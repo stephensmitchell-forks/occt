@@ -114,7 +114,11 @@ is
              ancestor : IndexedDataMapOfShapeListOfShape from TopTools;
              defedge: Real     from Standard;
              first  : Real     from Standard;
-             last   : Real     from Standard)
+             last   : Real     from Standard;
+             tolX   : Real     from Standard;
+             tolY   : Real     from Standard;
+             prevPointInd : out Integer from Standard;
+             firstEdge    : out Boolean from Standard)
         is static private;
 
         Add (me     : mutable;
@@ -323,5 +327,6 @@ fields
       myMapdefle     : DataMapOfShapeReal            from TopTools;
       myNottriangulated : ListOfShape                from TopTools;
       myAllocator    : BaseAllocator                 from BRepMesh;
+      myFirstPointInd: Integer                       from Standard;
 
 end FastDiscret;

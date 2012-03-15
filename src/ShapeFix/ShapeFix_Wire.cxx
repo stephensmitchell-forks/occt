@@ -2723,6 +2723,14 @@ Standard_Boolean ShapeFix_Wire::FixLacking (const Standard_Integer num,
   gp_Pnt p3d1, p3d2;
   Standard_Real tol1=::Precision::Confusion(), tol2=::Precision::Confusion(); //SK
 
+  Standard_Real pf, pl;
+  gp_Vec2d v1, v2;
+  Handle(Geom2d_Curve) c2d1, c2d2;
+  sae.PCurve (E1, face, c2d1, pf, pl, Standard_True);
+  c2d1->D1 (pl, p2d1, v1);
+  sae.PCurve (E2, face, c2d2, pf, pl, Standard_True);
+  c2d2->D1 (pf, p2d2, v2);
+
   //=============
   //:s2 abv 21 Apr 99: Speculation: try bending pcurves
   Standard_Real bendtol1, bendtol2;
@@ -2805,7 +2813,9 @@ Standard_Boolean ShapeFix_Wire::FixLacking (const Standard_Integer num,
     if ( ! doAddLong && inctol < MaxTolerance() && 
 	 ! myAnalyzer->Surface()->IsDegenerated ( p2d1, p2d2, 2.*tol, 10. ) ) { //:p7
       if ( ! bendc1.IsNull() && ! bendc2.IsNull() &&
-	   bendtol1 < inctol && bendtol2 < inctol ) doBend = Standard_True;
+	   bendtol1 < inctol && bendtol2 < inctol &&
+	   ! (c2d1->IsKind (STANDARD_TYPE (Geom2d_Line)) && c2d2->IsKind (STANDARD_TYPE (Geom2d_Line)) &&
+	   Abs (Abs (v1.Angle (v2)) - M_PI) < Precision::Angular()) ) doBend = Standard_True;
       else doIncrease = Standard_True;
     }
     else 
@@ -2913,7 +2923,9 @@ Standard_Boolean ShapeFix_Wire::FixLacking (const Standard_Integer num,
   // else try to increase tol up to MaxTol
   else if ( inctol > tol && inctol < MaxTolerance() ) {
     if ( ! bendc1.IsNull() && ! bendc2.IsNull() &&
-	 bendtol1 < inctol && bendtol2 < inctol ) doBend = Standard_True;
+	 bendtol1 < inctol && bendtol2 < inctol &&
+	 ! (c2d1->IsKind (STANDARD_TYPE (Geom2d_Line)) && c2d2->IsKind (STANDARD_TYPE (Geom2d_Line)) &&
+	 Abs (Abs (v1.Angle (v2)) - M_PI) < Precision::Angular()) ) doBend = Standard_True;
     else doIncrease = Standard_True;
   }
   
