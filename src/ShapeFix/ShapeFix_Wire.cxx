@@ -1305,6 +1305,9 @@ Standard_Boolean ShapeFix_Wire::FixShifted()
     else         VRange = RealLast();
   Standard_Real UTol = 0.2 * URange, VTol = 0.2 * VRange;
 
+  Standard_Integer degn2 = 0;
+  gp_Pnt pdeg;
+  gp_Pnt2d aFirstPnt, aLastPnt;
   Handle(ShapeExtend_WireData) sbwdOring = WireData();
   ShapeAnalysis_Edge sae;
   Handle(ShapeExtend_WireData) sbwd = new ShapeExtend_WireData;
@@ -1314,14 +1317,34 @@ Standard_Boolean ShapeFix_Wire::FixShifted()
       continue;
     
     sbwd->Add(E1);
+    Standard_Real aFirstPar, aLastPar;
+    Handle(Geom2d_Curve) aC2d;
+    sae.PCurve (E1, Face(), aC2d, aFirstPar, aLastPar, Standard_True);
+    gp_Pnt2d aFirst = aC2d->Value (aFirstPar);
+    gp_Pnt2d aLast = aC2d->Value (aLastPar);
+    if (i == 1)
+    {
+      aFirstPnt = aFirst;
+      aLastPnt = aLast;
+    }
+    else
+    {
+      if (degn2 == 0 && !aFirst.IsEqual (aLastPnt, Precision::PConfusion()))
+      {
+        degn2 = i;
+        TopoDS_Vertex aVert = sae.FirstVertex (E1);
+        pdeg = BRep_Tool::Pnt (aVert);
+      }
+      aLastPnt = aLast;
+    }
   }
+  if (degn2 == 0 && aFirstPnt.IsEqual (aLastPnt, Precision::Confusion()))
+    return Standard_True;
   
   ShapeBuild_Edge sbe;
   Standard_Integer nb = sbwd->NbEdges();
   Standard_Boolean end = (nb == 0), degstop = Standard_False;;
   Standard_Integer stop = nb;
-  Standard_Integer degn2 = 0;
-  gp_Pnt pdeg;
   //pdn 17.12.98 r0901_ec 38237 to shift wire at 0
  
   //GeomAdaptor_Surface& GAS = myAnalyzer->Surface()->Adaptor3d()->ChangeSurface(); //SK
