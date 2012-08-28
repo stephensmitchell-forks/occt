@@ -538,8 +538,22 @@ static
 	if (aMap.Contains(nV1) && aMap.Contains(nV2)) {
 	  //
 	  const BOPTools_ListOfPaveBlock& aLPBExisting=aFFi.PaveBlocks();
-	  bIsPaveBlock=IsPaveBlock(nV1, nV2, aLPBExisting);
 	  //
+	  //modified by NIZNHY-PKV Thu Jul 26 10:38:23 2012f
+	  iCheckIntermediatePoint=1;
+	  BOPTools_ListIteratorOfListOfPaveBlock anItLPB(aLPBExisting);
+	  for (; anItLPB.More(); anItLPB.Next()) {
+	    const BOPTools_PaveBlock& aPBR=anItLPB.Value();
+	    iCheckIntermediatePoint=
+	      CheckIntermediatePoint(aPBNew, aPBR, aTolR3D);
+	    if (!iCheckIntermediatePoint) {
+	      break;
+	    }
+	  }
+	  bIsPaveBlock=(iCheckIntermediatePoint==0);
+	  //
+	  /*
+	  bIsPaveBlock=IsPaveBlock(nV1, nV2, aLPBExisting);
 	  iCheckIntermediatePoint=1;
 	  if (bIsPaveBlock) {
 	    BOPTools_ListIteratorOfListOfPaveBlock anItLPB(aLPBExisting);
@@ -554,6 +568,8 @@ static
 	    }
 	    bIsPaveBlock=bIsPaveBlock && !iCheckIntermediatePoint;
 	  }
+	  */
+	  //modified by NIZNHY-PKV Thu Jul 26 10:38:32 2012t
 	  //
 	  if (bIsPaveBlock) {
 	    continue;
@@ -1741,7 +1757,10 @@ static
       }
     }
     //wkar OCC334 t
-  }
+    //modified by NIZNHY-PKV Mon Jul 09 13:14:15 2012f
+    TreatTechnoVertices(aFFi);
+    //modified by NIZNHY-PKV Mon Jul 09 13:14:17 2012t
+  }//for (i=1; i<=aNbFFs; i++) {
 }
 //=======================================================================
 // function: PrepareSetForFace

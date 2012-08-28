@@ -516,7 +516,6 @@ is
     	--- Try to put 3D-point <aP> (parameter aT)  on the curve <aBC> 
     	--- 
  
---modified by NIZNHY-PKV Thu Oct 20 07:17:11 2011f 
     PutClosingPaveOnCurve (me:out; 
     	    	    aBC :out Curve from BOPTools;	 
      	    	    aFF :out SSInterference from BOPTools)  
@@ -525,7 +524,6 @@ is
     	--- Put paves on the curve <aBC> in case when <aBC>   
         --  is closed 3D-curve  
     	---      
---modified by NIZNHY-PKV Thu Oct 20 07:17:11 2011t	 
 
     FindPave            (me:out; 
 		    aP  :Pnt from  gp;  
@@ -595,8 +593,27 @@ is
     	    nV      : Integer from Standard; 
             aTolExt : out Real from Standard) 
 	returns Boolean from Standard 		     
-	is  protected;		     
-
+	is  protected;		 
+	 
+    --modified by NIZNHY-PKV Tue Aug 28 09:45:00 2012ft 
+    TreatTechnoVertices(me:out;  
+     	    	    aFF:out SSInterference from BOPTools) 
+    	is protected;    
+	 
+    SplitPaveBlock(me:out;   
+    	    aPB: PaveBlock from BOPTools;  
+    	    nVT: Integer from Standard; 
+    	    aPB1:out PaveBlock from BOPTools; 
+    	    aPB2:out PaveBlock from BOPTools) 
+    	is protected;   
+ 
+    CheckCoincidence(me:out;   
+    	    aPB1: PaveBlock from BOPTools;  
+    	    aPB2: PaveBlock from BOPTools) 
+    	returns Boolean from Standard 
+    	is protected;  	
+    --modified by NIZNHY-PKV Mon Jul 09 13:15:55 2012t
+ 
 fields 
  
     myIntrPool         :  PInterferencePool from BOPTools

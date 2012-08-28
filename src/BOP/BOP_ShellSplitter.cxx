@@ -51,6 +51,7 @@
 
 #include <BRep_Tool.hxx>
 #include <BRep_Builder.hxx>
+#include <BOPTColStd_ListIteratorOfListOfListOfShape.hxx>
 
 static
   void RemoveInternals(const TopoDS_Face& ,
@@ -78,6 +79,10 @@ static
   void CreateClosedShell(TopTools_SequenceOfShape& ,
 			 const TopTools_MapOfShape& ,
 			 const TopTools_IndexedDataMapOfShapeListOfShape& );
+//DEBf
+static
+  void Dump(const BOPTColStd_ListOfListOfShape& myShapes);
+//DEBt
 // 
 //=======================================================================
 // function: BOP_ShellSplitter::BOP_ShellSplitter
@@ -198,13 +203,37 @@ static
   }
   //
   // 2. Split the Shell
-  
+  Standard_Integer aNbSh;
   TopoDS_Shape aShape;
   SplitShell (aShell, aShape);
   //
   // 3. Post-pro the result aShape
   //    and filling the myShapes field .
+  //modified by NIZNHY-PKV Tue Aug 28 09:45:39 2012f
   TopExp_Explorer aShellExp(aShape, TopAbs_SHELL);
+  for (aNbSh=0; aShellExp.More(); aShellExp.Next(), ++aNbSh) {
+    const TopoDS_Shape& aSh=aShellExp.Current();
+  }
+  //
+  if (aNbSh==1) {
+    Standard_Boolean bIsClosed;
+    //
+    bIsClosed=BRep_Tool::IsClosed(aShell);
+    if (bIsClosed) {
+      myShapes.Append(myFaces);
+      myIsDone=Standard_True;
+      Dump(myShapes);
+      return;
+    }
+    /*
+    myShapes.Append(myFaces);
+    myIsDone=Standard_True;
+    Dump(myShapes);
+    */
+  }
+  //modified by NIZNHY-PKV Tue Aug 28 09:45:45 2012t
+  //
+  aShellExp.Init(aShape, TopAbs_SHELL);
   for (; aShellExp.More(); aShellExp.Next()) {
     const TopoDS_Shape& aSh= aShellExp.Current();
 
@@ -221,9 +250,30 @@ static
       myShapes.Append(aLF);
     }
   }
-  
+  //
+  Dump(myShapes);
   myIsDone=Standard_True;
 }
+//DEBf
+//=======================================================================
+//function : Dump
+//purpose  : 
+//=======================================================================
+void Dump(const BOPTColStd_ListOfListOfShape& myShapes)
+{
+  Standard_Integer i, aNbAreas, aNbFaces;
+  BOPTColStd_ListIteratorOfListOfListOfShape aIt;
+  //
+  aNbAreas=myShapes.Extent();
+  printf(" aNbAreas=%d\n", aNbAreas);
+  aIt.Initialize(myShapes);
+  for (i=1; aIt.More(); aIt.Next(), ++i) {
+    const TopTools_ListOfShape& aLF=aIt.Value();
+    aNbFaces=aLF.Extent();
+    printf(" Area #%d aNbFaces=%d\n", i, aNbFaces);
+  }
+}
+//DEBt
 
 //=======================================================================
 // function: RemoveInternals
@@ -286,7 +336,7 @@ void RemoveInternals(const TopoDS_Face& aF,
   done = Standard_False;
   aNumMultShell =0;
   aShellsOut = aShellIn;
-
+  
   TopoDS_Iterator iter(aShellIn);
   for (; iter.More(); iter.Next()) {
     Lface.Append(iter.Value());
