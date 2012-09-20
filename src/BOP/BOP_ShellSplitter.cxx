@@ -204,7 +204,28 @@ static
   //
   // 3. Post-pro the result aShape
   //    and filling the myShapes field .
-  TopExp_Explorer aShellExp(aShape, TopAbs_SHELL);
+  //modified by NIZNHY-PKV Tue Sep 18 12:06:25 2012f
+  Standard_Integer aNbSh; 
+  TopExp_Explorer aShellExp;
+  //
+  aShellExp.Init(aShape, TopAbs_SHELL);
+  for (aNbSh=0; aShellExp.More(); aShellExp.Next(), ++aNbSh) {
+    const TopoDS_Shape& aSh=aShellExp.Current();
+  }
+  //
+  if (aNbSh==1) {
+    Standard_Boolean bIsClosed;
+    //
+    bIsClosed=BRep_Tool::IsClosed(aShell);
+    if (bIsClosed) {
+      myShapes.Append(myFaces);
+      myIsDone=Standard_True;
+      return;
+    }
+  }
+  //modified by NIZNHY-PKV Tue Sep 18 12:06:26 2012t
+  //
+  aShellExp.Init(aShape, TopAbs_SHELL);
   for (; aShellExp.More(); aShellExp.Next()) {
     const TopoDS_Shape& aSh= aShellExp.Current();
 
@@ -221,7 +242,7 @@ static
       myShapes.Append(aLF);
     }
   }
-  
+  //
   myIsDone=Standard_True;
 }
 
