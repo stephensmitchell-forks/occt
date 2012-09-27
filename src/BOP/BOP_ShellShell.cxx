@@ -126,7 +126,7 @@ BOP_ShellShell::BOP_ShellShell()
     aRefiner.SetInternals(myInternals);
     aRefiner.Do();
     //
-    BOP_CorrectTolerances::CorrectTolerances(myResult, 0.01);
+    BOP_CorrectTolerances::CorrectTolerances(myResult);
     //
     FillModified();
     myIsDone=Standard_True;

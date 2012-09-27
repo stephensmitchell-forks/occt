@@ -182,7 +182,7 @@ static Standard_Boolean CheckSameDomainFaceInside(const TopoDS_Face& theFace1,
     aRefiner.Do();
     //
     //
-    BOP_CorrectTolerances::CorrectTolerances(myResult, 0.01);
+    BOP_CorrectTolerances::CorrectTolerances(myResult);
     //
     FillModified();
 
