@@ -1,0 +1,10 @@
+puts "OCC23270: Wrong result done by boolean operation algorithm for cylinder and torus"
+
+restore [locate_data_file OCC23270-Cylinder_1.brep] b1
+restore [locate_data_file OCC23270-Torus_1.brep] b2
+bop b1 b2
+bopcommon result
+
+set square 210232.
+
+
