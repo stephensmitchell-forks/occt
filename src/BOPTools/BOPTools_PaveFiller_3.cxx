@@ -538,6 +538,20 @@ static
 	if (aMap.Contains(nV1) && aMap.Contains(nV2)) {
 	  //
 	  const BOPTools_ListOfPaveBlock& aLPBExisting=aFFi.PaveBlocks();
+	  //
+	  //modified by NIZNHY-PKV Tue Sep 18 11:59:35 2012f
+	  iCheckIntermediatePoint=1;
+	  BOPTools_ListIteratorOfListOfPaveBlock anItLPB(aLPBExisting);
+	  for (; anItLPB.More(); anItLPB.Next()) {
+	    const BOPTools_PaveBlock& aPBR=anItLPB.Value();
+	    iCheckIntermediatePoint=
+	      CheckIntermediatePoint(aPBNew, aPBR, aTolR3D);
+	    if (!iCheckIntermediatePoint) {
+	      break;
+	    }
+	  }
+	  bIsPaveBlock=(iCheckIntermediatePoint==0);
+	  /*
 	  bIsPaveBlock=IsPaveBlock(nV1, nV2, aLPBExisting);
 	  //
 	  iCheckIntermediatePoint=1;
@@ -554,6 +568,8 @@ static
 	    }
 	    bIsPaveBlock=bIsPaveBlock && !iCheckIntermediatePoint;
 	  }
+	  */
+	  //modified by NIZNHY-PKV Tue Sep 18 12:00:02 2012t
 	  //
 	  if (bIsPaveBlock) {
 	    continue;
@@ -1741,6 +1757,9 @@ static
       }
     }
     //wkar OCC334 t
+    //modified by NIZNHY-PKV Tue Sep 18 12:01:23 2012f
+    TreatTechnoVertices(aFFi);
+    //modified by NIZNHY-PKV Tue Sep 18 12:01:28 2012t
   }
 }
 //=======================================================================

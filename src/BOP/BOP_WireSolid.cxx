@@ -121,7 +121,7 @@ BOP_WireSolid::BOP_WireSolid()
     //
     BuildResult();
     //
-    BOP_CorrectTolerances::CorrectTolerances(myResult, 0.01);
+    BOP_CorrectTolerances::CorrectTolerances(myResult);
     //
     FillModified();
 

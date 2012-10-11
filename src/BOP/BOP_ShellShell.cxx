@@ -65,7 +65,6 @@
 #include <BOP_Refiner.hxx>
 #include <Standard_Failure.hxx>
 #include <Standard_ErrorHandler.hxx>
-#include <TopTools_DataMapOfShapeInteger.hxx>
 
 
 
@@ -81,14 +80,13 @@ BOP_ShellShell::BOP_ShellShell()
 // function: Destroy
 // purpose: 
 //=======================================================================
-void BOP_ShellShell::Destroy() {
-}
+  void BOP_ShellShell::Destroy() {}
 
 //=======================================================================
 // function: DoWithFiller
 // purpose: 
 //=======================================================================
-void BOP_ShellShell::DoWithFiller(const BOPTools_DSFiller& aDSFiller) 
+  void BOP_ShellShell::DoWithFiller(const BOPTools_DSFiller& aDSFiller) 
 {
   myErrorStatus=0;
   myIsDone=Standard_False;
@@ -101,12 +99,14 @@ void BOP_ShellShell::DoWithFiller(const BOPTools_DSFiller& aDSFiller)
   try {
     OCC_CATCH_SIGNALS
 
+    // modified by NIZHNY-MKK  Fri Sep  3 15:14:17 2004.BEGIN
     if(!myDSFiller->IsDone()) {
       myErrorStatus = 1;
       BOPTColStd_Dump::PrintMessage("DSFiller is invalid: Can not build result\n");
       return;
     }
-    //
+    // modified by NIZHNY-MKK  Fri Sep  3 15:14:20 2004.END
+
     Standard_Boolean bIsNewFiller;
     bIsNewFiller=aDSFiller.IsNewFiller();
     
@@ -126,7 +126,7 @@ void BOP_ShellShell::DoWithFiller(const BOPTools_DSFiller& aDSFiller)
     aRefiner.SetInternals(myInternals);
     aRefiner.Do();
     //
-    BOP_CorrectTolerances::CorrectTolerances(myResult, 0.01);
+    BOP_CorrectTolerances::CorrectTolerances(myResult);
     //
     FillModified();
     myIsDone=Standard_True;
@@ -141,7 +141,7 @@ void BOP_ShellShell::DoWithFiller(const BOPTools_DSFiller& aDSFiller)
 // function: BuildResult
 // purpose: 
 //=================================================================================
-void BOP_ShellShell::BuildResult()
+  void BOP_ShellShell::BuildResult()
 {
   const BooleanOperations_ShapesDataStructure& aDS=myDSFiller->DS();
   
@@ -231,7 +231,7 @@ void BOP_ShellShell::BuildResult()
   //
   // vars
   Standard_Boolean bIsTouchCase, bIsTouch;
-  Standard_Integer i, aNb, j, aNbj, iFF, nF1, iRank, nF2;
+  Standard_Integer i, aNb, j, aNbj, iFF, nF1, iRank;
   TopTools_ListOfShape aListOfNewFaces;
   TopTools_IndexedMapOfShape anEMap;
   TopAbs_Orientation anOriF1;
@@ -283,65 +283,6 @@ void BOP_ShellShell::BuildResult()
 	}
       }
       // 3. Add IN2D, ON2D Parts to the WES 
-      //
-      //modified by NIZNHY-PKV Fri Sep 14 10:00:44 2012f
-      BOP_WireEdgeSet aWES1 (myFace);
-      //
-      for (j=1; j<=aNbj; j++) {
-	iFF=aFFIndicesMap(j);
-	BOPTools_SSInterference& aFF=aFFs(iFF);
-	bIsTouch=aFF.IsTangentFaces();
-	if (bIsTouch) {
-	  nF2=aFF.OppositeIndex(nF1);
-	  AddINON2DPartsSh(nF1, iFF, aWES1);
-	}
-      }
-      //
-      if (iRank==2 || (iRank==1 && myOperation==BOP_CUT)) {
-	// #0023431
-	// Refine WES to remove duplicated edges: 
-	// - for the faces of the Object: Cut operation
-	// - for the faces of the Tool: all operations
-	//
-	// The duplications caused by the separated treatment
-	// the faces of an argument for the cases when: 
-	// -these faces contain shared edges and 
-	// -they are same domain faces with the faces of the other argument.
-	TopTools_DataMapOfShapeInteger aDMSI;
-
-	//--
-	aWES1.InitStartElements();
-	for (; aWES1.MoreStartElements(); aWES1.NextStartElement()) {
-	  const TopoDS_Edge& aE=*((TopoDS_Edge*)&aWES1.StartElement()); 
-	  if (!aDMSI.IsBound(aE)) {
-	    Standard_Integer iCnt=1;
-	    //
-	    aDMSI.Bind(aE, iCnt);
-	  }
-	  else {
-	    Standard_Integer& iCnt=aDMSI.ChangeFind(aE);
-	    ++iCnt;
-	  }
-	}
-	//
-	aWES1.InitStartElements();
-	for (; aWES1.MoreStartElements(); aWES1.NextStartElement()) {
-	  const TopoDS_Shape& aE=aWES1.StartElement(); 
-	  const Standard_Integer& iCnt=aDMSI.Find(aE);
-	  if (iCnt==1) {
-	    aWES.AddStartElement(aE);
-	  }
-	}
-      }
-      else {
-	aWES1.InitStartElements();
-	for (; aWES1.MoreStartElements(); aWES1.NextStartElement()) {
-	  const TopoDS_Shape& aE=aWES1.StartElement(); 
-	  aWES.AddStartElement(aE);
-	}
-      }
-      //--
-      /*
       for (j=1; j<=aNbj; j++) {
 	iFF=aFFIndicesMap(j);
 	BOPTools_SSInterference& aFF=aFFs(iFF);
@@ -352,8 +293,6 @@ void BOP_ShellShell::BuildResult()
 	  AddINON2DPartsSh(nF1, iFF, aWES);
 	}
       }
-      */
-      //modified by NIZNHY-PKV Fri Sep 14 10:00:48 2012t
       // 4. Add EF parts (E (from F2) on F1 ),
       // where F2 is non-same-domain face to F1
       anEMap.Clear();
@@ -419,6 +358,15 @@ void BOP_ShellShell::BuildResult()
       }
     }// end of (bIsTouchCase)'s else
     //
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    // Display the WES
+    if (myDraw)  {
+      const TopTools_ListOfShape& aWESL=aWES.StartElements();
+      BOP_Draw::DrawListOfEdgesWithPC (myFace, aWESL, i, "ew_"); 
+      BOP_Draw::Wait();
+    }
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
     //
     // d. Build new Faces from myFace
     BOP_FaceBuilder aFB;
@@ -448,24 +396,12 @@ void BOP_ShellShell::BuildResult()
     //
   }//  for (i=1; i<=aNb; i++)
   //
- 
+  //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  // Display the new Faces
+  if (myDraw) { 
+    BOP_Draw::DrawListOfShape(aListOfNewFaces, "fn_");
+  }
+  //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   myNewFaces.Clear();
   myNewFaces.Append(aListOfNewFaces);
 }
-/* DEB
-    {
-      TopoDS_Compound aCx;
-      BRep_Builder aBB;
-      //
-      aBB.MakeCompound(aCx);
-      aBB.Add(aCx, myFace);
-      //
-      aWES.InitStartElements();
-      for (; aWES.MoreStartElements(); aWES.NextStartElement()) {
-	const TopoDS_Shape& aE = aWES.StartElement(); 
-	aBB.Add(aCx, aE);
-      }
-      int a=0;
-    }
- 
-*/

@@ -269,7 +269,7 @@ BOP_Section::BOP_Section()
       mySectionEdges.Append(aS);
     }
     myResult=aCompound;
-    BOP_CorrectTolerances::CorrectTolerances(myResult, 0.01);
+    BOP_CorrectTolerances::CorrectTolerances(myResult);
     //
     if (!myErrorStatus) {
       FillModified();

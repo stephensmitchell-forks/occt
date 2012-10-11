@@ -182,7 +182,7 @@ static Standard_Boolean LocalIsKeepTwice(const TopoDS_Face&          aF1,
     aRefiner.SetInternals(myInternals);
     aRefiner.Do();
     //
-    BOP_CorrectTolerances::CorrectTolerances(myResult, 0.01);
+    BOP_CorrectTolerances::CorrectTolerances(myResult);
     //
     FillModified();
 

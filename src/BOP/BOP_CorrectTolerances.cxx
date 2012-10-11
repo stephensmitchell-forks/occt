@@ -70,12 +70,10 @@
 
 
 static 
-  void CheckEdge (const TopoDS_Edge& E,
-		  const Standard_Real aMaxTol);
+  void CheckEdge (const TopoDS_Edge& E);
 static 
   void CorrectEdgeTolerance (const TopoDS_Edge& myShape,
-			     const TopoDS_Face& S,
-			     const Standard_Real aMaxTol);
+			     const TopoDS_Face& S);
 static 
   Standard_Boolean Validate(const Adaptor3d_Curve& CRef,
 			 const Adaptor3d_Curve& Other,
@@ -87,24 +85,20 @@ static
 static
   void CorrectVertexTolerance(const TopoDS_Edge& aE);
 //
-
 //=======================================================================
 // Function : CorrectTolerances
 // purpose : 
 //=======================================================================
-  void BOP_CorrectTolerances::CorrectTolerances(const TopoDS_Shape& aShape,
-						const Standard_Real aMaxTol)
+  void BOP_CorrectTolerances::CorrectTolerances(const TopoDS_Shape& aShape)
 {
-  BOP_CorrectTolerances::CorrectPointOnCurve(aShape, aMaxTol);
-  BOP_CorrectTolerances::CorrectCurveOnSurface(aShape, aMaxTol);
+  BOP_CorrectTolerances::CorrectPointOnCurve(aShape);
+  BOP_CorrectTolerances::CorrectCurveOnSurface(aShape);
 }
-
 //=======================================================================
 // Function : CorrectPointOnCurve
 // purpose : 
 //=======================================================================
-  void BOP_CorrectTolerances::CorrectPointOnCurve(const TopoDS_Shape& S,
-						  const Standard_Real aMaxTol)
+  void BOP_CorrectTolerances::CorrectPointOnCurve(const TopoDS_Shape& S)
 {
   Standard_Integer i, aNb;
   TopTools_IndexedMapOfShape Edges;
@@ -112,7 +106,7 @@ static
   aNb=Edges.Extent();
   for (i=1; i<=aNb; i++) {
     const TopoDS_Edge& E= TopoDS::Edge(Edges(i));
-    CheckEdge(E, aMaxTol);
+    CheckEdge(E);
   }     
 }
 
@@ -120,8 +114,7 @@ static
 // Function : CorrectCurveOnSurface
 // purpose : 
 //=======================================================================
-  void BOP_CorrectTolerances::CorrectCurveOnSurface(const TopoDS_Shape& S,
-						    const Standard_Real aMaxTol)
+  void BOP_CorrectTolerances::CorrectCurveOnSurface(const TopoDS_Shape& S)
 {
   Standard_Integer i, aNbFaces, j, aNbEdges;
   TopTools_IndexedMapOfShape Faces;
@@ -135,7 +128,7 @@ static
     aNbEdges=Edges.Extent();
     for (j=1; j<=aNbEdges; j++) {
       const TopoDS_Edge& E= TopoDS::Edge(Edges(j));
-      CorrectEdgeTolerance (E, F, aMaxTol);
+      CorrectEdgeTolerance (E, F);
     }
   }
 }
@@ -145,8 +138,7 @@ static
 // purpose :  Correct tolerances for Edge 
 //=======================================================================
 void CorrectEdgeTolerance (const TopoDS_Edge& myShape, 
-			   const TopoDS_Face& S,
-			   const Standard_Real aMaxTol)
+			   const TopoDS_Face& S)
 {
   // 
   // 1. Minimum of conditions to Perform
@@ -280,21 +272,16 @@ void CorrectEdgeTolerance (const TopoDS_Edge& myShape,
 	Adaptor3d_CurveOnSurface ACS(GHPC,GAHS);
 	ok = Validate(myHCurve->Curve(), ACS, Tol, SameParameter, aNewTol);
 	if (ok) {
-	  if (cr->IsCurveOnClosedSurface()) {
-	    //return ;// BRepCheck::Add(lst,BRepCheck_InvalidCurveOnClosedSurface);
-	  }
-	  else {
-	    //return;//BRepCheck::Add(lst,BRepCheck_InvalidCurveOnSurface);
-	  }
-	  if (SameParameter) {
-	    //return;//BRepCheck::Add(lst,BRepCheck_InvalidSameParameterFlag);
-	  }
-	  //
+	  //modified by NIZNHY-PKV Thu Sep 27 10:28:27 2012f
+	  TE->UpdateTolerance(aNewTol+Delta); 
+	  CorrectVertexTolerance(myShape);
+	  /*
 	  if (aNewTol<aMaxTol) {
 	    TE->UpdateTolerance(aNewTol+Delta); 
-	    //
 	    CorrectVertexTolerance(myShape);
-	  }
+	    //}
+	    */
+	  //modified by NIZNHY-PKV Thu Sep 27 10:28:44 2012t
 	}
 
 	if (cr->IsCurveOnClosedSurface()) {
@@ -304,14 +291,16 @@ void CorrectEdgeTolerance (const TopoDS_Edge& myShape,
 	  ACS.Load(GHPC); // meme remarque...
 	  ok = Validate(myHCurve->Curve(),ACS,Tol,SameParameter, aNewTol);
 	  if (ok) {
-	    //return;//BRepCheck::Add(lst,BRepCheck_InvalidCurveOnClosedSurface);
-	    if (SameParameter) {
-	      //return;//BRepCheck::Add(lst,BRepCheck_InvalidSameParameterFlag);
-	    }
+	    //modified by NIZNHY-PKV Thu Sep 27 10:33:36 2012f
+	    TE->UpdateTolerance(aNewTol+Delta);
+	    CorrectVertexTolerance(myShape);
+	    /*
 	    if (aNewTol<aMaxTol) {
 	      TE->UpdateTolerance(aNewTol+Delta);
 	      CorrectVertexTolerance(myShape);
 	    } 
+	    */
+	    //modified by NIZNHY-PKV Thu Sep 27 10:34:00 2012t
 	  }
 	}
       }
@@ -329,7 +318,7 @@ void CorrectEdgeTolerance (const TopoDS_Edge& myShape,
 	P = Handle(Geom_Plane)::DownCast(Su);
       }
       if (P.IsNull()) { // not a plane
-	return;//BRepCheck::Add(lst,BRepCheck_NoCurveOnSurface);
+	return;
       }
       
       else {// on fait la projection a la volee, comme BRep_Tool
@@ -355,11 +344,15 @@ void CorrectEdgeTolerance (const TopoDS_Edge& myShape,
 	Standard_Boolean okx = Validate(myHCurve->Curve(),ACS,
 					Tol,Standard_True, aNewTol); // voir dub...
 	if (okx) {
-	  //return;//BRepCheck::Add(lst,BRepCheck_InvalidCurveOnSurface);
+	  //modified by NIZNHY-PKV Thu Sep 27 10:34:10 2012f
+	  TE->UpdateTolerance(aNewTol+Delta);
+	  CorrectVertexTolerance(myShape);
+	  /*
 	  if (aNewTol<aMaxTol) {
 	    TE->UpdateTolerance(aNewTol+Delta);
 	    CorrectVertexTolerance(myShape);
 	  }
+	  */
 	}
       }
       
@@ -515,7 +508,7 @@ Standard_Boolean Validate(const Adaptor3d_Curve& CRef,
 // Function : CheckEdge
 // purpose :  Correct tolerances for Vertices on Edge 
 //=======================================================================
-void CheckEdge (const TopoDS_Edge& Ed, const Standard_Real aMaxTol)
+void CheckEdge (const TopoDS_Edge& Ed)
 {
   TopoDS_Edge E=Ed;
   E.Orientation(TopAbs_FORWARD);
@@ -559,8 +552,12 @@ void CheckEdge (const TopoDS_Edge& Ed, const Standard_Real aMaxTol)
 	      aD2=prep.SquareDistance(Controlp);
 	      if (aD2 > Tol) {
 		aNewTolerance=sqrt(aD2)+dd;
+		//modified by NIZNHY-PKV Thu Sep 27 10:34:41 2012f
+		TV->UpdateTolerance(aNewTolerance);
+		/*
 		if (aNewTolerance<aMaxTol)
 		  TV->UpdateTolerance(aNewTolerance);
+		  */
 	      }
 	    }
 	    itpr.Next();
@@ -580,8 +577,13 @@ void CheckEdge (const TopoDS_Edge& Ed, const Standard_Real aMaxTol)
 	    
 	    if (aD2 > Tol) {
 	      aNewTolerance=sqrt(aD2)+dd;
+	      //modified by NIZNHY-PKV Thu Sep 27 10:34:55 2012f
+	      TV->UpdateTolerance(aNewTolerance);
+	      /*
 	      if (aNewTolerance<aMaxTol)
 		TV->UpdateTolerance(aNewTolerance);
+		*/
+	      //modified by NIZNHY-PKV Thu Sep 27 10:35:01 2012t
 	    }
 	  }
 	}
