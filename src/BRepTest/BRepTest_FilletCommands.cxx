@@ -45,7 +45,9 @@
 #include <TopExp.hxx>
 #include <TopExp_Explorer.hxx>
 
-#include <BOPTools_DSFiller.hxx>
+//#include <BOPTools_DSFiller.hxx>
+#include <BOPAlgo_PaveFiller.hxx>
+
 #include <BRepAlgoAPI_BooleanOperation.hxx>
 #include <BRepAlgoAPI_Fuse.hxx>
 #include <BRepAlgoAPI_Cut.hxx>
@@ -406,15 +408,17 @@ Standard_Integer boptopoblend(Draw_Interpretor& di, Standard_Integer narg, const
   }
   Standard_Real Rad = atof(a[4]);
 
-  BOPTools_DSFiller theDSFiller;
-
-  theDSFiller.SetShapes( S1, S2 );
-  if (!theDSFiller.IsDone()) {
+  BOPAlgo_PaveFiller theDSFiller;
+  BOPCol_ListOfShape aLS;
+  aLS.Append(S1); 
+  aLS.Append(S2); 
+  theDSFiller.SetArguments(aLS);
+  //
+  theDSFiller.Perform();
+  if (theDSFiller.ErrorStatus()) {
     printf("Check types of the arguments, please\n");
     return 1;
   }
-  
-  theDSFiller.Perform();
 
   BRepAlgoAPI_BooleanOperation* pBuilder=NULL;
 

@@ -95,9 +95,9 @@ uses
    TopoDS, 
    gp,
    Geom,
-   Geom2d,
-   BOP,  
-   BOPTools,
+   Geom2d, 
+   BOPAlgo, 
+   BOPDS,
    BRepBuilderAPI   
 is
 	     

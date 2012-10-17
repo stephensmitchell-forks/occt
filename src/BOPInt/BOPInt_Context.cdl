@@ -1,0 +1,189 @@
+-- Created by: Peter KURNEV
+-- Copyright (c) 1999-2012 OPEN CASCADE SAS
+--
+-- The content of this file is subject to the Open CASCADE Technology Public
+-- License Version 6.5 (the "License"). You may not use the content of this file
+-- except in compliance with the License. Please obtain a copy of the License
+-- at http://www.opencascade.org and read it completely before using this file.
+--
+-- The Initial Developer of the Original Code is Open CASCADE S.A.S., having its
+-- main offices at: 1, place des Freres Montgolfier, 78280 Guyancourt, France.
+--
+-- The Original Code and all software distributed under the License is
+-- distributed on an "AS IS" basis, without warranty of any kind, and the
+-- Initial Developer hereby disclaims all such warranties, including without
+-- limitation, any warranties of merchantability, fitness for a particular
+-- purpose or non-infringement. Please see the License for the specific terms
+-- and conditions governing the rights and limitations under the License.
+
+ 
+class Context from BOPInt  
+    inherits TShared from MMgt
+
+
+---Purpose:  
+        --  The intersection Context contains geometrical  
+        --  and topological toolkit (classifiers, projectors, etc). 
+        --  The intersection Context is for caching the tools  
+        --  to increase the performance.
+
+
+uses  
+
+    Pnt2d from gp,
+    Pnt   from gp, 
+    State from TopAbs,  
+    Curve from Geom,   
+    ProjectPointOnCurve from GeomAPI, 
+    ProjectPointOnSurf  from GeomAPI,
+    Vertex from TopoDS, 
+    Face   from TopoDS,
+    Edge   from TopoDS, 
+    Solid  from TopoDS, 
+    SolidClassifier from BRepClass3d, 
+    FClass2d from IntTools,
+    Curve    from IntTools, 
+    BaseAllocator from BOPCol,
+    DataMapOfShapeAddress from BOPCol, 
+    DataMapOfTransientAddress from BOPCol 
+
+--raises
+
+is 
+    Create   
+    returns mutable Context from BOPInt;
+    ---C++: alias "Standard_EXPORT virtual  ~BOPInt_Context();"   
+      
+    Create (theAllocator: BaseAllocator from BOPCol) 
+    returns Context from BOPInt;
+     
+    FClass2d(me:mutable; 
+        aF: Face from TopoDS) 
+    returns FClass2d from IntTools; 
+    ---C++: return & 
+     
+    ProjPS (me:mutable; 
+        aF: Face from TopoDS) 
+    returns ProjectPointOnSurf from GeomAPI;
+    ---C++: return &  
+     
+    ProjPC (me:mutable; 
+        aE: Edge from TopoDS) 
+    returns ProjectPointOnCurve from GeomAPI;
+    ---C++: return &
+
+    ProjPT (me:mutable; 
+        aC: Curve from Geom) 
+    returns ProjectPointOnCurve from GeomAPI;
+    ---C++: return &
+
+    SolidClassifier(me:mutable;  
+        aSolid: Solid from TopoDS) 
+    returns SolidClassifier from BRepClass3d; 
+    ---C++: return &   
+
+    ComputePE  (me:mutable;  
+       theP   : Pnt from gp; 
+       theTolP: Real from Standard; 
+       theE   : Edge   from  TopoDS; 
+       theT   :out Real from Standard) 
+    returns Integer from Standard; 
+        
+    ComputeVE  (me:mutable;  
+       aV   : Vertex from  TopoDS; 
+       aE   : Edge   from  TopoDS; 
+       aT   :out Real from Standard) 
+    returns Integer from Standard;
+    ---Purpose:
+        
+    ComputeVF  (me:mutable;  
+       aV  :     Vertex from  TopoDS; 
+       aF  :     Face   from  TopoDS; 
+       U   : out Real from Standard; 
+       V   : out Real from Standard) 
+    returns Integer from Standard;
+    
+    StatePointFace(me:mutable;    
+       aF   :  Face   from  TopoDS;
+       aP2D :  Pnt2d  from  gp) 
+    returns State from TopAbs; 
+         
+    IsPointInFace(me:mutable;    
+       aF   :  Face   from  TopoDS;
+       aP2D :  Pnt2d  from  gp) 
+    returns Boolean from Standard;
+    
+    IsPointInOnFace(me:mutable;     
+       aF   :  Face   from  TopoDS;
+       aP2D :  Pnt2d  from  gp) 
+    returns Boolean from Standard;
+         
+    IsValidPointForFace(me:mutable;
+       aP3D :  Pnt   from  gp; 
+       aF   :  Face  from TopoDS; 
+       aTol :  Real from Standard) 
+    returns Boolean from Standard;
+
+    IsValidPointForFaces(me:mutable;
+       aP3D :  Pnt   from  gp; 
+       aF1  :  Face  from TopoDS; 
+       aF2  :  Face  from TopoDS;
+       aTol :  Real from Standard)   
+    returns Boolean from Standard;
+         
+    IsValidBlockForFace (me:mutable;  
+       aT1  :  Real  from Standard;      
+       aT2  :  Real  from Standard;      
+       aIC  :  Curve from IntTools; 
+       aF   :  Face  from TopoDS; 
+       aTol :  Real from Standard) 
+    returns Boolean from Standard;
+
+    IsValidBlockForFaces (me:mutable;  
+       aT1  :  Real  from Standard;      
+       aT2  :  Real  from Standard;      
+       aIC  :  Curve from IntTools; 
+       aF1  :  Face  from TopoDS; 
+       aF2  :  Face  from TopoDS; 
+       aTol :  Real from Standard) 
+    returns Boolean from Standard;
+         
+    IsVertexOnLine(me:mutable;  
+       aV   :  Vertex from  TopoDS;  
+       aIC  :  Curve from IntTools;  
+       aTolC:  Real  from Standard; 
+       aT   :out  Real  from Standard)   
+    returns Boolean from Standard;
+        
+    IsVertexOnLine(me:mutable;  
+       aV   :  Vertex from  TopoDS; 
+       aTolV:  Real  from Standard;  
+       aIC  :  Curve from IntTools;  
+       aTolC:  Real  from Standard; 
+       aT   :out  Real  from Standard)   
+    returns Boolean from Standard;
+
+    ProjectPointOnEdge (me:mutable;  
+       aP   : Pnt  from  gp;       
+       aE   : Edge from  TopoDS;                    
+       aT   :out Real from  Standard) 
+    returns Boolean from Standard; 
+     
+    --modified by NIZHNY-EMV Tue Apr 12 09:50:14 2011 
+    StatePointFace (me:mutable; 
+       aF : Face from TopoDS; 
+       aP : Pnt from  gp)
+    returns State from TopAbs;
+    --modified by NIZHNY-EMV Tue Apr 12 09:50:16 2011
+
+fields 
+    myAllocator  : BaseAllocator from BOPCol is protected;
+    myFClass2dMap:DataMapOfShapeAddress from BOPCol is protected; 
+    myProjPSMap  :DataMapOfShapeAddress from BOPCol is protected; 
+    myProjPCMap  :DataMapOfShapeAddress from BOPCol is protected;    
+    mySClassMap  :DataMapOfShapeAddress from BOPCol is protected;
+    myProjPTMap  :DataMapOfTransientAddress from BOPCol is protected;   
+    myCreateFlag :Integer from Standard is protected; 
+     
+end Context;
+

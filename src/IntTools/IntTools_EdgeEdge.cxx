@@ -1503,7 +1503,7 @@ IntTools_EdgeEdge::IntTools_EdgeEdge()
   //
   IsParallel = Standard_False;
   IsCoincide = Standard_False;
-  Tolang2 = 1.e-16;
+  Tolang2 = Precision::Angular();
   Tol2 = myCriteria*myCriteria; 
   //
   gp_Lin C1 = myCFrom.Line();
@@ -1512,6 +1512,7 @@ IntTools_EdgeEdge::IntTools_EdgeEdge()
   const gp_Dir& D2 = C2.Position().Direction();
   Standard_Real aCos = D1.Dot(D2);
   Standard_Real Ang2;
+
   if(aCos >= 0. ) {
     Ang2 = 2.*(1. - aCos);
   }

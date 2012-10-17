@@ -1,0 +1,734 @@
+// Created by: Peter KURNEV
+// Copyright (c) 2010-2012 OPEN CASCADE SAS
+// Copyright (c) 2007-2010 CEA/DEN, EDF R&D, OPEN CASCADE
+// Copyright (c) 2003-2007 OPEN CASCADE, EADS/CCR, LIP6, CEA/DEN, CEDRAT,
+//                         EDF R&D, LEG, PRINCIPIA R&D, BUREAU VERITAS
+//
+// The content of this file is subject to the Open CASCADE Technology Public
+// License Version 6.5 (the "License"). You may not use the content of this file
+// except in compliance with the License. Please obtain a copy of the License
+// at http://www.opencascade.org and read it completely before using this file.
+//
+// The Initial Developer of the Original Code is Open CASCADE S.A.S., having its
+// main offices at: 1, place des Freres Montgolfier, 78280 Guyancourt, France.
+//
+// The Original Code and all software distributed under the License is
+// distributed on an "AS IS" basis, without warranty of any kind, and the
+// Initial Developer hereby disclaims all such warranties, including without
+// limitation, any warranties of merchantability, fitness for a particular
+// purpose or non-infringement. Please see the License for the specific terms
+// and conditions governing the rights and limitations under the License.
+
+#include <BOPAlgo_Builder.ixx>
+
+#include <NCollection_IncAllocator.hxx>
+
+#include <TopoDS_Shape.hxx>
+#include <TopoDS_Face.hxx>
+#include <TopoDS_Edge.hxx>
+#include <TopoDS_Vertex.hxx>
+#include <TopoDS_Compound.hxx>
+
+#include <BRep_Tool.hxx>
+#include <BRep_Builder.hxx>
+
+#include <TopExp_Explorer.hxx>
+
+#include <BOPCol_ListOfShape.hxx>
+#include <BOPCol_ListOfInteger.hxx>
+#include <BOPCol_MapOfInteger.hxx>
+#include <BOPCol_DataMapOfIntegerListOfShape.hxx>
+#include <BOPCol_DataMapOfShapeShape.hxx>
+
+#include <BOPInt_Context.hxx>
+
+#include <BOPDS_PaveBlock.hxx>
+#include <BOPDS_ShapeInfo.hxx>
+#include <BOPDS_DS.hxx>
+#include <BOPDS_FaceInfo.hxx>
+#include <BOPDS_MapOfPaveBlock.hxx>
+#include <BOPDS_VectorOfInterfFF.hxx>
+#include <BOPDS_Interf.hxx>
+#include <BOPDS_VectorOfCurve.hxx>
+#include <BOPDS_VectorOfPoint.hxx>
+
+#include <BOPTools.hxx>
+#include <BOPTools_AlgoTools.hxx>
+#include <BOPTools_AlgoTools3D.hxx>
+#include <BOPAlgo_BuilderFace.hxx>
+#include <BOPTools_CoupleOfShape.hxx>
+#include <BOPTools_ListOfCoupleOfShape.hxx>
+#include <BOPTools_MapOfSet.hxx>
+#include <BOPTools_DataMapOfShapeSet.hxx>
+
+static
+  Standard_Boolean HasPaveBlocksOnIn(const BOPDS_FaceInfo& aFI1,
+                                     const BOPDS_FaceInfo& aFI2);
+static
+  void FillMap(const TopoDS_Shape& aS1,
+               const TopoDS_Shape& aS2,
+               BOPCol_DataMapOfShapeListOfShape& aDMSLS,
+               Handle(NCollection_IncAllocator)& aAllocator);
+static
+  void MakeBlocksCnx(const BOPCol_DataMapOfShapeListOfShape& aMILI,
+                     BOPCol_DataMapOfIntegerListOfShape& aMBlocks,
+                     Handle(NCollection_IncAllocator)& aAllocator);
+
+//=======================================================================
+//function : FillImagesFaces
+//purpose  : 
+//=======================================================================
+  void BOPAlgo_Builder::FillImagesFaces()
+{
+  myErrorStatus=0;
+  //
+  BuildSplitFaces();
+  FillSameDomainFaces();
+  //modified by NIZNHY-PKV Thu Jul 08 07:20:41 2010f
+  FillImagesFaces1();
+  //modified by NIZNHY-PKV Thu Jul 08 07:20:44 2010t
+}
+//=======================================================================
+//function : BuildSplitFaces
+//purpose  : 
+//=======================================================================
+  void BOPAlgo_Builder::BuildSplitFaces()
+{
+  Standard_Boolean bHasFaceInfo, bIsClosed, bIsDegenerated, bToReverse;
+  Standard_Integer i, aNbS, aNbPBIn, aNbPBOn, aNbPBSc, aNbAV, nSp;
+  TopoDS_Face aFF, aFSD;
+  TopoDS_Edge aSp, aEE;
+  TopAbs_Orientation anOriF, anOriE;
+  TopExp_Explorer aExp;
+  BOPCol_ListIteratorOfListOfShape aIt;
+  BOPDS_MapIteratorOfMapOfPaveBlock aItMPB;
+  BOPCol_ListOfInteger aLIAV;
+  BOPCol_MapOfShape aMFence;
+  Handle(NCollection_IncAllocator) aAllocator;
+  BOPCol_ListOfShape aLFIm(myAllocator);
+  BOPCol_MapIteratorOfMapOfShape aItMS;
+  //
+  myErrorStatus=0;
+  //
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~scope f
+  aAllocator=new NCollection_IncAllocator();
+  //
+  BOPCol_ListOfShape aLE(aAllocator);
+  BOPCol_MapOfShape aMDE(100, aAllocator);
+  //
+  aNbS=myDS->NbSourceShapes();
+  for (i=0; i<aNbS; ++i) {
+    const BOPDS_ShapeInfo& aSI=myDS->ShapeInfo(i);
+    if (aSI.ShapeType()!=TopAbs_FACE) {
+      continue;
+    }
+    //
+    const TopoDS_Face& aF=(*(TopoDS_Face*)(&aSI.Shape()));
+    //
+    bHasFaceInfo=myDS->HasFaceInfo(i);
+    if(!bHasFaceInfo) {
+      continue;
+    }
+    //
+    // aLFIm will contain images of aF
+    aLFIm.Clear();
+    //
+    const BOPDS_FaceInfo& aFI=myDS->FaceInfo(i);
+    //
+    const BOPDS_MapOfPaveBlock& aMPBIn=aFI.PaveBlocksIn();
+    const BOPDS_MapOfPaveBlock& aMPBOn=aFI.PaveBlocksOn();
+    const BOPDS_MapOfPaveBlock& aMPBSc=aFI.PaveBlocksSc();
+    aLIAV.Clear();
+    myDS->AloneVertices(i, aLIAV);
+    
+    aNbPBIn=aMPBIn.Extent();
+    aNbPBOn=aMPBOn.Extent();
+    aNbPBSc=aMPBSc.Extent();
+    aNbAV=aLIAV.Extent();
+    if (!aNbPBIn && !aNbPBOn && !aNbPBSc && !aNbAV) { // not compete
+      continue;
+    }
+    //
+    aMFence.Clear();
+    //
+    anOriF=aF.Orientation();
+    aFF=aF;
+    aFF.Orientation(TopAbs_FORWARD);
+    //
+    
+    //
+    // 1. Fill the egdes set for the face aFF -> LE
+    aLE.Clear();
+    //
+    //
+    // 1.1 Bounding edges
+    aExp.Init(aFF, TopAbs_EDGE);
+    for (; aExp.More(); aExp.Next()) {
+      const TopoDS_Edge& aE=(*(TopoDS_Edge*)(&aExp.Current()));
+      anOriE=aE.Orientation();
+      bIsDegenerated=BRep_Tool::Degenerated(aE);
+      bIsClosed=BRep_Tool::IsClosed(aE, aF);
+      //
+      if (!myImages.IsBound(aE)) {
+        if (anOriE==TopAbs_INTERNAL) {
+          aEE=aE;
+          aEE.Orientation(TopAbs_FORWARD);
+          aLE.Append(aEE);
+          aEE.Orientation(TopAbs_REVERSED);
+          aLE.Append(aEE);
+        }
+        else {
+          aLE.Append(aE);
+        }
+      }
+      else {//else 1
+        const BOPCol_ListOfShape& aLIE=myImages.Find(aE);
+        aIt.Initialize(aLIE);
+        for (; aIt.More(); aIt.Next()) {
+          aSp=(*(TopoDS_Edge*)(&aIt.Value()));
+          if (bIsDegenerated) {
+            aSp.Orientation(anOriE);
+            aLE.Append(aSp);
+            continue;
+          }
+          //
+          if (anOriE==TopAbs_INTERNAL) {
+            aSp.Orientation(TopAbs_FORWARD);
+            aLE.Append(aSp);
+            aSp.Orientation(TopAbs_REVERSED);
+            aLE.Append(aSp);
+            continue;
+          }
+          //
+          if (bIsClosed) {
+            if (aMFence.Add(aSp)) {
+              if (!BRep_Tool::IsClosed(aSp, aF)){
+                BOPTools_AlgoTools3D::DoSplitSEAMOnFace(aSp, aF);
+                }
+              //
+              aSp.Orientation(TopAbs_FORWARD);
+              aLE.Append(aSp);
+              aSp.Orientation(TopAbs_REVERSED);
+              aLE.Append(aSp);
+            }// if (aMFence.Add(aSp))
+            continue;
+          }// if (bIsClosed){
+          //
+          aSp.Orientation(anOriE);
+          bToReverse=BOPTools_AlgoTools::IsSplitToReverse(aSp, aE, myContext);
+          if (bToReverse) {
+            aSp.Reverse();
+          }
+          aLE.Append(aSp);
+        }// for (; aIt.More(); aIt.Next()) {
+      }// else 1
+    }// for (; aExp.More(); aExp.Next()) {
+    // 
+    //
+    // 1.2 In edges
+    aItMPB.Initialize(aMPBIn);
+    for (; aItMPB.More(); aItMPB.Next()) {
+      const Handle(BOPDS_PaveBlock)& aPB=aItMPB.Value();
+      nSp=aPB->Edge();
+      aSp=(*(TopoDS_Edge*)(&myDS->Shape(nSp)));
+      //
+      aSp.Orientation(TopAbs_FORWARD);
+      aLE.Append(aSp);
+      aSp.Orientation(TopAbs_REVERSED);
+      aLE.Append(aSp);
+    }
+    //
+    //
+    // 1.3 Section edges
+    aItMPB.Initialize(aMPBSc);
+    for (; aItMPB.More(); aItMPB.Next()) {
+      const Handle(BOPDS_PaveBlock)& aPB=aItMPB.Value();
+      nSp=aPB->Edge();
+      aSp=(*(TopoDS_Edge*)(&myDS->Shape(nSp)));
+      //
+      aSp.Orientation(TopAbs_FORWARD);
+      aLE.Append(aSp);
+      aSp.Orientation(TopAbs_REVERSED);
+      aLE.Append(aSp);
+    }
+    //
+    // 3 Build split faces
+    BOPAlgo_BuilderFace aBF(aAllocator);
+    //
+    aBF.SetFace(aFF);
+    aBF.SetContext(myContext);
+    //
+    // <-DEB ft
+    //
+    aBF.SetShapes(aLE);
+    //
+    aBF.Perform();
+    //
+    const BOPCol_ListOfShape& aLFR=aBF.Areas();
+    aIt.Initialize(aLFR);
+    for (; aIt.More(); aIt.Next()) {
+      TopoDS_Shape& aFR=aIt.ChangeValue();
+      //modified by NIZNHY-PKV Wed Jun 10 13:25:24 2009f
+      if (anOriF==TopAbs_REVERSED) {
+        aFR.Orientation(TopAbs_REVERSED);
+      }
+      //aFR.Orientation(anOriF);
+      //modified by NIZNHY-PKV Wed Jun 10 13:25:33 2009t
+      aLFIm.Append(aFR);
+      //modified by NIZHNY-EMV Fri Sep 02 09:56:23 2011
+      myOrigins.Bind(aFR, aF);
+      //modified by NIZHNY-EMV Fri Sep 02 09:56:25 2011
+    }
+    //
+    mySplits.Bind(aF, aLFIm); 
+  }// for (i=0; i<aNbS; ++i) {
+  //
+  aAllocator.Nullify();
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~scope t
+}
+//=======================================================================
+//function : FillSameDomainFaces
+//purpose  : 
+//=======================================================================
+  void BOPAlgo_Builder::FillSameDomainFaces()
+{
+  Standard_Boolean bFlag;
+  Standard_Integer i, aNbFFs, aNbCurves, aNbPoints, nF1, nF2, aNbS;
+  Standard_Integer j;
+  Handle(NCollection_IncAllocator) aAllocator;
+  BOPCol_ListIteratorOfListOfShape aItF1, aItF2;
+  BOPTools_ListOfCoupleOfShape aLCS;  
+  BOPCol_DataMapIteratorOfDataMapOfIntegerListOfShape aItBlocks;
+  BOPCol_ListIteratorOfListOfShape aItLS;
+  //
+  myErrorStatus=0;
+  //
+  const BOPDS_VectorOfInterfFF& aFFs=myDS->InterfFF();
+  //
+  aNbFFs=aFFs.Extent();
+  if (!aNbFFs) {
+    return;
+  }
+  //-----------------------------------------------------scope f
+  aAllocator=new NCollection_IncAllocator();
+  BOPCol_DataMapOfShapeListOfShape aDMSLS(100, aAllocator);
+  BOPCol_DataMapOfIntegerListOfShape aMBlocks(100, aAllocator);
+  BOPTools_DataMapOfShapeSet aMSST(100, aAllocator);
+  //
+  BOPCol_ListOfShape aLFIm;
+  //
+  for (i=0; i<aNbFFs; ++i) {
+    const BOPDS_InterfFF& aFF=aFFs(i);
+    aFF.Indices(nF1, nF2);
+    //
+    const BOPDS_VectorOfCurve& aCurves=aFF.Curves();
+    aNbCurves=aCurves.Extent();
+    if (aNbCurves) {
+      //
+      //modified by NIZNHY-PKV Thu Jul  9 07:38:53 2009f
+      bFlag=Standard_False;
+      for (j=0; j<aNbCurves; ++j) {
+        const BOPDS_Curve& aNC=aCurves.Value(j);
+        bFlag=aNC.HasEdge();
+        if (bFlag) {
+          break;
+        }
+      }
+      if (bFlag) {
+        continue;
+      }
+      //continue;
+      //modified by NIZNHY-PKV Thu Jul  9 07:38:56 2009t
+    }
+    //
+    const BOPDS_VectorOfPoint& aPoints=aFF.Points();
+    aNbPoints=aPoints.Extent();
+    if (aNbPoints) {
+      continue;
+    }
+    //
+    if (!myDS->HasFaceInfo(nF1) || !myDS->HasFaceInfo(nF2) ) {
+      continue;
+    }
+    //
+    const BOPDS_FaceInfo& aFI1=myDS->FaceInfo(nF1);
+    const BOPDS_FaceInfo& aFI2=myDS->FaceInfo(nF2);
+    bFlag=HasPaveBlocksOnIn(aFI1, aFI2);
+    if (!bFlag) {
+      continue;
+    }
+    //
+    const TopoDS_Face& aF1=(*(TopoDS_Face*)(&myDS->Shape(nF1)));
+    const TopoDS_Face& aF2=(*(TopoDS_Face*)(&myDS->Shape(nF2)));
+    bFlag=mySplits.IsBound(aF1) && mySplits.IsBound(aF2);
+    if (!bFlag) {
+      continue;
+    }
+    //
+    const BOPCol_ListOfShape& aLF1=mySplits.Find(aF1);
+    const BOPCol_ListOfShape& aLF2=mySplits.Find(aF2);
+    //
+    aItF1.Initialize(aLF1);
+    for (; aItF1.More(); aItF1.Next()) {
+      const TopoDS_Face& aF1x=(*(TopoDS_Face*)(&aItF1.Value()));
+      if (!aMSST.IsBound(aF1x)) {
+        BOPTools_Set aST1(aAllocator);
+        //
+        aMSST.Bind(aF1x, aST1);
+        BOPTools_Set& aST=aMSST.ChangeFind(aF1x);
+        aST.AddEdges(aF1x);
+      }
+      //
+      aItF2.Initialize(aLF2);
+      for (; aItF2.More(); aItF2.Next()) {
+        const TopoDS_Face& aF2y=(*(TopoDS_Face*)(&aItF2.Value()));
+        if (!aMSST.IsBound(aF2y)) {
+          BOPTools_Set aST2(aAllocator);
+          //
+          aMSST.Bind(aF2y, aST2);
+          BOPTools_Set& aST=aMSST.ChangeFind(aF2y);
+          aST.AddEdges(aF2y);
+        }
+        //
+        const BOPTools_Set& aST1=aMSST.Find(aF1x);
+        const BOPTools_Set& aST2=aMSST.Find(aF2y);
+        //
+        if (aST1.IsEqual(aST2)) {
+          bFlag=BOPTools_AlgoTools::AreFacesSameDomain(aF1x, aF2y, myContext);
+          if (bFlag) {
+            FillMap(aF1x, aF2y, aDMSLS, aAllocator);
+          }
+        }
+      }
+    }  
+  } // for (i=0; i<aNbFFs; ++i) {
+  //
+  aNbS=aDMSLS.Extent();
+  //
+  // 2. Make blocks
+  aNbS=aDMSLS.Extent();
+  MakeBlocksCnx(aDMSLS, aMBlocks, aAllocator);
+  //
+  // 3. Fill same domain faces map -> aMSDF
+  aItBlocks.Initialize(aMBlocks);
+  for (; aItBlocks.More(); aItBlocks.Next()) {
+    const BOPCol_ListOfShape& aLSD=aItBlocks.Value();
+    if (aLSD.Extent()) {
+      const TopoDS_Shape& aFSD1=aLSD.First();
+      aItLS.Initialize(aLSD);
+      for (; aItLS.More(); aItLS.Next()) {
+        const TopoDS_Shape& aFSD=aItLS.Value();
+        myShapesSD.Bind(aFSD, aFSD1);
+      }
+    }
+  }
+  //modified by NIZNHY-PKV Thu Jul 08 07:17:23 2010f
+  /*
+  //
+  // 4. Fill Images faces
+  BOPCol_ListOfInteger aLIAV;
+  //
+  aNbS=myDS->NbSourceShapes();
+  for (i=0; i<aNbS; ++i) {
+    const BOPDS_ShapeInfo& aSI=myDS->ShapeInfo(i);
+    if (aSI.ShapeType()!=TopAbs_FACE) {
+      continue;
+    }
+    //
+    const TopoDS_Face& aF=(*(TopoDS_Face*)(&aSI.Shape()));
+    //
+    if (!mySplits.IsBound(aF)) {
+      continue;
+    }
+    //
+    aLIAV.Clear();
+    myDS->AloneVertices(i, aLIAV);
+    aLFIm.Clear();
+    //
+    const BOPCol_ListOfShape& aLSp=mySplits.Find(aF);
+    aItLS.Initialize(aLSp);
+    for (; aItLS.More(); aItLS.Next()) {
+      const TopoDS_Face& aFSp=(*(TopoDS_Face*)(&aItLS.Value()));
+      if (!myShapesSD.IsBound(aFSp)) {
+      aLFIm.Append(aFSp);
+      }
+      else {
+      TopoDS_Face aFSD;
+      //
+      aFSD=(*(TopoDS_Face*)(&myShapesSD.Find(aFSp)));
+      iSense=BOPTools_AlgoTools::Sense(aFSp, aFSD);
+      if (iSense<0) {
+      aFSD.Reverse();
+      }
+      aLFIm.Append(aFSD);
+      }
+    }
+    //
+    FillInternalVertices(aLFIm, aLIAV);
+    //
+    myImages.Bind(aF, aLFIm); 
+  }// for (i=0; i<aNbS; ++i) {
+  */
+  //modified by NIZNHY-PKV Thu Jul 08 07:17:39 2010t
+  //
+  //-----------------------------------------------------scope t
+  aMSST.Clear();
+  aMBlocks.Clear();
+  aDMSLS.Clear();
+  aAllocator.Nullify();
+}
+//modified by NIZNHY-PKV Thu Jul 08 07:15:21 2010f
+//=======================================================================
+// function: FillImagesFaces1
+// purpose: 
+//=======================================================================
+  void BOPAlgo_Builder::FillImagesFaces1()
+{
+  Standard_Integer i, aNbS, iSense;
+  TopoDS_Face aFSD;
+  BOPCol_ListOfInteger aLIAV;
+  BOPCol_ListOfShape aLFIm;
+  BOPCol_ListIteratorOfListOfShape aItLS;
+  //
+  aNbS=myDS->NbSourceShapes();
+  for (i=0; i<aNbS; ++i) {
+    const BOPDS_ShapeInfo& aSI=myDS->ShapeInfo(i);
+    if (aSI.ShapeType()!=TopAbs_FACE) {
+      continue;
+    }
+    //
+    const TopoDS_Face& aF=(*(TopoDS_Face*)(&aSI.Shape()));
+    //
+    if (!mySplits.IsBound(aF)) {
+      continue;
+    }
+    //
+    aLIAV.Clear();
+    myDS->AloneVertices(i, aLIAV);
+    aLFIm.Clear();
+    //
+    const BOPCol_ListOfShape& aLSp=mySplits.Find(aF);
+    aItLS.Initialize(aLSp);
+    for (; aItLS.More(); aItLS.Next()) {
+      const TopoDS_Face& aFSp=(*(TopoDS_Face*)(&aItLS.Value()));
+      if (!myShapesSD.IsBound(aFSp)) {
+        aLFIm.Append(aFSp);
+      }
+      else {
+        aFSD=(*(TopoDS_Face*)(&myShapesSD.Find(aFSp)));
+        iSense=BOPTools_AlgoTools::Sense(aFSp, aFSD);
+        if (iSense<0) {
+          aFSD.Reverse();
+        }
+        aLFIm.Append(aFSD);
+      }
+    }
+    //
+    FillInternalVertices(aLFIm, aLIAV);
+    //
+    myImages.Bind(aF, aLFIm); 
+  }// for (i=0; i<aNbS; ++i) {
+}
+//modified by NIZNHY-PKV Thu Jul 08 07:15:25 2010t
+//=======================================================================
+// function: FillInternalVertices
+// purpose: 
+//=======================================================================
+  void BOPAlgo_Builder::FillInternalVertices(BOPCol_ListOfShape& aLFIm,
+                                             BOPCol_ListOfInteger& aLIAV)
+{
+  Standard_Integer nV, iFlag;
+  Standard_Real aU1, aU2;
+  TopoDS_Vertex aV;
+  BRep_Builder aBB;
+  BOPCol_ListIteratorOfListOfInteger aItV;
+  BOPCol_ListIteratorOfListOfShape aItF;
+  //
+  aItV.Initialize(aLIAV);
+  for (; aItV.More(); aItV.Next()) {
+    nV=aItV.Value();
+    aV=(*(TopoDS_Vertex*)(&myDS->Shape(nV)));
+    aV.Orientation(TopAbs_INTERNAL);
+    //
+    aItF.Initialize(aLFIm);
+    for (; aItF.More(); aItF.Next()) {
+      TopoDS_Face& aF=(*(TopoDS_Face*)(&aItF.Value()));
+      iFlag=myContext->ComputeVF(aV, aF, aU1, aU2);
+      if (!iFlag) {
+        aBB.Add(aF, aV);
+        break;
+      }
+    }
+  }
+}
+//=======================================================================
+//function : MakeBlocksCnx
+//purpose  : 
+//=======================================================================
+void MakeBlocksCnx(const BOPCol_DataMapOfShapeListOfShape& aMILI,
+                   BOPCol_DataMapOfIntegerListOfShape& aMBlocks,
+                   Handle(NCollection_IncAllocator)& aAllocator)
+{
+  Standard_Integer aNbV, aNbVS, aNbVP, k;
+  BOPCol_DataMapIteratorOfDataMapOfShapeListOfShape aItMILI;
+  BOPCol_MapIteratorOfMapOfShape aItMVP;
+  BOPCol_ListIteratorOfListOfShape aItLI;
+  //
+  BOPCol_MapOfShape aMVS(100, aAllocator);
+  BOPCol_MapOfShape aMEC(100, aAllocator);
+  BOPCol_MapOfShape aMVP(100, aAllocator);
+  BOPCol_MapOfShape aMVAdd(100, aAllocator);
+  //
+  aNbV=aMILI.Extent();
+  //
+  aItMILI.Initialize(aMILI);
+  for (k=0; aItMILI.More(); aItMILI.Next()) {
+    aNbVS=aMVS.Extent();
+    if (aNbVS==aNbV) {
+      break;
+    }
+    //
+    const TopoDS_Shape& nV=aItMILI.Key();
+    if (aMVS.Contains(nV)){
+      continue;
+    }
+    aMVS.Add(nV);
+    //
+    aMEC.Clear();
+    aMVP.Clear();
+    aMVAdd.Clear();
+    //
+    aMVP.Add(nV);
+    while(1) {
+      aNbVP=aMVP.Extent();
+      aItMVP.Initialize(aMVP);
+      for (; aItMVP.More(); aItMVP.Next()) {
+        const TopoDS_Shape& nVP=aItMVP.Value();
+        const BOPCol_ListOfShape& aLV=aMILI.Find(nVP);
+        aItLI.Initialize(aLV);
+        for (; aItLI.More(); aItLI.Next()) {
+          const TopoDS_Shape& nVx=aItLI.Value();
+          if (aMEC.Contains(nVx)) {
+            continue;
+          }
+          //
+          aMVS.Add(nVx);
+          aMEC.Add(nVx);
+          aMVAdd.Add(nVx);
+        }
+      }
+      //
+      aNbVP=aMVAdd.Extent();
+      if (!aNbVP) {
+        break; // from while(1)
+      }
+      //
+      aMVP.Clear();
+      aItMVP.Initialize(aMVAdd);
+      for (; aItMVP.More(); aItMVP.Next()) {
+        aMVP.Add(aItMVP.Value());
+      }
+      aMVAdd.Clear();
+    }//while(1) {
+    //
+    BOPCol_ListOfShape aLIx(aAllocator);
+    //
+    //aLIx.Append(nV);
+    aItMVP.Initialize(aMEC);
+    for (; aItMVP.More(); aItMVP.Next()) {
+      const TopoDS_Shape& nVx=aItMVP.Value();
+      aLIx.Append(nVx);
+    }
+    //
+    aMBlocks.Bind(k, aLIx);
+    ++k;
+  }//for (; aItMILI.More(); aItMILI.Next()) {
+  aMVAdd.Clear();
+  aMVP.Clear();
+  aMEC.Clear();
+  aMVS.Clear();
+}
+
+//=======================================================================
+//function : FillMap
+//purpose  : 
+//=======================================================================
+void FillMap(const TopoDS_Shape& aS1,
+             const TopoDS_Shape& aS2,
+             BOPCol_DataMapOfShapeListOfShape& aDMSLS,
+             Handle(NCollection_IncAllocator)& aAllocator)
+{
+  if (aDMSLS.IsBound(aS1)) {
+    BOPCol_ListOfShape& aLS=aDMSLS.ChangeFind(aS1);
+    aLS.Append(aS2);
+  }
+  else {
+    BOPCol_ListOfShape aLS(aAllocator);
+    aLS.Append(aS2);
+    aDMSLS.Bind(aS1, aLS);
+  }
+  //
+  if (aDMSLS.IsBound(aS2)) {
+    BOPCol_ListOfShape& aLS=aDMSLS.ChangeFind(aS2);
+    aLS.Append(aS1);
+  }
+  else {
+    BOPCol_ListOfShape aLS(aAllocator);
+    aLS.Append(aS1);
+    aDMSLS.Bind(aS2, aLS);
+  }
+}
+//=======================================================================
+//function :HasPaveBlocksOnIn
+//purpose  : 
+//=======================================================================
+Standard_Boolean HasPaveBlocksOnIn(const BOPDS_FaceInfo& aFI1,
+                                   const BOPDS_FaceInfo& aFI2)
+{
+  Standard_Boolean bRet;
+  BOPDS_MapIteratorOfMapOfPaveBlock aItMPB;
+  //
+  bRet=Standard_False;
+  const BOPDS_MapOfPaveBlock& aMPBOn1=aFI1.PaveBlocksOn();
+  const BOPDS_MapOfPaveBlock& aMPBIn1=aFI1.PaveBlocksIn();
+  //
+  const BOPDS_MapOfPaveBlock& aMPBOn2=aFI2.PaveBlocksOn();
+  aItMPB.Initialize(aMPBOn2);
+  for (; aItMPB.More(); aItMPB.Next()) {
+    const Handle(BOPDS_PaveBlock)& aPB=aItMPB.Value();
+    bRet=aMPBOn1.Contains(aPB) || aMPBIn1.Contains(aPB);
+    if (bRet) {
+      return bRet;
+    }
+  }
+  //
+  const BOPDS_MapOfPaveBlock& aMPBIn2=aFI2.PaveBlocksIn();
+  aItMPB.Initialize(aMPBIn2);
+  for (; aItMPB.More(); aItMPB.Next()) {
+    const Handle(BOPDS_PaveBlock)& aPB=aItMPB.Value();
+    bRet=aMPBOn1.Contains(aPB) || aMPBIn1.Contains(aPB);
+    if (bRet) {
+      return bRet;
+    }
+  }
+  return bRet;
+}
+
+/*
+//DEBf
+    {
+      TopoDS_Compound aCx;
+      BRep_Builder aBBx;
+      BOPCol_ListIteratorOfListOfShape aItx;
+      //
+      aBBx.MakeCompound(aCx);
+      aBBx.Add(aCx, aFF);
+      aItx.Initialize(aLE);
+      for (; aItx.More(); aItx.Next()) {
+      const TopoDS_Shape& aEx=aItx.Value();
+      aBBx.Add(aCx, aEx);
+      }
+      int a=0;
+    }
+    //DEBt
+*/

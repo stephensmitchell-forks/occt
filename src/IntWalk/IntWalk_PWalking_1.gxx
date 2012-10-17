@@ -531,7 +531,11 @@ void IntWalk_PWalking::Perform(const TColStd_Array1OfReal& ParDep,
   Standard_Integer LevelOfIterWithoutAppend = -1;
   //
   Arrive = Standard_False;
-  while(!Arrive) {//010
+  //emv for chl 927 K1
+  //check one more point with half-step
+  Standard_Integer bTryOneMorePoint = 0;
+  //
+  while(!Arrive || bTryOneMorePoint==1) {//010
     LevelOfIterWithoutAppend++;
     if(LevelOfIterWithoutAppend>20) { 
       Arrive = Standard_True; 
@@ -560,6 +564,11 @@ void IntWalk_PWalking::Perform(const TColStd_Array1OfReal& ParDep,
     //
     //--ofv.begin
     Standard_Real aIncKey, aEps, dP1, dP2, dP3, dP4;
+    //
+    if (bTryOneMorePoint) {
+      f *= 2;
+      ++bTryOneMorePoint;
+    }
     //
     dP1 = sensCheminement * pasuv[0] * previousd1.X() /f;
     dP2 = sensCheminement * pasuv[1] * previousd1.Y() /f;
@@ -1049,6 +1058,11 @@ void IntWalk_PWalking::Perform(const TColStd_Array1OfReal& ParDep,
 	} //007  switch(Status) 
       } //008 fin traitement point en court (TEST DEFLECTION)
     } //009 fin traitement ligne (else if myIntersectionOn2S.IsDone())
+    if (Arrive && !close) {
+      ++bTryOneMorePoint;
+    } else if (bTryOneMorePoint) {
+      Arrive = Standard_True;
+    }
   }  //010 fin si premier point de depart a permis un cheminement while(!Arrive)
   done = Standard_True;
 }

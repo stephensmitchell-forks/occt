@@ -1041,6 +1041,46 @@ void IntTools_FaceFace::SetList(IntSurf_ListOfPntOn2S& aListOfPnts)
       myTolReached3d=sqrt(aD2max);
     }
   }//else if ((aType1==GeomAbs_Plane && aType2==GeomAbs_Sphere) ...
+  else if (!myApprox) {
+    Standard_Integer i, aNbP, j ;
+    Standard_Real aT1, aT2, dT, aD2, aD2Max, aEps, aT11, aT12;
+    //
+    aD2Max=0.;
+    aNbLin=mySeqOfCurve.Length();
+    //
+    for (i=1; i<=aNbLin; ++i) {
+      const IntTools_Curve& aIC=mySeqOfCurve(i);
+      const Handle(Geom_Curve)& aC3D=aIC.Curve();
+      const Handle(Geom2d_Curve)& aC2D1=aIC.FirstCurve2d();
+      const Handle(Geom2d_Curve)& aC2D2=aIC.SecondCurve2d();
+      //
+      if (aC3D.IsNull()) {
+	continue;
+      }
+      const Handle(Geom_BSplineCurve)& aBC=
+	Handle(Geom_BSplineCurve)::DownCast(aC3D);
+      if (aBC.IsNull()) {
+	continue;
+      }
+      //
+      aT1=aBC->FirstParameter();
+      aT2=aBC->LastParameter();
+      //
+      aEps=0.0001*(aT2-aT1);
+      aNbP=11;
+      dT=(aT2-aT1)/aNbP;
+      for (j=1; j<aNbP-1; ++j) {
+	aT11=aT1+j*dT;
+	aT12=aT11+dT;
+	aD2=FindMaxSquareDistance(aT11, aT12, aEps, aC3D, aC2D1, aC2D2,
+				  myHS1, myHS2, myFace1, myFace2, myContext);
+	if (aD2>aD2Max) {
+	  aD2Max=aD2;
+	}
+      }
+    }//for (i=1; i<=aNbLin; ++i) {
+    myTolReached3d=sqrt(aD2Max);
+  }
   //modified by NIZNHY-PKV Thu Aug 30 13:31:12 2012t
 }
 //=======================================================================
