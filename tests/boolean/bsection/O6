@@ -1,10 +1,5 @@
 restore [locate_data_file pro14151a.rle] a
-<<<<<<< HEAD
 restore [locate_data_file CFI_pro14fjq.rle] b
-bsection result b a -2d
-=======
-restore [locate_data_file pro14151b.rle] b
 bsection result b a
->>>>>>> a5b92d9... 0021762: Integration of new Boolean Operation algorithm to OCCT. Fixing regressions.
 
 set length 49.9609
