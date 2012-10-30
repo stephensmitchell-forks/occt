@@ -124,14 +124,6 @@
     //
     aTolE=BRep_Tool::Tolerance(aE);
     aTolF=BRep_Tool::Tolerance(aF);
-    //modified by NIZHNY-EMV Fri Oct 21 14:38:48 2011
-    if (aTolE < 1.e-5) {
-      BRepAdaptor_Curve aBAC(aE);
-      if (aBAC.GetType() == GeomAbs_BSplineCurve) {
-        aTolE = 1.e-5;
-      }
-    }
-    //modified by NIZHNY-EMV Fri Oct 21 14:38:50 2011
     //
     BOPDS_ListOfPaveBlock& aLPB=myDS->ChangePaveBlocks(nE);
     aIt.Initialize(aLPB);

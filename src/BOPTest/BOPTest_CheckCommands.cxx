@@ -99,7 +99,6 @@ Standard_Integer bopcheck (Draw_Interpretor& di, Standard_Integer n,  const char
   BOPAlgo_CheckerSI aChecker;
   BOPCol_ListOfShape anArgs;
   anArgs.Append(aS);
-  anArgs.Append(aS);
   aChecker.SetArguments(anArgs);
   //
   aChecker.Perform();

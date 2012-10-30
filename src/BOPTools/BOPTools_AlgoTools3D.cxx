@@ -235,7 +235,7 @@ static
   Handle(Geom_Surface) aS1=BRep_Tool::Surface(aF1);
   
   Handle(Geom2d_Curve)aC2D1;
-  BOPTools_AlgoTools2D::CurveOnSurface(aE, aF1, aC2D1, aTolPC, Standard_True);
+  BOPTools_AlgoTools2D::CurveOnSurface(aE, aF1, aC2D1, aTolPC);
 
   aC2D1->D0(aT, aP2D);
   U=aP2D.X();

@@ -735,7 +735,7 @@ Standard_Integer NbWaysOut(const BOPAlgo_ListOfEdgeInfo& aLEInfo)
   }
   //
   BOPTools_AlgoTools2D::CurveOnSurface (anEdge, myFace, aC2D, 
-                                    aFirst, aLast, aToler, Standard_True);
+                                    aFirst, aLast, aToler);
   dt=2.*Tolerance2D(aV, aGAS);
   //
   //modified by NIZHNY-EMV Wed Aug 03 11:34:58 2011
@@ -851,7 +851,7 @@ Standard_Real Angle (const gp_Dir2d& aDir2D)
   aIt.Initialize(myEdges);
   for(; aIt.More(); aIt.Next()) {
     const TopoDS_Edge& aE=(*(TopoDS_Edge *)&aIt.Value());
-    BOPTools_AlgoTools2D::CurveOnSurface(aE, myFace, aC2D, aTolE, Standard_True);
+    BOPTools_AlgoTools2D::CurveOnSurface(aE, myFace, aC2D, aTolE);
     aBB.UpdateEdge(aE, aC2D, myFace, aTolE);
   }
 }

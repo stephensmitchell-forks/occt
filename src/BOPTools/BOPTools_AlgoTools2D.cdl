@@ -65,13 +65,11 @@ is
               aE:  Edge from TopoDS; 
               aF:  Face from TopoDS; 
               aC    : out Curve from Geom2d; 
-              aToler: out Real from Standard; 
-              aTrim3d:Boolean from Standard); 
+              aToler: out Real from Standard); 
           ---Purpose:  
           --- Get P-Curve <aC>  for the edge <aE> on surface <aF> . 
           --- If the P-Curve does not exist, build  it using Make2D(). 
           --- [aToler] - reached tolerance 
-          --- [aTrim3d] - trimming flag. 
           ---
     CurveOnSurface  (myclass; 
               aE:  Edge from TopoDS; 
@@ -79,15 +77,13 @@ is
               aC    : out Curve from Geom2d; 
               aFirst: out Real from Standard; 
               aLast : out Real from Standard; 
-              aToler: out Real from Standard; 
-              aTrim3d:Boolean from Standard); 
+              aToler: out Real from Standard); 
                       
           ---Purpose: 
           --- Get P-Curve <aC>  for the edge <aE> on surface <aF> . 
           --- If the P-Curve does not exist, build  it using Make2D(). 
           --- [aFirst, aLast] - range of the P-Curve    
           --- [aToler] - reached tolerance 
-          --- [aTrim3d] - trimming flag. 
           ---
     HasCurveOnSurface  (myclass;  
               aE:  Edge from TopoDS; 
@@ -156,13 +152,11 @@ is
               aC    : out Curve from Geom2d;
               aFirst: out Real from Standard; 
               aLast : out Real from Standard; 
-              aToler: out Real from Standard; 
-              aTrim3d:Boolean from Standard);            
+              aToler: out Real from Standard);            
           ---Purpose:   
           --- Make P-Curve <aC> for the edge <aE> on surface <aF> . 
           --- [aFirst, aLast] - range of the P-Curve    
           --- [aToler] - reached tolerance 
-          --- [aTrim3d] - trimming flag. 
           --- 
           
     MakeCurveOnSurface        (myclass;  
@@ -171,8 +165,7 @@ is
               aC    : out Curve from Geom2d;
               aFirst: out Real from Standard; 
               aLast : out Real from Standard; 
-              aToler: out Real from Standard; 
-              aTrim3d:Boolean from Standard);             
+              aToler: out Real from Standard);             
           ---Purpose:   
           --- Same  as   Make2D() 
           ---

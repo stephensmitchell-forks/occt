@@ -1338,7 +1338,7 @@ static
       BOPTools_AlgoTools2D::BuildPCurveForEdgeOnFace(aE, aFFWD);
       BOPTools_AlgoTools2D::CurveOnSurface(aE, aFFWD, aC2D, 
                                        aOutFirst, aOutLast, 
-                                       aOutTol, Standard_True);
+                                       aOutTol);
       }
     //
     if (aC3DE->IsPeriodic()) {

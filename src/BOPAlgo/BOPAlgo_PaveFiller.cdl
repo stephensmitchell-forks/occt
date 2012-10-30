@@ -182,7 +182,8 @@ is
         theTolR3D:Real from Standard; 
         theNC:out Curve from BOPDS; 
         nF1:Integer from Standard; 
-        nF2:Integer from Standard) 
+        nF2:Integer from Standard; 
+        aMVB:out MapOfInteger from BOPCol) 
       is protected;  
 
     ExtendedTolerance(me:out; 

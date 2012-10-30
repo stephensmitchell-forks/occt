@@ -318,7 +318,6 @@ void BOPAlgo_ArgumentAnalyzer::TestSelfInterferences()
     BOPAlgo_CheckerSI aChecker;
     BOPCol_ListOfShape anArgs;
     anArgs.Append(aS);
-    anArgs.Append(aS);
     aChecker.SetArguments(anArgs);
     //
     aChecker.Perform();
