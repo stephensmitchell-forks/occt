@@ -18,37 +18,36 @@
 
 #include <BOPAlgo_Tools.ixx>
 #include <BOPDS_MapOfPaveBlock.hxx>
+#include <BOPDS_IndexedMapOfPaveBlock.hxx>
 #include <BOPDS_CommonBlock.hxx>
 #include <BOPDS_DataMapOfPaveBlockListOfPaveBlock.hxx>
+#include <BOPCol_IndexedMapOfInteger.hxx>
 
 //=======================================================================
 //function : MakeBlocksCnx
 //purpose  : 
 //=======================================================================
-  void BOPAlgo_Tools::MakeBlocksCnx(const BOPCol_DataMapOfIntegerListOfInteger& aMILI,
+  void BOPAlgo_Tools::MakeBlocksCnx(const BOPCol_IndexedDataMapOfIntegerListOfInteger& aMILI,
                                     BOPCol_DataMapOfIntegerListOfInteger& aMBlocks,
                                     Handle(NCollection_BaseAllocator)& aAllocator)
 {
-  Standard_Integer aNbV, nV, aNbVS, nVP, nVx, aNbVP, k;
-  BOPCol_DataMapIteratorOfDataMapOfIntegerListOfInteger aItMILI;
-  BOPCol_MapIteratorOfMapOfInteger aItMVP;
+  Standard_Integer aNbV, nV, aNbVS, nVP, nVx, aNbVP, aNbEC, k, i, j;
   BOPCol_ListIteratorOfListOfInteger aItLI;
   //
   BOPCol_MapOfInteger aMVS(100, aAllocator);
-  BOPCol_MapOfInteger aMEC(100, aAllocator);
-  BOPCol_MapOfInteger aMVP(100, aAllocator);
-  BOPCol_MapOfInteger aMVAdd(100, aAllocator);
+  BOPCol_IndexedMapOfInteger aMEC(100, aAllocator);
+  BOPCol_IndexedMapOfInteger aMVP(100, aAllocator);
+  BOPCol_IndexedMapOfInteger aMVAdd(100, aAllocator);
   //
   aNbV=aMILI.Extent();
   //
-  aItMILI.Initialize(aMILI);
-  for (k=0; aItMILI.More(); aItMILI.Next()) {
+  for (k=0,i=1; i<=aNbV; ++i) {
     aNbVS=aMVS.Extent();
     if (aNbVS==aNbV) {
       break;
     }
     //
-    nV=aItMILI.Key();
+    nV = aMILI.FindKey(i);
     if (aMVS.Contains(nV)){
       continue;
     }
@@ -61,10 +60,9 @@
     aMVP.Add(nV);
     while(1) {
       aNbVP=aMVP.Extent();
-      aItMVP.Initialize(aMVP);
-      for (; aItMVP.More(); aItMVP.Next()) {
-        nVP=aItMVP.Value();
-        const BOPCol_ListOfInteger& aLV=aMILI.Find(nVP);
+      for (j=1; j<=aNbVP; ++j) {
+        nVP=aMVP(j);
+        const BOPCol_ListOfInteger& aLV=aMILI.FindFromKey(nVP);
         aItLI.Initialize(aLV);
         for (; aItLI.More(); aItLI.Next()) {
           nVx=aItLI.Value();
@@ -84,25 +82,23 @@
       }
       //
       aMVP.Clear();
-      aItMVP.Initialize(aMVAdd);
-      for (; aItMVP.More(); aItMVP.Next()) {
-        aMVP.Add(aItMVP.Value());
+      for (j=1; j<=aNbVP; ++j) {
+        aMVP.Add(aMVAdd(j));
       }
       aMVAdd.Clear();
     }//while(1) {
     //
     BOPCol_ListOfInteger aLIx(aAllocator);
     //
-    //aLIx.Append(nV);
-    aItMVP.Initialize(aMEC);
-    for (; aItMVP.More(); aItMVP.Next()) {
-      nVx=aItMVP.Value();
+    aNbEC = aMEC.Extent();
+    for (j=1; j<=aNbEC; ++j) {
+      nVx=aMEC(j);
       aLIx.Append(nVx);
     }
     //
     aMBlocks.Bind(k, aLIx);
     ++k;
-  }//for (; aItMILI.More(); aItMILI.Next()) {
+  }//for (k=0,i=1; i<=aNbV; ++i)
   aMVAdd.Clear();
   aMVP.Clear();
   aMEC.Clear();
@@ -114,26 +110,26 @@
 //=======================================================================
   void BOPAlgo_Tools::FillMap(const Standard_Integer n1,
                               const Standard_Integer n2,
-                              BOPCol_DataMapOfIntegerListOfInteger& aMILI,
+                              BOPCol_IndexedDataMapOfIntegerListOfInteger& aMILI,
                               Handle(NCollection_BaseAllocator)& aAllocator)
 {
-  if (aMILI.IsBound(n1)) {
-    BOPCol_ListOfInteger& aLI=aMILI.ChangeFind(n1);
+  if (aMILI.Contains(n1)) {
+    BOPCol_ListOfInteger& aLI=aMILI.ChangeFromKey(n1);
     aLI.Append(n2);
   }
   else {
     BOPCol_ListOfInteger aLI(aAllocator);
     aLI.Append(n2);
-    aMILI.Bind(n1, aLI);
+    aMILI.Add(n1, aLI);
   }
-  if (aMILI.IsBound(n2)) {
-    BOPCol_ListOfInteger& aLI=aMILI.ChangeFind(n2);
+  if (aMILI.Contains(n2)) {
+    BOPCol_ListOfInteger& aLI=aMILI.ChangeFromKey(n2);
     aLI.Append(n1);
   }
   else {
     BOPCol_ListOfInteger aLI(aAllocator);
     aLI.Append(n1);
-    aMILI.Bind(n2, aLI);
+    aMILI.Add(n2, aLI);
   }
 }
 //=======================================================================
@@ -142,26 +138,26 @@
 //=======================================================================
   void BOPAlgo_Tools::FillMap(const Handle(BOPDS_PaveBlock)& aPB1,
                               const Handle(BOPDS_PaveBlock)& aPB2,
-                              BOPDS_DataMapOfPaveBlockListOfPaveBlock& aMPBLPB,
+                              BOPDS_IndexedDataMapOfPaveBlockListOfPaveBlock& aMPBLPB,
                               Handle(NCollection_BaseAllocator)& aAllocator)
 {
-  if (aMPBLPB.IsBound(aPB1)) {
-    BOPDS_ListOfPaveBlock& aLPB=aMPBLPB.ChangeFind(aPB1);
+  if (aMPBLPB.Contains(aPB1)) {
+    BOPDS_ListOfPaveBlock& aLPB=aMPBLPB.ChangeFromKey(aPB1);
     aLPB.Append(aPB2);
   }
   else {
     BOPDS_ListOfPaveBlock aLPB(aAllocator);
     aLPB.Append(aPB2);
-    aMPBLPB.Bind(aPB1, aLPB);
+    aMPBLPB.Add(aPB1, aLPB);
   }
-  if (aMPBLPB.IsBound(aPB2)) {
-    BOPDS_ListOfPaveBlock& aLPB=aMPBLPB.ChangeFind(aPB2);
+  if (aMPBLPB.Contains(aPB2)) {
+    BOPDS_ListOfPaveBlock& aLPB=aMPBLPB.ChangeFromKey(aPB2);
     aLPB.Append(aPB1);
   }
   else {
     BOPDS_ListOfPaveBlock aLPB(aAllocator);
     aLPB.Append(aPB1);
-    aMPBLPB.Bind(aPB2, aLPB);
+    aMPBLPB.Add(aPB2, aLPB);
   }
 }
 //=======================================================================
@@ -170,47 +166,44 @@
 //=======================================================================
   void BOPAlgo_Tools::FillMap(const Handle(BOPDS_PaveBlock)& aPB,
                               const Standard_Integer nF,
-                              BOPDS_DataMapOfPaveBlockListOfInteger& aMPBLI,
+                              BOPDS_IndexedDataMapOfPaveBlockListOfInteger& aMPBLI,
                               Handle(NCollection_BaseAllocator)& aAllocator)
 {
-  if (aMPBLI.IsBound(aPB)) {
-    BOPCol_ListOfInteger& aLI=aMPBLI.ChangeFind(aPB);
+  if (aMPBLI.Contains(aPB)) {
+    BOPCol_ListOfInteger& aLI=aMPBLI.ChangeFromKey(aPB);
     aLI.Append(nF);
   }
   else {
     BOPCol_ListOfInteger aLI(aAllocator);
     aLI.Append(nF);
-    aMPBLI.Bind(aPB, aLI);
+    aMPBLI.Add(aPB, aLI);
   }
 }
 //=======================================================================
 //function : MakeBlocks
 //purpose  : 
 //=======================================================================
-  void BOPAlgo_Tools::MakeBlocks(const BOPDS_DataMapOfPaveBlockListOfPaveBlock& aMILI,
-                                 BOPDS_DataMapOfPaveBlockListOfPaveBlock& aMBlocks,
+  void BOPAlgo_Tools::MakeBlocks(const BOPDS_IndexedDataMapOfPaveBlockListOfPaveBlock& aMILI,
+                                 BOPDS_DataMapOfIntegerListOfPaveBlock& aMBlocks,
                                  Handle(NCollection_BaseAllocator)& aAllocator)
 {
-  Standard_Integer aNbV,  aNbVS, aNbVP, k;//nV,nVx,nVP
-  BOPDS_DataMapIteratorOfDataMapOfPaveBlockListOfPaveBlock aItMILI;
-  BOPDS_MapIteratorOfMapOfPaveBlock aItMVP;
+  Standard_Integer aNbV,  aNbVS, aNbVP, aNbEC, k, i, j;
   BOPDS_ListIteratorOfListOfPaveBlock aItLI;
   //
   BOPDS_MapOfPaveBlock aMVS(100, aAllocator);
-  BOPDS_MapOfPaveBlock aMEC(100, aAllocator);
-  BOPDS_MapOfPaveBlock aMVP(100, aAllocator);
-  BOPDS_MapOfPaveBlock aMVAdd(100, aAllocator);
+  BOPDS_IndexedMapOfPaveBlock aMEC(100, aAllocator);
+  BOPDS_IndexedMapOfPaveBlock aMVP(100, aAllocator);
+  BOPDS_IndexedMapOfPaveBlock aMVAdd(100, aAllocator);
   //
   aNbV=aMILI.Extent();
   //
-  aItMILI.Initialize(aMILI);
-  for (k=0; aItMILI.More(); aItMILI.Next()) {
+  for (k=0, i=1; i<=aNbV; ++i) {
     aNbVS=aMVS.Extent();
     if (aNbVS==aNbV) {
       break;
     }
     //
-    const Handle(BOPDS_PaveBlock)& nV=aItMILI.Key();
+    const Handle(BOPDS_PaveBlock)& nV=aMILI.FindKey(i);
     if (aMVS.Contains(nV)){
       continue;
     }
@@ -223,10 +216,9 @@
     aMVP.Add(nV);
     while(1) {
       aNbVP=aMVP.Extent();
-      aItMVP.Initialize(aMVP);
-      for (; aItMVP.More(); aItMVP.Next()) {
-        const Handle(BOPDS_PaveBlock)& nVP=aItMVP.Value();
-        const BOPDS_ListOfPaveBlock& aLV=aMILI.Find(nVP);
+      for (j=1; j<=aNbVP; ++j) {
+        const Handle(BOPDS_PaveBlock)& nVP=aMVP(j);
+        const BOPDS_ListOfPaveBlock& aLV=aMILI.FindFromKey(nVP);
         aItLI.Initialize(aLV);
         for (; aItLI.More(); aItLI.Next()) {
           const Handle(BOPDS_PaveBlock)& nVx=aItLI.Value();
@@ -246,25 +238,23 @@
       }
       //
       aMVP.Clear();
-      aItMVP.Initialize(aMVAdd);
-      for (; aItMVP.More(); aItMVP.Next()) {
-        aMVP.Add(aItMVP.Value());
+      for (j=1; j<=aNbVP; ++j) {
+        aMVP.Add(aMVAdd(j));
       }
       aMVAdd.Clear();
     }//while(1) {
     //
     BOPDS_ListOfPaveBlock aLIx(aAllocator);
     //
-    //aLIx.Append(nV);
-    aItMVP.Initialize(aMEC);
-    for (; aItMVP.More(); aItMVP.Next()) {
-      const Handle(BOPDS_PaveBlock)& nVx=aItMVP.Value();
+    aNbEC = aMEC.Extent();
+    for (j=1; j<=aNbEC; ++j) {
+      const Handle(BOPDS_PaveBlock)& nVx=aMEC(j);
       aLIx.Append(nVx);
     }
     //
-    aMBlocks.Bind(aLIx.First(), aLIx);
+    aMBlocks.Bind(k, aLIx);
     ++k;
-  }//for (; aItMILI.More(); aItMILI.Next()) {
+  }//for (k=0, i=1; i<=aNbV; ++i)
   aMVAdd.Clear();
   aMVP.Clear();
   aMEC.Clear();
@@ -274,7 +264,7 @@
 //function : PerformCommonBlocks
 //purpose  : 
 //=======================================================================
-  void BOPAlgo_Tools::PerformCommonBlocks(BOPDS_DataMapOfPaveBlockListOfPaveBlock& aMPBLPB,
+  void BOPAlgo_Tools::PerformCommonBlocks(BOPDS_IndexedDataMapOfPaveBlockListOfPaveBlock& aMPBLPB,
                                           Handle(NCollection_BaseAllocator)& aAllocator)
 {
   Standard_Integer aNbCB;
@@ -284,18 +274,16 @@
     return;
   }
   //
-  Standard_Integer aNbPB;
-  BOPDS_DataMapIteratorOfDataMapOfPaveBlockListOfPaveBlock aItMPBLPB;
+  Standard_Integer aNbPB, aNbBlocks, k;
   BOPDS_ListIteratorOfListOfPaveBlock aItLPB;
   Handle(BOPDS_CommonBlock) aCB;
-  BOPDS_DataMapOfPaveBlockListOfPaveBlock aMBlocks(100, aAllocator);
+  BOPDS_DataMapOfIntegerListOfPaveBlock aMBlocks(100, aAllocator);
   //
   BOPAlgo_Tools::MakeBlocks(aMPBLPB, aMBlocks, aAllocator);
   //
-  aItMPBLPB.Initialize(aMBlocks);
-  for (; aItMPBLPB.More(); aItMPBLPB.Next()) {
-    const Handle(BOPDS_PaveBlock)& aPB=aItMPBLPB.Key();
-    const BOPDS_ListOfPaveBlock& aLPB=aItMPBLPB.Value();
+  aNbBlocks = aMBlocks.Extent();
+  for (k=0; k<aNbBlocks; ++k) {
+    const BOPDS_ListOfPaveBlock& aLPB=aMBlocks.Find(k);
     aNbPB=aLPB.Extent();
     if (aNbPB>1) {
       aCB=new BOPDS_CommonBlock;
@@ -318,18 +306,17 @@
 //function : PerformCommonBlocks
 //purpose  : 
 //=======================================================================
-  void BOPAlgo_Tools::PerformCommonBlocks(const BOPDS_DataMapOfPaveBlockListOfInteger& aMPBLI,
+  void BOPAlgo_Tools::PerformCommonBlocks(const BOPDS_IndexedDataMapOfPaveBlockListOfInteger& aMPBLI,
                                           Handle(NCollection_BaseAllocator)& )//aAllocator)
 {
-  Standard_Integer nF;
-  BOPDS_DataMapIteratorOfDataMapOfPaveBlockListOfInteger aItMPBLI;
+  Standard_Integer nF, i, aNb;
   BOPCol_ListIteratorOfListOfInteger aItLI;
   Handle(BOPDS_PaveBlock) aPB;
   Handle(BOPDS_CommonBlock) aCB;
   //
-  aItMPBLI.Initialize(aMPBLI);
-  for (; aItMPBLI.More(); aItMPBLI.Next()) {
-    aPB=aItMPBLI.Key();
+  aNb=aMPBLI.Extent();
+  for (i=1; i<=aNb; ++i) {
+    aPB=aMPBLI.FindKey(i);
     if (aPB->IsCommonBlock()) {
       aCB=aPB->CommonBlock();
     }
@@ -338,7 +325,7 @@
       aCB->AddPaveBlock(aPB);
     }
     //
-    const BOPCol_ListOfInteger& aLI=aItMPBLI.Value();
+    const BOPCol_ListOfInteger& aLI=aMPBLI.FindFromKey(aPB);
     aItLI.Initialize(aLI);
     for (; aItLI.More(); aItLI.Next()) {
       nF=aItLI.Value();

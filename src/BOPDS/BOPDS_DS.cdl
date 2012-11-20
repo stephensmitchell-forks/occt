@@ -55,9 +55,10 @@ uses
     VectorOfListOfPaveBlock from BOPDS,  
     ListOfPaveBlock    from BOPDS,  
     ListOfPave from BOPDS,
-    PaveBlock from BOPDS, 
+    PaveBlock from BOPDS,  
     CommonBlock from BOPDS,
     MapOfPaveBlock from BOPDS, 
+    IndexedMapOfPaveBlock from BOPDS, 
     VectorOfFaceInfo from BOPDS, 
     FaceInfo from BOPDS, 
     --  
@@ -322,7 +323,7 @@ is
 
     FaceInfoOn(me:out;  
                 theIndex:Integer from Standard;  
-            theMPB:out MapOfPaveBlock from BOPDS;
+            theMPB:out IndexedMapOfPaveBlock from BOPDS;
             theMVP:out MapOfInteger from BOPCol);  
         ---Purpose:  
             --- Selector
@@ -331,7 +332,7 @@ is
          
     FaceInfoIn(me:out;  
                 theIndex:Integer from Standard;  
-            theMPB:out MapOfPaveBlock from BOPDS;
+            theMPB:out IndexedMapOfPaveBlock from BOPDS;
             theMVP:out MapOfInteger from BOPCol);  
             ---Purpose:  
             --- Selector

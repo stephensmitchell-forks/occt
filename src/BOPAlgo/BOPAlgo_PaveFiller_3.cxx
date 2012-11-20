@@ -91,8 +91,8 @@
   //
   //-----------------------------------------------------scope f
   aAllocator=new NCollection_IncAllocator();
-  BOPDS_DataMapOfPaveBlockListOfPaveBlock aMPBLPB(100, aAllocator);
-  BOPDS_DataMapOfShapeCoupleOfPaveBlocks aMVCPB(100, aAllocator);
+  BOPDS_IndexedDataMapOfPaveBlockListOfPaveBlock aMPBLPB(100, aAllocator);
+  BOPDS_IndexedDataMapOfShapeCoupleOfPaveBlocks aMVCPB(100, aAllocator);
   //
   aDiscretize=30;
   aDeflection=0.01;
@@ -133,9 +133,12 @@
       Handle(BOPDS_PaveBlock)& aPB1=aIt1.ChangeValue();
       if (!aPB1->HasShrunkData()) {
         FillShrunkData(aPB1);
-        if (myErrorStatus) {
-          return;
+        if (myWarningStatus) {
+          continue;
         }
+        //if (myErrorStatus) {
+        //  return;
+        //}
       }
       aPB1->ShrunkData(aTS11, aTS12, aBB1);
       //
@@ -146,9 +149,12 @@
         Handle(BOPDS_PaveBlock)& aPB2=aIt2.ChangeValue();
         if (!aPB2->HasShrunkData()) {
           FillShrunkData(aPB2);
-          if (myErrorStatus) {
-            return;
+          if (myWarningStatus) {
+            continue;
           }
+          //if (myErrorStatus) {
+          //  return;
+          //}
         }
         aPB2->ShrunkData(aTS21, aTS22, aBB2);
         //
@@ -203,12 +209,12 @@
         //
         aNbCPrts=aCPrts.Length();
         //modified by NIZHNY-EMV Wed Dec 07 14:13:15 2011
-        if (aNbCPrts) {
-          if (myWarningStatus) {
-            myErrorStatus = 40;
-            return;
-          }
-        }
+        //if (aNbCPrts) {
+        //  if (myWarningStatus) {
+        //    myErrorStatus = 40;
+        //    continue;
+        //  }
+        //}
         //modified by NIZHNY-EMV Wed Dec 07 14:13:16 2011
         for (i=1; i<=aNbCPrts; ++i) {
           const IntTools_CommonPrt& aCPart=aCPrts(i);
@@ -297,7 +303,7 @@
               //
               aCPB.SetPaveBlocks(aPB1, aPB2);
               aCPB.SetIndexInterf(iX);
-              aMVCPB.Bind(aVnew, aCPB);
+              aMVCPB.Add(aVnew, aCPB);
             }//case TopAbs_VERTEX: 
             break;
             //
@@ -339,7 +345,7 @@
   // post treatment
   //=========================================
   BOPAlgo_Tools::PerformCommonBlocks(aMPBLPB, aAllocator);
-  PerformVertices(aMVCPB, aAllocator);
+  PerformVerticesEE(aMVCPB, aAllocator);
   //-----------------------------------------------------scope t
   aMPBLPB.Clear();
   aMVCPB.Clear();
@@ -349,8 +355,8 @@
 //function : PerformVertices
 //purpose  : 
 //=======================================================================
-  Standard_Integer BOPAlgo_PaveFiller::PerformVertices
-    (BOPDS_DataMapOfShapeCoupleOfPaveBlocks& theMVCPB,
+  Standard_Integer BOPAlgo_PaveFiller::PerformVerticesEE
+    (BOPDS_IndexedDataMapOfShapeCoupleOfPaveBlocks& theMVCPB,
      Handle(NCollection_BaseAllocator)& theAllocator)
 {
   Standard_Integer aNbV, iRet;
@@ -361,22 +367,19 @@
     return iRet;
   }
   //
-  Standard_Integer nVx, iV, j, nE, iFlag, iX; 
+  Standard_Integer nVx, iV, j, nE, iFlag, iX, i, aNb; 
   Standard_Real aT;
   TopoDS_Shape aV;
   BOPCol_ListIteratorOfListOfShape aItLS;
   BOPCol_ListIteratorOfListOfInteger aItLI;
-  BOPCol_DataMapIteratorOfDataMapOfShapeListOfShape aItImag;
-  BOPDS_DataMapIteratorOfDataMapOfShapeCoupleOfPaveBlocks aItMVCPB;
-  BOPDS_DataMapIteratorOfDataMapOfPaveBlockListOfInteger aItMPBLI;
   BOPDS_ListIteratorOfListOfPaveBlock aItLPB;
   BOPDS_ShapeInfo aSI;
   BOPDS_Pave aPave;
   //
-  BOPDS_DataMapOfPaveBlockListOfInteger aMPBLI(100, theAllocator);
+  BOPDS_IndexedDataMapOfPaveBlockListOfInteger aMPBLI(100, theAllocator);
   BOPCol_ListOfShape aLS(theAllocator);
-  BOPCol_DataMapOfShapeInteger aMVI(100, theAllocator);
-  BOPCol_DataMapOfShapeListOfShape aImages;
+  BOPCol_IndexedDataMapOfShapeInteger aMVI(100, theAllocator);
+  BOPCol_IndexedDataMapOfShapeListOfShape aImages;
   //
   aSI.SetShapeType(TopAbs_VERTEX);
   BOPDS_VectorOfInterfEE& aEEs=myDS->InterfEE();
@@ -384,12 +387,11 @@
   // 1 prepare arguments
   //
   // <- DEB
-  aItMVCPB.Initialize(theMVCPB);
-  for (; aItMVCPB.More(); aItMVCPB.Next()) {
-    const TopoDS_Shape& aS=aItMVCPB.Key();
-    const BOPDS_CoupleOfPaveBlocks& aCPB=aItMVCPB.Value();
+  for (i=1; i<=aNbV; ++i) {
+    const TopoDS_Shape& aS=theMVCPB.FindKey(i);
+    const BOPDS_CoupleOfPaveBlocks& aCPB=theMVCPB.FindFromIndex(i);
     iV=aCPB.IndexInterf();
-    aMVI.Bind(aS, iV);
+    aMVI.Add(aS, iV);
   }
   //
   // 2 Fuse vertices
@@ -397,10 +399,10 @@
   //
   // 3 Add new vertices to myDS; 
   //   connect indices to CPB structure
-  aItImag.Initialize(aImages);
-  for (; aItImag.More(); aItImag.Next()) {
-    const TopoDS_Vertex& aV=(*(TopoDS_Vertex*)(&aItImag.Key()));
-    const BOPCol_ListOfShape& aLVSD=aItImag.Value();
+  aNb = aImages.Extent();
+  for (i=1; i<=aNb; ++i) {
+    const TopoDS_Vertex& aV=(*(TopoDS_Vertex*)(&aImages.FindKey(i)));
+    const BOPCol_ListOfShape& aLVSD=aImages.FindFromIndex(i);
     //
     aSI.SetShape(aV);
     iV=myDS->Append(aSI);
@@ -412,7 +414,7 @@
     aItLS.Initialize(aLVSD);
     for (; aItLS.More(); aItLS.Next()) {
       const TopoDS_Shape& aVx = aItLS.Value();
-      BOPDS_CoupleOfPaveBlocks &aCPB=theMVCPB.ChangeFind(aVx);
+      BOPDS_CoupleOfPaveBlocks &aCPB=theMVCPB.ChangeFromKey(aVx);
       aCPB.SetIndex(iV);
       // update EE interference
       iX=aCPB.IndexInterf();
@@ -425,20 +427,19 @@
   {
     Handle(BOPDS_PaveBlock) aPB[2];
     //
-    aItMVCPB.Initialize(theMVCPB);
-    for (; aItMVCPB.More(); aItMVCPB.Next()) {
-      const BOPDS_CoupleOfPaveBlocks& aCPB=aItMVCPB.Value();
+    for (i=1; i<=aNbV; ++i) {
+      const BOPDS_CoupleOfPaveBlocks& aCPB=theMVCPB.FindFromIndex(i);
       iV=aCPB.Index();
       aCPB.PaveBlocks(aPB[0], aPB[1]);
       for (j=0; j<2; ++j) {
-        if (aMPBLI.IsBound(aPB[j])) {
-          BOPCol_ListOfInteger& aLI=aMPBLI.ChangeFind(aPB[j]);
+        if (aMPBLI.Contains(aPB[j])) {
+          BOPCol_ListOfInteger& aLI=aMPBLI.ChangeFromKey(aPB[j]);
           aLI.Append(iV);
         }
         else {
           BOPCol_ListOfInteger aLI(theAllocator);
           aLI.Append(iV);
-          aMPBLI.Bind(aPB[j], aLI);
+          aMPBLI.Add(aPB[j], aLI);
         }
       }
     }
@@ -447,13 +448,13 @@
   // 5 
   // 5.1  Compute Extra Paves and 
   // 5.2. Add Extra Paves to the PaveBlocks
-  aItMPBLI.Initialize(aMPBLI);
-  for (; aItMPBLI.More(); aItMPBLI.Next()) {
-    Handle(BOPDS_PaveBlock) aPB=aItMPBLI.Key();
+  aNb=aMPBLI.Extent();
+  for(i=1; i<=aNb; ++i) {
+    Handle(BOPDS_PaveBlock) aPB=aMPBLI.FindKey(i);
     nE=aPB->OriginalEdge();
     const TopoDS_Edge& aE=(*(TopoDS_Edge *)(&myDS->Shape(nE)));
     // 1,2
-    const BOPCol_ListOfInteger& aLI=aItMPBLI.Value();
+    const BOPCol_ListOfInteger& aLI=aMPBLI.FindFromIndex(i);
     aItLI.Initialize(aLI);
     for (; aItLI.More(); aItLI.Next()) {
       nVx=aItLI.Value();
@@ -468,9 +469,9 @@
     }
   }
   // 6  Split PaveBlocksa
-  aItMPBLI.Initialize(aMPBLI);
-  for (; aItMPBLI.More(); aItMPBLI.Next()) {
-    Handle(BOPDS_PaveBlock) aPB=aItMPBLI.Key();
+  aNb=aMPBLI.Extent();
+  for(i=1; i<=aNb; ++i) {
+    Handle(BOPDS_PaveBlock) aPB=aMPBLI.FindKey(i);
     nE=aPB->OriginalEdge();
     // 3
     if (!aPB->IsCommonBlock()) {
@@ -490,19 +491,17 @@
 //purpose  : 
 //=======================================================================
   void BOPAlgo_PaveFiller::TreatNewVertices(
-       const BOPCol_DataMapOfShapeInteger& aMapVI,
-       BOPCol_DataMapOfShapeListOfShape& myImages)
+       const BOPCol_IndexedDataMapOfShapeInteger& aMapVI,
+       BOPCol_IndexedDataMapOfShapeListOfShape& myImages)
 {
   Standard_Integer j, i, aNbV, aNbVSD;
   Standard_Real aTol;
   TopoDS_Shape aVF;
   TopoDS_Vertex aVnew;
-  BOPCol_IndexedMapOfShape aMV, aMVProcessed;
+  BOPCol_IndexedMapOfShape aMVProcessed;
 
   BOPCol_ListIteratorOfListOfInteger aIt;
-  BOPCol_DataMapIteratorOfDataMapOfShapeListOfShape aItIm;
-  BOPCol_DataMapIteratorOfDataMapOfShapeInteger aItMVI;
-  BOPCol_DataMapOfShapeListOfShape aMVV;
+  BOPCol_IndexedDataMapOfShapeListOfShape aMVLV;
   BOPCol_DataMapOfIntegerShape aMIS;
   BOPCol_IndexedDataMapOfShapeBox aMSB;
   //
@@ -510,15 +509,9 @@
   BOPDS_BoxBndTree aBBTree;
   NCollection_UBTreeFiller <Standard_Integer, Bnd_Box> aTreeFiller(aBBTree);
   //
-  aItMVI.Initialize(aMapVI);
-  for (; aItMVI.More(); aItMVI.Next()) {
-    const TopoDS_Shape& aV=aItMVI.Key();
-    aMV.Add(aV);
-  }
-  //
-  aNbV = aMV.Extent();
+  aNbV = aMapVI.Extent();
   for (i=1; i<=aNbV; ++i) {
-    const TopoDS_Shape& aV=aMV(i);
+    const TopoDS_Shape& aV=aMapVI.FindKey(i);
     Bnd_Box aBox;
     //
     aTol=BRep_Tool::Tolerance(*(TopoDS_Vertex*)(&aV));
@@ -535,7 +528,7 @@
 
   // Chains
   for (i=1; i<=aNbV; ++i) {
-    const TopoDS_Shape& aV=aMV(i);
+    const TopoDS_Shape& aV=aMapVI.FindKey(i);
     //
     if (aMVProcessed.Contains(aV)) {
       continue;
@@ -613,36 +606,21 @@
       aLVSD.Append(aVP);
       aMVProcessed.Add(aVP);
     }
-    myImages.Bind(aVF, aLVSD);
+    aMVLV.Add(aVF, aLVSD);
   }// for (i=1; i<=aNbV; ++i) {
 
   // Make new vertices
-  aMV.Clear();
-  aItIm.Initialize(myImages);
-  for (; aItIm.More(); aItIm.Next()) {
-    const TopoDS_Shape& aV=aItIm.Key();
-    BOPCol_ListOfShape& aLVSD=aItIm.ChangeValue();
+  aNbV=aMVLV.Extent();
+  for (i=1; i<=aNbV; ++i) {
+    const TopoDS_Shape& aV=aMVLV.FindKey(i);
+    BOPCol_ListOfShape& aLVSD=aMVLV.ChangeFromIndex(i);
     aNbVSD=aLVSD.Extent();
     if (aNbVSD>1) {
-      aMV.Add(aV);
       BOPTools_AlgoTools::MakeVertex(aLVSD, aVnew);
-      aMVV.Bind(aVnew, aLVSD);
+      myImages.Add(aVnew, aLVSD);
+    } else {
+      myImages.Add(aV, aLVSD);
     }
-  }
-  //
-  // UnBind old vertices
-  aNbV=aMV.Extent();
-  for (i=1; i<=aNbV; ++i) {
-    const TopoDS_Shape& aV=aMV(i);
-    myImages.UnBind(aV);
-  }
-  //
-  // Bind new vertices
-  aItIm.Initialize(aMVV);
-  for (; aItIm.More(); aItIm.Next()) {
-    const TopoDS_Shape& aV=aItIm.Key();
-    const BOPCol_ListOfShape& aLVSD=aItIm.Value();
-    myImages.Bind(aV, aLVSD);
   }
 }
 
@@ -677,11 +655,7 @@
   aSR.Perform();
   iErr=aSR.ErrorStatus();
   if (iErr) {
-    //modified by NIZHNY-EMV Wed Dec 07 14:12:10 2011
-    if (iErr==6) {
-      myWarningStatus = 1;
-    }
-    //modified by NIZHNY-EMV Wed Dec 07 14:12:12 2011
+    myWarningStatus = 1;
     //myErrorStatus=40;
     return;
   }

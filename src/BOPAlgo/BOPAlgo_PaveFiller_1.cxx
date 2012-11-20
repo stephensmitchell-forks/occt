@@ -49,7 +49,7 @@
   void BOPAlgo_PaveFiller::PerformVV() 
 {
   Standard_Boolean bWithSubShape;
-  Standard_Integer n1, n2, iFlag, nX, n, aSize, i, aNbVV, j, iX;
+  Standard_Integer n1, n2, iFlag, nX, n, aSize, i, aNbVV, j, iX, k, aNbBlocks;
   Handle(NCollection_IncAllocator) aAllocator;
   BOPCol_DataMapIteratorOfDataMapOfIntegerListOfInteger aItMILI;
   BOPCol_ListIteratorOfListOfInteger aItLI, aItLI2;
@@ -73,7 +73,7 @@
   //
   //-----------------------------------------------------scope f
   aAllocator=new NCollection_IncAllocator();
-  BOPCol_DataMapOfIntegerListOfInteger aMILI(100, aAllocator);
+  BOPCol_IndexedDataMapOfIntegerListOfInteger aMILI(100, aAllocator);
   BOPCol_DataMapOfIntegerListOfInteger aMBlocks(100, aAllocator);
   BOPCol_ListOfShape aLV(aAllocator);
   //
@@ -94,9 +94,9 @@
   BOPAlgo_Tools::MakeBlocksCnx(aMILI, aMBlocks, aAllocator);
   //
   // 3. Make vertices
-  aItMILI.Initialize(aMBlocks);
-  for (; aItMILI.More(); aItMILI.Next()) {
-    const BOPCol_ListOfInteger& aLI=aItMILI.Value();
+  aNbBlocks=aMBlocks.Extent();
+  for (k=0; k<aNbBlocks; ++k) {
+    const BOPCol_ListOfInteger& aLI=aMBlocks.Find(k);
     //
     aLV.Clear();
     aItLI.Initialize(aLI);
@@ -124,15 +124,15 @@
       //
       aItLI2.Initialize(aLI);
       for (j=0; aItLI2.More(); aItLI2.Next(), ++j) {
-	if (j>i) {
-	  n2=aItLI2.Value();
-	  //
-	  myDS->AddInterf(n1, n2);
-	  iX=aVVs.Append()-1;
-	  BOPDS_InterfVV& aVV=aVVs(iX);
-	  aVV.SetIndices(n1, n2);
-	  aVV.SetIndexNew(n);
-	}
+        if (j>i) {
+          n2=aItLI2.Value();
+          //
+          myDS->AddInterf(n1, n2);
+          iX=aVVs.Append()-1;
+          BOPDS_InterfVV& aVV=aVVs(iX);
+          aVV.SetIndices(n1, n2);
+          aVV.SetIndexNew(n);
+        }
       }
     }
   }

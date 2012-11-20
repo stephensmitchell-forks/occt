@@ -105,13 +105,12 @@ static
   TopoDS_Solid aSolidSp; 
   TopoDS_Face aFP;
   BOPCol_ListIteratorOfListOfShape aItS, aItFP, aItEx;	
-  BOPCol_MapIteratorOfMapOfShape aItMS, aItMS1;
   //
   BOPCol_ListOfShape aLIF(theAllocator);
   BOPCol_MapOfShape aMFDone(100, theAllocator);
-  BOPCol_MapOfShape aMSolids(100, theAllocator);
-  BOPCol_MapOfShape aMFaces(100, theAllocator);
-  BOPCol_MapOfShape aMFIN(100, theAllocator);
+  BOPCol_IndexedMapOfShape aMSolids(100, theAllocator);
+  BOPCol_IndexedMapOfShape aMFaces(100, theAllocator);
+  BOPCol_IndexedMapOfShape aMFIN(100, theAllocator);
   BOPCol_IndexedMapOfShape aMS(100, theAllocator);
   BOPCol_IndexedDataMapOfShapeListOfShape aMEF(100, theAllocator);
   //
@@ -153,9 +152,8 @@ static
   aNbFaces=aMFaces.Extent();
   aNbSolids=aMSolids.Extent();
   //
-  aItMS.Initialize(aMSolids);
-  for (; aItMS.More(); aItMS.Next()) {
-    const TopoDS_Solid& aSolid=(*(TopoDS_Solid*)(&aItMS.Value()));
+  for (i=1; i<=aNbSolids; ++i) {
+    const TopoDS_Solid& aSolid=(*(TopoDS_Solid*)(&aMSolids(i)));
     //
     aMFDone.Clear();
     aMFIN.Clear();
@@ -204,9 +202,8 @@ static
     BOPCol_ListOfShape aLEx(theAllocator);
     //
     // for all non-solid faces build EF map [ aMEFP ]
-    aItMS1.Initialize(aMFaces);
-    for (; aItMS1.More(); aItMS1.Next()) {
-      const TopoDS_Shape& aFace=aItMS1.Value();
+    for (j=1; j<=aNbFaces; ++j) {
+      const TopoDS_Shape& aFace=aMFaces(j);
       if (!aMS.Contains(aFace)) {
         BOPTools::MapShapesAndAncestors(aFace, TopAbs_EDGE, TopAbs_FACE, aMEFP);
       }
@@ -303,9 +300,8 @@ static
     aLFIN.Clear();
     aNbFIN=aMFIN.Extent();
     if (aNbFIN || aNbLIF) {
-      aItMS1.Initialize(aMFIN);
-      for (; aItMS1.More(); aItMS1.Next()) {
-        const TopoDS_Shape& aFIn=aItMS1.Value();
+      for (j=1; j<=aNbFIN; ++j) {
+        const TopoDS_Shape& aFIn=aMFIN(j);
         aLFIN.Append(aFIn);
       }
       //
@@ -458,11 +454,18 @@ static
   } //for (i=1; i<=aNbS; ++i) 
   //
   // 1. Build solids for interferred source solids
-  aNbS=theDraftSolids.Extent();
-  aIt1.Initialize(theDraftSolids);
-  for (; aIt1.More(); aIt1.Next()) {
-    const TopoDS_Shape& aS =aIt1.Key();
-    const TopoDS_Shape& aSD=aIt1.Value();
+  for (i=0; i<aNbS; ++i) {
+    const BOPDS_ShapeInfo& aSI=myDS->ShapeInfo(i);
+    //
+    if (aSI.ShapeType()!=TopAbs_SOLID) {
+      continue;
+    }
+    //
+    const TopoDS_Shape& aS=aSI.Shape();
+    if(!theDraftSolids.IsBound(aS)) {
+      continue;
+    }
+    const TopoDS_Shape& aSD=theDraftSolids.Find(aS);
     const BOPCol_ListOfShape& aLFIN=
       (theInParts.IsBound(aS)) ? theInParts.Find(aS) : aLSEmpty;
     //
@@ -492,7 +495,7 @@ static
     // 1.3 Build new solids
     BOPAlgo_BuilderSolid aSB(theAllocator);
     //
-    aSB.SetContext(myContext);
+    //aSB.SetContext(myContext);
     aSB.SetShapes(aSFS);
     aSB.Perform();
     iErr=aSB.ErrorStatus();

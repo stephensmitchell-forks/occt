@@ -91,8 +91,8 @@
   aAllocator=new NCollection_IncAllocator();
   
   BOPCol_MapOfInteger aMIEFC(100, aAllocator);
-  BOPDS_DataMapOfShapeCoupleOfPaveBlocks aMVCPB(100, aAllocator);
-  BOPDS_DataMapOfPaveBlockListOfInteger aMPBLI(100, aAllocator);
+  BOPDS_IndexedDataMapOfShapeCoupleOfPaveBlocks aMVCPB(100, aAllocator);
+  BOPDS_IndexedDataMapOfPaveBlockListOfInteger aMPBLI(100, aAllocator);
   //
   aDiscretize=35;
   aDeflection=0.01;
@@ -118,7 +118,7 @@
     const Bnd_Box& aBBF=myDS->ShapeInfo(nF).Box(); 
     //
     BOPDS_FaceInfo& aFI=myDS->ChangeFaceInfo(nF);
-    const BOPDS_MapOfPaveBlock& aMPBF=aFI.PaveBlocksOn();
+    const BOPDS_IndexedMapOfPaveBlock& aMPBF=aFI.PaveBlocksOn();
     const BOPCol_MapOfInteger& aMIFOn=aFI.VerticesOn();
     const BOPCol_MapOfInteger& aMIFIn=aFI.VerticesIn();
     //
@@ -173,14 +173,6 @@
       //
       const IntTools_SequenceOfCommonPrts& aCPrts=aEdgeFace.CommonParts();
       aNbCPrts=aCPrts.Length();
-      //modified by NIZHNY-EMV Wed Dec 07 14:17:07 2011
-      /*if (aNbCPrts) {
-        if (myWarningStatus) {
-          myErrorStatus = 40;
-          return;
-        }
-	}*/
-      //modified by NIZHNY-EMV Wed Dec 07 14:17:09 2011
       for (i=1; i<=aNbCPrts; ++i) {
         const IntTools_CommonPrt& aCPart=aCPrts(i);
         aType=aCPart.Type();
@@ -275,7 +267,7 @@
             //
             aCPB.SetPaveBlocks(aPB, aPB);
             aCPB.SetIndexInterf(iX);
-            aMVCPB.Bind(aVnew, aCPB);
+            aMVCPB.Add(aVnew, aCPB);
           }
         }
           break;
@@ -314,7 +306,7 @@
   // post treatment
   //=========================================
   BOPAlgo_Tools::PerformCommonBlocks(aMPBLI, aAllocator);
-  PerformVertices1(aMVCPB, aAllocator);
+  PerformVerticesEF(aMVCPB, aAllocator);
   //
   // Update FaceInfoIn for all faces having EF common parts
   BOPCol_MapIteratorOfMapOfInteger aItMI;
@@ -338,8 +330,8 @@
 //function : PerformVertices1
 //purpose  : 
 //=======================================================================
-  Standard_Integer BOPAlgo_PaveFiller::PerformVertices1
-    (BOPDS_DataMapOfShapeCoupleOfPaveBlocks& theMVCPB,
+  Standard_Integer BOPAlgo_PaveFiller::PerformVerticesEF
+    (BOPDS_IndexedDataMapOfShapeCoupleOfPaveBlocks& theMVCPB,
      Handle(NCollection_BaseAllocator)& theAllocator)
 {
   Standard_Integer aNbV, iRet;
@@ -350,29 +342,26 @@
     return iRet;
   }
   //
-  Standard_Integer nVx, nVSD, iV, iErr, nE, iFlag, iX;
+  Standard_Integer nVx, nVSD, iV, iErr, nE, iFlag, iX, i, aNbPBLI;
   Standard_Real aT;
   TopoDS_Shape aV;
   BOPCol_ListIteratorOfListOfShape aItLS;
   BOPCol_ListIteratorOfListOfInteger aItLI;
-  BOPDS_DataMapIteratorOfDataMapOfShapeCoupleOfPaveBlocks aItMVCPB;
-  BOPDS_DataMapIteratorOfDataMapOfPaveBlockListOfInteger aItMPBLI;
   BOPDS_PDS aPDS;
   BOPDS_ShapeInfo aSI;
   BOPDS_Pave aPave;
   //
   BOPCol_ListOfShape aLS(theAllocator);
   BOPCol_DataMapOfShapeInteger aMVI(100, theAllocator);
-  BOPDS_DataMapOfPaveBlockListOfInteger aMPBLI(100, theAllocator);
+  BOPDS_IndexedDataMapOfPaveBlockListOfInteger aMPBLI(100, theAllocator);
   BOPAlgo_PaveFiller aPF(theAllocator); 
   //
   aSI.SetShapeType(TopAbs_VERTEX);
   BOPDS_VectorOfInterfEF& aEFs=myDS->InterfEF();
   //
   // 1 prepare arguments
-  aItMVCPB.Initialize(theMVCPB);
-  for (; aItMVCPB.More(); aItMVCPB.Next()) {
-    const TopoDS_Shape& aS=aItMVCPB.Key();
+  for (i=1; i<=aNbV; ++i) {
+    const TopoDS_Shape& aS=theMVCPB.FindKey(i);
     aLS.Append(aS);
   }
   //
@@ -414,7 +403,7 @@
       iV=aMVI.Find(aV);
     }
     //
-    BOPDS_CoupleOfPaveBlocks &aCPB=theMVCPB.ChangeFind(aVx);
+    BOPDS_CoupleOfPaveBlocks &aCPB=theMVCPB.ChangeFromKey(aVx);
     aCPB.SetIndex(iV);
     // update EF interference
     iX=aCPB.IndexInterf();
@@ -422,27 +411,27 @@
     aEF.SetIndexNew(iV);
     // map aMPBLI
     const Handle(BOPDS_PaveBlock)& aPB=aCPB.PaveBlock1();
-    if (aMPBLI.IsBound(aPB)) {
-      BOPCol_ListOfInteger& aLI=aMPBLI.ChangeFind(aPB);
+    if (aMPBLI.Contains(aPB)) {
+      BOPCol_ListOfInteger& aLI=aMPBLI.ChangeFromKey(aPB);
       aLI.Append(iV);
     }
     else {
       BOPCol_ListOfInteger aLI(theAllocator);
       aLI.Append(iV);
-      aMPBLI.Bind(aPB, aLI);
+      aMPBLI.Add(aPB, aLI);
     }
   }
   //
   // 5 
   // 5.1  Compute Extra Paves and 
   // 5.2. Add Extra Paves to the PaveBlocks
-  aItMPBLI.Initialize(aMPBLI);
-  for (; aItMPBLI.More(); aItMPBLI.Next()) {
-    Handle(BOPDS_PaveBlock) aPB=aItMPBLI.Key();
+  aNbPBLI=aMPBLI.Extent();
+  for (i=1; i<=aNbPBLI; ++i) {
+    Handle(BOPDS_PaveBlock) aPB=aMPBLI.FindKey(i);
+    const BOPCol_ListOfInteger& aLI=aMPBLI.FindFromIndex(i);
     nE=aPB->OriginalEdge();
     const TopoDS_Edge& aE=(*(TopoDS_Edge *)(&myDS->Shape(nE)));
     // 
-    const BOPCol_ListOfInteger& aLI=aItMPBLI.Value();
     aItLI.Initialize(aLI);
     for (; aItLI.More(); aItLI.Next()) {
       nVx=aItLI.Value();
@@ -457,9 +446,8 @@
     }
   }
   // 6  Split PaveBlocksa
-  aItMPBLI.Initialize(aMPBLI);
-  for (; aItMPBLI.More(); aItMPBLI.Next()) {
-    Handle(BOPDS_PaveBlock) aPB=aItMPBLI.Key();
+  for (i=1; i<=aNbPBLI; ++i) {
+    Handle(BOPDS_PaveBlock) aPB=aMPBLI.FindKey(i);
     nE=aPB->OriginalEdge();
     // 3
     if (!aPB->IsCommonBlock()) {

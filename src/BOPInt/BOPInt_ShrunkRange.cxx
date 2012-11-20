@@ -210,7 +210,7 @@
       Standard_Real ddx=aTolE;//1.e-12;
       BndLib_Add3dCurve::Add (aBAC, t1C, t2C, ddx, myBndBox);
       
-      myErrorStatus=0;//6
+      myErrorStatus=6;//0
       return;
     }
   }
@@ -312,8 +312,7 @@
         if (pri==-3) {
           //modified by NIZHNY-EMV Mon Nov 28 14:55:00 2011
           t1C = t1;
-          myErrorStatus=6;
-          //myErrorStatus=4;
+          myErrorStatus=4;
           //return;
           //modified by NIZHNY-EMV Mon Nov 28 14:55:03 2011
         }
@@ -409,8 +408,7 @@
         if (pri==-3) {
           //modified by NIZHNY-EMV Mon Nov 28 14:55:32 2011
           t2C = t2;
-          myErrorStatus=6;
-          //myErrorStatus=5;
+          myErrorStatus=5;
           //return;
           //modified by NIZHNY-EMV Mon Nov 28 14:55:34 2011
         }

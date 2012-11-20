@@ -198,8 +198,6 @@
     return; 
   }
   //
-  myDS->RefineFaceInfoOn();
-  //
   // 22
   PerformFF();
   if (myErrorStatus) {
@@ -210,6 +208,8 @@
   if (myErrorStatus) {
     return; 
   }
+  //
+  RefineFaceInfoOn();
   //
   MakePCurves();
   if (myErrorStatus) {

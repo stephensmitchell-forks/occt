@@ -94,15 +94,15 @@ static
                                             const TopAbs_ShapeEnum theType2,
                                             BOPCol_ListOfShape& theLCB)
 {
-  Standard_Integer  aNbF, aNbAdd1;
+  Standard_Integer  aNbF, aNbAdd, aNbAdd1, i;
   BRep_Builder aBB;
   TopoDS_Compound aC;
   TopoDS_Iterator aIt;
   TopExp_Explorer aExp;
-  BOPCol_MapOfShape aMCB, aMAdd, aMAdd1, aMP;
+  BOPCol_MapOfShape aMP;
+  BOPCol_IndexedMapOfShape aMCB, aMAdd, aMAdd1;
   BOPCol_IndexedDataMapOfShapeListOfShape aMEF;
   BOPCol_ListIteratorOfListOfShape aItLF;
-  BOPCol_MapIteratorOfMapOfShape aItM;//, aItM1;
   //
   // 1. aMEF
   BOPTools::MapShapesAndAncestors(theS, theType1, theType2, aMEF);
@@ -122,9 +122,9 @@ static
     while(1) {
       aMAdd1.Clear();
       //
-      aItM.Initialize(aMAdd);
-      for (; aItM.More(); aItM.Next()) {
-        const TopoDS_Shape& aF=aItM.Key();
+      aNbAdd = aMAdd.Extent();
+      for (i=1; i<=aNbAdd; ++i) {
+        const TopoDS_Shape& aF=aMAdd(i);
         //
         aExp.Init(aF, theType1);
         for (; aExp.More(); aExp.Next()) {
@@ -144,7 +144,7 @@ static
           }
         }//for (; aExp.More(); aExp.Next()){
         aMCB.Add(aF);
-      }// for (; aItM.More(); aItM.Next()) {
+      }// for (i=1; i<=aNbAdd; ++i) {
       //
       aNbAdd1=aMAdd1.Extent();
       if (!aNbAdd1) {
@@ -152,9 +152,8 @@ static
       }
       //
       aMAdd.Clear();
-      aItM.Initialize(aMAdd1);
-      for (; aItM.More(); aItM.Next()) {
-        const TopoDS_Shape& aFAdd=aItM.Key();
+      for (i=1; i<=aNbAdd1; ++i) {
+        const TopoDS_Shape& aFAdd = aMAdd1(i);
         aMAdd.Add(aFAdd);
       }
     }//while(1) {
@@ -163,9 +162,8 @@ static
     if (aNbF) {
       aBB.MakeCompound(aC);
       //
-      aItM.Initialize(aMCB);
-      for (; aItM.More(); aItM.Next()) {
-        const TopoDS_Shape& aF=aItM.Key();
+      for (i=1; i<=aNbF; ++i) {
+        const TopoDS_Shape& aF=aMCB(i);
         aBB.Add(aC, aF);  
         aMP.Add(aF);
       }
@@ -334,14 +332,13 @@ static
                                            BOPCol_ListOfShape& theLCB,
                                            const Handle(NCollection_BaseAllocator)& theAllocator)
 {
-  Standard_Integer  aNbF, aNbAdd1;
+  Standard_Integer  aNbF, aNbAdd1, aNbAdd, i;
   TopExp_Explorer aExp;
-  BOPCol_MapIteratorOfMapOfShape aItM, aItM1;
   BOPCol_ListIteratorOfListOfShape aIt;
   //
-  BOPCol_MapOfShape aMCB(100, theAllocator);
-  BOPCol_MapOfShape aMAdd(100, theAllocator);
-  BOPCol_MapOfShape aMAdd1(100, theAllocator);
+  BOPCol_IndexedMapOfShape aMCB(100, theAllocator);
+  BOPCol_IndexedMapOfShape aMAdd(100, theAllocator);
+  BOPCol_IndexedMapOfShape aMAdd1(100, theAllocator);
   BOPCol_IndexedDataMapOfShapeListOfShape aMEF(100, theAllocator);
   //
   // 1. aMEF
@@ -358,9 +355,9 @@ static
   //
   while(1) {
     aMAdd1.Clear();
-    aItM.Initialize(aMAdd);
-    for (; aItM.More(); aItM.Next()) {
-      const TopoDS_Shape& aF=aItM.Key();
+    aNbAdd = aMAdd.Extent();
+    for (i=1; i<=aNbAdd; ++i) {
+      const TopoDS_Shape& aF=aMAdd(i);
       //
       //aMAdd1.Clear();
       aExp.Init(aF, TopAbs_EDGE);
@@ -384,7 +381,7 @@ static
         }
       }//for (; aExp.More(); aExp.Next()){
       aMCB.Add(aF);
-    }// for (; aItM.More(); aItM.Next()) {
+    }// for (i=1; i<=aNbAdd; ++i) {
     //
     aNbAdd1=aMAdd1.Extent();
     if (!aNbAdd1) {
@@ -392,9 +389,8 @@ static
     }
     //
     aMAdd.Clear();
-    aItM1.Initialize(aMAdd1);
-    for (; aItM1.More(); aItM1.Next()) {
-      const TopoDS_Shape& aFAdd=aItM1.Key();
+    for (i=1; i<=aNbAdd1; ++i) {
+      const TopoDS_Shape& aFAdd=aMAdd1(i);
       aMAdd.Add(aFAdd);
     }
     //
@@ -402,9 +398,8 @@ static
   
   //
   aNbF=aMCB.Extent();
-  aItM.Initialize(aMCB);
-  for (; aItM.More(); aItM.Next()) {
-    const TopoDS_Shape& aF=aItM.Key();
+  for (i=1; i<=aNbF; ++i) {
+    const TopoDS_Shape& aF=aMCB(i);
     theLCB.Append(aF);
   }
 }

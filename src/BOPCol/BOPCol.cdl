@@ -50,6 +50,8 @@ is
     imported ListOfListOfShape from BOPCol;  
     imported SequenceOfShape from BOPCol;  
     imported SequenceOfPnt2d from BOPCol;  
-    imported DataMapOfIntegerListOfShape from BOPCol;  
+    imported DataMapOfIntegerListOfShape from BOPCol;
+    imported IndexedDataMapOfIntegerListOfInteger from BOPCol;
+    imported IndexedDataMapOfShapeInteger from BOPCol;  
     
 end BOPCol;

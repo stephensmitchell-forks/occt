@@ -271,7 +271,7 @@
 //=======================================================================
   void BRepFeat_Builder::RebuildFaces()
 {
-  Standard_Integer aNbS, i, iRank, nSp;
+  Standard_Integer aNbS, i, iRank, nSp, j;
   Standard_Boolean bIsClosed, bIsDegenerated, bToReverse,
                    bRem, bIm, bFlagSD, bVInShapes;
   TopAbs_Orientation anOriF, anOriE;
@@ -334,8 +334,8 @@
     aFF=aF;
     aFF.Orientation(TopAbs_FORWARD);
 
-    const BOPDS_MapOfPaveBlock& aMPBIn=aFI.PaveBlocksIn();
-    const BOPDS_MapOfPaveBlock& aMPBSc=aFI.PaveBlocksSc();
+    const BOPDS_IndexedMapOfPaveBlock& aMPBIn=aFI.PaveBlocksIn();
+    const BOPDS_IndexedMapOfPaveBlock& aMPBSc=aFI.PaveBlocksSc();
 
     aLE.Clear();
 
@@ -378,15 +378,10 @@
           } else {
             bRem = Standard_True;
             aME.Add(aS);
-          }   
+          }
         }
         //
-        if (!bRem && !bIm) {
-          aLE.Append(aE);
-          continue;
-        }
-        //
-        if (bRem && !bIm) {
+        if (!bIm) {
           aLE.Append(aE);
           continue;
         }
@@ -449,10 +444,13 @@
       }
     }
 
+    Standard_Integer aNbPBIn, aNbPBSc;
+    aNbPBIn = aMPBIn.Extent();
+    aNbPBSc = aMPBSc.Extent();
+    //
     //in edges
-    aItMPB.Initialize(aMPBIn);
-    for (; aItMPB.More(); aItMPB.Next()) {
-      const Handle(BOPDS_PaveBlock)& aPB=aItMPB.Value();
+    for (j=1; j<=aNbPBIn; ++j) {
+      const Handle(BOPDS_PaveBlock)& aPB=aMPBIn(j);
       nSp=aPB->Edge();
       aSp=(*(TopoDS_Edge*)(&myDS->Shape(nSp)));
       if (myRemoved.Contains(aSp)) {
@@ -465,9 +463,8 @@
       aLE.Append(aSp);
     }
     //section edges
-    aItMPB.Initialize(aMPBSc);
-    for (; aItMPB.More(); aItMPB.Next()) {
-      const Handle(BOPDS_PaveBlock)& aPB=aItMPB.Value();
+    for (j=1; j<=aNbPBSc; ++j) {
+      const Handle(BOPDS_PaveBlock)& aPB=aMPBSc(j);
       nSp=aPB->Edge();
       aSp=(*(TopoDS_Edge*)(&myDS->Shape(nSp)));
       if (myRemoved.Contains(aSp)) {
@@ -529,6 +526,7 @@
 {
   Standard_Integer nE, nSp, nV1, nV2, nE1, nV, nVx, nVSD;
   Standard_Integer nV11, nV21;
+  Standard_Boolean bOld;
   Standard_Real aT11, aT21;
   Standard_Real aT1, aT2;
   TopoDS_Edge aSp, aE;
@@ -629,6 +627,7 @@
     //
     aItMPB.Initialize(aMPB);
     //check if it is the old pave block.
+    bOld = Standard_False;
     for (; aItMPB.More(); aItMPB.Next()) {
       const Handle(BOPDS_PaveBlock)& aPB1 = aItMPB.Value();
       aPB1->Indices(nV11, nV21);
@@ -637,8 +636,12 @@
           aT1 == aT11 && aT2 == aT21) {
         const TopoDS_Shape& aEIm = myDS->Shape(aPB1->Edge());
         aLIm.Append(aEIm);
-        continue;
+        bOld = Standard_True;
+        break;
       }
+    }
+    if (bOld) {
+      continue;
     }
     //
     aV1=(*(TopoDS_Vertex *)(&myDS->Shape(nV1)));
@@ -671,7 +674,6 @@
   BOPTools_MapOfSet aMST;
   BOPCol_ListOfShape aLSImNew;
   BOPCol_MapOfShape aMS;
-  Standard_Boolean bRem;
   BOPCol_ListIteratorOfListOfShape aIt;
   TopExp_Explorer aExp, aExpF;
   Standard_Boolean bFlagSD;
@@ -743,7 +745,7 @@
   //
   Standard_Boolean bIsIN, bHasImage;
   Standard_Integer aNbS, aNbSolids, i, j, aNbFaces, aNbFP, aNbFPx, aNbFIN, aNbLIF, aNbEFP;
-  Standard_Integer iRank, aNbRem;
+  Standard_Integer aNbRem;
   TopAbs_ShapeEnum aType;  
   TopAbs_State aState;
   TopoDS_Iterator aIt, aItF;

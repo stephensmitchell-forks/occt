@@ -113,9 +113,7 @@
       const Handle(BOPDS_CommonBlock)& aCB=aPB->CommonBlock();
       bCB=!aCB.IsNull();
       if (bCB) {
-        //modified by NIZHNY-EMV Tue Nov 22 10:27:54 2011
         myDS->SortPaveBlocks(aCB);
-        //modified by NIZHNY-EMV Tue Nov 22 10:27:56 2011
         aPB=aCB->PaveBlock1();
       }
       //
@@ -185,7 +183,7 @@
     aF1F=(*(TopoDS_Face *)(&myDS->Shape(nF1)));
     aF1F.Orientation(TopAbs_FORWARD);
     // In
-    const BOPDS_MapOfPaveBlock& aMPBIn=aFI.PaveBlocksIn();
+    const BOPDS_IndexedMapOfPaveBlock& aMPBIn=aFI.PaveBlocksIn();
     aItMPB.Initialize(aMPBIn);
     for(; aItMPB.More(); aItMPB.Next()) {
       const Handle(BOPDS_PaveBlock)& aPB=aItMPB.Value();
@@ -195,7 +193,7 @@
       BOPTools_AlgoTools2D::BuildPCurveForEdgeOnFace(aE, aF1F);
     }
     // On
-    const BOPDS_MapOfPaveBlock& aMPBOn=aFI.PaveBlocksOn();
+    const BOPDS_IndexedMapOfPaveBlock& aMPBOn=aFI.PaveBlocksOn();
     aItMPB.Initialize(aMPBOn);
     for(; aItMPB.More(); aItMPB.Next()) {
       const Handle(BOPDS_PaveBlock)& aPB=aItMPB.Value();
@@ -244,4 +242,46 @@
       }
     }
   }
+}
+
+//=======================================================================
+// function: RefineFaceInfoOn
+// purpose: 
+//=======================================================================
+  void BOPAlgo_PaveFiller::RefineFaceInfoOn() 
+{
+  Standard_Integer aNbPBP;
+  //
+  myErrorStatus=0;
+  //
+  BOPDS_VectorOfListOfPaveBlock& aPBP=myDS->ChangePaveBlocksPool();
+  aNbPBP=aPBP.Extent();
+  if(!aNbPBP) {
+    return;
+  }
+  //
+  Standard_Boolean bV1, bV2;
+  Standard_Integer i, nV1, nV2, aNbPB;
+  Handle(BOPDS_PaveBlock) aPB;
+  //
+  for (i=0; i<aNbPBP; ++i) {
+    BOPDS_ListOfPaveBlock& aLPB=aPBP(i);
+    //
+    aNbPB=aLPB.Extent();
+    if (aNbPB==1) {
+      aPB=aLPB.First();
+      aPB->Indices(nV1, nV2);
+      bV1=myDS->IsNewShape(nV1);
+      bV2=myDS->IsNewShape(nV2);
+      //
+      if (!(bV1 || bV2)) {
+        if (!aPB->IsCommonBlock()) {
+          // the PB seems to be untouced
+          aLPB.Clear();
+          continue;
+        }
+      }//if (!(bV1 || bV2)) {
+    }//if (aNbPB==1) {
+  }//for (i=0; i<aNbPBP; ++i) {
+  myDS->RefineFaceInfoOn();
 }

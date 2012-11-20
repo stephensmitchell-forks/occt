@@ -28,7 +28,7 @@ class FaceInfo from BOPDS
 uses     
     BaseAllocator from BOPCol,
     MapOfInteger from BOPCol,
-    MapOfPaveBlock from BOPDS
+    IndexedMapOfPaveBlock from BOPDS
    
 --raises
 
@@ -70,7 +70,7 @@ is
     -- In 
     --  
     PaveBlocksIn(me) 
-	returns MapOfPaveBlock from BOPDS; 
+	returns IndexedMapOfPaveBlock from BOPDS; 
     ---C++: return const &  
     ---C++: inline 
      	---Purpose: 
@@ -79,7 +79,7 @@ is
 	--- that  have state In 
 	 
     ChangePaveBlocksIn(me:out) 
-    	returns MapOfPaveBlock from BOPDS;  
+    	returns IndexedMapOfPaveBlock from BOPDS;  
     ---C++: return &  
     ---C++: inline    
       	---Purpose: 
@@ -111,7 +111,7 @@ is
     -- On 
     --  
     PaveBlocksOn(me) 
-	returns MapOfPaveBlock from BOPDS; 
+	returns IndexedMapOfPaveBlock from BOPDS; 
     ---C++: return const &  
     ---C++: inline    
     	---Purpose: 
@@ -120,7 +120,7 @@ is
 	--- that  have state On
      
     ChangePaveBlocksOn(me:out) 
-    	returns MapOfPaveBlock from BOPDS;  
+    	returns IndexedMapOfPaveBlock from BOPDS;  
     ---C++: return &  
     ---C++: inline    
       	---Purpose: 
@@ -151,7 +151,7 @@ is
     -- Sections 
     --  
     PaveBlocksSc(me) 
-	returns MapOfPaveBlock from BOPDS; 
+	returns IndexedMapOfPaveBlock from BOPDS; 
     ---C++: return const &  
     ---C++: inline   
     	---Purpose: 
@@ -160,7 +160,7 @@ is
 	--- that are  pave blocks of section edges  
      
     ChangePaveBlocksSc(me:out) 
-    	returns MapOfPaveBlock from BOPDS;  
+    	returns IndexedMapOfPaveBlock from BOPDS;  
     ---C++: return &  
     ---C++: inline  
     	--- Selector/Modifier      
@@ -193,11 +193,11 @@ is
 fields 
     myAllocator   : BaseAllocator from BOPCol is protected; 
     myIndex       : Integer from Standard is protected; 
-    myPaveBlocksIn: MapOfPaveBlock from BOPDS is protected;  
+    myPaveBlocksIn: IndexedMapOfPaveBlock from BOPDS is protected;  
     myVerticesIn  : MapOfInteger from BOPCol is protected;  
-    myPaveBlocksOn: MapOfPaveBlock from BOPDS is protected;  
+    myPaveBlocksOn: IndexedMapOfPaveBlock from BOPDS is protected;  
     myVerticesOn  : MapOfInteger from BOPCol is protected;
-    myPaveBlocksSc: MapOfPaveBlock from BOPDS is protected;  
+    myPaveBlocksSc: IndexedMapOfPaveBlock from BOPDS is protected;  
     myVerticesSc  : MapOfInteger from BOPCol is protected;
  
 end FaceInfo;

@@ -1058,7 +1058,7 @@ static
     iRef=aSI.Reference();
     BOPDS_FaceInfo &aFI=myFaceInfoPool(iRef);
     //
-    BOPDS_MapOfPaveBlock& aMPBIn=aFI.ChangePaveBlocksIn();
+    BOPDS_IndexedMapOfPaveBlock& aMPBIn=aFI.ChangePaveBlocksIn();
     BOPCol_MapOfInteger& aMVIn=aFI.ChangeVerticesIn();
     aMPBIn.Clear();
     aMVIn.Clear();
@@ -1078,7 +1078,7 @@ static
     iRef=aSI.Reference();
     BOPDS_FaceInfo &aFI=myFaceInfoPool(iRef);
     //
-    BOPDS_MapOfPaveBlock& aMPBOn=aFI.ChangePaveBlocksOn();
+    BOPDS_IndexedMapOfPaveBlock& aMPBOn=aFI.ChangePaveBlocksOn();
     BOPCol_MapOfInteger& aMVOn=aFI.ChangeVerticesOn();
     aMPBOn.Clear();
     aMVOn.Clear();
@@ -1090,7 +1090,7 @@ static
 //purpose  : 
 //=======================================================================
   void BOPDS_DS::FaceInfoOn(const Standard_Integer theF,
-                            BOPDS_MapOfPaveBlock& theMPB,
+                            BOPDS_IndexedMapOfPaveBlock& theMPB,
                             BOPCol_MapOfInteger& theMI)
 {
   Standard_Integer nS, nSD, nV1, nV2;
@@ -1135,7 +1135,7 @@ static
 //purpose  : 
 //=======================================================================
   void BOPDS_DS::FaceInfoIn(const Standard_Integer theF,
-                            BOPDS_MapOfPaveBlock& theMPB,
+                            BOPDS_IndexedMapOfPaveBlock& theMPB,
                             BOPCol_MapOfInteger& theMI)
 {
   Standard_Integer i, aNbVF, aNbEF, nV, nE;
@@ -1184,20 +1184,25 @@ static
 //=======================================================================
   void BOPDS_DS::RefineFaceInfoOn()
 {
-  Standard_Integer i, aNb, nF;
-  BOPDS_MapIteratorOfMapOfPaveBlock aIt;
+  Standard_Integer i, aNb, nF, aNbPB, j;
+  BOPDS_IndexedMapOfPaveBlock aMPB;
   //
   aNb=myFaceInfoPool.Extent();
   for (i=0; i<aNb; ++i) {
     BOPDS_FaceInfo &aFI=myFaceInfoPool(i);
     nF=aFI.Index();
     UpdateFaceInfoOn(nF);
-    BOPDS_MapOfPaveBlock& aMPBOn=aFI.ChangePaveBlocksOn();
-    aIt.Initialize(aMPBOn);
-    for(; aIt.More(); aIt.Next()){
-      const Handle(BOPDS_PaveBlock)& aPB=aIt.Value();
-      if (!aPB->HasEdge()) {
-        aMPBOn.Remove(aPB);
+    BOPDS_IndexedMapOfPaveBlock& aMPBOn=aFI.ChangePaveBlocksOn();
+    //
+    aMPB.Clear();
+    aMPB.Assign(aMPBOn);
+    aMPBOn.Clear();
+    //
+    aNbPB=aMPB.Extent();
+    for (j=1; j<=aNbPB; ++j) {
+      const Handle(BOPDS_PaveBlock)& aPB=aMPB(j);
+      if (aPB->HasEdge()) {
+        aMPBOn.Add(aPB);
       }
     }
   }
@@ -1220,7 +1225,7 @@ static
     const BOPDS_FaceInfo& aFI=FaceInfo(theI);
     //
     for (i=0; i<2; ++i) {
-      const BOPDS_MapOfPaveBlock& aMPB=(!i) ? aFI.PaveBlocksIn() : aFI.PaveBlocksSc();
+      const BOPDS_IndexedMapOfPaveBlock& aMPB=(!i) ? aFI.PaveBlocksIn() : aFI.PaveBlocksSc();
       aItMPB.Initialize(aMPB);
       for (; aItMPB.More(); aItMPB.Next()) {
         const Handle(BOPDS_PaveBlock)& aPB=aItMPB.Value();
@@ -1261,7 +1266,7 @@ static
   const BOPDS_FaceInfo& aFI1=FaceInfo(nF1);
   const BOPDS_FaceInfo& aFI2=FaceInfo(nF2);
   //
-  const BOPDS_MapOfPaveBlock& aMPBOn1=aFI1.PaveBlocksOn();
+  const BOPDS_IndexedMapOfPaveBlock& aMPBOn1=aFI1.PaveBlocksOn();
   aItMPB.Initialize(aMPBOn1);
   for (; aItMPB.More(); aItMPB.Next()) {
     const Handle(BOPDS_PaveBlock)& aPB=aItMPB.Value();
@@ -1271,7 +1276,7 @@ static
     aMI.Add(nV2);
   }
   //
-  const BOPDS_MapOfPaveBlock& aMPBIn1=aFI1.PaveBlocksIn();
+  const BOPDS_IndexedMapOfPaveBlock& aMPBIn1=aFI1.PaveBlocksIn();
   aItMPB.Initialize(aMPBIn1);
   for (; aItMPB.More(); aItMPB.Next()) {
     const Handle(BOPDS_PaveBlock)& aPB=aItMPB.Value();
@@ -1281,7 +1286,7 @@ static
     aMI.Add(nV2);
   }
   //
-  const BOPDS_MapOfPaveBlock& aMPBOn2=aFI2.PaveBlocksOn();
+  const BOPDS_IndexedMapOfPaveBlock& aMPBOn2=aFI2.PaveBlocksOn();
   aItMPB.Initialize(aMPBOn2);
   for (; aItMPB.More(); aItMPB.Next()) {
     const Handle(BOPDS_PaveBlock)& aPB=aItMPB.Value();
@@ -1291,7 +1296,7 @@ static
     aMI.Add(nV2);
   }
   //
-  const BOPDS_MapOfPaveBlock& aMPBIn2=aFI2.PaveBlocksIn();
+  const BOPDS_IndexedMapOfPaveBlock& aMPBIn2=aFI2.PaveBlocksIn();
   aItMPB.Initialize(aMPBIn2);
   for (; aItMPB.More(); aItMPB.Next()) {
     const Handle(BOPDS_PaveBlock)& aPB=aItMPB.Value();

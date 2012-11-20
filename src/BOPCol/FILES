@@ -26,3 +26,5 @@ BOPCol_BaseAllocator.hxx
 BOPCol_DataMapOfIntegerListOfShape.hxx
 BOPCol_SequenceOfReal.hxx
 BOPCol_DataMapOfIntegerShape.hxx
+BOPCol_IndexedDataMapOfIntegerListOfInteger.hxx
+BOPCol_IndexedDataMapOfShapeInteger.hxx

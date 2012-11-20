@@ -35,8 +35,10 @@ uses
     MapOfInteger from BOPCol, 
     ListOfInteger from BOPCol, 
     DataMapOfShapeInteger from BOPCol,   
+    IndexedDataMapOfShapeInteger from BOPCol,   
     DataMapOfIntegerListOfInteger from BOPCol, 
     DataMapOfShapeListOfShape from BOPCol,
+    IndexedDataMapOfShapeListOfShape from BOPCol,
     --  
     Context from BOPInt,
     -- 
@@ -47,8 +49,8 @@ uses
     Iterator  from BOPDS, 
     PIterator from BOPDS, 
     PaveBlock from BOPDS, 
-    Curve from BOPDS, 
-    DataMapOfShapeCoupleOfPaveBlocks from BOPDS,  
+    Curve from BOPDS,  
+    IndexedDataMapOfShapeCoupleOfPaveBlocks from BOPDS,
     MapOfPaveBlock from BOPDS,  
     ListOfPaveBlock from BOPDS, 
     ListOfPave from BOPDS, 
@@ -140,14 +142,14 @@ is
         thePB:out PaveBlock from BOPDS) 
       is protected;   
 	 
-    PerformVertices(me:out; 
-        theMVCPB:out DataMapOfShapeCoupleOfPaveBlocks from BOPDS; 
+    PerformVerticesEE(me:out; 
+        theMVCPB:out IndexedDataMapOfShapeCoupleOfPaveBlocks from BOPDS; 
         theAllocator:out BaseAllocator from BOPCol) 
       returns Integer from Standard 
       is protected; 
 	 
-    PerformVertices1(me:out; 
-        theMVCPB:out DataMapOfShapeCoupleOfPaveBlocks from BOPDS; 
+    PerformVerticesEF(me:out; 
+        theMVCPB:out IndexedDataMapOfShapeCoupleOfPaveBlocks from BOPDS; 
         theAllocator:out BaseAllocator from BOPCol) 
       returns Integer from Standard 
       is protected; 
@@ -182,8 +184,7 @@ is
         theTolR3D:Real from Standard; 
         theNC:out Curve from BOPDS; 
         nF1:Integer from Standard; 
-        nF2:Integer from Standard; 
-        aMVB:out MapOfInteger from BOPCol) 
+        nF2:Integer from Standard) 
       is protected;  
 
     ExtendedTolerance(me:out; 
@@ -199,8 +200,7 @@ is
         theTolR3D:Real from Standard; 
         theNC:out Curve from BOPDS;  
         --modified by NIZHNY-EMV Thu Mar 31 14:40:58 2011
-        theMVOnIn:out MapOfInteger from BOPCol; 
-        theMVB:out MapOfInteger from BOPCol) 
+        theMVOnIn:out MapOfInteger from BOPCol) 
         --modified by NIZHNY-EMV Thu Mar 31 14:41:02 2011
       is protected; 
 
@@ -208,7 +208,8 @@ is
         thePB:PaveBlock from BOPDS;  
         theNC:Curve from BOPDS;
         theTolR3D:Real from Standard; 
-        theMPB:MapOfPaveBlock from BOPDS)
+        theMPB:MapOfPaveBlock from BOPDS; 
+        thePBOut:out PaveBlock from BOPDS)
       returns Boolean from Standard 
       is protected;  
  
@@ -221,7 +222,7 @@ is
       is protected;   
      
     PostTreatFF(me:out; 
-        theMSCPB:out DataMapOfShapeCoupleOfPaveBlocks from BOPDS; 
+        theMSCPB:out IndexedDataMapOfShapeCoupleOfPaveBlocks from BOPDS; 
         theMVI:out DataMapOfShapeInteger from BOPCol; 
         theAllocator:out BaseAllocator from BOPCol) 
       returns Integer from Standard 
@@ -305,10 +306,9 @@ is
     ProcessExistingPaveBlocks(me:out; 
         theInt     : Integer from Standard; 
         theMPBOnIn : MapOfPaveBlock from BOPDS; 
-        theMV      : MapOfInteger from BOPCol; 
-        theMPB     : out MapOfPaveBlock from BOPDS; 
-        theMSCPB   : out DataMapOfShapeCoupleOfPaveBlocks from BOPDS; 
-        theMVI     : out DataMapOfShapeInteger from BOPCol)
+        theMSCPB   : out IndexedDataMapOfShapeCoupleOfPaveBlocks from BOPDS; 
+        theMVI     : out DataMapOfShapeInteger from BOPCol; 
+        theMPB     : out MapOfPaveBlock from BOPDS)
       is  protected;        
     --modified by NIZHNY-EMV Fri Dec 23 15:40:06 2011
  
@@ -322,8 +322,8 @@ is
      
     --modified by NIZHNY-EMV Wed Jan 11 10:59:32 2012 
     TreatNewVertices(me:out; 
-        theMVI    : DataMapOfShapeInteger from BOPCol; 
-        theImages : out DataMapOfShapeListOfShape from BOPCol) 
+        theMVI    : IndexedDataMapOfShapeInteger from BOPCol; 
+        theImages : out IndexedDataMapOfShapeListOfShape from BOPCol) 
       is protected;
     --modified by NIZHNY-EMV Wed Jan 11 10:59:33 2012 
      
@@ -336,15 +336,21 @@ is
     --- is closed 3D-curve  
    --modified by NIZHNY-EMV Wed Feb 15 08:40:02 2012
      
-    IsCommonBlockOnFaces(me:out; 
-        aPB  : PaveBlock from BOPDS; 
-        nF1  : Integer from Standard; 
-        nF2  : Integer from Standard)  
-      returns Boolean from Standard 
+    PreparePostTreatFF(me:out; 
+        aInt   : Integer from Standard; 
+        aPB    : PaveBlock from BOPDS;  
+        aMSCPB : out IndexedDataMapOfShapeCoupleOfPaveBlocks from BOPDS; 
+        aMVI   : out DataMapOfShapeInteger from BOPCol; 
+        aVC    : out VectorOfCurve from BOPDS)
       is protected; 
     ---Purpose: 
-    --- Checks if the PaveBlock aPB is common block  
-    --- for faces with indices nF1 and nF2
+    ---Keeps data for post treatment 
+     
+    RefineFaceInfoOn(me:out) 
+      is protected; 
+    ---Purpose: 
+    --- Refines the state On for the all faces having 
+    --- state information 
       
 fields  
     myArguments   : ListOfShape from BOPCol is protected;  

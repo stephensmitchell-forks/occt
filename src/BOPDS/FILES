@@ -28,3 +28,8 @@ BOPDS_VectorOfCurve.hxx
 BOPDS_VectorOfPoint.hxx
 BOPDS_DataMapOfShapeCoupleOfPaveBlocks.hxx
 BOPDS_MapOfPave.hxx
+BOPDS_IndexedDataMapOfPaveBlockListOfPaveBlock.hxx
+BOPDS_DataMapOfIntegerListOfPaveBlock.hxx
+BOPDS_IndexedMapOfPaveBlock.hxx
+BOPDS_IndexedDataMapOfPaveBlockListOfInteger.hxx
+BOPDS_IndexedDataMapOfShapeCoupleOfPaveBlocks.hxx

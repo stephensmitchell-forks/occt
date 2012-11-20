@@ -43,12 +43,11 @@
   void BOPAlgo_BOP::BuildSection()
 {
 
-  Standard_Integer i, aNb, nE;
+  Standard_Integer i, aNb, nE, aNbPB, j;
   TopoDS_Shape aRC;
   BRep_Builder aBB;
   BOPCol_MapOfShape aME;
   BOPDS_ListIteratorOfListOfPaveBlock aItLPB;
-  BOPDS_MapIteratorOfMapOfPaveBlock aItMPB;
   //
   myErrorStatus=0;
   //
@@ -78,11 +77,11 @@
   aNb=aFIP.Extent();
   for (i=0; i<aNb; ++i) {
     const BOPDS_FaceInfo& aFI=aFIP(i);
-    const BOPDS_MapOfPaveBlock& aMPB=aFI.PaveBlocksSc();
+    const BOPDS_IndexedMapOfPaveBlock& aMPB=aFI.PaveBlocksSc();
     //
-    aItMPB.Initialize(aMPB);
-    for (; aItMPB.More(); aItMPB.Next()) {
-      const Handle(BOPDS_PaveBlock)& aPB=aItMPB.Value();
+    aNbPB=aMPB.Extent();
+    for (j=1; j<=aNbPB; ++j) {
+      const Handle(BOPDS_PaveBlock)& aPB=aMPB(j);
       nE=aPB->Edge();
       const TopoDS_Shape& aE=myDS->Shape(nE);
       if (aME.Add(aE)) {

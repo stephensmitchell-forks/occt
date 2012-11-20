@@ -156,7 +156,7 @@ static
   //
   const BOPDS_FaceInfo& aFI=myDS->ChangeFaceInfo(nF);
   // In
-  const BOPDS_MapOfPaveBlock& aMPBIn=aFI.PaveBlocksIn();
+  const BOPDS_IndexedMapOfPaveBlock& aMPBIn=aFI.PaveBlocksIn();
   aItMPB.Initialize(aMPBIn);
   for(; aItMPB.More(); aItMPB.Next()) {
     const Handle(BOPDS_PaveBlock)& aPB=aItMPB.Value();
@@ -166,7 +166,7 @@ static
     }
   }
   // On
-  const BOPDS_MapOfPaveBlock& aMPBOn=aFI.PaveBlocksOn();
+  const BOPDS_IndexedMapOfPaveBlock& aMPBOn=aFI.PaveBlocksOn();
   aItMPB.Initialize(aMPBOn);
   for(; aItMPB.More(); aItMPB.Next()) {
     const Handle(BOPDS_PaveBlock)& aPB=aItMPB.Value();
@@ -176,7 +176,7 @@ static
     }
   }
   // Sections
-  const BOPDS_MapOfPaveBlock& aMPBSc=aFI.PaveBlocksSc();
+  const BOPDS_IndexedMapOfPaveBlock& aMPBSc=aFI.PaveBlocksSc();
   aItMPB.Initialize(aMPBSc);
   for(; aItMPB.More(); aItMPB.Next()) {
     const Handle(BOPDS_PaveBlock)& aPB=aItMPB.Value();

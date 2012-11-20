@@ -148,20 +148,18 @@
   void BOPAlgo_WireSplitter::MakeConnexityBlocks()
 {
   Standard_Boolean bRegular, bClosed;
-  Standard_Integer i, j, aNbV, aNbVS, aNbVP;
+  Standard_Integer i, j, aNbV, aNbVS, aNbVP, k;
   TopoDS_Iterator aItE;
   TopoDS_Shape aER;
   BOPCol_ListIteratorOfListOfShape aIt;
   BOPCol_MapIteratorOfMapOfShape aItM;
   //
   BOPCol_IndexedDataMapOfShapeListOfShape aMVE(100, myAllocator);
-  BOPCol_MapOfShape aMVP(100, myAllocator);
-  //modified by NIZHNY-EMV Wed Oct 06 10:17:57 2010
+  BOPCol_IndexedMapOfShape aMVP(100, myAllocator);
   BOPCol_IndexedMapOfShape aMEC(100, myAllocator);
-  //modified by NIZHNY-EMV Wed Oct 06 10:18:02 2010
   BOPCol_MapOfShape aMER(100, myAllocator);
   BOPCol_MapOfShape aMEP(100, myAllocator);
-  BOPCol_MapOfShape aMVAdd(100, myAllocator);
+  BOPCol_IndexedMapOfShape aMVAdd(100, myAllocator);
   BOPCol_MapOfShape aMVS(100, myAllocator);
   //
   myLCB.Clear();
@@ -202,16 +200,13 @@
     //
     while(1) {
       aNbVP=aMVP.Extent();
-      aItM.Initialize(aMVP);
-      for (; aItM.More(); aItM.Next()) {
-        const TopoDS_Shape& aVP=aItM.Value();
+      for (k=1; k<=aNbVP; ++k) {
+        const TopoDS_Shape& aVP=aMVP(k);
         const BOPCol_ListOfShape& aLE=aMVE.FindFromKey(aVP);
         aIt.Initialize(aLE);
         for (; aIt.More(); aIt.Next()) {
           const TopoDS_Shape& aE=aIt.Value();
-          //modified by NIZHNY-EMV Wed Oct 06 10:18:19 2010
           if (aMEC.Add(aE)) {
-            //modified by NIZHNY-EMV Wed Oct 06 10:18:25 2010
             aItE.Initialize(aE);
             for (; aItE.More(); aItE.Next()) {
               const TopoDS_Shape& aVE=aItE.Value();
@@ -230,9 +225,8 @@
       //
       aMVP.Clear();
       //
-      aItM.Initialize(aMVAdd);
-      for (; aItM.More(); aItM.Next()) {
-        const TopoDS_Shape& aVE=aItM.Value();
+      for (k=1; k<=aNbVP; ++k) {
+        const TopoDS_Shape& aVE=aMVAdd(k);
         aMVP.Add(aVE);
       }
       aMVAdd.Clear();
@@ -245,11 +239,9 @@
     BOPCol_IndexedDataMapOfShapeListOfShape aMVER(100, myAllocator);
     //
     bRegular=Standard_True;
-    //modified by NIZHNY-EMV Wed Oct 06 10:18:45 2010
     Standard_Integer aNbCB = aMEC.Extent();
     for (j = 1; j <= aNbCB; j++) {
       aER = aMEC(j);
-      //modified by NIZHNY-EMV Wed Oct 06 10:18:50 2010
       //
       if (aMER.Contains(aER)) {
         aER.Orientation(TopAbs_FORWARD);
