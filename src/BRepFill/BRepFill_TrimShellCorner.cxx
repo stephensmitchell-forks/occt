@@ -573,7 +573,6 @@ Standard_Boolean MakeFacesNonSec(const Standard_Integer                     theI
       BOPDS_ListOfPave aLP;
       theDS->Paves(anEIndex, aLP);
       BOPDS_ListIteratorOfListOfPave aIt;
-      Standard_Integer pit;
       aIt.Initialize(aLP);
       for ( ; aIt.More(); aIt.Next()) {
         const BOPDS_Pave& aPave = aIt.Value();
@@ -1402,7 +1401,6 @@ Standard_Boolean FindNextVertex(const Standard_Integer                    theEdg
                                 TopoDS_Vertex&                            theNextVertex,
                                 BOPDS_Pave&                               thePave) {
 
-  Standard_Integer i;
   Standard_Boolean bTakePave, bFound;
   BOPDS_Pave aTmpPave;
   BOPDS_ListIteratorOfListOfPave aItP;
