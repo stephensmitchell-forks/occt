@@ -758,8 +758,8 @@ Standard_Integer NbWaysOut(const BOPAlgo_ListOfEdgeInfo& aLEInfo)
     aTV1=aTV - dt;
   }
   //
-  aC2D->D0 (aTV, aPV);
   aC2D->D0 (aTV1, aPV1);
+  aC2D->D0 (aTV, aPV);
   //
   if (aFlag) {//IN
     gp_Vec2d aV2DIn(aPV1, aPV);

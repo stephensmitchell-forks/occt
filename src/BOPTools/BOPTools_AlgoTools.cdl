@@ -147,7 +147,8 @@ is
         theEdge    :Edge  from TopoDS;  
         theFace    :Face  from TopoDS; 
         theLCEF    :out ListOfCoupleOfShape from BOPTools; 
-        theFaceOff :out Face  from TopoDS); 
+        theFaceOff :out Face  from TopoDS; 
+        theContext :out Context from BOPInt); 
      ---Purpose:  For the face theFace and its edge theEdge 
      --           finds the face suitable to produce shell. 
      --           theLCEF - set of faces to search. All faces 

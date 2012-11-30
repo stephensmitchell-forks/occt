@@ -357,7 +357,7 @@ static
           aSelF=(*(TopoDS_Face*)(&aLCSOff.First().Shape2()));
         }
         else if (aNbOff>1){
-          BOPTools_AlgoTools::GetFaceOff(aE, aF, aLCSOff, aSelF);
+          BOPTools_AlgoTools::GetFaceOff(aE, aF, aLCSOff, aSelF, myContext);
           }
         //
         if (!aSelF.IsNull() && AddedFacesMap.Add(aSelF)) { 

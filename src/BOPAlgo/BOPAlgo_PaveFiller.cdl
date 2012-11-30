@@ -223,7 +223,8 @@ is
      
     PostTreatFF(me:out; 
         theMSCPB:out IndexedDataMapOfShapeCoupleOfPaveBlocks from BOPDS; 
-        theMVI:out DataMapOfShapeInteger from BOPCol; 
+        theMVI:out DataMapOfShapeInteger from BOPCol;  
+        theDMExEd:out DataMapOfPaveBlockListOfPaveBlock from BOPDS;
         theAllocator:out BaseAllocator from BOPCol) 
       returns Integer from Standard 
       is protected; 
@@ -313,7 +314,8 @@ is
     --modified by NIZHNY-EMV Fri Dec 23 15:40:06 2011
  
     --modified by NIZHNY-EMV Tue Dec 13 10:21:47 2011 
-    UpdateExistingPaveBlocks(me:out;
+    UpdateExistingPaveBlocks(me:out; 
+        thePB   : PaveBlock from BOPDS;
         theLPB  : out ListOfPaveBlock from BOPDS; 
         nF1     : Integer from Standard; 
         nF2     : Integer from Standard)

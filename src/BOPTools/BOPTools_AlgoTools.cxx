@@ -78,7 +78,8 @@ static
 static
   Standard_Boolean FindFacePairs (const TopoDS_Edge& theE,
                                   const BOPCol_ListOfShape& thLF,
-                                  BOPTools_ListOfCoupleOfShape& theLCFF);
+                                  BOPTools_ListOfCoupleOfShape& theLCFF,
+                                  Handle(BOPInt_Context)& theContext);
 static
   TopAbs_Orientation Orientation(const TopoDS_Edge& anE,
                                  const TopoDS_Face& aF);
@@ -659,7 +660,7 @@ static
     BOPTools_ListOfCoupleOfShape aLCFF;
     BOPTools_ListIteratorOfListOfCoupleOfShape aIt;
     //
-    FindFacePairs(theEdge, theLF, aLCFF);
+    FindFacePairs(theEdge, theLF, aLCFF, theContext);
     //
     aIt.Initialize(aLCFF);
     for (; aIt.More(); aIt.Next()) {
@@ -685,32 +686,11 @@ static
                                                       const TopoDS_Face& theFace2,
                                                       Handle(BOPInt_Context)& theContext)
 {
-  Standard_Boolean bRet;
-  Standard_Real aT1, aT2, aT;//aD1, aD2,
-  gp_Pnt aPx, aPF, aPF1, aPF2;
-  gp_Pnt2d aP2D, aPF2D;
-  gp_Dir aDNF1, aDNF2;
   TopoDS_Edge aE1, aE2;
-  Handle(Geom_Curve)aC3D;
-  gp_Vec aVTgt;
+  TopoDS_Face aFOff;
+  BOPTools_ListOfCoupleOfShape theLCSOff;
+  BOPTools_CoupleOfShape aCS1, aCS2;
   //
-  aC3D =BRep_Tool::Curve(theEdge, aT1, aT2);
-  aT=BOPTools_AlgoTools2D::IntermediatePoint(aT1, aT2);
-  aC3D->D0(aT, aPx);
-  //modified by NIZHNY-EMV Wed Sep 21 13:20:31 2011
-  BOPTools_AlgoTools2D::EdgeTangent(theEdge, aT, aVTgt);
-  gp_Dir aDTtgt(aVTgt);
-  aDTtgt.Reverse();
-  Handle(Geom_Plane) aPL;
-  aPL = new Geom_Plane(aPx, aDTtgt);
-  //modified by NIZHNY-EMV Wed Sep 21 13:20:33 2011
-  //
-  // 1. PF
-  //modified by NIZHNY-EMV Wed Oct 12 08:13:43 2011
-  BOPTools_AlgoTools3D::PointNearEdge (theEdge, theFace, aT, aPF2D, aPF);
-  //modified by NIZHNY-EMV Wed Oct 12 08:13:47 2011
-  // 
-  // 2. E1, E2
   BOPTools_AlgoTools::GetEdgeOnFace(theEdge, theFace1, aE1);
   if (aE1.Orientation()==TopAbs_INTERNAL) {
     aE2=aE1;
@@ -726,68 +706,27 @@ static
     BOPTools_AlgoTools::GetEdgeOnFace(theEdge, theFace2, aE2);
   }
   //
-  // 3
-  bRet=Standard_False;
+  aCS1.SetShape1(theEdge);
+  aCS1.SetShape2(theFace);
+  theLCSOff.Append(aCS1);
   //
-  //modified by NIZHNY-EMV Wed May 25 10:01:51 2011
-  if (!GetProjectPoint(theFace, aPF, theFace1, aPF1, aDNF1, theContext)) {
-    BOPTools_AlgoTools3D::GetApproxNormalToFaceOnEdge (aE1, theFace1, aT, aPF1, aDNF1);
-  }
-  if (!GetProjectPoint(theFace, aPF1, theFace2, aPF2, aDNF2, theContext)) {
-    BOPTools_AlgoTools3D::GetApproxNormalToFaceOnEdge (aE2, theFace2, aT, aPF2, aDNF2);
-  }
-  //modified by NIZHNY-EMV Wed May 25 10:01:53 2011
-  //modified by NIZHNY-EMV Wed Sep 21 13:25:27 2011
-  //get projects of the points aPF, aPF1, aPF2 on the plane aPL
-  //927/R7
-  gp_Pnt aPFx, aPF1x, aPF2x;
-  CorrectPoint(aPF, aPL, aPFx);
-  CorrectPoint(aPF1, aPL, aPF1x);
-  CorrectPoint(aPF2, aPL, aPF2x);
+  aCS2.SetShape1(aE2);
+  aCS2.SetShape2(theFace2);
+  theLCSOff.Append(aCS2);
   //
-  aPF = aPFx; aPF1 = aPF1x; aPF2 = aPF2x;
-  //modified by NIZHNY-EMV Wed Sep 21 13:25:29 2011
+  GetFaceOff(aE1, theFace1, theLCSOff, aFOff, theContext);
   //
-  {
-    Standard_Real aA12, aA1x, aTwoPI;
-    //
-    aTwoPI=2.*M_PI;
-    gp_Vec aVBF (aPx, aPF );
-    gp_Vec aVBF1(aPx, aPF1);
-    gp_Vec aVBF2(aPx, aPF2);
-    //
-    gp_Dir aDTF1;
-    gp_Dir aDBF (aVBF);
-    gp_Dir aDBF1(aVBF1);
-    gp_Dir aDBF2(aVBF2);
-    //
-    aDTF1=aDNF1^aDBF1;
-    //aA12=aDBF1.AngleWithRef(aDBF2, aDTF1);
-    aA12=AngleWithRef(aDBF1, aDBF2, aDTF1);
-    if (aA12<0.) {
-      aA12=aA12+aTwoPI;
-    }
-    //aA1x=aDBF1.AngleWithRef(aDBF , aDTF1);
-    aA1x=AngleWithRef(aDBF1, aDBF , aDTF1);
-    if (aA1x<0.) {
-      aA1x=aA1x+aTwoPI;
-    }
-    //
-    if (aA1x<aA12) {
-      bRet=!bRet; //TopAbs_IN;
-    }
-  }
-  //
-  return bRet;
+  return theFace.IsEqual(aFOff);
 }
 //=======================================================================
 //function : GetFaceOff
 //purpose  : 
 //=======================================================================
   void BOPTools_AlgoTools::GetFaceOff(const TopoDS_Edge& theE1,
-                                  const TopoDS_Face& theF1,
-                                  BOPTools_ListOfCoupleOfShape& theLCSOff,
-                                  TopoDS_Face& theFOff)
+                                      const TopoDS_Face& theF1,
+                                      BOPTools_ListOfCoupleOfShape& theLCSOff,
+                                      TopoDS_Face& theFOff,
+                                      Handle(BOPInt_Context)& theContext)
 {
   Standard_Real aT, aT1, aT2, aAngle, aTwoPI, aAngleMin;
   gp_Pnt aPn1, aPn2, aPx;
@@ -825,30 +764,28 @@ static
     const TopoDS_Edge& aE2=(*(TopoDS_Edge*)(&aCS.Shape1()));
     const TopoDS_Face& aF2=(*(TopoDS_Face*)(&aCS.Shape2()));
     //
-    if (aF2==theF1) {
+    /*if (aF2==theF1) {
       aAngle=M_PI;
     }
     else if (aF2.IsSame(theF1)) {
       aAngle=aTwoPI;
     }
-    else {
-      //modified by NIZHNY-EMV Tue Sep 06 10:49:54 2011
+    else {*/
+    if (!theE1.IsEqual(aE2) || 
+        !GetProjectPoint(theF1, aPn1, aF2, aPn2, aDN2, theContext)) {
       BOPTools_AlgoTools3D::GetApproxNormalToFaceOnEdge (aE2, aF2, aT, aPn2, aDN2);
-      CorrectPoint(aPn2, aPL, aPF2x);
-      gp_Vec aVBF2(aPx, aPF2x);
-      gp_Dir aDBF2(aVBF2);
-      //modified by NIZHNY-EMV Tue Sep 06 10:49:56 2011
-      //aDN2.Reverse();
-      // Angle
-      //aAngle=AngleWithRef(aDN1, aDN2, aDTtgt);
-      aAngle=AngleWithRef(aDBF, aDBF2, aDTF);
-      //modified by NIZHNY-EMV Fri Oct 14 09:39:45 2011
-      //
-      if(aAngle<0.) {
-        aAngle=aTwoPI+aAngle;
-      }
     }
-
+    CorrectPoint(aPn2, aPL, aPF2x);
+    gp_Vec aVBF2(aPx, aPF2x);
+    gp_Dir aDBF2(aVBF2);
+    //Angle
+    aAngle=AngleWithRef(aDBF, aDBF2, aDTF);
+    //
+    if(aAngle<0.) {
+      aAngle=aTwoPI+aAngle;
+    }
+    //}
+  
     if (aAngle<aAngleMin){
       aAngleMin=aAngle;
       theFOff=aF2;
@@ -1503,7 +1440,8 @@ static
 //=======================================================================
 Standard_Boolean FindFacePairs (const TopoDS_Edge& theE,
                                 const BOPCol_ListOfShape& thLF,
-                                BOPTools_ListOfCoupleOfShape& theLCFF)
+                                BOPTools_ListOfCoupleOfShape& theLCFF,
+                                Handle(BOPInt_Context)& theContext)
 {
   Standard_Boolean bFound;
   Standard_Integer i, aNbCEF;
@@ -1561,7 +1499,7 @@ Standard_Boolean FindFacePairs (const TopoDS_Edge& theE,
     }
     //
     // F2
-    BOPTools_AlgoTools::GetFaceOff(aE1, aF1, aLCEFx, aF2);
+    BOPTools_AlgoTools::GetFaceOff(aE1, aF1, aLCEFx, aF2, theContext);
     //
     aCFF.SetShape1(aF1);
     aCFF.SetShape2(aF2);
@@ -1764,7 +1702,7 @@ Standard_Real fsqrt(Standard_Real val)
   Handle(Geom_Surface) aS, aS1;
   GeomAbs_SurfaceType aTS, aTS1;
   Handle(Geom_CylindricalSurface) aCS, aCS1;
-  Standard_Real aR, aR1, dR, aU, aV;
+  Standard_Real aR, aR1, dR, aU, aV, aDMin;
   //
   aS = BRep_Tool::Surface(aF);
   aS1 = BRep_Tool::Surface(aF1);
@@ -1801,6 +1739,10 @@ Standard_Real fsqrt(Standard_Real val)
     GeomAPI_ProjectPointOnSurf& aProjector=aContext->ProjPS(aF1);
     aProjector.Perform(aPF);
     if (!aProjector.IsDone()) {
+      return bRet;
+    }
+    aDMin = aProjector.LowerDistance();
+    if (aDMin > dR) {
       return bRet;
     }
     aProjector.LowerDistanceParameters(aU, aV);
