@@ -137,7 +137,7 @@ void BRepFeat_MakeCylindricalHole::PerformThruNext(const Standard_Real Radius,
     return;
   }
   
-  Standard_Real First=0.,Last=0.,prm;
+  Standard_Real First=0.,Last=0.;
   Standard_Integer IndFrom,IndTo;
   TopAbs_Orientation theOr;
   Standard_Boolean ok = theASI.LocalizeAfter(0.,theOr,IndFrom,IndTo);
