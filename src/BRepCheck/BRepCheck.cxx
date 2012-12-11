@@ -80,112 +80,44 @@ Standard_Boolean BRepCheck::SelfIntersection(const TopoDS_Wire& W,
 void BRepCheck::Print(const BRepCheck_Status stat,
 		      Standard_OStream& OS)
 {
+#define PRINT_CASE(stat) case stat: OS << #stat "\n"; break
 
   switch (stat) {
-  case BRepCheck_NoError:
-    OS << "BRepCheck_NoError\n";
-    break;
-  case BRepCheck_InvalidPointOnCurve:
-    OS << "BRepCheck_InvalidPointOnCurve\n";
-    break;
-  case BRepCheck_InvalidPointOnCurveOnSurface:
-    OS << "BRepCheck_InvalidPointOnCurveOnSurface\n";
-    break;
-  case BRepCheck_InvalidPointOnSurface:
-    OS << "BRepCheck_InvalidPointOnSurface\n";
-    break;
-  case BRepCheck_No3DCurve:
-    OS << "BRepCheck_No3DCurve\n";
-    break;
-  case BRepCheck_Multiple3DCurve:
-    OS << "BRepCheck_Multiple3DCurve\n";
-    break;
-  case BRepCheck_Invalid3DCurve:
-    OS << "BRepCheck_Invalid3DCurve\n";
-    break;
-  case BRepCheck_NoCurveOnSurface:
-    OS << "BRepCheck_NoCurveOnSurface\n";
-    break;
-  case BRepCheck_InvalidCurveOnSurface:
-    OS << "BRepCheck_InvalidCurveOnSurface\n";
-    break;
-  case BRepCheck_InvalidCurveOnClosedSurface:
-    OS << "BRepCheck_InvalidCurveOnClosedSurface\n";
-    break;
-  case BRepCheck_InvalidSameRangeFlag:
-    OS << "BRepCheck_InvalidSameRangeFlag\n";
-    break;
-  case BRepCheck_InvalidSameParameterFlag:
-    OS << "BRepCheck_InvalidSameParameterFlag\n";
-    break;
-  case BRepCheck_InvalidDegeneratedFlag:
-    OS << "BRepCheck_InvalidDegeneratedFlag\n";
-    break;
-  case BRepCheck_FreeEdge:
-    OS << "BRepCheck_FreeEdge\n";
-    break;
-  case BRepCheck_InvalidMultiConnexity:
-    OS << "BRepCheck_InvalidMultiConnexity\n";
-    break;
-  case BRepCheck_InvalidRange:
-    OS << "BRepCheck_InvalidRange\n";
-    break;
-  case BRepCheck_EmptyWire:
-    OS << "BRepCheck_EmptyWire\n";
-    break;
-  case BRepCheck_RedundantEdge:
-    OS << "BRepCheck_RedundantEdge\n";
-    break;
-  case BRepCheck_SelfIntersectingWire:
-    OS << "BRepCheck_SelfIntersectingWire\n";
-    break;
-  case BRepCheck_NoSurface:
-    OS << "BRepCheck_NoSurface\n";
-    break;
-  case BRepCheck_InvalidWire:
-    OS << "BRepCheck_InvalidWire\n";
-    break;
-  case BRepCheck_RedundantWire:
-    OS << "BRepCheck_RedundantWire\n";
-    break;
-  case BRepCheck_IntersectingWires:
-    OS << "BRepCheck_IntersectingWires\n";
-    break;
-  case BRepCheck_InvalidImbricationOfWires:
-    OS << "BRepCheck_InvalidImbricationOfWires\n";
-    break;
-  case BRepCheck_EmptyShell:
-    OS << "BRepCheck_EmptyShell\n";
-    break;
-  case BRepCheck_RedundantFace:
-    OS << "BRepCheck_RedundantFace\n";
-    break;
-  case BRepCheck_UnorientableShape:
-    OS << "BRepCheck_UnorientableShape\n";
-    break;
-  case BRepCheck_NotClosed:
-    OS << "BRepCheck_NotClosed\n";
-    break;
-  case BRepCheck_NotConnected:
-    OS << "BRepCheck_NotConnected\n";
-    break;
-  case BRepCheck_SubshapeNotInShape:      
-    OS << "BRepCheck_SubshapeNotInShape\n";
-    break;
-  case BRepCheck_BadOrientation:
-    OS << "BRepCheck_BadOrientation\n";
-    break;
-  case BRepCheck_BadOrientationOfSubshape:
-    OS << "BRepCheck_BadOrientationOfSubshape\n";
-    break;
-  case BRepCheck_CheckFail:
-    OS << "BRepCheck_CheckFail\n";
-    break;
-#ifndef DEB
+  PRINT_CASE(BRepCheck_NoError);
+  PRINT_CASE(BRepCheck_InvalidPointOnCurve);
+  PRINT_CASE(BRepCheck_InvalidPointOnCurveOnSurface);
+  PRINT_CASE(BRepCheck_InvalidPointOnSurface);
+  PRINT_CASE(BRepCheck_No3DCurve);
+  PRINT_CASE(BRepCheck_Multiple3DCurve);
+  PRINT_CASE(BRepCheck_Invalid3DCurve);
+  PRINT_CASE(BRepCheck_NoCurveOnSurface);
+  PRINT_CASE(BRepCheck_InvalidCurveOnSurface);
+  PRINT_CASE(BRepCheck_InvalidCurveOnClosedSurface);
+  PRINT_CASE(BRepCheck_InvalidSameRangeFlag);
+  PRINT_CASE(BRepCheck_InvalidSameParameterFlag);
+  PRINT_CASE(BRepCheck_InvalidDegeneratedFlag);
+  PRINT_CASE(BRepCheck_FreeEdge);
+  PRINT_CASE(BRepCheck_InvalidMultiConnexity);
+  PRINT_CASE(BRepCheck_InvalidRange);
+  PRINT_CASE(BRepCheck_EmptyWire);
+  PRINT_CASE(BRepCheck_RedundantEdge);
+  PRINT_CASE(BRepCheck_SelfIntersectingWire);
+  PRINT_CASE(BRepCheck_NoSurface);
+  PRINT_CASE(BRepCheck_InvalidWire);
+  PRINT_CASE(BRepCheck_RedundantWire);
+  PRINT_CASE(BRepCheck_IntersectingWires);
+  PRINT_CASE(BRepCheck_InvalidImbricationOfWires);
+  PRINT_CASE(BRepCheck_EmptyShell);
+  PRINT_CASE(BRepCheck_RedundantFace);
+  PRINT_CASE(BRepCheck_UnorientableShape);
+  PRINT_CASE(BRepCheck_NotClosed);
+  PRINT_CASE(BRepCheck_NotConnected);
+  PRINT_CASE(BRepCheck_SubshapeNotInShape);
+  PRINT_CASE(BRepCheck_BadOrientation);
+  PRINT_CASE(BRepCheck_BadOrientationOfSubshape);
+  PRINT_CASE(BRepCheck_InvalidToleranceValue);
+  PRINT_CASE(BRepCheck_CheckFail);
   default:
     break;
-#endif
   }
 }
-
-
