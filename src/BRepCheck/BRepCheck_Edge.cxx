@@ -63,8 +63,6 @@
 #include <TopoDS_Face.hxx>
 #include <Precision.hxx>
 
-
-//modified by NIZNHY-PKV Thu May 05 09:01:57 2011f
 static 
   Standard_Boolean Validate(const Adaptor3d_Curve&,
 			    const Adaptor3d_CurveOnSurface&,
@@ -82,12 +80,6 @@ static
   Standard_Real PrecCurve(const Adaptor3d_Curve& aAC3D);
 static
   Standard_Real PrecSurface(const Adaptor3d_CurveOnSurface& aACS);
-
-//static Standard_Boolean Validate(const Adaptor3d_Curve&,
-//				 const Adaptor3d_Curve&,
-//				 const Standard_Real,
-//				 const Standard_Boolean);
-//modified by NIZNHY-PKV Thu May 05 09:02:01 2011t
 
 #define NCONTROL 23
 
@@ -230,7 +222,6 @@ void BRepCheck_Edge::InContext(const TopoDS_Shape& S)
   Standard_Real Tol = BRep_Tool::Tolerance(TopoDS::Edge(myShape));
 
   TopAbs_ShapeEnum styp = S.ShapeType();
-//  for (TopExp_Explorer exp(S,TopAbs_EDGE); exp.More(); exp.Next()) {
   TopExp_Explorer exp(S,TopAbs_EDGE) ;
   for ( ; exp.More(); exp.Next()) {
     if (exp.Current().IsSame(myShape)) {
@@ -244,6 +235,9 @@ void BRepCheck_Edge::InContext(const TopoDS_Shape& S)
   
   switch (styp) {
   case TopAbs_FACE:
+    if(BRep_Tool::Tolerance(TopoDS::Face(S)) - Tol > Precision::Confusion())  
+      BRepCheck::Add(lst,BRepCheck_InvalidToleranceValue);
+
     if (!myCref.IsNull()) {
       
       Standard_Boolean SameParameter = TE->SameParameter();
