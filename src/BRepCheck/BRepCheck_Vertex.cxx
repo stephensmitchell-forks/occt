@@ -22,6 +22,7 @@
 
 #include <BRepCheck_Vertex.ixx>
 
+#include <BRepCheck.hxx>
 #include <BRepCheck_ListOfStatus.hxx>
 
 #include <BRep_TVertex.hxx>
@@ -46,9 +47,9 @@
 #include <TopExp_Explorer.hxx>
 #include <TopoDS_Iterator.hxx>
 
-#include <BRepCheck.hxx>
 #include <TopoDS.hxx>
 #include <TopoDS_Edge.hxx>
+#include <Precision.hxx>
 
 //=======================================================================
 //function : BRepCheck_Vertex
@@ -115,7 +116,6 @@ void BRepCheck_Vertex::InContext(const TopoDS_Shape& S)
   case TopAbs_EDGE:
     {
       // Try to find the vertex on the edge
-      
       const TopoDS_Edge& E = TopoDS::Edge(S);
       TopoDS_Iterator itv(E.Oriented(TopAbs_FORWARD));
       TopoDS_Vertex VFind;
@@ -149,9 +149,15 @@ void BRepCheck_Vertex::InContext(const TopoDS_Shape& S)
       // VFind is not null for sure
       TopAbs_Orientation orv = VFind.Orientation();
 
-      Standard_Real Tol  = BRep_Tool::Tolerance(TopoDS::Vertex(myShape));
-      Tol = Max(Tol,BRep_Tool::Tolerance(E)); // to check
-      Tol *= Tol;
+      Standard_Real TolV = TV->Tolerance();
+      Standard_Real TolE = BRep_Tool::Tolerance(E);
+      if (TolE > TolV)
+      {
+         if (TolE - TolV > Precision::Confusion())
+           BRepCheck::Add(myMap(S),BRepCheck_InvalidToleranceValue);
+         TolV = TolE;
+      }
+      Standard_Real aTol2 = TolV * TolV;
 
       Handle(BRep_TEdge)& TE = *((Handle(BRep_TEdge)*)&E.TShape());
       BRep_ListIteratorOfListOfCurveRepresentation itcr(TE->Curves());
@@ -173,7 +179,7 @@ void BRepCheck_Vertex::InContext(const TopoDS_Shape& S)
 	      if (pr->IsPointOnCurve(C,L)) {
 		Controlp = C->Value(pr->Parameter());
 		Controlp.Transform(L.Transformation());
-		if (prep.SquareDistance(Controlp)> Tol) {
+		if (prep.SquareDistance(Controlp) > aTol2) {
 		  BRepCheck::Add(myMap(S),BRepCheck_InvalidPointOnCurve);
 		}
 	      }
@@ -184,14 +190,14 @@ void BRepCheck_Vertex::InContext(const TopoDS_Shape& S)
 	      if (orv == TopAbs_FORWARD || multiple) {
 		Controlp = C->Value(GC->First());
 		Controlp.Transform(L.Transformation());
-		if (prep.SquareDistance(Controlp)> Tol) {
+		if (prep.SquareDistance(Controlp) > aTol2) {
 		  BRepCheck::Add(myMap(S),BRepCheck_InvalidPointOnCurve);
 		}
 	      }
 	      if (orv == TopAbs_REVERSED || multiple) {
 		Controlp = C->Value(GC->Last());
 		Controlp.Transform(L.Transformation());
-		if (prep.SquareDistance(Controlp)> Tol) {
+		if (prep.SquareDistance(Controlp) > aTol2) {
 		  BRepCheck::Add(myMap(S),BRepCheck_InvalidPointOnCurve);
 		}
 	      }
@@ -212,18 +218,16 @@ void BRepCheck_Vertex::InContext(const TopoDS_Shape& S)
 	      gp_Pnt2d p2d = PC->Value(pr->Parameter());
 	      Controlp = Su->Value(p2d.X(),p2d.Y());
 	      Controlp.Transform(L.Transformation());
-	      if (prep.SquareDistance(Controlp)> Tol) {
-		BRepCheck::Add(myMap(S),
-			       BRepCheck_InvalidPointOnCurveOnSurface);
+	      if (prep.SquareDistance(Controlp) > aTol2) {
+		BRepCheck::Add(myMap(S), BRepCheck_InvalidPointOnCurveOnSurface);
 	      }
 	    }
 	    if (!PC2.IsNull() && pr->IsPointOnCurveOnSurface(PC2,Su,L)) {
 	      gp_Pnt2d p2d = PC2->Value(pr->Parameter());
 	      Controlp = Su->Value(p2d.X(),p2d.Y());
 	      Controlp.Transform(L.Transformation());
-	      if (prep.SquareDistance(Controlp)> Tol) {
-		BRepCheck::Add(myMap(S),
-			       BRepCheck_InvalidPointOnCurveOnSurface);
+	      if (prep.SquareDistance(Controlp) > aTol2) {
+		BRepCheck::Add(myMap(S), BRepCheck_InvalidPointOnCurveOnSurface);
 	      }
 	    }
 	    itpr.Next();
@@ -247,9 +251,15 @@ void BRepCheck_Vertex::InContext(const TopoDS_Shape& S)
       const Handle(Geom_Surface)& Su = TF->Surface();
       TopLoc_Location L = (Floc * TFloc).Predivided(myShape.Location());
 
-      Standard_Real Tol  = BRep_Tool::Tolerance(TopoDS::Vertex(myShape));
-      Tol = Max(Tol,BRep_Tool::Tolerance(TopoDS::Face(S))); // to check
-      Tol *= Tol;
+      Standard_Real TolV = TV->Tolerance();
+      Standard_Real TolF = TF->Tolerance();
+      if (TolF > TolV)
+      {
+         if (TolF - TolV > Precision::Confusion())
+           BRepCheck::Add(myMap(S),BRepCheck_InvalidToleranceValue);
+         TolV = TolF;
+      }
+      Standard_Real aTol2 = TolV * TolV;
 
       BRep_ListIteratorOfListOfPointRepresentation itpr(TV->Points());
       while (itpr.More()) {
@@ -257,7 +267,7 @@ void BRepCheck_Vertex::InContext(const TopoDS_Shape& S)
 	if (pr->IsPointOnSurface(Su,L)) {
 	  Controlp = Su->Value(pr->Parameter(),pr->Parameter2());
 	  Controlp.Transform(L.Transformation());
-	  if (prep.SquareDistance(Controlp)> Tol) {
+	  if (prep.SquareDistance(Controlp) > aTol2) {
 	    BRepCheck::Add(myMap(S),BRepCheck_InvalidPointOnSurface);
 	  }
 	}
