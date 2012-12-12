@@ -171,6 +171,7 @@ const Handle(MMgt_TShared)& ViewerTest::WClass()
   return theWClass;
 }
 
+#if !defined(__APPLE__) || defined(MACOSX_USE_GLX)
 //==============================================================================
 //function : ViewerInit
 //purpose  : Create the window viewer and initialize all the global variable
@@ -182,9 +183,9 @@ void ViewerTest::ViewerInit (const Standard_Integer thePxLeft,  const Standard_I
   static Standard_Boolean isFirst = Standard_True;
 
   // Default position and dimension of the viewer window.
-  // Note that left top corner is set to be sufficiently small to have 
+  // Note that left top corner is set to be sufficiently small to have
   // window fit in the small screens (actual for remote desktops, see #23003).
-  // The position corresponds to the window's client area, thus some 
+  // The position corresponds to the window's client area, thus some
   // gap is added for window frame to be visible.
   Standard_Integer aPxLeft   = 20;
   Standard_Integer aPxTop    = 40;
@@ -290,6 +291,7 @@ void ViewerTest::ViewerInit (const Standard_Integer thePxLeft,  const Standard_I
   }
   VT_GetWindow()->Map();
 }
+#endif // __APPLE__
 
 //==============================================================================
 //function : Vinit
@@ -658,7 +660,7 @@ void ViewerTest::GetMousePosition(Standard_Integer& Xpix,Standard_Integer& Ypix)
 
 static int ViewProject(Draw_Interpretor& di, const V3d_TypeOfOrientation ori)
 {
-  if ( ViewerTest::CurrentView().IsNull() ) 
+  if ( ViewerTest::CurrentView().IsNull() )
   {
     di<<"Call vinit before this command, please"<<"\n";
     return 1;
@@ -1064,8 +1066,7 @@ static int ViewerMainLoop(Standard_Integer argc, const char** argv)
   return Ppick;
 }
 
-
-#else
+#elif !defined(__APPLE__) || defined(MACOSX_USE_GLX)
 
 int min( int a, int b )
 {
@@ -1425,7 +1426,7 @@ return 0;
 }
 
 
-
+#if !defined(__APPLE__) || defined(MACOSX_USE_GLX)
 //==============================================================================
 //function : InitViewerTest
 //purpose  : initialisation de toutes les variables static de  ViewerTest (dp)
@@ -1459,7 +1460,7 @@ void ViewerTest_InitViewerTest (const Handle(AIS_InteractiveContext)& context)
   }
 #endif
 }
-
+#endif // __APPLE__
 
 //==============================================================================
 //function : VSetBg
@@ -2023,7 +2024,7 @@ static int VGraduatedTrihedron(Draw_Interpretor& di, Standard_Integer argc, cons
   // Create 3D view if it doesn't exist
   if ( aV3dView.IsNull() )
   {
-    ViewerTest::ViewerInit(); 
+    ViewerTest::ViewerInit();
     aV3dView = ViewerTest::CurrentView();
     if( aV3dView.IsNull() )
     {
@@ -2099,7 +2100,7 @@ static int VGraduatedTrihedron(Draw_Interpretor& di, Standard_Integer argc, cons
 //purpose  : Test printing algorithm, print the view to image file with given
 //           width and height. Printing implemented only for WNT.
 //==============================================================================
-static int VPrintView (Draw_Interpretor& di, Standard_Integer argc, 
+static int VPrintView (Draw_Interpretor& di, Standard_Integer argc,
                        const char** argv)
 {
 #ifndef WNT
@@ -2178,7 +2179,7 @@ static int VPrintView (Draw_Interpretor& di, Standard_Integer argc,
 
   Standard_Boolean isSaved = Standard_False, isPrinted = Standard_False;
   if (aBitsOut != NULL)
-  {    
+  {
     if (aMode == 0)
       isPrinted = aView->Print(anDC,1,1,0,Aspect_PA_STRETCH);
     else
@@ -2376,7 +2377,7 @@ V3d_TextItem::V3d_TextItem (const TCollection_AsciiString& theText,
 
 // render item
 void V3d_TextItem::RedrawLayerPrs ()
-{ 
+{
   if (myLayer.IsNull ())
     return;
 
@@ -2388,14 +2389,14 @@ void V3d_TextItem::RedrawLayerPrs ()
 DEFINE_STANDARD_HANDLE(V3d_LineItem, Visual3d_LayerItem)
 
 // The Visual3d_LayerItem line item for "vlayerline" command
-// it provides a presentation of line with user-defined 
+// it provides a presentation of line with user-defined
 // linewidth, linetype and transparency.
-class V3d_LineItem : public Visual3d_LayerItem 
+class V3d_LineItem : public Visual3d_LayerItem
 {
 public:
   // CASCADE RTTI
-  DEFINE_STANDARD_RTTI(V3d_LineItem) 
-  
+  DEFINE_STANDARD_RTTI(V3d_LineItem)
+
   // constructor
   Standard_EXPORT V3d_LineItem(Standard_Real X1, Standard_Real Y1,
                                Standard_Real X2, Standard_Real Y2,
@@ -2420,7 +2421,7 @@ IMPLEMENT_STANDARD_HANDLE(V3d_LineItem, Visual3d_LayerItem)
 IMPLEMENT_STANDARD_RTTIEXT(V3d_LineItem, Visual3d_LayerItem)
 
 // default constructor for line item
-V3d_LineItem::V3d_LineItem(Standard_Real X1, Standard_Real Y1, 
+V3d_LineItem::V3d_LineItem(Standard_Real X1, Standard_Real Y1,
                            Standard_Real X2, Standard_Real Y2,
                            V3d_LayerMgrPointer theLayerMgr,
                            Aspect_TypeOfLine theType,
@@ -2437,7 +2438,7 @@ V3d_LineItem::V3d_LineItem(Standard_Real X1, Standard_Real Y1,
 void V3d_LineItem::RedrawLayerPrs ()
 {
   Handle (Visual3d_Layer) aOverlay;
- 
+
   if (myLayerMgr)
     aOverlay = myLayerMgr->Overlay();
 
@@ -2505,7 +2506,7 @@ static int VLayerLine(Draw_Interpretor& di, Standard_Integer argc, const char** 
   if (argc > 7)
   {
     aTransparency = atof(argv[7]);
-    if (aTransparency < 0 || aTransparency > 1.0) 
+    if (aTransparency < 0 || aTransparency > 1.0)
       aTransparency = 1.0;
   }
 
@@ -2534,9 +2535,9 @@ static int VLayerLine(Draw_Interpretor& di, Standard_Integer argc, const char** 
   aView->SetLayerMgr(aMgr);
 
   // add line item
-  Handle (V3d_LineItem) anItem = new V3d_LineItem(X1, Y1, X2, Y2, 
+  Handle (V3d_LineItem) anItem = new V3d_LineItem(X1, Y1, X2, Y2,
                                                   aMgr.operator->(),
-                                                  aLineType, aWidth, 
+                                                  aLineType, aWidth,
                                                   aTransparency);
 
   // update view
@@ -2572,7 +2573,7 @@ static int VOverlayText (Draw_Interpretor& di, Standard_Integer argc, const char
     di << "(default=255.0 255.0 255.0)\n";
     return 1;
   }
-  
+
   TCollection_AsciiString aText (argv[1]);
   Standard_Real aPosX = atof(argv[2]);
   Standard_Real aPosY = atof(argv[3]);
@@ -2627,9 +2628,9 @@ static int VOverlayText (Draw_Interpretor& di, Standard_Integer argc, const char
     aView->SetLayerMgr (aMgr);
   }
 
-  Quantity_Color aTextColor (aColorRed, aColorGreen, 
+  Quantity_Color aTextColor (aColorRed, aColorGreen,
     aColorBlue, Quantity_TOC_RGB);
-  Quantity_Color aSubtColor (aSubRed, aSubGreen, 
+  Quantity_Color aSubtColor (aSubRed, aSubGreen,
     aSubBlue, Quantity_TOC_RGB);
 
   // add text item
