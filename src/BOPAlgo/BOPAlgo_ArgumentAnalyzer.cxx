@@ -40,16 +40,13 @@
 
 #include <TColStd_Array2OfBoolean.hxx>
 
-#include <IntTools_Context.hxx>
 #include <IntTools_Range.hxx>
-#include <IntTools_ShrunkRange.hxx>
 #include <IntTools_EdgeEdge.hxx>
 #include <IntTools_CommonPrt.hxx>
 
 #include <BOPAlgo_Operation.hxx>
 #include <BOPAlgo_CheckerSI.hxx>
 #include <BOPAlgo_BuilderFace.hxx>
-#include <BOPAlgo_BOP.hxx>
 
 #include <BOPDS_DS.hxx>
 #include <BOPDS_VectorOfInterfVV.hxx>
@@ -59,10 +56,11 @@
 #include <BOPDS_VectorOfInterfEF.hxx>
 #include <BOPDS_VectorOfInterfFF.hxx>
 
-#include <BOPTools_AlgoTools3D.hxx>
-#include <BOPCol_ListOfShape.hxx>
+#include <BOPInt_Context.hxx>
 
-static Standard_Boolean CheckEdge(const TopoDS_Edge& theEdge);
+#include <BOPTools_AlgoTools3D.hxx>
+#include <BOPTools_AlgoTools.hxx>
+#include <BOPCol_ListOfShape.hxx>
 
 // ================================================================================
 // function: Constructor
@@ -271,8 +269,8 @@ void BOPAlgo_ArgumentAnalyzer::TestTypes()
     Standard_Integer aDim1, aDim2;
     Standard_Boolean bBadTypes = Standard_False;
     //
-    aDim1 = BOPAlgo_BOP::Dimension(myShape1);
-    aDim2 = BOPAlgo_BOP::Dimension(myShape2);
+    aDim1 = BOPTools_AlgoTools::Dimension(myShape1);
+    aDim2 = BOPTools_AlgoTools::Dimension(myShape2);
     if (aDim1 < aDim2) {
       if (myOperation == BOPAlgo_FUSE ||
           myOperation == BOPAlgo_CUT21) {
@@ -421,7 +419,10 @@ void BOPAlgo_ArgumentAnalyzer::TestSmallEdge()
 {
   Standard_Integer i = 0;
   BRepExtrema_DistShapeShape aDist;
-
+  Handle(BOPInt_Context) aCtx;
+  //
+  aCtx = new BOPInt_Context;
+  
   for(i = 0; i < 2; i++) {
     TopoDS_Shape aS = (i == 0) ? myShape1 : myShape2;
 
@@ -433,7 +434,7 @@ void BOPAlgo_ArgumentAnalyzer::TestSmallEdge()
     for(; anExp.More(); anExp.Next()) {
       TopoDS_Edge anEdge = TopoDS::Edge(anExp.Current());
 
-      if(!CheckEdge(anEdge)) {
+      if(BOPTools_AlgoTools::IsMicroEdge(anEdge, aCtx)) {
         Standard_Boolean bKeepResult = Standard_True;
         
         if(myOperation == BOPAlgo_SECTION) {
@@ -820,29 +821,3 @@ void BOPAlgo_ArgumentAnalyzer::TestMergeEdge()
 // {
   // not implemented
 // }
-
-// ----------------------------------------------------------------------
-// static function: CheckEdge
-// purpose:
-// ----------------------------------------------------------------------
-Standard_Boolean CheckEdge(const TopoDS_Edge& theEdge) 
-{
-  Handle(IntTools_Context) aContext;
-  TopoDS_Vertex aV1, aV2;
-
-  aContext=new IntTools_Context;
-  TopExp::Vertices(theEdge, aV1, aV2);
-
-
-  if(aV1.IsNull() || aV2.IsNull() || BRep_Tool::Degenerated(theEdge))
-    return Standard_True;
-  Standard_Real aFirst = 0., aLast = 0.;
-  BRep_Tool::Range(theEdge, aFirst, aLast);
-  IntTools_Range aRange(aFirst, aLast);
-  IntTools_ShrunkRange aSR(theEdge, aV1, aV2, aRange, aContext);
-
-  if (!aSR.IsDone() || aSR.ErrorStatus() == 6) {
-    return Standard_False;
-  }
-  return Standard_True;
-}

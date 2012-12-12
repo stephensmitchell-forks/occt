@@ -1,3 +1,14 @@
+if { [array get env os_type] != "" } {
+	set os $env(os_type)
+}
+if { [string compare $os "windows"] == 0 } {
+	puts "TODO #22911 ALL: An exception was caught"
+	puts "TODO #22911 ALL: \\*\\* Exception \\*\\*.*"
+	puts "TODO #22911 ALL: TEST INCOMPLETE"
+} else {
+	puts "TODO #22911 ALL: TEST INCOMPLETE"
+}
+
 cpulimit 900
 
 restore [locate_data_file lh3d_ro1.brep] a

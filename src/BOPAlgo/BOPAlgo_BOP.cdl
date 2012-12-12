@@ -96,24 +96,12 @@ is
 	 
     BuildSection(me:out) 
     is protected;  
-     
-    Dimension(myclass; 
-        theS:Shape from TopoDS) 
-    returns Integer from Standard;
-    --is protected;  
-	 
-    TreatCompound(myclass; 
-        theS:Shape from TopoDS; 
-        theLS:out ListOfShape from BOPCol) 
-    is protected;     
-     
-    --modified by NIZHNY-EMV Fri Sep 02 08:34:17 2011 
+ 
     IsBoundSplits(me:out; 
         theS:Shape from TopoDS; 
         theMEF:out IndexedDataMapOfShapeListOfShape from BOPCol)  
     returns Boolean from Standard
     is protected;
-    --modified by NIZHNY-EMV Fri Sep 02 08:34:19 2011
 
 fields 
     myNbArgs    : Integer from Standard    is protected;

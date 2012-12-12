@@ -285,7 +285,11 @@
             myDS->AddInterf(nE, nF);
             break;
           }
-
+          //update tolerance of edge if needed
+          if (aTolE < aTolF) {
+            myDS->UpdateEdgeTolerance(nE, aTolF);
+            aTolE = aTolF;
+          }
           aEF.SetCommonPart(aCPart);
           // 2
           myDS->AddInterf(nE, nF);

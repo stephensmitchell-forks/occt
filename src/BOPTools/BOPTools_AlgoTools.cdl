@@ -447,5 +447,26 @@ is
       returns Boolean from Standard; 
     ---Purpose: 
     --- Computes projection of the point <aP> on the face <theFace>. 
-    --- Returns TRUE if projection is done.
+    --- Returns TRUE if projection is done. 
+     
+    IsMicroEdge(myclass; 
+        theEdge    : Edge from TopoDS; 
+        theContext : Context from BOPInt)  
+      returns Boolean from Standard; 
+    ---Purpose: 
+    --- Checks if it is possible to compute shrunk range for the edge <aE>. 
+    ---  
+ 
+    CorrectShapeTolerances (myclass;
+        theS: Shape from TopoDS);
+    ---Purpose: 
+    --- Corrects tolerance values of the sub-shapes of the shape <theS> if needed. 
+    ---
+ 
+    Dimension(myclass; 
+        theS:Shape from TopoDS) 
+    returns Integer from Standard;
+    ---Purpose: 
+    --- Retutns dimension of the shape <theS>. 
+    
 end AlgoTools;

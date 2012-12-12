@@ -33,7 +33,11 @@
 
 #include <BRep_Tool.hxx>
 #include <BRep_Builder.hxx>
+#include <TopoDS_Iterator.hxx>
 
+static
+  void TreatCompound(const TopoDS_Shape& theC1, 
+                     BOPCol_ListOfShape& theLSX);
 
 //=======================================================================
 // function: UpdateVertex
@@ -411,4 +415,104 @@
       aNewSR=aSR;
     }
   }
+}
+//=======================================================================
+//function : Dimension
+//purpose  : 
+//=======================================================================
+  Standard_Integer BOPTools_AlgoTools::Dimension(const TopoDS_Shape& theS)
+{
+  Standard_Integer i, iRet, iRx0, iRx;
+  TopAbs_ShapeEnum aTS;
+  BOPCol_ListOfShape aLS;
+  BOPCol_ListIteratorOfListOfShape aIt;
+  //
+  aTS=theS.ShapeType();
+  if (aTS!=TopAbs_COMPOUND) {
+    switch (aTS) {
+      case TopAbs_EDGE:
+      case TopAbs_WIRE:
+        iRet=1;
+        break;
+      case TopAbs_FACE:
+      case TopAbs_SHELL:
+        iRet=2;
+        break;
+      case TopAbs_SOLID:
+      case TopAbs_COMPSOLID:
+        iRet=3;
+        break;
+      default:
+        iRet=0;
+    }
+    return iRet;
+  }
+  //
+  iRet=-1;
+  TreatCompound(theS, aLS);
+  if(aLS.IsEmpty()) {
+    iRet = -2; //empty compound
+    return iRet;
+  }
+  aIt.Initialize(aLS);
+  for (i=0; aIt.More(); aIt.Next()) {
+    const TopoDS_Shape& aSx=aIt.Value(); 
+    iRx=Dimension(aSx);
+    if (!i) {
+      iRx0=iRx;
+      i=1;
+      continue;
+    }
+    if (iRx!=iRx0) {
+      return iRet;// -1
+    }
+  }
+  return iRx;
+}
+
+//=======================================================================
+//function : TreatCompound
+//purpose  : 
+//=======================================================================
+  void TreatCompound(const TopoDS_Shape& theC1, 
+                     BOPCol_ListOfShape& theLSX)
+{
+  Standard_Integer aNbC1;
+  TopAbs_ShapeEnum aType;
+  BOPCol_ListOfShape aLC, aLC1;
+  BOPCol_ListIteratorOfListOfShape aIt, aIt1;
+  TopoDS_Iterator aItC;
+  //
+  aLC.Append (theC1);
+  while(1) {
+    aLC1.Clear();
+    aIt.Initialize(aLC);
+    for (; aIt.More(); aIt.Next()) {
+      const TopoDS_Shape& aC=aIt.Value(); //C is compound
+      //
+      aItC.Initialize(aC);
+      for (; aItC.More(); aItC.Next()) {
+        const TopoDS_Shape& aS=aItC.Value();
+        aType=aS.ShapeType();
+        if (aType==TopAbs_COMPOUND) {
+          aLC1.Append(aS);
+        }
+        else {
+          theLSX.Append(aS);
+        }
+      }
+    }
+    //
+    aNbC1=aLC1.Extent();
+    if (!aNbC1) {
+      break;
+    }
+    //
+    aLC.Clear();
+    aIt.Initialize(aLC1);
+    for (; aIt.More(); aIt.Next()) {
+      const TopoDS_Shape& aSC=aIt.Value();
+      aLC.Append(aSC);
+    }
+  }// while(1)
 }

@@ -530,7 +530,14 @@ is
                 theIndex:Integer from Standard; 
                 theLP:out ListOfPave from BOPDS);
             ---Purpose: Fills theLP with sorted paves  
-            -- of the shape with index theIndex  
+            -- of the shape with index theIndex   
+             
+     UpdateEdgeTolerance(me:out; 
+                 theIndex:Integer from Standard; 
+                 theTolerance:Real from Standard); 
+             ---Purpose: 
+             --- Updates tolerance of the sub-shapes of the shape with index <theIndex>.
+             ---
                
 fields  
     myAllocator        : BaseAllocator from BOPCol is protected;

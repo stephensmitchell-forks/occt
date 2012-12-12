@@ -27,6 +27,8 @@
 #include <TopoDS_Vertex.hxx>
 #include <TopoDS_Face.hxx>
 #include <BRep_Tool.hxx>
+#include <BRep_Builder.hxx>
+#include <BRepBndLib.hxx>
 
 #include <BOPCol_MapOfInteger.hxx>
 
@@ -48,7 +50,8 @@
 {
   Standard_Boolean bJustAdd;
   Standard_Integer iSize, nV, nF, nVSD, iFlag, nVx, i;
-  Standard_Real aT1, aT2;
+  Standard_Real aT1, aT2, aTolF, aTolV;
+  BRep_Builder aBB;
   //
   myErrorStatus=0;
   //
@@ -89,6 +92,9 @@
       const TopoDS_Vertex& aV=(*(TopoDS_Vertex *)(&myDS->Shape(nVx))); 
       const TopoDS_Face& aF=(*(TopoDS_Face *)(&myDS->Shape(nF))); 
       //
+      aTolV = BRep_Tool::Tolerance(aV);
+      aTolF = BRep_Tool::Tolerance(aF);
+      //
       iFlag=myContext->ComputeVF(aV, aF, aT1, aT2);
       if (!iFlag) {
         // 1
@@ -98,6 +104,12 @@
         aVF.SetUV(aT1, aT2);
         // 2
         myDS->AddInterf(nVx, nF);
+        if (aTolV < aTolF) {
+          aBB.UpdateVertex(aV, aTolF);
+          BOPDS_ShapeInfo& aSIV = myDS->ChangeShapeInfo(nVx);
+          Bnd_Box& aBoxV = aSIV.ChangeBox();
+          BRepBndLib::Add(aV, aBoxV);
+        }
       }
     }// for (; myIterator->More(); myIterator->Next()) {
   }// if (iSize) {
@@ -142,7 +154,7 @@
     if (aEE.HasIndexNew()) {
       nV=aEE.IndexNew();
       if (aMI.Add(nV)) {
-	aLIV.Append(nV);
+        aLIV.Append(nV);
       }   
     }   
   }
@@ -183,16 +195,16 @@
       const TopoDS_Face& aF=(*(TopoDS_Face *)(&myDS->Shape(nF))); 
       iFlag=myContext->ComputeVF(aV, aF, aT1, aT2);
       if (!iFlag) {
-	// 1
-	i=aVFs.Append()-1;
-	BOPDS_InterfVF& aVF=aVFs(i);
-	aVF.SetIndices(nV, nF);
-	aVF.SetUV(aT1, aT2);
-	// 2
-	myDS->AddInterf(nV, nF);
-	//
-	BOPCol_MapOfInteger& aMVIn=aFI.ChangeVerticesIn();
-	aMVIn.Add(nV);
+        // 1
+        i=aVFs.Append()-1;
+        BOPDS_InterfVF& aVF=aVFs(i);
+        aVF.SetIndices(nV, nF);
+        aVF.SetUV(aT1, aT2);
+        // 2
+        myDS->AddInterf(nV, nF);
+        //
+        BOPCol_MapOfInteger& aMVIn=aFI.ChangeVerticesIn();
+        aMVIn.Add(nV);
       }
     }
   }

@@ -94,9 +94,6 @@
 #include <BOPInt_ShrunkRange.hxx>
 #include <BOPDS_DataMapOfPaveBlockListOfPaveBlock.hxx>
 
-static Standard_Boolean IsMicroEdge(const TopoDS_Edge& aE,
-                                    const Handle(BOPInt_Context)& aCtx);
-
 static void ToleranceFF(const TopoDS_Face& aF1,
                         const TopoDS_Face& aF2,
                         Standard_Real& aTolFF);
@@ -395,17 +392,16 @@ static void ToleranceFF(const TopoDS_Face& aF1,
         if (bExist) {
           if (aMPBAdd.Add(aPBOut)) {
             if (!aPBOut->IsCommonBlock()) {
-              TopoDS_Edge& aE = *(TopoDS_Edge*)&myDS->Shape(aPBOut->Edge());
-              if (aTolR3D > BRep_Tool::Tolerance(aE)) {
-                BRep_Builder BB;
-                //
-                TopoDS_Vertex& aV1 = *(TopoDS_Vertex*)&myDS->Shape(aPBOut->Pave1().Index());
-                TopoDS_Vertex& aV2 = *(TopoDS_Vertex*)&myDS->Shape(aPBOut->Pave2().Index());
-                //
-                BB.UpdateVertex(aV1, aTolR3D);
-                BB.UpdateVertex(aV2, aTolR3D);
-                BB.UpdateEdge(aE, aTolR3D);
+              Standard_Integer nE;
+              Standard_Real aTolE;
+              //
+              nE = aPBOut->Edge();
+              const TopoDS_Edge& aE = *(TopoDS_Edge*)&myDS->Shape(nE);
+              aTolE = BRep_Tool::Tolerance(aE);
+              if (aTolR3D > aTolE) {
+                myDS->UpdateEdgeTolerance(nE, aTolR3D);
               }
+              //
               PreparePostTreatFF(i, aPBOut, aMSCPB, aMVI, aVC);
             }
           }
@@ -421,7 +417,7 @@ static void ToleranceFF(const TopoDS_Face& aF1,
           BOPTools_AlgoTools::MakePCurve(aES, aF1, aF2, aIC);
         }
         //
-        if (IsMicroEdge(aES, myContext)) {
+        if (BOPTools_AlgoTools::IsMicroEdge(aES, myContext)) {
           continue;
         }
         //
@@ -1694,7 +1690,7 @@ void BOPAlgo_PaveFiller::RemoveUsedVertices(BOPDS_Curve& aNC,
     aPB = aIt.Value();
     if (!aPB->HasShrunkData()) {
       const TopoDS_Edge& aE = *(TopoDS_Edge*)&myDS->Shape(aPB->Edge());
-      if (IsMicroEdge(aE, myContext)) {
+      if (BOPTools_AlgoTools::IsMicroEdge(aE, myContext)) {
         aLPB.Remove(aIt);
         continue;
       }
@@ -1903,44 +1899,6 @@ void BOPAlgo_PaveFiller::RemoveUsedVertices(BOPDS_Curve& aNC,
   aMSCPB.Add(aE, aCPB);
   aMVI.Bind(aV1, nV1);
   aMVI.Bind(aV2, nV2);
-}
-
-//=======================================================================
-//function : IsMicroEdge
-//purpose  : Checks if it is possible to compute shrunk range for the edge <aE>.
-//=======================================================================
-Standard_Boolean IsMicroEdge(const TopoDS_Edge& aE,
-                             const Handle(BOPInt_Context)& aCtx) 
-{
-  Standard_Boolean bRet;
-  Standard_Integer iErr;
-  Standard_Real aT1, aT2, aTmp;
-  Handle(Geom_Curve) aC3D;
-  TopoDS_Vertex aV1, aV2;
-  //
-  bRet=(BRep_Tool::Degenerated(aE) ||
-        !BRep_Tool::IsGeometric(aE));
-  if (bRet) {
-    return bRet;
-  }
-  //
-  aC3D=BRep_Tool::Curve(aE, aT1, aT2);
-  TopExp::Vertices(aE, aV1, aV2);
-  aT1=BRep_Tool::Parameter(aV1, aE);
-  aT2=BRep_Tool::Parameter(aV2, aE);
-  if (aT2<aT1) {
-    aTmp=aT1;
-    aT1=aT2;
-    aT2=aTmp;
-  }
-  //
-  BOPInt_ShrunkRange aSR;
-  aSR.SetData(aE, aT1, aT2, aV1, aV2, aCtx);
-  aSR.Perform();
-  iErr=aSR.ErrorStatus();
-  bRet = !(iErr==0);
-  //
-  return bRet;
 }
 
 //=======================================================================

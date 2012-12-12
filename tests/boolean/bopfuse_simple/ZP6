@@ -20,7 +20,8 @@ if {  [string compare $os "CentOS55-64"] == 0
   ||  [string compare $os "Debian40-64"] == 0
   ||  [string compare $os "Mandriva2008"] == 0
   ||  [string compare $os "Mandriva2008-64"] == 0
-  ||  [string compare $os "SL51-64"] == 0
+  ||  [string compare $os "SL51-64"] == 0 
+  ||  [string compare $os "windows"] == 0 
 } {
   puts "TODO OCC22911 $os: Error : The square of result shape is"
 }

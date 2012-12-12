@@ -1659,6 +1659,39 @@ static
 }
 
 //=======================================================================
+// function: UpdateTolerance
+// purpose:
+//=======================================================================
+  void BOPDS_DS::UpdateEdgeTolerance(const Standard_Integer nE,
+                                     const Standard_Real aTol)
+{
+  Standard_Integer nV;
+  Standard_Real aTolV;
+  BRep_Builder aBB;
+  BOPCol_ListIteratorOfListOfInteger aIt;
+  //
+  const TopoDS_Edge& aE = *(TopoDS_Edge*)&Shape(nE);
+  aBB.UpdateEdge(aE, aTol);
+  BOPDS_ShapeInfo& aSIE=ChangeShapeInfo(nE);
+  Bnd_Box& aBoxE=aSIE.ChangeBox();
+  BRepBndLib::Add(aE, aBoxE);
+  //
+  const BOPCol_ListOfInteger& aLI = aSIE.SubShapes();
+  aIt.Initialize(aLI);
+  for (; aIt.More(); aIt.Next()) {
+    nV = aIt.Value();
+    const TopoDS_Vertex& aV = *(TopoDS_Vertex*)&Shape(nV);
+    aTolV = BRep_Tool::Tolerance(aV);
+    if (aTolV < aTol) {
+      aBB.UpdateVertex(aV, aTol);
+      BOPDS_ShapeInfo& aSIV = ChangeShapeInfo(nV);
+      Bnd_Box& aBoxV = aSIV.ChangeBox();
+      BRepBndLib::Add(aV, aBoxV);
+    }
+  }
+}
+
+//=======================================================================
 //function : TotalShapes
 //purpose  : 
 //=======================================================================

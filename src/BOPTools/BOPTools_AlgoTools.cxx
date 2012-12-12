@@ -67,6 +67,7 @@
 #include <gp_Cylinder.hxx>
 #include <Geom_CylindricalSurface.hxx>
 #include <gp_Lin.hxx>
+#include <BOPInt_ShrunkRange.hxx>
 
 static
   Standard_Real AngleWithRef(const gp_Dir& theD1,
@@ -1753,6 +1754,45 @@ Standard_Real fsqrt(Standard_Real val)
   }
   return bRet;
 }
+
+//=======================================================================
+//function : IsMicroEdge
+//purpose  : 
+//=======================================================================
+  Standard_Boolean BOPTools_AlgoTools::IsMicroEdge(const TopoDS_Edge& aE,
+                                                   const Handle(BOPInt_Context)& aCtx) 
+{
+  Standard_Boolean bRet;
+  Standard_Integer iErr;
+  Standard_Real aT1, aT2, aTmp;
+  Handle(Geom_Curve) aC3D;
+  TopoDS_Vertex aV1, aV2;
+  //
+  bRet=(BRep_Tool::Degenerated(aE) ||
+        !BRep_Tool::IsGeometric(aE));
+  if (bRet) {
+    return bRet;
+  }
+  //
+  aC3D=BRep_Tool::Curve(aE, aT1, aT2);
+  TopExp::Vertices(aE, aV1, aV2);
+  aT1=BRep_Tool::Parameter(aV1, aE);
+  aT2=BRep_Tool::Parameter(aV2, aE);
+  if (aT2<aT1) {
+    aTmp=aT1;
+    aT1=aT2;
+    aT2=aTmp;
+  }
+  //
+  BOPInt_ShrunkRange aSR;
+  aSR.SetData(aE, aT1, aT2, aV1, aV2, aCtx);
+  aSR.Perform();
+  iErr=aSR.ErrorStatus();
+  bRet = !(iErr==0);
+  //
+  return bRet;
+}
+
 /*
 //=======================================================================
 //function : AreFacesSameDomain
