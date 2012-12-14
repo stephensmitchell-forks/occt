@@ -15,13 +15,25 @@
 // purpose or non-infringement. Please see the License for the specific terms
 // and conditions governing the rights and limitations under the License.
 
-
-// This is a draft version of application delegate for the Cocoa application.
+#ifndef _ViewerTest_CocoaEventManager_H__
+#define _ViewerTest_CocoaEventManager_H__
 
 #import <Cocoa/Cocoa.h>
+#include <Handle_AIS_InteractiveContext.hxx>
+#include <Handle_V3d_View.hxx>
 
-@interface Cocoa_AppDelegate : NSObject <NSApplicationDelegate>
+//! Custom Cocoa view to handle events
+@interface ViewerTest_CocoaEventManagerView : NSView
 {
+  Handle_V3d_View               myView3d; //!< handle to 3D view
+  Handle_AIS_InteractiveContext myCtxAis;
 }
 
+//! View initializer - will replace content view in specified NSWindow
+- (id ) initWithView3d: (Handle_V3d_View& )               theView3d
+                 nsWin: (NSWindow* )                      theNsWin
+            contextAis: (Handle_AIS_InteractiveContext& ) theCtxAis;
+
 @end
+
+#endif // _ViewerTest_CocoaEventManager_H__

@@ -1,3 +1,20 @@
+// Copyright (c) 2012 OPEN CASCADE SAS
+//
+// The content of this file is subject to the Open CASCADE Technology Public
+// License Version 6.5 (the "License"). You may not use the content of this file
+// except in compliance with the License. Please obtain a copy of the License
+// at http://www.opencascade.org and read it completely before using this file.
+//
+// The Initial Developer of the Original Code is Open CASCADE S.A.S., having its
+// main offices at: 1, place des Freres Montgolfier, 78280 Guyancourt, France.
+//
+// The Original Code and all software distributed under the License is
+// distributed on an "AS IS" basis, without warranty of any kind, and the
+// Initial Developer hereby disclaims all such warranties, including without
+// limitation, any warranties of merchantability, fitness for a particular
+// purpose or non-infringement. Please see the License for the specific terms
+// and conditions governing the rights and limitations under the License.
+
 #if defined(__APPLE__) && !defined(MACOSX_USE_GLX)
 
 #import <Cocoa/Cocoa.h>
@@ -16,10 +33,10 @@
 #include <V3d_View.hxx>
 #include <OSD_Environment.hxx>
 #include <NIS_View.hxx>
+#include <ViewerTest_CocoaEventManagerView.hxx>
 
-static NSWindow * myWin;
-static Handle(Cocoa_Window) myWindow;
-static Handle(Aspect_GraphicDevice) myDevice3d;
+static Handle(Cocoa_Window) ViewerTest_myCocoaWindow;
+static Handle(Aspect_GraphicDevice) ViewerTest_myDevice3d;
 
 extern const Handle(NIS_InteractiveContext)& TheNISContext();
 
@@ -28,11 +45,6 @@ void ViewerTest::ViewerInit (const Standard_Integer thePxLeft,  const Standard_I
 {
   static Standard_Boolean isFirst = Standard_True;
 
-  // Default position and dimension of the viewer window.
-  // Note that left top corner is set to be sufficiently small to have
-  // window fit in the small screens (actual for remote desktops, see #23003).
-  // The position corresponds to the window's client area, thus some
-  // gap is added for window frame to be visible.
   Standard_Integer aPxLeft   = 20;
   Standard_Integer aPxTop    = 40;
   Standard_Integer aPxWidth  = 409;
@@ -48,53 +60,57 @@ void ViewerTest::ViewerInit (const Standard_Integer thePxLeft,  const Standard_I
   if (isFirst)
   {
 
-    NSRect aRect = NSMakeRect(256, 256, 512, 512);
-    myWin = [NSWindow alloc];
-    [myWin initWithContentRect: aRect
+    NSRect aRect = NSMakeRect (aPxLeft, aPxTop, aPxWidth, aPxHeight);
+    NSWindow * aWin = [NSWindow alloc];
+    [aWin initWithContentRect: aRect
                     styleMask: NSTitledWindowMask | NSClosableWindowMask | NSResizableWindowMask
-     //styleMask: NSBorderlessWindowMask
                       backing: NSBackingStoreBuffered
                         defer: NO];
 
-    [myWin setTitle: @"Test3d"];
-    [myWin makeKeyAndOrderFront: NSApp];
+    [aWin setTitle: @"Test3d"];
+    [aWin makeKeyAndOrderFront: NSApp];
     TCollection_ExtendedString aNameOfWindow ("Visu3D");
-    myDevice3d = new Graphic3d_GraphicDevice (getenv ("DISPLAY"), Xw_TOM_READONLY);
+    ViewerTest_myDevice3d = new Graphic3d_GraphicDevice (getenv ("DISPLAY"), Xw_TOM_READONLY);
 
-    Handle(V3d_Viewer) aViewer3d = new V3d_Viewer (myDevice3d, aNameOfWindow.ToExtString());
-    aViewer3d->SetDefaultBackgroundColor (Quantity_NOC_BLACK);
+    Handle(V3d_Viewer) a3DViewer = new V3d_Viewer (ViewerTest_myDevice3d, aNameOfWindow.ToExtString());
+    a3DViewer->SetDefaultBackgroundColor (Quantity_NOC_BLACK);
+    Handle(V3d_View) aView3d = a3DViewer->CreateView();
 
+    Handle(AIS_InteractiveContext) aCtxAis = new AIS_InteractiveContext (a3DViewer);
 
-    myWindow = new Cocoa_Window ([myWin contentView]);
-    Handle(V3d_View) aView3d = aViewer3d->CreateView();
-    aView3d->SetWindow (myWindow);
+    ViewerTest_CocoaEventManagerView* aViewNs = [ViewerTest_CocoaEventManagerView alloc];
+    [aViewNs initWithView3d: aView3d nsWin: aWin contextAis: aCtxAis];
+
+    ViewerTest_myCocoaWindow = new Cocoa_Window ([aWin contentView]);
+
+    aView3d->SetWindow (ViewerTest_myCocoaWindow);
 
     Handle(NIS_View) aView = Handle(NIS_View)::DownCast (ViewerTest::CurrentView());
     if (aView.IsNull())
     {
-      aView = new NIS_View (aViewer3d, myWindow);
+      aView = new NIS_View (a3DViewer, ViewerTest_myCocoaWindow);
       ViewerTest::CurrentView (aView);
       TheNISContext()->AttachView (aView);
     }
 
     if (ViewerTest::GetAISContext().IsNull())
     {
-      Handle(AIS_InteractiveContext) aCtxAis = new AIS_InteractiveContext (aViewer3d);
-      ViewerTest::SetAISContext(aCtxAis);
+      ViewerTest::SetAISContext (aCtxAis);
     }
 
-    //aView3d->SetZClippingDepth(0.5);
-    //aView3d->SetZClippingWidth(ZCLIPWIDTH/2.);
-    aViewer3d->SetDefaultLights();
-    aViewer3d->SetLightOn();
+    Handle(V3d_View) aCurrentView = ViewerTest::CurrentView();
+    aCurrentView->SetDegenerateModeOn();
 
-    //CocoaSample_View* aViewNs = [CocoaSample_View alloc];
-    //[aViewNs initWithView3d: aView3d nsWin: aWin contextAis: myCtxAis]
+    aCurrentView->SetZClippingDepth (0.5);
+    aCurrentView->SetZClippingWidth (0.5);
+
+    a3DViewer->SetDefaultLights();
+    a3DViewer->SetLightOn();
 
     isFirst = Standard_False;
   }
 
-  myWindow->Map();
+  ViewerTest_myCocoaWindow->Map();
 
 }
 
