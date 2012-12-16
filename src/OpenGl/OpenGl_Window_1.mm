@@ -82,7 +82,6 @@ OpenGl_Window::OpenGl_Window (const Handle(OpenGl_Display)& theDisplay,
   }
 
   NSView* aView = (NSView* )theCWindow.XWindow;
-  ///[aView setOpenGLContext: aGLContext];
   [aGLContext setView: aView];
 
   myGlContext->Init (aGLContext);

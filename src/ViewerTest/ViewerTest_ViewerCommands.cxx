@@ -61,27 +61,28 @@
 #include <Visual3d_Layer.hxx>
 #include <cstdlib>
 
-#ifndef WNT
-#include <Graphic3d_GraphicDevice.hxx>
-#include <Xw_GraphicDevice.hxx>
-#include <Xw_WindowQuality.hxx>
-#include <Xw_Window.hxx>
-#include <X11/Xlib.h> /* contains some dangerous #defines such as Status, True etc. */
-#include <X11/Xutil.h>
-#include <tk.h>
+#if defined(_WIN32) || defined(__WIN32__)
+  #include <Graphic3d_WNTGraphicDevice.hxx>
+  #include <WNT_WClass.hxx>
+  #include <WNT_Window.hxx>
 
+  #if defined(_MSC_VER)
+    #define _CRT_SECURE_NO_DEPRECATE
+    #pragma warning (disable:4996)
+  #endif
+#elif defined(__APPLE__) && !defined(MACOSX_USE_GLX)
+  #include <Graphic3d_GraphicDevice.hxx>
+  #include <Cocoa_Window.hxx>
+  #include <tk.h>
 #else
-
-#include <Graphic3d_WNTGraphicDevice.hxx>
-#include <WNT_WClass.hxx>
-#include <WNT_Window.hxx>
-
-#define _CRT_SECURE_NO_DEPRECATE
-#pragma warning (disable:4996)
-
+  #include <Graphic3d_GraphicDevice.hxx>
+  #include <Xw_GraphicDevice.hxx>
+  #include <Xw_WindowQuality.hxx>
+  #include <Xw_Window.hxx>
+  #include <X11/Xlib.h> /* contains some dangerous #defines such as Status, True etc. */
+  #include <X11/Xutil.h>
+  #include <tk.h>
 #endif
-
-#define OCC120
 
 //==============================================================================
 
@@ -94,7 +95,7 @@ Standard_IMPORT Standard_Boolean Draw_VirtualWindows;
 Standard_EXPORT int ViewerMainLoop(Standard_Integer , const char** argv);
 extern const Handle(NIS_InteractiveContext)& TheNISContext();
 
-#ifdef WNT
+#if defined(_WIN32) || defined(__WIN32__)
 static Handle(Graphic3d_WNTGraphicDevice)& GetG3dDevice(){
   static Handle(Graphic3d_WNTGraphicDevice) GD;
   return GD;
@@ -104,7 +105,18 @@ static Handle(WNT_Window)& VT_GetWindow() {
   static Handle(WNT_Window) WNTWin;
   return WNTWin;
 }
-
+#elif defined(__APPLE__) && !defined(MACOSX_USE_GLX)
+static Handle(Graphic3d_GraphicDevice)& GetG3dDevice()
+{
+  static Handle(Graphic3d_GraphicDevice) aGraphicDevice;
+  return aGraphicDevice;
+}
+static Handle(Cocoa_Window)& VT_GetWindow()
+{
+  static Handle(Cocoa_Window) aWindow;
+  return aWindow;
+}
+extern void ViewerTest_SetCocoaEventManagerView (const Handle(Cocoa_Window)& theWindow);
 #else
 static Handle(Graphic3d_GraphicDevice)& GetG3dDevice(){
   static Handle(Graphic3d_GraphicDevice) GD;
@@ -119,9 +131,7 @@ static Display *display;
 static void VProcessEvents(ClientData,int);
 #endif
 
-#ifdef OCC120
 static Standard_Boolean DegenerateMode = Standard_True;
-#endif
 
 #define ZCLIPWIDTH 1.
 
@@ -133,9 +143,10 @@ static void OSWindowSetup();
 
 static int Start_Rot = 0;
 static int ZClipIsOn = 0;
-static int X_Motion= 0,Y_Motion=0; // Current cursor position
-static int X_ButtonPress = 0, Y_ButtonPress = 0; // Last ButtonPress position
-
+int X_Motion = 0; // Current cursor position
+int Y_Motion = 0;
+int X_ButtonPress = 0; // Last ButtonPress position
+int Y_ButtonPress = 0;
 
 //==============================================================================
 
@@ -161,8 +172,9 @@ static LRESULT WINAPI AdvViewerWindowProc(
 const Handle(MMgt_TShared)& ViewerTest::WClass()
 {
   static Handle(MMgt_TShared) theWClass;
-#ifdef WNT
-  if (theWClass.IsNull()) {
+#if defined(_WIN32) || defined(__WIN32__)
+  if (theWClass.IsNull())
+  {
     theWClass = new WNT_WClass ("GW3D_Class", AdvViewerWindowProc,
       CS_VREDRAW | CS_HREDRAW, 0, 0,
       ::LoadCursor (NULL, IDC_ARROW));
@@ -171,7 +183,6 @@ const Handle(MMgt_TShared)& ViewerTest::WClass()
   return theWClass;
 }
 
-#if !defined(__APPLE__) || defined(MACOSX_USE_GLX)
 //==============================================================================
 //function : ViewerInit
 //purpose  : Create the window viewer and initialize all the global variable
@@ -202,7 +213,7 @@ void ViewerTest::ViewerInit (const Standard_Integer thePxLeft,  const Standard_I
   if (isFirst)
   {
     // Create the Graphic device
-#ifdef WNT
+#if defined(_WIN32) || defined(__WIN32__)
     if (GetG3dDevice().IsNull()) GetG3dDevice() = new Graphic3d_WNTGraphicDevice();
     if (VT_GetWindow().IsNull())
     {
@@ -215,7 +226,18 @@ void ViewerTest::ViewerInit (const Standard_Integer thePxLeft,  const Standard_I
                                        aPxLeft, aPxTop,
                                        aPxWidth, aPxHeight,
                                        Quantity_NOC_BLACK);
-      VT_GetWindow()->SetVirtual (Draw_VirtualWindows);
+    }
+#elif defined(__APPLE__) && !defined(MACOSX_USE_GLX)
+    if (GetG3dDevice().IsNull())
+    {
+      GetG3dDevice() = new Graphic3d_GraphicDevice (getenv ("DISPLAY"), Xw_TOM_READONLY);
+    }
+    if (VT_GetWindow().IsNull())
+    {
+      VT_GetWindow() = new Cocoa_Window ("Test3d",
+                                         aPxLeft, aPxTop,
+                                         aPxWidth, aPxHeight);
+      ViewerTest_SetCocoaEventManagerView (VT_GetWindow());
     }
 #else
     if (GetG3dDevice().IsNull()) GetG3dDevice() =
@@ -228,9 +250,9 @@ void ViewerTest::ViewerInit (const Standard_Integer thePxLeft,  const Standard_I
                                       aPxWidth, aPxHeight,
                                       Xw_WQ_3DQUALITY,
                                       Quantity_NOC_BLACK);
-      VT_GetWindow()->SetVirtual (Draw_VirtualWindows);
     }
 #endif
+    VT_GetWindow()->SetVirtual (Draw_VirtualWindows);
 
     Handle(V3d_Viewer) a3DViewer, a3DCollector;
     // Viewer and View creation
@@ -267,9 +289,7 @@ void ViewerTest::ViewerInit (const Standard_Integer thePxLeft,  const Standard_I
     Handle (V3d_View) V = ViewerTest::CurrentView();
 
     V->SetDegenerateModeOn();
-#ifdef OCC120
     DegenerateMode = V->DegenerateModeIsOn();
-#endif
     //    V->SetWindow(VT_GetWindow(), NULL, MyViewProc, NULL);
 
     V->SetZClippingDepth(0.5);
@@ -277,21 +297,22 @@ void ViewerTest::ViewerInit (const Standard_Integer thePxLeft,  const Standard_I
     a3DViewer->SetDefaultLights();
     a3DViewer->SetLightOn();
 
-#ifndef WNT
-#if TCL_MAJOR_VERSION  < 8
+  #if !defined(_WIN32) && !defined(__WIN32__) && (!defined(__APPLE__) || defined(MACOSX_USE_GLX))
+  #if TCL_MAJOR_VERSION  < 8
     Tk_CreateFileHandler((void*)ConnectionNumber(display),
       TK_READABLE, VProcessEvents, (ClientData) VT_GetWindow()->XWindow() );
-#else
+  #else
     Tk_CreateFileHandler(ConnectionNumber(display),
       TK_READABLE, VProcessEvents, (ClientData) VT_GetWindow()->XWindow() );
-#endif
-#endif
+  #endif
+  #endif
 
     isFirst = Standard_False;
   }
+
   VT_GetWindow()->Map();
+  ViewerTest::CurrentView()->Redraw();
 }
-#endif // __APPLE__
 
 //==============================================================================
 //function : Vinit
@@ -310,11 +331,10 @@ static int VInit (Draw_Interpretor& , Standard_Integer argc, const char** argv)
 }
 
 //==============================================================================
-//function : ProcessKeyPress
+//function : VT_ProcessKeyPress
 //purpose  : Handle KeyPress event from a CString
 //==============================================================================
-
-static void ProcessKeyPress( char *buf_ret )
+void VT_ProcessKeyPress (const char* buf_ret)
 {
   //cout << "KeyPress" << endl;
   const Handle(V3d_View) aView = ViewerTest::CurrentView();
@@ -339,20 +359,15 @@ static void ProcessKeyPress( char *buf_ret )
   else if ( !strcasecmp(buf_ret, "H") ) {
     // HLR
     cout << "HLR" << endl;
-#ifdef OCC120
+
     if (aView->DegenerateModeIsOn()) ViewerTest::CurrentView()->SetDegenerateModeOff();
     else aView->SetDegenerateModeOn();
     DegenerateMode = aView->DegenerateModeIsOn();
-#else
-    ViewerTest::CurrentView()->SetDegenerateModeOff();
-#endif
   }
   else if ( !strcasecmp(buf_ret, "S") ) {
     // SHADING
     cout << "passage en mode 1 (shading pour les shapes)" << endl;
-#ifndef OCC120
-    ViewerTest::CurrentView()->SetDegenerateModeOn();
-#endif
+
     Handle(AIS_InteractiveContext) Ctx = ViewerTest::GetAISContext();
     if(Ctx->NbCurrents()==0 ||
       Ctx->NbSelected()==0)
@@ -372,9 +387,7 @@ static void ProcessKeyPress( char *buf_ret )
   else if ( !strcasecmp(buf_ret, "U") ) {
     // Unset display mode
     cout<<"passage au mode par defaut"<<endl;
-#ifndef OCC120
-    ViewerTest::CurrentView()->SetDegenerateModeOn();
-#endif
+
     Handle(AIS_InteractiveContext) Ctx = ViewerTest::GetAISContext();
     if(Ctx->NbCurrents()==0 ||
       Ctx->NbSelected()==0)
@@ -411,13 +424,7 @@ static void ProcessKeyPress( char *buf_ret )
 
   else if ( !strcasecmp(buf_ret, "W") ) {
     // WIREFRAME
-#ifndef OCC120
-    ViewerTest::CurrentView()->SetDegenerateModeOn();
-#endif
     cout << "passage en mode 0 (filaire pour les shapes)" << endl;
-#ifndef OCC120
-    ViewerTest::CurrentView()->SetDegenerateModeOn();
-#endif
     Handle(AIS_InteractiveContext) Ctx = ViewerTest::GetAISContext();
     if(Ctx->NbCurrents()==0 ||
       Ctx->NbSelected()==0)
@@ -469,38 +476,44 @@ static void ProcessKeyPress( char *buf_ret )
 }
 
 //==============================================================================
-//function : ProcessExpose
+//function : VT_ProcessExpose
 //purpose  : Redraw the View on an Expose Event
 //==============================================================================
-
-static void ProcessExpose(  )
-{ //cout << "Expose" << endl;
-  ViewerTest::CurrentView()->Redraw();
+void VT_ProcessExpose()
+{
+  Handle(V3d_View) aView3d = ViewerTest::CurrentView();
+  if (!aView3d.IsNull())
+  {
+    aView3d->Redraw();
+  }
 }
 
 //==============================================================================
-//function : ProcessConfigure
+//function : VT_ProcessConfigure
 //purpose  : Resize the View on an Configure Event
 //==============================================================================
-
-static void ProcessConfigure()
+void VT_ProcessConfigure()
 {
-  Handle(V3d_View) V = ViewerTest::CurrentView();
-  V->MustBeResized();
-  V->Update();
-  V->Redraw();
+  Handle(V3d_View) aView3d = ViewerTest::CurrentView();
+  if (aView3d.IsNull())
+  {
+    return;
+  }
+
+  aView3d->MustBeResized();
+  aView3d->Update();
+  aView3d->Redraw();
 }
 
 //==============================================================================
-//function : ProcessButton1Press
+//function : VT_ProcessButton1Press
 //purpose  : Picking
 //==============================================================================
-
-static Standard_Boolean ProcessButton1Press(
+Standard_Boolean VT_ProcessButton1Press(
   Standard_Integer ,
-  const char** argv,
+  const char**     argv,
   Standard_Boolean pick,
-  Standard_Boolean shift )
+  Standard_Boolean shift)
 {
   Handle(ViewerTest_EventManager) EM = ViewerTest::CurrentEventManager();
   if ( pick ) {
@@ -522,35 +535,27 @@ static Standard_Boolean ProcessButton1Press(
 }
 
 //==============================================================================
-//function : ProcessButton3Press
+//function : VT_ProcessButton3Press
 //purpose  : Start Rotation
 //==============================================================================
-
-static void ProcessButton3Press()
-
-{ // Start rotation
+void VT_ProcessButton3Press()
+{
   Start_Rot = 1;
   ViewerTest::CurrentView()->SetDegenerateModeOn();
   ViewerTest::CurrentView()->StartRotation( X_ButtonPress, Y_ButtonPress );
-
 }
-//==============================================================================
-//function : ProcessButtonRelease
-//purpose  : Start Rotation
-//==============================================================================
 
-static void ProcessButtonRelease()
-
-{ // End rotation
-#ifdef OCC120
-  if (Start_Rot) {
+//==============================================================================
+//function : VT_ProcessButtonRelease
+//purpose  : End rotation
+//==============================================================================
+void VT_ProcessButtonRelease()
+{
+  if (Start_Rot)
+  {
     Start_Rot = 0;
     if (!DegenerateMode) ViewerTest::CurrentView()->SetDegenerateModeOff();
   }
-#else
-  Start_Rot = 0;
-  ViewerTest::CurrentView()->SetDegenerateModeOff();
-#endif
 }
 
 //==============================================================================
@@ -607,11 +612,10 @@ static void ProcessControlButton1Motion()
 }
 
 //==============================================================================
-//function : ProcessControlButton2Motion
-//purpose  : Pann
+//function : VT_ProcessControlButton2Motion
+//purpose  : Panning
 //==============================================================================
-
-static void ProcessControlButton2Motion()
+void VT_ProcessControlButton2Motion()
 {
   Quantity_Length dx = ViewerTest::CurrentView()->Convert(X_Motion - X_ButtonPress);
   Quantity_Length dy = ViewerTest::CurrentView()->Convert(Y_Motion - Y_ButtonPress);
@@ -625,21 +629,22 @@ static void ProcessControlButton2Motion()
 }
 
 //==============================================================================
-//function : ProcessControlButton3Motion
+//function : VT_ProcessControlButton3Motion
 //purpose  : Rotation
 //==============================================================================
-
-static void ProcessControlButton3Motion()
+void VT_ProcessControlButton3Motion()
 {
-  if ( Start_Rot ) ViewerTest::CurrentView()->Rotation( X_Motion, Y_Motion);
+  if (Start_Rot)
+  {
+    ViewerTest::CurrentView()->Rotation (X_Motion, Y_Motion);
+  }
 }
 
 //==============================================================================
-//function : ProcessPointerMotion
-//purpose  : Rotation
+//function : VT_ProcessMotion
+//purpose  :
 //==============================================================================
-
-static void ProcessMotion()
+void VT_ProcessMotion()
 {
   //pre-hilights detected objects at mouse position
 
@@ -907,41 +912,36 @@ static LRESULT WINAPI ViewerWindowProc( HWND hwnd,
       VT_GetWindow()->Unmap();
       return 0;
     case WM_PAINT:
-      //cout << "\t WM_PAINT" << endl;
       BeginPaint(hwnd, &ps);
       EndPaint(hwnd, &ps);
-      ProcessExpose();
+      VT_ProcessExpose();
       break;
 
     case WM_SIZE:
-      //cout << "\t WM_SIZE" << endl;
-      ProcessConfigure();
+      VT_ProcessConfigure();
       break;
 
     case WM_KEYDOWN:
-      //cout << "\t WM_KEYDOWN " << (int) wParam << endl;
-
-      if ( (wParam != VK_SHIFT) && (wParam != VK_CONTROL) ) {
+      if ((wParam != VK_SHIFT) && (wParam != VK_CONTROL))
+      {
         char c[2];
         c[0] = (char) wParam;
         c[1] = '\0';
-        ProcessKeyPress( c);
+        VT_ProcessKeyPress (c);
       }
       break;
 
     case WM_LBUTTONUP:
     case WM_MBUTTONUP:
     case WM_RBUTTONUP:
-      //cout << "\t WM_xBUTTONUP" << endl;
       Up = 1;
-      ProcessButtonRelease();
+      VT_ProcessButtonRelease();
       break;
 
     case WM_LBUTTONDOWN:
     case WM_MBUTTONDOWN:
     case WM_RBUTTONDOWN:
       {
-        //cout << "\t WM_xBUTTONDOWN" << endl;
         WPARAM fwKeys = wParam;
 
         Up = 0;
@@ -949,15 +949,21 @@ static LRESULT WINAPI ViewerWindowProc( HWND hwnd,
         X_ButtonPress = LOWORD(lParam);
         Y_ButtonPress = HIWORD(lParam);
 
-        if ( Msg == WM_LBUTTONDOWN) {
-          if(fwKeys & MK_CONTROL) {
-            Ppick = ProcessButton1Press( Pargc, Pargv, Ppick,  (fwKeys & MK_SHIFT) );
-          } else
-            ProcessButton1Press( Pargc, Pargv, Ppick,  (fwKeys & MK_SHIFT) );
+        if (Msg == WM_LBUTTONDOWN)
+        {
+          if (fwKeys & MK_CONTROL)
+          {
+            Ppick = VT_ProcessButton1Press (Pargc, Pargv, Ppick, (fwKeys & MK_SHIFT));
+          }
+          else
+          {
+            VT_ProcessButton1Press (Pargc, Pargv, Ppick, (fwKeys & MK_SHIFT));
+          }
         }
-        else if ( Msg == WM_RBUTTONDOWN ) {
+        else if (Msg == WM_RBUTTONDOWN)
+        {
           // Start rotation
-          ProcessButton3Press( );
+          VT_ProcessButton3Press();
         }
       }
       break;
@@ -977,7 +983,7 @@ static LRESULT WINAPI ViewerWindowProc( HWND hwnd,
 
             if ( fwKeys & MK_RBUTTON ) {
               // Start rotation
-              ProcessButton3Press();
+              VT_ProcessButton3Press();
             }
           }
 
@@ -988,10 +994,10 @@ static LRESULT WINAPI ViewerWindowProc( HWND hwnd,
             else if ( fwKeys & MK_MBUTTON ||
               ((fwKeys&MK_LBUTTON) &&
               (fwKeys&MK_RBUTTON) ) ){
-                ProcessControlButton2Motion();
+                VT_ProcessControlButton2Motion();
               }
             else if ( fwKeys & MK_RBUTTON ) {
-              ProcessControlButton3Motion();
+              VT_ProcessControlButton3Motion();
             }
           }
 #ifdef BUG
@@ -1005,11 +1011,14 @@ static LRESULT WINAPI ViewerWindowProc( HWND hwnd,
           }
 #endif
           else
-            if (( fwKeys & MK_MBUTTON || ((fwKeys&MK_LBUTTON) && (fwKeys&MK_RBUTTON) ) )){
+            if ((fwKeys & MK_MBUTTON
+            || ((fwKeys & MK_LBUTTON) && (fwKeys & MK_RBUTTON))))
+            {
               ProcessZClipMotion();
             }
-            else {
-              ProcessMotion();
+            else
+            {
+              VT_ProcessMotion();
             }
       }
       break;
@@ -1053,7 +1062,7 @@ static int ViewerMainLoop(Standard_Integer argc, const char** argv)
 
     //while ( Ppick == -1 ) {
     while ( Ppick == 1 ) {
-      // Wait for a ProcessButton1Press() to toggle pick to 1 or 0
+      // Wait for a VT_ProcessButton1Press() to toggle pick to 1 or 0
       if (GetMessage(&msg, NULL, 0, 0) ) {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
@@ -1099,12 +1108,12 @@ XNextEvent( display, &report );
 switch ( report.type ) {
       case Expose:
         {
-          ProcessExpose();
+          VT_ProcessExpose();
         }
         break;
       case ConfigureNotify:
         {
-          ProcessConfigure();
+          VT_ProcessConfigure();
         }
         break;
       case KeyPress:
@@ -1122,8 +1131,9 @@ switch ( report.type ) {
 
           buf_ret[ret_len] = '\0' ;
 
-          if ( ret_len ) {
-            ProcessKeyPress( buf_ret);
+          if (ret_len)
+          {
+            VT_ProcessKeyPress (buf_ret);
           }
         }
         break;
@@ -1133,10 +1143,12 @@ switch ( report.type ) {
           X_ButtonPress = report.xbutton.x;
           Y_ButtonPress = report.xbutton.y;
 
-          if ( report.xbutton.button == Button1 )
-            if(  report.xbutton.state & ControlMask )
-              pick = ProcessButton1Press( argc, argv, pick,
-              ( report.xbutton.state & ShiftMask) );
+          if (report.xbutton.button == Button1)
+          {
+            if (report.xbutton.state & ControlMask)
+            {
+              pick = VT_ProcessButton1Press (argc, argv, pick, (report.xbutton.state & ShiftMask));
+            }
             else
             {
               IsDragged = Standard_True;
@@ -1144,9 +1156,12 @@ switch ( report.type ) {
               yy1 = Y_ButtonPress;
               DragFirst = Standard_True;
             }
-          else if ( report.xbutton.button == Button3 )
+          }
+          else if (report.xbutton.button == Button3)
+          {
             // Start rotation
-            ProcessButton3Press();
+            VT_ProcessButton3Press();
+          }
         }
         break;
       case ButtonRelease:
@@ -1201,12 +1216,12 @@ switch ( report.type ) {
                   //                   cout << "select" << endl;
                 }
             else
-              ProcessButtonRelease();
+              VT_ProcessButtonRelease();
 
             IsDragged = Standard_False;
           }
           else
-            ProcessButtonRelease();
+            VT_ProcessButtonRelease();
         }
         break;
       case MotionNotify:
@@ -1274,14 +1289,15 @@ switch ( report.type ) {
                 ProcessControlButton1Motion();
               }
               else if ( report.xmotion.state & Button2Mask ) {
-                ProcessControlButton2Motion();
+                VT_ProcessControlButton2Motion();
               }
               else if ( report.xmotion.state & Button3Mask ) {
-                ProcessControlButton3Motion();
+                VT_ProcessControlButton3Motion();
               }
             }
-            else {
-              ProcessMotion();
+            else
+            {
+              VT_ProcessMotion();
             }
           }
         }
@@ -1317,7 +1333,7 @@ static void VProcessEvents(ClientData,int)
 
 static void OSWindowSetup()
 {
-#ifndef WNT
+#if !defined(_WIN32) && !defined(__WIN32__) && (!defined(__APPLE__) || defined(MACOSX_USE_GLX))
   // X11
 
   Window  window   = VT_GetWindow()->XWindow();
@@ -1425,8 +1441,6 @@ while (ViewerMainLoop( argc, argv)) {
 return 0;
 }
 
-
-#if !defined(__APPLE__) || defined(MACOSX_USE_GLX)
 //==============================================================================
 //function : InitViewerTest
 //purpose  : initialisation de toutes les variables static de  ViewerTest (dp)
@@ -1442,7 +1456,7 @@ void ViewerTest_InitViewerTest (const Handle(AIS_InteractiveContext)& context)
   ViewerTest::ResetEventManager();
   Handle(Aspect_GraphicDevice) device = viewer->Device();
   Handle(Aspect_Window) window = view->Window();
-#ifndef WNT
+#if !defined(_WIN32) && !defined(__WIN32__) && (!defined(__APPLE__) || defined(MACOSX_USE_GLX))
   // X11
   VT_GetWindow() = Handle(Xw_Window)::DownCast(window);
   GetG3dDevice() = Handle(Graphic3d_GraphicDevice)::DownCast(device);
@@ -1460,7 +1474,6 @@ void ViewerTest_InitViewerTest (const Handle(AIS_InteractiveContext)& context)
   }
 #endif
 }
-#endif // __APPLE__
 
 //==============================================================================
 //function : VSetBg

@@ -21,107 +21,223 @@
 
 #include <Cocoa_Window.hxx>
 #include <ViewerTest.hxx>
-#include <Xw_Window.hxx>
-#include <TCollection_ExtendedString.hxx>
-
+#include <V3d_View.hxx>
 #include <V3d_Viewer.hxx>
 #include <AIS_InteractiveContext.hxx>
-#include <AIS_Shape.hxx>
-#include <BRep_Builder.hxx>
-#include <BRepTools.hxx>
-#include <Graphic3d_GraphicDevice.hxx>
-#include <V3d_View.hxx>
-#include <OSD_Environment.hxx>
 #include <NIS_View.hxx>
-#include <ViewerTest_CocoaEventManagerView.hxx>
 
-static Handle(Cocoa_Window) ViewerTest_myCocoaWindow;
-static Handle(Aspect_GraphicDevice) ViewerTest_myDevice3d;
+//! Custom Cocoa view to handle events
+@interface ViewerTest_CocoaEventManagerView : NSView
+@end
 
-extern const Handle(NIS_InteractiveContext)& TheNISContext();
+extern void VT_ProcessExpose();
+extern void VT_ProcessConfigure();
+extern void VT_ProcessKeyPress (const char* theBuffer);
+extern void VT_ProcessMotion();
+extern void VT_ProcessButtonRelease();
+extern void VT_ProcessButton3Press();
+extern void VT_ProcessControlButton2Motion();
+extern void VT_ProcessControlButton3Motion();
+extern Standard_Boolean VT_ProcessButton1Press (Standard_Integer theArgsNb,
+                                                const char**     theArgsVec,
+                                                Standard_Boolean theToPick,
+                                                Standard_Boolean theIsShift);
 
-void ViewerTest::ViewerInit (const Standard_Integer thePxLeft,  const Standard_Integer thePxTop,
-                             const Standard_Integer thePxWidth, const Standard_Integer thePxHeight)
+extern int X_Motion; // Current cursor position
+extern int Y_Motion;
+extern int X_ButtonPress; // Last ButtonPress position
+extern int Y_ButtonPress;
+
+// =======================================================================
+// function : ViewerMainLoop
+// purpose  :
+// =======================================================================
+int ViewerMainLoop (Standard_Integer, const char** )
 {
-  static Standard_Boolean isFirst = Standard_True;
-
-  Standard_Integer aPxLeft   = 20;
-  Standard_Integer aPxTop    = 40;
-  Standard_Integer aPxWidth  = 409;
-  Standard_Integer aPxHeight = 409;
-  if (thePxWidth != 0 && thePxHeight != 0)
-  {
-    aPxLeft   = thePxLeft;
-    aPxTop    = thePxTop;
-    aPxWidth  = thePxWidth;
-    aPxHeight = thePxHeight;
-  }
-
-  if (isFirst)
-  {
-
-    NSRect aRect = NSMakeRect (aPxLeft, aPxTop, aPxWidth, aPxHeight);
-    NSWindow * aWin = [NSWindow alloc];
-    [aWin initWithContentRect: aRect
-                    styleMask: NSTitledWindowMask | NSClosableWindowMask | NSResizableWindowMask
-                      backing: NSBackingStoreBuffered
-                        defer: NO];
-
-    [aWin setTitle: @"Test3d"];
-    [aWin makeKeyAndOrderFront: NSApp];
-    TCollection_ExtendedString aNameOfWindow ("Visu3D");
-    ViewerTest_myDevice3d = new Graphic3d_GraphicDevice (getenv ("DISPLAY"), Xw_TOM_READONLY);
-
-    Handle(V3d_Viewer) a3DViewer = new V3d_Viewer (ViewerTest_myDevice3d, aNameOfWindow.ToExtString());
-    a3DViewer->SetDefaultBackgroundColor (Quantity_NOC_BLACK);
-    Handle(V3d_View) aView3d = a3DViewer->CreateView();
-
-    Handle(AIS_InteractiveContext) aCtxAis = new AIS_InteractiveContext (a3DViewer);
-
-    ViewerTest_CocoaEventManagerView* aViewNs = [ViewerTest_CocoaEventManagerView alloc];
-    [aViewNs initWithView3d: aView3d nsWin: aWin contextAis: aCtxAis];
-
-    ViewerTest_myCocoaWindow = new Cocoa_Window ([aWin contentView]);
-
-    aView3d->SetWindow (ViewerTest_myCocoaWindow);
-
-    Handle(NIS_View) aView = Handle(NIS_View)::DownCast (ViewerTest::CurrentView());
-    if (aView.IsNull())
-    {
-      aView = new NIS_View (a3DViewer, ViewerTest_myCocoaWindow);
-      ViewerTest::CurrentView (aView);
-      TheNISContext()->AttachView (aView);
-    }
-
-    if (ViewerTest::GetAISContext().IsNull())
-    {
-      ViewerTest::SetAISContext (aCtxAis);
-    }
-
-    Handle(V3d_View) aCurrentView = ViewerTest::CurrentView();
-    aCurrentView->SetDegenerateModeOn();
-
-    aCurrentView->SetZClippingDepth (0.5);
-    aCurrentView->SetZClippingWidth (0.5);
-
-    a3DViewer->SetDefaultLights();
-    a3DViewer->SetLightOn();
-
-    isFirst = Standard_False;
-  }
-
-  ViewerTest_myCocoaWindow->Map();
-
-}
-
-void ViewerTest_InitViewerTest (const Handle(AIS_InteractiveContext)& context)
-{
-
-}
-
-int ViewerMainLoop(Standard_Integer argc, const char** argv)
-{
+  // unused
   return 0;
 }
+
+// =======================================================================
+// function : ViewerTest_SetCocoaEventManagerView
+// purpose  :
+// =======================================================================
+void ViewerTest_SetCocoaEventManagerView (const Handle(Cocoa_Window)& theWindow)
+{
+  if (theWindow.IsNull())
+  {
+    return;
+  }
+
+  NSWindow* aWin = [theWindow->HView() window];
+  NSRect aBounds = [[aWin contentView] bounds];
+
+  ViewerTest_CocoaEventManagerView* aView = [[ViewerTest_CocoaEventManagerView alloc] initWithFrame: aBounds];
+
+  // replace content view in the window
+  theWindow->SetHView (aView);
+
+  // make view as first responder in winow to capture all useful events
+  [aWin makeFirstResponder: aView];
+  [aWin setAcceptsMouseMovedEvents: YES];
+
+  // should be retained by parent NSWindow
+  [aView release];
+}
+
+// =======================================================================
+// function : getMouseCoords
+// purpose  : Retrieve cursor position
+// =======================================================================
+static void getMouseCoords (NSView*           theView,
+                            NSEvent*          theEvent,
+                            Standard_Integer& theX,
+                            Standard_Integer& theY)
+{
+  NSPoint aMouseLoc = [theView convertPoint: [theEvent locationInWindow] fromView: nil];
+  NSRect  aBounds   = [theView bounds];
+
+  theX = Standard_Integer(aMouseLoc.x);
+  theY = Standard_Integer(aBounds.size.height - aMouseLoc.y);
+}
+
+@implementation ViewerTest_CocoaEventManagerView
+
+// =======================================================================
+// function : setFrameSize
+// purpose  :
+// =======================================================================
+- (void )setFrameSize: (NSSize )theNewSize
+{
+  [super setFrameSize: theNewSize];
+  VT_ProcessConfigure();
+}
+
+// =======================================================================
+// function : drawRect
+// purpose  :
+// =======================================================================
+- (void )drawRect: (NSRect )theDirtyRect
+{
+  VT_ProcessExpose();
+}
+
+// =======================================================================
+// function : mouseMoved
+// purpose  :
+// =======================================================================
+- (void )mouseMoved: (NSEvent* )theEvent
+{
+  getMouseCoords (self, theEvent, X_Motion, Y_Motion);
+  VT_ProcessMotion();
+}
+
+// =======================================================================
+// function : acceptsFirstResponder
+// purpose  :
+// =======================================================================
+- (BOOL )acceptsFirstResponder
+{
+  return YES;
+}
+
+// =======================================================================
+// function : mouseDown
+// purpose  :
+// =======================================================================
+- (void )mouseDown: (NSEvent* )theEvent
+{
+  getMouseCoords (self, theEvent, X_ButtonPress, Y_ButtonPress);
+  VT_ProcessButton1Press (0, NULL, Standard_False, [theEvent modifierFlags] & NSShiftKeyMask);
+}
+
+// =======================================================================
+// function : mouseUp
+// purpose  :
+// =======================================================================
+- (void )mouseUp: (NSEvent* )theEvent
+{
+  VT_ProcessButtonRelease();
+}
+
+
+// =======================================================================
+// function : mouseDragged
+// purpose  :
+// =======================================================================
+- (void )mouseDragged: (NSEvent* )theEvent
+{
+  if ([theEvent modifierFlags] & NSControlKeyMask)
+  {
+    getMouseCoords (self, theEvent, X_Motion, Y_Motion);
+    VT_ProcessControlButton2Motion();
+  }
+}
+
+// =======================================================================
+// function : rightMouseDown
+// purpose  :
+// =======================================================================
+- (void )rightMouseDown: (NSEvent* )theEvent
+{
+  getMouseCoords (self, theEvent, X_ButtonPress, Y_ButtonPress);
+  VT_ProcessButton3Press(); // Start rotation
+}
+
+// =======================================================================
+// function : rightMouseUp
+// purpose  :
+// =======================================================================
+- (void )rightMouseUp: (NSEvent* )theEvent
+{
+  VT_ProcessButtonRelease();
+}
+
+// =======================================================================
+// function : rightMouseDragged
+// purpose  :
+// =======================================================================
+- (void )rightMouseDragged: (NSEvent* )theEvent
+{
+  if ([theEvent modifierFlags] & NSControlKeyMask)
+  {
+    getMouseCoords (self, theEvent, X_Motion, Y_Motion);
+    VT_ProcessControlButton3Motion();
+  }
+}
+
+// =======================================================================
+// function : scrollWheel
+// purpose  :
+// =======================================================================
+- (void )scrollWheel: (NSEvent* )theEvent
+{
+  float aDelta = [theEvent deltaY];
+  if (Abs (aDelta) < 0.001)
+  {
+    // a lot of values near zero can be generated by touchpad
+    return;
+  }
+
+  ViewerTest::CurrentView()->Zoom (0, 0, aDelta, aDelta);
+}
+
+// =======================================================================
+// function : keyDown
+// purpose  :
+// =======================================================================
+- (void )keyDown: (NSEvent* )theEvent
+{
+  NSString* aStringNs = [theEvent characters];
+  if (aStringNs == NULL || [aStringNs length] == 0)
+  {
+    return;
+  }
+
+  const Standard_CString aString = [aStringNs UTF8String];
+  VT_ProcessKeyPress (aString);
+}
+
+@end
 
 #endif

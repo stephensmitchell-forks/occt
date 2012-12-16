@@ -208,8 +208,11 @@ public:
                                         Standard_Integer&        PX,
                                         Standard_Integer&        PY) const;
 
-  //! Returns the NSView
+  //! @return associated NSView
   Standard_EXPORT NSView* HView() const;
+
+  //! Setup new NSView.
+  Standard_EXPORT void SetHView (NSView* theView);
 
 protected:
 

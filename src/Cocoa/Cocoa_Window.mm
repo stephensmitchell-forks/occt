@@ -72,6 +72,11 @@ Cocoa_Window::Cocoa_Window (const Standard_CString theTitle,
   {
     Aspect_WindowDefinitionError::Raise ("Coordinate(s) out of range");
   }
+  else if (NSApp == NULL)
+  {
+    Aspect_WindowDefinitionError::Raise ("Cocoa application should be instantiated before window");
+    return;
+  }
 
   Cocoa_LocalPool aLocalPool;
   NSUInteger aWinStyle = NSTitledWindowMask | NSClosableWindowMask | NSResizableWindowMask;
@@ -84,7 +89,7 @@ Cocoa_Window::Cocoa_Window (const Standard_CString theTitle,
   {
     Aspect_WindowDefinitionError::Raise ("Unable to create window");
   }
-  myHView = [myHWindow contentView];
+  myHView = [[myHWindow contentView] retain];
 
   NSString* aTitleNs = [[NSString alloc] initWithUTF8String: theTitle];
   [myHWindow setTitle: aTitleNs];
@@ -98,7 +103,7 @@ Cocoa_Window::Cocoa_Window (const Standard_CString theTitle,
 Cocoa_Window::Cocoa_Window (NSView* theViewNS)
 : Aspect_Window (new Cocoa_GraphicDevice()),
   myHWindow (NULL),
-  myHView   (theViewNS),
+  myHView   ([theViewNS retain]),
   myXLeft   (0),
   myYTop    (0),
   myXRight  (512),
@@ -116,10 +121,15 @@ void Cocoa_Window::Destroy()
   Cocoa_LocalPool aLocalPool;
   if (myHWindow != NULL)
   {
-    [myHWindow close];
+    //[myHWindow close];
+    [myHWindow release];
     myHWindow = NULL;
   }
-  myHView = NULL;
+  if (myHView != NULL)
+  {
+    [myHView release];
+    myHView = NULL;
+  }
 }
 
 // =======================================================================
@@ -129,6 +139,24 @@ void Cocoa_Window::Destroy()
 NSView* Cocoa_Window::HView() const
 {
   return myHView;
+}
+
+// =======================================================================
+// function : SetHView
+// purpose  :
+// =======================================================================
+void Cocoa_Window::SetHView (NSView* theView)
+{
+  if (myHWindow != NULL)
+  {
+    [myHWindow setContentView: theView];
+  }
+  if (myHView != NULL)
+  {
+    [myHView release];
+    myHView = NULL;
+  }
+  myHView = [theView retain];
 }
 
 // =======================================================================
