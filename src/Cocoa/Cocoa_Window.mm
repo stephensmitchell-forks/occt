@@ -94,6 +94,9 @@ Cocoa_Window::Cocoa_Window (const Standard_CString theTitle,
   NSString* aTitleNs = [[NSString alloc] initWithUTF8String: theTitle];
   [myHWindow setTitle: aTitleNs];
   [aTitleNs release];
+
+  // do not destroy NSWindow on close - we didn't handle it!
+  [myHWindow setReleasedWhenClosed: NO];
 }
 
 // =======================================================================
