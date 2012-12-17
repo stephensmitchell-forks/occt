@@ -147,6 +147,8 @@ int X_Motion = 0; // Current cursor position
 int Y_Motion = 0;
 int X_ButtonPress = 0; // Last ButtonPress position
 int Y_ButtonPress = 0;
+Standard_Boolean IsDragged = Standard_False;
+Standard_Boolean DragFirst;
 
 //==============================================================================
 
@@ -535,6 +537,29 @@ Standard_Boolean VT_ProcessButton1Press(
 }
 
 //==============================================================================
+//function : VT_ProcessButton1Release
+//purpose  : End selecting
+//==============================================================================
+void VT_ProcessButton1Release (Standard_Boolean theIsShift)
+{
+  if (IsDragged)
+  {
+    IsDragged = Standard_False;
+    Handle(ViewerTest_EventManager) EM = ViewerTest::CurrentEventManager();
+    if (theIsShift)
+    {
+      EM->ShiftSelect (Min (X_ButtonPress, X_Motion), Max (Y_ButtonPress, Y_Motion),
+                       Max (X_ButtonPress, X_Motion), Min (Y_ButtonPress, Y_Motion));
+    }
+    else
+    {
+      EM->Select (Min (X_ButtonPress, X_Motion), Max (Y_ButtonPress, Y_Motion),
+                  Max (X_ButtonPress, X_Motion), Min (Y_ButtonPress, Y_Motion));
+    }
+  }
+}
+
+//==============================================================================
 //function : VT_ProcessButton3Press
 //purpose  : Start Rotation
 //==============================================================================
@@ -546,10 +571,10 @@ void VT_ProcessButton3Press()
 }
 
 //==============================================================================
-//function : VT_ProcessButtonRelease
+//function : VT_ProcessButton3Release
 //purpose  : End rotation
 //==============================================================================
-void VT_ProcessButtonRelease()
+void VT_ProcessButton3Release()
 {
   if (Start_Rot)
   {
@@ -797,14 +822,6 @@ static int VHelp(Draw_Interpretor& di, Standard_Integer , const char** )
   return 0;
 }
 
-Standard_Boolean IsDragged = Standard_False;
-
-Standard_Integer xx1, yy1, xx2, yy2;
-//the first and last point in viewer co-ordinates
-
-Standard_Boolean DragFirst;
-
-
 #ifdef WNT
 
 static Standard_Boolean Ppick = 0;
@@ -831,17 +848,17 @@ static LRESULT WINAPI AdvViewerWindowProc( HWND hwnd,
         HGDIOBJ anObj = SelectObject( hdc, GetStockObject( WHITE_PEN ) );
         SelectObject( hdc, GetStockObject( HOLLOW_BRUSH ) );
         SetROP2( hdc, R2_NOT );
-        Rectangle( hdc, xx1, yy1, xx2, yy2 );
+        Rectangle( hdc, X_ButtonPress, Y_ButtonPress, X_Motion, Y_Motion );
         ReleaseDC( hwnd, hdc );
 
         const Handle(ViewerTest_EventManager) EM =
           ViewerTest::CurrentEventManager();
         if ( fwKeys & MK_SHIFT )
-          EM->ShiftSelect( min( xx1, xx2 ), max( yy1, yy2 ),
-          max( xx1, xx2 ), min( yy1, yy2 ));
+          EM->ShiftSelect( min( X_ButtonPress, X_Motion ), max( Y_ButtonPress, Y_Motion ),
+          max( X_ButtonPress, X_Motion ), min( Y_ButtonPress, Y_Motion ));
         else
-          EM->Select( min( xx1, xx2 ), max( yy1, yy2 ),
-          max( xx1, xx2 ), min( yy1, yy2 ));
+          EM->Select( min( X_ButtonPress, X_Motion ), max( Y_ButtonPress, Y_Motion ),
+          max( X_ButtonPress, X_Motion ), min( Y_ButtonPress, Y_Motion ));
       }
       return ViewerWindowProc( hwnd, Msg, wParam, lParam );
 
@@ -850,8 +867,8 @@ static LRESULT WINAPI AdvViewerWindowProc( HWND hwnd,
       {
         IsDragged = Standard_True;
         DragFirst = Standard_True;
-        xx1 = LOWORD(lParam);
-        yy1 = HIWORD(lParam);
+        X_ButtonPress = LOWORD(lParam);
+        Y_ButtonPress = HIWORD(lParam);
       }
       return ViewerWindowProc( hwnd, Msg, wParam, lParam );
 
@@ -867,13 +884,13 @@ static LRESULT WINAPI AdvViewerWindowProc( HWND hwnd,
         SetROP2( hdc, R2_NOT );
 
         if( !DragFirst )
-          Rectangle( hdc, xx1, yy1, xx2, yy2 );
+          Rectangle( hdc, X_ButtonPress, Y_ButtonPress, X_Motion, Y_Motion );
 
         DragFirst = Standard_False;
-        xx2 = LOWORD(lParam);
-        yy2 = HIWORD(lParam);
+        X_Motion = LOWORD(lParam);
+        Y_Motion = HIWORD(lParam);
 
-        Rectangle( hdc, xx1, yy1, xx2, yy2 );
+        Rectangle( hdc, X_ButtonPress, Y_ButtonPress, X_Motion, Y_Motion );
 
         SelectObject( hdc, anObj );
 
@@ -935,7 +952,7 @@ static LRESULT WINAPI ViewerWindowProc( HWND hwnd,
     case WM_MBUTTONUP:
     case WM_RBUTTONUP:
       Up = 1;
-      VT_ProcessButtonRelease();
+      VT_ProcessButton3Release();
       break;
 
     case WM_LBUTTONDOWN:
@@ -1152,8 +1169,8 @@ switch ( report.type ) {
             else
             {
               IsDragged = Standard_True;
-              xx1 = X_ButtonPress;
-              yy1 = Y_ButtonPress;
+              X_ButtonPress = X_ButtonPress;
+              Y_ButtonPress = Y_ButtonPress;
               DragFirst = Standard_True;
             }
           }
@@ -1177,7 +1194,7 @@ switch ( report.type ) {
               Aspect_Handle aWindow = VT_GetWindow()->XWindow();
               GC gc = XCreateGC( display, aWindow, 0, 0 );
               //  XSetFunction( display, gc, GXinvert );
-              XDrawRectangle( display, aWindow, gc, min( xx1, xx2 ), min( yy1, yy2 ), abs( xx2-xx1 ), abs( yy2-yy1 ) );
+              XDrawRectangle( display, aWindow, gc, min( X_ButtonPress, X_Motion ), min( Y_ButtonPress, Y_Motion ), abs( X_Motion-X_ButtonPress ), abs( Y_Motion-Y_ButtonPress ) );
             }
 
             Handle( AIS_InteractiveContext ) aContext = ViewerTest::GetAISContext();
@@ -1203,25 +1220,25 @@ switch ( report.type ) {
               else
                 if( ShiftPressed )
                 {
-                  aContext->ShiftSelect( min( xx1, xx2 ), min( yy1, yy2 ),
-                    max( xx1, xx2 ), max( yy1, yy2 ),
+                  aContext->ShiftSelect( min( X_ButtonPress, X_Motion ), min( Y_ButtonPress, Y_Motion ),
+                    max( X_ButtonPress, X_Motion ), max( Y_ButtonPress, Y_Motion ),
                     ViewerTest::CurrentView());
                   //                   cout << "shift select" << endl;
                 }
                 else
                 {
-                  aContext->Select( min( xx1, xx2 ), min( yy1, yy2 ),
-                    max( xx1, xx2 ), max( yy1, yy2 ),
+                  aContext->Select( min( X_ButtonPress, X_Motion ), min( Y_ButtonPress, Y_Motion ),
+                    max( X_ButtonPress, X_Motion ), max( Y_ButtonPress, Y_Motion ),
                     ViewerTest::CurrentView() );
                   //                   cout << "select" << endl;
                 }
             else
-              VT_ProcessButtonRelease();
+              VT_ProcessButton3Release();
 
             IsDragged = Standard_False;
           }
           else
-            VT_ProcessButtonRelease();
+            VT_ProcessButton3Release();
         }
         break;
       case MotionNotify:
@@ -1238,14 +1255,14 @@ switch ( report.type ) {
             XSetFunction( display, gc, GXinvert );
 
             if( !DragFirst )
-              XDrawRectangle( display, aWindow, gc, min( xx1, xx2 ), min( yy1, yy2 ), abs( xx2-xx1 ), abs( yy2-yy1 ) );
+              XDrawRectangle( display, aWindow, gc, min( X_ButtonPress, X_Motion ), min( Y_ButtonPress, Y_Motion ), abs( X_Motion-X_ButtonPress ), abs( Y_Motion-Y_ButtonPress ) );
 
-            xx2 = X_Motion;
-            yy2 = Y_Motion;
+            X_Motion = X_Motion;
+            Y_Motion = Y_Motion;
             DragFirst = Standard_False;
 
-            //cout << "draw rect : " << xx2 << ", " << yy2 << endl;
-            XDrawRectangle( display, aWindow, gc, min( xx1, xx2 ), min( yy1, yy2 ), abs( xx2-xx1 ), abs( yy2-yy1 ) );
+            //cout << "draw rect : " << X_Motion << ", " << Y_Motion << endl;
+            XDrawRectangle( display, aWindow, gc, min( X_ButtonPress, X_Motion ), min( Y_ButtonPress, Y_Motion ), abs( X_Motion-X_ButtonPress ), abs( Y_Motion-Y_ButtonPress ) );
           }
           else
           {

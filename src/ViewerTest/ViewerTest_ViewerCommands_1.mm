@@ -34,19 +34,21 @@ extern void VT_ProcessExpose();
 extern void VT_ProcessConfigure();
 extern void VT_ProcessKeyPress (const char* theBuffer);
 extern void VT_ProcessMotion();
-extern void VT_ProcessButtonRelease();
 extern void VT_ProcessButton3Press();
+extern void VT_ProcessButton3Release();
 extern void VT_ProcessControlButton2Motion();
 extern void VT_ProcessControlButton3Motion();
 extern Standard_Boolean VT_ProcessButton1Press (Standard_Integer theArgsNb,
                                                 const char**     theArgsVec,
                                                 Standard_Boolean theToPick,
                                                 Standard_Boolean theIsShift);
+extern void VT_ProcessButton1Release(Standard_Boolean theIsShift);
 
 extern int X_Motion; // Current cursor position
 extern int Y_Motion;
 extern int X_ButtonPress; // Last ButtonPress position
 extern int Y_ButtonPress;
+extern Standard_Boolean IsDragged;
 
 // =======================================================================
 // function : ViewerMainLoop
@@ -157,7 +159,8 @@ static void getMouseCoords (NSView*           theView,
 // =======================================================================
 - (void )mouseUp: (NSEvent* )theEvent
 {
-  VT_ProcessButtonRelease();
+  getMouseCoords (self, theEvent, X_Motion, Y_Motion);
+  VT_ProcessButton1Release([theEvent modifierFlags] & NSShiftKeyMask);
 }
 
 
@@ -167,6 +170,7 @@ static void getMouseCoords (NSView*           theView,
 // =======================================================================
 - (void )mouseDragged: (NSEvent* )theEvent
 {
+  IsDragged = Standard_True;
   if ([theEvent modifierFlags] & NSControlKeyMask)
   {
     getMouseCoords (self, theEvent, X_Motion, Y_Motion);
@@ -190,7 +194,7 @@ static void getMouseCoords (NSView*           theView,
 // =======================================================================
 - (void )rightMouseUp: (NSEvent* )theEvent
 {
-  VT_ProcessButtonRelease();
+  VT_ProcessButton3Release();
 }
 
 // =======================================================================
