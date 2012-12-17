@@ -389,11 +389,13 @@ Standard_Boolean OpenGl_Context::Init (const Aspect_Drawable         theWindow,
 {
   Standard_ProgramError_Raise_if (myIsInitialized, "OpenGl_Context::Init() should be called only once!");
 #if (defined(_WIN32) || defined(__WIN32__))
+  myWindow   = theWindow;
   myGContext = theGContext;
   myWindowDC = theWindowDC;
 #elif defined(__APPLE__) && !defined(MACOSX_USE_GLX)
   myGContext = (void* )theGContext;
 #else
+  myWindow   = theWindow;
   myGContext = theGContext;
   myDisplay  = theDisplay;
 #endif
