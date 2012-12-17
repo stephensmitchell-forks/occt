@@ -51,6 +51,29 @@ DEFINE_STANDARD_HANDLE(Cocoa_GraphicDevice, Aspect_GraphicDevice)
 IMPLEMENT_STANDARD_HANDLE (Cocoa_GraphicDevice, Aspect_GraphicDevice)
 IMPLEMENT_STANDARD_RTTIEXT(Cocoa_GraphicDevice, Aspect_GraphicDevice)
 
+static Standard_Integer getScreenBottom()
+{
+  Cocoa_LocalPool aLocalPool;
+  NSArray* aScreens = [NSScreen screens];
+  if (aScreens == NULL || [aScreens count] == 0)
+  {
+    return 0;
+  }
+
+  NSScreen* aScreen = (NSScreen* )[aScreens objectAtIndex: 0];
+  NSDictionary* aDict = [aScreen deviceDescription];
+  NSNumber* aNumber = [aDict objectForKey: @"NSScreenNumber"];
+  if (aNumber == NULL
+  || [aNumber isKindOfClass: [NSNumber class]] == NO)
+  {
+    return 0;
+  }
+
+  CGDirectDisplayID aDispId = [aNumber unsignedIntValue];
+  CGRect aRect = CGDisplayBounds(aDispId);
+  return Standard_Integer(aRect.origin.y + aRect.size.height);
+}
+
 // =======================================================================
 // function : Cocoa_Window
 // purpose  :
@@ -78,9 +101,13 @@ Cocoa_Window::Cocoa_Window (const Standard_CString theTitle,
     return;
   }
 
+  // convert top-bottom coordinates to bottom-top (Cocoa)
+  myYTop    = getScreenBottom() - myYBottom;
+  myYBottom = myYTop + thePxHeight;
+
   Cocoa_LocalPool aLocalPool;
   NSUInteger aWinStyle = NSTitledWindowMask | NSClosableWindowMask | NSResizableWindowMask;
-  NSRect aRectNs = NSMakeRect (float(thePxLeft), float(thePxTop), float(thePxWidth), float(thePxHeight));
+  NSRect aRectNs = NSMakeRect (float(myXLeft), float(myYTop), float(thePxWidth), float(thePxHeight));
   myHWindow = [[NSWindow alloc] initWithContentRect: aRectNs
                                           styleMask: aWinStyle
                                             backing: NSBackingStoreBuffered
@@ -112,7 +139,7 @@ Cocoa_Window::Cocoa_Window (NSView* theViewNS)
   myXRight  (512),
   myYBottom (512)
 {
-  //
+  DoResize();
 }
 
 // =======================================================================
