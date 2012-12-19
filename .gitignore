@@ -26,6 +26,10 @@ win64
 *.ncb
 *.suo
 *.sdf
+*.pbxindex
+*.build
+*.pbxuser
+*.perspectivev3
 
 # test results
 /results*

@@ -1,0 +1,7 @@
+//
+// Prefix header for all source files of the 'Viewer' target in the 'Viewer' project
+//
+
+#ifdef __OBJC__
+    #import <Cocoa/Cocoa.h>
+#endif
