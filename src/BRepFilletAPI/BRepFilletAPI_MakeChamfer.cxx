@@ -391,6 +391,7 @@ void BRepFilletAPI_MakeChamfer::Build()
   if (myBuilder.IsDone()){
     Done();
     myShape = myBuilder.Shape();
+    EnsureToleranceRule(myShape);
       
       //creation of the Map.
     TopExp_Explorer ex;

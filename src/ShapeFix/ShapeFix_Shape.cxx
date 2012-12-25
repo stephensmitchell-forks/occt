@@ -33,6 +33,7 @@
 #include <TopAbs_ShapeEnum.hxx>
 #include <BRepTools.hxx>
 #include <BRep_Builder.hxx>
+#include <BRepBuilderAPI_MakeShape.hxx>
 
 #include <ShapeFix.hxx>
 #include <ShapeBuild_ReShape.hxx>
@@ -99,7 +100,22 @@ void ShapeFix_Shape::Init(const TopoDS_Shape& shape)
 //purpose  : 
 //=======================================================================
 
-Standard_Boolean ShapeFix_Shape::Perform(const Handle(Message_ProgressIndicator)& theProgress) 
+Standard_Boolean ShapeFix_Shape::Perform(const Handle(Message_ProgressIndicator)& theProgress)
+{
+  Standard_Boolean aR = PerformR(theProgress);
+  if (aR)
+  {
+    BRepBuilderAPI_MakeShape::EnsureToleranceRule(myResult);
+  }
+  return aR;
+}
+
+//=======================================================================
+//function : PerformR
+//purpose  : 
+//=======================================================================
+
+Standard_Boolean ShapeFix_Shape::PerformR(const Handle(Message_ProgressIndicator)& theProgress)
 {
   Standard_Integer savFixSmallAreaWireMode = 0;
 

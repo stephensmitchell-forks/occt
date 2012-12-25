@@ -800,6 +800,27 @@ static Standard_Integer scalexyz(Draw_Interpretor& di, Standard_Integer n, const
   return 0;  
 }
 
+static Standard_Integer EnsureTolRule(
+  Draw_Interpretor & theDI, Standard_Integer theC, const char ** theAs)
+{
+  if (theC != 3)
+  {
+    return 1;
+  }
+  //
+  TopoDS_Shape aS = DBRep::Get(theAs[2]);
+  if (aS.IsNull())
+  {
+    return 1;
+  }
+  //
+  TopoDS_Shape aRes = BRepBuilderAPI_Copy(aS);
+  BRepBuilderAPI_MakeShape::EnsureToleranceRule(aRes);
+  //
+  DBRep::Set(theAs[1], aRes);
+  return 0;
+}
+
 void  BRepTest::BasicCommands(Draw_Interpretor& theCommands)
 {
   static Standard_Boolean done = Standard_False;
@@ -931,4 +952,6 @@ void  BRepTest::BasicCommands(Draw_Interpretor& theCommands)
                   "scalexyz res shape factor_x factor_y factor_z",
 		  __FILE__,
 		  scalexyz, g);
+
+  theCommands.Add("EnsureTolRule", "res shape", __FILE__, EnsureTolRule, g);
 }

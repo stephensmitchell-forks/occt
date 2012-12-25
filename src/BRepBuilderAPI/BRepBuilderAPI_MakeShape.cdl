@@ -92,6 +92,11 @@ is
     is virtual;
     	---Purpose: Returns true if the shape S has been deleted.
 
+    EnsureToleranceRule (myclass; theS : Shape from TopoDS);
+    ---Purpose: Fixes all tolerances of shape theS and it's subshapes by the tolerance
+    -- rule: vertex tolerance >= edge tolerance >= face tolerance.
+    -- Edge or vertex tolerance which does not satisfy the tolerance rule will
+    -- be increased.
     
 fields
  
