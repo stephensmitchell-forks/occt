@@ -64,6 +64,7 @@ BRepOffsetAPI_NormalProjection::BRepOffsetAPI_NormalProjection()
 {
   myNormalProjector.Build();
   myShape = myNormalProjector.Projection();
+  BRepBuilderAPI_MakeShape::EnsureToleranceRule(myShape);
   Done();
 }
 
