@@ -49,9 +49,13 @@ is
     Init (me: mutable; shape: Shape from TopoDS);
     	---Purpose: Initislises by shape.
 
-    Perform (me          : mutable;
+    Perform  (me          : mutable;
              theProgress : ProgressIndicator from Message = 0) returns Boolean;
     	---Purpose: Iterates on sub- shape and performs fixes
+
+    PerformR (me          : mutable;
+             theProgress : ProgressIndicator from Message    ) returns Boolean is private;
+    	---Purpose: Internal method. Called by Perform.
 
     SameParameter (me          : mutable; 
                    shape       : Shape from TopoDS; 

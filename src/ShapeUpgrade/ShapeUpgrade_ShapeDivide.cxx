@@ -37,6 +37,7 @@
 #include <ShapeUpgrade_WireDivide.hxx>
 #include <Standard_ErrorHandler.hxx>
 #include <Standard_Failure.hxx>
+#include <BRepBuilderAPI_MakeShape.hxx>
 
 //=======================================================================
 //function : ShapeUpgrade_ShapeDivide
@@ -174,6 +175,7 @@ Standard_Boolean ShapeUpgrade_ShapeDivide::Perform(const Standard_Boolean newCon
     if ( Status ( ShapeExtend_DONE ) ) {
       myResult = myContext->Apply ( C, TopAbs_SHAPE );
       myContext->Replace ( myShape, myResult );
+      BRepBuilderAPI_MakeShape::EnsureToleranceRule(myResult);
       return Standard_True;
     }
     myResult = myShape;
@@ -282,6 +284,7 @@ Standard_Boolean ShapeUpgrade_ShapeDivide::Perform(const Standard_Boolean newCon
     }
   }
   myResult = myContext->Apply ( myShape, TopAbs_SHAPE );
+  BRepBuilderAPI_MakeShape::EnsureToleranceRule(myResult);
   return ! myResult.IsSame ( myShape );
 }
 

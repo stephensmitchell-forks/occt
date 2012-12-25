@@ -59,6 +59,7 @@ const BRepFill_Pipe& BRepOffsetAPI_MakePipe::Pipe() const
 void BRepOffsetAPI_MakePipe::Build() 
 {
   myShape = myPipe.Shape();
+  BRepBuilderAPI_MakeShape::EnsureToleranceRule(myShape);
   Done();
 }
 
