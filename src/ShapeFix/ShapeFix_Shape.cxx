@@ -103,10 +103,7 @@ void ShapeFix_Shape::Init(const TopoDS_Shape& shape)
 Standard_Boolean ShapeFix_Shape::Perform(const Handle(Message_ProgressIndicator)& theProgress)
 {
   Standard_Boolean aR = PerformR(theProgress);
-  if (aR)
-  {
-    BRepBuilderAPI_MakeShape::EnsureToleranceRule(myResult);
-  }
+  BRepBuilderAPI_MakeShape::EnsureToleranceRule(myResult);
   return aR;
 }
 
@@ -173,7 +170,7 @@ Standard_Boolean ShapeFix_Shape::PerformR(const Handle(Message_ProgressIndicator
     for ( TopoDS_Iterator anIter(S); anIter.More() && aPSentry.More(); anIter.Next(), aPSentry.Next() )
     {
       myShape = anIter.Value();
-      if ( Perform(theProgress) )
+      if ( PerformR(theProgress) )
         status = Standard_True;
     }
     if ( !aPSentry.More() )
