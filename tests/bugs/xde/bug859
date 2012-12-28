@@ -8,6 +8,7 @@ puts ""
 ##################### 
 
 restore [locate_data_file OCC859.brep] a
+EnsureTolRule a a
 checkshape a
 
 sewing result a

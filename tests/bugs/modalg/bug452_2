@@ -7,6 +7,7 @@ puts "========"
 puts ""
 
 restore [locate_data_file mds-part1.rle] a 
+EnsureTolRule a a
 set che [checkshape a]
 if { [regexp {Faulty} $che ] == 1 } {
     puts "Faulty OCC452 (shape 1): Source shape is invalid. It was detected by Checkshape command"
@@ -23,6 +24,7 @@ if { [regexp {Faulty} $che ] == 1 } {
 }
 
 restore [locate_data_file CTO900_ger60239a.rle] c
+EnsureTolRule c c
 set che [checkshape c]
 if { [regexp {Faulty} $che ] == 1 } {
     puts "Faulty OCC452 (shape 3): Source shape is invalid. It was detected by Checkshape command"
@@ -31,6 +33,7 @@ if { [regexp {Faulty} $che ] == 1 } {
 }
 
 restore [locate_data_file CTO900_ger60239b.rle] d
+EnsureTolRule d d
 set che [checkshape d]
 if { [regexp {Faulty} $che ] == 1 } {
     puts "Faulty OCC452 (shape 4): Source shape is invalid. It was detected by Checkshape command"
