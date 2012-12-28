@@ -32,6 +32,7 @@
 #include <TopTools_ListOfShape.hxx>
 #include <BRepCheck_Shell.hxx>
 #include <TopTools_ListIteratorOfListOfShape.hxx>
+#include <BRep_TEdge.hxx>
 #ifdef DEB
 static Standard_Integer AffichEps = 0;
 #endif
@@ -55,9 +56,15 @@ void  BRepGProp::LinearProperties(const TopoDS_Shape& S, GProp_GProps& SProps){
 //  Standard_Integer n,i;
   TopExp_Explorer ex;
   for (ex.Init(S,TopAbs_EDGE); ex.More(); ex.Next()) {
-    BAC.Initialize(TopoDS::Edge(ex.Current()));
-    BRepGProp_Cinert CG(BAC,P);
-    SProps.Add(CG);
+    TopoDS_Edge anES = TopoDS::Edge(ex.Current());
+    Handle_BRep_TEdge & anEG = (Handle_BRep_TEdge &)anES.TShape();
+    BRep_TEdge dsd;
+    if (!anEG->Degenerated())
+    {
+      BAC.Initialize(anES);
+      BRepGProp_Cinert CG(BAC,P);
+      SProps.Add(CG);
+    }
   }
 }
 
