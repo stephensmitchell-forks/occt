@@ -1,6 +1,7 @@
 if { [isdraw result] } {
    #check if result is valid
    
+   EnsureTolRule result result
    puts "checkshape"
    set ch [checkshape result]
    puts $ch

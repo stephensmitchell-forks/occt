@@ -7,6 +7,7 @@ puts ""
 ##################################################
 
 restore [locate_data_file OCC317.brep] result
+EnsureTolRule result result
 
 set che [checkshape result]
 if { [regexp {Faulty} $che] == 1} {
