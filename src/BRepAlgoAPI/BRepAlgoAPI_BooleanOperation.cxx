@@ -325,6 +325,7 @@ const TopTools_ListOfShape& BRepAlgoAPI_BooleanOperation::Modified(const TopoDS_
 	  myErrorStatus=0;
 	  myBuilderCanWork=Standard_True;
 	  myShape=myBuilder->Result();
+	  EnsureToleranceRule(myShape);
 	  Done(); 
 	}
 	else {
@@ -400,6 +401,7 @@ const TopTools_ListOfShape& BRepAlgoAPI_BooleanOperation::Modified(const TopoDS_
     myErrorStatus=0;
     myBuilderCanWork=Standard_True;
     myShape=myBuilder->Result();
+    EnsureToleranceRule(myShape);
     Done(); 
   }
   else {
