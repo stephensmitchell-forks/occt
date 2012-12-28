@@ -257,6 +257,56 @@ const TopTools_ListOfShape& BRepAlgoAPI_BooleanOperation::Modified(const TopoDS_
   const TopoDS_Shape& aS2 = myS2;
   //
   myShape.Nullify();
+  // 
+  // SECTION
+  //
+  if (myOperation==BOP_SECTION) {
+    myBuilder=new BOP_Section;
+  }
+  // 
+  // COMMON, FUSE, CUT12, CUT21
+  //
+  else if (myOperation==BOP_COMMON || myOperation==BOP_FUSE ||
+	   myOperation==BOP_CUT    || myOperation==BOP_CUT21) {
+    //
+    // Check whether one or both of the arguments is(are) empty shape(s)
+    // If yes, create BOP_EmptyBuilder object and build the result fast.
+    {
+      Standard_Boolean bIsEmptyShape1, bIsEmptyShape2;
+      
+      bIsEmptyShape1=BOPTools_Tools3D::IsEmptyShape(aS1);
+      bIsEmptyShape2=BOPTools_Tools3D::IsEmptyShape(aS2);
+      //
+      if (bIsEmptyShape1 || bIsEmptyShape2) {
+	myBuilder=new BOP_EmptyBuilder;
+	//
+	if (myBuilder==NULL) {
+	  myErrorStatus=7;
+	  return ;
+	}
+	//
+	myBuilder->SetShapes(aS1, aS2);
+	myBuilder->SetOperation (myOperation);
+	myBuilder->DoWithFiller (*myDSFiller);
+	
+	bIsDone=myBuilder->IsDone();
+	
+	if (bIsDone) {
+	  myErrorStatus=0;
+	  myBuilderCanWork=Standard_True;
+	  myShape=myBuilder->Result();
+	  EnsureToleranceRule(myShape);
+	  Done(); 
+	}
+	else {
+	  myErrorStatus=100+myBuilder->ErrorStatus();
+	  NotDone();
+	}
+	return;
+      }
+    }
+    //
+    TopAbs_ShapeEnum aT1, aT2;
 
   myBuilder=new BOPAlgo_BOP;
   myBuilder->AddArgument(aS1);
@@ -269,6 +319,7 @@ const TopTools_ListOfShape& BRepAlgoAPI_BooleanOperation::Modified(const TopoDS_
     myErrorStatus=0;
     myBuilderCanWork=Standard_True;
     myShape=myBuilder->Shape();
+    EnsureToleranceRule(myShape);
     Done(); 
   } 
   else {

@@ -463,6 +463,7 @@ void BRepFeat_MakePrism::Perform(const TopoDS_Shape& Until)
       }
     }         
   }
+  EnsureToleranceRule(myShape);
 /*   // loop of control of descendance
 
   TopExp_Explorer expr(mySbase, TopAbs_FACE);

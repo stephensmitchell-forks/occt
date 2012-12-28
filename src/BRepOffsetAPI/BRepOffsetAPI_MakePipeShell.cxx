@@ -225,6 +225,7 @@ void BRepOffsetAPI_MakePipeShell::Delete( const TopoDS_Shape& Profile)
   Ok = myPipe->Build();
   if (Ok) {
     myShape = myPipe->Shape();
+    EnsureToleranceRule(myShape);
     Done();
   }
   else NotDone(); 

@@ -859,12 +859,12 @@ void  BRepTest::SweepCommands(Draw_Interpretor& theCommands)
 		  "deletesweep wire, To delete a section",
 		  __FILE__,deletesweep,g);
 
-  theCommands.Add("buildsweep", "builsweep [r] [option] [Tol] , no args to get help"
+  theCommands.Add("buildsweep", "buildsweep [r] [option] [Tol] , no args to get help",
 		  __FILE__,buildsweep,g);
 
-  theCommands.Add("simulsweep", "simulsweep r [n] [option]"
+  theCommands.Add("simulsweep", "simulsweep r [n] [option]",
 		  __FILE__,simulsweep,g);
-  theCommands.Add("geompipe", "geompipe r spineedge profileedge radius [byACR [byrotate]]"
+  theCommands.Add("geompipe", "geompipe r spineedge profileedge radius [byACR [byrotate]]",
 		  __FILE__,geompipe,g);
   
   theCommands.Add("middlepath", "middlepath res shape startshape endshape",
