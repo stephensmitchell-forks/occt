@@ -135,12 +135,12 @@ void BRepBuilderAPI_MakeShape::EnsureToleranceRule(const TopoDS_Shape & theS)
   for (TopExp_Explorer aFE(theS, TopAbs_FACE); aFE.More(); aFE.Next())
   {
     TopoDS_Face aF = TopoDS::Face(aFE.Current());
-    Standard_Real aFT = (*((Handle_BRep_TFace *)&aF.TShape()))->Tolerance();
+    Standard_Real aFT = ((Handle_BRep_TFace &)aF.TShape())->Tolerance();
     //
     for (TopExp_Explorer anEE(aF, TopAbs_EDGE); anEE.More(); anEE.Next())
     {
       TopoDS_Edge anES = TopoDS::Edge(anEE.Current());
-      Handle_BRep_TEdge & anEG = *(Handle_BRep_TEdge *)&anES.TShape();
+      Handle_BRep_TEdge & anEG = (Handle_BRep_TEdge &)anES.TShape();
       Standard_Real anET = anEG->Tolerance();
       if (anET < aFT)
       {
@@ -150,7 +150,7 @@ void BRepBuilderAPI_MakeShape::EnsureToleranceRule(const TopoDS_Shape & theS)
       for (TopExp_Explorer aVE(anES, TopAbs_VERTEX); aVE.More(); aVE.Next())
       {
         TopoDS_Vertex aVS = TopoDS::Vertex(aVE.Current());
-        Handle_BRep_TVertex & aVG = *(Handle_BRep_TVertex *)&aVS.TShape();
+        Handle_BRep_TVertex & aVG = (Handle_BRep_TVertex &)aVS.TShape();
         aVG->UpdateTolerance(anET);
       }
     }
@@ -159,7 +159,7 @@ void BRepBuilderAPI_MakeShape::EnsureToleranceRule(const TopoDS_Shape & theS)
       aVE.More(); aVE.Next())
     {
       TopoDS_Vertex aVS = TopoDS::Vertex(aVE.Current());
-      Handle_BRep_TVertex & aVG = *(Handle_BRep_TVertex *)&aVS.TShape();
+      Handle_BRep_TVertex & aVG = (Handle_BRep_TVertex &)aVS.TShape();
       aVG->UpdateTolerance(aFT);
     }
   }
@@ -168,12 +168,12 @@ void BRepBuilderAPI_MakeShape::EnsureToleranceRule(const TopoDS_Shape & theS)
     anEE.More(); anEE.Next())
   {
     TopoDS_Edge anES = TopoDS::Edge(anEE.Current());
-    Handle_BRep_TEdge & anEG = *(Handle_BRep_TEdge *)&anES.TShape();
+    Handle_BRep_TEdge & anEG = (Handle_BRep_TEdge &)anES.TShape();
     Standard_Real anET = anEG->Tolerance();
     for (TopExp_Explorer aVE(anES, TopAbs_VERTEX); aVE.More(); aVE.Next())
     {
       TopoDS_Vertex aVS = TopoDS::Vertex(aVE.Current());
-      Handle_BRep_TVertex & aVG = *(Handle_BRep_TVertex *)&aVS.TShape();
+      Handle_BRep_TVertex & aVG = (Handle_BRep_TVertex &)aVS.TShape();
       aVG->UpdateTolerance(anET);
     }
   }
