@@ -1,2 +1,3 @@
 fixwgaps result a 0.001
+EnsureTolRule result result
 puts [checkshape result]

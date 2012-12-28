@@ -1,1 +1,2 @@
 restore [locate_data_file CFE900_pro16gdo.rle] a
+EnsureTolRule a a

@@ -1,3 +1,4 @@
 puts [DT_SplitAngle result a]
+EnsureTolRule result result
 puts [checkshape result]
 

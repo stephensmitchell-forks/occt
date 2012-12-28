@@ -1,4 +1,5 @@
 puts [fixsmall result a 1]
+EnsureTolRule result result
 if { [isdraw result] } {
   puts [checkshape result]
 }

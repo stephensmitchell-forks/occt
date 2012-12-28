@@ -8,6 +8,7 @@ puts "=================================="
 puts ""
 
 restore [locate_data_file fra62476b.brep] result 
+EnsureTolRule result result
 checkshape result
 
 tclean result
