@@ -2,6 +2,7 @@
 # Date : 15 Sept 98
 
 restore [locate_data_file CTO900_ger50084c.rle] base
+EnsureTolRule base base
 restore [locate_data_file ger50084_face.rle] wire
 
 ## contour est un wire -> on en fait une face

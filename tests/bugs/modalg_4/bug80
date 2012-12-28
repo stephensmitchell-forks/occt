@@ -8,6 +8,7 @@ puts ""
 ##########################################################
 
 restore [locate_data_file BUC60877_lh.brep] sh 
+EnsureTolRule sh sh
 checkshape sh
 
 plane pl 820 198 140 -1e-06 0 1

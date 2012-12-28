@@ -8,6 +8,7 @@ puts ""
 ######################################################
 
 restore [locate_data_file OCC859.brep] result
+EnsureTolRule result result
 checkshape result
 
 freebounds result 0.1

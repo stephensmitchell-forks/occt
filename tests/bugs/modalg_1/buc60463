@@ -10,6 +10,7 @@ cpulimit 1400
 restore [locate_data_file buc60463a.brep] a 
 checkshape a
 restore [locate_data_file buc60463b.brep] b
+EnsureTolRule b b
 checkshape b
 bsection result a b
 
