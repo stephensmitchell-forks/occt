@@ -24,7 +24,9 @@
 #include <BRepGProp_VinertGK.hxx>
 #include <BRepGProp_Face.hxx>
 #include <BRepGProp_Domain.hxx>
+#include <GProp_PGProps.hxx>
 #include <TopoDS.hxx>
+#include <TopoDS_Vertex.hxx>
 #include <BRepAdaptor_Curve.hxx>
 
 #include <TopTools.hxx>
@@ -33,6 +35,7 @@
 #include <BRepCheck_Shell.hxx>
 #include <TopTools_ListIteratorOfListOfShape.hxx>
 #include <BRep_TEdge.hxx>
+#include <BRep_TVertex.hxx>
 #ifdef DEB
 static Standard_Integer AffichEps = 0;
 #endif
@@ -64,6 +67,20 @@ void  BRepGProp::LinearProperties(const TopoDS_Shape& S, GProp_GProps& SProps){
       BAC.Initialize(anES);
       BRepGProp_Cinert CG(BAC,P);
       SProps.Add(CG);
+    }
+    else
+    {
+      GProp_PGProps aPD;
+      for (TopExp_Explorer aVE(anES, TopAbs_VERTEX); aVE.More(); aVE.Next())
+      {
+        TopoDS_Vertex aVS = TopoDS::Vertex(aVE.Current());
+        Handle_BRep_TVertex & aVG = (Handle_BRep_TVertex &)aVS.TShape();
+        gp_Pnt aP = aVG->Pnt();
+        aP.Transform(anES.Location());
+        aP.Transform(S.Location());
+        aPD.AddPoint(aP);
+      }
+      SProps.Add(aPD);
     }
   }
 }
