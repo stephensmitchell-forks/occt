@@ -5,7 +5,7 @@
 ## ====================================
 
 restore [locate_data_file CFI_cfi90fjc.rle] a
-nexplode a e
-blend result a 5 a_5 5 a_13 5 a_28
+explode a e
+blend result a 5 a_42 5 a_44 5 a_46
 
 set square 66620.1
