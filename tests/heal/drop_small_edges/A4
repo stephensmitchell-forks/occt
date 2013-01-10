@@ -1,3 +1,5 @@
 puts "TODO OCC23127 ALL: Error : the resulting shape is not done."
+puts "TODO OCC23127 ALL: Tcl Exception:"
 puts "TODO OCC23127 ALL: Faulty shapes in variables faulty_1 to faulty_"
 restore [locate_data_file DSE3.rle] a
+puts "TEST COMPLETED"
