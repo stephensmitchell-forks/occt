@@ -51,6 +51,8 @@
 #include <BRepGProp.hxx>
 #include <TColStd_Array1OfReal.hxx>
 #include <Draw_ProgressIndicator.hxx>
+#include <BRep_TEdge.hxx>
+#include <GProp_PGProps.hxx>
 
 // memory management
 #include <Standard.hxx>
@@ -618,7 +620,6 @@ static Standard_Integer nexplode(Draw_Interpretor& di,
   
   TColStd_Array1OfInteger OrderInd(1,MaxShapes);
 //  gp_Pnt GPoint;
-  GProp_GProps GPr;
 //  Standard_Integer InOfminX = 1,aTemp;
   Standard_Integer aTemp;
   TColStd_Array1OfReal MidXYZ(1,MaxShapes); //X,Y,Z;
@@ -627,8 +628,31 @@ static Standard_Integer nexplode(Draw_Interpretor& di,
   // Computing of CentreOfMass
   for (Index=1; Index <= MaxShapes; Index++) {
     OrderInd.SetValue(Index,Index);
-    BRepGProp::LinearProperties(aShapes(Index),GPr);
-    gp_Pnt GPoint = GPr.CentreOfMass();
+    const TopoDS_Shape & aS = aShapes(Index);
+    gp_Pnt GPoint;
+    TopoDS_Edge anES;
+    Handle_BRep_TEdge anEG;
+    if (typ != TopAbs_EDGE || (anES = TopoDS::Edge(aS),
+      anEG = (Handle_BRep_TEdge &)anES.TShape(), !anEG->Degenerated()))
+    {
+      GProp_GProps GPr;
+      BRepGProp::LinearProperties(aS,GPr);
+      GPoint = GPr.CentreOfMass();
+    }
+    else
+    {
+      GProp_PGProps aPD;
+      for (TopExp_Explorer aVE(anES, TopAbs_VERTEX); aVE.More(); aVE.Next())
+      {
+        TopoDS_Vertex aVS = TopoDS::Vertex(aVE.Current());
+        Handle_BRep_TVertex & aVG = (Handle_BRep_TVertex &)aVS.TShape();
+        gp_Pnt aP = aVG->Pnt();
+        aP.Transform(anES.Location());
+        aP.Transform(aS.Location());
+        aPD.AddPoint(aP);
+      }
+      GPoint = aPD.CentreOfMass();
+    }
     MidXYZ.SetValue(Index, GPoint.X()*999 + GPoint.Y()*99 +
 		    GPoint.Z()*0.9);
   }   
