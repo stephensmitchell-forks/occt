@@ -5,8 +5,9 @@ set chamf_dist_dist  [list "1.1  1" "  1 1.2" "  1 1.4"]
 set chamf_equal_dist [list "1     " "1.1    " "1.2    "]
 dset SCALE 100
 if { [string compare $command chamf_sequence] == 0 } {
-  puts "TODO #22909 ALL: Error: The tests should be reviewed"
-  puts "Error: The tests should be reviewed."
+  #puts "TODO #22909 ALL: Error: The tests should be reviewed"
+  puts "TODO ?22909 ALL: Error   : chamfer is not done."
+  #puts "Error: The tests should be reviewed."
   set os "ALL"
   if {[array get env os_type] != ""} {
     set os $env(os_type)
