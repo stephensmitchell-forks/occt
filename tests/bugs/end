@@ -28,6 +28,10 @@ if { [isdraw result] } {
 #   puts "Error : The command can not be build."
 #}
 
+if { [info exist only_screen_axo] } {
+   xwd $imagedir/${test_image}.png
+}
+
 # to end a test script
 puts "TEST COMPLETED"
 
