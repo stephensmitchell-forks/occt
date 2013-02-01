@@ -54,8 +54,11 @@
 #include <AIS_ListIteratorOfListOfInteractive.hxx>
 #include <Aspect_InteriorStyle.hxx>
 #include <Graphic3d_AspectFillArea3d.hxx>
+#include <Graphic3d_TextureRoot.hxx>
+#include <Graphic3d_AspectLine3d.hxx>
 #include <Image_AlienPixMap.hxx>
 #include <Prs3d_ShadingAspect.hxx>
+#include <Prs3d_IsoAspect.hxx>
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
@@ -89,6 +92,11 @@ extern int ViewerMainLoop(Standard_Integer argc, const char** argv);
 
 #define DEFAULT_COLOR    Quantity_NOC_GOLDENROD
 #define DEFAULT_MATERIAL Graphic3d_NOM_BRASS
+
+static Standard_Integer nbUIsos      = 1;
+static Standard_Integer nbVIsos      = 1;
+static Standard_Boolean isIsoOnPlane = Standard_False;
+
 
 //=======================================================================
 //function : GetColorFromName
@@ -372,6 +380,13 @@ const Handle(AIS_InteractiveContext)& ViewerTest::GetAISContext()
 void ViewerTest::SetAISContext (const Handle(AIS_InteractiveContext)& aCtx)
 {
   TheAISContext() = aCtx;
+
+  if (!aCtx.IsNull()) {
+    aCtx->IsoOnPlane(isIsoOnPlane);
+    aCtx->SetIsoNumber(nbUIsos, AIS_TOI_IsoU);
+    aCtx->SetIsoNumber(nbVIsos, AIS_TOI_IsoV);
+  }
+
   ViewerTest::ResetEventManager();
 }
 
@@ -578,126 +593,108 @@ void ViewerTest::StandardModeActivation(const Standard_Integer mode )
 }
 
 //==============================================================================
-//function : SelectFromContext
-//purpose  : pick / select an object from the last MoveTo() on a
-//            ButtonPress event
+//function : CopyIsoAspect
+//purpose  : Returns copy Prs3d_IsoAspect with new number of isolines.
 //==============================================================================
-
-Handle(AIS_InteractiveObject) Select(Standard_Integer argc,
-				     const char** argv,
-				     Standard_Boolean shift,
-				     Standard_Boolean pick )
+static Handle(Prs3d_IsoAspect) CopyIsoAspect
+      (const Handle(Prs3d_IsoAspect) &theIsoAspect,
+       const Standard_Integer theNbIsos)
 {
-  Handle(AIS_InteractiveObject) ret;
-  Handle (ViewerTest_EventManager) EM = ViewerTest::CurrentEventManager();
-  if ( shift ) {
-    EM->ShiftSelect();
-  }
-  else {
-    EM->Select();
-  }
-  const Handle(AIS_InteractiveContext) aContext = EM->Context();
+  Quantity_Color    aColor;
+  Aspect_TypeOfLine aType;
+  Standard_Real     aWidth;
 
-  if ( !aContext->HasOpenedContext() ) {
-    aContext->InitCurrent();
-    while ( aContext->MoreCurrent() ) {
-      Handle(AIS_InteractiveObject) aisPickedShape =
-	Handle(AIS_InteractiveObject)::DownCast(aContext->Current());
+  theIsoAspect->Aspect()->Values(aColor, aType, aWidth);
 
-//JR/Hp
-      const char *name = (GetMapOfAIS().IsBound1(aisPickedShape))?
-//      const char *name = (GetMapOfAIS().IsBound1(aisPickedShape))?
-	GetMapOfAIS().Find1(aisPickedShape).ToCString() :
-	  "????";
-      Handle(AIS_Shape) TheRealSh = Handle(AIS_Shape)::DownCast(aisPickedShape);
-      if(!TheRealSh.IsNull()){
-	cout << "Current is " << name
-	  << " (" << GetTypeNameFromShape(TheRealSh->Shape())
-	    << ")" << endl;
-      }
-      ret = aisPickedShape;
-      if(!TheRealSh.IsNull()){
-	if ( pick && argc > 4 ) {
-	  DBRep::Set(argv[4], TheRealSh->Shape());
-	}
-      }
-      aContext->NextCurrent();
-    }
-  }
-  else {
-    // A LocalContext is opened, the use xxxxSelected()
-    // to select an object and its SubShape
-    aContext->InitSelected();
-    while ( aContext->MoreSelected() ) {
-      if ( !aContext->HasSelectedShape() ) {
-      }
-      else {
-        TopoDS_Shape PickedShape = aContext->SelectedShape();
-	if ( pick && argc > 5 ) {
-	  DBRep::Set(argv[5], PickedShape);
-	}
-      }
+  Handle(Prs3d_IsoAspect) aResult =
+    new Prs3d_IsoAspect(aColor, aType, aWidth, theNbIsos);
 
-      if ( aContext->Interactive().IsNull() ) {
-        cout << "??? (No InteractiveObject selected)" << endl;
-      }
-      else {
-        Handle(AIS_InteractiveObject) aisPicked =
-          Handle(AIS_InteractiveObject)::DownCast(aContext->Interactive());
-        ret = aisPicked;
-	Handle(AIS_Shape) aisPickedShape = Handle(AIS_Shape)::DownCast(aisPicked);
-
-	// Get back its name
-//JR/Hp
-	const char *name = ( GetMapOfAIS().IsBound1(aisPicked) )?
-//	const char *name = ( GetMapOfAIS().IsBound1(aisPicked) )?
-	  GetMapOfAIS().Find1(aisPicked).ToCString() :
-	    "????";
-
-	if(!aisPickedShape.IsNull()){
-	  if ( pick && argc > 4 ) {
-	    // Create a draw variable to store the wohole shape
-	    // for vpick command
-	    DBRep::Set(argv[4], aisPickedShape->Shape());
-	  }
-
-	  cout << name << " (" << GetTypeNameFromShape(aisPickedShape->Shape())
-	    << ")" << endl  ;
-	}
-      }
-      // Goto the next selected object
-      aContext->NextSelected();
-    }
-  }
-  return ret;
+  return aResult;
 }
 
 //==============================================================================
-//function : DetectedFromContext
-//purpose  : hilight dynamicaly an object from the last MoveTo() on a
-//            MouseMove event
+//function : visos
+//purpose  : Returns or sets the number of U- and V- isos and isIsoOnPlane flag
+//Draw arg : [name1 ...] [nbUIsos nbVIsos IsoOnPlane(0|1)]
 //==============================================================================
-Handle(AIS_InteractiveObject) DetectedFromContext(
-	Handle(AIS_InteractiveContext) aContext )
+static int visos (Draw_Interpretor& di, Standard_Integer argc, const char** argv)
 {
-  Handle(AIS_InteractiveObject) ret;
-  if ( aContext->HasDetected() ) {
-    if ( !aContext->HasDetectedShape() ) {
-      //No SubShape selected
+  if (argc <= 1) {
+    di << "Current number of isos : " << nbUIsos << " " << nbVIsos << "\n";
+    di << "IsoOnPlane mode is " << (isIsoOnPlane ? "ON" : "OFF") << "\n";
+
+    return 0;
+  }
+
+  Standard_Integer aLastInd = argc - 1;
+  Standard_Boolean isChanged = Standard_False;
+
+  if (aLastInd >= 3) {
+    if (strcmp(argv[aLastInd], "1") == 0) {
+      isIsoOnPlane = Standard_True;
+      isChanged    = Standard_True;
+    } else if (strcmp(argv[aLastInd], "0") == 0) {
+      isIsoOnPlane = Standard_False;
+      isChanged    = Standard_True;
     }
-    else {
-      // Get the detected SubShape
-      TopoDS_Shape PickedShape = aContext->DetectedShape();
-    }
-    if ( !aContext->DetectedInteractive().IsNull() ) {
-      Handle(AIS_InteractiveObject) aisPickedShape =
-	Handle(AIS_InteractiveObject)::DownCast(aContext->DetectedInteractive());
-      ret = aisPickedShape;
+
+    if (isChanged) {
+      nbVIsos = atoi(argv[aLastInd - 1]);
+      nbUIsos = atoi(argv[aLastInd - 2]);
+      aLastInd -= 3;
+      di << "New number of isos : " << nbUIsos << " " << nbVIsos << "\n";
+      di << "New IsoOnPlane mode is " << (isIsoOnPlane ? "ON" : "OFF") << "\n";
     }
   }
-  return ret;
-}
 
+  if (TheAISContext().IsNull()) {
+    return 0;
+  }
+
+  if (isChanged) {
+    TheAISContext()->IsoOnPlane(isIsoOnPlane);
+
+    if (aLastInd == 0) {
+      // If there are no shapes provided set the default numbers.
+      TheAISContext()->SetIsoNumber(nbUIsos, AIS_TOI_IsoU);
+      TheAISContext()->SetIsoNumber(nbVIsos, AIS_TOI_IsoV);
+    }
+  }
+
+  Standard_Integer i;
+
+  for (i = 1; i <= aLastInd; i++) {
+    TCollection_AsciiString name(argv[i]);
+    Standard_Boolean IsBound = GetMapOfAIS().IsBound2(name);
+
+    if (IsBound) {
+      const Handle(Standard_Transient) anObj = GetMapOfAIS().Find2(name);
+      if (anObj->IsKind(STANDARD_TYPE(AIS_InteractiveObject))) {
+        const Handle(AIS_InteractiveObject) aShape =
+        Handle(AIS_InteractiveObject)::DownCast (anObj);
+        Handle(AIS_Drawer) CurDrawer = aShape->Attributes();
+        Handle(Prs3d_IsoAspect) aUIso = CurDrawer->UIsoAspect();
+        Handle(Prs3d_IsoAspect) aVIso = CurDrawer->VIsoAspect();
+
+        if (isChanged) {
+          CurDrawer->SetUIsoAspect(CopyIsoAspect(aUIso, nbUIsos));
+          CurDrawer->SetVIsoAspect(CopyIsoAspect(aVIso, nbVIsos));
+          TheAISContext()->SetLocalAttributes(aShape, CurDrawer);
+          TheAISContext()->Redisplay(aShape);
+        } else {
+          di << "Number of isos for " << argv[i] << " : "
+             << aUIso->Number() << " " << aVIso->Number() << "\n";
+        }
+      }
+    }
+  }
+
+  if (isChanged) {
+    TheAISContext()->UpdateCurrentViewer();
+  }
+
+  return 0;
+}
 
 //==============================================================================
 //function : VDispAreas,VDispSensitive,...
@@ -3553,6 +3550,10 @@ void ViewerTest::Commands(Draw_Interpretor& theCommands)
   const char *group = "AIS_Display";
 
   // display
+  theCommands.Add("visos",
+                  "visos [name1 ...] [nbUIsos nbVIsos IsoOnPlane(0|1)]\n"
+                  "\tIf last 3 optional parameters are not set prints numbers of U-, V- isolines and IsoOnPlane.\n",
+		  __FILE__, visos, group);
 
   theCommands.Add("vdisplay",
 		  "vdisplay         : vdisplay2 name1 [name2] ... [name n] ",
