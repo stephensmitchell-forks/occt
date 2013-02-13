@@ -127,7 +127,6 @@
 #include <BRepBuilderAPI_VertexInspector.hxx>
 #include <BRepBuilderAPI_CellFilter.hxx>
 #include <BRepBuilderAPI_BndBoxTreeSelector.hxx>
-#include <BRepBuilderAPI_MakeShape.hxx>
 #include <NCollection_UBTreeFiller.hxx>
 
 static void SortBox (const Handle(Bnd_HArray1OfBox) hSetBoxes,
@@ -1910,7 +1909,7 @@ void BRepBuilderAPI_Sewing::Perform(const Handle(Message_ProgressIndicator)& the
       mySewedShape.Nullify();
       return;
     }
-    BRepBuilderAPI_MakeShape::EnsureToleranceRule(mySewedShape);
+    BRepLib::UpdateTolerances(mySewedShape);
   }
 #if DEB
   chr_total.Stop();

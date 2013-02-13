@@ -22,6 +22,7 @@
 
 #include <BRepOffsetAPI_MakePipeShell.ixx>
 
+#include <BRepLib.hxx>
 #include <GeomFill_PipeError.hxx>
 #include <Standard_NotImplemented.hxx>
 #include <StdFail_NotDone.hxx>
@@ -225,7 +226,7 @@ void BRepOffsetAPI_MakePipeShell::Delete( const TopoDS_Shape& Profile)
   Ok = myPipe->Build();
   if (Ok) {
     myShape = myPipe->Shape();
-    EnsureToleranceRule(myShape);
+    BRepLib::UpdateTolerances(myShape);
     Done();
   }
   else NotDone(); 
