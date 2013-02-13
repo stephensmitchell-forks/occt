@@ -51,7 +51,7 @@
 #include <BRepGProp.hxx>
 #include <TColStd_Array1OfReal.hxx>
 #include <Draw_ProgressIndicator.hxx>
-#include <BRep_TEdge.hxx>
+#include <BRep_Tool.hxx>
 #include <GProp_PGProps.hxx>
 
 // memory management
@@ -631,9 +631,8 @@ static Standard_Integer nexplode(Draw_Interpretor& di,
     const TopoDS_Shape & aS = aShapes(Index);
     gp_Pnt GPoint;
     TopoDS_Edge anES;
-    Handle_BRep_TEdge anEG;
-    if (typ != TopAbs_EDGE || (anES = TopoDS::Edge(aS),
-      anEG = (Handle_BRep_TEdge &)anES.TShape(), !anEG->Degenerated()))
+    if (typ != TopAbs_EDGE ||
+      (anES = TopoDS::Edge(aS), BRep_Tool::Degenerated(anES)))
     {
       GProp_GProps GPr;
       BRepGProp::LinearProperties(aS,GPr);
@@ -645,8 +644,7 @@ static Standard_Integer nexplode(Draw_Interpretor& di,
       for (TopExp_Explorer aVE(anES, TopAbs_VERTEX); aVE.More(); aVE.Next())
       {
         TopoDS_Vertex aVS = TopoDS::Vertex(aVE.Current());
-        Handle_BRep_TVertex & aVG = (Handle_BRep_TVertex &)aVS.TShape();
-        gp_Pnt aP = aVG->Pnt();
+        gp_Pnt aP = BRep_Tool::Pnt(aVS);
         aP.Transform(anES.Location());
         aP.Transform(aS.Location());
         aPD.AddPoint(aP);
