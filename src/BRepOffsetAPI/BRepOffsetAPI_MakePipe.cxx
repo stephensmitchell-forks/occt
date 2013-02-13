@@ -21,6 +21,7 @@
 
 #include <BRepOffsetAPI_MakePipe.ixx>
 
+#include <BRepLib.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopoDS_Face.hxx>
 #include <TopoDS_Edge.hxx>
@@ -59,7 +60,7 @@ const BRepFill_Pipe& BRepOffsetAPI_MakePipe::Pipe() const
 void BRepOffsetAPI_MakePipe::Build() 
 {
   myShape = myPipe.Shape();
-  BRepBuilderAPI_MakeShape::EnsureToleranceRule(myShape);
+  BRepLib::UpdateTolerances(myShape);
   Done();
 }
 

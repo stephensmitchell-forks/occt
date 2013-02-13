@@ -38,6 +38,7 @@
 #include <BOP_SolidSolidHistoryCollector.hxx>
 #include <BOP_SectionHistoryCollector.hxx>
 #include <BRepLib_FuseEdges.hxx>
+#include <BRepLib.hxx>
 #include <TopExp.hxx>
 #include <TopTools_MapOfShape.hxx>
 #include <TopTools_ListIteratorOfListOfShape.hxx>
@@ -325,7 +326,7 @@ const TopTools_ListOfShape& BRepAlgoAPI_BooleanOperation::Modified(const TopoDS_
 	  myErrorStatus=0;
 	  myBuilderCanWork=Standard_True;
 	  myShape=myBuilder->Result();
-	  EnsureToleranceRule(myShape);
+	  BRepLib::UpdateTolerances(myShape);
 	  Done(); 
 	}
 	else {
@@ -401,7 +402,7 @@ const TopTools_ListOfShape& BRepAlgoAPI_BooleanOperation::Modified(const TopoDS_
     myErrorStatus=0;
     myBuilderCanWork=Standard_True;
     myShape=myBuilder->Result();
-    EnsureToleranceRule(myShape);
+    BRepLib::UpdateTolerances(myShape);
     Done(); 
   }
   else {

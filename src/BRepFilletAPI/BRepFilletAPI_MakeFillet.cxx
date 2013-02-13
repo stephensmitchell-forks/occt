@@ -30,6 +30,7 @@
 #include <Law_Linear.hxx>
 #include <Law_S.hxx>
 #include <Law_Interpol.hxx>
+#include <BRepLib.hxx>
 
 //=======================================================================
 //function : BRepFilletAPI_MakeFillet
@@ -532,7 +533,7 @@ void BRepFilletAPI_MakeFillet::Build()
   if(myBuilder.IsDone()) {
     Done();
     myShape = myBuilder.Shape();
-    EnsureToleranceRule(myShape);
+    BRepLib::UpdateTolerances(myShape);
 
     // creation of the Map.
     TopExp_Explorer ex;

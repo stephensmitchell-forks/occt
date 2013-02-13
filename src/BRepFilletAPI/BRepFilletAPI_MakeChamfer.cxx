@@ -25,6 +25,7 @@
 #include <TopTools_ListIteratorOfListOfShape.hxx>
 #include <ChFiDS_Spine.hxx>
 #include <TopExp_Explorer.hxx>
+#include <BRepLib.hxx>
 
 
 
@@ -391,7 +392,7 @@ void BRepFilletAPI_MakeChamfer::Build()
   if (myBuilder.IsDone()){
     Done();
     myShape = myBuilder.Shape();
-    EnsureToleranceRule(myShape);
+    BRepLib::UpdateTolerances(myShape);
       
       //creation of the Map.
     TopExp_Explorer ex;
