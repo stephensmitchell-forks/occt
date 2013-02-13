@@ -21,6 +21,7 @@
 #include <BRepAlgoAPI_BooleanOperation.ixx>
 
 #include <BRepLib_FuseEdges.hxx>
+#include <BRepLib.hxx>
 #include <TopExp.hxx>
 #include <TopTools_MapOfShape.hxx>
 #include <TopTools_ListIteratorOfListOfShape.hxx>
@@ -295,7 +296,7 @@ const TopTools_ListOfShape& BRepAlgoAPI_BooleanOperation::Modified(const TopoDS_
 	  myErrorStatus=0;
 	  myBuilderCanWork=Standard_True;
 	  myShape=myBuilder->Result();
-	  EnsureToleranceRule(myShape);
+	  BRepLib::UpdateTolerances(myShape);
 	  Done(); 
 	}
 	else {
@@ -318,8 +319,13 @@ const TopTools_ListOfShape& BRepAlgoAPI_BooleanOperation::Modified(const TopoDS_
   if (!iErr) {
     myErrorStatus=0;
     myBuilderCanWork=Standard_True;
+<<<<<<< HEAD
     myShape=myBuilder->Shape();
     EnsureToleranceRule(myShape);
+=======
+    myShape=myBuilder->Result();
+    BRepLib::UpdateTolerances(myShape);
+>>>>>>> d61c0a6... BRepBuilderAPI_MakeShape::EnsureToleranceRule was replaced by
     Done(); 
   } 
   else {

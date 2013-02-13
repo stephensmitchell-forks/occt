@@ -815,7 +815,7 @@ static Standard_Integer EnsureTolRule(
   }
   //
   TopoDS_Shape aRes = BRepBuilderAPI_Copy(aS);
-  BRepBuilderAPI_MakeShape::EnsureToleranceRule(aRes);
+  BRepLib::UpdateTolerances(aRes);
   //
   DBRep::Set(theAs[1], aRes);
   return 0;

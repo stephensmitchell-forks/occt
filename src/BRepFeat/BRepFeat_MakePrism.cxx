@@ -45,6 +45,8 @@
 
 #include <BRep_Tool.hxx>
 
+#include <BRepLib.hxx>
+
 #include <BRepTools.hxx>
 
 
@@ -463,7 +465,7 @@ void BRepFeat_MakePrism::Perform(const TopoDS_Shape& Until)
       }
     }         
   }
-  EnsureToleranceRule(myShape);
+  BRepLib::UpdateTolerances(myShape);
 /*   // loop of control of descendance
 
   TopExp_Explorer expr(mySbase, TopAbs_FACE);
