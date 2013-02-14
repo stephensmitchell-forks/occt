@@ -10,7 +10,7 @@ puts ""
 ##################################################
 
 restore [locate_data_file OCC330.brep] result
-EnsureTolRule result result
+updatetolerance result
 
 decho off
 set che [checkshape result]

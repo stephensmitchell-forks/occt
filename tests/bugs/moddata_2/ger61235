@@ -5,7 +5,7 @@ puts "==========="
 restore [locate_data_file ger61235a.brep] tool 
 checkshape tool
 restore [locate_data_file ger61235b.brep] object 
-EnsureTolRule object object
+updatetolerance object
 checkshape object
 
 bsection result object tool 

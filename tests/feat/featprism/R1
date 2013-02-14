@@ -2,7 +2,7 @@
 # Date : 02 Dec 98
 
 restore [locate_data_file CFE900_pro16gff.rle] base
-EnsureTolRule base base
+updatetolerance base
 restore [locate_data_file pro16769_face.brep] cont
 
 explode base face
