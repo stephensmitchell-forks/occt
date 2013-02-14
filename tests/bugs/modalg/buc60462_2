@@ -8,10 +8,10 @@ puts "BUC60462"
 puts "=========="
 
 restore [locate_data_file buc60462c.brep] a 
-EnsureTolRule a a
+updatetolerance a
 checkshape a
 restore [locate_data_file buc60462d.brep] b
-EnsureTolRule b b
+updatetolerance b
 checkshape b
 puts "Fuse begin"
 bfuse result a b

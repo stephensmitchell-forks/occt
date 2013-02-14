@@ -7,7 +7,7 @@ puts "=========="
 pload QAcommands
 
 restore [locate_data_file buc60652b.brep] result
-EnsureTolRule result result
+updatetolerance result
 checkshape result
 BUC60652 result
 

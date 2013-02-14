@@ -2,7 +2,7 @@
 # Date : 23mar98
 
 restore [locate_data_file CTO900_ger60224-part.rle] base
-EnsureTolRule base base
+updatetolerance base
 restore [locate_data_file ger60224-tool.rle] wire
 
 mkplane cont wire

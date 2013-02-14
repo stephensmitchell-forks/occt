@@ -7,7 +7,7 @@ puts ""
 ########################################################
 
 restore [locate_data_file OCC630.brep] a1
-EnsureTolRule a1 a1
+updatetolerance a1
 checkshape a1
 
 ######################################################################
