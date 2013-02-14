@@ -9,7 +9,7 @@ puts ""
 ###########################################################
 
 restore [locate_data_file OCC329.brep] a 
-EnsureTolRule a a
+updatetolerance a
 
 checkshape a
 set tol1 [maxtolerance a]

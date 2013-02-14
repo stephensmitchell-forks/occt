@@ -1,5 +1,5 @@
 puts [fixsmall result a 1]
-EnsureTolRule result result
+updatetolerance result
 if { [isdraw result] } {
   puts [checkshape result]
 }
