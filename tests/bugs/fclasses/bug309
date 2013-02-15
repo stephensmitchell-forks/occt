@@ -1,4 +1,5 @@
-puts "TODO ?OCC12345 ALL: OCC309: Error 2"
+puts "TODO ?OCC12345 ALL: OCC309: Error"
+puts "TODO ?OCC12345 ALL: Faulty shapes in variables faulty_"
 
 puts "================"
 puts "OCC309"
