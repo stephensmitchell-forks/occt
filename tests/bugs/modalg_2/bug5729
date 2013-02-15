@@ -10,6 +10,7 @@ set BugNumber OCC5729
 
 restore [locate_data_file OCC5729-f1.brep] f1 
 restore [locate_data_file OCC5729-f2.brep] f2 
+updatetolerance f2
 
 decho off
 set che_1 [checkshape f1]

@@ -9,6 +9,7 @@ puts ""
 set BugNumber OCC6182
 
 restore [locate_data_file OCC6182_A.brep] s1 
+updatetolerance s1
 restore [locate_data_file OCC6182_B.brep] s2 
 
 decho off
