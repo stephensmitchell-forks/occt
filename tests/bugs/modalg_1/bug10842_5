@@ -9,6 +9,7 @@ puts ""
 set BugNumber OCC10842
 
 restore [locate_data_file OCC10842-1.brep] b1 
+updatetolerance b1
 restore [locate_data_file OCC10842-2.brep] b2 
 
 puts "Prepare boolean operation ..."

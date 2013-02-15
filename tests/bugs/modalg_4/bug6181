@@ -9,7 +9,9 @@ puts ""
 set BugNumber OCC6181
 
 restore [locate_data_file OCC6181_A.brep] s1 
+updatetolerance s1
 restore [locate_data_file OCC6181_B.brep] s2 
+updatetolerance s2
 
 decho off
 set che_s1 [checkshape s1]
