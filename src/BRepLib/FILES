@@ -1,1 +1,4 @@
 BRepLib_MakeWire_1.cxx
+BRepLib_ToleranceRule.hxx
+BRepLib_ToleranceRule.lxx
+BRepLib_ToleranceRule.cxx
