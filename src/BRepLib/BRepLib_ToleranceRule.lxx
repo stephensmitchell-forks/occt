@@ -1,0 +1,117 @@
+// Copyright (c) 1999-2012 OPEN CASCADE SAS
+//
+// The content of this file is subject to the Open CASCADE Technology Public
+// License Version 6.5 (the "License"). You may not use the content of this file
+// except in compliance with the License. Please obtain a copy of the License
+// at http://www.opencascade.org and read it completely before using this file.
+//
+// The Initial Developer of the Original Code is Open CASCADE S.A.S., having its
+// main offices at: 1, place des Freres Montgolfier, 78280 Guyancourt, France.
+//
+// The Original Code and all software distributed under the License is
+// distributed on an "AS IS" basis, without warranty of any kind, and the
+// Initial Developer hereby disclaims all such warranties, including without
+// limitation, any warranties of merchantability, fitness for a particular
+// purpose or non-infringement. Please see the License for the specific terms
+// and conditions governing the rights and limitations under the License.
+
+#include <TopExp_Explorer.hxx>
+#include <TopoDS.hxx>
+#include <TopoDS_Edge.hxx>
+#include <TopoDS_Face.hxx>
+#include <TopoDS_Vertex.hxx>
+
+//=======================================================================
+//function : IsProtectedFromModification
+//purpose  :
+//=======================================================================
+inline Standard_Boolean BRepLib_ToleranceRule::IsProtectedFromModification(
+  const TopoDS_Shape &) const
+{
+  return Standard_False;
+}
+
+//=======================================================================
+//function : SetProperTolerances
+//purpose  :
+//=======================================================================
+template <typename T>
+void BRepLib_ToleranceRule::SetProperTolerances(const TopoDS_Shape & theS,
+  const T & theObj, Standard_Boolean theMinimizeTolerances)
+{
+  // Get proper tolerances.
+  NCollection_DataMap<TopoDS_Shape, Standard_Real,
+    TopTools_ShapeMapHasher> aTs;
+  ProperTolerances(theS, aTs, theMinimizeTolerances);
+  // Process faces.
+  if (theMinimizeTolerances)
+  {
+    for (TopExp_Explorer aFIt(theS, TopAbs_FACE); aFIt.More(); aFIt.Next())
+    {
+      const TopoDS_Face & aF = TopoDS::Face(aFIt.Current());
+      if (!theObj.IsProtectedFromModification(aF))
+      {
+        Handle_BRep_TFace & aFD = Handle_BRep_TFace::DownCast(aF.TShape());
+        aFD->Tolerance(aTs(aF));
+      }
+    }
+  }
+  // Process edges and vertices with face.
+  for (TopExp_Explorer aFIt(theS, TopAbs_FACE); aFIt.More(); aFIt.Next())
+  {
+    const TopoDS_Face & aF = TopoDS::Face(aFIt.Current());
+    // Process face edges.
+    for (TopExp_Explorer anEIt(aF, TopAbs_EDGE); anEIt.More(); anEIt.Next())
+    {
+      const TopoDS_Edge & anE = TopoDS::Edge(anEIt.Current());
+      if (!theObj.IsProtectedFromModification(anE))
+      {
+        Handle_BRep_TEdge & anED = Handle_BRep_TEdge::DownCast(anE.TShape());
+        anED->Tolerance(aTs(anE));
+      }
+      // Process face edge vertices.
+      for (TopExp_Explorer aVIt(anE, TopAbs_VERTEX); aVIt.More(); aVIt.Next())
+      {
+        const TopoDS_Vertex & aV = TopoDS::Vertex(aVIt.Current());
+        if (!theObj.IsProtectedFromModification(aV))
+        {
+          Handle_BRep_TVertex & aVD =
+            Handle_BRep_TVertex::DownCast(aV.TShape());
+          aVD->Tolerance(aTs(aV));
+        }
+      }
+    }
+    // Process face vertices.
+    for (TopExp_Explorer aVIt(aF, TopAbs_VERTEX, TopAbs_EDGE);
+      aVIt.More(); aVIt.Next())
+    {
+      const TopoDS_Vertex & aV = TopoDS::Vertex(aVIt.Current());
+      if (!theObj.IsProtectedFromModification(aV))
+      {
+        Handle_BRep_TVertex & aVD = Handle_BRep_TVertex::DownCast(aV.TShape());
+        aVD->Tolerance(aTs(aV));
+      }
+    }
+  }
+  // Process edge vertices without faces.
+  for (TopExp_Explorer anEIt(theS, TopAbs_EDGE, TopAbs_FACE);
+    anEIt.More(); anEIt.Next())
+  {
+    const TopoDS_Edge & anE = TopoDS::Edge(anEIt.Current());
+    for (TopExp_Explorer aVIt(anE, TopAbs_VERTEX); aVIt.More(); aVIt.Next())
+    {
+      const TopoDS_Vertex & aV = TopoDS::Vertex(aVIt.Current());
+      if (!theObj.IsProtectedFromModification(aV))
+      {
+        Handle_BRep_TVertex & aVD = Handle_BRep_TVertex::DownCast(aV.TShape());
+        aVD->Tolerance(aTs(aV));
+      }
+    }
+  }
+}
+
+inline void BRepLib_ToleranceRule::SetProperTolerances(
+  const TopoDS_Shape & theS, Standard_Boolean theMinimizeTolerances)
+{
+  SetProperTolerances(theS, BRepLib_ToleranceRule(), theMinimizeTolerances);
+}
