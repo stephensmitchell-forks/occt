@@ -86,6 +86,7 @@
 #include <BRepBndLib.hxx>
 #include <Approx_CurvilinearParameter.hxx>
 #include <Geom_BSplineSurface.hxx>
+#include <BRepLib_ToleranceRule.hxx>
 
 
 // TODO - not thread-safe static variables
@@ -1308,159 +1309,12 @@ void BRepLib::SameParameter(const TopoDS_Edge&  AnEdge,
 
 //=======================================================================
 //function : UpdateTolerances
-//purpose  : 
+//purpose  :
 //=======================================================================
-void  BRepLib::UpdateTolerances(const TopoDS_Shape& aShape,
-				const Standard_Boolean verifyTolerance) 
+void  BRepLib::UpdateTolerances(const TopoDS_Shape & theS,
+  const Standard_Boolean theMinimizeTolerances)
 {
-
-// Harmonize tolerances
-// with rule Tolerance(VERTEX)>=Tolerance(EDGE)>=Tolerance(FACE)
-  BRep_Builder B;
-  Standard_Real tol=0;
-  if (verifyTolerance) {
-    // Set tolerance to its minimum value
-    Handle(Geom_Surface) S;
-    TopLoc_Location l;
-    TopExp_Explorer ex;
-    Bnd_Box aB;
-    Standard_Real aXmin, aYmin, aZmin, aXmax, aYmax, aZmax, dMax;
-    for (ex.Init(aShape, TopAbs_FACE); ex.More(); ex.Next()) {
-      const TopoDS_Face& curf=TopoDS::Face(ex.Current());
-      S = BRep_Tool::Surface(curf, l);
-      if (!S.IsNull()) {
-	aB.SetVoid();
-	BRepBndLib::Add(curf,aB);
-	if (S->DynamicType() == STANDARD_TYPE(Geom_RectangularTrimmedSurface)) {
-	  S = (*((Handle(Geom_RectangularTrimmedSurface)*)&S))->BasisSurface();
-	}
-	GeomAdaptor_Surface AS(S);
-	switch (AS.GetType()) {
-	case GeomAbs_Plane: 
-	case GeomAbs_Cylinder: 
-	case GeomAbs_Cone: 
-	  {
-	    tol=Precision::Confusion();
-	    break;
-	  }
-	case GeomAbs_Sphere: 
-	case GeomAbs_Torus: 
-	  {
-	    tol=Precision::Confusion()*2;
-	    break;
-	  }
-	default:
-	  tol=Precision::Confusion()*4;
-	}
-	if (!aB.IsWhole()) {
-	  aB.Get(aXmin, aYmin, aZmin, aXmax, aYmax, aZmax);
-	  dMax=1.;
-	  if (!aB.IsOpenXmin() && !aB.IsOpenXmax()) dMax=aXmax-aXmin;
-	  if (!aB.IsOpenYmin() && !aB.IsOpenYmax()) aYmin=aYmax-aYmin;
-	  if (!aB.IsOpenZmin() && !aB.IsOpenZmax()) aZmin=aZmax-aZmin;
-	  if (aYmin>dMax) dMax=aYmin;
-	  if (aZmin>dMax) dMax=aZmin;
-	  tol=tol*dMax;
-	  // Do not process tolerances > 1.
-	  if (tol>1.) tol=0.99;
-	}
-	const Handle(BRep_TFace)& Tf = *((Handle(BRep_TFace)*)&curf.TShape());
-	Tf->Tolerance(tol);
-      }
-    }
-  }
-  
-  //Process edges
-  TopTools_IndexedDataMapOfShapeListOfShape parents;
-  TopExp::MapShapesAndAncestors(aShape, TopAbs_EDGE, TopAbs_FACE, parents);
-  TopTools_ListIteratorOfListOfShape lConx;
-  Standard_Integer iCur;
-  for (iCur=1; iCur<=parents.Extent(); iCur++) {
-    tol=0;
-    for (lConx.Initialize(parents(iCur)); lConx.More(); lConx.Next()) {
-      tol=Max(tol, BRep_Tool::Tolerance(TopoDS::Face(lConx.Value())));
-    }
-    // Update can only increase tolerance, so if the edge has a greater
-    //  tolerance than its faces it is not concerned
-    B.UpdateEdge(TopoDS::Edge(parents.FindKey(iCur)), tol);
-  }
-
-  //Vertices are processed
-  parents.Clear();
-  TopExp::MapShapesAndAncestors(aShape, TopAbs_VERTEX, TopAbs_EDGE, parents);
-  TColStd_MapOfTransient Initialized;
-  TopTools_MapOfShape Done;
-  Standard_Integer nbV = parents.Extent();
-  for (iCur=1; iCur<=nbV; iCur++) {
-    tol=0;
-    Done.Clear();
-    const TopoDS_Vertex& V = TopoDS::Vertex(parents.FindKey(iCur));
-    Bnd_Box box;
-    box.Add(BRep_Tool::Pnt(V));
-    gp_Pnt p3d;
-    for (lConx.Initialize(parents(iCur)); lConx.More(); lConx.Next()) {
-      const TopoDS_Edge& E = TopoDS::Edge(lConx.Value());
-      if(!Done.Add(E)) continue;
-      tol=Max(tol, BRep_Tool::Tolerance(E));
-      if(!BRep_Tool::SameRange(E)) continue;
-      Standard_Real par = BRep_Tool::Parameter(V,E);
-      Handle(BRep_TEdge)& TE = *((Handle(BRep_TEdge)*)&E.TShape());
-      BRep_ListIteratorOfListOfCurveRepresentation itcr(TE->Curves());
-      const TopLoc_Location& Eloc = E.Location();
-      while (itcr.More()) {
-	// For each CurveRepresentation, check the provided parameter
-	const Handle(BRep_CurveRepresentation)& cr = itcr.Value();
-	const TopLoc_Location& loc = cr->Location();
-	TopLoc_Location L = (Eloc * loc);
-	if (cr->IsCurve3D()) {
-	  const Handle(Geom_Curve)& C = cr->Curve3D();
-	  if (!C.IsNull()) { // edge non degenerated
-	    p3d = C->Value(par);
-	    p3d.Transform(L.Transformation());
-	    box.Add(p3d);
-	  }
-	}
-	else if (cr->IsCurveOnSurface()) {
-	  const Handle(Geom_Surface)& Su = cr->Surface();
-	  const Handle(Geom2d_Curve)& PC = cr->PCurve();
-	  Handle(Geom2d_Curve) PC2;
-	  if (cr->IsCurveOnClosedSurface()) {
-	    PC2 = cr->PCurve2();
-	  }
-	  gp_Pnt2d p2d = PC->Value(par);
-	  p3d = Su->Value(p2d.X(),p2d.Y());
-	  p3d.Transform(L.Transformation());
-	  box.Add(p3d);
-	  if (!PC2.IsNull()) {
-	    p2d = PC2->Value(par);
-	    p3d = Su->Value(p2d.X(),p2d.Y());
-	    p3d.Transform(L.Transformation());
-	    box.Add(p3d);
-	  }
-	}
-	itcr.Next();
-      }
-    }
-    Standard_Real aXmin, aYmin, aZmin, aXmax, aYmax, aZmax;
-    box.Get(aXmin, aYmin, aZmin, aXmax, aYmax, aZmax);
-    aXmax -= aXmin; aYmax -= aYmin; aZmax -= aZmin;
-    tol = Max(tol,sqrt(aXmax*aXmax+aYmax*aYmax+aZmax*aZmax));
-    tol += 2.*Epsilon(tol);
-    if (verifyTolerance) {
-      // ASet minimum value of the tolerance 
-      // Attention to sharing of the vertex by other shapes
-      const Handle(BRep_TVertex)& TV = *((Handle(BRep_TVertex)*)&V.TShape());
-      if (Initialized.Add(TV)) 
-	TV->Tolerance(tol);
-      else 
-	B.UpdateVertex(V, tol);
-    }
-    else {
-    // Update can only increase tolerance, so if the edge has a greater
-    //  tolerance than its faces it is not concerned
-      B.UpdateVertex(V, tol);
-    }
-  }
+  BRepLib_ToleranceRule::SetProperTolerances(theS, theMinimizeTolerances);
 }
 
 //=======================================================================
