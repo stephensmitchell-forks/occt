@@ -22,10 +22,11 @@
 
 #include <BRepOffsetAPI_MakePipeShell.ixx>
 
-#include <BRepLib.hxx>
+#include <BRepLib_ToleranceRule.hxx>
 #include <GeomFill_PipeError.hxx>
 #include <Standard_NotImplemented.hxx>
 #include <StdFail_NotDone.hxx>
+#include <TopExp.hxx>
 
 //=======================================================================
 //function :
@@ -96,6 +97,7 @@ BRepOffsetAPI_MakePipeShell::BRepOffsetAPI_MakePipeShell(const TopoDS_Wire& Spin
 				       const Standard_Boolean WithContact,
 				       const Standard_Boolean WithCorrection) 
 {
+  TopExp::MapShapes(Profile, myProtectedFromModificationShapes);
   myPipe->Add(Profile, WithContact, WithCorrection);
 }
 
@@ -108,6 +110,7 @@ BRepOffsetAPI_MakePipeShell::BRepOffsetAPI_MakePipeShell(const TopoDS_Wire& Spin
 				       const Standard_Boolean WithContact,
 				       const Standard_Boolean WithCorrection) 
 {
+  TopExp::MapShapes(Profile, myProtectedFromModificationShapes);
   myPipe->Add(Profile, Location, WithContact, WithCorrection);
 }
 
@@ -120,6 +123,7 @@ BRepOffsetAPI_MakePipeShell::BRepOffsetAPI_MakePipeShell(const TopoDS_Wire& Spin
 					  const Standard_Boolean WithContact,
 					  const Standard_Boolean WithCorrection) 
 {
+  TopExp::MapShapes(Profile, myProtectedFromModificationShapes);
   myPipe->SetLaw(Profile, L, WithContact, WithCorrection);
 }
 
@@ -133,6 +137,7 @@ BRepOffsetAPI_MakePipeShell::BRepOffsetAPI_MakePipeShell(const TopoDS_Wire& Spin
 					  const Standard_Boolean WithContact,
 					  const Standard_Boolean WithCorrection) 
 {
+  TopExp::MapShapes(Profile, myProtectedFromModificationShapes);
   myPipe->SetLaw(Profile, L, Location, WithContact, WithCorrection);
 }
 
@@ -226,7 +231,7 @@ void BRepOffsetAPI_MakePipeShell::Delete( const TopoDS_Shape& Profile)
   Ok = myPipe->Build();
   if (Ok) {
     myShape = myPipe->Shape();
-    BRepLib::UpdateTolerances(myShape);
+    BRepLib_ToleranceRule::SetProperTolerances(myShape, *this);
     Done();
   }
   else NotDone(); 
@@ -274,3 +279,12 @@ BRepOffsetAPI_MakePipeShell::Generated(const TopoDS_Shape& S)
   return myGenerated;
 }
 
+//=======================================================================
+//function : IsProtectedFromModification
+//purpose  :
+//=======================================================================
+Standard_Boolean BRepOffsetAPI_MakePipeShell::IsProtectedFromModification(
+  const TopoDS_Shape & theS) const
+{
+  return myProtectedFromModificationShapes.Contains(theS);
+}

@@ -45,7 +45,7 @@
 
 #include <BRep_Tool.hxx>
 
-#include <BRepLib.hxx>
+#include <BRepLib_ToleranceRule.hxx>
 
 #include <BRepTools.hxx>
 
@@ -141,6 +141,10 @@ void BRepFeat_MakePrism::Init(const TopoDS_Shape& Sbase,
   Standard_Boolean trc = BRepFeat_GettraceFEAT();
   if (trc) cout << "BRepFeat_MakePrism::Init" << endl;
 #endif
+  TopExp::MapShapes(Sbase,  myProtectedFromModificationShapes);
+  TopExp::MapShapes(Pbase,  myProtectedFromModificationShapes);
+  TopExp::MapShapes(Skface, myProtectedFromModificationShapes);
+  //
   mySkface = Skface;
   SketchFaceValid();
   mySbase  = Sbase;
@@ -206,6 +210,8 @@ void BRepFeat_MakePrism::Add(const TopoDS_Edge& E,
   Standard_Boolean trc = BRepFeat_GettraceFEAT();
   if (trc) cout << "BRepFeat_MakePrism::Add(Edge,face)" << endl;
 #endif
+  TopExp::MapShapes(E, myProtectedFromModificationShapes);
+  //
   TopExp_Explorer exp;
   for (exp.Init(mySbase,TopAbs_FACE);exp.More();exp.Next()) {
     if (exp.Current().IsSame(F)) {
@@ -366,6 +372,8 @@ void BRepFeat_MakePrism::Perform(const TopoDS_Shape& Until)
   Standard_Boolean trc = BRepFeat_GettraceFEAT();
   if (trc) cout << "BRepFeat_MakePrism::Perform(Until)" << endl;
 #endif
+  TopExp::MapShapes(Until, myProtectedFromModificationShapes);
+  //
   if (Until.IsNull()) {
     Standard_ConstructionError::Raise();
   }
@@ -465,7 +473,7 @@ void BRepFeat_MakePrism::Perform(const TopoDS_Shape& Until)
       }
     }         
   }
-  BRepLib::UpdateTolerances(myShape);
+  BRepLib_ToleranceRule::SetProperTolerances(myShape, *this);
 /*   // loop of control of descendance
 
   TopExp_Explorer expr(mySbase, TopAbs_FACE);
@@ -517,6 +525,9 @@ void BRepFeat_MakePrism::Perform(const TopoDS_Shape& From,
   Standard_Boolean trc = BRepFeat_GettraceFEAT();
   if (trc) cout << "BRepFeat_MakePrism::Perform(From,Until)" << endl;
 #endif
+  TopExp::MapShapes(From,  myProtectedFromModificationShapes);
+  TopExp::MapShapes(Until, myProtectedFromModificationShapes);
+  //
   if (From.IsNull() || Until.IsNull()) {
     Standard_ConstructionError::Raise();
   }
@@ -788,6 +799,8 @@ void BRepFeat_MakePrism::PerformFromEnd(const TopoDS_Shape& Until)
   Standard_Boolean trc = BRepFeat_GettraceFEAT();
   if (trc) cout << "BRepFeat_MakePrism::PerformFromEnd(From,Until)" << endl;
 #endif
+  TopExp::MapShapes(Until, myProtectedFromModificationShapes);
+  //
   if (Until.IsNull()) {
     Standard_ConstructionError::Raise();
   }
@@ -991,6 +1004,8 @@ void BRepFeat_MakePrism::PerformUntilHeight(const TopoDS_Shape& Until,
   Standard_Boolean trc = BRepFeat_GettraceFEAT();
   if (trc) cout << "BRepFeat_MakePrism::PerformUntilHeight(Until,Length)" << endl;
 #endif
+  TopExp::MapShapes(Until, myProtectedFromModificationShapes);
+  //
   if (Until.IsNull()) {
     Perform(Length);
   }
@@ -1435,8 +1450,12 @@ Standard_Boolean ToFuse(const TopoDS_Face& F1,
   return ValRet;
 }
 
-
-
-
-
-
+//=======================================================================
+//function : IsProtectedFromModification
+//purpose  :
+//=======================================================================
+Standard_Boolean BRepFeat_MakePrism::IsProtectedFromModification(
+  const TopoDS_Shape & theS) const
+{
+  return myProtectedFromModificationShapes.Contains(theS);
+}

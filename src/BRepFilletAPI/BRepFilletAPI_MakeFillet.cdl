@@ -450,6 +450,10 @@ is
     returns Boolean
     is redefined virtual;
 
+    IsProtectedFromModification(me; theS : Shape from TopoDS)
+    returns Boolean from Standard;
+      ---Purpose: Indicates if theS is protected from modification.
+
     -------------------------------------------
     -- Methods usefull for BRepCtx utilities --
     -------------------------------------------
@@ -538,5 +542,6 @@ fields
 
     myBuilder : FilBuilder from ChFi3d;
     myMap     : MapOfShape from TopTools;
+    myProtectedFromModificationShapes : IndexedMapOfShape from TopTools;
 
 end MakeFillet;

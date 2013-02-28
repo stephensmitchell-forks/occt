@@ -55,6 +55,7 @@
 #include <BRep_Builder.hxx>
 #include <BRep_Tool.hxx>
 #include <BRepLib.hxx>
+#include <BRepLib_ToleranceRule.hxx>
 #include <BRepTools_Quilt.hxx>
 #include <BSplCLib.hxx>
 #include <Extrema_ExtPC.hxx>
@@ -1736,7 +1737,12 @@ void BRepBuilderAPI_Sewing::Load(const TopoDS_Shape& theShape)
 {
   myReShape->Clear();
   if (theShape.IsNull()) myShape.Nullify();
-  else myShape = myReShape->Apply(theShape);
+  else
+  {
+    TopExp::MapShapes(theShape, myProtectedFromModificationShapes);
+    //
+    myShape = myReShape->Apply(theShape);
+  }
   mySewedShape.Nullify();
   // Nullify flags and counters
   myNbShapes = myNbEdges = myNbVertices = 0;
@@ -1766,6 +1772,9 @@ void BRepBuilderAPI_Sewing::Load(const TopoDS_Shape& theShape)
 void BRepBuilderAPI_Sewing::Add(const TopoDS_Shape& aShape)
 {
   if (aShape.IsNull()) return;
+  //
+  TopExp::MapShapes(aShape, myProtectedFromModificationShapes);
+  //
   TopoDS_Shape oShape = myReShape->Apply(aShape);
   myOldShapes.Add(aShape,oShape);
   myNbShapes = myOldShapes.Extent();
@@ -1909,7 +1918,8 @@ void BRepBuilderAPI_Sewing::Perform(const Handle(Message_ProgressIndicator)& the
       mySewedShape.Nullify();
       return;
     }
-    BRepLib::UpdateTolerances(mySewedShape);
+    BRepLib_ToleranceRule::SetProperTolerances(
+      mySewedShape, *this);
   }
 #if DEB
   chr_total.Stop();
@@ -2146,6 +2156,16 @@ Standard_Boolean BRepBuilderAPI_Sewing::IsModifiedSubShape(const TopoDS_Shape& a
 TopoDS_Shape BRepBuilderAPI_Sewing::ModifiedSubShape(const TopoDS_Shape& aShape) const
 { 
   return myReShape->Apply(aShape);
+}
+
+//=======================================================================
+//function : IsProtectedFromModification
+//purpose  :
+//=======================================================================
+Standard_Boolean BRepBuilderAPI_Sewing::IsProtectedFromModification(
+  const TopoDS_Shape & theS) const
+{
+  return myProtectedFromModificationShapes.Contains(theS);
 }
 
 //=======================================================================
