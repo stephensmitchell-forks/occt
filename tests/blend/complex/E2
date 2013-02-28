@@ -5,6 +5,7 @@
 ## ====================================
 
 restore [locate_data_file CFI_pro8792.rle] a
+updatetolerance a
 explode a e
 mkevol result a
 updatevol a_20 0 15 0.5 20 1 5

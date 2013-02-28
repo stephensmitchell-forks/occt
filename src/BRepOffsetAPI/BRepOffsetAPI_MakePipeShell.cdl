@@ -320,8 +320,14 @@ is
     returns ListOfShape from TopTools
     is redefined; 
      
+    IsProtectedFromModification(me; theS : Shape)
+      ---Purpose: Indicates if theS is protected from modification.
+    returns Boolean;
+
 fields 
   myPipe  :  PipeShell  from  BRepFill;
+
+  myProtectedFromModificationShapes : IndexedMapOfShape from TopTools;
 
 end MakePipeShell;
 

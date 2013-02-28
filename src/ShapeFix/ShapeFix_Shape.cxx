@@ -33,7 +33,7 @@
 #include <TopAbs_ShapeEnum.hxx>
 #include <BRepTools.hxx>
 #include <BRep_Builder.hxx>
-#include <BRepLib.hxx>
+#include <BRepLib_ToleranceRule.hxx>
 
 #include <ShapeFix.hxx>
 #include <ShapeBuild_ReShape.hxx>
@@ -103,7 +103,7 @@ void ShapeFix_Shape::Init(const TopoDS_Shape& shape)
 Standard_Boolean ShapeFix_Shape::Perform(const Handle(Message_ProgressIndicator)& theProgress)
 {
   Standard_Boolean aR = PerformR(theProgress);
-  BRepLib::UpdateTolerances(myResult);
+  BRepLib_ToleranceRule::SetProperTolerances(myResult);
   return aR;
 }
 

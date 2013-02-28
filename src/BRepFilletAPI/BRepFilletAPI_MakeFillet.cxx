@@ -30,7 +30,8 @@
 #include <Law_Linear.hxx>
 #include <Law_S.hxx>
 #include <Law_Interpol.hxx>
-#include <BRepLib.hxx>
+#include <BRepLib_ToleranceRule.hxx>
+#include <TopExp.hxx>
 
 //=======================================================================
 //function : BRepFilletAPI_MakeFillet
@@ -41,6 +42,7 @@ BRepFilletAPI_MakeFillet::BRepFilletAPI_MakeFillet(const TopoDS_Shape& S,
 				       const ChFi3d_FilletShape FShape):
    myBuilder(S,FShape)
 {
+  TopExp::MapShapes(S, myProtectedFromModificationShapes);
 }
 
 //=======================================================================
@@ -533,7 +535,7 @@ void BRepFilletAPI_MakeFillet::Build()
   if(myBuilder.IsDone()) {
     Done();
     myShape = myBuilder.Shape();
-    BRepLib::UpdateTolerances(myShape);
+    BRepLib_ToleranceRule::SetProperTolerances(myShape, *this);
 
     // creation of the Map.
     TopExp_Explorer ex;
@@ -665,6 +667,16 @@ Standard_Boolean BRepFilletAPI_MakeFillet::IsDeleted(const TopoDS_Shape& F)
     return Standard_False;
   
   return Standard_True;    
+}
+
+//=======================================================================
+//function : IsProtectedFromModification
+//purpose  :
+//=======================================================================
+Standard_Boolean BRepFilletAPI_MakeFillet::IsProtectedFromModification(
+  const TopoDS_Shape & theS) const
+{
+  return myProtectedFromModificationShapes.Contains(theS);
 }
 
 //=======================================================================

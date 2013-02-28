@@ -168,6 +168,10 @@ is
     BarycCurve(me: in out)    
     	returns Curve from Geom;
     	---Purpose: Generates a curve along the center of mass of the primitive.
+
+    IsProtectedFromModification(me; theS : Shape from TopoDS)
+    returns Boolean from Standard;
+      ---Purpose: Indicates if theS is protected from modification.
 fields
 
     myPbase  : Shape                     from TopoDS;
@@ -176,5 +180,6 @@ fields
     myCurves : SequenceOfCurve           from TColGeom;
     myBCurve : Curve                     from Geom;
     myStatusError : StatusError          from BRepFeat;
+    myProtectedFromModificationShapes : IndexedMapOfShape from TopTools;
 
 end MakePrism;

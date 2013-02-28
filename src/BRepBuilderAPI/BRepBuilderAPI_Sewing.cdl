@@ -212,6 +212,9 @@ is
     raises NoSuchObject from Standard; -- raised if shape has not been modified
     	---Purpose: Gives a modifieded subshape
 	
+    IsProtectedFromModification(me; theS : Shape from TopoDS) returns Boolean;
+      ---Purpose: Indicates if theS is protected from modification.
+
     Dump(me);
     	---Purpose: print the informations
 
@@ -554,4 +557,6 @@ fields
 
     myReShape        : ReShape from BRepTools is protected;
     myMergedEdges    : MapOfShape from TopTools;
+
+    myProtectedFromModificationShapes : IndexedMapOfShape from TopTools;
 end Sewing;
