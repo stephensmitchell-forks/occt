@@ -20,7 +20,7 @@
 
 
 #include <BRepOffsetAPI_NormalProjection.ixx>
-#include <BRepLib.hxx>
+#include <BRepLib_ToleranceRule.hxx>
 
 BRepOffsetAPI_NormalProjection::BRepOffsetAPI_NormalProjection()
 {
@@ -65,7 +65,7 @@ BRepOffsetAPI_NormalProjection::BRepOffsetAPI_NormalProjection()
 {
   myNormalProjector.Build();
   myShape = myNormalProjector.Projection();
-  BRepLib::UpdateTolerances(myShape);
+  BRepLib_ToleranceRule::SetProperTolerances(myShape);
   Done();
 }
 

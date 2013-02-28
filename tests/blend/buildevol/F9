@@ -1,4 +1,5 @@
 restore [locate_data_file CFI_2_o12ffq.rle] s
+updatetolerance s
 explode s e
 
 mkevol result s

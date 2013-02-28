@@ -5,6 +5,7 @@
 ## ====================================
 
 restore [locate_data_file CFI_pro10631.rle] a
+updatetolerance a
 explode a e
 blend result a 5 a_45
 

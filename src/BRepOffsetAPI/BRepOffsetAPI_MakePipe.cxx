@@ -21,13 +21,14 @@
 
 #include <BRepOffsetAPI_MakePipe.ixx>
 
-#include <BRepLib.hxx>
+#include <BRepLib_ToleranceRule.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopoDS_Face.hxx>
 #include <TopoDS_Edge.hxx>
 #include <TopoDS_Vertex.hxx>
 #include <TopoDS.hxx>
 #include <TopAbs_ShapeEnum.hxx>
+#include <TopExp.hxx>
 
 //=======================================================================
 //function : BRepOffsetAPI_MakePipe
@@ -38,6 +39,8 @@ BRepOffsetAPI_MakePipe::BRepOffsetAPI_MakePipe(const TopoDS_Wire&  Spine ,
 				   const TopoDS_Shape& Profile)
      : myPipe(Spine, Profile)
 {
+  TopExp::MapShapes(Profile, myProtectedFromModificationShapes);
+  //
   Build();
 }
 
@@ -60,7 +63,7 @@ const BRepFill_Pipe& BRepOffsetAPI_MakePipe::Pipe() const
 void BRepOffsetAPI_MakePipe::Build() 
 {
   myShape = myPipe.Shape();
-  BRepLib::UpdateTolerances(myShape);
+  BRepLib_ToleranceRule::SetProperTolerances(myShape, *this);
   Done();
 }
 
@@ -107,3 +110,12 @@ TopoDS_Shape BRepOffsetAPI_MakePipe::Generated (const TopoDS_Shape& SSpine,
   return bid;
 }
 
+//=======================================================================
+//function : IsProtectedFromModification
+//purpose  :
+//=======================================================================
+Standard_Boolean BRepOffsetAPI_MakePipe::IsProtectedFromModification(
+  const TopoDS_Shape & theS) const
+{
+  return myProtectedFromModificationShapes.Contains(theS);
+}

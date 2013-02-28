@@ -25,7 +25,8 @@
 #include <TopTools_ListIteratorOfListOfShape.hxx>
 #include <ChFiDS_Spine.hxx>
 #include <TopExp_Explorer.hxx>
-#include <BRepLib.hxx>
+#include <BRepLib_ToleranceRule.hxx>
+#include <TopExp.hxx>
 
 
 
@@ -35,6 +36,7 @@
 //=======================================================================
 BRepFilletAPI_MakeChamfer::BRepFilletAPI_MakeChamfer(const TopoDS_Shape &S):myBuilder(S)
 {
+  TopExp::MapShapes(S, myProtectedFromModificationShapes);
 }
 
 
@@ -392,7 +394,7 @@ void BRepFilletAPI_MakeChamfer::Build()
   if (myBuilder.IsDone()){
     Done();
     myShape = myBuilder.Shape();
-    BRepLib::UpdateTolerances(myShape);
+    BRepLib_ToleranceRule::SetProperTolerances(myShape, *this);
       
       //creation of the Map.
     TopExp_Explorer ex;
@@ -470,6 +472,16 @@ Standard_Boolean BRepFilletAPI_MakeChamfer::IsDeleted(const TopoDS_Shape& F)
     return Standard_False;
   
   return Standard_True;    
+}
+
+//=======================================================================
+//function : IsProtectedFromModification
+//purpose  :
+//=======================================================================
+Standard_Boolean BRepFilletAPI_MakeChamfer::IsProtectedFromModification(
+  const TopoDS_Shape & theS) const
+{
+  return myProtectedFromModificationShapes.Contains(theS);
 }
 
 //=======================================================================
