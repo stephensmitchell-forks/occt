@@ -53,7 +53,8 @@ uses
  Vertex  from  TopoDS, 
  TransitionMode  from  BRepBuilderAPI,  
  PipeError       from  BRepBuilderAPI,
- PipeShell       from  BRepFill
+ PipeShell       from  BRepFill,
+ IndexedMapOfShape from TopTools
 
 raises
  DomainError from Standard, 
