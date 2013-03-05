@@ -53,9 +53,10 @@ uses
  Vertex  from  TopoDS, 
  TransitionMode  from  BRepBuilderAPI,  
  PipeError       from  BRepBuilderAPI,
- PipeShell       from  BRepFill
+ PipeShell       from  BRepFill,
+ IndexedMapOfShape from TopTools
 
-raises
+ raises
  DomainError from Standard, 
  NotDone  from  StdFail
 
