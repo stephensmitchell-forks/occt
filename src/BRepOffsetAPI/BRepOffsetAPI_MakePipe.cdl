@@ -39,7 +39,7 @@ uses
     Shape       from TopoDS,
     Edge        from TopoDS,
     ListOfShape from TopTools,
-    TopTools    from IndexedMapOfShape
+    IndexedMapOfShape from TopTools
 
 is
  

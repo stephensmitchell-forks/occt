@@ -50,7 +50,7 @@ uses Shape                     from TopoDS,
      SequenceOfCurve           from TColGeom,
      Curve                     from Geom,
      StatusError               from BRepFeat,
-     TopTools                  from IndexedMapOfShape
+     IndexedMapOfShape         from TopTools
      
 raises ConstructionError from Standard
 

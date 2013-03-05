@@ -48,7 +48,7 @@ uses
     HBuilder          from TopOpeBRepBuild,
     MapOfShape        from TopTools,
     ShapeModification from BRepBuilderAPI,
-    TopTools          from IndexedMapOfShape
+    IndexedMapOfShape from TopTools
     
 raises
     NotDone     from StdFail ,
