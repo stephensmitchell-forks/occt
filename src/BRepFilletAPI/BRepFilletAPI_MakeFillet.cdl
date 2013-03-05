@@ -47,7 +47,8 @@ uses
     FilletShape       from ChFi3d,
     HBuilder          from TopOpeBRepBuild,
     MapOfShape        from TopTools,
-    ShapeModification from BRepBuilderAPI
+    ShapeModification from BRepBuilderAPI,
+    TopTools          from IndexedMapOfShape
     
 raises
     NotDone     from StdFail ,

@@ -49,7 +49,8 @@ uses Shape                     from TopoDS,
      DataMapOfShapeShape       from TopTools,
      SequenceOfCurve           from TColGeom,
      Curve                     from Geom,
-     StatusError               from BRepFeat
+     StatusError               from BRepFeat,
+     TopTools                  from IndexedMapOfShape
      
 raises ConstructionError from Standard
 
