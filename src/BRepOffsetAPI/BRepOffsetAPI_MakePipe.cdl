@@ -38,7 +38,8 @@ uses
     Wire        from TopoDS,
     Shape       from TopoDS,
     Edge        from TopoDS,
-    ListOfShape from TopTools
+    ListOfShape from TopTools,
+    IndexedMapOfShape from TopTools
 
 is
  

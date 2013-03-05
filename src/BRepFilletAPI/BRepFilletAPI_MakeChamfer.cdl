@@ -41,7 +41,8 @@ uses
     ListOfShape       from TopTools,
     SecHArray1        from ChFiDS,
     HBuilder          from TopOpeBRepBuild,
-    ShapeModification from BRepBuilderAPI
+    ShapeModification from BRepBuilderAPI,
+    IndexedMapOfShape from TopTools
     
     
     
