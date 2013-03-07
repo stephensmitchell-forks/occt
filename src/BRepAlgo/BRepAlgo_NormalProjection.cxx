@@ -480,46 +480,55 @@ void BRepAlgo_NormalProjection::SetDefaultParams()
 	    InitChron(chr_booltool);
 #endif
             if(!Degenerated){
-    	       BRepAlgo_BooleanOperations BoolTool;
-	       BoolTool.Shapes2d(Faces->Value(j),prj);
-	       BoolTool.Common();
-	       Handle(TopOpeBRepBuild_HBuilder) HB;
-	       TopTools_ListOfShape LS;
-	       TopTools_ListIteratorOfListOfShape Iter; 
-	       HB = BoolTool.Builder();
-	       LS.Clear();
-	       if (HB->IsSplit(prj, TopAbs_IN))
-	         LS = HB->Splits(prj, TopAbs_IN);
-	       Iter.Initialize(LS);
-	       if(Iter.More()) {
-#ifdef DEBUG
-                  cout << " BooleanOperations :"  << Iter.More()<<" solutions " << endl; 
-#endif
-	          for(; Iter.More(); Iter.Next()) {
-	  	     BB.Add(myRes, Iter.Value());
-		     myAncestorMap.Bind(Iter.Value(), Edges->Value(i));
-		     myCorresp.Bind(Iter.Value(),Faces->Value(j));
-	          }
-	       }
+			
+                // {Fix for Issue 0023820 ... introducing try-catch so that result of the previous iteration is kept
+                try
+                {
+                    BRepAlgo_BooleanOperations BoolTool;
+                    BoolTool.Shapes2d(Faces->Value(j),prj);
+                    BoolTool.Common();
+                    Handle(TopOpeBRepBuild_HBuilder) HB;
+                    TopTools_ListOfShape LS;
+                    TopTools_ListIteratorOfListOfShape Iter; 
+                    HB = BoolTool.Builder();
+                    LS.Clear();
+                    if (HB->IsSplit(prj, TopAbs_IN))
+                    LS = HB->Splits(prj, TopAbs_IN);
+                    Iter.Initialize(LS);
 
-  	       else {
+                    if(Iter.More()) {
+    #ifdef DEBUG
+                        cout << " BooleanOperations :"  << Iter.More()<<" solutions " << endl; 
+    #endif
+                        for(; Iter.More(); Iter.Next()) {
+                            BB.Add(myRes, Iter.Value());
+                            myAncestorMap.Bind(Iter.Value(), Edges->Value(i));
+                            myCorresp.Bind(Iter.Value(),Faces->Value(j));
+                        }
+                    }
+                    else {
 
-	         BRepTopAdaptor_FClass2d classifier(TopoDS::Face(Faces->Value(j)),
-			  		  	    Precision::Confusion());
-	         gp_Pnt2d Puv;
-	         Standard_Real f = PCur2d->FirstParameter();
-	         Standard_Real l = PCur2d->LastParameter();
-	         Standard_Real pmil = (f + l )/2;
-	         PCur2d->D0(pmil, Puv);
-	         TopAbs_State state;
-	         state = classifier.Perform(Puv);
-	         if(state == TopAbs_IN || state  == TopAbs_ON) {
-		   BB.Add(myRes, prj);
-		   DescenList.Append(prj);
-		   myAncestorMap.Bind(prj, Edges->Value(i));   
-		   myCorresp.Bind(prj, Faces->Value(j));
-	         }
-	       }
+                        BRepTopAdaptor_FClass2d classifier(TopoDS::Face(Faces->Value(j)),
+                                Precision::Confusion());
+                        gp_Pnt2d Puv;
+                        Standard_Real f = PCur2d->FirstParameter();
+                        Standard_Real l = PCur2d->LastParameter();
+                        Standard_Real pmil = (f + l )/2;
+                        PCur2d->D0(pmil, Puv);
+                        TopAbs_State state;
+                        state = classifier.Perform(Puv);
+
+                        if(state == TopAbs_IN || state  == TopAbs_ON) {
+                            BB.Add(myRes, prj);
+                            DescenList.Append(prj);
+                            myAncestorMap.Bind(prj, Edges->Value(i));   
+                            myCorresp.Bind(prj, Faces->Value(j));
+                        }
+                    }
+                }
+                catch (Standard_Failure) {
+                    continue;
+                }
             }
             else {
 #ifdef DEB

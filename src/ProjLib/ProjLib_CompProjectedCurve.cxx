@@ -579,9 +579,24 @@ static Standard_Boolean InitialPoint(const gp_Pnt& Point,
   
   FirstU = myCurve->FirstParameter();
   LastU  = myCurve->LastParameter();
+
+  // {Fix for Issue 0023820 ... 
+  // Taking derivative of the curve in the parametric space of the curve
+  gp_Pnt Pt;
+  gp_Vec V;
+
+  myCurve->D1(FirstU, Pt, V);
+  Standard_Real VD1 = V.Magnitude();
+  // ... Fix for Issue 0023820}
+
   const Standard_Real MinStep = 0.01*(LastU - FirstU), 
                       MaxStep = 0.1*(LastU - FirstU);
-  SearchStep = 10*MinStep;
+  
+  // {Fix for Issue 0023820 ...
+  // The step is taken to be minimum of the two values given below.
+  // The 2nd variable gives the 1/10th of the rate of change of parameter
+  SearchStep = Min(10*MinStep, 0.1/VD1);
+  // ... Fix for Issue 0023820}
   Step = SearchStep;
   
   //Initialization of aPrjPS
@@ -833,19 +848,19 @@ static Standard_Boolean InitialPoint(const gp_Pnt& Point,
 	  if (t == LastU) {t = LastU + 1; break;}//return;
 
           //Computation of WalkStep
-	  d2CurvOnSurf(Triple.X(), Triple.Y(), Triple.Z(), D1, D2, myCurve, mySurface);
-	  MagnD1 = D1.Magnitude();
-	  MagnD2 = D2.Magnitude();
-	  if(MagnD2 < Precision::Confusion() ) WalkStep = MaxStep;
-	  else WalkStep = Min(MaxStep, Max(MinStep, 0.1*MagnD1/MagnD2));
-	
-	  Step = WalkStep;
-	  t += Step;
-	  if (t > (LastU-MinStep/2) ) 
-	  { 
-	    Step =Step+LastU-t;
-	    t = LastU;
-	  }	
+      d2CurvOnSurf(Triple.X(), Triple.Y(), Triple.Z(), D1, D2, myCurve, mySurface);
+      MagnD1 = D1.Magnitude();
+      MagnD2 = D2.Magnitude();
+      if(MagnD2 < Precision::Confusion() ) WalkStep = MaxStep;	  
+      else WalkStep = Min(MaxStep, Max(MinStep, 0.1*MagnD1/MagnD2));
+    
+      Step = WalkStep;
+      t += Step;
+      if (t > (LastU-MinStep/2) ) 
+      { 
+        Step =Step+LastU-t;
+        t = LastU;
+      }	
           DecStep=Step;
       }
     }
@@ -1410,8 +1425,19 @@ gp_Vec2d ProjLib_CompProjectedCurve::DN(const Standard_Real t,
                           gp_Pnt2d(Tol, myTolV), 
                           gp_Pnt2d(Tl, mySurface->FirstVParameter()), 
                           gp_Pnt2d(Tr, mySurface->LastVParameter()));
-	  TUdisc.Append(Solver.Solution().X());
-	}
+
+      // {Fix for Issue 0023820 ... 
+      // Continue and preserve the projection result of the previous iteration
+	  try
+	  {
+          TUdisc.Append(Solver.Solution().X());
+      }
+      catch (Standard_Failure)  
+      {
+          ; // just continue
+      }
+      // ... Fix for Issue 0023820}
+    }
       }
   }
   for(i = 2; i <= TUdisc.Length(); i++)
@@ -1464,8 +1490,17 @@ gp_Vec2d ProjLib_CompProjectedCurve::DN(const Standard_Real t,
                          gp_Pnt2d(Tol, myTolV), 
                          gp_Pnt2d(Tl, mySurface->FirstUParameter()), 
                          gp_Pnt2d(Tr, mySurface->LastUParameter()));
-	                 TVdisc.Append(Solver.Solution().X());
-	}
+      
+	  // We Want to preserve the previous projection result and continue
+	  try
+      {
+           TVdisc.Append(Solver.Solution().X());
+      }
+      catch (Standard_Failure)
+      {
+      
+      }
+    }
       }
   }
   for(i = 2; i <= TVdisc.Length(); i++)
