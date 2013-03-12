@@ -21,8 +21,10 @@ proc myoffset {result sh val tan} {
 }
 
 testreadiges [locate_data_file OCC8842_cone_CATIA.igs] a1
+checkshape a1
 
 sewing con1 a1
+checkshape con1
 
 # join type Arc
 puts "***** offsetting with join type Arc"

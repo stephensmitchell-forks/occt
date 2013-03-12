@@ -5,6 +5,7 @@ puts ""
 # Exception in command 'section'
 
 restore [locate_data_file OCC1255.brep] a 
+updatetolerance a
 checkshape a
 
 plane p1 0 -36.8067 0 0 1 0

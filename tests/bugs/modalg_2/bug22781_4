@@ -11,6 +11,7 @@ puts ""
 set BugNumber OCC22781
 
 restore [locate_data_file OCC22781-BeforeCont.brep] result
+updatetolerance result
 vinit
 vdisplay result
 vfit

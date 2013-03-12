@@ -9,6 +9,7 @@ puts ""
 set BugNumber OCC22781
 
 restore [locate_data_file OCC22781-BeforeCont.brep] result
+updatetolerance result
 
 set length 5.82393
 set 3dviewer 0

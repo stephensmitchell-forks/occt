@@ -2,7 +2,8 @@ if {[string compare $command "ShapeConvertRev"] == 0 } {
     puts "TODO OCC23127 ALL: Error : The resulting shape is not correct"
 }
 if {[string compare $command "SplitAngle"] == 0 } {
-    puts "TODO OCC23127 ALL: 004C6978 : Standard_NoSuchObject: BRep_Tool:: no parameter on edge"
+    puts "TODO ?OCC23127 ALL: 004C6978 : Standard_NoSuchObject: BRep_Tool:: no parameter on edge"
+    puts "TODO ?OCC23127 ALL: 00511018 : Standard_NoSuchObject: BRep_Tool:: no parameter on edge"
     puts "TEST COMPLETED"
 }
 restore [locate_data_file CTO900_ger60598c.rle] a

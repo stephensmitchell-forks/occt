@@ -8,7 +8,10 @@ puts ""
 ######################################################
 
 restore [locate_data_file OCC1477_bsplinewire_c0.brep] s1 
+checkshape s1
 restore [locate_data_file OCC1477_profile1_circle.brep] e1 
+updatetolerance e1
+checkshape e1
 wire s2 e1
 
 puts "###############################################################################"

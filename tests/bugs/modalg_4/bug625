@@ -9,6 +9,7 @@ puts ""
 pload QAcommands
 
 restore [locate_data_file OCC625.brep] a 
+updatetolerance a
 checkshape a
 
 vinit

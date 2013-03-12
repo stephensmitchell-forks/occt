@@ -9,6 +9,8 @@ puts ""
 set BugNumber OCC288
 
 restore [locate_data_file shading_058.brep] result
+updatetolerance result
+checkshape result
 
 set square 14125.5
 
