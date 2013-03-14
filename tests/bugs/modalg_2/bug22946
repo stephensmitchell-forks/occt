@@ -9,9 +9,12 @@ puts ""
 set BugNumber OCC22946
 
 restore [locate_data_file OCC22946-FaceWithNewCurves.brep] a 
+checkshape a
 restore [locate_data_file OCC22946-CompoundWithoutPcurves.brep] b 
+checkshape b
 
 splitshape result a a b
+checkshape result
 
 set square 6.06498e+08
 set 3dviewer 0

@@ -33,6 +33,7 @@ puts "   cone_CATIA + 5"
 if [catch { myoffset result con1 5 0 } catch_result] {
   puts "${BugNumber}: Faulty (1)"
 } else {
+checkshape result
 
 set square 32396.2
 

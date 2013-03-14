@@ -33,9 +33,10 @@
 void BRepFeat_SplitShape::Build ()
 {
   mySShape.Perform(myWOnShape);
-  if (mySShape.IsDone()) {
-    Done();
+  if (mySShape.IsDone())
+  {
     myShape = mySShape.ResultingShape();
+    Done();
   }
 }
 

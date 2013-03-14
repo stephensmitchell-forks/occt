@@ -308,6 +308,9 @@ is
 	---Purpose: Computes the center lines
     is static;
 
+    IsProtectedFromModification(me; theS : Shape from TopoDS) returns Boolean from Standard;
+    ---Purpose: Indicates if theS is protected from modification.
+
     ComputeSurfaces( me    : in out)
 	---Purpose: Perform the generated surfaces.
     is static private;
@@ -359,5 +362,6 @@ fields
     myNbBranches     : Integer              from Standard;
     myIndices        : HArray1OfInteger     from TColStd;     
     myDone           : Boolean              from Standard;
+    myProtectedFromModificationShapes : IndexedMapOfShape from TopTools;
 
 end Blend;

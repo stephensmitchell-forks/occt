@@ -9,7 +9,9 @@ puts ""
 set BugNumber OCC22864
 
 restore [locate_data_file bug22864_face1.brep] f1 
+checkshape f1
 restore [locate_data_file bug22864_face2.brep] f2 
+checkshape f2
 
 shape aShape C
 add f1 aShape
@@ -33,6 +35,7 @@ set Numbers 11
 for {set i 0} {$i < ${Numbers}} {incr i} {
     puts "i=$i"
     rollingball result aShape 15 @ f1 f2
+    checkshape result
     
     set nb_info [nbshapes result]
     regexp {VERTEX +: +([-0-9.+eE]+)} $nb_info full nb_v

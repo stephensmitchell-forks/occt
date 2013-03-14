@@ -56,6 +56,7 @@
 #include <TopExp.hxx>
 
 #include <Standard_ConstructionError.hxx>
+#include <BRepLib_ToleranceRule.hxx>
 
 
 //  Modified by skv - Mon May 31 13:00:30 2004 OCC5865 Begin
@@ -99,6 +100,8 @@ void LocOpe_Spliter::Perform(const Handle(LocOpe_ProjectedWires)& PW)
   BRepTools_Substitution theSubs;
   BRep_Builder BB;
 
+  // LocOpe_ProjectedWires::InitEdgeIterator() is much more then simple
+  // initialization.
   for (PW->InitEdgeIterator(); PW->MoreEdge(); PW->NextEdge()) {
     const TopoDS_Edge& edg = PW->Edge();
     mapE.Add(edg);
@@ -432,6 +435,7 @@ void LocOpe_Spliter::Perform(const Handle(LocOpe_ProjectedWires)& PW)
     }
   }
 
+  BRepLib_ToleranceRule::SetProperTolerances(myRes);
   myDone = Standard_True;
 }
 

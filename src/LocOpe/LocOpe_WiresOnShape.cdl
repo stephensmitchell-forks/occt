@@ -55,23 +55,24 @@ is
     	is static;
 
     Bind(me: mutable; W: Wire from TopoDS;
-                      F: Face from TopoDS)
+      F : Face from TopoDS; theCopy : Boolean from Standard = Standard_False)
 		     
 	is static;
 
     Bind(me: mutable; Comp: Compound from TopoDS;
-                      F:    Face from TopoDS)
+      F : Face from TopoDS; theCopy : Boolean from Standard = Standard_False)
 		     
 	is static;
 
     Bind(me: mutable; E: Edge from TopoDS;
-                      F: Face from TopoDS)
+      F : Face from TopoDS; theCopy : Boolean from Standard = Standard_False)
 		      
     	is static;
 
 
     Bind(me: mutable; EfromW: Edge from TopoDS;
-    	              EonFace: Edge from TopoDS)
+      EonFace: Edge from TopoDS;
+      theCopy : Boolean from Standard = Standard_False)
 		      
 	is static;
 

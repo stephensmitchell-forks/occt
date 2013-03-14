@@ -44,6 +44,7 @@
 #include <BRepCheck_Vertex.hxx>
 #include <BRepLib.hxx>
 #include <BRepLib_MakeVertex.hxx>
+#include <BRepLib_ToleranceRule.hxx>
 #include <BRep_Builder.hxx>
 #include <BRep_Tool.hxx>
 #include <BRep_TVertex.hxx>
@@ -761,10 +762,10 @@ void BRepOffset_MakeOffset::MakeOffsetShape()
   // ----------------------------
   if (!myOffsetShape.IsNull()) {
     UpdateTolerance (myOffsetShape,myFaces);
-    BRepLib::UpdateTolerances( myOffsetShape );
   }
 
   CorrectConicalFaces();
+  BRepLib_ToleranceRule::SetProperTolerances(myOffsetShape);
 
   myDone = Standard_True;
 }

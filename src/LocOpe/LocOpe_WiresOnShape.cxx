@@ -24,6 +24,7 @@
 
 #include <TopExp_Explorer.hxx>
 #include <BRep_Builder.hxx>
+#include <BRepBuilderAPI_Copy.hxx>
 #include <BRep_Tool.hxx>
 #include <TopTools_MapOfShape.hxx>
 #include <TopTools_DataMapIteratorOfDataMapOfShapeShape.hxx>
@@ -117,10 +118,10 @@ void LocOpe_WiresOnShape::Init(const TopoDS_Shape& S)
 //=======================================================================
 
 void LocOpe_WiresOnShape::Bind(const TopoDS_Wire& W,
-			       const TopoDS_Face& F)
+  const TopoDS_Face & F, Standard_Boolean theCopy)
 {
   for (TopExp_Explorer exp(W, TopAbs_EDGE); exp.More(); exp.Next()) {
-    Bind(TopoDS::Edge(exp.Current()),F);
+    Bind(TopoDS::Edge(exp.Current()), F, theCopy);
   }
 }
 
@@ -130,10 +131,10 @@ void LocOpe_WiresOnShape::Bind(const TopoDS_Wire& W,
 //=======================================================================
 
 void LocOpe_WiresOnShape::Bind(const TopoDS_Compound& Comp,
-			       const TopoDS_Face& F)
+  const TopoDS_Face & F, Standard_Boolean theCopy)
 {
   for (TopExp_Explorer exp(Comp, TopAbs_EDGE); exp.More(); exp.Next()) {
-    Bind(TopoDS::Edge(exp.Current()),F);
+    Bind(TopoDS::Edge(exp.Current()), F, theCopy);
   }
   myFacesWithSection.Add(F);
 }
@@ -144,7 +145,7 @@ void LocOpe_WiresOnShape::Bind(const TopoDS_Compound& Comp,
 //=======================================================================
 
 void LocOpe_WiresOnShape::Bind(const TopoDS_Edge& E,
-			       const TopoDS_Face& F)
+  const TopoDS_Face & F, Standard_Boolean theCopy)
 {
 //  if (!myMapEF.IsBound(E)) {
   if (!myMapEF.Contains(E)) {
@@ -157,7 +158,12 @@ void LocOpe_WiresOnShape::Bind(const TopoDS_Edge& E,
     }
     if (!exp.More()) {
 //      myMapEF.Bind(E,F);
-      myMapEF.Add(E,F);
+      TopoDS_Shape anE = E;
+      if (theCopy)
+      {
+        anE = BRepBuilderAPI_Copy(E).Shape();
+      }
+      myMapEF.Add(anE, F);
     }
   }
   else {
@@ -172,12 +178,17 @@ void LocOpe_WiresOnShape::Bind(const TopoDS_Edge& E,
 //=======================================================================
 
 void LocOpe_WiresOnShape::Bind(const TopoDS_Edge& Ewir,
-			       const TopoDS_Edge& Efac)
+  const TopoDS_Edge & Efac, Standard_Boolean theCopy)
 {
   if (Ewir.IsSame(Efac)) {
     return;
   }
-  myMap.Bind(Ewir,Efac);
+  TopoDS_Shape anE = Ewir;
+  if (theCopy)
+  {
+    anE = BRepBuilderAPI_Copy(Ewir).Shape();
+  }
+  myMap.Bind(anE, Efac);
 }
 
 

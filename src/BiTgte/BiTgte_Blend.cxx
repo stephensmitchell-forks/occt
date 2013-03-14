@@ -38,6 +38,7 @@
 #include <BRep_Tool.hxx>
 #include <BRep_Builder.hxx>
 #include <BRepLib_MakeEdge.hxx>
+#include <BRepLib_ToleranceRule.hxx>
 #include <BRepOffset_DataMapOfShapeOffset.hxx>
 #include <BRepOffset_DataMapIteratorOfDataMapOfShapeOffset.hxx>
 #include <BRepOffset_Offset.hxx>
@@ -844,6 +845,8 @@ BiTgte_Blend::BiTgte_Blend(const TopoDS_Shape&    S,
 			   const Standard_Real    Tol,
 			   const Standard_Boolean NUBS)
 {
+  TopExp::MapShapes(S, myProtectedFromModificationShapes);
+  //
   myAsDes = new BRepAlgo_AsDes();
   Init(S,Radius,Tol,NUBS);
 }
@@ -859,6 +862,8 @@ void BiTgte_Blend::Init(const TopoDS_Shape&    S,
 			const Standard_Real    Tol,
 			const Standard_Boolean NUBS) 
 {
+  TopExp::MapShapes(S, myProtectedFromModificationShapes);
+  //
   Clear();
   myShape      = S;
   myTol        = Tol;
@@ -1060,6 +1065,7 @@ void BiTgte_Blend::Perform(const Standard_Boolean BuildShape)
   // Finally construct curves 3d from edges to be transfered
   // since the partition is provided ( A Priori);
   BRepLib::BuildCurves3d(myResult, Precision::Confusion());
+  BRepLib_ToleranceRule::SetProperTolerances(myResult, *this);
 
 #ifdef DEB
   ChFi3d_ResultChron(cl_total, t_total);
@@ -1855,6 +1861,15 @@ void BiTgte_Blend::ComputeCenters()
 #endif
 }
 
+//=======================================================================
+//function : IsProtectedFromModification
+//purpose  :
+//=======================================================================
+Standard_Boolean BiTgte_Blend::IsProtectedFromModification(
+  const TopoDS_Shape & theS) const
+{
+  return myProtectedFromModificationShapes.Contains(theS);
+}
 
 //=======================================================================
 //function : ComputeSurfaces
