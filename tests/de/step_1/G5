@@ -1,5 +1,4 @@
 # !!!! This file is generated automatically, do not edit manually! See end script
-puts "TODO CR23096 ALL: TPSTAT : Faulty" 
 puts "TODO CR23096 ALL: LABELS : Faulty" 
 puts "TODO CR23096 ALL: LAYERS : Faulty" 
 
@@ -12,7 +11,7 @@ TPSTAT      : Faulties = 0  ( 0 )  Warnings = 36  ( 12 )  Summary  = 36  ( 12 )
 CHECKSHAPE  : Wires    = 0  ( 0 )  Faces    = 0  ( 0 )  Shells   = 0  ( 0 )   Solids   = 0 ( 0 )
 NBSHAPES    : Solid    = 9  ( 9 )  Shell    = 9  ( 9 )  Face     = 152  ( 152 )   Summary  = 998  ( 998 )
 STATSHAPE   : Solid    = 11  ( 11 )  Shell    = 11  ( 11 )  Face     = 178  ( 178 )   FreeWire = 0  ( 0 )   FreeEdge  = 0 ( 0 )   SharedEdge = 407  ( 407 )
-TOLERANCE   : MaxTol   =   0.0182458548  (   0.0182458548 )  AvgTol   =  0.0001972882903  (  0.0001972348021 )
+TOLERANCE   : MaxTol   =   0.0182458548  (   0.0182458548 )  AvgTol   =  0.0001972891935  (  0.0001972348021 )
 LABELS      : N0Labels = 9  ( 9 )  N1Labels = 12  ( 12 )  N2Labels = 0  ( 0 )   TotalLabels = 21  ( 21 )   NameLabels = 19  ( 19 )   ColorLabels = 9  ( 9 )   LayerLabels = 9  ( 19 )
 PROPS       : Centroid = 0  ( 0 )  Volume   = 0  ( 0 )  Area     = 0  ( 0 )
 NCOLORS     : NColors  = 5  ( 5 )

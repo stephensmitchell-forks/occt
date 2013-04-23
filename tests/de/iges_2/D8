@@ -2,10 +2,8 @@
 puts "TODO CR23096 ALL: LABELS : Faulty" 
 puts "TODO CR23096 ALL: COLORS : Faulty" 
 puts "TODO CR23096 Mandriva2010: Error : 3 differences with reference data found :"
-puts "TODO CR23096 Mandriva2010: NBSHAPES : Faulty"
 
 set LinuxDiff 3
-set LinuxFaulties {NBSHAPES}
 set filename USA60231.igs
 
 set ref_data {

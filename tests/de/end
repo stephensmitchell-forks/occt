@@ -33,8 +33,8 @@ set MaxTol_Second 0; set AvgTol_Second 0
 set sol_First 0; set she_First 0; set fac_First 0; set fwir_First 0; set fedg_First 0; set sedg_First 0
 set sol_Second 0; set she_Second 0; set fac_Second 0; set fwir_Second 0; set fedg_Second 0; set sedg_Second 0
 ############################################# NBSHAPES #############
-set fa_First 0; set sh_First 0; set so_First 0; set co_First 0; set shpp_First 0
-set fa_Second 0; set sh_Second 0; set so_Second 0; set co_Second 0; set shpp_Second 0
+set fa_First 0; set sh_First 0; set so_First 0; set co_First 0; set shpp_First 0;
+set fa_Second 0; set sh_Second 0; set so_Second 0; set co_Second 0; set shpp_Second 0;
 ###################################### CHECKSHAPE ##################
 set chwi_First 0; set chfa_First 0; set chsh_First 0; set chso_First 0
 set chwi_Second 0; set chfa_Second 0; set chsh_Second 0; set chso_Second 0
@@ -408,8 +408,6 @@ if { $mist < 1 } {
     set dat_check "DATA : OK"
     set tpst_check "TPSTAT : OK"
     set check_check "CHECKSHAPE : OK"
-    set nbsh_check "NBSHAPES : OK"
-    set ststh_check "STATSHAPE : OK"
     set toler_check "TOLERANCE : OK"
     set lbls_check "LABELS : OK"
     set prps_check "PROPS : OK"
@@ -419,46 +417,64 @@ if { $mist < 1 } {
     if { $dcomp_First <  $dcomp_Second ||  $dfal_First < $dfal_Second } {
 	set dat_check "DATA : Faulty"
 	append todo_msg $todo_mask $dat_check $end_line
+        append dat_check { (increase number of}
+        if { $dcomp_First <  $dcomp_Second } { append dat_check { warnings} }
+        if { $dfal_First < $dfal_Second } { append dat_check { faulties} }
+        append dat_check ")"
     }
-    if { $fal_First < $fal_Second || $war_First < $war_Second } {
-       	
+    if { $fal_First < $fal_Second} {       	
 	set tpst_check "TPSTAT : Faulty"
 	append todo_msg $todo_mask $tpst_check $end_line
+        append tpst_check { (increase number of faulties)}
     } 
     if { $chwi_First < $chwi_Second || $chfa_First < $chfa_Second || $chsh_First < $chsh_Second || $chso_First < $chso_Second } {
 	set check_check "CHECKSHAPE : Faulty" 
 	append todo_msg $todo_mask $check_check $end_line
-    }
-    if { ($isIGES == 0 && $shpp_First > $shpp_Second) || 
-         ($isIGES == 1 && ($shpp_First - $co_First) > ($shpp_Second - $co_Second))} {
-	set nbsh_check "NBSHAPES : Faulty" 
-	append todo_msg $todo_mask $nbsh_check $end_line
-    }
-    if { $sol_First < $sol_Second || $she_First < $she_Second || $fac_First < $fac_Second || $fwir_First < $fwir_Second || $fedg_First < $fedg_Second} {
-	set ststh_check "STATSHAPE : Faulty"
-	append todo_msg $todo_mask $ststh_check $end_line
+        append check_check { (increase number of non-valid}
+        if { $chwi_First < $chwi_Second } { append check_check { wires} }
+        if { $chfa_First < $chfa_Second } { append check_check { faces} }
+        if { $chsh_First < $chsh_Second } { append check_check { shels} }
+        if { $chso_First < $chso_Second } { append check_check { solids} }
+        append check_check ")"
+         
     }
    
     if { ([expr 1.*($MaxTol_Second - $MaxTol_First)] > [expr 0.0001 * $MaxTol_First] && [expr 1. * abs($MaxTol_First-$MaxTol_Second)] > 0.0000001) || ($MaxTol_Second == 0 && $MaxTol_First > 0)} {
 	set toler_check "TOLERANCE : Faulty"
 	append todo_msg $todo_mask $toler_check $end_line
+        append toler_check { (increase tolerance from } $MaxTol_First { to } $MaxTol_Second {)}
     }
     
     if { $nblev0_First != $nblev0_Second || $nblev1_First != $nblev1_Second || $nblev2_First != $nblev2_Second || $nblev_total_First != $nblev_total_Second || $nbshname_First != $nbshname_Second || $nbshcolor_First != $nbshcolor_Second || $nbshlayer_First != $nbshlayer_Second } {
 	set lbls_check "LABELS : Faulty"
 	append todo_msg $todo_mask $lbls_check $end_line
+        append lbls_check { (number of labels}
+        if { $nblev0_First != $nblev0_Second } { append lbls_check { level_0} }
+        if { $nblev1_First != $nblev1_Second } { append lbls_check { level_1} }
+        if { $nblev2_First != $nblev2_Second } { append lbls_check { level_2} }
+        if { $nbshname_First != $nbshname_Second } { append lbls_check { with_names} }
+        if { $nbshcolor_First != $nbshcolor_Second } { append lbls_check { with_colors} }
+        if { $nbshlayer_First != $nbshlayer_Second } { append lbls_check { with_layers} }
+        append lbls_check { are not equal)}
     }
     if { $nbcentroid_First != $nbcentroid_Second || $nbvolume_First != $nbvolume_Second || $nbarea_First != $nbarea_Second } {
 	set prps_check "PROPS : Faulty"
 	append todo_msg $todo_mask $prps_check $end_line
+        append prps_check { (number of}
+        if { $nbcentroid_First != $nbcentroid_Second } { append prps_check { centroids} }
+        if { $nbvolume_First != $nbvolume_Second } { append prps_check { volumes} }
+        if { $nbarea_First != $nbarea_Second } { append prps_check { areas} }
+        append prps_check { are not equal)}
     }
     if { $nbcolor_First != $nbcolor_Second } {
 	set clrs_check "COLORS : Faulty"
 	append todo_msg $todo_mask $clrs_check $end_line
+        append clrs_check { (number of colors are not equal)}
     }
     if { $nblayer_First != $nblayer_Second } {
 	set lrs_check "LAYERS : Faulty"
 	append todo_msg $todo_mask $lrs_check $end_line
+        append lrs_check { (number of layers are not equal)}
     }
 }
 
@@ -521,8 +537,6 @@ if {$mist == 1 }  {
 	    puts $dat_check
 	    puts $tpst_check
 	    puts $check_check
-	    puts $nbsh_check
-	    puts $ststh_check
 	    puts $toler_check
 	    puts $lbls_check
 	    puts $prps_check

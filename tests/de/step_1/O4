@@ -1,12 +1,9 @@
 # !!!! This file is generated automatically, do not edit manually! See end script
-puts "TODO CR23096 ALL: TPSTAT : Faulty" 
-
-
 set filename ct_turbine-A.stp
 
 set ref_data {
 DATA        : Faulties = 0  ( 0 )  Warnings = 0  ( 0 )  Summary  = 0  ( 0 )
-TPSTAT      : Faulties = 0  ( 0 )  Warnings = 18  ( 4 )  Summary  = 18  ( 4 )
+TPSTAT      : Faulties = 0  ( 0 )  Warnings = 18  ( 5 )  Summary  = 18  ( 5 )
 CHECKSHAPE  : Wires    = 0  ( 0 )  Faces    = 0  ( 0 )  Shells   = 0  ( 0 )   Solids   = 0 ( 0 )
 NBSHAPES    : Solid    = 0  ( 0 )  Shell    = 40  ( 40 )  Face     = 40  ( 40 )   Summary  = 547  ( 527 )
 STATSHAPE   : Solid    = 0  ( 0 )  Shell    = 40  ( 40 )  Face     = 40  ( 40 )   FreeWire = 0  ( 0 )   FreeEdge  = 20 ( 20 )   SharedEdge = 196  ( 196 )

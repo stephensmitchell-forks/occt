@@ -1,5 +1,4 @@
 # !!!! This file is generated automatically, do not edit manually! See end script
-puts "TODO CR23096 ALL: TPSTAT : Faulty" 
 puts "TODO CR23096 ALL: LABELS : Faulty" 
 
 
@@ -7,12 +6,12 @@ set filename trj9_ap209-mp.stp
 
 set ref_data {
 DATA        : Faulties = 0  ( 0 )  Warnings = 0  ( 0 )  Summary  = 0  ( 0 )
-TPSTAT      : Faulties = 0  ( 0 )  Warnings = 26  ( 7 )  Summary  = 26  ( 7 )
+TPSTAT      : Faulties = 0  ( 0 )  Warnings = 39  ( 7 )  Summary  = 39  ( 7 )
 CHECKSHAPE  : Wires    = 0  ( 0 )  Faces    = 0  ( 0 )  Shells   = 0  ( 0 )   Solids   = 0 ( 0 )
-NBSHAPES    : Solid    = 8  ( 4 )  Shell    = 8  ( 4 )  Face     = 48  ( 24 )   Summary  = 277  ( 141 )
-STATSHAPE   : Solid    = 24  ( 24 )  Shell    = 24  ( 24 )  Face     = 144  ( 144 )   FreeWire = 0  ( 0 )   FreeEdge  = 0 ( 0 )   SharedEdge = 96  ( 48 )
+NBSHAPES    : Solid    = 12  ( 4 )  Shell    = 12  ( 4 )  Face     = 72  ( 24 )   Summary  = 414  ( 142 )
+STATSHAPE   : Solid    = 28  ( 28 )  Shell    = 28  ( 28 )  Face     = 168  ( 168 )   FreeWire = 0  ( 0 )   FreeEdge  = 0 ( 0 )   SharedEdge = 144  ( 48 )
 TOLERANCE   : MaxTol   = 0.0009551590893  ( 0.0009551590893 )  AvgTol   =  0.0002351494334  (  0.0002351494334 )
-LABELS      : N0Labels = 4  ( 4 )  N1Labels = 6  ( 6 )  N2Labels = 0  ( 0 )   TotalLabels = 10  ( 10 )   NameLabels = 10  ( 9 )   ColorLabels = 0  ( 0 )   LayerLabels = 0  ( 0 )
+LABELS      : N0Labels = 5  ( 5 )  N1Labels = 6  ( 6 )  N2Labels = 0  ( 0 )   TotalLabels = 11  ( 11 )   NameLabels = 11  ( 10 )   ColorLabels = 0  ( 0 )   LayerLabels = 0  ( 0 )
 PROPS       : Centroid = 0  ( 0 )  Volume   = 0  ( 0 )  Area     = 0  ( 0 )
 NCOLORS     : NColors  = 0  ( 0 )
 COLORS      : Colors   =   (  )
