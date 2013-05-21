@@ -23,6 +23,9 @@
 #include <Interface_IntVal.hxx>
 #include <Geom2d_CartesianPoint.hxx>
 
+#include <TColStd_MapOfTransient.hxx>
+#include <TColStd_MapIteratorOfMapOfTransient.hxx>
+
 
 //=======================================================================
 //function : Transfer_Binder
@@ -73,26 +76,53 @@ Standard_Boolean  Transfer_Binder::IsMultiple () const
 
 void  Transfer_Binder::AddResult (const Handle(Transfer_Binder)& next)
 {
-  if (next == this || next.IsNull()) return;
+  if (next == this || next.IsNull()) 
+    return;
+  
   next->CutResult(this);
-  if (thenextr.IsNull()) 
+
+  if (thenextr.IsNull()) {
     thenextr = next;
-  else {
-    //Modification of recursive to cycle
-    Handle(Transfer_Binder) theBinder = thenextr;
-    while( theBinder != next ) { 
-      if( theBinder->NextResult().IsNull() ) {
-        theBinder->AddResult(next);
-        return;
-      }
-      else
-        theBinder = theBinder->NextResult();
-    }
+    return;
   }
-  //former recursive
-  // if (thenextr.IsNull()) thenextr = next;
-  // else if (thenextr == next) return;
-  // else thenextr->AddResult (next);
+
+  Handle(Transfer_Binder) theBinder = thenextr;
+  Handle(Transfer_Binder) tmp = theBinder->NextResult();
+  while( !tmp.IsNull() && theBinder != next ) {
+    theBinder = tmp;
+    tmp = theBinder->NextResult();
+  }
+  if( tmp.IsNull() )
+    theBinder->thenextr = next;
+}
+
+//=======================================================================
+//function : AddResult
+//purpose  : 
+//=======================================================================
+
+void  Transfer_Binder::AddResult (const TColStd_MapOfTransient& mapOfResult)
+{
+  if (mapOfResult.IsEmpty())
+    return;
+  
+  // collect already added results
+  TColStd_MapOfTransient alreadyAddedResults; 
+  Handle(Transfer_Binder) tmp = this;
+  do {
+    alreadyAddedResults.Add( tmp );
+    tmp = tmp->NextResult();
+  } while( !tmp->thenextr.IsNull() );
+
+  // add results
+  TColStd_MapIteratorOfMapOfTransient it (mapOfResult);
+  while( it.More() ) {
+    if( !alreadyAddedResults.Contains( it.Key() ) ) {
+      tmp->thenextr = dynamic_cast<Transfer_Binder*> ( const_cast<Standard_Transient*> (it.Key().Access()) );
+      tmp = tmp->thenextr;
+    }
+    it.Next();
+  }
 }
 
 //=======================================================================

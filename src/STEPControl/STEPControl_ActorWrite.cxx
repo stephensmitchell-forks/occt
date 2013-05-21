@@ -1,4 +1,4 @@
-// Copyright (c) 1999-2012 OPEN CASCADE SAS
+﻿// Copyright (c) 1999-2012 OPEN CASCADE SAS
 //
 // The content of this file is subject to the Open CASCADE Technology Public
 // License Version 6.5 (the "License"). You may not use the content of this file
@@ -74,6 +74,7 @@
 
 #include <TopExp_Explorer.hxx>
 #include <TColStd_HSequenceOfTransient.hxx>
+#include <TColStd_MapOfTransient.hxx>
 #include <TCollection_HAsciiString.hxx>
 
 #include <Transfer_TransientProcess.hxx>
@@ -1324,6 +1325,7 @@ Handle(Transfer_Binder) STEPControl_ActorWrite::TransferCompound (const Handle(T
 
   // translate components
   Standard_Integer i, nbs = RepItemSeq->Length();
+  TColStd_MapOfTransient mapOfResultToAdd;
   Handle(TColStd_HSequenceOfTransient) ItemSeq = new TColStd_HSequenceOfTransient();
   ItemSeq->Append (myContext.GetDefaultAxis());
   myContext.NextLevel();
@@ -1342,11 +1344,14 @@ Handle(Transfer_Binder) STEPControl_ActorWrite::TransferCompound (const Handle(T
         // Single SDR is created for a non-manifold group (ssv: 12.11.2010)
         if (!isManifold && i > 1)
           break;
-        else
-          binder->AddResult( TransientResult( bx->Result() ) );
+        else {
+          Handle(Transfer_Binder) aResult = TransientResult( bx->Result() );
+          mapOfResultToAdd.Add( aResult );
+        }
       bnd = bnd->NextResult();
     }
   }
+  binder->AddResult(mapOfResultToAdd);
   myContext.PrevLevel();
 
   Standard_Integer nsub = ItemSeq->Length();

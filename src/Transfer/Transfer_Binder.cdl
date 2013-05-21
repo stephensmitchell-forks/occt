@@ -45,7 +45,7 @@ deferred class Binder  from Transfer  inherits TShared
     --           In addition to the Result, a Binder can bring a list of
     --           Attributes, which are additional data, each of them has a name
 
-uses CString, Type, HArray1OfInteger,
+uses CString, Type, HArray1OfInteger, MapOfTransient,
      HSequenceOfTransient from TColStd, DictionaryOfTransient from Dico,
      Check, ParamType, StatusResult, StatusExec
 
@@ -75,6 +75,10 @@ is
 
     AddResult (me : mutable; next : Binder);
     ---Purpose : Adds a next result (at the end of the list)
+    --           Remark : this information is not processed by Merge
+
+    AddResult (me : mutable; next : MapOfTransient);
+    ---Purpose : Adds results from the map (at the end of the list)
     --           Remark : this information is not processed by Merge
 
     CutResult (me : mutable; next : Binder)  is private;
