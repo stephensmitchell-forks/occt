@@ -417,6 +417,10 @@ void IntWalk_PWalking::Perform(const TColStd_Array1OfReal& ParDep,
 			       const Standard_Real u2max,
 			       const Standard_Real v2max)
 {
+  Standard_Real aU = -0.460173271833187, aV = 0.460173271833188, aW = -0.325391641034047;
+  Standard_Real aT = 0.563594854629184, aMaxN = 0;
+  //cout << endl << "start" << endl;
+  int aC = 0;
   //xf
   Standard_Integer i, NbPasOKConseq;
   Standard_Real UFirst1, VFirst1, ULast1, VLast1, UFirst2, VFirst2, ULast2, VLast2;
@@ -522,6 +526,10 @@ void IntWalk_PWalking::Perform(const TColStd_Array1OfReal& ParDep,
   
   previousPoint.Parameters(Param(1),Param(2),Param(3),Param(4));  
   AddAPoint(line,previousPoint);
+  {
+    const gp_Pnt & aP = pf;
+    //cout << "(X, Y, Z) = " << aP.X()  << " " << aP.Y()  << " " << aP.Z() << endl;
+  }
   //
   IntWalk_StatusDeflection Status = IntWalk_OK;
   Standard_Boolean NoTestDeflection = Standard_False;
@@ -531,7 +539,11 @@ void IntWalk_PWalking::Perform(const TColStd_Array1OfReal& ParDep,
   Standard_Integer LevelOfIterWithoutAppend = -1;
   //
   Arrive = Standard_False;
+  int aC2 = 0;
+  Standard_Boolean aReduceStep = Standard_False;
+  Standard_Real aStepCoef;
   while(!Arrive) {//010
+    //cout << ++aC2 << endl;
     LevelOfIterWithoutAppend++;
     if(LevelOfIterWithoutAppend>20) { 
       Arrive = Standard_True; 
@@ -540,6 +552,7 @@ void IntWalk_PWalking::Perform(const TColStd_Array1OfReal& ParDep,
       }
       RepartirOuDiviser(DejaReparti,ChoixIso,Arrive);
       LevelOfIterWithoutAppend = 0;
+      aReduceStep = Standard_False;
     }
     //
     // compute f
@@ -561,24 +574,122 @@ void IntWalk_PWalking::Perform(const TColStd_Array1OfReal& ParDep,
     //--ofv.begin
     Standard_Real aIncKey, aEps, dP1, dP2, dP3, dP4;
     //
-    dP1 = sensCheminement * pasuv[0] * previousd1.X() /f;
-    dP2 = sensCheminement * pasuv[1] * previousd1.Y() /f;
-    dP3 = sensCheminement * pasuv[2] * previousd2.X() /f; 
-    dP4 = sensCheminement * pasuv[3] * previousd2.Y() /f;
+    // Calculation of parameters for adaptive step.
     //
-    aIncKey=5.*(Standard_Real)IncKey;
-    aEps=1.e-7;
-    if(ChoixIso == IntImp_UIsoparametricOnCaro1 && Abs(dP1) < aEps) {
-      dP1 *= aIncKey;
+    if ((Status == IntWalk_PasTropGrand) || (aReduceStep == Standard_True))
+    {
+      aStepCoef *= 0.5;
     }
-    if(ChoixIso == IntImp_VIsoparametricOnCaro1 && Abs(dP2) < aEps) {
-      dP2 *= aIncKey;
+    else
+    {
+      aStepCoef = 1;
     }
-    if(ChoixIso == IntImp_UIsoparametricOnCaro2 && Abs(dP3) < aEps) {
-      dP3 *= aIncKey;
+    aReduceStep = Standard_False;
+    //cout << "aStepCoef = " << aStepCoef << endl;
+    gp_Vec aCD;
+    gp_Vec2d aSDs[2];
+    Standard_Real aR;
+    Standard_Real a2DR;
+    Standard_Boolean anIsAdaptiveStep;
+    {
+      Standard_Real aPs[] = {Param(1), Param(2), Param(3), Param(4)};
+      anIsAdaptiveStep = CalculateStepData(aPs, aCD, aSDs, aR, a2DR);
+      if (!anIsAdaptiveStep)
+      {
+        LevelOfIterWithoutAppend = 20;
+        continue;
+        //cout << "error" << endl;
+      }
     }
-    if(ChoixIso == IntImp_VIsoparametricOnCaro2 && Abs(dP4) < aEps) {
-      dP4 *= aIncKey;
+    //
+    //
+    //
+    Standard_Real aMaxStep = DBL_MAX;
+    Standard_Real aNT = 1e-12;
+    if (anIsAdaptiveStep)
+    {
+      if (aSDs[0].X() < -aNT)
+      {
+        aMaxStep = Min(aMaxStep, (UFirst1 - Param(1)) / aSDs[0].X());
+      }
+      if (aNT < aSDs[0].X())
+      {
+        aMaxStep = Min(aMaxStep, (ULast1 - Param(1)) / aSDs[0].X());
+      }
+      if (aSDs[0].Y() < -aNT)
+      {
+        aMaxStep = Min(aMaxStep, (VFirst1 - Param(2)) / aSDs[0].Y());
+      }
+      if (aNT < aSDs[0].Y())
+      {
+        aMaxStep = Min(aMaxStep, (VLast1 - Param(2)) / aSDs[0].Y());
+      }
+      //
+      if (aSDs[1].X() < -aNT)
+      {
+        aMaxStep = Min(aMaxStep, (UFirst2 - Param(3)) / aSDs[1].X());
+      }
+      if (aNT < aSDs[1].X())
+      {
+        aMaxStep = Min(aMaxStep, (ULast2 - Param(3)) / aSDs[1].X());
+      }
+      if (aSDs[1].Y() < -aNT)
+      {
+        aMaxStep = Min(aMaxStep, (VFirst2 - Param(4)) / aSDs[1].Y());
+      }
+      if (aNT < aSDs[1].Y())
+      {
+        aMaxStep = Min(aMaxStep, (VLast2 - Param(4)) / aSDs[1].Y());
+      }
+      //
+      //aMaxStep = Min(aMaxStep, aR);
+      aMaxStep = Min(aMaxStep, a2DR);
+      aMaxStep *= aStepCoef;
+      if (aMaxStep < 1e-5)
+      {
+        LevelOfIterWithoutAppend = 20;
+        continue;
+        dP1 = 0;
+        dP2 = 0;
+        dP3 = 0;
+        dP4 = 0;
+        //if (aDirection++ != 0)
+        //{
+        //  Arrive = Standard_True;
+        //  break;
+        //}
+      //  anAreCollinear = Standard_True;
+      }
+      //else
+      {
+        dP1 = aMaxStep * aSDs[0].X();
+        dP2 = aMaxStep * aSDs[0].Y();
+        dP3 = aMaxStep * aSDs[1].X();
+        dP4 = aMaxStep * aSDs[1].Y();
+      }
+    }
+    else
+    //if (anAreCollinear)
+    {
+      dP1 = sensCheminement * pasuv[0] * previousd1.X() /f;
+      dP2 = sensCheminement * pasuv[1] * previousd1.Y() /f;
+      dP3 = sensCheminement * pasuv[2] * previousd2.X() /f; 
+      dP4 = sensCheminement * pasuv[3] * previousd2.Y() /f;
+      //
+      aIncKey=5.*(Standard_Real)IncKey;
+      aEps=1.e-7;
+      if(ChoixIso == IntImp_UIsoparametricOnCaro1 && Abs(dP1) < aEps) {
+        dP1 *= aIncKey;
+      }
+      if(ChoixIso == IntImp_VIsoparametricOnCaro1 && Abs(dP2) < aEps) {
+        dP2 *= aIncKey;
+      }
+      if(ChoixIso == IntImp_UIsoparametricOnCaro2 && Abs(dP3) < aEps) {
+        dP3 *= aIncKey;
+      }
+      if(ChoixIso == IntImp_VIsoparametricOnCaro2 && Abs(dP4) < aEps) {
+        dP4 *= aIncKey;
+      }
     }
     //--ofv.end
     //
@@ -586,6 +697,40 @@ void IntWalk_PWalking::Perform(const TColStd_Array1OfReal& ParDep,
     Param(2) += dP2;
     Param(3) += dP3; 
     Param(4) += dP4;
+    //
+    if (Param(1) < UFirst1)
+    {
+      Param(1) = UFirst1;
+    }
+    if (ULast1 < Param(1))
+    {
+      Param(1) = ULast1;
+    }
+    if (Param(2) < VFirst1)
+    {
+      Param(2) = VFirst1;
+    }
+    if (VLast1 < Param(2))
+    {
+      Param(2) = ULast1;
+    }
+    //
+    if (Param(3) < UFirst2)
+    {
+      Param(3) = UFirst2;
+    }
+    if (ULast2 < Param(3))
+    {
+      Param(3) = ULast2;
+    }
+    if (Param(4) < VFirst2)
+    {
+      Param(4) = VFirst2;
+    }
+    if (VLast2 < Param(4))
+    {
+      Param(4) = ULast2;
+    }
     //==========================
     SvParam[0]=Param(1); 
     SvParam[1]=Param(2);
@@ -604,8 +749,29 @@ void IntWalk_PWalking::Perform(const TColStd_Array1OfReal& ParDep,
       RepartirOuDiviser(DejaReparti, ChoixIso, Arrive);
     }
     else  {//009 
+
+		  if (!myIntersectionOn2S.IsEmpty())
+		  {
+		    Standard_Real u1,v1,u2,v2; 
+		    myIntersectionOn2S.Point().Parameters(u1,v1,u2,v2);
+		    const gp_Pnt & aP = myIntersectionOn2S.Point().Value();
+		    gp_Pnt aP1, aP2;
+		    ThePSurfaceTool::D0(Caro1, u1, v1, aP1);
+		    ThePSurfaceTool::D0(Caro2, u2, v2, aP2);
+		    //cout << "(X, Y, Z) = " << aP.X()  << " " << aP.Y()  << " " << aP.Z() <<
+		    //  "; P1 = " << aP1.X()  << " " << aP1.Y()  << " " << aP1.Z() <<
+		    //  "; P2 = " << aP2.X()  << " " << aP2.Y()  << " " << aP2.Z() << endl;
+		    //Standard_Real aN = Abs(aU - u1) + Abs(aV - v1) + Abs(aW - u2) + Abs(aT - v2);
+		    //aMaxN = Max(aMaxN, aN);
+		    //cout << ++aC << ": N = " << aN << "; MaxN = " << aMaxN << "; u = " << u1 << "; v = " << v1 << "; w = " << u2 << "; t = " << v2 << endl;
+		    //aU = u1; aV = v1; aW = u2; aT = v2;
+		  }
+
       //== Le calcul du point exact a partir de Param(.) est possible
-      if (myIntersectionOn2S.IsEmpty())	{
+      if (myIntersectionOn2S.IsEmpty())
+      {
+        if (!anIsAdaptiveStep)
+        {
 	Standard_Real u1,v1,u2,v2;
 	previousPoint.Parameters(u1,v1,u2,v2);
 	//
@@ -631,6 +797,11 @@ void IntWalk_PWalking::Perform(const TColStd_Array1OfReal& ParDep,
 	  pasuv[2]=pasSav[2]; 
 	  pasuv[3]=pasSav[3];
 	}	    
+    }
+    else
+    {
+      aReduceStep = Standard_True;
+    }
       }
       else {//008
 	//============================================================
@@ -642,14 +813,110 @@ void IntWalk_PWalking::Perform(const TColStd_Array1OfReal& ParDep,
 	else { 
 	  if(--LevelOfEmptyInmyIntersectionOn2S<=0)	{ 
 	    LevelOfEmptyInmyIntersectionOn2S=0;
-	    if(LevelOfIterWithoutAppend < 10) {
-	      Status = TestDeflection();
-	    }			
-	    else   { 
-	      pasuv[0]*=0.5; 
-	      pasuv[1]*=0.5; 
-	      pasuv[2]*=0.5; 
-	      pasuv[3]*=0.5;
+	    if (anIsAdaptiveStep)
+	    {
+	      Status = IntWalk_OK;
+        Standard_Real aPs2[4];
+        gp_Vec aCD2;
+        gp_Vec2d aSDs2[2];
+        Standard_Real aR2;
+        Standard_Real a2DR2;
+        const IntSurf_PntOn2S & aMP = myIntersectionOn2S.Point();
+        aMP.Parameters(aPs2[0], aPs2[1], aPs2[2], aPs2[3]);
+        Status = IntWalk_PasTropGrand;
+        if (!CalculateStepData(aPs2, aCD2, aSDs2, aR2, a2DR2))
+        {
+          //cout << "error2" << endl;
+          //LevelOfIterWithoutAppend = 20;
+          //continue;
+        }
+        else if (a2DR2 < aMaxStep)
+        {
+          aStepCoef *= a2DR2 / aMaxStep;
+        }
+        else if (Abs(aCD * aCD2) <= 0.997)
+        {
+          //cout << "cos = " << Abs(aCD * aCD2) << endl;
+        }
+        else
+        {
+          Standard_Real aDist = previousPoint.Value().Distance(aMP.Value());
+          Standard_Real aMinR = Min(aR, aR2);
+          if (aMinR < aDist)
+          {
+            aStepCoef *= aMinR / aDist;
+          }
+          else
+          {
+            Standard_Real aSP = aSDs[0] * aSDs2[0];
+            if (aSP * aSP <= (0.997 * 0.997) * aSDs[0].SquareMagnitude() *
+                                               aSDs2[0].SquareMagnitude())
+            {
+            }
+            else
+            {
+              aSP = aSDs[1] * aSDs2[1];
+              if (aSP * aSP <= (0.997 * 0.997) * aSDs[1].SquareMagnitude() *
+                                                 aSDs2[1].SquareMagnitude())
+              {
+              }
+              else
+              {
+                Status = TestDeflection();
+              }
+            }
+          }
+        }
+	      /*Status = IntWalk_OK;
+	      if (!anAreCollinear)
+	      {
+	        {
+	          const gp_Pnt & aFP = previousPoint.Value();
+	          const gp_Pnt & aLP = myIntersectionOn2S.Point().Value();
+	          cout << "Old (X, Y, Z) " << aFP.X() << " " << aFP.Y() << " " << aFP.Z() << endl;
+	          cout << "New (X, Y, Z) " << aLP.X() << " " << aLP.Y() << " " << aLP.Z() << endl;
+	          cout << "Dir (X, Y, Z) " << aCD.X() << " " << aCD.Y() << " " << aCD.Z() << endl;
+	        }
+	        gp_Vec aV(previousPoint.Value(), myIntersectionOn2S.Point().Value());
+	        gp_Vec aCC = aV - (aV * aCD) * aCD;
+	        Standard_Real aCCN = aCC.Magnitude();
+	        if (aNT < aCCN)
+	        {
+	          aCC *= 1 / aCCN;
+	          {
+	            gp_Vec aCCP = gp_Vec(previousPoint.Value().Coord()) + aR * aCC;
+	            cout << "r = " << aR << "; (x, y, z) = " << aCCP.X() << " " << aCCP.Y() << " " << aCCP.Z() << endl;
+	          }
+	          Standard_Real aC = aR;
+	          if (1 < aR)
+	          {
+	            aC = 0.25;
+	            aCC *= 0.25;
+	            aV  *= 0.25 / aR;
+	          }
+	          Standard_Real aDist =
+	            Min((aV - aCC).SquareMagnitude(), (aV + aCC).SquareMagnitude());
+	          aDist = sqrt(aDist);
+	          cout << "Dist = " << aDist << "; aC = " << aC << endl;
+	          if (aC * 2e-2 < aDist)
+	          {
+	            Status = IntWalk_PasTropGrand;
+	          }
+	        }
+	      }*/
+	    }
+	    else
+	    {
+	      if((LevelOfIterWithoutAppend < 10))
+	      {
+	        Status = TestDeflection();
+	      }			
+	      else   { 
+	        pasuv[0]*=0.5; 
+	        pasuv[1]*=0.5; 
+	        pasuv[2]*=0.5; 
+	        pasuv[3]*=0.5;
+	      }
 	    }
 	  }
 	}
@@ -660,6 +927,11 @@ void IntWalk_PWalking::Perform(const TColStd_Array1OfReal& ParDep,
 	  Status = IntWalk_ArretSurPoint; 
 	  LevelOfPointConfondu = 0;  
 	}
+	//
+	//if (!anAreCollinear && (aMaxStep < 1e-7))
+	//{
+	//  Status = IntWalk_ArretSurPointPrecedent;
+	//}
 	//
 	if(Status==IntWalk_OK) { 
 	  NbPasOKConseq++;
@@ -724,6 +996,7 @@ void IntWalk_PWalking::Perform(const TColStd_Array1OfReal& ParDep,
 	  case IntWalk_ArretSurPointPrecedent:  {		      
 	    Arrive = Standard_False;                        
 	    RepartirOuDiviser(DejaReparti, ChoixIso, Arrive);
+	    aReduceStep = Standard_False;
 	    break;
 	  }
 	  case IntWalk_PasTropGrand:  {
@@ -859,6 +1132,11 @@ void IntWalk_PWalking::Perform(const TColStd_Array1OfReal& ParDep,
 		    }
 		    //
 		    AddAPoint(line,previousPoint);
+		    {
+		      const gp_Pnt & aP = previousPoint.Value();
+		      const gp_Pnt & aP2 = line->Value(line->NbPoints() - 1).Value();
+		      //cout << "(X, Y, Z) = " << aP.X()  << " " << aP.Y()  << " " << aP.Z() << "; d = " << aP.Distance(aP2) << endl;
+		    }
 		    RejectIndex++; 
 		    if(RejectIndex >= 250000) {
 		      break; 
@@ -886,6 +1164,11 @@ void IntWalk_PWalking::Perform(const TColStd_Array1OfReal& ParDep,
 	      if(close) { 
 		//================= la ligne est fermee ===============
 		AddAPoint(line,line->Value(1)); //ligne fermee
+    {
+      const gp_Pnt & aP = line->Value(1).Value();
+      const gp_Pnt & aP2 = line->Value(line->NbPoints() - 1).Value();
+      //cout << "(X, Y, Z) = " << aP.X()  << " " << aP.Y()  << " " << aP.Z() << "; d = " << aP.Distance(aP2) << endl;
+    }
 		LevelOfIterWithoutAppend=0;
 	      }
 	      else {//$$$
@@ -925,6 +1208,11 @@ void IntWalk_PWalking::Perform(const TColStd_Array1OfReal& ParDep,
 		      }
 		      //
 		      AddAPoint(line,previousPoint);
+          {
+            const gp_Pnt & aP = previousPoint.Value();
+		        const gp_Pnt & aP2 = line->Value(line->NbPoints() - 1).Value();
+		        //cout << "(X, Y, Z) = " << aP.X()  << " " << aP.Y()  << " " << aP.Z() << "; d = " << aP.Distance(aP2) << endl;
+          }
 		      RejectIndex++;
 		      if(RejectIndex >= 250000) {
 			break;
@@ -995,6 +1283,11 @@ void IntWalk_PWalking::Perform(const TColStd_Array1OfReal& ParDep,
 			  }
 			}
 			AddAPoint(line,previousPoint);
+      {
+        const gp_Pnt & aP = previousPoint.Value();
+	      const gp_Pnt & aP2 = line->Value(line->NbPoints() - 1).Value();
+	      //cout << "(X, Y, Z) = " << aP.X()  << " " << aP.Y()  << " " << aP.Z() << "; d = " << aP.Distance(aP2) << endl;
+      }
 			RejectIndex++;
 			if(RejectIndex >= 250000) {
 			  break;
@@ -1052,6 +1345,826 @@ void IntWalk_PWalking::Perform(const TColStd_Array1OfReal& ParDep,
   }  //010 fin si premier point de depart a permis un cheminement while(!Arrive)
   done = Standard_True;
 }
+
+Standard_Boolean IntWalk_PWalking::CalculateStepData(
+  const Standard_Real theParams[4],
+  gp_Vec & theCD, gp_Vec2d theSDs[2],
+  Standard_Real & theMaxStep, Standard_Real & theMax2DStep)
+{
+  const ThePSurface & aS1 = myIntersectionOn2S.Function().AuxillarSurface1();
+  const ThePSurface & aS2 = myIntersectionOn2S.Function().AuxillarSurface2();
+  gp_Pnt aPs[2];
+  gp_Vec aDs[2][5];
+  ThePSurfaceTool::D2(aS1, theParams[0], theParams[1], aPs[0], aDs[0][0], aDs[0][1],
+    aDs[0][2], aDs[0][3], aDs[0][4]);
+  ThePSurfaceTool::D2(aS2, theParams[2], theParams[3], aPs[1], aDs[1][0], aDs[1][1],
+    aDs[1][2], aDs[1][3], aDs[1][4]);
+  Standard_Real aNT = 1e-12, aDNs[2][2];
+  aDNs[0][0] = aDs[0][0].Magnitude();
+  aDNs[0][1] = aDs[0][1].Magnitude();
+  aDNs[1][0] = aDs[1][0].Magnitude();
+  aDNs[1][1] = aDs[1][1].Magnitude();
+  if ((aDNs[0][0] <= aNT) | (aDNs[0][1] <= aNT) |
+      (aDNs[1][0] <= aNT) | (aDNs[1][1] <= aNT))
+  {
+    return Standard_False;
+  }
+  gp_Vec aNs[2];
+  {
+    gp_Vec aNDs[2][2];
+    aNDs[0][0] = aDs[0][0] / aDNs[0][0];
+    aNDs[0][1] = aDs[0][1] / aDNs[0][1];
+    aNDs[1][0] = aDs[1][0] / aDNs[1][0];
+    aNDs[1][1] = aDs[1][1] / aDNs[1][1];
+    aNs[0] = aNDs[0][0] ^ aNDs[0][1];
+    aNs[1] = aNDs[1][0] ^ aNDs[1][1];
+    Standard_Real aNNs[2] = {aNs[0].Magnitude(), aNs[1].Magnitude()};
+    if ((aNNs[0] <= aNT) | (aNNs[1] <= aNT))
+    {
+      return Standard_False;
+    }
+    aNs[0] /= aNNs[0];
+    aNs[1] /= aNNs[1];
+  }
+  //////////////////////////////////////////////////////////////////////////////
+  //
+  // Set C(s) = S1(u(s), v(s)) = S2(x(s), y(s)),
+  //   s - curve length.
+  //
+  //////////////////////////////////////////////////////////////////////////////
+  // Calculate theSDs[0] and theSDs[1] as
+  //   theSDs[0] = (du/ds, dv/ds),
+  //   theSDs[1] = (dx/ds, dy/ds)
+  // from the following identities:
+  //    ddS1/ddu * du/ds + ddS1/ddv * dv/ds =
+  //    ddS2/ddx * dx/ds + ddS2/ddy * dy/ds,
+  //   |ddS1/ddu * du/ds + ddS1/ddv * dv/ds| = 1,
+  //   |ddS2/ddx * dx/ds + ddS2/ddy * dy/ds| = 1.
+  {
+    Standard_Real aMaxN = Max(aDNs[0][0], aDNs[0][1]);
+    Standard_Real aC = 1 / aMaxN;
+    theSDs[0] = gp_Vec2d((aC * aDs[0][1]) * aNs[1], (-aC * aDs[0][0]) * aNs[1]);
+    //
+                  aMaxN = Max(aDNs[1][0], aDNs[1][1]);
+                  aC = 1 / aMaxN;
+    theSDs[1] = gp_Vec2d((aC * aDs[1][1]) * aNs[0], (-aC * aDs[1][0]) * aNs[0]);
+  }
+  theCD = theSDs[0].X() * aDs[0][0] + theSDs[0].Y() * aDs[0][1];
+  {
+    Standard_Real aSP = theCD * previousd;
+    if (((aSP < 0) && (0 < sensCheminement)) ||
+        ((0 < aSP) && (sensCheminement < 0)))
+    {
+      theCD.Reverse();
+      theSDs[0].Reverse();
+    }
+  }
+  {
+    Standard_Real aN = theCD.Magnitude();
+    if (aN <= aNT)
+    {
+      return Standard_False;
+    }
+    Standard_Real aM = 1 / aN;
+    theCD *= aM;
+    theSDs[0] *= aM;
+    //
+    gp_Vec aCDer2 = theSDs[1].X() * aDs[1][0] + theSDs[1].Y() * aDs[1][1];
+    aN = aCDer2.Magnitude();
+    if (aN <= aNT)
+    {
+      return Standard_False;
+    }
+    theSDs[1] *= 1 / aN;
+    if (aCDer2 * theCD < 0)
+    {
+      theSDs[1].Reverse();
+    }
+  }
+  // Calculate aSSDs[0] and aSSDs[1] as
+  //   aSSDs[0] = (d2u/ds2, d2v/ds2),
+  //   aSSDs[1] = (d2x/ds2, d2y/ds2)
+  // from the following identities
+  // (obtained from above identities by differentiation on s):
+  //   ddS1/ddu * d2u/ds2 + ddS1/ddv * d2v/ds2 +
+  //     dd2S1/ddu2 * (du/ds) ^ 2 + dd2S1/ddv2 * (dv/ds) ^ 2 +
+  //     2 * dd2S1/(ddu ddv) * du/ds * dv/ds =
+  //   ddS2/ddx * d2x/ds2 + ddS2/ddy * d2y/ds2 +
+  //     dd2S2/ddx2 * (dx/ds) ^ 2 + dd2S2/ddy2 * (dy/ds) ^ 2 +
+  //     2 * dd2S2/(ddx ddy) * dx/dy * dy/ds,
+  //   (ddS1/ddu * d2u/ds2 + ddS1/ddv * d2v/ds2 +
+  //     dd2S1/ddu2 * (du/ds) ^ 2 + dd2S1/ddv2 * (dv/ds) ^ 2 +
+  //     2 * dd2S1/(ddu ddv) * du/ds * dv/ds) * theCD = 0,
+  //   (ddS2/ddx * d2x/ds2 + ddS2/ddy * d2y/ds2 +
+  //     dd2S2/ddx2 * (dx/ds) ^ 2 + dd2S2/ddy2 * (dy/ds) ^ 2 +
+  //     2 * dd2S2/(ddx ddy) * dx/dy * dy/ds) * theCD = 0.
+  gp_Vec aV1 = (theSDs[0].X() * theSDs[0].X()) * aDs[0][2] +
+               (theSDs[0].Y() * theSDs[0].Y()) * aDs[0][3] +
+           (2 * theSDs[0].X() * theSDs[0].Y()) * aDs[0][4];
+  gp_Vec aV2 = (theSDs[1].X() * theSDs[1].X()) * aDs[1][2] +
+               (theSDs[1].Y() * theSDs[1].Y()) * aDs[1][3] +
+           (2 * theSDs[1].X() * theSDs[1].Y()) * aDs[1][4];
+  gp_Vec aV12 = aV2 - aV1;
+  Standard_Real aKs[4][3];
+  aKs[0][0] = aDs[0][0] * aNs[1];
+  aKs[0][1] = aDs[0][1] * aNs[1];
+  aKs[0][2] =  aV12 * aNs[1];
+  aKs[1][0] = aDs[0][0] * theCD;
+  aKs[1][1] = aDs[0][1] * theCD;
+  aKs[1][2] = -aV1 * theCD;
+  aKs[2][0] = aDs[1][0] * aNs[0];
+  aKs[2][1] = aDs[1][1] * aNs[0];
+  aKs[2][2] = -aV12 * aNs[0];
+  aKs[3][0] = aDs[1][0] * theCD;
+  aKs[3][1] = aDs[1][1] * theCD;
+  aKs[3][2] = -aV2 * theCD;
+  Standard_Real aDets[] = {aKs[0][0] * aKs[1][1] - aKs[0][1] * aKs[1][0],
+                           aKs[2][0] * aKs[3][1] - aKs[2][1] * aKs[3][0]};
+  gp_Vec2d aSSDs[] = {
+    gp_Vec2d((aKs[0][2] * aKs[1][1] - aKs[0][1] * aKs[1][2]) / aDets[0],
+             (aKs[0][0] * aKs[1][2] - aKs[0][2] * aKs[1][0]) / aDets[0]),
+    gp_Vec2d((aKs[2][2] * aKs[3][1] - aKs[2][1] * aKs[3][2]) / aDets[1],
+             (aKs[2][0] * aKs[3][2] - aKs[2][2] * aKs[3][0]) / aDets[1])};
+  // Calculate theMaxStep as radius of curvature for curve C.
+  gp_Vec aCSD = aV1 + aSSDs[0].X() * aDs[0][0] + aSSDs[0].Y() * aDs[0][1];
+  {
+    theMaxStep = DBL_MAX;
+    Standard_Real aDen = (theCD ^ aCSD).Magnitude();
+    if (aNT < aDen)
+    {
+      theMaxStep = 1 / aDen;
+    }
+  }
+  // Calculate theMax2DStep as Min(aMax2DStep1, aMax2DStep2), here
+  // aMax2DStep1 = r1 / ((du/ds) ^ 2 + (dv/ds) ^ 2) ^ 0.5,
+  // aMax2DStep2 = r2 / ((dx/ds) ^ 2 + (dy/ds) ^ 2) ^ 0.5, here
+  // r1 and r2 are radii of curvature for curves
+  // C1(s) = (u(s), v(s)) and C2(s) = (x(s), y(s)).
+  theMax2DStep = DBL_MAX;
+  Standard_Real a2DStep = Abs(theSDs[0] ^ aSSDs[0]);
+  if (aNT < a2DStep)
+  {
+    a2DStep = theSDs[0].SquareMagnitude() / a2DStep;
+    theMax2DStep = Min(theMax2DStep, a2DStep);
+  }
+                a2DStep = Abs(theSDs[1] ^ aSSDs[1]);
+  if (aNT < a2DStep)
+  {
+    a2DStep = theSDs[1].SquareMagnitude() / a2DStep;
+    theMax2DStep = Min(theMax2DStep, a2DStep);
+  }
+  return Standard_True;
+}
+
+//==================================================================================
+// function : Perform
+// purpose  : 
+//==================================================================================
+//void IntWalk_PWalking::Perform2(const TColStd_Array1OfReal& ParDep,
+//			       const Standard_Real u1min,
+//			       const Standard_Real v1min,
+//			       const Standard_Real u2min,
+//			       const Standard_Real v2min,
+//			       const Standard_Real u1max,
+//			       const Standard_Real v1max,
+//			       const Standard_Real u2max,
+//			       const Standard_Real v2max)
+//{
+//  //xf
+//  Standard_Integer i, NbPasOKConseq;
+//  Standard_Real UFirst1, VFirst1, ULast1, VLast1, UFirst2, VFirst2, ULast2, VLast2;
+//  Standard_Real pasMaxSV[4], aTmp;
+//  TColStd_Array1OfReal Param(1,4);
+//  IntImp_ConstIsoparametric ChoixIso;
+//  //xt
+//  //
+//  done = Standard_False;
+//  NbPasOKConseq=0;
+//  //
+//  // Caro1 and Caro2
+//  const ThePSurface& Caro1 =myIntersectionOn2S.Function().AuxillarSurface1();
+//  const ThePSurface& Caro2 =myIntersectionOn2S.Function().AuxillarSurface2();
+//  //
+//  UFirst1 = ThePSurfaceTool::FirstUParameter(Caro1);
+//  VFirst1 = ThePSurfaceTool::FirstVParameter(Caro1);
+//  ULast1  = ThePSurfaceTool::LastUParameter (Caro1);
+//  VLast1  = ThePSurfaceTool::LastVParameter (Caro1);
+//  //
+//  UFirst2 = ThePSurfaceTool::FirstUParameter(Caro2);
+//  VFirst2 = ThePSurfaceTool::FirstVParameter(Caro2);
+//  ULast2  = ThePSurfaceTool::LastUParameter (Caro2);
+//  VLast2  = ThePSurfaceTool::LastVParameter (Caro2);
+//  //
+//  ComputePasInit(pasuv,u1min,u1max,v1min,v1max,u2min,u2max,v2min,v2max,
+//		 Um1,UM1,Vm1,VM1,Um2,UM2,Vm2,VM2,Caro1,Caro2,pasMax+pasMax);
+//  //
+//  if(pasuv[0]<100*ResoU1) {
+//    pasuv[0]=100*ResoU1; 
+//  }
+//  if(pasuv[1]<100*ResoV1) {
+//    pasuv[1]=100*ResoV1; 
+//  }
+//  if(pasuv[2]<100*ResoU2) {
+//    pasuv[2]=100*ResoU2;
+//  }
+//  if(pasuv[3]<100*ResoV2) {
+//    pasuv[3]=100*ResoV2;
+//  }
+//  //
+//  for (i=0; i<4; ++i) {
+//    if(pasuv[i]>10) {
+//      pasuv[i] = 10;
+//    }
+//    pasInit[i] = pasSav[i] = pasuv[i]; 
+//  }
+//  //
+//  line = new IntSurf_LineOn2S ();
+//  //
+//  for (i=1; i<=4; ++i) {
+//    aTmp=ParDep(i);
+//    Param(i)=ParDep(i);
+//  }
+//  //-- reprise des pas uv lies aux surfaces Caro1 et Caro2
+//  //-- pasuv[] et pasSav[] sont modifies lors du cheminement
+//  for(i = 0; i < 4; ++i) { 
+//    pasMaxSV[i] = pasSav[i] = pasuv[i] = pasInit[i]; 
+//  }
+//
+//  //-- calcul du premier point solution
+//  math_FunctionSetRoot  Rsnld(myIntersectionOn2S.Function());
+//  //
+//  ChoixIso = myIntersectionOn2S.Perform(Param,Rsnld);
+//  if (!myIntersectionOn2S.IsDone())   {
+//    return;
+//  }
+//  //
+//  if (myIntersectionOn2S.IsEmpty()) {
+//    return;
+//  }
+//  //
+//  if(myIntersectionOn2S.IsTangent()) {
+//    return;
+//  }
+//  //
+//  Standard_Boolean Arrive, DejaReparti;
+//  Standard_Integer IncKey, RejectIndex;
+//  gp_Pnt pf,pl;
+//  //
+//  DejaReparti = Standard_False;
+//  IncKey = 0;
+//  RejectIndex = 0;
+//  //
+//  previousPoint = myIntersectionOn2S.Point();
+//  previoustg = Standard_False;
+//  previousd  = myIntersectionOn2S.Direction();
+//  previousd1 = myIntersectionOn2S.DirectionOnS1();
+//  previousd2 = myIntersectionOn2S.DirectionOnS2();
+//  indextg = 1;
+//  tgdir   = previousd;
+//  firstd1 = previousd1;
+//  firstd2 = previousd2;
+//  tgfirst = tglast = Standard_False;
+//  choixIsoSav  =  ChoixIso;
+//  //------------------------------------------------------------
+//  //-- On Teste si le premier point de cheminement correspond 
+//  //-- a un point sur frontiere. 
+//  //-- Dans ce cas, DejaReparti est initialise a True
+//  //-- 
+//  pf = previousPoint.Value();
+//  Standard_Boolean bTestFirstPoint = Standard_True;
+//  
+//  previousPoint.Parameters(Param(1),Param(2),Param(3),Param(4));  
+//  AddAPoint(line,previousPoint);
+//  //
+//  IntWalk_StatusDeflection Status = IntWalk_OK;
+//  Standard_Boolean NoTestDeflection = Standard_False;
+//  Standard_Real SvParam[4], f;
+//  Standard_Integer LevelOfEmptyInmyIntersectionOn2S=0;
+//  Standard_Integer LevelOfPointConfondu = 0; 
+//  Standard_Integer LevelOfIterWithoutAppend = -1;
+//  //
+//  Arrive = Standard_False;
+//  while(!Arrive) {//010
+//    LevelOfIterWithoutAppend++;
+//    if(LevelOfIterWithoutAppend>20) { 
+//      Arrive = Standard_True; 
+//      if(DejaReparti) {
+//	break;
+//      }
+//      RepartirOuDiviser(DejaReparti,ChoixIso,Arrive);
+//      LevelOfIterWithoutAppend = 0;
+//    }
+//    //
+//    // compute f
+//    f = 0.;
+//    switch (ChoixIso) { 
+//      case IntImp_UIsoparametricOnCaro1: f = Abs(previousd1.X()); break;
+//      case IntImp_VIsoparametricOnCaro1: f = Abs(previousd1.Y()); break;
+//      case IntImp_UIsoparametricOnCaro2: f = Abs(previousd2.X()); break;
+//      case IntImp_VIsoparametricOnCaro2: f = Abs(previousd2.Y()); break;
+//      default:break;
+//    }
+//    //
+//    if(f<0.1) {
+//      f=0.1;
+//    }
+//    //
+//    previousPoint.Parameters(Param(1),Param(2),Param(3),Param(4));
+//    //
+//    //--ofv.begin
+//    Standard_Real aIncKey, aEps, dP1, dP2, dP3, dP4;
+//    //
+//    dP1 = sensCheminement * pasuv[0] * previousd1.X() /f;
+//    dP2 = sensCheminement * pasuv[1] * previousd1.Y() /f;
+//    dP3 = sensCheminement * pasuv[2] * previousd2.X() /f; 
+//    dP4 = sensCheminement * pasuv[3] * previousd2.Y() /f;
+//    //
+//    aIncKey=5.*(Standard_Real)IncKey;
+//    aEps=1.e-7;
+//    if(ChoixIso == IntImp_UIsoparametricOnCaro1 && Abs(dP1) < aEps) {
+//      dP1 *= aIncKey;
+//    }
+//    if(ChoixIso == IntImp_VIsoparametricOnCaro1 && Abs(dP2) < aEps) {
+//      dP2 *= aIncKey;
+//    }
+//    if(ChoixIso == IntImp_UIsoparametricOnCaro2 && Abs(dP3) < aEps) {
+//      dP3 *= aIncKey;
+//    }
+//    if(ChoixIso == IntImp_VIsoparametricOnCaro2 && Abs(dP4) < aEps) {
+//      dP4 *= aIncKey;
+//    }
+//    //--ofv.end
+//    //
+//    Param(1) += dP1;
+//    Param(2) += dP2;
+//    Param(3) += dP3; 
+//    Param(4) += dP4;
+//    //==========================
+//    SvParam[0]=Param(1); 
+//    SvParam[1]=Param(2);
+//    SvParam[2]=Param(3);
+//    SvParam[3]=Param(4);
+//    //
+//    ChoixIso= myIntersectionOn2S.Perform(Param, Rsnld, ChoixIso);                  
+//    //
+//    if (!myIntersectionOn2S.IsDone())   {
+//      //arret de la ligne,division
+//      Arrive = Standard_False;
+//      Param(1)=SvParam[0]; 
+//      Param(2)=SvParam[1]; 
+//      Param(3)=SvParam[2];
+//      Param(4)=SvParam[3];
+//      RepartirOuDiviser(DejaReparti, ChoixIso, Arrive);
+//    }
+//    else  {//009 
+//      //== Le calcul du point exact a partir de Param(.) est possible
+//      if (myIntersectionOn2S.IsEmpty())	{
+//	Standard_Real u1,v1,u2,v2;
+//	previousPoint.Parameters(u1,v1,u2,v2);
+//	//
+//	Arrive = Standard_False;
+//	if(u1<UFirst1 || u1>ULast1) {
+//	  Arrive=Standard_True;
+//	}	
+//	if(u2<UFirst2 || u2>ULast2) {
+//	  Arrive=Standard_True;
+//	}
+//	if(v1<VFirst1 || v1>VLast1) {
+//	  Arrive=Standard_True;
+//	}
+//	if(v2<VFirst2 || v2>VLast2) {
+//	  Arrive=Standard_True;
+//	}	
+//	RepartirOuDiviser(DejaReparti,ChoixIso,Arrive);
+//	LevelOfEmptyInmyIntersectionOn2S++;
+//	//
+//	if(LevelOfEmptyInmyIntersectionOn2S>10)    {
+//	  pasuv[0]=pasSav[0]; 
+//	  pasuv[1]=pasSav[1]; 
+//	  pasuv[2]=pasSav[2]; 
+//	  pasuv[3]=pasSav[3];
+//	}	    
+//      }
+//      else {//008
+//	//============================================================
+//	//== Un point a ete trouve :  T E S T   D E F L E C T I O N 
+//	//============================================================
+//	if(NoTestDeflection) {
+//	  NoTestDeflection = Standard_False;
+//	}		  
+//	else { 
+//	  if(--LevelOfEmptyInmyIntersectionOn2S<=0)	{ 
+//	    LevelOfEmptyInmyIntersectionOn2S=0;
+//	    if(LevelOfIterWithoutAppend < 10) {
+//	      Status = TestDeflection();
+//	    }			
+//	    else   { 
+//	      pasuv[0]*=0.5; 
+//	      pasuv[1]*=0.5; 
+//	      pasuv[2]*=0.5; 
+//	      pasuv[3]*=0.5;
+//	    }
+//	  }
+//	}
+//	//============================================================
+//	//==       T r a i t e m e n t   s u r   S t a t u s        ==
+//	//============================================================
+//	if(LevelOfPointConfondu > 5) { 
+//	  Status = IntWalk_ArretSurPoint; 
+//	  LevelOfPointConfondu = 0;  
+//	}
+//	//
+//	if(Status==IntWalk_OK) { 
+//	  NbPasOKConseq++;
+//	  if(NbPasOKConseq >= 5) { 
+//	    NbPasOKConseq=0;
+//	    Standard_Boolean pastroppetit;
+//	    Standard_Real t;
+//	    //
+//	    do { 
+//	      pastroppetit=Standard_True;
+//	      //
+//	      if(pasuv[0]<pasInit[0])     { 
+//		t = (pasInit[0]-pasuv[0])*0.25;
+//		if(t>0.1*pasInit[0]) {
+//		  t=0.1*pasuv[0];
+//		}
+//		pasuv[0]+=t; 
+//		pastroppetit=Standard_False;
+//	      } 
+//	      if(pasuv[1]<pasInit[1])	{ 
+//		t = (pasInit[1]-pasuv[1])*0.25;
+//		if(t>0.1*pasInit[1]) {
+//		  t=0.1*pasuv[1];
+//		}		
+//		pasuv[1]+=t; 
+//		pastroppetit=Standard_False;
+//	      } 
+//	      if(pasuv[2]<pasInit[2]){
+//		t = (pasInit[2]-pasuv[2])*0.25;
+//		if(t>0.1*pasInit[2]) {
+//		  t=0.1*pasuv[2];
+//		}
+//		pasuv[2]+=t; 
+//		pastroppetit=Standard_False;
+//	      } 
+//	      if(pasuv[3]<pasInit[3])	{ 
+//		t = (pasInit[3]-pasuv[3])*0.25;
+//		if(t>0.1*pasInit[3]) {
+//		  t=0.1*pasuv[3];
+//		}
+//		pasuv[3]+=t; 
+//		pastroppetit=Standard_False;
+//	      }
+//	      if(pastroppetit) { 
+//		if(pasMax<0.1){ 
+//		  pasMax*=1.1; 
+//		  pasInit[0]*=1.1; 
+//		  pasInit[1]*=1.1; 
+//		  pasInit[2]*=1.1; 
+//		  pasInit[3]*=1.1; 
+//		}
+//		else {
+//		  pastroppetit=Standard_False;
+//		}
+//	      }
+//	    } while(pastroppetit);
+//	  }
+//	}//Status==IntWalk_OK
+//	else NbPasOKConseq=0;
+//	//
+//	switch(Status) {//007 
+//	  case IntWalk_ArretSurPointPrecedent:  {		      
+//	    Arrive = Standard_False;                        
+//	    RepartirOuDiviser(DejaReparti, ChoixIso, Arrive);
+//	    break;
+//	  }
+//	  case IntWalk_PasTropGrand:  {
+//	    Param(1)=SvParam[0]; 
+//	    Param(2)=SvParam[1]; 
+//	    Param(3)=SvParam[2]; 
+//	    Param(4)=SvParam[3];
+//	    if(LevelOfIterWithoutAppend > 5) { 
+//	      if(pasSav[0]<pasInit[0]) { 
+//		pasInit[0]-=(pasInit[0]-pasSav[0])*0.25; 
+//		LevelOfIterWithoutAppend=0;
+//	      }
+//	      if(pasSav[1]<pasInit[1]) { 
+//		pasInit[1]-=(pasInit[1]-pasSav[1])*0.25;  
+//		LevelOfIterWithoutAppend=0; 
+//	      }
+//	      if(pasSav[2]<pasInit[2]) { 
+//		pasInit[2]-=(pasInit[2]-pasSav[2])*0.25;  
+//		LevelOfIterWithoutAppend=0; 
+//	      }
+//	      if(pasSav[3]<pasInit[3]) {
+//		pasInit[3]-=(pasInit[3]-pasSav[3])*0.25; 
+//		LevelOfIterWithoutAppend=0; 
+//	      }
+//	    }
+//	    break;
+//	  }
+//	  case IntWalk_PointConfondu:   {
+//	    LevelOfPointConfondu++;
+//	    if(LevelOfPointConfondu>5)   { 
+//	      Standard_Boolean pastroppetit;
+//	      //
+//	      do { 
+//		pastroppetit=Standard_True;
+//		if(pasuv[0]<pasInit[0]) { 
+//		  pasuv[0]+=(pasInit[0]-pasuv[0])*0.25;
+//		  pastroppetit=Standard_False; 
+//		} 
+//		if(pasuv[1]<pasInit[1]) { 
+//		  pasuv[1]+=(pasInit[1]-pasuv[1])*0.25;
+//		  pastroppetit=Standard_False; 
+//		} 
+//		if(pasuv[2]<pasInit[2]) { 
+//		  pasuv[2]+=(pasInit[2]-pasuv[2])*0.25;
+//		  pastroppetit=Standard_False; 
+//		} 
+//		if(pasuv[3]<pasInit[3]) { 
+//		  pasuv[3]+=(pasInit[3]-pasuv[3])*0.25; 
+//		  pastroppetit=Standard_False; 
+//		}
+//		if(pastroppetit)  { 
+//		  if(pasMax<0.1){ 
+//		    pasMax*=1.1; 
+//		    pasInit[0]*=1.1; 
+//		    pasInit[1]*=1.1; 
+//		    pasInit[2]*=1.1; 
+//		    pasInit[3]*=1.1; 
+//		  }
+//		  else{
+//		    pastroppetit=Standard_False; 
+//		  }		
+//		}
+//	      } while(pastroppetit);
+//	    }
+//	    break;
+//	  }
+//	  case IntWalk_OK:
+//	  case IntWalk_ArretSurPoint:  {//006
+//	    //=======================================================
+//	    //== T e s t   A r r e t   :  Cadrage sur Param(.)     ==
+//	    //=======================================================
+//	    //xft arrive here
+//	    Arrive = TestArret(DejaReparti,Param,ChoixIso); 
+//	    // JMB 30th December 1999. 
+//	    // Some statement below should not be put in comment because they are useful.
+//	    // See grid CTO 909 A1 which infinitely loops 
+//	    if(Arrive==Standard_False && Status==IntWalk_ArretSurPoint) { 
+//	      Arrive=Standard_True;
+//#ifdef DEB
+//	      cout << "Compile avec option DEB :Si Pb d intersection : ";
+//	      cout << "IntWalk_PWalking_1.gxx (lbr le 1erdec98)"<<endl;
+//#endif
+//	    }
+//	    if(Arrive) {
+//	      NbPasOKConseq = -10;
+//	    }
+//	    if(!Arrive)  {//005
+//	      //=====================================================
+//	      //== Param(.)  est dans les bornes                   ==
+//	      //==  et ne finit pas une ligne fermee               ==
+//	      //=====================================================
+//	      //== Verification sur Le Point Courant de myInters
+//	      Standard_Boolean pointisvalid = Standard_False;
+//	      {
+//		Standard_Real u1,v1,u2,v2; 
+//		myIntersectionOn2S.Point().Parameters(u1,v1,u2,v2); 
+//		//
+//		if(u1 <= UM1  && u2 <= UM2 && v1 <= VM1 && 
+//		   v2 <= VM2  && u1 >= Um1 && u2 >= Um2 &&
+//		   v1 >= Vm1  && v2 >= Vm2) {
+//		  pointisvalid=Standard_True;
+//		}
+//	      }
+//	      //
+//	      if(pointisvalid) { 
+//		previousPoint = myIntersectionOn2S.Point();
+//		previoustg = myIntersectionOn2S.IsTangent();
+//		if(!previoustg) {
+//		  previousd  = myIntersectionOn2S.Direction();
+//		  previousd1 = myIntersectionOn2S.DirectionOnS1();
+//		  previousd2 = myIntersectionOn2S.DirectionOnS2();
+//		}
+//		//=====================================================
+//		//== Verification sur Previous Point
+//		{
+//		  Standard_Real u1,v1,u2,v2; 
+//		  previousPoint.Parameters(u1,v1,u2,v2); 
+//		  if( u1 <= UM1  && u2 <= UM2 && v1 <= VM1 &&
+//		      v2 <= VM2  && u1 >= Um1 && u2 >= Um2 &&
+//		      v1 >= Vm1  && v2 >= Vm2) { 
+//		    pl = previousPoint.Value();
+//		    if(bTestFirstPoint) {
+//		      if(pf.Distance(pl) < 1.e-7){ 
+//			IncKey++; 
+//			if(IncKey == 5000) 
+//			  return; 
+//			else 
+//			  continue; 
+//		      }
+//		      else {
+//			bTestFirstPoint = Standard_False;
+//		      }
+//		    }
+//		    //
+//		    AddAPoint(line,previousPoint);
+//		    RejectIndex++; 
+//		    if(RejectIndex >= 250000) {
+//		      break; 
+//		    };
+//		    //
+//		    LevelOfIterWithoutAppend = 0;
+//		  } 
+//		}
+//	      }//pointisvalid
+//	      //====================================================
+//	      if(Status == IntWalk_ArretSurPoint)  {
+//		RepartirOuDiviser(DejaReparti,ChoixIso,Arrive);
+//	      }
+//	      else{ 
+//		if (line->NbPoints() == 2) {
+//		  pasSav[0] = pasuv[0]; 
+//		  pasSav[1] = pasuv[1]; 
+//		  pasSav[2] = pasuv[2]; 
+//		  pasSav[3] = pasuv[3];
+//		}
+//	      }
+//	    }//005 if(!Arrive)
+//	    //
+//	    else {//004
+//	      if(close) { 
+//		//================= la ligne est fermee ===============
+//		AddAPoint(line,line->Value(1)); //ligne fermee
+//		LevelOfIterWithoutAppend=0;
+//	      }
+//	      else {//$$$
+//		//====================================================
+//		//== Param n etait pas dans les bornes (a ete recadre)
+//		//====================================================
+//		Standard_Boolean bPrevNotTangent = !previoustg || !myIntersectionOn2S.IsTangent();
+//		
+//		IntImp_ConstIsoparametric SauvChoixIso = ChoixIso;
+//		ChoixIso = myIntersectionOn2S.Perform(Param,Rsnld,ChoixIso);    
+//		//
+//		if(!myIntersectionOn2S.IsEmpty()) { //002
+//		  // debordement sur le carreau reciproque ou intersection en coin
+//		  if(TestArret(Standard_True,Param,ChoixIso))  {
+//		    NbPasOKConseq = -10;
+//		    ChoixIso = myIntersectionOn2S.Perform(Param,Rsnld,ChoixIso); 
+//		    if(!myIntersectionOn2S.IsEmpty())	  {
+//		      previousPoint = myIntersectionOn2S.Point();         
+//		      previoustg = myIntersectionOn2S.IsTangent();
+//		      if (!previoustg)     {
+//			previousd  = myIntersectionOn2S.Direction();
+//			previousd1 = myIntersectionOn2S.DirectionOnS1();
+//			previousd2 = myIntersectionOn2S.DirectionOnS2();
+//		      }
+//		      pl = previousPoint.Value();
+//		      if(bTestFirstPoint) {
+//			if(pf.Distance(pl) < 1.e-7){ 
+//			  IncKey++; 
+//			  if(IncKey == 5000) 
+//			    return; 
+//			  else 
+//			    continue; 
+//			}
+//			else {
+//			  bTestFirstPoint = Standard_False;
+//			}
+//		      }
+//		      //
+//		      AddAPoint(line,previousPoint);
+//		      RejectIndex++;
+//		      if(RejectIndex >= 250000) {
+//			break;
+//		      };
+//		      //
+//		      LevelOfIterWithoutAppend=0;
+//		      RepartirOuDiviser(DejaReparti,ChoixIso,Arrive);
+//		    }
+//		    else  {
+//		      //echec cadrage diviser le pas
+//		      Arrive = Standard_False;
+//		      RepartirOuDiviser(DejaReparti,ChoixIso,Arrive);
+//		      NoTestDeflection = Standard_True;
+//		      ChoixIso = SauvChoixIso;
+//		    }
+//		  }//if(TestArret())
+//		  else {
+//		    // save the last point
+//		    // to revert to it if the current point is out of bounds
+//		    IntSurf_PntOn2S previousPointSave = previousPoint;
+//		    Standard_Boolean previoustgSave   = previoustg;
+//		    gp_Dir previousdSave              = previousd;
+//		    gp_Dir2d previousd1Save           = previousd1;
+//		    gp_Dir2d previousd2Save           = previousd2;
+//		    
+//		    previousPoint = myIntersectionOn2S.Point();         
+//		    previoustg = myIntersectionOn2S.IsTangent();
+//		    Arrive = Standard_False; 
+//		    if(!previoustg)  {
+//		      previousd  = myIntersectionOn2S.Direction();
+//		      previousd1 = myIntersectionOn2S.DirectionOnS1();
+//		      previousd2 = myIntersectionOn2S.DirectionOnS2();
+//		    }
+//		    //========================================
+//		    //== Verification sur PreviousPoint @@
+//		    {
+//		      Standard_Real u1,v1,u2,v2; 
+//		      previousPoint.Parameters(u1,v1,u2,v2); 
+//		      Param(1) = u1; 
+//		      Param(2) = v1;	
+//		      Param(3) = u2; 
+//		      Param(4) = v2;
+//		      //
+//		      //xf
+//		      Standard_Boolean bFlag1, bFlag2;
+//		      Standard_Real aTol2D=1.e-11;
+//		      //
+//		      bFlag1=u1 >= Um1-aTol2D && v1 >= Vm1-aTol2D && u1 <= UM1+aTol2D && v1 <= VM1+aTol2D;
+//		      bFlag2=u2 >= Um2-aTol2D && v2 >= Vm2-aTol2D && u2 <= UM2+aTol2D && v2 <= VM2+aTol2D;
+//		      if (bFlag1 && bFlag2) {
+//		      /*
+//		      if(u1 <= UM1  && u2 <= UM2 && v1 <= VM1 &&
+//			 v2 <= VM2  && u1 >= Um1 && u2 >= Um2 &&
+//			 v1 >= Vm1  && v2 >= Vm2)  {
+//			 */			
+//		      //xt
+//			pl = previousPoint.Value();
+//			if(bTestFirstPoint) {
+//			  if(pf.Distance(pl) < 1.e-7) {
+//			    IncKey++;
+//			    if(IncKey == 5000)
+//			      return; 
+//			    else 
+//			      continue;
+//			  }
+//			  else {
+//			    bTestFirstPoint = Standard_False;
+//			  }
+//			}
+//			AddAPoint(line,previousPoint);
+//			RejectIndex++;
+//			if(RejectIndex >= 250000) {
+//			  break;
+//			}
+//			//
+//			LevelOfIterWithoutAppend=0;
+//			Arrive = Standard_True;
+//		      }
+//		      else {
+//			// revert to the last correctly calculated point
+//			previousPoint = previousPointSave;
+//			previoustg    = previoustgSave;
+//			previousd     = previousdSave;
+//			previousd1    = previousd1Save;
+//			previousd2    = previousd2Save;
+//		      }
+//		    }
+//		    //
+//		    Standard_Boolean wasExtended = Standard_False;
+//		    
+//		    if(Arrive && myIntersectionOn2S.IsTangent() && bPrevNotTangent) {
+//		      if(ExtendLineInCommonZone(SauvChoixIso, DejaReparti)) {
+//			wasExtended = Standard_True;
+//			Arrive = Standard_False;
+//			ChoixIso = SauvChoixIso;
+//		      }
+//		    }
+//		    
+//		    RepartirOuDiviser(DejaReparti,ChoixIso,Arrive);
+//		    if(Arrive && 
+//		       myIntersectionOn2S.IsDone() && !myIntersectionOn2S.IsEmpty() &&
+//		       myIntersectionOn2S.IsTangent() && bPrevNotTangent &&
+//		       !wasExtended) {
+//		      
+//		      if(ExtendLineInCommonZone(SauvChoixIso, DejaReparti)) {
+//			wasExtended = Standard_True;
+//			Arrive = Standard_False;
+//			ChoixIso = SauvChoixIso;
+//		      }
+//		    }
+//		  }//else !TestArret() $
+//		} //$$ fin succes cadrage sur frontiere (!myIntersectionOn2S.IsEmpty())
+//		else  {
+//		  //echec cadrage  sur frontiere;division du pas 
+//		  Arrive = Standard_False;
+//		  NoTestDeflection = Standard_True;
+//		  RepartirOuDiviser(DejaReparti,ChoixIso,Arrive);
+//		} 
+//	      }//$$$ fin cadrage sur frontiere (!close)
+//	    } //004 fin TestArret retourne Arrive = True
+//	  } // 006case IntWalk_ArretSurPoint:  fin Traitement Status = OK  ou ArretSurPoint 
+//	} //007  switch(Status) 
+//      } //008 fin traitement point en court (TEST DEFLECTION)
+//    } //009 fin traitement ligne (else if myIntersectionOn2S.IsDone())
+//  }  //010 fin si premier point de depart a permis un cheminement while(!Arrive)
+//  done = Standard_True;
+//}
 // ===========================================================================================================
 // function: ExtendLineInCommonZone
 // purpose:  Extends already computed line inside tangent zone in the direction given by theChoixIso.
