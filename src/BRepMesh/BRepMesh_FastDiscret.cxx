@@ -770,11 +770,9 @@ static void splitSegment( BRepMesh_GeomTool&    theGT,
   aVec.Normalize();
 
   gp_XYZ Vec1 = midP3dFromSurf.XYZ() - P3dF.XYZ();
-  Standard_Real aModulus = Vec1.Dot(aVec);
-  gp_XYZ aProj = aVec*aModulus;
-  gp_XYZ aDist = Vec1 - aProj;
-    
-  if(aDist.SquareModulus() < theSquareEDef)
+  Standard_Real aDist2 = (Vec1 ^ aVec).SquareModulus();
+
+  if(aDist2 < theSquareEDef)
     return;
 
   midpar = (theFirst + theLast) * 0.5;
@@ -1004,7 +1002,8 @@ void BRepMesh_FastDiscret::Add( const TopoDS_Edge&                  theEdge,
 
       BRepMesh_GeomTool GT(cons, wFirst, wLast, 0.5 * myAngle, otherdefedge, nbpmin);
 
-      if ( aCurveType == GeomAbs_BSplineCurve )
+      Standard_Boolean isBSplineCurve = (aCurveType == GeomAbs_BSplineCurve);
+      if ( isBSplineCurve )
       {
         const Standard_Integer aNbInt = cons.NbIntervals( GeomAbs_C1 );
         if ( aNbInt > 0 )
@@ -1047,7 +1046,7 @@ void BRepMesh_FastDiscret::Add( const TopoDS_Edge&                  theEdge,
       Standard_Integer i; 
       Standard_Integer nbnodes = GT.NbPoints();
       //Check deflection in 2d space for improvement of edge tesselation.
-      if( isSameParam && nbnodes > 1)
+      if( isBSplineCurve && isSameParam && nbnodes > 1 )
       {
         Standard_Real aSquareEdgeDef = otherdefedge * otherdefedge;
         const TopTools_ListOfShape& lf = theAncestors.FindFromKey(theEdge);
@@ -1079,12 +1078,11 @@ void BRepMesh_FastDiscret::Add( const TopoDS_Edge&                  theEdge,
             splitSegment(GT, aSurf, aCurve2d, cons, aSquareEdgeDef, aParamArray(i), aParamArray(i+1), 1);
           }
         }
+
+        nbnodes = GT.NbPoints();
       }
 
       // Creation of polygons on triangulation:
-      Standard_Real puv;
-      nbnodes = GT.NbPoints();
-
       TColStd_Array1OfInteger Nodes(1, nbnodes);
       TColStd_Array1OfInteger NodInStruct(1, nbnodes);
       TColStd_Array1OfReal Param(1, nbnodes);
@@ -1105,6 +1103,7 @@ void BRepMesh_FastDiscret::Add( const TopoDS_Edge&                  theEdge,
         for (i = 2; i < GT.NbPoints(); i++)
         {
           // Record 3d point
+          Standard_Real puv;
           GT.Value(cons, theGFace, i, puv, P3d, uv);
           myNbLocat++;
           myLocation3d.Bind(myNbLocat, P3d);
