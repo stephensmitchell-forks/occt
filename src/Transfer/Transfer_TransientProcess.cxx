@@ -15,11 +15,32 @@
 // purpose or non-infringement. Please see the License for the specific terms
 // and conditions governing the rights and limitations under the License.
 
-#include <Transfer_TransientProcess.ixx>
+#include <Transfer_TransientProcess.hxx>
 #include <Interface_Check.hxx>
 #include <Interface_MSG.hxx>
 #include <Transfer_Binder.hxx>
 #include <TColStd_HSequenceOfTransient.hxx>
+#include <Standard_Type.hxx>
+#include <Interface_InterfaceModel.hxx>
+#include <Interface_HGraph.hxx>
+#include <Dico_DictionaryOfTransient.hxx>
+#include <TColStd_HSequenceOfTransient.hxx>
+#include <Interface_Graph.hxx>
+#include <Standard_Transient.hxx>
+#include <Message_Messenger.hxx>
+#include <Interface_EntityIterator.hxx>
+
+IMPLEMENT_STANDARD_TYPE(Transfer_TransientProcess)
+IMPLEMENT_STANDARD_SUPERTYPE_ARRAY()
+  STANDARD_TYPE(MMgt_TShared),
+  STANDARD_TYPE(Standard_Transient),
+
+IMPLEMENT_STANDARD_SUPERTYPE_ARRAY_END()
+IMPLEMENT_STANDARD_TYPE_END(Transfer_TransientProcess)
+
+
+IMPLEMENT_DOWNCAST(Transfer_TransientProcess,Standard_Transient)
+IMPLEMENT_STANDARD_RTTI(Transfer_TransientProcess)
 
 
 //=======================================================================
@@ -28,7 +49,7 @@
 //=======================================================================
 
 Transfer_TransientProcess::Transfer_TransientProcess
-  (const Standard_Integer nb) : Transfer_ProcessForTransient (nb)  
+  (const Standard_Integer nb) : Transfer_TransferProcess (nb)  
 {  
   thetrroots = new TColStd_HSequenceOfTransient;
 }
@@ -277,3 +298,172 @@ Handle(TColStd_HSequenceOfTransient) Transfer_TransientProcess::RootsForTransfer
 {
   return thetrroots;
 }
+
+//=======================================================================
+//function : TransferProduct
+//purpose  : 
+//=======================================================================
+  Handle(Transfer_Binder) Transfer_TransientProcess::TransferProduct (const Handle(Standard_Transient)& start)
+  {
+    thelevel ++;             // decrement and if == 0, root transfer
+    Handle(Transfer_Binder) binder;
+    Handle(Transfer_ActorOfTransientProcess) actor = theactor;
+    while (!actor.IsNull())
+    {
+      if (actor->Recognize (start)) binder = actor->Transferring(start,this);
+      else binder.Nullify();
+      if (!binder.IsNull()) break;
+      actor = actor->Next();
+    }
+    if (binder.IsNull()) {
+      if (thelevel > 0) thelevel --;
+      return binder;
+    }
+    // Managing the root level (.. a close look ..)
+    if (therootl == 0 && binder->StatusExec() == Transfer_StatusDone)
+      therootl = thelevel - 1;
+
+    if (thelevel > 0) thelevel --;
+    return binder;
+  }
+
+    //=======================================================================
+  //function : Transferring
+  //purpose  : 
+  //=======================================================================
+
+  Handle(Transfer_Binder) Transfer_TransientProcess::Transferring (const Handle(Standard_Transient)& start)
+  {
+    Handle(Transfer_Binder) former = FindAndMask(start);
+
+    // Use more: note "AlreadyUsed" so result can not be changed
+    if (!former.IsNull()) {
+      if (former->HasResult()) {
+        former->SetAlreadyUsed();
+        return former;
+      }
+
+      // Initial state: perhaps already done ... or infeasible
+      Transfer_StatusExec statex = former->StatusExec();
+      switch (statex) {
+        case Transfer_StatusInitial :               // Transfer is prepared to do
+          break;
+        case Transfer_StatusDone :                  // Transfer was already done
+          themessenger << " .. and Transfer done" << endl;
+          return former;
+        case Transfer_StatusRun :
+          former->SetStatusExec(Transfer_StatusLoop);
+          return former;
+        case Transfer_StatusError :
+          if (thetrace) {
+            themessenger << "                  *** Transfer in Error Status  :" << endl;
+            StartTrace (former, start, thelevel,0);
+          }
+          else StartTrace (former, start,thelevel,4);
+          Transfer_TransferFailure::Raise
+            ("TransferProcess : Transfer in Error Status");
+        case Transfer_StatusLoop :                  // The loop is closed ...
+          if (thetrace) {
+            themessenger << "                  *** Transfer  Head of Dead Loop  :" << endl;
+            StartTrace (former, start, thelevel,0);
+          }
+          else StartTrace (former, start,thelevel,4);
+          Transfer_TransferDeadLoop::Raise
+            ("TransferProcess : Transfer at Head of a Dead Loop");
+      }
+#ifdef TRANSLOG
+      cout << "Transfer,level "<<thelevel<<Message_Flush;
+#endif
+      former->SetStatusExec(Transfer_StatusRun);
+    }
+#ifdef TRANSLOG
+    cout << " GO .." << endl;
+#endif
+
+    Handle(Transfer_Binder) binder;
+    Standard_Boolean newbind = Standard_False;
+    if (theerrh) {
+      // Transfer under protection exceptions (for notification actually)
+      Standard_Integer oldlev = thelevel;
+      try {
+        OCC_CATCH_SIGNALS
+          binder = TransferProduct(start);
+      }
+      catch (Transfer_TransferDeadLoop) {
+        if (binder.IsNull()) {
+          themessenger << "                  *** Dead Loop with no Result" << endl;
+          if (thetrace) StartTrace (binder, start, thelevel-1,0);
+          binder = new Transfer_VoidBinder;
+          Bind (start,binder);  newbind = Standard_True;
+        } else if (binder->StatusExec() == Transfer_StatusLoop) {
+          if (thetrace) {
+            themessenger << "                  *** Dead Loop : Finding head of Loop :" << endl;
+            StartTrace (binder, start, thelevel-1,0);
+          }
+          else StartTrace (binder, start,thelevel-1,4);
+          Transfer_TransferFailure::Raise("TransferProcess : Head of Dead Loop");
+        } else {
+          if (thetrace) {
+            themessenger << "                  *** Dead Loop : Actor in Loop :" << endl;
+            StartTrace (binder, start, thelevel-1,0);
+          }
+        }
+        binder->AddFail("Transfer in dead Loop");
+        thelevel = oldlev;
+      }
+      catch (Standard_Failure) {
+        if (binder.IsNull()) {
+          themessenger << "                  *** Exception Raised with no Result" << endl;
+          binder = new Transfer_VoidBinder;
+          Bind (start,binder);  newbind = Standard_True;
+        }
+        binder->AddFail("Transfer stopped by exception raising");
+        if (thetrace) {
+          themessenger << "    *** Raised : " << Standard_Failure::Caught()->GetMessageString() << endl;
+          StartTrace (binder, start, thelevel-1,4);
+        }
+        thelevel = oldlev;
+      }
+    }
+
+    else  binder = TransferProduct(start);
+
+    //    Conclusion : Noter dans la Map  
+
+    if (!newbind && !binder.IsNull()) {
+      if (former.IsNull()) {
+        if (!IsBound(start)) Bind(start,binder);     // result = 0 category
+        else {                                       // gka TRJ9 for writing SDR for solid
+          Rebind(start,binder); // test_pattern.sat
+        }
+      }
+      else Rebind(start,binder);
+#ifdef TRANSLOG
+      cout << " ... OK" << endl;
+#endif
+    }
+    else
+    {
+      //= by ABV: 5 Oct 97: nothing generated, but former can be in run state - drop it
+      //= ASK: may be set it to StatusInitial ?
+      if ( ! former.IsNull() ) former->SetStatusExec ( Transfer_StatusDone );
+      Handle(Transfer_Binder)     nulbinder;
+      return nulbinder;
+    }
+
+    //  Manage Roots (if planned)
+    if (therootl >= thelevel) {
+      therootl = 0;
+      if (therootm && binder->Status() != Transfer_StatusVoid) {
+        SetRoot (start);
+      }
+    }
+    return thelastbnd;
+  }
+
+  Standard_Boolean Transfer_TransientProcess::Transfer(const Handle(Standard_Transient)& start)
+  {
+    Handle(Transfer_Binder) binder = Transferring(start);
+    return (!binder.IsNull());
+  }
+

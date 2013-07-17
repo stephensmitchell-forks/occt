@@ -40,12 +40,13 @@ uses
 
 is
 
-    class Controller;
-    class Writer;
-    class Reader;
-    class ActorWrite;
+    imported Controller;
+    imported Writer;
+    imported Reader;
     class IGESBoundary;
     class AlgoContainer;
     class ToolContainer;
+    
+    imported ActorWrite;
 
 end;

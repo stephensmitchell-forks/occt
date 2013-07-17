@@ -1,4 +1,4 @@
-// Copyright (c) 1999-2012 OPEN CASCADE SAS
+// Copyright (c) 1999-2013 OPEN CASCADE SAS
 //
 // The content of this file is subject to the Open CASCADE Technology Public
 // License Version 6.5 (the "License"). You may not use the content of this file
@@ -15,9 +15,14 @@
 // purpose or non-infringement. Please see the License for the specific terms
 // and conditions governing the rights and limitations under the License.
 
-#include <Transfer_ActorOfFinderProcess.ixx>
+#include <Transfer_ActorOfFinderProcess.hxx>
+#include <Transfer_Binder.hxx>
+#include <Transfer_Finder.hxx>
 #include <Transfer_TransientMapper.hxx>
 
+IMPLEMENT_STANDARD_HANDLE(Transfer_ActorOfFinderProcess, MMgt_TShared)
+IMPLEMENT_STANDARD_RTTIEXT(Transfer_ActorOfFinderProcess, MMgt_TShared)
+ 
 Transfer_ActorOfFinderProcess::Transfer_ActorOfFinderProcess ()    {  themodetrans = 0;  }
 
 Standard_Integer& Transfer_ActorOfFinderProcess::ModeTrans ()
@@ -36,7 +41,7 @@ Handle(Transfer_Binder)  Transfer_ActorOfFinderProcess::Transfer
 
 Handle(Transfer_Binder)  Transfer_ActorOfFinderProcess::Transferring
   (const Handle(Transfer_Finder)& ent,
-   const Handle(Transfer_ProcessForFinder)& TP)
+   const Handle(Transfer_FinderProcess)& TP)
 {
   return Transfer(ent,Handle(Transfer_FinderProcess)::DownCast(TP));
 }

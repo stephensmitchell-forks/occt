@@ -15,8 +15,9 @@
 // purpose or non-infringement. Please see the License for the specific terms
 // and conditions governing the rights and limitations under the License.
 
-#include <XSDRAW_Shape.ixx>
+#include <XSDRAW_Shape.hxx>
 #include <SWDRAW_ShapeTool.hxx>
+#include <Draw_Interpretor.hxx>
 
 //unused variable 
 //static int initactor = 0;

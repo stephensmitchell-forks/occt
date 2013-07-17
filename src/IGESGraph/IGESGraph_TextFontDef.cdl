@@ -30,9 +30,9 @@ class TextFontDef from IGESGraph  inherits IGESEntity
 
 uses
 
-        HAsciiString               from TCollection,
-        HArray1OfInteger           from TColStd,
-        HArray1OfHArray1OfInteger  from IGESBasic
+        HAsciiString                      from TCollection,
+        HArray1OfInteger                  from TColStd,
+        HArray1OfHArray1OfInteger_Handle  from IGESBasic
 
 raises DimensionMismatch, OutOfRange
 
@@ -52,9 +52,9 @@ is
               allNextCharX      : HArray1OfInteger;
               allNextCharY      : HArray1OfInteger;
               allPenMotions     : HArray1OfInteger;
-              allPenFlags       : HArray1OfHArray1OfInteger;
-              allMovePenToX     : HArray1OfHArray1OfInteger;
-              allMovePenToY     : HArray1OfHArray1OfInteger)
+              allPenFlags       : HArray1OfHArray1OfInteger_Handle;
+              allMovePenToX     : HArray1OfHArray1OfInteger_Handle;
+              allMovePenToY     : HArray1OfHArray1OfInteger_Handle)
         raises DimensionMismatch;
         ---Purpose : This method is used to set the fields of the class
         --           TextFontDef
@@ -169,14 +169,14 @@ fields
         -- Number of pen motions for each character(Length = NbCharacters)
         -- is (NM1 ,NM2 ....... NMn)
 
-        thePenMotions           : HArray1OfHArray1OfInteger;
+        thePenMotions           : HArray1OfHArray1OfInteger_Handle;
         -- Status of Pen up/down flag for each character
         --                       flag : 0 = Down(Default)
         --                              1 = Up
         -- Note : Inner HArray1 are of lengths NM1, NM2... NMn respectively
 
-        thePenMovesToX          : HArray1OfHArray1OfInteger;
-        thePenMovesToY          : HArray1OfHArray1OfInteger;
+        thePenMovesToX          : HArray1OfHArray1OfInteger_Handle;
+        thePenMovesToY          : HArray1OfHArray1OfInteger_Handle;
         --  For each character, Grid location to which the pen is to move
         -- Note : Inner HArray1 are of lengths NM1, NM2... NMn respectively
 

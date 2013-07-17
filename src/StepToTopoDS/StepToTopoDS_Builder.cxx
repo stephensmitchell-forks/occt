@@ -70,6 +70,7 @@
 #include <TopoDS_Compound.hxx>
 #include <TopExp_Explorer.hxx>
 
+#include <Transfer_TransientProcess.hxx>
 #include <Geom_RectangularTrimmedSurface.hxx>
 
 #include <ShapeFix_ShapeTolerance.hxx>

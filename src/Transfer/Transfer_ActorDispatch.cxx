@@ -15,8 +15,29 @@
 // purpose or non-infringement. Please see the License for the specific terms
 // and conditions governing the rights and limitations under the License.
 
-#include <Transfer_ActorDispatch.ixx>
+#include <Standard_Type.hxx>
+#include <Interface_InterfaceError.hxx>
+#include <Interface_InterfaceModel.hxx>
+#include <Interface_Protocol.hxx>
+#include <Transfer_ActorOfTransientProcess.hxx>
+#include <Transfer_TransferDispatch.hxx>
+#include <Transfer_Binder.hxx>
+#include <Standard_Transient.hxx>
 #include <Transfer_TransientProcess.hxx>
+#include <Transfer_ActorDispatch.hxx>
+#include <Transfer_TransientProcess.hxx>
+
+IMPLEMENT_STANDARD_TYPE(Transfer_ActorDispatch)
+IMPLEMENT_STANDARD_SUPERTYPE_ARRAY()
+  STANDARD_TYPE(Transfer_ActorOfTransientProcess),
+  STANDARD_TYPE(MMgt_TShared),
+  STANDARD_TYPE(Standard_Transient),
+
+IMPLEMENT_STANDARD_SUPERTYPE_ARRAY_END()
+IMPLEMENT_STANDARD_TYPE_END(Transfer_ActorDispatch)
+
+IMPLEMENT_DOWNCAST(Transfer_ActorDispatch,Standard_Transient)
+IMPLEMENT_STANDARD_RTTI(Transfer_ActorDispatch)
 
 
 Transfer_ActorDispatch::Transfer_ActorDispatch

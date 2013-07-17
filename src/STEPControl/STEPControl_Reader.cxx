@@ -15,14 +15,13 @@
 // purpose or non-infringement. Please see the License for the specific terms
 // and conditions governing the rights and limitations under the License.
 
-#include <STEPControl_Reader.ixx>
+#include <STEPControl_Reader.hxx>
 #include <STEPControl_Controller.hxx>
 #include <XSControl_Controller.hxx>
 #include <XSControl_TransferReader.hxx>
 #include <Interface_ShareFlags.hxx>
 
 #include <STEPControl_ActorRead.hxx>
-
 #include <StepBasic_ProductDefinition.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Graph.hxx>
@@ -66,6 +65,12 @@
 #include <STEPConstruct_UnitContext.hxx>
 #include <StepBasic_SiUnitAndPlaneAngleUnit.hxx>
 #include <StepBasic_SiUnitAndSolidAngleUnit.hxx>
+#include <XSControl_WorkSession.hxx>
+#include <StepData_StepModel.hxx>
+#include <TColStd_SequenceOfAsciiString.hxx>
+#include <StepRepr_RepresentationContext.hxx>
+#include <TColStd_Array1OfAsciiString.hxx>
+#include <TColStd_Array1OfReal.hxx>
 #include <XSControl_WorkSession.hxx>
 #include <StepData_StepModel.hxx>
 #include <TColStd_SequenceOfAsciiString.hxx>
@@ -556,4 +561,3 @@ Standard_Boolean STEPControl_Reader::findUnits(
     
   return (nbFind);
 }
-                                   

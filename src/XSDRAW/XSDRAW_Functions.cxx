@@ -15,7 +15,7 @@
 // purpose or non-infringement. Please see the License for the specific terms
 // and conditions governing the rights and limitations under the License.
 
-#include <XSDRAW_Functions.ixx>
+#include <XSDRAW_Functions.hxx>
 #include <XSControl_FuncShape.hxx>
 
 void  XSDRAW_Functions::Init ()

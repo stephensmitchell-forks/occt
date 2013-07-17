@@ -31,7 +31,7 @@ class TranslateCompositeCurve from StepToTopoDS
         --                cyclic references is implemented.
 
 uses
-    TransientProcess from Transfer,
+    TransientProcess_Handle from Transfer,
     CompositeCurve   from StepGeom,
     Surface          from StepGeom,
     Surface          from Geom,
@@ -43,12 +43,12 @@ is
         ---Purpose: Empty constructor
 	
     Create (CC: CompositeCurve from StepGeom;
-    	    TP: TransientProcess from Transfer)
+    	    TP: TransientProcess_Handle from Transfer)
     	returns TranslateCompositeCurve;
         ---Purpose: Translates standalone composite_curve
 
     Create (CC: CompositeCurve from StepGeom;
-    	    TP: TransientProcess from Transfer;
+    	    TP: TransientProcess_Handle from Transfer;
     	    S : Surface from StepGeom;
     	    Surf: Surface from Geom)
     	returns TranslateCompositeCurve;
@@ -56,13 +56,13 @@ is
 	
     Init (me: in out;
           CC: CompositeCurve from StepGeom;
-    	  TP: TransientProcess from Transfer)
+    	  TP: TransientProcess_Handle from Transfer)
     	returns Boolean;
         ---Purpose: Translates standalone composite_curve
 
     Init (me: in out;
           CC: CompositeCurve from StepGeom;
-    	  TP: TransientProcess from Transfer;
+    	  TP: TransientProcess_Handle from Transfer;
     	  S : Surface from StepGeom;
     	  Surf: Surface from Geom)
     	returns Boolean;

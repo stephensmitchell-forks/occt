@@ -1,1 +1,7 @@
+XSDRAW.hxx
+XSDRAW.cxx
+XSDRAW_Vars.hxx
+XSDRAW_Vars.cxx
+XSDRAW_Functions.hxx
+XSDRAW_Functions.cxx
 XSDRAW_Commands.hxx

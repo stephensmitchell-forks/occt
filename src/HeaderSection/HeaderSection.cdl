@@ -40,7 +40,7 @@ class FileName;
 class FileDescription;
 class FileSchema;
 
-class HeaderRecognizer;
+imported HeaderRecognizer;
 
 --class Array1OfHAsciiString instantiates Array1(HAsciiString);
 --class HArray1OfHAsciiString instantiates HArray1(HAsciiString,Array1OfHAsciiString from HeaderSection);

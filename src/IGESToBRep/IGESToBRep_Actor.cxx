@@ -15,7 +15,8 @@
 // purpose or non-infringement. Please see the License for the specific terms
 // and conditions governing the rights and limitations under the License.
 
-#include <IGESToBRep_Actor.ixx>
+#include <IGESToBRep_Actor.hxx>
+#include <Standard_Type.hxx>
 #include <IGESToBRep.hxx>
 #include <IGESData_IGESEntity.hxx>
 #include <IGESData_IGESModel.hxx>
@@ -28,18 +29,30 @@
 #include <Standard_ErrorHandler.hxx>
 #include <ShapeExtend_Explorer.hxx>
 #include <ShapeFix_ShapeTolerance.hxx>
-
+#include <Interface_InterfaceModel.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_Static.hxx>
-
 #include <Message_ProgressSentry.hxx>
-
+#include <Standard_Transient.hxx>
 #include <TopoDS_Shape.hxx>
 #include <TransferBRep.hxx>
 #include <TransferBRep_ShapeBinder.hxx>
 
 #include <XSAlgo.hxx>
 #include <XSAlgo_AlgoContainer.hxx>
+
+IMPLEMENT_STANDARD_TYPE(IGESToBRep_Actor)
+IMPLEMENT_STANDARD_SUPERTYPE_ARRAY()
+  STANDARD_TYPE(Transfer_ActorOfTransientProcess),
+  STANDARD_TYPE(MMgt_TShared),
+  STANDARD_TYPE(Standard_Transient),
+
+IMPLEMENT_STANDARD_SUPERTYPE_ARRAY_END()
+IMPLEMENT_STANDARD_TYPE_END(IGESToBRep_Actor)
+
+
+IMPLEMENT_DOWNCAST(IGESToBRep_Actor,Standard_Transient)
+IMPLEMENT_STANDARD_RTTI(IGESToBRep_Actor)
 
 //=======================================================================
 //function : IGESToBRep_Actor

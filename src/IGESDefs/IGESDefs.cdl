@@ -103,9 +103,9 @@ is
 
      class HArray1OfTabularData instantiates HArray1 from TCollection
     	(TabularData,Array1OfTabularData);
-     class HArray1OfHArray1OfTextDisplayTemplate instantiates
-    --	HArray1 (HArray1OfTextDisplayTemplate,Array1OfHArray1OfTextDisplayTemplate);
-      JaggedArray from Interface (HArray1OfTextDisplayTemplate from IGESGraph);
+
+     imported HArray1OfHArray1OfTextDisplayTemplate;
+     imported HArray1OfHArray1OfTextDisplayTemplate_Handle;
 
         -- Package Methods
 

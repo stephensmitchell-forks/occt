@@ -27,7 +27,7 @@ class ExternFile from STEPCAFControl inherits TShared from MMgt
 uses
     HAsciiString from TCollection,
     ReturnStatus from IFSelect,
-    WorkSession from XSControl,
+    WorkSession_Handle from XSControl,
     Shape from TopoDS,
     Label from TDF
 
@@ -36,9 +36,9 @@ is
     Create returns ExternFile;
     	---Purpose: Creates an empty structure
 	
-    SetWS (me: mutable; WS: WorkSession from XSControl);
+    SetWS (me: mutable; WS: WorkSession_Handle from XSControl);
     	---C++: inline
-    GetWS (me) returns WorkSession from XSControl;
+    GetWS (me) returns WorkSession_Handle from XSControl;
     	---C++: inline
     
     SetLoadStatus (me: mutable; stat: ReturnStatus from IFSelect);
@@ -73,7 +73,7 @@ is
     
 fields
 
-    myWS   : WorkSession from XSControl;
+    myWS   : WorkSession_Handle from XSControl;
     
     myLoadStatus: ReturnStatus from IFSelect;
     myTransferStatus: Boolean;

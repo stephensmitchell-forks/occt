@@ -31,24 +31,25 @@ uses Standard , MMgt, TCollection , TColStd, Dico,
 
 is
 
-    deferred class Controller;
-    class TransferReader;
-    class TransferWriter;
+    imported Controller;
+    imported TransferReader;
+    imported TransferWriter;
 
-    class WorkSession;
-    class SelectForTransfer;
-    class SignTransferStatus;
-    class ConnectedShapes;
-
-    class Reader;
-    class Writer;
+    imported WorkSession;
+    imported WorkSession_Handle; --workaround to allow WOK detect handle of non-cdl class
+    imported SelectForTransfer;
+    imported SignTransferStatus;
+    imported ConnectedShapes;
+    
+    imported Reader;
+    imported Writer;
 
     class Functions;
     class FuncShape;
     class Utils;
     class Vars;
 
-    Session (pilot : SessionPilot from IFSelect) returns WorkSession from XSControl;
+    Session (pilot : SessionPilot from IFSelect) returns WorkSession_Handle from XSControl;
     ---Purpose : Returns the WorkSession of a SessionPilot, but casts it as
     --           from XSControl : it then gives access to Control & Transfers
 

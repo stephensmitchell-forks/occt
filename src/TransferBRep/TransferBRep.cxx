@@ -27,6 +27,8 @@
 #include <Transfer_SimpleBinderOfTransient.hxx>
 #include <TransferBRep_ShapeBinder.hxx>
 #include <Transfer_IteratorOfProcessForTransient.hxx>
+#include <Transfer_TransientProcess.hxx>
+#include <Transfer_FinderProcess.hxx>
 #include <TransferBRep_ShapeMapper.hxx>
 #include <TransferBRep_TransferResultInfo.hxx>
 

@@ -29,14 +29,14 @@ class MakeGeometricCurveSet from TopoDSToStep inherits
   
 uses Shape from TopoDS,
      GeometricCurveSet from StepShape,
-     FinderProcess from Transfer
+     FinderProcess_Handle from Transfer
           
 raises NotDone from StdFail
      
 is 
 
 Create ( SH : Shape from TopoDS;
-         FP : mutable FinderProcess from Transfer)
+         FP : FinderProcess_Handle from Transfer)
         returns MakeGeometricCurveSet;
 
 Value (me) returns GeometricCurveSet from StepShape

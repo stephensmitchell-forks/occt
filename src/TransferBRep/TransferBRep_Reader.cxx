@@ -15,8 +15,16 @@
 // purpose or non-infringement. Please see the License for the specific terms
 // and conditions governing the rights and limitations under the License.
 
-#include <TransferBRep_Reader.ixx>
-
+#include <TransferBRep_Reader.hxx>
+#include <Interface_Protocol.hxx>
+#include <Interface_InterfaceModel.hxx>
+#include <Transfer_TransientProcess.hxx>
+#include <TopTools_HSequenceOfShape.hxx>
+#include <TColStd_HSequenceOfTransient.hxx>
+#include <Standard_OutOfRange.hxx>
+#include <Interface_CheckIterator.hxx>
+#include <TopoDS_Shape.hxx>
+#include <Standard_Transient.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_CheckTool.hxx>
 #include <Transfer_TransferOutput.hxx>

@@ -15,13 +15,31 @@
 // purpose or non-infringement. Please see the License for the specific terms
 // and conditions governing the rights and limitations under the License.
 
-#include <Transfer_ResultFromModel.ixx>
+#include <Transfer_ResultFromModel.hxx>
 #include <TColStd_IndexedMapOfTransient.hxx>
 #include <Interface_Check.hxx>
 #include <Interface_Macros.hxx>
 #include <Transfer_Binder.hxx>
 #include <TCollection_HAsciiString.hxx>
+#include <Standard_Type.hxx>
+#include <Interface_InterfaceModel.hxx>
+#include <Transfer_TransientProcess.hxx>
+#include <Standard_Transient.hxx>
+#include <TColStd_HSequenceOfTransient.hxx>
+#include <Interface_CheckIterator.hxx>
+#include <Transfer_ResultFromModel.hxx>
 
+IMPLEMENT_STANDARD_TYPE(Transfer_ResultFromModel)
+IMPLEMENT_STANDARD_SUPERTYPE_ARRAY()
+  STANDARD_TYPE(MMgt_TShared),
+  STANDARD_TYPE(Standard_Transient),
+
+IMPLEMENT_STANDARD_SUPERTYPE_ARRAY_END()
+IMPLEMENT_STANDARD_TYPE_END(Transfer_ResultFromModel)
+
+
+IMPLEMENT_DOWNCAST(Transfer_ResultFromModel,Standard_Transient)
+IMPLEMENT_STANDARD_RTTI(Transfer_ResultFromModel)
 
 Transfer_ResultFromModel::Transfer_ResultFromModel ()
       {  themnum = 0;  themchk = Interface_CheckAny;  }

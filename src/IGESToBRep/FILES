@@ -1,1 +1,5 @@
+IGESToBRep_Actor.hxx
+IGESToBRep_Actor.cxx
+IGESToBRep_Reader.hxx
+IGESToBRep_Reader.cxx
 project.pxx

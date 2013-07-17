@@ -15,11 +15,32 @@
 // purpose or non-infringement. Please see the License for the specific terms
 // and conditions governing the rights and limitations under the License.
 
-#include <XSControl_ConnectedShapes.ixx>
+#include <XSControl_ConnectedShapes.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopTools_MapOfShape.hxx>
 #include <TransferBRep.hxx>
+#include <Standard_Type.hxx>
+#include <Standard_Transient.hxx>
+#include <Interface_Graph.hxx>
+#include <Interface_EntityIterator.hxx>
+#include <TCollection_AsciiString.hxx>
+#include <TColStd_HSequenceOfTransient.hxx>
+#include <TopoDS_Shape.hxx>
 
+IMPLEMENT_STANDARD_TYPE(XSControl_ConnectedShapes)
+IMPLEMENT_STANDARD_SUPERTYPE_ARRAY()
+  STANDARD_TYPE(IFSelect_SelectExplore),
+  STANDARD_TYPE(IFSelect_SelectDeduct),
+  STANDARD_TYPE(IFSelect_Selection),
+  STANDARD_TYPE(MMgt_TShared),
+  STANDARD_TYPE(Standard_Transient),
+
+IMPLEMENT_STANDARD_SUPERTYPE_ARRAY_END()
+IMPLEMENT_STANDARD_TYPE_END(XSControl_ConnectedShapes)
+
+
+IMPLEMENT_DOWNCAST(XSControl_ConnectedShapes,Standard_Transient)
+IMPLEMENT_STANDARD_RTTI(XSControl_ConnectedShapes)
 
 XSControl_ConnectedShapes::XSControl_ConnectedShapes ()
     : IFSelect_SelectExplore (1)    {  }

@@ -15,7 +15,29 @@
 // purpose or non-infringement. Please see the License for the specific terms
 // and conditions governing the rights and limitations under the License.
 
-#include <XSControl_SelectForTransfer.ixx>
+#include <XSControl_SelectForTransfer.hxx>
+#include <Standard_Type.hxx>
+#include <XSControl_TransferReader.hxx>
+#include <Transfer_ActorOfTransientProcess.hxx>
+#include <Standard_Transient.hxx>
+#include <Interface_InterfaceModel.hxx>
+#include <TCollection_AsciiString.hxx>
+#include <XSControl_SelectForTransfer.hxx>
+
+IMPLEMENT_STANDARD_TYPE(XSControl_SelectForTransfer)
+IMPLEMENT_STANDARD_SUPERTYPE_ARRAY()
+  STANDARD_TYPE(IFSelect_SelectExtract),
+  STANDARD_TYPE(IFSelect_SelectDeduct),
+  STANDARD_TYPE(IFSelect_Selection),
+  STANDARD_TYPE(MMgt_TShared),
+  STANDARD_TYPE(Standard_Transient),
+
+IMPLEMENT_STANDARD_SUPERTYPE_ARRAY_END()
+IMPLEMENT_STANDARD_TYPE_END(XSControl_SelectForTransfer)
+
+
+IMPLEMENT_DOWNCAST(XSControl_SelectForTransfer,Standard_Transient)
+IMPLEMENT_STANDARD_RTTI(XSControl_SelectForTransfer)
 
 XSControl_SelectForTransfer::XSControl_SelectForTransfer ()    {  }
 

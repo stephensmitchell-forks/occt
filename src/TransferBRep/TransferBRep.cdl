@@ -30,21 +30,17 @@ uses Standard, TCollection, TColStd, TopoDS, TopAbs, TopTools, Interface, Transf
 
 is
 
-    class Reader;
+    imported Reader;
 
 --    class Analyzer;
 
     class ShapeInfo;
-    class BinderOfShape  instantiates  SimpleBinder from Transfer
-    	(Shape from TopoDS, ShapeInfo);
-
-    class ShapeBinder;
+    imported BinderOfShape;
+    imported ShapeBinder;
     class ShapeListBinder;
 
-    class ShapeMapper instantiates Mapper from Transfer
-    	(Shape from TopoDS, ShapeMapHasher from TopTools, ShapeInfo);
-    class OrientedShapeMapper instantiates Mapper from Transfer
-    	(Shape from TopoDS, OrientedShapeMapHasher from TopTools, ShapeInfo);
+    imported ShapeMapper;
+    imported ShapeMapper_Handle;
 
     class TransferResultInfo;
     class SequenceOfTransferResultInfo instantiates Sequence from TCollection
@@ -59,25 +55,25 @@ is
     ---Purpose : Get the Shape recorded in a Binder
     --           If the Binder brings a multiple result, search for the Shape
 
-    ShapeResult (TP : TransientProcess from Transfer; ent : Transient)
+    ShapeResult (TP : TransientProcess_Handle from Transfer; ent : Transient)
     	returns Shape from TopoDS;
     ---Purpose : Get the Shape recorded in a TransientProcess as result of the
     --           Transfer of an entity. I.E. in the binder bound to that Entity
     --           If no result or result not a single Shape, returns a Null Shape
 
-    SetShapeResult (TP : mutable TransientProcess from Transfer; ent : Transient;
+    SetShapeResult (TP : TransientProcess_Handle from Transfer; ent : Transient;
     	    	    result : Shape from TopoDS);
     ---Purpose : Sets a Shape as a result for a starting entity <ent>
     --           (reverse of ShapeResult)
     --           It simply creates a ShapeBinder then binds it to the entity
 
-    Shapes (TP : TransientProcess from Transfer; rootsonly : Boolean = Standard_True)
+    Shapes (TP : TransientProcess_Handle from Transfer; rootsonly : Boolean = Standard_True)
     	returns HSequenceOfShape from TopTools;
     ---Purpose : Gets the Shapes recorded in a TransientProcess as result of a
     --           Transfer, considers roots only or all results according
     --           <rootsonly>, returns them as a HSequence
 
-    Shapes (TP : TransientProcess from Transfer;
+    Shapes (TP : TransientProcess_Handle from Transfer;
     	    list : HSequenceOfTransient from TColStd)
     	returns HSequenceOfShape from TopTools;
     ---Purpose : Gets the Shapes recorded in a TransientProcess as result of a
@@ -85,7 +81,7 @@ is
     --           the shapes as a HSequence
 
 
-    ShapeState (FP : FinderProcess from Transfer; shape : Shape from TopoDS)
+    ShapeState (FP : FinderProcess_Handle from Transfer; shape : Shape from TopoDS)
     	returns Orientation from TopAbs;
     ---Purpose : Returns a Status regarding a Shape in a FinderProcess
     --           - FORWARD means bound with SAME Orientation
@@ -93,23 +89,23 @@ is
     --           - EXTERNAL means NOT BOUND
     --           - INTERNAL is not used
 
-    ResultFromShape (FP : FinderProcess from Transfer; shape : Shape from TopoDS)
+    ResultFromShape (FP : FinderProcess_Handle from Transfer; shape : Shape from TopoDS)
     	returns Binder from Transfer;
     ---Purpose : Returns the result (as a Binder) attached to a given Shape
     --           Null if none
 
-    TransientFromShape (FP : FinderProcess from Transfer; shape : Shape from TopoDS)
+    TransientFromShape (FP : FinderProcess_Handle from Transfer; shape : Shape from TopoDS)
     	returns Transient;
     ---Purpose : Returns the result as pure Transient attached to a Shape
     --           first one if multiple result
 
-    SetTransientFromShape (FP : FinderProcess from Transfer;
+    SetTransientFromShape (FP : FinderProcess_Handle from Transfer;
     	shape : Shape from TopoDS; result : Transient);
     ---Purpose : Binds a Transient Result to a Shape in a FinderProcess
     --           (as first result if multiple : does not add it to existing one)
 
-    ShapeMapper (FP : FinderProcess from Transfer; shape : Shape from TopoDS)
-    	returns ShapeMapper;
+    ShapeMapper (FP : FinderProcess_Handle from Transfer; shape : Shape from TopoDS)
+    	returns ShapeMapper_Handle;
     ---Purpose : Returns a ShapeMapper for a given Shape (location included)
     --           Either <shape> is already mapped, then its Mapper is returned
     --           Or it is not, then a new one is created then returned, BUT
@@ -117,7 +113,7 @@ is
 
     	-- Functions to collect transfer result information --
 	
-    TransferResultInfo (TP         : TransientProcess from Transfer;
+    TransferResultInfo (TP         : TransientProcess_Handle from Transfer;
     	    	    	EntityTypes: HSequenceOfTransient from TColStd;
     	    	    	InfoSeq    : out HSequenceOfTransferResultInfo from TransferBRep);
     	---Purpose: Fills sequence of TransferResultInfo for each type of entity
@@ -126,7 +122,7 @@ is
     	--          compare with entities in EntityTypes.
     	--          TopAbs_ShapeEnum).
 
-    TransferResultInfo (FP        : FinderProcess from Transfer;
+    TransferResultInfo (FP        : FinderProcess_Handle from Transfer;
     	    	    	ShapeTypes: HSequenceOfInteger from TColStd;
     	    	    	InfoSeq   : out HSequenceOfTransferResultInfo from TransferBRep);
     	---Purpose: Fills sequence of TransferResultInfo for each type of shape
@@ -157,7 +153,7 @@ is
     --           embedded in ShapeMapper
 
     ResultCheckList (chl : CheckIterator from Interface;
-    	    	     FP : FinderProcess  from Transfer;
+    	    	     FP : FinderProcess_Handle  from Transfer;
     	    	     model : InterfaceModel from Interface)
     	returns CheckIterator from Interface;
     ---Purpose : Takes a starting CheckIterator which brings checks bound with

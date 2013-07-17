@@ -81,7 +81,6 @@ is
 	    class SelectSharing;           -- directly sharing entities
 	    deferred class SelectAnyList;  -- from a list in an entity
 	    deferred class SelectInList;   -- from a list of single entities
-	    generic class SelectList;      -- from an entity as a list
 	    class SelectSuite;             -- macro-select-deduct
 
 	deferred class SelectExtract;   -- sorted lists (can be inverted) :
@@ -128,8 +127,6 @@ is
     deferred class Modifier;  -- defines modifying actions on transferred model
     	class ModifReorder;   -- reorder whole model from roots
 	class ModifEditForm;  -- applies an EditForm
-    deferred generic class FileModifier;    -- defines actions on file sending
-    deferred generic class ModelModifier;   -- specific actions on model
 
     	-- --    Session Management    -- --
 

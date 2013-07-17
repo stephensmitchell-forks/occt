@@ -15,8 +15,28 @@
 // purpose or non-infringement. Please see the License for the specific terms
 // and conditions governing the rights and limitations under the License.
 
-#include <Transfer_ResultFromTransient.ixx>
+#include <Transfer_ResultFromTransient.hxx>
 #include <TColStd_HArray1OfInteger.hxx>
+#include <Standard_Transient.hxx>
+#include <Standard_Type.hxx>
+#include <Transfer_Binder.hxx>
+#include <TColStd_HSequenceOfTransient.hxx>
+#include <Interface_Check.hxx>
+#include <TColStd_IndexedMapOfTransient.hxx>
+#include <Transfer_TransientProcess.hxx>
+#include <Transfer_ResultFromTransient.hxx>
+
+IMPLEMENT_STANDARD_TYPE(Transfer_ResultFromTransient)
+IMPLEMENT_STANDARD_SUPERTYPE_ARRAY()
+  STANDARD_TYPE(MMgt_TShared),
+  STANDARD_TYPE(Standard_Transient),
+
+IMPLEMENT_STANDARD_SUPERTYPE_ARRAY_END()
+IMPLEMENT_STANDARD_TYPE_END(Transfer_ResultFromTransient)
+
+
+IMPLEMENT_DOWNCAST(Transfer_ResultFromTransient,Standard_Transient)
+IMPLEMENT_STANDARD_RTTI(Transfer_ResultFromTransient)
 
 
 static Handle(Interface_Check) voidcheck = new Interface_Check;

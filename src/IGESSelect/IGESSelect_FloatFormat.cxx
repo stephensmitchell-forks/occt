@@ -15,11 +15,27 @@
 // purpose or non-infringement. Please see the License for the specific terms
 // and conditions governing the rights and limitations under the License.
 
-#include <IGESSelect_FloatFormat.ixx>
+#include <IGESSelect_FloatFormat.hxx>
 #include <Interface_FloatWriter.hxx>
+#include <TCollection_AsciiString.hxx>
+#include <IFSelect_ContextWrite.hxx>
+#include <IGESData_IGESWriter.hxx>
+#include <Standard_Type.hxx>
 #include <stdio.h>
 
+IMPLEMENT_STANDARD_TYPE(IGESSelect_FloatFormat)
+IMPLEMENT_STANDARD_SUPERTYPE_ARRAY()
+  STANDARD_TYPE(IGESSelect_FileModifier),
+  STANDARD_TYPE(IFSelect_GeneralModifier),
+  STANDARD_TYPE(MMgt_TShared),
+  STANDARD_TYPE(Standard_Transient),
 
+IMPLEMENT_STANDARD_SUPERTYPE_ARRAY_END()
+IMPLEMENT_STANDARD_TYPE_END(IGESSelect_FloatFormat)
+
+
+IMPLEMENT_DOWNCAST(IGESSelect_FloatFormat,Standard_Transient)
+IMPLEMENT_STANDARD_RTTI(IGESSelect_FloatFormat)
 
 IGESSelect_FloatFormat::IGESSelect_FloatFormat ()
     : thezerosup (Standard_True) , themainform ("%E") ,

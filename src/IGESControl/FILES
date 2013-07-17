@@ -1,0 +1,9 @@
+IGESControl_ActorWrite.hxx
+IGESControl_ActorWrite.cxx
+IGESControl_Controller.hxx
+IGESControl_Controller.cxx
+IGESControl_Reader.hxx
+IGESControl_Reader.lxx
+IGESControl_Reader.cxx
+IGESControl_Writer.hxx
+IGESControl_Writer.cxx

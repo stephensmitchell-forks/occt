@@ -57,6 +57,8 @@
 #include <UnitsMethods.hxx>
 #include <ShapeCustom.hxx>
 
+#include <Transfer_TransientProcess.hxx>
+#include <Transfer_FinderProcess.hxx>
 #include <TransferBRep.hxx>
 #include <TransferBRep_ShapeMapper.hxx>
 #include <TransferBRep_ShapeBinder.hxx>

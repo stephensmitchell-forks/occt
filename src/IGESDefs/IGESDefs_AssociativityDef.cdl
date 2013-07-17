@@ -29,8 +29,8 @@ class AssociativityDef from IGESDefs  inherits IGESEntity
 
 uses
 
-        HArray1OfInteger          from TColStd,
-        HArray1OfHArray1OfInteger from IGESBasic
+        HArray1OfInteger                 from TColStd,
+        HArray1OfHArray1OfInteger_Handle from IGESBasic
 
 raises DimensionMismatch, OutOfRange
 
@@ -44,7 +44,7 @@ is
               requirements : HArray1OfInteger;
               orders       : HArray1OfInteger;
               numItems     : HArray1OfInteger;
-              items        : HArray1OfHArray1OfInteger)
+              items        : HArray1OfHArray1OfInteger_Handle)
         raises DimensionMismatch;
         ---Purpose : This method is used to set the fields of the class
         --           AssociativityDef
@@ -111,6 +111,6 @@ fields
         theBackPointerReqs : HArray1OfInteger;
         theClassOrders     : HArray1OfInteger;
         theNbItemsPerClass : HArray1OfInteger;
-        theItems           : HArray1OfHArray1OfInteger;
+        theItems           : HArray1OfHArray1OfInteger_Handle;
 
 end AssociativityDef;

@@ -27,14 +27,14 @@ class ElementResults from IGESAppli  inherits IGESEntity
 
 uses
 
-        GeneralNote               from IGESDimen,
-        FiniteElement             from IGESAppli,
-        HAsciiString              from TCollection,
-        HArray1OfFiniteElement    from IGESAppli,
-        HArray1OfInteger          from TColStd,
-        HArray1OfReal             from TColStd,
-	HArray1OfHArray1OfInteger from IGESBasic,
-	HArray1OfHArray1OfReal    from IGESBasic
+        GeneralNote                      from IGESDimen,
+        FiniteElement                    from IGESAppli,
+        HAsciiString                     from TCollection,
+        HArray1OfFiniteElement           from IGESAppli,
+        HArray1OfInteger                 from TColStd,
+        HArray1OfReal                    from TColStd,
+	      HArray1OfHArray1OfInteger_Handle from IGESBasic,
+	      HArray1OfHArray1OfReal_Handle    from IGESBasic
 
 raises DimensionMismatch, OutOfRange
 
@@ -56,8 +56,8 @@ is
               nbLayers          : HArray1OfInteger;
               allDataLayerFlags : HArray1OfInteger;
               allnbResDataLocs  : HArray1OfInteger;
-              allResDataLocs    : HArray1OfHArray1OfInteger;
-              allResults        : HArray1OfHArray1OfReal)
+              allResDataLocs    : HArray1OfHArray1OfInteger_Handle;
+              allResults        : HArray1OfHArray1OfReal_Handle)
         ---Purpose : This method is used to set the fields of the class
         --           ElementResults
         --       - aNote             : GeneralNote Entity describing analysis
@@ -201,7 +201,7 @@ fields
         theNbLayers             : HArray1OfInteger;
         theDataLayerFlags       : HArray1OfInteger;
         theNbResultDataLocs     : HArray1OfInteger;
-        theResultDataLocs       : HArray1OfHArray1OfInteger;
-        theResultData           : HArray1OfHArray1OfReal;
+        theResultDataLocs       : HArray1OfHArray1OfInteger_Handle;
+        theResultData           : HArray1OfHArray1OfReal_Handle;
 
 end ElementResults;

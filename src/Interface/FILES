@@ -7,3 +7,9 @@ Interface_Translates.hxx
 Interface_StaticStandards.cxx
 Interface_Version.hxx
 Interface_VectorOfFileParameter.hxx
+Interface_JaggedArray.hxx
+Interface_Recognizer.hxx
+Interface_ReaderLib.hxx
+Interface_ReaderLib.cxx
+Interface_GeneralLib.hxx
+Interface_GeneralLib.cxx

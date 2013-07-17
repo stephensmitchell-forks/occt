@@ -38,7 +38,7 @@ uses
     GeometricSet                from StepShape,
     Shape                       from TopoDS,
     BuilderError                from StepToTopoDS,
-    TransientProcess            from Transfer,
+    TransientProcess_Handle     from Transfer,
     NMTool                      from StepToTopoDS
     
     raises NotDone from StdFail
@@ -48,62 +48,62 @@ is
     Create returns Builder from StepToTopoDS;
     
     Create (S  : ManifoldSolidBrep from StepShape;
-       	    TP : TransientProcess  from Transfer )
+       	    TP : TransientProcess_Handle  from Transfer )
 	returns Builder from StepToTopoDS;
      
     Create (S  : BrepWithVoids from StepShape;
-            TP : TransientProcess  from Transfer )
+            TP : TransientProcess_Handle  from Transfer )
     	returns Builder from StepToTopoDS;
 
     Create ( S : FacetedBrep from StepShape;
-            TP : TransientProcess  from Transfer )
+            TP : TransientProcess_Handle  from Transfer )
     	returns Builder from StepToTopoDS;
 
     Create (S  : FacetedBrepAndBrepWithVoids from StepShape;
-            TP : TransientProcess  from Transfer )
+            TP : TransientProcess_Handle  from Transfer )
     	returns Builder from StepToTopoDS;
 
     Create (S      : ShellBasedSurfaceModel from StepShape;
-            TP     : TransientProcess  from Transfer;
+            TP     : TransientProcess_Handle  from Transfer;
             NMTool : in out NMTool from StepToTopoDS )
     	returns Builder from StepToTopoDS;
 
     Create ( S : GeometricSet from StepShape;
-            TP : TransientProcess  from Transfer )
+            TP : TransientProcess_Handle  from Transfer )
     	returns Builder from StepToTopoDS;
 
     Init (me : in out;
     	  S  : ManifoldSolidBrep from StepShape;
-          TP : TransientProcess  from Transfer );
+          TP : TransientProcess_Handle  from Transfer );
 
     Init (me : in out;
     	  S  : BrepWithVoids from StepShape;
-          TP : TransientProcess  from Transfer );
+          TP : TransientProcess_Handle  from Transfer );
 
     Init (me : in out;
     	  S  : FacetedBrep from StepShape;
-          TP : TransientProcess  from Transfer );
+          TP : TransientProcess_Handle  from Transfer );
 
     Init (me : in out;
     	  S  : FacetedBrepAndBrepWithVoids from StepShape;
-          TP : TransientProcess  from Transfer );
+          TP : TransientProcess_Handle  from Transfer );
 	  
     Init (me     : in out;
     	   S     : ShellBasedSurfaceModel from StepShape;
-          TP     : TransientProcess  from Transfer;
+          TP     : TransientProcess_Handle  from Transfer;
 	  NMTool : in out NMTool from StepToTopoDS );
 	  
     Init (me : in out;
     	  S  : EdgeBasedWireframeModel from StepShape;
-          TP : TransientProcess  from Transfer );
+          TP : TransientProcess_Handle  from Transfer );
 	  
     Init (me : in out;
     	  S  : FaceBasedSurfaceModel from StepShape;
-          TP : TransientProcess  from Transfer );
+          TP : TransientProcess_Handle  from Transfer );
 	  
     Init (me : in out;
     	  S  : GeometricSet from StepShape;
-          TP : TransientProcess  from Transfer );
+          TP : TransientProcess_Handle  from Transfer );
 	  
     Value (me) returns Shape from TopoDS
     	raises NotDone

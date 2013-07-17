@@ -20,6 +20,7 @@
 
 #include <StepToTopoDS_MakeTransformed.ixx>
 #include <Transfer_Binder.hxx>
+#include <Transfer_TransientProcess.hxx>
 #include <TransferBRep_ShapeBinder.hxx>
 
 #include <StepToGeom_MakeAxis2Placement.hxx>

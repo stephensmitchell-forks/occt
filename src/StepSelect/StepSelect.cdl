@@ -32,12 +32,9 @@ is
 
     class StepType;
 
-    deferred class ModelModifier  instantiates  ModelModifier from IFSelect
-    	(StepModel from StepData, Protocol from StepData);
-    deferred class FileModifier   instantiates 	FileModifier  from IFSelect
-    	(StepWriter from StepData);
+    imported FileModifier;
 
-    class FloatFormat;
+    imported FloatFormat;
 
     class WorkLibrary;
 

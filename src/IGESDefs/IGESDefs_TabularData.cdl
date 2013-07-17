@@ -28,9 +28,9 @@ class TabularData from IGESDefs  inherits IGESEntity
 
 uses
 
-        HArray1OfInteger       from TColStd,
-        HArray1OfReal          from TColStd,
-        HArray1OfHArray1OfReal from IGESBasic
+        HArray1OfInteger              from TColStd,
+        HArray1OfReal                 from TColStd,
+        HArray1OfHArray1OfReal_Handle from IGESBasic
 
 raises DimensionMismatch, OutOfRange
 
@@ -45,8 +45,8 @@ is
               propType    : Integer;
               typesInd    : HArray1OfInteger;
               nbValuesInd : HArray1OfInteger;
-              valuesInd   : HArray1OfHArray1OfReal;
-              valuesDep   : HArray1OfHArray1OfReal)
+              valuesInd   : HArray1OfHArray1OfReal_Handle;
+              valuesDep   : HArray1OfHArray1OfReal_Handle)
         raises DimensionMismatch;
         ---Purpose : This method is used to set the fields of the class
         --           TabularData
@@ -132,7 +132,7 @@ fields
         thePropertyType               : Integer;
         theTypeOfIndependentVariables : HArray1OfInteger;
         theNbValues                   : HArray1OfInteger;
-        theIndependentValues          : HArray1OfHArray1OfReal;
-        theDependentValues            : HArray1OfHArray1OfReal;
+        theIndependentValues          : HArray1OfHArray1OfReal_Handle;
+        theDependentValues            : HArray1OfHArray1OfReal_Handle;
 
 end TabularData;

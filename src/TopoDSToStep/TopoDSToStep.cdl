@@ -153,13 +153,13 @@ is
 --    	returns Shape from TopoDS;
 	---Purpose: Returns a new shape without undirect surfaces.
 	
-    AddResult (FP: FinderProcess from Transfer;
+    AddResult (FP: FinderProcess_Handle from Transfer;
      	       Shape: Shape from TopoDS;
 	       entity: Transient from Standard);
 	---Purpose: Adds an entity into the list of results (binders) for
 	--          shape stored in FinderProcess
 
-    AddResult (FP: FinderProcess from Transfer;
+    AddResult (FP: FinderProcess_Handle from Transfer;
      	       Tool: Tool from TopoDSToStep);
 	---Purpose: Adds all entities recorded in Tool into the map of results
 	--          (binders) stored in FinderProcess

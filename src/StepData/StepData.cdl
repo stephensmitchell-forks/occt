@@ -60,8 +60,7 @@ is
     class Protocol;                     -- basic protocol for Step
     deferred class GeneralModule;       -- general services
 
-    deferred class FileRecognizer  instantiates
-    	Recognizer from Interface (AsciiString from TCollection, Transient);
+    imported FileRecognizer;
 
     class FileProtocol;
     class HeaderTool;
@@ -72,13 +71,12 @@ is
     class DescrReadWrite;
 
     class StepReaderData;               -- litteral description of Step File
-    class StepReaderTool;
+    imported StepReaderTool;
     deferred class ReadWriteModule;
     class StepWriter;                   -- idem but in the other sense
     class StepDumper;
 
-    class WriterLib instantiates  Library from LibCtl
-    	(Transient, ReadWriteModule, Protocol from StepData);
+    imported WriterLib;
 
     class DefaultGeneral;     -- Default Module which processes UnknownEntity
 

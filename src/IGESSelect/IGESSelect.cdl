@@ -62,14 +62,12 @@ is
     class SelectFaces;          -- Select some geometries : Faces
     class SelectPCurves;        -- Select PCurves of Faces
 
+    imported FileModifier;
+    
+    deferred class ModelModifier;
 
-    deferred class ModelModifier  instantiates
-    	ModelModifier from IFSelect (IGESModel from IGESData, Protocol from IGESData);
-    deferred class FileModifier   instantiates
-    	FileModifier  from IFSelect (IGESWriter from IGESData);
-
-    class FloatFormat;          -- File Modifier to control Float Format
-    class AddFileComment;       --  "      "     to add comment start lines
+    imported FloatFormat;          -- File Modifier to control Float Format
+    imported AddFileComment;       --  "      "     to add comment start lines
 
     class UpdateFileName;       -- Set new file name
     class UpdateCreationDate;   -- Set new creation date

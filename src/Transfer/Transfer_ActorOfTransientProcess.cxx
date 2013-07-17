@@ -1,4 +1,4 @@
-// Copyright (c) 1999-2012 OPEN CASCADE SAS
+// Copyright (c) 1999-2013 OPEN CASCADE SAS
 //
 // The content of this file is subject to the Open CASCADE Technology Public
 // License Version 6.5 (the "License"). You may not use the content of this file
@@ -15,9 +15,15 @@
 // purpose or non-infringement. Please see the License for the specific terms
 // and conditions governing the rights and limitations under the License.
 
-#include <Transfer_ActorOfTransientProcess.ixx>
+#include <Transfer_ActorOfTransientProcess.hxx>
+#include <Transfer_Binder.hxx>
+#include <Transfer_Finder.hxx>
+#include <Standard_Transient.hxx>
 
-Transfer_ActorOfTransientProcess::Transfer_ActorOfTransientProcess ()    {  }
+ IMPLEMENT_STANDARD_HANDLE(Transfer_ActorOfTransientProcess, MMgt_TShared)
+ IMPLEMENT_STANDARD_RTTIEXT(Transfer_ActorOfTransientProcess, MMgt_TShared)
+
+Transfer_ActorOfTransientProcess::Transfer_ActorOfTransientProcess () { }
 
 Handle(Transfer_Binder)  Transfer_ActorOfTransientProcess::Transfer
   (const Handle(Standard_Transient)& start,
@@ -30,7 +36,7 @@ Handle(Transfer_Binder)  Transfer_ActorOfTransientProcess::Transfer
 
 Handle(Transfer_Binder)  Transfer_ActorOfTransientProcess::Transferring
   (const Handle(Standard_Transient)& ent,
-   const Handle(Transfer_ProcessForTransient)& TP)
+   const Handle(Transfer_TransientProcess)& TP)
 {
   return Transfer(ent,Handle(Transfer_TransientProcess)::DownCast(TP));
 }

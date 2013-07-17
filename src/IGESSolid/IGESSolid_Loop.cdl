@@ -32,10 +32,11 @@ class Loop from IGESSolid  inherits IGESEntity
 
 uses
 
-        HArray1OfIGESEntity          from IGESData,
-        HArray1OfInteger             from TColStd,
-        HArray1OfHArray1OfInteger    from IGESBasic,
-        HArray1OfHArray1OfIGESEntity from IGESBasic
+        HArray1OfIGESEntity                 from IGESData,
+        HArray1OfInteger                    from TColStd,
+        HArray1OfHArray1OfInteger           from IGESBasic,
+        HArray1OfHArray1OfInteger_Handle    from IGESBasic,
+        HArray1OfHArray1OfIGESEntity_Handle from IGESBasic
 
 raises DimensionMismatch, OutOfRange
 
@@ -51,8 +52,8 @@ is
               index              : HArray1OfInteger;
               orient             : HArray1OfInteger;
               nbParameterCurves  : HArray1OfInteger;
-              isoparametricFlags : HArray1OfHArray1OfInteger;
-              curves             : HArray1OfHArray1OfIGESEntity from
+              isoparametricFlags : HArray1OfHArray1OfInteger_Handle;
+              curves             : HArray1OfHArray1OfIGESEntity_Handle from
                                    IGESBasic)
         raises DimensionMismatch;
         ---Purpose : This method is used to set the fields of the class Loop
@@ -148,10 +149,10 @@ fields
         theNbParameterCurves  : HArray1OfInteger;
             -- no. of underlying parameter space curves
 
-        theIsoparametricFlags : HArray1OfHArray1OfInteger;
+        theIsoparametricFlags : HArray1OfHArray1OfInteger_Handle;
             -- Isoparametric flags of the space curves
 
-        theCurves             : HArray1OfHArray1OfIGESEntity 
+        theCurves             : HArray1OfHArray1OfIGESEntity_Handle
                                 from IGESBasic;
             -- parameter space curves corresponding to the edges
 

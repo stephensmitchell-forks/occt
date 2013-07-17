@@ -17,7 +17,7 @@
 
 //gka 06.01.99 S3767
 //abv 10.04.99 S4136: eliminate using BRepAPI::Precision()
-#include <IGESControl_Reader.ixx>
+#include <IGESControl_Reader.hxx>
 #include <IGESControl_Controller.hxx>
 #include <XSControl_Controller.hxx>
 #include <XSControl_TransferReader.hxx>
@@ -56,6 +56,8 @@
 #include <TransferBRep.hxx>
 #include <ShapeFix_ShapeTolerance.hxx>
 #include <BRepLib.hxx>
+#include <XSControl_WorkSession.hxx>
+#include <IGESData_IGESModel.hxx>
 // add of stdio.h for NT compilation
 #include <stdio.h>
 

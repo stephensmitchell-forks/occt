@@ -15,8 +15,9 @@
 // purpose or non-infringement. Please see the License for the specific terms
 // and conditions governing the rights and limitations under the License.
 
-#include <XSControl_TransferWriter.ixx>
+#include <XSControl_TransferWriter.hxx>
 #include <Standard_ErrorHandler.hxx>
+#include <Standard_Type.hxx>
 #include <Standard_Failure.hxx>
 #include <Transfer_SimpleBinderOfTransient.hxx>
 #include <Transfer_TransientMapper.hxx>
@@ -25,7 +26,24 @@
 #include <Message_Messenger.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_Check.hxx>
+#include <XSControl_Controller.hxx>
+#include <Transfer_FinderProcess.hxx>
+#include <Standard_Transient.hxx>
+#include <Interface_InterfaceModel.hxx>
+#include <TopoDS_Shape.hxx>
+#include <Interface_CheckIterator.hxx>
 
+IMPLEMENT_STANDARD_TYPE(XSControl_TransferWriter)
+IMPLEMENT_STANDARD_SUPERTYPE_ARRAY()
+  STANDARD_TYPE(MMgt_TShared),
+  STANDARD_TYPE(Standard_Transient),
+
+IMPLEMENT_STANDARD_SUPERTYPE_ARRAY_END()
+IMPLEMENT_STANDARD_TYPE_END(XSControl_TransferWriter)
+
+
+IMPLEMENT_DOWNCAST(XSControl_TransferWriter,Standard_Transient)
+IMPLEMENT_STANDARD_RTTI(XSControl_TransferWriter)
 
 XSControl_TransferWriter::XSControl_TransferWriter ()
 {  theTransferWrite = new Transfer_FinderProcess;  theTransferMode = 0;  }

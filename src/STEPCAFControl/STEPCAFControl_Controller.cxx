@@ -18,10 +18,26 @@
 // and conditions governing the rights and limitations under the License.
 
 
-#include <STEPCAFControl_Controller.ixx>
+#include <STEPCAFControl_Controller.hxx>
 #include <STEPCAFControl_ActorWrite.hxx>
 #include <XSAlgo.hxx>
 #include <Interface_Static.hxx>
+#include <Standard_Type.hxx>
+
+IMPLEMENT_STANDARD_TYPE(STEPCAFControl_Controller)
+IMPLEMENT_STANDARD_SUPERTYPE_ARRAY()
+  STANDARD_TYPE(STEPControl_Controller),
+  STANDARD_TYPE(XSControl_Controller),
+  STANDARD_TYPE(MMgt_TShared),
+  STANDARD_TYPE(Standard_Transient),
+
+IMPLEMENT_STANDARD_SUPERTYPE_ARRAY_END()
+IMPLEMENT_STANDARD_TYPE_END(STEPCAFControl_Controller)
+
+
+IMPLEMENT_DOWNCAST(STEPCAFControl_Controller,Standard_Transient)
+IMPLEMENT_STANDARD_RTTI(STEPCAFControl_Controller)
+
 
 //=======================================================================
 //function : STEPCAFControl_Controller

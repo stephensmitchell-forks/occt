@@ -28,9 +28,9 @@ class Boundary from IGESGeom  inherits IGESEntity
 
 uses
 
-        HArray1OfInteger             from TColStd,
-        HArray1OfIGESEntity          from IGESData,
-        HArray1OfHArray1OfIGESEntity from IGESBasic
+        HArray1OfInteger                    from TColStd,
+        HArray1OfIGESEntity                 from IGESData,
+        HArray1OfHArray1OfIGESEntity_Handle from IGESBasic
 
 raises DimensionMismatch, OutOfRange
 
@@ -46,7 +46,7 @@ is
               aSurface           : IGESEntity;
               allModelCurves     : HArray1OfIGESEntity;
               allSenses          : HArray1OfInteger;
-              allParameterCurves : HArray1OfHArray1OfIGESEntity)
+              allParameterCurves : HArray1OfHArray1OfIGESEntity_Handle)
         raises DimensionMismatch;
         ---Purpose : This method is used to set the fields of the class
         --           Boundary
@@ -128,6 +128,6 @@ fields
         theSurface           : IGESEntity;
         theModelCurves       : HArray1OfIGESEntity;
         theSenses            : HArray1OfInteger;
-        theParameterCurves   : HArray1OfHArray1OfIGESEntity;
+        theParameterCurves   : HArray1OfHArray1OfIGESEntity_Handle;
 
 end Boundary;

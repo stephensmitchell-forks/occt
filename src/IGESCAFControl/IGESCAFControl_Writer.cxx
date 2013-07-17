@@ -18,7 +18,7 @@
 // and conditions governing the rights and limitations under the License.
 
 
-#include <IGESCAFControl_Writer.ixx>
+#include <IGESCAFControl_Writer.hxx>
 #include <XCAFDoc_ShapeTool.hxx>
 #include <TDF_LabelSequence.hxx>
 #include <TopoDS_Shape.hxx>
@@ -48,6 +48,16 @@
 #include <IGESData_NameEntity.hxx>
 #include <TopTools_SequenceOfShape.hxx>
 #include <TColStd_HSequenceOfExtendedString.hxx>
+#include <XSControl_WorkSession.hxx>
+#include <TDocStd_Document.hxx>
+#include <TCollection_AsciiString.hxx>
+#include <TDF_LabelSequence.hxx>
+#include <TopoDS_Shape.hxx>
+#include <XCAFPrs_DataMapOfShapeStyle.hxx>
+#include <XCAFPrs_DataMapOfStyleTransient.hxx>
+#include <TopTools_MapOfShape.hxx>
+#include <XCAFPrs_Style.hxx>
+#include <IGESCAFControl_Writer.hxx>
 
 //=======================================================================
 //function : IGESCAFControl_Writer

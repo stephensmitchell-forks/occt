@@ -32,7 +32,7 @@ uses Wire                          from TopoDS,
      TopologicalRepresentationItem from StepShape,
      Tool                          from TopoDSToStep,
      MakeWireError                 from TopoDSToStep,
-     FinderProcess                 from Transfer
+     FinderProcess_Handle          from Transfer
           
 raises NotDone from StdFail
      
@@ -42,13 +42,13 @@ is
     
     Create (W : Wire from TopoDS;
     	    T : in out Tool from TopoDSToStep;
-	   FP : mutable FinderProcess from Transfer)
+	   FP : FinderProcess_Handle from Transfer)
          returns MakeStepWire;
     
     Init(me : in out;
 	 W  : Wire from TopoDS;
          T  : in out Tool from TopoDSToStep;
-	 FP : mutable FinderProcess from Transfer);
+	 FP : FinderProcess_Handle from Transfer);
 
 	    
     Value (me) returns TopologicalRepresentationItem from StepShape

@@ -56,14 +56,13 @@ is
     class DirChecker;
 
     class IGESReaderData;
-    class IGESReaderTool;
+    imported IGESReaderTool;
     class ParamReader;
     class ParamCursor;
     class DirPart;             -- litteral description
     class IGESType;
 
-    deferred class FileRecognizer  instantiates
-    	Recognizer from Interface (IGESType, IGESEntity);
+    imported FileRecognizer;
 
     class IGESWriter;
     class IGESDumper;
@@ -78,10 +77,8 @@ is
     	class DefaultSpecific;
     class FileProtocol;
 
-    class WriterLib   instantiates  Library from LibCtl
-    	(IGESEntity, ReadWriteModule, Protocol from IGESData);
-    class SpecificLib instantiates  Library from LibCtl
-    	(IGESEntity, SpecificModule,  Protocol from IGESData);
+    imported WriterLib;
+    imported SpecificLib;
 
   	-- --   Enumerations   -- -- 
     enumeration  Status is 

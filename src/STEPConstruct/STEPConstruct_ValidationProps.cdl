@@ -27,11 +27,11 @@ class ValidationProps from STEPConstruct inherits Tool from STEPConstruct
     --          These are surface area, solid volume and centroid.
 
 uses
-    WorkSession        from XSControl,
+    WorkSession_Handle        from XSControl,
     InterfaceModel     from Interface,
     HGraph             from Interface,
-    FinderProcess      from Transfer,
-    TransientProcess   from Transfer,
+    FinderProcess_Handle      from Transfer,
+    TransientProcess_Handle   from Transfer,
     RepresentationItem from StepRepr,
     Pnt                from gp,
     Shape              from TopoDS,
@@ -52,10 +52,10 @@ is
     Create returns ValidationProps;
     	---Purpose: Creates an empty tool
 
-    Create (WS: WorkSession from XSControl) returns ValidationProps;
+    Create (WS: WorkSession_Handle from XSControl) returns ValidationProps;
     	---Purpose: Creates a tool and loads it with worksession
 	
-    Init (me: in out; WS: WorkSession from XSControl) returns Boolean;
+    Init (me: in out; WS: WorkSession_Handle from XSControl) returns Boolean;
     	---Purpose: Load worksession; returns True if succeeded
 	
     AddProp (me: in out; Shape: Shape from TopoDS; 

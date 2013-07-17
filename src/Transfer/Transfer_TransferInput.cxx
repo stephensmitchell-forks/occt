@@ -17,6 +17,8 @@
 
 #include <Transfer_TransferInput.ixx>
 #include <Transfer_Binder.hxx>
+#include <Transfer_TransientProcess.hxx>
+#include <Transfer_FinderProcess.hxx>
 #include <Transfer_IteratorOfProcessForTransient.hxx>
 #include <Transfer_IteratorOfProcessForFinder.hxx>
 #include <Transfer_VoidBinder.hxx>

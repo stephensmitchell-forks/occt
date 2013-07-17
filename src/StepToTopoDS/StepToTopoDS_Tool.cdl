@@ -38,18 +38,18 @@ uses
     Curve                         from Geom2d,
     Curve                         from Geom,
     Surface                       from Geom,
-    TransientProcess              from Transfer
+    TransientProcess_Handle       from Transfer
 is
 
     Create returns Tool from StepToTopoDS;
     
     Create(Map : DataMapOfTRI from StepToTopoDS;
-	   TP  : TransientProcess from Transfer)
+	   TP  : TransientProcess_Handle from Transfer)
     	returns Tool from StepToTopoDS;
     
     Init(me : in out;
     	 Map : DataMapOfTRI from StepToTopoDS;
-	 TP  : TransientProcess from Transfer);
+	 TP  : TransientProcess_Handle from Transfer);
 
     IsBound(me   : in out;
     	    TRI  : TopologicalRepresentationItem from StepShape) 
@@ -100,7 +100,7 @@ is
 
     ComputePCurve(me) returns Boolean from Standard;    
     
-    TransientProcess(me) returns TransientProcess from Transfer;
+    TransientProcess(me) returns TransientProcess_Handle from Transfer;
 
     -- Statistics
 
@@ -131,7 +131,7 @@ fields
 
     myComputePC : Boolean          from Standard;
     
-    myTransProc : TransientProcess from Transfer;
+    myTransProc : TransientProcess_Handle from Transfer;
 
     -- Statistics : 
     -- Surface continuity 

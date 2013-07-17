@@ -55,8 +55,8 @@ is
     	class BRepEntity;
 
     class IGESBoundary;
-    class Reader;
-    class Actor;
+    imported Reader;
+    imported Actor;
     class AlgoContainer;
     class ToolContainer;
  

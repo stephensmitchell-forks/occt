@@ -15,16 +15,35 @@
 // purpose or non-infringement. Please see the License for the specific terms
 // and conditions governing the rights and limitations under the License.
 
-#include <XSDRAW_Vars.ixx>
+#include <XSDRAW_Vars.hxx>
 #include <Geom_Geometry.hxx>
 #include <Geom2d_Curve.hxx>
-
 #include <DrawTrSurf.hxx>
 #include <DBRep.hxx>
-
 #include <Interface_Macros.hxx>
+#include <Standard_Transient.hxx>
+#include <Geom_Geometry.hxx>
+#include <Geom2d_Curve.hxx>
+#include <Geom_Curve.hxx>
+#include <Geom_Surface.hxx>
+#include <gp_Pnt.hxx>
+#include <gp_Pnt2d.hxx>
+#include <TopoDS_Shape.hxx>
+#include <XSDRAW_Vars.hxx>
+#include <Standard_Type.hxx>
+
+IMPLEMENT_STANDARD_TYPE(XSDRAW_Vars)
+IMPLEMENT_STANDARD_SUPERTYPE_ARRAY()
+  STANDARD_TYPE(XSControl_Vars),
+  STANDARD_TYPE(MMgt_TShared),
+  STANDARD_TYPE(Standard_Transient),
+
+IMPLEMENT_STANDARD_SUPERTYPE_ARRAY_END()
+IMPLEMENT_STANDARD_TYPE_END(XSDRAW_Vars)
 
 
+IMPLEMENT_DOWNCAST(XSDRAW_Vars,Standard_Transient)
+IMPLEMENT_STANDARD_RTTI(XSDRAW_Vars)
 
 XSDRAW_Vars::XSDRAW_Vars  ()    {  }
 
@@ -32,8 +51,6 @@ void  XSDRAW_Vars::Set
   (const Standard_CString name,
    const Handle(Standard_Transient)& val)
 {
-  //char* nam = name;
-// selon type
   DeclareAndCast(Geom_Geometry,geom,val);
   if (!geom.IsNull()) {
     DrawTrSurf::Set(name,geom);
@@ -44,18 +61,7 @@ void  XSDRAW_Vars::Set
     DrawTrSurf::Set(name,geom);
     return;
   }
-//  ??
 }
-
-/*
-Handle(Standard_Transient)  XSDRAW_Vars::Get (const Standard_CString name) const
-{
-  Handle(Standard_Transient) val;
-  if (!thevars->GetItem (name,val)) val.Nullify();
-  return val;
-}
-*/
-
 
 Handle(Geom_Geometry)  XSDRAW_Vars::GetGeom (Standard_CString& name) const
 {  //char* nam = name;  

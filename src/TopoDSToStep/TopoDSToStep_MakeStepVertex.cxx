@@ -30,7 +30,7 @@
 
 #include <gp_Pnt.hxx>
 #include <TransferBRep_ShapeMapper.hxx>
-
+#include <Transfer_FinderProcess.hxx>
 #include <TCollection_HAsciiString.hxx>
 
 // Processing of non-manifold topology (ssv; 11.11.2010)

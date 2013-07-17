@@ -23,7 +23,7 @@ class Construct from StepAP209 inherits Tool from STEPConstruct
     ---Purpose: Basic tool for working with AP209 model
 
 uses
-    WorkSession from XSControl,
+    WorkSession_Handle from XSControl,
     Product from StepBasic,
     ProductDefinition from StepBasic,
     ProductDefinitionFormation from StepBasic,
@@ -45,10 +45,10 @@ is
     Create returns Construct;
     	---Purpose: Creates an empty tool
 
-    Create (WS: WorkSession from XSControl) returns Construct;
+    Create (WS: WorkSession_Handle from XSControl) returns Construct;
     	---Purpose: Creates a tool and initializes it
 	
-    Init (me: in out; WS: WorkSession from XSControl) returns Boolean;
+    Init (me: in out; WS: WorkSession_Handle from XSControl) returns Boolean;
     	---Purpose: Initializes tool; returns True if succeeded
 
     IsDesing(me; PD: ProductDefinitionFormation from StepBasic) returns Boolean;

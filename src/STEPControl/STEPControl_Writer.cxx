@@ -15,7 +15,7 @@
 // purpose or non-infringement. Please see the License for the specific terms
 // and conditions governing the rights and limitations under the License.
 
-#include <STEPControl_Writer.ixx>
+#include <STEPControl_Writer.hxx>
 #include <STEPControl_Controller.hxx>
 #include <STEPControl_ActorWrite.hxx>
 #include <XSControl_TransferWriter.hxx>
@@ -24,6 +24,10 @@
 #include <Message_ProgressIndicator.hxx>
 #include <TopExp_Explorer.hxx>
 #include <Transfer_FinderProcess.hxx>
+#include <XSControl_WorkSession.hxx>
+#include <StepData_StepModel.hxx>
+#include <TopoDS_Shape.hxx>
+#include <STEPControl_Writer.hxx>
 
 
 //=======================================================================

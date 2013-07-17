@@ -15,11 +15,11 @@
 // purpose or non-infringement. Please see the License for the specific terms
 // and conditions governing the rights and limitations under the License.
 
-#include <IGESControl_ActorWrite.ixx>
+
 #include <TransferBRep_ShapeMapper.hxx>
 #include <Interface_Macros.hxx>
 #include <IGESData_IGESModel.hxx>
-
+#include <IGESControl_ActorWrite.hxx>
 #include <BRepToIGES_BREntity.hxx>
 #include <BRepToIGESBRep_Entity.hxx>
 
@@ -31,6 +31,19 @@
 #include <XSAlgo.hxx>
 #include <XSAlgo_AlgoContainer.hxx>
 #include <Interface_Static.hxx>
+
+IMPLEMENT_STANDARD_TYPE(IGESControl_ActorWrite)
+IMPLEMENT_STANDARD_SUPERTYPE_ARRAY()
+  STANDARD_TYPE(Transfer_ActorOfFinderProcess),
+  STANDARD_TYPE(MMgt_TShared),
+  STANDARD_TYPE(Standard_Transient),
+
+IMPLEMENT_STANDARD_SUPERTYPE_ARRAY_END()
+IMPLEMENT_STANDARD_TYPE_END(IGESControl_ActorWrite)
+
+
+IMPLEMENT_DOWNCAST(IGESControl_ActorWrite,Standard_Transient)
+IMPLEMENT_STANDARD_RTTI(IGESControl_ActorWrite)
 
 IGESControl_ActorWrite::IGESControl_ActorWrite ()  {  ModeTrans() = 0;  }
 
