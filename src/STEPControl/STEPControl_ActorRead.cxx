@@ -15,9 +15,9 @@
 //:n4 abv 11.02.99 S4132: recognition of GeometricSet (instead of GeometricCurveSet)
 //    gka 05.04.99 S4136: eliminate parameter lastpreci
 //gka,abv 14.04.99 S4136: maintain unit context, precision and maxtolerance values
-#include <STEPControl_ActorRead.ixx>
+#include <STEPControl_ActorRead.hxx>
 #include <OSD_Timer.hxx>
-
+#include <Standard_Type.hxx>
 // #include <Interface_InterfaceModel.hxx>  // pour mise au point
 
 #include <StepShape_ShapeDefinitionRepresentation.hxx>
@@ -125,6 +125,21 @@
 #include <HeaderSection_FileName.hxx>
 
 #define TRANSLOG
+
+
+IMPLEMENT_STANDARD_TYPE(STEPControl_ActorRead)
+IMPLEMENT_STANDARD_SUPERTYPE_ARRAY()
+  STANDARD_TYPE(Transfer_ActorOfTransientProcess),
+  STANDARD_TYPE(MMgt_TShared),
+  STANDARD_TYPE(Standard_Transient),
+
+IMPLEMENT_STANDARD_SUPERTYPE_ARRAY_END()
+IMPLEMENT_STANDARD_TYPE_END(STEPControl_ActorRead)
+
+
+IMPLEMENT_DOWNCAST(STEPControl_ActorRead,Standard_Transient)
+IMPLEMENT_STANDARD_RTTI(STEPControl_ActorRead)
+
 
 // ============================================================================
 // Function: DumpWhatIs   

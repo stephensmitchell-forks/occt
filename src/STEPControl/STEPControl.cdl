@@ -64,12 +64,10 @@ is
 --   - STEPControl_GeometricCurveSet
 --   translates an Open CASCADE shape into a STEP geometric_curve_set entity.
 
-    class Controller;
-
-    class Reader;
-    class Writer;
-
-    class ActorRead;
-    class ActorWrite;
+    imported Controller;
+    imported Reader;
+    imported Writer;
+    imported ActorRead;
+    imported ActorWrite;
 
 end STEPControl;

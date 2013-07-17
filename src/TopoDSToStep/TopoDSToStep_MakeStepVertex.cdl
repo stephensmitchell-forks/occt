@@ -25,7 +25,7 @@ uses Vertex                        from TopoDS,
      TopologicalRepresentationItem from StepShape,
      Tool                          from TopoDSToStep,
      MakeVertexError               from TopoDSToStep,
-     FinderProcess                 from Transfer
+     FinderProcess_Handle                 from Transfer
           
 raises NotDone from StdFail
      
@@ -35,13 +35,13 @@ is
     
     Create (V : Vertex from TopoDS;
     	    T : in out Tool from TopoDSToStep;
-	   FP : mutable FinderProcess from Transfer)
+	   FP : FinderProcess_Handle from Transfer)
          returns MakeStepVertex;
     
     Init(me : in out;
      	 V  : Vertex from TopoDS;
      	 T  : in out Tool from TopoDSToStep;
-         FP : mutable FinderProcess from Transfer);
+         FP : FinderProcess_Handle from Transfer);
 
 	    
     Value (me) returns TopologicalRepresentationItem from StepShape

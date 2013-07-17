@@ -1,0 +1,6 @@
+StepData_FileRecognizer.hxx
+StepData_FileRecognizer.cxx
+StepData_StepReaderTool.hxx
+StepData_StepReaderTool.cxx
+StepData_WriterLib.hxx
+StepData_WriterLib.cxx

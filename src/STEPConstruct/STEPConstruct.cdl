@@ -85,13 +85,13 @@ is
 		               	    PointHasher from STEPConstruct);
 
 
-    FindEntity (FinderProcess: FinderProcess from Transfer; Shape: Shape from TopoDS)
+    FindEntity (FinderProcess: FinderProcess_Handle from Transfer; Shape: Shape from TopoDS)
     returns RepresentationItem from StepRepr;
     	---Purpose: Returns STEP entity of the (sub)type of RepresentationItem
         --          which is a result of the tranalation of the Shape, or Null if
 	--          no result is recorded
 
-    FindEntity (FinderProcess: FinderProcess from Transfer; Shape: Shape from TopoDS;
+    FindEntity (FinderProcess: FinderProcess_Handle from Transfer; Shape: Shape from TopoDS;
                                Loc: out Location from TopLoc) 
     returns RepresentationItem from StepRepr;
     	---Purpose: The same as above, but in the case if item not found, repeats
@@ -99,7 +99,7 @@ is
         --          location with which result is found (either location of the Shape,
         --          or Null)
 
-    FindShape (TransientProcess: TransientProcess from Transfer; item: RepresentationItem from StepRepr)
+    FindShape (TransientProcess: TransientProcess_Handle from Transfer; item: RepresentationItem from StepRepr)
     returns Shape from TopoDS;
     	---Purpose: Returns Shape resulting from given STEP entity (Null if not mapped)
 

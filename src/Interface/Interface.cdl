@@ -34,7 +34,7 @@ is
 
     class EntityList;             -- for an (ordered) little list of Entities
     private class EntityCluster;  -- ancillary class for the former
-    generic class JaggedArray;    -- to turn arround limitation on Array(Array)
+    imported JaggedArray;    -- to turn arround limitation on Array(Array)
 
     	-- --   Auxiliary Classes (results, working data)   -- --
 
@@ -54,8 +54,7 @@ is
 
     deferred class Protocol;         -- manages also Active Protocol
     deferred class GeneralModule;    -- (Shareds,Check,Copy,Trace)
-    class GeneralLib instantiates Library from LibCtl
-    	(Transient, GeneralModule, Protocol from Interface);
+    imported GeneralLib;
 
     class GTool;
 
@@ -81,13 +80,12 @@ is
     imported StaticSatisfies;
     -- Function to be added to a Static for specific Satisfies
 
-    deferred generic class Recognizer;  -- aimed to create Interface Entities
+    imported Recognizer;  -- aimed to create Interface Entities
 
     	-- --   File Access (Read & Write)   -- --
 
     deferred class ReaderModule;
-    class ReaderLib instantiates  Library from LibCtl
-    	(Transient, ReaderModule, Protocol from Interface);
+    imported ReaderLib;
     
     imported VectorOfFileParameter;
     class FileParameter;

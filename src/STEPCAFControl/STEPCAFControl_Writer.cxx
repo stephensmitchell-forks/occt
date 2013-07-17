@@ -20,7 +20,7 @@
 // (analysis of SDRs which the CDSR links should be done)
 // Names and validation props are supported for top-level shapes only
 
-#include <STEPCAFControl_Writer.ixx>
+#include <STEPCAFControl_Writer.hxx>
 #include <STEPControl_StepModelType.hxx>
 #include <XCAFDoc_ShapeTool.hxx>
 #include <TDF_LabelSequence.hxx>
@@ -167,6 +167,17 @@
 #include <StepBasic_DerivedUnit.hxx>
 #include <StepRepr_MeasureRepresentationItem.hxx>
 #include <StepBasic_ProductDefinition.hxx>
+
+#include <STEPCAFControl_DictionaryOfExternFile.hxx>
+#include <XSControl_WorkSession.hxx>
+#include <TDocStd_Document.hxx>
+#include <TDF_Label.hxx>
+#include <TCollection_AsciiString.hxx>
+#include <STEPCAFControl_ExternFile.hxx>
+#include <STEPControl_Writer.hxx>
+#include <TDF_LabelSequence.hxx>
+#include <TopoDS_Shape.hxx>
+#include <STEPCAFControl_Writer.hxx>
 
 //=======================================================================
 //function : GetLabelName

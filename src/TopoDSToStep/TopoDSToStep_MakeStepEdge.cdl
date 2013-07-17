@@ -25,7 +25,7 @@ uses Edge                          from TopoDS,
      TopologicalRepresentationItem from StepShape,
      Tool                          from TopoDSToStep,
      MakeEdgeError                 from TopoDSToStep,
-     FinderProcess                 from Transfer
+     FinderProcess_Handle          from Transfer
           
 raises NotDone from StdFail
      
@@ -35,13 +35,13 @@ is
     
     Create(E  : Edge from TopoDS;
   	   T  : in out Tool from TopoDSToStep;
-	   FP : mutable FinderProcess from Transfer)
+	   FP : FinderProcess_Handle from Transfer)
          returns MakeStepEdge;
     
     Init(me : in out;
     	 E  : Edge from TopoDS;
      	 T  : in out Tool from TopoDSToStep;
-         FP : mutable FinderProcess from Transfer);
+         FP : FinderProcess_Handle from Transfer);
 
 	    
     Value (me) returns TopologicalRepresentationItem from StepShape

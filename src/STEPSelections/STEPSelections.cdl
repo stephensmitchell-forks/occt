@@ -46,7 +46,7 @@ is
     
     class SelectInstances;
      
-    class SelectForTransfer;
+    imported SelectForTransfer;
     -- Classes that are intended for assembly exploration
     
     class SequenceOfAssemblyLink instantiates

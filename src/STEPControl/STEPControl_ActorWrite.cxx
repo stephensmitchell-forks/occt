@@ -16,7 +16,7 @@
 //abv,gka 05.04.99: S4136: change parameters and update units
 // PTV    22.08.2002 OCC609 transfer solo vertices into step file.
 // PTV    16.09.2002 OCC725 transfer compound of vertices into one geometrical curve set.
-#include <STEPControl_ActorWrite.ixx>
+#include <STEPControl_ActorWrite.hxx>
 #include <STEPControl_StepModelType.hxx>
 
 //  Transfer
@@ -114,6 +114,19 @@
 #include <TopExp.hxx>
 #include <TopTools_MapOfShape.hxx>
 #include <TopTools_ListIteratorOfListOfShape.hxx>
+
+IMPLEMENT_STANDARD_TYPE(STEPControl_ActorWrite)
+IMPLEMENT_STANDARD_SUPERTYPE_ARRAY()
+  STANDARD_TYPE(Transfer_ActorOfFinderProcess),
+  STANDARD_TYPE(MMgt_TShared),
+  STANDARD_TYPE(Standard_Transient),
+
+IMPLEMENT_STANDARD_SUPERTYPE_ARRAY_END()
+IMPLEMENT_STANDARD_TYPE_END(STEPControl_ActorWrite)
+
+
+IMPLEMENT_DOWNCAST(STEPControl_ActorWrite,Standard_Transient)
+IMPLEMENT_STANDARD_RTTI(STEPControl_ActorWrite)
 
 // ============================================================================
 // Function: DumpWhatIs   
@@ -322,7 +335,7 @@ void STEPControl_ActorWrite::SetMode (const STEPControl_StepModelType M)
 
 STEPControl_StepModelType STEPControl_ActorWrite::Mode () const
 {
-  switch (themodetrans) {
+  switch (myModeTrans) {
   case 0 : return STEPControl_AsIs;
   case 1 : return STEPControl_FacetedBrep;
   case 2 : return STEPControl_ShellBasedSurfaceModel;

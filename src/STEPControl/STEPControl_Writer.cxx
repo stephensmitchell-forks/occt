@@ -11,7 +11,7 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#include <STEPControl_Writer.ixx>
+#include <STEPControl_Writer.hxx>
 #include <STEPControl_Controller.hxx>
 #include <STEPControl_ActorWrite.hxx>
 #include <XSControl_TransferWriter.hxx>
@@ -20,6 +20,10 @@
 #include <Message_ProgressIndicator.hxx>
 #include <TopExp_Explorer.hxx>
 #include <Transfer_FinderProcess.hxx>
+#include <XSControl_WorkSession.hxx>
+#include <StepData_StepModel.hxx>
+#include <TopoDS_Shape.hxx>
+#include <STEPControl_Writer.hxx>
 
 
 //=======================================================================

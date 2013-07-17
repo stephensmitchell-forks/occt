@@ -27,28 +27,28 @@ class Tool from STEPConstruct
     --          this (and derived) tool multiple times
 
 uses
-    WorkSession      from XSControl,
+    WorkSession_Handle  from XSControl,
     InterfaceModel   from Interface,
     Graph            from Interface,
     HGraph           from Interface,
-    FinderProcess    from Transfer,
-    TransientProcess from Transfer
+    FinderProcess_Handle    from Transfer,
+    TransientProcess_Handle from Transfer
 
 is
 
     Create returns Tool;
     	---Purpose: Creates an empty tool
 
-    Create (WS: WorkSession from XSControl) returns Tool;
+    Create (WS: WorkSession_Handle from XSControl) returns Tool;
     	---Purpose: Creates a tool and loads it with worksession
 	
-    SetWS (me: in out; WS: WorkSession from XSControl) 
+    SetWS (me: in out; WS: WorkSession_Handle from XSControl) 
     returns Boolean is protected;
     	---Purpose: Load worksession; returns True if succeeded
 	--          Returns False if either FinderProcess of TransientProcess
 	--          cannot be obtained or are Null
 	
-    WS (me) returns WorkSession from XSControl;
+    WS (me) returns WorkSession_Handle from XSControl;
     	---Purpose: Returns currently loaded WorkSession
 	---C++: return const &
 	---C++: inline
@@ -62,21 +62,21 @@ is
 	---C++: return const &
 	---C++: inline
     
-    TransientProcess (me) returns TransientProcess from Transfer;
+    TransientProcess (me) returns TransientProcess_Handle from Transfer;
     	---Purpose: Returns TransientProcess (reading; Null if not loaded)
 	---C++: return const &
 	---C++: inline
  
-    FinderProcess (me) returns FinderProcess from Transfer;
+    FinderProcess (me) returns FinderProcess_Handle from Transfer;
     	---Purpose: Returns FinderProcess (writing; Null if not loaded)
 	---C++: return const &
 	---C++: inline
  	
 fields
 
-    myWS           : WorkSession from XSControl;
-    myFinderProcess: FinderProcess from Transfer;
-    myTransientProcess: TransientProcess from Transfer;
+    myWS           : WorkSession_Handle from XSControl;
+    myFinderProcess: FinderProcess_Handle from Transfer;
+    myTransientProcess: TransientProcess_Handle from Transfer;
     myHGraph       : HGraph from Interface; -- for optimization (no recomutings)
 
 end Tool;

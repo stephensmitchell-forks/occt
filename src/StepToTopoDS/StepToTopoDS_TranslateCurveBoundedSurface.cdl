@@ -19,7 +19,7 @@ class TranslateCurveBoundedSurface from StepToTopoDS
     ---Purpose: Translate curve_bounded_surface into TopoDS_Face
 
 uses
-    TransientProcess from Transfer,
+    TransientProcess_Handle from Transfer,
     CurveBoundedSurface from StepGeom,
     Face                from TopoDS
 
@@ -28,13 +28,13 @@ is
         ---Purpose: Create empty tool
 
     Create (CBS: CurveBoundedSurface from StepGeom;
-    	    TP: TransientProcess from Transfer)
+    	    TP: TransientProcess_Handle from Transfer)
     	returns TranslateCurveBoundedSurface;
         ---Purpose: Translate surface
 	
     Init (me: in out;
           CBS: CurveBoundedSurface from StepGeom;
-    	  TP: TransientProcess from Transfer)
+    	  TP: TransientProcess_Handle from Transfer)
     	returns Boolean;
         ---Purpose: Translate surface
 	

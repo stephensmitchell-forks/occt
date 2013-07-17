@@ -38,7 +38,7 @@
 #include <TopoDS.hxx>
 #include <TopoDS_Edge.hxx>
 #include <TopoDS_Iterator.hxx>
-
+#include <Transfer_TransientProcess.hxx>
 #include <ShapeExtend_WireData.hxx>
 #include <ShapeFix_Wire.hxx>
 

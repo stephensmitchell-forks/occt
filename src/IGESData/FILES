@@ -1,1 +1,9 @@
 IGESData_Dump.hxx
+IGESData_FileRecognizer.hxx
+IGESData_FileRecognizer.cxx
+IGESData_IGESReaderTool.hxx
+IGESData_IGESReaderTool.cxx
+IGESData_SpecificLib.hxx
+IGESData_SpecificLib.cxx
+IGESData_WriterLib.hxx
+IGESData_WriterLib.cxx

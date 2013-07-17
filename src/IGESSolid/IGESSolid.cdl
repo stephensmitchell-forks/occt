@@ -23,10 +23,10 @@ uses
 
         Standard,
         TCollection,
-	TColStd,
-	TColgp,
+	      TColStd,
+	      TColgp,
         gp,
-	Message,
+	      Message,
         Interface,
         IGESData,
         IGESBasic,

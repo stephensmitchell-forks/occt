@@ -29,6 +29,7 @@
 #include <TopoDS.hxx>
 #include <TopoDS_Edge.hxx>
 #include <TopoDS_Iterator.hxx>
+#include <Transfer_TransientProcess.hxx>
 #include <BRep_Builder.hxx>
 
 #include <BRepBuilderAPI_MakeFace.hxx>

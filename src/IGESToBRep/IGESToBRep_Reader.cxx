@@ -15,23 +15,19 @@
 //#70 rln 03.03.99 syntax correction
 // sln 11.06.2002 OCC448 : Initialize "read.onlyvisiable" parameter  to control transfering invisiable sub entities which logicaly depend on the grouping entities
 #include <stdio.h>
-#include <IGESToBRep_Reader.ixx>
+#include <IGESToBRep_Reader.hxx>
 #include <Standard_ErrorHandler.hxx>
 #include <Standard_Failure.hxx>
 #include <OSD_Timer.hxx>
-
 #include <gp_Trsf.hxx>
-
 #include <TopAbs.hxx>
 #include <TopoDS_Compound.hxx>
 #include <TopoDS_Shape.hxx>
 #include <BRep_Builder.hxx>
 #include <BRepLib.hxx>
 #include <BRepTools_Modifier.hxx>
-
 #include <Message_Msg.hxx>
 #include <Message_Messenger.hxx>
-
 #include <IGESFile_Read.hxx>
 #include <IGESData_FileProtocol.hxx>
 #include <IGESData_GlobalSection.hxx>
@@ -40,22 +36,17 @@
 #include <IGESSolid_Protocol.hxx>
 #include <IGESAppli.hxx>
 #include <IGESAppli_Protocol.hxx>
-
 #include <Interface_Macros.hxx>
 #include <Interface_CheckTool.hxx>
 #include <Interface_CheckIterator.hxx>
 #include <Interface_ShareFlags.hxx>
 #include <Interface_Static.hxx>
 #include <Interface_Check.hxx>
-
 #include <IGESToBRep.hxx>
 #include <IGESToBRep_Actor.hxx>
 #include <IGESToBRep_CurveAndSurface.hxx>
-
-//#include <ShapeCustom.hxx>
 #include <ShapeExtend_Explorer.hxx>
 #include <ShapeFix_ShapeTolerance.hxx>
-
 #include <Transfer_TransferOutput.hxx>
 #include <Transfer_IteratorOfProcessForTransient.hxx>
 #include <TransferBRep.hxx>
@@ -63,10 +54,10 @@
 #include <TransferBRep_ShapeListBinder.hxx>
 #include <XSAlgo.hxx>
 #include <XSAlgo_AlgoContainer.hxx>
-
 #include <ShapeAlgo.hxx>
 #include <ShapeAlgo_AlgoContainer.hxx>
 #include <Message_ProgressSentry.hxx>
+#include <IGESData_IGESModel.hxx>
 
 #ifdef WNT
 #include <stdlib.h>

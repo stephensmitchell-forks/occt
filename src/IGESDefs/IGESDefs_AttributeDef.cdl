@@ -32,7 +32,7 @@ uses
         HArray1OfIGESEntity    from IGESData,
         TextDisplayTemplate    from IGESGraph,
         HArray1OfTextDisplayTemplate          from IGESGraph,
-        HArray1OfHArray1OfTextDisplayTemplate from IGESDefs
+        HArray1OfHArray1OfTextDisplayTemplate_Handle from IGESDefs
 
 raises DimensionMismatch, OutOfRange, NullObject
 
@@ -49,7 +49,7 @@ is
              attrValueDataTypes : HArray1OfInteger;
              attrValueCounts    : HArray1OfInteger;
              attrValues         : HArray1OfTransient from TColStd;
-             attrValuePointers  : HArray1OfHArray1OfTextDisplayTemplate)
+             attrValuePointers  : HArray1OfHArray1OfTextDisplayTemplate_Handle)
         raises DimensionMismatch;
         -- This method is used to set the fields of the
         -- class AttributeDef
@@ -163,6 +163,6 @@ fields
         theAttrValueDataTypes : HArray1OfInteger;
         theAttrValueCounts    : HArray1OfInteger;
         theAttrValues         : HArray1OfTransient from TColStd;
-        theAttrValuePointers  : HArray1OfHArray1OfTextDisplayTemplate;
+        theAttrValuePointers  : HArray1OfHArray1OfTextDisplayTemplate_Handle;
 
 end AttributeDef;

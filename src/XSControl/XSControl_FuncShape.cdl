@@ -28,14 +28,14 @@ class FuncShape  from XSControl
     --           basic features from user callable forms
 
 uses CString, AsciiString from TCollection,
-     WorkSession from XSControl, HSequenceOfShape from TopTools
+     WorkSession_Handle from XSControl, HSequenceOfShape from TopTools
 
 is
 
     Init (myclass);
     ---Purpose : Defines and loads all functions which work on shapes for XSControl (as ActFunc)
 
-    MoreShapes (myclass; session : WorkSession from XSControl;
+    MoreShapes (myclass; session : WorkSession_Handle from XSControl;
     	    	list : in out mutable HSequenceOfShape from TopTools;
                 name : CString) returns Integer;
     ---Purpose : Analyses a name as designating Shapes from a Vars or from
@@ -49,7 +49,7 @@ is
     --           completed (Append without Clear) by the Shapes found
     --           Returns 0 if no Shape could be found
 
-    FileAndVar (myclass; session : WorkSession from XSControl;
+    FileAndVar (myclass; session : WorkSession_Handle from XSControl;
     	    	file, var, def : CString;
                  resfile, resvar : out AsciiString from TCollection)
         returns Boolean;

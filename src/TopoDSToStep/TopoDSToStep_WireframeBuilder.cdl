@@ -22,7 +22,7 @@ class WireframeBuilder from TopoDSToStep
 
 uses
 
-    FinderProcess           from Transfer,
+    FinderProcess_Handle    from Transfer,
     Edge                    from TopoDS,
     Face                    from TopoDS,
     Shape                   from TopoDS,
@@ -43,13 +43,13 @@ is
     
     Create(S  : Shape from TopoDS;
     	   T  : in out Tool from TopoDSToStep;
-	   FP : mutable FinderProcess from Transfer)
+	   FP : FinderProcess_Handle from Transfer)
     	returns WireframeBuilder from TopoDSToStep;
     
     Init(me : in out;
     	 S  : Shape from TopoDS;
     	 T  : in out Tool from TopoDSToStep;
-	 FP : mutable FinderProcess from Transfer);
+	 FP : FinderProcess_Handle from Transfer);
     
 --  -----------------------------------------------------------    
 --  Get the Result

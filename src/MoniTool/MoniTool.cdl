@@ -28,16 +28,9 @@ uses Standard, MMgt, TCollection, TColStd, Dico,
      Message, Dico, OSD
 
 is
-
-    -- Element, generic Elem, and instance for Transient
-    class DataInfo;  -- used in Elem : this one is for Transient
     deferred class Element;
-        generic class Elem;
-        class TransientElem  instantiates Elem
-            (Transient, MapTransientHasher from TColStd, DataInfo);
     class ElemHasher;
-
-
+    
     class IntVal;
     class RealVal;
     class AttrList;

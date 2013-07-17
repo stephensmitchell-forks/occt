@@ -11,11 +11,28 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#include <XSControl_SignTransferStatus.ixx>
+#include <XSControl_SignTransferStatus.hxx>
 #include <Transfer_Binder.hxx>
 #include <TCollection_AsciiString.hxx>
 #include <Interface_Check.hxx>
-//#include <stdio.h>
+#include <Standard_Transient.hxx>
+#include <Interface_InterfaceModel.hxx>
+#include <Standard_Type.hxx>
+
+IMPLEMENT_STANDARD_TYPE(XSControl_SignTransferStatus)
+IMPLEMENT_STANDARD_SUPERTYPE_ARRAY()
+  STANDARD_TYPE(IFSelect_Signature),
+  STANDARD_TYPE(Interface_SignType),
+  STANDARD_TYPE(MoniTool_SignText),
+  STANDARD_TYPE(MMgt_TShared),
+  STANDARD_TYPE(Standard_Transient),
+
+IMPLEMENT_STANDARD_SUPERTYPE_ARRAY_END()
+IMPLEMENT_STANDARD_TYPE_END(XSControl_SignTransferStatus)
+
+
+IMPLEMENT_DOWNCAST(XSControl_SignTransferStatus,Standard_Transient)
+IMPLEMENT_STANDARD_RTTI(XSControl_SignTransferStatus)
 
 static TCollection_AsciiString& themes()
 {

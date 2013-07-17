@@ -24,7 +24,7 @@ uses
     Shape                    from TopoDS,
     IGESEntity               from IGESData,
     IGESModel                from IGESData,
-    FinderProcess            from Transfer
+    FinderProcess_Handle            from Transfer
 
 is
 
@@ -48,11 +48,11 @@ is
     ---Purpose : Returns the value of the UnitFlag of the header of the model
     --           in meters.
 
-    SetTransferProcess(me : in out; TP : FinderProcess from Transfer);
+    SetTransferProcess(me : in out; TP : FinderProcess_Handle from Transfer);
     ---Purpose : Set the value of "TheMap"
     
     GetTransferProcess(me) 
-    	returns FinderProcess from Transfer;
+    	returns FinderProcess_Handle from Transfer;
     ---Purpose : Returns the value of "TheMap"
 
     TransferShape(me : in out; start : Shape from TopoDS)
@@ -127,6 +127,6 @@ fields
     myConvSurface : Boolean;
     myPCurveMode  : Boolean;
 
-    TheMap        : FinderProcess from Transfer;
+    TheMap        : FinderProcess_Handle from Transfer;
 
 end BREntity;

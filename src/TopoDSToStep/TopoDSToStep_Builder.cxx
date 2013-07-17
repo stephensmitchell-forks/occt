@@ -15,11 +15,10 @@
 // commercial license or contractual agreement.
 
 #include <TopoDSToStep_Builder.ixx>
-
 #include <TopoDSToStep_Tool.hxx>
-
 #include <TopoDSToStep_MakeStepFace.hxx>
 
+#include <Message_ProgressIndicator.hxx>
 #include <StepShape_ConnectedFaceSet.hxx>
 #include <StepShape_HArray1OfFace.hxx>
 #include <StepShape_ClosedShell.hxx>
@@ -29,14 +28,11 @@
 #include <TopoDS.hxx>
 #include <TopoDS_Shell.hxx>
 #include <TopoDS_Face.hxx>
-
 #include <TopExp_Explorer.hxx>
-
+#include <TCollection_HAsciiString.hxx>
 #include <TColStd_SequenceOfTransient.hxx>
 #include <TransferBRep_ShapeMapper.hxx>
-#include <TCollection_HAsciiString.hxx>
-
-#include <Message_ProgressIndicator.hxx>
+#include <Transfer_FinderProcess.hxx>
 
 // ============================================================================
 // Method  : TopoDSToStep_Builder::TopoDSToStep_Builder

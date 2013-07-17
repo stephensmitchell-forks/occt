@@ -29,8 +29,8 @@ uses
     WireData          from ShapeExtend,
     Wire              from ShapeAnalysis,
     Wire              from ShapeFix,
-    TransientProcess  from Transfer,
-    FinderProcess     from Transfer,
+    TransientProcess_Handle  from Transfer,
+    FinderProcess_Handle     from Transfer,
     ProgressIndicator from Message
     
 is
@@ -92,10 +92,10 @@ is
       --          and corrects it if necessary.
       ---Remark : In Open CASCADE does nothing.
 
-    MergeTransferInfo (me; TP : TransientProcess from Transfer;
+    MergeTransferInfo (me; TP : TransientProcess_Handle from Transfer;
                        info: Transient;
                        startTPitem: Integer = 1) is virtual;
-    MergeTransferInfo (me; FP : FinderProcess from Transfer;
+    MergeTransferInfo (me; FP : FinderProcess_Handle from Transfer;
                        info: Transient) is virtual;
     	---Purpose: Updates translation map (TP or FP) with information
     	--          resulting from ShapeProcessing

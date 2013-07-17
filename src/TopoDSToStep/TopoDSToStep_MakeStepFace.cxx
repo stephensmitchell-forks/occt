@@ -84,6 +84,7 @@
 
 #include <TColStd_SequenceOfTransient.hxx>
 #include <TransferBRep_ShapeMapper.hxx>
+#include <Transfer_FinderProcess.hxx>
 #include <TCollection_HAsciiString.hxx>
 
 #include <ShapeAlgo.hxx>

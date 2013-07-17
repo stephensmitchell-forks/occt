@@ -1,0 +1,9 @@
+TransferBRep_Reader.hxx
+TransferBRep_Reader.cxx
+TransferBRep_ShapeMapper.hxx
+TransferBRep_ShapeMapper.cxx
+TransferBRep_ShapeMapper_Handle.hxx
+TransferBRep_BinderOfShape.hxx
+TransferBRep_BinderOfShape.cxx
+TransferBRep_ShapeBinder.hxx
+TransferBRep_ShapeBinder.cxx

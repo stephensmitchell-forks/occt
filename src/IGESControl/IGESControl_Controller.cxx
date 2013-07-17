@@ -14,7 +14,7 @@
 //#58 rln 28.12.98 changing default values for Global Section
 //sln 14.01.2002 OCC51 : verifying whether entry model of method ActorRead is IGESDatat_IGESModel 
 
-#include <IGESControl_Controller.ixx>
+#include <IGESControl_Controller.hxx>
 #include <IGESSelect_WorkLibrary.hxx>
 #include <IGESToBRep_Actor.hxx>
 #include <IGESData_IGESModel.hxx>
@@ -43,6 +43,8 @@
 #include <IGESSelect_IGESName.hxx>
 #include <IFSelect_SignType.hxx>
 #include <IFSelect_SignMultiple.hxx>
+#include <IFSelect_SelectModelEntities.hxx>
+#include <IFSelect_SelectModelRoots.hxx>
 #include <IGESSelect_CounterOfLevelNumber.hxx>
 #include <IFSelect_SignCounter.hxx>
 #include <IGESSelect_EditHeader.hxx>
@@ -59,10 +61,28 @@
 #include <XSAlgo.hxx>
 #include <Interface_Macros.hxx>
 #include <IGESToBRep.hxx>
-#include <IFSelect_SelectModelEntities.hxx>
-#include <IFSelect_SelectModelEntities.hxx>
-#include <IFSelect_SelectModelRoots.hxx>
+
 #include <XSControl_SelectForTransfer.hxx>
+#include <Interface_InterfaceModel.hxx>
+#include <Transfer_ActorOfTransientProcess.hxx>
+#include <TopoDS_Shape.hxx>
+#include <Transfer_FinderProcess.hxx>
+#include <XSControl_WorkSession.hxx>
+#include <IGESControl_Controller.hxx>
+#include <Standard_Type.hxx>
+
+IMPLEMENT_STANDARD_TYPE(IGESControl_Controller)
+IMPLEMENT_STANDARD_SUPERTYPE_ARRAY()
+  STANDARD_TYPE(XSControl_Controller),
+  STANDARD_TYPE(MMgt_TShared),
+  STANDARD_TYPE(Standard_Transient),
+
+IMPLEMENT_STANDARD_SUPERTYPE_ARRAY_END()
+IMPLEMENT_STANDARD_TYPE_END(IGESControl_Controller)
+
+
+IMPLEMENT_DOWNCAST(IGESControl_Controller,Standard_Transient)
+IMPLEMENT_STANDARD_RTTI(IGESControl_Controller)
 
 //szv#4:S4163:12Mar99 never referenced
 //static const Standard_CString thelong  = "IGES";
@@ -77,7 +97,7 @@ IGESControl_Controller::IGESControl_Controller (const Standard_Boolean mod)
 //JR/Hp
      : XSControl_Controller ((Standard_CString ) (mod ? "FNES" : "IGES") , (Standard_CString ) (mod ? "fnes" : "iges") ) ,
 //     : XSControl_Controller ( (mod ? "FNES" : "iges") , (mod ? "fnes" : "iges") ) ,
-       themode (mod)
+       myMode (mod)
 {
   static Standard_Boolean init = Standard_False;
   if (!init) {
@@ -144,7 +164,7 @@ IGESControl_Controller::IGESControl_Controller (const Standard_Boolean mod)
   TraceStatic ("write.iges.unit",6);
   TraceStatic ("write.iges.brep.mode",6);
 
-  theAdaptorLibrary  = new IGESSelect_WorkLibrary(themode);
+  theAdaptorLibrary  = new IGESSelect_WorkLibrary(myMode);
   theAdaptorProtocol = IGESSelect_WorkLibrary::DefineProtocol();
 
   Handle(IGESToBRep_Actor) anactiges = new IGESToBRep_Actor;

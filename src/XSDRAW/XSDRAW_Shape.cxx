@@ -11,8 +11,9 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#include <XSDRAW_Shape.ixx>
+#include <XSDRAW_Shape.hxx>
 #include <SWDRAW_ShapeTool.hxx>
+#include <Draw_Interpretor.hxx>
 
 //unused variable 
 //static int initactor = 0;

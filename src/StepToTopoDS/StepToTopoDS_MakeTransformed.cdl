@@ -19,7 +19,7 @@ class MakeTransformed  from StepToTopoDS    inherits Root
     ---Purpose : Produces instances by Transformation of a basic item
 
 uses Trsf from gp, Shape from TopoDS,
-     TransientProcess from Transfer,
+     TransientProcess_Handle from Transfer,
      Axis2Placement3d from StepGeom,
      CartesianTransformationOperator3d from StepGeom,
      MappedItem       from StepRepr
@@ -48,7 +48,7 @@ is
 
 
     TranslateMappedItem (me : in out; mapit : MappedItem from StepRepr;
-    	    	    	 TP : mutable TransientProcess from Transfer)
+    	    	    	 TP : TransientProcess_Handle from Transfer)
     	returns Shape;
     ---Purpose : Translates a MappedItem. More precisely
     --           A MappedItem has a MappingSource and a MappingTarget

@@ -27,7 +27,6 @@
 #include <TColgp_HArray1OfXY.hxx>
 #include <TColStd_HArray1OfInteger.hxx>
 #include <IGESBasic_HArray1OfHArray1OfInteger.hxx>
-#include <IGESBasic_HArray1OfHArray1OfXY.hxx>
 #include <IGESData_Dump.hxx>
 #include <Interface_Macros.hxx>
 

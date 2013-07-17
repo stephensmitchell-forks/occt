@@ -23,7 +23,7 @@ class TransferInput  from Transfer
     --           only Transient Objects)
 
 uses InterfaceModel, EntityIterator, Protocol from Interface,
-     TransferIterator, TransientProcess, FinderProcess
+     TransferIterator, TransientProcess_Handle, FinderProcess_Handle
 
 raises TransferFailure
 
@@ -38,7 +38,7 @@ is
     --           Error if one of the Resulting Objects is defined not Transient
 
 
-    FillModel (me; proc   : TransientProcess;
+    FillModel (me; proc   : TransientProcess_Handle;
     	    	   amodel : mutable InterfaceModel)
     ---Purpose : Fills an InterfaceModel with the Complete Result of a Transfer
     --           stored in a TransientProcess (Starting Objects are Transient)
@@ -46,7 +46,7 @@ is
     	raises TransferFailure;
     --           Error if one of the Resulting Objects is defined not Transient
 
-    FillModel (me; proc   : TransientProcess;
+    FillModel (me; proc   : TransientProcess_Handle;
     	    	   amodel : mutable InterfaceModel;
 		   proto  : Protocol from Interface;
 		   roots  : Boolean = Standard_True)
@@ -59,7 +59,7 @@ is
     --           Error if one of the Resulting Objects is defined not Transient
 
 
-    FillModel (me; proc   : FinderProcess;
+    FillModel (me; proc   : FinderProcess_Handle;
     	    	   amodel : mutable InterfaceModel)
     ---Purpose : Fills an InterfaceModel with the Complete Result of a Transfer
     --           stored in a TransientProcess (Starting Objects are Transient)
@@ -67,7 +67,7 @@ is
     	raises TransferFailure;
     --           Error if one of the Resulting Objects is defined not Transient
 
-    FillModel (me; proc   : FinderProcess;
+    FillModel (me; proc   : FinderProcess_Handle;
     	    	   amodel : mutable InterfaceModel;
 		   proto  : Protocol from Interface;
 		   roots  : Boolean = Standard_True)

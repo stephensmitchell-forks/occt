@@ -26,11 +26,11 @@ class Styles from STEPConstruct inherits Tool from STEPConstruct
     --          with particular implementation of colors (as described in RP)
 
 uses
-    WorkSession      from XSControl,
+    WorkSession_Handle from XSControl,
     InterfaceModel   from Interface,
     HGraph           from Interface,
-    FinderProcess    from Transfer,
-    TransientProcess from Transfer,
+    FinderProcess_Handle    from Transfer,
+    TransientProcess_Handle from Transfer,
     Shape            from TopoDS,
     SequenceOfTransient from TColStd,
     HSequenceOfTransient from TColStd,
@@ -52,10 +52,10 @@ is
     Create returns Styles;
     	---Purpose: Creates an empty tool
 
-    Create (WS: WorkSession from XSControl) returns Styles;
+    Create (WS: WorkSession_Handle from XSControl) returns Styles;
     	---Purpose: Creates a tool and initializes it
 	
-    Init (me: in out; WS: WorkSession from XSControl) returns Boolean;
+    Init (me: in out; WS: WorkSession_Handle from XSControl) returns Boolean;
     	---Purpose: Initializes tool; returns True if succeeded
 
     --Basic methods: general work with styles	

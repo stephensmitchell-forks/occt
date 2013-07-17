@@ -17,6 +17,8 @@
 #include <TransferBRep.hxx>
 #include <TransferBRep_ShapeMapper.hxx>
 #include <Transfer_Binder.hxx>
+#include <Transfer_FinderProcess.hxx>
+#include <Transfer_TransientProcess.hxx>
 #include <Transfer_SimpleBinderOfTransient.hxx>
 
 #include <StepBasic_ProductDefinition.hxx>

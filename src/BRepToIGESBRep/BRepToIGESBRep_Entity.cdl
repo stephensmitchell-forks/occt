@@ -42,7 +42,7 @@ uses
     Shell                    from IGESSolid, 
     ManifoldSolid            from IGESSolid,
     CString                  from Standard,
-    FinderProcess            from Transfer
+    FinderProcess_Handle     from Transfer
 
 is
 

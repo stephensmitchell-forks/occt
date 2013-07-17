@@ -25,14 +25,14 @@ class MakeBrepWithVoids from TopoDSToStep inherits
   
 uses Solid from TopoDS,
      BrepWithVoids from StepShape,
-     FinderProcess from Transfer
+     FinderProcess_Handle from Transfer
           
 raises NotDone from StdFail
      
 is 
 
 Create ( S  : Solid from TopoDS;
-         FP : mutable FinderProcess from Transfer)
+         FP : FinderProcess_Handle from Transfer)
         returns MakeBrepWithVoids;
 
 Value (me) returns BrepWithVoids from StepShape

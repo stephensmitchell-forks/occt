@@ -1,3 +1,4 @@
+// Copyright (c) 1994-1999 Matra Datavision
 // Copyright (c) 1999-2014 OPEN CASCADE SAS
 //
 // This file is part of Open CASCADE Technology software library.
@@ -11,30 +12,36 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#include <Transfer_ActorOfTransientProcess.ixx>
+#include <Transfer_ActorOfTransientProcess.hxx>
+#include <Transfer_Binder.hxx>
+#include <Transfer_Finder.hxx>
+#include <Standard_Transient.hxx>
 
-Transfer_ActorOfTransientProcess::Transfer_ActorOfTransientProcess ()    {  }
+ IMPLEMENT_STANDARD_HANDLE(Transfer_ActorOfTransientProcess, MMgt_TShared)
+ IMPLEMENT_STANDARD_RTTIEXT(Transfer_ActorOfTransientProcess, MMgt_TShared)
+
+Transfer_ActorOfTransientProcess::Transfer_ActorOfTransientProcess () { }
 
 Handle(Transfer_Binder)  Transfer_ActorOfTransientProcess::Transfer
-  (const Handle(Standard_Transient)& start,
-   const Handle(Transfer_TransientProcess)& TP)
+    (const Handle(Standard_Transient)& theEnt,
+     const Handle(Transfer_TransientProcess)& theTP)
 {
-  Handle(Standard_Transient) res = TransferTransient (start,TP);
+  Handle(Standard_Transient) res = TransferTransient (theEnt,theTP);
   if (res.IsNull()) return NullResult();
   return TransientResult (res);
 }
 
 Handle(Transfer_Binder)  Transfer_ActorOfTransientProcess::Transferring
-  (const Handle(Standard_Transient)& ent,
-   const Handle(Transfer_ProcessForTransient)& TP)
+  (const Handle(Standard_Transient)& theEnt,
+   const Handle(Transfer_TransientProcess)& theTP)
 {
-  return Transfer(ent,Handle(Transfer_TransientProcess)::DownCast(TP));
+  return Transfer (theEnt, Handle(Transfer_TransientProcess)::DownCast(theTP));
 }
 
 Handle(Standard_Transient)  Transfer_ActorOfTransientProcess::TransferTransient
-  (const Handle(Standard_Transient)& /*ent*/,
-   const Handle(Transfer_TransientProcess)& /*TP*/)
+  (const Handle(Standard_Transient)& /*theEnt*/,
+   const Handle(Transfer_TransientProcess)& /*theTP*/)
 {
-  Handle(Standard_Transient) nulres;
-  return nulres;
+  Handle(Standard_Transient) aNullRes;
+  return aNullRes;
 }

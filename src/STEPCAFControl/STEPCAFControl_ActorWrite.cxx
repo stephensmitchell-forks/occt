@@ -13,7 +13,23 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#include <STEPCAFControl_ActorWrite.ixx>
+#include <STEPCAFControl_ActorWrite.hxx>
+#include <Standard_Type.hxx>
+#include <TopoDS_Shape.hxx>
+
+IMPLEMENT_STANDARD_TYPE(STEPCAFControl_ActorWrite)
+IMPLEMENT_STANDARD_SUPERTYPE_ARRAY()
+  STANDARD_TYPE(STEPControl_ActorWrite),
+  STANDARD_TYPE(Transfer_ActorOfFinderProcess),
+  STANDARD_TYPE(MMgt_TShared),
+  STANDARD_TYPE(Standard_Transient),
+
+IMPLEMENT_STANDARD_SUPERTYPE_ARRAY_END()
+IMPLEMENT_STANDARD_TYPE_END(STEPCAFControl_ActorWrite)
+
+
+IMPLEMENT_DOWNCAST(STEPCAFControl_ActorWrite,Standard_Transient)
+IMPLEMENT_STANDARD_RTTI(STEPCAFControl_ActorWrite)
 
 //=======================================================================
 //function : STEPCAFControl_ActorWrite

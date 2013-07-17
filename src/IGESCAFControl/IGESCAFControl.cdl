@@ -32,10 +32,10 @@ uses
 
 is
 
-    class Reader;
+    imported Reader;
     	---Purpose: Provides a tool for reading IGES file
 
-    class Writer;
+    imported Writer;
     	---Purpose: Provides a tool for writing IGES file
 
     DecodeColor (col: Integer) returns Color from Quantity;

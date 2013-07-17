@@ -26,7 +26,7 @@ class ExternRefs from STEPConstruct inherits Tool from STEPConstruct
 uses
     HAsciiString from TCollection,
     SequenceOfTransient from TColStd,
-    WorkSession from XSControl,
+    WorkSession_Handle from XSControl,
     ProductDefinition from StepBasic,
     SequenceOfInteger from TColStd,
     CString from Standard,
@@ -42,10 +42,10 @@ is
     Create returns ExternRefs;
     	---Purpose: Creates an empty tool
 
-    Create (WS: WorkSession from XSControl) returns ExternRefs;
+    Create (WS: WorkSession_Handle from XSControl) returns ExternRefs;
     	---Purpose: Creates a tool and initializes it
 	
-    Init (me: in out; WS: WorkSession from XSControl) returns Boolean;
+    Init (me: in out; WS: WorkSession_Handle from XSControl) returns Boolean;
     	---Purpose: Initializes tool; returns True if succeeded
 
     Clear (me: in out);

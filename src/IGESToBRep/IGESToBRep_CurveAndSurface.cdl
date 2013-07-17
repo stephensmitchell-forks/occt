@@ -27,7 +27,7 @@ uses
     IGESEntity       from IGESData,
     IGESModel        from IGESData,
     CString          from Standard,
-    TransientProcess from Transfer,
+    TransientProcess_Handle from Transfer,
     Surface          from Geom,
     Msg	             from Message
 is
@@ -155,11 +155,11 @@ is
     	---C++: inline
     	---Purpose: Returns the value of "myContinuity" 
     
-    SetTransferProcess(me: in out; TP: TransientProcess from Transfer);
+    SetTransferProcess(me: in out; TP: TransientProcess_Handle from Transfer);
     	---C++: inline
     	---Purpose: Set the value of "myMsgReg"
     
-    GetTransferProcess(me) returns TransientProcess from Transfer;
+    GetTransferProcess(me) returns TransientProcess_Handle from Transfer;
     	---C++: inline
     	---Purpose: Returns the value of "myMsgReg"
 
@@ -240,6 +240,6 @@ fields
     
 
     myModel        : IGESModel from IGESData ;
-    myTP           : TransientProcess from Transfer;
+    myTP           : TransientProcess_Handle from Transfer;
 
 end CurveAndSurface;

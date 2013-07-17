@@ -1,0 +1,10 @@
+STEPControl_ActorWrite.hxx
+STEPControl_ActorWrite.cxx
+STEPControl_ActorRead.hxx
+STEPControl_ActorRead.cxx
+STEPControl_Controller.hxx
+STEPControl_Controller.cxx
+STEPControl_Reader.hxx
+STEPControl_Reader.cxx
+STEPControl_Writer.hxx
+STEPControl_Writer.cxx

@@ -11,25 +11,22 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#include <XSDRAW.ixx>
+#include <XSDRAW.hxx>
 #include <Dico_DictionaryOfInteger.hxx>
 #include <TCollection_AsciiString.hxx>
 #include <TColStd_HSequenceOfAsciiString.hxx>
 #include <IFSelect_Functions.hxx>
 #include <IFSelect_SessionPilot.hxx>
 #include <SWDRAW.hxx>
-//#include <XSDRAW_Shape.hxx>
 #include <XSDRAW_Vars.hxx>
 #include <XSControl_Functions.hxx>
 #include <XSControl_FuncShape.hxx>
 #include <Draw_Appli.hxx>
 #include <XSControl.hxx>
 #include <XSControl_TransferWriter.hxx>
-
 #include <TopoDS_Shape.hxx>
 #include <TransferBRep.hxx>
 #include <DBRep.hxx>
-
 #include <Interface_Macros.hxx>
 #include <stdio.h>
 
@@ -37,6 +34,16 @@
 #include <Message_Messenger.hxx>
 #include <Message_PrinterOStream.hxx>
 #include <Draw_Printer.hxx>
+#include <Draw_Interpretor.hxx>
+#include <IFSelect_SessionPilot.hxx>
+#include <Interface_Protocol.hxx>
+#include <Interface_InterfaceModel.hxx>
+#include <Standard_Transient.hxx>
+#include <Transfer_TransientProcess.hxx>
+#include <Transfer_FinderProcess.hxx>
+#include <TColStd_HSequenceOfTransient.hxx>
+#include <TCollection_AsciiString.hxx>
+#include <TopTools_HSequenceOfShape.hxx>
 
 static int deja = 0, dejald = 0;
 //unused variable 
