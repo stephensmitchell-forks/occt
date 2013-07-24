@@ -55,11 +55,11 @@ class Transfer_IteratorOfProcessForTransient  : public Transfer_Iterator <Handle
                                                                           Transfer_TransferMapOfProcessForTransient>
 {
 public:
-  Standard_EXPORT   Transfer_IteratorOfProcessForTransient(const Standard_Boolean withstarts)
+  Standard_EXPORT   Transfer_IteratorOfProcessForTransient(const Standard_Boolean theWithStarts)
   : Transfer_Iterator <Handle(Standard_Transient),
                       TColStd_HSequenceOfTransient,
                       Handle(TColStd_HSequenceOfTransient),
-                      Transfer_TransferMapOfProcessForTransient> (withstarts)
+                      Transfer_TransferMapOfProcessForTransient> (theWithStarts)
   { }
 
 };

@@ -23,7 +23,7 @@
 
 inline void IGESControl_Reader::SetReadVisible (const Standard_Boolean ReadRoot)
 {
- theReadOnlyVisible = ReadRoot;
+ myReadOnlyVisible = ReadRoot;
 }
 
 
@@ -34,5 +34,5 @@ inline void IGESControl_Reader::SetReadVisible (const Standard_Boolean ReadRoot)
 
 inline Standard_Boolean IGESControl_Reader::GetReadVisible ()const
 {
- return  theReadOnlyVisible;
+ return  myReadOnlyVisible;
 }

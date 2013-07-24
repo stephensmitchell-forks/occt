@@ -32,30 +32,36 @@ template <class TheKey, class TheHasher, class TheInfo, class MapperHandle>
 class Transfer_Mapper : public Transfer_Finder
 {
 private:
-  TheKey theval;
+  TheKey myVal;
 public:
-  Standard_EXPORT Transfer_Mapper (const TheKey& akey)
-  : theval (akey)
+  Standard_EXPORT Transfer_Mapper (const TheKey& theKey)
+  : myVal (theKey)
   {
-    SetHashCode ( TheHasher::HashCode (akey, IntegerLast() ) );
+    SetHashCode (TheHasher::HashCode (theKey, IntegerLast()));
   }
   
   Standard_EXPORT const TheKey&  Value () const
-  {  return theval;  }
-
-  Standard_EXPORT Standard_Boolean Equates (const Handle(Transfer_Finder)& other) const
   {
-    if (other.IsNull()) return Standard_False;
-    if (GetHashCode() != other->GetHashCode()) return Standard_False;
-    if (other->DynamicType() != DynamicType()) return Standard_False;
-    MapperHandle another = MapperHandle::DownCast(other);
-    return  TheHasher::IsEqual (theval,another->Value());
+    return myVal;
+  }
+
+  Standard_EXPORT Standard_Boolean Equates (const Handle(Transfer_Finder)& theOther) const
+  {
+    if (theOther.IsNull()) return Standard_False;
+    if (GetHashCode() != theOther->GetHashCode()) return Standard_False;
+    if (theOther->DynamicType() != DynamicType()) return Standard_False;
+    MapperHandle another = MapperHandle::DownCast(theOther);
+    return  TheHasher::IsEqual (myVal,another->Value());
   }
 
   Standard_EXPORT Handle(Standard_Type) ValueType () const
-  {  return TheInfo::Type(theval);  }
+  {
+    return TheInfo::Type(myVal);
+  }
 
   Standard_EXPORT Standard_CString ValueTypeName () const
-  {  return TheInfo::TypeName(theval);  }
+  {
+    return TheInfo::TypeName(myVal);
+  }
 };
 #endif

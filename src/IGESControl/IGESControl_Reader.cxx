@@ -72,7 +72,7 @@ IGESControl_Reader::IGESControl_Reader ()
   IGESControl_Controller::Init();
   SetWS (new XSControl_WorkSession);
   SetNorm("IGES");
-  theReadOnlyVisible = Standard_False;
+  myReadOnlyVisible = Standard_False;
 }
 
 
@@ -87,7 +87,7 @@ IGESControl_Reader::IGESControl_Reader
   IGESControl_Controller::Init();
   SetWS (WS,scratch);
   SetNorm ("IGES");
-  theReadOnlyVisible = Standard_False;
+  myReadOnlyVisible = Standard_False;
 }
 
 
@@ -124,14 +124,14 @@ Standard_Integer  IGESControl_Reader::NbRootsForTransfer()
   Interface_ShareFlags SH (model,protocol);
    
   // sln 11.06.2002 OCC448
-  Interface_Static::SetIVal("read.iges.onlyvisible",theReadOnlyVisible);
+  Interface_Static::SetIVal("read.iges.onlyvisible",myReadOnlyVisible);
   
   Standard_Integer nb = model->NbEntities();
   for (Standard_Integer i = 1; i <= nb; i ++) {
     Handle(IGESData_IGESEntity) ent = model->Entity(i);
     if ( SH.IsShared(ent) || ! actor->Recognize (ent) ) continue;
     // on ajoute un traitement pour ne prendre que les entites visibles
-    if ( ! theReadOnlyVisible || ent->BlankStatus() == 0 ) {
+    if ( ! myReadOnlyVisible || ent->BlankStatus() == 0 ) {
       theroots.Append(ent);
     }
   }

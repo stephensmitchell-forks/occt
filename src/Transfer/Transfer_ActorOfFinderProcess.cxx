@@ -23,33 +23,33 @@
 IMPLEMENT_STANDARD_HANDLE(Transfer_ActorOfFinderProcess, MMgt_TShared)
 IMPLEMENT_STANDARD_RTTIEXT(Transfer_ActorOfFinderProcess, MMgt_TShared)
  
-Transfer_ActorOfFinderProcess::Transfer_ActorOfFinderProcess ()    {  themodetrans = 0;  }
+Transfer_ActorOfFinderProcess::Transfer_ActorOfFinderProcess ()    {  myModeTrans = 0;  }
 
 Standard_Integer& Transfer_ActorOfFinderProcess::ModeTrans ()
-{  return themodetrans;  }
+{  return myModeTrans;  }
 
 Handle(Transfer_Binder)  Transfer_ActorOfFinderProcess::Transfer
-  (const Handle(Transfer_Finder)& fnd,
-   const Handle(Transfer_FinderProcess)& FP)
+  (const Handle(Transfer_Finder)& theFinder,
+   const Handle(Transfer_FinderProcess)& theFP)
 {
-  Handle(Transfer_TransientMapper) tm = Handle(Transfer_TransientMapper)::DownCast (fnd);
+  Handle(Transfer_TransientMapper) tm = Handle(Transfer_TransientMapper)::DownCast (theFinder);
   if (tm.IsNull()) return NullResult();
-  Handle(Standard_Transient) res = TransferTransient (tm->Value(),FP);
+  Handle(Standard_Transient) res = TransferTransient (tm->Value(),theFP);
   if (res.IsNull()) return NullResult();
   return TransientResult (res);
 }
 
 Handle(Transfer_Binder)  Transfer_ActorOfFinderProcess::Transferring
-  (const Handle(Transfer_Finder)& ent,
-   const Handle(Transfer_FinderProcess)& TP)
+  (const Handle(Transfer_Finder)& theFinder,
+   const Handle(Transfer_FinderProcess)& theTP)
 {
-  return Transfer(ent,Handle(Transfer_FinderProcess)::DownCast(TP));
+  return Transfer(theFinder,Handle(Transfer_FinderProcess)::DownCast(theTP));
 }
 
 Handle(Standard_Transient)  Transfer_ActorOfFinderProcess::TransferTransient
-  (const Handle(Standard_Transient)& /*ent*/,
+  (const Handle(Standard_Transient)& /*theEnt*/,
    const Handle(Transfer_FinderProcess)& )
 {
-  Handle(Standard_Transient) nulres;
-  return nulres;
+  Handle(Standard_Transient) aNullRes;
+  return aNullRes;
 }

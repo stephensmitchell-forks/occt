@@ -338,7 +338,7 @@ void STEPControl_ActorWrite::SetMode (const STEPControl_StepModelType M)
 
 STEPControl_StepModelType STEPControl_ActorWrite::Mode () const
 {
-  switch (themodetrans) {
+  switch (myModeTrans) {
   case 0 : return STEPControl_AsIs;
   case 1 : return STEPControl_FacetedBrep;
   case 2 : return STEPControl_ShellBasedSurfaceModel;

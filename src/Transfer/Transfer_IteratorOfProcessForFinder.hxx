@@ -54,11 +54,11 @@ class Transfer_IteratorOfProcessForFinder  : public Transfer_Iterator <Handle(Tr
                                                                        Transfer_TransferMapOfProcessForFinder>
 {
 public:
-  Standard_EXPORT   Transfer_IteratorOfProcessForFinder(const Standard_Boolean withstarts)
+  Standard_EXPORT   Transfer_IteratorOfProcessForFinder(const Standard_Boolean theWithStarts)
   : Transfer_Iterator <Handle(Transfer_Finder),
                        Transfer_HSequenceOfFinder,
                        Handle(Transfer_HSequenceOfFinder),
-                       Transfer_TransferMapOfProcessForFinder>(withstarts)
+                       Transfer_TransferMapOfProcessForFinder> (theWithStarts)
   { }
 
 };

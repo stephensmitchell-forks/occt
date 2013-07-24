@@ -36,39 +36,6 @@ class Standard_NoSuchObject;
 typedef LibCtl_Library <Handle(Standard_Transient),
                 Handle(Interface_ReaderModule),
                 Handle(Interface_Protocol)>
-        LibCtl_ReaderLib;
-
-//template <>
-//NCollection_Handle <LibCtl_GlobalNode<Handle(Interface_ReaderModule),
-//                                      Handle(Interface_Protocol)> >
-//LibCtl_ReaderLib::theglobal;
-//
-//template <>
-//Handle(Interface_Protocol)
-//LibCtl_ReaderLib::theprotocol;
-//
-//template <>
-//NCollection_Handle <LibCtl_Node<Handle(Interface_ReaderModule),
-//                                Handle(Interface_Protocol)> >
-//LibCtl_ReaderLib::thelast;
-
-// Library
-class Interface_ReaderLib : public LibCtl_ReaderLib
-{
-public:
-  DEFINE_STANDARD_ALLOC
-  Standard_EXPORT   Interface_ReaderLib()
-  : LibCtl_ReaderLib ()
-  { }
-  
-  Standard_EXPORT   Interface_ReaderLib(const Handle(Interface_Protocol)& theProtocol);
-
-  Standard_EXPORT void SetComplete ();
-
-  Standard_EXPORT void AddProtocol (const Handle(Standard_Transient)& theProtocol);
-
-  Standard_EXPORT static void SetGlobal (const Handle(Interface_ReaderModule)& theModule,
-                                         const Handle(Interface_Protocol)& theProtocol);
-};
+        Interface_ReaderLib;
 
 #endif

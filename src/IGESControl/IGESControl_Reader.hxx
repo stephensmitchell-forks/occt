@@ -69,55 +69,43 @@ class IGESData_IGESModel;
 //!      reader.TransientProcess(); <br>
 //! TopoDS_Shape shape = <br>
 //! TransferBRep::ShapeResult(reader.TransientProcess(),ent); <br>
-class IGESControl_Reader  : public XSControl_Reader {
+class IGESControl_Reader  : public XSControl_Reader
+{
 public:
 
   DEFINE_STANDARD_ALLOC
 
   //! Creates a Reader from scratch <br>
   Standard_EXPORT   IGESControl_Reader();
-  //! Creates a Reader from an already existing Session <br>
-  Standard_EXPORT   IGESControl_Reader(const Handle(XSControl_WorkSession)& WS,const Standard_Boolean scratch = Standard_True);
-  //! Set the transion of ALL Roots (if theReadOnlyVisible is False) <br>
-//!           or of Visible Roots (if theReadOnlyVisible is True) <br>
-        void SetReadVisible(const Standard_Boolean ReadRoot) ;
   
-        Standard_Boolean GetReadVisible() const;
+  //! Creates a Reader from an already existing Session <br>
+  Standard_EXPORT   IGESControl_Reader(const Handle(XSControl_WorkSession)& WS,
+                                       const Standard_Boolean scratch = Standard_True);
+                                       
+  //! Set the transion of ALL Roots (if myReadOnlyVisible is False) <br>
+  //!           or of Visible Roots (if myReadOnlyVisible is True) <br>
+  void SetReadVisible(const Standard_Boolean ReadRoot) ;
+  
+  Standard_Boolean GetReadVisible() const;
+  
   //! Returns the model as a IGESModel. <br>
-//!           It can then be consulted (header, product) <br>
+  //!           It can then be consulted (header, product) <br>
   Standard_EXPORT     Handle_IGESData_IGESModel IGESModel() const;
+  
   //! Determines the list of root entities from Model which are candidate for <br>
-//!           a transfer to a Shape (type of entities is PRODUCT) <br>
-//!           <theReadOnlyVisible> is taken into account to define roots <br>
-  Standard_EXPORT   virtual  Standard_Integer NbRootsForTransfer() ;
+  //!           a transfer to a Shape (type of entities is PRODUCT) <br>
+  //!           <myReadOnlyVisible> is taken into account to define roots <br>
+  Standard_EXPORT   virtual  Standard_Integer NbRootsForTransfer();
+  
   //! Prints Statistics and check list for Transfer <br>
-  Standard_EXPORT     void PrintTransferInfo(const IFSelect_PrintFail failwarn,const IFSelect_PrintCount mode) const;
-
-
-
-
-
-protected:
-
-
-
+  Standard_EXPORT     void PrintTransferInfo (const IFSelect_PrintFail failwarn,
+                                              const IFSelect_PrintCount mode) const;
 
 
 private:
-
-
-
-Standard_Boolean theReadOnlyVisible;
-
-
+  Standard_Boolean myReadOnlyVisible;
 };
 
-
 #include <IGESControl_Reader.lxx>
-
-
-
-// other Inline functions and methods (like "C++: function call" methods)
-
 
 #endif

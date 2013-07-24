@@ -101,7 +101,7 @@ IGESControl_Controller::IGESControl_Controller (const Standard_Boolean mod)
 //JR/Hp
      : XSControl_Controller ((Standard_CString ) (mod ? "FNES" : "IGES") , (Standard_CString ) (mod ? "fnes" : "iges") ) ,
 //     : XSControl_Controller ( (mod ? "FNES" : "iges") , (mod ? "fnes" : "iges") ) ,
-       themode (mod)
+       myMode (mod)
 {
   static Standard_Boolean init = Standard_False;
   if (!init) {
@@ -168,7 +168,7 @@ IGESControl_Controller::IGESControl_Controller (const Standard_Boolean mod)
   TraceStatic ("write.iges.unit",6);
   TraceStatic ("write.iges.brep.mode",6);
 
-  theAdaptorLibrary  = new IGESSelect_WorkLibrary(themode);
+  theAdaptorLibrary  = new IGESSelect_WorkLibrary(myMode);
   theAdaptorProtocol = IGESSelect_WorkLibrary::DefineProtocol();
 
   Handle(IGESToBRep_Actor) anactiges = new IGESToBRep_Actor;

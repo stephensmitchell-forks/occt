@@ -70,7 +70,7 @@ Handle(Transfer_Binder)  IGESControl_ActorWrite::Transfer
     
   DeclareAndCast(IGESData_IGESModel,modl,FP->Model());
   if (modl.IsNull()) return NullResult();
-  if (themodetrans < 0 || themodetrans > 1) return NullResult();
+  if (myModeTrans < 0 || myModeTrans > 1) return NullResult();
   Handle(Standard_Transient) ent;
 
   DeclareAndCast(TransferBRep_ShapeMapper,shmap,start);
@@ -90,8 +90,8 @@ Handle(Transfer_Binder)  IGESControl_ActorWrite::Transfer
     BRepToIGES_BREntity   BR0; BR0.SetModel(modl);  BR0.SetTransferProcess(FP);
     BRepToIGESBRep_Entity BR1; BR1.SetModel(modl);  BR1.SetTransferProcess(FP);
 
-    if (themodetrans == 0) ent = BR0.TransferShape(shape);
-    if (themodetrans == 1) ent = BR1.TransferShape(shape);
+    if (myModeTrans == 0) ent = BR0.TransferShape(shape);
+    if (myModeTrans == 1) ent = BR1.TransferShape(shape);
 //  modified by NIZHNY-EAP Tue Aug 29 11:37:18 2000 ___BEGIN___
     XSAlgo::AlgoContainer()->MergeTransferInfo(FP, info);
 //  modified by NIZHNY-EAP Tue Aug 29 11:37:25 2000 ___END___

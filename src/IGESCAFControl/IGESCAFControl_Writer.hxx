@@ -107,7 +107,7 @@ protected:
 private:
 
   //! Recursively iterates on subshapes and assigns colors <br>
- //!          to faces and edges (if set) <br>
+  //!          to faces and edges (if set) <br>
   Standard_EXPORT     void MakeColors(const TopoDS_Shape& S,const XCAFPrs_DataMapOfShapeStyle& settings,XCAFPrs_DataMapOfStyleTransient& colors,TopTools_MapOfShape& Map,const XCAFPrs_Style& inherit) ;
 
   Standard_Boolean myColorMode;

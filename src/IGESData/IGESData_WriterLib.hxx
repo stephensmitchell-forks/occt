@@ -38,42 +38,10 @@ class IGESData_ReadWriteModule;
 class IGESData_Protocol;
 class Standard_Transient;
 
+
 typedef LibCtl_Library<Handle(IGESData_IGESEntity),
-                      Handle(IGESData_ReadWriteModule),
-                      Handle(IGESData_Protocol)>
-        LibCtl_IGESWriterLib;
-
-//template <>
-//NCollection_Handle <LibCtl_GlobalNode<Handle(IGESData_ReadWriteModule),
-//                                      Handle(IGESData_Protocol)> >
-//LibCtl_IGESWriterLib::theglobal;
-//
-//template <>
-//Handle(IGESData_Protocol)
-//LibCtl_IGESWriterLib::theprotocol;
-//
-//template <>
-//NCollection_Handle <LibCtl_Node<Handle(IGESData_ReadWriteModule),
-//                                Handle(IGESData_Protocol)> >
-//LibCtl_IGESWriterLib::thelast;
-
-class IGESData_WriterLib : public LibCtl_IGESWriterLib
-{
-public:
-  DEFINE_STANDARD_ALLOC
-
-  Standard_EXPORT   IGESData_WriterLib()
-  : LibCtl_IGESWriterLib ()
-  { }
-  
-  Standard_EXPORT   IGESData_WriterLib(const Handle(IGESData_Protocol)& theProtocol);
-  
-  Standard_EXPORT void SetComplete ();
-
-  Standard_EXPORT void AddProtocol (const Handle(Standard_Transient)& theProtocol);
-
-  Standard_EXPORT static void SetGlobal (const Handle(IGESData_ReadWriteModule)& theModule,
-                                         const Handle(IGESData_Protocol)& theProtocol);
-};
+                       Handle(IGESData_ReadWriteModule),
+                       Handle(IGESData_Protocol)>
+        IGESData_WriterLib;
 
 #endif

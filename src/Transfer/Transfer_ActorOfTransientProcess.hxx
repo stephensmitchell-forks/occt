@@ -35,11 +35,14 @@ public:
   
   Standard_EXPORT   Transfer_ActorOfTransientProcess();
   
-  Standard_EXPORT   virtual  Handle_Transfer_Binder Transferring(const Handle(Standard_Transient)& start,const Handle(Transfer_TransientProcess)& TP) ;
+  Standard_EXPORT   virtual  Handle_Transfer_Binder Transferring (const Handle(Standard_Transient)& theEnt,
+                                                                  const Handle(Transfer_TransientProcess)& theTP) ;
   
-  Standard_EXPORT   virtual  Handle_Transfer_Binder Transfer(const Handle(Standard_Transient)& start,const Handle(Transfer_TransientProcess)& TP) ;
+  Standard_EXPORT   virtual  Handle_Transfer_Binder Transfer (const Handle(Standard_Transient)& theEnt,
+                                                              const Handle(Transfer_TransientProcess)& theTP) ;
   
-  Standard_EXPORT   virtual  Handle_Standard_Transient TransferTransient(const Handle(Standard_Transient)& start,const Handle(Transfer_TransientProcess)& TP) ;
+  Standard_EXPORT   virtual  Handle_Standard_Transient TransferTransient (const Handle(Standard_Transient)& theStart,
+                                                                          const Handle(Transfer_TransientProcess)& theTP) ;
 
 
   DEFINE_STANDARD_RTTI(Transfer_ActorOfTransientProcess)

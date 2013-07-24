@@ -16,93 +16,16 @@
 // and conditions governing the rights and limitations under the License.
 
 #include <StepData_WriterLib.hxx>
+#include <NCollection_Handle.hxx>
 
+typedef LibCtl_GlobalNode <Handle(StepData_ReadWriteModule),
+                                  Handle(StepData_Protocol)>
+        StepData_GlobalNode;
 
-  static NCollection_Handle < LibCtl_GlobalNode<Handle(StepData_ReadWriteModule),
-                                                Handle(StepData_Protocol)> >
-     myGlobal;
-
-  static NCollection_Handle < LibCtl_Node<Handle(StepData_ReadWriteModule),
-                                          Handle(StepData_Protocol)> >
-     myLast;
-
-  static Handle(StepData_Protocol)
-     myProtocol;
-
-
-  void StepData_WriterLib::SetGlobal (const Handle(StepData_ReadWriteModule)& theModule,
-                                         const Handle(StepData_Protocol)& theProtocol)
-  {
-    if (myGlobal.IsNull())
-      myGlobal = new LibCtl_StepWriterLib::LibCtl_GlobalNode;
-    myGlobal->Add(theModule,theProtocol);
-  }
-
-  StepData_WriterLib::StepData_WriterLib(const Handle(StepData_Protocol)& theProtocol)
-  {
-    Standard_Boolean last = Standard_False;
-    if (theProtocol.IsNull())
-      return;
-    if (!myProtocol.IsNull())
-      last = (myProtocol == theProtocol);
-
-    if (last)
-     thelist = myLast;
-    // If no optimization available: list building
-    else
-    {
-      AddProtocol(theProtocol);
-      // This defines the optimization (for the next time)
-      myLast     = thelist;
-      myProtocol = theProtocol;
-    }
-  }
-
-  void StepData_WriterLib::SetComplete ()
-  {
-    thelist = new LibCtl_StepWriterLib::LibCtl_Node;
-    // Take each of the protocols of the Global list
-    NCollection_Handle <LibCtl_StepWriterLib::LibCtl_GlobalNode> curr;
-    for (curr = myGlobal; !curr.IsNull(); )
-    {
-      const Handle(StepData_Protocol)& protocol = curr->Protocol();
-      // As we take all , it is not preoccupied resources
-      if (!protocol.IsNull()) thelist->AddNode(curr);
-      curr = curr->Next();
-    }
-  }
-
-  void StepData_WriterLib::AddProtocol (const Handle(Standard_Transient)& theProtocol)
-  {
-        // Downcast as Protocol-> Resources, and even redefined to use in other
-    // Library must always return the type highest
-    Handle(StepData_Protocol) aProtocol = Handle(StepData_Protocol)::DownCast(theProtocol);
-    if (aProtocol.IsNull()) return;
-
-    NCollection_Handle <LibCtl_StepWriterLib::LibCtl_GlobalNode> curr;
-    for (curr = myGlobal; !curr.IsNull(); )
-    {
-      const Handle(StepData_Protocol)& protocol = curr->Protocol();
-      if (!protocol.IsNull())
-      {
-        if (protocol->DynamicType() == theProtocol->DynamicType())
-        {
-          if (thelist.IsNull())
-            thelist = new LibCtl_StepWriterLib::LibCtl_Node;
-          thelist->AddNode(curr);
-          break;
-        }
-      }
-      curr = curr->Next();
-    }
-    //  Treat resources
-    Standard_Integer nb = aProtocol->NbResources();
-    for (Standard_Integer i = 1; i <= nb; i++)
-    {
-      AddProtocol (aProtocol->Resource(i));
-    }
-    
-    myProtocol.Nullify();
-    myLast.Nullify();
-  }
-
+template <>
+Standard_EXPORT  static NCollection_Handle< StepData_GlobalNode > & 
+StepData_WriterLib::GetGlobal()
+{
+  static NCollection_Handle < StepData_GlobalNode > aGlobal;
+  return aGlobal;
+}

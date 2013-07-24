@@ -32,60 +32,64 @@ template <class TheStart, class List, class ListHandle, class TransferMap>
 class Transfer_Iterator : public Transfer_TransferIterator
 {
 private:
-  ListHandle  thestarts;
+  ListHandle  myStarts;
 
 public:
   DEFINE_STANDARD_ALLOC
   
-  Standard_EXPORT Transfer_Iterator (const Standard_Boolean withstarts)
+  Standard_EXPORT Transfer_Iterator (const Standard_Boolean theWithStarts)
   : Transfer_TransferIterator ()
-  {  if (withstarts) thestarts = new List();  }
+  {  if (theWithStarts)
+       myStarts = new List();  }
 
 
-  Standard_EXPORT void Add (const Handle(Transfer_Binder)& binder)
+  Standard_EXPORT void Add (const Handle(Transfer_Binder)& theBinder)
   {
-    if (!thestarts.IsNull()) Standard_NoSuchObject::Raise
+    if (!myStarts.IsNull()) Standard_NoSuchObject::Raise
       ("Transfer_Iterator : Add, Starting Object required not provided");
-    AddItem(binder);
+    AddItem(theBinder);
   }
 
-  Standard_EXPORT  void Add (const Handle(Transfer_Binder)& binder,
-                             const TheStart& start)
+  Standard_EXPORT  void Add (const Handle(Transfer_Binder)& theBinder,
+                             const TheStart& theStart)
   {
-    AddItem(binder);
-    if (!thestarts.IsNull()) thestarts->Append(start);
+    AddItem (theBinder);
+    if (!myStarts.IsNull())
+      myStarts->Append(theStart);
   }
 
-  Standard_EXPORT void Filter (const ListHandle& list,
-                               const Standard_Boolean keep = Standard_True)
+  Standard_EXPORT void Filter (const ListHandle& theList,
+                               const Standard_Boolean toKeep = Standard_True)
   {
-    if (list.IsNull() || thestarts.IsNull()) return;
-    Standard_Integer i, j, nb = thestarts->Length();
-    if (nb == 0) return;
+    if (theList.IsNull() || myStarts.IsNull())
+      return;
+    Standard_Integer anI, aJ, aNb = myStarts->Length();
+    if (aNb == 0) return;
     Handle(Transfer_Binder) factice;
-    TransferMap amap (nb);
-    for (i = 1; i <= nb; i ++) {
-      j = amap.Add (thestarts->Value(i),factice);
-      SelectItem (j,!keep);
+    TransferMap amap (aNb);
+    for (anI = 1; anI <= aNb; anI ++) {
+      aJ = amap.Add (myStarts->Value(anI),factice);
+      SelectItem (aJ,!toKeep);
     }
 
     //  Comparaison
-    nb = list->Length();
-    for (i = 1; i <= nb; i ++) {
-      j = amap.FindIndex (list->Value(i));
-      if (j > 0) SelectItem (j,keep);
+    aNb = theList->Length();
+    for (anI = 1; anI <= aNb; anI ++) {
+      aJ = amap.FindIndex (theList->Value(anI));
+      if (aJ > 0) SelectItem (aJ,toKeep);
     }
   }
 
   Standard_EXPORT Standard_Boolean HasStarting () const
-  {  return (!thestarts.IsNull());  }
+  {
+    return (!myStarts.IsNull());
+  }
 
   Standard_EXPORT const TheStart& Starting () const
   {
-
-    if (thestarts.IsNull()) Standard_NoSuchObject::Raise
+    if (myStarts.IsNull()) Standard_NoSuchObject::Raise
       ("TransferIterator : No Starting defined at all");
-    return thestarts->Value(thecurr);
+    return myStarts->Value(thecurr);
   }
 };
 #endif

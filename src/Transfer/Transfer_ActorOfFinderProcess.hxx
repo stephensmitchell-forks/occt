@@ -39,18 +39,18 @@ public:
   //! Returns the Transfer Mode, modifiable <br>
   Standard_EXPORT     Standard_Integer& ModeTrans() ;
   
-  Standard_EXPORT   virtual  Handle(Transfer_Binder) Transferring(const Handle(Transfer_Finder)& start,
-                                                                  const Handle(Transfer_FinderProcess)& TP);
+  Standard_EXPORT   virtual  Handle(Transfer_Binder) Transferring(const Handle(Transfer_Finder)& theFinder,
+                                                                  const Handle(Transfer_FinderProcess)& theFP);
   
-  Standard_EXPORT   virtual  Handle(Transfer_Binder) Transfer(const Handle(Transfer_Finder)& start,
-                                                              const Handle(Transfer_FinderProcess)& TP);
+  Standard_EXPORT   virtual  Handle(Transfer_Binder) Transfer(const Handle(Transfer_Finder)& theFinder,
+                                                              const Handle(Transfer_FinderProcess)& theFP);
   
-  Standard_EXPORT   virtual  Handle(Standard_Transient) TransferTransient(const Handle(Standard_Transient)& start,
-                                                                          const Handle(Transfer_FinderProcess)& TP);
+  Standard_EXPORT   virtual  Handle(Standard_Transient) TransferTransient(const Handle(Standard_Transient)& theEnt,
+                                                                          const Handle(Transfer_FinderProcess)& theFP);
 
   DEFINE_STANDARD_RTTI(Transfer_ActorOfFinderProcess)
 
 protected:
-  Standard_Integer themodetrans;
+  Standard_Integer myModeTrans;
 };
 #endif

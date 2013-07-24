@@ -50,8 +50,8 @@ template < class ActorHandle, class TheStart, class TransferProcessHandle >
 class Transfer_Actor : public MMgt_TShared
 {
 private:
-  ActorHandle thenext;
-  Standard_Boolean thelast;
+  ActorHandle myNext;
+  Standard_Boolean myLast;
 public:
   Standard_EXPORT Transfer_Actor () {  }
 
@@ -62,7 +62,7 @@ public:
   //! TransferProcess calls Recognize on each one before
   //! calling Transfer. But even if Recognize has returned
   //! true, Transfer can reject by returning a Null Binder
-  //! (afterwards rejection), the next actor is then invoked.
+  //! (afterwards rejection), the theNext actor is then invoked.
   //!  The provided default returns True, can be redefined.
   Standard_EXPORT   Standard_Boolean  Recognize (const TheStart& /*start*/)
   {
@@ -76,23 +76,22 @@ public:
   //! information, in addition to those of TransferProcess.
   //! In case of Error during a Transfer, any kind of
   //! exception can be raised.
-  Standard_EXPORT   Handle(Transfer_Binder) Transferring
-                          (const TheStart& /*start*/,
-                           const TransferProcessHandle& /*TP*/)
+  Standard_EXPORT   Handle(Transfer_Binder) Transferring (const TheStart& /*start*/,
+                                                          const TransferProcessHandle& /*TP*/)
   {
     return NullResult();
   }
 
   //! Prepares and returns a binder for a Transient result.
-  //! Returns a Null Handle if <res> is itself null.
+  //! Returns a Null Handle if <theRes> is itself null.
   Standard_EXPORT   Handle(Transfer_SimpleBinderOfTransient) TransientResult
-                   (const Handle(Standard_Transient)& res) const
+                   (const Handle(Standard_Transient)& theRes) const
   {
     Handle(Transfer_SimpleBinderOfTransient) binder;
-    if (res.IsNull())
+    if (theRes.IsNull())
       return binder;
     binder = new Transfer_SimpleBinderOfTransient;
-    binder->SetResult (res);
+    binder->SetResult (theRes);
     return binder;
   }
 
@@ -110,7 +109,7 @@ public:
   //! This allows to define default Actors (which are Last).
   Standard_EXPORT   void SetLast (const Standard_Boolean theMode)
   {
-    thelast = theMode;
+    myLast = theMode;
   }
   
   //! Defines a Next Actor : it can then be asked to work if
@@ -118,31 +117,31 @@ public:
   //! If Next is already set and is not "Last", calls
   //! SetNext on it. If Next defined and "Last", the new
   //! actor is added before it in the list.
-  Standard_EXPORT   void SetNext (const ActorHandle& next)
+  Standard_EXPORT   void SetNext (const ActorHandle& theNext)
   {
-    if (thenext == next)
+    if (myNext == theNext)
       return;
-    if (thenext.IsNull())
-      thenext = next;
-    else if (thenext->IsLast())
+    if (myNext.IsNull())
+      myNext = theNext;
+    else if (myNext->IsLast())
       {
-        next->SetNext(thenext);
-        thenext = next;
+        theNext->SetNext(myNext);
+        myNext = theNext;
       }
     else
-      thenext->SetNext(next);
+      myNext->SetNext(theNext);
   }
   
   //! Returns the actor defined as Next, or a null handle.
   Standard_EXPORT   ActorHandle Next () const
   {
-    return thenext;
+    return myNext;
   }
 
   //! Returns the Last status (see SetLast).
   Standard_EXPORT   Standard_Boolean IsLast () const
   {
-    return thelast;
+    return myLast;
   }
 };
 #endif

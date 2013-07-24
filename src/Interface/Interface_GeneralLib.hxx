@@ -40,58 +40,6 @@ class Interface_Protocol;
 typedef LibCtl_Library <Handle(Standard_Transient),
                         Handle(Interface_GeneralModule),
                         Handle(Interface_Protocol)>
-        LibCtl_GeneralLib;
-
-//template <>
-//NCollection_Handle <LibCtl_GlobalNode<Handle(Interface_GeneralModule),
-//                                      Handle(Interface_Protocol)> >
-//LibCtl_GeneralLib::theglobal;
-//
-//template <>
-//Handle(Interface_Protocol)
-//LibCtl_GeneralLib::theprotocol;
-//
-//template <>
-//NCollection_Handle <LibCtl_Node<Handle(Interface_GeneralModule),
-//                                Handle(Interface_Protocol)> >
-//LibCtl_GeneralLib::thelast;
-
-class Interface_GeneralLib : public LibCtl_GeneralLib
-{
-public:
-  DEFINE_STANDARD_ALLOC
-  Standard_EXPORT   Interface_GeneralLib()
-  : LibCtl_GeneralLib ()
-  { }
-  
-  Standard_EXPORT   Interface_GeneralLib(const Handle(Interface_Protocol)& theProtocol);
-  
-      Standard_EXPORT const Handle(Interface_Protocol)& Protocol () const
-  {return  LibCtl_GeneralLib::Protocol();}
-
-  Standard_EXPORT const Handle(Interface_GeneralModule)& Module () const
-  {return  LibCtl_GeneralLib::Module();}
-
-  Standard_EXPORT void Next ()
-  { LibCtl_GeneralLib::Next();}
-
-  Standard_EXPORT Standard_Boolean More () const
-  {return  LibCtl_GeneralLib::More();}
-
-  Standard_EXPORT void Start ()
-  { LibCtl_GeneralLib::Start();}
-
-  Standard_EXPORT Standard_Boolean Select (const Handle(Standard_Transient)& obj,
-                                           Handle(Interface_GeneralModule)& module,
-                                           Standard_Integer& CN) const
-  {return  LibCtl_GeneralLib::Select(obj,module,CN);}
-
-  Standard_EXPORT void SetComplete ();
-
-  Standard_EXPORT void AddProtocol (const Handle(Standard_Transient)& theProtocol);
-
-  Standard_EXPORT static void SetGlobal (const Handle(Interface_GeneralModule)& theModule,
-                                         const Handle(Interface_Protocol)& theProtocol);
-};
+        Interface_GeneralLib;
 
 #endif

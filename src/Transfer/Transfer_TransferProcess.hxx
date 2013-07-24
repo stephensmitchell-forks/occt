@@ -82,7 +82,7 @@
     //!           - it produces a Binder, which is then recorded in the Map
     //!           - of course, if the Transfer has been already done, it is not
     //!             run once more : the first Result is available
-    //!           - it is possible to re-evaluate the Result if required (i.e.
+    //!           - it is possible to re-evaluate the Result if required (anI.e.
     //!             if the definitive Result is known only once other Transfers
     //!             have been engaged)
     //!           - in the case of a second (or more) ask for Transfer, the
@@ -115,31 +115,31 @@ template <class ActorHandle,
 class Transfer_TransferProcess : public MMgt_TShared
 {
 private:
-  Handle(Standard_Transient) nultrans;
+  Handle(Standard_Transient) myNullTrans;
 protected:
   //! to handle or not exception raisings
-  Standard_Boolean theerrh; 
-  //! trace level (exceptions,errors, etc...)
-  Standard_Integer thetrace;
-  //! messenger for sending messages
-  Handle(Message_Messenger) themessenger;
+  Standard_Boolean myToHandleErr; 
+  //! trace theLevel (exceptions,errors, etc...)
+  Standard_Integer myTrace;
+  //! theMessenger for sending messages
+  Handle(Message_Messenger) myMessenger;
 
-  Standard_Integer thelevel;
-  //! level of root at each time (not allways 1)
-  Standard_Integer therootl;
+  Standard_Integer myLevel;
+  //! theLevel of root at each time (not allways 1)
+  Standard_Integer myRootLevel;
   //! Flag for Root Management set or not
-  Standard_Boolean therootm;
+  Standard_Boolean myToManageRoot;
   //! indices of roots in the map
-  TColStd_IndexedMapOfInteger theroots;
+  TColStd_IndexedMapOfInteger myRoots;
 
   //! Last Starting Object Bound
-  TheStart thelastobj;
+  TheStart myLastObj;
   //! Its attached Binder (noted to optimize)
-  Handle(Transfer_Binder) thelastbnd;
+  Handle(Transfer_Binder) myLastBinder;
   //! And Index
-  Standard_Integer  theindex;
-  ActorHandle theactor;
-  TransferMap themap;
+  Standard_Integer  myIndex;
+  ActorHandle myActor;
+  TransferMap myMap;
   //! Progress indicator
   Handle(Message_ProgressIndicator) myProgress;
   
@@ -150,16 +150,16 @@ public:
   //purpose  : 
   //=======================================================================
 
-  Standard_EXPORT Transfer_TransferProcess (const Standard_Integer nb)
-        : themap (nb)
+  Standard_EXPORT Transfer_TransferProcess (const Standard_Integer theNb)
+        : myMap (theNb)
   {
-    theerrh  = Standard_True;
-    therootm = Standard_False;
-    thelevel = 0;     therootl  = 0;
-    themessenger = Message::DefaultMessenger();
-    thetrace = 0;
-  //  theroots = new TColStd_HSequenceOfInteger ();
-    theindex = 0;
+    myToHandleErr  = Standard_True;
+    myToManageRoot = Standard_False;
+    myLevel = 0;     myRootLevel  = 0;
+    myMessenger = Message::DefaultMessenger();
+    myTrace = 0;
+  //  myRoots = new TColStd_HSequenceOfInteger ();
+    myIndex = 0;
   }
 
 
@@ -168,62 +168,62 @@ public:
   //purpose  : 
   //=======================================================================
 
-  Standard_EXPORT Transfer_TransferProcess (const Handle(Message_Messenger)& messenger,
-                                            const Standard_Integer nb)
-  : themap (nb)
+  Standard_EXPORT Transfer_TransferProcess (const Handle(Message_Messenger)& theMessenger,
+                                            const Standard_Integer theNb)
+  : myMap (theNb)
   {
-    theerrh  = Standard_True;
-    therootm = Standard_False;
-    thelevel = 0;     therootl  = 0;
-    SetMessenger (messenger);
-    thetrace = 1;
-    theindex = 0;
+    myToHandleErr  = Standard_True;
+    myToManageRoot = Standard_False;
+    myLevel = 0;     myRootLevel  = 0;
+    SetMessenger (theMessenger);
+    myTrace = 1;
+    myIndex = 0;
   }
 
   Standard_EXPORT  void Clear ()
   {
-    thelevel = 0;     therootl  = 0;
-    theroots.Clear();
-    themap.Clear();
-    theindex = 0;  thelastobj.Nullify();  thelastbnd.Nullify();
+    myLevel = 0;     myRootLevel  = 0;
+    myRoots.Clear();
+    myMap.Clear();
+    myIndex = 0;  myLastObj.Nullify();  myLastBinder.Nullify();
   }
 
   Standard_EXPORT void Clean ()
   {
-    Standard_Integer i, nb = NbMapped();
-    Standard_Integer j,unb = 0;
-    for (i = 1; i <= nb; i ++)
+    Standard_Integer anI, aNb = NbMapped();
+    Standard_Integer aJ,unb = 0;
+    for (anI = 1; anI <= aNb; anI ++)
     {
-      if (themap(i).IsNull()) unb ++;
+      if (myMap(anI).IsNull()) unb ++;
     }
     if (unb == 0) return;
 
-    TColStd_Array1OfInteger unbs (1,nb);  unbs.Init(0);
-    Transfer_TransferMap newmap (nb*2);
-    for (i = 1; i <= nb; i ++)
+    TColStd_Array1OfInteger unbs (1,aNb);  unbs.Init(0);
+    Transfer_TransferMap newmap (aNb*2);
+    for (anI = 1; anI <= aNb; anI ++)
     {
-      TheStart ent = Mapped(i);
-      Handle(Transfer_Binder) bnd = MapItem(i);
+      TheStart ent = Mapped(anI);
+      Handle(Transfer_Binder) bnd = MapItem(anI);
       if (bnd.IsNull()) continue;
-      j = newmap.Add (ent,bnd);
-      unbs.SetValue (i,j);
+      aJ = newmap.Add (ent,bnd);
+      unbs.SetValue (anI,aJ);
     }
-    themap.Assign (newmap);
+    myMap.Assign (newmap);
 
     // Update the list of root
     TColStd_IndexedMapOfInteger aNewRoots;
-    for (i=1; i<= theroots.Extent(); i++)
+    for (anI=1; anI<= myRoots.Extent(); anI++)
     {
-      j = theroots.FindKey(i);
-      Standard_Integer k = unbs.Value(j);
+      aJ = myRoots.FindKey(anI);
+      Standard_Integer k = unbs.Value(aJ);
       if (k) aNewRoots.Add (k);
     }
-    theroots.Clear();
-    theroots = aNewRoots;
+    myRoots.Clear();
+    myRoots = aNewRoots;
 
-    thelastobj.Nullify();
-    thelastbnd.Nullify();
-    theindex = 0;
+    myLastObj.Nullify();
+    myLastBinder.Nullify();
+    myIndex = 0;
   }
 
   //=======================================================================
@@ -231,9 +231,10 @@ public:
   //purpose  : 
   //=======================================================================
 
-  Standard_EXPORT void Resize (const Standard_Integer nb)
+  Standard_EXPORT void Resize (const Standard_Integer theNb)
   {
-    if (nb > themap.NbBuckets()) themap.ReSize(nb);
+    if (theNb > myMap.NbBuckets())
+      myMap.ReSize(theNb);
   }
 
   //=======================================================================
@@ -241,13 +242,13 @@ public:
   //purpose  : 
   //=======================================================================
 
-  Standard_EXPORT void  SetActor(const ActorHandle& actor)
+  Standard_EXPORT void  SetActor(const ActorHandle& theActor)
   {
-    if (theactor == actor)         return;
-    if (theactor.IsNull())         theactor = actor;
-    else if (actor.IsNull())       theactor = actor;  // declenche RAZ
-    else if (theactor->IsLast()) { actor->SetNext(theactor);  theactor = actor; }
-    else                           theactor->SetNext(actor);
+    if (myActor == theActor)         return;
+    if (myActor.IsNull())         myActor = theActor;
+    else if (theActor.IsNull())       myActor = theActor;  // declenche RAZ
+    else if (myActor->IsLast()) { theActor->SetNext(myActor);  myActor = theActor; }
+    else                           myActor->SetNext(theActor);
   }
 
 
@@ -258,7 +259,7 @@ public:
 
   Standard_EXPORT ActorHandle Actor () const 
   {
-    return theactor;
+    return myActor;
   }
 
 
@@ -273,19 +274,19 @@ public:
   //purpose  : 
   //=======================================================================
 
-  Standard_EXPORT Handle(Transfer_Binder) Find (const TheStart& start) const
+  Standard_EXPORT Handle(Transfer_Binder) Find (const TheStart& theStart) const
   {
-    if (thelastobj == start) {
-      //if (theindex > 0) return thelastbnd->Search(categ); //skl
-      if (theindex > 0) return thelastbnd; //skl
+    if (myLastObj == theStart) {
+      //if (myIndex > 0) return myLastBinder->Search(categ); //skl
+      if (myIndex > 0) return myLastBinder; //skl
     }
-    Standard_Integer index = themap.FindIndex (start);
+    Standard_Integer index = myMap.FindIndex (theStart);
     if (index > 0)
     {
-      const Handle(Transfer_Binder)& binder = themap.FindFromIndex(index);
-      //if (binder.IsNull()) //skl
-      return binder;
-      //return binder->Search(categ); //skl
+      const Handle(Transfer_Binder)& theBinder = myMap.FindFromIndex(index);
+      //if (theBinder.IsNull()) //skl
+      return theBinder;
+      //return theBinder->Search(categ); //skl
     }
     Handle(Transfer_Binder)  nulbinder;
     return nulbinder;
@@ -296,11 +297,11 @@ public:
   //purpose  : 
   //=======================================================================
 
-  Standard_EXPORT Standard_Boolean IsBound(const TheStart& start) const
+  Standard_EXPORT Standard_Boolean IsBound(const TheStart& theStart) const
   {
-    Handle(Transfer_Binder) binder = Find(start); //,categ); skl
-    if (binder.IsNull()) return Standard_False;
-    return binder->HasResult();
+    Handle(Transfer_Binder) theBinder = Find(theStart); //,categ); skl
+    if (theBinder.IsNull()) return Standard_False;
+    return theBinder->HasResult();
   }
 
   //=======================================================================
@@ -308,16 +309,16 @@ public:
   //purpose  : 
   //=======================================================================
 
-  Standard_EXPORT Standard_Boolean IsAlreadyUsed(const TheStart& start) const
+  Standard_EXPORT Standard_Boolean IsAlreadyUsed(const TheStart& theStart) const
   //							 const Standard_Integer categ) const
   {
-    Handle(Transfer_Binder) binder = Find(start);
-    if (binder.IsNull()) {
-      StartTrace (binder,start,thelevel,4);
+    Handle(Transfer_Binder) theBinder = Find(theStart);
+    if (theBinder.IsNull()) {
+      StartTrace (theBinder,theStart,myLevel,4);
       Transfer_TransferFailure::Raise
         ("TransferProcess : IsAlreadyUsed, transfer not done cannot be used...");
     }
-    return (binder->Status() == Transfer_StatusUsed);
+    return (theBinder->Status() == Transfer_StatusUsed);
   }
 
   //=======================================================================
@@ -325,17 +326,17 @@ public:
   //purpose  : 
   //=======================================================================
 
-  Standard_EXPORT Handle(Transfer_Binder) FindAndMask(const TheStart& start)
+  Standard_EXPORT Handle(Transfer_Binder) FindAndMask(const TheStart& theStart)
   {
-    if (thelastobj == start)
+    if (myLastObj == theStart)
     {
-      if (theindex > 0) return thelastbnd;
+      if (myIndex > 0) return myLastBinder;
     }
-    thelastobj = start;
-    theindex   = themap.FindIndex (start);
-    if (theindex > 0) thelastbnd = themap.FindFromIndex(theindex);
-    else thelastbnd.Nullify();
-    return thelastbnd;
+    myLastObj = theStart;
+    myIndex   = myMap.FindIndex (theStart);
+    if (myIndex > 0) myLastBinder = myMap.FindFromIndex(myIndex);
+    else myLastBinder.Nullify();
+    return myLastBinder;
   }
 
   //=======================================================================
@@ -343,40 +344,40 @@ public:
   //purpose  : 
   //=======================================================================
 
-  Standard_EXPORT void Bind (const TheStart& start,
-                             const Handle(Transfer_Binder)& binder)
+  Standard_EXPORT void Bind (const TheStart& theStart,
+                             const Handle(Transfer_Binder)& theBinder)
   {
-    if (binder.IsNull()) return;
-    Handle(Transfer_Binder) former = FindAndMask(start);
-    if (!former.IsNull())
+    if (theBinder.IsNull()) return;
+    Handle(Transfer_Binder) aFormer = FindAndMask(theStart);
+    if (!aFormer.IsNull())
     {
-      if (former->DynamicType() == STANDARD_TYPE(Transfer_VoidBinder))
+      if (aFormer->DynamicType() == STANDARD_TYPE(Transfer_VoidBinder))
       {
-        binder->Merge(former);
-        themap(theindex) = binder; // Substitution
+        theBinder->Merge(aFormer);
+        myMap(myIndex) = theBinder; // Substitution
       }
-      else if (former->Status() == Transfer_StatusUsed)
+      else if (aFormer->Status() == Transfer_StatusUsed)
       {
-        StartTrace (former,start,thelevel,4);
+        StartTrace (aFormer,theStart,myLevel,4);
         Transfer_TransferFailure::Raise
          ("TransferProcess : Bind, already Bound");
       }
       else
       {
-        if (thetrace > 2) StartTrace (former,start,thelevel,5);
-        binder->CCheck()->GetMessages (former->Check());
+        if (myTrace > 2) StartTrace (aFormer,theStart,myLevel,5);
+        theBinder->CCheck()->GetMessages (aFormer->Check());
       }
     }
-    if (theindex == 0 || thelastbnd.IsNull())
+    if (myIndex == 0 || myLastBinder.IsNull())
     {
-      if (theindex == 0) theindex = themap.Add(start,binder);
-      else themap(theindex) = binder;
-      thelastbnd = binder;
+      if (myIndex == 0) myIndex = myMap.Add(theStart,theBinder);
+      else myMap(myIndex) = theBinder;
+      myLastBinder = theBinder;
     }
     else 
     {
-      thelastbnd  = binder;
-      themap(theindex) = binder;
+      myLastBinder  = theBinder;
+      myMap(myIndex) = theBinder;
     }
   }
 
@@ -385,10 +386,10 @@ public:
   //purpose  : 
   //=======================================================================
 
-  Standard_EXPORT void Rebind (const TheStart& start,
-                               const Handle(Transfer_Binder)& binder)
+  Standard_EXPORT void Rebind (const TheStart& theStart,
+                               const Handle(Transfer_Binder)& theBinder)
   {
-    Bind(start,binder);
+    Bind(theStart,theBinder);
   }
 
   //=======================================================================
@@ -396,28 +397,28 @@ public:
   //purpose  : 
   //=======================================================================
 
-  Standard_EXPORT Standard_Boolean Unbind (const TheStart& start)
+  Standard_EXPORT Standard_Boolean Unbind (const TheStart& theStart)
   {
-    Handle(Transfer_Binder) former = FindAndMask(start);
-    if (theindex == 0) return Standard_False;
-    if (former.IsNull()) return Standard_False;
-    if (former->DynamicType() == STANDARD_TYPE(Transfer_VoidBinder))
+    Handle(Transfer_Binder) aFormer = FindAndMask(theStart);
+    if (myIndex == 0) return Standard_False;
+    if (aFormer.IsNull()) return Standard_False;
+    if (aFormer->DynamicType() == STANDARD_TYPE(Transfer_VoidBinder))
       return Standard_True;
-      themap(theindex) = thelastbnd;
-    if (theroots.Contains(theindex))
+      myMap(myIndex) = myLastBinder;
+    if (myRoots.Contains(myIndex))
     {
       TColStd_IndexedMapOfInteger aNewRoots;
-      for (Standard_Integer i = 1; i <= theroots.Extent(); i++)
-        if (theindex!= theroots.FindKey(i))
-          aNewRoots.Add(theroots.FindKey(i));
+      for (Standard_Integer anI = 1; anI <= myRoots.Extent(); anI++)
+        if (myIndex!= myRoots.FindKey(anI))
+          aNewRoots.Add(myRoots.FindKey(anI));
       
-      theroots.Clear();
-      theroots = aNewRoots;
+      myRoots.Clear();
+      myRoots = aNewRoots;
     }
 
-    thelastobj.Nullify();
-    thelastbnd.Nullify();
-    theindex = 0;
+    myLastObj.Nullify();
+    myLastBinder.Nullify();
+    myIndex = 0;
     return Standard_True;
   }
 
@@ -426,13 +427,13 @@ public:
   //purpose  : 
   //=======================================================================
 
-  Standard_EXPORT Handle(Transfer_Binder) FindElseBind(const TheStart& start)
+  Standard_EXPORT Handle(Transfer_Binder) FindElseBind(const TheStart& theStart)
   {
-    Handle(Transfer_Binder) binder = FindAndMask (start);
-    if (!binder.IsNull()) return binder;
-    binder = new Transfer_VoidBinder;
-    Bind(start,binder);
-    return binder;
+    Handle(Transfer_Binder) aBinder = FindAndMask (theStart);
+    if (!aBinder.IsNull()) return aBinder;
+    aBinder = new Transfer_VoidBinder;
+    Bind(theStart,aBinder);
+    return aBinder;
   }
   
   //=======================================================================
@@ -440,12 +441,12 @@ public:
   //purpose  : 
   //=======================================================================
 
-  Standard_EXPORT void SetMessenger (const Handle(Message_Messenger)& messenger)
+  Standard_EXPORT void SetMessenger (const Handle(Message_Messenger)& theMessenger)
   {
-    if ( messenger.IsNull() )
-      themessenger = Message::DefaultMessenger();
+    if ( theMessenger.IsNull() )
+      myMessenger = Message::DefaultMessenger();
     else   
-      themessenger = messenger;
+      myMessenger = theMessenger;
   }
 
   //=======================================================================
@@ -455,7 +456,7 @@ public:
 
   Standard_EXPORT Handle(Message_Messenger) Messenger () const
   {
-    return themessenger;
+    return myMessenger;
   }
 
   //=======================================================================
@@ -465,7 +466,7 @@ public:
 
   Standard_EXPORT void SetTraceLevel (const Standard_Integer tracelev)
   {
-    thetrace = tracelev;
+    myTrace = tracelev;
   }
 
   //=======================================================================
@@ -475,7 +476,7 @@ public:
 
   Standard_EXPORT Standard_Integer TraceLevel () const
   {
-    return thetrace;
+    return myTrace;
   }
 
   //=======================================================================
@@ -483,10 +484,10 @@ public:
   //purpose  : 
   //=======================================================================
 
-  Standard_EXPORT void  SendFail (const TheStart& start,
-                                  const Message_Msg& amsg)
+  Standard_EXPORT void  SendFail (const TheStart& theStart,
+                                  const Message_Msg& theMsg)
   {
-    AddFail(start,amsg);
+    AddFail(theStart,theMsg);
   }
 
 
@@ -495,10 +496,10 @@ public:
   //purpose  : 
   //=======================================================================
 
-  Standard_EXPORT void  SendWarning(const TheStart& start,
-                                    const Message_Msg& amsg)
+  Standard_EXPORT void  SendWarning (const TheStart& theStart,
+                                     const Message_Msg& theMsg)
   {
-    AddWarning(start,amsg);
+    AddWarning(theStart,theMsg);
   }
 
 
@@ -507,21 +508,21 @@ public:
   //purpose  : 
   //=======================================================================
 
-  Standard_EXPORT void  SendMsg (const TheStart& start,
-                                           const Message_Msg& amsg)
+  Standard_EXPORT void  SendMsg (const TheStart& theStart,
+                                 const Message_Msg& theMsg)
   {
-    Handle(Transfer_Binder) binder = FindAndMask(start);
-    if (binder.IsNull()) {
-      binder = new Transfer_VoidBinder;
-      Bind (start,binder);
+    Handle(Transfer_Binder) theBinder = FindAndMask(theStart);
+    if (theBinder.IsNull()) {
+      theBinder = new Transfer_VoidBinder;
+      Bind (theStart,theBinder);
     }
     // Feeds the trace: Rule causing (user messages)
-    if (thetrace > 0) {
-      StartTrace (binder,start,thelevel,6);
-      themessenger << amsg.Value();
-      if (amsg.IsEdited()&&thetrace>2)
-        themessenger << " [from: " << amsg.Original() << "]";
-      themessenger << endl;
+    if (myTrace > 0) {
+      StartTrace (theBinder,theStart,myLevel,6);
+      myMessenger << theMsg.Value();
+      if (theMsg.IsEdited()&&myTrace>2)
+        myMessenger << " [from: " << theMsg.Original() << "]";
+      myMessenger << endl;
     }
   }
 
@@ -530,21 +531,21 @@ public:
   //purpose  : 
   //=======================================================================
 
-  Standard_EXPORT void AddFail (const TheStart& start,
+  Standard_EXPORT void AddFail (const TheStart& theStart,
                                 const Standard_CString mess,
                                 const Standard_CString orig)
   {
-    Handle(Transfer_Binder) binder = FindAndMask(start);
-    if (binder.IsNull()) {
-      binder = new Transfer_VoidBinder;
-      Bind (start,binder);
+    Handle(Transfer_Binder) theBinder = FindAndMask(theStart);
+    if (theBinder.IsNull()) {
+      theBinder = new Transfer_VoidBinder;
+      Bind (theStart,theBinder);
     }
-    binder->AddFail (mess,orig);
-    if (thetrace > 0) {
-      StartTrace (binder,start,thelevel,1);
-      themessenger << "    --> Fail : " << mess;
-      if (orig[0] != '\0'&&thetrace>2) themessenger << " [from: " << orig << "]";
-      themessenger << endl;
+    theBinder->AddFail (mess,orig);
+    if (myTrace > 0) {
+      StartTrace (theBinder,theStart,myLevel,1);
+      myMessenger << "    --> Fail : " << mess;
+      if (orig[0] != '\0'&&myTrace>2) myMessenger << " [from: " << orig << "]";
+      myMessenger << endl;
     }
   }
 
@@ -554,11 +555,11 @@ public:
   //purpose  : 
   //=======================================================================
 
-  Standard_EXPORT void AddError(const TheStart& start,
+  Standard_EXPORT void AddError(const TheStart& theStart,
                                 const Standard_CString mess,
                                 const Standard_CString orig)
   {
-    AddFail (start,mess,orig);
+    AddFail (theStart,mess,orig);
   }
 
   //=======================================================================
@@ -566,12 +567,12 @@ public:
   //purpose  : 
   //=======================================================================
 
-  Standard_EXPORT void AddFail (const TheStart& start,
-                                const Message_Msg& amsg)
+  Standard_EXPORT void AddFail (const TheStart& theStart,
+                                const Message_Msg& theMsg)
   {
-    if (amsg.IsEdited()) AddFail (start,TCollection_AsciiString(amsg.Value()).ToCString(),
-          TCollection_AsciiString(amsg.Original()).ToCString());
-    else AddFail (start,TCollection_AsciiString(amsg.Value()).ToCString());
+    if (theMsg.IsEdited()) AddFail (theStart,TCollection_AsciiString(theMsg.Value()).ToCString(),
+          TCollection_AsciiString(theMsg.Original()).ToCString());
+    else AddFail (theStart,TCollection_AsciiString(theMsg.Value()).ToCString());
   }
 
   //=======================================================================
@@ -579,21 +580,21 @@ public:
   //purpose  : 
   //=======================================================================
 
-  Standard_EXPORT void AddWarning (const TheStart& start,
+  Standard_EXPORT void AddWarning (const TheStart& theStart,
                                    const Standard_CString mess,
                                    const Standard_CString orig)
   {
-    Handle(Transfer_Binder) binder = FindAndMask(start);
-    if (binder.IsNull()) {
-      binder = new Transfer_VoidBinder;
-      Bind (start,binder);
+    Handle(Transfer_Binder) aBinder = FindAndMask(theStart);
+    if (aBinder.IsNull()) {
+      aBinder = new Transfer_VoidBinder;
+      Bind (theStart,aBinder);
     }
-    binder->AddWarning(mess,orig);
-    if (thetrace > 1) {
-      StartTrace (binder,start,thelevel,2);
-      themessenger << "    --> Warning : " << mess;
-      if (orig[0] != '\0'&&thetrace>2) themessenger << " [from: " << orig << "]";
-      themessenger << endl;
+    aBinder->AddWarning(mess,orig);
+    if (myTrace > 1) {
+      StartTrace (aBinder,theStart,myLevel,2);
+      myMessenger << "    --> Warning : " << mess;
+      if (orig[0] != '\0'&&myTrace>2) myMessenger << " [from: " << orig << "]";
+      myMessenger << endl;
     }
   }
 
@@ -602,12 +603,12 @@ public:
   //purpose  : 
   //=======================================================================
 
-  Standard_EXPORT void AddWarning (const TheStart& start,
-                                   const Message_Msg& amsg)
+  Standard_EXPORT void AddWarning (const TheStart& theStart,
+                                   const Message_Msg& theMsg)
   {
-    if (amsg.IsEdited()) AddWarning (start,TCollection_AsciiString(amsg.Value()).ToCString(),
-             TCollection_AsciiString(amsg.Original()).ToCString());
-    else AddWarning (start,TCollection_AsciiString(amsg.Value()).ToCString());
+    if (theMsg.IsEdited()) AddWarning (theStart,TCollection_AsciiString(theMsg.Value()).ToCString(),
+             TCollection_AsciiString(theMsg.Original()).ToCString());
+    else AddWarning (theStart,TCollection_AsciiString(theMsg.Value()).ToCString());
   }
 
   //=======================================================================
@@ -615,12 +616,12 @@ public:
   //purpose  : 
   //=======================================================================
 
-  Standard_EXPORT void Mend (const TheStart& start,
+  Standard_EXPORT void Mend (const TheStart& theStart,
                              const Standard_CString pref)
   {
-    Handle(Transfer_Binder) binder = FindAndMask(start);
-    if (binder.IsNull()) return;
-    Handle(Interface_Check) ach =  binder->CCheck();
+    Handle(Transfer_Binder) aBinder = FindAndMask(theStart);
+    if (aBinder.IsNull()) return;
+    Handle(Interface_Check) ach =  aBinder->CCheck();
     ach->Mend (pref);
   }
 
@@ -629,14 +630,14 @@ public:
   //purpose  : 
   //=======================================================================
 
-  Standard_EXPORT Handle(Interface_Check) Check(const TheStart& start) const
+  Standard_EXPORT Handle(Interface_Check) Check(const TheStart& theStart) const
   {
-    const Handle(Transfer_Binder)& binder = Find(start);
-    if (binder.IsNull()) {
-      Handle(Interface_Check) check;
-      return check;
+    const Handle(Transfer_Binder)& aBinder = Find(theStart);
+    if (aBinder.IsNull()) {
+      Handle(Interface_Check) aCheck;
+      return aCheck;
     }
-    return binder->Check();
+    return aBinder->Check();
   }
 
   //  ##    ##    ##        Actions sur Types Privilegies        ##    ##    ##
@@ -654,20 +655,20 @@ public:
   //purpose  : 
   //=======================================================================
 
-  Standard_EXPORT void BindTransient (const TheStart& start,
+  Standard_EXPORT void BindTransient (const TheStart& theStart,
                                       const Handle(Standard_Transient)& res)
   {
     if (res.IsNull()) return;
-    Handle(Transfer_Binder) former = Find(start);//,categ);skl
-    Handle(Transfer_SimpleBinderOfTransient) binder =
-      Handle(Transfer_SimpleBinderOfTransient)::DownCast(former);
-    if (!binder.IsNull()) {
-      if (binder->Status() == Transfer_StatusVoid) { binder->SetResult(res); return; }
+    Handle(Transfer_Binder) aFormer = Find(theStart);//,categ);skl
+    Handle(Transfer_SimpleBinderOfTransient) aBinder =
+      Handle(Transfer_SimpleBinderOfTransient)::DownCast(aFormer);
+    if (!aBinder.IsNull()) {
+      if (aBinder->Status() == Transfer_StatusVoid) { aBinder->SetResult(res); return; }
     }
-    binder = new Transfer_SimpleBinderOfTransient;
-    binder->SetResult (res);
-    if (former.IsNull()) Bind(start,binder);
-    else Rebind(start,binder);
+    aBinder = new Transfer_SimpleBinderOfTransient;
+    aBinder->SetResult (res);
+    if (aFormer.IsNull()) Bind(theStart,aBinder);
+    else Rebind(theStart,aBinder);
   }
 
   //=======================================================================
@@ -676,13 +677,13 @@ public:
   //=======================================================================
 
   Standard_EXPORT const Handle(Standard_Transient)& FindTransient
-                                                    (const TheStart& start) const
+                                                    (const TheStart& theStart) const
   {
-    Handle(Transfer_SimpleBinderOfTransient) binder =
-      Handle(Transfer_SimpleBinderOfTransient)::DownCast(Find(start));
-    if (binder.IsNull()) return nultrans;
-    if (!binder->HasResult()) return nultrans;
-    return binder->Result();
+    Handle(Transfer_SimpleBinderOfTransient) aBinder =
+      Handle(Transfer_SimpleBinderOfTransient)::DownCast(Find(theStart));
+    if (aBinder.IsNull()) return myNullTrans;
+    if (!aBinder->HasResult()) return myNullTrans;
+    return aBinder->Result();
   }
 
   // Binding Multiple: D by BindMultiple declare the first (if not already done)
@@ -693,16 +694,16 @@ public:
   //purpose  : 
   //=======================================================================
 
-  Standard_EXPORT void BindMultiple(const TheStart& start)
+  Standard_EXPORT void BindMultiple(const TheStart& theStart)
   {
-    Handle(Transfer_Binder) binder = FindAndMask (start);
-    if (!binder.IsNull()) {
-      if (!binder->IsKind(STANDARD_TYPE(Transfer_MultipleBinder))) {
-        StartTrace (thelastbnd,start,thelevel,4);
+    Handle(Transfer_Binder) aBinder = FindAndMask (theStart);
+    if (!aBinder.IsNull()) {
+      if (!aBinder->IsKind(STANDARD_TYPE(Transfer_MultipleBinder))) {
+        StartTrace (myLastBinder,theStart,myLevel,4);
         Transfer_TransferFailure::Raise ("TransferProcess : BindMultiple");
       }
     }
-    else Bind(start,new Transfer_MultipleBinder);
+    else Bind(theStart,new Transfer_MultipleBinder);
   }
 
   //=======================================================================
@@ -710,15 +711,15 @@ public:
   //purpose  : 
   //=======================================================================
 
-  Standard_EXPORT void AddMultiple(const TheStart& start,
+  Standard_EXPORT void AddMultiple(const TheStart& theStart,
                                    const Handle(Standard_Transient)& res)
   {
-    Handle(Transfer_Binder) binder = FindAndMask(start);
+    Handle(Transfer_Binder) aBinder = FindAndMask(theStart);
     Handle(Transfer_MultipleBinder) multr =
-      Handle(Transfer_MultipleBinder)::DownCast(binder);
+      Handle(Transfer_MultipleBinder)::DownCast(aBinder);
     if (multr.IsNull()) {
-      StartTrace (binder,start,thelevel,4);
-      if (binder.IsNull()) Transfer_TransferFailure::Raise
+      StartTrace (aBinder,theStart,myLevel,4);
+      if (aBinder.IsNull()) Transfer_TransferFailure::Raise
         ("TransferProcess : AddMultiple, nothing bound");
       else                 Transfer_TransferFailure::Raise
         ("TransferProcess : AddMultiple, Binder not a MultipleBinder");
@@ -732,11 +733,11 @@ public:
   //=======================================================================
 
   Standard_EXPORT Standard_Boolean FindTypedTransient
-           (const TheStart& start,
+           (const TheStart& theStart,
             const Handle(Standard_Type)& atype,
             Handle(Standard_Transient)& val) const
   {
-    return GetTypedTransient (Find(start),atype,val);
+    return GetTypedTransient (Find(theStart),atype,val);
   }
 
 
@@ -746,11 +747,11 @@ public:
   //=======================================================================
 
   Standard_EXPORT Standard_Boolean GetTypedTransient
-         (const Handle(Transfer_Binder)& binder,
+         (const Handle(Transfer_Binder)& aBinder,
           const Handle(Standard_Type)& atype,
           Handle(Standard_Transient)& val) const
   {
-    return Transfer_SimpleBinderOfTransient::GetTypedResult(binder,atype,val);
+    return Transfer_SimpleBinderOfTransient::GetTypedResult(aBinder,atype,val);
   }
 
 
@@ -764,7 +765,7 @@ public:
 
   Standard_EXPORT Standard_Integer NbMapped () const
   {
-    return themap.Extent();
+    return myMap.Extent();
   }
 
   //=======================================================================
@@ -774,7 +775,7 @@ public:
 
   Standard_EXPORT const TheStart& Mapped(const Standard_Integer num) const
   {
-    return themap.FindKey(num);
+    return myMap.FindKey(num);
   }
 
   //=======================================================================
@@ -782,9 +783,9 @@ public:
   //purpose  : 
   //=======================================================================
 
-  Standard_EXPORT Standard_Integer MapIndex(const TheStart& start) const
+  Standard_EXPORT Standard_Integer MapIndex(const TheStart& theStart) const
   {
-    return themap.FindIndex(start);
+    return myMap.FindIndex(theStart);
   }
 
   //=======================================================================
@@ -794,8 +795,8 @@ public:
 
   Standard_EXPORT Handle(Transfer_Binder) MapItem(const Standard_Integer num) const
   {
-    Handle(Transfer_Binder) binder = themap.FindFromIndex(num);
-    return binder;
+    Handle(Transfer_Binder) aBinder = myMap.FindFromIndex(num);
+    return aBinder;
   }
 
 
@@ -807,15 +808,15 @@ public:
   //purpose  : 
   //=======================================================================
 
-  Standard_EXPORT void SetRoot (const TheStart& start)
+  Standard_EXPORT void SetRoot (const TheStart& theStart)
   {
-    Standard_Integer index = MapIndex(start);
+    Standard_Integer index = MapIndex(theStart);
     if (index == 0) {
       return;
     }
 
-    theroots.Add(index);
-    if (thetrace > 2) StartTrace (MapItem(index),start,thelevel,3);
+    myRoots.Add(index);
+    if (myTrace > 2) StartTrace (MapItem(index),theStart,myLevel,3);
   }
 
   //=======================================================================
@@ -825,7 +826,7 @@ public:
 
   Standard_EXPORT void SetRootManagement(const Standard_Boolean stat)
   {
-    therootm = stat;
+    myToManageRoot = stat;
   }
 
   //=======================================================================
@@ -835,7 +836,7 @@ public:
 
   Standard_EXPORT Standard_Integer NbRoots () const
   {
-    return theroots.Extent();
+    return myRoots.Extent();
   }
 
   //=======================================================================
@@ -845,9 +846,9 @@ public:
 
   Standard_EXPORT const TheStart& Root(const Standard_Integer num) const
   {
-    Standard_Integer ind = 0;
-    if (num > 0 && num <= theroots.Extent()) ind = theroots.FindKey(num);
-    return themap.FindKey (ind);
+    Standard_Integer anInd = 0;
+    if (num > 0 && num <= myRoots.Extent()) anInd = myRoots.FindKey(num);
+    return myMap.FindKey (anInd);
   }
   
   //=======================================================================
@@ -857,9 +858,9 @@ public:
 
   Standard_EXPORT Handle(Transfer_Binder) RootItem(const Standard_Integer num) const
   {
-    Standard_Integer ind = 0;
-    if (num > 0 && num <= theroots.Extent()) ind = theroots.FindKey(num);
-    return themap.FindFromIndex(ind);//->Search(categ);skl
+    Standard_Integer anInd = 0;
+    if (num > 0 && num <= myRoots.Extent()) anInd = myRoots.FindKey(num);
+    return myMap.FindFromIndex(anInd);//->Search(categ);skl
   }
   
   //=======================================================================
@@ -867,11 +868,11 @@ public:
   //purpose  : 
   //=======================================================================
 
-  Standard_EXPORT Standard_Integer RootIndex(const TheStart& start) const
+  Standard_EXPORT Standard_Integer RootIndex(const TheStart& theStart) const
   {
-    Standard_Integer index = MapIndex(start);
+    Standard_Integer index = MapIndex(theStart);
     if (index == 0) return 0;
-    return theroots.FindIndex(index);
+    return myRoots.FindIndex(index);
   }
 
   //=======================================================================
@@ -881,7 +882,7 @@ public:
 
   Standard_EXPORT Standard_Integer NestingLevel () const
   {
-    return thelevel;
+    return myLevel;
   }
 
   //=======================================================================
@@ -891,7 +892,7 @@ public:
 
   Standard_EXPORT void ResetNestingLevel ()
   {
-    thelevel = 0;
+    myLevel = 0;
   }
 
   //  ########################################################################
@@ -900,7 +901,7 @@ public:
 
   //======================================================================
   //Purpose : gka TRJ9 for writing SDR for solid
-  //          Check if binder has already been bound to the result binder.
+  //          Check if aBinder has already been bound to the result aBinder.
   //======================================================================
 
   // static Standard_Boolean Contains(const Handle(Transfer_Binder)& resbinder, 
@@ -923,185 +924,18 @@ public:
   //purpose  : 
   //=======================================================================
 
-  Standard_EXPORT Standard_Boolean Recognize(const TheStart& start) const
+  Standard_EXPORT Standard_Boolean Recognize(const TheStart& theStart) const
   {
-    ActorHandle actor = theactor;
+    ActorHandle aActor = myActor;
     // It scans up to have a next result
-    while (!actor.IsNull()) {
-      if (actor->Recognize (start)) return Standard_True;
-      actor = actor->Next();
+    while (!aActor.IsNull())
+    {
+      if (aActor->Recognize (theStart))
+        return Standard_True;
+      aActor = aActor->Next();
     }
     return Standard_False;
   }
-
-//  //=======================================================================
-//  //function : Transferring
-//  //purpose  : 
-//  //=======================================================================
-//
-//  Standard_EXPORT Handle(Transfer_Binder) Transferring (const TheStart& start)
-//  {
-//    Handle(Transfer_Binder) former = FindAndMask(start);
-//
-//    // Use more: note "AlreadyUsed" so result can not be changed
-//    if (!former.IsNull()) {
-//      if (former->HasResult()) {
-//        former->SetAlreadyUsed();
-//        return former;
-//      }
-//
-//      // Initial state: perhaps already done ... or infeasible
-//      Transfer_StatusExec statex = former->StatusExec();
-//      switch (statex) {
-//        case Transfer_StatusInitial :               // Transfer is prepared to do
-//          break;
-//        case Transfer_StatusDone :                  // Transfer was already done
-//          themessenger << " .. and Transfer done" << endl;
-//          return former;
-//        case Transfer_StatusRun :
-//          former->SetStatusExec(Transfer_StatusLoop);
-//          return former;
-//        case Transfer_StatusError :
-//          if (thetrace) {
-//            themessenger << "                  *** Transfer in Error Status  :" << endl;
-//            StartTrace (former, start, thelevel,0);
-//          }
-//          else StartTrace (former, start,thelevel,4);
-//          Transfer_TransferFailure::Raise
-//            ("TransferProcess : Transfer in Error Status");
-//        case Transfer_StatusLoop :                  // The loop is closed ...
-//          if (thetrace) {
-//            themessenger << "                  *** Transfer  Head of Dead Loop  :" << endl;
-//            StartTrace (former, start, thelevel,0);
-//          }
-//          else StartTrace (former, start,thelevel,4);
-//          Transfer_TransferDeadLoop::Raise
-//            ("TransferProcess : Transfer at Head of a Dead Loop");
-//      }
-//#ifdef TRANSLOG
-//      cout << "Transfer,level "<<thelevel<<Message_Flush;
-//#endif
-//      former->SetStatusExec(Transfer_StatusRun);
-//    }
-//#ifdef TRANSLOG
-//    cout << " GO .." << endl;
-//#endif
-//
-//    Handle(Transfer_Binder) binder;
-//    Standard_Boolean newbind = Standard_False;
-//    if (theerrh) {
-//      // Transfer under protection exceptions (for notification actually)
-//      Standard_Integer oldlev = thelevel;
-//      try {
-//        OCC_CATCH_SIGNALS
-//          binder = TransferProduct(start);
-//      }
-//      catch (Transfer_TransferDeadLoop) {
-//        if (binder.IsNull()) {
-//          themessenger << "                  *** Dead Loop with no Result" << endl;
-//          if (thetrace) StartTrace (binder, start, thelevel-1,0);
-//          binder = new Transfer_VoidBinder;
-//          Bind (start,binder);  newbind = Standard_True;
-//        } else if (binder->StatusExec() == Transfer_StatusLoop) {
-//          if (thetrace) {
-//            themessenger << "                  *** Dead Loop : Finding head of Loop :" << endl;
-//            StartTrace (binder, start, thelevel-1,0);
-//          }
-//          else StartTrace (binder, start,thelevel-1,4);
-//          Transfer_TransferFailure::Raise("TransferProcess : Head of Dead Loop");
-//        } else {
-//          if (thetrace) {
-//            themessenger << "                  *** Dead Loop : Actor in Loop :" << endl;
-//            StartTrace (binder, start, thelevel-1,0);
-//          }
-//        }
-//        binder->AddFail("Transfer in dead Loop");
-//        thelevel = oldlev;
-//      }
-//      catch (Standard_Failure) {
-//        if (binder.IsNull()) {
-//          themessenger << "                  *** Exception Raised with no Result" << endl;
-//          binder = new Transfer_VoidBinder;
-//          Bind (start,binder);  newbind = Standard_True;
-//        }
-//        binder->AddFail("Transfer stopped by exception raising");
-//        if (thetrace) {
-//          themessenger << "    *** Raised : " << Standard_Failure::Caught()->GetMessageString() << endl;
-//          StartTrace (binder, start, thelevel-1,4);
-//        }
-//        thelevel = oldlev;
-//      }
-//    }
-//
-//    else  binder = TransferProduct(start);
-//
-//    //    Conclusion : Noter dans la Map  
-//
-//    if (!newbind && !binder.IsNull()) {
-//      if (former.IsNull()) {
-//        if (!IsBound(start)) Bind(start,binder);     // result = 0 category
-//        else {                                       // gka TRJ9 for writing SDR for solid
-//          Rebind(start,binder); // test_pattern.sat
-//        }
-//      }
-//      else Rebind(start,binder);
-//#ifdef TRANSLOG
-//      cout << " ... OK" << endl;
-//#endif
-//    }
-//    else
-//    {
-//      //= by ABV: 5 Oct 97: nothing generated, but former can be in run state - drop it
-//      //= ASK: may be set it to StatusInitial ?
-//      if ( ! former.IsNull() ) former->SetStatusExec ( Transfer_StatusDone );
-//      Handle(Transfer_Binder)     nulbinder;
-//      return nulbinder;
-//    }
-//
-//    //  Manage Roots (if planned)
-//    if (therootl >= thelevel) {
-//      therootl = 0;
-//      if (therootm && binder->Status() != Transfer_StatusVoid) {
-//        SetRoot (start);
-//      }
-//    }
-//    return thelastbnd;
-//  }
-
-  //Standard_EXPORT Handle(Transfer_Binder) TransferProduct (const TheStart& start)
-  //{
-  //  thelevel ++;             // decrement and if == 0, root transfer
-  //  Handle(Transfer_Binder) binder;
-  //  ActorHandle actor = theactor;
-  //  while (!actor.IsNull())
-  //  {
-  //    if (actor->Recognize (start)) binder = actor->Transferring(start,this);
-  //    else binder.Nullify();
-  //    if (!binder.IsNull()) break;
-  //    actor = actor->Next();
-  //  }
-  //  if (binder.IsNull()) {
-  //    if (thelevel > 0) thelevel --;
-  //    return binder;
-  //  }
-  //  // Managing the root level (.. a close look ..)
-  //  if (therootl == 0 && binder->StatusExec() == Transfer_StatusDone)
-  //    therootl = thelevel - 1;
-
-  //  if (thelevel > 0) thelevel --;
-  //  return binder;
-  //}
-
-  //=======================================================================
-  //function : Transfer
-  //purpose  : 
-  //=======================================================================
-
-  //Standard_EXPORT Standard_Boolean Transfer(const TheStart& start)
-  //{
-  //  Handle(Transfer_Binder) binder = Transferring(start);
-  //  return (!binder.IsNull());
-  //}
 
   //  #########################################################################
   //  ....                      Error Handling + Trace                     ....
@@ -1111,9 +945,9 @@ public:
   //purpose  : 
   //=======================================================================
 
-  Standard_EXPORT void SetErrorHandle(const Standard_Boolean err)
+  Standard_EXPORT void SetErrorHandle(const Standard_Boolean isError)
   {
-    theerrh = err;
+    myToHandleErr = isError;
   }
 
   //=======================================================================
@@ -1123,7 +957,7 @@ public:
 
   Standard_EXPORT Standard_Boolean ErrorHandle() const
   {
-    return theerrh;
+    return myToHandleErr;
   }
 
   //=======================================================================
@@ -1131,38 +965,38 @@ public:
   //purpose  : 
   //=======================================================================
 
-  Standard_EXPORT void StartTrace(const Handle(Transfer_Binder)& binder,
-                                  const TheStart& start,
-                                  const Standard_Integer level,
-                                  const Standard_Integer mode) const 
+  Standard_EXPORT void StartTrace(const Handle(Transfer_Binder)& theBinder,
+                                  const TheStart& theStart,
+                                  const Standard_Integer theLevel,
+                                  const Standard_Integer theMode) const 
   {
-    // ###  Fail (Roots:50)  --  Start start->DynamicType()
-    // ###  Fail (Roots:50)  --  Start id:#label.. Type:start->DynamicType()
-    if (thetrace > 3) {  // Internal to be switch when searching bug (trace >= 4)
-      if (mode == 1) themessenger << "  ###  Fail";
-      if (mode == 2) themessenger << "  ###  Warning";
-      if (mode == 3) themessenger << "  ###  New Root n0 " << theroots.Extent();
-      if (mode == 4) themessenger << "  ###  Exception";
-      if (mode == 5) themessenger << "  ###  Substitution";
-      if (mode == 6) themessenger << "  ###  Information";
-      if (level > 1)
-        themessenger << " (nested)";  // " at nesting Level:"<<level;
-      if (mode >= 0 && mode != 3)
-        themessenger << " at " << theroots.Extent() << " Roots";
+    // ###  Fail (Roots:50)  --  Start theStart->DynamicType()
+    // ###  Fail (Roots:50)  --  Start id:#label.. Type:theStart->DynamicType()
+    if (myTrace > 3) {  // Internal to be switch when searching bug (trace >= 4)
+      if (theMode == 1) myMessenger << "  ###  Fail";
+      if (theMode == 2) myMessenger << "  ###  Warning";
+      if (theMode == 3) myMessenger << "  ###  New Root n0 " << myRoots.Extent();
+      if (theMode == 4) myMessenger << "  ###  Exception";
+      if (theMode == 5) myMessenger << "  ###  Substitution";
+      if (theMode == 6) myMessenger << "  ###  Information";
+      if (theLevel > 1)
+        myMessenger << " (nested)";  // " at nesting Level:"<<theLevel;
+      if (theMode >= 0 && theMode != 3)
+        myMessenger << " at " << myRoots.Extent() << " Roots";
     }
-    if (!start.IsNull()) PrintTrace (start,themessenger);
+    if (!theStart.IsNull()) PrintTrace (theStart,myMessenger);
 
-    if (!binder.IsNull()) {   // old: if IsNull sout <<endl<< "  ---  Not Bound";
-      Handle(Transfer_Binder) bnd = binder;
+    if (!theBinder.IsNull()) {   // old: if IsNull sout <<endl<< "  ---  Not Bound";
+      Handle(Transfer_Binder) bnd = theBinder;
       Standard_Boolean hasres = Standard_False, isused = Standard_False;
       while (!bnd.IsNull()) {
         if (bnd->Status() != Transfer_StatusVoid) {
-  // ---  Result Type: binder->ResultType()  ---  Binder : binder->DynamicType();
+  // ---  Result Type: theBinder->ResultType()  ---  Binder : theBinder->DynamicType();
     if (!hasres)
-      themessenger << "\n  ---  Result Type : ";
+      myMessenger << "\n  ---  Result Type : ";
     else 
-      themessenger << " , ";
-    themessenger << bnd->ResultTypeName();
+      myMessenger << " , ";
+    myMessenger << bnd->ResultTypeName();
   //  CKY 9-JAN-1999:  waiting for XSTEP Kernel message (not IGES_2075)
   /*        Message_Msg Msg2075("IGES_2075");
             Msg2075.AddString(bnd->ResultTypeName());
@@ -1172,8 +1006,8 @@ public:
         }
         bnd = bnd->NextResult();
       }
-      if (!hasres && mode > 2) {
-        themessenger << "\n  ---  No Result recorded";
+      if (!hasres && theMode > 2) {
+        myMessenger << "\n  ---  No Result recorded";
   //  CKY 9-JAN-1999 : waiting for XSTEP Kernel message
   //     (not IGES_2075, no reference to specifically TopoDS_Shape)
   /*       Message_Msg Msg2075("IGES_2075");
@@ -1182,7 +1016,7 @@ public:
       }
   //old    if (isused) sout << "  --    (Already Used in another Transfer)";
     }
-    themessenger << endl;
+    myMessenger << endl;
   }
 
 
@@ -1191,10 +1025,11 @@ public:
   //purpose  : 
   //=======================================================================
 
-  Standard_EXPORT void PrintTrace(const TheStart& start,
-                                  const Handle(Message_Messenger)& S) const
+  Standard_EXPORT void PrintTrace(const TheStart& theStart,
+                                  const Handle(Message_Messenger)& theMessenger) const
   {
-    if (!start.IsNull())   S <<" Type:" << start->DynamicType()->Name();
+    if (!theStart.IsNull())
+      theMessenger <<" Type:" << theStart->DynamicType()->Name();
   }
 
   //=======================================================================
@@ -1202,8 +1037,10 @@ public:
   //purpose  : 
   //=======================================================================
 
-  Standard_EXPORT Standard_Boolean  IsLooping (const Standard_Integer alevel) const 
-  {  return alevel > NbMapped();  }
+  Standard_EXPORT Standard_Boolean  IsLooping (const Standard_Integer theLevel) const 
+  {
+    return theLevel > NbMapped();
+  }
 
   //  #########################################################################
   //  ....                            RESULTS                            ....
@@ -1213,16 +1050,16 @@ public:
   //purpose  : 
   //=======================================================================
 
-  Standard_EXPORT Iterator RootResult(const Standard_Boolean withstart = Standard_False) const
+  Standard_EXPORT Iterator RootResult (const Standard_Boolean isWithStart = Standard_False) const
   {
-    Iterator iter(withstart);
-    Standard_Integer max = theroots.Extent();
-    for (Standard_Integer j = 1; j <= max; j ++) {
-      Standard_Integer i = theroots.FindKey(j);
-      Handle(Transfer_Binder) binder = MapItem(i);
-      if (binder.IsNull()) continue;
-      if (withstart) iter.Add (binder,Mapped(i));
-      else iter.Add (binder);
+    Iterator iter(isWithStart);
+    Standard_Integer aMax = myRoots.Extent();
+    for (Standard_Integer aJ = 1; aJ <= aMax; aJ ++) {
+      Standard_Integer anI = myRoots.FindKey(aJ);
+      Handle(Transfer_Binder) aBinder = MapItem(anI);
+      if (aBinder.IsNull()) continue;
+      if (isWithStart) iter.Add (aBinder,Mapped(anI));
+      else iter.Add (aBinder);
     }
     return iter;
   }
@@ -1232,15 +1069,15 @@ public:
   //purpose  : All Results
   //=======================================================================
 
-  Standard_EXPORT Iterator CompleteResult (const Standard_Boolean withstart = Standard_False) const
+  Standard_EXPORT Iterator CompleteResult (const Standard_Boolean isWithStart = Standard_False) const
   {
-    Iterator iter(withstart);
-    Standard_Integer max = NbMapped();
-    for (Standard_Integer i = 1; i <= max; i ++) {
-      Handle(Transfer_Binder) binder = MapItem(i);
-      if (binder.IsNull()) continue;
-      if (withstart) iter.Add (binder,Mapped(i));
-      else iter.Add (binder);
+    Iterator iter(isWithStart);
+    Standard_Integer aMax = NbMapped();
+    for (Standard_Integer anI = 1; anI <= aMax; anI ++) {
+      Handle(Transfer_Binder) aBinder = MapItem(anI);
+      if (aBinder.IsNull()) continue;
+      if (isWithStart) iter.Add (aBinder,Mapped(anI));
+      else iter.Add (aBinder);
     }
     return iter;
   }
@@ -1253,13 +1090,13 @@ public:
   Standard_EXPORT Iterator AbnormalResult() const
   {
     Iterator iter(Standard_True);
-    Standard_Integer max = NbMapped();
-    for (Standard_Integer i = 1; i <= max; i ++) {
-      Handle(Transfer_Binder) binder = MapItem(i);
-      if (binder.IsNull()) continue;
-      Transfer_StatusExec statex = binder->StatusExec();
-      if (statex != Transfer_StatusInitial && statex != Transfer_StatusDone)
-        iter.Add (binder,Mapped(i));  // on note les cas "pas normaux"
+    Standard_Integer aMax = NbMapped();
+    for (Standard_Integer anI = 1; anI <= aMax; anI ++) {
+      Handle(Transfer_Binder) aBinder = MapItem(anI);
+      if (aBinder.IsNull()) continue;
+      Transfer_StatusExec aStatExec = aBinder->StatusExec();
+      if (aStatExec != Transfer_StatusInitial && aStatExec != Transfer_StatusDone)
+        iter.Add (aBinder,Mapped(anI));  // on note les cas "pas normaux"
     }
     return iter;
   }
@@ -1269,24 +1106,24 @@ public:
   //purpose  : 
   //=======================================================================
 
-  Standard_EXPORT Interface_CheckIterator CheckList (const Standard_Boolean erronly) const
+  Standard_EXPORT Interface_CheckIterator CheckList (const Standard_Boolean isErrOnly) const
   {
     Interface_CheckIterator list;
-    Standard_Integer num, max = NbMapped();
-    for (Standard_Integer i = 1; i <= max; i ++) {
-      Handle(Transfer_Binder) binder = MapItem(i);
-      if (binder.IsNull()) continue;
-      Transfer_StatusExec statex = binder->StatusExec();
-      Handle(Interface_Check) check = binder->Check();
-      if (statex != Transfer_StatusInitial && statex != Transfer_StatusDone &&
-    !check->HasFailed())
-        check->AddFail("Transfer in Abnormal Status (!= Initial or Done)");
-      if (!check->HasFailed() && (erronly || check->NbWarnings() == 0)) continue;
-      const TheStart& ent = Mapped(i);
+    Standard_Integer num, aMax = NbMapped();
+    for (Standard_Integer anI = 1; anI <= aMax; anI ++) {
+      Handle(Transfer_Binder) aBinder = MapItem(anI);
+      if (aBinder.IsNull()) continue;
+      Transfer_StatusExec aStatExec = aBinder->StatusExec();
+      Handle(Interface_Check) aCheck = aBinder->Check();
+      if (aStatExec != Transfer_StatusInitial && aStatExec != Transfer_StatusDone &&
+    !aCheck->HasFailed())
+        aCheck->AddFail("Transfer in Abnormal Status (!= Initial or Done)");
+      if (!aCheck->HasFailed() && (isErrOnly || aCheck->NbWarnings() == 0)) continue;
+      const TheStart& ent = Mapped(anI);
       num = CheckNum(ent);
-      if (num == 0) num = i;
-      check->SetEntity(ent);
-      list.Add(check,num);
+      if (num == 0) num = anI;
+      aCheck->SetEntity(ent);
+      list.Add(aCheck,num);
     }
     return list;
   }
@@ -1299,24 +1136,24 @@ public:
   //purpose  : 
   //=======================================================================
 
-  Standard_EXPORT Iterator ResultOne (const TheStart& start,
-                                               const Standard_Integer level,
-                                               const Standard_Boolean withstart = Standard_False) const
+  Standard_EXPORT Iterator ResultOne (const TheStart& theStart,
+                                      const Standard_Integer theLevel,
+                                      const Standard_Boolean isWithStart = Standard_False) const
   {
-    Iterator iter(withstart);
-    Standard_Integer max = NbMapped();
-    Standard_Integer ind = MapIndex (start);
-    if (ind == 0) return iter;
-    Standard_Integer i1 = (level == 0 ? ind : 1);
-    Standard_Integer i2 = (level == 0 ? ind : max);
+    Iterator iter(isWithStart);
+    Standard_Integer aMax = NbMapped();
+    Standard_Integer anInd = MapIndex (theStart);
+    if (anInd == 0) return iter;
+    Standard_Integer i1 = (theLevel == 0 ? anInd : 1);
+    Standard_Integer i2 = (theLevel == 0 ? anInd : aMax);
     Handle(TColStd_HArray1OfInteger) map = new TColStd_HArray1OfInteger (i1,i2,0);
-    for (Standard_Integer i = i1; i <= i2; i ++) {
-      ind = map->Value(i);
-      if (ind == 0) continue;
-      Handle(Transfer_Binder) binder = MapItem(i);
-      if (binder.IsNull()) continue;
-      if (withstart) iter.Add (binder,Mapped(ind));
-      else iter.Add (binder);
+    for (Standard_Integer anI = i1; anI <= i2; anI ++) {
+      anInd = map->Value(anI);
+      if (anInd == 0) continue;
+      Handle(Transfer_Binder) aBinder = MapItem(anI);
+      if (aBinder.IsNull()) continue;
+      if (isWithStart) iter.Add (aBinder,Mapped(anInd));
+      else iter.Add (aBinder);
     }
     return iter;
   }
@@ -1327,34 +1164,34 @@ public:
   //=======================================================================
 
   Standard_EXPORT Interface_CheckIterator CheckListOne
-          (const TheStart& start,const Standard_Integer level,
-           const Standard_Boolean erronly) const
+          (const TheStart& theStart,const Standard_Integer theLevel,
+           const Standard_Boolean isErrOnly) const
   {
-    Interface_CheckIterator list;
-    Standard_Integer max = NbMapped();
-    Standard_Integer num, ind = MapIndex (start);
-    if (ind == 0) return list;
-    Standard_Integer i1 = (level == 0 ? ind : 1);
-    Standard_Integer i2 = (level == 0 ? ind : max);
+    Interface_CheckIterator aList;
+    Standard_Integer aMax = NbMapped();
+    Standard_Integer aNum, anInd = MapIndex (theStart);
+    if (anInd == 0) return aList;
+    Standard_Integer i1 = (theLevel == 0 ? anInd : 1);
+    Standard_Integer i2 = (theLevel == 0 ? anInd : aMax);
     Handle(TColStd_HArray1OfInteger) map = new TColStd_HArray1OfInteger (i1,i2,0);
 
-    for (Standard_Integer i = i1; i <= i2; i ++) {
-      ind = map->Value(i);
-      if (ind == 0) continue;
-      Handle(Transfer_Binder) binder = MapItem(ind);
-      if (binder.IsNull()) continue;
-      Transfer_StatusExec statex = binder->StatusExec();
-      Handle(Interface_Check) check = binder->Check();
-      if (statex != Transfer_StatusInitial && statex != Transfer_StatusDone &&
-    !check->HasFailed())
-        check->AddFail("Transfer in Abnormal Status (!= Initial or Done)");
-      if (!check->HasFailed() && (erronly || check->NbWarnings() == 0)) continue;
-      const TheStart& ent = Mapped(ind);
-      num = CheckNum(ent);  if (num == 0) num = ind;
-      check->SetEntity(ent);
-      list.Add(check,num);
+    for (Standard_Integer anI = i1; anI <= i2; anI ++) {
+      anInd = map->Value(anI);
+      if (anInd == 0) continue;
+      Handle(Transfer_Binder) aBinder = MapItem(anInd);
+      if (aBinder.IsNull()) continue;
+      Transfer_StatusExec aStatExec = aBinder->StatusExec();
+      Handle(Interface_Check) aCheck = aBinder->Check();
+      if (aStatExec != Transfer_StatusInitial && aStatExec != Transfer_StatusDone &&
+    !aCheck->HasFailed())
+        aCheck->AddFail("Transfer in Abnormal Status (!= Initial or Done)");
+      if (!aCheck->HasFailed() && (isErrOnly || aCheck->NbWarnings() == 0)) continue;
+      const TheStart& anEnt = Mapped(anInd);
+      aNum = CheckNum(anEnt);  if (aNum == 0) aNum = anInd;
+      aCheck->SetEntity(anEnt);
+      aList.Add(aCheck,aNum);
     }
-    return list;
+    return aList;
   }
 
   //=======================================================================
@@ -1363,27 +1200,27 @@ public:
   //=======================================================================
 
   Standard_EXPORT Standard_Boolean IsCheckListEmpty
-    (const TheStart& start, const Standard_Integer level,
-     const Standard_Boolean erronly) const
+    (const TheStart& theStart, const Standard_Integer theLevel,
+     const Standard_Boolean isErrOnly) const
   {
-    Standard_Integer max = NbMapped();
-    Standard_Integer ind = MapIndex (start);
-    if (ind == 0) return Standard_False;
-    Standard_Integer i1 = (level == 0 ? ind : 1);
-    Standard_Integer i2 = (level == 0 ? ind : max);
+    Standard_Integer aMax = NbMapped();
+    Standard_Integer anInd = MapIndex (theStart);
+    if (anInd == 0) return Standard_False;
+    Standard_Integer i1 = (theLevel == 0 ? anInd : 1);
+    Standard_Integer i2 = (theLevel == 0 ? anInd : aMax);
     Handle(TColStd_HArray1OfInteger) map = new TColStd_HArray1OfInteger (i1,i2,0);
 
-    for (Standard_Integer i = i1; i <= i2; i ++) {
-      ind = map->Value(i);
-      if (ind == 0) continue;
-      Handle(Transfer_Binder) binder = MapItem(ind);
-      if (binder.IsNull()) continue;
+    for (Standard_Integer anI = i1; anI <= i2; anI ++) {
+      anInd = map->Value(anI);
+      if (anInd == 0) continue;
+      Handle(Transfer_Binder) aBinder = MapItem(anInd);
+      if (aBinder.IsNull()) continue;
 
-      Transfer_StatusExec statex = binder->StatusExec();
-      Handle(Interface_Check) check = binder->Check();
-      if (statex != Transfer_StatusInitial && statex != Transfer_StatusDone)
+      Transfer_StatusExec aStatExec = aBinder->StatusExec();
+      Handle(Interface_Check) aCheck = aBinder->Check();
+      if (aStatExec != Transfer_StatusInitial && aStatExec != Transfer_StatusDone)
         return Standard_False;
-      if (check->HasFailed() || (!erronly && check->NbWarnings() > 0)) return Standard_False;
+      if (aCheck->HasFailed() || (!isErrOnly && aCheck->NbWarnings() > 0)) return Standard_False;
     }
     return Standard_True;
   }
@@ -1393,23 +1230,23 @@ public:
   //purpose  : 
   //=======================================================================
 
-  Standard_EXPORT void RemoveResult(const TheStart& start,
-                 const Standard_Integer level,
-                 const Standard_Boolean compute = Standard_True)
+  Standard_EXPORT void RemoveResult (const TheStart& theStart,
+                                     const Standard_Integer theLevel,
+                                     const Standard_Boolean toCompute = Standard_True)
   {
-    Standard_Integer max = NbMapped();
-    Standard_Integer ind = MapIndex (start);
-    if (ind == 0) return;
-    Standard_Integer i1 = (level == 0 ? ind : 1);
-    Standard_Integer i2 = (level == 0 ? ind : max);
+    Standard_Integer aMax = NbMapped();
+    Standard_Integer anInd = MapIndex (theStart);
+    if (anInd == 0) return;
+    Standard_Integer i1 = (theLevel == 0 ? anInd : 1);
+    Standard_Integer i2 = (theLevel == 0 ? anInd : aMax);
     Handle(TColStd_HArray1OfInteger) map = new TColStd_HArray1OfInteger (i1,i2,0);
 
-    Standard_Integer i; // svv Jan11 2000 : porting on DEC
-    for (i = i1; i <= i2; i ++) {
-      ind = map->Value(i);
-      if (ind == 0) continue;
-      Handle(Transfer_Binder) binder = MapItem(ind);
-      if (binder.IsNull()) continue;
+    Standard_Integer anI; // svv Jan11 2000 : porting on DEC
+    for (anI = i1; anI <= i2; anI ++) {
+      anInd = map->Value(anI);
+      if (anInd == 0) continue;
+      Handle(Transfer_Binder) aBinder = MapItem(anInd);
+      if (aBinder.IsNull()) continue;
     }
   }
 

@@ -18,28 +18,28 @@
 #ifndef _LibCtl_Library_HeaderFile
 #define _LibCtl_Library_HeaderFile
 
+#include <Standard.hxx>
+#include <Standard_DefineAlloc.hxx>
 #include <Standard_NoSuchObject.hxx>
 #include <NCollection_Handle.hxx>
 
-template<class ModuleType, class ProtocolType> class LibCtl_GlobalNode;
+template <class ModuleType, class ProtocolType> class LibCtl_GlobalNode;
 
-
-// Node for LibCtl_Library
 //! Manages a list of Modules for a Library (as an instance) :
-//!  Designates a GlobalNode (couple Module-Protocol)
-template<class ModuleType, class ProtocolType>
+//! Designates a GlobalNode (couple Module-Protocol)
+template <class ModuleType, class ProtocolType>
 class LibCtl_Node
 {
 private:
   typedef LibCtl_GlobalNode<ModuleType, ProtocolType> LibCtl_GlobalNode;
 
-  NCollection_Handle < LibCtl_GlobalNode > thenode;
-  NCollection_Handle < LibCtl_Node > thenext;
+  NCollection_Handle < LibCtl_GlobalNode > myNode;
+  NCollection_Handle < LibCtl_Node > myNext;
 
 public:
 
   Standard_EXPORT   LibCtl_Node ();
-  Standard_EXPORT   void AddNode (const NCollection_Handle< LibCtl_GlobalNode >& anode);
+  Standard_EXPORT   void AddNode (const NCollection_Handle< LibCtl_GlobalNode >& theNode);
   Standard_EXPORT   const ModuleType&  Module () const;
   Standard_EXPORT   const ProtocolType& Protocol () const;
   Standard_EXPORT   const NCollection_Handle< LibCtl_Node >& Next () const;
@@ -53,31 +53,31 @@ LibCtl_Node<ModuleType,ProtocolType>
 //! Adds a couple (Module,Protocol), that is, stores it into
 //! itself if not yet done, else creates a Next Node to do it.
 template<class ModuleType, class ProtocolType>
-void LibCtl_Node<ModuleType,ProtocolType>::AddNode (const NCollection_Handle< LibCtl_GlobalNode >& anode)
+void LibCtl_Node<ModuleType,ProtocolType>::AddNode (const NCollection_Handle< LibCtl_GlobalNode >& theNode)
 {
-  if (thenode == anode) return;
-  if (thenext.IsNull()) {
-    if (thenode.IsNull()) thenode = anode;
+  if (myNode == theNode) return;
+  if (myNext.IsNull()) {
+    if (myNode.IsNull()) myNode = theNode;
     else {
-      thenext = new LibCtl_Node;
-      thenext->AddNode (anode);
+      myNext = new LibCtl_Node;
+      myNext->AddNode (theNode);
     }
   }
-  else thenext->AddNode (anode);
+  else myNext->AddNode (theNode);
 }
 
 //! Returns the Module designated by a precise Node.
 template<class ModuleType, class ProtocolType>
 const ModuleType& LibCtl_Node<ModuleType,ProtocolType>::Module () const
 {
-  return thenode->Module();
+  return myNode->Module();
 }
 
 //! Returns the Protocol designated by a precise Node.
 template<class ModuleType, class ProtocolType>
 const ProtocolType& LibCtl_Node<ModuleType,ProtocolType>::Protocol () const
 {
-  return thenode->Protocol();
+  return myNode->Protocol();
 }
 
 //! Returns the next Node.
@@ -85,10 +85,9 @@ const ProtocolType& LibCtl_Node<ModuleType,ProtocolType>::Protocol () const
 template<class ModuleType, class ProtocolType>
 const NCollection_Handle< LibCtl_Node<ModuleType,ProtocolType> >& LibCtl_Node<ModuleType,ProtocolType>::Next () const
 {
-  return thenext;
+  return myNext;
 }
 
-// GlobalNode for LibCtl_Library
 //! Manages a (possibly static) Global List of Modules bound to protocols.
 //! Remark that it requires independance from Memory Management
 //! (because a Global List of Modules can be build through static
@@ -98,12 +97,12 @@ template<class ModuleType, class ProtocolType>
 class LibCtl_GlobalNode
 {
 private:
-  ModuleType themod;
-  ProtocolType theprot;
-  NCollection_Handle <LibCtl_GlobalNode> thenext;
+  ModuleType myMod;
+  ProtocolType myProt;
+  NCollection_Handle <LibCtl_GlobalNode> myNext;
 public:
   Standard_EXPORT   LibCtl_GlobalNode ();
-  Standard_EXPORT   void Add (const ModuleType& amodule, const ProtocolType& aprotocol);
+  Standard_EXPORT   void Add (const ModuleType& theModule, const ProtocolType& theProtocol);
   Standard_EXPORT   const ModuleType& Module () const;
   Standard_EXPORT   const ProtocolType& Protocol () const;
   Standard_EXPORT   const NCollection_Handle <LibCtl_GlobalNode >& Next () const;
@@ -120,32 +119,38 @@ LibCtl_GlobalNode<ModuleType,ProtocolType>
 //! Once added, stores its attached Protocol in correspondance.
 template<class ModuleType, class ProtocolType>
 void LibCtl_GlobalNode <ModuleType,ProtocolType>::Add
-(const ModuleType& amodule, const ProtocolType& aprotocol)
+(const ModuleType& theModule, const ProtocolType& theProtocol)
 {
-  if (themod == amodule) return;
-  if (theprot == aprotocol) themod = amodule;
-  else if (thenext.IsNull()) {
-    if (themod.IsNull()) {  themod = amodule;   theprot = aprotocol;  }
-    else {
-      thenext = new LibCtl_GlobalNode;
-      thenext->Add (amodule,aprotocol);
+  if (myMod == theModule) return;
+  if (myProt == theProtocol) myMod = theModule;
+  else if (myNext.IsNull())
+  {
+    if (myMod.IsNull())
+    {
+      myMod = theModule;
+      myProt = theProtocol;
+    }
+    else
+    {
+      myNext = new LibCtl_GlobalNode;
+      myNext->Add (theModule,theProtocol);
     }
   }
-  else thenext->Add (amodule,aprotocol);
+  else myNext->Add (theModule,theProtocol);
 }
 
 //! Returns the Module stored in a given GlobalNode.
 template<class ModuleType, class ProtocolType>
 const ModuleType& LibCtl_GlobalNode <ModuleType,ProtocolType>::Module () const
 {
-  return themod;
+  return myMod;
 }
 
 //! Returns the attached Protocol stored in a given GlobalNode.
 template<class ModuleType, class ProtocolType>
 const ProtocolType& LibCtl_GlobalNode <ModuleType,ProtocolType>::Protocol () const
 {
-  return theprot;
+  return myProt;
 }
 
 //! Returns the next GlobalNode.
@@ -154,206 +159,199 @@ template<class ModuleType, class ProtocolType>
 const NCollection_Handle <LibCtl_GlobalNode<ModuleType,ProtocolType> >&
 LibCtl_GlobalNode <ModuleType,ProtocolType>::Next () const
 {
-  return thenext;
+  return myNext;
 }
 
 // Library
+//! Manages a list of Execution Modules attached to Protocols
+//! to perform a specific set of functionnalities.
+//!           
+//! Each instantiated class of Library has a global set a Modules.
+//! These Modules are put in this set before working, for instance
+//! by static construction (using method SetGlobal). One Module
+//! is bound which each Protocol (considered as a class).
 //!
-template<class ObjectType,class ModuleType, class ProtocolType>
+//! To work, a Library is created by taking the Modules which
+//! comply with a Protocol (bound with its class and the classes
+//! of its Resources), given as parameter of its creation.
+//!
+//! Thus, any tool can use it to get the suitable Modules
+//! Warning : The order of the Modules in the Library has assumed to be
+//! useless, and is not managed.
+template <class ObjectType, class ModuleType, class ProtocolType>
 class LibCtl_Library
 {
 public:
-  typedef LibCtl_GlobalNode<ModuleType, ProtocolType > LibCtl_GlobalNode;
-  typedef LibCtl_Node<ModuleType, ProtocolType > LibCtl_Node;
-  static NCollection_Handle< LibCtl_GlobalNode > theglobal;
-  static ProtocolType theprotocol;
-  static NCollection_Handle< LibCtl_Node > thelast;
+  // Type definitions for template classes
+  typedef LibCtl_GlobalNode<ModuleType, ProtocolType> LibCtl_GlobalNode;
+  typedef LibCtl_Node<ModuleType, ProtocolType>       LibCtl_Node;
+public:
+  // Basic data for optimization (Protocol last request)
+  static ProtocolType myProtocol;
+  static NCollection_Handle< LibCtl_Node > myLast;
 
-  // Public methods
-  Standard_EXPORT   static void SetGlobal(const ModuleType& amodule, const ProtocolType& aprotocol);
-  Standard_EXPORT   LibCtl_Library (const ProtocolType& aprotocol);
-  Standard_EXPORT   LibCtl_Library ();
-  Standard_EXPORT   void AddProtocol(const Handle(Standard_Transient)& aprotocol);
-  Standard_EXPORT   void Clear ();
-  Standard_EXPORT   void SetComplete ();
-  Standard_EXPORT   Standard_Boolean Select (const ObjectType& obj,
-                                             ModuleType& module,
-                                             Standard_Integer& CN) const;
-  Standard_EXPORT   void Start ();
-  Standard_EXPORT   Standard_Boolean More () const;
-  Standard_EXPORT   void Next ();
-  Standard_EXPORT   const ModuleType& Module () const;
-  Standard_EXPORT   const ProtocolType& Protocol () const;
+  DEFINE_STANDARD_ALLOC
 
-protected:
-    NCollection_Handle < LibCtl_Node > thelist;
-    NCollection_Handle < LibCtl_Node > thecurr;
+private:
+    NCollection_Handle< LibCtl_Node > myList;
+    NCollection_Handle< LibCtl_Node > myCurr;
+public:
+
+  //! Gets global list of modules
+  static NCollection_Handle< LibCtl_GlobalNode >& GetGlobal();
+ 
+   //! Supply the global list
+  Standard_EXPORT static void SetGlobal (const ModuleType& theModule, const ProtocolType& theProtocol)
+  {
+    if (GetGlobal().IsNull()) GetGlobal() = new LibCtl_GlobalNode;
+    GetGlobal()->Add(theModule,theProtocol);
+  }
+  
+  Standard_EXPORT LibCtl_Library (const ProtocolType& theProtocol)
+  {
+    Standard_Boolean last = Standard_False;
+    // No protocol = empty library
+    if (theProtocol.IsNull()) return;
+    if (!myProtocol.IsNull()) last =
+      (myProtocol == theProtocol);
+
+    if (last)
+     myList = myLast;
+    // If no optimization available: list building
+    else
+    {
+      AddProtocol(theProtocol);
+      // This defines the optimization (for the next time)
+      myLast     = myList;
+      myProtocol = theProtocol;
+    }
+  }
+
+  Standard_EXPORT LibCtl_Library ()
+  { }
+
+  //! Add a Protocol: attention: it is desoptimise (if not confusion!)
+  Standard_EXPORT void AddProtocol (const Handle(Standard_Transient)& theProtocol)
+  {
+    // Downcast as Protocol-> Resources, and even redefined to use in other
+    // Library must always return the type highest
+    ProtocolType aProtocol = ProtocolType::DownCast(theProtocol);
+    if (aProtocol.IsNull()) return;
+
+    NCollection_Handle< LibCtl_GlobalNode > curr;
+    for (curr = GetGlobal(); !curr.IsNull(); )
+    {
+      const ProtocolType& aProtocol = curr->Protocol();
+      if (!aProtocol.IsNull())
+      {
+        //  Match Protocol ?
+        if (aProtocol->DynamicType() == theProtocol->DynamicType())
+        {
+          if (myList.IsNull())
+            myList = new LibCtl_Node;
+
+          myList->AddNode(curr);
+          break;  // UN SEUL MODULE PAR PROTOCOLE
+        }
+      }
+      curr = curr->Next();
+    }
+    //  Treat resources
+    Standard_Integer nb = aProtocol->NbResources();
+    for (Standard_Integer i = 1; i <= nb; i++)
+    {
+      AddProtocol (aProtocol->Resource(i));
+    }
+    
+    myProtocol.Nullify();
+    myLast.Nullify();
+  }
+
+  Standard_EXPORT void Clear ()
+  {
+    myList = new LibCtl_Node();
+  }
+
+  Standard_EXPORT void SetComplete ()
+  {
+    myList = new LibCtl_Node;
+    // Take each of the protocols of the Global list
+    NCollection_Handle< LibCtl_GlobalNode > curr;
+    for (curr = GetGlobal(); !curr.IsNull(); )
+    {
+      const ProtocolType& aProtocol = curr->Protocol();
+      // As we take all , it is not preoccupied resources
+      if (!aProtocol.IsNull()) myList->AddNode(curr);
+      curr = curr->Next();
+    }
+  }
+
+  //!  Selection: the corresponding theModule is returned to a Type
+  //! (as well as CaseNumber returns the corresponding protocol)
+  Standard_EXPORT Standard_Boolean Select (const ObjectType& theObj,
+                                           ModuleType& theModule,
+                                           Standard_Integer& theCN) const
+  {
+    // Reponse: "not found"
+    theModule.Nullify(); theCN = 0;
+    if (myList.IsNull())
+      return Standard_False;
+    NCollection_Handle< LibCtl_Node > curr = myList;
+    for (curr = myList; !curr.IsNull(); )
+    {
+      const ProtocolType& aProtocol = curr->Protocol();
+      if (!aProtocol.IsNull())
+      {
+        theCN = aProtocol->CaseNumber(theObj);
+        if (theCN > 0)
+        {
+          theModule = curr->Module();
+          return Standard_True;
+        }
+      }
+      curr = curr->Next();
+    }
+    return Standard_False;
+  }
+
+  //! Initialization for iteration through the library
+  Standard_EXPORT void Start ()
+  {
+    myCurr = myList;
+  }
+
+  Standard_EXPORT Standard_Boolean More () const
+  {
+    return (!myCurr.IsNull());  
+  }
+
+  Standard_EXPORT void LibCtl_Library::Next ()
+  {
+    if (!myCurr.IsNull())
+      myCurr = myCurr->Next();
+  }
+
+  Standard_EXPORT const ModuleType& Module () const
+  {
+    if (myCurr.IsNull())
+      Standard_NoSuchObject::Raise("Library from LibCtl");
+    return myCurr->Module();
+  }
+
+  Standard_EXPORT const ProtocolType& Protocol () const
+  {
+    if (myCurr.IsNull())
+      Standard_NoSuchObject::Raise("Library from LibCtl");
+    return myCurr->Protocol();
+  }
 };
 
-//! Adds a couple (Module-Protocol) into the global definition set
-//! for this class of Library.
-template<class ObjectType,class ModuleType, class ProtocolType>
-void LibCtl_Library <ObjectType, ModuleType, ProtocolType> 
-::SetGlobal (const ModuleType& amodule, const ProtocolType& aprotocol)
-{
-  if (theglobal.IsNull()) theglobal = new LibCtl_GlobalNode;
-  theglobal->Add(amodule,aprotocol);
-}
+//! Basic data for optimization (Protocol last request)
+template <class ObjectType, class ModuleType, class ProtocolType>
+ProtocolType LibCtl_Library<ObjectType, ModuleType, ProtocolType>::myProtocol;
 
-//! Creates a Library which complies with a Protocol, that is :
-//! - Same class (criterium IsInstance)
-//! - This creation gets the Modules from the global set, those
-//!   which are bound to the given Protocol and its Resources.
-template<class ObjectType,class ModuleType, class ProtocolType>
-LibCtl_Library<ObjectType, ModuleType, ProtocolType>::LibCtl_Library (const ProtocolType& aprotocol)
-{
-  Standard_Boolean last = Standard_False;
-  if (aprotocol.IsNull()) return;    // PAS de protocole = Lib VIDE
-  if (!theprotocol.IsNull()) last =
-    (theprotocol == aprotocol);
+template <class ObjectType, class ModuleType, class ProtocolType>
+NCollection_Handle <LibCtl_Node <ModuleType, ProtocolType> >
+LibCtl_Library<ObjectType, ModuleType, ProtocolType>::myLast;
 
-  if (last) thelist = thelast;
-  //  Si Pas d optimisation disponible : construire la liste
-  else {
-    AddProtocol(aprotocol);
-    //  Ceci definit l optimisation (pour la fois suivante)
-    thelast     = thelist;
-    theprotocol = aprotocol;
-  }
-}
-
-//! Creates an empty Library : it will later by filled by method AddProtocol.
-template<class ObjectType,class ModuleType, class ProtocolType>
-LibCtl_Library<ObjectType, ModuleType, ProtocolType>::LibCtl_Library ()    {  }
-
-//! Adds a couple (Module-Protocol) to the Library, given the
-//! class of a Protocol. Takes Resources into account.
-//! (if <aprotocol> is not of type TheProtocol, it is not added).
-template<class ObjectType,class ModuleType, class ProtocolType>
-void LibCtl_Library<ObjectType, ModuleType, ProtocolType>::AddProtocol
-    (const Handle(Standard_Transient)& aprotocol)
-{
-  ProtocolType aproto = ProtocolType::DownCast(aprotocol);
-  if (aproto.IsNull()) return;
-
-  //  D first, add it to the list: search the Node
-  NCollection_Handle<LibCtl_GlobalNode > curr;
-  for (curr = theglobal; !curr.IsNull(); )
-  {
-    const ProtocolType& protocol = curr->Protocol();
-    if (!protocol.IsNull()) {
-      //  Match Protocol ?
-      if (protocol->DynamicType() == aprotocol->DynamicType()) {
-        if (thelist.IsNull()) thelist = new LibCtl_Node;
-        thelist->AddNode(curr);
-        break;
-      }
-    }
-    curr = curr->Next();
-  }
-  // Treat resources
-  Standard_Integer nb = aproto->NbResources();
-  for (Standard_Integer i = 1; i <= nb; i ++) {
-    AddProtocol (aproto->Resource(i));
-  }
-
-  theprotocol.Nullify();
-  thelast.Nullify();
-}
-
-//! Clears the list of Modules of a library (can be used to
-//! redefine the order of Modules before action : Clear then
-//! refill the Library by calls to AddProtocol).
-template<class ObjectType,class ModuleType, class ProtocolType>
-void LibCtl_Library<ObjectType, ModuleType, ProtocolType>::Clear ()
-{
-  thelist = new LibCtl_Node;
-}
-
-//! Sets a library to be defined with the complete Global list
-//! (all the couples Protocol/Modules recorded in it).
-template<class ObjectType,class ModuleType, class ProtocolType>
-void LibCtl_Library<ObjectType, ModuleType, ProtocolType>::SetComplete ()
-{
-  thelist = new LibCtl_Node;
-  // Take each of the Protocols of the Global list and add it
-  NCollection_Handle<LibCtl_GlobalNode > curr;
-  for (curr = theglobal; !curr.IsNull(); )
-  {
-    const ProtocolType& protocol = curr->Protocol();
-    // As we take all, it is not preoccupied resources.
-    if (!protocol.IsNull()) thelist->AddNode(curr);
-    curr = curr->Next();
-  }
-}
-
-//! Selects a Module from the Library, given an Object.
-//! Returns True if Select has succeeded, False else.
-//! Also Returns (as arguments) the selected Module and the Case
-//! Number determined by the associated Protocol.
-//! If Select has failed, <module> is Null Handle and CN is zero.
-//! (Select can work on any criterium, such as Object DynamicType).
-template<class ObjectType,class ModuleType, class ProtocolType>
-Standard_Boolean LibCtl_Library<ObjectType, ModuleType, ProtocolType>::Select
-                                             (const ObjectType& obj,
-                                              ModuleType& module,
-                                              Standard_Integer& CN) const
-{
-  module.Nullify();  CN = 0;    // Answer "not found"
-  if (thelist.IsNull()) return Standard_False;
-  NCollection_Handle<LibCtl_Node > curr = thelist;
-  for (curr = thelist; !curr.IsNull(); )
-  {
-    const ProtocolType& protocol = curr->Protocol();
-    if (!protocol.IsNull()) {
-      CN = protocol->CaseNumber(obj);
-      if (CN > 0) {
-        module = curr->Module();
-        return Standard_True;
-      }
-    }
-    curr = curr->Next();
-  }
-  return Standard_False;
-}
-
-//! Starts Iteration on the Modules (sets it on the first one).
-template<class ObjectType,class ModuleType, class ProtocolType>
-void LibCtl_Library<ObjectType, ModuleType, ProtocolType>::Start ()
-{
-  thecurr = thelist;
-}
-
-//! Returns True if there are more Modules to iterate on.
-template<class ObjectType,class ModuleType, class ProtocolType>
-Standard_Boolean LibCtl_Library<ObjectType, ModuleType, ProtocolType>::More () const
-{
-  return (!thecurr.IsNull());
-}
-
-//! Iterates by getting the next Module in the list.
-//! If there is none, the exception will be raised by Value.
-template<class ObjectType,class ModuleType, class ProtocolType>
-void LibCtl_Library<ObjectType, ModuleType, ProtocolType>::Next ()
-{
-  if (!thecurr.IsNull()) thecurr = thecurr->Next();
-}
-
-//! Returns the current Module in the Iteration.
-//! Error if there is no current Module to iterate on.
-template<class ObjectType,class ModuleType, class ProtocolType>
-const ModuleType& LibCtl_Library<ObjectType, ModuleType, ProtocolType>::Module () const
-{
-  if (thecurr.IsNull()) Standard_NoSuchObject::Raise("Library from LibCtl");
-  return thecurr->Module();
-}
-
-//! Returns the current Protocol in the Iteration.
-//! Error if there is no current Protocol to iterate on.
-template<class ObjectType,class ModuleType, class ProtocolType>
-const ProtocolType& LibCtl_Library<ObjectType, ModuleType, ProtocolType>::Protocol () const
-{
-  if (thecurr.IsNull()) Standard_NoSuchObject::Raise("Library from LibCtl");
-  return thecurr->Protocol();
-}
 #endif

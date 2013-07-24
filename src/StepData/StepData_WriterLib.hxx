@@ -42,38 +42,6 @@ class StepData_Protocol;
 typedef LibCtl_Library <Handle(Standard_Transient),
                         Handle(StepData_ReadWriteModule),
                         Handle(StepData_Protocol)>
-        LibCtl_StepWriterLib;
-
-//template <>
-//NCollection_Handle <LibCtl_GlobalNode<Handle(StepData_ReadWriteModule),
-//                                      Handle(StepData_Protocol)> >
-//LibCtl_StepWriterLib::theglobal;
-//
-//template <>
-//Handle(StepData_Protocol)
-//LibCtl_StepWriterLib::theprotocol;
-//
-//template <>
-//NCollection_Handle <LibCtl_Node<Handle(StepData_ReadWriteModule),
-//                                Handle(StepData_Protocol)> >
-//LibCtl_StepWriterLib::thelast;
-
-class StepData_WriterLib : public LibCtl_StepWriterLib
-{
-public:
-  DEFINE_STANDARD_ALLOC
-  Standard_EXPORT   StepData_WriterLib()
-    : LibCtl_StepWriterLib() { }
-  
-  Standard_EXPORT   StepData_WriterLib(const Handle(StepData_Protocol)& theProtocol);
-
-  Standard_EXPORT void SetComplete ();
-
-  Standard_EXPORT void AddProtocol (const Handle(Standard_Transient)& theProtocol);
-
-  Standard_EXPORT static void SetGlobal (const Handle(StepData_ReadWriteModule)& theModule,
-                                         const Handle(StepData_Protocol)& theProtocol);
-
-};
+        StepData_WriterLib;
 
 #endif

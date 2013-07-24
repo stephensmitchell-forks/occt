@@ -40,40 +40,6 @@ class IGESData_Protocol;
 typedef LibCtl_Library<Handle(IGESData_IGESEntity),
                       Handle(IGESData_SpecificModule),
                       Handle(IGESData_Protocol)>
-        LibCtl_IGESSpecificLib;
+        IGESData_SpecificLib;
 
-template <>
-NCollection_Handle <LibCtl_GlobalNode<Handle(IGESData_SpecificModule),
-                                      Handle(IGESData_Protocol)> >
-LibCtl_IGESSpecificLib::theglobal;
-
-template <>
-Handle(IGESData_Protocol)
-LibCtl_IGESSpecificLib::theprotocol;
-
-template <>
-NCollection_Handle <LibCtl_Node<Handle(IGESData_SpecificModule),
-                                Handle(IGESData_Protocol)> >
-LibCtl_IGESSpecificLib::thelast;
-
-
-class IGESData_SpecificLib : public LibCtl_IGESSpecificLib
-{
-public:
-  DEFINE_STANDARD_ALLOC
-  Standard_EXPORT   IGESData_SpecificLib()
-  : LibCtl_IGESSpecificLib ()
-  { }
-  
-  Standard_EXPORT   IGESData_SpecificLib(const Handle(IGESData_Protocol)& theProtocol);
-  
-  Standard_EXPORT void SetComplete ();
-
-  Standard_EXPORT void AddProtocol (const Handle(Standard_Transient)& theProtocol);
-
-  Standard_EXPORT static void SetGlobal (const Handle(IGESData_SpecificModule)& theModule,
-                                         const Handle(IGESData_Protocol)& theProtocol);
-  
-};
- 
 #endif

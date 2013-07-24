@@ -17,91 +17,14 @@
 
 #include <Interface_GeneralLib.hxx>
 
+typedef LibCtl_GlobalNode <Handle(Interface_GeneralModule),
+                           Handle(Interface_Protocol)>
+        Interface_GlobalNodeOfGeneralLib;
 
-  static NCollection_Handle < LibCtl_GlobalNode<Handle(Interface_GeneralModule),
-                                                Handle(Interface_Protocol)> >
-     myGlobal;
-
-  static NCollection_Handle < LibCtl_Node<Handle(Interface_GeneralModule),
-                                          Handle(Interface_Protocol)> >
-     myLast;
-
-  static Handle(Interface_Protocol)
-     myProtocol;
-
-
-  void Interface_GeneralLib::SetGlobal (const Handle(Interface_GeneralModule)& theModule,
-                                         const Handle(Interface_Protocol)& theProtocol)
-  {
-    if (myGlobal.IsNull())
-      myGlobal = new LibCtl_GeneralLib::LibCtl_GlobalNode;
-    myGlobal->Add(theModule,theProtocol);
-  }
-
-  Interface_GeneralLib::Interface_GeneralLib(const Handle(Interface_Protocol)& theProtocol)
-  {
-    Standard_Boolean last = Standard_False;
-    if (theProtocol.IsNull())
-      return;
-    if (!myProtocol.IsNull())
-      last = (myProtocol == theProtocol);
-
-    if (last)
-     thelist = myLast;
-    // If no optimization available: list building
-    else
-    {
-      AddProtocol(theProtocol);
-      // This defines the optimization (for the next time)
-      myLast     = thelist;
-      myProtocol = theProtocol;
-    }
-  }
-
-  void Interface_GeneralLib::SetComplete ()
-  {
-    thelist = new LibCtl_GeneralLib::LibCtl_Node;
-    // Take each of the protocols of the Global list
-    NCollection_Handle <LibCtl_GeneralLib::LibCtl_GlobalNode> curr;
-    for (curr = myGlobal; !curr.IsNull(); )
-    {
-      const Handle(Interface_Protocol)& protocol = curr->Protocol();
-      // As we take all , it is not preoccupied resources
-      if (!protocol.IsNull()) thelist->AddNode(curr);
-      curr = curr->Next();
-    }
-  }
-
-  void Interface_GeneralLib::AddProtocol (const Handle(Standard_Transient)& theProtocol)
-  {
-        // Downcast as Protocol-> Resources, and even redefined to use in other
-    // Library must always return the type highest
-    Handle(Interface_Protocol) aProtocol = Handle(Interface_Protocol)::DownCast(theProtocol);
-    if (aProtocol.IsNull()) return;
-
-    NCollection_Handle <LibCtl_GeneralLib::LibCtl_GlobalNode> curr;
-    for (curr = myGlobal; !curr.IsNull(); )
-    {
-      const Handle(Interface_Protocol)& protocol = curr->Protocol();
-      if (!protocol.IsNull())
-      {
-        if (protocol->DynamicType() == theProtocol->DynamicType())
-        {
-          if (thelist.IsNull())
-            thelist = new LibCtl_GeneralLib::LibCtl_Node;
-          thelist->AddNode(curr);
-          break;
-        }
-      }
-      curr = curr->Next();
-    }
-    //  Treat resources
-    Standard_Integer nb = aProtocol->NbResources();
-    for (Standard_Integer i = 1; i <= nb; i++)
-    {
-      AddProtocol (aProtocol->Resource(i));
-    }
-    
-    myProtocol.Nullify();
-    myLast.Nullify();
-  }
+template<>
+Standard_EXPORT static NCollection_Handle< Interface_GlobalNodeOfGeneralLib >&
+Interface_GeneralLib::GetGlobal()
+{
+  static NCollection_Handle< Interface_GlobalNodeOfGeneralLib > aGlobal;
+  return aGlobal;
+}
