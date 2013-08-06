@@ -389,7 +389,8 @@ static void ComputeTangency (const Contap_TheSearch& solrst,
       theparam = PStart.Parameter();
       gp_Pnt2d Ptoproj=TheArcTool::Value(thearc,theparam);
       
-      //jgv: purge of bad points (points that are out of domain)
+      //jgv: for the issue 24103 to exclude points that are not same parameter:
+      //these points can be out of the surface's domain and lead to failure of Walking algorithm.
       gp_Pnt PointFromSurf = TheSurfaceTool::Value(Surf, Ptoproj.X(), Ptoproj.Y());
       Handle(BRepAdaptor_HCurve2d) brhc = Handle(BRepAdaptor_HCurve2d)::DownCast(thearc);
       TopoDS_Edge theedge = ((BRepAdaptor_Curve2d *)&(brhc->Curve2d()))->Edge();
