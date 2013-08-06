@@ -1,0 +1,24 @@
+puts "============"
+puts "OCC24103"
+puts "============"
+puts ""
+######################################################
+# Infinite loop in HLR algorithm on the customer's shape
+######################################################
+
+pload XDE
+
+smallview
+top
+
+stepread [locate_data_file bug24100_REFLECT_CURVE_PART_5_SOL_ohne_Metadaten.stp] a *
+
+explode a_1
+donly a_1_1
+fit
+
+reflectlines result a_1_1 0 0 1
+
+set length 6385.96
+
+set only_screen_axo 1

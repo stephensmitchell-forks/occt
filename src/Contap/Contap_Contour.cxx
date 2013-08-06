@@ -44,6 +44,10 @@
 #include <TColStd_Array1OfInteger.hxx>
 #include <TopTrans_CurveTransition.hxx>
 
+#include <BRepAdaptor_HCurve2d.hxx>
+#include <Geom_Curve.hxx>
+#include <BRep_Tool.hxx>
+
 #define Tolpetit 1.e-10  // pour dist au carre
 
 #define tole 5.e-6
@@ -535,6 +539,23 @@ static void ComputeTangency (const Contap_TheSearch& solrst,
       const Handle(Adaptor2d_HCurve2d)& thearc = PStart.Arc();
       theparam = PStart.Parameter();
       gp_Pnt2d Ptoproj=Contap_HCurve2dTool::Value(thearc,theparam);
+      
+      //jgv: for the issue 24103 to exclude points that are not same parameter:
+      //these points can be out of the surface's domain and lead to failure of Walking algorithm.
+      gp_Pnt PointFromSurf = Surf->Value(Ptoproj.X(), Ptoproj.Y());
+      Handle(BRepAdaptor_HCurve2d) brhc = Handle(BRepAdaptor_HCurve2d)::DownCast(thearc);
+      TopoDS_Edge theedge = brhc->ChangeCurve2d().Edge();
+      Standard_Real fpar, lpar;
+      Handle(Geom_Curve) thecurve = BRep_Tool::Curve(theedge, fpar, lpar);
+      if (!thecurve.IsNull())
+      {
+        gp_Pnt PointFromEdge = thecurve->Value(theparam);
+        Standard_Real TolEdge = BRep_Tool::Tolerance(theedge);
+        if (PointFromSurf.Distance(PointFromEdge) > 2.*TolEdge)
+          continue;
+      }
+      //////////////////////////////////////////////////////////
+      
       //-- lbr le 15 mai 97 
       //-- On elimine les points qui sont egalement present sur une restriction solution
       Standard_Boolean SurUneRestrictionSolution = Standard_False;
