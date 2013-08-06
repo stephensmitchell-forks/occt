@@ -36,8 +36,11 @@
 #include <BndLib_AddSurface.hxx>
 #include <Bnd_Box.hxx>
 
-
 #include <ElSLib.hxx>
+
+#include <BRepAdaptor_HCurve2d.hxx>
+#include <Geom_Curve.hxx>
+#include <BRep_Tool.hxx>
 
 #define tole 5.e-6
 
@@ -385,6 +388,22 @@ static void ComputeTangency (const Contap_TheSearch& solrst,
       const TheArc& thearc = PStart.Arc();
       theparam = PStart.Parameter();
       gp_Pnt2d Ptoproj=TheArcTool::Value(thearc,theparam);
+      
+      //jgv: purge of bad points (points that are out of domain)
+      gp_Pnt PointFromSurf = TheSurfaceTool::Value(Surf, Ptoproj.X(), Ptoproj.Y());
+      Handle(BRepAdaptor_HCurve2d) brhc = Handle(BRepAdaptor_HCurve2d)::DownCast(thearc);
+      TopoDS_Edge theedge = ((BRepAdaptor_Curve2d *)&(brhc->Curve2d()))->Edge();
+      Standard_Real fpar, lpar;
+      Handle(Geom_Curve) thecurve = BRep_Tool::Curve(theedge, fpar, lpar);
+      if (!thecurve.IsNull())
+      {
+        gp_Pnt PointFromEdge = thecurve->Value(theparam);
+        Standard_Real TolEdge = BRep_Tool::Tolerance(theedge);
+        if (PointFromSurf.Distance(PointFromEdge) > 2.*TolEdge)
+          continue;
+      }
+      //////////////////////////////////////////////////////////
+      
       //-- lbr le 15 mai 97 
       //-- On elimine les points qui sont egalement present sur une restriction solution
       Standard_Boolean SurUneRestrictionSolution = Standard_False;
