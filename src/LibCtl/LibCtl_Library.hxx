@@ -31,15 +31,14 @@ template <class ModuleType, class ProtocolType>
 class LibCtl_Node
 {
 private:
-  typedef LibCtl_GlobalNode<ModuleType, ProtocolType> LibCtl_GlobalNode;
 
-  NCollection_Handle < LibCtl_GlobalNode > myNode;
+  NCollection_Handle < LibCtl_GlobalNode<ModuleType, ProtocolType> > myNode;
   NCollection_Handle < LibCtl_Node > myNext;
 
 public:
 
   Standard_EXPORT   LibCtl_Node ();
-  Standard_EXPORT   void AddNode (const NCollection_Handle< LibCtl_GlobalNode >& theNode);
+  Standard_EXPORT   void AddNode (const NCollection_Handle< LibCtl_GlobalNode<ModuleType, ProtocolType> >& theNode);
   Standard_EXPORT   const ModuleType&  Module () const;
   Standard_EXPORT   const ProtocolType& Protocol () const;
   Standard_EXPORT   const NCollection_Handle< LibCtl_Node >& Next () const;
@@ -53,7 +52,7 @@ LibCtl_Node<ModuleType,ProtocolType>
 //! Adds a couple (Module,Protocol), that is, stores it into
 //! itself if not yet done, else creates a Next Node to do it.
 template<class ModuleType, class ProtocolType>
-void LibCtl_Node<ModuleType,ProtocolType>::AddNode (const NCollection_Handle< LibCtl_GlobalNode >& theNode)
+void LibCtl_Node<ModuleType,ProtocolType>::AddNode (const NCollection_Handle< LibCtl_GlobalNode<ModuleType, ProtocolType> >& theNode)
 {
   if (myNode == theNode) return;
   if (myNext.IsNull()) {
@@ -182,28 +181,24 @@ template <class ObjectType, class ModuleType, class ProtocolType>
 class LibCtl_Library
 {
 public:
-  // Type definitions for template classes
-  typedef LibCtl_GlobalNode<ModuleType, ProtocolType> LibCtl_GlobalNode;
-  typedef LibCtl_Node<ModuleType, ProtocolType>       LibCtl_Node;
-public:
   // Basic data for optimization (Protocol last request)
   static ProtocolType myProtocol;
-  static NCollection_Handle< LibCtl_Node > myLast;
+  static NCollection_Handle< LibCtl_Node<ModuleType, ProtocolType> > myLast;
 
   DEFINE_STANDARD_ALLOC
 
 private:
-    NCollection_Handle< LibCtl_Node > myList;
-    NCollection_Handle< LibCtl_Node > myCurr;
+    NCollection_Handle< LibCtl_Node<ModuleType, ProtocolType> > myList;
+    NCollection_Handle< LibCtl_Node<ModuleType, ProtocolType> > myCurr;
 public:
 
   //! Gets global list of modules
-  static NCollection_Handle< LibCtl_GlobalNode >& GetGlobal();
+  static NCollection_Handle< LibCtl_GlobalNode<ModuleType, ProtocolType> >& GetGlobal();
  
    //! Supply the global list
   Standard_EXPORT static void SetGlobal (const ModuleType& theModule, const ProtocolType& theProtocol)
   {
-    if (GetGlobal().IsNull()) GetGlobal() = new LibCtl_GlobalNode;
+    if (GetGlobal().IsNull()) GetGlobal() = new LibCtl_GlobalNode<ModuleType, ProtocolType>;
     GetGlobal()->Add(theModule,theProtocol);
   }
   
@@ -238,7 +233,7 @@ public:
     ProtocolType aProtocol = ProtocolType::DownCast(theProtocol);
     if (aProtocol.IsNull()) return;
 
-    NCollection_Handle< LibCtl_GlobalNode > curr;
+    NCollection_Handle< LibCtl_GlobalNode<ModuleType, ProtocolType> > curr;
     for (curr = GetGlobal(); !curr.IsNull(); )
     {
       const ProtocolType& aProtocol = curr->Protocol();
@@ -248,7 +243,7 @@ public:
         if (aProtocol->DynamicType() == theProtocol->DynamicType())
         {
           if (myList.IsNull())
-            myList = new LibCtl_Node;
+            myList = new LibCtl_Node<ModuleType, ProtocolType>;
 
           myList->AddNode(curr);
           break;  // UN SEUL MODULE PAR PROTOCOLE
@@ -269,14 +264,14 @@ public:
 
   Standard_EXPORT void Clear ()
   {
-    myList = new LibCtl_Node();
+    myList = new LibCtl_Node <ModuleType, ProtocolType>;
   }
 
   Standard_EXPORT void SetComplete ()
   {
-    myList = new LibCtl_Node;
+    myList = new LibCtl_Node <ModuleType, ProtocolType>;
     // Take each of the protocols of the Global list
-    NCollection_Handle< LibCtl_GlobalNode > curr;
+    NCollection_Handle< LibCtl_GlobalNode<ModuleType, ProtocolType> > curr;
     for (curr = GetGlobal(); !curr.IsNull(); )
     {
       const ProtocolType& aProtocol = curr->Protocol();
@@ -296,7 +291,7 @@ public:
     theModule.Nullify(); theCN = 0;
     if (myList.IsNull())
       return Standard_False;
-    NCollection_Handle< LibCtl_Node > curr = myList;
+    NCollection_Handle< LibCtl_Node<ModuleType, ProtocolType> > curr = myList;
     for (curr = myList; !curr.IsNull(); )
     {
       const ProtocolType& aProtocol = curr->Protocol();
@@ -325,7 +320,7 @@ public:
     return (!myCurr.IsNull());  
   }
 
-  Standard_EXPORT void LibCtl_Library::Next ()
+  Standard_EXPORT void Next ()
   {
     if (!myCurr.IsNull())
       myCurr = myCurr->Next();

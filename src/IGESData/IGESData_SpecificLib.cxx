@@ -22,7 +22,7 @@ typedef LibCtl_GlobalNode <Handle(IGESData_SpecificModule),
         IGESData_GlobalNodeOfSpecificLib;
 
 template<>
-Standard_EXPORT static NCollection_Handle< IGESData_GlobalNodeOfSpecificLib >&
+Standard_EXPORT NCollection_Handle< IGESData_GlobalNodeOfSpecificLib >&
 IGESData_SpecificLib::GetGlobal()
 {
   static NCollection_Handle< IGESData_GlobalNodeOfSpecificLib > aGlobal;

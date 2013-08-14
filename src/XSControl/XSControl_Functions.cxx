@@ -46,7 +46,6 @@
 //#include <TransferBRep_ShapeBinder.hxx>
 //#include <TransferBRep_ShapeListBinder.hxx>
 //#include <TransferBRep_ShapeMapper.hxx>
-//#include <TransferBRep_OrientedShapeMapper.hxx>
 
 #include <XSControl_TransferWriter.hxx>
 #include <XSControl_TransferReader.hxx>

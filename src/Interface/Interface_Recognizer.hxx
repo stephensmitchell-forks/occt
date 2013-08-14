@@ -71,11 +71,11 @@ protected:
     myHasNext = Standard_False;
   }
 
-  Standard_EXPORT void Interface_Recognizer::SetOK (const ResultType& theResult)
+  Standard_EXPORT void SetOK (const ResultType& theResult)
   {
     myRes = theResult;
   }
-  Standard_EXPORT void Interface_Recognizer::SetKO ()
+  Standard_EXPORT void SetKO ()
   {
     myRes.Nullify();
   }

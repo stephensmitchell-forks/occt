@@ -39,7 +39,12 @@ IMPLEMENT_DOWNCAST(Transfer_FinderProcess,Standard_Transient)
 IMPLEMENT_STANDARD_RTTI(Transfer_FinderProcess)
 
   Transfer_FinderProcess::Transfer_FinderProcess (const Standard_Integer theNb)
-    : Transfer_TransferProcess (theNb) {  }
+    : Transfer_TransferProcess < Handle(Transfer_ActorOfFinderProcess),
+                                 Transfer_TransferMapOfProcessForFinder,
+                                 Handle(Transfer_Finder),
+                                 Transfer_FindHasher,
+                                 Handle(Transfer_HSequenceOfFinder),
+                                 Transfer_IteratorOfProcessForFinder > (theNb) {  }
  
   void Transfer_FinderProcess::SetModel (const Handle(Interface_InterfaceModel)& theModel)
   {

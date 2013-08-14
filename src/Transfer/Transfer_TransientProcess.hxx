@@ -72,20 +72,20 @@ class Transfer_TransientProcess
 public:
 
   //! Sets TransientProcess at initial state, with an initial size <br>
-  Standard_EXPORT   Transfer_TransientProcess(const Standard_Integer theNb = 10000);
+  Standard_EXPORT   Transfer_TransientProcess (const Standard_Integer theNb = 10000);
   //! Sets an InterfaceModel, used by StartTrace, CheckList, queries <br>
   //!           on Integrity, to give informations significant for each norm. <br>
-  Standard_EXPORT     void SetModel(const Handle(Interface_InterfaceModel)& theModel) ;
+  Standard_EXPORT     void SetModel (const Handle(Interface_InterfaceModel)& theModel) ;
   //! Returns the Model used for StartTrace <br>
-  Standard_EXPORT     Handle_Interface_InterfaceModel Model() const;
+  Standard_EXPORT     Handle_Interface_InterfaceModel Model () const;
   //! Sets a Graph : superseedes SetModel if already done <br>
   Standard_EXPORT     void SetGraph(const Handle(Interface_HGraph)& theHG) ;
   
-  Standard_EXPORT     Standard_Boolean HasGraph() const;
+  Standard_EXPORT     Standard_Boolean HasGraph () const;
   
-  Standard_EXPORT     Handle_Interface_HGraph HGraph() const;
+  Standard_EXPORT     Handle_Interface_HGraph HGraph () const;
   
-  Standard_EXPORT    const Interface_Graph& Graph() const;
+  Standard_EXPORT    const Interface_Graph& Graph () const;
   //! Sets a Context : according to receiving appli, to be <br>
   //!           interpreted by the Actor <br>
   Standard_EXPORT     void SetContext (const Standard_CString theName,
@@ -98,7 +98,7 @@ public:
                                                    Handle(Standard_Transient)& theCtx) const;
   //! Returns (modifiable) the whole definition of Context <br>
   //!           Rather for internal use (ex.: preparing and setting in once) <br>
-  Standard_EXPORT     Handle_Dico_DictionaryOfTransient& Context() ;
+  Standard_EXPORT     Handle_Dico_DictionaryOfTransient& Context () ;
   //! Specific printing to trace an entity : prints label and type <br>
   //!           (if model is set) <br>
   Standard_EXPORT   virtual  void PrintTrace (const Handle(Standard_Transient)& theStart,
@@ -121,7 +121,7 @@ public:
   //!           syntactic, or semantic check). Normally, should answer False. <br>
   //!           It is not prudent to try transferring an entity which fails on <br>
   //!           data checking <br>
-  Standard_EXPORT     Standard_Boolean IsDataFail(const Handle(Standard_Transient)& theEnt) const;
+  Standard_EXPORT     Standard_Boolean IsDataFail (const Handle(Standard_Transient)& theEnt) const;
   //! Prints statistics on a given output, according mode <br>
   Standard_EXPORT     void PrintStats (const Standard_Integer theMode,
                                        const Handle(Message_Messenger)& theMessenger) const;

@@ -130,7 +130,6 @@
 
 #include <Transfer_FinderProcess.hxx>
 #include <TransferBRep_ShapeMapper.hxx>
-#include <TransferBRep_OrientedShapeMapper.hxx>
 #include <Transfer_TransientMapper.hxx>
 #include <Transfer_SimpleBinderOfTransient.hxx>
 #include <Interface_Static.hxx>

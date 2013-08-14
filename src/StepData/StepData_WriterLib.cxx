@@ -23,7 +23,7 @@ typedef LibCtl_GlobalNode <Handle(StepData_ReadWriteModule),
         StepData_GlobalNode;
 
 template <>
-Standard_EXPORT  static NCollection_Handle< StepData_GlobalNode > & 
+Standard_EXPORT NCollection_Handle< StepData_GlobalNode > & 
 StepData_WriterLib::GetGlobal()
 {
   static NCollection_Handle < StepData_GlobalNode > aGlobal;

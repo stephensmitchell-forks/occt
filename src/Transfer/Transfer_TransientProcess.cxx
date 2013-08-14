@@ -49,7 +49,13 @@ IMPLEMENT_STANDARD_RTTI(Transfer_TransientProcess)
 //=======================================================================
 
 Transfer_TransientProcess::Transfer_TransientProcess
-  (const Standard_Integer theNb) : Transfer_TransferProcess (theNb)  
+  (const Standard_Integer theNb)
+  : Transfer_TransferProcess  < Handle(Transfer_ActorOfTransientProcess),
+                                Transfer_TransferMapOfProcessForTransient,
+                                Handle(Standard_Transient),
+                                TColStd_MapTransientHasher,
+                                Handle(TColStd_HSequenceOfTransient),
+                                Transfer_IteratorOfProcessForTransient > (theNb)  
 {  
   theTrRoots = new TColStd_HSequenceOfTransient;
 }

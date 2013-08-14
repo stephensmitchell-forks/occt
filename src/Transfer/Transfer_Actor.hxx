@@ -107,7 +107,7 @@ public:
   //! If it is False (creation default), each add Actor is
   //! set at the beginning of the list.
   //! This allows to define default Actors (which are Last).
-  Standard_EXPORT   void SetLast (const Standard_Boolean theMode)
+  Standard_EXPORT   void SetLast (const Standard_Boolean theMode = Standard_True)
   {
     myLast = theMode;
   }

@@ -22,7 +22,7 @@ typedef LibCtl_GlobalNode <Handle(Interface_GeneralModule),
         Interface_GlobalNodeOfGeneralLib;
 
 template<>
-Standard_EXPORT static NCollection_Handle< Interface_GlobalNodeOfGeneralLib >&
+Standard_EXPORT NCollection_Handle< Interface_GlobalNodeOfGeneralLib >&
 Interface_GeneralLib::GetGlobal()
 {
   static NCollection_Handle< Interface_GlobalNodeOfGeneralLib > aGlobal;

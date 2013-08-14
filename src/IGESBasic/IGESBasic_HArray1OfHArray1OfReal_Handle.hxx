@@ -22,7 +22,7 @@
 #ifndef _IGESBasic_HArray1OfHArray1Real_Handle_HeaderFile
 #define _IGESBasic_HArray1OfHArray1Real_Handle_HeaderFile
 
-#include <IGESBasic_HArray1OfHArray1Ofreal.hxx>
+#include <IGESBasic_HArray1OfHArray1OfReal.hxx>
 
 typedef Handle(IGESBasic_HArray1OfHArray1OfReal) IGESBasic_HArray1OfHArray1OfReal_Handle;
 
