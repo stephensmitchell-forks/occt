@@ -4,9 +4,15 @@ puts "BUC60839"
 puts "============"
 puts ""                                                                                                                                                                        
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file BUC60839-1.brep] a 
+sfixpcu a a -f 
 checkshape a
+
 restore [locate_data_file BUC60839-2.brep] b
+sfixpcu b b -f 
 checkshape b
 
 puts "Starting fuse operation"

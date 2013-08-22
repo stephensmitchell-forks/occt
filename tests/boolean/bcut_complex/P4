@@ -1,6 +1,13 @@
 # cts21347
+
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file CTO909_part_1.brep] a
 restore [locate_data_file CTO909_tool_2.brep] b
+
+sfixpcu a a -f
+sfixpcu b b -f
 
 bcut result a b
 

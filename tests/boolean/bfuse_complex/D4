@@ -3,10 +3,20 @@
 
 puts "TODO #22911 Mandriva2010: Faulty shapes in variables faulty_1 to faulty_2"
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file ger60054a.rle] a
 restore [locate_data_file CTO900_ger60054b.rle] b
+
+sfixpcu a a -f
+sfixpcu b b -f
+
 fsameparameter a
 fsameparameter b
+
+checkshape a
+checkshape b
 
 bfuse result a b
 

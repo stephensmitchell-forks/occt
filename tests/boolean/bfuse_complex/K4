@@ -1,8 +1,17 @@
 # Original bug : pro13494
 # Date : 4June98
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file pro13494a.rle] a 
 restore [locate_data_file pro13494b.rle] b
+
+sfixpcu a a -f
+sfixpcu b b -f
+
+checkshape a
+checkshape b
 
 # pkv f
 explode a so

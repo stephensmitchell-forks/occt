@@ -2,8 +2,14 @@ puts "PRO16769"
 puts "Fuse"
 puts ""
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file CFE900_pro16gff.rle] base
 restore [locate_data_file pro16769b.rle] tool
+
+sfixpcu base base -f
+sfixpcu tool tool -f
 
 bfuse result base tool
 fsameparameter result

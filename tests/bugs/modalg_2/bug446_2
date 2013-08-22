@@ -9,7 +9,12 @@ puts ""
 ## As result I have fail on shape that it is not closed.
 ######################################
 
+# for "ffixpcu" command
+pload XSDRAW
+
 restore [locate_data_file OCC446b.brep] result
+
+ffixpcu result -f -s
 
 set che [checkshape result]
 if { [regexp {Faulty} $che ] == 1} {

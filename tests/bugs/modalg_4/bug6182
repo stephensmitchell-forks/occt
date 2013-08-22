@@ -8,8 +8,14 @@ puts ""
 
 set BugNumber OCC6182
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file OCC6182_A.brep] s1 
 restore [locate_data_file OCC6182_B.brep] s2 
+
+sfixpcu s1 s1 -f
+sfixpcu s2 s2 -f
 
 decho off
 set che_s1 [checkshape s1]

@@ -1,9 +1,21 @@
 # Original bug : cts21180
 # Date : 17 Sept 98
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file CTO900_cts21180c.rle] base
 restore [locate_data_file cts21180_face.rle] cont
 restore [locate_data_file cts21180_until.rle] funtil
+
+sfixpcu base base -f
+sfixpcu cont cont -f
+sfixpcu funtil funtil -f
+
+checkshape base
+checkshape cont
+checkshape funtil
+
 
 featprism base cont cont 0 0 -1 1 1
 featperform prism result funtil

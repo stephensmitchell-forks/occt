@@ -2,12 +2,19 @@ puts "==========="
 puts "OCC22535"
 puts "==========="
 ######################################################
-# Cut cphere: invalid shape after reading from STEP
+# Cut sphere: invalid shape after reading from STEP
 ######################################################
+
+# for "fixshape" command
+pload XSDRAW
 
 set BugNumber OCC22535
 
 restore [locate_data_file OCC22535-sphere_cyl2_cut.brep] a 
+
+fixshape a a
+checkshape a
+
 testwritestep $imagedir/${test_image}.stp a
 stepread $imagedir/${test_image}.stp b *
 renamevar b_1 result

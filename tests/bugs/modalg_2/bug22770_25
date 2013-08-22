@@ -10,8 +10,17 @@ puts ""
 
 set BugNumber OCC22770
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file 22770-tramp.brep] a 
 restore [locate_data_file 22770-trans.brep] b 
+
+sfixpcu a a -f
+sfixpcu b b -f
+
+checkshape a
+checkshape b
 
 sewing result 0.1 a b +mint 0.01 -a
 

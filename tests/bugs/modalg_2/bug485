@@ -7,10 +7,15 @@ puts ""
 ## Draw hangs up during performing fuse operation
 #######################################
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file OCC485a.brep] a_1 
+sfixpcu a_1 a_1 -f
 checkshape a_1
 
 restore [locate_data_file OCC485a.brep] a_2
+sfixpcu a_2 a_2 -f
 checkshape a_2
 
 if [catch {bfuse result a_1 a_2 } result] {

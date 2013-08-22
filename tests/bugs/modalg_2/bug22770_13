@@ -18,8 +18,18 @@ catch { pload XDE }
 # Open a transaction
 # NewCommand D
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file 22770-tramp.brep] a 
 restore [locate_data_file 22770-trans.brep] b 
+
+sfixpcu a a -f
+sfixpcu b b -f
+
+checkshape a
+checkshape b
+
 sewing result a b +c
 
 set square 1.8847e+07

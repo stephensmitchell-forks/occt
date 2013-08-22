@@ -3,7 +3,11 @@ puts "OCC25"
 puts "================"
 puts ""
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file OCC25-1.brep] sh1 
+sfixpcu sh1 sh1 -f
 
 decho off
 set che [checkshape sh1]
@@ -17,6 +21,7 @@ if { [regexp {Faulty} $che ] == 1 } {
 
 # ================================================
 restore [locate_data_file OCC25-2.brep] sh2
+sfixpcu sh2 sh2 -f
 
 decho off
 set che [checkshape sh2]

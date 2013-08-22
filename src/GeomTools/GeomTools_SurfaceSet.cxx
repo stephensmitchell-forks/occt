@@ -528,7 +528,14 @@ static void Print(const Handle(Geom_RectangularTrimmedSurface)& S,
   if (compact)
     OS << RECTANGULAR << " ";
   else
+  {
     OS << "RectangularTrimmedSurface";
+    
+    Standard_Boolean isUtr, isVtr;
+    S->GetTrimmedFlags(isUtr, isVtr);
+
+    OS << " (uTrim = " << isUtr << ", vTrim = " << isVtr << ")";
+  }
 
   Standard_Real U1,U2,V1,V2;
   S->Bounds(U1,U2,V1,V2);

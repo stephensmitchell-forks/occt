@@ -6,8 +6,12 @@ puts ""
 ## BRepTools_WireExplorere gives not all edges from a wire
 ###################################################
 
+# for "sfixpcu" command
+pload XSDRAW
+
 pload XDE
 restore [locate_data_file OCC8.brep] result
+sfixpcu result result -f -s
 
 checkshape result
 

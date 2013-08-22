@@ -2,9 +2,17 @@
 # Date : 13Mai98
 # A1.gi
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file CTO902_cts20452a.rle] a
 restore [locate_data_file CTO902_cts20452b.rle] b
 
+sfixpcu a a -f
+sfixpcu b b -f
+
+checkshape a
+checkshape b
 
 bfuse result a b
 

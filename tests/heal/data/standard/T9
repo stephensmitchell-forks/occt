@@ -1,2 +1,7 @@
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file CTO900_pro7637c_prism_oblong_dsg.rle] a
 
+sfixpcu a a -f
+checkshape a

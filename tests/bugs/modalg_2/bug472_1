@@ -10,10 +10,15 @@ puts ""
 ## Bad result of Fuse Operation (Cut&Common - bad too). SAM1470 (#2634) 
 #####################################################
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file OCC472a.brep] b1 
+sfixpcu b1 b1 -f
 checkshape b1
 
 restore [locate_data_file OCC472b.brep] b2
+sfixpcu b2 b2 -f
 checkshape b2
 
 bcut result b1 b2

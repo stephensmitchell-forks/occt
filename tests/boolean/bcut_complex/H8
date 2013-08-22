@@ -1,13 +1,26 @@
 # Original bug : cts20736
 # Date : 28Sept97
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file CTO900_cts20736a.rle] part
 restore [locate_data_file cts20736b.rle] aface
+
+sfixpcu part part -f
+sfixpcu aface aface -f
+
+checkshape aface
 
 btolx part
 btolx aface
 
+checkshape aface
+
 prism tool aface 0 0 -12
+
+checkshape part
+checkshape tool
 
 bcut result part tool
 

@@ -1,2 +1,8 @@
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file CTO909_tool_2.brep] a
+
+sfixpcu a a -f
+checkshape a
 

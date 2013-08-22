@@ -1,8 +1,14 @@
 # Original bug : pro12663
 # Date : 24mar98
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file CTO900_pro12663-part.rle] part
 restore [locate_data_file CTO900_pro12663-tool.rle] tool
+
+sfixpcu part part -f
+sfixpcu tool tool -f
 
 bcut result part tool
 

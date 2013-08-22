@@ -1,5 +1,15 @@
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file CIN900_cts21hlq.rle] a
 restore [locate_data_file CIN900_cts21hlr.rle] b
+
+sfixpcu a a -f
+sfixpcu b b -f
+
+checkshape a
+checkshape b
+
 bsection result a b
 
 set length 79.1327

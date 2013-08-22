@@ -8,7 +8,11 @@ puts ""
 ##  but I believe that orientation of this face is correct.
 #################################################################
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file OCC302c.brep] result
+fixshape result result
 
 set che [checkshape result r]
 if { [regexp {OK} $che] !=1 } {

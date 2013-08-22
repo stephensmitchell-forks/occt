@@ -5,7 +5,12 @@ puts "================"
 puts ""
 puts "TODO OCC12345 ALL: Error : The square of result shape is"
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file OCC26.brep] a 
+sfixpcu a a -f
+
 explode a
 checkshape a_1
 checkshape a_2

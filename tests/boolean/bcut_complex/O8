@@ -1,7 +1,14 @@
 ## cts20461
 puts "TODO #22911 ALL: Error : The area of the resulting shape is"
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file cts20461.rle] a
+
+sfixpcu a a -f
+checkshape a
+
 nexplode a f
 mksurface surf a_26
 nexplode a_26 e

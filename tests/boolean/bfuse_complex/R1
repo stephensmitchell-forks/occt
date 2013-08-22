@@ -2,9 +2,17 @@ puts "ITA60531"
 puts "Fuse"
 puts ""
 
+# for "sfixpcu" command
+pload XSDRAW
 
 restore [locate_data_file ita60531a.rle] b
 restore [locate_data_file ita60531b.rle] f
+
+sfixpcu b b -f
+sfixpcu f f -f
+
+checkshape b
+checkshape f
 
 # Operation booleenne -> shape pas valide
 prism tool f 0 0 1

@@ -4,7 +4,14 @@
 ## Comment : from pro5545
 ## ====================================
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file CFI_pro5545.rle] a
+
+sfixpcu a a -f
+checkshape a
+
 encoderegularity a 1
 tscale a 0 0 0 1000
 nexplode a e

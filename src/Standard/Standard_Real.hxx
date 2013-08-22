@@ -63,6 +63,8 @@ __Standard_API Standard_Real    ATanh       (const Standard_Real );
 __Standard_API Standard_Real    ACosh       (const Standard_Real );
 __Standard_API Standard_Real    Log         (const Standard_Real );
 __Standard_API Standard_Real    Sqrt        (const Standard_Real );
+__Standard_API Standard_Real    RealMod     (const Standard_Real theDivident,
+                                             const Standard_Real theDivisor);
 
 //class  Standard_OStream;
 //void             ShallowDump(const Standard_Real, Standard_OStream& );
@@ -264,6 +266,21 @@ inline Standard_Real     Min (const Standard_Real Val1,
 {
   return Val1 <= Val2 ? Val1 : Val2;
 }
+
+// ------------------------------------------------------------------
+// MinMax : Replaces  theParMIN = MIN(theParMIN, theParMAX),
+//                    theParMAX = MAX(theParMIN, theParMAX).
+// ------------------------------------------------------------------
+inline void MinMax(Standard_Real& theParMIN, Standard_Real& theParMAX)
+{
+  if(theParMIN > theParMAX)
+  {
+    const Standard_Real aux = theParMAX;
+    theParMAX = theParMIN;
+    theParMIN = aux;
+  }
+}
+
 
 //-------------------------------------------------------------------
 // Pow : Returns a real to a given power

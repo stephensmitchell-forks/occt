@@ -1,8 +1,17 @@
 # Original bug : cts20150
 # Date : 13Mai98
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file CTO901_cts20150_base.rle]  base
-restore [locate_data_file CTO901_cts20150_outil.rle]  outil
+restore [locate_data_file CTO901_cts20150_outil.rle] outil
+
+sfixpcu base base -f
+sfixpcu outil outil -f
+
+checkshape base
+checkshape outil
 
 bcut result base outil
 

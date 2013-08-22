@@ -17,9 +17,6 @@
 // purpose or non-infringement. Please see the License for the specific terms
 // and conditions governing the rights and limitations under the License.
 
-
-
-#include <ShapeFix.hxx>
 //:k2 abv 16.12.98: eliminating code duplication
 //pdn     18.12.98: checking deviation for SP edges
 //:   abv 22.02.99: method FillFace() removed since PRO13123 is fixed
@@ -27,54 +24,50 @@
 //szv#9:S4244:19Aug99: Added method FixWireGaps
 //szv#10:S4244:23Aug99: Added method FixFaceGaps
 
+#include <Adaptor3d_CurveOnSurface.hxx>
 #include <BRep_Builder.hxx>
 #include <BRep_Tool.hxx>
-
-#include <Geom2d_Curve.hxx>
+#include <BRepLib.hxx>
+#include <BRepTools.hxx>
 #include <Geom_Curve.hxx>
-
+#include <Geom_Plane.hxx>
+#include <Geom_RectangularTrimmedSurface.hxx>
+#include <Geom_Surface.hxx>
+#include <Geom2d_Curve.hxx>
+#include <Geom2dAdaptor_HCurve.hxx>
+#include <GeomAdaptor_HSurface.hxx>
+#include <gp_Pnt.hxx>
+#include <Message_ProgressSentry.hxx>
 #include <Precision.hxx>
-
+#include <ShapeAnalysis_Edge.hxx>
+#include <ShapeAnalysis_Surface.hxx>
+#include <ShapeBuild_Edge.hxx>
+#include <ShapeBuild_ReShape.hxx>
+#include <ShapeExtend_CompositeSurface.hxx>
+#include <ShapeFix.hxx>
+#include <ShapeFix_ComposeShell.hxx>
+#include <ShapeFix_Edge.hxx>
+#include <ShapeFix_Edge.hxx>
+#include <ShapeFix_Face.hxx>
+#include <ShapeFix_Shape.hxx>
+#include <ShapeFix_Wire.hxx>
 #include <Standard_ErrorHandler.hxx>
 #include <Standard_Failure.hxx>
-
+#include <TColGeom_HArray2OfSurface.hxx>
+#include <TColgp_SequenceOfPnt.hxx>
+#include <TopExp.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopLoc_Location.hxx>
 #include <TopoDS.hxx>
 #include <TopoDS_Edge.hxx>
 #include <TopoDS_Face.hxx>
-#include <Geom_Surface.hxx>
-
-//:i2
-#include <gp_Pnt.hxx>
-#include <Geom_Plane.hxx>
-#include <ShapeFix_Edge.hxx>
-#include <Geom2dAdaptor_HCurve.hxx>
-#include <Adaptor3d_CurveOnSurface.hxx>
-#include <Geom_RectangularTrimmedSurface.hxx>
-#include <ShapeAnalysis_Surface.hxx>
-
-#include <ShapeFix_Edge.hxx>
-#include <ShapeFix_Shape.hxx>
-#include <ShapeFix_Wire.hxx>
-#include <ShapeFix_Face.hxx>
 #include <TopoDS_Iterator.hxx>
-#include <GeomAdaptor_HSurface.hxx>
-#include <TopTools_MapOfShape.hxx>
-#include <BRepLib.hxx>
-
-#include <ShapeAnalysis_Edge.hxx>
-#include <ShapeBuild_Edge.hxx>
 #include <TopoDS_Vertex.hxx>
-#include <ShapeBuild_ReShape.hxx>
-#include <TColgp_SequenceOfPnt.hxx>
-#include <TopTools_ListOfShape.hxx>
-#include <TopTools_ListIteratorOfListOfShape.hxx>
-#include <TopTools_SequenceOfShape.hxx>
 #include <TopTools_IndexedDataMapOfShapeListOfShape.hxx>
-#include <TopExp.hxx>
-
-#include <Message_ProgressSentry.hxx>
+#include <TopTools_ListIteratorOfListOfShape.hxx>
+#include <TopTools_ListOfShape.hxx>
+#include <TopTools_MapOfShape.hxx>
+#include <TopTools_SequenceOfShape.hxx>
 
 //=======================================================================
 //function : SameParameter
@@ -717,4 +710,381 @@ Standard_Real ShapeFix::LeastEdgeSize(TopoDS_Shape& theShape)
   }
   aRes = sqrt(aRes);
   return aRes;
+}
+
+
+//static void Boundaries2D(const TopoDS_Face& theF,
+//                         const Handle(Geom_Surface)& theS,
+//                         Standard_Real& UMin,
+//                         Standard_Real& UMax,
+//                         Standard_Real& VMin,
+//                         Standard_Real& VMax)
+//{
+//  const Standard_Integer NBPoints = 23;
+//  TopoDS_Face aF = theF;
+//  aF.Orientation(TopAbs_FORWARD);
+//
+//  Standard_Real anUF = 0.0, anUL = 0.0, aVF = 0.0, aVL = 0.0;
+//
+//  Bnd_Box2d Baux;
+//  TopExp_Explorer ex(aF,TopAbs_EDGE);
+//  for (;ex.More();ex.Next())
+//  {
+//    Standard_Real pf, pl;
+//    TopoDS_Edge anE = TopoDS::Edge(ex.Current());
+//    const Handle(Geom2d_Curve) aCur = BRep_Tool::CurveOnSurface(anE, theF, pf, pl);
+//
+//    if (aCur.IsNull())
+//      continue;
+//    
+//    MinMax(pf,pl);
+//
+//    if (Precision::IsNegativeInfinite(pf) ||
+//              Precision::IsPositiveInfinite(pf))
+//      continue;
+//
+//    if (Precision::IsNegativeInfinite(pl) ||
+//              Precision::IsPositiveInfinite(pl))
+//      continue;
+//
+//
+//    Geom2dAdaptor_Curve anAC(aCur,pf,pl);
+//
+//    gp_Pnt2d aP;
+//    
+//    anAC.D0(pf, aP);
+//    Baux.Add(aP);
+//
+//    anAC.D0(pl, aP);
+//    Baux.Add(aP);
+//
+//    if (anAC.GetType() == GeomAbs_Line)
+//    {
+//      continue;
+//    }
+//    
+//    Standard_Real prm = pf;
+//    const Standard_Real step = (pl - pf) / NBPoints;
+//    for(Standard_Integer i = 1; i < NBPoints; i++)
+//    {
+//      prm += step;
+//      anAC.D0(prm, aP);
+//      Baux.Add(aP);
+//    }
+//  }
+//
+//  if(!Baux.IsVoid())
+//    Baux.Get(UMin, VMin, UMax, VMax);
+//  else
+//    theS->Bounds(UMin, UMax, VMin, VMax);
+//  
+//#ifdef DEB 
+//  cout << "++Boundaries2D: U = ( " << UMin << ")...(" << UMax << "); "
+//                  "V = ( " << VMin << ")...(" << VMax << ").--" << endl;
+//#endif
+//}
+
+//=======================================================================
+//function : RefineFace
+//purpose  : 
+//=======================================================================
+void ShapeFix::RefineFace(const TopoDS_Face& theF,
+                          TopoDS_Shape& theNewShape/*,
+                          const Standard_Boolean flForce,
+                          const Standard_Boolean flDoNotSplit*/)
+{
+  Standard_Real anUFf, anUFl, aVFf, aVFl;
+
+  Standard_Boolean  isUtrim = Standard_True,//Standard_False, 
+                    isVtrim = Standard_True;//Standard_False; 
+
+  //Standard_Boolean  isUtrimmed = Standard_False, 
+  //                  isVtrimmed = Standard_False; 
+
+  TopoDS_Face aF = theF;
+
+  Handle(Geom_Surface) aS=BRep_Tool::Surface(aF);
+  Standard_Boolean isRectangularTrimmed = (aS->DynamicType() == STANDARD_TYPE(Geom_RectangularTrimmedSurface));
+
+  if (isRectangularTrimmed)
+  {
+    //Handle(Geom_RectangularTrimmedSurface) TS = 
+    //  Handle(Geom_RectangularTrimmedSurface)::DownCast(aS);
+
+    //TS->GetTrimmedFlags(isUtrimmed, isVtrimmed);
+
+    //aS = TS->BasisSurface();
+  }
+  else
+    return;
+
+  //Boundaries2D(theF, aS, aU1, aU2, aV1, aV2);
+  BRepTools::UVBounds(aF, anUFf, anUFl, aVFf, aVFl);
+
+//  Standard_Boolean  isURunAway, isVRunAway;
+//  Standard_Boolean  isSplitByU = Standard_False, 
+//                    isSplitByV = Standard_False;
+//
+//  {
+//    Standard_Real uf, ul, vf, vl;
+//    aS->Bounds(uf, ul, vf, vl);
+//
+//    const Standard_Real duf = anUFl - anUFf;
+//    const Standard_Real dus = ul - uf;    
+//    const Standard_Real dvf = aVFl - aVFf;
+//    const Standard_Real dvs = vl - vf;
+//
+//
+//    isSplitByU = !flDoNotSplit && (aS->IsUPeriodic() || flForce) && (duf > dus);
+//    isSplitByV = !flDoNotSplit && (aS->IsVPeriodic() || flForce) && (dvf > dvs);
+//
+//#ifdef DEB
+//    cout << "isSplitByU = " << isSplitByU << "; isSplitByV = " << isSplitByV <<endl;
+//#endif
+//
+//    if(isSplitByU || isSplitByV)
+//    {
+//      Standard_Real anURemainder = isSplitByU ? RealMod(duf, dus) : 0.0;
+//      Standard_Real aVRemainder  = isSplitByV ? RealMod(dvf, dvs) : 0.0;
+//
+//      SplittingFace(aF, theNewShape, aS, (ul-uf)/2.0, (vl-vf)/2.0, anUFf, aVFf, 
+//                anURemainder, aVRemainder, isSplitByU, isSplitByV);
+//      return;
+//    }
+//
+//    isURunAway = (anUFf < uf - Precision::PConfusion()) ||
+//                 (anUFl > ul + Precision::PConfusion());
+//    isVRunAway = (aVFf < vf - Precision::PConfusion()) ||
+//                 (aVFl > vl + Precision::PConfusion());
+//  }
+//
+//  if(!(flForce || isRectangularTrimmed))
+//  {
+//#ifdef DEB
+//    cout << "The surface is not \"RectangularTrimmed\". " 
+//      "Try to use \"force\" flag."<< endl;
+//#endif
+//    
+//    return;
+//  }
+//
+  if(aS->IsUPeriodic())
+  {
+    const Standard_Real aT = aS->UPeriod();
+    const Standard_Real dU = anUFl - anUFf;
+
+#ifdef DEB
+    if(dU > aT)
+    {
+      cout << "dU = " << dU << " > T = " << aT << ". Delta = " << dU - aT << endl;
+    }
+#endif
+    
+    anUFl = anUFf + aT;
+
+    //isUtrim = isURunAway || isUtrimmed;
+  }
+
+  if(aS->IsVPeriodic())
+  {
+    const Standard_Real aT = aS->VPeriod();
+    const Standard_Real dv = aVFl - aVFf;
+    
+#ifdef DEB
+    if(dv > aT)
+    {
+      cout << "++dV = " << dv << " > T = " << aT << ". Delta = " << dv - aT << endl;
+    }
+
+#endif
+    
+    aVFl = aVFf + aT;
+
+    //isVtrim = isVRunAway || isVtrimmed;
+  }
+
+  //if(!(isUtrim || isVtrim))
+  //  return;
+
+#ifdef DEB
+  if(isUtrim)
+    cout << "Trimming U: (" << anUFf  << ")...(" << anUFl << ")" << endl;
+
+  if(isVtrim)
+    cout << "Trimming V: (" << aVFf  << ")...(" << aVFl << ")" << endl;
+#endif
+
+  Handle(Geom_RectangularTrimmedSurface) aRTS=new Geom_RectangularTrimmedSurface(aS,isUtrim,
+                                    isVtrim, anUFf, anUFl, aVFf, aVFl);
+
+  ReTrimmedFace(aF, aRTS);
+}
+
+//=======================================================================
+//function : RefineFace
+//purpose  : 
+//=======================================================================
+void ShapeFix::ReTrimmedFace(TopoDS_Face& theF,
+                            const Handle(Geom_RectangularTrimmedSurface)& theNewRTSurf)
+{
+#ifdef DEB
+  cout << "ShapeFix::ReTrimmedFace(...) is executed." << endl;
+#endif
+
+  TopExp_Explorer aExp;
+  TopTools_MapOfShape aME;
+  BRep_Builder aBB;
+  
+  aExp.Init(theF, TopAbs_EDGE);
+  for (; aExp.More(); aExp.Next())
+  {
+    Standard_Real aT1, aT2;
+    const TopoDS_Edge& aE=*((TopoDS_Edge*)&aExp.Current());
+    if (!aME.Add(aE))
+      continue;
+
+    TopLoc_Location aLocE;
+    Standard_Real aTolE=BRep_Tool::Tolerance(aE);
+    Handle(Geom2d_Curve) aC2D1=BRep_Tool::CurveOnSurface(aE, theF, aT1, aT2);
+    Standard_Boolean bIsClosed = BRep_Tool::IsClosed(aE, theF);
+    
+    if (!bIsClosed)
+    {
+      aBB.UpdateEdge(aE, aC2D1, theNewRTSurf, aLocE, theF, aTolE);
+    }
+    else
+    {
+      Standard_Boolean bIsLeft;
+      Standard_Real aScPr;
+      Handle(Geom2d_Curve) aC2D2;
+      TopoDS_Edge aE2;
+      aE2=aE;
+      aE2.Reverse();
+      aC2D2=BRep_Tool::CurveOnSurface(aE2, theF, aT1, aT2);
+      {
+        Standard_Real aT, aU1, aU2;
+        gp_Pnt2d aP2D1, aP2D2;
+        gp_Vec2d aV2D1, aV2D2;
+
+        const Standard_Real PAR_T = 0.43213918;
+        aT=(1.-PAR_T)*aT1 + PAR_T*aT2;
+        aC2D1->D1(aT, aP2D1, aV2D1);
+        aC2D2->D1(aT, aP2D2, aV2D2);
+        
+        aU1=aP2D1.X();
+        aU2=aP2D2.X();
+        bIsLeft=(aU1<aU2);
+        
+        gp_Vec2d aDOY(0.,1.);
+        aScPr=aV2D1*aDOY;
+      }
+
+      if (!bIsLeft)
+      {
+        if (aScPr<0.)
+          aBB.UpdateEdge(aE, aC2D2, aC2D1, theNewRTSurf, aLocE, theF, aTolE);
+        else
+          aBB.UpdateEdge(aE, aC2D1, aC2D2, theNewRTSurf, aLocE, theF, aTolE);
+      }
+      else
+      {
+        if (aScPr<0.)
+          aBB.UpdateEdge(aE, aC2D1, aC2D2, theNewRTSurf, aLocE, theF, aTolE);
+        else
+          aBB.UpdateEdge(aE, aC2D2, aC2D1, theNewRTSurf, aLocE, theF, aTolE);
+      }
+    }
+  }
+
+  TopLoc_Location aLoc;
+  aBB.UpdateFace(theF, theNewRTSurf, aLoc, BRep_Tool::Tolerance(theF));
+}
+
+//=======================================================================
+//function : RefineFace
+//purpose  : 
+//=======================================================================
+void ShapeFix::SplittingFace(const TopoDS_Face& theSourceShape,
+                             TopoDS_Shape& theNewShape,
+                             const Handle(Geom_Surface)& theS,
+                             const Standard_Real theDeltaBU2, //=(anUSl - anUSf)/2.0
+                             const Standard_Real theDeltaBV2, //=(aVSl - aVSf)/2.0
+                             const Standard_Real theUFf,      //left face's coordinate
+                             const Standard_Real theVFf,      //bottom face's coordinate
+                             const Standard_Real theURem, 
+                             const Standard_Real theVRem,
+                             const Standard_Boolean isSplitByU, 
+                             const Standard_Boolean isSplitByV)
+{
+#ifdef DEB
+  cout << "ShapeFix::SplittingFace(...) is executed." << endl;
+#endif
+
+  Standard_Real anUFf = theUFf, aVFf = theVFf;
+  Standard_Real anURem = theURem, aVRem = theVRem;
+
+  const Standard_Boolean isUTrimReq = isSplitByU && (0.0 < anURem) && (anURem < theDeltaBU2);
+  const Standard_Boolean isVTrimReq = isSplitByV && (0.0 < aVRem)  && (aVRem  < theDeltaBV2);
+  const Standard_Boolean isTrimReq = (isUTrimReq || isVTrimReq);
+
+#ifdef DEB
+    cout << "isTrimReq = " << isTrimReq << endl;
+#endif
+
+  const Standard_Integer aNU = isSplitByU ? 3 : 1;
+  const Standard_Integer aNV = isSplitByV ? 3 : 1;
+
+  Handle(TColGeom_HArray2OfSurface) AS = 
+                      new TColGeom_HArray2OfSurface(1, aNU, 1, aNV);
+  for(Standard_Integer i = AS->LowerRow(); i <= AS->UpperRow(); i++)
+  {
+    for(Standard_Integer j = AS->LowerCol(); j <= AS->UpperCol(); j++)
+    {
+      if(isTrimReq)
+      {
+        const Standard_Real umin = anUFf, vmin = aVFf;
+        const Standard_Real umax = umin + theDeltaBU2 + anURem;
+        const Standard_Real vmax = vmin + theDeltaBV2 + aVRem;
+
+        Handle(Geom_RectangularTrimmedSurface) rect = 
+          new Geom_RectangularTrimmedSurface (theS, isUTrimReq, isVTrimReq, umin, umax, vmin, vmax );
+
+        //after 1st passage
+        anURem = aVRem = 0.0;
+        
+        if(isUTrimReq)
+          anUFf = umax;
+
+        if(isVTrimReq)
+          aVFf = vmax;
+
+        AS->SetValue (i, j, rect);
+      }
+      else
+      {
+        AS->SetValue (i, j, theS);
+      }
+    }
+  }
+
+  Handle(ShapeExtend_CompositeSurface) aGrid = new ShapeExtend_CompositeSurface;
+
+#ifndef DEB
+  aGrid->Init(AS);
+#else
+  if (!aGrid->Init(AS))
+    cout << "Grid badly connected!" << endl;
+#endif
+
+  ShapeFix_ComposeShell SUCS;
+  {
+    TopLoc_Location l;
+    SUCS.Init(aGrid, l, theSourceShape, Precision::Confusion());
+    Handle(ShapeBuild_ReShape) RS = new ShapeBuild_ReShape();
+    SUCS.SetContext(RS);
+    SUCS.Perform ();
+  }
+
+  theNewShape = SUCS.Result();
+  ShapeFix::SameParameter (theNewShape, Standard_False);
 }

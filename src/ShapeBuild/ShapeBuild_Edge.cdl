@@ -33,7 +33,8 @@ uses
     Location from TopLoc,
     Vertex   from TopoDS,
     Face     from TopoDS,
-    Edge     from TopoDS
+    Edge     from TopoDS,
+    Shape    from GeomAbs 
 
 is
 
@@ -86,14 +87,15 @@ is
 	--           only pcurve corresponding to the orientation of the edge is 
         --           replaced
 
-    ReassignPCurve (me; edge: Edge from TopoDS; 
-    	    	    	old, sub: Face from TopoDS)
+    ReassignPCurve (me; edge: Edge from TopoDS;
+                    old, sub: Face from TopoDS;
+                    theContinuity  : Shape from GeomAbs = GeomAbs_C0)
     returns Boolean;    
-        ---Purpose: Reassign edge pcurve lying on face <old> to another face <sub>. 
-	--          If edge has two pcurves on <old> face, only one of them will be 
+        ---Purpose: Reassign edge pcurve lying on face <old> to another face <sub>.
+        --          If edge has two pcurves on <old> face, only one of them will be 
         --          reassigned, and other will left alone. Similarly, if edge already 
         --          had a pcurve on face <sub>, it will have two pcurves on it.
-	--          Returns True if succeeded, False if no pcurve lying on <old> found.
+        --          Returns True if succeeded, False if no pcurve lying on <old> found.
     
     TransformPCurve(me; pcurve: Curve  from Geom2d; 
     	    	    	trans : Trsf2d from gp;

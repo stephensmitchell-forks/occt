@@ -1,2 +1,7 @@
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file CTS18683.rle] a
 
+fixshape a a
+checkshape a

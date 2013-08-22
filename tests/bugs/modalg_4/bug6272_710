@@ -8,7 +8,13 @@ puts ""
 
 set BugNumber OCC6272
 
+# for "sfixpcu" command
+pload XSDRAW
+
+
 restore [locate_data_file OCC6272_bridge2.brep] a1 
+
+sfixpcu a1 a1 -f
 
 #
 # a1 is compound. It containes a_3, a_5, a_1, a_2, a_4, a_6 solids

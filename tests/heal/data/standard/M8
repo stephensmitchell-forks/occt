@@ -1,2 +1,7 @@
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file CTO900_jap60038-part.rle] a
 
+sfixpcu a a -f
+checkshape a

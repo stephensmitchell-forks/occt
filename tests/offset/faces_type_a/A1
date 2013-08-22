@@ -1,6 +1,12 @@
 #old file filtercb
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file CHE_filter.rle] s
+sfixpcu s s -f
+checkshape s
+
 OFFSETSHAPE -.0015 {s_26 s_27 s_28 s_29} $calcul $type
 
 set volume 6.38048e-05

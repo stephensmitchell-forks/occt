@@ -2,8 +2,17 @@ puts "ID260084"
 puts "Cut"
 puts ""
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file id260084a.rle] a
 restore [locate_data_file id260084b.rle] b
+
+sfixpcu a a -f
+sfixpcu b b -f
+
+checkshape a
+checkshape b
 
 # Cut
 prism tool b 0 0 10

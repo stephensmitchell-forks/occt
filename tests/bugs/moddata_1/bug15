@@ -4,8 +4,11 @@ puts "OCC15"
 puts "================"
 puts ""
 
-restore [locate_data_file OCC15.brep] result
+# for "sfixpcu" command
+pload XSDRAW
 
+restore [locate_data_file OCC15.brep] result
+sfixpcu result result -f
 checkshape result
 
 vinit

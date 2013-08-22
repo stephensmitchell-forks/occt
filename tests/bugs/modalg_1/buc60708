@@ -3,9 +3,15 @@ puts "==========="
 puts "BUC60708"
 puts "==========="
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file buc60708a.brep] a 
+sfixpcu a a -f
 checkshape a
+
 restore [locate_data_file buc60708b.brep] b
+sfixpcu b b -f
 checkshape b
 
 bcommon result a b

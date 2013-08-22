@@ -1,10 +1,21 @@
 # Original bug : pro14892
 # Date : 16July98
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file pro14892a.rle] a 
 restore [locate_data_file pro14892b.rle] aface
 
+sfixpcu a a -f
+sfixpcu aface aface -f
+
+checkshape a
+checkshape aface
+
 prism b aface 0 0 -50
+
+checkshape b
 
 bfuse result a b
 

@@ -233,7 +233,8 @@ static void UpdateCurves(BRep_ListOfCurveRepresentation& lcr,
                          const Handle(Geom2d_Curve)& C1,
                          const Handle(Geom2d_Curve)& C2,
                          const Handle(Geom_Surface)& S,
-                         const TopLoc_Location& L)
+                         const TopLoc_Location& L,
+                         const GeomAbs_Shape theContinuity = GeomAbs_C0)
 {
   BRep_ListIteratorOfListOfCurveRepresentation itcr(lcr);
   Handle(BRep_CurveRepresentation) cr;
@@ -259,7 +260,7 @@ static void UpdateCurves(BRep_ListOfCurveRepresentation& lcr,
 
   if ( !C1.IsNull() && !C2.IsNull() ) {
     Handle(BRep_CurveOnClosedSurface) COS =
-      new BRep_CurveOnClosedSurface(C1,C2,S,L,GeomAbs_C0);
+      new BRep_CurveOnClosedSurface(C1,C2,S,L,theContinuity);
     // test if there is already a range
     if (!GC.IsNull()) {
       COS->SetRange(f,l);
@@ -280,7 +281,8 @@ static void UpdateCurves(BRep_ListOfCurveRepresentation& lcr,
                          const Handle(Geom_Surface)& S,
                          const TopLoc_Location& L,
                          const gp_Pnt2d& Pf,
-                         const gp_Pnt2d& Pl)
+                         const gp_Pnt2d& Pl,
+                         const GeomAbs_Shape theContinuity = GeomAbs_C0)
 {
   BRep_ListIteratorOfListOfCurveRepresentation itcr(lcr);
   Handle(BRep_CurveRepresentation) cr;
@@ -306,7 +308,7 @@ static void UpdateCurves(BRep_ListOfCurveRepresentation& lcr,
 
   if ( !C1.IsNull() && !C2.IsNull() ) {
     Handle(BRep_CurveOnClosedSurface) COS =
-      new BRep_CurveOnClosedSurface(C1,C2,S,L,GeomAbs_C0);
+      new BRep_CurveOnClosedSurface(C1,C2,S,L,theContinuity);
     // test if there is already a range
     if (!GC.IsNull()) {
       COS->SetRange(f,l);
@@ -342,6 +344,167 @@ static void UpdateCurves(BRep_ListOfCurveRepresentation& lcr,
     lcr.Append(COS);
   }
 }
+
+//=======================================================================
+//function : UpdateCurves
+//purpose  : Insert two pcurves <C1,C2> on surface <newSurf> with 
+//           location <newL> in the list of curve representations <lcr>.
+//           Deletes curves, which belong to <oldSurf> because <oldSurf>
+//           will not be used later (presumably).
+//           Remove the pcurves on <S> from <lcr> if <C1> or <C2> is null
+//=======================================================================
+
+static void UpdateCurves(BRep_ListOfCurveRepresentation& lcr,
+                         const Handle(Geom2d_Curve)& C1,
+                         const Handle(Geom2d_Curve)& C2,
+                         const Handle(Geom_Surface)& newSurf,
+                         const TopLoc_Location& newL,
+                         const Handle(Geom_Surface)& oldSurf,
+                         const TopLoc_Location oldL,
+                         const GeomAbs_Shape theContinuity = GeomAbs_C0)
+{
+  BRep_ListIteratorOfListOfCurveRepresentation itcr(lcr);
+  
+  Handle(BRep_GCurve) GC;
+  Standard_Real aFirst,aLast;
+
+  Standard_Boolean rangeFound = Standard_False;
+  Standard_Boolean isModified = Standard_False;
+
+  while (itcr.More())
+  {
+    Handle(BRep_CurveRepresentation) cr = itcr.Value();
+    GC = Handle(BRep_GCurve)::DownCast(cr);
+
+    if ( !GC.IsNull() )
+    {
+      GC->Range(aFirst, aLast);
+
+      Standard_Boolean undefined = (Precision::IsPositiveInfinite(aLast) ||
+                                      Precision::IsNegativeInfinite(aFirst));
+
+      if (!undefined)
+      {
+        rangeFound = Standard_True;
+      }
+
+      Standard_Boolean cond = Standard_False;
+      cond = cond || GC->IsCurveOnSurface(oldSurf, oldL);
+
+      if(!cond)
+      {
+        if(GC->IsCurveOnClosedSurface())
+        {
+          Handle(BRep_CurveOnSurface) aCS = Handle(BRep_CurveOnSurface)::DownCast(GC);
+          cond = aCS->IsCurveOnSurface(oldSurf, oldL);
+        }
+      }
+
+      if (cond)
+      {
+        lcr.Remove(itcr);
+        isModified = Standard_True;
+      }
+      else
+      {
+        itcr.Next();
+      }
+    }//if ( !GC.IsNull() )
+    else
+    {
+      if (cr->IsPolygonOnSurface(oldSurf, oldL))
+      {
+        lcr.Remove(itcr);
+        isModified = Standard_True;
+      }
+      else
+      {
+        itcr.Next();
+      }
+    }
+  }
+    
+  if ( !C1.IsNull() && !C2.IsNull() ) {
+    Handle(BRep_CurveOnClosedSurface) COS =
+      new BRep_CurveOnClosedSurface(C1,C2,newSurf,newL,theContinuity);
+    // test if there is already a range
+    if (rangeFound) {
+      COS->SetRange(aFirst,aLast);
+    }
+    lcr.Append(COS);
+  }
+}
+
+//=======================================================================
+//function : UpdateCurves
+//purpose  : Insert the pcurve <C> on surface <newSurf> with 
+//           location <newL> in the list of curve representations <lcr>.
+//           Remove the pcurves on <oldSurf> from <lcr> if <C> is null
+//=======================================================================
+static void UpdateCurves(BRep_ListOfCurveRepresentation& lcr,
+                         const Handle(Geom2d_Curve)& C,
+                         const Handle(Geom_Surface)& newSurf,
+                         const TopLoc_Location& newL,
+                         const Handle(Geom_Surface)& oldSurf,
+                         const TopLoc_Location oldL)
+{
+  BRep_ListIteratorOfListOfCurveRepresentation itcr(lcr);
+  Handle(BRep_CurveRepresentation) cr;
+  Handle(BRep_GCurve) GC;
+  Standard_Real f,l;
+  Standard_Boolean rangeFound = Standard_False;
+
+  // search the range of the 3d curve
+  // and remove any existing representation
+
+  while (itcr.More()) {
+    GC = Handle(BRep_GCurve)::DownCast(itcr.Value());
+    if (!GC.IsNull()) {
+      if (GC->IsCurve3D()) {
+        GC->Range(f, l);
+        Standard_Boolean undefined = (Precision::IsPositiveInfinite(l) ||
+                                      Precision::IsNegativeInfinite(f));
+        
+        if (!undefined) {
+          rangeFound = Standard_True;
+        }
+      }
+      if (GC->IsCurveOnSurface(oldSurf,oldL))
+      {
+        GC->Range(f, l);
+        Standard_Boolean undefined = (Precision::IsPositiveInfinite(l) ||
+                                      Precision::IsNegativeInfinite(f));
+        
+        if (!undefined)
+        {
+          rangeFound = Standard_True;
+        }
+
+        // remove existing curve on surface
+        // cr is used to keep a reference on the curve representation
+        // this avoid deleting it as its content may be referenced by C or S
+        cr = itcr.Value();
+        lcr.Remove(itcr);
+      }
+      else {
+        itcr.Next();
+      }
+    }
+    else {
+      itcr.Next();
+    }
+  }
+
+  if (! C.IsNull()) {
+    Handle(BRep_CurveOnSurface) COS = new BRep_CurveOnSurface(C,newSurf,newL);
+    // test if there is already a range
+    if (rangeFound) {
+      COS->SetRange(f,l);
+    }
+    lcr.Append(COS);
+  }
+}
+
 
 static void UpdatePoints(BRep_ListOfPointRepresentation& lpr,
                          Standard_Real p,
@@ -578,6 +741,33 @@ void  BRep_Builder::UpdateEdge(const TopoDS_Edge& E,
   TE->Modified(Standard_True);
 }
 
+//=======================================================================
+//function : UpdateEdge
+//purpose  : 
+//=======================================================================
+void  BRep_Builder::UpdateEdge(const TopoDS_Edge& E, 
+                               const Handle(Geom2d_Curve)& C, 
+                               const Handle(Geom_Surface)& newSurf,
+                               const TopLoc_Location& newL,
+                               const TopoDS_Face& theFace,
+                               const Standard_Real Tol) const
+{
+  const Handle(BRep_TEdge)& TE = *((Handle(BRep_TEdge)*) &E.TShape());
+  const TopLoc_Location l = newL.Predivided(E.Location());
+
+  const Handle(BRep_TFace)& TF = *((Handle(BRep_TFace)*) &theFace.TShape());
+  const TopLoc_Location &L = theFace.Location() * TF->Location();
+  const Handle(Geom_Surface) &S = TF->Surface();
+
+  //BRep_Tool::Degenerated(E);
+
+  UpdateCurves(TE->ChangeCurves(),
+                        C, newSurf, l, S,
+                        L.Predivided(E.Location()));
+  
+  TE->UpdateTolerance(Tol);
+  TE->Modified(Standard_True);
+}
 
 //=======================================================================
 //function : UpdateEdge
@@ -612,12 +802,13 @@ void  BRep_Builder::UpdateEdge(const TopoDS_Edge& E,
                                const Handle(Geom2d_Curve)& C2, 
                                const Handle(Geom_Surface)& S, 
                                const TopLoc_Location& L, 
-                               const Standard_Real Tol) const
+                               const Standard_Real Tol,
+                               const GeomAbs_Shape theContinuity) const
 {
   const Handle(BRep_TEdge)& TE = *((Handle(BRep_TEdge)*) &E.TShape());
   const TopLoc_Location l = L.Predivided(E.Location());
 
-  UpdateCurves(TE->ChangeCurves(),C1,C2,S,l);
+  UpdateCurves(TE->ChangeCurves(),C1,C2,S,l,theContinuity);
   if (!C1.IsNull() && !C2.IsNull()) 
     TE->Closed(C1->IsClosed() && C2->IsClosed());
 
@@ -899,6 +1090,36 @@ void  BRep_Builder::UpdateEdge(const TopoDS_Edge& E,
   TE->Modified(Standard_True);
 }
 
+//=======================================================================
+//function : UpdateEdge
+//purpose  : 
+//=======================================================================
+void  BRep_Builder::UpdateEdge(const TopoDS_Edge& E,
+                               const Handle(Geom2d_Curve)& C1,
+                               const Handle(Geom2d_Curve)& C2,
+                               const Handle(Geom_Surface)& newSurf,
+                               const TopLoc_Location& newL,
+                               const TopoDS_Face& theFace, 
+                               const Standard_Real Tol) const
+{
+  const Handle(BRep_TEdge)& TE = *((Handle(BRep_TEdge)*) &E.TShape());
+  const TopLoc_Location l = newL.Predivided(E.Location());
+
+  const Handle(BRep_TFace)& TF = *((Handle(BRep_TFace)*) &theFace.TShape());
+  const TopLoc_Location &L = theFace.Location() * TF->Location();
+  const Handle(Geom_Surface) &S = TF->Surface();
+
+
+  UpdateCurves(TE->ChangeCurves(),
+                          C1,C2,newSurf,l,S,
+                          L.Predivided(E.Location()));
+
+  if (!C1.IsNull() && !C2.IsNull()) 
+    TE->Closed(C1->IsClosed() && C2->IsClosed());
+
+  TE->UpdateTolerance(Tol);
+  TE->Modified(Standard_True);
+}
 
 //=======================================================================
 //function : Continuity

@@ -6,8 +6,17 @@ puts ""
 # Any boolean operation is impossible between attached shapes
 #######################################################################
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file OCC17357-1.brep] b1
 restore [locate_data_file OCC17357-2.brep] b2
+
+sfixpcu b1 b1 -f
+sfixpcu b2 b2 -f
+
+checkshape b1
+checkshape b2
 
 bop b1 b2
 bopcut result

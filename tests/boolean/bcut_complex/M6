@@ -1,8 +1,17 @@
 # Original bug : cts21210
 # Date : 16July98
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file CTO904_cts21210a.rle] a 
 restore [locate_data_file cts21210b.rle] b
+
+sfixpcu a a -f
+sfixpcu b b -f
+
+checkshape a
+checkshape b
 
 bcut result a b
 

@@ -7,7 +7,12 @@ puts "========"
 ##Error of fillet prolongation. 
 ##########################################
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file OCC211.brep] a 
+sfixpcu a a -f
+checkshape a
 
 explode a e
 

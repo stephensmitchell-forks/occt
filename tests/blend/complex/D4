@@ -4,7 +4,14 @@
 ## Comment : from
 ## ====================================
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file CFI_cfi90fjc.rle] a
+
+sfixpcu a a -f
+checkshape a
+
 nexplode a e
 blend result a 5 a_5 5 a_13 5 a_28
 

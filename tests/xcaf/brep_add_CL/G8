@@ -1,4 +1,11 @@
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file CTO909_tool_2.brep] Shape1
+
+sfixpcu Shape1 Shape1 -f
+checkshape Shape1
+
 XNewDoc D_First
 
 XAddShape D_First Shape1

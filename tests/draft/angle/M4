@@ -1,9 +1,14 @@
 # Original bug : pro16449
 # Date : 18 Dec 98
 
+# for "sfixpcu" command
+pload XSDRAW
+
 puts "TODO OCC22803 All:Faulty shapes in variables faulty_1 to faulty_4"
 
 restore [locate_data_file CFE903_pro16gha.rle] base
+sfixpcu base base -f
+checkshape base
 
 explode base face
 

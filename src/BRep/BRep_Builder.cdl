@@ -238,11 +238,13 @@ is
     UpdateEdge(me; E     : Edge  from TopoDS;
                    C1,C2 : Curve from Geom2d;
                    F     : Face  from TopoDS;
-                   Tol   : Real);
+                   Tol   : Real;
+                   theContinuity  : Shape from GeomAbs = GeomAbs_C0);
     ---C++: inline
 
-        ---Purpose: Sets pcurves for the edge on the  closed face.  If
-        --          <C1> or <C2> is a null handle, remove any existing
+        ---Purpose: Sets pcurves (with theContinuity) for the edge on 
+        --          the  closed face.
+        --          If <C1> or <C2> is a null handle, remove any existing
         --          pcurve.
 
     UpdateEdge(me; E   : Edge     from TopoDS;
@@ -254,7 +256,20 @@ is
         ---Purpose: Sets a pcurve for the edge on the face.
         --          If <C> is a null handle, remove any existing pcurve.
 
-    UpdateEdge(me; E     : Edge     from TopoDS;
+    UpdateEdge(me; E   : Edge     from TopoDS;
+                   C   : Curve    from Geom2d;
+                   newSurf : Surface  from Geom;
+                   newL    : Location from TopLoc;
+                   theFace : Face  from TopoDS;
+                   Tol     : Real from Standard);
+
+        ---Purpose: Sets a pcurve for the edge on the face.
+        --          If <C> is a null handle, remove any existing pcurve.
+        --          New edge will be in the face <theFace>, which 
+        --          based on surface newSurf. Old surface must be 
+        --          deleted from <theFace> later.
+
+        UpdateEdge(me; E     : Edge     from TopoDS;
                    C     : Curve    from Geom2d;
                    S     : Surface  from Geom;
                    L     : Location from TopLoc;
@@ -269,12 +284,28 @@ is
                    C1,C2 : Curve    from Geom2d;
                    S     : Surface  from Geom;
                    L     : Location from TopLoc;
-                   Tol   : Real);
+                   Tol   : Real from Standard;
+                   theContinuity  : Shape from GeomAbs = GeomAbs_C0);
 
-        ---Purpose: Sets pcurves for the edge on the closed surface.
-        --          <C1> or <C2> is a null handle, remove any existing
+        ---Purpose: Sets pcurves (with theContinuity) for the edge on the 
+        --          closed surface.
+        --          If <C1> or <C2> is a null handle, remove any existing
         --          pcurve.
 
+    UpdateEdge(me; E    : Edge     from TopoDS;
+                C1,C2   : Curve    from Geom2d;
+                newSurf : Surface  from Geom;
+                newL    : Location from TopLoc;
+                theFace : Face  from TopoDS;
+                Tol     : Real from Standard);
+
+        ---Purpose: Sets pcurves for the edge on the closed surface.
+        --          If <C1> or <C2> is a null handle, remove any 
+        --          existing pcurve.
+        --          New edge will be in the face <theFace>, which 
+        --          based on surface newSurf. Old surface must be 
+        --          deleted from <theFace> later.
+        
     UpdateEdge(me; E     : Edge     from TopoDS;
                    C1,C2 : Curve    from Geom2d;
                    S     : Surface  from Geom;
