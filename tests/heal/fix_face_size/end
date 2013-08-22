@@ -1,2 +1,6 @@
+# for "sfixpcu" command
+pload XSDRAW
+
 puts [DT_ApplySeq result a MDTV ToV4]
+sfixpcu result result -f
 puts [checkshape result]

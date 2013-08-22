@@ -6,7 +6,11 @@ puts ""
 ## Error in Draw command "checkshape": invalid face is not recognized
 ##################################################
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file bug23530_BadFace.brep] result
+sfixpcu result result -f
 pcurve result
 
 decho off

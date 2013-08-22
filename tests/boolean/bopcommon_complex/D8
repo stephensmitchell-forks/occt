@@ -1,6 +1,13 @@
 puts "TODO #22911 ALL: Error : The area of the resulting shape is"
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file OCC228.brep] sh
+
+sfixpcu sh sh -f
+checkshape sh
+
 explode sh
 
 bop sh_1 sh_2

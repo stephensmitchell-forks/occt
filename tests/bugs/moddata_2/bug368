@@ -8,7 +8,11 @@ puts ""
 ## Visualization is too slow.
 ##############################################
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file OCC368.brep] result
+sfixpcu result result -f
 checkshape result
 
 tclean result

@@ -10,8 +10,14 @@ puts ""
 ## (section)
 ######################################################
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file OCC951_1.brep] b 
 restore [locate_data_file OCC951_2.brep] a 
+
+sfixpcu a a -f
+sfixpcu b b -f
 
 checkshape b
 checkshape a

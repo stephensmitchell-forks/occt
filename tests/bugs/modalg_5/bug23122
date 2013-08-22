@@ -6,8 +6,17 @@ puts ""
 # Operation "cut" crashes on attached shapes
 ######################################################
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file bug23122_ExtTor.brep] s1
 restore [locate_data_file bug23122_IntTor.brep] s2
+
+sfixpcu s1 s1 -f
+sfixpcu s2 s2 -f
+
+checkshape s1
+checkshape s2
 
 bcut result s1 s2
 

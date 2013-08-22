@@ -6,9 +6,15 @@ puts "(case 6)"
 puts "========================"
 puts ""
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file CTO900_cts16184a.rle] a 
+sfixpcu a a -f
 checkshape a
+
 restore [locate_data_file cts16184b.brep] b
+sfixpcu b b -f
 checkshape b
 
 bop a b

@@ -407,14 +407,13 @@ void ShapeBuild_Edge::ReplacePCurve (const TopoDS_Edge& edge,
 }
 
 //=======================================================================
-//function : ReassignPCurve
-//purpose  : 
+//function :  CountPCurves
+//purpose  :  Count exact number of pcurves STORED in edge for face
+//            This makes difference for faces based on plane surfaces
+//            where pcurves can be not stored but returned by 
+//            BRep_Tools::CurveOnSurface
 //=======================================================================
-
-// Count exact number of pcurves STORED in edge for face
-// This makes difference for faces based on plane surfaces where pcurves can be 
-// not stored but returned by BRep_Tools::CurveOnSurface
-static Standard_Integer CountPCurves (const TopoDS_Edge &edge, 
+static Standard_Integer CountPCurves(const TopoDS_Edge &edge, 
 				      const TopoDS_Face &face)
 {
   TopLoc_Location L;
@@ -430,9 +429,15 @@ static Standard_Integer CountPCurves (const TopoDS_Edge &edge,
   return 0;
 }
 
-Standard_Boolean ShapeBuild_Edge::ReassignPCurve (const TopoDS_Edge& edge,
-						  const TopoDS_Face& old,
-						  const TopoDS_Face& sub) const
+//=======================================================================
+//function : ReassignPCurve
+//purpose  : 
+//=======================================================================
+Standard_Boolean 
+  ShapeBuild_Edge::ReassignPCurve(const TopoDS_Edge& edge,
+                                  const TopoDS_Face& old,
+                                  const TopoDS_Face& sub,
+                                  const GeomAbs_Shape theContinuity) const
 {
   Standard_Integer npcurves = CountPCurves ( edge, old );
   //if ( npcurves <1 ) return Standard_False; //gka
@@ -440,14 +445,16 @@ Standard_Boolean ShapeBuild_Edge::ReassignPCurve (const TopoDS_Edge& edge,
   Standard_Real f, l;
   Handle(Geom2d_Curve) pc;
   pc = BRep_Tool::CurveOnSurface ( edge, old, f, l );
-  if ( pc.IsNull() ) return Standard_False;
-  else if( npcurves == 0)  npcurves =1; //gka
-	   
-	   
+  if (pc.IsNull())
+    return Standard_False;
+  else if(npcurves == 0)
+    npcurves =1; //gka
+
   BRep_Builder B;
 
   // if the pcurve was only one, remove; else leave second one
-  if ( npcurves >1 ) {
+  if ( npcurves >1 )
+  {
     //smh#8 Porting AIX
     TopoDS_Shape tmpshape = edge.Reversed();
     TopoDS_Edge erev = TopoDS::Edge (tmpshape);
@@ -455,11 +462,13 @@ Standard_Boolean ShapeBuild_Edge::ReassignPCurve (const TopoDS_Edge& edge,
     B.UpdateEdge ( edge, pc2, old, 0. );
     B.Range ( edge, old, f, l );
   }
-  else RemovePCurve ( edge, old );
+  else
+    RemovePCurve ( edge, old );
   
   // if edge does not have yet pcurves on sub, just add; else add as first
   Standard_Integer npcs = CountPCurves ( edge, sub );
-  if ( npcs <1 ) B.UpdateEdge ( edge, pc, sub, 0. );
+  if ( npcs < 1 )
+    B.UpdateEdge ( edge, pc, sub, 0. );
   else {
 //smh#8 Porting AIX
     TopoDS_Shape tmpshape = edge.Reversed();
@@ -467,8 +476,9 @@ Standard_Boolean ShapeBuild_Edge::ReassignPCurve (const TopoDS_Edge& edge,
     Standard_Real cf, cl;
     Handle(Geom2d_Curve) pcs = BRep_Tool::CurveOnSurface ( erev, sub, cf, cl );
     if ( edge.Orientation() == TopAbs_REVERSED ) // because B.UpdateEdge does not check edge orientation
-         B.UpdateEdge ( edge, pcs, pc, sub, 0. );
-    else B.UpdateEdge ( edge, pc, pcs, sub, 0. );
+      B.UpdateEdge ( edge, pcs, pc, sub, 0., theContinuity);
+    else
+      B.UpdateEdge ( edge, pc, pcs, sub, 0., theContinuity);
   }
   
   B.Range ( edge, sub, f, l );

@@ -1,12 +1,19 @@
 # Original bug : cts21453
 # Date : 15sept98
 
+# for "sfixpcu" command
+pload XSDRAW
 
 restore [locate_data_file CTO900_cts21453a.rle] a
 restore [locate_data_file CTO900_cts21453b.rle] b
 
-bcommon result a b
+sfixpcu a a -f
+sfixpcu b b -f
 
+checkshape a
+checkshape b
+
+bcommon result a b
 
 
 set square 16681.4

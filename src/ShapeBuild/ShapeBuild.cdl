@@ -35,8 +35,9 @@ uses
     TopTools,
     BRep,
     ShapeExtend,
-    BRepTools
-
+    BRepTools,
+    GeomAbs
+    
 is
 
     class Vertex;

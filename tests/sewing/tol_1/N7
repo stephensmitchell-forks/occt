@@ -1,1 +1,7 @@
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file CFI_pro10117.rle] a
+
+sfixpcu a a -f
+checkshape a

@@ -1,3 +1,6 @@
+# for "sfixpcu" command
+pload XSDRAW
+
 if {[string compare $command "SplitAngle"] == 0 } {
     set os "ALL"
     if {[array get env os_type] != ""} {
@@ -14,3 +17,4 @@ if {[string compare $command "SplitAngle"] == 0 } {
 
 restore [locate_data_file cd.brep] a
 
+sfixpcu a a -f

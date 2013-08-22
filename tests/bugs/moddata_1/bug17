@@ -9,7 +9,11 @@ puts ""
 puts " Solid_14 will be the face which is unvisible during displaying entire solid."
 #####################################################
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file OCC17.brep] sh 
+sfixpcu sh sh -f
 
 checkshape sh
 

@@ -7,9 +7,14 @@ puts ""
 ## No possibility to cut the shapes. 
 ############################
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file OCC620a.brep] a 
+sfixpcu a a -f
 checkshape a
 restore [locate_data_file OCC620b.brep] b 
+sfixpcu b b -f
 checkshape b
 
 bop a b

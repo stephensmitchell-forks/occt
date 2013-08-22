@@ -6,8 +6,14 @@ puts ""
 # Self intersection reported after Fuse operation
 ######################################################
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file bug23933_a.brep] a
 restore [locate_data_file bug23933_b.brep] b
+
+sfixpcu a a -f
+sfixpcu b b -f
 
 checkshape a
 checkshape b

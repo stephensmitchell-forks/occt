@@ -1,9 +1,16 @@
 # Original bug : cts20722
 # Date : 21August98
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file CTO900_cts20722c.rle] base
 restore [locate_data_file cts20722b.rle] cont
 restore [locate_data_file cts20722c.rle] funtil
+
+sfixpcu base base -f
+sfixpcu cont cont -f
+sfixpcu funtil funtil -f
 
 explode cont face
 #explode base face

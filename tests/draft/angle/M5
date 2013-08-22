@@ -1,7 +1,12 @@
 # Original bug : cts20610
 # Date : 21 Dec 98
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file CFE903_cts20ghb.rle] base
+sfixpcu base base -f
+checkshape base
 
 explode base face
 

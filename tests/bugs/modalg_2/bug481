@@ -7,7 +7,11 @@ puts ""
 ##Attached shape could not be displayed in the Shading mode.
 ##########################################
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file OCC481.rle] result
+sfixpcu result result -f
 checkshape result
 
 tclean result

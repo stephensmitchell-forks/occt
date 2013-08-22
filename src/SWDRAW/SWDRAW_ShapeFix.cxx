@@ -20,55 +20,51 @@
 
 #include <SWDRAW_ShapeFix.ixx>
 
-#include <Draw.hxx>
-#include <DBRep.hxx>
-#include <SWDRAW.hxx>
-#include <gp_XYZ.hxx>
-#include <gp_Pnt2d.hxx>
-#include <TopoDS.hxx>
-#include <TopoDS_Shape.hxx>
-#include <TopoDS_Edge.hxx>
-#include <TopoDS_Wire.hxx>
-#include <TopoDS_Face.hxx>
-#include <TopoDS_Iterator.hxx>
-#include <TopExp_Explorer.hxx>
-#include <BRep_Tool.hxx>
 #include <BRep_Builder.hxx>
+#include <BRep_Tool.hxx>
 #include <BRepBuilderAPI.hxx>
+#include <BRepCheck_Analyzer.hxx>
+#include <BRepCheck_ListIteratorOfListOfStatus.hxx>
+#include <BRepCheck_Result.hxx>
+#include <BRepTools.hxx>
 #include <BRepTopAdaptor_FClass2d.hxx>
-
-#include <ShapeBuild_ReShape.hxx>
-#include <ShapeAnalysis_Edge.hxx>
-#include <ShapeAnalysis_WireOrder.hxx>
-#include <ShapeAnalysis_WireVertex.hxx>
-#include <ShapeAnalysis_Wire.hxx>
-#include <ShapeExtend_WireData.hxx>
-#include <ShapeFix.hxx>
-#include <ShapeFix_ShapeTolerance.hxx>
-#include <ShapeFix_Wire.hxx>
-#include <ShapeFix_WireVertex.hxx>
-#include <ShapeFix_Wireframe.hxx>
-#include <ShapeFix_Face.hxx>
-#include <ShapeFix_Shape.hxx>
-#include <Precision.hxx>
-#include <ShapeExtend_DataMapOfShapeListOfMsg.hxx>
-#include <ShapeExtend_MsgRegistrator.hxx>
-#include <ShapeExtend_DataMapIteratorOfDataMapOfShapeListOfMsg.hxx>
+#include <DBRep.hxx>
+#include <Draw.hxx>
+#include <Draw_ProgressIndicator.hxx>
+#include <Geom_RectangularTrimmedSurface.hxx>
+#include <Geom_Surface.hxx>
+#include <gp_XYZ.hxx>
 #include <Message_ListIteratorOfListOfMsg.hxx>
 #include <Message_Msg.hxx>
-#include <TCollection_AsciiString.hxx>
+#include <ShapeAnalysis_Edge.hxx>
+#include <ShapeAnalysis_FreeBounds.hxx>
+#include <ShapeAnalysis_Wire.hxx>
+#include <ShapeAnalysis_WireOrder.hxx>
+#include <ShapeAnalysis_WireVertex.hxx>
+#include <ShapeBuild_ReShape.hxx>
+#include <ShapeExtend_CompositeSurface.hxx>
+#include <ShapeExtend_DataMapIteratorOfDataMapOfShapeListOfMsg.hxx>
+#include <ShapeExtend_MsgRegistrator.hxx>
+#include <ShapeFix.hxx>
+#include <ShapeFix_ComposeShell.hxx>
+#include <ShapeFix_Face.hxx>
+#include <ShapeFix_Shape.hxx>
+#include <ShapeFix_ShapeTolerance.hxx>
+#include <ShapeFix_Wire.hxx>
+#include <ShapeFix_Wireframe.hxx>
+#include <ShapeFix_WireVertex.hxx>
+#include <SWDRAW.hxx>
+#include <TColGeom_HArray2OfSurface.hxx>
 #include <TColStd_DataMapIteratorOfDataMapOfAsciiStringInteger.hxx>
 #include <TColStd_DataMapOfAsciiStringInteger.hxx>
-#include <TopTools_MapOfShape.hxx>
-#include <TopTools_DataMapOfShapeListOfShape.hxx>
-#include <TopAbs_State.hxx>
-
-#include <Draw_ProgressIndicator.hxx>
-#include <ShapeAnalysis_FreeBounds.hxx>
-#include <TopTools_HSequenceOfShape.hxx>
-#include <BRep_Builder.hxx>
-#include <TopTools_IndexedMapOfShape.hxx>
 #include <TopExp.hxx>
+#include <TopExp_Explorer.hxx>
+#include <TopoDS.hxx>
+#include <TopoDS_Edge.hxx>
+#include <TopoDS_Shape.hxx>
+#include <TopTools_DataMapOfShapeListOfShape.hxx>
+#include <TopTools_HSequenceOfShape.hxx>
+#include <TopTools_IndexedMapOfShape.hxx>
 
 #ifdef AIX
 #include <strings.h>
@@ -757,6 +753,277 @@ static Standard_Integer connectedges(Draw_Interpretor& di, Standard_Integer n, c
 }
 
 //=======================================================================
+//function : FixPCurveOfFace
+//purpose  : 
+//=======================================================================
+static Standard_Integer FixPCurveOfFace(Draw_Interpretor& theDI, 
+                                        Standard_Integer theNArg,
+                                        const char** theArg)
+{
+  if(theNArg < 2)
+  {
+    theDI << "use \"ffixpcu face [-f] [-s]\".\n";
+    return 1;
+  }
+
+  Standard_Boolean isForsing = Standard_False;
+  Standard_Boolean isSplitForbidden = Standard_True;
+
+  if(theNArg > 2)
+  {
+    for (Standard_Integer i = 2; i < theNArg; i++)
+    {
+      if(theArg[i][0] == '-')
+      {
+        switch(theArg[i][1])
+        {
+        case 'f':
+          isForsing = Standard_True;
+          break;
+        case 's':
+          isSplitForbidden = Standard_False;
+          break;
+        }
+      }
+    }
+  }
+
+  TopoDS_Shape aS=DBRep::Get(theArg[1]);
+  if (aS.IsNull()) {
+    theDI << "null shapes is not allowed here\n";
+    return 1;
+  }
+
+  if (aS.ShapeType()!=TopAbs_FACE) {
+    char buff[256];
+    Sprintf ( buff, "shape %s must be a face\n", theArg[1]);
+    theDI << buff;
+    return 1;
+  }
+
+  TopoDS_Face aF=*((TopoDS_Face*)&aS);
+  
+  BRepCheck_Analyzer anAna(aF);
+
+  if(anAna.IsValid())
+  {
+    theDI << "Face is valid!\n";
+    return 0;
+  }
+
+  BRepCheck_ListIteratorOfListOfStatus itl;
+  itl.Initialize(anAna.Result(aF)->Status());
+
+  if (itl.Value() != BRepCheck_OutOfSurfaceBoundary)
+  {
+    theDI << "Other Status!\n";
+    return 0;
+  }
+
+  TopoDS_Shape aNS = TopoDS_Shape();
+  ShapeFix::RefineFace(aF, aNS, isForsing, isSplitForbidden);
+
+  if(aNS.IsNull())
+    DBRep::Set(theArg[1], aF);
+  else
+    DBRep::Set(theArg[1], aNS);
+
+  //
+  return 0;
+}
+
+//=======================================================================
+//function : FixPCurveOfShape
+//purpose  : 
+//=======================================================================
+static Standard_Integer FixPCurveOfShape(Draw_Interpretor& theDI, 
+                                        Standard_Integer theNArg,
+                                        const char** theArg)
+{
+  if(theNArg < 3)
+  {
+    theDI << "use \"sfixpcu result shape [-f] [-s]\".\n";
+    return 1;
+  }
+
+  Standard_Boolean isForsing = Standard_False;
+  Standard_Boolean isSplitForbidden = Standard_True;
+
+  if(theNArg > 3)
+  {
+    for (Standard_Integer i = 3; i < theNArg; i++)
+    {
+      if(theArg[i][0] == '-')
+      {
+        switch(theArg[i][1])
+        {
+        case 'f':
+          isForsing = Standard_True;
+          break;
+        case 's':
+          isSplitForbidden = Standard_False;
+          break;
+        }
+      }
+    }
+  }
+
+  TopoDS_Shape aS=DBRep::Get(theArg[2]);
+
+  if (aS.IsNull()) {
+    theDI << "null shapes is not allowed here\n";
+    return 1;
+  }
+
+  Standard_Boolean doCompound = Standard_False;
+  BRep_Builder aBuilder;
+  TopoDS_Compound aSt;
+  aBuilder.MakeCompound(aSt);
+  aSt.Free(Standard_True);
+
+  TopExp_Explorer exp;
+  for (exp.Init(aS,TopAbs_FACE); exp.More();exp.Next())
+  {
+    const TopoDS_Shape& aS1 = exp.Current();
+    TopoDS_Face aF=*((TopoDS_Face*)&aS1);
+
+    BRepCheck_Analyzer anAna(aF);
+    if(anAna.IsValid())
+    {
+      aBuilder.Add(aSt,aF);
+      continue;
+    }
+
+    BRepCheck_ListIteratorOfListOfStatus itl;
+    itl.Initialize(anAna.Result(aF)->Status());
+    if (itl.Value() != BRepCheck_OutOfSurfaceBoundary)
+    {
+      aBuilder.Add(aSt,aF);
+      continue;
+    }
+
+    TopoDS_Shape aNS = TopoDS_Shape();
+    ShapeFix::RefineFace(aF, aNS, isForsing,isSplitForbidden);
+
+    if(!aNS.IsNull())
+    {
+      aBuilder.Add(aSt,aNS);
+      doCompound = Standard_True;
+    }
+    else
+    {
+      aBuilder.Add(aSt,aF);
+    }
+  }
+
+  if(doCompound)
+  {
+    aSt.Free(aS.Free());
+    DBRep::Set(theArg[1],aSt);
+  }
+  else
+  {
+    DBRep::Set(theArg[1],aS);
+  }
+
+  return 0;
+}
+
+////=======================================================================
+////function : splitfix
+////purpose  : 
+////=======================================================================
+//static Standard_Integer splitfix(Draw_Interpretor& theDI, 
+//                                 Standard_Integer theNArg, 
+//                                 const char** theArg)
+//{
+//  if (theNArg < 3) {
+//    theDI << "use: splitface result face [-p]\n";
+//    return 1;    
+//  }
+//
+//  TopoDS_Face aFace;
+//  {
+//    TopoDS_Shape aShape = DBRep::Get(theArg[2]) ;
+//    if (aShape.IsNull())
+//    {
+//      theDI << "null shapes is not allowed here\n";
+//      return 1;
+//    }
+//
+//    aFace = TopoDS::Face ( aShape );
+//  }
+//
+//  if ( aFace.IsNull() ) {
+//    theDI << theArg[2] << " is not Face\n";
+//    return 1;
+//  }
+//
+//  Standard_Real anUFf, anUFl, aVFf, aVFl;
+//  BRepTools::UVBounds(aFace, anUFf, anUFl, aVFf, aVFl);
+//  
+//  Standard_Real anUSf, anUSl, aVSf, aVSl;
+//  Handle(Geom_Surface) aSurf = BRep_Tool::Surface(aFace);
+//
+//  if (aSurf->DynamicType() == STANDARD_TYPE(Geom_RectangularTrimmedSurface))
+//  {
+//    Handle(Geom_RectangularTrimmedSurface) TS = 
+//      Handle(Geom_RectangularTrimmedSurface)::DownCast(aSurf);
+//
+//    aSurf = TS->BasisSurface();
+//  }
+//
+//  aSurf->Bounds(anUSf, anUSl, aVSf, aVSl);
+//
+//  Standard_Real anURem = 0.0, aVRem = 0.0;
+//  Standard_Integer aNU = 1, aNV = 1;
+//
+//  TopoDS_Shape aNewSh = TopoDS_Shape();
+//  Standard_Boolean isSplitByU, isSplitByV;
+//
+//  const Standard_Real duf = anUFl - anUFf;
+//  const Standard_Real dus = anUSl - anUSf;    
+//  const Standard_Real dvf = aVFl - aVFf;
+//  const Standard_Real dvs = aVSl - aVSf;
+//
+//  isSplitByU = /*aSurf->IsUPeriodic() && */
+//     duf > dus;
+//  isSplitByV = /*aSurf->IsVPeriodic() && */
+//     dvf > dvs;
+//
+//  if(isSplitByU)
+//  {
+//    theDI << "Splitting by U: " << anUSf << ", " << anUSl << "\n";
+//    aNU += 2;
+//    anURem = RealMod(duf,dus);
+//  }
+//
+//  if(isSplitByV)
+//  {
+//    theDI << "Splitting by V: " << aVSf << ", " << aVSl << "\n";
+//    aNV += 2;
+//    aVRem  = RealMod(dvf,dvs);
+//  }
+//
+//  if (!(isSplitByU || isSplitByV))
+//  {
+//    theDI << "No splitting required!\n";
+//    return 0;
+//  }
+//
+//  ShapeFix::SplittingFace(aFace, aNewSh, aSurf, dus/2.0, dvs/2.0, anUFf, aVFf, 
+//              anURem, aVRem, isSplitByU, isSplitByV);
+//
+//  if(!aNewSh.IsNull())
+//    DBRep::Set(theArg[1], aNewSh);
+//  else
+//    theDI << "No splitting result was found!\n";
+//
+//  return 0;
+//}
+
+
+//=======================================================================
 //function : InitCommands
 //purpose  : 
 //=======================================================================
@@ -792,6 +1059,14 @@ static Standard_Integer connectedges(Draw_Interpretor& di, Standard_Integer n, c
 		   __FILE__,checkfclass2d,g);
   theCommands.Add ("connectedges","res shape [toler shared]",
 		   __FILE__,connectedges,g);
-  
+  theCommands.Add ("ffixpcu"," ffixpcu face [-f] [-s] (to fix face with "
+       "\"BRepCheck_OutOfSurfaceBoundary\" status) ", __FILE__,FixPCurveOfFace,g);
+
+  theCommands.Add ("sfixpcu"," sfixpcu result shape [-f] [-s] (to fix shape, which contains face with "
+       "\"BRepCheck_OutOfSurfaceBoundary\" status) ", __FILE__,FixPCurveOfShape,g);
+
+  //theCommands.Add ("splitfix"," splitfix result face [u usplit1 usplit2...] "
+  //                                    "[v vsplit1 vsplit2 ...]",__FILE__,splitfix,g);
+
 }
 

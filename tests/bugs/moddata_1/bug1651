@@ -10,7 +10,11 @@ puts ""
 # No intersection found using BRepClass3d_Intersector3d
 ######################################################
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file OCC1651.brep] face 
+sfixpcu face face -f
 
 checkshape face
 

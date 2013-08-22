@@ -1,2 +1,7 @@
+# for "fixshape" command
+pload XSDRAW
+
 restore [locate_data_file CTS18826.rle] a
 
+fixshape a a
+checkshape a

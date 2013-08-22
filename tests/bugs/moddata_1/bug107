@@ -5,9 +5,15 @@ puts "OCC107"
 puts "================"
 puts ""
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file OCC107-1.brep] ee 
+sfixpcu ee ee -f
 checkshape ee
+
 restore [locate_data_file OCC107-2.brep] ff
+sfixpcu ff ff -f
 checkshape ff
 
 distmini dd1 ee ff

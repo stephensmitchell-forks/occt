@@ -1,8 +1,17 @@
 # Original bug : cts20551
 # Date : 4June98
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file CTO902_cts20551b.rle] a
 restore [locate_data_file cts20551-tool.rle] b
+
+sfixpcu a a -f
+sfixpcu b b -f
+
+checkshape a
+checkshape b
 
 bcut result a b
 

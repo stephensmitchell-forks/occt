@@ -1,2 +1,8 @@
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file CHE_filter.rle] a
+sfixpcu a a -f
+checkshape a
+
 set nb_f 16

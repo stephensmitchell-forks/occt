@@ -1,2 +1,5 @@
-restore [locate_data_file pg.brep] a
+# for "sfixpcu" command
+pload XSDRAW
 
+restore [locate_data_file pg.brep] a
+sfixpcu a a -f

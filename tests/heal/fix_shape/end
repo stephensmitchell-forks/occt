@@ -1,2 +1,7 @@
+# for "sfixpcu" command
+pload XSDRAW
+
 puts [fixshape result a 0.001 0.005]
+sfixpcu result result -f
+
 puts [checkshape result]

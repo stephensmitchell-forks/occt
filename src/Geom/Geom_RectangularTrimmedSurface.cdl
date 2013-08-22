@@ -86,7 +86,30 @@ is
 
      raises ConstructionError;
 
+  Create (S : Surface from Geom; 
+          isUTrim, isVTrim : Boolean;
+          U1, U2, V1, V2 : Real)
+     returns mutable RectangularTrimmedSurface
+        ---Purpose :
+        --  The U parametric direction of the surface is oriented from U1
+        --  to U2. The V parametric direction of the surface is oriented 
+        --  from V1 to V2.
+        --  These two directions define the orientation of the surface 
+        --  (normal). By default in this case the surface has the same
+        --  orientation as the basis surface S.
+        --  isUTrim and isVTrim arguments determine, if it is necessary to
+        --  trim S surface along corresponding direction.
+        --  The returned surface is not closed and not periodic.
+        --  ConstructionError   Raised if 
+        --  S is not periodic in the UDirection and U1 or U2 are out of the 
+        --  bounds of S.
+        --  S is not periodic in the VDirection and V1 or V2 are out of the 
+        --  bounds of S.
+        --  U1 = U2 or V1 = V2
 
+     raises ConstructionError;
+
+     
   Create (S              : Surface from Geom; 
           Param1, Param2 : Real; 
           UTrim          : Boolean;
@@ -116,7 +139,37 @@ is
         --  Param1 or Param2 are out of the bounds of S.
         --  Param1 = Param2
 
+    SetUTrim (me : mutable; U1, U2 : Real)
+        ---Purpose : Sets boundaries of basisSurf in U1 and U2
+        -- along U-direction.
+        -- For periodic surface boundary values can be changed 
+        -- algorithmically.
+     raises ConstructionError;
+        ---Purpose : Raised if 
+        --  The BasisSurface is not periodic in the U-direction and U1 or U2
+        --    are out of the bounds of the BasisSurface.
+        --  U1 = U2
 
+    SetVTrim (me : mutable; V1, V2 : Real)
+        ---Purpose : Sets boundaries of basisSurf in V1 and V2
+        -- along V-direction.
+        -- For periodic surface boundary values can be changed 
+        -- algorithmically.
+     raises ConstructionError;
+        ---Purpose : Raised if 
+        --  The BasisSurface is not periodic in the V-direction and V1 or V2
+        --    are out of the bounds of the BasisSurface.
+        --  V1 = V2
+
+    ForceTrim(me : mutable; 
+              U1, U2, V1, V2 : Real; 
+              UTrim, VTrim : Boolean = Standard_True);
+      ---Purpose : For periodic surface this method changes
+      -- (if it is necessary) U2 and V2, so that 0 < U2 - U1 < T and
+      -- 0 < V2 - V1 < T (where T is the period).
+      -- If surface is not periodic, boundaries do not chenge.
+      -- After that it trims basisSurf in new boundaries.
+        
   SetTrim (me : mutable; 
            U1, U2, V1, V2 : Real; 
            USense, VSense : Boolean = Standard_True)
@@ -368,6 +421,10 @@ is
 
   Copy (me)  returns mutable like me;
     	---Purpose: Creates a new object which is a copy of this patch.
+      
+  GetTrimmedFlags(me; isUtrimmed,isVtrimmed : in out Boolean from Standard);
+    	---Purpose: Allows to get <isutrimmed> and <isvtrimmed> members values.
+      
 fields
 
    basisSurf   : Surface from Geom;

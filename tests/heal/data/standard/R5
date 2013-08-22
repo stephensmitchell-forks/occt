@@ -4,5 +4,12 @@ if { [string compare $command "ShapeConvertRev"] == 0 } {
 if {[string compare $command "SplitAngle"] == 0 } {
     puts "TODO OCC23127 ALL: Faulty shapes in variables faulty_1 to faulty_4 "
 }
+
+# for "fixshape" command
+pload XSDRAW
+
 restore [locate_data_file CTO900_pro5363c.rle] a
+
+fixshape a a
+checkshape a
 

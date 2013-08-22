@@ -5,9 +5,16 @@ puts "==========="
 # Cut cphere: invalid shape after reading from STEP
 ######################################################
 
+# for "fixshape" command
+pload XSDRAW
+
 set BugNumber OCC22535
 
 restore [locate_data_file OCC22535-cut_comp.brep] a 
+
+fixshape a a
+checkshape a
+
 testwritestep $imagedir/${test_image}.stp a
 stepread $imagedir/${test_image}.stp b *
 renamevar b_1 result

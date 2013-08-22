@@ -1,2 +1,6 @@
+# for "fixshape" command
+pload XSDRAW
+
 fixwgaps result a 0.001
+sfixpcu result result -f
 puts [checkshape result]

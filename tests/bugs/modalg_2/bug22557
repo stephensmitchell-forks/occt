@@ -8,11 +8,20 @@ puts ""
 
 set BugNumber OCC22557
 
+# for "sfixpcu" command
+pload XSDRAW
+
 puts "Load first shape ..."
 restore [locate_data_file bug22557_Bloc_racine_70deg.brep] b1 
 
 puts "Load second shape ..."
 restore [locate_data_file bug22557_PaveEntree.brep] b2 
+
+sfixpcu b1 b1 -f
+sfixpcu b2 b2 -f
+
+checkshape b1
+checkshape b2
 
 puts "Prepare boolean operation ..."
 bop b1 b2

@@ -1,8 +1,17 @@
 # Original bug : pro16290
 # Date : 12 Nov 98
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file CFE900_pro16gdq.rle] base
 restore [locate_data_file pro16290_face.rle] cont
+
+sfixpcu base base -f
+sfixpcu cont cont -f
+
+checkshape base
+checkshape cont
 
 explode base face
 copy base_7 funtil

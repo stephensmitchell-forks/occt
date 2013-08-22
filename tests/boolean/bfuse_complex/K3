@@ -1,8 +1,18 @@
 # Original bug : fra60275
 # Date : 4June98
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file CTO904_fra60275a.rle] s
 restore [locate_data_file fra60275b.rle] c
+
+sfixpcu s s -f
+sfixpcu c c -f
+
+checkshape s
+checkshape c
+
 tcopy  c w
 mkplane f w
 

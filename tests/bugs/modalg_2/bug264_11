@@ -6,7 +6,11 @@ puts "OCC264"
 puts " (case 11)"
 puts "========"
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file OCC264_11.brep] result
+sfixpcu result result -f 
 checkshape result
 
 tclean result

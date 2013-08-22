@@ -1,8 +1,17 @@
 # Original bug : cts21200
 # Date : 16July98
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file cts21200a.rle] a 
 restore [locate_data_file cts21200b.rle] skface
+
+sfixpcu a a -f
+sfixpcu skface skface -f
+
+checkshape a
+checkshape skface
 
 prism b skface 0 0 -230
 

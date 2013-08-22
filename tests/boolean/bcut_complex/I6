@@ -2,8 +2,17 @@
 # Date : 13Mai98
 # A6.gif
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file CTO902_cts20455-part.rle] part
 restore [locate_data_file CTO902_cts20455-tool.rle] tool
+
+sfixpcu part part -f
+sfixpcu tool tool -f
+
+checkshape part
+checkshape tool
 
 bcut result part tool
 

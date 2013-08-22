@@ -1,5 +1,15 @@
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file CFE_osa_sgad.rle] a
 restore [locate_data_file osa-contour] b
+
+sfixpcu a a -f
+sfixpcu b b -f
+
+checkshape a
+checkshape b
+
 mkplane f b
 
 featprism a f f 1 0 0 0 1

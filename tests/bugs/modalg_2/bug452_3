@@ -6,7 +6,11 @@ puts "(case 3)"
 puts "========"
 puts ""
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file CTO900_ger60239a.rle] a 
+sfixpcu a a -f
 set che [checkshape a]
 if { [regexp {Faulty} $che ] == 1 } {
     puts "Faulty OCC452 (shape 5): Source shape is invalid. It was detected by Checkshape command"
@@ -15,6 +19,7 @@ if { [regexp {Faulty} $che ] == 1 } {
 }
 
 restore [locate_data_file CTO900_ger60239b.rle] b
+sfixpcu b b -f
 set che [checkshape b]
 if { [regexp {Faulty} $che ] == 1 } {
     puts "Faulty OCC452 (shape 6): Source shape is invalid. It was detected by Checkshape command"

@@ -139,6 +139,20 @@ inline Standard_Integer  Min (const Standard_Integer Val1,
 }
 
 // ------------------------------------------------------------------
+// MinMax : Replaces  theParMIN = MIN(theParMIN, theParMAX),
+//                    theParMAX = MAX(theParMIN, theParMAX).
+// ------------------------------------------------------------------
+inline void MinMax(Standard_Integer& theParMIN, Standard_Integer& theParMAX)
+{
+  if(theParMIN > theParMAX)
+  {
+    const Standard_Integer aux = theParMAX;
+    theParMAX = theParMIN;
+    theParMIN = aux;
+  }
+}
+
+// ------------------------------------------------------------------
 // Modulus : Returns the remainder of division between two integers
 // ------------------------------------------------------------------
 inline Standard_Integer  Modulus (const Standard_Integer Value, 

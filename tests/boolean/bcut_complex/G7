@@ -1,8 +1,17 @@
 # Original bug : fra60810
 # Date : 30mar98
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file CTO900_fra60810-part.rle] part
 restore [locate_data_file CTO900_fra60810-tool.rle] tool
+
+sfixpcu part part -f
+sfixpcu tool tool -f
+
+checkshape part
+checkshape tool
 
 bcut result part tool
 

@@ -4,7 +4,14 @@
 ## Comment : from pro11850
 ## ====================================
 
+# for "sfixpcu" command
+pload XSDRAW
+
 restore [locate_data_file CFI_pro11850.rle] a
+
+sfixpcu a a -f
+checkshape a
+
 explode a e
 blend result a 3 a_22
 
