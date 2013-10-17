@@ -463,8 +463,8 @@ is
                UFlatKnots,VFlatKnots       : Array1OfReal  from TColStd ;
 	       Poles                       : Array2OfPnt   from TColgp;
 	       Weights                     : Array2OfReal    from TColStd ;
-               CachePoles                  : in out Array2OfPnt from TColgp;
-	       CacheWeights                : in out Array2OfReal from TColStd);
+               CacheRational               : in out Boolean;
+	       CachePolesWeights           : in out Array2OfReal from TColStd);
 	 
     ---Purpose: Perform the evaluation of the Taylor expansion
     --          of the Bspline normalized between 0 and 1.
@@ -477,8 +477,8 @@ is
     	    UDegree,VDegree                 : Integer;
             UCacheParameter,VCacheParameter : Real;
 	    USpanLenght,VSpanLength         : Real;
-	    Poles                           : Array2OfPnt from TColgp  ;
-	    Weights                         : Array2OfReal from TColStd ;
+	    PolesWeightsArray               : Array2OfReal from TColStd;
+            CacheRational                   : Boolean;
             Point                           : out Pnt from gp) ;
 	 
     ---Purpose: Perform the evaluation of the of the cache
@@ -494,13 +494,15 @@ is
     --          effects
     --          
 
-    CoefsD0(U,V     : Real;
-	    Poles   : Array2OfPnt from TColgp  ;
-	    Weights : Array2OfReal from TColStd ;
-            Point   : out Pnt from gp) ;
+    CoefsD0(U,V               : Real;
+	    PolesWeightsArray : Array2OfReal from TColStd;
+            CacheRational     : Boolean;
+            Point             : out Pnt from gp) ;
     ---Purpose: Calls CacheD0 for Bezier Surfaces Arrays computed with
     --          the method PolesCoefficients. 
     --  Warning: To be used for BezierSurfaces ONLY!!!
+    --  Warning: Number of columns of the PolesWeightsArray should be 
+    --           divisible to 4 (three columns for Pole and fourth for Weight)
     ---C++: inline
 	 
 
@@ -508,8 +510,8 @@ is
     	    UDegree,VDegree                 : Integer;
             UCacheParameter,VCacheParameter : Real;
 	    USpanLenght,VSpanLength         : Real;
-	    Poles                           : Array2OfPnt     from TColgp  ;
-	    Weights                         : Array2OfReal    from TColStd ;
+	    PolesWeightsArray               : Array2OfReal from TColStd;
+            CacheRational                   : Boolean;
             Point                           : out Pnt from gp;
             VecU, VecV                      : out Vec from gp) ;
 	 
@@ -526,14 +528,16 @@ is
     --          effects
     --          
 
-    CoefsD1(U,V        : Real;
-	    Poles      : Array2OfPnt from TColgp;
-	    Weights    : Array2OfReal from TColStd;
-            Point      : out Pnt from gp;
-            VecU, VecV : out Vec from gp) ;
+    CoefsD1(U,V               : Real;
+	    PolesWeightsArray : Array2OfReal from TColStd;
+            CacheRational     : Boolean;
+            Point             : out Pnt from gp;
+            VecU, VecV        : out Vec from gp) ;
     ---Purpose: Calls CacheD0 for Bezier Surfaces Arrays computed with
     --          the method PolesCoefficients. 
-        --  Warning: To be used for BezierSurfaces ONLY!!!
+    --  Warning: To be used for BezierSurfaces ONLY!!!
+    --  Warning: Number of columns of the PolesWeightsArray should be 
+    --           divisible to 4 (three columns for Pole and fourth for Weight)
     ---C++: inline
 	 
 
@@ -541,8 +545,8 @@ is
     	    UDegree,VDegree                    : Integer;
             UCacheParameter,VCacheParameter    : Real;
 	    USpanLenght,VSpanLength            : Real;
-	    Poles                              : Array2OfPnt from TColgp  ;
-	    Weights                            : Array2OfReal from TColStd ;
+	    PolesWeightsArray                  : Array2OfReal from TColStd;
+            CacheRational                      : Boolean;
             Point                              : out Pnt from gp;
             VecU, VecV, VecUU, VecUV, VecVV    : out Vec from gp) ;
 	 
@@ -560,25 +564,27 @@ is
     --          
 
     CoefsD2(U,V                             : Real;
-	    Poles                           : Array2OfPnt from TColgp  ;
-	    Weights                         : Array2OfReal from TColStd ;
+	    PolesWeightsArray               : Array2OfReal from TColStd;
+            CacheRational                   : Boolean;
             Point                           : out Pnt from gp;
             VecU, VecV, VecUU, VecUV, VecVV : out Vec from gp) ;
     ---Purpose: Calls CacheD0 for Bezier Surfaces Arrays computed with
     --          the method PolesCoefficients. 
-        --  Warning: To be used for BezierSurfaces ONLY!!!
+    --  Warning: To be used for BezierSurfaces ONLY!!!
+    --  Warning: Number of columns of the PolesWeightsArray should be 
+    --           divisible to 4 (three columns for Pole and fourth for Weight)
     ---C++: inline
 	 
 
-    PolesCoefficients(Poles         : Array2OfPnt   from TColgp;
-                      CachePoles    : in out Array2OfPnt   from TColgp);
+    PolesCoefficients(Poles             : Array2OfPnt from TColgp;
+                      CachePolesWeights : in out Array2OfReal from TColStd);
     ---Purpose:  Warning! To be used for BezierSurfaces ONLY!!!
     ---C++: inline
 
-    PolesCoefficients(Poles         : Array2OfPnt   from TColgp;
-	    	      Weights       : Array2OfReal    from TColStd ;
-                      CachePoles    : in out Array2OfPnt   from TColgp;
-	    	      CacheWeights  : in out Array2OfReal    from TColStd)   ;
+    PolesCoefficients(Poles             : Array2OfPnt   from TColgp;
+	    	      Weights           : Array2OfReal    from TColStd ;
+                      CacheRational     : in out Boolean;
+	    	      CachePolesWeights : in out Array2OfReal    from TColStd)   ;
 	 
     ---Purpose: Encapsulation   of  BuildCache    to   perform   the
     --          evaluation  of the Taylor expansion for beziersurfaces

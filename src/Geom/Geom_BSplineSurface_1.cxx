@@ -123,39 +123,23 @@ void Geom_BSplineSurface::D0(const Standard_Real U,
   Standard_Mutex::Sentry aSentry(MySurface->myMutex);
 
   if(!IsCacheValid(new_u, new_v))
-     MySurface->ValidateCache(new_u, new_v);
+    MySurface->ValidateCache(new_u, new_v);
 
- Standard_Real uparameter_11 = (2*ucacheparameter + ucachespanlenght)/2,
-               uspanlenght_11 = ucachespanlenght/2,
-               vparameter_11 = (2*vcacheparameter + vcachespanlenght)/2,
-               vspanlenght_11 = vcachespanlenght/2 ; 
- if (cacheweights.IsNull()) {
-      
-   BSplSLib::CacheD0(new_u,
-		     new_v,
-		     udeg,
-		     vdeg,
-		     uparameter_11,
-		     vparameter_11,
-		     uspanlenght_11,
-		     vspanlenght_11,
-		     cachepoles->Array2(),
-		     *((TColStd_Array2OfReal*) NULL),
-		     P) ;
- }
- else {
-   BSplSLib::CacheD0(new_u,
-		     new_v,
-		     udeg,
-		     vdeg,
-		     uparameter_11,
-		     vparameter_11,
-		     uspanlenght_11,
-		     vspanlenght_11,
-		     cachepoles->Array2(),
-		     cacheweights->Array2(),
-		     P) ;
- }
+  Standard_Real uparameter_11  = (2*ucacheparameter + ucachespanlenght)/2;
+  Standard_Real uspanlenght_11 = ucachespanlenght/2;
+  Standard_Real vparameter_11  = (2*vcacheparameter + vcachespanlenght)/2;
+  Standard_Real vspanlenght_11 = vcachespanlenght/2; 
+  BSplSLib::CacheD0(new_u,
+      new_v,
+      udeg,
+      vdeg,
+      uparameter_11,
+      vparameter_11,
+      uspanlenght_11,
+      vspanlenght_11,
+      cachePolesWeights->Array2(),
+      cacheRational,
+      P);
 }
 
 //=======================================================================
@@ -176,45 +160,26 @@ void Geom_BSplineSurface::D1(const Standard_Real U,
   Standard_Mutex::Sentry aSentry(MySurface->myMutex);
 
   if(!IsCacheValid(new_u, new_v))
-     MySurface->ValidateCache(new_u, new_v);
+    MySurface->ValidateCache(new_u, new_v);
 
-  Standard_Real uparameter_11 = (2*ucacheparameter + ucachespanlenght)/2,
-                uspanlenght_11 = ucachespanlenght/2,
-                vparameter_11 = (2*vcacheparameter + vcachespanlenght)/2,
-                vspanlenght_11 = vcachespanlenght/2 ;
+  Standard_Real uparameter_11 = (2*ucacheparameter + ucachespanlenght)/2;
+  Standard_Real uspanlenght_11 = ucachespanlenght/2;
+  Standard_Real vparameter_11 = (2*vcacheparameter + vcachespanlenght)/2;
+  Standard_Real vspanlenght_11 = vcachespanlenght/2;
 
-  if (cacheweights.IsNull()) {
-    
-    BSplSLib::CacheD1(new_u,
-		      new_v,
-		      udeg,
-		      vdeg,
-		      uparameter_11,
-		      vparameter_11,
-		      uspanlenght_11,
-		      vspanlenght_11,
-		      cachepoles->Array2(),
-		      *((TColStd_Array2OfReal*) NULL),
-		      P,
-		      D1U,
-		      D1V) ;
-  }
-  else {
-    
-    BSplSLib::CacheD1(new_u,
-		      new_v,
-		      udeg,
-		      vdeg,
-		      uparameter_11,
-		      vparameter_11,
-		      uspanlenght_11,
-		      vspanlenght_11,
-		      cachepoles->Array2(),
-		      cacheweights->Array2(),
-		      P,
-		      D1U,
-		      D1V) ;
-  }
+  BSplSLib::CacheD1(new_u,
+      new_v,
+      udeg,
+      vdeg,
+      uparameter_11,
+      vparameter_11,
+      uspanlenght_11,
+      vspanlenght_11,
+      cachePolesWeights->Array2(),
+      cacheRational,
+      P,
+      D1U,
+      D1V);
 }
 
 //=======================================================================
@@ -223,13 +188,13 @@ void Geom_BSplineSurface::D1(const Standard_Real U,
 //=======================================================================
 
 void Geom_BSplineSurface::D2 (const Standard_Real U, 
-			      const Standard_Real V,
-			            gp_Pnt&       P,
-			            gp_Vec&       D1U,
-			            gp_Vec&       D1V,
-			            gp_Vec&       D2U,
-			            gp_Vec&       D2V,
-			            gp_Vec&       D2UV) const
+                              const Standard_Real V,
+                              gp_Pnt&             P,
+                              gp_Vec&             D1U,
+                              gp_Vec&             D1V,
+                              gp_Vec&             D2U,
+                              gp_Vec&             D2V,
+                              gp_Vec&             D2UV) const
 {
   Standard_Real  new_u(U), new_v(V);
   PeriodicNormalization(new_u, new_v);
@@ -238,49 +203,30 @@ void Geom_BSplineSurface::D2 (const Standard_Real U,
   Standard_Mutex::Sentry aSentry(MySurface->myMutex);
 
   if(!IsCacheValid(new_u, new_v))
-     MySurface->ValidateCache(new_u, new_v);
+    MySurface->ValidateCache(new_u, new_v);
 
-  Standard_Real uparameter_11 = (2*ucacheparameter + ucachespanlenght)/2,
-                uspanlenght_11 = ucachespanlenght/2,
-                vparameter_11 = (2*vcacheparameter + vcachespanlenght)/2,
-                vspanlenght_11 = vcachespanlenght/2 ;
-  if (cacheweights.IsNull()) {
-      BSplSLib::CacheD2(new_u,
-			new_v,
-			udeg,
-			vdeg,
-			uparameter_11,
-			vparameter_11,
-			uspanlenght_11,
-			vspanlenght_11,
-			cachepoles->Array2(),
-			*((TColStd_Array2OfReal*) NULL),
-			P,
-			D1U,
-			D1V,
-			D2U,
-			D2UV,
-			D2V); 
-    }
-    else {
-      BSplSLib::CacheD2(new_u,
-			new_v,
-			udeg,
-			vdeg,
-			uparameter_11,
-			vparameter_11,
-			uspanlenght_11,
-			vspanlenght_11,
-			cachepoles->Array2(),
-			cacheweights->Array2(),
-			P,
-			D1U,
-			D1V,
-			D2U,
-			D2UV,
-			D2V); 
-    }
-  }
+  Standard_Real uparameter_11 = (2*ucacheparameter + ucachespanlenght)/2;
+  Standard_Real uspanlenght_11 = ucachespanlenght/2;
+  Standard_Real vparameter_11 = (2*vcacheparameter + vcachespanlenght)/2;
+  Standard_Real vspanlenght_11 = vcachespanlenght/2;
+
+  BSplSLib::CacheD2(new_u,
+      new_v,
+      udeg,
+      vdeg,
+      uparameter_11,
+      vparameter_11,
+      uspanlenght_11,
+      vspanlenght_11,
+      cachePolesWeights->Array2(),
+      cacheRational,
+      P,
+      D1U,
+      D1V,
+      D2U,
+      D2UV,
+      D2V); 
+}
 
 //=======================================================================
 //function : D3
@@ -301,9 +247,9 @@ void Geom_BSplineSurface::D3 (const Standard_Real U,
 			            gp_Vec&       D3UVV) const
 {
   BSplSLib::D3(U,V,0,0,POLES,WEIGHTS,UFKNOTS,VFKNOTS,FMULTS,FMULTS,
-	       udeg,vdeg,urational,vrational,uperiodic,vperiodic,
-	       P,D1U,D1V,D2U,D2V,D2UV,D3U,D3V,D3UUV,D3UVV);
-  }
+       udeg,vdeg,urational,vrational,uperiodic,vperiodic,
+       P,D1U,D1V,D2U,D2V,D2UV,D3U,D3V,D3UUV,D3UVV);
+}
 
 //=======================================================================
 //function : DN

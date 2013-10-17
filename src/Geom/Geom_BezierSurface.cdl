@@ -105,7 +105,8 @@ uses Array1OfReal      from TColStd,
      Vec               from gp, 
      Curve             from Geom,
      Geometry          from Geom,
-     Shape             from GeomAbs
+     Shape             from GeomAbs,
+     BSplineCache      from Geom
 
 
 raises ConstructionError from Standard,
@@ -668,9 +669,10 @@ is
         --  Bezier surface. This value is 25.
 
 
-  Create (SurfacePoles, SurfaceCoefficients : HArray2OfPnt  from TColgp;
-          PoleWeights, CoefficientWeights   : HArray2OfReal from TColStd;
-	  IsURational, IsVRational          : Boolean)
+  Create (SurfacePoles              : HArray2OfPnt  from TColgp;
+          PoleWeights               : HArray2OfReal from TColStd;
+          SurfaceCoeffsAndWeights   : BSplineCache from Geom;
+	  IsURational, IsVRational  : Boolean)
      returns mutable BezierSurface
      is private;
 
@@ -723,8 +725,8 @@ fields
     poles     : HArray2OfPnt  from TColgp;
     weights   : HArray2OfReal from TColStd;
 
-    coeffs    : HArray2OfPnt  from TColgp;
-    wcoeffs   : HArray2OfReal from TColStd;
+    coeffsweights : BSplineCache from Geom;
+    cacherational : Boolean;
 
     ucacheparameter : Real ;
     vcacheparameter : Real ;

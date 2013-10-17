@@ -439,11 +439,11 @@ Standard_Boolean Geom_OsculatingSurface::VOscSurf
 //=======================================================================
 
 Standard_Boolean  Geom_OsculatingSurface::BuildOsculatingSurface
-       (const Standard_Real Param,
-	const Standard_Integer SUKnot,
-	const Standard_Integer SVKnot,
-	const Handle(Geom_BSplineSurface)& BS,
-        Handle(Geom_BSplineSurface)& BSpl) const
+  (const Standard_Real Param,
+  const Standard_Integer SUKnot,
+  const Standard_Integer SVKnot,
+  const Handle(Geom_BSplineSurface)& BS,
+  Handle(Geom_BSplineSurface)& BSpl) const
 {
   Standard_Integer i, j;
   Standard_Boolean OsculSurf=Standard_True;
@@ -452,210 +452,211 @@ Standard_Boolean  Geom_OsculatingSurface::BuildOsculatingSurface
   cout<<"======================================"<<endl<<endl;
 #endif
 
-// for cache
+  // for cache
   Standard_Integer MinDegree,
-                  MaxDegree ;
+    MaxDegree ;
   Standard_Real udeg, vdeg;
   udeg = BS->UDegree();
   vdeg = BS->VDegree();
   if( (IsAlongU() && vdeg <=1) || (IsAlongV() && udeg <=1))
   {
 #if defined(DEB) && defined(OCCT_DEVELOPMENT)
-      cout<<" surface osculatrice nulle "<<endl;
+    cout<<" surface osculatrice nulle "<<endl;
 #endif
-      //Standard_ConstructionError::Raise("Geom_OsculatingSurface");
-      OsculSurf=Standard_False;
+    //Standard_ConstructionError::Raise("Geom_OsculatingSurface");
+    OsculSurf=Standard_False;
   }
   else
   {
-      MinDegree = (Standard_Integer ) Min(udeg,vdeg) ;
-      MaxDegree = (Standard_Integer ) Max(udeg,vdeg) ;
+    MinDegree = (Standard_Integer ) Min(udeg,vdeg) ;
+    MaxDegree = (Standard_Integer ) Max(udeg,vdeg) ;
 
-      TColgp_Array2OfPnt cachepoles(1, MaxDegree + 1, 1, MinDegree + 1);
-// end for cache
+    // cachepoles is a 2D grid of 4D row vectors (three components for pole and fourth for weight)
+    TColStd_Array2OfReal cachepoles(1, MaxDegree + 1, 1, (MinDegree + 1) * 4);
+    Standard_Boolean cacheRational;
+    // end for cache
 
-// for polynomial grid 
-      Standard_Integer MaxUDegree, MaxVDegree;
-      Standard_Integer UContinuity, VContinuity;
+    // for polynomial grid 
+    Standard_Integer MaxUDegree, MaxVDegree;
+    Standard_Integer UContinuity, VContinuity;
 
-      Handle(TColStd_HArray2OfInteger) NumCoeffPerSurface = 
-                                   new TColStd_HArray2OfInteger(1, 1, 1, 2);
-      Handle(TColStd_HArray1OfReal) PolynomialUIntervals = 
-                                   new TColStd_HArray1OfReal(1, 2);
-      Handle(TColStd_HArray1OfReal) PolynomialVIntervals = 
-                                   new TColStd_HArray1OfReal(1, 2);
-      Handle(TColStd_HArray1OfReal) TrueUIntervals = 
-                                   new TColStd_HArray1OfReal(1, 2);
-      Handle(TColStd_HArray1OfReal) TrueVIntervals = 
-                                   new TColStd_HArray1OfReal(1, 2);
-      MaxUDegree = (Standard_Integer ) udeg;
-      MaxVDegree = (Standard_Integer ) vdeg;
+    Handle(TColStd_HArray2OfInteger) NumCoeffPerSurface = 
+            new TColStd_HArray2OfInteger(1, 1, 1, 2);
+    Handle(TColStd_HArray1OfReal) PolynomialUIntervals = 
+            new TColStd_HArray1OfReal(1, 2);
+    Handle(TColStd_HArray1OfReal) PolynomialVIntervals = 
+            new TColStd_HArray1OfReal(1, 2);
+    Handle(TColStd_HArray1OfReal) TrueUIntervals = 
+            new TColStd_HArray1OfReal(1, 2);
+    Handle(TColStd_HArray1OfReal) TrueVIntervals = 
+            new TColStd_HArray1OfReal(1, 2);
+    MaxUDegree = (Standard_Integer ) udeg;
+    MaxVDegree = (Standard_Integer ) vdeg;
 
-      for (i=1;i<=2;i++) 
-      {
-        PolynomialUIntervals->ChangeValue(i) = i-1;
-        PolynomialVIntervals->ChangeValue(i) = i-1;
-        TrueUIntervals->ChangeValue(i) = BS->UKnot(SUKnot+i-1);
-        TrueVIntervals->ChangeValue(i) = BS->VKnot(SVKnot+i-1);
-      }
-
-
-      Standard_Integer OscUNumCoeff=0, OscVNumCoeff=0;
-      if (IsAlongU()) 
-      {
-#if defined(DEB) && defined(OCCT_DEVELOPMENT)
-        cout<<">>>>>>>>>>> AlongU"<<endl;
-#endif
-        OscUNumCoeff = (Standard_Integer ) udeg + 1;  
-        OscVNumCoeff = (Standard_Integer ) vdeg;  
-      }
-      if (IsAlongV()) 
-      {
-#if defined(DEB) && defined(OCCT_DEVELOPMENT)
-        cout<<">>>>>>>>>>> AlongV"<<endl;
-#endif
-        OscUNumCoeff = (Standard_Integer ) udeg;  
-        OscVNumCoeff = (Standard_Integer ) vdeg + 1;  
-      }
-      NumCoeffPerSurface->ChangeValue(1,1) = OscUNumCoeff;  
-      NumCoeffPerSurface->ChangeValue(1,2) = OscVNumCoeff;  
-
-      Handle(TColStd_HArray1OfReal) Coefficients = new TColStd_HArray1OfReal(1, 
-             NumCoeffPerSurface->Value(1,1)*NumCoeffPerSurface->Value(1,2)*3);
-//    end for polynomial grid
-
-//    building the cache
-      Standard_Integer ULocalIndex, VLocalIndex;
-      Standard_Real ucacheparameter, vcacheparameter,uspanlength, vspanlength;
-      TColgp_Array2OfPnt NewPoles(1, BS->NbUPoles(), 1, BS->NbVPoles());
-      TColStd_Array1OfReal UFlatKnots(1, BS->NbUPoles() + BS->UDegree() + 1);
-      TColStd_Array1OfReal VFlatKnots(1, BS->NbVPoles() + BS->VDegree() + 1);
-      BS->Poles(NewPoles);
-      BS->UKnotSequence(UFlatKnots);
-      BS->VKnotSequence(VFlatKnots);
-
-      VLocalIndex = 0;
-      ULocalIndex = 0;
-      for(j = 1; j <= SVKnot; j++) VLocalIndex += BS->VMultiplicity(j);
-      for(i = 1; i <= SUKnot; i++) ULocalIndex += BS->UMultiplicity(i);
-      ucacheparameter = BS->UKnot(SUKnot);
-      vcacheparameter = BS->VKnot(SVKnot);
-      vspanlength = BS->VKnot(SVKnot + 1) - BS->VKnot(SVKnot);
-      uspanlength = BS->UKnot(SUKnot + 1) - BS->UKnot(SUKnot);
-
-      // On se ramene toujours a un parametrage tel que localement ce soit l'iso 
-      // u=0 ou v=0 qui soit degeneree
-
-      Standard_Boolean IsVNegative = Param > vcacheparameter + vspanlength/2;
-      Standard_Boolean IsUNegative = Param > ucacheparameter + uspanlength/2;
-
-      if (IsAlongU() && (Param > vcacheparameter + vspanlength/2))
-	vcacheparameter = vcacheparameter +  vspanlength;
-      if (IsAlongV() && (Param > ucacheparameter + uspanlength/2))
-	ucacheparameter = ucacheparameter +  uspanlength;
-
-      BSplSLib::BuildCache(ucacheparameter,   
-			   vcacheparameter,   
-			   uspanlength,         
-			   vspanlength,         
-			   BS->IsUPeriodic(),
-			   BS->IsVPeriodic(),
-			   BS->UDegree(),       
-			   BS->VDegree(),       
-			   ULocalIndex,         
-			   VLocalIndex,         
-			   UFlatKnots,
-			   VFlatKnots,
-			   NewPoles,
-			   BSplSLib::NoWeights(),
-			   cachepoles,
-			   BSplSLib::NoWeights());
-      Standard_Integer m, n, index;
-      TColgp_Array2OfPnt OscCoeff(1,OscUNumCoeff , 1, OscVNumCoeff);
-
-      if (IsAlongU()) 
-	{
-	  if (udeg > vdeg) 
-	    {
-	      for(n = 1; n <= udeg + 1; n++) 
-		for(m = 1; m <= vdeg; m++)
-		  OscCoeff(n,m) = cachepoles(n,m+1) ;
-	    }
-	  else
-	    {
-	      for(n = 1; n <= udeg + 1; n++) 
-		for(m = 1; m <= vdeg; m++)
-		  OscCoeff(n,m) = cachepoles(m+1,n) ;
-	    }
-	  if (IsVNegative) PLib::VTrimming(-1,0,OscCoeff,PLib::NoWeights2());
-
-	  index=1;
-	  for(n = 1; n <= udeg + 1; n++) 
-	    for(m = 1; m <= vdeg; m++)
-	      {
-		Coefficients->ChangeValue(index++) = OscCoeff(n,m).X();
-		Coefficients->ChangeValue(index++) = OscCoeff(n,m).Y();
-		Coefficients->ChangeValue(index++) = OscCoeff(n,m).Z();
-	      }
-	}
-
-      if (IsAlongV()) 
-	{
-	  if (udeg > vdeg) 
-	    {
-	      for(n = 1; n <= udeg; n++) 
-		for(m = 1; m <= vdeg + 1; m++)
-		  OscCoeff(n,m) = cachepoles(n+1,m);
-	    }
-	  else
-	    {
-	      for(n = 1; n <= udeg; n++) 
-		for(m = 1; m <= vdeg + 1; m++)
-		  OscCoeff(n,m) = cachepoles(m,n+1);
-	    }
-	  if (IsUNegative) PLib::UTrimming(-1,0,OscCoeff,PLib::NoWeights2());
-	  index=1;
-	  for(n = 1; n <= udeg; n++) 
-	    for(m = 1; m <= vdeg + 1; m++)
-	      {
-		Coefficients->ChangeValue(index++) = OscCoeff(n,m).X();
-		Coefficients->ChangeValue(index++) = OscCoeff(n,m).Y();
-		Coefficients->ChangeValue(index++) = OscCoeff(n,m).Z();
-	      }
-	}
-
-      if (IsAlongU()) MaxVDegree--;
-      if (IsAlongV()) MaxUDegree--;
-      UContinuity = - 1;
-      VContinuity = - 1;
-
-      Convert_GridPolynomialToPoles Data(1,1,
-					 UContinuity,
-					 VContinuity,
-					 MaxUDegree,
-					 MaxVDegree,
-					 NumCoeffPerSurface,
-					 Coefficients,
-					 PolynomialUIntervals,
-					 PolynomialVIntervals,
-					 TrueUIntervals,
-					 TrueVIntervals);
-  
-//      Handle(Geom_BSplineSurface) BSpl = 
-	BSpl =new Geom_BSplineSurface(Data.Poles()->Array2(),
-				Data.UKnots()->Array1(),
-				Data.VKnots()->Array1(),
-				Data.UMultiplicities()->Array1(),
-				Data.VMultiplicities()->Array1(),
-				Data.UDegree(),
-				Data.VDegree(),
-				0, 0);
-#if defined(DEB) && defined(OCCT_DEVELOPMENT)
-      cout<<"^====================================^"<<endl<<endl;
-#endif
-
-//      L=BSpl;
+    for (i=1;i<=2;i++) 
+    {
+      PolynomialUIntervals->ChangeValue(i) = i-1;
+      PolynomialVIntervals->ChangeValue(i) = i-1;
+      TrueUIntervals->ChangeValue(i) = BS->UKnot(SUKnot+i-1);
+      TrueVIntervals->ChangeValue(i) = BS->VKnot(SVKnot+i-1);
     }
+
+    Standard_Integer OscUNumCoeff=0, OscVNumCoeff=0;
+    if (IsAlongU()) 
+    {
+#if defined(DEB) && defined(OCCT_DEVELOPMENT)
+      cout<<">>>>>>>>>>> AlongU"<<endl;
+#endif
+      OscUNumCoeff = (Standard_Integer ) udeg + 1;  
+      OscVNumCoeff = (Standard_Integer ) vdeg;  
+    }
+    if (IsAlongV()) 
+    {
+#if defined(DEB) && defined(OCCT_DEVELOPMENT)
+      cout<<">>>>>>>>>>> AlongV"<<endl;
+#endif
+      OscUNumCoeff = (Standard_Integer ) udeg;  
+      OscVNumCoeff = (Standard_Integer ) vdeg + 1;  
+    }
+    NumCoeffPerSurface->ChangeValue(1,1) = OscUNumCoeff;  
+    NumCoeffPerSurface->ChangeValue(1,2) = OscVNumCoeff;  
+
+    Handle(TColStd_HArray1OfReal) Coefficients = new TColStd_HArray1OfReal(1, 
+            NumCoeffPerSurface->Value(1,1)*NumCoeffPerSurface->Value(1,2)*3);
+    //    end for polynomial grid
+
+    //    building the cache
+    Standard_Integer ULocalIndex, VLocalIndex;
+    Standard_Real ucacheparameter, vcacheparameter,uspanlength, vspanlength;
+    TColgp_Array2OfPnt NewPoles(1, BS->NbUPoles(), 1, BS->NbVPoles());
+    TColStd_Array1OfReal UFlatKnots(1, BS->NbUPoles() + BS->UDegree() + 1);
+    TColStd_Array1OfReal VFlatKnots(1, BS->NbVPoles() + BS->VDegree() + 1);
+    BS->Poles(NewPoles);
+    BS->UKnotSequence(UFlatKnots);
+    BS->VKnotSequence(VFlatKnots);
+
+    VLocalIndex = 0;
+    ULocalIndex = 0;
+    for(j = 1; j <= SVKnot; j++) VLocalIndex += BS->VMultiplicity(j);
+    for(i = 1; i <= SUKnot; i++) ULocalIndex += BS->UMultiplicity(i);
+    ucacheparameter = BS->UKnot(SUKnot);
+    vcacheparameter = BS->VKnot(SVKnot);
+    vspanlength = BS->VKnot(SVKnot + 1) - BS->VKnot(SVKnot);
+    uspanlength = BS->UKnot(SUKnot + 1) - BS->UKnot(SUKnot);
+
+    // On se ramene toujours a un parametrage tel que localement ce soit l'iso 
+    // u=0 ou v=0 qui soit degeneree
+
+    Standard_Boolean IsVNegative = Param > vcacheparameter + vspanlength/2;
+    Standard_Boolean IsUNegative = Param > ucacheparameter + uspanlength/2;
+
+    if (IsAlongU() && (Param > vcacheparameter + vspanlength/2))
+      vcacheparameter = vcacheparameter +  vspanlength;
+    if (IsAlongV() && (Param > ucacheparameter + uspanlength/2))
+      ucacheparameter = ucacheparameter +  uspanlength;
+
+    BSplSLib::BuildCache(ucacheparameter,   
+            vcacheparameter,   
+            uspanlength,         
+            vspanlength,         
+            BS->IsUPeriodic(),
+            BS->IsVPeriodic(),
+            BS->UDegree(),       
+            BS->VDegree(),       
+            ULocalIndex,         
+            VLocalIndex,         
+            UFlatKnots,
+            VFlatKnots,
+            NewPoles,
+            BSplSLib::NoWeights(),
+            cacheRational,
+            cachepoles);
+    Standard_Integer m, n, index;
+    TColgp_Array2OfPnt OscCoeff(1,OscUNumCoeff , 1, OscVNumCoeff);
+
+    if (IsAlongU()) 
+    {
+      if (udeg > vdeg) 
+      {
+        for(n = 1; n <= udeg + 1; n++) 
+          for(m = 1; m <= vdeg; m++)
+            OscCoeff(n,m) = gp_Pnt(cachepoles(n, m*4), cachepoles(n, m*4+1), cachepoles(n, m*4+2));
+      }
+      else
+      {
+        for(n = 1; n <= udeg + 1; n++) 
+          for(m = 1; m <= vdeg; m++)
+            OscCoeff(n,m) = gp_Pnt(cachepoles(m+1, (n-1)*4), cachepoles(m+1, (n-1)*4+1), cachepoles(m+1, (n-1)*4+2));
+      }
+      if (IsVNegative) PLib::VTrimming(-1,0,OscCoeff,PLib::NoWeights2());
+
+      index=1;
+      for(n = 1; n <= udeg + 1; n++) 
+        for(m = 1; m <= vdeg; m++)
+        {
+          Coefficients->ChangeValue(index++) = OscCoeff(n,m).X();
+          Coefficients->ChangeValue(index++) = OscCoeff(n,m).Y();
+          Coefficients->ChangeValue(index++) = OscCoeff(n,m).Z();
+        }
+    }
+
+    if (IsAlongV()) 
+    {
+      if (udeg > vdeg) 
+      {
+        for(n = 1; n <= udeg; n++) 
+          for(m = 1; m <= vdeg + 1; m++)
+            OscCoeff(n,m) = gp_Pnt(cachepoles(n+1, (m-1)*4), cachepoles(n+1, (m-1)*4+1), cachepoles(n+1, (m-1)*4+2));
+      }
+      else
+      {
+        for(n = 1; n <= udeg; n++) 
+          for(m = 1; m <= vdeg + 1; m++)
+            OscCoeff(n,m) = gp_Pnt(cachepoles(m, n*4), cachepoles(m, n*4+1), cachepoles(m, n*4+2));
+      }
+      if (IsUNegative) PLib::UTrimming(-1,0,OscCoeff,PLib::NoWeights2());
+      index=1;
+      for(n = 1; n <= udeg; n++) 
+        for(m = 1; m <= vdeg + 1; m++)
+        {
+          Coefficients->ChangeValue(index++) = OscCoeff(n,m).X();
+          Coefficients->ChangeValue(index++) = OscCoeff(n,m).Y();
+          Coefficients->ChangeValue(index++) = OscCoeff(n,m).Z();
+        }
+    }
+
+    if (IsAlongU()) MaxVDegree--;
+    if (IsAlongV()) MaxUDegree--;
+    UContinuity = - 1;
+    VContinuity = - 1;
+
+    Convert_GridPolynomialToPoles Data(1,1,
+            UContinuity,
+            VContinuity,
+            MaxUDegree,
+            MaxVDegree,
+            NumCoeffPerSurface,
+            Coefficients,
+            PolynomialUIntervals,
+            PolynomialVIntervals,
+            TrueUIntervals,
+            TrueVIntervals);
+
+    //      Handle(Geom_BSplineSurface) BSpl = 
+    BSpl = new Geom_BSplineSurface(Data.Poles()->Array2(),
+                  Data.UKnots()->Array1(),
+                  Data.VKnots()->Array1(),
+                  Data.UMultiplicities()->Array1(),
+                  Data.VMultiplicities()->Array1(),
+                  Data.UDegree(),
+                  Data.VDegree(),
+                  0, 0);
+#if defined(DEB) && defined(OCCT_DEVELOPMENT)
+    cout<<"^====================================^"<<endl<<endl;
+#endif
+
+    //      L=BSpl;
+  }
   return OsculSurf;
 }
 

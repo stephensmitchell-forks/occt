@@ -1,6 +1,7 @@
 Geom_BSplineCurve_1.cxx		
 Geom_BSplineSurface_1.cxx
-
+Geom_BSplineCache.lxx
+Handle_Geom_BSplineCache.hxx
 
 
 

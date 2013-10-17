@@ -145,11 +145,12 @@ exception UndefinedValue inherits DomainError from  Standard;
                        class BezierSurface;
                        class BSplineSurface;
                        class RectangularTrimmedSurface;
-               
+     
               
               class OffsetSurface;
 	      
 private       class OsculatingSurface;
+              class BSplineCache;
 
 --    	      class PlateSurface ;
 end Geom;

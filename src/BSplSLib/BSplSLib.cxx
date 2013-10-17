@@ -36,6 +36,7 @@
 #include <Standard_NotImplemented.hxx>
 #include <Standard_ConstructionError.hxx>
 #include <math_Matrix.hxx>
+#include <NCollection_AlignAllocator.hxx>
 
 // for null derivatives
 static Standard_Real BSplSLib_zero[3] = {0.0, 0.0, 0.0};
@@ -1916,25 +1917,25 @@ void  BSplSLib::Unperiodize
 //           stored in homogeneous form 
 //=======================================================================
 
-void BSplSLib::BuildCache
-(const Standard_Real            U,   
- const Standard_Real            V,
- const Standard_Real            USpanDomain,
- const Standard_Real            VSpanDomain,  
- const Standard_Boolean         UPeriodic,
- const Standard_Boolean         VPeriodic,
- const Standard_Integer         UDegree,
- const Standard_Integer         VDegree,
- const Standard_Integer         UIndex,
- const Standard_Integer         VIndex,
- const TColStd_Array1OfReal&    UFlatKnots,   
- const TColStd_Array1OfReal&    VFlatKnots,   
- const TColgp_Array2OfPnt&      Poles,  
- const TColStd_Array2OfReal&    Weights,
- TColgp_Array2OfPnt&            CachePoles,
- TColStd_Array2OfReal&          CacheWeights)
-{  
-  Standard_Boolean rational,rational_u,rational_v,flag_u_or_v;                  
+void BSplSLib::BuildCache(
+        const Standard_Real            U,
+        const Standard_Real            V,
+        const Standard_Real            USpanDomain,
+        const Standard_Real            VSpanDomain,
+        const Standard_Boolean         UPeriodic,
+        const Standard_Boolean         VPeriodic,
+        const Standard_Integer         UDegree,
+        const Standard_Integer         VDegree,
+        const Standard_Integer         UIndex,
+        const Standard_Integer         VIndex,
+        const TColStd_Array1OfReal&    UFlatKnots,
+        const TColStd_Array1OfReal&    VFlatKnots,
+        const TColgp_Array2OfPnt&      Poles,
+        const TColStd_Array2OfReal&    Weights,
+        Standard_Boolean&              CacheRational,
+        TColStd_Array2OfReal&          CachePolesWeights)
+{
+  Standard_Boolean rational,rational_u,rational_v,flag_u_or_v;
   Standard_Integer kk,d1,d1p1,d2,d2p1,ii,jj,iii,jjj,Index;
   Standard_Real u1,min_degree_domain,max_degree_domain,f,factor[2],u2;
   if (&Weights != NULL) 
@@ -1943,113 +1944,116 @@ void BSplSLib::BuildCache
     rational_u = rational_v = Standard_False;
   BSplSLib_DataContainer dc (UDegree, VDegree);
   flag_u_or_v =
-    PrepareEval  (U,
-		  V,
-		  UIndex,
-		  VIndex,
-		  UDegree,
-		  VDegree,
-		  rational_u,
-		  rational_v,
-		  UPeriodic,
-		  VPeriodic,
-		  Poles,
-		  Weights,
-		  UFlatKnots,
-		  VFlatKnots,
-		  (BSplCLib::NoMults()),
-		  (BSplCLib::NoMults()),
-		  u1,
-		  u2,
-		  d1,
-		  d2,
-		  rational,
-          dc);
+    PrepareEval(U,
+                V,
+                UIndex,
+                VIndex,
+                UDegree,
+                VDegree,
+                rational_u,
+                rational_v,
+                UPeriodic,
+                VPeriodic,
+                Poles,
+                Weights,
+                UFlatKnots,
+                VFlatKnots,
+                (BSplCLib::NoMults()),
+                (BSplCLib::NoMults()),
+                u1,
+                u2,
+                d1,
+                d2,
+                rational,
+                dc);
   d1p1 = d1 + 1;
   d2p1 = d2 + 1;
-  if (rational) {
-    BSplCLib::Bohm(u1,d1,d1,*dc.knots1,4 * d2p1,*dc.poles);
-    
-    for (kk = 0; kk <= d1 ; kk++) 
-      BSplCLib::Bohm(u2,d2,d2,*dc.knots2,4,*(dc.poles + kk * 4 * d2p1));
-    if (flag_u_or_v) {
-      min_degree_domain = USpanDomain ;
-      max_degree_domain = VSpanDomain ;
+  CacheRational = rational;
+
+  if (rational)
+  {
+    BSplCLib::Bohm(u1, d1, d1, *dc.knots1, 4 * d2p1, *dc.poles);
+
+    for (kk = 0; kk <= d1; kk++) 
+      BSplCLib::Bohm(u2, d2, d2, *dc.knots2, 4, *(dc.poles + kk * 4 * d2p1));
+
+    if (flag_u_or_v)
+    {
+      min_degree_domain = USpanDomain;
+      max_degree_domain = VSpanDomain;
     }
-    else {
-      min_degree_domain = VSpanDomain ;
-      max_degree_domain = USpanDomain ;
+    else 
+    {
+      min_degree_domain = VSpanDomain;
+      max_degree_domain = USpanDomain;
     }
+
     factor[0] = 1.0e0 ;
-    
-    for (ii = 0 ; ii <= d2 ; ii++) {
+    for (ii = 0; ii <= d2; ii++)
+    {
       iii = ii + 1;
-      factor[1] = 1.0e0 ;
-      
-      for (jj = 0 ; jj <= d1 ; jj++) {
-	jjj = jj + 1;
-	Index = jj * d2p1 + ii ;
-	Index = Index << 2;
-	gp_Pnt& P = CachePoles(iii,jjj);
-	f = factor[0] * factor[1];
-	P.SetX( f * dc.poles[Index]); Index++;
-	P.SetY( f * dc.poles[Index]); Index++;
-	P.SetZ( f * dc.poles[Index]); Index++;
-	CacheWeights(iii ,jjj) = f * dc.poles[Index] ;
-	factor[1] *= min_degree_domain / (Standard_Real) (jjj) ;
+      factor[1] = 1.0e0;
+
+      for (jj = 0; jj <= d1; jj++)
+      {
+        jjj = jj * 4;
+        Index = jj * d2p1 + ii;
+        Index = Index << 2;
+        f = factor[0] * factor[1];
+        for (kk = 1; kk <= 4; kk++)
+        {
+          CachePolesWeights(iii, jjj + kk) = f * dc.poles[Index];
+          Index++;
+        }
+        factor[1] *= min_degree_domain / (Standard_Real)(jj + 1);
       }
-      factor[0] *= max_degree_domain / (Standard_Real) (iii) ;
+      factor[0] *= max_degree_domain / (Standard_Real)(iii);
     }
   }
-  else {
-    BSplCLib::Bohm(u1,d1,d1,*dc.knots1,3 * d2p1,*dc.poles);
-    
-    for (kk = 0; kk <= d1 ; kk++) 
-      BSplCLib::Bohm(u2,d2,d2,*dc.knots2,3,*(dc.poles + kk * 3 * d2p1));
-    if (flag_u_or_v) {
-      min_degree_domain = USpanDomain ;
-      max_degree_domain = VSpanDomain ;
+  else
+  {
+    BSplCLib::Bohm(u1, d1, d1, *dc.knots1, 3 * d2p1, *dc.poles);
+
+    for (kk = 0; kk <= d1; kk++) 
+      BSplCLib::Bohm(u2, d2, d2, *dc.knots2, 3, *(dc.poles + kk * 3 * d2p1));
+
+    if (flag_u_or_v)
+    {
+      min_degree_domain = USpanDomain;
+      max_degree_domain = VSpanDomain;
     }
-    else {
-      min_degree_domain = VSpanDomain ;
-      max_degree_domain = USpanDomain ;
+    else 
+    {
+      min_degree_domain = VSpanDomain;
+      max_degree_domain = USpanDomain;
     }
-    factor[0] = 1.0e0 ;
-    
-    for (ii = 0 ; ii <= d2 ; ii++) {
+
+    factor[0] = 1.0e0;
+    for (ii = 0; ii <= d2; ii++)
+    {
       iii = ii + 1;
-      factor[1] = 1.0e0 ;
-      
-      for (jj = 0 ; jj <= d1 ; jj++) {
-	jjj = jj + 1;
-	Index = jj * d2p1 + ii ;
-	Index = (Index << 1) + Index;
-	gp_Pnt& P = CachePoles(iii,jjj);
-	f = factor[0] * factor[1];
-	P.SetX( f * dc.poles[Index]); Index++;
-	P.SetY( f * dc.poles[Index]); Index++;
-	P.SetZ( f * dc.poles[Index]);
-	factor[1] *= min_degree_domain / (Standard_Real) (jjj) ;
+      factor[1] = 1.0e0;
+
+      for (jj = 0; jj <= d1; jj++)
+      {
+        jjj = jj * 4;
+        Index = jj * d2p1 + ii;
+        Index = (Index << 1) + Index;
+        f = factor[0] * factor[1];
+        for (kk = 1; kk <= 3; kk++)
+        {
+          CachePolesWeights(iii, jjj + kk) = f * dc.poles[Index];
+          Index++;
+        }
+        CachePolesWeights(iii, jjj + 4) = 0.0e0; 
+        factor[1] *= min_degree_domain / (Standard_Real)(jj + 1);
       }
-      factor[0] *= max_degree_domain / (Standard_Real) (iii) ;
+      factor[0] *= max_degree_domain / (Standard_Real)(iii);
     }
-    if (&Weights != NULL) {
-      //
-      // means that PrepareEval did found out that the surface was 
-      // locally polynomial but since the surface is constructed
-      // with some weights we need to set the weight polynomial to constant
-      // 
-      
-      for (ii = 1 ; ii <= d2p1 ; ii++) {
-	
-	for (jj = 1 ; jj <= d1p1 ; jj++) {
-	  CacheWeights(ii,jj) = 0.0e0 ;
-	}
-      }
-      CacheWeights(1,1) = 1.0e0 ;
-    }
+    CachePolesWeights(1, 4) = 1.0e0;
   }
 }
+
 
 //=======================================================================
 //function : CacheD0
@@ -2057,92 +2061,81 @@ void BSplSLib::BuildCache
 //           
 //=======================================================================
 
-void  BSplSLib::CacheD0(const Standard_Real                  UParameter,
-			const Standard_Real                  VParameter,
-			const  Standard_Integer              UDegree,
-			const  Standard_Integer              VDegree,
-			const  Standard_Real                 UCacheParameter,
-			const  Standard_Real                 VCacheParameter,
-			const  Standard_Real                 USpanLenght,
-			const  Standard_Real                 VSpanLenght,
-			const  TColgp_Array2OfPnt&           PolesArray,
-			const  TColStd_Array2OfReal&         WeightsArray,
-                        gp_Pnt&                              aPoint)
+void  BSplSLib::CacheD0(
+        const Standard_Real           UParameter,
+        const Standard_Real           VParameter,
+        const  Standard_Integer       UDegree,
+        const  Standard_Integer       VDegree,
+        const  Standard_Real          UCacheParameter,
+        const  Standard_Real          VCacheParameter,
+        const  Standard_Real          USpanLenght,
+        const  Standard_Real          VSpanLenght,
+        const  TColStd_Array2OfReal&  PolesWeightsArray,
+        const  Standard_Boolean       CacheRational,
+        gp_Pnt&                       aPoint)
 {
   //
   // the CacheParameter is where the cache polynomial was evaluated in homogeneous
   // form
   // the SpanLenght     is the normalizing factor so that the polynomial is between
   // 0 and 1 
-  Standard_Integer 
-//    ii,
-  dimension,
-  min_degree,
-  max_degree  ;
-  
-  Standard_Real 
-    new_parameter[2] ,
-  inverse ;
-  
-  Standard_Real * 
-    PArray = (Standard_Real *) 
-      &(PolesArray(PolesArray.LowerCol(), PolesArray.LowerRow())) ;
-  Standard_Real *
-    myPoint = (Standard_Real *) &aPoint  ;
-  if (UDegree <= VDegree) {
-    min_degree = UDegree ;
-    max_degree = VDegree ;
-    new_parameter[1] = (UParameter - UCacheParameter) / USpanLenght ;
-    new_parameter[0] = (VParameter - VCacheParameter) / VSpanLenght ; 
-    dimension = 3 * (UDegree + 1) ;
+  Standard_Integer dimension, min_degree, max_degree;
+  Standard_Real new_parameter[2], inverse;
+  MEMALIGN(Standard_Real *PArray) = (Standard_Real *) &(PolesWeightsArray(PolesWeightsArray.LowerCol(), PolesWeightsArray.LowerRow()));
+  Standard_Real *myPoint = (Standard_Real *) &aPoint;
+  MEMALIGN(Standard_Real local_pole_and_weight[4]);
+
+  if (UDegree <= VDegree)
+  {
+    min_degree = UDegree;
+    max_degree = VDegree;
+    new_parameter[1] = (UParameter - UCacheParameter) / USpanLenght;
+    new_parameter[0] = (VParameter - VCacheParameter) / VSpanLenght; 
+    dimension = 4 * (UDegree + 1);
   }
-  else {
-    min_degree = VDegree ;
-    max_degree = UDegree ;
-    new_parameter[0] = (UParameter - UCacheParameter) / USpanLenght ;
-    new_parameter[1] = (VParameter - VCacheParameter) / VSpanLenght ; 
-    dimension = 3 * (VDegree + 1) ;
+  else
+  {
+    min_degree = VDegree;
+    max_degree = UDegree;
+    new_parameter[0] = (UParameter - UCacheParameter) / USpanLenght;
+    new_parameter[1] = (VParameter - VCacheParameter) / VSpanLenght; 
+    dimension = 4 * (VDegree + 1);
   }
-  NCollection_LocalArray<Standard_Real> locpoles(dimension);
-  
+
+  Standard_Real* locpoles = (Standard_Real*) NCollection_AlignAllocator::Allocate(dimension*sizeof(Standard_Real), DATA_ALIGNMENT);
+
   PLib::NoDerivativeEvalPolynomial(new_parameter[0],
-		       max_degree,
-		       dimension,
-		       max_degree*dimension,
-		       PArray[0],
-		       locpoles[0]) ;
-  
+          max_degree,
+          dimension,
+          max_degree*dimension,
+          PArray[0],
+          locpoles[0]);
+
   PLib::NoDerivativeEvalPolynomial(new_parameter[1],
-		       min_degree,
-		       3,
-		       (min_degree << 1) + min_degree,
-		       locpoles[0],
-		       myPoint[0]) ;
-  if (&WeightsArray != NULL) {
-    dimension = min_degree + 1 ;
-    Standard_Real *
-      WArray = (Standard_Real *) 
-	&WeightsArray(WeightsArray.LowerCol(),WeightsArray.LowerRow()) ;
-    PLib::NoDerivativeEvalPolynomial(new_parameter[0],
-			 max_degree,
-			 dimension,
-			 max_degree*dimension,
-			 WArray[0],
-			 locpoles[0]) ;
-    
-    PLib::NoDerivativeEvalPolynomial(new_parameter[1],
-			 min_degree,
-			 1,
-			 min_degree,
-			 locpoles[0],
-			 inverse) ;
-    inverse = 1.0e0/ inverse ;
-    
-    myPoint[0] *= inverse ;
-    myPoint[1] *= inverse ;
-    myPoint[2] *= inverse ;
+          min_degree,
+          4,
+          min_degree * 4,
+          locpoles[0],
+          local_pole_and_weight[0]);
+
+  if (CacheRational)
+  {
+    inverse = 1.0e0 / local_pole_and_weight[3];
+
+    myPoint[0] = local_pole_and_weight[0] * inverse;
+    myPoint[1] = local_pole_and_weight[1] * inverse;
+    myPoint[2] = local_pole_and_weight[2] * inverse;
   }
+  else
+  {
+    myPoint[0] = local_pole_and_weight[0];
+    myPoint[1] = local_pole_and_weight[1];
+    myPoint[2] = local_pole_and_weight[2];
+  }
+
+  NCollection_AlignAllocator::Free(locpoles);
 }
+
 
 //=======================================================================
 //function : CacheD1
@@ -2150,204 +2143,118 @@ void  BSplSLib::CacheD0(const Standard_Real                  UParameter,
 //           
 //=======================================================================
 
-void  BSplSLib::CacheD1(const Standard_Real                  UParameter,
-			const Standard_Real                  VParameter,
-			const  Standard_Integer              UDegree,
-			const  Standard_Integer              VDegree,
-			const  Standard_Real                 UCacheParameter,
-			const  Standard_Real                 VCacheParameter,
-			const  Standard_Real                 USpanLenght,
-			const  Standard_Real                 VSpanLenght,
-			const  TColgp_Array2OfPnt&           PolesArray,
-			const  TColStd_Array2OfReal&         WeightsArray,
-                        gp_Pnt&                              aPoint,
-			gp_Vec&                              aVecU,
-                        gp_Vec&                              aVecV)
+void  BSplSLib::CacheD1(
+        const Standard_Real          UParameter,
+        const Standard_Real          VParameter,
+        const Standard_Integer       UDegree,
+        const Standard_Integer       VDegree,
+        const Standard_Real          UCacheParameter,
+        const Standard_Real          VCacheParameter,
+        const Standard_Real          USpanLenght,
+        const Standard_Real          VSpanLenght,
+        const TColStd_Array2OfReal&  PolesWeightsArray,
+        const Standard_Boolean       CacheRational,
+        gp_Pnt&                      aPoint,
+        gp_Vec&                      aVecU,
+        gp_Vec&                      aVecV)
 {
-  //
   // the CacheParameter is where the cache polynomial was evaluated in homogeneous
   // form
   // the SpanLenght     is the normalizing factor so that the polynomial is between
   // 0 and 1 
-  Standard_Integer 
-//    ii,
-//  jj,
-//  kk,
-  dimension,
-  min_degree,
-  max_degree  ;
-  
-  Standard_Real
-    inverse_min,
-  inverse_max, 
-  new_parameter[2]  ;
-  
-  Standard_Real * 
-    PArray = (Standard_Real *) 
-      &(PolesArray(PolesArray.LowerCol(), PolesArray.LowerRow())) ;
-  Standard_Real local_poles_array[2][2][3],
-  local_poles_and_weights_array[2][2][4],
-  local_weights_array[2][2]  ;
-  Standard_Real * my_vec_min,
-  * my_vec_max,
-  * my_point ;
-  my_point = (Standard_Real *) &aPoint  ;
-  //
-  // initialize in case of rational evaluation
-  // because RationalDerivative will use all
-  // the coefficients
-  //
-  //
-  if (&WeightsArray != NULL) {
+  Standard_Integer dimension, min_degree, max_degree, ii;
+  Standard_Real inverse_min, inverse_max, new_parameter[2];
+  MEMALIGN(Standard_Real *PArray) = (Standard_Real *) &(PolesWeightsArray(PolesWeightsArray.LowerCol(), PolesWeightsArray.LowerRow()));
+  MEMALIGN(Standard_Real local_poles_array[4][3]); 
+  MEMALIGN(Standard_Real local_poles_and_weights_array[4][4]);
+  Standard_Real *my_vec_min, *my_vec_max, *my_point;
 
-    local_poles_array            [0][0][0] = 0.0e0 ;
-    local_poles_array            [0][0][1] = 0.0e0 ;
-    local_poles_array            [0][0][2] = 0.0e0 ;
-    local_weights_array          [0][0]    = 0.0e0 ;
-    local_poles_and_weights_array[0][0][0] = 0.0e0 ;
-    local_poles_and_weights_array[0][0][1] = 0.0e0 ;
-    local_poles_and_weights_array[0][0][2] = 0.0e0 ;
-    local_poles_and_weights_array[0][0][3] = 0.0e0 ;
-    
-    local_poles_array            [0][1][0] = 0.0e0 ;
-    local_poles_array            [0][1][1] = 0.0e0 ;
-    local_poles_array            [0][1][2] = 0.0e0 ;
-    local_weights_array          [0][1]    = 0.0e0 ;
-    local_poles_and_weights_array[0][1][0] = 0.0e0 ;
-    local_poles_and_weights_array[0][1][1] = 0.0e0 ;
-    local_poles_and_weights_array[0][1][2] = 0.0e0 ;
-    local_poles_and_weights_array[0][1][3] = 0.0e0 ;
+  my_point = (Standard_Real *) &aPoint;
 
-    local_poles_array            [1][0][0] = 0.0e0 ;
-    local_poles_array            [1][0][1] = 0.0e0 ;
-    local_poles_array            [1][0][2] = 0.0e0 ;
-    local_weights_array          [1][0]    = 0.0e0 ;
-    local_poles_and_weights_array[1][0][0] = 0.0e0 ;
-    local_poles_and_weights_array[1][0][1] = 0.0e0 ;
-    local_poles_and_weights_array[1][0][2] = 0.0e0 ;
-    local_poles_and_weights_array[1][0][3] = 0.0e0 ;
-    
-    local_poles_array            [1][1][0] = 0.0e0 ;
-    local_poles_array            [1][1][1] = 0.0e0 ;
-    local_poles_array            [1][1][2] = 0.0e0 ;
-    local_weights_array          [1][1]    = 0.0e0 ;
-    local_poles_and_weights_array[1][1][0] = 0.0e0 ;
-    local_poles_and_weights_array[1][1][1] = 0.0e0 ;
-    local_poles_and_weights_array[1][1][2] = 0.0e0 ;
-    local_poles_and_weights_array[1][1][3] = 0.0e0 ;
+  for (ii = 0; ii < 3; ii++)
+  {
+    local_poles_array            [3][ii] = 0.0e0;
+    local_poles_and_weights_array[3][ii] = 0.0e0;
+  }
+  local_poles_and_weights_array[3][3] = 0.0e0;
+
+  if (UDegree <= VDegree)
+  {
+    min_degree = UDegree;
+    max_degree = VDegree;
+    inverse_min = 1.0e0 / USpanLenght;
+    inverse_max = 1.0e0 / VSpanLenght;
+    new_parameter[0] = (VParameter - VCacheParameter) * inverse_max; 
+    new_parameter[1] = (UParameter - UCacheParameter) * inverse_min;
+    dimension = 4 * (UDegree + 1);
+    my_vec_min = (Standard_Real *) &aVecU;
+    my_vec_max = (Standard_Real *) &aVecV;
+  }
+  else 
+  {
+    min_degree = VDegree;
+    max_degree = UDegree;
+    inverse_min = 1.0e0 / VSpanLenght;
+    inverse_max = 1.0e0 / USpanLenght;
+    new_parameter[0] = (UParameter - UCacheParameter) * inverse_max;
+    new_parameter[1] = (VParameter - VCacheParameter) * inverse_min; 
+    dimension = 4 * (VDegree + 1);
+    my_vec_min = (Standard_Real *) &aVecV;
+    my_vec_max = (Standard_Real *) &aVecU;
   }
 
-  if (UDegree <= VDegree) {
-    min_degree = UDegree ;
-    max_degree = VDegree ;
-    inverse_min = 1.0e0/USpanLenght ;
-    inverse_max = 1.0e0/VSpanLenght ;
-    new_parameter[0] = (VParameter - VCacheParameter) * inverse_max ; 
-    new_parameter[1] = (UParameter - UCacheParameter) * inverse_min ;
-    
-    dimension = 3 * (UDegree + 1) ;
-    my_vec_min = (Standard_Real *) &aVecU ;
-    my_vec_max = (Standard_Real *) &aVecV ;
-  }
-  else {
-    min_degree = VDegree ;
-    max_degree = UDegree ;
-    inverse_min = 1.0e0/VSpanLenght ;
-    inverse_max = 1.0e0/USpanLenght ;
-    new_parameter[0] = (UParameter - UCacheParameter) * inverse_max ;
-    new_parameter[1] = (VParameter - VCacheParameter) * inverse_min ; 
-    dimension = 3 * (VDegree + 1) ;
-    my_vec_min = (Standard_Real *) &aVecV ;
-    my_vec_max = (Standard_Real *) &aVecU ;
-  }
+  Standard_Real* locpoles = (Standard_Real*) NCollection_AlignAllocator::Allocate(2*dimension*sizeof(Standard_Real), DATA_ALIGNMENT);
 
-  NCollection_LocalArray<Standard_Real> locpoles (2 * dimension);
-  
   PLib::EvalPolynomial(new_parameter[0],
-		       1,
-		       max_degree,
-		       dimension,
-		       PArray[0],
-		       locpoles[0]) ;
-  
-  PLib::EvalPolynomial(new_parameter[1],
-		       1,
-		       min_degree,
-		       3,
-		       locpoles[0],
-		       local_poles_array[0][0][0]) ;
-  PLib::NoDerivativeEvalPolynomial(new_parameter[1],
-		       min_degree,
-		       3,
-		       (min_degree << 1) + min_degree,
-		       locpoles[dimension],
-		       local_poles_array[1][0][0]) ;
-  
-  if (&WeightsArray != NULL) {
-    dimension = min_degree + 1 ;
-    Standard_Real *
-      WArray = (Standard_Real *) 
-	&WeightsArray(WeightsArray.LowerCol(),WeightsArray.LowerRow()) ;
-    PLib::EvalPolynomial(new_parameter[0],
-			 1,
-			 max_degree,
-			 dimension,
-			 WArray[0],
-			 locpoles[0]) ;
-    
-    PLib::EvalPolynomial(new_parameter[1],
-			 1,
-			 min_degree,
-			 1,
-			 locpoles[0],
-			 local_weights_array[0][0]) ;
-    PLib::NoDerivativeEvalPolynomial(new_parameter[1],
-			 min_degree,
-			 1,
-			 min_degree,
-			 locpoles[dimension],
-			 local_weights_array[1][0]) ;
-    
-    local_poles_and_weights_array[0][0][0] = local_poles_array  [0][0][0] ;
-    local_poles_and_weights_array[0][0][1] = local_poles_array  [0][0][1] ;
-    local_poles_and_weights_array[0][0][2] = local_poles_array  [0][0][2] ;
-    local_poles_and_weights_array[0][0][3] = local_weights_array[0][0]    ;
-    
-    local_poles_and_weights_array[0][1][0] = local_poles_array  [0][1][0] ;
-    local_poles_and_weights_array[0][1][1] = local_poles_array  [0][1][1] ;
-    local_poles_and_weights_array[0][1][2] = local_poles_array  [0][1][2] ;
-    local_poles_and_weights_array[0][1][3] = local_weights_array[0][1]    ;
-    
-    local_poles_and_weights_array[1][0][0] = local_poles_array  [1][0][0] ;
-    local_poles_and_weights_array[1][0][1] = local_poles_array  [1][0][1] ;
-    local_poles_and_weights_array[1][0][2] = local_poles_array  [1][0][2] ;
-    local_poles_and_weights_array[1][0][3] = local_weights_array[1][0]    ;
-    
-    local_poles_and_weights_array[1][1][0] = local_poles_array  [1][1][0] ;
-    local_poles_and_weights_array[1][1][1] = local_poles_array  [1][1][1] ;
-    local_poles_and_weights_array[1][1][2] = local_poles_array  [1][1][2] ;
-    local_poles_and_weights_array[1][1][3] = local_weights_array[1][1]    ;
+          1,
+          max_degree,
+          dimension,
+          PArray[0],
+          locpoles[0]);
 
+  PLib::EvalPolynomial(new_parameter[1],
+          1,
+          min_degree,
+          4,
+          locpoles[0],
+          local_poles_and_weights_array[0][0]);
+
+  PLib::NoDerivativeEvalPolynomial(new_parameter[1],
+          min_degree,
+          4,
+          min_degree * 4,
+          locpoles[dimension],
+          local_poles_and_weights_array[2][0]);
+
+  if (CacheRational)
+  {
     BSplSLib::RationalDerivative(1,
-				 1,
-				 1,
-				 1,
-				 local_poles_and_weights_array[0][0][0],
-				 local_poles_array[0][0][0]) ;
+            1,
+            1,
+            1,
+            local_poles_and_weights_array[0][0],
+            local_poles_array[0][0]);
+
+    for (ii = 0; ii < 3; ii++)
+    {
+      my_point  [ii] = local_poles_array              [0][ii];
+      my_vec_min[ii] = inverse_min * local_poles_array[1][ii];
+      my_vec_max[ii] = inverse_max * local_poles_array[2][ii];
+    }
   }
-  
-  my_point  [0] = local_poles_array              [0][0][0] ;
-  my_vec_min[0] = inverse_min * local_poles_array[0][1][0] ;
-  my_vec_max[0] = inverse_max * local_poles_array[1][0][0] ;
-  
-  my_point  [1] = local_poles_array              [0][0][1] ;
-  my_vec_min[1] = inverse_min * local_poles_array[0][1][1] ;
-  my_vec_max[1] = inverse_max * local_poles_array[1][0][1] ;
-  
-  my_point  [2] = local_poles_array              [0][0][2] ;
-  my_vec_min[2] = inverse_min * local_poles_array[0][1][2] ;
-  my_vec_max[2] = inverse_max * local_poles_array[1][0][2] ;
+  else
+  {
+    for (ii = 0; ii < 3; ii++)
+    {
+      my_point  [ii] = local_poles_and_weights_array		    [0][ii];
+      my_vec_min[ii] = inverse_min * local_poles_and_weights_array[1][ii];
+      my_vec_max[ii] = inverse_max * local_poles_and_weights_array[2][ii];
+    }
+  }
+
+  NCollection_AlignAllocator::Free(locpoles);
 }
+
 
 //=======================================================================
 //function : CacheD2
@@ -2355,329 +2262,170 @@ void  BSplSLib::CacheD1(const Standard_Real                  UParameter,
 //           
 //=======================================================================
 
-void  BSplSLib::CacheD2(const Standard_Real                  UParameter,
-			const Standard_Real                  VParameter,
-			const  Standard_Integer              UDegree,
-			const  Standard_Integer              VDegree,
-			const  Standard_Real                 UCacheParameter,
-			const  Standard_Real                 VCacheParameter,
-			const  Standard_Real                 USpanLenght,
-			const  Standard_Real                 VSpanLenght,
-			const  TColgp_Array2OfPnt&           PolesArray,
-			const  TColStd_Array2OfReal&         WeightsArray,
-                        gp_Pnt&                              aPoint,
-                        gp_Vec&                              aVecU,
-                        gp_Vec&                              aVecV,
-			gp_Vec&                              aVecUU,
-                        gp_Vec&                              aVecUV,
-                        gp_Vec&                              aVecVV)
+void  BSplSLib::CacheD2(
+        const Standard_Real          UParameter,
+        const Standard_Real          VParameter,
+        const Standard_Integer       UDegree,
+        const Standard_Integer       VDegree,
+        const Standard_Real          UCacheParameter,
+        const Standard_Real          VCacheParameter,
+        const Standard_Real          USpanLength,
+        const Standard_Real          VSpanLength,
+        const TColStd_Array2OfReal&  PolesWeightsArray,
+        const Standard_Boolean       CacheRational,
+        gp_Pnt&                      aPoint,
+        gp_Vec&                      aVecU,
+        gp_Vec&                      aVecV,
+        gp_Vec&                      aVecUU,
+        gp_Vec&                      aVecUV,
+        gp_Vec&                      aVecVV)
 {
   //
   // the CacheParameter is where the cache polynomial was evaluated in homogeneous
   // form
   // the SpanLenght     is the normalizing factor so that the polynomial is between
   // 0 and 1 
-  Standard_Integer 
-    ii,
-//  jj,
-  kk,
-  index,
-  dimension,
-  min_degree,
-  max_degree  ;
-  
-  Standard_Real
-    inverse_min,
-  inverse_max, 
-  new_parameter[2]  ;
-
-  Standard_Real * 
-    PArray = (Standard_Real *) 
-      &(PolesArray(PolesArray.LowerCol(), PolesArray.LowerRow())) ;
-  Standard_Real local_poles_array[3][3][3],
-  local_poles_and_weights_array[3][3][4],
-  local_weights_array[3][3]  ;
-  Standard_Real * my_vec_min,
-  * my_vec_max,
-  * my_vec_min_min,
-  * my_vec_max_max,
-  * my_vec_min_max,
-  * my_point ;
+  Standard_Integer ii, kk, index, dimension, min_degree, max_degree;
+  Standard_Real inverse_min, inverse_max, new_parameter[2];
+  MEMALIGN(Standard_Real *PArray) = (Standard_Real *) &(PolesWeightsArray(PolesWeightsArray.LowerCol(), PolesWeightsArray.LowerRow()));
+  MEMALIGN(Standard_Real local_poles_array[9][3]);
+  MEMALIGN(Standard_Real local_poles_and_weights_array[9][4]);
+  Standard_Real *my_vec_min, *my_vec_max, *my_vec_min_min, *my_vec_max_max, *my_vec_min_max, *my_point;
   my_point = (Standard_Real *) &aPoint  ;
-  
+
   //
   // initialize in case the min and max degree are less than 2
   //
-  local_poles_array[0][0][0] = 0.0e0 ;
-  local_poles_array[0][0][1] = 0.0e0 ;
-  local_poles_array[0][0][2] = 0.0e0 ;
-  local_poles_array[0][1][0] = 0.0e0 ;
-  local_poles_array[0][1][1] = 0.0e0 ;
-  local_poles_array[0][1][2] = 0.0e0 ;
-  local_poles_array[0][2][0] = 0.0e0 ;
-  local_poles_array[0][2][1] = 0.0e0 ;
-  local_poles_array[0][2][2] = 0.0e0 ;
-  
-  local_poles_array[1][0][0] = 0.0e0 ;
-  local_poles_array[1][0][1] = 0.0e0 ;
-  local_poles_array[1][0][2] = 0.0e0 ;
-  local_poles_array[1][1][0] = 0.0e0 ;
-  local_poles_array[1][1][1] = 0.0e0 ;
-  local_poles_array[1][1][2] = 0.0e0 ;
-  local_poles_array[1][2][0] = 0.0e0 ;
-  local_poles_array[1][2][1] = 0.0e0 ;
-  local_poles_array[1][2][2] = 0.0e0 ;
-  
-  local_poles_array[2][0][0] = 0.0e0 ;
-  local_poles_array[2][0][1] = 0.0e0 ;
-  local_poles_array[2][0][2] = 0.0e0 ;
-  local_poles_array[2][1][0] = 0.0e0 ;
-  local_poles_array[2][1][1] = 0.0e0 ;
-  local_poles_array[2][1][2] = 0.0e0 ;
-  local_poles_array[2][2][0] = 0.0e0 ;
-  local_poles_array[2][2][1] = 0.0e0 ;
-  local_poles_array[2][2][2] = 0.0e0 ;
-  //
-  // initialize in case of rational evaluation
+  // and in case of rational evaluation
   // because RationalDerivative will use all
   // the coefficients
   //
-  //
-  if (&WeightsArray != NULL) {
-    
-    local_poles_and_weights_array[0][0][0] = 0.0e0 ;
-    local_poles_and_weights_array[0][0][1] = 0.0e0 ;
-    local_poles_and_weights_array[0][0][2] = 0.0e0 ;
-    local_poles_and_weights_array[0][1][0] = 0.0e0 ;
-    local_poles_and_weights_array[0][1][1] = 0.0e0 ;
-    local_poles_and_weights_array[0][1][2] = 0.0e0 ;
-    local_poles_and_weights_array[0][2][0] = 0.0e0 ;
-    local_poles_and_weights_array[0][2][1] = 0.0e0 ;
-    local_poles_and_weights_array[0][2][2] = 0.0e0 ;
-    
-    local_poles_and_weights_array[1][0][0] = 0.0e0 ;
-    local_poles_and_weights_array[1][0][1] = 0.0e0 ;
-    local_poles_and_weights_array[1][0][2] = 0.0e0 ;
-    local_poles_and_weights_array[1][1][0] = 0.0e0 ;
-    local_poles_and_weights_array[1][1][1] = 0.0e0 ;
-    local_poles_and_weights_array[1][1][2] = 0.0e0 ;
-    local_poles_and_weights_array[1][2][0] = 0.0e0 ;
-    local_poles_and_weights_array[1][2][1] = 0.0e0 ;
-    local_poles_and_weights_array[1][2][2] = 0.0e0 ;
-    
-    local_poles_and_weights_array[2][0][0] = 0.0e0 ;
-    local_poles_and_weights_array[2][0][1] = 0.0e0 ;
-    local_poles_and_weights_array[2][0][2] = 0.0e0 ;
-    local_poles_and_weights_array[2][1][0] = 0.0e0 ;
-    local_poles_and_weights_array[2][1][1] = 0.0e0 ;
-    local_poles_and_weights_array[2][1][2] = 0.0e0 ;
-    local_poles_and_weights_array[2][2][0] = 0.0e0 ;
-    local_poles_and_weights_array[2][2][1] = 0.0e0 ;
-    local_poles_and_weights_array[2][2][2] = 0.0e0 ;
-    
-    local_poles_and_weights_array[0][0][3] =
-      local_weights_array[0][0] = 0.0e0 ;
-    local_poles_and_weights_array[0][1][3] =
-      local_weights_array[0][1] = 0.0e0 ;
-    local_poles_and_weights_array[0][2][3] =
-      local_weights_array[0][2] = 0.0e0 ;
-    local_poles_and_weights_array[1][0][3] =
-      local_weights_array[1][0] = 0.0e0 ;
-    local_poles_and_weights_array[1][1][3] =
-      local_weights_array[1][1] = 0.0e0 ;
-    local_poles_and_weights_array[1][2][3] =
-      local_weights_array[1][2] = 0.0e0 ;
-    local_poles_and_weights_array[2][0][3] =
-      local_weights_array[2][0] = 0.0e0 ;
-    local_poles_and_weights_array[2][1][3] =
-      local_weights_array[2][1] = 0.0e0 ;
-    local_poles_and_weights_array[2][2][3] =
-      local_weights_array[2][2] = 0.0e0 ;
+  for (ii = 0; ii < 9; ii++)
+  {
+    for (kk = 0; kk < 3; kk++)
+      local_poles_array[ii][kk] = 0.0e0;
+    for (kk = 0; kk < 4; kk++)
+      local_poles_and_weights_array[ii][kk] = 0.0e0;
   }
 
-  if (UDegree <= VDegree) {
-    min_degree = UDegree ;
-    max_degree = VDegree ;
-    inverse_min = 1.0e0/USpanLenght ;
-    inverse_max = 1.0e0/VSpanLenght ;
-    new_parameter[0] = (VParameter - VCacheParameter) * inverse_max ; 
-    new_parameter[1] = (UParameter - UCacheParameter) * inverse_min ;
-    
-    dimension = 3 * (UDegree + 1) ;
-    my_vec_min     = (Standard_Real *) &aVecU ;
-    my_vec_max     = (Standard_Real *) &aVecV ;
-    my_vec_min_min = (Standard_Real *) &aVecUU ;
-    my_vec_min_max = (Standard_Real *) &aVecUV ;
-    my_vec_max_max = (Standard_Real *) &aVecVV ;
+  if (UDegree <= VDegree)
+  {
+    min_degree = UDegree;
+    max_degree = VDegree;
+    inverse_min = 1.0e0 / USpanLength;
+    inverse_max = 1.0e0 / VSpanLength;
+    new_parameter[0] = (VParameter - VCacheParameter) * inverse_max; 
+    new_parameter[1] = (UParameter - UCacheParameter) * inverse_min;   
+    dimension = 4 * (UDegree + 1);
+    my_vec_min     = (Standard_Real *) &aVecU;
+    my_vec_max     = (Standard_Real *) &aVecV;
+    my_vec_min_min = (Standard_Real *) &aVecUU;
+    my_vec_min_max = (Standard_Real *) &aVecUV;
+    my_vec_max_max = (Standard_Real *) &aVecVV;
   }
-  else {
-    min_degree = VDegree ;
-    max_degree = UDegree ;
-    inverse_min = 1.0e0/VSpanLenght ;
-    inverse_max = 1.0e0/USpanLenght ;
-    new_parameter[0] = (UParameter - UCacheParameter) * inverse_max ;
-    new_parameter[1] = (VParameter - VCacheParameter) * inverse_min ; 
-    dimension = 3 * (VDegree + 1) ;
-    my_vec_min     = (Standard_Real *) &aVecV ;
-    my_vec_max     = (Standard_Real *) &aVecU ;
-    my_vec_min_min = (Standard_Real *) &aVecVV ;
-    my_vec_min_max = (Standard_Real *) &aVecUV ;
-    my_vec_max_max = (Standard_Real *) &aVecUU ;
+  else 
+  {
+    min_degree = VDegree;
+    max_degree = UDegree;
+    inverse_min = 1.0e0 / VSpanLength;
+    inverse_max = 1.0e0 / USpanLength;
+    new_parameter[0] = (UParameter - UCacheParameter) * inverse_max;
+    new_parameter[1] = (VParameter - VCacheParameter) * inverse_min; 
+    dimension = 4 * (VDegree + 1);
+    my_vec_min     = (Standard_Real *) &aVecV;
+    my_vec_max     = (Standard_Real *) &aVecU;
+    my_vec_min_min = (Standard_Real *) &aVecVV;
+    my_vec_min_max = (Standard_Real *) &aVecUV;
+    my_vec_max_max = (Standard_Real *) &aVecUU;
   }
 
-  NCollection_LocalArray<Standard_Real> locpoles (3 * dimension);
-  
+  Standard_Real* locpoles = (Standard_Real*) NCollection_AlignAllocator::Allocate(3*dimension*sizeof(Standard_Real), DATA_ALIGNMENT);
+
   //
   // initialize in case min or max degree are less than 2
   //
   Standard_Integer MinIndMax = 2;
-  if ( max_degree < 2) MinIndMax = max_degree;
+  if (max_degree < 2) MinIndMax = max_degree;
   Standard_Integer MinIndMin = 2;
-  if ( min_degree < 2) MinIndMin = min_degree;
-  
+  if (min_degree < 2) MinIndMin = min_degree;
+
   index =  MinIndMax * dimension ;
 
-  for (ii = MinIndMax ; ii <  3 ; ii++) {
-    
-    for (kk = 0 ; kk < dimension ; kk++) {
+  for (ii = MinIndMax; ii < 3 ; ii++)
+  {
+    for (kk = 0 ; kk < dimension ; kk++) 
+    {
       locpoles[index] = 0.0e0 ;
       index += 1 ;
     }
   }
-  
+
   PLib::EvalPolynomial(new_parameter[0],
-		       MinIndMax,
-		       max_degree,
-		       dimension,
-		       PArray[0],
-		       locpoles[0]) ;
-  
+          MinIndMax,
+          max_degree,
+          dimension,
+          PArray[0],
+          locpoles[0]);
+
   PLib::EvalPolynomial(new_parameter[1],
-		       MinIndMin,
-		       min_degree,
-		       3,
-		       locpoles[0],
-		       local_poles_array[0][0][0]) ;
+          MinIndMin,
+          min_degree,
+          4,
+          locpoles[0],
+          local_poles_and_weights_array[0][0]);
+
   PLib::EvalPolynomial(new_parameter[1],
-		       1,
-		       min_degree,
-		       3,
-		       locpoles[dimension],
-		       local_poles_array[1][0][0]) ;
-  
+          1,
+          min_degree,
+          4,
+          locpoles[dimension],
+          local_poles_and_weights_array[3][0]);
+
   PLib::NoDerivativeEvalPolynomial(new_parameter[1],
-		       min_degree,
-		       3,
-		       (min_degree << 1) + min_degree,
-		       locpoles[dimension + dimension],
-		       local_poles_array[2][0][0]) ;
-  
-  if (&WeightsArray != NULL) {
-    dimension = min_degree + 1 ;
-    Standard_Real *
-      WArray = (Standard_Real *) 
-        &WeightsArray(WeightsArray.LowerCol(),WeightsArray.LowerRow()) ;
-    PLib::EvalPolynomial(new_parameter[0],
-			 MinIndMax,
-			 max_degree,
-			 dimension,
-			 WArray[0],
-			 locpoles[0]) ;
-    
-    PLib::EvalPolynomial(new_parameter[1],
-			 MinIndMin,
-			 min_degree,
-			 1,
-			 locpoles[0],
-			 local_weights_array[0][0]) ;
-    PLib::EvalPolynomial(new_parameter[1],
-			 1,
-			 min_degree,
-			 1,
-			 locpoles[dimension],
-			 local_weights_array[1][0]) ;
-    PLib::NoDerivativeEvalPolynomial(new_parameter[1],
-			 min_degree,
-			 1,
-			 min_degree,
-			 locpoles[dimension + dimension],
-			 local_weights_array[2][0]) ;
-    
-    
-    local_poles_and_weights_array[0][0][0] = local_poles_array[0][0][0];
-    local_poles_and_weights_array[0][0][1] = local_poles_array[0][0][1];
-    local_poles_and_weights_array[0][0][2] = local_poles_array[0][0][2];
-    local_poles_and_weights_array[0][1][0] = local_poles_array[0][1][0];
-    local_poles_and_weights_array[0][1][1] = local_poles_array[0][1][1];
-    local_poles_and_weights_array[0][1][2] = local_poles_array[0][1][2];
-    local_poles_and_weights_array[0][2][0] = local_poles_array[0][2][0];
-    local_poles_and_weights_array[0][2][1] = local_poles_array[0][2][1];
-    local_poles_and_weights_array[0][2][2] = local_poles_array[0][2][2];
-    
-    local_poles_and_weights_array[1][0][0] = local_poles_array[1][0][0];
-    local_poles_and_weights_array[1][0][1] = local_poles_array[1][0][1];
-    local_poles_and_weights_array[1][0][2] = local_poles_array[1][0][2];
-    local_poles_and_weights_array[1][1][0] = local_poles_array[1][1][0];
-    local_poles_and_weights_array[1][1][1] = local_poles_array[1][1][1];
-    local_poles_and_weights_array[1][1][2] = local_poles_array[1][1][2];
-    local_poles_and_weights_array[1][2][0] = local_poles_array[1][2][0];
-    local_poles_and_weights_array[1][2][1] = local_poles_array[1][2][1];
-    local_poles_and_weights_array[1][2][2] = local_poles_array[1][2][2];
-    
-    local_poles_and_weights_array[2][0][0] = local_poles_array[2][0][0];
-    local_poles_and_weights_array[2][0][1] = local_poles_array[2][0][1];
-    local_poles_and_weights_array[2][0][2] = local_poles_array[2][0][2];
-    local_poles_and_weights_array[2][1][0] = local_poles_array[2][1][0];
-    local_poles_and_weights_array[2][1][1] = local_poles_array[2][1][1];
-    local_poles_and_weights_array[2][1][2] = local_poles_array[2][1][2];
-    local_poles_and_weights_array[2][2][0] = local_poles_array[2][2][0];
-    local_poles_and_weights_array[2][2][1] = local_poles_array[2][2][1];
-    local_poles_and_weights_array[2][2][2] = local_poles_array[2][2][2];
-    
-    
-    local_poles_and_weights_array[0][0][3] = local_weights_array[0][0];
-    local_poles_and_weights_array[0][1][3] = local_weights_array[0][1];
-    local_poles_and_weights_array[0][2][3] = local_weights_array[0][2];
-    local_poles_and_weights_array[1][0][3] = local_weights_array[1][0];
-    local_poles_and_weights_array[1][1][3] = local_weights_array[1][1];
-    local_poles_and_weights_array[1][2][3] = local_weights_array[1][2];
-    local_poles_and_weights_array[2][0][3] = local_weights_array[2][0];
-    local_poles_and_weights_array[2][1][3] = local_weights_array[2][1];
-    local_poles_and_weights_array[2][2][3] = local_weights_array[2][2];
-    
-    BSplSLib::RationalDerivative(2,
-				 2,
-				 2,
-				 2,
-				 local_poles_and_weights_array[0][0][0],
-				 local_poles_array[0][0][0]) ;
-  }
-  
+          min_degree,
+          4,
+          (min_degree << 2),
+          locpoles[ (dimension<<1) ],
+          local_poles_and_weights_array[6][0]);
+
 
   Standard_Real minmin = inverse_min * inverse_min;
   Standard_Real minmax = inverse_min * inverse_max;
   Standard_Real maxmax = inverse_max * inverse_max;
-  
-  my_point      [0] = local_poles_array              [0][0][0] ;
-  my_vec_min    [0] = inverse_min * local_poles_array[0][1][0] ;
-  my_vec_max    [0] = inverse_max * local_poles_array[1][0][0] ;
-  my_vec_min_min[0] = minmin * local_poles_array     [0][2][0] ;
-  my_vec_min_max[0] = minmax * local_poles_array     [1][1][0] ;
-  my_vec_max_max[0] = maxmax * local_poles_array     [2][0][0] ;
 
-  my_point      [1] = local_poles_array              [0][0][1] ;
-  my_vec_min    [1] = inverse_min * local_poles_array[0][1][1] ;
-  my_vec_max    [1] = inverse_max * local_poles_array[1][0][1] ;
-  my_vec_min_min[1] = minmin * local_poles_array     [0][2][1] ;
-  my_vec_min_max[1] = minmax * local_poles_array     [1][1][1] ;
-  my_vec_max_max[1] = maxmax * local_poles_array     [2][0][1] ;
+  if (CacheRational) 
+  {
+    BSplSLib::RationalDerivative(2,
+          2,
+          2,
+          2,
+          local_poles_and_weights_array[0][0],
+          local_poles_array[0][0]);
 
-  my_point      [2] = local_poles_array              [0][0][2] ;
-  my_vec_min    [2] = inverse_min * local_poles_array[0][1][2] ;
-  my_vec_max    [2] = inverse_max * local_poles_array[1][0][2] ;
-  my_vec_min_min[2] = minmin * local_poles_array     [0][2][2] ;
-  my_vec_min_max[2] = minmax * local_poles_array     [1][1][2] ;
-  my_vec_max_max[2] = maxmax * local_poles_array     [2][0][2] ;
+    for (ii = 0; ii < 3; ii++)
+    {
+      my_point      [ii] = local_poles_array              [0][ii] ;
+      my_vec_min    [ii] = inverse_min * local_poles_array[1][ii] ;
+      my_vec_max    [ii] = inverse_max * local_poles_array[3][ii] ;
+      my_vec_min_min[ii] = minmin * local_poles_array     [2][ii] ;
+      my_vec_min_max[ii] = minmax * local_poles_array     [4][ii] ;
+      my_vec_max_max[ii] = maxmax * local_poles_array     [6][ii] ;
+    }
+  }
+  else
+  {
+    for (ii = 0; ii < 3; ii++)
+    {
+      my_point      [ii] = local_poles_and_weights_array              [0][ii] ;
+      my_vec_min    [ii] = inverse_min * local_poles_and_weights_array[1][ii] ;
+      my_vec_max    [ii] = inverse_max * local_poles_and_weights_array[3][ii] ;
+      my_vec_min_min[ii] = minmin * local_poles_and_weights_array     [2][ii] ;
+      my_vec_min_max[ii] = minmax * local_poles_and_weights_array     [4][ii] ;
+      my_vec_max_max[ii] = maxmax * local_poles_and_weights_array     [6][ii] ;
+    }
+  }
+
+  NCollection_AlignAllocator::Free(locpoles);
 }
 
 //=======================================================================

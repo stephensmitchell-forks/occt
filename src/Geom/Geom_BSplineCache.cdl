@@ -1,0 +1,108 @@
+-- Created on: 2013-10-17
+-- Created by: AZV
+-- Copyright (c) 2013 OPEN CASCADE SAS
+--
+-- The content of this file is subject to the Open CASCADE Technology Public
+-- License Version 6.5 (the "License"). You may not use the content of this file
+-- except in compliance with the License. Please obtain a copy of the License
+-- at http://www.opencascade.org and read it completely before using this file.
+--
+-- The Initial Developer of the Original Code is Open CASCADE S.A.S., having its
+-- main offices at: 1, place des Freres Montgolfier, 78280 Guyancourt, France.
+--
+-- The Original Code and all software distributed under the License is
+-- distributed on an "AS IS" basis, without warranty of any kind, and the
+-- Initial Developer hereby disclaims all such warranties, including without
+-- limitation, any warranties of merchantability, fitness for a particular
+-- purpose or non-infringement. Please see the License for the specific terms
+-- and conditions governing the rights and limitations under the License.
+
+class BSplineCache from Geom inherits TShared from MMgt
+
+  ---Purpose: Describes a memory aligned cache array of B-spline and 
+  --          Bezier surfaces poles and weights
+
+uses Array2OfReal from TColStd
+
+raises RangeError        from Standard,
+       OutOfRange        from Standard,
+       OutOfMemory       from Standard,
+       DimensionMismatch from Standard
+
+is
+
+  Create (theRowLower, theRowUpper       : Integer from Standard;
+          theColumnLower, theColumnUpper : Integer from Standard)
+    returns BSplineCache from Geom
+    ---Purpose: Creates 2D array of real, 
+    --          address of the first element is aligned on 16 or 32 bytes.
+    raises  RangeError  from Standard,
+            OutOfMemory from Standard;
+
+  Destroy (me : mutable);
+    ---Level: Advanced
+    ---Purpose: Frees the allocated memory
+    ---C++: alias ~
+
+  ColLength (me)
+    ---Level: Public
+    ---Purpose: Return the number of rows in the array.
+    ---C++: inline
+    returns Integer from Standard;
+
+  RowLength (me)
+    ---Level: Public
+    ---Purpose: Returns the number of columns in the array.
+    ---C++: inline
+    returns Integer from Standard;
+
+  Array2 (me)
+    ---Purpose: Returns the 2D array; the returned array is not modifiable.
+    ---C++: return const &
+    ---C++: inline
+    returns Array2OfReal from TColStd
+    is static;
+
+  ChangeArray2 (me : mutable)
+    ---Purpose: Returns a modifiable reference to 2D array.
+    ---C++: return &
+    ---C++: inline
+    returns Array2OfReal from TColStd
+    is static;
+
+  SetValue (me : mutable;
+            theRow, theColumn : Integer from Standard;
+            theValue          : Real from Standard) 
+    ---Purpose: Assigns the value <Value> to the (<theRow>, <theColumn>) item of array.
+    -- Exceptions
+    -- Standard_OutOfRange if <theRow> or <theColumn> lies outside the bounds of this array.
+    ---C++: inline
+    raises OutOfRange from Standard;
+
+
+  Value (me; 
+         theRow, theCol: Integer from Standard)
+    ---Level: Public
+    ---Purpose: Returns the value of the element of index (<theRow>, <theColumn>)
+    ---C++: alias operator()
+    ---C++: return const &
+    ---C++: inline
+    returns Real from Standard
+    raises OutOfRange from Standard;
+
+
+  ChangeValue (me: mutable;
+               theRow, theColumn: Integer from Standard)
+    ---Level: Public
+    ---Purpose: Returns the value of the element of index (<theRow>, <theColumn>).
+    --          Allows to change this value.
+    ---C++: alias operator()
+    ---C++: return &
+    ---C++: inline
+    returns Real from Standard
+    raises OutOfRange from Standard;
+
+fields
+  myCacheArray : Array2OfReal from TColStd;
+
+end BSplineCache;

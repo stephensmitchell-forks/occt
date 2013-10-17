@@ -154,7 +154,8 @@ uses  Array1OfInteger      from TColStd,
       Curve                from Geom,
       Geometry             from Geom,
       Shape                from GeomAbs,
-      Mutex                from Standard
+      Mutex                from Standard,
+      BSplineCache         from Geom
 
 raises ConstructionError   from Standard,
        DimensionError      from Standard,
@@ -1427,7 +1428,7 @@ fields
    umults    : HArray1OfInteger from TColStd;
    vmults    : HArray1OfInteger from TColStd;
   -- Inplementation of the cache on surfaces
-   cachepoles : HArray2OfPnt     from TColgp;
+   cachePolesWeights : BSplineCache from Geom;
   -- Taylor expansion of the poles function, in homogeneous
   -- form if the curve is rational. The taylor expansion
   -- is normalized so that the span corresponds to
@@ -1458,14 +1459,12 @@ fields
   --  f     (u0,v0)  f     (u0,v0)  -------------   -----------
   --                                     2              3!
   --   
-  --   The size of the array is (1,Max degree) (1, Min degree) 
+  -- The size of the array is (1,Max degree) (1, 4*Min degree) 
+  -- The array consists of numbers which can be composed to 4D row vectors
+  -- with three components for storing the point and the fourth for the weight
   -- 
-    cacheweights   : HArray2OfReal    from TColStd;
-  -- Taylor expansion of the poles function, in homogeneous
-  -- form if the curve is rational. The taylor expansion
-  -- is normalized so that the span corresponds to
-  -- [0 1]x[0 1]. The Taylor expension of lower degree
-  -- is stored as consecutive Real in the array as explained above
+    cacheRational   : Boolean;
+
     ucacheparameter : Real ;
     vcacheparameter : Real ;
   -- Parameters at which the Taylor expension is stored in 

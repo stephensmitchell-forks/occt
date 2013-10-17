@@ -34,10 +34,11 @@
 //purpose  : 
 //=======================================================================
 
-void BSplSLib::PolesCoefficients (const TColgp_Array2OfPnt& Poles, 
-				  const TColStd_Array2OfReal& Weights, 
-				  TColgp_Array2OfPnt& CachePoles, 
-				  TColStd_Array2OfReal& CacheWeights)
+void BSplSLib::PolesCoefficients(
+          const TColgp_Array2OfPnt&    Poles, 
+          const TColStd_Array2OfReal&  Weights, 
+          Standard_Boolean&            CacheRational, 
+          TColStd_Array2OfReal&        CachePolesWeights)
 {
   Standard_Integer i;
   Standard_Integer uclas = Poles.ColLength(); 
@@ -45,53 +46,56 @@ void BSplSLib::PolesCoefficients (const TColgp_Array2OfPnt& Poles,
   TColStd_Array1OfReal biduflatknots(1,uclas << 1);
   TColStd_Array1OfReal bidvflatknots(1,vclas << 1);
 
-  for(i = 1; i <= uclas; i++) {
+  for(i = 1; i <= uclas; i++) 
+  {
     biduflatknots(i        ) = 0.;
     biduflatknots(i + uclas) = 1.;
   }
 
-  for(i = 1; i <= vclas; i++) {
+  for(i = 1; i <= vclas; i++) 
+  {
     bidvflatknots(i        ) = 0.;
     bidvflatknots(i + vclas) = 1.;
   }
-  if ( uclas > vclas) {
+  if ( uclas > vclas) 
+  {
     BSplSLib::BuildCache(0.,0.,
-			 1.,1.,0,0,
-			 uclas - 1,vclas - 1,0,0,
-			 biduflatknots,bidvflatknots,
-			 Poles,Weights,
-			 CachePoles,CacheWeights);
+      1.,1.,0,0,
+      uclas - 1,vclas - 1,0,0,
+      biduflatknots,bidvflatknots,
+      Poles,Weights,
+      CacheRational,CachePolesWeights);
   }
-  else {
+  else 
+  {
     // BuilCache exige que les resultats soient formates en [MaxCoeff,MinCoeff]
-    TColgp_Array2OfPnt   CPoles  (1,vclas, 1, uclas);
-    TColStd_Array2OfReal CWeights(1,vclas, 1, uclas);
-    Standard_Integer ii, jj;
+////    TColgp_Array2OfPnt   CPoles  (1,vclas, 1, uclas);
+////    TColStd_Array2OfReal CWeights(1,vclas, 1, uclas);
+    TColStd_Array2OfReal aCachePolesWeights(1, vclas, 1, uclas*4);
     BSplSLib::BuildCache(0.,0.,
-			 1.,1.,0,0,
-			 uclas - 1,vclas - 1,0,0,
-			 biduflatknots,bidvflatknots,
-			 Poles,Weights,
-			 CPoles,CWeights);
-    if (&Weights == NULL) {
-      
-      for (ii = 1; ii <= uclas; ii++) {
-	
-	for (jj = 1; jj <= vclas; jj++) {
-	  CachePoles(ii, jj) = CPoles(jj, ii);
-	}
-      }
-    }
-    else {
-      
-      for (ii = 1; ii <= uclas; ii++) {
-	
-	for (jj = 1; jj <= vclas; jj++) {
-	  CachePoles  (ii, jj) = CPoles  (jj, ii);
-	  CacheWeights(ii, jj) = CWeights(jj, ii);
-	}
-      }
-    }
+      1.,1.,0,0,
+      uclas - 1,vclas - 1,0,0,
+      biduflatknots,bidvflatknots,
+      Poles,Weights,
+      CacheRational,aCachePolesWeights);
+////    if (&Weights == NULL) 
+////    {
+    Standard_Integer ii, jj, kk;
+    for (ii = 1; ii <= uclas; ii++) 
+      for (jj = 1; jj <= vclas; jj++)
+        // The loop boundaries were taken to avoid unnecessary subtractions in array indexes
+        for (kk = -3; kk <= 0; kk++) 
+          CachePolesWeights(ii, (jj<<2) + kk) = aCachePolesWeights(jj, (ii<<2) + kk);
+////    }
+////    else 
+////    {
+////      for (ii = 1; ii <= uclas; ii++)
+////        for (jj = 1; jj <= vclas; jj++)
+////        {
+////          CachePoles  (ii, jj) = CPoles  (jj, ii);
+////          CacheWeights(ii, jj) = CWeights(jj, ii);
+////        }
+////    }
   }
 }
 

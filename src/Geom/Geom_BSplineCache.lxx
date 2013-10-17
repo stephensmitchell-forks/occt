@@ -1,0 +1,61 @@
+#ifndef _NCollection_AlignAllocator_HeaderFile
+#include <NCollection_AlignAllocator.hxx>
+#endif
+
+
+Geom_BSplineCache::Geom_BSplineCache(const Standard_Integer theRowLower,    const Standard_Integer theRowUpper,
+                                     const Standard_Integer theColumnLower, const Standard_Integer theColumnUpper)
+  : myCacheArray( 
+      *(Standard_Real*)NCollection_AlignAllocator::Allocate( 
+                            (theRowUpper-theRowLower+1)*(theColumnUpper-theColumnLower+1)*sizeof(Standard_Real), 
+                            DATA_ALIGNMENT),
+      theRowLower, theRowUpper, theColumnLower, theColumnUpper)
+  {}
+
+void Geom_BSplineCache::Destroy()
+{
+  Standard_Real* aPtr = (Standard_Real*) &(myCacheArray(myCacheArray.LowerCol(), myCacheArray.LowerRow()));
+  if (aPtr)
+    NCollection_AlignAllocator::Free(aPtr);
+}
+
+inline const TColStd_Array2OfReal& Geom_BSplineCache::Array2() const
+{
+  return myCacheArray;
+}
+
+inline TColStd_Array2OfReal& Geom_BSplineCache::ChangeArray2()
+{
+  return myCacheArray;
+}
+
+inline Standard_Integer Geom_BSplineCache::ColLength() const
+{
+  return myCacheArray.ColLength();
+}
+
+inline Standard_Integer Geom_BSplineCache::RowLength() const
+{
+  return myCacheArray.RowLength();
+}
+
+inline void Geom_BSplineCache::SetValue(const Standard_Integer theRow,
+                                        const Standard_Integer theColumn,
+                                        const Standard_Real    theValue)
+{
+  myCacheArray.SetValue(theRow, theColumn, theValue);
+}
+
+inline const Standard_Real& Geom_BSplineCache::Value(const Standard_Integer theRow,
+                                                     const Standard_Integer theColumn) const
+{
+  return myCacheArray(theRow, theColumn);
+}
+
+inline Standard_Real& Geom_BSplineCache::ChangeValue(const Standard_Integer theRow,
+                                                    const Standard_Integer theColumn)
+{
+  return myCacheArray.ChangeValue(theRow, theColumn);
+}
+
+#include <Handle_Geom_BSplineCache.hxx>
