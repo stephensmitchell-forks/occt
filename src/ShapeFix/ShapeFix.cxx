@@ -52,6 +52,7 @@
 #include <ShapeFix_Shape.hxx>
 #include <ShapeFix_Wire.hxx>
 #include <ShapeFix_Face.hxx>
+#include <ShapeFix_LackingEdgeRecover.hxx>
 #include <TopoDS_Iterator.hxx>
 #include <GeomAdaptor_HSurface.hxx>
 #include <TopTools_MapOfShape.hxx>
@@ -711,4 +712,24 @@ Standard_Real ShapeFix::LeastEdgeSize(TopoDS_Shape& theShape)
   }
   aRes = sqrt(aRes);
   return aRes;
+}
+
+//=======================================================================
+//function : RecoverLackingEdges
+//purpose  : 
+//=======================================================================
+
+TopoDS_Shape ShapeFix::RecoverLackingEdges(const TopoDS_Shape& theShape,
+                                           const Standard_Real theMaxTolerance,
+                                           Handle(ShapeBuild_ReShape)& theContext)
+{
+  Handle(ShapeFix_LackingEdgeRecover) aLackingEdgeTool = 
+    new ShapeFix_LackingEdgeRecover;
+
+  aLackingEdgeTool->SetContext(theContext);
+  aLackingEdgeTool->SetMaxTolerance(theMaxTolerance);
+  aLackingEdgeTool->Init(theShape);
+  aLackingEdgeTool->Perform();
+
+  return aLackingEdgeTool->Shape();
 }

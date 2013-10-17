@@ -46,6 +46,7 @@
 #include <ShapeFix_Wireframe.hxx>
 #include <ShapeFix_Face.hxx>
 #include <ShapeFix_Shape.hxx>
+#include <ShapeFix_LackingEdgeRecover.hxx>
 #include <Precision.hxx>
 #include <ShapeExtend_DataMapOfShapeListOfMsg.hxx>
 #include <ShapeExtend_MsgRegistrator.hxx>
@@ -568,6 +569,52 @@ Standard_Integer fixsmall(Draw_Interpretor& di, Standard_Integer n, const char**
 }
 
 //=======================================================================
+//function : fixlackingedges
+//purpose  : 
+//=======================================================================
+
+static Standard_Integer fixlackingedges(Draw_Interpretor& di, Standard_Integer n, const char** a)
+{
+  if( n < 3) 
+  {
+    di << "\nInvalid number of arguments\n";
+    return 1;
+  }
+  Standard_Integer aCurIndexOfArg = 1;
+  
+  // result shape
+  Standard_CString aNameOfModifiedShape = a[aCurIndexOfArg];
+
+  // source shape
+  aCurIndexOfArg++;
+  TopoDS_Shape aShape = DBRep::Get(a[aCurIndexOfArg]);
+  if (aShape.IsNull())
+  {
+    di << "\nthe shape is null\n";
+    return 1;
+  }
+
+  // max tolerance
+  Standard_Real aMaxTol = 0.01;
+  aCurIndexOfArg++;
+  if (aCurIndexOfArg < n)
+    aMaxTol = Draw::Atof(a[aCurIndexOfArg]);
+
+  Handle(ShapeFix_LackingEdgeRecover) aLackingEdgeTool = 
+    new ShapeFix_LackingEdgeRecover;
+
+  aLackingEdgeTool->SetMaxTolerance(aMaxTol);
+  aLackingEdgeTool->Init(aShape);
+  aLackingEdgeTool->Perform();
+
+  TopoDS_Shape aModifiedShape = aLackingEdgeTool->Shape();
+
+  DBRep::Set ( aNameOfModifiedShape, aModifiedShape );
+
+  return 0;
+}
+
+//=======================================================================
 //function : fixsmalledges
 //purpose  : 
 //=======================================================================
@@ -775,8 +822,8 @@ static Standard_Integer connectedges(Draw_Interpretor& di, Standard_Integer n, c
 		   __FILE__,reface,g);
   theCommands.Add ("fixshape","res shape [preci [maxpreci]] [{switches}]",
 		   __FILE__,fixshape,g);
-//  theCommands.Add ("testfill","result edge1 edge2",
-//		   __FILE__,XSHAPE_testfill,g);
+  theCommands.Add ("fixlackingedges","result shape [toler]",
+		   __FILE__,fixlackingedges,g);
   theCommands.Add ("fixwgaps","result shape [toler=0]",
 		   __FILE__,fixgaps,g);
   theCommands.Add ("fixsmall","result shape [toler=1.]",

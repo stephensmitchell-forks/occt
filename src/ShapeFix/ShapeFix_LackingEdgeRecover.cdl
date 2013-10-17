@@ -1,0 +1,113 @@
+-- Created on:   10.10.2013
+-- Created by:   Briginas Ivan
+
+class LackingEdgeRecover from ShapeFix inherits Root from ShapeFix
+
+---Purpose: Fixing lacking edge
+        
+uses
+
+    Shape               from TopoDS,
+    Face                from TopoDS,
+    Wire                from TopoDS,
+    Edge                from TopoDS,
+    Vertex              from TopoDS,
+    Pnt                 from gp,
+    Pnt2d               from gp,
+    BSplineCurve        from Geom2d,
+    Curve               from Geom2d,
+    WireData            from ShapeExtend,
+    Root                from ShapeFix,
+    SequenceOfPnt       from TColgp
+    
+is
+    
+    Create returns LackingEdgeRecover from ShapeFix;
+        ---Purpose: Default constructor set precision and status message
+        --          and drops all fixing statuses
+        
+    Create (theShape: Shape from TopoDS)
+    returns LackingEdgeRecover from ShapeFix;
+        ---Purpose: Constructor call Init method
+
+    Init (me: mutable; theShape: Shape from TopoDS);
+        ---Purpose: apply current context to the shape.
+
+    Perform (me: mutable);
+        ---Purpose: split vertices with big tolerance covering missed edge, 
+        --          into two new vertices and lacking edge
+
+    Shape (me) returns Shape from TopoDS;
+        ---Purpose: Returns resulting shape
+
+    ConvertLackingVerticesTo2D(me;
+                               theWire: Wire from TopoDS;
+                               theFace: Face from TopoDS;
+                               theFirstVertex:  Vertex from TopoDS;
+                               theSecondVertex: Vertex from TopoDS;
+                               theFirstPnt2D:  in out Pnt2d from gp;
+                               theSecondPnt2D: in out Pnt2d from gp);
+        ---Purpose: seek the ends of parametric curves of edges that share 
+        --          input vertices (first and second) update the first and
+        --          the second points by found results
+
+    MakeBSplineLackingCurve2D(me;
+                              theFirstPnt2D:  Pnt2d from gp;
+                              theSecondPnt2D: Pnt2d from gp) 
+    returns BSplineCurve from Geom2d;
+        ---Purpose: create and return b-spline in 2D space
+
+
+    IsWireStrip(me;
+                theWire: Wire from TopoDS;
+                theFace: Face from TopoDS;
+                theVertex: Vertex from TopoDS;
+                theFirstPnt: in out Pnt from gp;
+                theSecondPnt: in out Pnt from gp) returns Boolean;
+    ---Purpose: 1. build vector between the ends of the parametric curves (of
+    --             edges belonging to the wire) that share the vertex;
+    --          2. project the wire on the built vector
+    --          3. return TRUE if the length of the projection is less than
+    --             the length of the built vector which was multiplied by <br>
+    --          predefined (2) number
+
+    ReplaceVertex(me;
+                  theVertex: Vertex from TopoDS;
+                  theEdge: Edge from TopoDS;
+                  theFace: Face from TopoDS;
+                  theListOfFirstPnt: SequenceOfPnt from TColgp;
+                  theFirstVertex: Vertex from TopoDS;
+                  theSecondVertex: Vertex from TopoDS)
+    returns Edge from TopoDS;
+    ---Purpose: replace the vertex of the edge by the first or the second vertex
+    --          before replacing the method choose what vertex should be used for 
+    --          replacing return modified edge (with replaced vertex)
+
+    ConvertTo2D(me;
+                theEdge : Edge from TopoDS;
+                theVertex : Vertex from TopoDS;
+                theCurve2D : Curve from Geom2d;
+                thePFirst : Real;
+                thePSecond : Real)
+    returns Pnt2d from gp;
+    ---Purpose: calculate parametric representation the vertex on the curve 2d
+    --          return this representation
+
+    ProjectTo2DVector(me;
+                      theWireData : WireData from ShapeExtend;
+                      theFace : Face from TopoDS;
+                      thePntNbPerEdgeForProj : Real;
+                      thePFirst2D : Pnt2d from gp;
+                      thePSecond2D : Pnt2d from gp)
+    returns Real;
+    ---Purpose: 1. project the wire (equidistant point of it) on the vector
+    --             is formed by the first and second parametric points
+    --          2. calculate and RETURN length of the projection
+
+fields
+
+    myShape : Shape from TopoDS is protected;
+    myRecoveredShape : Shape from TopoDS is protected;
+    myStatus : Integer is protected;
+
+end LackingEdgeRecover;
