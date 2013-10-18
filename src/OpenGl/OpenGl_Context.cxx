@@ -31,6 +31,7 @@
 #include <OpenGl_ExtGS.hxx>
 #include <OpenGl_GlCore20.hxx>
 
+#include <Message_Messenger.hxx>
 #include <NCollection_Vector.hxx>
 
 #include <Standard_ProgramError.hxx>
@@ -87,6 +88,7 @@ OpenGl_Context::OpenGl_Context (const Handle(OpenGl_Caps)& theCaps)
   extGS  (NULL),
   extBgra(Standard_False),
   extAnis(Standard_False),
+  extPDS(Standard_False),
   atiMem (Standard_False),
   nvxMem (Standard_False),
   mySharedResources (new OpenGl_ResourcesMap()),
@@ -137,6 +139,18 @@ OpenGl_Context::~OpenGl_Context()
   }
   mySharedResources.Nullify();
   myDelayed.Nullify();
+
+  if (arbDbg != NULL
+   && caps->contextDebug)
+  {
+    // reset callback
+    void* aPtr = NULL;
+    glGetPointerv (GL_DEBUG_CALLBACK_USER_PARAM_ARB, &aPtr);
+    if (aPtr == this)
+    {
+      arbDbg->glDebugMessageCallbackARB (NULL, NULL);
+    }
+  }
 
   delete myGlCore20;
   delete arbVBO;
@@ -241,15 +255,13 @@ Standard_Boolean OpenGl_Context::MakeCurrent()
     DWORD anErrorCode = GetLastError();
     FormatMessageW (FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
                     NULL, anErrorCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (wchar_t* )&aMsgBuff, 0, NULL);
+    TCollection_ExtendedString aMsg ("wglMakeCurrent() has failed. ");
     if (aMsgBuff != NULL)
     {
-      std::wcerr << L"OpenGL interface: wglMakeCurrent() failed. " << aMsgBuff << L" (" << int(anErrorCode) << L")\n";
+      aMsg += (Standard_ExtString )aMsgBuff;
       LocalFree (aMsgBuff);
     }
-    else
-    {
-      std::wcerr << L"OpenGL interface: wglMakeCurrent() failed with #" << int(anErrorCode) << L" error code\n";
-    }
+    PushMessage (GL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB, GL_DEBUG_TYPE_ERROR_ARB, (unsigned int )anErrorCode, GL_DEBUG_SEVERITY_HIGH_ARB, aMsg);
     return Standard_False;
   }
 #else
@@ -262,7 +274,8 @@ Standard_Boolean OpenGl_Context::MakeCurrent()
   if (!glXMakeCurrent ((Display* )myDisplay, (GLXDrawable )myWindow, (GLXContext )myGContext))
   {
     // if there is no current context it might be impossible to use glGetError() correctly
-    //std::cerr << "glXMakeCurrent() failed!\n";
+    PushMessage (GL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB, GL_DEBUG_TYPE_ERROR_ARB, 0, GL_DEBUG_SEVERITY_HIGH_ARB,
+                 "glXMakeCurrent() has failed!");
     return Standard_False;
   }
 #endif
@@ -340,7 +353,7 @@ Standard_Boolean OpenGl_Context::CheckExtension (const char* theExtName) const
   const char* anExtString = (const char* )glGetString (GL_EXTENSIONS);
   if (anExtString == NULL)
   {
-    std::cerr << "glGetString (GL_EXTENSIONS) returns NULL! No GL context?\n";
+    Messanger()->Send ("TKOpenGL: glGetString (GL_EXTENSIONS) has returned NULL! No GL context?", Message_Warning);
     return Standard_False;
   }
   return CheckExtension (anExtString, theExtName);
@@ -540,35 +553,50 @@ void OpenGl_Context::readGlVersion()
 static Standard_CString THE_DBGMSG_UNKNOWN = "UNKNOWN";
 static Standard_CString THE_DBGMSG_SOURCES[] =
 {
-  "OpenGL",          // GL_DEBUG_SOURCE_API_ARB
-  "Window System",   // GL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB
-  "Shader Compiler", // GL_DEBUG_SOURCE_SHADER_COMPILER_ARB
-  "Third Party",     // GL_DEBUG_SOURCE_THIRD_PARTY_ARB
-  "Application",     // GL_DEBUG_SOURCE_APPLICATION_ARB
-  "Other"            // GL_DEBUG_SOURCE_OTHER_ARB
+  ".OpenGL",    // GL_DEBUG_SOURCE_API_ARB
+  ".WinSystem", // GL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB
+  ".GLSL",      // GL_DEBUG_SOURCE_SHADER_COMPILER_ARB
+  ".3rdParty",  // GL_DEBUG_SOURCE_THIRD_PARTY_ARB
+  "",           // GL_DEBUG_SOURCE_APPLICATION_ARB
+  ".Other"      // GL_DEBUG_SOURCE_OTHER_ARB
 };
 
 static Standard_CString THE_DBGMSG_TYPES[] =
 {
-  "Error",              // GL_DEBUG_TYPE_ERROR_ARB
-  "Deprecated",         // GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB
-  "Undefined behavior", // GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB
-  "Portability",        // GL_DEBUG_TYPE_PORTABILITY_ARB
-  "Performance",        // GL_DEBUG_TYPE_PERFORMANCE_ARB
-  "Other"               // GL_DEBUG_TYPE_OTHER_ARB
+  "Error",           // GL_DEBUG_TYPE_ERROR_ARB
+  "Deprecated",      // GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB
+  "Undef. behavior", // GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB
+  "Portability",     // GL_DEBUG_TYPE_PORTABILITY_ARB
+  "Performance",     // GL_DEBUG_TYPE_PERFORMANCE_ARB
+  "Other"            // GL_DEBUG_TYPE_OTHER_ARB
 };
 
 static Standard_CString THE_DBGMSG_SEV_HIGH   = "High";   // GL_DEBUG_SEVERITY_HIGH_ARB
 static Standard_CString THE_DBGMSG_SEV_MEDIUM = "Medium"; // GL_DEBUG_SEVERITY_MEDIUM_ARB
 static Standard_CString THE_DBGMSG_SEV_LOW    = "Low";    // GL_DEBUG_SEVERITY_LOW_ARB
 
+//! Callback for GL_ARB_debug_output extension
 static void APIENTRY debugCallbackWrap(unsigned int theSource,
                                        unsigned int theType,
                                        unsigned int theId,
                                        unsigned int theSeverity,
                                        int          /*theLength*/,
                                        const char*  theMessage,
-                                       void*        /*theUserParam*/)
+                                       void*        theUserParam)
+{
+  OpenGl_Context* aCtx = (OpenGl_Context* )theUserParam;
+  aCtx->PushMessage (theSource, theType, theId, theSeverity, theMessage);
+}
+
+// =======================================================================
+// function : PushMessage
+// purpose  :
+// =======================================================================
+void OpenGl_Context::PushMessage (const unsigned int theSource,
+                                  const unsigned int theType,
+                                  const unsigned int theId,
+                                  const unsigned int theSeverity,
+                                  const TCollection_ExtendedString& theMessage)
 {
   //OpenGl_Context* aCtx = (OpenGl_Context* )theUserParam;
   Standard_CString& aSrc = (theSource >= GL_DEBUG_SOURCE_API_ARB
@@ -584,11 +612,21 @@ static void APIENTRY debugCallbackWrap(unsigned int theSource,
                          : (theSeverity == GL_DEBUG_SEVERITY_MEDIUM_ARB
                           ? THE_DBGMSG_SEV_MEDIUM
                           : THE_DBGMSG_SEV_LOW);
-  std::cerr << "Source:"  << aSrc
-            << " | Type:" << aType
-            << " | ID:"   << theId
-            << " | Severity:" << aSev
-            << " | Message:\n  " << theMessage << "\n";
+  Message_Gravity aGrav = theSeverity == GL_DEBUG_SEVERITY_HIGH_ARB
+                        ? Message_Alarm
+                        : (theSeverity == GL_DEBUG_SEVERITY_MEDIUM_ARB
+                         ? Message_Warning
+                         : Message_Info);
+
+  TCollection_ExtendedString aMsg;
+  aMsg += "TKOpenGl"; aMsg += aSrc;
+  aMsg += " | Type: ";        aMsg += aType;
+  aMsg += " | ID: ";          aMsg += (Standard_Integer )theId;
+  aMsg += " | Severity: ";    aMsg += aSev;
+  aMsg += " | Message:\n  ";
+  aMsg += theMessage;
+
+  Messanger()->Send (aMsg, aGrav);
 }
 
 // =======================================================================
@@ -603,6 +641,7 @@ void OpenGl_Context::init()
   arbNPTW = CheckExtension ("GL_ARB_texture_non_power_of_two");
   extBgra = CheckExtension ("GL_EXT_bgra");
   extAnis = CheckExtension ("GL_EXT_texture_filter_anisotropic");
+  extPDS  = CheckExtension ("GL_EXT_packed_depth_stencil");
   atiMem  = CheckExtension ("GL_ATI_meminfo");
   nvxMem  = CheckExtension ("GL_NVX_gpu_memory_info");
 
@@ -634,7 +673,9 @@ void OpenGl_Context::init()
     {
       // setup default callback
       arbDbg->glDebugMessageCallbackARB (debugCallbackWrap, this);
+    #ifdef DEB
       glEnable (GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
+    #endif
     }
   }
 

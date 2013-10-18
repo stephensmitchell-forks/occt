@@ -1,5 +1,5 @@
-// Copyright (c) 1996-1999 Matra Datavision
-// Copyright (c) 1999-2012 OPEN CASCADE SAS
+// Created by: Peter KURNEV
+// Copyright (c) 1999-2013 OPEN CASCADE SAS
 //
 // The content of this file is subject to the Open CASCADE Technology Public
 // License Version 6.5 (the "License"). You may not use the content of this file
@@ -16,33 +16,16 @@
 // purpose or non-infringement. Please see the License for the specific terms
 // and conditions governing the rights and limitations under the License.
 
-#ifndef __WNT_ColorRef_HeaderFile
-# define __WNT_ColorRef_HeaderFile
+#ifndef _BOPDS_Col_HeaderFile
+#define _BOPDS_Col_HeaderFile
 
-# ifndef __WINDOWS_H_INCLUDED
-#  define __WINDOWS_H_INCLUDED
-#  ifndef STRICT
-#   define STRICT
-#  endif  /* STRICT */
-#  define WIN32_LEAN_AND_MEAN
-#  include <windows.h>
+#ifdef HAVE_TBB
 
-#ifdef DrawText
-#undef DrawText
+
+#include <tbb/tbb.h>
+using namespace tbb;
+
+
 #endif
 
-#  ifdef THIS
-#   undef THIS
-#  endif  // THIS
-# endif  // __WINDOWS_H_INCLUDED
-
-# ifndef __STANDARD_TYPE_HXX_INCLUDED
-#  define __STANDARD_TYPE_HXX_INCLUDED
-#  include <Standard_Type.hxx>
-# endif  // __STANDARD_TYPE_HXX_INCLUDED 
-
-typedef COLORREF WNT_ColorRef;
-
-extern const Handle( Standard_Type )& STANDARD_TYPE( WNT_ColorRef );
-
-#endif  // __WNT_ColorRef_HeaderFile
+#endif

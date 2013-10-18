@@ -114,7 +114,8 @@ Standard_Boolean Bnd_SphereUBTreeSelectorMin::Accept(const Standard_Integer& the
   const Bnd_Sphere& aSph = mySphereArray->Value(theInd);
   Standard_Real aCurDist;
 
-    if ( (aCurDist = aSph.SquareDistance(myXYZ.XYZ())) < mySol.SquareDistance(myXYZ.XYZ()) )
+//    if ( (aCurDist = aSph.SquareDistance(myXYZ.XYZ())) < mySol.SquareDistance(myXYZ.XYZ()) )
+    if ( (aCurDist = aSph.Distance(myXYZ.XYZ())) < mySol.Distance(myXYZ.XYZ()) )
     {
       mySol = aSph;
       if ( aCurDist < myMinDist ) 
@@ -160,7 +161,8 @@ Standard_Boolean Bnd_SphereUBTreeSelectorMax::Accept(const Standard_Integer& the
   const Bnd_Sphere& aSph = mySphereArray->Value(theInd);
   Standard_Real aCurDist;
 
-    if ( (aCurDist = aSph.SquareDistance(myXYZ.XYZ())) > mySol.SquareDistance(myXYZ.XYZ()) )
+//    if ( (aCurDist = aSph.SquareDistance(myXYZ.XYZ())) > mySol.SquareDistance(myXYZ.XYZ()) )
+    if ( (aCurDist = aSph.Distance(myXYZ.XYZ())) > mySol.Distance(myXYZ.XYZ()) )
     {
       mySol = aSph;
       if ( aCurDist > myMaxDist ) 
@@ -704,6 +706,16 @@ void Extrema_GenExtPS::BuildTree()
   // if tree already exists, assume it is already correctly filled
   if ( ! mySphereUBTree.IsNull() )
     return;
+
+   if (myS->GetType() == GeomAbs_BSplineSurface) {
+     Handle(Geom_BSplineSurface) aBspl = myS->BSpline();
+     Standard_Integer aUValue = aBspl->UDegree() * aBspl->NbUKnots();
+     Standard_Integer aVValue = aBspl->VDegree() * aBspl->NbVKnots();
+     if (aUValue > myusample)
+       myusample = aUValue;
+     if (aVValue > myvsample)
+       myvsample = aVValue;
+   }
 
   Standard_Real PasU = myusup - myumin;
   Standard_Real PasV = myvsup - myvmin;

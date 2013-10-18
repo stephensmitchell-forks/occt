@@ -215,7 +215,7 @@
     //
     pProjPS=(GeomAPI_ProjectPointOnSurf*)myAllocator->Allocate(sizeof(GeomAPI_ProjectPointOnSurf));
     new (pProjPS) GeomAPI_ProjectPointOnSurf();
-    pProjPS->Init(aS ,Umin, Usup, Vmin, Vsup, anEpsT, Extrema_ExtAlgo_Tree);
+    pProjPS->Init(aS ,Umin, Usup, Vmin, Vsup, anEpsT/*, Extrema_ExtAlgo_Tree*/);
     Extrema_ExtPS& anExtAlgo = const_cast<Extrema_ExtPS&>(pProjPS->Extrema());
     anExtAlgo.SetFlag(Extrema_ExtFlag_MIN);
     //
@@ -466,10 +466,13 @@
   }
   //
   aDist=aProjector.LowerDistance();
-  //
+
+  // tolerance of check for coincidence is sum of tolerances of edge and vertex 
+  // extended by additional Precision::Confusion() to allow for interference where
+  // it is very close but not fit to tolerance (see #24108)
   aTolV1=BRep_Tool::Tolerance(aV1);
   aTolE2=BRep_Tool::Tolerance(aE2);
-  aTolSum=aTolV1+aTolE2;
+  aTolSum = aTolV1 + aTolE2 + Precision::Confusion();
   //
   aT=aProjector.LowerDistanceParameter();
   if (aDist > aTolSum) {

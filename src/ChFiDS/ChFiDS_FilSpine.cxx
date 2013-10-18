@@ -265,7 +265,7 @@ Standard_Boolean  ChFiDS_FilSpine::IsConstant(const Standard_Integer IE)const
   Standard_Real Uf = FirstParameter(IE);
   Standard_Real Ul = LastParameter(IE);
 
-  Standard_Real StartRad, par, rad;
+  Standard_Real StartRad = 0.0, par, rad;
   Standard_Integer i;
   for (i = 1; i < parandrad.Length(); i++)
     {
@@ -273,11 +273,11 @@ Standard_Boolean  ChFiDS_FilSpine::IsConstant(const Standard_Integer IE)const
       rad = parandrad(i).Y();
       Standard_Real nextpar = parandrad(i+1).X();
       if (Abs( Uf-par ) <= gp::Resolution() ||
-	  par < Uf && Uf < nextpar && nextpar-Uf > gp::Resolution())
-	{
-	  StartRad = rad;
-	  break;
-	}
+         (par < Uf && Uf < nextpar && nextpar-Uf > gp::Resolution()))
+        {
+          StartRad = rad;
+          break;
+        }
     }
   for (i++; i <= parandrad.Length(); i++)
     {
@@ -322,11 +322,11 @@ Standard_Real  ChFiDS_FilSpine::Radius(const Standard_Integer IE)const
       rad = parandrad(i).Y();
       Standard_Real nextpar = parandrad(i+1).X();
       if (Abs( Uf-par ) <= gp::Resolution() ||
-	  par < Uf && Uf < nextpar && nextpar-Uf > gp::Resolution())
-	{
-	  StartRad = rad;
-	  break;
-	}
+          (par < Uf && Uf < nextpar && nextpar-Uf > gp::Resolution()))
+        {
+          StartRad = rad;
+          break;
+        }
     }
   for (i++; i <= parandrad.Length(); i++)
     {

@@ -575,21 +575,21 @@ void OpenGl_PrimitiveArray::DrawMarkers (const Handle(OpenGl_Workspace)& theWork
   }
 
   // Textured markers will be drawn with the glBitmap
-  const GLfloat aPntSize = anAspectMarker->Type() == Aspect_TOM_POINT
-                         ? anAspectMarker->MarkerSize()
-                         : 0.0f;
-  if (aPntSize > 0.0f)
-  {
-    glPointSize (aPntSize);
-  }
   if (anAspectMarker->Type() == Aspect_TOM_POINT
    || anAspectMarker->Type() == Aspect_TOM_O_POINT)
   {
+    const GLfloat aPntSize = anAspectMarker->Type() == Aspect_TOM_POINT
+                           ? anAspectMarker->MarkerSize()
+                           : 0.0f;
+    if (aPntSize > 0.0f)
+    {
+      glPointSize (aPntSize);
+    }
     glDrawArrays (myDrawMode, 0, toDrawVbo() ? myVbos[VBOVertices]->GetElemsNb() : myPArray->num_vertexs);
-  }
-  if (aPntSize > 0.0f)
-  {
-    glPointSize (1.0f);
+    if (aPntSize > 0.0f)
+    {
+      glPointSize (1.0f);
+    }
   }
 
   if (anAspectMarker->Type() != Aspect_TOM_POINT
@@ -706,7 +706,14 @@ void OpenGl_PrimitiveArray::Render (const Handle(OpenGl_Workspace)& theWorkspace
    && aCtx->core15 != NULL
    && (myDrawMode != GL_POINTS || anAspectMarker->Sprite().IsNull() || !anAspectMarker->Sprite()->IsDisplayList()))
   {
-    BuildVBO (theWorkspace);
+    if (!BuildVBO (theWorkspace))
+    {
+      TCollection_ExtendedString aMsg;
+      aMsg += "VBO creation for Primitive Array has failed for ";
+      aMsg += myPArray->num_vertexs;
+      aMsg += " vertices. Out of memory?";
+      aCtx->PushMessage (GL_DEBUG_SOURCE_APPLICATION_ARB, GL_DEBUG_TYPE_PERFORMANCE_ARB, 0, GL_DEBUG_SEVERITY_LOW_ARB, aMsg);
+    }
     myIsVboInit = Standard_True;
   }
 

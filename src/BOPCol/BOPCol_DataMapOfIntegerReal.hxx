@@ -1,4 +1,4 @@
-// Copyright (c) 1996-1999 Matra Datavision
+// Created by: Eugeny MALTCHIKOV
 // Copyright (c) 1999-2012 OPEN CASCADE SAS
 //
 // The content of this file is subject to the Open CASCADE Technology Public
@@ -16,16 +16,17 @@
 // purpose or non-infringement. Please see the License for the specific terms
 // and conditions governing the rights and limitations under the License.
 
-#ifndef __WNT_LogFont_HeaderFile
-# include <WNT_LogFont.hxx>
-#endif  // __WNT_LogFont_HeaderFile
 
-const Handle( Standard_Type )& STANDARD_TYPE( WNT_LogFont ) {
+#ifndef BOPCol_DataMapOfIntegerReal_HeaderFile
+#define BOPCol_DataMapOfIntegerReal_HeaderFile
 
- static Handle( Standard_Type ) _aType = new Standard_Type (
-                                              "WNT_LogFont", sizeof ( WNT_LogFont )
-                                             );
+#include <NCollection_DataMap.hxx>
 
- return _aType;
+#include <TColStd_MapIntegerHasher.hxx>
 
-}  // end function
+typedef NCollection_DataMap<Standard_Integer, Standard_Real, TColStd_MapIntegerHasher> BOPCol_DataMapOfIntegerReal; 
+typedef BOPCol_DataMapOfIntegerReal::Iterator BOPCol_DataMapIteratorOfDataMapOfIntegerReal;
+
+#undef _NCollection_MapHasher
+
+#endif

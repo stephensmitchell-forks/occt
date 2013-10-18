@@ -86,7 +86,7 @@ void DocumentCommon::onCreateNewView()
   connect( w,    SIGNAL( selectionChanged() ),
            this, SIGNAL( selectionChanged() ) );
   connect( w, SIGNAL( message( const QString&, int ) ),
-	         myApp->statusBar(), SLOT( message( const QString&, int ) ) );
+	         myApp->statusBar(), SLOT( showMessage( const QString&, int ) ) );
   connect( w, SIGNAL( sendCloseView( MDIWindow* ) ),
 	         this, SLOT( onCloseView( MDIWindow* ) ) );
 
@@ -223,7 +223,7 @@ void DocumentCommon::onTransparency()
 void DocumentCommon::onDelete()
 {
     for ( myContext->InitCurrent(); myContext->MoreCurrent(); myContext->NextCurrent() )
-        myContext->Erase( myContext->Current(), false, true );
+        myContext->Erase( myContext->Current(), false);
     myContext->ClearSelected();
     getApplication()->onSelectionChanged();
 }

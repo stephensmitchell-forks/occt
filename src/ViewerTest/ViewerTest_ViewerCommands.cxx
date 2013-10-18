@@ -18,9 +18,6 @@
 // purpose or non-infringement. Please see the License for the specific terms
 // and conditions governing the rights and limitations under the License.
 
-
-// Robert Boehne 30 May 2000 : Dec Osf
-
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif
@@ -104,17 +101,23 @@
   #include <tk.h>
 #endif
 
-//==============================================================================
+// Auxiliary definitions
+static const char THE_KEY_DELETE = 127;
 
 //==============================================================================
 //  VIEWER GLOBAL VARIABLES
 //==============================================================================
 
 Standard_IMPORT Standard_Boolean Draw_VirtualWindows;
+Standard_IMPORT Standard_Boolean Draw_Interprete (const char* theCommand);
 
 Standard_EXPORT int ViewerMainLoop(Standard_Integer , const char** argv);
 extern const Handle(NIS_InteractiveContext)& TheNISContext();
 extern ViewerTest_DoubleMapOfInteractiveAndName& GetMapOfAIS();
+
+extern int VErase (Draw_Interpretor& theDI,
+                   Standard_Integer  theArgNb,
+                   const char**      theArgVec);
 
 #if defined(_WIN32)
 static Handle(WNT_Window)& VT_GetWindow() {
@@ -154,7 +157,7 @@ static void SetDisplayConnection (const Handle(Aspect_DisplayConnection)& theDis
 #if defined(_WIN32) || (!defined(__APPLE__) || defined(MACOSX_USE_GLX))
 Aspect_Handle GetWindowHandle(const Handle(Aspect_Window)& theWindow)
 {
-  Aspect_Handle aWindowHandle = NULL;
+  Aspect_Handle aWindowHandle = (Aspect_Handle)NULL;
 #if defined(_WIN32)
   const Handle (WNT_Window) aWindow = Handle(WNT_Window)::DownCast (theWindow);
   if (!aWindow.IsNull())
@@ -601,7 +604,7 @@ TCollection_AsciiString ViewerTest::ViewerInit (const Standard_Integer thePxLeft
   }
 
   // Create viewer
-  Handle(V3d_Viewer) a3DViewer, a3DCollector;
+  Handle(V3d_Viewer) a3DViewer;
   // If it's the single view, we first look for empty context
   if (ViewerTest_myViews.IsEmpty() && !ViewerTest_myContexts.IsEmpty())
   {
@@ -610,25 +613,21 @@ TCollection_AsciiString ViewerTest::ViewerInit (const Standard_Integer thePxLeft
     if (anIter.More())
       ViewerTest::SetAISContext (anIter.Value());
     a3DViewer = ViewerTest::GetAISContext()->CurrentViewer();
-    a3DCollector= ViewerTest::GetAISContext()->Collector();
   }
   else if (ViewerTest_myContexts.IsBound1(aViewNames.GetViewerName()))
   {
     ViewerTest::SetAISContext(ViewerTest_myContexts.Find1(aViewNames.GetViewerName()));
     a3DViewer = ViewerTest::GetAISContext()->CurrentViewer();
-    a3DCollector= ViewerTest::GetAISContext()->Collector();
   }
-  else if (a3DViewer.IsNull() || a3DCollector.IsNull())
+  else if (a3DViewer.IsNull())
   {
     toCreateViewer = Standard_True;
     TCollection_ExtendedString NameOfWindow("Viewer3D");
     a3DViewer = new V3d_Viewer(aGraphicDriver, NameOfWindow.ToExtString());
 
     NameOfWindow = TCollection_ExtendedString("Collector");
-    a3DCollector = new V3d_Viewer(aGraphicDriver, NameOfWindow.ToExtString());
 
     a3DViewer->SetDefaultBackgroundColor(Quantity_NOC_BLACK);
-    a3DCollector->SetDefaultBackgroundColor(Quantity_NOC_STEELBLUE);
   }
 
   // AIS context setup
@@ -636,7 +635,7 @@ TCollection_AsciiString ViewerTest::ViewerInit (const Standard_Integer thePxLeft
       !(ViewerTest_myContexts.IsBound1(aViewNames.GetViewerName())))
   {
     Handle(AIS_InteractiveContext) aContext =
-      new AIS_InteractiveContext(a3DViewer, a3DCollector);
+      new AIS_InteractiveContext(a3DViewer);
     ViewerTest::SetAISContext (aContext);
     ViewerTest_myContexts.Bind (aViewNames.GetViewerName(), ViewerTest::GetAISContext());
   }
@@ -647,7 +646,7 @@ TCollection_AsciiString ViewerTest::ViewerInit (const Standard_Integer thePxLeft
 #if defined(_WIN32) || defined(__WIN32__)
       VT_GetWindow() = new WNT_Window (aTitle.ToCString(),
                                        Handle(WNT_WClass)::DownCast (WClass()),
-                                       WS_OVERLAPPEDWINDOW,
+                                       Draw_VirtualWindows ? WS_POPUPWINDOW : WS_OVERLAPPEDWINDOW,
                                        aPxLeft, aPxTop,
                                        aPxWidth, aPxHeight,
                                        Quantity_NOC_BLACK);
@@ -707,7 +706,6 @@ TCollection_AsciiString ViewerTest::ViewerInit (const Standard_Integer thePxLeft
 
   aView.Nullify();
   a3DViewer.Nullify();
-  a3DCollector.Nullify();
 
   return aViewNames.GetViewName();
 }
@@ -1260,28 +1258,33 @@ void VT_ProcessKeyPress (const char* buf_ret)
   const Handle(NIS_View) aNisView = Handle(NIS_View)::DownCast (aView);
   // Letter in alphabetic order
 
-  if ( !strcasecmp(buf_ret, "A") ) {
+  if (!strcasecmp (buf_ret, "A"))
+  {
     // AXO
     aView->SetProj(V3d_XposYnegZpos);
   }
-  else if ( !strcasecmp(buf_ret, "D") ) {
+  else if (!strcasecmp (buf_ret, "D"))
+  {
     // Reset
     aView->Reset();
   }
-  else if ( !strcasecmp(buf_ret, "F") ) {
+  else if (!strcasecmp (buf_ret, "F"))
+  {
     // FitAll
     if (aNisView.IsNull())
       aView->FitAll();
     else
       aNisView->FitAll3d();
   }
-  else if ( !strcasecmp(buf_ret, "H") ) {
+  else if (!strcasecmp (buf_ret, "H"))
+  {
     // HLR
     cout << "HLR" << endl;
     aView->SetComputedMode (!aView->ComputedMode());
     MyHLRIsOn = aView->ComputedMode();
   }
-  else if ( !strcasecmp(buf_ret, "P") ) {
+  else if (!strcasecmp (buf_ret, "P"))
+  {
     // Type of HLR
     Handle(AIS_InteractiveContext) aContext = ViewerTest::GetAISContext();
     if (aContext->DefaultDrawer()->TypeOfHLR() == Prs3d_TOH_Algo)
@@ -1323,9 +1326,9 @@ void VT_ProcessKeyPress (const char* buf_ret)
     aContext->UpdateCurrentViewer();
 
   }
-  else if ( !strcasecmp(buf_ret, "S") ) {
-    // SHADING
-    cout << "passage en mode 1 (shading pour les shapes)" << endl;
+  else if (!strcasecmp (buf_ret, "S"))
+  {
+    std::cout << "setup Shaded display mode" << std::endl;
 
     Handle(AIS_InteractiveContext) Ctx = ViewerTest::GetAISContext();
     if(Ctx->NbCurrents()==0 ||
@@ -1343,9 +1346,10 @@ void VT_ProcessKeyPress (const char* buf_ret)
       Ctx->UpdateCurrentViewer();
     }
   }
-  else if ( !strcasecmp(buf_ret, "U") ) {
+  else if (!strcasecmp (buf_ret, "U"))
+  {
     // Unset display mode
-    cout<<"passage au mode par defaut"<<endl;
+    std::cout << "reset display mode to defaults" << std::endl;
 
     Handle(AIS_InteractiveContext) Ctx = ViewerTest::GetAISContext();
     if(Ctx->NbCurrents()==0 ||
@@ -1364,26 +1368,29 @@ void VT_ProcessKeyPress (const char* buf_ret)
     }
 
   }
-  else if ( !strcasecmp(buf_ret, "T") ) {
+  else if (!strcasecmp (buf_ret, "T"))
+  {
     // Top
     aView->SetProj(V3d_Zpos);
   }
-  else if ( !strcasecmp(buf_ret, "B") ) {
+  else if (!strcasecmp (buf_ret, "B"))
+  {
     // Bottom
     aView->SetProj(V3d_Zneg);
   }
-  else if ( !strcasecmp(buf_ret, "L") ) {
+  else if (!strcasecmp (buf_ret, "L"))
+  {
     // Left
     aView->SetProj(V3d_Xneg);
   }
-  else if ( !strcasecmp(buf_ret, "R") ) {
+  else if (!strcasecmp (buf_ret, "R"))
+  {
     // Right
     aView->SetProj(V3d_Xpos);
   }
-
-  else if ( !strcasecmp(buf_ret, "W") ) {
-    // WIREFRAME
-    cout << "passage en mode 0 (filaire pour les shapes)" << endl;
+  else if (!strcasecmp (buf_ret, "W"))
+  {
+    std::cout << "setup WireFrame display mode" << std::endl;
     Handle(AIS_InteractiveContext) Ctx = ViewerTest::GetAISContext();
     if(Ctx->NbCurrents()==0 ||
       Ctx->NbSelected()==0)
@@ -1400,9 +1407,9 @@ void VT_ProcessKeyPress (const char* buf_ret)
       Ctx->UpdateCurrentViewer();
     }
   }
-  else if ( !strcasecmp(buf_ret, "Z") ) {
+  else if (!strcasecmp (buf_ret, "Z"))
+  {
     // ZCLIP
-
     if ( ZClipIsOn ) {
       cout << "ZClipping OFF" << endl;
       ZClipIsOn = 0;
@@ -1418,16 +1425,27 @@ void VT_ProcessKeyPress (const char* buf_ret)
       aView->Redraw();
     }
   }
-  else if ( !strcasecmp(buf_ret, ",") ) {
+  else if (!strcasecmp (buf_ret, ","))
+  {
     ViewerTest::GetAISContext()->HilightNextDetected(ViewerTest::CurrentView());
-
-
   }
-  else if ( !strcasecmp(buf_ret, ".") ) {
+  else if (!strcasecmp (buf_ret, "."))
+  {
     ViewerTest::GetAISContext()->HilightPreviousDetected(ViewerTest::CurrentView());
   }
-  // Number
-  else{
+  else if (*buf_ret == THE_KEY_DELETE)
+  {
+    Handle(AIS_InteractiveContext) aCtx = ViewerTest::GetAISContext();
+    if (!aCtx.IsNull()
+     && aCtx->NbCurrents() > 0
+     && aCtx->NbSelected() > 0)
+    {
+      Draw_Interprete ("verase");
+    }
+  }
+  else
+  {
+    // Number
     Standard_Integer Num = Draw::Atoi(buf_ret);
     if(Num>=0 && Num<=7)
       ViewerTest::StandardModeActivation(Num);
@@ -1765,6 +1783,7 @@ static int VHelp(Draw_Interpretor& di, Standard_Integer , const char** )
   di << "W : Wireframe" << "\n";
   di << "H : HidelLineRemoval" << "\n";
   di << "U : Unset display mode" << "\n";
+  di << "Delete : Remove selection from viewer" << "\n";
 
   di << "========================="<<"\n";
   di << "Selection mode "<<"\n";
@@ -1915,6 +1934,10 @@ static LRESULT WINAPI ViewerWindowProc( HWND hwnd,
         char c[2];
         c[0] = (char) wParam;
         c[1] = '\0';
+        if (wParam == VK_DELETE)
+        {
+          c[0] = THE_KEY_DELETE;
+        }
         VT_ProcessKeyPress (c);
       }
       break;
@@ -3895,6 +3918,7 @@ static int VCaps (Draw_Interpretor& theDI,
   {
     theDI << "VBO:     " << (aCaps->vboDisable        ? "0" : "1") << "\n";
     theDI << "Sprites: " << (aCaps->pntSpritesDisable ? "0" : "1") << "\n";
+    theDI << "SoftMode:" << (aCaps->contextNoAccel    ? "1" : "0") << "\n";
     return 0;
   }
 
@@ -3908,6 +3932,10 @@ static int VCaps (Draw_Interpretor& theDI,
     else if (anArg.Search ("sprites=") > -1)
     {
       aCaps->pntSpritesDisable = anArg.Token ("=", 2).IntegerValue() == 0;
+    }
+    else if (anArg.Search ("soft=") > -1)
+    {
+      aCaps->contextNoAccel = anArg.Token ("=", 2).IntegerValue() != 0;
     }
     else
     {
@@ -4521,15 +4549,10 @@ static Standard_Integer VPurgeDisplay (Draw_Interpretor& di,
                                 Standard_Integer argc,
                                 const char ** argv)
 {
-  if (argc > 2)
+  if (argc > 1)
   {
-    di << "Usage : " << argv[0] << " [CollectorToo = 0|1]" << "\n";
+    di << "Usage : " << argv[0] << "\n";
     return 1;
-  }
-  Standard_Boolean isCollectorToo = Standard_False;
-  if (argc == 2)
-  {
-      isCollectorToo = (atoi(argv [1]) != 0);
   }
   Handle(AIS_InteractiveContext) aContext = ViewerTest::GetAISContext();
   if (aContext.IsNull())
@@ -4538,7 +4561,7 @@ static Standard_Integer VPurgeDisplay (Draw_Interpretor& di,
     return 1;
   }
   aContext->CloseAllContexts(Standard_False);
-  di << aContext->PurgeDisplay(isCollectorToo) << "\n";
+  di << aContext->PurgeDisplay() << "\n";
   return 0;
 }
 
@@ -5402,7 +5425,7 @@ void ViewerTest::ViewerCommands(Draw_Interpretor& theCommands)
     "vvbo [{0|1}] : turn VBO usage On/Off; affects only newly displayed objects",
     __FILE__, VVbo, group);
   theCommands.Add ("vcaps",
-    "vcaps [vbo={0|1}] [sprites={0|1}] : modify particular graphic driver options",
+    "vcaps [vbo={0|1}] [sprites={0|1}] [soft={0|1}] : modify particular graphic driver options",
     __FILE__, VCaps, group);
   theCommands.Add ("vmemgpu",
     "vmemgpu [f]: print system-dependent GPU memory information if available;"
@@ -5446,7 +5469,7 @@ void ViewerTest::ViewerCommands(Draw_Interpretor& theCommands)
     "vantialiasing 1|0",
     __FILE__,VAntialiasing,group);
   theCommands.Add ("vpurgedisplay",
-    "vpurgedisplay [CollectorToo = 0|1]"
+    "vpurgedisplay"
     "- removes structures which don't belong to objects displayed in neutral point",
     __FILE__, VPurgeDisplay, group);
   theCommands.Add("vsetviewsize",
