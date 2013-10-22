@@ -2081,9 +2081,9 @@ void  BSplSLib::CacheD0(
   // 0 and 1 
   Standard_Integer dimension, min_degree, max_degree;
   Standard_Real new_parameter[2], inverse;
-  MEMALIGN(Standard_Real *PArray) = (Standard_Real *) &(PolesWeightsArray(PolesWeightsArray.LowerCol(), PolesWeightsArray.LowerRow()));
+  MEMALIGN(Standard_Real, *PArray) = (Standard_Real *) &(PolesWeightsArray(PolesWeightsArray.LowerCol(), PolesWeightsArray.LowerRow()));
   Standard_Real *myPoint = (Standard_Real *) &aPoint;
-  MEMALIGN(Standard_Real local_pole_and_weight[4]);
+  MEMALIGN(Standard_Real, local_pole_and_weight[4]);
 
   if (UDegree <= VDegree)
   {
@@ -2164,9 +2164,9 @@ void  BSplSLib::CacheD1(
   // 0 and 1 
   Standard_Integer dimension, min_degree, max_degree, ii;
   Standard_Real inverse_min, inverse_max, new_parameter[2];
-  MEMALIGN(Standard_Real *PArray) = (Standard_Real *) &(PolesWeightsArray(PolesWeightsArray.LowerCol(), PolesWeightsArray.LowerRow()));
-  MEMALIGN(Standard_Real local_poles_array[4][3]); 
-  MEMALIGN(Standard_Real local_poles_and_weights_array[4][4]);
+  MEMALIGN(Standard_Real, *PArray) = (Standard_Real *) &(PolesWeightsArray(PolesWeightsArray.LowerCol(), PolesWeightsArray.LowerRow()));
+  MEMALIGN(Standard_Real, local_poles_array[4][3]); 
+  MEMALIGN(Standard_Real, local_poles_and_weights_array[4][4]);
   Standard_Real *my_vec_min, *my_vec_max, *my_point;
 
   my_point = (Standard_Real *) &aPoint;
@@ -2287,9 +2287,9 @@ void  BSplSLib::CacheD2(
   // 0 and 1 
   Standard_Integer ii, kk, index, dimension, min_degree, max_degree;
   Standard_Real inverse_min, inverse_max, new_parameter[2];
-  MEMALIGN(Standard_Real *PArray) = (Standard_Real *) &(PolesWeightsArray(PolesWeightsArray.LowerCol(), PolesWeightsArray.LowerRow()));
-  MEMALIGN(Standard_Real local_poles_array[9][3]);
-  MEMALIGN(Standard_Real local_poles_and_weights_array[9][4]);
+  MEMALIGN(Standard_Real, *PArray) = (Standard_Real *) &(PolesWeightsArray(PolesWeightsArray.LowerCol(), PolesWeightsArray.LowerRow()));
+  MEMALIGN(Standard_Real, local_poles_array[9][3]);
+  MEMALIGN(Standard_Real, local_poles_and_weights_array[9][4]);
   Standard_Real *my_vec_min, *my_vec_max, *my_vec_min_min, *my_vec_max_max, *my_vec_min_max, *my_point;
   my_point = (Standard_Real *) &aPoint  ;
 

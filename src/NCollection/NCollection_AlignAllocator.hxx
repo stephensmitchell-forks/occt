@@ -41,12 +41,15 @@
 // The macro for array (pointer) alignment according DATA_ALIGNMENT
 #ifdef NEED_DATA_ALIGN
 # ifdef _MSC_VER
-#     define MEMALIGN(thePtrDef) __declspec(align(DATA_ALIGNMENT)) thePtrDef
+  // MEMALIGN macro should be used for declaration of alignment of pointer or array
+  // <theType> is an array type (example: Standard_Real)
+  // <thePtrDef> is a pointer or array variable definition (example: *aPtr or anArray[2])
+#     define MEMALIGN(theType, thePtrDef) __declspec(align(DATA_ALIGNMENT)) theType thePtrDef
 # else
-#     define MEMALIGN(thePtrDef) thePtrDef__attribute__((aligned(DATA_ALIGNMENT)))
+#     define MEMALIGN(theType, thePtrDef) theType thePtrDef __attribute__((aligned(DATA_ALIGNMENT)))
 # endif
 #else
-# define MEMALIGN(thePtrDef) thePtrDef
+# define MEMALIGN(theType, thePtrDef) theType thePtrDef
 #endif
 //======================================================
 
