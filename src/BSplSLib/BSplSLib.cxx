@@ -2205,14 +2205,14 @@ void  BSplSLib::CacheD1(
 
   Standard_Real* locpoles = (Standard_Real*) NCollection_AlignAllocator::Allocate(2*dimension*sizeof(Standard_Real), DATA_ALIGNMENT);
 
-  PLib::EvalPolynomial(new_parameter[0],
+  PLib::EvalPolynomialWithAlignedData(new_parameter[0],
           1,
           max_degree,
           dimension,
           PArray[0],
           locpoles[0]);
 
-  PLib::EvalPolynomial(new_parameter[1],
+  PLib::EvalPolynomialWithAlignedData(new_parameter[1],
           1,
           min_degree,
           4,
@@ -2360,21 +2360,21 @@ void  BSplSLib::CacheD2(
     }
   }
 
-  PLib::EvalPolynomial(new_parameter[0],
+  PLib::EvalPolynomialWithAlignedData(new_parameter[0],
           MinIndMax,
           max_degree,
           dimension,
           PArray[0],
           locpoles[0]);
 
-  PLib::EvalPolynomial(new_parameter[1],
+  PLib::EvalPolynomialWithAlignedData(new_parameter[1],
           MinIndMin,
           min_degree,
           4,
           locpoles[0],
           local_poles_and_weights_array[0][0]);
 
-  PLib::EvalPolynomial(new_parameter[1],
+  PLib::EvalPolynomialWithAlignedData(new_parameter[1],
           1,
           min_degree,
           4,

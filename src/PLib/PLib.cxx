@@ -963,6 +963,329 @@ void  PLib::EvalPolynomial(const Standard_Real    Par,
   }
 }
 
+void  PLib::EvalPolynomialWithAlignedData(const Standard_Real    Par,
+			   const Standard_Integer DerivativeRequest,
+			   const Standard_Integer Degree,
+			   const Standard_Integer Dimension, 
+			   Standard_Real&         PolynomialCoeff,
+			   Standard_Real&         Results)
+     //
+     // the polynomial coefficients are assumed to be stored as follows :
+     //                                                      0    
+     // [0]                  [Dimension -1]                 X     coefficient
+     //                                                      1 
+     // [Dimension]          [Dimension + Dimension -1]     X     coefficient
+     //                                                      2 
+     // [2 * Dimension]      [2 * Dimension + Dimension-1]  X     coefficient
+     //
+     //   ...................................................
+     //
+     //  
+     //                                                      d 
+     // [d * Dimension]      [d * Dimension + Dimension-1]  X     coefficient
+     //
+     //  where d is the Degree
+     //
+{
+  Standard_Integer kk, jj;
+  Standard_Real *PA = &PolynomialCoeff + Degree * Dimension;
+
+  switch (DerivativeRequest)
+  {
+  case 0 :
+    {
+      Standard_Real *resD0 = &Results;
+
+#pragma vector aligned
+      for (kk = 0; kk < Dimension; kk++)
+        resD0[kk] = PA[kk];
+
+      for (jj = 0; jj < Degree; jj++)
+      {
+        PA -= Dimension;
+#pragma vector aligned
+        for (kk = 0; kk < Dimension; kk++)
+          resD0[kk] = Par * resD0[kk] + PA[kk];
+      }    		
+      break;
+    }
+  case 1 :
+    {
+      Standard_Real *resD0 = &Results;
+      Standard_Real *resD1 = &Results + Dimension;
+
+      switch (Dimension)
+      {
+      case 4:
+        {
+#pragma vector aligned
+          for (kk = 0; kk < 4; kk++)
+            resD1[kk] = resD0[kk] = PA[kk];
+          PA -= 4;
+
+#pragma vector aligned
+          for (kk = 0; kk < 4; kk++)
+            resD0[kk] = Par * resD0[kk] + PA[kk];
+
+          for (jj = 1; jj < Degree; jj++)
+          {
+            PA -= 4;
+
+#pragma vector aligned
+            for (kk = 0; kk < 4; kk++)
+              resD1[kk] = Par * resD1[kk] + resD0[kk];
+
+#pragma vector aligned
+            for (kk = 0; kk < 4; kk++)
+              resD0[kk] = Par * resD0[kk] + PA[kk];
+          }
+          break;
+        }
+      case 8:
+        {
+#pragma vector aligned
+          for (kk = 0; kk < 8; kk++)
+            resD1[kk] = resD0[kk] = PA[kk];
+          PA -= 8;
+
+#pragma vector aligned
+          for (kk = 0; kk < 8; kk++)
+            resD0[kk] = Par * resD0[kk] + PA[kk];
+
+          for (jj = 1; jj < Degree; jj++)
+          {
+            PA -= 8;
+
+#pragma vector aligned
+            for (kk = 0; kk < 8; kk++)
+              resD1[kk] = Par * resD1[kk] + resD0[kk];
+
+#pragma vector aligned
+            for (kk = 0; kk < 8; kk++)
+              resD0[kk] = Par * resD0[kk] + PA[kk];
+          }
+          break;
+        }
+      case 12:
+        {
+#pragma vector aligned
+          for (kk = 0; kk < 12; kk++)
+            resD1[kk] = resD0[kk] = PA[kk];
+          PA -= 12;
+
+#pragma vector aligned
+          for (kk = 0; kk < 12; kk++)
+            resD0[kk] = Par * resD0[kk] + PA[kk];
+
+          for (jj = 1; jj < Degree; jj++)
+          {
+            PA -= 12;
+
+#pragma vector aligned
+            for (kk = 0; kk < 12; kk++)
+              resD1[kk] = Par * resD1[kk] + resD0[kk];
+
+#pragma vector aligned
+            for (kk = 0; kk < 12; kk++)
+              resD0[kk] = Par * resD0[kk] + PA[kk];
+          }
+          break;
+        }
+      case 16:
+        {
+#pragma vector aligned
+          for (kk = 0; kk < 16; kk++)
+            resD1[kk] = resD0[kk] = PA[kk];
+          PA -= 16;
+
+#pragma vector aligned
+          for (kk = 0; kk < 16; kk++)
+            resD0[kk] = Par * resD0[kk] + PA[kk];
+
+          for (jj = 1; jj < Degree; jj++)
+          {
+            PA -= 16;
+
+#pragma vector aligned
+            for (kk = 0; kk < 16; kk++)
+              resD1[kk] = Par * resD1[kk] + resD0[kk];
+
+#pragma vector aligned
+            for (kk = 0; kk < 16; kk++)
+              resD0[kk] = Par * resD0[kk] + PA[kk];
+          }
+          break;
+        }
+      case 20:
+        {
+#pragma vector aligned
+          for (kk = 0; kk < 20; kk++)
+            resD1[kk] = resD0[kk] = PA[kk];
+          PA -= 20;
+
+#pragma vector aligned
+          for (kk = 0; kk < 20; kk++)
+            resD0[kk] = Par * resD0[kk] + PA[kk];
+
+          for (jj = 1; jj < Degree; jj++)
+          {
+            PA -= 20;
+
+#pragma vector aligned
+            for (kk = 0; kk < 20; kk++)
+              resD1[kk] = Par * resD1[kk] + resD0[kk];
+
+#pragma vector aligned
+            for (kk = 0; kk < 20; kk++)
+              resD0[kk] = Par * resD0[kk] + PA[kk];
+          }
+          break;
+        }
+      case 24:
+        {
+#pragma vector aligned
+          for (kk = 0; kk < 24; kk++)
+            resD1[kk] = resD0[kk] = PA[kk];
+          PA -= 24;
+
+#pragma vector aligned
+          for (kk = 0; kk < 24; kk++)
+            resD0[kk] = Par * resD0[kk] + PA[kk];
+
+          for (jj = 1; jj < Degree; jj++)
+          {
+            PA -= 24;
+
+#pragma vector aligned
+            for (kk = 0; kk < 24; kk++)
+              resD1[kk] = Par * resD1[kk] + resD0[kk];
+
+#pragma vector aligned
+            for (kk = 0; kk < 24; kk++)
+              resD0[kk] = Par * resD0[kk] + PA[kk];
+          }
+          break;
+        }
+      default:
+        {
+#pragma vector aligned
+          for (kk = 0; kk < Dimension; kk++)
+            resD1[kk] = resD0[kk] = PA[kk];
+          PA -= Dimension;
+
+#pragma vector aligned
+          for (kk = 0; kk < Dimension; kk++)
+            resD0[kk] = Par * resD0[kk] + PA[kk];
+
+          for (jj = 1; jj < Degree; jj++)
+          {
+            PA -= Dimension;
+
+#pragma vector aligned
+            for (kk = 0; kk < Dimension; kk++)
+              resD1[kk] = Par * resD1[kk] + resD0[kk];
+
+#pragma vector aligned
+            for (kk = 0; kk < Dimension; kk++)
+              resD0[kk] = Par * resD0[kk] + PA[kk];
+          }
+          break;
+        }
+      }
+      break;
+    }
+  case 2 :
+    {
+      Standard_Real *resD0 = &Results;
+      Standard_Real *resD1 = &Results + Dimension;
+      Standard_Real *resD2 = &Results + 2 * Dimension;
+
+      switch (Degree)
+      {
+      case 1 :
+        {
+          Standard_Real *tmpPA = PA - Dimension;
+
+          for (kk = 0; kk < Dimension; kk++)
+          {
+            resD0[kk] = Par * PA[kk] + tmpPA[kk];
+            resD1[kk] = PA[kk];
+            resD2[kk] = 0.0e0;
+          }
+          break;
+        }
+      default :
+        {
+          for (kk = 0; kk < Dimension; kk++)
+          {
+            resD2[kk] = 2. * PA[kk];
+            resD1[kk] = Par * PA[kk] + (Par * PA[kk] + PA[kk - Dimension]);
+            resD0[kk] = Par * (Par * PA[kk] + PA[kk - Dimension]) + PA[kk - 2 * Dimension];
+
+          }
+          PA -= 2 * Dimension;
+
+          for (jj = 2; jj < Degree; jj++)
+          {
+            PA -= Dimension;
+
+            for (kk = 0; kk < Dimension; kk++)
+              resD2[kk] = Par * resD2[kk] + 2. * resD1[kk];
+            for (kk = 0; kk < Dimension; kk++)
+              resD1[kk] = Par * resD1[kk] + resD0[kk];
+            for (kk = 0; kk < Dimension; kk++)
+              resD0[kk] = Par * resD0[kk] + PA[kk];
+          }
+          break;
+        }
+      }
+      break;
+    }
+  default :
+    {
+      Standard_Integer ii, LocalRequest, LocReqDim;
+      Standard_Real *RA = &Results;
+
+      for (kk = 0; kk < Dimension; kk++)
+        RA[kk] = PA[kk];
+
+      if (DerivativeRequest < Degree)
+        LocalRequest = DerivativeRequest;
+      else 
+        LocalRequest = Degree;
+      LocReqDim = LocalRequest * Dimension;
+
+      for (ii = 1; ii <= DerivativeRequest; ii++)
+      {
+        RA += Dimension;
+        for (kk = 0; kk < Dimension; kk++)
+          RA[kk] = 0.0e0;
+      }		
+
+      for (jj = 0; jj < Degree; jj++)
+      {	
+        RA = &Results + LocReqDim;
+        for (ii = LocalRequest; ii > 1; ii--)
+        {
+          for (kk = 0; kk < Dimension; kk++)
+            RA[kk] = Par * RA[kk] + ((double)ii) * RA[kk - Dimension];
+          RA -= Dimension;
+        }
+
+        for (kk = 0; kk < Dimension; kk++)
+          RA[kk] = Par * RA[kk] + RA[kk - Dimension];
+        RA -= Dimension;
+        PA -= Dimension;
+
+        for (kk = 0; kk < Dimension; kk++)
+          RA[kk] = Par * RA[kk] + PA[kk];
+      }
+      break;
+    }
+  }
+}
+
+
 //=======================================================================
 //function : This evaluates a polynomial without derivative 
 //purpose  :
