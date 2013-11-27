@@ -174,6 +174,13 @@ is
 		    Dimension         : Integer ;
 		    PolynomialCoeff   : in out Real ;
 		    Results           : in out Real) ;
+     ---Purpose: Makes the same as EvalPolynomial but with data aligned for support of SSE
+     EvalPolynomialWithAlignedData(U  : Real;
+    	    	    DerivativeOrder   : Integer ;
+		    Degree            : Integer ;
+		    Dimension         : Integer ;
+		    PolynomialCoeff   : in out Real ;
+		    Results           : in out Real) ;
 		     
       ---Purpose: Performs Horner method with synthethic division
       --          for derivatives

@@ -36,7 +36,7 @@
 #include <Standard_NotImplemented.hxx>
 #include <Standard_ConstructionError.hxx>
 #include <math_Matrix.hxx>
-#include <NCollection_AlignAllocator.hxx>
+#include <NCollection_AlignedLocalArray.hxx>
 
 // for null derivatives
 static Standard_Real BSplSLib_zero[3] = {0.0, 0.0, 0.0};
@@ -2102,7 +2102,8 @@ void  BSplSLib::CacheD0(
     dimension = 4 * (VDegree + 1);
   }
 
-  Standard_Real* locpoles = (Standard_Real*) NCollection_AlignAllocator::Allocate(dimension*sizeof(Standard_Real), DATA_ALIGNMENT);
+  NCollection_AlignedLocalArray<Standard_Real> locpoles(dimension);
+//  Standard_Real* locpoles = (Standard_Real*) NCollection_AlignAllocator::Allocate(dimension*sizeof(Standard_Real), DATA_ALIGNMENT);
 
   PLib::NoDerivativeEvalPolynomial(new_parameter[0],
           max_degree,
@@ -2133,7 +2134,7 @@ void  BSplSLib::CacheD0(
     myPoint[2] = local_pole_and_weight[2];
   }
 
-  NCollection_AlignAllocator::Free(locpoles);
+//  NCollection_AlignAllocator::Free(locpoles);
 }
 
 
@@ -2203,7 +2204,8 @@ void  BSplSLib::CacheD1(
     my_vec_max = (Standard_Real *) &aVecU;
   }
 
-  Standard_Real* locpoles = (Standard_Real*) NCollection_AlignAllocator::Allocate(2*dimension*sizeof(Standard_Real), DATA_ALIGNMENT);
+  NCollection_AlignedLocalArray<Standard_Real> locpoles(2*dimension);
+//  Standard_Real* locpoles = (Standard_Real*) NCollection_AlignAllocator::Allocate(2*dimension*sizeof(Standard_Real), DATA_ALIGNMENT);
 
   PLib::EvalPolynomialWithAlignedData(new_parameter[0],
           1,
@@ -2252,7 +2254,7 @@ void  BSplSLib::CacheD1(
     }
   }
 
-  NCollection_AlignAllocator::Free(locpoles);
+//  NCollection_AlignAllocator::Free(locpoles);
 }
 
 
@@ -2339,7 +2341,8 @@ void  BSplSLib::CacheD2(
     my_vec_max_max = (Standard_Real *) &aVecUU;
   }
 
-  Standard_Real* locpoles = (Standard_Real*) NCollection_AlignAllocator::Allocate(3*dimension*sizeof(Standard_Real), DATA_ALIGNMENT);
+  NCollection_AlignedLocalArray<Standard_Real> locpoles(3*dimension);
+//  Standard_Real* locpoles = (Standard_Real*) NCollection_AlignAllocator::Allocate(3*dimension*sizeof(Standard_Real), DATA_ALIGNMENT);
 
   //
   // initialize in case min or max degree are less than 2
@@ -2425,7 +2428,7 @@ void  BSplSLib::CacheD2(
     }
   }
 
-  NCollection_AlignAllocator::Free(locpoles);
+//  NCollection_AlignAllocator::Free(locpoles);
 }
 
 //=======================================================================
