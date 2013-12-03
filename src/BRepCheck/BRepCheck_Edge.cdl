@@ -27,7 +27,8 @@ class Edge from BRepCheck inherits Result from BRepCheck
 uses Shape               from TopoDS,
      Edge                from TopoDS,
      CurveRepresentation from BRep,
-     HCurve              from Adaptor3d
+     HCurve              from Adaptor3d,
+     Status              from BRepCheck
 
 is
 
@@ -60,6 +61,18 @@ is
     Tolerance(me: mutable) returns Real from Standard 
 
     	is static;
+
+    SetStatus(me: mutable;
+              theStatus:Status from BRepCheck)
+
+          --- Purpose: Sets status of Edge;
+	is static;
+
+    CheckTolerance(me: mutable; theEdge: Edge from TopoDS)
+	  --- Purpose: Checks, if tolerance of vertexes overlaps
+	  --  theEdge;
+        returns Status from BRepCheck
+	is static;
 
 fields
 

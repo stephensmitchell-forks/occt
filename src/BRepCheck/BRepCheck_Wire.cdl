@@ -126,6 +126,12 @@ is
         ---Purpose: set SelfIntersect() to be checked
 	is static;
 
+    SetStatus(me: mutable;
+              theStatus:Status from BRepCheck)
+
+          --- Purpose: Sets status of Wire;
+	is static;
+
 
 
 fields

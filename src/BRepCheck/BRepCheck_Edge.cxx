@@ -29,6 +29,8 @@
 #include <BRep_TEdge.hxx>
 #include <BRep_TFace.hxx>
 
+#include <BRepAdaptor_Curve.hxx>
+
 #include <BRep_CurveRepresentation.hxx>
 #include <BRep_ListOfCurveRepresentation.hxx>
 #include <BRep_ListIteratorOfListOfCurveRepresentation.hxx>
@@ -37,6 +39,7 @@
 
 #include <BRep_Tool.hxx>
 
+#include <TopExp.hxx>
 #include <TopExp_Explorer.hxx>
 
 #include <Geom_Surface.hxx>
@@ -61,7 +64,21 @@
 #include <TopoDS.hxx>
 #include <TopAbs_ShapeEnum.hxx>
 #include <TopoDS_Face.hxx>
+#include <TopoDS_Vertex.hxx>
 #include <Precision.hxx>
+
+//Golden ratio
+static const Standard_Real  GoldRatio = (sqrt(5.0)-1)/2.0;
+
+static const Standard_Real  DivPoints[] = {
+                                            GoldRatio,
+                                            1.0-GoldRatio,
+                                            4.0*GoldRatio-2.0,
+                                            3.0-4.0*GoldRatio,
+                                            0.5
+                                          };
+
+static const Standard_Integer maxNIter = sizeof(DivPoints)/sizeof(DivPoints[0]);
 
 
 //modified by NIZNHY-PKV Thu May 05 09:01:57 2011f
@@ -70,6 +87,7 @@ static
 			    const Adaptor3d_CurveOnSurface&,
 			    const Standard_Real,
 			    const Standard_Boolean);
+
 static
   void PrintProblematicPoint(const gp_Pnt&,
 			     const Standard_Real,
@@ -89,7 +107,7 @@ static
 //				 const Standard_Boolean);
 //modified by NIZNHY-PKV Thu May 05 09:02:01 2011t
 
-#define NCONTROL 23
+static const Standard_Integer NCONTROL=23;
 
 //=======================================================================
 //function : BRepCheck_Edge
@@ -242,12 +260,24 @@ void BRepCheck_Edge::InContext(const TopoDS_Shape& S)
     return;
   }
   
-  switch (styp) {
+  switch (styp) 
+  {
+  case TopAbs_WIRE:
+    {
+      //if (CheckTolerance(TopoDS::Edge(myShape)) == BRepCheck_CollapsedEdge)
+      //{
+      //  BRepCheck::Add(lst,BRepCheck_CollapsedEdge);
+      //  return;
+      //}
+    }
+    break;
+
   case TopAbs_FACE:
     if (!myCref.IsNull()) {
       
       Standard_Boolean SameParameter = TE->SameParameter();
       Standard_Boolean SameRange = TE->SameRange();
+
 //  Modified by skv - Tue Apr 27 11:48:13 2004 Begin
       if (!SameParameter || !SameRange) {
 	if (!SameParameter)
@@ -279,8 +309,8 @@ void BRepCheck_Edge::InContext(const TopoDS_Shape& S)
           // gka OCC
 //  Modified by skv - Tue Apr 27 11:50:35 2004 Begin
 // 	  if (SameRange && (fabs(f-First) > Precision::PConfusion() || fabs(l-Last)> Precision::PConfusion())) { //f != First || l != Last)) { gka OCC
-	  if (fabs(f-First) > Precision::PConfusion() ||
-	      fabs(l-Last)  > Precision::PConfusion()) {
+	  if (Abs(f-First) > Precision::PConfusion() ||
+	      Abs(l-Last)  > Precision::PConfusion()) {
 	    BRepCheck::Add(lst,BRepCheck_InvalidSameRangeFlag);
 	    BRepCheck::Add(lst,BRepCheck_InvalidSameParameterFlag);
 // 	    if (SameParameter) {
@@ -455,6 +485,16 @@ Standard_Boolean BRepCheck_Edge::GeometricControls() const
   return myGctrl;
 }
 
+//=======================================================================
+//function :   SetStatus
+//purpose  : 
+//=======================================================================
+
+void BRepCheck_Edge::SetStatus(const BRepCheck_Status theStatus)
+{
+    BRepCheck::Add(myMap(myShape),theStatus);
+}
+
 
 
 
@@ -555,6 +595,86 @@ Standard_Real BRepCheck_Edge::Tolerance()
 }
 
 //=======================================================================
+//function : CheckTolerance
+//purpose  : Cheks, if theEdge lies entirely into sphere, center of which
+//            is middle point of line segment, which joins first and last 
+//            vertex of an edge, and radius is aTol (see function's body).
+//=======================================================================
+BRepCheck_Status BRepCheck_Edge::CheckTolerance(const TopoDS_Edge& theEdge)
+{
+  BRepCheck_Status aStatus = BRepCheck_NoError;
+  Standard_Real aTol1 = 1.0e-7, aTol2 = 1.0e-7;
+  
+  if(BRep_Tool::Degenerated(theEdge))
+  {
+    aStatus = BRepCheck_NoError;
+    return aStatus;
+  }
+
+  TopoDS_Vertex aV1 = TopExp::FirstVertex(theEdge),
+                aV2 = TopExp::LastVertex(theEdge);
+
+  if(aV2.IsNull() || aV1.IsNull())
+  {
+    aStatus = BRepCheck_NoError;
+    return aStatus;
+  }
+
+  gp_Pnt aPnt1, aPnt2;
+
+  aPnt1 = BRep_Tool::Pnt(aV1);
+  aPnt2 = BRep_Tool::Pnt(aV2);
+
+  aTol1 = BRep_Tool::Tolerance(aV1);
+  aTol2 = BRep_Tool::Tolerance(aV2);
+
+  if( Precision::IsInfinite(aTol1) ||
+      Precision::IsInfinite(aTol2))
+  {
+    aStatus = BRepCheck_CollapsedEdge;
+    return aStatus;
+  }
+
+  Standard_Real st = aTol1 + aTol2;
+
+  if(aPnt1.SquareDistance(aPnt2) >= st*st)
+  {
+    aStatus = BRepCheck_NoError;
+    return aStatus;
+  }
+
+  gp_Pnt aPn( (aPnt1.X() + aPnt2.X())/2.0,
+              (aPnt1.Y() + aPnt2.Y())/2.0,
+              (aPnt1.Z() + aPnt2.Z())/2.0);
+
+  
+  const Standard_Real aTol = Max(aTol1,aTol2) + aPnt1.Distance(aPnt2)/2.0;
+  const Standard_Real aTols = aTol*aTol;
+
+  BRepAdaptor_Curve BACurve(theEdge);
+
+  const Standard_Real aFirst = BACurve.FirstParameter(), 
+                      aLast  =  BACurve.LastParameter();
+
+  const Standard_Real dParam = aLast - aFirst;
+
+  for(Standard_Integer i = 0; i < maxNIter; i++)
+  {
+    const Standard_Real ParOnC = aFirst + DivPoints[i]*dParam;
+
+    gp_Pnt pt = BACurve.Value(ParOnC);
+    if((aPn.SquareDistance(pt) >= aTols))
+    {
+      aStatus = BRepCheck_NoError;
+      return aStatus;
+    }
+  }
+
+  aStatus = BRepCheck_CollapsedEdge;
+  return aStatus;
+}
+
+//=======================================================================
 //function : Validate
 //purpose  : 
 //=======================================================================
@@ -571,12 +691,13 @@ Standard_Boolean Validate(const Adaptor3d_Curve& CRef,
   Error = 0.;
   First = CRef.FirstParameter();
   Last  = CRef.LastParameter();
-  //
+  
   aPC=Precision::PConfusion();
   proj = (!SameParameter || 
-	  fabs(Other.FirstParameter()-First) > aPC || 
-	  fabs( Other.LastParameter()-Last) > aPC);
-  if (!proj) {
+	  Abs(Other.FirstParameter()-First) > aPC || 
+	  Abs( Other.LastParameter()-Last) > aPC);
+  if (!proj)
+  {
     Standard_Integer i;
     Standard_Real Tol2, prm, dD;
     gp_Pnt pref, pother;
@@ -588,7 +709,7 @@ Standard_Boolean Validate(const Adaptor3d_Curve& CRef,
     //Tol2=Tol*Tol;
     //modified by NIZNHY-PKV Thu May 05 09:06:47 2011t
     
-    for (i = 0; i< NCONTROL; ++i) {
+    for (i = 0; i < NCONTROL; ++i) {
       prm = ((NCONTROL-1-i)*First + i*Last)/(NCONTROL-1);
       pref = CRef.Value(prm);
       pother = Other.Value(prm);
@@ -666,18 +787,6 @@ Standard_Boolean Validate(const Adaptor3d_Curve& CRef,
       }
     }
   }
-  //FINISH :
-/*
-#ifdef DEB
-    if (! Status) {
-      cout << " **** probleme de SameParameter au point :" << endl;
-      cout << "         " << problematic_point.Coord(1) << " " 
-	   << problematic_point.Coord(2) << " " 
-	   << problematic_point.Coord(3) << endl ;
-      cout << "   Erreur detectee :" << Error << " Tolerance :" << Tol << endl;
-    }
-#endif
-*/
 
   return Status ;
   
