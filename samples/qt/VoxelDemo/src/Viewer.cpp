@@ -14,7 +14,7 @@
 #include <AIS_ListIteratorOfListOfInteractive.hxx>
 #include <Aspect_DisplayConnection.hxx>
 #include <Graphic3d.hxx>
-#include <Graphic3d_GraphicDriver.hxx>
+#include <OpenGl_GraphicDriver.hxx>
 
 static Handle(Graphic3d_GraphicDriver) Viewer_aGraphicDriver;
 
@@ -25,7 +25,7 @@ Viewer::Viewer(QWidget* parent):QWidget(parent)
       if (Viewer_aGraphicDriver.IsNull())
       {
         Handle(Aspect_DisplayConnection) aDisplayConnection;
-        Viewer_aGraphicDriver = Graphic3d::InitGraphicDriver (aDisplayConnection);
+        Viewer_aGraphicDriver = new OpenGl_GraphicDriver (aDisplayConnection);
       }
       myGraphicDriver = Handle(OpenGl_GraphicDriver)::DownCast(Viewer_aGraphicDriver);
     }
@@ -34,7 +34,6 @@ Viewer::Viewer(QWidget* parent):QWidget(parent)
                                                 1000, V3d_XposYnegZpos,
                                                 Quantity_NOC_GRAY30, V3d_ZBUFFER, V3d_GOURAUD, V3d_WAIT,
                                                 true, true, V3d_TEX_NONE);
-    aViewer->Init();
 
 	aViewer->SetDefaultBackgroundColor(Quantity_NOC_BLACK);
 

@@ -53,7 +53,9 @@ const Standard_CString MAGICNUMBER = "FSDFILE";
 //purpose  : 
 //=======================================================================
 
-DDF_IOStream::DDF_IOStream()
+DDF_IOStream::DDF_IOStream() : 
+	myIStream(NULL),
+	myOStream(NULL)
 {}
 
 //=======================================================================
@@ -258,8 +260,7 @@ void DDF_IOStream::ReadExtendedLine(TCollection_ExtendedString& buffer)
     myIStream->get(c);
     check++; 
 //    if (!(check % 2)) Storage_StreamExtCharParityError::Raise();
-    i = 0; j = 0;
-    i += (Standard_ExtCharacter)c;
+    i = (Standard_ExtCharacter)c;
     if (c == '\0') fin = Standard_True;
     i = (i << 8);
 
@@ -267,7 +268,7 @@ void DDF_IOStream::ReadExtendedLine(TCollection_ExtendedString& buffer)
     check++;
 //    if ((check % 2) != 0) Storage_StreamExtCharParityError::Raise();
 //    cout << check << endl;
-    j += (Standard_ExtCharacter)c;
+    j = (Standard_ExtCharacter)c;
     if (c != '\n') fin = Standard_False;
     i |= (0x00FF & j);
     buffer += (Standard_ExtCharacter)i;

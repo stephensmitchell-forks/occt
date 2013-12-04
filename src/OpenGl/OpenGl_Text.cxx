@@ -17,11 +17,13 @@
 // purpose or non-infringement. Please see the License for the specific terms
 // and conditions governing the rights and limitations under the License.
 
-#include <OpenGl_GlCore11.hxx>
-#include <OpenGl_Text.hxx>
-
 #include <OpenGl_AspectText.hxx>
+#include <OpenGl_GlCore11.hxx>
 #include <OpenGl_GraphicDriver.hxx>
+#include <OpenGl_ShaderManager.hxx>
+#include <OpenGl_ShaderProgram.hxx>
+#include <OpenGl_ShaderStates.hxx>
+#include <OpenGl_Text.hxx>
 #include <OpenGl_Workspace.hxx>
 
 #include <Font_FontMgr.hxx>
@@ -385,11 +387,34 @@ void OpenGl_Text::Render (const Handle(OpenGl_Workspace)& theWorkspace) const
   const OpenGl_AspectText* aTextAspect = theWorkspace->AspectText (Standard_True);
   const Handle(OpenGl_Texture) aPrevTexture = theWorkspace->DisableTexture();
 
+  const Handle(OpenGl_Context)& aCtx = theWorkspace->GetGlContext();
+
+  if (aCtx->IsGlGreaterEqual (2, 0))
+  {
+    Handle(OpenGl_ShaderProgram) aProgram = aTextAspect->ShaderProgramRes (theWorkspace);
+
+    if (!aProgram.IsNull())
+    {
+      aProgram->BindWithVariables (aCtx);
+
+      const OpenGl_MaterialState* aMaterialState = aCtx->ShaderManager()->MaterialState (aProgram);
+      
+      if (aMaterialState == NULL || aMaterialState->Aspect() != aTextAspect)
+        aCtx->ShaderManager()->UpdateMaterialStateTo (aProgram, aTextAspect);
+      
+      aCtx->ShaderManager()->PushState (aProgram);
+    }
+    else
+    {
+      OpenGl_ShaderProgram::Unbind (aCtx);
+    }
+  }
+
   // use highlight color or colors from aspect
   if (theWorkspace->NamedStatus & OPENGL_NS_HIGHLIGHT)
   {
     render (theWorkspace->PrinterContext(),
-            theWorkspace->GetGlContext(),
+            aCtx,
             *aTextAspect,
             *theWorkspace->HighlightColor,
             *theWorkspace->HighlightColor);
@@ -397,7 +422,7 @@ void OpenGl_Text::Render (const Handle(OpenGl_Workspace)& theWorkspace) const
   else
   {
     render (theWorkspace->PrinterContext(),
-            theWorkspace->GetGlContext(),
+            aCtx,
             *aTextAspect,
             aTextAspect->Color(),
             aTextAspect->SubtitleColor());
@@ -758,6 +783,7 @@ void OpenGl_Text::render (const Handle(OpenGl_PrinterContext)& thePrintCtx,
       drawText    (thePrintCtx, theCtx, theTextAspect);
       break;
     }
+    case Aspect_TODT_DIMENSION:
     case Aspect_TODT_NORMAL:
     {
       break;
@@ -769,8 +795,42 @@ void OpenGl_Text::render (const Handle(OpenGl_PrinterContext)& thePrintCtx,
   setupMatrix (thePrintCtx, theCtx, theTextAspect, OpenGl_Vec3 (0.0f, 0.0f, 0.0f));
   drawText    (thePrintCtx, theCtx, theTextAspect);
 
-  // revert OpenGL state
   glTexEnvi (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, aTexEnvParam);
+
+  if (theTextAspect.DisplayType() == Aspect_TODT_DIMENSION)
+  {
+    setupMatrix (thePrintCtx, theCtx, theTextAspect, OpenGl_Vec3 (0.0f, 0.0f, 0.00001f));
+
+    glDisable (GL_BLEND);
+    glDisable (GL_TEXTURE_2D);
+    glDisable (GL_ALPHA_TEST);
+    if (!myIs2d)
+    {
+      glDisable (GL_DEPTH_TEST);
+    }
+    glColorMask (GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+
+    glClear (GL_STENCIL_BUFFER_BIT);
+    glEnable (GL_STENCIL_TEST);
+    glStencilFunc (GL_ALWAYS, 1, 0xFF);
+    glStencilOp (GL_KEEP, GL_KEEP, GL_REPLACE);
+
+    glBegin (GL_QUADS);
+    glVertex2f (myBndBox.Left,  myBndBox.Top);
+    glVertex2f (myBndBox.Right, myBndBox.Top);
+    glVertex2f (myBndBox.Right, myBndBox.Bottom);
+    glVertex2f (myBndBox.Left,  myBndBox.Bottom);
+    glEnd();
+
+    glStencilFunc (GL_ALWAYS, 0, 0xFF);
+    // glPopAttrib() will reset state for us
+    //glDisable (GL_STENCIL_TEST);
+    //if (!myIs2d) glEnable (GL_DEPTH_TEST);
+
+    glColorMask (GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+  }
+
+  // revert OpenGL state
   glPopAttrib(); // enable bit
   glPopMatrix(); // model view matrix was modified
 }

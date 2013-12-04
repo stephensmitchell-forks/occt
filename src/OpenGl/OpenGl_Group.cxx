@@ -17,22 +17,37 @@
 // purpose or non-infringement. Please see the License for the specific terms
 // and conditions governing the rights and limitations under the License.
 
-#include <OpenGl_Group.hxx>
 
+#ifdef HAVE_CONFIG_H
+  #include <config.h>
+#endif
+
+#include <OpenGl_Group.hxx>
 #include <OpenGl_PrimitiveArray.hxx>
+#include <OpenGl_Structure.hxx>
 #include <OpenGl_Workspace.hxx>
 
 // =======================================================================
 // function : OpenGl_Group
 // purpose  :
 // =======================================================================
-OpenGl_Group::OpenGl_Group ()
+#ifndef HAVE_OPENCL
+OpenGl_Group::OpenGl_Group()
+#else
+OpenGl_Group::OpenGl_Group (const OpenGl_Structure* theAncestorStructure)
+#endif
 : myAspectLine(NULL),
   myAspectFace(NULL),
   myAspectMarker(NULL),
   myAspectText(NULL),
-  myFirst(NULL), myLast(NULL)
+  myFirst(NULL),
+  myLast(NULL)
 {
+#ifdef HAVE_OPENCL
+  myAncestorStructure = theAncestorStructure;
+  myIsRaytracable = Standard_False;
+  myModificationState = 0; // initial state
+#endif
 }
 
 // =======================================================================
@@ -48,19 +63,21 @@ OpenGl_Group::~OpenGl_Group()
 // function : SetAspectLine
 // purpose  :
 // =======================================================================
-void OpenGl_Group::SetAspectLine (const CALL_DEF_CONTEXTLINE& theContext,
+void OpenGl_Group::SetAspectLine (const CALL_DEF_CONTEXTLINE& theAspect,
                                   const Standard_Boolean theIsGlobal)
 {
   if (theIsGlobal || myFirst == NULL)
   {
     if (myAspectLine == NULL)
+    {
       myAspectLine = new OpenGl_AspectLine();
-    myAspectLine->SetContext (theContext);
+    }
+    myAspectLine->SetAspect (theAspect);
   }
   else
   {
     OpenGl_AspectLine* anAspectLine = new OpenGl_AspectLine();
-    anAspectLine->SetContext (theContext);
+    anAspectLine->SetAspect (theAspect);
     AddElement (TelNil/*TelAspectLine*/, anAspectLine);
   }
 }
@@ -69,8 +86,7 @@ void OpenGl_Group::SetAspectLine (const CALL_DEF_CONTEXTLINE& theContext,
 // function : SetAspectFace
 // purpose  :
 // =======================================================================
-void OpenGl_Group::SetAspectFace (const Handle(OpenGl_Context)&   theCtx,
-                                  const CALL_DEF_CONTEXTFILLAREA& theAspect,
+void OpenGl_Group::SetAspectFace (const CALL_DEF_CONTEXTFILLAREA& theAspect,
                                   const Standard_Boolean          theIsGlobal)
 {
   if (theIsGlobal || myFirst == NULL)
@@ -79,22 +95,33 @@ void OpenGl_Group::SetAspectFace (const Handle(OpenGl_Context)&   theCtx,
     {
       myAspectFace = new OpenGl_AspectFace();
     }
-    myAspectFace->Init (theCtx, theAspect);
+    myAspectFace->SetAspect (theAspect);
   }
   else
   {
     OpenGl_AspectFace* anAspectFace = new OpenGl_AspectFace();
-    anAspectFace->Init (theCtx, theAspect);
+    anAspectFace->SetAspect (theAspect);
     AddElement (TelNil/*TelAspectFace*/, anAspectFace);
   }
+
+#ifdef HAVE_OPENCL
+  if (myIsRaytracable)
+  {
+    myModificationState++;
+
+    if (myAncestorStructure != NULL)
+    {
+      myAncestorStructure->UpdateStateWithAncestorStructures();
+    }
+  }
+#endif
 }
 
 // =======================================================================
 // function : SetAspectMarker
 // purpose  :
 // =======================================================================
-void OpenGl_Group::SetAspectMarker (const Handle(OpenGl_Context)& theCtx,
-                                    const CALL_DEF_CONTEXTMARKER& theAspect,
+void OpenGl_Group::SetAspectMarker (const CALL_DEF_CONTEXTMARKER& theAspect,
                                     const Standard_Boolean theIsGlobal)
 {
   if (theIsGlobal || myFirst == NULL)
@@ -103,12 +130,12 @@ void OpenGl_Group::SetAspectMarker (const Handle(OpenGl_Context)& theCtx,
     {
       myAspectMarker = new OpenGl_AspectMarker();
     }
-    myAspectMarker->Init (theCtx, theAspect);
+    myAspectMarker->SetAspect (theAspect);
   }
   else
   {
     OpenGl_AspectMarker* anAspectMarker = new OpenGl_AspectMarker();
-    anAspectMarker->Init (theCtx, theAspect);
+    anAspectMarker->SetAspect (theAspect);
     AddElement (TelNil/*TelAspectMarker*/, anAspectMarker);
   }
 }
@@ -117,19 +144,21 @@ void OpenGl_Group::SetAspectMarker (const Handle(OpenGl_Context)& theCtx,
 // function : SetAspectText
 // purpose  :
 // =======================================================================
-void OpenGl_Group::SetAspectText (const CALL_DEF_CONTEXTTEXT& theContext,
+void OpenGl_Group::SetAspectText (const CALL_DEF_CONTEXTTEXT& theAspect,
                                   const Standard_Boolean theIsGlobal)
 {
   if (theIsGlobal || myFirst == NULL)
   {
     if (myAspectText == NULL)
+    {
       myAspectText = new OpenGl_AspectText();
-    myAspectText->SetContext (theContext);
+    }
+    myAspectText->SetAspect (theAspect);
   }
   else
   {
     OpenGl_AspectText* anAspectText = new OpenGl_AspectText();
-    anAspectText->SetContext (theContext);
+    anAspectText->SetAspect (theAspect);
     AddElement ( TelNil/*TelAspectText*/, anAspectText);
   }
 }
@@ -138,15 +167,29 @@ void OpenGl_Group::SetAspectText (const CALL_DEF_CONTEXTTEXT& theContext,
 // function : AddElement
 // purpose  :
 // =======================================================================
-void OpenGl_Group::AddElement (const TelType AType, OpenGl_Element *AElem )
+void OpenGl_Group::AddElement (const TelType theType, OpenGl_Element *theElem)
 {
-  OpenGl_ElementNode *node = new OpenGl_ElementNode();
+  OpenGl_ElementNode *aNode = new OpenGl_ElementNode();
 
-  node->type = AType;
-  node->elem = AElem;
-  node->next = NULL;
-  (myLast? myLast->next : myFirst) = node;
-  myLast = node;
+  aNode->type = theType;
+  aNode->elem = theElem;
+  aNode->next = NULL;
+  (myLast? myLast->next : myFirst) = aNode;
+  myLast = aNode;
+
+#ifdef HAVE_OPENCL
+  if (OpenGl_Raytrace::IsRaytracedElement (aNode))
+  {
+    myModificationState++;
+    myIsRaytracable = Standard_True;
+
+    if (myAncestorStructure != NULL)
+    {
+      myAncestorStructure->UpdateStateWithAncestorStructures();
+      myAncestorStructure->SetRaytracableWithAncestorStructures();
+    }
+  }
+#endif
 }
 
 // =======================================================================

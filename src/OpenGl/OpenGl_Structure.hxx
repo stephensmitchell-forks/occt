@@ -30,8 +30,9 @@
 
 #include <OpenGl_Group.hxx>
 #include <OpenGl_Matrix.hxx>
+#include <OpenGl_NamedStatus.hxx>
 
-#include <Graphic3d_SetOfHClipPlane.hxx>
+#include <Graphic3d_SequenceOfHClipPlane.hxx>
 
 class OpenGl_Structure;
 
@@ -39,6 +40,7 @@ typedef NCollection_List<const OpenGl_Structure* > OpenGl_ListOfStructure;
 
 class OpenGl_Structure : public OpenGl_Element
 {
+  friend class OpenGl_Group;
 
 public:
 
@@ -48,15 +50,13 @@ public:
 
   void SetTransformPersistence (const CALL_DEF_TRANSFORM_PERSISTENCE &ATransPers);
 
-  void SetAspectLine (const CALL_DEF_CONTEXTLINE &AContext);
-  void SetAspectFace (const Handle(OpenGl_Context)&   theCtx,
-                      const CALL_DEF_CONTEXTFILLAREA& theAspect);
-  void SetAspectMarker (const Handle(OpenGl_Context)& theCtx,
-                        const CALL_DEF_CONTEXTMARKER& theAspect);
-  void SetAspectText (const CALL_DEF_CONTEXTTEXT &AContext);
+  void SetAspectLine   (const CALL_DEF_CONTEXTLINE &theAspect);
+  void SetAspectFace   (const CALL_DEF_CONTEXTFILLAREA& theAspect);
+  void SetAspectMarker (const CALL_DEF_CONTEXTMARKER& theAspect);
+  void SetAspectText   (const CALL_DEF_CONTEXTTEXT &theAspect);
 
   void SetHighlightBox (const Handle(OpenGl_Context)& theGlCtx,
-                        const CALL_DEF_BOUNDBOX&      theBoundBox);
+                        const CALL_DEF_BOUNDBOX& theBoundBox);
 
   void ClearHighlightBox (const Handle(OpenGl_Context)& theGlCtx);
 
@@ -67,9 +67,11 @@ public:
 
   void ClearHighlightColor (const Handle(OpenGl_Context)& theGlCtx);
 
-  void SetNamedStatus (const Standard_Integer aStatus) { myNamedStatus = aStatus; }
+  void SetNamedStatus (const Standard_Integer aStatus);
 
-  void SetClipPlanes (const Graphic3d_SetOfHClipPlane& thePlanes) { myClipPlanes = thePlanes; }
+  Standard_Boolean IsVisible() const { return !(myNamedStatus & OPENGL_NS_HIDE); }
+
+  void SetClipPlanes (const Graphic3d_SequenceOfHClipPlane& thePlanes) { myClipPlanes = thePlanes; }
 
   void Connect (const OpenGl_Structure *astructure);
   void Disconnect (const OpenGl_Structure *astructure);
@@ -89,16 +91,66 @@ public:
   virtual void Release (const Handle(OpenGl_Context)&   theGlCtx);
 
   //! This method releases GL resources without actual elements destruction.
-  //! As result structure could be correctly destroyed layter without GL context
+  //! As result structure could be correctly destroyed layer without GL context
   //! (after last window was closed for example).
   //!
   //! Notice however that reusage of this structure after calling this method is incorrect
   //! and will lead to broken visualization due to loosed data.
   void ReleaseGlResources (const Handle(OpenGl_Context)& theGlCtx);
 
+  //! Returns list of OpenGL groups.
+  const OpenGl_ListOfGroup& Groups() const { return myGroups; }
+
+  //! Returns list of connected OpenGL structures.
+  const OpenGl_ListOfStructure& ConnectedStructures() const { return myConnected; }
+
+  //! Returns OpenGL face aspect.
+  const OpenGl_AspectFace* AspectFace() const { return myAspectFace; }
+
+  //! Returns OpenGL transformation matrix.
+  const OpenGl_Matrix* Transformation() const { return myTransformation; }
+  
+  //! Returns OpenGL persistent translation.
+  const TEL_TRANSFORM_PERSISTENCE* PersistentTranslation() const { return myTransPers; }
+
+#ifdef HAVE_OPENCL
+
+  //! Returns structure modification state (for ray-tracing).
+  Standard_Size ModificationState() const { return myModificationState; }
+
+  //! Resets structure modification state (for ray-tracing)
+  void ResetModificationState() const { myModificationState = 0; }
+
+  //! Is the structure ray-tracable (contains ray-tracable elements)?
+  Standard_Boolean IsRaytracable() const { return myIsRaytracable; }
+
+#endif
+
 protected:
 
   virtual ~OpenGl_Structure();
+
+#ifdef HAVE_OPENCL
+
+  //! Registers ancestor connected structure (for updating ray-tracing state).
+  void RegisterAncestorStructure (const OpenGl_Structure* theStructure) const;
+
+  //! Unregisters ancestor connected structure (for updating ray-tracing state).
+  void UnregisterAncestorStructure (const OpenGl_Structure* theStructure) const;
+
+  //! Unregisters structure from ancestor structure (for updating ray-tracing state).
+  void UnregisterFromAncestorStructure() const;
+
+  //! Updates modification state for structure and its parents.
+  void UpdateStateWithAncestorStructures() const;
+
+  //! Updates ray-tracable status for structure and its parents.
+  void UpdateRaytracableWithAncestorStructures() const;
+
+  //! Sets ray-tracable status for structure and its parents.
+  void SetRaytracableWithAncestorStructures() const;
+
+#endif
 
 protected:
 
@@ -117,9 +169,15 @@ protected:
   int                        myNamedStatus; //Structure_LABNameSet
   int                        myZLayer;
 
-  OpenGl_ListOfStructure     myConnected;
-  OpenGl_ListOfGroup         myGroups;
-  Graphic3d_SetOfHClipPlane  myClipPlanes;
+  OpenGl_ListOfStructure           myConnected;
+  OpenGl_ListOfGroup               myGroups;
+  Graphic3d_SequenceOfHClipPlane   myClipPlanes;
+
+#ifdef HAVE_OPENCL
+  mutable OpenGl_ListOfStructure   myAncestorStructures;
+  mutable Standard_Boolean         myIsRaytracable;
+  mutable Standard_Size            myModificationState;
+#endif
 
 public:
 

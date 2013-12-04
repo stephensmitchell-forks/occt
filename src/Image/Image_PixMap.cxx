@@ -69,7 +69,7 @@ Image_PixMap::Image_PixMap()
 {
   memset (&myData, 0, sizeof(myData));
   myData.mySizeBPP   = 1;
-  myData.myTopToDown = 1;
+  myData.myTopToDown = Standard_Size(-1);
   setFormat (Image_PixMap::ImgGray);
 }
 
@@ -232,7 +232,6 @@ void Image_PixMap::Clear (Image_PixMap::ImgFormat thePixelFormat)
   myIsOwnPointer = true;
   myData.mySizeX = myData.mySizeY = myData.mySizeRowBytes = 0;
   setFormat (thePixelFormat);
-  myData.myTopToDown = 1;
 }
 
 // =======================================================================
@@ -261,7 +260,6 @@ Quantity_Color Image_PixMap::PixelColor (const Standard_Integer theX,
                              Quantity_Parameter (Standard_Real (aPixel)),
                              Quantity_Parameter (Standard_Real (aPixel)),
                              Quantity_TOC_RGB);
-      break;
     }
     case ImgRGBAF:
     {

@@ -8,6 +8,10 @@
 #include <TOcafFunction_CylDriver.hxx>
 #include <TCollection_AsciiString.hxx>
 #include <TDF_Tool.hxx>
+#include "Standard_GUID.hxx"
+#include "TFunction_Logbook.hxx"
+#include "TDataStd_Real.hxx"
+#include "TNaming_Builder.hxx"
 
 
 //=======================================================================
@@ -77,7 +81,7 @@ Standard_Boolean TOcafFunction_CylDriver::MustExecute(const TFunction_Logbook& l
 //         : if there are no any mistakes occurred we return 0:
 //         : 0 - no mistakes were found.
 //=======================================================================
-Standard_Integer TOcafFunction_CylDriver::Execute(TFunction_Logbook& log) const
+Standard_Integer TOcafFunction_CylDriver::Execute(TFunction_Logbook& /*log*/) const
 {
 	// Get the values of dimension and position attributes 
 	Handle(TDataStd_Real) TSR;

@@ -33,6 +33,7 @@
 #include <DBRep.hxx>
 
 #include <Font_BRepFont.hxx>
+#include <Font_FontMgr.hxx>
 #include <OSD_Chronometer.hxx>
 #include <TCollection_AsciiString.hxx>
 #include <Visual3d_View.hxx>
@@ -75,8 +76,8 @@
 #include <AIS_InteractiveContext.hxx>
 #include <Geom_Plane.hxx>
 #include <gp_Pln.hxx>
-#include <AIS_AngleDimension.hxx>
 #include <TCollection_ExtendedString.hxx>
+#include <TCollection_HAsciiString.hxx>
 #include <GC_MakePlane.hxx>
 #include <gp_Circ.hxx>
 #include <AIS_Axis.hxx>
@@ -3756,156 +3757,115 @@ static Standard_Integer VConnectShape(Draw_Interpretor& /*di*/,
   return 0;
 }
 
+namespace
+{
+  //! Checks if theMode is already turned on for theObj.
+  static Standard_Boolean InList (const Handle(AIS_InteractiveContext)& theAISContext,
+                                  const Handle(AIS_InteractiveObject)&  theObj,
+                                  const Standard_Integer                theMode)
+  {
+    TColStd_ListOfInteger anActiveModes;
+    theAISContext->ActivatedModes (theObj, anActiveModes);
+    for (TColStd_ListIteratorOfListOfInteger aModeIt (anActiveModes); aModeIt.More(); aModeIt.Next())
+    {
+      if (aModeIt.Value() == theMode)
+      {
+        return Standard_True;
+      }
+    }
+    return Standard_False;
+  }
+};
+
 //===============================================================================================
 //function : VSetSelectionMode
 //purpose  : Sets input selection mode for input object or for all displayed objects 
 //Draw arg : vselmode [object] mode On/Off (1/0)
 //===============================================================================================
-
-// function : InList 
-// purpose  : checks if theMode is already turned on for theObj
-Standard_Boolean InList(Handle(AIS_InteractiveContext) theAISContext, 
-                          Handle(AIS_InteractiveObject) theObj, 
-                          Standard_Integer theMode)
-{
-  TColStd_ListOfInteger anArray; 
-  theAISContext->ActivatedModes(theObj, anArray);
-  TColStd_ListIteratorOfListOfInteger anIt(anArray);
-  for(; anIt.More(); anIt.Next())
-  {
-    if(anIt.Value() == theMode) 
-      return Standard_True;
-  }
-  return Standard_False;
-}
-
-static Standard_Integer VSetSelectionMode(Draw_Interpretor& /*di*/, 
-                                          Standard_Integer argc, 
-                                          const char ** argv)
+static Standard_Integer VSetSelectionMode (Draw_Interpretor& /*di*/,
+                                           Standard_Integer  theArgc,
+                                           const char**      theArgv)
 {
   // Check errors
   Handle(AIS_InteractiveContext) anAISContext = ViewerTest::GetAISContext();
-  if(anAISContext.IsNull())
+  if (anAISContext.IsNull())
   {
-    std::cout << "Call vinit before!\n";
-    return 1; // TCL_ERROR
+    std::cerr << "Call vinit before!\n";
+    return 1;
   }
 
-  // Check the arguments 
-  if(argc != 3 && argc != 4)
+  // Check the arguments
+  if (theArgc != 3 && theArgc != 4)
   {
-    std::cout << "vselmode error : expects at least 2 arguments.\n"
-      << "Type help "<< argv[0] <<" for more information."; 
-    return 1; // TCL_ERROR
+    std::cerr << "vselmode error : expects at least 2 arguments.\n"
+              << "Type help "<< theArgv[0] <<" for more information.";
+    return 1;
   }
 
-  Handle(AIS_InteractiveObject) anObj;
-
-  // Set new selection mode for all objects in context
-  if(argc == 3)
+  // get objects to change selection mode
+  AIS_ListOfInteractive aTargetIOs;
+  if (theArgc == 3)
   {
-    // Get arguments 
-    Standard_Integer aMode = Draw::Atoi(argv[1]);
-    Standard_Boolean isTurnOn = Draw::Atoi(argv[2]); 
-
-    // Get all displayed objects
-    AIS_ListOfInteractive anObjList;
-    anAISContext->DisplayedObjects(anObjList);
-    AIS_ListIteratorOfListOfInteractive anObjIter;
-
-    if(aMode == 0)
-    {
-      if(anAISContext->HasOpenedContext())
-        anAISContext->CloseLocalContext();
-    }
-
-    // Turn on aMode
-    if(aMode != 0 && isTurnOn)
-    {
-      if(!anAISContext->HasOpenedContext())
-      {
-        anAISContext->OpenLocalContext(); 
-        for(anObjIter.Initialize(anObjList); anObjIter.More(); anObjIter.Next())
-        {
-          anAISContext->Activate(anObjIter.Value(), aMode); 
-        }
-      }
-      else
-      {
-        for(anObjIter.Initialize(anObjList); anObjIter.More(); anObjIter.Next())
-        {
-          anObj = anObjIter.Value();
-          if(!InList(anAISContext, anObj, aMode))
-            anAISContext->Activate(anObj, aMode);
-        }
-      }
-    }
-
-    // Turn off aMode
-    if(aMode != 0 && !isTurnOn)
-    {
-      if(anAISContext->HasOpenedContext())
-      {
-        for(anObjIter.Initialize(anObjList); anObjIter.More(); anObjIter.Next())
-        {
-          anObj = anObjIter.Value();
-          if(InList(anAISContext, anObj, aMode))
-            anAISContext->Deactivate(anObj, aMode);
-        }
-      }
-    }
+    anAISContext->DisplayedObjects (aTargetIOs);
   }
-
-  // Set new selection mode for named object 
   else
   {
-    // Get argumnets 
-    Standard_Integer aMode = Draw::Atoi(argv[2]);
-    Standard_Boolean isTurnOn = Draw::Atoi(argv[3]);
-    TCollection_AsciiString aName(argv[1]); 
-
     // Check if there is an object with given name in context
-    if(GetMapOfAIS().IsBound2(aName))
+    const TCollection_AsciiString aNameIO (theArgv[1]);
+    if (GetMapOfAIS().IsBound2 (aNameIO))
     {
-      anObj = Handle(AIS_InteractiveObject)::
-        DownCast(GetMapOfAIS().Find2(aName));
-      if(anObj.IsNull())
+      Handle(AIS_InteractiveObject) anIO = Handle(AIS_InteractiveObject)::DownCast (GetMapOfAIS().Find2 (aNameIO));
+      if (anIO.IsNull())
       {
-        std::cout << "vselmode error : object name is used for non AIS viewer\n"; 
-        return 1; // TCL_ERROR
+        std::cerr << "vselmode error : object name is used for non AIS viewer\n"; 
+        return 1;
       }
+      aTargetIOs.Append (anIO);
+    }
+  }
+
+  const Standard_Integer aSelectionMode = Draw::Atoi (theArgc == 3 ? theArgv[1] : theArgv[2]);
+  const Standard_Boolean toTurnOn       = Draw::Atoi (theArgc == 3 ? theArgv[2] : theArgv[3]);
+  if (aSelectionMode == 0 && anAISContext->HasOpenedContext())
+  {
+    anAISContext->CloseLocalContext();
+  }
+
+  if (aSelectionMode != 0 && toTurnOn) // Turn on specified mode
+  {
+    if (!anAISContext->HasOpenedContext())
+    {
+      anAISContext->OpenLocalContext (Standard_False);
     }
 
-    if(aMode == 0)
+    for (AIS_ListIteratorOfListOfInteractive aTargetIt (aTargetIOs); aTargetIt.More(); aTargetIt.Next())
     {
-      if(anAISContext->HasOpenedContext())
-        anAISContext->CloseLocalContext();
-    }
-    // Turn on aMode
-    if(aMode != 0 && isTurnOn) 
-    {
-      if(!anAISContext->HasOpenedContext())
+      const Handle(AIS_InteractiveObject)& anIO = aTargetIt.Value();
+      if (!InList (anAISContext, anIO, aSelectionMode))
       {
-        anAISContext->OpenLocalContext(); 
-        anAISContext->Activate(anObj, aMode);
-      }
-      else
-      {
-        if(!InList(anAISContext, anObj, aMode))
-          anAISContext->Activate(anObj, aMode);
-      }
-    }
-
-    // Turn off aMode
-    if(aMode != 0 && !isTurnOn)
-    {
-      if(anAISContext->HasOpenedContext())
-      {
-        if(InList(anAISContext, anObj, aMode))
-          anAISContext->Deactivate(anObj, aMode);
+        anAISContext->Load (anIO, -1, Standard_True);
+        anAISContext->Activate (anIO, aSelectionMode);
       }
     }
   }
+
+  if (aSelectionMode != 0 && !toTurnOn) // Turn off specified mode
+  {
+    if (!anAISContext->HasOpenedContext())
+    {
+      return 0;
+    }
+
+    for (AIS_ListIteratorOfListOfInteractive aTargetIt (aTargetIOs); aTargetIt.More(); aTargetIt.Next())
+    {
+      const Handle(AIS_InteractiveObject)& anIO = aTargetIt.Value();
+      if (InList (anAISContext, anIO, aSelectionMode))
+      {
+        anAISContext->Deactivate (anIO, aSelectionMode);
+      }
+    }
+  }
+
   return 0;
 }
 
@@ -4672,6 +4632,49 @@ static Standard_Integer VMarkersTest (Draw_Interpretor&,
   return 0;
 }
 
+//! Auxiliary function to parse font aspect style argument
+static Standard_Boolean parseFontStyle (const TCollection_AsciiString& theArg,
+                                        Font_FontAspect&               theAspect)
+{
+  if (theArg == "regular"
+   || *theArg.ToCString() == 'r')
+  {
+    theAspect = Font_FA_Regular;
+    return Standard_True;
+  }
+  else if (theArg == "bolditalic")
+  {
+    theAspect = Font_FA_BoldItalic;
+    return Standard_True;
+  }
+  else if (theArg == "bold"
+        || *theArg.ToCString() == 'b')
+  {
+    theAspect = Font_FA_Bold;
+    return Standard_True;
+  }
+  else if (theArg == "italic"
+        || *theArg.ToCString() == 'i')
+  {
+    theAspect = Font_FA_Italic;
+    return Standard_True;
+  }
+  return Standard_False;
+}
+
+//! Auxiliary function
+static TCollection_AsciiString fontStyleString (const Font_FontAspect theAspect)
+{
+  switch (theAspect)
+  {
+    case Font_FA_Regular:    return "regular";
+    case Font_FA_BoldItalic: return "bolditalic";
+    case Font_FA_Bold:       return "bold";
+    case Font_FA_Italic:     return "italic";
+    default:                 return "undefined";
+  }
+}
+
 //=======================================================================
 //function : TextToBrep
 //purpose  : Tool for conversion text to occt-shapes
@@ -4702,37 +4705,27 @@ static int TextToBRep (Draw_Interpretor& /*theDI*/,
   while (anArgIter < theArgNb)
   {
     const TCollection_AsciiString anArg (theArgVec[anArgIter++]);
-    if (anArg.Search ("x=") > -1)
+    TCollection_AsciiString anArgCase (anArg);
+    anArgCase.LowerCase();
+    if (anArgCase.Search ("x=") > -1)
     {
       aPenLoc.SetX (anArg.Token ("=", 2).RealValue());
     }
-    else if (anArg.Search ("y=") > -1)
+    else if (anArgCase.Search ("y=") > -1)
     {
       aPenLoc.SetY (anArg.Token ("=", 2).RealValue());
     }
-    else if (anArg.Search ("z=") > -1)
+    else if (anArgCase.Search ("z=") > -1)
     {
       aPenLoc.SetZ (anArg.Token ("=", 2).RealValue());
     }
-    else if (anArg.Search ("composite=") > -1)
+    else if (anArgCase.Search ("composite=") > -1)
     {
       isCompositeCurve = (anArg.Token ("=", 2).IntegerValue() == 1);
     }
-    else if (anArg.Search ("regular") > -1)
+    else if (parseFontStyle (anArgCase, aFontAspect))
     {
-      aFontAspect = Font_FA_Regular;
-    }
-    else if (anArg.Search ("bolditalic") > -1)
-    {
-      aFontAspect = Font_FA_BoldItalic;
-    }
-    else if (anArg.Search ("bold") > -1)
-    {
-      aFontAspect = Font_FA_Bold;
-    }
-    else if (anArg.Search ("italic") > -1)
-    {
-      aFontAspect = Font_FA_Italic;
+      //
     }
     else
     {
@@ -4749,6 +4742,136 @@ static int TextToBRep (Draw_Interpretor& /*theDI*/,
 
   aPenAx3.SetLocation (aPenLoc);
   DBRep::Set (aResName, aFont.RenderText (aText, aPenAx3));
+  return 0;
+}
+
+//=======================================================================
+//function : VFont
+//purpose  : Font management
+//=======================================================================
+
+static int VFont (Draw_Interpretor& theDI,
+                  Standard_Integer  theArgNb,
+                  const char**      theArgVec)
+{
+  Handle(Font_FontMgr) aMgr = Font_FontMgr::GetInstance();
+  if (theArgNb < 2)
+  {
+    // just print the list of available fonts
+    Standard_Boolean isFirst = Standard_True;
+    for (Font_NListOfSystemFont::Iterator anIter (aMgr->GetAvailableFonts());
+         anIter.More(); anIter.Next())
+    {
+      const Handle(Font_SystemFont)& aFont = anIter.Value();
+      if (!isFirst)
+      {
+        theDI << "\n";
+      }
+
+      theDI << aFont->FontName()->String()
+            << " " << fontStyleString (aFont->FontAspect())
+            << " " << aFont->FontPath()->String();
+      isFirst = Standard_False;
+    }
+    return 0;
+  }
+
+  for (Standard_Integer anArgIter = 1; anArgIter < theArgNb; ++anArgIter)
+  {
+    const TCollection_AsciiString anArg (theArgVec[anArgIter]);
+    TCollection_AsciiString anArgCase (anArg);
+    anArgCase.LowerCase();
+    if (anArgCase == "find")
+    {
+      if (++anArgIter >= theArgNb)
+      {
+        std::cerr << "Wrong syntax at argument '" << anArg.ToCString() << "'!\n";
+        return 1;
+      }
+
+      Standard_CString aFontName   = theArgVec[anArgIter];
+      Font_FontAspect  aFontAspect = Font_FA_Undefined;
+      if (++anArgIter < theArgNb)
+      {
+        anArgCase = theArgVec[anArgIter];
+        anArgCase.LowerCase();
+        if (!parseFontStyle (anArgCase, aFontAspect))
+        {
+          --anArgIter;
+        }
+      }
+      Handle(Font_SystemFont) aFont = aMgr->FindFont (new TCollection_HAsciiString (aFontName), aFontAspect, -1);
+      if (aFont.IsNull())
+      {
+        std::cerr << "Error: font '" << aFontName << "' is not found!\n";
+        continue;
+      }
+
+      theDI << aFont->FontName()->String()
+            << " " << fontStyleString (aFont->FontAspect())
+            << " " << aFont->FontPath()->String();
+    }
+    else if (anArgCase == "add"
+          || anArgCase == "register")
+    {
+      if (++anArgIter >= theArgNb)
+      {
+        std::cerr << "Wrong syntax at argument '" << anArg.ToCString() << "'!\n";
+        return 1;
+      }
+      Standard_CString aFontPath   = theArgVec[anArgIter];
+      Standard_CString aFontName   = NULL;
+      Font_FontAspect  aFontAspect = Font_FA_Undefined;
+      if (++anArgIter < theArgNb)
+      {
+        if (!parseFontStyle (anArgCase, aFontAspect))
+        {
+          aFontName = theArgVec[anArgIter];
+        }
+        if (++anArgIter < theArgNb)
+        {
+          anArgCase = theArgVec[anArgIter];
+          anArgCase.LowerCase();
+          if (!parseFontStyle (anArgCase, aFontAspect))
+          {
+            --anArgIter;
+          }
+        }
+      }
+
+      Handle(Font_SystemFont) aFont = aMgr->CheckFont (aFontPath);
+      if (aFont.IsNull())
+      {
+        std::cerr << "Error: font '" << aFontPath << "' is not found!\n";
+        continue;
+      }
+
+      if (aFontAspect != Font_FA_Undefined
+       || aFontName   != NULL)
+      {
+        if (aFontAspect == Font_FA_Undefined)
+        {
+          aFontAspect = aFont->FontAspect();
+        }
+        Handle(TCollection_HAsciiString) aName = aFont->FontName();
+        if (aFontName != NULL)
+        {
+          aName = new TCollection_HAsciiString (aFontName);
+        }
+        aFont = new Font_SystemFont (aName, aFontAspect, new TCollection_HAsciiString (aFontPath));
+      }
+
+      aMgr->RegisterFont (aFont, Standard_True);
+      theDI << aFont->FontName()->String()
+            << " " << fontStyleString (aFont->FontAspect())
+            << " " << aFont->FontPath()->String();
+    }
+    else
+    {
+      std::cerr << "Warning! Unknown argument '" << anArg.ToCString() << "'\n";
+    }
+  }
+
   return 0;
 }
 
@@ -4891,4 +5014,8 @@ void ViewerTest::ObjectCommands(Draw_Interpretor& theCommands)
   theCommands.Add ("text2brep",
                    "text2brep: res text fontName fontSize [x=0.0 y=0.0 z=0.0 composite=1 {regular,bold,italic,bolditalic=regular}]\n",
                    __FILE__, TextToBRep, group);
+  theCommands.Add ("vfont",
+                            "vfont [add pathToFont [fontName] [regular,bold,italic,bolditalic=undefined]]"
+                   "\n\t\t:        [find fontName [regular,bold,italic,bolditalic=undefined]]",
+                   __FILE__, VFont, group);
 }

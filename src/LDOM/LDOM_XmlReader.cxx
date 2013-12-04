@@ -38,7 +38,6 @@
 //#include <ctype.h>
 
 const int XML_MIN_BUFFER = 10;
-const int MAX_ATTRIBUTES = 512;
 const int FILE_NONVALUE  = -1;
 
 typedef enum {
@@ -80,6 +79,7 @@ LDOM_XmlReader::LDOM_XmlReader (const int                       aFileDes,
 #endif
        myError          (anErrorString),
        myDocument       (aDocument),
+	   myElement        (NULL),
        myPtr            (&myBuffer[0]),
        myEndPtr         (&myBuffer[0])
 {}
@@ -97,6 +97,7 @@ LDOM_XmlReader::LDOM_XmlReader (istream&                        anInput,
        myIStream        (anInput),
        myError          (anErrorString),
        myDocument       (aDocument),
+	   myElement        (NULL),
        myPtr            (&myBuffer[0]),
        myEndPtr         (&myBuffer[0])
 {}

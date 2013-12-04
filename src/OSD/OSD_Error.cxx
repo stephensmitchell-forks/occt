@@ -563,7 +563,7 @@ static ERROR_TABLE commErrorTable [] = {
 
 };
 
-#define COMM_ERR_TABLE_SIZE (  sizeof ( commErrorTable ) / sizeof ( commErrorTable[ 0 ] )  )
+#define COMM_ERR_TABLE_SIZE (int)(sizeof(commErrorTable) / sizeof(commErrorTable[0]))
 
 static ERROR_TABLE dirErrorTable[] = {
 
@@ -578,7 +578,7 @@ static ERROR_TABLE dirErrorTable[] = {
 
 };
 
-#define DIR_ERR_TABLE_SIZE (  sizeof ( dirErrorTable ) / sizeof ( dirErrorTable[ 0 ] )  )
+#define DIR_ERR_TABLE_SIZE (int)(sizeof(dirErrorTable) / sizeof(dirErrorTable[0]))
 
 static ERROR_TABLE fileErrorTable[] = {
 
@@ -604,7 +604,7 @@ static ERROR_TABLE fileErrorTable[] = {
 
 };
 
-#define FILE_ERR_TABLE_SIZE (  sizeof ( fileErrorTable ) / sizeof ( fileErrorTable[ 0 ] )  )
+#define FILE_ERR_TABLE_SIZE (int)(sizeof(fileErrorTable) / sizeof(fileErrorTable[0]))
 
 static ERROR_TABLE fileNodeErrorTable[] = {
 
@@ -620,16 +620,15 @@ static ERROR_TABLE fileNodeErrorTable[] = {
 
 };
 
-#define FILE_NODE_ERR_TABLE_SIZE (  sizeof ( fileNodeErrorTable ) /    \
-                                    sizeof ( fileNodeErrorTable[ 0 ] ) \
-                                 )
+#define FILE_NODE_ERR_TABLE_SIZE (int)(sizeof(fileNodeErrorTable) / sizeof(fileNodeErrorTable[0]))
 
 static Standard_Integer _get_comm_error ( DWORD );
 
-OSD_Error :: OSD_Error () {
-
+OSD_Error :: OSD_Error () : 
+   myCode((OSD_WhoAmI)0),
+   extCode(0)
+{
  Reset ();
-
 }  // end constructor ( 1 )
 
 void OSD_Error :: Perror () {

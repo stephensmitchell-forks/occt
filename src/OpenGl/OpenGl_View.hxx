@@ -37,7 +37,7 @@
 
 #include <Graphic3d_CView.hxx>
 #include <Graphic3d_CGraduatedTrihedron.hxx>
-#include <Graphic3d_SetOfHClipPlane.hxx>
+#include <Graphic3d_SequenceOfHClipPlane.hxx>
 #include <Visual3d_TypeOfSurfaceDetail.hxx>
 
 #include <OpenGl_telem_view.hxx>
@@ -45,6 +45,8 @@
 #include <OpenGl_Light.hxx>
 
 #include <Handle_OpenGl_Context.hxx>
+#include <Handle_OpenGl_GraphicDriver.hxx>
+#include <Handle_OpenGl_Display.hxx>
 #include <Handle_OpenGl_Workspace.hxx>
 #include <Handle_OpenGl_View.hxx>
 #include <Handle_OpenGl_Texture.hxx>
@@ -97,26 +99,27 @@ class OpenGl_GraduatedTrihedron;
 class OpenGl_Structure;
 class OpenGl_Trihedron;
 class Handle(OpenGl_PrinterContext);
+class OpenGl_StateCounter;
 
 class OpenGl_View : public MMgt_TShared
 {
  public:
-  OpenGl_View (const CALL_DEF_VIEWCONTEXT &AContext);
+  OpenGl_View (const CALL_DEF_VIEWCONTEXT &AContext, OpenGl_StateCounter* theCounter);
   virtual ~OpenGl_View ();
 
   void ReleaseGlResources (const Handle(OpenGl_Context)& theCtx);
 
   void SetTextureEnv (const Handle(OpenGl_Context)&       theCtx,
                       const Handle(Graphic3d_TextureEnv)& theTexture);
-  void SetSurfaceDetail (const Visual3d_TypeOfSurfaceDetail AMode) { mySurfaceDetail = AMode; }
+  void SetSurfaceDetail (const Visual3d_TypeOfSurfaceDetail AMode);
   void SetBackfacing (const Standard_Integer AMode);
   void SetLights (const CALL_DEF_VIEWCONTEXT &AContext);
   void SetAntiAliasing (const Standard_Boolean AMode) { myAntiAliasing = AMode; }
-  void SetClipPlanes (const Graphic3d_SetOfHClipPlane &thePlanes) { myClipPlanes = thePlanes; }
+  void SetClipPlanes (const Graphic3d_SequenceOfHClipPlane &thePlanes) { myClipPlanes = thePlanes; }
   void SetVisualisation (const CALL_DEF_VIEWCONTEXT &AContext);
 
   void SetClipLimit (const Graphic3d_CView& theCView);
-  void SetMapping (const Graphic3d_CView& theCView);
+  void SetMapping (const Handle(OpenGl_Display)& theGlDisplay, const Graphic3d_CView& theCView);
   void SetOrientation (const Graphic3d_CView& theCView);
 
   void SetFog (const Graphic3d_CView& theCView, const Standard_Boolean theFlag);
@@ -151,8 +154,9 @@ class OpenGl_View : public MMgt_TShared
 
   Standard_Integer Backfacing () const { return myBackfacing; }
 
-  const TEL_TRANSFORM_PERSISTENCE * BeginTransformPersistence ( const TEL_TRANSFORM_PERSISTENCE *ATransPers );
-  void EndTransformPersistence ();
+  const TEL_TRANSFORM_PERSISTENCE * BeginTransformPersistence (const Handle(OpenGl_Context)& theCtx,
+                                                               const TEL_TRANSFORM_PERSISTENCE *theTransPers);
+  void EndTransformPersistence (const Handle(OpenGl_Context)& theCtx);
 
   //! Add structure to display list with specified priority.
   //! The structure will be added to associated with it z layer.
@@ -187,6 +191,26 @@ class OpenGl_View : public MMgt_TShared
                const Aspect_CLayer2d&               theCUnderLayer,
                const Aspect_CLayer2d&               theCOverLayer);
 
+
+  void DrawBackground (const Handle(OpenGl_Workspace)& theWorkspace);
+
+  //! Returns list of OpenGL Z-layers.
+  const OpenGl_LayerList& LayerList() const { return myZLayers; }
+
+  //! Returns list of openGL light sources.
+  const OpenGl_ListOfLight& LightList() const { return myLights; }
+
+  //! Returns OpenGL environment map.
+  const Handle(OpenGl_Texture)& TextureEnv() const { return myTextureEnv; }
+
+  //! Returns visualization mode for objects in the view.
+  Visual3d_TypeOfSurfaceDetail SurfaceDetail() const { return mySurfaceDetail; }
+
+#ifdef HAVE_OPENCL
+  //! Returns modification state for ray-tracing.
+  Standard_Size ModificationState() const { return myModificationState; }
+#endif
+
 public:
 
   DEFINE_STANDARD_RTTI(OpenGl_View) // Type definition
@@ -195,7 +219,6 @@ public:
 
   void RenderStructs (const Handle(OpenGl_Workspace) &AWorkspace);
   void RedrawLayer2d (const Handle(OpenGl_PrinterContext)& thePrintContext,
-                      const Handle(OpenGl_Workspace)&      theWorkspace,
                       const Graphic3d_CView&               theCView,
                       const Aspect_CLayer2d&               theCLayer);
 
@@ -220,7 +243,7 @@ public:
   OPENGL_EXTRA_REP myExtra;
   //}
 
-  Graphic3d_SetOfHClipPlane myClipPlanes;
+  Graphic3d_SequenceOfHClipPlane myClipPlanes;
   
   OPENGL_FOG myFog;
   OpenGl_Trihedron*          myTrihedron;
@@ -243,6 +266,22 @@ public:
 
   const TEL_TRANSFORM_PERSISTENCE *myTransPers;
   Standard_Boolean myIsTransPers;
+
+  OpenGl_StateCounter* myStateCounter;
+
+  Standard_Size myCurrOrientationState; // <-- delete it after merge with new camera
+  Standard_Size myCurrViewMappingState; // <-- delete it after merge with new camera
+  Standard_Size myCurrLightSourceState;
+
+  typedef std::pair<Standard_Size, Standard_Size> StateInfo;
+
+  StateInfo myLastOrientationState;
+  StateInfo myLastViewMappingState;
+  StateInfo myLastLightSourceState;
+
+#ifdef HAVE_OPENCL
+  Standard_Size myModificationState;
+#endif
 
  public:
   DEFINE_STANDARD_ALLOC

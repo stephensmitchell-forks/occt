@@ -17,7 +17,6 @@
 // purpose or non-infringement. Please see the License for the specific terms
 // and conditions governing the rights and limitations under the License.
 
-
 #include <QABugs.hxx>
 
 #include <Draw_Interpretor.hxx>
@@ -46,7 +45,7 @@
 #include <BRepPrimAPI_MakeBox.hxx>
 #include <BRepPrimAPI_MakeSphere.hxx>
 #include <BRepAlgo_Cut.hxx>
-
+#include <NCollection_Map.hxx>
 #include <TCollection_HAsciiString.hxx>
 
 #define QCOMPARE(val1, val2) \
@@ -296,7 +295,7 @@ Standard_Integer OCC22595 (Draw_Interpretor& di, Standard_Integer /*argc*/, cons
 #include <BRepExtrema_DistShapeShape.hxx>
 #include <BRepTools.hxx>
 
-Standard_Boolean static OCC23774Test(const TopoDS_Face& grossPlateFace, const TopoDS_Shape& originalWire, Draw_Interpretor& di)
+static Standard_Boolean OCC23774Test(const TopoDS_Face& grossPlateFace, const TopoDS_Shape& originalWire, Draw_Interpretor& di)
 {
   BRepExtrema_DistShapeShape distShapeShape(grossPlateFace,originalWire,Extrema_ExtFlag_MIN);
   if(!distShapeShape.IsDone()) {
@@ -565,6 +564,45 @@ static int test_offset(Draw_Interpretor& di, Standard_Integer argc, const char**
 
   di << "Result: f2" << "\n";
 
+  return 0;
+}
+
+#include <Geom_Curve.hxx>
+#include <Geom_Surface.hxx>
+#include <Precision.hxx>
+#include <ShapeConstruct_ProjectCurveOnSurface.hxx>
+//=======================================================================
+//function : OCC24008
+//purpose  : 
+//=======================================================================
+static Standard_Integer OCC24008 (Draw_Interpretor& di, Standard_Integer argc, const char ** argv)
+{
+  if (argc != 3) {
+    di << "Usage: " << argv[0] << " invalid number of arguments" << "\n";
+    return 1;
+  }
+  Handle(Geom_Curve) aCurve = DrawTrSurf::GetCurve(argv[1]);
+  Handle(Geom_Surface) aSurf = DrawTrSurf::GetSurface(argv[2]);
+  if (aCurve.IsNull()) {
+    di << "Curve was not read" << "\n";
+	return 1;
+  }
+  if (aSurf.IsNull()) {
+	di << "Surface was not read" << "\n";
+	return 1;
+  }
+  ShapeConstruct_ProjectCurveOnSurface aProj;
+  aProj.Init (aSurf, Precision::Confusion());
+  try {
+    Handle(Geom2d_Curve) aPCurve;
+    aProj.Perform (aCurve, aCurve->FirstParameter(), aCurve->LastParameter(), aPCurve);
+    if (aPCurve.IsNull()) {
+	  di << "PCurve was not created" << "\n";
+	  return 1;
+    }
+  } catch (...) {
+    di << "Exception was caught" << "\n";
+  }
   return 0;
 }
 
@@ -1297,6 +1335,103 @@ static Standard_Integer OCC24137 (Draw_Interpretor& theDI, Standard_Integer theN
   return 0;
 }
 
+//! Check boolean operations on NCollection_Map
+static Standard_Integer OCC24271 (Draw_Interpretor& di,
+                                  Standard_Integer  /*theArgNb*/,
+                                  const char**      /*theArgVec*/)
+{
+  // input data
+  const Standard_Integer aLeftLower  = 1;
+  const Standard_Integer aLeftUpper  = 10;
+  const Standard_Integer aRightLower = 5;
+  const Standard_Integer aRightUpper = 15;
+
+  // define arguments
+  NCollection_Map<Standard_Integer> aMapLeft;
+  for (Standard_Integer aKeyIter = aLeftLower; aKeyIter <= aLeftUpper; ++aKeyIter)
+  {
+    aMapLeft.Add (aKeyIter);
+  }
+
+  NCollection_Map<Standard_Integer> aMapRight;
+  for (Standard_Integer aKeyIter = aRightLower; aKeyIter <= aRightUpper; ++aKeyIter)
+  {
+    aMapRight.Add (aKeyIter);
+  }
+
+  QCOMPARE (aMapLeft .Contains (aMapRight), Standard_False);
+  QCOMPARE (aMapRight.Contains (aMapLeft),  Standard_False);
+
+  // validate Union operation
+  NCollection_Map<Standard_Integer> aMapUnion;
+  aMapUnion.Union (aMapLeft, aMapRight);
+  QCOMPARE (aMapUnion.Extent(), aRightUpper - aLeftLower + 1);
+  for (Standard_Integer aKeyIter = aLeftLower; aKeyIter <= aRightUpper; ++aKeyIter)
+  {
+    QCOMPARE (aMapUnion.Contains (aKeyIter), Standard_True);
+  }
+
+  // validate Intersection operation
+  NCollection_Map<Standard_Integer> aMapSect;
+  aMapSect.Intersection (aMapLeft, aMapRight);
+  QCOMPARE (aMapSect.Extent(), aLeftUpper - aRightLower + 1);
+  for (Standard_Integer aKeyIter = aRightLower; aKeyIter <= aLeftUpper; ++aKeyIter)
+  {
+    QCOMPARE (aMapSect.Contains (aKeyIter), Standard_True);
+  }
+  QCOMPARE (aMapLeft .Contains (aMapSect), Standard_True);
+  QCOMPARE (aMapRight.Contains (aMapSect), Standard_True);
+
+  // validate Substruction operation
+  NCollection_Map<Standard_Integer> aMapSubsLR;
+  aMapSubsLR.Subtraction (aMapLeft, aMapRight);
+  QCOMPARE (aMapSubsLR.Extent(), aRightLower - aLeftLower);
+  for (Standard_Integer aKeyIter = aLeftLower; aKeyIter < aRightLower; ++aKeyIter)
+  {
+    QCOMPARE (aMapSubsLR.Contains (aKeyIter), Standard_True);
+  }
+
+  NCollection_Map<Standard_Integer> aMapSubsRL;
+  aMapSubsRL.Subtraction (aMapRight, aMapLeft);
+  QCOMPARE (aMapSubsRL.Extent(), aRightUpper - aLeftUpper);
+  for (Standard_Integer aKeyIter = aLeftUpper + 1; aKeyIter < aRightUpper; ++aKeyIter)
+  {
+    QCOMPARE (aMapSubsRL.Contains (aKeyIter), Standard_True);
+  }
+
+  // validate Difference operation
+  NCollection_Map<Standard_Integer> aMapDiff;
+  aMapDiff.Difference (aMapLeft, aMapRight);
+  QCOMPARE (aMapDiff.Extent(), aRightLower - aLeftLower + aRightUpper - aLeftUpper);
+  for (Standard_Integer aKeyIter = aLeftLower; aKeyIter < aRightLower; ++aKeyIter)
+  {
+    QCOMPARE (aMapDiff.Contains (aKeyIter), Standard_True);
+  }
+  for (Standard_Integer aKeyIter = aLeftUpper + 1; aKeyIter < aRightUpper; ++aKeyIter)
+  {
+    QCOMPARE (aMapDiff.Contains (aKeyIter), Standard_True);
+  }
+
+  // validate Exchange operation
+  NCollection_Map<Standard_Integer> aMapSwap;
+  aMapSwap.Exchange (aMapSect);
+  for (Standard_Integer aKeyIter = aRightLower; aKeyIter <= aLeftUpper; ++aKeyIter)
+  {
+    QCOMPARE (aMapSwap.Contains (aKeyIter), Standard_True);
+  }
+  QCOMPARE (aMapSect.IsEmpty(), Standard_True);
+  aMapSwap.Add (34);
+  aMapSect.Add (43);
+
+  NCollection_Map<Standard_Integer> aMapCopy (aMapSwap);
+  QCOMPARE (aMapCopy.IsEqual (aMapSwap), Standard_True);
+  aMapCopy.Remove (34);
+  aMapCopy.Add    (43);
+  QCOMPARE (aMapCopy.IsEqual (aMapSwap), Standard_False);
+
+  return 0;
+}
+
 void QABugs::Commands_19(Draw_Interpretor& theCommands) {
   const char *group = "QABugs";
 
@@ -1314,9 +1449,11 @@ void QABugs::Commands_19(Draw_Interpretor& theCommands) {
   theCommands.Add ("OCC23952intersect", "OCC23952intersect nbsol shape1 shape2", __FILE__, OCC23952intersect, group);
   theCommands.Add ("test_offset", "test_offset", __FILE__, test_offset, group);
   theCommands.Add("OCC23945", "OCC23945 surfname U V X Y Z [DUX DUY DUZ DVX DVY DVZ [D2UX D2UY D2UZ D2VX D2VY D2VZ D2UVX D2UVY D2UVZ]]", __FILE__, OCC23945,group);
+  theCommands.Add ("OCC24008", "OCC24008 curve surface", __FILE__, OCC24008, group);
   theCommands.Add ("OCC24019", "OCC24019 aShape", __FILE__, OCC24019, group);
   theCommands.Add ("OCC11758", "OCC11758", __FILE__, OCC11758, group);
   theCommands.Add ("OCC24005", "OCC24005 result", __FILE__, OCC24005, group);
   theCommands.Add ("OCC24137", "OCC24137 face vertex U V [N]", __FILE__, OCC24137, group);
+  theCommands.Add ("OCC24271", "Boolean operations on NCollection_Map", __FILE__, OCC24271, group);
   return;
 }

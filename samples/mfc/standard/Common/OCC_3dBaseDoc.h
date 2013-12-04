@@ -10,13 +10,18 @@
 #endif // _MSC_VER > 1000
 
 #include "OCC_BaseDoc.h"
+#include "DimensionDlg.h"
 #include <Standard_Macro.hxx>
 
 class AFX_EXT_CLASS OCC_3dBaseDoc : public OCC_BaseDoc  
 {
+protected:
+  CDimensionDlg myDimensionDlg;
+  int myPopupMenuNumber;
 public:
 
   OCC_3dBaseDoc();
+  ~OCC_3dBaseDoc();
 
   void SetMaterial(Graphic3d_NameOfMaterial Material);
 
@@ -78,6 +83,9 @@ protected:
   afx_msg void OnUpdateObjectDisplayall(CCmdUI* pCmdUI);
   afx_msg void OnObjectRemove();
   afx_msg void OnUpdateObjectRemove(CCmdUI* pCmdUI);
+  afx_msg void OnObjectAddDimensions();
+  afx_msg void OnUpdateObjectAddDimensions(CCmdUI* pCmdUI);
+
   //}}AFX_MSG
   DECLARE_MESSAGE_MAP()
 };

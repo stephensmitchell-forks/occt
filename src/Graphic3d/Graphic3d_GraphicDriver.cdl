@@ -91,7 +91,8 @@ uses
     NListOfHAsciiString from Graphic3d,
     FontAspect          from Font,
     CGraduatedTrihedron from Graphic3d,
-    ClipPlane           from Graphic3d
+    ClipPlane           from Graphic3d,
+    Ax2                 from gp
 
 raises
 
@@ -450,6 +451,19 @@ is
                       ACView    : CView from Graphic3d )
         is deferred;
     ---Purpose:
+
+    SetStencilTestOptions ( me          : mutable;
+                            theCGroup   : CGroup from Graphic3d;
+                            theIsEnabled: Boolean from Standard)
+    is deferred;
+    ---Purpose: sets the stencil test to theIsEnabled state;
+    
+    SetFlippingOptions (me          : mutable;
+                        theCGroup   : CGroup from Graphic3d;
+                        theIsEnabled: Boolean from Standard;
+                        theRefPlane : Ax2 from gp)
+    is deferred;
+    ---Purpose: sets the flipping to theIsEnabled state for the given graphic group.
 
     ----------------------------------------
     -- Category: Methods to create Text
@@ -934,16 +948,6 @@ is
         returns Integer from Standard is deferred;
         ---Purpose: Get Z layer ID of structure. If the structure doesn't
         -- exists in graphic driver, the method returns -1.
-
-    --------------------------
-    -- Category: Class methods
-    --------------------------
-
-    Light ( myclass;
-        ACLight : CLight from Graphic3d;
-        Update  : Boolean from Standard )
-        returns Integer from Standard;
-    ---Purpose: call_togl_light
 
     -----------------------------
     -- Category: Internal methods

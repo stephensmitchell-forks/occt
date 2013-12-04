@@ -27,6 +27,7 @@
 
 #include <OpenGl_Element.hxx>
 #include <Handle_OpenGl_PointSprite.hxx>
+#include <Handle_OpenGl_ShaderProgram.hxx>
 
 #include <Image_PixMap_Handle.hxx>
 
@@ -36,29 +37,135 @@ public:
 
   OpenGl_AspectMarker();
 
-  void Init (const Handle(OpenGl_Context)& theContext,
-             const CALL_DEF_CONTEXTMARKER& theAspect);
+  //! Copy parameters
+  void SetAspect (const CALL_DEF_CONTEXTMARKER& theAspect);
 
-  const TEL_COLOUR&   Color()      const { return myColor; }
-  Aspect_TypeOfMarker Type()       const { return myType;  }
-  Standard_ShortReal  Scale()      const { return myScale; }
-  Standard_ShortReal  MarkerSize() const { return myMarkerSize; }
-  const Handle(OpenGl_PointSprite)& Sprite()          const { return mySprite;  }
-  const Handle(OpenGl_PointSprite)& SpriteHighlight() const { return mySpriteA; }
+  //! @return marker color
+  const TEL_COLOUR& Color() const
+  {
+    return myColor;
+  }
+
+  //! @return maker type
+  Aspect_TypeOfMarker Type() const
+  {
+    return myType;
+  }
+
+  //! @return marker scale
+  Standard_ShortReal Scale() const
+  {
+    return myScale;
+  }
+
+  //! @return marker size
+  Standard_ShortReal MarkerSize() const
+  {
+    return myMarkerSize;
+  }
+
+  //! Init and return OpenGl point sprite resource.
+  //! @return point sprite texture.
+  const Handle(OpenGl_PointSprite)& SpriteRes (const Handle(OpenGl_Workspace)& theWorkspace) const
+  {
+    if (!myResources.IsSpriteReady())
+    {
+      myResources.BuildSprites (theWorkspace, myMarkerImage, myType, myScale, myColor, myMarkerSize);
+      myResources.SetSpriteReady();
+    }
+
+    return myResources.Sprite;
+  }
+
+  //! Init and return OpenGl highlight point sprite resource.
+  //! @return point sprite texture for highlight.
+  const Handle(OpenGl_PointSprite)& SpriteHighlightRes (const Handle(OpenGl_Workspace)& theWorkspace) const
+  {
+    if (!myResources.IsSpriteReady())
+    {
+      myResources.BuildSprites (theWorkspace, myMarkerImage, myType, myScale, myColor, myMarkerSize);
+      myResources.SetSpriteReady();
+    }
+
+    return myResources.SpriteA;
+  }
+
+  //! Init and return OpenGl shader program resource.
+  //! @return shader program resource.
+  const Handle(OpenGl_ShaderProgram)& ShaderProgramRes (const Handle(OpenGl_Workspace)& theWorkspace) const
+  {
+    if (!myResources.IsShaderReady())
+    {
+      myResources.BuildShader (theWorkspace, myShaderProgram);
+      myResources.SetShaderReady();
+    }
+
+    return myResources.ShaderProgram;
+  }
 
   virtual void Render  (const Handle(OpenGl_Workspace)& theWorkspace) const;
   virtual void Release (const Handle(OpenGl_Context)&   theContext);
 
-protected:
+protected: //! @name ordinary aspect properties
 
-  TEL_COLOUR                 myColor;
-  Aspect_TypeOfMarker        myType;
-  Standard_ShortReal         myScale;
-  Standard_ShortReal         myMarkerSize;
-  TCollection_AsciiString    mySpriteKey;    //!< shared resource ID
-  TCollection_AsciiString    mySpriteAKey;   //!< shared resource ID
-  Handle(OpenGl_PointSprite) mySprite;       //!< normal sprite
-  Handle(OpenGl_PointSprite) mySpriteA;      //!< extra alphs-only sprite for RGB sprites
+  TEL_COLOUR                      myColor;
+  Aspect_TypeOfMarker             myType;
+  Standard_ShortReal              myScale;
+  mutable Standard_ShortReal      myMarkerSize;
+  Handle(Graphic3d_MarkerImage)   myMarkerImage;
+  Handle(Graphic3d_ShaderProgram) myShaderProgram;
+
+protected: //! @name OpenGl resources
+
+  //! OpenGl resources
+  mutable struct Resources
+  {
+  public:
+
+    Resources() :
+        SpriteKey (""),
+        SpriteAKey (""),
+        myIsSpriteReady (Standard_False),
+        myIsShaderReady (Standard_False) {}
+
+    Standard_Boolean IsSpriteReady() const { return myIsSpriteReady; }
+    Standard_Boolean IsShaderReady() const { return myIsShaderReady; }
+    void SetSpriteReady() { myIsSpriteReady = Standard_True; }
+    void SetShaderReady() { myIsShaderReady = Standard_True; }
+    void ResetSpriteReadiness() { myIsSpriteReady = Standard_False; }
+    void ResetShaderReadiness() { myIsShaderReady = Standard_False; }
+
+    void BuildSprites (const Handle(OpenGl_Workspace)& theWS,
+                       const Handle(Graphic3d_MarkerImage)& theMarkerImage,
+                       const Aspect_TypeOfMarker theType,
+                       const Standard_ShortReal theScale,
+                       const TEL_COLOUR& theColor,
+                       Standard_ShortReal& theMarkerSize);
+
+    void BuildShader (const Handle(OpenGl_Workspace)& theWS, const Handle(Graphic3d_ShaderProgram)& theShader);
+
+    void SpriteKeys (const Handle(Graphic3d_MarkerImage)& theMarkerImage,
+                     const Aspect_TypeOfMarker theType,
+                     const Standard_ShortReal theScale,
+                     const TEL_COLOUR& theColor,
+                     TCollection_AsciiString& theKey,
+                     TCollection_AsciiString& theKeyA);
+
+    Handle(OpenGl_PointSprite)   Sprite;
+    TCollection_AsciiString      SpriteKey;
+
+    Handle(OpenGl_PointSprite)   SpriteA;
+    TCollection_AsciiString      SpriteAKey;
+
+    Handle(OpenGl_ShaderProgram) ShaderProgram;
+    TCollection_AsciiString      ShaderProgramId;
+
+  private:
+
+    Standard_Boolean myIsSpriteReady;
+    Standard_Boolean myIsShaderReady;
+
+  } myResources;
 
 public:
 

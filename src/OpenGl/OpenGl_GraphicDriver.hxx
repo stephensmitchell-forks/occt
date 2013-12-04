@@ -22,6 +22,7 @@
 
 #include <Graphic3d_GraphicDriver.hxx>
 #include <Handle_OpenGl_GraphicDriver.hxx>
+#include <Handle_OpenGl_Display.hxx>
 #include <OpenGl_Context.hxx>
 #include <OpenGl_PrinterContext.hxx>
 
@@ -43,7 +44,7 @@
 #include <Aspect_TypeOfTriedronEcho.hxx>
 #include <Aspect_Handle.hxx>
 #include <Aspect_PrintAlgo.hxx>
-
+#include <gp_Ax2.hxx>
 #include <Graphic3d_CView.hxx>
 #include <Graphic3d_CStructure.hxx>
 #include <Graphic3d_CGroup.hxx>
@@ -80,16 +81,34 @@ class OpenGl_Element;
 class OpenGl_Structure;
 class OpenGl_Text;
 
+//! Tool class to implement consistent state counter
+//! for objects inside the same driver instance.
+class OpenGl_StateCounter
+{
+public:
+
+  OpenGl_StateCounter() : myCounter (0) { }
+
+  Standard_Size Increment() { return ++myCounter; }
+
+private:
+  
+  Standard_Size myCounter;
+};
+
 //! This class defines an OpenGl graphic driver <br>
 class OpenGl_GraphicDriver : public Graphic3d_GraphicDriver
 {
 public:
 
   //! Constructor
-  Standard_EXPORT OpenGl_GraphicDriver (const Standard_CString theShrName = "TKOpenGl");
+  Standard_EXPORT OpenGl_GraphicDriver (const Handle(Aspect_DisplayConnection)& theDisplayConnection);
 
+  //! Constructor
+  Standard_EXPORT OpenGl_GraphicDriver (const Standard_CString theShrName = "TKOpenGl");
   Standard_EXPORT Standard_Boolean Begin (const Handle(Aspect_DisplayConnection)& theDisplayConnection);
   Standard_EXPORT void End ();
+
   Standard_EXPORT Standard_Integer InquireLightLimit ();
   Standard_EXPORT void InquireMat (const Graphic3d_CView& ACView, TColStd_Array2OfReal& AMatO, TColStd_Array2OfReal& AMatM);
   Standard_EXPORT Standard_Integer InquireViewLimit ();
@@ -157,6 +176,7 @@ public:
   Standard_EXPORT void ViewMapping (const Graphic3d_CView& ACView, const Standard_Boolean AWait);
   Standard_EXPORT void ViewOrientation (const Graphic3d_CView& ACView,const Standard_Boolean AWait);
   Standard_EXPORT void Environment (const Graphic3d_CView& ACView);
+  Standard_EXPORT void SetStencilTestOptions (const Graphic3d_CGroup& theCGroup, const Standard_Boolean theIsEnabled);
   Standard_EXPORT void Text (const Graphic3d_CGroup& ACGroup, const Standard_CString AText, const Graphic3d_Vertex& APoint, const Standard_Real AHeight, const Quantity_PlaneAngle AAngle, const Graphic3d_TextPath ATp, const Graphic3d_HorizontalTextAlignment AHta, const Graphic3d_VerticalTextAlignment AVta, const Standard_Boolean EvalMinMax = Standard_True);
   Standard_EXPORT void Text (const Graphic3d_CGroup& ACGroup, const Standard_CString AText, const Graphic3d_Vertex& APoint, const Standard_Real AHeight, const Standard_Boolean EvalMinMax = Standard_True);
   Standard_EXPORT void Text (const Graphic3d_CGroup& ACGroup, const TCollection_ExtendedString& AText, const Graphic3d_Vertex& APoint, const Standard_Real AHeight, const Quantity_PlaneAngle AAngle, const Graphic3d_TextPath ATp, const Graphic3d_HorizontalTextAlignment AHta, const Graphic3d_VerticalTextAlignment AVta, const Standard_Boolean EvalMinMax = Standard_True);
@@ -195,6 +215,7 @@ public:
   Standard_EXPORT void SetTransparency (const Standard_ShortReal ATransparency);
   Standard_EXPORT void UnsetTransparency ();
   Standard_EXPORT void SetLineAttributes (const Standard_Integer Type,const Standard_ShortReal Width);
+  Standard_EXPORT void SetFlippingOptions (const Graphic3d_CGroup& theCGroup, const Standard_Boolean theIsEnabled, const gp_Ax2& theRefPlane);
 
   //! Set text attributes for under-/overlayer. <br>
   //! <Font> argument defines the name of the font to be used, <br>
@@ -318,6 +339,12 @@ public:
   //! Method to setup UserDraw callback
   Standard_EXPORT OpenGl_UserDrawCallback_t& UserDrawCallback();
 
+public:
+  
+  //! Returns information about OpenCL device used for computations.
+  Standard_EXPORT Standard_Boolean GetOpenClDeviceInfo (const Graphic3d_CView& theCView,
+                      NCollection_DataMap<TCollection_AsciiString, TCollection_AsciiString>& theInfo);
+
 private:
 
   //! Method to retrieve valid GL context.
@@ -330,6 +357,7 @@ public:
 
 private:
 
+  Handle(OpenGl_Display)                                          myGlDisplay;
   Handle(OpenGl_Caps)                                             myCaps;
   NCollection_DataMap<Standard_Integer, Handle(OpenGl_View)>      myMapOfView;
   NCollection_DataMap<Standard_Integer, Handle(OpenGl_Workspace)> myMapOfWS;
@@ -338,6 +366,14 @@ private:
   mutable Handle(OpenGl_PrinterContext)                           myPrintContext;
   OpenGl_UserDrawCallback_t                                       myUserDrawCallback;
   OpenGl_Text*                                                    myTempText;         //!< variable for compatibility (drawing text in layers)
+
+public:
+
+  OpenGl_StateCounter* GetStateCounter() const { return &myStateCounter; }
+
+private:
+
+  mutable OpenGl_StateCounter myStateCounter;
 
 };
 

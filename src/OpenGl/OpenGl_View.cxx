@@ -17,18 +17,23 @@
 // purpose or non-infringement. Please see the License for the specific terms
 // and conditions governing the rights and limitations under the License.
 
-#include <OpenGl_GlCore11.hxx>
+#ifdef HAVE_CONFIG_H
+  #include <config.h>
+#endif
 
-#include <OpenGl_View.hxx>
+#include <NCollection_Mat4.hxx>
+
 #include <OpenGl_Context.hxx>
-#include <OpenGl_Workspace.hxx>
 #include <OpenGl_Display.hxx>
-
+#include <OpenGl_GlCore11.hxx>
+#include <OpenGl_GraduatedTrihedron.hxx>
+#include <OpenGl_GraphicDriver.hxx>
+#include <OpenGl_ShaderManager.hxx>
 #include <OpenGl_Texture.hxx>
 #include <OpenGl_Trihedron.hxx>
-#include <OpenGl_GraduatedTrihedron.hxx>
-
 #include <OpenGl_transform_persistence.hxx>
+#include <OpenGl_View.hxx>
+#include <OpenGl_Workspace.hxx>
 
 #include <Graphic3d_TextureEnv.hxx>
 
@@ -82,7 +87,8 @@ static const GLdouble THE_IDENTITY_MATRIX[4][4] =
 
 /*----------------------------------------------------------------------*/
 
-OpenGl_View::OpenGl_View (const CALL_DEF_VIEWCONTEXT &AContext)
+OpenGl_View::OpenGl_View (const CALL_DEF_VIEWCONTEXT &AContext,
+                          OpenGl_StateCounter*       theCounter)
 : mySurfaceDetail(Visual3d_TOD_NONE),
   myBackfacing(0),
   myBgTexture(myDefaultBgTexture),
@@ -97,13 +103,17 @@ OpenGl_View::OpenGl_View (const CALL_DEF_VIEWCONTEXT &AContext)
   myZClip(myDefaultZClip),
   myExtra(myDefaultExtra),
   myFog(myDefaultFog),
+  myTrihedron(NULL),
+  myGraduatedTrihedron(NULL),
   myVisualization(AContext.Visualization),
   myIntShadingMethod(TEL_SM_GOURAUD),
   myAntiAliasing(Standard_False),
   myTransPers(&myDefaultTransPers),
-  myTrihedron(NULL),
   myIsTransPers(Standard_False),
-  myGraduatedTrihedron(NULL)
+  myStateCounter (theCounter),
+  myLastOrientationState (0, 0),
+  myLastViewMappingState (0, 0),
+  myLastLightSourceState (0, 0)
 {
   // Initialize matrices
   memcpy(myOrientationMatrix,myDefaultMatrix,sizeof(Tmatrix3));
@@ -120,6 +130,14 @@ OpenGl_View::OpenGl_View (const CALL_DEF_VIEWCONTEXT &AContext)
       myIntShadingMethod = TEL_SM_FLAT;
       break;
   }
+
+  myCurrOrientationState = myStateCounter->Increment(); // <-- delete after merge with camera
+  myCurrViewMappingState = myStateCounter->Increment(); // <-- delete after merge with camera
+  myCurrLightSourceState = myStateCounter->Increment();
+
+#ifdef HAVE_OPENCL
+  myModificationState = 1; // initial state
+#endif
 }
 
 /*----------------------------------------------------------------------*/
@@ -133,7 +151,7 @@ void OpenGl_View::ReleaseGlResources (const Handle(OpenGl_Context)& theCtx)
 {
   OpenGl_Element::Destroy (theCtx, myTrihedron);
   OpenGl_Element::Destroy (theCtx, myGraduatedTrihedron);
-   
+
   if (!myTextureEnv.IsNull())
   {
     theCtx->DelayedRelease (myTextureEnv);
@@ -162,86 +180,44 @@ void OpenGl_View::SetTextureEnv (const Handle(OpenGl_Context)&       theCtx,
 
   myTextureEnv = new OpenGl_Texture (theTexture->GetParams());
   Handle(Image_PixMap) anImage = theTexture->GetImage();
-  if( !anImage.IsNull())
+  if (!anImage.IsNull())
     myTextureEnv->Init (theCtx, *anImage.operator->(), theTexture->Type());
+
+#ifdef HAVE_OPENCL
+  myModificationState++;
+#endif
 }
 
-/*----------------------------------------------------------------------*/
+void OpenGl_View::SetSurfaceDetail (const Visual3d_TypeOfSurfaceDetail theMode)
+{
+  mySurfaceDetail = theMode;
 
+#ifdef HAVE_OPENCL
+  myModificationState++;
+#endif
+}
+
+// =======================================================================
+// function : SetBackfacing
+// purpose  :
+// =======================================================================
 void OpenGl_View::SetBackfacing (const Standard_Integer theMode)
 {
   myBackfacing = theMode;
 }
 
-/*----------------------------------------------------------------------*/
-
-//call_togl_setlight
-void OpenGl_View::SetLights (const CALL_DEF_VIEWCONTEXT &AContext)
+// =======================================================================
+// function : SetLights
+// purpose  :
+// =======================================================================
+void OpenGl_View::SetLights (const CALL_DEF_VIEWCONTEXT& theViewCtx)
 {
   myLights.Clear();
-
-  const int nb_lights = AContext.NbActiveLight;
-
-  int i = 0;
-  const CALL_DEF_LIGHT *alight = &(AContext.ActiveLight[0]);
-  for ( ; i < nb_lights; i++, alight++ )
+  for (Standard_Integer aLightIt = 0; aLightIt < theViewCtx.NbActiveLight; ++aLightIt)
   {
-    OpenGl_Light rep;
-    memset(&rep,0,sizeof(rep));
-
-	switch( alight->LightType )
-    {
-      case 0 : /* TOLS_AMBIENT */
-        rep.type = TLightAmbient;
-        rep.col.rgb[0] = alight->Color.r;
-        rep.col.rgb[1] = alight->Color.g;
-        rep.col.rgb[2] = alight->Color.b;
-        break;
-
-      case 1 : /* TOLS_DIRECTIONAL */
-        rep.type = TLightDirectional;
-        rep.col.rgb[0] = alight->Color.r;
-        rep.col.rgb[1] = alight->Color.g;
-        rep.col.rgb[2] = alight->Color.b;
-        rep.dir[0] = alight->Direction.x;
-        rep.dir[1] = alight->Direction.y;
-        rep.dir[2] = alight->Direction.z;
-        break;
-
-      case 2 : /* TOLS_POSITIONAL */
-        rep.type = TLightPositional;
-        rep.col.rgb[0] = alight->Color.r;
-        rep.col.rgb[1] = alight->Color.g;
-        rep.col.rgb[2] = alight->Color.b;
-        rep.pos[0] = alight->Position.x;
-        rep.pos[1] = alight->Position.y;
-        rep.pos[2] = alight->Position.z;
-        rep.atten[0] = alight->Attenuation[0];
-        rep.atten[1] = alight->Attenuation[1];
-        break;
-
-      case 3 : /* TOLS_SPOT */
-        rep.type = TLightSpot;
-        rep.col.rgb[0] = alight->Color.r;
-        rep.col.rgb[1] = alight->Color.g;
-        rep.col.rgb[2] = alight->Color.b;
-        rep.pos[0] = alight->Position.x;
-        rep.pos[1] = alight->Position.y;
-        rep.pos[2] = alight->Position.z;
-        rep.dir[0] = alight->Direction.x;
-        rep.dir[1] = alight->Direction.y;
-        rep.dir[2] = alight->Direction.z;
-        rep.shine = alight->Concentration;
-        rep.atten[0] = alight->Attenuation[0];
-        rep.atten[1] = alight->Attenuation[1];
-        rep.angle = alight->Angle;
-        break;
-    }
-
-    rep.HeadLight = alight->Headlight;
-
-    myLights.Append(rep);
+    myLights.Append (theViewCtx.ActiveLight[aLightIt]);
   }
+  myCurrLightSourceState = myStateCounter->Increment();
 }
 
 /*----------------------------------------------------------------------*/
@@ -291,7 +267,8 @@ void OpenGl_View::SetClipLimit (const Graphic3d_CView& theCView)
 /*----------------------------------------------------------------------*/
 
 //call_togl_viewmapping
-void OpenGl_View::SetMapping (const Graphic3d_CView& theCView)
+void OpenGl_View::SetMapping (const Handle(OpenGl_Display)& theGlDisplay,
+                              const Graphic3d_CView&        theCView)
 {
   const float ratio   = theCView.DefWindow.dy / theCView.DefWindow.dx;
   const float r_ratio = theCView.DefWindow.dx / theCView.DefWindow.dy;
@@ -325,7 +302,7 @@ void OpenGl_View::SetMapping (const Graphic3d_CView& theCView)
   Map.prp[0] = theCView.Mapping.ProjectionReferencePoint.x;
   Map.prp[1] = theCView.Mapping.ProjectionReferencePoint.y;
   Map.prp[2] = theCView.Mapping.ProjectionReferencePoint.z;
-  if (!openglDisplay.IsNull() && !openglDisplay->Walkthrough())
+  if (!theGlDisplay.IsNull() && !theGlDisplay->Walkthrough())
     Map.prp[2] += theCView.Mapping.FrontPlaneDistance;
 
   // view plane distance
@@ -348,10 +325,12 @@ void OpenGl_View::SetMapping (const Graphic3d_CView& theCView)
         myMappingMatrix[i][j] = theCView.Mapping.ProjectionMatrix[i][j];
   }
   else
-    TelEvalViewMappingMatrix( &Map, &err_ind, myMappingMatrix );
+    TelEvalViewMappingMatrix (theGlDisplay, &Map, &err_ind, myMappingMatrix);
 
   if (!err_ind)
     myExtra.map = Map;
+
+  myCurrViewMappingState = myStateCounter->Increment();
 }
 
 /*----------------------------------------------------------------------*/
@@ -413,6 +392,8 @@ void OpenGl_View::SetOrientation (const Graphic3d_CView& theCView)
     myExtra.scaleFactors[1] = ScaleFactors[1],
     myExtra.scaleFactors[2] = ScaleFactors[2];
   }
+
+  myCurrOrientationState = myStateCounter->Increment();
 }
 
 /*----------------------------------------------------------------------*/
@@ -497,7 +478,7 @@ void OpenGl_View::GraduatedTrihedronErase (const Handle(OpenGl_Context)& theCtx)
 /*----------------------------------------------------------------------*/
 
 //transform_persistence_end
-void OpenGl_View::EndTransformPersistence()
+void OpenGl_View::EndTransformPersistence(const Handle(OpenGl_Context)& theCtx)
 {
   if (myIsTransPers)
   {
@@ -507,19 +488,33 @@ void OpenGl_View::EndTransformPersistence()
     glMatrixMode (GL_MODELVIEW);
     glPopMatrix();
     myIsTransPers = Standard_False;
+
+    // Note: the approach of accessing OpenGl matrices is used now since the matrix
+    // manipulation are made with help of OpenGl methods. This might be replaced by
+    // direct computation of matrices by OCC subroutines.
+    Tmatrix3 aResultWorldView;
+    glGetFloatv (GL_MODELVIEW_MATRIX, *aResultWorldView);
+
+    Tmatrix3 aResultProjection;
+    glGetFloatv (GL_PROJECTION_MATRIX, *aResultProjection);
+
+    // Set OCCT state uniform variables
+    theCtx->ShaderManager()->RevertWorldViewStateTo (aResultWorldView);
+    theCtx->ShaderManager()->RevertProjectionStateTo (aResultProjection);
   }
 }
 
 /*----------------------------------------------------------------------*/
 
 //transform_persistence_begin
-const TEL_TRANSFORM_PERSISTENCE* OpenGl_View::BeginTransformPersistence (const TEL_TRANSFORM_PERSISTENCE* theTransPers)
+const TEL_TRANSFORM_PERSISTENCE* OpenGl_View::BeginTransformPersistence (const Handle(OpenGl_Context)& theCtx,
+                                                                         const TEL_TRANSFORM_PERSISTENCE* theTransPers)
 {
   const TEL_TRANSFORM_PERSISTENCE* aTransPersPrev = myTransPers;
   myTransPers = theTransPers;
   if (theTransPers->mode == 0)
   {
-    EndTransformPersistence();
+    EndTransformPersistence (theCtx);
     return aTransPersPrev;
   }
 
@@ -657,6 +652,19 @@ const TEL_TRANSFORM_PERSISTENCE* OpenGl_View::BeginTransformPersistence (const T
     glMatrixMode (GL_MODELVIEW);
     glTranslated (aMoveX, aMoveY, aMoveZ);
   }
+
+  // Note: the approach of accessing OpenGl matrices is used now since the matrix
+  // manipulation are made with help of OpenGl methods. This might be replaced by
+  // direct computation of matrices by OCC subroutines.
+  Tmatrix3 aResultWorldView;
+  glGetFloatv (GL_MODELVIEW_MATRIX, *aResultWorldView);
+
+  Tmatrix3 aResultProjection;
+  glGetFloatv (GL_PROJECTION_MATRIX, *aResultProjection);
+
+  // Set OCCT state uniform variables
+  theCtx->ShaderManager()->UpdateWorldViewStateTo (aResultWorldView);
+  theCtx->ShaderManager()->UpdateProjectionStateTo (aResultProjection);
 
   return aTransPersPrev;
 }

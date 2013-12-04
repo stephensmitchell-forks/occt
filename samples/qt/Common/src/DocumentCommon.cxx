@@ -13,7 +13,7 @@
 #include <AIS_InteractiveObject.hxx>
 #include <Graphic3d.hxx>
 #include <Graphic3d_NameOfMaterial.hxx>
-#include <Graphic3d_GraphicDriver.hxx>
+#include <OpenGl_GraphicDriver.hxx>
 #include <TCollection_AsciiString.hxx>
 
 Handle(V3d_Viewer) DocumentCommon::Viewer( const Standard_CString aDisplay,
@@ -24,7 +24,7 @@ Handle(V3d_Viewer) DocumentCommon::Viewer( const Standard_CString aDisplay,
 				                     const Standard_Boolean ComputedMode,
 				                     const Standard_Boolean aDefaultComputedMode )
 {
-  static Handle(Graphic3d_GraphicDriver) aGraphicDriver;
+  static Handle(OpenGl_GraphicDriver) aGraphicDriver;
 
   if (aGraphicDriver.IsNull())
   {
@@ -32,7 +32,7 @@ Handle(V3d_Viewer) DocumentCommon::Viewer( const Standard_CString aDisplay,
 #if !defined(_WIN32) && !defined(__WIN32__) && (!defined(__APPLE__) || defined(MACOSX_USE_GLX))
     aDisplayConnection = new Aspect_DisplayConnection (aDisplay);
 #endif
-    aGraphicDriver = Graphic3d::InitGraphicDriver (aDisplayConnection);
+    aGraphicDriver = new OpenGl_GraphicDriver (aDisplayConnection);
   }
 
   return new V3d_Viewer(aGraphicDriver,aName,aDomain,ViewSize,ViewProj,
@@ -50,12 +50,10 @@ myNbViews( 0 )
   myViewer = Viewer( getenv("DISPLAY"), a3DName.ToExtString(), "", 1000.0,
 		               V3d_XposYnegZpos, Standard_True, Standard_True );
 
-  myViewer->Init();
 	myViewer->SetDefaultLights();
 	myViewer->SetLightOn();
 
-	myContext =new AIS_InteractiveContext(myViewer);	
-	//onCreateNewView();
+	myContext =new AIS_InteractiveContext(myViewer);
 }
 
 DocumentCommon::~DocumentCommon()
@@ -67,15 +65,16 @@ ApplicationCommonWindow* DocumentCommon::getApplication()
 	return myApp;
 }
 
-MDIWindow* DocumentCommon::createNewMDIWindow()
+MDIWindow* DocumentCommon::createNewMDIWindow( bool theRT )
 {
   QWorkspace* ws = myApp->getWorkspace();
-  return new MDIWindow( this, ws, 0 );
+  return new MDIWindow( this, ws, 0, theRT );
 }
-void DocumentCommon::onCreateNewView() 
+
+void DocumentCommon::onCreateNewView( bool theRT ) 
 {
 	QWorkspace* ws = myApp->getWorkspace();
-  MDIWindow* w = createNewMDIWindow();
+  MDIWindow* w = createNewMDIWindow( theRT );
 	
 	if( !w )
 	  return;
@@ -228,4 +227,48 @@ void DocumentCommon::onDelete()
     getApplication()->onSelectionChanged();
 }
 
+#ifdef HAVE_OPENCL
 
+void DocumentCommon::onShadows( int state )
+{
+  QWorkspace* ws = ApplicationCommonWindow::getWorkspace();
+
+  MDIWindow* window = qobject_cast< MDIWindow* >( ws->activeWindow() );
+
+  if( window == NULL )
+    return;
+
+  window->setRaytracedShadows( state );
+
+  myContext->UpdateCurrentViewer();
+}
+
+void DocumentCommon::onReflections( int state )
+{
+  QWorkspace* ws = ApplicationCommonWindow::getWorkspace();
+
+  MDIWindow* window = qobject_cast< MDIWindow* >( ws->activeWindow() );
+
+  if( window == NULL )
+    return;
+
+  window->setRaytracedReflections( state );
+
+  myContext->UpdateCurrentViewer();
+}
+
+void DocumentCommon::onAntialiasing( int state )
+{
+  QWorkspace* ws = ApplicationCommonWindow::getWorkspace();
+
+  MDIWindow* window = qobject_cast< MDIWindow* >( ws->activeWindow() );
+
+  if( window == NULL )
+    return;
+
+  window->setRaytracedAntialiasing( state );
+
+  myContext->UpdateCurrentViewer();
+}
+
+#endif

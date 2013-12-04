@@ -191,6 +191,7 @@
 #include <Graphic3d_Group.hxx>
 #include <Graphic3d_Array1OfVertex.hxx>
 #include <Graphic3d_ArrayOfPolylines.hxx>
+#include <Graphic3d_ArrayOfSegments.hxx>
 #include <GProp_PEquation.hxx>
 #include <gp.hxx>
 #include <gp_Ax2d.hxx>
@@ -210,9 +211,11 @@
 #include <IntAna_IntConicQuad.hxx>
 
 #include <OSD_Environment.hxx>
+#include <OpenGl_GraphicDriver.hxx>
 
 #include <Poly_Triangulation.hxx>
 #include <Precision.hxx>
+#include <Prs3d_Arrow.hxx>
 #include <Prs3d_Root.hxx>
 #include <Prs3d_Text.hxx>
 #include <Prs3d_ArrowAspect.hxx>

@@ -6,6 +6,11 @@
 
 #include <stdafx.h>
 #include <TOcafFunction_BoxDriver.hxx>
+#include "Standard_GUID.hxx"
+#include "TFunction_Logbook.hxx"
+#include "TDataStd_Real.hxx"
+#include "BRepPrimAPI_MakeBox.hxx"
+#include "TNaming_Builder.hxx"
 
 //=======================================================================
 //function : GetID
@@ -78,7 +83,7 @@ Standard_Boolean TOcafFunction_BoxDriver::MustExecute(const TFunction_Logbook& l
 //         : if there are no any mistakes occurred we return 0:
 //         : 0 - no mistakes were found.
 //=======================================================================
-Standard_Integer TOcafFunction_BoxDriver::Execute(TFunction_Logbook& log) const
+Standard_Integer TOcafFunction_BoxDriver::Execute(TFunction_Logbook& /*log*/) const
 {
 	// Get the values of dimension and position attributes 
 	Handle(TDataStd_Real) TSR;

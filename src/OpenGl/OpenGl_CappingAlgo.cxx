@@ -74,8 +74,8 @@ void OpenGl_CappingAlgo::RenderCapping (const Handle(OpenGl_Workspace)& theWorks
 
   // check whether algorithm need to be performed
   Standard_Boolean isCapping = Standard_False;
-  const Graphic3d_SetOfHClipPlane& aContextPlanes = aContext->Clipping().Planes();
-  Graphic3d_SetOfHClipPlane::Iterator aCappingIt (aContextPlanes);
+  const Graphic3d_SequenceOfHClipPlane& aContextPlanes = aContext->Clipping().Planes();
+  Graphic3d_SequenceOfHClipPlane::Iterator aCappingIt (aContextPlanes);
   for (; aCappingIt.More(); aCappingIt.Next())
   {
     const Handle(Graphic3d_ClipPlane)& aPlane = aCappingIt.Value();
@@ -117,7 +117,7 @@ void OpenGl_CappingAlgo::RenderCapping (const Handle(OpenGl_Workspace)& theWorks
     }
 
     // enable only the rendering plane to generate stencil mask
-    Graphic3d_SetOfHClipPlane::Iterator aPlaneIt (aContextPlanes);
+    Graphic3d_SequenceOfHClipPlane::Iterator aPlaneIt (aContextPlanes);
     for (; aPlaneIt.More(); aPlaneIt.Next())
     {
       const Handle(Graphic3d_ClipPlane)& aPlane = aPlaneIt.Value();
@@ -228,7 +228,7 @@ void OpenGl_CappingAlgo::RenderPlane (const Handle(OpenGl_Workspace)& theWorkspa
   glDisableClientState (GL_VERTEX_ARRAY);
   glDisableClientState (GL_TEXTURE_COORD_ARRAY);
 
-  theWorkspace->SetStructureMatrix (aModelMatrix);
+  theWorkspace->SetStructureMatrix (aModelMatrix, true);
   theWorkspace->SetAspectFace (aFaceAspect);
 
   // set delayed resource release
@@ -246,11 +246,11 @@ void OpenGl_CappingAlgo::Init()
     return;
 
   myRenderFilter = new OpenGl_CappingAlgoFilter();
-  myNoneCulling.CullingMode = TelCullNone;
-  myNoneCulling.Edge = 0;
+  myNoneCulling.ChangeCullingMode() = TelCullNone;
+  myNoneCulling.ChangeEdge() = 0;
 
-  myFrontCulling.CullingMode = TelCullBack;
-  myFrontCulling.Edge = 0;
+  myFrontCulling.ChangeCullingMode() = TelCullBack;
+  myFrontCulling.ChangeEdge() = 0;
 
   myIsInit = Standard_True;
 }

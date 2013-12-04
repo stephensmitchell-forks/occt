@@ -50,7 +50,7 @@ namespace
   }
 
   //! Auxiliary function to translate rectangles in horizontal direction.
-  inline void moveX (NCollection_Vector<OpenGl_Font::Tile>& theRects,
+  /*inline void moveX (NCollection_Vector<OpenGl_Font::Tile>& theRects,
                      const Standard_ShortReal               theMoveVec,
                      Standard_Integer                       theCharLower,
                      const Standard_Integer                 theCharUpper)
@@ -61,7 +61,7 @@ namespace
       aRect.Left  += theMoveVec;
       aRect.Right += theMoveVec;
     }
-  }
+  }*/
 
   //! Auxiliary function to translate rectangles in vertical direction.
   inline void moveY (NCollection_Vector<OpenGl_Font::Tile>& theRects,
@@ -110,6 +110,7 @@ OpenGl_TextFormatter::OpenGl_TextFormatter()
   myLinesNb (0),
   myRectLineStart (0),
   myRectWordStart (0),
+  myNewLineNb(0),
   myPenCurrLine (0.0f),
   myLineLeft (0.0f),
   myLineTail (0.0f),

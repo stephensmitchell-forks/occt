@@ -33,6 +33,7 @@ public: //! @name flags to disable particular functionality, should be used only
 
   Standard_Boolean vboDisable;        //!< flag permits VBO usage, will significantly affect performance (OFF by default)
   Standard_Boolean pntSpritesDisable; //!< flag permits Point Sprites usage, will significantly affect performance (OFF by default)
+  Standard_Boolean keepArrayData;     //!< Disables freeing CPU memory after building VBOs (OFF by default)
 
 public: //! @name context creation parameters
 
@@ -66,6 +67,11 @@ public: //! @name context creation parameters
    * OFF by default. Currently implemented only for Windows (WGL) and Mac OS X (Cocoa).
    */
   Standard_Boolean contextNoAccel;
+
+public: //! @name flags to activate verbose output
+
+  //! Print GLSL program compilation/linkage warnings, if any. OFF by default.
+  Standard_Boolean glslWarnings;
 
 public: //! @name class methods
 

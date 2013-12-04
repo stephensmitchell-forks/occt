@@ -48,7 +48,7 @@ Handle(TObj_Application) TObj_Application::GetInstance()
 //purpose  : 
 //=======================================================================
 
-TObj_Application::TObj_Application ()
+TObj_Application::TObj_Application () : myIsError(Standard_False)
 {
   myMessenger = new Message_Messenger;
   myMessageDriver = new CDM_COutMessageDriver;
@@ -102,9 +102,6 @@ Standard_Boolean TObj_Application::SaveDocument
       break;
     case PCDM_SS_Failure:
       ErrorMessage (Message_Msg("TObj_Appl_SFailure") << aPath);
-      break;
-    case PCDM_SS_DiskWritingFailure:
-      ErrorMessage (Message_Msg("TObj_Appl_SDiskWritingFailure") << aPath);
       break;
     case PCDM_SS_Doc_IsNull:
       ErrorMessage (Message_Msg("TObj_Appl_SDocIsNull") << aPath);

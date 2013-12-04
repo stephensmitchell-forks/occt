@@ -13,6 +13,9 @@
 #include <BRepAlgoAPI_Cut.hxx>
 #include <TCollection_AsciiString.hxx>
 #include <TDF_Tool.hxx>
+#include "Standard_GUID.hxx"
+#include "TFunction_Logbook.hxx"
+#include "TDF_Reference.hxx"
 
 //=======================================================================
 //function : GetID
@@ -96,7 +99,7 @@ Standard_Boolean TOcafFunction_CutDriver::MustExecute(const TFunction_Logbook& l
 //         : 0 - no mistakes were found.
 //=======================================================================
 
-Standard_Integer TOcafFunction_CutDriver::Execute(TFunction_Logbook& log) const
+Standard_Integer TOcafFunction_CutDriver::Execute(TFunction_Logbook& /*log*/) const
 {
   // Let's get the arguments (OriginalNShape, ToolNShape of the object):
 

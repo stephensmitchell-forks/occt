@@ -2,9 +2,6 @@ if { [array get env os_type] != "" } {
     set os $env(os_type)
 }
 if { [string compare $os "windows"] != 0 } {
-   puts "TODO ?OCC12345 ALL: An exception was caught"
-   puts "TODO ?OCC12345 ALL: \\*\\* Exception \\*\\*.*"
-   puts "TODO ?OCC12345 ALL: TEST INCOMPLETE"
 }
 
 puts "================"
@@ -14,11 +11,11 @@ puts "================"
 vinit
 BUC60632 1 100
 vfit
-vmoveto 313 254
+vmoveto 126 143
 puts "Highlighting by 'Move To' command in shading mode"
 
-set x_coord 315
-set y_coord 256
+set x_coord 128
+set y_coord 143
 
 checkcolor $x_coord $y_coord 0 1 1
 

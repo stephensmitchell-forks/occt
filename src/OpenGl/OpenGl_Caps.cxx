@@ -29,13 +29,15 @@ IMPLEMENT_STANDARD_RTTIEXT(OpenGl_Caps, Standard_Transient)
 OpenGl_Caps::OpenGl_Caps()
 : vboDisable        (Standard_False),
   pntSpritesDisable (Standard_False),
+  keepArrayData     (Standard_False),
   contextStereo     (Standard_False),
 #ifdef DEB
   contextDebug      (Standard_True),
 #else
   contextDebug      (Standard_False),
 #endif
-  contextNoAccel    (Standard_False)
+  contextNoAccel    (Standard_False),
+  glslWarnings      (Standard_False)
 {
   //
 }
@@ -48,9 +50,11 @@ OpenGl_Caps& OpenGl_Caps::operator= (const OpenGl_Caps& theCopy)
 {
   vboDisable        = theCopy.vboDisable;
   pntSpritesDisable = theCopy.pntSpritesDisable;
+  keepArrayData     = theCopy.keepArrayData;
   contextStereo     = theCopy.contextStereo;
   contextDebug      = theCopy.contextDebug;
   contextNoAccel    = theCopy.contextNoAccel;
+  glslWarnings      = theCopy.glslWarnings;
   return *this;
 }
 

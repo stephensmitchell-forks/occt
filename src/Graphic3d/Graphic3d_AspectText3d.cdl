@@ -36,11 +36,12 @@ class AspectText3d from Graphic3d inherits TShared
     
 uses
 
-    Color             from Quantity,
-    TypeOfStyleText   from Aspect,
-    TypeOfDisplayText from Aspect,
-    AsciiString       from TCollection,
-    FontAspect        from Font 
+    Color                 from Quantity,
+    TypeOfStyleText       from Aspect,
+    TypeOfDisplayText     from Aspect,
+    AsciiString           from TCollection,
+    FontAspect            from Font,
+    ShaderProgram_Handle  from Graphic3d
 
 raises
 
@@ -137,6 +138,7 @@ is
     --      TODT_SUBTITLE   There is a subtitle under the text.
     --      TODT_DEKALE     The text is displayed with a 3D style.
     --      TODT_BLEND      The text is displayed in XOR.
+    --      TODT_DIMENSION  Dimension line under text will be invisible. 
     ---Category: Methods to modify the class definition
 
     SetColorSubTitle ( me       : mutable;
@@ -178,11 +180,10 @@ is
     ---Level: Public 
     ---Purpose: Returns text FontAspect
 
-
-
-
-
-
+    SetShaderProgram ( me  :  mutable; 
+                       theProgram  :  ShaderProgram_Handle from Graphic3d );
+    ---Level: Public
+    ---Purpose: Sets up OpenGL/GLSL shader program.
 
     ----------------------------
     -- Category: Inquire methods
@@ -245,7 +246,11 @@ is
     ---Purpose: Returns the current values of the group <me>.
     ---Category: Inquire methods
 
---
+    ShaderProgram ( me )
+    returns ShaderProgram_Handle from Graphic3d;
+    ---C++: return const &
+
+--
 
 fields
 
@@ -291,5 +296,7 @@ fields
 
     -- the variable turning FontAspect of the text
     MyTextFontAspect :  FontAspect from Font;
+
+    MyShaderProgram  :  ShaderProgram_Handle  from  Graphic3d; 
 
 end AspectText3d;

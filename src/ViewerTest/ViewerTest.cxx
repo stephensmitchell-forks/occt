@@ -32,9 +32,6 @@
 #include <TopLoc_Location.hxx>
 #include <TopTools_HArray1OfShape.hxx>
 #include <TColStd_HArray1OfTransient.hxx>
-#include <OSD_Directory.hxx>
-#include <OSD_File.hxx>
-#include <OSD_Path.hxx>
 #include <OSD_Timer.hxx>
 #include <Geom_Axis2Placement.hxx>
 #include <Geom_Axis1Placement.hxx>
@@ -54,8 +51,8 @@
 #include <AIS_ListIteratorOfListOfInteractive.hxx>
 #include <Aspect_InteriorStyle.hxx>
 #include <Graphic3d_AspectFillArea3d.hxx>
-#include <Graphic3d_TextureRoot.hxx>
 #include <Graphic3d_AspectLine3d.hxx>
+#include <Graphic3d_TextureRoot.hxx>
 #include <Image_AlienPixMap.hxx>
 #include <Prs3d_ShadingAspect.hxx>
 #include <Prs3d_IsoAspect.hxx>
@@ -3481,7 +3478,31 @@ static Standard_Integer TDraft(Draw_Interpretor& di, Standard_Integer argc, cons
   return 0;
 }
 
+//==============================================================================
+//function : splitParameter
+//purpose  : Split parameter string to parameter name an parameter value
+//==============================================================================
+Standard_Boolean ViewerTest::SplitParameter (const TCollection_AsciiString& theString,
+                                             TCollection_AsciiString&       theName,
+                                             TCollection_AsciiString&       theValue)
+{
+  Standard_Integer aParamNameEnd = theString.FirstLocationInSet ("=", 1, theString.Length());
 
+  if (aParamNameEnd == 0)
+  {
+    return Standard_False;
+  }
+
+  TCollection_AsciiString aString (theString);
+  if (aParamNameEnd != 0)
+  {
+    theValue = aString.Split (aParamNameEnd);
+    aString.Split (aString.Length() - 1);
+    theName = aString;
+  }
+
+  return Standard_True;
+}
 
 //============================================================================
 //  MyCommands

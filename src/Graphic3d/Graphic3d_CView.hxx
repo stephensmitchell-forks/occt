@@ -21,8 +21,8 @@
 #include <InterfaceGraphic_Graphic3d.hxx>
 #include <InterfaceGraphic_Visual3d.hxx>
 #include <Handle_Graphic3d_TextureEnv.hxx>
-#include <Standard_Type.hxx>
-#include <Graphic3d_SetOfHClipPlane.hxx>
+#include <Graphic3d_CLight.hxx>
+#include <Graphic3d_SequenceOfHClipPlane.hxx>
 
 class CALL_DEF_VIEWCONTEXT
 {
@@ -69,12 +69,12 @@ public:
   int   Visualization;
 
   int   NbActiveLight;
-  CALL_DEF_LIGHT* ActiveLight;
+  Graphic3d_CLight* ActiveLight;
 
   Handle(Graphic3d_TextureEnv) TextureEnv;
   int   SurfaceDetail;
 
-  Graphic3d_SetOfHClipPlane ClipPlanes;
+  Graphic3d_SequenceOfHClipPlane ClipPlanes;
 };
 
 class Graphic3d_CView
@@ -92,11 +92,21 @@ public:
     ptrUnderLayer (NULL),
     ptrOverLayer  (NULL),
     Backfacing  (0),
+	GContext (NULL),
     GDisplayCB  (NULL),
     GClientData (NULL),
-    ptrFBO (NULL)
+    ptrFBO (NULL),
+    WasRedrawnGL (0),
+    IsRaytracing (0),
+    IsShadowsEnabled (1),
+    IsReflectionsEnabled (1),
+    IsAntialiasingEnabled (0)
   {
-    //
+    memset(&Orientation,0,sizeof(Orientation));
+	memset(&Mapping,0,sizeof(Mapping));
+	memset(&OrientationReset,0,sizeof(OrientationReset));
+	memset(&MappingReset,0,sizeof(MappingReset));
+	memset(&DefWindow,0,sizeof(DefWindow));
   }
 
 public:
@@ -130,6 +140,21 @@ public:
   void* GClientData;
 
   void* ptrFBO;
+
+  //! Was the window redrawn by standard OpenGL?
+  mutable int WasRedrawnGL;
+
+  //! Enables/disables OpenCL-based ray-tracing.
+  int IsRaytracing;
+
+  //! Enables/disables ray-traced sharp shadows.
+  int IsShadowsEnabled;
+  
+  //! Enables/disables ray-traced reflections.
+  int IsReflectionsEnabled;
+  
+  //! Enables/disables ray-traced adaptive anti-aliasing.
+  int IsAntialiasingEnabled;
 
 };
 

@@ -957,7 +957,7 @@ Standard_Boolean Exist = Standard_False;
 
 #if defined(_WIN32) || defined(__WIN32__)
   const Handle(WNT_Window) THEWindow = Handle(WNT_Window)::DownCast (AWindow);
-  int TheSpecifiedWindowId = int (THEWindow->HWindow ());
+  Aspect_Handle TheSpecifiedWindowId = THEWindow->HWindow ();
 #elif defined(__APPLE__) && !defined(MACOSX_USE_GLX)
   const Handle(Cocoa_Window) THEWindow = Handle(Cocoa_Window)::DownCast (AWindow);
   NSView* TheSpecifiedWindowId = THEWindow->HView();
@@ -974,7 +974,7 @@ Standard_Boolean Exist = Standard_False;
 const Handle(Aspect_Window) AspectWindow = (MyIterator.Value ())->Window ();
 #if defined(_WIN32) || defined(__WIN32__)
    const Handle(WNT_Window) theWindow = Handle(WNT_Window)::DownCast (AspectWindow);
-   int TheWindowIdOfView = int (theWindow->HWindow ());
+   Aspect_Handle TheWindowIdOfView = theWindow->HWindow ();
 #elif defined(__APPLE__) && !defined(MACOSX_USE_GLX)
    const Handle(Cocoa_Window) theWindow = Handle(Cocoa_Window)::DownCast (AspectWindow);
    NSView* TheWindowIdOfView = theWindow->HView();
@@ -1061,6 +1061,19 @@ Standard_Integer Visual3d_ViewManager::Identification (const Handle(Visual3d_Vie
 
 void Visual3d_ViewManager::UnIdentification (const Standard_Integer aViewId)
 {
+  Visual3d_SetIteratorOfSetOfView MyIterator(MyDefinedView);
+  while (MyIterator.More()) 
+  {
+    if ((MyIterator.Value())->Identification () == aViewId)
+    {
+      const Handle(Visual3d_View)& theView = MyIterator.Value();
+      //remove the view from the list
+      MyDefinedView.Remove(theView);
+      break;
+    }
+    // go to next
+    MyIterator.Next ();
+  }
   MyViewGenId.Free(aViewId);
 }
 

@@ -17,13 +17,18 @@
 // purpose or non-infringement. Please see the License for the specific terms
 // and conditions governing the rights and limitations under the License.
 
-#include <OpenGl_GraphicDriver.hxx>
+#ifdef HAVE_CONFIG_H
+  #include <config.h>
+#endif
 
+#include <OpenGl_GraphicDriver.hxx>
 #include <OpenGl_Context.hxx>
+#include <OpenGl_Flipper.hxx>
 #include <OpenGl_GraduatedTrihedron.hxx>
 #include <OpenGl_Group.hxx>
 #include <OpenGl_CView.hxx>
 #include <OpenGl_View.hxx>
+#include <OpenGl_StencilTest.hxx>
 #include <OpenGl_Text.hxx>
 #include <OpenGl_Trihedron.hxx>
 #include <OpenGl_Workspace.hxx>
@@ -56,6 +61,22 @@ extern "C" {
 #if defined(_MSC_VER)
   #pragma warning(pop)
 #endif
+}
+
+// =======================================================================
+// function : OpenGl_GraphicDriver
+// purpose  :
+// =======================================================================
+OpenGl_GraphicDriver::OpenGl_GraphicDriver (const Handle(Aspect_DisplayConnection)& theDisplayConnection)
+: Graphic3d_GraphicDriver ("TKOpenGl"),
+  myCaps           (new OpenGl_Caps()),
+  myMapOfView      (1, NCollection_BaseAllocator::CommonBaseAllocator()),
+  myMapOfWS        (1, NCollection_BaseAllocator::CommonBaseAllocator()),
+  myMapOfStructure (1, NCollection_BaseAllocator::CommonBaseAllocator()),
+  myUserDrawCallback (NULL),
+  myTempText (new OpenGl_Text())
+{
+  Begin (theDisplayConnection);
 }
 
 // =======================================================================
@@ -153,6 +174,34 @@ Standard_Boolean OpenGl_GraphicDriver::SetImmediateModeDrawToFront (const Graphi
   }
   return Standard_False;
 }
+
+// =======================================================================
+// function : GetOpenClDeviceInfo
+// purpose  : Returns information about device used for computations
+// =======================================================================
+#ifndef HAVE_OPENCL
+
+Standard_Boolean OpenGl_GraphicDriver::GetOpenClDeviceInfo (const Graphic3d_CView&,
+  NCollection_DataMap<TCollection_AsciiString, TCollection_AsciiString>&)
+{
+  return Standard_False;
+}
+
+#else
+
+Standard_Boolean OpenGl_GraphicDriver::GetOpenClDeviceInfo (const Graphic3d_CView& theCView,
+  NCollection_DataMap<TCollection_AsciiString, TCollection_AsciiString>& theInfo)
+{
+
+  if (theCView.ViewId == -1 || theCView.ptrView == NULL)
+  {
+    return Standard_False;
+  }
+  
+  return reinterpret_cast<const OpenGl_CView*> (theCView.ptrView)->WS->GetOpenClDeviceInfo (theInfo);
+}
+
+#endif
 
 // =======================================================================
 // function : BeginAddMode
@@ -295,6 +344,14 @@ Standard_Boolean OpenGl_GraphicDriver::Print (const Graphic3d_CView& theCView,
 #endif
   myPrintContext.Nullify();
   return isPrinted;
+}
+
+void OpenGl_GraphicDriver::SetStencilTestOptions (const Graphic3d_CGroup& theCGroup,
+                                                  const Standard_Boolean theIsEnabled)
+{
+  OpenGl_StencilTest* aStencilTest = new OpenGl_StencilTest();
+  aStencilTest->SetOptions (theIsEnabled);
+  ((OpenGl_Group* )theCGroup.ptrGroup)->AddElement (TelNil, aStencilTest);
 }
 
 // =======================================================================
@@ -524,4 +581,17 @@ void OpenGl_GraphicDriver::GraduatedTrihedronMinMaxValues (const Standard_ShortR
                                                            const Standard_ShortReal theMaxZ)
 {
   OpenGl_GraduatedTrihedron::SetMinMax (theMinX, theMinY, theMinZ, theMaxX, theMaxY, theMaxZ);
+}
+
+// =======================================================================
+// function : SetFlippingOptions
+// purpose  : Enable or disable flipping option for the given group
+// =======================================================================
+void OpenGl_GraphicDriver::SetFlippingOptions (const Graphic3d_CGroup& theCGroup,
+                                               const Standard_Boolean  theIsEnabled,
+                                               const gp_Ax2&           theRefPlane)
+{
+  OpenGl_Flipper* aFlipper = new OpenGl_Flipper (theRefPlane);
+  aFlipper->SetOptions (theIsEnabled);
+  ((OpenGl_Group* )theCGroup.ptrGroup)->AddElement (TelNil, aFlipper);
 }

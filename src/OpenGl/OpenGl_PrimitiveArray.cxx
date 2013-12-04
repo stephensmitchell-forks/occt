@@ -17,18 +17,43 @@
 // purpose or non-infringement. Please see the License for the specific terms
 // and conditions governing the rights and limitations under the License.
 
-#include <OpenGl_IndexBuffer.hxx>
-#include <OpenGl_Context.hxx>
-
-#include <OpenGl_PrimitiveArray.hxx>
-
 #include <OpenGl_AspectFace.hxx>
+#include <OpenGl_Context.hxx>
 #include <OpenGl_GraphicDriver.hxx>
+#include <OpenGl_IndexBuffer.hxx>
 #include <OpenGl_PointSprite.hxx>
+#include <OpenGl_PrimitiveArray.hxx>
+#include <OpenGl_ShaderManager.hxx>
+#include <OpenGl_ShaderProgram.hxx>
 #include <OpenGl_Structure.hxx>
 #include <OpenGl_Workspace.hxx>
 
 #include <InterfaceGraphic_PrimitiveArray.hxx>
+
+namespace
+{
+  template<class T>
+  void BindProgramWithMaterial (const Handle(OpenGl_Workspace)& theWS,
+                                const T*                      theAspect)
+  {
+    const Handle(OpenGl_Context)& aCtx = theWS->GetGlContext();
+    const Handle(OpenGl_ShaderProgram)& aProgram = theAspect->ShaderProgramRes (theWS);
+    if (aProgram.IsNull())
+    {
+      OpenGl_ShaderProgram::Unbind (aCtx);
+      return;
+    }
+    aProgram->BindWithVariables (aCtx);
+
+    const OpenGl_MaterialState* aMaterialState = aCtx->ShaderManager()->MaterialState (aProgram);
+    if (aMaterialState == NULL || aMaterialState->Aspect() != theAspect)
+    {
+      aCtx->ShaderManager()->UpdateMaterialStateTo (aProgram, theAspect);
+    }
+
+    aCtx->ShaderManager()->PushState (aProgram);
+  }
+}
 
 // =======================================================================
 // function : clearMemoryOwn
@@ -124,7 +149,11 @@ Standard_Boolean OpenGl_PrimitiveArray::BuildVBO (const Handle(OpenGl_Workspace)
     }
   }
 
-  clearMemoryOwn();
+  if (!aGlCtx->caps->keepArrayData)
+  {
+    clearMemoryOwn();
+  }
+  
   return Standard_True;
 }
 
@@ -177,6 +206,8 @@ void OpenGl_PrimitiveArray::DrawArray (Tint theLightingModel,
     case TelQuadrangleStripsArrayType:
     case TelTriangleFansArrayType:
       glColor3fv (theInteriorColour->rgb);
+      break;
+    case TelUnknownArrayType:
       break;
   }
 
@@ -409,10 +440,15 @@ void OpenGl_PrimitiveArray::DrawEdges (const TEL_COLOUR*               theEdgeCo
   if (myDrawMode > GL_LINE_STRIP)
   {
     anAspectLineOld = theWorkspace->SetAspectLine (theWorkspace->AspectFace (Standard_True)->AspectEdge());
-    theWorkspace->AspectLine (Standard_True);
+    const OpenGl_AspectLine* anAspect = theWorkspace->AspectLine (Standard_True);
 
     glPushAttrib (GL_POLYGON_BIT);
     glPolygonMode (GL_FRONT_AND_BACK, GL_LINE);
+
+    if (aGlContext->IsGlGreaterEqual (2, 0))
+    {
+      BindProgramWithMaterial (theWorkspace, anAspect);
+    }
   }
 
   Tint i, j, n;
@@ -539,7 +575,7 @@ void OpenGl_PrimitiveArray::DrawMarkers (const Handle(OpenGl_Workspace)& theWork
 {
   const OpenGl_AspectMarker* anAspectMarker     = theWorkspace->AspectMarker (Standard_True);
   const Handle(OpenGl_Context)&     aCtx        = theWorkspace->GetGlContext();
-  const Handle(OpenGl_PointSprite)& aSpriteNorm = anAspectMarker->Sprite();
+  const Handle(OpenGl_PointSprite)& aSpriteNorm = anAspectMarker->SpriteRes (theWorkspace);
   const Standard_Boolean            isHilight   = (theWorkspace->NamedStatus & OPENGL_NS_HIGHLIGHT);
   if (aCtx->IsGlGreaterEqual (2, 0)
    && !aSpriteNorm.IsNull() && !aSpriteNorm->IsDisplayList())
@@ -550,8 +586,8 @@ void OpenGl_PrimitiveArray::DrawMarkers (const Handle(OpenGl_Workspace)& theWork
     Handle(OpenGl_Texture) aTextureBack;
     if (anAspectMarker->Type() != Aspect_TOM_POINT)
     {
-      const Handle(OpenGl_PointSprite)& aSprite = (isHilight && anAspectMarker->SpriteHighlight()->IsValid())
-                                                ? anAspectMarker->SpriteHighlight()
+      const Handle(OpenGl_PointSprite)& aSprite = (isHilight && anAspectMarker->SpriteHighlightRes (theWorkspace)->IsValid())
+                                                ? anAspectMarker->SpriteHighlightRes (theWorkspace)
                                                 : aSpriteNorm;
       aTextureBack = theWorkspace->EnableTexture (aSprite);
 
@@ -653,6 +689,8 @@ OpenGl_PrimitiveArray::OpenGl_PrimitiveArray (CALL_DEF_PARRAY* thePArray)
     case TelTriangleFansArrayType:
       myDrawMode = GL_TRIANGLE_FAN;
       break;
+    case TelUnknownArrayType:
+      break;
   }
 }
 
@@ -704,7 +742,7 @@ void OpenGl_PrimitiveArray::Render (const Handle(OpenGl_Workspace)& theWorkspace
   if (!myIsVboInit
    && !aCtx->caps->vboDisable
    && aCtx->core15 != NULL
-   && (myDrawMode != GL_POINTS || anAspectMarker->Sprite().IsNull() || !anAspectMarker->Sprite()->IsDisplayList()))
+   && (myDrawMode != GL_POINTS || anAspectMarker->SpriteRes (theWorkspace).IsNull() || !anAspectMarker->SpriteRes (theWorkspace)->IsDisplayList()))
   {
     if (!BuildVBO (theWorkspace))
     {
@@ -730,8 +768,8 @@ void OpenGl_PrimitiveArray::Render (const Handle(OpenGl_Workspace)& theWorkspace
       break;
   }
 
-  Tint aFrontLightingModel = anAspectFace->IntFront.color_mask;
-  const TEL_COLOUR* anInteriorColor = &anAspectFace->IntFront.matcol;
+  Tint aFrontLightingModel = anAspectFace->IntFront().color_mask;
+  const TEL_COLOUR* anInteriorColor = &anAspectFace->IntFront().matcol;
   const TEL_COLOUR* anEdgeColor = &anAspectFace->AspectEdge()->Color();
   const TEL_COLOUR* aLineColor = (myPArray->type == TelPointsArrayType) ? &anAspectMarker->Color() : &anAspectLine->Color();
 
@@ -742,12 +780,35 @@ void OpenGl_PrimitiveArray::Render (const Handle(OpenGl_Workspace)& theWorkspace
     aFrontLightingModel = 0;
   }
 
+  if (aCtx->IsGlGreaterEqual (2, 0))
+  {
+    switch (myPArray->type)
+    {
+      case TelPointsArrayType:
+      {
+        BindProgramWithMaterial (theWorkspace, anAspectMarker);
+        break;
+      }
+      case TelSegmentsArrayType:
+      case TelPolylinesArrayType:
+      {
+        BindProgramWithMaterial (theWorkspace, anAspectLine);
+        break;
+      }
+      default: // polygonal array
+      {
+        BindProgramWithMaterial (theWorkspace, anAspectFace);
+        break;
+      }
+    }
+  }
+
   DrawArray (aFrontLightingModel,
-             anAspectFace->InteriorStyle,
-             anAspectFace->Edge,
+             anAspectFace->InteriorStyle(),
+             anAspectFace->Edge(),
              anInteriorColor,
              aLineColor,
              anEdgeColor,
-             &anAspectFace->IntFront,
+             &anAspectFace->IntFront(),
              theWorkspace);
 }

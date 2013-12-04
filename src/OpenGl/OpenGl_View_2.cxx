@@ -26,23 +26,34 @@
 #include <Image_AlienPixMap.hxx>
 #include <Visual3d_Layer.hxx>
 
+#include <NCollection_Mat4.hxx>
+
 #include <OpenGl_AspectLine.hxx>
+#include <OpenGl_Context.hxx>
 #include <OpenGl_Display.hxx>
+#include <OpenGl_Matrix.hxx>
 #include <OpenGl_Workspace.hxx>
 #include <OpenGl_View.hxx>
 #include <OpenGl_Trihedron.hxx>
 #include <OpenGl_GraduatedTrihedron.hxx>
 #include <OpenGl_PrinterContext.hxx>
+#include <OpenGl_ShaderManager.hxx>
+#include <OpenGl_ShaderProgram.hxx>
 #include <OpenGl_Structure.hxx>
 
 #define EPSI 0.0001
 
-static const GLfloat default_amb[4] = { 0.F, 0.F, 0.F, 1.F };
-static const GLfloat default_sptdir[3] = { 0.F, 0.F, -1.F };
-static const GLfloat default_sptexpo = 0.F;
-static const GLfloat default_sptcutoff = 180.F;
+namespace
+{
 
-extern void InitLayerProp (const int AListId); //szvgl: defined in OpenGl_GraphicDriver_Layer.cxx
+  static const GLfloat THE_DEFAULT_AMBIENT[4]    = { 0.0f, 0.0f, 0.0f, 1.0f };
+  static const GLfloat THE_DEFAULT_SPOT_DIR[3]   = { 0.0f, 0.0f, -1.0f };
+  static const GLfloat THE_DEFAULT_SPOT_EXPONENT = 0.0f;
+  static const GLfloat THE_DEFAULT_SPOT_CUTOFF   = 180.0f;
+
+};
+
+extern void InitLayerProp (const int theListId); //szvgl: defined in OpenGl_GraphicDriver_Layer.cxx
 
 /*----------------------------------------------------------------------*/
 
@@ -62,171 +73,90 @@ struct OPENGL_CLIP_PLANE
 /*
 *  Set des lumieres
 */
-static void bind_light(const OpenGl_Light *lptr, int *gl_lid)
+static void bind_light (const OpenGl_Light& theLight,
+                        GLenum&             theLightGlId,
+                        Graphic3d_Vec4&     theAmbientColor)
 {
   // Only 8 lights in OpenGL...
-  if (*gl_lid > GL_LIGHT7) return;
-
-  // the light is a headlight ?
-  GLint cur_matrix = 0;
-  if (lptr->HeadLight)
+  if (theLightGlId > GL_LIGHT7)
   {
-    glGetIntegerv(GL_MATRIX_MODE, &cur_matrix);
-    glMatrixMode(GL_MODELVIEW);
+    return;
+  }
+
+  if (theLight.Type == Visual3d_TOLS_AMBIENT)
+  {
+    // add RGBA intensity of the ambient light
+    theAmbientColor += theLight.Color;
+    return;
+  }
+
+  // the light is a headlight?
+  GLint aMatrixModeOld = 0;
+  if (theLight.IsHeadlight)
+  {
+    glGetIntegerv (GL_MATRIX_MODE, &aMatrixModeOld);
+    glMatrixMode  (GL_MODELVIEW);
     glPushMatrix();
     glLoadIdentity();
   }
 
-  GLfloat data_amb[4];
-  GLfloat data_diffu[4];
-  GLfloat data_pos[4];
-  GLfloat data_sptdir[3];
-  GLfloat data_sptexpo;
-  GLfloat data_sptcutoff;
-  GLfloat data_constantattenuation;
-  GLfloat data_linearattenuation;
-
-  /* set la light en fonction de son type */
-  switch (lptr->type)
+  // setup light type
+  switch (theLight.Type)
   {
-  case TLightAmbient:
-    data_amb[0] = lptr->col.rgb[0];
-    data_amb[1] = lptr->col.rgb[1];
-    data_amb[2] = lptr->col.rgb[2];
-    data_amb[3] = 1.0;
+    case Visual3d_TOLS_DIRECTIONAL:
+    {
+      // if the last parameter of GL_POSITION, is zero, the corresponding light source is a Directional one
+      const OpenGl_Vec4 anInfDir = -theLight.Direction;
 
-    /*------------------------- Ambient ---------------------------*/
-    /*
-    * The GL_AMBIENT parameter refers to RGBA intensity of the ambient
-    * light.
-    */
-    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, data_amb);
-    break;
-
-
-  case TLightDirectional:
-    data_diffu[0] = lptr->col.rgb[0];
-    data_diffu[1] = lptr->col.rgb[1];
-    data_diffu[2] = lptr->col.rgb[2];
-    data_diffu[3] = 1.0;
-
-    /*------------------------- Direction ---------------------------*/
-    /* From Open GL Programming Rev 1 Guide Chapt 6 :
-    Lighting The Mathematics of Lighting ( p 168 )
-
-    Directional Light Source ( Infinite ) :
-    if the last parameter of GL_POSITION , w , is zero, the
-    corresponding light source is a Directional one.
-
-    GL_SPOT_CUTOFF a 180 signifie que ce n'est pas un spot.
-    To create a realistic effect,  set the GL_SPECULAR parameter
-    to the same value as the GL_DIFFUSE.
-    */
-
-    data_pos[0] = -lptr->dir[0];
-    data_pos[1] = -lptr->dir[1];
-    data_pos[2] = -lptr->dir[2];
-    data_pos[3] = 0.0;
-
-    glLightfv(*gl_lid, GL_AMBIENT, default_amb);
-    glLightfv(*gl_lid, GL_DIFFUSE, data_diffu);
-    glLightfv(*gl_lid, GL_SPECULAR, data_diffu);
-
-    glLightfv(*gl_lid, GL_POSITION, data_pos);
-    glLightfv(*gl_lid, GL_SPOT_DIRECTION, default_sptdir);
-    glLightf(*gl_lid, GL_SPOT_EXPONENT, default_sptexpo);
-    glLightf(*gl_lid, GL_SPOT_CUTOFF, default_sptcutoff);
-    break;
-
-
-  case TLightPositional:
-    data_diffu[0] = lptr->col.rgb[0];
-    data_diffu[1] = lptr->col.rgb[1];
-    data_diffu[2] = lptr->col.rgb[2];
-    data_diffu[3] = 1.0;
-
-    /*------------------------- Position -----------------------------*/
-    /* From Open GL Programming Rev 1 Guide Chapt 6 :
-    Lighting The Mathematics of Lighting ( p 168 )
-    Positional Light Source :
-    if the last parameter of GL_POSITION , w , is nonzero,
-    the corresponding light source is a Positional one.
-
-    GL_SPOT_CUTOFF a 180 signifie que ce n'est pas un spot.
-
-    To create a realistic effect,  set the GL_SPECULAR parameter
-    to the same value as the GL_DIFFUSE.
-    */
-
-    data_pos[0] = lptr->pos[0];
-    data_pos[1] = lptr->pos[1];
-    data_pos[2] = lptr->pos[2];
-    data_pos[3] = 1.0;
-
-    data_constantattenuation = lptr->atten[0];
-    data_linearattenuation = lptr->atten[1];
-
-    glLightfv(*gl_lid, GL_AMBIENT, default_amb);
-    glLightfv(*gl_lid, GL_DIFFUSE, data_diffu);
-    glLightfv(*gl_lid, GL_SPECULAR, data_diffu);
-
-    glLightfv(*gl_lid, GL_POSITION, data_pos);
-    glLightfv(*gl_lid, GL_SPOT_DIRECTION, default_sptdir);
-    glLightf(*gl_lid, GL_SPOT_EXPONENT, default_sptexpo);
-    glLightf(*gl_lid, GL_SPOT_CUTOFF, default_sptcutoff);
-    glLightf(*gl_lid, GL_CONSTANT_ATTENUATION, data_constantattenuation);
-    glLightf(*gl_lid, GL_LINEAR_ATTENUATION, data_linearattenuation);
-    glLightf(*gl_lid, GL_QUADRATIC_ATTENUATION, 0.0);
-    break;
-
-
-  case TLightSpot:
-    data_diffu[0] = lptr->col.rgb[0];
-    data_diffu[1] = lptr->col.rgb[1];
-    data_diffu[2] = lptr->col.rgb[2];
-    data_diffu[3] = 1.0;
-
-    data_pos[0] = lptr->pos[0];
-    data_pos[1] = lptr->pos[1];
-    data_pos[2] = lptr->pos[2];
-    data_pos[3] = 1.0;
-
-    data_sptdir[0] = lptr->dir[0];
-    data_sptdir[1] = lptr->dir[1];
-    data_sptdir[2] = lptr->dir[2];
-
-    data_sptexpo = ( float )lptr->shine * 128.0F;
-    data_sptcutoff = ( float )(lptr->angle * 180.0F)/( float )M_PI;
-
-    data_constantattenuation = lptr->atten[0];
-    data_linearattenuation = lptr->atten[1];
-
-    glLightfv(*gl_lid, GL_AMBIENT, default_amb);
-    glLightfv(*gl_lid, GL_DIFFUSE, data_diffu);
-    glLightfv(*gl_lid, GL_SPECULAR, data_diffu);
-
-    glLightfv(*gl_lid, GL_POSITION, data_pos);
-    glLightfv(*gl_lid, GL_SPOT_DIRECTION, data_sptdir);
-    glLightf(*gl_lid, GL_SPOT_EXPONENT, data_sptexpo);
-    glLightf(*gl_lid, GL_SPOT_CUTOFF, data_sptcutoff);
-    glLightf(*gl_lid, GL_CONSTANT_ATTENUATION, data_constantattenuation);
-    glLightf(*gl_lid, GL_LINEAR_ATTENUATION, data_linearattenuation);
-    glLightf(*gl_lid, GL_QUADRATIC_ATTENUATION, 0.0);
-    break;
+      // to create a realistic effect,  set the GL_SPECULAR parameter to the same value as the GL_DIFFUSE.
+      glLightfv (theLightGlId, GL_AMBIENT,               THE_DEFAULT_AMBIENT);
+      glLightfv (theLightGlId, GL_DIFFUSE,               theLight.Color.GetData());
+      glLightfv (theLightGlId, GL_SPECULAR,              theLight.Color.GetData());
+      glLightfv (theLightGlId, GL_POSITION,              anInfDir.GetData());
+      glLightfv (theLightGlId, GL_SPOT_DIRECTION,        THE_DEFAULT_SPOT_DIR);
+      glLightf  (theLightGlId, GL_SPOT_EXPONENT,         THE_DEFAULT_SPOT_EXPONENT);
+      glLightf  (theLightGlId, GL_SPOT_CUTOFF,           THE_DEFAULT_SPOT_CUTOFF);
+      break;
+    }
+    case Visual3d_TOLS_POSITIONAL:
+    {
+      // to create a realistic effect, set the GL_SPECULAR parameter to the same value as the GL_DIFFUSE
+      glLightfv (theLightGlId, GL_AMBIENT,               THE_DEFAULT_AMBIENT);
+      glLightfv (theLightGlId, GL_DIFFUSE,               theLight.Color.GetData());
+      glLightfv (theLightGlId, GL_SPECULAR,              theLight.Color.GetData());
+      glLightfv (theLightGlId, GL_POSITION,              theLight.Position.GetData());
+      glLightfv (theLightGlId, GL_SPOT_DIRECTION,        THE_DEFAULT_SPOT_DIR);
+      glLightf  (theLightGlId, GL_SPOT_EXPONENT,         THE_DEFAULT_SPOT_EXPONENT);
+      glLightf  (theLightGlId, GL_SPOT_CUTOFF,           THE_DEFAULT_SPOT_CUTOFF);
+      glLightf  (theLightGlId, GL_CONSTANT_ATTENUATION,  theLight.ConstAttenuation());
+      glLightf  (theLightGlId, GL_LINEAR_ATTENUATION,    theLight.LinearAttenuation());
+      glLightf  (theLightGlId, GL_QUADRATIC_ATTENUATION, 0.0);
+      break;
+    }
+    case Visual3d_TOLS_SPOT:
+    {
+      glLightfv (theLightGlId, GL_AMBIENT,               THE_DEFAULT_AMBIENT);
+      glLightfv (theLightGlId, GL_DIFFUSE,               theLight.Color.GetData());
+      glLightfv (theLightGlId, GL_SPECULAR,              theLight.Color.GetData());
+      glLightfv (theLightGlId, GL_POSITION,              theLight.Position.GetData());
+      glLightfv (theLightGlId, GL_SPOT_DIRECTION,        theLight.Direction.GetData());
+      glLightf  (theLightGlId, GL_SPOT_EXPONENT,         theLight.Concentration() * 128.0f);
+      glLightf  (theLightGlId, GL_SPOT_CUTOFF,          (theLight.Angle() * 180.0f) / GLfloat(M_PI));
+      glLightf  (theLightGlId, GL_CONSTANT_ATTENUATION,  theLight.ConstAttenuation());
+      glLightf  (theLightGlId, GL_LINEAR_ATTENUATION,    theLight.LinearAttenuation());
+      glLightf  (theLightGlId, GL_QUADRATIC_ATTENUATION, 0.0f);
+      break;
+    }
   }
 
-  if (lptr->type != TLightAmbient)
-  {
-    glEnable(*gl_lid);
-    (*gl_lid)++;
-  }
-
-  /* si la light etait une headlight alors restaure la matrice precedente */
-  if (lptr->HeadLight)
+  // restore matrix in case of headlight
+  if (theLight.IsHeadlight)
   {
     glPopMatrix();
-    glMatrixMode(cur_matrix);
+    glMatrixMode (aMatrixModeOld);
   }
+
+  glEnable (theLightGlId++);
 }
 
 /*----------------------------------------------------------------------*/
@@ -630,40 +560,14 @@ call_util_mat_mul( matrix3 mat_a, matrix3 mat_b, matrix3 mat_c)
 
 /*----------------------------------------------------------------------*/
 
-//call_func_redraw_all_structs_proc
-void OpenGl_View::Render (const Handle(OpenGl_PrinterContext)& thePrintContext,
-                          const Handle(OpenGl_Workspace) &AWorkspace,
-                          const Graphic3d_CView& ACView,
-                          const Aspect_CLayer2d& ACUnderLayer,
-                          const Aspect_CLayer2d& ACOverLayer)
+void OpenGl_View::DrawBackground (const Handle(OpenGl_Workspace) &AWorkspace)
 {
-  // Store and disable current clipping planes
-  const Handle(OpenGl_Context)& aContext = AWorkspace->GetGlContext();
-  const Standard_Integer aMaxClipPlanes = aContext->MaxClipPlanes();
-  const GLenum lastid = GL_CLIP_PLANE0 + aMaxClipPlanes;
-  OPENGL_CLIP_PLANE *oldPlanes = new OPENGL_CLIP_PLANE[aMaxClipPlanes];
-  OPENGL_CLIP_PLANE *ptrPlane = oldPlanes;
-  GLenum planeid = GL_CLIP_PLANE0;
-  for ( ; planeid < lastid; planeid++, ptrPlane++ )
-  {
-    glGetClipPlane( planeid, ptrPlane->Equation );
-    if ( ptrPlane->isEnabled )
-    {
-      glDisable( planeid );
-      ptrPlane->isEnabled = GL_TRUE;
-    }
-    else
-    {
-      ptrPlane->isEnabled = GL_FALSE;
-    }
-  }
-
   /////////////////////////////////////////////////////////////////////////////
   // Step 1: Prepare for redraw
 
   // Render background
   if ( (AWorkspace->NamedStatus & OPENGL_NS_WHITEBACK) == 0 &&
-	   ( myBgTexture.TexId != 0 || myBgGradient.type != Aspect_GFM_NONE ) )
+    ( myBgTexture.TexId != 0 || myBgGradient.type != Aspect_GFM_NONE ) )
   {
     const Standard_Integer aViewWidth = AWorkspace->Width();
     const Standard_Integer aViewHeight = AWorkspace->Height();
@@ -684,8 +588,8 @@ void OpenGl_View::Render (const Handle(OpenGl_PrinterContext)& thePrintContext,
     // - gradient fill type is not Aspect_GFM_NONE and
     // - either background texture is no specified or it is drawn in Aspect_FM_CENTERED mode
     if ( ( myBgGradient.type != Aspect_GFM_NONE ) &&
-         ( myBgTexture.TexId == 0 || myBgTexture.Style == Aspect_FM_CENTERED ||
-           myBgTexture.Style == Aspect_FM_NONE ) )
+      ( myBgTexture.TexId == 0 || myBgTexture.Style == Aspect_FM_CENTERED ||
+      myBgTexture.Style == Aspect_FM_NONE ) )
     {
       Tfloat* corner1 = 0;/* -1,-1*/
       Tfloat* corner2 = 0;/*  1,-1*/
@@ -696,63 +600,63 @@ void OpenGl_View::Render (const Handle(OpenGl_PrinterContext)& thePrintContext,
 
       switch( myBgGradient.type )
       {
-        case Aspect_GFM_HOR:
-          corner1 = myBgGradient.color1.rgb;
-          corner2 = myBgGradient.color2.rgb;
-          corner3 = myBgGradient.color2.rgb;
-          corner4 = myBgGradient.color1.rgb;
-          break;
-        case Aspect_GFM_VER:
-          corner1 = myBgGradient.color2.rgb;
-          corner2 = myBgGradient.color2.rgb;
-          corner3 = myBgGradient.color1.rgb;
-          corner4 = myBgGradient.color1.rgb;
-          break;
-        case Aspect_GFM_DIAG1:
-          corner2 = myBgGradient.color2.rgb;
-          corner4 = myBgGradient.color1.rgb;
-          dcorner1 [0] = dcorner2[0] = 0.5F * (corner2[0] + corner4[0]);
-          dcorner1 [1] = dcorner2[1] = 0.5F * (corner2[1] + corner4[1]);
-          dcorner1 [2] = dcorner2[2] = 0.5F * (corner2[2] + corner4[2]);
-          corner1 = dcorner1;
-          corner3 = dcorner2;
-          break;
-        case Aspect_GFM_DIAG2:
-          corner1 = myBgGradient.color2.rgb;
-          corner3 = myBgGradient.color1.rgb;
-          dcorner1 [0] = dcorner2[0] = 0.5F * (corner1[0] + corner3[0]);
-          dcorner1 [1] = dcorner2[1] = 0.5F * (corner1[1] + corner3[1]);
-          dcorner1 [2] = dcorner2[2] = 0.5F * (corner1[2] + corner3[2]);
-          corner2 = dcorner1;
-          corner4 = dcorner2;
-          break;
-        case Aspect_GFM_CORNER1:
-          corner1 = myBgGradient.color2.rgb;
-          corner2 = myBgGradient.color2.rgb;
-          corner3 = myBgGradient.color2.rgb;
-          corner4 = myBgGradient.color1.rgb;
-          break;
-        case Aspect_GFM_CORNER2:
-          corner1 = myBgGradient.color2.rgb;
-          corner2 = myBgGradient.color2.rgb;
-          corner3 = myBgGradient.color1.rgb;
-          corner4 = myBgGradient.color2.rgb;
-          break;
-        case Aspect_GFM_CORNER3:
-          corner1 = myBgGradient.color2.rgb;
-          corner2 = myBgGradient.color1.rgb;
-          corner3 = myBgGradient.color2.rgb;
-          corner4 = myBgGradient.color2.rgb;
-          break;
-        case Aspect_GFM_CORNER4:
-          corner1 = myBgGradient.color1.rgb;
-          corner2 = myBgGradient.color2.rgb;
-          corner3 = myBgGradient.color2.rgb;
-          corner4 = myBgGradient.color2.rgb;
-          break;
-        default:
-          //printf("gradient background type not right\n");
-         break;
+      case Aspect_GFM_HOR:
+        corner1 = myBgGradient.color1.rgb;
+        corner2 = myBgGradient.color2.rgb;
+        corner3 = myBgGradient.color2.rgb;
+        corner4 = myBgGradient.color1.rgb;
+        break;
+      case Aspect_GFM_VER:
+        corner1 = myBgGradient.color2.rgb;
+        corner2 = myBgGradient.color2.rgb;
+        corner3 = myBgGradient.color1.rgb;
+        corner4 = myBgGradient.color1.rgb;
+        break;
+      case Aspect_GFM_DIAG1:
+        corner2 = myBgGradient.color2.rgb;
+        corner4 = myBgGradient.color1.rgb;
+        dcorner1 [0] = dcorner2[0] = 0.5F * (corner2[0] + corner4[0]);
+        dcorner1 [1] = dcorner2[1] = 0.5F * (corner2[1] + corner4[1]);
+        dcorner1 [2] = dcorner2[2] = 0.5F * (corner2[2] + corner4[2]);
+        corner1 = dcorner1;
+        corner3 = dcorner2;
+        break;
+      case Aspect_GFM_DIAG2:
+        corner1 = myBgGradient.color2.rgb;
+        corner3 = myBgGradient.color1.rgb;
+        dcorner1 [0] = dcorner2[0] = 0.5F * (corner1[0] + corner3[0]);
+        dcorner1 [1] = dcorner2[1] = 0.5F * (corner1[1] + corner3[1]);
+        dcorner1 [2] = dcorner2[2] = 0.5F * (corner1[2] + corner3[2]);
+        corner2 = dcorner1;
+        corner4 = dcorner2;
+        break;
+      case Aspect_GFM_CORNER1:
+        corner1 = myBgGradient.color2.rgb;
+        corner2 = myBgGradient.color2.rgb;
+        corner3 = myBgGradient.color2.rgb;
+        corner4 = myBgGradient.color1.rgb;
+        break;
+      case Aspect_GFM_CORNER2:
+        corner1 = myBgGradient.color2.rgb;
+        corner2 = myBgGradient.color2.rgb;
+        corner3 = myBgGradient.color1.rgb;
+        corner4 = myBgGradient.color2.rgb;
+        break;
+      case Aspect_GFM_CORNER3:
+        corner1 = myBgGradient.color2.rgb;
+        corner2 = myBgGradient.color1.rgb;
+        corner3 = myBgGradient.color2.rgb;
+        corner4 = myBgGradient.color2.rgb;
+        break;
+      case Aspect_GFM_CORNER4:
+        corner1 = myBgGradient.color1.rgb;
+        corner2 = myBgGradient.color2.rgb;
+        corner3 = myBgGradient.color2.rgb;
+        corner4 = myBgGradient.color2.rgb;
+        break;
+      default:
+        //printf("gradient background type not right\n");
+        break;
       }
 
       // Save GL parameters
@@ -792,7 +696,7 @@ void OpenGl_View::Render (const Handle(OpenGl_PrinterContext)& thePrintContext,
       GLfloat texX_range = 1.F; // texture <s> coordinate
       GLfloat texY_range = 1.F; // texture <t> coordinate
 
-	  // Set up for stretching or tiling
+      // Set up for stretching or tiling
       GLfloat x_offset, y_offset;
       if ( myBgTexture.Style == Aspect_FM_CENTERED )
       {
@@ -852,13 +756,77 @@ void OpenGl_View::Render (const Handle(OpenGl_PrinterContext)& thePrintContext,
     else
       glDisable (GL_DITHER);
   }
+}
+
+/*----------------------------------------------------------------------*/
+
+//call_func_redraw_all_structs_proc
+void OpenGl_View::Render (const Handle(OpenGl_PrinterContext)& thePrintContext,
+                          const Handle(OpenGl_Workspace) &AWorkspace,
+                          const Graphic3d_CView& ACView,
+                          const Aspect_CLayer2d& ACUnderLayer,
+                          const Aspect_CLayer2d& ACOverLayer)
+{
+  // Store and disable current clipping planes
+  const Handle(OpenGl_Context)& aContext = AWorkspace->GetGlContext();
+  const Standard_Integer aMaxClipPlanes = aContext->MaxClipPlanes();
+  const GLenum lastid = GL_CLIP_PLANE0 + aMaxClipPlanes;
+  OPENGL_CLIP_PLANE *oldPlanes = new OPENGL_CLIP_PLANE[aMaxClipPlanes];
+  OPENGL_CLIP_PLANE *ptrPlane = oldPlanes;
+  GLenum planeid = GL_CLIP_PLANE0;
+  for ( ; planeid < lastid; planeid++, ptrPlane++ )
+  {
+    glGetClipPlane( planeid, ptrPlane->Equation );
+    if ( ptrPlane->isEnabled )
+    {
+      glDisable( planeid );
+      ptrPlane->isEnabled = GL_TRUE;
+    }
+    else
+    {
+      ptrPlane->isEnabled = GL_FALSE;
+    }
+  }
+
+  // Set OCCT state uniform variables
+  const Handle(OpenGl_ShaderManager) aManager = aContext->ShaderManager();
+  if (StateInfo (myCurrLightSourceState, aManager->LightSourceState().Index()) != myLastLightSourceState)
+  {
+    aManager->UpdateLightSourceStateTo (&myLights);
+    myLastLightSourceState = StateInfo (myCurrLightSourceState, aManager->LightSourceState().Index());
+  }
+  if (StateInfo (myCurrViewMappingState, aManager->ProjectionState().Index()) != myLastViewMappingState)
+  {
+    aManager->UpdateProjectionStateTo (myMappingMatrix);
+    myLastViewMappingState = StateInfo (myCurrViewMappingState, aManager->ProjectionState().Index());
+  }
+  if (StateInfo (myCurrOrientationState, aManager->WorldViewState().Index()) != myLastOrientationState)
+  {
+    aManager->UpdateWorldViewStateTo (myOrientationMatrix);
+    myLastOrientationState = StateInfo (myCurrOrientationState, aManager->WorldViewState().Index());
+  }
+  if (aManager->ModelWorldState().Index() == 0)
+  {
+    Tmatrix3 aModelWorldState = { { 1.f, 0.f, 0.f, 0.f },
+                                  { 0.f, 1.f, 0.f, 0.f },
+                                  { 0.f, 0.f, 1.f, 0.f },
+                                  { 0.f, 0.f, 0.f, 1.f } };
+    
+    aManager->UpdateModelWorldStateTo (aModelWorldState);
+  }
+
+  /////////////////////////////////////////////////////////////////////////////
+  // Step 1: Prepare for redraw
+
+  // Render background
+  DrawBackground (AWorkspace);
 
   // Switch off lighting by default
   glDisable(GL_LIGHTING);
 
   /////////////////////////////////////////////////////////////////////////////
   // Step 2: Draw underlayer
-  RedrawLayer2d (thePrintContext, AWorkspace, ACView, ACUnderLayer);
+  RedrawLayer2d (thePrintContext, ACView, ACUnderLayer);
 
   /////////////////////////////////////////////////////////////////////////////
   // Step 3: Redraw main plane
@@ -965,23 +933,31 @@ D = -[Px,Py,Pz] dot |Nx|
 
   // Apply Lights
   {
-    int i;
-
-    // Switch off all lights
-    for (i = GL_LIGHT0; i <= GL_LIGHT7; i++)
-      glDisable(i);
-    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, default_amb);
-
-    /* set les lights */
-    int gl_lid = GL_LIGHT0;
-    OpenGl_ListOfLight::Iterator itl(myLights);
-    for (; itl.More(); itl.Next())
+    // setup lights
+    Graphic3d_Vec4 anAmbientColor (THE_DEFAULT_AMBIENT[0],
+                                   THE_DEFAULT_AMBIENT[1],
+                                   THE_DEFAULT_AMBIENT[2],
+                                   THE_DEFAULT_AMBIENT[3]);
+    GLenum aLightGlId = GL_LIGHT0;
+    for (OpenGl_ListOfLight::Iterator aLightIt (myLights);
+         aLightIt.More(); aLightIt.Next())
     {
-      const OpenGl_Light &alight = itl.Value();
-      bind_light(&alight, &gl_lid);
+      bind_light (aLightIt.Value(), aLightGlId, anAmbientColor);
     }
 
-    if (gl_lid != GL_LIGHT0) glEnable(GL_LIGHTING);
+    // apply accumulated ambient color
+    anAmbientColor.a() = 1.0f;
+    glLightModelfv (GL_LIGHT_MODEL_AMBIENT, anAmbientColor.GetData());
+
+    if (aLightGlId != GL_LIGHT0)
+    {
+      glEnable (GL_LIGHTING);
+    }
+    // switch off unused lights
+    for (; aLightGlId <= GL_LIGHT7; ++aLightGlId)
+    {
+      glDisable (aLightGlId);
+    }
   }
 
   // Apply InteriorShadingMethod
@@ -989,8 +965,6 @@ D = -[Px,Py,Pz] dot |Nx|
 
   // Apply clipping planes
   {
-    const Handle(OpenGl_Context)& aContext = AWorkspace->GetGlContext();
-
     if (myZClip.Back.IsOn || myZClip.Front.IsOn)
     {
       const GLdouble ramp = myExtra.map.fpd - myExtra.map.bpd;
@@ -1015,15 +989,15 @@ D = -[Px,Py,Pz] dot |Nx|
       // do some "memory allocation"-wise optimization
       if (!aPlaneBack.IsNull() || !aPlaneFront.IsNull())
       {
-        Graphic3d_SetOfHClipPlane aSlicingPlanes;
+        Graphic3d_SequenceOfHClipPlane aSlicingPlanes;
         if (!aPlaneBack.IsNull())
         {
-          aSlicingPlanes.Add (aPlaneBack);
+          aSlicingPlanes.Append (aPlaneBack);
         }
 
         if (!aPlaneFront.IsNull())
         {
-          aSlicingPlanes.Add (aPlaneFront);
+          aSlicingPlanes.Append (aPlaneFront);
         }
 
         // add planes at loaded view matrix state
@@ -1034,14 +1008,14 @@ D = -[Px,Py,Pz] dot |Nx|
     // Apply user clipping planes
     if (!myClipPlanes.IsEmpty())
     {
-      Graphic3d_SetOfHClipPlane aUserPlanes;
-      Graphic3d_SetOfHClipPlane::Iterator aClippingIt (myClipPlanes);
+      Graphic3d_SequenceOfHClipPlane aUserPlanes;
+      Graphic3d_SequenceOfHClipPlane::Iterator aClippingIt (myClipPlanes);
       for (; aClippingIt.More(); aClippingIt.Next())
       {
         const Handle(Graphic3d_ClipPlane)& aClipPlane = aClippingIt.Value();
         if (aClipPlane->IsOn())
         {
-          aUserPlanes.Add (aClipPlane);
+          aUserPlanes.Append (aClipPlane);
         }
       }
 
@@ -1050,6 +1024,11 @@ D = -[Px,Py,Pz] dot |Nx|
         // add planes at actual matrix state.
         aContext->ChangeClipping().AddWorld (aUserPlanes);
       }
+    }
+    
+    if (!aManager->IsEmpty())
+    {
+      aManager->UpdateClippingState();
     }
   }
 
@@ -1138,6 +1117,17 @@ D = -[Px,Py,Pz] dot |Nx|
 
   aContext->ChangeClipping().RemoveAll();
 
+  if (!aManager->IsEmpty())
+  {
+    aManager->ResetMaterialStates();
+    aManager->RevertClippingState();
+
+    // We need to disable (unbind) all shaders programs to ensure
+    // that all objects without specified aspect will be drawn
+    // correctly (such as background)
+    OpenGl_ShaderProgram::Unbind (aContext);
+  }
+
   // display global trihedron
   if (myTrihedron != NULL)
   {
@@ -1165,7 +1155,7 @@ D = -[Px,Py,Pz] dot |Nx|
   const int aMode = 0;
   AWorkspace->DisplayCallback (ACView, (aMode | OCC_PRE_OVERLAY));
 
-  RedrawLayer2d (thePrintContext, AWorkspace, ACView, ACOverLayer);
+  RedrawLayer2d (thePrintContext, ACView, ACOverLayer);
 
   AWorkspace->DisplayCallback (ACView, aMode);
 
@@ -1225,7 +1215,6 @@ void OpenGl_View::RenderStructs (const Handle(OpenGl_Workspace) &AWorkspace)
 
 //call_togl_redraw_layer2d
 void OpenGl_View::RedrawLayer2d (const Handle(OpenGl_PrinterContext)& thePrintContext,
-                                 const Handle(OpenGl_Workspace)&      /*AWorkspace*/,
                                  const Graphic3d_CView&               ACView,
                                  const Aspect_CLayer2d&               ACLayer)
 {
@@ -1336,9 +1325,9 @@ void OpenGl_View::RedrawLayer2d (const Handle(OpenGl_PrinterContext)& thePrintCo
   //calling dynamic render of LayerItems
   if ( ACLayer.ptrLayer->layerData )
   {
-    InitLayerProp(ACLayer.ptrLayer->listIndex);
+    InitLayerProp (ACLayer.ptrLayer->listIndex);
     ((Visual3d_Layer*)ACLayer.ptrLayer->layerData)->RenderLayerItems();
-    InitLayerProp(0);
+    InitLayerProp (0);
   }
 
   glPopAttrib ();

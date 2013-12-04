@@ -19,7 +19,7 @@
 // and conditions governing the rights and limitations under the License.
 
 #ifdef HAVE_CONFIG_H
-# include <config.h>
+  #include <config.h>
 #endif
 
 #include <OpenGl_GlCore20.hxx>
@@ -42,7 +42,12 @@
 #include <ViewerTest_DoubleMapIteratorOfDoubleMapOfInteractiveAndName.hxx>
 #include <Visual3d_View.hxx>
 #include <Visual3d_ViewManager.hxx>
+#include <V3d_AmbientLight.hxx>
+#include <V3d_DirectionalLight.hxx>
 #include <V3d_LayerMgr.hxx>
+#include <V3d_LayerMgrPointer.hxx>
+#include <V3d_PositionalLight.hxx>
+#include <V3d_SpotLight.hxx>
 #include <NCollection_DoubleMap.hxx>
 #include <NCollection_List.hxx>
 #include <NCollection_Vector.hxx>
@@ -61,8 +66,6 @@
 #include <TColStd_HSequenceOfReal.hxx>
 #include <TColgp_Array1OfPnt2d.hxx>
 #include <Visual3d_LayerItem.hxx>
-#include <V3d_LayerMgr.hxx>
-#include <V3d_LayerMgrPointer.hxx>
 #include <Aspect_TypeOfLine.hxx>
 #include <Image_Diff.hxx>
 #include <Aspect_DisplayConnection.hxx>
@@ -93,7 +96,6 @@
   #endif
 #elif defined(__APPLE__) && !defined(MACOSX_USE_GLX)
   #include <Cocoa_Window.hxx>
-  #include <tk.h>
 #else
   #include <Xw_Window.hxx>
   #include <X11/Xlib.h> /* contains some dangerous #defines such as Status, True etc. */
@@ -532,9 +534,8 @@ TCollection_AsciiString ViewerTest::ViewerInit (const Standard_Integer thePxLeft
     (void)theDisplayName; // avoid warning on unused argument
     SetDisplayConnection (new Aspect_DisplayConnection ());
   #endif
-    aGraphicDriver = new OpenGl_GraphicDriver();
+    aGraphicDriver = new OpenGl_GraphicDriver (GetDisplayConnection());
     aGraphicDriver->ChangeOptions() = ViewerTest_myDefaultCaps;
-    aGraphicDriver->Begin (GetDisplayConnection());
     ViewerTest_myDrivers.Bind (aViewNames.GetDriverName(), aGraphicDriver);
     toCreateViewer = Standard_True;
   }
@@ -634,32 +635,33 @@ TCollection_AsciiString ViewerTest::ViewerInit (const Standard_Integer thePxLeft
   if (ViewerTest::GetAISContext().IsNull() ||
       !(ViewerTest_myContexts.IsBound1(aViewNames.GetViewerName())))
   {
-    Handle(AIS_InteractiveContext) aContext =
-      new AIS_InteractiveContext(a3DViewer);
+    Handle(AIS_InteractiveContext) aContext = new AIS_InteractiveContext (a3DViewer);
     ViewerTest::SetAISContext (aContext);
     ViewerTest_myContexts.Bind (aViewNames.GetViewerName(), ViewerTest::GetAISContext());
   }
   else
+  {
     ViewerTest::ResetEventManager();
+  }
 
   // Create window
-#if defined(_WIN32) || defined(__WIN32__)
-      VT_GetWindow() = new WNT_Window (aTitle.ToCString(),
-                                       Handle(WNT_WClass)::DownCast (WClass()),
-                                       Draw_VirtualWindows ? WS_POPUPWINDOW : WS_OVERLAPPEDWINDOW,
-                                       aPxLeft, aPxTop,
-                                       aPxWidth, aPxHeight,
-                                       Quantity_NOC_BLACK);
+#if defined(_WIN32)
+  VT_GetWindow() = new WNT_Window (aTitle.ToCString(),
+                                    Handle(WNT_WClass)::DownCast (WClass()),
+                                    Draw_VirtualWindows ? WS_POPUPWINDOW : WS_OVERLAPPEDWINDOW,
+                                    aPxLeft, aPxTop,
+                                    aPxWidth, aPxHeight,
+                                    Quantity_NOC_BLACK);
 #elif defined(__APPLE__) && !defined(MACOSX_USE_GLX)
-      VT_GetWindow() = new Cocoa_Window (aTitle.ToCString(),
-                                         aPxLeft, aPxTop,
-                                         aPxWidth, aPxHeight);
-      ViewerTest_SetCocoaEventManagerView (VT_GetWindow());
+  VT_GetWindow() = new Cocoa_Window (aTitle.ToCString(),
+                                     aPxLeft, aPxTop,
+                                     aPxWidth, aPxHeight);
+  ViewerTest_SetCocoaEventManagerView (VT_GetWindow());
 #else
-      VT_GetWindow() = new Xw_Window (aGraphicDriver->GetDisplayConnection(),
-                                      aTitle.ToCString(),
-                                      aPxLeft, aPxTop,
-                                      aPxWidth, aPxHeight);
+  VT_GetWindow() = new Xw_Window (aGraphicDriver->GetDisplayConnection(),
+                                  aTitle.ToCString(),
+                                  aPxLeft, aPxTop,
+                                  aPxWidth, aPxHeight);
 #endif
   VT_GetWindow()->SetVirtual (Draw_VirtualWindows);
 
@@ -687,7 +689,7 @@ TCollection_AsciiString ViewerTest::ViewerInit (const Standard_Integer thePxLeft
     a3DViewer->SetLightOn();
   }
 
-  #if !defined(_WIN32) && !defined(__WIN32__) && (!defined(__APPLE__) || defined(MACOSX_USE_GLX))
+  #if !defined(_WIN32) && (!defined(__APPLE__) || defined(MACOSX_USE_GLX))
   #if TCL_MAJOR_VERSION  < 8
   Tk_CreateFileHandler((void*)XConnectionNumber(GetDisplayConnection()->GetDisplay()),
       TK_READABLE, VProcessEvents, (ClientData) VT_GetWindow()->XWindow() );
@@ -725,93 +727,89 @@ void ViewerTest::RedrawAllViews()
 }
 
 //==============================================================================
-//function : SplitParameter
-//purpose  : Split parameter string to parameter name an patameter value
-//==============================================================================
-Standard_Boolean SplitParameter (const TCollection_AsciiString& theString,
-                                      TCollection_AsciiString& theName,
-                                      TCollection_AsciiString& theValue)
-{
-  Standard_Integer aParamNameEnd = theString.FirstLocationInSet("=",1, theString.Length());
-  if (aParamNameEnd == 0)
-    return Standard_False;
-  TCollection_AsciiString aString(theString);
-  if (aParamNameEnd != 0)
-  {
-    theValue = aString.Split(aParamNameEnd);
-    aString.Split(aString.Length()-1);
-    theName = aString;
-  }
-  return Standard_True;
-}
-
-//==============================================================================
 //function : Vinit
 //purpose  : Create the window viewer and initialize all the global variable
-//    Use Tk_CreateFileHandler on UNIX to cath the X11 Viewer event
+//    Use Tk_CreateFileHandler on UNIX to catch the X11 Viewer event
 //==============================================================================
 
 static int VInit (Draw_Interpretor& theDi, Standard_Integer theArgsNb, const char** theArgVec)
 {
-if (theArgsNb > 9)
+  if (theArgsNb > 9)
   {
-    theDi << theArgVec[0] << ": incorrect number of command arguments.\n"
-      << "Type help for more information.\n";
+    std::cerr << theArgVec[0] << ": incorrect number of command arguments.\n"
+              << "Type help for more information.\n";
     return 1;
   }
-  TCollection_AsciiString aViewName (""),
-                          aDisplayName ("");
-  Standard_Integer aPxLeft = 0,
-                  aPxTop = 0,
-                  aPxWidth = 0,
-                  aPxHeight = 0;
 
-  for (Standard_Integer i = 1; i < theArgsNb; ++i)
+  TCollection_AsciiString aViewName, aDisplayName;
+  Standard_Integer aPxLeft = 0, aPxTop = 0, aPxWidth = 0, aPxHeight = 0;
+  TCollection_AsciiString aName, aValue;
+  for (Standard_Integer anArgIt = 1; anArgIt < theArgsNb; ++anArgIt)
   {
-    TCollection_AsciiString aName = "", aValue = "";
-    if(!SplitParameter (TCollection_AsciiString(theArgVec[i]),aName,aValue) && theArgsNb == 2)
+    const TCollection_AsciiString anArg = theArgVec[anArgIt];
+    TCollection_AsciiString anArgCase = anArg;
+    anArgCase.UpperCase();
+    if (ViewerTest::SplitParameter (anArg, aName, aValue))
     {
-      // In case of syntax: vinit ViewName
-      aViewName = theArgVec[1];
-    }
-    else
-    {
-      if (aName == "name")
+      aName.UpperCase();
+      if (aName.IsEqual ("NAME"))
       {
         aViewName = aValue;
       }
-      else if (aName == "l" || aName == "left")
+      else if (aName.IsEqual ("L")
+            || aName.IsEqual ("LEFT"))
+      {
         aPxLeft = aValue.IntegerValue();
-      else if (aName == "t" || aName == "top")
+      }
+      else if (aName.IsEqual ("T")
+            || aName.IsEqual ("TOP"))
+      {
         aPxTop = aValue.IntegerValue();
-#if !defined(_WIN32) && !defined(__WIN32__) && (!defined(__APPLE__) || defined(MACOSX_USE_GLX))
-      else if (aName == "display")
+      }
+    #if !defined(_WIN32) && (!defined(__APPLE__) || defined(MACOSX_USE_GLX))
+      else if (aName.IsEqual ("DISP")
+            || aName.IsEqual ("DISPLAY"))
+      {
         aDisplayName = aValue;
-#endif
-      else if (aName == "w" || aName == "width")
+      }
+    #endif
+      else if (aName.IsEqual ("W")
+            || aName.IsEqual ("WIDTH"))
+      {
         aPxWidth = aValue.IntegerValue();
-      else if (aName == "h" || aName == "height")
+      }
+      else if (aName.IsEqual ("H")
+            || aName.IsEqual ("HEIGHT"))
+      {
         aPxHeight = aValue.IntegerValue();
+      }
       else
       {
-        theDi << theArgVec[0] << ": Warning: unknown parameter " << aName.ToCString() << ".\n";
+        std::cerr << theArgVec[0] << ": Warning: unknown argument " << anArg << ".\n";
       }
+    }
+    else if (aViewName.IsEmpty())
+    {
+      aViewName = anArg;
+    }
+    else
+    {
+      std::cerr << theArgVec[0] << ": Warning: unknown argument " << anArg << ".\n";
     }
   }
 
   ViewerTest_Names aViewNames (aViewName);
-  if (ViewerTest_myViews.IsBound1 (aViewNames.GetViewName ()))
+  if (ViewerTest_myViews.IsBound1 (aViewNames.GetViewName()))
   {
-    TCollection_AsciiString aCommand("vactivate ");
-    aCommand = aCommand + aViewNames.GetViewName();
-    theDi.Eval(aCommand.ToCString());
+    TCollection_AsciiString aCommand = TCollection_AsciiString ("vactivate ") + aViewNames.GetViewName();
+    theDi.Eval (aCommand.ToCString());
     return 0;
   }
 
   TCollection_AsciiString aViewId = ViewerTest::ViewerInit (aPxLeft, aPxTop, aPxWidth, aPxHeight,
                                                             aViewName.ToCString(),
                                                             aDisplayName.ToCString());
-  cout << theArgVec[0] << ": 3D View - " << aViewId << " was created.\n";
+  theDi << aViewId;
   return 0;
 }
 
@@ -1079,44 +1077,56 @@ void ViewerTest::RemoveView (const TCollection_AsciiString& theViewName, const S
 //purpose  : Remove the view defined by its name
 //==============================================================================
 
-static int VClose (Draw_Interpretor& theDi, Standard_Integer theArgsNb, const char** theArgVec)
+static int VClose (Draw_Interpretor& /*theDi*/,
+                   Standard_Integer  theArgsNb,
+                   const char**      theArgVec)
 {
-  if (theArgsNb < 2)
-  {
-    theDi << theArgVec[0] << ": incorrect number of command arguments.\n"
-      << "Type help " << theArgVec[0] << " for more information.\n";
-    return 1;
-  }
-
-  if (ViewerTest_myViews.IsEmpty())
-  {
-    theDi << theArgVec[0] <<": there is no views to close.\n";
-    return 0;
-  }
-
-  TCollection_AsciiString anInputString(theArgVec[1]);
-
-  // Create list to iterate and remove views from the map of views
   NCollection_List<TCollection_AsciiString> aViewList;
-  if ( strcasecmp( anInputString.ToCString(), "ALL" ) == 0 )
+  if (theArgsNb > 1)
   {
-    for (NCollection_DoubleMap<TCollection_AsciiString, Handle(V3d_View)>::Iterator anIter(ViewerTest_myViews);
-         anIter.More(); anIter.Next())
+    TCollection_AsciiString anArg (theArgVec[1]);
+    anArg.UpperCase();
+    if (anArg.IsEqual ("ALL")
+     || anArg.IsEqual ("*"))
     {
-      aViewList.Append(anIter.Key1());
+      for (NCollection_DoubleMap<TCollection_AsciiString, Handle(V3d_View)>::Iterator anIter (ViewerTest_myViews);
+           anIter.More(); anIter.Next())
+      {
+        aViewList.Append (anIter.Key1());
+      }
+      if (aViewList.IsEmpty())
+      {
+        std::cout << "No view to close\n";
+        return 0;
+      }
+    }
+    else
+    {
+      ViewerTest_Names aViewName (theArgVec[1]);
+      if (!ViewerTest_myViews.IsBound1 (aViewName.GetViewName()))
+      {
+        std::cerr << "The view with name '" << theArgVec[1] << "' does not exist\n";
+        return 1;
+      }
+      aViewList.Append (aViewName.GetViewName());
     }
   }
   else
   {
-    ViewerTest_Names aViewNames(anInputString);
-    aViewList.Append(aViewNames.GetViewName());
+    // close active view
+    if (ViewerTest::CurrentView().IsNull())
+    {
+      std::cerr << "No active view!\n";
+      return 1;
+    }
+    aViewList.Append (ViewerTest_myViews.Find2 (ViewerTest::CurrentView()));
   }
 
-  Standard_Boolean isContextRemoved = (theArgsNb == 3 && atoi(theArgVec[2])==1) ? Standard_False : Standard_True;
+  Standard_Boolean toRemoveContext = (theArgsNb != 3 || Draw::Atoi (theArgVec[2]) != 1);
   for (NCollection_List<TCollection_AsciiString>::Iterator anIter(aViewList);
        anIter.More(); anIter.Next())
   {
-    ViewerTest::RemoveView(anIter.Value(), isContextRemoved);
+    ViewerTest::RemoveView (anIter.Value(), toRemoveContext);
   }
 
   return 0;
@@ -1486,29 +1496,31 @@ void VT_ProcessConfigure()
 //function : VT_ProcessButton1Press
 //purpose  : Picking
 //==============================================================================
-Standard_Boolean VT_ProcessButton1Press(
-  Standard_Integer ,
-  const char**     argv,
-  Standard_Boolean pick,
-  Standard_Boolean shift)
+Standard_Boolean VT_ProcessButton1Press (Standard_Integer ,
+                                         const char**     theArgVec,
+                                         Standard_Boolean theToPick,
+                                         Standard_Boolean theIsShift)
 {
-  Handle(ViewerTest_EventManager) EM = ViewerTest::CurrentEventManager();
-  if ( pick ) {
+  if (theToPick)
+  {
     Standard_Real X, Y, Z;
+    ViewerTest::CurrentView()->Convert (X_Motion, Y_Motion, X, Y, Z);
 
-    ViewerTest::CurrentView()->Convert(X_Motion, Y_Motion, X, Y, Z);
+    Draw::Set (theArgVec[1], X);
+    Draw::Set (theArgVec[2], Y);
+    Draw::Set (theArgVec[3], Z);
+  }
 
-    Draw::Set(argv[1], X);
-    Draw::Set(argv[2], Y);
-    Draw::Set(argv[3], Z);}
-
-  if(shift)
-    EM->ShiftSelect();
+  if (theIsShift)
+  {
+    ViewerTest::CurrentEventManager()->ShiftSelect();
+  }
   else
-    EM->Select();
+  {
+    ViewerTest::CurrentEventManager()->Select();
+  }
 
-  pick = 0;
-  return pick;
+  return Standard_False;
 }
 
 //==============================================================================
@@ -3594,7 +3606,7 @@ static int VOverlayText (Draw_Interpretor& di, Standard_Integer argc, const char
     di << "  height - pixel height of the text (default=10.0)\n";
     di << "  font_name - name of font (default=courier)\n";
     di << "  text_color - R G B values of text color (default=255.0 255.0 255.0)\n";
-    di << "  display_type = {normal/subtitle/decal/blend}, (default=normal)\n";
+    di << "  display_type = {normal/subtitle/decal/blend/dimension}, (default=normal)\n";
     di << "  background_color- R G B values used for subtitle and decal text\n";
     di << "(default=255.0 255.0 255.0)\n";
     return 1;
@@ -3633,6 +3645,8 @@ static int VOverlayText (Draw_Interpretor& di, Standard_Integer argc, const char
     aTextType = Aspect_TODT_DEKALE;
   else if (aDispStr.IsEqual ("blend"))
     aTextType = Aspect_TODT_BLEND;
+  else if (aDispStr.IsEqual ("dimension"))
+    aTextType = Aspect_TODT_DIMENSION;
 
   // subtitle color
   Quantity_Parameter aSubRed   = 1.0;
@@ -4087,11 +4101,11 @@ static int VReadPixel (Draw_Interpretor& theDI,
   {
     if (aBufferType == Graphic3d_BT_RGBA)
     {
-      theDI << Quantity_Color::StringName (aColor.Name()) << " " << anAlpha << "\n";
+      theDI << Quantity_Color::StringName (aColor.Name()) << " " << anAlpha;
     }
     else
     {
-      theDI << Quantity_Color::StringName (aColor.Name()) << "\n";
+      theDI << Quantity_Color::StringName (aColor.Name());
     }
   }
   else
@@ -4103,22 +4117,22 @@ static int VReadPixel (Draw_Interpretor& theDI,
       {
         if (toShowHls)
         {
-          theDI << aColor.Hue() << " " << aColor.Light() << " " << aColor.Saturation() << "\n";
+          theDI << aColor.Hue() << " " << aColor.Light() << " " << aColor.Saturation();
         }
         else
         {
-          theDI << aColor.Red() << " " << aColor.Green() << " " << aColor.Blue() << "\n";
+          theDI << aColor.Red() << " " << aColor.Green() << " " << aColor.Blue();
         }
         break;
       }
       case Graphic3d_BT_RGBA:
       {
-        theDI << aColor.Red() << " " << aColor.Green() << " " << aColor.Blue() << " " << anAlpha << "\n";
+        theDI << aColor.Red() << " " << aColor.Green() << " " << aColor.Blue() << " " << anAlpha;
         break;
       }
       case Graphic3d_BT_Depth:
       {
-        theDI << aColor.Red() << "\n";
+        theDI << aColor.Red();
         break;
       }
     }
@@ -5263,6 +5277,680 @@ static int VSetTextureMode (Draw_Interpretor& theDi, Standard_Integer theArgsNb,
   return 0;
 }
 
+//===============================================================================================
+//function : VDefaults
+//purpose  :
+//===============================================================================================
+static int VDefaults (Draw_Interpretor& theDi,
+                      Standard_Integer  theArgsNb,
+                      const char**      theArgVec)
+{
+  const Handle(AIS_InteractiveContext)& aCtx = ViewerTest::GetAISContext();
+  if (aCtx.IsNull())
+  {
+    std::cerr << "No active viewer!\n";
+    return 1;
+  }
+
+  Handle(Prs3d_Drawer) aDefParams = aCtx->DefaultDrawer();
+  if (theArgsNb < 2)
+  {
+    if (aDefParams->TypeOfDeflection() == Aspect_TOD_RELATIVE)
+    {
+      theDi << "DeflType:           relative\n"
+            << "DeviationCoeff:     " << aDefParams->DeviationCoefficient() << "\n";
+    }
+    else
+    {
+      theDi << "DeflType:           absolute\n"
+            << "AbsoluteDeflection: " << aDefParams->MaximalChordialDeviation() << "\n";
+    }
+    theDi << "AngularDeflection:  " << (180.0 * aDefParams->HLRAngle() / M_PI) << "\n";
+    return 0;
+  }
+
+  for (Standard_Integer anArgIter = 1; anArgIter < theArgsNb; ++anArgIter)
+  {
+    TCollection_AsciiString anArg (theArgVec[anArgIter]);
+    TCollection_AsciiString aKey, aValue;
+    if (!ViewerTest::SplitParameter (anArg, aKey, aValue)
+     || aValue.IsEmpty())
+    {
+      std::cerr << "Error, wrong syntax at: '" << anArg.ToCString() << "'!\n";
+      return 1;
+    }
+
+    aKey.UpperCase();
+    if (aKey == "ABSDEFL"
+     || aKey == "ABSOLUTEDEFLECTION"
+     || aKey == "DEFL"
+     || aKey == "DEFLECTION")
+    {
+      aDefParams->SetTypeOfDeflection         (Aspect_TOD_ABSOLUTE);
+      aDefParams->SetMaximalChordialDeviation (aValue.RealValue());
+    }
+    else if (aKey == "RELDEFL"
+          || aKey == "RELATIVEDEFLECTION"
+          || aKey == "DEVCOEFF"
+          || aKey == "DEVIATIONCOEFF"
+          || aKey == "DEVIATIONCOEFFICIENT")
+    {
+      aDefParams->SetTypeOfDeflection     (Aspect_TOD_RELATIVE);
+      aDefParams->SetDeviationCoefficient (aValue.RealValue());
+    }
+    else if (aKey == "ANGDEFL"
+          || aKey == "ANGULARDEFL"
+          || aKey == "ANGULARDEFLECTION")
+    {
+      // currently HLRDeviationAngle is used instead of DeviationAngle in most places
+      aDefParams->SetHLRAngle (M_PI * aValue.RealValue() / 180.0);
+    }
+    else
+    {
+      std::cerr << "Warning, unknown argument '" << anArg.ToCString() << "'\n";
+    }
+  }
+
+  return 0;
+}
+
+//! Auxiliary method
+inline void addLight (const Handle(V3d_Light)& theLightNew,
+                      const Standard_Boolean   theIsGlobal)
+{
+  if (theLightNew.IsNull())
+  {
+    return;
+  }
+
+  if (theIsGlobal)
+  {
+    ViewerTest::GetViewerFromContext()->SetLightOn (theLightNew);
+  }
+  else
+  {
+    ViewerTest::CurrentView()->SetLightOn (theLightNew);
+  }
+}
+
+//! Auxiliary method
+inline Standard_Integer getLightId (const TCollection_AsciiString& theArgNext)
+{
+  TCollection_AsciiString anArgNextCase (theArgNext);
+  anArgNextCase.UpperCase();
+  if (anArgNextCase.Length() > 5
+   && anArgNextCase.SubString (1, 5).IsEqual ("LIGHT"))
+  {
+    return theArgNext.SubString (6, theArgNext.Length()).IntegerValue();
+  }
+  else
+  {
+    return theArgNext.IntegerValue();
+  }
+}
+
+//===============================================================================================
+//function : VLight
+//purpose  :
+//===============================================================================================
+static int VLight (Draw_Interpretor& theDi,
+                   Standard_Integer  theArgsNb,
+                   const char**      theArgVec)
+{
+  Handle(V3d_View)   aView   = ViewerTest::CurrentView();
+  Handle(V3d_Viewer) aViewer = ViewerTest::GetViewerFromContext();
+  if (aView.IsNull()
+   || aViewer.IsNull())
+  {
+    std::cerr << "No active viewer!\n";
+    return 1;
+  }
+
+  Standard_Real        anXYZ[3];
+  Quantity_Coefficient anAtten[2];
+  if (theArgsNb < 2)
+  {
+    // print lights info
+    Standard_Integer aLightId = 0;
+    for (aView->InitActiveLights(); aView->MoreActiveLights(); aView->NextActiveLights(), ++aLightId)
+    {
+      Handle(V3d_Light) aLight = aView->ActiveLight();
+      const Quantity_Color aColor = aLight->Color();
+      theDi << "Light" << aLightId << "\n";
+      switch (aLight->Type())
+      {
+        case V3d_AMBIENT:
+        {
+          theDi << "  Type:      Ambient\n";
+          break;
+        }
+        case V3d_DIRECTIONAL:
+        {
+          Handle(V3d_DirectionalLight) aLightDir = Handle(V3d_DirectionalLight)::DownCast (aLight);
+          theDi << "  Type:      Directional\n";
+          theDi << "  Headlight: " << (aLight->Headlight() ? "TRUE" : "FALSE") << "\n";
+          if (!aLightDir.IsNull())
+          {
+            aLightDir->Position  (anXYZ[0], anXYZ[1], anXYZ[2]);
+            theDi << "  Position:  " << anXYZ[0] << ", " << anXYZ[1] << ", " << anXYZ[2] << "\n";
+            aLightDir->Direction (anXYZ[0], anXYZ[1], anXYZ[2]);
+            theDi << "  Direction: " << anXYZ[0] << ", " << anXYZ[1] << ", " << anXYZ[2] << "\n";
+          }
+          break;
+        }
+        case V3d_POSITIONAL:
+        {
+          Handle(V3d_PositionalLight) aLightPos = Handle(V3d_PositionalLight)::DownCast (aLight);
+          theDi << "  Type:      Positional\n";
+          theDi << "  Headlight: " << (aLight->Headlight() ? "TRUE" : "FALSE") << "\n";
+          if (!aLightPos.IsNull())
+          {
+            aLightPos->Position  (anXYZ[0], anXYZ[1], anXYZ[2]);
+            theDi << "  Position:  " << anXYZ[0] << ", " << anXYZ[1] << ", " << anXYZ[2] << "\n";
+            aLightPos->Attenuation (anAtten[0], anAtten[1]);
+            theDi << "  Atten.:    " << anAtten[0] << " " << anAtten[1] << "\n";
+          }
+          break;
+        }
+        case V3d_SPOT:
+        {
+          Handle(V3d_SpotLight) aLightSpot = Handle(V3d_SpotLight)::DownCast (aLight);
+          theDi << "  Type:      Spot\n";
+          theDi << "  Headlight: " << (aLight->Headlight() ? "TRUE" : "FALSE") << "\n";
+          if (!aLightSpot.IsNull())
+          {
+            aLightSpot->Position  (anXYZ[0], anXYZ[1], anXYZ[2]);
+            theDi << "  Position:  " << anXYZ[0] << ", " << anXYZ[1] << ", " << anXYZ[2] << "\n";
+            aLightSpot->Direction (anXYZ[0], anXYZ[1], anXYZ[2]);
+            theDi << "  Direction: " << anXYZ[0] << ", " << anXYZ[1] << ", " << anXYZ[2] << "\n";
+            aLightSpot->Attenuation (anAtten[0], anAtten[1]);
+            theDi << "  Atten.:    " << anAtten[0] << " " << anAtten[1] << "\n";
+            theDi << "  Angle:     " << (aLightSpot->Angle() * 180.0 / M_PI) << "\n";
+            theDi << "  Exponent:  " << aLightSpot->Concentration() << "\n";
+          }
+          break;
+        }
+        default:
+        {
+          theDi << "  Type:      UNKNOWN\n";
+          break;
+        }
+      }
+      theDi << "  Color:     " << aColor.Red() << ", " << aColor.Green() << ", " << aColor.Blue() << "\n";
+    }
+  }
+
+  Handle(V3d_Light) aLightNew;
+  Handle(V3d_Light) aLightOld;
+  Standard_Boolean  isGlobal = Standard_True;
+  Standard_Boolean  toCreate = Standard_False;
+  for (Standard_Integer anArgIt = 1; anArgIt < theArgsNb; ++anArgIt)
+  {
+    Handle(V3d_Light)            aLightCurr = aLightNew.IsNull() ? aLightOld : aLightNew;
+    Handle(V3d_AmbientLight)     aLightAmb  = Handle(V3d_AmbientLight)    ::DownCast (aLightCurr);
+    Handle(V3d_DirectionalLight) aLightDir  = Handle(V3d_DirectionalLight)::DownCast (aLightCurr);
+    Handle(V3d_PositionalLight)  aLightPos  = Handle(V3d_PositionalLight) ::DownCast (aLightCurr);
+    Handle(V3d_SpotLight)        aLightSpot = Handle(V3d_SpotLight)       ::DownCast (aLightCurr);
+
+    TCollection_AsciiString aName, aValue;
+    const TCollection_AsciiString anArg (theArgVec[anArgIt]);
+    TCollection_AsciiString anArgCase (anArg);
+    anArgCase.UpperCase();
+    if (anArgCase.IsEqual ("NEW")
+     || anArgCase.IsEqual ("ADD")
+     || anArgCase.IsEqual ("CREATE"))
+    {
+      toCreate = Standard_True;
+    }
+    else if (anArgCase.IsEqual ("GLOB")
+          || anArgCase.IsEqual ("GLOBAL"))
+    {
+      isGlobal = Standard_True;
+    }
+    else if (anArgCase.IsEqual ("LOC")
+          || anArgCase.IsEqual ("LOCAL"))
+    {
+      isGlobal = Standard_False;
+    }
+    else if (anArgCase.IsEqual ("DEF")
+          || anArgCase.IsEqual ("DEFAULTS"))
+    {
+      toCreate = Standard_False;
+      aViewer->SetDefaultLights();
+    }
+    else if (anArgCase.IsEqual ("CLR")
+          || anArgCase.IsEqual ("CLEAR"))
+    {
+      toCreate = Standard_False;
+      aView->InitActiveLights();
+      while (aView->MoreActiveLights())
+      {
+        aViewer->DelLight (aView->ActiveLight());
+        aView->InitActiveLights();
+      }
+    }
+    else if (anArgCase.IsEqual ("AMB")
+          || anArgCase.IsEqual ("AMBIENT")
+          || anArgCase.IsEqual ("AMBLIGHT"))
+    {
+      addLight (aLightNew, isGlobal);
+      if (!toCreate)
+      {
+        std::cerr << "Wrong syntax at argument '" << anArg << "'!\n";
+        return 1;
+      }
+      toCreate  = Standard_False;
+      aLightNew = new V3d_AmbientLight (aViewer);
+    }
+    else if (anArgCase.IsEqual ("DIRECTIONAL")
+          || anArgCase.IsEqual ("DIRLIGHT"))
+    {
+      addLight (aLightNew, isGlobal);
+      if (!toCreate)
+      {
+        std::cerr << "Wrong syntax at argument '" << anArg << "'!\n";
+        return 1;
+      }
+      toCreate  = Standard_False;
+      aLightNew = new V3d_DirectionalLight (aViewer);
+    }
+    else if (anArgCase.IsEqual ("SPOT")
+          || anArgCase.IsEqual ("SPOTLIGHT"))
+    {
+      addLight (aLightNew, isGlobal);
+      if (!toCreate)
+      {
+        std::cerr << "Wrong syntax at argument '" << anArg << "'!\n";
+        return 1;
+      }
+      toCreate  = Standard_False;
+      aLightNew = new V3d_SpotLight (aViewer, 0.0, 0.0, 0.0);
+    }
+    else if (anArgCase.IsEqual ("POSLIGHT")
+          || anArgCase.IsEqual ("POSITIONAL"))
+    {
+      addLight (aLightNew, isGlobal);
+      if (!toCreate)
+      {
+        std::cerr << "Wrong syntax at argument '" << anArg << "'!\n";
+        return 1;
+      }
+      toCreate  = Standard_False;
+      aLightNew = new V3d_PositionalLight (aViewer, 0.0, 0.0, 0.0);
+    }
+    else if (anArgCase.IsEqual ("CHANGE"))
+    {
+      addLight (aLightNew, isGlobal);
+      aLightNew.Nullify();
+      if (++anArgIt >= theArgsNb)
+      {
+        std::cerr << "Wrong syntax at argument '" << anArg << "'!\n";
+        return 1;
+      }
+
+      const Standard_Integer aLightId = getLightId (theArgVec[anArgIt]);
+      Standard_Integer aLightIt = 0;
+      for (aView->InitActiveLights(); aView->MoreActiveLights(); aView->NextActiveLights(), ++aLightIt)
+      {
+        if (aLightIt == aLightId)
+        {
+          aLightOld = aView->ActiveLight();
+          break;
+        }
+      }
+
+      if (aLightOld.IsNull())
+      {
+        std::cerr << "Light " << theArgVec[anArgIt] << " is undefined!\n";
+        return 1;
+      }
+    }
+    else if (anArgCase.IsEqual ("DEL")
+          || anArgCase.IsEqual ("DELETE"))
+    {
+      Handle(V3d_Light) aLightDel;
+      if (++anArgIt >= theArgsNb)
+      {
+        std::cerr << "Wrong syntax at argument '" << anArg << "'!\n";
+        return 1;
+      }
+
+      const TCollection_AsciiString anArgNext (theArgVec[anArgIt]);
+      const Standard_Integer aLightDelId = getLightId (theArgVec[anArgIt]);
+      Standard_Integer aLightIt = 0;
+      for (aView->InitActiveLights(); aView->MoreActiveLights(); aView->NextActiveLights(), ++aLightIt)
+      {
+        aLightDel = aView->ActiveLight();
+        if (aLightIt == aLightDelId)
+        {
+          break;
+        }
+      }
+      if (!aLightDel.IsNull())
+      {
+        aViewer->DelLight (aLightDel);
+      }
+    }
+    else if (anArgCase.IsEqual ("COLOR")
+          || anArgCase.IsEqual ("COLOUR"))
+    {
+      if (++anArgIt >= theArgsNb)
+      {
+        std::cerr << "Wrong syntax at argument '" << anArg << "'!\n";
+        return 1;
+      }
+
+      TCollection_AsciiString anArgNext (theArgVec[anArgIt]);
+      anArgNext.UpperCase();
+      const Quantity_Color aColor = ViewerTest::GetColorFromName (anArgNext.ToCString());
+      if (!aLightCurr.IsNull())
+      {
+        aLightCurr->SetColor (aColor);
+      }
+    }
+    else if (anArgCase.IsEqual ("POS")
+          || anArgCase.IsEqual ("POSITION"))
+    {
+      if ((anArgIt + 3) >= theArgsNb)
+      {
+        std::cerr << "Wrong syntax at argument '" << anArg << "'!\n";
+        return 1;
+      }
+
+      anXYZ[0] = Atof (theArgVec[++anArgIt]);
+      anXYZ[1] = Atof (theArgVec[++anArgIt]);
+      anXYZ[2] = Atof (theArgVec[++anArgIt]);
+      if (!aLightDir.IsNull())
+      {
+        aLightDir->SetPosition (anXYZ[0], anXYZ[1], anXYZ[2]);
+      }
+      else if (!aLightPos.IsNull())
+      {
+        aLightPos->SetPosition (anXYZ[0], anXYZ[1], anXYZ[2]);
+      }
+      else if (!aLightSpot.IsNull())
+      {
+        aLightSpot->SetPosition (anXYZ[0], anXYZ[1], anXYZ[2]);
+      }
+      else
+      {
+        std::cerr << "Wrong syntax at argument '" << anArg << "'!\n";
+        return 1;
+      }
+    }
+    else if (anArgCase.IsEqual ("DIR")
+          || anArgCase.IsEqual ("DIRECTION"))
+    {
+      if ((anArgIt + 3) >= theArgsNb)
+      {
+        std::cerr << "Wrong syntax at argument '" << anArg << "'!\n";
+        return 1;
+      }
+
+      anXYZ[0] = Atof (theArgVec[++anArgIt]);
+      anXYZ[1] = Atof (theArgVec[++anArgIt]);
+      anXYZ[2] = Atof (theArgVec[++anArgIt]);
+      if (!aLightDir.IsNull())
+      {
+        aLightDir->SetDirection (anXYZ[0], anXYZ[1], anXYZ[2]);
+      }
+      else if (!aLightSpot.IsNull())
+      {
+        aLightSpot->SetDirection (anXYZ[0], anXYZ[1], anXYZ[2]);
+      }
+      else
+      {
+        std::cerr << "Wrong syntax at argument '" << anArg << "'!\n";
+        return 1;
+      }
+    }
+    else if (anArgCase.IsEqual ("ANG")
+          || anArgCase.IsEqual ("ANGLE"))
+    {
+      if (++anArgIt >= theArgsNb)
+      {
+        std::cerr << "Wrong syntax at argument '" << anArg << "'!\n";
+        return 1;
+      }
+
+      Standard_Real anAngle = Atof (theArgVec[anArgIt]);
+
+      if (!aLightSpot.IsNull())
+      {
+        aLightSpot->SetAngle (anAngle / 180.0 * M_PI);
+      }
+    }
+    else if (anArgCase.IsEqual ("CONSTATTEN")
+          || anArgCase.IsEqual ("CONSTATTENUATION"))
+    {
+      if (++anArgIt >= theArgsNb)
+      {
+        std::cerr << "Wrong syntax at argument '" << anArg << "'!\n";
+        return 1;
+      }
+
+      if (!aLightPos.IsNull())
+      {
+        aLightPos->Attenuation (anAtten[0], anAtten[1]);
+        anAtten[0] = Atof (theArgVec[anArgIt]);
+        aLightPos->SetAttenuation (anAtten[0], anAtten[1]);
+      }
+      else if (!aLightSpot.IsNull())
+      {
+        aLightSpot->Attenuation (anAtten[0], anAtten[1]);
+        anAtten[0] = Atof (theArgVec[anArgIt]);
+        aLightSpot->SetAttenuation (anAtten[0], anAtten[1]);
+      }
+      else
+      {
+        std::cerr << "Wrong syntax at argument '" << anArg << "'!\n";
+        return 1;
+      }
+    }
+    else if (anArgCase.IsEqual ("LINATTEN")
+          || anArgCase.IsEqual ("LINEARATTEN")
+          || anArgCase.IsEqual ("LINEARATTENUATION"))
+    {
+      if (++anArgIt >= theArgsNb)
+      {
+        std::cerr << "Wrong syntax at argument '" << anArg << "'!\n";
+        return 1;
+      }
+
+      if (!aLightPos.IsNull())
+      {
+        aLightPos->Attenuation (anAtten[0], anAtten[1]);
+        anAtten[1] = Atof (theArgVec[anArgIt]);
+        aLightPos->SetAttenuation (anAtten[0], anAtten[1]);
+      }
+      else if (!aLightSpot.IsNull())
+      {
+        aLightSpot->Attenuation (anAtten[0], anAtten[1]);
+        anAtten[1] = Atof (theArgVec[anArgIt]);
+        aLightSpot->SetAttenuation (anAtten[0], anAtten[1]);
+      }
+      else
+      {
+        std::cerr << "Wrong syntax at argument '" << anArg << "'!\n";
+        return 1;
+      }
+    }
+    else if (anArgCase.IsEqual ("EXP")
+          || anArgCase.IsEqual ("EXPONENT")
+          || anArgCase.IsEqual ("SPOTEXP")
+          || anArgCase.IsEqual ("SPOTEXPONENT"))
+    {
+      if (++anArgIt >= theArgsNb)
+      {
+        std::cerr << "Wrong syntax at argument '" << anArg << "'!\n";
+        return 1;
+      }
+
+      if (!aLightSpot.IsNull())
+      {
+        aLightSpot->SetConcentration (Atof (theArgVec[anArgIt]));
+      }
+      else
+      {
+        std::cerr << "Wrong syntax at argument '" << anArg << "'!\n";
+        return 1;
+      }
+    }
+    else if (anArgCase.IsEqual ("HEAD")
+          || anArgCase.IsEqual ("HEADLIGHT"))
+    {
+      if (++anArgIt >= theArgsNb)
+      {
+        std::cerr << "Wrong syntax at argument '" << anArg << "'!\n";
+        return 1;
+      }
+
+      if (aLightAmb.IsNull()
+       && !aLightCurr.IsNull())
+      {
+        aLightCurr->SetHeadlight (Draw::Atoi (theArgVec[anArgIt]) != 0);
+      }
+      else
+      {
+        std::cerr << "Wrong syntax at argument '" << anArg << "'!\n";
+        return 1;
+      }
+    }
+    else
+    {
+      std::cerr << "Warning: unknown argument '" << anArg << "'\n";
+    }
+  }
+
+  addLight (aLightNew, isGlobal);
+  aViewer->UpdateLights();
+
+  return 0;
+}
+
+
+
+//==============================================================================
+//function : VClInfo
+//purpose  : Prints info about active OpenCL device
+//==============================================================================
+
+static Standard_Integer VClInfo (Draw_Interpretor& theDi,
+                                 Standard_Integer,
+                                 const char**)
+{
+  Handle(AIS_InteractiveContext) aContextAIS = ViewerTest::GetAISContext();
+  if (aContextAIS.IsNull())
+  {
+    std::cerr << "Call vinit before!\n";
+    return 1;
+  }
+
+  Handle(OpenGl_GraphicDriver) aDrv = Handle(OpenGl_GraphicDriver)::DownCast (aContextAIS->CurrentViewer()->Driver());
+  Graphic3d_CView* aCView = static_cast<Graphic3d_CView*> (ViewerTest::CurrentView()->View()->CView());
+  NCollection_DataMap<TCollection_AsciiString, TCollection_AsciiString> anInfo;
+  if (aDrv.IsNull()
+   || aCView == NULL
+   || !aDrv->GetOpenClDeviceInfo (*aCView, anInfo))
+  {
+    theDi << "OpenCL device info is unavailable!\n";
+    return 0;
+  }
+
+  theDi << "OpenCL device info:\n";
+  for (NCollection_DataMap<TCollection_AsciiString, TCollection_AsciiString>::Iterator anIter (anInfo);
+       anIter.More(); anIter.Next())
+  {
+    theDi << anIter.Key() << ": \t" << anIter.Value() << "\n";
+  }
+  return 0;
+}
+
+//=======================================================================
+//function : VRaytrace
+//purpose  : Enables/disables OpenCL-based ray-tracing
+//=======================================================================
+
+static Standard_Integer VRaytrace (Draw_Interpretor& ,
+                                   Standard_Integer  theArgNb,
+                                   const char**      theArgVec)
+{
+  Handle(V3d_View) aView = ViewerTest::CurrentView();
+  if (aView.IsNull())
+  {
+    std::cerr << "Use 'vinit' command before " << theArgVec[0] << "\n";
+    return 1;
+  }
+
+  if (theArgNb < 2
+   || Draw::Atoi (theArgVec[1]))
+  {
+    aView->SetRaytracingMode();
+  }
+  else
+  {
+    aView->SetRasterizationMode();
+  }
+  aView->Redraw();
+  return 0;
+}
+
+//=======================================================================
+//function : VSetRaytraceMode
+//purpose  : Enables/disables features of OpenCL-based ray-tracing
+//=======================================================================
+
+static Standard_Integer VSetRaytraceMode (Draw_Interpretor&,
+                                          Standard_Integer theArgNb,
+                                          const char ** theArgVec)
+{
+  Handle(V3d_View) aView = ViewerTest::CurrentView();
+  if (aView.IsNull())
+  {
+    std::cerr << "Use 'vinit' command before " << theArgVec[0] << "\n";
+    return 1;
+  }
+  else if (theArgNb < 2)
+  {
+    std::cerr << "Usage : " << theArgVec[0] << " [shad=0|1] [refl=0|1] [aa=0|1]\n";
+    return 1;
+  }
+
+  for (Standard_Integer anArgIter = 1; anArgIter < theArgNb; ++anArgIter)
+  {
+    const TCollection_AsciiString anArg (theArgVec[anArgIter]);
+
+    if (anArg.Search ("shad=") > -1)
+    {
+      if (anArg.Token ("=", 2).IntegerValue() != 0)
+        aView->EnableRaytracedShadows();
+      else
+        aView->DisableRaytracedShadows();
+    }
+    else if (anArg.Search ("refl=") > -1)
+    {
+      if (anArg.Token ("=", 2).IntegerValue() != 0)
+        aView->EnableRaytracedReflections();
+      else
+        aView->DisableRaytracedReflections();
+    }
+    else if (anArg.Search ("aa=") > -1)
+    {
+      if (anArg.Token ("=", 2).IntegerValue() != 0)
+        aView->EnableRaytracedAntialiasing();
+      else
+        aView->DisableRaytracedAntialiasing();
+    }
+    else
+    {
+      std::cerr << "Unknown argument: " << anArg << "\n";
+    }
+  }
+
+  aView->Redraw();
+  return 0;
+}
+
 //=======================================================================
 //function : ViewerCommands
 //purpose  :
@@ -5293,7 +5981,7 @@ void ViewerTest::ViewerCommands(Draw_Interpretor& theCommands)
     "Additional commands for operations with views: vclose, vactivate, vviewlist.\n",
     __FILE__,VInit,group);
   theCommands.Add("vclose" ,
-    "view_id [keep_context=0|1]\n"
+    "[view_id [keep_context=0|1]]\n"
     "or vclose ALL - to remove all created views\n"
     " - removes view(viewer window) defined by its view_id.\n"
     " - keep_context: by default 0; if 1 and the last view is deleted"
@@ -5536,4 +6224,24 @@ void ViewerTest::ViewerCommands(Draw_Interpretor& theCommands)
     "  2 - all textures enabled.\n"
     "  this command sets texture details mode for the specified view.\n"
     , __FILE__, VSetTextureMode, group);
+  theCommands.Add("vdefaults",
+    "vdefaults [absDefl=value] [devCoeff=value] [angDefl=value]",
+    __FILE__, VDefaults, group);
+  theCommands.Add("vlight",
+            "vlight [add|new {amb}ient|directional|{spot}light|positional]"
+    "\n\t\t:        [{def}aults] [clear]"
+    "\n\t\t:        [{del}ete|change lightId] [local|global]"
+    "\n\t\t:        [{pos}ition X Y Z] [color colorName] [{head}light 0|1]"
+    "\n\t\t:        [{constAtten}uation value] [{linearAtten}uation value]"
+    "\n\t\t:        [angle angleDeg] [{spotexp}onent value]",
+    __FILE__, VLight, group);
+  theCommands.Add("vraytrace",
+    "vraytrace 0|1",
+    __FILE__,VRaytrace,group);
+  theCommands.Add("vclinfo",
+    "vclinfo",
+    __FILE__,VClInfo,group);
+  theCommands.Add("vsetraytracemode",
+    "vsetraytracemode [shad=0|1] [refl=0|1] [aa=0|1]",
+    __FILE__,VSetRaytraceMode,group);
 }

@@ -30,8 +30,10 @@
 #include <OpenGl_ExtFBO.hxx>
 #include <OpenGl_ExtGS.hxx>
 #include <OpenGl_GlCore20.hxx>
+#include <OpenGl_ShaderManager.hxx>
 
 #include <Message_Messenger.hxx>
+
 #include <NCollection_Vector.hxx>
 
 #include <Standard_ProgramError.hxx>
@@ -88,7 +90,7 @@ OpenGl_Context::OpenGl_Context (const Handle(OpenGl_Caps)& theCaps)
   extGS  (NULL),
   extBgra(Standard_False),
   extAnis(Standard_False),
-  extPDS(Standard_False),
+  extPDS (Standard_False),
   atiMem (Standard_False),
   nvxMem (Standard_False),
   mySharedResources (new OpenGl_ResourcesMap()),
@@ -97,9 +99,9 @@ OpenGl_Context::OpenGl_Context (const Handle(OpenGl_Caps)& theCaps)
   myClippingState (),
   myGlLibHandle (NULL),
   myGlCore20 (NULL),
+  myAnisoMax   (1),
   myMaxTexDim  (1024),
   myMaxClipPlanes (6),
-  myAnisoMax   (1),
   myGlVerMajor (0),
   myGlVerMinor (0),
   myIsFeedback (Standard_False),
@@ -117,6 +119,8 @@ OpenGl_Context::OpenGl_Context (const Handle(OpenGl_Caps)& theCaps)
   // (depends on renderer).
   myGlLibHandle = dlopen ("/System/Library/Frameworks/OpenGL.framework/Versions/Current/OpenGL", RTLD_LAZY);
 #endif
+
+  myShaderManager = new OpenGl_ShaderManager (this);
 }
 
 // =======================================================================
@@ -131,11 +135,16 @@ OpenGl_Context::~OpenGl_Context()
   // release shared resources if any
   if (((const Handle(Standard_Transient)& )mySharedResources)->GetRefCount() <= 1)
   {
+    myShaderManager.Nullify();
     for (NCollection_DataMap<TCollection_AsciiString, Handle(OpenGl_Resource)>::Iterator anIter (*mySharedResources);
          anIter.More(); anIter.Next())
     {
       anIter.Value()->Release (this);
     }
+  }
+  else
+  {
+    myShaderManager->SetContext (NULL);
   }
   mySharedResources.Nullify();
   myDelayed.Nullify();
@@ -199,6 +208,7 @@ void OpenGl_Context::Share (const Handle(OpenGl_Context)& theShareCtx)
     mySharedResources = theShareCtx->mySharedResources;
     myDelayed         = theShareCtx->myDelayed;
     myReleaseQueue    = theShareCtx->myReleaseQueue;
+    myShaderManager   = theShareCtx->myShaderManager;
   }
 }
 
@@ -246,6 +256,7 @@ Standard_Boolean OpenGl_Context::MakeCurrent()
   // however some drivers (Intel etc.) may FAIL doing this for unknown reason
   if (IsCurrent())
   {
+    myShaderManager->SetContext (this);
     return Standard_True;
   }
   else if (wglMakeCurrent ((HDC )myWindowDC, (HGLRC )myGContext) != TRUE)
@@ -262,6 +273,7 @@ Standard_Boolean OpenGl_Context::MakeCurrent()
       LocalFree (aMsgBuff);
     }
     PushMessage (GL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB, GL_DEBUG_TYPE_ERROR_ARB, (unsigned int )anErrorCode, GL_DEBUG_SEVERITY_HIGH_ARB, aMsg);
+    myIsInitialized = Standard_False;
     return Standard_False;
   }
 #else
@@ -276,9 +288,11 @@ Standard_Boolean OpenGl_Context::MakeCurrent()
     // if there is no current context it might be impossible to use glGetError() correctly
     PushMessage (GL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB, GL_DEBUG_TYPE_ERROR_ARB, 0, GL_DEBUG_SEVERITY_HIGH_ARB,
                  "glXMakeCurrent() has failed!");
+    myIsInitialized = Standard_False;
     return Standard_False;
   }
 #endif
+  myShaderManager->SetContext (this);
   return Standard_True;
 }
 
@@ -485,7 +499,7 @@ void OpenGl_Context::readGlVersion()
   GLint aMajor = 0, aMinor = 0;
   glGetIntegerv (GL_MAJOR_VERSION, &aMajor);
   glGetIntegerv (GL_MINOR_VERSION, &aMinor);
-  // glGetError() sometimes does not report an error here even if 
+  // glGetError() sometimes does not report an error here even if
   // GL does not know GL_MAJOR_VERSION and GL_MINOR_VERSION constants.
   // This happens on some rendereres like e.g. Cygwin MESA.
   // Thus checking additionally if GL has put anything to
@@ -582,7 +596,7 @@ static void APIENTRY debugCallbackWrap(unsigned int theSource,
                                        unsigned int theSeverity,
                                        int          /*theLength*/,
                                        const char*  theMessage,
-                                       void*        theUserParam)
+                                       const void*  theUserParam)
 {
   OpenGl_Context* aCtx = (OpenGl_Context* )theUserParam;
   aCtx->PushMessage (theSource, theType, theId, theSeverity, theMessage);
@@ -814,7 +828,7 @@ void OpenGl_Context::init()
     && FindProcShort (myGlCore20, glLoadTransposeMatrixd)
     && FindProcShort (myGlCore20, glMultTransposeMatrixf)
     && FindProcShort (myGlCore20, glMultTransposeMatrixd);
-  
+
   // Check if OpenGL 1.4 core functionality is actually present
   Standard_Boolean hasGlCore14 = IsGlGreaterEqual (1, 4)
     && FindProcShort (myGlCore20, glBlendFuncSeparate)

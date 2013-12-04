@@ -12,6 +12,7 @@
 *.jxx       eol=lf
 *.lxx       eol=lf
 *.pxx       eol=lf
+*.cl        eol=lf
 *.cdl       eol=lf
 *.edl       eol=lf
 *.yacc      eol=lf
@@ -34,6 +35,7 @@
 *.brep      eol=lf
 *.rle       eol=lf
 *.vrml      eol=lf
+*.md        eol=lf
 FILES       eol=lf
 PACKAGES    eol=lf
 EXTERNLIB   eol=lf
