@@ -55,7 +55,12 @@ void  BRepGProp::LinearProperties(const TopoDS_Shape& S, GProp_GProps& SProps){
 //  Standard_Integer n,i;
   TopExp_Explorer ex;
   for (ex.Init(S,TopAbs_EDGE); ex.More(); ex.Next()) {
-    BAC.Initialize(TopoDS::Edge(ex.Current()));
+    const TopoDS_Edge& aE = TopoDS::Edge(ex.Current());
+    if(!BRep_Tool::IsGeometric(aE))
+    {
+      continue;
+    }
+    BAC.Initialize(aE);
     BRepGProp_Cinert CG(BAC,P);
     SProps.Add(CG);
   }
