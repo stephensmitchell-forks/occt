@@ -1,0 +1,26 @@
+puts "============"
+puts "OCC24397"
+puts "============"
+puts ""
+#############################################
+# BRepBuilderAPI_Copy works not correct
+#############################################
+
+restore [locate_data_file case_1_wire3.brep] result
+regexp {Mass +: +([-0-9.+eE]+)} [lprops result] full lp1
+tcopy result result1
+regexp {Mass +: +([-0-9.+eE]+)} [lprops result1] full lp2
+
+if { $lp1 != $lp2 } {
+    puts "Error: lengths of original and copy shapes are not equal"
+} else {
+    puts "OK: lengths of original and copy shapes are equal"
+}
+
+set length 942.478
+set 2dviewer 0
+
+
+
+
+
