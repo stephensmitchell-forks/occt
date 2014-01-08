@@ -108,9 +108,10 @@ namespace {
     cout << flush;
   }
 
-  FILE* capture_start (int std_fd, int *save_fd, char*& tmp_name)
+  FILE* capture_start (int *save_fd_out, int *save_fd_err, char*& tmp_name)
   {
-    *save_fd = 0;
+    *save_fd_out = 0;
+    *save_fd_err = 0;
 
     // open temporary files
   #if defined(_WIN32)
@@ -135,19 +136,27 @@ namespace {
     }
 
     // remember current file descriptors of standard stream, and replace it by temporary
-    (*save_fd) = dup(std_fd);
-    dup2(fd_tmp, std_fd);
+    (*save_fd_out) = dup(STDOUT_FILENO);
+    (*save_fd_err) = dup(STDERR_FILENO);
+    
+    dup2(fd_tmp, STDOUT_FILENO);
+    dup2(fd_tmp, STDERR_FILENO);
+    
     return aTmpFile;
   }
 
-  void capture_end (FILE* tmp_file, int std_fd, int save_fd, char* tmp_name, Standard_OStream &log, Standard_Boolean doEcho)
+  void capture_end (FILE* tmp_file, int save_fd_out, int save_fd_err, 
+                    char* tmp_name, Standard_OStream &log, Standard_Boolean doEcho)
   {
     if (! tmp_file)
       return;
 
     // restore normal descriptors of console stream
-    dup2 (save_fd, std_fd);
-    close(save_fd);
+    dup2 (save_fd_out, STDOUT_FILENO);
+    dup2 (save_fd_err, STDERR_FILENO);
+
+    close(save_fd_out);
+    close(save_fd_err);
 
     // extract all output and copy it to log and optionally to cout
     const int BUFSIZE = 2048;
@@ -199,15 +208,13 @@ static Standard_Integer CommandCmd
   flush_standard_streams();
 
   // capture cout and cerr to log
-  char *err_name = NULL, *out_name = NULL;
-  FILE * aFile_err = NULL;
+  char *out_name = NULL;
   FILE * aFile_out = NULL;
   int fd_err_save = 0;
   int fd_out_save = 0;
   if (doLog)
   {
-    aFile_out = capture_start (STDOUT_FILENO, &fd_out_save, out_name);
-    aFile_err = capture_start (STDERR_FILENO, &fd_err_save, err_name);
+    aFile_out = capture_start (&fd_out_save, &fd_err_save, out_name);
   }
 
   // run command
@@ -261,8 +268,7 @@ static Standard_Integer CommandCmd
   // end capturing cout and cerr 
   if (doLog) 
   {
-    capture_end (aFile_err, STDERR_FILENO, fd_err_save, err_name, di.Log(), doEcho);
-    capture_end (aFile_out, STDOUT_FILENO, fd_out_save, out_name, di.Log(), doEcho);
+    capture_end (aFile_out, fd_out_save, fd_err_save, out_name, di.Log(), doEcho);
   }
 
   // log command result
