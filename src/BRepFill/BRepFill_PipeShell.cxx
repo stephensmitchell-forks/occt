@@ -214,7 +214,7 @@ static Standard_Boolean IsSameOriented(const TopoDS_Shape& aFace,
 //purpose  : 
 //=======================================================================
 BRepFill_PipeShell::BRepFill_PipeShell(const TopoDS_Wire& Spine)
-                      :  mySpine(Spine), 
+                      :  mySpine(Spine),
                          myForceApproxC1(Standard_False),
                          myIsAutomaticLaw(Standard_False),
                          myTrihedron(GeomFill_IsCorrectedFrenet),
@@ -225,6 +225,9 @@ BRepFill_PipeShell::BRepFill_PipeShell(const TopoDS_Wire& Spine)
   mySection.Nullify();
   myLaw.Nullify();
   SetTolerance();
+
+  myMaxDegree = 11;
+  myMaxSegments = 30;
 
   // Attention to closed non-declared wire !
   if (!mySpine.Closed()) {
@@ -412,6 +415,25 @@ BRepFill_PipeShell::BRepFill_PipeShell(const TopoDS_Wire& Spine)
     myLocation = new (BRepFill_Edge3DLaw) (mySpine, Loc);  
   }    
   mySection.Nullify(); //It is required to relocalize the sections.
+}
+
+
+//=======================================================================
+//function : SetMaxDegree
+//purpose  : 
+//=======================================================================
+void BRepFill_PipeShell::SetMaxDegree(const Standard_Integer NewMaxDegree)
+{
+  myMaxDegree = NewMaxDegree;
+}
+
+//=======================================================================
+//function : SetMaxSegments
+//purpose  : 
+//=======================================================================
+void BRepFill_PipeShell::SetMaxSegments(const Standard_Integer NewMaxSegments)
+{
+  myMaxSegments = NewMaxSegments;
 }
 
 //=======================================================================
@@ -742,7 +764,8 @@ void BRepFill_PipeShell::SetForceApproxC1(const Standard_Boolean ForceApproxC1)
     theContinuity = GeomAbs_C0;
   TopTools_MapOfShape Dummy;
   BRepFill_DataMapOfShapeHArray2OfShape Dummy2;
-  MkSw.Build(Dummy, Dummy2, myTransition, theContinuity);
+  MkSw.Build(Dummy, Dummy2, myTransition, theContinuity,
+             GeomFill_Location, myMaxDegree, myMaxSegments);
 
   myStatus = myLocation->GetStatus();
   Ok =  (MkSw.IsDone() && (myStatus == GeomFill_PipeOk));

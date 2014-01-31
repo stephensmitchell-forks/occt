@@ -1700,7 +1700,7 @@ const
 
     for (TopoDS_Iterator IteW(IteF.Value()); IteW.More(); IteW.Next()) {
       
-      TopoDS_Edge E = TopoDS::Edge(IteW.Value());
+      const TopoDS_Edge& E = TopoDS::Edge(IteW.Value());
       EdgeVertices(E,V1,V2);
       MapSpine.Bind(V1,V1);
       MapSpine.Bind(V2,V2);

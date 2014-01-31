@@ -88,7 +88,8 @@
 // Returns true if one of original edges dropped
 static Standard_Boolean AddOrdinaryEdges(TopTools_SequenceOfShape& edges,
                                          const TopoDS_Shape aShape,
-                                         Standard_Integer& anIndex)
+                                         Standard_Integer& anIndex,
+                                         Handle(ShapeBuild_ReShape)& aContext)
 {
   //map of edges
   TopTools_IndexedMapOfShape aNewEdges;
@@ -122,6 +123,7 @@ static Standard_Boolean AddOrdinaryEdges(TopTools_SequenceOfShape& edges,
         aNewEdges.Substitute(aNewEdges.FindIndex(current), LastEdge);
       /////////////////////////
       edges.Remove(i);
+      aContext->Remove(current);
       i--;
 
       if(!isDropped) {
@@ -838,7 +840,7 @@ void ShapeUpgrade_UnifySameDomain::UnifyFaces()
 
       Standard_Integer dummy;
       TopTools_SequenceOfShape edges;
-      AddOrdinaryEdges(edges,aFace,dummy);
+      AddOrdinaryEdges(edges, aFace, dummy, myContext);
 
       TopTools_SequenceOfShape faces;
       faces.Append(aFace);
@@ -878,7 +880,7 @@ void ShapeUpgrade_UnifySameDomain::UnifyFaces()
             B.MakeFace(aMockUpFace,aBaseSurface,aBaseLocation,0.);
             MovePCurves(aMockUpFace,anCheckedFace);
 
-            if (AddOrdinaryEdges(edges,aMockUpFace,dummy)) {
+            if (AddOrdinaryEdges(edges, aMockUpFace, dummy, myContext)) {
               // sequence edges is modified
               i = dummy;
             }
