@@ -42,6 +42,7 @@
 #include <BRepFill_ShapeLaw.hxx>
 #include <BRepFill_CompatibleWires.hxx>
 #include <BRepFill_NSections.hxx>
+#include <BRepFill_DataMapOfShapeHArray2OfShape.hxx>
 #include <TColStd_HArray1OfReal.hxx>
 
 #include <GeomFill_TrihedronLaw.hxx>
@@ -69,6 +70,7 @@
 #include <StdFail_NotDone.hxx>
 
 #include <BRepBuilderAPI_Copy.hxx>
+#include <BRepBuilderAPI_Transform.hxx>
 
 #include <GProp_GProps.hxx>
 #include <BRepGProp.hxx>
@@ -212,7 +214,7 @@ static Standard_Boolean IsSameOriented(const TopoDS_Shape& aFace,
 //purpose  : 
 //=======================================================================
 BRepFill_PipeShell::BRepFill_PipeShell(const TopoDS_Wire& Spine)
-                      :  mySpine(Spine), 
+                      :  mySpine(Spine),
                          myForceApproxC1(Standard_False),
                          myIsAutomaticLaw(Standard_False),
                          myTrihedron(GeomFill_IsCorrectedFrenet),
@@ -223,6 +225,9 @@ BRepFill_PipeShell::BRepFill_PipeShell(const TopoDS_Wire& Spine)
   mySection.Nullify();
   myLaw.Nullify();
   SetTolerance();
+
+  myMaxDegree = 11;
+  myMaxSegments = 30;
 
   // Attention to closed non-declared wire !
   if (!mySpine.Closed()) {
@@ -410,6 +415,25 @@ BRepFill_PipeShell::BRepFill_PipeShell(const TopoDS_Wire& Spine)
     myLocation = new (BRepFill_Edge3DLaw) (mySpine, Loc);  
   }    
   mySection.Nullify(); //It is required to relocalize the sections.
+}
+
+
+//=======================================================================
+//function : SetMaxDegree
+//purpose  : 
+//=======================================================================
+void BRepFill_PipeShell::SetMaxDegree(const Standard_Integer NewMaxDegree)
+{
+  myMaxDegree = NewMaxDegree;
+}
+
+//=======================================================================
+//function : SetMaxSegments
+//purpose  : 
+//=======================================================================
+void BRepFill_PipeShell::SetMaxSegments(const Standard_Integer NewMaxSegments)
+{
+  myMaxSegments = NewMaxSegments;
 }
 
 //=======================================================================
@@ -738,7 +762,10 @@ void BRepFill_PipeShell::SetForceApproxC1(const Standard_Boolean ForceApproxC1)
   GeomAbs_Shape theContinuity = GeomAbs_C2;
   if (myTrihedron == GeomFill_IsDiscreteTrihedron)
     theContinuity = GeomAbs_C0;
-  MkSw.Build(myTransition, theContinuity);
+  TopTools_MapOfShape Dummy;
+  BRepFill_DataMapOfShapeHArray2OfShape Dummy2;
+  MkSw.Build(Dummy, Dummy2, myTransition, theContinuity,
+             GeomFill_Location, myMaxDegree, myMaxSegments);
 
   myStatus = myLocation->GetStatus();
   Ok =  (MkSw.IsDone() && (myStatus == GeomFill_PipeOk));
@@ -1118,11 +1145,14 @@ void BRepFill_PipeShell::Place(const BRepFill_Section& Sec,
 				  Sec.Vertex(),
 				  Sec.WithContact(),
 				  Sec.WithCorrection());
-  W =  Sec.Wire();
+  TopoDS_Wire TmpWire =  Sec.Wire();
   aTrsf = Place.Transformation();
-  TopLoc_Location Loc2(Place.Transformation()), Loc1;
-  Loc1 = W.Location();
-  W.Location(Loc2.Multiplied(Loc1));
+  //TopLoc_Location Loc2(Place.Transformation()), Loc1;
+  //Loc1 = TmpWire.Location();
+  //W.Location(Loc2.Multiplied(Loc1));
+  //Transform the copy
+  W = TopoDS::Wire(BRepBuilderAPI_Transform(TmpWire, aTrsf, Standard_True));
+  ////////////////////////////////////
   param = Place.AbscissaOnPath();
 }
 
