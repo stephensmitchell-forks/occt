@@ -16,6 +16,7 @@ regexp {Distance += +([-0-9.+eE]+)} ${info1} full Distance
 
 if { [info exists Sol4] } {
    set info2 [dump Sol4]
+   set toler 10e-8
    regexp {Center +:([-0-9.+eE]+), +([-0-9.+eE]+)} ${info2} full CenterX CenterY
    regexp {XAxis +:([-0-9.+eE]+), +([-0-9.+eE]+)} ${info2} full XAxisX XAxisY
    regexp {YAxis +:([-0-9.+eE]+), +([-0-9.+eE]+)} ${info2} full YAxisX YAxisY
@@ -27,31 +28,31 @@ if { [info exists Sol4] } {
    set good_YAxisX 0
    set good_YAxisY 1
    set good_Radius 3
-   if { ${CenterX} != ${good_CenterX} } {
+   if {[expr abs(${CenterX} - ${good_CenterX}) > $toler]} {
       puts "Faulty : Bad CenterX"
       set status 1
    }
-   if { ${CenterY} != ${good_CenterY} } {
+   if {[expr abs(${CenterY} - ${good_CenterY}) > $toler]} {
       puts "Faulty : Bad CenterY"
       set status 1
    }
-   if { ${XAxisX} != ${good_XAxisX} } {
+   if {[expr abs(${XAxisX} - ${good_XAxisX}) > $toler]} {
       puts "Faulty : Bad XAxisX"
       set status 1
    }
-   if { ${XAxisY} != ${good_XAxisY} } {
+   if {[expr abs(${XAxisY} - ${good_XAxisY}) > $toler]} {
       puts "Faulty : Bad XAxisY"
       set status 1
    }
-   if { ${YAxisX} != ${good_YAxisX} } {
+   if {[expr abs(${YAxisX} - ${good_YAxisX}) > $toler]} {
       puts "Faulty : Bad YAxisX"
       set status 1
    }
-   if { ${YAxisY} != ${good_YAxisY} } {
+   if {[expr abs(${YAxisY} - ${good_YAxisY}) > $toler]} {
       puts "Faulty : Bad YAxisY"
        set status 1
   }
-   if { ${Radius} != ${good_Radius} } {
+   if {[expr abs(${Radius} - ${good_Radius}) > $toler]} {
       puts "Faulty : Bad Radius"
       set status 1
    }

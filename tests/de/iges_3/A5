@@ -14,7 +14,7 @@ set filename USA60022.igs
 
 set ref_data {
 DATA        : Faulties = 0  ( 0 )  Warnings = 0  ( 1 )  Summary  = 0  ( 1 )
-TPSTAT      : Faulties = 0  ( 0 )  Warnings = 155  ( 2001 )  Summary  = 155  ( 2001 )
+TPSTAT      : Faulties = 0  ( 0 )  Warnings = 155  ( 2000 )  Summary  = 155  ( 2000 )
 CHECKSHAPE  : Wires    = 7  ( 13 )  Faces    = 8  ( 15 )  Shells   = 0  ( 0 )   Solids   = 0 ( 0 )
 NBSHAPES    : Solid    = 0  ( 0 )  Shell    = 0  ( 0 )  Face     = 665  ( 634 )   Summary  = 25075  ( 24992 )
 STATSHAPE   : Solid    = 0  ( 0 )  Shell    = 0  ( 0 )  Face     = 665  ( 634 )   FreeWire = 0  ( 0 )   FreeEdge  = 0 ( 0 )   SharedEdge = 11900  ( 11871 )

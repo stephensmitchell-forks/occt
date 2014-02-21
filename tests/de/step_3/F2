@@ -8,11 +8,11 @@ set filename PRO10368.stp
 
 set ref_data {
 DATA        : Faulties = 0  ( 0 )  Warnings = 0  ( 0 )  Summary  = 0  ( 0 )
-TPSTAT      : Faulties = 0  ( 0 )  Warnings = 204  ( 165 )  Summary  = 204  ( 165 )
+TPSTAT      : Faulties = 0  ( 0 )  Warnings = 205  ( 167 )  Summary  = 205  ( 167 )
 CHECKSHAPE  : Wires    = 1  ( 0 )  Faces    = 1  ( 0 )  Shells   = 0  ( 0 )   Solids   = 0 ( 0 )
-NBSHAPES    : Solid    = 0  ( 0 )  Shell    = 3  ( 3 )  Face     = 773  ( 773 )   Summary  = 4599  ( 4557 )
-STATSHAPE   : Solid    = 0  ( 0 )  Shell    = 3  ( 3 )  Face     = 773  ( 773 )   FreeWire = 0  ( 0 )   FreeEdge  = 0 ( 0 )   SharedEdge = 1948  ( 1943 )
-TOLERANCE   : MaxTol   =  0.06507711685  (   0.0607003883 )  AvgTol   =  0.002006298401  (  0.003310782808 )
+NBSHAPES    : Solid    = 0  ( 0 )  Shell    = 3  ( 3 )  Face     = 773  ( 773 )   Summary  = 4598  ( 4557 )
+STATSHAPE   : Solid    = 0  ( 0 )  Shell    = 3  ( 3 )  Face     = 773  ( 773 )   FreeWire = 0  ( 0 )   FreeEdge  = 0 ( 0 )   SharedEdge = 1947  ( 1943 )
+TOLERANCE   : MaxTol   =  0.06507711685  (   0.0607003883 )  AvgTol   =   0.00201447544  (  0.003318003313 )
 LABELS      : N0Labels = 1  ( 1 )  N1Labels = 3  ( 3 )  N2Labels = 0  ( 0 )   TotalLabels = 4  ( 4 )   NameLabels = 1  ( 1 )   ColorLabels = 0  ( 0 )   LayerLabels = 3  ( 3 )
 PROPS       : Centroid = 0  ( 0 )  Volume   = 0  ( 0 )  Area     = 0  ( 0 )
 NCOLORS     : NColors  = 0  ( 0 )

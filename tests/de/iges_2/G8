@@ -9,7 +9,7 @@ set filename PRO5236.igs
 
 set ref_data {
 DATA        : Faulties = 0  ( 0 )  Warnings = 0  ( 0 )  Summary  = 0  ( 0 )
-TPSTAT      : Faulties = 0  ( 2 )  Warnings = 145  ( 1619 )  Summary  = 145  ( 1621 )
+TPSTAT      : Faulties = 0  ( 2 )  Warnings = 144  ( 1619 )  Summary  = 144  ( 1621 )
 CHECKSHAPE  : Wires    = 0  ( 0 )  Faces    = 0  ( 0 )  Shells   = 0  ( 0 )   Solids   = 0 ( 0 )
 NBSHAPES    : Solid    = 0  ( 0 )  Shell    = 0  ( 0 )  Face     = 253  ( 253 )   Summary  = 5360  ( 5363 )
 STATSHAPE   : Solid    = 0  ( 0 )  Shell    = 0  ( 0 )  Face     = 253  ( 253 )   FreeWire = 7  ( 10 )   FreeEdge  = 78 ( 78 )   SharedEdge = 2412  ( 2412 )

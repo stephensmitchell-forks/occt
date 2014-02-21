@@ -3,7 +3,7 @@ set filename trj5_k1-ug-214.stp
 
 set ref_data {
 DATA        : Faulties = 0  ( 0 )  Warnings = 0  ( 0 )  Summary  = 0  ( 0 )
-TPSTAT      : Faulties = 0  ( 0 )  Warnings = 0  ( 10 )  Summary  = 0  ( 10 )
+TPSTAT      : Faulties = 0  ( 0 )  Warnings = 0  ( 8 )  Summary  = 0  ( 8 )
 CHECKSHAPE  : Wires    = 0  ( 0 )  Faces    = 0  ( 0 )  Shells   = 0  ( 0 )   Solids   = 0 ( 0 )
 NBSHAPES    : Solid    = 0  ( 0 )  Shell    = 1  ( 1 )  Face     = 44  ( 44 )   Summary  = 287  ( 287 )
 STATSHAPE   : Solid    = 0  ( 0 )  Shell    = 1  ( 1 )  Face     = 44  ( 44 )   FreeWire = 0  ( 0 )   FreeEdge  = 0 ( 0 )   SharedEdge = 118  ( 118 )

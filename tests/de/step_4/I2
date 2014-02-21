@@ -3,7 +3,7 @@ set filename PRO8853.stp
 
 set ref_data {
 DATA        : Faulties = 0  ( 0 )  Warnings = 0  ( 0 )  Summary  = 0  ( 0 )
-TPSTAT      : Faulties = 0  ( 0 )  Warnings = 325  ( 349 )  Summary  = 325  ( 349 )
+TPSTAT      : Faulties = 0  ( 0 )  Warnings = 325  ( 348 )  Summary  = 325  ( 348 )
 CHECKSHAPE  : Wires    = 0  ( 0 )  Faces    = 0  ( 0 )  Shells   = 0  ( 0 )   Solids   = 0 ( 0 )
 NBSHAPES    : Solid    = 1  ( 1 )  Shell    = 1  ( 1 )  Face     = 1858  ( 1858 )   Summary  = 12119  ( 12119 )
 STATSHAPE   : Solid    = 1  ( 1 )  Shell    = 1  ( 1 )  Face     = 1858  ( 1858 )   FreeWire = 0  ( 0 )   FreeEdge  = 0 ( 0 )   SharedEdge = 5030  ( 5030 )

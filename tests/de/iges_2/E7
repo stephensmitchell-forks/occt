@@ -8,7 +8,7 @@ set filename 1stdraw.igs
 
 set ref_data {
 DATA        : Faulties = 0  ( 0 )  Warnings = 0  ( 0 )  Summary  = 0  ( 0 )
-TPSTAT      : Faulties = 0  ( 0 )  Warnings = 73  ( 1077 )  Summary  = 73  ( 1077 )
+TPSTAT      : Faulties = 0  ( 0 )  Warnings = 73  ( 1076 )  Summary  = 73  ( 1076 )
 CHECKSHAPE  : Wires    = 0  ( 1 )  Faces    = 0  ( 1 )  Shells   = 0  ( 0 )   Solids   = 0 ( 0 )
 NBSHAPES    : Solid    = 0  ( 0 )  Shell    = 0  ( 0 )  Face     = 1628  ( 1628 )   Summary  = 21885  ( 21885 )
 STATSHAPE   : Solid    = 0  ( 0 )  Shell    = 0  ( 0 )  Face     = 1628  ( 1628 )   FreeWire = 16  ( 17 )   FreeEdge  = 625 ( 625 )   SharedEdge = 9297  ( 9297 )

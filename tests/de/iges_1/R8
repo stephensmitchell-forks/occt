@@ -9,12 +9,12 @@ set filename BUC60743.igs
 
 set ref_data {
 DATA        : Faulties = 0  ( 2 )  Warnings = 0  ( 0 )  Summary  = 0  ( 2 )
-TPSTAT      : Faulties = 3  ( 59 )  Warnings = 2203  ( 4655 )  Summary  = 2206  ( 4714 )
-CHECKSHAPE  : Wires    = 8  ( 17 )  Faces    = 6  ( 11 )  Shells   = 0  ( 0 )   Solids   = 0 ( 0 )
-NBSHAPES    : Solid    = 0  ( 0 )  Shell    = 0  ( 0 )  Face     = 3349  ( 2837 )   Summary  = 45817  ( 39081 )
-STATSHAPE   : Solid    = 0  ( 0 )  Shell    = 0  ( 0 )  Face     = 3349  ( 3349 )   FreeWire = 6  ( 6 )   FreeEdge  = 67 ( 67 )   SharedEdge = 19532  ( 16688 )
-TOLERANCE   : MaxTol   =    4.854604894  (    5.769095076 )  AvgTol   =   0.01656950421  (   0.01735270218 )
-LABELS      : N0Labels = 11  ( 11 )  N1Labels = 2891  ( 6257 )  N2Labels = 0  ( 0 )   TotalLabels = 2902  ( 6268 )   NameLabels = 2900  ( 5879 )   ColorLabels = 2891  ( 6257 )   LayerLabels = 2411  ( 5261 )
+TPSTAT      : Faulties = 3  ( 59 )  Warnings = 2201  ( 4656 )  Summary  = 2204  ( 4715 )
+CHECKSHAPE  : Wires    = 7  ( 16 )  Faces    = 5  ( 11 )  Shells   = 0  ( 0 )   Solids   = 0 ( 0 )
+NBSHAPES    : Solid    = 0  ( 0 )  Shell    = 0  ( 0 )  Face     = 3349  ( 2837 )   Summary  = 45820  ( 39085 )
+STATSHAPE   : Solid    = 0  ( 0 )  Shell    = 0  ( 0 )  Face     = 3349  ( 3349 )   FreeWire = 6  ( 6 )   FreeEdge  = 67 ( 67 )   SharedEdge = 19536  ( 16692 )
+TOLERANCE   : MaxTol   =   0.9767071585  (    5.769095076 )  AvgTol   =   0.01593202317  (    0.0173234812 )
+LABELS      : N0Labels = 11  ( 11 )  N1Labels = 2891  ( 6261 )  N2Labels = 0  ( 0 )   TotalLabels = 2902  ( 6272 )   NameLabels = 2900  ( 5879 )   ColorLabels = 2891  ( 6261 )   LayerLabels = 2411  ( 5256 )
 PROPS       : Centroid = 0  ( 0 )  Volume   = 0  ( 0 )  Area     = 0  ( 0 )
 NCOLORS     : NColors  = 4  ( 4 )
 COLORS      : Colors   = BLACK BLUE1 RED YELLOW  ( BLACK BLUE1 RED YELLOW )

@@ -626,15 +626,15 @@ Standard_Boolean HeadOrEndPoint( const IntRes2d_Domain& D1
 
 
 //======================================================================
-void IntCurve_IntPolyPolyGen::Perform( const TheCurve& C1
-				      ,const IntRes2d_Domain& D1
-				      ,const TheCurve& C2
-				      ,const IntRes2d_Domain& D2
-				      ,const Standard_Real TolConf
-				      ,const Standard_Real Tol
-				      ,const Standard_Integer NbIter
-				      ,const Standard_Real DeltaU
-				      ,const Standard_Real DeltaV) {
+void IntCurve_IntPolyPolyGen::Perform (const TheCurve& C1,
+                                       const IntRes2d_Domain& D1,
+                                       const TheCurve& C2,
+                                       const IntRes2d_Domain& D2,
+                                       const Standard_Real TolConf,
+                                       const Standard_Real Tol,
+                                       const Standard_Integer NbIter,
+                                       const Standard_Real DeltaU,
+                                       const Standard_Real DeltaV) {
 
   Standard_Integer nbsamplesOnC1,nbsamplesOnC2;
   done = Standard_False;
@@ -652,7 +652,6 @@ void IntCurve_IntPolyPolyGen::Perform( const TheCurve& C1
   {
     nbsamplesOnC1=(5*(nbsamplesOnC1*NbIter))/4;
   }
-  /////////////////////////////////////////////
 
   nbsamplesOnC2 = TheCurveTool::NbSamples(C2,D2.FirstParameter(),D2.LastParameter());
   
@@ -665,34 +664,11 @@ void IntCurve_IntPolyPolyGen::Perform( const TheCurve& C1
   {
     nbsamplesOnC2=(5*(nbsamplesOnC2*NbIter))/4;
   }
-  /////////////////////////////////////////////
 
-  
   NCollection_Handle<IntCurve_ThePolygon2d> aPoly1 ,aPoly2;
-  if(nbsamplesOnC2 > nbsamplesOnC1) { 
-    aPoly1 = new IntCurve_ThePolygon2d(C1,nbsamplesOnC1,D1,Tol);  
-    if(aPoly1->DeflectionOverEstimation() < TolConf) { 
-      aPoly2 = new IntCurve_ThePolygon2d(C2,nbsamplesOnC2,D2,Tol);
-    }
-    else { 
-      aPoly2 = new IntCurve_ThePolygon2d(C2,nbsamplesOnC2,D2,Tol,aPoly1->Bounding());
-      aPoly1->SetDeflectionOverEstimation( aPoly2->DeflectionOverEstimation()
-					    + aPoly1->DeflectionOverEstimation());
-      aPoly1->ComputeWithBox(C1,aPoly2->Bounding());
-    }
-  }
-  else { 
-    aPoly2 = new IntCurve_ThePolygon2d(C2,nbsamplesOnC2,D2,Tol);  
-    if(aPoly2->DeflectionOverEstimation() < TolConf) {
-      aPoly1 = new IntCurve_ThePolygon2d(C1,nbsamplesOnC1,D1,Tol);
-    }
-    else { 
-      aPoly1 = new IntCurve_ThePolygon2d(C1,nbsamplesOnC1,D1,Tol,aPoly2->Bounding());
-      aPoly2->SetDeflectionOverEstimation( aPoly2->DeflectionOverEstimation()
-					    + aPoly1->DeflectionOverEstimation());
-      aPoly2->ComputeWithBox(C2,aPoly1->Bounding());
-    }
-  }
+  aPoly1 = new IntCurve_ThePolygon2d(C1,nbsamplesOnC1,D1,Tol);
+  aPoly2 = new IntCurve_ThePolygon2d(C2,nbsamplesOnC2,D2,Tol);
+
   //----------------------------------------------------------------------
   //-- Si la deflection est inferieure a la Tolerance de Confusion
   //-- Alors la deflection du polygone est fixee a TolConf
@@ -705,33 +681,11 @@ void IntCurve_IntPolyPolyGen::Perform( const TheCurve& C1
   if(aPoly2->DeflectionOverEstimation() < TolConf) { 
     aPoly2->SetDeflectionOverEstimation(TolConf);
   }
-  //for case when a few polygon points were replaced by line
-  //if exact solution was not found 
-  //then search of precise solution will be repeat 
-  //for polygon conatins all initial points
-  //secondary search will be performed only for case when initial points
-  //were dropped
-  Standard_Boolean isFullRepresentation = ( aPoly1->NbSegments() == nbsamplesOnC1 && 
-	    aPoly2->NbSegments() == nbsamplesOnC2 );
-  
-  if( !findIntersect( C1, D1, C2, D2, TolConf, Tol, NbIter,
-	  DeltaU, DeltaV, *aPoly1, *aPoly2, isFullRepresentation ) && !isFullRepresentation ) 
-  {
-    if(aPoly1->NbSegments() < nbsamplesOnC1)
-    {
-      aPoly1 = new IntCurve_ThePolygon2d(C1,nbsamplesOnC1,D1,Tol);
-    }
-    if(aPoly2->NbSegments() < nbsamplesOnC2)
-    {
-      aPoly2 = new IntCurve_ThePolygon2d(C2,nbsamplesOnC2,D2,Tol);
-    }
 
-    findIntersect( C1, D1, C2, D2, TolConf, Tol, NbIter,
-      DeltaU, DeltaV, *aPoly1, *aPoly2, 
-      Standard_True);	
+  findIntersect (C1, D1, C2, D2, TolConf, Tol,
+                 NbIter, DeltaU, DeltaV,
+                 *aPoly1, *aPoly2, Standard_True);
 
-  }
- 
   done = Standard_True;
 }
 
