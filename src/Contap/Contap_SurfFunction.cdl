@@ -5,8 +5,8 @@
 --
 -- This file is part of Open CASCADE Technology software library.
 --
--- This library is free software; you can redistribute it and/or modify it under
--- the terms of the GNU Lesser General Public License version 2.1 as published
+-- This library is free software; you can redistribute it and / or modify it
+-- under the terms of the GNU Lesser General Public version 2.1 as published
 -- by the Free Software Foundation, with special exception defined in the file
 -- OCCT_LGPL_EXCEPTION.txt. Consult the file LICENSE_LGPL_21.txt included in OCCT
 -- distribution for complete text of the license and disclaimer of any warranty.
@@ -152,6 +152,12 @@ is
     	returns Boolean from Standard 
     	is static;
     
+    IsTangentSmooth(me : in out)
+
+    	returns Boolean from Standard 
+	---C++: inline
+    	is static;
+    
 
     Direction3d(me: in out)
 
@@ -170,6 +176,49 @@ is
     	raises UndefinedDerivative from StdFail
     	is static;
 
+
+    Projection1(me: in out)
+    	returns Real from Standard
+	---C++: inline
+    	is static;
+    
+    Projection2(me: in out)
+    	returns Real from Standard
+	---C++: inline
+    	is static;
+    
+    Projection3(me: in out)
+    	returns Real from Standard
+	---C++: inline
+    	is static;
+    
+    Projection4(me: in out)
+    	returns Real from Standard
+	---C++: inline
+    	is static;
+
+    DerivativesAndNormalOnPSurf(me: in out; D1U :    out Vec from gp;
+    	    	    	    	    D1V :    out Vec from gp;
+				    Normal : out Dir from gp;
+    	    	    	    	    D2U :    out Vec from gp;
+    	    	    	    	    D2V :    out Vec from gp;
+    	    	    	    	    D2UV :   out Vec from gp)
+	---C++: inline
+    	is static;
+    
+    DerivativesAndNormalOnISurf(me; D1U :    out Vec from gp;
+    	    	    	    	    D1V :    out Vec from gp;
+				    Normal : out Dir from gp;
+    	    	    	    	    D2U :    out Vec from gp;
+    	    	    	    	    D2V :    out Vec from gp;
+    	    	    	    	    D2UV :   out Vec from gp)
+	---C++: inline
+    	is static;
+    
+    SquareTangentError(me)
+    	returns Real from Standard
+	---C++: inline
+	is static;
 
     FunctionType(me)
     

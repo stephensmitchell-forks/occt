@@ -5,8 +5,8 @@
 --
 -- This file is part of Open CASCADE Technology software library.
 --
--- This library is free software; you can redistribute it and/or modify it under
--- the terms of the GNU Lesser General Public License version 2.1 as published
+-- This library is free software; you can redistribute it and / or modify it
+-- under the terms of the GNU Lesser General Public version 2.1 as published
 -- by the Free Software Foundation, with special exception defined in the file
 -- OCCT_LGPL_EXCEPTION.txt. Consult the file LICENSE_LGPL_21.txt included in OCCT
 -- distribution for complete text of the license and disclaimer of any warranty.
@@ -22,7 +22,9 @@ class PntOn2S from IntSurf
 	--          parametric coordinates.
 
 
-uses Pnt from gp
+uses
+    Pnt   from gp,
+    Pnt2d from gp
 
 is
 
@@ -91,6 +93,13 @@ is
 
 	is static;
 
+    ValueOnSurface(me; OnFirst: Boolean from Standard)
+    
+	---Purpose: Returns the point in 2d space of one of the surfaces.
+
+    	returns Pnt2d from gp
+	is static;
+
 
 
     ParametersOnS1(me; U1,V1: out Real from Standard)
@@ -110,6 +119,13 @@ is
 
     	is static;
 
+    ParametersOnSurface(me; OnFirst: Boolean from Standard;
+    	    	    	    U,V: out Real from Standard)
+    
+	---Purpose: Returns the parameters of the point in the
+	--          parametric space of one of the surface.
+
+    	is static;
 
     Parameters(me; U1,V1,U2,V2: out Real from Standard)
 

@@ -3,14 +3,18 @@
 //
 // This file is part of Open CASCADE Technology software library.
 //
-// This library is free software; you can redistribute it and/or modify it under
-// the terms of the GNU Lesser General Public License version 2.1 as published
+// This library is free software; you can redistribute it and / or modify it
+// under the terms of the GNU Lesser General Public version 2.1 as published
 // by the Free Software Foundation, with special exception defined in the file
 // OCCT_LGPL_EXCEPTION.txt. Consult the file LICENSE_LGPL_21.txt included in OCCT
 // distribution for complete text of the license and disclaimer of any warranty.
 //
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
+
+#include <Geom2d_Line.hxx>
+#include <GCE2d_MakeLine.hxx>
+
 
 #ifndef DEB
 #define No_Standard_RangeError
@@ -39,7 +43,6 @@ void IntWalk_IWalking::MakeWalkingPoint
 	  IntSurf_PntOn2S& Psol )
 
 {
-
 // Case == 1      : make a WalkinkPoint.
 // Case == 2      : make a WalkinkPoint.
 //                  The computation of the tangency on is done  
@@ -65,11 +68,201 @@ void IntWalk_IWalking::MakeWalkingPoint
   else {
     Standard_ConstructionError::Raise();
   }
-
-
 }
 
+void IntWalk_IWalking::ComputeDirOfTangentialIntersection(TheIWFunction& sp,
+                                                          Standard_Integer& StepSignTangent)
+{
+  gp_Vec Pu, Pv, Puu, Puv, Pvv;
+  gp_Vec Iu, Iv, Iuu, Iuv, Ivv;
+  gp_Dir NormalP, NormalI;
 
+  sp.DerivativesAndNormalOnPSurf(Pu, Pv, NormalP, Puu, Pvv, Puv);
+  sp.DerivativesAndNormalOnISurf(Iu, Iv, NormalI, Iuu, Ivv, Iuv);
+
+  Standard_Real Lp, Mp, Np, Li, Mi, Ni; //second fundamental form coefficients
+  Lp = Puu * NormalP;
+  Mp = Puv * NormalP;
+  Np = Pvv * NormalP;
+  Li = Iuu * NormalI;
+  Mi = Iuv * NormalI;
+  Ni = Ivv * NormalI;
+
+  gp_Vec Normal;
+  if (NormalP * NormalI < 0.)
+    NormalI.Reverse();
+  Normal.SetXYZ(0.5*(NormalP.XYZ() + NormalI.XYZ()));
+  Normal.Normalize();
+
+  Standard_Real A11, A12, A21, A22;
+  Standard_Real NormIdotNorm = (Iu ^ Iv) * Normal;
+  A11 = ((Pu ^ Iv) * Normal) / NormIdotNorm;
+  A12 = ((Pv ^ Iv) * Normal) / NormIdotNorm;
+  A21 = ((Iu ^ Pu) * Normal) / NormIdotNorm;
+  A22 = ((Iu ^ Pv) * Normal) / NormIdotNorm;
+
+  Standard_Real B11, B12, B22;
+  B11 = A11*A11*Li + 2*A11*A21*Mi + A21*A21*Ni - Lp;
+  B12 = A11*A12*Li + (A11*A22 + A21*A12)*Mi + A21*A22*Ni - Mp;
+  B22 = A12*A12*Li + 2*A12*A22*Mi + A22*A22*Ni - Np;
+
+  Standard_Real Discriminant = B12*B12 - B11*B22;
+#ifdef DRAW
+  cout<<"Discriminant = "<<Discriminant<<endl<<endl;
+#endif
+
+  const Standard_Real TolDiscr = 1.e-8;
+  const Standard_Real TolB = 1.e-5;
+  if (Abs(Discriminant) < TolDiscr)
+  {
+    if (Abs(B11) <= TolB && Abs(B22) <= TolB)
+    {
+#ifdef DRAW
+      cout<<"Possible branching"<<endl<<endl;
+#endif
+    }
+    else
+    {
+      gp_Vec NewPreviousD3d;
+      gp_Dir2d NewPreviousD2d;
+      if (Abs(B11) > TolB)
+      {
+        Standard_Real CoefPu = -B12/B11;
+        NewPreviousD3d = CoefPu*Pu + Pv;
+        NewPreviousD3d.Normalize();
+        NewPreviousD2d = gp_Dir2d(CoefPu, 1.);
+      }
+      else
+      {
+        Standard_Real CoefPv = -B12/B22;
+        NewPreviousD3d = Pu + CoefPv*Pv;
+        NewPreviousD3d.Normalize();
+        NewPreviousD2d = gp_Dir2d(1., CoefPv);
+      }
+      
+      if (!IsTangentialIntersection)
+      {
+        IsTangentialIntersection = Standard_True;
+        if (NewPreviousD3d * previousd3d < 0)
+          StepSignTangent = -1;
+        else
+          StepSignTangent = 1;
+      }
+      previousd3d = StepSignTangent * NewPreviousD3d;
+      previousd2d = StepSignTangent * NewPreviousD2d;
+    }
+  }
+}
+
+void IntWalk_IWalking::FindExactTangentPoint(const Standard_Real TolTang,
+                                             TheIWFunction& sp,
+                                             IntSurf_PntOn2S& Psol)
+                                             
+{
+  IntSurf_PntOn2S TangentPoint = Psol;
+
+  IntSurf_PntOn2S Pfirst, Plast;
+
+  Standard_Real newU, newV;
+  IntSurf_PntOn2S newPoint;
+
+  Standard_Real MinOffset = Sqrt(tolerance(1)*tolerance(1) + tolerance(2)*tolerance(2));
+
+  gp_Pnt2d prevP2d = previousPoint.ValueOnSurface(reversed);
+  gp_Pnt2d TangP2d = TangentPoint.ValueOnSurface(reversed);
+  gp_Pnt2d EndP2d = PointAfterPossibleCuspPoint.ValueOnSurface(reversed);
+  Handle(Geom2d_Line) Line1 = GCE2d_MakeLine(TangP2d, prevP2d);
+  Handle(Geom2d_Line) Line2 = GCE2d_MakeLine(TangP2d, EndP2d);
+
+  Standard_Real Dist1 = prevP2d.Distance(TangP2d);
+  Standard_Real Dist2 = TangP2d.Distance(EndP2d);
+  Standard_Real Dist = (Dist1 < Dist2)? Dist1 : Dist2;
+  Standard_Real Offset = 0.01*Dist;
+  if (Offset < MinOffset)
+    Offset = MinOffset;
+
+  Standard_Real TangentError = sp.SquareTangentError();
+
+  gp_Pnt2d DeltaUV1 = Line1->Value(Offset);
+  gp_Pnt2d DeltaUV2 = Line2->Value(Offset);
+  IntSurf_PntOn2S DeltaPnt1, DeltaPnt2;
+
+  MakeWalkingPoint(11, DeltaUV1.X(), DeltaUV1.Y(), sp, DeltaPnt1);
+  Standard_Boolean IsTangentPoint = sp.IsTangent();
+  Standard_Real DeltaError1 = sp.SquareTangentError();
+  MakeWalkingPoint(11, DeltaUV2.X(), DeltaUV2.Y(), sp, DeltaPnt2);
+  IsTangentPoint = sp.IsTangent();
+  Standard_Real DeltaError2 = sp.SquareTangentError();
+
+  if (DeltaError1 <= TangentError && TangentError <= DeltaError2)
+  {
+    Pfirst = previousPoint;
+    Plast  = TangentPoint;
+    Dist = Dist1;
+  }
+  else if (DeltaError1 >= TangentError && TangentError >= DeltaError2)
+  {
+    Pfirst = TangentPoint;
+    Plast  = PointAfterPossibleCuspPoint;
+    Dist = Dist2;
+  }
+  else
+  {
+    Pfirst = DeltaPnt1;
+    Plast  = DeltaPnt2;
+    Dist = DeltaUV1.Distance(DeltaUV2);
+  }
+
+  Standard_Real newError;
+  for (;;)
+  {
+    Standard_Real Ufirst, Vfirst, Ulast, Vlast;
+    Pfirst.ParametersOnSurface(reversed, Ufirst, Vfirst);
+    Plast.ParametersOnSurface(reversed, Ulast, Vlast);
+    
+    newU = 0.5*(Ufirst + Ulast);
+    newV = 0.5*(Vfirst + Vlast);
+
+    if (Abs(newU - Ufirst) < tolerance(1) &&
+        Abs(newV - Vfirst) < tolerance(2))
+      break;
+    
+    MakeWalkingPoint(11, newU, newV, sp, newPoint);
+    
+    IsTangentPoint = sp.IsTangent();
+    newError = sp.SquareTangentError();
+    if (newError <= TolTang)
+      break;
+
+    gp_Pnt2d newP2d(newU, newV);
+    Handle(Geom2d_Line) newLine = GCE2d_MakeLine(newP2d, Plast.ValueOnSurface(reversed));
+    Dist *= 0.5;
+    Offset = 0.01*Dist;
+
+    DeltaUV1 = newLine->Value(-Offset);
+    DeltaUV2 = newLine->Value(Offset);
+
+    MakeWalkingPoint(11, DeltaUV1.X(), DeltaUV1.Y(), sp, DeltaPnt1);
+    IsTangentPoint = sp.IsTangent();
+    DeltaError1 = sp.SquareTangentError();
+    MakeWalkingPoint(11, DeltaUV2.X(), DeltaUV2.Y(), sp, DeltaPnt2);
+    IsTangentPoint = sp.IsTangent();
+    DeltaError2 = sp.SquareTangentError();
+
+    if (DeltaError1 <= newError && newError <= DeltaError2)
+      Plast = newPoint;
+    else if (DeltaError1 >= newError && newError >= DeltaError2)
+      Pfirst = newPoint;
+    else
+    {
+      Pfirst = DeltaPnt1;
+      Plast  = DeltaPnt2;
+      Dist = DeltaUV1.Distance(DeltaUV2);
+    }
+  }
+
+  Psol = newPoint;
+}
 
 void IntWalk_IWalking::OpenLine(const Standard_Integer N,
                                 const IntSurf_PntOn2S& Psol,
@@ -94,8 +287,16 @@ void IntWalk_IWalking::OpenLine(const Standard_Integer N,
     previousPoint.ParametersOnS1(UV(1),UV(2));
   }
   sp.Values(UV, FF, DD);
-  previousd3d = sp.Direction3d();
-  previousd2d = sp.Direction2d();
+  if (sp.IsTangent())
+  {
+    Standard_Integer theSign = 1;
+    ComputeDirOfTangentialIntersection(sp, theSign);
+  }
+  else
+  {
+    previousd3d = sp.Direction3d();
+    previousd2d = sp.Direction2d();
+  }
 
   if (N>0) { //departure point given at input
     PathPnt = Pnts1.Value(N);

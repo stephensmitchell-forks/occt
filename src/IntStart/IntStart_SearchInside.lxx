@@ -3,8 +3,8 @@
 //
 // This file is part of Open CASCADE Technology software library.
 //
-// This library is free software; you can redistribute it and/or modify it under
-// the terms of the GNU Lesser General Public License version 2.1 as published
+// This library is free software; you can redistribute it and / or modify it
+// under the terms of the GNU Lesser General Public version 2.1 as published
 // by the Free Software Foundation, with special exception defined in the file
 // OCCT_LGPL_EXCEPTION.txt. Consult the file LICENSE_LGPL_21.txt included in OCCT
 // distribution for complete text of the license and disclaimer of any warranty.
@@ -27,6 +27,12 @@ inline Standard_Integer IntStart_SearchInside::NbPoints () const {
   return list.Length();
 }
 
+inline Standard_Integer IntStart_SearchInside::NbTangentPoints () const {
+
+  if (!done) {StdFail_NotDone::Raise();}
+  return myTangentPoints.Length();
+}
+
 
 inline const IntSurf_InteriorPoint& IntStart_SearchInside::Value 
      (const Standard_Integer Index) const
@@ -36,3 +42,10 @@ inline const IntSurf_InteriorPoint& IntStart_SearchInside::Value
   return list.Value(Index);
 }
 
+inline const IntSurf_InteriorPoint& IntStart_SearchInside::TangentPoint
+     (const Standard_Integer Index) const
+
+{
+  if (!done) {StdFail_NotDone::Raise();}
+  return myTangentPoints.Value(Index);
+}

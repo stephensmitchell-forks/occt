@@ -5,8 +5,8 @@
 //
 // This file is part of Open CASCADE Technology software library.
 //
-// This library is free software; you can redistribute it and/or modify it under
-// the terms of the GNU Lesser General Public License version 2.1 as published
+// This library is free software; you can redistribute it and / or modify it
+// under the terms of the GNU Lesser General Public version 2.1 as published
 // by the Free Software Foundation, with special exception defined in the file
 // OCCT_LGPL_EXCEPTION.txt. Consult the file LICENSE_LGPL_21.txt included in OCCT
 // distribution for complete text of the license and disclaimer of any warranty.
@@ -98,6 +98,54 @@ inline const gp_Dir& Contap_SurfFunction::Direction() const
 inline Standard_Real Contap_SurfFunction::Angle () const
 {
   return myAng;
+}
+
+inline Standard_Boolean Contap_SurfFunction::IsTangentSmooth()
+{
+  return Standard_False;
+}
+
+inline Standard_Real Contap_SurfFunction::Projection1()
+{
+  return 1.;
+}
+
+inline Standard_Real Contap_SurfFunction::Projection2()
+{
+  return 1.;
+}
+
+inline Standard_Real Contap_SurfFunction::Projection3()
+{
+  return 1.;
+}
+
+inline Standard_Real Contap_SurfFunction::Projection4()
+{
+  return 1.;
+}
+
+inline void Contap_SurfFunction::DerivativesAndNormalOnPSurf(gp_Vec&,
+                                                             gp_Vec&,
+                                                             gp_Dir&,
+                                                             gp_Vec&,
+                                                             gp_Vec&,
+                                                             gp_Vec&)
+{
+}
+
+inline void Contap_SurfFunction::DerivativesAndNormalOnISurf(gp_Vec&,
+                                                             gp_Vec&,
+                                                             gp_Dir&,
+                                                             gp_Vec&,
+                                                             gp_Vec&,
+                                                             gp_Vec&) const
+{
+}
+
+inline Standard_Real Contap_SurfFunction::SquareTangentError() const
+{
+  return 0.;
 }
 
 inline Contap_TFunction Contap_SurfFunction::FunctionType () const

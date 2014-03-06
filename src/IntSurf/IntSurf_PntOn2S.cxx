@@ -3,8 +3,8 @@
 //
 // This file is part of Open CASCADE Technology software library.
 //
-// This library is free software; you can redistribute it and/or modify it under
-// the terms of the GNU Lesser General Public License version 2.1 as published
+// This library is free software; you can redistribute it and / or modify it
+// under the terms of the GNU Lesser General Public version 2.1 as published
 // by the Free Software Foundation, with special exception defined in the file
 // OCCT_LGPL_EXCEPTION.txt. Consult the file LICENSE_LGPL_21.txt included in OCCT
 // distribution for complete text of the license and disclaimer of any warranty.
@@ -48,5 +48,26 @@ void IntSurf_PntOn2S::SetValue (const Standard_Boolean OnFirst,
   }
 }
 
+gp_Pnt2d IntSurf_PntOn2S::ValueOnSurface(const Standard_Boolean OnFirst) const
+{
+  gp_Pnt2d PointOnSurf;
+  if (OnFirst)
+    PointOnSurf.SetCoord(u1,v1);
+  else
+    PointOnSurf.SetCoord(u2,v2);
+  return PointOnSurf;
+}
 
-
+void IntSurf_PntOn2S::ParametersOnSurface(const Standard_Boolean OnFirst,
+                                          Standard_Real& U,
+                                          Standard_Real& V) const
+{
+  if (OnFirst) {
+    U = u1;
+    V = v1;
+  }
+  else {
+    U = u2;
+    V = v2;
+  }
+}

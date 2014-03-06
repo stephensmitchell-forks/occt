@@ -5,8 +5,8 @@
 --
 -- This file is part of Open CASCADE Technology software library.
 --
--- This library is free software; you can redistribute it and/or modify it under
--- the terms of the GNU Lesser General Public License version 2.1 as published
+-- This library is free software; you can redistribute it and / or modify it
+-- under the terms of the GNU Lesser General Public version 2.1 as published
 -- by the Free Software Foundation, with special exception defined in the file
 -- OCCT_LGPL_EXCEPTION.txt. Consult the file LICENSE_LGPL_21.txt included in OCCT
 -- distribution for complete text of the license and disclaimer of any warranty.
@@ -68,7 +68,20 @@ is
     NbPoints(me)
     
 	---Purpose: Returns the number of points.
-	--          The exception NotDone if raised if IsDone 
+	--          The exception NotDone is raised if IsDone 
+	--          returns False.
+    
+    	returns Integer
+	---C++: inline
+	
+	raises NotDone from StdFail
+	
+	is static;
+
+    NbTangentPoints(me)
+    
+	---Purpose: Returns the number of tangent points.
+	--          The exception NotDone is raised if IsDone 
 	--          returns False.
     
     	returns Integer
@@ -96,10 +109,29 @@ is
 
     	is static;
 
+    TangentPoint(me; Index: Integer)
+    
+	---Purpose: Returns the tangent point of range Index.
+	--          
+	--          The exception NotDone is raised if IsDone 
+	--          returns False.
+	--          The exception OutOfRange if raised if
+	--          Index <= 0 or Index > NbTangentPoints.
+
+    	returns InteriorPoint from IntSurf
+	---C++: return const&
+	---C++: inline
+	
+	raises NotDone from StdFail,
+	       OutOfRange from Standard
+
+    	is static;
+
 
 fields
 
-    done : Boolean                 from Standard;
-    list : SequenceOfInteriorPoint from IntSurf;
+    done            : Boolean                 from Standard;
+    list            : SequenceOfInteriorPoint from IntSurf;
+    myTangentPoints : SequenceOfInteriorPoint from IntSurf;
 
 end SearchInside;

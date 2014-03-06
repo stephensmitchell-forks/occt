@@ -3,8 +3,8 @@
 //
 // This file is part of Open CASCADE Technology software library.
 //
-// This library is free software; you can redistribute it and/or modify it under
-// the terms of the GNU Lesser General Public License version 2.1 as published
+// This library is free software; you can redistribute it and / or modify it
+// under the terms of the GNU Lesser General Public version 2.1 as published
 // by the Free Software Foundation, with special exception defined in the file
 // OCCT_LGPL_EXCEPTION.txt. Consult the file LICENSE_LGPL_21.txt included in OCCT
 // distribution for complete text of the license and disclaimer of any warranty.
@@ -20,6 +20,13 @@ namespace {
                                                    // because the angle is too great in 2d (U4)
 }
 
+static Standard_Real RealSign(const Standard_Real aValue)
+{
+  if (aValue >= 0.)
+    return 1.;
+  else return -1.;
+}
+
 IntWalk_StatusDeflection IntWalk_IWalking::TestDeflection
   (TheIWFunction& sp,
    const Standard_Boolean Finished,
@@ -27,7 +34,8 @@ IntWalk_StatusDeflection IntWalk_IWalking::TestDeflection
    const IntWalk_StatusDeflection StatusPrecedent,
    Standard_Integer& NbDivision,
    Standard_Real& Step,
-   const Standard_Integer StepSign)
+   const Standard_Integer StepSign,
+   const Standard_Integer CurNbPoints)
 {
   // Check the step of advancement, AND recalculate this step :
   //
@@ -117,9 +125,16 @@ IntWalk_StatusDeflection IntWalk_IWalking::TestDeflection
     return IntWalk_ArretSurPointPrecedent; // leave as step back  
                                            // with confused point
 
-
-  if (sp.IsTangent()) 
-    return IntWalk_ArretSurPoint;       
+  if (IsTangentialIntersection)
+  {
+    if (sp.IsTangentSmooth()) 
+      return IntWalk_ArretSurPoint;       
+  }
+  else
+  {
+    if (sp.IsTangent()) 
+      return IntWalk_ArretSurPoint;
+  }
 
 //if during routing one has subdivided more than  MaxDivision for each
 //previous step, bug on the square; do nothing (experience U4)
@@ -168,6 +183,34 @@ IntWalk_StatusDeflection IntWalk_IWalking::TestDeflection
 	Status = IntWalk_PasTropGrand;
       return Status;
     }
+    //jgv: detect possible cusp points
+    //point is suspicious to be a cusp point
+    //if there are 2 or more changes of sign
+    if (!IsTangentialIntersection && CurNbPoints > 1)
+    {
+      Standard_Real ChangeSign [5];
+      ChangeSign[1] = RealSign(previousProj1) * RealSign(sp.Projection1());
+      ChangeSign[2] = RealSign(previousProj2) * RealSign(sp.Projection2());
+      ChangeSign[3] = RealSign(previousProj3) * RealSign(sp.Projection3());
+      ChangeSign[4] = RealSign(previousProj4) * RealSign(sp.Projection4());
+      Standard_Real SumChange = ChangeSign[1]+ChangeSign[2]+ChangeSign[3]+ChangeSign[4];
+      if (SumChange <= 0 || //at least 2 changes of sign
+          (StatusPrecedent == IntWalk_PasTropGrand && SumChange <= 2)) //1 change of sign
+      {
+        PossibleCuspPoint = Standard_True;
+        if (SumChange <= 0)
+          MakeWalkingPoint(1, UV(1), UV(2), sp, PointAfterPossibleCuspPoint);
+        Step  = Step / 2.;
+        StepU = Abs(Step*previousd2d.X());
+        StepV = Abs(Step*previousd2d.Y());
+        if (StepU < tolerance(1) && StepV < tolerance(2))
+          Status = IntWalk_ArretSurPointPrecedent;
+        else 
+          Status = IntWalk_PasTropGrand;
+        return Status;
+      }
+    }
+    //////////////////////////////////
   }
 
   if (!Finished) {

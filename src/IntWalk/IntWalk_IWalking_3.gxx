@@ -3,8 +3,8 @@
 //
 // This file is part of Open CASCADE Technology software library.
 //
-// This library is free software; you can redistribute it and/or modify it under
-// the terms of the GNU Lesser General Public License version 2.1 as published
+// This library is free software; you can redistribute it and / or modify it
+// under the terms of the GNU Lesser General Public version 2.1 as published
 // by the Free Software Foundation, with special exception defined in the file
 // OCCT_LGPL_EXCEPTION.txt. Consult the file LICENSE_LGPL_21.txt included in OCCT
 // distribution for complete text of the license and disclaimer of any warranty.
@@ -14,6 +14,7 @@
 
 #include <NCollection_IncAllocator.hxx>
 #include <NCollection_LocalArray.hxx>
+#include <Bnd_Box2d.hxx>
 
 
 // modified by NIZHNY-MKK  Thu Nov  2 15:07:26 2000.BEGIN
@@ -74,12 +75,15 @@ void IntWalk_IWalking::ComputeOpenLine(const TColStd_SequenceOfReal& Umult,
   Handle(IntWalk_TheIWLine)  CurrentLine;    // line under construction
   Standard_Boolean Tgtend;
 
+  Standard_Real TolTang = 5.e-28;
+
   IntWalk_StatusDeflection Status, StatusPrecedent;
   
   Standard_Integer NbDivision; 
   // number of divisions of step for each section
 
   Standard_Integer StepSign;
+  Standard_Integer StepSignTangent;
   
   ThePointOfPath PathPnt;
 
@@ -105,16 +109,26 @@ void IntWalk_IWalking::ComputeOpenLine(const TColStd_SequenceOfReal& Umult,
     // modified by NIZHNY-MKK  Fri Oct 27 12:33:37 2000.BEGIN
     if ((wd1[I].etat > 11) || ((wd1[I].etat < -11) && (movementdirectioninfo[I]!=0))) {
     // modified by NIZHNY-MKK  Fri Oct 27 12:33:43 2000.END
-      PathPnt = Pnts1.Value(I);     
+      PathPnt = Pnts1.Value(I);
+#ifdef DRAW
+      cout<<"PathPnt("<<I<<"):"<<endl;
+#endif
       CurrentLine = new IntWalk_TheIWLine (new NCollection_IncAllocator());
       CurrentLine->SetTangencyAtBegining(Standard_False);
       Tgtend = Standard_False;
       CurrentLine->AddStatusFirst(Standard_False, Standard_True, I, PathPnt);
+      PossibleCuspPoint = Standard_False;
+      IsTangentialIntersection = Standard_False;
       UVap(1) = wd1[I].ustart;
       UVap(2) = wd1[I].vstart;
       MakeWalkingPoint(11, UVap(1), UVap(2), Func, previousPoint);
       previousd3d = Func.Direction3d();
       previousd2d = Func.Direction2d();
+      //prevtg = Standard_False;
+      previousProj1 = Func.Projection1();
+      previousProj2 = Func.Projection2();
+      previousProj3 = Func.Projection3();
+      previousProj4 = Func.Projection4();
       CurrentLine->AddPoint(previousPoint);
       // modified by NIZHNY-MKK  Fri Oct 27 12:34:32 2000.BEGIN
       if(movementdirectioninfo[I] !=0) {
@@ -238,8 +252,18 @@ void IntWalk_IWalking::ComputeOpenLine(const TColStd_SequenceOfReal& Umult,
 	      }
 	    }
 	    Status = TestDeflection(Func, Arrive, UVap, StatusPrecedent,
-				    NbDivision,PasC,StepSign);
+				    NbDivision,PasC,StepSign,CurrentLine->NbPoints());
 	    StatusPrecedent = Status;
+
+            if (Status == IntWalk_ArretSurPoint && !PossibleCuspPoint && Func.IsTangent())
+            {
+              ComputeDirOfTangentialIntersection(Func, StepSignTangent);
+              MakeWalkingPoint(2, UVap(1), UVap(2), Func, previousPoint);
+              previousProj1 = previousProj2 = previousProj3 = previousProj4 = 0.;
+	      CurrentLine->AddPoint(previousPoint);
+              Status = IntWalk_OKtangent;
+            }
+            
 	    if (Status == IntWalk_PasTropGrand) {
 	      Arrive = Standard_False;
 	      ArretAjout = Standard_False;
@@ -324,18 +348,28 @@ void IntWalk_IWalking::ComputeOpenLine(const TColStd_SequenceOfReal& Umult,
 	      }
 	    }
 	    else if (Status == IntWalk_ArretSurPoint) {
-	      Arrive = Standard_True;                   
-	      CurrentLine->AddStatusLast(Standard_False);
-	      Tgtend = Standard_True;
+              Arrive = Standard_True;
+              CurrentLine->AddStatusLast(Standard_False);
+              Tgtend = Standard_True;
               MakeWalkingPoint(1, UVap(1), UVap(2), Func, Psol);
-	      CurrentLine->AddPoint(Psol);
-	      Rajout = Standard_True;
+              //jgv
+              if (PossibleCuspPoint &&
+                  Func.IsTangent() && Func.SquareTangentError() > TolTang)
+                FindExactTangentPoint(TolTang, Func, Psol);
+              /////
+              CurrentLine->AddPoint(Psol);
+              Rajout = Standard_True;
               seqAjout.Append(lines.Length() + 1);
 	    }
 	    else if (Status == IntWalk_OK) { 
               MakeWalkingPoint(2, UVap(1), UVap(2), Func, previousPoint);
 	      previousd3d = Func.Direction3d();
 	      previousd2d = Func.Direction2d();
+              //prevtg = Standard_False;
+              previousProj1 = Func.Projection1();
+              previousProj2 = Func.Projection2();
+              previousProj3 = Func.Projection3();
+              previousProj4 = Func.Projection4();
 	      CurrentLine->AddPoint(previousPoint);
 	    }                           
 	  }
@@ -433,6 +467,7 @@ void IntWalk_IWalking::ComputeOpenLine(const TColStd_SequenceOfReal& Umult,
     } //end of point processing
   } //end of all points
 }
+
 
 // modified by NIZHNY-MKK  Thu Nov  2 15:07:53 2000.BEGIN
 static Standard_Boolean TestPassedSolutionWithNegativeState(const IntWalk_VectorOfWalkingData& wd,
