@@ -18,6 +18,7 @@
 #define _OpenGl_LayerList_Header
 
 #include <OpenGl_PriorityList.hxx>
+#include <OpenGl_Layer.hxx>
 
 #include <InterfaceGraphic_telem.hxx>
 
@@ -27,7 +28,7 @@
 class OpenGl_Structure;
 class Handle(OpenGl_Workspace);
 
-typedef NCollection_Sequence<OpenGl_PriorityList> OpenGl_SequenceOfLayers;
+typedef NCollection_Sequence<OpenGl_Layer> OpenGl_SequenceOfLayers;
 typedef NCollection_DataMap<int, int> OpenGl_LayerSeqIds;
 
 class OpenGl_LayerList
@@ -72,6 +73,12 @@ class OpenGl_LayerList
   void ChangeLayer (const OpenGl_Structure *theStructure,
                     const Standard_Integer  theOldLayerId,
                     const Standard_Integer  theNewLayerId);
+
+  //! Returns reference to the layer with given ID.
+  OpenGl_Layer& Layer (const Standard_Integer theLayerId);
+
+  //! Returns reference to the layer with given ID.
+  const OpenGl_Layer& Layer (const Standard_Integer theLayerId) const;
   
   //! Render this element
   void Render (const Handle(OpenGl_Workspace) &theWorkspace) const;
@@ -89,7 +96,7 @@ class OpenGl_LayerList
  private:
   
   //! Get default layer
-  OpenGl_PriorityList& defaultLayer ();
+  OpenGl_Layer& defaultLayer ();
   
  protected:
 
