@@ -1,8 +1,15 @@
 # Original bug : fra61199
 # Date : 29June98
+
+# for "sfixpcu" command
+pload XSDRAW
+
 cpulimit 3000
 restore [locate_data_file CTO904_fra61199a.rle] a 
 restore [locate_data_file CTO904_fra61199b.rle] b
+
+sfixpcu a a
+sfixpcu b b
 
 bcut result a b
 

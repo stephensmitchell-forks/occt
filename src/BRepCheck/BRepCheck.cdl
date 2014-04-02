@@ -69,6 +69,7 @@ is
       FreeEdge,
       InvalidMultiConnexity,
       InvalidRange,
+      PCurveIsOutOfDomainFace,
       
       
       -- for wires
@@ -78,6 +79,7 @@ is
 
       -- for faces
       NoSurface,
+      OutOfSurfaceBoundary,
       InvalidWire,
       RedundantWire,
       IntersectingWires,

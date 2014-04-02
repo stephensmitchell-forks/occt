@@ -175,7 +175,15 @@ void BRepCheck::Print(const BRepCheck_Status stat,
   case BRepCheck_CheckFail:
     OS << "BRepCheck_CheckFail\n";
     break;
+  case BRepCheck_PCurveIsOutOfDomainFace:
+    OS << "BRepCheck_PCurveIsOutOfDomainFace\n";
+    break;
+  case BRepCheck_OutOfSurfaceBoundary:
+    OS << "BRepCheck_OutOfSurfaceBoundary\n";
+    break;
+
   default:
+    OS << "BRepCheck::Print(...): Undefined status!\n";
     break;
   }
 }

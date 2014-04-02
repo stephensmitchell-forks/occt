@@ -1,2 +1,5 @@
-restore [locate_data_file CTO900_pro12663-part.rle] a
+# for "sfixpcu" command
+pload XSDRAW
 
+restore [locate_data_file CTO900_pro12663-part.rle] a
+sfixpcu a a

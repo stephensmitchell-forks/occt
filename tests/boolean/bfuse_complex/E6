@@ -1,8 +1,15 @@
 # Original bug : pro10505   
 # Date : 20mar98
 
+# for "sfixpcu" command
+pload XSDRAW
+
+
 restore [locate_data_file CTO900_pro10505a.rle] a
 restore [locate_data_file CTO900_pro10505b.rle] b
+
+sfixpcu a a
+sfixpcu b b
 
 bfuse result a b
 

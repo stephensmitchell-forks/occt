@@ -16,55 +16,51 @@
 
 #include <SWDRAW_ShapeFix.ixx>
 
-#include <Draw.hxx>
-#include <DBRep.hxx>
-#include <SWDRAW.hxx>
-#include <gp_XYZ.hxx>
-#include <gp_Pnt2d.hxx>
-#include <TopoDS.hxx>
-#include <TopoDS_Shape.hxx>
-#include <TopoDS_Edge.hxx>
-#include <TopoDS_Wire.hxx>
-#include <TopoDS_Face.hxx>
-#include <TopoDS_Iterator.hxx>
-#include <TopExp_Explorer.hxx>
-#include <BRep_Tool.hxx>
 #include <BRep_Builder.hxx>
+#include <BRep_Tool.hxx>
 #include <BRepBuilderAPI.hxx>
+#include <BRepCheck_Analyzer.hxx>
+#include <BRepCheck_ListIteratorOfListOfStatus.hxx>
+#include <BRepCheck_Result.hxx>
+#include <BRepTools.hxx>
 #include <BRepTopAdaptor_FClass2d.hxx>
-
-#include <ShapeBuild_ReShape.hxx>
-#include <ShapeAnalysis_Edge.hxx>
-#include <ShapeAnalysis_WireOrder.hxx>
-#include <ShapeAnalysis_WireVertex.hxx>
-#include <ShapeAnalysis_Wire.hxx>
-#include <ShapeExtend_WireData.hxx>
-#include <ShapeFix.hxx>
-#include <ShapeFix_ShapeTolerance.hxx>
-#include <ShapeFix_Wire.hxx>
-#include <ShapeFix_WireVertex.hxx>
-#include <ShapeFix_Wireframe.hxx>
-#include <ShapeFix_Face.hxx>
-#include <ShapeFix_Shape.hxx>
-#include <Precision.hxx>
-#include <ShapeExtend_DataMapOfShapeListOfMsg.hxx>
-#include <ShapeExtend_MsgRegistrator.hxx>
-#include <ShapeExtend_DataMapIteratorOfDataMapOfShapeListOfMsg.hxx>
+#include <DBRep.hxx>
+#include <Draw.hxx>
+#include <Draw_ProgressIndicator.hxx>
+#include <Geom_RectangularTrimmedSurface.hxx>
+#include <Geom_Surface.hxx>
+#include <gp_XYZ.hxx>
 #include <Message_ListIteratorOfListOfMsg.hxx>
 #include <Message_Msg.hxx>
-#include <TCollection_AsciiString.hxx>
+#include <ShapeAnalysis_Edge.hxx>
+#include <ShapeAnalysis_FreeBounds.hxx>
+#include <ShapeAnalysis_Wire.hxx>
+#include <ShapeAnalysis_WireOrder.hxx>
+#include <ShapeAnalysis_WireVertex.hxx>
+#include <ShapeBuild_ReShape.hxx>
+#include <ShapeExtend_CompositeSurface.hxx>
+#include <ShapeExtend_DataMapIteratorOfDataMapOfShapeListOfMsg.hxx>
+#include <ShapeExtend_MsgRegistrator.hxx>
+#include <ShapeFix.hxx>
+#include <ShapeFix_ComposeShell.hxx>
+#include <ShapeFix_Face.hxx>
+#include <ShapeFix_Shape.hxx>
+#include <ShapeFix_ShapeTolerance.hxx>
+#include <ShapeFix_Wire.hxx>
+#include <ShapeFix_Wireframe.hxx>
+#include <ShapeFix_WireVertex.hxx>
+#include <SWDRAW.hxx>
+#include <TColGeom_HArray2OfSurface.hxx>
 #include <TColStd_DataMapIteratorOfDataMapOfAsciiStringInteger.hxx>
 #include <TColStd_DataMapOfAsciiStringInteger.hxx>
-#include <TopTools_MapOfShape.hxx>
-#include <TopTools_DataMapOfShapeListOfShape.hxx>
-#include <TopAbs_State.hxx>
-
-#include <Draw_ProgressIndicator.hxx>
-#include <ShapeAnalysis_FreeBounds.hxx>
-#include <TopTools_HSequenceOfShape.hxx>
-#include <BRep_Builder.hxx>
-#include <TopTools_IndexedMapOfShape.hxx>
 #include <TopExp.hxx>
+#include <TopExp_Explorer.hxx>
+#include <TopoDS.hxx>
+#include <TopoDS_Edge.hxx>
+#include <TopoDS_Shape.hxx>
+#include <TopTools_DataMapOfShapeListOfShape.hxx>
+#include <TopTools_HSequenceOfShape.hxx>
+#include <TopTools_IndexedMapOfShape.hxx>
 
 #ifdef AIX
 #include <strings.h>
@@ -754,6 +750,102 @@ static Standard_Integer connectedges(Draw_Interpretor& di, Standard_Integer n, c
 }
 
 //=======================================================================
+//function : FixPCurveOfFace
+//purpose  : 
+//=======================================================================
+static Standard_Integer FixPCurveOfFace(Draw_Interpretor& theDI, 
+                                        Standard_Integer theNArg,
+                                        const char** theArg)
+{
+  if(theNArg < 2)
+  {
+    theDI << "use \"ffixpcu face\".\n";
+    return 1;
+  }
+
+  TopoDS_Shape aS=DBRep::Get(theArg[1]);
+  if (aS.IsNull()) {
+    theDI << "null shapes is not allowed here\n";
+    return 1;
+  }
+
+  if (aS.ShapeType()!=TopAbs_FACE) {
+    char buff[256];
+    Sprintf ( buff, "shape %s must be a face\n", theArg[1]);
+    theDI << buff;
+    return 1;
+  }
+
+  TopoDS_Face aF=*((TopoDS_Face*)&aS);
+  
+  BRepCheck_Analyzer anAna(aF);
+
+  if(anAna.IsValid())
+  {
+    theDI << "Face is valid!\n";
+    return 0;
+  }
+
+  BRepCheck_ListIteratorOfListOfStatus itl;
+  itl.Initialize(anAna.Result(aF)->Status());
+
+  if (itl.Value() != BRepCheck_OutOfSurfaceBoundary)
+  {
+    theDI << "Other Status!\n";
+    return 0;
+  }
+
+  ShapeFix::RefineFace(aF);
+  DBRep::Set(theArg[1], aF);
+
+  return 0;
+}
+
+//=======================================================================
+//function : FixPCurveOfShape
+//purpose  : 
+//=======================================================================
+static Standard_Integer FixPCurveOfShape(Draw_Interpretor& theDI, 
+                                        Standard_Integer theNArg,
+                                        const char** theArg)
+{
+  if(theNArg < 3)
+  {
+    theDI << "use \"sfixpcu result shape\".\n";
+    return 1;
+  }
+
+  TopoDS_Shape aS=DBRep::Get(theArg[2]);
+
+  if (aS.IsNull()) {
+    theDI << "null shapes is not allowed here\n";
+    return 1;
+  }
+
+  TopExp_Explorer exp;
+  for (exp.Init(aS,TopAbs_FACE); exp.More();exp.Next())
+  {
+    const TopoDS_Shape& aS1 = exp.Current();
+    TopoDS_Face aF=*((TopoDS_Face*)&aS1);
+
+    BRepCheck_Analyzer anAna(aF);
+    if(anAna.IsValid())
+      continue;
+
+    BRepCheck_ListIteratorOfListOfStatus itl;
+    itl.Initialize(anAna.Result(aF)->Status());
+    if (itl.Value() != BRepCheck_OutOfSurfaceBoundary)
+      continue;
+
+    ShapeFix::RefineFace(aF);
+  }
+
+  DBRep::Set(theArg[1],aS);
+
+  return 0;
+}
+
+//=======================================================================
 //function : InitCommands
 //purpose  : 
 //=======================================================================
@@ -789,6 +881,10 @@ static Standard_Integer connectedges(Draw_Interpretor& di, Standard_Integer n, c
 		   __FILE__,checkfclass2d,g);
   theCommands.Add ("connectedges","res shape [toler shared]",
 		   __FILE__,connectedges,g);
-  
+  theCommands.Add ("ffixpcu"," ffixpcu face (to fix face with "
+       "\"BRepCheck_OutOfSurfaceBoundary\" status) ", __FILE__,FixPCurveOfFace,g);
+
+  theCommands.Add ("sfixpcu"," sfixpcu result shape (to fix shape, which contains face with "
+       "\"BRepCheck_OutOfSurfaceBoundary\" status) ", __FILE__,FixPCurveOfShape,g);
 }
 

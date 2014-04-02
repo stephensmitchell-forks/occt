@@ -1,2 +1,5 @@
-restore [locate_data_file CTO904_fra61199a.rle] a
+# for "sfixpcu" command
+pload XSDRAW
 
+restore [locate_data_file CTO904_fra61199a.rle] a
+sfixpcu a a

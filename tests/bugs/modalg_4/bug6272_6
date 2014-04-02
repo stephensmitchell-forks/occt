@@ -11,8 +11,15 @@ puts ""
 
 set BugNumber OCC6272
 
+# for "sfixpcu" command
+pload XSDRAW
+
+
 restore [locate_data_file OCC6272_bridge2.brep] a1 
 restore [locate_data_file OCC6272_revolution.brep] a2 
+
+sfixpcu a1 a1
+sfixpcu a2 a2
 
 bop a1 a2
 bopfuse result

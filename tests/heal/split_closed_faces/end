@@ -1,2 +1,3 @@
 puts [DT_ClosedSplit result a]
+sfixpcu result result
 puts [checkshape result]

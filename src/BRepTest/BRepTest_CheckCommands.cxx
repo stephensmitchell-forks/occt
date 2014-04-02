@@ -76,6 +76,12 @@
 # include <strings.h>
 #endif
 
+//Number of BRepCheck_Statuses in BRepCheck_Status.hxx file
+//(BRepCheck_NoError is not considered, i.e. general status 
+//is smaller by one specified in file)
+static const Standard_Integer NumberOfStatus = 35;
+                                                  
+
 static char* checkfaultyname = NULL;
 Standard_EXPORT void BRepTest_CheckCommands_SetFaultyName(const char* name)
 {
@@ -511,40 +517,46 @@ static void FillProblems(const BRepCheck_Status stat,
     NbProblems->SetValue(14,NbProblems->Value(14)+1); break;
   case BRepCheck_InvalidRange:
     NbProblems->SetValue(15,NbProblems->Value(15)+1); break;
-  case BRepCheck_EmptyWire:
+  case BRepCheck_PCurveIsOutOfDomainFace:
     NbProblems->SetValue(16,NbProblems->Value(16)+1); break;
-  case BRepCheck_RedundantEdge:
+  case BRepCheck_EmptyWire:
     NbProblems->SetValue(17,NbProblems->Value(17)+1); break;
-  case BRepCheck_SelfIntersectingWire:
+  case BRepCheck_RedundantEdge:
     NbProblems->SetValue(18,NbProblems->Value(18)+1); break;
-  case BRepCheck_NoSurface:
+  case BRepCheck_SelfIntersectingWire:
     NbProblems->SetValue(19,NbProblems->Value(19)+1); break;
-  case BRepCheck_InvalidWire:
+  case BRepCheck_NoSurface:
     NbProblems->SetValue(20,NbProblems->Value(20)+1); break;
-  case BRepCheck_RedundantWire:
+  case BRepCheck_OutOfSurfaceBoundary:
     NbProblems->SetValue(21,NbProblems->Value(21)+1); break;
-  case BRepCheck_IntersectingWires:
+  case BRepCheck_InvalidWire:
     NbProblems->SetValue(22,NbProblems->Value(22)+1); break;
-  case BRepCheck_InvalidImbricationOfWires:
+  case BRepCheck_RedundantWire:
     NbProblems->SetValue(23,NbProblems->Value(23)+1); break;
-  case BRepCheck_EmptyShell:
+  case BRepCheck_IntersectingWires:
     NbProblems->SetValue(24,NbProblems->Value(24)+1); break;
-  case BRepCheck_RedundantFace:
+  case BRepCheck_InvalidImbricationOfWires:
     NbProblems->SetValue(25,NbProblems->Value(25)+1); break;
-  case BRepCheck_UnorientableShape:
+  case BRepCheck_EmptyShell:
     NbProblems->SetValue(26,NbProblems->Value(26)+1); break;
-  case BRepCheck_NotClosed:
+  case BRepCheck_RedundantFace:
     NbProblems->SetValue(27,NbProblems->Value(27)+1); break;
-  case BRepCheck_NotConnected:
+  case BRepCheck_UnorientableShape:
     NbProblems->SetValue(28,NbProblems->Value(28)+1); break;
-  case BRepCheck_SubshapeNotInShape:
+  case BRepCheck_NotClosed:
     NbProblems->SetValue(29,NbProblems->Value(29)+1); break;
-  case BRepCheck_BadOrientation:
+  case BRepCheck_NotConnected:
     NbProblems->SetValue(30,NbProblems->Value(30)+1); break;
-  case BRepCheck_BadOrientationOfSubshape:
+  case BRepCheck_SubshapeNotInShape:
     NbProblems->SetValue(31,NbProblems->Value(31)+1); break;
-  case BRepCheck_CheckFail:
+  case BRepCheck_BadOrientation:
     NbProblems->SetValue(32,NbProblems->Value(32)+1); break;
+  case BRepCheck_BadOrientationOfSubshape:
+    NbProblems->SetValue(33,NbProblems->Value(33)+1); break;
+  case BRepCheck_InvalidToleranceValue:
+    NbProblems->SetValue(34,NbProblems->Value(34)+1); break;
+  case BRepCheck_CheckFail:
+    NbProblems->SetValue(35,NbProblems->Value(35)+1); break;
   default:
     break;
   }
@@ -670,8 +682,9 @@ void StructuralDump(Draw_Interpretor& theCommands,
   theCommands<<"  Check                                    Count"<<"\n";
   theCommands<<" ------------------------------------------------"<<"\n";
 
-  Handle(TColStd_HArray1OfInteger) NbProblems = new TColStd_HArray1OfInteger(1,32);
-  for(i=1; i<=32; i++) NbProblems->SetValue(i,0);
+  Handle(TColStd_HArray1OfInteger) NbProblems = new 
+                              TColStd_HArray1OfInteger(1,NumberOfStatus);
+  for(i=1; i<=NumberOfStatus; i++) NbProblems->SetValue(i,0);
   Handle(TopTools_HSequenceOfShape) sl,slv,sle,slw,slf,sls,slo;
   sl = new TopTools_HSequenceOfShape();
   theMap.Clear();
@@ -724,55 +737,64 @@ void StructuralDump(Draw_Interpretor& theCommands,
     theCommands<<"  Invalid Range ............................ "<<NbProblems->Value(15)<<"\n";
     //cout<<"  Invalid Range ............................ "<<NbProblems->Value(15)<<endl;
   if(NbProblems->Value(16)>0)
-    theCommands<<"  Empty Wire ............................... "<<NbProblems->Value(16)<<"\n";
-    //cout<<"  Empty Wire ............................... "<<NbProblems->Value(16)<<endl;
+    theCommands<<"  pcurve is out of domain face.............. "<<NbProblems->Value(16)<<"\n";
+    //cout<<"  Invalid Range ............................ "<<NbProblems->Value(15)<<endl;
   if(NbProblems->Value(17)>0)
-    theCommands<<"  Redundant Edge ........................... "<<NbProblems->Value(17)<<"\n";
-    //cout<<"  Redundant Edge ........................... "<<NbProblems->Value(17)<<endl;
+    theCommands<<"  Empty Wire ............................... "<<NbProblems->Value(17)<<"\n";
+    //cout<<"  Empty Wire ............................... "<<NbProblems->Value(16)<<endl;
   if(NbProblems->Value(18)>0)
-    theCommands<<"  Self Intersecting Wire ................... "<<NbProblems->Value(18)<<"\n";
-    //cout<<"  Self Intersecting Wire ................... "<<NbProblems->Value(18)<<endl;
+    theCommands<<"  Redundant Edge ........................... "<<NbProblems->Value(18)<<"\n";
+    //cout<<"  Redundant Edge ........................... "<<NbProblems->Value(17)<<endl;
   if(NbProblems->Value(19)>0)
-    theCommands<<"  No Surface ............................... "<<NbProblems->Value(19)<<"\n";
-    //cout<<"  No Surface ............................... "<<NbProblems->Value(19)<<endl;
+    theCommands<<"  Self Intersecting Wire ................... "<<NbProblems->Value(19)<<"\n";
+    //cout<<"  Self Intersecting Wire ................... "<<NbProblems->Value(18)<<endl;
   if(NbProblems->Value(20)>0)
-    theCommands<<"  Invalid Wire ............................. "<<NbProblems->Value(20)<<"\n";
-    //cout<<"  Invalid Wire ............................. "<<NbProblems->Value(20)<<endl;
+    theCommands<<"  No Surface ............................... "<<NbProblems->Value(20)<<"\n";
+    //cout<<"  No Surface ............................... "<<NbProblems->Value(19)<<endl;
   if(NbProblems->Value(21)>0)
-    theCommands<<"  Redundant Wire ........................... "<<NbProblems->Value(21)<<"\n";
-    //cout<<"  Redundant Wire ........................... "<<NbProblems->Value(21)<<endl;
+    theCommands<<"  Face is out of it surface boundary........ "<<NbProblems->Value(21)<<"\n";
+    //cout<<"  Invalid Wire ............................. "<<NbProblems->Value(20)<<endl;
   if(NbProblems->Value(22)>0)
-    theCommands<<"  Intersecting Wires ....................... "<<NbProblems->Value(22)<<"\n";
-    //cout<<"  Intersecting Wires ....................... "<<NbProblems->Value(22)<<endl;
+    theCommands<<"  Invalid Wire ............................. "<<NbProblems->Value(22)<<"\n";
+    //cout<<"  Invalid Wire ............................. "<<NbProblems->Value(20)<<endl;
   if(NbProblems->Value(23)>0)
-    theCommands<<"  Invalid Imbrication of Wires ............. "<<NbProblems->Value(23)<<"\n";
-    //cout<<"  Invalid Imbrication of Wires ............. "<<NbProblems->Value(23)<<endl;
+    theCommands<<"  Redundant Wire ........................... "<<NbProblems->Value(23)<<"\n";
+    //cout<<"  Redundant Wire ........................... "<<NbProblems->Value(21)<<endl;
   if(NbProblems->Value(24)>0)
-    theCommands<<"  Empty Shell .............................. "<<NbProblems->Value(24)<<"\n";
-    //cout<<"  Empty Shell .............................. "<<NbProblems->Value(24)<<endl;
+    theCommands<<"  Intersecting Wires ....................... "<<NbProblems->Value(24)<<"\n";
+    //cout<<"  Intersecting Wires ....................... "<<NbProblems->Value(22)<<endl;
   if(NbProblems->Value(25)>0)
-    theCommands<<"  Redundant Face ........................... "<<NbProblems->Value(25)<<"\n";
-    //cout<<"  Redundant Face ........................... "<<NbProblems->Value(25)<<endl;
+    theCommands<<"  Invalid Imbrication of Wires ............. "<<NbProblems->Value(25)<<"\n";
+    //cout<<"  Invalid Imbrication of Wires ............. "<<NbProblems->Value(23)<<endl;
   if(NbProblems->Value(26)>0)
-    theCommands<<"  Unorientable Shape ....................... "<<NbProblems->Value(26)<<"\n";
-    //cout<<"  Unorientable Shape ....................... "<<NbProblems->Value(26)<<endl;
+    theCommands<<"  Empty Shell .............................. "<<NbProblems->Value(26)<<"\n";
+    //cout<<"  Empty Shell .............................. "<<NbProblems->Value(24)<<endl;
   if(NbProblems->Value(27)>0)
-    theCommands<<"  Not Closed ............................... "<<NbProblems->Value(27)<<"\n";
-    //cout<<"  Not Closed ............................... "<<NbProblems->Value(27)<<endl;
+    theCommands<<"  Redundant Face ........................... "<<NbProblems->Value(27)<<"\n";
+    //cout<<"  Redundant Face ........................... "<<NbProblems->Value(25)<<endl;
   if(NbProblems->Value(28)>0)
-    theCommands<<"  Not Connected ............................ "<<NbProblems->Value(28)<<"\n";
-    //cout<<"  Not Connected ............................ "<<NbProblems->Value(28)<<endl;
+    theCommands<<"  Unorientable Shape ....................... "<<NbProblems->Value(28)<<"\n";
+    //cout<<"  Unorientable Shape ....................... "<<NbProblems->Value(26)<<endl;
   if(NbProblems->Value(29)>0)
-    theCommands<<"  Subshape not in Shape .................... "<<NbProblems->Value(29)<<"\n";
-    //cout<<"  Subshape not in Shape .................... "<<NbProblems->Value(29)<<endl;
+    theCommands<<"  Not Closed ............................... "<<NbProblems->Value(29)<<"\n";
+    //cout<<"  Not Closed ............................... "<<NbProblems->Value(27)<<endl;
   if(NbProblems->Value(30)>0)
-    theCommands<<"  Bad Orientation .......................... "<<NbProblems->Value(30)<<"\n";
-    //cout<<"  Bad Orientation .......................... "<<NbProblems->Value(30)<<endl;
+    theCommands<<"  Not Connected ............................ "<<NbProblems->Value(30)<<"\n";
+    //cout<<"  Not Connected ............................ "<<NbProblems->Value(28)<<endl;
   if(NbProblems->Value(31)>0)
-    theCommands<<"  Bad Orientation of Subshape .............. "<<NbProblems->Value(31)<<"\n";
-    //cout<<"  Bad Orientation of Subshape .............. "<<NbProblems->Value(31)<<endl;
+    theCommands<<"  Subshape not in Shape .................... "<<NbProblems->Value(31)<<"\n";
+    //cout<<"  Subshape not in Shape .................... "<<NbProblems->Value(29)<<endl;
   if(NbProblems->Value(32)>0)
-    theCommands<<"  checkshape failure......... .............. "<<NbProblems->Value(32)<<"\n";
+    theCommands<<"  Bad Orientation .......................... "<<NbProblems->Value(32)<<"\n";
+    //cout<<"  Bad Orientation .......................... "<<NbProblems->Value(30)<<endl;
+  if(NbProblems->Value(33)>0)
+    theCommands<<"  Bad Orientation of Subshape .............. "<<NbProblems->Value(33)<<"\n";
+    //cout<<"  Bad Orientation of Subshape .............. "<<NbProblems->Value(31)<<endl;
+  if(NbProblems->Value(34)>0)
+    theCommands<<"  Invalid tolerance......................... "<<NbProblems->Value(34)<<"\n";
+    //cout<<"  checkshape failure......... .............. "<<NbProblems->Value(32)<<endl;
+  if(NbProblems->Value(35)>0)
+    theCommands<<"  checkshape failure........................ "<<NbProblems->Value(35)<<"\n";
     //cout<<"  checkshape failure......... .............. "<<NbProblems->Value(32)<<endl;
 
   //cout<<" ------------------------------------------------"<<endl;

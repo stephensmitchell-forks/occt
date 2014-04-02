@@ -149,6 +149,15 @@ is
     	 
     LeastEdgeSize(theshape: in out Shape from TopoDS) returns Real;
       ---Purpose: Calculate size of least edge;       
-    	 
 
+    RefineFace (theF        :        Face  from TopoDS);
+    ---Purpose: It is created for fixing faces with 
+    --          BRepCheck_OutOfSurfaceBoundary status.
+		
+    ReTrimmedFace(theF        : in out Face       from TopoDS;
+                  theNewRTSurf: RectangularTrimmedSurface from Geom)
+                  
+    ---Purpose:    Replace the surface in theF with theNewRTSurf.
+    is private;
+    
 end ShapeFix;

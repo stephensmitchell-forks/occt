@@ -83,6 +83,45 @@ Handle(Geom_Geometry) Geom_RectangularTrimmedSurface::Copy () const {
   return S;
 }
 
+//=======================================================================
+//function : Geom_RectangularTrimmedSurface
+//purpose  : 
+//=======================================================================
+
+Geom_RectangularTrimmedSurface::Geom_RectangularTrimmedSurface(
+                          const Handle(Geom_Surface)& S,
+                          const Standard_Boolean isUTrim,
+                          const Standard_Boolean isVTrim,
+                          const Standard_Real U1,
+                          const Standard_Real U2,
+                          const Standard_Real V1,
+                          const Standard_Real V2):  utrim1(U1),
+                                                    vtrim1(V1),
+                                                    utrim2(U2),
+                                                    vtrim2(V2),
+                                                    isutrimmed (isUTrim),
+                                                    isvtrimmed (isVTrim)
+{
+  // kill trimmed basis surfaces
+  Handle(Geom_RectangularTrimmedSurface) T =
+    Handle(Geom_RectangularTrimmedSurface)::DownCast(S);
+  if (!T.IsNull())
+    basisSurf = Handle(Surface)::DownCast(T->BasisSurface()->Copy());
+  else
+    basisSurf = Handle(Surface)::DownCast(S->Copy());
+
+  Handle(Geom_OffsetSurface) O =
+    Handle(Geom_OffsetSurface)::DownCast(basisSurf);
+  if (!O.IsNull()) 
+  {
+    Handle(Geom_RectangularTrimmedSurface) S2 = 
+           new Geom_RectangularTrimmedSurface( O->BasisSurface(),U1,U2, V1, V2, isUTrim, isVTrim);
+    Handle(Geom_OffsetSurface) OS = new Geom_OffsetSurface(S2, O->Offset());
+    basisSurf = Handle(Surface)::DownCast(OS);
+  }  
+
+  ForceTrim( U1, U2, V1, V2, isUTrim, isVTrim);
+}
 
 //=======================================================================
 //function : Geom_RectangularTrimmedSurface
@@ -164,6 +203,172 @@ Geom_RectangularTrimmedSurface::Geom_RectangularTrimmedSurface (
   SetTrim(Param1, Param2, UTrim, Sense);
 }
 
+//=======================================================================
+//function : SetUTrim
+//purpose  : 
+//=======================================================================
+void Geom_RectangularTrimmedSurface::SetUTrim(const Standard_Real theU1,
+                                              const Standard_Real theU2)
+{
+  const Standard_Real Udeb = utrim1, Ufin = utrim2;
+
+  utrim1 = theU1;
+  utrim2 = theU2;
+
+  if ( utrim1 == utrim2)
+    Standard_ConstructionError::Raise
+                  ("Geom_RectangularTrimmedSurface::U1==U2");
+
+  if (basisSurf->IsUPeriodic())
+  {
+    ElCLib::AdjustPeriodic(Udeb, Ufin, 
+      Min(Abs(utrim2-utrim1)/2,Precision::PConfusion()), utrim1, utrim2); 
+  }//if (basisSurf->IsUPeriodic())
+  else
+  {
+    if (utrim1 > utrim2)
+    {
+      //change some places of theUTrim1 and theUTrim2
+      Standard_Real ut = utrim1;
+      utrim1 = utrim2;
+      utrim2 = ut;
+    }
+
+    if (  (Udeb-utrim1 > Precision::PConfusion()) ||
+          (utrim2-Ufin > Precision::PConfusion()))
+    {
+      Standard_ConstructionError::Raise
+        ("Geom_RectangularTrimmedSurface::Uparameters out of range");
+    }
+  }
+}
+
+//=======================================================================
+//function : SetVTrim
+//purpose  : 
+//=======================================================================
+void Geom_RectangularTrimmedSurface::SetVTrim(const Standard_Real theV1,
+                                              const Standard_Real theV2)
+{
+  const Standard_Real Vdeb = vtrim1, Vfin = vtrim2;
+
+  vtrim1 = theV1;
+  vtrim2 = theV2;
+
+  if ( vtrim1 == vtrim2)
+    Standard_ConstructionError::Raise
+                      ("Geom_RectangularTrimmedSurface::V1==V2");
+
+  if (basisSurf->IsVPeriodic())
+  {
+    ElCLib::AdjustPeriodic(Vdeb, Vfin,
+      Min(Abs(vtrim2-vtrim1)/2,Precision::PConfusion()),vtrim1, vtrim2);
+  }//if (basisSurf->IsVPeriodic())
+  else
+  {
+    if (vtrim1 > vtrim2)
+    {
+      Standard_Real vt = vtrim1;
+      vtrim1 = vtrim2;
+      vtrim2 = vt;
+    }
+
+    if (  (Vdeb-vtrim1 > Precision::PConfusion()) ||
+          (vtrim2-Vfin > Precision::PConfusion()))
+    {
+      Standard_ConstructionError::Raise
+         ("Geom_RectangularTrimmedSurface::V parameters out of range");
+    }
+  }
+}
+
+//=======================================================================
+//function : ForceTrim
+//purpose  : 
+//=======================================================================
+void Geom_RectangularTrimmedSurface::ForceTrim(const Standard_Real theU1,
+                                               const Standard_Real theU2,
+                                               const Standard_Real theV1,
+                                               const Standard_Real theV2,
+                                               const Standard_Boolean isUTrim,
+                                               const Standard_Boolean isVTrim)
+{
+  basisSurf->Bounds(utrim1, utrim2, vtrim1, vtrim2);
+
+  isutrimmed = isUTrim;
+  isvtrimmed = isVTrim;
+
+  // Trimming along U-Direction
+  if (isutrimmed)
+  {
+    utrim1 = theU1;
+    utrim2 = theU2;
+
+    if((utrim1 > utrim2) || !(basisSurf->IsUPeriodic()))
+    {
+      //Standard_ConstructionError::Raise
+      //  ("Geom_RectangularTrimmedSurface::ForceTrim(...). "
+      //                        "utrim1 > utrim2");
+
+      SetUTrim(theU1,theU2);
+    }
+    else
+    {
+      const Standard_Real aTolPeriodicFactor = 1.0e-7;
+      const Standard_Real aT = basisSurf->UPeriod();
+      const Standard_Real aTol = aTolPeriodicFactor * aT;
+      if(utrim2 - utrim1 - aT > 2.0*aTol)
+      {
+        Standard_Integer n = RealToInt((utrim2 - utrim1)/aT);
+        utrim2 -= (n * aT);
+        
+        if(utrim2 - utrim1 < aTol)
+          utrim2 += aT;
+      }
+
+      //if(utrim2 - utrim1 < aTol)
+      //  Standard_ConstructionError::Raise
+      //        ("Geom_RectangularTrimmedSurface::SetTrim(...)."
+      //              "ERROR in adjust U-parameter!");
+    }
+  }
+
+  // Trimming along V-Direction
+  if (isvtrimmed)
+  {
+    vtrim1 = theV1;
+    vtrim2 = theV2;
+
+    if ((vtrim1 > vtrim2) || !(basisSurf->IsVPeriodic()))
+    {
+      //Standard_ConstructionError::Raise
+      //  ("Geom_RectangularTrimmedSurface::ForceTrim(...). "
+      //                        "vtrim1 > vtrim2");
+
+      SetVTrim(theV1,theV2);
+    }
+    else
+    {
+      const Standard_Real aTolPeriodicFactor = 1.0e-7;
+      const Standard_Real aT = basisSurf->VPeriod();
+      const Standard_Real aTol = aTolPeriodicFactor * aT;
+
+      if(vtrim2 - vtrim1 - aT > 2.0*aTol)
+      {
+        Standard_Integer n = RealToInt((vtrim2 - vtrim1)/aT);
+        vtrim2 -= (n * aT);
+
+        if(vtrim2 - vtrim1 < aTol)
+          vtrim2 += aT;
+      }
+
+      //if(vtrim2 - vtrim1 < aTol)
+      //  Standard_ConstructionError::Raise
+      //        ("Geom_RectangularTrimmedSurface::SetTrim(...)."
+      //              "ERROR in adjust V-parameter!");
+    }
+  }
+}
 
 //=======================================================================
 //function : SetTrim
@@ -217,107 +422,36 @@ void Geom_RectangularTrimmedSurface::SetTrim (const Standard_Real    Param1,
 //purpose  : 
 //=======================================================================
 
-void Geom_RectangularTrimmedSurface::SetTrim(const Standard_Real U1,
-					     const Standard_Real U2,
-					     const Standard_Real V1,
-					     const Standard_Real V2,
-					     const Standard_Boolean UTrim,
-					     const Standard_Boolean VTrim,
-					     const Standard_Boolean USense,
-					     const Standard_Boolean VSense) {
-  
-  Standard_Boolean UsameSense = Standard_True;
-  Standard_Boolean VsameSense = Standard_True;
-  Standard_Real Udeb, Ufin, Vdeb, Vfin;
+void Geom_RectangularTrimmedSurface::SetTrim(
+                                          const Standard_Real theU1,
+                                          const Standard_Real theU2,
+                                          const Standard_Real theV1,
+                                          const Standard_Real theV2,
+                                          const Standard_Boolean isUTrim,
+                                          const Standard_Boolean isVTrim,
+                                          const Standard_Boolean isUSense,
+                                          const Standard_Boolean isVSense)
+{
+  Standard_Boolean UsameSense = !(isUSense && (theU1 > theU2));
+  Standard_Boolean VsameSense = !(isVSense && (theV1 > theV2));
 
-  basisSurf->Bounds(Udeb, Ufin, Vdeb, Vfin);
+  basisSurf->Bounds(utrim1, utrim2, vtrim1, vtrim2);
+
+  isutrimmed = isUTrim;
+  isvtrimmed = isVTrim;
 
   // Trimming the U-Direction
-  isutrimmed = UTrim;
-  if (!UTrim) {
-    utrim1 = Udeb;
-    utrim2 = Ufin;
-  }
-  else {
-    if ( U1 == U2)
-      Standard_ConstructionError::Raise
-	("Geom_RectangularTrimmedSurface::U1==U2");
-
-    if (basisSurf->IsUPeriodic()) {
-      UsameSense = USense;
-      
-      // set uTrim1 in the range Udeb , Ufin
-      // set uTrim2 in the range uTrim1 , uTrim1 + Period()
-      utrim1 = U1;
-      utrim2 = U2;
-      ElCLib::AdjustPeriodic(Udeb, Ufin, 
-			     Min(Abs(utrim2-utrim1)/2,Precision::PConfusion()), 
-			     utrim1, utrim2);
-    }
-    else {
-      if (U1 < U2) {
-	UsameSense = USense;
-	utrim1 = U1;
-	utrim2 = U2;
-      }
-      else {
-	UsameSense = !USense;
-	utrim1 = U2;
-	utrim2 = U1;
-      }
-      
-      if ((Udeb-utrim1 > Precision::PConfusion()) ||
-	  (utrim2-Ufin > Precision::PConfusion()))
-	Standard_ConstructionError::Raise
-	  ("Geom_RectangularTrimmedSurface::U parameters out of range");
-
-    }
-  }
+  if (isutrimmed)
+    SetUTrim(theU1,theU2);
 
   // Trimming the V-Direction
-  isvtrimmed = VTrim;
-  if (!VTrim) {
-    vtrim1 = Vdeb;
-    vtrim2 = Vfin;
-  }
-  else {
-    if ( V1 == V2)
-      Standard_ConstructionError::Raise
-	("Geom_RectangularTrimmedSurface::V1==V2");
+  if (isvtrimmed)
+    SetVTrim(theV1,theV2);
 
-    if (basisSurf->IsVPeriodic()) {
-      VsameSense = VSense;
-
-      // set vTrim1 in the range Vdeb , Vfin
-      // set vTrim2 in the range vTrim1 , vTrim1 + Period()
-      vtrim1 = V1;
-      vtrim2 = V2;
-      ElCLib::AdjustPeriodic(Vdeb, Vfin,  
-			     Min(Abs(vtrim2-vtrim1)/2,Precision::PConfusion()), 
-			     vtrim1, vtrim2);
-    }
-    else {
-      if (V1 < V2) {
-	VsameSense = VSense;
-	vtrim1 = V1;
-	vtrim2 = V2;
-      }
-      else {
-	VsameSense = !VSense;
-	vtrim1 = V2;
-	vtrim2 = V1;
-      }
-      
-      if ((Vdeb-vtrim1 > Precision::PConfusion()) ||
-	  (vtrim2-Vfin > Precision::PConfusion()))
-	Standard_ConstructionError::Raise
-	  ("Geom_RectangularTrimmedSurface::V parameters out of range");
-
-    }
-  }
-
-  if (!UsameSense) UReverse();
-  if (!VsameSense) VReverse();
+  if (!UsameSense)
+    UReverse();
+  if (!VsameSense)
+    VReverse();
 }
 
 
@@ -662,3 +796,12 @@ gp_GTrsf2d Geom_RectangularTrimmedSurface::ParametricTransformation
   return basisSurf->ParametricTransformation(T);
 }
 
+//=======================================================================
+//function : GetTrimmedFlags
+//purpose  : 
+//=======================================================================
+void Geom_RectangularTrimmedSurface::GetTrimmedFlags(Standard_Boolean& isU, Standard_Boolean& isV) const
+{
+  isU = isutrimmed;
+  isV = isvtrimmed;
+}

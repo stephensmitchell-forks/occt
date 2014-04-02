@@ -299,3 +299,14 @@ Standard_Real     Sqrt (const Standard_Real Value)
  return sqrt(Value); 
 }
 
+//=======================================================================
+//function :  RealMod
+//purpose  :  Returns the remainder of theDivident on theDivisor.
+//            Quotient is always integer number.
+//=======================================================================
+Standard_Real RealMod(const Standard_Real theDivident,
+                                    const Standard_Real theDivisor)
+{
+  const Standard_Integer n = RealToInt(theDivident/theDivisor);
+  return theDivident - n * theDivisor;
+}

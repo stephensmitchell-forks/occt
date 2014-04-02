@@ -58,12 +58,14 @@
 #include <Precision.hxx>
 
 
-//modified by NIZNHY-PKV Thu May 05 09:01:57 2011f
 static 
-  Standard_Boolean Validate(const Adaptor3d_Curve&,
-			    const Adaptor3d_CurveOnSurface&,
-			    const Standard_Real,
-			    const Standard_Boolean);
+  BRepCheck_Status Validate(const Adaptor3d_Curve&, 
+                            const Adaptor3d_CurveOnSurface&,
+                            const Standard_Real,
+                            const Standard_Boolean,
+                            const Standard_Boolean theSurfIsUPeriodic,
+                            const Standard_Boolean theSurfIsVPeriodic);
+
 static
   void PrintProblematicPoint(const gp_Pnt&,
 			     const Standard_Real,
@@ -77,13 +79,9 @@ static
 static
   Standard_Real PrecSurface(const Adaptor3d_CurveOnSurface& aACS);
 
-//static Standard_Boolean Validate(const Adaptor3d_Curve&,
-//				 const Adaptor3d_Curve&,
-//				 const Standard_Real,
-//				 const Standard_Boolean);
 //modified by NIZNHY-PKV Thu May 05 09:02:01 2011t
 
-#define NCONTROL 23
+static const Standard_Integer aNbControl = 23;
 
 //=======================================================================
 //function : BRepCheck_Edge
@@ -213,9 +211,9 @@ void BRepCheck_Edge::Minimum()
 
 void BRepCheck_Edge::InContext(const TopoDS_Shape& S)
 {
-  if (myMap.IsBound(S)) {
+  if (myMap.IsBound(S))
     return;
-  }
+
   BRepCheck_ListOfStatus thelist;
   myMap.Bind(S, thelist);
   BRepCheck_ListOfStatus& lst = myMap(S);
@@ -224,191 +222,238 @@ void BRepCheck_Edge::InContext(const TopoDS_Shape& S)
   Standard_Real Tol = BRep_Tool::Tolerance(TopoDS::Edge(myShape));
 
   TopAbs_ShapeEnum styp = S.ShapeType();
-//  for (TopExp_Explorer exp(S,TopAbs_EDGE); exp.More(); exp.Next()) {
   TopExp_Explorer exp(S,TopAbs_EDGE) ;
-  for ( ; exp.More(); exp.Next()) {
-    if (exp.Current().IsSame(myShape)) {
+  for ( ; exp.More(); exp.Next())
+  {
+    if (exp.Current().IsSame(myShape))
       break;
-    }
   }
-  if (!exp.More()) {
+
+  if (!exp.More())
+  {
     BRepCheck::Add(lst,BRepCheck_SubshapeNotInShape);
     return;
   }
-  
-  switch (styp) {
-  case TopAbs_FACE:
-    if (!myCref.IsNull()) {
-      
-      Standard_Boolean SameParameter = TE->SameParameter();
-      Standard_Boolean SameRange = TE->SameRange();
-//  Modified by skv - Tue Apr 27 11:48:13 2004 Begin
-      if (!SameParameter || !SameRange) {
-	if (!SameParameter)
-	  BRepCheck::Add(lst,BRepCheck_InvalidSameParameterFlag);
-	if (!SameRange)
-	  BRepCheck::Add(lst,BRepCheck_InvalidSameRangeFlag);
 
-	return;
-      }
-//  Modified by skv - Tue Apr 27 11:48:14 2004 End
-      Standard_Real First = myHCurve->FirstParameter();
-      Standard_Real Last  = myHCurve->LastParameter();
+  switch (styp)
+  {
+    case TopAbs_FACE:
+      if (myCref.IsNull())
+        break;
 
-      Handle(BRep_TFace)& TF = *((Handle(BRep_TFace)*) &S.TShape());
-      const TopLoc_Location& Floc = S.Location();
-      const TopLoc_Location& TFloc = TF->Location();
-      const Handle(Geom_Surface)& Su = TF->Surface();
-      TopLoc_Location L = (Floc * TFloc).Predivided(myShape.Location());
-      Standard_Boolean pcurvefound = Standard_False;
+      {
+        Standard_Boolean SameParameter = TE->SameParameter();
+        Standard_Boolean SameRange = TE->SameRange();
 
-      BRep_ListIteratorOfListOfCurveRepresentation itcr(TE->Curves());
-      while (itcr.More()) {
-	const Handle(BRep_CurveRepresentation)& cr = itcr.Value();
-	if (cr != myCref && cr->IsCurveOnSurface(Su,L)) {
-	  pcurvefound = Standard_True;
-	  const Handle(BRep_GCurve)& GC = *((Handle(BRep_GCurve)*)&cr);
-	  Standard_Real f,l;
-	  GC->Range(f,l);
-          // gka OCC
-//  Modified by skv - Tue Apr 27 11:50:35 2004 Begin
-// 	  if (SameRange && (fabs(f-First) > Precision::PConfusion() || fabs(l-Last)> Precision::PConfusion())) { //f != First || l != Last)) { gka OCC
-	  if (fabs(f-First) > Precision::PConfusion() ||
-	      fabs(l-Last)  > Precision::PConfusion()) {
-	    BRepCheck::Add(lst,BRepCheck_InvalidSameRangeFlag);
-	    BRepCheck::Add(lst,BRepCheck_InvalidSameParameterFlag);
-// 	    if (SameParameter) {
-// 	      BRepCheck::Add(lst,BRepCheck_InvalidSameParameterFlag);
-// 	    }
-	  }
-//  Modified by skv - Tue Apr 27 11:50:37 2004 End
-	  if (myGctrl) {
-	    Handle(Geom_Surface) Sb = cr->Surface();
-	    Sb = Handle(Geom_Surface)::DownCast
-//	      (Su->Transformed(L.Transformation()));
- 	      (Su->Transformed(/*L*/(Floc * TFloc).Transformation()));
-	    Handle(Geom2d_Curve) PC = cr->PCurve();
-	    Handle(GeomAdaptor_HSurface) GAHS = new GeomAdaptor_HSurface(Sb);
-	    Handle(Geom2dAdaptor_HCurve) GHPC = new Geom2dAdaptor_HCurve(PC,f,l);
-	    Adaptor3d_CurveOnSurface ACS(GHPC,GAHS);
-	    Standard_Boolean ok = 
-	      Validate(myHCurve->Curve(),ACS,Tol,SameParameter);
-	    if (!ok) {
-	      if (cr->IsCurveOnClosedSurface()) {
-		BRepCheck::Add(lst,BRepCheck_InvalidCurveOnClosedSurface);
-	      }
-	      else {
-		BRepCheck::Add(lst,BRepCheck_InvalidCurveOnSurface);
-	      }
-//  Modified by skv - Tue Apr 27 11:53:00 2004 Begin
-	      BRepCheck::Add(lst,BRepCheck_InvalidSameParameterFlag);
-// 	      if (SameParameter) {
-// 		BRepCheck::Add(lst,BRepCheck_InvalidSameParameterFlag);
-// 	      }
-//  Modified by skv - Tue Apr 27 11:53:01 2004 End
-	    }
-	    if (cr->IsCurveOnClosedSurface()) {
-	      GHPC->ChangeCurve2d().Load(cr->PCurve2(),f,l); // same bounds
-	      ACS.Load(GAHS); // sans doute inutile
-	      ACS.Load(GHPC); // meme remarque...
-	      ok = Validate(myHCurve->Curve(),ACS,Tol,SameParameter);
-	      if (!ok) {
-		BRepCheck::Add(lst,BRepCheck_InvalidCurveOnClosedSurface);
-//  Modified by skv - Tue Apr 27 11:53:20 2004 Begin
-		if (SameParameter) {
-		  BRepCheck::Add(lst,BRepCheck_InvalidSameParameterFlag);
-		}
-//  Modified by skv - Tue Apr 27 11:53:23 2004 End
-	      }
-	    }
-	  }
-	}
-	itcr.Next();
-      }
+        if (!SameParameter || !SameRange)
+        {
+          if (!SameParameter)
+            BRepCheck::Add(lst,BRepCheck_InvalidSameParameterFlag);
 
-      if (!pcurvefound) {
-	Handle(Geom_Plane) P;
-	Handle(Standard_Type) dtyp = Su->DynamicType();
-	if (dtyp == STANDARD_TYPE(Geom_RectangularTrimmedSurface)) {
-	  P = Handle(Geom_Plane)::DownCast
-	    (Handle(Geom_RectangularTrimmedSurface)::
-	     DownCast(Su)->BasisSurface());
-	}
-	else {
-	  P = Handle(Geom_Plane)::DownCast(Su);
-	}
-	if (P.IsNull()) { // not a plane
-	  BRepCheck::Add(lst,BRepCheck_NoCurveOnSurface);
-	}
-	else { // on fait la projection a la volee, comme BRep_Tool
-	  // plan en position
-	  if (myGctrl) {
-	    P = Handle(Geom_Plane)::
-	      DownCast(P->Transformed(/*L*/(Floc * TFloc).Transformation()));// eap occ332
-	    //on projette Cref sur ce plan
-	    Handle(GeomAdaptor_HSurface) GAHS = new GeomAdaptor_HSurface(P);
+          if (!SameRange)
+            BRepCheck::Add(lst,BRepCheck_InvalidSameRangeFlag);
 
-	    // Dub - Normalement myHCurve est une GeomAdaptor_HCurve
-	    GeomAdaptor_Curve& Gac = 
-	      Handle(GeomAdaptor_HCurve)::DownCast(myHCurve)->ChangeCurve();
-	    Handle(Geom_Curve) C3d = Gac.Curve();
-	    Handle(Geom_Curve) ProjOnPlane = 
-	      GeomProjLib::ProjectOnPlane(new Geom_TrimmedCurve(C3d,First,Last),
-					  P, P->Position().Direction(),
-					  Standard_True);
-	    Handle(GeomAdaptor_HCurve) aHCurve = 
-	      new GeomAdaptor_HCurve(ProjOnPlane);
+          return;
+        }//if (!SameParameter || !SameRange)
 
-	    ProjLib_ProjectedCurve proj(GAHS,aHCurve);
-	    Handle(Geom2d_Curve) PC = Geom2dAdaptor::MakeCurve(proj);
-	    Handle(Geom2dAdaptor_HCurve) GHPC = 
-	      new Geom2dAdaptor_HCurve(PC,
-				       myHCurve->FirstParameter(),
-				       myHCurve->LastParameter());
+        const Standard_Real First = myHCurve->FirstParameter();
+        const Standard_Real Last  = myHCurve->LastParameter();
 
-	    Adaptor3d_CurveOnSurface ACS(GHPC,GAHS);
-	    
-	    Standard_Boolean ok = Validate(myHCurve->Curve(),ACS,
-					   Tol,Standard_True); // voir dub...
-	    if (!ok) {
-	      BRepCheck::Add(lst,BRepCheck_InvalidCurveOnSurface);
-	    }
-	  }
-	}
+        Handle(BRep_TFace)& TF = *((Handle(BRep_TFace)*) &S.TShape());
+        const TopLoc_Location& Floc = S.Location();
+        const TopLoc_Location& TFloc = TF->Location();
+        const Handle(Geom_Surface)& Su = TF->Surface();
+        TopLoc_Location L = (Floc * TFloc).Predivided(myShape.Location());
+        Standard_Boolean pcurvefound = Standard_False;
+
+        BRep_ListIteratorOfListOfCurveRepresentation itcr(TE->Curves());
+        
+        while (itcr.More())
+        {
+          const Handle(BRep_CurveRepresentation)& cr = itcr.Value();
+          if (cr != myCref && cr->IsCurveOnSurface(Su,L))
+          {
+            pcurvefound = Standard_True;
+            const Handle(BRep_GCurve)& GC = *((Handle(BRep_GCurve)*)&cr);
+            Standard_Real f,l;
+            GC->Range(f,l);
+
+            if (fabs(f-First) > Precision::PConfusion() ||
+                              fabs(l-Last)  > Precision::PConfusion())
+            {
+              BRepCheck::Add(lst,BRepCheck_InvalidSameRangeFlag);
+              BRepCheck::Add(lst,BRepCheck_InvalidSameParameterFlag);
+            }
+
+            if (myGctrl)
+            {
+              Handle(Geom_Surface) Sb = cr->Surface();
+              {
+                Standard_Real U1Su, U2Su, V1Su, V2Su;
+                Standard_Real U1Sb, U2Sb, V1Sb, V2Sb;
+                
+                Standard_Boolean isTrimU = Standard_False, isTrimV = Standard_False;
+                if(Su->DynamicType() == STANDARD_TYPE(Geom_RectangularTrimmedSurface))
+                {
+                  Handle(Geom_RectangularTrimmedSurface) TS = 
+                        Handle(Geom_RectangularTrimmedSurface)::DownCast(Su);
+
+                  TS->GetTrimmedFlags(isTrimU, isTrimV);
+                }
+                
+                Su->Bounds(U1Su, U2Su, V1Su, V2Su);
+                Sb = Handle(Geom_Surface)::DownCast
+                      (Su->Transformed((Floc * TFloc).Transformation()));
+
+                Sb->Bounds(U1Sb, U2Sb, V1Sb, V2Sb);
+                Standard_Boolean  isUtr = ((Abs(U1Su - U1Sb) + Abs(U2Su - U2Sb)) > Precision::PConfusion()), 
+                                  isVtr = ((Abs(V1Su - V1Sb) + Abs(V2Su - V2Sb)) > Precision::PConfusion());
+
+                if(isUtr || isVtr)
+                {
+                  Handle(Geom_Surface) St = Handle(Geom_RectangularTrimmedSurface)::DownCast(Sb)->BasisSurface();
+                  Sb = new Geom_RectangularTrimmedSurface(St, isTrimU || isUtr, isVtr || isTrimV, U1Su, U2Su, V1Su, V2Su);
+                }
+              }
+
+              Handle(Geom2d_Curve) PC = cr->PCurve();
+              Handle(GeomAdaptor_HSurface) GAHS = new GeomAdaptor_HSurface(Sb);
+              Handle(Geom2dAdaptor_HCurve) GHPC = new Geom2dAdaptor_HCurve(PC,f,l);
+              Adaptor3d_CurveOnSurface ACS(GHPC,GAHS);
+              BRepCheck_Status aStatus = Validate(myHCurve->Curve(),ACS,Tol,SameParameter,
+                                  Sb->IsUPeriodic(),Sb->IsVPeriodic());
+
+              if(aStatus == BRepCheck_PCurveIsOutOfDomainFace)
+                  BRepCheck::Add(lst,BRepCheck_PCurveIsOutOfDomainFace);
+              else if(aStatus == BRepCheck_InvalidCurveOnSurface)
+              {
+                if (cr->IsCurveOnClosedSurface())
+                  BRepCheck::Add(lst,BRepCheck_InvalidCurveOnClosedSurface);
+                else
+                  BRepCheck::Add(lst,BRepCheck_InvalidCurveOnSurface);
+
+                BRepCheck::Add(lst,BRepCheck_InvalidSameParameterFlag);
+              }
+              else if(aStatus != BRepCheck_NoError)
+                BRepCheck::Add(lst,aStatus);
+
+              if (cr->IsCurveOnClosedSurface())
+              {
+                GHPC->ChangeCurve2d().Load(cr->PCurve2(),f,l); // same bounds
+                ACS.Load(GAHS); // sans doute inutile
+                ACS.Load(GHPC); // meme remarque...
+                aStatus = Validate(myHCurve->Curve(),ACS,Tol,SameParameter,
+                              Sb->IsUPeriodic(),Sb->IsVPeriodic());
+
+                if(aStatus == BRepCheck_PCurveIsOutOfDomainFace)
+                  BRepCheck::Add(lst,BRepCheck_PCurveIsOutOfDomainFace);
+                else if(aStatus == BRepCheck_InvalidCurveOnSurface)
+                {
+                  BRepCheck::Add(lst,BRepCheck_InvalidCurveOnClosedSurface);
+                  if (SameParameter)
+                    BRepCheck::Add(lst,BRepCheck_InvalidSameParameterFlag);
+                }
+                else if(aStatus != BRepCheck_NoError)
+                  BRepCheck::Add(lst,aStatus);
+              }//if (cr->IsCurveOnClosedSurface())
+            }//if (myGctrl)
+          }//if (cr != myCref && cr->IsCurveOnSurface(Su,L))
+          itcr.Next();
+        }//while (itcr.More())
+        
+        if (!pcurvefound)
+        {
+          Handle(Geom_Plane) P;
+          Handle(Standard_Type) dtyp = Su->DynamicType();
+          if (dtyp == STANDARD_TYPE(Geom_RectangularTrimmedSurface))
+          {
+            P = Handle(Geom_Plane)::DownCast
+                    (Handle(Geom_RectangularTrimmedSurface)::
+                    DownCast(Su)->BasisSurface());
+          }
+          else
+            P = Handle(Geom_Plane)::DownCast(Su);
+          
+          if (P.IsNull()) // not a plane
+            BRepCheck::Add(lst,BRepCheck_NoCurveOnSurface);
+          else
+          {
+  // on fait la projection a la volee, comme BRep_Tool plan en position
+            if (myGctrl)
+            {
+              P = Handle(Geom_Plane)::DownCast(
+                    P->Transformed((Floc * TFloc).Transformation()));// eap occ332
+
+              //on projette Cref sur ce plan
+              Handle(GeomAdaptor_HSurface) GAHS = new GeomAdaptor_HSurface(P);
+
+              // Dub - Normalement myHCurve est une GeomAdaptor_HCurve
+              GeomAdaptor_Curve& Gac = 
+                Handle(GeomAdaptor_HCurve)::DownCast(myHCurve)->ChangeCurve();
+
+              Handle(Geom_Curve) C3d = Gac.Curve();
+              Handle(Geom_Curve) ProjOnPlane = 
+                GeomProjLib::ProjectOnPlane(new Geom_TrimmedCurve(C3d,First,Last),
+                P, P->Position().Direction(),Standard_True);
+
+              Handle(GeomAdaptor_HCurve) aHCurve = 
+                                          new GeomAdaptor_HCurve(ProjOnPlane);
+
+              ProjLib_ProjectedCurve proj(GAHS,aHCurve);
+              Handle(Geom2d_Curve) PC = Geom2dAdaptor::MakeCurve(proj);
+              Handle(Geom2dAdaptor_HCurve) GHPC = new Geom2dAdaptor_HCurve(PC,
+                                myHCurve->FirstParameter(),
+                                myHCurve->LastParameter());
+
+              Adaptor3d_CurveOnSurface ACS(GHPC,GAHS);
+
+              BRepCheck_Status aStatus = Validate(myHCurve->Curve(),ACS,Tol,
+                    Standard_True, P->IsUPeriodic(),P->IsVPeriodic()); // voir dub...
+
+              if (aStatus != BRepCheck_NoError)
+                BRepCheck::Add(lst,aStatus);
+            }//if (myGctrl)
+          }//else of "if (P.IsNull())" condition
+        }//if (!pcurvefound)
+
+        break;
       }
-    }
-    break;
-  case TopAbs_SOLID:
-    {
-      // on verifie que l`edge est bien connectee 2 fois (pas de bord libre)
-      Standard_Integer nbconnection = 0;
-      //TopExp_Explorer exp;
-      for (exp.Init(S,TopAbs_FACE); exp.More(); exp.Next()) {
-	const TopoDS_Face& fac = TopoDS::Face(exp.Current());
-	TopExp_Explorer exp2;
-	for (exp2.Init(fac,TopAbs_EDGE); exp2.More(); exp2.Next()) {
-	  if (exp2.Current().IsSame(myShape)) {
-	    nbconnection++;
-	  }
-	}
+    case TopAbs_SOLID:
+      {
+        // on verifie que l`edge est bien connectee 2 fois (pas de bord libre)
+        Standard_Integer nbconnection = 0;
+
+        //TopExp_Explorer exp;
+        for (exp.Init(S,TopAbs_FACE); exp.More(); exp.Next())
+        {
+          const TopoDS_Face& fac = TopoDS::Face(exp.Current());
+          TopExp_Explorer exp2;
+          
+          for (exp2.Init(fac,TopAbs_EDGE); exp2.More(); exp2.Next())
+          {
+            if (exp2.Current().IsSame(myShape))
+              nbconnection++;
+          }//for (exp2.Init(fac,TopAbs_EDGE); exp2.More(); exp2.Next())
+        }//for (exp.Init(S,TopAbs_FACE); exp.More(); exp.Next())
+
+        if (nbconnection < 2 && !TE->Degenerated())
+          BRepCheck::Add(myMap(S),BRepCheck_FreeEdge);
+        else if (nbconnection > 2)
+        {
+          BRepCheck::Add(myMap(S),BRepCheck_InvalidMultiConnexity);
+        }
+        else
+          BRepCheck::Add(myMap(S),BRepCheck_NoError);
+        
       }
-      if (nbconnection < 2 && !TE->Degenerated()) {
-	BRepCheck::Add(myMap(S),BRepCheck_FreeEdge);
-      }
-      else if (nbconnection > 2) {
-	BRepCheck::Add(myMap(S),BRepCheck_InvalidMultiConnexity);
-      }
-      else {
-	BRepCheck::Add(myMap(S),BRepCheck_NoError);
-      }
-    }
-    break;
-  default:
-    break;
-  }
-  if (myMap(S).IsEmpty()) {
+      break;
+
+    default:
+      break;
+  }//switch (styp)
+
+  if (myMap(S).IsEmpty())
     myMap(S).Append(BRepCheck_NoError);
-  }
 }
 
 
@@ -530,8 +575,8 @@ Standard_Real BRepCheck_Edge::Tolerance()
   Standard_Real dist2, tol2, tolCal=0., prm;
   gp_Pnt center, othP;
   Standard_Integer i;
-  for (i= 0; i< NCONTROL; i++) {
-    prm = ((NCONTROL-1-i)*First + i*Last)/(NCONTROL-1);
+  for (i= 0; i< aNbControl; i++) {
+    prm = ((aNbControl-1-i)*First + i*Last)/(aNbControl-1);
     tol2=dist2=0.;
     center=(*(Handle(Adaptor3d_HCurve)*)&theRep(1))->Value(prm);
     for (iRep=2; iRep<=nbRep; iRep++) {
@@ -549,74 +594,383 @@ Standard_Real BRepCheck_Edge::Tolerance()
 
 //=======================================================================
 //function : Validate
-//purpose  : 
+//purpose  :
+//Remark : If the original surface is not periodic in U or V direction
+//         (for example, rectangular trimmed on periodic surface),
+//         the surface that <Adaptor3d_CurveOnSurface> contains
+//         can be periodic.
+//         To use true values of flags, the parameters
+//         <theSurfIsUPeriodic> and <theSurfIsVPeriodic> have been added.
 //=======================================================================
-Standard_Boolean Validate(const Adaptor3d_Curve& CRef,
-			  const Adaptor3d_CurveOnSurface& Other,
-			  const Standard_Real Tol,
-			  const Standard_Boolean SameParameter)
+BRepCheck_Status Validate (const Adaptor3d_Curve& CRef,
+                           const Adaptor3d_CurveOnSurface& Other,
+                           const Standard_Real Tol,
+                           const Standard_Boolean SameParameter,
+                           const Standard_Boolean theSurfIsUPeriodic,
+                           const Standard_Boolean theSurfIsVPeriodic)
 {
-  Standard_Boolean  Status, proj; 
-  Standard_Real aPC, First, Last, Error;
-  gp_Pnt  problematic_point ;
-  //
-  Status = Standard_True;
-  Error = 0.;
-  First = CRef.FirstParameter();
-  Last  = CRef.LastParameter();
-  //
-  aPC=Precision::PConfusion();
-  proj = (!SameParameter || 
-	  fabs(Other.FirstParameter()-First) > aPC || 
-	  fabs( Other.LastParameter()-Last) > aPC);
-  if (!proj) {
-    Standard_Integer i;
-    Standard_Real Tol2, prm, dD;
-    gp_Pnt pref, pother;
+  BRepCheck_Status  Status = BRepCheck_NoError;
+  const Standard_Real aPC = Precision::PConfusion(),
+                      First = CRef.FirstParameter(),
+                      Last = CRef.LastParameter();
+
+  const Standard_Boolean proj = (!SameParameter ||
+                                  fabs(Other.FirstParameter()-First) > aPC ||
+                                  fabs(Other.LastParameter()-Last) > aPC);
+
+  if (!proj)
+  {
     //modified by NIZNHY-PKV Thu May 05 09:06:41 2011f
     //OCC22428
-    dD=Prec(CRef, Other);//3.e-15;
-    Tol2=Tol+dD;
+    const Standard_Real dD = Prec(CRef, Other);//3.e-15;
+    Standard_Real Tol2=Tol+dD;
     Tol2=Tol2*Tol2;
+
     //Tol2=Tol*Tol;
     //modified by NIZNHY-PKV Thu May 05 09:06:47 2011t
+
+    const Standard_Real uf = Other.GetSurface()->FirstUParameter ();
+    const Standard_Real ul = Other.GetSurface()->LastUParameter ();
+    const Standard_Real vf = Other.GetSurface()->FirstVParameter();
+    const Standard_Real vl = Other.GetSurface()->LastVParameter();
     
-    for (i = 0; i< NCONTROL; ++i) {
-      prm = ((NCONTROL-1-i)*First + i*Last)/(NCONTROL-1);
-      pref = CRef.Value(prm);
-      pother = Other.Value(prm);
-      if (pref.SquareDistance(pother) > Tol2) {
-	problematic_point = pref ;
-	Status = Standard_False;
-	Error  = pref.Distance(pother);
-	PrintProblematicPoint(problematic_point, Error, Tol);
-	return Status;
-        //goto FINISH ;
+    //These values are used for estimation of toleranves of
+    //"plane-like" surfaces
+    const Standard_Real aDeltaU = (ul - uf);
+    const Standard_Real aDeltaV = (vl - vf);
+
+    //(for Rectangular trimmed surface for example)
+    const Standard_Boolean isBaseSurfUPeriodic = Other.GetSurface()->IsUPeriodic() && !theSurfIsUPeriodic;
+    const Standard_Boolean isBaseSurfVPeriodic = Other.GetSurface()->IsVPeriodic() && !theSurfIsVPeriodic;
+
+    const Standard_Boolean isUPeriodic = isBaseSurfUPeriodic || theSurfIsUPeriodic;
+    const Standard_Boolean isVPeriodic = isBaseSurfVPeriodic || theSurfIsVPeriodic;
+
+    const Standard_Boolean isUClosedOrPeriodic = Other.GetSurface()->IsUClosed() || theSurfIsUPeriodic;
+    const Standard_Boolean isVClosedOrPeriodic = Other.GetSurface()->IsVClosed() || theSurfIsVPeriodic;
+
+    const Standard_Real UResSt =Other.GetSurface()->UResolution(Tol);
+    const Standard_Real VResSt =Other.GetSurface()->VResolution(Tol);
+
+//    if(isUClosedOrPeriodic)
+//    {
+//      const Standard_Real aF = Other.GetCurve()->Value(First).X();
+//      const Standard_Real aL = Other.GetCurve()->Value(Last).X();
+//      const Standard_Real aDim = theSurfIsUPeriodic ? 
+//                                    Other.GetSurface()->UPeriod() :
+//                                    aDeltaU;
+//
+//      if(Abs(aL - aF) - aDim > 2 * UResSt)
+//      {
+//#ifdef DEB
+//        cout << endl << "----\nFunction Validate(...); file: "
+//                                        "BRepCheck_Edge.cxx" << endl;
+//        if(theSurfIsUPeriodic)
+//          cout << "The surface is U-periodic." << endl;
+//        else
+//          cout << "The surface is U-closed." << endl;
+//
+//        cout << "P1.X() = " << aF << "; P2.X() = " << aL << endl;
+//        cout << "Surface dimension D = " << aDim << 
+//                    ". (P2.X() - P1.X()) > D." << "\n-----" << endl;
+//#endif
+//        Status = BRepCheck_PCurveIsOutOfDomainFace;
+//        return Status;
+//      }//if(aL - aF - aT > 2* URes)
+//    }//if(theSurfIsUPeriodic)
+//
+//    if(isVClosedOrPeriodic)
+//    {
+//      const Standard_Real aF = Other.GetCurve()->Value(First).Y();
+//      const Standard_Real aL = Other.GetCurve()->Value(Last).Y();
+//      const Standard_Real aDim = theSurfIsVPeriodic ? 
+//                                    Other.GetSurface()->VPeriod() : 
+//                                    aDeltaV;
+//
+//      if(Abs(aL - aF) - aDim > 2 * VResSt)
+//      {
+//#ifdef DEB
+//        cout << endl << "----\nFunction Validate(...); file: "
+//                                          "RepCheck_Edge.cxx" << endl;
+//        if(theSurfIsVPeriodic)
+//          cout << "The surface is V-periodic." << endl;
+//        else
+//          cout << "The surface is V-closed." << endl;
+//
+//        cout << "P1.Y() = " << aF << "; P2.Y() = " << aL << endl;
+//        cout << "Surface dimension D = " << aDim << 
+//                    ". (P2.Y() - P1.Y()) > D." << "\n-----" << endl;
+//#endif
+//        Status = BRepCheck_PCurveIsOutOfDomainFace;
+//        return Status;
+//      }//if(aL - aF - aT > 2* VRes)
+//    }//if(theSurfIsVPeriodic)
+
+    Standard_Real aCriticalParameterU = First,
+                  aCriticalParameterV = First;
+
+    Standard_Real aDeltaUmax = 0.0,
+                  aDeltaVmax = 0.0;
+
+    Standard_Real dUmaxU = 0.0, dUmaxV = 0.0;
+    Standard_Real dVmaxU = 0.0, dVmaxV = 0.0;
+
+    Standard_Boolean isIntoBoundaries = Standard_True;
+
+    for (Standard_Integer i = 0; i < aNbControl; ++i)
+    {
+      const Standard_Real prm = ((aNbControl-1-i)*First + i*Last)/(aNbControl-1);
+      const gp_Pnt pref = CRef.Value(prm);
+      const gp_Pnt pother = Other.Value(prm);
+
+      if (pref.SquareDistance(pother) > Tol2)
+      {
+        const gp_Pnt problematic_point(pref) ;
+        Status = BRepCheck_InvalidCurveOnSurface;
+        const Standard_Real Error  = pref.Distance(pother);
+        PrintProblematicPoint(problematic_point, Error, Tol);
+        return Status;
       }
-    }
-  }
-  else {
+
+      const gp_Pnt2d CP = Other.GetCurve()->Value(prm);
+
+      if(isUClosedOrPeriodic && isVClosedOrPeriodic)
+        continue;
+
+      const Standard_Real u = Max(uf, Min(CP.X(), ul));
+      const Standard_Real v = Max(vf, Min(CP.Y(), vl));
+
+      const Standard_Boolean  isUbound = ((uf <= CP.X()) && (CP.X() <= ul)) || isUClosedOrPeriodic,
+                              isVbound = ((vf <= CP.Y()) && (CP.Y() <= vl)) || isVClosedOrPeriodic;
+
+      //Point CP is in surface boundary.
+      if(isUbound && isVbound)
+        continue;
+
+      isIntoBoundaries = Standard_False;
+
+      //Values of overrun of surface boundaries 
+      const Standard_Real dUpar = (isUPeriodic || isUbound) ? 0.0 : CP.X() - u, 
+                          dVpar = (isVPeriodic || isVbound) ? 0.0 : CP.Y() - v;
+
+      if(Abs(dUpar) > aDeltaUmax)
+      {
+        aCriticalParameterU = prm;
+        aDeltaUmax = Abs(dUpar);
+        dUmaxU = dUpar;
+        dUmaxV = dVpar;
+      }
+
+      if(Abs(dVpar) > aDeltaVmax)
+      {
+        aCriticalParameterV = prm;
+        aDeltaVmax = Abs(dVpar);
+        dVmaxU = dUpar;
+        dVmaxV = dVpar;
+      }
+    }//for (i = 0; i< aNbControl; ++i)
+
+    if(!isIntoBoundaries)
+    {
+      // Max U(V) resolution is calculated from condition:
+      // |S'|*dU > aCoeff*(0.5*|S"|dU*dU), it means that
+      // first order differential of surface >> second order one
+      const Standard_Real aCoeff = 10.;
+      //Value to check modulus of derivatives against zero
+      const Standard_Real eps = 1.e-16;
+      //Value for estimation Max resolution if |S"| < eps
+      const Standard_Real aFactor = 10.;
+
+      for(Standard_Integer anIndex = 0; anIndex < 2; anIndex++)
+      {
+        const Standard_Real aParam = !anIndex ? aCriticalParameterU : aCriticalParameterV;
+        const Standard_Real du = !anIndex ? dUmaxU : dUmaxV;
+        const Standard_Real dv = !anIndex ? dVmaxU : dVmaxV;
+
+        const gp_Pnt2d CP = Other.GetCurve()->Value(aParam);
+
+        const Standard_Real u = Max(uf, Min(CP.X(), ul));
+        const Standard_Real v = Max(vf, Min(CP.Y(), vl));
+
+        gp_Pnt aPref;
+        gp_Vec aDSdu, aDSdv, aD2Sdu2, aD2Sdv2, aD2Sdudv;
+        Other.GetSurface()->D2(u, v, aPref, aDSdu, aDSdv, aD2Sdu2, aD2Sdv2, aD2Sdudv);
+
+        Standard_Real UResMax = 0.0, VResMax = 0.0;
+        const Standard_Real aModDSdu = aDSdu.Magnitude();
+        const Standard_Real aModDSdv = aDSdv.Magnitude();
+        const Standard_Real aModD2Sdu2 = aD2Sdu2.Magnitude();
+        const Standard_Real aModD2Sdv2 = aD2Sdv2.Magnitude();
+
+        if(aModDSdu > eps)
+        {
+          if(aModD2Sdu2 > aModDSdu / aCoeff)
+          {
+            UResMax = aModDSdu / (.5 * aCoeff * aModD2Sdu2);
+          }
+          else
+          {
+            //Surface seems to be "plane-like" in U direction
+            UResMax = aDeltaU / aFactor;
+          }
+        }
+        else
+        {
+          UResMax = aFactor * UResSt;
+        }
+
+        if(aModDSdv > eps)
+        {
+          if(aModD2Sdv2 > aModDSdv / aCoeff)
+          {
+            VResMax = aModDSdv / (5. * aModD2Sdv2);
+          }
+          else
+          {
+            //Surface seems to be "plane-like" in V direction
+            VResMax = aDeltaV / aFactor;
+          }
+        }
+        else
+        {
+          VResMax = aFactor * VResSt;
+        }
+
+        const Standard_Real anURes = isBaseSurfUPeriodic ? UResSt : UResMax,
+                            aVRes  = isBaseSurfVPeriodic ? VResSt : VResMax;
+
+        const Standard_Boolean  isUbound = ((uf - anURes <= CP.X()) && (CP.X() <= ul + anURes)) || isUClosedOrPeriodic,
+                                isVbound = ((vf - aVRes <= CP.Y())  && (CP.Y() <= vl + aVRes))  || isVClosedOrPeriodic;
+
+        if(isUbound && isVbound)
+          continue;
+
+#ifdef DEB
+        if(!isUbound)
+        {
+          cout << endl << "----\nFunction Validate(...); file: "
+                                            "BRepCheck_Edge.cxx" << endl;
+
+          if(isBaseSurfUPeriodic)
+            cout << "RTS from U-periodic" << endl;
+          else if(theSurfIsUPeriodic)
+            cout << "U-periodic surface" << endl;
+          else if(isUClosedOrPeriodic)
+            cout << "U-closed surface" << endl;
+
+
+          cout << "Point(prm = " << aParam << "): (" << 
+                                CP.X() << "; " << CP.Y() <<")."  << endl;
+          cout << "u = (" << uf << ")...(" << ul << "). "
+            "Delta = " << Max(uf - CP.X(),CP.X()-ul) << " Tol3D = " << Tol << 
+                                  ". URes = " << anURes << "\n-----" << endl;
+        }
+
+        if(!isVbound)
+        {
+          cout << endl << "----\nFunction Validate(...); file: "
+                                                "BRepCheck_Edge.cxx" << endl;
+
+          if(isBaseSurfVPeriodic)
+            cout << "RTS from V-periodic" << endl;
+          else if(theSurfIsVPeriodic)
+            cout << "V-periodic surface" << endl;
+          else if(isVClosedOrPeriodic)
+            cout << "V-closed surface" << endl;
+
+          cout << "Point(prm = " << aParam << "): (" << 
+                                    CP.X() << "; " << CP.Y() <<")."  << endl;
+          cout << "v = (" << vf << ")...(" << vl << "). "
+            "Delta = " << Max(vf - CP.Y(),CP.Y()-vl) << " Tol3D = " << Tol << 
+                                  ". VRes = " << aVRes << "\n-----"  << endl;
+        }
+#endif
+
+        //Expected and real point
+        gp_Pnt aPe, aPf;
+        //1st degree estimation
+        aPe.SetXYZ(gp_XYZ(aPref.X() + (aDSdu.X()*du+aDSdv.X()*dv),
+                          aPref.Y() + (aDSdu.Y()*du+aDSdv.Y()*dv),
+                          aPref.Z() + (aDSdu.Z()*du+aDSdv.Z()*dv)));
+
+        Other.GetSurface()->D0(CP.X(), CP.Y(), aPf);
+        const Standard_Real aTol = Tol2;
+        Standard_Real dist = aPe.SquareDistance(aPf);
+
+        if(dist < aTol)
+          continue;
+
+#ifdef DEB
+        cout << endl << "++++\nFunction Validate(...); file: "
+                            "BRepCheck_Edge.cxx (1st degree)" << endl;
+        cout << "Exp. point: (" << aPe.X() << ", " << aPe.Y() << ", " <<
+                                              aPe.Z() << ")." << endl;
+        cout << "Real point: (" << aPf.X() << ", " << aPf.Y() << ", " <<
+                                              aPf.Z() << ")." << endl;
+        cout << "dist**2 = " << dist << 
+                              "; Tol = " << aTol << "\n-----" << endl;
+#endif
+
+        const Standard_Real dUpar2 = du*du;
+        const Standard_Real dVpar2 = dv*dv;
+        const Standard_Real dUVpar = du*dv;
+
+        //2nd degree estimation
+        aPe.SetXYZ(gp_XYZ(aPe.X() + (aD2Sdu2.X()*dUpar2 + 
+                            2.0*aD2Sdudv.X()*dUVpar + aD2Sdv2.X()*dVpar2)/2.0,
+                          aPe.Y() + (aD2Sdu2.Y()*dUpar2 + 
+                            2.0*aD2Sdudv.Y()*dUVpar + aD2Sdv2.Y()*dVpar2)/2.0,
+                          aPe.Z() + (aD2Sdu2.Z()*dUpar2 + 
+                            2.0*aD2Sdudv.Z()*dUVpar + aD2Sdv2.Z()*dVpar2)/2.0));
+
+        dist = aPe.SquareDistance(aPf);
+
+        if(dist > aTol)
+        {
+#ifdef DEB
+          cout << endl << "++++\nFunction Validate(...); file: "
+            "BRepCheck_Edge.cxx (2nd degree)" << endl;
+          cout << "Exp. point: (" << aPe.X() << ", " << aPe.Y() << ", " <<
+                                                  aPe.Z() << ")." << endl;
+          cout << "Real point: (" << aPf.X() << ", " << aPf.Y() << ", " <<
+                                                  aPf.Z() << ")." << endl;
+          cout << "dist**2 = " << dist << 
+                                  "; Tol = " << aTol << "\n-----" << endl;
+#endif
+          Status = BRepCheck_PCurveIsOutOfDomainFace;
+          return Status;
+        }
+      }//for(Standard_Integer anIndex = 0; anIndex < 2; anIndex++)
+    }//if(!isIntoBoundaries)
+  }//if (!proj)
+  else
+  {
     Extrema_LocateExtPC refd,otherd;
     Standard_Real OFirst = Other.FirstParameter();
     Standard_Real OLast  = Other.LastParameter();
     gp_Pnt pd = CRef.Value(First);
     gp_Pnt pdo = Other.Value(OFirst);
     Standard_Real distt = pd.SquareDistance(pdo);
-    if (distt > Tol*Tol) {
-      problematic_point = pd ;
-      Status = Standard_False ;
-      Error = Sqrt(distt);
+    
+    if (distt > Tol*Tol)
+    {
+      const gp_Pnt problematic_point(pd);
+      Status = BRepCheck_InvalidCurveOnSurface ;
+      const Standard_Real Error = Sqrt(distt);
       PrintProblematicPoint(problematic_point, Error, Tol);
       return Status;
       //goto FINISH ;
     }
+
     pd = CRef.Value(Last);
     pdo = Other.Value(OLast);
     distt = pd.SquareDistance(pdo);
-    if (distt > Tol*Tol) {
-      problematic_point = pd ;
-      Status = Standard_False ;
-      Error = Sqrt(distt);
+
+    if (distt > Tol*Tol)
+    {
+      const gp_Pnt problematic_point(pd);
+      Status = BRepCheck_InvalidCurveOnSurface ;
+      const Standard_Real Error = Sqrt(distt);
       PrintProblematicPoint(problematic_point, Error, Tol);
       return Status;
       //goto FINISH ;
@@ -624,57 +978,50 @@ Standard_Boolean Validate(const Adaptor3d_Curve& CRef,
 
     refd.Initialize(CRef,First,Last,CRef.Resolution(Tol));
     otherd.Initialize(Other,OFirst,OLast,Other.Resolution(Tol));
-    for (Standard_Integer i = 2; i< NCONTROL-1; i++) {
-      Standard_Real rprm = ((NCONTROL-1-i)*First + i*Last)/(NCONTROL-1);
+
+    for (Standard_Integer i = 2; i< aNbControl-1; i++)
+    {
+      Standard_Real rprm = ((aNbControl-1-i)*First + i*Last)/(aNbControl-1);
       gp_Pnt pref = CRef.Value(rprm);
-      Standard_Real oprm = ((NCONTROL-1-i)*OFirst + i*OLast)/(NCONTROL-1);
+      Standard_Real oprm = ((aNbControl-1-i)*OFirst + i*OLast)/(aNbControl-1);
       gp_Pnt pother = Other.Value(oprm);
       refd.Perform(pother,rprm);
-      if (!refd.IsDone() || refd.SquareDistance() > Tol * Tol) {
-	problematic_point = pref ;
-	Status = Standard_False ;
-	if (refd.IsDone()) {
-	  Error = sqrt (refd.SquareDistance());
-	}
-	else {
-	  Error = RealLast();
-	}
-	PrintProblematicPoint(problematic_point, Error, Tol);
-	return Status;
+
+      if (!refd.IsDone() || refd.SquareDistance() > Tol * Tol)
+      {
+        const gp_Pnt problematic_point(pref);
+        Status = BRepCheck_InvalidCurveOnSurface ;
+        
+        const Standard_Real Error = refd.IsDone() ? 
+                                      sqrt (refd.SquareDistance()) :
+                                      RealLast();
+
+        PrintProblematicPoint(problematic_point, Error, Tol);
+        return Status;
         //goto FINISH ;
       }
+
       otherd.Perform(pref,oprm);
-      if (!otherd.IsDone() || otherd.SquareDistance() > Tol * Tol) {
-	problematic_point = pref ;
-	Status = Standard_False ;
-	if (otherd.IsDone()) {
-	  Error = sqrt (otherd.SquareDistance());
-	}
-	else {
-	  Error = RealLast();
-	}
-	PrintProblematicPoint(problematic_point, Error, Tol);
-	return Status;
-	//goto FINISH ;
+
+      if (!otherd.IsDone() || otherd.SquareDistance() > Tol * Tol)
+      {
+        const gp_Pnt problematic_point(pref);
+        Status = BRepCheck_InvalidCurveOnSurface ;
+
+        const Standard_Real Error = otherd.IsDone() ? 
+                                      sqrt (otherd.SquareDistance()) :
+                                      RealLast();
+
+        PrintProblematicPoint(problematic_point, Error, Tol);
+        return Status;
+        //goto FINISH ;
       }
     }
   }
-  //FINISH :
-/*
-#ifdef DEB
-    if (! Status) {
-      cout << " **** probleme de SameParameter au point :" << endl;
-      cout << "         " << problematic_point.Coord(1) << " " 
-	   << problematic_point.Coord(2) << " " 
-	   << problematic_point.Coord(3) << endl ;
-      cout << "   Erreur detectee :" << Error << " Tolerance :" << Tol << endl;
-    }
-#endif
-*/
-
-  return Status ;
   
+  return Status ;
 }
+
 //=======================================================================
 //function : Prec
 //purpose  : 

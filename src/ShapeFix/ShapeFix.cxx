@@ -21,54 +21,50 @@
 //szv#9:S4244:19Aug99: Added method FixWireGaps
 //szv#10:S4244:23Aug99: Added method FixFaceGaps
 
+#include <Adaptor3d_CurveOnSurface.hxx>
 #include <BRep_Builder.hxx>
 #include <BRep_Tool.hxx>
-
-#include <Geom2d_Curve.hxx>
+#include <BRepLib.hxx>
+#include <BRepTools.hxx>
 #include <Geom_Curve.hxx>
-
+#include <Geom_Plane.hxx>
+#include <Geom_RectangularTrimmedSurface.hxx>
+#include <Geom_Surface.hxx>
+#include <Geom2d_Curve.hxx>
+#include <Geom2dAdaptor_HCurve.hxx>
+#include <GeomAdaptor_HSurface.hxx>
+#include <gp_Pnt.hxx>
+#include <Message_ProgressSentry.hxx>
 #include <Precision.hxx>
-
+#include <ShapeAnalysis_Edge.hxx>
+#include <ShapeAnalysis_Surface.hxx>
+#include <ShapeBuild_Edge.hxx>
+#include <ShapeBuild_ReShape.hxx>
+#include <ShapeExtend_CompositeSurface.hxx>
+#include <ShapeFix.hxx>
+#include <ShapeFix_ComposeShell.hxx>
+#include <ShapeFix_Edge.hxx>
+#include <ShapeFix_Edge.hxx>
+#include <ShapeFix_Face.hxx>
+#include <ShapeFix_Shape.hxx>
+#include <ShapeFix_Wire.hxx>
 #include <Standard_ErrorHandler.hxx>
 #include <Standard_Failure.hxx>
-
+#include <TColGeom_HArray2OfSurface.hxx>
+#include <TColgp_SequenceOfPnt.hxx>
+#include <TopExp.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopLoc_Location.hxx>
 #include <TopoDS.hxx>
 #include <TopoDS_Edge.hxx>
 #include <TopoDS_Face.hxx>
-#include <Geom_Surface.hxx>
-
-//:i2
-#include <gp_Pnt.hxx>
-#include <Geom_Plane.hxx>
-#include <ShapeFix_Edge.hxx>
-#include <Geom2dAdaptor_HCurve.hxx>
-#include <Adaptor3d_CurveOnSurface.hxx>
-#include <Geom_RectangularTrimmedSurface.hxx>
-#include <ShapeAnalysis_Surface.hxx>
-
-#include <ShapeFix_Edge.hxx>
-#include <ShapeFix_Shape.hxx>
-#include <ShapeFix_Wire.hxx>
-#include <ShapeFix_Face.hxx>
 #include <TopoDS_Iterator.hxx>
-#include <GeomAdaptor_HSurface.hxx>
-#include <TopTools_MapOfShape.hxx>
-#include <BRepLib.hxx>
-
-#include <ShapeAnalysis_Edge.hxx>
-#include <ShapeBuild_Edge.hxx>
 #include <TopoDS_Vertex.hxx>
-#include <ShapeBuild_ReShape.hxx>
-#include <TColgp_SequenceOfPnt.hxx>
-#include <TopTools_ListOfShape.hxx>
-#include <TopTools_ListIteratorOfListOfShape.hxx>
-#include <TopTools_SequenceOfShape.hxx>
 #include <TopTools_IndexedDataMapOfShapeListOfShape.hxx>
-#include <TopExp.hxx>
-
-#include <Message_ProgressSentry.hxx>
+#include <TopTools_ListIteratorOfListOfShape.hxx>
+#include <TopTools_ListOfShape.hxx>
+#include <TopTools_MapOfShape.hxx>
+#include <TopTools_SequenceOfShape.hxx>
 
 //=======================================================================
 //function : SameParameter
@@ -711,4 +707,146 @@ Standard_Real ShapeFix::LeastEdgeSize(TopoDS_Shape& theShape)
   }
   aRes = sqrt(aRes);
   return aRes;
+}
+
+//=======================================================================
+//function : RefineFace
+//purpose  : 
+//=======================================================================
+void ShapeFix::RefineFace(const TopoDS_Face& theF)
+{
+  Standard_Real anUFf, anUFl, aVFf, aVFl;
+
+  Standard_Boolean  isUtrim = Standard_True,
+                    isVtrim = Standard_True;
+
+  TopoDS_Face aF = theF;
+
+  Handle(Geom_Surface) aS=BRep_Tool::Surface(aF);
+  Standard_Boolean isRectangularTrimmed = (aS->DynamicType() == STANDARD_TYPE(Geom_RectangularTrimmedSurface));
+
+  if (!isRectangularTrimmed)
+    return;
+
+  BRepTools::UVBounds(aF, anUFf, anUFl, aVFf, aVFl);
+
+  if(aS->IsUPeriodic())
+  {
+    const Standard_Real aT = aS->UPeriod();
+
+#ifdef DEB
+    const Standard_Real dU = anUFl - anUFf;
+    if(dU > aT)
+    {
+      cout << "dU = " << dU << " > T = " << aT << ". Delta = " << dU - aT << endl;
+    }
+#endif
+    
+    anUFl = anUFf + aT;
+  }
+
+  if(aS->IsVPeriodic())
+  {
+    const Standard_Real aT = aS->VPeriod();
+    
+#ifdef DEB
+    const Standard_Real dv = aVFl - aVFf;
+    if(dv > aT)
+    {
+      cout << "++dV = " << dv << " > T = " << aT << ". Delta = " << dv - aT << endl;
+    }
+
+#endif
+    
+    aVFl = aVFf + aT;
+  }
+
+#ifdef DEB
+  if(isUtrim)
+    cout << "Trimming U: (" << anUFf  << ")...(" << anUFl << ")" << endl;
+
+  if(isVtrim)
+    cout << "Trimming V: (" << aVFf  << ")...(" << aVFl << ")" << endl;
+#endif
+
+  Handle(Geom_RectangularTrimmedSurface) aRTS=new Geom_RectangularTrimmedSurface(aS,isUtrim,
+                                    isVtrim, anUFf, anUFl, aVFf, aVFl);
+
+  ReTrimmedFace(aF, aRTS);
+}
+
+//=======================================================================
+//function : ReTrimmedFace
+//purpose  : 
+//=======================================================================
+void ShapeFix::ReTrimmedFace(TopoDS_Face& theF,
+                             const Handle(Geom_RectangularTrimmedSurface)& theNewRTSurf)
+{
+  TopExp_Explorer aExp;
+  TopTools_MapOfShape aME;
+  BRep_Builder aBB;
+  
+  aExp.Init(theF, TopAbs_EDGE);
+  for (; aExp.More(); aExp.Next())
+  {
+    Standard_Real aT1, aT2;
+    const TopoDS_Edge& aE=*((TopoDS_Edge*)&aExp.Current());
+    if (!aME.Add(aE))
+      continue;
+
+    TopLoc_Location aLocE;
+    Standard_Real aTolE=BRep_Tool::Tolerance(aE);
+    Handle(Geom2d_Curve) aC2D1=BRep_Tool::CurveOnSurface(aE, theF, aT1, aT2);
+    Standard_Boolean bIsClosed = BRep_Tool::IsClosed(aE, theF);
+    
+    if (!bIsClosed)
+    {
+      aBB.UpdateEdge(aE, aC2D1, theNewRTSurf, aLocE, theF, aTolE);
+    }
+    else
+    {
+      Standard_Boolean bIsLeft;
+      Standard_Real aScPr;
+      Handle(Geom2d_Curve) aC2D2;
+      TopoDS_Edge aE2;
+      aE2=aE;
+      aE2.Reverse();
+      aC2D2=BRep_Tool::CurveOnSurface(aE2, theF, aT1, aT2);
+      {
+        Standard_Real aT, aU1, aU2;
+        gp_Pnt2d aP2D1, aP2D2;
+        gp_Vec2d aV2D1, aV2D2;
+
+        const Standard_Real PAR_T = 0.43213918;
+        aT=(1.-PAR_T)*aT1 + PAR_T*aT2;
+        aC2D1->D1(aT, aP2D1, aV2D1);
+        aC2D2->D1(aT, aP2D2, aV2D2);
+        
+        aU1=aP2D1.X();
+        aU2=aP2D2.X();
+        bIsLeft=(aU1<aU2);
+        
+        gp_Vec2d aDOY(0.,1.);
+        aScPr=aV2D1*aDOY;
+      }
+
+      if (!bIsLeft)
+      {
+        if (aScPr<0.)
+          aBB.UpdateEdge(aE, aC2D2, aC2D1, theNewRTSurf, aLocE, theF, aTolE);
+        else
+          aBB.UpdateEdge(aE, aC2D1, aC2D2, theNewRTSurf, aLocE, theF, aTolE);
+      }
+      else
+      {
+        if (aScPr<0.)
+          aBB.UpdateEdge(aE, aC2D1, aC2D2, theNewRTSurf, aLocE, theF, aTolE);
+        else
+          aBB.UpdateEdge(aE, aC2D2, aC2D1, theNewRTSurf, aLocE, theF, aTolE);
+      }
+    }
+  }
+
+  TopLoc_Location aLoc;
+  aBB.UpdateFace(theF, theNewRTSurf, aLoc, BRep_Tool::Tolerance(theF));
 }

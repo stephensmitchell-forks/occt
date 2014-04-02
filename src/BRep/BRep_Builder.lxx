@@ -140,10 +140,11 @@ inline void BRep_Builder::UpdateEdge(const TopoDS_Edge& E,
                                      const Handle(Geom2d_Curve)& C1,
                                      const Handle(Geom2d_Curve)& C2,
                                      const TopoDS_Face& F,
-                                     const Standard_Real Tol) const
+                                     const Standard_Real Tol,
+                                     const GeomAbs_Shape theContinuity) const
 {
   TopLoc_Location l;
-  UpdateEdge(E,C1,C2,BRep_Tool::Surface(F,l),l,Tol);
+  UpdateEdge(E,C1,C2,BRep_Tool::Surface(F,l),l,Tol, theContinuity);
 }
 
 
