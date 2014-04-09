@@ -359,7 +359,7 @@ void V3d_Viewer::DelView( const Handle(V3d_View)& TheView ) {
 //=======================================================================
 
 void V3d_Viewer::SetZLayerSettings (const Standard_Integer theLayerId,
-                                    const Graphic3d_ZLayerSettings theSettings)
+                                    const Graphic3d_ZLayerSettings& theSettings)
 {
   MyViewer->SetZLayerSettings (theLayerId, theSettings);
 }

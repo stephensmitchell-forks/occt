@@ -419,7 +419,7 @@ is
     primitive Mat4;
     primitive Mat4d;
 
-    primitive ZLayerSettings;
+    imported ZLayerSettings;
 
     --------------------
     -- Category: Classes

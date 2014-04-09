@@ -308,7 +308,7 @@ public:
   //! Sets the settings for a single Z layer of specified view.
   Standard_EXPORT void SetZLayerSettings (const Graphic3d_CView& theCView,
                                           const Standard_Integer theLayerId,
-                                          const Graphic3d_ZLayerSettings theSettings);
+                                          const Graphic3d_ZLayerSettings& theSettings);
 
 public:
 

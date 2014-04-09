@@ -17,33 +17,9 @@
 #define _OpenGl_Layer_Header
 
 #include <OpenGl_PriorityList.hxx>
+#include <Graphic3d_ZLayerSettings.hxx>
 
 class Handle(OpenGl_Workspace);
-
-enum OpenGl_LayerSetting
-{
-  OpenGl_LayerDepthTest = 1,
-  OpenGl_LayerDepthWrite = 2,
-  OpenGl_LayerDepthClear = 4,
-  OpenGl_LayerDepthOffset = 8
-};
-
-struct OpenGl_LayerSettings
-{
-  //! Initializes settings
-  OpenGl_LayerSettings();
-
-  //! Returns true if theSetting is enabled.
-  const Standard_Boolean IsSettingEnabled (const OpenGl_LayerSetting theSetting) const
-  {
-    return (Flags & theSetting) == theSetting;
-  }
-
-  Standard_ShortReal DepthOffsetFactor; //!< Factor argument value for OpenGl glPolygonOffset function.
-  Standard_ShortReal DepthOffsetUnits;  //!< Units argument value for OpenGl glPolygonOffset function.
-
-  Standard_Integer Flags; //!< Storage field for settings.
-};
 
 class OpenGl_Layer
 {
@@ -53,16 +29,16 @@ public:
   OpenGl_Layer (const Standard_Integer theNbPriorities = 11);
 
   //! Returns settings of the layer object.
-  const OpenGl_LayerSettings LayerSettings() const { return myLayerSettings; };
+  const Graphic3d_ZLayerSettings LayerSettings() const { return myLayerSettings; };
 
   //! Sets settings of the layer object.
-  void SetLayerSettings (OpenGl_LayerSettings theSettings)
+  void SetLayerSettings (Graphic3d_ZLayerSettings theSettings)
   {
     myLayerSettings = theSettings;
   }
 
   //! Returns true if theSetting is enabled for the layer.
-  const Standard_Boolean IsSettingEnabled (const OpenGl_LayerSetting theSetting) const
+  const Standard_Boolean IsSettingEnabled (const Graphic3d_ZLayerSetting theSetting) const
   {
     return myLayerSettings.IsSettingEnabled (theSetting);
   }
@@ -77,8 +53,8 @@ public:
 
 private:
 
-  OpenGl_PriorityList myPriorityList;   //!< Associated priority list object.
+  OpenGl_PriorityList myPriorityList;       //!< Associated priority list object.
 
-  OpenGl_LayerSettings myLayerSettings; //!< Layer setting flags.
+  Graphic3d_ZLayerSettings myLayerSettings; //!< Layer setting flags.
 };
 #endif //_OpenGl_Layer_Header

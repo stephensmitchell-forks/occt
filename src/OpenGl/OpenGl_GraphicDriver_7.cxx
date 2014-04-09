@@ -632,7 +632,7 @@ void OpenGl_GraphicDriver::RemoveZLayer (const Graphic3d_CView& theCView,
 //=======================================================================
 Standard_EXPORT void OpenGl_GraphicDriver::SetZLayerSettings (const Graphic3d_CView& theCView,
                                                               const Standard_Integer theLayerId,
-                                                              const Graphic3d_ZLayerSettings theSettings)
+                                                              const Graphic3d_ZLayerSettings& theSettings)
 {
   const OpenGl_CView* aCView = (const OpenGl_CView* )theCView.ptrView;
   if (aCView)

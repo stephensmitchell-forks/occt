@@ -1207,12 +1207,14 @@ Standard_Integer Visual3d_ViewManager::GetZLayer (const Handle(Graphic3d_Structu
 //purpose  :
 //=======================================================================
 void Visual3d_ViewManager::SetZLayerSettings (const Standard_Integer theLayerId,
-                                              const Graphic3d_ZLayerSettings theSettings)
+                                              const Graphic3d_ZLayerSettings& theSettings)
 {
-  // tell all managed views to set zlayer settings display layers
+  // tell all managed views to set zlayer settings
   Visual3d_SetIteratorOfSetOfView aViewIt (MyDefinedView);
-  for ( ; aViewIt.More (); aViewIt.Next ())
+  for (; aViewIt.More (); aViewIt.Next ())
+  {
     (aViewIt.Value ())->SetZLayerSettings (theLayerId, theSettings);
+  }
 
   if (myMapOfZLayerSettings.IsBound (theLayerId))
   {
@@ -1232,7 +1234,9 @@ void Visual3d_ViewManager::SetZLayerSettings (const Standard_Integer theLayerId,
 Graphic3d_ZLayerSettings Visual3d_ViewManager::ZLayerSettings (const Standard_Integer theLayerId)
 {
   if (!myLayerIds.Contains (theLayerId))
+  {
     return Graphic3d_ZLayerSettings();
+  }
 
   return myMapOfZLayerSettings.Find (theLayerId);
 }

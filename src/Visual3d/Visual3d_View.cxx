@@ -3676,7 +3676,7 @@ Standard_Boolean Visual3d_View::Export (const Standard_CString       theFileName
 //=======================================================================
 
 void Visual3d_View::SetZLayerSettings (const Standard_Integer theLayerId,
-                                       const Graphic3d_ZLayerSettings theSettings)
+                                       const Graphic3d_ZLayerSettings& theSettings)
 {
   MyGraphicDriver->SetZLayerSettings (MyCView, theLayerId, theSettings);
 }
