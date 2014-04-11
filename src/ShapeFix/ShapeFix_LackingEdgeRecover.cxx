@@ -108,7 +108,7 @@ void ShapeFix_LackingEdgeRecover::Perform()
   NCollection_List< std::pair<TopoDS_Vertex, TopoDS_Vertex> > aVerticesForLackingEdgesBuilding;
   typedef NCollection_DataMap<TopoDS_Face, Standard_Integer> FaceDataMap;
 
-  // search vertices with tolerance greater than specified threshold (theMaxTol)
+  // search for vertices with tolerance greater than specified threshold (theMaxTol)
   TopTools_IndexedMapOfShape aShapeVertexMap;
   TopExp::MapShapes(myRecoveredShape, TopAbs_VERTEX, aShapeVertexMap);
 
@@ -128,10 +128,16 @@ void ShapeFix_LackingEdgeRecover::Perform()
     Standard_Boolean anIsVertexReplaced = Standard_False;
     gp_Pnt aFirstNewPnt, aSecondNewPnt; // these points will replace vertex with big tolerance
 
+    TopTools_MapOfShape anUniqueSharingWiresOfCurVertex;
     TopTools_ListIteratorOfListOfShape anWireIter(aSharingWiresOfCurVertex);
     for (;anWireIter.More() && !anIsVertexReplaced; anWireIter.Next())
     {
       const TopoDS_Wire& aCurWire = TopoDS::Wire(anWireIter.Value());
+
+      if (!anUniqueSharingWiresOfCurVertex.Contains(aCurWire))
+        anUniqueSharingWiresOfCurVertex.Add(aCurWire);
+      else
+        continue;
 
       const TopTools_ListOfShape& aSharingFacesOfCurWire =
         aWireFacesMap.FindFromKey (anWireIter.Value());
@@ -520,123 +526,88 @@ Standard_Boolean ShapeFix_LackingEdgeRecover::IsWireStrip(const TopoDS_Wire& the
   // in parametric space on the vector that was described previously
   Standard_Integer aPntNbPerEdgeForProj = 10; 
 
-  // the analogues of the first and second points in parametric space of the face
-  gp_Pnt2d aPFirst2D, aPSecond2D;
-
-  // the wire is explored by BRepTools_WireExplorer and it is 
-  // guaranteed that edges will be SEQUENCIALLY connected
-  Standard_Boolean isNOTExpByBRepTools_WireExplorer = Standard_False;
-  Handle(ShapeExtend_WireData) anEdgeExp = 
-    new ShapeExtend_WireData(theWire, isNOTExpByBRepTools_WireExplorer);
-
-  Standard_Integer aStartIndex = 1; // start index of ShapeExtend_WireData
-  Standard_Integer anEndIndex  = anEdgeExp->NbEdges();
-
-  if (anEndIndex == 0) // the WIRE IS EMPTY
+  // edges sharing the vertex
+  TopTools_ListOfShape aSharingEdges;
+  TopExp_Explorer aWireExp(theWire, TopAbs_EDGE);
+  for (; aWireExp.More(); aWireExp.Next())
+  {
+    const TopoDS_Edge& aCurEdge = TopoDS::Edge(aWireExp.Current());
+    if (!aCurEdge.IsNull())
+    {
+      TopExp_Explorer anEdgeExp(aCurEdge, TopAbs_VERTEX);
+      for (; anEdgeExp.More(); anEdgeExp.Next())
+      {
+        if (theVertex.IsSame(TopoDS::Vertex(anEdgeExp.Current())))
+          aSharingEdges.Append(aCurEdge);
+      }
+    }
+  }
+  
+  if (aSharingEdges.IsEmpty())
     return Standard_False;
 
-  // run through all edges and seek couple of edges which share the vertex
-  Standard_Integer anEdgeIndex, anEdgeIndex_Prev, anEdgeIndex_Next;
-  for (anEdgeIndex = aStartIndex; anEdgeIndex <= anEndIndex; anEdgeIndex++)
+  NCollection_List<gp_Pnt2d> aPnt2DList;
+  gp_Pnt2d aPnt2D;
+
+  TopoDS_Vertex aFirstVertex,aLastVertex;
+  Standard_Real aFirstParam, aLastParam;
+
+  TopTools_ListIteratorOfListOfShape aSEdgeIter(aSharingEdges);
+  for (; aSEdgeIter.More(); aSEdgeIter.Next())
   {
-    // index of previous edge
-    if (anEdgeIndex == aStartIndex) anEdgeIndex_Prev = anEndIndex;
-    else anEdgeIndex_Prev = anEdgeIndex-1;
+    const TopoDS_Edge& anEdge = TopoDS::Edge(aSEdgeIter.Value());
+    TopExp::Vertices(anEdge, aFirstVertex, aLastVertex, Standard_False);
 
-    // index of next element
-    if (anEdgeIndex == anEndIndex) anEdgeIndex_Next = aStartIndex;
-    else anEdgeIndex_Next = anEdgeIndex+1;
+    Handle(Geom2d_Curve) aPCurve = 
+      BRep_Tool::CurveOnSurface (anEdge, theFace, aFirstParam, aLastParam);
 
-    const TopoDS_Edge& aCurEdge = anEdgeExp->Edge(anEdgeIndex);
-
-    TopoDS_Vertex aCurFirstVertex = TopExp::FirstVertex(aCurEdge);
-    TopoDS_Vertex aCurLastVertex  = TopExp::LastVertex(aCurEdge);
-
-    Standard_Boolean anIsFirstBelong = theVertex.IsSame(aCurFirstVertex);
-    Standard_Boolean anIsLastBelong  = theVertex.IsSame(aCurLastVertex);
-
-    if (!anIsFirstBelong && !anIsLastBelong)
-      continue;
-
-    //int todo_investigate_degenerated_edge;
-
-    Standard_Real aPFirstParamOfCurEdge, aPLastParamOfCurEdge;
-    Handle(Geom2d_Curve) aPCurveOfCurEdge = 
-      BRep_Tool::CurveOnSurface (aCurEdge, theFace, aPFirstParamOfCurEdge, aPLastParamOfCurEdge);
-
-    if (anIsFirstBelong && anIsLastBelong) // both ends of current edge belong to the vertex
+    if (theVertex.IsSame(aFirstVertex))
     {
-      aPCurveOfCurEdge->D0(aPFirstParamOfCurEdge, aPFirst2D);
-      aPCurveOfCurEdge->D0(aPLastParamOfCurEdge, aPSecond2D);
-    }
-    else
-    {
-      if (anIsFirstBelong) // first end of current edge
-        aPCurveOfCurEdge->D0(aPFirstParamOfCurEdge, aPFirst2D);
-      else if (anIsLastBelong) // last end of current edge
-        aPCurveOfCurEdge->D0(aPLastParamOfCurEdge, aPFirst2D);
-
-      // is second edge nether next edge in the sequence or previous?
-      TopAbs_Orientation aCurEdgeOrient = aCurEdge.Orientation();
-      Standard_Boolean anIsSecondANextEdge = 
-        (aCurEdgeOrient == TopAbs_FORWARD  && anIsLastBelong) ||
-        (aCurEdgeOrient == TopAbs_REVERSED && anIsFirstBelong);
-
-      Standard_Integer anIndexOfEdgeWithSecondPnt = 
-        (anIsSecondANextEdge ? anEdgeIndex_Next : anEdgeIndex_Prev);
-
-      //
-      const TopoDS_Edge& anEdgeWithSecondPnt = anEdgeExp->Edge(anIndexOfEdgeWithSecondPnt);
-      TopAbs_Orientation anOrientOfEdgeWithSecondPnt = anEdgeWithSecondPnt.Orientation();
-
-      Standard_Boolean isFirstVertexOfEdgeWithSecondPnt = Standard_True;
-      if (anIsSecondANextEdge) // next edge in the edge sequence
-      {
-        if (anOrientOfEdgeWithSecondPnt == TopAbs_FORWARD)
-          isFirstVertexOfEdgeWithSecondPnt = Standard_True;
-        else
-          isFirstVertexOfEdgeWithSecondPnt = Standard_False;
-      }
-      else // previous edge in sequence in the edge sequence
-      {
-        if (anOrientOfEdgeWithSecondPnt == TopAbs_FORWARD)
-          isFirstVertexOfEdgeWithSecondPnt = Standard_False;
-        else
-          isFirstVertexOfEdgeWithSecondPnt = Standard_True;
-      }
-
-      Standard_Real aFirstParamOfEdgeWithSecondPnt, aLastParamOfEdgeWithSecondPnt;
-      Handle(Geom2d_Curve) aPCurveOfEdgeWithSecondPnt =
-        BRep_Tool::CurveOnSurface (anEdgeWithSecondPnt, theFace,
-        aFirstParamOfEdgeWithSecondPnt,
-        aLastParamOfEdgeWithSecondPnt);
-
-      if (isFirstVertexOfEdgeWithSecondPnt)
-        aPCurveOfEdgeWithSecondPnt->D0(aFirstParamOfEdgeWithSecondPnt, aPSecond2D);
-      else
-        aPCurveOfEdgeWithSecondPnt->D0(aLastParamOfEdgeWithSecondPnt, aPSecond2D);
+      aPCurve->D0(aFirstParam, aPnt2D);
+      aPnt2DList.Append(aPnt2D);
     }
 
-    if (aPFirst2D.Distance(aPSecond2D) <= Precision::Confusion())
-      continue;
-
-    // project points of edges on aPVec2D
-    Standard_Real aProjLength = ProjectTo2DVector(anEdgeExp, theFace, aPntNbPerEdgeForProj, aPFirst2D, aPSecond2D);
-    
-    gp_Vec2d aPVec2D(aPFirst2D, aPSecond2D);
-    if (aProjLength <= aStripRatio*aPVec2D.Magnitude())
+    if (theVertex.IsSame(aLastVertex))
     {
-      TopLoc_Location aLocation;
-      Handle(Geom_Surface) aSurf = BRep_Tool::Surface (theFace, aLocation);
-
-      aSurf->D0(aPFirst2D.X() , aPFirst2D.Y(),  theFirstPnt);
-      aSurf->D0(aPSecond2D.X(), aPSecond2D.Y(), theSecondPnt);
-
-      return Standard_True;
+      aPCurve->D0(aLastParam, aPnt2D);
+      aPnt2DList.Append(aPnt2D);
     }
   }
 
-  return Standard_False;
+  if (aPnt2DList.Extent() < 2)
+    return Standard_False;
+
+  gp_Pnt2d aFirstPnt2D, aSecondPnt2D;
+
+  NCollection_List<gp_Pnt2d>::Iterator aPnt2DIter(aPnt2DList);
+
+  // first param point
+  aFirstPnt2D = aPnt2DIter.Value();
+  
+  // second param point
+  aPnt2DIter.Next();
+  aSecondPnt2D = aPnt2DIter.Value();
+
+  // todo: process other points if they exist
+
+  if (aFirstPnt2D.Distance(aSecondPnt2D) <= Precision::PConfusion())
+    return Standard_False; 
+
+  // project points of edges on aPVec2D
+  Standard_Real aProjLength = ProjectTo2DVector(theWire, theFace, aPntNbPerEdgeForProj, aFirstPnt2D, aSecondPnt2D);
+
+  gp_Vec2d aVec2D(aFirstPnt2D, aSecondPnt2D);
+
+  if (aProjLength > aStripRatio*aVec2D.Magnitude())
+    return Standard_False;
+
+  TopLoc_Location aLocation;
+  Handle(Geom_Surface) aSurf = BRep_Tool::Surface (theFace, aLocation);
+
+  aSurf->D0(aFirstPnt2D.X() , aFirstPnt2D.Y(),  theFirstPnt);
+  aSurf->D0(aSecondPnt2D.X(), aSecondPnt2D.Y(), theSecondPnt);
+
+  return Standard_True;
 }
 
 //=======================================================================
@@ -747,7 +718,7 @@ gp_Pnt2d ShapeFix_LackingEdgeRecover::ConvertTo2D(const TopoDS_Edge& theEdge,
 //function : ProjectTo2DVector
 //purpose  :
 //=======================================================================
-Standard_Real ShapeFix_LackingEdgeRecover::ProjectTo2DVector(const Handle(ShapeExtend_WireData)& theWireData,
+Standard_Real ShapeFix_LackingEdgeRecover::ProjectTo2DVector(const TopoDS_Wire& theWire,
                                                              const TopoDS_Face& theFace,
                                                              const Standard_Real thePntNbPerEdgeForProj,
                                                              const gp_Pnt2d& thePFirst2D,
@@ -755,8 +726,14 @@ Standard_Real ShapeFix_LackingEdgeRecover::ProjectTo2DVector(const Handle(ShapeE
 {
   gp_Vec2d aPVec2D(thePFirst2D, thePSecond2D);
 
+  // the wire is explored by BRepTools_WireExplorer and it is 
+  // guaranteed that edges will be SEQUENCIALLY connected
+  Standard_Boolean isNOTExpByBRepTools_WireExplorer = Standard_False;
+  Handle(ShapeExtend_WireData) aWireData = 
+    new ShapeExtend_WireData(theWire, isNOTExpByBRepTools_WireExplorer);
+
   Standard_Integer aStartIndex = 1; // start index of ShapeExtend_WireData
-  Standard_Integer anEndIndex  = theWireData->NbEdges();
+  Standard_Integer anEndIndex  = aWireData->NbEdges();
 
   // project points of edges on aPVec2D
   Standard_Real aMaxWireValue = -Precision::Infinite();
@@ -767,7 +744,7 @@ Standard_Real ShapeFix_LackingEdgeRecover::ProjectTo2DVector(const Handle(ShapeE
   {
     Standard_Real aPFirstParamOfIntCurEdge, aPLastParamOfIntCurEdge;
     Handle(Geom2d_Curve) aPCurveOfIntCurEdge = 
-      BRep_Tool::CurveOnSurface (theWireData->Edge(aCurEdgeIndex), theFace,
+      BRep_Tool::CurveOnSurface (aWireData->Edge(aCurEdgeIndex), theFace,
       aPFirstParamOfIntCurEdge, aPLastParamOfIntCurEdge);
 
     // split the curve of the current edge on aPntNbPerEdgeForProj parts

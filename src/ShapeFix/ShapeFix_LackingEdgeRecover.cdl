@@ -94,7 +94,7 @@ is
     --          return this representation
 
     ProjectTo2DVector(me;
-                      theWireData : WireData from ShapeExtend;
+                      theWire : Wire from TopoDS;
                       theFace : Face from TopoDS;
                       thePntNbPerEdgeForProj : Real;
                       thePFirst2D : Pnt2d from gp;
