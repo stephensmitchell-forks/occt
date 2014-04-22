@@ -6,6 +6,14 @@
 # - check transfer status, shape, and attributes against expected values
 # - write data to 
 
+puts "<h2><ol>
+<a name=\"section0\">Test steps:</a>\n
+<li><a href=\"#section1\"> Read file</a>
+<li><a href=\"#section2\"> Write file</a>
+<li><a href=\"#section3\"> Loopback read file</a>
+<li><a href=\"#section4\"> Results</a>
+</ol></h2>"
+
 # Set flag dump_file to 1 in order to regenerate script files with actual data
 # used as reference. In this mode all tests intentionaly report failure. 
 set dump_file 0
@@ -47,6 +55,7 @@ set end_line "\" \n"
 ##################################################################
 
 # Read original file
+puts "<h1><a name=\"section1\"> 1. Read file </a> <a href=\"#section0\">UP</a></h1>"
 if { [string length $filename] > 1} {
     set ext [file extension $filename]
     set ReadCommand ReadStep
@@ -73,9 +82,8 @@ if { [string length $filename] > 1} {
 }
 
 # Get information about translation
-if { $mist < 1} {           
+if { $mist < 1} {
     puts ""
-   
     set tps_2 [data c]
     if { [llength $tps_2] > 0 } {
 	# Finding all strings with warnings
@@ -100,7 +108,6 @@ if { $mist < 1} {
 	puts " DATA c checking was NOT provided"
     }
 
-    puts ""
     set tps_1 [tpstat c]
     set colvo [llength $tps_1]
     if { ${colvo} > 0 } {
@@ -130,7 +137,7 @@ if { $mist < 1} {
     # Get DECAF information about (color, layers and properties)
     puts ""
    
-    set xst [ XStat D_First ] 
+    set xst [ XStat D_First ]
 
     if { [llength $xst] > 0 } {
 	regexp {level +N +0 +: +([-0-9.+eE]+)} $xst full nblev0_First    
@@ -221,8 +228,7 @@ if { $mist < 1} {
 }
 # Writing file
 if { $mist < 1} {
-    puts " "
-    puts "-----------------------------WRITING FILE ------------------------------"
+    puts "<h1><a name=\"section2\">2. Write file </a> <a href=\"#section0\">UP</a></h1>"
     file delete $imagedir/${casename}_D_First$ext
     if { [catch { $WriteCommand D_First $imagedir/${casename}_D_First$ext } catch_result] } {
        	set err_msg "Error: First - file was not written - exception"
@@ -231,7 +237,7 @@ if { $mist < 1} {
 	set mist_w 1
     }
     if { $mist_w < 1 } {
-	
+	puts "<h1><a name=\"section3\">3. Loopback read file </a> <a href=\"#section0\">UP</a></h1>"
         if { [catch { $ReadCommand D_Second $imagedir/${casename}_D_First$ext } catch_result] } {
 	    set err_msg "Errorr: Second - file was not read - exception"
 	    puts $err_msg
@@ -403,7 +409,6 @@ if { $mist < 1} {
 }
 
 #Collect results of loop back test
-
 if { $mist < 1 } {
     set dat_check "DATA : OK"
     set tpst_check "TPSTAT : OK"
@@ -491,10 +496,9 @@ if { $mist != 1 } {
 	      [lsort $layers_Second] [lsort $layers_First] ]
 }
 
-puts ""
+puts "<h1><a name=\"section4\"> 4. Results </a> <a href=\"#section0\">UP</a></h1>"
 puts ""
 puts "########################### RESULTS ###############################"
-puts ""
 puts "========================== Loop Back test ========================="
 puts ""
 if {$mist == 1 }  {

@@ -108,17 +108,6 @@
 #define DEBUG
 #endif
 
-static Standard_Boolean IsSurfaceUVInfinite(const Handle(Geom_Surface)& theSurf)
-{
-  Standard_Real UMin,UMax,VMin,VMax;
-  theSurf->Bounds(UMin,UMax,VMin,VMax);
-
-  return (Precision::IsInfinite(UMin) ||
-          Precision::IsInfinite(UMax) ||
-          Precision::IsInfinite(VMin) ||
-          Precision::IsInfinite(VMax)   );
-}
-
 static Standard_Boolean IsSurfaceUVPeriodic(const Handle(Geom_Surface)& theSurf)
 {
   return theSurf->IsUPeriodic() && theSurf->IsVPeriodic();
@@ -823,7 +812,7 @@ Standard_Boolean ShapeFix_Face::FixAddNaturalBound()
   }
 
   // deal with the case of an empty face: just create a new face by a standard tool
-  if (ws.IsEmpty() && !IsSurfaceUVInfinite (mySurf->Surface()))
+  if (ws.IsEmpty())
   {
     BRepBuilderAPI_MakeFace aFaceBuilder (mySurf->Surface(), Precision::Confusion());
 
