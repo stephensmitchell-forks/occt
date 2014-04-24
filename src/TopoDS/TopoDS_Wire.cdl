@@ -27,5 +27,9 @@ is
     Create returns Wire from TopoDS;
     ---C++: inline
         ---Purpose: Undefined Wire.
+        
+    This(me)
+      returns Wire from TopoDS;
+      ---Purpose: returns current shape.
 
 end Wire;

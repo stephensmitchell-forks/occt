@@ -82,6 +82,51 @@ static Standard_Boolean IsInside(const TopoDS_Wire& wir,
 static Standard_Boolean CheckThin(const TopoDS_Shape& w,
 				  const TopoDS_Shape& f);
 
+#ifdef HAVE_TBB
+// paralleling using Intel TBB
+#include <tbb/parallel_for_each.h>
+#include <vector>
+
+static Standard_Boolean isWiresIntersect = Standard_False;
+struct WIreintersectParallel
+{
+  TopoDS_Wire wir1;
+  TopoDS_Face aF;
+  Bnd_Box2d aMainBox;
+  const DataMapOfShapeBox2d& aMapShapeBox2d;
+
+  WIreintersectParallel(const DataMapOfShapeBox2d& theBox) : aMapShapeBox2d(theBox)
+  {
+    aMainBox.SetVoid();
+  }
+
+  void operator()(const TopoDS_Wire& theWire) const
+  {
+    if(isWiresIntersect)
+      return;
+
+    if(theWire.IsSame(wir1))
+      return;
+
+    Bnd_Box2d aBox2;
+    if (aMapShapeBox2d.IsBound (theWire))
+    {
+      aBox2 = aMapShapeBox2d(theWire);
+    }
+    
+    if (!aMainBox.IsVoid() && !aBox2.IsVoid())
+    {
+      if(aMainBox.IsOut (aBox2))
+        return;
+    }
+
+    isWiresIntersect = Intersect(wir1,theWire,aF,aMapShapeBox2d);
+  }
+
+  void operator=(WIreintersectParallel&);
+};
+#endif
+
 //=======================================================================
 //function : BRepCheck_Face
 //purpose  : 
@@ -176,8 +221,10 @@ void BRepCheck_Face::Blind()
 
 BRepCheck_Status BRepCheck_Face::IntersectWires(const Standard_Boolean Update)
 {
-  if (myIntdone) {
-    if (Update) {
+  if (myIntdone)
+  {
+    if (Update)
+    {
       BRepCheck::Add(myMap(myShape),myIntres);
     }
     return myIntres;
@@ -188,28 +235,106 @@ BRepCheck_Status BRepCheck_Face::IntersectWires(const Standard_Boolean Update)
   // This method has to be called by an analyzer. It is assumed that
   // each edge has a correct 2d representation on the face.
 
-  TopExp_Explorer exp1,exp2;
+  TopExp_Explorer exp1, exp2;
+
+#ifdef HAVE_TBB
+  std::vector<TopoDS_Wire> aWires;
+#endif
 
   // the wires are mapped
   exp1.Init(myShape.Oriented(TopAbs_FORWARD),TopAbs_WIRE);
   TopTools_ListOfShape theListOfShape;
-  while (exp1.More()) {
-    if (!myMapImb.IsBound(exp1.Current())) {
+  while (exp1.More())
+  {
+#ifdef HAVE_TBB
+    aWires.push_back(TopoDS::Wire(exp1.Current()));
+#endif
+
+    if (!myMapImb.IsBound(exp1.Current()))
+    {
       myMapImb.Bind(exp1.Current(), theListOfShape);
     }
-    else { // the same wire is met twice...
+    else
+    { // the same wire is met twice...
       myIntres = BRepCheck_RedundantWire;
-      if (Update) {
-	BRepCheck::Add(myMap(myShape),myIntres);
+      if (Update)
+      {
+        BRepCheck::Add(myMap(myShape),myIntres);
       }
       return myIntres;
     }
     exp1.Next();
   }
-
+  
   Geom2dAdaptor_Curve aC;
   Standard_Real aFirst, aLast;
   DataMapOfShapeBox2d aMapShapeBox2d;
+
+#ifdef HAVE_TBB
+  for (unsigned int i = 0; i < aWires.size(); i++) 
+  {
+    const TopoDS_Wire& aWire = TopoDS::Wire(aWires[i]);
+    // create 2d boxes for all edges from wire
+    Bnd_Box2d aBoxW;
+    for (exp2.Init (aWire, TopAbs_EDGE); exp2.More(); exp2.Next())
+    {
+      const TopoDS_Edge& anEdge = TopoDS::Edge (exp2.Current());
+      aC.Load (BRep_Tool::CurveOnSurface (anEdge, TopoDS::Face (myShape), aFirst, aLast));
+      // To avoid exeption in Segment if C1 is BSpline
+      if (aC.FirstParameter() > aFirst)
+      {
+        aFirst = aC.FirstParameter();
+      }
+      if (aC.LastParameter() < aLast)
+      {
+        aLast = aC.LastParameter();
+      }
+      Bnd_Box2d aBoxE;
+      BndLib_Add2dCurve::Add (aC, aFirst, aLast, 0., aBoxE);
+      aMapShapeBox2d.Bind (anEdge, aBoxE);
+      aBoxW.Add (aBoxE);
+    }
+    aMapShapeBox2d.Bind (aWire, aBoxW);
+  }
+
+  WIreintersectParallel wi(aMapShapeBox2d);
+  wi.aF = TopoDS::Face(myShape);
+
+  isWiresIntersect = Standard_False;
+
+  do
+  {
+    if(!aWires.empty())
+    {
+      wi.wir1 = TopoDS::Wire(aWires.begin()->This());
+      if (wi.aMapShapeBox2d.IsBound (wi.wir1))
+      {
+        wi.aMainBox = wi.aMapShapeBox2d (wi.wir1);
+      }
+      else
+      {
+        wi.aMainBox.SetVoid();
+      }
+
+      aWires.erase(aWires.begin());
+
+      tbb::parallel_for_each(aWires.begin(), aWires.end(), wi);
+    }
+
+    if (isWiresIntersect)
+    {
+      myIntres = BRepCheck_IntersectingWires;
+
+      if (Update)
+      {
+        BRepCheck::Add(myMap(myShape), myIntres);
+      }
+
+      return myIntres;
+    }
+  }
+  while(!aWires.empty());
+#else
   for (exp1.Init (myShape, TopAbs_WIRE); exp1.More(); exp1.Next()) 
   {
     const TopoDS_Wire& aWire = TopoDS::Wire (exp1.Current());
@@ -242,11 +367,11 @@ BRepCheck_Status BRepCheck_Face::IntersectWires(const Standard_Boolean Update)
   Index = 1;
   while (Index < Nbwire) {
     for (exp1.Init(myShape,TopAbs_WIRE),Indexbis = 0;
-	 exp1.More();exp1.Next()) {
-      Indexbis++;
-      if (Indexbis == Index) {
-	break;
-      }
+      exp1.More();exp1.Next()) {
+        Indexbis++;
+        if (Indexbis == Index) {
+          break;
+        }
     }
     TopoDS_Wire wir1 = TopoDS::Wire(exp1.Current());
     // to reduce the number of calls Intersect(wir1,wir2)
@@ -257,6 +382,7 @@ BRepCheck_Status BRepCheck_Face::IntersectWires(const Standard_Boolean Update)
     }
     exp1.Next();
     for (; exp1.More(); exp1.Next()) {
+      aBox2.SetVoid();
       const TopoDS_Wire& wir2 = TopoDS::Wire(exp1.Current());
       if (aMapShapeBox2d.IsBound (wir2))
       {
@@ -267,21 +393,22 @@ BRepCheck_Status BRepCheck_Face::IntersectWires(const Standard_Boolean Update)
         continue;
       }
       if (Intersect(wir1,wir2,TopoDS::Face(myShape), aMapShapeBox2d)) {
-	myIntres = BRepCheck_IntersectingWires;
-	if (Update) {
-	  BRepCheck::Add(myMap(myShape),myIntres);
-	}
-	return myIntres;
+        myIntres = BRepCheck_IntersectingWires;
+        if (Update) {
+          BRepCheck::Add(myMap(myShape),myIntres);
+        }
+        return myIntres;
       }
     }
     Index++;
   }
+#endif 
+
   if (Update) {
     BRepCheck::Add(myMap(myShape),myIntres);
   }
   return myIntres;
 }
-
 
 //=======================================================================
 //function : ClassifyWires
@@ -556,7 +683,7 @@ static Standard_Boolean Intersect(const TopoDS_Wire& wir1,
 {
   Standard_Real Inter2dTol = 1.e-10;
   TopExp_Explorer exp1,exp2;
-//  BRepAdaptor_Curve2d cur1,cur2;
+  //  BRepAdaptor_Curve2d cur1,cur2;
 
   //Find common vertices of two wires - non-manifold case
   TopTools_MapOfShape MapW1;
@@ -564,11 +691,11 @@ static Standard_Boolean Intersect(const TopoDS_Wire& wir1,
   for (exp1.Init( wir1, TopAbs_VERTEX ); exp1.More(); exp1.Next())
     MapW1.Add( exp1.Current() );
   for (exp2.Init( wir2, TopAbs_VERTEX ); exp2.More(); exp2.Next())
-    {
-      TopoDS_Shape V = exp2.Current();
-      if (MapW1.Contains( V ))
-	CommonVertices.Append( V );
-    }
+  {
+    TopoDS_Shape V = exp2.Current();
+    if (MapW1.Contains( V ))
+      CommonVertices.Append( V );
+  }
 
   // MSV 03.04.2002: create pure surface adaptor to avoid UVBounds computation
   //                 due to performance problem
@@ -577,12 +704,12 @@ static Standard_Boolean Intersect(const TopoDS_Wire& wir1,
   TColgp_SequenceOfPnt PntSeq;
   Standard_Integer i;
   for (i = 1; i <= CommonVertices.Length(); i++)
-    {
-      TopoDS_Vertex V = TopoDS::Vertex( CommonVertices(i) );
-      gp_Pnt2d P2d = BRep_Tool::Parameters( V, F );
-      gp_Pnt P = Surf.Value( P2d.X(), P2d.Y() );
-      PntSeq.Append( P );
-    }
+  {
+    TopoDS_Vertex V = TopoDS::Vertex( CommonVertices(i) );
+    gp_Pnt2d P2d = BRep_Tool::Parameters( V, F );
+    gp_Pnt P = Surf.Value( P2d.X(), P2d.Y() );
+    PntSeq.Append( P );
+  }
 
   Geom2dAdaptor_Curve   C1,C2;
   gp_Pnt2d              pfirst1,plast1,pfirst2,plast2;
@@ -592,112 +719,112 @@ static Standard_Boolean Intersect(const TopoDS_Wire& wir1,
   Bnd_Box2d Box1, Box2;
 
   for (exp1.Init(wir1,TopAbs_EDGE); exp1.More(); exp1.Next())
+  {
+    const TopoDS_Edge& edg1 = TopoDS::Edge(exp1.Current());
+    //    cur1.Initialize(edg1,F);
+    C1.Load( BRep_Tool::CurveOnSurface(edg1,F,first1,last1) );
+    // To avoid exeption in Segment if C1 is BSpline - IFV
+    if(C1.FirstParameter() > first1) first1 = C1.FirstParameter();
+    if(C1.LastParameter()  < last1 ) last1  = C1.LastParameter();
+
+    Box1.SetVoid();
+    if (theMapEdgeBox.IsBound (edg1))
     {
-      const TopoDS_Edge& edg1 = TopoDS::Edge(exp1.Current());
-      //    cur1.Initialize(edg1,F);
-      C1.Load( BRep_Tool::CurveOnSurface(edg1,F,first1,last1) );
-      // To avoid exeption in Segment if C1 is BSpline - IFV
-      if(C1.FirstParameter() > first1) first1 = C1.FirstParameter();
-      if(C1.LastParameter()  < last1 ) last1  = C1.LastParameter();
-
-      Box1.SetVoid();
-      if (theMapEdgeBox.IsBound (edg1))
-      {
-        Box1 = theMapEdgeBox (edg1);
-      }
-      if (Box1.IsVoid())
-      {
-        BndLib_Add2dCurve::Add( C1, first1, last1, 0., Box1 );
-      }
-      for (exp2.Init(wir2,TopAbs_EDGE); exp2.More(); exp2.Next())
-	{
-	  const TopoDS_Edge& edg2 = TopoDS::Edge(exp2.Current());
-	  if (!edg1.IsSame(edg2))
-	    {
-	      //cur2.Initialize(edg2,F);
-	      C2.Load( BRep_Tool::CurveOnSurface(edg2,F,first2,last2) );
-	      // To avoid exeption in Segment if C2 is BSpline - IFV
-	      if(C2.FirstParameter() > first2) first2 = C2.FirstParameter();
-	      if(C2.LastParameter()  < last2 ) last2  = C2.LastParameter();
-
-	      Box2.SetVoid();
-	      if (theMapEdgeBox.IsBound (edg2))
-	      {
-          Box2 = theMapEdgeBox (edg2);
-	      }
-	      if (Box2.IsVoid())
-	      {
-          BndLib_Add2dCurve::Add( C2, first2, last2, 0., Box2 );
-	      }
-	      if (! Box1.IsOut( Box2 ))
-		{
-		  BRep_Tool::UVPoints(edg1,F,pfirst1,plast1);
-		  myDomain1.SetValues( pfirst1, first1, Inter2dTol, plast1, last1, Inter2dTol );
-		  BRep_Tool::UVPoints(edg2,F,pfirst2,plast2);
-		  myDomain2.SetValues( pfirst2, first2, Inter2dTol, plast2, last2, Inter2dTol );
-		  Inter.Perform( C1, myDomain1, C2, myDomain2, Inter2dTol, Inter2dTol );
-		  if (!Inter.IsDone())
-		    return Standard_True;
-		  if (Inter.NbSegments() > 0)
-		    {
-		      if (PntSeq.IsEmpty())
-			return Standard_True;
-		      else
-			{
-			  Standard_Integer NbCoinc = 0;
-			  for (i = 1; i <= Inter.NbSegments(); i++)
-			    {
-			      if (!Inter.Segment(i).HasFirstPoint() || !Inter.Segment(i).HasLastPoint())
-				return Standard_True;
-			      gp_Pnt2d FirstP2d = Inter.Segment(i).FirstPoint().Value();
-			      gp_Pnt2d LastP2d = Inter.Segment(i).LastPoint().Value();
-			      gp_Pnt FirstP = Surf.Value( FirstP2d.X(), FirstP2d.Y() );
-			      gp_Pnt LastP = Surf.Value( LastP2d.X(), LastP2d.Y() );
-			      for (Standard_Integer j = 1; j <= PntSeq.Length(); j++)
-				{
-				  Standard_Real tolv = BRep_Tool::Tolerance( TopoDS::Vertex(CommonVertices(j)) );
-				  if (FirstP.IsEqual( PntSeq(j), tolv ) || LastP.IsEqual( PntSeq(j), tolv ))
-				    {
-				      NbCoinc++;
-				      break;
-				    }
-				}
-			    }
-			  if (NbCoinc == Inter.NbSegments())
-			    return Standard_False;
-			  return Standard_True;
-			}
-		    }
-		  if (Inter.NbPoints() > 0)
-		    {
-		      if (PntSeq.IsEmpty())
-			return Standard_True;
-		      else
-			{
-			  Standard_Integer NbCoinc = 0;
-			  for (i = 1; i <= Inter.NbPoints(); i++)
-			    {
-			      gp_Pnt2d P2d = Inter.Point(i).Value();
-			      gp_Pnt P = Surf.Value( P2d.X(), P2d.Y() );
-			      for (Standard_Integer j = 1; j <= PntSeq.Length(); j++)
-				{
-				  Standard_Real tolv = BRep_Tool::Tolerance( TopoDS::Vertex(CommonVertices(j)) );
-				  if (P.IsEqual( PntSeq(j), tolv ))
-				    {
-				      NbCoinc++;
-				      break;
-				    }
-				}
-			    }
-			  if (NbCoinc == Inter.NbPoints())
-			    return Standard_False;
-			  return Standard_True;
-			}
-		    }
-		}
-	    }
-	}
+      Box1 = theMapEdgeBox (edg1);
     }
+    if (Box1.IsVoid())
+    {
+      BndLib_Add2dCurve::Add( C1, first1, last1, 0., Box1 );
+    }
+    for (exp2.Init(wir2,TopAbs_EDGE); exp2.More(); exp2.Next())
+    {
+      const TopoDS_Edge& edg2 = TopoDS::Edge(exp2.Current());
+      if (!edg1.IsSame(edg2))
+      {
+        //cur2.Initialize(edg2,F);
+        C2.Load( BRep_Tool::CurveOnSurface(edg2,F,first2,last2) );
+        // To avoid exeption in Segment if C2 is BSpline - IFV
+        if(C2.FirstParameter() > first2) first2 = C2.FirstParameter();
+        if(C2.LastParameter()  < last2 ) last2  = C2.LastParameter();
+
+        Box2.SetVoid();
+        if (theMapEdgeBox.IsBound (edg2))
+        {
+          Box2 = theMapEdgeBox (edg2);
+        }
+        if (Box2.IsVoid())
+        {
+          BndLib_Add2dCurve::Add( C2, first2, last2, 0., Box2 );
+        }
+        if (! Box1.IsOut( Box2 ))
+        {
+          BRep_Tool::UVPoints(edg1,F,pfirst1,plast1);
+          myDomain1.SetValues( pfirst1, first1, Inter2dTol, plast1, last1, Inter2dTol );
+          BRep_Tool::UVPoints(edg2,F,pfirst2,plast2);
+          myDomain2.SetValues( pfirst2, first2, Inter2dTol, plast2, last2, Inter2dTol );
+          Inter.Perform( C1, myDomain1, C2, myDomain2, Inter2dTol, Inter2dTol );
+          if (!Inter.IsDone())
+            return Standard_True;
+          if (Inter.NbSegments() > 0)
+          {
+            if (PntSeq.IsEmpty())
+              return Standard_True;
+            else
+            {
+              Standard_Integer NbCoinc = 0;
+              for (i = 1; i <= Inter.NbSegments(); i++)
+              {
+                if (!Inter.Segment(i).HasFirstPoint() || !Inter.Segment(i).HasLastPoint())
+                  return Standard_True;
+                gp_Pnt2d FirstP2d = Inter.Segment(i).FirstPoint().Value();
+                gp_Pnt2d LastP2d = Inter.Segment(i).LastPoint().Value();
+                gp_Pnt FirstP = Surf.Value( FirstP2d.X(), FirstP2d.Y() );
+                gp_Pnt LastP = Surf.Value( LastP2d.X(), LastP2d.Y() );
+                for (Standard_Integer j = 1; j <= PntSeq.Length(); j++)
+                {
+                  Standard_Real tolv = BRep_Tool::Tolerance( TopoDS::Vertex(CommonVertices(j)) );
+                  if (FirstP.IsEqual( PntSeq(j), tolv ) || LastP.IsEqual( PntSeq(j), tolv ))
+                  {
+                    NbCoinc++;
+                    break;
+                  }
+                }
+              }
+              if (NbCoinc == Inter.NbSegments())
+                return Standard_False;
+              return Standard_True;
+            }
+          }
+          if (Inter.NbPoints() > 0)
+          {
+            if (PntSeq.IsEmpty())
+              return Standard_True;
+            else
+            {
+              Standard_Integer NbCoinc = 0;
+              for (i = 1; i <= Inter.NbPoints(); i++)
+              {
+                gp_Pnt2d P2d = Inter.Point(i).Value();
+                gp_Pnt P = Surf.Value( P2d.X(), P2d.Y() );
+                for (Standard_Integer j = 1; j <= PntSeq.Length(); j++)
+                {
+                  Standard_Real tolv = BRep_Tool::Tolerance( TopoDS::Vertex(CommonVertices(j)) );
+                  if (P.IsEqual( PntSeq(j), tolv ))
+                  {
+                    NbCoinc++;
+                    break;
+                  }
+                }
+              }
+              if (NbCoinc == Inter.NbPoints())
+                return Standard_False;
+              return Standard_True;
+            }
+          }
+        }
+      }
+    }
+  }
   return Standard_False;
 }
 

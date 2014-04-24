@@ -22,3 +22,12 @@
 inline TopoDS_Wire::TopoDS_Wire ()
 {
 }
+
+//=======================================================================
+//function : TopoDS_Wire
+//purpose  : 
+//=======================================================================
+inline TopoDS_Wire TopoDS_Wire::This() const
+{
+  return *this;
+}
