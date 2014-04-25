@@ -31,7 +31,10 @@ IntWalk_IWalking::IntWalk_IWalking (const Standard_Real Epsilon,
       epsilon(Epsilon*Epsilon),
       wd1 (IntWalk_VectorOfWalkingData::allocator_type (new NCollection_IncAllocator)),
       wd2 (wd1.get_allocator()),
-      nbMultiplicities (wd1.get_allocator())
+      wd3 (wd2.get_allocator()),
+      nbMultiplicities (wd1.get_allocator()),
+      PossibleCuspPoint(Standard_False),
+      IsTangentialIntersection(Standard_False)
 {
 }
 
@@ -48,11 +51,13 @@ void IntWalk_IWalking::Clear()
 {
   wd1.clear();
   wd2.clear();
+  wd3.clear();
   IntWalk_WalkingData aDummy;
   aDummy.etat = -10;
   aDummy.ustart = aDummy.vstart = 0.;
   wd1.push_back (aDummy);
   wd2.push_back (aDummy);
+  wd3.push_back (aDummy);
   nbMultiplicities.clear();
   nbMultiplicities.push_back (-1);
   
@@ -80,6 +85,7 @@ void IntWalk_IWalking::Clear()
 //
 void IntWalk_IWalking::Perform(const ThePOPIterator& Pnts1,
 			       const ThePOLIterator& Pnts2,
+                               const ThePOLIterator& Pnts3,
 			       TheIWFunction& Func,
 			       const ThePSurface& Caro,
 			       const Standard_Boolean Reversed)
@@ -90,6 +96,7 @@ void IntWalk_IWalking::Perform(const ThePOPIterator& Pnts1,
   Standard_Boolean Rajout = Standard_False;
   Standard_Integer nbPnts1 = Pnts1.Length();
   Standard_Integer nbPnts2 = Pnts2.Length();
+  Standard_Integer nbPnts3 = Pnts3.Length();
   Standard_Real U,V;
 
   Clear();
@@ -137,6 +144,14 @@ void IntWalk_IWalking::Perform(const ThePOPIterator& Pnts1,
     wd2.push_back (aWD2);
   }
 
+  wd3.reserve (nbPnts3);
+  for (I = 1; I <= nbPnts3; I++) {
+    IntWalk_WalkingData aWD3;
+    aWD3.etat = 13;
+    ThePointOfLoopTool::Value2d(Pnts3.Value(I), aWD3.ustart, aWD3.vstart);
+    wd3.push_back (aWD3);
+  }
+
   tolerance(1) = ThePSurfaceTool::UResolution(Caro,Precision::Confusion());
   tolerance(2) = ThePSurfaceTool::VResolution(Caro,Precision::Confusion());
 
@@ -160,12 +175,10 @@ void IntWalk_IWalking::Perform(const ThePOPIterator& Pnts1,
 
   // calculation of all open lines   
   if (nbPnts1 != 0)
-    ComputeOpenLine(Umult,Vmult,Pnts1,Func,Rajout); 
-
+    ComputeOpenLine(Umult,Vmult,Pnts1,Func,Rajout);
   // calculation of all closed lines 
-  if (nbPnts2 != 0)
-    ComputeCloseLine(Umult,Vmult,Pnts1,Pnts2,Func,Rajout); 
-  
+  if (nbPnts2 != 0 || nbPnts3 != 0)
+    ComputeCloseLine(Umult,Vmult,Pnts1,Pnts2,Pnts3,Func,Rajout); 
   for (I = 1; I <= nbPnts1; I++) { 
     if (wd1[I].etat >0) seqSingle.Append(Pnts1(I));
   }

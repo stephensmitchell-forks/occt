@@ -141,6 +141,12 @@ is
 
     	is static;
     
+    IsTangentSmooth(me : in out)
+
+    	returns Boolean from Standard 
+
+    	is static;
+    
 
     Direction3d(me: in out)
 
@@ -161,6 +167,45 @@ is
     	raises UndefinedDerivative from StdFail
     	is static;
     
+    Projection1(me: in out)
+    	returns Real from Standard
+    	is static;
+    
+    Projection2(me: in out)
+    	returns Real from Standard
+    	is static;
+    
+    Projection3(me: in out)
+    	returns Real from Standard
+    	is static;
+    
+    Projection4(me: in out)
+    	returns Real from Standard
+    	is static;
+    
+    DerivativesAndNormalOnPSurf(me: in out; D1U :    out Vec from gp;
+    	    	    	    	    D1V :    out Vec from gp;
+				    Normal : out Vec from gp;
+    	    	    	    	    D2U :    out Vec from gp;
+    	    	    	    	    D2V :    out Vec from gp;
+    	    	    	    	    D2UV :   out Vec from gp)
+    	returns Boolean from Standard
+    	is static;
+    
+    DerivativesAndNormalOnISurf(me; D1U :    out Vec from gp;
+    	    	    	    	    D1V :    out Vec from gp;
+				    Normal : out Vec from gp;
+    	    	    	    	    D2U :    out Vec from gp;
+    	    	    	    	    D2V :    out Vec from gp;
+    	    	    	    	    D2UV :   out Vec from gp)
+    	returns Boolean from Standard
+    	is static;
+    
+    SquareTangentError(me)
+    	returns Real from Standard
+	---C++: inline
+
+	is static;
 
     PSurface(me)
 
@@ -170,7 +215,6 @@ is
 
     	is static;
     
-
     ISurface(me)
 
     	returns TheISurface
@@ -195,11 +239,17 @@ fields
   tgdu        : Real    from Standard;
   tgdv        : Real    from Standard;
   gradient    : Vec     from gp;
+  d1u_isurf   : Vec     from gp;
+  d1v_isurf   : Vec     from gp;
   derived     : Boolean from Standard;
   d1u         : Vec     from gp;
   d1v         : Vec     from gp;
   d3d         : Vec     from gp;
   d2d         : Dir2d   from gp;
+  Proj1       : Real    from Standard;
+  Proj2       : Real    from Standard;
+  Proj3       : Real    from Standard;
+  Proj4       : Real    from Standard;
 
 end ZerImpFunc;
 

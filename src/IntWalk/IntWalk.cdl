@@ -35,7 +35,7 @@ is
 
     enumeration StatusDeflection is 
                 PasTropGrand, PointConfondu, ArretSurPointPrecedent,
-                ArretSurPoint, OK;
+                ArretSurPoint, OK, OKtangent;
 
 -- StepTooGreat, ConfusedPoint, StopOnPreviousPoint, StopOnPoint, OK
     
