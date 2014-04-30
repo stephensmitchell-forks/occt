@@ -1,0 +1,23 @@
+puts "============"
+puts "OCC24865"
+puts "============"
+puts ""
+#################################################################
+# igesread loopback transfer process should not skip any entity
+#################################################################
+
+ReadIges D_First [locate_data_file BUC50003.igs]
+
+WriteIges D_First ${imagedir}/R1_D_First.igs 
+
+ReadIges D_Second ${imagedir}/R1_D_First.igs
+
+set info [ tpstat c ]
+
+set SkippString "CurveOnSurface +\: +3D +and +2D +curve +representations +are +invalid +\: +entity +skipped"
+
+if { [regexp ${SkippString} ${info}] } {
+    puts "Error: igesread loopback transfer process skip entity"
+} else {
+    puts "Ok: igesread loopback transfer process should not skip any entity"
+}
