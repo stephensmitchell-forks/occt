@@ -88,6 +88,7 @@ is
     Perform(me: in out;
             Pnts1    : ThePOPIterator;
             Pnts2    : ThePOLIterator;
+	    Pnts3    : ThePOLIterator;
             Func     : in out TheIWFunction;
 	    S        : ThePSurface;
             Reversed : Boolean from Standard = Standard_False)
@@ -180,7 +181,6 @@ is
 
         is static;
     
-
 -- -- private
 
     Cadrage(me; BornInf, BornSup, UVap : in out Vector from math;
@@ -199,6 +199,14 @@ is
     is static protected;		      
        
     TestArretPassage (me: in out; Umult  : SequenceOfReal from TColStd;
+                                  Vmult  : SequenceOfReal from TColStd;
+                                  UV     : Vector from math;
+                                  Index  : Integer from Standard;
+	          	          Irang  : out Integer from Standard) 
+    returns Boolean from Standard
+    is static protected;		      
+
+    TestArretPassageTang (me: in out; Umult  : SequenceOfReal from TColStd;
                                   Vmult  : SequenceOfReal from TColStd;
                                   UV     : Vector from math;
                                   Index  : Integer from Standard;
@@ -227,9 +235,10 @@ is
                                UV              : Vector from math;
 		               StatusPrecedent : StatusDeflection from IntWalk;
                                NbDivision      : in out Integer from Standard;
-                               Step           : in out Real from Standard;
+                               Step            : in out Real from Standard;
 --                               StepV           : in out Real from Standard;
-                               StepSign        : Integer from Standard)
+                               StepSign        : Integer from Standard;
+			       CurNbPoints     : Integer from Standard)
     returns StatusDeflection from IntWalk		    
     is static protected;		      
 
@@ -251,6 +260,7 @@ is
                                   Vmult  : SequenceOfReal from TColStd;
                                   Pnts1  : ThePOPIterator;
 				  Pnts2  : ThePOLIterator;
+				  Pnts3  : ThePOLIterator;
                                   Section: in out TheIWFunction;
                                   Rajout : in out Boolean from Standard)
     is static protected;	
@@ -265,6 +275,16 @@ is
 				   Section : in out TheIWFunction;
                                    Psol    : in out PntOn2S from IntSurf)
 
+    is static protected;
+    
+    FindExactTangentPoint(me : in out ; TolTang : Real from Standard;
+    	    	    	    	    	Section : in out TheIWFunction;
+    	    	    	    	    	Psol    : in out PntOn2S from IntSurf)
+    is static protected;
+    
+    ComputeDirOfTangentialIntersection(me : in out; Section : in out TheIWFunction;
+    	    	    	    	     	    	    StepSign: in out Integer from Standard)
+    returns Boolean from Standard
     is static protected;
     
     Clear (me: in out) is static protected;
@@ -283,6 +303,7 @@ fields
 
     wd1                 : VectorOfWalkingData from IntWalk;
     wd2                 : VectorOfWalkingData from IntWalk;
+    wd3                 : VectorOfWalkingData from IntWalk;
     nbMultiplicities    : VectorOfInteger   from IntWalk;
     Um                  : Real              from Standard; -- Min U de la surf
     UM                  : Real              from Standard; -- Max U de la surf
@@ -291,7 +312,15 @@ fields
     previousPoint       : PntOn2S           from IntSurf;
     previousd3d         : Vec               from gp;
     previousd2d         : Dir2d             from gp;
+    previousProj1       : Real              from Standard;
+    previousProj2       : Real              from Standard;
+    previousProj3       : Real              from Standard;
+    previousProj4       : Real              from Standard;
+    PointAfterPossibleCuspPoint : PntOn2S   from IntSurf;
+    PossibleCuspPoint   : Boolean           from Standard;
+    IsTangentialIntersection : Boolean      from Standard;
     seqAjout            : SequenceOfInteger from TColStd; 
     lines               : SequenceOfIWLine;
+    
 end IWalking;
 

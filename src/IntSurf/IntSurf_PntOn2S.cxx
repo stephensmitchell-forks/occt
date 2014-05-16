@@ -48,5 +48,26 @@ void IntSurf_PntOn2S::SetValue (const Standard_Boolean OnFirst,
   }
 }
 
+gp_Pnt2d IntSurf_PntOn2S::ValueOnSurface(const Standard_Boolean OnFirst) const
+{
+  gp_Pnt2d PointOnSurf;
+  if (OnFirst)
+    PointOnSurf.SetCoord(u1,v1);
+  else
+    PointOnSurf.SetCoord(u2,v2);
+  return PointOnSurf;
+}
 
-
+void IntSurf_PntOn2S::ParametersOnSurface(const Standard_Boolean OnFirst,
+                                          Standard_Real& U,
+                                          Standard_Real& V) const
+{
+  if (OnFirst) {
+    U = u1;
+    V = v1;
+  }
+  else {
+    U = u2;
+    V = v2;
+  }
+}
