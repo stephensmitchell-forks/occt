@@ -11,8 +11,8 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef _StdPrs_WFDeflectionShape_H__
-#define _StdPrs_WFDeflectionShape_H__
+#ifndef StdPrs_WFDeflectionShape_HeaderFile
+#define StdPrs_WFDeflectionShape_HeaderFile
 
 #include <Prs3d_Presentation.hxx>
 #include <Prs3d_WFShape.hxx>

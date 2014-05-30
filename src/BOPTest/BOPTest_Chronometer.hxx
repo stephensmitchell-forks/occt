@@ -12,8 +12,8 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef  BOPTest_Chronometer_HeaderFile
-#define  BOPTest_Chronometer_HeaderFile
+#ifndef BOPTest_Chronometer_HeaderFile
+#define BOPTest_Chronometer_HeaderFile
 //
 #ifdef HAVE_TBB
 #include <BOPCol_TBB.hxx>

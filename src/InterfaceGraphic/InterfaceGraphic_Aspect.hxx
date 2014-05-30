@@ -12,8 +12,8 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef InterfaceGraphic_AspectHeader
-#define InterfaceGraphic_AspectHeader
+#ifndef InterfaceGraphic_Aspect_HeaderFile
+#define InterfaceGraphic_Aspect_HeaderFile
 
 #ifndef IMP100701
 #define IMP100701 /* GG Add depth field in the bitmap structure */

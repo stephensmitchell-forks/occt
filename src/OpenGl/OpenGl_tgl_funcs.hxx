@@ -13,8 +13,8 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef OPENGL_TGL_FUNCS_H
-#define OPENGL_TGL_FUNCS_H
+#ifndef OpenGl_tgl_funcs_HeaderFile
+#define OpenGl_tgl_funcs_HeaderFile
 
 typedef float matrix3[4][4];
 

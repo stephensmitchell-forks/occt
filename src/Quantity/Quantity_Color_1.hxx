@@ -12,8 +12,8 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef COLOR_PXX_INCLUDED
-#define COLOR_PXX_INCLUDED
+#ifndef Quantity_Color_1_HeaderFile
+#define Quantity_Color_1_HeaderFile
 
 #define RGBHLS_H_UNDEFINED -1.0
 

@@ -12,8 +12,8 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef _BOPDS_Col_HeaderFile
-#define _BOPDS_Col_HeaderFile
+#ifndef BOPCol_TBB_HeaderFile
+#define BOPCol_TBB_HeaderFile
 
 #ifdef HAVE_TBB
 

@@ -18,8 +18,8 @@
 #include <TColStd_Array1OfReal.hxx>
 #include <TColStd_Array1OfInteger.hxx>
 
-#ifndef _Convert_CosAnSinEvalFunction_HeaderFile
-#define _Convert_CosAnSinEvalFunction_HeaderFile
+#ifndef Convert_CosAndSinEvalFunction_HeaderFile
+#define Convert_CosAndSinEvalFunction_HeaderFile
 
 typedef void   Convert_CosAndSinEvalFunction(Standard_Real,
 					     const Standard_Integer,

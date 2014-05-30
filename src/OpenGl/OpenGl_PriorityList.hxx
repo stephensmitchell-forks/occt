@@ -13,8 +13,8 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef _OpenGl_PriorityList_Header
-#define _OpenGl_PriorityList_Header
+#ifndef OpenGl_PriorityList_HeaderFile
+#define OpenGl_PriorityList_HeaderFile
 
 #include <NCollection_Sequence.hxx>
 #include <NCollection_Array1.hxx>

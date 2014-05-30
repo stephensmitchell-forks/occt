@@ -11,8 +11,8 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef _Prs3d_WFShape_H__
-#define _Prs3d_WFShape_H__
+#ifndef Prs3d_WFShape_HeaderFile
+#define Prs3d_WFShape_HeaderFile
 
 #include <Prs3d_Root.hxx>
 #include <Prs3d_NListOfSequenceOfPnt.hxx>

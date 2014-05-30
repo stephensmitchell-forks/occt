@@ -13,8 +13,8 @@
 
 #ifdef __APPLE__
 
-#ifndef InterfaceGraphic_CocoaHeader
-#define InterfaceGraphic_CocoaHeader
+#ifndef InterfaceGraphic_Cocoa_HeaderFile
+#define InterfaceGraphic_Cocoa_HeaderFile
 
 #include <stdio.h>
 

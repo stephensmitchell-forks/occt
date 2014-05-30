@@ -13,8 +13,8 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef __OPENGL_AVIWRITER_H
-#define __OPENGL_AVIWRITER_H
+#ifndef OpenGl_AVIWriter_HeaderFile
+#define OpenGl_AVIWriter_HeaderFile
 
 #ifdef WNT
 #define THIS void 

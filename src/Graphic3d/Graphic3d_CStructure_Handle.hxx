@@ -11,8 +11,8 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef _Graphic3d_CStructure_Handle_H__
-#define _Graphic3d_CStructure_Handle_H__
+#ifndef Graphic3d_CStructure_Handle_HeaderFile
+#define Graphic3d_CStructure_Handle_HeaderFile
 
 #include <Standard_DefineHandle.hxx>
 #include <Handle_Standard_Transient.hxx>

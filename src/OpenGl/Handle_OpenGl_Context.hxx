@@ -13,8 +13,8 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef _Handle_OpenGl_Context_Header
-#define _Handle_OpenGl_Context_Header
+#ifndef Handle_OpenGl_Context_HeaderFile
+#define Handle_OpenGl_Context_HeaderFile
 
 #include <Standard_DefineHandle.hxx>
 #include <Handle_Standard_Transient.hxx>

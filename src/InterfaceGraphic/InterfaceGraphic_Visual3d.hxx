@@ -12,8 +12,8 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef InterfaceGraphic_Visual3dHeader
-#define InterfaceGraphic_Visual3dHeader
+#ifndef InterfaceGraphic_Visual3d_HeaderFile
+#define InterfaceGraphic_Visual3d_HeaderFile
 
 #include <InterfaceGraphic_Aspect.hxx>
 #include <InterfaceGraphic_Graphic3d.hxx>

@@ -13,8 +13,8 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef _Handle_OpenGl_Workspace_Header
-#define _Handle_OpenGl_Workspace_Header
+#ifndef Handle_OpenGl_Workspace_HeaderFile
+#define Handle_OpenGl_Workspace_HeaderFile
 
 #include <Standard_DefineHandle.hxx>
 #include <Handle_OpenGl_Window.hxx>

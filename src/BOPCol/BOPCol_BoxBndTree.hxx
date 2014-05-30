@@ -15,8 +15,8 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef NMTDS_BoxBndTree_HeaderFile
-#define NMTDS_BoxBndTree_HeaderFile
+#ifndef BOPCol_BoxBndTree_HeaderFile
+#define BOPCol_BoxBndTree_HeaderFile
 
 #include <NCollection_UBTree.hxx>
 #include <Bnd_Box.hxx>

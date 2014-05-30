@@ -12,8 +12,8 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef BOPDS_VectorOfPnt_HeaderFile
-#define BOPDS_VectorOfPnt_HeaderFile
+#ifndef BOPDS_VectorOfPoint_HeaderFile
+#define BOPDS_VectorOfPoint_HeaderFile
 
 #include <BOPCol_Array1.hxx>
 #include <BOPDS_Point.hxx>

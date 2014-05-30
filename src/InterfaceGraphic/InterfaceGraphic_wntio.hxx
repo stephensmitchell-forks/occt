@@ -12,8 +12,8 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef __WNTIO_H
-# define __WNTIO_H
+#ifndef InterfaceGraphic_wntio_HeaderFile
+#define InterfaceGraphic_wntio_HeaderFile
 
 # ifdef __cplusplus
 extern "C" {

@@ -11,6 +11,9 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
+#ifndef XSDRAW_Commands_HeaderFile
+#define XSDRAW_Commands_HeaderFile
+
 #include <TCollection_AsciiString.hxx>
 
 static TCollection_AsciiString XSDRAW_CommandPart
@@ -23,3 +26,5 @@ static TCollection_AsciiString XSDRAW_CommandPart
   }
   return res;
 }
+
+#endif

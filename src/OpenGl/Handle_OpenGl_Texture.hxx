@@ -11,8 +11,8 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef _Handle_OpenGl_Texture_Header
-#define _Handle_OpenGl_Texture_Header
+#ifndef Handle_OpenGl_Texture_HeaderFile
+#define Handle_OpenGl_Texture_HeaderFile
 
 #include <OpenGl_Resource.hxx>
 

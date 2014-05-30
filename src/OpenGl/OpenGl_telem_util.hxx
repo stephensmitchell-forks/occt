@@ -34,8 +34,8 @@ xx-xx-xx : xxx ; Creation.
 
 ************************************************************************/
 
-#ifndef  OPENGL_TELEM_UTIL_H
-#define  OPENGL_TELEM_UTIL_H
+#ifndef OpenGl_telem_util_HeaderFile
+#define OpenGl_telem_util_HeaderFile
 
 #include <InterfaceGraphic_telem.hxx>
 #include <cmath>

@@ -13,8 +13,8 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef _OpenGl_Layer_Header
-#define _OpenGl_Layer_Header
+#ifndef OpenGl_Layer_HeaderFile
+#define OpenGl_Layer_HeaderFile
 
 #include <OpenGl_PriorityList.hxx>
 #include <Graphic3d_ZLayerSettings.hxx>

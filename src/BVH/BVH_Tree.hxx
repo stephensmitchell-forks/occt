@@ -13,8 +13,8 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef _BVH_Tree_Header
-#define _BVH_Tree_Header
+#ifndef BVH_Tree_HeaderFile
+#define BVH_Tree_HeaderFile
 
 #include <Standard_Type.hxx>
 

@@ -13,8 +13,8 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef _Graphic3d_Camera_Handle_H__
-#define _Graphic3d_Camera_Handle_H__
+#ifndef Graphic3d_Camera_Handle_HeaderFile
+#define Graphic3d_Camera_Handle_HeaderFile
 
 #include <Graphic3d_Camera.hxx>
 typedef Handle(Graphic3d_Camera) Graphic3d_Camera_Handle;

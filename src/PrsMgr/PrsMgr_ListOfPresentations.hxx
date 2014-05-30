@@ -17,8 +17,8 @@
 // purpose or non-infringement. Please see the License for the specific terms
 // and conditions governing the rights and limitations under the License.
 
-#ifndef _PrsMgr_ListOfPresentations_H__
-#define _PrsMgr_ListOfPresentations_H__
+#ifndef PrsMgr_ListOfPresentations_HeaderFile
+#define PrsMgr_ListOfPresentations_HeaderFile
 
 #include <NCollection_List.hxx>
 #include <Prs3d_Presentation.hxx>

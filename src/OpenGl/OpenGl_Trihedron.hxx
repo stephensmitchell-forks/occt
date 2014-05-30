@@ -13,8 +13,8 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef _OpenGl_Trihedron_Header
-#define _OpenGl_Trihedron_Header
+#ifndef OpenGl_Trihedron_HeaderFile
+#define OpenGl_Trihedron_HeaderFile
 
 #include <OpenGl_Element.hxx>
 

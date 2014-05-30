@@ -11,7 +11,12 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
+#ifndef StepFile_CallFailure_HeaderFile
+#define StepFile_CallFailure_HeaderFile
+
 #ifdef __cplusplus
 extern "C"
 #endif
 void StepFile_CallFailure(char * const message);
+
+#endif

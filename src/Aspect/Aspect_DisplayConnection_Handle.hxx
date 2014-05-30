@@ -11,8 +11,8 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef _Aspect_DisplayConnection_Handle_H__
-#define _Aspect_DisplayConnection_Handle_H__
+#ifndef Aspect_DisplayConnection_Handle_HeaderFile
+#define Aspect_DisplayConnection_Handle_HeaderFile
 
 #include <Standard_Transient.hxx>
 

@@ -12,8 +12,8 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef INTERFACEGRAPHIC_TELEM_H
-#define INTERFACEGRAPHIC_TELEM_H
+#ifndef InterfaceGraphic_telem_HeaderFile
+#define InterfaceGraphic_telem_HeaderFile
 
 #include <Standard.hxx>
 #include <Standard_DefineAlloc.hxx>

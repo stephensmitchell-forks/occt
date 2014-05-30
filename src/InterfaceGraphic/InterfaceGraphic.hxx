@@ -12,8 +12,8 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef __INTERFACE_GRAPHIC_HXX
-#define __INTERFACE_GRAPHIC_HXX
+#ifndef InterfaceGraphic_HeaderFile
+#define InterfaceGraphic_HeaderFile
 
 #ifdef WNT
   #include <InterfaceGraphic_WNT.hxx>

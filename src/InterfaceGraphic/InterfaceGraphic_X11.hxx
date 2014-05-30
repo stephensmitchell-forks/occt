@@ -13,8 +13,8 @@
 // commercial license or contractual agreement.
 
 #ifndef _WIN32
-#ifndef InterfaceGraphic_X11Header
-#define InterfaceGraphic_X11Header
+#ifndef InterfaceGraphic_X11_HeaderFile
+#define InterfaceGraphic_X11_HeaderFile
 
 #include <stdio.h>
 

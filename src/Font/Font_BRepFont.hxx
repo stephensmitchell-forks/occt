@@ -12,8 +12,8 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef _Font_BRepFont_H__
-#define _Font_BRepFont_H__
+#ifndef Font_BRepFont_HeaderFile
+#define Font_BRepFont_HeaderFile
 
 #include <Adaptor3d_CurveOnSurface.hxx>
 #include <BRep_Builder.hxx>

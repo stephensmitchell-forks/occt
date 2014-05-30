@@ -13,8 +13,8 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef _OpenGl_AspectLine_Header
-#define _OpenGl_AspectLine_Header
+#ifndef OpenGl_AspectLine_HeaderFile
+#define OpenGl_AspectLine_HeaderFile
 
 #include <TCollection_AsciiString.hxx>
 

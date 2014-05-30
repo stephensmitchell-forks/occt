@@ -13,8 +13,8 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef _Handle_Graphic3d_ShaderObject_HeaderFile
-#define _Handle_Graphic3d_ShaderObject_HeaderFile
+#ifndef Graphic3d_ShaderObject_Handle_HeaderFile
+#define Graphic3d_ShaderObject_Handle_HeaderFile
 
 #include <Standard_Transient.hxx>
 

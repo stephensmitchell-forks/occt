@@ -12,8 +12,8 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef InterfaceGraphic_XWDHeader
-#define InterfaceGraphic_XWDHeader
+#ifndef InterfaceGraphic_XWD_HeaderFile
+#define InterfaceGraphic_XWD_HeaderFile
 
 /*
  * InterfaceGraphic_SWAPTEST =	0 sur sun, sgi, hp

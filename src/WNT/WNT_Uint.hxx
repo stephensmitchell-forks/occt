@@ -12,8 +12,8 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef __WNT_Uint_HeaderFile
-# define __WNT_Uint_HeaderFile
+#ifndef WNT_Uint_HeaderFile
+#define WNT_Uint_HeaderFile
 
 // Purpose:  Defines a Windows NT UINT type.
 

@@ -13,8 +13,8 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef _Handle_OpenGl_View_Header
-#define _Handle_OpenGl_View_Header
+#ifndef Handle_OpenGl_View_HeaderFile
+#define Handle_OpenGl_View_HeaderFile
 
 #include <Standard_DefineHandle.hxx>
 #include <Handle_MMgt_TShared.hxx>

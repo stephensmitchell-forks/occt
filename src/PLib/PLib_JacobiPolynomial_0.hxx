@@ -11,6 +11,9 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
+#ifndef PLib_JacobiPolynomial_0_HeaderFile
+#define PLib_JacobiPolynomial_0_HeaderFile
+
 //   Table de la matrice de passage de canonique a Legendre.
 static const Standard_Real TransMatrix_C0[2][496] = {
  {0.10000000000000000000000000000000e+01,	
@@ -16852,3 +16855,5 @@ static const Standard_Real MaxValuesDB_C2[53] = {
 };
 
 //#include <PLib_JacobiPolynomial_1.cxx>
+
+#endif

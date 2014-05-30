@@ -11,6 +11,9 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
+#ifndef V3d_Static_HeaderFile
+#define V3d_Static_HeaderFile
+
 //static Standard_Real MyXwindowCenter ;
 //static Standard_Real MyYwindowCenter ;
 //static Standard_Real MyWindowWidth ;
@@ -24,3 +27,5 @@ static Graphic3d_Vector MyViewAxis ;
 static Graphic3d_Vertex MyViewReferencePoint ;
 static Graphic3d_Vertex MyGravityReferencePoint ;
 static Graphic3d_Vertex MyProjReferencePoint ;
+
+#endif

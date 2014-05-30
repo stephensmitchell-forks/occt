@@ -12,8 +12,8 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef _DBC_BaseArray_HeaderFile
-#define _DBC_BaseArray_HeaderFile
+#ifndef DBC_BaseArray_objs_HeaderFile
+#define DBC_BaseArray_objs_HeaderFile
 
 #include <DBC_DBVArray.hxx>
 #include <Standard_Storable.hxx>

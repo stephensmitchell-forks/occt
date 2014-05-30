@@ -12,8 +12,8 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef InterfaceGraphic_Graphic3dHeader
-#define InterfaceGraphic_Graphic3dHeader
+#ifndef InterfaceGraphic_Graphic3d_HeaderFile
+#define InterfaceGraphic_Graphic3d_HeaderFile
 
 #include <InterfaceGraphic_telem.hxx>
 #include <Standard_Transient.hxx>

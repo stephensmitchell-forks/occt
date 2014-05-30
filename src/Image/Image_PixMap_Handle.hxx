@@ -11,8 +11,8 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef _Image_PixMap_Handle_H__
-#define _Image_PixMap_Handle_H__
+#ifndef Image_PixMap_Handle_HeaderFile
+#define Image_PixMap_Handle_HeaderFile
 
 #include <Standard_DefineHandle.hxx>
 #include <Standard_Transient.hxx>

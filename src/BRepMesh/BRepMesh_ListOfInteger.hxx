@@ -11,6 +11,11 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
+#ifndef BRepMesh_ListOfInteger_HeaderFile
+#define BRepMesh_ListOfInteger_HeaderFile
+
 #include <NCollection_List.hxx>
 
 typedef NCollection_List<Standard_Integer> BRepMesh_ListOfInteger;
+
+#endif

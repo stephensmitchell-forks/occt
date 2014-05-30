@@ -12,8 +12,8 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef __WNT_WindowData_HeaderFile
-# define __WNT_WindowData_HeaderFile
+#ifndef WNT_WindowData_HeaderFile
+#define WNT_WindowData_HeaderFile
 
 // Purpose:  Defines additional window data type.
 

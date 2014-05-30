@@ -11,8 +11,8 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef OPENGL_TRANSFORM_PERSISTENCE_H
-#define OPENGL_TRANSFORM_PERSISTENCE_H
+#ifndef OpenGl_transform_persistence_HeaderFile
+#define OpenGl_transform_persistence_HeaderFile
 
 enum TP_FLAGS
 {

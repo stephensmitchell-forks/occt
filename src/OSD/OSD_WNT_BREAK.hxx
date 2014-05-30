@@ -12,8 +12,8 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef __OSD_WNT_BREAK_HXX
-# define __OSD_WNT_BREAK_HXX
+#ifndef OSD_WNT_BREAK_HeaderFile
+#define OSD_WNT_BREAK_HeaderFile
 
 # ifdef WNT
 #  include <OSD.hxx>

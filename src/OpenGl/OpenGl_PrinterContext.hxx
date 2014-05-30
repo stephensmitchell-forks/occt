@@ -13,8 +13,8 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef _OPENGL_PRINTERCONTEXT_H
-#define _OPENGL_PRINTERCONTEXT_H
+#ifndef OpenGl_PrinterContext_HeaderFile
+#define OpenGl_PrinterContext_HeaderFile
 
 #include <Standard_DefineHandle.hxx>
 #include <TColStd_Array2OfReal.hxx>

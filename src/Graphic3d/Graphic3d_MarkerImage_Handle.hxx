@@ -13,8 +13,8 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef _Graphic3d_TextureBitMap_Handle_H__
-#define _Graphic3d_TextureBitMap_Handle_H__
+#ifndef Graphic3d_MarkerImage_Handle_HeaderFile
+#define Graphic3d_MarkerImage_Handle_HeaderFile
 
 #include <Standard_DefineHandle.hxx>
 #include <Standard_Transient.hxx>

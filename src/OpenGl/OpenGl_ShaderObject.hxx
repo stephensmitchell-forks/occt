@@ -13,8 +13,8 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef _OpenGl_ShaderObject_Header
-#define _OpenGl_ShaderObject_Header
+#ifndef OpenGl_ShaderObject_HeaderFile
+#define OpenGl_ShaderObject_HeaderFile
 
 #include <Handle_OpenGl_ShaderObject.hxx>
 #include <Graphic3d_ShaderObject.hxx>

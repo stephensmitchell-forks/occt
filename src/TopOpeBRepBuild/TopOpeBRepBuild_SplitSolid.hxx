@@ -14,8 +14,8 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef TopOpeBRepBuild_SplitSolid_INCLUDED
-#define TopOpeBRepBuild_SplitSolid_INCLUDED
+#ifndef TopOpeBRepBuild_SplitSolid_HeaderFile
+#define TopOpeBRepBuild_SplitSolid_HeaderFile
 
 #include <TopOpeBRepBuild_ShellFaceSet.hxx>
 #include <TopOpeBRepBuild_SolidBuilder.hxx>

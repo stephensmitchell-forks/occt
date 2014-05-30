@@ -13,9 +13,14 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
+#ifndef BRepMesh_CellFilter_HeaderFile
+#define BRepMesh_CellFilter_HeaderFile
+
 #include <gp_XYZ.hxx>
 #include <gp_XY.hxx>
 #include <NCollection_CellFilter.hxx>
 #include <BRepMesh_CircleInspector.hxx>
 
 typedef NCollection_CellFilter<BRepMesh_CircleInspector> BRepMesh_CellFilter;
+
+#endif

@@ -11,6 +11,11 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
+#ifndef BRepMesh_BaseAllocator_HeaderFile
+#define BRepMesh_BaseAllocator_HeaderFile
+
 #include <NCollection_IncAllocator.hxx>
 
 typedef Handle(NCollection_IncAllocator) BRepMesh_BaseAllocator;
+
+#endif

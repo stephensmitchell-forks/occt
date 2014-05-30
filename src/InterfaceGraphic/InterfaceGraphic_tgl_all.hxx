@@ -12,8 +12,8 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef  INTERFACEGRAPHIC_TGL_ALL_H
-#define  INTERFACEGRAPHIC_TGL_ALL_H
+#ifndef InterfaceGraphic_tgl_all_HeaderFile
+#define InterfaceGraphic_tgl_all_HeaderFile
 
 typedef  int          Tint;
 typedef  float        Tfloat;

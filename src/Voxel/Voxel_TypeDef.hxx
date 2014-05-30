@@ -11,8 +11,8 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef _VOXEL_TYPEDEF_HXX_
-#define _VOXEL_TYPEDEF_HXX_
+#ifndef Voxel_TypeDef_HeaderFile
+#define Voxel_TypeDef_HeaderFile
 
 // Basic data types
 

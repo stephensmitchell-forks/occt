@@ -12,8 +12,8 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef __OSD_WNT_H
-# define __OSD_WNT_H
+#ifndef OSD_WNT_1_HeaderFile
+#define OSD_WNT_1_HeaderFile
 
 # ifndef STRICT
 #  define STRICT

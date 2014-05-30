@@ -13,6 +13,9 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
+#ifndef SelectMgr_CompareResults_HeaderFile
+#define SelectMgr_CompareResults_HeaderFile
+
 #include <SelectMgr_IndexedDataMapOfOwnerCriterion.hxx>
 #include <SelectMgr_SortCriterion.hxx>
 #include <TCollection_CompareOfInteger.hxx>
@@ -58,3 +61,5 @@ inline Standard_Boolean SelectMgr_CompareResults::IsGreater
   return (myMapOfCriterion.FindFromIndex(Left) <
           myMapOfCriterion.FindFromIndex(Right));
 }
+
+#endif

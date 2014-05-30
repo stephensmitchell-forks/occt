@@ -14,8 +14,8 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef _TopOpeBRepDS_tsx_HeaderFile
-#define _TopOpeBRepDS_tsx_HeaderFile
+#ifndef TopOpeBRepDS_DSX_HeaderFile
+#define TopOpeBRepDS_DSX_HeaderFile
 
 #ifdef DEB
 #include <TopOpeBRepDS_define.hxx>
