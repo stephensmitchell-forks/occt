@@ -93,7 +93,7 @@
   #include <tbb/parallel_for_each.h>
 #endif
 
-#define UVDEFLECTION 1.e-05
+#define UVDEFLECTION 1.e-06
 
 inline Standard_Real MaxFaceTol (const TopoDS_Face& theFace)
 {
@@ -126,7 +126,8 @@ BRepMesh_FastDiscret::BRepMesh_FastDiscret(const Standard_Real    theDefle,
                                            const Standard_Boolean theWithShare,
                                            const Standard_Boolean theInshape,
                                            const Standard_Boolean theRelative,
-                                           const Standard_Boolean theShapetrigu) :
+                                           const Standard_Boolean theShapetrigu,
+                                           const Handle_Message_ProgressIndicator & theProgress) :
   myAngle (theAngl),
   myDeflection (theDefle),
   myWithShare (theWithShare),
@@ -134,7 +135,8 @@ BRepMesh_FastDiscret::BRepMesh_FastDiscret(const Standard_Real    theDefle,
   myNbLocat (0),
   myRelative (theRelative),
   myShapetrigu (theShapetrigu), 
-  myInshape (theInshape)
+  myInshape (theInshape),
+  myProgress (theProgress)
 {
   myAllocator = new NCollection_IncAllocator(64000);
   if(myRelative)
@@ -153,7 +155,8 @@ BRepMesh_FastDiscret::BRepMesh_FastDiscret(const Standard_Real    theDefle,
                                            const Standard_Boolean theWithShare,
                                            const Standard_Boolean theInshape,
                                            const Standard_Boolean theRelative,
-                                           const Standard_Boolean theShapetrigu): 
+                                           const Standard_Boolean theShapetrigu,
+                                           const Handle_Message_ProgressIndicator & theProgress): 
   myAngle (theAngl),
   myDeflection (theDefle),
   myWithShare (theWithShare),
@@ -161,7 +164,8 @@ BRepMesh_FastDiscret::BRepMesh_FastDiscret(const Standard_Real    theDefle,
   myNbLocat (0),
   myRelative (theRelative),
   myShapetrigu (theShapetrigu),
-  myInshape (theInshape)
+  myInshape (theInshape),
+  myProgress (theProgress)
 {
   myAllocator = new NCollection_IncAllocator(64000);
   if(myRelative)
@@ -221,7 +225,9 @@ Standard_Real BRepMesh_FastDiscret::RelativeEdgeDeflection(const TopoDS_Edge& th
     return defedge;
 
   Bnd_Box B;
-  BRepBndLib::Add(theEdge, B);
+  // We should use the bounding box of the real geometry and
+  // not the triangulation bounding box, since we are about to build the triangulation
+  BRepBndLib::Add(theEdge, B, Standard_False);
   BoxMaxDimension(B, defedge);
             
   // adjusted in relation to the total size:
@@ -277,14 +283,80 @@ void BRepMesh_FastDiscret::Perform(const TopoDS_Shape& theShape)
 
 void BRepMesh_FastDiscret::Process(const TopoDS_Face& theFace) const
 {
+  if (!myProgress.IsNull() && myProgress->UserBreak())
+    return;
+
   //cout << "START face " << theFace.TShape().operator->() << endl << flush;
   Handle(BRepMesh_FaceAttribute) fattribute;
   if ( GetFaceAttribute (theFace, fattribute) ) 
   {
-    BRepMesh_FastDiscretFace aTool (GetAngle(), WithShare());
+    BRepMesh_FastDiscretFace aTool (GetAngle(), WithShare(), myProgress);
     aTool.Add (theFace, fattribute, GetMapOfDefEdge(), myMutexProvider);
   }
   //cout << "END   face " << theFace.TShape().operator->() << endl << flush;
+
+  if (!myProgress.IsNull())
+  {
+    ((Standard_Mutex &)myMutex).Lock();
+    myProgress->Increment();
+    ((Standard_Mutex &)myMutex).Unlock();
+  }
+}
+
+//=======================================================================
+//function : ModifyDeflection
+//purpose  : 
+//=======================================================================
+Standard_Boolean BRepMesh_FastDiscret::ModifyDeflection
+(
+  const TopoDS_Shape& aTarget,
+  const TopoDS_Face& face,
+  const Handle(BRepAdaptor_HSurface)& gFace,
+  const TopTools_IndexedDataMapOfShapeListOfShape& theAncestors,
+  const TopTools_SequenceOfShape& aShSeq,
+  const TColGeom2d_SequenceOfCurve& aCSeq,
+  const TColStd_SequenceOfReal& aFSeq,
+  const TColStd_SequenceOfReal& aLSeq,
+  const BRepMesh_BaseAllocator& anAlloc,
+  const Standard_Real factor,
+  const Standard_Real eps
+)
+{
+  //clear the structure of links
+  myStructure.Nullify();
+  myStructure = new BRepMesh_DataStructureOfDelaun(anAlloc);
+
+  myVemap.Clear();
+  myLocation2d.Clear();
+  myInternaledges.Clear();
+
+  for(TopExp_Explorer iter(aTarget, TopAbs_EDGE); iter.More(); iter.Next())
+  {
+    const TopoDS_Edge& edge = TopoDS::Edge(iter.Current());
+    if (myEdges.IsBound(edge))
+    {
+      myEdges.UnBind(edge);
+      myInternaledges.UnBind(edge);
+    }
+  }
+
+  Standard_Real defedge;
+  Standard_Boolean aEpsReached = Standard_True;
+  for(Standard_Integer i = 1; i <= aShSeq.Length(); ++i)
+  {
+    const TopoDS_Edge& edge = TopoDS::Edge(aShSeq.Value(i));
+    if (!myMapdefle.IsBound(edge) || myEdges.IsBound(edge)) continue;
+
+    defedge = myMapdefle(edge) * factor;
+    defedge = Max(defedge, eps);
+    myMapdefle.Bind(edge, defedge);
+    const Handle(Geom2d_Curve)& C = aCSeq.Value(i);
+    Add(edge, face, gFace, C, theAncestors, defedge, aFSeq.Value(i), aLSeq.Value(i));
+    if (defedge != eps)
+      aEpsReached = Standard_False;
+  }
+
+  return aEpsReached;
 }
 
 //=======================================================================
@@ -405,9 +477,26 @@ void BRepMesh_FastDiscret::Add(const TopoDS_Face& theface,
     }
   }
 
-  if (nbEdge == 0 || myVemap.Extent() < 3)
+  if (nbEdge == 0)
   {
-      MESH_FAILURE(theface);
+    MESH_FAILURE(theface);
+  }
+
+  if ( myVemap.Extent() < 3 ) {
+    TopTools_DataMapOfShapeReal mapdefle_copy;
+    mapdefle_copy.Assign(myMapdefle);
+    while ( myVemap.Extent() < 3 )
+    {
+      // we have not enough vertices to build a mesh
+      // it could be caused by the deflection
+      // try to adjust the deflection before throughing an error
+      if ( ModifyDeflection ( face, face, gFace, theAncestors, aShSeq, aCSeq, aFSeq, aLSeq, anAlloc, 0.5, Precision::Confusion() * 100) )
+      {
+        // Recover the initial deflection map in order to prevent the generating of the big number of triangles
+        myMapdefle.Assign(mapdefle_copy);
+        MESH_FAILURE(theface);
+      }
+    }
   }
 
   if (myRelative ) defface = defface / nbEdge;
@@ -500,46 +589,69 @@ void BRepMesh_FastDiscret::Add(const TopoDS_Face& theface,
     myFacestate = classifier->State();
     if (myFacestate == BRepMesh_SelfIntersectingWire)
     {
-      Standard_Integer nbmaill = 0;
-      Standard_Real eps = Precision::Confusion();
-      while (nbmaill < 5 && myFacestate != BRepMesh_ReMesh)
+      Standard_Boolean aEpsReached = Standard_False;
+
+      TopTools_DataMapOfShapeReal mapdefle_copy;
+      mapdefle_copy.Assign(myMapdefle);
+
+      while (!aEpsReached && classifier->State() != BRepMesh_NoError)
       {
-        nbmaill++;
-        
-        //clear the structure of links
-        myStructure.Nullify();
-        myStructure = new BRepMesh_DataStructureOfDelaun(anAlloc);
-        
-        myVemap.Clear();
-        myLocation2d.Clear();
-        myInternaledges.Clear();
 
-        Standard_Integer j1;
-        for(j1 = 1; j1 <= aShSeq.Length(); j1++)
-        {
-          const TopoDS_Edge& edge = TopoDS::Edge(aShSeq.Value(j1));
-          if (myEdges.IsBound(edge))
-          {
-            myEdges.UnBind(edge);
-            myInternaledges.UnBind(edge);
-          }
-        }
-        
-        
-        for( j1 = 1; j1 <= aShSeq.Length(); j1++)
-        {
-          const TopoDS_Edge& edge = TopoDS::Edge(aShSeq.Value(j1));
-          defedge = myMapdefle(edge) / 3.;
-          defedge = Max(defedge, eps);
-          myMapdefle.Bind(edge, defedge);
-          const Handle(Geom2d_Curve)& C = aCSeq.Value(j1);
-          Add(edge, face, gFace, C, theAncestors, defedge, aFSeq.Value(j1), aLSeq.Value(j1));
+        BRep_Builder B;
+        TopoDS_Face aTmpFace;
+        TopoDS_Shape aTarget;
+        for ( TopoDS_Iterator iter(face, Standard_False); iter.More(); iter.Next()) { 
+          if(iter.Value().ShapeType() != TopAbs_WIRE) continue;
+          aTmpFace = TopoDS::Face( face.EmptyCopied() );
+          aTmpFace.Orientation(TopAbs_FORWARD);
+          aTarget = TopoDS::Wire(iter.Value());
+          B.Add(aTmpFace, aTarget);
+
+          classifier.Nullify();
+          classifier = new BRepMesh_Classifier(aTmpFace, tolclass, myInternaledges, myVemap,
+            myStructure, myumin, myumax, myvmin, myvmax);
+          if (classifier->State() == BRepMesh_SelfIntersectingWire)
+            break;
         }
 
-        classifier.Nullify();
+        if (classifier->State() == BRepMesh_NoError)
+        {
+          // No self-intersecting wires found
+          // This means, that the wires intersect one another
+          // We should modify deflection for the whole face
+          aTarget  = face;
+          aTmpFace = face;
+        }
 
-        classifier = new BRepMesh_Classifier(face, tolclass, myInternaledges, myVemap,
-                                             myStructure, myumin, myumax, myvmin, myvmax);
+        // Ok, now aTarget contains the wire making our problems
+        do
+        {
+          aEpsReached = ModifyDeflection ( aTarget, face, gFace, theAncestors, aShSeq, aCSeq, aFSeq, aLSeq, anAlloc, 0.5, Precision::Confusion() * 100);
+          if ( aEpsReached )
+            break;
+
+          classifier.Nullify();
+          classifier = new BRepMesh_Classifier(aTmpFace, tolclass, myInternaledges, myVemap,
+            myStructure, myumin, myumax, myvmin, myvmax);
+
+          //myStructure->SerializeTo("a", "E:\\test.txt");
+        } while (classifier->State() != BRepMesh_NoError);
+
+        if (classifier->State() != BRepMesh_NoError)
+        {
+          // Recover the initial deflection map in order to prevent the generating of the big number of triangles
+          myMapdefle.Assign( mapdefle_copy );
+          break;
+        }
+
+        if (aTmpFace != face){
+          //clear the structure of links
+          ModifyDeflection ( face, face, gFace, theAncestors, aShSeq, aCSeq, aFSeq, aLSeq, anAlloc, 1.0, Precision::Confusion() * 100);
+
+          classifier.Nullify();
+          classifier = new BRepMesh_Classifier(face, tolclass, myInternaledges, myVemap,
+            myStructure, myumin, myumax, myvmin, myvmax);
+        }
 
         if (classifier->State() == BRepMesh_NoError)
         {

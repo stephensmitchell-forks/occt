@@ -42,7 +42,9 @@ uses    Standard,
         GeomAdaptor,
         TopLoc,
         SortTools,
-        Plugin
+        Plugin,
+        TColGeom2d,
+        Message
 
 
 is    enumeration DegreeOfFreedom is 

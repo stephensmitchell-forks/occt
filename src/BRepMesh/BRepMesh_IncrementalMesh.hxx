@@ -24,6 +24,7 @@
 #include <Bnd_Box.hxx>
 #include <BRepMesh_DiscretRoot.hxx>
 #include <BRepMesh_PDiscretRoot.hxx>
+#include <Message_ProgressIndicator.hxx>
 
 #include <vector>
 
@@ -52,7 +53,8 @@ public:
                                            const Standard_Real    theLinDeflection,
                                            const Standard_Boolean isRelative       = Standard_False,
                                            const Standard_Real    theAngDeflection = 0.5,
-                                           const Standard_Boolean isInParallel     = Standard_False);
+                                           const Standard_Boolean isInParallel     = Standard_False,
+                                           const Handle_Message_ProgressIndicator & Progress = 0);
   
   Standard_EXPORT void SetRelative(const Standard_Boolean theFlag);
   
@@ -110,6 +112,7 @@ protected:
   Bnd_Box                                   myBox;
   Standard_Integer                          myStatus;
   std::vector<TopoDS_Face>                  myFaces;
+  Handle_Message_ProgressIndicator          myProgress;
 
 private:
   //! Checks is the shape to be meshed has correct poly data, <br>

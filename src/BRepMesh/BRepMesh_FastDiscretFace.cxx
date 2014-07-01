@@ -29,6 +29,7 @@
 #include <BRep_PointRepresentation.hxx>
 #include <BRep_TVertex.hxx>
 #include <BRep_Tool.hxx>
+#include <BRepTools.hxx>
 #include <Geom_Surface.hxx>
 #include <ElSLib.hxx>
 #include <Standard_ErrorHandler.hxx>
@@ -50,7 +51,7 @@
 #include <GeomLib.hxx>
 #include <Bnd_Box2d.hxx>
 
-#define UVDEFLECTION 1.e-05
+#define UVDEFLECTION 1.e-06
 
 static Standard_Real FUN_CalcAverageDUV(TColStd_Array1OfReal& P, const Standard_Integer PLen)
 {
@@ -89,9 +90,10 @@ static Standard_Real FUN_CalcAverageDUV(TColStd_Array1OfReal& P, const Standard_
 //=======================================================================
 BRepMesh_FastDiscretFace::BRepMesh_FastDiscretFace
                           (const Standard_Real     theAngle,
-                           const Standard_Boolean  theWithShare) : 
+                           const Standard_Boolean  theWithShare,
+                           const Handle_Message_ProgressIndicator & theProgress) : 
   myAngle(theAngle), myWithShare(theWithShare), myNbLocat(0), 
-  myInternalVerticesMode(Standard_True)
+  myInternalVerticesMode(Standard_True), myProgress(theProgress)
 {
   myAllocator = new NCollection_IncAllocator(64000);
 }
@@ -157,11 +159,22 @@ void BRepMesh_FastDiscretFace::Add(const TopoDS_Face&                    theFace
 
     Standard_Integer i = 1;
     Standard_Integer ipn = 0;
- 
+    
+    const TopoDS_Wire & aOuterWire = BRepTools::OuterWire( face );
+    {
+      TopoDS_Iterator ex(aOuterWire);
+      for(; ex.More(); ex.Next()) {
+        const TopoDS_Edge& edge = TopoDS::Edge(ex.Value());
+        if(edge.IsNull())
+          continue;
+        RestoreStructureFromTriangulation(edge, face, gFace, aFaceTrigu, theMapDefle(edge), loc, theMutexProvider);
+      }
+    }
+
     TopoDS_Iterator exW(face);
     for (; exW.More(); exW.Next()) {
       const TopoDS_Shape& aWire = exW.Value();
-      if (aWire.ShapeType() != TopAbs_WIRE)
+      if (aWire.ShapeType() != TopAbs_WIRE || aWire.IsEqual(aOuterWire))
         continue;
       TopoDS_Iterator ex(aWire);
       for(; ex.More(); ex.Next()) {
@@ -241,16 +254,21 @@ void BRepMesh_FastDiscretFace::Add(const TopoDS_Face&                    theFace
       rajout = Standard_False;
     }  
 
-    BRepMesh_Delaun trigu(myStructure, tabvert_corr, orFace==TopAbs_FORWARD);
+    BRepMesh_Delaun trigu(myStructure, tabvert_corr, orFace==TopAbs_FORWARD, myProgress);
+
+    if (!myProgress.IsNull() && myProgress->UserBreak())
+      return;
     
     //removed all free edges from triangulation
     Standard_Integer nbLinks = myStructure->NbLinks();
-    for( i = 1; i <= nbLinks; i++ ) 
+    for( i = 1; i <= nbLinks; ++i ) 
     {
       if( myStructure->ElemConnectedTo(i).Extent() < 1 )
       {
         BRepMesh_Edge& anEdge = (BRepMesh_Edge&)trigu.GetEdge(i);
-        if ( anEdge.Movability() == BRepMesh_Deleted )
+        if(anEdge.Movability()==BRepMesh_Deleted)
+          continue;
+        if(anEdge.Movability()==BRepMesh_Frontier)
           continue;
 
         anEdge.SetMovability(BRepMesh_Free);
@@ -287,6 +305,9 @@ void BRepMesh_FastDiscretFace::Add(const TopoDS_Face&                    theFace
         }
       }
 
+      if (!myProgress.IsNull() && myProgress->UserBreak())
+      return;
+
       if(rajout){
         InternalVertices(gFace, myListver, theAttrib->GetDefFace(), classifier);
         
@@ -298,12 +319,19 @@ void BRepMesh_FastDiscretFace::Add(const TopoDS_Face&                    theFace
             verttab(ipn++) = itVer.Value();
           trigu.AddVertices(verttab);
         }
+
+        if (!myProgress.IsNull() && myProgress->UserBreak())
+          return;
+
         //control internal points
         BRepMesh_ListOfVertex vvlist;
         aDef = Control(gFace, theAttrib->GetDefFace(), vvlist, badTri, nulTri, trigu, Standard_False);
         myListver.Append(vvlist);
       }
     }
+
+    if (!myProgress.IsNull() && myProgress->UserBreak())
+      return;
 
     //modify myStructure back
     aMoveNodes.SetCellSize ( uCellSize, vCellSize );

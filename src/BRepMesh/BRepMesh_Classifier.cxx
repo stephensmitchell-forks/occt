@@ -54,9 +54,38 @@
 static const Standard_Real PARALL_COND = Sin(M_PI/3.0);
 static const Standard_Real RESOLUTION = 1.0E-16;
 
-// Real mesh is created in the grid 10E5x10E5, so intersection
+// Real mesh is created in the grid 10E6x10E6, so intersection
 // should be cheched with double of discretization.
-static const Standard_Real MIN_DIST = 2.E-5;
+static const Standard_Real MIN_DIST = Precision::PConfusion();
+
+//=======================================================================
+//function : IsLine
+//purpose  : 
+//=======================================================================
+static Standard_Boolean IsLine(const Handle(Geom2d_Curve)& theCurve2d)
+{
+  Standard_Boolean IsALine = Standard_False;
+  if ( theCurve2d->IsKind( STANDARD_TYPE(Geom2d_Line) ) )
+  {
+    IsALine = Standard_True;
+  }
+  else if ( theCurve2d->IsKind( STANDARD_TYPE(Geom2d_BSplineCurve) ) )
+  {
+    Handle(Geom2d_BSplineCurve) aBSpline = *((Handle(Geom2d_BSplineCurve)*)&theCurve2d);
+    IsALine = (aBSpline->NbPoles() == 2);
+  }
+  else if ( theCurve2d->IsKind( STANDARD_TYPE(Geom2d_BezierCurve) ) )
+  {
+    Handle(Geom2d_BezierCurve) aBezier = *((Handle(Geom2d_BezierCurve)*)&theCurve2d);
+    IsALine = (aBezier->NbPoles() == 2);
+  }
+  else if ( theCurve2d->IsKind( STANDARD_TYPE(Geom2d_TrimmedCurve) ) )
+  {
+    Handle(Geom2d_TrimmedCurve) aTrimmedCurve = *((Handle(Geom2d_TrimmedCurve)*)&theCurve2d);
+    IsALine = IsLine(aTrimmedCurve->BasisCurve());
+  }
+  return IsALine;
+}
 
 //=======================================================================
 //function : AnalizeWire
@@ -315,7 +344,7 @@ static Standard_Boolean checkWiresIntersection(const Standard_Integer           
           }
 
           if ( checkWiresIntersection(theFirstWireId, theSecondWireId, &ik, ikEnd, theWireLength,
-                           theBiPoints, Standard_True, isFirst, &jk) )
+                           theBiPoints, Standard_True, /*isFirst*/ Standard_True, &jk) )
           {
             // small crossing is not intersection, continue cheching
             aLoopArea = aTmpArea = 0.0;
@@ -371,6 +400,7 @@ BRepMesh_Classifier::BRepMesh_Classifier(const TopoDS_Face& theFace,
   
   TColgp_SequenceOfPnt2d    aWirePoints, aWire;
   TColStd_SequenceOfInteger aWireLength;
+  Standard_Real             aFaceArea = 0.;
 
   TopoDS_Iterator aFaceExplorer;
   for(aFaceExplorer.Initialize(myFace); aFaceExplorer.More(); aFaceExplorer.Next())
@@ -462,6 +492,11 @@ BRepMesh_Classifier::BRepMesh_Classifier(const TopoDS_Face& theFace,
 
           gp_Pnt2d aPnt( theStructure->GetNode(anIndex).Coord() );
           aSeqPnt2d.Append(aPnt);
+
+          if (aSeqPnt2d.Length() > 1)
+          {
+            aFaceArea += aSeqPnt2d(aSeqPnt2d.Length() - 1).Coord() ^ aPnt.Coord();
+          }
         }
 
         // Now, is there a loop?
@@ -472,6 +507,9 @@ BRepMesh_Classifier::BRepMesh_Classifier(const TopoDS_Face& theFace,
           const Standard_Integer aIdxWireStart = aNodeInSeq(anIndexLast);
           if(aIdxWireStart < aSeqPnt2d.Length())
           {
+            // Before splitting calculate the area
+            aFaceArea += aSeqPnt2d(aSeqPnt2d.Length()).Coord() ^ aSeqPnt2d(aIdxWireStart).Coord();
+
             aSeqPnt2d.Split(aIdxWireStart, aWire);
             // 2. Proceed the loop
             //AnalizeWire(aLoop, Umin, Umax, Vmin, Vmax, aWirePoints, aWireLength, NbBiPoint);
@@ -492,6 +530,13 @@ BRepMesh_Classifier::BRepMesh_Classifier(const TopoDS_Face& theFace,
         return;
       }
     }
+  }
+
+  if (Abs(aFaceArea) < myTolUV)
+  {
+    // the face is just empty - nothing to mesh
+    myState = BRepMesh_Failure;
+    return;
   }
 
   const Standard_Integer aNbWires = aWireLength.Length();

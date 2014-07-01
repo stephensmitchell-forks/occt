@@ -63,8 +63,13 @@ uses    Boolean                   from Standard,
         DataMapOfFaceAttribute    from BRepMesh,
         IndexedDataMapOfShapeListOfShape from TopTools,
         MutexForShapeProvider     from TopTools,
-        ShapeEnum                 from TopAbs
-
+        SequenceOfShape           from TopTools,
+        SequenceOfCurve           from TColGeom2d,
+        ShapeEnum                 from TopAbs,
+        SequenceOfReal            from TColStd,
+        ProgressIndicator         from Message,
+        Mutex                     from Standard
+        
 is
 
         Create (defle     : Real    from Standard;
@@ -73,7 +78,8 @@ is
                 withShare : Boolean from Standard=Standard_True;
                 inshape   : Boolean from Standard=Standard_False;
                 relative  : Boolean from Standard=Standard_False;
-                shapetrigu: Boolean from Standard=Standard_False)
+                shapetrigu: Boolean from Standard=Standard_False;
+                theProgress : ProgressIndicator from Message = 0)
           returns FastDiscret from BRepMesh;
 
 
@@ -84,7 +90,8 @@ is
                 withShare : Boolean from Standard=Standard_True;
                 inshape   : Boolean from Standard=Standard_False;
                 relative  : Boolean from Standard=Standard_False;
-                shapetrigu: Boolean from Standard=Standard_False)
+                shapetrigu: Boolean from Standard=Standard_False;
+                theProgress : ProgressIndicator from Message = 0)
            ---Purpose: if the  boolean    <relative>   is  True,    the
            --          deflection used   for the polygonalisation   of
            --          each edge will be <defle> * Size of Edge.
@@ -177,6 +184,20 @@ is
                    face   : Face from TopoDS;
                    defedge: Real from Standard)
         is static private;
+
+        ModifyDeflection(me           : mutable;
+                         aTarget      : Shape                             from TopoDS;
+                         face         : Face                              from TopoDS;
+                         gFace        : HSurface                          from BRepAdaptor;
+                         theAncestors : IndexedDataMapOfShapeListOfShape  from TopTools;
+                         aShSeq       : SequenceOfShape                   from TopTools;
+                         aCSeq        : SequenceOfCurve                   from TColGeom2d;
+                         aFSeq        : SequenceOfReal                    from TColStd;
+                         aLSeq        : SequenceOfReal                    from TColStd;
+                         anAlloc      : BaseAllocator                     from BRepMesh;
+                         factor       : Real                              from Standard;
+                         eps          : Real                              from Standard)
+          returns Boolean from Standard is static private;
 
         SetParallel (           me : mutable;
                      theInParallel : Boolean from Standard);
@@ -345,5 +366,7 @@ fields
       myNottriangulated : ListOfShape                from TopTools;
       myAllocator    : BaseAllocator                 from BRepMesh;
       myMutexProvider: MutexForShapeProvider         from TopTools;
+      myProgress     : ProgressIndicator             from Message;
+      myMutex        : Mutex                         from Standard;
 
 end FastDiscret;

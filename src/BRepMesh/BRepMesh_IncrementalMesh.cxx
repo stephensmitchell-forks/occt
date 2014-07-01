@@ -100,7 +100,8 @@ Standard_Boolean BRepMesh_IncrementalMesh::isCorrectPolyData()
 //=======================================================================
 BRepMesh_IncrementalMesh::BRepMesh_IncrementalMesh() 
 : myRelative (Standard_False),
-  myInParallel (Standard_False)
+  myInParallel (Standard_False),
+  myProgress (0)
 {
   Init();
 }
@@ -113,9 +114,11 @@ BRepMesh_IncrementalMesh::BRepMesh_IncrementalMesh (const TopoDS_Shape& theShape
                                                     const Standard_Real theDeflection,
                                                     const Standard_Boolean theRelative,
                                                     const Standard_Real theAngle,
-                                                    const Standard_Boolean theInParallel)
+                                                    const Standard_Boolean theInParallel,
+                                                    const Handle_Message_ProgressIndicator& theProgress)
 : myRelative (theRelative),
-  myInParallel (theInParallel)
+  myInParallel (theInParallel),
+  myProgress (theProgress)
 {
   Init();
   myDeflection = theDeflection;
@@ -220,7 +223,8 @@ void BRepMesh_IncrementalMesh::Perform()
 				    Standard_True,
 				    Standard_True,
 				    myRelative,
-				    Standard_True);
+				    Standard_True,
+            myProgress);
   //
   Update(myShape);
 }
@@ -293,6 +297,11 @@ void BRepMesh_IncrementalMesh::Update(const TopoDS_Shape& S)
   for (; aFaceIt != myFaces.end(); aFaceIt++)
     Update(*aFaceIt);
 
+  if (!myProgress.IsNull())
+  {
+    myProgress->SetScale(0., (Standard_Real)myFaces.size(), 1.);
+  }
+
   if (myInParallel)
   {
   #ifdef HAVE_TBB
@@ -302,15 +311,22 @@ void BRepMesh_IncrementalMesh::Update(const TopoDS_Shape& S)
   #else
     // alternative parallelization not yet available
     for (std::vector<TopoDS_Face>::iterator it(myFaces.begin()); it != myFaces.end(); it++)
+    {
       myMesh->Process (*it);
+    }
   #endif
     myMesh->RemoveAllMutexes();
   }
   else
   {
     for (std::vector<TopoDS_Face>::iterator it(myFaces.begin()); it != myFaces.end(); it++)
+    {
       myMesh->Process (*it);
+    }
   }
+
+  if (!myProgress.IsNull() && myProgress->UserBreak())
+    return;
 
   // maillage des edges non contenues dans les faces :
   Standard_Real f, l, defedge;

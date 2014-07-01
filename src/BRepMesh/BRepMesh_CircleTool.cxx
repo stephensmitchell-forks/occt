@@ -30,7 +30,7 @@
 BRepMesh_CircleInspector::BRepMesh_CircleInspector (Standard_Real theTol,
                                                     Standard_Integer nbComp,
                                                     const BRepMesh_BaseAllocator& theAlloc)
-                                                    : myTol(theTol*theTol),
+                                                    : myTol(theTol),
                                                     myResInd(theAlloc),
                                                     myInitCircle(nbComp)
 {
@@ -229,7 +229,15 @@ Standard_Boolean BRepMesh_CircleTool::Add(const gp_XY& p1,
   gp_XY pInt = pl11+pl12*theParam1;
   dx=p1.X()-pInt.X();
   dy=p1.Y()-pInt.Y();
-  Standard_Real R = Sqrt(dx*dx+dy*dy);
+  Standard_Real R1 = Sqrt(dx*dx+dy*dy);
+  dx=p2.X()-pInt.X();
+  dy=p2.Y()-pInt.Y();
+  Standard_Real R2 = Sqrt(dx*dx+dy*dy);
+  dx=p3.X()-pInt.X();
+  dy=p3.Y()-pInt.Y();
+  Standard_Real R3 = Sqrt(dx*dx+dy*dy);
+  Standard_Real R = Max(R1,R2);
+  R = Max(R,R3) + Precision::PConfusion();
   BRepMesh_Circ aCir(pInt, R);
 
   //compute coords

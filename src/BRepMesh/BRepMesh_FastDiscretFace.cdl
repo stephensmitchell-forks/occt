@@ -48,12 +48,14 @@ uses    Boolean                   from Standard,
         IndexedMapOfReal          from TColStd,
         DataMapOfShapePairOfPolygon from  BRepMesh,
         Triangulation             from Poly,
-        Location                  from TopLoc
+        Location                  from TopLoc,
+        ProgressIndicator         from Message
 
 is 
 
         Create (theAngle      : Real    from Standard;
-                theWithShare  : Boolean from Standard=Standard_True)
+                theWithShare  : Boolean from Standard=Standard_True;
+                theProgress : ProgressIndicator from Message = 0)
           returns FastDiscretFace from BRepMesh;
 
 
@@ -166,5 +168,6 @@ fields
         myUParam        : IndexedMapOfReal              from TColStd;
         myVParam        : IndexedMapOfReal              from TColStd;
         myAllocator     : BaseAllocator                 from BRepMesh;
+        myProgress      : ProgressIndicator             from Message;
  
 end FastDiscretFace;
