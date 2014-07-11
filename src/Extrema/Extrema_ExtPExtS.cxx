@@ -204,14 +204,14 @@ void Extrema_ExtPExtS::Initialize(const Adaptor3d_SurfaceOfLinearExtrusion& S,
   myPosition = GetPosition(myC);
   myDirection = S.Direction();
   myIsAnalyticallyComputable = //Standard_False;
-    IsCaseAnalyticallyComputable (myC->GetType(),myPosition,myDirection);
+    IsCaseAnalyticallyComputable (myC->GetType(), myPosition, myDirection);
   
   if (!myIsAnalyticallyComputable)
     
     myExtPS.Initialize(S, 32, 32,
 		       Uinf, Usup, Vinf, Vsup,
 		       TolU, TolV);
-}
+  }
 
 
 //=======================================================================
@@ -258,7 +258,7 @@ void Extrema_ExtPExtS::Perform (const gp_Pnt& P)
     Extrema_POnCurv POC=anExt.Point(i);
     U = POC.Parameter();
     //// modified by jgv, 23.12.2008 for OCC17194 ////
-    if (myC->IsPeriodic())
+    if (myC->IsPeriodic() || (myC->GetType() == GeomAbs_Circle) || (myC->GetType() == GeomAbs_Ellipse))
     {
       Standard_Real U2 = U;
       ElCLib::AdjustPeriodic(myuinf, myuinf + 2.*M_PI, Precision::PConfusion(), U, U2);
