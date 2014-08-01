@@ -26,32 +26,39 @@
 #include <BRepMesh_Collections.hxx>
 #include <BRepMesh_DataStructureOfDelaun.hxx>
 #include <BRepMesh_GeomTool.hxx>
+#include <BRepMesh_ProgressRoot.hxx>
+#include <Handle_Message_ProgressIndicator.hxx>
 
 class Bnd_B2d;
 class Bnd_Box2d;
 class BRepMesh_Array1OfVertexOfDelaun;
 class BRepMesh_Vertex;
+class Message_ProgressIndicator;
 
 //! Compute the Delaunay's triangulation with the algorithm of Watson.
-class BRepMesh_Delaun
+class BRepMesh_Delaun : public BRepMesh_ProgressRoot
 {
 public:
 
-  DEFINE_STANDARD_ALLOC
-
   //! Creates the triangulation with an empty Mesh data structure.
-  Standard_EXPORT BRepMesh_Delaun (BRepMeshCol::Array1OfVertexOfDelaun& theVertices,
-                                   const Standard_Boolean               isPositive = Standard_True);
+  Standard_EXPORT BRepMesh_Delaun(
+    BRepMeshCol::Array1OfVertexOfDelaun&      theVertices,
+    const Standard_Boolean                    isPositive  = Standard_True,
+    const Handle(BRepMesh_ProgressIndicator)& theProgress = NULL);
 
   //! Creates the triangulation with an existent Mesh data structure.
-  Standard_EXPORT BRepMesh_Delaun (const Handle(BRepMesh_DataStructureOfDelaun)& theOldMesh,
-                                   BRepMeshCol::Array1OfVertexOfDelaun&          theVertices,
-                                   const Standard_Boolean                        isPositive = Standard_True);
+  Standard_EXPORT BRepMesh_Delaun(
+    const Handle(BRepMesh_DataStructureOfDelaun)& theOldMesh,
+    BRepMeshCol::Array1OfVertexOfDelaun&          theVertices,
+    const Standard_Boolean                        isPositive  = Standard_True,
+    const Handle(BRepMesh_ProgressIndicator)&     theProgress = NULL);
 
-  //! Creates the triangulation with an existant Mesh data structure.
-  Standard_EXPORT BRepMesh_Delaun (const Handle(BRepMesh_DataStructureOfDelaun)& theOldMesh,
-                                   BRepMeshCol::Array1OfInteger&                 theVertexIndices,
-                                   const Standard_Boolean                        isPositive = Standard_True);
+  //! Creates the triangulation with an existent Mesh data structure.
+  Standard_EXPORT BRepMesh_Delaun(
+    const Handle(BRepMesh_DataStructureOfDelaun)& theOldMesh,
+    BRepMeshCol::Array1OfInteger&                 theVertexIndices,
+    const Standard_Boolean                        isPositive  = Standard_True,
+    const Handle(BRepMesh_ProgressIndicator)&     theProgress = NULL);
 
   //! Initializes the triangulation with an array of vertices.
   Standard_EXPORT void Init (BRepMeshCol::Array1OfVertexOfDelaun& theVertices);
@@ -114,6 +121,8 @@ public:
   Standard_EXPORT Standard_Boolean Contains (const Standard_Integer theTriangleId,
                                              const BRepMesh_Vertex& theVertex,
                                              Standard_Integer&      theEdgeOn) const;
+
+  DEFINE_STANDARD_RTTI(BRepMesh_Delaun)
 
 private:
 
@@ -313,5 +322,7 @@ private:
   BRepMesh_Triangle                      mySupTrian;
 
 };
+
+DEFINE_STANDARD_HANDLE(BRepMesh_Delaun, BRepMesh_ProgressRoot)
 
 #endif

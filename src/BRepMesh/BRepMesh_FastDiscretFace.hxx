@@ -20,12 +20,13 @@
 #include <BRepMesh_DataStructureOfDelaun.hxx>
 #include <BRepMesh_Collections.hxx>
 #include <BRepMesh_FaceAttribute.hxx>
-#include <Standard_Transient.hxx>
+#include <BRepMesh_ProgressRoot.hxx>
 #include <TopTools_MutexForShapeProvider.hxx>
 #include <Handle_BRepAdaptor_HSurface.hxx>
 #include <Handle_Poly_Triangulation.hxx>
 #include <BRepMesh_Delaun.hxx>
 #include <BRepMesh_Triangle.hxx>
+#include <Handle_Message_ProgressIndicator.hxx>
 
 class BRepMesh_DataStructureOfDelaun;
 class BRepMesh_FaceAttribute;
@@ -41,16 +42,19 @@ class gp_Pnt2d;
 class BRepMesh_Edge;
 class BRepMesh_Vertex;
 class gp_Pnt;
+class Message_ProgressIndicator;
 
 //! Algorithm to mesh a face with respect of the frontier 
 //! the deflection and by option the shared components. <br>
-class BRepMesh_FastDiscretFace : public Standard_Transient 
+class BRepMesh_FastDiscretFace : public BRepMesh_ProgressRoot
 {
 public:
 
   
-  Standard_EXPORT BRepMesh_FastDiscretFace(const Standard_Real theAngle,
-                                           const Standard_Boolean theWithShare = Standard_True);
+  Standard_EXPORT BRepMesh_FastDiscretFace(
+    const Standard_Real                       theAngle,
+    const Standard_Boolean                    theWithShare = Standard_True,
+    const Handle(BRepMesh_ProgressIndicator)& theProgress  = NULL);
   
   Standard_EXPORT void Add(const TopoDS_Face& theFace,
                            const Handle(BRepMesh_FaceAttribute)& theAttrib,
@@ -122,6 +126,6 @@ private:
   BRepMeshCol::Allocator                    myAllocator;
 };
 
-DEFINE_STANDARD_HANDLE (BRepMesh_FastDiscretFace, Standard_Transient)
+DEFINE_STANDARD_HANDLE(BRepMesh_FastDiscretFace, BRepMesh_ProgressRoot)
 
 #endif

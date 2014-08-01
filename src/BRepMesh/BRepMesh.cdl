@@ -52,6 +52,7 @@ is
       imported Edge from BRepMesh;
       imported Triangle from BRepMesh;
       imported Circle from BRepMesh;
+      imported ProgressRoot from BRepMesh;
       imported DiscretRoot from BRepMesh; 
       imported DiscretFactory from BRepMesh;
       --

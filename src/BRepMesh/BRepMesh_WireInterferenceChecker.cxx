@@ -16,9 +16,13 @@
 #include <BRepMesh_WireInterferenceChecker.hxx>
 #include <BRepMesh_GeomTool.hxx>
 #include <Precision.hxx>
+#include <Message_ProgressIndicator.hxx>
 
 // TODO: remove this variable after implementation of LoopChecker2d.
 static const Standard_Real MIN_LOOP_S = 2 * M_PI * 2.E-5;
+
+IMPLEMENT_STANDARD_HANDLE (BRepMesh_WireInterferenceChecker, BRepMesh_ProgressRoot)
+IMPLEMENT_STANDARD_RTTIEXT(BRepMesh_WireInterferenceChecker, BRepMesh_ProgressRoot)
 
 #ifdef HAVE_TBB
 //=======================================================================
@@ -28,11 +32,13 @@ static const Standard_Real MIN_LOOP_S = 2 * M_PI * 2.E-5;
 BRepMesh_WireInterferenceChecker::BRepMesh_WireInterferenceChecker(
   const std::vector<BRepMeshCol::SegmentsTree>& theWires,
   BRepMesh_Status*                              theStatus,
-  Standard_Mutex*                               theMutex)
-: myWires   (&theWires.front()),
-  myWiresNb ((Standard_Integer)theWires.size()),
-  myStatus  (theStatus),
-  myMutex   (theMutex)
+  Standard_Mutex*                               theMutex,
+  const Handle(BRepMesh_ProgressIndicator)&     theProgress)
+  : BRepMesh_ProgressRoot(theProgress),
+    myWires   (&theWires.front()),
+    myWiresNb ((Standard_Integer)theWires.size()),
+    myStatus  (theStatus),
+    myMutex   (theMutex)
 {
 }
 
@@ -53,10 +59,12 @@ void BRepMesh_WireInterferenceChecker::operator ()(
 //=======================================================================
 BRepMesh_WireInterferenceChecker::BRepMesh_WireInterferenceChecker(
   const std::vector<BRepMeshCol::SegmentsTree>& theWires,
-  BRepMesh_Status*                              theStatus)
-: myWires   (&theWires.front()),
-  myWiresNb ((Standard_Integer)theWires.size()),
-  myStatus  (theStatus)
+  BRepMesh_Status*                              theStatus,
+  const Handle(BRepMesh_ProgressIndicator)&     theProgress)
+  : BRepMesh_ProgressRoot(theProgress),
+    myWires   (&theWires.front()),
+    myWiresNb ((Standard_Integer)theWires.size()),
+    myStatus  (theStatus)
 {
 }
 #endif
@@ -68,6 +76,8 @@ BRepMesh_WireInterferenceChecker::BRepMesh_WireInterferenceChecker(
 void BRepMesh_WireInterferenceChecker::operator ()(
   const Standard_Integer& theWireId) const
 {
+  ProgressIndicator()->UserBreak();
+
   if (*myStatus == BRepMesh_SelfIntersectingWire)
     return;
 
@@ -94,6 +104,8 @@ void BRepMesh_WireInterferenceChecker::operator ()(
     BRepMesh_WireChecker::BndBox2dTreeSelector aSelector ((Standard_Integer)aWireSegTree2.first->size());
     for (Standard_Integer aSegmentId1 = 0; aSegmentId1 < aWireLen1; ++aSegmentId1)
     {
+      ProgressIndicator()->UserBreak();
+
 #ifdef HAVE_TBB
       // Break execution in case if flag was raised by another thread
       if (*myStatus == BRepMesh_SelfIntersectingWire)
@@ -113,6 +125,8 @@ void BRepMesh_WireInterferenceChecker::operator ()(
       const Standard_Integer aSelectedNb = aSelector.IndicesNb();
       for (Standard_Integer aBndIt = 0; aBndIt < aSelectedNb; ++aBndIt)
       {
+        ProgressIndicator()->UserBreak();
+
 #ifdef HAVE_TBB
         // Break execution in case if flag was raised by another thread
         if (*myStatus == BRepMesh_SelfIntersectingWire)

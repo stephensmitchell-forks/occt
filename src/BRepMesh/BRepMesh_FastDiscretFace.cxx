@@ -56,10 +56,12 @@
 #include <NCollection_Map.hxx>
 #include <Bnd_Box2d.hxx>
 
+#include <Message_ProgressIndicator.hxx>
+
 #define UVDEFLECTION 1.e-05
 
-IMPLEMENT_STANDARD_HANDLE (BRepMesh_FastDiscretFace, Standard_Transient)
-IMPLEMENT_STANDARD_RTTIEXT(BRepMesh_FastDiscretFace, Standard_Transient)
+IMPLEMENT_STANDARD_HANDLE (BRepMesh_FastDiscretFace, BRepMesh_ProgressRoot)
+IMPLEMENT_STANDARD_RTTIEXT(BRepMesh_FastDiscretFace, BRepMesh_ProgressRoot)
 
 static Standard_Real FUN_CalcAverageDUV(TColStd_Array1OfReal& P, const Standard_Integer PLen)
 {
@@ -96,11 +98,15 @@ static Standard_Real FUN_CalcAverageDUV(TColStd_Array1OfReal& P, const Standard_
 //function : BRepMesh_FastDiscretFace
 //purpose  : 
 //=======================================================================
-BRepMesh_FastDiscretFace::BRepMesh_FastDiscretFace
-                          (const Standard_Real     theAngle,
-                           const Standard_Boolean  theWithShare) : 
-  myAngle(theAngle), myWithShare(theWithShare), myNbLocat(0), 
-  myInternalVerticesMode(Standard_True)
+BRepMesh_FastDiscretFace::BRepMesh_FastDiscretFace(
+  const Standard_Real                       theAngle,
+  const Standard_Boolean                    theWithShare,
+  const Handle(BRepMesh_ProgressIndicator)& theProgress)
+  : BRepMesh_ProgressRoot(theProgress),
+    myAngle(theAngle), 
+    myWithShare(theWithShare), 
+    myNbLocat(0), 
+    myInternalVerticesMode(Standard_True)
 {
   myAllocator = new NCollection_IncAllocator(64000);
 }
@@ -115,11 +121,12 @@ void BRepMesh_FastDiscretFace::Add(const TopoDS_Face&                    theFace
                                    const TopTools_DataMapOfShapeReal&    theMapDefle,
                                    const TopTools_MutexForShapeProvider& theMutexProvider)
 {
-#ifndef DEB_MESH
+  ProgressIndicator()->UserBreak();
+
   try
   {
     OCC_CATCH_SIGNALS
-#endif
+
     TopoDS_Face face = theFace;
     TopLoc_Location loc;
 
@@ -251,7 +258,10 @@ void BRepMesh_FastDiscretFace::Add(const TopoDS_Face&                    theFace
       rajout = Standard_False;
     }  
 
-    BRepMesh_Delaun trigu(myStructure, tabvert_corr, orFace==TopAbs_FORWARD);
+    BRepMesh_Delaun trigu(myStructure, tabvert_corr, orFace==TopAbs_FORWARD,
+      ProgressIndicator());
+
+    ProgressIndicator()->UserBreak();
     
     //removed all free edges from triangulation
     Standard_Integer nbLinks = myStructure->NbLinks();
@@ -331,13 +341,16 @@ void BRepMesh_FastDiscretFace::Add(const TopoDS_Face&                    theFace
     myStructure->ReplaceNodes(aMoveNodes);
   
     AddInShape(face, (aDef < 0.0)? theAttrib->GetDefFace() : aDef, theMutexProvider);
-#ifndef DEB_MESH
+  }
+  catch (BRepMesh_UserBreak)
+  {
+    Raise_BRepMesh_UserBreak();
   }
   catch(Standard_Failure)
   {
     BRepMesh_ShapeTool::NullifyFace(theFace);
   }
-#endif // DEB_MESH
+
   myStructure.Nullify();
   myAttrib.Nullify();
 }
@@ -648,6 +661,8 @@ void BRepMesh_FastDiscretFace::InternalVertices(const Handle(BRepAdaptor_HSurfac
                                                 const Standard_Real                 theDefFace,
                                                 const BRepMeshCol::HClassifier&       theClassifier)
 {
+  ProgressIndicator()->UserBreak();
+
   BRepMesh_Vertex newV;
   gp_Pnt2d p2d;
   gp_Pnt p3d;
@@ -695,12 +710,11 @@ void BRepMesh_FastDiscretFace::InternalVertices(const Handle(BRepAdaptor_HSurfac
       const Standard_Real pasumax = umax-Du*0.5 + d;
       for (pasu = umin + Du - d; pasu < pasumax; pasu += Du)
       {
+        ProgressIndicator()->UserBreak();
+
         if (theClassifier->Perform(gp_Pnt2d(pasu, pasv)) == TopAbs_IN)
         {
           // Record 3d point
-#ifdef DEB_MESH_CHRONO
-          D0Internal++;
-#endif
           ElSLib::D0(pasu, pasv, S, p3d);
           myNbLocat++;
           myLocation3d.Bind(myNbLocat, p3d);
@@ -733,8 +747,12 @@ void BRepMesh_FastDiscretFace::InternalVertices(const Handle(BRepAdaptor_HSurfac
     Standard_Real Dv = sv/(nbV+1);
 
     Standard_Real pasu, pasv, pasvmax = vmax-Dv*0.5, pasumax = umax-Du*0.5;
-    for (pasv = vmin + Dv; pasv < pasvmax; pasv += Dv) {
-      for (pasu = umin + Du; pasu < pasumax; pasu += Du) {
+    for (pasv = vmin + Dv; pasv < pasvmax; pasv += Dv)
+    {
+      for (pasu = umin + Du; pasu < pasumax; pasu += Du)
+      {
+        ProgressIndicator()->UserBreak();
+
         if (theClassifier->Perform(gp_Pnt2d(pasu, pasv)) == TopAbs_IN)
         {
           // Record 3d point
@@ -765,8 +783,12 @@ void BRepMesh_FastDiscretFace::InternalVertices(const Handle(BRepAdaptor_HSurfac
     Dv = (vmax-vmin)/(nbV+1);
 
     Standard_Real pasvmax = vmax-Dv*0.5, pasumax = umax-Du*0.5;
-    for (pasv = vmin + Dv; pasv < pasvmax; pasv += Dv) {
-      for (pasu = umin + Du; pasu < pasumax; pasu += Du) {
+    for (pasv = vmin + Dv; pasv < pasvmax; pasv += Dv)
+    {
+      for (pasu = umin + Du; pasu < pasumax; pasu += Du)
+      {
+        ProgressIndicator()->UserBreak();
+
         if (theClassifier->Perform(gp_Pnt2d(pasu, pasv)) == TopAbs_IN)
         {
           // Record 3d point
@@ -892,6 +914,8 @@ void BRepMesh_FastDiscretFace::InternalVertices(const Handle(BRepAdaptor_HSurfac
       {
         for (j = 1; j <= Lv; j++)
         {
+          ProgressIndicator()->UserBreak();
+
           pasv = ParamV.Value(j);
           if (pasv >= vminnew && pasv < vmaxnew)
           {
@@ -956,11 +980,15 @@ void BRepMesh_FastDiscretFace::InternalVertices(const Handle(BRepAdaptor_HSurfac
     // Insert V parameters by deflection criterion
     Standard_Integer i,j;
     Standard_Real V1, V2, U1, U2;
-    for (i = 1; i <= ParamULength; i++) {
+    for (i = 1; i <= ParamULength; i++)
+    {
       Handle(Geom_Curve) IsoU = B->UIso(ParamU.Value(i));
       V1 = ParamV.Value(1);
       P1 = IsoU->Value(V1);
-      for (j = 2; j <= ParamVLength;) {
+      for (j = 2; j <= ParamVLength;)
+      {
+        ProgressIndicator()->UserBreak();
+
         V2 = ParamV.Value(j);
         P2 = IsoU->Value(V2);
         v = 0.5*(V1+V2);
@@ -985,7 +1013,8 @@ void BRepMesh_FastDiscretFace::InternalVertices(const Handle(BRepAdaptor_HSurfac
           Standard_Boolean aSt2 = GeomLib::NormEstim(B, gp_Pnt2d(ParamU.Value(i),v), Precision::Confusion(), N2);
 
           Standard_Real anAngle1 = N2.Angle(N1);
-	  if(aSt1 < 1 && aSt2 < 1 && anAngle1 > myAngle ) {
+	        if(aSt1 < 1 && aSt2 < 1 && anAngle1 > myAngle )
+          {
             // insertion 
             ParamV.InsertBefore(j, v);
             ParamVLength++;
@@ -999,12 +1028,16 @@ void BRepMesh_FastDiscretFace::InternalVertices(const Handle(BRepAdaptor_HSurfac
       }
     }
 
-    for (i = 2; i < ParamVLength; i++) {
+    for (i = 2; i < ParamVLength; i++)
+    {
       v = ParamV.Value(i);
       Handle(Geom_Curve) IsoV = B->VIso(v);
       U1 = ParamU.Value(1);
       P1 = IsoV->Value(U1);
-      for (j = 2; j <= ParamULength;) {
+      for (j = 2; j <= ParamULength;)
+      {
+        ProgressIndicator()->UserBreak();
+
         U2 = ParamU.Value(j);
         P2 = IsoV->Value(U2);
         u = 0.5*(U1+U2);
@@ -1057,7 +1090,8 @@ void BRepMesh_FastDiscretFace::InternalVertices(const Handle(BRepAdaptor_HSurfac
       }
     }
   }
-  else {
+  else
+  {
     const Standard_Real anAngle = 0.35;
 
     Standard_Integer i, j, nbpointsU = 10, nbpointsV = 10;
@@ -1086,12 +1120,16 @@ void BRepMesh_FastDiscretFace::InternalVertices(const Handle(BRepAdaptor_HSurfac
     
     GCPnts_TangentialDeflection* tabGU = new GCPnts_TangentialDeflection[nbpointsU+1];
 
-    for (i = 0; i <= nbpointsU; i++) {
+    for (i = 0; i <= nbpointsU; i++)
+    {
+      ProgressIndicator()->UserBreak();
+
       f = Max(vmin, tabu[i].FirstParameter());
       l = Min(vmax, tabu[i].LastParameter());
       GCPnts_TangentialDeflection theDeflection(tabu[i], f, l, anAngle, 0.7*theDefFace, 2);
       tabGU[i] = theDeflection;
-      if (tabGU[i].NbPoints() > MaxV) {
+      if (tabGU[i].NbPoints() > MaxV)
+      {
         MaxV = tabGU[i].NbPoints();
         imax = i;
       }
@@ -1099,9 +1137,9 @@ void BRepMesh_FastDiscretFace::InternalVertices(const Handle(BRepAdaptor_HSurfac
     
     // return table of parameters V:
     Standard_Integer NV = tabGU[imax].NbPoints();
-    for (i = 1; i <= NV; i++) {
+    for (i = 1; i <= NV; i++)
       ParamV.Append(tabGU[imax].Parameter(i));
-    }
+
     delete [] tabGU;
 
     imax = 1;
@@ -1109,12 +1147,16 @@ void BRepMesh_FastDiscretFace::InternalVertices(const Handle(BRepAdaptor_HSurfac
 
     GCPnts_TangentialDeflection* tabGV = new GCPnts_TangentialDeflection[nbpointsV+1];
 
-    for (i = 0; i <= nbpointsV; i++) {
+    for (i = 0; i <= nbpointsV; i++)
+    {
+      ProgressIndicator()->UserBreak();
+
       f = Max(umin, tabv[i].FirstParameter());
       l = Min(umax, tabv[i].LastParameter());
       GCPnts_TangentialDeflection thedeflection2(tabv[i], f, l, anAngle, 0.7*theDefFace, 2);
       tabGV[i] = thedeflection2;
-      if (tabGV[i].NbPoints() > MaxU) {
+      if (tabGV[i].NbPoints() > MaxU)
+      {
         MaxU = tabGV[i].NbPoints();
         imax = i;
       }
@@ -1122,17 +1164,16 @@ void BRepMesh_FastDiscretFace::InternalVertices(const Handle(BRepAdaptor_HSurfac
     
     // return table of parameters U:
     Standard_Integer NU = tabGV[imax].NbPoints();
-    for (i = 1; i <= NU; i++) {
+    for (i = 1; i <= NU; i++)
       ParamU.Append(tabGV[imax].Parameter(i));
-    }
+
     delete [] tabGV;
     
-    if (ParamU.Length() == 2) {
+    if (ParamU.Length() == 2)
       ParamU.InsertAfter(1, (umax+umin)*0.5);
-    }
-    if (ParamV.Length() == 2) {
+
+    if (ParamV.Length() == 2)
       ParamV.InsertAfter(1, (vmax+vmin)*0.5);
-    }
     
     BRepMeshCol::SequenceOfReal InsertV, InsertU;
     gp_Pnt P1;
@@ -1142,10 +1183,14 @@ void BRepMesh_FastDiscretFace::InternalVertices(const Handle(BRepAdaptor_HSurfac
 
     Standard_Integer Lu = ParamU.Length(), Lv = ParamV.Length();
     
-    for (i = 2; i < Lv; i++) {
+    for (i = 2; i < Lv; i++)
+    {
       v = ParamV.Value(i);
       IsoV.Load(GeomAbs_IsoV, v);
-      for (j = 2; j < Lu; j++) {
+      for (j = 2; j < Lu; j++)
+      {
+        ProgressIndicator()->UserBreak();
+
         u = ParamU.Value(j);
         if (theClassifier->Perform(gp_Pnt2d(u, v)) == TopAbs_IN)
         {
@@ -1161,9 +1206,6 @@ void BRepMesh_FastDiscretFace::InternalVertices(const Handle(BRepAdaptor_HSurfac
       }
     } 
   }
-#ifdef DEB_MESH_CHRONO
-  chInternal.Stop();
-#endif
 }
 
 /**
@@ -1210,6 +1252,8 @@ Standard_Real BRepMesh_FastDiscretFace::Control(const Handle(BRepAdaptor_HSurfac
                                                 BRepMesh_Delaun&                    theTrigu,
                                                 const Standard_Boolean              theIsFirst)
 {
+  ProgressIndicator()->UserBreak();
+
   //IMPORTANT: Constants used in calculations
   const Standard_Real MinimalArea2d = 1.e-9;
   const Standard_Real MinimalSqLength3d = 1.e-12;
@@ -1283,6 +1327,8 @@ Standard_Real BRepMesh_FastDiscretFace::Control(const Handle(BRepAdaptor_HSurfac
     Standard_Real deltaY = myAttrib->GetDeltaY();
     for (; triDom.More(); triDom.Next())
     {
+      ProgressIndicator()->UserBreak();
+
       Standard_Integer TriId = triDom.Key();
       const BRepMesh_Triangle& curTri=Triangle(TriId);
       if (curTri.Movability()==BRepMesh_Deleted) continue;
@@ -1536,86 +1582,87 @@ void BRepMesh_FastDiscretFace::AddInShape(const TopoDS_Face&  theFace,
 
   BRepMesh_ShapeTool::NullifyFace(theFace);
 
-  try{
-  BRepMeshCol::MapOfInteger::Iterator it;
+  try
+  {
+    BRepMeshCol::MapOfInteger::Iterator it;
 
-  Standard_Integer i, index;
-  TopAbs_Orientation orFace = theFace.Orientation();
+    Standard_Integer i, index;
+    TopAbs_Orientation orFace = theFace.Orientation();
 
-  const BRepMeshCol::MapOfInteger& TriMap = myStructure->ElementsOfDomain();
-  it.Initialize(TriMap);
+    const BRepMeshCol::MapOfInteger& TriMap = myStructure->ElementsOfDomain();
+    it.Initialize(TriMap);
     
-  Standard_Integer nTri = TriMap.Extent();
-  if (nTri != 0) {
-    
-    Poly_Array1OfTriangle Tri(1, nTri);
-    
-    i = 1;
-    
-    for (; it.More(); it.Next())
+    Standard_Integer nTri = TriMap.Extent();
+    if (nTri != 0)
     {
-      const BRepMesh_Triangle& aCurElem = myStructure->GetElement(it.Key());
+    
+      Poly_Array1OfTriangle Tri(1, nTri);
+    
+      i = 1;
+    
+      for (; it.More(); it.Next())
+      {
+        const BRepMesh_Triangle& aCurElem = myStructure->GetElement(it.Key());
 
-      Standard_Integer v[3];
-      myStructure->ElementNodes(aCurElem, v);
+        Standard_Integer v[3];
+        myStructure->ElementNodes(aCurElem, v);
       
-      Standard_Integer iv1, iv2, iv3;
-      iv1 = myVemap.FindIndex(v[0]);
-      if (iv1 == 0) iv1 = myVemap.Add(v[0]);
-      iv2 = myVemap.FindIndex(v[1]);
-      if (iv2 == 0) iv2 = myVemap.Add(v[1]);
-      iv3 = myVemap.FindIndex(v[2]);
-      if (iv3 == 0) iv3 = myVemap.Add(v[2]);
+        Standard_Integer iv1, iv2, iv3;
+        iv1 = myVemap.FindIndex(v[0]);
+        if (iv1 == 0) iv1 = myVemap.Add(v[0]);
+        iv2 = myVemap.FindIndex(v[1]);
+        if (iv2 == 0) iv2 = myVemap.Add(v[1]);
+        iv3 = myVemap.FindIndex(v[2]);
+        if (iv3 == 0) iv3 = myVemap.Add(v[2]);
       
-      if (orFace == TopAbs_REVERSED) Tri(i++).Set(iv1, iv3, iv2);
-      else Tri(i++).Set(iv1, iv2, iv3);
-    }
-    
-    Standard_Integer nbVertices = myVemap.Extent();
-    Handle(Poly_Triangulation) T = new Poly_Triangulation(nbVertices, nTri, Standard_True);
-    Poly_Array1OfTriangle& Trian = T->ChangeTriangles();
-    Trian = Tri;
-    TColgp_Array1OfPnt&  Nodes = T->ChangeNodes();
-    TColgp_Array1OfPnt2d& Nodes2d = T->ChangeUVNodes();
-    
-    for (i = 1; i <= nbVertices; i++) {
-      index = myVemap.FindKey(i);
-      Nodes(i) = Pnt(index);
-      Nodes2d(i).SetXY(Vertex(index).Coord());
-    }
-    
-    T->Deflection(theDefFace);
-    BRepMesh_ShapeTool::AddInFace(theFace, T);
-
-    // implement polygons on triangulation in the face:
-    BRepMeshCol::DMapOfShapePairOfPolygon::Iterator It(myInternaledges);
-
-    for (; It.More(); It.Next()) {
-      const TopoDS_Edge& aEdge = TopoDS::Edge(It.Key());
-      const BRepMesh_PairOfPolygon& pair = It.Value();
-      const Handle(Poly_PolygonOnTriangulation)& NOD1 = pair.First();
-      const Handle(Poly_PolygonOnTriangulation)& NOD2 = pair.Last();
-
-      // lock mutex to prevent parallel change of the same data
-      Standard_Mutex* aMutex = theMutexProvider.GetMutex(It.Key());
-      Standard_Mutex::Sentry aSentry (aMutex);
-
-      if ( NOD1 == NOD2 ) {
-        BRepMesh_ShapeTool::NullifyEdge(aEdge, TOld, loc);
-        BRepMesh_ShapeTool::UpdateEdge(aEdge, NOD1, T, loc);
+        if (orFace == TopAbs_REVERSED) Tri(i++).Set(iv1, iv3, iv2);
+        else Tri(i++).Set(iv1, iv2, iv3);
       }
-      else {
-        BRepMesh_ShapeTool::NullifyEdge(aEdge, TOld, loc);
-        BRepMesh_ShapeTool::UpdateEdge(aEdge, NOD1, NOD2, T, loc);
+    
+      Standard_Integer nbVertices = myVemap.Extent();
+      Handle(Poly_Triangulation) T = new Poly_Triangulation(nbVertices, nTri, Standard_True);
+      Poly_Array1OfTriangle& Trian = T->ChangeTriangles();
+      Trian = Tri;
+      TColgp_Array1OfPnt&  Nodes = T->ChangeNodes();
+      TColgp_Array1OfPnt2d& Nodes2d = T->ChangeUVNodes();
+    
+      for (i = 1; i <= nbVertices; i++) {
+        index = myVemap.FindKey(i);
+        Nodes(i) = Pnt(index);
+        Nodes2d(i).SetXY(Vertex(index).Coord());
+      }
+    
+      T->Deflection(theDefFace);
+      BRepMesh_ShapeTool::AddInFace(theFace, T);
+
+      // implement polygons on triangulation in the face:
+      BRepMeshCol::DMapOfShapePairOfPolygon::Iterator It(myInternaledges);
+
+      for (; It.More(); It.Next()) {
+        const TopoDS_Edge& aEdge = TopoDS::Edge(It.Key());
+        const BRepMesh_PairOfPolygon& pair = It.Value();
+        const Handle(Poly_PolygonOnTriangulation)& NOD1 = pair.First();
+        const Handle(Poly_PolygonOnTriangulation)& NOD2 = pair.Last();
+
+        // lock mutex to prevent parallel change of the same data
+        Standard_Mutex* aMutex = theMutexProvider.GetMutex(It.Key());
+        Standard_Mutex::Sentry aSentry (aMutex);
+
+        if ( NOD1 == NOD2 ) {
+          BRepMesh_ShapeTool::NullifyEdge(aEdge, TOld, loc);
+          BRepMesh_ShapeTool::UpdateEdge(aEdge, NOD1, T, loc);
+        }
+        else {
+          BRepMesh_ShapeTool::NullifyEdge(aEdge, TOld, loc);
+          BRepMesh_ShapeTool::UpdateEdge(aEdge, NOD1, NOD2, T, loc);
+        }
       }
     }
   }
- }
-
- catch(Standard_Failure)
- {
-   //   MESH_FAILURE(theFace);
- }
+  catch(Standard_Failure)
+  {
+    //   MESH_FAILURE(theFace);
+  }
 }
 
 

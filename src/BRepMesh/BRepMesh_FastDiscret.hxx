@@ -23,14 +23,16 @@
 #include <TopTools_DataMapOfShapeReal.hxx>
 #include <TopTools_ListOfShape.hxx>
 #include <TopTools_MutexForShapeProvider.hxx>
-#include <Standard_Transient.hxx>
+#include <BRepMesh_ProgressRoot.hxx>
 #include <Handle_BRepAdaptor_HSurface.hxx>
 #include <Handle_Geom2d_Curve.hxx>
+#include <Handle_Message_ProgressIndicator.hxx>
 #include <BRepMesh_Delaun.hxx>
 #include <TopAbs_ShapeEnum.hxx>
 #include <BRepMesh_Triangle.hxx>
 #include <BRepMesh_FaceAttribute.hxx>
 #include <BRepMesh_Collections.hxx>
+#include <Standard_Mutex.hxx>
 
 class BRepMesh_DataStructureOfDelaun;
 class Bnd_Box;
@@ -46,23 +48,26 @@ class BRepMesh_Vertex;
 class gp_Pnt;
 class BRepMesh_FaceAttribute;
 class TopTools_DataMapOfShapeReal;
+class Message_ProgressIndicator;
 
 
 //! Algorithm to mesh a shape with respect of the <br>
 //! frontier the deflection and by option the shared <br>
 //! components. <br>
-class BRepMesh_FastDiscret : public Standard_Transient
+class BRepMesh_FastDiscret : public BRepMesh_ProgressRoot
 {
 public:
   
-  Standard_EXPORT BRepMesh_FastDiscret(const Standard_Real defle,
-                                       const Standard_Real angle,
-                                       const Bnd_Box& B,
-                                       const Standard_Boolean withShare = Standard_True,
-                                       const Standard_Boolean inshape = Standard_False,
-                                       const Standard_Boolean relative = Standard_False,
-                                       const Standard_Boolean shapetrigu = Standard_False,
-                                       const Standard_Boolean isInParallel = Standard_False);
+  Standard_EXPORT BRepMesh_FastDiscret(
+    const Standard_Real                       theLinDeflection,
+    const Standard_Real                       theAngDeflection,
+    const Bnd_Box&                            theBox,
+    const Standard_Boolean                    isWithShare  = Standard_True,
+    const Standard_Boolean                    isInShape    = Standard_False,
+    const Standard_Boolean                    isRelative   = Standard_False,
+    const Standard_Boolean                    isShapeTrigu = Standard_False,
+    const Standard_Boolean                    isInParallel = Standard_False,
+    const Handle(BRepMesh_ProgressIndicator)& theProgress = NULL);
 
   //! if the boolean <relative> is True, the <br>
   //! deflection used for the polygonalisation of <br>
@@ -76,17 +81,18 @@ public:
   //! <br>
   //! if <inshape> is True, the calculated <br>
   //! triangulation will be stored in the shape. <br>
-  Standard_EXPORT BRepMesh_FastDiscret(const TopoDS_Shape& shape,
-                                       const Standard_Real defle,
-                                       const Standard_Real angle,
-                                       const Bnd_Box& B,
-                                       const Standard_Boolean withShare = Standard_True,
-                                       const Standard_Boolean inshape = Standard_False,
-                                       const Standard_Boolean relative = Standard_False,
-                                       const Standard_Boolean shapetrigu = Standard_False,
-                                       const Standard_Boolean isInParallel = Standard_False);
+  Standard_EXPORT BRepMesh_FastDiscret(
+    const TopoDS_Shape&                       theShape,
+    const Standard_Real                       theLinDeflection,
+    const Standard_Real                       theAngDeflection,
+    const Bnd_Box&                            theBox,
+    const Standard_Boolean                    isWithShare  = Standard_True,
+    const Standard_Boolean                    isInShape    = Standard_False,
+    const Standard_Boolean                    isRelative   = Standard_False,
+    const Standard_Boolean                    isShapeTrigu = Standard_False,
+    const Standard_Boolean                    isInParallel = Standard_False,
+    const Handle(BRepMesh_ProgressIndicator)& theProgress = NULL);
 
-  //! Build triangulation on the whole shape <br>
   Standard_EXPORT void Perform(const TopoDS_Shape& shape);
 
   //! Record a face for further processing. <br>
@@ -217,7 +223,6 @@ public:
     return myMapdefle;
   }
 
-
   DEFINE_STANDARD_RTTI(BRepMesh_FastDiscret)
 
 private: 
@@ -258,6 +263,7 @@ private:
   void AddInShape(const TopoDS_Face& face,
                   const Standard_Real defedge);
 
+
 private:
 
   Standard_Real                             myAngle;
@@ -284,6 +290,6 @@ private:
   TopTools_MutexForShapeProvider            myMutexProvider;
 };
 
-DEFINE_STANDARD_HANDLE(BRepMesh_FastDiscret, Standard_Transient)
+DEFINE_STANDARD_HANDLE(BRepMesh_FastDiscret, BRepMesh_ProgressRoot)
 
 #endif

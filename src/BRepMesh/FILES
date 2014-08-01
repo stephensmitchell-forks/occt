@@ -6,6 +6,8 @@ BRepMesh_Vertex.hxx
 BRepMesh_Edge.hxx
 BRepMesh_Triangle.hxx
 BRepMesh_Circle.hxx
+BRepMesh_ProgressRoot.hxx
+BRepMesh_ProgressRoot.cxx
 BRepMesh_Classifier.hxx
 BRepMesh_Classifier.cxx
 BRepMesh_WireInterferenceChecker.hxx

@@ -26,16 +26,19 @@
 #include <Bnd_Box2d.hxx>
 #include <gp_Pnt2d.hxx>
 #include <gp_XY.hxx>
+#include <Handle_Message_ProgressIndicator.hxx>
+#include <BRepMesh_ProgressRoot.hxx>
 
 #include <vector>
 
 class BRepMesh_DataMapOfShapePairOfPolygon;
 class TColStd_IndexedMapOfInteger;
+class Message_ProgressIndicator;
 
 //! Auxilary class intended to check correctness of discretized face.
 //! In particular, checks boundaries of discretized face for self 
 //! intersections and gaps.
-class BRepMesh_WireChecker
+class BRepMesh_WireChecker : public BRepMesh_ProgressRoot
 {
 public:
 
@@ -75,15 +78,16 @@ private:
 public:
 
   //! Constructor.
-  //! \param theFace Face to be checked.
-  //! \param theTolUV Tolerance to be used for calculations in parametric space.
-  //! \param theEdges Map of edges with associated polygon on triangulation.
-  //! \param theVertexMap Map of face vertices.
-  //! \param theStructure Discretized representation of face in parametric space.
-  //! \param theUmin Lower U boundary of the face in parametric space.
-  //! \param theUmax Upper U boundary of the face in parametric space.
-  //! \param theVmin Lower V boundary of the face in parametric space.
-  //! \param theVmax Upper V boundary of the face in parametric space.
+  //! @param theFace Face to be checked.
+  //! @param theTolUV Tolerance to be used for calculations in parametric space.
+  //! @param theEdges Map of edges with associated polygon on triangulation.
+  //! @param theVertexMap Map of face vertices.
+  //! @param theStructure Discretized representation of face in parametric space.
+  //! @param theUmin Lower U boundary of the face in parametric space.
+  //! @param theUmax Upper U boundary of the face in parametric space.
+  //! @param theVmin Lower V boundary of the face in parametric space.
+  //! @param theVmax Upper V boundary of the face in parametric space.
+  //! @param theProgress progress indicator.
   Standard_EXPORT BRepMesh_WireChecker(
     const TopoDS_Face&                            theFace,
     const Standard_Real                           theTolUV,
@@ -94,10 +98,11 @@ public:
     const Standard_Real                           theUmax,
     const Standard_Real                           theVmin,
     const Standard_Real                           theVmax,
-    const Standard_Boolean                        isInParallel);
+    const Standard_Boolean                        isInParallel = Standard_False,
+    const Handle(BRepMesh_ProgressIndicator)&     theProgress = NULL);
 
   //! Recompute data using parameters passed in constructor.
-  //! \param[out] theClassifier Classifier to be updated using calculated data.
+  //! @param[out] theClassifier Classifier to be updated using calculated data.
   Standard_EXPORT void ReCompute(BRepMeshCol::HClassifier& theClassifier);
 
   //! Returns status of the check.
@@ -106,16 +111,18 @@ public:
     return myStatus;
   }
 
+  DEFINE_STANDARD_RTTI(BRepMesh_WireChecker)
+
 private:
 
-  //! Collects disñrete wires.
-  //! \param[out] theDWires sequence of discretized wires to be filled.
-  //! \return TRUE on success, FALSE in case of open wire.
+  //! Collects discrete wires.
+  //! @param[out] theDWires sequence of discretized wires to be filled.
+  //! @return TRUE on success, FALSE in case of open wire.
   Standard_Boolean collectDiscretizedWires(SeqOfDWires& theDWires);
 
   //! Fills array of BiPoints for corresponding wire.
-  //! \param theDWires Sequence of wires to be processed.
-  //! \param theWiresSegmentsTree Array of segments with corresponding 
+  //! @param theDWires Sequence of wires to be processed.
+  //! @param theWiresSegmentsTree Array of segments with corresponding 
   //! bounding boxes trees to be filled.
   void fillSegmentsTree(
     const SeqOfDWires&                 theDWires, 
@@ -140,5 +147,7 @@ private:
   SeqOfWireEdges                                myWiresEdges;
   Standard_Boolean                              myIsInParallel;
 };
+
+DEFINE_STANDARD_HANDLE(BRepMesh_WireChecker, BRepMesh_ProgressRoot)
 
 #endif

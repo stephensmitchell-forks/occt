@@ -32,6 +32,7 @@
 #include <BRepMesh_Triangle.hxx>
 
 #include <NCollection_Vector.hxx>
+#include <Message_ProgressIndicator.hxx>
 
 #include <algorithm>
 
@@ -71,14 +72,20 @@ namespace {
   };
 } // anonymous namespace
 
+IMPLEMENT_STANDARD_HANDLE (BRepMesh_Delaun, BRepMesh_ProgressRoot)
+IMPLEMENT_STANDARD_RTTIEXT(BRepMesh_Delaun, BRepMesh_ProgressRoot)
+
 //=======================================================================
 //function : BRepMesh_Delaun
 //purpose  : Creates the triangulation with an empty Mesh data structure
 //=======================================================================
-BRepMesh_Delaun::BRepMesh_Delaun( BRepMeshCol::Array1OfVertexOfDelaun& theVertices,
-                                  const Standard_Boolean               isPositive )
-: myIsPositiveOrientation( isPositive ),
-  myCircles( theVertices.Length(), new NCollection_IncAllocator() )
+BRepMesh_Delaun::BRepMesh_Delaun(
+  BRepMeshCol::Array1OfVertexOfDelaun&      theVertices,
+  const Standard_Boolean                    isPositive,
+  const Handle(BRepMesh_ProgressIndicator)& theProgress)
+  : BRepMesh_ProgressRoot(theProgress),
+    myIsPositiveOrientation( isPositive ),
+    myCircles( theVertices.Length(), new NCollection_IncAllocator() )
 {
   if ( theVertices.Length() > 2 )
   {
@@ -92,11 +99,14 @@ BRepMesh_Delaun::BRepMesh_Delaun( BRepMeshCol::Array1OfVertexOfDelaun& theVertic
 //function : BRepMesh_Delaun
 //purpose  : Creates the triangulation with and existent Mesh data structure
 //=======================================================================
-BRepMesh_Delaun::BRepMesh_Delaun( const Handle( BRepMesh_DataStructureOfDelaun )& theOldMesh,
-                                  BRepMeshCol::Array1OfVertexOfDelaun&            theVertices,
-                                  const Standard_Boolean                          isPositive )
- : myIsPositiveOrientation( isPositive ),
-   myCircles( theVertices.Length(), theOldMesh->Allocator() )
+BRepMesh_Delaun::BRepMesh_Delaun(
+  const Handle( BRepMesh_DataStructureOfDelaun )& theOldMesh,
+  BRepMeshCol::Array1OfVertexOfDelaun&            theVertices,
+  const Standard_Boolean                          isPositive,
+  const Handle(BRepMesh_ProgressIndicator)&       theProgress)
+  : BRepMesh_ProgressRoot(theProgress), 
+    myIsPositiveOrientation(isPositive),
+    myCircles( theVertices.Length(), theOldMesh->Allocator() )
 {
   myMeshData = theOldMesh;
   if ( theVertices.Length() > 2 )
@@ -107,11 +117,14 @@ BRepMesh_Delaun::BRepMesh_Delaun( const Handle( BRepMesh_DataStructureOfDelaun )
 //function : BRepMesh_Delaun
 //purpose  : Creates the triangulation with and existent Mesh data structure
 //=======================================================================
-BRepMesh_Delaun::BRepMesh_Delaun( const Handle( BRepMesh_DataStructureOfDelaun )& theOldMesh, 
-                                  BRepMeshCol::Array1OfInteger&                   theVertexIndices,
-                                  const Standard_Boolean                          isPositive )
- : myIsPositiveOrientation( isPositive ),
-   myCircles( theVertexIndices.Length(), theOldMesh->Allocator() )
+BRepMesh_Delaun::BRepMesh_Delaun(
+  const Handle( BRepMesh_DataStructureOfDelaun )& theOldMesh, 
+  BRepMeshCol::Array1OfInteger&                   theVertexIndices,
+  const Standard_Boolean                          isPositive,
+  const Handle(BRepMesh_ProgressIndicator)&       theProgress)
+  : BRepMesh_ProgressRoot(theProgress), 
+    myIsPositiveOrientation(isPositive),
+    myCircles( theVertexIndices.Length(), theOldMesh->Allocator() )
 {
   myMeshData = theOldMesh;
   if ( theVertexIndices.Length() > 2 )
@@ -314,6 +327,8 @@ void BRepMesh_Delaun::createTriangles ( const Standard_Integer            theVer
   BRepMeshCol::MapOfIntegerInteger::Iterator anEdges( thePoly );
   for ( ; anEdges.More(); anEdges.Next() )
   {
+    ProgressIndicator()->UserBreak();
+
     Standard_Integer     anEdgeId = anEdges.Key();
     const BRepMesh_Edge& anEdge   = GetEdge( anEdgeId );
 
@@ -592,6 +607,8 @@ void BRepMesh_Delaun::cleanupMesh()
 {
   for(;;)
   {
+    ProgressIndicator()->UserBreak();
+
     BRepMeshCol::MapOfIntegerInteger aLoopEdges( 10, myMeshData->Allocator() );
     BRepMeshCol::MapOfInteger aDelTriangles;
 
@@ -697,6 +714,8 @@ void BRepMesh_Delaun::frontierAdjust()
     BRepMeshCol::MapOfInteger::Iterator aFrontierIt( *aFrontier );
     for ( ; aFrontierIt.More(); aFrontierIt.Next() )
     {
+      ProgressIndicator()->UserBreak();
+
       Standard_Integer aFrontierId = aFrontierIt.Key();
       const BRepMesh_PairOfIndex& aPair = myMeshData->ElementsConnectedTo( aFrontierId );
       Standard_Integer aNbElem = aPair.Extent();
@@ -794,6 +813,8 @@ Standard_Boolean BRepMesh_Delaun::meshLeftPolygonOf(
   const Standard_Boolean                isForward,
   BRepMeshCol::HMapOfInteger            theSkipped )
 {
+  ProgressIndicator()->UserBreak();
+
   if ( !theSkipped.IsNull() && theSkipped->Contains( theStartEdgeId ) )
     return Standard_True;
 
@@ -841,6 +862,8 @@ Standard_Boolean BRepMesh_Delaun::meshLeftPolygonOf(
   Standard_Integer aFirstNode    = aStartNode;
   while ( aPivotNode != aFirstNode )
   {
+    ProgressIndicator()->UserBreak();
+
     Bnd_B2d          aNextLinkBndBox;
     gp_Vec2d         aNextLinkDir;
     Standard_Integer aNextPivotNode = 0;
@@ -1053,6 +1076,8 @@ Standard_Boolean BRepMesh_Delaun::checkIntersection(
 
   for ( Standard_Integer aPolyIt = 1; aPolyIt <= aPolyLen; ++aPolyIt )
   {
+    ProgressIndicator()->UserBreak();
+
     if ( !theLinkBndBox.IsOut( thePolyBoxes.Value( aPolyIt ) ) )
     {
       // intersection is possible...
@@ -1215,6 +1240,8 @@ void BRepMesh_Delaun::killTrianglesAroundVertex(
   BRepMeshCol::MapOfInteger&            theSurvivedLinks,
   BRepMeshCol::MapOfIntegerInteger&     theLoopEdges )
 {
+  ProgressIndicator()->UserBreak();
+
   BRepMeshCol::ListOfInteger::Iterator aNeighborsIt = 
     myMeshData->LinksConnectedTo( theZombieNodeId );
 
@@ -1340,6 +1367,8 @@ void BRepMesh_Delaun::killTrianglesOnIntersectingLinks(
   BRepMeshCol::MapOfInteger&            theSurvivedLinks,
   BRepMeshCol::MapOfIntegerInteger&     theLoopEdges )
 {
+  ProgressIndicator()->UserBreak();
+
   if ( theSurvivedLinks.Contains( theLinkToCheckId ) )
     return;
 
@@ -1521,6 +1550,8 @@ void BRepMesh_Delaun::meshPolygon( BRepMeshCol::SequenceOfInteger& thePolygon,
     Standard_Integer aNextPolyIt = aPolyIt + 1;
     for ( ; aNextPolyIt <= aPolyLen; ++aNextPolyIt )
     {
+      ProgressIndicator()->UserBreak();
+
       Standard_Integer aNextEdgeInfo = thePolygon( aNextPolyIt );
       Standard_Integer aNextEdgeId   = Abs( aNextEdgeInfo );
       const BRepMesh_Edge* aNextEdge = &GetEdge( aNextEdgeId );
@@ -1756,10 +1787,11 @@ inline Standard_Boolean BRepMesh_Delaun::meshElementaryPolygon(
 void BRepMesh_Delaun::meshSimplePolygon( BRepMeshCol::SequenceOfInteger& thePolygon,
                                          BRepMeshCol::SequenceOfBndB2d&  thePolyBoxes )
 {
+  ProgressIndicator()->UserBreak();
+
   // Check is the given polygon elementary
   if ( meshElementaryPolygon( thePolygon ) )
     return;
-
 
   // Polygon contains more than 3 links
   Standard_Integer aFirstEdgeInfo = thePolygon(1);

@@ -51,10 +51,13 @@
 #include <TopTools_HArray1OfShape.hxx>
 
 #include <GCPnts_TangentialDeflection.hxx>
+#include <Message_ProgressIndicator.hxx>
+#include <Standard_ErrorHandler.hxx>
 
 #ifdef HAVE_TBB
   // paralleling using Intel TBB
   #include <tbb/parallel_for_each.h>
+  #include <tbb/tbb_exception.h>
 #endif
 
 namespace
@@ -72,8 +75,8 @@ IMPLEMENT_STANDARD_RTTIEXT(BRepMesh_IncrementalMesh, BRepMesh_DiscretRoot)
 //purpose  : 
 //=======================================================================
 BRepMesh_IncrementalMesh::BRepMesh_IncrementalMesh()
-: myRelative (Standard_False),
-  myInParallel (Standard_False)
+  : myRelative  (Standard_False),
+    myInParallel(Standard_False)
 {
 }
 
@@ -82,17 +85,19 @@ BRepMesh_IncrementalMesh::BRepMesh_IncrementalMesh()
 //purpose  : 
 //=======================================================================
 BRepMesh_IncrementalMesh::BRepMesh_IncrementalMesh(
-  const TopoDS_Shape&    theShape,
-  const Standard_Real    theLinDeflection,
-  const Standard_Boolean isRelative,
-  const Standard_Real    theAngDeflection,
-  const Standard_Boolean isInParallel)
+  const TopoDS_Shape&                      theShape,
+  const Standard_Real                      theLinDeflection,
+  const Standard_Boolean                   isRelative,
+  const Standard_Real                      theAngDeflection,
+  const Standard_Boolean                   isInParallel,
+  const Handle(Message_ProgressIndicator)& theProgress)
   : myRelative  (isRelative),
     myInParallel(isInParallel)
 {
-  myDeflection = theLinDeflection;
-  myAngle      = theAngDeflection;
-  myShape      = theShape;
+  SetShape            (theShape);
+  SetDeflection       (theLinDeflection);
+  SetAngle            (theAngDeflection);
+  ProgressIndicator()->SetProgressIndicator(theProgress);
 
   Perform();
 }
@@ -121,10 +126,10 @@ void BRepMesh_IncrementalMesh::init()
   setDone();
 
   if (!isCorrectPolyData())
-    BRepTools::Clean(myShape);
+    BRepTools::Clean(Shape());
 
   Bnd_Box aBox;
-  BRepBndLib::Add(myShape, aBox, Standard_False);
+  BRepBndLib::Add(Shape(), aBox, Standard_False);
 
   if (aBox.IsVoid())
   {
@@ -134,10 +139,11 @@ void BRepMesh_IncrementalMesh::init()
   }
 
   BRepMesh_ShapeTool::BoxMaxDimension(aBox, myMaxShapeSize);
-  TopExp::MapShapesAndAncestors(myShape, TopAbs_EDGE, TopAbs_FACE, mySharedFaces);
+  TopExp::MapShapesAndAncestors(Shape(), TopAbs_EDGE, TopAbs_FACE, mySharedFaces);
 
-  myMesher = new BRepMesh_FastDiscret(myDeflection, myAngle, aBox,
-    Standard_True, Standard_True, myRelative, Standard_True, myInParallel);
+  myMesher = new BRepMesh_FastDiscret(Deflection(), Angle(), aBox,
+    Standard_True, Standard_True, myRelative, Standard_True, myInParallel,
+    ProgressIndicator());
 }
 
 //=======================================================================
@@ -176,7 +182,7 @@ Standard_Boolean BRepMesh_IncrementalMesh::isCorrectPolyData()
 void BRepMesh_IncrementalMesh::collectFaces()
 {
   TopTools_ListOfShape aFaceList;
-  BRepLib::ReverseSortFaces(myShape, aFaceList);
+  BRepLib::ReverseSortFaces(Shape(), aFaceList);
   TopTools_MapOfShape aFaceMap;
   myFaces.reserve(aFaceList.Extent());
 
@@ -211,7 +217,21 @@ void BRepMesh_IncrementalMesh::Perform()
   if (myMesher.IsNull())
     return;
 
-  update();
+  try
+  {
+    OCC_CATCH_SIGNALS
+
+    update();
+    return;
+  }
+  catch (const BRepMesh_UserBreak&)
+  {
+    myStatus |= BRepMesh_Break;
+  }
+  catch (...)
+  {
+    myStatus |= BRepMesh_Failure;
+  }
 }
 
 //=======================================================================
@@ -221,7 +241,7 @@ void BRepMesh_IncrementalMesh::Perform()
 void BRepMesh_IncrementalMesh::update()
 {
   // Update edges data
-  TopExp_Explorer aExplorer(myShape, TopAbs_EDGE);
+  TopExp_Explorer aExplorer(Shape(), TopAbs_EDGE);
   for (; aExplorer.More(); aExplorer.Next())
   {
     const TopoDS_Edge& aEdge = TopoDS::Edge(aExplorer.Current());
@@ -236,13 +256,35 @@ void BRepMesh_IncrementalMesh::update()
   for (; aFaceIt != myFaces.end(); aFaceIt++)
     update(*aFaceIt);
 
+  ProgressIndicator()->SetScale(0., (Standard_Real)myFaces.size(), 1.);
+
   // Mesh faces
 #ifdef HAVE_TBB
   if (myInParallel)
   {
-    myMesher->CreateMutexesForSubShapes(myShape, TopAbs_EDGE);
-    tbb::parallel_for_each(myFaces.begin(), myFaces.end(), *myMesher);
-    myMesher->RemoveAllMutexes();
+    try
+    {
+      OCC_CATCH_SIGNALS
+
+      myMesher->CreateMutexesForSubShapes(Shape(), TopAbs_EDGE);
+      tbb::parallel_for_each(myFaces.begin(), myFaces.end(), *myMesher);
+      myMesher->RemoveAllMutexes();
+    }
+    catch (BRepMesh_UserBreak)
+    {
+      myMesher->RemoveAllMutexes();
+      Raise_BRepMesh_UserBreak();
+    }
+    catch (tbb::captured_exception)
+    {
+      myMesher->RemoveAllMutexes();
+      Raise_BRepMesh_UserBreak();
+    }
+    catch (...)
+    {
+      myMesher->RemoveAllMutexes();
+      Standard_Failure::Raise("Unknown exception");
+    }
   }
   else
   {
@@ -262,7 +304,7 @@ void BRepMesh_IncrementalMesh::update()
 //=======================================================================
 void BRepMesh_IncrementalMesh::discretizeFreeEdges()
 {
-  TopExp_Explorer aExplorer(myShape ,TopAbs_EDGE, TopAbs_FACE);
+  TopExp_Explorer aExplorer(Shape(), TopAbs_EDGE, TopAbs_FACE);
   for (; aExplorer.More(); aExplorer.Next())
   {
     const TopoDS_Edge& aEdge = TopoDS::Edge(aExplorer.Current());
@@ -277,7 +319,7 @@ void BRepMesh_IncrementalMesh::discretizeFreeEdges()
 
     BRepAdaptor_Curve aCurve(aEdge);
     GCPnts_TangentialDeflection aDiscret(aCurve, aCurve.FirstParameter(),
-      aCurve.LastParameter(), myAngle, aEdgeDeflection, 2);
+      aCurve.LastParameter(), Angle(), aEdgeDeflection, 2);
 
     Standard_Integer aNodesNb = aDiscret.NbPoints();
     TColgp_Array1OfPnt   aNodes  (1, aNodesNb);
@@ -289,7 +331,7 @@ void BRepMesh_IncrementalMesh::discretizeFreeEdges()
     }
     
     aPoly3D = new Poly_Polygon3D(aNodes, aUVNodes);
-    aPoly3D->Deflection(myDeflection);
+    aPoly3D->Deflection(Deflection());
 
     BRep_Builder aBuilder;
     aBuilder.UpdateEdge(aEdge, aPoly3D);
@@ -311,10 +353,10 @@ Standard_Real BRepMesh_IncrementalMesh::edgeDeflection(
   {
     Standard_Real aScale;
     aEdgeDeflection = BRepMesh_ShapeTool::RelativeEdgeDeflection(theEdge, 
-      myDeflection, myMaxShapeSize, aScale);
+      Deflection(), myMaxShapeSize, aScale);
   }
   else
-    aEdgeDeflection = myDeflection;
+    aEdgeDeflection = Deflection();
 
   myEdgeDeflection.Bind(theEdge, aEdgeDeflection);
   return aEdgeDeflection;
@@ -328,7 +370,7 @@ Standard_Real BRepMesh_IncrementalMesh::faceDeflection(
   const TopoDS_Face& theFace)
 {
   if (!myRelative)
-    return myDeflection;
+    return Deflection();
 
   Standard_Integer aEdgesNb        = 0;
   Standard_Real    aFaceDeflection = 0.;
@@ -340,7 +382,7 @@ Standard_Real BRepMesh_IncrementalMesh::faceDeflection(
     aFaceDeflection += edgeDeflection(aEdge);
   }
 
-  return (aEdgesNb == 0) ? myDeflection : (aFaceDeflection / aEdgesNb);
+  return (aEdgesNb == 0) ? Deflection() : (aFaceDeflection / aEdgesNb);
 }
 
 //=======================================================================
@@ -349,6 +391,8 @@ Standard_Real BRepMesh_IncrementalMesh::faceDeflection(
 //=======================================================================
 void BRepMesh_IncrementalMesh::update(const TopoDS_Edge& theEdge)
 {
+  ProgressIndicator()->UserBreak();
+
   Standard_Integer aPolyIndex   = 1;
   Standard_Real aEdgeDeflection = edgeDeflection(theEdge);
   Handle(Poly_PolygonOnTriangulation) aPolygon;
@@ -430,6 +474,8 @@ Standard_Boolean BRepMesh_IncrementalMesh::toBeMeshed(
 //=======================================================================
 void BRepMesh_IncrementalMesh::update(const TopoDS_Face& theFace)
 {
+  ProgressIndicator()->UserBreak();
+
   if (!toBeMeshed(theFace, Standard_True))
     return;
 

@@ -30,12 +30,16 @@
 #include <BRepMesh_DataStructureOfDelaun.hxx>
 #include <BRepMesh_Classifier.hxx>
 #include <BRepMesh_WireInterferenceChecker.hxx>
+#include <Message_ProgressIndicator.hxx>
 
 #ifdef HAVE_TBB
   // paralleling using Intel TBB
   #include <tbb/parallel_for.h>
   #include <tbb/blocked_range.h>
 #endif
+
+IMPLEMENT_STANDARD_HANDLE (BRepMesh_WireChecker, BRepMesh_ProgressRoot)
+IMPLEMENT_STANDARD_RTTIEXT(BRepMesh_WireChecker, BRepMesh_ProgressRoot)
 
 //=======================================================================
 //function : Selector::Constructor
@@ -136,8 +140,10 @@ BRepMesh_WireChecker::BRepMesh_WireChecker(
   const Standard_Real                           theUmax,
   const Standard_Real                           theVmin,
   const Standard_Real                           theVmax,
-  const Standard_Boolean                        isInParallel)
-  : myTolUV(theTolUV),
+  const Standard_Boolean                        isInParallel,
+  const Handle(BRepMesh_ProgressIndicator)&     theProgress)
+  : BRepMesh_ProgressRoot(theProgress),
+    myTolUV(theTolUV),
     myEdges(theEdges),
     myVertexMap(theVertexMap),
     myStructure(theStructure),
@@ -202,18 +208,33 @@ void BRepMesh_WireChecker::ReCompute(BRepMeshCol::HClassifier& theClassifier)
 #ifdef HAVE_TBB
   Standard_Mutex aWireMutex;
   BRepMesh_WireInterferenceChecker aIntChecker(aWiresBiPoints, 
-    &myStatus, &aWireMutex);
+    &myStatus, &aWireMutex, ProgressIndicator());
 
   if (myIsInParallel && aNbWires > 1)
   {
-    // check wires in parallel threads using TBB
-    tbb::parallel_for(tbb::blocked_range<Standard_Integer>(0, aNbWires), 
-      aIntChecker);
+    try
+    {
+      tbb::parallel_for(tbb::blocked_range<Standard_Integer>(0, aNbWires), 
+        aIntChecker);
+    }
+    catch (BRepMesh_UserBreak)
+    {
+      Raise_BRepMesh_UserBreak();
+    }
+    catch (tbb::captured_exception)
+    {
+      Raise_BRepMesh_UserBreak();
+    }
+    catch (...)
+    {
+      Standard_Failure::Raise("Unknown exception");
+    }
   }
   else
   {
 #else
-    BRepMesh_WireInterferenceChecker aIntChecker(aWiresBiPoints, &myStatus);
+    BRepMesh_WireInterferenceChecker aIntChecker(aWiresBiPoints, &myStatus,
+      ProgressIndicator());
 #endif
     for (Standard_Integer i = 0; i < aNbWires; ++i)
       aIntChecker(i);
@@ -262,6 +283,8 @@ Standard_Boolean BRepMesh_WireChecker::collectDiscretizedWires(
     ListOfEdges::Iterator aEdgeIt(aEdges);
     for (; aEdgeIt.More(); aEdgeIt.Next())
     {
+      ProgressIndicator()->UserBreak();
+
       const TopoDS_Edge& aEdge   = aEdgeIt.Value();
       TopAbs_Orientation aOrient = aEdge.Orientation();
       if (!myEdges.IsBound(aEdge))
