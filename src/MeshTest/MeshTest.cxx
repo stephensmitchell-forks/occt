@@ -210,7 +210,7 @@ options:\n\
                         (default is less than zero, i.e. no limit)\n\
         -relative       notifies that relative deflection is used\n\
                         (switched off by default)\n\
-        -parallel       enables parallel execution (switched off default)\n";
+        -parallel       enables parallel execution (switched off by default)\n";
     return 0;
   }
 
