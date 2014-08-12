@@ -113,6 +113,7 @@ namespace BRepMeshCol
   typedef N_MAP<TopoDS_Shape, ShapeMapHasher>                                   MapOfShape;
 
   typedef N_DATAMAP<Standard_Integer, Standard_Integer>                         MapOfIntegerInteger;
+  typedef N_DATAMAP<Standard_Integer, Bnd_Box2d>                                MapOfIntegerBndBox2d;
   typedef N_DATAMAP<TopoDS_Vertex, Standard_Integer, ShapeMapHasher>            DMapOfVertexInteger;
   typedef N_DATAMAP<TopoDS_Face, Handle_BRepMesh_FaceAttribute, ShapeMapHasher> DMapOfFaceAttribute;
   typedef N_DATAMAP<TopoDS_Shape, BRepMesh_PairOfPolygon, ShapeMapHasher>       DMapOfShapePairOfPolygon;

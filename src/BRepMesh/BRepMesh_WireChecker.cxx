@@ -240,6 +240,8 @@ void BRepMesh_WireChecker::ReCompute(BRepMeshCol::HClassifier& theClassifier)
 Standard_Boolean BRepMesh_WireChecker::collectDiscretizedWires(
   SeqOfDWires& theDWires)
 {
+  Standard_Real             aFaceArea = 0.;  
+
   // TODO: Collect disretized wires in parallel
   SeqOfWireEdges::iterator aWireIt = myWiresEdges.begin();
   for(; aWireIt != myWiresEdges.end(); ++aWireIt)
@@ -323,6 +325,11 @@ Standard_Boolean BRepMesh_WireChecker::collectDiscretizedWires(
           myVertexMap.FindKey(aIndices(i)));
 
         aSeqPnt2d.Append(gp_Pnt2d(myStructure->GetNode(aIndex).Coord()));
+
+        if (aSeqPnt2d.Length() > 1)
+        {
+          aFaceArea += aSeqPnt2d(aSeqPnt2d.Length() - 1).Coord() ^ myStructure->GetNode(aIndex).Coord();
+        }
       }
 
       // Now, is there a loop?
@@ -333,6 +340,9 @@ Standard_Boolean BRepMesh_WireChecker::collectDiscretizedWires(
         const Standard_Integer aIdxWireStart = aNodeInSeq(aLastVertexId);
         if(aIdxWireStart < aSeqPnt2d.Length())
         {
+          // Before splitting calculate the area
+          aFaceArea += aSeqPnt2d(aSeqPnt2d.Length()).Coord() ^ aSeqPnt2d(aIdxWireStart).Coord();
+
           theDWires.push_back(SeqOfPnt2d());
           SeqOfPnt2d& aWire = theDWires.back();
           aSeqPnt2d.Split(aIdxWireStart, aWire);
@@ -349,6 +359,13 @@ Standard_Boolean BRepMesh_WireChecker::collectDiscretizedWires(
       myStatus = BRepMesh_OpenWire;
       return Standard_False;
     }
+  }
+
+  if (Abs(aFaceArea) < myTolUV)
+  {
+    // the face is just empty - nothing to mesh
+    myStatus = BRepMesh_Failure;
+    return Standard_False;
   }
 
   return Standard_True;

@@ -29,6 +29,7 @@
 #include <BRepAdaptor_Surface.hxx>
 #include <BRepAdaptor_HSurface.hxx>
 
+#include <BRep_Builder.hxx>
 #include <Bnd_Box.hxx>
 #include <BRepTools.hxx>
 #include <BRepBndLib.hxx>
@@ -76,7 +77,7 @@
   #include <tbb/parallel_for_each.h>
 #endif
 
-#define UVDEFLECTION 1.e-05
+#define UVDEFLECTION 1.e-06
 
 IMPLEMENT_STANDARD_HANDLE (BRepMesh_FastDiscret, Standard_Transient)
 IMPLEMENT_STANDARD_RTTIEXT(BRepMesh_FastDiscret, Standard_Transient)
@@ -207,6 +208,62 @@ void BRepMesh_FastDiscret::Process(const TopoDS_Face& theFace) const
 }
 
 //=======================================================================
+//function : ModifyDeflection
+//purpose  : Modifies the recorded deflection values of aTarget edges
+//=======================================================================
+Standard_Boolean BRepMesh_FastDiscret::ModifyDeflection
+(
+  const TopoDS_Shape & aTarget,
+  const TopoDS_Face & face,
+  const Handle(BRepAdaptor_HSurface) & gFace,
+  const TopTools_IndexedDataMapOfShapeListOfShape & theAncestors,
+  const TopTools_SequenceOfShape & aShSeq,
+  const TColGeom2d_SequenceOfCurve & aCSeq,
+  const BRepMeshCol::SequenceOfReal & aFSeq,
+  const BRepMeshCol::SequenceOfReal & aLSeq,
+  const Handle(NCollection_IncAllocator) & anAlloc,
+  Standard_Real factor,
+  Standard_Real eps
+)
+{
+  //clear the structure of links
+  myStructure.Nullify();
+  myStructure = new BRepMesh_DataStructureOfDelaun(anAlloc);
+
+  myVemap.Clear();
+  myLocation2d.Clear();
+  myInternaledges.Clear();
+
+  for(TopExp_Explorer iter(aTarget, TopAbs_EDGE); iter.More(); iter.Next())
+  {
+    const TopoDS_Edge& edge = TopoDS::Edge(iter.Current());
+    if (myEdges.IsBound(edge))
+    {
+      myEdges.UnBind(edge);
+      myInternaledges.UnBind(edge);
+    }
+  }
+
+  Standard_Real defedge;
+  Standard_Boolean aEpsReached = Standard_True;
+  for(Standard_Integer i = 1; i <= aShSeq.Length(); ++i)
+  {
+    const TopoDS_Edge& edge = TopoDS::Edge(aShSeq.Value(i));
+    if (!myMapdefle.IsBound(edge) || myEdges.IsBound(edge)) continue;
+
+    defedge = myMapdefle(edge) * factor;
+    defedge = Max(defedge, eps);
+    myMapdefle.Bind(edge, defedge);
+    const Handle(Geom2d_Curve)& C = aCSeq.Value(i);
+    Add(edge, face, gFace, C, theAncestors, defedge, aFSeq.Value(i), aLSeq.Value(i));
+    if (defedge != eps)
+      aEpsReached = Standard_False;
+  }
+
+  return aEpsReached;
+}
+
+//=======================================================================
 //function : Add(face)
 //purpose  : 
 //=======================================================================
@@ -271,6 +328,12 @@ void BRepMesh_FastDiscret::Add(const TopoDS_Face& theface,
   Standard_Real maxdef = 2.* BRepMesh_ShapeTool::MaxFaceTolerance(theface);
   defface = 0.;
 
+  // The corrupt faces with abnormal tolerances shouldn't be meshed, the mesher can hang in this case
+  if ( maxdef > FLT_MAX )
+  {
+    MESH_FAILURE(theface);
+  }
+
   if (!myRelative) defface = Max(myDeflection, maxdef);
 
   BRepMeshCol::SequenceOfReal aFSeq, aLSeq;
@@ -326,9 +389,28 @@ void BRepMesh_FastDiscret::Add(const TopoDS_Face& theface,
     }
   }
 
-  if (nbEdge == 0 || myVemap.Extent() < 3)
+  if (nbEdge == 0)
   {
-      MESH_FAILURE(theface);
+    MESH_FAILURE(theface);
+  }
+
+  // Try to modify the deflection if there is not enough vertices
+  // In case of small in can help
+  if ( myVemap.Extent() < 3 ) {
+    TopTools_DataMapOfShapeReal mapdefle_copy;
+    mapdefle_copy.Assign(myMapdefle);
+    while ( myVemap.Extent() < 3 )
+    {
+      // we have not enough vertices to build a mesh
+      // it could be caused by the deflection
+      // try to adjust the deflection before throughing an error
+      if ( ModifyDeflection ( face, face, gFace, theAncestors, aShSeq, aCSeq, aFSeq, aLSeq, anAlloc, 0.5, Precision::Confusion() * 100) )
+      {
+        // Recover the initial deflection map in order to prevent the generating of the big number of triangles
+        myMapdefle.Assign(mapdefle_copy);
+        MESH_FAILURE(theface);
+      }
+    }
   }
 
   if (myRelative ) defface = defface / nbEdge;
@@ -416,57 +498,106 @@ void BRepMesh_FastDiscret::Add(const TopoDS_Face& theface,
     
     BRepMeshCol::HClassifier classifier = new BRepMesh_Classifier;
     {
-      BRepMesh_WireChecker aDFaceChecker(face, 
+      BRepMesh_WireChecker * aDFaceChecker = new BRepMesh_WireChecker(face, 
         tolclass, myInternaledges, myVemap, myStructure, 
         myumin, myumax, myvmin, myvmax, myInParallel);
-      aDFaceChecker.ReCompute(classifier);
+      aDFaceChecker->ReCompute(classifier);
     
-      myFacestate = aDFaceChecker.Status();
-      if (myFacestate == BRepMesh_SelfIntersectingWire)
+      myFacestate = aDFaceChecker->Status();
+      delete aDFaceChecker;
+    }
+
+    if (myFacestate == BRepMesh_SelfIntersectingWire)
+    {
+      Standard_Boolean aEpsReached = Standard_False;
+ 
+      TopTools_DataMapOfShapeReal mapdefle_copy;
+      mapdefle_copy.Assign(myMapdefle);
+      
+      BRepMesh_WireChecker * aDFaceChecker = nullptr;
+ 
+      do
       {
-        Standard_Integer nbmaill = 0;
-        Standard_Real eps = Precision::Confusion();
-        while (nbmaill < 5 && myFacestate != BRepMesh_ReMesh)
-        {
-          nbmaill++;
-          
-          //clear the structure of links
-          myStructure.Nullify();
-          myStructure = new BRepMesh_DataStructureOfDelaun(anAlloc);
-          
-          myVemap.Clear();
-          myLocation2d.Clear();
-          myInternaledges.Clear();
+        BRep_Builder B;
+        TopoDS_Face aTmpFace;
+        TopoDS_Shape aTarget;
+        Standard_Boolean isWireFound = Standard_False;
+        // First of all lets try to identify the wire, which makes problems
+        for ( TopoDS_Iterator iter(face, Standard_False); iter.More(); iter.Next()) { 
+          if(iter.Value().ShapeType() != TopAbs_WIRE) continue;
+          aTmpFace = TopoDS::Face( face.EmptyCopied() );
+          aTmpFace.Orientation(TopAbs_FORWARD);
+          aTarget = TopoDS::Wire(iter.Value());
+          B.Add(aTmpFace, aTarget);
 
-          Standard_Integer j1;
-          for(j1 = 1; j1 <= aShSeq.Length(); j1++)
+          BRepMesh_WireChecker aTmpFaceChecker(aTmpFace, tolclass, myInternaledges, myVemap,
+            myStructure, myumin, myumax, myvmin, myvmax, myInParallel);
+          aTmpFaceChecker.ReCompute(classifier);
+          if (aTmpFaceChecker.Status() == BRepMesh_SelfIntersectingWire)
           {
-            const TopoDS_Edge& edge = TopoDS::Edge(aShSeq.Value(j1));
-            if (myEdges.IsBound(edge))
-            {
-              myEdges.UnBind(edge);
-              myInternaledges.UnBind(edge);
-            }
+            isWireFound = Standard_True;
+            break;
           }
-          
-          
-          for( j1 = 1; j1 <= aShSeq.Length(); j1++)
-          {
-            const TopoDS_Edge& edge = TopoDS::Edge(aShSeq.Value(j1));
-            defedge = myMapdefle(edge) / 3.;
-            defedge = Max(defedge, eps);
-            myMapdefle.Bind(edge, defedge);
-            const Handle(Geom2d_Curve)& C = aCSeq.Value(j1);
-            Add(edge, face, gFace, C, theAncestors, defedge, aFSeq.Value(j1), aLSeq.Value(j1));
-          }
-
-          aDFaceChecker.ReCompute(classifier);
-          if (aDFaceChecker.Status() == BRepMesh_NoError)
-          {
-            myFacestate = BRepMesh_ReMesh;
-          }
-          nbVertices = myVemap.Extent();
         }
+ 
+        if (!isWireFound)
+        {
+          // No self-intersecting wires found
+          // This means, that the wires intersect one another
+          // We should modify deflection for the whole face
+          aTarget  = face;
+          aTmpFace = face;
+        }
+ 
+        // Ok, now aTarget contains the wire(s) making our problems
+        do
+        {
+          aEpsReached = ModifyDeflection ( aTarget, face, gFace, theAncestors, aShSeq, aCSeq, aFSeq, aLSeq, anAlloc, 0.5, Precision::Confusion() * 100);
+          if ( aEpsReached )
+            break;
+ 
+          if (aDFaceChecker != nullptr)
+          {
+            delete aDFaceChecker;
+          }
+
+          aDFaceChecker = new BRepMesh_WireChecker(aTmpFace, tolclass, myInternaledges, myVemap,
+            myStructure, myumin, myumax, myvmin, myvmax, myInParallel);
+          aDFaceChecker->ReCompute(classifier);
+        } while (aDFaceChecker->Status() != BRepMesh_NoError);
+ 
+        if (aDFaceChecker->Status() != BRepMesh_NoError)
+        {
+          // Recover the initial deflection map in order to prevent the generating of the big number of triangles
+          myMapdefle.Assign( mapdefle_copy );
+          break;
+        }
+ 
+        if (aTmpFace != face){
+          //clear the structure of links
+          ModifyDeflection ( face, face, gFace, theAncestors, aShSeq, aCSeq, aFSeq, aLSeq, anAlloc, 1.0, Precision::Confusion() * 100);
+ 
+          if (aDFaceChecker != nullptr)
+          {
+            delete aDFaceChecker;
+          }
+          aDFaceChecker = new BRepMesh_WireChecker(face, tolclass, myInternaledges, myVemap,
+            myStructure, myumin, myumax, myvmin, myvmax, myInParallel);
+          aDFaceChecker->ReCompute(classifier);
+        }
+ 
+        if (aDFaceChecker->Status() == BRepMesh_NoError)
+        {
+          myFacestate = BRepMesh_ReMesh;
+        }
+
+        nbVertices = myVemap.Extent();
+ 
+      } while (!aEpsReached && aDFaceChecker->Status() != BRepMesh_NoError);
+
+      if (aDFaceChecker != nullptr)
+      {
+        delete aDFaceChecker;
       }
     }
     
@@ -683,9 +814,10 @@ static void splitSegment( BRepMesh_GeomTool&    theGT,
   if(aDist.SquareModulus() < theSquareEDef)
     return;
 
+  // Take into account the grid resolution in order to avoid degenerated edges in the final mesh
   midpar = (theFirst + theLast) * 0.5;
   theBAC.D0(midpar, midP3d);
-  theGT.AddPoint(midP3d, midpar, Standard_False);
+  theGT.AddPoint(midP3d, midpar, Standard_False, UVDEFLECTION);
 
   splitSegment(theGT, theSurf, theCurve2d, theBAC, theSquareEDef, theFirst, midpar, theNbIter+1);
   splitSegment(theGT, theSurf, theCurve2d, theBAC, theSquareEDef, midpar, theLast,  theNbIter+1); 
@@ -908,7 +1040,8 @@ void BRepMesh_FastDiscret::Add( const TopoDS_Edge&                  theEdge,
       if ( aCurveType == GeomAbs_Circle )
         nbpmin = 4; //OCC287
 
-      BRepMesh_GeomTool GT(cons, wFirst, wLast, otherdefedge, 0.5 * myAngle, nbpmin);
+      // Take into account the grid resolution in order to avoid degenerated edges in the final mesh
+      BRepMesh_GeomTool GT(cons, wFirst, wLast, otherdefedge, 0.5 * myAngle, nbpmin, UVDEFLECTION);
 
       if ( aCurveType == GeomAbs_BSplineCurve )
       {
@@ -932,7 +1065,8 @@ void BRepMesh_FastDiscret::Add( const TopoDS_Edge&                  theEdge,
               gp_Pnt        aPoint3d;
               gp_Pnt2d      aPoint2d;
               aDetalizator.Value( aNodeIt, theGFace, aParam, aPoint3d, aPoint2d );
-              GT.AddPoint( aPoint3d, aParam, Standard_False );
+              // Take into account the grid resolution in order to avoid degenerated edges in the final mesh
+              GT.AddPoint( aPoint3d, aParam, Standard_False, UVDEFLECTION );
             }
           }
         }
@@ -943,11 +1077,13 @@ void BRepMesh_FastDiscret::Add( const TopoDS_Edge&                  theEdge,
       TopoDS_Iterator exV(theEdge);
       for ( ; exV.More(); exV.Next() )
       {
+        // Take into account the grid resolution in order to avoid degenerated edges in the final mesh
         TopoDS_Vertex aIntV = TopoDS::Vertex(exV.Value());
         if ( aIntV.Orientation() == TopAbs_INTERNAL )
          GT.AddPoint(BRep_Tool::Pnt(aIntV),
                      BRep_Tool::Parameter(aIntV, theEdge),
-                     Standard_True);
+                     Standard_True,
+                     UVDEFLECTION);
       }
 
       Standard_Integer i; 

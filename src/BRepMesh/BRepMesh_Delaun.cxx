@@ -274,7 +274,8 @@ void BRepMesh_Delaun::compute( BRepMeshCol::Array1OfInteger& theVertexIndexes )
     createTriangles( theVertexIndexes( anVertexIdx ), aLoopEdges );
 
     // Add other nodes to the mesh
-    createTrianglesOnNewVertices( theVertexIndexes );
+    // Adjusting of the frontier at the initial meshing is absolutely necessary
+    createTrianglesOnNewVertices( theVertexIndexes, Standard_True );
   }
 
   // Destruction of triangles containing a top of the super triangle
@@ -432,7 +433,7 @@ void BRepMesh_Delaun::createTriangles ( const Standard_Integer            theVer
 //function : createTrianglesOnNewVertices
 //purpose  : Creation of triangles from the new nodes
 //=======================================================================
-void BRepMesh_Delaun::createTrianglesOnNewVertices( BRepMeshCol::Array1OfInteger& theVertexIndexes )
+void BRepMesh_Delaun::createTrianglesOnNewVertices( BRepMeshCol::Array1OfInteger& theVertexIndexes, const Standard_Boolean adjustFrontier )
 {
   BRepMeshCol::MapOfIntegerInteger aLoopEdges( 10, myMeshData->Allocator() );
 
@@ -524,8 +525,12 @@ void BRepMesh_Delaun::createTrianglesOnNewVertices( BRepMeshCol::Array1OfInteger
     }
   }
 
-  // Adjustment of meshes to boundary edges
-  frontierAdjust();
+  // adjusting of the frontier, when we just add new points to existing mesh is not necessary due to the algorithm
+  if (adjustFrontier) // adjust of the frontier only if it's requested
+  {
+    // Adjustment of meshes to boundary edges
+    frontierAdjust();
+  }
 }
 
 //=======================================================================
@@ -684,90 +689,207 @@ void BRepMesh_Delaun::cleanupMesh()
 //=======================================================================
 void BRepMesh_Delaun::frontierAdjust()
 {
-  BRepMeshCol::HMapOfInteger        aFrontier = Frontier();
-  BRepMeshCol::VectorOfInteger      aFailedFrontiers;
   BRepMeshCol::MapOfIntegerInteger  aLoopEdges( 10, myMeshData->Allocator() );
-  BRepMeshCol::HMapOfInteger        aIntFrontierEdges = new BRepMeshCol::MapOfInteger;
-  for ( Standard_Integer aPass = 1; aPass <= 2; ++aPass )
-  {      
-    // 1 pass): find external triangles on boundary edges;
-    // 2 pass): find external triangles on boundary edges appeared 
-    //          during triangles replacement.
-    
+  BRepMeshCol::MapOfInteger aTrianglesList;
+  Standard_Boolean isModified = Standard_True;
+
+  BRepMeshCol::MapOfIntegerBndBox2d aFrontBoxes;
+  Standard_Integer aPass = 1;
+
+  BRepMeshCol::SequenceOfInteger aProcessSequence;
+
+  for ( ; isModified; ++aPass )
+  {
+    isModified = Standard_False;
+    // First of all get rid of right traingles
+    BRepMeshCol::HMapOfInteger aFrontier = Frontier();
     BRepMeshCol::MapOfInteger::Iterator aFrontierIt( *aFrontier );
     for ( ; aFrontierIt.More(); aFrontierIt.Next() )
     {
-      Standard_Integer aFrontierId = aFrontierIt.Key();
-      const BRepMesh_PairOfIndex& aPair = myMeshData->ElementsConnectedTo( aFrontierId );
-      Standard_Integer aNbElem = aPair.Extent();
-      for( Standard_Integer aElemIt = 1; aElemIt <= aNbElem; ++aElemIt )
+      const BRepMesh_PairOfIndex& aPair = myMeshData->ElementsConnectedTo( aFrontierIt.Key() );
+      for( Standard_Integer j = 1, jn = aPair.Extent(); j <= jn; ++j )
       {
-        const Standard_Integer aPriorElemId = aPair.Index( aElemIt );
+        const Standard_Integer aPriorElemId = aPair.Index(j);
         if( aPriorElemId < 0 )
-          continue;
+            continue;
             
         Standard_Integer e[3];
         Standard_Boolean o[3];
         GetTriangle( aPriorElemId ).Edges( e, o );
 
-        Standard_Boolean isTriangleFound = Standard_False;
         for ( Standard_Integer n = 0; n < 3; ++n )
         {
-          if ( aFrontierId == e[n] && !o[n] )
+          if ( aFrontierIt.Key() == e[n] && !o[n] )
           {
-            // Destruction  of external triangles on boundary edges
-            isTriangleFound = Standard_True;
-            deleteTriangle( aPriorElemId, aLoopEdges );
+            if ( !aTrianglesList.Contains(aPriorElemId) )
+              aTrianglesList.Add( aPriorElemId );
             break;
           }
         }
-
-        if ( isTriangleFound )
-          break;
       }
     }
 
-    // destrucrion of remaining hanging edges :
-    BRepMeshCol::MapOfIntegerInteger::Iterator aLoopEdgesIt( aLoopEdges );
-    for ( ; aLoopEdgesIt.More(); aLoopEdgesIt.Next() )
-    {
-      Standard_Integer aLoopEdgeId = aLoopEdgesIt.Key();
-      if (myMeshData->ElementsConnectedTo( aLoopEdgeId ).IsEmpty() )
-        myMeshData->RemoveLink( aLoopEdgeId );
+    // destruction  of external triangles on boundary edges
+    BRepMeshCol::MapOfInteger::Iterator anTriangleIt( aTrianglesList );
+    for ( ; anTriangleIt.More(); anTriangleIt.Next() )
+      deleteTriangle( anTriangleIt.Key(), aLoopEdges );
+    aTrianglesList.Clear();
+
+    { // destrucrion of remaining hanging edges :
+      BRepMeshCol::MapOfIntegerInteger::Iterator aLoopEdgesIt( aLoopEdges );
+      for ( ; aLoopEdgesIt.More(); aLoopEdgesIt.Next() )
+      {
+        if (myMeshData->ElementsConnectedTo( aLoopEdgesIt.Key() ).IsEmpty() )
+          myMeshData->RemoveLink( aLoopEdgesIt.Key() );
+      }
+      aLoopEdges.Clear();
     }
 
-    // destruction of triangles crossing the boundary edges and 
-    // their replacement by makeshift triangles
-    for ( aFrontierIt.Reset(); aFrontierIt.More(); aFrontierIt.Next() )
+    // Cleanup mesh to get rid of all invalid triangles
+    cleanupMesh();
+
+    // Search for other invalid triangles, which intersect any frontier edges
+    BRepMeshCol::MapOfInteger::Iterator aTriangleIt( myMeshData->ElementsOfDomain() );
+    for ( ; aTriangleIt.More(); aTriangleIt.Next() )
     {
-      Standard_Integer aFrontierId = aFrontierIt.Key();
-      if ( !myMeshData->ElementsConnectedTo( aFrontierId ).IsEmpty() )
-        continue;
+      Standard_Integer tid = aTriangleIt.Key();
 
-      Standard_Boolean isSuccess = 
-        meshLeftPolygonOf( aFrontierId, Standard_True, aIntFrontierEdges );
+      Standard_Integer e[3];
+      Standard_Boolean o[3];
+      
+      GetTriangle(tid).Edges( e, o );
+      const BRepMesh_Edge& anTEdge0 = GetEdge( e[0] );
+      const BRepMesh_Edge& anTEdge1 = GetEdge( e[1] );
+      const BRepMesh_Edge& anTEdge2 = GetEdge( e[2] );
 
-      if ( aPass == 2 && !isSuccess )
-        aFailedFrontiers.Append( aFrontierId );
+      Bnd_Box2d aTriangleBox;
+      Standard_Integer v[3];
+
+      v[0] = anTEdge0.FirstNode();
+      v[1] = anTEdge0.LastNode();
+      if (v[0] == anTEdge1.FirstNode() || v[1] == anTEdge1.FirstNode())
+        v[2] = anTEdge1.LastNode();
+      else
+        v[2] = anTEdge1.FirstNode();
+
+      BRepMesh_Vertex bV[3];
+
+      for (Standard_Integer j = 0; j < 3; ++j)
+      {
+        bV[j] = GetVertex(v[j]);
+        aTriangleBox.Add( (gp_Pnt2d)bV[j].Coord () );
+      }
+
+      aFrontierIt.Reset();
+      for ( ; !isModified && aFrontierIt.More(); aFrontierIt.Next() )
+      {
+        if (aFrontierIt.Key() == e[0] || aFrontierIt.Key() == e[1] || aFrontierIt.Key() == e[2])
+          continue;
+
+        if (aFrontBoxes.IsBound(aFrontierIt.Key()) && aTriangleBox.IsOut(aFrontBoxes.Find(aFrontierIt.Key())))
+          continue;
+
+        const BRepMesh_Edge& anEdge = GetEdge( aFrontierIt.Key() );
+        const BRepMesh_Vertex& aV1  = GetVertex( anEdge.FirstNode() );
+        const BRepMesh_Vertex& aV2  = GetVertex( anEdge.LastNode()  );
+
+        if (aV1.IsEqual(aV2))
+          continue;
+
+        if (!aFrontBoxes.IsBound(aFrontierIt.Key()))
+        {
+          Bnd_Box2d anEdgeBox;
+          anEdgeBox.Add((gp_Pnt2d)aV1.Coord());
+          anEdgeBox.Add((gp_Pnt2d)aV2.Coord());
+          aFrontBoxes.Bind(aFrontierIt.Key(), anEdgeBox);
+          if (aTriangleBox.IsOut(anEdgeBox))
+            continue;
+        }
+
+        Standard_Integer aOnEdge = 0;
+        gp_Pnt2d intpnt;
+        Standard_Boolean aV1isNode = (aV1.IsEqual(bV[0]) || aV1.IsEqual(bV[1]) || aV1.IsEqual(bV[2]));
+        Standard_Boolean aV2isNode = (aV2.IsEqual(bV[0]) || aV2.IsEqual(bV[1]) || aV2.IsEqual(bV[2]));
+
+        if ( ( !aV1isNode && Contains(tid, aV1, aOnEdge) ) ||
+             ( !aV2isNode && Contains(tid, aV2, aOnEdge) ) ||
+             ( intSegSeg(anEdge, anTEdge0, Standard_False, Standard_True, intpnt) ||
+               intSegSeg(anEdge, anTEdge1, Standard_False, Standard_True, intpnt) || 
+               intSegSeg(anEdge, anTEdge2, Standard_False, Standard_True, intpnt) )
+           )
+        {
+          if ( !myMeshData->ElementsConnectedTo( aFrontierIt.Key() ).IsEmpty() )
+          {
+            deleteTriangle( myMeshData->ElementsConnectedTo( aFrontierIt.Key() ).Index( 1 ), aLoopEdges );
+            if ( !myMeshData->ElementsConnectedTo( aFrontierIt.Key() ).IsEmpty() )
+              deleteTriangle( myMeshData->ElementsConnectedTo( aFrontierIt.Key() ).Index( 1 ), aLoopEdges );
+          }
+          deleteTriangle( tid, aLoopEdges );
+
+          aProcessSequence.Append(aFrontierIt.Key());
+          break;
+        }
+      }
+
+    }
+
+    { // destrucrion of remaining hanging edges :
+      BRepMeshCol::MapOfIntegerInteger::Iterator aLoopEdgesIt( aLoopEdges );
+      for ( ; aLoopEdgesIt.More(); aLoopEdgesIt.Next() )
+      {
+        if (myMeshData->ElementsConnectedTo( aLoopEdgesIt.Key() ).IsEmpty() )
+          myMeshData->RemoveLink( aLoopEdgesIt.Key() );
+      }
+      aLoopEdges.Clear();
+    }
+
+    // Now analyze the frontier and build the missing triangles
+    aFrontierIt.Reset ();
+    for ( ; aFrontierIt.More(); aFrontierIt.Next() )
+    {
+      const BRepMesh_Edge& anEdge = GetEdge( aFrontierIt.Key() );
+
+      if ( myMeshData->ElementsConnectedTo( aFrontierIt.Key() ).IsEmpty() && (anEdge.FirstNode() != anEdge.LastNode())) // we fix mesh only for non-zero edges
+      {
+        meshLeftPolygonOf( aFrontierIt.Key(), Standard_True ); 
+        isModified = Standard_True;
+      }
+    }
+
+    if (aPass > 2 && isModified && !aProcessSequence.IsEmpty())
+    {
+      TColStd_SequenceOfInteger loop;
+      Standard_Integer last = aProcessSequence.Last();
+      loop.Append(last);
+      Standard_Integer i = aProcessSequence.Length() - 1;
+      for ( ; i > 0; --i )
+      {
+        Standard_Integer edge = aProcessSequence(i);
+        if (edge == last)
+        {
+          Standard_Integer j = 2;
+          Standard_Integer k = i - 1;
+          for ( ; j <= loop.Length() && k > 0; ++j, --k )
+          {
+            if (loop(j) != aProcessSequence(k))
+              break;
+          }
+
+          if (j > loop.Length()) // we found a loop in our processing sequence, this means, that the face isn't consistent, for example it has self-intersecting wires
+          {
+            return;
+          }
+        }
+        loop.Append(edge);
+      }
+    }
+
+    if ( aPass > 3 ) {
+      isModified = Standard_False;
     }
   }
 
   cleanupMesh();
-
-  // When the mesh has been cleaned up, try to process frontier edges 
-  // once again to fill the possible gaps that might be occured in case of "saw" -
-  // situation when frontier edge has a triangle at a right side, but its free 
-  // links cross another frontieres  and meshLeftPolygonOf itself can't collect 
-  // a closed polygon.
-  BRepMeshCol::VectorOfInteger::Iterator aFailedFrontiersIt( aFailedFrontiers );
-  for ( ; aFailedFrontiersIt.More(); aFailedFrontiersIt.Next() )
-  {
-    Standard_Integer aFrontierId = aFailedFrontiersIt.Value();
-    if ( !myMeshData->ElementsConnectedTo( aFrontierId ).IsEmpty() )
-      continue;
-
-    meshLeftPolygonOf( aFrontierId, Standard_True, aIntFrontierEdges );
-  }
 }
 
 //=======================================================================

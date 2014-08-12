@@ -236,7 +236,7 @@ private:
                                                 BRepMeshCol::SequenceOfBndB2d&  thePolyBoxes);
   
   //! Creates the triangles on new nodes.
-  void createTrianglesOnNewVertices (BRepMeshCol::Array1OfInteger& theVertexIndices);
+  void createTrianglesOnNewVertices (BRepMeshCol::Array1OfInteger& theVertexIndices, const Standard_Boolean adjustFrontier = Standard_False);
 
   //! Cleanup mesh from the free triangles.
   void cleanupMesh();

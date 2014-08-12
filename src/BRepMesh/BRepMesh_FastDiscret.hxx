@@ -37,6 +37,8 @@ class Bnd_Box;
 class TopoDS_Shape;
 class TopoDS_Face;
 class TopTools_IndexedDataMapOfShapeListOfShape;
+class TopTools_SequenceOfShape;
+class TColGeom2d_SequenceOfCurve;
 class TopoDS_Edge;
 class BRepAdaptor_HSurface;
 class Geom2d_Curve;
@@ -257,6 +259,18 @@ private:
   
   void AddInShape(const TopoDS_Face& face,
                   const Standard_Real defedge);
+                  
+  Standard_Boolean ModifyDeflection(  const TopoDS_Shape & aTarget,
+                                      const TopoDS_Face & face,
+                                      const Handle(BRepAdaptor_HSurface) & gFace,
+                                      const TopTools_IndexedDataMapOfShapeListOfShape & theAncestors,
+                                      const TopTools_SequenceOfShape & aShSeq,
+                                      const TColGeom2d_SequenceOfCurve & aCSeq,
+                                      const BRepMeshCol::SequenceOfReal & aFSeq,
+                                      const BRepMeshCol::SequenceOfReal & aLSeq,
+                                      const Handle(NCollection_IncAllocator) & anAlloc,
+                                      Standard_Real factor,
+                                      Standard_Real eps );
 
 private:
 

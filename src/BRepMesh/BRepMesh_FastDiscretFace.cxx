@@ -29,6 +29,7 @@
 #include <BRep_PointRepresentation.hxx>
 #include <BRep_TVertex.hxx>
 #include <BRep_Tool.hxx>
+#include <BRepTools.hxx>
 
 #include <ElSLib.hxx>
 #include <GeomLib.hxx>
@@ -51,12 +52,13 @@
 #include <TopExp_Explorer.hxx>
 #include <TopoDS.hxx>
 #include <TopoDS_Vertex.hxx>
+#include <TopoDS_Wire.hxx>
 #include <TopExp.hxx>
 
 #include <NCollection_Map.hxx>
 #include <Bnd_Box2d.hxx>
 
-#define UVDEFLECTION 1.e-05
+#define UVDEFLECTION 1.e-06
 
 IMPLEMENT_STANDARD_HANDLE (BRepMesh_FastDiscretFace, Standard_Transient)
 IMPLEMENT_STANDARD_RTTIEXT(BRepMesh_FastDiscretFace, Standard_Transient)
@@ -166,11 +168,23 @@ void BRepMesh_FastDiscretFace::Add(const TopoDS_Face&                    theFace
 
     Standard_Integer i = 1;
     Standard_Integer ipn = 0;
- 
+    
+    // Firstly restore the outer wire; because the outer wire isn't always the first in the list of wires
+    const TopoDS_Wire & aOuterWire = BRepTools::OuterWire( face );
+    {
+      TopoDS_Iterator ex(aOuterWire);
+      for(; ex.More(); ex.Next()) {
+        const TopoDS_Edge& edge = TopoDS::Edge(ex.Value());
+        if(edge.IsNull())
+          continue;
+        RestoreStructureFromTriangulation(edge, face, gFace, aFaceTrigu, theMapDefle(edge), loc, theMutexProvider);
+      }
+    }
+
     TopoDS_Iterator exW(face);
     for (; exW.More(); exW.Next()) {
       const TopoDS_Shape& aWire = exW.Value();
-      if (aWire.ShapeType() != TopAbs_WIRE)
+      if (aWire.ShapeType() != TopAbs_WIRE || aWire.IsEqual(aOuterWire))
         continue;
       TopoDS_Iterator ex(aWire);
       for(; ex.More(); ex.Next()) {
@@ -261,6 +275,8 @@ void BRepMesh_FastDiscretFace::Add(const TopoDS_Face&                    theFace
       {
         BRepMesh_Edge& anEdge = (BRepMesh_Edge&)trigu.GetEdge(i);
         if ( anEdge.Movability() == BRepMesh_Deleted )
+          continue;
+        if ( anEdge.Movability() == BRepMesh_Frontier ) // We shouldn't delete frontier edges
           continue;
 
         anEdge.SetMovability(BRepMesh_Free);

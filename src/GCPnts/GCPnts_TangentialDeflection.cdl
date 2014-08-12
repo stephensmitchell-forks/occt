@@ -151,9 +151,10 @@ is
     raises ConstructionError is static;
 
 
-    AddPoint(me: in out; thePnt : in Pnt from gp;
-                         theParam : in Real;
-                         theIsReplace : in Boolean = Standard_True)
+    AddPoint(me: in out; thePnt       : in Pnt from gp;
+                         theParam     : in Real;
+                         theIsReplace : in Boolean = Standard_True;
+               	         UTol         : in Real = 1.0e-9)
     returns Integer from Standard;
     ---Purpose: Add point to already calculated points (or replace existing)
     --          Returns index of new added point

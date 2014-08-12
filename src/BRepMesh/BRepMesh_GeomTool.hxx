@@ -61,7 +61,8 @@ public:
                                     const Standard_Real      theLastParam,
                                     const Standard_Real      theLinDeflection,
                                     const Standard_Real      theAngDeflection,
-                                    const Standard_Integer   theMinPointsNb = 2);
+                                    const Standard_Integer   theMinPointsNb = 2,
+                                    const Standard_Real      theTol = 1.e-9);
   
   //! Constructor.
   //! Initiates discretization of geometric curve corresponding 
@@ -81,7 +82,8 @@ public:
                                     const Standard_Real                 theLastParam,
                                     const Standard_Real                 theLinDeflection,
                                     const Standard_Real                 theAngDeflection,
-                                    const Standard_Integer              theMinPointsNb = 2);
+                                    const Standard_Integer              theMinPointsNb = 2,
+                                    const Standard_Real                 theTol = 1.e-9);
 
   //! Adds point to already calculated points (or replaces existing).
   //! \param thePoint point to be added.
@@ -91,9 +93,10 @@ public:
   //! \return index of new added point or found with parametric tolerance
   inline Standard_Integer AddPoint(const gp_Pnt&           thePoint,
                                    const Standard_Real     theParam,
-                                   const Standard_Boolean  theIsReplace = Standard_True)
+                                   const Standard_Boolean  theIsReplace = Standard_True,
+                                   const Standard_Real     theTol = 1.e-9)
   {
-    return myDiscretTool.AddPoint(thePoint, theParam, theIsReplace);
+    return myDiscretTool.AddPoint(thePoint, theParam, theIsReplace, theTol);
   }
   
   //! Returns number of discretization points.

@@ -35,12 +35,14 @@ BRepMesh_GeomTool::BRepMesh_GeomTool(
   const Standard_Real      theLastParam,
   const Standard_Real      theLinDeflection,
   const Standard_Real      theAngDeflection,
-  const Standard_Integer   theMinPointsNb)
+  const Standard_Integer   theMinPointsNb,
+  const Standard_Real      theTol)
   : myEdge(&theCurve.Edge()),
     myIsoType(GeomAbs_NoneIso)
 {
+  // Take the tolerance into account
   myDiscretTool.Initialize(theCurve, theFirstParam, theLastParam,
-    theAngDeflection, theLinDeflection, theMinPointsNb);
+    theAngDeflection, theLinDeflection, theMinPointsNb, theTol);
 }
 
 //=======================================================================
@@ -55,15 +57,17 @@ BRepMesh_GeomTool::BRepMesh_GeomTool(
   const Standard_Real                 theLastParam,
   const Standard_Real                 theLinDeflection,
   const Standard_Real                 theAngDeflection,
-  const Standard_Integer              theMinPointsNb)
+  const Standard_Integer              theMinPointsNb,
+  const Standard_Real      theTol)
   : myEdge(NULL),
     myIsoType(theIsoType)
 {
   Adaptor3d_IsoCurve aIso(theSurface, theIsoType, theParamIso,
     theFirstParam, theLastParam);
 
+  // Take the tolerance into account
   myDiscretTool.Initialize(aIso, theFirstParam, theLastParam,
-    theAngDeflection, theLinDeflection, theMinPointsNb);
+    theAngDeflection, theLinDeflection, theMinPointsNb, theTol);
 }
 
 //=======================================================================
@@ -264,7 +268,7 @@ BRepMesh_GeomTool::IntFlag BRepMesh_GeomTool::IntSegSeg(
 
     return BRepMesh_GeomTool::NoIntersection;
   }
-  else if ( aPosHash == 2 )
+  else if ( aPosHash == 2 || aPosHash == -1) // -1 means, that 2 points are equal, and 1 point is on another curve
     return BRepMesh_GeomTool::Glued;
 
   Standard_Real aParam[2];

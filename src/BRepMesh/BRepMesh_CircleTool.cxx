@@ -145,6 +145,10 @@ Standard_Boolean BRepMesh_CircleTool::Bind(const Standard_Integer theIndex,
     return Standard_False;
 
   Standard_Real aRadius = (aPoints[0] - aIntPnt).Modulus();
+  // Make sure, that we choose the right radius
+  aRadius = Max(aRadius, (aPoints[1] - aIntPnt).Modulus());
+  aRadius = Max(aRadius, (aPoints[2] - aIntPnt).Modulus());
+
   bind(theIndex, aIntPnt, aRadius);
   return Standard_True;
 }

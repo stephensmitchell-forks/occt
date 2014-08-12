@@ -74,9 +74,11 @@ GCPnts_TangentialDeflection::GCPnts_TangentialDeflection () { }
 Standard_Integer GCPnts_TangentialDeflection::AddPoint
  (const gp_Pnt& thePnt,
   const Standard_Real theParam,
-  const Standard_Boolean theIsReplace)
+  const Standard_Boolean theIsReplace,
+  const Standard_Real UTol)
 {
-  const Standard_Real tol = Precision::PConfusion();
+  // As well as during initialization, we should take tolerance into account
+  const Standard_Real tol = UTol;
   Standard_Integer index = -1;
   const Standard_Integer nb = parameters.Length();
   for ( Standard_Integer i = 1; index == -1 && i <= nb; i++ )
