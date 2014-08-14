@@ -17,15 +17,7 @@ package XBRepMesh
 
 	---Purpose: 
 
-uses 
-    TopoDS,
-    BRepMesh
-
 is 
-    Discret(theShape      : Shape from TopoDS;  
-    	    theDeflection : Real from Standard; 
-    	    theAngle      : Real from Standard;
-    	    theAlgo:out PDiscretRoot from BRepMesh) 
-    	returns Integer from Standard; 
+  imported XBRepMesh from BRepMesh;
 
 end XBRepMesh;

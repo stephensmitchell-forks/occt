@@ -18,7 +18,7 @@
 #include <OSD_SharedLibrary.hxx>
 #include <OSD_Function.hxx>
 #include <BRepMesh_IncrementalMesh.hxx>
-#include <BRepMesh_PDiscretRoot.hxx>
+#include <BRepMesh_DiscretRoot.hxx>
 
 namespace
 {
