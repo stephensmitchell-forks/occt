@@ -359,7 +359,7 @@ static const Standard_Real vtab[] =
 
     if (prem > MAXCHIF) {
       if (car == '0') continue;
-      if (car == '.') {  point = i;  continue;  }
+      if (car == '.') { if (point < 0) { point = i; }  continue;  }
       if (car == '+') continue;
       if (car == '-') {  moins = 1;  continue;  }
       if (car == '\0')
@@ -371,7 +371,7 @@ static const Standard_Real vtab[] =
     if (car > 48 && car <= 57)
       {  chiffre[j] = car - 48;  jj = ++j;  continue;  }    // j++ puis jj = j
     if (car == '0') {  chiffre[j] = 0;  j ++;  continue;  }
-    if (car == '.') {  point = i;  jx = point - prem;  continue;  }
+    if (car == '.') { if (point < 0) { point = i;  jx = point - prem; } continue;  }
     if ((car & 94) == 68) { // prend  : e E d D
       je = i;     exp = atoi(&ligne[i+1]);     jx += exp;
       if (exp < -100 || exp > 100) grexp = 1;  break;
