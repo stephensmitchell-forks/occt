@@ -18,7 +18,7 @@
 
 #include <IVtkTools.hxx>
 #include <IVtkOCC_Shape.hxx>
-#include <vtkObject.h>
+#include <vtkDataObject.h>
 #include <vtkSetGet.h>
 #include <vtkSmartPointer.h>
 
@@ -29,7 +29,12 @@ class IVtkTools_ShapeDataSource;
 
 //! @class IVtkTools_ShapeObject
 //! @brief VTK holder class for OCC shapes to pass them through pipelines.
-class Standard_EXPORT IVtkTools_ShapeObject :  public vtkObject
+//!
+//! It is descendent of vtkObject (data). Logically it is a one of milestones of VTK pipeline.
+//! It stores data of OCC shape (the OccShape instance) in vtkInformation object of vtkDataObject.
+//! Then pass it to the actors through pipelines,
+//! so selection logic can access OccShape easily given the actor instance.
+class Standard_EXPORT IVtkTools_ShapeObject :  public vtkDataObject
 {
 public:
   vtkTypeMacro (IVtkTools_ShapeObject, vtkObject);

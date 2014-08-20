@@ -23,7 +23,7 @@
 
 DEFINE_STANDARD_HANDLE( IVtkOCC_Shape, IVtk_IShape )
 
-//! @class IVtkOCC_Shape  
+//! @class IVtkOCC_Shape
 //! @brief OCC implementation of IShape interface.
 class IVtkOCC_Shape : public IVtk_IShape
 {

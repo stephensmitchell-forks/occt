@@ -62,7 +62,7 @@ int IVtkTools_SubPolyDataFilter::RequestData (vtkInformation *vtkNotUsed(theRequ
   vtkIdList *anIdList = vtkIdList::New(); // List of cell ids to be passed
   anIdList->Allocate(myIdsSet.Extent());  // Allocate the list of ids
 
-  anInput->Update();
+  anInput->Modified();
 
   if (myDoFiltering)
   {

@@ -27,7 +27,6 @@
 #include <vtkObjectFactory.h> 
 #include <vtkPoints.h>
 #include <vtkPolyData.h>
-#include <vtkSphereSource.h>
 #include <vtkStreamingDemandDrivenPipeline.h>
 #include <vtkTransform.h>
 #include <vtkTransformPolyDataFilter.h>
@@ -42,7 +41,9 @@ IVtkTools_ShapeDataSource::IVtkTools_ShapeDataSource()
 : myPolyData (new IVtkVTK_ShapeData),
   myIsFastTransformMode (Standard_False),
   myIsTransformOnly (Standard_False)
-{ }
+{
+  this->SetNumberOfInputPorts (0);
+}
 
 //================================================================
 // Function : Destructor
@@ -81,12 +82,14 @@ IVtkOCC_Shape::Handle IVtkTools_ShapeDataSource::GetShape()
 }
 
 //================================================================
-// Function : Execute
+// Function : RequestData
 // Purpose  : 
 //================================================================
-void IVtkTools_ShapeDataSource::Execute()
+int IVtkTools_ShapeDataSource::RequestData (vtkInformation* theRequest,
+                                            vtkInformationVector** theInputVector,
+                                            vtkInformationVector* theOutputVector)
 {
-  vtkPolyData* aPolyData = GetOutput();
+  vtkPolyData* aPolyData = vtkPolyData::GetData (theOutputVector);
   aPolyData->Allocate();
   vtkPoints* aPts = vtkPoints::New();
   aPolyData->SetPoints (aPts);
@@ -96,7 +99,7 @@ void IVtkTools_ShapeDataSource::Execute()
   TopoDS_Shape aShape = myOccShape->GetShape();
   TopLoc_Location aShapeLoc = aShape.Location();
 
-  if (myIsTransformOnly )
+  if (myIsTransformOnly)
   {
     vtkPolyData* aPrevData = myPolyData->getVtkPolyData();
     if (!aShapeLoc.IsIdentity() )
@@ -147,6 +150,8 @@ void IVtkTools_ShapeDataSource::Execute()
   // OccShape easily given the actor instance.
   IVtkTools_ShapeObject::SetShapeSource (this, aPolyData);
   aPolyData->GetAttributes (vtkDataObject::CELL)->SetPedigreeIds (SubShapeIDs() );
+
+  return Superclass::RequestData (theRequest, theInputVector, theOutputVector);
 }
 
 //================================================================
@@ -198,11 +203,11 @@ vtkSmartPointer<vtkPolyData> IVtkTools_ShapeDataSource::transform (vtkPolyData* 
     }
 
   aTransform->SetMatrix (aMx);
+  vtkSmartPointer<vtkTransformPolyDataFilter> aTrsfFilter
+    = vtkSmartPointer<vtkTransformPolyDataFilter>::New();
 
-  vtkSmartPointer<vtkTransformPolyDataFilter>
-    aTrsfFilter = vtkSmartPointer<vtkTransformPolyDataFilter>::New();
   aTrsfFilter->SetTransform (aTransform);
-  aTrsfFilter->SetInput (theSource);
+  aTrsfFilter->SetInputData (theSource);
   aTrsfFilter->Update();
 
   vtkPolyData* aTransformed = aTrsfFilter->GetOutput();

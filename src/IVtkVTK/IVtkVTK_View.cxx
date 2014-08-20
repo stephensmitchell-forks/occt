@@ -13,18 +13,19 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
+
 #include <IVtkVTK_View.hxx>
+#include <vtkAutoInit.h>
 #include <vtkCamera.h>
 #include <vtkRenderer.h>
 #include <vtkTransform.h>
 
-#ifdef _MSC_VER
-#pragma comment( lib, "vtkCommon.lib" )
-#pragma comment( lib, "vtkRendering.lib" )
-#pragma comment( lib, "vtkFiltering.lib" )
-#pragma comment( lib, "vtkGraphics.lib" )
-#pragma comment( lib, "vtkParallel.lib" )
-#endif
+// Initialization of VTK object factories.
+// Since VTK 6 the factory methods require "auto-initialization" depending on
+// what modules are enabled at VTK configure time.
+// Some defines are needed in order to make the factories work properly.
+VTK_MODULE_INIT(vtkRenderingOpenGL);
+VTK_MODULE_INIT(vtkInteractionStyle);
 
 // Handle implementation
 IMPLEMENT_STANDARD_HANDLE(IVtkVTK_View, IVtk_IView)

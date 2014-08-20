@@ -23,7 +23,6 @@
 
 //! @class IVtkTools_SubPolyDataFilter 
 //! @brief Cells filter according to the given set of cells ids.
-//! @ingroup tools
 class Standard_EXPORT IVtkTools_SubPolyDataFilter : public vtkPolyDataAlgorithm
 {
 public:

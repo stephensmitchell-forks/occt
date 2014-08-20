@@ -20,7 +20,7 @@
 #include <IVtkOCC_Shape.hxx>
 #include <IVtkVTK_ShapeData.hxx>
 #include <vtkInformationIdTypeKey.h>
-#include <vtkPolyDataSource.h>
+#include <vtkPolyDataAlgorithm.h>
 #include <vtkType.h>
 #include <vtkSmartPointer.h>
 
@@ -29,12 +29,11 @@ class vtkPolyData;
 
 //! @class IVtkTools_ShapeDataSource.
 //! @brief VTK data source for OCC shapes polygonal data.
-//! @ingroup tools.
-class Standard_EXPORT IVtkTools_ShapeDataSource : public vtkPolyDataSource
+class Standard_EXPORT IVtkTools_ShapeDataSource : public vtkPolyDataAlgorithm
 {
 public:
 
-  vtkTypeMacro(IVtkTools_ShapeDataSource, vtkPolyDataSource);
+  vtkTypeMacro(IVtkTools_ShapeDataSource, vtkPolyDataAlgorithm);
   static IVtkTools_ShapeDataSource* New();
 
 
@@ -50,11 +49,6 @@ public: //! @name Initialization
   inline void FastTransformModeOn() { myIsFastTransformMode = true; }
   inline void FastTransformModeOff() { myIsFastTransformMode = false; }
 
-public: //! @name Kernel
-
-  //! Build output polygonal data set from the shape wrapper.
-  void Execute();
-
 public: //! @name Data accessors
 
   //! Returns ID of the shape used as a topological input for this data source.
@@ -69,6 +63,20 @@ public: //! @name Data accessors
   //! Access to the shape's sub-shape ids array
   //! @returns the array cast to vtkIdTypeArray
   vtkSmartPointer<vtkIdTypeArray> SubShapeIDs();
+
+protected: //! @name Interface to override
+
+  //! This is called by the superclass.
+  //! This is the method you should override if you use this class as ancestor.
+  //! Build output polygonal data set from the shape wrapper.
+  //! @param theRequest [in] information about data object.
+  //! In current implementation it is ignored.
+  //! @param theInputVector [in] the input data. As adata source is the start
+  //! stage of the VTK pipeline, theInputVector is empty and not used (no input port).
+  //! @param theOutputVector [in] the pointer to output data, that is filled in this method.
+  virtual int RequestData(vtkInformation* theRequest,
+                          vtkInformationVector** theInputVector,
+                          vtkInformationVector* theOutputVector);
 
 protected: //! @name Internals
 
