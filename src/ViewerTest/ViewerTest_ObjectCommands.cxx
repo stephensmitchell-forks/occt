@@ -39,6 +39,7 @@
 
 #include <AIS_Shape.hxx>
 #include <AIS_DisplayMode.hxx>
+#include <AIS_PointCloud.hxx>
 #include <TColStd_MapOfInteger.hxx>
 #include <AIS_MapOfInteractive.hxx>
 #include <ViewerTest_DoubleMapOfInteractiveAndName.hxx>
@@ -5029,6 +5030,194 @@ static int VFont (Draw_Interpretor& theDI,
 }
 
 //=======================================================================
+//function : VPointCloud
+//purpose  : Create interactive object for arbitary set of points.
+//=======================================================================
+static Standard_Integer VPointCloud (Draw_Interpretor&,
+                                     Standard_Integer theArgNum,
+                                     const char** theArgs)
+{
+  if (theArgNum < 2)
+  {
+    std::cout << theArgs[0] << " error: wrong number of parameters. Type 'help "
+              << theArgs[0] << "' for more information.\n";
+    return 1;
+  }
+
+  Handle(AIS_InteractiveContext) anAISContext = ViewerTest::GetAISContext();
+  if (anAISContext.IsNull())
+  {
+    std::cerr << "Call 'vinit' before!\n";
+    return 1;
+  }
+
+  Standard_Integer anArgIter = 1;
+
+  // Get and check point cloud name in AIS context
+  TCollection_AsciiString aName (theArgs[anArgIter++]);
+  if (GetMapOfAIS().IsBound2 (aName))
+  {
+    std::cout << theArgs[0] << " error: object name exists." << std::endl;
+    return 1;
+  }
+
+  // Sets default value
+  Standard_Integer aMode = 0;
+  Standard_Integer aMarkerType = -1;
+  Quantity_NameOfColor aColorName = Quantity_NOC_YELLOW;
+  Standard_Real aScale = 1.;
+  Standard_Boolean aHasColor = true;
+  Standard_Integer aNumberOfPoints = 1000;
+  TCollection_AsciiString aFileName = NULL;
+
+  // Parses arguments
+  for (; anArgIter < theArgNum; ++anArgIter)
+  {
+    const TCollection_AsciiString anArg (theArgs[anArgIter]);
+    if (anArg.Search ("Mode=") > -1)
+    {
+      aMode = anArg.Token ("=", 2).IntegerValue();
+      if (aMode != 0 && aMode != 1)
+      {
+        std::cerr << "Wrong argument : " << anArg << "\n";
+        return 1;
+      }
+    }
+    else if (anArg.Search ("MarkerType=") > -1)
+    {
+      aMarkerType = anArg.Token ("=", 2).IntegerValue();
+    }
+    else if (anArg.Search ("ColorName=") > -1)
+    {
+      aColorName = ViewerTest::GetColorFromName (anArg.Token ("=", 2).ToCString());
+      aHasColor = false;
+    }
+    else if (anArg.Search ("Scale=") > -1)
+    {
+      aScale = anArg.Token ("=", 2).RealValue();
+    }
+    else if (anArg.Search ("NumPoints=") > -1)
+    {
+      aNumberOfPoints = anArg.Token ("=", 2).IntegerValue();
+    }
+    else if (anArg.Search ("FileName=") > -1)
+    {
+      aFileName = anArg.Token ("=", 2);
+    }
+    else
+    {
+      std::cerr << "Wrong argument: " << anArg << "\n";
+      return 1;
+    }
+  }
+
+  srand (static_cast<unsigned int>(time(NULL)));
+
+  // Point cloud initialization
+  Handle(AIS_PointCloud) aPointCloud = new AIS_PointCloud();
+
+  Standard_Integer anIter = 1;
+  if (aMode == 0)
+  {
+    Handle(Graphic3d_ArrayOfPoints) anArrayPoints = new Graphic3d_ArrayOfPoints (aNumberOfPoints, aHasColor);
+    for (; anIter < aNumberOfPoints; anIter++)
+    {
+      // Create random points
+      gp_Pnt aPoint (RandomReal (0., 10000.),
+                     RandomReal (0., 10000.),
+                     RandomReal (0., 10000.));
+
+      // Create random colors
+      Quantity_Color aColor (RandomReal (0., 1.),
+                             RandomReal (0., 1.),
+                             RandomReal (0., 1.),
+                             Quantity_TOC_RGB);
+
+      // Add point with color in array
+      anArrayPoints->AddVertex (aPoint, aColor);
+    }
+    // Set array of points in point cloud object
+    aPointCloud->SetPoints (anArrayPoints);
+  }
+  /*else if (aMode == 1)
+  {
+    Handle(AIS_ArrayOfPnt) aCoords = new AIS_ArrayOfPnt (1, aNumberOfPoints);
+    Handle(AIS_ArrayOfPnt) aColors = new AIS_ArrayOfPnt (1, aNumberOfPoints);
+    for (; anIter <= aNumberOfPoints; anIter++)
+    {
+      gp_Pnt aPoint (RandomReal (0., 5000.),
+                     RandomReal (0., 5000.),
+                     RandomReal (0., 5000.));
+      aCoords->SetValue (anIter, aPoint);
+
+      gp_Pnt aColor (RandomReal (0., 1.),
+                     RandomReal (0., 1.),
+                     RandomReal (0., 1.));
+      aColors->SetValue (anIter, aColor);
+    }
+    // Set coordinates and colors
+    aPointCloud->SetPoints (aCoords, aColors, aHasColor);
+  }*/
+
+  //std::cout << aPointCloud->Attributes()->HasLocalAttributes()
+
+  // Set point aspect for attributes of interactive object
+  Aspect_TypeOfMarker anAMarkerType = aMarkerType >= 0 ? (Aspect_TypeOfMarker )aMarkerType : Aspect_TOM_POINT;
+  aPointCloud->Attributes()->SetPointAspect (new Prs3d_PointAspect (anAMarkerType, aColorName, aScale));
+
+  anAISContext->Display (aPointCloud);
+  GetMapOfAIS().Bind (aPointCloud, theArgs[1]);
+
+  return 0;
+}
+
+//=======================================================================
+//function : VPointCloudSetColor
+//purpose  : Sets the color for point cloud.
+//=======================================================================
+static Standard_Integer VPointCloudSetColor (Draw_Interpretor&,
+                                             Standard_Integer theArgNum,
+                                             const char** theArgs)
+{
+  // Check arguments
+  if (theArgNum < 3)
+  {
+    std::cout << theArgs[0] << " error: wrong number of parameters. Type 'help "
+              << theArgs[0] << "' for more information.\n";
+    return 1;
+  }
+
+  // Check AIS context
+  Handle(AIS_InteractiveContext) anAISContext = ViewerTest::GetAISContext();
+  if (anAISContext.IsNull())
+  {
+    std::cerr << "Call 'vinit' before!" << std::endl;
+    return 1;
+  }
+
+  Standard_Integer anArgIter = 1;
+
+  // Find an interactive object in map of AIS context
+  TCollection_AsciiString aName (theArgs[anArgIter++]);
+  Handle(AIS_InteractiveObject) anInterObject = Handle(AIS_InteractiveObject)::DownCast (GetMapOfAIS().Find2 (aName));
+  if (anInterObject.IsNull())
+  {
+    std::cout << "Not an AIS interactive object!" << std::endl;
+    return 1;
+  }
+
+  // Get color name
+  const TCollection_AsciiString aColorName (theArgs[anArgIter++]);
+  Quantity_NameOfColor aNameOfColor = ViewerTest::GetColorFromName (aColorName.ToCString());
+
+  // Set color
+  anInterObject->SetColor (aNameOfColor);
+
+  // Update context current viewer
+  anAISContext->UpdateCurrentViewer();
+}
+
+//=======================================================================
 //function : ObjectsCommands
 //purpose  :
 //=======================================================================
@@ -5185,4 +5374,18 @@ void ViewerTest::ObjectCommands(Draw_Interpretor& theCommands)
                             "vfont [add pathToFont [fontName] [regular,bold,italic,bolditalic=undefined]]"
                    "\n\t\t:        [find fontName [regular,bold,italic,bolditalic=undefined]]",
                    __FILE__, VFont, group);
+
+  theCommands.Add ("vpointcloud",
+                   "vpointcloud usage:\n"
+                   "vpointcloud ObjectName [Mode=1]\n"
+                   "                       [NumPoints=100]\n"
+                   "                       [MarkerType=0] [ColorName=GREEN] [Scale=1.0]\n"
+                   "                       [FileName=PointCloudFile]"
+                   "\n\t\t:        Create an interactive object for arbitary set of points.",
+                   __FILE__, VPointCloud, group);
+  theCommands.Add ("vpcsetcolor",
+                   "vpcsetcolor usage:\n"
+                   "vpcsetcolor PointCloudObjectName [ColorName=GREEN]"
+                   "\n\t\t:        Set color for point cloud interactive object.",
+                   __FILE__, VPointCloudSetColor, group);
 }
