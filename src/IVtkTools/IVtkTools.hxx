@@ -18,6 +18,16 @@
 
 #include <IVtk_Types.hxx>
 
+#if defined(_WIN32) && !defined(HAVE_NO_DLL)
+  #ifdef __IVtkTools_DLL
+    #define IVtkTools_EXPORT Standard_EXPORT
+  #elif 
+    #define IVtkTools_EXPORT Standard_IMPORT
+  #endif
+#else
+  #define IVtkTools_EXPORT
+#endif
+
 class vtkLookupTable;
 class vtkMapper;
 
