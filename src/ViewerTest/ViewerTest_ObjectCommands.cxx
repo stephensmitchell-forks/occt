@@ -5029,11 +5029,18 @@ static int VFont (Draw_Interpretor& theDI,
   return 0;
 }
 
+//! Auxilarily function.
+//! Create random float number in range from theMin to theMax.
+static Standard_Real RandomReal (const Standard_Real theMin, const Standard_Real theMax)
+{
+  return theMin + (theMax - theMin) * Standard_Real(rand()) / RAND_MAX;
+}
+
 //=======================================================================
 //function : VPointCloud
 //purpose  : Create interactive object for arbitary set of points.
 //=======================================================================
-static Standard_Integer VPointCloud (Draw_Interpretor&,
+static Standard_Integer VPointCloud (Draw_Interpretor& /*theDI*/,
                                      Standard_Integer theArgNum,
                                      const char** theArgs)
 {
@@ -5079,7 +5086,7 @@ static Standard_Integer VPointCloud (Draw_Interpretor&,
       aMode = anArg.Token ("=", 2).IntegerValue();
       if (aMode != 0 && aMode != 1)
       {
-        std::cerr << "Wrong argument : " << anArg << "\n";
+        std::cerr << "Wrong argument : " << anArg << std::endl;
         return 1;
       }
     }
@@ -5139,7 +5146,7 @@ static Standard_Integer VPointCloud (Draw_Interpretor&,
     // Set array of points in point cloud object
     aPointCloud->SetPoints (anArrayPoints);
   }
-  /*else if (aMode == 1)
+  else if (aMode == 1)
   {
     Handle(AIS_ArrayOfPnt) aCoords = new AIS_ArrayOfPnt (1, aNumberOfPoints);
     Handle(AIS_ArrayOfPnt) aColors = new AIS_ArrayOfPnt (1, aNumberOfPoints);
@@ -5157,9 +5164,7 @@ static Standard_Integer VPointCloud (Draw_Interpretor&,
     }
     // Set coordinates and colors
     aPointCloud->SetPoints (aCoords, aColors, aHasColor);
-  }*/
-
-  //std::cout << aPointCloud->Attributes()->HasLocalAttributes()
+  }
 
   // Set point aspect for attributes of interactive object
   Aspect_TypeOfMarker anAMarkerType = aMarkerType >= 0 ? (Aspect_TypeOfMarker )aMarkerType : Aspect_TOM_POINT;
@@ -5169,52 +5174,6 @@ static Standard_Integer VPointCloud (Draw_Interpretor&,
   GetMapOfAIS().Bind (aPointCloud, theArgs[1]);
 
   return 0;
-}
-
-//=======================================================================
-//function : VPointCloudSetColor
-//purpose  : Sets the color for point cloud.
-//=======================================================================
-static Standard_Integer VPointCloudSetColor (Draw_Interpretor&,
-                                             Standard_Integer theArgNum,
-                                             const char** theArgs)
-{
-  // Check arguments
-  if (theArgNum < 3)
-  {
-    std::cout << theArgs[0] << " error: wrong number of parameters. Type 'help "
-              << theArgs[0] << "' for more information.\n";
-    return 1;
-  }
-
-  // Check AIS context
-  Handle(AIS_InteractiveContext) anAISContext = ViewerTest::GetAISContext();
-  if (anAISContext.IsNull())
-  {
-    std::cerr << "Call 'vinit' before!" << std::endl;
-    return 1;
-  }
-
-  Standard_Integer anArgIter = 1;
-
-  // Find an interactive object in map of AIS context
-  TCollection_AsciiString aName (theArgs[anArgIter++]);
-  Handle(AIS_InteractiveObject) anInterObject = Handle(AIS_InteractiveObject)::DownCast (GetMapOfAIS().Find2 (aName));
-  if (anInterObject.IsNull())
-  {
-    std::cout << "Not an AIS interactive object!" << std::endl;
-    return 1;
-  }
-
-  // Get color name
-  const TCollection_AsciiString aColorName (theArgs[anArgIter++]);
-  Quantity_NameOfColor aNameOfColor = ViewerTest::GetColorFromName (aColorName.ToCString());
-
-  // Set color
-  anInterObject->SetColor (aNameOfColor);
-
-  // Update context current viewer
-  anAISContext->UpdateCurrentViewer();
 }
 
 //=======================================================================
@@ -5383,9 +5342,4 @@ void ViewerTest::ObjectCommands(Draw_Interpretor& theCommands)
                    "                       [FileName=PointCloudFile]"
                    "\n\t\t:        Create an interactive object for arbitary set of points.",
                    __FILE__, VPointCloud, group);
-  theCommands.Add ("vpcsetcolor",
-                   "vpcsetcolor usage:\n"
-                   "vpcsetcolor PointCloudObjectName [ColorName=GREEN]"
-                   "\n\t\t:        Set color for point cloud interactive object.",
-                   __FILE__, VPointCloudSetColor, group);
 }

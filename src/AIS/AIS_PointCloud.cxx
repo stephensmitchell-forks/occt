@@ -78,11 +78,19 @@ bool AIS_PointCloud::SetPoints (const Handle(AIS_ArrayOfPnt)& theCoords,
   return true;
 }
 
+//=======================================================================
+//function : SetColor
+//purpose  : 
+//=======================================================================
 void AIS_PointCloud::SetColor (const Quantity_NameOfColor theColor)
 {
   SetColor (Quantity_Color(theColor));
 }
 
+//=======================================================================
+//function : SetColor
+//purpose  : 
+//=======================================================================
 void AIS_PointCloud::SetColor (const Quantity_Color &theColor)
 {
   if (!myDrawer->HasPointAspect())
@@ -94,23 +102,6 @@ void AIS_PointCloud::SetColor (const Quantity_Color &theColor)
 
   hasOwnColor = Standard_True;
   myOwnColor = theColor;
-
-  Handle(Graphic3d_AspectMarker3d) aPointAspect = myDrawer->PointAspect()->Aspect();
-
-  const Handle(Prs3d_Presentation)& aPrs = Presentations().Value (1).Presentation()->Presentation();
-  
-  // Set aspect for presentation
-  aPrs->SetPrimitivesAspect (aPointAspect);
-
-  const Handle(Graphic3d_Group)& aGroup = aPrs->Groups().First();
-
-  // Check if aspect of given type is set for the group, 
-  // because setting aspect for group with no already set aspect
-  // can lead to loss of presentation data
-  if (aGroup->IsGroupPrimitivesAspectSet (Graphic3d_ASPECT_MARKER))
-  {
-    aGroup->SetGroupPrimitivesAspect (aPointAspect);
-  }
 }
 
 //=======================================================================
@@ -125,18 +116,6 @@ void AIS_PointCloud::Compute(const Handle(PrsMgr_PresentationManager3d)& /*aPres
   if (myPoints.IsNull() || !myPoints->IsValid()) return;
 
   Handle(Graphic3d_Group) aGroup = Prs3d_Root::CurrentGroup (aPresentation);
-
-  /************************************
-  static Handle(Graphic3d_AspectMarker3d) PtA = new Graphic3d_AspectMarker3d();
-  PtA->SetType(Aspect_TOM_POINT);
-  PtA->SetScale(1.);
-  Handle(Graphic3d_Group) TheGroup = Prs3d_Root::CurrentGroup(aPresentation);
-  TheGroup->SetPrimitivesAspect(PtA);
-  Handle(Graphic3d_ArrayOfPoints) aPoint = new Graphic3d_ArrayOfPoints (1);
-  aPoint->AddVertex (myComponent->X(),myComponent->Y(),myComponent->Z());
-  TheGroup->AddPrimitiveArray (aPoint);
-  ******************************/
-
   if (Attributes()->HasPointAspect())
   {
     aGroup->SetPrimitivesAspect (Attributes()->PointAspect()->Aspect());
@@ -144,6 +123,10 @@ void AIS_PointCloud::Compute(const Handle(PrsMgr_PresentationManager3d)& /*aPres
   aGroup->AddPrimitiveArray (myPoints);
 }
 
+//=======================================================================
+//function : ComputeSelection
+//purpose  : 
+//=======================================================================
 void AIS_PointCloud::ComputeSelection(const Handle(SelectMgr_Selection)& /*aSelection*/,
                                       const Standard_Integer /*aMode*/)
 {
