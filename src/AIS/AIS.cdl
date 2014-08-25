@@ -368,7 +368,7 @@ is
     ---Category: General Objects
     class ConnectedInteractive;          --signature 0
     class MultipleConnectedInteractive;  --signature 1
-	imported PointCloud;                 --signature 2
+    imported PointCloud;
 
 	    ---Category:  DIMENSIONS AND RELATIONS
  

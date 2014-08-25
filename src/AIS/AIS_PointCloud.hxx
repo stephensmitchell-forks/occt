@@ -18,16 +18,19 @@
 
 #include <AIS.hxx>
 #include <AIS_InteractiveObject.hxx>
-#include <gp_Pnt.hxx>
-#include <Standard.hxx>
-#include <Standard_Macro.hxx>
+
 #include <Graphic3d_ArrayOfPoints.hxx>
-#include <NCollection_Handle.hxx>
-#include <NCollection_HArray1.hxx>
+
+#include <Quantity_HArray1OfColor.hxx>
+
+#include <Standard.hxx>
+#include <Standard_DefineHandle.hxx>
+#include <Standard_Macro.hxx>
+
+#include <TColgp_HArray1OfDir.hxx>
+#include <TColgp_HArray1OfPnt.hxx>
 
 DEFINE_STANDARD_HANDLE (AIS_PointCloud, AIS_InteractiveObject)
-
-NCOLLECTION_HARRAY1(AIS_ArrayOfPnt, gp_Pnt)
 
 //! Interactive object for set of points.
 class AIS_PointCloud : public AIS_InteractiveObject
@@ -35,23 +38,29 @@ class AIS_PointCloud : public AIS_InteractiveObject
 
 public:
 
-  //! Create point cloud.
+  //! Constructor
   Standard_EXPORT AIS_PointCloud ();
 
-  //! Initializes construction of the point cloud from points.
-  //! @param thePoints [in] the points.
-  Standard_EXPORT bool SetPoints (const Handle(Graphic3d_ArrayOfPoints)& thePoints);
+  //! Sets the points from array of points.
+  //! @detailed This function allows to avoid data duplication.
+  //! @param    thePoints [in] the array of points.
+  Standard_EXPORT virtual void SetPoints (const Handle(Graphic3d_ArrayOfPoints)& thePoints);
 
-  //! Sets the points.
+  //! Sets the points with optional colors.
   //! @param theCoords [in] the array of coordinates.
-  //! @param theColors [in] the array of RGB colors.
-  Standard_EXPORT bool SetPoints (const Handle(AIS_ArrayOfPnt)& theCoords,
-                                  const Handle(AIS_ArrayOfPnt)& theColors,
-                                  const Standard_Boolean hasColors = true);
+  //! @param theColors [in] optional array of colors.
+  Standard_EXPORT virtual void SetPoints (const Handle(TColgp_HArray1OfPnt)&     theCoords,
+                                          const Handle(Quantity_HArray1OfColor)& theColors = NULL);
 
-  //! Sets the color theColor in the reconstructed point cloud
-  Standard_EXPORT void SetColor (const Quantity_NameOfColor theColor);
-  Standard_EXPORT void SetColor (const Quantity_Color &theColor);
+  //! Get the points.
+  //! @return the array of points.
+  Standard_EXPORT virtual const Handle(Graphic3d_ArrayOfPoints)& GetPoints () const;
+
+  //! Redefined method implemets the standard behavior.
+  Standard_EXPORT virtual void SetColor (const Quantity_NameOfColor theColor);
+
+  //! Redefined method implemets the standard behavior.
+  Standard_EXPORT virtual void SetColor (const Quantity_Color& theColor);
 
 public:
 
@@ -63,8 +72,8 @@ protected:
                                         const Handle(Prs3d_Presentation)& thePresentation,
                                         const Standard_Integer theMode = 0);
 
-  Standard_EXPORT virtual void ComputeSelection(const Handle(SelectMgr_Selection)& aSelection,
-                                                const Standard_Integer aMode);
+  Standard_EXPORT virtual void ComputeSelection(const Handle(SelectMgr_Selection)& theSelection,
+                                                const Standard_Integer theMode);
 
 private:
 

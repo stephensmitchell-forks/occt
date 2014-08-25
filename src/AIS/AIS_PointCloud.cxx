@@ -13,23 +13,22 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#include <AIS_PointCloud.hxx>
 #include <AIS_Drawer.hxx>
-
-#include <Prs3d_Root.hxx>
-#include <Prs3d_Presentation.hxx>
-#include <Prs3d_PointAspect.hxx>
-
-#include <PrsMgr_Presentations.hxx>
-#include <PrsMgr_ModedPresentation.hxx>
+#include <AIS_PointCloud.hxx>
+#include <AIS_PointCloud.lxx>
 
 #include <Graphic3d_Group.hxx>
 #include <Graphic3d_AspectMarker3d.hxx>
 
+#include <Prs3d_PointAspect.hxx>
+#include <Prs3d_Presentation.hxx>
+#include <Prs3d_Root.hxx>
+
+#include <PrsMgr_ModedPresentation.hxx>
+#include <PrsMgr_Presentations.hxx>
+
 IMPLEMENT_STANDARD_HANDLE(AIS_PointCloud, AIS_InteractiveObject)
 IMPLEMENT_STANDARD_RTTIEXT(AIS_PointCloud, AIS_InteractiveObject)
-
-IMPLEMENT_HARRAY1(AIS_ArrayOfPnt)
 
 //==================================================
 // Function: AIS_PointCloud
@@ -44,38 +43,50 @@ AIS_PointCloud::AIS_PointCloud()
 //function : SetPoints
 //purpose  :
 //=======================================================================
-bool AIS_PointCloud::SetPoints (const Handle(Graphic3d_ArrayOfPoints)& thePoints)
+void AIS_PointCloud::SetPoints (const Handle(Graphic3d_ArrayOfPoints)& thePoints)
 {
-  if (thePoints.IsNull() || !thePoints->IsValid()) return false;
+  myPoints.Nullify();
+
+  if (thePoints.IsNull())
+    return;
+
   myPoints = thePoints;
-  return true;
 }
 
 //=======================================================================
 //function : SetPoints
 //purpose  : 
 //=======================================================================
-bool AIS_PointCloud::SetPoints (const Handle(AIS_ArrayOfPnt)& theCoords,
-                                const Handle(AIS_ArrayOfPnt)& theColors,
-                                const Standard_Boolean hasColors)
+void AIS_PointCloud::SetPoints (const Handle(TColgp_HArray1OfPnt)&     theCoords,
+                                const Handle(Quantity_HArray1OfColor)& theColors)
 {
-  if (theCoords.IsNull() || theColors.IsNull()) return false;
-  if (theCoords->Size() != theColors->Size()) return false;
+  myPoints.Nullify();
 
-  Standard_Integer aNumPoints = theCoords->Size();
+  if (theCoords.IsNull())
+    return;
 
-  Handle(Graphic3d_ArrayOfPoints) anArrayOfPoints = new Graphic3d_ArrayOfPoints (aNumPoints, hasColors);
-  Standard_Integer iter = 1;
-  for (; iter <= aNumPoints; iter++)
+  Standard_Integer aNumPoints = theCoords->Length();
+
+  Standard_Boolean aHasColors = Standard_False;
+  if (!theColors.IsNull() && aNumPoints == theColors->Length())
+    aHasColors = Standard_True;
+
+  myPoints = new Graphic3d_ArrayOfPoints (aNumPoints, aHasColors);
+
+  for (Standard_Integer aPntIter = theCoords->Lower(); aPntIter <= theCoords->Upper(); aPntIter++)
   {
-    anArrayOfPoints->AddVertex (theCoords->Value(iter));
-
-    gp_Pnt aColor = theColors->Value(iter);
-    anArrayOfPoints->SetVertexColor (anArrayOfPoints->VertexNumber(),
-                                     aColor.X(), aColor.Y(), aColor.Z());
+    myPoints->AddVertex (theCoords->Value (aPntIter));
   }
-  myPoints = anArrayOfPoints;
-  return true;
+
+  if (aHasColors)
+  {
+    Standard_Integer aNumVertex = 1;
+    for(Standard_Integer aColorIter = theColors->Lower(); aColorIter <= theColors->Upper(); aColorIter++)
+    {
+      myPoints->SetVertexColor (aNumVertex, theColors->Value (aColorIter));
+      aNumVertex++;
+    }
+  }
 }
 
 //=======================================================================
@@ -84,14 +95,14 @@ bool AIS_PointCloud::SetPoints (const Handle(AIS_ArrayOfPnt)& theCoords,
 //=======================================================================
 void AIS_PointCloud::SetColor (const Quantity_NameOfColor theColor)
 {
-  SetColor (Quantity_Color(theColor));
+  SetColor (Quantity_Color (theColor));
 }
 
 //=======================================================================
 //function : SetColor
-//purpose  : 
+//purpose  :
 //=======================================================================
-void AIS_PointCloud::SetColor (const Quantity_Color &theColor)
+void AIS_PointCloud::SetColor (const Quantity_Color& theColor)
 {
   if (!myDrawer->HasPointAspect())
   {
@@ -108,26 +119,28 @@ void AIS_PointCloud::SetColor (const Quantity_Color &theColor)
 //function : Compute
 //purpose  : 
 //=======================================================================
-void AIS_PointCloud::Compute(const Handle(PrsMgr_PresentationManager3d)& /*aPresentationManager*/,
-                             const Handle(Prs3d_Presentation)& aPresentation,
-                             const Standard_Integer /*aMode*/)
+void AIS_PointCloud::Compute(const Handle(PrsMgr_PresentationManager3d)& /*thePresentationManager*/,
+                             const Handle(Prs3d_Presentation)& thePresentation,
+                             const Standard_Integer /*theMode*/)
 {
-  aPresentation->Clear();
-  if (myPoints.IsNull() || !myPoints->IsValid()) return;
+  thePresentation->Clear();
 
-  Handle(Graphic3d_Group) aGroup = Prs3d_Root::CurrentGroup (aPresentation);
-  if (Attributes()->HasPointAspect())
+  if (GetPoints().IsNull() || !GetPoints()->IsValid())
+    return;
+
+  Handle(Graphic3d_Group) aGroup = Prs3d_Root::CurrentGroup (thePresentation);
+  if (myDrawer->HasPointAspect())
   {
-    aGroup->SetPrimitivesAspect (Attributes()->PointAspect()->Aspect());
+    aGroup->SetPrimitivesAspect (myDrawer->PointAspect()->Aspect());
   }
-  aGroup->AddPrimitiveArray (myPoints);
+  aGroup->AddPrimitiveArray (GetPoints());
 }
 
 //=======================================================================
 //function : ComputeSelection
 //purpose  : 
 //=======================================================================
-void AIS_PointCloud::ComputeSelection(const Handle(SelectMgr_Selection)& /*aSelection*/,
-                                      const Standard_Integer /*aMode*/)
+void AIS_PointCloud::ComputeSelection(const Handle(SelectMgr_Selection)& /*theSelection*/,
+                                      const Standard_Integer /*theMode*/)
 {
 }
