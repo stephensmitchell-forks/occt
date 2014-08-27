@@ -39,6 +39,7 @@
 
 #include <AIS_Shape.hxx>
 #include <AIS_DisplayMode.hxx>
+#include <AIS_PointCloud.hxx>
 #include <TColStd_MapOfInteger.hxx>
 #include <AIS_MapOfInteractive.hxx>
 #include <ViewerTest_DoubleMapOfInteractiveAndName.hxx>
@@ -5028,6 +5029,159 @@ static int VFont (Draw_Interpretor& theDI,
   return 0;
 }
 
+//! Auxilarily function.
+//! Create random float number in range from theMin to theMax.
+static Standard_Real randomReal (const Standard_Real theMin, const Standard_Real theMax)
+{
+  return theMin + (theMax - theMin) * Standard_Real(rand()) / RAND_MAX;
+}
+
+//=======================================================================
+//function : VPointCloud
+//purpose  : Create interactive object for arbitary set of points.
+//=======================================================================
+static Standard_Integer VPointCloud (Draw_Interpretor& /*theDI*/,
+                                     Standard_Integer theArgNum,
+                                     const char** theArgs)
+{
+  if (theArgNum < 2)
+  {
+    std::cout << theArgs[0] << " error: wrong number of parameters. Type 'help "
+              << theArgs[0] << "' for more information.\n";
+    return 1;
+  }
+
+  Handle(AIS_InteractiveContext) anAISContext = ViewerTest::GetAISContext();
+  if (anAISContext.IsNull())
+  {
+    std::cerr << "Call 'vinit' before!\n";
+    return 1;
+  }
+
+  Standard_Integer anArgIter = 1;
+
+  // Get point cloud object name
+  TCollection_AsciiString aName (theArgs[anArgIter++]);
+
+  // Sets default value
+  Standard_Integer aMode           = 0;
+  Standard_Integer aMarkerType     = -1;
+  Quantity_NameOfColor aColorName  = Quantity_NOC_YELLOW;
+  Standard_Real aScale             = 1.0;
+  Standard_Boolean aHasColor       = Standard_True;
+  Standard_Integer aNumberOfPoints = 100;
+
+  // Parses arguments
+  for (; anArgIter < theArgNum; ++anArgIter)
+  {
+    const TCollection_AsciiString anArg (theArgs[anArgIter]);
+    if (anArg.Search ("Mode=") > -1)
+    {
+      aMode = anArg.Token ("=", 2).IntegerValue();
+      if (aMode < 0 && aMode > 1)
+      {
+        std::cerr << "Wrong argument : " << anArg << std::endl;
+        return 1;
+      }
+    }
+    else if (anArg.Search ("MarkerType=") > -1)
+    {
+      aMarkerType = anArg.Token ("=", 2).IntegerValue();
+    }
+    else if (anArg.Search ("ColorName=") > -1)
+    {
+      aColorName = ViewerTest::GetColorFromName (anArg.Token ("=", 2).ToCString());
+      aHasColor = Standard_False;
+    }
+    else if (anArg.Search ("Scale=") > -1)
+    {
+      aScale = anArg.Token ("=", 2).RealValue();
+    }
+    else if (anArg.Search ("NumPoints=") > -1)
+    {
+      aNumberOfPoints = anArg.Token ("=", 2).IntegerValue();
+    }
+    else
+    {
+      std::cerr << "Wrong argument: " << anArg << std::endl;
+      return 1;
+    }
+  }
+
+  // Point cloud initialization
+  Handle(AIS_PointCloud) aPointCloud = new AIS_PointCloud();
+
+  if (aMode == 0)
+  {
+    Handle(Graphic3d_ArrayOfPoints) anArrayPoints = new Graphic3d_ArrayOfPoints (aNumberOfPoints, aHasColor);
+    for (Standard_Integer anIter = 1; anIter < aNumberOfPoints; anIter++)
+    {
+      // Create random point
+      gp_Pnt aPoint (randomReal (0., 5000.),
+                     randomReal (0., 5000.),
+                     randomReal (0., 5000.));
+
+      // Create random color
+      Quantity_Color aColor (randomReal (0., 1.),
+                             randomReal (0., 1.),
+                             randomReal (0., 1.),
+                             Quantity_TOC_RGB);
+
+      // Add point with color in array
+      anArrayPoints->AddVertex (aPoint, aColor);
+    }
+    // Set array of points in point cloud object
+    aPointCloud->SetPoints (anArrayPoints);
+  }
+  else if (aMode == 1)
+  {
+    Handle(TColgp_HArray1OfPnt) aCoords     = new TColgp_HArray1OfPnt (1, aNumberOfPoints);
+    Handle(Quantity_HArray1OfColor) aColors = new Quantity_HArray1OfColor (1, aNumberOfPoints);
+
+    if (aCoords->Length() != aColors->Length())
+    {
+      std::cerr << "Wrong length of arrays" << std::endl;
+      return 1;
+    }
+
+    for (Standard_Integer aPntIt = aCoords->Lower(); aPntIt <= aCoords->Upper(); aPntIt++)
+    {
+      gp_Pnt aPoint (randomReal (0., 5000.),
+                     randomReal (0., 5000.),
+                     randomReal (0., 5000.));
+      aCoords->SetValue (aPntIt, aPoint);
+    }
+
+    if (aHasColor)
+    {
+      for (Standard_Integer aColorIt = aColors->Lower(); aColorIt <= aColors->Upper(); aColorIt++)
+      {
+        Quantity_Color aColor (randomReal (0., 1.),
+                               randomReal (0., 1.),
+                               randomReal (0., 1.),
+                               Quantity_TOC_RGB);
+        aColors->SetValue (aColorIt, aColor);
+      }
+    }
+    else
+    {
+      aColors.Nullify();
+    }
+    // Set coordinates and colors
+    aPointCloud->SetPoints (aCoords, aColors);
+  }
+
+  // Set point aspect for attributes of interactive object
+  aPointCloud->Attributes()->SetPointAspect (
+    new Prs3d_PointAspect (aMarkerType >= 0 ? (Aspect_TypeOfMarker )aMarkerType : Aspect_TOM_POINT,
+                           aColorName,
+                           aScale));
+
+  VDisplayAISObject (aName, aPointCloud);
+
+  return 0;
+}
+
 //=======================================================================
 //function : ObjectsCommands
 //purpose  :
@@ -5185,4 +5339,12 @@ void ViewerTest::ObjectCommands(Draw_Interpretor& theCommands)
                             "vfont [add pathToFont [fontName] [regular,bold,italic,bolditalic=undefined]]"
                    "\n\t\t:        [find fontName [regular,bold,italic,bolditalic=undefined]]",
                    __FILE__, VFont, group);
+
+  theCommands.Add ("vpointcloud",
+                   "vpointcloud usage:\n"
+                   "vpointcloud ObjectName [Mode=1]\n"
+                   "                       [NumPoints=100]\n"
+                   "                       [MarkerType=0] [ColorName=GREEN] [Scale=1.0]"
+                   "\n\t\t:        Create an interactive object for arbitary set of points.",
+                   __FILE__, VPointCloud, group);
 }
