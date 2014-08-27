@@ -33,6 +33,7 @@
 DEFINE_STANDARD_HANDLE (AIS_PointCloud, AIS_InteractiveObject)
 
 //! Interactive object for set of points.
+//! Selection services are not provided by this class.
 class AIS_PointCloud : public AIS_InteractiveObject
 {
 
