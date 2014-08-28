@@ -5060,16 +5060,19 @@ static Standard_Integer VPointCloud (Draw_Interpretor& /*theDI*/,
 
   Standard_Integer anArgIter = 1;
 
-  // Get point cloud object name
+  // Point cloud name
   TCollection_AsciiString aName (theArgs[anArgIter++]);
 
-  // Sets default value
-  Standard_Integer aMode           = 0;
-  Standard_Integer aMarkerType     = -1;
-  Quantity_NameOfColor aColorName  = Quantity_NOC_YELLOW;
-  Standard_Real aScale             = 1.0;
-  Standard_Boolean aHasColor       = Standard_True;
-  Standard_Integer aNumberOfPoints = 100;
+  // Default value
+  Standard_Integer     aMode        = 0;
+  Standard_Integer     aMarkerType  = -1;
+  Quantity_NameOfColor aColorName   = Quantity_NOC_YELLOW;
+  Standard_Real        aScale       = 1.0;
+  Standard_Integer     aPointsOnSide = 100;
+  gp_Pnt aStartPonit (0., 0., 0.);
+  
+  Standard_Boolean aHasColor  = Standard_True;
+  Standard_Boolean aHasAspect = Standard_False;
 
   // Parses arguments
   for (; anArgIter < theArgNum; ++anArgIter)
@@ -5087,19 +5090,22 @@ static Standard_Integer VPointCloud (Draw_Interpretor& /*theDI*/,
     else if (anArg.Search ("MarkerType=") > -1)
     {
       aMarkerType = anArg.Token ("=", 2).IntegerValue();
+      aHasAspect = Standard_True;
     }
     else if (anArg.Search ("ColorName=") > -1)
     {
       aColorName = ViewerTest::GetColorFromName (anArg.Token ("=", 2).ToCString());
       aHasColor = Standard_False;
+      aHasAspect = Standard_True;
     }
     else if (anArg.Search ("Scale=") > -1)
     {
       aScale = anArg.Token ("=", 2).RealValue();
+      aHasAspect = Standard_True;
     }
-    else if (anArg.Search ("NumPoints=") > -1)
+    else if (anArg.Search ("PointsOnSide=") > -1)
     {
-      aNumberOfPoints = anArg.Token ("=", 2).IntegerValue();
+      aPointsOnSide = anArg.Token ("=", 2).IntegerValue();
     }
     else
     {
@@ -5108,59 +5114,66 @@ static Standard_Integer VPointCloud (Draw_Interpretor& /*theDI*/,
     }
   }
 
+  Standard_Integer aNumberOfPoints = (Standard_Integer )Pow (aPointsOnSide, 3);
+  std::cout << "Number of points: " << aNumberOfPoints;
+
   // Point cloud initialization
   Handle(AIS_PointCloud) aPointCloud = new AIS_PointCloud();
-
   if (aMode == 0)
   {
-    Handle(Graphic3d_ArrayOfPoints) anArrayPoints = new Graphic3d_ArrayOfPoints (aNumberOfPoints, aHasColor);
-    for (Standard_Integer anIter = 1; anIter < aNumberOfPoints; anIter++)
+    Handle(Graphic3d_ArrayOfPoints) anArrayPoints = new Graphic3d_ArrayOfPoints (aNumberOfPoints,
+                                                                                 aNumberOfPoints != 1 && aHasColor);
+    if (aNumberOfPoints == 1)
     {
-      // Create random point
-      gp_Pnt aPoint (randomReal (0., 5000.),
-                     randomReal (0., 5000.),
-                     randomReal (0., 5000.));
-
-      // Create random color
-      Quantity_Color aColor (randomReal (0., 1.),
-                             randomReal (0., 1.),
-                             randomReal (0., 1.),
-                             Quantity_TOC_RGB);
-
-      // Add point with color in array
-      anArrayPoints->AddVertex (aPoint, aColor);
+      anArrayPoints->AddVertex (aStartPonit, Quantity_NOC_YELLOW);
     }
-    // Set array of points in point cloud object
-    aPointCloud->SetPoints (anArrayPoints);
-  }
-  else if (aMode == 1)
-  {
-    Handle(TColgp_HArray1OfPnt) aCoords     = new TColgp_HArray1OfPnt (1, aNumberOfPoints);
-    Handle(Quantity_HArray1OfColor) aColors = new Quantity_HArray1OfColor (1, aNumberOfPoints);
-
-    if (aCoords->Length() != aColors->Length())
+    else
     {
-      std::cerr << "Wrong length of arrays" << std::endl;
+      for (Standard_Real i = 1; i <= aPointsOnSide; i++)
+      {
+        for (Standard_Real j = 1; j <= aPointsOnSide; j++)
+        {
+          for (Standard_Real k = 1; k <= aPointsOnSide; k++)
+          {
+            anArrayPoints->AddVertex (aStartPonit.X() + i,
+                                      aStartPonit.Y() + j,
+                                      aStartPonit.Z() + k);
+            anArrayPoints->SetVertexColor (anArrayPoints->VertexNumber(),
+                                           i / aPointsOnSide,
+                                           j / aPointsOnSide,
+                                           k / aPointsOnSide);
+          }
+        }
+      }
+    }
+
+    if (anArrayPoints.IsNull() || !anArrayPoints->IsValid())
+    {
+      std::cerr << "No points found." << std::endl;
       return 1;
     }
 
-    for (Standard_Integer aPntIt = aCoords->Lower(); aPntIt <= aCoords->Upper(); aPntIt++)
+    // Set array of points in point cloud object
+    aPointCloud->SetPoints (anArrayPoints);
+  }
+  else if (aMode = 1)
+  {
+    Handle(TColgp_HArray1OfPnt) aCoords = new TColgp_HArray1OfPnt (1, aNumberOfPoints);
+    for (Standard_Integer i = 1; i <= aNumberOfPoints; i++)
     {
       gp_Pnt aPoint (randomReal (0., 5000.),
                      randomReal (0., 5000.),
                      randomReal (0., 5000.));
-      aCoords->SetValue (aPntIt, aPoint);
+      aCoords->SetValue (i, aPoint);
     }
 
+    Handle(Quantity_HArray1OfColor) aColors = new Quantity_HArray1OfColor (1, aNumberOfPoints);
     if (aHasColor)
     {
-      for (Standard_Integer aColorIt = aColors->Lower(); aColorIt <= aColors->Upper(); aColorIt++)
+      for (Standard_Integer i = 1; i <= aNumberOfPoints; i++)
       {
-        Quantity_Color aColor (randomReal (0., 1.),
-                               randomReal (0., 1.),
-                               randomReal (0., 1.),
-                               Quantity_TOC_RGB);
-        aColors->SetValue (aColorIt, aColor);
+        Quantity_Color aColor (360. * i / aNumberOfPoints, 1.0, 0.5, Quantity_TOC_HLS);
+        aColors->SetValue (i, aColor);
       }
     }
     else
@@ -5171,11 +5184,14 @@ static Standard_Integer VPointCloud (Draw_Interpretor& /*theDI*/,
     aPointCloud->SetPoints (aCoords, aColors);
   }
 
-  // Set point aspect for attributes of interactive object
-  aPointCloud->Attributes()->SetPointAspect (
-    new Prs3d_PointAspect (aMarkerType >= 0 ? (Aspect_TypeOfMarker )aMarkerType : Aspect_TOM_POINT,
-                           aColorName,
-                           aScale));
+  if (aHasAspect)
+  {
+    // Set point aspect for attributes of interactive object
+    aPointCloud->Attributes()->SetPointAspect (
+      new Prs3d_PointAspect (aMarkerType >= 0 ? (Aspect_TypeOfMarker )aMarkerType : Aspect_TOM_POINT,
+                             aColorName,
+                             aScale));
+  }
 
   VDisplayAISObject (aName, aPointCloud);
 
@@ -5341,10 +5357,11 @@ void ViewerTest::ObjectCommands(Draw_Interpretor& theCommands)
                    __FILE__, VFont, group);
 
   theCommands.Add ("vpointcloud",
-                   "vpointcloud usage:\n"
-                   "vpointcloud ObjectName [Mode=1]\n"
-                   "                       [NumPoints=100]\n"
-                   "                       [MarkerType=0] [ColorName=GREEN] [Scale=1.0]"
-                   "\n\t\t:        Create an interactive object for arbitary set of points.",
+                   "Create an interactive object for arbitary set of points.\n"
+                   "\t\t: vpointcloud usage: \n"
+                   "\t\t  vpointcloud ObjectName\n"
+                   "\t\t              [Mode=1]\n"
+                   "\t\t              [PointsOnSide=100]\n"
+                   "\t\t              [MarkerType=0] [ColorName=GREEN] [Scale=1.0]",
                    __FILE__, VPointCloud, group);
 }

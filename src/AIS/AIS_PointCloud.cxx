@@ -36,7 +36,6 @@ IMPLEMENT_STANDARD_RTTIEXT(AIS_PointCloud, AIS_InteractiveObject)
 AIS_PointCloud::AIS_PointCloud()
 : AIS_InteractiveObject()
 {
-  SetHilightMode (0);
 }
 
 //=======================================================================
@@ -89,7 +88,7 @@ void AIS_PointCloud::SetPoints (const Handle(TColgp_HArray1OfPnt)&     theCoords
 //function : GetPoints
 //purpose  : 
 //=======================================================================
-const Handle(Graphic3d_ArrayOfPoints)& AIS_PointCloud::GetPoints() const
+const Handle(Graphic3d_ArrayOfPoints) AIS_PointCloud::GetPoints() const
 {
   return myPoints;
 }
@@ -130,7 +129,7 @@ void AIS_PointCloud::Compute(const Handle(PrsMgr_PresentationManager3d)& /*thePr
 {
   thePresentation->Clear();
 
-  const Handle(Graphic3d_ArrayOfPoints)& aPoints = GetPoints();
+  const Handle(Graphic3d_ArrayOfPoints) aPoints = GetPoints();
   if (aPoints.IsNull() || !aPoints->IsValid())
     return;
 

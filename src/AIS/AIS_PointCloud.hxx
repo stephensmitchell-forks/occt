@@ -55,7 +55,7 @@ public:
 
   //! Get the points.
   //! @return the array of points.
-  Standard_EXPORT virtual const Handle(Graphic3d_ArrayOfPoints)& GetPoints () const;
+  Standard_EXPORT virtual const Handle(Graphic3d_ArrayOfPoints) GetPoints() const;
 
   //! Redefined method implemets the standard behavior.
   Standard_EXPORT virtual void SetColor (const Quantity_NameOfColor theColor);
