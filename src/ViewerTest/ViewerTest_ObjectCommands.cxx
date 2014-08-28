@@ -5047,7 +5047,7 @@ static Standard_Integer VPointCloud (Draw_Interpretor& /*theDI*/,
   if (theArgNum < 2)
   {
     std::cout << theArgs[0] << " error: wrong number of parameters. Type 'help "
-              << theArgs[0] << "' for more information.\n";
+              << theArgs[0] << "' for more information." << std::endl;
     return 1;
   }
 
@@ -5064,84 +5064,119 @@ static Standard_Integer VPointCloud (Draw_Interpretor& /*theDI*/,
   TCollection_AsciiString aName (theArgs[anArgIter++]);
 
   // Default value
-  Standard_Integer     aMode        = 0;
-  Standard_Integer     aMarkerType  = -1;
-  Quantity_NameOfColor aColorName   = Quantity_NOC_YELLOW;
-  Standard_Real        aScale       = 1.0;
-  Standard_Integer     aPointsOnSide = 100;
-  gp_Pnt aStartPonit (0., 0., 0.);
-  
-  Standard_Boolean aHasColor  = Standard_True;
-  Standard_Boolean aHasAspect = Standard_False;
+  Standard_Integer     aModeSetPoints = 0;
+  Standard_Integer     aMarkerType    = -1;
+  Quantity_NameOfColor aColorName     = Quantity_NOC_GOLDENROD;
+  Standard_Real        aScale         = 1.0;
+  Standard_Integer     aPointsOnSide  = 100;
+  Standard_Real        aStartPos[3]   = {0.0, 0.0, 0.0};
+
+  Standard_Boolean hasColors  = Standard_True;
+  Standard_Boolean hasAspect = Standard_False;
 
   // Parses arguments
   for (; anArgIter < theArgNum; ++anArgIter)
   {
-    const TCollection_AsciiString anArg (theArgs[anArgIter]);
-    if (anArg.Search ("Mode=") > -1)
+    Standard_CString anArg = theArgs[anArgIter];
+    TCollection_AsciiString aFlag (anArg);
+    aFlag.LowerCase();
+
+    if (aFlag == "-mode")
     {
-      aMode = anArg.Token ("=", 2).IntegerValue();
-      if (aMode < 0 && aMode > 1)
+      if (++anArgIter >= theArgNum)
       {
-        std::cerr << "Wrong argument : " << anArg << std::endl;
+        std::cout << "Error: wrong syntax at " << anArg << std::endl;
+        return 1;
+      }
+      aModeSetPoints = Draw::Atoi (theArgs[anArgIter]);
+      if (aModeSetPoints < 0 || aModeSetPoints > 1)
+      {
+        std::cout << "Wrong value for argument " << aFlag << std::endl;
         return 1;
       }
     }
-    else if (anArg.Search ("MarkerType=") > -1)
+    else if (aFlag == "-nbpointsonside")
     {
-      aMarkerType = anArg.Token ("=", 2).IntegerValue();
-      aHasAspect = Standard_True;
+      if (++anArgIter >= theArgNum)
+      {
+        std::cout << "Error: wrong syntax at " << aFlag << std::endl;
+        return 1;
+      }
+      aPointsOnSide = Draw::Atoi (theArgs[anArgIter]);
+      if (aPointsOnSide <= 0)
+      {
+        std::cout << "Wrong value for argument " << aFlag << std::endl;
+        return 1;
+      }
     }
-    else if (anArg.Search ("ColorName=") > -1)
+    else if (aFlag == "-markertype")
     {
-      aColorName = ViewerTest::GetColorFromName (anArg.Token ("=", 2).ToCString());
-      aHasColor = Standard_False;
-      aHasAspect = Standard_True;
+      if (++anArgIter >= theArgNum)
+      {
+        std::cout << "Error: wrong syntax at " << aFlag << std::endl;
+        return 1;
+      }
+      aMarkerType = Draw::Atoi (theArgs[anArgIter]);
+      hasAspect = Standard_True;
     }
-    else if (anArg.Search ("Scale=") > -1)
+    else if (aFlag == "-scale")
     {
-      aScale = anArg.Token ("=", 2).RealValue();
-      aHasAspect = Standard_True;
+      if (++anArgIter >= theArgNum)
+      {
+        std::cout << "Error: wrong syntax at " << aFlag << std::endl;
+        return 1;
+      }
+      aScale = Draw::Atof (theArgs[anArgIter]);
+      hasAspect = Standard_True;
     }
-    else if (anArg.Search ("PointsOnSide=") > -1)
+    else if (aFlag == "-color")
     {
-      aPointsOnSide = anArg.Token ("=", 2).IntegerValue();
+      if (++anArgIter >= theArgNum)
+      {
+        std::cout << "Error: wrong syntax at " << aFlag << std::endl;
+        return 1;
+      }
+      aColorName = ViewerTest::GetColorFromName (theArgs[anArgIter]);
+      hasColors  = Standard_False;
+      hasAspect  = Standard_True;
     }
     else
     {
-      std::cerr << "Wrong argument: " << anArg << std::endl;
+      std::cout << "Wrong argument: " << aFlag << std::endl;
       return 1;
     }
   }
 
   Standard_Integer aNumberOfPoints = (Standard_Integer )Pow (aPointsOnSide, 3);
-  std::cout << "Number of points: " << aNumberOfPoints;
+  std::cout << "Number of points: " << aNumberOfPoints << std::endl;
 
   // Point cloud initialization
   Handle(AIS_PointCloud) aPointCloud = new AIS_PointCloud();
-  if (aMode == 0)
+  if (aModeSetPoints == 0)
   {
     Handle(Graphic3d_ArrayOfPoints) anArrayPoints = new Graphic3d_ArrayOfPoints (aNumberOfPoints,
-                                                                                 aNumberOfPoints != 1 && aHasColor);
+                                                                                 aNumberOfPoints != 1 && hasColors);
     if (aNumberOfPoints == 1)
     {
-      anArrayPoints->AddVertex (aStartPonit, Quantity_NOC_YELLOW);
+      anArrayPoints->AddVertex (aStartPos[0], aStartPos[1], aStartPos[2]);
+      anArrayPoints->SetVertexColor (anArrayPoints->VertexNumber(),
+                                     Quantity_Color (Quantity_NOC_YELLOW));
     }
     else
     {
-      for (Standard_Real i = 1; i <= aPointsOnSide; i++)
+      for (Standard_Real aStepX = 1; aStepX <= aPointsOnSide; aStepX++)
       {
-        for (Standard_Real j = 1; j <= aPointsOnSide; j++)
+        for (Standard_Real aStepY = 1; aStepY <= aPointsOnSide; aStepY++)
         {
-          for (Standard_Real k = 1; k <= aPointsOnSide; k++)
+          for (Standard_Real aStepZ = 1; aStepZ <= aPointsOnSide; aStepZ++)
           {
-            anArrayPoints->AddVertex (aStartPonit.X() + i,
-                                      aStartPonit.Y() + j,
-                                      aStartPonit.Z() + k);
+            anArrayPoints->AddVertex (aStartPos[0] + aStepX,
+                                      aStartPos[1] + aStepY,
+                                      aStartPos[2] + aStepZ);
             anArrayPoints->SetVertexColor (anArrayPoints->VertexNumber(),
-                                           i / aPointsOnSide,
-                                           j / aPointsOnSide,
-                                           k / aPointsOnSide);
+                                           aStepX / aPointsOnSide,
+                                           aStepY / aPointsOnSide,
+                                           aStepZ / aPointsOnSide);
           }
         }
       }
@@ -5156,7 +5191,7 @@ static Standard_Integer VPointCloud (Draw_Interpretor& /*theDI*/,
     // Set array of points in point cloud object
     aPointCloud->SetPoints (anArrayPoints);
   }
-  else if (aMode = 1)
+  else if (aModeSetPoints = 1)
   {
     Handle(TColgp_HArray1OfPnt) aCoords = new TColgp_HArray1OfPnt (1, aNumberOfPoints);
     for (Standard_Integer i = 1; i <= aNumberOfPoints; i++)
@@ -5168,7 +5203,7 @@ static Standard_Integer VPointCloud (Draw_Interpretor& /*theDI*/,
     }
 
     Handle(Quantity_HArray1OfColor) aColors = new Quantity_HArray1OfColor (1, aNumberOfPoints);
-    if (aHasColor)
+    if (hasColors)
     {
       for (Standard_Integer i = 1; i <= aNumberOfPoints; i++)
       {
@@ -5184,7 +5219,7 @@ static Standard_Integer VPointCloud (Draw_Interpretor& /*theDI*/,
     aPointCloud->SetPoints (aCoords, aColors);
   }
 
-  if (aHasAspect)
+  if (hasAspect)
   {
     // Set point aspect for attributes of interactive object
     aPointCloud->Attributes()->SetPointAspect (
@@ -5194,7 +5229,7 @@ static Standard_Integer VPointCloud (Draw_Interpretor& /*theDI*/,
   }
 
   VDisplayAISObject (aName, aPointCloud);
-
+  
   return 0;
 }
 
@@ -5357,11 +5392,12 @@ void ViewerTest::ObjectCommands(Draw_Interpretor& theCommands)
                    __FILE__, VFont, group);
 
   theCommands.Add ("vpointcloud",
-                   "Create an interactive object for arbitary set of points.\n"
-                   "\t\t: vpointcloud usage: \n"
-                   "\t\t  vpointcloud ObjectName\n"
-                   "\t\t              [Mode=1]\n"
-                   "\t\t              [PointsOnSide=100]\n"
-                   "\t\t              [MarkerType=0] [ColorName=GREEN] [Scale=1.0]",
-                   __FILE__, VPointCloud, group);
+            "vpointcloud [name]"
+    "\n\t\t:             [-setmode ModeSetPoints]"
+    "\n\t\t:             [-nbpointsonside NumberPointsOnSide]"
+    "\n\t\t:             [-markertype TypeOfMarker]"
+    "\n\t\t:             [-color ColorName]"
+    "\n\t\t:             [-scale Scale]"
+    "\n\t\t: Create an interactive object for arbitary set of points.",
+    __FILE__, VPointCloud, group);
 }
