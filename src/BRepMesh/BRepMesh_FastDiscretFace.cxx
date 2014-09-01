@@ -15,7 +15,6 @@
 #include <BRepMesh_FastDiscretFace.hxx>
 
 #include <BRepMesh_PairOfPolygon.hxx>
-#include <BRepMesh_Classifier.hxx>
 #include <BRepMesh_ShapeTool.hxx>
 #include <Poly_PolygonOnTriangulation.hxx>
 #include <Poly_Triangulation.hxx>
@@ -30,7 +29,6 @@
 #include <BRep_TVertex.hxx>
 #include <BRep_Tool.hxx>
 
-#include <ElSLib.hxx>
 #include <GeomLib.hxx>
 #include <Geom_Surface.hxx>
 #include <Geom_BSplineSurface.hxx>

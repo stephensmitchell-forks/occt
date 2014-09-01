@@ -26,6 +26,8 @@
 #include <Handle_Poly_Triangulation.hxx>
 #include <BRepMesh_Delaun.hxx>
 #include <BRepMesh_Triangle.hxx>
+#include <BRepMesh_Classifier.hxx>
+#include <ElSLib.hxx>
 
 class BRepMesh_DataStructureOfDelaun;
 class BRepMesh_FaceAttribute;
