@@ -73,15 +73,6 @@ void IVtkOCC_SelectableObject::SetShape (const IVtkOCC_Shape::Handle& theShape)
 }
 
 //============================================================================
-// Method:  UpdateTransformation
-// Purpose: Redefined as public, simply calls the base' implementation
-//============================================================================
-void IVtkOCC_SelectableObject::UpdateTransformation (const Handle(SelectMgr_Selection)& theSelection)
-{
-  SelectMgr_SelectableObject::UpdateTransformation (theSelection);
-}
-
-//============================================================================
 // Method:  ComputeSelection
 // Purpose: Internal method, computes selection data for viewer selector
 //============================================================================

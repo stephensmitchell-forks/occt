@@ -43,9 +43,6 @@ public:
 
   const IVtkOCC_Shape::Handle&  GetShape() const { return myShape; };
 
-  //! Redefined as public, simply calls the base' implementation
-  virtual void   UpdateTransformation (const Handle(SelectMgr_Selection)& theSelection);
-
   DEFINE_STANDARD_RTTI( IVtkOCC_SelectableObject )
 
 private: 

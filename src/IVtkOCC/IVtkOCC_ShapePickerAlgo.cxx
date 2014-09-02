@@ -148,7 +148,7 @@ void IVtkOCC_ShapePickerAlgo::SetSelectionMode (const IVtk_IShape::Handle& theSh
           {
             // Updates locations in all sensitive entities from the Selection and
             // corresponding entity owners (shapes).
-            aSelObj->UpdateTransformation (aSel);
+            aSelObj->UpdateTransformations (aSel);
           }
           break;
         }
