@@ -227,14 +227,8 @@ void BRepMesh_FastDiscretFace::Add(const Handle(BRepMesh_FaceAttribute)& theAttr
   }
   myStructure->ReplaceNodes(aMoveNodes);
 
-  Standard_Boolean rajout(Standard_False);
-  switch (thetype)
-  {
-    case GeomAbs_Sphere:
-    case GeomAbs_Torus:
-      rajout = Standard_True;
-      break;
-  }
+  Standard_Boolean rajout = 
+    (thetype == GeomAbs_Sphere || thetype == GeomAbs_Torus);
 
   BRepMesh_Delaun trigu(myStructure, tabvert_corr);
 
