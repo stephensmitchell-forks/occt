@@ -451,12 +451,8 @@ Standard_Integer BRepMesh_FastDiscret::Add(const TopoDS_Face& theFace)
         }
 
         myAttribute->SetStatus(aCheckStatus);
-        if (aCheckStatus != BRepMesh_NoError &&
-            aCheckStatus != BRepMesh_ReMesh)
-        {
-          RemoveFaceAttribute(theFace);
+        if (!myAttribute->IsValid())
           return myAttribute->GetStatus();
-        }
       }
 
       // try to find the real length:
@@ -974,14 +970,4 @@ Standard_Boolean BRepMesh_FastDiscret::GetFaceAttribute(
   }
 
   return Standard_False;
-}
-
-//=======================================================================
-//function : RemoveFaceAttribute
-//purpose  : 
-//=======================================================================
-void BRepMesh_FastDiscret::RemoveFaceAttribute(const TopoDS_Face& theFace)
-{
-  if (myAttributes.IsBound(theFace))
-    myAttributes.UnBind(theFace);
 }

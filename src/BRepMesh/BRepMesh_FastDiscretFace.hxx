@@ -151,7 +151,6 @@ private:
   Handle(BRepMesh_DataStructureOfDelaun)    myStructure;
   BRepMeshCol::HIMapOfInteger               myVertexEdgeMap;
   BRepMeshCol::HClassifier                  myClassifier;
-  BRepMeshCol::HDMapOfShapePairOfPolygon    myInternalEdges;
   BRepMeshCol::HDMapOfIntegerPnt            mySurfacePoints;
 };
 

@@ -441,7 +441,7 @@ static Standard_Integer triangule(Draw_Interpretor& di, Standard_Integer nbarg, 
     const TopoDS_Face& aFace = TopoDS::Face(aFaceIt.Current());
 
     Handle(BRepMesh_FaceAttribute) anAttribute;
-    if (aFastDiscret->GetFaceAttribute(aFace, anAttribute))
+    if (aFastDiscret->GetFaceAttribute(aFace, anAttribute) && anAttribute->IsValid())
     {
       const Standard_Integer aNbPnts = anAttribute->LastPointId();
       for (Standard_Integer i = 1; i < aNbPnts; ++i)

@@ -135,7 +135,7 @@ Standard_Boolean  XSDRAWSTLVRML_ToVRML::Write
       {
         Handle(BRepMesh_FaceAttribute) anAttribute;
         const TopoDS_Face& aFace = TopoDS::Face(aFaceIt.Current());
-        if (!aDiscret->GetFaceAttribute(aFace, anAttribute))
+        if (!aDiscret->GetFaceAttribute(aFace, anAttribute) || !anAttribute->IsValid())
           continue;
 
         Handle(BRepMesh_DataStructureOfDelaun)& aStructure =
@@ -164,7 +164,7 @@ Standard_Boolean  XSDRAWSTLVRML_ToVRML::Write
         Handle(BRepMesh_FaceAttribute) anAttribute;
         const TopoDS_Face& aFace = TopoDS::Face(aFaceIt.Current());
 
-        if (!aDiscret->GetFaceAttribute(aFace, anAttribute))
+        if (!aDiscret->GetFaceAttribute(aFace, anAttribute) || !anAttribute->IsValid())
           continue;
 
         Handle(BRepMesh_DataStructureOfDelaun)& aStructure =

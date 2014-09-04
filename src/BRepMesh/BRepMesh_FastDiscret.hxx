@@ -161,9 +161,6 @@ public:
   Standard_EXPORT Standard_Boolean GetFaceAttribute
     ( const TopoDS_Face& theFace, Handle(BRepMesh_FaceAttribute)& theAttribute ) const;
 
-  //! Remove face attribute as useless to free locate memory.
-  Standard_EXPORT void RemoveFaceAttribute( const TopoDS_Face& theFace );
-
   //! Returns number of boundary 3d points.
   inline Standard_Integer NbBoundaryPoints() const
   {

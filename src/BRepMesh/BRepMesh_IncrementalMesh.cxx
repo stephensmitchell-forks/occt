@@ -490,24 +490,20 @@ void BRepMesh_IncrementalMesh::commitFace(const TopoDS_Face& theFace)
   TopoDS_Face aFace = theFace;
   aFace.Orientation(TopAbs_FORWARD);
 
-  TopLoc_Location            aLoc = aFace.Location();
-  Handle(Poly_Triangulation) aOldTriangulation = BRep_Tool::Triangulation(aFace, aLoc);
+  Handle(BRepMesh_FaceAttribute) aFaceAttribute;
+  if (!myMesh->GetFaceAttribute(aFace, aFaceAttribute))
+    return;
 
   BRepMesh_ShapeTool::NullifyFace(aFace);
 
-  Handle(BRepMesh_FaceAttribute) aFaceAttribute;
-  if (!myMesh->GetFaceAttribute(aFace, aFaceAttribute))
+  if (!aFaceAttribute->IsValid())
   {
-    myStatus |= BRepMesh_Failure;
+    myStatus |= aFaceAttribute->GetStatus();
     return;
   }
 
-  Standard_Integer aFaceStatus = aFaceAttribute->GetStatus();
-  if (aFaceStatus != BRepMesh_NoError && aFaceStatus != BRepMesh_ReMesh)
-  {
-    myStatus |= aFaceStatus;
-    return;
-  }
+  TopLoc_Location            aLoc = aFace.Location();
+  Handle(Poly_Triangulation) aOldTriangulation = BRep_Tool::Triangulation(aFace, aLoc);
 
   try
   {

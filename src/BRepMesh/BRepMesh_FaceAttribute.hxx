@@ -166,6 +166,12 @@ public: //! @name main geometrical properties.
     myStatus |= theStatus;
   }
 
+  //! Returns TRUE in case if computed data is valid.
+  inline Standard_Boolean IsValid() const
+  {
+    return (myStatus == BRepMesh_NoError || myStatus == BRepMesh_ReMesh);
+  }
+
 public: //! @name auxiliary structures
 
   //! Clear all face attribute.

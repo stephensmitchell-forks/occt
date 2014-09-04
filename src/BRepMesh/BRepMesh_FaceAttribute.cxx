@@ -111,8 +111,8 @@ Standard_Real BRepMesh_FaceAttribute::computeParametricTolerance(
   const Standard_Real theFirstParam,
   const Standard_Real theLastParam) const
 {
-  const Standard_Real aDeflectionUV = 1.e-06;
-  return Max(aDeflectionUV, (theLastParam - theFirstParam) * aDeflectionUV);
+  const Standard_Real aDeflectionUV = 1.e-05;
+  return Max(Precision::PConfusion(), (theLastParam - theFirstParam) * aDeflectionUV);
 }
 
 //=======================================================================

@@ -155,11 +155,13 @@ BRepMesh_FastDiscretFace::BRepMesh_FastDiscretFace
 //=======================================================================
 void BRepMesh_FastDiscretFace::Add(const Handle(BRepMesh_FaceAttribute)& theAttribute)
 {
+  if (!theAttribute->IsValid())
+    return;
+
   myAttribute     = theAttribute;
   myStructure     = myAttribute->ChangeStructure();
   myVertexEdgeMap = myAttribute->ChangeVertexEdgeMap();
   myClassifier    = myAttribute->ChangeClassifier();
-  myInternalEdges = myAttribute->ChangeInternalEdges();
   mySurfacePoints = myAttribute->ChangeSurfacePoints();
 
   Standard_Real aTolU = myAttribute->ToleranceU();

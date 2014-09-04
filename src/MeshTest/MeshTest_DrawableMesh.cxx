@@ -233,7 +233,7 @@ void MeshTest_DrawableMesh::Whatis(Draw_Interpretor& theStream) const
     const TopoDS_Face& aFace = TopoDS::Face(aFaceIt.Current());
 
     Handle(BRepMesh_FaceAttribute) aAtrribure;
-    if (!aMesh->GetFaceAttribute(aFace, aAtrribure))
+    if (!aMesh->GetFaceAttribute(aFace, aAtrribure) || !aAtrribure->IsValid())
       continue;
 
     aPointsNb   += aAtrribure->ChangeSurfacePoints()->Extent();
