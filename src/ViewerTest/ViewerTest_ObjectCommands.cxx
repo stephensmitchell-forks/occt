@@ -5054,7 +5054,7 @@ static Standard_Integer VPointCloud (Draw_Interpretor& /*theDI*/,
   Handle(AIS_InteractiveContext) anAISContext = ViewerTest::GetAISContext();
   if (anAISContext.IsNull())
   {
-    std::cerr << "Call 'vinit' before!\n";
+    std::cout << "Call 'vinit' before!" << std::endl;
     return 1;
   }
 
@@ -5191,7 +5191,7 @@ static Standard_Integer VPointCloud (Draw_Interpretor& /*theDI*/,
     // Set array of points in point cloud object
     aPointCloud->SetPoints (anArrayPoints);
   }
-  else if (aModeSetPoints = 1)
+  else if (aModeSetPoints == 1)
   {
     Handle(TColgp_HArray1OfPnt) aCoords = new TColgp_HArray1OfPnt (1, aNumberOfPoints);
     for (Standard_Integer i = 1; i <= aNumberOfPoints; i++)
@@ -5393,7 +5393,7 @@ void ViewerTest::ObjectCommands(Draw_Interpretor& theCommands)
 
   theCommands.Add ("vpointcloud",
             "vpointcloud [name]"
-    "\n\t\t:             [-setmode ModeSetPoints]"
+    "\n\t\t:             [-mode ModeSetPoints]"
     "\n\t\t:             [-nbpointsonside NumberPointsOnSide]"
     "\n\t\t:             [-markertype TypeOfMarker]"
     "\n\t\t:             [-color ColorName]"

@@ -36,6 +36,7 @@ IMPLEMENT_STANDARD_RTTIEXT(AIS_PointCloud, AIS_InteractiveObject)
 AIS_PointCloud::AIS_PointCloud()
 : AIS_InteractiveObject()
 {
+  SetHilightMode (1);
 }
 
 //=======================================================================
@@ -67,20 +68,16 @@ void AIS_PointCloud::SetPoints (const Handle(TColgp_HArray1OfPnt)&     theCoords
   Standard_Integer aNumPoints = theCoords->Length();
   Standard_Boolean hasColors = !theColors.IsNull() && aNumPoints == theColors->Length();
 
+  Standard_Integer aDiffColors = 0;
+  if (hasColors)
+    aDiffColors = theColors->Lower() - theCoords->Lower();
+
   myPoints = new Graphic3d_ArrayOfPoints (aNumPoints, hasColors);
   for (Standard_Integer aPntIter = theCoords->Lower(); aPntIter <= theCoords->Upper(); aPntIter++)
   {
     myPoints->AddVertex (theCoords->Value (aPntIter));
-  }
-
-  if (hasColors)
-  {
-    Standard_Integer aNumVertex = 1;
-    for(Standard_Integer aColorIter = theColors->Lower(); aColorIter <= theColors->Upper(); aColorIter++)
-    {
-      myPoints->SetVertexColor (aNumVertex, theColors->Value (aColorIter));
-      aNumVertex++;
-    }
+    if (hasColors)
+      myPoints->SetVertexColor (myPoints->VertexNumber(), theColors->Value (aPntIter + aDiffColors));
   }
 }
 
@@ -125,23 +122,29 @@ void AIS_PointCloud::SetColor (const Quantity_Color& theColor)
 //=======================================================================
 void AIS_PointCloud::Compute(const Handle(PrsMgr_PresentationManager3d)& /*thePresentationManager*/,
                              const Handle(Prs3d_Presentation)& thePresentation,
-                             const Standard_Integer /*theMode*/)
+                             const Standard_Integer theMode)
 {
   thePresentation->Clear();
 
-  const Handle(Graphic3d_ArrayOfPoints) aPoints = GetPoints();
-  if (aPoints.IsNull() || !aPoints->IsValid())
-    return;
-
-  Handle(Graphic3d_AspectMarker3d) aMarkerAspect = myDrawer->PointAspect()->Aspect();
-  if (!myDrawer->HasPointAspect())
+  switch (theMode)
   {
-    aMarkerAspect->SetType (Aspect_TOM_POINT);
-  }
+  case 0:
+    {
+      const Handle(Graphic3d_ArrayOfPoints) aPoints = GetPoints();
+      if (aPoints.IsNull() || !aPoints->IsValid())
+        return;
 
-  Handle(Graphic3d_Group) aGroup = Prs3d_Root::CurrentGroup (thePresentation);
-  aGroup->SetGroupPrimitivesAspect (aMarkerAspect);
-  aGroup->AddPrimitiveArray (aPoints);
+      Handle(Graphic3d_AspectMarker3d) aMarkerAspect = myDrawer->PointAspect()->Aspect();
+      if (!myDrawer->HasPointAspect())
+        aMarkerAspect->SetType (Aspect_TOM_POINT);
+
+      Handle(Graphic3d_Group) aGroup = Prs3d_Root::CurrentGroup (thePresentation);
+      aGroup->SetGroupPrimitivesAspect (aMarkerAspect);
+      aGroup->AddPrimitiveArray (aPoints);
+    }
+  default:
+    break;
+  }
 }
 
 //=======================================================================
