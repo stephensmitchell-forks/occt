@@ -110,7 +110,7 @@ Standard_Real BRepMesh_ShapeTool::RelativeEdgeDeflection(
     return aDefEdge;
 
   Bnd_Box aBox;
-  BRepBndLib::Add(theEdge, aBox);
+  BRepBndLib::Add(theEdge, aBox, Standard_False);
   BoxMaxDimension(aBox, aDefEdge);
             
   // Adjust resulting value in relation to the total size

@@ -76,6 +76,8 @@
   #include <tbb/parallel_for_each.h>
 #endif
 
+#define UVDEFLECTION 1.e-05
+
 IMPLEMENT_STANDARD_HANDLE (BRepMesh_FastDiscret, Standard_Transient)
 IMPLEMENT_STANDARD_RTTIEXT(BRepMesh_FastDiscret, Standard_Transient)
 
@@ -278,7 +280,7 @@ Standard_Integer BRepMesh_FastDiscret::Add(const TopoDS_Face& theFace)
           }
 
           defedge = Max(maxdef, defedge);
-          defedge = Max(Precision::Confusion(), defedge);
+          defedge = Max(UVDEFLECTION, defedge);
           myMapdefle.Bind(aEdge, defedge);
         }
         else
@@ -452,6 +454,7 @@ Standard_Integer BRepMesh_FastDiscret::Add(const TopoDS_Face& theFace)
 
         myAttribute->SetStatus(aCheckStatus);
         if (!myAttribute->IsValid())
+          //RemoveFaceAttribute(theFace);
           return myAttribute->GetStatus();
       }
 
@@ -808,7 +811,7 @@ void BRepMesh_FastDiscret::update(
   const TopoDS_Face& aFace = myAttribute->Face();
   N_HANDLE<BRepMesh_IEdgeTool> aEdgeTool;
   // Try to find existing tessellation.
-  for (Standard_Integer i = 0; !aEdgeTool.IsNull(); ++i)
+  for (Standard_Integer i = 1; aEdgeTool.IsNull(); ++i)
   {
     TopLoc_Location aLoc;
     Handle(Poly_Triangulation) aTriangulation;
@@ -970,4 +973,14 @@ Standard_Boolean BRepMesh_FastDiscret::GetFaceAttribute(
   }
 
   return Standard_False;
+}
+
+//=======================================================================
+//function : RemoveFaceAttribute
+//purpose  : 
+//=======================================================================
+void BRepMesh_FastDiscret::RemoveFaceAttribute(const TopoDS_Face& theFace)
+{
+  if (myAttributes.IsBound(theFace))
+    myAttributes.UnBind(theFace);
 }
