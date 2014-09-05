@@ -83,6 +83,8 @@ void BRepMesh_FaceAttribute::clearLocal()
   myLocation2D.Clear();
   myVertexEdgeMap->Clear();
   myInternalEdges->Clear();
+
+  myAllocator->Reset(Standard_False);
 }
 
 //=======================================================================

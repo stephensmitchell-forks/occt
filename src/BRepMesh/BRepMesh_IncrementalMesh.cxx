@@ -358,10 +358,13 @@ void BRepMesh_IncrementalMesh::update(const TopoDS_Edge& theEdge)
     BRep_Tool::PolygonOnTriangulation(theEdge, aPolygon, 
       aTriangulation, aLoc, aPolyIndex++);
 
-    if (!aTriangulation.IsNull() && !aPolygon.IsNull() && aPolygon->HasParameters())
+    if (!aTriangulation.IsNull() && !aPolygon.IsNull())
     {
-      if (aPolygon->Deflection() < 1.1 * aEdgeDeflection)
+      if (aPolygon->Deflection() < 1.1 * aEdgeDeflection &&
+          aPolygon->HasParameters())
+      {
         continue;
+      }
 
       myModified = Standard_True;
       BRepMesh_ShapeTool::NullifyEdge(theEdge, aTriangulation, aLoc);
@@ -370,7 +373,8 @@ void BRepMesh_IncrementalMesh::update(const TopoDS_Edge& theEdge)
     if (!myEmptyEdges.IsBound(theEdge))
       myEmptyEdges.Bind(theEdge, BRepMeshCol::MapOfTriangulation());
 
-    myEmptyEdges(theEdge).Add(aTriangulation);
+    if (!aTriangulation.IsNull())
+      myEmptyEdges(theEdge).Add(aTriangulation);
   }
   while (!aPolygon.IsNull());
 }
@@ -403,7 +407,8 @@ Standard_Boolean BRepMesh_IncrementalMesh::toBeMeshed(
         if (!myEmptyEdges.IsBound(aEdge))
           continue;
 
-        isEdgesConsistent &= !myEmptyEdges(aEdge).Contains(aTriangulation);
+        BRepMeshCol::MapOfTriangulation& aTriMap = myEmptyEdges(aEdge);
+        isEdgesConsistent &= !aTriMap.IsEmpty() && !aTriMap.Contains(aTriangulation);
       }
 
       if (isEdgesConsistent)

@@ -79,7 +79,7 @@ private:
   const Handle(Geom2d_Curve)&    myPCurve;
   const TColgp_Array1OfPnt&      myNodes;
   const TColStd_Array1OfInteger& myIndices;
-  const TopLoc_Location&         myLoc;
+  const TopLoc_Location          myLoc;
 };
 
 #endif

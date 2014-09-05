@@ -253,7 +253,7 @@ private:
   private:
     Standard_Integer          myVertexIndex;
     const TColgp_Array1OfPnt& myPolygon;
-    const TopLoc_Location&    myLoc;
+    const TopLoc_Location     myLoc;
   };
 
   //! Structure keeps common parameters of edge
