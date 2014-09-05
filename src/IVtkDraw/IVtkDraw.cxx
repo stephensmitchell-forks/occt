@@ -382,6 +382,9 @@ void IVtkDraw::ViewerInit (Standard_Integer thePxLeft,
     GetInteractor()->SetPipelines (GetPipelines());
     GetInteractor()->Initialize();
 
+    aRenWin->SetOffScreenRendering(Draw_VirtualWindows);
+    aRenWin->Render();
+
     isFirst = Standard_False;
   }
 
