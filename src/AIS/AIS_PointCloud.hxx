@@ -33,6 +33,7 @@
 DEFINE_STANDARD_HANDLE (AIS_PointCloud, AIS_InteractiveObject)
 
 //! Interactive object for set of points.
+//! Selection services are not provided by this class.
 class AIS_PointCloud : public AIS_InteractiveObject
 {
 
@@ -54,7 +55,7 @@ public:
 
   //! Get the points.
   //! @return the array of points.
-  Standard_EXPORT virtual const Handle(Graphic3d_ArrayOfPoints)& GetPoints () const;
+  Standard_EXPORT virtual const Handle(Graphic3d_ArrayOfPoints) GetPoints() const;
 
   //! Redefined method implemets the standard behavior.
   Standard_EXPORT virtual void SetColor (const Quantity_NameOfColor theColor);

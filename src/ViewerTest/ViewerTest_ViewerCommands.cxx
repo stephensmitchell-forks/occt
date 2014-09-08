@@ -50,6 +50,7 @@
 #include <NIS_View.hxx>
 #include <NIS_Triangulated.hxx>
 #include <NIS_InteractiveContext.hxx>
+#include <AIS_LocalContext.hxx>
 #include <AIS_InteractiveContext.hxx>
 #include <Draw_Interpretor.hxx>
 #include <Draw.hxx>
@@ -4355,61 +4356,147 @@ static int VDiffImage (Draw_Interpretor& theDI, Standard_Integer theArgNb, const
 //purpose  : Emulates different types of selection by mouse:
 //           1) single click selection
 //           2) selection with rectangle having corners at pixel positions (x1,y1) and (x2,y2)
-//           3) selection with polygon having corners at
-//           pixel positions (x1,y1),...,(xn,yn)
-//           4) any of these selections with shift button pressed
+//           3) selection with polygon having corners at pixel positions (x1,y1),...,(xn,yn)
+//           4) selection of specified shape(s)
+//           5) any of these selections with shift button pressed
 //=======================================================================
-static Standard_Integer VSelect (Draw_Interpretor& di,
-                                 Standard_Integer argc,
-                                 const char ** argv)
+static Standard_Integer VSelect (Draw_Interpretor& /*theDI*/,
+                                 Standard_Integer  theArgNum,
+                                 const char **     theArgs)
 {
-  if(argc < 3)
+  if (theArgNum < 2)
   {
-    di << "Usage : " << argv[0] << " x1 y1 [x2 y2 [... xn yn]] [shift_selection = 1|0]" << "\n";
+    std::cout << theArgs[0] << " error: wrong number of parameters. Type 'help "
+              << theArgs[0] << "' for more information." << std::cout;
     return 1;
   }
 
-  Handle(AIS_InteractiveContext) myAIScontext = ViewerTest::GetAISContext();
-  if(myAIScontext.IsNull())
+  Handle(AIS_InteractiveContext) anAISContext = ViewerTest::GetAISContext();
+  if (anAISContext.IsNull())
   {
-    di << "use 'vinit' command before " << argv[0] << "\n";
+    std::cout << "Call 'vinit' before!" << std::endl;
     return 1;
   }
-  const Standard_Boolean isShiftSelection = (argc>3 && !(argc%2) && (atoi(argv[argc-1])==1));
-  Handle(ViewerTest_EventManager) aCurrentEventManager = ViewerTest::CurrentEventManager();
-  aCurrentEventManager->MoveTo(atoi(argv[1]),atoi(argv[2]));
-  if(argc <= 4)
+
+  Standard_Integer anArgIter     = 1;
+  Standard_Boolean toSelectShape = Standard_False;
+  Standard_Boolean isShift       = Standard_False;
+
+  TCollection_AsciiString anArgum (theArgs[anArgIter]);
+  if (!anArgum.IsIntegerValue() && !anArgum.IsRealValue())
+      toSelectShape = Standard_True;
+
+  NCollection_Sequence<TCollection_AsciiString> aParams;
+  for (; anArgIter < theArgNum; ++anArgIter)
   {
-    if(isShiftSelection)
-      aCurrentEventManager->ShiftSelect();
-    else
-      aCurrentEventManager->Select();
+    TCollection_AsciiString anArgum (theArgs[anArgIter]);
+    anArgum.LowerCase();
+
+    if (anArgum == "-shift")
+    {
+      isShift = Standard_True;
+      continue;
+    }
+
+    if (!anArgum.IsEmpty())
+      aParams.Append (anArgum);
   }
-  else if(argc <= 6)
+
+  if (toSelectShape)
   {
-    if(isShiftSelection)
-      aCurrentEventManager->ShiftSelect(atoi(argv[1]),atoi(argv[2]),atoi(argv[3]),atoi(argv[4]));
-    else
-      aCurrentEventManager->Select(atoi(argv[1]),atoi(argv[2]),atoi(argv[3]),atoi(argv[4]));
+    NCollection_Sequence<TCollection_AsciiString>::Iterator aParamIter (aParams);
+    for (; aParamIter.More(); aParamIter.Next())
+    {
+      TCollection_AsciiString aShapeName = aParamIter.Value();
+      if (!GetMapOfAIS().IsBound2 (aShapeName))
+      {
+        std::cout << "Warning: no object with name '" << aShapeName << "' found." << std::endl;
+        continue;
+      }
+
+      const Handle(Standard_Transient) anObject = GetMapOfAIS().Find2 (aShapeName);
+      if (!anObject->IsKind (STANDARD_TYPE (AIS_InteractiveObject)))
+      {
+        std::cout << "Warning: no shape with type '" << STANDARD_TYPE (AIS_InteractiveObject)->Name()
+                  << "' found." << std::endl;
+        continue;
+      }
+
+      const Handle(AIS_InteractiveObject) anInterObject = Handle(AIS_InteractiveObject)::DownCast (anObject);
+      if (anInterObject.IsNull())
+      {
+        std::cout << "Error: 3D object is expected to be an AIS_InteractiveObject" << std::endl;
+        continue;
+      }
+
+      if (anAISContext->HasOpenedContext())
+      {
+        if (isShift)
+          anAISContext->LocalContext()->AddOrRemoveSelected (anInterObject);
+        else
+          anAISContext->LocalContext()->SetSelected (anInterObject);
+      }
+      else
+      {
+        if (isShift)
+          anAISContext->AddOrRemoveCurrentObject (anInterObject);
+        else
+          anAISContext->SetCurrentObject (anInterObject);
+      }
+    }
   }
   else
   {
-    Standard_Integer anUpper = 0;
+    Standard_Integer aNumParams = aParams.Length();
+    if (aNumParams < 2 || aNumParams % 2 != 0)
+    {
+      std::cout << "Error: no X Y defined." << std::endl;
+      return 1;
+    }
 
-    if(isShiftSelection)
-      anUpper = (argc-1)/2;
+    Handle(ViewerTest_EventManager) aCurrentEventManager = ViewerTest::CurrentEventManager();
+    aCurrentEventManager->MoveTo (Draw::Atoi (aParams (1).ToCString()),
+                                  Draw::Atoi (aParams (2).ToCString()));
+    if (aNumParams == 2)
+    {
+      if (isShift)
+        aCurrentEventManager->ShiftSelect();
+      else
+        aCurrentEventManager->Select();
+    }
+    else if (aNumParams == 4)
+    {
+      if (isShift)
+        aCurrentEventManager->ShiftSelect (Draw::Atoi (aParams (1).ToCString()),
+                                           Draw::Atoi (aParams (2).ToCString()),
+                                           Draw::Atoi (aParams (3).ToCString()),
+                                           Draw::Atoi (aParams (4).ToCString()));
+      else
+        aCurrentEventManager->Select (Draw::Atoi (aParams (1).ToCString()),
+                                      Draw::Atoi (aParams (2).ToCString()),
+                                      Draw::Atoi (aParams (3).ToCString()),
+                                      Draw::Atoi (aParams (4).ToCString()));
+    }
     else
-      anUpper = argc/2;
-    TColgp_Array1OfPnt2d aPolyline(1,anUpper);
+    {
+      Standard_Integer anUpper = 0;
+      if (isShift)
+        anUpper = (aNumParams - 1) / 2;
+      else
+        anUpper = aNumParams / 2;
+      TColgp_Array1OfPnt2d aPolyline (1, anUpper);
 
-    for(Standard_Integer i=1;i<=anUpper;++i)
-      aPolyline.SetValue(i,gp_Pnt2d(atoi(argv[2*i-1]),atoi(argv[2*i])));
+      for (Standard_Integer i = 1; i <= anUpper; ++i)
+        aPolyline.SetValue (i, gp_Pnt2d (Draw::Atoi (aParams (2*i - 1).ToCString()),
+                                         Draw::Atoi (aParams (2*i).ToCString())));
 
-    if(isShiftSelection)
-      aCurrentEventManager->ShiftSelect(aPolyline);
-    else
-      aCurrentEventManager->Select(aPolyline);
+      if (isShift)
+        aCurrentEventManager->ShiftSelect (aPolyline);
+      else
+        aCurrentEventManager->Select (aPolyline);
+    }
   }
+
   return 0;
 }
 
@@ -6298,12 +6385,14 @@ void ViewerTest::ViewerCommands(Draw_Interpretor& theCommands)
     "diffimage     : diffimage imageFile1 imageFile2 toleranceOfColor(0..1) blackWhite(1|0) borderFilter(1|0) [diffImageFile]",
     __FILE__, VDiffImage, group);
   theCommands.Add ("vselect",
-    "vselect x1 y1 [x2 y2 [x3 y3 ... xn yn]] [shift_selection = 0|1]\n"
+    "vselect x1 y1 [x2 y2 [x3 y3 ... xn yn]] [-shift]\n"
+    "vselect name1 [name2 [name3 ... nameN]] [-shift]\n"
     "- emulates different types of selection:\n"
     "- 1) single click selection\n"
     "- 2) selection with rectangle having corners at pixel positions (x1,y1) and (x2,y2)\n"
     "- 3) selection with polygon having corners in pixel positions (x1,y1), (x2,y2),...,(xn,yn)\n"
-    "- 4) any of these selections with shift button pressed",
+    "- 4) selection of specified shape(s)\n"
+    "- 5) any of these selections with shift button pressed",
     __FILE__, VSelect, group);
   theCommands.Add ("vmoveto",
     "vmoveto x y"
