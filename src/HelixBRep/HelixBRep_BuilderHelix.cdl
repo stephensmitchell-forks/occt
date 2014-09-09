@@ -1,0 +1,145 @@
+-- File:	HelixBRep_BuilderHelix.cdl
+
+class  BuilderHelix  from  HelixBRep 
+	---Purpose:  Implementation  of  building  helix  wire 
+	--  Values  of  Error  Status  returned  by  algo:
+        -- 0 - OK
+        -- 1 - object is just initialized, it means that no input parameters were set
+        -- 2 - approximation fails
+        --
+        -- 10 - R < tolerance - starting point is too close to axis
+        -- 11 - step (Pitch) < tolerancee
+        -- 12 - Height < tolerance
+        -- 13 - TaperAngle < 0 or TaperAngle > Pi/2 - TolAng
+	--  Warning  Status: 
+	--  0  -  OK 
+	--  1  -  tolerance  reached  by  approximation  >  requested  tolerance.
+	 
+uses 
+     Ax1  from  gp, 
+     Ax3  from  gp, 
+     Pnt  from  gp,  
+     Array1OfReal  from TColStd,
+     HArray1OfReal  from TColStd,
+     Array1OfBoolean  from TColStd,
+     HArray1OfBoolean  from TColStd,
+     Shape  from  GeomAbs,
+     Shape  from  TopoDS, 
+     Wire  from  TopoDS,  
+     Edge  from  TopoDS,
+     ListOfShape  from  TopTools     
+ 
+is 
+ 
+    Create
+	---Purpose:  Empty  constructor
+    	returns BuilderHelix from HelixBRep; 
+    ---C++: alias "Standard_EXPORT virtual ~HelixBRep_BuilderHelix();"      
+ 
+			   
+    SetParameters(me:out;  theAxis:  Ax3  from  gp;   
+			   theDiams:  Array1OfReal  from  TColStd; 
+			   theHeights:  Array1OfReal  from TColStd ; 
+			   thePitches:  Array1OfReal  from TColStd ; 
+			   theIsPitches:   Array1OfBoolean  from  TColStd); 
+	---Purpose:  Sets  parameters  of  general  composite  helix
+			   
+    SetParameters(me:out;  theAxis:  Ax3  from  gp;   
+			   theDiam:  Real  from  Standard; 
+			   theHeights:  Array1OfReal  from TColStd ; 
+			   thePitches:  Array1OfReal  from TColStd ; 
+			   theIsPitches:   Array1OfBoolean  from  TColStd); 
+	---Purpose:  Sets  parameters  of pure  helix
+			   
+    SetParameters(me:out;  theAxis:  Ax3  from  gp;   
+			   theDiam1:  Real  from  Standard; 
+			   theDiam2:  Real  from  Standard; 
+			   theHeights:  Array1OfReal  from TColStd ; 
+			   thePitches:  Array1OfReal  from TColStd ; 
+			   theIsPitches:   Array1OfBoolean  from  TColStd); 
+	---Purpose:  Sets  parameters  of pure spiral
+ 
+			   
+    SetParameters(me:out;  theAxis:  Ax3  from  gp;   
+			   theDiams:  Array1OfReal  from  TColStd; 
+			   thePitches:  Array1OfReal  from TColStd ; 
+			   theNbTurns:  Array1OfReal  from TColStd); 
+	---Purpose:  Sets  parameters  of  general  composite  helix
+			   
+				  
+    SetParameters(me:out;  theAxis:  Ax3  from  gp;   
+			   theDiam:  Real  from  Standard; 
+			   thePitches:  Array1OfReal  from TColStd ; 
+			   theNbTurns:  Array1OfReal  from TColStd); 
+	---Purpose:  Sets  parameters  of pure  helix
+			   
+    SetParameters(me:out;  theAxis:  Ax3  from  gp;   
+			   theDiam1:  Real  from  Standard; 
+			   theDiam2:  Real  from  Standard; 
+			   thePitches:  Array1OfReal  from TColStd ; 
+			   theNbTurns:  Array1OfReal  from TColStd); 
+	---Purpose:  Sets  parameters  of pure spiral
+			   
+			   
+    SetApproxParameters(me:out;  theTolerance:  Real  from  Standard; 
+                                 theMaxDegree:  Integer  from  Standard; 
+				 theContinuity:  Shape  from  GeomAbs); 
+	---Purpose:  Sets  parameters for  approximation
+				  
+			   
+    Perform(me:out) ; 
+	---Purpose:  Performs  calculations
+     
+    ToleranceReached(me)  returns  Real  from  Standard;				   
+	---Purpose:  Gets  tolerance  reached  by  approximation 
+	                              
+    ErrorStatus(me)           
+        ---Purpose: Returns  error  status  of  algorithm 
+        returns Integer from Standard;  
+                              
+    WarningStatus(me)        
+        ---Purpose: Returns  warning  status  of  algorithm   
+        returns Integer from Standard;   
+	
+    Shape(me)  returns  Shape  from  TopoDS;  
+        ---Purpose:  Gets  result  of  algorithm 
+    ---C++: return const &    
+     
+    BuildPart(me:in  out;  theAxis:  Ax1  from  gp;   
+                           thePStart:  Pnt  from  gp; 
+			   theHeight:  Real  from  Standard; 
+			   thePitch:  Real  from  Standard; 
+			   theTaperAngle:  Real  from  Standard; 
+			   theIsClockwise:  Boolean  from  Standard; 
+    	    	    	   thePart:  out  Wire  from  TopoDS)
+			    
+			   is  private; 
+			    
+    Smoothing(me:  in  out;  theParts: in out  ListOfShape  from  TopTools) 
+	is  private;     
+
+    SmoothingEdges(me:  in  out; thePrev, theNext:  in  out  Edge  from  TopoDS) 
+    	is  private;
+	  
+fields 
+    myAxis3:  Ax3  from  gp  is  protected;  
+    myDiams:  HArray1OfReal  from  TColStd is  protected;
+    myHeights:  HArray1OfReal  from  TColStd is  protected; 
+    myPitches:  HArray1OfReal  from  TColStd is  protected; 
+    myIsPitches:  HArray1OfBoolean  from  TColStd  is  protected;  
+    myNParts:  Integer  from  Standard;     
+	  
+    myTolerance:  Real  from  Standard  is  protected;
+    myTolReached:  Real  from  Standard  is  protected;
+    myContinuity:  Shape  from  GeomAbs  is  protected; 
+    myMaxDegree:  Integer  from  Standard  is  protected;
+    myMaxSegments:  Integer  from  Standard  is  protected; 
+     
+    myErrorStatus   : Integer from Standard is protected; 
+    myWarningStatus : Integer from Standard is protected; 
+    
+    myShape:  Shape  from  TopoDS  is  protected;    
+    
+     
+end  BuilderHelix;    
+

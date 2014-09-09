@@ -1,0 +1,72 @@
+-- File:	HelixGeom_BuilderApproxCurve.cdl
+
+
+deferred class BuilderApproxCurve from HelixGeom 
+
+	---Purpose: Root class for algorithm of building helix curves
+
+uses 
+    Shape from GeomAbs, 
+    SequenceOfCurve from TColGeom
+
+--raises
+
+is 
+    Initialize 
+	---Purpose: Sets  default  values  of  aprroximation  parameters
+    	returns BuilderApproxCurve from HelixGeom; 
+    ---C++: alias "Standard_EXPORT virtual ~HelixGeom_BuilderApproxCurve();"  
+     
+    SetApproxParameters(me:out; 
+	    aCont     : Shape from GeomAbs;  
+    	    aMaxDegree: Integer from Standard; 
+    	    aMaxSeg   : Integer from Standard); 
+	---Purpose: Sets  aprroximation  parameters
+	 
+    ApproxParameters(me; 
+	    aCont     :out Shape from GeomAbs;  
+    	    aMaxDegree:out Integer from Standard; 
+    	    aMaxSeg   :out Integer from Standard);     
+	---Purpose: Gets  aprroximation  parameters
+
+    SetTolerance(me:out; 
+    	    aTolerance: Real from Standard); 
+	---Purpose: Sets  aprroximation  tolerance
+	     
+    Tolerance(me) 
+    	returns Real from Standard;  
+	---Purpose: Gets  aprroximation  tolerance
+
+    ToleranceReached(me)  
+	---Purpose: Gets actual tolerance reached by  approximation  algorithm
+    	returns  Real from Standard; 
+
+    Curves(me)   
+	---Purpose: Gets sequence of Bspline  curves  representing  helix  coins.
+    	returns SequenceOfCurve from TColGeom; 
+    ---C++: return const &	 
+    
+    ErrorStatus(me)           
+        ---Purpose: Returns  error  status  of  algorithm
+        returns Integer from Standard;   
+	
+    WarningStatus(me)          
+        ---Purpose: Returns  warning  status  of  algorithm 
+        returns Integer from Standard;    
+	
+    Perform(me:out)            
+        ---Purpose: Performs  calculations.  
+        --  Must  be  redefined. 
+        is deferred;             
+fields 
+   myErrorStatus   : Integer from Standard is protected;
+   myWarningStatus : Integer from Standard is protected;
+   myTolerance  : Real from Standard is protected;  
+   myCont       : Shape from GeomAbs is protected; 
+   myMaxDegree  : Integer from Standard is protected; 
+   myMaxSeg     : Integer from Standard is protected; 
+   --     
+   myTolReached : Real from Standard is protected;   
+   myCurves     : SequenceOfCurve from TColGeom is protected; 
+
+end BuilderApproxCurve;

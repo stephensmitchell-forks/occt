@@ -1,0 +1,42 @@
+-- File:	HelixGeom_Tools.cdl
+
+
+class Tools from HelixGeom 
+
+	---Purpose: Approximation  algorithms  for  bulding  helix  curves
+
+uses 
+    HCurve  from  Adaptor3d,
+    BSplineCurve from  Geom,
+    Shape from GeomAbs
+--raises
+
+is  
+    ApprHelix(myclass; 
+    	    aT1        :Real from Standard;
+    	    aT2        :Real from Standard;
+    	    aPitch     :Real from Standard;
+    	    aRStart    :Real from Standard;
+    	    aTaperAngle:Real from Standard;
+    	    aIsCW      :Boolean from Standard;  
+    	    aTol       :Real from Standard;
+    	    theBSpl    :out BSplineCurve from Geom; 
+    	    theMaxError:out Real  from  Standard)   
+	---Purpose: Bulding  helix  curves
+    	returns Integer from Standard;
+     
+    ApprCurve3D(myclass;  
+    	    theHC      :out HCurve  from  Adaptor3d; 
+    	    theTol     : Real  from  Standard; 
+	    theCont    : Shape  from  GeomAbs; 
+	    theMaxSeg  : Integer  from  Standard;
+    	    theMaxDeg  : Integer  from  Standard; 
+	    theBSpl    :out  BSplineCurve  from  Geom; 
+	    theMaxError:out  Real  from  Standard) 
+	---Purpose: Reaprroximation  of  adaptor  curve
+    	returns Integer from Standard;
+--fields
+
+end Tools;
+
+

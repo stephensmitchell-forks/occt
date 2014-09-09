@@ -1,0 +1,21 @@
+-- File:	HelixBRep.cdl
+
+
+package HelixBRep 
+
+	---Purpose: 
+
+uses  
+    gp, 
+    TopoDS, 
+    GeomAbs, 
+    TColStd, 
+    TopTools,
+    HelixGeom
+    
+is  
+    class BuilderHelix; 
+
+    
+end HelixBRep;
+

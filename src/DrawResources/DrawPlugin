@@ -37,8 +37,10 @@ DATAEXCHANGEKERNEL : XSDRAW
 OCAF               : VISUALIZATION, OCAFKERNEL
 DATAEXCHANGE       : XDE, VISUALIZATION
 XDE                : DATAEXCHANGEKERNEL, XDEDRAW
+HELIX              : TestHelix
+UNFOLDING          : TestUnfolding
 FULL               : MODELING, OCAFKERNEL, VISUALIZATION 
-ALL                : MODELING, OCAFKERNEL, DATAEXCHANGE
+ALL                : MODELING, OCAFKERNEL, DATAEXCHANGE, HELIX, UNFOLDING
 
 TOPTEST            : TKTopTest
 DCAF               : TKDCAF
@@ -48,3 +50,5 @@ XDEDRAW            : TKXDEDRAW
 TOBJ               : TKTObjDRAW
 DFBROWSER          : TKDFBrowser
 QAcommands         : TKQADraw
+TestHelix          : TKHelix
+TestUnfolding      : TKUnfoldingTest

@@ -488,3 +488,11 @@ p BOPAlgo
 p BOPDS
 p BOPCol
 p BOPInt
+p HelixBRep
+p HelixGeom
+p HelixTest
+t TKHelix
+p Unfolding
+p UnfoldingTest
+t TKUnfolding
+t TKUnfoldingTest

@@ -1,0 +1,35 @@
+-- File:	HelixGeom_HHelixCurve.cdl
+
+class HHelixCurve from HelixGeom  
+    inherits  GHHelixCurve from HelixGeom  
+	
+	---Purpose: HAdaptor class for helix  curve
+
+uses
+    HelixCurve from HelixGeom
+
+--raises
+
+is 
+    Create  
+	---Purpose: Empty  constructor
+    	returns mutable HHelixCurve from HelixGeom; 
+	 
+    Create(aC: HelixCurve from HelixGeom)  
+	---Purpose: Constructor by  corresponding  adaptor  curve
+    	returns mutable HHelixCurve from HelixGeom;  
+
+    Create(aT1:Real from Standard;
+    	   aT2:Real from Standard;
+    	   aPitch:Real from Standard;
+    	   aRStart:Real from Standard;
+    	   aTaperAngle:Real from Standard;
+    	   aIsCW:Boolean from Standard) 
+	---Purpose: Constructor by parameters
+	returns mutable HHelixCurve from HelixGeom;  
+
+--fields
+
+end HHelixCurve;
+
+

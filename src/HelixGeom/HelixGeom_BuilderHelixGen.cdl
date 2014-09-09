@@ -1,0 +1,45 @@
+-- File:	HelixGeom_BuilderHelixGen.cdl
+
+deferred class BuilderHelixGen from HelixGeom  
+    	inherits BuilderApproxCurve from HelixGeom 
+
+	---Purpose: Root  class  for  algorithms  of  building  helix  curves
+	
+
+--uses
+--raises
+
+is 
+    Initialize 
+	---Purpose: Sets  default  parameters
+    	returns BuilderHelixGen from HelixGeom; 
+    ---C++: alias "Standard_EXPORT virtual ~HelixGeom_BuilderHelixGen();" 
+     
+    SetCurveParameters(me:out; 
+    	    aT1          :Real from Standard;
+    	    aT2          :Real from Standard; 
+    	    aPitch       :Real from Standard;
+    	    aRStart      :Real from Standard;
+    	    aTaperAngle  :Real from Standard; 
+	    bIsClockwise :Boolean from Standard); 
+	---Purpose: Sets  parameters  for  building  helix  curves
+    			     
+    CurveParameters(me; 
+    	    aT1          :out Real from Standard;
+    	    aT2          :out Real from Standard;
+    	    aPitch       :out Real from Standard;
+    	    aRStart      :out Real from Standard;
+    	    aTaperAngle  :out Real from Standard; 
+	    bIsClockwise :out Boolean from Standard); 
+	---Purpose: Gets  parameters  for  building  helix  curves
+
+fields
+    myT1         : Real from Standard is protected;     
+    myT2         : Real from Standard is protected;     
+    myPitch      : Real from Standard is protected;     
+    myRStart     : Real from Standard is protected;     
+    myTaperAngle : Real from Standard is protected;     
+    myIsClockWise: Boolean from Standard is protected; 
+
+end BuilderHelixGen;
+

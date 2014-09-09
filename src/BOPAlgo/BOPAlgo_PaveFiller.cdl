@@ -38,7 +38,8 @@ uses
     IndexedDataMapOfShapeInteger from BOPCol,   
     DataMapOfIntegerListOfInteger from BOPCol, 
     DataMapOfShapeListOfShape from BOPCol,
-    IndexedDataMapOfShapeListOfShape from BOPCol,
+    IndexedDataMapOfShapeListOfShape from BOPCol, 
+    DataMapOfIntegerInteger from BOPCol,
     --  
     Context from BOPInt,
     -- 
@@ -174,19 +175,21 @@ is
       returns Boolean from Standard 
       is protected; 
 	 
-    PutPaveOnCurve(me:out; 
+    PutPavesOnCurve(me:out; 
         theMVOn:MapOfInteger from BOPCol; 
         theTolR3D:Real from Standard; 
         theNC:out Curve from BOPDS; 
         nF1:Integer from Standard; 
         nF2:Integer from Standard;
+        theMI : MapOfInteger from BOPCol;  
         theMVEF:MapOfInteger from BOPCol) 
       is protected;  
 
     ExtendedTolerance(me:out; 
         nV:Integer from Standard; 
         aMI:MapOfInteger from BOPCol; 
-        aTolVExt:out Real from  Standard) 
+        aTolVExt:out Real from  Standard; 
+        aType    : Integer from Standard = 0) 
       returns Boolean from  Standard 
       is protected;
 	 
@@ -219,7 +222,8 @@ is
     PostTreatFF(me:out; 
         theMSCPB:out IndexedDataMapOfShapeCoupleOfPaveBlocks from BOPDS; 
         theMVI:out DataMapOfShapeInteger from BOPCol;  
-        theDMExEd:out DataMapOfPaveBlockListOfPaveBlock from BOPDS;
+        theDMExEdges:out DataMapOfPaveBlockListOfPaveBlock from BOPDS; 
+        theDMI:out DataMapOfIntegerInteger from BOPCol;
         theAllocator:out BaseAllocator from BOPCol) 
       returns Integer from Standard 
       is protected; 
@@ -252,15 +256,15 @@ is
       is protected; 
        
     PutEFPavesOnCurve(me:out; 
-        nF1        : Integer from Standard; 
-        nF2        : Integer from Standard; 
         theNC      : out Curve from BOPDS; 
+        theMI      : MapOfInteger from BOPCol;
         theMVEF    : MapOfInteger from BOPCol)  
       is protected;
  
     PutStickPavesOnCurve(me:out; 
-        nF1        : Integer from Standard; 
-        nF2        : Integer from Standard; 
+        aF1        : Face from TopoDS; 
+        aF2        : Face from TopoDS;  
+        theMI      : MapOfInteger from BOPCol;
         theNC      : out Curve from BOPDS; 
         theMVStick : MapOfInteger from BOPCol)
       is protected; 
@@ -269,10 +273,11 @@ is
         nF1        : Integer from Standard; 
         nF2        : Integer from Standard; 
         theMVStick : out MapOfInteger from BOPCol;
-        theMVEFk   : out MapOfInteger from BOPCol)
+        theMVEF    : out MapOfInteger from BOPCol; 
+        theMI      : out MapOfInteger from BOPCol)
       is protected; 
  
-    GetFullFaceMap(me:out; 
+    GetFullShapeMap(me:out; 
         nF    : Integer from Standard; 
         theMI : out MapOfInteger from BOPCol) 
       is protected; 
@@ -286,8 +291,9 @@ is
     PutPaveOnCurve(me:out; 
         nV        : Integer from Standard; 
         theTolR3D : Real from Standard;
-        theNC     : Curve from BOPDS;
-        thePB     : out PaveBlock from BOPDS) 
+        theNC     : out Curve from BOPDS; 
+        theMI     : MapOfInteger from BOPCol;
+        aType     : Integer from Standard = 0)
       is protected;
  
     ProcessExistingPaveBlocks(me:out; 
@@ -340,7 +346,25 @@ is
     ---Purpose: 
     ---Updates the information about faces
 
-      
+    SplitEdge(me:out; 
+        nE  : Integer from Standard; 
+        nV1 : Integer from Standard; 
+        aT1 : Real from Standard;
+        nV2 : Integer from Standard; 
+        aT2 : Real from Standard) 
+    returns Integer from Standard 
+    is protected;
+    ---Purpose: 
+    -- Creates new edge from the edge nE with vertices nV1 and nV2 
+    -- and returns the index of that new edge in the DS.
+ 
+    UpdatePaveBlocks(me:out;  
+        theDMI : DataMapOfIntegerInteger from BOPCol) 
+    is protected; 
+    ---Purpose: 
+    -- Updates pave blocks which have the paves with indices contained  
+    -- in the map <theDMI>.
+              
 fields  
     myArguments   : ListOfShape from BOPCol is protected;  
     myDS          : PDS from BOPDS is protected; 

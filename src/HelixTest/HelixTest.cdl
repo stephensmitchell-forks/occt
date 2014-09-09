@@ -1,0 +1,19 @@
+-- File:	HelixTest.cdl
+
+
+package HelixTest 
+
+	---Purpose: 
+
+uses
+    Draw,
+    DBRep, 
+    TopoDS,
+    gp
+is 
+   AllCommands  (aDI:out Interpretor from Draw); 
+   HelixCommands  (aDI:out Interpretor from Draw); 
+   Factory      (aDI:out Interpretor from Draw);  
+
+end HelixTest;
+

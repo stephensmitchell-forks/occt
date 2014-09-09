@@ -1,0 +1,24 @@
+-- File:	HelixGeom_BuilderHelixCoil.cdl
+
+class BuilderHelixCoil from HelixGeom  
+    	inherits BuilderHelixGen from HelixGeom 
+
+	---Purpose: Implementation  of  algorithm  for  building  helix  coil  with 
+	--          axis  OZ
+
+--uses
+--raises
+
+is 
+    Create 
+	---Purpose: Empty  constructor
+    	returns BuilderHelixCoil from HelixGeom; 
+    ---C++: alias "Standard_EXPORT virtual ~HelixGeom_BuilderHelixCoil();"   
+    
+    Perform(me:out) 
+	---Purpose: Performs  calculations
+    	is redefined; 
+	 
+end BuilderHelixCoil;
+
+

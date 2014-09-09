@@ -1,0 +1,99 @@
+// File:	Unfolding_Shell.lxx
+// Created:	Tue Sep  9 17:14:56 2008
+// Author:	Mikhail KLOKOV
+//		<mkk@kurox>
+
+
+inline void Unfolding_Shell::SetShell(const TopoDS_Shell& theShell) 
+{
+  myShell = theShell;
+}
+
+ 
+inline const TopoDS_Shell& Unfolding_Shell::GetShell() const
+{
+  return myShell;
+}
+
+ 
+inline void Unfolding_Shell::SetPlane(const gp_Pln& thePlane) 
+{
+  myPlane = thePlane;
+}
+
+ 
+inline const gp_Pln& Unfolding_Shell::GetPlane() const
+{
+  return myPlane;
+}
+
+ 
+inline void Unfolding_Shell::SetCurvatureTolerance(const Standard_Real theTolerance) 
+{
+  myTolCurvature = theTolerance;
+}
+
+ 
+inline Standard_Real Unfolding_Shell::GetCurvatureTolerance() const
+{
+  return myTolCurvature;
+}
+
+ 
+inline void Unfolding_Shell::SetContourTolerance(const Standard_Real theTolerance) 
+{
+  myTolContour = theTolerance;
+}
+
+ 
+inline Standard_Real Unfolding_Shell::GetContourTolerance() const
+{
+  return myTolContour;
+}
+
+ 
+inline void Unfolding_Shell::SetDeflection(const Standard_Real theDeflection) 
+{
+  myDeflection = theDeflection;
+}
+
+ 
+inline Standard_Real Unfolding_Shell::GetDeflection() const
+{
+  return myDeflection;
+}
+
+ 
+inline Unfolding_ErrorStatus Unfolding_Shell::ErrorStatus() const
+{
+  return myErrorStatus;
+}
+
+ 
+inline const TopoDS_Face& Unfolding_Shell::GetResult() const
+{
+  return myResult;
+}
+
+ 
+inline Standard_Real Unfolding_Shell::GetAreaError() const
+{
+  return myDistortionArea;
+}
+
+ 
+inline Standard_Real Unfolding_Shell::GetMaxGaussCurvature() const
+{
+  return myCurvature;
+}
+
+ 
+inline void Unfolding_Shell::Reset() 
+{
+  myDistortionArea = 0.;
+  myCurvature = 0.;
+  myErrorStatus = Unfolding_NotDone;
+
+  myMapFaceData.Clear();
+  myResult.Nullify();
+}

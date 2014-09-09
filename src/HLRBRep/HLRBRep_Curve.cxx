@@ -18,7 +18,6 @@
 // purpose or non-infringement. Please see the License for the specific terms
 // and conditions governing the rights and limitations under the License.
 
-
 #include <HLRBRep_Curve.ixx>
 #include <gp.hxx>
 #include <gp_Ax3.hxx>
@@ -101,7 +100,7 @@ HLRBRep_Curve::Parameter3d (const Standard_Real P2d) const
       const Standard_Real FmOZ = myOF - myOZ;
       return P2d * FmOZ * FmOZ / (FmOZ * (myOF * myVX + P2d * myVZ) + myOF * myOX * myVZ);
     }
-    return P2d / myVX;
+    return ((myVX <= gp::Resolution())? P2d : (P2d / myVX));
   }
 
   else if (myType == GeomAbs_Ellipse) {

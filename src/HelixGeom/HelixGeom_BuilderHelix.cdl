@@ -1,0 +1,38 @@
+-- File:	HelixGeom_BuilderHelix.cdl
+
+
+class BuilderHelix from HelixGeom 
+    	inherits BuilderHelixGen from HelixGeom  
+	
+	---Purpose: Upper level class for geometrical algorithm of building 
+	--          helix curves using arbitrary axis
+
+uses
+    Ax2 from gp
+
+--raises
+
+is   
+    Create 
+	---Purpose: Empty  constructor 
+    	returns BuilderHelix from HelixGeom; 
+    ---C++: alias "Standard_EXPORT virtual ~HelixGeom_BuilderHelix();"  
+      
+    SetPosition (me:out;  
+	---Purpose: Sets coordinate axes for helix 
+    	    aAx2 : Ax2 from gp);
+
+    Position (me)   
+	---Purpose: Gets coordinate axes for helix 
+    	returns Ax2 from gp; 
+    ---C++: return const &	 
+
+    Perform(me:out) 
+	---Purpose: Performs  calculations 
+    	is redefined; 
+
+fields 
+    myPosition: Ax2 from gp is protected; 
+     
+end BuilderHelix;
+

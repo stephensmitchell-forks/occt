@@ -1,0 +1,24 @@
+-- File:	UnfoldingTest.cdl
+-- Created:	Tue Jul 22 18:15:41 2008
+-- Author:	Sergey KHROMOV
+--		<skv@dimox>
+---Copyright:	 Matra Datavision 2008
+
+
+package UnfoldingTest
+    ---Purpose: This package defines a set of Draw commands for testing of
+    --          functionality of the package Unfolding.
+
+uses
+
+    Draw
+
+is
+
+    Commands(theDI: in out Interpretor from Draw);
+    ---Purpose: Adds Draw commands to the draw interpretor.
+
+    Factory(theDI: out Interpretor from Draw);
+    ---Purpose: Plugin entry point function.
+
+end UnfoldingTest;
