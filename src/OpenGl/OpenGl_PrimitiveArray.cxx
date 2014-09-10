@@ -231,14 +231,6 @@ void OpenGl_PrimitiveArray::DrawArray (Tint theLightingModel,
       pvc = NULL;
     }
 
-    // Sometimes the GL_LIGHTING mode is activated here
-    // without glEnable(GL_LIGHTING) call for an unknown reason, so it is necessary
-    // to call glEnable(GL_LIGHTING) to synchronize Light On/Off mechanism*
-    if (theLightingModel == 0 || myDrawMode <= GL_LINE_STRIP)
-      glDisable (GL_LIGHTING);
-    else
-      glEnable (GL_LIGHTING);
-
     if (!toDrawVbo())
     {
       if (myPArray->vertices != NULL)
@@ -246,10 +238,15 @@ void OpenGl_PrimitiveArray::DrawArray (Tint theLightingModel,
         glVertexPointer (3, GL_FLOAT, 0, myPArray->vertices); // array of vertices
         glEnableClientState (GL_VERTEX_ARRAY);
       }
-      if (myPArray->vnormals != NULL)
+      if (myPArray->vnormals != NULL && theLightingModel != 0)
       {
         glNormalPointer (GL_FLOAT, 0, myPArray->vnormals); // array of normals
         glEnableClientState (GL_NORMAL_ARRAY);
+        glEnable (GL_LIGHTING);
+      }
+      else
+      {
+        glDisable (GL_LIGHTING);
       }
       if (myPArray->vtexels != NULL)
       {
@@ -269,9 +266,14 @@ void OpenGl_PrimitiveArray::DrawArray (Tint theLightingModel,
     {
       // Bindings concrete pointer in accordance with VBO buffer
       myVbos[VBOVertices]->BindFixed (aGlContext, GL_VERTEX_ARRAY);
-      if (!myVbos[VBOVnormals].IsNull())
+      if (!myVbos[VBOVnormals].IsNull() && theLightingModel != 0)
       {
         myVbos[VBOVnormals]->BindFixed (aGlContext, GL_NORMAL_ARRAY);
+        glEnable (GL_LIGHTING);
+      }
+      else
+      {
+        glDisable (GL_LIGHTING);
       }
       if (!myVbos[VBOVtexels].IsNull() && (theWorkspace->NamedStatus & OPENGL_NS_FORBIDSETTEX) == 0)
       {

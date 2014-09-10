@@ -294,11 +294,11 @@ uses
     GetDeflection(myclass; aShape  : Shape from TopoDS;
     	    	    	   aDrawer : Drawer from Prs3d)
     	    	    	   returns Real from Standard;
-		
+
     DisplayBox(myclass; aPrs : Presentation from Prs3d;
 		       	aBox : Box from Bnd;
 		       	aDrawer : Drawer from Prs3d) is protected;
-    		
+
     setColor (me;
               theDrawer : Drawer from AIS;
               theColor  : Color  from Quantity)
