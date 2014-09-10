@@ -4,8 +4,8 @@
 //
 // This file is part of Open CASCADE Technology software library.
 //
-// This library is free software; you can redistribute it and / or modify it
-// under the terms of the GNU Lesser General Public version 2.1 as published
+// This library is free software; you can redistribute it and/or modify it under
+// the terms of the GNU Lesser General Public License version 2.1 as published
 // by the Free Software Foundation, with special exception defined in the file
 // OCCT_LGPL_EXCEPTION.txt. Consult the file LICENSE_LGPL_21.txt included in OCCT
 // distribution for complete text of the license and disclaimer of any warranty.
@@ -52,8 +52,6 @@
 
 #include <GeomAbs_SurfaceType.hxx>
 #include <GeomAbs_CurveType.hxx>
-#include <Handle_Adaptor3d_HCurve.hxx>
-#include <Handle_Adaptor3d_HSurface.hxx>
 #include <Adaptor3d_Surface.hxx>
 #include <Adaptor3d_Curve.hxx>
 #include <Adaptor3d_HSurface.hxx>
@@ -412,7 +410,7 @@ ProjLib_ComputeApproxOnPolarSurface::ProjLib_ComputeApproxOnPolarSurface
 {
   myTolerance = tol3d; //OCC217
   //myTolerance = Max(tolerance,Precision::PApproximation());
-  const Handle_Adaptor2d_HCurve2d InitCurve2d ;
+  const Handle(Adaptor2d_HCurve2d) InitCurve2d ;
   myBSpline = Perform(InitCurve2d,Curve,S);  
 } 
 
@@ -1059,14 +1057,91 @@ Handle(Adaptor2d_HCurve2d)
 	    (pntproj, Surf->Surface(), U0, V0, TolU, TolV) ;
 	  
 	  if (aLocateExtPS.IsDone())
-	    if (aLocateExtPS.SquareDistance() < DistTol3d * DistTol3d) {  //OCC217
-	    //if (aLocateExtPS.SquareDistance() < Tol3d * Tol3d) {
+          {
+	    if (aLocateExtPS.SquareDistance() < DistTol3d * DistTol3d)
+            {  //OCC217
+              //if (aLocateExtPS.SquareDistance() < Tol3d * Tol3d) {
 	      (aLocateExtPS.Point()).Parameter(U0,V0);
 	      U1 = U0 + usens*uperiod;
 	      V1 = V0 + vsens*vperiod;
 	      Pts2d(i).SetCoord(U1,V1);
 	      myProjIsDone = Standard_True;
 	    }
+            else
+            {
+              Extrema_ExtPS aGlobalExtr(pntproj, Surf->Surface(), TolU, TolV);
+              if (aGlobalExtr.IsDone())
+              {
+                Standard_Real LocalMinSqDist = RealLast();
+                Standard_Integer imin = 0;
+                for (Standard_Integer isol = 1; isol <= aGlobalExtr.NbExt(); isol++)
+                {
+                  Standard_Real aSqDist = aGlobalExtr.SquareDistance(isol);
+                  if (aSqDist < LocalMinSqDist)
+                  {
+                    LocalMinSqDist = aSqDist;
+                    imin = isol;
+                  }
+                }
+                if (LocalMinSqDist < DistTol3d * DistTol3d)
+                {
+                  Standard_Real LocalU, LocalV;
+                  aGlobalExtr.Point(imin).Parameter(LocalU, LocalV);
+                  if (uperiod > 0. && Abs(U0 - LocalU) >= uperiod/2.)
+                  {
+                    if (LocalU > U0)
+                      usens = -1;
+                    else
+                      usens = 1;
+                  }
+                  if (vperiod > 0. && Abs(V0 - LocalV) >= vperiod/2.)
+                  {
+                    if (LocalV > V0)
+                      vsens = -1;
+                    else
+                      vsens = 1;
+                  }
+                  U0 = LocalU; V0 = LocalV;
+                  U1 = U0 + usens*uperiod;
+                  V1 = V0 + vsens*vperiod;
+                  Pts2d(i).SetCoord(U1,V1);
+                  myProjIsDone = Standard_True;
+
+                  if((i == 2) && (!IsEqual(uperiod, 0.0) || !IsEqual(vperiod, 0.0)))
+                  {//Make 1st point more precise for periodic surfaces
+                    const Standard_Integer aSize = 3;
+                    const gp_Pnt2d aP(Pts2d(2)); 
+                    Standard_Real aUpar[aSize], aVpar[aSize];
+                    Pts2d(1).Coord(aUpar[1], aVpar[1]);
+                    aUpar[0] = aUpar[1] - uperiod;
+                    aUpar[2] = aUpar[1] + uperiod;
+                    aVpar[0] = aVpar[1] - vperiod;
+                    aVpar[2] = aVpar[1] + vperiod;
+
+                    Standard_Real aSQdistMin = RealLast();
+                    Standard_Integer aBestUInd = 1, aBestVInd = 1;
+                    const Standard_Integer  aSizeU = IsEqual(uperiod, 0.0) ? 1 : aSize,
+                                            aSizeV = IsEqual(vperiod, 0.0) ? 1 : aSize;
+                    for(Standard_Integer uInd = 0; uInd < aSizeU; uInd++)
+                    {
+                      for(Standard_Integer vInd = 0; vInd < aSizeV; vInd++)
+                      {
+                        Standard_Real aSQdist = aP.SquareDistance(gp_Pnt2d(aUpar[uInd], aVpar[vInd]));
+                        if(aSQdist < aSQdistMin)
+                        {
+                          aSQdistMin = aSQdist;
+                          aBestUInd = uInd;
+                          aBestVInd = vInd;
+                        }
+                      }
+                    }
+
+                    Pts2d(1).SetCoord(aUpar[aBestUInd], aVpar[aBestVInd]);
+                  }//if(i == 2) condition
+                }
+              }
+            }
+          }
 	  if(!myProjIsDone && uperiod) {
 	    Standard_Real Uinf, Usup, Uaux;
 	    Uinf = Surf->Surface().FirstUParameter();
@@ -1544,16 +1619,16 @@ Handle(Geom2d_BSplineCurve)
   }
   Handle(Geom2d_BSplineCurve) DummyC2d =
     new Geom2d_BSplineCurve(DummyPoles, DummyKnots, DummyMults, 1);
-  Standard_CString Temp = "bs2d";
 #ifdef DRAW
+  Standard_CString Temp = "bs2d";
   DrawTrSurf::Set(Temp,DummyC2d);
 #endif
 //  DrawTrSurf::Set((Standard_CString ) "bs2d",DummyC2d);
   Handle(Geom2dAdaptor_HCurve) DDD = 
     Handle(Geom2dAdaptor_HCurve)::DownCast(InitCurve2d);
   
-  Temp = "initc2d";
 #ifdef DRAW
+  Temp = "initc2d";
   DrawTrSurf::Set(Temp,DDD->ChangeCurve2d().Curve());
 #endif
 //  DrawTrSurf::Set((Standard_CString ) "initc2d",DDD->ChangeCurve2d().Curve());

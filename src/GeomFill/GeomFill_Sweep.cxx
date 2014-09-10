@@ -526,8 +526,7 @@ static Standard_Boolean IsSweepParallelSpine (const Handle(GeomFill_LocationLaw)
 
   TfBegin.SetValues(GTfBegin(1,1), GTfBegin(1,2), GTfBegin(1,3), GTfBegin(1,4),
 		    GTfBegin(2,1), GTfBegin(2,2), GTfBegin(2,3), GTfBegin(2,4),
-		    GTfBegin(3,1), GTfBegin(3,2), GTfBegin(3,3), GTfBegin(3,4),
-		    1.e-12, 1.e-14);
+		    GTfBegin(3,1), GTfBegin(3,2), GTfBegin(3,3), GTfBegin(3,4));
 
 // Get the last transformation
   theLoc->D0(aLast, M, VEnd);
@@ -537,8 +536,7 @@ static Standard_Boolean IsSweepParallelSpine (const Handle(GeomFill_LocationLaw)
 
   TfEnd.SetValues(GTfEnd(1,1), GTfEnd(1,2), GTfEnd(1,3), GTfEnd(1,4),
 		  GTfEnd(2,1), GTfEnd(2,2), GTfEnd(2,3), GTfEnd(2,4),
-		  GTfEnd(3,1), GTfEnd(3,2), GTfEnd(3,3), GTfEnd(3,4),
-		  1.e-12, 1.e-14);
+		  GTfEnd(3,1), GTfEnd(3,2), GTfEnd(3,3), GTfEnd(3,4));
 
   Handle(Geom_Surface) aSurf = theSec->BSplineSurface();
   Standard_Real Umin;
@@ -610,8 +608,7 @@ static Standard_Boolean IsSweepParallelSpine (const Handle(GeomFill_LocationLaw)
       OCC_CATCH_SIGNALS
       Tf2.SetValues(Tf(1,1), Tf(1,2), Tf(1,3), Tf(1,4),
 		    Tf(2,1), Tf(2,2), Tf(2,3), Tf(2,4),
-		    Tf(3,1), Tf(3,2), Tf(3,3), Tf(3,4),
-		    1.e-12, 1.e-14);
+		    Tf(3,1), Tf(3,2), Tf(3,3), Tf(3,4));
     }
     catch (Standard_ConstructionError) {
       IsTrsf = Standard_False;
@@ -798,8 +795,7 @@ static Standard_Boolean IsSweepParallelSpine (const Handle(GeomFill_LocationLaw)
 //        OCC_CATCH_SIGNALS
 	Tf2.SetValues(Tf(1,1), Tf(1,2), Tf(1,3), Tf(1,4),
 		      Tf(2,1), Tf(2,2), Tf(2,3), Tf(2,4),
-		      Tf(3,1), Tf(3,2), Tf(3,3), Tf(3,4),
-		      1.e-14, 1.e-15);
+		      Tf(3,1), Tf(3,2), Tf(3,3), Tf(3,4));
 //      }
 //      catch (Standard_ConstructionError) {
 //	IsTrsf = Standard_False;
