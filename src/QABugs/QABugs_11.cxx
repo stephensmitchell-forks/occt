@@ -94,6 +94,18 @@
 #include <BRepFeat_SplitShape.hxx>
 #include <BRepAlgoAPI_Section.hxx>
 
+#include <Storage_Data.hxx>
+#include <MgtBRep.hxx>
+#include <FSD_BinaryFile.hxx>
+#include <ShapeSchema.hxx>
+#include <PTColStd_PersistentTransientMap.hxx>
+#include <Storage_Root.hxx>
+#include <Storage_HSeqOfRoot.hxx>
+#include <BRepCheck_Analyzer.hxx>
+#include <BRep_Builder.hxx>
+#include <DBRep.hxx>
+#include <BRepTools.hxx>
+
 #include <tcl.h>
 
 #if ! defined(WNT)
@@ -5335,6 +5347,123 @@ Standard_Integer CR23234 (Draw_Interpretor& di, Standard_Integer argc, const cha
   return 0; //TCL_OK
 }
 
+//============================================================================
+Standard_Boolean GetShape(Handle(Storage_Data) d, TopoDS_Compound& aComp) 
+{
+	// Read all the root objects
+	// Get the root list
+	char* label;
+	Handle(Storage_HSeqOfRoot) roots = d->Roots();
+	Handle(Standard_Persistent) p;
+	Handle(Storage_Root) r;
+	Handle(PTopoDS_HShape) aPShape;
+	PTColStd_PersistentTransientMap aMap;
+	BRep_Builder aB;
+	aB.MakeCompound(aComp);
+	Standard_Boolean isOK(Standard_True);
+	for (int i = 1; i <= roots->Length(); i++ ) 
+	{
+		// Get the root
+		try 
+		{
+			r = roots->Value(i);
+			// Get the persistent application object from the root
+			p = r->Object();
+			aPShape = Handle(PTopoDS_HShape)::DownCast(p);
+			// Get the root
+			int labelLen = (r->Name()).Length();
+			label = new char[labelLen+1];
+			strcpy(label, r->Name().ToCString());
+			char *entId = strtok(label,"_");
+			char *entType = strtok(NULL,"_");
+			long id = atol(entId);
+			int iType = atoi(entType);
+			//Entity *ent = NULL;
+			if (!aPShape.IsNull()) 
+			{
+				// Get the persistent SHAPE
+				TopoDS_Shape aTShape;
+				MgtBRep::Translate(aPShape,aMap,aTShape,MgtBRep_WithTriangle);
+				if (iType == 103) {
+					//ent = new Entity(aTShape);
+				}
+				else if ((iType == 81) || (iType == 100)
+				|| (iType == 102)
+				|| (iType == 21)
+				|| (iType == 105)
+				|| (iType == 108)
+				|| (iType == 109)
+				|| (iType == 110))
+				{
+					// Shape Analyzer check added
+					BRepCheck_Analyzer bAnalyzer(aTShape, Standard_True); 
+					if (!bAnalyzer.IsValid()) 
+					{ 
+						cout << "Selected shape " << i << " is Faulty" << endl;
+						isOK = Standard_False; 
+					} else 
+					  aB.Add(aComp, aTShape);
+				}
+			}
+		}
+		catch(Standard_Failure)
+		{
+			cout<<"error "<<endl;
+		}
+	}
+	return isOK;		
+}
+void read_occ_binary (const TCollection_AsciiString& filename )
+{
+	
+	// an I/O driver 
+	FSD_BinaryFile f;
+	Storage_Error err = f.Open(filename, Storage_VSRead);
+	// Read all the persistent object in the file with the schema
+	if ( err != Storage_VSOk ) {
+		exit;
+	}
+	// the application Schema
+	Handle(ShapeSchema) s = new ShapeSchema;
+	Handle(Storage_Data) d = s->Read( f ); // It hangs here
+	err = d->ErrorStatus() ;
+	if ( err != Storage_VSOk ) {
+		f.Close();
+		exit;
+	}
+	TopoDS_Compound aComp;
+	if(GetShape(d, aComp))
+	  cout << "Test is OK" << endl;
+#ifdef DEB
+	if(!aComp.IsNull()) {
+	  DBRep::Set("result", aComp);
+	  Standard_Integer aLen = filename.Length() -3; // 'occ'
+	  TCollection_AsciiString aName = filename;
+	  aName.Trunc(aLen);
+	  aName = aName + "brep";
+	  BRepTools::Write(aComp, aName.ToCString());
+	}
+#endif
+	// Close the file driver
+	f.Close();
+}
+
+//=============================== Draw Command =================================
+static Standard_Integer TataMotors_Tata (Draw_Interpretor& di,
+				      Standard_Integer nb,
+				      const char** a)
+{   
+  if (nb == 2) {
+    TCollection_AsciiString filename (a[1]); 
+    read_occ_binary(filename);
+	return 0;
+
+  }
+  cout <<"Wrong arguments " <<endl;
+  return 1;
+}
+
+
 void QABugs::Commands_11(Draw_Interpretor& theCommands) {
   const char *group = "QABugs";
 
@@ -5444,5 +5573,7 @@ void QABugs::Commands_11(Draw_Interpretor& theCommands) {
   theCommands.Add("CR23403", "CR23403 string", __FILE__, CR23403, group);
   theCommands.Add("OCC23429", "OCC23429 res shape tool [appr]", __FILE__, OCC23429, group);
   theCommands.Add("CR23234", "CR23234 mode(0/1)", __FILE__, CR23234, group);
+  theCommands.Add("test_tata1","test_tata1 filename",__FILE__,TataMotors_Tata, group);
+
   return;
 }

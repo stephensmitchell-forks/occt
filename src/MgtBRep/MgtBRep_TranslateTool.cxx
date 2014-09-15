@@ -910,7 +910,8 @@ MgtBRep_TranslateTool::UpdateEdge(const Handle(PTopoDS_HShape)& S1,
       }
       else if (PCR->IsCurve3D()) {
 	Handle(PBRep_Curve3D)& PC3D = (Handle(PBRep_Curve3D)&) PCR;
-	if (! PC3D->Curve3D().IsNull()) {
+
+// szy: correction for edge which has null 3d curve representation.
 	  Handle(BRep_Curve3D) C3D =
 	    new BRep_Curve3D(MgtBRep_TranslateTool::Translate(PC3D->Curve3D(), aMap),
 			     MgtTopLoc::Translate(PC3D->Location(), aMap));
@@ -918,7 +919,7 @@ MgtBRep_TranslateTool::UpdateEdge(const Handle(PTopoDS_HShape)& S1,
 	  CR = C3D;
 	}
       }
-    }
+
     else if (PCR->IsRegularity()) {
       Handle(PBRep_CurveOn2Surfaces)& PR = 
 	(Handle(PBRep_CurveOn2Surfaces)&) PCR;
@@ -1001,9 +1002,8 @@ MgtBRep_TranslateTool::UpdateEdge(const Handle(PTopoDS_HShape)& S1,
     
     Standard_NullObject_Raise_if (CR.IsNull(), "Persistant CurveRep is Null");
 
-    if(!CR.IsNull()) {
       lcr.Prepend(CR); 
-    }
+
     PCR = PCR->Next();
   }
   

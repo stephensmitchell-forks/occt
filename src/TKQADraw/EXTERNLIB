@@ -33,6 +33,8 @@ TKXDESTEP
 TKXSDRAW
 TKSTL
 TKAdvTools
+TKPShape
+TKShapeSchema
 CSF_TclLibs
 CSF_TclTkLibs
 CSF_gdi32
