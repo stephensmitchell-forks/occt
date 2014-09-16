@@ -1,6 +1,6 @@
-// Created on: 2008-04-11
-// Created by: Peter KURNEV
-// Copyright (c) 2008-2014 OPEN CASCADE SAS
+// Created on: 2014-08-13
+// Created by: Oleg AGASHIN
+// Copyright (c) 2011-2014 OPEN CASCADE SAS
 //
 // This file is part of Open CASCADE Technology software library.
 //
@@ -13,27 +13,7 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef _XBRepMesh_HeaderFile
-#define _XBRepMesh_HeaderFile
+#include <BRepMesh_IEdgeTool.hxx>
 
-#include <Standard.hxx>
-#include <Standard_DefineAlloc.hxx>
-#include <Standard_Macro.hxx>
-#include <BRepMesh_DiscretRoot.hxx>
-
-class TopoDS_Shape;
-
-class XBRepMesh
-{
-public:
-
-  DEFINE_STANDARD_ALLOC
-  
-  Standard_EXPORT static Standard_Integer Discret(
-    const TopoDS_Shape&    theShape,
-    const Standard_Real    theDeflection,
-    const Standard_Real    theAngle,
-    BRepMesh_DiscretRoot* &theAlgo);
-};
-
-#endif
+IMPLEMENT_STANDARD_HANDLE (BRepMesh_IEdgeTool, Standard_Transient)
+IMPLEMENT_STANDARD_RTTIEXT(BRepMesh_IEdgeTool, Standard_Transient)

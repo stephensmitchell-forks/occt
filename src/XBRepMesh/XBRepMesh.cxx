@@ -21,10 +21,11 @@
 //function : Discret
 //purpose  : 
 //=======================================================================
-Standard_Integer XBRepMesh::Discret(const TopoDS_Shape& theShape,
-				    const Standard_Real theDeflection,
-				    const Standard_Real theAngle,
-				    BRepMesh_PDiscretRoot& theAlgo)
+Standard_Integer XBRepMesh::Discret(
+  const TopoDS_Shape&   theShape,
+  const Standard_Real   theDeflection,
+  const Standard_Real   theAngle,
+  BRepMesh_DiscretRoot* &theAlgo)
 {
   Standard_Integer iErr;
   //

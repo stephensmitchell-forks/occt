@@ -593,7 +593,7 @@ Standard_Integer BRepMesh_IncrementalMesh::Discret(
   const TopoDS_Shape&    theShape,
   const Standard_Real    theDeflection,
   const Standard_Real    theAngle,
-  BRepMesh_PDiscretRoot& theAlgo)
+  BRepMesh_DiscretRoot* &theAlgo)
 {
   BRepMesh_IncrementalMesh* anAlgo = new BRepMesh_IncrementalMesh();
   anAlgo->SetDeflection(theDeflection);

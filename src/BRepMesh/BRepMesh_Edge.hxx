@@ -87,8 +87,6 @@ class BRepMesh_Edge : public BRepMesh_OrientedEdge
 {
 public:
 
-  DEFINE_STANDARD_ALLOC
-
     //! Default constructor.
   Standard_EXPORT BRepMesh_Edge()
     : BRepMesh_OrientedEdge(),

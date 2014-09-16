@@ -100,7 +100,6 @@ protected:
   Standard_Boolean  myIsDone;
 };
 
-typedef BRepMesh_DiscretRoot* BRepMesh_PDiscretRoot;
 DEFINE_STANDARD_HANDLE(BRepMesh_DiscretRoot, Standard_Transient)
 
 #endif

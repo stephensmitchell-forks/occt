@@ -114,7 +114,7 @@ public: //! \name plugin API
   Standard_EXPORT static Standard_Integer Discret(const TopoDS_Shape&    theShape,
                                                   const Standard_Real    theLinDeflection,
                                                   const Standard_Real    theAngDeflection,
-                                                  BRepMesh_PDiscretRoot& theAlgo);
+                                                  BRepMesh_DiscretRoot* &theAlgo);
   
   //! Returns multi-threading usage flag set by default in 
   //! Discret() static method (thus applied only to Mesh Factories).

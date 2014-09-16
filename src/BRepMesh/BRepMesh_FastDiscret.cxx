@@ -809,7 +809,7 @@ void BRepMesh_FastDiscret::update(
   EdgeAttributes& aEAttr = theAttributes;
 
   const TopoDS_Face& aFace = myAttribute->Face();
-  N_HANDLE<BRepMesh_IEdgeTool> aEdgeTool;
+  Handle(BRepMesh_IEdgeTool) aEdgeTool;
   // Try to find existing tessellation.
   for (Standard_Integer i = 1; aEdgeTool.IsNull(); ++i)
   {

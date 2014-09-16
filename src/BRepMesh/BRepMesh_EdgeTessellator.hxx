@@ -39,8 +39,6 @@ class BRepMesh_EdgeTessellator : public BRepMesh_IEdgeTool
 {
 public:
 
-  DEFINE_STANDARD_ALLOC
-
   //! Constructor.
   //! Automatically performs tessellation of the edge according to the
   //! given parameters.
@@ -67,6 +65,8 @@ public:
                      gp_Pnt&                thePoint,
                      gp_Pnt2d&              theUV);
 
+  DEFINE_STANDARD_RTTI(BRepMesh_EdgeTessellator)
+
 private:
 
   //! 
@@ -82,5 +82,7 @@ private:
   BRepAdaptor_Curve            myCOnS;
   Standard_Real                mySquareEdgeDef;
 };
+
+DEFINE_STANDARD_HANDLE(BRepMesh_EdgeTessellator, BRepMesh_IEdgeTool)
 
 #endif

@@ -38,8 +38,6 @@ class BRepMesh_EdgeTessellationExtractor : public BRepMesh_IEdgeTool
 {
 public:
 
-  DEFINE_STANDARD_ALLOC
-
   //! Constructor.
   //! Initializes extractor.
   BRepMesh_EdgeTessellationExtractor(
@@ -66,6 +64,8 @@ public:
                      gp_Pnt&                thePoint,
                      gp_Pnt2d&              theUV);
 
+  DEFINE_STANDARD_RTTI(BRepMesh_EdgeTessellationExtractor)
+
 private:
 
   //! Assignment operator.
@@ -81,5 +81,7 @@ private:
   const TColStd_Array1OfInteger& myIndices;
   const TopLoc_Location          myLoc;
 };
+
+DEFINE_STANDARD_HANDLE(BRepMesh_EdgeTessellationExtractor, BRepMesh_IEdgeTool)
 
 #endif

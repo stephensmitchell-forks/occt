@@ -19,6 +19,9 @@
 #include <Poly_Triangulation.hxx>
 #include <BRepMesh_ShapeTool.hxx>
 
+IMPLEMENT_STANDARD_HANDLE (BRepMesh_EdgeTessellationExtractor, BRepMesh_IEdgeTool)
+IMPLEMENT_STANDARD_RTTIEXT(BRepMesh_EdgeTessellationExtractor, BRepMesh_IEdgeTool)
+
 //=======================================================================
 //function : Constructor
 //purpose  : 

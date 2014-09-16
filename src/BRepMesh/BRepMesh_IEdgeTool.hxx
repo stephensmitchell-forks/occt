@@ -19,9 +19,10 @@
 #include <Standard.hxx>
 #include <gp_Pnt.hxx>
 #include <gp_Pnt2d.hxx>
+#include <Standard_Transient.hxx>
 
 //! Interface class providing API for edge tessellation tools.
-class BRepMesh_IEdgeTool
+class BRepMesh_IEdgeTool : public Standard_Transient
 {
 public:
   //! Returns number of tessellation points.
@@ -36,6 +37,10 @@ public:
                      Standard_Real&         theParameter,
                      gp_Pnt&                thePoint,
                      gp_Pnt2d&              theUV) = 0;
+
+  DEFINE_STANDARD_RTTI(BRepMesh_IEdgeTool)
 };
+
+DEFINE_STANDARD_HANDLE(BRepMesh_IEdgeTool, Standard_Transient)
 
 #endif
