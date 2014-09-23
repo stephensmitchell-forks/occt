@@ -74,6 +74,8 @@ is
     imported CoherentLink;
     imported CoherentTriPtr;
     imported ListOfTriangulation;
+    imported IBuffer;
+    imported Outline;
 
     imported MakeLoops;
         ---Purpose: Algorithm to make minimal loops in a graph
@@ -164,5 +166,36 @@ is
         --          to closest point, and returned value is square of
         --          the distance from original point to triangle (0 if
         --          point is inside).
+
+    Intersect(theTri       : Triangulation from Poly;
+              theAxis      : Ax1 from gp;
+              theIsClosest : Boolean from Standard;
+              theTriangle  : out Triangle from Poly;
+              theDistance  : out Real from Standard)
+    returns Boolean;
+        ---Purpose: Computes the intersection between axis defined by theAxis
+        --          and triangulation defined by theTri.
+        --          Finds the closest intersection with positive parameter on Axis
+        --          if theIsClosest flag is set to Standard_True, otherwise the farthest.
+        --          The triangle which include intersection point is  
+        --          stored into theTriangle.
+        --          The distance between the axis point
+        --          and the intersection point is stored into theDistance.
+        --          Retuns Standard_True if intersection takes place, 
+        --          Standard_False otherwise.
+    
+    IntersectTriLine (theStart : XYZ from gp,
+                      theDir   : Dir from gp,
+                      theV0    : XYZ from gp,
+                      theV1    : XYZ from gp,
+                      theV2    : XYZ from gp,
+                      theParam : out Real from Standard)
+    returns Integer;
+        ---Purpose: Computes the intersection between a triangle defined by <br>
+        --          three vertexes theV0, theV1, theV2 <br>
+        --          and a line defined by point theStart and the direction theDir. <br>
+        --          If intersection takes place the param on line of the intersection point <br>
+        --          will be stored in theParam input variable <br>
+        --          Returned value is 1 if intersection was found, 0 otherwise. <br>
 
 end Poly;
