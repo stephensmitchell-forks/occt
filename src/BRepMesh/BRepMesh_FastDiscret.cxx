@@ -86,16 +86,17 @@ IMPLEMENT_STANDARD_RTTIEXT(BRepMesh_FastDiscret, Standard_Transient)
 //purpose  : 
 //=======================================================================
 BRepMesh_FastDiscret::BRepMesh_FastDiscret(
-  const Standard_Real                              theDefle,
-  const Standard_Real                              theAngl,
+  const Standard_Real                              theDeflection,
+  const Standard_Real                              theAngle,
   const Bnd_Box&                                   theBox,
   const Standard_Boolean                           theWithShare,
   const Standard_Boolean                           theInshape,
   const Standard_Boolean                           theRelative,
   const Standard_Boolean                           theShapetrigu,
-  const Standard_Boolean                           isInParallel)
-: myAngle (theAngl),
-  myDeflection (theDefle),
+  const Standard_Boolean                           isInParallel,
+  const Handle(Message_MultithreadProgressSentry)& theProgressSentry)
+: myAngle (theAngle),
+  myDeflection (theDeflection),
   myWithShare (theWithShare),
   myInParallel (isInParallel),
   myRelative (theRelative),
@@ -104,6 +105,8 @@ BRepMesh_FastDiscret::BRepMesh_FastDiscret(
   myBoundaryVertices(new BRepMesh::DMapOfVertexInteger),
   myBoundaryPoints(new BRepMesh::DMapOfIntegerPnt)
 {
+  SetProgressSentry(theProgressSentry);
+
   if ( myRelative )
     BRepMesh_ShapeTool::BoxMaxDimension(theBox, myDtotale);
 }
@@ -112,17 +115,19 @@ BRepMesh_FastDiscret::BRepMesh_FastDiscret(
 //function : BRepMesh_FastDiscret
 //purpose  : 
 //=======================================================================
-BRepMesh_FastDiscret::BRepMesh_FastDiscret(const TopoDS_Shape&    theShape,
-                                           const Standard_Real    theDefle,
-                                           const Standard_Real    theAngl,
-                                           const Bnd_Box&         theBox,
-                                           const Standard_Boolean theWithShare,
-                                           const Standard_Boolean theInshape,
-                                           const Standard_Boolean theRelative,
-                                           const Standard_Boolean theShapetrigu,
-                                           const Standard_Boolean isInParallel)
-: myAngle (theAngl),
-  myDeflection (theDefle),
+BRepMesh_FastDiscret::BRepMesh_FastDiscret(
+  const TopoDS_Shape&                              theShape,
+  const Standard_Real                              theDeflection,
+  const Standard_Real                              theAngle,
+  const Bnd_Box&                                   theBox,
+  const Standard_Boolean                           theWithShare,
+  const Standard_Boolean                           theInshape,
+  const Standard_Boolean                           theRelative,
+  const Standard_Boolean                           theShapetrigu,
+  const Standard_Boolean                           isInParallel,
+  const Handle(Message_MultithreadProgressSentry)& theProgressSentry)
+: myAngle (theAngle),
+  myDeflection (theDeflection),
   myWithShare (theWithShare),
   myInParallel (isInParallel),
   myRelative (theRelative),
@@ -131,6 +136,8 @@ BRepMesh_FastDiscret::BRepMesh_FastDiscret(const TopoDS_Shape&    theShape,
   myBoundaryVertices(new BRepMesh::DMapOfVertexInteger),
   myBoundaryPoints(new BRepMesh::DMapOfIntegerPnt)
 {
+  SetProgressSentry(theProgressSentry);
+
   if ( myRelative )
     BRepMesh_ShapeTool::BoxMaxDimension(theBox, myDtotale);
 
@@ -154,13 +161,13 @@ void BRepMesh_FastDiscret::Perform(const TopoDS_Shape& theShape)
 {
   InitSharedFaces(theShape);
 
-  std::vector<TopoDS_Face> aFaces;
+  NCollection_Vector<TopoDS_Face> aFaces;
   TopExp_Explorer anExplorer(theShape, TopAbs_FACE);
   for (; anExplorer.More(); anExplorer.Next())
   {
     const TopoDS_Face& aFace = TopoDS::Face(anExplorer.Current());
     Add(aFace);
-    aFaces.push_back(aFace);
+    aFaces.Append(aFace);
   }
 
 #ifdef HAVE_TBB
@@ -171,9 +178,9 @@ void BRepMesh_FastDiscret::Perform(const TopoDS_Shape& theShape)
   else
   {
 #endif
-    std::vector<TopoDS_Face>::const_iterator anIt(aFaces.begin());
-    for (; anIt != aFaces.end(); anIt++)
-      Process(*anIt);
+    NCollection_Vector<TopoDS_Face>::Iterator anIt(aFaces);
+    for (; anIt.More(); anIt.Next())
+      Process(anIt.Value());
 #ifdef HAVE_TBB
   }
 #endif
@@ -193,7 +200,11 @@ void BRepMesh_FastDiscret::Process(const TopoDS_Face& theFace) const
     {
       OCC_CATCH_SIGNALS
 
-      BRepMesh_FastDiscretFace aTool(GetAngle(), WithShare());
+      Handle(Message_MultithreadProgressSentry) aSentry =
+        new Message_MultithreadProgressSentry("", 
+        0., 1., 1, myProgressSentry);
+
+      BRepMesh_FastDiscretFace aTool(GetAngle(), WithShare(), aSentry);
       aTool.Add(anAttribute);
     }
     catch (Standard_Failure)

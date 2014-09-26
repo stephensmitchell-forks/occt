@@ -47,6 +47,11 @@ is
     imported StatusType;
     imported ExecStatus;
     imported HArrayOfMsg;
+    
+    imported ProgressInfo;
+    imported MultithreadProgressIndicator;
+    imported MultithreadProgressScale;
+    imported MultithreadProgressSentry;
 
     class Msg;
     class MsgFile;

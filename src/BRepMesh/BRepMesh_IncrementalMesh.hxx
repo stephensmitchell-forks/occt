@@ -23,8 +23,8 @@
 #include <BRepMesh_DiscretRoot.hxx>
 #include <Handle_Poly_Triangulation.hxx>
 #include <BRepMesh.hxx>
-
-#include <vector>
+#include <Message_MultithreadProgressIndicator.hxx>
+#include <NCollection_Vector.hxx>
 
 class Poly_Triangulation;
 class TopoDS_Shape;
@@ -57,12 +57,25 @@ public: //! @name mesher API
     const Standard_Real    theLinDeflection,
     const Standard_Boolean isRelative       = Standard_False,
     const Standard_Real    theAngDeflection = 0.5,
-    const Standard_Boolean isInParallel     = Standard_False);
+    const Standard_Boolean isInParallel     = Standard_False,
+    const Handle(Message_MultithreadProgressIndicator)& theProgress = NULL);
 
   //! Performs meshing ot the shape.
   Standard_EXPORT virtual void Perform();
   
 public: //! @name accessing to parameters.
+
+  //! Sets the given indicator to display progress of the algorithm.
+  inline void SetProgress(const Handle(Message_MultithreadProgressIndicator)& theProgress)
+  {
+    myProgress = theProgress;
+  }
+
+  //! Gets progress indicator set to the algorithm.
+  inline const Handle(Message_MultithreadProgressIndicator)& GetProgress() const
+  {
+    return myProgress;
+  }
 
   //! Enables using relative deflection.
   //! @param isRelative if TRUE deflection used for discretization of 
@@ -194,15 +207,16 @@ private:
 
 protected:
 
-  Standard_Boolean                        myRelative;
-  Standard_Boolean                        myInParallel;
-  BRepMesh::DMapOfEdgeListOfTriangulation myEmptyEdges;
-  Handle(BRepMesh_FastDiscret)            myMesh;
-  Standard_Boolean                        myModified;
-  TopTools_DataMapOfShapeReal             myEdgeDeflection;
-  Standard_Real                           myMaxShapeSize;
-  Standard_Integer                        myStatus;
-  std::vector<TopoDS_Face>                myFaces;
+  Standard_Boolean                              myRelative;
+  Standard_Boolean                              myInParallel;
+  BRepMesh::DMapOfEdgeListOfTriangulation       myEmptyEdges;
+  Handle(BRepMesh_FastDiscret)                  myMesh;
+  Standard_Boolean                              myModified;
+  TopTools_DataMapOfShapeReal                   myEdgeDeflection;
+  Standard_Real                                 myMaxShapeSize;
+  Standard_Integer                              myStatus;
+  NCollection_Vector<TopoDS_Face>               myFaces;
+  Handle(Message_MultithreadProgressIndicator)  myProgress;
 };
 
 DEFINE_STANDARD_HANDLE(BRepMesh_IncrementalMesh,BRepMesh_DiscretRoot)

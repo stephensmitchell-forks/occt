@@ -76,9 +76,11 @@ namespace {
 //purpose  : Creates the triangulation with an empty Mesh data structure
 //=======================================================================
 BRepMesh_Delaun::BRepMesh_Delaun(
-  BRepMesh::Array1OfVertexOfDelaun& theVertices)
+  BRepMesh::Array1OfVertexOfDelaun&                theVertices,
+  const Handle(Message_MultithreadProgressSentry)& theProgressSentry)
 : myCircles( theVertices.Length(), new NCollection_IncAllocator() )
 {
+  myProgressSentry.NewScope("Delaunay triangulation", 0., 1., 1, theProgressSentry);
   if ( theVertices.Length() > 2 )
   {
     myMeshData = new BRepMesh_DataStructureOfDelaun( new NCollection_IncAllocator(),
@@ -92,10 +94,12 @@ BRepMesh_Delaun::BRepMesh_Delaun(
 //purpose  : Creates the triangulation with and existent Mesh data structure
 //=======================================================================
 BRepMesh_Delaun::BRepMesh_Delaun(
-  const Handle( BRepMesh_DataStructureOfDelaun )& theOldMesh,
-  BRepMesh::Array1OfVertexOfDelaun&               theVertices)
+  const Handle( BRepMesh_DataStructureOfDelaun )&  theOldMesh,
+  BRepMesh::Array1OfVertexOfDelaun&                theVertices,
+  const Handle(Message_MultithreadProgressSentry)& theProgressSentry)
  : myCircles( theVertices.Length(), theOldMesh->Allocator() )
 {
+  myProgressSentry.NewScope("Delaunay triangulation", 0., 1., 1, theProgressSentry);
   myMeshData = theOldMesh;
   if ( theVertices.Length() > 2 )
     Init( theVertices );
@@ -106,10 +110,12 @@ BRepMesh_Delaun::BRepMesh_Delaun(
 //purpose  : Creates the triangulation with and existent Mesh data structure
 //=======================================================================
 BRepMesh_Delaun::BRepMesh_Delaun(
-  const Handle( BRepMesh_DataStructureOfDelaun )& theOldMesh, 
-  BRepMesh::Array1OfInteger&                      theVertexIndices)
+  const Handle( BRepMesh_DataStructureOfDelaun )&  theOldMesh, 
+  BRepMesh::Array1OfInteger&                       theVertexIndices,
+  const Handle(Message_MultithreadProgressSentry)& theProgressSentry)
  : myCircles( theVertexIndices.Length(), theOldMesh->Allocator() )
 {
+  myProgressSentry.NewScope("Delaunay triangulation", 0., 1., 1, theProgressSentry);
   myMeshData = theOldMesh;
   if ( theVertexIndices.Length() > 2 )
   {

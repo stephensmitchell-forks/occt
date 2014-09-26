@@ -26,6 +26,7 @@
 #include <BRepMesh.hxx>
 #include <BRepMesh_DataStructureOfDelaun.hxx>
 #include <BRepMesh_GeomTool.hxx>
+#include <Message_MultithreadProgressSentry.hxx>
 
 class Bnd_B2d;
 class Bnd_Box2d;
@@ -40,15 +41,21 @@ public:
   DEFINE_STANDARD_ALLOC
 
   //! Creates the triangulation with an empty Mesh data structure.
-  Standard_EXPORT BRepMesh_Delaun (BRepMesh::Array1OfVertexOfDelaun& theVertices);
+  Standard_EXPORT BRepMesh_Delaun (
+    BRepMesh::Array1OfVertexOfDelaun&                theVertices,
+    const Handle(Message_MultithreadProgressSentry)& theProgressSentry = NULL);
 
   //! Creates the triangulation with an existent Mesh data structure.
-  Standard_EXPORT BRepMesh_Delaun (const Handle(BRepMesh_DataStructureOfDelaun)& theOldMesh,
-                                   BRepMesh::Array1OfVertexOfDelaun&             theVertices);
+  Standard_EXPORT BRepMesh_Delaun (
+    const Handle(BRepMesh_DataStructureOfDelaun)&    theOldMesh,
+    BRepMesh::Array1OfVertexOfDelaun&                theVertices,
+    const Handle(Message_MultithreadProgressSentry)& theProgressSentry = NULL);
 
   //! Creates the triangulation with an existant Mesh data structure.
-  Standard_EXPORT BRepMesh_Delaun (const Handle(BRepMesh_DataStructureOfDelaun)& theOldMesh,
-                                   BRepMesh::Array1OfInteger&                    theVertexIndices);
+  Standard_EXPORT BRepMesh_Delaun (
+    const Handle(BRepMesh_DataStructureOfDelaun)&    theOldMesh,
+    BRepMesh::Array1OfInteger&                       theVertexIndices,
+    const Handle(Message_MultithreadProgressSentry)& theProgressSentry = NULL);
 
   //! Initializes the triangulation with an array of vertices.
   Standard_EXPORT void Init (BRepMesh::Array1OfVertexOfDelaun& theVertices);
@@ -307,7 +314,7 @@ private:
   BRepMesh_CircleTool                    myCircles;
   Standard_Integer                       mySupVert[3];
   BRepMesh_Triangle                      mySupTrian;
-
+  Message_MultithreadProgressSentry      myProgressSentry;
 };
 
 #endif

@@ -52,6 +52,7 @@
 #include <TopTools_IndexedDataMapOfShapeListOfShape.hxx>
 
 #include <GCPnts_TangentialDeflection.hxx>
+#include <Message_MultithreadProgressSentry.hxx>
 
 #ifdef HAVE_TBB
   // paralleling using Intel TBB
@@ -83,11 +84,12 @@ BRepMesh_IncrementalMesh::BRepMesh_IncrementalMesh()
 //purpose  : 
 //=======================================================================
 BRepMesh_IncrementalMesh::BRepMesh_IncrementalMesh(
-  const TopoDS_Shape&    theShape,
-  const Standard_Real    theLinDeflection,
-  const Standard_Boolean isRelative,
-  const Standard_Real    theAngDeflection,
-  const Standard_Boolean isInParallel)
+  const TopoDS_Shape&                                 theShape,
+  const Standard_Real                                 theLinDeflection,
+  const Standard_Boolean                              isRelative,
+  const Standard_Real                                 theAngDeflection,
+  const Standard_Boolean                              isInParallel,
+  const Handle(Message_MultithreadProgressIndicator)& theProgress)
   : myRelative  (isRelative),
     myInParallel(isInParallel)
 {
@@ -95,6 +97,8 @@ BRepMesh_IncrementalMesh::BRepMesh_IncrementalMesh(
   myAngle       = theAngDeflection;
   myShape       = theShape;
   
+  SetProgress(theProgress);
+
   Perform();
 }
 
@@ -116,29 +120,29 @@ void BRepMesh_IncrementalMesh::init()
   myModified = Standard_False;
 
   myEdgeDeflection.Clear();
-  myFaces.clear();
+  myFaces.Clear();
+  myMesh.Nullify();
 
   setDone();
 
   if (!isCorrectPolyData())
-    BRepTools::Clean(myShape);
+    BRepTools::Clean(Shape());
 
   Bnd_Box aBox;
-  BRepBndLib::Add(myShape, aBox, Standard_False);
+  BRepBndLib::Add(Shape(), aBox, Standard_False);
 
   if (aBox.IsVoid())
   {
     // Nothing to mesh.
-    myMesh.Nullify();
     return;
   }
 
   BRepMesh_ShapeTool::BoxMaxDimension(aBox, myMaxShapeSize);
 
-  myMesh = new BRepMesh_FastDiscret(myDeflection, myAngle, aBox,
-    Standard_True, Standard_True, myRelative, Standard_True, myInParallel);
+  myMesh = new BRepMesh_FastDiscret(Deflection(), Angle(), aBox, Standard_True, 
+    Standard_True, IsRelative(), Standard_True, IsParallel());
 
-  myMesh->InitSharedFaces(myShape);
+  myMesh->InitSharedFaces(Shape());
 }
 
 //=======================================================================
@@ -149,10 +153,10 @@ Standard_Boolean BRepMesh_IncrementalMesh::isCorrectPolyData()
 {
   collectFaces();
 
-  BRepMesh_FaceChecker aFaceChecker(myInParallel);
+  BRepMesh_FaceChecker aFaceChecker(IsParallel());
 
 #ifdef HAVE_TBB
-  if (myInParallel)
+  if (IsParallel())
   {
     // check faces in parallel threads using TBB
     tbb::parallel_for_each(myFaces.begin(), myFaces.end(), aFaceChecker);
@@ -160,9 +164,9 @@ Standard_Boolean BRepMesh_IncrementalMesh::isCorrectPolyData()
   else
   {
 #endif
-    std::vector<TopoDS_Face>::iterator aFaceIt = myFaces.begin();
-    for (; aFaceIt != myFaces.end(); aFaceIt++)
-      aFaceChecker(*aFaceIt);
+    NCollection_Vector<TopoDS_Face>::Iterator aFaceIt(myFaces);
+    for (; aFaceIt.More(); aFaceIt.Next())
+      aFaceChecker(aFaceIt.Value());
 #ifdef HAVE_TBB
   }
 #endif
@@ -177,9 +181,8 @@ Standard_Boolean BRepMesh_IncrementalMesh::isCorrectPolyData()
 void BRepMesh_IncrementalMesh::collectFaces()
 {
   TopTools_ListOfShape aFaceList;
-  BRepLib::ReverseSortFaces(myShape, aFaceList);
+  BRepLib::ReverseSortFaces(Shape(), aFaceList);
   TopTools_MapOfShape aFaceMap;
-  myFaces.reserve(aFaceList.Extent());
 
   // make array of faces suitable for processing (excluding faces without surface)
   TopLoc_Location aDummyLoc;
@@ -197,7 +200,7 @@ void BRepMesh_IncrementalMesh::collectFaces()
     if (aSurf.IsNull())
       continue;
 
-    myFaces.push_back(aFace);
+    myFaces.Append(aFace);
   }
 }
 
@@ -221,8 +224,15 @@ void BRepMesh_IncrementalMesh::Perform()
 //=======================================================================
 void BRepMesh_IncrementalMesh::update()
 {
+  Message_MultithreadProgressSentry aMainSentry("Meshing", 0., 1., 3, myProgress);
+
+  // TODO: here is no progress indication, progress sentry is used only for
+  // UserBreak. Main progress will be increased on release of sub-scale sentry.
+  myMesh->SetProgressSentry(new Message_MultithreadProgressSentry("", 
+    0., 1., myFaces.Size(), aMainSentry));
+
   // Update edges data
-  TopExp_Explorer aExplorer(myShape, TopAbs_EDGE);
+  TopExp_Explorer aExplorer(Shape(), TopAbs_EDGE);
   for (; aExplorer.More(); aExplorer.Next())
   {
     const TopoDS_Edge& aEdge = TopoDS::Edge(aExplorer.Current());
@@ -233,21 +243,25 @@ void BRepMesh_IncrementalMesh::update()
   }
 
   // Update faces data
-  std::vector<TopoDS_Face>::iterator aFaceIt(myFaces.begin());
-  for (; aFaceIt != myFaces.end(); aFaceIt++)
-    update(*aFaceIt);
+  NCollection_Vector<TopoDS_Face>::Iterator aFaceIt(myFaces);
+  for (; aFaceIt.More(); aFaceIt.Next())
+    update(aFaceIt.Value());
+
+  Handle(Message_MultithreadProgressSentry) aFastDiscretFaceSentry =
+    new Message_MultithreadProgressSentry("", 0., 1., myFaces.Size(), aMainSentry);
+  myMesh->SetProgressSentry(aFastDiscretFaceSentry);
 
   // Mesh faces
 #ifdef HAVE_TBB
-  if (myInParallel)
+  if (IsParallel())
   {
     tbb::parallel_for_each(myFaces.begin(), myFaces.end(), *myMesh);
   }
   else
   {
 #endif
-    for (aFaceIt = myFaces.begin(); aFaceIt != myFaces.end(); aFaceIt++)
-      myMesh->Process(*aFaceIt);
+    for (aFaceIt.Init(myFaces); aFaceIt.More(); aFaceIt.Next())
+      myMesh->Process(aFaceIt.Value());
 #ifdef HAVE_TBB
   }
 #endif
@@ -261,7 +275,7 @@ void BRepMesh_IncrementalMesh::update()
 //=======================================================================
 void BRepMesh_IncrementalMesh::discretizeFreeEdges()
 {
-  TopExp_Explorer aExplorer(myShape ,TopAbs_EDGE, TopAbs_FACE);
+  TopExp_Explorer aExplorer(Shape() ,TopAbs_EDGE, TopAbs_FACE);
   for (; aExplorer.More(); aExplorer.Next())
   {
     const TopoDS_Edge& aEdge = TopoDS::Edge(aExplorer.Current());
@@ -276,7 +290,7 @@ void BRepMesh_IncrementalMesh::discretizeFreeEdges()
 
     BRepAdaptor_Curve aCurve(aEdge);
     GCPnts_TangentialDeflection aDiscret(aCurve, aCurve.FirstParameter(),
-      aCurve.LastParameter(), myAngle, aEdgeDeflection, 2);
+      aCurve.LastParameter(), Angle(), aEdgeDeflection, 2);
 
     Standard_Integer aNodesNb = aDiscret.NbPoints();
     TColgp_Array1OfPnt   aNodes  (1, aNodesNb);
@@ -288,7 +302,7 @@ void BRepMesh_IncrementalMesh::discretizeFreeEdges()
     }
     
     aPoly3D = new Poly_Polygon3D(aNodes, aUVNodes);
-    aPoly3D->Deflection(myDeflection);
+    aPoly3D->Deflection(Deflection());
 
     BRep_Builder aBuilder;
     aBuilder.UpdateEdge(aEdge, aPoly3D);
@@ -306,14 +320,14 @@ Standard_Real BRepMesh_IncrementalMesh::edgeDeflection(
     return myEdgeDeflection(theEdge);
 
   Standard_Real aEdgeDeflection;
-  if (myRelative) 
+  if (IsRelative()) 
   {
     Standard_Real aScale;
     aEdgeDeflection = BRepMesh_ShapeTool::RelativeEdgeDeflection(theEdge, 
-      myDeflection, myMaxShapeSize, aScale);
+      Deflection(), myMaxShapeSize, aScale);
   }
   else
-    aEdgeDeflection = myDeflection;
+    aEdgeDeflection = Deflection();
 
   myEdgeDeflection.Bind(theEdge, aEdgeDeflection);
   return aEdgeDeflection;
@@ -326,8 +340,8 @@ Standard_Real BRepMesh_IncrementalMesh::edgeDeflection(
 Standard_Real BRepMesh_IncrementalMesh::faceDeflection(
   const TopoDS_Face& theFace)
 {
-  if (!myRelative)
-    return myDeflection;
+  if (!IsRelative())
+    return Deflection();
 
   Standard_Integer aEdgesNb        = 0;
   Standard_Real    aFaceDeflection = 0.;
@@ -339,7 +353,7 @@ Standard_Real BRepMesh_IncrementalMesh::faceDeflection(
     aFaceDeflection += edgeDeflection(aEdge);
   }
 
-  return (aEdgesNb == 0) ? myDeflection : (aFaceDeflection / aEdgesNb);
+  return (aEdgesNb == 0) ? Deflection() : (aFaceDeflection / aEdgesNb);
 }
 
 //=======================================================================
@@ -479,9 +493,9 @@ void BRepMesh_IncrementalMesh::update(const TopoDS_Face& theFace)
 //=======================================================================
 void BRepMesh_IncrementalMesh::commit()
 {
-  std::vector<TopoDS_Face>::iterator aFaceIt(myFaces.begin());
-  for (; aFaceIt != myFaces.end(); aFaceIt++)
-    commitFace(*aFaceIt);
+  NCollection_Vector<TopoDS_Face>::Iterator aFaceIt(myFaces);
+  for (; aFaceIt.More(); aFaceIt.Next())
+    commitFace(aFaceIt.Value());
 
   discretizeFreeEdges();
 }

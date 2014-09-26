@@ -36,6 +36,7 @@
 #include <BRepMesh_ShapeTool.hxx>
 #include <TopoDS_Vertex.hxx>
 #include <TopTools_IndexedDataMapOfShapeListOfShape.hxx>
+#include <Message_MultithreadProgressSentry.hxx>
 
 class BRepMesh_DataStructureOfDelaun;
 class Bnd_Box;
@@ -58,14 +59,16 @@ class BRepMesh_FastDiscret : public Standard_Transient
 {
 public:
   
-  Standard_EXPORT BRepMesh_FastDiscret(const Standard_Real defle,
-                                       const Standard_Real angle,
-                                       const Bnd_Box& B,
-                                       const Standard_Boolean withShare = Standard_True,
-                                       const Standard_Boolean inshape = Standard_False,
-                                       const Standard_Boolean relative = Standard_False,
-                                       const Standard_Boolean shapetrigu = Standard_False,
-                                       const Standard_Boolean isInParallel = Standard_False);
+  Standard_EXPORT BRepMesh_FastDiscret(
+    const Standard_Real                              theDeflection,
+    const Standard_Real                              theAngle,
+    const Bnd_Box&                                   theBox,
+    const Standard_Boolean                           theWithShare  = Standard_True,
+    const Standard_Boolean                           theInshape    = Standard_False,
+    const Standard_Boolean                           theRelative   = Standard_False,
+    const Standard_Boolean                           theShapetrigu = Standard_False,
+    const Standard_Boolean                           isInParallel  = Standard_False,
+    const Handle(Message_MultithreadProgressSentry)& theProgressSentry = NULL);
 
   //! if the boolean <relative> is True, the <br>
   //! deflection used for the polygonalisation of <br>
@@ -79,15 +82,23 @@ public:
   //! <br>
   //! if <inshape> is True, the calculated <br>
   //! triangulation will be stored in the shape. <br>
-  Standard_EXPORT BRepMesh_FastDiscret(const TopoDS_Shape& shape,
-                                       const Standard_Real defle,
-                                       const Standard_Real angle,
-                                       const Bnd_Box& B,
-                                       const Standard_Boolean withShare = Standard_True,
-                                       const Standard_Boolean inshape = Standard_False,
-                                       const Standard_Boolean relative = Standard_False,
-                                       const Standard_Boolean shapetrigu = Standard_False,
-                                       const Standard_Boolean isInParallel = Standard_False);
+  Standard_EXPORT BRepMesh_FastDiscret(
+    const TopoDS_Shape&                              theShape,
+    const Standard_Real                              theDeflection,
+    const Standard_Real                              theAngle,
+    const Bnd_Box&                                   theBox,
+    const Standard_Boolean                           theWithShare  = Standard_True,
+    const Standard_Boolean                           theInshape    = Standard_False,
+    const Standard_Boolean                           theRelative   = Standard_False,
+    const Standard_Boolean                           theShapetrigu = Standard_False,
+    const Standard_Boolean                           isInParallel  = Standard_False,
+    const Handle(Message_MultithreadProgressSentry)& theProgressSentry = NULL);
+
+  //! Sets the given sentry to indicate progress of the algorithm.
+  inline void SetProgressSentry(const Handle(Message_MultithreadProgressSentry)& theProgressSentry)
+  {
+    myProgressSentry.NewScope("", 0., 1., 1, theProgressSentry);
+  }
 
   //! Build triangulation on the whole shape.
   Standard_EXPORT void Perform(const TopoDS_Shape& shape);
@@ -368,6 +379,7 @@ private:
   BRepMesh::HIMapOfInteger                         myVertexEdgeMap;
   BRepMesh::HDMapOfShapePairOfPolygon              myInternalEdges;
   TopTools_IndexedDataMapOfShapeListOfShape        mySharedFaces;
+  Message_MultithreadProgressSentry                myProgressSentry;
 };
 
 DEFINE_STANDARD_HANDLE(BRepMesh_FastDiscret, Standard_Transient)

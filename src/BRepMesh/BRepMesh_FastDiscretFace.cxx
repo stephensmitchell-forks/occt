@@ -140,12 +140,15 @@ namespace {
 //function : BRepMesh_FastDiscretFace
 //purpose  : 
 //=======================================================================
-BRepMesh_FastDiscretFace::BRepMesh_FastDiscretFace
-                          (const Standard_Real     theAngle,
-                           const Standard_Boolean  theWithShare) : 
-  myAngle(theAngle), myWithShare(theWithShare),
-  myInternalVerticesMode(Standard_True)
+BRepMesh_FastDiscretFace::BRepMesh_FastDiscretFace(
+  const Standard_Real                              theAngle,
+  const Standard_Boolean                           theWithShare,
+  const Handle(Message_MultithreadProgressSentry)& theProgressSentry)
+  : myAngle(theAngle),
+    myWithShare(theWithShare),
+    myInternalVerticesMode(Standard_True)
 {
+  myProgressSentry.NewScope("Meshing of face", 0., 1., 1, theProgressSentry);
   myAllocator = new NCollection_IncAllocator(64000);
 }
 
@@ -232,7 +235,10 @@ void BRepMesh_FastDiscretFace::Add(const Handle(BRepMesh_FaceAttribute)& theAttr
   Standard_Boolean rajout = 
     (thetype == GeomAbs_Sphere || thetype == GeomAbs_Torus);
 
-  BRepMesh_Delaun trigu(myStructure, tabvert_corr);
+  Handle(Message_MultithreadProgressSentry) aDelaunSentry = 
+    new Message_MultithreadProgressSentry("", 0., 1., 1, myProgressSentry);
+
+  BRepMesh_Delaun trigu(myStructure, tabvert_corr, aDelaunSentry);
 
   //removed all free edges from triangulation
   const Standard_Integer nbLinks = myStructure->NbLinks();

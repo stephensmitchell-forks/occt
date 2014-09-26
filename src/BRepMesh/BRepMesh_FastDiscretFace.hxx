@@ -28,6 +28,7 @@
 #include <BRepMesh_Triangle.hxx>
 #include <BRepMesh_Classifier.hxx>
 #include <ElSLib.hxx>
+#include <Message_MultithreadProgressSentry.hxx>
 
 class BRepMesh_DataStructureOfDelaun;
 class BRepMesh_FaceAttribute;
@@ -51,8 +52,9 @@ class BRepMesh_FastDiscretFace : public Standard_Transient
 public:
   
   Standard_EXPORT BRepMesh_FastDiscretFace(
-    const Standard_Real    theAngle,
-    const Standard_Boolean theWithShare = Standard_True);
+    const Standard_Real                              theAngle,
+    const Standard_Boolean                           theWithShare = Standard_True,
+    const Handle(Message_MultithreadProgressSentry)& theProgressSentry = NULL);
 
   Standard_EXPORT void Add(const Handle(BRepMesh_FaceAttribute)& theAttribute);
 
@@ -149,6 +151,7 @@ private:
   BRepMesh::HIMapOfInteger               myVertexEdgeMap;
   BRepMesh::HClassifier                  myClassifier;
   BRepMesh::HDMapOfIntegerPnt            mySurfacePoints;
+  Message_MultithreadProgressSentry      myProgressSentry;
 };
 
 DEFINE_STANDARD_HANDLE (BRepMesh_FastDiscretFace, Standard_Transient)
