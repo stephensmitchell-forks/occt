@@ -65,60 +65,112 @@
 
 #include <TopTools_OrientedShapeMapHasher.hxx>
 #include <NCollection_DataMap.hxx>
-
-typedef NCollection_DataMap<TopoDS_Shape, Bnd_Box2d, TopTools_OrientedShapeMapHasher> DataMapOfShapeBox2d;
-
-static Standard_Boolean Intersect(const TopoDS_Wire&,
-				  const TopoDS_Wire&,
-				  const TopoDS_Face&,
-				  const DataMapOfShapeBox2d&);
-				  
-
-static Standard_Boolean IsInside(const TopoDS_Wire& wir,
-				 const Standard_Boolean Inside,
-				 const BRepTopAdaptor_FClass2d& FClass2d,
-				 const TopoDS_Face& F);
-
-static Standard_Boolean CheckThin(const TopoDS_Shape& w,
-				  const TopoDS_Shape& f);
-
-#ifdef HAVE_TBB
-#include <tbb/parallel_for_each.h>
 #include <vector>
 #include <Standard_Mutex.hxx>
 
-Standard_Mutex theMutex;
+typedef NCollection_DataMap<TopoDS_Shape, Bnd_Box2d, TopTools_OrientedShapeMapHasher> DataMapOfShapeBox2d;
 
-class ClassWireParallel
-{
- private:
-  const TopoDS_Wire* myWir1;
-  const TopoDS_Face* myFace;
-  const BRepTopAdaptor_FClass2d* myFClass2d;
-  const Standard_Boolean myWireBienOriente;
-  TopTools_DataMapOfShapeListOfShape* myMapImb;
-
- public:
-  ClassWireParallel(const TopoDS_Wire* theWir1, const TopoDS_Face* theFace, const BRepTopAdaptor_FClass2d* FClass2d, 
-                    const Standard_Boolean theWireBienOriente, TopTools_DataMapOfShapeListOfShape* theMapImb)
-  : myWir1(theWir1), myFace(theFace), myFClass2d(FClass2d),
-    myWireBienOriente(theWireBienOriente), myMapImb(theMapImb)
-  {}
-
-  void operator=(const ClassWireParallel& ) 
-  {} // to eliminate a MSBuild compiler warning
-
-  void operator()(const TopoDS_Wire& theWire) const
-  {
-    if (theWire.IsSame(*myWir1)) return;
-    if (IsInside(theWire, myWireBienOriente, *myFClass2d, *myFace)) {
-      theMutex.Lock();
-      (*myMapImb)(*myWir1).Append(theWire);
-      theMutex.Unlock();
-    }
-  }
-};
+#ifdef HAVE_TBB
+#include <tbb/parallel_for_each.h>
 #endif
+
+static Standard_Boolean Intersect (const TopoDS_Wire&,
+                                   const TopoDS_Wire&,
+                                   const TopoDS_Face&,
+                                   const DataMapOfShapeBox2d&);
+
+static Standard_Boolean IsInside (const TopoDS_Wire&,
+                                  const Standard_Boolean,
+                                  const BRepTopAdaptor_FClass2d&,
+                                  const TopoDS_Face&);
+
+static Standard_Boolean CheckThin (const TopoDS_Shape&, const TopoDS_Shape&);
+
+namespace
+{
+  //! Auxiliary class for parallel checking wires.
+  class BRepCheck_ParallelWireChecker
+  {
+  public:
+
+    typedef TopTools_DataMapOfShapeListOfShape MapOfWires;
+
+    //! Constructor.
+    BRepCheck_ParallelWireChecker ( const TopoDS_Wire&             theWire,
+                                    const TopoDS_Face&             theFace,
+                                    const BRepTopAdaptor_FClass2d& theFClass2D,
+                                    const Standard_Boolean         theWireBienOriente,
+                                    MapOfWires&                    theMapImb )
+    : myWire           (theWire),
+      myFace           (theFace),
+      myFClass2D       (theFClass2D),
+      myWireBienOriente(theWireBienOriente),
+      myWiresMap       (theMapImb),
+      myMutex          (NULL)
+    {
+    }
+
+    //! Destructor.
+    ~BRepCheck_ParallelWireChecker ()
+    {
+      if ( myMutex )
+        delete myMutex;
+    }
+
+    //! Realese functor interface.
+    void operator() ( const TopoDS_Wire& theWire ) const
+    {
+      if ( theWire.IsSame(myWire) )
+        return;
+
+      if ( IsInside(theWire, myWireBienOriente, myFClass2D, myFace) )
+      {
+        Standard_Mutex::Sentry aSentry(myMutex);
+        myWiresMap(myWire).Append(theWire);
+      }
+    }
+
+    //! Perform wires checking.
+    void PerformCheck ( const std::vector<TopoDS_Wire>& theWires,
+                        Standard_Boolean theIsParallel = Standard_False ) const
+    {
+      #ifndef HAVE_TBB
+      {
+        theIsParallel = Standard_False;
+      }
+      #endif
+
+      if ( theIsParallel )
+      {
+        myMutex = new Standard_Mutex();
+        tbb::parallel_for_each(theWires.begin(), theWires.end(), *this);
+      }
+      else
+      {
+        const Standard_Integer aLength = theWires.size();
+        for ( Standard_Integer i = 0; i < aLength; ++i )
+        {
+          this->operator ()(theWires[i]);
+        }
+      }
+    }
+
+  private: //! @name private methods
+
+    BRepCheck_ParallelWireChecker();
+    void operator = (const BRepCheck_ParallelWireChecker&);
+
+  private: //! @name private fields
+
+    const TopoDS_Wire&             myWire;
+    const TopoDS_Face&             myFace;
+    const BRepTopAdaptor_FClass2d& myFClass2D;
+    const Standard_Boolean         myWireBienOriente;
+    MapOfWires&                    myWiresMap;
+
+    mutable Standard_Mutex*        myMutex;
+  };
+}
 
 //=======================================================================
 //function : BRepCheck_Face
@@ -353,21 +405,22 @@ BRepCheck_Status BRepCheck_Face::ClassifyWires(const Standard_Boolean Update)
     return myImbres;
   }
 
-  TopExp_Explorer exp1,exp2;
+  //! Collects wires to the vector.
+  TopoDS_Shape anOrientedShape( myShape.Oriented(TopAbs_FORWARD) );
+  TopExp_Explorer anExplorer( anOrientedShape , TopAbs_WIRE );
 
-#ifdef HAVE_TBB
   std::vector<TopoDS_Wire> aWires;
-  for (exp1.Init(myShape.Oriented(TopAbs_FORWARD),TopAbs_WIRE); exp1.More();exp1.Next()) {
-    aWires.push_back(TopoDS::Wire(exp1.Current()));
+  for ( ; anExplorer.More(); anExplorer.Next() )
+  {
+    aWires.push_back( TopoDS::Wire( anExplorer.Current() ) );
   }
-  
-#endif
 
   BRep_Builder B;
   TopTools_ListOfShape theListOfShape;
-  for (exp1.Init(myShape.Oriented(TopAbs_FORWARD),TopAbs_WIRE); exp1.More();exp1.Next()) {
-
-    const TopoDS_Wire& wir1 = TopoDS::Wire(exp1.Current());
+  for ( anExplorer.Init(anOrientedShape, TopAbs_WIRE);
+        anExplorer.More(); anExplorer.Next() )
+  {
+    const TopoDS_Wire& wir1 = TopoDS::Wire(anExplorer.Current());
     TopoDS_Shape aLocalShape = myShape.EmptyCopied();
     TopoDS_Face newFace = TopoDS::Face(aLocalShape);
 
@@ -375,29 +428,16 @@ BRepCheck_Status BRepCheck_Face::ClassifyWires(const Standard_Boolean Update)
     B.Add(newFace,wir1);
     BRepTopAdaptor_FClass2d FClass2d(newFace,Precision::PConfusion());
     Standard_Boolean WireBienOriente = Standard_False;
-    if(FClass2d.PerformInfinitePoint() != TopAbs_OUT) { 
+    if(FClass2d.PerformInfinitePoint() != TopAbs_OUT)
+    {
       WireBienOriente=Standard_True;
       // the given wire defines a hole
       myMapImb.UnBind(wir1);
       myMapImb.Bind(wir1.Reversed(), theListOfShape);
     }
 
-#ifdef HAVE_TBB
-
-    ClassWireParallel CWP(&wir1, &newFace, &FClass2d, WireBienOriente, &myMapImb);
-    tbb::parallel_for_each(aWires.begin(), aWires.end(), CWP);
-
-#else
-
-    for (exp2.Init(myShape.Oriented(TopAbs_FORWARD),TopAbs_WIRE); exp2.More();exp2.Next()) {
-      const TopoDS_Wire& wir2 = TopoDS::Wire(exp2.Current());
-      if (!wir2.IsSame(wir1))
-        if (IsInside(wir2,WireBienOriente,FClass2d,newFace)) 
-          myMapImb(wir1).Append(wir2);
-    }
-
-#endif
-
+    BRepCheck_ParallelWireChecker aWChecker(wir1, newFace, FClass2d, WireBienOriente, myMapImb);
+    aWChecker.PerformCheck(aWires, /*myIsParallel*/Standard_True);
   }
   // It is required to have 1 wire that contains all others, and the others should not  
   // contain anything (case solid ended) or
