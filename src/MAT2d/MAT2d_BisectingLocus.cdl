@@ -59,6 +59,7 @@ generic class BisectingLocus from MAT2d (Explorer as any)
     	--         - The Nodes are the extremities of the arcs.
 
 uses
+    JoinType                 from GeomAbs,
     Graph                    from MAT,
     Arc                      from MAT,
     BasicElt                 from MAT,
@@ -79,7 +80,9 @@ is
     Compute (me        : in out ; 
     	     anExplo   : in out Explorer;
              LineIndex :        Integer       = 1;
-             aSide     :        Side from MAT = MAT_Left )
+             aSide     :        Side from MAT = MAT_Left;
+	     aJoinType    :     JoinType from GeomAbs = GeomAbs_Arc;
+	     IsOpenResult :     Boolean       = Standard_False)
 	--- Purpose : Computation of the Bisector_Locus in a set of Lines 
 	--            defined in <anExplo>.
 	--            The bisecting locus are computed on the side <aSide>
@@ -165,11 +168,3 @@ fields
     nbContours  : Integer               from Standard;	
     
 end BisectingLocus;
-
-
-
-
-
-
-
-
