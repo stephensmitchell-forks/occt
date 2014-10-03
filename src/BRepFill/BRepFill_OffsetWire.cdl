@@ -1,40 +1,39 @@
 -- Created on: 1995-04-19
 -- Created by: Yves FRICAUD
 -- Copyright (c) 1995-1999 Matra Datavision
--- Copyright (c) 1999-2012 OPEN CASCADE SAS
+-- Copyright (c) 1999-2014 OPEN CASCADE SAS
 --
--- The content of this file is subject to the Open CASCADE Technology Public
--- License Version 6.5 (the "License"). You may not use the content of this file
--- except in compliance with the License. Please obtain a copy of the License
--- at http://www.opencascade.org and read it completely before using this file.
+-- This file is part of Open CASCADE Technology software library.
 --
--- The Initial Developer of the Original Code is Open CASCADE S.A.S., having its
--- main offices at: 1, place des Freres Montgolfier, 78280 Guyancourt, France.
+-- This library is free software; you can redistribute it and/or modify it under
+-- the terms of the GNU Lesser General Public License version 2.1 as published
+-- by the Free Software Foundation, with special exception defined in the file
+-- OCCT_LGPL_EXCEPTION.txt. Consult the file LICENSE_LGPL_21.txt included in OCCT
+-- distribution for complete text of the license and disclaimer of any warranty.
 --
--- The Original Code and all software distributed under the License is
--- distributed on an "AS IS" basis, without warranty of any kind, and the
--- Initial Developer hereby disclaims all such warranties, including without
--- limitation, any warranties of merchantability, fitness for a particular
--- purpose or non-infringement. Please see the License for the specific terms
--- and conditions governing the rights and limitations under the License.
-
-
+-- Alternatively, this file may be used under the terms of Open CASCADE
+-- commercial license or contractual agreement.
 
 class OffsetWire from BRepFill
 
 	---Purpose: Constructs a Offset Wire to a spine (wire or face) 
 	--          on the left of spine.
-
+	--          The Wire or the Face must be planar.
 uses
 
     Face        from TopoDS,
     Shape       from TopoDS,
     JoinType    from GeomAbs,
     ListOfShape from TopTools,
+    SequenceOfShape from TopTools,
+    SequenceOfPnt from TColgp,
     DataMapOfShapeShape               from TopTools,
     IndexedDataMapOfOrientedShapeListOfShape from BRepFill,  
+    DataMapOfOrientedShapeListOfShape from BRepFill,  
     BisectingLocus                    from BRepMAT2d, 
-    LinkTopoBilo                      from BRepMAT2d
+    LinkTopoBilo                      from BRepMAT2d,
+    Bisec from Bisector,
+    TrimEdgeTool from BRepFill
     
 raises
     ConstructionError from Standard,
@@ -45,12 +44,14 @@ is
     Create returns OffsetWire from BRepFill;
 
     Create ( Spine : Face     from TopoDS; 
-    	     Join  : JoinType from GeomAbs  =  GeomAbs_Arc)
+    	     Join  : JoinType from GeomAbs  =  GeomAbs_Arc;
+	     IsOpenResult : Boolean from Standard = Standard_False)
     returns OffsetWire from BRepFill;
 
     Init ( me    : in out;
     	   Spine : Face     from TopoDS; 
-    	   Join  : JoinType from GeomAbs  =  GeomAbs_Arc)
+    	   Join  : JoinType from GeomAbs  =  GeomAbs_Arc;
+	   IsOpenResult : Boolean from Standard = Standard_False)
 	---Purpose: Initialize the evaluation of Offseting.
     raises
     	ConstructionError from Standard
@@ -120,6 +121,16 @@ is
 	---Purpose: Add the OffsetWire <Other> to <me> and update <myMap>
     is static private;
     
+    UpdateDetromp (me; Detromp : in out DataMapOfOrientedShapeListOfShape from BRepFill;
+    	    	       Shape1, Shape2 : Shape from TopoDS;
+		       Vertices : SequenceOfShape from TopTools;
+		       Params   : SequenceOfPnt   from TColgp;
+		       Bisec    : Bisec from Bisector;
+		       SOnE     : Boolean from Standard;
+		       EOnE     : Boolean from Standard;
+		       Trim     : TrimEdgeTool from BRepFill)
+    is static private;
+    
     MakeWires (me : in  out)
 	---Purpose: Constructs the wires with the trimmed offset edges.
     is static private;
@@ -133,6 +144,7 @@ fields
     mySpine     : Face      from TopoDS;
     myWorkSpine : Face      from TopoDS;
     myOffset    : Real      from Standard; -- >0 ;
+    myIsOpenResult : Boolean from Standard;
     myShape     : Shape     from TopoDS;
     myIsDone    : Boolean   from Standard;
     myJoinType  : JoinType  from GeomAbs;	    

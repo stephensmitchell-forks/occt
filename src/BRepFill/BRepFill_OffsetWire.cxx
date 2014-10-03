@@ -1,23 +1,18 @@
 // Created on: 1995-04-20
 // Created by: Bruno DUMORTIER
 // Copyright (c) 1995-1999 Matra Datavision
-// Copyright (c) 1999-2012 OPEN CASCADE SAS
+// Copyright (c) 1999-2014 OPEN CASCADE SAS
 //
-// The content of this file is subject to the Open CASCADE Technology Public
-// License Version 6.5 (the "License"). You may not use the content of this file
-// except in compliance with the License. Please obtain a copy of the License
-// at http://www.opencascade.org and read it completely before using this file.
+// This file is part of Open CASCADE Technology software library.
 //
-// The Initial Developer of the Original Code is Open CASCADE S.A.S., having its
-// main offices at: 1, place des Freres Montgolfier, 78280 Guyancourt, France.
+// This library is free software; you can redistribute it and/or modify it under
+// the terms of the GNU Lesser General Public License version 2.1 as published
+// by the Free Software Foundation, with special exception defined in the file
+// OCCT_LGPL_EXCEPTION.txt. Consult the file LICENSE_LGPL_21.txt included in OCCT
+// distribution for complete text of the license and disclaimer of any warranty.
 //
-// The Original Code and all software distributed under the License is
-// distributed on an "AS IS" basis, without warranty of any kind, and the
-// Initial Developer hereby disclaims all such warranties, including without
-// limitation, any warranties of merchantability, fitness for a particular
-// purpose or non-infringement. Please see the License for the specific terms
-// and conditions governing the rights and limitations under the License.
-
+// Alternatively, this file may be used under the terms of Open CASCADE
+// commercial license or contractual agreement.
 
 //  Modified by skv - Fri Jul  8 11:21:38 2005 OCC9145
 
@@ -60,6 +55,7 @@
 #include <GeomAPI.hxx>
 #include <Geom_TrimmedCurve.hxx>
 #include <Geom_Circle.hxx>
+#include <Geom_Line.hxx>
 #include <Geom_OffsetCurve.hxx>
 #include <MAT_Arc.hxx>
 #include <MAT_Node.hxx>
@@ -110,9 +106,6 @@
 #include <DrawTrSurf.hxx>
 #include <DrawTrSurf_Curve2d.hxx>
 #include <DBRep.hxx>
-#endif
-
-#ifdef DEB
 static Standard_Boolean AffichGeom  = Standard_False;
 static Standard_Boolean Affich2d    = Standard_False;
 static Standard_Boolean AffichEdge  = Standard_False;
@@ -120,10 +113,6 @@ static Standard_Integer NbTRIMEDGES = 0;
 static Standard_Integer NbOFFSET    = 0;
 static Standard_Integer NbEDGES     = 0;
 static Standard_Integer NbBISSEC    = 0;
-#ifndef WNT
-static char tname[100];
-static Standard_CString name = tname ;
-#endif
 #endif
 
 //  Modified by Sergey KHROMOV - Thu Nov 16 17:24:39 2000 Begin
@@ -179,15 +168,6 @@ static void EdgeVertices (const TopoDS_Edge&   E,
   }
 }
 				      
-static void UpdateDetromp (TopTools_ListOfShape&           Detromp1, 
-			   TopTools_ListOfShape&           Detromp2, 
-			   const TopTools_SequenceOfShape& Vertices, 
-			   const TColgp_SequenceOfPnt&     Params, 
-			   const Bisector_Bisec&           Bisec,
-			   const Standard_Boolean          SOnE,
-			   const Standard_Boolean          EOnE,
-			   const BRepFill_TrimEdgeTool&    Trim);
-
 static Standard_Boolean VertexFromNode
 (const Handle(MAT_Node)&      aNode, 
  const Standard_Real          Offset,
@@ -201,10 +181,11 @@ static void StoreInMap (const TopoDS_Shape& V1,
 
 static void TrimEdge (const TopoDS_Edge&              CurrentEdge,
 		      const TopTools_ListOfShape&     D,
-		            TopTools_SequenceOfShape& Sv,  
-		            TColStd_SequenceOfReal&   MapverPar,
-		            TopTools_SequenceOfShape& S,
-		            TopTools_IndexedDataMapOfShapeShape& MapVV);
+                      TopTools_SequenceOfShape& Sv,  
+                      TColStd_SequenceOfReal&   MapverPar,
+                      TopTools_SequenceOfShape& S,
+                      TopTools_IndexedDataMapOfShapeShape& MapVV,
+                      const Standard_Integer IndOfE);
 
 static Standard_Boolean DoubleOrNotInside (const TopTools_ListOfShape& EC,
 					   const TopoDS_Vertex&        V);
@@ -225,7 +206,29 @@ static void MakeOffset
  const TopoDS_Face&                          F,
  const Standard_Real                         Offset, 
  BRepFill_IndexedDataMapOfOrientedShapeListOfShape& Map,
- const Handle(Geom_Plane)&                   RefPlane);
+ const Handle(Geom_Plane)&                   RefPlane,
+ const Standard_Boolean                      IsOpenResult,
+ const TopoDS_Vertex *                       Ends);
+
+
+
+//=======================================================================
+//function : CheckFace
+//purpose  : Check if face contains an edge with C0 continuity
+//=======================================================================
+//
+static void CheckFace(const TopoDS_Face& theFace)
+  {
+  TopExp_Explorer ex(theFace,TopAbs_EDGE);
+  for(; ex.More(); ex.Next())
+    {
+    TopoDS_Edge anEdge=TopoDS::Edge(ex.Current());
+    Standard_Real f,l;
+    const Handle(Geom2d_Curve) C = BRep_Tool::CurveOnSurface(anEdge,theFace,f,l);
+    if (C->Continuity() == GeomAbs_C0)
+      Standard_ConstructionError::Raise("Initial shape contains an edge with C0 continuity");
+    }
+  }
 
 //=======================================================================
 //function : KPartCircle
@@ -250,9 +253,6 @@ static Standard_Boolean KPartCircle
     E = TopoDS::Edge(exp.Current());
     if (NbEdges > 1) return Standard_False;
   }
-  TopoDS_Vertex V1,V2;
-  TopExp::Vertices(E,V1,V2);
-  if (!V1.IsSame(V2)) return Standard_False;
 
   Standard_Real      f,l;
   TopLoc_Location    L;
@@ -263,6 +263,49 @@ static Standard_Boolean KPartCircle
     C = Ct->BasisCurve();
   }
 
+  TopoDS_Vertex V1,V2;
+  TopExp::Vertices(E,V1,V2);
+  if (!V1.IsSame(V2)) //may be case of line
+  {
+    if (!C->IsKind(STANDARD_TYPE(Geom_Line))) return Standard_False;
+    Handle(Geom_Line) LE = Handle(Geom_Line)::DownCast(C);
+    Standard_Real anOffset = myOffset;
+    if (E.Orientation() == TopAbs_REVERSED) anOffset *= -1;
+    
+    Handle(Geom2d_Curve) aPCurve;
+    Handle(Geom_Surface) aSurf;
+    TopLoc_Location aLoc;
+    BRep_Tool::CurveOnSurface(E, aPCurve, aSurf, aLoc, f, l);
+    Handle(Geom2dAdaptor_HCurve) AHC = new Geom2dAdaptor_HCurve(aPCurve, f, l);
+    Adaptor3d_OffsetCurve Off(AHC,anOffset);
+    Handle(Geom2d_Line) OLC = new Geom2d_Line(Off.Line());
+    Handle(Geom_Plane) aPlane = Handle(Geom_Plane)::DownCast(aSurf);
+    myShape = BRepLib_MakeEdge(OLC, aPlane, f, l);
+    BRepLib::BuildCurve3d(TopoDS::Edge(myShape));
+    
+    myShape.Orientation(E.Orientation());
+    myShape.Location(L);
+    if (Alt != 0.) {
+      BRepAdaptor_Surface S(mySpine,0);
+      gp_Ax1 Nor = S.Plane().Axis();
+      gp_Trsf T;
+      gp_Vec Trans(Nor.Direction());
+      Trans = Alt*Trans;
+      T.SetTranslation(Trans);
+      myShape.Move(TopLoc_Location(T));
+    }
+      
+    TopTools_ListOfShape LL;
+    LL.Append(myShape);
+    myMap.Add(E,LL);
+    
+    TopoDS_Edge myEdge = TopoDS::Edge(myShape);
+    myShape = BRepLib_MakeWire(myEdge);
+    
+    myIsDone = Standard_True;
+    return Standard_True;
+  }
+  
   if (!C->IsKind(STANDARD_TYPE(Geom_Circle))) return Standard_False;
   Handle(Geom_Circle) CE = Handle(Geom_Circle)::DownCast(C);
   Standard_Real anOffset = myOffset;
@@ -298,7 +341,8 @@ static Standard_Boolean KPartCircle
 //=======================================================================
 
 BRepFill_OffsetWire::BRepFill_OffsetWire() 
-:myIsDone(Standard_False)
+  : myIsOpenResult(Standard_False),
+    myIsDone(Standard_False)
 {
 }
 
@@ -309,11 +353,11 @@ BRepFill_OffsetWire::BRepFill_OffsetWire()
 //=======================================================================
 
 BRepFill_OffsetWire::BRepFill_OffsetWire(const TopoDS_Face&     Spine,
-					 const GeomAbs_JoinType Join )
+					 const GeomAbs_JoinType Join,
+                                         const Standard_Boolean IsOpenResult)
 {
-  Init(Spine,Join);
+  Init(Spine,Join,IsOpenResult);
 }
-
 
 //=======================================================================
 //function : Init
@@ -321,17 +365,18 @@ BRepFill_OffsetWire::BRepFill_OffsetWire(const TopoDS_Face&     Spine,
 //=======================================================================
 
 void BRepFill_OffsetWire::Init(const TopoDS_Face&     Spine,
-			       const GeomAbs_JoinType Join )
+			       const GeomAbs_JoinType Join,
+                               const Standard_Boolean IsOpenResult)
 {
-  Standard_NotImplemented_Raise_if(Join > GeomAbs_Arc,
-				   "Only GeomAbs_Arc is implemented");
-
   myIsDone   = Standard_False;
   TopoDS_Shape aLocalShape = Spine.Oriented(TopAbs_FORWARD);
   mySpine    = TopoDS::Face(aLocalShape);
 //  mySpine    = TopoDS::Face(Spine.Oriented(TopAbs_FORWARD));
   myJoinType = Join;
+  myIsOpenResult = IsOpenResult;
 
+  CheckFace(mySpine);
+  
   myMap.Clear();
   myMapSpine.Clear();
   //------------------------------------------------------------------
@@ -363,8 +408,8 @@ void BRepFill_OffsetWire::Init(const TopoDS_Face&     Spine,
 //   static BRepMAT2d_Explorer Exp;
 //  Modified by Sergey KHROMOV - Tue Nov 26 17:39:03 2002 End
   Exp.Perform(myWorkSpine);
-  myBilo.Compute(Exp,1,MAT_Left);
-  myLink.Perform(Exp,myBilo);
+  myBilo.Compute(Exp, 1 ,MAT_Left, myJoinType, myIsOpenResult);
+  myLink.Perform(Exp, myBilo);
 }
 
 
@@ -479,10 +524,11 @@ GeomAbs_JoinType BRepFill_OffsetWire::JoinType() const
 void BRepFill_OffsetWire::Perform (const Standard_Real Offset,
 				   const Standard_Real Alt)
 {
-//  Modified by skv - Fri Jul  8 11:21:38 2005 OCC9145 Begin
-  try {
+  //  Modified by skv - Fri Jul  8 11:21:38 2005 OCC9145 Begin
+  try
+  {
     OCC_CATCH_SIGNALS
-    myCallGen = Standard_False;
+      myCallGen = Standard_False;
     if (KPartCircle(mySpine,Offset,Alt,myShape,myMap,myIsDone)) return;
 
     TopoDS_Face oldWorkSpain = myWorkSpine;
@@ -490,7 +536,8 @@ void BRepFill_OffsetWire::Perform (const Standard_Real Offset,
     TopTools_ListOfShape BadEdges;
     CheckBadEdges(myWorkSpine,Offset,myBilo,myLink,BadEdges);
 
-    if(!BadEdges.IsEmpty()) {
+    if(!BadEdges.IsEmpty())
+    {
       // Modification of myWorkSpine;
       //cout << "Modification of myWorkSpine : " << BadEdges.Extent() << endl;
       BRepTools_Substitution aSubst;
@@ -501,127 +548,144 @@ void BRepFill_OffsetWire::Perform (const Standard_Real Offset,
       TColgp_SequenceOfPnt Points;
 
       for(; it.More(); it.Next()) {
-	aL.Clear();
-	Parameters.Clear();
-	Points.Clear();
-	const TopoDS_Shape& anE = it.Value();
-	TopoDS_Vertex Vf, Vl;
-	TopExp::Vertices(TopoDS::Edge(anE), Vf, Vl);
+        aL.Clear();
+        Parameters.Clear();
+        Points.Clear();
+        const TopoDS_Shape& anE = it.Value();
 
-	Standard_Real f, l;
-	Handle(Geom_Curve) G3d = BRep_Tool::Curve(TopoDS::Edge(anE),f,l);
-	GeomAdaptor_Curve  AC(G3d,f,l);
+        TopoDS_Vertex Vf, Vl;
+        TopExp::Vertices(TopoDS::Edge(anE), Vf, Vl);
 
-	Standard_Boolean dummy = PerformCurve(Parameters, Points,
-					      AC, aDefl, f, l, Precision::Confusion(),
-					      2);
+        Standard_Real f, l;
+        Handle(Geom_Curve) G3d = BRep_Tool::Curve(TopoDS::Edge(anE),f,l);
+        GeomAdaptor_Curve  AC(G3d,f,l);
 
-	Standard_Integer NPnts = Points.Length();
-	if(NPnts > 2) {
-	  //cout << NPnts << " points " << endl;
-	  TopoDS_Vertex FV = Vf;
-	  TopoDS_Vertex LV;
-	  TopoDS_Edge newE;
-	  Standard_Integer np;
-	  for(np = 2; np < NPnts; np++) {
-	    gp_Pnt LP = Points(np);
-	    LV = BRepLib_MakeVertex(LP);
-	    newE = BRepLib_MakeEdge(FV, LV);
-	    aL.Append(newE);
-	    FV = LV;
-	  }
-	  LV = Vl;
-	  newE = BRepLib_MakeEdge(FV, LV);
-	  aL.Append(newE);
-	}
-	else {
-	  //cout << " 2 points " << endl;
-	  TopoDS_Edge newE = BRepLib_MakeEdge(Vf, Vl);
-	  aL.Append(newE);
-	}
-	//Update myMapSpine
-	if (myMapSpine.IsBound( anE ))
-	  {
-	    TopTools_ListIteratorOfListOfShape newit( aL );
-	    for (; newit.More(); newit.Next())
-	      {
-		TopoDS_Edge NewEdge = TopoDS::Edge( newit.Value() );
-		myMapSpine.Bind( NewEdge, myMapSpine(anE) );
-		TopoDS_Vertex NewV1, NewV2;
-		EdgeVertices( NewEdge, NewV1, NewV2 );
-		if (!myMapSpine.IsBound(NewV1)) myMapSpine.Bind( NewV1, myMapSpine(anE) );
-		if (!myMapSpine.IsBound(NewV2)) myMapSpine.Bind( NewV2, myMapSpine(anE) );
-	      }
-	    myMapSpine.UnBind( anE );
-	  }
-	///////////////////
-	  aSubst.Substitute(anE, aL);
+        PerformCurve(Parameters, Points, AC, aDefl, f, 
+                                          l, Precision::Confusion(), 2);
+
+        Standard_Integer NPnts = Points.Length();
+        if(NPnts > 2)
+        {
+          //cout << NPnts << " points " << endl;
+          TopoDS_Vertex FV = Vf;
+          TopoDS_Vertex LV;
+          TopoDS_Edge newE;
+          Standard_Integer np;
+          for(np = 2; np < NPnts; np++) {
+            gp_Pnt LP = Points(np);
+            LV = BRepLib_MakeVertex(LP);
+            newE = BRepLib_MakeEdge(FV, LV);
+            aL.Append(newE);
+            FV = LV;
+          }
+          LV = Vl;
+          newE = BRepLib_MakeEdge(FV, LV);
+          aL.Append(newE);
+        }
+        else
+        {
+          //cout << " 2 points " << endl;
+          TopoDS_Edge newE = BRepLib_MakeEdge(Vf, Vl);
+          aL.Append(newE);
+        }
+        //Update myMapSpine
+        if (myMapSpine.IsBound( anE ))
+        {
+          TopTools_ListIteratorOfListOfShape newit( aL );
+          for (; newit.More(); newit.Next())
+          {
+            TopoDS_Edge NewEdge = TopoDS::Edge( newit.Value() );
+            myMapSpine.Bind( NewEdge, myMapSpine(anE) );
+            TopoDS_Vertex NewV1, NewV2;
+            EdgeVertices( NewEdge, NewV1, NewV2 );
+            if (!myMapSpine.IsBound(NewV1)) myMapSpine.Bind( NewV1, myMapSpine(anE) );
+            if (!myMapSpine.IsBound(NewV2)) myMapSpine.Bind( NewV2, myMapSpine(anE) );
+          }
+          myMapSpine.UnBind( anE );
+        }
+        ///////////////////
+        aSubst.Substitute(anE, aL);
       }
 
       TopTools_DataMapOfShapeListOfShape wwmap;
       TopoDS_Iterator itws( myWorkSpine );
       for (; itws.More(); itws.Next())
-	{
-	  TopoDS_Shape aWire = itws.Value();
-	  aSubst.Build( aWire );
-	  if (aSubst.IsCopied(aWire))
-	    {
-	      TopoDS_Wire NewWire = TopoDS::Wire( aSubst.Copy(aWire).First() );
-	      NewWire.Closed( aWire.Closed() );
-	      TopTools_ListOfShape Lw;
-	      Lw.Append( NewWire );
-	      wwmap.Bind( aWire, Lw );
-	    }
-	}
+      {
+        TopoDS_Shape aWire = itws.Value();
+        aSubst.Build( aWire );
+        if (aSubst.IsCopied(aWire))
+        {
+          TopoDS_Wire NewWire = TopoDS::Wire( aSubst.Copy(aWire).First() );
+          NewWire.Closed( aWire.Closed() );
+          TopTools_ListOfShape Lw;
+          Lw.Append( NewWire );
+          wwmap.Bind( aWire, Lw );
+        }
+      }
       aSubst.Clear();
       TopTools_DataMapIteratorOfDataMapOfShapeListOfShape itmap( wwmap );
       for (; itmap.More(); itmap.Next())
-	aSubst.Substitute( itmap.Key(), itmap.Value() );
+        aSubst.Substitute( itmap.Key(), itmap.Value() );
+      
       aSubst.Build(myWorkSpine);
+      
       if(aSubst.IsCopied(myWorkSpine)) {
-	myWorkSpine = TopoDS::Face(aSubst.Copy(myWorkSpine).First());
-	//sprintf(name,"WS1");
-	//DBRep::Set(name,myWorkSpine);
-    
-	BRepMAT2d_Explorer newExp;
-	newExp.Perform(myWorkSpine);
-	BRepMAT2d_BisectingLocus newBilo;
-	BRepMAT2d_LinkTopoBilo newLink;
-	newBilo.Compute(newExp,1,MAT_Left);
-	newLink.Perform(newExp,newBilo);
-	PerformWithBiLo(myWorkSpine,Offset,newBilo,newLink,myJoinType,Alt);
+        myWorkSpine = TopoDS::Face(aSubst.Copy(myWorkSpine).First());
 
-	myWorkSpine = oldWorkSpain;
+        BRepMAT2d_Explorer newExp;
+        newExp.Perform(myWorkSpine);
+        BRepMAT2d_BisectingLocus newBilo;
+        BRepMAT2d_LinkTopoBilo newLink;
+        newBilo.Compute(newExp, 1, MAT_Left, myJoinType, myIsOpenResult);
+
+        if(!newBilo.IsDone())
+        {
+          myShape.Nullify();
+          myIsDone = Standard_False;
+          return;
+        }
+
+        newLink.Perform(newExp,newBilo);
+        PerformWithBiLo(myWorkSpine,Offset,newBilo,newLink,myJoinType,Alt);
+        myWorkSpine = oldWorkSpain;
       }
       else {
-	PerformWithBiLo(myWorkSpine,Offset,myBilo,myLink,myJoinType,Alt);
+        PerformWithBiLo(myWorkSpine,Offset,myBilo,myLink,myJoinType,Alt);
       }
-    
     }
-    else {
+    else
+    {
       PerformWithBiLo(myWorkSpine,Offset,myBilo,myLink,myJoinType,Alt);
     }
-
-  } catch (Standard_Failure) {
+  }
+  catch (...)//Every exception was caught.
+  {
     myShape.Nullify();
     myIsDone = Standard_False;
+    cout<<"An exception was caught in BRepFill_OffsetWire::Perform : ";
+    Standard_Failure::Caught()->Print(cout);
+    cout<<endl;
 
     return;
   }
-//  Modified by skv - Fri Jul  8 11:21:38 2005 OCC9145 End
-//  Modified by Sergey KHROMOV - Thu Mar 14 10:48:15 2002 Begin
-  TopExp_Explorer anExp(myShape, TopAbs_WIRE);
 
-  for (; anExp.More(); anExp.Next()) {
-    const TopoDS_Shape &aWire = anExp.Current();
-
-    if (!aWire.Closed()) {
-      myShape.Nullify();
-      myIsDone = Standard_False;
-      Standard_ConstructionError::Raise("Offset wire is not closed.");
+  //  Modified by skv - Fri Jul  8 11:21:38 2005 OCC9145 End
+  //  Modified by Sergey KHROMOV - Thu Mar 14 10:48:15 2002 Begin
+  if (!myIsOpenResult)
+  {
+    TopExp_Explorer anExp(myShape, TopAbs_WIRE);
+    
+    for (; anExp.More(); anExp.Next()) {
+      const TopoDS_Shape &aWire = anExp.Current();
+      
+      if (!aWire.Closed()) {
+        myShape.Nullify();
+        myIsDone = Standard_False;
+        Standard_ConstructionError::Raise("Offset wire is not closed.");
+      }
     }
   }
-//  Modified by Sergey KHROMOV - Thu Mar 14 10:48:16 2002 End
+  //  Modified by Sergey KHROMOV - Thu Mar 14 10:48:16 2002 End
 }
 
 //=======================================================================
@@ -672,9 +736,6 @@ void BRepFill_OffsetWire::PerformWithBiLo
  const GeomAbs_JoinType          Join,
  const Standard_Real             Alt)
 {
-  Standard_NotImplemented_Raise_if (Join > GeomAbs_Arc,
-				    "Only GeomAbs_Arc is implemented");
-
   myIsDone     = Standard_False;
   TopoDS_Shape aLocalShape = Spine.Oriented(TopAbs_FORWARD);
   myWorkSpine  = TopoDS::Face(aLocalShape);
@@ -700,7 +761,8 @@ void BRepFill_OffsetWire::PerformWithBiLo
   //********************************
   // Calculate for a non null offset 
   //********************************
-  if (KPartCircle(mySpine,Offset,Alt,myShape,myMap,myIsDone)) return;
+  if (KPartCircle(mySpine,Offset,Alt,myShape,myMap,myIsDone))
+    return;
 
   BRep_Builder myBuilder;
   myBuilder.MakeCompound(TopoDS::Compound(myShape));
@@ -735,7 +797,16 @@ void BRepFill_OffsetWire::PerformWithBiLo
   //---------------------------------------------------------------
   // Construction of Circles and OffsetCurves
   //---------------------------------------------------------------
- 
+
+  TopoDS_Vertex Ends [2];
+  if (myIsOpenResult)
+  {
+    TopoDS_Wire theWire;
+    TopoDS_Iterator iter(mySpine);
+    theWire = TopoDS::Wire(iter.Value());
+    TopExp::Vertices(theWire, Ends[0], Ends[1]);
+  }
+  
   for (Standard_Integer ic = 1; ic <= Locus.NumberOfContours(); ic++) {
     TopoDS_Shape PEE = Link.GeneratingShape(Locus.BasicElt(ic,Locus.NumberOfElts(ic)));
     TopoDS_Shape& PE = PEE ;      
@@ -746,14 +817,15 @@ void BRepFill_OffsetWire::PerformWithBiLo
 		    myWorkSpine,myOffset,myMap,RefPlane);
       }
       else {
-	MakeOffset (TopoDS::Edge(SE),myWorkSpine,myOffset,myMap,RefPlane);
+	MakeOffset (TopoDS::Edge(SE),myWorkSpine,myOffset,myMap,RefPlane,
+                    myIsOpenResult, Ends);
 	PE = SE;
       }
     }
   }
 
 
-#ifdef DEB
+#ifdef DRAW
   if (AffichEdge) {
     cout << " End Construction of geometric primitives "<<endl;
   }
@@ -781,6 +853,7 @@ void BRepFill_OffsetWire::PerformWithBiLo
     
 #ifdef DRAW
   if ( AffichGeom) {
+    char name[256];
     sprintf(name,"BISSEC_%d",NbBISSEC++);
     DrawTrSurf::Set(name,Bisec.Value());
   }
@@ -895,7 +968,7 @@ void BRepFill_OffsetWire::PerformWithBiLo
     if (!Detromp.IsBound(S[1])) Detromp.Bind(S[1],EmptyList);
 
     
-    UpdateDetromp (Detromp(S[0]), Detromp(S[1]), Vertices, Params, 
+    UpdateDetromp (Detromp, S[0], S[1], Vertices, Params, 
 		   Bisec, StartOnEdge, EndOnEdge, Trim);
     //----------------------------------------------
     // Storage of vertices on parallel edges.
@@ -932,7 +1005,7 @@ void BRepFill_OffsetWire::PerformWithBiLo
     }
   }
   
-#ifdef DEB 
+#ifdef DRAW
   if (AffichEdge) {
     cout << " End Construction of vertices on offsets"<<endl;
   }
@@ -955,11 +1028,19 @@ void BRepFill_OffsetWire::PerformWithBiLo
     if (MapBis.IsBound(CurrentEdge)) {
       TopTools_SequenceOfShape S;
       if (!MapBis(CurrentEdge).IsEmpty()) {
+        Standard_Integer IndOfE = 0;
+        if (myIsOpenResult)
+        {
+          if (j == 1)
+            IndOfE = 1;
+          else if (j == myMap.Extent())
+            IndOfE = -1;
+        }
 	TrimEdge (CurrentEdge,
 		  Detromp  (CurrentSpine),
 		  MapBis   (CurrentEdge) ,  
 		  MapVerPar(CurrentEdge) ,
-		  S, MapVV);
+		  S, MapVV, IndOfE);
 	for ( k = 1; k <= S.Length(); k++) {
 	  myMap(j).Append(S.Value(k));
 	}
@@ -1108,7 +1189,7 @@ void BRepFill_OffsetWire::PrepareSpine()
     TopExp::MapShapes(IteF.Value(), TopAbs_EDGE, EdgeMap);
     Standard_Integer nbEdges = EdgeMap.Extent();
     
-    if (nbEdges == 1)
+    if (nbEdges == 1 && !myIsOpenResult) //in case of open wire there's no need to do it
       ForcedCut = 2;
 //  Modified by Sergey KHROMOV - Thu Nov 16 17:29:48 2000 End
 
@@ -1157,11 +1238,106 @@ void BRepFill_OffsetWire::PrepareSpine()
 
 #ifdef DRAW
   if ( AffichEdge) {
-    sprintf(name,"WS");
-    DBRep::Set(name,myWorkSpine);
+    DBRep::Set("WS",myWorkSpine);
   }
 #endif
 
+}
+
+//=======================================================================
+//function : UpdateDetromp
+//purpose  : For each interval on bissectrice defined by parameters
+//           test if the medium point is at a distance > offset	
+//           in this case vertices corresponding to the extremities of the interval
+//           are ranked in the proofing.
+//           => If the same vertex appears in the proofing, the 
+//           border of the zone of proximity is tangent to the offset .
+//=======================================================================
+
+void BRepFill_OffsetWire::UpdateDetromp (BRepFill_DataMapOfOrientedShapeListOfShape& Detromp,
+                                         const TopoDS_Shape& Shape1,
+                                         const TopoDS_Shape& Shape2,
+                                         const TopTools_SequenceOfShape& Vertices, 
+                                         const TColgp_SequenceOfPnt&     Params, 
+                                         const Bisector_Bisec&           Bisec,
+                                         const Standard_Boolean          SOnE,
+                                         const Standard_Boolean          EOnE,
+                                         const BRepFill_TrimEdgeTool&    Trim) const
+{
+  if (myJoinType == GeomAbs_Intersection &&
+      Vertices.Length() == 1 &&
+      !EOnE)
+  {
+    TopTools_IndexedMapOfShape Vmap1, Vmap2;
+    TopExp::MapShapes(Shape1, TopAbs_VERTEX, Vmap1);
+    TopExp::MapShapes(Shape2, TopAbs_VERTEX, Vmap2);
+    Standard_Boolean Adjacent = Standard_False;
+    for (Standard_Integer i = 1; i <= Vmap1.Extent(); i++)
+      for (Standard_Integer j = 1; j <= Vmap2.Extent(); j++)
+        if (Vmap1(i).IsSame(Vmap2(j)))
+        {
+          Adjacent = Standard_True;
+          break;
+        }
+    if (Adjacent)
+    {
+      Detromp(Shape1).Append(Vertices.First());
+      Detromp(Shape2).Append(Vertices.First());
+      return;
+    }
+  }
+  
+  Standard_Integer ii = 1;
+  Standard_Real    U1,U2;
+  TopoDS_Vertex    V1,V2;
+
+  Handle(Geom2d_Curve) Bis = Bisec.Value();
+
+  U1 = Bis->FirstParameter();
+  
+  if (SOnE) { 
+    // the first point of the bissectrice is on the offset
+    V1 = TopoDS::Vertex(Vertices.Value(ii));
+    ii++; 
+  }
+
+  while (ii <= Vertices.Length()) {
+    U2 = Params.Value(ii).X();
+    V2 = TopoDS::Vertex(Vertices.Value(ii));
+
+    gp_Pnt2d P = Bis->Value((U2 + U1)*0.5);  
+    if (!Trim.IsInside(P)) {
+      if (!V1.IsNull()) {
+        Detromp(Shape1).Append(V1);
+        Detromp(Shape2).Append(V1);
+      }
+      Detromp(Shape1).Append(V2);
+      Detromp(Shape2).Append(V2);
+    }
+    U1 = U2;
+    V1 = V2;
+    ii ++;
+  }
+
+  // test medium point between the last parameter and the end of the bissectrice.
+  U2 = Bis->LastParameter();
+  if (!EOnE) {
+    if (!Precision::IsInfinite(U2)) {
+      gp_Pnt2d P = Bis->Value((U2 + U1)*0.5);  
+      if (!Trim.IsInside(P)) {
+	if (!V1.IsNull()) {
+	  Detromp(Shape1).Append(V1);
+	  Detromp(Shape2).Append(V1);
+	}
+      }
+    }
+    else {
+      if (!V1.IsNull()) {
+	Detromp(Shape1).Append(V1);
+	Detromp(Shape2).Append(V1);
+      }
+    }
+  }    
 }
 
 //=======================================================================
@@ -1325,260 +1501,266 @@ void BRepFill_OffsetWire::FixHoles()
 
   TopExp_Explorer Explo( mySpine, TopAbs_VERTEX );
   for (; Explo.More(); Explo.Next())
-    {
-      const TopoDS_Vertex& aVertex = TopoDS::Vertex( Explo.Current() );
-      Standard_Real Tol = BRep_Tool::Tolerance(aVertex);
-      if (Tol > MaxTol)
-	MaxTol = Tol;
-    }
+  {
+    const TopoDS_Vertex& aVertex = TopoDS::Vertex( Explo.Current() );
+    Standard_Real Tol = BRep_Tool::Tolerance(aVertex);
+    if (Tol > MaxTol)
+      MaxTol = Tol;
+  }
   MaxTol *= 100.;
 
   Explo.Init( myShape, TopAbs_WIRE );
   for (; Explo.More(); Explo.Next())
+  {
+    TopoDS_Shape aWire = Explo.Current();
+    // Remove duplicated edges
+    TopTools_DataMapOfShapeListOfShape EEmap;
+    TopoDS_Iterator it( aWire );
+    for (; it.More(); it.Next())
     {
-      TopoDS_Shape aWire = Explo.Current();
-      // Remove duplicated edges
-      TopTools_DataMapOfShapeListOfShape EEmap;
-      TopoDS_Iterator it( aWire );
-      for (; it.More(); it.Next())
-	{
-	  const TopoDS_Shape& anEdge = it.Value();
-	  if (! EEmap.IsBound( anEdge ))
-	    {
-	      TopTools_ListOfShape LE;
-	      EEmap.Bind( anEdge, LE );
-	    }
-	  else
-	    EEmap(anEdge).Append( anEdge );
-	}
-      aWire.Free( Standard_True );
-      TopTools_DataMapIteratorOfDataMapOfShapeListOfShape mapit( EEmap );
-      for (; mapit.More(); mapit.Next())
-	{
-	  const TopTools_ListOfShape& LE = mapit.Value();
-	  TopTools_ListIteratorOfListOfShape itl( LE );
-	  for (; itl.More(); itl.Next())
-	    BB.Remove( aWire, itl.Value() );
-	}
-      // Sorting
-      if (aWire.Closed())
-	ClosedWires.Append( aWire );
+      const TopoDS_Shape& anEdge = it.Value();
+      if (! EEmap.IsBound( anEdge ))
+      {
+        TopTools_ListOfShape LE;
+        EEmap.Bind( anEdge, LE );
+      }
       else
-	UnclosedWires.Append( aWire );
+        EEmap(anEdge).Append( anEdge );
     }
-  
-  while (!UnclosedWires.IsEmpty())
+    aWire.Free( Standard_True );
+    TopTools_DataMapIteratorOfDataMapOfShapeListOfShape mapit( EEmap );
+    for (; mapit.More(); mapit.Next())
     {
-      TopoDS_Wire& Base = TopoDS::Wire( UnclosedWires(1) );
-      TopoDS_Vertex Vf, Vl;
+      const TopTools_ListOfShape& LE = mapit.Value();
+      TopTools_ListIteratorOfListOfShape itl( LE );
+      for (; itl.More(); itl.Next())
+        BB.Remove( aWire, itl.Value() );
+    }
+    // Sorting
+    if (aWire.Closed())
+      ClosedWires.Append( aWire );
+    else
+      UnclosedWires.Append( aWire );
+  }
+
+  while (!UnclosedWires.IsEmpty())
+  {
+    TopoDS_Wire& Base = TopoDS::Wire( UnclosedWires(1) );
+    TopoDS_Vertex Vf, Vl;
+    TopExp::Vertices( Base, Vf, Vl );
+    if(Vf.IsNull() || Vl.IsNull())
+      Standard_Failure::Raise("BRepFill_OffsetWire::FixHoles(): Wrong wire.");
+    gp_Pnt Pf, Pl;
+    Pf = BRep_Tool::Pnt(Vf);
+    Pl = BRep_Tool::Pnt(Vl);
+    Standard_Real DistF = RealLast(), DistL = RealLast();
+    Standard_Integer IndexF = 1, IndexL = 1;
+    Standard_Boolean IsFirstF = Standard_False, IsFirstL = Standard_False;
+    for (Standard_Integer i = 2; i <= UnclosedWires.Length(); i++)
+    {
+      TopoDS_Wire aWire = TopoDS::Wire( UnclosedWires(i) );
+      TopoDS_Vertex V1, V2;
+      TopExp::Vertices( aWire, V1, V2 );
+
+      if(V1.IsNull() || V2.IsNull())
+        Standard_Failure::Raise("BRepFill_OffsetWire::FixHoles(): Wrong wire.");
+
+      gp_Pnt P1, P2;
+      P1 = BRep_Tool::Pnt(V1);
+      P2 = BRep_Tool::Pnt(V2);
+      Standard_Real dist = Pf.Distance( P1 );
+      if (dist < DistF)
+      {
+        DistF = dist;
+        IndexF = i;
+        IsFirstF = Standard_True;
+      }
+      dist = Pf.Distance( P2 );
+      if (dist < DistF)
+      {
+        DistF = dist;
+        IndexF = i;
+        IsFirstF = Standard_False;
+      }
+      dist = Pl.Distance( P1 );
+      if (dist < DistL)
+      {
+        DistL = dist;
+        IndexL = i;
+        IsFirstL = Standard_True;
+      }
+      dist = Pl.Distance( P2 );
+      if (dist < DistL)
+      {
+        DistL = dist;
+        IndexL = i;
+        IsFirstL = Standard_False;
+      }
+    }
+    TopoDS_Wire theWire;
+    TopoDS_Edge theEdge;
+    TopoDS_Vertex theVertex;
+    Standard_Real CommonTol;
+    Standard_Boolean TryToClose = Standard_True;
+    if (DistF <= MaxTol && DistL <= MaxTol && IndexF == IndexL && IsFirstF == IsFirstL)
+    {
+      if (DistF < DistL)
+      {
+        DistL = RealLast();
+        IndexL++;
+      }
+      else
+      {
+        DistF = RealLast();
+        IndexF++;
+      }
+      TryToClose = Standard_False;
+    }
+    if (DistF <= MaxTol)
+    {
+      theWire = TopoDS::Wire( UnclosedWires(IndexF) );
+      TopoDS_Vertex V1, V2;
+      TopExp::Vertices( theWire, V1, V2 );
+      TopTools_IndexedDataMapOfShapeListOfShape VEmap;
+      TopExp::MapShapesAndAncestors( theWire, TopAbs_VERTEX, TopAbs_EDGE, VEmap );
+      theEdge = (IsFirstF)? TopoDS::Edge(VEmap.FindFromKey( V1 ).First()) :
+        TopoDS::Edge(VEmap.FindFromKey( V2 ).First());
+      TopoDS_Iterator it( theWire );
+      for (; it.More(); it.Next())
+      {
+        TopoDS_Edge anEdge = TopoDS::Edge( it.Value() );
+        if (IsFirstF) anEdge.Reverse();
+        if (!anEdge.IsSame( theEdge ))
+          BB.Add( Base, anEdge );
+      }
+      theVertex = (IsFirstF)? V1 : V2;
+      CommonTol = Max( BRep_Tool::Tolerance(Vf), BRep_Tool::Tolerance(theVertex) );
+      if (DistF <= CommonTol)
+      {
+        theEdge.Free( Standard_True );
+        Vf.Orientation( theVertex.Orientation() );
+        BB.Remove( theEdge, theVertex );
+        BB.Add( theEdge, Vf );
+        BB.UpdateVertex( Vf, CommonTol );
+        if (IsFirstF) theEdge.Reverse();
+        BB.Add( Base, theEdge );
+      }
+      else
+      {
+        if (IsFirstF) theEdge.Reverse();
+        BB.Add( Base, theEdge );
+        // Creating new edge from theVertex to Vf
+        TopoDS_Edge NewEdge = BRepLib_MakeEdge( theVertex, Vf );
+        BB.Add( Base, NewEdge );
+      }
+    }
+    if (DistL <= MaxTol && IndexL != IndexF)
+    {
+      theWire = TopoDS::Wire( UnclosedWires(IndexL) );
+      TopoDS_Vertex V1, V2;
+      TopExp::Vertices( theWire, V1, V2 );
+      TopTools_IndexedDataMapOfShapeListOfShape VEmap;
+      TopExp::MapShapesAndAncestors( theWire, TopAbs_VERTEX, TopAbs_EDGE, VEmap );
+      theEdge = (IsFirstL)? TopoDS::Edge(VEmap.FindFromKey( V1 ).First()) :
+        TopoDS::Edge(VEmap.FindFromKey( V2 ).First());
+      TopoDS_Iterator it( theWire );
+      for (; it.More(); it.Next())
+      {
+        TopoDS_Edge anEdge = TopoDS::Edge( it.Value() );
+        if (!IsFirstL) anEdge.Reverse();
+        if (!anEdge.IsSame( theEdge ))
+          BB.Add( Base, anEdge );
+      }
+      theVertex = (IsFirstL)? V1 : V2;
+      CommonTol = Max( BRep_Tool::Tolerance(Vl), BRep_Tool::Tolerance(theVertex) );
+      if (DistL <= CommonTol)
+      {
+        theEdge.Free( Standard_True );
+        Vl.Orientation( theVertex.Orientation() );
+        BB.Remove( theEdge, theVertex );
+        BB.Add( theEdge, Vl );
+        BB.UpdateVertex( Vl, CommonTol );
+        if (!IsFirstL) theEdge.Reverse();
+        BB.Add( Base, theEdge );
+      }
+      else
+      {
+        if (!IsFirstL) theEdge.Reverse();
+        BB.Add( Base, theEdge );
+        // Creating new edge from Vl to theVertex
+        TopoDS_Edge NewEdge = BRepLib_MakeEdge( Vl, theVertex );
+        BB.Add( Base, NewEdge );
+      }
+    }
+    // Check if it is possible to close resulting wire
+    if (TryToClose)
+    {
       TopExp::Vertices( Base, Vf, Vl );
-      gp_Pnt Pf, Pl;
+      CommonTol = Max( BRep_Tool::Tolerance(Vf), BRep_Tool::Tolerance(Vl) );
+      TopTools_IndexedDataMapOfShapeListOfShape VEmap;
+      TopExp::MapShapesAndAncestors( Base, TopAbs_VERTEX, TopAbs_EDGE, VEmap );
+      TopoDS_Edge Efirst, Elast;
+      Efirst = TopoDS::Edge(VEmap.FindFromKey( Vf ).First());
+      Elast  = TopoDS::Edge(VEmap.FindFromKey( Vl ).First());
       Pf = BRep_Tool::Pnt(Vf);
       Pl = BRep_Tool::Pnt(Vl);
-      Standard_Real DistF = RealLast(), DistL = RealLast();
-      Standard_Integer IndexF, IndexL;
-      Standard_Boolean IsFirstF, IsFirstL;
-      for (Standard_Integer i = 2; i <= UnclosedWires.Length(); i++)
-	{
-	  TopoDS_Wire aWire = TopoDS::Wire( UnclosedWires(i) );
-	  TopoDS_Vertex V1, V2;
-	  TopExp::Vertices( aWire, V1, V2 );
-	  gp_Pnt P1, P2;
-	  P1 = BRep_Tool::Pnt(V1);
-	  P2 = BRep_Tool::Pnt(V2);
-	  Standard_Real dist = Pf.Distance( P1 );
-	  if (dist < DistF)
-	    {
-	      DistF = dist;
-	      IndexF = i;
-	      IsFirstF = Standard_True;
-	    }
-	  dist = Pf.Distance( P2 );
-	  if (dist < DistF)
-	    {
-	      DistF = dist;
-	      IndexF = i;
-	      IsFirstF = Standard_False;
-	    }
-	  dist = Pl.Distance( P1 );
-	  if (dist < DistL)
-	    {
-	      DistL = dist;
-	      IndexL = i;
-	      IsFirstL = Standard_True;
-	    }
-	  dist = Pl.Distance( P2 );
-	  if (dist < DistL)
-	    {
-	      DistL = dist;
-	      IndexL = i;
-	      IsFirstL = Standard_False;
-	    }
-	}
-      TopoDS_Wire theWire;
-      TopoDS_Edge theEdge;
-      TopoDS_Vertex theVertex;
-      Standard_Real CommonTol;
-      Standard_Boolean TryToClose = Standard_True;
-      if (DistF <= MaxTol && DistL <= MaxTol && IndexF == IndexL && IsFirstF == IsFirstL)
-	{
-	  if (DistF < DistL)
-	    {
-	      DistL = RealLast();
-	      IndexL++;
-	    }
-	  else
-	    {
-	      DistF = RealLast();
-	      IndexF++;
-	    }
-	  TryToClose = Standard_False;
-	}
-      if (DistF <= MaxTol)
-	{
-	  theWire = TopoDS::Wire( UnclosedWires(IndexF) );
-	  TopoDS_Vertex V1, V2;
-	  TopExp::Vertices( theWire, V1, V2 );
-	  TopTools_IndexedDataMapOfShapeListOfShape VEmap;
-	  TopExp::MapShapesAndAncestors( theWire, TopAbs_VERTEX, TopAbs_EDGE, VEmap );
-	  theEdge = (IsFirstF)? TopoDS::Edge(VEmap.FindFromKey( V1 ).First()) :
-	    TopoDS::Edge(VEmap.FindFromKey( V2 ).First());
-	  TopoDS_Iterator it( theWire );
-	  for (; it.More(); it.Next())
-	    {
-	      TopoDS_Edge anEdge = TopoDS::Edge( it.Value() );
-	      if (IsFirstF) anEdge.Reverse();
-	      if (!anEdge.IsSame( theEdge ))
-		BB.Add( Base, anEdge );
-	    }
-	  theVertex = (IsFirstF)? V1 : V2;
-	  CommonTol = Max( BRep_Tool::Tolerance(Vf), BRep_Tool::Tolerance(theVertex) );
-	  if (DistF <= CommonTol)
-	    {
-	      theEdge.Free( Standard_True );
-	      Vf.Orientation( theVertex.Orientation() );
-	      BB.Remove( theEdge, theVertex );
-	      BB.Add( theEdge, Vf );
-	      BB.UpdateVertex( Vf, CommonTol );
-	      if (IsFirstF) theEdge.Reverse();
-	      BB.Add( Base, theEdge );
-	    }
-	  else
-	    {
-	      if (IsFirstF) theEdge.Reverse();
-	      BB.Add( Base, theEdge );
-	      // Creating new edge from theVertex to Vf
-	      TopoDS_Edge NewEdge = BRepLib_MakeEdge( theVertex, Vf );
-	      BB.Add( Base, NewEdge );
-	    }
-	}
-      if (DistL <= MaxTol && IndexL != IndexF)
-	{
-	  theWire = TopoDS::Wire( UnclosedWires(IndexL) );
-	  TopoDS_Vertex V1, V2;
-	  TopExp::Vertices( theWire, V1, V2 );
-	  TopTools_IndexedDataMapOfShapeListOfShape VEmap;
-	  TopExp::MapShapesAndAncestors( theWire, TopAbs_VERTEX, TopAbs_EDGE, VEmap );
-	  theEdge = (IsFirstL)? TopoDS::Edge(VEmap.FindFromKey( V1 ).First()) :
-	    TopoDS::Edge(VEmap.FindFromKey( V2 ).First());
-	  TopoDS_Iterator it( theWire );
-	  for (; it.More(); it.Next())
-	    {
-	      TopoDS_Edge anEdge = TopoDS::Edge( it.Value() );
-	      if (!IsFirstL) anEdge.Reverse();
-	      if (!anEdge.IsSame( theEdge ))
-		BB.Add( Base, anEdge );
-	    }
-	  theVertex = (IsFirstL)? V1 : V2;
-	  CommonTol = Max( BRep_Tool::Tolerance(Vl), BRep_Tool::Tolerance(theVertex) );
-	  if (DistL <= CommonTol)
-	    {
-	      theEdge.Free( Standard_True );
-	      Vl.Orientation( theVertex.Orientation() );
-	      BB.Remove( theEdge, theVertex );
-	      BB.Add( theEdge, Vl );
-	      BB.UpdateVertex( Vl, CommonTol );
-	      if (!IsFirstL) theEdge.Reverse();
-	      BB.Add( Base, theEdge );
-	    }
-	  else
-	    {
-	      if (!IsFirstL) theEdge.Reverse();
-	      BB.Add( Base, theEdge );
-	      // Creating new edge from Vl to theVertex
-	      TopoDS_Edge NewEdge = BRepLib_MakeEdge( Vl, theVertex );
-	      BB.Add( Base, NewEdge );
-	    }
-	}
-      // Check if it is possible to close resulting wire
-      if (TryToClose)
-	{
-	  TopExp::Vertices( Base, Vf, Vl );
-	  CommonTol = Max( BRep_Tool::Tolerance(Vf), BRep_Tool::Tolerance(Vl) );
-	  TopTools_IndexedDataMapOfShapeListOfShape VEmap;
-	  TopExp::MapShapesAndAncestors( Base, TopAbs_VERTEX, TopAbs_EDGE, VEmap );
-	  TopoDS_Edge Efirst, Elast;
-	  Efirst = TopoDS::Edge(VEmap.FindFromKey( Vf ).First());
-          Elast  = TopoDS::Edge(VEmap.FindFromKey( Vl ).First());
-          Pf = BRep_Tool::Pnt(Vf);
-          Pl = BRep_Tool::Pnt(Vl);
-          Standard_Real Dist = Pf.Distance(Pl);
-	  if (Dist <= CommonTol)
-	    {
-	      Elast.Free( Standard_True );
-	      Vf.Orientation( Vl.Orientation() );
-	      BB.Remove( Elast, Vl );
-	      BB.Add( Elast, Vf );
-	      BB.UpdateVertex( Vf, CommonTol );
-	      Base.Closed( Standard_True );
-	    }
-	  else if (Dist <= MaxTol)
-	    {
-	      // Creating new edge from Vl to Vf
-	      TopoDS_Edge NewEdge = BRepLib_MakeEdge( Vf, Vl );
-	      BB.Add( Base, NewEdge );
-	      Base.Closed( Standard_True );
-	    }
-	}
-      // Updating sequences ClosedWires and UnclosedWires
-      if (DistF <= MaxTol)
-	UnclosedWires.Remove( IndexF );
-      if (DistL <= MaxTol && IndexL != IndexF)
-	{
-	  if (DistF <= MaxTol && IndexL > IndexF)
-	    IndexL--;
-	  UnclosedWires.Remove( IndexL );
-	}
-      if (Base.Closed())
-	{
-	  ClosedWires.Append( Base );
-	  UnclosedWires.Remove( 1 );
-	}
-      else if (DistF > MaxTol && DistL > MaxTol)
-	{
-	  IsolatedWires.Append( Base );
-	  UnclosedWires.Remove( 1 );
-	}
+      Standard_Real Dist = Pf.Distance(Pl);
+      if (Dist <= CommonTol)
+      {
+        Elast.Free( Standard_True );
+        Vf.Orientation( Vl.Orientation() );
+        BB.Remove( Elast, Vl );
+        BB.Add( Elast, Vf );
+        BB.UpdateVertex( Vf, CommonTol );
+        Base.Closed( Standard_True );
+      }
+      else if (Dist <= MaxTol)
+      {
+        // Creating new edge from Vl to Vf
+        TopoDS_Edge NewEdge = BRepLib_MakeEdge( Vf, Vl );
+        BB.Add( Base, NewEdge );
+        Base.Closed( Standard_True );
+      }
     }
+    // Updating sequences ClosedWires and UnclosedWires
+    if (DistF <= MaxTol)
+      UnclosedWires.Remove( IndexF );
+    if (DistL <= MaxTol && IndexL != IndexF)
+    {
+      if (DistF <= MaxTol && IndexL > IndexF)
+        IndexL--;
+      UnclosedWires.Remove( IndexL );
+    }
+    if (Base.Closed())
+    {
+      ClosedWires.Append( Base );
+      UnclosedWires.Remove( 1 );
+    }
+    else if (DistF > MaxTol && DistL > MaxTol)
+    {
+      IsolatedWires.Append( Base );
+      UnclosedWires.Remove( 1 );
+    }
+  }
 
   // Updating myShape
   if (ClosedWires.Length() + IsolatedWires.Length() == 1)
-    {
-      if (!ClosedWires.IsEmpty())
-	myShape = ClosedWires.First();
-      else
-	myShape = IsolatedWires.First();
-    }
+  {
+    if (!ClosedWires.IsEmpty())
+      myShape = ClosedWires.First();
+    else
+      myShape = IsolatedWires.First();
+  }
   else
-    {
-      TopoDS_Compound R;
-      BB.MakeCompound( R );
-      for (i = 1; i <= ClosedWires.Length(); i++)
-	BB.Add( R, ClosedWires(i) );
-      for (i = 1; i <= IsolatedWires.Length(); i++)
-	BB.Add( R, IsolatedWires(i) );
-      myShape = R;
-    }
+  {
+    TopoDS_Compound R;
+    BB.MakeCompound( R );
+    for (i = 1; i <= ClosedWires.Length(); i++)
+      BB.Add( R, ClosedWires(i) );
+    for (i = 1; i <= IsolatedWires.Length(); i++)
+      BB.Add( R, IsolatedWires(i) );
+    myShape = R;
+  }
 }
 
 //=======================================================================
@@ -1784,6 +1966,7 @@ void MakeCircle (const TopoDS_Edge&          E,
 
 #ifdef DRAW
   if ( AffichGeom && !OE.IsNull()) {
+    char name[256];
     sprintf(name,"OFFSET_%d",++NbOFFSET);
     DBRep::Set(name,OE);
   }
@@ -1799,7 +1982,9 @@ void MakeOffset (const TopoDS_Edge&        E,
 		 const TopoDS_Face&        F,
 		 const Standard_Real       Offset, 
 		       BRepFill_IndexedDataMapOfOrientedShapeListOfShape& Map,
-		 const Handle(Geom_Plane)& RefPlane)
+		 const Handle(Geom_Plane)& RefPlane,
+                 const Standard_Boolean    IsOpenResult,
+                 const TopoDS_Vertex *     Ends)
 {
   Standard_Real f,l;
   Standard_Real anOffset = Offset;
@@ -1808,6 +1993,20 @@ void MakeOffset (const TopoDS_Edge&        E,
 
   Handle(Geom2d_Curve) G2d = BRep_Tool::CurveOnSurface(E,F,f,l);
   Handle(Geom2d_Curve) G2dOC;
+
+  Standard_Boolean ToExtendFirstPar = Standard_True;
+  Standard_Boolean ToExtendLastPar  = Standard_True;
+  if (IsOpenResult)
+  {
+    TopoDS_Vertex V1, V2;
+    TopExp::Vertices(E, V1, V2);
+    if (V1.IsSame(Ends[0]) ||
+        V1.IsSame(Ends[1]))
+      ToExtendFirstPar = Standard_False;
+    if (V2.IsSame(Ends[0]) ||
+        V2.IsSame(Ends[1]))
+      ToExtendLastPar  = Standard_False;
+  }
 
   Geom2dAdaptor_Curve  AC(G2d,f,l);
   if ( AC.GetType() == GeomAbs_Circle) {
@@ -1820,7 +2019,7 @@ void MakeOffset (const TopoDS_Edge&        E,
     Standard_Real Crossed = Xd.X()*Yd.Y()-Xd.Y()*Yd.X();
     Standard_Real Signe = ( Crossed > 0.) ? 1. : -1.;
 
-    if (anOffset*Signe < AC.Circle().Radius()) {
+    if (anOffset*Signe < AC.Circle().Radius() - Precision::Confusion()) {
 
       Handle(Geom2dAdaptor_HCurve) AHC = 
 	new Geom2dAdaptor_HCurve(G2d);
@@ -1828,7 +2027,10 @@ void MakeOffset (const TopoDS_Edge&        E,
       Handle(Geom2d_Circle) CC = new Geom2d_Circle(Off.Circle());      
 
       Standard_Real Delta = 2*M_PI - l + f;
-      f -= 0.2*Delta; l += 0.2*Delta;
+      if (ToExtendFirstPar)
+        f -= 0.2*Delta;
+      if (ToExtendLastPar)
+        l += 0.2*Delta;
 
       G2dOC = new Geom2d_TrimmedCurve(CC,f,l);
     }
@@ -1839,7 +2041,10 @@ void MakeOffset (const TopoDS_Edge&        E,
     Adaptor3d_OffsetCurve Off(AHC,anOffset);
     Handle(Geom2d_Line)       CC = new Geom2d_Line(Off.Line());
     Standard_Real Delta = (l - f);
-    f -= Delta; l += Delta;
+    if (ToExtendFirstPar)
+      f -= Delta;
+    if (ToExtendLastPar)
+      l += Delta;
     G2dOC = new Geom2d_TrimmedCurve(CC,f,l);
   }
   else {
@@ -1860,6 +2065,7 @@ void MakeOffset (const TopoDS_Edge&        E,
 
 #ifdef DRAW  
     if (AffichGeom && !OE.IsNull()) {
+      char name[256];
       sprintf(name,"OFFSET_%d",++NbOFFSET);
       DBRep::Set(name,OE);
       Standard_Real ii = 0;
@@ -1869,77 +2075,6 @@ void MakeOffset (const TopoDS_Edge&        E,
   }
 }  
 
-//=======================================================================
-//function : UpdateDetromp
-//purpose  : For each interval on bissectrice defined by parameters
-//           test if the medium point is at a distance > offset	
-//           in this case vertices corresponding to the extremities of the interval
-//           are ranked in the proofing.
-//           => If the same vertex appears in the proofing, the 
-//           border of the zone of proximity is tangent to the offset .
-//=======================================================================
-
-void UpdateDetromp (TopTools_ListOfShape&           Detromp1,
-		    TopTools_ListOfShape&           Detromp2, 
-		    const TopTools_SequenceOfShape& Vertices, 
-		    const TColgp_SequenceOfPnt&     Params, 
-		    const Bisector_Bisec&           Bisec,
-		    const Standard_Boolean          SOnE,
-		    const Standard_Boolean          EOnE,
-		    const BRepFill_TrimEdgeTool&    Trim)
-{
-  Standard_Integer ii = 1;
-  Standard_Real    U1,U2;
-  TopoDS_Vertex    V1,V2;
-
-  Handle(Geom2d_Curve) Bis = Bisec.Value();
-
-  U1 = Bis->FirstParameter();
-  
-  if (SOnE) { 
-    // the first point of the bissectrice is on the offset
-    V1 = TopoDS::Vertex(Vertices.Value(ii));
-    ii++; 
-  }
-
-  while (ii <= Vertices.Length()) {
-    U2 = Params.Value(ii).X();
-    V2 = TopoDS::Vertex(Vertices.Value(ii));
-
-    gp_Pnt2d P = Bis->Value((U2 + U1)*0.5);  
-    if (!Trim.IsInside(P)) {
-      if (!V1.IsNull()) {
-	  Detromp1.Append(V1);
-	  Detromp2.Append(V1);
-      }
-      Detromp1.Append(V2);
-      Detromp2.Append(V2);
-    }
-    U1 = U2;
-    V1 = V2;
-    ii ++;
-  }
-
-  // test medium point between the last parameter and the end of the bissectrice.
-  U2 = Bis->LastParameter();
-  if (!EOnE) {
-    if (!Precision::IsInfinite(U2)) {
-      gp_Pnt2d P = Bis->Value((U2 + U1)*0.5);  
-      if (!Trim.IsInside(P)) {
-	if (!V1.IsNull()) {
-	  Detromp1.Append(V1);
-	  Detromp2.Append(V1);
-	}
-      }
-    }
-    else {
-      if (!V1.IsNull()) {
-	Detromp1.Append(V1);
-	Detromp2.Append(V1);
-      }
-    }
-  }    
-}
 
 //=======================================================================
 //function : VertexFromNode
@@ -2009,10 +2144,11 @@ void StoreInMap (const TopoDS_Shape& V1,
 
 void TrimEdge (const TopoDS_Edge&              E,
 	       const TopTools_ListOfShape&     Detromp,
-	             TopTools_SequenceOfShape& TheVer,
-	             TColStd_SequenceOfReal&   ThePar,
-		     TopTools_SequenceOfShape& S,
-	             TopTools_IndexedDataMapOfShapeShape& MapVV)
+               TopTools_SequenceOfShape& TheVer,
+               TColStd_SequenceOfReal&   ThePar,
+               TopTools_SequenceOfShape& S,
+               TopTools_IndexedDataMapOfShapeShape& MapVV,
+               const Standard_Integer IndOfE)
 {
   Standard_Boolean         Change = Standard_True;
   BRep_Builder             TheBuilder;
@@ -2083,44 +2219,93 @@ void TrimEdge (const TopoDS_Edge&              E,
   // the number of vertices should be even. The created edges  
   // go from a vertex with uneven index i to vertex i+1;
   //-----------------------------------------------------------
-  for (Standard_Integer k = 1; k < TheVer.Length(); k = k+2) {
+  if (IndOfE == 1 || IndOfE == -1) //open result and extreme edges of result
+  {
     TopoDS_Shape aLocalShape = E.EmptyCopied();
     TopoDS_Edge NewEdge = TopoDS::Edge(aLocalShape);
-//    TopoDS_Edge NewEdge = TopoDS::Edge(E.EmptyCopied());
-
-    if (NewEdge.Orientation() == TopAbs_REVERSED) {
-      TheBuilder.Add  (NewEdge,TheVer.Value(k)  .Oriented(TopAbs_REVERSED));
-      TheBuilder.Add  (NewEdge,TheVer.Value(k+1).Oriented(TopAbs_FORWARD));
+    TopoDS_Vertex V1, V2;
+    TopExp::Vertices(E, V1, V2);
+    Standard_Real fpar, lpar;
+    BRep_Tool::Range(E, fpar, lpar);
+    if (IndOfE == 1) //first edge of open wire
+    {
+      if (NewEdge.Orientation() == TopAbs_FORWARD)
+      {
+        TheBuilder.Add(NewEdge, V1.Oriented(TopAbs_FORWARD));
+        TheBuilder.Add(NewEdge, TheVer.First().Oriented(TopAbs_REVERSED));
+        TheBuilder.Range(NewEdge, fpar, ThePar.First());
+      }
+      else
+      {
+        //TheBuilder.Add(NewEdge, V1.Oriented(TopAbs_REVERSED));
+        //TheBuilder.Add(NewEdge, TheVer.First().Oriented(TopAbs_FORWARD));
+        TheBuilder.Add(NewEdge, TheVer.First().Oriented(TopAbs_REVERSED));
+        TheBuilder.Add(NewEdge, V2.Oriented(TopAbs_FORWARD));
+        TheBuilder.Range(NewEdge, ThePar.First(), lpar);
+      }
     }
-    else {      
-      TheBuilder.Add  (NewEdge,TheVer.Value(k)  .Oriented(TopAbs_FORWARD));
-      TheBuilder.Add  (NewEdge,TheVer.Value(k+1).Oriented(TopAbs_REVERSED));
+    else //last edge of open wire
+    {
+      if (NewEdge.Orientation() == TopAbs_FORWARD)
+      {
+        TheBuilder.Add(NewEdge, TheVer.First().Oriented(TopAbs_FORWARD));
+        TheBuilder.Add(NewEdge, V2.Oriented(TopAbs_REVERSED));
+        TheBuilder.Range(NewEdge, ThePar.First(), lpar);
+      }
+      else
+      {
+        //TheBuilder.Add(NewEdge, TheVer.First().Oriented(TopAbs_REVERSED));
+        //TheBuilder.Add(NewEdge, V2.Oriented(TopAbs_FORWARD));
+        TheBuilder.Add(NewEdge, V1.Oriented(TopAbs_REVERSED));
+        TheBuilder.Add(NewEdge, TheVer.First().Oriented(TopAbs_FORWARD));
+        TheBuilder.Range(NewEdge, fpar, ThePar.First());
+      }
     }
-
-
-    TheBuilder.Range(NewEdge,ThePar.Value(k),ThePar.Value(k+1));
-
-#ifdef DRAW
-    if ( AffichEdge) {
-      sprintf(name,"TRIMEDGE_%d",NbTRIMEDGES);
-      DBRep::Set(name,NewEdge);  
-    }
-    if (Affich2d) {
-      TopLoc_Location L;
-      Standard_Real f,l;
-      Handle(Geom_Surface) Surf;  
-      Handle(Geom2d_Curve) C;
-      BRep_Tool::CurveOnSurface(NewEdge,C,Surf,L,f,l);
-      sprintf(name,"OFFSET2d_%d",NbTRIMEDGES++);
-      Handle(Geom2d_TrimmedCurve) C2d = new Geom2d_TrimmedCurve(C,f,l);
-      Handle(DrawTrSurf_Curve2d) dr =
-	new DrawTrSurf_Curve2d(C2d,Standard_False);
-      dr->SetColor(Draw_bleu);
-      Draw::Set(name,dr);
-    }
-#endif
-
     S.Append(NewEdge);
+  }
+  else
+  {
+    for (Standard_Integer k = 1; k < TheVer.Length(); k = k+2) {
+      TopoDS_Shape aLocalShape = E.EmptyCopied();
+      TopoDS_Edge NewEdge = TopoDS::Edge(aLocalShape);
+      //    TopoDS_Edge NewEdge = TopoDS::Edge(E.EmptyCopied());
+      
+      if (NewEdge.Orientation() == TopAbs_REVERSED) {
+        TheBuilder.Add  (NewEdge,TheVer.Value(k)  .Oriented(TopAbs_REVERSED));
+        TheBuilder.Add  (NewEdge,TheVer.Value(k+1).Oriented(TopAbs_FORWARD));
+      }
+      else {      
+        TheBuilder.Add  (NewEdge,TheVer.Value(k)  .Oriented(TopAbs_FORWARD));
+        TheBuilder.Add  (NewEdge,TheVer.Value(k+1).Oriented(TopAbs_REVERSED));
+      }
+      
+      
+      TheBuilder.Range(NewEdge,ThePar.Value(k),ThePar.Value(k+1));
+      
+#ifdef DRAW
+      if ( AffichEdge) {
+        char name[256];
+        sprintf(name,"TRIMEDGE_%d",NbTRIMEDGES);
+        DBRep::Set(name,NewEdge);  
+      }
+      if (Affich2d) {
+        TopLoc_Location L;
+        Standard_Real f,l;
+        Handle(Geom_Surface) Surf;  
+        Handle(Geom2d_Curve) C;
+        BRep_Tool::CurveOnSurface(NewEdge,C,Surf,L,f,l);
+        char name[256];
+        sprintf(name,"OFFSET2d_%d",NbTRIMEDGES++);
+        Handle(Geom2d_TrimmedCurve) C2d = new Geom2d_TrimmedCurve(C,f,l);
+        Handle(DrawTrSurf_Curve2d) dr =
+          new DrawTrSurf_Curve2d(C2d,Standard_False);
+        dr->SetColor(Draw_bleu);
+        Draw::Set(name,dr);
+      }
+#endif
+      
+      S.Append(NewEdge);
+    }
   }
 }
 
@@ -2299,14 +2484,22 @@ static Standard_Boolean PerformCurve (TColStd_SequenceOfReal& Parameters,
   Points.Append(Pdeb);
 
   C.D1(UU2,Pfin,Dfin);
-  QuasiFleche(C,Deflection*Deflection,
-	      UU1,Pdeb,
-	      Ddeb,
-	      UU2,Pfin,
-	      Dfin,
-	      Nbmin,
-	      EPSILON*EPSILON,
-	      Parameters,Points);
+
+  const Standard_Real aDelta = UU2 - UU1;
+  const Standard_Real aDist = Pdeb.Distance(Pfin);
+
+  if((aDelta/aDist) > 5.0e-14)
+  {
+    QuasiFleche(C,Deflection*Deflection,
+	              UU1,Pdeb,
+	              Ddeb,
+	              UU2,Pfin,
+	              Dfin,
+	              Nbmin,
+	              EPSILON*EPSILON,
+	              Parameters,Points);
+  }
+
   return Standard_True;
 }
 //=======================================================================
@@ -2388,4 +2581,4 @@ static void QuasiFleche(const Adaptor3d_Curve& C,
 		Parameters,Points);
   }
 }
-			
+
