@@ -64,6 +64,9 @@
 #include <BOPCol_ListOfInteger.hxx>
 #include <BOPInt_Context.hxx>
 
+#include <TCollection_CompareOfInteger.hxx>
+#include <TColStd_Array1OfInteger.hxx>
+#include <SortTools_QuickSortOfInteger.hxx>
 
 static
   Standard_Boolean IsClosedShell(const TopoDS_Shell& aSh);
@@ -302,6 +305,15 @@ void BOPAlgo_Builder::FillIn3DParts(BOPCol_DataMapOfShapeListOfShape& theInParts
     aNbFP=aBBTree.Select(aSelector);
     //
     const BOPCol_ListOfInteger& aLIFP=aSelector.Indices();
+    //sort indices
+    TColStd_Array1OfInteger anArray(1, aNbFP);
+    aItLI.Initialize(aLIFP);
+    for (k = 1; aItLI.More(); aItLI.Next(), ++k) {
+      nFP=aItLI.Value();
+      anArray(k) = nFP;
+    }
+    TCollection_CompareOfInteger comp;
+    SortTools_QuickSortOfInteger::Sort(anArray,comp);
     //
     // 2.7. Collect faces that are IN aSolid [ aLFIN ]
     BOPCol_ListOfShape aLFP(aAlr1);
@@ -311,9 +323,8 @@ void BOPAlgo_Builder::FillIn3DParts(BOPCol_DataMapOfShapeListOfShape& theInParts
     //
     BOPTools::MapShapes(aSD, TopAbs_EDGE, aME);
     //
-    aItLI.Initialize(aLIFP);
-    for (; aItLI.More(); aItLI.Next()) {
-      nFP=aItLI.Value();
+    for (k = 1; k <= aNbFP; ++k) {
+      nFP = anArray(k);
       const BOPAlgo_ShapeBox& aSBF=aDMISB.Find(nFP);
       const TopoDS_Face& aFP=(*(TopoDS_Face*)&aSBF.Shape());
       if (aMFDone.Contains(aFP)) {
