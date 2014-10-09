@@ -1143,10 +1143,6 @@ static Standard_Integer bsplineprof(Draw_Interpretor& di,
   
   return 0;
 
-#ifdef DEB  
-  di << "profile : bad number of arguments";
-  return 1;
-#endif
 }
 
 

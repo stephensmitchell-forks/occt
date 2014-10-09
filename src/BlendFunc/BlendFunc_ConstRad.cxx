@@ -288,14 +288,14 @@ Standard_Boolean BlendFunc_ConstRad::ComputeValues(const math_Vector& X,
  if (invnorm1 > Eps) invnorm1 = ((Standard_Real) 1) /invnorm1;
  else {
    invnorm1 = 1; // Unsatisfactory, but it is not necessary to crash
-#if DEB
+#if BLENDFUNC_DEB
    cout << " ConstRad : Surface singuliere " << endl;
 #endif
  }
  if (invnorm2 > Eps) invnorm2 = ((Standard_Real) 1) /invnorm2;
  else {
    invnorm2 = 1; //  Unsatisfactory, but it is not necessary to crash
-#if DEB
+#if BLENDFUNC_DEB
    cout << " ConstRad : Surface singuliere " << endl;
 #endif
  }
@@ -883,7 +883,7 @@ Standard_Boolean BlendFunc_ConstRad::IsSolution(const math_Vector& Sol, const St
 	   Abs(controle(2)) > tolerances(2) ||
 	   Abs(controle(3)) > tolerances(3) ||
 	   Abs(controle(4)) > tolerances(4)){
-#ifdef DEB
+#ifdef BLENDFUNC_DEB
 	cout<<"Cheminement : echec calcul des derivees"<<endl;
 #endif
 	  istangent = Standard_True;
@@ -1487,13 +1487,13 @@ Standard_Boolean BlendFunc_ConstRad::Section
   norm2 = nplan.Crossed(ns2).Magnitude();
   if (norm1 < Eps) {
     norm1 = 1; // Unsatisfactory, but it is not necessary to stop
-#if DEB
+#if BLENDFUNC_DEB
     cout << " ConstRad : Surface singuliere " << endl;
 #endif
   }
   if (norm2 < Eps) {
    norm2 = 1; // Unsatisfactory, but it is not necessary to stop
-#if DEB
+#if BLENDFUNC_DEB
    cout << " ConstRad : Surface singuliere " << endl;
 #endif
  }
@@ -1829,13 +1829,13 @@ Standard_Boolean BlendFunc_ConstRad::Section
   norm2 = nplan.Crossed(ns2).Magnitude();
   if (norm1 < Eps) {
     norm1 = 1; // Unsatisfactory, but it is not necessary to stop
-#if DEB
+#if BLENDFUNC_DEB
     cout << " ConstRad : Surface singuliere " << endl;
 #endif
   }
   if (norm2 < Eps) {
     norm2 = 1; // Unsatisfactory, but it is not necessary to stop
-#if DEB
+#if BLENDFUNC_DEB
     cout << " ConstRad : Surface singuliere " << endl;
 #endif
  }

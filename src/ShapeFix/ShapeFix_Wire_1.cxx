@@ -364,7 +364,7 @@ static Standard_Real AdjustOnPeriodic3d (const Handle(Geom_Curve)& c,
 	}
 	catch (Standard_Failure) 
         {
-#ifdef DEB 
+#ifdef SHAPEFIX_DEB
 	  cout << "Warning: ShapeFix_Wire_1::FixGap3d: Exception in TrimmedCurve" <<first<<" " <<last<<endl;
 	  Standard_Failure::Caught()->Print(cout); cout << endl; 
 #endif  
@@ -639,7 +639,7 @@ static Standard_Real AdjustOnPeriodic3d (const Handle(Geom_Curve)& c,
       }
       catch (Standard_Failure) 
       {
-#ifdef DEB       
+#ifdef SHAPEFIX_DEB
 	cout << "Warning: ShapeFix_Wire_1::FixGap3d: Exception in TrimmedCurve      :"<<endl;
 	Standard_Failure::Caught()->Print(cout); cout << endl;
 #endif
@@ -947,7 +947,7 @@ static Standard_Real AdjustOnPeriodic2d (const Handle(Geom2d_Curve)& pc,
 	}
 	catch (Standard_Failure) 
         {
-#ifdef DEB
+#ifdef SHAPEFIX_DEB
 	  cout << "Warning: ShapeFix_Wire_1::FixGap2d: Exception in TrimmedCurve2d" <<first<<" " <<last<<endl;
 	  Standard_Failure::Caught()->Print(cout); cout << endl; 
 #endif  
@@ -1527,7 +1527,7 @@ static Standard_Real AdjustOnPeriodic2d (const Handle(Geom2d_Curve)& pc,
       catch (Standard_Failure) 
       {
 	
-#ifdef DEB 		
+#ifdef SHAPEFIX_DEB
 	cout << "Warning: ShapeFix_Wire_1::FixGap2d: Exception in TrimmedCurve2d  :"<<endl;
 	Standard_Failure::Caught()->Print(cout); cout << endl;
 #endif	

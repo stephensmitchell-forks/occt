@@ -326,7 +326,7 @@ Handle(IGESData_IGESEntity) GeomToIGES_GeomCurve::TransferCurve
       }
     }
     catch ( Standard_Failure ) {
-#ifdef DEB
+#ifdef GEOMTOIGES_DEB
       cout << "Warning: GeomToIGES_GeomCurve: can't trim bspline" << endl;
       cout << "Warning: Exception in Segment(): " ;
       Standard_Failure::Caught()->Print(cout);
@@ -840,7 +840,7 @@ Handle(IGESData_IGESEntity) GeomToIGES_GeomCurve::TransferCurve
       return res;
     }
     catch(Standard_Failure){
-#ifdef DEB
+#ifdef GEOMTOIGES_DEB
       cout << "writing non-planar offset curve."<<endl;
       cout << "Warning: GeomConvert::CurveToBSplineCurve raised an exception: ";
       Standard_Failure::Caught()->Print(cout);

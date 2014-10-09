@@ -127,8 +127,11 @@ void BRepFeat_RibSlot::LFPerform()
   if (mySbase.IsNull() || myPbase.IsNull() || mySkface.IsNull() 
       || myGShape.IsNull() || myLFMap.IsEmpty()) {
 #ifdef DEB
-    cout << "Topological reconstruction is impossible" << endl;
-    if (trc) cout << " Fields not initialized" << endl;
+    if (trc)
+    {
+      cout << "Topological reconstruction is impossible" << endl;
+      cout << " Fields not initialized" << endl;
+    }
 #endif
     myStatusError = BRepFeat_NotInitialized;
     NotDone();
@@ -208,7 +211,7 @@ void BRepFeat_RibSlot::LFPerform()
         (!Collage)) {
       theOpe = 2;
       ChangeOpe = Standard_True;
-#ifdef DEB
+#ifdef BREPFEAT_DEB
       cout << "Passage to topological operations" << endl;
 #endif
     }
@@ -230,7 +233,7 @@ void BRepFeat_RibSlot::LFPerform()
     else {
       theOpe = 2;
       ChangeOpe = Standard_True;
-#ifdef DEB
+#ifdef BREPFEAT_DEB
       cout << "Passage to topologic operation" << endl;
 #endif
     }

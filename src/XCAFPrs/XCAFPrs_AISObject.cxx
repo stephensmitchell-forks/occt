@@ -242,7 +242,7 @@ void XCAFPrs_AISObject::AddStyledItem (const XCAFPrs_Style &style,
   case 0:{
     try { OCC_CATCH_SIGNALS  StdPrs_WFDeflectionShape::Add(aPrs,shape,myDrawer); }
     catch (Standard_Failure) { 
-#ifdef DEB
+#ifdef XCAFPRS_DEB
       cout << "AIS_Shape::Compute() failed: exception " <<
 	      Standard_Failure::Caught()->DynamicType()->Name() << ": " <<
 	      Standard_Failure::Caught()->GetMessageString() << endl;
@@ -264,7 +264,7 @@ void XCAFPrs_AISObject::AddStyledItem (const XCAFPrs_Style &style,
 	  OwnDeviationCoefficient(newcoeff,prevcoeff))
 	if (Abs (newangle - prevangle) > Precision::Angular() ||
 	    Abs (newcoeff - prevcoeff) > Precision::Confusion()  ) { 
-#ifdef DEB
+#ifdef XCAFPRS_DEB
 	  cout << "AIS_Shape : compute"<<endl;
 	  cout << "newangl   : " << newangle << " # de " << "prevangl  : " << prevangle << " OU "<<endl;
 	  cout << "newcoeff  : " << newcoeff << " # de " << "prevcoeff : " << prevcoeff << endl;
@@ -286,7 +286,7 @@ void XCAFPrs_AISObject::AddStyledItem (const XCAFPrs_Style &style,
 	}
       }
       catch (Standard_Failure) {
-#ifdef DEB
+#ifdef XCAFPRS_DEB
 	cout << "AIS_Shape::Compute() in ShadingMode failed: exception " <<
 	        Standard_Failure::Caught()->DynamicType()->Name() << ": " <<
 	        Standard_Failure::Caught()->GetMessageString() << endl;
@@ -394,9 +394,6 @@ void XCAFPrs_AISObject::Compute (const Handle(PrsMgr_PresentationManager3d)& aPr
                                  const Handle(Prs3d_Presentation)& aPrs,
                                  const Standard_Integer aMode)
 {  
-#ifdef DEB
-  //cout << "XCAFPrs_AISObject: Update called" << endl;
-#endif
   aPrs->Clear();
 
   // abv: 06 Mar 00: to have good colors
@@ -426,33 +423,17 @@ void XCAFPrs_AISObject::Compute (const Handle(PrsMgr_PresentationManager3d)& aPr
   TopLoc_Location L;
   XCAFPrs_DataMapOfShapeStyle settings;
   XCAFPrs::CollectStyleSettings ( myLabel, L, settings );
-#ifdef DEB
-  //cout << "Styles collected" << endl;
-#endif
 
   // dispatch (sub)shapes by their styles
   XCAFPrs_DataMapOfStyleShape items;
   XCAFPrs_Style DefStyle;
   DefaultStyle (DefStyle);
   XCAFPrs::DispatchStyles ( shape, settings, items, DefStyle );
-#ifdef DEB
-  //cout << "Dispatch done" << endl;
-#endif
 
   // add subshapes to presentation (one shape per style)
   XCAFPrs_DataMapIteratorOfDataMapOfStyleShape it ( items );
-#ifdef DEB
-  //Standard_Integer i=1;
-#endif
   for ( ; it.More(); it.Next() ) {
     XCAFPrs_Style s = it.Key();
-#ifdef DEB
-    //cout << "Style " << i << ": [" << 
-    //  ( s.IsSetColorSurf() ? Quantity_Color::StringName ( s.GetColorSurf().Name() ) : "" ) << ", " <<
-    //  ( s.IsSetColorCurv() ? Quantity_Color::StringName ( s.GetColorCurv().Name() ) : "" ) << "]" <<
-	//" --> si_" << i << ( s.IsVisible() ? "" : " <invisible>" ) << endl;
-    //i++;
-#endif
     if (! s.IsVisible() ) continue;
     Prs3d_Root::NewGroup(aPrs);
     AddStyledItem ( s, it.Value(), aPresentationManager, aPrs, aMode );
@@ -460,15 +441,9 @@ void XCAFPrs_AISObject::Compute (const Handle(PrsMgr_PresentationManager3d)& aPr
   
   if ( XCAFPrs::GetViewNameMode() ) {
   // Displaying Name attributes
-#ifdef DEB
-    //cout << "Now display name of shapes" << endl;
-#endif
     aPrs->SetDisplayPriority(10);
     DisplayText (myLabel, aPrs, Attributes()->LengthAspect()->TextAspect(), TopLoc_Location());//no location
   }
-#ifdef DEB
-  //cout << "Compute finished" << endl;
-#endif
   
   aPrs->ReCompute(); // for hidden line recomputation if necessary...
 }

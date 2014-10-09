@@ -122,7 +122,7 @@ void TestTopOpe::Factory(Draw_Interpretor& theDI)
 
   BOPTest::Factory(theDI);
 
-#ifdef DEB
+#ifdef TESTTOPOPE_DEB
       cout << "Draw Plugin : All topological operations kernel commands are loaded" << endl;
 #endif
 }

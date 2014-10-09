@@ -569,7 +569,7 @@ void ChFi3d_ChBuilder::PerformThreeCorner(const Standard_Integer Jndex)
       if (inter.IsDone()) {
 	Standard_Integer nbl = inter.NbLines();
 	if (nbl > 1) {
-#ifdef DEB
+#ifdef CHFI3D_DEB
 	  cout<<"trop d'intersection entre les surfaces"<<endl;
 #endif
 	}

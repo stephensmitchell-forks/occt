@@ -76,7 +76,7 @@ static Standard_Integer distmini(Draw_Interpretor& di, Standard_Integer n, const
 
   if (dst.IsDone()) 
       { 
-#ifdef DEB
+#ifdef BREPTEST_DEB
          //dst.Dump(cout);
 	Standard_SStream aSStream;
 	dst.Dump(aSStream);

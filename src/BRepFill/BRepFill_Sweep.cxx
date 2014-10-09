@@ -355,7 +355,7 @@ static Standard_Boolean SameParameter(TopoDS_Edge&    E,
   Approx_SameParameter sp( HC3d, Pcurv, S, tol3d );
   if(sp.IsDone() && !sp.IsSameParameter()) Pcurv = sp.Curve2d();
   else if(!sp.IsDone() && !sp.IsSameParameter()){
-#ifdef DEB
+#ifdef BREPFILL_DEB
     cout<<"echec SameParameter"<<endl;
 #endif  
     return Standard_False;
@@ -363,7 +363,7 @@ static Standard_Boolean SameParameter(TopoDS_Edge&    E,
 
   ResTol = sp.TolReached();
   if(ResTol > tolreached ){
-#ifdef DEB
+#ifdef BREPFILL_DEB
     cout<<"SameParameter : Tolerance not reached!"<<endl;
     cout<<"tol visee : "<<tol3d<<" tol obtained : "<<ResTol<<endl;
 #endif  
@@ -2313,7 +2313,7 @@ BRepFill_Sweep::BRepFill_Sweep(const Handle(BRepFill_SectionLaw)& Section,
 					   Max(myTol3d, TabErr(isec,ipath)));
       }
       if (Degenerated(isec, ipath)) { 
-#if DEB
+#if BREPFILL_DEB
 	cout << "Sweep : Degenerated case" << endl;
 #endif
 	hasdegen = Standard_True;
@@ -2797,7 +2797,7 @@ BRepFill_Sweep::BRepFill_Sweep(const Handle(BRepFill_SectionLaw)& Section,
     t2 = M.Column(3);
 
     if (t1.Angle(t2) < myAngMin) {
-#if DEB
+#if BREPFILL_DEB
       cout << "BRepFill_Sweep::PerformCorner : This is not a corner !" << endl;
 #endif
       return;
@@ -2890,7 +2890,7 @@ BRepFill_Sweep::BRepFill_Sweep(const Handle(BRepFill_SectionLaw)& Section,
   }
   else if ((TheTransition == BRepFill_Right) ||
 	   aTrim.HasSection() ) { 
-#if DEB
+#if BREPFILL_DEB
     cout << "Fail of TrimCorner" << endl;
 #endif
     return; // Nothing is touched
@@ -2958,7 +2958,7 @@ BRepFill_Sweep::BRepFill_Sweep(const Handle(BRepFill_SectionLaw)& Section,
 	  if (ii==1) BordFirst = Bord1;
 	}
       }
-#if DEB
+#if BREPFILL_DEB
       else cout << "PerformCorner : Unsymmetry of free border" << endl;
 #endif
     }

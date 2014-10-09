@@ -53,7 +53,9 @@ Handle(Standard_Transient) Plugin::Load(const Standard_GUID& aGUID)
     if(!PluginResource->Find(theResource.ToCString())) {
       Standard_SStream aMsg; aMsg << "could not find the resource:";
       aMsg << theResource.ToCString()<< endl;
+#ifdef PLUGIN_DEB
       cout << "could not find the resource:"<<theResource.ToCString()<< endl;
+#endif
       Plugin_Failure::Raise(aMsg);
     }
     
@@ -78,7 +80,9 @@ Handle(Standard_Transient) Plugin::Load(const Standard_GUID& aGUID)
       aMsg << PluginResource->Value(theResource.ToCString());
       aMsg << "; reason:";
       aMsg << error.ToCString();
+#ifdef PLUGIN_DEB
       cout << "could not open: "  << PluginResource->Value(theResource.ToCString())<< " ; reason: "<< error.ToCString() << endl;
+#endif
       Plugin_Failure::Raise(aMsg);
     }
     f = theSharedLibrary.DlSymb("PLUGINFACTORY");

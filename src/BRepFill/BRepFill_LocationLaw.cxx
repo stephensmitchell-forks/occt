@@ -619,7 +619,7 @@ void BRepFill_LocationLaw::CurvilinearBounds(const Standard_Integer Index,
   }
   else {
     W.Nullify();
-#if DEB    
+#if BREPFILL_DEB    
     cout << "BRepFill_LocationLaw::D0 : Attention position out of limits" 
          << endl;
 #endif

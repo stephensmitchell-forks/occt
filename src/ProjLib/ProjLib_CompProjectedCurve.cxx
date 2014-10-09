@@ -715,7 +715,7 @@ static Standard_Boolean InitialPoint(const gp_Pnt& Point,
 	  if(!ExactBound(Triple, t - Step, Tol, 
                          myTolU, myTolV, myCurve, mySurface)) 
           {
-#if DEB
+#if PROJLIB_DEB
 	    cout<<"There is a problem with ExactBound computation"<<endl;
 #endif
 	    DichExactBound(Triple, t - Step, Tol, myTolU, myTolV, 
@@ -788,7 +788,7 @@ static Standard_Boolean InitialPoint(const gp_Pnt& Point,
 	      if(!ExactBound(Triple, t, Tol, myTolU, myTolV, 
                              myCurve, mySurface)) 
               {
-#if DEB
+#if PROJLIB_DEB
 	          cout<<"There is a problem with ExactBound computation"<<endl;
 #endif
 	          DichExactBound(Triple, t, Tol, myTolU, myTolV, 

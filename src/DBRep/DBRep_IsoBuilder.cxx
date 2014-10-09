@@ -114,14 +114,14 @@ DBRep_IsoBuilder::DBRep_IsoBuilder (const TopoDS_Face&     TopologicalFace,
 
     if (PCurve.IsNull())
     {
-    #ifdef DEB
+    #ifdef DBREP_DEB
       cout << "DBRep_IsoBuilder : PCurve is null\n";
     #endif
       return;
     }
     else if (U1 == U2)
     {
-    #ifdef DEB
+    #ifdef DBREP_DEB
       cout << "DBRep_IsoBuilder PCurve : U1==U2\n";
     #endif
       return;
@@ -146,7 +146,7 @@ DBRep_IsoBuilder::DBRep_IsoBuilder (const TopoDS_Face&     TopologicalFace,
               U2 - TrimPCurve->BasisCurve()->LastParameter()  > Precision::PConfusion())
           {
             AddElement (PCurve, TopologicalEdge.Orientation());
-          #ifdef DEB
+          #ifdef DBREP_DEB
             cout << "DBRep_IsoBuilder TrimPCurve : parameters out of range\n";
             cout << "    U1(" << U1 << "), Umin(" << PCurve->FirstParameter()
                  << "), U2("  << U2 << "), Umax(" << PCurve->LastParameter() << ")\n";
@@ -158,7 +158,7 @@ DBRep_IsoBuilder::DBRep_IsoBuilder (const TopoDS_Face&     TopologicalFace,
         {
           if (PCurve->FirstParameter() - U1 > Precision::PConfusion())
           {
-          #ifdef DEB
+          #ifdef DBREP_DEB
             cout << "DBRep_IsoBuilder PCurve : parameters out of range\n";
             cout << "    U1(" << U1 << "), Umin(" << PCurve->FirstParameter() << ")\n";
           #endif
@@ -166,7 +166,7 @@ DBRep_IsoBuilder::DBRep_IsoBuilder (const TopoDS_Face&     TopologicalFace,
           }
           if (PCurve->FirstParameter() - U2 > Precision::PConfusion())
           {
-          #ifdef DEB
+          #ifdef DBREP_DEB
             cout << "DBRep_IsoBuilder PCurve : parameters out of range\n";
             cout << "    U2(" << U2 << "), Umin(" << PCurve->FirstParameter() << ")\n";
           #endif
@@ -174,7 +174,7 @@ DBRep_IsoBuilder::DBRep_IsoBuilder (const TopoDS_Face&     TopologicalFace,
           }
           if (U1 - PCurve->LastParameter() > Precision::PConfusion())
           {
-          #ifdef DEB
+          #ifdef DBREP_DEB
             cout << "DBRep_IsoBuilder PCurve : parameters out of range\n";
             cout << "    U1(" << U1 << "), Umax(" << PCurve->LastParameter() << ")\n";
           #endif
@@ -182,7 +182,7 @@ DBRep_IsoBuilder::DBRep_IsoBuilder (const TopoDS_Face&     TopologicalFace,
           }
           if (U2 - PCurve->LastParameter() > Precision::PConfusion())
           {
-          #ifdef DEB
+          #ifdef DBREP_DEB
             cout << "DBRep_IsoBuilder PCurve : parameters out of range\n";
             cout << "    U2(" << U2 << "), Umax(" << PCurve->LastParameter() << ")\n";
           #endif

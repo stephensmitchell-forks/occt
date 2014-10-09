@@ -565,7 +565,7 @@ void TopOpeBRepBuild_Builder::GFABUMakeFaces(const TopoDS_Shape& FF,TopOpeBRepBu
 
     Standard_Boolean topurge = FUN_purgeFon1nonoriE(newFace);
     if (topurge) {
-#ifdef DEB      
+#ifdef TOPOPEBREPBUILD_DEB      
       if (strange) cout<<"Builder::GFABUMakeFaces -> purgeFon1nonoriE\n";
 #endif
       continue;

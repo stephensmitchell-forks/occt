@@ -405,8 +405,11 @@ void BRepFeat_MakeLinearForm::Init(const TopoDS_Shape& Sbase,
     
     if (!ProfileOK) {
 #ifdef DEB
-      cout << "Not computable" << endl;
-      if (trc) cout << "Face profile not computable" << endl;
+      if (trc)
+      {
+        cout << "Not computable" << endl;
+        cout << "Face profile not computable" << endl;
+      }
 #endif
       myStatusError = BRepFeat_NoFaceProf;
       NotDone();
@@ -420,7 +423,7 @@ void BRepFeat_MakeLinearForm::Init(const TopoDS_Shape& Sbase,
     Sliding = Propagate(SliList, Prof, myFirstPnt, myLastPnt, falseside);
 // Control if there is everything required to have the material at the proper side
     if(falseside == Standard_False) {
-#ifdef DEB
+#ifdef BREPFEAT_DEB
       cout << "Verify plane and wire orientation" << endl;
 #endif
       myStatusError = BRepFeat_FalseSide;
@@ -738,8 +741,11 @@ void BRepFeat_MakeLinearForm::Init(const TopoDS_Shape& Sbase,
     
     if (!ProfileOK) {
 #ifdef DEB
-      cout << "Not computable" << endl;
-      if (trc) cout << " Face profile not computable" << endl;
+      if (trc)
+      {
+        cout << "Not computable" << endl;
+        cout << " Face profile not computable" << endl;
+      }
 #endif
       myStatusError = BRepFeat_NoFaceProf;
       NotDone();
@@ -753,7 +759,7 @@ void BRepFeat_MakeLinearForm::Init(const TopoDS_Shape& Sbase,
     Propagate(SliList, Prof, myFirstPnt, myLastPnt, falseside);
 // Control if there is everything required to have the material at the proper side
     if(falseside == Standard_False) {
-#ifdef DEB
+#ifdef BREPFEAT_DEB
       cout << "Verify plane and wire orientation" << endl;
 #endif
       myStatusError = BRepFeat_FalseSide;
@@ -898,8 +904,11 @@ void BRepFeat_MakeLinearForm::Perform()
 
   if(!myGluedF.IsEmpty() && !mySUntil.IsNull()) {
 #ifdef DEB
-    cout << "The case is not computable" << endl;
-    if (trc) cout << " Glued faces not empty and Until shape not null" << endl;
+    if (trc)
+    {
+      cout << "The case is not computable" << endl;
+      cout << " Glued faces not empty and Until shape not null" << endl;
+    }
 #endif
     myStatusError = BRepFeat_InvShape;
     NotDone();
@@ -1228,7 +1237,7 @@ static void SetGluedFaces(const TopTools_DataMapOfShapeListOfShape& theSlmap,
       for (it.Initialize(ledg); it.More(); it.Next()) {
 	const TopTools_ListOfShape& gfac = thePrism.Shapes(it.Value());
 	if (gfac.Extent() != 1) {
-#ifdef DEB
+#ifdef BREPFEAT_DEB
 	  cout << "Pb SetGluedFace" << endl;
 #endif
 	}

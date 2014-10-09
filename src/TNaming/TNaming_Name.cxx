@@ -2239,7 +2239,7 @@ case TNaming_SHELLIN:
     }
   }
 } catch (...) {
-#ifdef DEB  
+#ifdef TNAMING_DEB  
   cout << "Name::Solve: EXCEPTION==> NameType = " << NameTypeToString(myType) << "  ";
   PrintEntry(aLab);
 #endif

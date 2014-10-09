@@ -357,7 +357,7 @@ Standard_Integer XmlLDrivers_DocumentStorageDriver::MakeDocument
 #endif
     return myRelocTable.Extent();
   }
-#ifdef DEB
+#ifdef XMLLDRIVERS_DEB
   cout << "First step failed" << endl;  // No MessageDriver available
 #endif
   return -1; // error

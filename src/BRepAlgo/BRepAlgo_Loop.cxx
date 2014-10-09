@@ -667,9 +667,11 @@ void BRepAlgo_Loop::Perform()
       myNewWires.Append (NW);
     else {
 #ifdef DEB
-      cout <<"BRepAlgo_Loop: Open Wire"<<endl;
       if (AffichLoop)
-	cout << "OpenWire is : NW_"<<NbLoops<<"_"<<NbWires<<endl;
+      {
+        cout <<"BRepAlgo_Loop: Open Wire"<<endl;
+        cout << "OpenWire is : NW_"<<NbLoops<<"_"<<NbWires<<endl;
+      }
 #endif
     }
 #ifdef DRAW

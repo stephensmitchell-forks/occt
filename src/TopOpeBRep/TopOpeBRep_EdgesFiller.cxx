@@ -177,7 +177,7 @@ void TopOpeBRep_EdgesFiller::Insert(const TopoDS_Shape& E1,const TopoDS_Shape& E
 
     Standard_Boolean faulty =  (isvertex && isnewpoint) || (!isvertex && isnewvertex);
     if (faulty) {
-#ifdef DEB
+#ifdef TOPOPEBREP_DEB
       cout<<"- - - faulty EdgesFiller : G "<<G<<" K ";TopOpeBRepDS::Print(K,cout);cout.flush();
       cout<<" isvertex="<<isvertex;cout.flush();
       cout<<" isop="<<foundpoint<<" isov="<<foundvertex;cout.flush();

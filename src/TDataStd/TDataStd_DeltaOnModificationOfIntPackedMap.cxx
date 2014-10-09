@@ -44,7 +44,7 @@ TDataStd_DeltaOnModificationOfIntPackedMap::TDataStd_DeltaOnModificationOfIntPac
       Handle(TColStd_HPackedMapOfInteger) aMap1, aMap2;
       aMap1 = OldAtt->GetHMap();
       aMap2 = CurrAtt->GetHMap();
-#ifdef DEB
+#ifdef TDATASTD_DEB
       if(aMap1.IsNull())
 	cout <<"DeltaOnModificationOfIntPackedMap:: Old Map is Null" <<endl;
       if(aMap2.IsNull())
@@ -71,7 +71,7 @@ TDataStd_DeltaOnModificationOfIntPackedMap::TDataStd_DeltaOnModificationOfIntPac
       }
     }
     OldAtt->RemoveMap();
-#ifdef DEB
+#ifdef TDATASTD_DEB
     if(OldAtt->GetHMap().IsNull())
       cout << "BackUp Arr is Nullified" << endl;
 #endif
@@ -90,7 +90,7 @@ void TDataStd_DeltaOnModificationOfIntPackedMap::Apply()
   Handle(TDF_Attribute) aTDFAttribute = Attribute();
   Handle(TDataStd_IntPackedMap) aBackAtt = (*((Handle(TDataStd_IntPackedMap)*)&aTDFAttribute));
   if(aBackAtt.IsNull()) {
-#ifdef DEB
+#ifdef TDATASTD_DEB
     cout << "DeltaOnModificationOfIntPAckedMap::Apply: OldAtt is Null" <<endl;
 #endif
     return;
@@ -103,7 +103,7 @@ void TDataStd_DeltaOnModificationOfIntPackedMap::Apply()
   }
 
   if(aCurAtt.IsNull()) {
-#ifdef DEB
+#ifdef TDATASTD_DEB
     cout << "DeltaOnModificationOfIntAPckedMAp::Apply: CurAtt is Null" <<endl;
 #endif
     return;
@@ -130,7 +130,7 @@ void TDataStd_DeltaOnModificationOfIntPackedMap::Apply()
     }
   }
   
-#ifdef DEB    
+#ifdef TDATASTD_DEB
   cout << " << Map Dump after Delta Apply >>" <<endl;
   Handle(TColStd_HPackedMapOfInteger) aIntMap = aCurAtt->GetHMap();
   TColStd_MapIteratorOfPackedMapOfInteger it(aIntMap->Map());

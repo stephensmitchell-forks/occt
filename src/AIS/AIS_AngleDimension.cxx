@@ -139,9 +139,9 @@ AIS_AngleDimension::AIS_AngleDimension( const TopoDS_Face& aCone,
 					const TCollection_ExtendedString& aText):
 myNbShape(1)
 {
-//#ifdef DEB
+#ifdef AIS_DEB
   cout << "Call new AngleDimension for cone's angle" << endl;
-//#endif
+#endif
 
   gp_Pnt tmpPnt(0., 0., 0.); 
 
@@ -171,7 +171,7 @@ AIS_AngleDimension::AIS_AngleDimension(const TopoDS_Edge& aFirstEdge,
 :AIS_Relation(),
  myNbShape(2)
 {
-#ifdef DEB
+#ifdef AIS_DEB
   cout << endl << "Call new AngleDimension for edges, default" << endl;
 #endif
 
@@ -201,7 +201,7 @@ AIS_AngleDimension::AIS_AngleDimension( const TopoDS_Edge& aFirstEdge,
 					const Standard_Real anArrowSize):
 myNbShape(2)
 {
-#ifdef DEB
+#ifdef AIS_DEB
   cout << endl << "Call new AngleDimension for edges" << endl;
 #endif
 
@@ -234,7 +234,7 @@ AIS_AngleDimension::AIS_AngleDimension( const TopoDS_Face& aFirstFace,
 myNbShape(2),
 myAxis(anAxis)
 {
-#ifdef DEB
+#ifdef AIS_DEB
   cout << endl << "Call new AngleDimension for planar faces, default" << endl;
 #endif
 
@@ -271,7 +271,7 @@ AIS_AngleDimension::AIS_AngleDimension( const TopoDS_Face& aFirstFace,
 myNbShape(2),
 myAxis(anAxis)
 {
-#ifdef DEB
+#ifdef AIS_DEB
   cout << endl << "Call new AngleDimension for planar faces" << endl;
 #endif
 
@@ -308,7 +308,7 @@ AIS_AngleDimension::AIS_AngleDimension( const TopoDS_Face& aFFace,
 					const TCollection_ExtendedString& aText ):
 myNbShape(2)
 {
-#ifdef DEB
+#ifdef AIS_DEB
   cout << endl << "Call new AngleDimension for curvilinear faces, default" << endl;
 #endif
 
@@ -337,7 +337,7 @@ AIS_AngleDimension::AIS_AngleDimension( const TopoDS_Face& aFFace,
 					const Standard_Real anArrowSize):
 myNbShape(2)
 {
-#ifdef DEB
+#ifdef AIS_DEB
   cout << endl << "Call new AngleDimension for curvilinear faces" << endl;
 #endif
 

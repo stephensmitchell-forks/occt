@@ -356,7 +356,9 @@ bool Image_AlienPixMap::Save (const TCollection_AsciiString& theFileName)
   FREE_IMAGE_FORMAT anImageFormat = FreeImage_GetFIFFromFilename (theFileName.ToCString());
   if (anImageFormat == FIF_UNKNOWN)
   {
+#ifdef IMAGE_DEB
     std::cerr << "Image_PixMap, image format doesn't supported!\n";
+#endif
     return false;
   }
 
@@ -496,7 +498,9 @@ bool Image_AlienPixMap::Save (const TCollection_AsciiString& theFileName)
   {
     return savePPM (theFileName);
   }
+#ifdef IMAGE_DEB
   std::cerr << "Image_PixMap, no image library available! Image saved in PPM format.\n";
+#endif
   return savePPM (theFileName);
 #endif
 }

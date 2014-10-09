@@ -167,7 +167,7 @@ TCollection_ExtendedString::TCollection_ExtendedString
       mystring = Allocate(ROUNDMEM((mylength+1)*2));
       if(!ConvertToUnicode (astring))
       {
-#ifdef DEB
+#ifdef TCOLLECTION_DEB
 	cout <<"UTF8 decoding failure..." <<endl;
 #endif
       }

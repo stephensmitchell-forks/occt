@@ -453,7 +453,7 @@ ShapeFix_FixSmallFace::ShapeFix_FixSmallFace()
 	  
 	} 
       else {
-#ifdef DEB
+#ifdef SHAPEFIX_DEB
 	cout << "The face is not strip face"  << endl;
 #endif
 	return theNewEdge;

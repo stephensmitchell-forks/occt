@@ -1773,7 +1773,7 @@ void ChFi3d_FilBuilder::SplitSurf(ChFiDS_SequenceOfSurfData&    SeqData,
 	}
       }
       else {
-# if DEB
+# if CHFI3D_DEB
 	cout << "Failed calculation of the minimum length" << endl;
 # endif
       }

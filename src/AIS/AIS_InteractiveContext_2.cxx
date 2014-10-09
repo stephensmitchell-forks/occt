@@ -87,7 +87,7 @@ OpenLocalContext(const Standard_Boolean UseDisplayedObjects,
 
   NewLocal->MainSelector()->UpdateConversion();
 
-#ifdef DEB
+#ifdef AIS_DEB
   cout<<"\tOpen Local Context No "<<myCurLocalIndex<<endl;
   if(UseDisplayedObjects){
     cout<<"\t\tObjects from Neutral Point loaded"<<endl;
@@ -112,7 +112,7 @@ void AIS_InteractiveContext::CloseLocalContext(const Standard_Integer Index,
 {
 
  Standard_Boolean debugmode(Standard_False);
-#ifdef DEB 
+#ifdef AIS_DEB 
  debugmode = Standard_True;
 #endif
  

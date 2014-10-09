@@ -40,9 +40,11 @@ TCollection_Queue::TCollection_Queue() :
 
 TCollection_Queue::TCollection_Queue(const TCollection_Queue& Other)
 {
+#ifdef TCOLLECTION_DEB
   if (!Other.IsEmpty()) {
     cout << "WARNING copy constructor of non empty Queue !"<<endl;
   }
+#endif
   TCollection_QueueNode* p = (TCollection_QueueNode*) Other.myFront;
   TCollection_QueueNode* q = NULL;
   TCollection_QueueNode* r = NULL;

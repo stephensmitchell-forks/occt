@@ -82,5 +82,7 @@ void DrawDim_PlanarDiameter::DrawOn(Draw_Display& dis) const
       return;
     }
   }  
+#ifdef DRAWDIM_DEB
   cout << " DrawDim_PlanarDiameter::DrawOn : dimension error" << endl;
+#endif
 }

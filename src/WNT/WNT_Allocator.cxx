@@ -1115,7 +1115,7 @@ WNT_LineAttribNote :: ~WNT_LineAttribNote ( void )
 {
 #ifdef PRO19042
   if ( myPen ) {
-#ifdef DEB
+#ifdef WNT_DEB
 printf(" *** Destroy:WNT_LineAttribNote %x/%x\n",myPen,ALLOCATOR->myLinePen);
 #endif
     DeletePen( myPen );
@@ -1152,7 +1152,7 @@ WNT_PolyAttribNote :: ~WNT_PolyAttribNote ( void )
 {
 #ifdef PRO19042
   if ( myBrush ) {
-#ifdef DEB
+#ifdef WNT_DEB
 printf(" *** Destroy:WNT_PolyAttribNote %x/%x\n",myBrush,ALLOCATOR->myPolyBrush);
 #endif
     DeleteBrush( myBrush );
@@ -1202,21 +1202,21 @@ WNT_TextAttribNote :: ~WNT_TextAttribNote ()
 {
 #ifdef PRO19042
   if ( myFont && (myFlags & W32F_TFREE) ) {
-#ifdef DEB
+#ifdef WNT_DEB
 printf(" *** Destroy:WNT_TextAttribNote_FONT %x/%x\n",myFont,ALLOCATOR->myTextFont);
 #endif
     DeleteFont  ( myFont  );
     myFont = NULL;
   }
   if ( myPen ) {
-#ifdef DEB
+#ifdef WNT_DEB
 printf(" *** Destroy:WNT_TextAttribNote_PEN %x/%x\n",myPen,ALLOCATOR->myTextPen);
 #endif
     DeletePen   ( myPen   );
     myPen = NULL;
   }
   if ( myBrush ) {
-#ifdef DEB
+#ifdef WNT_DEB
 printf(" *** Destroy:WNT_TextAttribNote_BRUSH %x/%x\n",myBrush,ALLOCATOR->myTextBrush);
 #endif
     DeleteBrush ( myBrush );
@@ -1270,7 +1270,7 @@ WNT_MarkerAttribNote :: ~WNT_MarkerAttribNote ( void )
 {
 #ifdef PRO19042
   if ( myPen ) {
-#ifdef DEB
+#ifdef WNT_DEB
 printf(" *** Destroy:WNT_MarkerAttribNote %x/%x\n",myPen,ALLOCATOR->myMarkerPen);
 #endif
     DeletePen( myPen );

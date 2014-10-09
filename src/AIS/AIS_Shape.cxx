@@ -209,10 +209,10 @@ void AIS_Shape::Compute(const Handle(PrsMgr_PresentationManager3d)& /*aPresentat
   case 0:{
     try { OCC_CATCH_SIGNALS  StdPrs_WFDeflectionShape::Add(aPrs,myshape,myDrawer); }
     catch (Standard_Failure) { 
-#ifdef DEB
+#ifdef AIS_DEB
       cout << "AIS_Shape::Compute()  failed"<< endl;
-#endif
       cout << "a Shape should be incorrect : No Compute can be maked on it  "<< endl;     
+#endif
 // presentation of the bounding box is calculated
 //      Compute(aPresentationManager,aPrs,2);
     }
@@ -230,7 +230,7 @@ void AIS_Shape::Compute(const Handle(PrsMgr_PresentationManager3d)& /*aPresentat
           OwnDeviationCoefficient(newcoeff,prevcoeff))
         if (Abs (newangle - prevangle) > Precision::Angular() ||
             Abs (newcoeff - prevcoeff) > Precision::Confusion()  ) { 
-#ifdef DEB
+#ifdef AIS_DEB
           cout << "AIS_Shape : compute"<<endl;
           cout << "newangl   : " << newangle << " # de " << "prevangl  : " << prevangle << " OU "<<endl;
           cout << "newcoeff  : " << newcoeff << " # de " << "prevcoeff : " << prevcoeff << endl;
@@ -251,7 +251,7 @@ void AIS_Shape::Compute(const Handle(PrsMgr_PresentationManager3d)& /*aPresentat
               StdPrs_ShadedShape::Add(aPrs,myshape,myDrawer);
             }
             catch (Standard_Failure) {
-#ifdef DEB
+#ifdef AIS_DEB
               cout << "AIS_Shape::Compute() in ShadingMode failed"<< endl;
 #endif
               StdPrs_WFShape::Add(aPrs,myshape,myDrawer);
@@ -329,7 +329,7 @@ void AIS_Shape::Compute(const Handle(Prs3d_Projector)& aProjector,
   if (OwnHLRDeviationAngle(newangle,prevangle) || OwnHLRDeviationCoefficient(newcoeff, prevcoeff))
     if (Abs (newangle - prevangle) > Precision::Angular() ||
         Abs (newcoeff - prevcoeff) > Precision::Confusion()  ) { 
-#ifdef DEB
+#ifdef AIS_DEB
       cout << "AIS_Shape : compute"<<endl;
       cout << "newangle  : " << newangle << " # de " << "prevangl  : " << prevangle << " OU "<<endl;
       cout << "newcoeff  : " << newcoeff << " # de " << "prevcoeff : " << prevcoeff << endl;
@@ -351,7 +351,7 @@ void AIS_Shape::Compute(const Handle(Prs3d_Projector)& aProjector,
       }
     }
     catch (Standard_Failure) {
-#ifdef DEB
+#ifdef AIS_DEB
       cout <<"AIS_Shape::Compute(Proj) HLR Algorithm failed" << endl;
 #endif
       StdPrs_WFShape::Add(aPresentation,SH,myDrawer);

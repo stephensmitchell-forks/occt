@@ -644,7 +644,7 @@ void Graphic3d_Structure::GroupsWithFacet (const Standard_Integer ADelta) {
   MyCStructure.ContainsFacet = MyCStructure.ContainsFacet + ADelta;
   if (MyCStructure.ContainsFacet < 0) MyCStructure.ContainsFacet = 0;
 
-#ifdef DEBUG
+#ifdef GRAPHIC3D_DEB
   cout << "MyCStructure.ContainsFacet " << MyCStructure.ContainsFacet;
   cout << endl << flush;
 #endif

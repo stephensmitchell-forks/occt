@@ -60,8 +60,10 @@ TCollection_AsciiString Graphic3d_TextureRoot::TexturesFolder()
 
     if (VarName.IsEmpty())
     {
+#ifdef GRAPHIC3D_DEB
       std::cerr << " CSF_MDTVTexturesDirectory and CASROOT not setted\n";
       std::cerr << " one of these variable are mandatory to use this functionality\n";
+#endif
       Standard_Failure::Raise ("CSF_MDTVTexturesDirectory and CASROOT not setted");
       return VarName;
     }
@@ -72,8 +74,10 @@ TCollection_AsciiString Graphic3d_TextureRoot::TexturesFolder()
     OSD_File aTextureFile (aTexture);
     if (!aDir.Exists() || !aTextureFile.Exists())
     {
+#ifdef GRAPHIC3D_DEB
       std::cerr << " CSF_MDTVTexturesDirectory or CASROOT not correctly setted\n";
       std::cerr << " not all files are found in : "<< VarName.ToCString() << std::endl;
+#endif
       Standard_Failure::Raise ("CSF_MDTVTexturesDirectory or CASROOT not correctly setted");
       return VarName;
     }

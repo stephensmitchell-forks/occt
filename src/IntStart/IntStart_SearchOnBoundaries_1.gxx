@@ -241,9 +241,6 @@ void BoundedArc (const TheArc& A,
       }
     }
     if(aelargir && maxdist<0.01) { 
-#ifdef DEB 
-      //--    cout<<"\n Tolerance elargie a "<<maxdist<<" dans IntStart_SearchOnBoundaries_1.gxx"<<endl;
-#endif
     }
     else { 
       maxdist = TolBoundary;

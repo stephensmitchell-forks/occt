@@ -256,7 +256,7 @@ void  ChFi3d_Builder::Compute()
     }
     catch(Standard_Failure) {
       Handle(Standard_Failure) exc = Standard_Failure::Caught();
-#ifdef DEB
+#ifdef CHFI3D_DEB
       cout <<"EXCEPTION Stripe compute " << exc << endl;
 #endif
       badstripes.Append(itel.Value());
@@ -287,7 +287,7 @@ void  ChFi3d_Builder::Compute()
       catch(Standard_Failure)
       {
         Handle(Standard_Failure) exc = Standard_Failure::Caught();
-#ifdef DEB
+#ifdef CHFI3D_DEB
         cout <<"EXCEPTION Corner compute " << exc << endl;
 #endif
         badvertices.Append(myVDataMap.FindKey(j));
@@ -342,7 +342,7 @@ void  ChFi3d_Builder::Compute()
 	}
 	catch(Standard_Failure) {
 	  Handle(Standard_Failure) exc = Standard_Failure::Caught();
-#ifdef DEB
+#ifdef CHFI3D_DEB
 	  cout <<"EXCEPTION Fillets compute " << exc << endl;
 #endif
 	  badstripes.Append(itel.Value());
@@ -494,16 +494,16 @@ void  ChFi3d_Builder::Compute()
   // display of time for perfs 
   
 #ifdef DEB  
-  cout<<endl; 
-  cout<<"COMPUTE: temps total "<<t_total<<"s  dont :"<<endl;
-  cout<<"- Init + ExtentAnalyse "<<t_extent<<"s"<<endl;  
-  cout<<"- PerformSetOfSurf "<<t_perfsetofsurf<<"s"<<endl;
-  cout<<"- PerformFilletOnVertex "<<t_perffilletonvertex<<"s"<<endl; 
-  cout<<"- FilDS "<<t_filds<<"s"<<endl; 
-  cout<<"- Reconstruction "<<t_reconstruction<<"s"<<endl;
-  cout<<"- SetRegul "<<t_setregul<<"s"<<endl<<endl;
-  
   if(ChFi3d_GettraceCHRON()){
+    cout<<endl; 
+    cout<<"COMPUTE: temps total "<<t_total<<"s  dont :"<<endl;
+    cout<<"- Init + ExtentAnalyse "<<t_extent<<"s"<<endl;  
+    cout<<"- PerformSetOfSurf "<<t_perfsetofsurf<<"s"<<endl;
+    cout<<"- PerformFilletOnVertex "<<t_perffilletonvertex<<"s"<<endl; 
+    cout<<"- FilDS "<<t_filds<<"s"<<endl; 
+    cout<<"- Reconstruction "<<t_reconstruction<<"s"<<endl;
+    cout<<"- SetRegul "<<t_setregul<<"s"<<endl<<endl;
+
     cout<<endl;
     cout <<"temps PERFORMSETOFSURF "<<t_perfsetofsurf <<"s  dont : "<<endl;
     cout <<"- SetofKPart "<<t_perfsetofkpart<<"s"<<endl;

@@ -263,9 +263,6 @@ Standard_Boolean StepToGeom_MakeTrimmedCurve::Convert (const Handle(StepGeom_Tri
         }
       }
       else {
-//#ifdef DEBUG
-//	cout << "Trimming Failed" << endl;
-//#endif
         return Standard_False;
       }
     }

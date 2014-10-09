@@ -106,7 +106,7 @@ Standard_Integer XmlMDF::WriteSubTree
       //    Paste
       aDriver -> Paste (tAtt, pAtt, theRelocTable);
     }
-#ifdef DEB
+#ifdef XMLMDF_DEB
     else if (!UnsuppTypesMap().Contains (aType))
     {
       cout << "attribute driver for type "<< aType -> Name()<< " not found"<< endl;
@@ -265,7 +265,7 @@ Standard_Integer XmlMDF::ReadSubTree (const XmlObjMgt_Element&    theElement,
           else if (isBound == Standard_False)
             theRelocTable.Bind (anID, tAtt);
         }
-#ifdef DEB
+#ifdef XMLMDATASTD_DEB
         else
         {
           const TCollection_AsciiString anAsciiName = aName;

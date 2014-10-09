@@ -247,7 +247,7 @@ Standard_Boolean ShapeConstruct_ProjectCurveOnSurface::Perform (Handle(Geom_Curv
       if ( bspl->Knot(i+1) > First && bspl->Knot(i) < Last ) nint++;
     Standard_Integer minPnt = nint * ( bspl->Degree() + 1 );
     while ( nbPini < minPnt ) nbPini += NCONTROL - 1;
-#ifdef DEBUG
+#ifdef SHAPECONSTRUCT_DEB
     if ( nbPini > NCONTROL ) 
       cout << "Warning: number of points for projecting is " << nbPini << endl;
 #endif
@@ -362,12 +362,12 @@ Standard_Boolean ShapeConstruct_ProjectCurveOnSurface::PerformByProjLib(Handle(G
 	if ( appr.IsDone() )
 	  c2d = appr.Curve2d();
       }
-#ifdef DEB
+#ifdef SHAPECONSTRUCT_DEB
       else
 	cout<<"Warning: ProjLib cutting pcurve "<< First << " -> " << ubeg <<" ; "<< Last << " -> " << ufin << endl;
 #endif     
     }
-#ifdef DEB
+#ifdef SHAPECONSTRUCT_DEB
     else cout<<"Warning: ProjLib "<< nbSol << " curves in ProjLib"<<endl;
 #endif
     if(c2d.IsNull()) {
@@ -381,7 +381,7 @@ Standard_Boolean ShapeConstruct_ProjectCurveOnSurface::PerformByProjLib(Handle(G
     
   }
   catch(Standard_Failure) {
-#ifdef DEB
+#ifdef SHAPECONSTRUCT_DEB
     cout << "Warning: ShapeConstruct_ProjectCurveOnSurface::PerformByProjLib(): Exception: ";
     Standard_Failure::Caught()->Print(cout); cout << endl;
 #endif
@@ -460,9 +460,7 @@ Standard_Boolean ShapeConstruct_ProjectCurveOnSurface::PerformAdvanced (Handle(G
       Handle(Geom2d_TrimmedCurve) TC = Handle(Geom2d_TrimmedCurve)::DownCast ( result );
       result = TC->BasisCurve();
     }
-#ifdef DEB
-//    if ( ! result.IsNull() ) cout << "SC_PCONS: analitic projection on plane" << endl;
-#endif
+
     return result;
   }
   
@@ -682,7 +680,7 @@ Standard_Boolean ShapeConstruct_ProjectCurveOnSurface::PerformAdvanced (Handle(G
   Standard_Real Up = ul - uf;
   Standard_Real Vp = vl - vf;
   Standard_Real dist2d;
-#ifdef DEBUG
+#ifdef SHAPECONSTRUCT_DEB
   if (mySurf->IsUClosed(myPreci) && mySurf->IsVClosed(myPreci)) {//#78 rln 12.03.99 S4135
     cout << "WARNING : Recadrage incertain sur U & VClosed" << endl;
   }
@@ -835,7 +833,7 @@ Standard_Boolean ShapeConstruct_ProjectCurveOnSurface::PerformAdvanced (Handle(G
 	  pnt2d (i) = newCurr;
 	}
 	// on verifie
-#ifdef DEBUG
+#ifdef SHAPECONSTRUCT_DEB
 	dist2d = pnt2d (i-1).Distance(pnt2d (i));
 	if (dist2d > ( Vp / 2) ) {
 	  cout << "Echec dans le recadrage" << endl;
@@ -1065,7 +1063,7 @@ Handle(Geom2d_Curve) ShapeConstruct_ProjectCurveOnSurface::ApproximatePCurve(con
     return C2d;
   }
   catch(Standard_Failure) {
-#ifdef DEB //:s5
+#ifdef SHAPECONSTRUCT_DEB //:s5
     //    debug ...
     Standard_Integer nbp = params->Length();
     Standard_Integer nb2 = points2d->Length();
@@ -1109,7 +1107,7 @@ Handle(Geom2d_Curve) ShapeConstruct_ProjectCurveOnSurface::ApproximatePCurve(con
     if (myInterPol2d.IsDone()) C2d = myInterPol2d.Curve();
   }
   catch(Standard_Failure) {
-#ifdef DEB //:s5
+#ifdef SHAPECONSTRUCT_DEB //:s5
 // //    debug ...
     Standard_Integer nbp = params->Length();
     Standard_Integer nb2 = points2d->Length();
@@ -1151,7 +1149,7 @@ Handle(Geom_Curve) ShapeConstruct_ProjectCurveOnSurface::InterpolateCurve3d(cons
   }
   catch(Standard_Failure) {
     C3d.Nullify();
-#ifdef DEB //:s5
+#ifdef SHAPECONSTRUCT_DEB //:s5
     cout << "Warning: ShapeConstruct_ProjectCurveOnSurface::InterpolateCurve3d(): Exception: ";
     Standard_Failure::Caught()->Print(cout); cout << endl;
 #endif
@@ -1198,13 +1196,13 @@ Handle(Geom_Curve) ShapeConstruct_ProjectCurveOnSurface::InterpolateCurve3d(cons
   if (nbPntDropped == 0)
     return;
 
-#ifdef DEBUG
+#ifdef SHAPECONSTRUCT_DEB
   cout << "Warning : removing 3d points for interpolation" << endl;
 #endif
   // Build new HArrays
   Standard_Integer newLast = lastElem - nbPntDropped;
   if ((newLast - firstElem + 1)  < 2) {
-#ifdef DEBUG
+#ifdef SHAPECONSTRUCT_DEB
     cout << "Too many degenerated points for 3D interpolation" << endl;
 #endif
     return;
@@ -1269,13 +1267,13 @@ Handle(Geom_Curve) ShapeConstruct_ProjectCurveOnSurface::InterpolateCurve3d(cons
   if (nbPntDropped == 0)
     return;
 
-#ifdef DEBUG
+#ifdef SHAPECONSTRUCT_DEB
   cout << "Warning : removing 2d points for interpolation" << endl;
 #endif
   // Build new HArrays
   Standard_Integer newLast = lastElem - nbPntDropped;
   if ((newLast - firstElem + 1)  < 2) {
-#ifdef DEBUG
+#ifdef SHAPECONSTRUCT_DEB
     cout << "Too many degenerated points for 2D interpolation" << endl;
 #endif
     //pdn 12.02.99 S4135 Creating pcurve with minimal length.
@@ -1294,7 +1292,7 @@ Handle(Geom_Curve) ShapeConstruct_ProjectCurveOnSurface::InterpolateCurve3d(cons
   Standard_Integer newCurr = 1;
   for (i = firstElem; i <= lastElem ; i++) {
     if (tmpParam.Value(i) == 1) { 
-#ifdef DEBUG
+#ifdef SHAPECONSTRUCT_DEB
       cout << "Point " << i << " : " << points->Value(i).X() << " " << points->Value(i).Y() << " at param " <<  params->Value(i) << endl;
 #endif
       newPnts->SetValue(newCurr, points->Value(i));
@@ -1302,7 +1300,7 @@ Handle(Geom_Curve) ShapeConstruct_ProjectCurveOnSurface::InterpolateCurve3d(cons
       newCurr ++;
     }
     else {
-#ifdef DEBUG
+#ifdef SHAPECONSTRUCT_DEB
       cout << "Removed " << i << " : " << points->Value(i).X() << " " << points->Value(i).Y() << " at param " <<  params->Value(i) << endl;
 #endif
     }
@@ -1551,13 +1549,13 @@ Handle(Geom_Curve) ShapeConstruct_ProjectCurveOnSurface::InterpolateCurve3d(cons
   }  // RAJOUT
   catch(Standard_Failure) {
 //  pb : on affiche ce qu on peut
-#ifdef DEBUG
+#ifdef SHAPECONSTRUCT_DEB
     for (Standard_Integer numpnt = 1; numpnt <= nbrPnt; numpnt ++) {
       cout<<"["<<numpnt<<"]param="<<params(numpnt)<<" point=("<<
 	points(numpnt).X()<<"  "<<points(numpnt).Y()<<"  "<<points(numpnt).Z()<<")"<<endl;
     }
 #endif
-#ifdef DEB //:s5
+#ifdef SHAPECONSTRUCT_DEB //:s5
     cout << "Warning: ShapeConstruct_ProjectCurveOnSurface::IsAnIsoparametric(): Exception: ";
     Standard_Failure::Caught()->Print(cout); cout << endl;
 #endif

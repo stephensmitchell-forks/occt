@@ -1896,7 +1896,7 @@ void BRepOffset_Tool::Inter3D(const TopoDS_Face& F1,
             TopoDS_Edge anEdge = TopoDS::Edge(eseq(i));
             BRepLib::SameParameter(anEdge, aSameParTol, Standard_True);
             Standard_Real EdgeTol = BRep_Tool::Tolerance(anEdge);
-#ifdef DEB
+#ifdef BREPOFFSET_DEB
             cout<<"Tolerance of glued E =      "<<EdgeTol<<endl;
 #endif
             if (EdgeTol > 1.e-2)
@@ -1906,7 +1906,7 @@ void BRepOffset_Tool::Inter3D(const TopoDS_Face& F1,
               {
                 ReconstructPCurves(anEdge);
                 BRepLib::SameParameter(anEdge, aSameParTol, Standard_True);
-#ifdef DEB
+#ifdef BREPOFFSET_DEB
                 cout<<"After projection tol of E = "<<BRep_Tool::Tolerance(anEdge)<<endl;
 #endif
               }
@@ -2333,7 +2333,7 @@ void BRepOffset_Tool::Inter2d (const TopoDS_Face&    F,
 //        if (j == 1)  C2 = BRep_Tool::CurveOnSurface(E2,F,fl2[0],fl2[1]);
 //        else         C2 = BRep_Tool::CurveOnSurface(TopoDS::Edge(E2.Reversed()),
 //                                                    F,fl2[0],fl2[1]);
-#ifdef DEB
+#ifdef BREPOFFSET_DEB
         if (C1.IsNull() || C2.IsNull()) {
           cout <<"Inter2d : Pas de pcurve"<<endl;
 #ifdef DRAW
@@ -2445,7 +2445,7 @@ void BRepOffset_Tool::Inter2d (const TopoDS_Face&    F,
             Standard_Real U1on2 = IntP2.ParamOnFirst();
             Standard_Real U2on1 = IntP1.ParamOnSecond();
             Standard_Real U2on2 = IntP2.ParamOnSecond();
-#ifdef DEB
+#ifdef BREPOFFSET_DEB
             cout << " BRepOffset_Tool::Inter2d SEGMENT d intersection" << endl;
             cout << "     ===> Parametres sur Curve1 : ";
             cout << U1on1 << " " << U1on2 << endl;
@@ -2503,7 +2503,7 @@ void BRepOffset_Tool::Inter2d (const TopoDS_Face&    F,
     LV.Clear();LV.Append(VF); LV.Append(VL);
   }
 
-#ifdef DEB
+#ifdef BREPOFFSET_DEB
   if (!YaSol) {
     cout <<"Inter2d : Pas de solution"<<endl;
 #ifdef DRAW

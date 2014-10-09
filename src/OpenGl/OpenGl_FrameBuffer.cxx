@@ -59,7 +59,7 @@ Standard_Boolean OpenGl_FrameBuffer::Init (const Handle(OpenGl_Context)& theGlCo
 {
   if (theGlContext->extFBO == NULL)
   {
-  #ifdef DEB
+  #ifdef OPENGL_DEB
     std::cerr << "OpenGl_FrameBuffer, FBO extension not supported!\n";
   #endif
     return Standard_False;
@@ -121,7 +121,7 @@ Standard_Boolean OpenGl_FrameBuffer::Init (const Handle(OpenGl_Context)& theGlCo
   UnbindTexture();
   theGlContext->extFBO->glBindRenderbufferEXT (GL_RENDERBUFFER_EXT, NO_RENDERBUFFER);
 
-  #ifdef DEB
+  #ifdef OPENGL_DEB
     std::cerr << "OpenGl_FrameBuffer, created FBO " << mySizeX << "x" << mySizeY
               << " for viewport " << theViewportSizeX << "x" << theViewportSizeY << "\n";
   #endif
@@ -137,10 +137,12 @@ void OpenGl_FrameBuffer::Release (const Handle(OpenGl_Context)& theGlContext)
       theGlContext->extFBO->glDeleteRenderbuffersEXT (1, &myGlDepthRBId);
       myGlDepthRBId = NO_RENDERBUFFER;
     }
+#ifdef OPENGL_DEB
     else
     {
       std::cerr << "OpenGl_FrameBuffer::Release() called with invalid OpenGl_Context!\n";
     }
+#endif
   }
   if (IsValidTexture())
   {
@@ -155,10 +157,12 @@ void OpenGl_FrameBuffer::Release (const Handle(OpenGl_Context)& theGlContext)
       theGlContext->extFBO->glDeleteFramebuffersEXT (1, &myGlFBufferId);
       myGlFBufferId = NO_FRAMEBUFFER;
     }
+#ifdef OPENGL_DEB
     else
     {
       std::cerr << "OpenGl_FrameBuffer::Release() called with invalid OpenGl_Context!\n";
     }
+#endif
   }
 }
 

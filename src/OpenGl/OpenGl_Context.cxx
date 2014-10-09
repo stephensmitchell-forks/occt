@@ -296,7 +296,9 @@ Standard_Boolean OpenGl_Context::CheckExtension (const char* theExtName) const
 {
   if (theExtName  == NULL)
   {
+#ifdef OPENGL_DEB
     std::cerr << "CheckExtension called with NULL string!\n";
+#endif
     return Standard_False;
   }
   int anExtNameLen = strlen (theExtName);
@@ -323,7 +325,9 @@ Standard_Boolean OpenGl_Context::CheckExtension (const char* theExtName) const
   const char* anExtString = (const char* )glGetString (GL_EXTENSIONS);
   if (anExtString == NULL)
   {
+#ifdef OPENGL_DEB
     std::cerr << "glGetString (GL_EXTENSIONS) returns NULL! No GL context?\n";
+#endif
     return Standard_False;
   }
 

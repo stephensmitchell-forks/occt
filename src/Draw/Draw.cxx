@@ -184,10 +184,6 @@ void Draw_Appli(Standard_Integer argc, char** argv,const FDraw_InitAppli Draw_In
     {
       aFunc (aUserDllPath.ToCString());
     }
-    else
-    {
-      //std::cerr << "SetDllDirectoryA() is not available on this system!\n";
-    }
     if (aKern32Module != NULL)
     {
       FreeLibrary (aKern32Module);
@@ -529,7 +525,7 @@ void Draw::Load(Draw_Interpretor& theDI, const TCollection_AsciiString& theKey,
       aMsg << aPluginResource->Value(theKey.ToCString());
       aMsg << "; reason: ";
       aMsg << error.ToCString();
-#ifdef DEB
+#ifdef DRAW_DEB
       cout << "could not open: "  << aPluginResource->Value(theKey.ToCString())<< " ; reason: "<< error.ToCString() << endl;
 #endif
       Draw_Failure::Raise(aMsg);
@@ -602,7 +598,7 @@ void Draw::Load(Draw_Interpretor& theDI, const TCollection_AsciiString& theKey,
       aMsg << aPluginResource->Value(theKey.ToCString());
       aMsg << "; reason: ";
       aMsg << error.ToCString();
-#ifdef DEB
+#ifdef DRAW_DEB
       cout << "could not open: "  << aPluginResource->Value(theKey.ToCString())<< " ; reason: "<< error.ToCString() << endl;
 #endif
       Draw_Failure::Raise(aMsg);

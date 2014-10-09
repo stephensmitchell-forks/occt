@@ -240,7 +240,7 @@ void Prs3d_WFShape::Add(const Handle (Prs3d_Presentation)& aPresentation,
 	    }
 	    catch (Standard_Failure)
 	    {
-#ifdef DEB
+#ifdef PRS3D_DEB
 	      const TopoDS_Face& FF = S.Face();
 	      cout <<"probleme pour les isos de la face "<< (void*) &(*(FF).TShape()) << endl;
 #endif
@@ -273,7 +273,7 @@ void Prs3d_WFShape::Add(const Handle (Prs3d_Presentation)& aPresentation,
 	    }
 	    catch (Standard_Failure)
 	    {
-#ifdef DEB
+#ifdef PRS3D_DEB
 	      const TopoDS_Face& FF = S.Face();
 	      cout <<"probleme pour les isos de la face "<< (void*) &(*(FF).TShape()) << endl;
 #endif
@@ -446,7 +446,7 @@ void Prs3d_WFShape::Add(const Handle (Prs3d_Presentation)& aPresentation,
       }
       catch(Standard_Failure)
       {
-#ifdef DEB
+#ifdef PRS3D_DEB
 	cout <<"probleme sur l'edge "<< (void*) &(*(E).TShape()) << endl;
 #endif
       }
@@ -474,7 +474,7 @@ void Prs3d_WFShape::Add(const Handle (Prs3d_Presentation)& aPresentation,
 	}
 	catch(Standard_Failure)
 	{
-#ifdef DEB
+#ifdef PRS3D_DEB
 	  cout <<"probleme sur l'edge "<< (void*) &(*(E).TShape()) << endl;
 #endif
 	}  
@@ -504,7 +504,7 @@ void Prs3d_WFShape::Add(const Handle (Prs3d_Presentation)& aPresentation,
       }
       catch(Standard_Failure)
       {
-#ifdef DEB
+#ifdef PRS3D_DEB
 	cout <<"probleme sur l'edge "<< (void*) &(*(E).TShape()) << endl;
 #endif
       }

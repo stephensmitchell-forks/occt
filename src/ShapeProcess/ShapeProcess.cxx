@@ -43,7 +43,7 @@ Standard_Boolean ShapeProcess::RegisterOperator (const Standard_CString name,
 {
   if ( dic.IsNull() ) dic = new ShapeProcess_DictionaryOfOperator;
   if ( dic->HasItem ( name, Standard_True ) ) {
-#ifdef DEB
+#ifdef SHAPEPROCESS_DEB
     cout << "Warning: operator with name " << name << " is already registered!" << endl;
 #endif
     return Standard_False;
@@ -62,7 +62,7 @@ Standard_Boolean ShapeProcess::FindOperator (const Standard_CString name,
 {
   if ( dic.IsNull() ) dic = new ShapeProcess_DictionaryOfOperator;
   if ( ! dic->HasItem ( name, Standard_True ) ) {
-#ifdef DEB
+#ifdef SHAPEPROCESS_DEB
     cout << "Error: no operator with name " << name << " registered!" << endl;
 #endif
     return Standard_False;
@@ -84,7 +84,7 @@ Standard_Boolean ShapeProcess::Perform (const Handle(ShapeProcess_Context)& cont
   // get description of the sequence
   TCollection_AsciiString sequence;
   if ( ! context->GetString ( "exec.op", sequence ) ) {
-#ifdef DEB
+#ifdef SHAPEPROCESS_DEB
     cout << "Error: ShapeProcess_Performer::Perform: sequence not defined for " << seq << endl;
 #endif
     context->UnSetScope();

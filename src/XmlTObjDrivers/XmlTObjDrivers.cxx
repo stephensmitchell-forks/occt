@@ -44,7 +44,9 @@ Handle(Standard_Transient) XmlTObjDrivers::Factory(const Standard_GUID& aGUID)
 {
   if(aGUID == XmlStorageDriver)
   {
+#ifdef XMLTOBJDRIVERS_DEB
     cout << "XmlTObjDrivers : Storage Plugin" << endl;
+#endif
     static Handle(XmlTObjDrivers_DocumentStorageDriver) model_sd
       = new XmlTObjDrivers_DocumentStorageDriver
         ("Copyright: Open CASCADE 2004"); // default copyright
@@ -53,7 +55,9 @@ Handle(Standard_Transient) XmlTObjDrivers::Factory(const Standard_GUID& aGUID)
 
   if(aGUID == XmlRetrievalDriver)
   {  
+#ifdef XMLTOBJDRIVERS_DEB
     cout << "XmlTObjDrivers : Retrieval Plugin" << endl;
+#endif
     static Handle (XmlTObjDrivers_DocumentRetrievalDriver) model_rd
       = new XmlTObjDrivers_DocumentRetrievalDriver;
     return model_rd;

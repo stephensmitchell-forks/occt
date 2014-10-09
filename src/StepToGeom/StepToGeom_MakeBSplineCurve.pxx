@@ -101,9 +101,6 @@
   // force periodicity on closed curves
   if ( SC->ClosedCurve() && CC->Degree() >1 && CC->IsClosed() ) {
     CC->SetPeriodic();
-//#ifdef DEB
-//    cout << "Warning: "__FILE__": Closed curve made periodic" << endl;
-//#endif
   }
   return Standard_True;
 }

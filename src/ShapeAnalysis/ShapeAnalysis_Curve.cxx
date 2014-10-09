@@ -78,7 +78,7 @@ static void ProjectOnSegments (const Adaptor3d_Curve& AC, const gp_Pnt& P3D,
     if (dist < distmin)  {  distmin = dist;  proj = PU;  param = u;  }
   }
 
-#ifdef DEBUG
+#ifdef SHAPEANALYSIS_DEB
   cout<<"ShapeAnalysis_Geom:Project, param="<<param<<" -> distmin="<<distmin<<endl;
 #endif
 
@@ -226,7 +226,7 @@ Standard_Real ShapeAnalysis_Curve::ProjectAct(const Adaptor3d_Curve& C3D,
   }
   catch(Standard_Failure) {
     OK = Standard_False;
-#ifdef DEB //:s5
+#ifdef SHAPEANALYSIS_DEB //:s5
     cout << "\nWarning: ShapeAnalysis_Curve::ProjectAct(): Exception in Extrema_ExtPC: "; 
     Standard_Failure::Caught()->Print(cout); cout << endl;
 #endif
@@ -462,25 +462,25 @@ Standard_Boolean ShapeAnalysis_Curve::ValidateRange (const Handle(Geom_Curve)& t
 
   if (theCurve->IsKind(STANDARD_TYPE(Geom_BoundedCurve)) && !theCurve->IsClosed()) {
     if (First < cf) {
-#ifdef DEBUG
+#ifdef SHAPEANALYSIS_DEB
       cout << "Update Edge First Parameter to Curve First Parameter" << endl;
 #endif
       First = cf;
     }
     else if (First > cl) {
-#ifdef DEBUG
+#ifdef SHAPEANALYSIS_DEB
       cout << "Update Edge First Parameter to Curve Last Parameter" << endl;
 #endif
       First = cl;
     }
     if (Last < cf) {
-#ifdef DEBUG
+#ifdef SHAPEANALYSIS_DEB
       cout << "Update Edge Last Parameter to Curve First Parameter" << endl;
 #endif
       Last = cf;
     }
     else if (Last > cl) {
-#ifdef DEBUG
+#ifdef SHAPEANALYSIS_DEB
       cout << "Update Edge Last Parameter to Curve Last Parameter" << endl;
 #endif
       Last = cl;
@@ -510,7 +510,7 @@ Standard_Boolean ShapeAnalysis_Curve::ValidateRange (const Handle(Geom_Curve)& t
       if ( theCurve->Value(First).Distance(theCurve->Value(cf)) < preci ) First = cf;
       if ( theCurve->Value(Last).Distance(theCurve->Value(cl)) < preci ) Last = cl;
       if ( First > Last ) {
-#ifdef DEBUG
+#ifdef SHAPEANALYSIS_DEB
 	cout << "Warning : parameter range of edge crossing non periodic curve origin" << endl;
 #endif
 	Standard_Real tmp = First;
@@ -538,7 +538,7 @@ Standard_Boolean ShapeAnalysis_Curve::ValidateRange (const Handle(Geom_Curve)& t
       // illegal sur une courbe fermee non periodique
       // on inverse quand meme les parametres !!!!!!
       else {
-#ifdef DEBUG
+#ifdef SHAPEANALYSIS_DEB
 	cout << "Warning : parameter range of edge crossing non periodic curve origin" << endl;
 #endif
 	Standard_Real tmp = First;
@@ -548,7 +548,7 @@ Standard_Boolean ShapeAnalysis_Curve::ValidateRange (const Handle(Geom_Curve)& t
     }
     //abv 15.03.00 #72 bm1_pe_t4 protection of exceptions in draw
     else if ( First > Last ) {
-#ifdef DEBUG
+#ifdef SHAPEANALYSIS_DEB
       cout << "Warning: parameter range is bad; curve reversed" << endl;
 #endif
       First = theCurve->ReversedParameter ( First );
@@ -562,7 +562,7 @@ Standard_Boolean ShapeAnalysis_Curve::ValidateRange (const Handle(Geom_Curve)& t
     }
   }
   else {
-#ifdef DEBUG
+#ifdef SHAPEANALYSIS_DEB
     cout << "UpdateParam3d Failed" << endl;
     cout << "  - Curve Type : " << theCurve->DynamicType() << endl;
     cout << "  - Param 1    : " << First << endl;
@@ -570,7 +570,7 @@ Standard_Boolean ShapeAnalysis_Curve::ValidateRange (const Handle(Geom_Curve)& t
 #endif
     //abv 15.03.00 #72 bm1_pe_t4 protection of exceptions in draw
     if ( First > Last ) {
-#ifdef DEBUG
+#ifdef SHAPEANALYSIS_DEB
       cout << "Warning: parameter range is bad; curve reversed" << endl;
 #endif
       First = theCurve->ReversedParameter ( First );

@@ -625,7 +625,7 @@ void Draw_Interpretor::Destroy()
     Tcl_Exit(0);
   }
   catch (Standard_Failure) {
-#ifdef DEB
+#ifdef DRAW_DEB
     cout <<"Tcl_Exit have an exeption" << endl;
 #endif
   }

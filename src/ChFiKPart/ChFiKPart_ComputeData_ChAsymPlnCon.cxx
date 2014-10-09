@@ -139,7 +139,7 @@ Standard_Boolean ChFiKPart_MakeChAsym(TopOpeBRepDS_DataStructure& DStr,
       ChamfRad = Spine.Radius() - Dis;
       if ( Abs(ChamfRad) < Precision::Confusion() ) pointu = Standard_True;
       if( ChamfRad < 0 ) {
-#ifdef DEB
+#ifdef CHFIKPART_DEB
 	cout<<"the chamfer can't pass"<<endl;
 #endif
 	return Standard_False;
@@ -153,7 +153,9 @@ Standard_Boolean ChFiKPart_MakeChAsym(TopOpeBRepDS_DataStructure& DStr,
 
     if (ouvert) {
       if (Abs(angCon) - Abs(SemiAngl) > -Precision::Confusion() ) {
+#ifdef CHFIKPART_DEB
 	cout<<"wrong choice of angle for the chamfer"<<endl;
+#endif
 	return Standard_False; 
       } 
     }
@@ -165,7 +167,9 @@ Standard_Boolean ChFiKPart_MakeChAsym(TopOpeBRepDS_DataStructure& DStr,
       SemiAngl =  Abs(angCon) + Angle;
 
       if ( (M_PI / 2. - SemiAngl) < Precision::Confusion() ) {
+#ifdef CHFIKPART_DEB
 	cout <<"wrong choice of angle for the chamfer"<<endl;
+#endif
 	return Standard_False;
       }
       Dis1 =  move * Tan(SemiAngl) - Dis * Abs(Sin(angCon));
@@ -197,7 +201,7 @@ Standard_Boolean ChFiKPart_MakeChAsym(TopOpeBRepDS_DataStructure& DStr,
 
       if ( Abs(ChamfRad) < Precision::Confusion() ) pointu = Standard_True;
       if( ChamfRad < 0 ) {
-#ifdef DEB
+#ifdef CHFIKPART_DEB
 	cout<<"the chamfer can't pass"<<endl;
 #endif
 	return Standard_False;

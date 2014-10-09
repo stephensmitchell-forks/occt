@@ -787,7 +787,7 @@ TopoDS_Shape IGESToBRep_TopoSurface::TransferSurfaceOfRevolution
     }
   }
   catch (Standard_Failure) {
-#ifdef DEB
+#ifdef IGESTOBREP_DEB
     cout << "Warning: IgesToBRep_TopoSurface::TransferSurfaceOfRevolution(): exception by Geom: ";
     Standard_Failure::Caught()->Print ( cout ); cout << endl;
 #endif
@@ -914,7 +914,7 @@ TopoDS_Shape IGESToBRep_TopoSurface::TransferTabulatedCylinder
     }
   }
   catch (Standard_Failure) {
-#ifdef DEB
+#ifdef IGESTOBREP_DEB
     cout << "Warning: IgesToBRep_TopoSurface::TransferTabulatedCylinder(): exception by Geom: ";
     Standard_Failure::Caught()->Print ( cout ); cout << endl;
 #endif
@@ -1264,7 +1264,7 @@ TopoDS_Shape  IGESToBRep_TopoSurface::TransferBoundedSurface
 
   if (myshape.IsNull()) {
     //#55 rln 24.12.98 UKI60878 entity D593
-#ifdef DEB
+#ifdef IGESTOBREP_DEB
     cout << "Fail: IGESToBRep_TopoSurface::TransferBoundedSurface  UntrimmedSurface is translated into Null" << endl;
 #endif
     return res;

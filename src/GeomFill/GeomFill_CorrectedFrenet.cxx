@@ -148,7 +148,7 @@ static void smoothlaw(Handle(Law_BSpline)& Law,
     if (Ok) 
       tol = (Tol-tol)/2;
     else {
-#if DEB
+#if GEOMFILL_DEB
       cout << "smooth law echec" << endl;
 #endif
       return; // Echec
@@ -176,7 +176,7 @@ static void smoothlaw(Handle(Law_BSpline)& Law,
       Ok = (tol <= Tol);
     }
     if (!Ok) {
-#if DEB
+#if GEOMFILL_DEB
       cout << "smooth law echec" << endl;
 #endif
     } 

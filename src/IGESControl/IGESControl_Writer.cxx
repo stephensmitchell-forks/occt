@@ -249,7 +249,7 @@ Standard_Boolean IGESControl_Writer::Write
   if (!S) return Standard_False;
   ComputeModel();
   Standard_Integer nbEnt = themod->NbEntities();
-#ifdef DEBUG
+#ifdef IGESCONTROL_DEB
   cout<<" IGES Write : "<<nbEnt<<" ent.s"<< flush;
 #endif
   if(!nbEnt)
@@ -257,12 +257,12 @@ Standard_Boolean IGESControl_Writer::Write
   IGESData_IGESWriter IW (themod);
 //  ne pas oublier le mode fnes ... a transmettre a IW
   IW.SendModel (IGESSelect_WorkLibrary::DefineProtocol());
-#ifdef DEBUG
+#ifdef IGESCONTROL_DEB
   cout<<" ...  ecriture  ..."<<flush;
 #endif
   if (fnes) IW.WriteMode() = 10;
   Standard_Boolean status = IW.Print(S);
-#ifdef DEBUG
+#ifdef IGESCONTROL_DEB
   cout<<" ...  fichier ecrit  ..."<<endl;
 #endif
   return status;
@@ -273,7 +273,7 @@ Standard_Boolean IGESControl_Writer::Write
 {
   ofstream fout(file,ios::out);
   if (!fout) return Standard_False;
-#ifdef DEBUG
+#ifdef IGESCONTROL_DEB
   cout<<" Ecriture fichier ("<< (fnes ? "fnes" : "IGES") <<"): "<<file<<endl;
 #endif
   Standard_Boolean res = Write (fout,fnes);

@@ -118,5 +118,7 @@ void DrawDim_PlanarDistance::DrawOn(Draw_Display& dis) const
       }
     }
   } 
+#ifdef DRAWDIM_DEB
   cout << " DrawDim_PlanarDistance::DrawOn : dimension error" << endl;
+#endif
 }

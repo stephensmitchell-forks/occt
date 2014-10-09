@@ -141,7 +141,7 @@ void AIS_MultipleConnectedShape::Compute(const Handle(Prs3d_Projector)& aProject
       Standard_Real prevangl = myDrawer->HLRAngle();
       Standard_Real newangl = defdrawer->HLRAngle();
       if (Abs(newangl- prevangl) > Precision::Angular()) {
-#ifdef DEB
+#ifdef AIS_DEB
 	cout << "AIS_MultipleConnectedShape : compute"<<endl;
 	cout << "newangl   : " << newangl << " # de " << "prevangl  : " << prevangl << endl;
 #endif	

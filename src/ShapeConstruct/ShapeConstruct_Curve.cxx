@@ -162,7 +162,7 @@ Handle(Geom_BSplineCurve) ShapeConstruct_Curve::ConvertToBSpline (const Handle(G
       bspl = GeomConvert::CurveToBSplineCurve(tc);
     }
     catch ( Standard_Failure ) {
-#ifdef DEB 
+#ifdef SHAPECONSTRUCT_DEB
       cout << "Warning: ShapeConstruct_Curve::ConvertToBSpline(): Exception in GeomConvert: ";
       Standard_Failure::Caught()->Print(cout); cout << endl;
 #endif
@@ -183,7 +183,7 @@ Handle(Geom_BSplineCurve) ShapeConstruct_Curve::ConvertToBSpline (const Handle(G
       return bspl;
     }
     catch ( Standard_Failure ) {
-#ifdef DEB 
+#ifdef SHAPECONSTRUCT_DEB
       cout << "Warning: ShapeConstruct_Curve::ConvertToBSpline(): Exception in Segment: ";
       Standard_Failure::Caught()->Print(cout); cout << endl;
 #endif
@@ -201,7 +201,7 @@ Handle(Geom_BSplineCurve) ShapeConstruct_Curve::ConvertToBSpline (const Handle(G
       bspl = Conv.Curve();
   }
   catch ( Standard_Failure ) {
-#ifdef DEB 
+#ifdef SHAPECONSTRUCT_DEB
     cout << "Warning: ShapeConstruct_Curve::ConvertToBSpline(): Exception in Approx_Curve3d: ";
     Standard_Failure::Caught()->Print(cout); cout << endl;
 #endif
@@ -232,7 +232,7 @@ Handle(Geom2d_BSplineCurve) ShapeConstruct_Curve::ConvertToBSpline (const Handle
       bspl = Geom2dConvert::CurveToBSplineCurve(tc);
     }
     catch ( Standard_Failure ) {
-#ifdef DEB 
+#ifdef SHAPECONSTRUCT_DEB
       cout << "Warning: ShapeConstruct_Curve::ConvertToBSpline(): Exception in Geom2dConvert: ";
       Standard_Failure::Caught()->Print(cout); cout << endl;
 #endif
@@ -253,7 +253,7 @@ Handle(Geom2d_BSplineCurve) ShapeConstruct_Curve::ConvertToBSpline (const Handle
       return bspl;
     }
     catch ( Standard_Failure ) {
-#ifdef DEB 
+#ifdef SHAPECONSTRUCT_DEB
       cout << "Warning: ShapeConstruct_Curve::ConvertToBSpline(): Exception in Segment: ";
       Standard_Failure::Caught()->Print(cout); cout << endl;
 #endif
@@ -272,7 +272,7 @@ Handle(Geom2d_BSplineCurve) ShapeConstruct_Curve::ConvertToBSpline (const Handle
       bspl = Conv.Curve();
   }
   catch ( Standard_Failure ) {
-#ifdef DEB 
+#ifdef SHAPECONSTRUCT_DEB
     cout << "Warning: ShapeConstruct_Curve::ConvertToBSpline(): Exception in Approx_Curve3d: ";
     Standard_Failure::Caught()->Print(cout); cout << endl;
 #endif

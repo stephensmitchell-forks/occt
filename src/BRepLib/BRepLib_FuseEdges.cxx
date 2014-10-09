@@ -845,7 +845,7 @@ Standard_Boolean BRepLib_FuseEdges::SameSupport(const TopoDS_Edge& E1,
       typC1 != STANDARD_TYPE(Geom_Ellipse) &&
       typC1 != STANDARD_TYPE(Geom_BSplineCurve) && 
       typC1 != STANDARD_TYPE(Geom_BezierCurve)) {
-#ifdef DEB
+#ifdef BREPLIB_DEB
     cout << " TopOpeBRepTool_FuseEdge : Type de Support non traite" << endl;
 #endif
     return Standard_False;

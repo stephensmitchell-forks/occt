@@ -80,7 +80,9 @@ Materials_MaterialsDictionary::Materials_MaterialsDictionary()
   ifstream file(filename);
   if(!file)
     {
+#ifdef MATERIALS_DEB
       cout<<"unable to open "<<filename<<" for input"<<endl;
+#endif
       return;
     }
   

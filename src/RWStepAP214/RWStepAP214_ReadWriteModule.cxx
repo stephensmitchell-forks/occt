@@ -2804,7 +2804,7 @@ Standard_Integer RWStepAP214_ReadWriteModule::CaseStep
   
   Standard_Integer NbComp = theTypes.Length();
   if (NbComp < 2) {
-#ifdef DEB
+#ifdef RWSTEPAP214_DEB
     cout << "Not a Plex" << endl;
 #endif
   }
@@ -4068,7 +4068,7 @@ void RWStepAP214_ReadWriteModule::ReadStep(const Standard_Integer CN,
                                            const Handle(Standard_Transient)&ent) const
 {
   if (CN == 0) {
-#ifdef DEB
+#ifdef RWSTEPAP214_DEB
     cout << "CN = 0 for num = " << num << endl;
 #endif
     return;

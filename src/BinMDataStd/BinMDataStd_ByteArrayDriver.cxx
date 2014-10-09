@@ -50,9 +50,6 @@ Standard_Boolean BinMDataStd_ByteArrayDriver::Paste(const BinObjMgt_Persistent& 
 						    const Handle(TDF_Attribute)& theTarget,
 						    BinObjMgt_RRelocationTable&  ) const
 {
-#ifdef DEB
-//  cout << "ByteArrayDriver::Retrieve: " << TypeName() << endl;
-#endif
   Standard_Integer aFirstInd, aLastInd;
   if (! (theSource >> aFirstInd >> aLastInd))
     return Standard_False;
@@ -69,9 +66,7 @@ Standard_Boolean BinMDataStd_ByteArrayDriver::Paste(const BinObjMgt_Persistent& 
     bytes->SetValue(i, aTargetArray.Value(i));
   }
   anAtt->ChangeArray(bytes);
-#ifdef DEB
-  //cout << "CurDocVersion = " << BinMDataStd::DocumentVersion() <<endl;
-#endif
+
   Standard_Boolean aDelta(Standard_False); 
   if(BinMDataStd::DocumentVersion() > 2) {
     Standard_Byte aDeltaValue;
@@ -92,9 +87,6 @@ void BinMDataStd_ByteArrayDriver::Paste(const Handle(TDF_Attribute)& theSource,
 					BinObjMgt_Persistent&        theTarget,
 					BinObjMgt_SRelocationTable&  ) const
 {
-#ifdef DEB
-//  cout << "ByteArrayDriver::Store: " << TypeName() << endl;
-#endif
   Handle(TDataStd_ByteArray) anAtt = Handle(TDataStd_ByteArray)::DownCast(theSource);
   const Standard_Integer aFirstInd = anAtt->Lower();
   const Standard_Integer aLastInd  = anAtt->Upper();

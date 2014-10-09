@@ -163,9 +163,11 @@ void Standard_ErrorHandler::Abort (const Handle(Standard_Failure)& theError)
 
   //==== Check if can do the "longjmp" =======================================
   if(anActive == NULL || anActive->myLabel == NULL) {
+#ifdef STANDARD_DEB
     cerr << "*** Abort *** an exception was raised, but no catch was found." << endl;
     if (!theError.IsNull())
       cerr << "\t... The exception is:" << theError->GetMessageString() << endl;
+#endif
     exit(1);
   }
 

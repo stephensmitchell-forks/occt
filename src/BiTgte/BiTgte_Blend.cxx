@@ -1843,7 +1843,7 @@ void BiTgte_Blend::ComputeCenters()
     }
   }
 
-#ifdef DEB
+#ifdef BITGTE_DEB
   if ( myResult.IsNull()) {
     cout << " No Lines of Generated Centers" << endl;
   }

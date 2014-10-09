@@ -39,9 +39,11 @@ TCollection_Stack::TCollection_Stack() :
 
 TCollection_Stack::TCollection_Stack(const TCollection_Stack& Other)
 {
+#ifdef TCOLLECTION_DEB
   if (!Other.IsEmpty()) {
     cout << "WARNING copy constructor of non empty stack !"<<endl;
   }
+#endif
   TCollection_StackNode* p = (TCollection_StackNode*) Other.myTop;
   TCollection_StackNode* q;
   TCollection_StackNode* r = NULL;

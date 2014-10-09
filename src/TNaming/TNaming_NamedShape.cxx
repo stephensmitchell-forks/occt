@@ -263,7 +263,7 @@ static void RemoveNode(Standard_Boolean                   MapExist ,
 void TNaming_NamedShape::Clear()
 {
   if (Label().IsNull()) {
-#ifdef DEB
+#ifdef TNAMING_DEB
     cout << "attention etat fantomatique" << endl;
 #endif
     return;
@@ -479,7 +479,7 @@ static TopLoc_Location GetLocation(const TopLoc_Location& L,
   if (!L.IsIdentity()) {
     Handle(TopLoc_Datum3D) TD;
     if(!RT->HasTransientRelocation(L.FirstDatum(), TD))
-#ifdef DEB
+#ifdef TNAMING_DEB
       cout <<"TNaming_Named_Shape::Paste : Relocation for TopLocation don't exist" << endl;
 #endif
     result = GetLocation(L.NextLocation(), RT) * 
@@ -694,7 +694,7 @@ void TNaming_Builder::Generated(const TopoDS_Shape& newShape)
   TNaming_RefShape* pns;
   
   if (myShapes->myMap.IsBound(newShape)) {
-#ifdef DEB
+#ifdef TNAMING_DEB
     cout <<"TNaming_Builder::Generate : the shape is already in the attribute"<<endl;
 #endif
     pns = myShapes->myMap.ChangeFind(newShape);
@@ -735,7 +735,7 @@ void TNaming_Builder::Delete(const TopoDS_Shape& oldShape)
   if (myShapes->myMap.IsBound(oldShape)) 
     pos = myShapes->myMap.ChangeFind(oldShape); 
   else {
-#ifdef DEB
+#ifdef TNAMING_DEB
     cout <<"TNaming_Builder::Delete : the shape is not in the data"<<endl;
 #endif
     pos = new TNaming_RefShape(oldShape);  
@@ -761,7 +761,7 @@ void TNaming_Builder::Generated(const TopoDS_Shape& oldShape,
   }
 
   if (oldShape.IsSame(newShape)) {
-#ifdef DEB
+#ifdef TNAMING_DEB
     cout <<"TNaming_Builder::Generate : oldShape IsSame newShape"<<endl;
 #endif
     return;
@@ -804,7 +804,7 @@ void TNaming_Builder::Modify(const TopoDS_Shape& oldShape,
   }
 
   if (oldShape.IsSame(newShape)) {
-#ifdef DEB
+#ifdef TNAMING_DEB
     cout <<"TNaming_Builder::Modify : oldShape IsSame newShape"<<endl;
 #endif
     return;
@@ -949,7 +949,7 @@ TNaming_Iterator::TNaming_Iterator(const TDF_Label&       Lab,
   }
   else {
     myNode = 0L;
-#ifdef DEB
+#ifdef TNAMING_DEB
     cout <<"TNaming_Iterator : No Shape for this label"<<endl;
 #endif
   }

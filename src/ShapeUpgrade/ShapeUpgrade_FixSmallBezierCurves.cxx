@@ -83,7 +83,7 @@ Standard_Boolean ShapeUpgrade_FixSmallBezierCurves::Approx(Handle(Geom_Curve)& C
       }
     }
     catch (Standard_Failure) {
-#ifdef DEB 
+#ifdef SHAPEUPGRADE_DEB
       cout << "Warning: ShapeUpgrade_FixSmallBezierCurve::Approx(): Exception in Segment      :";
       Standard_Failure::Caught()->Print(cout); cout << endl;
 #endif
@@ -119,7 +119,7 @@ Standard_Boolean ShapeUpgrade_FixSmallBezierCurves::Approx(Handle(Geom_Curve)& C
       }
     }
     catch (Standard_Failure) {
-#ifdef DEB 
+#ifdef SHAPEUPGRADE_DEB
       cout << "Warning: ShapeUpgrade_FixSmallBezierCurve::Approx(): Exception in Segment      :";
       Standard_Failure::Caught()->Print(cout); cout << endl;
 #endif
@@ -156,7 +156,7 @@ Standard_Boolean ShapeUpgrade_FixSmallBezierCurves::Approx(Handle(Geom_Curve)& C
 	}
       }
       catch (Standard_Failure) {
-#ifdef DEB 
+#ifdef SHAPEUPGRADE_DEB
 	  cout << "Warning: ShapeUpgrade_FixSmallBezierCurve::Approx(): Exception in Segment      :";
 	  Standard_Failure::Caught()->Print(cout); cout << endl;
 #endif

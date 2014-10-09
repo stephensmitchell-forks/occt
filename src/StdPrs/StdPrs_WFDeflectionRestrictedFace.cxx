@@ -185,9 +185,11 @@ void StdPrs_WFDeflectionRestrictedFace::Add
 	    }
 	  }
 	}
+#ifdef STDPRS_DEB
 	else {
 	  cout << "Cannot evaluate curve on surface"<<endl;
 	}
+#endif
       }
       else {
 	U1 = TheRCurve->FirstParameter();
@@ -456,9 +458,11 @@ Standard_Boolean StdPrs_WFDeflectionRestrictedFace::Match
 	  }
 	}
       }
+#ifdef STDPRS_DEB
       else {
 	cout << "Cannot evaluate curve on surface"<<endl;
       }
+#endif
     }
   }
   

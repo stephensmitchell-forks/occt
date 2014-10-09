@@ -196,7 +196,7 @@ Standard_Boolean StepToTopoDS_TranslateCompositeCurve::Init (const Handle(StepGe
         }
       }
       catch(Standard_Failure) {
-#ifdef DEB
+#ifdef STEPTOTOPODS_DEB
 	cout << "Warning: StepToTopoDS_TranslateCompositeCurve: Exception: ";
 	Standard_Failure::Caught()->Print(cout); cout << endl;
 #endif
@@ -233,7 +233,7 @@ Standard_Boolean StepToTopoDS_TranslateCompositeCurve::Init (const Handle(StepGe
 	}
       }
       catch(Standard_Failure) {
-#ifdef DEB
+#ifdef STEPTOTOPODS_DEB
 	cout << "Warning: StepToTopoDS_TranslateCompositeCurve: Exception: ";
 	Standard_Failure::Caught()->Print(cout); cout << endl;
 #endif

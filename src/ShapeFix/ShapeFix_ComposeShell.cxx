@@ -381,7 +381,7 @@ static Standard_Integer ApplyContext (ShapeFix_WireSegment &wire,
   for ( TopoDS_Iterator it(res); it.More(); it.Next() ) {
     TopoDS_Edge E = TopoDS::Edge ( it.Value() );
     if ( ! E.IsNull() ) segw->Add ( E );
-#ifdef DEB
+#ifdef SHAPEFIX_DEB
     else cout << "Error: ShapeFix_ComposeShell, ApplyContext: wrong mapping of edge" << endl;
 #endif
   }
@@ -398,7 +398,7 @@ static Standard_Integer ApplyContext (ShapeFix_WireSegment &wire,
       else wire.AddEdge ( index, aE, iumin, iumax, ivmin, ivmax );
     }
   }
-#ifdef DEB
+#ifdef SHAPEFIX_DEB
   else cout << "Warning: ShapeFix_ComposeShell, ApplyContext: edge is to remove - not implemented" << endl;
 #endif
   
@@ -697,7 +697,7 @@ Standard_Integer ShapeFix_ComposeShell::ComputeCode (const Handle(ShapeExtend_Wi
   else if ( code == IOR_BOTH ) { // parity error in intersector
     code = IOR_LEFT;
     myStatus |= ShapeExtend::EncodeStatus ( ShapeExtend_FAIL2 );
-#ifdef DEB
+#ifdef SHAPEFIX_DEB
     cout << "Warning: ShapeFix_ComposeShell::ComputeCode: lost intersection point" << cout;
 #endif
   }
@@ -835,7 +835,7 @@ ShapeFix_WireSegment ShapeFix_ComposeShell::SplitWire (ShapeFix_WireSegment &wir
     if ( nsplit !=1 ) {
       DistributeSplitPoints ( wire.WireData(), myFace, i, nsplit, indexes, values );
       if ( nsplit <=0 ) {
-#ifdef DEB
+#ifdef SHAPEFIX_DEB
 	cout << "Error: ShapeFix_ComposeShell::SplitWire: edge dismissed" << endl;
 #endif
 	i--;
@@ -1624,7 +1624,7 @@ void ShapeFix_ComposeShell::SplitByLine (ShapeFix_SequenceOfWireSegment &wires,
     }
     if ( tanglevel <0 ) {
 //      myStatus |= ShapeExtend::EncodeStatus ( ShapeExtend_FAIL4 );
-#ifdef DEB
+#ifdef SHAPEFIX_DEB
       cout << "Warning: ShapeFix_ComposeShell::SplitByLine: tangency level <0 !" << endl;
 #endif
     }
@@ -1639,7 +1639,7 @@ void ShapeFix_ComposeShell::SplitByLine (ShapeFix_SequenceOfWireSegment &wires,
     // protection against creating null-length edges
     if ( SplitLinePar(i) - SplitLinePar(i-1) < ::Precision::PConfusion() ) {
 
-#ifdef DEB
+#ifdef SHAPEFIX_DEB
       cout << "Info: ShapeFix_ComposeShell::SplitByLine: Short segment ignored" << endl;
 #endif
       if ( ! V1.IsSame ( V2 ) ) { // merge coincident vertices
@@ -1648,7 +1648,7 @@ void ShapeFix_ComposeShell::SplitByLine (ShapeFix_SequenceOfWireSegment &wires,
         Context()->Replace ( V1, V.Oriented ( V1.Orientation() ) );
         Context()->Replace ( V2, V.Oriented ( V2.Orientation() ) );
 	V1 = V2 = V;
-#ifdef DEB
+#ifdef SHAPEFIX_DEB
         cout << "Info: ShapeFix_ComposeShell::SplitByLine: Coincided vertices merged" << endl;
 #endif
       }
@@ -1691,7 +1691,7 @@ void ShapeFix_ComposeShell::SplitByLine (ShapeFix_SequenceOfWireSegment &wires,
   }
   if ( parity % 2 ) {
     myStatus |= ShapeExtend::EncodeStatus ( ShapeExtend_FAIL4 );
-#ifdef DEB
+#ifdef SHAPEFIX_DEB
     cout << "Error: ShapeFix_ComposeShell::SplitByLine: parity error" << endl;
 #endif
   }
@@ -1976,10 +1976,12 @@ void ShapeFix_ComposeShell::CollectWires (ShapeFix_SequenceOfWireSegment &wires,
       i--;
       continue;
     }
-#ifdef DEB
+#ifdef SHAPEFIX_DEB
     for ( Standard_Integer k=1; ! myClosedMode && k <= seqw(i).NbEdges(); k++ ) 
-      if ( ! seqw(i).CheckPatchIndex ( k ) ) {;} //break;
-//	cout << "Warning: ShapeFix_ComposeShell::CollectWires: Wrong patch indices" << endl;
+      if ( ! seqw(i).CheckPatchIndex ( k ) ) {
+        cout << "Warning: ShapeFix_ComposeShell::CollectWires: Wrong patch indices" << endl;
+        break;
+      }
 #endif
     Standard_Integer isshort = IsShortSegment ( seqw(i), myFace, myGrid, myLoc,
 					        myUResolution, myVResolution );
@@ -1988,7 +1990,7 @@ void ShapeFix_ComposeShell::CollectWires (ShapeFix_SequenceOfWireSegment &wires,
          ( seqw(i).Orientation() == TopAbs_EXTERNAL ||
            ( seqw(i).NbEdges() == 1 && //:abv 13.05.02: OCC320 - remove if degenerated 
              BRep_Tool::Degenerated ( seqw(i).Edge(1) ) ) ) ) {
-#ifdef DEB
+#ifdef SHAPEFIX_DEB
       cout << "Info: ShapeFix_ComposeShell::CollectWires: Short segment ignored" << endl;
 #endif
       seqw(i).Orientation ( TopAbs_INTERNAL );
@@ -2189,7 +2191,7 @@ void ShapeFix_ComposeShell::CollectWires (ShapeFix_SequenceOfWireSegment &wires,
 		      IsCoincided ( endPnt, firstPnt, myUResolution, myVResolution, 2.* tol ) ) ) {
       if ( ! endV.IsSame ( sae.FirstVertex ( firstEdge ) ) ) {
         myStatus |= ShapeExtend::EncodeStatus ( ShapeExtend_FAIL5 );
-#ifdef DEB
+#ifdef SHAPEFIX_DEB
         cout << "Warning: ShapeFix_ComposeShell::CollectWires: can't close wire" << endl;
 #endif
       }
@@ -2246,7 +2248,7 @@ void ShapeFix_ComposeShell::CollectWires (ShapeFix_SequenceOfWireSegment &wires,
       //pdn add into resulting sequence!
       ShapeFix_WireSegment s ( wd, TopAbs_FORWARD );
       wires.Append ( s );
-#ifdef DEB
+#ifdef SHAPEFIX_DEB
       cout <<"Warning: Short segment processed as separate wire"<<endl;
 #endif
       continue;
@@ -2434,7 +2436,7 @@ void ShapeFix_ComposeShell::MakeFacesOnPatch (TopTools_SequenceOfShape &faces,
   
   // check for lost wires, and if they are, make them roots
   if ( roots.Length() <=0 && loops.Length() >0 ) {
-#ifdef DEB
+#ifdef SHAPEFIX_DEB
     cout << "Error: ShapeFix_ComposeShell::MakeFacesOnPatch: can't dispatch wires" << endl;
 #endif
     for ( Standard_Integer j=1; j <= loops.Length(); j++ ) {
@@ -2453,7 +2455,7 @@ void ShapeFix_ComposeShell::MakeFacesOnPatch (TopTools_SequenceOfShape &faces,
     BRepTopAdaptor_FClass2d clas ( fc, ::Precision::PConfusion() );
     if ( clas.PerformInfinitePoint() == TopAbs_IN ) {
       reverse = Standard_True;
-#ifdef DEB
+#ifdef SHAPEFIX_DEB
       cout << "Warning: ShapeFix_ComposeShell::MakeFacesOnPatch: badly oriented wire" << endl;
 #endif
     }
@@ -2505,7 +2507,7 @@ void ShapeFix_ComposeShell::MakeFacesOnPatch (TopTools_SequenceOfShape &faces,
     
     // check for lost wires, and if they are, make them roots
     if ( i == roots.Length() && loops.Length() >0 ) {
-#ifdef DEB
+#ifdef SHAPEFIX_DEB
       cout << "Error: ShapeFix_ComposeShell::MakeFacesOnPatch: can't dispatch wires" << endl;
 #endif
       for ( j=1; j <= loops.Length(); j++ ) {

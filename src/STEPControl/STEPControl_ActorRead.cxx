@@ -180,7 +180,7 @@ static void DumpWhatIs(const TopoDS_Shape& S) {
         nbVertexes++;
     }
   }
-  #ifdef DEB
+  #ifdef STEPCONTROL_DEB
   cout << "//What is?// NB COMPOUNDS: " << nbCompounds << endl;
   cout << "//What is?// NB SOLIDS: " << nbSolids << endl;
   cout << "//What is?// NB SHELLS: " << nbShells << endl;
@@ -290,12 +290,12 @@ Handle(Transfer_Binder)  STEPControl_ActorRead::Transfer
       Handle(TCollection_HAsciiString) aPPVersion = aFileNameEntity->PreprocessorVersion();
       if(aPPVersion.IsNull())
         continue;
-      #ifdef DEB
+      #ifdef STEPCONTROL_DEB
       cout << "Preprocessor version detected: " << aPPVersion->ToCString() << endl;
       #endif
       Standard_Integer anIDeasResult = aPPVersion->Search("I-DEAS");
       if (anIDeasResult != -1) {
-        #ifdef DEB
+        #ifdef STEPCONTROL_DEB
         cout << "Recognized as I-DEAS STP" << endl;
         #endif
         myNMTool.SetIDEASCase(Standard_True);
@@ -776,7 +776,7 @@ Handle(TransferBRep_ShapeBinder) STEPControl_ActorRead::TransferEntity(const Han
   if ( isNMMode && sr->IsKind(STANDARD_TYPE(StepShape_NonManifoldSurfaceShapeRepresentation)) ) {
     isManifold = Standard_False;
     NM_DETECTED = Standard_True;
-    #ifdef DEB
+    #ifdef STEPCONTROL_DEB
     Standard_Integer NMSSRItemsLen = sr->Items()->Length();
     cout << "NMSSR with " << NMSSRItemsLen << " items detected" << endl;
     #endif
@@ -787,11 +787,11 @@ Handle(TransferBRep_ShapeBinder) STEPControl_ActorRead::TransferEntity(const Han
     if (isNMMode && myNMTool.IsIDEASCase() && isIDeasMode) {
       isManifold = Standard_False;
       NM_DETECTED = Standard_True;
-      #ifdef DEB
+      #ifdef STEPCONTROL_DEB
       cout << "I-DEAS post processing for non-manifold topology ENABLED" << endl;
       #endif
     }
-    #ifdef DEB
+    #ifdef STEPCONTROL_DEB
     else if ( myNMTool.IsIDEASCase() )
       cout << "I-DEAS post processing for non-manifold topology DISABLED" << endl;
     #endif
@@ -1768,7 +1768,7 @@ TopoDS_Shell STEPControl_ActorRead::closeIDEASShell(const TopoDS_Shell& shell,
     if (subCheckStatus != BRepCheck_NoError)
       brepBuilder.Add(result, currentFace);
     else {
-      #ifdef DEB
+      #ifdef STEPCONTROL_DEB
       cout << "Redundant closing face detected: REMOVED from shell";
       #endif
     }

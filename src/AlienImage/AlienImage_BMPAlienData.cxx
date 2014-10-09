@@ -113,15 +113,19 @@ Standard_Boolean AlienImage_BMPAlienData::Read (OSD_File& file)
   lpVoid = Standard_Address(&bmfh);
   file.Read ((void*&)lpVoid, sizeof(AlienImage_BMPHeader), nBytes);
   if (file.Failed () || nBytes != sizeof(AlienImage_BMPHeader)) {
+#ifdef ALIENIMAGE_DEB
     cout << "AlienImage_BMPAlienData::Read() : Reading AlienImage_BMPHeader."
          << endl << flush;
+#endif
     goto _ExitReadError;
   }
 
   lpVoid = Standard_Address (&dwSize);
   file.Read ((void*&)lpVoid, sizeof (DWORD), nBytes);
   if (file.Failed() || nBytes != sizeof (DWORD)) {
+#ifdef ALIENIMAGE_DEB
     cout << "AlienImage_BMPAlienData::Read() : BAD file size." << endl << flush;
+#endif
     goto _ExitReadError;
   }
   file.Seek (-(int)sizeof(DWORD), OSD_FromHere);
@@ -131,16 +135,20 @@ Standard_Boolean AlienImage_BMPAlienData::Read (OSD_File& file)
     lpVoid = Standard_Address(&bmch);
     file.Read ((void*&)lpVoid, sizeof(BITMAPCOREHEADER), nBytes);
     if (file.Failed() || nBytes != sizeof(BITMAPCOREHEADER)) {
+#ifdef ALIENIMAGE_DEB
       cout << "AlienImage_BMPAlienData::Read() : Reading BITMAPCOREHEADER."
            << endl << flush;
+#endif
       goto _ExitReadError;
     }
   } else {
     lpVoid = Standard_Address(&bmih);
     file.Read ((void*&)lpVoid, sizeof(BITMAPINFOHEADER), nBytes);
     if (file.Failed() || nBytes != sizeof(BITMAPINFOHEADER)) {
+#ifdef ALIENIMAGE_DEB
       cout << "AlienImage_BMPAlienData::Read() : Reading BITMAPINFOHEADER."
            << endl << flush;
+#endif
       goto _ExitReadError;
     }
   }
@@ -149,8 +157,10 @@ Standard_Boolean AlienImage_BMPAlienData::Read (OSD_File& file)
   if ((nBitCount != 1 &&  nBitCount != 4 && nBitCount != 8 &&
        nBitCount != 16 && nBitCount != 24 && nBitCount != 32) ||
        isOS2Format && (nBitCount == 16 || nBitCount == 32)) {
+#ifdef ALIENIMAGE_DEB
     cout << "AlienImage_BMPAlienData::Read() : Bad <nBitCount> value :"
          << nBitCount << " " << isOS2Format << endl << flush;
+#endif
     goto _ExitReadError;
   }
 
@@ -178,8 +188,10 @@ Standard_Boolean AlienImage_BMPAlienData::Read (OSD_File& file)
 
     file.Read ((void*&)pColors256, isize, nBytes);
     if (file.Failed() || nBytes != isize) {
+#ifdef ALIENIMAGE_DEB
       cout << "AlienImage_BMPAlienData::Read() : Reading ColorMap."
            << endl << flush;
+#endif
       goto _ExitReadError;
     }
     // Build colormap
@@ -199,24 +211,32 @@ Standard_Boolean AlienImage_BMPAlienData::Read (OSD_File& file)
     // Retrieve three DWORD's that contain the masks for R, G and B respectively
     file.Read ((void*&)(pdw = &dwRMask), sizeof (DWORD), nBytes);
     if (file.Failed() || nBytes != sizeof(DWORD)) {
+#ifdef ALIENIMAGE_DEB
       cout << "AlienImage_BMPAlienData::Read() : BAD file size." << endl << flush;
+#endif
       goto _ExitReadError;
     }
 
     file.Read ((void*&)(pdw = &dwGMask), sizeof (DWORD), nBytes);
     if (file.Failed() || nBytes != sizeof(DWORD)) {
+#ifdef ALIENIMAGE_DEB
       cout << "AlienImage_BMPAlienData::Read() : BAD file size." << endl << flush;
+#endif
       goto _ExitReadError;
     }
 
     file.Read ((void*&)(pdw = &dwBMask), sizeof (DWORD), nBytes);
     if (file.Failed() || nBytes != sizeof(DWORD)) {
+#ifdef ALIENIMAGE_DEB
       cout << "AlienImage_BMPAlienData::Read() : BAD file size." << endl << flush;
+#endif
       goto _ExitReadError;
     }
 
     if (hasColormap || !dwRMask || !dwGMask || !dwBMask) {
+#ifdef ALIENIMAGE_DEB
       cout << "AlienImage_BMPAlienData::Read() : BAD image colormap." << endl << flush;
+#endif
       goto _ExitReadError;
     }
     
@@ -246,8 +266,10 @@ Standard_Boolean AlienImage_BMPAlienData::Read (OSD_File& file)
   file.Seek (i, OSD_FromBeginning);
   file.Read ((void*&)pData, iDataSize, nBytes);
   if (file.Failed () || nBytes != iDataSize) {
+#ifdef ALIENIMAGE_DEB
     cout << "AlienImage_BMPAlienData::Read() : Image data."
          << endl << flush;
+#endif
     goto _ExitReadError;
   }
 
@@ -457,7 +479,9 @@ Standard_Boolean AlienImage_BMPAlienData::Write (OSD_File& file) const
   return Standard_True;
         
 _ExitWriteError:
+#ifdef ALIENIMAGE_DEB
   cout << "AlienImage_BMPAlienData::Write() : Write file error." << endl << flush;
+#endif
   STGMGR_FREE (pbData, isize);
   return Standard_False;
 }

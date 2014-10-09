@@ -103,10 +103,6 @@ Standard_Boolean XmlMDataStd_IntPackedMapDriver::Paste
       if(aPackedMap->ChangeMap(aHMap))
 	Ok = Standard_True;
     }
-    //
-#ifdef DEB
-  //cout << "CurDocVersion = " << XmlMDataStd::DocumentVersion() <<endl;
-#endif
     if(Ok) {
       Standard_Boolean aDelta(Standard_False);
   
@@ -124,7 +120,7 @@ Standard_Boolean XmlMDataStd_IntPackedMapDriver::Paste
 	else
 	  aDelta = (Standard_Boolean)aDeltaValue;
       }
-#ifdef DEB
+#ifdef XMLMDATASTD_DEB
       else if(XmlMDataStd::DocumentVersion() == -1)
 	cout << "Current DocVersion field is not initialized. "  <<endl;
 #endif

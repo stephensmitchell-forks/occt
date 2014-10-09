@@ -305,13 +305,13 @@ Standard_Boolean BlendFunc_ConstRadInv::Derivatives(const math_Vector& X,
   norm2 = ncrossns2.Magnitude();
   if (norm1 < Eps)  {
     norm1 = 1; // Unsatisfactory, but it is not necessary to stop
-#if DEB
+#if BLENDFUNC_DEB
     cout << " ConstRadInv : Surface singuliere " << endl;
 #endif
   }
   if (norm2 < Eps)  {
     norm2 = 1; // Unsatisfactory, but it is not necessary to stop
-#if DEB
+#if BLENDFUNC_DEB
     cout << " ConstRadInv : Surface singuliere " << endl;
 #endif
   } 
@@ -486,13 +486,13 @@ Standard_Boolean BlendFunc_ConstRadInv::Values(const math_Vector& X,
   norm2 = ncrossns2.Magnitude();
   if (norm1 < Eps)  {
     norm1 = 1; // Unsatisfactory, but it is not necessary to stop
-#if DEB
+#if BLENDFUNC_DEB
     cout << " ConstRadInv : Surface singuliere " << endl;
 #endif
   }
   if (norm2 < Eps)  {
     norm2 = 1; // Unsatisfactory, but it is not necessary to stop
-#if DEB
+#if BLENDFUNC_DEB
     cout << " ConstRadInv : Surface singuliere " << endl;
 #endif
   } 

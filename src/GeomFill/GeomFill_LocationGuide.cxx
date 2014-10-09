@@ -370,7 +370,7 @@ static void InGoodPeriod(const Standard_Real Prec,
 	
 	if (Result.IsDone() && 
 	    (Result.FunctionSetErrors().Norm() < TolRes(1)*TolRes(1)) ) {
-#if DEB
+#if GEOMFILL_DEB
 	  cout << "Ratrappage Reussi !" << endl;
 #endif
 	  SOS = Standard_True;
@@ -381,7 +381,7 @@ static void InGoodPeriod(const Standard_Real Prec,
           theV = PInt.V();
 	}  
 	else {
-#if DEB
+#if GEOMFILL_DEB
 	  cout << "Echec du Ratrappage !" << endl;
 #endif
 	}
@@ -427,7 +427,7 @@ static void InGoodPeriod(const Standard_Real Prec,
 	}
       }
       
-#if DEB		
+#if GEOMFILL_DEB		
       if (Abs(Diff) > DeltaG) {
 	cout << "Location :: Diff on Guide : " << 
 	  Diff << endl;
@@ -443,7 +443,7 @@ static void InGoodPeriod(const Standard_Real Prec,
 	  InGoodPeriod (OldAngle, 2*M_PI, Angle);
 	  Diff = Angle - OldAngle;
 	}
-#if DEB
+#if GEOMFILL_DEB
       if (Abs(Diff) > M_PI/4) {
 	cout << "Diff d'angle trop grand !!" << endl;
       } 
@@ -459,7 +459,7 @@ static void InGoodPeriod(const Standard_Real Prec,
 	InGoodPeriod (myPoles2d->Value(2, ii-1).Y(), UPeriod, v);
       }
       Diff = v -  myPoles2d->Value(2, ii-1).Y();
-#if DEB
+#if GEOMFILL_DEB
       if (Abs(Diff) > DeltaU) {
 	cout << "Diff sur section trop grand !!" << endl;
       } 

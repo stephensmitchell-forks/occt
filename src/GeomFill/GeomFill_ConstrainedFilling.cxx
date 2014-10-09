@@ -222,7 +222,7 @@ static void coonscnd(const Standard_Integer     nb,
 	if(scal1 > tolang) {
 	  Standard_Real killfactor = tolang/scal1;
 	  stat[i].DoKill(killfactor);
-#ifdef DEB
+#ifdef GEOMFILL_DEB
 	  cout<<"pb coons cnd coin : "<<i<<" fact = "<<killfactor<<endl; 
 #endif
 	}
@@ -566,23 +566,23 @@ void GeomFill_ConstrainedFilling::Build()
       }
       nbd3 += ctr[ii];
     }
-#ifdef DEB
+#ifdef GEOMFILL_DEB
     appclock.Start();
 #endif
     if(nbd3) PerformApprox();
-#ifdef DEB
+#ifdef GEOMFILL_DEB
     appclock.Stop();
 #endif
   }
   appdone = Standard_True;
-#ifdef DEB
+#ifdef GEOMFILL_DEB
   cstclock.Start();
 #endif
   MatchKnots();
   PerformS0();
   PerformS1();
   PerformSurface();
-#ifdef DEB
+#ifdef GEOMFILL_DEB
   cstclock.Stop();
   totclock.Stop();
   Standard_Real tottime, apptime, partime, csttime;

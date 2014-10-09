@@ -158,7 +158,7 @@ void LocOpe_FindEdges::Set(const TopoDS_Shape& FFrom,
 	  }
 	  else {
 	    // Cas non traite : on est a cheval
-#ifdef DEB
+#ifdef LOCOPE_DEB
 	    cout <<" cas a cheval."<< endl;
 #endif
 
@@ -210,7 +210,7 @@ void LocOpe_FindEdges::Set(const TopoDS_Shape& FFrom,
 	  }
 	  else {
 	    // Cas non traite : on est a cheval
-#ifdef DEB
+#ifdef LOCOPE_DEB
 	    cout <<" cas a cheval."<< endl;
 #endif
 //	    myLFrom.Append(edgf);
@@ -293,7 +293,7 @@ void LocOpe_FindEdges::Set(const TopoDS_Shape& FFrom,
 	      }
 
 	      if (IsSame) {
-#ifdef DEB
+#ifdef LOCOPE_DEB
 		cout <<"memes bsplines."<< endl;
 #endif
 		myLFrom.Append(edgf);
@@ -353,7 +353,7 @@ void LocOpe_FindEdges::Set(const TopoDS_Shape& FFrom,
 	    }
 	    
 	    if (IsSame) {
-#ifdef DEB
+#ifdef LOCOPE_DEB
 	      cout <<"memes beziers."<< endl;
 #endif
 	      myLFrom.Append(edgf);

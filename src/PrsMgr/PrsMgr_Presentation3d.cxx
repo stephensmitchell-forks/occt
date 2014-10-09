@@ -154,7 +154,7 @@ void PrsMgr_Presentation3d::SetShadingAspect(const Handle(Prs3d_ShadingAspect)& 
 Handle(Graphic3d_Structure) PrsMgr_Presentation3d::
 Compute(const Handle(Graphic3d_DataStructureManager)& aProjector)
 {
-#ifdef DEB
+#ifdef PRSMGR_DEB
   cout<<"passage in g = Compute(P) "<<endl;
 #endif
   Handle(Prs3d_Presentation) g = new Prs3d_Presentation(Handle(PrsMgr_PresentationManager3d)::DownCast(PresentationManager())->StructureManager());
@@ -170,7 +170,7 @@ Compute(const Handle(Graphic3d_DataStructureManager)& aProjector)
 void PrsMgr_Presentation3d::Compute(const Handle(Graphic3d_DataStructureManager)& aProjector,
 				    const Handle(Graphic3d_Structure)& TheStructToFill)
 {
-#ifdef DEB
+#ifdef PRSMGR_DEB
   cout<<"passage in Compute(P,Str)"<<endl;
 #endif
   TheStructToFill->Clear();
@@ -186,14 +186,14 @@ Handle(Graphic3d_Structure) PrsMgr_Presentation3d::
 Compute(const Handle(Graphic3d_DataStructureManager)& aProjector,
 	const Handle(Geom_Transformation)& TheTrsf)
 {
-#ifdef DEB
+#ifdef PRSMGR_DEB
   cout<<"passage in G =  Compute(P,Trsf)"<<endl;
 #endif
   Handle(Prs3d_Presentation) g = new Prs3d_Presentation(Handle(PrsMgr_PresentationManager3d)::DownCast(PresentationManager())->StructureManager());
 
 
   if(TheTrsf->Form()== gp_Translation){
-#ifdef DEB
+#ifdef PRSMGR_DEB
     cout<<"\tla Trsf est une translation"<<endl;
 #endif
    
@@ -213,7 +213,7 @@ Compute(const Handle(Graphic3d_DataStructureManager)& aProjector,
     }
     
     if(good){
-#ifdef DEB
+#ifdef PRSMGR_DEB
       cout<<"\t it is checked if Trsf is a Translation"<<endl;
 #endif
     myPresentableObject->Compute(Projector(aProjector),g);
@@ -221,7 +221,7 @@ Compute(const Handle(Graphic3d_DataStructureManager)& aProjector,
       
     }
     else{
-#ifdef DEB
+#ifdef PRSMGR_DEB
       cout<<"\t Trsf is not only translation..."<<endl;
 #endif
       myPresentableObject->Compute(Projector(aProjector),TheTrsf,g);
@@ -239,7 +239,7 @@ void PrsMgr_Presentation3d::Compute(const Handle(Graphic3d_DataStructureManager)
 				    const Handle(Graphic3d_Structure)& TheStructToFill)
 {
   
-#ifdef DEB
+#ifdef PRSMGR_DEB
   cout<<"passage in Compute(P,Trsf,Str)"<<endl;
 #endif
 
@@ -250,7 +250,7 @@ void PrsMgr_Presentation3d::Compute(const Handle(Graphic3d_DataStructureManager)
   myPresentableObject->Compute(Projector(aProjector),TheTrsf,P);
 #else	//Does not work properly, HLR seems deactivated for view rotation 
   if(TheTrsf->Form()== gp_Translation){
-#ifdef DEB
+#ifdef PRSMGR_DEB
     cout<<"\t Trsf is a translation"<<endl;
 #endif
 //    myPresentableObject->Compute(Projector(aProjector),P);
@@ -268,7 +268,7 @@ void PrsMgr_Presentation3d::Compute(const Handle(Graphic3d_DataStructureManager)
       }
     }
     if(good && !TheStructToFill->IsEmpty()){
-#ifdef DEB
+#ifdef PRSMGR_DEB
       cout<<"\t it is checked if Trsf is a Translation"<<endl;
 #endif
       
@@ -277,7 +277,7 @@ void PrsMgr_Presentation3d::Compute(const Handle(Graphic3d_DataStructureManager)
     else{
       TheStructToFill->Clear();
       
-#ifdef DEB
+#ifdef PRSMGR_DEB
       cout<<"\t Trsf is not only translation..."<<endl;
 #endif
       

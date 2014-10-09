@@ -70,7 +70,9 @@ Message_PrinterOStream::Message_PrinterOStream (const Standard_CString theFileNa
     }
     else {
       myStream = &cout;
+#ifdef MESSAGE_DEB
       cerr << "Error opening " << theFileName << endl << flush;
+#endif
     }
   }
 }

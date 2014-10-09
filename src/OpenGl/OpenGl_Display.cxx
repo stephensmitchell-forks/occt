@@ -227,7 +227,7 @@ void OpenGl_Display::Init()
     int aDummy;
     if (!XQueryExtension ((Display* )myDisplay, "GLX", &aDummy, &aDummy, &aDummy))
     {
-    #ifdef DEBUG
+    #ifdef OPENGL_DEB
       std::cerr << "This system doesn't appear to support OpenGL\n";
     #endif
     }

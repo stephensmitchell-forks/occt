@@ -68,7 +68,7 @@ Standard_Integer RWHeaderSection_ReadWriteModule::CaseStep
 {
 
   Standard_Integer NbComp = types.Length();
-#ifdef DEB
+#ifdef RWHEADERSECTION_DEB
   if (NbComp < 2) {
     cout << "Plex Instance illegal " << endl;
   }

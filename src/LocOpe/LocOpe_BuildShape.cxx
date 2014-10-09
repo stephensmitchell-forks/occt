@@ -420,7 +420,7 @@ static Standard_Boolean IsInside(const TopoDS_Shape& S1,
       return Standard_False;
     }
   }
-#ifdef DEB
+#ifdef LOCOPE_DEB
   cout << "Classification impossible sur vertex " << endl;
 #endif
   

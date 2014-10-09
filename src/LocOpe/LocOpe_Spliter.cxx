@@ -296,7 +296,7 @@ void LocOpe_Spliter::Perform(const Handle(LocOpe_ProjectedWires)& PW)
       theSubs.Substitute(ebase.Oriented(TopAbs_FORWARD),lsubs);
     }
     else {
-#ifdef DEB
+#ifdef LOCOPE_DEB
       cout << "Pb pour substitution" << endl;
 #endif
     }

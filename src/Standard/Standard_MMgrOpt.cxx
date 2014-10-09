@@ -195,7 +195,9 @@ Standard_MMgrOpt::Standard_MMgrOpt(const Standard_Boolean aClear,
   // check basic assumption
   if ( sizeof(Standard_Size) != sizeof(Standard_Address) )
   {
+#ifdef STANDARD_DEB
     cerr << "Fatal error: Open CASCADE Optimized Memory manager: this platform is not supported!" << endl;
+#endif
     exit(1);
   }
 

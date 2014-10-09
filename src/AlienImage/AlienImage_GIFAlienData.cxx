@@ -141,7 +141,9 @@ Standard_Boolean AlienImage_GIFAlienData::Read (OSD_File& file)
   // Read file into memory
   file.Read ((void*&)pFileBuffer, nFileSize, nReadCount);
   if (nFileSize != nReadCount) {
+#ifdef ALIENIMAGE_DEB
     cout << "GIFAlienData::Read() : BAD file size." << endl << flush;
+#endif
     goto _ExitReadError;
   }
 
@@ -172,8 +174,10 @@ Standard_Boolean AlienImage_GIFAlienData::Read (OSD_File& file)
       BLUE [i] = ((BYTE)(hasColormap ? *pFileStream++: i));
     }
   } else {
+#ifdef ALIENIMAGE_DEB
     cout << "GIFAlienData::Read() : There's no colormap"
          << " in the image (or too big): " << ncolors << endl << flush;
+#endif
     goto _ExitReadError;
   }
 
@@ -187,8 +191,10 @@ Standard_Boolean AlienImage_GIFAlienData::Read (OSD_File& file)
   }
 
   if (*pFileStream++ != ',') { // must be an image descriptor
+#ifdef ALIENIMAGE_DEB
     cout << "GIFAlienData::Read() : There's no separator"
          << " following the colormap" << endl << flush;
+#endif
     goto _ExitReadError;
   }
 
@@ -201,8 +207,10 @@ Standard_Boolean AlienImage_GIFAlienData::Read (OSD_File& file)
   byte = *pFileStream++;
   isInterlace = byte & 0x40;
   if (byte & 0x80) {
+#ifdef ALIENIMAGE_DEB
     cout << "GIFAlienData::Read() : Can't read GIF image"
          << " with locally defined colormap" << endl << flush;
+#endif
     goto _ExitReadError;
   }
 
@@ -231,7 +239,9 @@ Standard_Boolean AlienImage_GIFAlienData::Read (OSD_File& file)
     while (byte--)
       *ptr1++ = *pFileStream++;
     if ((long) (ptr1 - rasterPtr) > nFileSize) {// Currupt file
+#ifdef ALIENIMAGE_DEB
       cout << "GIFAlienData::Read() : BAD file size." << endl << flush;
+#endif
       goto _ExitReadError;
     }
   } while (byte1);
@@ -284,7 +294,9 @@ Standard_Boolean AlienImage_GIFAlienData::Read (OSD_File& file)
       }
       while (CurCode > BitMask) {
         if (OutCount > 1024) {
+#ifdef ALIENIMAGE_DEB
           cout << "GIFAlienData::Read() : BAD file size." << endl << flush;
+#endif
           goto _ExitReadError;
 	}
         OutCode [OutCount++] = Suffix [CurCode];

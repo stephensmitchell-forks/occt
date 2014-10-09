@@ -104,7 +104,7 @@ void XmlMXCAFDoc_LocationDriver::Translate (const TopLoc_Location&      theLoc,
   // The location is not identity  
   if( myLocations == 0 )
   {
-#ifdef DEB
+#ifdef XMLMXCAFDOC_DEB
     cout<<"Pointer to LocationSet is NULL\n";
 #endif
     return;

@@ -807,7 +807,7 @@ static void FUN_samgeomori(const TopOpeBRepDS_DataStructure& BDS, const Standard
           Standard_Boolean so = Standard_True;
 	  Standard_Boolean ok = FUN_tool_curvesSO(newE,par,TopoDS::Edge(EOR),so);
 	  if (!ok) {
-#ifdef DEB
+#ifdef TOPOPEBREPBUILD_DEB
             cout<<"GSplitEdgeWES: cannot orient SDM split of an edge"<<endl;
 #endif
 	    //return; // nyiFUNRAISE
@@ -930,7 +930,7 @@ static void FUN_samgeomori(const TopOpeBRepDS_DataStructure& BDS, const Standard
           Standard_Boolean so = Standard_True;
 	  Standard_Boolean ok = FUN_tool_curvesSO(newE,par,TopoDS::Edge(EOR),so);
 	  if (!ok) {
-#ifdef DEB
+#ifdef TOPOPEBREPBUILD_DEB
             cout<<"GSplitEdgeWES: cannot orient SDM split of an edge"<<endl;
 #endif
           }

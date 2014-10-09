@@ -239,7 +239,7 @@ void AIS_RadiusDimension::InitFirstShape()
 	  myFirstPar = AdaptedCurve.FirstParameter();
 	  myLastPar = AdaptedCurve.LastParameter();
 	}
-#ifdef DEB
+#ifdef AIS_DEB
 	else {
 	  cout << "AIS_RadiusDimension::InitFirstShape ==> myFShape.ShapeType() == " << myFShape.ShapeType()  << endl;
 	}

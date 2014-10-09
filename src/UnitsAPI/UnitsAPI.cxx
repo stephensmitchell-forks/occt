@@ -183,9 +183,11 @@ Standard_Real UnitsAPI::CurrentToLS(const Standard_Real aData,
     aValue = Units::ToSI(aData,current.ToCString());
     aValue = LocalSystemUnits.ConvertSIValueToUserSystem(aQuantity,aValue);
   }
+#ifdef UNITSAPI_DEB
   else {
     cout <<"Warning: UnitsAPI,the quantity '" << aQuantity << "' does not exist in the current units system" << endl;
   }
+#endif
 
   return aValue;
 }
@@ -205,9 +207,11 @@ Standard_Real UnitsAPI::CurrentToSI(const Standard_Real aData,
     TCollection_AsciiString current(CurrentUnits->Value(aQuantity));
     aValue = Units::ToSI(aData,current.ToCString());
   }
+#ifdef UNITSAPI_DEB
   else {
     cout<<"Warning: UnitsAPI,the quantity '" << aQuantity << "' does not exist in the current units system" << endl;
   }
+#endif
 
   return aValue;
 }
@@ -228,9 +232,11 @@ Standard_Real UnitsAPI::CurrentFromLS(const Standard_Real aData,
     aValue = LocalSystemUnits.ConvertUserSystemValueToSI(aQuantity,aData);
     aValue = Units::FromSI(aValue,current.ToCString());
   }
+#ifdef UNITSAPI_DEB
   else {
     cout<<"Warning: UnitsAPI,the quantity '" << aQuantity << "' does not exist in the current units system" << endl;
   }
+#endif
 
   return aValue;
 }
@@ -250,9 +256,11 @@ Standard_Real UnitsAPI::CurrentFromSI(const Standard_Real aData,
     TCollection_AsciiString current(CurrentUnits->Value(aQuantity));
     aValue = Units::FromSI(aData,current.ToCString());
   }
+#ifdef UNITSAPI_DEB
   else {
     cout<<"Warning: UnitsAPI,the quantity '" << aQuantity << "' does not exist in the current units system" << endl;
   }
+#endif
 
   return aValue;
 }
@@ -272,9 +280,11 @@ Standard_Real UnitsAPI::CurrentToAny(const Standard_Real aData,
     TCollection_AsciiString current(CurrentUnits->Value(aQuantity));
     aValue = AnyToAny(aData,current.ToCString(),aUnit);
   }
+#ifdef UNITSAPI_DEB
   else {
     cout<<"Warning: UnitsAPI,the quantity '" << aQuantity << "' does not exist in the current units system" << endl;
   }
+#endif
 
   return aValue;
 }
@@ -295,9 +305,11 @@ Standard_Real UnitsAPI::CurrentFromAny(const Standard_Real aData,
     TCollection_AsciiString current(CurrentUnits->Value(aQuantity));
     aValue = AnyToAny(aData,aUnit,current.ToCString());
   }
+#ifdef UNITSAPI_DEB
   else {
     cout<<"Warning: UnitsAPI,the quantity '" << aQuantity << "' does not exist in the current units system" << endl;
   }
+#endif
 
   return aValue;
 }
@@ -321,8 +333,10 @@ Standard_Real UnitsAPI::AnyToLS(const Standard_Real aData,
   if( quantity ) {
     aValue = LocalSystemUnits.ConvertSIValueToUserSystem(quantity,aValue);
   }
+#ifdef UNITSAPI_DEB
   else
     cout<<"Warning: BAD Quantity returns in UnitsAPI::AnyToLS(" << aData << "," << aUnit << ")" << endl;
+#endif
   return aValue;
 }
 
@@ -345,8 +359,10 @@ Standard_Real UnitsAPI::AnyToLS(const Standard_Real aData,
   if( quantity ) {
     aValue = LocalSystemUnits.ConvertSIValueToUserSystem(quantity,aValue);
   }
+#ifdef UNITSAPI_DEB
   else
     cout<<"Warning: BAD Quantity returns in UnitsAPI::AnyToLS(" << aData << "," << aUnit << "," << aDim << ")" << endl;
+#endif
   return aValue;
 }
 
@@ -398,8 +414,10 @@ Standard_Real UnitsAPI::AnyFromLS(const Standard_Real aData,
   if( quantity ) {
     aValue = LocalSystemUnits.ConvertUserSystemValueToSI(quantity,aValue);
   }
+#ifdef UNITSAPI_DEB
   else
     cout<<"Warning: BAD Quantity returns in UnitsAPI::AnyToLS(" << aData << "," << aUnit << ")" << endl;
+#endif
 
   return aValue;
 }
@@ -449,9 +467,11 @@ Standard_Real UnitsAPI::LSToSI(const Standard_Real aData,
   if( CurrentUnits->Find(aQuantity) ) {
     aValue = LocalSystemUnits.ConvertUserSystemValueToSI(aQuantity,aData);
   }
+#ifdef UNITSAPI_DEB
   else {
     cout<<"Warning: UnitsAPI,the quantity '" << aQuantity << "' does not exist in the current units system" << endl;
   }
+#endif
 
   return aValue;
 }
@@ -470,9 +490,11 @@ Standard_Real UnitsAPI::SIToLS(const Standard_Real aData,
   if( CurrentUnits->Find(aQuantity) ) {
     aValue = LocalSystemUnits.ConvertSIValueToUserSystem(aQuantity,aValue);
   }
+#ifdef UNITSAPI_DEB
   else {
     cout<<"Warning: UnitsAPI,the quantity '" << aQuantity << "' does not exist in the current units system" << endl;
   }
+#endif
 
   return aValue;
 }
