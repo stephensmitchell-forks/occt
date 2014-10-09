@@ -1504,7 +1504,7 @@ Standard_Integer mkoffset(Draw_Interpretor& di,
   else
   {
     Base.Orientation(TopAbs_FORWARD);
-    Paral.Init(TopoDS::Face(Base)), theJoinType);
+    Paral.Init(TopoDS::Face(Base), theJoinType);
   }
 
   Standard_Real U, dU;
