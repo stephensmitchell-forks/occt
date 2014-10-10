@@ -130,26 +130,29 @@ void IntTools_LineConstructor::Perform(const Handle(IntPatch_Line)& L)
 	  }
 	}
 	else {
-	  const IntSurf_PntOn2S& Pfirst = WLine->Point((Standard_Integer)(firstp));
-	  Pfirst.Parameters(u1,v1,u2,v2);
-	  Recadre(myHS1,myHS2,u1,v1,u2,v2);
-	  TopAbs_State in1 = myDom1->Classify(gp_Pnt2d(u1,v1),Tol);
-	  if(in1 !=  TopAbs_OUT) {  //-- !=ON donne Pb 
-	    TopAbs_State in2 = myDom2->Classify(gp_Pnt2d(u2,v2),Tol);
-	    if(in2 != TopAbs_OUT) { //-- !=ON  
-	      const IntSurf_PntOn2S& Plast = WLine->Point((Standard_Integer)(lastp));
-	      Plast.Parameters(u1,v1,u2,v2);
-	      Recadre(myHS1,myHS2,u1,v1,u2,v2);
-	      in1 = myDom1->Classify(gp_Pnt2d(u1,v1),Tol);
-	      if(in1 !=  TopAbs_OUT) {  //-- !=ON donne Pb 
-		in2 = myDom2->Classify(gp_Pnt2d(u2,v2),Tol);
-		if(in2 != TopAbs_OUT) {
-		  seqp.Append(firstp);
-		  seqp.Append(lastp);
-		}
-	      }
-	    }
-	  }
+          TopAbs_State in1, in2;
+          //
+          const IntSurf_PntOn2S& Pfirst = WLine->Point((Standard_Integer)(firstp));
+          const IntSurf_PntOn2S& Plast = WLine->Point((Standard_Integer)(lastp));
+          //
+          Pfirst.Parameters(u1,v1,u2,v2);
+          Recadre(myHS1,myHS2,u1,v1,u2,v2);
+          in1 = myDom1->Classify(gp_Pnt2d(u1,v1),Tol);
+          in2 = (in1 == TopAbs_OUT) ? TopAbs_OUT : 
+            myDom2->Classify(gp_Pnt2d(u2,v2),Tol);
+          //
+          if (in2 == TopAbs_OUT) {
+            Plast.Parameters(u1,v1,u2,v2);
+            Recadre(myHS1,myHS2,u1,v1,u2,v2);
+            in1 = myDom1->Classify(gp_Pnt2d(u1,v1),Tol);
+            in2 = (in1 == TopAbs_OUT) ? TopAbs_OUT : 
+              myDom2->Classify(gp_Pnt2d(u2,v2),Tol);
+          }
+          //
+          if (in2 != TopAbs_OUT) {
+            seqp.Append(firstp);
+            seqp.Append(lastp);
+          }
 	}
       }
     }

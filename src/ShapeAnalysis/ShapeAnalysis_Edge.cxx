@@ -263,6 +263,8 @@ TopoDS_Vertex ShapeAnalysis_Edge::FirstVertex (const TopoDS_Edge& edge) const
   else {
     V = TopExp::FirstVertex (edge);
   }
+  if( V.IsNull())
+    return V;
   return V;
 }
 
@@ -282,6 +284,8 @@ TopoDS_Vertex ShapeAnalysis_Edge::LastVertex (const TopoDS_Edge& edge) const
   else {
     V = TopExp::LastVertex (edge);
   }
+  if( V.IsNull())
+    return V;
   return V;
 }
 

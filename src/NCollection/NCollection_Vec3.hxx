@@ -1,10 +1,10 @@
 // Created by: Kirill GAVRILOV
-// Copyright (c) 2014 OPEN CASCADE SAS
+// Copyright (c) 2013-2014 OPEN CASCADE SAS
 //
 // This file is part of Open CASCADE Technology software library.
 //
-// This library is free software; you can redistribute it and / or modify it
-// under the terms of the GNU Lesser General Public version 2.1 as published
+// This library is free software; you can redistribute it and/or modify it under
+// the terms of the GNU Lesser General Public License version 2.1 as published
 // by the Free Software Foundation, with special exception defined in the file
 // OCCT_LGPL_EXCEPTION.txt. Consult the file LICENSE_LGPL_21.txt included in OCCT
 // distribution for complete text of the license and disclaimer of any warranty.
@@ -105,12 +105,12 @@ public:
   Element_t b() const { return v[2]; }
 
   //! @return 2 components by their names in specified order (in GLSL-style)
-  NCOLLECTION_VEC_COMPONENTS_2D(x, y);
-  NCOLLECTION_VEC_COMPONENTS_2D(x, z);
-  NCOLLECTION_VEC_COMPONENTS_2D(y, z);
+  NCOLLECTION_VEC_COMPONENTS_2D(x, y)
+  NCOLLECTION_VEC_COMPONENTS_2D(x, z)
+  NCOLLECTION_VEC_COMPONENTS_2D(y, z)
 
   //! @return 3 components by their names in specified order (in GLSL-style)
-  NCOLLECTION_VEC_COMPONENTS_3D(x, y, z);
+  NCOLLECTION_VEC_COMPONENTS_3D(x, y, z)
 
   //! Alias to 1st component as X coordinate in XYZ.
   Element_t& x() { return v[0]; }
@@ -232,6 +232,22 @@ public:
     NCollection_Vec3 aCopyVec3 (*this);
     aCopyVec3 *= theFactor;
     return aCopyVec3;
+  }
+
+  //! Compute component-wise minimum of two vectors.
+  NCollection_Vec3 cwiseMin (const NCollection_Vec3& theVec) const
+  {
+    return NCollection_Vec3 (v[0] < theVec.v[0] ? v[0] : theVec.v[0],
+                             v[1] < theVec.v[1] ? v[1] : theVec.v[1],
+                             v[2] < theVec.v[2] ? v[2] : theVec.v[2]);
+  }
+
+  //! Compute component-wise maximum of two vectors.
+  NCollection_Vec3 cwiseMax (const NCollection_Vec3& theVec) const
+  {
+    return NCollection_Vec3 (v[0] > theVec.v[0] ? v[0] : theVec.v[0],
+                             v[1] > theVec.v[1] ? v[1] : theVec.v[1],
+                             v[2] > theVec.v[2] ? v[2] : theVec.v[2]);
   }
 
   //! Compute per-component division by scale factor.

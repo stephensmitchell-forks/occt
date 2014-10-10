@@ -258,7 +258,7 @@ void Extrema_ExtPExtS::Perform (const gp_Pnt& P)
     Extrema_POnCurv POC=anExt.Point(i);
     U = POC.Parameter();
     //// modified by jgv, 23.12.2008 for OCC17194 ////
-    if (myC->IsPeriodic())
+    if (myC->IsPeriodic() || (myC->GetType() == GeomAbs_Circle) || (myC->GetType() == GeomAbs_Ellipse))
     {
       Standard_Real U2 = U;
       ElCLib::AdjustPeriodic(myuinf, myuinf + 2.*M_PI, Precision::PConfusion(), U, U2);

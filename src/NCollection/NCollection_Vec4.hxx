@@ -1,10 +1,10 @@
 // Created by: Kirill GAVRILOV
-// Copyright (c) 2014 OPEN CASCADE SAS
+// Copyright (c) 2013-2014 OPEN CASCADE SAS
 //
 // This file is part of Open CASCADE Technology software library.
 //
-// This library is free software; you can redistribute it and / or modify it
-// under the terms of the GNU Lesser General Public version 2.1 as published
+// This library is free software; you can redistribute it and/or modify it under
+// the terms of the GNU Lesser General Public License version 2.1 as published
 // by the Free Software Foundation, with special exception defined in the file
 // OCCT_LGPL_EXCEPTION.txt. Consult the file LICENSE_LGPL_21.txt included in OCCT
 // distribution for complete text of the license and disclaimer of any warranty.
@@ -29,7 +29,7 @@ class NCollection_Vec4
 public:
 
   //! Returns the number of components.
-  static size_t Length()
+  static int Length()
   {
     return 4;
   }
@@ -118,21 +118,21 @@ public:
   Element_t a() const { return v[3]; }
 
   //! @return 2 of XYZW components in specified order as vector in GLSL-style
-  NCOLLECTION_VEC_COMPONENTS_2D(x, y);
-  NCOLLECTION_VEC_COMPONENTS_2D(x, z);
-  NCOLLECTION_VEC_COMPONENTS_2D(x, w);
-  NCOLLECTION_VEC_COMPONENTS_2D(y, z);
-  NCOLLECTION_VEC_COMPONENTS_2D(y, w);
-  NCOLLECTION_VEC_COMPONENTS_2D(z, w);
+  NCOLLECTION_VEC_COMPONENTS_2D(x, y)
+  NCOLLECTION_VEC_COMPONENTS_2D(x, z)
+  NCOLLECTION_VEC_COMPONENTS_2D(x, w)
+  NCOLLECTION_VEC_COMPONENTS_2D(y, z)
+  NCOLLECTION_VEC_COMPONENTS_2D(y, w)
+  NCOLLECTION_VEC_COMPONENTS_2D(z, w)
 
   //! @return 3 of XYZW components in specified order as vector in GLSL-style
-  NCOLLECTION_VEC_COMPONENTS_3D(x, y, z);
-  NCOLLECTION_VEC_COMPONENTS_3D(x, y, w);
-  NCOLLECTION_VEC_COMPONENTS_3D(x, z, w);
-  NCOLLECTION_VEC_COMPONENTS_3D(y, z, w);
+  NCOLLECTION_VEC_COMPONENTS_3D(x, y, z)
+  NCOLLECTION_VEC_COMPONENTS_3D(x, y, w)
+  NCOLLECTION_VEC_COMPONENTS_3D(x, z, w)
+  NCOLLECTION_VEC_COMPONENTS_3D(y, z, w)
 
   //! @return RGB components as vector
-  NCOLLECTION_VEC_COMPONENTS_3D(r, g, b);
+  NCOLLECTION_VEC_COMPONENTS_3D(r, g, b)
 
   //! Alias to 1st component as X coordinate in XYZW.
   Element_t& x() { return v[0]; }
@@ -284,6 +284,24 @@ public:
     return aCopyVec4;
   }
 
+  //! Compute component-wise minimum of two vectors.
+  NCollection_Vec4 cwiseMin (const NCollection_Vec4& theVec) const
+  {
+    return NCollection_Vec4 (v[0] < theVec.v[0] ? v[0] : theVec.v[0],
+                             v[1] < theVec.v[1] ? v[1] : theVec.v[1],
+                             v[2] < theVec.v[2] ? v[2] : theVec.v[2],
+                             v[3] < theVec.v[3] ? v[3] : theVec.v[3]);
+  }
+
+  //! Compute component-wise maximum of two vectors.
+  NCollection_Vec4 cwiseMax (const NCollection_Vec4& theVec) const
+  {
+    return NCollection_Vec4 (v[0] > theVec.v[0] ? v[0] : theVec.v[0],
+                             v[1] > theVec.v[1] ? v[1] : theVec.v[1],
+                             v[2] > theVec.v[2] ? v[2] : theVec.v[2],
+                             v[3] > theVec.v[3] ? v[3] : theVec.v[3]);
+  }
+
   //! Compute per-component division by scale factor.
   NCollection_Vec4& operator/= (const Element_t theInvFactor)
   {
@@ -297,7 +315,7 @@ public:
   //! Compute per-component division by scale factor.
   NCollection_Vec4 operator/ (const Element_t theInvFactor)
   {
-    NCollection_Vec4 aResult(this);
+    NCollection_Vec4 aResult(*this);
     return aResult /= theInvFactor;
   }
 

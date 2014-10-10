@@ -59,6 +59,7 @@
 #include <TopExp.hxx>
 #include <TopoDS.hxx>
 #include <TopoDS_Vertex.hxx>
+#include <TopExp_Explorer.hxx>
 
 #ifdef DRAW
 #include <DrawTrSurf.hxx>

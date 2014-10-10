@@ -20,10 +20,10 @@
 #include <Geom_Circle.hxx>
 
 #include <LocOpe_PntFace.hxx>
-
+#include <GeomAdaptor_Curve.hxx>
 
 #include <Precision.hxx>
-
+#include <gp_Lin.hxx>
 
 static void Perform(BRepIntCurveSurface_Inter&,
 		    LocOpe_SequenceOfPntFace&);

@@ -511,6 +511,7 @@ void ProjLib_ProjectedCurve::Load(const Handle(Adaptor3d_HCurve)& C)
 	  Projector.Bounds(1,Udeb,Ufin);
 	}
 	else {
+    
 	  StdFail_NotDone::Raise("ProjLib CompProjectedCurve Not Done");
 	}
 	// Approximons cette courbe algorithmique.

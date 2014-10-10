@@ -87,9 +87,9 @@ static
 static 
   void Path (const GeomAdaptor_Surface& aGAS,
              const TopoDS_Face& myFace,
-             const TopoDS_Vertex& aVa,
-             const TopoDS_Edge& aEOuta,
-             BOPAlgo_EdgeInfo& anEdgeInfo,
+             const TopoDS_Vertex& aVFirst,
+             const TopoDS_Edge& aEFirst,
+             BOPAlgo_EdgeInfo& aEIFirst,
              BOPCol_SequenceOfShape& aLS,
              BOPCol_SequenceOfShape& aVertVa,
              BOPCol_SequenceOfPnt2d& aCoordVa,
@@ -326,245 +326,239 @@ static
 //=======================================================================
 void Path (const GeomAdaptor_Surface& aGAS,
            const TopoDS_Face& myFace,
-           const TopoDS_Vertex& aVa,
-           const TopoDS_Edge& aEOuta,
-           BOPAlgo_EdgeInfo& anEdgeInfo,
+           const TopoDS_Vertex& aVFirst,
+           const TopoDS_Edge& aEFirst,
+           BOPAlgo_EdgeInfo& aEIFirst,
            BOPCol_SequenceOfShape& aLS,
            BOPCol_SequenceOfShape& aVertVa,
            BOPCol_SequenceOfPnt2d& aCoordVa,
            BOPTools_ConnexityBlock& aCB,
            BOPAlgo_IndexedDataMapOfShapeListOfEdgeInfo& mySmartMap)
-     
 {
   Standard_Integer i, j, aNb, aNbj;
-  Standard_Real aTol, anAngleIn, anAngleOut, anAngle, aMinAngle;
-  Standard_Real aTol2D, aTol2D2;
-  Standard_Real aTol2, aD2, aTwoPI;
+  Standard_Real anAngleIn, anAngleOut, anAngle, aMinAngle;
+  Standard_Real aTol2D, aTol2D2, aD2, aTwoPI;
   Standard_Boolean anIsSameV2d, anIsSameV, anIsFound, anIsOut, anIsNotPassed;
-  TopoDS_Vertex aVb;
-  TopoDS_Edge aEOutb;
+  Standard_Boolean bIsClosed, bRecomputeAngle;
+  TopoDS_Vertex aVa, aVb;
+  TopoDS_Edge aEOuta;
   BOPAlgo_ListIteratorOfListOfEdgeInfo anIt;
+  BOPCol_SequenceOfReal aRecomputedAngles;
+  //
+  aVa = aVFirst;
+  aEOuta = aEFirst;
+  BOPAlgo_EdgeInfo* anEdgeInfo = &aEIFirst;
   //
   aTwoPI = M_PI + M_PI;
-  aTol=1.e-7;
   //
   // append block
   //
-  // Do not escape through edge from which you enter 
-  aNb=aLS.Length();
-  if (aNb==1) {
-    const TopoDS_Shape& anEPrev=aLS(aNb);
-    if (anEPrev.IsSame(aEOuta)) {
-      return;
+  for (;;) {
+    // Do not escape through edge from which you enter 
+    aNb=aLS.Length();
+    if (aNb==1) {
+      const TopoDS_Shape& anEPrev=aLS(aNb);
+      if (anEPrev.IsSame(aEOuta)) {
+        return;
+      }
     }
-  }
-  //
-  anEdgeInfo.SetPassed(Standard_True);
-  aLS.Append(aEOuta);
-  aVertVa.Append(aVa);
-  
-  TopoDS_Vertex pVa=aVa;
-  pVa.Orientation(TopAbs_FORWARD);
-  gp_Pnt2d aPa=Coord2d(pVa, aEOuta, myFace);
-  aCoordVa.Append(aPa);
-  
-  GetNextVertex (pVa, aEOuta, aVb);
-
-  gp_Pnt2d aPb=Coord2d(aVb, aEOuta, myFace);
-
-  const BOPAlgo_ListOfEdgeInfo& aLEInfoVb=mySmartMap.FindFromKey(aVb);
-  //
-  aTol=2.*Tolerance2D(aVb, aGAS);
-  aTol2=10.*aTol*aTol;
-
-  TopoDS_Vertex aV1, aV2;
-  TopExp::Vertices(aEOuta, aV1, aV2);
-  Standard_Boolean bIsClosedEdge = aV1.IsNull() || aV2.IsNull() || aV1.IsSame(aV2);
-  Standard_Boolean bIsDegenerated = BRep_Tool::Degenerated(aEOuta);
-  Standard_Boolean bIsSeam = BRep_Tool::IsClosed(aEOuta, myFace);
-
-  anIt.Initialize(aLEInfoVb);
-  for (; anIt.More(); anIt.Next()) {
-    const BOPAlgo_EdgeInfo& anEI = anIt.Value();
-    const TopoDS_Edge& aE = anEI.Edge();
-    bIsDegenerated = bIsDegenerated || BRep_Tool::Degenerated(aE);
-    bIsSeam = bIsSeam || BRep_Tool::IsClosed(aE, myFace);
-    aV1.Nullify();
-    aV2.Nullify();
-    TopExp::Vertices(aE, aV1, aV2);
-    bIsClosedEdge = bIsClosedEdge || aV1.IsNull() || aV2.IsNull() || aV1.IsSame(aV2);
-  }
-  //
-  aNb=aLS.Length();
-  if (aNb>0) {
     //
-    BOPCol_ListOfShape aBuf;
+    anEdgeInfo->SetPassed(Standard_True);
+    aLS.Append(aEOuta);
+    aVertVa.Append(aVa);
+    
+    TopoDS_Vertex pVa=aVa;
+    pVa.Orientation(TopAbs_FORWARD);
+    gp_Pnt2d aPa=Coord2d(pVa, aEOuta, myFace);
+    aCoordVa.Append(aPa);
+    
+    GetNextVertex (pVa, aEOuta, aVb);
+    
+    gp_Pnt2d aPb=Coord2d(aVb, aEOuta, myFace);
+    
+    const BOPAlgo_ListOfEdgeInfo& aLEInfo=mySmartMap.FindFromKey(aVb);
     //
-    for (i=aNb; i>0; --i) {
-      const TopoDS_Shape& aVPrev=aVertVa(i);
-      const gp_Pnt2d& aPaPrev=aCoordVa(i);
-      const TopoDS_Shape& aEPrev=aLS(i);
-
-      aBuf.Append(aEPrev);
-
-      anIsSameV=aVPrev.IsSame(aVb);
-      anIsSameV2d=Standard_False;
-
-      if (anIsSameV) {
-        anIsSameV2d = Standard_True;
-        //
-        aD2=aPaPrev.SquareDistance(aPb);
-        anIsSameV2d =aD2<aTol2;
-        if(anIsSameV2d && 
-           (bIsDegenerated || bIsSeam || bIsClosedEdge)) {
-          Standard_Real udist = fabs(aPaPrev.X() - aPb.X());
-          Standard_Real vdist = fabs(aPaPrev.Y() - aPb.Y());
-          Standard_Real aTolU = 2. * UTolerance2D(aVb, aGAS);
-          Standard_Real aTolV = 2. * VTolerance2D(aVb, aGAS);
-          //
-          if((udist > aTolU) ||
-             (vdist > aTolV)) {
-            anIsSameV2d = Standard_False;
-          }
-        }
-      }//if (anIsSameV) {
+    aTol2D = 2.*Tolerance2D(aVb, aGAS);
+    aTol2D2 = aTol2D * aTol2D;
+    //
+    bIsClosed = BRep_Tool::Degenerated(aEOuta) || 
+      BRep_Tool::IsClosed(aEOuta, myFace) || aVa.IsSame(aVb);
+    if (!bIsClosed) {
+      TopoDS_Vertex aV1, aV2;
       //
-      if (anIsSameV && anIsSameV2d) {
-        Standard_Integer iPriz;
-        iPriz=1;
-        if (aBuf.Extent()==2) {
-          if(aBuf.First().IsSame(aBuf.Last())) {
-            iPriz=0;
-          }
-        }
-        if (iPriz) {
-          TopoDS_Wire aW;
-          BOPAlgo_WireSplitter::MakeWire(aBuf, aW);
-          aCB.ChangeLoops().Append(aW);
-        }
+      anIt.Initialize(aLEInfo);
+      for (; anIt.More() && !bIsClosed; anIt.Next()) {
+        const BOPAlgo_EdgeInfo& anEI = anIt.Value();
+        const TopoDS_Edge& aE = anEI.Edge();
         //
-        aNbj=i-1;
-        if (aNbj<1) {
+        bIsClosed = BRep_Tool::Degenerated(aE) || BRep_Tool::IsClosed(aE, myFace);
+        if (!bIsClosed) {
+          TopExp::Vertices(aE, aV1, aV2);
+          bIsClosed = aV1.IsNull() || aV2.IsNull() || aV1.IsSame(aV2);
+        }
+      }
+    }
+    //
+    aNb=aLS.Length();
+    if (aNb>0) {
+      //
+      BOPCol_ListOfShape aBuf;
+      //
+      for (i=aNb; i>0; --i) {
+        const TopoDS_Shape& aVPrev=aVertVa(i);
+        const gp_Pnt2d& aPaPrev=aCoordVa(i);
+        const TopoDS_Shape& aEPrev=aLS(i);
+        
+        aBuf.Append(aEPrev);
+        
+        anIsSameV = aVPrev.IsSame(aVb);
+        anIsSameV2d = anIsSameV;
+        if (anIsSameV) {
+          if(bIsClosed) {
+            aD2 = aPaPrev.SquareDistance(aPb);
+            anIsSameV2d = aD2 < aTol2D2;
+            if (anIsSameV2d) {
+              Standard_Real udist = fabs(aPaPrev.X() - aPb.X());
+              Standard_Real vdist = fabs(aPaPrev.Y() - aPb.Y());
+              Standard_Real aTolU = 2.*UTolerance2D(aVb, aGAS);
+              Standard_Real aTolV = 2.*VTolerance2D(aVb, aGAS);
+              //
+              if((udist > aTolU) || (vdist > aTolV)) {
+                anIsSameV2d = Standard_False;
+              }
+            }
+          }
+        }//if (anIsSameV) {
+        //
+        if (anIsSameV && anIsSameV2d) {
+          Standard_Integer iPriz;
+          iPriz=1;
+          if (aBuf.Extent()==2) {
+            if(aBuf.First().IsSame(aBuf.Last())) {
+              iPriz=0;
+            }
+          }
+          if (iPriz) {
+            TopoDS_Wire aW;
+            BOPAlgo_WireSplitter::MakeWire(aBuf, aW);
+            aCB.ChangeLoops().Append(aW);
+          }
+          //
+          aNbj=i-1;
+          if (aNbj<1) {
+            //
+            aLS.Clear();
+            aVertVa.Clear();
+            aCoordVa.Clear();
+            //
+            return;
+          }
+          //
+          BOPCol_SequenceOfShape aLSt, aVertVat;
+          BOPCol_SequenceOfPnt2d aCoordVat;
+          //
+          aVb=(*(TopoDS_Vertex *)(&aVertVa(i))); 
+          //
+          for (j=1; j<=aNbj; ++j) {
+            aLSt.Append(aLS(j));
+            aVertVat.Append(aVertVa(j));
+            aCoordVat.Append(aCoordVa(j));
+          }
           //
           aLS.Clear();
           aVertVa.Clear();
           aCoordVa.Clear();
+          
+          aLS=aLSt;
+          aVertVa=aVertVat;
+          aCoordVa=aCoordVat;
           //
+          break;
+        }
+      }
+    }
+    //
+    aRecomputedAngles.Clear();
+    bRecomputeAngle = 
+      RecomputeAngles(aLEInfo, myFace, aPb, aVb, aGAS, aEOuta, 
+                      bIsClosed, aTol2D, aRecomputedAngles);
+    //
+    // aEOutb
+    BOPAlgo_EdgeInfo *pEdgeInfo=NULL;
+    //
+    anAngleIn = AngleIn(aEOuta, aLEInfo);
+    aMinAngle = 100.;
+    anIsFound = Standard_False;
+    Standard_Integer aCurIndexE = 0;
+    anIt.Initialize(aLEInfo);
+    for (; anIt.More(); anIt.Next()) {
+      BOPAlgo_EdgeInfo& anEI=anIt.ChangeValue();
+      const TopoDS_Edge& aE=anEI.Edge();
+      anIsOut=!anEI.IsIn();
+      anIsNotPassed=!anEI.Passed();
+      
+      if (anIsOut && anIsNotPassed) {
+        aCurIndexE++;
+        //
+        // Is there one way to go out of the vertex 
+        // we have to use it only.
+        Standard_Integer iCnt;
+        iCnt=NbWaysOut (aLEInfo);
+        //
+        if (!iCnt) {
+          // no way to go . (Error)
           return;
         }
         //
-        BOPCol_SequenceOfShape aLSt, aVertVat;
-        BOPCol_SequenceOfPnt2d aCoordVat;
-        //
-        aVb=(*(TopoDS_Vertex *)(&aVertVa(i))); 
-        //
-        for (j=1; j<=aNbj; ++j) {
-          aLSt.Append(aLS(j));
-          aVertVat.Append(aVertVa(j));
-          aCoordVat.Append(aCoordVa(j));
+        if (iCnt==1) {
+          // the one and only way to go out .
+          pEdgeInfo=&anEI;
+          anIsFound=Standard_True;
+          break;
         }
         //
-        aLS.Clear();
-        aVertVa.Clear();
-        aCoordVa.Clear();
-        
-        aLS=aLSt;
-        aVertVa=aVertVat;
-        aCoordVa=aCoordVat;
-        //
-        break;
-      }
-    }
-  }
-  //
-  aTol2D=2.*Tolerance2D(aVb, aGAS);
-  aTol2D2=1000.*aTol2D*aTol2D;//100.*aTol2D*aTol2D;
-  //
-  // anAngleIn in Vb from edge aEOuta
-  const BOPAlgo_ListOfEdgeInfo& aLEInfo=mySmartMap.FindFromKey(aVb);
-  //
-  anAngleIn=AngleIn(aEOuta, aLEInfo);
-  BOPCol_SequenceOfReal aRecomputedAngles;
-
-  Standard_Boolean bRecomputeAngle = 
-    RecomputeAngles(aLEInfo, myFace, aPb, aVb, aGAS, aEOuta, 
-                    (bIsDegenerated || bIsSeam || bIsClosedEdge),
-                    aTol2D, aRecomputedAngles);
-
-  //
-  // aEOutb
-  BOPAlgo_EdgeInfo *pEdgeInfo=NULL;
-  //
-  aMinAngle=100.;
-  anIsFound=Standard_False;
-  Standard_Integer aCurIndexE = 0;
-  anIt.Initialize(aLEInfo);
-  for (; anIt.More(); anIt.Next()) {
-    BOPAlgo_EdgeInfo& anEI=anIt.ChangeValue();
-    const TopoDS_Edge& aE=anEI.Edge();
-    anIsOut=!anEI.IsIn();
-    anIsNotPassed=!anEI.Passed();
-    
-    if (anIsOut && anIsNotPassed) {
-      aCurIndexE++;
-      //
-      // Is there one way to go out of the vertex 
-      // we have to use it only.
-      Standard_Integer iCnt;
-      iCnt=NbWaysOut (aLEInfo);
-      //
-      if (!iCnt) {
-        // no way to go . (Error)
-        return ;
-      }
-      //
-      if (iCnt==1) {
-        // the one and only way to go out .
-        pEdgeInfo=&anEI;
-        anIsFound=Standard_True;
-        break;
-      }
-      //
-      if (aE.IsSame(aEOuta)) {
-        anAngle = aTwoPI;
-      } else {
-        // Look for minimal angle and make the choice.
-        gp_Pnt2d aP2Dx;
-        //
-        aP2Dx=Coord2dVf(aE, myFace);
-        //
-        aD2=aP2Dx.SquareDistance(aPb);
-        if (aD2 > aTol2D2){
-          continue;
-        }
-        //
-        //
-        anAngleOut=anEI.Angle();
-        //
-        if(bRecomputeAngle) {
-          if(aCurIndexE <= aRecomputedAngles.Length()) {
-            anAngleOut = aRecomputedAngles.Value(aCurIndexE);
+        if (aE.IsSame(aEOuta)) {
+          anAngle = aTwoPI;
+        } else {
+          //check 2d distance
+          if (bIsClosed) {
+            gp_Pnt2d aP2Dx;
+            //
+            aP2Dx = Coord2dVf(aE, myFace);
+            //
+            aD2 = aP2Dx.SquareDistance(aPb);
+            if (aD2 > aTol2D2){
+              continue;
+            }
           }
+          //
+          // Look for minimal angle and make the choice.
+          anAngleOut=anEI.Angle();
+          //
+          if(bRecomputeAngle) {
+            if(aCurIndexE <= aRecomputedAngles.Length()) {
+              anAngleOut = aRecomputedAngles.Value(aCurIndexE);
+            }
+          }
+          anAngle=ClockWiseAngle(anAngleIn, anAngleOut);
         }
-        anAngle=ClockWiseAngle(anAngleIn, anAngleOut);
+        if (anAngle < aMinAngle) {
+          aMinAngle=anAngle;
+          pEdgeInfo=&anEI;
+          anIsFound=Standard_True;
+        }
       }
-      if (anAngle < aMinAngle) {
-        aMinAngle=anAngle;
-        pEdgeInfo=&anEI;
-        anIsFound=Standard_True;
-      }
+    } // for (; anIt.More(); anIt.Next()) 
+    //
+    if (!anIsFound) {
+      // no way to go . (Error)
+      return;
     }
-  } // for (; anIt.More(); anIt.Next()) 
-  //
-  if (!anIsFound) {
-    // no way to go . (Error)
-    return;
+    //
+    aVa = aVb;
+    aEOuta = pEdgeInfo->Edge();
+    anEdgeInfo = pEdgeInfo;
   }
-  
-  aEOutb=pEdgeInfo->Edge();
-  //
-  Path (aGAS, myFace, aVb, aEOutb, *pEdgeInfo, aLS, 
-        aVertVa, aCoordVa, aCB, mySmartMap);
 }
 //=======================================================================
 // function:  ClockWiseAngle

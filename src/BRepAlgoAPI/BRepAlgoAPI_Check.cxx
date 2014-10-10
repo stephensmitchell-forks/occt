@@ -74,9 +74,10 @@
 //=======================================================================
   void BRepAlgoAPI_Check::SetData(const TopoDS_Shape& theS,
                                   const Standard_Boolean bTestSE,
-                                  const Standard_Boolean bTestSI)
+                                  const Standard_Boolean bTestSI,
+                                  const Standard_Boolean theCopy)
 {
-  Init(theS, TopoDS_Shape(), BOPAlgo_UNKNOWN, bTestSE, bTestSI);
+  Init(theS, TopoDS_Shape(), BOPAlgo_UNKNOWN, bTestSE, bTestSI, theCopy);
 }
 
 //=======================================================================
@@ -87,9 +88,10 @@
                                   const TopoDS_Shape& theS2,
                                   const BOPAlgo_Operation theOp,
                                   const Standard_Boolean bTestSE,
-                                  const Standard_Boolean bTestSI)
+                                  const Standard_Boolean bTestSI,
+                                  const Standard_Boolean theCopy)
 {
-  Init(theS1, theS2, theOp, bTestSE, bTestSI);
+  Init(theS1, theS2, theOp, bTestSE, bTestSI, theCopy);
 }
 
 
@@ -101,11 +103,12 @@
                                const TopoDS_Shape& theS2,
                                const BOPAlgo_Operation theOp,
                                const Standard_Boolean bTestSE,
-                               const Standard_Boolean bTestSI)
+                               const Standard_Boolean bTestSI,
+                               const Standard_Boolean theCopy )
 {
   myResult.Clear();
-  myS1 = theS1.IsNull() ? theS1 : BRepBuilderAPI_Copy(theS1).Shape();
-  myS2 = theS2.IsNull() ? theS2 : BRepBuilderAPI_Copy(theS2).Shape();
+  myS1 = theS1.IsNull() || !theCopy ? theS1 : BRepBuilderAPI_Copy(theS1).Shape();
+  myS2 = theS2.IsNull() || !theCopy ? theS2 : BRepBuilderAPI_Copy(theS2).Shape();
   //
   myAnalyzer = new BOPAlgo_ArgumentAnalyzer();
   //

@@ -855,3 +855,41 @@ Handle(Geom_BSplineCurve) GeomAdaptor_Curve::BSpline() const
   return *((Handle(Geom_BSplineCurve)*)&myCurve);
 }
 
+static Standard_Integer nbPoints(const Handle(Geom_Curve)& theCurve) 
+{
+ 
+  Standard_Integer nbs = 10;
+  
+  if(theCurve->IsKind(STANDARD_TYPE( Geom_Line)) )
+    nbs = 2;
+  else if(theCurve->IsKind(STANDARD_TYPE( Geom_BezierCurve))) 
+  {
+    nbs = 3 + (*((Handle(Geom_BezierCurve)*)&theCurve))->NbPoles();
+  }
+  else if(theCurve->IsKind(STANDARD_TYPE( Geom_BSplineCurve))) { 
+    nbs =  (*((Handle(Geom_BSplineCurve)*)&theCurve))->NbKnots();
+    nbs*= (*((Handle(Geom_BSplineCurve)*)&theCurve))->Degree();
+    if(nbs < 2.0) nbs=2;
+  }
+  else if (theCurve->IsKind(STANDARD_TYPE(Geom_OffsetCurve)))
+  {
+    Handle(Geom_Curve) aCurve = (*((Handle(Geom_OffsetCurve)*)&theCurve))->BasisCurve();
+    return Max(nbs, nbPoints(aCurve));
+  }
+
+  else if (theCurve->IsKind(STANDARD_TYPE(Geom_TrimmedCurve)))
+  {
+    Handle(Geom_Curve) aCurve = (*((Handle(Geom_TrimmedCurve)*)&theCurve))->BasisCurve();
+    return Max(nbs, nbPoints(aCurve));
+  }
+  if(nbs>300)
+    nbs = 300;
+  return nbs;
+  
+}
+
+/*Standard_Integer GeomAdaptor_Curve::NbSamples() const
+{
+  return  nbPoints(myCurve);
+}
+*/

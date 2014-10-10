@@ -660,11 +660,12 @@ void LocOpe_SplitShape::AddClosedWire(const TopoDS_Wire& W,
 void LocOpe_SplitShape::AddOpenWire(const TopoDS_Wire& W,
                                     const TopoDS_Face& F)
 {
+  
   // On cherche la face descendante de F qui continent le wire
   TopTools_ListOfShape& lf = myMap(F);
   TopTools_ListIteratorOfListOfShape itl(lf);
   TopoDS_Vertex Vfirst,Vlast;
-
+ 
   BRepTools::Update(F);
 
   Standard_Real tolf, toll, tol1;
@@ -680,7 +681,9 @@ void LocOpe_SplitShape::AddOpenWire(const TopoDS_Wire& W,
   TopExp_Explorer exp,exp2;  
 
   TopoDS_Wire wfirst,wlast;
+ 
   for (; itl.More(); itl.Next()) {
+    
     TopoDS_Face fac = TopoDS::Face(itl.Value());
     if (!IsInside(fac,W)) {
       continue;
@@ -893,9 +896,12 @@ void LocOpe_SplitShape::AddOpenWire(const TopoDS_Wire& W,
       else if (nbPoss > 1) {
         // Faire choix en U,V...
         TopoDS_Shape aLocalFace  = FaceRef.Oriented(wfirst.Orientation());
-        
         ChoixUV(LastEdge, TopoDS::Face(aLocalFace), PossE,
                 itm, plast, dlast, toll);
+        /*if(!ChoixUV(LastEdge, TopoDS::Face(aLocalFace), PossE,
+                itm, plast, dlast, toll))
+                return;*/
+
       }
 
       if (nbPoss >= 1) {
@@ -961,9 +967,9 @@ void LocOpe_SplitShape::AddOpenWire(const TopoDS_Wire& W,
     newW2.Oriented(orfila);
     
     B.Add(newF1,newW1);
-    BRepTools::Write(newF1, "k:/queries/WrongBOP/NewF1.brep");
+    //BRepTools::Write(newF1, "NewF1.brep");
     B.Add(newF2,newW2);
-    BRepTools::Write(newF2, "k:/queries/WrongBOP/NewF2.brep");
+    //BRepTools::Write(newF2, "NewF2.brep");
     
     for (exp.ReInit(); exp.More(); exp.Next()) {
       const TopoDS_Wire& wir = TopoDS::Wire(exp.Current());
@@ -1363,7 +1369,7 @@ static Standard_Boolean IsInside(const TopoDS_Face& F,
 //purpose  : 
 //=======================================================================
 
-static void ChoixUV(const TopoDS_Edge& Last,
+void ChoixUV(const TopoDS_Edge& Last,
                     const TopoDS_Face& F,
                     const TopTools_MapOfShape& Poss,
                     TopTools_MapIteratorOfMapOfShape& It,
@@ -1436,6 +1442,7 @@ static void ChoixUV(const TopoDS_Edge& Last,
     //if ((dist < dmin - tol) ||
     //(dist <= dmin+tol && ang > angmax)) {
     if ((dist < tol)  && (ang > angmax)) {
+    //if (ang > angmax) {
       imin = index;
       //      dmin = dist;
       angmax = ang;
@@ -1469,7 +1476,7 @@ static void ChoixUV(const TopoDS_Edge& Last,
     }
     index++;
   }
-
+  //return (imin);
 }
 
 //=======================================================================

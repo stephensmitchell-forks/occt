@@ -100,17 +100,17 @@ class BOPTime_Chronometer {
 };
 #endif
 
-
-
 static Standard_Integer bfillds  (Draw_Interpretor&, Standard_Integer, const char**); 
 static Standard_Integer bbuild   (Draw_Interpretor&, Standard_Integer, const char**);
 static Standard_Integer bbop     (Draw_Interpretor&, Standard_Integer, const char**);
 static Standard_Integer bclear   (Draw_Interpretor&, Standard_Integer, const char**);
+static Standard_Integer bnsection(Draw_Interpretor&, Standard_Integer, const char**);
+
 //=======================================================================
 //function : PartitionCommands
 //purpose  : 
 //=======================================================================
-  void BOPTest::PartitionCommands(Draw_Interpretor& theCommands)
+void BOPTest::PartitionCommands(Draw_Interpretor& theCommands)
 {
   static Standard_Boolean done = Standard_False;
   if (done) return;
@@ -118,17 +118,20 @@ static Standard_Integer bclear   (Draw_Interpretor&, Standard_Integer, const cha
   // Chapter's name
   const char* g = "Partition commands";
   // Commands  
-  theCommands.Add("bfillds"  , "use bfillds"           , __FILE__, bfillds  , g);
-  theCommands.Add("bbuild"   , " use bbuild r [-s -t]" , __FILE__, bbuild, g);
-  theCommands.Add("bbop"     , "use bbop r op"         , __FILE__, bbop, g);
-  theCommands.Add("bclear"   , "use bclear"            , __FILE__, bclear, g);
+  theCommands.Add("bfillds"  , "use bfillds [-s -t]" , __FILE__, bfillds, g);
+  theCommands.Add("bbuild"   , "use bbuild r [-s -t]", __FILE__, bbuild, g);
+  theCommands.Add("bbop"     , "use bbop r op"       , __FILE__, bbop, g);
+  theCommands.Add("bclear"   , "use bclear"          , __FILE__, bclear, g);
+  theCommands.Add("bnsection", "use bnsection r"     , __FILE__, bnsection, g);
 }
 
 //=======================================================================
 //function : bclear
 //purpose  : 
 //=======================================================================
-Standard_Integer bclear(Draw_Interpretor& di, Standard_Integer n, const char** ) 
+Standard_Integer bclear(Draw_Interpretor& di, 
+                        Standard_Integer n, 
+                        const char** ) 
 {
   if (n!=1) {
     di << " use bclear\n";
@@ -142,17 +145,21 @@ Standard_Integer bclear(Draw_Interpretor& di, Standard_Integer n, const char** )
 //function : bfillds
 //purpose  : 
 //=======================================================================
-Standard_Integer bfillds(Draw_Interpretor& di, Standard_Integer n, const char** ) 
+Standard_Integer bfillds(Draw_Interpretor& di, 
+                         Standard_Integer n, 
+                         const char** a) 
 { 
-  if (n!=1) {
-    di << " Use bfillds\n";
+  if (n>3) {
+    di << " use bfillds [-s -t]\n";
     return 0;
   }
   //
   char buf[32];
-  Standard_Integer aNbS, aNbT, iErr;
+  Standard_Boolean bRunParallel, bShowTime;
+  Standard_Integer i, aNbS, iErr;
   BOPCol_ListIteratorOfListOfShape aIt;
   BOPCol_ListOfShape aLC;
+  BOPTime_Chronometer aChrono;
   
   BOPCol_ListOfShape& aLS=BOPTest_Objects::Shapes();
   aNbS=aLS.Extent();
@@ -161,8 +168,18 @@ Standard_Integer bfillds(Draw_Interpretor& di, Standard_Integer n, const char** 
     return 0;
   }
   //
+  bShowTime=Standard_False;
+  bRunParallel=Standard_True;
+  for (i=1; i<n; ++i) {
+    if (!strcmp(a[i], "-s")) {
+      bRunParallel=Standard_False;
+    }
+    else if (!strcmp(a[i], "-t")) {
+      bShowTime=Standard_True;
+    }
+  }
+  //
   BOPCol_ListOfShape& aLT=BOPTest_Objects::Tools();
-  aNbT=aLT.Extent();
   //
   aIt.Initialize(aLS);
   for (; aIt.More(); aIt.Next()) {
@@ -179,6 +196,9 @@ Standard_Integer bfillds(Draw_Interpretor& di, Standard_Integer n, const char** 
   BOPAlgo_PaveFiller& aPF=BOPTest_Objects::PaveFiller();
   //
   aPF.SetArguments(aLC);
+  //aPF.SetRunParallel(bRunParallel);
+  //
+  aChrono.Start();
   //
   aPF.Perform();
   iErr=aPF.ErrorStatus();
@@ -188,13 +208,25 @@ Standard_Integer bfillds(Draw_Interpretor& di, Standard_Integer n, const char** 
     return 0;
   }
   //
+  aChrono.Stop();
+  //
+  if (bShowTime) {
+    Standard_Real aTime;
+    //
+    aTime=aChrono.Time();
+    Sprintf(buf, "  Tps: %7.2lf\n", aTime);
+    di << buf;
+  }
+  //
   return 0;
 }
 //=======================================================================
 //function : bbuild
 //purpose  : 
 //=======================================================================
-Standard_Integer bbuild(Draw_Interpretor& di, Standard_Integer n, const char** a) 
+Standard_Integer bbuild(Draw_Interpretor& di,
+                        Standard_Integer n, 
+                        const char** a) 
 { 
   if (n<2) {
     di << " use bbuild r [-s -t]\n";
@@ -213,8 +245,6 @@ Standard_Integer bbuild(Draw_Interpretor& di, Standard_Integer n, const char** a
   
   BOPTime_Chronometer aChrono;
   BOPCol_ListIteratorOfListOfShape aIt;
-  //
-  
   //
   BOPAlgo_PaveFiller& aPF=BOPTest_Objects::PaveFiller();
   //
@@ -282,7 +312,9 @@ Standard_Integer bbuild(Draw_Interpretor& di, Standard_Integer n, const char** a
 //function : bbop
 //purpose  : 
 //=======================================================================
-Standard_Integer bbop(Draw_Interpretor& di, Standard_Integer n, const char** a) 
+Standard_Integer bbop(Draw_Interpretor& di, 
+                      Standard_Integer n, 
+                      const char** a) 
 { 
   if (n!=3) {
     di << " use bbop r op\n";
@@ -345,3 +377,103 @@ Standard_Integer bbop(Draw_Interpretor& di, Standard_Integer n, const char** a)
   return 0;
 }
 
+#include <BRep_Builder.hxx>
+#include <BOPCol_IndexedMapOfShape.hxx>
+#include <BOPDS_DS.hxx>
+#include <BOPDS_VectorOfInterfFF.hxx>
+#include <BOPTools.hxx>
+
+//=======================================================================
+//function : nsection
+//purpose  : 
+//=======================================================================
+Standard_Integer bnsection(Draw_Interpretor& di, 
+                           Standard_Integer n, 
+                           const char** a) 
+{ 
+  if (n != 2) {
+    di << "use bnsection r\n";
+    return 0;
+  }
+  //
+  BOPDS_PDS pDS = BOPTest_Objects::PDS();
+  if (!pDS) {
+    di << " prepare PaveFiller first\n";
+    return 0;
+  }
+  //
+  Standard_Integer i, j, k, nE, nF1, nF2, aNbPB, aNbFF;
+  Standard_Boolean bFlag;
+  TopoDS_Compound aRC;
+  BRep_Builder aBB;
+  BOPCol_MapOfShape aME;
+  BOPCol_IndexedMapOfShape aME1, aME2;
+  //
+  aBB.MakeCompound(aRC);
+  BOPDS_VectorOfInterfFF& aFFs = pDS->InterfFF();
+  aNbFF = aFFs.Extent();
+  //
+  for (i = 0; i < aNbFF; ++i) {
+    BOPDS_InterfFF& aFF = aFFs(i);
+    aFF.Indices(nF1, nF2);
+    const BOPDS_FaceInfo& aFI1 = pDS->FaceInfo(nF1);
+    const BOPDS_FaceInfo& aFI2 = pDS->FaceInfo(nF2);
+    //
+    const BOPDS_IndexedMapOfPaveBlock& aMPBIn1 = aFI1.PaveBlocksIn();
+    const BOPDS_IndexedMapOfPaveBlock& aMPBOn1 = aFI1.PaveBlocksOn();
+    const BOPDS_IndexedMapOfPaveBlock& aMPBSc1 = aFI1.PaveBlocksSc();
+    //
+    const BOPDS_IndexedMapOfPaveBlock& aMPBIn2 = aFI2.PaveBlocksIn();
+    const BOPDS_IndexedMapOfPaveBlock& aMPBOn2 = aFI2.PaveBlocksOn();
+    //
+    //1. Section edges
+    aNbPB = aMPBSc1.Extent();
+    for (j = 1; j <= aNbPB; ++j) {
+      const Handle(BOPDS_PaveBlock)& aPB = aMPBSc1(j);
+      nE = aPB->Edge();
+      const TopoDS_Shape& aE = pDS->Shape(nE);
+      if (aME.Add(aE)) {
+        aBB.Add(aRC, aE);
+      }
+    }
+    //2. Common edges
+    BOPDS_IndexedMapOfPaveBlock aMPB[4] = {aMPBOn2, aMPBIn1, aMPBIn2, aMPBOn1};
+    for (k = 0; k < 3; ++k) {
+      aNbPB = aMPB[k].Extent();
+      for (j = 1; j <= aNbPB; ++j) {
+        const Handle(BOPDS_PaveBlock)& aPB = aMPB[k](j);
+        bFlag = (k==0) ? aMPB[3].Contains(aPB) :
+          (aMPB[k-1].Contains(aPB) || aMPB[k+1].Contains(aPB));
+        if (bFlag) {
+          nE = aPB->Edge();
+          const TopoDS_Shape& aE = pDS->Shape(nE);
+          if (aME.Add(aE)) {
+            aBB.Add(aRC, aE);
+          }
+        }
+      }
+    }
+    //3. Shared edges
+    aME1.Clear();
+    aME2.Clear();
+    //
+    const TopoDS_Face& aF1 = (*(TopoDS_Face *)(&pDS->Shape(nF1)));
+    const TopoDS_Face& aF2 = (*(TopoDS_Face *)(&pDS->Shape(nF2)));
+    //
+    BOPTools::MapShapes(aF1, TopAbs_EDGE, aME1);
+    BOPTools::MapShapes(aF2, TopAbs_EDGE, aME2);
+    //
+    aNbPB = aME1.Extent();
+    for (j = 1; j <= aNbPB; ++j) {
+      const TopoDS_Shape& aE = aME1(j);
+      if (aME2.Contains(aE)) {
+        if (aME.Add(aE)) {
+          aBB.Add(aRC, aE);
+        }
+      }
+    }
+  }
+  //
+  DBRep::Set(a[1], aRC);
+  return 0;
+}
