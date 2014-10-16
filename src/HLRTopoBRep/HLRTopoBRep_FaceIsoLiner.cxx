@@ -61,6 +61,8 @@ void HLRTopoBRep_FaceIsoLiner::Perform (const Standard_Integer FI,
 					HLRTopoBRep_Data& DS,
 					const Standard_Integer nbIsos)
 {
+  (void)FI; // avoid compiler warning
+
   Standard_Real UMin, UMax, VMin, VMax, U1, U2;
   Standard_Integer ne = 0;
   //BRep_Builder Builder;

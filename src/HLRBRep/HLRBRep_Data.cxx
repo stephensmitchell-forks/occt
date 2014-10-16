@@ -1806,6 +1806,8 @@ void HLRBRep_Data::OrientOthEdge (const Standard_Integer I,
 	  cout << " Edge " << myFE << " : ";
 	  cout << "UVPoint not found, Edge not Oriented" << endl;
 	}
+#else
+    (void)I; // avoid compiler warning
 #endif
       }
     }
