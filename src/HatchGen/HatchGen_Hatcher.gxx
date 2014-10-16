@@ -461,7 +461,9 @@ Standard_Boolean HatchGen_Hatcher::Trim (const Standard_Integer IndH,
 #endif    
   
   if (!myIntersector.IsDone())  { 
+#if TRACE_HATCHER
     cout<<" Intersector -> Done = False ";
+#endif
     return Standard_False ;
   }
   

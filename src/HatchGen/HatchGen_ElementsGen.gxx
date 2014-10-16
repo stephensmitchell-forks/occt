@@ -27,7 +27,9 @@
 
 //HatchGen_ElementsGen::HatchGen_ElementsGen(const HatchGen_ElementsGen& Other) {
 HatchGen_ElementsGen::HatchGen_ElementsGen(const HatchGen_ElementsGen& ) {
+#ifdef HATCHGEN_DEB
   cout<<" Magic Constructor in HatchGen_ElementsGen:: "<<endl;
+#endif
 } 
 
 HatchGen_ElementsGen::HatchGen_ElementsGen() { 

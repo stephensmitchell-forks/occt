@@ -272,20 +272,17 @@ void AIS_InteractiveContext::DisplayedObjects(AIS_ListOfInteractive& aListOfIO,
       if(It.Value()->GraphicStatus()==AIS_DS_Displayed)
         theMap.Add(It.Key());
     }
-#ifdef AIS_DEB
-    cout<<"\tFrom Neutral Point : "<<theMap.Extent()<<endl;
-#endif
 
     //parse all local contexts...
+#ifdef AIS_DEB
+    cout<<"\tFrom Neutral Point : "<<theMap.Extent()<<endl;
     Standard_Integer NbDisp;
     for(AIS_DataMapIteratorOfDataMapOfILC it1(myLocalContexts);it1.More();it1.Next()){
       const Handle(AIS_LocalContext)& LC = it1.Value();
       NbDisp =  LC->DisplayedObjects(theMap);
-#ifdef AIS_DEB
       cout<<"\tIn Local Context "<<it1.Key()<<" : "<<NbDisp<<endl;
-#endif
-      
     }
+#endif
     Handle(AIS_InteractiveObject) curIO;
     Handle(Standard_Transient) Tr;
       for(TColStd_MapIteratorOfMapOfTransient it2(theMap);it2.More();it2.Next()){

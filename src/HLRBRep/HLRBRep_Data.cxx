@@ -238,7 +238,7 @@ public:
   } 
   //-- ============================================================
   void Destroy() {
-#ifdef DEB
+#ifdef HLRBREP_DEB
     if(N) { 
       Standard_Integer nnn=0;
       StNbMoy=StNbMoyNonNul=0;
@@ -272,20 +272,24 @@ public:
 	  free(IndUV[i]);
 	  IndUV[i]=NULL;
 	}
-	else { cout<<" IndUV ~~~~~~~~~~~~~~~~~~~~~~~~~~~~"<<endl; } 
-	       
+#ifdef HLRBREP_DEB
+	else
+          cout<<" IndUV ~~~~~~~~~~~~~~~~~~~~~~~~~~~~"<<endl;
+#endif
       }
       for(i=0;i<N;i++) { 
 	if(UV[i]) { 
 	  free(UV[i]);
 	  UV[i]=NULL;
 	}
+#ifdef HLRBREP_DEB
 	else { cout<<" UV ~~~~~~~~~~~~~~~~~~~~~~~~~~~~"<<endl; } 
+#endif
       }
       
-      if(nbUV)  { free(nbUV);  nbUV=NULL; } else { cout<<" nbUV ~~~~~~~~~~~~~~~~~~~~~~~~~~~~"<<endl; } 
-      if(IndUV) { free(IndUV); IndUV=NULL;} else { cout<<" IndUV ~~~~~~~~~~~~~~~~~~~~~~~~~~~~"<<endl; } 
-      if(UV)    { free(UV);    UV=NULL; }  else { cout<<" UV ~~~~~~~~~~~~~~~~~~~~~~~~~~~~"<<endl; } 
+      if(nbUV)  { free(nbUV);  nbUV=NULL; } 
+      if(IndUV) { free(IndUV); IndUV=NULL;}
+      if(UV) { free(UV);    UV=NULL; }
       N=0;
     }
   }
@@ -1796,11 +1800,13 @@ void HLRBRep_Data::OrientOthEdge (const Standard_Integer I,
 	    eb1->Orientation(ie1,myFEOri);
 	  }
 	}
+#ifdef HLRBREP_DEB
 	else {
 	  cout << "HLRBRep_Data::OrientOthEdge " << I;
 	  cout << " Edge " << myFE << " : ";
 	  cout << "UVPoint not found, Edge not Oriented" << endl;
 	}
+#endif
       }
     }
   }
@@ -1995,9 +2001,7 @@ HLRBRep_Data::Classify (const Standard_Integer E,
 			  (Standard_Address)VertMax,
 			  (Standard_Address)MinMaxVert);
 
-
-
-#if 0 
+#ifdef HLRBREP_DEB
 	{
 	  Standard_Integer qwe,qwep8,q,q1,q2;
 	  printf("\n E:%d -------\n",E);
@@ -2036,9 +2040,6 @@ HLRBRep_Data::Classify (const Standard_Integer E,
 	  cout<<endl;
 	}
  #endif
-
-
-
 
     if (((MaxFace1 - MinVert1) & 0x80008000) != 0 ||
 	((MaxVert1 - MinFace1) & 0x80008000) != 0 ||

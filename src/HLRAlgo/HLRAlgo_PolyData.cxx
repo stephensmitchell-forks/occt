@@ -478,7 +478,7 @@ HideByOneTriangle (const Standard_Address Coordinates,
 	o[npi] = n1 == -1;
 	m[npi] = Multiple;
       }
-#ifdef DEB
+#ifdef HLRALGO_DEB
       else if (ERROR) {
 	cout << " error : HLRAlgo_PolyData::HideByOneTriangle " << endl;
 	cout << " ( more than 2 points )." << endl;
@@ -623,7 +623,7 @@ HideByOneTriangle (const Standard_Address Coordinates,
 	o[npi] = n1 == -1;
 	m[npi] = Multiple;
       }
-#ifdef DEB
+#ifdef HLRALGO_DEB
       else if (ERROR) {
 	cout << " error : HLRAlgo_PolyData::HideByOneTriangle " << endl;
 	cout << " ( more than 2 points )." << endl;
@@ -768,7 +768,7 @@ HideByOneTriangle (const Standard_Address Coordinates,
 	o[npi] = n1 == -1;
 	m[npi] = Multiple;
       }
-#ifdef DEB
+#ifdef HLRALGO_DEB
       else if (ERROR) {
 	cout << " error : HLRAlgo_PolyData::HideByOneTriangle " << endl;
 	cout << " ( more than 2 points )." << endl;
