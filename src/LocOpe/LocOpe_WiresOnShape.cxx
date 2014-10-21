@@ -1095,7 +1095,7 @@ void FindInternalIntersections(const TopoDS_Edge& theEdge,
   Standard_Real /*theFpar, theLpar,*/ aFpar, aLpar;
   const Handle(Geom_Curve)& theCurve = BRep_Tool::Curve(theEdge, thePar[0], thePar[1]);
   GeomAdaptor_Curve theGAcurve(theCurve, thePar[0], thePar[1]);
-  
+  Standard_Real aDistMax = Precision::Confusion();
   TopExp_Explorer Explo(theFace, TopAbs_EDGE);
   for (; Explo.More(); Explo.Next())
   {
@@ -1117,6 +1117,7 @@ void FindInternalIntersections(const TopoDS_Edge& theEdge,
 
     aNbExt = anExtrema.NbExt();
     Standard_Real MaxTol = Max(BRep_Tool::Tolerance(theEdge), BRep_Tool::Tolerance(anEdge));
+    
     for (i = 1; i <= aNbExt; i++)
     {
       Standard_Real aDist = Sqrt(anExtrema.SquareDistance(i));
@@ -1163,7 +1164,11 @@ void FindInternalIntersections(const TopoDS_Edge& theEdge,
         gp_Pnt aPoint = aCurve->Value(anIntPar);
         if (aPoint.Distance(thePnt[0]) > BRep_Tool::Tolerance(theVertices[0]) &&
             aPoint.Distance(thePnt[1]) > BRep_Tool::Tolerance(theVertices[1]))
+        {
           SplitPars.Append(theIntPar);
+          if( aDist > aDistMax)
+            aDistMax = aDist;
+        }
       }
     }
   }
@@ -1208,6 +1213,8 @@ void FindInternalIntersections(const TopoDS_Edge& theEdge,
       LastPar = SplitPars(i);
       gp_Pnt LastPoint = theCurve->Value(LastPar);
       LastVertex = BRepLib_MakeVertex(LastPoint);
+      BRep_Builder aB;
+      aB.UpdateVertex(LastVertex, aDistMax);
     }
     else
     {

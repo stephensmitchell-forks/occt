@@ -158,6 +158,7 @@ ShapeAnalysis_FreeBounds::ShapeAnalysis_FreeBounds(const TopoDS_Shape& shape,
   }
 
   ConnectWiresToWires (iwires, toler, shared, wires);
+  
 
   for (i = 1; i <= edges->Length(); i++)
     if (iwires->Value(i).Orientation() == TopAbs_REVERSED)
@@ -248,7 +249,8 @@ ShapeAnalysis_FreeBounds::ShapeAnalysis_FreeBounds(const TopoDS_Shape& shape,
     TopoDS_Vertex Vf, Vl;
     Vf = sae.FirstVertex(sewd->Edge(1));
     Vl = sae.LastVertex(sewd->Edge(sewd->NbEdges()));
-
+    if( Vf.IsNull() || Vl.IsNull())
+      return;
     gp_Pnt pf, pl;
     pf = BRep_Tool::Pnt(Vf);
     pl = BRep_Tool::Pnt(Vl);

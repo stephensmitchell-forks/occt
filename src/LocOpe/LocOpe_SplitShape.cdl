@@ -76,6 +76,7 @@ is
 
     Add(me: in out; W: Wire from TopoDS;
     	            F: Face from TopoDS)
+                  returns Boolean from Standard
 	---Purpose: Adds the wire <W> on the face <F>.
     	raises NoSuchObject from Standard,
 	       -- if <F> does not belong to the original shape.
@@ -88,6 +89,7 @@ is
     
     Add(me: in out; Lwires: ListOfShape from TopTools;
     	            F: Face from TopoDS)
+                  returns Boolean from Standard
 	---Purpose: Adds the list of wires <Lwires> on the face <F>.
     	raises NoSuchObject from Standard,
 	       -- if <F> does not belong to the original shape.
@@ -131,11 +133,11 @@ is
 -- -- Private implementation methods
 
     AddOpenWire(me: in out; W: Wire from TopoDS; F: Face from TopoDS)
-    
+      returns Boolean from Standard
     	is static private;
 
 
-    AddClosedWire(me: in out; W: Wire from TopoDS; F: Face from TopoDS)
+    AddClosedWire(me: in out; W: Wire from TopoDS; F: Face from TopoDS) returns Boolean from Standard
     
     	is static private;
 

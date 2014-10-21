@@ -60,8 +60,9 @@ static Standard_Boolean IsInside(const TopoDS_Face&,
 static Standard_Boolean IsInside(const TopoDS_Face&,
                                  const TopoDS_Wire&);
 
-static void ChoixUV(const TopoDS_Edge&,
+static Standard_Boolean ChoixUV(const TopoDS_Edge&,
                     const TopoDS_Face&,
+                    const TopoDS_Vertex&,
                     const TopTools_MapOfShape&,
                     TopTools_MapIteratorOfMapOfShape&,
                     gp_Pnt2d&,
@@ -231,7 +232,7 @@ void LocOpe_SplitShape::Add(const TopoDS_Vertex& V,
 //purpose  : adds the list of wires on the face <F>
 //=======================================================================
 
-void LocOpe_SplitShape::Add(const TopTools_ListOfShape& Lwires,
+Standard_Boolean LocOpe_SplitShape::Add(const TopTools_ListOfShape& Lwires,
                             const TopoDS_Face& F)
 {
 
@@ -250,26 +251,27 @@ void LocOpe_SplitShape::Add(const TopTools_ListOfShape& Lwires,
   TopoDS_Vertex Vfirst,Vlast;
 
   BRepTools::Update(F);
-
+ // Standard_Boolean nbInside = 0;
+  TopTools_ListOfShape aLInside;
   for (; itl.More(); itl.Next())
   {
     const TopoDS_Face& fac = TopoDS::Face(itl.Value());
-    Standard_Boolean AllWiresInside = Standard_True;
+    //Standard_Boolean AllWiresInside = Standard_True;
     TopTools_ListIteratorOfListOfShape itwires(Lwires);
+   
     for (; itwires.More(); itwires.Next())
     {
       const TopoDS_Wire& aWire = TopoDS::Wire(itwires.Value());
-      if (!IsInside(fac, aWire))
+      if (IsInside(fac, aWire))
       {
-        AllWiresInside = Standard_False;
-        break;
+        //nbInside++;
+        aLInside.Append(aWire);
       }
     }
-    if (AllWiresInside)
-      break;
+    
   }
-  if (!itl.More()) {
-    Standard_ConstructionError::Raise();
+  if (!aLInside.Extent()) {
+    return Standard_False;
   }
 
   TopoDS_Face FaceRef = TopoDS::Face(itl.Value());
@@ -288,7 +290,7 @@ void LocOpe_SplitShape::Add(const TopTools_ListOfShape& Lwires,
   TopTools_DataMapOfShapeShape VerWireMap;
   Standard_Integer i;
   TopExp_Explorer ExploF, ExploW;
-  for (itl.Initialize(Lwires); itl.More(); itl.Next())
+  for (itl.Initialize(aLInside); itl.More(); itl.Next())
   {
     const TopoDS_Wire& aSection = TopoDS::Wire(itl.Value());
     TopoDS_Vertex Ver [2];
@@ -317,7 +319,7 @@ void LocOpe_SplitShape::Add(const TopTools_ListOfShape& Lwires,
   }  
   
   TopTools_DataMapOfShapeListOfShape VerSecMap;
-  for (itl.Initialize(Lwires); itl.More(); itl.Next())
+  for (itl.Initialize(aLInside); itl.More(); itl.Next())
   {
     const TopoDS_Wire& aWire = TopoDS::Wire(itl.Value());
     TopoDS_Vertex V1, V2;
@@ -514,7 +516,7 @@ void LocOpe_SplitShape::Add(const TopTools_ListOfShape& Lwires,
   ///////////////////
   
   // JAG 10.11.95 Codage des regularites
-  for (itl.Initialize(Lwires); itl.More(); itl.Next())
+  for (itl.Initialize(aLInside); itl.More(); itl.Next())
     for (ExploW.Init(itl.Value(), TopAbs_EDGE); ExploW.More(); ExploW.Next())
     {
       const TopoDS_Edge& edg = TopoDS::Edge(ExploW.Current());
@@ -522,6 +524,7 @@ void LocOpe_SplitShape::Add(const TopTools_ListOfShape& Lwires,
         BB.Continuity(edg,F,F,GeomAbs_CN);
       }
     }
+    return Standard_True;
 }
 
 
@@ -530,12 +533,13 @@ void LocOpe_SplitShape::Add(const TopTools_ListOfShape& Lwires,
 //purpose  : 
 //=======================================================================
 
-void LocOpe_SplitShape::Add(const TopoDS_Wire& W,
+Standard_Boolean LocOpe_SplitShape::Add(const TopoDS_Wire& W,
                             const TopoDS_Face& F)
 {
 
   if (myDone) {
-    Standard_ConstructionError::Raise();
+    return Standard_False;
+    //Standard_ConstructionError::Raise();
   }
 
 
@@ -547,16 +551,18 @@ void LocOpe_SplitShape::Add(const TopoDS_Wire& W,
   try {
     OCC_CATCH_SIGNALS
     if (!LocOpe::Closed(W,F)) {
-      AddOpenWire(W,F);
+      if(!AddOpenWire(W,F))
+        return Standard_False;
     }
     else {
-      AddClosedWire(W,F);
+      if(!AddClosedWire(W,F))
+        return Standard_False;
     }
   } catch (Standard_Failure ) {
 #ifdef DEB
     cout << "Warning: SpliShape internal problem detected, some faces may be lost. Check input edges/wires" <<endl;
 #endif
-    return;
+    return Standard_False;
   }
   // JAG 10.11.95 Codage des regularites
   BRep_Builder B;
@@ -566,8 +572,8 @@ void LocOpe_SplitShape::Add(const TopoDS_Wire& W,
       B.Continuity(edg,F,F,GeomAbs_CN);
     }
   }
+  return Standard_True;
 }
-
 
 
 //=======================================================================
@@ -575,7 +581,7 @@ void LocOpe_SplitShape::Add(const TopoDS_Wire& W,
 //purpose  : 
 //=======================================================================
 
-void LocOpe_SplitShape::AddClosedWire(const TopoDS_Wire& W,
+Standard_Boolean LocOpe_SplitShape::AddClosedWire(const TopoDS_Wire& W,
                                       const TopoDS_Face& F)
 {
   TopExp_Explorer exp;
@@ -598,7 +604,8 @@ void LocOpe_SplitShape::AddClosedWire(const TopoDS_Wire& W,
 
   }
   if (!itl.More()) {
-    Standard_ConstructionError::Raise();
+    return Standard_False;
+    //Standard_ConstructionError::Raise();
   }
 
   BRep_Builder B;
@@ -648,7 +655,7 @@ void LocOpe_SplitShape::AddClosedWire(const TopoDS_Wire& W,
   B.Add(newRef,W.Oriented(TopAbs::Reverse(orWire)));
   lf.Append(newRef);
   lf.Append(newFace);
-
+  return Standard_True;
 }
 
 
@@ -657,7 +664,7 @@ void LocOpe_SplitShape::AddClosedWire(const TopoDS_Wire& W,
 //purpose  : 
 //=======================================================================
 
-void LocOpe_SplitShape::AddOpenWire(const TopoDS_Wire& W,
+Standard_Boolean LocOpe_SplitShape::AddOpenWire(const TopoDS_Wire& W,
                                     const TopoDS_Face& F)
 {
   
@@ -716,7 +723,8 @@ void LocOpe_SplitShape::AddOpenWire(const TopoDS_Wire& W,
     }
   }
   if (!itl.More()) {
-    Standard_ConstructionError::Raise();
+    return Standard_False;
+    //Standard_ConstructionError::Raise();
   }
 
   TopoDS_Face FaceRef = TopoDS::Face(itl.Value());
@@ -819,19 +827,19 @@ void LocOpe_SplitShape::AddOpenWire(const TopoDS_Wire& W,
  
     if (LastEdge.Orientation() == TopAbs_FORWARD) {
       C2d->D1(l,plast,dlast);
-      if (dlast.Magnitude() < gp::Resolution())
-      {
+      //if (dlast.Magnitude() < gp::Resolution())
+      //{
         gp_Pnt2d PrevPnt = C2d->Value(l - dpar);
         dlast.SetXY(plast.XY() - PrevPnt.XY());
-      }
+      //}
     }
     else {
       C2d->D1(f,plast,dlast);
-      if (dlast.Magnitude() < gp::Resolution())
-      {
+      //if (dlast.Magnitude() < gp::Resolution())
+      //{
         gp_Pnt2d NextPnt = C2d->Value(f + dpar);
         dlast.SetXY(NextPnt.XY() - plast.XY());
-      }
+      //}
       dlast.Reverse();
     }
 
@@ -877,30 +885,30 @@ void LocOpe_SplitShape::AddOpenWire(const TopoDS_Wire& W,
 
         if (itm.Key().Orientation() == TopAbs_FORWARD) {
           C2d->D1(l,plast,dlast);
-          if (dlast.Magnitude() < gp::Resolution())
-          {
+          //if (dlast.Magnitude() < gp::Resolution())
+          //{
             gp_Pnt2d PrevPnt = C2d->Value(l - dpar);
             dlast.SetXY(plast.XY() - PrevPnt.XY());
-          }
+          //}
         }
         else {
           C2d->D1(f,plast,dlast);
-          if (dlast.Magnitude() < gp::Resolution())
-          {
+          //if (dlast.Magnitude() < gp::Resolution())
+          //{
             gp_Pnt2d NextPnt = C2d->Value(f + dpar);
             dlast.SetXY(NextPnt.XY() - plast.XY());
-          }
+          //}
           dlast.Reverse();
         }
       }
       else if (nbPoss > 1) {
         // Faire choix en U,V...
         TopoDS_Shape aLocalFace  = FaceRef.Oriented(wfirst.Orientation());
-        ChoixUV(LastEdge, TopoDS::Face(aLocalFace), PossE,
-                itm, plast, dlast, toll);
-        /*if(!ChoixUV(LastEdge, TopoDS::Face(aLocalFace), PossE,
+        //ChoixUV(LastEdge, TopoDS::Face(aLocalFace), PossE,
+        //        itm, plast, dlast, toll);
+        if(!ChoixUV(LastEdge, TopoDS::Face(aLocalFace), Vlast, PossE,
                 itm, plast, dlast, toll))
-                return;*/
+                return Standard_False;
 
       }
 
@@ -1090,6 +1098,7 @@ void LocOpe_SplitShape::AddOpenWire(const TopoDS_Wire& W,
       
     }
   }
+  return Standard_True;
 }
 
 
@@ -1369,8 +1378,9 @@ static Standard_Boolean IsInside(const TopoDS_Face& F,
 //purpose  : 
 //=======================================================================
 
-void ChoixUV(const TopoDS_Edge& Last,
+Standard_Boolean ChoixUV(const TopoDS_Edge& Last,
                     const TopoDS_Face& F,
+                    const TopoDS_Vertex& theVCommon,
                     const TopTools_MapOfShape& Poss,
                     TopTools_MapIteratorOfMapOfShape& It,
                     gp_Pnt2d& plst,
@@ -1386,48 +1396,49 @@ void ChoixUV(const TopoDS_Edge& Last,
   BRepAdaptor_Surface surf(F,Standard_False); // no restriction
   surf.D0 (plst.X(), plst.Y(), aPlst);
 
-  Standard_Real tol;
-
+  Standard_Real tolV = BRep_Tool::Tolerance(theVCommon) + Precision::Confusion();
+    
   TopoDS_Vertex vtx;
-
   gp_Dir2d ref2d(dlst);
+  gp_XY aNext2d(0.,0.0);
 
   Handle(Geom2d_Curve) C2d;
   Standard_Real dpar;
 
   Standard_Integer index = 0, imin=0;
   Standard_Real  angmax = -M_PI, dist, ang;
-
-
+  Standard_Real dmin = Precision::Infinite();
+  Standard_Real aTol = Max (surf.UResolution (tolV), surf.VResolution (tolV));
+  
   for (It.Initialize(Poss); It.More(); It.Next()) {
     index++;
     C2d = BRep_Tool::CurveOnSurface(TopoDS::Edge(It.Key()),F,f,l);
-    dpar = (l - f)*0.01;
+    dpar = Min(aTol,(l - f)*0.01);
     if (It.Key().Orientation() == TopAbs_FORWARD) {
-      //      p2d = C2d->Value(f);
-      C2d->D1(f,p2d,v2d);
-      if (v2d.Magnitude() < gp::Resolution())
-      {
-        gp_Pnt2d NextPnt = C2d->Value(f + dpar);
-        v2d.SetXY(NextPnt.XY() - p2d.XY());
-      }
-      vtx = TopExp::FirstVertex(TopoDS::Edge(It.Key()));
+        p2d = C2d->Value(f);
+        //C2d->D1(f,p2d,v2d);
+        //if (v2d.Magnitude() < gp::Resolution())
+        //{
+          gp_Pnt2d NextPnt = C2d->Value(f + dpar);
+          v2d.SetXY(NextPnt.XY() - p2d.XY());
+      //}
+        vtx = TopExp::FirstVertex(TopoDS::Edge(It.Key()));
     }
     else {
-      //      p2d = C2d->Value(l);
+      p2d = C2d->Value(l);
       C2d->D1(l,p2d,v2d);
-      if (v2d.Magnitude() < gp::Resolution())
-      {
+     // if (v2d.Magnitude() < gp::Resolution())
+     // {
         gp_Pnt2d PrevPnt = C2d->Value(l - dpar);
         v2d.SetXY(p2d.XY() - PrevPnt.XY());
-      }
+     // }
       v2d.Reverse();
       vtx = TopExp::LastVertex(TopoDS::Edge(It.Key()));
     }
 
     surf.D0 (p2d.X(), p2d.Y(), aPCur);
 
-    tol = BRep_Tool::Tolerance(vtx);
+    Standard_Real tol = BRep_Tool::Tolerance(vtx);
     tol = Max(toll, tol); tol *= tol;
 
     dist = aPCur.SquareDistance(aPlst);
@@ -1439,44 +1450,49 @@ void ChoixUV(const TopoDS_Edge& Last,
       ang = -M_PI;
     }
 
-    //if ((dist < dmin - tol) ||
-    //(dist <= dmin+tol && ang > angmax)) {
-    if ((dist < tol)  && (ang > angmax)) {
-    //if (ang > angmax) {
+    if ((dist < tol)  && (ang > angmax)) {// && !Last.IsSame(It.Key())) {
       imin = index;
-      //      dmin = dist;
       angmax = ang;
+      dmin = dist;
+     
     }
   }
-
+  if(!imin)
+    return Standard_False;
+     
   for (index = 1, It.Initialize(Poss); It.More(); It.Next()) {
     if (index == imin) {
-      C2d = BRep_Tool::CurveOnSurface(TopoDS::Edge(It.Key()),F,f,l);
-      dpar = (l - f)*0.01;
+      TopoDS_Edge aNextEdge = TopoDS::Edge(It.Key());
+      C2d = BRep_Tool::CurveOnSurface(aNextEdge,F,f,l);
+      vtx = TopExp::LastVertex(aNextEdge, Standard_True);
+      Standard_Real tolV2 = BRep_Tool::Tolerance(vtx);
+      Standard_Real aTol2d = Max (surf.UResolution (tolV2), surf.VResolution (tolV2));
+      dpar = Min(aTol2d,(l - f)*0.01);
       if (It.Key().Orientation() == TopAbs_FORWARD) {
-        //	plst = C2d->Value(l);
-        C2d->D1(l,plst,dlst);
-        if (dlst.Magnitude() < gp::Resolution())
-        {
+      
+        plst = C2d->Value(l);
+        //C2d->D1(l,plst,dlst);
+        //if (dlst.Magnitude() < gp::Resolution())
+        //{
           gp_Pnt2d PrevPnt = C2d->Value(l - dpar);
           dlst.SetXY(plst.XY() - PrevPnt.XY());
-        }
+        //}
       }
       else {
-        //	plst = C2d->Value(f);
+        plst = C2d->Value(f);
         C2d->D1(f,plst,dlst);
-        if (dlst.Magnitude() < gp::Resolution())
-        {
+        //if (dlst.Magnitude() < gp::Resolution())
+        //{
           gp_Pnt2d NextPnt = C2d->Value(f + dpar);
           dlst.SetXY(NextPnt.XY() - plst.XY());
-        }
+        //}
         dlst.Reverse();
       }
       break;
     }
     index++;
   }
-  //return (imin);
+  return (imin);
 }
 
 //=======================================================================
