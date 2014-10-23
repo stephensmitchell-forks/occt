@@ -34,7 +34,7 @@ uses
     
 is
 
-    Create
+    Create(IsOpenResult : Boolean from Standard = Standard_False)
     ---Purpose: Empty construtor.
     returns Mat from MAT;
     
@@ -42,6 +42,11 @@ is
     
     CreateMat(me : in out ; aTool : in out Tool)
        ---Purpose: Algoritm of computation of the bisecting locus.
+    is static;
+    
+    CreateMatOpen(me : in out ; aTool : in out Tool)
+       ---Purpose: Algoritm of computation of the bisecting locus for
+       --          open wire.
     is static;
     
     IsDone(me) returns Boolean from Standard
@@ -98,6 +103,7 @@ is
 
 fields
 
+    myIsOpenResult        : Boolean;
     thenumberofbisectors  : Integer;
     thenumberofedges      : Integer;
     semiInfinite          : Boolean;

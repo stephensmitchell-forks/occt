@@ -648,9 +648,11 @@ void BRepFill_OffsetWire::Perform (const Standard_Real Offset,
   {
     myShape.Nullify();
     myIsDone = Standard_False;
+#ifdef BREPFILL_DEB
     cout<<"An exception was caught in BRepFill_OffsetWire::Perform : ";
     Standard_Failure::Caught()->Print(cout);
     cout<<endl;
+#endif
 
     return;
   }
@@ -799,8 +801,9 @@ void BRepFill_OffsetWire::PerformWithBiLo
     for (Standard_Integer ie = 1; ie <= Locus.NumberOfElts(ic); ie++) {
       const TopoDS_Shape& SE = Link.GeneratingShape(Locus.BasicElt(ic,ie));
       if (SE.ShapeType() == TopAbs_VERTEX) {
-	MakeCircle (TopoDS::Edge(PE),TopoDS::Vertex(SE),
-		    myWorkSpine,myOffset,myMap,RefPlane);
+        if (!SE.IsSame(Ends[0]) && !SE.IsSame(Ends[1]))
+          MakeCircle (TopoDS::Edge(PE),TopoDS::Vertex(SE),
+                      myWorkSpine,myOffset,myMap,RefPlane);
       }
       else {
 	MakeOffset (TopoDS::Edge(SE),myWorkSpine,myOffset,myMap,RefPlane,
