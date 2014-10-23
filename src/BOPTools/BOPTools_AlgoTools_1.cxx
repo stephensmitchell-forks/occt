@@ -945,8 +945,6 @@ Standard_Boolean BOPTools_AlgoTools::ComputeTolerance
   }
   //
   try {
-    const Standard_Integer aNbParticles = 100;
-    //
     BOPTools_CheckCurveOnSurface aFunc(theCurve3D, theCurve2D, theSurf);
     //
     math_Vector anOutputParam(1, 1);
@@ -956,11 +954,9 @@ Standard_Boolean BOPTools_AlgoTools::ComputeTolerance
     theMaxPar  = anOutputParam(1);
     aFunc.Value(anOutputParam, theMaxDist);
     //
-    Standard_Real aValue = 0.;
-    math_Vector aFirstV(1, 1), aLastV(1, 1), aStepV(1, 1);
+    math_Vector aFirstV(1, 1), aLastV(1, 1);
     aFirstV(1) = theFirst;
     aLastV(1) = theLast;
-    aStepV = (aLastV - aFirstV)/(100.0*aNbParticles);
     //
     math_GlobOptMin aFinder(&aFunc, aFirstV, aLastV);
     aFinder.SetTol(1.0e-2, 1.0e-3);
@@ -968,6 +964,7 @@ Standard_Boolean BOPTools_AlgoTools::ComputeTolerance
     //
     Standard_Integer i, aNbExtr = aFinder.NbExtrema();
     for(i = 1; i <= aNbExtr; i++) {
+      Standard_Real aValue = 0.;
       aFinder.Points(i, anOutputParam);
       aFunc.Value(anOutputParam, aValue);
       aValue = sqrt(Abs(aValue));
