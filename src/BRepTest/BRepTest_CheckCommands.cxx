@@ -23,6 +23,7 @@
 #include <BRepCheck_Analyzer.hxx>
 #include <BRepCheck_Result.hxx>
 #include <BRepCheck_ListIteratorOfListOfStatus.hxx>
+#include <BRepCheck_SurfNormAnalyzer.hxx>
 #include <TopoDS_Iterator.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopTools_DataMapOfShapeListOfShape.hxx>
@@ -243,6 +244,60 @@ static void Print(Standard_OStream& OS,
 
 }
 
+//
+//=======================================================================
+//function : checknorm
+//purpose  : Checks the normals of faces
+//=======================================================================
+static Standard_Integer checknorm(Draw_Interpretor& di,
+				     Standard_Integer narg, const char** a)
+{
+  if (narg < 3) {
+    return 1;
+  }
+  Standard_Real tol = 1.e-2;
+  TopoDS_Shape S = DBRep::Get(a[2]);
+  if(S.IsNull())
+  {
+    di << "Null shape \n";
+    return 1;
+  }
+  TopExp_Explorer anExp(S, TopAbs_FACE);
+  if(!anExp.More())
+  {
+    di << "There are no faces in shape /n";
+    return 1;
+  }
+  //
+  if(narg > 3)
+  {
+    tol = atof(a[3]);
+  }
+  //
+  BRepCheck_SurfNormAnalyzer aNormChecker(S, tol);
+  if(aNormChecker.IsValid())
+  {
+    di << "All faces seem to be valid \n" ;
+    return 0;
+  }
+  
+  const TopTools_ListOfShape& aBadFaces = aNormChecker.BadFaces();
+ 
+  //
+  di << " number of problematic faces : " << aBadFaces.Extent() << "\n";
+  //
+  char Name[32];
+  Standard_Integer ipp=0;
+  TopTools_ListIteratorOfListOfShape itf;
+  for (itf.Initialize(aBadFaces); itf.More(); itf.Next()) {
+    ipp++;
+    Sprintf(Name,"%s_%d",a[1], ipp);
+    DBRep::Set(Name, itf.Value());
+    di << Name << " " ;
+  }
+  di << "\n";
+  return 0;
+}
 //=======================================================================
 //function : computetolerance
 //purpose  : 
@@ -1677,5 +1732,11 @@ theCommands.Add("listfuseedge",
 		  "listfuseedge shape",
 		  __FILE__,
 		  listfuseedge,g);
+
+theCommands.Add("checknorm",
+		  "checknorm name shape tol",
+		  __FILE__,
+		  checknorm,g);
+
 }
 
