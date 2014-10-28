@@ -64,6 +64,9 @@
 #include <BOPCol_ListOfInteger.hxx>
 #include <BOPInt_Context.hxx>
 
+#include <TCollection_CompareOfInteger.hxx>
+#include <TColStd_Array1OfInteger.hxx>
+#include <SortTools_QuickSortOfInteger.hxx>
 
 static
   Standard_Boolean IsClosedShell(const TopoDS_Shell& aSh);
@@ -284,7 +287,7 @@ void BOPAlgo_Builder::FillIn3DParts(BOPCol_DataMapOfShapeListOfShape& theInParts
       const BOPAlgo_ShapeBox& aSBk=aItDMISB.Value();
       const TopoDS_Shape& aFk=aSBk.Shape();
       if (aMF.Contains(aFk)) {
-	continue;
+        continue;
       }
       //
       const Bnd_Box& aBk=aSBk.Box();
@@ -300,67 +303,76 @@ void BOPAlgo_Builder::FillIn3DParts(BOPCol_DataMapOfShapeListOfShape& theInParts
     aSelector.SetBox(aBoxS);
     //
     aNbFP=aBBTree.Select(aSelector);
-    //
-    const BOPCol_ListOfInteger& aLIFP=aSelector.Indices();
-    //
-    // 2.7. Collect faces that are IN aSolid [ aLFIN ]
-    BOPCol_ListOfShape aLFP(aAlr1);
-    BOPCol_ListOfShape aLCBF(aAlr1);
-    BOPCol_MapOfShape aMFDone(100, aAlr1);
-    BOPCol_IndexedMapOfShape aME(100, aAlr1);
-    //
-    BOPTools::MapShapes(aSD, TopAbs_EDGE, aME);
-    //
-    aItLI.Initialize(aLIFP);
-    for (; aItLI.More(); aItLI.Next()) {
-      nFP=aItLI.Value();
-      const BOPAlgo_ShapeBox& aSBF=aDMISB.Find(nFP);
-      const TopoDS_Face& aFP=(*(TopoDS_Face*)&aSBF.Shape());
-      if (aMFDone.Contains(aFP)) {
-	continue;
+    if (aNbFP) {
+      const BOPCol_ListOfInteger& aLIFP=aSelector.Indices();
+      //sort indices
+      TColStd_Array1OfInteger anArray(1, aNbFP);
+      aItLI.Initialize(aLIFP);
+      for (k = 1; aItLI.More(); aItLI.Next(), ++k) {
+        nFP=aItLI.Value();
+        anArray(k) = nFP;
       }
+      TCollection_CompareOfInteger comp;
+      SortTools_QuickSortOfInteger::Sort(anArray,comp);
       //
-      aMFDone.Add(aFP);
+      // 2.7. Collect faces that are IN aSolid [ aLFIN ]
+      BOPCol_ListOfShape aLFP(aAlr1);
+      BOPCol_ListOfShape aLCBF(aAlr1);
+      BOPCol_MapOfShape aMFDone(100, aAlr1);
+      BOPCol_IndexedMapOfShape aME(100, aAlr1);
       //
-      iIsIN=BOPTools_AlgoTools::IsInternalFace(aFP, aSD, aMEF, 1.e-14, myContext);
+      BOPTools::MapShapes(aSD, TopAbs_EDGE, aME);
       //
-      aLFP.Clear();
-      aLFP.Append(aFP);
-      //
-      aItLI1.Initialize(aLIFP);
-      for (; aItLI1.More(); aItLI1.Next()) {
-	const TopoDS_Shape& aFx=aDMISB.Find(aItLI1.Value()).Shape();
-	if (!aMFDone.Contains(aFx)) {
-	  aLFP.Append(aFx);
-	}
-      }
-      //
-      aLCBF.Clear();
-      //---------------------------------------- 
-      {
-	Handle(NCollection_IncAllocator) aAlr2;
-	aAlr2=new NCollection_IncAllocator();
-	//
-	BOPTools_AlgoTools::MakeConnexityBlock(aLFP, aME, aLCBF, aAlr2);
-      }
-      //----------------------------------------
-      aItLS.Initialize(aLCBF);
-      for (; aItLS.More(); aItLS.Next()) {
-        const TopoDS_Shape& aFx=aItLS.Value();
-        aMFDone.Add(aFx);
-        if (iIsIN) {
-          aLFIN.Append(aFx);
+      for (k = 1; k <= aNbFP; ++k) {
+        nFP = anArray(k);
+        const BOPAlgo_ShapeBox& aSBF=aDMISB.Find(nFP);
+        const TopoDS_Face& aFP=(*(TopoDS_Face*)&aSBF.Shape());
+        if (aMFDone.Contains(aFP)) {
+          continue;
         }
-      }
-    }// for (; aItLI.More(); aItLI.Next()) {
-    //
+        //
+        aMFDone.Add(aFP);
+        //
+        iIsIN=BOPTools_AlgoTools::IsInternalFace(aFP, aSD, aMEF, 1.e-14, myContext);
+        //
+        aLFP.Clear();
+        aLFP.Append(aFP);
+        //
+        aItLI1.Initialize(aLIFP);
+        for (; aItLI1.More(); aItLI1.Next()) {
+          const TopoDS_Shape& aFx=aDMISB.Find(aItLI1.Value()).Shape();
+          if (!aMFDone.Contains(aFx)) {
+            aLFP.Append(aFx);
+          }
+        }
+        //
+        aLCBF.Clear();
+        //---------------------------------------- 
+        {
+          Handle(NCollection_IncAllocator) aAlr2;
+          aAlr2=new NCollection_IncAllocator();
+          //
+          BOPTools_AlgoTools::MakeConnexityBlock(aLFP, aME, aLCBF, aAlr2);
+        }
+        //----------------------------------------
+        aItLS.Initialize(aLCBF);
+        for (; aItLS.More(); aItLS.Next()) {
+          const TopoDS_Shape& aFx=aItLS.Value();
+          aMFDone.Add(aFx);
+          if (iIsIN) {
+            aLFIN.Append(aFx);
+          }
+        }
+      }// for (; aItLI.More(); aItLI.Next()) {
+      //
+    }
     // 2.8. Store the results in theInParts, theDraftSolids
     aNbFIN=aLFIN.Extent();
     if (aNbFIN || aNbLIF) {
       aItLS.Initialize(aLIF);
       for (; aItLS.More(); aItLS.Next()) {
-	const TopoDS_Shape& aFI=aItLS.Value();
-	aLFIN.Append(aFI);
+        const TopoDS_Shape& aFI=aItLS.Value();
+        aLFIN.Append(aFI);
       }
       theInParts.Bind(aSolid, aLFIN);
     }
