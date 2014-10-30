@@ -35,15 +35,17 @@ generic class IWalking from  IntWalk (
 
 
 
-uses Vector            from math,
-     SequenceOfInteger from TColStd,
-     SequenceOfReal    from TColStd,
-     StatusDeflection  from IntWalk,
-     VectorOfInteger   from IntWalk,
-     VectorOfWalkingData from IntWalk,
-     Vec               from gp,
-     Dir2d             from gp,
-     PntOn2S           from IntSurf
+uses Vector               from math,
+     SequenceOfInteger    from TColStd,
+     SequenceOfReal       from TColStd,
+     StatusDeflection     from IntWalk,
+     VectorOfInteger      from IntWalk,
+     VectorOfWalkingData  from IntWalk,
+     Vec                  from gp,
+     Dir2d                from gp,
+     Pnt                  from gp,
+     PntOn2S              from IntSurf,
+     Box2d                from Bnd
 
 
 raises   NotDone    from StdFail,
@@ -270,7 +272,60 @@ is
     Clear (me: in out) is static protected;
     ---Purpose: Clears up internal containers
 
+    DistanceMinimizeByGradient (me: in out;
+                                theASurf1 , theASurf2  : ThePSurface;
+                                theU1, theV1, theU2, theV2: out Real from Standard;
+                                theBox1, theBox2: Box2d from Bnd;
+                                theStep0U1V1: Real from Standard = 1.0e-6;
+                                theStep0U2V2: Real from Standard = 1.0e-6)
+      returns Boolean from Standard
+      is static protected;
+    ---Purpose: Clears up internal containers
 
+    DistanceMinimizeByExtrema (me: in out;
+                               theASurf : ThePSurface;
+                               theP0       : Pnt from gp;
+                               theU0, theV0: out Real from Standard;
+                               theStep0U: Real from Standard = 1.0;
+                               theStep0V: Real from Standard = 1.0)
+      returns Boolean from Standard
+      is static protected;
+    ---Purpose: Clears up internal containers
+
+    SeekPointOnBoundary(me    : in out;
+                        theASurf1 , theASurf2  : ThePSurface ;
+                        theU1, theV1, theU2, theV2: Real from Standard;
+                        isTheFirst : Boolean from Standard;
+                        theNCurve : Integer from Standard;
+                        theExtendingType : Integer from Standard;
+                        theParamTol : Real from Standard)
+      returns Boolean from Standard
+      is static protected;
+    -- Unites and correctly coordinates of work of
+    -- "DistanceMinimizeByGradient" and "DistanceMinimizeByExtrema" functions.
+  
+  
+    PutToBoundary(me    : in out;
+                  theASurf1 , theASurf2  : ThePSurface;
+                  theNCurve : Integer from Standard)
+    -- Tries to extend existing intersection line 
+    --  (as set of points) to surface's boundaries,
+    --  if it is possibly.
+    --  If line is scienter far from boundaries
+    --  or is (almost) parralel with some boundary,
+    --  extending is not required.
+      returns Boolean from Standard;
+
+
+    SeekAdditionalPoints( me    : in out;
+                          theASurf1 , theASurf2  : ThePSurface;
+                          theMinNbPoints : Integer from Standard;
+                          theNCurve : Integer from Standard)
+      returns Boolean from Standard;
+    -- Unites and correctly coordinates of work of
+    -- "DistanceMinimizeByGradient" and "DistanceMinimizeByExtrema" functions.
+    
+    
 fields 
 
     done                : Boolean           from Standard;

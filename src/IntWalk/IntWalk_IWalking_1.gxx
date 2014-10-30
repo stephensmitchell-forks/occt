@@ -20,7 +20,303 @@ OSD_Chronometer Chronrsnld;
 
 #include <NCollection_IncAllocator.hxx>
 #include <Precision.hxx>
+#include <Geom_Surface.hxx>
+#include <Geom_Plane.hxx>
+#include <Geom_CylindricalSurface.hxx>
+#include <Geom_ConicalSurface.hxx>
+#include <Geom_SphericalSurface.hxx>
+#include <Geom_ToroidalSurface.hxx>
 
+enum TypeOfExtending
+{
+  IS_NOT_REQUIRED = 0,
+  EXTEND_Udir_FOR_SURF1 = 1,
+  EXTEND_Vdir_FOR_SURF1 = 2,
+  EXTEND_Udir_FOR_SURF2 = 4,
+  EXTEND_Vdir_FOR_SURF2 = 8
+};
+
+enum TypeOfPoint
+{
+  EXACTLY_INTO = 0,
+  ON_BOUNDARY = 1,
+  OUT_OF_SURFACE = 2,
+};
+
+//=======================================================================
+//function : IsParallel
+//purpose  : Checks if theLine is parallel of some boundary of given
+//            surface (it is determined by theCheckSurf1 flag). 
+//            Parallelism assumes small oscillations (swing is less or 
+//            equal than theToler).
+//            Small lines (if first and last parameters in the Surface 
+//            are almost equal) are classified as parallel (as same as 
+//            any point can be considered as parallel of any line).
+// ATTENTION!!!!
+//            This function is same as in IntWalk_PWalking_1.gxx file.
+//            If you change it, you should change and that function too.
+//=======================================================================
+static void IsParallel(const Handle(IntSurf_LineOn2S)& theLine,
+                  const Standard_Boolean theCheckSurf1,
+                  const Standard_Real theToler,
+                  Standard_Boolean& theIsUparallel,
+                  Standard_Boolean& theIsVparallel)
+{
+  const Standard_Integer aNbPointsMAX = 23;
+
+  theIsUparallel = theIsVparallel = Standard_True;
+
+  Standard_Integer aNbPoints = theLine->NbPoints();
+  if(aNbPoints > aNbPointsMAX)
+  {
+    aNbPoints = aNbPointsMAX;
+  }
+  else if(aNbPoints < 2)
+  {
+    //Here we cannot estimate of parallelism.
+    //Do all the same as for small lines 
+    return;
+  }
+
+  Standard_Real aStep = IntToReal(theLine->NbPoints()) / aNbPoints;
+  Standard_Real aNPoint = 1.0;
+
+  Standard_Real aUmin = RealLast(), aUmax = RealFirst(), aVmin = RealLast(), aVmax = RealFirst();
+  for(Standard_Integer aNum = 1; aNum <= aNbPoints; aNum++, aNPoint += aStep)
+  {
+    if(aNPoint > aNbPoints)
+    {
+      aNPoint = aNbPoints;
+    }
+
+    Standard_Real u, v;
+    if(theCheckSurf1)
+      theLine->Value(RealToInt(aNPoint)).ParametersOnS1(u, v);
+    else
+      theLine->Value(RealToInt(aNPoint)).ParametersOnS2(u, v);
+
+    if(u < aUmin)
+      aUmin = u;
+
+    if(u > aUmax)
+      aUmax = u;
+
+    if(v < aVmin)
+      aVmin = v;
+
+    if(v > aVmax)
+      aVmax = v;
+  }
+
+  theIsVparallel = ((aUmax - aUmin) < theToler);
+  theIsUparallel = ((aVmax - aVmin) < theToler);
+}
+
+//=======================================================================
+//function : Checking
+//purpose  : Check, if given point is in surface's boundaries.
+//            If "yes" then theFactTol = 0.0, else theFactTol is
+//            equal maximal deviation.
+// ATTENTION!!!!
+//            This function is same as in IntWalk_IWalking_1.gxx file.
+//            If you change it, you should change and that function too.
+//=======================================================================
+static Standard_Integer Checking(const Handle(Adaptor3d_HSurface)& theASurf1,
+                            const Handle(Adaptor3d_HSurface)& theASurf2,
+                            Standard_Real& theU1,
+                            Standard_Real& theV1,
+                            Standard_Real& theU2,
+                            Standard_Real& theV2,
+                            Standard_Real& theFactTolU,
+                            Standard_Real& theFactTolV)
+{
+  const Standard_Real aTol = Min(theFactTolU, theFactTolV);
+  const Standard_Real aU1bFirst = theASurf1->FirstUParameter();
+  const Standard_Real aU1bLast = theASurf1->LastUParameter();
+  const Standard_Real aU2bFirst = theASurf2->FirstUParameter();
+  const Standard_Real aU2bLast = theASurf2->LastUParameter();
+  const Standard_Real aV1bFirst = theASurf1->FirstVParameter();
+  const Standard_Real aV1bLast = theASurf1->LastVParameter();
+  const Standard_Real aV2bFirst = theASurf2->FirstVParameter();
+  const Standard_Real aV2bLast = theASurf2->LastVParameter();
+
+  Standard_Integer aResult = EXACTLY_INTO;
+  theFactTolU = 0.0, theFactTolV = 0.0;
+
+  Standard_Real aDelta = aU1bFirst - theU1;
+  if(aDelta >= 0.0)
+  {
+    theU1 = aU1bFirst;
+
+    if(aDelta > aTol)
+    {
+      theFactTolU = Max(theFactTolU, aDelta);
+      aResult |= (Standard_Integer)OUT_OF_SURFACE;
+    }
+    else
+    {
+      aResult |= (Standard_Integer)ON_BOUNDARY;
+    }
+  }
+  else if(Abs(aDelta) <= aTol)
+  {
+    aResult |= (Standard_Integer)ON_BOUNDARY;
+  }
+
+  aDelta = theU1 - aU1bLast;
+  if(aDelta >= 0.0)
+  {
+    theU1 = aU1bLast;
+
+    if(aDelta > aTol)
+    {
+      theFactTolU = Max(theFactTolU, aDelta);
+      aResult |= (Standard_Integer)OUT_OF_SURFACE;
+    }
+    else
+    {
+      aResult |= (Standard_Integer)ON_BOUNDARY;
+    }
+  }
+  else if(Abs(aDelta) <= aTol)
+  {
+    aResult |= (Standard_Integer)ON_BOUNDARY;
+  }
+
+  aDelta = aV1bFirst - theV1;
+  if(aDelta >= 0.0)
+  {
+    theV1 = aV1bFirst;
+    if(aDelta > aTol)
+    {
+      theFactTolV = Max(theFactTolV, aDelta);
+      aResult |= (Standard_Integer)OUT_OF_SURFACE;
+    }
+    else
+    {
+      aResult |= (Standard_Integer)ON_BOUNDARY;
+    }
+  }
+  else if(Abs(aDelta) <= aTol)
+  {
+    aResult |= (Standard_Integer)ON_BOUNDARY;
+  }
+  
+  aDelta = theV1 - aV1bLast;
+  if(aDelta >= 0.0)
+  {
+    theV1 = aV1bLast;
+
+    if(aDelta > aTol)
+    {
+      theFactTolV = Max(theFactTolV, aDelta);
+      aResult |= (Standard_Integer)OUT_OF_SURFACE;
+    }
+    else
+    {
+      aResult |= (Standard_Integer)ON_BOUNDARY;
+    }
+  }
+  else if(Abs(aDelta) <= aTol)
+  {
+    aResult |= (Standard_Integer)ON_BOUNDARY;
+  }
+
+  aDelta = aU2bFirst - theU2;
+  if(aDelta >= 0.0)
+  {
+    theU2 = aU2bFirst;
+    if(aDelta > aTol)
+    {
+      theFactTolU = Max(theFactTolU, aDelta);
+      aResult |= (Standard_Integer)OUT_OF_SURFACE;
+    }
+    else
+    {
+      aResult |= (Standard_Integer)ON_BOUNDARY;
+    }
+  }
+  else if(Abs(aDelta) <= aTol)
+  {
+    aResult |= (Standard_Integer)ON_BOUNDARY;
+  }
+  
+  aDelta = theU2 - aU2bLast;
+  if(aDelta >= 0.0)
+  {
+    theU2 = aU2bLast;
+
+    if(aDelta > aTol)
+    {
+      theFactTolU = Max(theFactTolU, aDelta);
+      aResult |= (Standard_Integer)OUT_OF_SURFACE;
+    }
+    else
+    {
+      aResult |= (Standard_Integer)ON_BOUNDARY;
+    }
+  }
+  else if(Abs(aDelta) <= aTol)
+  {
+    aResult |= (Standard_Integer)ON_BOUNDARY;
+  }
+
+  aDelta = aV2bFirst - theV2;
+  if(aDelta >= 0.0)
+  {
+    theV2 = aV2bFirst;
+    
+    if(aDelta > aTol)
+    {
+      theFactTolV = Max(theFactTolV, aDelta);
+      aResult |= (Standard_Integer)OUT_OF_SURFACE;
+    }
+    else
+    {
+      aResult |= (Standard_Integer)ON_BOUNDARY;
+    }
+  }
+  else if(Abs(aDelta) <= aTol)
+  {
+    aResult |= (Standard_Integer)ON_BOUNDARY;
+  }
+  
+  aDelta = theV2 - aV2bLast;
+  if(aDelta >= 0.0)
+  {
+    theV2 = aV2bLast;
+
+    if(aDelta > aTol)
+    {
+      theFactTolV = Max(theFactTolV, aDelta);
+      aResult |= (Standard_Integer)OUT_OF_SURFACE;
+    }
+    else
+    {
+      aResult |= (Standard_Integer)ON_BOUNDARY;
+    }
+  }
+  else if(Abs(aDelta) <= aTol)
+  {
+    aResult |= (Standard_Integer)ON_BOUNDARY;
+  }
+
+  if(aResult & OUT_OF_SURFACE)
+  {
+    aResult = OUT_OF_SURFACE;
+  }
+  else if(aResult & ON_BOUNDARY)
+  {
+    aResult = ON_BOUNDARY;
+  }
+
+  return aResult;
+}
+
+//=======================================================================
+//function : Constructor
+//purpose  : 
+//=======================================================================
 IntWalk_IWalking::IntWalk_IWalking (const Standard_Real Epsilon,
                                     const Standard_Real Deflection,
                                     const Standard_Real Increment ) :
@@ -244,5 +540,1226 @@ void IntWalk_IWalking::Perform(const ThePOPIterator& Pnts1,
   done = Standard_True;
 }
 
+//=======================================================================
+//function : DistanceMinimizeByGradient
+//purpose  : This function is same as in IntWalk_PWalking_1.gxx file.
+//            If you change it, you should change and that function too.
+//=======================================================================
+Standard_Boolean IntWalk_IWalking::
+  DistanceMinimizeByGradient( const Handle(Adaptor3d_HSurface)& theASurf1,
+                              const Handle(Adaptor3d_HSurface)& theASurf2,
+                              Standard_Real& theU1,
+                              Standard_Real& theV1,
+                              Standard_Real& theU2,
+                              Standard_Real& theV2,
+                              const Bnd_Box2d& theBox1,
+                              const Bnd_Box2d& theBox2,
+                              const Standard_Real theStep0U1V1,
+                              const Standard_Real theStep0U2V2)
+{
+  const Standard_Real aZeroTol = 1.0/Precision::Infinite();
+  const Standard_Integer aNbIterMAX = 60;
+  const Standard_Real aTol = 1.0e-14;
+  const Standard_Boolean hasCheckBounds = !(theBox1.IsVoid() || theBox2.IsVoid());
+  Standard_Boolean aStatus = Standard_False;
 
+  gp_Pnt aP1, aP2;
+  gp_Vec aD1u, aD1v, aD2U, aD2V;
+
+  theASurf1->D1(theU1, theV1, aP1, aD1u, aD1v);
+  theASurf2->D1(theU2, theV2, aP2, aD2U, aD2V);
+
+  Standard_Real aSQDistPrev = aP1.SquareDistance(aP2);
+
+  gp_Vec aP12(aP1, aP2);
+
+  Standard_Real aGradFu(-aP12.Dot(aD1u));
+  Standard_Real aGradFv(-aP12.Dot(aD1v));
+  Standard_Real aGradFU( aP12.Dot(aD2U));
+  Standard_Real aGradFV( aP12.Dot(aD2V));
+
+  if(Abs(aGradFu) <= aZeroTol)
+    aGradFu = 0.0;
+  if(Abs(aGradFv) <= aZeroTol)
+    aGradFv = 0.0;
+  if(Abs(aGradFU) <= aZeroTol)
+    aGradFU = 0.0;
+  if(Abs(aGradFV) <= aZeroTol)
+    aGradFV = 0.0;
+
+  Standard_Real aSTEPuv = theStep0U1V1, aStepUV = theStep0U2V2;
+
+  Standard_Boolean flRepeat = Standard_True;
+  Standard_Integer aNbIter = aNbIterMAX;
+
+  while(flRepeat)
+  {
+    Standard_Real anAdd = aGradFu*aSTEPuv;
+    Standard_Real aPARu = (anAdd >= 0.0)?
+            (theU1 - Max(anAdd, Epsilon(theU1))) :
+            (theU1 + Max(-anAdd, Epsilon(theU1)));
+    anAdd = aGradFv*aSTEPuv;
+    Standard_Real aPARv = (anAdd >= 0.0)?
+            (theV1 - Max(anAdd, Epsilon(theV1))) :
+            (theV1 + Max(-anAdd, Epsilon(theV1)));
+    anAdd = aGradFU*aStepUV;
+    Standard_Real aParU = (anAdd >= 0.0)?
+            (theU2 - Max(anAdd, Epsilon(theU2))) :
+            (theU2 + Max(-anAdd, Epsilon(theU2)));
+    anAdd = aGradFV*aStepUV;
+    Standard_Real aParV = (anAdd >= 0.0)?
+            (theV2 - Max(anAdd, Epsilon(theV2))) :
+            (theV2 + Max(-anAdd, Epsilon(theV2)));
+
+    if(hasCheckBounds)
+    {
+      Standard_Real aU1min = 0.0, aV1min = 0.0, aU1max = 0.0, aV1max = 0.0;
+      Standard_Real aU2min = 0.0, aV2min = 0.0, aU2max = 0.0, aV2max = 0.0;
+
+      theBox1.Get(aU1min, aV1min, aU1max, aV1max);
+      theBox2.Get(aU2min, aV2min, aU2max, aV2max);
+
+      if(aPARu < aU1min)
+      {
+        const Standard_Real aTTol = 100.0*(aU1max - aU1min);
+        if((aU1min - aPARu) < aTTol)
+          aPARu = aU1min;
+      }
+
+      if(aPARu > aU1max)
+      {
+        const Standard_Real aTTol = 100.0*(aU1max - aU1min);
+        if((aPARu - aU1max) < aTTol)
+          aPARu = aU1max;
+      }
+
+      if(aPARv < aV1min)
+      {
+        const Standard_Real aTTol = 100.0*(aV1max - aV1min);
+        if((aV1min - aPARv) < aTTol)
+          aPARv = aV1min;
+      }
+
+      if(aPARv > aV1max)
+      {
+        const Standard_Real aTTol = 100.0*(aV1max - aV1min);
+        if((aPARv - aV1max) < aTTol)
+          aPARv = aV1max;
+      }
+
+      if(aParU < aU2min)
+      {
+        const Standard_Real aTTol = 100.0*(aU2max - aU2min);
+        if((aU2min - aParU) < aTTol)
+          aParU = aU2min;
+      }
+
+      if(aParU > aU2max)
+      {
+        const Standard_Real aTTol = 100.0*(aU2max - aU2min);
+        if((aParU - aU2max) < aTTol)
+          aParU = aU2max;
+      }
+
+      if(aParV < aV2min)
+      {
+        const Standard_Real aTTol = 100.0*(aV2max - aV2min);
+        if((aV2min - aParV) < aTTol)
+          aParV = aV2min;
+      }
+
+      if(aParV > aV2max)
+      {
+        const Standard_Real aTTol = 100.0*(aV2max - aV2min);
+        if((aParV - aV2max) < aTTol)
+          aParV = aV2max;
+      }
+    }
+
+    gp_Pnt aPt1, aPt2;
+
+    theASurf1->D1(aPARu, aPARv, aPt1, aD1u, aD1v);
+    theASurf2->D1(aParU, aParV, aPt2, aD2U, aD2V);
+
+    Standard_Real aSQDist = aPt1.SquareDistance(aPt2);
+
+    if(aSQDist < aSQDistPrev)
+    {
+      aSQDistPrev = aSQDist;
+      theU1 = aPARu;
+      theV1 = aPARv;
+      theU2 = aParU;
+      theV2 = aParV;
+
+      if(Abs(theU1) < aZeroTol)
+        theU1 = 0.0;
+
+      if(Abs(theV1) < aZeroTol)
+        theV1 = 0.0;
+
+      if(Abs(theU2) < aZeroTol)
+        theU2 = 0.0;
+
+      if(Abs(theV2) < aZeroTol)
+        theV2 = 0.0;
+
+      aStatus = aSQDistPrev < aTol;
+      aSTEPuv *= 1.2;
+      aStepUV *= 1.2;
+    }
+    else
+    {
+      if(--aNbIter < 0)
+      {
+        flRepeat = Standard_False;
+      }
+      else
+      {
+        theASurf1->D1(theU1, theV1, aPt1, aD1u, aD1v);
+        theASurf2->D1(theU2, theV2, aPt2, aD2U, aD2V);
+
+        gp_Vec aP12(aPt1, aPt2);
+        aGradFu = -aP12.Dot(aD1u);
+        aGradFv = -aP12.Dot(aD1v);
+        aGradFU = aP12.Dot(aD2U);
+        aGradFV = aP12.Dot(aD2V);
+
+        if(Abs(aGradFu) <= aZeroTol)
+          aGradFu = 0.0;
+        if(Abs(aGradFv) <= aZeroTol)
+          aGradFv = 0.0;
+        if(Abs(aGradFU) <= aZeroTol)
+          aGradFU = 0.0;
+        if(Abs(aGradFV) <= aZeroTol)
+          aGradFV = 0.0;
+
+        aSTEPuv = theStep0U1V1;
+        aStepUV = theStep0U2V2;
+      }
+    }
+  }
+
+  return aStatus;
+}
+
+//=======================================================================
+//function : DistanceMinimizeByExtrema
+//purpose  : This function is same as in IntWalk_PWalking_1.gxx file.
+//            If you change it, you should change and that function too.
+//=======================================================================
+Standard_Boolean IntWalk_IWalking::
+  DistanceMinimizeByExtrema(const ThePSurface& theASurf, 
+                            const gp_Pnt& theP0,
+                            Standard_Real& theU0,
+                            Standard_Real& theV0,
+                            const Standard_Real theStep0U,
+                            const Standard_Real theStep0V)
+{
+  const Standard_Real aTol = 1.0e-14;
+  gp_Pnt aPS;
+  gp_Vec aD1Su, aD1Sv, aD2Su, aD2Sv, aD2SuvTemp;
+  Standard_Real aSQDistPrev = RealLast();
+  Standard_Real aU = theU0, aV = theV0;
+  
+  Standard_Integer aNbIter = 10;
+  do
+  {
+    theASurf->D2(aU, aV, aPS, aD1Su, aD1Sv, aD2Su, aD2Sv, aD2SuvTemp);
+    
+    gp_Vec aVec(theP0, aPS);
+    
+    Standard_Real aSQDist = aVec.SquareMagnitude();
+
+    if(aSQDist >= aSQDistPrev)
+      break;
+
+    aSQDistPrev = aSQDist;
+    theU0 = aU;
+    theV0 = aV;
+    aNbIter--;
+
+    if(aSQDistPrev < aTol)
+      break;
+
+    //Functions
+    const Standard_Real aF1 = aD1Su.Dot(aVec), aF2 = aD1Sv.Dot(aVec);
+
+    //Derivatives
+    const Standard_Real aDf1u = aD2Su.Dot(aVec) + aD1Su.Dot(aD1Su),
+                        aDf1v = aD2Su.Dot(aD1Sv),
+                        aDf2u = aDf1v,
+                        aDf2v = aD2Sv.Dot(aVec) + aD1Sv.Dot(aD1Sv);
+
+    const Standard_Real aDet = aDf1u*aDf2v - aDf1v*aDf2u;
+    aU -= theStep0U*(aDf2v*aF1 - aDf1v*aF2)/aDet;
+    aV += theStep0V*(aDf2u*aF1 - aDf1u*aF2)/aDet;
+  }
+  while(aNbIter > 0);
+
+  return (aSQDistPrev < aTol);
+}
+
+//=======================================================================
+//function : SeekPointOnBoundary
+//purpose  : This function is same as in IntWalk_PWalking_1.gxx file.
+//            If you change it, you should change and that function too.
+//=======================================================================
+Standard_Boolean IntWalk_IWalking::
+  SeekPointOnBoundary(const ThePSurface& theASurf1,
+                      const ThePSurface& theASurf2,
+                      const Standard_Real theU1,
+                      const Standard_Real theV1,
+                      const Standard_Real theU2,
+                      const Standard_Real theV2,
+                      const Standard_Boolean isTheFirst,
+                      const Standard_Integer theNCurve,
+                      const Standard_Integer theExtendingType,
+                      const Standard_Real theParamTol)
+{
+  const Handle(IntSurf_LineOn2S)& line = lines.Value(theNCurve)->Line();
+
+  const Standard_Real aTol = 1.0e-14;
+  Standard_Real aRepetitionFactor = 1.0;
+  Standard_Boolean isOK = Standard_False;
+  Standard_Real U1prec = theU1, V1prec = theV1, U2prec = theU2, V2prec = theV2;
+
+  Standard_Real aU1Min = -Precision::Infinite(),
+                aU1Max = Precision::Infinite(),
+                aV1Min = -Precision::Infinite(),
+                aV1Max = Precision::Infinite();
+
+  Standard_Real aU2Min = -Precision::Infinite(),
+                aU2Max = Precision::Infinite(),
+                aV2Min = -Precision::Infinite(),
+                aV2Max = Precision::Infinite();
+
+  gp_Vec2d aDir1, aDir2;
+
+  if(isTheFirst)
+  {
+    Standard_Real u1prev = 0.0, v1prev = 0.0, u2prev = 0.0, v2prev = 0.0;
+    line->Value(1).Parameters(u1prev, v1prev, u2prev, v2prev);
+    aDir1 = gp_Vec2d(gp_Pnt2d(u1prev, v1prev), gp_Pnt2d(theU1, theV1));
+    aDir2 = gp_Vec2d(gp_Pnt2d(u2prev, v2prev), gp_Pnt2d(theU2, theV2));
+
+    Standard_Real u1 = 0.0, u2 = 0.0, v1 = 0.0, v2 = 0.0;
+    line->Value(2).Parameters(u1, v1, u2, v2);
+
+    if(u1 <= u1prev)
+      aU1Max = u1prev;
+    else
+      aU1Min = u1prev;
+
+    if(v1 <= v1prev)
+      aV1Max = v1prev;
+    else
+      aV1Min = v1prev;
+
+    if(u2 <= u2prev)
+      aU2Max = u2prev;
+    else
+      aU2Min = u2prev;
+
+    if(v2 <= v2prev)
+      aV2Max = v2prev;
+    else
+      aV2Min = v2prev;
+  }
+  else
+  {
+    Standard_Real u1prev = 0.0, v1prev = 0.0, u2prev = 0.0, v2prev = 0.0;
+    const Standard_Integer aNbPnts = line->NbPoints();
+    line->Value(aNbPnts).Parameters(u1prev, v1prev, u2prev, v2prev);
+    aDir1 = gp_Vec2d(gp_Pnt2d(u1prev, v1prev), gp_Pnt2d(theU1, theV1));
+    aDir2 = gp_Vec2d(gp_Pnt2d(u2prev, v2prev), gp_Pnt2d(theU2, theV2));
+
+    Standard_Real u1 = 0.0, u2 = 0.0, v1 = 0.0, v2 = 0.0;
+    line->Value(aNbPnts-1).Parameters(u1, v1, u2, v2);
+
+    if(u1 <= u1prev)
+      aU1Min = u1prev;
+    else
+      aU1Max = u1prev;
+      
+    if(v1 <= v1prev)
+      aV1Min = v1prev;
+    else
+      aV1Max = v1prev;
+
+    if(u2 <= u2prev)
+      aU2Min = u2prev;
+    else
+      aU2Max = u2prev;
+
+    if(v2 <= v2prev)
+      aV2Min = v2prev;
+    else
+      aV2Max = v2prev;
+  }
+
+  //Into surface we allow walking in any direction.
+  if(!(theExtendingType & EXTEND_Udir_FOR_SURF1))
+  {
+    aDir1.SetX(0.0);
+  }
+  else
+  {
+    aU1Min = -Precision::Infinite();
+    aU1Max = Precision::Infinite();
+  }
+
+  if(!(theExtendingType & EXTEND_Vdir_FOR_SURF1))
+  {
+    aDir1.SetY(0.0);
+  }
+  else
+  {
+    aV1Min = -Precision::Infinite();
+    aV1Max = Precision::Infinite();
+  }
+
+  if(!(theExtendingType & EXTEND_Udir_FOR_SURF2))
+  {
+    aDir2.SetX(0.0);
+  }
+  else
+  {
+    aU2Min = -Precision::Infinite();
+    aU2Max = Precision::Infinite();
+  }
+
+  if(!(theExtendingType & EXTEND_Vdir_FOR_SURF2))
+  {
+    aDir2.SetY(0.0);
+  }
+  else
+  {
+    aV2Min = -Precision::Infinite();
+    aV2Max = Precision::Infinite();
+  }
+
+  Standard_Integer flFinish = OUT_OF_SURFACE;
+
+  Standard_Integer aNbIter = 20;
+  while(flFinish == OUT_OF_SURFACE)
+  {
+    flFinish = OUT_OF_SURFACE;
+    Standard_Boolean aStatus = Standard_False;
+
+    do
+    {
+      aNbIter--;
+      
+      Bnd_Box2d aB1, aB2;
+      aB1.SetVoid();
+      aB2.SetVoid();
+
+      aStatus = DistanceMinimizeByGradient(theASurf1, theASurf2, U1prec, V1prec, U2prec, V2prec, aB1, aB2);
+      if(aStatus)
+      {
+        break;
+      }
+
+      aStatus = DistanceMinimizeByExtrema(theASurf1, theASurf2->Value(U2prec, V2prec), U1prec, V1prec);
+      if(aStatus)
+      {
+        break;
+      }
+
+      aStatus = DistanceMinimizeByExtrema(theASurf2, theASurf1->Value(U1prec, V1prec), U2prec, V2prec);
+      if(aStatus)
+      {
+        break;
+      }
+    }
+    while(!aStatus && (aNbIter > 0));
+
+    if(aStatus)
+    {
+      const Standard_Real aResTol = 1.0e-4;
+      const Standard_Real aTolMaxU = 1.0e-8;
+      const Standard_Real aTolMaxV = 1.0e-8;
+      const Standard_Real aURes1 = theASurf1->UResolution(aResTol), aVRes1 = theASurf1->VResolution(aResTol);
+      const Standard_Real aURes2 = theASurf2->UResolution(aResTol), aVRes2 = theASurf2->VResolution(aResTol);
+
+      const Standard_Real aResTol1sq = aURes1*aURes1+aVRes1*aVRes1;
+      const Standard_Real aResTol2sq = aURes2*aURes2+aVRes2*aVRes2;
+      
+      Standard_Real aTolU = aTolMaxU, aTolV = aTolMaxV;
+
+      Standard_Real u1 = U1prec, v1 = V1prec, u2 = U2prec, v2 = V2prec;
+
+      flFinish = Checking(theASurf1, theASurf2, U1prec, V1prec, U2prec, V2prec, aTolU, aTolV);
+      
+      if((aTolU <= aTolMaxU) && (aTolV <= aTolMaxV))
+      {
+        Standard_Boolean isAdded = Standard_False;
+        gp_Pnt aP1, aP2, aPInt;
+
+        gp_Pnt aPrevPoint;
+        if(isTheFirst)
+        {
+          aPrevPoint = lines.Value(theNCurve)->Value(1).Value();
+        }
+        else
+        {
+          const Standard_Integer aNbPoints = lines.Value(theNCurve)->NbPoints();
+          aPrevPoint = lines.Value(theNCurve)->Value(aNbPoints).Value();
+        }
+
+        if((flFinish == ON_BOUNDARY) || (flFinish == EXACTLY_INTO))
+        {
+          aP1 = theASurf1->Value(U1prec, V1prec);
+          aP2 = theASurf2->Value(U2prec, V2prec);
+          aPInt.SetXYZ(0.5*(aP1.XYZ() + aP2.XYZ()));
+
+          const Standard_Real aSQDist1 = aPInt.SquareDistance(aP1),
+                              aSQDist2 = aPInt.SquareDistance(aP2);
+
+          if((aSQDist1 < aTol) && (aSQDist2 < aTol))
+          {
+            IntSurf_PntOn2S anIP;
+            anIP.SetValue(aPInt, U1prec, V1prec, U2prec, V2prec);
+
+            const Standard_Real aSQNeighborDist = aPInt.SquareDistance(aPrevPoint);
+
+            //Adding too remote point is dangerously
+            if((flFinish == ON_BOUNDARY) || (aSQNeighborDist < aResTol*aResTol))
+            {
+            if(isTheFirst)
+            {
+              line->InsertBefore(1,anIP);
+              isOK = Standard_True;
+            }
+            else
+            {
+              line->Add(anIP);
+              isOK = Standard_True;
+            }
+
+            isAdded = Standard_True;
+          }
+        }
+        }
+        
+        if(!isAdded)
+        {
+          aP1 = theASurf1->Value(u1, v1);
+          aP2 = theASurf2->Value(u2, v2);
+          aPInt.SetXYZ(0.5*(aP1.XYZ() + aP2.XYZ()));
+
+          const Standard_Real aSQDist1 = aPInt.SquareDistance(aP1),
+                              aSQDist2 = aPInt.SquareDistance(aP2);
+          if((aSQDist1 < aTol) && (aSQDist2 < aTol))
+          {
+            IntSurf_PntOn2S anIP;
+            anIP.SetValue(aPInt, u1, v1, u2, v2);
+          
+            if(isTheFirst)
+            {
+              Standard_Real u1prev = 0.0, v1prev = 0.0, u2prev = 0.0, v2prev = 0.0;
+              line->Value(1).Parameters(u1prev, v1prev, u2prev, v2prev);
+              gp_Vec2d aVec1(gp_Pnt2d(u1prev, v1prev), gp_Pnt2d(u1, v1));
+              gp_Vec2d aVec2(gp_Pnt2d(u2prev, v2prev), gp_Pnt2d(u2, v2));
+
+              const Standard_Real aDotPr1 = aVec1.Dot(aDir1), aDotPr2 = aVec2.Dot(aDir2);
+
+              if( ((aDotPr1 >= 0.0) || (aVec1.SquareMagnitude() < aResTol1sq)) &&
+                  ((aDotPr2 >= 0.0) || (aVec2.SquareMagnitude() < aResTol2sq)))
+              {//Direction is kept
+                line->InsertBefore(1,anIP);
+                isOK = Standard_True;
+                isAdded = Standard_True;
+              }
+            }
+            else
+            {
+              Standard_Real u1prev = 0.0, v1prev = 0.0, u2prev = 0.0, v2prev = 0.0;
+              const Standard_Integer aNbPoints = line->NbPoints();
+              line->Value(aNbPoints).Parameters(u1prev, v1prev, u2prev, v2prev);
+              gp_Vec2d aVec1(gp_Pnt2d(u1prev, v1prev), gp_Pnt2d(u1, v1));
+              gp_Vec2d aVec2(gp_Pnt2d(u2prev, v2prev), gp_Pnt2d(u2, v2));
+
+              const Standard_Real aDotPr1 = aVec1.Dot(aDir1), aDotPr2 = aVec2.Dot(aDir2);
+
+              if( ((aDotPr1 >= 0.0) || (aVec1.SquareMagnitude() < aResTol1sq)) &&
+                  ((aDotPr2 >= 0.0) || (aVec2.SquareMagnitude() < aResTol2sq)))
+              {//Direction is kept
+                line->Add(anIP);
+                isOK = Standard_True;
+                isAdded = Standard_True;
+              }
+            }
+          }
+        }
+
+        if(flFinish == ON_BOUNDARY)
+        {
+          aRepetitionFactor = 1.0;
+        }
+        else
+        {
+          aRepetitionFactor *= 2.0;
+        }
+
+        if((flFinish != OUT_OF_SURFACE) && isAdded)
+        {//One more point into surface is found. We should try continue seeking.
+          Standard_Real aDelta = 0.0;
+          if((theU1 - theASurf1->FirstUParameter()) < -RealSmall())
+          {//U1prec were corrected
+            aDelta = Abs(theASurf1->FirstUParameter() - U1prec);
+            
+            if(aDelta > aTolMaxU)
+            {
+              U1prec = theASurf1->FirstUParameter() - Min(aRepetitionFactor*aDelta, theParamTol);
+              flFinish = OUT_OF_SURFACE;
+            }
+          }
+
+          aDelta = 0.0;
+          if((theASurf1->LastUParameter() - theU1) < -RealSmall())
+          {//U1prec were corrected
+            aDelta = Abs(theASurf1->LastUParameter() - U1prec);
+
+            if(aDelta > aTolMaxU)
+            {
+              U1prec = theASurf1->LastUParameter() + Min(aRepetitionFactor*aDelta, theParamTol);
+              flFinish = OUT_OF_SURFACE;
+            }
+          }
+
+          aDelta = 0.0;
+          if((theV1 - theASurf1->FirstVParameter()) < -RealSmall())
+          {//V1prec were corrected
+            aDelta = Abs(theASurf1->FirstVParameter() - V1prec);
+            
+            if(aDelta > aTolMaxV)
+            {
+              V1prec = theASurf1->FirstVParameter() - Min(aRepetitionFactor*aDelta, theParamTol);
+              flFinish = OUT_OF_SURFACE;
+            }
+          }
+
+          aDelta = 0.0;
+          if((theASurf1->LastVParameter() - theV1) < -RealSmall())
+          {//V1prec were corrected
+            aDelta = Abs(theASurf1->LastVParameter() - V1prec);
+
+            if(aDelta > aTolMaxV)
+            {
+              V1prec = theASurf1->LastVParameter() + Min(aRepetitionFactor*aDelta, theParamTol);
+              flFinish = OUT_OF_SURFACE;
+            }
+          }
+
+          aDelta = 0.0;
+          if((theU2 - theASurf2->FirstUParameter()) < -RealSmall())
+          {//U2prec were corrected
+            aDelta = Abs(theASurf2->FirstUParameter() - U2prec);
+            
+            if(aDelta > aTolMaxU)
+            {
+              U2prec = theASurf2->FirstUParameter() - Min(aRepetitionFactor*aDelta, theParamTol);
+              flFinish = OUT_OF_SURFACE;
+            }
+          }
+
+          aDelta = 0.0;
+          if((theASurf2->LastUParameter() - theU2) < -RealSmall())
+          {//U2prec were corrected
+            aDelta = Abs(theASurf2->LastUParameter() - U2prec);
+
+            if(aDelta > aTolMaxU)
+            {
+              U2prec = theASurf2->LastUParameter() + Min(aRepetitionFactor*aDelta, theParamTol);
+              flFinish = OUT_OF_SURFACE;
+            }
+          }
+
+          aDelta = 0.0;
+          if((theV2 - theASurf2->FirstVParameter()) < -RealSmall())
+          {//V2prec were corrected
+            aDelta = Abs(theASurf2->FirstVParameter() - V2prec);
+            
+            if(aDelta > aTolMaxV)
+            {
+              V2prec = theASurf2->FirstVParameter() - Min(aRepetitionFactor*aDelta, theParamTol);
+              flFinish = OUT_OF_SURFACE;
+            }
+          }
+
+          aDelta = 0.0;
+          if((theASurf2->LastVParameter() - theV2) < -RealSmall())
+          {//V2prec were corrected
+            aDelta = Abs(theASurf2->LastVParameter() - V2prec);
+
+            if(aDelta > aTolMaxV)
+            {
+              V2prec = theASurf2->LastVParameter() + Min(aRepetitionFactor*aDelta, theParamTol);
+              flFinish = OUT_OF_SURFACE;
+            }
+          }
+        }//if((flFinish != OUT_OF_SURFACE) && isAdded)
+      }
+    }
+    else
+    {
+      break;
+    }
+
+    if(aNbIter < 0)
+      break;
+  }
+
+  return isOK;
+}
+
+//=======================================================================
+//function : PutToBoundary
+//purpose  : This function is same as in IntWalk_PWalking_1.gxx file.
+//            If you change it, you should change and that function too.
+//=======================================================================
+Standard_Boolean IntWalk_IWalking::
+  PutToBoundary(const ThePSurface& theASurf1,
+                const ThePSurface& theASurf2,
+                const Standard_Integer theNCurve)
+{
+  //For periodic surfaces, point on boundary can have coordinate t and 
+  //(t +/- T) in 2D-space (t is U or V-coordinate, in dependence from
+  //periodic direction, T is a period). Therefore, forcefully found
+  //point on boundary can change orientation of 2D-curve, what
+  //can be worse. By this cause, here we will not consider periodic
+  //surfaces. This case requires additional researching.
+
+  if(theASurf1->IsUPeriodic() || theASurf1->IsVPeriodic())
+  {
+    return Standard_False;
+  }
+
+  if(theASurf2->IsUPeriodic() || theASurf2->IsVPeriodic())
+  {
+    return Standard_False;
+  }
+
+  const Standard_Real aTolMin = Precision::Confusion();
+
+  Standard_Boolean hasBeenAdded = Standard_False;
+
+  const Standard_Real aU1bFirst = theASurf1->FirstUParameter();
+  const Standard_Real aU1bLast = theASurf1->LastUParameter();
+  const Standard_Real aU2bFirst = theASurf2->FirstUParameter();
+  const Standard_Real aU2bLast = theASurf2->LastUParameter();
+  const Standard_Real aV1bFirst = theASurf1->FirstVParameter();
+  const Standard_Real aV1bLast = theASurf1->LastVParameter();
+  const Standard_Real aV2bFirst = theASurf2->FirstVParameter();
+  const Standard_Real aV2bLast = theASurf2->LastVParameter();
+
+  Standard_Real aTol = 1.0;
+  aTol = Min(aTol, aU1bLast - aU1bFirst);
+  aTol = Min(aTol, aU2bLast - aU2bFirst);
+  aTol = Min(aTol, aV1bLast - aV1bFirst);
+  aTol = Min(aTol, aV2bLast - aV2bFirst)*0.1;
+
+  if(aTol <= 2.0*aTolMin)
+    return hasBeenAdded;
+
+  const Handle(IntSurf_LineOn2S)& line = lines.Value(theNCurve)->Line();
+
+  TypeOfExtending anExtType = IS_NOT_REQUIRED;
+  Standard_Boolean isU1parallel = Standard_False, isV1parallel = Standard_False;
+  Standard_Boolean isU2parallel = Standard_False, isV2parallel = Standard_False;
+  IsParallel(line, Standard_True, 0.01*aTol, isU1parallel, isV1parallel);
+  IsParallel(line, Standard_False, 0.01*aTol, isU2parallel, isV2parallel);
+
+  const Standard_Integer aNbPnts = line->NbPoints();
+  Standard_Real u1 = 0.0, v1 = 0.0, u2 = 0.0, v2 = 0.0;
+  Standard_Real u1prev = 0.0, v1prev = 0.0, u2prev = 0.0, v2prev = 0.0;
+
+  line->Value(1).Parameters(u1, v1, u2, v2);
+  if(aNbPnts >= 2)
+  {
+    line->Value(2).Parameters(u1prev, v1prev, u2prev, v2prev);
+  }
+  else
+  {
+    u1prev = u1;
+    v1prev = v1;
+    u2prev = u2;
+    v2prev = v2;
+  }
+
+  Standard_Real aDelta = 0.0;
+  
+  if(!isV1parallel)
+  {
+    Standard_Boolean isCurveReversed = Standard_False;
+    if((aU1bLast - aU1bFirst) >= 2.0*u1)
+    {//u1 is nearer to aU1bFirst than to aU1bLast
+      aDelta = u1 - aU1bFirst;
+      isCurveReversed = Standard_False;
+    }
+    else
+    {//u1 is nearer to aU1bLast than to aU1bFirst
+      aDelta = aU1bLast - u1;
+      isCurveReversed = Standard_True;
+    }
+
+    if((aTolMin < aDelta) && (aDelta < aTol))
+    {
+      Standard_Real u1old = u1;
+      if(isCurveReversed)
+      { // u1 should be extended to aU1bLast
+        u1 = aU1bLast + aDelta;
+      }
+      else
+      { // u1 should be extended to aU1bFirst
+        u1 = aU1bFirst - aDelta;
+      }
+
+      if((u1 - u1old)*(u1prev - u1old) < 0.0)
+      {//do extending
+        anExtType = (TypeOfExtending)((Standard_Integer)anExtType | (Standard_Integer)EXTEND_Udir_FOR_SURF1);
+      }
+      else
+      {//direction is changed. Extending is not required
+        u1 = u1old;
+      }
+    }
+  }
+
+  if(!isV2parallel)
+  {
+    Standard_Boolean isCurveReversed = Standard_False;
+    if((aU2bLast - aU2bFirst) >= 2.0*u2)
+    {//u2 is nearer to aU2bFirst than to aU2bLast
+      aDelta = u2 - aU2bFirst;
+      isCurveReversed = Standard_False;
+    }
+    else
+    {//u2 is nearer to aU2bLast than to aU2bFirst
+      aDelta = aU2bLast - u2;
+      isCurveReversed = Standard_True;
+    }
+
+    if((aTolMin < aDelta) && (aDelta < aTol))
+    {
+      Standard_Real u2old = u2;
+      if(isCurveReversed)
+      { // u2 should be extended to aU2bLast
+        u2 = aU2bLast + aDelta;
+      }
+      else
+      { // u2 should be extended to aU2bFirst
+        u2 = aU2bFirst - aDelta;
+      }
+
+      if((u2 - u2old)*(u2prev - u2old) < 0.0)
+      {//do extending
+        anExtType = (TypeOfExtending)((Standard_Integer)anExtType | (Standard_Integer)EXTEND_Udir_FOR_SURF2);
+      }
+      else
+      {//direction is changed. Extending is not required
+        u2 = u2old;
+      }
+    }
+  }
+
+  if(!isU1parallel)
+  {
+    Standard_Boolean isCurveReversed = Standard_False;
+    if((aV1bLast - aV1bFirst) >= 2.0*v1)
+    {//v1 is nearer to aV1bFirst than to aV1bLast
+      aDelta = v1 - aV1bFirst;
+      isCurveReversed = Standard_False;
+    }
+    else
+    {//v1 is nearer to aV1bLast than to aV1bFirst
+      aDelta = aV1bLast - v1;
+      isCurveReversed = Standard_True;
+    }
+
+    if((aTolMin < aDelta) && (aDelta < aTol))
+    {
+      Standard_Real v1old = v1;
+      if(isCurveReversed)
+      { // v1 should be extended to aV1bLast
+        v1 = aV1bLast + aDelta;
+      }
+      else
+      { // v1 should be extended to aV1bFirst
+        v1 = aV1bFirst - aDelta;
+      }
+
+      if((v1 - v1old)*(v1prev - v1old) < 0.0)
+      {//do extending
+        anExtType = (TypeOfExtending)((Standard_Integer)anExtType | (Standard_Integer)EXTEND_Vdir_FOR_SURF1);
+      }
+      else
+      {//direction is changed. Extending is not required
+        v1 = v1old;
+      }
+    }
+  }
+
+  if(!isU2parallel)
+  {
+    Standard_Boolean isCurveReversed = Standard_False;
+    if((aV2bLast - aV2bFirst) >= 2.0*v2)
+    {//v2 is nearer to aV2bFirst than to aV2bLast
+      aDelta = v2 - aV2bFirst;
+      isCurveReversed = Standard_False;
+    }
+    else
+    {//v2 is nearer to aV2bLast than to aV2bFirst
+      aDelta = aV2bLast - v2;
+      isCurveReversed = Standard_True;
+    }
+
+    if((aTolMin < aDelta) && (aDelta < aTol))
+    {
+      Standard_Real v2old = v2;
+      if(isCurveReversed)
+      { // v2 should be extended to aV2bLast
+        v2 = aV2bLast + aDelta;
+      }
+      else
+      { // v2 should be extended to aV2bFirst
+        v2 = aV2bFirst - aDelta;
+      }
+
+      if((v2 - v2old)*(v2prev - v2old) < 0.0)
+      {//do extending
+        anExtType = (TypeOfExtending)((Standard_Integer)anExtType | (Standard_Integer)EXTEND_Vdir_FOR_SURF2);
+      }
+      else
+      {//direction is changed. Extending is not required
+        v2 = v2old;
+      }
+    }
+  }
+
+  if(anExtType != IS_NOT_REQUIRED)
+  {
+    hasBeenAdded = 
+      SeekPointOnBoundary(theASurf1, theASurf2, u1, 
+                            v1, u2, v2, Standard_True, theNCurve, (Standard_Integer)anExtType,aTol);
+  }
+
+  anExtType = IS_NOT_REQUIRED;
+  line->Value(aNbPnts).Parameters(u1, v1, u2, v2);
+  if(aNbPnts >= 2)
+  {
+    line->Value(aNbPnts-1).Parameters(u1prev, v1prev, u2prev, v2prev);
+  }
+  else
+  {
+    u1prev = u1;
+    v1prev = v1;
+    u2prev = u2;
+    v2prev = v2;
+  }
+
+  if(!isV1parallel)
+  {
+    Standard_Boolean isCurveReversed = Standard_False;
+    if((aU1bLast - aU1bFirst) >= 2.0*u1)
+    {//u1 is nearer to aU1bFirst than to aU1bLast
+      aDelta = u1 - aU1bFirst;
+      isCurveReversed = Standard_False;
+    }
+    else
+    {//u1 is nearer to aU1bLast than to aU1bFirst
+      aDelta = aU1bLast - u1;
+      isCurveReversed = Standard_True;
+    }
+
+    if((aTolMin < aDelta) && (aDelta < aTol))
+    {
+      Standard_Real u1old = u1;
+      if(isCurveReversed)
+      { // u1 should be extended to aU1bLast
+        u1 = aU1bLast + aDelta;
+      }
+      else
+      { // u1 should be extended to aU1bFirst
+        u1 = aU1bFirst - aDelta;
+      }
+
+      if((u1 - u1old)*(u1prev - u1old) < 0.0)
+      {//do extending
+        anExtType = (TypeOfExtending)((Standard_Integer)anExtType | (Standard_Integer)EXTEND_Udir_FOR_SURF1);
+      }
+      else
+      {//direction is changed. Extending is not required
+        u1 = u1old;
+      }
+    }
+  }
+
+  if(!isV2parallel)
+  {
+    Standard_Boolean isCurveReversed = Standard_False;
+    if((aU2bLast - aU2bFirst) >= 2.0*u2)
+    {//u2 is nearer to aU2bFirst than to aU2bLast
+      aDelta = u2 - aU2bFirst;
+      isCurveReversed = Standard_False;
+    }
+    else
+    {//u2 is nearer to aU2bLast than to aU2bFirst
+      aDelta = aU2bLast - u2;
+      isCurveReversed = Standard_True;
+    }
+
+    if((aTolMin < aDelta) && (aDelta < aTol))
+    {
+      Standard_Real u2old = u2;
+      if(isCurveReversed)
+      { // u2 should be extended to aU2bLast
+        u2 = aU2bLast + aDelta;
+      }
+      else
+      { // u2 should be extended to aU2bFirst
+        u2 = aU2bFirst - aDelta;
+      }
+
+      if((u2 - u2old)*(u2prev - u2old) < 0.0)
+      {//do extending
+        anExtType = (TypeOfExtending)((Standard_Integer)anExtType | (Standard_Integer)EXTEND_Udir_FOR_SURF2);
+      }
+      else
+      {//direction is changed. Extending is not required
+        u2 = u2old;
+      }
+    }
+  }
+
+  if(!isU1parallel)
+  {
+    Standard_Boolean isCurveReversed = Standard_False;
+    if((aV1bLast - aV1bFirst) >= 2.0*v1)
+    {//v1 is nearer to aV1bFirst than to aV1bLast
+      aDelta = v1 - aV1bFirst;
+      isCurveReversed = Standard_False;
+    }
+    else
+    {//v1 is nearer to aV1bLast than to aV1bFirst
+      aDelta = aV1bLast - v1;
+      isCurveReversed = Standard_True;
+    }
+
+    if((aTolMin < aDelta) && (aDelta < aTol))
+    {
+      Standard_Real v1old = v1;
+      if(isCurveReversed)
+      { // v1 should be extended to aV1bLast
+        v1 = aV1bLast + aDelta;
+      }
+      else
+      { // v1 should be extended to aV1bFirst
+        v1 = aV1bFirst - aDelta;
+      }
+
+      if((v1 - v1old)*(v1prev - v1old) < 0.0)
+      {//do extending
+        anExtType = (TypeOfExtending)((Standard_Integer)anExtType | (Standard_Integer)EXTEND_Vdir_FOR_SURF1);
+      }
+      else
+      {//direction is changed. Extending is not required
+        v1 = v1old;
+      }
+    }
+  }
+
+  if(!isU2parallel)
+  {
+    Standard_Boolean isCurveReversed = Standard_False;
+    if((aV2bLast - aV2bFirst) >= 2.0*v2)
+    {//v2 is nearer to aV2bFirst than to aV2bLast
+      aDelta = v2 - aV2bFirst;
+      isCurveReversed = Standard_False;
+    }
+    else
+    {//v2 is nearer to aV2bLast than to aV2bFirst
+      aDelta = aV2bLast - v2;
+      isCurveReversed = Standard_True;
+    }
+
+    if((aTolMin < aDelta) && (aDelta < aTol))
+    {
+      Standard_Real v2old = v2;
+      if(isCurveReversed)
+      { // v2 should be extended to aV2bLast
+        v2 = aV2bLast + aDelta;
+      }
+      else
+      { // v2 should be extended to aV2bFirst
+        v2 = aV2bFirst - aDelta;
+      }
+
+      if((v2 - v2old)*(v2prev - v2old) < 0.0)
+      {//do extending
+        anExtType = (TypeOfExtending)((Standard_Integer)anExtType | (Standard_Integer)EXTEND_Vdir_FOR_SURF2);
+      }
+      else
+      {//direction is changed. Extending is not required
+        v2 = v2old;
+      }
+    }
+  }
+
+  if(anExtType != IS_NOT_REQUIRED)
+  {
+    hasBeenAdded = 
+      SeekPointOnBoundary(theASurf1, theASurf2, u1, 
+                            v1, u2, v2, Standard_False, theNCurve, (Standard_Integer)anExtType,aTol);
+  }
+
+  return hasBeenAdded;
+}
+
+//=======================================================================
+//function : SeekAdditionalPoints
+//purpose  : This function is same as in IntWalk_PWalking_1.gxx file.
+//            If you change it, you should change and that function too.
+//=======================================================================
+Standard_Boolean IntWalk_IWalking::
+  SeekAdditionalPoints( const ThePSurface& theASurf1,
+                        const ThePSurface& theASurf2,
+                        const Standard_Integer theMinNbPoints,
+                        const Standard_Integer theNCurve)
+{
+  const Standard_Real aTol = 1.0e-14;
+  const Handle(IntSurf_LineOn2S)& line = lines.Value(theNCurve)->Line();
+
+  Standard_Integer aNbPoints = line->NbPoints();
+  if(aNbPoints >= theMinNbPoints)
+    return Standard_True;
+
+  const Standard_Real aU1bFirst = theASurf1->FirstUParameter();
+  const Standard_Real aU1bLast = theASurf1->LastUParameter();
+  const Standard_Real aU2bFirst = theASurf2->FirstUParameter();
+  const Standard_Real aU2bLast = theASurf2->LastUParameter();
+  const Standard_Real aV1bFirst = theASurf1->FirstVParameter();
+  const Standard_Real aV1bLast = theASurf1->LastVParameter();
+  const Standard_Real aV2bFirst = theASurf2->FirstVParameter();
+  const Standard_Real aV2bLast = theASurf2->LastVParameter();
+
+  
+  Standard_Boolean isPrecise = Standard_False;
+
+  Standard_Real U1prec = 0.0, V1prec = 0.0, U2prec = 0.0, V2prec = 0.0;
+
+  Standard_Integer aNbPointsPrev = 0;
+  while(aNbPoints < theMinNbPoints && (aNbPoints != aNbPointsPrev))
+  {
+    aNbPointsPrev = aNbPoints;
+    for(Standard_Integer fp = 1, lp = 2; fp < aNbPoints; fp = lp + 1)
+    {
+      Standard_Real U1f, V1f, U2f, V2f; //first point in 1st and 2nd surafaces
+      Standard_Real U1l, V1l, U2l, V2l; //last  point in 1st and 2nd surafaces
+
+      lp = fp+1;
+      line->Value(fp).Parameters(U1f, V1f, U2f, V2f);
+      line->Value(lp).Parameters(U1l, V1l, U2l, V2l);
+
+      U1prec = 0.5*(U1f+U1l);
+      if(U1prec < aU1bFirst)
+        U1prec = aU1bFirst;
+      if(U1prec > aU1bLast)
+        U1prec = aU1bLast;
+
+      V1prec = 0.5*(V1f+V1l);
+      if(V1prec < aV1bFirst)
+        V1prec = aV1bFirst;
+      if(V1prec > aV1bLast)
+        V1prec = aV1bLast;
+
+      U2prec = 0.5*(U2f+U2l);
+      if(U2prec < aU2bFirst)
+        U2prec = aU2bFirst;
+      if(U2prec > aU2bLast)
+        U2prec = aU2bLast;
+
+      V2prec = 0.5*(V2f+V2l);
+      if(V2prec < aV2bFirst)
+        V2prec = aV2bFirst;
+      if(V2prec > aV2bLast)
+        V2prec = aV2bLast;
+
+      Standard_Boolean aStatus = Standard_False;
+      Standard_Integer aNbIter = 5;
+      do
+      {
+        Bnd_Box2d aB1, aB2;
+        aB1.SetVoid();
+        aB2.SetVoid();
+
+        aB1.Add(gp_Pnt2d(U1f, V1f));
+        aB1.Add(gp_Pnt2d(U1l, V1l));
+        aB2.Add(gp_Pnt2d(U2f, V2f));
+        aB2.Add(gp_Pnt2d(U2l, V2l));
+
+        aStatus = DistanceMinimizeByGradient(theASurf1, theASurf2, U1prec, V1prec, U2prec, V2prec, aB1, aB2);
+        if(aStatus)
+        {
+          break;
+        }
+
+        aStatus = DistanceMinimizeByExtrema(theASurf1, theASurf2->Value(U2prec, V2prec), U1prec, V1prec);
+        if(aStatus)
+        {
+          break;
+        }
+
+        aStatus = DistanceMinimizeByExtrema(theASurf2, theASurf1->Value(U1prec, V1prec), U2prec, V2prec);
+        if(aStatus)
+        {
+          break;
+        }
+      }
+      while(!aStatus && (--aNbIter > 0));
+
+      //if((U1prec-U1f)*(U1l-U1prec) < 0.0)
+      //  aStatus = Standard_False;
+
+      //if((U2prec-U2f)*(U2l-U2prec) < 0.0)
+      //  aStatus = Standard_False;
+
+      //if((V1prec-V1f)*(V1l-V1prec) < 0.0)
+      //  aStatus = Standard_False;
+
+      //if((V2prec-V2f)*(V2l-V2prec) < 0.0)
+      //  aStatus = Standard_False;
+
+      if(aStatus)
+      {
+        gp_Pnt  aP1 = theASurf1->Value(U1prec, V1prec),
+                aP2 = theASurf2->Value(U2prec, V2prec);
+        gp_Pnt aPInt(0.5*(aP1.XYZ() + aP2.XYZ()));
+
+        const Standard_Real aSQDist1 = aPInt.SquareDistance(aP1),
+                            aSQDist2 = aPInt.SquareDistance(aP2);
+
+        if((aSQDist1 < aTol) && (aSQDist2 < aTol))
+        {
+          IntSurf_PntOn2S anIP;
+          anIP.SetValue(aPInt, U1prec, V1prec, U2prec, V2prec);
+          line->InsertBefore(lp, anIP);
+          
+          isPrecise = Standard_True;
+
+          aNbPoints = line->NbPoints();
+          if(aNbPoints >= theMinNbPoints)
+            break;
+        }
+        else
+        {
+          lp--;
+        }
+      }
+    }
+  }
+
+  return isPrecise;
+}
 
