@@ -65,8 +65,8 @@ GeomAbs_SurfaceType IntCurvesFace_Intersector::SurfaceType() const
 //purpose  : 
 //=======================================================================
 IntCurvesFace_Intersector::IntCurvesFace_Intersector(const TopoDS_Face& Face,
-						     const Standard_Real aTol)
-: 
+                                                     const Standard_Real aTol)
+     : 
   Tol(aTol),
   done(Standard_False),
   nbpnt(0),
@@ -95,7 +95,7 @@ IntCurvesFace_Intersector::IntCurvesFace_Intersector(const TopoDS_Face& Face,
     Standard_Boolean bFlag;
     //
     {
-      Standard_Real dU, dV, dA, dB, aR, aTresh; 
+      Standard_Real dU, dV, dA, dB, aTresh; 
       bFlag=Standard_True;
       //
       aTresh=100.;
@@ -104,18 +104,12 @@ IntCurvesFace_Intersector::IntCurvesFace_Intersector(const TopoDS_Face& Face,
       dA=dU;
       dB=dV;
       if (dV>dU) {
-	dA=dV;
-	dB=dU;
+        dA=dV;
+        dB=dU;
       }
       //
-      aR=dA/dB;
-      if (dB<Precision::PConfusion()) {
-	bFlag=!bFlag;
-      }
-      else {
-	if (aR>aTresh) {
-	  bFlag=!bFlag;
-	}
+      if (dB < Precision::PConfusion() || dA > dB * aTresh) {
+        bFlag=!bFlag;
       }
     }
     //
@@ -125,7 +119,7 @@ IntCurvesFace_Intersector::IntCurvesFace_Intersector(const TopoDS_Face& Face,
       if(nbsu>40) nbsu = 40;
       if(nbsv>40) nbsv = 40;
       PtrOnPolyhedron = (IntCurveSurface_ThePolyhedronOfHInter *) 
-	new IntCurveSurface_ThePolyhedronOfHInter(Hsurface,nbsu,nbsv,U0,V0,U1,V1);
+        new IntCurveSurface_ThePolyhedronOfHInter(Hsurface,nbsu,nbsv,U0,V0,U1,V1);
     }
     //
     /*

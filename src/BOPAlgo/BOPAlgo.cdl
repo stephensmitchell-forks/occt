@@ -74,6 +74,7 @@ is
     class CheckerSI; 
     class ArgumentAnalyzer; 
     class CheckResult;
+    class ShellSplitter;
     --
     --  pointers
     --
