@@ -622,7 +622,17 @@ void IntPatch_WLine::ComputeVertexParameters( const Standard_Real RTol,
 	  RecadreMemePeriode(POn2S,curv->Value(nbponline),U1Period(),V1Period(),U2Period(),V2Period());
 	  curv->Add(POn2S);
 	}
-	else { 
+  else if(hasBeenAdded)
+  {
+    RecadreMemePeriode(POn2S,curv->Value(indicevertexonline+1),U1Period(),V1Period(),U2Period(),V2Period());
+    const IntSurf_PntOn2S aP2S1 = curv->Value(curv->NbPoints());
+    if(POn2S.Value().SquareDistance(aP2S1.Value()) > Precision::Confusion()*Precision::Confusion())
+    {
+      curv->InsertBefore(indicevertexonline+1,POn2S);
+    }
+  }
+  else
+  {
 	  RecadreMemePeriode(POn2S,curv->Value(indicevertexonline+1),U1Period(),V1Period(),U2Period(),V2Period());
 	  curv->InsertBefore(indicevertexonline+1,POn2S);
 	}

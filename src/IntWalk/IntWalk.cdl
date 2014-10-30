@@ -29,7 +29,7 @@ package IntWalk
         -- All the methods of the classes of this package are Internal.
 	-- 
 uses   
-     Standard, MMgt, TCollection, TColStd, gp, math, StdFail, IntSurf, IntImp
+     Standard, MMgt, TCollection, TColStd, gp, math, StdFail, IntSurf, IntImp, Adaptor3d, Bnd
 
 is
 
@@ -38,7 +38,7 @@ is
                 ArretSurPoint, OK;
 
 -- StepTooGreat, ConfusedPoint, StopOnPreviousPoint, StopOnPoint, OK
-		
+    
 -- class for definition of ressources on a biparametric surface
 
     deferred generic class PSurfaceTool;    
@@ -67,7 +67,7 @@ is
     
     imported VectorOfWalkingData;
     ---Purpose: Defines a dynamic vector of work data.
-    
+
     imported VectorOfInteger;
     ---Purpose: Defines a dynamic vector of integer.
 
@@ -76,6 +76,6 @@ is
 -- 2 biparametric surfaces
 
     generic class PWalking, TheInt2S;
-
+	
 
 end IntWalk;
