@@ -57,6 +57,8 @@
 #include <BOPCol_DataMapOfShapeShape.hxx>
 #include <BOPCol_DataMapOfShapeListOfShape.hxx>
 #include <BOPCol_MapOfShape.hxx>
+#include <BRepBndLib.hxx>
+#include <Bnd_Box.hxx>
 
 
 static
@@ -444,6 +446,7 @@ TopAbs_Orientation BOPAlgo_BuilderFace::Orientation()const
   }
   //
   // 2. Find outer growth shell that is most close to each hole shell
+  BOPCol_ListOfShape anUnUsedHoles;
   aIt2.Initialize(aHoleWires);
   for (; aIt2.More(); aIt2.Next()) {
     const TopoDS_Shape& aHole = aIt2.Value();
@@ -481,7 +484,25 @@ TopAbs_Orientation BOPAlgo_BuilderFace::Orientation()const
         aMSH.Bind(aF, aLH);
       }
     }
+    else {
+      anUnUsedHoles.Append(aHole);
+    }
   }// for (; aIt2.More(); aIt2.Next())
+  //
+  if (anUnUsedHoles.Extent()) {
+    // add the infinite face to new faces
+    Bnd_Box aBox;
+    BRepBndLib::Add(myFace, aBox);
+    if (aBox.IsOpenXmin() || aBox.IsOpenXmax() ||
+        aBox.IsOpenYmin() || aBox.IsOpenYmax() ||
+        aBox.IsOpenZmin() || aBox.IsOpenZmax()) {
+      TopoDS_Face aFace;
+      aBB.MakeFace(aFace, aS, aLoc, aTol);
+      //
+      aNewFaces.Append(aFace);
+      aMSH.Bind(aFace, anUnUsedHoles);
+    }
+  }
   //
   // 3. Add aHoles to Faces
   aItMSH.Initialize(aMSH);
