@@ -20,7 +20,30 @@
 
 //! Standard type function allowing to check that contained object is Handle
 Standard_EXPORT const Handle(Standard_Type)& STANDARD_TYPE(NCollection_Handle);
-  
+
+/*! Defines a default destruction policy by calling an object deleter.
+    \sa std::default_delete.
+*/
+template<class T>
+class NCollection_Handle_DefaultDelete
+{
+public:
+  //! Deletes the object by invoking its delete operator.
+  void operator() (T* theObject) const { delete theObject; }
+};
+
+/*! Defines an empty destruction policy.
+    Can be used as NCollection_Handle template argument when the handle is not supposed to
+    own the object, but just to wrap it.
+*/
+template<class T>
+class NCollection_Handle_EmptyDelete
+{
+public:
+  //! Does nothing.
+  void operator() (T* /*theObject*/) const {}
+};
+
 //! Purpose: This template class is used to define Handle adaptor
 //! for allocated dynamically objects of arbitrary type.
 //!
@@ -42,8 +65,16 @@ Standard_EXPORT const Handle(Standard_Type)& STANDARD_TYPE(NCollection_Handle);
 //!   if ( ! aPtr2.IsNull() )
 //!     aPtr2->Method2();
 //! }
+//!
+//! NCollection_Handle allows to specify a user-defined deleter to delete the object.
+//! The default one (NCollection_Handle_DefaultDelete) invokes the delete operator;
+//! NCollection_Handle_EmptyDelete provides empty implementation.
+//! The deleter must be DefaultConstructible, its instance is created when
+//! the last instance of the handle is being destroyed. Thus, NCollection_Handle
+//! does not accept instances of the deleters, unlike C++ standard smart pointers
+//! which do allow that.
 
-template <class T>
+template <class T, class D = NCollection_Handle_DefaultDelete<T> >
 class NCollection_Handle : public Handle(Standard_Transient)
 {
  private:
@@ -59,7 +90,7 @@ class NCollection_Handle : public Handle(Standard_Transient)
     Ptr (T* theObj) { myPtr = theObj; }
 
     //! Destructor deletes the object
-    ~Ptr () { if ( myPtr ) delete myPtr; myPtr = 0; }
+    ~Ptr () { if ( myPtr ) D()(myPtr); myPtr = 0; }
 
     //! Implementation of DynamicType() method
     const Handle(Standard_Type)& DynamicType() const 
