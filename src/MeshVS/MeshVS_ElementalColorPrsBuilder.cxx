@@ -222,7 +222,7 @@ void MeshVS_ElementalColorPrsBuilder::Build ( const Handle(Prs3d_Presentation)& 
     // OCC21720 For single-colored elements turning all material components off is a good idea,
     // as anyhow the normals are not computed and the lighting will be off,
     // the element color will be taken from Graphic3d_AspectFillArea3d's interior color,
-    // and there is no need to spend time on updating material properties 
+    // and there is no need to spend time on updating material properties
     if ( !IsReflect )
     {
       aMaterial[i].SetReflectionModeOff(Graphic3d_TOR_AMBIENT);
@@ -234,7 +234,7 @@ void MeshVS_ElementalColorPrsBuilder::Build ( const Handle(Prs3d_Presentation)& 
     {
       // OCC20644 This stuff is important in order for elemental and nodal colors
       // to produce similar visual impression and also to make colors match
-      // those in the color scale most exactly (the sum of all reflection 
+      // those in the color scale most exactly (the sum of all reflection
       // coefficients is equal to 1). See also MeshVS_NodalColorPrsBuilder
       // class for more explanations.
       aMaterial[i].SetAmbient( .5 );
@@ -245,7 +245,58 @@ void MeshVS_ElementalColorPrsBuilder::Build ( const Handle(Prs3d_Presentation)& 
   }
 
   // Draw elements with one color
-  for ( MeshVS_DataMapIteratorOfDataMapOfColorMapOfInteger aColIter ( aColorsOfElements ); aColIter.More();
+  Standard_Integer aNbFacePrimitives = 0;
+  for (it.Reset(); it.More(); it.Next())
+  {
+    if (!anElemColorMap->IsBound (it.Key()))
+      continue;
+
+    Standard_Integer aNbNodes = 0;
+    if (!aSource->GetGeom (it.Key(), Standard_True, aCoords, aNbNodes, aType))
+      continue;
+
+    if (aType == MeshVS_ET_Face)
+    {
+      aNbFacePrimitives += aNbNodes - 2; // add face triangles
+    }
+  }
+
+  Handle(Graphic3d_ArrayOfTriangles) aTriangles = new Graphic3d_ArrayOfTriangles (aNbFacePrimitives * 3, 0, Standard_False, Standard_True);
+  for (it.Reset(); it.More(); it.Next())
+  {
+    if (!anElemColorMap->IsBound (it.Key()))
+      continue;
+
+    Standard_Integer aNbNodes = 0;
+    if (!aSource->GetGeom (it.Key(), Standard_True, aCoords, aNbNodes, aType))
+      continue;
+
+    const Quantity_Color& aColor = anElemColorMap->Find (it.Key());
+    if (aType == MeshVS_ET_Face)
+    {
+      for (Standard_Integer aNodeIdx = 0; aNodeIdx < aNbNodes - 2; ++aNodeIdx)
+      {
+        for (Standard_Integer anIdx = 0; anIdx < 3; ++anIdx)
+        {
+          aTriangles->AddVertex (gp_Pnt (aCoords (3 * (anIdx == 0 ? 0 : (aNodeIdx + anIdx)) + 1),
+                                         aCoords (3 * (anIdx == 0 ? 0 : (aNodeIdx + anIdx)) + 2),
+                                         aCoords (3 * (anIdx == 0 ? 0 : (aNodeIdx + anIdx)) + 3)),
+                                 aColor);
+
+        }
+      }
+    }
+  }
+  Handle(Graphic3d_Group) aTrisGroup = Prs3d_Root::NewGroup (Prs);
+
+  Handle(Graphic3d_AspectFillArea3d) aFillAspect = new Graphic3d_AspectFillArea3d (Aspect_IS_SOLID, Quantity_NOC_WHITE, anEdgeColor,
+                                                                                   anEdgeType, anEdgeWidth, aMaterial[0], aMaterial[1]);
+  aFillAspect->SetDistinguishOff();
+  aFillAspect->SetEdgeOff();
+  aTrisGroup->SetGroupPrimitivesAspect (aFillAspect);
+  aTrisGroup->AddPrimitiveArray (aTriangles);
+
+  /**for ( MeshVS_DataMapIteratorOfDataMapOfColorMapOfInteger aColIter ( aColorsOfElements ); aColIter.More();
         aColIter.Next() )
   {
     Standard_Integer aSize = aColIter.Value().Extent();
@@ -254,12 +305,9 @@ void MeshVS_ElementalColorPrsBuilder::Build ( const Handle(Prs3d_Presentation)& 
 
     TColStd_PackedMapOfInteger aCustomElements;
 
-    Prs3d_Root::NewGroup ( Prs );
-    Handle ( Graphic3d_Group ) aGGroup = Prs3d_Root::CurrentGroup ( Prs );
-    Prs3d_Root::NewGroup ( Prs );
-    Handle ( Graphic3d_Group ) aLGroup = Prs3d_Root::CurrentGroup ( Prs );
-    Prs3d_Root::NewGroup ( Prs );
-    Handle ( Graphic3d_Group ) aSGroup = Prs3d_Root::CurrentGroup ( Prs );
+    Handle(Graphic3d_Group) aGGroup = Prs3d_Root::NewGroup (Prs);
+    Handle(Graphic3d_Group) aLGroup = Prs3d_Root::NewGroup (Prs);
+    Handle(Graphic3d_Group) aSGroup = Prs3d_Root::NewGroup (Prs);
 
     Standard_Integer aNbFacePrimitives = 0;
     Standard_Integer aNbVolmPrimitives = 0;
@@ -306,7 +354,7 @@ void MeshVS_ElementalColorPrsBuilder::Build ( const Handle(Prs3d_Presentation)& 
         {
           aNbEdgePrimitives += aNbNodes; // add edge segments
         }
-          
+
         aNbFacePrimitives += aNbNodes - 2; // add face triangles
       }
     }
@@ -316,8 +364,7 @@ void MeshVS_ElementalColorPrsBuilder::Build ( const Handle(Prs3d_Presentation)& 
     // cell rendering (normal interpolation is not always applicable - flat shading),
     // elemental coloring (color interpolation is impossible)
 
-    Handle (Graphic3d_ArrayOfTriangles) aFaceTriangles = new Graphic3d_ArrayOfTriangles (
-     (aNbFacePrimitives + aNbVolmPrimitives) * 3, 0, IsReflect );
+    Handle(Graphic3d_ArrayOfTriangles) aFaceTriangles = new Graphic3d_ArrayOfTriangles ((aNbFacePrimitives + aNbVolmPrimitives) * 3, 0, IsReflect);
     Standard_Boolean IsPolyG = Standard_False;
 
     Handle (Graphic3d_ArrayOfSegments) anEdgeSegments = new Graphic3d_ArrayOfSegments (aNbEdgePrimitives * 2);
@@ -346,28 +393,28 @@ void MeshVS_ElementalColorPrsBuilder::Build ( const Handle(Prs3d_Presentation)& 
     for (it.Reset(); it.More(); it.Next())
     {
       Standard_Integer aKey = it.Key();
-      
+
       if (aColIter.Value().Contains (aKey))
       {
         if (!aSource->GetGeom (aKey, Standard_True, aCoords, NbNodes, aType))
           continue;
-        
+
         if (aType != MeshVS_ET_Face && aType != MeshVS_ET_Link && aType != MeshVS_ET_Volume)
         {
           aCustomElements.Add (aKey);
           continue;
         }
-        
+
         if (IsExcludingOn())
           IDsToExclude.Add (aKey);
-          
+
         if (aType == MeshVS_ET_Volume)
         {
           if (!aSource->Get3DGeom (aKey, NbNodes, aTopo))
           {
             continue;
           }
-          
+
           MeshVS_MeshPrsBuilder::AddVolumePrs (aTopo, aCoords,
             NbNodes, aFaceTriangles, IsReflect, Standard_False, Standard_False, 1.0);
 
@@ -416,7 +463,7 @@ void MeshVS_ElementalColorPrsBuilder::Build ( const Handle(Prs3d_Presentation)& 
               anEdgeSegments->AddVertex (aCoords (3 * aNodeIdx + 1),
                                          aCoords (3 * aNodeIdx + 2),
                                          aCoords (3 * aNodeIdx + 3));
-              
+
               anEdgeSegments->AddVertex (aCoords (3 * aNextIdx + 1),
                                          aCoords (3 * aNextIdx + 2),
                                          aCoords (3 * aNextIdx + 3));
@@ -450,7 +497,7 @@ void MeshVS_ElementalColorPrsBuilder::Build ( const Handle(Prs3d_Presentation)& 
       aFillAspect->SetEdgeOff();
       aGGroup->SetPrimitivesAspect (aFillAspect);
       aGGroup->AddPrimitiveArray (aFaceTriangles);
-      
+
       if (anEdgeOn)
       {
         aFillAspect->SetEdgeOff();
@@ -487,7 +534,7 @@ void MeshVS_ElementalColorPrsBuilder::Build ( const Handle(Prs3d_Presentation)& 
       // OCC21720 Cannot turn ALL material components off, as such a material
       // would be ignored by TelUpdateMaterial(), but we need it in order
       // to have different materials for front and back sides!
-      // Instead, trying to make material color "nondirectional" with 
+      // Instead, trying to make material color "nondirectional" with
       // only ambient component on.
       aMaterial2[i].SetReflectionModeOn ( Graphic3d_TOR_AMBIENT );
       aMaterial2[i].SetReflectionModeOff( Graphic3d_TOR_DIFFUSE );
@@ -502,7 +549,7 @@ void MeshVS_ElementalColorPrsBuilder::Build ( const Handle(Prs3d_Presentation)& 
     {
       // OCC20644 This stuff is important in order for elemental and nodal colors
       // to produce similar visual impression and also to make colors match
-      // those in the color scale most exactly (the sum of all reflection 
+      // those in the color scale most exactly (the sum of all reflection
       // coefficients is equal to 1). See also MeshVS_NodalColorPrsBuilder
       // class for more explanations.
       aMaterial2[i].SetAmbient( .5 );
@@ -527,7 +574,7 @@ void MeshVS_ElementalColorPrsBuilder::Build ( const Handle(Prs3d_Presentation)& 
 
     Standard_Integer aNbFacePrimitives = 0;
     Standard_Integer aNbEdgePrimitives = 0;
-    
+
     for (it.Reset(); it.More(); it.Next())
     {
       Standard_Integer aNbNodes = 0;
@@ -570,7 +617,7 @@ void MeshVS_ElementalColorPrsBuilder::Build ( const Handle(Prs3d_Presentation)& 
     /*if (anEdgeOn)
       anAsp->SetEdgeOn();
     else
-      anAsp->SetEdgeOff();*/
+      anAsp->SetEdgeOff();* /
 
     Handle(Graphic3d_AspectLine3d) anEdgeAspect =
       new Graphic3d_AspectLine3d (anEdgeColor, anEdgeType, anEdgeWidth);
@@ -592,7 +639,7 @@ void MeshVS_ElementalColorPrsBuilder::Build ( const Handle(Prs3d_Presentation)& 
           Handle(TColStd_HArray1OfReal) aNormals;
           // OCC21720 Always passing normals to OpenGL to make materials work
           // For OpenGL: "No normals" -> "No lighting" -> "no materials taken into account"
-          Standard_Boolean aHasNormals = /*IsReflect &&*/
+          Standard_Boolean aHasNormals = /*IsReflect &&* /
             aSource->GetNormalsByElement (aKey, IsMeshSmoothShading, aMaxFaceNodes, aNormals);
 
           for (Standard_Integer aNodeIdx = 0; aNodeIdx < NbNodes - 2; ++aNodeIdx)
@@ -640,7 +687,7 @@ void MeshVS_ElementalColorPrsBuilder::Build ( const Handle(Prs3d_Presentation)& 
     aGroup2->SetGroupPrimitivesAspect (anAsp);
     aGroup3->AddPrimitiveArray (anEdgeSegments);
     aGroup3->SetGroupPrimitivesAspect (anEdgeAspect);
-  }
+  }*/
 }
 
 //================================================================
