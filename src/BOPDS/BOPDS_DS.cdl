@@ -39,6 +39,7 @@ uses
     -- 
     ListOfShape from BOPCol,  
     DataMapOfIntegerInteger from BOPCol,
+    DataMapOfIntegerReal    from BOPCol, 
     DataMapOfShapeInteger   from BOPCol, 
     ListOfInteger           from BOPCol, 
     MapOfInteger            from BOPCol, 
@@ -628,14 +629,24 @@ is
              ---
  
     BuildBndBoxSolid (me:out; 
-    	    	theIndex:Integer from Standard;  
-		theBox:out Box from Bnd) 
-    	is protected;  
-	    ---Purpose: 
-            --- Computes bouding box <theBox> for the solid with DS-index <theIndex>
-            ---  
-	    
+                 theIndex:Integer from Standard;  
+                 theBox:out Box from Bnd) 
+    is protected;  
+    ---Purpose: 
+    -- Computes bouding box <theBox> for the solid with DS-index <theIndex>
 
+    SetFuzzyValue(me:out; 
+                theFuzz : Real from Standard);
+    ---C++: inline 
+    ---Purpose: Sets the extended tolerance
+ 
+    FuzzyValue(me)
+             returns Real from Standard;
+    ---C++: inline 
+    ---Purpose: Returns the extended tolerance 
+     
+    SetDefaultTolerances(me:out);
+    ---Purpose: Reverts the tolerance values of unchanged entities to default values.
  
 fields  
     myAllocator        : BaseAllocator from BOPCol is protected;
@@ -666,4 +677,9 @@ fields
     myInterfEZ         : VectorOfInterfEZ from BOPDS is protected;
     myInterfFZ         : VectorOfInterfFZ from BOPDS is protected;
     myInterfZZ         : VectorOfInterfZZ from BOPDS is protected;
+    -- 
+    -- extended tolerance for intersection
+    myFuzzyValue       : Real from Standard is protected;
+    myToleranceMap     : DataMapOfIntegerReal from BOPCol is protected; 
+ 
 end DS;

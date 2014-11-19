@@ -59,7 +59,7 @@ is
     RunParallel(me) 
     	returns Boolean from Standard; 
     ---Purpose: Returns the flag of parallel processing  
- 
+
 fields 
     myAllocator     : BaseAllocator from BOPCol is protected;
     myErrorStatus   : Integer from Standard is protected;	 

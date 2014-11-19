@@ -36,3 +36,4 @@ BOPCol_BoxBndTree.hxx
 BOPCol_BoxBndTree.cxx
 BOPCol_Box2DBndTree.hxx
 BOPCol_Box2DBndTree.cxx
+BOPCol_DataMapOfShapeReal.hxx

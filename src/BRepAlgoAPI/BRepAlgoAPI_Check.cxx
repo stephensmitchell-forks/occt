@@ -23,7 +23,9 @@
 //purpose  : 
 //=======================================================================
   BRepAlgoAPI_Check::BRepAlgoAPI_Check()
-: myAnalyzer(NULL)
+:
+  myAnalyzer(NULL),
+  myFuzzyValue(0.0)
 {
 }
 
@@ -33,9 +35,10 @@
 //=======================================================================
   BRepAlgoAPI_Check::BRepAlgoAPI_Check(const TopoDS_Shape& theS,
                                        const Standard_Boolean bTestSE,
-                                       const Standard_Boolean bTestSI)
+                                       const Standard_Boolean bTestSI,
+                                       const Standard_Real theFuzz)
 {
-  Init(theS, TopoDS_Shape(), BOPAlgo_UNKNOWN, bTestSE, bTestSI);
+  Init(theS, TopoDS_Shape(), BOPAlgo_UNKNOWN, bTestSE, bTestSI, theFuzz);
   //
   Perform();
 }
@@ -48,9 +51,10 @@
                                        const TopoDS_Shape& theS2,
                                        const BOPAlgo_Operation theOp,
                                        const Standard_Boolean bTestSE,
-                                       const Standard_Boolean bTestSI)
+                                       const Standard_Boolean bTestSI,
+                                       const Standard_Real theFuzz)
 {
-  Init(theS1, theS2, theOp, bTestSE, bTestSI);
+  Init(theS1, theS2, theOp, bTestSE, bTestSI, theFuzz);
   //
   Perform();
 }
@@ -74,9 +78,10 @@
 //=======================================================================
   void BRepAlgoAPI_Check::SetData(const TopoDS_Shape& theS,
                                   const Standard_Boolean bTestSE,
-                                  const Standard_Boolean bTestSI)
+                                  const Standard_Boolean bTestSI,
+                                  const Standard_Real theFuzz)
 {
-  Init(theS, TopoDS_Shape(), BOPAlgo_UNKNOWN, bTestSE, bTestSI);
+  Init(theS, TopoDS_Shape(), BOPAlgo_UNKNOWN, bTestSE, bTestSI, theFuzz);
 }
 
 //=======================================================================
@@ -87,9 +92,10 @@
                                   const TopoDS_Shape& theS2,
                                   const BOPAlgo_Operation theOp,
                                   const Standard_Boolean bTestSE,
-                                  const Standard_Boolean bTestSI)
+                                  const Standard_Boolean bTestSI,
+                                  const Standard_Real theFuzz)
 {
-  Init(theS1, theS2, theOp, bTestSE, bTestSI);
+  Init(theS1, theS2, theOp, bTestSE, bTestSI, theFuzz);
 }
 
 
@@ -101,7 +107,8 @@
                                const TopoDS_Shape& theS2,
                                const BOPAlgo_Operation theOp,
                                const Standard_Boolean bTestSE,
-                               const Standard_Boolean bTestSI)
+                               const Standard_Boolean bTestSI,
+                               const Standard_Real theFuzz)
 {
   myResult.Clear();
   myS1 = theS1.IsNull() ? theS1 : BRepBuilderAPI_Copy(theS1).Shape();
@@ -115,6 +122,7 @@
   myAnalyzer->ArgumentTypeMode() = Standard_True;
   myAnalyzer->SmallEdgeMode() = bTestSE;
   myAnalyzer->SelfInterMode() = bTestSI;
+  myAnalyzer->SetFuzzyValue(theFuzz);
 }
 
 //=======================================================================

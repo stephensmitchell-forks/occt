@@ -23,8 +23,9 @@
 //purpose  : 
 //=======================================================================
   BRepAlgoAPI_Fuse::BRepAlgoAPI_Fuse(const TopoDS_Shape& S1, 
-                                     const TopoDS_Shape& S2)
-: BRepAlgoAPI_BooleanOperation(S1, S2, BOPAlgo_FUSE)
+                                     const TopoDS_Shape& S2,
+                                     const Standard_Real theFuzz)
+: BRepAlgoAPI_BooleanOperation(S1, S2, BOPAlgo_FUSE, theFuzz)
 {
   BRepAlgoAPI_BooleanOperation* pBO=
     (BRepAlgoAPI_BooleanOperation*) (void*) this;

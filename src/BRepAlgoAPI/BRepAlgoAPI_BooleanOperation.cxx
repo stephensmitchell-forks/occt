@@ -32,9 +32,11 @@
 //function : BRepAlgoAPI_BooleanOperation
 //purpose  : 
 //=======================================================================
-  BRepAlgoAPI_BooleanOperation::BRepAlgoAPI_BooleanOperation(const TopoDS_Shape& aS1, 
-                                                             const TopoDS_Shape& aS2,
-                                                             const BOPAlgo_Operation anOp)
+BRepAlgoAPI_BooleanOperation::BRepAlgoAPI_BooleanOperation
+  (const TopoDS_Shape& aS1, 
+   const TopoDS_Shape& aS2,
+   const BOPAlgo_Operation anOp,
+   const Standard_Real theFuzz)
 : 
   myS1(aS1),
   myS2(aS2),
@@ -44,17 +46,19 @@
   myDSFiller(NULL),
   myBuilder(NULL),
   myEntryType(1),
-  myFuseEdges(Standard_False)
+  myFuseEdges(Standard_False),
+  myFuzzyValue(theFuzz)
 {
 }
 //=======================================================================
 //function : BRepAlgoAPI_BooleanOperation
 //purpose  : 
 //=======================================================================
-  BRepAlgoAPI_BooleanOperation::BRepAlgoAPI_BooleanOperation(const TopoDS_Shape& aS1, 
-                                                             const TopoDS_Shape& aS2,
-                                                             const BOPAlgo_PaveFiller& aDSFiller,
-                                                             const BOPAlgo_Operation anOp)
+BRepAlgoAPI_BooleanOperation::BRepAlgoAPI_BooleanOperation
+  (const TopoDS_Shape& aS1, 
+   const TopoDS_Shape& aS2,
+   const BOPAlgo_PaveFiller& aDSFiller,
+   const BOPAlgo_Operation anOp)
 : 
   myS1(aS1),
   myS2(aS2),
@@ -64,10 +68,12 @@
   myDSFiller(NULL),
   myBuilder(NULL),
   myEntryType(0),
-  myFuseEdges(Standard_False)
+  myFuseEdges(Standard_False),
+  myFuzzyValue(0.)
 {
   if ((Standard_Address) &aDSFiller!=NULL) {
     myDSFiller=(BOPAlgo_PaveFiller*)&aDSFiller;
+    myFuzzyValue = myDSFiller->FuzzyValue();
   }
 }
 //=======================================================================
@@ -150,6 +156,24 @@
   return myErrorStatus;    
 }
 //=======================================================================
+//function : SetFuzzyValue
+//purpose  : 
+//=======================================================================
+  void BRepAlgoAPI_BooleanOperation::SetFuzzyValue(const Standard_Real theFuzz)
+{
+  if (theFuzz > 0.) {
+    myFuzzyValue = theFuzz;
+  }
+}
+//=======================================================================
+//function : FuzzyValue
+//purpose  : 
+//=======================================================================
+  Standard_Real BRepAlgoAPI_BooleanOperation::FuzzyValue() const
+{
+  return myFuzzyValue;
+}
+//=======================================================================
 //function : Modified
 //purpose  : 
 //=======================================================================
@@ -219,6 +243,7 @@ const TopTools_ListOfShape& BRepAlgoAPI_BooleanOperation::Modified(const TopoDS_
     aLS.Append(myS2);
     //
     myDSFiller->SetArguments(aLS);
+    myDSFiller->SetFuzzyValue(myFuzzyValue);
   }
 
   return bIsNewFiller;

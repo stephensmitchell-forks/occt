@@ -44,9 +44,10 @@ is
     ---Purpose:  Empty constructor. 
      
     Create( 
-        theS   : Shape   from TopoDS; 
+        theS    : Shape    from TopoDS; 
         bTestSE : Boolean from Standard = Standard_True; 
-        bTestSI : Boolean from Standard = Standard_True) 
+        bTestSI : Boolean from Standard = Standard_True; 
+        theFuzz : Real    from Standard = 0.0) 
     returns Check from BRepAlgoAPI;  
     ---Purpose:  Constructor for checking single shape. 
     -- It calls methods  
@@ -57,14 +58,16 @@ is
     --  bTestSE - flag that specifies whether check on small edges  
     --            should be performed; by default it is set to TRUE;
     --  bTestSI - flag that specifies whether check on self-interference 
-    --            should be performed; by default it is set to TRUE;
+    --            should be performed; by default it is set to TRUE; 
+    --  theFuzz  - The extended tolerance for the check;
      
     Create( 
         theS1   : Shape     from TopoDS; 
         theS2   : Shape     from TopoDS; 
         theOp   : Operation from BOPAlgo = BOPAlgo_UNKNOWN;
         bTestSE : Boolean   from Standard = Standard_True; 
-        bTestSI : Boolean   from Standard = Standard_True) 
+        bTestSI : Boolean   from Standard = Standard_True; 
+        theFuzz : Real      from Standard = 0.0) 
     returns Check from BRepAlgoAPI; 
     ---Purpose: Constructor for couple of shapes.  
     -- It calls methods  
@@ -77,21 +80,24 @@ is
     --  bTestSE - flag that specifies whether check on small edges  
     --            should be performed; by default it is set to TRUE;
     --  bTestSI - flag that specifies whether check on self-interference 
-    --            should be performed; by default it is set to TRUE; 
+    --            should be performed; by default it is set to TRUE;  
+    --  theFuzz - The extended tolerance for the check;
       
     Init(me:out; 
         theS1   : Shape     from TopoDS; 
         theS2   : Shape     from TopoDS; 
         theOp   : Operation from BOPAlgo;
         bTestSE : Boolean   from Standard; 
-        bTestSI : Boolean   from Standard)
+        bTestSI : Boolean   from Standard; 
+        theFuzz : Real      from Standard)
       is protected;  
     ---Purpose: Initialyzes data.
  
     SetData(me:out; 
-        theS   : Shape   from TopoDS; 
+        theS    : Shape    from TopoDS; 
         bTestSE : Boolean from Standard = Standard_True; 
-        bTestSI : Boolean from Standard = Standard_True);
+        bTestSI : Boolean from Standard = Standard_True; 
+        theFuzz : Real    from Standard = 0.0);
     ---Purpose: Sets data for check by Init method.
     -- The method provides alternative way for checking single shape. 
      
@@ -100,7 +106,8 @@ is
         theS2   : Shape     from TopoDS; 
         theOp   : Operation from BOPAlgo = BOPAlgo_UNKNOWN;
         bTestSE : Boolean   from Standard = Standard_True; 
-        bTestSI : Boolean   from Standard = Standard_True);
+        bTestSI : Boolean   from Standard = Standard_True; 
+        theFuzz : Real      from Standard = 0.0);
     ---Purpose: Sets data for check by Init method.
     -- The method provides alternative way for checking couple of shapes.
     
@@ -117,9 +124,10 @@ is
     ---Purpose: Returns faulty shapes.
     
 fields  
-  myS1, myS2 : Shape from TopoDS is protected;  
-  myAnalyzer : PArgumentAnalyzer from BOPAlgo is protected;
-  myResult   : ListOfCheckResult from BOPAlgo is protected;
+  myS1, myS2   : Shape from TopoDS is protected;  
+  myAnalyzer   : PArgumentAnalyzer from BOPAlgo is protected; 
+  myFuzzyValue : Real from Standard is protected;
+  myResult     : ListOfCheckResult from BOPAlgo is protected;
    
 end BooleanOperation;
 

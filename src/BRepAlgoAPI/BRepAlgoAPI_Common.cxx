@@ -23,8 +23,9 @@
 //purpose  : 
 //=======================================================================
   BRepAlgoAPI_Common::BRepAlgoAPI_Common(const TopoDS_Shape& S1, 
-                                         const TopoDS_Shape& S2)
-: BRepAlgoAPI_BooleanOperation(S1, S2, BOPAlgo_COMMON)
+                                         const TopoDS_Shape& S2,
+                                         const Standard_Real theFuzz)
+: BRepAlgoAPI_BooleanOperation(S1, S2, BOPAlgo_COMMON, theFuzz)
 {
   BRepAlgoAPI_BooleanOperation* pBO=
     (BRepAlgoAPI_BooleanOperation*) (void*) this;

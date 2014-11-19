@@ -33,7 +33,8 @@
 //=======================================================================
 BOPAlgo_PaveFiller::BOPAlgo_PaveFiller()
 :
-  BOPAlgo_Algo()
+  BOPAlgo_Algo(),
+  myFuzzyValue(0.)
 {
   myDS=NULL;
   myIterator=NULL;
@@ -45,7 +46,8 @@ BOPAlgo_PaveFiller::BOPAlgo_PaveFiller()
 BOPAlgo_PaveFiller::BOPAlgo_PaveFiller
   (const Handle(NCollection_BaseAllocator)& theAllocator)
 :
-  BOPAlgo_Algo(theAllocator)
+  BOPAlgo_Algo(theAllocator),
+  myFuzzyValue(0.)
 {
   myDS=NULL;
   myIterator=NULL;
@@ -123,6 +125,24 @@ const BOPCol_ListOfShape& BOPAlgo_PaveFiller::Arguments()const
   return myArguments;
 }
 //=======================================================================
+//function : SetFuzzyValue
+//purpose  : 
+//=======================================================================
+void BOPAlgo_PaveFiller::SetFuzzyValue(const Standard_Real theFuzz)
+{
+  if (theFuzz > 0.) {
+    myFuzzyValue = theFuzz;
+  }
+}
+//=======================================================================
+//function : FuzzyValue
+//purpose  : 
+//=======================================================================
+Standard_Real BOPAlgo_PaveFiller::FuzzyValue() const
+{
+  return myFuzzyValue;
+}
+//=======================================================================
 // function: Init
 // purpose: 
 //=======================================================================
@@ -141,6 +161,7 @@ void BOPAlgo_PaveFiller::Init()
   // 1.myDS 
   myDS=new BOPDS_DS(myAllocator);
   myDS->SetArguments(myArguments);
+  myDS->SetFuzzyValue(myFuzzyValue);
   myDS->Init();
   //
   // 2.myIterator 
@@ -163,67 +184,80 @@ void BOPAlgo_PaveFiller::Perform()
   try { 
     OCC_CATCH_SIGNALS
     //
-    Init();
-    if (myErrorStatus) {
-      return; 
-    }
-    // 00
-    PerformVV();
-    if (myErrorStatus) {
-      return; 
-    }
-    // 01
-    PerformVE();
-    if (myErrorStatus) {
-      return; 
-    }
-    //
-    myDS->UpdatePaveBlocks();
-    // 11
-    PerformEE();
-    if (myErrorStatus) {
-      return; 
-    }
-    // 02
-    PerformVF();
-    if (myErrorStatus) {
-      return; 
-    }
-    // 12
-    PerformEF();
-    if (myErrorStatus) {
-      return; 
-    }
-    //
-    MakeSplitEdges();
-    if (myErrorStatus) {
-      return; 
-    }
-    //
-    // 22
-    PerformFF();
-    if (myErrorStatus) {
-      return; 
-    }
-    //
-    MakeBlocks();
-    if (myErrorStatus) {
-      return; 
-    }
-    //
-    RefineFaceInfoOn();
-    //
-    MakePCurves();
-    if (myErrorStatus) {
-      return; 
-    }
-    //
-    ProcessDE();
-    if (myErrorStatus) {
-      return; 
-    }
-  } // try {
+    PerformInternal();
+  }
+  //
   catch (Standard_Failure) {
     myErrorStatus=11;
-  }  
+  }
+  //
+  myDS->SetDefaultTolerances();
+}
+//=======================================================================
+// function: PerformInternal
+// purpose: 
+//=======================================================================
+void BOPAlgo_PaveFiller::PerformInternal()
+{
+  myErrorStatus=0;
+  //
+  Init();
+  if (myErrorStatus) {
+    return; 
+  }
+  // 00
+  PerformVV();
+  if (myErrorStatus) {
+    return; 
+  }
+  // 01
+  PerformVE();
+  if (myErrorStatus) {
+    return; 
+  }
+  //
+  myDS->UpdatePaveBlocks();
+  // 11
+  PerformEE();
+  if (myErrorStatus) {
+    return; 
+  }
+  // 02
+  PerformVF();
+  if (myErrorStatus) {
+    return; 
+  }
+  // 12
+  PerformEF();
+  if (myErrorStatus) {
+    return; 
+  }
+  //
+  MakeSplitEdges();
+  if (myErrorStatus) {
+    return; 
+  }
+  //
+  // 22
+  PerformFF();
+  if (myErrorStatus) {
+    return; 
+  }
+  //
+  MakeBlocks();
+  if (myErrorStatus) {
+    return; 
+  }
+  //
+  RefineFaceInfoOn();
+  //
+  MakePCurves();
+  if (myErrorStatus) {
+    return; 
+  }
+  //
+  ProcessDE();
+  if (myErrorStatus) {
+    return; 
+  }
 }

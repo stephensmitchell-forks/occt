@@ -87,7 +87,7 @@ Standard_Integer bopcheck
   (Draw_Interpretor& di, Standard_Integer n,  const char** a )
 {
   if (n<2) {
-    di << " Use >bopcheck Shape [level of check: 0 - 9" << "\n";
+    di << " Use >bopcheck Shape [level of check: 0 - 9] [-tol tol]" << "\n";
     di << " The level of check defines "; 
     di << " which interferences will be checked:\n";
     di << " 0 - V/V only\n"; 
@@ -110,12 +110,29 @@ Standard_Integer bopcheck
     return 1;
   }
   //
-  Standard_Integer theLevelOfCheck, aNbInterfTypes;
+  Standard_Integer theLevelOfCheck, aNbInterfTypes, iTol;
+  Standard_Boolean bLevel;
+  Standard_Real aTolerance;
   //
   aNbInterfTypes=BOPDS_DS::NbInterfTypes();
   //
-  theLevelOfCheck = (n==3) ? Draw::Atoi(a[2]) : aNbInterfTypes-1;
-  if (theLevelOfCheck > aNbInterfTypes-1) {
+  aTolerance = 0.;
+  bLevel = Standard_False;
+  theLevelOfCheck = aNbInterfTypes-1;
+  if (n > 2) {
+    if (a[2][0] != '-') {
+      theLevelOfCheck = Draw::Atoi(a[2]); 
+      bLevel = Standard_True;
+    }
+    //
+    iTol = bLevel ? 3 : 2;
+    if (iTol + 1 < n) {
+      if (!strcmp(a[iTol], "-tol")) {
+        aTolerance = Draw::Atof(a[iTol+1]);
+      }
+    }
+  }
+  if (theLevelOfCheck < 0 || theLevelOfCheck > aNbInterfTypes-1) {
     di << "Invalid level";
     return 1;
   }
@@ -145,6 +162,7 @@ Standard_Integer bopcheck
   anArgs.Append(aS);
   aChecker.SetArguments(anArgs);
   aChecker.SetLevelOfCheck(theLevelOfCheck);
+  aChecker.SetFuzzyValue(aTolerance);
   //
   aChecker.Perform();
   iErr = aChecker.ErrorStatus();
@@ -324,7 +342,7 @@ Standard_Integer bopargcheck
   if (n<2) {
     di << "\n";
     di << " Use >bopargcheck Shape1 [[Shape2] ";
-    di << "[-F/O/C/T/S/U] [/R|F|T|V|E|I|P]] [#BF]" << "\n" << "\n";
+    di << "[-F/O/C/T/S/U] [/R|F|T|V|E|I|P]] [#BF] [-tol tol]" << "\n" << "\n";
     di << " -<Boolean Operation>" << "\n";
     di << " F (fuse)" << "\n";
     di << " O (common)" << "\n";
@@ -377,11 +395,19 @@ Standard_Integer bopargcheck
   Standard_Integer indxAD = 0;
   Standard_Boolean isS2 = Standard_False;
   Standard_Integer indxS2 = 0;
+  Standard_Real aTolerance = 0;
 
   if(n >= 3) {
     Standard_Integer iIndex = 0;
     for(iIndex = 2; iIndex < n; iIndex++) {
-      if(a[iIndex][0] == '-')
+      if(!strcmp(a[iIndex], "-tol"))
+      {
+        if ((iIndex+1) < n) {
+          ++iIndex;
+          aTolerance = Draw::Atof(a[iIndex]);
+        }
+      }
+      else if(a[iIndex][0] == '-')
       {
         isBO = Standard_True;
         indxBO = iIndex;
@@ -424,6 +450,7 @@ Standard_Integer bopargcheck
 
   // init checker
   BOPAlgo_ArgumentAnalyzer aChecker;
+  aChecker.SetFuzzyValue(aTolerance);
   aChecker.SetShape1(aS1);
 
   // set default options (always tested!) for single and couple shapes

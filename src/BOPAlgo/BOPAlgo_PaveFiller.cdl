@@ -93,7 +93,10 @@ is
         theSecAttr : SectionAttribute from BOPAlgo); 
          
     Perform(me:out) 
-      is redefined;   
+      is redefined;    
+ 
+    PerformInternal (me:out) 
+      is virtual protected;   
     --  
     -- protected methods 
     -- 
@@ -442,12 +445,21 @@ is
     ---Purpose: 
     -- Updates pave blocks which have the paves with indices contained  
     -- in the map <theDMI>.
-        
+
+    SetFuzzyValue(me:out; 
+        theFuzz : Real from Standard);
+    ---Purpose: Sets the additional tolerance
+
+    FuzzyValue(me)
+    returns Real from Standard;
+    ---Purpose: Returns the additional tolerance 
+ 
 fields  
     myArguments   : ListOfShape from BOPCol is protected;  
     myDS          : PDS from BOPDS is protected; 
     myIterator    : PIterator from BOPDS is protected; 
     myContext     : Context from BOPInt is protected;   
     mySectionAttribute : SectionAttribute from BOPAlgo is protected;
+    myFuzzyValue  : Real from Standard is protected;
 
 end PaveFiller;

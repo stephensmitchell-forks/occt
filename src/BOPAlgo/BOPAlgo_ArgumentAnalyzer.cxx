@@ -18,6 +18,10 @@
 #include <Standard_Failure.hxx>
 #include <TopExp.hxx>
 #include <TopExp_Explorer.hxx>
+
+#include <BRep_TVertex.hxx>
+#include <BRep_TEdge.hxx>
+#include <BRep_TFace.hxx>
 #include <BRep_Builder.hxx>
 #include <BRep_Tool.hxx>
 #include <BRepExtrema_DistShapeShape.hxx>
@@ -53,6 +57,7 @@
 
 #include <BOPInt_Context.hxx>
 
+#include <BOPTools.hxx>
 #include <BOPTools_AlgoTools3D.hxx>
 #include <BOPTools_AlgoTools.hxx>
 #include <BOPCol_ListOfShape.hxx>
@@ -63,6 +68,7 @@
 // purpose:
 // ================================================================================
 BOPAlgo_ArgumentAnalyzer::BOPAlgo_ArgumentAnalyzer() : 
+BOPAlgo_Algo(),
 myStopOnFirst(Standard_False),
 myOperation(BOPAlgo_UNKNOWN),
 myArgumentTypeMode(Standard_False),
@@ -74,9 +80,19 @@ myMergeVertexMode(Standard_False),
 myMergeEdgeMode(Standard_False),
 myContinuityMode(Standard_False),
 myEmpty1(Standard_False),
-myEmpty2(Standard_False)
+myEmpty2(Standard_False),
+myFuzzyValue(0.)
 // myMergeFaceMode(Standard_False)
 {
+}
+//=======================================================================
+// function: ~
+// purpose: 
+//=======================================================================
+BOPAlgo_ArgumentAnalyzer::~BOPAlgo_ArgumentAnalyzer()
+{
+  myResult.Clear();
+  myToleranceMap.Clear();
 }
 
 // ================================================================================
@@ -159,6 +175,8 @@ void BOPAlgo_ArgumentAnalyzer::Perform()
 
     Prepare();
 
+    UpdateTolerances();
+
     if(myArgumentTypeMode) {
       TestTypes();
     }
@@ -202,6 +220,8 @@ void BOPAlgo_ArgumentAnalyzer::Perform()
     aResult.SetCheckStatus(BOPAlgo_CheckUnknown);
     myResult.Append(aResult);
   }
+  //
+  SetDefaultTolerances();
 }
 
 // ================================================================================
@@ -912,3 +932,122 @@ void BOPAlgo_ArgumentAnalyzer::TestContinuity()
 // {
   // not implemented
 // }
+
+// ================================================================================
+// function: UpdateTolerances
+// purpose:
+// ================================================================================
+void BOPAlgo_ArgumentAnalyzer::UpdateTolerances()
+{
+  if (myFuzzyValue == 0.) {
+    return;
+  }
+  //
+  BOPCol_MapOfShape aMapShapes;
+  //
+  if (!myShape1.IsNull()) {
+    BOPTools::MapShapes(myShape1, aMapShapes);
+  }
+  if (!myShape2.IsNull()) {
+    BOPTools::MapShapes(myShape2, aMapShapes);
+  }
+  //
+  if (aMapShapes.IsEmpty()) {
+    return;
+  }
+  //
+  Standard_Real aTol, aFuzz;
+  TopAbs_ShapeEnum aType;
+  BOPCol_MapIteratorOfMapOfShape aIt;
+  //
+  aFuzz = myFuzzyValue / 2.;
+  aIt.Initialize(aMapShapes);
+  for (; aIt.More(); aIt.Next()) {
+    const TopoDS_Shape& aS = aIt.Value();
+    aType = aS.ShapeType();
+    //
+    switch (aType) {
+    case TopAbs_VERTEX: {
+      const TopoDS_Vertex& aV = *(TopoDS_Vertex*)&aS;
+      const Handle(BRep_TVertex)& TV = 
+        *((Handle(BRep_TVertex)*)&aV.TShape());
+      aTol = TV->Tolerance();
+      myToleranceMap.Bind(aS, aTol);
+      TV->Tolerance(aTol + aFuzz);
+      break;
+    }
+    case TopAbs_EDGE: {
+      const TopoDS_Edge& aE = *(TopoDS_Edge*)&aS;
+      const Handle(BRep_TEdge)& TE = 
+        *((Handle(BRep_TEdge)*)&aE.TShape());
+      aTol = TE->Tolerance();
+      myToleranceMap.Bind(aS, aTol);
+      TE->Tolerance(aTol + aFuzz);
+      break;
+    }
+    case TopAbs_FACE: {
+      const TopoDS_Face& aF = *(TopoDS_Face*)&aS;
+      const Handle(BRep_TFace)& TF = 
+        *((Handle(BRep_TFace)*)&aF.TShape());
+      aTol = TF->Tolerance();
+      myToleranceMap.Bind(aS, aTol);
+      TF->Tolerance(aTol + aFuzz);
+      break;
+    }
+    default:
+      break;
+    } // switch (aType) {
+  } // for (; aIt.More(); aIt.Next()) {
+}
+
+// ================================================================================
+// function: SetDefaultTolerances
+// purpose:
+// ================================================================================
+void BOPAlgo_ArgumentAnalyzer::SetDefaultTolerances()
+{
+  if (myFuzzyValue == 0.) {
+    return;
+  }
+  //
+  if (myToleranceMap.IsEmpty()) {
+    return;
+  }
+  //
+  Standard_Real aTol;
+  TopAbs_ShapeEnum aType;
+  BOPCol_DataMapIteratorOfDataMapOfShapeReal aIt;
+  //
+  aIt.Initialize(myToleranceMap);
+  for (; aIt.More(); aIt.Next()) {
+    const TopoDS_Shape& aS = aIt.Key();
+    aTol = aIt.Value();
+    aType = aS.ShapeType();
+    //
+    switch (aType) {
+    case TopAbs_VERTEX: {
+      const TopoDS_Vertex& aV = *(TopoDS_Vertex*)&aS;
+      const Handle(BRep_TVertex)& TV = 
+        *((Handle(BRep_TVertex)*)&aV.TShape());
+      TV->Tolerance(aTol);
+      break;
+    }
+    case TopAbs_EDGE: {
+      const TopoDS_Edge& aE = *(TopoDS_Edge*)&aS;
+      const Handle(BRep_TEdge)& TE = 
+        *((Handle(BRep_TEdge)*)&aE.TShape());
+      TE->Tolerance(aTol);
+      break;
+    }
+    case TopAbs_FACE: {
+      const TopoDS_Face& aF = *(TopoDS_Face*)&aS;
+      const Handle(BRep_TFace)& TF = 
+        *((Handle(BRep_TFace)*)&aF.TShape());
+      TF->Tolerance(aTol);
+      break;
+    }
+    default:
+      break;
+    } // switch (aType) {
+  } // for (; aIt.More(); aIt.Next()) {
+}

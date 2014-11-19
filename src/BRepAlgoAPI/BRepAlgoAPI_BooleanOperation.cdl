@@ -46,16 +46,19 @@ uses
     
 is
 
-    Initialize (S1 :Shape from TopoDS; 
-    	    	S2 :Shape from TopoDS; 
-    	    	anOperation:Operation from BOPAlgo);
-    	---Purpose: Prepares the operations for S1 and S2.
+    Initialize ( 
+            theS1 : Shape from TopoDS;  
+            theS2 : Shape from TopoDS; 
+            anOperation : Operation from BOPAlgo; 
+            theFuzz : Real from Standard = 0.0);
+    ---Purpose: Prepares the operations for S1 and S2.
      
-    Initialize (S1   :Shape from TopoDS; 
-    	    	S2   :Shape from TopoDS; 
-		aDSF :PaveFiller from BOPAlgo;   							     
-    	    	anOperation:Operation from BOPAlgo); 
-    	---Purpose: Prepares the operations for S1 and S2.
+    Initialize ( 
+            theS1  : Shape from TopoDS; 
+            theS2  : Shape from TopoDS; 
+            theDSF : PaveFiller from BOPAlgo;
+            anOperation : Operation from BOPAlgo);
+    ---Purpose: Prepares the operations for S1 and S2.
 
     SetOperation (me:out; 
     	    anOp:  Operation from BOPAlgo); 
@@ -176,6 +179,13 @@ is
     	---Purpose: Returns the list  of shapes generated from the shape <S>.
     	---         For use in BRepNaming.
     	---C++:  return const &
+    SetFuzzyValue(me:out; 
+            theFuzz : Real from Standard);
+    ---Purpose: Sets the extended tolerance
+ 
+    FuzzyValue(me)
+        returns Real from Standard;
+    ---Purpose: Returns the extended tolerance 
 
 fields
     myS1             : Shape from TopoDS        is protected;
@@ -192,6 +202,9 @@ fields
     myFuseEdges      : Boolean  from  Standard ; 
     myModifFaces     : DataMapOfShapeShape  from  TopTools;   
     myEdgeMap        : DataMapOfShapeShape  from  TopTools;
+    -- 
+    -- extended tolerance for Boolean Operation
+    myFuzzyValue     : Real from Standard is protected;
     
 end BooleanOperation;
 
