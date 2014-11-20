@@ -440,13 +440,17 @@ Standard_Boolean STEPCAFControl_Reader::Transfer (STEPControl_Reader &reader,
 
   Handle(Transfer_TransientProcess) process = reader.WS()->MapReader();
   Standard_Integer aSentryNum = asOne ? num : 2*num + nb + nbRefs;
-  Message_ProgressSentry PS ( process->GetProgress(), "Root", 0, aSentryNum, 1 );
+  Handle(Message_ProgressIndicator) anIndicator = process->GetProgress();
+  Message_ProgressSentry PS ( anIndicator, "Root", 0, aSentryNum, 1 );
 
   // Fill a map of (top-level) shapes resulting from that transfer
   // Only these shapes will be considered further
   TopTools_MapOfShape ShapesMap, NewShapesMap;
-  for ( i=1; i <= num && PS.More(); i++, PS.Next() ) FillShapesMap ( reader.Shape(i), ShapesMap );
+  for ( i=1; i <= num && PS.More() && !anIndicator->UserBreak(); i++, PS.Next() ) FillShapesMap ( reader.Shape(i), ShapesMap );
   
+  if(anIndicator->UserBreak())
+    return false;
+
   // Collect information on shapes originating from SDRs
   // this will be used to distinguish compounds representing assemblies
   // from the ones representing hybrid models and shape sets
@@ -456,7 +460,7 @@ Standard_Boolean STEPCAFControl_Reader::Transfer (STEPControl_Reader &reader,
   Handle(Transfer_TransientProcess) TP = reader.WS()->TransferReader()->TransientProcess();
   Handle(TColStd_HSequenceOfTransient) SeqPDS = new TColStd_HSequenceOfTransient;
 
-  for (i = 1; i <= nb && PS.More(); i ++, PS.Next()) {
+  for (i = 1; i <= nb && PS.More() && !anIndicator->UserBreak(); i ++, PS.Next()) {
     Handle(Standard_Transient) enti = Model->Value(i);
     if(enti->IsKind(STANDARD_TYPE(StepRepr_ProductDefinitionShape))) {
       // sequence for acceleration ReadMaterials
@@ -488,6 +492,9 @@ Standard_Boolean STEPCAFControl_Reader::Transfer (STEPControl_Reader &reader,
     }
   }
 
+  if(anIndicator->UserBreak())
+  	  return false;
+
   // get directory name of the main file
   OSD_Path mainfile ( reader.WS()->LoadedFile() );
   mainfile.SetName ( "" );
@@ -499,7 +506,7 @@ Standard_Boolean STEPCAFControl_Reader::Transfer (STEPControl_Reader &reader,
   // and fill map SDR -> extern file
 
   ExtRefs.LoadExternRefs();
-  for ( i=1; i <= nbRefs && PS.More(); i++, PS.Next() ) {
+  for ( i=1; i <= nbRefs && PS.More() && !anIndicator->UserBreak(); i++, PS.Next() ) {
     // check extern ref format
     Handle(TCollection_HAsciiString) format = ExtRefs.Format(i);
     if ( ! format.IsNull() ) {
@@ -558,6 +565,9 @@ Standard_Boolean STEPCAFControl_Reader::Transfer (STEPControl_Reader &reader,
     PDFileMap.Bind ( PD, EF );
   }
   
+  if(anIndicator->UserBreak())
+    return false;
+
   // and insert them to the document
   Handle(XCAFDoc_ShapeTool) STool = XCAFDoc_DocumentTool::ShapeTool( doc->Main() );
   if ( STool.IsNull() ) return Standard_False;
@@ -565,9 +575,11 @@ Standard_Boolean STEPCAFControl_Reader::Transfer (STEPControl_Reader &reader,
   if ( asOne )
     Lseq.Append ( AddShape ( reader.OneShape(), STool, NewShapesMap, ShapePDMap, PDFileMap, map ) );
   else {
-    for ( i=1; i <= num && PS.More(); i++, PS.Next() ) {
+    for ( i=1; i <= num && PS.More() && !anIndicator->UserBreak(); i++, PS.Next() ) {
       Lseq.Append ( AddShape ( reader.Shape(i), STool, NewShapesMap, ShapePDMap, PDFileMap, map ) );
     }
+    if(anIndicator->UserBreak())
+      return false;
   }
   
   // read colors
