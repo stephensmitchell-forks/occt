@@ -157,6 +157,7 @@
 #include <StepShape_ShellBasedSurfaceModel.hxx>
 #include <StepShape_GeometricSet.hxx>
 #include <StepBasic_ProductDefinition.hxx>
+#include <Message_ProgressSentry.hxx>
 #include <NCollection_DataMap.hxx>
 #include <StepShape_ManifoldSolidBrep.hxx>
 #include <Interface_Static.hxx>
@@ -417,7 +418,7 @@ Standard_Boolean STEPCAFControl_Reader::Transfer (STEPControl_Reader &reader,
 {
   reader.ClearShapes();
   Standard_Integer i;
-  
+
   // Read all shapes
   Standard_Integer num = reader.NbRootsForTransfer();
   if ( num <=0 ) return Standard_False;
@@ -431,23 +432,42 @@ Standard_Boolean STEPCAFControl_Reader::Transfer (STEPControl_Reader &reader,
   num = reader.NbShapes();
   if ( num <=0 ) return Standard_False;
 
+  Handle(Interface_InterfaceModel) Model = reader.Model();
+  Standard_Integer nb = Model->NbEntities();
+
+  STEPConstruct_ExternRefs ExtRefs (reader.WS());
+  // Load external references (only for relevant SDRs)
+  ExtRefs.LoadExternRefs();
+  Standard_Integer nbRefs = ExtRefs.NbExternRefs();
+
+  Handle(Transfer_TransientProcess) process     = reader.WS()->MapReader();
+  Standard_Integer                  aSentryNum  = asOne ? num : 2 * num + nb + nbRefs;
+  Handle(Message_ProgressIndicator) anIndicator = process->GetProgress();
+  Message_ProgressSentry PS (anIndicator, "Root", 0, aSentryNum, 1);
+
   // Fill a map of (top-level) shapes resulting from that transfer
   // Only these shapes will be considered further
   TopTools_MapOfShape ShapesMap, NewShapesMap;
-  for ( i=1; i <= num; i++ ) FillShapesMap ( reader.Shape(i), ShapesMap );
-  
+  for (i = 1; i <= num && PS.More(); ++i, PS.Next())
+  {
+    FillShapesMap (reader.Shape (i), ShapesMap);
+  }
+
+  if (!PS.More())
+  {
+    return Standard_False;
+  }
+
   // Collect information on shapes originating from SDRs
   // this will be used to distinguish compounds representing assemblies
   // from the ones representing hybrid models and shape sets
   STEPCAFControl_DataMapOfShapePD ShapePDMap;
   STEPCAFControl_DataMapOfPDExternFile PDFileMap;
-  Handle(Interface_InterfaceModel) Model = reader.Model();
-  Handle(Transfer_TransientProcess) TP = reader.WS()->TransferReader()->TransientProcess();
-  Standard_Integer nb = Model->NbEntities();
 
+  Handle(Transfer_TransientProcess) TP = reader.WS()->TransferReader()->TransientProcess();
   Handle(TColStd_HSequenceOfTransient) SeqPDS = new TColStd_HSequenceOfTransient;
 
-  for (i = 1; i <= nb; i ++) {
+  for (i = 1; i <= nb && PS.More(); ++i, PS.Next()) {
     Handle(Standard_Transient) enti = Model->Value(i);
     if(enti->IsKind(STANDARD_TYPE(StepRepr_ProductDefinitionShape))) {
       // sequence for acceleration ReadMaterials
@@ -479,6 +499,11 @@ Standard_Boolean STEPCAFControl_Reader::Transfer (STEPControl_Reader &reader,
     }
   }
 
+  if (!PS.More())
+  {
+    return Standard_False;
+  }
+
   // get directory name of the main file
   OSD_Path mainfile ( reader.WS()->LoadedFile() );
   mainfile.SetName ( "" );
@@ -486,11 +511,9 @@ Standard_Boolean STEPCAFControl_Reader::Transfer (STEPControl_Reader &reader,
   TCollection_AsciiString dpath;
   mainfile.SystemName ( dpath );
 
-  // Load external references (only for relevant SDRs)
-  // and fill map SDR -> extern file
-  STEPConstruct_ExternRefs ExtRefs ( reader.WS() );
-  ExtRefs.LoadExternRefs();
-  for ( i=1; i <= ExtRefs.NbExternRefs(); i++ ) {
+  // fill map SDR -> extern file
+  for (i = 1; i <= nbRefs && PS.More(); ++i, PS.Next())
+  {
     // check extern ref format
     Handle(TCollection_HAsciiString) format = ExtRefs.Format(i);
     if ( ! format.IsNull() ) {
@@ -548,19 +571,31 @@ Standard_Boolean STEPCAFControl_Reader::Transfer (STEPControl_Reader &reader,
       ReadExternFile ( filename, fullname.ToCString(), doc );
     PDFileMap.Bind ( PD, EF );
   }
-  
+
+  if (!PS.More())
+  {
+    return Standard_False;
+  }
+
   // and insert them to the document
   Handle(XCAFDoc_ShapeTool) STool = XCAFDoc_DocumentTool::ShapeTool( doc->Main() );
   if ( STool.IsNull() ) return Standard_False;
   XCAFDoc_DataMapOfShapeLabel map;
   if ( asOne )
     Lseq.Append ( AddShape ( reader.OneShape(), STool, NewShapesMap, ShapePDMap, PDFileMap, map ) );
-  else {
-    for ( i=1; i <= num; i++ ) {
+  else
+  {
+    for (i = 1; i <= num && PS.More(); ++i, PS.Next())
+    {
       Lseq.Append ( AddShape ( reader.Shape(i), STool, NewShapesMap, ShapePDMap, PDFileMap, map ) );
     }
   }
-  
+
+  if (!PS.More())
+  {
+    return Standard_False;
+  }
+
   // read colors
   if ( GetColorMode() )
     ReadColors ( reader.WS(), doc, PDFileMap, map );

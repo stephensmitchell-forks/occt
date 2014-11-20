@@ -27,6 +27,7 @@
 #include <IGESGraph_Color.hxx>
 #include <Interface_InterfaceModel.hxx>
 #include <Transfer_TransientProcess.hxx>
+#include <Message_ProgressSentry.hxx>
 #include <XCAFDoc_DocumentTool.hxx>
 #include <TopoDS_Iterator.hxx>
 #include <TopTools_MapOfShape.hxx>
@@ -179,11 +180,19 @@ Standard_Boolean IGESCAFControl_Reader::Transfer (Handle(TDocStd_Document) &doc)
   num = NbShapes();
   if ( num <=0 ) return Standard_False;
 
+  Handle(Interface_InterfaceModel) Model = WS()->Model();
+  Standard_Integer nb = Model->NbEntities();
+
+  Handle(Transfer_TransientProcess) process = WS()->MapReader();
+  Standard_Integer                  aSentryNum  = num+nb;
+  Handle(Message_ProgressIndicator) anIndicator = process->GetProgress();
+  Message_ProgressSentry PS (anIndicator, "Root", 0, aSentryNum, 1);
+
   // and insert them to the document
   Handle(XCAFDoc_ShapeTool) STool = XCAFDoc_DocumentTool::ShapeTool( doc->Main() );
   if(STool.IsNull()) return Standard_False;
   Standard_Integer i;
-  for(i=1; i<=num; i++) {
+  for(i=1; i<= num && PS.More(); i++, PS.Next()) {
     TopoDS_Shape sh = Shape ( i );
     // ---- HERE -- to add check [ assembly / hybrid model ]
     if( !IsComposite (sh))
@@ -195,8 +204,12 @@ Standard_Boolean IGESCAFControl_Reader::Transfer (Handle(TDocStd_Document) &doc)
     }
   }
   
+  if (!PS.More())
+  {
+    return Standard_False;
+  }
+
   // added by skl 13.10.2003
-  Handle(Interface_InterfaceModel) Model = WS()->Model();
   //WS()->TransferReader()->SetTransientProcess(TransientProcess());
   Handle(XSControl_TransferReader) TR = WS()->TransferReader();
   Handle(Transfer_TransientProcess) TP = TR->TransientProcess();
@@ -207,8 +220,7 @@ Standard_Boolean IGESCAFControl_Reader::Transfer (Handle(TDocStd_Document) &doc)
   Handle(XCAFDoc_LayerTool) LTool = XCAFDoc_DocumentTool::LayerTool(doc->Main());
   if(LTool.IsNull()) IsLTool = Standard_False;
 
-  Standard_Integer nb = Model->NbEntities();
-  for(i=1; i<=nb; i++) {
+  for(i=1; i<=nb && PS.More(); i++, PS.Next()) {
     Handle(IGESData_IGESEntity) ent = Handle(IGESData_IGESEntity)::DownCast ( Model->Value(i) );
     if ( ent.IsNull() ) continue;
     Handle(Transfer_Binder) binder = TP->Find ( ent );
@@ -339,6 +351,11 @@ Standard_Boolean IGESCAFControl_Reader::Transfer (Handle(TDocStd_Document) &doc)
       TDataStd_Name::Set (L, anExtStrName);
     }
 
+  }
+
+  if (!PS.More())
+  {
+    return Standard_False;
   }
 
   CTool->ReverseChainsOfTreeNodes();
