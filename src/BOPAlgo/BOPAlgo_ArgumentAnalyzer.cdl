@@ -172,10 +172,12 @@ is
     ---C++: inline
     ---Purpose: Returns the additional tolerance 
 
-    UpdateTolerances(me:out); 
+    UpdateTolerances(me:out)
+    is protected;
     ---Purpose: Updates the shapes tolerance values.
      
-    SetDefaultTolerances(me:out);
+    SetDefaultTolerances(me:out)
+    is protected;
     ---Purpose: Reverts the tolerance values for all entities to default values.
 
 fields
@@ -194,7 +196,7 @@ fields
     myContinuityMode   : Boolean   from Standard;
     myEmpty1,myEmpty2  : Boolean   from Standard; 
     myResult      : ListOfCheckResult from BOPAlgo; 
-    myFuzzyValue       : Real from Standard is protected;    
+    myFuzzyValue       : Real      from Standard;
     myToleranceMap     : DataMapOfShapeReal from BOPCol; 
 
 end ArgumentAnalyzer;
