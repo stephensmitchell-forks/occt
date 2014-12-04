@@ -36,6 +36,7 @@
 #include <BRepMesh_ShapeTool.hxx>
 #include <TopoDS_Vertex.hxx>
 #include <TopTools_IndexedDataMapOfShapeListOfShape.hxx>
+#include <BRepMesh_ProgressRoot.hxx>
 
 class BRepMesh_DataStructureOfDelaun;
 class Bnd_Box;
@@ -54,7 +55,7 @@ class TopTools_DataMapOfShapeReal;
 //! Algorithm to mesh a shape with respect of the <br>
 //! frontier the deflection and by option the shared <br>
 //! components. <br>
-class BRepMesh_FastDiscret : public Standard_Transient
+class BRepMesh_FastDiscret : public BRepMesh_ProgressRoot
 {
 public:
   
@@ -364,6 +365,6 @@ private:
   TopTools_IndexedDataMapOfShapeListOfShape        mySharedFaces;
 };
 
-DEFINE_STANDARD_HANDLE(BRepMesh_FastDiscret, Standard_Transient)
+DEFINE_STANDARD_HANDLE(BRepMesh_FastDiscret, BRepMesh_ProgressRoot)
 
 #endif

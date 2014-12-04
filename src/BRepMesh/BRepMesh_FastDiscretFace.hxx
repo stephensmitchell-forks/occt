@@ -28,6 +28,7 @@
 #include <BRepMesh_Triangle.hxx>
 #include <BRepMesh_Classifier.hxx>
 #include <ElSLib.hxx>
+#include <BRepMesh_ProgressRoot.hxx>
 
 class BRepMesh_DataStructureOfDelaun;
 class BRepMesh_FaceAttribute;
@@ -46,14 +47,24 @@ class gp_Pnt;
 
 //! Algorithm to mesh a face with respect of the frontier 
 //! the deflection and by option the shared components.
-class BRepMesh_FastDiscretFace : public Standard_Transient 
+class BRepMesh_FastDiscretFace : public BRepMesh_ProgressRoot 
 {
 public:
   
-  Standard_EXPORT BRepMesh_FastDiscretFace(
-    const Standard_Real theAngle);
+  Standard_EXPORT BRepMesh_FastDiscretFace(const Standard_Real theAngle);
 
   Standard_EXPORT void Perform(const Handle(BRepMesh_FaceAttribute)& theAttribute);
+
+  //! Initializes tool.
+  //! @param theProgressRootSentry root progress sentry.
+  //! If Null, new sentry will be created, otherwise the 
+  //! given one will be used.
+  //! @param theProgressIndicator progress indicator to be 
+  //! used in successor algorithms. Replaces progress indicator
+  //! of the given sentry if it is not Null.
+  Standard_EXPORT virtual void ProgressInit(
+    const Handle(Message_MultithreadProgressSentry)&    theProgressRootSentry = NULL,
+    const Handle(Message_MultithreadProgressIndicator)& theProgressIndicator  = NULL);
 
   DEFINE_STANDARD_RTTI(BRepMesh_FastDiscretFace)
 
@@ -71,10 +82,13 @@ private:
   //! @param theVertices nodes to be inserted.
   //! @param theMeshBuilder initialized tool refining mesh 
   //! in respect to inserting nodes.
+  //! @param theProgressScale progress scale for indicating 
+  //! process of vertices addition.
   //! @return TRUE if vertices were been inserted, FALSE elewhere.
   Standard_Boolean addVerticesToMesh(
-    const BRepMesh::ListOfVertex& theVertices,
-    BRepMesh_Delaun&              theMeshBuilder);
+    const BRepMesh::ListOfVertex&                    theVertices,
+    BRepMesh_Delaun&                                 theMeshBuilder,
+    const Handle(Message_MultithreadProgressSentry)& theProgressScale);
 
   //! Calculates nodes lying on face's surface and inserts them to a mesh.
   //! @param theNewVertices list of vertices to be extended and added to mesh.
@@ -149,17 +163,17 @@ private:
 
 private:
 
-  Standard_Real                          myAngle;
-  Standard_Boolean                       myInternalVerticesMode;
-  BRepMesh::IMapOfReal                   myUParam;
-  BRepMesh::IMapOfReal                   myVParam;
+  Standard_Real                           myAngle;
+  Standard_Boolean                        myInternalVerticesMode;
+  BRepMesh::IMapOfReal                    myUParam;
+  BRepMesh::IMapOfReal                    myVParam;
 
   // Fast access to attributes of current face
-  Handle(NCollection_IncAllocator)       myAllocator;
-  Handle(BRepMesh_FaceAttribute)         myAttribute;
-  Handle(BRepMesh_DataStructureOfDelaun) myStructure;
+  Handle(NCollection_IncAllocator)        myAllocator;
+  Handle(BRepMesh_FaceAttribute)          myAttribute;
+  Handle(BRepMesh_DataStructureOfDelaun)  myStructure;
 };
 
-DEFINE_STANDARD_HANDLE (BRepMesh_FastDiscretFace, Standard_Transient)
+DEFINE_STANDARD_HANDLE (BRepMesh_FastDiscretFace, BRepMesh_ProgressRoot)
 
 #endif

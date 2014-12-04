@@ -1,4 +1,6 @@
 BRepMesh.hxx
+BRepMesh_ProgressRoot.hxx
+BRepMesh_ProgressRoot.cxx
 BRepMesh_PluginEntryType.hxx
 BRepMesh_PluginMacro.hxx
 BRepMesh_DegreeOfFreedom.hxx

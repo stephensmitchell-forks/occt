@@ -18,10 +18,11 @@
 #include <Standard_DefineHandle.hxx>
 #include <TopoDS_Shape.hxx>
 #include <Standard_Transient.hxx>
+#include <BRepMesh_ProgressRoot.hxx>
 
 //! This is a common interface for meshing algorithms 
 //! instantiated by Mesh Factory and implemented by plugins.
-class BRepMesh_DiscretRoot : public Standard_Transient
+class BRepMesh_DiscretRoot : public BRepMesh_ProgressRoot
 {
 public:
   
@@ -100,6 +101,6 @@ protected:
   Standard_Boolean  myIsDone;
 };
 
-DEFINE_STANDARD_HANDLE(BRepMesh_DiscretRoot, Standard_Transient)
+DEFINE_STANDARD_HANDLE(BRepMesh_DiscretRoot, BRepMesh_ProgressRoot)
 
 #endif

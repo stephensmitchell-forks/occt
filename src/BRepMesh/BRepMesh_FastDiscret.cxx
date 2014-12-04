@@ -74,12 +74,13 @@
 #ifdef HAVE_TBB
   // paralleling using Intel TBB
   #include <tbb/parallel_for_each.h>
+  #include <tbb/tbb_exception.h>
 #endif
 
 #define UVDEFLECTION 1.e-05
 
-IMPLEMENT_STANDARD_HANDLE (BRepMesh_FastDiscret, Standard_Transient)
-IMPLEMENT_STANDARD_RTTIEXT(BRepMesh_FastDiscret, Standard_Transient)
+IMPLEMENT_STANDARD_HANDLE (BRepMesh_FastDiscret, BRepMesh_ProgressRoot)
+IMPLEMENT_STANDARD_RTTIEXT(BRepMesh_FastDiscret, BRepMesh_ProgressRoot)
 
 //=======================================================================
 //function : BRepMesh_FastDiscret
@@ -166,7 +167,16 @@ void BRepMesh_FastDiscret::Perform(const TopoDS_Shape& theShape)
 #ifdef HAVE_TBB
   if ( myInParallel )
   {
-    tbb::parallel_for_each(aFaces.begin(), aFaces.end(), *this);
+    try
+    {
+      OCC_CATCH_SIGNALS
+
+      tbb::parallel_for_each(aFaces.begin(), aFaces.end(), *this);
+    }
+    catch (tbb::captured_exception)
+    {
+      BRepMesh_UserBreakException::Raise();
+    }
   }
   else
   {
@@ -194,9 +204,14 @@ void BRepMesh_FastDiscret::Process(const TopoDS_Face& theFace) const
       OCC_CATCH_SIGNALS
 
       BRepMesh_FastDiscretFace aTool(GetAngle());
+      aTool.ProgressInit(ProgressRootSentry());
       aTool.Perform(anAttribute);
     }
-    catch (Standard_Failure)
+    catch (const BRepMesh_UserBreakException& aExc)
+    {
+      BRepMesh_UserBreakException::Raise(aExc.GetMessageString());
+    }
+    catch (...)
     {
       anAttribute->SetStatus(BRepMesh_Failure);
     }
@@ -628,7 +643,11 @@ Standard_Integer BRepMesh_FastDiscret::Add(const TopoDS_Face& theFace)
       myAttribute->SetDeltaY(deltaY);
     }
   }
-  catch(Standard_Failure)
+  catch (const BRepMesh_UserBreakException& aExc)
+  {
+    BRepMesh_UserBreakException::Raise(aExc.GetMessageString());
+  }
+  catch (...)
   {
     myAttribute->SetStatus(BRepMesh_Failure);
   }
@@ -795,6 +814,8 @@ void BRepMesh_FastDiscret::add(
     BRepMesh_EdgeParameterProvider aProvider(theEdge, aFace, aParams);
     for (Standard_Integer i = 2; i < aNodesNb; ++i)
     {
+      UserBreak();
+
       const Standard_Integer aPointId = aNodes(i);
       const gp_Pnt& aPnt = myBoundaryPoints->Find(aPointId);
 
@@ -906,6 +927,8 @@ void BRepMesh_FastDiscret::update(
     Standard_Integer aLastPointId = myAttribute->LastPointId();
     for (Standard_Integer i = 2; i < aNodesNb; ++i)
     {
+      UserBreak();
+
       gp_Pnt        aPnt;
       gp_Pnt2d      aUV;
       Standard_Real aParam;

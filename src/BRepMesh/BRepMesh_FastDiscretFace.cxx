@@ -56,8 +56,8 @@
 
 #include <algorithm>
 
-IMPLEMENT_STANDARD_HANDLE (BRepMesh_FastDiscretFace, Standard_Transient)
-IMPLEMENT_STANDARD_RTTIEXT(BRepMesh_FastDiscretFace, Standard_Transient)
+IMPLEMENT_STANDARD_HANDLE (BRepMesh_FastDiscretFace, BRepMesh_ProgressRoot)
+IMPLEMENT_STANDARD_RTTIEXT(BRepMesh_FastDiscretFace, BRepMesh_ProgressRoot)
 
 static Standard_Real FUN_CalcAverageDUV(TColStd_Array1OfReal& P, const Standard_Integer PLen)
 {
@@ -141,13 +141,36 @@ namespace
 //function : BRepMesh_FastDiscretFace
 //purpose  :
 //=======================================================================
-BRepMesh_FastDiscretFace::BRepMesh_FastDiscretFace
-                          (const Standard_Real     theAngle)
+BRepMesh_FastDiscretFace::BRepMesh_FastDiscretFace(
+  const Standard_Real theAngle)
 : myAngle(theAngle),
   myInternalVerticesMode(Standard_True)
 {
   myAllocator = new NCollection_IncAllocator(
     BRepMesh::MEMORY_BLOCK_SIZE_HUGE);
+}
+
+//=======================================================================
+//function : ProgressInit
+//purpose  : 
+//=======================================================================
+void BRepMesh_FastDiscretFace::ProgressInit(
+  const Handle(Message_MultithreadProgressSentry)&    theProgressRootSentry,
+  const Handle(Message_MultithreadProgressIndicator)& theProgressIndicator)
+{
+  BRepMesh_ProgressRoot::ProgressInit(
+    theProgressRootSentry, theProgressIndicator);
+
+  // Take 5 intervals: add; commit; 
+  // 1 for insertInternalVertices and 
+  // 2 for control
+  const Standard_Integer aSubScopesNb = 5;
+
+  Handle(Message_MultithreadProgressSentry) aRootSentry = 
+    new Message_MultithreadProgressSentry(
+      "Meshing face...", 0., 100., aSubScopesNb, *ProgressRootSentry());
+
+  BRepMesh_ProgressRoot::ProgressInit(aRootSentry);
 }
 
 //=======================================================================
@@ -281,16 +304,26 @@ void BRepMesh_FastDiscretFace::add(const Handle(BRepMesh_FaceAttribute)& theAttr
   if (!theAttribute->IsValid() || theAttribute->ChangeMeshNodes()->IsEmpty())
     return;
 
+  Message_MultithreadProgressSentry aLocalRootSentry(
+    "Tessellation...", 0., 100., 3, *ProgressRootSentry());
+
+  Handle(Message_MultithreadProgressSentry) aSentry = 
+    new Message_MultithreadProgressSentry(
+      "Init...", 0., 100., 1, aLocalRootSentry);
+
   myAttribute = theAttribute;
   initDataStructure();
 
+  UserBreak();
+
+  aSentry->NextScope("Create triangulation on base vertices...", 0., 100., 1);
   BRepMesh::HIMapOfInteger& aVertexEdgeMap = myAttribute->ChangeVertexEdgeMap();
   Standard_Integer nbVertices = aVertexEdgeMap->Extent();
   BRepMesh::Array1OfInteger tabvert_corr(1, nbVertices);
   for ( Standard_Integer i = 1; i <= nbVertices; ++i )
     tabvert_corr(i) = i;
 
-  BRepMesh_Delaun trigu(myStructure, tabvert_corr);
+  BRepMesh_Delaun trigu(myStructure, tabvert_corr, aSentry);
 
   //removed all free edges from triangulation
   const Standard_Integer nbLinks = myStructure->NbLinks();
@@ -359,6 +392,7 @@ void BRepMesh_FastDiscretFace::add(const Handle(BRepMesh_FaceAttribute)& theAttr
   }
 
   //modify myStructure back
+  aSentry->NextScope("Finalizing...", 0., 100., 1);
   BRepMesh::HVectorOfVertex& aMeshNodes = myStructure->Data()->ChangeVertices();
   for ( Standard_Integer i = 1; i <= myStructure->NbNodes(); ++i )
   {
@@ -380,8 +414,9 @@ void BRepMesh_FastDiscretFace::add(const Handle(BRepMesh_FaceAttribute)& theAttr
 //purpose  : 
 //=======================================================================
 Standard_Boolean BRepMesh_FastDiscretFace::addVerticesToMesh(
-  const BRepMesh::ListOfVertex& theVertices,
-  BRepMesh_Delaun&              theMeshBuilder)
+  const BRepMesh::ListOfVertex&                    theVertices,
+  BRepMesh_Delaun&                                 theMeshBuilder,
+  const Handle(Message_MultithreadProgressSentry)& theProgressScale)
 {
   if (theVertices.IsEmpty())
     return Standard_False;
@@ -391,7 +426,7 @@ Standard_Boolean BRepMesh_FastDiscretFace::addVerticesToMesh(
   for (Standard_Integer aVertexId = 0; aVertexIt.More(); aVertexIt.Next())
     aArrayOfNewVertices(++aVertexId) = aVertexIt.Value();
 
-  theMeshBuilder.AddVertices(aArrayOfNewVertices);
+  theMeshBuilder.AddVertices(aArrayOfNewVertices, theProgressScale);
   return Standard_True;
 }
 
@@ -497,6 +532,10 @@ void BRepMesh_FastDiscretFace::insertInternalVertices(
   BRepMesh::ListOfVertex&  theNewVertices,
   BRepMesh_Delaun&         theMeshBuilder)
 {
+  Handle(Message_MultithreadProgressSentry) aLocalRootSentry =
+    new Message_MultithreadProgressSentry(
+    "Insert internal vertices...", 0., 100., 1, *ProgressRootSentry());
+
   const Handle(BRepAdaptor_HSurface)& gFace = myAttribute->Surface();
   switch (gFace->GetType())
   {
@@ -526,7 +565,7 @@ void BRepMesh_FastDiscretFace::insertInternalVertices(
     break;
   }
   
-  addVerticesToMesh(theNewVertices, theMeshBuilder);
+  addVerticesToMesh(theNewVertices, theMeshBuilder, aLocalRootSentry);
 }
 
 //=======================================================================
@@ -561,6 +600,8 @@ void BRepMesh_FastDiscretFace::insertInternalVerticesSphere(
   Standard_Boolean Shift = Standard_False;
   for (pasv = vmin + Dv; pasv < pasvmax; pasv += Dv)
   {
+    UserBreak();
+
     // Calculate parameters for iteration in U direction
     // 1.-.365*pasv*pasv is simple approximation of Cos(pasv)
     // with condition that it gives ~.1 when pasv = pi/2
@@ -609,6 +650,8 @@ void BRepMesh_FastDiscretFace::insertInternalVerticesCylinder(
   Standard_Real pasu, pasv, pasvmax = vmax - Dv*0.5, pasumax = umax - Du*0.5;
   for (pasv = vmin + Dv; pasv < pasvmax; pasv += Dv)
   {
+    UserBreak();
+
     for (pasu = umin + Du; pasu < pasumax; pasu += Du)
     {
       tryToInsertAnalyticVertex(gp_Pnt2d(pasu, pasv), S, theNewVertices);
@@ -644,6 +687,8 @@ void BRepMesh_FastDiscretFace::insertInternalVerticesCone(
   Standard_Real pasvmax = vmax - Dv*0.5, pasumax = umax - Du*0.5;
   for (pasv = vmin + Dv; pasv < pasvmax; pasv += Dv)
   {
+    UserBreak();
+
     for (pasu = umin + Du; pasu < pasumax; pasu += Du)
     {
       tryToInsertAnalyticVertex(gp_Pnt2d(pasu, pasv), C, theNewVertices);
@@ -770,6 +815,8 @@ void BRepMesh_FastDiscretFace::insertInternalVerticesTorus(
 
   for (i = 1; i <= Lu; i++)
   {
+    UserBreak();
+
     pasu = ParamU.Value(i);
     if (pasu >= uminnew && pasu < umaxnew)
     {
@@ -864,6 +911,8 @@ void BRepMesh_FastDiscretFace::insertInternalVerticesBSpline(
       gp_Pnt aPrevPnt2 = aIso->Value(aPrevParam2);
       for (Standard_Integer j = 2; j <= aParams2.Length();)
       {
+        UserBreak();
+
         Standard_Real aParam2 = aParams2(j);
         gp_Pnt aPnt2 = aIso->Value(aParam2);
         Standard_Real aMidParam = 0.5 * (aPrevParam2 + aParam2);
@@ -1006,6 +1055,8 @@ void BRepMesh_FastDiscretFace::insertInternalVerticesOther(
 
     for (Standard_Integer j = 2; j < aUPointsNb; ++j)
     {
+      UserBreak();
+
       const Standard_Real aU = aParams[0].Value(j);
 
       const gp_Pnt2d aNewPoint(aU, aV);
@@ -1063,12 +1114,20 @@ if (aSqDef > aSqDefFace)                                        \
   // Define the number of iterations
   Standard_Integer       aIterationsNb = 11;
   const Standard_Integer aPassesNb = (theIsFirst ? 1 : aIterationsNb);
+
+  Message_MultithreadProgressSentry aLocalRootSentry(
+    "Control...", 0., 100., aPassesNb, *ProgressRootSentry());
+
   // Initialize stop condition
   Standard_Real aMaxSqDef = -1.;
   Standard_Integer aPass = 1, aInsertedNb = 1;
   Standard_Boolean isAllDegenerated = Standard_False;
   for (; aPass <= aPassesNb && aInsertedNb && !isAllDegenerated; ++aPass)
   {
+    Handle(Message_MultithreadProgressSentry) aSentry = 
+      new Message_MultithreadProgressSentry(
+        "", 0., 100., 2, aLocalRootSentry);
+
     theNewVertices.Clear();
 
     // Reset stop condition
@@ -1082,9 +1141,14 @@ if (aSqDef > aSqDefFace)                                        \
 
     // Iterate on current triangles
     const BRepMesh::MapOfInteger& aTriangles = myStructure->ElementsOfDomain();
+    Message_MultithreadProgressSentry aTriSentry("", 0., 100., 
+      aTriangles.Size(), *aSentry);
+
     BRepMesh::MapOfInteger::Iterator aTriangleIt(aTriangles);
-    for (; aTriangleIt.More(); aTriangleIt.Next())
+    for (; aTriangleIt.More(); aTriangleIt.Next(), aTriSentry.Increment())
     {
+      UserBreak();
+
       const Standard_Integer aTriangleId = aTriangleIt.Key();
       const BRepMesh_Triangle& aCurrentTriangle = myStructure->GetElement(aTriangleId);
 
@@ -1226,7 +1290,7 @@ if (aSqDef > aSqDefFace)                                        \
     if (theIsFirst)
       continue;
 
-    if (addVerticesToMesh(theNewVertices, theTrigu))
+    if (addVerticesToMesh(theNewVertices, theTrigu, aSentry))
       ++aInsertedNb;
   }
 

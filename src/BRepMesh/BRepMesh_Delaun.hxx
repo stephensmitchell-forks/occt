@@ -26,6 +26,7 @@
 #include <BRepMesh.hxx>
 #include <BRepMesh_DataStructureOfDelaun.hxx>
 #include <BRepMesh_GeomTool.hxx>
+#include <BRepMesh_ProgressRoot.hxx>
 
 class Bnd_B2d;
 class Bnd_Box2d;
@@ -33,22 +34,26 @@ class BRepMesh_Array1OfVertexOfDelaun;
 class BRepMesh_Vertex;
 
 //! Compute the Delaunay's triangulation with the algorithm of Watson.
-class BRepMesh_Delaun
+class BRepMesh_Delaun : public BRepMesh_ProgressRoot
 {
 public:
 
-  DEFINE_STANDARD_ALLOC
-
   //! Creates the triangulation with an empty Mesh data structure.
-  Standard_EXPORT BRepMesh_Delaun (BRepMesh::Array1OfVertexOfDelaun& theVertices);
+  Standard_EXPORT BRepMesh_Delaun(
+    BRepMesh::Array1OfVertexOfDelaun&                theVertices,
+    const Handle(Message_MultithreadProgressSentry)& theProgressRootSentry = NULL);
 
   //! Creates the triangulation with an existent Mesh data structure.
-  Standard_EXPORT BRepMesh_Delaun (const Handle(BRepMesh_DataStructureOfDelaun)& theOldMesh,
-                                   BRepMesh::Array1OfVertexOfDelaun&             theVertices);
+  Standard_EXPORT BRepMesh_Delaun(
+    const Handle(BRepMesh_DataStructureOfDelaun)&    theOldMesh,
+    BRepMesh::Array1OfVertexOfDelaun&                theVertices,
+    const Handle(Message_MultithreadProgressSentry)& theProgressRootSentry = NULL);
 
   //! Creates the triangulation with an existant Mesh data structure.
-  Standard_EXPORT BRepMesh_Delaun (const Handle(BRepMesh_DataStructureOfDelaun)& theOldMesh,
-                                   BRepMesh::Array1OfInteger&                    theVertexIndices);
+  Standard_EXPORT BRepMesh_Delaun(
+    const Handle(BRepMesh_DataStructureOfDelaun)&    theOldMesh,
+    BRepMesh::Array1OfInteger&                       theVertexIndices,
+    const Handle(Message_MultithreadProgressSentry)& theProgressRootSentry = NULL);
 
   //! Initializes the triangulation with an array of vertices.
   Standard_EXPORT void Init (BRepMesh::Array1OfVertexOfDelaun& theVertices);
@@ -57,7 +62,9 @@ public:
   Standard_EXPORT void RemoveVertex (const BRepMesh_Vertex& theVertex);
 
   //! Adds some vertices into the triangulation.
-  Standard_EXPORT void AddVertices (BRepMesh::Array1OfVertexOfDelaun& theVertices);
+  Standard_EXPORT void AddVertices(
+    BRepMesh::Array1OfVertexOfDelaun&                theVertices,
+    const Handle(Message_MultithreadProgressSentry)& theProgressRootSentry = NULL);
 
   //! Modify mesh to use the edge.
   //! @return True if done
@@ -111,6 +118,8 @@ public:
   Standard_EXPORT Standard_Boolean Contains (const Standard_Integer theTriangleId,
                                              const BRepMesh_Vertex& theVertex,
                                              Standard_Integer&      theEdgeOn) const;
+
+  DEFINE_STANDARD_RTTI(BRepMesh_Delaun)
 
 private:
 
@@ -304,11 +313,12 @@ private:
 
 private:
 
-  Handle(BRepMesh_DataStructureOfDelaun) myMeshData;
-  BRepMesh_CircleTool                    myCircles;
-  Standard_Integer                       mySupVert[3];
-  BRepMesh_Triangle                      mySupTrian;
-
+  Handle(BRepMesh_DataStructureOfDelaun)    myMeshData;
+  BRepMesh_CircleTool                       myCircles;
+  Standard_Integer                          mySupVert[3];
+  BRepMesh_Triangle                         mySupTrian;
 };
+
+DEFINE_STANDARD_HANDLE(BRepMesh_Delaun, BRepMesh_ProgressRoot)
 
 #endif

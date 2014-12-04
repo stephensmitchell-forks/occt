@@ -2,3 +2,11 @@ Message_Status.hxx
 Message_StatusType.hxx
 Message_ExecStatus.hxx
 Message_HArrayOfMsg.hxx
+Message_ProgressInfo.hxx
+Message_ProgressInfo.cxx
+Message_MultithreadProgressIndicator.hxx
+Message_MultithreadProgressIndicator.cxx
+Message_MultithreadProgressScale.hxx
+Message_MultithreadProgressScale.cxx
+Message_MultithreadProgressSentry.hxx
+Message_MultithreadProgressSentry.cxx

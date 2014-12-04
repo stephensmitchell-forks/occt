@@ -93,6 +93,7 @@
 #include <BRepBuilderAPI_MakeVertex.hxx>
 #include <Poly_PolygonOnTriangulation.hxx>
 #include <TopTools_MapIteratorOfMapOfShape.hxx>
+#include <Message_MultithreadProgressIndicator.hxx>
 
 #ifdef WNT
 Standard_IMPORT Draw_Viewer dout;
@@ -115,6 +116,101 @@ OSD_Chronometer chAdd11, chAdd12, chAdd2, chUpdate, chPointValid;
 OSD_Chronometer chIsos, chPointsOnIsos;
 #endif
 
+//! Class implements Message_ProgressIndicator interface and intended
+//! to limit execution of incremental mesh algorithm by timeout.
+class MeshTest_TimeOutIndicator : public Message_MultithreadProgressIndicator
+{
+public:
+
+  //! Constructor
+  //! @param theTimeOut timeout in seconds. 
+  //! If value of timeout is negative it is supposed that no time limit is set.
+  MeshTest_TimeOutIndicator(
+    const Standard_Real    theTimeOut     = -1,
+    const Standard_Boolean isShowProgress = Standard_False)
+    : Message_MultithreadProgressIndicator("", 0., 100000., 1),
+      myTimeOut  (theTimeOut),
+      myIsTimeOut(Standard_False),
+      myIsShowProgress(isShowProgress),
+      myCurPos(0)
+  {
+    Reset();
+  }
+
+  //! Returns TRUE in case if time if out.
+  virtual Standard_Boolean UserBreak()
+  {
+    if (myTimeOut < 0)
+      return Standard_False;
+
+    if (myIsTimeOut)
+      return Standard_True;
+
+    Standard_Mutex::Sentry aSentry(myMutex);
+    // Eliminate double calculations in case of concurrency
+    if (myIsTimeOut)
+      return Standard_True;
+
+    clock_t aCurTime = clock();
+    Standard_Real aElapsed =
+      (Standard_Real)(aCurTime - myStartTime) / CLOCKS_PER_SEC;
+
+    myIsTimeOut = (aElapsed - myTimeOut) > 0;
+    return myIsTimeOut;
+  }
+
+  //! Returns status of timer.
+  virtual Standard_Boolean Show(
+    const Standard_Boolean /*isForce*/ = Standard_True)
+  {
+    if (myIsShowProgress)
+    {
+      Standard_Mutex::Sentry aSentry(myMutex);
+      Standard_Integer aPos = (Standard_Integer)GetPosition();
+      if (myCurPos != aPos)
+      {
+        myCurPos = aPos;
+        std::cout << '\r' << "Done: " << std::setw(6) << std::setprecision(5) 
+          << myCurPos / 1000. << std::showpoint << "% " << std::flush;
+      }
+    }
+
+    return myIsTimeOut;
+  }
+
+  //! Resets progress indicator to start new counting.
+  virtual void Reset()
+  {
+    Message_MultithreadProgressIndicator::Reset();
+
+    if (myTimeOut < 0)
+      return;
+
+    myStartTime = clock();
+  }
+
+
+private: //! @name private fields
+
+  Standard_Real    myTimeOut;
+  Standard_Boolean myIsTimeOut;
+  clock_t          myStartTime;
+  Standard_Mutex   myMutex;
+  Standard_Boolean myIsShowProgress;
+  Standard_Integer myCurPos;
+
+public:
+
+  //! Declaration of CASCADE RTTI
+  DEFINE_STANDARD_RTTI(MeshTest_TimeOutIndicator)
+};
+
+// Definition of HANDLE object using Standard_DefineHandle.hxx
+DEFINE_STANDARD_HANDLE    (MeshTest_TimeOutIndicator, Message_MultithreadProgressIndicator)
+
+IMPLEMENT_STANDARD_HANDLE (MeshTest_TimeOutIndicator, Message_MultithreadProgressIndicator)
+IMPLEMENT_STANDARD_RTTIEXT(MeshTest_TimeOutIndicator, Message_MultithreadProgressIndicator)
+
 //=======================================================================
 //function : incrementalmesh
 //purpose  : 
@@ -130,7 +226,10 @@ options:\n\
         -a val          angular deflection in deg (default ~28.64 deg = 0.5 rad)\n\
         -relative       notifies that relative deflection is used\n\
                         (switched off by default)\n\
-        -parallel       enables parallel execution (switched off by default)\n";
+        -parallel       enables parallel execution (switched off by default)\n\
+        -progress       shows progress indicator\n\
+        -timeout val    timeout in sec limiting execution of algorithm\n\
+                        (default is less than zero, i.e. no limit)\n";
     return 0;
   }
 
@@ -143,8 +242,10 @@ options:\n\
 
   Standard_Real aLinDeflection  = Max(Draw::Atof(argv[2]), Precision::Confusion());
   Standard_Real aAngDeflection  = 0.5;
-  Standard_Boolean isRelative   = Standard_False;
-  Standard_Boolean isInParallel = Standard_False;
+  Standard_Real aTimeout        = -1.;
+  Standard_Boolean isShowProgress = Standard_False;
+  Standard_Boolean isRelative     = Standard_False;
+  Standard_Boolean isInParallel   = Standard_False;
 
   if (nbarg > 3)
   {
@@ -160,22 +261,45 @@ options:\n\
         isRelative = Standard_True;
       else if (aOpt == "-parallel")
         isInParallel = Standard_True;
+      else if (aOpt == "-progress")
+        isShowProgress = Standard_True;
       else if (i < nbarg)
       {
         Standard_Real aVal = Draw::Atof(argv[i++]);
         if (aOpt == "-a")
           aAngDeflection = aVal * M_PI / 180.;
+        else if (aOpt == "-timeout")
+          aTimeout = aVal;
         else
           --i;
       }
     }
   }
 
-  di << "Incremental Mesh, multi-threading "
-     << (isInParallel ? "ON" : "OFF") << "\n";
+  BRepMesh_IncrementalMesh aMesher;
+  aMesher.SetShape     (aShape);
+  aMesher.SetDeflection(aLinDeflection);
+  aMesher.SetRelative  (isRelative);
+  aMesher.SetAngle     (aAngDeflection);
+  aMesher.SetParallel  (isInParallel);
+  if (aTimeout > 0. || isShowProgress)
+  {
+    aMesher.ProgressInit (NULL, new MeshTest_TimeOutIndicator(
+      aTimeout, isShowProgress));
+  }
+  aMesher.Perform();
 
-  BRepMesh_IncrementalMesh aMesher(aShape, aLinDeflection, isRelative, 
-    aAngDeflection, isInParallel);
+  if (isShowProgress)
+    di << "\n";
+
+  di << "Incremental Mesh, multi-threading "
+     << (isInParallel ? "ON" : "OFF")
+     << ", timeout is "; 
+  if (aTimeout < 0.)
+    di << "OFF";
+  else 
+    di << aTimeout << " sec";
+  di << "\n";
 
   di << "Meshing statuses: ";
   Standard_Integer statusFlags = aMesher.GetStatusFlags();
@@ -186,7 +310,7 @@ options:\n\
   else
   {
     Standard_Integer i;
-    for( i = 0; i < 4; i++ )
+    for( i = 0; i < 5; i++ )
     {
       if( (statusFlags >> i) & (Standard_Integer)1 )
       {
@@ -203,6 +327,9 @@ options:\n\
             break;
           case 4:
             di << "ReMesh ";
+            break;
+          case 5:
+            di << "UserBreak ";
             break;
         }
       }

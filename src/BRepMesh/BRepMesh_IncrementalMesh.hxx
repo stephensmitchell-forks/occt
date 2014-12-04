@@ -21,10 +21,9 @@
 #include <TopTools_MapOfShape.hxx>
 #include <TopTools_DataMapOfShapeReal.hxx>
 #include <BRepMesh_DiscretRoot.hxx>
+#include <BRepMesh_ProgressRoot.hxx>
 #include <Handle_Poly_Triangulation.hxx>
 #include <BRepMesh.hxx>
-
-#include <vector>
 
 class Poly_Triangulation;
 class TopoDS_Shape;
@@ -184,15 +183,15 @@ private:
 
 protected:
 
-  Standard_Boolean                            myRelative;
-  Standard_Boolean                            myInParallel;
-  BRepMesh::DMapOfEdgeListOfTriangulationBool myEdges;
-  Handle(BRepMesh_FastDiscret)                myMesh;
-  Standard_Boolean                            myModified;
-  TopTools_DataMapOfShapeReal                 myEdgeDeflection;
-  Standard_Real                               myMaxShapeSize;
-  Standard_Integer                            myStatus;
-  NCollection_Vector<TopoDS_Face>             myFaces;
+  Standard_Boolean                             myRelative;
+  Standard_Boolean                             myInParallel;
+  BRepMesh::DMapOfEdgeListOfTriangulationBool  myEdges;
+  Handle(BRepMesh_FastDiscret)                 myMesh;
+  Standard_Boolean                             myModified;
+  TopTools_DataMapOfShapeReal                  myEdgeDeflection;
+  Standard_Real                                myMaxShapeSize;
+  Standard_Integer                             myStatus;
+  NCollection_Vector<TopoDS_Face>              myFaces;
 };
 
 DEFINE_STANDARD_HANDLE(BRepMesh_IncrementalMesh,BRepMesh_DiscretRoot)
