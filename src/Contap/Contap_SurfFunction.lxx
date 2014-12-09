@@ -100,6 +100,56 @@ inline Standard_Real Contap_SurfFunction::Angle () const
   return myAng;
 }
 
+inline Standard_Boolean Contap_SurfFunction::IsTangentSmooth()
+{
+  return Standard_False;
+}
+
+inline Standard_Real Contap_SurfFunction::Projection1()
+{
+  return 1.;
+}
+
+inline Standard_Real Contap_SurfFunction::Projection2()
+{
+  return 1.;
+}
+
+inline Standard_Real Contap_SurfFunction::Projection3()
+{
+  return 1.;
+}
+
+inline Standard_Real Contap_SurfFunction::Projection4()
+{
+  return 1.;
+}
+
+inline Standard_Boolean Contap_SurfFunction::DerivativesAndNormalOnPSurf(gp_Vec&,
+                                                                          gp_Vec&,
+                                                                          gp_Vec&,
+                                                                          gp_Vec&,
+                                                                          gp_Vec&,
+                                                                          gp_Vec&)
+{
+  return Standard_False;
+}
+
+inline Standard_Boolean Contap_SurfFunction::DerivativesAndNormalOnISurf(gp_Vec&,
+                                                                         gp_Vec&,
+                                                                         gp_Vec&,
+                                                                         gp_Vec&,
+                                                                         gp_Vec&,
+                                                                         gp_Vec&) const
+{
+  return Standard_False;
+}
+
+inline Standard_Real Contap_SurfFunction::SquareTangentError() const
+{
+  return 0.;
+}
+
 inline Contap_TFunction Contap_SurfFunction::FunctionType () const
 {
   return myType;
