@@ -178,10 +178,11 @@ gp_XY BRepMesh_ShapeTool::FindUV(
   const gp_Pnt aPnt1 = aSurface->Value(aUV.X(), aUV.Y());
   const gp_Pnt aPnt2 = aSurface->Value(aPnt2d.X(), aPnt2d.Y());
 
+  Standard_Real tol2d = 2 * Max ( aSurface->UResolution(aTolerance), aSurface->VResolution(aTolerance) );
+
   //! If selected point is too far from the given one in parametric space
   //! or their positions in 3d are different, add the given point as unique.
-  if (Abs(aUV.X() - aPnt2d.X()) > Utol2d ||
-      Abs(aUV.Y() - aPnt2d.Y()) > Vtol2d ||
+  if ((aMinDist > tol2d && (Abs(aUV.X() - aPnt2d.X()) > Utol2d || Abs(aUV.Y() - aPnt2d.Y()) > Vtol2d)) ||
       !aPnt1.IsEqual(aPnt2, aTolerance))
   {
     aUV = aPnt2d;
