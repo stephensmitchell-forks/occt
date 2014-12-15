@@ -404,28 +404,27 @@ Standard_Boolean IsDistanceIn2DTolerance (const BRepAdaptor_Surface& aFaceSurfac
                                           const Standard_Real aTol3d)
 {
   const Standard_Real aFactor = 0.01;
-  Standard_Real dumax = (aFaceSurface.LastUParameter() - aFaceSurface.FirstUParameter());
-  Standard_Real dvmax = (aFaceSurface.LastVParameter() - aFaceSurface.FirstVParameter());
-  Standard_Real dumin = Abs(thePnt.X() - thePntRef.X());
-  Standard_Real dvmin = Abs(thePnt.Y() - thePntRef.Y());
+  const Standard_Real aDeltaUPar = (aFaceSurface.LastUParameter() -
+                                    aFaceSurface.FirstUParameter());
+  const Standard_Real aDeltaVPar = (aFaceSurface.LastVParameter() - 
+                                    aFaceSurface.FirstVParameter());
+  const Standard_Real aDist2dU = Abs(thePnt.X() - thePntRef.X());
+  const Standard_Real aDist2dV = Abs(thePnt.Y() - thePntRef.Y());
   
-  if((dumin < (aFactor*dumax)) && (dvmin < (aFactor*dvmax)))
+  if((aDist2dU < (aFactor*aDeltaUPar)) && (aDist2dV < (aFactor*aDeltaVPar)))
     return Standard_True;
 
-  dumin = dumax;
-  dvmin = dvmax;
-
-  dumax = dvmax = aTol3d;
-
+  Standard_Real aUTol = aFaceSurface.UResolution(aTol3d);
+  Standard_Real aVTol = aFaceSurface.VResolution(aTol3d);
 
 #ifdef OCCT_DEBUG
   cout << endl;
   cout << "--------Function IsDistanceIn2DTolerance(...)----------"               << endl;
   cout << "--- BRepCheck Wire: Not closed in 2D"                                  << endl;
   cout << "*****************************************************"                 << endl;
-  cout << "*dumin = " << dumin << "; dumax = " << dumax                           << endl;
-  cout << "* dvmin = " << dvmin << "; dvmax = " << dvmax                          << endl;
-  cout << "* (dumin > dumax) or (dvmin > dvmax)."                                 << endl;
+  cout << "*aDist2dU  = " << aDist2dU << "; aDeltaUPar = " << aFactor*aDeltaUPar  << endl;
+  cout << "* aDist2dV = " << aDist2dV << "; aDeltaVPar = " << aFactor*aDeltaVPar  << endl;
+  cout << "* (aDist2dU > aDeltaUPar) or (aDist2dV > aDeltaVPar)."                 << endl;
   cout << "*****************************************************"                 << endl;
   cout << endl;
   cout << "UFirst = "  << aFaceSurface.FirstUParameter();
@@ -433,38 +432,22 @@ Standard_Boolean IsDistanceIn2DTolerance (const BRepAdaptor_Surface& aFaceSurfac
   cout << "VFirst = " << aFaceSurface.FirstVParameter();
   cout << "; VLast = " << aFaceSurface.LastVParameter()                           << endl;
 
-  dumax = aFaceSurface.UResolution(dumax);
-  dvmax = aFaceSurface.VResolution(dvmax);
-
-  if(dumax >= dumin)
-  {//Singular case
-    dumax = 0.0;
-  }
-
-  if(dvmax >= dvmin)
-  {//Singular case
-    dvmax = 0.0;
-  }
-
-  cout << "aTol3d = " << aTol3d <<"; URes = " << dumax << "; VRes = " << dvmax    << endl;
+  cout << "aTol3d = " << aTol3d <<"; URes = " << aUTol << "; VRes = " << aVTol    << endl;
   cout << "thePnt(" << thePnt.X() << "; " << thePnt.Y() << ")"                    << endl;
   cout << "thePntRef(" << thePntRef.X() << "; " << thePntRef.Y() << ")"           << endl;
 #else
-  dumax = aFaceSurface.UResolution(dumax);
-  dvmax = aFaceSurface.VResolution(dvmax);
-
-  if(dumax >= dumin)
+  if(aUTol >= aDeltaUPar)
   {//Singular case
-    dumax = 0.0;
+    aUTol = 0.0;
   }
 
-  if(dvmax >= dvmin)
+  if(aVTol >= aDeltaVPar)
   {//Singular case
-    dvmax = 0.0;
+    aVTol = 0.0;
   }
 #endif
 
-  Standard_Real aTol2d = 2*Max(dumax, dvmax);
+  Standard_Real aTol2d = 2*Max(aUTol, aVTol);
   
 #ifdef OCCT_DEBUG
   if(aTol2d <= 0.0)
@@ -474,10 +457,10 @@ Standard_Boolean IsDistanceIn2DTolerance (const BRepAdaptor_Surface& aFaceSurfac
   }
 #endif
 
-  //Standard_Real Dist = thePntRef.Distance(thePnt);
-  Standard_Real Dist = Max(dumin, dvmin);
+  //Standard_Real aDist = thePntRef.Distance(thePnt);
+  Standard_Real aDist = Max(aDist2dU, aDist2dV);
   
-  if (Dist < aTol2d)
+  if (aDist < aTol2d)
     return Standard_True;
 
 #ifdef OCCT_DEBUG
@@ -485,15 +468,15 @@ Standard_Boolean IsDistanceIn2DTolerance (const BRepAdaptor_Surface& aFaceSurfac
   cout << "--------Function IsDistanceIn2DTolerance(...)----------"             << endl;
   cout << "--- BRepCheck Wire: Not closed in 2d"                                << endl;
   cout << "*****************************************************"               << endl;
-  cout << "* Dist = " << Dist	<< " > Tol2d = " <<	aTol2d                        << endl;
+  cout << "* Dist = " << aDist  << " > Tol2d = " << aTol2d                      << endl;
   cout << "*****************************************************"               << endl;
-  cout << "aTol3d = " << aTol3d <<"; URes = " << dumax << "; VRes = " << dvmax  << endl;
+  cout << "aTol3d = " << aTol3d <<"; URes = " << aUTol << "; VRes = " << aVTol  << endl;
   cout << "thePnt(" << thePnt.X() << "; " << thePnt.Y() << ")"                  << endl;
   cout << "thePntRef(" << thePntRef.X() << "; " << thePntRef.Y() << ")"         << endl;
 #endif
 
   return Standard_False;
-  }
+}
 
 //=======================================================================
 //function : Closed2d
