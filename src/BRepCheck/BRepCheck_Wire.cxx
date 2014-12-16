@@ -374,24 +374,30 @@ BRepCheck_Status BRepCheck_Wire::Closed(const Standard_Boolean Update)
 Standard_Boolean IsDistanceIn3DTolerance (const gp_Pnt& thePnt_f,
                                           const gp_Pnt& thePnt_l,
                                           const Standard_Real aTol3d)
-  {
-  Standard_Real Dist		= thePnt_f.Distance(thePnt_l);
-  
+{
+  Standard_Real Dist = thePnt_f.Distance(thePnt_l);
+
   if (Dist < aTol3d)
     return Standard_True;
 
 #ifdef OCCT_DEBUG
   cout << endl;
-  cout << "--------Function IsDistanceIn3DTolerance(...)----------"												<< endl;
-  cout << "--- BRepCheck Wire: Closed3d -> Error"																					<< endl;
-  cout << "--- Dist (" << Dist << ") > Tol3d (" << aTol3d << ")"													<< endl;
-  cout << "Pnt1(" << thePnt_f.X() << "; " << thePnt_f.Y() << "; " << thePnt_f.Z() << ")"	<< endl;
-  cout << "Pnt2(" << thePnt_l.X() << "; " << thePnt_l.Y() << "; " << thePnt_l.Z() << ")"	<< endl;
-  cout << "------------------------------------------------------"												<< endl;
+  cout << "--------Function IsDistanceIn3DTolerance(...)----------"
+       << endl;
+  cout << "--- BRepCheck Wire: Closed3d -> Error"
+       << endl;
+  cout << "--- Dist (" << Dist << ") > Tol3d (" << aTol3d << ")"
+       << endl;
+  cout << "Pnt1(" << thePnt_f.X() << "; " << thePnt_f.Y() << "; " << thePnt_f.Z() << ")"
+       << endl;
+  cout << "Pnt2(" << thePnt_l.X() << "; " << thePnt_l.Y() << "; " << thePnt_l.Z() << ")"
+       << endl;
+  cout << "------------------------------------------------------"
+       << endl;
 #endif
 
   return Standard_False;
-  }
+}
 
 //=======================================================================
 //function : IsDistanceIn2DTolerance
@@ -414,28 +420,28 @@ Standard_Boolean IsDistanceIn2DTolerance (const BRepAdaptor_Surface& aFaceSurfac
   if((aDist2dU < (aFactor*aDeltaUPar)) && (aDist2dV < (aFactor*aDeltaVPar)))
     return Standard_True;
 
+#ifdef OCCT_DEBUG
+  cout << endl;
+  cout << "--------Function IsDistanceIn2DTolerance(...)----------"             << endl;
+  cout << "--- BRepCheck Wire: Not closed in 2D"                                << endl;
+  cout << "*****************************************************"               << endl;
+  cout << "* aDist2dU = " << aDist2dU << "; aDeltaUPar = " << aFactor*aDeltaUPar<< endl;
+  cout << "* aDist2dV = " << aDist2dV << "; aDeltaVPar = " << aFactor*aDeltaVPar<< endl;
+  cout << "* (aDist2dU > aDeltaUPar) or (aDist2dV > aDeltaVPar)."               << endl;
+  cout << "*****************************************************"               << endl;
+  cout << endl;
+  cout << "UFirst = "  << aFaceSurface.FirstUParameter();
+  cout << "; ULast = " << aFaceSurface.LastUParameter()                         << endl;
+  cout << "VFirst = " << aFaceSurface.FirstVParameter();
+  cout << "; VLast = " << aFaceSurface.LastVParameter()                         << endl;
+
+  cout << "thePnt(" << thePnt.X() << "; " << thePnt.Y() << ")"                  << endl;
+  cout << "thePntRef(" << thePntRef.X() << "; " << thePntRef.Y() << ")"         << endl;
+#endif
+
   Standard_Real aUTol = aFaceSurface.UResolution(aTol3d);
   Standard_Real aVTol = aFaceSurface.VResolution(aTol3d);
 
-#ifdef OCCT_DEBUG
-  cout << endl;
-  cout << "--------Function IsDistanceIn2DTolerance(...)----------"               << endl;
-  cout << "--- BRepCheck Wire: Not closed in 2D"                                  << endl;
-  cout << "*****************************************************"                 << endl;
-  cout << "*aDist2dU  = " << aDist2dU << "; aDeltaUPar = " << aFactor*aDeltaUPar  << endl;
-  cout << "* aDist2dV = " << aDist2dV << "; aDeltaVPar = " << aFactor*aDeltaVPar  << endl;
-  cout << "* (aDist2dU > aDeltaUPar) or (aDist2dV > aDeltaVPar)."                 << endl;
-  cout << "*****************************************************"                 << endl;
-  cout << endl;
-  cout << "UFirst = "  << aFaceSurface.FirstUParameter();
-  cout << "; ULast = " << aFaceSurface.LastUParameter()                           << endl;
-  cout << "VFirst = " << aFaceSurface.FirstVParameter();
-  cout << "; VLast = " << aFaceSurface.LastVParameter()                           << endl;
-
-  cout << "aTol3d = " << aTol3d <<"; URes = " << aUTol << "; VRes = " << aVTol    << endl;
-  cout << "thePnt(" << thePnt.X() << "; " << thePnt.Y() << ")"                    << endl;
-  cout << "thePntRef(" << thePntRef.X() << "; " << thePntRef.Y() << ")"           << endl;
-#else
   if(aUTol >= aDeltaUPar)
   {//Singular case
     aUTol = 0.0;
@@ -445,37 +451,39 @@ Standard_Boolean IsDistanceIn2DTolerance (const BRepAdaptor_Surface& aFaceSurfac
   {//Singular case
     aVTol = 0.0;
   }
-#endif
 
-  Standard_Real aTol2d = 2*Max(aUTol, aVTol);
-  
 #ifdef OCCT_DEBUG
-  if(aTol2d <= 0.0)
+  if(IsEqual(aUTol, 0.0) || IsEqual(aVTol, 0.0))
   {
-    cout<<"BRepCheck_Wire : UResolution and VResolution = 0.0 (Face too small ?)"<<endl;
-    cout.flush();
+    cout << "BRepCheck_Wire: UResolution and VResolution = 0.0."
+            " Is face too small?" << endl;
   }
-#endif
 
-  //Standard_Real aDist = thePntRef.Distance(thePnt);
-  Standard_Real aDist = Max(aDist2dU, aDist2dV);
-  
-  if (aDist < aTol2d)
-    return Standard_True;
-
-#ifdef OCCT_DEBUG
-  cout << endl;
-  cout << "--------Function IsDistanceIn2DTolerance(...)----------"             << endl;
-  cout << "--- BRepCheck Wire: Not closed in 2d"                                << endl;
-  cout << "*****************************************************"               << endl;
-  cout << "* Dist = " << aDist  << " > Tol2d = " << aTol2d                      << endl;
   cout << "*****************************************************"               << endl;
   cout << "aTol3d = " << aTol3d <<"; URes = " << aUTol << "; VRes = " << aVTol  << endl;
-  cout << "thePnt(" << thePnt.X() << "; " << thePnt.Y() << ")"                  << endl;
-  cout << "thePntRef(" << thePntRef.X() << "; " << thePntRef.Y() << ")"         << endl;
+  cout << "*****************************************************"               << endl;
 #endif
 
-  return Standard_False;
+
+  if(aDist2dU > aUTol)
+  {
+#ifdef OCCT_DEBUG
+    cout << "(aDist2dU > URes)" << endl;
+#endif
+
+    return Standard_False;
+  }
+
+  if(aDist2dV > aVTol)
+  {
+#ifdef OCCT_DEBUG
+    cout << "(aDist2dV > VRes)" << endl;
+#endif
+
+    return Standard_False;
+  }
+
+  return Standard_True;
 }
 
 //=======================================================================
@@ -484,16 +492,16 @@ Standard_Boolean IsDistanceIn2DTolerance (const BRepAdaptor_Surface& aFaceSurfac
 //=======================================================================
 BRepCheck_Status BRepCheck_Wire::Closed2d(const TopoDS_Face& theFace,
                                           const Standard_Boolean Update)
-  {
+{
   // 3d closure checked too
   BRepCheck_Status aClosedStat = Closed();
   if (aClosedStat != BRepCheck_NoError)
-    {
+  {
     if (Update)
       BRepCheck::Add(myMap(myShape),aClosedStat);
 
     return aClosedStat;
-    }
+  }
 
 // 20/03/02 akm vvv : (OCC234) Hence this method will be used to check
 //                    both periodic and non-periodic faces
@@ -511,18 +519,18 @@ BRepCheck_Status BRepCheck_Wire::Closed2d(const TopoDS_Face& theFace,
   Standard_Integer aNbOrirntedEdges = 0;
   TopExp_Explorer anEdgeExp(myShape,TopAbs_EDGE);
   for (;anEdgeExp.More(); anEdgeExp.Next())
-    {
+  {
     if (IsOriented(anEdgeExp.Current())) 
       aNbOrirntedEdges++;
-    }
+  }
 
   if (aNbOrirntedEdges==0)
-    {
+  {
     if (Update)
       BRepCheck::Add(myMap(myShape),aClosedStat);
 
     return aClosedStat;
-    }
+  }
 
 // all those edges must form a closed 2d contour and be found by WireExplorer
 
@@ -533,19 +541,19 @@ BRepCheck_Status BRepCheck_Wire::Closed2d(const TopoDS_Face& theFace,
   TopoDS_Edge aLastEdge;
 
   for (;aWireExp.More(); aWireExp.Next())
-    {
+  {
     aNbFoundEdges++;
     aLastEdge = aWireExp.Current();
-    }
+  }
 
   if (aNbFoundEdges != aNbOrirntedEdges)
-    {
+  {
     aClosedStat = BRepCheck_NotClosed;
     if (Update) 
       BRepCheck::Add(myMap(myShape),aClosedStat);
-    
+
     return aClosedStat;
-    }
+  }
 
 // Check distance between 2d ends of first and last edges
 //  Modified by Sergey KHROMOV - Mon May 13 12:42:10 2002 Begin
@@ -559,32 +567,36 @@ BRepCheck_Status BRepCheck_Wire::Closed2d(const TopoDS_Face& theFace,
   anOri = aFirstEdge.Orientation();
   BRep_Tool::Range(aFirstEdge, aF, aL);
   if ((anOri == TopAbs_FORWARD  && Precision::IsNegativeInfinite( aF )) ||
-         (anOri == TopAbs_REVERSED && Precision::IsPositiveInfinite( aL )))
+      (anOri == TopAbs_REVERSED && Precision::IsPositiveInfinite( aL )))
+  {
     isFirstInfinite = Standard_True;
+  }
 
   anOri = aLastEdge.Orientation();
   BRep_Tool::Range(aLastEdge, aF, aL);
   
   if ((anOri == TopAbs_FORWARD  && Precision::IsPositiveInfinite( aL )) ||
-         (anOri == TopAbs_REVERSED && Precision::IsNegativeInfinite( aF )))
+      (anOri == TopAbs_REVERSED && Precision::IsNegativeInfinite( aF )))
+  {
     isLastInfinite = Standard_True;
+  }
 
   if (isFirstInfinite && isLastInfinite)
-    {
+  {
     if (Update)
       BRepCheck::Add(myMap(myShape),aClosedStat);
 
     return aClosedStat;
-    }
+  }
   else if (aFirstVertex.IsNull())
-    {
+  {
     aClosedStat = BRepCheck_NotClosed;
-    
+
     if (Update) 
       BRepCheck::Add(myMap(myShape),aClosedStat);
-    
+
     return aClosedStat;
-    }
+  }
 //  Modified by Sergey KHROMOV - Mon May 13 12:42:10 2002 End
 
   gp_Pnt2d aP_first, aP_last, aP_temp; // ends of prev edge, next edge, bidon
@@ -604,19 +616,6 @@ BRepCheck_Status BRepCheck_Wire::Closed2d(const TopoDS_Face& theFace,
   Standard_Real aTol3d = Max(BRep_Tool::Tolerance(aFirstVertex),BRep_Tool::Tolerance(aWireExp.CurrentVertex()));
 
 // get first point
-  if(aNbFoundEdges == 1)
-  {
-    BRep_Tool::UVPoints(aFirstEdge, theFace, aP_first, aP_last);
-    if(!IsDistanceIn2DTolerance(aFaceSurface, aP_first, aP_last, aTol3d))
-    {
-      aClosedStat = BRepCheck_NotClosed;
-
-      if (Update)
-        BRepCheck::Add(myMap(myShape),aClosedStat);
-
-      return aClosedStat;
-    }
-  }
   if (aFirstEdge.Orientation() == TopAbs_REVERSED)
     BRep_Tool::UVPoints(aFirstEdge, theFace, aP_temp, aP_first);
   else 
@@ -625,13 +624,13 @@ BRepCheck_Status BRepCheck_Wire::Closed2d(const TopoDS_Face& theFace,
 //  Modified by Sergey KHROMOV - Thu Jun 20 10:55:42 2002 OCC325 Begin
 // Check 2d distance for periodic faces with seam edge
   if (!IsClosed2dForPeriodicFace(theFace, aP_first, aP_last, aFirstVertex))
-    {
+  {
     aClosedStat = BRepCheck_NotClosed;
     if (Update)
       BRepCheck::Add(myMap(myShape),aClosedStat);
-    
+
     return aClosedStat;
-    }
+  }
 //  Modified by Sergey KHROMOV - Thu Jun 20 10:58:05 2002 End
 
 // check distance
@@ -653,7 +652,8 @@ BRepCheck_Status BRepCheck_Wire::Closed2d(const TopoDS_Face& theFace,
     BRepCheck::Add(myMap(myShape),aClosedStat);
 
   return aClosedStat;
-  }
+}
+
 //=======================================================================
 //function : Orientation
 //purpose  : 
