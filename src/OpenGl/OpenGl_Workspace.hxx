@@ -160,7 +160,8 @@ public:
   void RedrawImmediate (const Graphic3d_CView& theCView,
                         const Aspect_CLayer2d& theCUnderLayer,
                         const Aspect_CLayer2d& theCOverLayer,
-                        const Standard_Boolean theToForce = Standard_False);
+                        const Standard_Boolean theToForce = Standard_False,
+                        OpenGl_FrameBuffer*    theTargetFBO = NULL);
 
   void Invalidate (const Graphic3d_CView& /*theCView*/)
   {
@@ -641,6 +642,8 @@ protected: //! @name fields related to ray-tracing
   Handle(OpenGl_FrameBuffer) myRaytraceFBO2;
   //! Framebuffer (FBO) for pre-raytrace rendering by OpenGL.
   Handle(OpenGl_FrameBuffer) myOpenGlFBO;
+
+  Handle(OpenGl_FrameBuffer) myResultFBO;
 
   //! State of OpenGL view.
   Standard_Size myViewModificationStatus;

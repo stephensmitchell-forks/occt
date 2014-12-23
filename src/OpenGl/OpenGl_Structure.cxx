@@ -73,10 +73,10 @@ public:
     const Handle(OpenGl_Texture) aPrevTexture = theWorkspace->DisableTexture();
 
     glDisable (GL_LIGHTING);
-    if ((theWorkspace->NamedStatus & OPENGL_NS_IMMEDIATE) != 0)
+    /**if ((theWorkspace->NamedStatus & OPENGL_NS_IMMEDIATE) != 0)
     {
       glDepthMask (GL_FALSE);
-    }
+    }*/
 
     // Use highlight colors
     theWorkspace->GetGlContext()->core11->glColor3fv ((theWorkspace->NamedStatus & OPENGL_NS_HIGHLIGHT) ? theWorkspace->HighlightColor->rgb : anAspectLine->Color().rgb);

@@ -177,6 +177,24 @@ void OpenGl_FrameBuffer::BindBuffer (const Handle(OpenGl_Context)& theGlCtx)
 }
 
 // =======================================================================
+// function : BindDrawBuffer
+// purpose  :
+// =======================================================================
+void OpenGl_FrameBuffer::BindDrawBuffer (const Handle(OpenGl_Context)& theGlCtx)
+{
+  theGlCtx->arbFBO->glBindFramebuffer (GL_DRAW_FRAMEBUFFER, myGlFBufferId);
+}
+
+// =======================================================================
+// function : BindReadBuffer
+// purpose  :
+// =======================================================================
+void OpenGl_FrameBuffer::BindReadBuffer (const Handle(OpenGl_Context)& theGlCtx)
+{
+  theGlCtx->arbFBO->glBindFramebuffer (GL_READ_FRAMEBUFFER, myGlFBufferId);
+}
+
+// =======================================================================
 // function : UnbindBuffer
 // purpose  :
 // =======================================================================
