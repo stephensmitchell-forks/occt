@@ -204,6 +204,7 @@ void Graphic3d_Structure::Display()
   }
 
   myCStructure->visible = 1;
+  //myCStructure->UpdateNamedStatus();
 }
 
 //=============================================================================
@@ -312,12 +313,16 @@ void Graphic3d_Structure::Erase()
 //function : Highlight
 //purpose  :
 //=============================================================================
-void Graphic3d_Structure::Highlight (const Aspect_TypeOfHighlightMethod theMethod)
+void Graphic3d_Structure::Highlight (const Aspect_TypeOfHighlightMethod theMethod,
+                                     const Quantity_Color&              theColor,
+                                     const Standard_Boolean             theToUpdateMgr)
 {
   if (IsDeleted())
   {
     return;
   }
+
+  myHighlightColor = theColor;
 
   // Highlight on already Highlighted structure.
   if (myCStructure->highlight)
@@ -340,47 +345,18 @@ void Graphic3d_Structure::Highlight (const Aspect_TypeOfHighlightMethod theMetho
   SetDisplayPriority (Structure_MAX_PRIORITY - 1);
 
   GraphicHighlight (theMethod);
+
+  if (!theToUpdateMgr)
+  {
+    return;
+  }
+
   if (myCStructure->stick)
   {
     myStructureManager->Highlight (this, theMethod);
   }
 
   Update();
-}
-
-//=============================================================================
-//function : SetHighlightColor
-//purpose  :
-//=============================================================================
-void Graphic3d_Structure::SetHighlightColor (const Quantity_Color& theColor)
-{
-  if (IsDeleted())
-  {
-    return;
-  }
-
-  if (!myCStructure->highlight)
-  {
-    myHighlightColor = theColor;
-    return;
-  }
-
-  // Change highlight color on already Highlighted structure.
-  Aspect_TypeOfUpdate anUpdateMode  = myStructureManager->UpdateMode();
-  if (anUpdateMode == Aspect_TOU_WAIT)
-  {
-    UnHighlight();
-  }
-  else
-  {
-    // To avoid call of method : Update()
-    // Not useful and can be costly.
-    myStructureManager->SetUpdateMode (Aspect_TOU_WAIT);
-    UnHighlight();
-    myStructureManager->SetUpdateMode (anUpdateMode);
-  }
-  myHighlightColor = theColor;
-  Highlight (myHighlightMethod);
 }
 
 //=============================================================================

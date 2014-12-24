@@ -22,6 +22,7 @@
 #include <Graphic3d_SequenceOfHClipPlane.hxx>
 #include <Graphic3d_TypeOfComposition.hxx>
 #include <Graphic3d_Vec3.hxx>
+#include <Graphic3d_ViewAffinity.hxx>
 #include <Standard_Transient.hxx>
 #include <Handle_Graphic3d_GraphicDriver.hxx>
 
@@ -121,6 +122,8 @@ public:
   Graphic3d_TypeOfComposition Composition;
 
   int   ContainsFacet;
+
+  Handle(Graphic3d_ViewAffinity) ViewAffinity; //!< view affinity mask
 
   unsigned IsInfinite     : 1;
   unsigned stick          : 1;

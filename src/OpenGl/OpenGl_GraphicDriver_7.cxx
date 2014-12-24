@@ -27,7 +27,7 @@ void OpenGl_GraphicDriver::ActivateView (const Graphic3d_CView& ACView)
 {
   const OpenGl_CView *aCView = (const OpenGl_CView *)ACView.ptrView;
   if (aCView)
-    aCView->WS->SetActiveView(aCView->View);
+    aCView->WS->SetActiveView(aCView->View, ACView.ViewId);
 }
 
 void OpenGl_GraphicDriver::AntiAliasing (const Graphic3d_CView& ACView, const Standard_Boolean AFlag)
@@ -77,7 +77,7 @@ void OpenGl_GraphicDriver::DeactivateView (const Graphic3d_CView& ACView)
   if (aCView)
   {
     const Handle(OpenGl_View) aDummyView;
-    aCView->WS->SetActiveView(aDummyView);
+    aCView->WS->SetActiveView (aDummyView, -1);
   }
 }
 
@@ -510,7 +510,7 @@ Standard_Boolean OpenGl_GraphicDriver::View (Graphic3d_CView& theCView)
 
     Handle(OpenGl_Workspace) aWS = new OpenGl_Workspace (this, theCView.DefWindow, theCView.GContext, myCaps, aShareCtx);
     aCView->WS = aWS;
-    aWS->SetActiveView (aCView->View);
+    aWS->SetActiveView (aCView->View, theCView.ViewId);
 
     myMapOfWS.UnBind (theCView.WsId);
     myMapOfWS.Bind   (theCView.WsId, aWS);
@@ -526,7 +526,7 @@ Standard_Boolean OpenGl_GraphicDriver::View (Graphic3d_CView& theCView)
   aCView->View = aView;
   aCView->WS   = aWS;
   theCView.ptrView = aCView;
-  aWS->SetActiveView (aCView->View);
+  aWS->SetActiveView (aCView->View, theCView.ViewId);
 
   return Standard_True;
 }

@@ -116,7 +116,8 @@ void PrsMgr_Presentation::SetVisible (const Standard_Boolean theValue)
 //function : Highlight
 //purpose  :
 //=======================================================================
-void PrsMgr_Presentation::Highlight()
+void PrsMgr_Presentation::Highlight (const Aspect_TypeOfHighlightMethod theMethod,
+                                     const Quantity_Color&              theColor)
 {
   if (!IsHighlighted())
   {
@@ -124,7 +125,7 @@ void PrsMgr_Presentation::Highlight()
   }
 
   Display (Standard_True);
-  myStructure->Highlight();
+  myStructure->Highlight (theMethod, theColor);
 }
 
 //=======================================================================
@@ -134,7 +135,13 @@ void PrsMgr_Presentation::Highlight()
 void PrsMgr_Presentation::Unhighlight() const
 {
   myStructure->UnHighlight();
-  switch (myBeforeHighlightState)
+  if (myBeforeHighlightState == State_Visible)
+  {
+    return;
+  }
+
+  myStructure->SetVisible (Standard_False);
+  /**switch (myBeforeHighlightState)
   {
  case State_Visible:
     return;
@@ -144,7 +151,7 @@ void PrsMgr_Presentation::Unhighlight() const
  case State_Empty:
     myStructure->Erase();
     break;
-  }
+  }*/
 }
 
 //=======================================================================
@@ -167,30 +174,6 @@ void PrsMgr_Presentation::Clear()
   myStructure->Clear (Standard_True);
   //  myStructure->Clear(Standard_False);
   myStructure->RemoveAll();
-}
-
-//=======================================================================
-//function : Color
-//purpose  :
-//=======================================================================
-void PrsMgr_Presentation::Color (const Quantity_NameOfColor theColor)
-{
-  if (!IsHighlighted())
-  {
-    myBeforeHighlightState = StructureState (myStructure);
-  }
-
-  Display (Standard_True);
-  myStructure->Color (theColor);
-}
-
-//=======================================================================
-//function : BoundBox
-//purpose  :
-//=======================================================================
-void PrsMgr_Presentation::BoundBox() const
-{
-  myStructure->BoundBox();
 }
 
 //=======================================================================

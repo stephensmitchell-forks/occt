@@ -172,30 +172,31 @@ is
     	-- local context without selection, use the syntax below,
     	-- setting aSelectionMode to -1.
 
-    Display(me                 : mutable;
-    	    anIobj             : InteractiveObject from AIS;
-    	    amode              : Integer from Standard ;
-	    aSelectionMode     : Integer from Standard ;
-    	    updateviewer       : Boolean from Standard = Standard_True;
-    	    allowdecomposition : Boolean from Standard = Standard_True);
+    Display (me                      : mutable;
+             theIObj                 : InteractiveObject from AIS;
+             theDispMode             : Integer from Standard;
+             theSelectionMode        : Integer from Standard;
+             theToUpdateViewer       : Boolean from Standard = Standard_True;
+             theToAllowDecomposition : Boolean from Standard = Standard_True;
+             theDispStatus           : DisplayStatus from AIS = AIS_DS_None);
     	---Purpose: Controls the choice between the using the display
     	-- and selection modes of open local context which you
     	-- have defined and activating those available by default.
     	-- If no Local Context is opened. and the Interactive
-    	-- Object aniobj has no display mode of its own, the
-    	-- default display mode, 0, is used. Likewise, if aniobj
+    	-- Object theIObj has no display mode of its own, the
+    	-- default display mode, 0, is used. Likewise, if theIObj
     	-- has no selection mode of its own, the default one, 0, is used.
-    	-- If a local context is open and if updateviewer equals
+    	-- If a local context is open and if theToUpdateViewer equals
     	-- Standard_False, the presentation of the Interactive
     	-- Object activates the selection mode; the object is
     	-- displayed but no viewer will be updated.
-    	-- If aSelectionMode equals -1, anIobj will not be
+    	-- If theSelectionMode equals -1, theIObj will not be
     	-- activated: it will be displayed but will not be selectable.
     	-- Use this if you want to view the object in open local
     	-- context without selection. Note: This option is only
     	-- available in Local Context.
-    	-- If allowDecomposition equals true, anIObj can have
-    	-- subshapes detected by selection mechanisms. anIObj
+    	-- If theToAllowDecomposition equals true, theIObj can have
+    	-- subshapes detected by selection mechanisms. theIObj
     	-- must be able to give a shape selection modes which
     	-- fit the AIS_Shape selection modes:
     	-- -   vertices: 1
@@ -2030,6 +2031,19 @@ is
     ---Purpose: returns if possible,
     --          the first local context where the object is seen
 
+    SetViewAffinity (me           : mutable;
+                     theIObj      : InteractiveObject from AIS;
+                     theView      : View from V3d;
+                     theIsVisible : Boolean from Standard) is static;
+    ---Purpose: setup object visibility in specified view,
+    -- has no effect if object is not disaplyed in this context.
+
+    ObjectsForView (me;
+                    theListOfIO        : in out ListOfInteractive from AIS;
+                    theView            : View from V3d;
+                    theIsVisibleInView : Boolean from Standard;
+                    theStatus          : DisplayStatus from AIS = AIS_DS_None) is static;
+    ---Purpose: Query objects visible or hidden in specified view due to affinity mask.
 
     InitAttributes(me:mutable) is static private;
 

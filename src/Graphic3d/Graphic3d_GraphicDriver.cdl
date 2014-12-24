@@ -123,16 +123,16 @@ is
     -- Category: Structure management methods
     -----------------------------------------
 
-    DisplayStructure ( me            : mutable;
-                       theCView      : CView from Graphic3d;
-                       theCStructure : in out CStructure from Graphic3d;
-                       thePriority   : Integer from Standard )
+    DisplayStructure ( me           : mutable;
+                       theCView     : CView from Graphic3d;
+                       theStructure : Structure from Graphic3d;
+                       thePriority  : Integer from Standard )
         is deferred;
     ---Purpose: call_togl_displaystructure
 
-    EraseStructure ( me            : mutable;
-                     theCView      : CView from Graphic3d;
-                     theCStructure : in out CStructure from Graphic3d )
+    EraseStructure ( me           : mutable;
+                     theCView     : CView from Graphic3d;
+                     theStructure : Structure from Graphic3d )
         is deferred;
     ---Purpose: call_togl_erasestructure
 
@@ -369,9 +369,9 @@ is
     --    But it works in any case and is especially useful for view dump because the dump image is read from the back buffer.
     -- @return previous mode.
 
-    DisplayImmediateStructure ( me            : mutable;
-                                theCView      : CView      from Graphic3d;
-                                theCStructure : CStructure from Graphic3d )
+    DisplayImmediateStructure ( me           : mutable;
+                                theCView     : CView      from Graphic3d;
+                                theStructure : Structure from Graphic3d )
     is deferred;
     ---Purpose: Display structure in immediate mode on top of general presentation
 

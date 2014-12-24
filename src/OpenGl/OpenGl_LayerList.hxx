@@ -32,8 +32,8 @@ typedef NCollection_DataMap<int, int> OpenGl_LayerSeqIds;
 
 class OpenGl_LayerList
 {
- public:
-  
+public:
+
   //! Constructor
   OpenGl_LayerList (const Standard_Integer theNbPriorities = 11);
   
@@ -58,14 +58,14 @@ class OpenGl_LayerList
   //! Add structure to list with given priority. The structure will be inserted
   //! to specified layer. If the layer isn't found, the structure will be put
   //! to default bottom-level layer.
-  void AddStructure (const OpenGl_Structure *theStructure,
+  void AddStructure (const OpenGl_Structure* theStruct,
                      const Standard_Integer  theLayerId,
                      const Standard_Integer  thePriority,
-                     Standard_Boolean isForChangePriority = Standard_False);
-  
+                     Standard_Boolean        isForChangePriority = Standard_False);
+
   //! Remove structure from structure list and return its previous priority
-  void RemoveStructure (const OpenGl_Structure *theStructure,
-                        const Standard_Integer  theZLayerId);
+  void RemoveStructure (const Handle(Graphic3d_Structure)& theStructure,
+                        const Standard_Integer             theZLayerId);
   
   //! Change structure z layer
   //! If the new layer is not presented, the structure will be displayed

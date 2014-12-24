@@ -80,9 +80,7 @@ Standard_Boolean OpenGl_Workspace::UpdateRaytraceGeometry (GeomUpdateMode theMod
 
     for (Standard_Integer anIndex = 0; anIndex < aStructArray.Length(); ++anIndex)
     {
-      OpenGl_SequenceOfStructure::Iterator aStructIt;
-
-      for (aStructIt.Init (aStructArray (anIndex)); aStructIt.More(); aStructIt.Next())
+      for (OpenGl_SequenceOfStructure::Iterator aStructIt (aStructArray (anIndex)); aStructIt.More(); aStructIt.Next())
       {
         const OpenGl_Structure* aStructure = aStructIt.Value();
 
@@ -96,8 +94,15 @@ Standard_Boolean OpenGl_Workspace::UpdateRaytraceGeometry (GeomUpdateMode theMod
         else if (theMode == OpenGl_GUM_PREPARE)
         {
           if (!aStructure->IsRaytracable()
-           || !aStructure->IsVisible())
+           || !aStructure->visible)
+          {
             continue;
+          }
+          else if (!aStructure->ViewAffinity.IsNull()
+                && !aStructure->ViewAffinity->IsVisible (myViewId))
+          {
+            continue;
+          }
 
           for (OpenGl_Structure::GroupIterator aGroupIter (aStructure->DrawGroups()); aGroupIter.More(); aGroupIter.Next())
           {

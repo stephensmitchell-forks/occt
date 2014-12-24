@@ -493,19 +493,17 @@ is
     imported Vertex;
     ---Category: Classes
 
+    imported transient class ViewAffinity;
+    imported MapOfStructure;
+    imported SequenceOfDisplayedStructures;
+    imported MapOfObject;
+    imported transient class NMapOfTransient;
+
     ---------------------------------
     -- Category: Instantiated classes
     ---------------------------------
 
     imported SequenceOfGroup;
-
-    ---Category: Instantiated classes
-
-    class MapOfStructure instantiates
-            Map from TCollection (Structure from Graphic3d,MapTransientHasher from TColStd);
-
-
-    ---Category: Instantiated classes
 
     class SequenceOfStructure instantiates
             Sequence from TCollection

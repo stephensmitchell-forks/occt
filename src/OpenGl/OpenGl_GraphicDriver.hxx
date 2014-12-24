@@ -122,18 +122,18 @@ public:
 
 public: // Methods for graphical structures
 
-  Standard_EXPORT void DisplayStructure (const Graphic3d_CView& theCView,
-                                         Graphic3d_CStructure&  theCStructure,
-                                         const Standard_Integer thePriority);
-  Standard_EXPORT void EraseStructure (const Graphic3d_CView& theCView,
-                                       Graphic3d_CStructure&  theCStructure);
+  Standard_EXPORT void DisplayStructure (const Graphic3d_CView&             theCView,
+                                         const Handle(Graphic3d_Structure)& theStructure,
+                                         const Standard_Integer             thePriority);
+  Standard_EXPORT void EraseStructure (const Graphic3d_CView&             theCView,
+                                       const Handle(Graphic3d_Structure)& theStructure);
   Standard_EXPORT void RemoveStructure (Handle(Graphic3d_CStructure)& theCStructure);
   Standard_EXPORT Handle(Graphic3d_CStructure) Structure (const Handle(Graphic3d_StructureManager)& theManager);
 
   Standard_EXPORT Standard_Boolean SetImmediateModeDrawToFront (const Graphic3d_CView& theCView,
                                                                 const Standard_Boolean theDrawToFrontBuffer);
-  Standard_EXPORT void DisplayImmediateStructure (const Graphic3d_CView&      theCView,
-                                                  const Graphic3d_CStructure& theCStructure);
+  Standard_EXPORT void DisplayImmediateStructure (const Graphic3d_CView&             theCView,
+                                                  const Handle(Graphic3d_Structure)& theStructure);
   Standard_EXPORT void EraseImmediateStructure (const Graphic3d_CView&      theCView,
                                                 const Graphic3d_CStructure& theCStructure);
 

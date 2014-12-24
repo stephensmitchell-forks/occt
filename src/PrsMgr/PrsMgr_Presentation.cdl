@@ -21,9 +21,11 @@ uses
 
   PresentationManager from PrsMgr,
   NameOfColor from Quantity,
+  Color       from Quantity,
   Transformation from Geom,
   Length from Quantity,
   ShadingAspect from Prs3d,
+  TypeOfHighlightMethod from Aspect,
   TypeOfPresentation3d from PrsMgr,
   DataStructureManager from Graphic3d,
   Structure from Graphic3d,
@@ -59,7 +61,9 @@ is
               theValue : Boolean from Standard)
   is virtual private;
 
-  Highlight (me : mutable) is virtual private;
+  Highlight (me : mutable;
+             theMethod : TypeOfHighlightMethod from Aspect;
+             theColor  : Color                 from Quantity) is virtual private;
 
   Unhighlight (me) is virtual private;
 
@@ -88,13 +92,6 @@ is
   is virtual private;
   ---Purpose: removes the whole content of the presentation.
   --          Does not remove the other connected presentations.
-
-  Color (me       : mutable;
-         theColor : NameOfColor from Quantity)
-  is virtual private;
-
-  BoundBox (me)
-  is static private;
 
 ---Category: references to other presentation.
 

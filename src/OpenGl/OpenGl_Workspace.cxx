@@ -152,6 +152,7 @@ OpenGl_Workspace::OpenGl_Workspace (const Handle(OpenGl_GraphicDriver)& theDrive
   //
   myRaytraceFilter       (new OpenGl_RaytraceFilter()),
   myToRedrawGL           (Standard_True),
+  myViewId               (-1),
   myAntiAliasingMode     (3),
   myTransientDrawToFront (Standard_True),
   myBackBufferRestored   (Standard_False),
@@ -953,6 +954,16 @@ void OpenGl_Workspace::RedrawImmediate (const Graphic3d_CView& theCView,
        anIter.More(); anIter.Next())
   {
     const OpenGl_Structure* aStructure = anIter.Value();
+    if (!aStructure->visible)
+    {
+      continue;
+    }
+    else if (!aStructure->ViewAffinity.IsNull()
+          && !aStructure->ViewAffinity->IsVisible (myViewId))
+    {
+      continue;
+    }
+
     aStructure->Render (aWS);
   }
 

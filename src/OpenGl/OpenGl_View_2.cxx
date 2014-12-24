@@ -1024,11 +1024,12 @@ void OpenGl_View::RemoveZLayer (const Standard_Integer theLayerId)
 //purpose  :
 //=======================================================================
 
-void OpenGl_View::DisplayStructure (const OpenGl_Structure *theStructure,
-                                    const Standard_Integer  thePriority)
+void OpenGl_View::DisplayStructure (const Handle(Graphic3d_Structure)& theStructure,
+                                    const Standard_Integer             thePriority)
 {
-  Standard_Integer aZLayer = theStructure->GetZLayer ();
-  myZLayers.AddStructure (theStructure, aZLayer, thePriority);
+  const Standard_Integer  aZLayer = theStructure->GetZLayer();
+  const OpenGl_Structure* aStruct = reinterpret_cast<const OpenGl_Structure*> (theStructure->CStructure().operator->());
+  myZLayers.AddStructure (aStruct, aZLayer, thePriority);
 }
 
 //=======================================================================
@@ -1036,18 +1037,19 @@ void OpenGl_View::DisplayStructure (const OpenGl_Structure *theStructure,
 //purpose  :
 //=======================================================================
 
-void OpenGl_View::DisplayImmediateStructure (const OpenGl_Structure* theStructure)
+void OpenGl_View::DisplayImmediateStructure (const Handle(Graphic3d_Structure)& theStructure)
 {
+  const OpenGl_Structure* aStruct = reinterpret_cast<const OpenGl_Structure*> (theStructure->CStructure().operator->());
   for (OpenGl_SequenceOfStructure::Iterator anIter (myImmediateList);
        anIter.More(); anIter.Next())
   {
-    if (anIter.Value() == theStructure)
+    if (anIter.Value() == aStruct)
     {
       return;
     }
   }
 
-  myImmediateList.Append (theStructure);
+  myImmediateList.Append (aStruct);
 }
 
 //=======================================================================
@@ -1055,7 +1057,7 @@ void OpenGl_View::DisplayImmediateStructure (const OpenGl_Structure* theStructur
 //purpose  :
 //=======================================================================
 
-void OpenGl_View::EraseStructure (const OpenGl_Structure *theStructure)
+void OpenGl_View::EraseStructure (const Handle(Graphic3d_Structure)& theStructure)
 {
   Standard_Integer aZLayer = theStructure->GetZLayer ();
   myZLayers.RemoveStructure (theStructure, aZLayer);

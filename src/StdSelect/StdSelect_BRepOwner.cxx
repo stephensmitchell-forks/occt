@@ -133,6 +133,7 @@ void StdSelect_BRepOwner::HilightWithColor(const Handle(PrsMgr_PresentationManag
 #else
   Standard_Integer M = (myCurMode==-1) ? aMode:myCurMode;
 #endif
+  Handle(SelectMgr_SelectableObject) aSel = Selectable();
   if (myFromDecomposition)
   {
     // do the update flag check
@@ -158,8 +159,7 @@ void StdSelect_BRepOwner::HilightWithColor(const Handle(PrsMgr_PresentationManag
     }
 
     // highlight with color and set layer
-    PM->Color (myPrsSh, aCol, M);
-    Handle(SelectMgr_SelectableObject) aSel = Selectable();
+    PM->Color (myPrsSh, aCol, M, aSel);
     if (!aSel.IsNull())
     {
       Standard_Integer aLayer = aSel->GetZLayer (PM);
@@ -169,10 +169,14 @@ void StdSelect_BRepOwner::HilightWithColor(const Handle(PrsMgr_PresentationManag
   }
   else
   {
-    if(myPrsSh.IsNull())
-      PM->Color(Selectable(),aCol,M);
+    if (!myPrsSh.IsNull())
+    {
+      PM->Color (myPrsSh, aCol, M, aSel);
+    }
     else
-      PM->Color(myPrsSh,aCol,M);
+    {
+      PM->Color (aSel, aCol, M);
+    }
   }
 }
 

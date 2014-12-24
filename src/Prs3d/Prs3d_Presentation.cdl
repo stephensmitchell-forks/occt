@@ -82,21 +82,6 @@ is
 	---Purpose: Returns the new Structure defined for the new visualization
 	---Category: Methods to modify the class definition
 
-
----Category: Highlighting methods.
---           
-    Highlight(me: mutable) is static;
-    	---Purpose: displays the whole content of the presentation in white.
-    Color(me: mutable; aColor: NameOfColor from Quantity) is static;
-    	---Purpose: displays the whole content of the presentation in the specified color.
-    BoundBox(me: mutable) is static;
-
-    SetIsForHighlight (me             : mutable;
-                       isForHighlight : Boolean from Standard)
-        is virtual;
-    ---Purpose: marks the structure <me> representing wired structure needed for
-    --          highlight only so it won't be added to BVH tree.
-
 ---Category: Global modification methods.
     SetShadingAspect(me: mutable; aShadingAspect: ShadingAspect from Prs3d);
     

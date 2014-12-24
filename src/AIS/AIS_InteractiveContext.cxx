@@ -33,6 +33,7 @@
 #include <AIS_MapIteratorOfMapOfInteractive.hxx>
 #include <PrsMgr_ModedPresentation.hxx>
 #include <Visual3d_ViewManager.hxx>
+#include <Visual3d_View.hxx>
 #include <Prs3d_ShadingAspect.hxx>
 #include <AIS_Shape.hxx>
 #include <Graphic3d_AspectFillArea3d.hxx>
@@ -266,8 +267,12 @@ void AIS_InteractiveContext::ObjectsByDisplayStatus (const AIS_KindOfInteractive
 {
   for (AIS_DataMapIteratorOfDataMapOfIOStatus anObjIter (myObjects); anObjIter.More(); anObjIter.Next())
   {
-    if (anObjIter.Value()->GraphicStatus() != theStatus
-     || anObjIter.Key()->Type() != theKind)
+    if (theStatus != AIS_DS_None
+     && anObjIter.Value()->GraphicStatus() != theStatus)
+    {
+      continue;
+    }
+    else if (anObjIter.Key()->Type() != theKind)
     {
       continue;
     }
@@ -314,6 +319,35 @@ void AIS_InteractiveContext::ObjectsInside (AIS_ListOfInteractive&      theListO
 }
 
 //=======================================================================
+//function : ObjectsForView
+//purpose  :
+//=======================================================================
+void AIS_InteractiveContext::ObjectsForView (AIS_ListOfInteractive&  theListOfIO,
+                                             const Handle(V3d_View)& theView,
+                                             const Standard_Boolean  theIsVisibleInView,
+                                             const AIS_DisplayStatus theStatus) const
+{
+  const Graphic3d_CView* aCView  = reinterpret_cast<const Graphic3d_CView* >(theView->View()->CView());
+  const Standard_Integer aViewId = aCView->ViewId;
+  for (AIS_DataMapIteratorOfDataMapOfIOStatus anObjIter (myObjects); anObjIter.More(); anObjIter.Next())
+  {
+    if (theStatus != AIS_DS_None
+     && anObjIter.Value()->GraphicStatus() != theStatus)
+    {
+      theListOfIO.Append (anObjIter.Key());
+      continue;
+    }
+
+    Handle(Graphic3d_ViewAffinity) anAffinity = myMainVwr->Viewer()->ObjectAffinity (anObjIter.Key());
+    const Standard_Boolean isVisible = anAffinity->IsVisible (aViewId);
+    if (isVisible == theIsVisibleInView)
+    {
+      theListOfIO.Append (anObjIter.Key());
+    }
+  }
+}
+
+//=======================================================================
 //function : Display
 //purpose  :
 //=======================================================================
@@ -333,6 +367,33 @@ void AIS_InteractiveContext::Display (const Handle(AIS_InteractiveObject)& theIO
 }
 
 //=======================================================================
+//function : SetViewAffinity
+//purpose  :
+//=======================================================================
+void AIS_InteractiveContext::SetViewAffinity (const Handle(AIS_InteractiveObject)& theIObj,
+                                              const Handle(V3d_View)&              theView,
+                                              const Standard_Boolean               theIsVisible)
+{
+  if (theIObj.IsNull()
+  || !myObjects.IsBound (theIObj))
+  {
+    return;
+  }
+
+  Handle(Graphic3d_ViewAffinity) anAffinity = myMainVwr->Viewer()->ObjectAffinity (theIObj);
+  const Graphic3d_CView* aCView = reinterpret_cast<const Graphic3d_CView* >(theView->View()->CView());
+  anAffinity->SetVisible (aCView->ViewId, theIsVisible == Standard_True);
+  if (theIsVisible)
+  {
+    theView->View()->ChangeHiddenObjects()->Remove (theIObj);
+  }
+  else
+  {
+    theView->View()->ChangeHiddenObjects()->Add (theIObj);
+  }
+}
+
+//=======================================================================
 //function : Display
 //purpose  :
 //=======================================================================
@@ -340,10 +401,18 @@ void AIS_InteractiveContext::Display (const Handle(AIS_InteractiveObject)& theIO
                                       const Standard_Integer               theDispMode,
                                       const Standard_Integer               theSelectionMode,
                                       const Standard_Boolean               theToUpdateViewer,
-                                      const Standard_Boolean               theToAllowDecomposition)
+                                      const Standard_Boolean               theToAllowDecomposition,
+                                      const AIS_DisplayStatus              theDispStatus)
 {
   if (theIObj.IsNull())
   {
+    return;
+  }
+
+  if (theDispStatus == AIS_DS_Erased)
+  {
+    Erase  (theIObj, theToUpdateViewer);
+    Load (theIObj, theSelectionMode, theToAllowDecomposition);
     return;
   }
 
@@ -352,21 +421,47 @@ void AIS_InteractiveContext::Display (const Handle(AIS_InteractiveObject)& theIO
     theIObj->SetContext (this);
   }
 
-  if (HasOpenedContext())
+  if (theDispStatus == AIS_DS_Temporary
+  && !HasOpenedContext())
   {
-    myLocalContexts (myCurLocalIndex)->Display (theIObj, theDispMode, theToAllowDecomposition, theSelectionMode);
-    if (theToUpdateViewer)
-    {
-      myMainVwr->Update();
-    }
     return;
   }
+  else if (HasOpenedContext())
+  {
+    if (theDispStatus == AIS_DS_None
+     || theDispStatus == AIS_DS_Temporary)
+    {
+      myLocalContexts (myCurLocalIndex)->Display (theIObj, theDispMode, theToAllowDecomposition, theSelectionMode);
+      if (theToUpdateViewer)
+      {
+        myMainVwr->Update();
+      }
+      return;
+    }
+  }
 
+  const AIS_DisplayStatus aDispStatus = theDispStatus != AIS_DS_None ? theDispStatus : AIS_DS_Displayed;
   if (!myObjects.IsBound (theIObj))
   {
-    Handle(AIS_GlobalStatus) aStatus = new AIS_GlobalStatus (AIS_DS_Displayed, theDispMode, theSelectionMode);
-    myObjects.Bind   (theIObj, aStatus);
-    myMainPM->Display(theIObj, theDispMode);
+    Handle(AIS_GlobalStatus) aStatus = new AIS_GlobalStatus (aDispStatus, theDispMode, theSelectionMode);
+    myObjects.Bind (theIObj, aStatus);
+    Handle(Graphic3d_ViewAffinity) anAffinity = myMainVwr->Viewer()->RegisterObject (theIObj);
+
+    switch (aDispStatus)
+    {
+      case AIS_DS_Displayed:
+      {
+        myMainPM->Display (theIObj, theDispMode, Standard_False);
+        break;
+      }
+      case AIS_DS_DispImmediate:
+      {
+        myMainPM->Display (theIObj, theDispMode, Standard_True);
+        break;
+      }
+      default: break;
+    }
+
     if (theSelectionMode != -1)
     {
       if (!mgrSelector->Contains (theIObj))
@@ -379,8 +474,7 @@ void AIS_InteractiveContext::Display (const Handle(AIS_InteractiveObject)& theIO
   else
   {
     Handle(AIS_GlobalStatus) aStatus = myObjects (theIObj);
-    if (aStatus->GraphicStatus() != AIS_DS_Displayed
-     && aStatus->GraphicStatus() != AIS_DS_Erased)
+    if (aStatus->GraphicStatus() == AIS_DS_Temporary)
     {
       return;
     }
@@ -413,11 +507,8 @@ void AIS_InteractiveContext::Display (const Handle(AIS_InteractiveObject)& theIO
       aStatus->AddDisplayMode (theDispMode);
     }
 
-    myMainPM->Display (theIObj, theDispMode);
-    if (aStatus->GraphicStatus() == AIS_DS_Erased)
-    {
-      aStatus->SetGraphicStatus (AIS_DS_Displayed);
-    }
+    myMainPM->Display (theIObj, theDispMode, aDispStatus == AIS_DS_DispImmediate);
+    aStatus->SetGraphicStatus (aDispStatus);
     if (aStatus->IsHilighted())
     {
       const Standard_Integer aHiMod = theIObj->HasHilightMode() ? theIObj->HilightMode() : theDispMode;
@@ -829,7 +920,8 @@ void AIS_InteractiveContext::Hilight (const Handle(AIS_InteractiveObject)& theIO
 
     Handle(AIS_GlobalStatus) aStatus = myObjects (theIObj);
     aStatus->SetHilightStatus (Standard_True);
-    if (aStatus->GraphicStatus() == AIS_DS_Displayed)
+    if (aStatus->GraphicStatus() != AIS_DS_Erased
+     && aStatus->GraphicStatus() != AIS_DS_Temporary)
     {
       Standard_Integer aHilightMode = theIObj->HasHilightMode() ? theIObj->HilightMode() : 0;
       myMainPM->Highlight (theIObj, aHilightMode);
@@ -862,14 +954,15 @@ void AIS_InteractiveContext::HilightWithColor(const Handle(AIS_InteractiveObject
   {
     if(!myObjects.IsBound(anIObj)) return;
 
-    const Handle(AIS_GlobalStatus)& STATUS = myObjects(anIObj);
-    STATUS->SetHilightStatus (Standard_True);
+    const Handle(AIS_GlobalStatus)& aStatus = myObjects(anIObj);
+    aStatus->SetHilightStatus (Standard_True);
 
-    if (STATUS->GraphicStatus() == AIS_DS_Displayed)
+    if (aStatus->GraphicStatus() != AIS_DS_Erased
+     && aStatus->GraphicStatus() != AIS_DS_Temporary)
     {
-      Standard_Integer aHilightMode = anIObj->HasHilightMode() ? anIObj->HilightMode() : 0;
+      const Standard_Integer aHilightMode = anIObj->HasHilightMode() ? anIObj->HilightMode() : 0;
       myMainPM->Color (anIObj, aCol, aHilightMode);
-      STATUS->SetHilightColor (aCol);
+      aStatus->SetHilightColor (aCol);
     }
   }
   else
@@ -892,11 +985,12 @@ void AIS_InteractiveContext::Unhilight(const Handle(AIS_InteractiveObject)& anIO
   {
     if(!myObjects.IsBound(anIObj)) return;
 
-    const Handle(AIS_GlobalStatus)& STATUS = myObjects(anIObj);
-    STATUS->SetHilightStatus (Standard_False);
-    STATUS->SetHilightColor(Quantity_NOC_WHITE);
+    const Handle(AIS_GlobalStatus)& aStatus = myObjects(anIObj);
+    aStatus->SetHilightStatus (Standard_False);
+    aStatus->SetHilightColor(Quantity_NOC_WHITE);
 
-    if (STATUS->GraphicStatus() == AIS_DS_Displayed)
+    if (aStatus->GraphicStatus() != AIS_DS_Erased
+     && aStatus->GraphicStatus() != AIS_DS_Temporary)
     {
       Standard_Integer aHilightMode = anIObj->HasHilightMode() ? anIObj->HilightMode() : 0;
       myMainPM->Unhighlight (anIObj, aHilightMode);
@@ -1430,14 +1524,15 @@ void AIS_InteractiveContext::SetDisplayMode (const AIS_DisplayMode  theMode,
     }
 
     aStatus->AddDisplayMode (theMode);
-    if (aStatus->GraphicStatus() == AIS_DS_Displayed)
+    if (aStatus->GraphicStatus() == AIS_DS_Displayed
+     || aStatus->GraphicStatus() == AIS_DS_DispImmediate)
     {
-      myMainPM->SetVisibility (anObj, myDisplayMode, Standard_False);
-      myMainPM->Display (anObj, theMode);
+      myMainPM->Display (anObj, theMode, aStatus->GraphicStatus() == AIS_DS_DispImmediate);
       if (aStatus->IsSubIntensityOn())
       {
         myMainPM->Color (anObj, mySubIntensity, theMode);
       }
+      myMainPM->SetVisibility (anObj, myDisplayMode, Standard_False);
     }
   }
 
@@ -1477,7 +1572,8 @@ void AIS_InteractiveContext::SetDisplayMode (const Handle(AIS_InteractiveObject)
   }
 
   Handle(AIS_GlobalStatus) aStatus = myObjects (theIObj);
-  if (aStatus->GraphicStatus() != AIS_DS_Displayed)
+  if (aStatus->GraphicStatus() != AIS_DS_Displayed
+   && aStatus->GraphicStatus() != AIS_DS_DispImmediate)
   {
     theIObj->SetDisplayMode (theMode);
     return;
@@ -1509,7 +1605,7 @@ void AIS_InteractiveContext::SetDisplayMode (const Handle(AIS_InteractiveObject)
     aStatus->AddDisplayMode (theMode);
   }
 
-  myMainPM->Display (theIObj, theMode);
+  myMainPM->Display (theIObj, theMode, aStatus->GraphicStatus() == AIS_DS_DispImmediate);
   Standard_Integer aDispMode, aHiMode, aSelMode;
   GetDefModes (theIObj, aDispMode, aHiMode, aSelMode);
   if (aStatus->IsHilighted())
@@ -1560,14 +1656,15 @@ void AIS_InteractiveContext::UnsetDisplayMode (const Handle(AIS_InteractiveObjec
     aStatus->AddDisplayMode (myDisplayMode);
   }
 
-  if (aStatus->GraphicStatus() == AIS_DS_Displayed)
+  if (aStatus->GraphicStatus() == AIS_DS_Displayed
+   || aStatus->GraphicStatus() == AIS_DS_DispImmediate)
   {
     if (myMainPM->IsHighlighted (theIObj, anOldMode))
     {
       myMainPM->Unhighlight (theIObj, anOldMode);
     }
     myMainPM->SetVisibility (theIObj, anOldMode, Standard_False);
-    myMainPM->Display (theIObj, myDisplayMode);
+    myMainPM->Display (theIObj, myDisplayMode, aStatus->GraphicStatus() == AIS_DS_DispImmediate);
 
     Standard_Integer aDispMode, aHiMode, aSelMode;
     GetDefModes (theIObj, aDispMode, aHiMode, aSelMode);
@@ -2234,35 +2331,39 @@ void AIS_InteractiveContext::EraseGlobal (const Handle(AIS_InteractiveObject)& t
 
   Handle(AIS_GlobalStatus) aStatus = myObjects (theIObj);
 
-  Standard_Integer aDispMode = theIObj->HasHilightMode() ? theIObj->HilightMode() : 0;
-  if (aStatus->GraphicStatus() == AIS_DS_Displayed)
+  const Standard_Integer aDispMode = theIObj->HasHilightMode() ? theIObj->HilightMode() : 0;
+  if (aStatus->GraphicStatus() == AIS_DS_Temporary
+   || aStatus->GraphicStatus() == AIS_DS_Erased)
   {
-    for (TColStd_ListIteratorOfListOfInteger aDispModeIter (aStatus->DisplayedModes()); aDispModeIter.More(); aDispModeIter.Next())
+    return;
+  }
+
+  for (TColStd_ListIteratorOfListOfInteger aDispModeIter (aStatus->DisplayedModes()); aDispModeIter.More(); aDispModeIter.Next())
+  {
+    if (myMainPM->IsHighlighted (theIObj, aDispModeIter.Value()))
     {
-      if (myMainPM->IsHighlighted (theIObj, aDispModeIter.Value()))
-      {
-        myMainPM->Unhighlight (theIObj, aDispModeIter.Value());
-      }
-      myMainPM->SetVisibility (theIObj, aDispModeIter.Value(), Standard_False);
+      myMainPM->Unhighlight (theIObj, aDispModeIter.Value());
     }
 
-    if (IsCurrent (theIObj)
-    && !aStatus->IsDModeIn (aDispMode))
-    {
-      myMainPM->SetVisibility (theIObj, aDispMode, Standard_False);
-    }
+    myMainPM->SetVisibility (theIObj, aDispModeIter.Value(), Standard_False);
+  }
 
-    for (TColStd_ListIteratorOfListOfInteger aSelModeIter (aStatus->SelectionModes()); aSelModeIter.More(); aSelModeIter.Next())
-    {
-      mgrSelector->Deactivate (theIObj, aSelModeIter.Value(), myMainSel);
-    }
+  if (IsCurrent (theIObj)
+  && !aStatus->IsDModeIn (aDispMode))
+  {
+    myMainPM->SetVisibility (theIObj, aDispMode, Standard_False);
+  }
 
-    if (theToUpdateviewer)
-    {
-      myMainVwr->Update();
-    }
+  for (TColStd_ListIteratorOfListOfInteger aSelModeIter (aStatus->SelectionModes()); aSelModeIter.More(); aSelModeIter.Next())
+  {
+    mgrSelector->Deactivate (theIObj, aSelModeIter.Value(), myMainSel);
   }
   aStatus->SetGraphicStatus (AIS_DS_Erased);
+
+  if (theToUpdateviewer)
+  {
+    myMainVwr->Update();
+  }
 }
 
 //=======================================================================
@@ -2326,6 +2427,11 @@ void AIS_InteractiveContext::ClearGlobal (const Handle(AIS_InteractiveObject)& t
   mgrSelector->Remove (theIObj);
 
   myObjects.UnBind (theIObj);
+  myMainVwr->Viewer()->UnregisterObject (theIObj);
+  for (myMainVwr->InitDefinedViews(); myMainVwr->MoreDefinedViews(); myMainVwr->NextDefinedViews())
+  {
+    myMainVwr->DefinedView()->View()->ChangeHiddenObjects()->Remove (theIObj);
+  }
 
   if (theToUpdateviewer
    && aStatus->GraphicStatus() == AIS_DS_Displayed)

@@ -45,20 +45,24 @@ OpenGl_PriorityList::~OpenGl_PriorityList()
 // function : Add
 // purpose  :
 // =======================================================================
-void OpenGl_PriorityList::Add (const OpenGl_Structure* theStructure,
+void OpenGl_PriorityList::Add (const OpenGl_Structure* theStruct,
                                const Standard_Integer  thePriority,
-                               Standard_Boolean isForChangePriority)
+                               Standard_Boolean        isForChangePriority)
 {
   const Standard_Integer anIndex = Min (Max (thePriority, 0), myArray.Length() - 1);
-
-  myArray (anIndex).Append (theStructure);
-  if (theStructure->IsAlwaysRendered())
+  if (theStruct == NULL)
   {
-    theStructure->MarkAsNotCulled();
+    return;
+  }
+
+  myArray (anIndex).Append (theStruct);
+  if (theStruct->IsAlwaysRendered())
+  {
+    theStruct->MarkAsNotCulled();
   }
   else if (!isForChangePriority)
   {
-    myBVHPrimitives.Add (theStructure);
+    myBVHPrimitives.Add (theStruct);
   }
   ++myNbStructures;
 }
@@ -67,31 +71,39 @@ void OpenGl_PriorityList::Add (const OpenGl_Structure* theStructure,
 // function : Remove
 // purpose  :
 // =======================================================================
-Standard_Integer OpenGl_PriorityList::Remove (const OpenGl_Structure* theStructure,
-                                              Standard_Boolean isForChangePriority)
+bool OpenGl_PriorityList::Remove (const OpenGl_Structure* theStruct,
+                                  Standard_Integer&       thePriority,
+                                  Standard_Boolean        isForChangePriority)
 {
+  if (theStruct == NULL)
+  {
+    thePriority = -1;
+    return false;
+  }
+
   const Standard_Integer aNbPriorities = myArray.Length();
-  OpenGl_SequenceOfStructure::Iterator aStructIter;
   for (Standard_Integer aPriorityIter = 0; aPriorityIter < aNbPriorities; ++aPriorityIter)
   {
     OpenGl_SequenceOfStructure& aSeq = myArray (aPriorityIter);
-    for (aStructIter.Init (aSeq); aStructIter.More(); aStructIter.Next())
+    for (OpenGl_SequenceOfStructure::Iterator aStructIter (aSeq); aStructIter.More(); aStructIter.Next())
     {
-      if (aStructIter.Value() == theStructure)
+      if (aStructIter.Value() == theStruct)
       {
         aSeq.Remove (aStructIter);
-        if (!theStructure->IsAlwaysRendered()
-            && !isForChangePriority)
+        if (!theStruct->IsAlwaysRendered()
+         && !isForChangePriority)
         {
-          myBVHPrimitives.Remove (theStructure);
+          myBVHPrimitives.Remove (theStruct);
         }
         --myNbStructures;
-        return aPriorityIter;
+        thePriority = aPriorityIter;
+        return true;
       }
     }
   }
 
-  return -1;
+  thePriority = -1;
+  return false;
 }
 
 // =======================================================================
@@ -119,12 +131,23 @@ void OpenGl_PriorityList::Render (const Handle(OpenGl_Workspace)& theWorkspace) 
 void OpenGl_PriorityList::renderAll (const Handle(OpenGl_Workspace)& theWorkspace) const
 {
   const Standard_Integer aNbPriorities = myArray.Length();
-  OpenGl_SequenceOfStructure::Iterator aStructIter;
+  const Standard_Integer aViewId       = theWorkspace->ActiveViewId();
   for (Standard_Integer aPriorityIter = 0; aPriorityIter < aNbPriorities; ++aPriorityIter)
   {
-    for (aStructIter.Init (myArray (aPriorityIter)); aStructIter.More(); aStructIter.Next())
+    for (OpenGl_SequenceOfStructure::Iterator aStructIter (myArray (aPriorityIter)); aStructIter.More(); aStructIter.Next())
     {
-      aStructIter.Value()->Render (theWorkspace);
+      const OpenGl_Structure* aStruct = aStructIter.Value();
+      if (!aStruct->visible)
+      {
+        continue;
+      }
+      else if (!aStruct->ViewAffinity.IsNull()
+            && !aStruct->ViewAffinity->IsVisible (aViewId))
+      {
+        continue;
+      }
+
+      aStruct->Render (theWorkspace);
     }
   }
 }
@@ -145,16 +168,25 @@ void OpenGl_PriorityList::renderTraverse (const Handle(OpenGl_Workspace)& theWor
   traverse (aSelector);
 
   const Standard_Integer aNbPriorities = myArray.Length();
-  OpenGl_SequenceOfStructure::Iterator aStructIter;
+  const Standard_Integer aViewId       = theWorkspace->ActiveViewId();
   for (Standard_Integer aPriorityIter = 0; aPriorityIter < aNbPriorities; ++aPriorityIter)
   {
-    for (aStructIter.Init (myArray (aPriorityIter)); aStructIter.More(); aStructIter.Next())
+    for (OpenGl_SequenceOfStructure::Iterator aStructIter (myArray (aPriorityIter)); aStructIter.More(); aStructIter.Next())
     {
-      if (!aStructIter.Value()->IsCulled())
+      const OpenGl_Structure* aStruct = aStructIter.Value();
+      if (!aStruct->visible
+        || aStruct->IsCulled())
       {
-        aStructIter.Value()->Render (theWorkspace);
-        aStructIter.Value()->ResetCullingStatus();
+        continue;
       }
+      else if (!aStruct->ViewAffinity.IsNull()
+            && !aStruct->ViewAffinity->IsVisible (aViewId))
+      {
+        continue;
+      }
+
+      aStruct->Render (theWorkspace);
+      aStruct->ResetCullingStatus();
     }
   }
 }
@@ -248,11 +280,9 @@ Standard_Boolean OpenGl_PriorityList::Append (const OpenGl_PriorityList& theOthe
   }
 
   // add all structures to destination priority list
-  OpenGl_SequenceOfStructure::Iterator aStructIter;
   for (Standard_Integer aPriorityIter = 0; aPriorityIter < aNbPriorities; ++aPriorityIter)
   {
-    const OpenGl_SequenceOfStructure& aSeq = theOther.myArray (aPriorityIter);
-    for (aStructIter.Init (aSeq); aStructIter.More(); aStructIter.Next())
+    for (OpenGl_SequenceOfStructure::Iterator aStructIter (theOther.myArray (aPriorityIter)); aStructIter.More(); aStructIter.Next())
     {
       Add (aStructIter.Value(), aPriorityIter);
     }

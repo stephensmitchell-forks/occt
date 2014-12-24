@@ -25,11 +25,6 @@
 #include <OpenGl_BVHClipPrimitiveSet.hxx>
 #include <OpenGl_BVHTreeSelector.hxx>
 
-class OpenGl_Structure;
-
-typedef NCollection_Sequence<const OpenGl_Structure*> OpenGl_SequenceOfStructure;
-typedef NCollection_Array1<OpenGl_SequenceOfStructure> OpenGl_ArrayOfStructure;
-
 class OpenGl_PriorityList
 {
 public:
@@ -40,13 +35,14 @@ public:
   //! Destructor.
   virtual ~OpenGl_PriorityList();
 
-  void Add (const OpenGl_Structure* theStructure,
+  void Add (const OpenGl_Structure* theStruct,
             const Standard_Integer  thePriority,
-            Standard_Boolean isForChangePriority = Standard_False);
+            Standard_Boolean        isForChangePriority = Standard_False);
 
   //! Remove structure and returns its priority, if the structure is not found, method returns negative value
-  Standard_Integer Remove (const OpenGl_Structure* theStructure,
-                           Standard_Boolean isForChangePriority = Standard_False);
+  bool Remove (const OpenGl_Structure* theStruct,
+               Standard_Integer&       thePriority,
+               Standard_Boolean        isForChangePriority = Standard_False);
 
   //! @return the number of structures
   Standard_Integer NbStructures() const { return myNbStructures; }

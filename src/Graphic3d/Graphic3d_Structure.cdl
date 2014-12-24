@@ -190,20 +190,15 @@ is
 	--	    of the visualiser.
 	---Category: Methods to modify the class definition
 
-	Highlight ( me		: mutable;
-		    Method	: TypeOfHighlightMethod from Aspect )
+  Highlight ( me : mutable;
+              theMethod : TypeOfHighlightMethod from Aspect;
+              theColor  : Color                 from Quantity;
+              theToUpdateMgr : Boolean from Standard = Standard_True)
 		is static;
 	---Level: Public
-	---Purpose: Highlights the structure <me> in all the
-	--	    views of the visualiser, using the following methods:
-	--
-	--   TOHM_COLOR		= drawn in the highlight color
-	--				  (default white)
-	--	    TOHM_BLINK		= blinking
-	--   TOHM_BOUNDBOX	= enclosed by the boundary box
-	--				  (default white)
-	--
-	---Category: Methods to modify the class definition
+	---Purpose: Highlights the structure <me> in all the views of the visualiser, using the following methods:
+	--  TOHM_COLOR    = drawn in the highlight color
+	--  TOHM_BOUNDBOX = enclosed by the boundary box
 
 	Remove ( me	: mutable )
 		is static;
@@ -218,14 +213,6 @@ is
 	---Level:   Public
 	---Purpose: Computes axis-aligned bounding box of a structure.
 	--  Category: Methods to modify the class definition
-
-	SetHighlightColor ( me		: mutable;
-			    AColor	: Color from Quantity )
-		is static;
-	---Level: Public
-	---Purpose: Modifies the highlight color for the Highlight method
-	--	    with the highlight method TOHM_COLOR or TOHM_BOUNDBOX.
-	---Category: Methods to modify the class definition
 
     SetInfiniteState (me : mutable; theToSet : Boolean from Standard) is static;
     ---Level: Internal

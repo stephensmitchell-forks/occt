@@ -23,6 +23,9 @@ Graphic3d_CPick.hxx
 Graphic3d_CUserDraw.hxx
 Graphic3d_CView.hxx
 Graphic3d_CGraduatedTrihedron.hxx
+Graphic3d_ViewAffinity.hxx
+Graphic3d_ViewAffinity.cxx
+Graphic3d_MapOfObject.hxx
 Graphic3d_Structure.lxx
 Graphic3d_Structure.pxx
 Graphic3d_ShaderObject.hxx
@@ -35,6 +38,8 @@ Graphic3d_ShaderVariable.lxx
 Graphic3d_ShaderObject_Handle.hxx
 Graphic3d_ShaderProgram_Handle.hxx
 Graphic3d_ShaderVariable_Handle.hxx
+Graphic3d_MapOfStructure.hxx
+Graphic3d_MapIteratorOfMapOfStructure.hxx
 Graphic3d_TypeOfShaderObject.hxx
 Graphic3d_DataStructure.pxx
 Graphic3d_StructureManager.pxx
@@ -69,3 +74,4 @@ Graphic3d_Camera.cxx
 Graphic3d_Camera.hxx
 Graphic3d_Camera_Handle.hxx
 Graphic3d_RenderingParams.hxx
+Graphic3d_NMapOfTransient.hxx

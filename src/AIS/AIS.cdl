@@ -180,21 +180,22 @@ is
     TOI_IsoV,
     TOI_Both;
     	 ---Purpose: Declares the type of isoparameter displayed.	    
-    
-    enumeration DisplayStatus is 
-    DS_Displayed,  
-    DS_Erased,     
-    DS_Temporary, 
-    DS_None;     
-    	 ---Purpose:
-    	 -- To give the display status of an Interactive Object.
-    	 -- This will be one of the following:
-    	 -- -   DS_Displayed: the Interactive Object is
-    	 --   displayed in the main viewer;
-    	 -- -   DS_Erased: the Interactive Object is hidden in main viewer;
-    	 -- -   DS_Temporary: the Interactive Object is temporarily displayed;
-    	 -- -   DS_None: the Interactive Object is nowhere displayed.
-        
+
+    enumeration DisplayStatus is
+    DS_Displayed,
+    DS_Erased,
+    DS_Temporary,
+    DS_DispImmediate,
+    DS_None;
+    ---Purpose:
+    -- To give the display status of an Interactive Object.
+    -- This will be one of the following:
+    -- - DS_Displayed:     the Interactive Object is displayed in the main viewer;
+    -- - DS_Erased:        the Interactive Object is hidden in main viewer;
+    -- - DS_Temporary:     temporarily displayed (in local context);
+    -- - DS_DispImmediate: displayed in the list of immediate presentations (highly interactive);
+    -- - DS_None:          nowhere displayed.
+
     enumeration SelectStatus is 
     SS_Added,
     SS_Removed,

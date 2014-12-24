@@ -87,6 +87,7 @@
 #include <SelectBasics_SensitiveEntity.hxx>
 #include <TCollection_AsciiString.hxx>
 #include <NCollection_Map.hxx>
+#include <Visual3d_View.hxx>
 
 #ifdef OCC9026
 #include <SelectMgr_DataMapIteratorOfDataMapOfIntegerSensitive.hxx>
@@ -128,6 +129,7 @@ AIS_StatusOfDetection AIS_LocalContext::MoveTo (const Standard_Integer  theXpix,
 
   myCurDetected = 0;
   myDetectedSeq.Clear();
+  myFilters->SetDisabledObjects (theView->View()->HiddenObjects());
   myMainVS->Pick (theXpix, theYpix, theView);
 
   const Standard_Integer aDetectedNb = myMainVS->NbPicked();

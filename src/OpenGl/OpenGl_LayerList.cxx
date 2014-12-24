@@ -154,18 +154,19 @@ void OpenGl_LayerList::RemoveLayer (const Standard_Integer theLayerId)
 //purpose  :
 //=======================================================================
 
-void OpenGl_LayerList::AddStructure (const OpenGl_Structure *theStructure,
+void OpenGl_LayerList::AddStructure (const OpenGl_Structure* theStruct,
                                      const Standard_Integer  theLayerId,
                                      const Standard_Integer  thePriority,
-                                     Standard_Boolean isForChangePriority)
+                                     Standard_Boolean        isForChangePriority)
 {
   // add structure to associated layer,
   // if layer doesn't exists, display structure in default layer
-  OpenGl_PriorityList& aList = !HasLayer (theLayerId) ? defaultLayer ().PriorityList() :
-    myLayers.ChangeValue (myLayerIds.Find (theLayerId)).PriorityList();
+  OpenGl_PriorityList& aList = !HasLayer (theLayerId)
+                             ? defaultLayer().PriorityList()
+                             : myLayers.ChangeValue (myLayerIds.Find (theLayerId)).PriorityList();
 
-  aList.Add (theStructure, thePriority, isForChangePriority);
-  myNbStructures++;
+  aList.Add (theStruct, thePriority, isForChangePriority);
+  ++myNbStructures;
 
   // Note: In ray-tracing mode we don't modify modification
   // state here. It is redundant, because the possible changes
@@ -174,50 +175,49 @@ void OpenGl_LayerList::AddStructure (const OpenGl_Structure *theStructure,
 
 //=======================================================================
 //function : RemoveStructure
-//purpose  : 
+//purpose  :
 //=======================================================================
 
-void OpenGl_LayerList::RemoveStructure (const OpenGl_Structure *theStructure,
-                                        const Standard_Integer  theLayerId)
+void OpenGl_LayerList::RemoveStructure (const Handle(Graphic3d_Structure)& theStructure,
+                                        const Standard_Integer             theLayerId)
 {
-  Standard_Integer aSeqPos = !HasLayer (theLayerId) ?
-    1 : myLayerIds.Find (theLayerId);
-  
-  OpenGl_PriorityList& aList = myLayers.ChangeValue (aSeqPos).PriorityList();
+  Standard_Integer aSeqPos = !HasLayer (theLayerId) ? 1 : myLayerIds.Find (theLayerId);
+
+  OpenGl_PriorityList&    aList     = myLayers.ChangeValue (aSeqPos).PriorityList();
+  const OpenGl_Structure* aStruct   = reinterpret_cast<const OpenGl_Structure* > (theStructure->CStructure().operator->());
+  Standard_Integer        aPriority = -1;
 
   // remove structure from associated list
   // if the structure is not found there,
   // scan through layers and remove it
-  if (aList.Remove (theStructure) >= 0)
+  if (aList.Remove (aStruct, aPriority))
   {
-    myNbStructures--;
-
-    if (theStructure->IsRaytracable())
+    --myNbStructures;
+    if (aStruct->IsRaytracable())
     {
-      myModificationState++;
+      ++myModificationState;
     }
 
     return;
   }
-  
+
   // scan through layers and remove it
   Standard_Integer aSeqId = 1;
-  OpenGl_SequenceOfLayers::Iterator anIts;
-  for (anIts.Init (myLayers); anIts.More (); anIts.Next (), aSeqId++)
+  for (OpenGl_SequenceOfLayers::Iterator anIts (myLayers); anIts.More(); anIts.Next(), ++aSeqId)
   {
-    OpenGl_PriorityList& aScanList = anIts.ChangeValue ().PriorityList();
+    OpenGl_PriorityList& aScanList = anIts.ChangeValue().PriorityList();
     if (aSeqPos == aSeqId)
-      continue;
-  
-    if (aScanList.Remove (theStructure) >= 0)
     {
-      myNbStructures--;
+      continue;
+    }
 
-      if (theStructure->IsRaytracable())
+    if (aScanList.Remove (aStruct, aPriority))
+    {
+      --myNbStructures;
+      if (aStruct->IsRaytracable())
       {
-        myModificationState++;
+        ++myModificationState;
       }
-
       return;
     }
   }
@@ -242,44 +242,43 @@ void OpenGl_LayerList::InvalidateBVHData (const Standard_Integer theLayerId)
 //purpose  :
 //=======================================================================
 
-void OpenGl_LayerList::ChangeLayer (const OpenGl_Structure *theStructure,
+void OpenGl_LayerList::ChangeLayer (const OpenGl_Structure* theStructure,
                                     const Standard_Integer  theOldLayerId,
                                     const Standard_Integer  theNewLayerId)
 {
-  Standard_Integer aSeqPos = !HasLayer (theOldLayerId) ?
-    1 : myLayerIds.Find (theOldLayerId);
-  
-  OpenGl_PriorityList& aList = myLayers.ChangeValue (aSeqPos).PriorityList();
-  Standard_Integer aPriority;
+  Standard_Integer     aSeqPos      = !HasLayer (theOldLayerId) ? 1 : myLayerIds.Find (theOldLayerId);
+  OpenGl_PriorityList& aForcastList = myLayers.ChangeValue (aSeqPos).PriorityList();
+  Standard_Integer     aPriority    = -1;
 
   // take priority and remove structure from list found by <theOldLayerId>
   // if the structure is not found there, scan through all other layers
-  if ((aPriority = aList.Remove (theStructure, Standard_True)) >= 0)
+  if (aForcastList.Remove (theStructure, aPriority, Standard_True))
   {
-    myNbStructures--;
+    --myNbStructures;
     // isForChangePriority should be Standard_False below, because we want
     // the BVH tree in the target layer to be updated with theStructure
     AddStructure (theStructure, theNewLayerId, aPriority);
+    return;
   }
-  else
+
+  // scan through layers and remove it
+  Standard_Integer aSeqId = 1;
+  for (OpenGl_SequenceOfLayers::Iterator anIts (myLayers); anIts.More(); anIts.Next(), ++aSeqId)
   {
-    // scan through layers and remove it
-    Standard_Integer aSeqId = 1;
-    OpenGl_SequenceOfLayers::Iterator anIts;
-    for (anIts.Init (myLayers); anIts.More (); anIts.Next (), aSeqId++)
+    if (aSeqPos == aSeqId)
     {
-      if (aSeqPos == aSeqId)
-        continue;
+      continue;
+    }
   
-      // try to remove structure and get priority value from this layer
-      if ((aPriority = aList.Remove (theStructure, Standard_True)) >= 0)
-      {
-        myNbStructures--;
-        // isForChangePriority should be Standard_False below, because we want
-        // the BVH tree in the target layer to be updated with theStructure
-        AddStructure (theStructure, theNewLayerId, aPriority);
-        break;
-      }
+    // try to remove structure and get priority value from this layer
+    OpenGl_PriorityList& aList = myLayers.ChangeValue (aSeqPos).PriorityList();
+    if (aList.Remove (theStructure, aPriority, Standard_True))
+    {
+      --myNbStructures;
+      // isForChangePriority should be Standard_False below, because we want
+      // the BVH tree in the target layer to be updated with theStructure
+      AddStructure (theStructure, theNewLayerId, aPriority);
+      return;
     }
   }
 }
@@ -288,35 +287,35 @@ void OpenGl_LayerList::ChangeLayer (const OpenGl_Structure *theStructure,
 //function : ChangePriority
 //purpose  :
 //=======================================================================
-void OpenGl_LayerList::ChangePriority (const OpenGl_Structure *theStructure,
-                                       const Standard_Integer theLayerId,
-                                       const Standard_Integer theNewPriority)
+void OpenGl_LayerList::ChangePriority (const OpenGl_Structure* theStructure,
+                                       const Standard_Integer  theLayerId,
+                                       const Standard_Integer  theNewPriority)
 {
-  Standard_Integer aSeqPos = !HasLayer (theLayerId) ?
-    1 : myLayerIds.Find (theLayerId);
+  Standard_Integer     aSeqPos       = !HasLayer (theLayerId) ? 1 : myLayerIds.Find (theLayerId);
+  OpenGl_PriorityList& aForcastList  = myLayers.ChangeValue (aSeqPos).PriorityList();
+  Standard_Integer     anOldPriority = -1;
 
-  OpenGl_PriorityList& aList = myLayers.ChangeValue (aSeqPos).PriorityList();
-
-  if (aList.Remove (theStructure, Standard_True) >= 0)
+  if (aForcastList.Remove (theStructure, anOldPriority, Standard_True))
   {
-    myNbStructures--;
+    --myNbStructures;
     AddStructure (theStructure, theLayerId, theNewPriority, Standard_True);
+    return;
   }
-  else
-  {
-    Standard_Integer aSeqId = 1;
-    OpenGl_SequenceOfLayers::Iterator anIts;
-    for (anIts.Init (myLayers); anIts.More (); anIts.Next (), aSeqId++)
-    {
-      if (aSeqPos == aSeqId)
-        continue;
 
-      if (aList.Remove (theStructure, Standard_True) >= 0)
-      {
-        myNbStructures--;
-        AddStructure (theStructure, theLayerId, theNewPriority, Standard_True);
-        break;
-      }
+  Standard_Integer aSeqId = 1;
+  for (OpenGl_SequenceOfLayers::Iterator anIts (myLayers); anIts.More(); anIts.Next(), ++aSeqId)
+  {
+    if (aSeqPos == aSeqId)
+    {
+      continue;
+    }
+
+    OpenGl_PriorityList& aList = myLayers.ChangeValue (aSeqPos).PriorityList();
+    if (aList.Remove (theStructure, anOldPriority, Standard_True))
+    {
+      --myNbStructures;
+      AddStructure (theStructure, theLayerId, theNewPriority, Standard_True);
+      return;
     }
   }
 }

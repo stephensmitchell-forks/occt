@@ -129,9 +129,10 @@ is
 	---Purpose: Returns the group of views activated in the visualiser <me>.
 	---Category: Inquire methods
 
-	DefinedView ( me )
-		returns HSequenceOfView from Visual3d
-		is static;
+  DefinedViews (me)
+  returns SequenceOfView from Visual3d
+  is static;
+  ---C++: return const &
 	---Level: Internal
 	---Purpose: Returns the group of views defined in the visualiser <me>.
 	---Category: Inquire methods

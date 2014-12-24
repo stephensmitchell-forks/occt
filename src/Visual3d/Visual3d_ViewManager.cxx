@@ -81,7 +81,7 @@
 Visual3d_ViewManager::Visual3d_ViewManager (const Handle(Graphic3d_GraphicDriver)& theDriver):
 Graphic3d_StructureManager (theDriver),
 MyDefinedView (),
-MyViewGenId (View_IDMIN+((View_IDMIN+View_IDMAX)/(Visual3d_ViewManager::Limit ()))*(Visual3d_ViewManager::CurrentId ()-1),View_IDMIN+((View_IDMIN+View_IDMAX)/(Visual3d_ViewManager::Limit ()))*Visual3d_ViewManager::CurrentId ()-1),
+MyViewGenId (0, 31),
 MyZBufferAuto (Standard_False)
 {
   // default layer is always presented in display layer sequence
@@ -423,16 +423,9 @@ Standard_Boolean Visual3d_ViewManager::ContainsComputedStructure () const
 }
 #endif
 
-Handle(Visual3d_HSequenceOfView) Visual3d_ViewManager::DefinedView () const
+const Visual3d_SequenceOfView& Visual3d_ViewManager::DefinedViews() const
 {
-  Handle (Visual3d_HSequenceOfView) SG = new Visual3d_HSequenceOfView();
-
-  for(int i=1; i<=MyDefinedView.Length(); i++)
-  {
-    SG->Append(MyDefinedView.Value(i));
-  }
-
-  return (SG);
+  return MyDefinedView;
 }
 
 Standard_Boolean Visual3d_ViewManager::ViewExists (const Handle(Aspect_Window)& AWindow, Graphic3d_CView& TheCView) const

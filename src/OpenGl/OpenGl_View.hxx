@@ -139,14 +139,14 @@ class OpenGl_View : public MMgt_TShared
   //! The structure will be added to associated with it z layer.
   //! If the z layer is not presented in the view, the structure will
   //! be displayed in default bottom-level z layer.
-  void DisplayStructure (const OpenGl_Structure* theStructure,
-                         const Standard_Integer  thePriority);
+  void DisplayStructure (const Handle(Graphic3d_Structure)& theStructure,
+                         const Standard_Integer             thePriority);
 
   //! Erase structure from display list.
-  void EraseStructure (const OpenGl_Structure* theStructure);
+  void EraseStructure (const Handle(Graphic3d_Structure)& theStructure);
 
   //! Add structure to the list of immediate structures.
-  void DisplayImmediateStructure (const OpenGl_Structure* theStructure);
+  void DisplayImmediateStructure (const Handle(Graphic3d_Structure)& theStructure);
 
   //! Erase structure from display list.
   void EraseImmediateStructure (const OpenGl_Structure* theStructure);

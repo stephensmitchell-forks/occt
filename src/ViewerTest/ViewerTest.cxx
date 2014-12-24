@@ -2223,8 +2223,9 @@ int VErase (Draw_Interpretor& theDI,
             Standard_Integer  theArgNb,
             const char**      theArgVec)
 {
-  const Handle(AIS_InteractiveContext)& aCtx = ViewerTest::GetAISContext();
-  ViewerTest_AutoUpdater anUpdateTool (aCtx, ViewerTest::CurrentView());
+  const Handle(AIS_InteractiveContext)& aCtx  = ViewerTest::GetAISContext();
+  const Handle(V3d_View)&               aView = ViewerTest::CurrentView();
+  ViewerTest_AutoUpdater anUpdateTool (aCtx, aView);
   if (aCtx.IsNull())
   {
     std::cerr << "Error: no active view!\n";
@@ -2234,7 +2235,8 @@ int VErase (Draw_Interpretor& theDI,
   const Standard_Boolean toEraseAll = TCollection_AsciiString (theArgNb > 0 ? theArgVec[0] : "") == "veraseall";
 
   Standard_Integer anArgIter = 1;
-  Standard_Boolean toEraseLocal = Standard_False;
+  Standard_Boolean toEraseLocal  = Standard_False;
+  Standard_Boolean toEraseInView = Standard_False;
   TColStd_SequenceOfAsciiString aNamesOfEraseIO;
   for (; anArgIter < theArgNb; ++anArgIter)
   {
@@ -2247,6 +2249,11 @@ int VErase (Draw_Interpretor& theDI,
     else if (anArgCase == "-local")
     {
       toEraseLocal = Standard_True;
+    }
+    else if (anArgCase == "-view"
+          || anArgCase == "-inview")
+    {
+      toEraseInView = Standard_True;
     }
     else
     {
@@ -2286,7 +2293,14 @@ int VErase (Draw_Interpretor& theDI,
       theDI << aName.ToCString() << " ";
       if (!anIO.IsNull())
       {
-        aCtx->Erase (anIO, Standard_False);
+        if (toEraseInView)
+        {
+          aCtx->SetViewAffinity (anIO, aView, Standard_False);
+        }
+        else
+        {
+          aCtx->Erase (anIO, Standard_False);
+        }
       }
       else
       {
@@ -2309,7 +2323,14 @@ int VErase (Draw_Interpretor& theDI,
        && aCtx->IsCurrent (anIO))
       {
         theDI << anIter.Key2().ToCString() << " ";
-        aCtx->Erase (anIO, Standard_False);
+        if (toEraseInView)
+        {
+          aCtx->SetViewAffinity (anIO, aView, Standard_False);
+        }
+        else
+        {
+          aCtx->Erase (anIO, Standard_False);
+        }
       }
     }
   }
@@ -2322,7 +2343,14 @@ int VErase (Draw_Interpretor& theDI,
       const Handle(AIS_InteractiveObject) anIO = Handle(AIS_InteractiveObject)::DownCast (anIter.Key1());
       if (!anIO.IsNull())
       {
-        aCtx->Erase (anIO, Standard_False);
+        if (toEraseInView)
+        {
+          aCtx->SetViewAffinity (anIO, aView, Standard_False);
+        }
+        else
+        {
+          aCtx->Erase (anIO, Standard_False);
+        }
       }
       else
       {
@@ -2473,7 +2501,7 @@ inline void bndPresentation (Draw_Interpretor&                  theDI,
     }
     case BndAction_Show:
     {
-      thePrs->Presentation()->BoundBox();
+      thePrs->Presentation()->Highlight (Aspect_TOHM_BOUNDBOX, Quantity_NOC_GRAY99);
       break;
     }
     case BndAction_Print:
@@ -2905,9 +2933,12 @@ static int VDisplay2 (Draw_Interpretor& theDI,
 
   // Parse input arguments
   ViewerTest_AutoUpdater anUpdateTool (aCtx, ViewerTest::CurrentView());
-  Standard_Integer isMutable = -1;
+  Standard_Integer isMutable      = -1;
   Standard_Boolean toDisplayLocal = Standard_False;
+  Standard_Boolean toReDisplay    = Standard_False;
   TColStd_SequenceOfAsciiString aNamesOfDisplayIO;
+  AIS_DisplayStatus aDispStatus = AIS_DS_None;
+  Standard_Integer toDisplayInView = Standard_False;
   for (Standard_Integer anArgIter = 1; anArgIter < theArgNb; ++anArgIter)
   {
     const TCollection_AsciiString aName     = theArgVec[anArgIter];
@@ -2921,9 +2952,24 @@ static int VDisplay2 (Draw_Interpretor& theDI,
     {
       isMutable = 1;
     }
+    else if (aNameCase == "-immediate"
+          || aNameCase == "-dynamic")
+    {
+      aDispStatus = AIS_DS_DispImmediate;
+    }
+    else if (aNameCase == "-view"
+          || aNameCase == "-inview")
+    {
+      toDisplayInView = Standard_True;
+    }
     else if (aNameCase == "-local")
     {
+      aDispStatus = AIS_DS_Temporary;
       toDisplayLocal = Standard_True;
+    }
+    else if (aNameCase == "-redisplay")
+    {
+      toReDisplay = Standard_True;
     }
     else
     {
@@ -2963,7 +3009,27 @@ static int VDisplay2 (Draw_Interpretor& theDI,
           aShape->SetMutable (isMutable == 1);
         }
         GetMapOfAIS().Bind (aShape, aName);
-        aCtx->Display (aShape, Standard_False);
+
+        Standard_Integer aDispMode = aShape->HasDisplayMode()
+                                   ? aShape->DisplayMode()
+                                   : (aShape->AcceptDisplayMode (aCtx->DisplayMode())
+                                    ? aCtx->DisplayMode()
+                                    : 0);
+        Standard_Integer aSelMode = aShape->HasSelectionMode() && aCtx->GetAutoActivateSelection()
+                                  ? aShape->SelectionMode() : -1;
+
+        aCtx->Display (aShape, aDispMode, aSelMode,
+                       Standard_False, aShape->AcceptShapeDecomposition(),
+                       aDispStatus);
+
+        if (toDisplayInView)
+        {
+          for (aCtx->CurrentViewer()->InitDefinedViews(); aCtx->CurrentViewer()->MoreDefinedViews(); aCtx->CurrentViewer()->NextDefinedViews())
+          {
+            aCtx->SetViewAffinity (aShape, aCtx->CurrentViewer()->DefinedView(), Standard_False);
+          }
+          aCtx->SetViewAffinity (aShape, ViewerTest::CurrentView(), Standard_True);
+        }
       }
       continue;
     }
@@ -2977,6 +3043,14 @@ static int VDisplay2 (Draw_Interpretor& theDI,
         aShape->SetMutable (isMutable == 1);
       }
 
+      Standard_Integer aDispMode = aShape->HasDisplayMode()
+                                  ? aShape->DisplayMode()
+                                  : (aShape->AcceptDisplayMode (aCtx->DisplayMode())
+                                  ? aCtx->DisplayMode()
+                                  : 0);
+      Standard_Integer aSelMode = aShape->HasSelectionMode() && aCtx->GetAutoActivateSelection()
+                                ? aShape->SelectionMode() : -1;
+
       if (aShape->Type() == AIS_KOI_Datum)
       {
         aCtx->Display (aShape, Standard_False);
@@ -2984,17 +3058,30 @@ static int VDisplay2 (Draw_Interpretor& theDI,
       else
       {
         theDI << "Display " << aName.ToCString() << "\n";
-        // get the Shape from a name
-        TopoDS_Shape aNewShape = GetShapeFromName (aName.ToCString());
 
         // update the Shape in the AIS_Shape
+        TopoDS_Shape      aNewShape = GetShapeFromName (aName.ToCString());
         Handle(AIS_Shape) aShapePrs = Handle(AIS_Shape)::DownCast(aShape);
         if (!aShapePrs.IsNull())
         {
+          if (!aShapePrs->Shape().IsEqual (aNewShape))
+          {
+            toReDisplay = Standard_True;
+          }
           aShapePrs->Set (aNewShape);
         }
-        aCtx->Redisplay (aShape, Standard_False);
-        aCtx->Display   (aShape, Standard_False);
+        if (toReDisplay)
+        {
+          aCtx->Redisplay (aShape, Standard_False);
+        }
+
+        aCtx->Display (aShape, aDispMode, aSelMode,
+                       Standard_False, aShape->AcceptShapeDecomposition(),
+                       aDispStatus);
+        if (toDisplayInView)
+        {
+          aCtx->SetViewAffinity (aShape, ViewerTest::CurrentView(), Standard_True);
+        }
       }
     }
     else if (anObj->IsKind (STANDARD_TYPE (NIS_InteractiveObject)))
