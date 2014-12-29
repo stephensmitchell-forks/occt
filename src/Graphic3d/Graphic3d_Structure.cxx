@@ -28,6 +28,8 @@
 
 #include <Aspect_PolygonOffsetMode.hxx>
 
+#include <Precision.hxx>
+
 #include <stdio.h>
 
 //=============================================================================
@@ -122,6 +124,25 @@ void Graphic3d_Structure::CalculateBoundBox()
 {
   Graphic3d_BndBox4d aBox;
   addTransformed (aBox, Standard_True);
+
+  // Workaround for zero size components, to avoid clipping issues
+  Graphic3d_BndBox4d::BVH_VecNt aSizeVec = aBox.Size();
+  if (aSizeVec.x() < Precision::Confusion())
+  {
+    aBox.CornerMin().x() -= Precision::Confusion();
+    aBox.CornerMax().x() += Precision::Confusion();
+  }
+  if (aSizeVec.y() < Precision::Confusion())
+  {
+    aBox.CornerMin().y() -= Precision::Confusion();
+    aBox.CornerMax().y() += Precision::Confusion();
+  }
+  if (aSizeVec.z() < Precision::Confusion())
+  {
+    aBox.CornerMin().z() -= Precision::Confusion();
+    aBox.CornerMax().z() += Precision::Confusion();
+  }
+
   if (aBox.IsValid() && myCStructure->TransformPersistence.Flag == 0)
   {
     Graphic3d_Vec4 aMinPt (RealToShortReal (aBox.CornerMin().x()),
