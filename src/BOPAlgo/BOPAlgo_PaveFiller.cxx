@@ -26,6 +26,7 @@
 #include <BOPDS_DS.hxx>
 #include <BOPDS_Iterator.hxx>
 #include <TopTools_ListIteratorOfListOfShape.hxx>
+#include <Message_ProgressIndicator.hxx>
 
 
 //=======================================================================
@@ -215,26 +216,46 @@ void BOPAlgo_PaveFiller::Perform()
 void BOPAlgo_PaveFiller::PerformInternal()
 {
   myErrorStatus=0;
+  if (!myProgressIndicator.IsNull()) {
+    myProgressIndicator->NewScope(100.0);
+    myProgressIndicator->SetStep(100.0 / 16.0);
+  }
+
   //
   Init();
   if (myErrorStatus) {
     return; 
   }
+  if (!myProgressIndicator.IsNull()) {
+    myProgressIndicator->Increment();
+  }
+  
   //
   Prepare();
   if (myErrorStatus) {
     return; 
   }
+  if (!myProgressIndicator.IsNull()) {
+    myProgressIndicator->Increment();
+  }
+  
   // 00
   PerformVV();
   if (myErrorStatus) {
     return; 
+  }
+  if (!myProgressIndicator.IsNull()) {
+    myProgressIndicator->Increment();
   }
   // 01
   PerformVE();
   if (myErrorStatus) {
     return; 
   }
+  if (!myProgressIndicator.IsNull()) {
+    myProgressIndicator->Increment();
+  }
+  
   //
   myDS->UpdatePaveBlocks();
   // 11
@@ -242,32 +263,62 @@ void BOPAlgo_PaveFiller::PerformInternal()
   if (myErrorStatus) {
     return; 
   }
+  
+  if (!myProgressIndicator.IsNull()) {
+    myProgressIndicator->Increment();
+  }
+  
   // 02
   PerformVF();
   if (myErrorStatus) {
     return; 
   }
+  
+  if (!myProgressIndicator.IsNull()) {
+    myProgressIndicator->Increment();
+  }
+  
   // 12
   PerformEF();
   if (myErrorStatus) {
     return; 
   }
+  
+  if (!myProgressIndicator.IsNull()) {
+    myProgressIndicator->Increment();
+  }
+  
   //
   MakeSplitEdges();
   if (myErrorStatus) {
     return; 
   }
+
+  if (!myProgressIndicator.IsNull()) {
+    myProgressIndicator->Increment();
+  }
+  
   //
   // 22
   PerformFF();
   if (myErrorStatus) {
     return; 
   }
+  
+  if (!myProgressIndicator.IsNull()) {
+    myProgressIndicator->Increment();
+  }
+  
   //
   MakeBlocks();
   if (myErrorStatus) {
     return; 
   }
+  
+  if (!myProgressIndicator.IsNull()) {
+    myProgressIndicator->Increment();
+  }
+  
   //
   RefineFaceInfoOn();
   //
@@ -275,30 +326,59 @@ void BOPAlgo_PaveFiller::PerformInternal()
   if (myErrorStatus) {
     return; 
   }
+  
+  if (!myProgressIndicator.IsNull()) {
+    myProgressIndicator->Increment();
+  }
+  
   //
   ProcessDE();
   if (myErrorStatus) {
     return; 
   }
+  
+  if (!myProgressIndicator.IsNull()) {
+    myProgressIndicator->Increment();
+  }
+  
   //
   // 03
   PerformVZ();
   if (myErrorStatus) {
     return;
   }
+  if (!myProgressIndicator.IsNull()) {
+    myProgressIndicator->Increment();
+  }
+    
   // 13
   PerformEZ();
   if (myErrorStatus) {
     return;
   }
+  
+  if (!myProgressIndicator.IsNull()) {
+    myProgressIndicator->Increment();
+  }
+  
   // 23
   PerformFZ();
   if (myErrorStatus) {
     return;
   }
+  
+  if (!myProgressIndicator.IsNull()) {
+    myProgressIndicator->Increment();
+  }
+  
   // 33
   PerformZZ();
   if (myErrorStatus) {
     return;
   }
-} 
+  
+  if (!myProgressIndicator.IsNull()) {
+    myProgressIndicator->Increment();
+    myProgressIndicator->EndScope();
+  }
+}
