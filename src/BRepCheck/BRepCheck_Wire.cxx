@@ -76,6 +76,8 @@
 #include <TopTools_IndexedMapOfOrientedShape.hxx>
 #include <ElCLib.hxx>
 
+#include <GCPnts_AbscissaPoint.hxx>
+
 
 static void Propagate(const TopTools_IndexedDataMapOfShapeListOfShape&,
                       const TopoDS_Shape&,   // edge
@@ -409,6 +411,7 @@ Standard_Boolean IsDistanceIn2DTolerance (const BRepAdaptor_Surface& aFaceSurfac
                                           const gp_Pnt2d& thePntRef,
                                           const Standard_Real aTol3d)
 {
+  const Standard_Real aLengthTol = Precision::Confusion();
   const Standard_Real aFactor = 0.01;
   const Standard_Real aDeltaUPar = (aFaceSurface.LastUParameter() -
                                     aFaceSurface.FirstUParameter());
@@ -439,15 +442,74 @@ Standard_Boolean IsDistanceIn2DTolerance (const BRepAdaptor_Surface& aFaceSurfac
   cout << "thePntRef(" << thePntRef.X() << "; " << thePntRef.Y() << ")"         << endl;
 #endif
 
-  Standard_Real aUTol = aFaceSurface.UResolution(aTol3d);
-  Standard_Real aVTol = aFaceSurface.VResolution(aTol3d);
+  const Standard_Real aU0 = thePntRef.X(), aV0 = thePntRef.Y();
+  Adaptor3d_Curve* aCu = new GeomAdaptor_Curve(aFaceSurface.Surface().Surface()->UIso(aU0));
+  Adaptor3d_Curve* aCv = new GeomAdaptor_Curve(aFaceSurface.Surface().Surface()->VIso(aV0));
+  
+  //For line and circle the resolution is independent of the point on curve
+  const Standard_Boolean isUAnalitic = ((aCu->GetType() == GeomAbs_Line) ||
+                                        (aCu->GetType() == GeomAbs_Circle));
+  const Standard_Boolean isVAnalitic = ((aCv->GetType() == GeomAbs_Line) ||
+                                        (aCv->GetType() == GeomAbs_Circle));
 
-  if(aUTol >= aDeltaUPar)
+  Standard_Real aUTol = 0.0;
+  Standard_Real aVTol = 0.0;
+
+  if(!isUAnalitic)
+  {
+    Standard_Real aLR = aTol3d;
+    if(2.0*aU0 > (aFaceSurface.LastUParameter() +
+                                    aFaceSurface.FirstUParameter()))
+    {
+      aLR = -aLR;
+    }
+
+    GCPnts_AbscissaPoint aGAu(aLengthTol, *aCu, aLR, aU0);
+    if(aGAu.IsDone())
+    {
+      aUTol = Abs(aGAu.Parameter() - aU0);
+    }
+    else
+    {
+      aUTol = aFaceSurface.UResolution(aTol3d);
+    }
+  }
+  else
+  {
+    aUTol = aFaceSurface.UResolution(aTol3d);
+  }
+
+  if(!isVAnalitic)
+  {
+    Standard_Real aLR = aTol3d;
+    if(2.0*aV0 > (aFaceSurface.LastVParameter() +
+                                    aFaceSurface.FirstVParameter()))
+    {
+      aLR = -aLR;
+    }
+
+    GCPnts_AbscissaPoint aGAv(aLengthTol, *aCv, aLR, aV0);
+
+    if(aGAv.IsDone())
+    {
+      aVTol = Abs(aGAv.Parameter() - aV0);
+    }
+    else
+    {
+      aVTol = aFaceSurface.VResolution(aTol3d);
+    }
+  }
+  else
+  {
+    aVTol = aFaceSurface.VResolution(aTol3d);
+  }
+
+  if(aUTol - aDeltaUPar >= aLengthTol)
   {//Singular case
     aUTol = 0.0;
   }
 
-  if(aVTol >= aDeltaVPar)
+  if(aVTol - aDeltaVPar >= aLengthTol)
   {//Singular case
     aVTol = 0.0;
   }
