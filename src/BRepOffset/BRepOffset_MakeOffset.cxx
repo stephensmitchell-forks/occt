@@ -129,6 +129,9 @@
   Standard_Boolean ChronBuild  = Standard_False;
   Standard_Integer NbAE        = 0;
   Standard_Integer NbAF        = 0;  
+  Standard_Integer NVP        = 0;  
+  Standard_Integer NVM        = 0;  
+  Standard_Integer NVN        = 0;  
   static OSD_Chronometer  Clock;
   char name[100];
 
@@ -1845,6 +1848,7 @@ void BRepOffset_MakeOffset::CorrectConicalFaces()
   Standard_Real TolApex = 1.e-5;
 
   Standard_Integer i;
+  Standard_Boolean isSphericalFaceAdded = Standard_False;
 
   TopTools_DataMapOfShapeListOfShape FacesOfCone;
   //TopTools_DataMapOfShapeShape DegEdges;
@@ -2152,13 +2156,17 @@ void BRepOffset_MakeOffset::CorrectConicalFaces()
     TopoDS_Shape theShell = Explo.Current();
     theShell.Free( Standard_True );
     BB.Add( theShell, NewSphericalFace );
+    isSphericalFaceAdded = Standard_True;
   }
 
-  Explo.Init( myOffsetShape, TopAbs_SHELL );
+  if(isSphericalFaceAdded)
+  {
+    Explo.Init( myOffsetShape, TopAbs_SHELL );
 
-  if (Explo.More()) {
-    TopoDS_Shape theShell = Explo.Current();
-    theShell.Closed( Standard_True );
+    if (Explo.More()) {
+      TopoDS_Shape theShell = Explo.Current();
+      theShell.Closed( Standard_True );
+    }
   }
 
 /*
