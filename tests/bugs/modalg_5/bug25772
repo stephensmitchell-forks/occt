@@ -1,0 +1,37 @@
+puts "============"
+puts "OCC24154"
+puts "============"
+puts ""
+######################################################
+# Wrong result of CUT operation
+######################################################
+
+restore [locate_data_file pl1.brep] pl
+restore [locate_data_file selected_holes.brep] hl
+
+set log [bopargcheck pl hl #F]
+
+if{[string compare $log "Shape(s) seem(s) to be valid for BOP.\n"] == 0} {
+  puts "OK: Source shapes are valid in terms of bopargcheck"
+}else{
+  puts "Error: source shapes are invalid in terms of bopargcheck"
+}
+
+bcut result pl hl
+
+set log [bopargcheck result #F]
+
+if{[string compare $log "Shape(s) seem(s) to be valid for BOP.\n"] == 0} {
+  puts "OK: Source shapes are valid in terms of bopargcheck"
+}else{
+  puts "Error: source shapes are invalid in terms of bopargcheck"
+}
+
+
+# Analysis of "nbshapes res"
+set nb_f_good 2
+set nb_sh_good 1
+set nb_sol_good 0
+set nb_compsol_good 0
+set nb_compound_good 1
+

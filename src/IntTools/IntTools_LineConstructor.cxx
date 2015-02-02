@@ -77,7 +77,7 @@ void IntTools_LineConstructor::Perform(const Handle(IntPatch_Line)& L)
 {
   Standard_Integer i,nbvtx;
   Standard_Real firstp,lastp;
-  const Standard_Real Tol = 1.001e-6;//Precision::PConfusion() * 35.0;
+  const Standard_Real Tol = Precision::PConfusion() * 35.0;
   
   const IntPatch_IType typl = L->ArcType();
   if(typl == IntPatch_Analytic)  {

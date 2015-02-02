@@ -571,6 +571,7 @@ void IntPatch_ImpPrmIntersection::Perform (const Handle(Adaptor3d_HSurface)& Sur
     }
     //
     Nblines = iwalk.NbLines();
+    const Standard_Integer aMinNbWLPoins = 40;
     for (j=1; j<=Nblines; j++) {
       const Handle(IntPatch_TheIWLineOfTheIWalking)&  iwline  = iwalk.Value(j);
       const Handle(IntSurf_LineOn2S)&                 thelin  = iwline->Line();
@@ -891,75 +892,27 @@ void IntPatch_ImpPrmIntersection::Perform (const Handle(Adaptor3d_HSurface)& Sur
           wline->SetLastPoint(wline->NbVertex());
         }
 
-        if(wline->NbPnts() < 40)
+        if(wline->NbPnts() < aMinNbWLPoins)
         {
-          Standard_Boolean hasBeenAdded = iwalk.SeekAdditionalPoints(Surf1, Surf2, 40, j);
-
-          if (!reversed)
-            IntPatch_RstInt::PutVertexOnLine(wline,Surf1,D1,Surf2,Standard_True,TolTang, hasBeenAdded);
-          else
-            IntPatch_RstInt::PutVertexOnLine(wline,Surf2,D2,Surf1,Standard_False,TolTang, hasBeenAdded);
-
-          if(hasBeenAdded)
+          Standard_Integer aDeltaParam = 0;
+          for(Standard_Integer aVertNum = 1; aVertNum < wline->NbVertex(); aVertNum++)
           {
-            const Standard_Real aTol = Precision::Confusion()*Precision::Confusion();
-            Standard_Real aDecrParam = 0.0;
-            Standard_Integer aNbVert = wline->NbVertex();
-            for (Standard_Integer aV = 2; aV <= aNbVert; aV++)
-            {
-              IntPatch_Point aVert = wline->Vertex(aV);
+            const Standard_Integer aFirst = 
+                            RealToInt(wline->Vertex(aVertNum).ParameterOnLine());
+            const Standard_Integer aLast = 
+                            RealToInt(wline->Vertex(aVertNum + 1).ParameterOnLine());
 
-              const gp_Pnt aP(aVert.Value()), aP1(wline->Vertex(aV-1).Value());
+            const Standard_Integer aNbPoints = wline->NbPnts();
 
-              if(aV == aNbVert)
-              {
-                if(aP.SquareDistance(aP1) <= aTol)
-                {
-                  wline->RemoveVertex(aV-1);
-                }
+            iwalk.SeekAdditionalPoints(Surf1, Surf2, aFirst, aLast, aMinNbWLPoins, j);
 
-                break;
-              }
-              else
-              {
-                aVert.SetParameter(aVert.ParameterOnLine() - aDecrParam);
-                wline->RemoveVertex(aV);
-                wline->InsertVertexBefore(aV, aVert);
-              }
+            aDeltaParam += (wline->NbPnts() - aNbPoints);
 
-              const gp_Pnt aP2(wline->Vertex(aV+1).Value());
-
-              if(aP.SquareDistance(aP1) <= aTol)
-              {
-                wline->RemoveVertex(aV);
-              }
-              else if(aP.SquareDistance(aP2) <= aTol)
-              {
-                wline->RemoveVertex(aV);
-
-                aDecrParam++;
-                aV--;
-                aNbVert = wline->NbVertex();
-              }
-
-              aNbVert = wline->NbVertex();
-            }
-          }
-
-          if (wline->HasLastPoint())
-          {
-            wline->SetLastPoint(wline->NbVertex());
-            wline->LastPoint(indlast);
+            IntPatch_Point aVert = wline->Vertex(aVertNum + 1);
+            aVert.SetParameter(aLast + aDeltaParam);
+            wline->Replace(aVertNum + 1, aVert);
           }
         }
-        else
-        {
-          if (!reversed)
-            IntPatch_RstInt::PutVertexOnLine(wline,Surf1,D1,Surf2,Standard_True,TolTang);
-          else
-            IntPatch_RstInt::PutVertexOnLine(wline,Surf2,D2,Surf1,Standard_False,TolTang);
-        }
-
         //
         // Il faut traiter les points de passage.
         slin.Append(wline);
@@ -1323,17 +1276,11 @@ void IntPatch_ImpPrmIntersection::Perform (const Handle(Adaptor3d_HSurface)& Sur
   for (i=1; i<=slin.Length(); i++)
   {
     Handle(IntPatch_Line)& aL = slin(i);
-    const Handle(IntPatch_WLine)& wline = Handle(IntPatch_WLine)::DownCast(aL);
     
-    if(!wline.IsNull())
-    {//It was processed above
-      continue;
-    }
-
     if (!reversed)
-      IntPatch_RstInt::PutVertexOnLine(aL,Surf1,D1,Surf2,Standard_True,TolTang, 1);
+      IntPatch_RstInt::PutVertexOnLine(aL,Surf1,D1,Surf2,Standard_True,TolTang);
     else
-      IntPatch_RstInt::PutVertexOnLine(aL,Surf2,D2,Surf1,Standard_False,TolTang, 1);
+      IntPatch_RstInt::PutVertexOnLine(aL,Surf2,D2,Surf1,Standard_False,TolTang);
   }
   empt = (slin.Length() == 0 && spnt.Length() == 0);
   done = Standard_True;
@@ -1838,7 +1785,7 @@ static void ToSmooth(Handle(IntSurf_LineOn2S)& Line,
 		     Standard_Boolean          IsReversed,
 		     IntSurf_Quadric&          Quad,
 		     Standard_Boolean          IsFirst,
-  Standard_Real&                  D3D)
+                      Standard_Real&                  D3D)
 {
   if(Line->NbPoints() <= 10)
     return;
@@ -1934,9 +1881,9 @@ static void ToSmooth(Handle(IntSurf_LineOn2S)& Line,
 } 
 
 static Standard_Boolean TestMiddleOnPrm(const IntSurf_PntOn2S& aP,
-  const IntSurf_PntOn2S& aV,
-  const Standard_Boolean IsReversed,
-  const Standard_Real    ArcTol,
+                                        const IntSurf_PntOn2S& aV,
+                                        const Standard_Boolean IsReversed,
+                                        const Standard_Real    ArcTol,
                                         Handle(Adaptor3d_TopolTool)&  PDomain)
 
 {
@@ -1962,12 +1909,12 @@ static void VerifyVertices(Handle(IntSurf_LineOn2S)& Line,
                            Standard_Boolean          IsReversed,
                            Handle(IntSurf_LineOn2S)& Vertices,
                            Standard_Real             TOL2D,
-  const Standard_Real       ArcTol,
+                            const Standard_Real       ArcTol,
                            Handle(Adaptor3d_TopolTool)&     PDomain,
-  IntSurf_PntOn2S&          VrtF,
-  Standard_Boolean&         AddFirst,
-  IntSurf_PntOn2S&          VrtL,
-  Standard_Boolean&         AddLast)
+                            IntSurf_PntOn2S&          VrtF,
+                            Standard_Boolean&         AddFirst,
+                            IntSurf_PntOn2S&          VrtL,
+                            Standard_Boolean&         AddLast)
 {
   Standard_Integer nbp = Line->NbPoints(), nbv = Vertices->NbPoints();
   Standard_Integer FIndexSame = 0, FIndexNear = 0, LIndexSame = 0, LIndexNear = 0;

@@ -1,0 +1,90 @@
+puts "=========="
+puts "OCC25697"
+puts "=========="
+puts ""
+########################################################################################
+# Regression : Section obtained after command "bsection" in Test Harness is incorrect.
+########################################################################################
+
+# Check if list of xdistcs-command is valid
+proc checkList {List Tolerance D_good Limit_Tol} {
+   set L1 [llength ${List}]
+   set L2 10
+   set L3 5
+   set N [expr (${L1} - ${L2})/${L3} + 1]
+
+   for {set i 1} {${i} <= ${N}} {incr i} {
+      set j1 [expr ${L2} + (${i}-1)*${L3}]
+      set j2 [expr ${j1} + 2]
+      set T [lindex ${List} ${j1}]
+      set D [lindex ${List} ${j2}]
+      #puts "i=${i} j1=${j1} j2=${j2} T=${T} D=${D}"
+      if { [expr abs(${D} - ${D_good})] > ${Tolerance} } {
+         puts "Error : T=${T} D=${D}"
+      }
+      
+      if { ${Tolerance} > ${Limit_Tol} } {
+        if { [expr abs(${D} - ${D_good})] > ${Limit_Tol} 
+             && [expr abs(${D} - ${D_good})] <= ${Tolerance} } {
+           puts "Attention (critical value of tolerance) : T=${T} D=${D}"
+        }
+      }
+   }
+}
+
+
+restore [locate_data_file bug25697_shell_for_seam.brep] b1
+restore [locate_data_file bug25697_prism.brep] b2
+explode b1 f
+copy b1_1 b1
+explode b2 f
+copy b2_1 b2
+
+#################################
+set log [bopcurves b1 b2 -2d1]
+#################################
+
+regexp {Tolerance Reached=+([-0-9.+eE]+)\n+([-0-9.+eE]+)} ${log} full Toler NbCurv
+
+set MaxTol 1.e-7
+set GoodNbCurv 3
+
+if { ${Toler} > ${MaxTol} } {
+  puts "Error: Tolerance is too big!"
+}
+
+if { ${NbCurv} != ${GoodNbCurv} } {
+  puts "Error: Curve Number is bad!"
+}
+
+#---------------
+mksurface s1 b1
+mksurface s2 b2
+
+for {set i 1} {$i <= ${NbCurv}} {incr i} {
+  bounds c_$i u1 u2
+  dump u1 u2
+  dlog reset
+  dlog on
+  xdistcs c_$i s1 u1 u2 10
+  set Log2 [dlog get]
+  set List2 [split ${Log2} {TD= \t\n}]
+  set Tolerance 1.0e-7
+  set Limit_Tol 1.0e-7
+  set D_good 0.
+  checkList ${List2} ${Tolerance} ${D_good} ${Limit_Tol}
+
+  dlog reset
+  dlog on
+  xdistcs c_$i s2 u1 u2 10
+  set Log2 [dlog get]
+  set List2 [split ${Log2} {TD= \t\n}]
+  set Tolerance 1.0e-7
+  set Limit_Tol 1.0e-7
+  set D_good 0.
+  checkList ${List2} ${Tolerance} ${D_good} ${Limit_Tol}
+}
+
+smallview
+fit
+set only_screen_axo 1

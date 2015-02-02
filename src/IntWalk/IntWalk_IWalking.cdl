@@ -319,6 +319,7 @@ is
 
     SeekAdditionalPoints( me    : in out;
                           theASurf1 , theASurf2  : ThePSurface;
+                          theFromPoint, theToPoint : Integer from Standard;
                           theMinNbPoints : Integer from Standard;
                           theNCurve : Integer from Standard)
       returns Boolean from Standard;

@@ -309,21 +309,9 @@ is
     	---C++: return const&
         returns HCurve2d from Adaptor2d;
 
-    ClearVertexes(me: mutable)
-      is static;
+    Dump(me)
     
-    RemoveVertex(me: mutable;
-                  theIndex : Integer from Standard)
-      is static;
-      
-    InsertVertexBefore(me: mutable;
-                        theIndex : Integer from Standard;
-                        thePnt   : Point from IntPatch)
-      is static;
-    
-	  Dump(me)
-    
-      is static;
+    	is static;
 
  
 fields
