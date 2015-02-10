@@ -748,7 +748,7 @@ static Standard_Integer FindEntities (const Handle(Transfer_FinderProcess) &FP,
     //Handle(Transfer_TransientListBinder)::DownCast( bnd->Next(Standard_True) );
     Handle(Transfer_TransientListBinder)::DownCast( bnd );
   Standard_Integer nres=0;
-  if ( TransientListBinder.IsNull() && S.ShapeType() == TopAbs_COMPOUND) 
+  if ( TransientListBinder.IsNull() || S.ShapeType() == TopAbs_COMPOUND) 
   {
     for ( TopoDS_Iterator it(S); it.More(); it.Next() ) {
       Handle(StepRepr_RepresentationItem) item = STEPConstruct::FindEntity ( FP, it.Value(), L );

@@ -67,7 +67,7 @@ if { [regexp {Debug mode} [dversion]] } {
   } else {
     puts "Checking LINUX performance..."
     # Initial CPU_time is 287-289 seconds for Linux
-    if {$CPU_time > 250.} {
+    if {$CPU_time > 260.} {
        puts "ERROR: OCC23753 is reproduced."
        puts "       Low performance: $CPU_time"
     }

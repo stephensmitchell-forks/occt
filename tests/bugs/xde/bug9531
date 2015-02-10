@@ -35,7 +35,7 @@ if { ${IsOk} == 1} {
    set Tol1 [lindex [split [tolerance OCC9531a] ${aTokList}] 2]
    set Tol2 [lindex [split [tolerance OCC9531b] ${aTokList}] 2]
    set percent_max 0.1
-   set Tolerance_percent [GetPercent ${Tol1} ${Tol2}]
+   set Tolerance_percent [expr abs( ${Tol2})-abs(${Tol1})/abs(${Tol1})*100.]
    puts "Tolerance_percent = ${Tolerance_percent} %"
    if { ${Tolerance_percent}  > ${percent_max} } {
       set IsOk 0

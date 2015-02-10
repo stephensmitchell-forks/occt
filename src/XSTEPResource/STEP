@@ -6,7 +6,9 @@
 ! ==============================================================================
 !
 
-ToSTEP.exec.op : SplitCommonVertex,DirectFaces
+ToSTEP.exec.op : SplitCommonVertex,DirectFaces,SplitClosedFaces
+
+ToSTEP.SplitClosedFaces.SegmentSurfaceMode      : 1
 
 FromSTEP.exec.op : FixShape
 

@@ -29,9 +29,22 @@ catch { file delete ${aFile} }
 
 stepwrite a a ${aFile}
 
+set nbshapes_expected_1 "
+Number of shapes in a
+ VERTEX    : 58
+ EDGE      : 106
+ WIRE      : 56
+ FACE      : 51
+ SHELL     : 1
+ SOLID     : 1
+ COMPSOLID : 0
+ COMPOUND  : 0
+ SHAPE     : 273
+"
+
 stepread ${aFile} b *
 nbshapes b_1 ;# empty compound
-checknbshapes b_1 ${nbshapes_expected} 0 "Stator model"
+checknbshapes b_1 ${nbshapes_expected_1} 0 "Stator model"
 
 tpstat c ;# reports exception
 

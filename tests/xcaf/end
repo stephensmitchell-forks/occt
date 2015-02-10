@@ -728,7 +728,7 @@ if {[regexp "FACES" $CompareDocumentsMode]} {
     puts "================FACES==================="
     puts "Faces First: [llength $faces_list_First]"
     puts "Faces Second: [llength $faces_list_Second]"
-    if {[llength $faces_list_First] != [llength $faces_list_Second]} {
+    if {[llength $faces_list_First] > [llength $faces_list_Second]} {
 	puts "Error : The number of faces is wrong"
 	set ErrorCode 2
     }
