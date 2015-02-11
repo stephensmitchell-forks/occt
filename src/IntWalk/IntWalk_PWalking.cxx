@@ -711,6 +711,8 @@ void IntWalk_PWalking::Perform(const TColStd_Array1OfReal& ParDep,
   Standard_Integer LevelOfIterWithoutAppend = -1;
   //
   Arrive = Standard_False;
+  Standard_Boolean aReduceStep = Standard_False;
+  Standard_Real aStepCoef = 1.0;
   while(!Arrive) //010
   {
     LevelOfIterWithoutAppend++;
@@ -722,6 +724,7 @@ void IntWalk_PWalking::Perform(const TColStd_Array1OfReal& ParDep,
       }
       RepartirOuDiviser(DejaReparti,ChoixIso,Arrive);
       LevelOfIterWithoutAppend = 0;
+      aReduceStep = Standard_False;
     }
     //
     // compute f
@@ -743,31 +746,111 @@ void IntWalk_PWalking::Perform(const TColStd_Array1OfReal& ParDep,
     //--ofv.begin
     Standard_Real aIncKey, aEps, dP1, dP2, dP3, dP4;
     //
-    dP1 = sensCheminement * pasuv[0] * previousd1.X() /f;
-    dP2 = sensCheminement * pasuv[1] * previousd1.Y() /f;
-    dP3 = sensCheminement * pasuv[2] * previousd2.X() /f; 
-    dP4 = sensCheminement * pasuv[3] * previousd2.Y() /f;
+    // Calculation of parameters for adaptive step.
     //
-    aIncKey=5.*(Standard_Real)IncKey;
-    aEps=1.e-7;
-    if(ChoixIso == IntImp_UIsoparametricOnCaro1 && Abs(dP1) < aEps)
+    if ((Status == IntWalk_PasTropGrand) || (aReduceStep == Standard_True))
     {
-      dP1 *= aIncKey;
+      aStepCoef *= 0.5;
     }
-
-    if(ChoixIso == IntImp_VIsoparametricOnCaro1 && Abs(dP2) < aEps)
+    else
     {
-      dP2 *= aIncKey;
+      aStepCoef = 1.0;
     }
-
-    if(ChoixIso == IntImp_UIsoparametricOnCaro2 && Abs(dP3) < aEps)
+    aReduceStep = Standard_False;
+    //cout << "aStepCoef = " << aStepCoef << endl;
+    gp_Vec aCD;
+    gp_Vec2d aSDs[2];
+    Standard_Real aR;
+    Standard_Real a2DR;
+    Standard_Boolean anIsAdaptiveStep;
     {
-      dP3 *= aIncKey;
+      anIsAdaptiveStep = CalculateStepData(Param(1), Param(2), Param(3), Param(4), aCD, aSDs[0], aSDs[1], aR, a2DR);
+      if (!anIsAdaptiveStep)
+      {
+        LevelOfIterWithoutAppend = 20;
+        continue;
+        //cout << "error" << endl;
+      }
     }
-
-    if(ChoixIso == IntImp_VIsoparametricOnCaro2 && Abs(dP4) < aEps)
+    //
+    //
+    //
+    Standard_Real aMaxStep = DBL_MAX;
+    Standard_Real aNT = 1e-12;
+    if (anIsAdaptiveStep)
     {
-      dP4 *= aIncKey;
+      if (aSDs[0].X() < -aNT)
+      {
+        aMaxStep = Min(aMaxStep, (UFirst1 - Param(1)) / aSDs[0].X());
+      }
+      if (aNT < aSDs[0].X())
+      {
+        aMaxStep = Min(aMaxStep, (ULast1 - Param(1)) / aSDs[0].X());
+      }
+      if (aSDs[0].Y() < -aNT)
+      {
+        aMaxStep = Min(aMaxStep, (VFirst1 - Param(2)) / aSDs[0].Y());
+      }
+      if (aNT < aSDs[0].Y())
+      {
+        aMaxStep = Min(aMaxStep, (VLast1 - Param(2)) / aSDs[0].Y());
+      }
+      //
+      if (aSDs[1].X() < -aNT)
+      {
+        aMaxStep = Min(aMaxStep, (UFirst2 - Param(3)) / aSDs[1].X());
+      }
+      if (aNT < aSDs[1].X())
+      {
+        aMaxStep = Min(aMaxStep, (ULast2 - Param(3)) / aSDs[1].X());
+      }
+      if (aSDs[1].Y() < -aNT)
+      {
+        aMaxStep = Min(aMaxStep, (VFirst2 - Param(4)) / aSDs[1].Y());
+      }
+      if (aNT < aSDs[1].Y())
+      {
+        aMaxStep = Min(aMaxStep, (VLast2 - Param(4)) / aSDs[1].Y());
+      }
+      //
+      //aMaxStep = Min(aMaxStep, aR);
+      aMaxStep = Min(aMaxStep, a2DR);
+      aMaxStep *= aStepCoef;
+      if (aMaxStep < 1e-5)
+      {
+        LevelOfIterWithoutAppend = 20;
+        continue;
+      }
+      //else
+      {
+        dP1 = aMaxStep * aSDs[0].X();
+        dP2 = aMaxStep * aSDs[0].Y();
+        dP3 = aMaxStep * aSDs[1].X();
+        dP4 = aMaxStep * aSDs[1].Y();
+      }
+    }
+    else
+    //if (anAreCollinear)
+    {
+      dP1 = sensCheminement * pasuv[0] * previousd1.X() /f;
+      dP2 = sensCheminement * pasuv[1] * previousd1.Y() /f;
+      dP3 = sensCheminement * pasuv[2] * previousd2.X() /f; 
+      dP4 = sensCheminement * pasuv[3] * previousd2.Y() /f;
+      //
+      aIncKey=5.*(Standard_Real)IncKey;
+      aEps=1.e-7;
+      if(ChoixIso == IntImp_UIsoparametricOnCaro1 && Abs(dP1) < aEps) {
+        dP1 *= aIncKey;
+      }
+      if(ChoixIso == IntImp_VIsoparametricOnCaro1 && Abs(dP2) < aEps) {
+        dP2 *= aIncKey;
+      }
+      if(ChoixIso == IntImp_UIsoparametricOnCaro2 && Abs(dP3) < aEps) {
+        dP3 *= aIncKey;
+      }
+      if(ChoixIso == IntImp_VIsoparametricOnCaro2 && Abs(dP4) < aEps) {
+        dP4 *= aIncKey;
+      }
     }
     //--ofv.end
     //
@@ -775,6 +858,40 @@ void IntWalk_PWalking::Perform(const TColStd_Array1OfReal& ParDep,
     Param(2) += dP2;
     Param(3) += dP3; 
     Param(4) += dP4;
+    //
+    if (Param(1) < UFirst1)
+    {
+      Param(1) = UFirst1;
+    }
+    if (ULast1 < Param(1))
+    {
+      Param(1) = ULast1;
+    }
+    if (Param(2) < VFirst1)
+    {
+      Param(2) = VFirst1;
+    }
+    if (VLast1 < Param(2))
+    {
+      Param(2) = ULast1;
+    }
+    //
+    if (Param(3) < UFirst2)
+    {
+      Param(3) = UFirst2;
+    }
+    if (ULast2 < Param(3))
+    {
+      Param(3) = ULast2;
+    }
+    if (Param(4) < VFirst2)
+    {
+      Param(4) = VFirst2;
+    }
+    if (VLast2 < Param(4))
+    {
+      Param(4) = ULast2;
+    }
     //==========================
     SvParam[0]=Param(1); 
     SvParam[1]=Param(2);
@@ -834,39 +951,46 @@ void IntWalk_PWalking::Perform(const TColStd_Array1OfReal& ParDep,
       //== Calculation of exact point from Param(.) is possible
       if (myIntersectionOn2S.IsEmpty())
       {
-        Standard_Real u1,v1,u2,v2;
-        previousPoint.Parameters(u1,v1,u2,v2);
-        //
-        Arrive = Standard_False;
-        if(u1<UFirst1 || u1>ULast1)
+        if (!anIsAdaptiveStep)
         {
-          Arrive=Standard_True;
-        }	
+          Standard_Real u1,v1,u2,v2;
+          previousPoint.Parameters(u1,v1,u2,v2);
+          //
+          Arrive = Standard_False;
+          if(u1<UFirst1 || u1>ULast1)
+          {
+            Arrive=Standard_True;
+          }	
 
-        if(u2<UFirst2 || u2>ULast2)
-        {
-          Arrive=Standard_True;
+          if(u2<UFirst2 || u2>ULast2)
+          {
+            Arrive=Standard_True;
+          }
+
+          if(v1<VFirst1 || v1>VLast1)
+          {
+            Arrive=Standard_True;
+          }
+
+          if(v2<VFirst2 || v2>VLast2)
+          {
+            Arrive=Standard_True;
+          }
+
+          RepartirOuDiviser(DejaReparti,ChoixIso,Arrive);
+          LevelOfEmptyInmyIntersectionOn2S++;
+          //
+          if(LevelOfEmptyInmyIntersectionOn2S>10)
+          {
+            pasuv[0]=pasSav[0]; 
+            pasuv[1]=pasSav[1]; 
+            pasuv[2]=pasSav[2]; 
+            pasuv[3]=pasSav[3];
+          }
         }
-
-        if(v1<VFirst1 || v1>VLast1)
+        else
         {
-          Arrive=Standard_True;
-        }
-
-        if(v2<VFirst2 || v2>VLast2)
-        {
-          Arrive=Standard_True;
-        }
-
-        RepartirOuDiviser(DejaReparti,ChoixIso,Arrive);
-        LevelOfEmptyInmyIntersectionOn2S++;
-        //
-        if(LevelOfEmptyInmyIntersectionOn2S>10)
-        {
-          pasuv[0]=pasSav[0]; 
-          pasuv[1]=pasSav[1]; 
-          pasuv[2]=pasSav[2]; 
-          pasuv[3]=pasSav[3];
+          aReduceStep = Standard_True;
         }
       }
       else //008
@@ -882,17 +1006,73 @@ void IntWalk_PWalking::Perform(const TColStd_Array1OfReal& ParDep,
         {
           if(--LevelOfEmptyInmyIntersectionOn2S<=0)
           {
-            LevelOfEmptyInmyIntersectionOn2S=0;
-            if(LevelOfIterWithoutAppend < 10)
+            if (anIsAdaptiveStep)
             {
-              Status = TestDeflection();
-            }			
+              Status = IntWalk_OK;
+              Standard_Real aPs2[4];
+              gp_Vec aCD2;
+              gp_Vec2d aSDs2[2];
+              Standard_Real aR2;
+              Standard_Real a2DR2;
+              const IntSurf_PntOn2S & aMP = myIntersectionOn2S.Point();
+              aMP.Parameters(aPs2[0], aPs2[1], aPs2[2], aPs2[3]);
+              Status = IntWalk_PasTropGrand;
+              if (!CalculateStepData(Param(1), Param(2), Param(3), Param(4), aCD2, aSDs2[0], aSDs2[1], aR2, a2DR2))
+              {
+                //cout << "error2" << endl;
+                //LevelOfIterWithoutAppend = 20;
+                //continue;
+              }
+              else if (a2DR2 < aMaxStep)
+              {
+                aStepCoef *= a2DR2 / aMaxStep;
+              }
+              else if (Abs(aCD * aCD2) <= 0.997)
+              {
+                //cout << "cos = " << Abs(aCD * aCD2) << endl;
+              }
+              else
+              {
+                Standard_Real aDist = previousPoint.Value().Distance(aMP.Value());
+                Standard_Real aMinR = Min(aR, aR2);
+                if (aMinR < aDist)
+                {
+                  aStepCoef *= aMinR / aDist;
+                }
+                else
+                {
+                  Standard_Real aSP = aSDs[0] * aSDs2[0];
+                  if (aSP * aSP <= (0.997 * 0.997) * aSDs[0].SquareMagnitude() *
+                    aSDs2[0].SquareMagnitude())
+                  {
+                  }
+                  else
+                  {
+                    aSP = aSDs[1] * aSDs2[1];
+                    if (aSP * aSP <= (0.997 * 0.997) * aSDs[1].SquareMagnitude() *
+                      aSDs2[1].SquareMagnitude())
+                    {
+                    }
+                    else
+                    {
+                      Status = TestDeflection();
+                    }
+                  }
+                }
+              }
+            }
             else
             {
-              pasuv[0]*=0.5; 
-              pasuv[1]*=0.5; 
-              pasuv[2]*=0.5; 
-              pasuv[3]*=0.5;
+              if((LevelOfIterWithoutAppend < 10))
+              {
+                Status = TestDeflection();
+              }			
+              else   { 
+                pasuv[0]*=0.5; 
+                pasuv[1]*=0.5; 
+                pasuv[2]*=0.5; 
+                pasuv[3]*=0.5;
+              }
             }
           }
         }
@@ -992,6 +1172,7 @@ void IntWalk_PWalking::Perform(const TColStd_Array1OfReal& ParDep,
           {
             Arrive = Standard_False;
             RepartirOuDiviser(DejaReparti, ChoixIso, Arrive);
+            aReduceStep = Standard_False;
             break;
           }
         case IntWalk_PasTropGrand:
@@ -1463,6 +1644,184 @@ void IntWalk_PWalking::Perform(const TColStd_Array1OfReal& ParDep,
 
   done = Standard_True;
 }
+
+Standard_Boolean IntWalk_PWalking::CalculateStepData(const Standard_Real thePtrParams1,
+                                                     const Standard_Real thePtrParams2,
+                                                     const Standard_Real thePtrParams3,
+                                                     const Standard_Real thePtrParams4,
+                                                     gp_Vec  & theCD,
+                                                     gp_Vec2d& theSD1,
+                                                     gp_Vec2d& theSD2,
+                                                     Standard_Real & theMaxStep,
+                                                     Standard_Real & theMax2DStep)
+{
+  Standard_Real theParams[4] = {thePtrParams1, thePtrParams2,
+                                thePtrParams3, thePtrParams4};
+  const Handle(Adaptor3d_HSurface) & aS1 = myIntersectionOn2S.Function().AuxillarSurface1();
+  const Handle(Adaptor3d_HSurface) & aS2 = myIntersectionOn2S.Function().AuxillarSurface2();
+  gp_Pnt aPs[2];
+  gp_Vec aDs[2][5];
+  Adaptor3d_HSurfaceTool::D2(aS1, theParams[0], theParams[1], aPs[0], aDs[0][0], aDs[0][1],
+    aDs[0][2], aDs[0][3], aDs[0][4]);
+  Adaptor3d_HSurfaceTool::D2(aS2, theParams[2], theParams[3], aPs[1], aDs[1][0], aDs[1][1],
+    aDs[1][2], aDs[1][3], aDs[1][4]);
+  Standard_Real aNT = 1e-12, aDNs[2][2];
+  aDNs[0][0] = aDs[0][0].Magnitude();
+  aDNs[0][1] = aDs[0][1].Magnitude();
+  aDNs[1][0] = aDs[1][0].Magnitude();
+  aDNs[1][1] = aDs[1][1].Magnitude();
+  if ((aDNs[0][0] <= aNT) | (aDNs[0][1] <= aNT) |
+      (aDNs[1][0] <= aNT) | (aDNs[1][1] <= aNT))
+  {
+    return Standard_False;
+  }
+  gp_Vec aNs[2];
+  {
+    gp_Vec aNDs[2][2];
+    aNDs[0][0] = aDs[0][0] / aDNs[0][0];
+    aNDs[0][1] = aDs[0][1] / aDNs[0][1];
+    aNDs[1][0] = aDs[1][0] / aDNs[1][0];
+    aNDs[1][1] = aDs[1][1] / aDNs[1][1];
+    aNs[0] = aNDs[0][0] ^ aNDs[0][1];
+    aNs[1] = aNDs[1][0] ^ aNDs[1][1];
+    Standard_Real aNNs[2] = {aNs[0].Magnitude(), aNs[1].Magnitude()};
+    if ((aNNs[0] <= aNT) | (aNNs[1] <= aNT))
+    {
+      return Standard_False;
+    }
+    aNs[0] /= aNNs[0];
+    aNs[1] /= aNNs[1];
+  }
+  //////////////////////////////////////////////////////////////////////////////
+  //
+  // Set C(s) = S1(u(s), v(s)) = S2(x(s), y(s)),
+  //   s - curve length.
+  //
+  //////////////////////////////////////////////////////////////////////////////
+  // Calculate theSD1 and theSD2 as
+  //   theSD1 = (du/ds, dv/ds),
+  //   theSD2 = (dx/ds, dy/ds)
+  // from the following identities:
+  //    ddS1/ddu * du/ds + ddS1/ddv * dv/ds =
+  //    ddS2/ddx * dx/ds + ddS2/ddy * dy/ds,
+  //   |ddS1/ddu * du/ds + ddS1/ddv * dv/ds| = 1,
+  //   |ddS2/ddx * dx/ds + ddS2/ddy * dy/ds| = 1.
+  {
+    Standard_Real aMaxN = Max(aDNs[0][0], aDNs[0][1]);
+    Standard_Real aC = 1 / aMaxN;
+    theSD1 = gp_Vec2d((aC * aDs[0][1]) * aNs[1], (-aC * aDs[0][0]) * aNs[1]);
+    //
+                  aMaxN = Max(aDNs[1][0], aDNs[1][1]);
+                  aC = 1 / aMaxN;
+    theSD2 = gp_Vec2d((aC * aDs[1][1]) * aNs[0], (-aC * aDs[1][0]) * aNs[0]);
+  }
+  theCD = theSD1.X() * aDs[0][0] + theSD1.Y() * aDs[0][1];
+  {
+    Standard_Real aSP = theCD * previousd;
+    if (((aSP < 0) && (0 < sensCheminement)) ||
+        ((0 < aSP) && (sensCheminement < 0)))
+    {
+      theCD.Reverse();
+      theSD1.Reverse();
+    }
+  }
+  {
+    Standard_Real aN = theCD.Magnitude();
+    if (aN <= aNT)
+    {
+      return Standard_False;
+    }
+    Standard_Real aM = 1 / aN;
+    theCD *= aM;
+    theSD1 *= aM;
+    //
+    gp_Vec aCDer2 = theSD2.X() * aDs[1][0] + theSD2.Y() * aDs[1][1];
+    aN = aCDer2.Magnitude();
+    if (aN <= aNT)
+    {
+      return Standard_False;
+    }
+    theSD2 *= 1 / aN;
+    if (aCDer2 * theCD < 0)
+    {
+      theSD2.Reverse();
+    }
+  }
+  // Calculate aSSDs[0] and aSSDs[1] as
+  //   aSSDs[0] = (d2u/ds2, d2v/ds2),
+  //   aSSDs[1] = (d2x/ds2, d2y/ds2)
+  // from the following identities
+  // (obtained from above identities by differentiation on s):
+  //   ddS1/ddu * d2u/ds2 + ddS1/ddv * d2v/ds2 +
+  //     dd2S1/ddu2 * (du/ds) ^ 2 + dd2S1/ddv2 * (dv/ds) ^ 2 +
+  //     2 * dd2S1/(ddu ddv) * du/ds * dv/ds =
+  //   ddS2/ddx * d2x/ds2 + ddS2/ddy * d2y/ds2 +
+  //     dd2S2/ddx2 * (dx/ds) ^ 2 + dd2S2/ddy2 * (dy/ds) ^ 2 +
+  //     2 * dd2S2/(ddx ddy) * dx/dy * dy/ds,
+  //   (ddS1/ddu * d2u/ds2 + ddS1/ddv * d2v/ds2 +
+  //     dd2S1/ddu2 * (du/ds) ^ 2 + dd2S1/ddv2 * (dv/ds) ^ 2 +
+  //     2 * dd2S1/(ddu ddv) * du/ds * dv/ds) * theCD = 0,
+  //   (ddS2/ddx * d2x/ds2 + ddS2/ddy * d2y/ds2 +
+  //     dd2S2/ddx2 * (dx/ds) ^ 2 + dd2S2/ddy2 * (dy/ds) ^ 2 +
+  //     2 * dd2S2/(ddx ddy) * dx/dy * dy/ds) * theCD = 0.
+  gp_Vec aV1 = (theSD1.X() * theSD1.X()) * aDs[0][2] +
+               (theSD1.Y() * theSD1.Y()) * aDs[0][3] +
+           (2 * theSD1.X() * theSD1.Y()) * aDs[0][4];
+  gp_Vec aV2 = (theSD2.X() * theSD2.X()) * aDs[1][2] +
+               (theSD2.Y() * theSD2.Y()) * aDs[1][3] +
+           (2 * theSD2.X() * theSD2.Y()) * aDs[1][4];
+  gp_Vec aV12 = aV2 - aV1;
+  Standard_Real aKs[4][3];
+  aKs[0][0] = aDs[0][0] * aNs[1];
+  aKs[0][1] = aDs[0][1] * aNs[1];
+  aKs[0][2] =  aV12 * aNs[1];
+  aKs[1][0] = aDs[0][0] * theCD;
+  aKs[1][1] = aDs[0][1] * theCD;
+  aKs[1][2] = -aV1 * theCD;
+  aKs[2][0] = aDs[1][0] * aNs[0];
+  aKs[2][1] = aDs[1][1] * aNs[0];
+  aKs[2][2] = -aV12 * aNs[0];
+  aKs[3][0] = aDs[1][0] * theCD;
+  aKs[3][1] = aDs[1][1] * theCD;
+  aKs[3][2] = -aV2 * theCD;
+  Standard_Real aDets[] = {aKs[0][0] * aKs[1][1] - aKs[0][1] * aKs[1][0],
+                           aKs[2][0] * aKs[3][1] - aKs[2][1] * aKs[3][0]};
+  gp_Vec2d aSSDs[] = {
+    gp_Vec2d((aKs[0][2] * aKs[1][1] - aKs[0][1] * aKs[1][2]) / aDets[0],
+             (aKs[0][0] * aKs[1][2] - aKs[0][2] * aKs[1][0]) / aDets[0]),
+    gp_Vec2d((aKs[2][2] * aKs[3][1] - aKs[2][1] * aKs[3][2]) / aDets[1],
+             (aKs[2][0] * aKs[3][2] - aKs[2][2] * aKs[3][0]) / aDets[1])};
+  // Calculate theMaxStep as radius of curvature for curve C.
+  gp_Vec aCSD = aV1 + aSSDs[0].X() * aDs[0][0] + aSSDs[0].Y() * aDs[0][1];
+  {
+    theMaxStep = DBL_MAX;
+    Standard_Real aDen = (theCD ^ aCSD).Magnitude();
+    if (aNT < aDen)
+    {
+      theMaxStep = 1 / aDen;
+    }
+  }
+  // Calculate theMax2DStep as Min(aMax2DStep1, aMax2DStep2), here
+  // aMax2DStep1 = r1 / ((du/ds) ^ 2 + (dv/ds) ^ 2) ^ 0.5,
+  // aMax2DStep2 = r2 / ((dx/ds) ^ 2 + (dy/ds) ^ 2) ^ 0.5, here
+  // r1 and r2 are radii of curvature for curves
+  // C1(s) = (u(s), v(s)) and C2(s) = (x(s), y(s)).
+  theMax2DStep = DBL_MAX;
+  Standard_Real a2DStep = Abs(theSD1 ^ aSSDs[0]);
+  if (aNT < a2DStep)
+  {
+    a2DStep = theSD1.SquareMagnitude() / a2DStep;
+    theMax2DStep = Min(theMax2DStep, a2DStep);
+  }
+                a2DStep = Abs(theSD2 ^ aSSDs[1]);
+  if (aNT < a2DStep)
+  {
+    a2DStep = theSD2.SquareMagnitude() / a2DStep;
+    theMax2DStep = Min(theMax2DStep, a2DStep);
+  }
+  return Standard_True;
+}
+
 // ===========================================================================================================
 // function: ExtendLineInCommonZone
 // purpose:  Extends already computed line inside tangent zone in the direction given by theChoixIso.

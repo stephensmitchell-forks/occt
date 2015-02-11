@@ -31,6 +31,8 @@ uses XY                  from gp,
      Dir                 from gp,
      Dir2d               from gp,
      Pnt                 from gp,
+     Vec                 from gp,
+     Vec2d               from gp,
 	 TheInt2S            from IntWalk,
      HSurface            from Adaptor3d,
      HSurfaceTool        from Adaptor3d
@@ -297,12 +299,26 @@ theDirectionFlag: Boolean from Standard)
     returns Boolean from Standard;
 
 
-  SeekAdditionalPoints( me    : in out;
-                        theASurf1 , theASurf2  : HSurface from Adaptor3d;
-                        theMinNbPoints : Integer from Standard)
+  SeekAdditionalPoints(me    : in out;
+                       theASurf1 , theASurf2  : HSurface from Adaptor3d;
+                       theMinNbPoints : Integer from Standard)
     returns Boolean from Standard;
     -- Unites and correctly coordinates of work of
     -- "DistanceMinimizeByGradient" and "DistanceMinimizeByExtrema" functions.
+
+  CalculateStepData(me: in out;
+                    theParams1: Real from Standard;
+                    theParams2: Real from Standard;
+                    theParams3: Real from Standard;
+                    theParams4: Real from Standard;
+                    theCD: in out Vec from gp;
+                    theSD1: in out Vec2d from gp;
+                    theSD2: in out Vec2d from gp;
+                    theMaxStep: in out Real from Standard;
+                    theMax2DStep: in out Real from Standard)
+     ---Purpose: Compute data used in next point computation.
+  returns Boolean from Standard
+  is static private;
 
 fields
 
