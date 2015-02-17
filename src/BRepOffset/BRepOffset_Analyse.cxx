@@ -5,8 +5,8 @@
 //
 // This file is part of Open CASCADE Technology software library.
 //
-// This library is free software; you can redistribute it and / or modify it
-// under the terms of the GNU Lesser General Public version 2.1 as published
+// This library is free software; you can redistribute it and/or modify it under
+// the terms of the GNU Lesser General Public License version 2.1 as published
 // by the Free Software Foundation, with special exception defined in the file
 // OCCT_LGPL_EXCEPTION.txt. Consult the file LICENSE_LGPL_21.txt included in OCCT
 // distribution for complete text of the license and disclaimer of any warranty.
@@ -49,7 +49,21 @@
 #include <Adaptor3d_Surface.hxx>
 //
 static void Correct2dPoint(const Adaptor3d_Surface& theS, gp_Pnt2d& theP2d);
-
+//
+static BRepOffset_Type DefineConnectType(const TopoDS_Edge&         E,
+			                                   const TopoDS_Face&         F1,
+			                                   const TopoDS_Face&         F2,
+			                                   const Standard_Real        SinTol,
+                                         const Standard_Boolean     CorrectPoint);
+//
+static void CorrectOrientationOfTangent(gp_Vec& TangVec,
+                                        const TopoDS_Vertex& aVertex,
+                                        const TopoDS_Edge& anEdge)
+{
+  TopoDS_Vertex Vlast = TopExp::LastVertex(anEdge);
+  if (aVertex.IsSame(Vlast))
+    TangVec.Reverse();
+}
 //=======================================================================
 //function : BRepOffset_Analyse
 //purpose  : 
@@ -79,100 +93,32 @@ BRepOffset_Analyse::BRepOffset_Analyse(const TopoDS_Shape& S,
 //=======================================================================
 
 static void EdgeAnalyse(const TopoDS_Edge&         E,
-			const TopoDS_Face&         F1,
-			const TopoDS_Face&         F2,
-			const Standard_Real        SinTol,
-			BRepOffset_ListOfInterval& LI)
+			                  const TopoDS_Face&         F1,
+			                  const TopoDS_Face&         F2,
+			                  const Standard_Real        SinTol,
+			                        BRepOffset_ListOfInterval& LI)
 {
-
   
-  TopLoc_Location L;
   Standard_Real   f,l;
-  
-  BRepAdaptor_Surface S1(F1), S2(F2);
-  Handle (Geom2d_Curve) C1 = BRep_Tool::CurveOnSurface(E,F1,f,l);
-  Handle (Geom2d_Curve) C2 = BRep_Tool::CurveOnSurface(E,F2,f,l);
-
-  BRepAdaptor_Curve C(E);
-  f = C.FirstParameter();
-  l = C.LastParameter();
-  
+  BRep_Tool::Range(E, F1, f, l);
+  BRepOffset_Interval I;
+  I.First(f); I.Last(l);
+  //
   // Tangent if the regularity is at least G1.
   if (BRep_Tool::HasContinuity(E,F1,F2)) {
     if (BRep_Tool::Continuity(E,F1,F2) > GeomAbs_C0) {
-      BRepOffset_Interval I;
-	    I.First(f); I.Last(l);
       I.Type(BRepOffset_Tangent);
       LI.Append(I);
       return;
     }
   }
-  // First stage : Type determined by one of ends.
-  // Calculate normals and tangents on the curves and surface.
-  // normals are oriented outwards.
-  
-  Standard_Real ParOnC = 0.5*(f+l);
-  gp_Vec T1 = C.DN(ParOnC,1).Transformed(L.Transformation());
-  if (T1.SquareMagnitude() > gp::Resolution()) {
-    T1.Normalize();
+  //
+  BRepOffset_Type aType = DefineConnectType(E, F1, F2, SinTol, Standard_False);
+  if(aType != BRepOffset_Tangent)
+  {
+    aType = DefineConnectType(E, F1, F2, SinTol, Standard_True);
   }
-  
-  if (BRepOffset_Tool::OriEdgeInFace(E,F1) == TopAbs_REVERSED) {
-    T1.Reverse();
-  }
-  if (F1.Orientation() == TopAbs_REVERSED) T1.Reverse();
-
-  gp_Pnt2d P  = C1->Value(ParOnC);
-  gp_Pnt   P3;
-  gp_Vec   D1U,D1V;
-
-  Correct2dPoint(S1, P);
-  S1.D1(P.X(),P.Y(),P3,D1U,D1V);
-  gp_Vec DN1(D1U^D1V);
-  if (F1.Orientation() == TopAbs_REVERSED) DN1.Reverse();
-  
-  P = C2->Value(ParOnC);
-  Correct2dPoint(S2, P);
-  S2.D1(P.X(),P.Y(),P3,D1U,D1V);
-  gp_Vec DN2(D1U^D1V);
-  if (F2.Orientation() == TopAbs_REVERSED) DN2.Reverse();
-
-  DN1.Normalize();
-  DN2.Normalize();
-
-  gp_Vec        ProVec     = DN1^DN2;
-  Standard_Real NormProVec = ProVec.Magnitude(); 
-
-  BRepOffset_Interval I;
-  I.First(f); I.Last(l);
-
-  if (Abs(NormProVec) < SinTol) {
-    // plane
-    if (DN1.Dot(DN2) > 0) {   
-      //Tangent
-      I.Type(BRepOffset_Tangent);
-    }
-    else  {                   
-      //Mixed not finished!
-#ifdef DEB
-      cout <<" faces locally mixed"<<endl;
-#endif
-      I.Type(BRepOffset_Convex);
-    }
-  }
-  else {  
-    if (NormProVec > gp::Resolution())
-      ProVec.Normalize();
-    Standard_Real Prod  = T1.Dot(DN1^DN2);
-    if (Prod > 0.) {       
-      //
-      I.Type(BRepOffset_Convex);
-    }
-    else {                       
-      //reenters
-      I.Type(BRepOffset_Concave);
-    }
-  }
+  I.Type(aType);
   LI.Append(I);
 }
 
@@ -261,7 +207,7 @@ void BRepOffset_Analyse::Perform (const TopoDS_Shape& S,
 	mapEdgeType(E).Append(Inter);
       }
       else {  
-#ifdef DEB                   
+#ifdef OCCT_DEBUG
 	cout <<"edge shared by more than two faces"<<endl;
 #endif	
       }
@@ -371,6 +317,7 @@ void BRepOffset_Analyse::TangentEdges(const TopoDS_Edge&    Edge  ,
   URef   = BRep_Tool::Parameter(Vertex,Edge);
   C3dRef = BRepAdaptor_Curve(Edge);
   VRef   = C3dRef.DN(URef,1);
+  CorrectOrientationOfTangent(VRef, Vertex, Edge);
   if (VRef.SquareMagnitude() < gp::Resolution()) return;
 
   Edges.Clear();
@@ -383,8 +330,9 @@ void BRepOffset_Analyse::TangentEdges(const TopoDS_Edge&    Edge  ,
     U   = BRep_Tool::Parameter(Vertex,CurE);
     C3d = BRepAdaptor_Curve(CurE);
     V   = C3d.DN(U,1);
+    CorrectOrientationOfTangent(V, Vertex, CurE);
     if (V.SquareMagnitude() < gp::Resolution()) continue;
-    if (V.IsParallel(VRef,angle)) {
+    if (V.IsOpposite(VRef,angle)) {
       Edges.Append(CurE);
     }
   }
@@ -572,6 +520,91 @@ void Correct2dPoint(const Adaptor3d_Surface& theS, gp_Pnt2d& theP2d)
       {
         theP2d.SetY(v2 - eps);
       }
+    }
+  }
+}
+
+//=======================================================================
+//function : DefineConnectType
+//purpose  : 
+//=======================================================================
+BRepOffset_Type DefineConnectType(const TopoDS_Edge&         E,
+			                            const TopoDS_Face&         F1,
+			                            const TopoDS_Face&         F2,
+			                            const Standard_Real        SinTol,
+                                  const Standard_Boolean     CorrectPoint)
+{
+  TopLoc_Location L;
+  Standard_Real   f,l;
+  
+  BRepAdaptor_Surface S1(F1), S2(F2);
+  Handle (Geom2d_Curve) C1 = BRep_Tool::CurveOnSurface(E,F1,f,l);
+  Handle (Geom2d_Curve) C2 = BRep_Tool::CurveOnSurface(E,F2,f,l);
+
+  BRepAdaptor_Curve C(E);
+  f = C.FirstParameter();
+  l = C.LastParameter();
+//
+  Standard_Real ParOnC = 0.5*(f+l);
+  gp_Vec T1 = C.DN(ParOnC,1).Transformed(L.Transformation());
+  if (T1.SquareMagnitude() > gp::Resolution()) {
+    T1.Normalize();
+  }
+  
+  if (BRepOffset_Tool::OriEdgeInFace(E,F1) == TopAbs_REVERSED) {
+    T1.Reverse();
+  }
+  if (F1.Orientation() == TopAbs_REVERSED) T1.Reverse();
+
+  gp_Pnt2d P  = C1->Value(ParOnC);
+  gp_Pnt   P3;
+  gp_Vec   D1U,D1V;
+  
+  if(CorrectPoint) 
+    Correct2dPoint(S1, P);
+  //
+  S1.D1(P.X(),P.Y(),P3,D1U,D1V);
+  gp_Vec DN1(D1U^D1V);
+  if (F1.Orientation() == TopAbs_REVERSED) DN1.Reverse();
+  
+  P = C2->Value(ParOnC);
+  if(CorrectPoint) 
+    Correct2dPoint(S2, P);
+  S2.D1(P.X(),P.Y(),P3,D1U,D1V);
+  gp_Vec DN2(D1U^D1V);
+  if (F2.Orientation() == TopAbs_REVERSED) DN2.Reverse();
+
+  DN1.Normalize();
+  DN2.Normalize();
+
+  gp_Vec        ProVec     = DN1^DN2;
+  Standard_Real NormProVec = ProVec.Magnitude(); 
+
+  if (Abs(NormProVec) < SinTol) {
+    // plane
+    if (DN1.Dot(DN2) > 0) {   
+      //Tangent
+      return BRepOffset_Tangent;
+    }
+    else  {                   
+      //Mixed not finished!
+#ifdef OCCT_DEBUG
+      cout <<" faces locally mixed"<<endl;
+#endif
+      return BRepOffset_Convex;
+    }
+  }
+  else {  
+    if (NormProVec > gp::Resolution())
+      ProVec.Normalize();
+    Standard_Real Prod  = T1.Dot(DN1^DN2);
+    if (Prod > 0.) {       
+      //
+      return BRepOffset_Convex;
+    }
+    else {                       
+      //reenters
+      return BRepOffset_Concave;
     }
   }
 }
