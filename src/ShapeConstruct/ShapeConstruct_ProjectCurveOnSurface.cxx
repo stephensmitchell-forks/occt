@@ -1488,7 +1488,7 @@ Handle(Geom_Curve) ShapeConstruct_ProjectCurveOnSurface::InterpolateCurve3d(cons
   try {    // RAJOUT
     OCC_CATCH_SIGNALS
     
-  Standard_Real prec = Precision::Confusion();//myPreci;
+  Standard_Real prec = myPreci;
     
   Standard_Boolean isoParam = Standard_False;
   isoPar2d3d = Standard_False;
@@ -1566,28 +1566,45 @@ Handle(Geom_Curve) ShapeConstruct_ProjectCurveOnSurface::InterpolateCurve3d(cons
     Standard_Boolean PtEQext2 = Standard_False;
 
     Standard_Real currd2[2], tp[2] = {0, 0};
-    Standard_Integer mp[2];
+    Standard_Integer mp[2] = {0, 0};
     
     for (Standard_Integer i=0; i<2; i++) {
-      mp[i] = 0;
+
+      Standard_Real Cf = cI->FirstParameter();
+      Standard_Real Cl = cI->LastParameter();
+      if (Precision::IsInfinite(Cf))  Cf = -1000;
+      if (Precision::IsInfinite(Cl))  Cl = +1000;
+
+      ShapeAnalysis_Curve sac;
+      Standard_Real mdist = sac.Project (cI,points(nbrPnt/2),prec,pt,t,Cf,Cl);
+      if(mdist > prec)
+        break;
+
       Standard_Integer k = (i == 0 ? 1 : nbrPnt);
+      Standard_Integer knext = (i == 0 ? 2 : nbrPnt-1);
 
       // si ext1 == ext2 => valueP1 == valueP2 => vect null plus tard
       currd2[i] = points(k).SquareDistance ( ext1 );
       if ( currd2[i] <= prec*prec && !PtEQext1) {
-        mp[i] = 1;
-        tp[i] = tt1;
-	PtEQext1 = Standard_True;
-	continue;
-      } 
+        sac.Project (cI,points(knext),prec,pt,t,Cf,Cl);
+        if ( abs(t - tt1) < abs(t - tt2)){
+          mp[i] = 1;
+          tp[i] = tt1;
+          PtEQext1 = Standard_True; 
+          continue;
+        }
+      }
       
       currd2[i] = points(k).SquareDistance ( ext2 );
       if ( currd2[i] <= prec*prec && !PtEQext2) {
-        mp[i] = 2;
-        tp[i] = tt2;
-	PtEQext2 = Standard_True;
-	continue;
-      }  
+        sac.Project (cI,points(knext),prec,pt,t,Cf,Cl);
+        if ( abs(t - tt1) > abs(t - tt2)){
+          mp[i] = 2;
+          tp[i] = tt2;
+          PtEQext2 = Standard_True;
+          continue;
+        }
+      }
       
       // On evite de projecter sur un iso degenere
       // on doit egalement le faire pour l apex du cone
@@ -1597,12 +1614,6 @@ Handle(Geom_Curve) ShapeConstruct_ProjectCurveOnSurface::InterpolateCurve3d(cons
       
       if(aBox->IsOut(points(k))) continue;
       
-      Standard_Real Cf = cI->FirstParameter();
-      Standard_Real Cl = cI->LastParameter();
-      if (Precision::IsInfinite(Cf))  Cf = -1000;
-      if (Precision::IsInfinite(Cl))  Cl = +1000;
-
-      ShapeAnalysis_Curve sac;
       Standard_Real dist = sac.Project (cI,points(k),prec,pt,t,Cf,Cl);
       currd2[i] = dist * dist;
       if ((dist <= prec) && (t>= Cf) && (t<=Cl)) {
