@@ -22,7 +22,8 @@ class QuadricTool from IntSurf
 	--          as implicit surface.
 
 uses Quadric from IntSurf,
-     Vec     from gp
+     Vec     from gp,
+     Pnt     from gp
 
 is
 
@@ -47,11 +48,22 @@ is
 
     ValueAndGradient(myclass; Quad: Quadric from IntSurf;
                      X, Y, Z: Real from Standard;
-                     Val: out Real from Standard; Grad: out Vec from gp);
+                     Val: out Real from Standard;
+    	    	     Grad: out Vec from gp;
+		     D1U_ISurf, D1V_ISurf: out Vec from gp);
 		     
     	---Purpose: Returns the value and the gradient.
 
-	---C++: inline
+    D2(myclass; Quad:  Quadric from IntSurf;
+                Point: Pnt from gp;
+    	    	D1U:   out Vec from gp;
+    	    	D1V:   out Vec from gp;
+    	    	D2U:   out Vec from gp;
+    	    	D2V:   out Vec from gp;
+    	    	D2UV:  out Vec from gp);
+		     
+    	---Purpose: Returns all first and second derivatives.
+    
     
 
     Tolerance(myclass; Quad: Quadric from IntSurf )
