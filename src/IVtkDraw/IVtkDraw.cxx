@@ -68,6 +68,7 @@
 #include <NCollection_DoubleMap.hxx>
 #include <NCollection_List.hxx>
 #include <NCollection_DataMap.hxx>
+#include <TColStd_HSequenceOfAsciiString.hxx>
 #include <TopTools_DataMapOfIntegerShape.hxx>
 #include <OpenGl_GraphicDriver.hxx>
 #include <Aspect_DisplayConnection.hxx>
@@ -875,7 +876,7 @@ static Standard_Integer VtkFit (Draw_Interpretor& theDI,
 // Fubction  : VtkDump
 // Purpose   :
 // Draw args : ivtkdump FullFilename.{png|bmp|jpeg|tiff|pnm} 
-//                      [buffer={rgb|rgba|depth}] [width height]
+//                      [buffer={rgb|rgba|depth}] [width=height]
 //                      [stereoproj={L|R}]
 //===================================================================
 static Standard_Integer VtkDump (Draw_Interpretor& theDI,
@@ -1072,6 +1073,115 @@ static Standard_Integer VtkBackgroundColor (Draw_Interpretor& theDI,
   return 0;
 }
 
+//===================================================================
+// Fubction  : VtkProperty
+// Purpose   :
+// Draw args :
+//===================================================================
+static Standard_Integer VtkProperty (Draw_Interpretor& theDI,
+                                     Standard_Integer theArgsNb,
+                                     const char** theArgs)
+{
+  if (theArgsNb < 2)
+  {
+    theDI << theArgs[0] << " error : wrong number of parameters.\n"
+      << "Type 'help " << theArgs[0] << "' for more information.\n";
+    return 1;
+  }
+
+  // Parse parameters
+  NCollection_DataMap<TCollection_AsciiString, Handle(TColStd_HSequenceOfAsciiString)> aMapOfArgs;
+  TCollection_AsciiString aParseKey;
+  for (Standard_Integer anArgIt = 2; anArgIt < theArgsNb; ++anArgIt)
+  {
+    TCollection_AsciiString anArg(theArgs[anArgIt]);
+
+    if (anArg.Value(1) == '-' && !anArg.IsRealValue())
+    {
+      aParseKey = anArg;
+      aParseKey.Remove(1);
+      aParseKey.LowerCase();
+      aMapOfArgs.Bind (aParseKey, new TColStd_HSequenceOfAsciiString);
+      continue;
+    }
+
+    if (aParseKey.IsEmpty())
+    {
+      continue;
+    }
+
+    aMapOfArgs(aParseKey)->Append(anArg);
+  }
+
+  // Check for validity
+  NCollection_DataMap<TCollection_AsciiString, Handle(TColStd_HSequenceOfAsciiString)>::Iterator aMapIt(aMapOfArgs);
+  for (; aMapIt.More(); aMapIt.Next())
+  {
+    const TCollection_AsciiString& aKey = aMapIt.Key();
+    const Handle(TColStd_HSequenceOfAsciiString)& anArgs = aMapIt.Value();
+
+    if (aKey.IsEqual ("shading") && anArgs->Length() == 1
+      && (anArgs->Value(1) == "flat" || anArgs->Value(1) == "phong" || anArgs->Value(1) == "gouraud"))
+    {
+      continue;
+    }
+
+    if (aKey.IsEqual ("color") && anArgs->Length() == 3
+      && anArgs->Value(1).IsIntegerValue() && anArgs->Value(2).IsIntegerValue() && anArgs->Value(3).IsIntegerValue())
+    {
+      continue;
+    }
+
+    TCollection_AsciiString aLowerKey;
+    aLowerKey = "-";
+    aLowerKey += aKey;
+    aLowerKey.LowerCase();
+    std::cout << theArgs[0] << ": " << aLowerKey << " is unknown option, or the arguments are unacceptable.\n";
+    std::cout << "Type help for more information.\n";
+    return 1;
+  }
+
+  // Process
+  TCollection_AsciiString aName = theArgs[1];
+  if (!GetMapOfActors().IsBound2 (aName))
+  {
+    std::cout << theArgs[0] << "Wrong name of shape.\n";
+    return 1;
+  }
+
+  vtkSmartPointer<vtkActor> anActor = GetMapOfActors().Find2 (aName);
+
+  Handle(TColStd_HSequenceOfAsciiString) aValues;
+  if (aMapOfArgs.Find ("shading", aValues))
+  {
+    if (aValues->Value(1) == "flat")
+    {
+      anActor->GetProperty()->SetInterpolationToFlat();
+    }
+    else if (aValues->Value(1) == "phong")
+    {
+      anActor->GetProperty()->SetInterpolationToPhong();
+    }
+    else if (aValues->Value(1) == "gouraud")
+    {
+      anActor->GetProperty()->SetInterpolationToFlat();
+    }
+  }
+
+  if (aMapOfArgs.Find("color", aValues))
+  {
+      anActor->GetProperty()->SetColor (aValues->Value(1).IntegerValue() / 255.0,
+                                        aValues->Value(2).IntegerValue() / 255.0,
+                                        aValues->Value(1).IntegerValue() / 255.0);
+  }
+
+  //  Update interactor
+  GetRenderer()->ResetCamera();
+  GetInteractor()->Render();
+
+  return 0;
+}
+
 //================================================================
 // Function : Commands
 // Purpose  : 
@@ -1141,6 +1251,14 @@ void IVtkDraw::Commands (Draw_Interpretor& theCommands)
     "\n\t\t: Sets uniform  background color or gradient one if second triple of paramers is set."
     "Color parameters r,g,b = [0..255].",
     __FILE__, VtkBackgroundColor, group);
+
+
+  theCommands.Add("ivtkproperty",
+	  "ivtkproperty usage:\n"
+	  "ivtkproperty Shape -shading {flat;phong;gouraud} -color {r g b}\n"
+	  "\n\t\t: Sets shape (actor) propertoes."
+	  "Color parameters r,g,b = [0..255].",
+	  __FILE__, VtkProperty, group);
 }
 
 

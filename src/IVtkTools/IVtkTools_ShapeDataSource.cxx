@@ -76,7 +76,7 @@ void IVtkTools_ShapeDataSource::SetShape (const IVtkOCC_Shape::Handle& theOccSha
 // Function : GetShape
 // Purpose  : 
 //================================================================
-IVtkOCC_Shape::Handle IVtkTools_ShapeDataSource::GetShape()
+IVtkOCC_Shape::Handle IVtkTools_ShapeDataSource::GetShape() const
 {
   return myOccShape;
 }
@@ -101,7 +101,7 @@ int IVtkTools_ShapeDataSource::RequestData (vtkInformation* theRequest,
 
   if (myIsTransformOnly)
   {
-    vtkPolyData* aPrevData = myPolyData->getVtkPolyData();
+    vtkPolyData* aPrevData = myPolyData->GetVtkPolyData();
     if (!aShapeLoc.IsIdentity() )
     {
       aTransformedData = this->transform (aPrevData, aShapeLoc);
@@ -129,7 +129,7 @@ int IVtkTools_ShapeDataSource::RequestData (vtkInformation* theRequest,
     myPolyData = new IVtkVTK_ShapeData;
     IVtkOCC_ShapeMesher::Handle aMesher = new IVtkOCC_ShapeMesher;
     aMesher->Build (aShapeWrapperCopy, myPolyData);
-    vtkPolyData* aMeshData = myPolyData->getVtkPolyData();
+    vtkPolyData* aMeshData = myPolyData->GetVtkPolyData();
 
     if (myIsFastTransformMode && !aShapeLoc.IsIdentity() )
     {

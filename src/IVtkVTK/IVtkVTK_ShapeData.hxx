@@ -105,7 +105,7 @@ public: //! @name Specific methods
 
   //! Get VTK PolyData.
   //! @return VTK PolyData
-  vtkSmartPointer< vtkPolyData > getVtkPolyData() const
+  vtkSmartPointer< vtkPolyData > GetVtkPolyData() const
   { return myPolyData; }
 
 private:

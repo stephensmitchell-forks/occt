@@ -17,7 +17,9 @@
 
 #include <vtkRenderer.h>
 #include <vtkActor.h>
+#include <vtkCellData.h>
 #include <vtkPolyDataMapper.h>
+#include <vtkPolyDataNormals.h>
 #include <vtkPolyData.h>
 #include <vtkAppendPolyData.h>
 #include <vtkProperty.h>
@@ -65,10 +67,30 @@ IVtkDraw_HighlightAndSelectionPipeline::IVtkDraw_HighlightAndSelectionPipeline (
   aDMFilter->AddInputConnection (aDataSource->GetOutputPort());
   aDMFilter->SetDisplayMode (DM_Wireframe);
 
+
   myMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-  myMapper->AddInputConnection (aDMFilter->GetOutputPort());
+
+  // Normals filter is needed
+  if (aDataSource->GetShapeData()->GetVtkPolyData()->GetCellData()->HasArray("Normals"))
+  {
+    vtkSmartPointer<vtkPolyDataNormals> aNormals = vtkSmartPointer<vtkPolyDataNormals>::New();
+    aNormals->SetComputePointNormals(0);
+    aNormals->SetComputeCellNormals(1);
+    aNormals->SetFeatureAngle(37);
+
+    aNormals->SetInputConnection (aDMFilter->GetOutputPort());
+
+    myMapper->AddInputConnection (aNormals->GetOutputPort());
+  }
+  else
+  {
+    myMapper->AddInputConnection (aDMFilter->GetOutputPort());
+  }
+
   myActor->SetMapper (myMapper);
   IVtkTools_ShapeObject::SetShapeSource (aDataSource, myActor);
+
+
 
   myMapper->ScalarVisibilityOn();
   myMapper->SetScalarModeToUseCellFieldData();
@@ -100,7 +122,7 @@ IVtkDraw_HighlightAndSelectionPipeline::IVtkDraw_HighlightAndSelectionPipeline (
   myHiliActor->GetProperty()->SetPointSize (myHiliActor->GetProperty()->GetPointSize() + 4 );
   myHiliActor->GetProperty()->SetLineWidth (myHiliActor->GetProperty()->GetLineWidth() + 2 );
 
-  // Set maper for actor
+  // Set mapper for actor
   myHiliActor->SetMapper (myHiliMapper);
   myHiliMapper->ScalarVisibilityOff();
 

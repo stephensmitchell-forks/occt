@@ -45,7 +45,8 @@ public: //! @name Initialization
 
   //! Get the source OCCT shape.
   //! @return occShape OCCT shape wrapper.
-  IVtkOCC_Shape::Handle GetShape();
+  IVtkOCC_Shape::Handle GetShape() const;
+  IVtkVTK_ShapeData::Handle GetShapeData() const { return myPolyData; };
   inline void FastTransformModeOn() { myIsFastTransformMode = true; }
   inline void FastTransformModeOff() { myIsFastTransformMode = false; }
 
