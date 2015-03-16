@@ -3,7 +3,7 @@ puts "erase"
 puts "============"
 puts ""
 #######################################################
-#  Tests erasing of shapes in the IVtk view
+puts "Tests erasing of shapes in the IVtk view"
 #######################################################
 
 set anImage1 $imagedir/${casename}_before.png

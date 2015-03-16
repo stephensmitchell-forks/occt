@@ -27,10 +27,12 @@
 #include <GCPnts_TangentialDeflection.hxx>
 #include <Geom2dAdaptor_Curve.hxx>
 #include <GeomAdaptor_Curve.hxx>
+#include <GeomLib.hxx>
 #include <gp_Dir2d.hxx>
 #include <gp_Pnt2d.hxx>
 #include <IVtkOCC_ShapeMesher.hxx>
 #include <NCollection_Array1.hxx>
+#include <Poly_Connect.hxx>
 #include <Poly_Polygon3D.hxx>
 #include <Poly_PolygonOnTriangulation.hxx>
 #include <Poly_Triangulation.hxx>
@@ -39,10 +41,12 @@
 #include <Prs3d_Drawer.hxx>
 #include <Quantity_Length.hxx>
 #include <Standard_ErrorHandler.hxx>
+#include <TColgp_Array1OfPnt2d.hxx>
 #include <TColgp_SequenceOfPnt2d.hxx>
 #include <TColStd_Array1OfReal.hxx>
 #include <TopExp.hxx>
 #include <TopExp_Explorer.hxx>
+#include <TShort_HArray1OfShortReal.hxx>
 
 // Handle implementation
 IMPLEMENT_STANDARD_HANDLE(IVtkOCC_ShapeMesher, IVtk_IShapeMesher)
@@ -911,6 +915,12 @@ void IVtkOCC_ShapeMesher::addWFFace (const TopoDS_Face& theFace,
   }
 }
 
+#include <IVtkVTK_ShapeData.hxx>
+#include <vtkSmartPointer.h>
+#include <vtkFloatArray.h>
+#include <vtkPolyData.h>
+#include <vtkCellData.h>
+#include <vtkPointData.h>
 //================================================================
 // Function : addShadedFace
 // Purpose  : 
@@ -973,4 +983,63 @@ void IVtkOCC_ShapeMesher::addShadedFace (const TopoDS_Face& theFace,
     myShapeData->InsertTriangle (
       theShapeId, aPointIds(aN1), aPointIds(aN2), aPointIds(aN3), MT_ShadedFace);
   }
+
+    // Estimate normals
+ vtkSmartPointer<vtkFloatArray> aNormArray = vtkFloatArray::New();
+ aNormArray->SetNumberOfComponents (3);
+ aNormArray->SetName ("Normals");
+ vtkPolyData* aShapeData = IVtkVTK_ShapeData::Handle::DownCast (myShapeData)->GetVtkPolyData();
+ aNormArray->SetNumberOfTuples (aShapeData->GetNumberOfPoints());
+ double n[3];
+ n[0] = n[1] = n[2] = 0.0;
+ for (int i = 0; i < aShapeData->GetNumberOfPoints(); i++)
+ {
+   aNormArray->SetTuple (i,n);
+ }
+
+ const TopoDS_Face aZeroFace = TopoDS::Face (theFace.Located (TopLoc_Location()));
+ Handle(Geom_Surface) aSurface = BRep_Tool::Surface (aZeroFace);
+ Handle(TShort_HArray1OfShortReal) aNormals = new TShort_HArray1OfShortReal (1, aNbPoints * 3);
+ const TColgp_Array1OfPnt2d*  aNodesUV = anOcctTriangulation->HasUVNodes() && !aSurface.IsNull()
+                                         ? &anOcctTriangulation->UVNodes()
+                                         : NULL;
+
+ Poly_Connect aPolyConnect (anOcctTriangulation);
+ for (Standard_Integer aNodeIter = aPoints.Lower(); aNodeIter <= aPoints.Upper(); ++aNodeIter)
+ {
+   gp_Dir aDirNormal;
+   Standard_Integer aTri[3];
+
+   // Try to retrieve normal from real surface first, when UV coordinates are available
+   if (aNodesUV == NULL
+     || GeomLib::NormEstim (aSurface, aNodesUV->Value (aNodeIter), Precision::Confusion(), aDirNormal) > 1)
+   {
+     // Compute flat normals
+     gp_XYZ eqPlan (0.0, 0.0, 0.0);
+     for (aPolyConnect.Initialize (aNodeIter); aPolyConnect.More(); aPolyConnect.Next())
+     {
+       aTriangles (aPolyConnect.Value()).Get (aTri[0], aTri[1], aTri[2]);
+
+       const gp_XYZ aVertex1 (aPoints (aTri[1]).Coord() - aPoints (aTri[0]).Coord());
+       const gp_XYZ aVertex2 (aPoints (aTri[2]).Coord() - aPoints (aTri[1]).Coord());
+       const gp_XYZ aNorm = aVertex1 ^ aVertex2;
+       const Standard_Real aMod = aNorm.Modulus();
+       if (aMod >= Precision::Confusion())
+       {
+         eqPlan += aNorm / aMod;
+       }
+     }
+     const Standard_Real aModMax = eqPlan.Modulus();
+
+     aDirNormal = (aModMax > Precision::Confusion()) ? gp_Dir (eqPlan) : gp::DZ();
+   }
+
+   // Set normal from NormEstim result
+   const Standard_Integer anId = (aNodeIter - aPoints.Lower());
+
+   aNormArray->SetTuple3 (anId, aDirNormal.X(), aDirNormal.Y(), aDirNormal.Z());
+  }
+
+  aShapeData->GetPointData()->SetNormals (aNormArray);
+
 }

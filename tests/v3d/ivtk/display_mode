@@ -3,7 +3,7 @@ puts "display_mode"
 puts "============"
 puts ""
 #######################################################
-#  Tests display modes changing in the IVtk view
+puts "Tests display modes changing in the IVtk view"
 #######################################################
 
 set anImage1 $imagedir/${casename}_1.png

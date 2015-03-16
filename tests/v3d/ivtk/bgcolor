@@ -2,9 +2,9 @@ puts "============"
 puts "bgcolor"
 puts "============"
 puts ""
-#######################################################
-#  Tests changing of background color in the IVtk view
-#######################################################
+###########################################################
+puts "Tests changing of background color in the IVtk view"
+###########################################################
 
 set anImage1 $imagedir/${casename}_1.png
 set anImage2 $imagedir/${casename}_2.png

@@ -21,6 +21,7 @@
 #include <vtkPolyDataMapper.h>
 #include <vtkPolyDataNormals.h>
 #include <vtkPolyData.h>
+#include <vtkPointData.h>
 #include <vtkAppendPolyData.h>
 #include <vtkProperty.h>
 
@@ -60,6 +61,7 @@ IVtkDraw_HighlightAndSelectionPipeline::IVtkDraw_HighlightAndSelectionPipeline (
   anIVtkShape->SetId (theShapeID);
   vtkSmartPointer<IVtkTools_ShapeDataSource> aDataSource = vtkSmartPointer<IVtkTools_ShapeDataSource>::New();
   aDataSource->SetShape (IVtkOCC_Shape::Handle::DownCast (anIVtkShape) );
+  IVtkTools_ShapeObject::SetShapeSource (aDataSource, myActor);
 
   IVtkTools_DisplayModeFilter*
     aDMFilter = IVtkTools_DisplayModeFilter::SafeDownCast (myFilterMap.Find(Filter_DM_Shape));
@@ -67,18 +69,17 @@ IVtkDraw_HighlightAndSelectionPipeline::IVtkDraw_HighlightAndSelectionPipeline (
   aDMFilter->AddInputConnection (aDataSource->GetOutputPort());
   aDMFilter->SetDisplayMode (DM_Wireframe);
 
-
   myMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
 
   // Normals filter is needed
-  if (aDataSource->GetShapeData()->GetVtkPolyData()->GetCellData()->HasArray("Normals"))
+  if (!aDataSource->GetShapeData()->GetVtkPolyData()->GetPointData()->HasArray("Normals"))
   {
     vtkSmartPointer<vtkPolyDataNormals> aNormals = vtkSmartPointer<vtkPolyDataNormals>::New();
-    aNormals->SetComputePointNormals(0);
-    aNormals->SetComputeCellNormals(1);
+    myFilterMap.Bind (Filter_Normals,  aNormals);
+    aNormals->ComputeCellNormalsOff();
+    aNormals->ComputePointNormalsOn();
     aNormals->SetFeatureAngle(37);
-
-    aNormals->SetInputConnection (aDMFilter->GetOutputPort());
+    aNormals->AddInputConnection (aDMFilter->GetOutputPort());
 
     myMapper->AddInputConnection (aNormals->GetOutputPort());
   }
@@ -88,7 +89,7 @@ IVtkDraw_HighlightAndSelectionPipeline::IVtkDraw_HighlightAndSelectionPipeline (
   }
 
   myActor->SetMapper (myMapper);
-  IVtkTools_ShapeObject::SetShapeSource (aDataSource, myActor);
+  
 
 
 

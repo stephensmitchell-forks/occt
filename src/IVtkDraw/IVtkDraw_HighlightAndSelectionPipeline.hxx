@@ -41,8 +41,8 @@
 #include <IVtkTools_DisplayModeFilter.hxx>
 #include <IVtkTools_SubPolyDataFilter.hxx>
 
-typedef NCollection_DataMap <IVtk_IdType, vtkSmartPointer<IVtkTools_DisplayModeFilter> > DisplayModeFiltersMap;
-typedef NCollection_DataMap <IVtk_IdType, vtkSmartPointer<IVtkTools_SubPolyDataFilter> > SubShapesFiltersMap;
+typedef NCollection_DataMap <IVtk_IdType, vtkSmartPointer<IVtkTools_DisplayModeFilter> > IVtkDraw_DisplayModeFiltersMap;
+typedef NCollection_DataMap <IVtk_IdType, vtkSmartPointer<IVtkTools_SubPolyDataFilter> > IVtkDraw_SubShapeFiltersMap;
 
 DEFINE_STANDARD_HANDLE(IVtkDraw_HighlightAndSelectionPipeline, Standard_Transient)
 
@@ -58,6 +58,7 @@ public:
   enum FilterId
   {
     Filter_DM_Shape = 1, //!< Display Mode filter for shape.
+    Filter_Normals,      //!< Filter for normals.
     Filter_DM_Hili,      //!< Display Mode filter for highlighting.
     Filter_DM_Sel,       //!< Display Mode filter for selection.
     Filter_SUB_Hili,     //!< Sub-shapes filter for highlighting.
@@ -122,7 +123,7 @@ private:
 
 //! Mapping between OCCT topological shape IDs and their correspondent
 //! visualization pipelines.
-typedef NCollection_DataMap<IVtk_IdType, Handle(IVtkDraw_HighlightAndSelectionPipeline)> ShapePipelineMap;
-typedef NCollection_Handle<ShapePipelineMap> Handle(ShapePipelineMap);
+typedef NCollection_DataMap<IVtk_IdType, Handle(IVtkDraw_HighlightAndSelectionPipeline)> IVtkDraw_ShapePipelineMap;
+typedef NCollection_Handle<IVtkDraw_ShapePipelineMap> Handle(IVtkDraw_ShapePipelineMap);
 
 #endif

@@ -1,16 +1,17 @@
 puts "============"
-puts "selection_mode"
+puts "shading"
 puts "============"
 puts ""
 #######################################################
-puts "Tests selection modes changing in the IVtk view"
+puts "Tests display modes changing in the IVtk view"
 #######################################################
 
 set anImage $imagedir/${casename}.png
-ivtkinit
-box b 1 1 1
-ivtkdisplay b
-ivtksetselmode 2 1
-ivtkselect 86 117
 
+pload MODELING
+ivtkinit
+psphere s 30
+ivtkdisplay s
+ivtksetdispmode 1
+ivtkproperty s -shading gouraud
 ivtkdump $anImage

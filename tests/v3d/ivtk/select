@@ -3,7 +3,7 @@ puts "select"
 puts "============"
 puts ""
 #######################################################
-#  Tests selection of shapes in the IVtk view
+puts "Tests selection of shapes in the IVtk view"
 #######################################################
 
 set anImage $imagedir/${casename}.png

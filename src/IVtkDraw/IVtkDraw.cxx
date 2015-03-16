@@ -175,12 +175,12 @@ static vtkSmartPointer<vtkRenderer>& GetRenderer()
   return aRenderer;
 }
 
-static Handle(ShapePipelineMap)& GetPipelines()
+static Handle(IVtkDraw_ShapePipelineMap)& GetPipelines()
 {
-  static Handle(ShapePipelineMap) aPLMap;
+  static Handle(IVtkDraw_ShapePipelineMap) aPLMap;
   if (aPLMap.IsNull())
   {
-    aPLMap = new ShapePipelineMap();
+    aPLMap = new IVtkDraw_ShapePipelineMap();
   }
 
   return aPLMap;
@@ -1126,12 +1126,6 @@ static Standard_Integer VtkProperty (Draw_Interpretor& theDI,
       continue;
     }
 
-    if (aKey.IsEqual ("color") && anArgs->Length() == 3
-      && anArgs->Value(1).IsIntegerValue() && anArgs->Value(2).IsIntegerValue() && anArgs->Value(3).IsIntegerValue())
-    {
-      continue;
-    }
-
     TCollection_AsciiString aLowerKey;
     aLowerKey = "-";
     aLowerKey += aKey;
@@ -1164,19 +1158,11 @@ static Standard_Integer VtkProperty (Draw_Interpretor& theDI,
     }
     else if (aValues->Value(1) == "gouraud")
     {
-      anActor->GetProperty()->SetInterpolationToFlat();
+      anActor->GetProperty()->SetInterpolationToGouraud();
     }
   }
 
-  if (aMapOfArgs.Find("color", aValues))
-  {
-      anActor->GetProperty()->SetColor (aValues->Value(1).IntegerValue() / 255.0,
-                                        aValues->Value(2).IntegerValue() / 255.0,
-                                        aValues->Value(1).IntegerValue() / 255.0);
-  }
-
   //  Update interactor
-  GetRenderer()->ResetCamera();
   GetInteractor()->Render();
 
   return 0;
@@ -1255,7 +1241,7 @@ void IVtkDraw::Commands (Draw_Interpretor& theCommands)
 
   theCommands.Add("ivtkproperty",
 	  "ivtkproperty usage:\n"
-	  "ivtkproperty Shape -shading {flat;phong;gouraud} -color {r g b}\n"
+	  "ivtkproperty Shape -shading {flat;phong;gouraud}\n"
 	  "\n\t\t: Sets shape (actor) propertoes."
 	  "Color parameters r,g,b = [0..255].",
 	  __FILE__, VtkProperty, group);

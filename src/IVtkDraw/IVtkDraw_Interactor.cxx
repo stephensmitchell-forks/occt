@@ -51,7 +51,7 @@
 // Function : ClearHighlightAndSelection
 // Purpose  :
 //===========================================================
-static void ClearHighlightAndSelection (const Handle(ShapePipelineMap)& theMap,
+static void ClearHighlightAndSelection (const Handle(IVtkDraw_ShapePipelineMap)& theMap,
                                          const Standard_Boolean doHighlighting,
                                          const Standard_Boolean doSelection)
 {
@@ -60,7 +60,7 @@ static void ClearHighlightAndSelection (const Handle(ShapePipelineMap)& theMap,
     return;
   }
 
-  for (ShapePipelineMap::Iterator anIt (*theMap); anIt.More(); anIt.Next())
+  for (IVtkDraw_ShapePipelineMap::Iterator anIt (*theMap); anIt.More(); anIt.Next())
   {
     const Handle(IVtkDraw_HighlightAndSelectionPipeline)& aPL = anIt.Value();
 
@@ -121,7 +121,7 @@ void IVtkDraw_Interactor::SetShapePicker (const PSelector& theSelector)
 // Function : SetPipelines
 // Purpose  :
 //===========================================================
-void IVtkDraw_Interactor::SetPipelines (const Handle(ShapePipelineMap)& thePipelines)
+void IVtkDraw_Interactor::SetPipelines (const Handle(IVtkDraw_ShapePipelineMap)& thePipelines)
 {
   myPipelines = thePipelines;
 }

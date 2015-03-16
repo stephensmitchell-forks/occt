@@ -50,7 +50,7 @@ public:
   virtual void Start() { }
 
   void SetShapePicker (const PSelector& theSelector);
-  void SetPipelines (const Handle(ShapePipelineMap)& thePipelines);
+  void SetPipelines (const Handle(IVtkDraw_ShapePipelineMap)& thePipelines);
   void SetOCCWindow (const Handle(Aspect_Window)& theWindow);
   const Handle(Aspect_Window)& GetOCCWindow() const;
 
@@ -110,7 +110,7 @@ private:
 #endif
 
   PSelector                mySelector;
-  Handle(ShapePipelineMap) myPipelines;
+  Handle(IVtkDraw_ShapePipelineMap) myPipelines;
   Handle(Aspect_Window)    myWindow;
 
 };
