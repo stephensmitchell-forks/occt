@@ -38,6 +38,9 @@
 #include <TColStd_ListIteratorOfListOfReal.hxx>
 #include <TColStd_MapIteratorOfPackedMapOfInteger.hxx>
 
+#include <OpenGl_FrameBuffer.hxx>
+#include <OpenGl_Workspace.hxx>
+
 IMPLEMENT_STANDARD_RTTIEXT(MeshVS_TextPrsBuilder,MeshVS_PrsBuilder)
 
 //================================================================
@@ -136,6 +139,89 @@ void MeshVS_TextPrsBuilder::SetText ( const Standard_Boolean IsElement,
     aMap->Bind ( ID, Text );
 }
 
+#include <OpenGl_Group.hxx>
+#include <OpenGl_Element.hxx>
+#include <OpenGl_Texture.hxx>
+#include <OpenGl_ArbFBO.hxx>
+
+namespace
+{
+  //! Custom OpenGL element for fetching current depth buffer.
+  class OpenGl_GrabDepthElement : public OpenGl_Element
+  {
+  public:
+
+    Standard_EXPORT OpenGl_GrabDepthElement() : OpenGl_Element()
+    {
+      myFBO = new OpenGl_FrameBuffer;
+    }
+
+    Standard_EXPORT virtual void Render (const Handle(OpenGl_Workspace)& theWorkspace) const
+    {
+      glFinish(); // wait for rendering mesh
+
+      const Handle(OpenGl_Context)& aContext = theWorkspace->GetGlContext();
+
+      if (myFBO->GetVPSizeX() != theWorkspace->Width() || myFBO->GetVPSizeY() != theWorkspace->Height())
+      {
+        myFBO->Init (aContext, theWorkspace->Width(), theWorkspace->Height());
+      }
+
+      GLint aDrawFboId = 0;
+      glGetIntegerv (GL_DRAW_FRAMEBUFFER_BINDING, &aDrawFboId);
+
+      if (aContext->arbFBOBlit != NULL)
+      {
+        aContext->arbFBO->glBindFramebuffer (GL_FRAMEBUFFER, 0);
+
+        aContext->arbFBO->glBindFramebuffer (GL_READ_FRAMEBUFFER, aDrawFboId);
+        myFBO->BindDrawBuffer (aContext);
+
+        aContext->arbFBOBlit->glBlitFramebuffer (0,
+                                                 0,
+                                                 myFBO->GetVPSizeX(),
+                                                 myFBO->GetVPSizeY(),
+                                                 0,
+                                                 0,
+                                                 myFBO->GetVPSizeX(),
+                                                 myFBO->GetVPSizeY(),
+                                                 GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT,
+                                                 GL_NEAREST);
+
+        if (glGetError() != GL_NO_ERROR)
+          return;
+
+        aContext->arbFBO->glBindFramebuffer (GL_FRAMEBUFFER, aDrawFboId);
+      }
+
+      myFBO->DepthStencilTexture()->Bind (aContext, GL_TEXTURE5);
+
+      glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+      glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    }
+
+    Standard_EXPORT virtual void Release (OpenGl_Context* theContext)
+    {
+      //
+    }
+
+  protected:
+
+    Standard_EXPORT virtual ~OpenGl_GrabDepthElement()
+    {
+      //
+    }
+
+  protected:
+
+    mutable Handle(OpenGl_FrameBuffer) myFBO;
+
+  public:
+
+    DEFINE_STANDARD_ALLOC
+  };
+}
+
 //================================================================
 // Function : Build
 // Purpose  :
@@ -158,6 +244,16 @@ void MeshVS_TextPrsBuilder::Build ( const Handle(Prs3d_Presentation)& Prs,
     aMaxFaceNodes <= 0 ||
     !aDrawer->GetDouble  ( MeshVS_DA_TextHeight, aHeight )    )
     return;
+
+  Prs3d_Root::NewGroup ( Prs );
+  Handle (Graphic3d_Group) aCustomGroup = Prs3d_Root::CurrentGroup ( Prs );
+  OpenGl_Group* aGroupGL = dynamic_cast<OpenGl_Group*> (aCustomGroup.operator->());
+  if (aGroupGL != NULL)
+  {
+    aGroupGL->AddElement (new OpenGl_GrabDepthElement);
+  }
+
+  ///////////////////////////////////////////////////////////////////////
 
   Prs3d_Root::NewGroup ( Prs );
   Handle (Graphic3d_Group) aTextGroup = Prs3d_Root::CurrentGroup ( Prs );
@@ -198,6 +294,30 @@ void MeshVS_TextPrsBuilder::Build ( const Handle(Prs3d_Presentation)& Prs,
   aTextAspect->SetTextFontAspect( AFontAspectType );
   Handle (Graphic3d_AspectMarker3d) anAspectMarker3d =
     new Graphic3d_AspectMarker3d( Aspect_TOM_POINT, Quantity_NOC_GRAY, 1. );
+
+  // Set custom shader program
+  {
+    Handle(Graphic3d_ShaderProgram) aShaderProgram = new Graphic3d_ShaderProgram();
+
+    const TCollection_AsciiString& aShaderFolder = Graphic3d_ShaderProgram::ShadersFolder();
+
+    if (!aShaderProgram->AttachShader (Graphic3d_ShaderObject::
+      CreateFromFile (Graphic3d_TOS_VERTEX,   aShaderFolder + "/TextRender.vs")))
+    {
+      return;
+    }
+
+    if (!aShaderProgram->AttachShader (Graphic3d_ShaderObject::
+      CreateFromFile (Graphic3d_TOS_FRAGMENT, aShaderFolder + "/TextRender.fs")))
+    {
+      return;
+    }
+
+    aShaderProgram->PushVariable ("DepthTexture", 5);
+
+    aTextAspect->SetShaderProgram (aShaderProgram);
+  }
+
   aTextGroup->SetPrimitivesAspect( aTextAspect );
   aTextGroup->SetPrimitivesAspect( anAspectMarker3d );
 
