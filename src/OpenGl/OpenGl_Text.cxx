@@ -736,6 +736,15 @@ void OpenGl_Text::render (const Handle(OpenGl_PrinterContext)& thePrintCtx,
   }
   myExportHeight = (float )myFont->FTFont()->PointSize() / myExportHeight;
 
+  {
+    const Handle(OpenGl_ShaderProgram)& aProgram = theTextAspect.ShaderProgramRes (theCtx);
+
+    if (!aProgram.IsNull())
+    {
+      aProgram->SetUniform (theCtx, "Pixel", OpenGl_Vec3 (myWinX, myWinY, myWinZ));
+    }
+  }
+
 #if !defined(GL_ES_VERSION_2_0)
   if (theCtx->core11 != NULL)
   {
