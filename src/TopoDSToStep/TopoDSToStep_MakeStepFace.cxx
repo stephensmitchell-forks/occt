@@ -263,6 +263,7 @@ void TopoDSToStep_MakeStepFace::Init(const TopoDS_Face& aFace,
 
   // Initialize the Wire Explorer with the forward face
 
+  Standard_Boolean isNeedWritePcurve = Standard_False;
   TopExp_Explorer WireExp;
   for (WireExp.Init(ForwardFace,TopAbs_WIRE);WireExp.More();WireExp.Next()) {
 
@@ -274,7 +275,8 @@ void TopoDSToStep_MakeStepFace::Init(const TopoDS_Face& aFace,
       //const TopoDS_Wire ForwardWire = TopoDS::Wire(ssh);
 
       //MkWire.Init(ForwardWire, aTool, FP);
-      MkWire.Init(CurrentWire, aTool, FP);
+      MkWire.Init(CurrentWire, aTool, FP, isNeedWritePcurve);
+
       if (MkWire.IsDone()) Loop = Handle(StepShape_Loop)::DownCast(MkWire.Value());
       else {
 #ifdef OCCT_DEBUG
@@ -323,7 +325,7 @@ void TopoDSToStep_MakeStepFace::Init(const TopoDS_Face& aFace,
   // Translate the Edge 2D Geometry (pcurves)
   // ----------------------------------------
   
-  if ( ! aTool.Faceted() && aTool.PCurveMode() != 0 ) {
+  if ( ! aTool.Faceted() && (aTool.PCurveMode() != 0 || isNeedWritePcurve)) {
     
     TopExp_Explorer Ex(ForwardFace, TopAbs_EDGE);
 
@@ -358,6 +360,9 @@ void TopoDSToStep_MakeStepFace::Init(const TopoDS_Face& aFace,
       Handle(StepGeom_Curve) Cpms = 
 	Handle(StepShape_EdgeCurve)::DownCast(aTool.Find(E))->EdgeGeometry();
       if ( Cpms.IsNull() ) continue;
+      Handle(StepGeom_SurfaceCurve) C1pms = 
+        Handle(StepGeom_SurfaceCurve)::DownCast(Cpms);
+      if (C1pms.IsNull()) continue;
       
       if ( !C2d.IsNull() && aTool.IsBound(E) ) {
 	if (C2d->IsKind(STANDARD_TYPE(Geom2d_Hyperbola)) || 
@@ -416,9 +421,7 @@ void TopoDSToStep_MakeStepFace::Init(const TopoDS_Face& aFace,
 
 	DRI->Init(aName, aItems, aContext);
 	Pc->Init(aName, Spms, DRI );
-	Handle(StepGeom_SurfaceCurve) C1pms = 
-	  Handle(StepGeom_SurfaceCurve)::DownCast(Cpms);
-	Handle(StepGeom_HArray1OfPcurveOrSurface) aGeom = C1pms->AssociatedGeometry();
+  Handle(StepGeom_HArray1OfPcurveOrSurface) aGeom = C1pms->AssociatedGeometry();
 	if (aGeom.IsNull()) aGeom = new StepGeom_HArray1OfPcurveOrSurface(1,2);
 	StepGeom_PcurveOrSurface PcOrSur;
 	PcOrSur.SetValue(Pc);

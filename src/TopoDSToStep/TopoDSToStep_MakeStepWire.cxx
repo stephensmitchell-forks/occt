@@ -65,10 +65,11 @@ TopoDSToStep_MakeStepWire::TopoDSToStep_MakeStepWire()
 TopoDSToStep_MakeStepWire::TopoDSToStep_MakeStepWire
 (const TopoDS_Wire& W, 
  TopoDSToStep_Tool& T,
- const Handle(Transfer_FinderProcess)& FP)
+ const Handle(Transfer_FinderProcess)& FP,
+ Standard_Boolean& isNeedWritePcurve)
 {
   done = Standard_False;
-  Init(W, T, FP);
+  Init(W, T, FP, isNeedWritePcurve);
 }
 
 
@@ -79,7 +80,8 @@ TopoDSToStep_MakeStepWire::TopoDSToStep_MakeStepWire
 
 void TopoDSToStep_MakeStepWire::Init(const TopoDS_Wire& aWire, 
 				    TopoDSToStep_Tool& aTool,
-				    const Handle(Transfer_FinderProcess)& FP)
+				    const Handle(Transfer_FinderProcess)& FP,
+            Standard_Boolean& isNeedWritePcurve)
 {
 
   // ----------------------------------------------------------------
@@ -221,6 +223,10 @@ void TopoDSToStep_MakeStepWire::Init(const TopoDS_Wire& aWire,
     }
 
     nb = cwd->NbEdges();
+    if (nb < sbwd->NbEdges())
+    {
+      isNeedWritePcurve = Standard_True;
+    }
     if(nb%2 == 0 ) {
       for ( ie = 1; ie < nb; ie++) {
 	if ( cwd->Edge(ie).IsSame(cwd->Edge(ie+1)) ) break;
@@ -283,7 +289,7 @@ void TopoDSToStep_MakeStepWire::Init(const TopoDS_Wire& aWire,
 	//TopoDS_Shape ssh = CurrentEdge.Oriented(TopAbs_FORWARD);
 	//const TopoDS_Edge ForwardEdge = TopoDS::Edge(ssh);
 
-	MkEdge.Init(CurrentEdge, aTool, FP);
+	MkEdge.Init(CurrentEdge, aTool, FP, isNeedWritePcurve);
 	if (MkEdge.IsDone()) {
 	  OrientedEdge = new StepShape_OrientedEdge();
 	  Epms = Handle(StepShape_Edge)::DownCast(MkEdge.Value());

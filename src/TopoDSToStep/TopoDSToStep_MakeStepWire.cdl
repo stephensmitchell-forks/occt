@@ -35,14 +35,15 @@ is
     
     Create (W : Wire from TopoDS;
     	    T : in out Tool from TopoDSToStep;
-	   FP : FinderProcess from Transfer)
+	        FP : FinderProcess from Transfer;
+           isNeedWritePcurve : in out Boolean from Standard)
          returns MakeStepWire;
     
     Init(me : in out;
 	 W  : Wire from TopoDS;
          T  : in out Tool from TopoDSToStep;
-	 FP : FinderProcess from Transfer);
-
+	     FP : FinderProcess from Transfer;
+         isNeedWritePcurve : in out Boolean from Standard);
 	    
     Value (me) returns TopologicalRepresentationItem from StepShape
     	raises NotDone

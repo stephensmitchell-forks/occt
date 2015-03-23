@@ -35,13 +35,15 @@ is
     
     Create(E  : Edge from TopoDS;
   	   T  : in out Tool from TopoDSToStep;
-	   FP : FinderProcess from Transfer)
+	   FP : FinderProcess from Transfer;
+       isNeedWritePcurve : in out Boolean from Standard)
          returns MakeStepEdge;
     
     Init(me : in out;
     	 E  : Edge from TopoDS;
      	 T  : in out Tool from TopoDSToStep;
-         FP : FinderProcess from Transfer);
+         FP : FinderProcess from Transfer;
+         isNeedWritePcurve : in out Boolean from Standard);
 
 	    
     Value (me) returns TopologicalRepresentationItem from StepShape

@@ -73,10 +73,11 @@ TopoDSToStep_MakeStepEdge::TopoDSToStep_MakeStepEdge()
 TopoDSToStep_MakeStepEdge::TopoDSToStep_MakeStepEdge
 (const TopoDS_Edge& E,
  TopoDSToStep_Tool& T,
- const Handle(Transfer_FinderProcess)& FP)
+ const Handle(Transfer_FinderProcess)& FP,
+ Standard_Boolean& isNeedWritePcurve)
 {
   done = Standard_False;
-  Init(E, T, FP);
+  Init(E, T, FP, isNeedWritePcurve);
 }
 
 // ----------------------------------------------------------------------------
@@ -86,7 +87,8 @@ TopoDSToStep_MakeStepEdge::TopoDSToStep_MakeStepEdge
 
 void TopoDSToStep_MakeStepEdge::Init(const TopoDS_Edge& aEdge, 
                                      TopoDSToStep_Tool& aTool,
-                                     const Handle(Transfer_FinderProcess)& FP)
+                                     const Handle(Transfer_FinderProcess)& FP,
+                                     Standard_Boolean& isNeedWritePcurve )
 {
   // ------------------------------------------------------------------
   // The edge is given with its relative orientation (i.e. in the wire)
@@ -252,7 +254,7 @@ void TopoDSToStep_MakeStepEdge::Init(const TopoDS_Edge& aEdge,
 
   //:abv 25.01.00 CAX-IF TRJ3
   // if PcurveMode is 1 (default), make surface_curve instead of simple 3d curve
-  if ( aTool.PCurveMode() != 0 ) {
+  if ( aTool.PCurveMode() != 0  || isNeedWritePcurve) {
   
     Handle(StepGeom_HArray1OfPcurveOrSurface) aGeom =
       new StepGeom_HArray1OfPcurveOrSurface(1,2);
