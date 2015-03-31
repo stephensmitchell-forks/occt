@@ -14,10 +14,15 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#include <Poly_Triangulation.ixx>
-#include <gp_Pnt.hxx>
-#include <Poly_Triangle.hxx>
+#include <Poly_Triangulation.hxx>
 
+#include <gp_Pnt.hxx>
+#include <Standard_NullObject.hxx>
+#include <TColgp_HArray1OfPnt2d.hxx>
+#include <TShort_HArray1OfShortReal.hxx>
+
+IMPLEMENT_STANDARD_HANDLE (Poly_Triangulation,MMgt_TShared)
+IMPLEMENT_STANDARD_RTTIEXT(Poly_Triangulation,MMgt_TShared)
 
 //=======================================================================
 //function : Poly_Triangulation
@@ -27,13 +32,14 @@
 Poly_Triangulation::Poly_Triangulation(const Standard_Integer NbNodes, 
                                        const Standard_Integer NbTriangles,
                                        const Standard_Boolean UVNodes) :
-   myDeflection(0),
-   myNbNodes(NbNodes),
-   myNbTriangles(NbTriangles),
-   myNodes(1, NbNodes),
-   myTriangles(1, NbTriangles)
+  myDeflection (0)
 {
-  if (UVNodes) myUVNodes = new TColgp_HArray1OfPnt2d(1, myNbNodes);
+  myNodes.SetValue (NbNodes - 1, gp_Pnt());
+  myTriangles.SetValue (NbTriangles - 1, Poly_Triangle());
+  if (UVNodes)
+  {
+    myUVNodes.SetValue (NbNodes - 1, gp_Pnt2d());
+  }
 }
 
 //=======================================================================
@@ -43,14 +49,16 @@ Poly_Triangulation::Poly_Triangulation(const Standard_Integer NbNodes,
 
 Poly_Triangulation::Poly_Triangulation(const TColgp_Array1OfPnt&    Nodes, 
                                        const Poly_Array1OfTriangle& Triangles) :
-   myDeflection(0),
-   myNbNodes(Nodes.Length()),
-   myNbTriangles(Triangles.Length()),
-   myNodes(1, Nodes.Length()),
-   myTriangles(1, Triangles.Length())
+  myDeflection (0)
 {
-  myNodes = Nodes;
-  myTriangles = Triangles;
+  for (Standard_Integer anIndex = Nodes.Upper(); anIndex >= Nodes.Lower(); anIndex--)
+  {
+    myNodes.SetValue (anIndex - 1, Nodes (anIndex));
+  }
+  for (Standard_Integer anIndex = Triangles.Upper(); anIndex >= Triangles.Lower(); anIndex--)
+  {
+    myTriangles.SetValue (anIndex - 1, Triangles (anIndex));
+  }
 }
 
 
@@ -63,16 +71,20 @@ Poly_Triangulation::Poly_Triangulation(const TColgp_Array1OfPnt&    Nodes,
 Poly_Triangulation::Poly_Triangulation(const TColgp_Array1OfPnt&    Nodes,
                                        const TColgp_Array1OfPnt2d&  UVNodes,
                                        const Poly_Array1OfTriangle& Triangles) :
-   myDeflection(0),
-   myNbNodes(Nodes.Length()),
-   myNbTriangles(Triangles.Length()),
-   myNodes(1, Nodes.Length()),
-   myTriangles(1, Triangles.Length())
+  myDeflection (0)
 {
-  myNodes = Nodes;
-  myTriangles = Triangles;
-  myUVNodes = new TColgp_HArray1OfPnt2d(1, myNbNodes);
-  myUVNodes->ChangeArray1() = UVNodes;
+  for (Standard_Integer anIndex = Nodes.Upper(); anIndex >= Nodes.Lower(); anIndex--)
+  {
+    myNodes.SetValue (anIndex - 1, Nodes (anIndex));
+  }
+  for (Standard_Integer anIndex = UVNodes.Upper(); anIndex >= UVNodes.Lower(); anIndex--)
+  {
+    myUVNodes.SetValue (anIndex - 1, UVNodes (anIndex));
+  }
+  for (Standard_Integer anIndex = Triangles.Upper(); anIndex >= Triangles.Lower(); anIndex--)
+  {
+    myTriangles.SetValue (anIndex - 1, Triangles (anIndex));
+  }
 }
 
 //=======================================================================
@@ -104,69 +116,109 @@ void Poly_Triangulation::Deflection(const Standard_Real D)
 
 void Poly_Triangulation::RemoveUVNodes()
 {
-  myUVNodes.Nullify();
+  myUVNodes.Clear();
 }
 
 //=======================================================================
-//function : Nodes
+//function : Node
 //purpose  : 
 //=======================================================================
 
-const TColgp_Array1OfPnt& Poly_Triangulation::Nodes() const 
+const gp_Pnt& Poly_Triangulation::Node (const Standard_Integer theIndex) const 
 {
-  return myNodes;
+  if (theIndex < 1 || theIndex > myNodes.Size())
+  {
+    Standard_OutOfRange::Raise ("Poly_Triangulation::Node : index out of range");
+  }
+  return myNodes.Value (theIndex - 1);
 }
 
 //=======================================================================
-//function : ChangeNodes
+//function : ChangeNode
 //purpose  : 
 //=======================================================================
 
-TColgp_Array1OfPnt& Poly_Triangulation::ChangeNodes()
+gp_Pnt& Poly_Triangulation::ChangeNode (const Standard_Integer theIndex)
 {
-  return myNodes;
+  if (theIndex < 1 || theIndex > myNodes.Size())
+  {
+    Standard_OutOfRange::Raise ("Poly_Triangulation::ChangeNode : index out of range");
+  }
+  return myNodes.ChangeValue (theIndex - 1);
 }
 
 //=======================================================================
-//function : UVNodes
+//function : UVNode
 //purpose  : 
 //=======================================================================
 
-const TColgp_Array1OfPnt2d& Poly_Triangulation::UVNodes() const 
+const gp_Pnt2d& Poly_Triangulation::UVNode (const Standard_Integer theIndex) const 
 {
-  return myUVNodes->Array1();
+  if (myUVNodes.IsEmpty() || theIndex < 1 || theIndex > myUVNodes.Size())
+  {
+    Standard_OutOfRange::Raise ("Poly_Triangulation::UVNode : index out of range");
+  }
+  return myUVNodes.Value (theIndex - 1);
 }
 
 //=======================================================================
-//function : ChangeUVNodes
+//function : ChangeUVNode
 //purpose  : 
 //=======================================================================
 
-TColgp_Array1OfPnt2d& Poly_Triangulation::ChangeUVNodes()
+gp_Pnt2d& Poly_Triangulation::ChangeUVNode (const Standard_Integer theIndex)
 {
-  return myUVNodes->ChangeArray1();
+  if (myUVNodes.IsEmpty() || theIndex < 1 || theIndex > myUVNodes.Size())
+  {
+    Standard_OutOfRange::Raise ("Poly_Triangulation::ChangeUVNode : index out of range");
+  }
+  return myUVNodes.ChangeValue (theIndex - 1);
 }
 
 //=======================================================================
-//function : Triangles
+//function : Triangle
 //purpose  : 
 //=======================================================================
 
-const Poly_Array1OfTriangle& Poly_Triangulation::Triangles() const 
+Standard_Integer Poly_Triangulation::AddTriangle (const Poly_Triangle& theTriangle)
 {
-  return myTriangles;
+  if  (theTriangle(1) < 1 || theTriangle(1) > myNodes.Size()
+    || theTriangle(2) < 1 || theTriangle(2) > myNodes.Size()
+    || theTriangle(3) < 1 || theTriangle(3) > myNodes.Size())
+  {
+    Standard_OutOfRange::Raise ("Poly_Triangulation::AddTriangle : index out of range");
+  }
+  myTriangles.Append (theTriangle);
+  return myTriangles.Size();
 }
 
 //=======================================================================
-//function : ChangeTriangles
+//function : Triangle
 //purpose  : 
 //=======================================================================
 
-Poly_Array1OfTriangle& Poly_Triangulation::ChangeTriangles()
+const Poly_Triangle& Poly_Triangulation::Triangle (const Standard_Integer theIndex) const 
 {
-  return myTriangles;
+  if (theIndex < 1 || theIndex > myTriangles.Size())
+  {
+    Standard_OutOfRange::Raise ("Poly_Triangulation::Triangle : index out of range");
+  }
+  return myTriangles.Value (theIndex - 1);
 }
 
+//=======================================================================
+//function : ChangeTriangle
+//purpose  : 
+//=======================================================================
+
+Poly_Triangle& Poly_Triangulation::ChangeTriangle (const Standard_Integer theIndex)
+{
+  if (theIndex < 1 || theIndex > myTriangles.Size())
+  {
+    Standard_OutOfRange::Raise ("Poly_Triangulation::ChangeTriangle : index out of range");
+  }
+  return myTriangles.ChangeValue (theIndex - 1);
+}
 
 //=======================================================================
 //function : SetNormals
@@ -177,45 +229,54 @@ void Poly_Triangulation::SetNormals
                         (const Handle(TShort_HArray1OfShortReal)& theNormals)
 {
 
-  if(theNormals.IsNull() || theNormals->Length() != 3*myNbNodes) {
+  if (theNormals.IsNull() || theNormals->Length() != 3 * NbNodes())
+  {
     Standard_DomainError::Raise("Poly_Triangulation::SetNormals : wrong length");
   }
 
-  myNormals = theNormals;
+  for (Standard_Integer anIndex = theNormals->Upper(); anIndex >= theNormals->Lower(); anIndex--)
+  {
+    myNormals.SetValue (anIndex, (theNormals->Value (anIndex)));
+  }
 
 }
 
 //=======================================================================
-//function : Normals
+//function : Normal
 //purpose  : 
 //=======================================================================
 
-const TShort_Array1OfShortReal& Poly_Triangulation::Normals() const
+const gp_Dir Poly_Triangulation::Normal (const Standard_Integer theIndex) const
 {
 
-  if(myNormals.IsNull() || myNormals->Length() != 3*myNbNodes) {
-    Standard_NullObject::Raise("Poly_Triangulation::Normals : "
-                               "wrong length or null array");
+  if (myNormals.IsEmpty() || theIndex < 1 || theIndex > myNodes.Size())
+  {
+    Standard_NullObject::Raise("Poly_Triangulation::Normal : empty array or index out of range");
   }
 
-  return myNormals->Array1();
-
+  Standard_Integer anIndex = (theIndex - 1) * 3;
+  return gp_Dir (myNormals (anIndex),
+                 myNormals (anIndex + 1),
+                 myNormals (anIndex + 2));
 }
 
 //=======================================================================
-//function : ChangeNormals
+//function : SetNormal
 //purpose  : 
 //=======================================================================
 
-TShort_Array1OfShortReal& Poly_Triangulation::ChangeNormals() 
+void Poly_Triangulation::SetNormal (const Standard_Integer theIndex, const gp_Dir& theNormal)
 {
 
-  if(myNormals.IsNull() || myNormals->Length() != 3*myNbNodes) {
-    Standard_NullObject::Raise("Poly_Triangulation::ChangeNormals : "
-                               "wrong length or null array");
+  if (myNormals.IsEmpty() || theIndex < 1 || theIndex > myNodes.Size())
+  {
+    Standard_NullObject::Raise("Poly_Triangulation::SetNormal : empty array or index out of range");
   }
 
-  return myNormals->ChangeArray1();
+  Standard_Integer anIndex = (theIndex - 1) * 3;
+  myNormals.ChangeValue (anIndex)     = (Standard_ShortReal) theNormal.X();
+  myNormals.ChangeValue (anIndex + 1) = (Standard_ShortReal) theNormal.Y();
+  myNormals.ChangeValue (anIndex + 2) = (Standard_ShortReal) theNormal.Z();
 
 }
 
@@ -227,11 +288,69 @@ TShort_Array1OfShortReal& Poly_Triangulation::ChangeNormals()
 Standard_Boolean Poly_Triangulation::HasNormals() const
 {
 
-  if(myNormals.IsNull() || myNormals->Length() != 3*myNbNodes) {
+  if(myNormals.IsEmpty() || myNormals.Length() != 3 * NbNodes())
+  {
     return Standard_False;
   }
   return Standard_True;
 }
 
+Standard_Integer Poly_Triangulation::AddQuad (const Standard_Integer theFirstTriangleIndex, const Standard_Integer theSecondTriangleIndex)
+{
+  if (theFirstTriangleIndex < 1 || theFirstTriangleIndex > myTriangles.Size()
+    || theSecondTriangleIndex < 1 || theSecondTriangleIndex > myTriangles.Size())
+  {
+    Standard_OutOfRange::Raise ("Poly_Triangulation::AddQuad : index out of range");
+  }
+  if (myPolygons.PolygonsIndexes.IsEmpty())
+  {
+    myPolygons.PolygonsIndexes.SetValue (myTriangles.Size() - 1, 0);
+  }
+  myPolygons.NbQuads++;
+  myPolygons.NbUsedTriangles += 2;
+  myPolygons.PolygonsIndexes (theFirstTriangleIndex) = myPolygons.NbQuads;
+  myPolygons.PolygonsIndexes (theSecondTriangleIndex) = myPolygons.NbQuads;
 
+  return myPolygons.NbQuads;
+}
 
+void Poly_Triangulation::Quad (const Standard_Integer theIndex, Standard_Integer& theFirstTriangleIndex, Standard_Integer& theSecondTriangleIndex)
+{
+  Standard_Integer aFirstTriangleIndex (0), aSecondTriangleIndex (0);
+  if (myPolygons.NbQuads == 0 || theIndex > myPolygons.NbQuads)
+  {
+    theFirstTriangleIndex  = 0;
+    theSecondTriangleIndex = 0;
+    Standard_OutOfRange::Raise ("Poly_Triangulation::Quad : quads are empty or index out of range");
+  }
+  Standard_Integer anIndex = 0;
+  while (anIndex < myPolygons.PolygonsIndexes.Size() - 1)
+  {
+    if (myPolygons.PolygonsIndexes (anIndex) == theIndex)
+    {
+      aFirstTriangleIndex = anIndex + 1;
+      break;
+    }
+    anIndex++;
+  }
+  anIndex++;
+  while (anIndex < myPolygons.PolygonsIndexes.Size())
+  {
+    if (myPolygons.PolygonsIndexes (anIndex) == theIndex)
+    {
+      aSecondTriangleIndex = anIndex + 1;
+      break;
+    }
+    anIndex++;
+  }
+  if (aFirstTriangleIndex != 0 && aSecondTriangleIndex != 0)
+  {
+    theFirstTriangleIndex = aFirstTriangleIndex;
+    theSecondTriangleIndex = aSecondTriangleIndex;
+    return;
+  }
+  else
+  {
+    Standard_OutOfRange::Raise ("Poly_Triangulation::Quad : quad with given index does not exist");
+  }
+}

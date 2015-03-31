@@ -253,10 +253,9 @@ void MeshTest_DrawableMesh::Whatis(Draw_Interpretor& theStream) const
 
     // Count number of links
     BRepMesh_MapOfLinks aMap;
-    const Poly_Array1OfTriangle& aTriangles = aTriangulation->Triangles();
-    for (Standard_Integer i = 1, v[3]; i <= aTriangles.Length(); ++i)
+    for (Standard_Integer i = 1, v[3]; i <= aTriangulation->NbTriangles(); ++i)
     {
-      aTriangles(i).Get(v[0], v[1], v[2]);
+      aTriangulation->Triangle (i).Get(v[0], v[1], v[2]);
 
       addLink(v[0], v[1], aMap);
       addLink(v[1], v[2], aMap);

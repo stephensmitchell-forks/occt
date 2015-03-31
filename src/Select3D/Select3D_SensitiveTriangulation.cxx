@@ -124,8 +124,6 @@ myDetectedTr(-1)
   // This code should have been integrated in poly_triangulation...
 
   Standard_Integer fr = 1;
-  const Poly_Array1OfTriangle& triangles = myTriangul->Triangles();
-  const TColgp_Array1OfPnt& Nodes = myTriangul->Nodes();
   Standard_Integer nbTriangles (myTriangul->NbTriangles());
   gp_XYZ cdg(0,0,0);
   Standard_Integer n[3];
@@ -141,8 +139,8 @@ myDetectedTr(-1)
     for ( i = 1; i <= nbTriangles; i++)
     {
       pc.Triangles(i,t[0],t[1],t[2]);
-      triangles(i).Get(n[0],n[1],n[2]);
-      cdg += (Nodes(n[0]).XYZ() + Nodes(n[1]).XYZ()+ Nodes(n[2]).XYZ())/3.;
+      myTriangul->Triangle (i).Get(n[0],n[1],n[2]);
+      cdg += (myTriangul->Node (n[0]).XYZ() + myTriangul->Node (n[1]).XYZ()+ myTriangul->Node (n[2]).XYZ())/3.;
       for (j = 0; j < 3; j++)
       {
         Standard_Integer k = (j+1) % 3;
@@ -158,8 +156,8 @@ myDetectedTr(-1)
   else{
     for (Standard_Integer i = 1; i <= nbTriangles; i++)
     {
-      triangles(i).Get(n[0],n[1],n[2]);
-      cdg += (Nodes(n[0]).XYZ() + Nodes(n[1]).XYZ()+ Nodes(n[2]).XYZ())/3.;
+      myTriangul->Triangle (i).Get(n[0],n[1],n[2]);
+      cdg += (myTriangul->Node (n[0]).XYZ() + myTriangul->Node (n[1]).XYZ()+ myTriangul->Node (n[2]).XYZ())/3.;
     }
   }
 
@@ -204,15 +202,14 @@ myDetectedTr(-1)
 void Select3D_SensitiveTriangulation::Project(const Handle(Select3D_Projector)& aPrj)
 {
   mybox2d.SetVoid();
-  const TColgp_Array1OfPnt& Nodes = myTriangul->Nodes();
 
   gp_Pnt2d ProjPT;
 
   for(Standard_Integer I=1;I<=myTriangul->NbNodes();I++){
     if(myTrsf.Form()!=gp_Identity)
-      aPrj->Project(Nodes(I).Transformed(myTrsf),ProjPT);
+      aPrj->Project(myTriangul->Node (I).Transformed(myTrsf),ProjPT);
     else
-      aPrj->Project(Nodes(I),ProjPT);
+      aPrj->Project(myTriangul->Node (I),ProjPT);
 
     myNodes2d.SetValue(I,ProjPT);
     mybox2d.Add(ProjPT);
@@ -243,7 +240,6 @@ Standard_Boolean Select3D_SensitiveTriangulation::Matches (const SelectBasics_Pi
   theMatchDMin = Precision::Infinite();
   gp_XY BidPoint (thePickArgs.X(), thePickArgs.Y());
   myDetectedTr = -1;
-  const Poly_Array1OfTriangle& triangles = myTriangul->Triangles();
 
   // it is checked if we are inside the triangle 2d.
   if(myIntFlag)
@@ -256,11 +252,10 @@ Standard_Boolean Select3D_SensitiveTriangulation::Matches (const SelectBasics_Pi
     }
 
     Standard_Real aMinDepth = Precision::Infinite();
-    const TColgp_Array1OfPnt& Nodes = myTriangul->Nodes();
     for (Standard_Integer itr=1; itr<=myTriangul->NbTriangles(); itr++)
     {
       Standard_Integer n1,n2,n3;
-      triangles(itr).Get(n1,n2,n3);
+      myTriangul->Triangle (itr).Get(n1,n2,n3);
       const gp_XY& aPnt2d1 = myNodes2d(n1).XY();
       const gp_XY& aPnt2d2 = myNodes2d(n2).XY();
       const gp_XY& aPnt2d3 = myNodes2d(n3).XY();
@@ -270,9 +265,9 @@ Standard_Boolean Select3D_SensitiveTriangulation::Matches (const SelectBasics_Pi
         continue;
 
       // get interpolated depth of the triangle nodes
-      Standard_Real aDepth1 = ElCLib::Parameter (aPickingLine, Nodes(n1));
-      Standard_Real aDepth2 = ElCLib::Parameter (aPickingLine, Nodes(n2));
-      Standard_Real aDepth3 = ElCLib::Parameter (aPickingLine, Nodes(n3));
+      Standard_Real aDepth1 = ElCLib::Parameter (aPickingLine, myTriangul->Node (n1));
+      Standard_Real aDepth2 = ElCLib::Parameter (aPickingLine, myTriangul->Node (n2));
+      Standard_Real aDepth3 = ElCLib::Parameter (aPickingLine, myTriangul->Node (n3));
       Standard_Real aDepth = aDepth1 + aUV.X() * (aDepth2 - aDepth1) +
                                        aUV.Y() * (aDepth3 - aDepth1);
 
@@ -307,7 +302,7 @@ Standard_Boolean Select3D_SensitiveTriangulation::Matches (const SelectBasics_Pi
         for(Standard_Integer itr=1; itr <= myTriangul->NbTriangles(); itr++)
         {
           Standard_Integer n1,n2,n3;
-          triangles(itr).Get(n1,n2,n3);
+          myTriangul->Triangle (itr).Get(n1,n2,n3);
           if(S3D_IsEdgeIn(Node1,Node2,n1,n2,n3))
           {
             myDetectedTr = itr;
@@ -402,8 +397,7 @@ Standard_Boolean Select3D_SensitiveTriangulation::IsFree(const Standard_Integer 
 {
   FoundIndex=-1;
   Standard_Integer n[3];
-  const Poly_Array1OfTriangle& triangles = myTriangul->Triangles();
-  triangles(IndexOfTriangle).Get(n[0],n[1],n[2]);
+  myTriangul->Triangle (IndexOfTriangle).Get(n[0],n[1],n[2]);
   TColStd_Array1OfInteger& FreeE = myFreeEdges->ChangeArray1();
 
   for(Standard_Integer I=1;I<=FreeE.Length() && FoundIndex==-1;I+=2)
@@ -510,12 +504,9 @@ Standard_Real Select3D_SensitiveTriangulation::ComputeDepth(const gp_Lin& thePic
     return Precision::Infinite(); // currently not implemented...
   }
 
-  const Poly_Array1OfTriangle& triangles = myTriangul->Triangles();
-  const TColgp_Array1OfPnt& Nodes = myTriangul->Nodes();
-
   Standard_Integer n1,n2,n3;
-  triangles (theTriangle).Get (n1,n2,n3);
-  gp_Pnt P[3]={Nodes(n1),Nodes(n2),Nodes(n3)};
+  myTriangul->Triangle (theTriangle).Get (n1,n2,n3);
+  gp_Pnt P[3]={myTriangul->Node (n1),myTriangul->Node (n2),myTriangul->Node (n3)};
 
   if (myTrsf.Form() != gp_Identity)
   {
@@ -627,14 +618,12 @@ DetectedTriangle(gp_Pnt& P1,
                  gp_Pnt& P3) const
 {
   if(myDetectedTr==-1) return Standard_False; // currently not implemented...
-  const Poly_Array1OfTriangle& triangles = myTriangul->Triangles();
-  const TColgp_Array1OfPnt& Nodes = myTriangul->Nodes();
   Standard_Integer n1,n2,n3;
-  triangles(myDetectedTr).Get(n1,n2,n3);
+  myTriangul->Triangle (myDetectedTr).Get(n1,n2,n3);
 
-  P1 = Nodes(n1);
-  P2 = Nodes(n2);
-  P3 = Nodes(n3);
+  P1 = myTriangul->Node (n1);
+  P2 = myTriangul->Node (n2);
+  P3 = myTriangul->Node (n3);
   if(myTrsf.Form()!=gp_Identity)
   {
     P1.Transform(myTrsf);
@@ -657,9 +646,8 @@ DetectedTriangle2d(gp_Pnt2d& P1,
 {
   if(myDetectedTr==-1)
     return Standard_False; //  currently not implemented...
-  const Poly_Array1OfTriangle& triangles = myTriangul->Triangles();
   Standard_Integer n1,n2,n3;
-  triangles( myDetectedTr ).Get(n1,n2,n3);
+  myTriangul->Triangle ( myDetectedTr ).Get(n1,n2,n3);
 
   int aLower = myNodes2d.Lower();
   int anUpper = myNodes2d.Upper();

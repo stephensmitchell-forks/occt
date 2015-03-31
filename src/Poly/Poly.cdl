@@ -47,7 +47,7 @@ is
     instantiates HArray1 from TCollection(Triangle         from Poly,
                                           Array1OfTriangle from Poly);
 
-    class Triangulation;
+    imported transient class Triangulation;
 
     class Polygon3D;
 

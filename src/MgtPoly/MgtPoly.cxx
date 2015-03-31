@@ -49,6 +49,26 @@ static Handle(PColgp_HArray1OfPnt) ArrayCopy
 }
 
 //=======================================================================
+//function : CopyNodes
+//purpose  : Copy the gp_Pnt
+//           from an Poly_Triangulation
+//           to an HArray1 from PColgp (PCollection)
+//=======================================================================
+
+static Handle(PColgp_HArray1OfPnt) CopyNodes
+       (const Handle(Poly_Triangulation)& theTriangulation)
+{
+  Standard_Integer Lower = 1;
+  Standard_Integer Upper = theTriangulation->NbNodes();
+  Standard_Integer Index;
+  Handle(PColgp_HArray1OfPnt) PArray = new PColgp_HArray1OfPnt(Lower, Upper);
+  for (Index = Lower; Index <= Upper; Index++) {
+    PArray->SetValue(Index, theTriangulation->Node (Index));
+  }
+  return PArray;
+}
+
+//=======================================================================
 //function : ArrayCopy
 //purpose  : Copy the gp_Pnt
 //           from an HArray1 from PColgp (PCollection)
@@ -88,6 +108,27 @@ static Handle(PColgp_HArray1OfPnt2d) ArrayCopy
 }
 
 //=======================================================================
+//function : CopyUVNodes
+//purpose  : Copy the gp_Pnt2d
+//           from an Poly_Triangulation
+//           to an Array1 from PColgp (PCollection)
+//=======================================================================
+
+static Handle(PColgp_HArray1OfPnt2d) CopyUVNodes
+       (const Handle(Poly_Triangulation)& theTriangulation)
+{
+  Standard_Integer Lower = 1;
+  Standard_Integer Upper = theTriangulation->NbNodes();
+  Standard_Integer Index;
+  Handle(PColgp_HArray1OfPnt2d) PArray = 
+    new PColgp_HArray1OfPnt2d(Lower, Upper);
+  for (Index = Lower; Index <= Upper; Index++) {
+    PArray->SetValue(Index, theTriangulation->UVNode (Index));
+  }
+  return PArray;
+}
+
+//=======================================================================
 //function : ArrayCopy
 //purpose  : Copy the gp_Pnt2d
 //           from an HArray1 from PColgp (PCollection)
@@ -108,22 +149,22 @@ static void ArrayCopy
 
 
 //=======================================================================
-//function : ArrayCopy
+//function : CopyTriangles
 //purpose  : Copy the Triangle
-//           from an Array1 from Poly (TCollection)
+//           from an from Poly_Triangulation
 //           to an HArray1 from PPoly (PCollection)
 //=======================================================================
 
-static Handle(PPoly_HArray1OfTriangle) ArrayCopy
-(const Poly_Array1OfTriangle& TArray)
+static Handle(PPoly_HArray1OfTriangle) CopyTriangles
+(const Handle(Poly_Triangulation)& theTrinagulation)
 {
-  Standard_Integer Lower = TArray.Lower();
-  Standard_Integer Upper = TArray.Upper();
+  Standard_Integer Lower = 1;
+  Standard_Integer Upper = theTrinagulation->NbTriangles();
   Standard_Integer Index;
   Handle(PPoly_HArray1OfTriangle) PArray = 
     new PPoly_HArray1OfTriangle(Lower, Upper);
   for (Index = Lower; Index <= Upper; Index++) {
-    PPoly_Triangle aPTriangle = MgtPoly::Translate(TArray(Index));
+    PPoly_Triangle aPTriangle = MgtPoly::Translate(theTrinagulation->Triangle (Index));
     PArray->SetValue(Index, aPTriangle);
   }
   return PArray;
@@ -312,27 +353,24 @@ Handle(PPoly_Triangulation) MgtPoly::Translate
     }
     else {
       // myNodes
-      const TColgp_Array1OfPnt& TNodes = TObj->Nodes();
       Handle(PColgp_HArray1OfPnt) PNodes = 
-	new PColgp_HArray1OfPnt(TNodes.Lower(), 
-				TNodes.Upper());
-      PNodes = ArrayCopy(TNodes);
+        new PColgp_HArray1OfPnt(1, 
+        TObj->NbNodes());
+      PNodes = CopyNodes(TObj);
       
       // myTriangles
-      const Poly_Array1OfTriangle& TTriangle = TObj->Triangles();
       Handle(PPoly_HArray1OfTriangle) PTriangle =
-	new PPoly_HArray1OfTriangle(TTriangle.Lower(), 
-				    TTriangle.Upper());
-      PTriangle = ArrayCopy(TTriangle);
+	new PPoly_HArray1OfTriangle(1, 
+				    TObj->NbTriangles());
+      PTriangle = CopyTriangles(TObj);
       
       // myUVNodes
       Handle(PColgp_HArray1OfPnt2d) PUVNodes;
       if (TObj->HasUVNodes()) {
-	const TColgp_Array1OfPnt2d& TUVNodes = TObj->UVNodes();
 	PUVNodes = 
-	  new PColgp_HArray1OfPnt2d(TUVNodes.Lower(), 
-				    TUVNodes.Upper());
-	PUVNodes = ArrayCopy(TUVNodes);
+    new PColgp_HArray1OfPnt2d(1, 
+    TObj->NbNodes());
+	PUVNodes = CopyUVNodes(TObj);
       }
       // Constructor + Deflection
       PT = new PPoly_Triangulation(TObj->Deflection(),

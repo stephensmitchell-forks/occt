@@ -50,9 +50,6 @@ void AIS_Triangulation::Compute(const Handle(PrsMgr_PresentationManager3d)& /*aP
   switch (aMode) 
   {
     case 0:
-      const TColgp_Array1OfPnt& nodes = myTriangulation->Nodes();             //Nodes
-      const Poly_Array1OfTriangle& triangles = myTriangulation->Triangles();  //Triangle
-
       Standard_Boolean hasVNormals = myTriangulation->HasNormals();
       Standard_Boolean hasVColors  = (myFlagColor == 1);
 
@@ -62,29 +59,25 @@ void AIS_Triangulation::Compute(const Handle(PrsMgr_PresentationManager3d)& /*aP
       Handle(Graphic3d_AspectFillArea3d) aspect = myDrawer->ShadingAspect()->Aspect();
 
       Standard_Integer i;
-      Standard_Integer j;
 
       Standard_Real ambient = aspect->FrontMaterial().Ambient();
       if (hasVNormals)
       {
-        const TShort_Array1OfShortReal& normals = myTriangulation->Normals();
         if (hasVColors)
         {
           const TColStd_Array1OfInteger& colors = myColor->Array1();
-          for ( i = nodes.Lower(); i <= nodes.Upper(); i++ )
+          for ( i = 1; i <= myTriangulation->NbNodes(); i++ )
           {
-            j = (i - nodes.Lower()) * 3;
-            anArray->AddVertex(nodes(i), AttenuateColor(colors(i), ambient));
-            anArray->SetVertexNormal(i, normals(j+1), normals(j+2), normals(j+3));
+            anArray->AddVertex(myTriangulation->Node (i), AttenuateColor(colors(i), ambient));
+            anArray->SetVertexNormal(i, myTriangulation->Normal (i));
           }
         }
         else // !hasVColors
         {
-          for ( i = nodes.Lower(); i <= nodes.Upper(); i++ )
+          for ( i = 1; i <= myTriangulation->NbNodes(); i++ )
           {
-            j = (i - nodes.Lower()) * 3;
-            anArray->AddVertex(nodes(i));
-            anArray->SetVertexNormal(i, normals(j+1), normals(j+2), normals(j+3));
+            anArray->AddVertex(myTriangulation->Node (i));
+            anArray->SetVertexNormal(i, myTriangulation->Normal (i));
           }
         }
       }
@@ -93,23 +86,23 @@ void AIS_Triangulation::Compute(const Handle(PrsMgr_PresentationManager3d)& /*aP
         if (hasVColors)
         {
           const TColStd_Array1OfInteger& colors = myColor->Array1();
-          for ( i = nodes.Lower(); i <= nodes.Upper(); i++ )
+          for ( i = 1; i <= myTriangulation->NbNodes(); i++ )
           {
-            anArray->AddVertex(nodes(i), AttenuateColor(colors(i), ambient));
+            anArray->AddVertex(myTriangulation->Node (i), AttenuateColor(colors(i), ambient));
           }
         }
         else // !hasVColors
         {
-          for ( i = nodes.Lower(); i <= nodes.Upper(); i++ )
+          for ( i = 1; i <= myTriangulation->NbNodes(); i++ )
           {
-            anArray->AddVertex(nodes(i));
+            anArray->AddVertex(myTriangulation->Node (i));
           }
         }
       }
 
       Standard_Integer indexTriangle[3] = {0,0,0};
-      for ( i = triangles.Lower(); i<= triangles.Upper(); i++ ) {
-        triangles(i).Get(indexTriangle[0], indexTriangle[1], indexTriangle[2]);
+      for ( i = 1; i<= myTriangulation->NbTriangles(); i++ ) {
+        myTriangulation->Triangle (i).Get(indexTriangle[0], indexTriangle[1], indexTriangle[2]);
         anArray->AddEdge(indexTriangle[0]);
         anArray->AddEdge(indexTriangle[1]);
         anArray->AddEdge(indexTriangle[2]);

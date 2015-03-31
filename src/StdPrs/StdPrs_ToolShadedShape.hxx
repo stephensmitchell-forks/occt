@@ -17,10 +17,9 @@
 #include <Standard.hxx>
 #include <Standard_DefineAlloc.hxx>
 #include <Standard_Macro.hxx>
-#include <Handle_Poly_Triangulation.hxx>
+#include <Poly_Triangulation.hxx>
 
 class TopoDS_Shape;
-class Poly_Triangulation;
 class TopoDS_Face;
 class TopLoc_Location;
 class Poly_Connect;

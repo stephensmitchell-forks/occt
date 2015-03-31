@@ -39,7 +39,7 @@
 #include <BRepMesh_PairOfIndex.hxx>
 #include <BRepMesh_Circle.hxx>
 #include <TopTools_ShapeMapHasher.hxx>
-#include <Handle_Poly_Triangulation.hxx>
+#include <Poly_Triangulation.hxx>
 #include <TopoDS_Face.hxx>
 #include <TopoDS_Shape.hxx>
 
@@ -52,7 +52,6 @@ class Handle_BRepMesh_FaceAttribute;
 class BRepMesh_VertexInspector;
 class BRepMesh_CircleInspector;
 class BRepMesh_Classifier;
-class Poly_Triangulation;
 class BRepMesh_VertexTool;
 
 namespace BRepMesh

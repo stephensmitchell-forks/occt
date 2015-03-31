@@ -103,27 +103,25 @@ NIS_Surface::NIS_Surface (const Handle(Poly_Triangulation)&       theTri,
 
     // Copy the data from the original triangulation.
     Standard_Integer i, iN(0), iT(0);
-    const Poly_Array1OfTriangle& arrTri = theTri->Triangles();
-    const TColgp_Array1OfPnt& arrNodes = theTri->Nodes();
-    for (i = arrTri.Lower(); i <= arrTri.Upper(); i++) {
+    for (i = 1; i <= theTri->NbTriangles(); i++) {
       Standard_Integer iNode[3];
-      arrTri(i).Get(iNode[0], iNode[1], iNode[2]);
-      gp_XYZ aNorm = ((arrNodes(iNode[1]).XYZ() - arrNodes(iNode[0]).XYZ()) ^
-                      (arrNodes(iNode[2]).XYZ() - arrNodes(iNode[0]).XYZ()));
+      theTri->Triangle (i).Get(iNode[0], iNode[1], iNode[2]);
+      gp_XYZ aNorm = ((theTri->Node (iNode[1]).XYZ() - theTri->Node (iNode[0]).XYZ()) ^
+                      (theTri->Node (iNode[2]).XYZ() - theTri->Node (iNode[0]).XYZ()));
       const Standard_Real aMagn = aNorm.Modulus();
       if (aMagn > Precision::Confusion())
         aNorm /= aMagn;
       else
         aNorm.SetCoord(0., 0., 1.);
-      mypNodes[iN+0] = static_cast<Standard_ShortReal>(arrNodes(iNode[0]).X());
-      mypNodes[iN+1] = static_cast<Standard_ShortReal>(arrNodes(iNode[0]).Y());
-      mypNodes[iN+2] = static_cast<Standard_ShortReal>(arrNodes(iNode[0]).Z());
-      mypNodes[iN+3] = static_cast<Standard_ShortReal>(arrNodes(iNode[1]).X());
-      mypNodes[iN+4] = static_cast<Standard_ShortReal>(arrNodes(iNode[1]).Y());
-      mypNodes[iN+5] = static_cast<Standard_ShortReal>(arrNodes(iNode[1]).Z());
-      mypNodes[iN+6] = static_cast<Standard_ShortReal>(arrNodes(iNode[2]).X());
-      mypNodes[iN+7] = static_cast<Standard_ShortReal>(arrNodes(iNode[2]).Y());
-      mypNodes[iN+8] = static_cast<Standard_ShortReal>(arrNodes(iNode[2]).Z());
+      mypNodes[iN+0] = static_cast<Standard_ShortReal>(theTri->Node (iNode[0]).X());
+      mypNodes[iN+1] = static_cast<Standard_ShortReal>(theTri->Node (iNode[0]).Y());
+      mypNodes[iN+2] = static_cast<Standard_ShortReal>(theTri->Node (iNode[0]).Z());
+      mypNodes[iN+3] = static_cast<Standard_ShortReal>(theTri->Node (iNode[1]).X());
+      mypNodes[iN+4] = static_cast<Standard_ShortReal>(theTri->Node (iNode[1]).Y());
+      mypNodes[iN+5] = static_cast<Standard_ShortReal>(theTri->Node (iNode[1]).Z());
+      mypNodes[iN+6] = static_cast<Standard_ShortReal>(theTri->Node (iNode[2]).X());
+      mypNodes[iN+7] = static_cast<Standard_ShortReal>(theTri->Node (iNode[2]).Y());
+      mypNodes[iN+8] = static_cast<Standard_ShortReal>(theTri->Node(iNode[2]).Z());
       mypNormals[iN+0] = static_cast<Standard_ShortReal>(aNorm.X());
       mypNormals[iN+1] = static_cast<Standard_ShortReal>(aNorm.Y());
       mypNormals[iN+2] = static_cast<Standard_ShortReal>(aNorm.Z());
@@ -235,12 +233,10 @@ void NIS_Surface::Init (const TopoDS_Shape& theShape,
         Standard_Boolean isReverse = (aFace.Orientation() == TopAbs_REVERSED);
 
         // Store all nodes of the current face in the data model
-        const TColgp_Array1OfPnt&   tabNode = aTriangulation->Nodes();
-        const TColgp_Array1OfPnt2d& tabUV   = aTriangulation->UVNodes();
-        for (i = tabNode.Lower(); i <= tabNode.Upper(); i++)
+        for (i = 1; i <= aTriangulation->NbNodes(); i++)
         {
           Standard_Real t[3];
-          tabNode(i).Transformed(aTrf).Coord (t[0], t[1], t[2]);
+          aTriangulation->Node (i).Transformed(aTrf).Coord (t[0], t[1], t[2]);
           //  write node to mesh data
           mypNodes[3*aNodeInd + 0] = static_cast<Standard_ShortReal>(t[0]);
           mypNodes[3*aNodeInd + 1] = static_cast<Standard_ShortReal>(t[1]);
@@ -252,13 +248,11 @@ void NIS_Surface::Init (const TopoDS_Shape& theShape,
 
           if (aTriangulation->HasNormals()) {
             // Retrieve the normal direction from the triangulation
-            aNorm.SetCoord(aTriangulation->Normals().Value(3*i-2),
-                           aTriangulation->Normals().Value(3*i-1),
-                           aTriangulation->Normals().Value(3*i-0));
+            aNorm = aTriangulation->Normal (i).XYZ();
           } else if (aSurf.IsNull() == Standard_False)
           {
             // Compute the surface normal at the Node.
-            aSurf->D1(tabUV(i).X(), tabUV(i).Y(), aP, aD1U, aD1V);
+            aSurf->D1(aTriangulation->UVNode (i).X(), aTriangulation->UVNode (i).Y(), aP, aD1U, aD1V);
             aNorm = (aD1U.Crossed(aD1V)).XYZ();
           }
 
@@ -282,11 +276,10 @@ void NIS_Surface::Init (const TopoDS_Shape& theShape,
         }
         const Standard_Integer nNodes1 = nNodes - 1;
         // Store all triangles of the current face in the data model
-        const Poly_Array1OfTriangle& tabTri  = aTriangulation->Triangles();
-        for (i = tabTri.Lower(); i <= tabTri.Upper(); i++)
+        for (i = 1; i <= aTriangulation->NbTriangles(); i++)
         {
           Standard_Integer aN[3];
-          tabTri(i).Get (aN[0], aN[1], aN[2]);
+          aTriangulation->Triangle (i).Get (aN[0], aN[1], aN[2]);
           Standard_Integer * pTriangle = &mypTriangles[nTriangles*3];
           pTriangle[0] = aN[0] + nNodes1;
           if (isReverse) {
@@ -327,17 +320,17 @@ void NIS_Surface::Init (const TopoDS_Shape& theShape,
               Standard_Integer aLen = arrNode.Length();
               Standard_Integer * pEdge = static_cast<Standard_Integer *>
                 (myAlloc->Allocate(sizeof(Standard_Integer) * (aLen + 1)));
-              const gp_Pnt* pLast = &tabNode(arrNode(arrNode.Lower()));
+              const gp_Pnt* pLast = &aTriangulation->Node (arrNode(arrNode.Lower()));
               pEdge[1] = arrNode(arrNode.Lower()) + nNodes1;
               Standard_Integer iPNode(arrNode.Lower() + 1), iENode(1);
               for (; iPNode <= arrNode.Upper(); iPNode++)
               {
                 const Standard_Integer aN(arrNode(iPNode));
-                if (pLast->SquareDistance(tabNode(aN)) < eps2)
+                if (pLast->SquareDistance(aTriangulation->Node (aN)) < eps2)
                 {
                   aLen--;
                 } else {
-                  pLast = &tabNode(aN);
+                  pLast = &aTriangulation->Node (aN);
                   pEdge[++iENode] = aN + nNodes1;
                 }
               }
@@ -349,7 +342,7 @@ void NIS_Surface::Init (const TopoDS_Shape& theShape,
             }
           }
         }
-        nNodes += tabNode.Length();
+        nNodes += aTriangulation->NbNodes();
       }
     }
     myNTriangles = nTriangles;

@@ -81,7 +81,15 @@ is
  	---C++: return const &
    raises NullObject from Standard;
     	
-    
+
+    Node(me; theIndex: Integer from Standard) returns Integer from Standard;
+    ---Purpose: @return node at the given index.
+    -- Raises exception if theIndex is less than NodesLowerIndex or bigger than NodesUpperIndex. 
+
+    SetNode(me: mutable; theIndex: Integer from Standard; theNode: Integer from Standard);
+    ---Purpose: Sets node at the given index.
+    -- Raises exception if theIndex is less than NodesLowerIndex or bigger than NodesUpperIndex.
+
     HasParameters(me) returns Boolean from Standard;
     	---Purpose:
     	-- Returns true if parameters are associated with the nodes in this polygon.   
@@ -92,8 +100,17 @@ is
     	-- are associated with the nodes in this polygon.
 	--          
     raises NullObject from Standard;
-    
-    
+
+    Parameter(me; theIndex: Integer from Standard) returns Real from Standard;
+    ---Purpose: @return parameter at the given index.
+    -- Raises Standard_NullObject exception if parameters has not been initialized.
+    -- Raises Standard_OutOfRange exception if theIndex is less than ParametersLowerIndex or bigger than ParametersUpperIndex. 
+
+    SetParameter(me: mutable; theIndex: Integer from Standard; theValue: Real from Standard);
+    ---Purpose: Sets parameter at the given index.
+    -- Raises Standard_NullObject exception if parameters has not been initialized.
+    -- Raises Standard_OutOfRange exception if theIndex is less than ParametersLowerIndex or bigger than ParametersUpperIndex. 
+
 fields
 
     myDeflection    : Real            from Standard;

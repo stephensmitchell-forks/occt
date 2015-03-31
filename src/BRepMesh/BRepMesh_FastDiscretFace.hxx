@@ -23,7 +23,7 @@
 #include <Standard_Transient.hxx>
 #include <TopTools_MutexForShapeProvider.hxx>
 #include <Handle_BRepAdaptor_HSurface.hxx>
-#include <Handle_Poly_Triangulation.hxx>
+#include <Poly_Triangulation.hxx>
 #include <BRepMesh_Delaun.hxx>
 #include <BRepMesh_Triangle.hxx>
 #include <BRepMesh_Classifier.hxx>
@@ -36,7 +36,6 @@ class TopTools_DataMapOfShapeReal;
 class TopoDS_Vertex;
 class BRepAdaptor_HSurface;
 class TopoDS_Edge;
-class Poly_Triangulation;
 class TopLoc_Location;
 class gp_XY;
 class gp_Pnt2d;

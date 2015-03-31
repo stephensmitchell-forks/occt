@@ -913,8 +913,6 @@ void StdSelect_ViewerSelector3d::ComputeSensitivePrs (const Handle(SelectMgr_Sel
       const Handle(Poly_Triangulation)& PT =
         (*((Handle(Select3D_SensitiveTriangulation)*) &Ent))->Triangulation();
 
-      const Poly_Array1OfTriangle& triangles = PT->Triangles();
-      const TColgp_Array1OfPnt& Nodes = PT->Nodes();
       Standard_Integer n[3];
 
       TopLoc_Location iloc, bidloc;
@@ -929,10 +927,10 @@ void StdSelect_ViewerSelector3d::ComputeSensitivePrs (const Handle(SelectMgr_Sel
       Standard_Integer i;
       for (i = 1; i <= PT->NbTriangles(); i++)
       {
-        triangles (i).Get (n[0], n[1], n[2]);
-        gp_Pnt P1 (Nodes (n[0]).Transformed (iloc));
-        gp_Pnt P2 (Nodes (n[1]).Transformed (iloc));
-        gp_Pnt P3 (Nodes (n[2]).Transformed (iloc));
+        PT->Triangle (i).Get (n[0], n[1], n[2]);
+        gp_Pnt P1 (PT->Node (n[0]).Transformed (iloc));
+        gp_Pnt P2 (PT->Node (n[1]).Transformed (iloc));
+        gp_Pnt P3 (PT->Node (n[2]).Transformed (iloc));
         gp_XYZ V1 (P1.XYZ());
         gp_XYZ V2 (P2.XYZ());
         gp_XYZ V3 (P3.XYZ());
@@ -959,7 +957,7 @@ void StdSelect_ViewerSelector3d::ComputeSensitivePrs (const Handle(SelectMgr_Sel
       for (i = 1; i <= PT->NbTriangles(); i++)
       {
         pc.Triangles (i, t[0], t[1], t[2]);
-        triangles (i).Get (n[0], n[1], n[2]);
+        PT->Triangle (i).Get (n[0], n[1], n[2]);
         for (j = 0; j < 3; j++)
         {
           Standard_Integer k = (j + 1) % 3;
@@ -973,7 +971,7 @@ void StdSelect_ViewerSelector3d::ComputeSensitivePrs (const Handle(SelectMgr_Sel
       }
       for (Standard_Integer ifri = 1; ifri <= FreeE.Length(); ifri += 2)
       {
-        gp_Pnt pe1 (Nodes (FreeE (ifri)).Transformed (iloc)), pe2 (Nodes (FreeE (ifri + 1)).Transformed (iloc));
+        gp_Pnt pe1 (PT->Node (FreeE (ifri)).Transformed (iloc)), pe2 (PT->Node (FreeE (ifri + 1)).Transformed (iloc));
         aSeqFree.Append(pe1);
         aSeqFree.Append(pe2);
       }

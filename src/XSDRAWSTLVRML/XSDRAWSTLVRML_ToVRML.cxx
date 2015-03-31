@@ -144,10 +144,9 @@ Standard_Boolean  XSDRAWSTLVRML_ToVRML::Write
         BRep_Tool::Triangulation(aFace, aLoc);
 
       const Standard_Integer   aLength = aTriangulation->NbNodes();
-      const TColgp_Array1OfPnt& aNodes = aTriangulation->Nodes();
       for ( Standard_Integer i = 1; i <= aLength; ++i )
       {
-        const gp_Pnt& aPoint = aNodes(i);
+        const gp_Pnt& aPoint = aTriangulation->Node (i);
 
         anOut << "          "
               << aPoint.X() << " "
@@ -171,10 +170,9 @@ Standard_Boolean  XSDRAWSTLVRML_ToVRML::Write
         BRep_Tool::Triangulation(aFace, aLoc);
 
       const Standard_Integer aNbTriangles = aTriangulation->NbTriangles();
-      const Poly_Array1OfTriangle& aTriangles = aTriangulation->Triangles();
       for ( Standard_Integer i = 1, v[3]; i <= aNbTriangles; ++i )
       {
-        aTriangles(i).Get(v[0], v[1], v[2]);
+        aTriangulation->Triangle (i).Get(v[0], v[1], v[2]);
 
         anOut << "          "
               << v[0] - 1 << ", "
