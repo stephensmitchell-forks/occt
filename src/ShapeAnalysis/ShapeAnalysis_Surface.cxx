@@ -785,11 +785,11 @@ Standard_Boolean ShapeAnalysis_Surface::SurfaceNewton(const gp_Pnt2d &p2dPrev,
                                                       const Standard_Real preci,
                                                       gp_Pnt2d &sol)
 {
-  GeomAdaptor_Surface& SurfAdapt = Adaptor3d()->ChangeSurface();
+  const GeomAdaptor_Surface& aSurfaceAdaptor = Adaptor3d()->ChangeSurface();
   Standard_Real uf, ul, vf, vl;
   Bounds(uf, ul, vf, vl);
-  Standard_Real du = SurfAdapt.UResolution (preci);
-  Standard_Real dv = SurfAdapt.VResolution (preci);
+  Standard_Real du = aSurfaceAdaptor.UResolution (preci);
+  Standard_Real dv = aSurfaceAdaptor.VResolution (preci);
   Standard_Real UF = uf - du, UL = ul + du;
   Standard_Real VF = vf - dv, VL = vl + dv;
 
@@ -797,11 +797,11 @@ Standard_Boolean ShapeAnalysis_Surface::SurfaceNewton(const gp_Pnt2d &p2dPrev,
   Standard_Real Tol = Precision::Confusion();
   Standard_Real Tol2 = Tol * Tol;//, rs2p=1e10;
   Standard_Real U = p2dPrev.X(), V = p2dPrev.Y();
-  gp_Vec rsfirst = P3D.XYZ() - Value ( U, V ).XYZ(); //pdn
+  gp_Vec rsfirst = P3D.XYZ() - aSurfaceAdaptor.Value( U, V ).XYZ(); //pdn
   for ( Standard_Integer i=0; i < 25; i++ ) {
     gp_Vec ru, rv, ruu, rvv, ruv;
     gp_Pnt pnt;
-    mySurf->D2 ( U, V, pnt, ru, rv, ruu, rvv, ruv );
+    aSurfaceAdaptor.D2( U, V, pnt, ru, rv, ruu, rvv, ruv );
 
     // normal
     Standard_Real ru2 = ru * ru, rv2 = rv * rv;
@@ -809,8 +809,8 @@ Standard_Boolean ShapeAnalysis_Surface::SurfaceNewton(const gp_Pnt2d &p2dPrev,
     Standard_Real nrm2 = n.SquareMagnitude();
     if ( nrm2 < 1e-10 ) break; // n == 0, use standard
 
-    // descriminant
-    gp_Vec rs = P3D.XYZ() - Value ( U, V ).XYZ();
+    // descriminantx
+    gp_Vec rs = P3D.XYZ() - aSurfaceAdaptor.Value( U, V ).XYZ();
     Standard_Real rSuu = ( rs * ruu );
     Standard_Real rSvv = ( rs * rvv );
     Standard_Real rSuv = ( rs * ruv );
@@ -996,20 +996,20 @@ gp_Pnt2d ShapeAnalysis_Surface::ValueOfUV(const gp_Pnt& P3D,const Standard_Real 
       S = (uf+ul)/2;  T = (vf+vl)/2;  // yaura aumoins qqchose
       //pdn to fix hangs PRO17015
       if ((surftype==GeomAbs_SurfaceOfExtrusion)&&Precision::IsInfinite(uf)&&Precision::IsInfinite(ul)) {
-	//conic case
-	gp_Pnt2d prev(S,T);
-	gp_Pnt2d solution;
-	if (SurfaceNewton(prev,P3D,preci,solution)) {
+        //conic case
+        gp_Pnt2d prev(S,T);
+        gp_Pnt2d solution;
+        if (SurfaceNewton(prev,P3D,preci,solution)) {
 #ifdef OCCT_DEBUG
-	  cout <<"Newton found point on conic extrusion"<<endl;
+          cout <<"Newton found point on conic extrusion"<<endl;
 #endif
-	  return solution;
-	}
+          return solution;
+        }
 #ifdef OCCT_DEBUG
-	cout <<"Newton failed point on conic extrusion"<<endl;
+        cout <<"Newton failed point on conic extrusion"<<endl;
 #endif
-	uf = -500;
-	ul = 500;
+        uf = -500;
+        ul = 500;
       }
 
       if (Precision::IsInfinite(uf)) uf = -1000;
@@ -1020,38 +1020,38 @@ gp_Pnt2d ShapeAnalysis_Surface::ValueOfUV(const gp_Pnt& P3D,const Standard_Real 
       //:30 by abv 2.12.97: speed optimization
       // code is taken from GeomAPI_ProjectPointOnSurf
       if ( ! myExtOK ) {
-//      Standard_Real du = Abs(ul-uf)/100;  Standard_Real dv = Abs(vl-vf)/100;
-//      if (IsUClosed()) du = 0;  if (IsVClosed()) dv = 0;
-//  Forcer appel a IsU-VClosed
-	if (myUCloseVal < 0) IsUClosed();
-	if (myVCloseVal < 0) IsVClosed();
-    Standard_Real du = 0., dv = 0.;
-    //extension of the surface range is limited to non-offset surfaces as the latter
-    //can throw exception (e.g. Geom_UndefinedValue) when computing value - see id23943
-    if (!mySurf->IsKind (STANDARD_TYPE (Geom_OffsetSurface))) {
-      //modified by rln during fixing CSR # BUC60035 entity #D231
-      du = Min (myUDelt, SurfAdapt.UResolution (preci));
-      dv = Min (myVDelt, SurfAdapt.VResolution (preci));
-    }
+        //      Standard_Real du = Abs(ul-uf)/100;  Standard_Real dv = Abs(vl-vf)/100;
+        //      if (IsUClosed()) du = 0;  if (IsVClosed()) dv = 0;
+        //  Forcer appel a IsU-VClosed
+        if (myUCloseVal < 0) IsUClosed();
+        if (myVCloseVal < 0) IsVClosed();
+        Standard_Real du = 0., dv = 0.;
+        //extension of the surface range is limited to non-offset surfaces as the latter
+        //can throw exception (e.g. Geom_UndefinedValue) when computing value - see id23943
+        if (!mySurf->IsKind (STANDARD_TYPE (Geom_OffsetSurface))) {
+          //modified by rln during fixing CSR # BUC60035 entity #D231
+          du = Min (myUDelt, SurfAdapt.UResolution (preci));
+          dv = Min (myVDelt, SurfAdapt.VResolution (preci));
+        }
         myExtSrf = mySurf;
-	Standard_Real Tol = Precision::PConfusion();
+        Standard_Real Tol = Precision::PConfusion();
         myExtPS.SetFlag (Extrema_ExtFlag_MIN);
-	myExtPS.Initialize ( myExtSrf, uf-du, ul+du, vf-dv, vl+dv, Tol, Tol );
-	myExtOK = Standard_True;
+        myExtPS.Initialize ( myExtSrf, uf-du, ul+du, vf-dv, vl+dv, Tol, Tol );
+        myExtOK = Standard_True;
       }
       myExtPS.Perform ( P3D );
       Standard_Integer nPSurf = ( myExtPS.IsDone() ? myExtPS.NbExt() : 0 );
 
       if ( nPSurf > 0 ) {
-	Standard_Real dist2Min = myExtPS.SquareDistance( 1 );
-	Standard_Integer indMin=1;
-	for (Standard_Integer sol = 2; sol <= nPSurf ; sol++) {
-	  Standard_Real dist2 = myExtPS.SquareDistance(sol);
-	  if ( dist2Min > dist2 ) {
-	    dist2Min = dist2;
-	    indMin = sol;
-	  }
-	}
+        Standard_Real dist2Min = myExtPS.SquareDistance( 1 );
+        Standard_Integer indMin=1;
+        for (Standard_Integer sol = 2; sol <= nPSurf ; sol++) {
+          Standard_Real dist2 = myExtPS.SquareDistance(sol);
+          if ( dist2Min > dist2 ) {
+            dist2Min = dist2;
+            indMin = sol;
+          }
+        }
         myExtPS.Point(indMin).Parameter ( S, T );
         // PTV 26.06.2002 WORKAROUND protect OCC486. Remove after fix bug.
         // file CEA_cuve-V5.igs Entityes 244, 259, 847, 925
@@ -1060,86 +1060,86 @@ gp_Pnt2d ShapeAnalysis_Surface::ValueOfUV(const gp_Pnt& P3D,const Standard_Real 
         gp_Pnt aCheckPnt = mySurf->Value( S, T );
         dist2Min = P3D.SquareDistance(aCheckPnt);
         // end of WORKAROUND
-	Standard_Real disSurf = sqrt (dist2Min);//, disCurv =1.e10;
+        Standard_Real disSurf = sqrt (dist2Min);//, disCurv =1.e10;
 
-	// Test de projection merdeuse sur les bords :
-	Standard_Real UU = S, VV = T, DistMinOnIso = RealLast();  // myGap;
-//	ForgetNewton(P3D, mySurf, preci, UU, VV, DistMinOnIso);
+        // Test de projection merdeuse sur les bords :
+        Standard_Real UU = S, VV = T, DistMinOnIso = RealLast();  // myGap;
+        //	ForgetNewton(P3D, mySurf, preci, UU, VV, DistMinOnIso);
 
-	//test added by rln on 08/12/97
-//	DistMinOnIso = UVFromIso (P3D, preci, UU, VV);
-	Standard_Boolean possLockal = Standard_False; //:study S4030 (optimizing)
-	if (disSurf > preci) {
-	  gp_Pnt2d pp(UU,VV);
-	  if ( SurfaceNewton(pp,P3D,preci,pp))  { //:q2 abv 16 Mar 99: PRO7226 #412920
-	    Standard_Real dist = P3D.Distance ( Value(pp) );
-	    if ( dist < disSurf ) {
-	      disSurf = dist;
-	      S = UU = pp.X();
-	      T = VV = pp.Y();
-	    }
-	  }
-	  if ( disSurf < 10*preci)
-	    if (mySurf->Continuity() != GeomAbs_C0){
-	      Standard_Real Tol = Precision::Confusion();
-	      gp_Vec D1U, D1V;
-	      gp_Pnt pnt;
-	      mySurf->D1(UU, VV, pnt, D1U, D1V);
-	      gp_Vec b = D1U.Crossed(D1V);
-	      gp_Vec a (pnt, P3D);
-	      Standard_Real ab = a.Dot(b);
-	      Standard_Real nrm2 = b.SquareMagnitude();
-	      if ( nrm2 > 1e-10 ) {
-		Standard_Real dist = a.SquareMagnitude() - (ab*ab)/nrm2;
-		possLockal = ( dist < Tol*Tol );
-	      }
-	    }
-	  if (!possLockal) {
-	    DistMinOnIso = UVFromIso (P3D, preci, UU, VV);
-	  }
-	}
+        //test added by rln on 08/12/97
+        //	DistMinOnIso = UVFromIso (P3D, preci, UU, VV);
+        Standard_Boolean possLockal = Standard_False; //:study S4030 (optimizing)
+        if (disSurf > preci) {
+          gp_Pnt2d pp(UU,VV);
+          if ( SurfaceNewton(pp,P3D,preci,pp))  { //:q2 abv 16 Mar 99: PRO7226 #412920
+            Standard_Real dist = P3D.Distance ( Value(pp) );
+            if ( dist < disSurf ) {
+              disSurf = dist;
+              S = UU = pp.X();
+              T = VV = pp.Y();
+            }
+          }
+          if ( disSurf < 10*preci)
+            if (mySurf->Continuity() != GeomAbs_C0){
+              Standard_Real Tol = Precision::Confusion();
+              gp_Vec D1U, D1V;
+              gp_Pnt pnt;
+              mySurf->D1(UU, VV, pnt, D1U, D1V);
+              gp_Vec b = D1U.Crossed(D1V);
+              gp_Vec a (pnt, P3D);
+              Standard_Real ab = a.Dot(b);
+              Standard_Real nrm2 = b.SquareMagnitude();
+              if ( nrm2 > 1e-10 ) {
+                Standard_Real dist = a.SquareMagnitude() - (ab*ab)/nrm2;
+                possLockal = ( dist < Tol*Tol );
+              }
+            }
+            if (!possLockal) {
+              DistMinOnIso = UVFromIso (P3D, preci, UU, VV);
+            }
+        }
 
-	if (disSurf > DistMinOnIso) {
-	  // On prend les parametres UU et VV;
-	  S = UU;
-	  T = VV;
-	  myGap = DistMinOnIso;
-	}
-	else {
-	  myGap = disSurf;
-	}
+        if (disSurf > DistMinOnIso) {
+          // On prend les parametres UU et VV;
+          S = UU;
+          T = VV;
+          myGap = DistMinOnIso;
+        }
+        else {
+          myGap = disSurf;
+        }
 
-	// On essaie Intersection Droite Passant par P3D / Surface
-//	if ((myGap > preci)&&(!possLockal) ) {
-//	  Standard_Real SS, TT;
-//	  disCurv = FindUV(P3D, mySurf, S, T, SS, TT);
-//	  if (disCurv < preci || disCurv < myGap) {
-//	    S = SS;
-//	    T = TT;
-//	  }
-//	}
+        // On essaie Intersection Droite Passant par P3D / Surface
+        //	if ((myGap > preci)&&(!possLockal) ) {
+        //	  Standard_Real SS, TT;
+        //	  disCurv = FindUV(P3D, mySurf, S, T, SS, TT);
+        //	  if (disCurv < preci || disCurv < myGap) {
+        //	    S = SS;
+        //	    T = TT;
+        //	  }
+        //	}
 
       }
       else {
 #ifdef OCCT_DEBUG
-	cout << "Warning: ShapeAnalysis_Surface::ValueOfUV(): Extrema failed, doing Newton" << endl;
+        cout << "Warning: ShapeAnalysis_Surface::ValueOfUV(): Extrema failed, doing Newton" << endl;
 #endif
-	// on essai sur les bords
-	Standard_Real UU = S, VV = T;//, DistMinOnIso;
-//	ForgetNewton(P3D, mySurf, preci, UU, VV, DistMinOnIso);
-	myGap = UVFromIso (P3D, preci, UU, VV);
-//	if (DistMinOnIso > preci) {
-//	  Standard_Real SS, TT;
-//	  Standard_Real disCurv = FindUV(P3D, mySurf, UU, VV, SS, TT);
-//	  if (disCurv < preci) {
-//	    S = SS;
-//	    T = TT;
-//	  }
-//	}
-//	else {
-	  S = UU;
-	  T = VV;
-//	}
+        // on essai sur les bords
+        Standard_Real UU = S, VV = T;//, DistMinOnIso;
+        //	ForgetNewton(P3D, mySurf, preci, UU, VV, DistMinOnIso);
+        myGap = UVFromIso (P3D, preci, UU, VV);
+        //	if (DistMinOnIso > preci) {
+        //	  Standard_Real SS, TT;
+        //	  Standard_Real disCurv = FindUV(P3D, mySurf, UU, VV, SS, TT);
+        //	  if (disCurv < preci) {
+        //	    S = SS;
+        //	    T = TT;
+        //	  }
+        //	}
+        //	else {
+        S = UU;
+        T = VV;
+        //	}
       }
     }
     break;

@@ -47,6 +47,7 @@
 
 #include <Standard_ErrorHandler.hxx>
 #include <Standard_Failure.hxx>
+#include <OSD_Parallel.hxx>
 #include <TColStd_Array1OfReal.hxx>
 #include <TColStd_Array1OfInteger.hxx>
 #include <Precision.hxx>
@@ -108,6 +109,7 @@
 #include <Geom_Plane.hxx>
 #include <Geom_OffsetCurve.hxx>
 
+#include <NCollection_Array1.hxx>
 #include <TColStd_HSequenceOfReal.hxx>
 #include <Handle_Geom2dAdaptor_HCurve.hxx>
 #include <Adaptor3d_CurveOnSurface.hxx>
@@ -516,6 +518,129 @@ Standard_Boolean ShapeFix_Wire::FixConnected (const Standard_Real prec)
 }
 
 //=======================================================================
+//function :
+//purpose  :
+//=======================================================================
+#include <NCollection_DataMap.hxx>
+namespace
+{
+  class ShapeFix_PCurveInitializer
+  {
+    //! Auxiliary thread ID  hasher.
+    struct Hasher
+    {
+      static Standard_Integer HashCode
+        (const Standard_ThreadId theKey, const Standard_Integer  theUpper)
+      {
+        return ::HashCode(reinterpret_cast<Standard_Address>(theKey), theUpper);
+      }
+
+      static Standard_Boolean IsEqual
+        (const Standard_ThreadId theKey1, const Standard_ThreadId theKey2)
+      {
+        return theKey1 == theKey2;
+      }
+    };
+
+    //! Auxiliary containers.
+    struct ShapeFix_PCurveContext
+    {
+      Handle(ShapeFix_Edge)         EdgeContext;
+      Handle(ShapeAnalysis_Surface) SurfaceContext;
+    };
+
+    typedef NCollection_Array1 <Standard_Integer> ShapeFix_ArrayOfStates;
+    typedef NCollection_DataMap<Standard_ThreadId, ShapeFix_PCurveContext, Hasher> ShapeFix_ContextMap;
+
+  public:
+    //! Constructor
+    ShapeFix_PCurveInitializer(const Standard_Real                  theTolerance,
+                               const TopoDS_Face&                   theFace,
+                               const Handle(ShapeExtend_WireData)&  theWireData,
+                               const Handle(ShapeAnalysis_Surface)& theSurface,
+                               const Handle(ShapeFix_Edge)&         theFixEdge)
+    : myPrecision(theTolerance),
+      myFace     (theFace),
+      myWireData (theWireData),
+      myStates   (1, theWireData->NbEdges())
+    {
+      myWireData->ComputeSeams(Standard_False);
+      myStates.Init(ShapeExtend::EncodeStatus(ShapeExtend_OK));
+
+      // bind context for main thread
+      myMainContext.EdgeContext    = theFixEdge;
+      myMainContext.SurfaceContext = theSurface;
+
+      myContexts.Bind(OSD_Thread::Current(), myMainContext);
+    }
+
+    //! Returns status of edge processing.
+    Standard_Boolean GetStatus(const Standard_Integer   theEdgeIndex,
+                               const ShapeExtend_Status theStatus) const
+    {
+      return ShapeExtend::DecodeStatus(theEdgeIndex, theStatus);
+    }
+
+    //! Returns surface context for current thread.
+    const ShapeFix_PCurveContext& GetContext() const
+    {
+      // try to find existing context
+      const Standard_ThreadId aThreadId = OSD_Thread::Current();
+
+      if  ( myContexts.IsBound(aThreadId) )
+        return myContexts(aThreadId);
+
+      Standard_Mutex::Sentry aLocker(myMutex);
+
+      // create new copy of main context
+      ShapeFix_PCurveContext aContext;
+      aContext.EdgeContext    = new ShapeFix_Edge();
+      aContext.SurfaceContext = new ShapeAnalysis_Surface(myMainContext.SurfaceContext->Surface());
+
+      myContexts.Bind(aThreadId, aContext);
+      return myContexts(aThreadId);
+    }
+
+    //! Functor
+    void operator() (const Standard_Integer theIndex) const
+    {
+      const TopoDS_Edge&     anEdge   = myWireData->Edge(theIndex);
+      const Standard_Boolean anIsSeam = myWireData->IsSeam(theIndex);
+
+      const ShapeFix_PCurveContext& aContext = GetContext();
+      aContext.EdgeContext->FixAddPCurve(anEdge, myFace, anIsSeam, aContext.SurfaceContext, myPrecision);
+
+      // Store current status
+      Standard_Integer& aCurrentStatus = myStates(theIndex);
+      if ( aContext.EdgeContext->Status(ShapeExtend_DONE) )
+        aCurrentStatus |= ShapeExtend::EncodeStatus(ShapeExtend_DONE);
+      if ( aContext.EdgeContext->Status(ShapeExtend_DONE2) )
+        aCurrentStatus |= ShapeExtend::EncodeStatus(ShapeExtend_DONE2);
+      if ( aContext.EdgeContext->Status(ShapeExtend_FAIL) )
+        aCurrentStatus |= ShapeExtend::EncodeStatus(ShapeExtend_FAIL);
+    }
+
+  private:
+    //! Empty copy constructor.
+    ShapeFix_PCurveInitializer(const ShapeFix_PCurveInitializer&);
+
+    //! Empty assignent operator.
+    ShapeFix_PCurveInitializer& operator=(const ShapeFix_PCurveInitializer&);
+
+  private:
+    const Standard_Real            myPrecision;
+    const TopoDS_Face&             myFace;
+    Handle(ShapeExtend_WireData)   myWireData;
+
+    ShapeFix_PCurveContext         myMainContext;
+
+    mutable Standard_Mutex         myMutex;
+    mutable ShapeFix_ArrayOfStates myStates;
+    mutable ShapeFix_ContextMap    myContexts;
+  };
+}
+
+//=======================================================================
 //function : FixEdgeCurves
 //purpose  : 
 //=======================================================================
@@ -537,162 +662,196 @@ Standard_Boolean ShapeFix_Wire::FixEdgeCurves()
     for ( i=1; i <= nb; i++ ) {
       theAdvFixEdge->FixReversed2d ( sbwd->Edge(i), face ); 
       if ( theAdvFixEdge->Status ( ShapeExtend_DONE ) ) 
-	myStatusEdgeCurves |= ShapeExtend::EncodeStatus ( ShapeExtend_DONE1 );
+        myStatusEdgeCurves |= ShapeExtend::EncodeStatus ( ShapeExtend_DONE1 );
       if ( theAdvFixEdge->Status ( ShapeExtend_FAIL ) ) 
-	myStatusEdgeCurves |= ShapeExtend::EncodeStatus ( ShapeExtend_FAIL1 );
+        myStatusEdgeCurves |= ShapeExtend::EncodeStatus ( ShapeExtend_FAIL1 );
     }
   }
-  
+
   // add / remove pcurve
   if ( isReady && NeedFix ( myFixRemovePCurveMode, Standard_False ) ) {
     for ( i=1; i <= nb; i++ ) {
       myFixEdge->FixRemovePCurve ( sbwd->Edge(i), face );
       if ( myFixEdge->Status ( ShapeExtend_DONE ) ) 
-	myStatusEdgeCurves |= ShapeExtend::EncodeStatus ( ShapeExtend_DONE2 );
+        myStatusEdgeCurves |= ShapeExtend::EncodeStatus ( ShapeExtend_DONE2 );
       if ( myFixEdge->Status ( ShapeExtend_FAIL ) ) 
-	myStatusEdgeCurves |= ShapeExtend::EncodeStatus ( ShapeExtend_FAIL2 );
+        myStatusEdgeCurves |= ShapeExtend::EncodeStatus ( ShapeExtend_FAIL2 );
     }
   }
 
-  if ( isReady && NeedFix ( myFixAddPCurveMode ) ) {
+  if ( isReady && NeedFix ( myFixAddPCurveMode ) )
+  {
     Standard_Integer overdegen = 0; //:c0
-    for ( i=1; i <= nb; i++ ) {
-      myFixEdge->FixAddPCurve ( sbwd->Edge(i), face, sbwd->IsSeam(i), 
-			 myAnalyzer->Surface(), Precision() );
-      if ( myFixEdge->Status ( ShapeExtend_DONE ) ) 
-	myStatusEdgeCurves |= ShapeExtend::EncodeStatus ( ShapeExtend_DONE3 );
-      if ( myFixEdge->Status ( ShapeExtend_FAIL ) ) 
-	myStatusEdgeCurves |= ShapeExtend::EncodeStatus ( ShapeExtend_FAIL3 );
 
-      //if ( !sbwd->IsSeam(i) && myFixEdge->Status ( ShapeExtend_DONE2 )
-      //     && BRep_Tool::SameParameter(sbwd->Edge(i)) ) {
-      if ( !sbwd->IsSeam(i) && myFixEdge->Status ( ShapeExtend_DONE2 ) ) {
-	// abv 24 Feb 00: trj3_s1-ac-214.stp #1631 etc.: try to split the edge in singularity
-	if ( ! Context().IsNull() ) { 
-	  ShapeBuild_Edge sbe;
-	  TopoDS_Edge E = sbwd->Edge ( i );
-	  ShapeAnalysis_Curve SAC;
-	  Standard_Real a, b;
-	  Handle(Geom_Curve) C = BRep_Tool::Curve ( E, a, b );
-	  Handle(ShapeAnalysis_Surface) S = myAnalyzer->Surface();
-	  Standard_Integer nbs = S->NbSingularities(MinTolerance());
-	  GeomAdaptor_Curve GAC ( C, a, b );
-	  TColStd_SequenceOfReal seq;
-	  for (Standard_Integer j=1; j <= nbs; j++) {
-	    Standard_Real Preci;
-	    gp_Pnt2d pd1, pd2;
-	    gp_Pnt P3d, pr;
-	    Standard_Real par1, par2, split;
-	    Standard_Boolean tmpUIsoDeg;
-	    S->Singularity (j, Preci, P3d, pd1, pd2, par1, par2, tmpUIsoDeg);
-	    if ( SAC.Project ( GAC, P3d, MinTolerance(), pr, split, Standard_True ) < Max(Preci,MinTolerance()) ) {
-	      if ( split - a > ::Precision::PConfusion() &&
-		   b - split > ::Precision::PConfusion() ) {
-		Standard_Integer k;
-		for ( k=1; k <= seq.Length(); k++ ) {
-		  if ( split < seq(k)-::Precision::PConfusion() ) {
-		    seq.InsertBefore ( k, split );
-		    break;
-		  }
-		  else if ( split < seq(k)+::Precision::PConfusion() ) break;
-		}
-		if ( k > seq.Length() ) seq.Append ( split );
-	      }
-	    }
-	  }
-	  if ( seq.Length() >0 ) { // supposed that edge is SP
-#ifdef OCCT_DEBUG
-	    cout << "Edge going over singularity detected; splitted" << endl;
-#endif
-      Standard_Boolean isFwd = ( E.Orientation() == TopAbs_FORWARD );
-      E.Orientation ( TopAbs_FORWARD );
+    // perform parallel processing pcurves for each edge
+    const Standard_Real aPrecision = Precision();
+    ShapeFix_PCurveInitializer anInitializer
+      (aPrecision, face, sbwd, myAnalyzer->Surface(), myFixEdge);
+    OSD_Parallel::For(1, nb, anInitializer);
 
-      //if( BRep_Tool::SameParameter(sbwd->Edge(i)) )
-      //  sbe.RemovePCurve ( E, face );
+    // check edges on splitting
+    Standard_Integer aNbSplitted  = 0;
+    Standard_Integer aPrevEdgeIdx = 0;
+    Standard_Boolean anIsDone2    = Standard_False;
+    for ( i = 1; i <= nb; ++i )
+    {
+      if (aNbSplitted != 0)
+      {
+        myFixEdge->FixAddPCurve( sbwd->Edge(i),
+                                 face,
+                                 sbwd->IsSeam(i),
+                                 myAnalyzer->Surface(),
+                                 aPrecision );
 
-      //10.04.2003 skl for using trimmed lines as pcurves
-      ShapeAnalysis_Edge sae;
-      if( BRep_Tool::SameParameter(sbwd->Edge(i)) )
-        sbe.RemovePCurve ( E, face );
-      else {
-        if(sae.HasPCurve(E,face)) {
-          Handle(Geom2d_Curve) C2d;
-          Standard_Real fp2d,lp2d;
-          if(sae.PCurve(E,face,C2d,fp2d,lp2d)) {
-            if( !C2d->IsKind(STANDARD_TYPE(Geom2d_TrimmedCurve)) )
-              sbe.RemovePCurve(E,face);
-          }
-        }
+        if ( myFixEdge->Status(ShapeExtend_DONE) )
+          myStatusEdgeCurves |= ShapeExtend::EncodeStatus(ShapeExtend_DONE3);
+        if ( myFixEdge->Status(ShapeExtend_FAIL) )
+          myStatusEdgeCurves |= ShapeExtend::EncodeStatus(ShapeExtend_FAIL3);
+
+        anIsDone2 = myFixEdge->Status(ShapeExtend_DONE2);
+        --aNbSplitted;
+      }
+      else
+      {
+        ++aPrevEdgeIdx;
+        if ( anInitializer.GetStatus(aPrevEdgeIdx, ShapeExtend_DONE) )
+          myStatusEdgeCurves |= ShapeExtend::EncodeStatus(ShapeExtend_DONE3);
+        if ( anInitializer.GetStatus(aPrevEdgeIdx, ShapeExtend_FAIL) )
+          myStatusEdgeCurves |= ShapeExtend::EncodeStatus(ShapeExtend_FAIL3);
+
+        anIsDone2 = anInitializer.GetStatus(aPrevEdgeIdx, ShapeExtend_DONE2);
       }
 
-//    myFixEdge->FixSameParameter ( E ); // to ensure SameRange & SP
-      BRep_Builder B;
-      TopoDS_Vertex V1, V2, V;
-      //ShapeAnalysis_Edge sae;
-      V1 = sae.FirstVertex ( E );
-      V2 = sae.LastVertex ( E );
-        
-      Handle(ShapeExtend_WireData) sw = new ShapeExtend_WireData;
-      for ( Standard_Integer k=0; k <= seq.Length(); k++ )
+      if ( !sbwd->IsSeam(i) && anIsDone2 == Standard_True )
       {
-        Standard_Real split = ( k < seq.Length() ? seq(k+1) : b );
-        if ( k < seq.Length() )
+        // abv 24 Feb 00: trj3_s1-ac-214.stp #1631 etc.: try to split the edge in singularity
+        if ( ! Context().IsNull() )
         {
-          B.MakeVertex ( V, C->Value(split), BRep_Tool::Tolerance(E) );
-          //try increase tolerance before splitting
-          Standard_Real aDist = BRep_Tool::Pnt(V1).Distance(BRep_Tool::Pnt(V));
-          if (aDist < BRep_Tool::Tolerance(V1) * 1.01) {
-            B.UpdateVertex(V1, Max(aDist, BRep_Tool::Tolerance(V1)));
-            a = split;
-            V1 = V;
-            continue;
-          }
-          else
-          {
-            aDist = BRep_Tool::Pnt(V2).Distance(BRep_Tool::Pnt(V));
-            if (aDist < BRep_Tool::Tolerance(V2) * 1.01) {
-              B.UpdateVertex(V, Max(aDist, BRep_Tool::Tolerance(V2)));
-              b = split;
-              V2 = V;
-              continue;
+          ShapeBuild_Edge sbe;
+          TopoDS_Edge E = sbwd->Edge ( i );
+          ShapeAnalysis_Curve SAC;
+          Standard_Real a, b;
+          Handle(Geom_Curve) C = BRep_Tool::Curve ( E, a, b );
+          Handle(ShapeAnalysis_Surface) S = myAnalyzer->Surface();
+          Standard_Integer nbs = S->NbSingularities(MinTolerance());
+          GeomAdaptor_Curve GAC ( C, a, b );
+          TColStd_SequenceOfReal seq;
+          for (Standard_Integer j=1; j <= nbs; j++) {
+            Standard_Real Preci;
+            gp_Pnt2d pd1, pd2;
+            gp_Pnt P3d, pr;
+            Standard_Real par1, par2, split;
+            Standard_Boolean tmpUIsoDeg;
+            S->Singularity (j, Preci, P3d, pd1, pd2, par1, par2, tmpUIsoDeg);
+            if ( SAC.Project ( GAC, P3d, MinTolerance(), pr, split, Standard_True ) < Max(Preci,MinTolerance()) ) {
+              if ( split - a > ::Precision::PConfusion() &&
+                   b - split > ::Precision::PConfusion() ) {
+                  Standard_Integer k;
+                  for ( k=1; k <= seq.Length(); k++ ) {
+                    if ( split < seq(k)-::Precision::PConfusion() ) {
+                      seq.InsertBefore ( k, split );
+                      break;
+                    }
+                    else if ( split < seq(k)+::Precision::PConfusion() ) break;
+                  }
+                  if ( k > seq.Length() ) seq.Append ( split );
+              }
             }
           }
-        }
-        else
-        {
-          V = V2;
+          if ( seq.Length() >0 ) { // supposed that edge is SP
+#ifdef OCCT_DEBUG
+            cout << "Edge going over singularity detected; splitted" << endl;
+#endif
+            Standard_Boolean isFwd = ( E.Orientation() == TopAbs_FORWARD );
+            E.Orientation ( TopAbs_FORWARD );
+
+            //if( BRep_Tool::SameParameter(sbwd->Edge(i)) )
+            //  sbe.RemovePCurve ( E, face );
+
+            //10.04.2003 skl for using trimmed lines as pcurves
+            ShapeAnalysis_Edge sae;
+            if( BRep_Tool::SameParameter(sbwd->Edge(i)) )
+              sbe.RemovePCurve ( E, face );
+            else {
+              if(sae.HasPCurve(E,face)) {
+                Handle(Geom2d_Curve) C2d;
+                Standard_Real fp2d,lp2d;
+                if(sae.PCurve(E,face,C2d,fp2d,lp2d)) {
+                  if( !C2d->IsKind(STANDARD_TYPE(Geom2d_TrimmedCurve)) )
+                    sbe.RemovePCurve(E,face);
+                }
+              }
+            }
+
+            //    myFixEdge->FixSameParameter ( E ); // to ensure SameRange & SP
+            BRep_Builder B;
+            TopoDS_Vertex V1, V2, V;
+            //ShapeAnalysis_Edge sae;
+            V1 = sae.FirstVertex ( E );
+            V2 = sae.LastVertex ( E );
+
+            Handle(ShapeExtend_WireData) sw = new ShapeExtend_WireData;
+            for ( Standard_Integer k=0; k <= seq.Length(); k++ )
+            {
+              Standard_Real split = ( k < seq.Length() ? seq(k+1) : b );
+              if ( k < seq.Length() )
+              {
+                B.MakeVertex ( V, C->Value(split), BRep_Tool::Tolerance(E) );
+                //try increase tolerance before splitting
+                Standard_Real aDist = BRep_Tool::Pnt(V1).Distance(BRep_Tool::Pnt(V));
+                if (aDist < BRep_Tool::Tolerance(V1) * 1.01) {
+                  B.UpdateVertex(V1, Max(aDist, BRep_Tool::Tolerance(V1)));
+                  a = split;
+                  V1 = V;
+                  continue;
+                }
+                else
+                {
+                  aDist = BRep_Tool::Pnt(V2).Distance(BRep_Tool::Pnt(V));
+                  if (aDist < BRep_Tool::Tolerance(V2) * 1.01) {
+                    B.UpdateVertex(V, Max(aDist, BRep_Tool::Tolerance(V2)));
+                    b = split;
+                    V2 = V;
+                    continue;
+                  }
+                }
+              }
+              else
+              {
+                V = V2;
+              }
+
+              TopoDS_Edge edge = sbe.CopyReplaceVertices ( E, V1, V );
+              if( BRep_Tool::SameParameter(sbwd->Edge(i)) ) {
+                //TopoDS_Edge edge = sbe.CopyReplaceVertices ( E, V1, V );
+                B.Range ( edge, a, split );
+                sw->Add ( edge );
+              }
+              else {
+                //TopoDS_Edge edge = sbe.CopyReplaceVertices(sbwd->Edge(i),V1,V);
+                Handle(ShapeAnalysis_TransferParameters) sftp =
+                  new ShapeAnalysis_TransferParameters(E,face);
+                sftp->TransferRange(edge, a, split, Standard_False);
+                sw->Add(edge);
+              }
+              //sw->Add(edge);
+              a = split;
+              V1 = V;
+            }
+            if ( ! isFwd ) {
+              sw->Reverse();
+              E.Orientation ( TopAbs_REVERSED );
+            }
+            Context()->Replace ( E, sw->Wire() );
+            UpdateWire();
+            nb = sbwd->NbEdges();
+            aNbSplitted += sw->NbEdges();
+            i--;
+            continue;
+          }
         }
 
-        TopoDS_Edge edge = sbe.CopyReplaceVertices ( E, V1, V );
-        if( BRep_Tool::SameParameter(sbwd->Edge(i)) ) {
-          //TopoDS_Edge edge = sbe.CopyReplaceVertices ( E, V1, V );
-          B.Range ( edge, a, split );
-          sw->Add ( edge );
-        }
-        else {
-          //TopoDS_Edge edge = sbe.CopyReplaceVertices(sbwd->Edge(i),V1,V);
-          Handle(ShapeAnalysis_TransferParameters) sftp =
-            new ShapeAnalysis_TransferParameters(E,face);
-          sftp->TransferRange(edge, a, split, Standard_False);
-          sw->Add(edge);
-        }
-        //sw->Add(edge);
-        a = split;
-        V1 = V;
-      }
-      if ( ! isFwd ) {
-        sw->Reverse();
-        E.Orientation ( TopAbs_REVERSED );
-      }
-      Context()->Replace ( E, sw->Wire() );
-      UpdateWire();
-      nb = sbwd->NbEdges();
-      i--;
-      continue;
-    }
-	}
-	
-	overdegen = i;
+        overdegen = i;
       }
     }
 
@@ -706,15 +865,15 @@ Standard_Boolean ShapeFix_Wire::FixEdgeCurves()
       ShapeAnalysis_Edge sae;
       Standard_Integer k;
       for ( k = 1; k <= nb; k++) {
-	Standard_Real cf, cl;
-	Handle(Geom2d_Curve) c2d;
-	if ( ! sae.PCurve ( sbwd->Edge(k), face, c2d, cf, cl, Standard_True ) ) break;
-	vec += c2d->Value(cl).XY() - c2d->Value(cf).XY();
+        Standard_Real cf, cl;
+        Handle(Geom2d_Curve) c2d;
+        if ( ! sae.PCurve ( sbwd->Edge(k), face, c2d, cf, cl, Standard_True ) ) break;
+        vec += c2d->Value(cl).XY() - c2d->Value(cf).XY();
       }
       if ( k > nb && Abs ( Abs ( vec.X() ) - URange ) < 0.1 * URange ) {
-	sbe.RemovePCurve (sbwd->Edge ( overdegen ), face);
-	myFixEdge->Projector()->AdjustOverDegenMode() = Standard_False;
-	myFixEdge->FixAddPCurve ( sbwd->Edge(overdegen), face, sbwd->IsSeam(overdegen), myAnalyzer->Surface(), Precision());
+        sbe.RemovePCurve (sbwd->Edge ( overdegen ), face);
+        myFixEdge->Projector()->AdjustOverDegenMode() = Standard_False;
+        myFixEdge->FixAddPCurve ( sbwd->Edge(overdegen), face, sbwd->IsSeam(overdegen), myAnalyzer->Surface(), Precision());
       }
 #ifdef OCCT_DEBUG
       cout << "Edge going over singularity detected; pcurve adjusted" << endl;
@@ -727,16 +886,16 @@ Standard_Boolean ShapeFix_Wire::FixEdgeCurves()
     for ( i=1; i <= nb; i++ ) {
       myFixEdge->FixRemoveCurve3d ( sbwd->Edge(i) );
       if ( myFixEdge->Status ( ShapeExtend_DONE ) ) 
-	myStatusEdgeCurves |= ShapeExtend::EncodeStatus ( ShapeExtend_DONE4 );
+        myStatusEdgeCurves |= ShapeExtend::EncodeStatus ( ShapeExtend_DONE4 );
       if ( myFixEdge->Status ( ShapeExtend_FAIL ) ) 
-	myStatusEdgeCurves |= ShapeExtend::EncodeStatus ( ShapeExtend_FAIL4 );
+        myStatusEdgeCurves |= ShapeExtend::EncodeStatus ( ShapeExtend_FAIL4 );
     }
   }
   if ( NeedFix ( myFixAddCurve3dMode ) ) {
     for ( i=1; i <= nb; i++ ) {
       myFixEdge->FixAddCurve3d ( sbwd->Edge(i) );
       if ( myFixEdge->Status ( ShapeExtend_DONE ) ) 
-	myStatusEdgeCurves |= ShapeExtend::EncodeStatus ( ShapeExtend_DONE5 );
+        myStatusEdgeCurves |= ShapeExtend::EncodeStatus ( ShapeExtend_DONE5 );
       if ( myFixEdge->Status ( ShapeExtend_FAIL ) ) {
         //:abv 29.08.01: Spatial_firex_lofting.sat: if 3d curve cannot
         // be built because edge has no pcurves either, remove that edge
@@ -753,19 +912,19 @@ Standard_Boolean ShapeFix_Wire::FixEdgeCurves()
           myStatusEdgeCurves |= ShapeExtend::EncodeStatus ( ShapeExtend_DONE5 );
           FixConnected (i + 1, Precision());
         }
-	myStatusEdgeCurves |= ShapeExtend::EncodeStatus ( ShapeExtend_FAIL5 );
+        myStatusEdgeCurves |= ShapeExtend::EncodeStatus ( ShapeExtend_FAIL5 );
       }
     }
   }
-  
+
   // fix seam
   if ( isReady && NeedFix ( myFixSeamMode, Standard_False ) ) {
     for ( i=1; i <= nb; i++ ) {
       FixSeam ( i );
       if ( LastFixStatus ( ShapeExtend_DONE ) ) 
-	myStatusEdgeCurves |= ShapeExtend::EncodeStatus ( ShapeExtend_DONE6 );
+        myStatusEdgeCurves |= ShapeExtend::EncodeStatus ( ShapeExtend_DONE6 );
       if ( LastFixStatus ( ShapeExtend_FAIL ) ) 
-	myStatusEdgeCurves |= ShapeExtend::EncodeStatus ( ShapeExtend_FAIL6 );
+        myStatusEdgeCurves |= ShapeExtend::EncodeStatus ( ShapeExtend_FAIL6 );
     }
   }
 
@@ -790,32 +949,32 @@ Standard_Boolean ShapeFix_Wire::FixEdgeCurves()
         Standard_Real fp2d,lp2d;
         if(sae.PCurve(sbwd->Edge(i),face,C2d,fp2d,lp2d)) {
           if( fabs(First-fp2d)>Precision::PConfusion() ||
-              fabs(Last-lp2d)>Precision::PConfusion() ) {
-            BRep_Builder B;
-            B.SameRange(sbwd->Edge(i),Standard_False);
+            fabs(Last-lp2d)>Precision::PConfusion() ) {
+              BRep_Builder B;
+              B.SameRange(sbwd->Edge(i),Standard_False);
           }
         }
       }
       myFixEdge->FixSameParameter ( sbwd->Edge(i) );
       if ( myFixEdge->Status ( ShapeExtend_DONE ) ) 
-	myStatusEdgeCurves |= ShapeExtend::EncodeStatus ( ShapeExtend_DONE8 );
+        myStatusEdgeCurves |= ShapeExtend::EncodeStatus ( ShapeExtend_DONE8 );
       if ( myFixEdge->Status ( ShapeExtend_FAIL ) ) 
-	myStatusEdgeCurves |= ShapeExtend::EncodeStatus ( ShapeExtend_FAIL8 );
+        myStatusEdgeCurves |= ShapeExtend::EncodeStatus ( ShapeExtend_FAIL8 );
     }
   }
-    
+
   //:abv 10.06.02: porting C40 -> dev (CC670-12608.stp): moved from Perform()
   // Update with face is needed for plane surfaces (w/o stored pcurves)
   if ( NeedFix ( myFixVertexToleranceMode ) ) {
     for ( i=1; i <= nb; i++) {
       myFixEdge->FixVertexTolerance (sbwd->Edge (i), face);
       if ( myFixEdge->Status ( ShapeExtend_DONE ) ) 
-	myStatusEdgeCurves |= ShapeExtend::EncodeStatus ( ShapeExtend_DONE8 );
+        myStatusEdgeCurves |= ShapeExtend::EncodeStatus ( ShapeExtend_DONE8 );
       if ( myFixEdge->Status ( ShapeExtend_FAIL ) ) 
-	myStatusEdgeCurves |= ShapeExtend::EncodeStatus ( ShapeExtend_FAIL8 );
+        myStatusEdgeCurves |= ShapeExtend::EncodeStatus ( ShapeExtend_FAIL8 );
     }
   }
-  
+
   return StatusEdgeCurves ( ShapeExtend_DONE );
 }
 

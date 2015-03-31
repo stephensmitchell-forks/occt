@@ -94,7 +94,11 @@ is
 	Uniform, -- each patch gives range 1.: Ui = i-1, Vj = j-1
 	Unitary  -- uniform parametrisation with global range [0,1]
     end Parametrisation;
-    
+
+    imported SequenceOfInteger;
+
+    imported SequenceOfShape;
+
     deferred class ComplexCurve;
 
     class CompositeSurface;

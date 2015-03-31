@@ -42,12 +42,13 @@ class WireData from ShapeExtend inherits TShared from MMgt
     	--      ShapeExtend_WireData saves time and memory. 
 
 uses 
-    HSequenceOfInteger from TColStd,
     Shape              from TopoDS,
     Edge               from TopoDS, 
     Wire               from TopoDS, 
     Face               from TopoDS, 
-    HSequenceOfShape   from TopTools
+    HSequenceOfShape   from TopTools,
+    SequenceOfShape    from ShapeExtend,
+    SequenceOfInteger  from ShapeExtend
 
 is
 
@@ -216,10 +217,9 @@ is
     	-- null shape is returned.
  
 fields
-
-    myEdges: HSequenceOfShape from TopTools;
     myNonmanifoldEdges : HSequenceOfShape from TopTools;
-    mySeams: HSequenceOfInteger from TColStd;
+    myEdges: SequenceOfShape   from ShapeExtend;
+    mySeams: SequenceOfInteger from ShapeExtend;
     mySeamF: Integer;
     mySeamR: Integer;
     myManifoldMode : Boolean;
