@@ -120,6 +120,30 @@ void Poly_Triangulation::RemoveUVNodes()
 }
 
 //=======================================================================
+//function : AddNode
+//purpose  : 
+//=======================================================================
+Standard_Integer Poly_Triangulation::AddNode (const gp_Pnt& theNode)
+{
+  myNodes.Append (theNode);
+
+  if (!myUVNodes.IsEmpty())
+  {
+    myUVNodes.Append (gp_Pnt2d (0.0, 0.0));
+  }
+
+  if (!myNormals.IsEmpty())
+  {
+    Standard_Integer aNbNormals = myNodes.Size();
+    myNormals.SetValue (aNbNormals + 2, 0.0);
+    myNormals.SetValue (aNbNormals + 1, 0.0);
+    myNormals.SetValue (aNbNormals, 0.0);
+  }
+
+  return myNodes.Size();
+}
+
+//=======================================================================
 //function : Node
 //purpose  : 
 //=======================================================================

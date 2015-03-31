@@ -109,6 +109,11 @@ public:
   //! @return true if 2D nodes are associated with 3D nodes for this triangulation.
   Standard_Boolean HasUVNodes() const { return !myUVNodes.IsEmpty(); }
 
+  //! Adds Node to the triangulation. If triangulation has UVNodes or Normals
+  //! they will be expanded and set to zero values to match the new number of nodes.
+  //! @return index of the added Node.
+  Standard_EXPORT Standard_Integer AddNode (const gp_Pnt& theNode);
+
   //! @return node at the given index.
   //! Raises exception if theIndex is less than 1 or bigger than NbNodes().
   Standard_EXPORT const gp_Pnt& Node (const Standard_Integer theIndex) const;
@@ -116,10 +121,6 @@ public:
   //! Give access to the node at the given index.
   //! Raises exception if theIndex is less than 1 or bigger than NbNodes().
   Standard_EXPORT gp_Pnt& ChangeNode (const Standard_Integer theIndex);
-
-  //! Adds UVNode to the triangulation.
-  //! @return index of the added UVNode.
-  Standard_EXPORT Standard_Integer AddUVNode (const gp_Pnt2d& theUVNode);
 
   //! @return UVNode at the given index.
   //! Raises Standard_OutOfRange exception.
