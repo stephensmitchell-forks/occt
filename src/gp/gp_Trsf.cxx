@@ -357,6 +357,103 @@ void gp_Trsf::SetValues(const Standard_Real a11,
 }
 
 //=======================================================================
+//function : SetValues
+//purpose  : 
+// 06-01-1998 modified by PMN : On utilise TolDist pour evaluer si les coeffs 
+//  sont nuls : c'est toujours mieux que gp::Resolution !
+//=======================================================================
+
+void gp_Trsf::SetValues(const Standard_Real a11, 
+                        const Standard_Real a12, 
+                        const Standard_Real a13, 
+                        const Standard_Real a14, 
+                        const Standard_Real a21, 
+                        const Standard_Real a22, 
+                        const Standard_Real a23, 
+                        const Standard_Real a24, 
+                        const Standard_Real a31, 
+                        const Standard_Real a32,
+                        const Standard_Real a33, 
+                        const Standard_Real a34, 
+//                      const Standard_Real Tolang, 
+                        const Standard_Real , 
+                        const Standard_Real
+#ifndef No_Exception
+                                            TolDist
+#endif
+                       )
+{
+  gp_XYZ col1(a11,a21,a31);
+  gp_XYZ col2(a12,a22,a32);
+  gp_XYZ col3(a13,a23,a33);
+  gp_XYZ col4(a14,a24,a34);
+  // compute the determinant
+  gp_Mat M(col1,col2,col3);
+  Standard_Real s = M.Determinant();
+  Standard_Real As = s;
+  if (As < 0) As = - As;
+  Standard_ConstructionError_Raise_if
+    (As < gp::Resolution(),"gp_Trsf::SeValues, null determinant");
+  if (s > 0)
+    s = Pow(s,1./3.);
+  else
+    s = -Pow(-s,1./3.);
+  M.Divide(s);
+  
+  // check if the matrix is a rotation matrix
+  // the transposition should be the invert.
+  gp_Mat TM(M);
+  TM.Transpose();
+  TM.Multiply(M);
+  //
+  // don t trust the initial values !
+  //
+  gp_Mat anIdentity ;
+  anIdentity.SetIdentity() ;
+  TM.Subtract(anIdentity);
+  As = TM.Value(1,1);
+  if (As < 0) As = - As;
+  Standard_ConstructionError_Raise_if
+    (As > TolDist,"gp_Trsf::SeValues, non uniform");
+  As = TM.Value(1,2);
+  if (As < 0) As = - As;
+  Standard_ConstructionError_Raise_if
+    (As > TolDist,"gp_Trsf::SeValues, non uniform");
+  As = TM.Value(1,3);
+  if (As < 0) As = - As;
+  Standard_ConstructionError_Raise_if
+    (As > TolDist,"gp_Trsf::SeValues, non uniform");
+  As = TM.Value(2,1);
+  if (As < 0) As = - As;
+  Standard_ConstructionError_Raise_if
+    (As > TolDist,"gp_Trsf::SeValues, non uniform");
+  As = TM.Value(2,2);
+  if (As < 0) As = - As;
+  Standard_ConstructionError_Raise_if
+    (As > TolDist,"gp_Trsf::SeValues, non uniform");
+  As = TM.Value(2,3);
+  if (As < 0) As = - As;
+  Standard_ConstructionError_Raise_if
+    (As > TolDist,"gp_Trsf::SeValues, non uniform");
+  As = TM.Value(3,1);
+  if (As < 0) As = - As;
+  Standard_ConstructionError_Raise_if
+    (As > TolDist,"gp_Trsf::SeValues, non uniform");
+  As = TM.Value(3,2);
+  if (As < 0) As = - As;
+  Standard_ConstructionError_Raise_if
+    (As > TolDist,"gp_Trsf::SeValues, non uniform");
+  As = TM.Value(3,3);
+  if (As < 0) As = - As;
+  Standard_ConstructionError_Raise_if
+    (As > TolDist,"gp_Trsf::SeValues, non uniform");
+  scale = s;
+  shape = gp_CompoundTrsf;
+  matrix = M;
+  loc = col4;
+}
+
+//=======================================================================
 //function : GetRotation
 //purpose  : 
 //=======================================================================

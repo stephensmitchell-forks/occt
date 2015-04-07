@@ -221,6 +221,33 @@ is
         ConstructionError from Standard
 
     is static;
+
+	SetValues(me : in out;
+            a11, a12, a13, a14,
+            a21, a22, a23, a24,
+            a31, a32, a33, a34 : Real;
+            Tolang, TolDist : Real)
+
+        ---Purpose: Sets the coefficients  of the transformation.  The
+        --          transformation  of the  point  x,y,z is  the point
+        --          x',y',z' with :
+        --          
+        --          x' = a11 x + a12 y + a13 z + a14
+        --          y' = a21 x + a22 y + a23 z + a24
+        --          z' = a31 x + a32 y + a43 z + a34
+        --          
+        --          Tolang and  TolDist are  used  to  test  for  null
+        --          angles and null distances to determine the form of
+        --          the transformation (identity, translation, etc..).
+        --          
+        --          The method Value(i,j) will return aij.
+        --          Raises ConstructionError if the determinant of  the aij is null. Or  if
+        --          the matrix as not a uniform scale.
+
+    raises
+        ConstructionError from Standard
+
+    is static;
      
 
   IsNegative (me)  returns Boolean    is static;
