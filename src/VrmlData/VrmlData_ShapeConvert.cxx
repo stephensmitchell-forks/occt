@@ -308,8 +308,6 @@ Handle(VrmlData_Geometry) VrmlData_ShapeConvert::triToIndexedFaceSet
   Standard_Integer i;
   const Standard_Integer nNodes         (theTri->NbNodes());
   const Standard_Integer nTriangles     (theTri->NbTriangles());
-  const TColgp_Array1OfPnt&    arrPolyNodes = theTri->Nodes();
-  const Poly_Array1OfTriangle& arrTriangles = theTri->Triangles();
 
   const Handle(VrmlData_IndexedFaceSet) aFaceSet =
     new VrmlData_IndexedFaceSet (myScene,
@@ -330,7 +328,7 @@ Handle(VrmlData_Geometry) VrmlData_ShapeConvert::triToIndexedFaceSet
     Standard_Integer * aPolygon = static_cast<Standard_Integer *>
       (anAlloc->Allocate (4*sizeof(Standard_Integer)));
     aPolygon[0] = 3;
-    arrTriangles(i+1).Get (aPolygon[1],aPolygon[2],aPolygon[3]);
+    theTri->Triangle (i+1).Get (aPolygon[1],aPolygon[2],aPolygon[3]);
     aPolygon[1]--;
     if (isReverse) {
       const Standard_Integer aTmp = aPolygon[2]-1;
@@ -350,7 +348,7 @@ Handle(VrmlData_Geometry) VrmlData_ShapeConvert::triToIndexedFaceSet
     gp_XYZ * arrNodes = static_cast <gp_XYZ *>
       (anAlloc->Allocate (nNodes * sizeof(gp_XYZ)));
     for  (i = 0; i < nNodes; i++)
-      arrNodes[i] = arrPolyNodes(i+1).XYZ() * myScale;
+      arrNodes[i] = theTri->Node (i+1).XYZ() * myScale;
 
     const Handle(VrmlData_Coordinate) aCoordNode =
       new VrmlData_Coordinate (myScene, 0L, nNodes, arrNodes);
@@ -362,13 +360,9 @@ Handle(VrmlData_Geometry) VrmlData_ShapeConvert::triToIndexedFaceSet
   if(theTri->HasNormals()) {
     gp_XYZ * arrVec = static_cast <gp_XYZ *>
       (anAlloc->Allocate (nNodes * sizeof(gp_XYZ)));
-    const TShort_Array1OfShortReal& Norm = theTri->Normals();
-    Standard_Integer j;
-    for  (i = 0, j = 1; i < nNodes; i++, j += 3) {
-      
-      gp_XYZ aNormal(Norm(j), Norm(j+1), Norm(j+2));
-      arrVec[i] = aNormal;
-
+    for (i = 0; i < nNodes; i++)
+    {
+      arrVec[i] = theTri->Normal (i + 1).XYZ();
     }
     const Handle(VrmlData_Normal) aNormalNode =
       new VrmlData_Normal (myScene, 0L, nNodes, arrVec);
@@ -389,14 +383,13 @@ Handle(VrmlData_Geometry) VrmlData_ShapeConvert::triToIndexedFaceSet
       Handle(TShort_HArray1OfShortReal) Normals = 
         new TShort_HArray1OfShortReal(1, nbNormVal);
 
-      const TColgp_Array1OfPnt2d& arrUV = theTri->UVNodes();
       gp_XYZ * arrVec = static_cast <gp_XYZ *>
         (anAlloc->Allocate (nNodes * sizeof(gp_XYZ)));
 
       // Compute the normal vectors
       Standard_Real Tol = Sqrt(aConf2);
       for  (i = 0; i < nNodes; i++) {
-        const gp_Pnt2d& aUV = arrUV(i+1);
+        const gp_Pnt2d& aUV = theTri->UVNode (i+1);
         
         gp_Dir aNormal;
         
@@ -406,9 +399,9 @@ Handle(VrmlData_Geometry) VrmlData_ShapeConvert::triToIndexedFaceSet
 
           gp_XYZ eqPlan(0., 0., 0.);
           for (PC.Initialize(i+1);  PC.More(); PC.Next()) {
-            arrTriangles(PC.Value()).Get(n[0], n[1], n[2]);
-            gp_XYZ v1(arrPolyNodes(n[1]).Coord()-arrPolyNodes(n[0]).Coord());
-            gp_XYZ v2(arrPolyNodes(n[2]).Coord()-arrPolyNodes(n[1]).Coord());
+            theTri->Triangle (PC.Value()).Get(n[0], n[1], n[2]);
+            gp_XYZ v1(theTri->Node (n[1]).Coord() - theTri->Node (n[0]).Coord());
+            gp_XYZ v2(theTri->Node (n[2]).Coord() - theTri->Node (n[1]).Coord());
             gp_XYZ vv = v1^v2;
 
             Standard_Real mod = vv.Modulus();

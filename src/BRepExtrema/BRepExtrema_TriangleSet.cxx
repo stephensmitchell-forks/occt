@@ -186,7 +186,7 @@ Standard_Boolean BRepExtrema_TriangleSet::Init (const BRepExtrema_ShapeList& the
 
     for (Standard_Integer aVertIdx = 1; aVertIdx <= aTriangulation->NbNodes(); ++aVertIdx)
     {
-      gp_Pnt aVertex = aTriangulation->Nodes().Value (aVertIdx);
+      gp_Pnt aVertex = aTriangulation->Node (aVertIdx);
 
       aVertex.Transform (aLocation.Transformation());
 
@@ -194,8 +194,8 @@ Standard_Boolean BRepExtrema_TriangleSet::Init (const BRepExtrema_ShapeList& the
                                           aVertex.Y(),
                                           aVertex.Z()));
 
-      const Standard_Real aU = aTriangulation->UVNodes().Value (aVertIdx).X();
-      const Standard_Real aV = aTriangulation->UVNodes().Value (aVertIdx).Y();
+      const Standard_Real aU = aTriangulation->UVNode (aVertIdx).X();
+      const Standard_Real aV = aTriangulation->UVNode (aVertIdx).Y();
 
       myVertUVArray.push_back (BVH_Vec2d (aU, aV));
     }
@@ -206,9 +206,9 @@ Standard_Boolean BRepExtrema_TriangleSet::Init (const BRepExtrema_ShapeList& the
       Standard_Integer aVertex2;
       Standard_Integer aVertex3;
 
-      aTriangulation->Triangles().Value (aTriIdx).Get (aVertex1,
-                                                       aVertex2,
-                                                       aVertex3);
+      aTriangulation->Triangle (aTriIdx).Get (aVertex1,
+                                              aVertex2,
+                                              aVertex3);
 
       myTriangles.push_back (BVH_Vec4i (aVertex1 + aVertOffset,
                                         aVertex2 + aVertOffset,

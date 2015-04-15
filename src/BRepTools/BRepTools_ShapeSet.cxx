@@ -1516,28 +1516,26 @@ void BRepTools_ShapeSet::WriteTriangulation(Standard_OStream&      OS,
     if (!Compact) OS << "\n3D Nodes :\n";
     
     nbNodes = T->NbNodes();
-    const TColgp_Array1OfPnt& Nodes = T->Nodes();
     for (j = 1; j <= nbNodes; j++) {
       if (!Compact) OS << setw(10) << j << " : ";
       if (!Compact) OS << setw(17);
-      OS << Nodes(j).X() << " ";
+      OS << T->Node (j).X() << " ";
       if (!Compact) OS << setw(17);
-      OS << Nodes(j).Y() << " ";
+      OS << T->Node (j).Y() << " ";
       if (!Compact) OS << setw(17);
-      OS << Nodes(j).Z();
+      OS << T->Node (j).Z();
       if (!Compact) OS << "\n";
       else OS << " ";
     }
     
     if (T->HasUVNodes()) {
       if (!Compact) OS << "\nUV Nodes :\n";
-      const TColgp_Array1OfPnt2d& UVNodes = T->UVNodes();
       for (j = 1; j <= nbNodes; j++) {
         if (!Compact) OS << setw(10) << j << " : ";
         if (!Compact) OS << setw(17);
-        OS << UVNodes(j).X() << " ";
+        OS << T->UVNode (j).X() << " ";
         if (!Compact) OS << setw(17);
-        OS << UVNodes(j).Y();
+        OS << T->UVNode (j).Y();
         if (!Compact) OS << "\n";
         else OS << " ";
       }
@@ -1545,10 +1543,9 @@ void BRepTools_ShapeSet::WriteTriangulation(Standard_OStream&      OS,
     
     if (!Compact) OS << "\nTriangles :\n";
     nbTriangles = T->NbTriangles();
-    const Poly_Array1OfTriangle& Triangles = T->Triangles();
     for (j = 1; j <= nbTriangles; j++) {
       if (!Compact) OS << setw(10) << j << " : ";
-      Triangles(j).Get(n1, n2, n3);
+      T->Triangle (j).Get(n1, n2, n3);
       if (!Compact) OS << setw(10);
       OS << n1 << " ";
       if (!Compact) OS << setw(10);

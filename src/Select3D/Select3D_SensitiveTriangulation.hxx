@@ -25,7 +25,7 @@
 #include <Standard_DefineHandle.hxx>
 #include <Standard_Type.hxx>
 
-#include <Handle_Poly_Triangulation.hxx>
+#include <Poly_Triangulation.hxx>
 #include <TopLoc_Location.hxx>
 #include <gp_Trsf.hxx>
 #include <gp_Pnt.hxx>

@@ -1403,24 +1403,21 @@ void BinTools_ShapeSet::WriteTriangulation(Standard_OStream& OS) const
 
     // write the 3d nodes
       nbNodes = T->NbNodes();
-      const TColgp_Array1OfPnt& Nodes = T->Nodes();
       for (j = 1; j <= nbNodes; j++) {
-	BinTools::PutReal(OS, Nodes(j).X());
-	BinTools::PutReal(OS, Nodes(j).Y());
-	BinTools::PutReal(OS, Nodes(j).Z());
+	BinTools::PutReal(OS, T->Node (j).X());
+	BinTools::PutReal(OS, T->Node (j).Y());
+	BinTools::PutReal(OS, T->Node (j).Z());
       }
     
       if (T->HasUVNodes()) {
-	const TColgp_Array1OfPnt2d& UVNodes = T->UVNodes();
 	for (j = 1; j <= nbNodes; j++) {
-	  BinTools::PutReal(OS, UVNodes(j).X());
-	  BinTools::PutReal(OS, UVNodes(j).Y());
+	  BinTools::PutReal(OS, T->UVNode (j).X());
+	  BinTools::PutReal(OS, T->UVNode (j).Y());
 	}
       }
       nbTriangles = T->NbTriangles();
-      const Poly_Array1OfTriangle& Triangles = T->Triangles();
       for (j = 1; j <= nbTriangles; j++) {
-	Triangles(j).Get(n1, n2, n3);
+	T->Triangle (j).Get(n1, n2, n3);
 	BinTools::PutInteger(OS, n1);
 	BinTools::PutInteger(OS, n2);
 	BinTools::PutInteger(OS, n3);

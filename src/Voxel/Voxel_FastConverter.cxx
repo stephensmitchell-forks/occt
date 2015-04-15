@@ -223,9 +223,7 @@ Standard_Boolean Voxel_FastConverter::Convert(Standard_Integer&      progress,
     if (transform)
       trsf = L.Transformation();
 
-    const TColgp_Array1OfPnt& nodes = T->Nodes();
-    const Poly_Array1OfTriangle& triangles = T->Triangles();
-    Standard_Integer itriangle = triangles.Lower(), nb_triangles = triangles.Upper();
+    Standard_Integer itriangle = 1, nb_triangles = T->NbTriangles();
     for (; itriangle <= nb_triangles; itriangle++)
     {
       ithread_triangle++;
@@ -242,11 +240,11 @@ Standard_Boolean Voxel_FastConverter::Convert(Standard_Integer&      progress,
         return Standard_True;
       }
 
-      const Poly_Triangle& t = triangles.Value(itriangle);
+      const Poly_Triangle& t = T->Triangle (itriangle);
       t.Get(n1, n2, n3);
-      gp_Pnt p1 = nodes.Value(n1);
-      gp_Pnt p2 = nodes.Value(n2);
-      gp_Pnt p3 = nodes.Value(n3);
+      gp_Pnt p1 = T->Node (n1);
+      gp_Pnt p2 = T->Node (n2);
+      gp_Pnt p3 = T->Node (n3);
       if (transform)
       {
         p1.Transform(trsf);
@@ -361,9 +359,7 @@ Standard_Boolean Voxel_FastConverter::ConvertUsingSAT(Standard_Integer&      pro
     if (transform)
       trsf = L.Transformation();
 
-    const TColgp_Array1OfPnt& nodes = T->Nodes();
-    const Poly_Array1OfTriangle& triangles = T->Triangles();
-    Standard_Integer itriangle = triangles.Lower(), nb_triangles = triangles.Upper();
+    Standard_Integer itriangle = 1, nb_triangles = T->NbTriangles();
     for (; itriangle <= nb_triangles; itriangle++)
     {
       ithread_triangle++;
@@ -380,12 +376,12 @@ Standard_Boolean Voxel_FastConverter::ConvertUsingSAT(Standard_Integer&      pro
         return Standard_True;
       }
 
-      const Poly_Triangle& t = triangles.Value(itriangle);
+      const Poly_Triangle& t = T->Triangle (itriangle);
 
       t.Get(n1, n2, n3);
-      gp_Pnt p1 = nodes.Value(n1);
-      gp_Pnt p2 = nodes.Value(n2);
-      gp_Pnt p3 = nodes.Value(n3);
+      gp_Pnt p1 = T->Node (n1);
+      gp_Pnt p2 = T->Node (n2);
+      gp_Pnt p3 = T->Node (n3);
       if (transform)
       {
         p1.Transform(trsf);

@@ -300,15 +300,13 @@ static Standard_Integer triarea (Draw_Interpretor& di, int n, const char ** a)
         cout << "face "<<i<<" has no triangulation"<<endl;
         continue;
       }
-      const Poly_Array1OfTriangle& triangles = aPoly->Triangles();
-      const TColgp_Array1OfPnt& nodes = aPoly->Nodes();
-      for (int j=triangles.Lower(); j <= triangles.Upper(); j++) {
-        const Poly_Triangle& tri = triangles(j);
+      for (int j = 1; j <= aPoly->NbTriangles(); j++) {
+        const Poly_Triangle& tri = aPoly->Triangle (j);
         int n1, n2, n3;
         tri.Get (n1, n2, n3);
-        const gp_Pnt& p1 = nodes(n1);
-        const gp_Pnt& p2 = nodes(n2);
-        const gp_Pnt& p3 = nodes(n3);
+        const gp_Pnt& p1 = aPoly->Node (n1);
+        const gp_Pnt& p2 = aPoly->Node (n2);
+        const gp_Pnt& p3 = aPoly->Node (n3);
         gp_Vec v1(p1, p2);
         gp_Vec v2(p1, p3);
         double ar = v1.CrossMagnitude(v2);
@@ -365,8 +363,6 @@ static Standard_Integer tricheck (Draw_Interpretor& di, int n, const char ** a)
       const TopoDS_Face& aFace = TopoDS::Face(aShape);
       TopLoc_Location aLoc;
       Handle(Poly_Triangulation) aT = BRep_Tool::Triangulation(aFace, aLoc);
-      const TColgp_Array1OfPnt& aPoints = aT->Nodes();
-      const TColgp_Array1OfPnt2d& aPoints2d = aT->UVNodes();
       const gp_Trsf& trsf = aLoc.Transformation();
 
       TColgp_Array1OfPnt pnts(1,2);
@@ -375,14 +371,14 @@ static Standard_Integer tricheck (Draw_Interpretor& di, int n, const char ** a)
         Standard_Integer n1, n2;
         aCheck.GetFreeLink(k, i, n1, n2);
         di << "{" << n1 << " " << n2 << "} ";
-        pnts(1) = aPoints(n1).Transformed(trsf);
-        pnts(2) = aPoints(n2).Transformed(trsf);
+        pnts(1) = aT->Node (n1).Transformed(trsf);
+        pnts(2) = aT->Node (n2).Transformed(trsf);
         Handle(Poly_Polygon3D) poly = new Poly_Polygon3D (pnts);
         DrawTrSurf::Set (name, poly);
         DrawTrSurf::Set (name, pnts(1));
         DrawTrSurf::Set (name, pnts(2));
-        pnts2d(1) = aPoints2d(n1);
-        pnts2d(2) = aPoints2d(n2);
+        pnts2d(1) = aT->UVNode (n1);
+        pnts2d(2) = aT->UVNode (n2);
         Handle(Poly_Polygon2D) poly2d = new Poly_Polygon2D (pnts2d);
         DrawTrSurf::Set (name, poly2d);
         DrawTrSurf::Set (name, pnts2d(1));
@@ -481,12 +477,11 @@ static Standard_Integer tricheck (Draw_Interpretor& di, int n, const char ** a)
       break;
     }
 
-    const Poly_Array1OfTriangle& aTris = aT->Triangles();
     NCollection_Map<BRepMesh_Edge> aFreeEdgeMap;
-    Standard_Integer aTriNum = aTris.Length();
+    Standard_Integer aTriNum = aT->NbTriangles();
     for ( Standard_Integer aTriIndx = 1; aTriIndx <= aTriNum; aTriIndx++ )
     {
-      const Poly_Triangle& aTri = aTris(aTriIndx);
+      const Poly_Triangle& aTri = aT->Triangle (aTriIndx);
       Standard_Integer aTriNodes[3] = { aTri.Value(1), aTri.Value(2), aTri.Value(3)};
 
       for (Standard_Integer i = 1; i <= 3; ++i)

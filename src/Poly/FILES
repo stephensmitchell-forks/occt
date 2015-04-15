@@ -11,3 +11,9 @@ Poly_CoherentLink.cxx
 Poly_MakeLoops.hxx
 Poly_MakeLoops.cxx
 Poly_ListOfTriangulation.hxx
+Poly_Triangulation.hxx
+Poly_Triangulation.cxx
+Poly_Element.hxx
+Poly_Element.cxx
+Poly_Mesh.hxx
+Poly_Mesh.cxx

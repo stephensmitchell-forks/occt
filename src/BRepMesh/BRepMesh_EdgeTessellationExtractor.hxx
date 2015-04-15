@@ -22,12 +22,11 @@
 #include <BRepMesh_EdgeParameterProvider.hxx>
 #include <Handle_Geom2d_Curve.hxx>
 #include <Handle_Poly_PolygonOnTriangulation.hxx>
-#include <Handle_Poly_Triangulation.hxx>
+#include <Poly_Triangulation.hxx>
 #include <TopLoc_Location.hxx>
 #include <TColgp_Array1OfPnt.hxx>
 #include <TColStd_Array1OfInteger.hxx>
 
-class Poly_Triangulation;
 class Poly_PolygonOnTriangulation;
 class TopoDS_Edge;
 class TopoDS_Face;
@@ -77,7 +76,7 @@ private:
 
   BRepMesh_EdgeParameterProvider myProvider;
   const Handle(Geom2d_Curve)&    myPCurve;
-  const TColgp_Array1OfPnt&      myNodes;
+  Handle(Poly_Triangulation)     myTriangulation;
   const TColStd_Array1OfInteger& myIndices;
   const TopLoc_Location          myLoc;
 };

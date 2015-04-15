@@ -35,7 +35,7 @@ BRepMesh_EdgeTessellationExtractor::BRepMesh_EdgeTessellationExtractor(
   const TopLoc_Location&                      theLocation)
   : myProvider(theEdge, theFace, thePolygon->Parameters()),
     myPCurve(thePCurve),
-    myNodes(theTriangulation->Nodes()),
+    myTriangulation(theTriangulation),
     myIndices(thePolygon->Nodes()),
     myLoc(theLocation)
 {
@@ -51,7 +51,7 @@ void BRepMesh_EdgeTessellationExtractor::Value(
   gp_Pnt&                thePoint,
   gp_Pnt2d&              theUV)
 {
-  const gp_Pnt& theRefPnt = myNodes(myIndices(theIndex));
+  const gp_Pnt& theRefPnt = myTriangulation->Node (myIndices(theIndex));
   thePoint = BRepMesh_ShapeTool::UseLocation(theRefPnt, myLoc);
 
   theParameter = myProvider.Parameter(theIndex, thePoint);

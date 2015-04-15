@@ -1411,8 +1411,6 @@ void BRepMesh_FastDiscretFace::commitSurfaceTriangulation()
   Handle(Poly_Triangulation) aNewTriangulation =
     new Poly_Triangulation(aVerticesNb, aTrianglesNb, Standard_True);
 
-  Poly_Array1OfTriangle& aPolyTrianges = aNewTriangulation->ChangeTriangles();
-
   Standard_Integer aTriangeId = 1;
   BRepMesh::MapOfInteger::Iterator aTriIt(aTriangles);
   for (; aTriIt.More(); aTriIt.Next())
@@ -1426,12 +1424,10 @@ void BRepMesh_FastDiscretFace::commitSurfaceTriangulation()
     for (Standard_Integer i = 0; i < 3; ++i)
       aNodeId[i] = aVetrexEdgeMap->FindIndex(aNode[i]);
 
-    aPolyTrianges(aTriangeId++).Set(aNodeId[0], aNodeId[1], aNodeId[2]);
+    aNewTriangulation->ChangeTriangle (aTriangeId++).Set(aNodeId[0], aNodeId[1], aNodeId[2]);
   }
 
   // Store mesh nodes
-  TColgp_Array1OfPnt&   aNodes   = aNewTriangulation->ChangeNodes();
-  TColgp_Array1OfPnt2d& aNodes2d = aNewTriangulation->ChangeUVNodes();
 
   for (Standard_Integer i = 1; i <= aVerticesNb; ++i)
   {
@@ -1439,8 +1435,8 @@ void BRepMesh_FastDiscretFace::commitSurfaceTriangulation()
     const BRepMesh_Vertex& aVertex   = aStructure->GetNode(aVertexId);
     const gp_Pnt&          aPoint    = myAttribute->GetPoint(aVertex);
 
-    aNodes(i)   = aPoint;
-    aNodes2d(i) = aVertex.Coord();
+    aNewTriangulation->ChangeNode (i)   = aPoint;
+    aNewTriangulation->ChangeUVNode (i) = aVertex.Coord();
   }
 
   aNewTriangulation->Deflection(myAttribute->GetDefFace());

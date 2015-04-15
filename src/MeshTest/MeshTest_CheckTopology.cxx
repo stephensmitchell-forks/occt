@@ -88,8 +88,6 @@ void MeshTest_CheckTopology::Perform (Draw_Interpretor& di)
 
       // check distances between corresponding points
       Standard_Real aDefle = Max(aT1->Deflection(), aT2->Deflection());
-      const TColgp_Array1OfPnt& aPoints1 = aT1->Nodes();
-      const TColgp_Array1OfPnt& aPoints2 = aT2->Nodes();
       Standard_Integer iF1 = aMapF.FindIndex(aFace1);
       Standard_Integer iF2 = aMapF.FindIndex(aFace2);
       Standard_Integer i1 = aNodes1.Lower();
@@ -97,8 +95,8 @@ void MeshTest_CheckTopology::Perform (Draw_Interpretor& di)
       gp_Trsf aTrsf1 = aFace1.Location().Transformation();
       gp_Trsf aTrsf2 = aFace2.Location().Transformation();
       for (; i1 <= aNodes1.Upper(); i1++, i2++) {
-	gp_Pnt aP1 = aPoints1(aNodes1(i1)).Transformed(aTrsf1);
-	gp_Pnt aP2 = aPoints2(aNodes2(i2)).Transformed(aTrsf2);
+	gp_Pnt aP1 = aT1->Node (aNodes1(i1)).Transformed(aTrsf1);
+	gp_Pnt aP2 = aT2->Node (aNodes2(i2)).Transformed(aTrsf2);
 	Standard_Real aDist = aP1.Distance(aP2);
 	if (aDist > aDefle) {
 	  myErrors.Append(iF1);
@@ -140,10 +138,9 @@ void MeshTest_CheckTopology::Perform (Draw_Interpretor& di)
 
     // check of free links and nodes
     Poly_Connect aConn(aT);
-    const Poly_Array1OfTriangle& aTriangles = aT->Triangles();
     Standard_Integer nbTri = aT->NbTriangles(), i, j, n[3], t[3];
     for (i = 1; i <= nbTri; i++) {
-      aTriangles(i).Get(n[0], n[1], n[2]);
+      aT->Triangle (i).Get(n[0], n[1], n[2]);
       
       aUsedNodes.Add (n[0]);
       aUsedNodes.Add (n[1]);

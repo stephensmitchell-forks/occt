@@ -236,18 +236,18 @@ private:
       const Standard_Boolean    isSameUV,
       const TopoDS_Vertex&      theSameVertex,
       const Standard_Integer    theVertexIndex,
-      const TColgp_Array1OfPnt& thePolygon,
+      const Handle(Poly_Triangulation)& theTriangulation,
       const TopLoc_Location&    theLoc)
       : TopoDSVExplorer(theVertex, isSameUV, theSameVertex),
         myVertexIndex(theVertexIndex),
-        myPolygon(thePolygon),
+        myTriangulation(theTriangulation),
         myLoc(theLoc)
     {
     }
 
     virtual gp_Pnt Point() const
     {
-      return BRepMesh_ShapeTool::UseLocation(myPolygon(myVertexIndex), myLoc);
+      return BRepMesh_ShapeTool::UseLocation(myTriangulation->Node (myVertexIndex), myLoc);
     }
 
   private:
@@ -257,9 +257,9 @@ private:
     }
 
   private:
-    Standard_Integer          myVertexIndex;
-    const TColgp_Array1OfPnt& myPolygon;
-    const TopLoc_Location     myLoc;
+    Standard_Integer           myVertexIndex;
+    Handle(Poly_Triangulation) myTriangulation;
+    const TopLoc_Location      myLoc;
   };
 
   //! Structure keeps common parameters of edge
