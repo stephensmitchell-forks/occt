@@ -447,7 +447,7 @@ void XSAlgo_AlgoContainer::MergeTransferInfo(const Handle(Transfer_TransientProc
     {
       TopLoc_Location aNullLoc;
       TopoDS_Shape atmpSh = orig.Located(aNullLoc);
-      if ( map.IsBound ( atmpSh ) ) sb->SetResult ( map.Find ( atmpSh ) );
+      if ( map.IsBound ( atmpSh ) ) sb->SetResult ( map.Find ( atmpSh ).Located(orig.Location()));
     }
     else
     {
