@@ -1,0 +1,4 @@
+# Fixing shape on a case where most is taken by projection of pcurves
+
+restore [locate_data_file bug26166_beforeSH2.brep] a
+fixshape result a
