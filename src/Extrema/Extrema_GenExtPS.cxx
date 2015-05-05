@@ -219,7 +219,7 @@ Extrema_GenExtPS::Extrema_GenExtPS()
   myDone = Standard_False;
   myInit = Standard_False;
   myFlag = Extrema_ExtFlag_MINMAX;
-  myAlgo = Extrema_ExtAlgo_Tree;
+  myAlgo = Extrema_ExtAlgo_Grad;
 }
 
 

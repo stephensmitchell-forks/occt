@@ -1039,6 +1039,7 @@ gp_Pnt2d ShapeAnalysis_Surface::ValueOfUV(const gp_Pnt& P3D,const Standard_Real 
 	myExtPS.Initialize ( myExtSrf, uf-du, ul+du, vf-dv, vl+dv, Tol, Tol );
 	myExtOK = Standard_True;
       }
+      myExtPS.SetAlgo ( Extrema_ExtAlgo_Tree );
       myExtPS.Perform ( P3D );
       Standard_Integer nPSurf = ( myExtPS.IsDone() ? myExtPS.NbExt() : 0 );
 
