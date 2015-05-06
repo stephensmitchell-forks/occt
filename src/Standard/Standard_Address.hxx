@@ -47,4 +47,17 @@ inline Standard_Boolean IsEqual(const Standard_Address One
 			       ,const Standard_Address Two)
 { return One == Two; }
 
+//! Workaround CLang extreme optimization, which causes failures in case when reference is passed for NULL pointer.
+#ifdef __APPLE__
+template<typename T> bool Standard_IS_NULL_REFERENCE (const T& theRef) __attribute__((optnone))
+{
+  return &theRef == NULL;
+}
+#else
+template<typename T> bool Standard_IS_NULL_REFERENCE (const T& theRef)
+{
+  return &theRef == NULL;
+}
+#endif
+
 #endif

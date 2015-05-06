@@ -311,12 +311,12 @@ static Standard_Boolean  PrepareEval (const Standard_Real            U,
     BSplCLib::BuildKnots(UDegree,uindex,UPer,UKnots,UMults,*dc.knots1);
     BSplCLib::BuildKnots(VDegree,vindex,VPer,VKnots,VMults,*dc.knots2);
     
-    if (&UMults == NULL)
+    if (Standard_IS_NULL_REFERENCE(UMults))
       uindex -= UKLower + UDegree;
     else
       uindex  = BSplCLib::PoleIndex(UDegree,uindex,UPer,UMults);
 
-    if (&VMults == NULL)
+    if (Standard_IS_NULL_REFERENCE(VMults))
       vindex -= VKLower + VDegree;
     else
       vindex  = BSplCLib::PoleIndex(VDegree,vindex,VPer,VMults);
@@ -462,12 +462,12 @@ static Standard_Boolean  PrepareEval (const Standard_Real            U,
     BSplCLib::BuildKnots(UDegree,uindex,UPer,UKnots,UMults,*dc.knots2);
     BSplCLib::BuildKnots(VDegree,vindex,VPer,VKnots,VMults,*dc.knots1);
 
-    if (&UMults == NULL)
+    if (Standard_IS_NULL_REFERENCE(UMults))
       uindex -= UKLower + UDegree;
     else
       uindex  = BSplCLib::PoleIndex(UDegree,uindex,UPer,UMults);
 
-    if (&VMults == NULL)
+    if (Standard_IS_NULL_REFERENCE(VMults))
       vindex -= VKLower + VDegree;
     else
       vindex  = BSplCLib::PoleIndex(VDegree,vindex,VPer,VMults);
@@ -1304,7 +1304,7 @@ void  BSplSLib::Iso(const Standard_Real            Param,
 {
   Standard_Integer index = 0;
   Standard_Real    u = Param;
-  Standard_Boolean rational = &Weights != NULL;
+  Standard_Boolean rational = !Standard_IS_NULL_REFERENCE(Weights);
   Standard_Integer dim = rational ? 4 : 3;
   
   // compute local knots
@@ -1312,7 +1312,7 @@ void  BSplSLib::Iso(const Standard_Real            Param,
   NCollection_LocalArray<Standard_Real> locknots1 (2*Degree);  
   BSplCLib::LocateParameter(Degree,Knots,Mults,u,Periodic,index,u);
   BSplCLib::BuildKnots(Degree,index,Periodic,Knots,Mults,*locknots1);
-  if (&Mults == NULL)
+  if (Standard_IS_NULL_REFERENCE(Mults))
     index -= Knots.Lower() + Degree;
   else
     index = BSplCLib::PoleIndex(Degree,index,Periodic,Mults);
@@ -1386,7 +1386,7 @@ void  BSplSLib::Iso(const Standard_Real            Param,
   }
   
   // if the input is not rational but weights are wanted
-  if (!rational && (&CWeights != NULL)) {
+  if (!rational && !Standard_IS_NULL_REFERENCE(CWeights)) {
 
     for (i = CWeights.Lower(); i <= CWeights.Upper(); i++)
       CWeights(i) = 1.;
@@ -1746,7 +1746,7 @@ void  BSplSLib::InsertKnots(const Standard_Boolean         UDirection,
 			    const Standard_Real            Epsilon, 
 			    const Standard_Boolean         Add )
 {
-  Standard_Boolean rational = &Weights != NULL;
+  Standard_Boolean rational = !Standard_IS_NULL_REFERENCE(Weights);
   Standard_Integer dim = 3;
   if (rational) dim++;
   
@@ -1792,7 +1792,7 @@ Standard_Boolean  BSplSLib::RemoveKnot
  TColStd_Array1OfInteger& NewMults,
  const Standard_Real            Tolerance)
 {
-  Standard_Boolean rational = &Weights != NULL;
+  Standard_Boolean rational = !Standard_IS_NULL_REFERENCE(Weights);
   Standard_Integer dim = 3;
   if (rational) dim++;
   
@@ -1839,7 +1839,7 @@ void  BSplSLib::IncreaseDegree
  TColStd_Array1OfReal&    NewKnots, 
  TColStd_Array1OfInteger& NewMults)
 {
-  Standard_Boolean rational = &Weights != NULL;
+  Standard_Boolean rational = !Standard_IS_NULL_REFERENCE(Weights);
   Standard_Integer dim = 3;
   if (rational) dim++;
   
@@ -1881,7 +1881,7 @@ void  BSplSLib::Unperiodize
  TColgp_Array2OfPnt&      NewPoles,
  TColStd_Array2OfReal&    NewWeights)
 {
-  Standard_Boolean rational = &Weights != NULL;
+  Standard_Boolean rational = !Standard_IS_NULL_REFERENCE(Weights);
   Standard_Integer dim = 3;
   if (rational) dim++;
   
@@ -1934,7 +1934,7 @@ void BSplSLib::BuildCache
   Standard_Boolean rational,rational_u,rational_v,flag_u_or_v;                  
   Standard_Integer kk,d1,d1p1,d2,d2p1,ii,jj,iii,jjj,Index;
   Standard_Real u1,min_degree_domain,max_degree_domain,f,factor[2],u2;
-  if (&Weights != NULL) 
+  if (!Standard_IS_NULL_REFERENCE(Weights))
     rational_u = rational_v = Standard_True;
   else
     rational_u = rational_v = Standard_False;
@@ -2030,7 +2030,7 @@ void BSplSLib::BuildCache
       }
       factor[0] *= max_degree_domain / (Standard_Real) (iii) ;
     }
-    if (&Weights != NULL) {
+    if (!Standard_IS_NULL_REFERENCE(Weights)) {
       //
       // means that PrepareEval did found out that the surface was 
       // locally polynomial but since the surface is constructed
@@ -2210,7 +2210,7 @@ void  BSplSLib::CacheD0(const Standard_Real                  UParameter,
 		       (min_degree << 1) + min_degree,
 		       locpoles[0],
 		       myPoint[0]) ;
-  if (&WeightsArray != NULL) {
+  if (!Standard_IS_NULL_REFERENCE(WeightsArray)) {
     dimension = min_degree + 1 ;
     Standard_Real *
       WArray = (Standard_Real *) 
@@ -2290,7 +2290,7 @@ void  BSplSLib::CacheD1(const Standard_Real                  UParameter,
   // the coefficients
   //
   //
-  if (&WeightsArray != NULL) {
+  if (!Standard_IS_NULL_REFERENCE(WeightsArray)) {
 
     local_poles_array            [0][0][0] = 0.0e0 ;
     local_poles_array            [0][0][1] = 0.0e0 ;
@@ -2375,7 +2375,7 @@ void  BSplSLib::CacheD1(const Standard_Real                  UParameter,
 		       locpoles[dimension],
 		       local_poles_array[1][0][0]) ;
   
-  if (&WeightsArray != NULL) {
+  if (!Standard_IS_NULL_REFERENCE(WeightsArray)) {
     dimension = min_degree + 1 ;
     Standard_Real *
       WArray = (Standard_Real *) 
@@ -2535,7 +2535,7 @@ void  BSplSLib::CacheD2(const Standard_Real                  UParameter,
   // the coefficients
   //
   //
-  if (&WeightsArray != NULL) {
+  if (!Standard_IS_NULL_REFERENCE(WeightsArray)) {
     
     local_poles_and_weights_array[0][0][0] = 0.0e0 ;
     local_poles_and_weights_array[0][0][1] = 0.0e0 ;
@@ -2664,7 +2664,7 @@ void  BSplSLib::CacheD2(const Standard_Real                  UParameter,
 		       locpoles[dimension + dimension],
 		       local_poles_array[2][0][0]) ;
   
-  if (&WeightsArray != NULL) {
+  if (!Standard_IS_NULL_REFERENCE(WeightsArray)) {
     dimension = min_degree + 1 ;
     Standard_Real *
       WArray = (Standard_Real *) 

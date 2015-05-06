@@ -70,7 +70,7 @@ void  BSplCLib::BuildEval(const Standard_Integer         Degree,
   Standard_Integer i;
   Standard_Integer ip = PLower + Index - 1;
   Standard_Real w, *pole = &LP;
-  if (&Weights == NULL) {
+  if (Standard_IS_NULL_REFERENCE(Weights)) {
     
     for (i = 0; i <= Degree; i++) {
       ip++;
@@ -115,13 +115,13 @@ static void PrepareEval
   
   // make the knots
   BSplCLib::BuildKnots(Degree,index,Periodic,Knots,Mults,*dc.knots);
-  if (&Mults == NULL)
+  if (Standard_IS_NULL_REFERENCE(Mults))
     index -= Knots.Lower() + Degree;
   else
     index = BSplCLib::PoleIndex(Degree,index,Periodic,Mults);
   
   // check truly rational
-  rational = (&Weights != NULL);
+  rational = (!Standard_IS_NULL_REFERENCE(Weights));
   if (rational) {
     Standard_Integer WLower = Weights.Lower() + index;
     rational = BSplCLib::IsRational(Weights, WLower, WLower + Degree);
