@@ -197,7 +197,7 @@ void  ChFi3d_ChBuilder::Add(const TopoDS_Edge& E)
     TopoDS_Edge E_wnt = E;
     E_wnt.Orientation(TopAbs_FORWARD);
     Spine->SetEdges(E_wnt);
-    if(PerformElement(Spine)){
+    /*if(PerformElement(Spine))*/{
       PerformExtremity(Spine);
       Spine->Load();
       myListStripe.Append(Stripe);
@@ -244,7 +244,7 @@ void  ChFi3d_ChBuilder::Add(const Standard_Real Dis,
         Spine = Handle(ChFiDS_ChamfSpine)::DownCast(Sp);
 
       Spine->SetEdges(E_wnt);
-      if(PerformElement(Spine)){
+      /*if(PerformElement(Spine))*/{
 	Spine->Load();
 	myListStripe.Append(Stripe);
 	
@@ -357,7 +357,7 @@ void  ChFi3d_ChBuilder::Add(const Standard_Real Dis1,
         Spine = Handle(ChFiDS_ChamfSpine)::DownCast(Sp);
 
       Spine->SetEdges(E_wnt);
-      if(PerformElement(Spine)){
+      /*if(PerformElement(Spine))*/{
 	Spine->Load();
 	myListStripe.Append(Stripe);
 	
@@ -499,7 +499,7 @@ void  ChFi3d_ChBuilder::AddDA(const Standard_Real Dis1,
         Spine = Handle(ChFiDS_ChamfSpine)::DownCast(Sp);
 
       Spine->SetEdges(E_wnt);
-      if(PerformElement(Spine)){
+      /*if(PerformElement(Spine))*/{
 	Spine->Load();
 	myListStripe.Append(Stripe);
 	
