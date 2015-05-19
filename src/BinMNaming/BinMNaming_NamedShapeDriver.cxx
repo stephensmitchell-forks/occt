@@ -30,6 +30,8 @@
 #include <TNaming_NamedShape.hxx>
 #include <TopAbs_Orientation.hxx>
 #include <TopoDS_Shape.hxx>
+#include <Storage_IStream.hxx>
+#include <Storage_OStream.hxx>
 
 #define SHAPESET "SHAPE_SECTION"
 #define FORMAT_NUMBER 3
@@ -309,4 +311,3 @@ void BinMNaming_NamedShapeDriver::ReadShapeSection (Standard_IStream& theIS)
   else
     theIS.seekg(aPos); // no shape section is present, try to return to initial point
 }
-

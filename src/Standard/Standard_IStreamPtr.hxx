@@ -12,19 +12,14 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
+#ifndef Standard_IStreamPtr_HeaderFile
+#define Standard_IStreamPtr_HeaderFile
 
-#include <Storage_BaseDriver.hxx>
-#include <Storage_StreamExtCharParityError.hxx>
-#include <Storage_StreamFormatError.hxx>
-#include <Storage_StreamTypeMismatchError.hxx>
-#include <Storage_StreamWriteError.hxx>
-#include <TCollection_AsciiString.hxx>
-#include <TCollection_ExtendedString.hxx>
+#include <Standard_TypeDef.hxx>
+#include <Standard_Stream.hxx>
 
-Storage_BaseDriver::Storage_BaseDriver()
-{
-}
+typedef std::istream* Standard_IStreamPtr;
 
-void Storage_BaseDriver::Delete()
-{
-}
+#endif
+
+

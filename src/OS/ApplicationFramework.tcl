@@ -51,7 +51,7 @@ proc ApplicationFramework:alias { } {
     return CAF
 }
 proc ApplicationFramework:depends { } {
-    return [list Visualization]
+    return [list ModelingAlgorithms]
 }
 
 ;#

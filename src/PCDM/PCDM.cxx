@@ -85,16 +85,16 @@ Handle(Storage_Schema) PCDM::Schema(const TCollection_ExtendedString& aSchemaNam
 //purpose  : 
 //=======================================================================
 
-PCDM_TypeOfFileDriver PCDM::FileDriverType(const TCollection_AsciiString& aFileName, PCDM_BaseDriverPointer& aBaseDriver) {
-  if(FSD_CmpFile::IsGoodFileType(aFileName) == Storage_VSOk) {
+PCDM_TypeOfFileDriver PCDM::FileDriverType(const Handle(Storage_IODevice)& aDevice, PCDM_BaseDriverPointer& aBaseDriver) {
+  if(FSD_CmpFile::IsGoodFileType(aDevice) == Storage_VSOk) {
     aBaseDriver=new FSD_CmpFile;
     return PCDM_TOFD_CmpFile;
   }
-  else if(FSD_File::IsGoodFileType(aFileName) == Storage_VSOk) {
+  else if(FSD_File::IsGoodFileType(aDevice) == Storage_VSOk) {
     aBaseDriver=new FSD_File;
     return PCDM_TOFD_File;
   }
-  else if(FSD_BinaryFile::IsGoodFileType(aFileName) == Storage_VSOk) {
+  else if(FSD_BinaryFile::IsGoodFileType(aDevice) == Storage_VSOk) {
     aBaseDriver=new FSD_BinaryFile;
     return PCDM_TOFD_File;
   }

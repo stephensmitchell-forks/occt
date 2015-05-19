@@ -40,14 +40,13 @@
 
 
 
-void PCDM_StorageDriver::Write(const Handle(CDM_Document)& aDocument, const TCollection_ExtendedString&  aFileName) 
+void PCDM_StorageDriver::Write(const Handle(CDM_Document)& aDocument, const Handle(Storage_IODevice)& aDevice) 
 {
   Handle(Storage_Schema) theSchema=PCDM::Schema(SchemaName(),aDocument->Application());
 
   TColStd_SequenceOfExtendedString theExtensions;
   aDocument->Extensions(theExtensions);
   LoadExtensions(theSchema,theExtensions);
-
 
   Handle(Storage_Data) theData = new Storage_Data;
 
@@ -81,7 +80,7 @@ void PCDM_StorageDriver::Write(const Handle(CDM_Document)& aDocument, const TCol
 
   PCDM_ReadWriter::WriteFileFormat(theData,aDocument);
   PCDM_ReadWriter::Writer()->WriteReferenceCounter(theData,aDocument);
-  PCDM_ReadWriter::Writer()->WriteReferences(theData,aDocument,aFileName);
+  PCDM_ReadWriter::Writer()->WriteReferences(theData,aDocument,aDevice);
   PCDM_ReadWriter::Writer()->WriteExtensions(theData,aDocument);
   PCDM_ReadWriter::Writer()->WriteVersion(theData,aDocument);
 
@@ -95,7 +94,7 @@ void PCDM_StorageDriver::Write(const Handle(CDM_Document)& aDocument, const TCol
   }
 
   FSD_CmpFile theFile;
-  PCDM_ReadWriter::Open(theFile,aFileName,Storage_VSWrite);
+  PCDM_ReadWriter::Open(theFile,aDevice,Storage_VSWrite);
   theSchema->Write(theFile,theData);
   theFile.Close();
 

@@ -1,5 +1,5 @@
 // Copyright (c) 1998-1999 Matra Datavision
-// Copyright (c) 1999-2014 OPEN CASCADE SAS
+// Copyright (c) 1999-2015 OPEN CASCADE SAS
 //
 // This file is part of Open CASCADE Technology software library.
 //
@@ -12,19 +12,12 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
+#ifndef Standard_FStream_HeaderFile
+#define Standard_FStream_HeaderFile
 
-#include <Storage_BaseDriver.hxx>
-#include <Storage_StreamExtCharParityError.hxx>
-#include <Storage_StreamFormatError.hxx>
-#include <Storage_StreamTypeMismatchError.hxx>
-#include <Storage_StreamWriteError.hxx>
-#include <TCollection_AsciiString.hxx>
-#include <TCollection_ExtendedString.hxx>
+#include <Standard_Macro.hxx>
+#include <Standard_Stream.hxx>
 
-Storage_BaseDriver::Storage_BaseDriver()
-{
-}
+typedef std::fstream Standard_FStream;
 
-void Storage_BaseDriver::Delete()
-{
-}
+#endif

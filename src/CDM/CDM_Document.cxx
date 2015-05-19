@@ -54,8 +54,6 @@ CDM_Document::CDM_Document():
   myActualReferenceIdentifier   (0),
   myStorageVersion              (0),
   myRequestedComment            (""),
-  myRequestedFolderIsDefined    (Standard_False),
-  myRequestedNameIsDefined      (Standard_False),
   myRequestedPreviousVersionIsDefined(Standard_False),
   myFileExtensionWasFound       (Standard_False),
   myDataTypeWasFound            (Standard_False),
@@ -685,8 +683,9 @@ void CDM_Document::SetMetaData(const Handle(CDM_MetaData)& aMetaData)
   
   myMetaData = aMetaData;
   
-  SetRequestedFolder(aMetaData->Folder());
-  if(aMetaData->HasVersion()) SetRequestedPreviousVersion(aMetaData->Version());
+  SetRequestedDevice( aMetaData->Device() );
+  if ( aMetaData->HasVersion() )
+      SetRequestedPreviousVersion( aMetaData->Version() );
 }
 
 //=======================================================================
@@ -736,62 +735,45 @@ TCollection_ExtendedString CDM_Document::RequestedComment() const
 }
 
 //=======================================================================
-//function : Folder
+//function : Device
 //purpose  : 
 //=======================================================================
 
-TCollection_ExtendedString CDM_Document::Folder() const {
+Handle(Storage_IODevice) CDM_Document::Device() const {
   if(myMetaData.IsNull())
     Standard_NoSuchObject::Raise("cannot furnish the folder of an object "
                                  "which is not stored");
-  return myMetaData->Folder();
+  return myMetaData->Device();
 }
 
 //=======================================================================
-//function : SetRequestedFolder
+//function : SetRequestedDevice
 //purpose  : 
 //=======================================================================
 
-void CDM_Document::SetRequestedFolder(const TCollection_ExtendedString& aFolder)
+void CDM_Document::SetRequestedDevice(const Handle(Storage_IODevice)& aDevice)
 {
-  TCollection_ExtendedString f(aFolder);
-  if(f.Length() != 0) {
-    myRequestedFolderIsDefined=Standard_True;
-    myRequestedFolder=aFolder;
-  }
+  myRequestedDevice=aDevice;
 }
 
 //=======================================================================
-//function : RequestedFolder
+//function : RequestedDevice
 //purpose  : 
 //=======================================================================
 
-TCollection_ExtendedString CDM_Document::RequestedFolder() const
+Handle(Storage_IODevice) CDM_Document::RequestedDevice() const
 {
-  Standard_NoSuchObject_Raise_if (!myRequestedFolderIsDefined,
-                                  "storage folder is undefined for this document");
-  return myRequestedFolder;
+  return myRequestedDevice;
 }
 
 //=======================================================================
-//function : HasRequestedFolder
+//function : HasRequestedDevice
 //purpose  : 
 //=======================================================================
 
-Standard_Boolean CDM_Document::HasRequestedFolder() const
+Standard_Boolean CDM_Document::HasRequestedDevice() const
 {
-  return myRequestedFolderIsDefined;
-}
-
-//=======================================================================
-//function : SetRequestedName
-//purpose  : 
-//=======================================================================
-
-void CDM_Document::SetRequestedName(const TCollection_ExtendedString& aName)
-{
-  myRequestedName=aName;
-  myRequestedNameIsDefined=Standard_True;
+  return !myRequestedDevice.IsNull();
 }
 
 //=======================================================================
@@ -801,14 +783,16 @@ void CDM_Document::SetRequestedName(const TCollection_ExtendedString& aName)
 
 TCollection_ExtendedString CDM_Document::RequestedName()
 {
-  if(!myRequestedNameIsDefined) {
-    if(!myMetaData.IsNull())
-      myRequestedName=myMetaData->Name();
-    else
-      myRequestedName=Presentation();
-  }
-  myRequestedNameIsDefined=Standard_True;
-  return myRequestedName;
+  TCollection_ExtendedString aName;
+
+  if ( !myRequestedDevice.IsNull() )
+    aName = myRequestedDevice->Name();
+  else if ( !myMetaData.IsNull() )
+    aName = myMetaData->Name();
+  else
+    aName = Presentation();
+
+  return aName;
 }
 
 //=======================================================================

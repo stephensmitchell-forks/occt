@@ -70,8 +70,8 @@ TCollection_ExtendedString BinLDrivers_DocumentStorageDriver::SchemaName() const
 //=======================================================================
 
 void BinLDrivers_DocumentStorageDriver::Write
-                          (const Handle(CDM_Document)&       theDocument,
-                           const TCollection_ExtendedString& theFileName)
+                          (const Handle(CDM_Document)&     theDocument,
+                           const Handle(Storage_IODevice)& theDevice)
 {
   SetIsError(Standard_False);
   SetStoreStatus(PCDM_SS_OK);
@@ -86,9 +86,6 @@ void BinLDrivers_DocumentStorageDriver::Write
     SetStoreStatus(PCDM_SS_Doc_IsNull);
   }
   else {
-    // Open the file
-    TCollection_AsciiString aFileName (theFileName);
-
     // First pass: collect empty labels, assign IDs to the types
     if (myDrivers.IsNull())
       myDrivers = AttributeDrivers (myMsgDriver);
@@ -96,7 +93,7 @@ void BinLDrivers_DocumentStorageDriver::Write
     FirstPass (aData->Root());
 
 //  1. Write info section (including types table)
-    WriteInfoSection(theDocument, aFileName);
+    WriteInfoSection(theDocument, theDevice);
     myTypesMap.Clear();
     if (IsError())
     {
@@ -104,31 +101,20 @@ void BinLDrivers_DocumentStorageDriver::Write
         return;
     }
 
-#if defined(_WIN32)
-    ofstream anOS ((const wchar_t*) theFileName.ToExtString(), ios::in | ios::binary | ios::ate);
-#elif !defined(IRIX) // 10.10.2005
-    ofstream anOS (aFileName.ToCString(), ios::in | ios::binary | ios::ate);
-#else
-    ofstream anOS (aFileName.ToCString(), ios::ate);
-    //ofstream anOS (aFileName.ToCString(), ios::out| ios::binary | ios::ate);
-#endif
-#ifdef OCCT_DEBUG
-    const Standard_Integer aP = (Standard_Integer) anOS.tellp();
-    cout << "POS = " << aP <<endl;
-#endif
-//#endif
+    theDevice->Open( Storage_VSAppend );
+    Standard_Size aP = theDevice->Tell();
 
-    if (anOS) {
+    if (theDevice->CanWrite()) {
 
 //  2. Write the Table of Contents of Sections
       BinLDrivers_VectorOfDocumentSection::Iterator anIterS (mySections);
       for (; anIterS.More(); anIterS.Next())
-        anIterS.ChangeValue().WriteTOC (anOS);
+        anIterS.ChangeValue().WriteTOC (theDevice);
 
       // Shapes Section is the last one, it indicates the end of the table.
       BinLDrivers_DocumentSection aShapesSection (SHAPESECTION_POS,
                                                   Standard_False);
-      aShapesSection.WriteTOC (anOS);
+      aShapesSection.WriteTOC (theDevice);
 
 //  3. Write document contents
       // (Storage data to the stream)
@@ -136,17 +122,17 @@ void BinLDrivers_DocumentStorageDriver::Write
       myPAtt.Init();
 
 //    Write Doc structure
-      WriteSubTree (aData->Root(), anOS); // Doc is written
+      WriteSubTree (aData->Root(), theDevice); // Doc is written
 
 //  4. Write Shapes section
-      WriteShapeSection(aShapesSection, anOS);
+      WriteShapeSection(aShapesSection, theDevice);
 
 // Write application-defined sections
       for (anIterS.Init (mySections); anIterS.More(); anIterS.Next()) {
         BinLDrivers_DocumentSection& aSection = anIterS.ChangeValue();
-        const Standard_Size aSectionOffset = (Standard_Size) anOS.tellp();
-        WriteSection (aSection.Name(), theDocument, anOS);
-        aSection.Write (anOS, aSectionOffset);
+        const Standard_Size aSectionOffset = (Standard_Size)theDevice->Tell();
+        WriteSection (aSection.Name(), theDocument, theDevice);
+        aSection.Write (theDevice, aSectionOffset);
       }
 
 // End of processing: close structures and check the status
@@ -165,17 +151,13 @@ void BinLDrivers_DocumentStorageDriver::Write
       myRelocTable.Clear();
     }
 
-    if (!anOS) {
-      // A problem with the stream
-#ifdef OCCT_DEBUG
-      TCollection_ExtendedString anErrorStr ("Error: ");
-      WriteMessage (anErrorStr + "BinLDrivers_DocumentStorageDriver, Problem with the file stream, rdstate="
-                    + (Standard_Integer )anOS.rdstate());
-#endif
+    if (!theDevice->CanWrite()) {
+      WriteMessage ("Error: BinLDrivers_DocumentStorageDriver, Problem with the file stream.") ;
       SetIsError(Standard_True);
       SetStoreStatus(PCDM_SS_WriteFailure);
     }
 
+    theDevice->Close();
   }
 }
 
@@ -204,9 +186,8 @@ void BinLDrivers_DocumentStorageDriver::UnsupportedAttrMsg
 //purpose  :
 //=======================================================================
 
-void BinLDrivers_DocumentStorageDriver::WriteSubTree
-                        (const TDF_Label&          theLabel,
-                         Standard_OStream&         theOS)
+void BinLDrivers_DocumentStorageDriver::WriteSubTree(const TDF_Label&          theLabel,
+                                                     const Handle(Storage_IODevice)& theDevice)
 {
   // Skip empty labels
   if (!myEmptyLabels.IsEmpty() && myEmptyLabels.First() == theLabel) {
@@ -219,11 +200,11 @@ void BinLDrivers_DocumentStorageDriver::WriteSubTree
 #if DO_INVERSE
   aTag = InverseInt (aTag);
 #endif
-  theOS.write ((char*)&aTag, sizeof(Standard_Integer));
+  theDevice->Write ((char*)&aTag, sizeof(Standard_Integer));
 
   // Write attributes
   TDF_AttributeIterator itAtt (theLabel);
-  for ( ; itAtt.More() && theOS; itAtt.Next()) {
+  for ( ; itAtt.More() && theDevice->CanWrite(); itAtt.Next()) {
     const Handle(TDF_Attribute)& tAtt = itAtt.Value();
     const Handle(Standard_Type)& aType = tAtt->DynamicType();
     // Get type ID and driver
@@ -239,14 +220,15 @@ void BinLDrivers_DocumentStorageDriver::WriteSubTree
       aDriver->Paste (tAtt, myPAtt, myRelocTable);
 
       // Write data to the stream -->!!!
-      theOS << myPAtt;
+      //theOS << myPAtt;
+      myPAtt.Write( theDevice );
     }
 #ifdef OCCT_DEBUG
     else
       UnsupportedAttrMsg (aType);
 #endif
   }
-  if (!theOS) {
+  if (!theDevice->CanWrite()) {
     // Problem with the stream
     return;
   }
@@ -256,14 +238,14 @@ void BinLDrivers_DocumentStorageDriver::WriteSubTree
 #if DO_INVERSE
   anEndAttr = (BinLDrivers_Marker) InverseInt (anEndAttr);
 #endif
-  theOS.write ((char*)&anEndAttr, sizeof(anEndAttr));
+  theDevice->Write ((char*)&anEndAttr, sizeof(anEndAttr));
 
   // Process sub-labels
   TDF_ChildIterator itChld (theLabel);
   for ( ; itChld.More(); itChld.Next())
   {
     const TDF_Label& aChildLab = itChld.Value();
-    WriteSubTree (aChildLab, theOS);
+    WriteSubTree (aChildLab, theDevice);
   }
 
   // Write the end label marker
@@ -271,8 +253,7 @@ void BinLDrivers_DocumentStorageDriver::WriteSubTree
 #if DO_INVERSE
   anEndLabel = (BinLDrivers_Marker) InverseInt (anEndLabel);
 #endif
-  theOS.write ((char*)&anEndLabel, sizeof(anEndLabel));
-
+  theDevice->Write( (Standard_Address)&anEndLabel, sizeof(anEndLabel));
 }
 
 //=======================================================================
@@ -360,13 +341,13 @@ void BinLDrivers_DocumentStorageDriver::FirstPass
 #define END_TYPES "END_TYPES"
 
 void BinLDrivers_DocumentStorageDriver::WriteInfoSection
-                         (const Handle(CDM_Document)&    theDocument,
-                          const TCollection_AsciiString& theFileName)
+                         (const Handle(CDM_Document)& theDocument,
+                         const Handle(Storage_IODevice)& theDevice)
 {
   FSD_BinaryFile aFileDriver;
-  if (aFileDriver.Open( theFileName, Storage_VSWrite ) != Storage_VSOk) {
-    WriteMessage (TCollection_ExtendedString("Error: Cannot open file ") +
-                  theFileName);
+  if (aFileDriver.Open( theDevice, Storage_VSWrite ) != Storage_VSOk) {
+    WriteMessage (TCollection_ExtendedString("Error: Cannot open the device ") +
+                  theDevice->Name());
     SetIsError(Standard_True);
     return;
   }
@@ -377,7 +358,7 @@ void BinLDrivers_DocumentStorageDriver::WriteInfoSection
     Handle(Storage_Data) theData = new Storage_Data;
     PCDM_ReadWriter::WriteFileFormat( theData, theDocument );
     PCDM_ReadWriter::Writer()->WriteReferenceCounter(theData,theDocument);
-    PCDM_ReadWriter::Writer()->WriteReferences(theData,theDocument,theFileName);
+    PCDM_ReadWriter::Writer()->WriteReferences(theData,theDocument,theDevice);
     PCDM_ReadWriter::Writer()->WriteExtensions(theData,theDocument);
     PCDM_ReadWriter::Writer()->WriteVersion(theData,theDocument);
 
@@ -422,7 +403,7 @@ void BinLDrivers_DocumentStorageDriver::WriteInfoSection
   }
   else {
     WriteMessage(TCollection_ExtendedString("Error: Problem writing header "
-                                            "into file ") + theFileName);
+                                            "into file ") + theDevice->Name());
     SetIsError(Standard_True);
   }
 #ifdef OCCT_DEBUG
@@ -463,9 +444,9 @@ void BinLDrivers_DocumentStorageDriver::AddSection
 //=======================================================================
 
 void BinLDrivers_DocumentStorageDriver::WriteSection
-                                (const TCollection_AsciiString& /*theName*/,
-                                 const Handle(CDM_Document)&     /*theDocument*/,
-                                 Standard_OStream&              /*theOS*/)
+                                (const TCollection_AsciiString&  /*theName*/,
+                                 const Handle(CDM_Document)&     /*theDoc*/,
+                                 const Handle(Storage_IODevice)& /*theDevice*/)
 {
   // empty; should be redefined in subclasses
 }
@@ -475,9 +456,12 @@ void BinLDrivers_DocumentStorageDriver::WriteSection
 //purpose  : defines WriteShapeSection
 //=======================================================================
 void BinLDrivers_DocumentStorageDriver::WriteShapeSection
-                                (BinLDrivers_DocumentSection&   theSection,
-                                 Standard_OStream&              theOS)
+                                (BinLDrivers_DocumentSection& theDocSection,
+                                const Handle(Storage_IODevice)& theDevice)
 {
-  const Standard_Size aShapesSectionOffset = (Standard_Size) theOS.tellp();
-  theSection.Write (theOS, aShapesSectionOffset);
+  if (theDevice->CanWrite())
+  {
+    const Standard_Size aShapesSectionOffset = theDevice->Tell();
+    theDocSection.Write (theDevice, aShapesSectionOffset);
+  }
 }

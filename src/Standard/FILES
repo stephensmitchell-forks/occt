@@ -38,7 +38,6 @@ Standard_Handle.hxx
 Standard_HandlerStatus.hxx
 Standard_ImmutableObject.hxx
 Standard_Integer.hxx
-Standard_IStream.hxx
 Standard_JmpBuf.hxx
 Standard_LicenseError.hxx
 Standard_LicenseNotFound.hxx
@@ -81,6 +80,11 @@ Standard_Real.hxx
 Standard_ShortReal.cxx
 Standard_ShortReal.hxx
 Standard_Size.hxx
+Standard_IStream.hxx
+Standard_IStreamPtr.hxx
+Standard_OStream.hxx
+Standard_OStreamPtr.hxx
+Standard_FStream.hxx
 Standard_SStream.cxx
 Standard_SStream.hxx
 Standard_Stream.hxx

@@ -24,32 +24,39 @@
 #include <Standard_Type.hxx>
 #include <TCollection_ExtendedString.hxx>
 
+#include <TCollection_AsciiString.hxx>
+
 static CDM_MetaDataLookUpTable& getLookUpTable(){
   static CDM_MetaDataLookUpTable theLookUpTable;
   return theLookUpTable;
 }
-CDM_MetaData::CDM_MetaData(const TCollection_ExtendedString& aFolder, const TCollection_ExtendedString& aName, const TCollection_ExtendedString& aPath,const TCollection_ExtendedString& aFileName,const Standard_Boolean ReadOnly):
+
+CDM_MetaData::CDM_MetaData(const Handle(Storage_IODevice)& aDevice, const Standard_Boolean ReadOnly):
 myIsRetrieved(Standard_False),
-myFolder(aFolder),
-myName(aName),
+//myFolder(aFolder),
+//myName(aName),
 myHasVersion(Standard_False),
-myFileName(aFileName),
-myPath(aPath),
+//myFileName(aFileName),
+//myPath(aPath),
+myDevice(aDevice),
 myDocumentVersion(0),
 myIsReadOnly(ReadOnly) 
-{}
+{
+}
 
-CDM_MetaData::CDM_MetaData(const TCollection_ExtendedString& aFolder, const TCollection_ExtendedString& aName, const TCollection_ExtendedString& aPath,const TCollection_ExtendedString& aVersion,const TCollection_ExtendedString& aFileName,const Standard_Boolean ReadOnly):
+CDM_MetaData::CDM_MetaData(const Handle(Storage_IODevice)& aDevice, const TCollection_ExtendedString& aVersion, const Standard_Boolean ReadOnly):
 myIsRetrieved(Standard_False),
-myFolder(aFolder),
-myName(aName),
+//myFolder(aFolder),
+//myName(aName),
 myVersion(aVersion),
 myHasVersion(Standard_True),
-myFileName(aFileName),
-myPath(aPath),
+//myFileName(aFileName),
+//myPath(aPath),
+myDevice(aDevice),
 myDocumentVersion(0),
 myIsReadOnly(ReadOnly)  
-{}
+{
+}
 
 Standard_Boolean CDM_MetaData::IsRetrieved() const {
   return myIsRetrieved;
@@ -66,60 +73,81 @@ void CDM_MetaData::SetDocument(const Handle(CDM_Document)& aDocument) {
 void CDM_MetaData::UnsetDocument() {
   myIsRetrieved = Standard_False;
 }
-Handle(CDM_MetaData) CDM_MetaData::LookUp(const TCollection_ExtendedString& aFolder, const TCollection_ExtendedString& aName, const TCollection_ExtendedString& aPath,const TCollection_ExtendedString& aFileName,const Standard_Boolean ReadOnly) {
+
+Handle(CDM_MetaData) CDM_MetaData::LookUp(const Handle(Storage_IODevice)& aDevice, const Standard_Boolean ReadOnly) {
   Handle(CDM_MetaData) theMetaData;
-  TCollection_ExtendedString aConventionalPath=aPath;
-  aConventionalPath.ChangeAll('\\','/');
-  if(!getLookUpTable().IsBound(aConventionalPath)) {
-    theMetaData = new CDM_MetaData(aFolder,aName,aPath,aFileName,ReadOnly);
-    getLookUpTable().Bind(aConventionalPath,theMetaData);
+  TCollection_AsciiString aSig;
+  if ( !aDevice.IsNull() )
+    aSig = aDevice->Signature();
+
+  if ( aSig.IsEmpty() || !getLookUpTable().IsBound(aSig) ) {
+    theMetaData = new CDM_MetaData(aDevice, ReadOnly);
+    if ( !aSig.IsEmpty() )
+        getLookUpTable().Bind(aSig, theMetaData);
   }
   else
-    theMetaData = getLookUpTable()(aConventionalPath);
-  
-  return theMetaData;
-}
-Handle(CDM_MetaData) CDM_MetaData::LookUp(const TCollection_ExtendedString& aFolder, const TCollection_ExtendedString& aName, const TCollection_ExtendedString& aPath, const TCollection_ExtendedString& aVersion, const TCollection_ExtendedString& aFileName,const Standard_Boolean ReadOnly) {
-  Handle(CDM_MetaData) theMetaData;
-  TCollection_ExtendedString aConventionalPath=aPath;
-  aConventionalPath.ChangeAll('\\','/');
-  if(!getLookUpTable().IsBound(aConventionalPath)) {
-    theMetaData = new CDM_MetaData(aFolder,aName,aPath,aVersion,aFileName,ReadOnly);
-    getLookUpTable().Bind(aConventionalPath,theMetaData);
-  }
-  else
-    theMetaData = getLookUpTable()(aConventionalPath);
-  
+    theMetaData = getLookUpTable()(aSig);
+
   return theMetaData;
 }
 
+Handle(CDM_MetaData) CDM_MetaData::LookUp(const Handle(Storage_IODevice)& aDevice, const TCollection_ExtendedString& aVersion, const Standard_Boolean ReadOnly) {
+  Handle(CDM_MetaData) theMetaData;
+  TCollection_AsciiString aSig;
+  if ( !aDevice.IsNull() )
+    aSig = aDevice->Signature();
+
+  if ( aSig.IsEmpty() || !getLookUpTable().IsBound(aSig) ) {
+    theMetaData = new CDM_MetaData(aDevice, aVersion, ReadOnly);
+    if ( !aSig.IsEmpty() )
+        getLookUpTable().Bind(aSig, theMetaData);
+  }
+  else
+    theMetaData = getLookUpTable()(aSig);
+
+  return theMetaData;
+}
+/*
 TCollection_ExtendedString CDM_MetaData::Folder() const {
   return myFolder;
 }
+*/
 TCollection_ExtendedString CDM_MetaData::Name() const {
-  return myName;
+  TCollection_ExtendedString aName;
+  if ( !Device().IsNull() )
+    aName = Device()->Name();
+  return aName;
 }
+
 TCollection_ExtendedString CDM_MetaData::Version() const {
   Standard_NoSuchObject_Raise_if(!myHasVersion,"Document has no version");
   return myVersion;
 }
+
 Standard_Boolean CDM_MetaData::HasVersion() const {
   return myHasVersion;
 }
-
+/*
 TCollection_ExtendedString CDM_MetaData::FileName() const {
   return myFileName;
 }
 TCollection_ExtendedString CDM_MetaData::Path() const {
   return myPath;
 }
+*/
+
+Handle(Storage_IODevice) CDM_MetaData::Device() const
+{
+    return myDevice;
+}
+
 Standard_OStream& CDM_MetaData::Print(Standard_OStream& anOStream) const {
   anOStream << "*CDM_MetaData*";
-  anOStream <<  myFolder << "," << myName; 
+  //  anOStream <<  myFolder << "," << myName; 
   if(HasVersion()) anOStream << "," << myVersion ;
-  anOStream << "; Physical situation: ";
-  anOStream << myFileName;
-  anOStream << endl;
+  //  anOStream << "; Physical situation: ";
+  //  anOStream << myFileName;
+  //  anOStream << endl;
   return anOStream;
 }
 Standard_OStream& CDM_MetaData::operator << (Standard_OStream& anOStream) {

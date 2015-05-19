@@ -39,7 +39,7 @@ const Standard_GUID& TPrsStd_AISViewer::GetID ()
 //=======================================================================
 
 Handle(TPrsStd_AISViewer) TPrsStd_AISViewer::New (const TDF_Label& acces, 
-						  const Handle(V3d_Viewer)& viewer)
+                                                  const Handle(V3d_Viewer)& viewer)
 {   
   Handle(TPrsStd_AISViewer) V;
   if (acces.Root().FindAttribute(TPrsStd_AISViewer::GetID(),V)) { 
@@ -56,7 +56,7 @@ Handle(TPrsStd_AISViewer) TPrsStd_AISViewer::New (const TDF_Label& acces,
 //purpose  : 
 //=======================================================================
 Handle(TPrsStd_AISViewer) TPrsStd_AISViewer::New (const TDF_Label& acces, 
-						  const Handle(AIS_InteractiveContext)& IC) 
+                                                  const Handle(AIS_InteractiveContext)& IC) 
 {   
   Handle(TPrsStd_AISViewer) V;
   if (acces.Root().FindAttribute(TPrsStd_AISViewer::GetID(),V)) { 
@@ -73,7 +73,7 @@ Handle(TPrsStd_AISViewer) TPrsStd_AISViewer::New (const TDF_Label& acces,
 //purpose  : 
 //=======================================================================
 Standard_Boolean TPrsStd_AISViewer::Find (const TDF_Label& acces, 
-					  Handle(TPrsStd_AISViewer)& V) 
+                                          Handle(TPrsStd_AISViewer)& V) 
 { 
   return (acces.Root().FindAttribute(TPrsStd_AISViewer::GetID(),V)); 
 }
@@ -83,7 +83,7 @@ Standard_Boolean TPrsStd_AISViewer::Find (const TDF_Label& acces,
 //purpose  : 
 //=======================================================================
 Standard_Boolean TPrsStd_AISViewer::Find (const TDF_Label& acces, 
-					  Handle(AIS_InteractiveContext)& IC)
+                                          Handle(AIS_InteractiveContext)& IC)
 { 
   Handle(TPrsStd_AISViewer) V; 
   if (acces.Root().FindAttribute(TPrsStd_AISViewer::GetID(),V)) { 
@@ -99,7 +99,7 @@ Standard_Boolean TPrsStd_AISViewer::Find (const TDF_Label& acces,
 //=======================================================================
 
 Standard_Boolean TPrsStd_AISViewer::Find (const TDF_Label& acces, 
-					  Handle(V3d_Viewer)& VIEW) 
+                                          Handle(V3d_Viewer)& VIEW) 
 { 
   Handle(TPrsStd_AISViewer) V;
   if (acces.Root().FindAttribute(TPrsStd_AISViewer::GetID(),V)) { 
@@ -145,9 +145,9 @@ TPrsStd_AISViewer::TPrsStd_AISViewer()
 
 void TPrsStd_AISViewer::Update () const
 {
-  myInteractiveContext->UpdateCurrentViewer();  
+  myInteractiveContext->UpdateCurrentViewer();
 }
- 
+
 //=======================================================================
 //function : SetInteractiveContext
 //purpose  : 
@@ -202,7 +202,7 @@ Handle(TDF_Attribute) TPrsStd_AISViewer::NewEmpty() const
 //=======================================================================
 
 void TPrsStd_AISViewer::Paste (const Handle(TDF_Attribute)&,
-			     const Handle(TDF_RelocationTable)&) const
+                               const Handle(TDF_RelocationTable)&) const
 {
 }
 

@@ -100,24 +100,20 @@ Standard_Boolean CDF_FWOSDriver::HasReadPermission(const TCollection_ExtendedStr
 //function : MetaData
 //purpose  :
 //==============================================================================
-Handle(CDM_MetaData) CDF_FWOSDriver::MetaData(const TCollection_ExtendedString& aFolder,
-                                                 const TCollection_ExtendedString& aName,
-                                                 const TCollection_ExtendedString& /*aVersion*/)
+Handle(CDM_MetaData) CDF_FWOSDriver::MetaData(const Handle(Storage_IODevice)& aDevice,
+                                              const TCollection_ExtendedString& /*aVersion*/)
 {
-  TCollection_ExtendedString p = Concatenate(aFolder,aName);
-  return CDM_MetaData::LookUp(aFolder,aName,p,p,UTL::IsReadOnly(p));
+  //  TCollection_ExtendedString p = Concatenate(aFolder,aName);
+  return CDM_MetaData::LookUp(aDevice,!aDevice->CanWrite());
 }
 
 //==============================================================================
 //function : CreateMetaData
 //purpose  :
 //==============================================================================
-Handle(CDM_MetaData) CDF_FWOSDriver::CreateMetaData(const Handle(CDM_Document)& aDocument,
-                                                       const TCollection_ExtendedString& aFileName)
+Handle(CDM_MetaData) CDF_FWOSDriver::CreateMetaData(const Handle(CDM_Document)& aDocument)
 {
-  return CDM_MetaData::LookUp(aDocument->RequestedFolder(),aDocument->RequestedName(),
-                              Concatenate(aDocument->RequestedFolder(),aDocument->RequestedName()),
-                              aFileName,UTL::IsReadOnly(aFileName));
+  return CDM_MetaData::LookUp(aDocument->RequestedDevice(),!aDocument->RequestedDevice()->CanWrite());
 }
 
 //==============================================================================
@@ -126,11 +122,13 @@ Handle(CDM_MetaData) CDF_FWOSDriver::CreateMetaData(const Handle(CDM_Document)& 
 //==============================================================================
 TCollection_ExtendedString CDF_FWOSDriver::BuildFileName(const Handle(CDM_Document)& aDocument)
 {
-
+/*
   TCollection_ExtendedString retstr = TCollection_ExtendedString(aDocument->RequestedFolder());
   PutSlash(retstr);
   retstr += aDocument->RequestedName();
   return retstr;
+*/
+  return aDocument->RequestedDevice()->Name();
 }
 
 //==============================================================================
@@ -195,9 +193,9 @@ TCollection_ExtendedString CDF_FWOSDriver::DefaultFolder()
 //function : BuildMetaData
 //purpose  :
 //==============================================================================
-Handle(CDM_MetaData) CDF_FWOSDriver::BuildMetaData(const TCollection_ExtendedString& aFileName)
+Handle(CDM_MetaData) CDF_FWOSDriver::BuildMetaData(const Handle(Storage_IODevice)& aDevice)
 {
-
+/*
   OSD_Path p = UTL::Path(aFileName);
   
   TCollection_ExtendedString f = UTL::Trek(p);
@@ -206,6 +204,8 @@ Handle(CDM_MetaData) CDF_FWOSDriver::BuildMetaData(const TCollection_ExtendedStr
   n += UTL::Extension(p);
 
   return CDM_MetaData::LookUp(f,n,aFileName,aFileName,UTL::IsReadOnly(aFileName));
+*/
+  return CDM_MetaData::LookUp(aDevice,!aDevice->CanWrite());
 }
 
 //==============================================================================
