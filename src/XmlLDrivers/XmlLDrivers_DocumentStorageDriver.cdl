@@ -25,7 +25,8 @@ uses
     Element			from XmlObjMgt,
     SRelocationTable		from XmlObjMgt,
     ADriverTable		from XmlMDF,
-    MessageDriver               from CDM
+    MessageDriver               from CDM,
+    IODevice                    from Storage
 
 is
     Create (theCopyright: ExtendedString from TCollection)
@@ -36,13 +37,13 @@ is
     -- pure virtual method definition
 
     Write	      (me: mutable;theDocument: Document       from CDM;
-				   theFileName: ExtendedString from TCollection)
+				   theDevice: IODevice from Storage)
 	is redefined virtual;
     -- Write <aDocument> to the xml file <theFileName>
 
     WriteToDomDocument(me:mutable; theDocument: Document from CDM;
 			           thePDoc    : out Element from XmlObjMgt;
-   	    	    	    	   theFileName: ExtendedString from TCollection)
+   	    	    	    	   theDevice: IODevice from Storage)
 	returns Boolean from Standard
 	is virtual protected;
 

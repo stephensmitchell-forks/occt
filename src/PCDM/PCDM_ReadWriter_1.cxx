@@ -25,6 +25,7 @@
 #include <TColStd_SequenceOfExtendedString.hxx>
 #include <Storage_Schema.hxx>
 #include <Storage_HeaderData.hxx>
+#include <Storage_File.hxx>
 #include <TColStd_SequenceOfAsciiString.hxx>
 #include <PCDM_Reference.hxx>
 #include <Standard_ErrorHandler.hxx>
@@ -32,6 +33,8 @@
 #include <PCDM_BaseDriverPointer.hxx>
 #include <PCDM.hxx>
 #include <PCDM_TypeOfFileDriver.hxx>
+#include <PCDM_WriteError.hxx>
+#include <PCDM_ReadError.hxx>
 
 #define START_REF "START_REF"
 #define END_REF "END_REF"
@@ -153,10 +156,16 @@ void PCDM_ReadWriter_1::WriteReferenceCounter(const Handle(Storage_Data)& aData,
 //purpose  : 
 //=======================================================================
 
-void PCDM_ReadWriter_1::WriteReferences(const Handle(Storage_Data)& aData, const Handle(CDM_Document)& aDocument,const TCollection_ExtendedString& theReferencerFileName) const {  
+void PCDM_ReadWriter_1::WriteReferences(const Handle(Storage_Data)& aData, const Handle(CDM_Document)& aDocument,const Handle(Storage_IODevice)& theReferencer) const {  
 
   Standard_Integer theNumber = aDocument->ToReferencesNumber();
   if(theNumber > 0) {
+
+    Handle(Storage_File) aFileDevice = Handle(Storage_File)::DownCast(theReferencer);
+    if ( aFileDevice.IsNull() )
+    {
+      PCDM_WriteError::Raise( "Can't save references of document which was not stored to file" );
+    }
 
     aData->AddToUserInfo(START_REF);
 
@@ -164,7 +173,7 @@ void PCDM_ReadWriter_1::WriteReferences(const Handle(Storage_Data)& aData, const
 
     TCollection_ExtendedString ligne;
 
-    TCollection_AsciiString theAbsoluteDirectory=GetDirFromFile(theReferencerFileName);
+    TCollection_AsciiString theAbsoluteDirectory=GetDirFromFile(aFileDevice->Path());
 
     for (;it.More();it.Next()) {
       ligne = TCollection_ExtendedString(it.ReferenceIdentifier());
@@ -172,7 +181,14 @@ void PCDM_ReadWriter_1::WriteReferences(const Handle(Storage_Data)& aData, const
       ligne += TCollection_ExtendedString(it.Document()->Modifications());
       ligne += " ";
 
-      TCollection_AsciiString thePath=UTL::CString(it.Document()->MetaData()->FileName());
+      Handle(Storage_File) aFileDevice = Handle(Storage_File)::DownCast(it.Document()->MetaData()->Device());
+      if ( aFileDevice.IsNull() )
+      {
+        PCDM_WriteError::Raise( "Can't save reference to document which was not retrieved from file" );
+      }
+
+      TCollection_AsciiString thePath = aFileDevice->Path();
+
       TCollection_AsciiString theRelativePath;
       if(!theAbsoluteDirectory.IsEmpty()) {
 	theRelativePath=OSD_Path::RelativePath(theAbsoluteDirectory,thePath);
@@ -219,21 +235,22 @@ void PCDM_ReadWriter_1::WriteVersion(const Handle(Storage_Data)& aData, const Ha
 //purpose  : 
 //=======================================================================
 
-Standard_Integer PCDM_ReadWriter_1::ReadReferenceCounter(const TCollection_ExtendedString& aFileName, const Handle(CDM_MessageDriver)& theMsgDriver) const {
+ Standard_Integer PCDM_ReadWriter_1::ReadReferenceCounter(const Handle(Storage_IODevice)& aDevice, const Handle(CDM_MessageDriver)& theMsgDriver) const {
 
   static Standard_Integer theReferencesCounter ;
   theReferencesCounter=0;
   static Standard_Integer i ;
 
   PCDM_BaseDriverPointer theFileDriver;
-  if(PCDM::FileDriverType(TCollection_AsciiString(UTL::CString(aFileName)), theFileDriver) == PCDM_TOFD_Unknown) return theReferencesCounter;
+  if(PCDM::FileDriverType(aDevice, theFileDriver) == PCDM_TOFD_Unknown)
+    return theReferencesCounter;
   
   static Standard_Boolean theFileIsOpen ;
   theFileIsOpen=Standard_False;
 
   try {
     OCC_CATCH_SIGNALS
-    PCDM_ReadWriter::Open(*theFileDriver,aFileName,Storage_VSRead);
+    PCDM_ReadWriter::Open(*theFileDriver,aDevice,Storage_VSRead);
     theFileIsOpen=Standard_True;
    
     Handle(Storage_Schema) s = new Storage_Schema;
@@ -246,13 +263,12 @@ Standard_Integer PCDM_ReadWriter_1::ReadReferenceCounter(const TCollection_Exten
 	catch (Standard_Failure) { 
 //	  cout << "warning: could not read the reference counter in " << aFileName << endl;
 	  TCollection_ExtendedString aMsg("Warning: ");
-	  aMsg = aMsg.Cat("could not read the reference counter in ").Cat(aFileName).Cat("\0");
+	  aMsg = aMsg.Cat("could not read the reference counter in ").Cat("\0");
 	  if(!theMsgDriver.IsNull()) 
 	    theMsgDriver->Write(aMsg.ToExtString());
 	}
       }
     }
-    
   }
   catch (Standard_Failure) {}
 
@@ -267,17 +283,25 @@ Standard_Integer PCDM_ReadWriter_1::ReadReferenceCounter(const TCollection_Exten
 //purpose  : 
 //=======================================================================
 
-void PCDM_ReadWriter_1::ReadReferences(const TCollection_ExtendedString& aFileName, PCDM_SequenceOfReference& theReferences, const Handle(CDM_MessageDriver)& theMsgDriver) const  {
+ void PCDM_ReadWriter_1::ReadReferences(const Handle(Storage_IODevice)& aDevice, PCDM_SequenceOfReference& theReferences, const Handle(CDM_MessageDriver)& theMsgDriver) const  {
 
   TColStd_SequenceOfExtendedString ReadReferences;
   
-  ReadUserInfo(aFileName,START_REF,END_REF,ReadReferences, theMsgDriver);
+  ReadUserInfo(aDevice,START_REF,END_REF,ReadReferences, theMsgDriver);
 
   Standard_Integer theReferenceIdentifier;
   TCollection_ExtendedString theFileName;
   Standard_Integer theDocumentVersion;
 
-  TCollection_AsciiString theAbsoluteDirectory=GetDirFromFile(aFileName);
+
+  Handle(Storage_File) aFileDevice = Handle(Storage_File)::DownCast(aDevice);
+  if ( aFileDevice.IsNull() )
+  {
+    return;
+    //PCDM_ReadError::Raise( "Can't read references for document which was not retrieved from file" );
+  }
+
+  TCollection_AsciiString theAbsoluteDirectory = GetDirFromFile(aFileDevice->Path());
 
   for (Standard_Integer i=1; i<=ReadReferences.Length(); i++) {
     Standard_Integer pos=ReadReferences(i).Search(" ");
@@ -302,8 +326,7 @@ void PCDM_ReadWriter_1::ReadReferences(const TCollection_ExtendedString& aFileNa
 	aMsg = aMsg.Cat("reference found; ReferenceIdentifier:  ").Cat(theReferenceIdentifier).Cat("; File:").Cat(thePath).Cat(", version:").Cat(theDocumentVersion).Cat("\0");
 	theMsgDriver->Write(aMsg.ToExtString());
       }
-      theReferences.Append(PCDM_Reference (theReferenceIdentifier,UTL::ExtendedString(thePath),theDocumentVersion));
-    
+      theReferences.Append(PCDM_Reference (theReferenceIdentifier,new Storage_File( TCollection_ExtendedString( thePath ) ),theDocumentVersion));    
     }
   }
 
@@ -314,9 +337,9 @@ void PCDM_ReadWriter_1::ReadReferences(const TCollection_ExtendedString& aFileNa
 //purpose  : 
 //=======================================================================
 
-void PCDM_ReadWriter_1::ReadExtensions(const TCollection_ExtendedString& aFileName, TColStd_SequenceOfExtendedString& theExtensions, const Handle(CDM_MessageDriver)& theMsgDriver) const {
+void PCDM_ReadWriter_1::ReadExtensions(const Handle(Storage_IODevice)& aDevice, TColStd_SequenceOfExtendedString& theExtensions, const Handle(CDM_MessageDriver)& theMsgDriver) const {
   
-  ReadUserInfo(aFileName,START_EXT,END_EXT,theExtensions, theMsgDriver);
+  ReadUserInfo(aDevice,START_EXT,END_EXT,theExtensions, theMsgDriver);
 }
 
 
@@ -325,7 +348,7 @@ void PCDM_ReadWriter_1::ReadExtensions(const TCollection_ExtendedString& aFileNa
 //purpose  : 
 //=======================================================================
 
-void PCDM_ReadWriter_1::ReadUserInfo(const TCollection_ExtendedString& aFileName,
+void PCDM_ReadWriter_1::ReadUserInfo(const Handle(Storage_IODevice)& aDevice,
                                      const TCollection_AsciiString& Start,
                                      const TCollection_AsciiString& End,
                                      TColStd_SequenceOfExtendedString& theUserInfo,
@@ -333,9 +356,10 @@ void PCDM_ReadWriter_1::ReadUserInfo(const TCollection_ExtendedString& aFileName
 
   static Standard_Integer i ;
   PCDM_BaseDriverPointer theFileDriver;
-  if(PCDM::FileDriverType(TCollection_AsciiString(UTL::CString(aFileName)), theFileDriver) == PCDM_TOFD_Unknown) return;
+  if(PCDM::FileDriverType(aDevice, theFileDriver) == PCDM_TOFD_Unknown)
+    return;
 
-  PCDM_ReadWriter::Open(*theFileDriver,aFileName,Storage_VSRead);
+  PCDM_ReadWriter::Open(*theFileDriver,aDevice,Storage_VSRead);
   Handle(Storage_Schema) s = new Storage_Schema;
   Handle(Storage_HeaderData) hd = s->ReadHeaderSection(*theFileDriver);
   const TColStd_SequenceOfAsciiString &refUserInfo = hd->UserInfo();
@@ -361,20 +385,21 @@ void PCDM_ReadWriter_1::ReadUserInfo(const TCollection_ExtendedString& aFileName
 //purpose  : 
 //=======================================================================
 
-Standard_Integer PCDM_ReadWriter_1::ReadDocumentVersion(const TCollection_ExtendedString& aFileName, const Handle(CDM_MessageDriver)& theMsgDriver) const {
+Standard_Integer PCDM_ReadWriter_1::ReadDocumentVersion(const Handle(Storage_IODevice)& aDevice, const Handle(CDM_MessageDriver)& theMsgDriver) const {
 
   static Standard_Integer theVersion ;
   theVersion=-1;
 
   PCDM_BaseDriverPointer theFileDriver;
-  if(PCDM::FileDriverType(TCollection_AsciiString(UTL::CString(aFileName)), theFileDriver) == PCDM_TOFD_Unknown) return theVersion;
+  if(PCDM::FileDriverType(aDevice, theFileDriver) == PCDM_TOFD_Unknown)
+    return theVersion;
 
   static Standard_Boolean theFileIsOpen ;
   theFileIsOpen =Standard_False;
 
   try {
     OCC_CATCH_SIGNALS
-    PCDM_ReadWriter::Open(*theFileDriver,aFileName,Storage_VSRead);
+    PCDM_ReadWriter::Open(*theFileDriver,aDevice,Storage_VSRead);
     theFileIsOpen=Standard_True;
     Handle(Storage_Schema) s = new Storage_Schema;
     Handle(Storage_HeaderData) hd = s->ReadHeaderSection(*theFileDriver);
@@ -387,11 +412,10 @@ Standard_Integer PCDM_ReadWriter_1::ReadDocumentVersion(const TCollection_Extend
 	catch (Standard_Failure) { 
 //	  cout << "warning: could not read the version in " << aFileName << endl;
 	  TCollection_ExtendedString aMsg("Warning: ");
-	  aMsg = aMsg.Cat("could not read the version in ").Cat(aFileName).Cat("\0");
+	  aMsg = aMsg.Cat("could not read the version in ").Cat("\0");
 	  if(!theMsgDriver.IsNull()) 
 	    theMsgDriver->Write(aMsg.ToExtString());
 	}
-
       }
     }
   }

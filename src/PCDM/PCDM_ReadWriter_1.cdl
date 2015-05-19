@@ -20,6 +20,7 @@ uses
     ExtendedString from TCollection,  
     AsciiString from TCollection, 
     Data from Storage, 
+    IODevice from Storage,
     Document from CDM, 
     MessageDriver from CDM, 
     SequenceOfExtendedString from TColStd, 
@@ -34,28 +35,24 @@ is
    
     WriteReferenceCounter(me; aData: mutable Data from Storage; aDocument: Document from CDM);
 
-    WriteReferences(me; aData: mutable Data from Storage; aDocument: Document from CDM; theReferencerFileName: ExtendedString from TCollection);
+    WriteReferences(me; aData: mutable Data from Storage; aDocument: Document from CDM; theReferencer: IODevice from Storage);
 
-    
     WriteExtensions(me; aData: mutable Data from Storage; aDocument: Document from CDM);
 
-    
     WriteVersion(me; aData: mutable Data from Storage; aDocument: Document from CDM);
 
-    
-    ReadReferenceCounter(me; aFileName: ExtendedString from TCollection; theMsgDriver: MessageDriver from CDM)
+    ReadReferenceCounter(me; aDevice: IODevice from Storage; theMsgDriver: MessageDriver from CDM)
     returns Integer from Standard;
 
-    ReadReferences(me; aFileName: ExtendedString from TCollection; theReferences: in out  SequenceOfReference from PCDM; theMsgDriver: MessageDriver from CDM);
+    ReadReferences(me; aDevice: IODevice from Storage; theReferences: in out  SequenceOfReference from PCDM; theMsgDriver: MessageDriver from CDM);
 
     
-    ReadExtensions(me; aFileName: ExtendedString from TCollection; theExtensions: in out  SequenceOfExtendedString from TColStd; theMsgDriver: MessageDriver from CDM);
+    ReadExtensions(me; aDevice: IODevice from Storage; theExtensions: in out  SequenceOfExtendedString from TColStd; theMsgDriver: MessageDriver from CDM);
 
-    ReadUserInfo(myclass; aFileName: ExtendedString from TCollection; Start, End: AsciiString from TCollection; theUserInfo:in  out SequenceOfExtendedString from TColStd;theMsgDriver: MessageDriver from CDM)
+    ReadUserInfo(myclass; aDevice: IODevice from Storage; Start, End: AsciiString from TCollection; theUserInfo:in  out SequenceOfExtendedString from TColStd;theMsgDriver: MessageDriver from CDM)
     is private;
 
-    ReadDocumentVersion(me; aFileName: ExtendedString from TCollection; theMsgDriver: MessageDriver from CDM)
+    ReadDocumentVersion(me; aDevice: IODevice from Storage; theMsgDriver: MessageDriver from CDM)
     returns Integer from Standard;
-
 
 end ReadWriter_1 from PCDM;

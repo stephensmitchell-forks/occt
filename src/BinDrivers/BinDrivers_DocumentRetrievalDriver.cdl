@@ -20,7 +20,8 @@ uses
     ADriverTable     from BinMDF, 
     Position         from Storage, 
     IStream          from Standard, 
-    DocumentSection from BinLDrivers 
+    DocumentSection  from BinLDrivers ,
+    IODevice         from Storage
     
 is
     -- ===== Public methods =====
@@ -34,12 +35,12 @@ is
 
     ReadShapeSection (me: mutable;
                       theSection : in out DocumentSection from BinLDrivers;
-                      theIS      : in out IStream from Standard; 
-    	    	      isMess     : Boolean from Standard = Standard_False) is redefined virtual;  
+                      theDevice  : IODevice from Storage; 
+    	    	          isMess     : Boolean from Standard = Standard_False) is redefined virtual;  
 		       
     CheckShapeSection (me: mutable;
-                      thePos : Position from Storage;
-                      theIS  : in out IStream from Standard) is redefined virtual; 
+                      thePos    : Position from Storage;
+                      theDevice : IODevice from Storage) is redefined virtual protected; 
 		       
     PropagateDocumentVersion(me: mutable; theVersion : Integer from Standard) 
     	is redefined  virtual;		      

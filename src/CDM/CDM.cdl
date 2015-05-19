@@ -17,7 +17,7 @@
 package CDM
 
 
-uses TCollection,TColStd,Resource
+uses TCollection, TColStd, Resource, Storage
 
 is
 

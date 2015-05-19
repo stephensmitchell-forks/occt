@@ -49,8 +49,12 @@ is
     enumeration HandlerStatus is HandlerVoid, HandlerJumped, HandlerProcessed;
 
     imported IStream;
+    imported IStreamPtr;
     imported OStream;
+    imported OStreamPtr;
     imported SStream;
+    imported FStream;
+
     imported UUID;
     imported JmpBuf;
     imported ThreadId;

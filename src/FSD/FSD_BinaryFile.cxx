@@ -22,8 +22,7 @@ const Standard_CString MAGICNUMBER = "BINFILE";
 //purpose  : 
 //=======================================================================
 
-FSD_BinaryFile::FSD_BinaryFile() :
-myStream(0L)
+FSD_BinaryFile::FSD_BinaryFile()
 {
   myHeader.testindian  = -1;
   myHeader.binfo       = -1;
@@ -46,12 +45,12 @@ myStream(0L)
 //           write
 //=======================================================================
 
-Storage_Error FSD_BinaryFile::IsGoodFileType(const TCollection_AsciiString& aName)
+Storage_Error FSD_BinaryFile::IsGoodFileType(const Handle(Storage_IODevice)& aDevice)
 {
   FSD_BinaryFile      f;
   Storage_Error s;
 
-  s = f.Open(aName,Storage_VSRead);
+  s = f.Open(aDevice, Storage_VSRead);
 
   if (s == Storage_VSOk) {
     TCollection_AsciiString l;
@@ -74,8 +73,16 @@ Storage_Error FSD_BinaryFile::IsGoodFileType(const TCollection_AsciiString& aNam
 //purpose  : 
 //=======================================================================
 
-Storage_Error FSD_BinaryFile::Open(const TCollection_AsciiString& aName,const Storage_OpenMode aMode)
+Storage_Error FSD_BinaryFile::Open(const Handle(Storage_IODevice)& aDevice, const Storage_OpenMode aMode)
 {
+  SetDevice(aDevice);
+
+  if ( Device().IsNull() )
+    return Storage_VSOpenError;
+
+  return Device()->Open(aMode);
+  
+/*
   Storage_Error result = Storage_VSOk;
 
   SetName(aName);
@@ -103,6 +110,7 @@ Storage_Error FSD_BinaryFile::Open(const TCollection_AsciiString& aName,const St
   }
 
   return result;
+*/
 }
 
 //=======================================================================
@@ -112,7 +120,7 @@ Storage_Error FSD_BinaryFile::Open(const TCollection_AsciiString& aName,const St
 
 Standard_Boolean FSD_BinaryFile::IsEnd()
 {
-  return (feof(myStream) != 0);
+  return !Device().IsNull() ? Device()->IsEnd() : Standard_True;
 }
 
 //=======================================================================
@@ -125,8 +133,9 @@ Storage_Error FSD_BinaryFile::Close()
   Storage_Error result = Storage_VSOk;
 
   if (OpenMode() != Storage_VSNone) {
-    fclose(myStream);
-    SetOpenMode(Storage_VSNone);
+    Device()->Close();
+    //    fclose(myStream);
+    //    SetOpenMode(Storage_VSNone);
   }
   else {
     result = Storage_VSNotOpen;
@@ -158,7 +167,7 @@ void FSD_BinaryFile::ReadChar(TCollection_AsciiString& buffer, const Standard_Si
   buffer.Clear();
 
   while (!IsEnd() && (ccount < rsize)) {
-    fread(&c, sizeof(char),1, myStream);
+    Device()->Read(&c, sizeof(char));
     buffer += c;
     ccount++;
   }
@@ -181,13 +190,18 @@ void FSD_BinaryFile::SkipObject()
 
 Storage_BaseDriver& FSD_BinaryFile::PutReference(const Standard_Integer aValue)
 {
+  if ( Device().IsNull() )
+    Storage_StreamWriteError::Raise();
+
 #if DO_INVERSE
   Standard_Integer t = InverseInt (aValue);
-  
-  if (!fwrite(&t,sizeof(Standard_Integer),1,myStream)) Storage_StreamWriteError::Raise();
 #else
-  if (!fwrite(&aValue,sizeof(Standard_Integer),1,myStream)) Storage_StreamWriteError::Raise();
+  Standard_Integer t = aValue;
 #endif
+
+  if ( Device()->Write( &t, sizeof(Standard_Integer) ) != sizeof(Standard_Integer) )
+    Storage_StreamWriteError::Raise();
+
   return *this;
 }
 
@@ -198,7 +212,11 @@ Storage_BaseDriver& FSD_BinaryFile::PutReference(const Standard_Integer aValue)
 
 Storage_BaseDriver& FSD_BinaryFile::PutCharacter(const Standard_Character aValue)
 {
-  if (!fwrite(&aValue,sizeof(Standard_Character),1,myStream)) Storage_StreamWriteError::Raise();
+  if ( Device().IsNull() )
+    Storage_StreamWriteError::Raise();
+
+  if ( Device()->Write((Standard_Address)&aValue,sizeof(Standard_Character)) != sizeof(Standard_Character) )
+    Storage_StreamWriteError::Raise();
   return *this;
 }
 
@@ -209,13 +227,18 @@ Storage_BaseDriver& FSD_BinaryFile::PutCharacter(const Standard_Character aValue
 
 Storage_BaseDriver& FSD_BinaryFile::PutExtCharacter(const Standard_ExtCharacter aValue)
 {
+  if ( Device().IsNull() )
+    Storage_StreamWriteError::Raise();
+
 #if DO_INVERSE
   Standard_ExtCharacter t = InverseExtChar (aValue);
-
-  if (!fwrite(&t,sizeof(Standard_ExtCharacter),1,myStream)) Storage_StreamWriteError::Raise();
 #else
-  if (!fwrite(&aValue,sizeof(Standard_ExtCharacter),1,myStream)) Storage_StreamWriteError::Raise();
+  Standard_ExtCharacter t = aValue;
 #endif
+
+  if ( Device()->Write(&t, sizeof(Standard_ExtCharacter)) != sizeof(Standard_ExtCharacter) )
+    Storage_StreamWriteError::Raise();
+
   return *this;
 }
 
@@ -226,13 +249,17 @@ Storage_BaseDriver& FSD_BinaryFile::PutExtCharacter(const Standard_ExtCharacter 
 
 Storage_BaseDriver& FSD_BinaryFile::PutInteger(const Standard_Integer aValue)
 {
+  if ( Device().IsNull() )
+    Storage_StreamWriteError::Raise();
+
 #if DO_INVERSE
-  Standard_Integer t = InverseInt (aValue);
-  
-  if (!fwrite(&t,sizeof(Standard_Integer),1,myStream)) Storage_StreamWriteError::Raise();
+  Standard_Integer t = InverseInt(aValue);
 #else
-  if (!fwrite(&aValue,sizeof(Standard_Integer),1,myStream)) Storage_StreamWriteError::Raise();
+  Standard_Integer t = aValue;
 #endif
+  
+  if ( Device()->Write(&t,sizeof(Standard_Integer)) != sizeof(Standard_Integer))
+    Storage_StreamWriteError::Raise();
 
   return *this;
 }
@@ -244,13 +271,18 @@ Storage_BaseDriver& FSD_BinaryFile::PutInteger(const Standard_Integer aValue)
 
 Storage_BaseDriver& FSD_BinaryFile::PutBoolean(const Standard_Boolean aValue)
 {
+  if ( Device().IsNull() )
+    Storage_StreamWriteError::Raise();
+
 #if DO_INVERSE
   Standard_Integer t = InverseInt ((Standard_Integer) aValue);
-  
-  if (!fwrite(&t,sizeof(Standard_Integer),1,myStream)) Storage_StreamWriteError::Raise();
 #else
-  if (!fwrite(&aValue,sizeof(Standard_Boolean),1,myStream)) Storage_StreamWriteError::Raise();
+  Standard_Integer t = (Standard_Integer)aValue;
 #endif
+  
+  if ( Device()->Write(&t,sizeof(Standard_Integer)) != sizeof(Standard_Integer) )
+    Storage_StreamWriteError::Raise();
+
   return *this;
 }
 
@@ -261,13 +293,18 @@ Storage_BaseDriver& FSD_BinaryFile::PutBoolean(const Standard_Boolean aValue)
 
 Storage_BaseDriver& FSD_BinaryFile::PutReal(const Standard_Real aValue)
 {
+  if ( Device().IsNull() )
+    Storage_StreamWriteError::Raise();
+
 #if DO_INVERSE
   Standard_Real t = InverseReal (aValue);
-  
-  if (!fwrite(&t,sizeof(Standard_Real),1,myStream)) Storage_StreamWriteError::Raise();
 #else
-  if (!fwrite(&aValue,sizeof(Standard_Real),1,myStream)) Storage_StreamWriteError::Raise();
+  Standard_Real t = aValue;
 #endif
+  
+  if ( Device()->Write(&t,sizeof(Standard_Real)) != sizeof(Standard_Real) )
+    Storage_StreamWriteError::Raise();
+
   return *this;
 }
 
@@ -278,13 +315,18 @@ Storage_BaseDriver& FSD_BinaryFile::PutReal(const Standard_Real aValue)
 
 Storage_BaseDriver& FSD_BinaryFile::PutShortReal(const Standard_ShortReal aValue)
 {
+  if ( Device().IsNull() )
+    Storage_StreamWriteError::Raise();
+
 #if DO_INVERSE
   Standard_ShortReal t = InverseShortReal (aValue);
-
-  if (!fwrite(&t,sizeof(Standard_ShortReal),1,myStream)) Storage_StreamWriteError::Raise();
 #else
-  if (!fwrite(&aValue,sizeof(Standard_ShortReal),1,myStream)) Storage_StreamWriteError::Raise();
+  Standard_ShortReal t = aValue;
 #endif
+
+  if ( Device()->Write(&t,sizeof(Standard_ShortReal)) != sizeof(Standard_ShortReal) )
+    Storage_StreamWriteError::Raise();
+
   return *this;
 }
 
@@ -295,7 +337,10 @@ Storage_BaseDriver& FSD_BinaryFile::PutShortReal(const Standard_ShortReal aValue
 
 Storage_BaseDriver& FSD_BinaryFile::GetReference(Standard_Integer& aValue)
 {
-  if (!fread(&aValue,sizeof(Standard_Integer),1,myStream))
+  if ( Device().IsNull() )
+    Storage_StreamReadError::Raise();
+
+  if ( Device()->Read(&aValue,sizeof(Standard_Integer)) != sizeof(Standard_Integer) )
     Storage_StreamTypeMismatchError::Raise();
 #if DO_INVERSE
   aValue = InverseInt (aValue);
@@ -310,8 +355,12 @@ Storage_BaseDriver& FSD_BinaryFile::GetReference(Standard_Integer& aValue)
 
 Storage_BaseDriver& FSD_BinaryFile::GetCharacter(Standard_Character& aValue)
 {
-  if (!fread(&aValue,sizeof(Standard_Character),1,myStream))
+  if ( Device().IsNull() )
+    Storage_StreamReadError::Raise();
+
+  if ( Device()->Read(&aValue,sizeof(Standard_Character)) != sizeof(Standard_Character) )
     Storage_StreamTypeMismatchError::Raise();
+
   return *this;
 }
 
@@ -322,7 +371,10 @@ Storage_BaseDriver& FSD_BinaryFile::GetCharacter(Standard_Character& aValue)
 
 Storage_BaseDriver& FSD_BinaryFile::GetExtCharacter(Standard_ExtCharacter& aValue)
 {
-  if (!fread(&aValue,sizeof(Standard_ExtCharacter),1,myStream))
+  if ( Device().IsNull() )
+    Storage_StreamReadError::Raise();
+
+  if ( Device()->Read(&aValue,sizeof(Standard_ExtCharacter)) != sizeof(Standard_ExtCharacter) )
     Storage_StreamTypeMismatchError::Raise();
 #if DO_INVERSE
   aValue = InverseExtChar (aValue);
@@ -337,7 +389,10 @@ Storage_BaseDriver& FSD_BinaryFile::GetExtCharacter(Standard_ExtCharacter& aValu
 
 Storage_BaseDriver& FSD_BinaryFile::GetInteger(Standard_Integer& aValue)
 {
-  if (!fread(&aValue,sizeof(Standard_Integer),1,myStream))
+  if ( Device().IsNull() )
+    Storage_StreamReadError::Raise();
+
+  if ( Device()->Read(&aValue,sizeof(Standard_Integer)) != sizeof(Standard_Integer) )
     Storage_StreamTypeMismatchError::Raise();
 #if DO_INVERSE
   aValue = InverseInt (aValue);
@@ -352,7 +407,10 @@ Storage_BaseDriver& FSD_BinaryFile::GetInteger(Standard_Integer& aValue)
 
 Storage_BaseDriver& FSD_BinaryFile::GetBoolean(Standard_Boolean& aValue)
 {
-  if (!fread(&aValue,sizeof(Standard_Boolean),1,myStream))
+  if ( Device().IsNull() )
+    Storage_StreamReadError::Raise();
+
+  if ( Device()->Read(&aValue,sizeof(Standard_Boolean)) != sizeof(Standard_Boolean) )
     Storage_StreamTypeMismatchError::Raise();
 #if DO_INVERSE
   aValue = InverseInt ((Standard_Integer) aValue);
@@ -367,7 +425,10 @@ Storage_BaseDriver& FSD_BinaryFile::GetBoolean(Standard_Boolean& aValue)
 
 Storage_BaseDriver& FSD_BinaryFile::GetReal(Standard_Real& aValue)
 {
-  if (!fread(&aValue,sizeof(Standard_Real),1,myStream))
+  if ( Device().IsNull() )
+    Storage_StreamReadError::Raise();
+
+  if ( Device()->Read(&aValue,sizeof(Standard_Real)) != sizeof(Standard_Real))
     Storage_StreamTypeMismatchError::Raise();
 #if DO_INVERSE
   aValue = InverseReal (aValue);
@@ -382,7 +443,10 @@ Storage_BaseDriver& FSD_BinaryFile::GetReal(Standard_Real& aValue)
 
 Storage_BaseDriver& FSD_BinaryFile::GetShortReal(Standard_ShortReal& aValue)
 {
-  if (!fread(&aValue,sizeof(Standard_ShortReal),1,myStream))
+  if ( Device().IsNull() )
+    Storage_StreamReadError::Raise();
+
+  if ( Device()->Read(&aValue,sizeof(Standard_ShortReal)) != sizeof(Standard_ShortReal))
     Storage_StreamTypeMismatchError::Raise();
 #if DO_INVERSE
   aValue = InverseShortReal (aValue);
@@ -415,13 +479,11 @@ Storage_Error FSD_BinaryFile::BeginWriteInfoSection()
   ti[2] = 3;
   ti[3] = 4;
   myHeader.testindian = *((int*)ti);
-  if (!fwrite(FSD_BinaryFile::MagicNumber(),
-              strlen(FSD_BinaryFile::MagicNumber()),
-              1,
-              myStream))
+  Standard_Size aLen = strlen(FSD_BinaryFile::MagicNumber());
+  if ( Device()->Write( (Standard_Address)FSD_BinaryFile::MagicNumber(), aLen ) != aLen )
     Storage_StreamWriteError::Raise();
   
-  myHeader.binfo = ftell(myStream);
+  myHeader.binfo = Device()->Tell();
   WriteHeader();
 
   return Storage_VSOk;
@@ -467,7 +529,7 @@ void FSD_BinaryFile::WriteInfo(const Standard_Integer nbObj,
 
 Storage_Error FSD_BinaryFile::EndWriteInfoSection() 
 {
-  myHeader.einfo = ftell(myStream);
+  myHeader.einfo = Device()->Tell();
 
   return Storage_VSOk;
 }
@@ -538,8 +600,10 @@ void FSD_BinaryFile::ReadInfo(Standard_Integer& nbObj,
 
 Storage_Error FSD_BinaryFile::EndReadInfoSection() 
 {
-  if (!fseek(myStream,myHeader.einfo,SEEK_SET)) return Storage_VSOk;
-  else return Storage_VSSectionNotFound;
+  if ( Device()->Seek(myHeader.einfo))
+    return Storage_VSOk;
+  else
+    return Storage_VSSectionNotFound;
 }
 
 //=======================================================================
@@ -549,7 +613,7 @@ Storage_Error FSD_BinaryFile::EndReadInfoSection()
 
 Storage_Error FSD_BinaryFile::BeginWriteCommentSection() 
 {
-  myHeader.bcomment = ftell(myStream);
+  myHeader.bcomment = Device()->Tell();
   return Storage_VSOk;
 }
 
@@ -576,7 +640,7 @@ void FSD_BinaryFile::WriteComment(const TColStd_SequenceOfExtendedString& aCom)
 
 Storage_Error FSD_BinaryFile::EndWriteCommentSection() 
 {
-  myHeader.ecomment = ftell(myStream);
+  myHeader.ecomment = Device()->Tell();
 
   return Storage_VSOk;
 }
@@ -588,8 +652,10 @@ Storage_Error FSD_BinaryFile::EndWriteCommentSection()
 
 Storage_Error FSD_BinaryFile::BeginReadCommentSection() 
 {
-  if (!fseek(myStream,myHeader.bcomment,SEEK_SET)) return Storage_VSOk;
-  else return Storage_VSSectionNotFound;
+  if ( Device()->Seek(myHeader.bcomment) )
+    return Storage_VSOk;
+  else
+    return Storage_VSSectionNotFound;
 }
 
 //=======================================================================
@@ -616,8 +682,10 @@ void FSD_BinaryFile::ReadComment(TColStd_SequenceOfExtendedString& aCom)
 
 Storage_Error FSD_BinaryFile::EndReadCommentSection() 
 {
-  if (!fseek(myStream,myHeader.ecomment,SEEK_SET)) return Storage_VSOk;
-  else return Storage_VSSectionNotFound;
+  if ( Device()->Seek(myHeader.ecomment) )
+    return Storage_VSOk;
+  else
+    return Storage_VSSectionNotFound;
 }
 
 //=======================================================================
@@ -627,7 +695,7 @@ Storage_Error FSD_BinaryFile::EndReadCommentSection()
 
 Storage_Error FSD_BinaryFile::BeginWriteTypeSection() 
 {
-  myHeader.btype = ftell(myStream);
+  myHeader.btype = Device()->Tell();
 
   return Storage_VSOk;
 }
@@ -661,7 +729,7 @@ void FSD_BinaryFile::WriteTypeInformations(const Standard_Integer typeNum,
 
 Storage_Error FSD_BinaryFile::EndWriteTypeSection() 
 {
-  myHeader.etype = ftell(myStream);
+  myHeader.etype = Device()->Tell();
 
   return Storage_VSOk;
 }
@@ -673,8 +741,10 @@ Storage_Error FSD_BinaryFile::EndWriteTypeSection()
 
 Storage_Error FSD_BinaryFile::BeginReadTypeSection() 
 {
- if (!fseek(myStream,myHeader.btype,SEEK_SET)) return Storage_VSOk;
-  else return Storage_VSSectionNotFound;
+  if ( Device()->Seek(myHeader.btype) )
+    return Storage_VSOk;
+  else
+    return Storage_VSSectionNotFound;
 }
 
 //=======================================================================
@@ -709,8 +779,10 @@ void FSD_BinaryFile::ReadTypeInformations(Standard_Integer& typeNum,TCollection_
 
 Storage_Error FSD_BinaryFile::EndReadTypeSection() 
 {
- if (!fseek(myStream,myHeader.etype,SEEK_SET)) return Storage_VSOk;
-  else return Storage_VSSectionNotFound;
+  if ( Device()->Seek(myHeader.etype) )
+    return Storage_VSOk;
+  else
+    return Storage_VSSectionNotFound;
 }
 
 //=======================================================================
@@ -720,7 +792,7 @@ Storage_Error FSD_BinaryFile::EndReadTypeSection()
 
 Storage_Error FSD_BinaryFile::BeginWriteRootSection() 
 {
-  myHeader.broot = ftell(myStream);
+  myHeader.broot = Device()->Tell();
 
   return Storage_VSOk;
 }
@@ -754,7 +826,7 @@ void FSD_BinaryFile::WriteRoot(const TCollection_AsciiString& rootName, const St
 
 Storage_Error FSD_BinaryFile::EndWriteRootSection() 
 {
-  myHeader.eroot = ftell(myStream);
+  myHeader.eroot = Device()->Tell();
 
   return Storage_VSOk;
 }
@@ -766,8 +838,10 @@ Storage_Error FSD_BinaryFile::EndWriteRootSection()
 
 Storage_Error FSD_BinaryFile::BeginReadRootSection() 
 {
- if (!fseek(myStream,myHeader.broot,SEEK_SET)) return Storage_VSOk;
-  else return Storage_VSSectionNotFound;
+  if ( Device()->Seek(myHeader.broot) )
+    return Storage_VSOk;
+  else
+    return Storage_VSSectionNotFound;
 }
 
 //=======================================================================
@@ -803,8 +877,10 @@ void FSD_BinaryFile::ReadRoot(TCollection_AsciiString& rootName, Standard_Intege
 
 Storage_Error FSD_BinaryFile::EndReadRootSection() 
 {
- if (!fseek(myStream,myHeader.eroot,SEEK_SET)) return Storage_VSOk;
-  else return Storage_VSSectionNotFound;
+  if ( Device()->Seek(myHeader.eroot) )
+    return Storage_VSOk;
+  else
+    return Storage_VSSectionNotFound;
 }
 
 //=======================================================================
@@ -814,7 +890,7 @@ Storage_Error FSD_BinaryFile::EndReadRootSection()
 
 Storage_Error FSD_BinaryFile::BeginWriteRefSection() 
 {
-  myHeader.bref = ftell(myStream);
+  myHeader.bref = Device()->Tell();
 
   return Storage_VSOk;
 }
@@ -847,7 +923,7 @@ void FSD_BinaryFile::WriteReferenceType(const Standard_Integer reference,const S
 
 Storage_Error FSD_BinaryFile::EndWriteRefSection() 
 {
-  myHeader.eref = ftell(myStream);
+  myHeader.eref = Device()->Tell();
 
   return Storage_VSOk;
 }
@@ -859,8 +935,10 @@ Storage_Error FSD_BinaryFile::EndWriteRefSection()
 
 Storage_Error FSD_BinaryFile::BeginReadRefSection() 
 {
- if (!fseek(myStream,myHeader.bref,SEEK_SET)) return Storage_VSOk;
-  else return Storage_VSSectionNotFound;
+  if ( Device()->Seek(myHeader.bref) )
+    return Storage_VSOk;
+  else
+    return Storage_VSSectionNotFound;
 }
 
 //=======================================================================
@@ -896,8 +974,10 @@ void FSD_BinaryFile::ReadReferenceType(Standard_Integer& reference,
 
 Storage_Error FSD_BinaryFile::EndReadRefSection() 
 {
- if (!fseek(myStream,myHeader.eref,SEEK_SET)) return Storage_VSOk;
-  else return Storage_VSSectionNotFound;
+  if ( Device()->Seek(myHeader.eref) )
+    return Storage_VSOk;
+  else
+    return Storage_VSSectionNotFound;
 }
 
 //=======================================================================
@@ -907,7 +987,7 @@ Storage_Error FSD_BinaryFile::EndReadRefSection()
 
 Storage_Error FSD_BinaryFile::BeginWriteDataSection() 
 {
-  myHeader.bdata = ftell(myStream);
+  myHeader.bdata = Device()->Tell();
 
   return Storage_VSOk;
 }
@@ -967,9 +1047,9 @@ void FSD_BinaryFile::EndWritePersistentObjectData()
 
 Storage_Error FSD_BinaryFile::EndWriteDataSection() 
 {
-  myHeader.edata = ftell(myStream);
+  myHeader.edata = Device()->Tell();
   
-  fseek(myStream,myHeader.binfo,SEEK_SET);
+  Device()->Seek(myHeader.binfo);
   WriteHeader();
   return Storage_VSOk;
 }
@@ -981,8 +1061,10 @@ Storage_Error FSD_BinaryFile::EndWriteDataSection()
 
 Storage_Error FSD_BinaryFile::BeginReadDataSection() 
 {
- if (!fseek(myStream,myHeader.bdata,SEEK_SET)) return Storage_VSOk;
-  else return Storage_VSSectionNotFound;
+  if ( Device()->Seek(myHeader.bdata) )
+    return Storage_VSOk;
+  else
+    return Storage_VSSectionNotFound;
 }
 
 //=======================================================================
@@ -1040,8 +1122,10 @@ void FSD_BinaryFile::EndReadPersistentObjectData()
 
 Storage_Error FSD_BinaryFile::EndReadDataSection() 
 {
- if (!fseek(myStream,myHeader.edata,SEEK_SET)) return Storage_VSOk;
-  else return Storage_VSSectionNotFound;
+  if ( Device()->Seek(myHeader.edata) )
+    return Storage_VSOk;
+  else
+    return Storage_VSSectionNotFound;
 }
 
 //=======================================================================
@@ -1058,7 +1142,8 @@ void FSD_BinaryFile::WriteString(const TCollection_AsciiString& aString)
   PutInteger(size);
 
   if (size > 0) {
-    if (!fwrite(aString.ToCString(),aString.Length(),1,myStream)) Storage_StreamWriteError::Raise();
+    if ( Device().IsNull() || Device()->Write((Standard_Address)aString.ToCString(),size) != size )
+      Storage_StreamWriteError::Raise();
   }
 }
 
@@ -1074,7 +1159,8 @@ void FSD_BinaryFile::ReadString(TCollection_AsciiString& aString)
   GetInteger(size);
   if (size > 0) {
     Standard_Character *c = (Standard_Character *)Standard::Allocate((size+1) * sizeof(Standard_Character));
-    if (!fread(c,size,1,myStream)) Storage_StreamWriteError::Raise();
+    if ( Device().IsNull() || Device()->Read(c,size) != size )
+      Storage_StreamReadError::Raise();
     c[size] = '\0';
     aString = c;
     Standard::Free(c);
@@ -1112,7 +1198,8 @@ void FSD_BinaryFile::WriteExtendedString(const TCollection_ExtendedString& aStri
 #else
     anExtStr = aString.ToExtString();
 #endif
-    if (!fwrite(anExtStr,sizeof(Standard_ExtCharacter)*aString.Length(),1,myStream))
+    Standard_Size aSize = sizeof(Standard_ExtCharacter)*aString.Length();
+    if ( Device().IsNull() || Device()->Write((Standard_Address)anExtStr,aSize) != aSize )
       Storage_StreamWriteError::Raise();
   }
 }
@@ -1130,7 +1217,7 @@ void FSD_BinaryFile::ReadExtendedString(TCollection_ExtendedString& aString)
   if (size > 0) {
     Standard_ExtCharacter *c = (Standard_ExtCharacter *)
       Standard::Allocate((size+1) * sizeof(Standard_ExtCharacter));
-    if (!fread(c,size*sizeof(Standard_ExtCharacter),1,myStream))
+    if ( Device().IsNull() || Device()->Read(c,size*sizeof(Standard_ExtCharacter)) != size*sizeof(Standard_ExtCharacter) )
       Storage_StreamWriteError::Raise();
     c[size] = '\0';
 #if DO_INVERSE
@@ -1197,5 +1284,5 @@ void FSD_BinaryFile::ReadHeader()
 
 Storage_Position FSD_BinaryFile::Tell()
 {
-  return (Storage_Position) ftell(myStream);
+  return Device()->Tell();
 }

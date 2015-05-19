@@ -18,12 +18,16 @@
 
 #include <LDOMParser.hxx>
 
+#include <Storage_IODevice.hxx>
+
 //  Block of comments describing class PCDM_DOMHeaderParser
 
 class PCDM_DOMHeaderParser : public LDOMParser
 {
  public:
   // ---------- PUBLIC METHODS ----------
+
+  Standard_Boolean parse (const Handle(Storage_IODevice)& anInput);
 
   void SetStartElementName   (const TCollection_AsciiString& aStartElementName);
   //    set the name of the element which would stop parsing when detected

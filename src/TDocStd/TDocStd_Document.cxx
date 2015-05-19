@@ -40,6 +40,8 @@
 
 #include <CDM_MetaData.hxx>
 
+#include <Storage_File.hxx>
+
 // List should have a RemoveLast...
 #define TDocStd_List_RemoveLast(theList) \
 TDF_ListIteratorOfDeltaList it(theList); \
@@ -117,9 +119,12 @@ TCollection_ExtendedString TDocStd_Document::GetName () const
 
 TCollection_ExtendedString TDocStd_Document::GetPath () const
 {
-  return CDM_Document::MetaData()->Path();
+  TCollection_ExtendedString aPath;
+  Handle(Storage_File) aFile = Handle(Storage_File)::DownCast(CDM_Document::MetaData()->Device());
+  if ( !aFile.IsNull() )
+    aPath = aFile->Path();
+  return aPath;
 }
-
 
 //=======================================================================
 //function : SetData

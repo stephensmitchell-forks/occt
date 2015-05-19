@@ -22,6 +22,7 @@
 #include <Storage_HeaderData.hxx>
 #include <Storage_Schema.hxx>
 #include <Storage_Root.hxx>
+#include <Storage_IODevice.hxx>
 #include <TCollection_AsciiString.hxx>
 
 #include <TColStd_SequenceOfAsciiString.hxx>
@@ -35,12 +36,14 @@
 #include <Storage_HSeqOfRoot.hxx>
 #include <locale.h>
 
-void PCDM_RetrievalDriver::RaiseIfUnknownTypes(const Handle(Storage_Schema)& aSchema, const TCollection_ExtendedString& aFileName) {
+void PCDM_RetrievalDriver::RaiseIfUnknownTypes(const Handle(Storage_Schema)& aSchema, const Handle(Storage_IODevice)& aDevice) {
 
   PCDM_BaseDriverPointer theFileDriver;
-  if(PCDM::FileDriverType(TCollection_AsciiString(UTL::CString(aFileName)), theFileDriver) == PCDM_TOFD_Unknown) return;
+  //  TCollection_AsciiString aFileNameU(aFileName);
+  if(PCDM::FileDriverType(aDevice, theFileDriver) == PCDM_TOFD_Unknown)
+    return;
   
-  PCDM_ReadWriter::Open(*theFileDriver,aFileName,Storage_VSRead);
+  PCDM_ReadWriter::Open(*theFileDriver, aDevice, Storage_VSRead);
   
   TColStd_SequenceOfAsciiString theUnknownTypes;
   Standard_Boolean unknowns = aSchema->HasUnknownType(*theFileDriver,theUnknownTypes);
@@ -49,7 +52,7 @@ void PCDM_RetrievalDriver::RaiseIfUnknownTypes(const Handle(Storage_Schema)& aSc
   delete theFileDriver;
 
   if(unknowns) {
-    Standard_SStream aMsg; aMsg << "cannot read: `" << aFileName << "', because  the following types: ";
+    Standard_SStream aMsg; aMsg << "cannot read: `" << aDevice << "', because the following types: ";
     for (Standard_Integer i=1; i <= theUnknownTypes.Length(); i++) {
       aMsg << theUnknownTypes(i);
       if(i< theUnknownTypes.Length()) aMsg <<",";
@@ -64,7 +67,7 @@ void PCDM_RetrievalDriver::RaiseIfUnknownTypes(const Handle(Storage_Schema)& aSc
 //purpose  : 
 //=======================================================================
 
-void PCDM_RetrievalDriver::Read(const TCollection_ExtendedString& theFileName,
+void PCDM_RetrievalDriver::Read(const Handle(Storage_IODevice)& aDevice,
 				const Handle(CDM_Document)& aNewDocument,
 				const Handle(CDM_Application)& theApplication)
 {
@@ -77,7 +80,7 @@ void PCDM_RetrievalDriver::Read(const TCollection_ExtendedString& theFileName,
     try {
       OCC_CATCH_SIGNALS
       aSchema=PCDM::Schema(SchemaName(),theApplication);
-      Extensions(theFileName, theExtensions, theApplication->MessageDriver());
+      Extensions(aDevice, theExtensions, theApplication->MessageDriver());
       LoadExtensions(aSchema,theExtensions, theApplication->MessageDriver());
     } 
     catch (Standard_NoSuchObject) {
@@ -94,15 +97,16 @@ void PCDM_RetrievalDriver::Read(const TCollection_ExtendedString& theFileName,
   }
 
   PCDM_BaseDriverPointer theFileDriver;
-  if(PCDM::FileDriverType(TCollection_AsciiString(UTL::CString(theFileName)), theFileDriver) == PCDM_TOFD_Unknown) {
+  //  TCollection_AsciiString aFileNameU(theFileName);
+  if(PCDM::FileDriverType(aDevice, theFileDriver) == PCDM_TOFD_Unknown) {
     myReaderStatus = PCDM_RS_UnknownFileDriver;
     return;
   }
   {
     try {
       OCC_CATCH_SIGNALS
-      RaiseIfUnknownTypes(aSchema, theFileName);
-      PCDM_ReadWriter::Open(*theFileDriver,theFileName,Storage_VSRead);
+      RaiseIfUnknownTypes(aSchema, aDevice);
+      PCDM_ReadWriter::Open(*theFileDriver, aDevice, Storage_VSRead);
     } 
     catch (Standard_TypeMismatch) {
       aMsg << Standard_TypeMismatch::Caught() << endl;
@@ -193,28 +197,29 @@ void PCDM_RetrievalDriver::Read(const TCollection_ExtendedString& theFileName,
   PCDM_DriverError_Raise_if(Failure,aMsg);
 }
 
-void PCDM_RetrievalDriver::References(const TCollection_ExtendedString& aFileName, PCDM_SequenceOfReference& theReferences, const Handle(CDM_MessageDriver)& theMsgDriver) {
+void PCDM_RetrievalDriver::References(const Handle(Storage_IODevice)& aDevice, PCDM_SequenceOfReference& theReferences, const Handle(CDM_MessageDriver)& theMsgDriver) {
 
-  PCDM_ReadWriter::Reader(aFileName)->ReadReferences(aFileName, theReferences, theMsgDriver);
+  PCDM_ReadWriter::Reader(aDevice)->ReadReferences(aDevice, theReferences, theMsgDriver);
 }
 
-void PCDM_RetrievalDriver::Extensions(const TCollection_ExtendedString& aFileName, TColStd_SequenceOfExtendedString& theExtensions,  const Handle(CDM_MessageDriver)& theMsgDriver) {
+void PCDM_RetrievalDriver::Extensions(const Handle(Storage_IODevice)& aDevice, TColStd_SequenceOfExtendedString& theExtensions,  const Handle(CDM_MessageDriver)& theMsgDriver) {
   
-  PCDM_ReadWriter::Reader(aFileName)->ReadExtensions(aFileName,theExtensions, theMsgDriver);
+  PCDM_ReadWriter::Reader(aDevice)->ReadExtensions(aDevice,theExtensions, theMsgDriver);
 }
 
+Standard_Integer PCDM_RetrievalDriver::DocumentVersion(const Handle(Storage_IODevice)& aDevice, const Handle(CDM_MessageDriver)& theMsgDriver) {
 
-
-Standard_Integer PCDM_RetrievalDriver::DocumentVersion(const TCollection_ExtendedString& aFileName, const Handle(CDM_MessageDriver)& theMsgDriver) {
-
-  return PCDM_ReadWriter::Reader(aFileName)->ReadDocumentVersion(aFileName, theMsgDriver);
+  return PCDM_ReadWriter::Reader(aDevice)->ReadDocumentVersion(aDevice, theMsgDriver);
 }
-Standard_Integer PCDM_RetrievalDriver::ReferenceCounter(const TCollection_ExtendedString& aFileName, const Handle(CDM_MessageDriver)& theMsgDriver) {
 
-  return PCDM_ReadWriter::Reader(aFileName)->ReadReferenceCounter(aFileName, theMsgDriver);
+Standard_Integer PCDM_RetrievalDriver::ReferenceCounter(const Handle(Storage_IODevice)& aDevice, const Handle(CDM_MessageDriver)& theMsgDriver) {
+
+  return PCDM_ReadWriter::Reader(aDevice)->ReadReferenceCounter(aDevice, theMsgDriver);
 }
-void PCDM_RetrievalDriver::LoadExtensions(const Handle(Storage_Schema)& , const TColStd_SequenceOfExtendedString& ,  const Handle(CDM_MessageDriver)&) {}
 
+void PCDM_RetrievalDriver::LoadExtensions(const Handle(Storage_Schema)& , const TColStd_SequenceOfExtendedString& , const Handle(CDM_MessageDriver)&)
+{
+}
 
 //=======================================================================
 //function : Format

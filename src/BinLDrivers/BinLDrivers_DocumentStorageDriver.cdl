@@ -31,7 +31,8 @@ uses
     MapOfTransient              from TColStd,
     IndexedMapOfTransient       from TColStd,
     DocumentSection             from BinLDrivers,
-    VectorOfDocumentSection     from BinLDrivers
+    VectorOfDocumentSection     from BinLDrivers,
+    IODevice                    from Storage
 
 is
     -- ===== Public methods =====
@@ -43,7 +44,7 @@ is
         ---Purpose: pure virtual method definition
 
     Write (me: mutable; theDocument: Document from CDM;
-                        theFileName: ExtendedString from TCollection)
+                        theDevice: IODevice from Storage)
         is redefined virtual;
         ---Purpose: Write <theDocument> to the binary file <theFileName>
 
@@ -54,7 +55,7 @@ is
     -- ===== Protected methods =====
 
     WriteSubTree (me: mutable; theData  : Label from TDF;
-                               theOS    : in out OStream from Standard)
+                               theDevice: IODevice from Storage)
         is protected;
         ---Purpose: Write the tree under <theLabel> to the stream <theOS>
 
@@ -64,12 +65,12 @@ is
 
     WriteSection    (me: mutable; theName : AsciiString from TCollection;
                                   theDoc  : Document    from CDM;
-                                  theOS   : in out OStream from Standard)
+                                  theDevice: IODevice from Storage)
         is virtual protected; 
         ---Purpose: define the procedure of writing a section to file.  
 	
     WriteShapeSection    (me: mutable; theDocSection : in out DocumentSection from BinLDrivers;
-                                       theOS         : in out OStream from Standard)
+                                       theDevice: IODevice from Storage)
         is virtual protected; 
         ---Purpose: defines the procedure of writing a shape  section to file 
 	
@@ -82,7 +83,7 @@ is
         --          attributes to store
     
     WriteInfoSection(me: mutable; theDocument  : Document from CDM;
-                                  theFile      : AsciiString from TCollection)
+                                  theDevice: IODevice from Storage)
         is private;
         ---Purpose: Write info secton using FSD_BinaryFile driver
     

@@ -24,6 +24,9 @@
 #include <Standard_Failure.hxx>
 #include <Standard_IStream.hxx>
 #include <Standard_ErrorHandler.hxx>
+
+#include <string>
+
 //=======================================================================
 //function : BinDrivers_DocumentRetrievalDriver
 //purpose  : Constructor
@@ -49,28 +52,44 @@ Handle(BinMDF_ADriverTable) BinDrivers_DocumentRetrievalDriver::AttributeDrivers
 //purpose  : 
 //=======================================================================
 
-void BinDrivers_DocumentRetrievalDriver::ReadShapeSection
-                              (BinLDrivers_DocumentSection& /*theSection*/,
-                               Standard_IStream&            theIS,
-			       const Standard_Boolean       /*isMess*/)
+void BinDrivers_DocumentRetrievalDriver::ReadShapeSection( BinLDrivers_DocumentSection& theSection,
+                                                           const Handle(Storage_IODevice)& theDevice,
+                                                           const Standard_Boolean /*isMess*/)
 
 {
   // Read Shapes
+  Standard_Character* aBuf = 0;
   Handle(BinMNaming_NamedShapeDriver) aNamedShapeDriver;
-  if (myDrivers->GetDriver(STANDARD_TYPE(TNaming_NamedShape),aNamedShapeDriver))
-    {
-      try {
-	OCC_CATCH_SIGNALS
-	  aNamedShapeDriver->ReadShapeSection (theIS);
+  if (myDrivers->GetDriver(STANDARD_TYPE(TNaming_NamedShape), aNamedShapeDriver))
+  {
+    try {
+      OCC_CATCH_SIGNALS
+
+      aBuf = (Standard_Character*)malloc( theSection.Length() + 1 );
+      Standard_Size aSize = theDevice->Read( aBuf, theSection.Length() );
+      if ( aSize == theSection.Length() )
+      {
+          Standard_SStream aStrStream( std::string( aBuf, aSize ), Standard_SStream::in | Standard_SStream::binary );
+          aNamedShapeDriver->ReadShapeSection( aStrStream );
       }
-      catch(Standard_Failure) {
-	Handle(Standard_Failure) aFailure = Standard_Failure::Caught();
-	const TCollection_ExtendedString aMethStr
-	  ("BinDrivers_DocumentRetrievalDriver: ");
-	WriteMessage (aMethStr + "error of Shape Section " +
-		      aFailure->GetMessageString());
-      }
+      else
+        WriteMessage( "BinDrivers_DocumentRetrievalDriver: can't read all section data." );
     }
+    catch(Standard_Failure) {
+      if ( aBuf )
+      {
+        free( aBuf );
+        aBuf = 0;
+      }
+
+      Handle(Standard_Failure) aFailure = Standard_Failure::Caught();
+      const TCollection_ExtendedString aMethStr ("BinDrivers_DocumentRetrievalDriver: ");
+      WriteMessage (aMethStr + "error of Shape Section " +
+      aFailure->GetMessageString());
+    }
+  }
+  if ( aBuf )
+    free( aBuf );
 }
 
 //=======================================================================
@@ -78,8 +97,8 @@ void BinDrivers_DocumentRetrievalDriver::ReadShapeSection
 //purpose  : 
 //=======================================================================
 void BinDrivers_DocumentRetrievalDriver::CheckShapeSection(
-			      const Storage_Position& /*ShapeSectionPos*/, 
-				 	         Standard_IStream& /*IS*/)
+                                          const Storage_Position& /*ShapeSectionPos*/, 
+                                          const Handle(Storage_IODevice)& /*theDevice*/)
 {}
 
 //=======================================================================

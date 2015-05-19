@@ -20,7 +20,8 @@ class DocumentSection from BinLDrivers
 
 uses
     AsciiString      from TCollection,
-    Size             from Standard
+    Size             from Standard,
+    IODevice         from Storage
 
 is
     -- ===== Public methods =====
@@ -58,16 +59,16 @@ is
     SetLength   (me:in out; theLength: Size from Standard);
     ---Purpose: Set the length of the section in the persistent file
 
-    WriteTOC    (me: in out; theOS : in out OStream from Standard);
+    WriteTOC    (me: in out; theDevice : IODevice from Storage);
     ---Purpose: Create a Section entry in the Document TOC (list of sections)
 
-    Write       (me: in out; theOS : in out OStream from Standard;
+    Write       (me: in out; theDevice : IODevice from Storage;
                              theOffset: Size from Standard);
     ---Purpose: Save Offset and Length data into the Section entry
     --          in the Document TOC (list of sections)
 
     ReadTOC     (myclass; theSection: out DocumentSection from BinLDrivers;
-                          theIS : in out IStream from Standard);
+                          theDevice : IODevice from Storage);
     ---Purpose: Fill a DocumentSection instance from the data that are read
     --          from TOC.
 

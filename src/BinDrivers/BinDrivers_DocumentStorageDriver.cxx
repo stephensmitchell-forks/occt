@@ -46,20 +46,21 @@ Handle(BinMDF_ADriverTable) BinDrivers_DocumentStorageDriver::AttributeDrivers
 //=======================================================================
 void BinDrivers_DocumentStorageDriver::WriteShapeSection
                                (BinLDrivers_DocumentSection&   theSection,
-                                Standard_OStream&              theOS)
+                                const Handle(Storage_IODevice)& theDevice)
 {
-
-#if defined(_DEBUG) || defined(DEB)
-  TCollection_ExtendedString aMethStr ("BinDrivers_DocumentStorageDriver, ");
-#else
-  TCollection_ExtendedString aMethStr;
-#endif
-  const Standard_Size aShapesSectionOffset = (Standard_Size) theOS.tellp();
+  if (!theDevice->CanWrite())
+  {
+    return;
+  }
+  
+  const Standard_Size aShapesSectionOffset = theDevice->Tell();
   
   Handle(BinMNaming_NamedShapeDriver) aNamedShapeDriver;
   if (myDrivers->GetDriver(STANDARD_TYPE(TNaming_NamedShape), aNamedShapeDriver)) {   
     try { 
-      OCC_CATCH_SIGNALS  aNamedShapeDriver->WriteShapeSection (theOS);
+      OCC_CATCH_SIGNALS
+
+      aNamedShapeDriver->WriteShapeSection (theDevice);
     }
     catch(Standard_Failure) {
       TCollection_ExtendedString anErrorStr ("Error: ");
@@ -71,5 +72,5 @@ void BinDrivers_DocumentStorageDriver::WriteShapeSection
   }
    
   // Write the section info in the TOC.
-  theSection.Write (theOS, aShapesSectionOffset);
+  theSection.Write (theDevice, aShapesSectionOffset);
 }
