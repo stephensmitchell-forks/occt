@@ -117,6 +117,11 @@ is
     
     deferred class BaseDriver;
 
+    deferred class IODevice;
+      class File;
+      class OStream;
+      class IStream;
+
     deferred class CallBack;
       class DefaultCallBack;
 	  

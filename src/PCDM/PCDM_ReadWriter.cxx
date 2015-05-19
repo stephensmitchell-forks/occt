@@ -27,8 +27,7 @@
 
 #define FILE_FORMAT "FILE_FORMAT: "
 
-static TCollection_ExtendedString TryXmlDriverType
-                                (const TCollection_AsciiString& theFileName);
+static TCollection_ExtendedString TryXmlDriverType(const Handle(Storage_IODevice)& theDevice);
 
 //=======================================================================
 //function : Open
@@ -36,13 +35,14 @@ static TCollection_ExtendedString TryXmlDriverType
 //=======================================================================
 
 void PCDM_ReadWriter::Open (Storage_BaseDriver&                 aDriver,
-                            const TCollection_ExtendedString&   aFileName,
+                            const Handle(Storage_IODevice)&     aDevice,
                             const Storage_OpenMode              aMode)
 {
-  Storage_Error error = UTL::OpenFile(aDriver,aFileName,aMode);
+  Storage_Error error = aDriver.Open(aDevice, aMode);
+
   if(error != Storage_VSOk) {
     Standard_SStream aMsg; aMsg << "could not open the file: ";
-    aMsg << aFileName;
+    aMsg << aDevice;
     switch (error) {
     case Storage_VSOpenError: aMsg << "; file was not found or permission denied"; break;
     case Storage_VSAlreadyOpen: aMsg<< "; file was already opened";
@@ -61,8 +61,7 @@ void PCDM_ReadWriter::Open (Storage_BaseDriver&                 aDriver,
 
 //Handle(PCDM_ReadWriter) PCDM_ReadWriter::Reader(const TCollection_ExtendedString& aFileName) {
 
-Handle(PCDM_ReadWriter) PCDM_ReadWriter::Reader
-                                           (const TCollection_ExtendedString&)
+Handle(PCDM_ReadWriter) PCDM_ReadWriter::Reader(const Handle(Storage_IODevice)&)
 {
   static Handle(PCDM_ReadWriter_1) theReader=new PCDM_ReadWriter_1;
   return theReader;
@@ -98,26 +97,24 @@ void PCDM_ReadWriter::WriteFileFormat (const Handle(Storage_Data)& aData,
 //purpose  : 
 //=======================================================================
 
-TCollection_ExtendedString PCDM_ReadWriter::FileFormat
-                                (const TCollection_ExtendedString& aFileName)
+TCollection_ExtendedString PCDM_ReadWriter::FileFormat(const Handle(Storage_IODevice)& aDevice)
 {
   TCollection_ExtendedString theFormat;
   
   PCDM_BaseDriverPointer theFileDriver;
 
   // conversion to UTF-8 is done inside
-  TCollection_AsciiString theFileName (aFileName);
-  if (PCDM::FileDriverType (theFileName, theFileDriver) == PCDM_TOFD_Unknown)
-    return ::TryXmlDriverType (theFileName);
+  if (PCDM::FileDriverType (aDevice, theFileDriver) == PCDM_TOFD_Unknown)
+    return ::TryXmlDriverType (aDevice);
 
-  static Standard_Boolean theFileIsOpen;
-  theFileIsOpen=Standard_False;
+  static Standard_Boolean aDeviceIsOpen;
+  aDeviceIsOpen = Standard_False;
 
   try {
     OCC_CATCH_SIGNALS
     
-    Open(*theFileDriver,aFileName,Storage_VSRead);
-    theFileIsOpen=Standard_True;
+    Open(*theFileDriver, aDevice, Storage_VSRead);
+    aDeviceIsOpen = Standard_True;
     Handle(Storage_Schema) s = new Storage_Schema;
     Handle(Storage_HeaderData) hd = s->ReadHeaderSection(*theFileDriver);
     const TColStd_SequenceOfAsciiString &refUserInfo = hd->UserInfo();
@@ -134,7 +131,7 @@ TCollection_ExtendedString PCDM_ReadWriter::FileFormat
   catch (Standard_Failure) {}
 
   
-  if(theFileIsOpen)theFileDriver->Close();
+  if(aDeviceIsOpen)theFileDriver->Close();
 
   delete theFileDriver;
 
@@ -146,8 +143,7 @@ TCollection_ExtendedString PCDM_ReadWriter::FileFormat
 //purpose  : called from FileFormat()
 //=======================================================================
 
-static TCollection_ExtendedString TryXmlDriverType
-                                (const TCollection_AsciiString& theFileName)
+static TCollection_ExtendedString TryXmlDriverType(const Handle(Storage_IODevice)& theDevice)
 {
   TCollection_ExtendedString theFormat;
   PCDM_DOMHeaderParser       aParser;
@@ -156,7 +152,7 @@ static TCollection_ExtendedString TryXmlDriverType
 
   // Parse the file; if there is no error or an error appears before retrieval
   // of the DocumentElement, the XML format cannot be defined
-  if (aParser.parse (theFileName.ToCString()))
+  if (aParser.parse (theDevice))
   {
     LDOM_Element anElement = aParser.GetElement();
     if (anElement.getTagName().equals (LDOMString(aDocumentElementName)))

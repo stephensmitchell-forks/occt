@@ -25,6 +25,8 @@
 #include <TCollection_AsciiString.hxx>
 #include <BinTools_ShapeSet.hxx>
 #include <TopAbs_Orientation.hxx>
+#include <Storage_IStream.hxx>
+#include <Storage_OStream.hxx>
 
 #define SHAPESET "SHAPE_SECTION"
 #define FORMAT_NUMBER 3
@@ -275,6 +277,25 @@ void BinMNaming_NamedShapeDriver::WriteShapeSection (Standard_OStream& theOS)
 }
 
 //=======================================================================
+//function : WriteShapeSection
+//purpose  : 
+//=======================================================================
+
+void BinMNaming_NamedShapeDriver::WriteShapeSection (const Handle(Storage_IODevice)& theDevice)
+{
+  if (!theDevice->CanWrite())
+  {
+    return;
+  }
+
+  Handle(Storage_OStream) aStream = Handle(Storage_OStream)::DownCast(theDevice);
+  if (!aStream.IsNull())
+  {
+    WriteShapeSection (*aStream->Stream());
+  }
+}
+
+//=======================================================================
 //function : Clear
 //purpose  : 
 //=======================================================================
@@ -305,3 +326,21 @@ void BinMNaming_NamedShapeDriver::ReadShapeSection (Standard_IStream& theIS)
     theIS.seekg(aPos); // no shape section is present, try to return to initial point
 }
 
+//=======================================================================
+//function : ReadShapeSection
+//purpose  : 
+//=======================================================================
+
+void BinMNaming_NamedShapeDriver::ReadShapeSection (const Handle(Storage_IODevice)& theDevice)
+{
+  if (!theDevice->CanRead())
+  {
+    return;
+  }
+
+  Handle(Storage_IStream) aStream = Handle(Storage_IStream)::DownCast(theDevice);
+  if (!aStream.IsNull())
+  {
+    ReadShapeSection (*aStream->Stream());
+  }
+}

@@ -16,6 +16,8 @@
 #ifndef LDOM_XmlWriter_HeaderFile
 #define LDOM_XmlWriter_HeaderFile
 
+#include <Storage_IODevice.hxx>
+
 #include <Standard_TypeDef.hxx>
 #include <stdio.h>
 
@@ -29,8 +31,11 @@ class LDOM_XmlWriter
 {
  public:
 
-  Standard_EXPORT LDOM_XmlWriter (FILE * aFile, const char * theEncoding= NULL);
+  Standard_EXPORT LDOM_XmlWriter (FILE * aFile, const char* theEncoding = NULL);
   // Constructor
+
+  Standard_EXPORT LDOM_XmlWriter(const Handle(Storage_IODevice)& theDevice,
+                                 const char * theEncoding = NULL );
 
   Standard_EXPORT ~LDOM_XmlWriter ();
   // Destructor
@@ -73,6 +78,7 @@ class LDOM_XmlWriter
   Standard_Integer              myCurIndent;
   char *                        myABuffer;      // for WriteAttribute()
   Standard_Integer              myABufferLen;   // for WriteAttribute()
+  Handle(Storage_IODevice)      myDevice;
 };
 
 #endif

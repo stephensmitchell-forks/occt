@@ -12,22 +12,14 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#include <Storage_IODevice.hxx>
+#ifndef Standard_IStreamPtr_HeaderFile
+#define Standard_IStreamPtr_HeaderFile
 
-inline Handle(Storage_IODevice) Storage_BaseDriver::Device() const
-{
-  return myDevice;
-}
+#include <Standard_TypeDef.hxx>
+#include <Standard_Stream.hxx>
 
-inline Storage_OpenMode Storage_BaseDriver::OpenMode() const
-{
-  Storage_OpenMode aMode = Storage_VSNone;
-  if ( !Device().IsNull() )
-    aMode = Device()->OpenMode();
-  return aMode;
-}
+typedef std::istream* Standard_IStreamPtr;
 
-inline void Storage_BaseDriver::SetDevice( const Handle(Storage_IODevice)& theDevice )
-{
-  myDevice = theDevice;
-}
+#endif
+
+

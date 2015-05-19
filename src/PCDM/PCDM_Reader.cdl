@@ -21,7 +21,8 @@ uses
     Document from CDM, 
     ExtendedString from TCollection,  
     Application from CDM, 
-    ReaderStatus from PCDM
+    ReaderStatus from PCDM,
+    IODevice from Storage
 
 raises  DriverError from PCDM
 
@@ -32,7 +33,7 @@ is
     is deferred;
     ---Purpose: this method is called by the framework before the read method.
     
-    Read(me: mutable; aFileName: ExtendedString from TCollection; 
+    Read(me: mutable; aDevice: IODevice from Storage; 
                       aNewDocument: Document from CDM;
 		      anApplication: Application from CDM)
     raises DriverError from PCDM

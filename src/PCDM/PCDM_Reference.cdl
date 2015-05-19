@@ -15,22 +15,23 @@
 -- commercial license or contractual agreement.
 
 private class Reference from PCDM
-uses ExtendedString from TCollection
+uses ExtendedString from TCollection, IODevice from Storage
 is
     Create returns Reference from PCDM;
     
-    Create(aReferenceIdentifier: Integer from Standard; aFileName: ExtendedString from TCollection; aDocumentVersion: Integer from Standard)
+    Create(aReferenceIdentifier: Integer from Standard; aDevice: IODevice from Storage; aDocumentVersion: Integer from Standard)
      returns Reference from PCDM;
     
     ReferenceIdentifier(me) returns Integer from Standard;
     
-    FileName(me) returns ExtendedString from TCollection;
+    Device(me) returns IODevice from Storage;
     
     DocumentVersion(me) returns Integer from Standard;
     
-    
 fields
+
     myReferenceIdentifier: Integer from Standard;
-    myFileName: ExtendedString from TCollection;
-    myDocumentVersion: Integer from Standard;
+    myDevice:              IODevice from Storage;
+    myDocumentVersion:     Integer from Standard;
+
 end Reference from PCDM;

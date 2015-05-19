@@ -21,6 +21,7 @@ inherits BaseDriver from Storage
 uses Position    from Storage,
      Error       from Storage,
      OpenMode    from Storage,
+     IODevice    from Storage,
      AsciiString from TCollection,
      SequenceOfAsciiString from TColStd,
      SequenceOfExtendedString from TColStd,
@@ -35,15 +36,16 @@ raises StreamTypeMismatchError from Storage,
 is
     Create returns CmpFile from FSD;
     
-    Open(me : in out; aName : AsciiString from TCollection; aMode : OpenMode from Storage) returns Error from Storage;
+    Open(me : in out; aDevice : IODevice from Storage; aMode : OpenMode from Storage)
+    returns Error from Storage is redefined;
         
     IsEnd(me : in out) returns Boolean from Standard;
 
     Tell( me : in out ) returns Position from Storage;
         ---Purpose: return position in the file. Return -1 upon error.
 
-    IsGoodFileType(myclass; aName : AsciiString from TCollection)
-    	returns Error from Storage;
+    IsGoodFileType(myclass; aDevice : IODevice from Storage)
+    returns Error from Storage;
     
     --	INFO SECTION
     --	write
@@ -303,6 +305,9 @@ is
     raises StreamExtCharParityError 
     is protected;
     ---Purpose: read extended chars (unicode) from the current position to the end of line.
+    
+    WriteLine(me : in out; buffer : AsciiString from TCollection; putNewLine: Boolean from Standard = Standard_True) is protected;
+    ---Purpose: write the line.
 
     WriteExtendedLine(me : in out; buffer : ExtendedString from TCollection) is protected;
     ---Purpose: write from the current position to the end of line.
