@@ -16,6 +16,8 @@
 #include <BinLDrivers_DocumentSection.hxx>
 #include <FSD_FileHeader.hxx>
 
+#include <Storage_IODevice.hxx>
+
 //=======================================================================
 //function : BinLDrivers_DocumentSection
 //purpose  : Empty constructor
@@ -108,7 +110,7 @@ void BinLDrivers_DocumentSection::SetLength (const Standard_Size theLength)
 //purpose  : 
 //=======================================================================
 
-void BinLDrivers_DocumentSection::WriteTOC (Standard_OStream& theStream)
+void BinLDrivers_DocumentSection::WriteTOC (const Handle(Storage_IODevice)& theDevice)
 {
   char aBuf[512];
 
@@ -135,10 +137,10 @@ void BinLDrivers_DocumentSection::WriteTOC (Standard_OStream& theStream)
 #else
     aBufSz[0] = (Standard_Integer)aBufSize;
 #endif
-    theStream.write (&aBuf[0], aBufSize + sizeof(Standard_Integer));
+    theDevice->Write( (Standard_Address)&aBuf[0], aBufSize + sizeof(Standard_Integer) );
 
     // Store the address of Offset word in the file
-    myValue[0] = (Standard_Size) theStream.tellp();
+    myValue[0] = (Standard_Size) theDevice->Tell();
     myValue[1] = 0;
 
     // Write the placeholders of Offset and Length of the section that should
@@ -146,7 +148,7 @@ void BinLDrivers_DocumentSection::WriteTOC (Standard_OStream& theStream)
     aBufSz[0] = 0;
     aBufSz[1] = 0;
     aBufSz[2] = 0;
-    theStream.write (&aBuf[0], 3*sizeof(Standard_Integer));
+    theDevice->Write( (Standard_Address)&aBuf[0], 3*sizeof(Standard_Integer));
   }
 }
 
@@ -155,11 +157,11 @@ void BinLDrivers_DocumentSection::WriteTOC (Standard_OStream& theStream)
 //purpose  : 
 //=======================================================================
 
-void BinLDrivers_DocumentSection::Write (Standard_OStream&   theStream,
+void BinLDrivers_DocumentSection::Write (const Handle(Storage_IODevice)& theDevice,
                                          const Standard_Size theOffset)
 {
-  const Standard_Size aSectionEnd = (Standard_Size) theStream.tellp();
-  theStream.seekp(myValue[0]);
+  const Standard_Size aSectionEnd = (Standard_Size)theDevice->Tell();
+  theDevice->Seek(myValue[0]);
   myValue[0] = theOffset;
   myValue[1] = aSectionEnd - theOffset;
   Standard_Integer aVal[3] = {
@@ -173,8 +175,8 @@ void BinLDrivers_DocumentSection::Write (Standard_OStream&   theStream,
   aVal[2] = InverseSize(aVal[2]);
 #endif
 
-  theStream.write((char *)&aVal[0], 3*sizeof(Standard_Integer));
-  theStream.seekp(aSectionEnd);
+  theDevice->Write((Standard_Address)&aVal[0], 3*sizeof(Standard_Integer));
+  theDevice->Seek(aSectionEnd);
 }
 
 //=======================================================================
@@ -182,21 +184,20 @@ void BinLDrivers_DocumentSection::Write (Standard_OStream&   theStream,
 //purpose  : 
 //=======================================================================
 
-void BinLDrivers_DocumentSection::ReadTOC
-                                (BinLDrivers_DocumentSection& theSection,
-                                 Standard_IStream&            theStream)
+void BinLDrivers_DocumentSection::ReadTOC( BinLDrivers_DocumentSection& theSection,
+                                           const Handle(Storage_IODevice)& theDevice)
 {
   char aBuf[512];
   Standard_Integer aNameBufferSize;
-  theStream.read ((char *)&aNameBufferSize, sizeof(Standard_Integer));
+  theDevice->Read( (Standard_Address)&aNameBufferSize, sizeof(Standard_Integer) );
 #if DO_INVERSE
   aNameBufferSize = InverseSize(aNameBufferSize);
 #endif
   if (aNameBufferSize > 0) {
-    theStream.read ((char *)&aBuf[0], (Standard_Size)aNameBufferSize);
+    theDevice->Read ((char *)&aBuf[0], (Standard_Size)aNameBufferSize);
     theSection.myName = (Standard_CString)&aBuf[0];
     Standard_Integer aValue[3];
-    theStream.read ((char *)&aValue[0], 3*sizeof(Standard_Integer));
+    theDevice->Read ((char *)&aValue[0], 3*sizeof(Standard_Integer));
 #if DO_INVERSE
     aValue[0] = InverseSize (aValue[0]);
     aValue[1] = InverseSize (aValue[1]);

@@ -14,9 +14,10 @@
 
 #include <Storage_BaseDriver.ixx>
 
-Storage_BaseDriver::Storage_BaseDriver() : myOpenMode(Storage_VSNone)
+Storage_BaseDriver::Storage_BaseDriver()
 {
 }
-void Storage_BaseDriver::Delete()
-{}
 
+void Storage_BaseDriver::Delete()
+{
+}

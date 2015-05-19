@@ -1,0 +1,9 @@
+// File:      Storage_IODevice.lxx
+// Created:   18.05.15 12:45:50
+// Author:    stv@NETEX
+// Copyright: Open CASCADE 2015
+
+inline Storage_OpenMode Storage_IODevice::OpenMode() const
+{
+  return myOpenMode;
+}

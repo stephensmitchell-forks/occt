@@ -19,7 +19,6 @@
 #include <MDataXtd.hxx>
 #include <MNaming.hxx>  
 #include <MDocStd.hxx> 
-#include <MPrsStd.hxx>
 #include <MFunction.hxx>
 
 #include <TNaming_Tool.hxx>
@@ -58,7 +57,6 @@ Handle(MDF_ASDriverTable) StdDrivers_DocumentStorageDriver::AttributeDrivers(con
   MDocStd::AddStorageDrivers(HASSeq, theMsgDriver); 
   MFunction::AddStorageDrivers(HASSeq, theMsgDriver);
   MNaming::AddStorageDrivers(HASSeq, theMsgDriver);
-  MPrsStd::AddStorageDrivers(HASSeq, theMsgDriver);
   //
   aStorageTable->SetDrivers(HASSeq);
   return aStorageTable;

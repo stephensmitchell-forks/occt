@@ -29,6 +29,7 @@ uses
     Persistent                  from BinObjMgt,
     Label                       from TDF,
     IStream                     from Standard,
+    IODevice                    from Storage,
     MapOfInteger                from TColStd,
     DocumentSection             from BinLDrivers,
     VectorOfDocumentSection     from BinLDrivers
@@ -52,7 +53,7 @@ is
         returns Document from CDM is redefined virtual;
         ---Purpose: pure virtual method definition
 
-    Read(me:mutable; theFileName:    ExtendedString from TCollection;
+    Read(me:mutable; theDevice: IODevice from Storage;
                      theNewDocument: Document    from CDM;
                      theApplication: Application from CDM) is redefined virtual;
         ---Purpose: retrieves the content of the file into a new Document.
@@ -63,14 +64,14 @@ is
 
     -- ===== Protected methods =====
 
-    ReadSubTree (me: mutable; theIS   : in out IStream from Standard;
+    ReadSubTree (me: mutable; theDevice: IODevice from Storage;
                               theData : Label from TDF)
         returns Integer from Standard
         is virtual protected;
         ---Purpose: Read the tree from the stream <theIS> to <theLabel>
 
-    ReadInfoSection(me: mutable; theFile : AsciiString from TCollection;
-                                 theData : in out HeaderData from Storage)
+    ReadInfoSection(me: mutable; theDevice: IODevice from Storage;
+                                 theData  : in out HeaderData from Storage)
         returns Position from Storage is protected;
         ---Purpose: Read the  info  section  of  theFile into theData,
         --          return a file  position  corresponding to the info
@@ -79,19 +80,19 @@ is
     ReadSection    (me: mutable;
                     theSection : in out DocumentSection from BinLDrivers;
                     theDoc     : Document    from CDM;
-                    theIS      : in out IStream from Standard)
+                    theDevice  : IODevice from Storage)
         is virtual protected; 
         ---Purpose: define the procedure of reading a section to file.
 
     ReadShapeSection (me: mutable;
                       theSection : in out DocumentSection from BinLDrivers;
-                      theIS      : in out IStream from Standard; 
-    	    	      isMess     : Boolean from Standard = Standard_False)
+                      theDevice: IODevice from Storage; 
+                      isMess     : Boolean from Standard = Standard_False)
         is virtual protected; 
 	
     CheckShapeSection (me: mutable;
-                      thePos : Position from Storage;
-                      theIS  : in out IStream from Standard)
+                   thePos : Position from Storage;
+                   theDevice: IODevice from Storage)
         is virtual protected; 
 	 
     PropagateDocumentVersion(me: mutable; theVersion : Integer from Standard) 

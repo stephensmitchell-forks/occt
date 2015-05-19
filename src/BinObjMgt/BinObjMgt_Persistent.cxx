@@ -18,6 +18,7 @@
 #include <TDF_Tool.hxx>
 #include <TColStd_ListIteratorOfListOfInteger.hxx>
 #include <FSD_FileHeader.hxx>
+#include <Storage_OStream.hxx>
 
 #define BP_INTSIZE         ((Standard_Integer)sizeof(Standard_Integer))
 #define BP_EXTCHARSIZE     ((Standard_Integer)sizeof(Standard_ExtCharacter))
@@ -104,6 +105,34 @@ Standard_OStream& BinObjMgt_Persistent::Write (Standard_OStream& theOS)
 }
 
 //=======================================================================
+//function : Write
+//purpose  : Stores <me> to the device.
+//=======================================================================
+
+void BinObjMgt_Persistent::Write (const Handle(Storage_IODevice)& theDevice)
+{
+  Standard_Integer nbWritten = 0;
+  Standard_Integer *aData = (Standard_Integer*) myData(1);
+  // update data length
+  aData[2] = mySize - BP_HEADSIZE;
+#if DO_INVERSE
+  aData[0] = InverseInt (aData[0]);
+  aData[1] = InverseInt (aData[1]);
+  aData[2] = InverseInt (aData[2]);
+#endif
+  for (Standard_Integer i=1; theDevice->CanWrite() && nbWritten < mySize && i <= myData.Length(); i++)
+  {
+    Standard_Integer nbToWrite = Min(mySize - nbWritten, BP_PIECESIZE);
+    theDevice->Write( (Standard_Address)myData(i), nbToWrite );
+    nbWritten += nbToWrite;
+  }
+  myIndex = 1;
+  myOffset = BP_HEADSIZE;
+  mySize = BP_HEADSIZE;
+  myIsError = Standard_False;
+}
+
+//=======================================================================
 //function : Read
 //purpose  : Retrieves <me> from the stream.
 //           inline Standard_IStream& operator>> (Standard_IStream&,
@@ -161,6 +190,62 @@ Standard_IStream& BinObjMgt_Persistent::Read (Standard_IStream& theIS)
       aData[2] = 0;
   }
   return theIS;
+}
+
+//=======================================================================
+//function : Read
+//purpose  : 
+//=======================================================================
+
+void BinObjMgt_Persistent::Read (const Handle(Storage_IODevice)& aDevice)
+{
+  myIndex = 1;
+  myOffset = BP_HEADSIZE;
+  mySize = BP_HEADSIZE;
+  myIsError = Standard_False;
+
+  Standard_Integer *aData = (Standard_Integer*) myData(1);
+  aData[0] = 0;         // Type Id
+  aData[1] = 0;         // Object Id
+  aData[2] = 0;         // Data length
+
+  // read TypeId
+  aDevice->Read ((char*) &aData[0], BP_INTSIZE);
+#if DO_INVERSE
+  aData[0] = InverseInt (aData[0]);
+#endif
+  if (aDevice->CanRead() && aData[0] > 0) {
+    // read Id and Length
+    aDevice->Read ((char*)&aData[1], 2 * BP_INTSIZE);
+#if DO_INVERSE
+    aData[1] = InverseInt (aData[1]);
+    aData[2] = InverseInt (aData[2]);
+#endif
+    if (aDevice->CanRead() && aData[1] > 0 && aData[2] > 0) {
+      mySize += aData[2];
+      // read remaining data
+      Standard_Integer nbRead = BP_HEADSIZE;
+      for (Standard_Integer i=1; aDevice->CanRead() && nbRead < mySize; i++)
+      {
+        if (i > myData.Length()) {
+          // grow myData dynamically
+          Standard_Address aPiece = Standard::Allocate (BP_PIECESIZE);
+          myData.Append (aPiece);
+        }
+        Standard_Integer nbToRead = Min (mySize - nbRead, BP_PIECESIZE);
+        char *ptr = (char*)myData(i);
+        if (i == 1) {
+          // 1st piece: reduce the number of bytes by header size
+          ptr += BP_HEADSIZE;
+          if (nbToRead == BP_PIECESIZE) nbToRead -= BP_HEADSIZE;
+        }
+        aDevice->Read (ptr, nbToRead);
+        nbRead += nbToRead;
+      }
+    }
+    else
+      aData[2] = 0;
+  }
 }
 
 //=======================================================================

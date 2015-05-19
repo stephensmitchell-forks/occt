@@ -86,10 +86,11 @@ Standard_Boolean CDF_MetaDataDriver::Find(const TCollection_ExtendedString& aFol
 //purpose  : 
 //=======================================================================
 
-Handle(CDM_MetaData) CDF_MetaDataDriver::MetaData(const TCollection_ExtendedString& aFolder, const TCollection_ExtendedString& aName) {
+Handle(CDM_MetaData) CDF_MetaDataDriver::MetaData(const Handle(Storage_IODevice)& aDevice) {
   TCollection_ExtendedString aVersion;
-  return MetaData(aFolder,aName,aVersion);
+  return MetaData(aDevice,aVersion);
 }
+
 //=======================================================================
 //function : LastVersion
 //purpose  : 
