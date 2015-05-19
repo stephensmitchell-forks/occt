@@ -15,6 +15,28 @@
 
 #include <PCDM_DOMHeaderParser.hxx>
 
+#include <Storage_File.hxx>
+#include <Storage_IStream.hxx>
+
+Standard_Boolean PCDM_DOMHeaderParser::parse( const Handle(Storage_IODevice)& anInput )
+{
+  Standard_Boolean aRes = Standard_True;
+  Handle(Storage_File) aFile = Handle(Storage_File)::DownCast(anInput);
+  Handle(Storage_IStream) aStream = Handle(Storage_IStream)::DownCast(anInput);
+  if ( !aFile.IsNull() )
+  {
+    TCollection_AsciiString aPath( aFile->Path() );
+    aRes = LDOMParser::parse( aPath.ToCString() );
+  }
+  else if ( !aStream.IsNull() && aStream->Stream() )
+  {
+    aStream->Open(Storage_VSRead);
+    aRes = LDOMParser::parse( *aStream->Stream() );
+    aStream->Close();
+  }
+  return aRes;
+}
+
 //=======================================================================
 //function : SetStartElementName
 //purpose  : set the name of the element which would stop parsing when detected

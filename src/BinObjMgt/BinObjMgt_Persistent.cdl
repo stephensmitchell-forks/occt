@@ -26,6 +26,7 @@ uses
     Address             from Standard,
     OStream             from Standard,
     IStream             from Standard,
+    IODevice            from Storage,
     SequenceOfAddress   from TColStd,
     AsciiString         from TCollection,
     ExtendedString      from TCollection,
@@ -317,12 +318,17 @@ is
         --          inline Standard_OStream& operator<< (Standard_OStream&,
         --          BinObjMgt_Persistent&) is also available
 
+    Write (me: in out; theDevice: IODevice from Storage) is static;
+
     Read (me: in out; theIS: in out IStream from Standard)
         returns IStream from Standard is static;
         ---C++: return &
         ---Purpose: Retrieves <me> from the stream.
         --          inline Standard_IStream& operator>> (Standard_IStream&,
         --          BinObjMgt_Persistent&) is also available
+        
+    Read (me: in out; theDevice:IODevice from Storage) is static;
+        ---Purpose: Retrieves <me> from the Storage_IODevice.
 
     Destroy (me: in out);
         ---C++: alias ~

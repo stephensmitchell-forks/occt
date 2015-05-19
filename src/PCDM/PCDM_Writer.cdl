@@ -16,12 +16,12 @@
 
 deferred class Writer from PCDM inherits Transient from Standard
 
-uses Document from CDM, ExtendedString from TCollection
+uses Document from CDM, ExtendedString from TCollection, IODevice from Storage
 
 raises DriverError from PCDM
 is
 
-    Write(me: mutable; aDocument: Document from CDM; aFileName: ExtendedString from TCollection)
+    Write(me: mutable; aDocument: Document from CDM; aDevice: IODevice from Storage)
     raises DriverError
     is deferred;
 

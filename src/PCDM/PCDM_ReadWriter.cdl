@@ -25,6 +25,7 @@ uses
     SequenceOfExtendedString from TColStd,  
     BaseDriver from Storage,  
     OpenMode from Storage, 
+    IODevice from Storage,
     SequenceOfReference from PCDM
 
 is
@@ -37,7 +38,7 @@ is
     WriteReferenceCounter(me; aData: Data from Storage; aDocument: Document from CDM)
     is deferred;
     
-    WriteReferences(me; aData: Data from Storage; aDocument: Document from CDM; theReferencerFileName: ExtendedString from TCollection)
+    WriteReferences(me; aData: Data from Storage; aDocument: Document from CDM; theReferencer: IODevice from Storage)
     is deferred;
 
     
@@ -49,27 +50,27 @@ is
     is deferred;
 
     
-    ReadReferenceCounter(me; theFileName: ExtendedString from TCollection;   
+    ReadReferenceCounter(me; theDevice: IODevice from Storage;   
 			     theMsgDriver: MessageDriver from CDM)
     returns Integer from Standard
     is deferred;
 
-    ReadReferences(me; aFileName: ExtendedString from TCollection; theReferences: in out  SequenceOfReference from PCDM; theMsgDriver: MessageDriver from CDM)
+    ReadReferences(me; aDevice: IODevice from Storage; theReferences: in out SequenceOfReference from PCDM; theMsgDriver: MessageDriver from CDM)
     is deferred;
 
-    ReadExtensions(me; aFileName: ExtendedString from TCollection; theExtensions: in out  SequenceOfExtendedString from TColStd; theMsgDriver: MessageDriver from CDM)
+    ReadExtensions(me; aDevice: IODevice from Storage; theExtensions: in out  SequenceOfExtendedString from TColStd; theMsgDriver: MessageDriver from CDM)
     is deferred;
     
-    ReadDocumentVersion(me; aFileName: ExtendedString from TCollection; theMsgDriver: MessageDriver from CDM)
+    ReadDocumentVersion(me; aDevice: IODevice from Storage; theMsgDriver: MessageDriver from CDM)
     returns Integer from Standard
     is deferred;
 
 ---Category: commom methods
 
 
-    Open(myclass; aDriver: in out BaseDriver from Storage; aFileName: ExtendedString from TCollection; anOpenMode: OpenMode from  Storage);
+    Open(myclass; aDriver: in out BaseDriver from Storage; aDevice: IODevice from Storage; anOpenMode: OpenMode from  Storage);
     
-    Reader(myclass; aFileName: ExtendedString from TCollection)
+    Reader(myclass; aDevice: IODevice from Storage)
     returns ReadWriter from PCDM;
     ---Purpose: returns the convenient Reader for a File.
     --          
@@ -80,9 +81,10 @@ is
 
     WriteFileFormat(myclass; aData: Data from Storage; aDocument: Document from CDM);
     
-    FileFormat(myclass; aFileName: ExtendedString from TCollection)
+    FileFormat(myclass; aDevice: IODevice from Storage)
     returns ExtendedString from TCollection;
     ---Purpose: tries  to get a format  in the  file.  returns an empty
     --          string if the file could not be read or does not have 
     --          a FileFormat information.
+
 end ReadWriter from PCDM;

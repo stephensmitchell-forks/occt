@@ -21,6 +21,7 @@ package BinObjMgt
 uses
     TDF,
     Standard,
+    Storage,
     TCollection,
     TColStd
 

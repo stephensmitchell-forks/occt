@@ -16,37 +16,34 @@
 
 class MetaData from CDM inherits Transient from Standard
 
-uses ExtendedString from TCollection,Document from CDM,MetaDataLookUpTable from CDM, DocumentPointer from CDM,
-Application from CDM
+uses ExtendedString from TCollection,
+     Document from CDM,
+     MetaDataLookUpTable from CDM,
+     DocumentPointer from CDM,
+     Application from CDM,
+     IODevice from Storage
+     
 raises NoSuchObject from Standard
 
 is
     
-    Create(aFolder,aName, aPath: ExtendedString from TCollection;
-           aFileName: ExtendedString from TCollection; ReadOnly:Boolean from Standard)
-    returns  MetaData from CDM is private;
+    Create(aDevice: IODevice from Storage; ReadOnly:Boolean from Standard)
+    returns MetaData from CDM is private;
 
-    Create(aFolder,aName, aPath, aVersion: ExtendedString from TCollection;
-           aFileName: ExtendedString from TCollection; ReadOnly:Boolean from Standard)
-    returns  MetaData from CDM is private;
+    Create(aDevice: IODevice from Storage; aVersion: ExtendedString from TCollection; ReadOnly:Boolean from Standard)
+    returns MetaData from CDM is private;
 
+    LookUp(myclass; aDevice: IODevice from Storage; ReadOnly:Boolean from Standard)
+    returns MetaData from CDM;
 
-
-    LookUp(myclass; aFolder,aName, aPath: ExtendedString from TCollection; 
-           aFileName: ExtendedString from TCollection; ReadOnly:Boolean from Standard)
-    returns  MetaData from CDM;
-
-    LookUp(myclass; aFolder,aName, aPath, aVersion: ExtendedString from TCollection; aFileName: ExtendedString from TCollection; ReadOnly:Boolean from Standard)
-    returns  MetaData from CDM;
-
-
-
+    LookUp(myclass; aDevice: IODevice from Storage; aVersion: ExtendedString from TCollection; ReadOnly:Boolean from Standard)
+    returns MetaData from CDM;
 
     IsRetrieved(me) returns Boolean from Standard;
 
     Document(me) returns Document from CDM;
     
-    Folder(me) returns ExtendedString from TCollection;
+--    Folder(me) returns ExtendedString from TCollection;
     ---Purpose: returns the folder in which the meta-data has to be created 
     --          or has to be found.
     --          
@@ -65,7 +62,7 @@ is
     ---Purpose: indicates that the version has to be taken into account when
     --          searching the corresponding meta-data.
 
-    FileName(me) returns ExtendedString from TCollection;
+--    FileName(me) returns ExtendedString from TCollection;
     ---Category: programming facility
     --           
     Print(me; anOStream:  in out OStream from Standard)
@@ -74,8 +71,9 @@ is
     ---C++: alias "Standard_OStream& operator << (Standard_OStream& anOStream);"
     --      
 
-    Path(me) returns ExtendedString from TCollection;
-    
+--    Path(me) returns ExtendedString from TCollection;
+
+    Device(me) returns IODevice from Storage;
    
     ---Category: methods to modify the metadata.
     --           
@@ -100,15 +98,17 @@ is
 fields
     myIsRetrieved: Boolean from Standard;
     myDocument: DocumentPointer from CDM;
-    myFolder: ExtendedString from TCollection;
+
+--    myFolder: ExtendedString from TCollection;
     myName: ExtendedString from TCollection;
 
     myVersion: ExtendedString from TCollection;
     myHasVersion: Boolean from Standard;
 
-    myFileName: ExtendedString from TCollection;
-    myPath: ExtendedString from TCollection;
+--    myFileName: ExtendedString from TCollection;
+--    myPath: ExtendedString from TCollection;
 
+    myDevice : IODevice from Storage;
 
     myDocumentVersion: Integer from Standard;
     

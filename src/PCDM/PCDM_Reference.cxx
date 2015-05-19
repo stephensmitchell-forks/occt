@@ -16,16 +16,23 @@
 
 #include <PCDM_Reference.ixx>
 
-PCDM_Reference::PCDM_Reference(){}
-PCDM_Reference::PCDM_Reference(const Standard_Integer aReferenceIdentifier, const TCollection_ExtendedString& aFileName, const Standard_Integer aDocumentVersion):myReferenceIdentifier(aReferenceIdentifier),myFileName(aFileName),myDocumentVersion(aDocumentVersion) {}
+PCDM_Reference::PCDM_Reference()
+{
+}
 
+PCDM_Reference::PCDM_Reference(const Standard_Integer aReferenceIdentifier, const Handle(Storage_IODevice)& aDevice, const Standard_Integer aDocumentVersion)
+ : myReferenceIdentifier(aReferenceIdentifier),
+   myDevice(aDevice),
+   myDocumentVersion(aDocumentVersion)
+{
+}
 
 Standard_Integer PCDM_Reference::ReferenceIdentifier() const {
   return myReferenceIdentifier;
 }
 
-TCollection_ExtendedString PCDM_Reference::FileName() const {
-  return myFileName;
+Handle(Storage_IODevice) PCDM_Reference::Device() const {
+  return myDevice;
 }
 
 Standard_Integer PCDM_Reference::DocumentVersion() const {

@@ -51,13 +51,18 @@ inherits Transient from Standard
 --           the retrieving of the referenced documents.
 
 uses
+    MetaData from CDM,
     Reference from CDM,
+    Application from CDM,
+    CanCloseStatus from CDM,
+    ListOfReferences from CDM,
     ReferenceIterator from CDM,
-    ExtendedString from TCollection,MetaData from CDM, Application from CDM,
-    ListOfReferences from CDM, SequenceOfExtendedString from TColStd,
-    GUID from Standard,Manager from Resource,CanCloseStatus from CDM 
-    
-
+    ExtendedString from TCollection,
+    SequenceOfExtendedString from TColStd,
+    GUID from Standard,
+    Manager from Resource,
+    IODevice from Storage
+ 
 raises NoSuchObject from Standard,Failure from Standard,DomainError from Standard
 is
 
@@ -290,7 +295,7 @@ is
     MetaData(me) returns MetaData from CDM
     raises NoSuchObject from Standard;
     
-    Folder(me) returns ExtendedString from TCollection
+    Device(me) returns IODevice from Storage
     raises NoSuchObject from Standard;
     ---Warning: if the object is not stored;
 
@@ -300,20 +305,16 @@ is
 
 			   
     
-    SetRequestedFolder(me: mutable; aFolder: ExtendedString from TCollection);
+    SetRequestedDevice(me: mutable; aDevice: IODevice from Storage);
     ---Purpose: defines the folder in which the object should be stored.
 
-    RequestedFolder(me) returns ExtendedString from TCollection
-    raises NoSuchObject from Standard;
+    RequestedDevice(me) returns IODevice from Storage;
     
-    
-    HasRequestedFolder(me) returns Boolean from Standard;
-    
+    HasRequestedDevice(me) returns Boolean from Standard;
+  
     
     
     
-    SetRequestedName(me: mutable; aName: ExtendedString from TCollection);
-    ---Purpose: defines the name under which the object should be stored.
     RequestedName(me:mutable) returns ExtendedString from TCollection;
     ---Purpose: determines  under  which the document  is  going to be
     --           store.  By default the name of the document wil be --
@@ -332,7 +333,6 @@ is
     ---Purpose: defines the Comment with  which the object should be stored.
 
     RequestedComment(me) returns ExtendedString from TCollection;
-    
 
 ---Category: resource reading methods
 --           
@@ -507,11 +507,7 @@ fields
 
     myRequestedComment: ExtendedString from TCollection;
 
-    myRequestedFolder: ExtendedString from TCollection;
-    myRequestedFolderIsDefined: Boolean from Standard;
-
-    myRequestedName: ExtendedString from TCollection;
-    myRequestedNameIsDefined: Boolean from Standard;
+    myRequestedDevice: IODevice from Storage;
 
     myRequestedPreviousVersionIsDefined:  Boolean from Standard;
     myRequestedPreviousVersion:  ExtendedString from TCollection;

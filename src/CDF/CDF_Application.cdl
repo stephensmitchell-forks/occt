@@ -29,7 +29,8 @@ uses
     TypeOfActivation from CDF, 
     SequenceOfExtendedString from TColStd, 
     CanCloseStatus from CDM,  
-    AsciiString from TCollection 
+    AsciiString from TCollection,
+    IODevice from Storage
     
 raises NoSuchObject from Standard
 is
@@ -69,7 +70,7 @@ is
     ---Purpose: removes the document of the current session directory 
     --          and closes the document;
     
-    Retrieve (me: mutable; aFolder, aName: ExtendedString from TCollection; UseStorageConfiguration: Boolean from Standard = Standard_True)
+    Retrieve (me: mutable; aDevice: in out IODevice from Storage; UseStorageConfiguration: Boolean from Standard = Standard_True)
     returns Document from CDM;
     ---Purpose: This method retrieves a document from the database. 
     --          If the Document references other documents which have
@@ -91,7 +92,7 @@ is
 --  A link is kept with the database through an instance of CDM_MetaData
 
 
-    Retrieve (me: mutable; aFolder, aName, aVersion: ExtendedString from TCollection; UseStorageConfiguration: Boolean from Standard = Standard_True)
+    Retrieve (me: mutable; aDevice: in out IODevice from Storage; aVersion: ExtendedString from TCollection; UseStorageConfiguration: Boolean from Standard = Standard_True)
     returns Document from CDM;
     ---Purpose:  This method retrieves  a  document from the database.
     --          If the  Document references other documents which have
@@ -108,17 +109,17 @@ is
 --             A link is kept with the database through an instance 
 --             of CDM_MetaData
 
-
-    CanRetrieve(me: mutable; aFolder, aName: ExtendedString from TCollection)
+    CanRetrieve(me: mutable; aDevice: in out IODevice from Storage)
     ---Purpose:
     returns ReaderStatus from PCDM;
     
-    CanRetrieve(me: mutable; aFolder, aName, aVersion: ExtendedString from TCollection)
+    CanRetrieve(me: mutable; aDevice: in out IODevice from Storage; aVersion: ExtendedString from TCollection)
     ---Purpose:
     returns ReaderStatus from PCDM;
-       
+
     Formats(me: mutable; Formats: out SequenceOfExtendedString from TColStd) 
     is deferred;
+
 ---Category: CurrentDocument methods.
 --           
 
@@ -148,11 +149,10 @@ is
  ---Category:  methods to get storage/retrieval driver.
  --           
  --           
-    FindReader(me: mutable; aFileName: ExtendedString from TCollection)
+    FindReader(me: mutable; aDevice: IODevice from Storage)
     returns Boolean from Standard;
 
-
-    Reader(me: mutable; aFileName: ExtendedString from TCollection) 
+    Reader(me: mutable; aDevice: IODevice from Storage) 
     returns Reader from PCDM
     raises NoSuchObject from Standard;
     
@@ -165,15 +165,13 @@ is
 
     ---Purpose: 
 
-    Format (me : mutable; aFileName :     ExtendedString from TCollection; 
+    Format (me : mutable; aDevice : IODevice from Storage; 
                           theFormat : out ExtendedString from TCollection)
     ---Purpose: try to  retrieve a Format  directly in the  file or in
     --           application   resource  by using   extension. returns
     --          True if found;
     returns Boolean from Standard;
     
-
-
 ---Category: Default Storage folder
 --           
     DefaultFolder(me: mutable) returns ExtString from Standard;
@@ -196,7 +194,7 @@ is
     returns Integer from Standard
     is private;
 
-    FindReader(me: mutable; aFileName: ExtendedString from TCollection; PluginIn: out GUID from Standard; ResourceName: out ExtendedString from TCollection)
+    FindReader(me: mutable; aDevice: IODevice from Storage; PluginIn: out GUID from Standard; ResourceName: out ExtendedString from TCollection)
     returns Boolean from Standard
     is private;
     
@@ -212,6 +210,7 @@ is
     CanRetrieve(me: mutable; aMetaData: MetaData from CDM)
     returns ReaderStatus from PCDM
     is private;
+    
 fields
 
     myDefaultFolder: ExtendedString from TCollection; 
