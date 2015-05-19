@@ -82,10 +82,9 @@ void BinLDrivers_DocumentRetrievalDriver::Make (const Handle(PCDM_Document)&,
 #define START_TYPES "START_TYPES"
 #define END_TYPES "END_TYPES"
 
-void BinLDrivers_DocumentRetrievalDriver::Read
-                         (const TCollection_ExtendedString& theFileName,
-                          const Handle(CDM_Document)&       theNewDocument,
-                          const Handle(CDM_Application)&    theApplication)
+void BinLDrivers_DocumentRetrievalDriver::Read (const Handle(Storage_IODevice)&   theDevice,
+                                                const Handle(CDM_Document)&       theNewDocument,
+                                                const Handle(CDM_Application)&    theApplication)
 {
   myReaderStatus = PCDM_RS_DriverFailure;
   myMsgDriver = theApplication -> MessageDriver();
@@ -103,11 +102,9 @@ void BinLDrivers_DocumentRetrievalDriver::Read
     return;
   }
 
-  TCollection_AsciiString aFileName (theFileName);
-
   // 1. Read the information section
   Handle(Storage_HeaderData) aHeaderData;
-  Storage_Position anInfoSectionEnd = ReadInfoSection( aFileName, aHeaderData );
+  Storage_Position anInfoSectionEnd = ReadInfoSection( theDevice, aHeaderData );
   if (!anInfoSectionEnd) {
     WriteMessage (aMethStr + "error: file has invalid header");
     myReaderStatus = PCDM_RS_UnrecognizedFileFormat;
@@ -178,22 +175,24 @@ void BinLDrivers_DocumentRetrievalDriver::Read
 	WriteMessage (aTypeNames(i));
   }
 
-  // Open the file stream
-#ifdef _WIN32
-  ifstream anIS ((const wchar_t*) theFileName.ToExtString(), ios::in | ios::binary);
-#else
-  ifstream anIS (aFileName.ToCString());
-#endif
+  theDevice->Open (Storage_VSRead);
 
-  if (!anIS) {
+  // Open the file stream
+//#ifdef _WIN32
+//  ifstream anIS ((const wchar_t*) theFileName.ToExtString(), ios::in | ios::binary);
+//#else
+//  ifstream anIS (aFileName.ToCString());
+//#endif
+
+  if (!theDevice->CanRead()) {
     // Can not open file
-    WriteMessage (aMethStr + "error: can't open file " + theFileName);
+    WriteMessage (aMethStr + "error: can't read " + theDevice->Name());
     myReaderStatus = PCDM_RS_OpenError;
     return;
   }
 
   // skip info section
-  anIS.seekg( (streampos) anInfoSectionEnd );
+  theDevice->Seek ((streampos) anInfoSectionEnd);
 
   // propagate the opened document version to data drivers
   PropagateDocumentVersion(aFileVer);
@@ -211,30 +210,30 @@ void BinLDrivers_DocumentRetrievalDriver::Read
   if (aFileVer >= 3) {
     BinLDrivers_DocumentSection aSection;
     do {
-      BinLDrivers_DocumentSection::ReadTOC (aSection, anIS);
+      BinLDrivers_DocumentSection::ReadTOC (aSection, theDevice);
       mySections.Append(aSection);
     } while
       (!aSection.Name().IsEqual((Standard_CString)SHAPESECTION_POS));
-    aDocumentPos = anIS.tellg(); // position of root label
+    aDocumentPos = theDevice->Tell(); // position of root label
 
     BinLDrivers_VectorOfDocumentSection::Iterator anIterS (mySections);
     for (; anIterS.More(); anIterS.Next()) {
       BinLDrivers_DocumentSection& aCurSection = anIterS.ChangeValue();
       if (aCurSection.IsPostRead() == Standard_False) {
-        anIS.seekg ((streampos) aCurSection.Offset());
+        theDevice->Seek((streampos) aCurSection.Offset());
         if (aCurSection.Name().IsEqual ((Standard_CString)SHAPESECTION_POS)) 
-          ReadShapeSection (aCurSection, anIS);
+          ReadShapeSection (aCurSection, theDevice);
         else
-          ReadSection (aCurSection, theNewDocument, anIS); 
+          ReadSection (aCurSection, theNewDocument, theDevice); 
       }
     }
   } else { //aFileVer < 3
-    aDocumentPos = anIS.tellg(); // position of root label
+    aDocumentPos = theDevice->Tell(); // position of root label
 
     // retrieve SHAPESECTION_POS string
     char aShapeSecLabel[SIZEOFSHAPELABEL + 1];
     aShapeSecLabel[SIZEOFSHAPELABEL] = 0x00;
-    anIS.read ((char*)&aShapeSecLabel, SIZEOFSHAPELABEL);// SHAPESECTION_POS
+    theDevice->Read ((char*)&aShapeSecLabel, SIZEOFSHAPELABEL);// SHAPESECTION_POS
     TCollection_AsciiString aShapeLabel(aShapeSecLabel);
     // detect if a file was written in old fashion (version 2 without shapes)
     // and if so then skip reading ShapeSection
@@ -248,7 +247,7 @@ void BinLDrivers_DocumentRetrievalDriver::Read
 
       // retrieve ShapeSection Position
       Standard_Integer aShapeSectionPos; // go to ShapeSection
-      anIS.read ((char*)&aShapeSectionPos, sizeof(Standard_Integer));
+      theDevice->Read ((char*)&aShapeSectionPos, sizeof(Standard_Integer));
 
 #if DO_INVERSE
       aShapeSectionPos = InverseInt (aShapeSectionPos);
@@ -257,26 +256,26 @@ void BinLDrivers_DocumentRetrievalDriver::Read
       cout <<"aShapeSectionPos = " <<aShapeSectionPos <<endl;
 #endif
       if(aShapeSectionPos) { 
-	aDocumentPos = anIS.tellg();
-	anIS.seekg((streampos) aShapeSectionPos);
+	aDocumentPos = theDevice->Tell();
+	theDevice->Seek ((streampos) aShapeSectionPos);
 
-	CheckShapeSection(aShapeSectionPos, anIS);
+	//CheckShapeSection(aShapeSectionPos, theDevice);
 	// Read Shapes
 	BinLDrivers_DocumentSection aCurSection;
-	ReadShapeSection (aCurSection, anIS, Standard_False);
+	ReadShapeSection (aCurSection, theDevice, Standard_False);
       }
     }
   } // end of reading Sections or shape section
 
   // Return to read of the Document structure
-  anIS.seekg(aDocumentPos);
+  theDevice->Seek (aDocumentPos);
 
   // read the header (tag) of the root label
   Standard_Integer aTag;
-  anIS.read ((char*)&aTag, sizeof(Standard_Integer));
+  theDevice->Read ((char*)&aTag, sizeof(Standard_Integer));
 
   // read sub-tree of the root label
-  Standard_Integer nbRead = ReadSubTree (anIS, aData->Root());
+  Standard_Integer nbRead = ReadSubTree (theDevice, aData->Root());
   myPAtt.Destroy();    // free buffer
   myRelocTable.Clear();
   myMapUnsupported.Clear();
@@ -295,8 +294,8 @@ void BinLDrivers_DocumentRetrievalDriver::Read
     for (; anIterS.More(); anIterS.Next()) {
       BinLDrivers_DocumentSection& aCurSection = anIterS.ChangeValue();
       if (aCurSection.IsPostRead()) {
-	anIS.seekg ((streampos) aCurSection.Offset());
-	ReadSection (aCurSection, theNewDocument, anIS); 
+	theDevice->Seek ((streampos) aCurSection.Offset());
+	ReadSection (aCurSection, theNewDocument, theDevice); 
       }
     }
   }
@@ -308,7 +307,7 @@ void BinLDrivers_DocumentRetrievalDriver::Read
 //=======================================================================
 
 Standard_Integer BinLDrivers_DocumentRetrievalDriver::ReadSubTree
-                         (Standard_IStream& theIS,
+                         (const Handle(Storage_IODevice)&   theDevice,
                           const TDF_Label&  theLabel)
 {
   Standard_Integer nbRead = 0;
@@ -316,9 +315,12 @@ Standard_Integer BinLDrivers_DocumentRetrievalDriver::ReadSubTree
     ("BinLDrivers_DocumentRetrievalDriver: ");
 
   // Read attributes:
-  theIS >> myPAtt;
-  while (theIS && myPAtt.TypeId() > 0 &&             // not an end marker ?
-         myPAtt.Id() > 0) {                          // not a garbage ?
+  myPAtt.Read (theDevice); 
+
+  while (theDevice->CanRead()
+      && myPAtt.TypeId() > 0              // not an end marker ?
+      && myPAtt.Id() > 0)                // not a garbage ?
+  {
     // get a driver according to TypeId
     Handle(BinMDF_ADriver) aDriver = myDrivers->GetDriver (myPAtt.TypeId());
     if (!aDriver.IsNull()) {
@@ -352,9 +354,9 @@ Standard_Integer BinLDrivers_DocumentRetrievalDriver::ReadSubTree
                     + myPAtt.TypeId());
 
     // read next attribute
-    theIS >> myPAtt;
-  }
-  if (!theIS || myPAtt.TypeId() != BinLDrivers_ENDATTRLIST) {
+    myPAtt.Read (theDevice);
+      }
+  if (!theDevice->CanRead() || myPAtt.TypeId() != BinLDrivers_ENDATTRLIST) {
     // unexpected EOF or garbage data
     WriteMessage (aMethStr + "error: unexpected EOF or garbage data");
     myReaderStatus = PCDM_RS_UnrecognizedFileFormat;
@@ -364,23 +366,23 @@ Standard_Integer BinLDrivers_DocumentRetrievalDriver::ReadSubTree
   // Read children:
   // read the tag of a child label
   Standard_Integer aTag = BinLDrivers_ENDLABEL;
-  theIS.read ((char*) &aTag, sizeof(Standard_Integer));
+  theDevice->Read ((char*) &aTag, sizeof(Standard_Integer));
 #if DO_INVERSE
   aTag = InverseInt (aTag);
 #endif
-  while (theIS && aTag >= 0) { // not an end marker ?
+  while (theDevice->CanRead() && aTag >= 0) { // not an end marker ?
     // create sub-label
     TDF_Label aLab = theLabel.FindChild (aTag, Standard_True);
 
     // read sub-tree
-    Standard_Integer nbSubRead = ReadSubTree(theIS, aLab);
+    Standard_Integer nbSubRead = ReadSubTree(theDevice, aLab);
     // check for error
     if (nbSubRead == -1)
       return -1;
     nbRead += nbSubRead;
 
     // read the tag of the next child
-    theIS.read ((char*) &aTag, sizeof(Standard_Integer));
+    theDevice->Read ((char*) &aTag, sizeof(Standard_Integer));
 #if DO_INVERSE
     aTag = InverseInt (aTag);
 #endif
@@ -413,7 +415,7 @@ Handle(BinMDF_ADriverTable) BinLDrivers_DocumentRetrievalDriver::AttributeDriver
 //=======================================================================
 
 Storage_Position BinLDrivers_DocumentRetrievalDriver::ReadInfoSection
-                         (const TCollection_AsciiString& theFileName,
+                         (const Handle(Storage_IODevice)& theDevice,
                           Handle(Storage_HeaderData)&    theData)
 {
   TCollection_ExtendedString aMsg
@@ -421,7 +423,7 @@ Storage_Position BinLDrivers_DocumentRetrievalDriver::ReadInfoSection
 
   FSD_BinaryFile aFileDriver;
   Storage_Position aPos = 0;
-  if (aFileDriver.Open( theFileName, Storage_VSRead ) == Storage_VSOk)
+  if (aFileDriver.Open( theDevice, Storage_VSRead ) == Storage_VSOk)
   {
     Storage_Schema aSchema;
     theData = aSchema.ReadHeaderSection( aFileDriver );
@@ -432,7 +434,7 @@ Storage_Position BinLDrivers_DocumentRetrievalDriver::ReadInfoSection
       WriteMessage( aMsg + theData->ErrorStatusExtension() );
   }
   else
-    WriteMessage( aMsg + "can not open file " + theFileName);
+    WriteMessage( aMsg + "can not open file " + theDevice->Name());
 
   aFileDriver.Close();
 
@@ -460,7 +462,7 @@ void BinLDrivers_DocumentRetrievalDriver::WriteMessage
 void BinLDrivers_DocumentRetrievalDriver::ReadSection
                                 (BinLDrivers_DocumentSection& /*theSection*/,
                                  const Handle(CDM_Document)&  /*theDocument*/,
-                                 Standard_IStream&            /*theIS*/)
+                                 const Handle(Storage_IODevice)&   /*theDevice*/)
 {
   // empty; should be redefined in subclasses
 }
@@ -472,7 +474,7 @@ void BinLDrivers_DocumentRetrievalDriver::ReadSection
 
 void BinLDrivers_DocumentRetrievalDriver::ReadShapeSection
                               (BinLDrivers_DocumentSection& theSection,
-                               Standard_IStream&            /*theIS*/,
+                               const Handle(Storage_IODevice)&   /*theDevice*/,
 			       const Standard_Boolean isMess)
 
 {
@@ -487,20 +489,10 @@ void BinLDrivers_DocumentRetrievalDriver::ReadShapeSection
 //purpose  : 
 //=======================================================================
 void BinLDrivers_DocumentRetrievalDriver::CheckShapeSection(
-				  const Storage_Position& ShapeSectionPos, 
-						    Standard_IStream& IS)
+                                            const Storage_Position&           /*ShapeSectionPos*/, 
+                                            const Handle(Storage_IODevice)&   /*theDevice*/)
 {
-  if (!IS.eof())
-  {
-    const std::streamoff endPos = IS.rdbuf()->pubseekoff(0L, std::ios_base::end, std::ios_base::in);
-#ifdef OCCT_DEBUG
-    cout << "endPos = " << endPos <<endl;
-#endif
-    if(ShapeSectionPos != endPos) {
-      const TCollection_ExtendedString aMethStr ("BinLDrivers_DocumentRetrievalDriver: ");
-      WriteMessage (aMethStr + "warning: Geometry is not supported by Lite schema. ");
-    }
-  }
+  
 }
 
 //=======================================================================

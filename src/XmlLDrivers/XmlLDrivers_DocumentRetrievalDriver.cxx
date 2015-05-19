@@ -34,6 +34,9 @@
 #include <UTL.hxx>
 #include <OSD_Path.hxx>
 
+#include <Storage_File.hxx>
+#include <Storage_IStream.hxx>
+
 #ifdef WNT
 # include <tchar.h>
 #endif  // WNT
@@ -182,19 +185,33 @@ void XmlLDrivers_DocumentRetrievalDriver::Make (const Handle(PCDM_Document)&,
 //purpose  : 
 //=======================================================================
 void XmlLDrivers_DocumentRetrievalDriver::Read
-  (const TCollection_ExtendedString& theFileName,
+  (const Handle(Storage_IODevice)&   theDevice,
    const Handle(CDM_Document)&       theNewDocument,
    const Handle(CDM_Application)&    theApplication)
 {
   myReaderStatus = PCDM_RS_DriverFailure;
-  myFileName = theFileName;
   Handle(CDM_MessageDriver) aMessageDriver = theApplication -> MessageDriver();
   ::take_time (~0, " +++++ Start RETRIEVE procedures ++++++", aMessageDriver);
 
+  myDevice = theDevice;
+
   // 1. Read DOM_Document from file
   LDOMParser aParser;
-  TCollection_AsciiString aName (theFileName,'?');
-  if (aParser.parse(aName.ToCString()))
+
+  Standard_Boolean aRes = Standard_True;
+  Handle(Storage_File) aFile = Handle(Storage_File)::DownCast(theDevice);
+  Handle(Storage_IStream) aStream = Handle(Storage_IStream)::DownCast(theDevice);
+  if ( !aFile.IsNull() )
+  {
+    TCollection_AsciiString aPath( aFile->Path() );
+    aRes = aParser.parse( aPath.ToCString() );
+  }
+  else if ( !aStream.IsNull() && aStream->Stream() )
+  {
+    aRes = aParser.parse( *aStream->Stream() );
+  }
+
+  if (aRes)
   {
     TCollection_AsciiString aData;
     cout << aParser.GetError(aData) << ": " << aData << endl;
@@ -222,7 +239,13 @@ void XmlLDrivers_DocumentRetrievalDriver::ReadFromDomDocument
   const Handle(CDM_MessageDriver) aMsgDriver =
     theApplication -> MessageDriver();
   // 1. Read info // to be done
-  TCollection_AsciiString anAbsoluteDirectory = GetDirFromFile(myFileName);
+  TCollection_AsciiString anAbsoluteDirectory;
+  Handle(Storage_File) aStorageFile = Handle(Storage_File)::DownCast(myDevice);
+  if (!aStorageFile.IsNull())
+  {
+    anAbsoluteDirectory = GetDirFromFile(aStorageFile->Path());
+  }
+  
   Standard_Integer aCurDocVersion = 0;
   TCollection_ExtendedString anInfo;
   const XmlObjMgt_Element anInfoElem =
@@ -314,57 +337,52 @@ void XmlLDrivers_DocumentRetrievalDriver::ReadFromDomDocument
         }
         // Add new ref!
         /////////////
-    TCollection_ExtendedString theFolder,theName;
-        //TCollection_ExtendedString theFile=myReferences(myIterator).FileName();
-        TCollection_ExtendedString f(aPath);
-#ifndef WNT
+//    TCollection_ExtendedString theFolder,theName;
+//        //TCollection_ExtendedString theFile=myReferences(myIterator).FileName();
+//        TCollection_ExtendedString f(aPath);
+//#ifndef WNT
+//        
+//        Standard_Integer i= f.SearchFromEnd("/");
+//        TCollection_ExtendedString n = f.Split(i); 
+//        f.Trunc(f.Length()-1);
+//        theFolder = f;
+//        theName = n;
+//#else
+//        OSD_Path p = UTL::Path(f);
+//        Standard_ExtCharacter      chr;
+//        TCollection_ExtendedString dir, dirRet, name;
+//        
+//        dir = UTL::Disk(p);
+//        dir += UTL::Trek(p);
+//        
+//        for ( int i = 1; i <= dir.Length (); ++i ) {
+//    
+//    chr = dir.Value ( i );
+//    
+//    switch ( chr ) {
+//      
+//    case _TEXT( '|' ):
+//      dirRet += _TEXT( "/" );
+//      break;
+//      
+//    case _TEXT( '^' ):
+//      
+//      dirRet += _TEXT( ".." );
+//      break;
+//      
+//    default:
+//      dirRet += chr;
+//      
+//    }  
+//        }
+//        theFolder = dirRet;
+//        theName   = UTL::Name(p); theName+= UTL::Extension(p);
+//#endif  // WNT
         
-        Standard_Integer i= f.SearchFromEnd("/");
-        TCollection_ExtendedString n = f.Split(i); 
-        f.Trunc(f.Length()-1);
-        theFolder = f;
-        theName = n;
-#else
-        OSD_Path p = UTL::Path(f);
-        Standard_ExtCharacter      chr;
-        TCollection_ExtendedString dir, dirRet, name;
-        
-        dir = UTL::Disk(p);
-        dir += UTL::Trek(p);
-        
-        for ( int i = 1; i <= dir.Length (); ++i ) {
-    
-    chr = dir.Value ( i );
-    
-    switch ( chr ) {
-      
-    case _TEXT( '|' ):
-      dirRet += _TEXT( "/" );
-      break;
-      
-    case _TEXT( '^' ):
-      
-      dirRet += _TEXT( ".." );
-      break;
-      
-    default:
-      dirRet += chr;
-      
-    }  
-        }
-        theFolder = dirRet;
-        theName   = UTL::Name(p); theName+= UTL::Extension(p);
-#endif  // WNT
-        
-        Handle(CDM_MetaData) aMetaData =  CDM_MetaData::LookUp(theFolder,theName,aPath,aPath,UTL::IsReadOnly(aFileName));
-////////////
-        theNewDocument->CreateReference(aMetaData,aRefId,
-             theApplication,aDocumentVersion,Standard_False);
+        Handle(CDM_MetaData) aMetaData =  CDM_MetaData::LookUp(myDevice, UTL::IsReadOnly(aFileName));
 
-        
+        theNewDocument->CreateReference (aMetaData, aRefId, theApplication, aDocumentVersion, Standard_False);
       }
-
-      
     }
     if(anInfo == START_REF)
       isRef = Standard_True;

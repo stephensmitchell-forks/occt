@@ -21,7 +21,8 @@ uses
     OStream          from Standard,
     MessageDriver    from CDM, 
     DocumentSection  from BinLDrivers,
-    ADriverTable     from BinMDF
+    ADriverTable     from BinMDF,
+    IODevice         from Storage
 is
     -- ===== Public methods =====
 
@@ -34,7 +35,7 @@ is
 	is redefined virtual; 
 	 
     WriteShapeSection    (me: mutable; theDocSection : in out DocumentSection from BinLDrivers;
-                                       theOS         : in out OStream from Standard)
+                                       theDevice     : IODevice from Storage)
         is redefined  virtual; 
         ---Purpose: implements the procedure of writing a shape section to file 	
 

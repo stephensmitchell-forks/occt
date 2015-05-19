@@ -18,7 +18,9 @@ class FWOSDriver from CDF  inherits MetaDataDriver from CDF
 uses
     MetaData from CDM,
     Document from CDM,
-    ExtendedString from TCollection
+    ExtendedString from TCollection,
+    IODevice from Storage
+    
 is
     Create
     returns FWOSDriver from CDF;
@@ -34,20 +36,19 @@ is
     returns Boolean from Standard;
 
     
-    MetaData(me: mutable; aFolder, aName, aVersion: ExtendedString from TCollection)
+    MetaData(me: mutable; aDevice: IODevice from Storage; aVersion: ExtendedString from TCollection)
     returns MetaData from CDM
     is  private;
     
-    CreateMetaData(me: mutable; aDocument: Document from CDM;
-    	         aFileName: ExtendedString from TCollection)
-    returns  MetaData from CDM
-    is  private;
+    CreateMetaData(me: mutable; aDocument: Document from CDM)
+    returns MetaData from CDM
+    is private;
     
     FindFolder(me: mutable; aFolder: ExtendedString from TCollection)
     returns Boolean from Standard;
 
 
-   DefaultFolder(me: mutable) returns ExtendedString from TCollection;
+    DefaultFolder(me: mutable) returns ExtendedString from TCollection;
    
    BuildFileName(me: mutable; aDocument: Document from CDM)
    returns ExtendedString from TCollection;
@@ -57,9 +58,9 @@ is
    is private;
 
 
-   BuildMetaData(me: mutable; aFileName: ExtendedString from TCollection)
+   BuildMetaData(me: mutable; aDevice: IODevice from Storage)
    returns MetaData from CDM
-   is  private;
+   is private;
 
    SetName(me: mutable; aDocument: Document from CDM; aName: ExtendedString from TCollection)
    returns ExtendedString from TCollection

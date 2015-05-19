@@ -1,5 +1,5 @@
 // Copyright (c) 1998-1999 Matra Datavision
-// Copyright (c) 1999-2014 OPEN CASCADE SAS
+// Copyright (c) 1999-2015 OPEN CASCADE SAS
 //
 // This file is part of Open CASCADE Technology software library.
 //
@@ -12,22 +12,12 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#include <Storage_IODevice.hxx>
+#ifndef Standard_FStream_HeaderFile
+#define Standard_FStream_HeaderFile
 
-inline Handle(Storage_IODevice) Storage_BaseDriver::Device() const
-{
-  return myDevice;
-}
+#include <Standard_Macro.hxx>
+#include <Standard_Stream.hxx>
 
-inline Storage_OpenMode Storage_BaseDriver::OpenMode() const
-{
-  Storage_OpenMode aMode = Storage_VSNone;
-  if ( !Device().IsNull() )
-    aMode = Device()->OpenMode();
-  return aMode;
-}
+typedef std::fstream Standard_FStream;
 
-inline void Storage_BaseDriver::SetDevice( const Handle(Storage_IODevice)& theDevice )
-{
-  myDevice = theDevice;
-}
+#endif

@@ -86,12 +86,20 @@ is
     	-- -   Storage_VSInternalError : an internal error  has been detected
     	-- -   Storage_VSExtCharParityError : an error
     	--   has occurred while reading 16 bit characte   
- 
+
+    enumeration SeekMode
+    is
+        SMBegin,
+    	SMCur,
+	SMEnd
+    end;
+
     enumeration OpenMode
     is
         VSNone,
     	VSRead,
 	VSWrite,
+	VSAppend,
 	VSReadWrite
     end;
     	---Purpose:
@@ -116,6 +124,11 @@ is
     imported Position; -- typedef long
     
     deferred class BaseDriver;
+
+    deferred class IODevice;
+      class File;
+      class OStream;
+      class IStream;
 
     deferred class CallBack;
       class DefaultCallBack;

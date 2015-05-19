@@ -52,8 +52,9 @@ uses Manager                  from Resource,
      ExtendedString           from TCollection,
      SequenceOfExtendedString from TColStd,
      ReaderStatus             from PCDM,
-     StoreStatus              from PCDM
-
+     StoreStatus              from PCDM,
+     IODevice                 from Storage
+     
 raises NoSuchObject from Standard
 
 is
@@ -183,22 +184,48 @@ is
   
     returns Integer from Standard;
 
-    Open (me : mutable; path :     ExtendedString from TCollection;
-                        aDoc : out Document from TDocStd)
+    Open (me : mutable; thePath :     ExtendedString from TCollection;
+                        theDoc  : out Document from TDocStd)
     	---Purpose: Retrieves the document aDoc stored under the
     	-- name aName in the directory directory.
     	-- In order not to override a version of aDoc which
     	-- is already in memory, this method can be made
     	-- to depend on the value returned by IsInSession.
     returns ReaderStatus from PCDM;
+    
+    Open (me : mutable; aDevice : in out IODevice from Storage;
+                        aDoc : out Document from TDocStd)
+    	---Purpose: Retrieves the document aDoc from the device 
+    	-- In order not to override a version of aDoc which
+    	-- is already in memory, this method can be made
+    	-- to depend on the value returned by IsInSession.
+    returns ReaderStatus from PCDM is protected;
+    
+    Open (me : mutable; theIStream : in out IStream from Standard;
+                        aDoc : out Document from TDocStd)
+    	---Purpose: Retrieves the document aDoc from the stream
+    	-- In order not to override a version of aDoc which
+    	-- is already in memory, this method can be made
+    	-- to depend on the value returned by IsInSession.
+    returns ReaderStatus from PCDM;
 
-    SaveAs (me : mutable; aDoc : Document from TDocStd;
-                          path : ExtendedString from TCollection)
-    	---Purpose:  Save the  active document  in the file  <name> in the
-    	--           path <path> ; o verwrites  the file  if  it already exists.
+    SaveAs (me : mutable; theDoc : Document from TDocStd;
+                          thePath: ExtendedString from TCollection)
+    	---Purpose:  Save the  active document  in the
+    	--           path <thePath> ; overwrites  the file  if  it already exists.
     returns StoreStatus from PCDM;
+
+    SaveAs (me : mutable; theDoc   : Document from TDocStd;
+                          theDevice: IODevice from Storage)
+    	---Purpose:  Save the  active document  in the device  <theDevice>;
+    	--           overwrites  the file  if  it already exists.
+    returns StoreStatus from PCDM is protected;
     
-    
+    SaveAs (me : mutable; theDoc    : Document from TDocStd;
+                          theOStream: in out OStream from Standard)
+    	---Purpose:  Save the  active document  in the stream  <theOStream>;
+    returns StoreStatus from PCDM;
+
     Save (me : mutable; aDoc : Document from TDocStd)
     	---Purpose: Save aDoc active document.  
         -- Exceptions:
@@ -207,7 +234,7 @@ is
     returns StoreStatus from PCDM;
     
     SaveAs (me : mutable; aDoc : Document from TDocStd;
-                          path : ExtendedString from TCollection;
+                          aDev : IODevice from Storage;
     	    	    	  theStatusMessage:  out  ExtendedString from TCollection)
     	---Purpose:  Save the  active document  in the file  <name> in the
     	--           path <path>  .  overwrite  the file  if  it
