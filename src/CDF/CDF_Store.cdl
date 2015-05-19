@@ -23,10 +23,9 @@ uses Document from CDM,
      ExtendedString from TCollection,
      StoreList from CDF,
      StoreStatus from PCDM,
-     ExtendedString from TCollection
-    
+     ExtendedString from TCollection,
+     IODevice from Storage
 is
-  
   
     Create  is private;
     
@@ -65,8 +64,8 @@ is
     --            
     --            The store list contains one or more documents. One of them is the current document.
     --            
-    Folder(me) 
-    returns ExtString from Standard;
+    Device(me) 
+    returns IODevice from Storage;
     ---Purpose: returns the folder in which the current document will be stored.
     
     Name(me) returns ExtString from Standard;
@@ -91,16 +90,16 @@ is
 
 ---Category: Set methods
 --           
-    SetFolder(me: in out; aFolder: ExtendedString from TCollection)
+    SetDevice(me: in out; aDevice: IODevice from Storage)
     ---Purpose: defines the   folder in which  the document  should be
     --          stored.  returns  Standard_True if  the Folder exists,
     --          Standard_False otherwise.
     returns Boolean from Standard;
     
 			   
-    SetName(me: in out; aName: ExtString from Standard)
-    ---Purpose: defines the name under which the document should be stored.
-    returns StoreSetNameStatus  from CDF;
+--    SetName(me: in out; aName: ExtString from Standard)
+--    ---Purpose: defines the name under which the document should be stored.
+--    returns StoreSetNameStatus  from CDF;
     
     SetComment(me: in out; aComment: ExtString from Standard);
     
@@ -116,12 +115,13 @@ is
     
     Realize(me: in out);
 
-    Path(me) returns ExtString from Standard;
-    ---Purpose: returns the complete path of the created meta-data.
+--    Path(me) returns ExtString from Standard;
+--    ---Purpose: returns the complete path of the created meta-data.
 
-    MetaDataPath(me) returns ExtString from Standard;
+    MetaDataDevice(me) returns IODevice from Storage;
     ---Purpose: returns the path of  the previous store is the object
     --          is already stored, otherwise an empty string;
+
     Description(me) returns ExtString from Standard;
     ---Purpose: returns the description of the format of the main object.
 
@@ -167,17 +167,17 @@ is
 
     Init(me: in out) is private;
 
-    SetName(me: in out; aName: ExtendedString from TCollection)
-    ---Purpose: defines the name under which the document should be stored.
-    returns StoreSetNameStatus  from CDF;
+--    SetName(me: in out; aName: ExtendedString from TCollection)
+--    ---Purpose: defines the name under which the document should be stored.
+--    returns StoreSetNameStatus  from CDF;
     
     
 ---Category: compatibility
-    SetFolder(me: in out; aFolder: ExtString from Standard)
-    ---Purpose: defines the   folder in which  the document  should be
-    --          stored.  returns  Standard_True if  the Folder exists,
-    --          Standard_False otherwise.
-    returns Boolean from Standard;
+--    SetFolder(me: in out; aFolder: ExtString from Standard)
+--    ---Purpose: defines the   folder in which  the document  should be
+--    --          stored.  returns  Standard_True if  the Folder exists,
+--    --          Standard_False otherwise.
+--    returns Boolean from Standard;
     
 			   
 fields
@@ -189,9 +189,8 @@ fields
     
     myLastName: ExtendedString from TCollection;
 
-    myPath: ExtendedString from TCollection;
+--    myPath: ExtendedString from TCollection;
     myText: ExtendedString from TCollection;
     myStatus: StoreStatus from PCDM;
     
-
 end Store from CDF;

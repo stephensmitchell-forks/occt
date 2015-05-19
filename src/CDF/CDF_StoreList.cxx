@@ -57,13 +57,14 @@ Standard_Boolean CDF_StoreList::IsConsistent () const {
   Standard_Boolean yes = Standard_True;
   CDM_MapIteratorOfMapOfDocument it (myItems); 
   for ( ; it.More() && yes ; it.Next()) {
-    yes = it.Key()->HasRequestedFolder();
+    yes = it.Key()->HasRequestedDevice();
   }
-  return yes && myMainDocument->HasRequestedFolder();
+  return yes && myMainDocument->HasRequestedDevice();
 }
 void CDF_StoreList::Init() {
   myIterator = CDM_MapIteratorOfMapOfDocument(myItems);
 }
+
 Standard_Boolean CDF_StoreList::More() const {
   return myIterator.More();
 }
@@ -93,23 +94,25 @@ PCDM_StoreStatus CDF_StoreList::Store (Handle(CDM_MetaData)& aMetaData, TCollect
             aMsg <<"No storage driver does exist for this format: " << theDocument->StorageFormat() << (char)0;
             Standard_Failure::Raise(aMsg);
           }
-
+          /*
           if(!theMetaDataDriver->FindFolder(theDocument->RequestedFolder())) {
             Standard_SStream aMsg; aMsg << "could not find the active dbunit";
             aMsg << TCollection_ExtendedString(theDocument->RequestedFolder())<< (char)0;
             Standard_NoSuchObject::Raise(aMsg);
           }
           TCollection_ExtendedString theName=theMetaDataDriver->BuildFileName(theDocument);
+          */
 
           CDF_Timer theTimer;
+          Handle(Storage_IODevice) aDevice = theDocument->RequestedDevice();
           Handle(PCDM_StorageDriver) aDocumentStorageDriver = PCDM::StorageDriver(theDocument);
 
-          aDocumentStorageDriver->Write(theDocument,theName);
+          aDocumentStorageDriver->Write(theDocument, aDevice);
           status = aDocumentStorageDriver->GetStoreStatus();
 
           theTimer.ShowAndRestart("Driver->Write: ");
 
-          aMetaData = theMetaDataDriver->CreateMetaData(theDocument,theName);
+          aMetaData = theMetaDataDriver->CreateMetaData(theDocument);
           theTimer.ShowAndStop("metadata creating: ");
 
           theDocument->SetMetaData(aMetaData);

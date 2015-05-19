@@ -21,7 +21,8 @@ deferred class MetaDataDriver from CDF inherits Transient from Standard
 uses
     Document from CDM, MetaData from CDM,
     ExtendedString from TCollection,
-    ReferenceIterator from PCDM
+    ReferenceIterator from PCDM,
+    IODevice from Storage
     
 raises 
     NotImplemented from Standard
@@ -81,7 +82,7 @@ is
     returns Boolean from Standard
     is deferred;
     
-    MetaData(me: mutable; aFolder, aName, aVersion: ExtendedString from TCollection)
+    MetaData(me: mutable; aDevice: IODevice from Storage; aVersion: ExtendedString from TCollection)
     returns MetaData from CDM
     ---Purpose: should return the MetaData stored in the DBMS with the meta-data
     --          corresponding to the Data. If the MetaDataDriver has version management capabilities
@@ -110,8 +111,7 @@ is
 
 
     
-    CreateMetaData(me: mutable; aDocument: Document from CDM;
-    	         aFileName: ExtendedString from TCollection)
+    CreateMetaData(me: mutable; aDocument: Document from CDM)
     ---Purpose:  should create meta-data corresponding to aData and maintaining a meta-link
     --           between these meta-data and aFileName
     --           CreateMetaData is called by CreateData
@@ -134,14 +134,12 @@ is
     returns ReferenceIterator from PCDM
     is virtual;
     
-
     Find(me: mutable; aFolder, aName: ExtendedString from TCollection)
     returns Boolean from Standard;
     ---Purpose: calls Find with an empty version
 
-    MetaData(me: mutable; aFolder, aName: ExtendedString from TCollection)
+    MetaData(me: mutable; aDevice: IODevice from Storage)
     returns MetaData from CDM;
     ---Purpose: calls MetaData with an empty version
-    
 
 end MetaDataDriver from CDF;

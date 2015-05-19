@@ -56,7 +56,8 @@ uses
      TDF,
      TColStd,
      TCollection,
-     Resource
+     Resource,
+     Storage
 
 is
 

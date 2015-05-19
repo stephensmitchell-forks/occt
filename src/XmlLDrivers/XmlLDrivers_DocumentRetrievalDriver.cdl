@@ -21,6 +21,7 @@ uses
     Document			from PCDM,
     Document			from CDM,
     Document			from TDocStd,
+    IODevice          from Storage,
     Application			from CDM,
     ADriver		        from XmlMDF, 
     ADriverTable		from XmlMDF,
@@ -45,7 +46,7 @@ is
 	returns Document from CDM is redefined virtual;
     -- pure virtual method definition
 
-    Read(me:mutable; theFileName:    ExtendedString from TCollection;
+    Read(me:mutable; theDevice: IODevice from Storage;
     	    	     theNewDocument: Document    from CDM;
     	    	     theApplication: Application from CDM) is redefined virtual;
     -- 
@@ -78,6 +79,6 @@ is
 fields
     myDrivers	: ADriverTable		from XmlMDF      is protected;
     myRelocTable: RRelocationTable	from XmlObjMgt   is protected;
-    myFileName  : ExtendedString        from TCollection is protected;
+    myDevice  : IODevice from Storage is protected;
 
 end DocumentRetrievalDriver;

@@ -14,9 +14,7 @@
 -- Alternatively, this file may be used under the terms of Open CASCADE
 -- commercial license or contractual agreement.
 
-deferred class RetrievalDriver from PCDM
-inherits Reader from PCDM
-
+deferred class RetrievalDriver from PCDM inherits Reader from PCDM
 
 uses
     Document from PCDM,  
@@ -26,6 +24,7 @@ uses
     AsciiString from TCollection, 
     SequenceOfReference from PCDM, 
     Schema from Storage, 
+    IODevice from Storage,
     MessageDriver from CDM,
     Application from CDM
 
@@ -34,7 +33,7 @@ raises NoSuchObject from Standard,  DriverError from PCDM
 
 is
 
-    Read(me: mutable; aFileName: ExtendedString from TCollection; 
+    Read(me: mutable; aDevice: IODevice from Storage; 
                       aNewDocument: Document from CDM;
 		      anApplication: Application from CDM)
     raises DriverError from PCDM
@@ -61,21 +60,21 @@ is
     
     ---Category: private methods.
 
-    References(myclass; aFileName: ExtendedString from TCollection; theReferences: out SequenceOfReference from PCDM; theMsgDriver: MessageDriver from CDM)
+    References(myclass; aDevice: IODevice from Storage; theReferences: out SequenceOfReference from PCDM; theMsgDriver: MessageDriver from CDM)
     is private;
     
-    Extensions(myclass; aFileName: ExtendedString from TCollection; theExtensions: in out  SequenceOfExtendedString from TColStd; theMsgDriver: MessageDriver from CDM)
+    Extensions(myclass; aDevice: IODevice from Storage; theExtensions: in out  SequenceOfExtendedString from TColStd; theMsgDriver: MessageDriver from CDM)
     is private;
 
-    UserInfo(myclass; aFileName: ExtendedString from TCollection; Start, End: AsciiString from TCollection; theUserInfo:in  out SequenceOfExtendedString from TColStd;  theMsgDriver: MessageDriver from CDM)
+    UserInfo(myclass; aDevice: IODevice from Storage; Start, End: AsciiString from TCollection; theUserInfo:in  out SequenceOfExtendedString from TColStd;  theMsgDriver: MessageDriver from CDM)
     is private;
 
-    RaiseIfUnknownTypes(myclass; aSchema: Schema from Storage; aFileName: ExtendedString from TCollection);
+    RaiseIfUnknownTypes(myclass; aSchema: Schema from Storage; aDevice: IODevice from Storage);
     
-    DocumentVersion(myclass; aFileName: ExtendedString from TCollection; theMsgDriver: MessageDriver from CDM)
+    DocumentVersion(myclass; aDevice: IODevice from Storage; theMsgDriver: MessageDriver from CDM)
     returns Integer from Standard;
 
-    ReferenceCounter(myclass; aFileName: ExtendedString from TCollection; theMsgDriver: MessageDriver from CDM)
+    ReferenceCounter(myclass; aDevice: IODevice from Storage; theMsgDriver: MessageDriver from CDM)
     returns Integer from Standard;
     
     SetFormat (me : mutable; aformat : ExtendedString from TCollection);

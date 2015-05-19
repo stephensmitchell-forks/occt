@@ -184,6 +184,19 @@ LDOM_XmlWriter::LDOM_XmlWriter (FILE            * aFile,
        myABufferLen   (0)
 {}
 
+
+LDOM_XmlWriter::LDOM_XmlWriter(const Handle(Storage_IODevice)& theDevice,
+                               const char * theEncoding )
+  : myFile         (NULL),
+    myEncodingName (::getEncodingName (theEncoding)),
+    myIndent       (0),
+    myCurIndent    (0),
+    myABuffer      (NULL),
+    myABufferLen   (0)
+{
+  myDevice = theDevice;
+}
+
 //=======================================================================
 //function : ~LDOM_XmlWriter
 //purpose  : Destructor
@@ -222,7 +235,16 @@ inline LDOM_XmlWriter& LDOM_XmlWriter::operator <<
     {
       Standard_Integer aValue;
       aString.GetInteger (aValue);
-      fprintf (myFile, "%d", aValue);
+      if (!myDevice.IsNull() && myDevice->CanWrite())
+      {
+        TCollection_AsciiString aStrValue (aValue);
+        myDevice->Write ((Standard_Address)aStrValue.ToCString(), strlen (aStrValue.ToCString()));
+      }
+      else
+      {
+        fprintf (myFile, "%d", aValue);
+      }
+      
       break;
     }
   case LDOMBasicString::LDOM_AsciiHashed:       // attr names and element tags
@@ -231,7 +253,17 @@ inline LDOM_XmlWriter& LDOM_XmlWriter::operator <<
       const char * str = aString.GetString();
       if (str) {
         const Standard_Size aLen = strlen (str);
-        if (aLen > 0) fwrite (str, aLen, 1, myFile);
+        if (aLen > 0) 
+        {
+          if (!myDevice.IsNull() && myDevice->CanWrite())
+          {
+            myDevice->Write((Standard_Address)str, aLen);
+          }
+          else
+          {
+            fwrite (str, aLen, 1, myFile);
+          }
+        }
       }
     }
     break;
@@ -242,7 +274,17 @@ inline LDOM_XmlWriter& LDOM_XmlWriter::operator <<
       if (str) {
         Standard_Integer aLen;
         char * encStr = LDOM_CharReference::Encode(str, aLen, Standard_False);
-        if (aLen > 0) fwrite (encStr, aLen, 1, myFile);
+        if (aLen > 0)
+        {
+          if (!myDevice.IsNull() && myDevice->CanWrite())
+          {
+            myDevice->Write(encStr, aLen);
+          }
+          else
+          {
+            fwrite (encStr, aLen, 1, myFile);
+          }
+        }
         if (encStr != str) delete [] encStr;
       }
     }
@@ -258,7 +300,17 @@ inline LDOM_XmlWriter& LDOM_XmlWriter::operator <<
 inline LDOM_XmlWriter& LDOM_XmlWriter::operator << (const LXMLCh * aString)
 {
   Standard_Size aLength = strlen (aString);
-  if (aLength > 0) fwrite ((void *) aString, aLength, 1, myFile);
+  if (aLength > 0)
+  {
+    if (!myDevice.IsNull() && myDevice->CanWrite())
+    {
+      myDevice->Write((Standard_Address)aString, aLength);
+    }
+    else
+    {
+      fwrite ((void *) aString, aLength, 1, myFile);
+    } 
+  }
   return * this;
 }
 
@@ -268,7 +320,15 @@ inline LDOM_XmlWriter& LDOM_XmlWriter::operator << (const LXMLCh * aString)
 //=======================================================================
 inline LDOM_XmlWriter& LDOM_XmlWriter::operator << (const LXMLCh aChar)
 {
-  fputc (aChar, myFile);
+  if (!myDevice.IsNull() && myDevice->CanWrite())
+  {
+    LXMLCh atmp = aChar;
+    myDevice->Write (&atmp, sizeof(LXMLCh));
+  }
+  else
+  {
+    fputc (aChar, myFile);
+  }
   return * this;
 }
 
@@ -316,7 +376,15 @@ void LDOM_XmlWriter::WriteAttribute (const LDOM_Node& theAtt)
              chEqual, chDoubleQuote, encStr, chDoubleQuote);
     if (encStr != aValue) delete [] encStr;
   }
-  fwrite ((void *) myABuffer, aLength, 1, myFile);
+
+  if (!myDevice.IsNull() && myDevice->CanWrite())
+  {
+    myDevice->Write(myABuffer, aLength);
+  }
+  else
+  {
+    fwrite ((void *) myABuffer, aLength, 1, myFile);
+  }  
 }
 
 //=======================================================================

@@ -90,100 +90,46 @@ Standard_ExtString CDF_Store::LastName() const {
   return myLastName.ToExtString();
 }
 
-Standard_ExtString CDF_Store::Folder() const {
-  static TCollection_ExtendedString retv;
-  if(myCurrentDocument->HasRequestedFolder())
-    retv =  myCurrentDocument->RequestedFolder();
-  else
-    retv= blank;
-  return retv.ToExtString();
+Handle(Storage_IODevice) CDF_Store::Device() const {
+  Handle(Storage_IODevice) retv;
+  if( myCurrentDocument->HasRequestedDevice() )
+    retv = myCurrentDocument->RequestedDevice();
+
+  return retv;
 }
 
 Standard_ExtString CDF_Store::Name() const {
   static TCollection_ExtendedString retv;
-  retv = myCurrentDocument->RequestedName();
+  Handle(Storage_IODevice) dev = myCurrentDocument->RequestedDevice();
+  if ( !dev.IsNull() )
+    retv = dev->Name();
+  else
+    retv = blank;
   return retv.ToExtString();
 }
 
-
-Standard_Boolean  CDF_Store::SetFolder(const Standard_ExtString aFolder) {
-  TCollection_ExtendedString f(aFolder);
-  return SetFolder(f);
+Standard_Boolean CDF_Store::SetDevice(const Handle(Storage_IODevice)& aDevice) {
+  myCurrentDocument->SetRequestedDevice(aDevice);
+  return Standard_True;
 }
-Standard_Boolean  CDF_Store::SetFolder(const TCollection_ExtendedString& aFolder) {
-
-  TCollection_ExtendedString theFolder(aFolder);
-  Standard_Integer l = theFolder.Length();
-
-  // if the last character is the folder separator (which is always the first character)
-  // it is removed.
-	// This is correct for Unix systems but not for Windows! VMS and MAC? Thomas Haller, 23.11.01
-  if(l > 1) {
-#ifndef WNT
-    if(theFolder.Value(l) == theFolder.Value(1)) theFolder.Trunc(l-1);
-#else
-	if (theFolder.Value(l) == '/' || theFolder.Value(l) == '\\')
-		theFolder.Trunc(l-1);
-#endif
-  }
-
-  if(theMetaDataDriver->FindFolder(theFolder))  {
-    myCurrentDocument->SetRequestedFolder(theFolder);
-    return Standard_True;
-  }
-  return Standard_False;
-}
-
 
 CDF_StoreSetNameStatus CDF_Store::RecheckName () {
-   return SetName(myCurrentDocument->RequestedName());
-}
-
-CDF_StoreSetNameStatus CDF_Store::SetName(const TCollection_ExtendedString&  aName)
-{
-  TCollection_ExtendedString theName=theMetaDataDriver->SetName(myCurrentDocument,aName);
-
-  if(myCurrentDocument->IsStored ()) { 
-    Handle(CDM_MetaData)  E = myCurrentDocument->MetaData();
-    if(   E->Folder() == myCurrentDocument->RequestedFolder() 
-       && E->Name()   == theName) return CDF_SSNS_OK;
-  }
-  
-  if(myCurrentDocument->HasRequestedFolder()) {
-    if (theMetaDataDriver->Find(myCurrentDocument->RequestedFolder(),theName)) {
-      if(theMetaDataDriver->MetaData(myCurrentDocument->RequestedFolder(),theName)->IsRetrieved())
-	return CDF_SSNS_OpenDocument;
-      else {
-	myCurrentDocument->SetRequestedName(theName);
-	return CDF_SSNS_ReplacingAnExistentDocument;
-      }
-    }
-  }
-  myCurrentDocument->SetRequestedName(theName);
-  return  CDF_SSNS_OK;
-}
-CDF_StoreSetNameStatus CDF_Store::SetName(const Standard_ExtString aName)
-{
-  TCollection_ExtendedString theName(aName);
-  return SetName(theName);
+  //   return SetName(myCurrentDocument->RequestedName());
+  return CDF_SSNS_OK;
 }
 
 void CDF_Store::Realize() {
   Standard_ProgramError_Raise_if(!myList->IsConsistent(),"information are missing");
   Handle(CDM_MetaData) m;
   myText = "";
+
   myStatus = myList->Store(m,myText);
-  if(myStatus==PCDM_SS_OK) myPath = m->Path();
 }
-Standard_ExtString CDF_Store::Path() const {
-  return myPath.ToExtString();
+
+Handle(Storage_IODevice) CDF_Store::MetaDataDevice() const {
+  return myCurrentDocument->MetaData()->Device();
 }
-Standard_ExtString CDF_Store::MetaDataPath() const {
-  static TCollection_ExtendedString retv;
-  retv="";
-  if(myCurrentDocument->IsStored()) retv=myCurrentDocument->MetaData()->Path();
-  return retv.ToExtString();
-}
+
 Standard_ExtString CDF_Store::Description() const {
   static TCollection_ExtendedString retv;
 
@@ -203,7 +149,7 @@ Standard_Boolean CDF_Store::IsModified() const {
 }
 Standard_Boolean CDF_Store::CurrentIsConsistent() const {
   if(!myCurrentDocument->IsStored())
-    return myCurrentDocument->HasRequestedFolder();
+    return myCurrentDocument->HasRequestedDevice();
   return Standard_True;
 }
 
@@ -225,14 +171,14 @@ Standard_ExtString CDF_Store::PreviousVersion() const {
 
 Standard_Boolean CDF_Store::SetPreviousVersion (const Standard_ExtString aPreviousVersion) {
   if(theMetaDataDriver->HasVersionCapability()) {
-    if(myCurrentDocument->HasRequestedFolder()) {
-      if(theMetaDataDriver->Find(myCurrentDocument->RequestedFolder(),myCurrentDocument->RequestedName(),aPreviousVersion)){
+    if(myCurrentDocument->HasRequestedDevice()) {
+      // if(theMetaDataDriver->Find(myCurrentDocument->RequestedFolder(),myCurrentDocument->RequestedName(),aPreviousVersion)){
 	
 	myCurrentDocument->SetRequestedPreviousVersion(aPreviousVersion);
 	return Standard_True;
-      }
-      else
-	return Standard_False;
+        //      }
+        //      else
+        //	return Standard_False;
     }
     else 
       return Standard_False;
@@ -285,7 +231,7 @@ CDF_SubComponentStatus CDF_Store::SubComponentStatus(const Standard_ExtString aP
    Handle(CDM_Document) d = CDM_Document::FindFromPresentation(aPresentation);
 
   if(!d->IsStored()) 
-    return d->HasRequestedFolder()? CDF_SCS_Consistent : CDF_SCS_Unconsistent;
+    return d->HasRequestedDevice()? CDF_SCS_Consistent : CDF_SCS_Unconsistent;
 
   if(d->IsModified()) return CDF_SCS_Modified;
   return CDF_SCS_Stored;
@@ -303,9 +249,9 @@ Standard_ExtString CDF_Store::AssociatedStatusText() const {
 
 void CDF_Store::FindDefault() {
   if (!myCurrentDocument->IsStored ()) {
-    myCurrentDocument->SetRequestedFolder(CDF_Session::CurrentSession()->CurrentApplication()->DefaultFolder());
+//    myCurrentDocument->SetRequestedFolder(CDF_Session::CurrentSession()->CurrentApplication()->DefaultFolder());
 //    myCurrentDocument->SetRequestedName(theMetaDataDriver->SetName(myCurrentDocument,myCurrentDocument->Presentation()));
-    myCurrentDocument->SetRequestedName(theMetaDataDriver->SetName(myCurrentDocument,myCurrentDocument->RequestedName()));
+//    myCurrentDocument->SetRequestedName(theMetaDataDriver->SetName(myCurrentDocument,myCurrentDocument->RequestedName()));
   }
 }
 void CDF_Store::SetComment(const Standard_ExtString aComment) {
