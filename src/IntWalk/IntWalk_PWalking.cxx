@@ -2209,7 +2209,6 @@ PutToBoundary(const Handle(Adaptor3d_HSurface)& theASurf1,
   IsParallel(line, Standard_True, aTol, isU1parallel, isV1parallel);
   IsParallel(line, Standard_False, aTol, isU2parallel, isV2parallel);
 
-  const Standard_Integer aNbPnts = line->NbPoints();
   Standard_Real u1, v1, u2, v2;
   line->Value(1).Parameters(u1, v1, u2, v2);
   Standard_Real aDelta = 0.0;
@@ -2297,6 +2296,7 @@ PutToBoundary(const Handle(Adaptor3d_HSurface)& theASurf1,
       v1, u2, v2, Standard_True);
   }
 
+  const Standard_Integer aNbPnts = line->NbPoints();
   isNeedAdding = Standard_False;
   line->Value(aNbPnts).Parameters(u1, v1, u2, v2);
 
