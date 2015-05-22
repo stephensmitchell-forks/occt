@@ -24,6 +24,7 @@
 //=======================================================================
 
 NIS_DrawList::NIS_DrawList ()
+  : myIsCompiled(Standard_False)
 {
 #ifdef ARRAY_LISTS
   myListID = 0;
@@ -47,7 +48,8 @@ NIS_DrawList::NIS_DrawList ()
 //=======================================================================
 
 NIS_DrawList::NIS_DrawList (const Handle_NIS_View& theView)
-  : myView      (theView)
+  : myView      (theView),
+    myIsCompiled(Standard_False)
 {
 #ifdef ARRAY_LISTS
   myListID = 0;
@@ -157,9 +159,12 @@ void NIS_DrawList::BeginPrepare (const Standard_Integer theType)
 //purpose  :
 //=======================================================================
 
-void NIS_DrawList::EndPrepare (const Standard_Integer theType)
+void NIS_DrawList::EndPrepare (const Standard_Integer theType,
+                               const Standard_Boolean isCompiled)
 {
-  glEndList ();
+  if (isCompiled)
+    glEndList ();
+  myIsCompiled = isCompiled;
   myIsUpdated[theType] = Standard_False;
 }
 
@@ -170,7 +175,8 @@ void NIS_DrawList::EndPrepare (const Standard_Integer theType)
 
 void NIS_DrawList::Call (const Standard_Integer theType)
 {
-  glCallList (GetListID (theType));
+  if (myIsCompiled)
+    glCallList (GetListID (theType));
 }
 
 //=======================================================================

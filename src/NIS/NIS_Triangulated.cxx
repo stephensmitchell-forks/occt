@@ -16,8 +16,14 @@
 #include <NIS_Triangulated.hxx>
 #include <NIS_TriangulatedDrawer.hxx>
 #include <NIS_InteractiveContext.hxx>
+#include <TopoDS.hxx>
 #include <gp_Ax1.hxx>
 #include <Precision.hxx>
+#include <NCollection_DataMap.hxx>
+#include <BRepAdaptor_Curve.hxx>
+#include <GCPnts_TangentialDeflection.hxx>
+#include <TopExp_Explorer.hxx>
+#include <BRep_Tool.hxx>
 
 IMPLEMENT_STANDARD_HANDLE  (NIS_Triangulated, NIS_InteractiveObject)
 IMPLEMENT_STANDARD_RTTIEXT (NIS_Triangulated, NIS_InteractiveObject)
@@ -48,6 +54,16 @@ static inline Standard_Size    NBytesInd  (const Standard_Integer nInd,
 }
 
 //=======================================================================
+//function : IsEqual
+//purpose  : 
+//=======================================================================
+inline Standard_Boolean IsEqual(const TopoDS_Shape& theS1,
+                                const TopoDS_Shape& theS2)
+{
+  return theS1.IsEqual(theS2);
+}
+
+//=======================================================================
 //function : NIS_Triangulated()
 //purpose  : Constructor
 //=======================================================================
@@ -59,18 +75,15 @@ NIS_Triangulated::NIS_Triangulated
   : myAlloc             (0L),
     myType              (Type_None),
     mypNodes            (0L),
-    mypTriangles        (0L),
-    mypLines            (0L),
-    mypPolygons         (0L),
+    mypTriangles        (0L),    
     myNNodes            (0),
-    myNTriangles        (0),
-    myNLineNodes        (0),
-    myNPolygons         (0u),
+    myNTriangles        (0),    
     myIsDrawPolygons    (Standard_False),
     myIsCloned          (Standard_False),
     myIndexType         (2u),
     myNodeCoord         (is2D ? 2 : 3),
-    myPolygonType       (static_cast<unsigned int>(Polygon_Default))
+    myPolygonType       (static_cast<unsigned int>(Polygon_Default)),
+    myTriMode           (static_cast<unsigned int>(TriMode_Triangles))
 {
   
   if (theAlloc.IsNull())
@@ -78,6 +91,100 @@ NIS_Triangulated::NIS_Triangulated
   else
     myAlloc = theAlloc.operator->();
   allocateNodes (nNodes);
+}
+
+//=======================================================================
+//function : NIS_Triangulated()
+//purpose  : Constructor
+//=======================================================================
+
+NIS_Triangulated::NIS_Triangulated
+                        (const TopoDS_Shape&                      theShape, 
+                         const Standard_Real                      theDeflection,
+                         const Handle(NCollection_BaseAllocator)& theAlloc)
+  : myAlloc             (0L),
+    myType              (Type_None),
+    mypNodes            (0L),
+    mypTriangles        (0L),    
+    myNNodes            (0),
+    myNTriangles        (0),    
+    myIsDrawPolygons    (Standard_False),
+    myIsCloned          (Standard_False),
+    myIndexType         (2u),
+    myNodeCoord         (3),
+    myPolygonType       (static_cast<unsigned int>(Polygon_Default)),
+    myTriMode           (static_cast<unsigned int>(TriMode_Triangles))
+{
+  
+  if (theAlloc.IsNull())
+    myAlloc = NCollection_BaseAllocator::CommonBaseAllocator().operator->();
+  else
+    myAlloc = theAlloc.operator->();
+
+  Init(theShape, theDeflection);
+}
+
+//=======================================================================
+//function : Init
+//purpose  : Initialize the instance with a TopoDS_Shape.
+//=======================================================================
+
+void NIS_Triangulated::Init (const TopoDS_Shape& theShape,
+                             const Standard_Real theDeflection,
+                             const Standard_Real theAngularDeflection)
+{
+  Clear();
+
+  NCollection_DataMap<TopoDS_Shape, GCPnts_TangentialDeflection>
+    mapEdges(100, myAlloc);
+  TopExp_Explorer eexp (theShape, TopAbs_EDGE);
+  Standard_Integer nbNodes = 0;
+  for (; eexp.More(); eexp.Next())
+  {
+    const TopoDS_Edge& anEdge = TopoDS::Edge(eexp.Current());
+    if (BRep_Tool::Degenerated(anEdge)) {
+      continue;
+    }
+
+    // perform discretization
+    BRepAdaptor_Curve anAdapCurve(anEdge);
+    GCPnts_TangentialDeflection aTD(anAdapCurve, theAngularDeflection, theDeflection);
+    Standard_Integer nPoints = aTD.NbPoints();
+    if (nPoints < 2)
+      continue;
+
+    if (!mapEdges.IsBound(anEdge))
+    {
+      mapEdges.Bind(anEdge, aTD);
+      nbNodes += nPoints;
+    }
+  }
+
+  Standard_Integer nbE = mapEdges.Extent();
+  if (nbE > 0)
+  {
+    myType |= Type_Line;
+    allocateNodes (nbNodes);  
+    myLines.InitArray(myIndexType, nbE, myAlloc);
+  
+    Standard_Integer aCurEdge = 0, aStartNode = 0;  
+    NCollection_DataMap<TopoDS_Shape, GCPnts_TangentialDeflection>::Iterator
+      anIt(mapEdges);
+    for (; anIt.More(); anIt.Next())
+    {
+      const GCPnts_TangentialDeflection& aTD = anIt.Value();
+      Standard_Integer nPoints = aTD.NbPoints();
+      myLines.SetArray(aCurEdge, nPoints, myAlloc);
+      for (Standard_Integer i = 0; i < nPoints; i++)
+      {
+        gp_XYZ aCurr = aTD.Value(i+1).XYZ();
+        SetNode(i + aStartNode, aCurr);
+        myLines.SetArrayIndex(aCurEdge, i, i + aStartNode);
+      }
+      aCurEdge++;
+      aStartNode += nPoints;
+    }
+  }
 }
 
 //=======================================================================
@@ -96,22 +203,16 @@ void NIS_Triangulated::Clear ()
     myNTriangles = 0;
     myAlloc->Free(mypTriangles);
     mypTriangles = 0L;
-  }
-  if (myNLineNodes) {
-    myNLineNodes = 0;
-    myAlloc->Free( mypLines);
-    mypLines = 0L;
-  }
-  if (myNPolygons) {
-    for (unsigned int i = 0; i < myNPolygons; i++)
-      myAlloc->Free(mypPolygons[i]);
-    myAlloc->Free(mypPolygons);
-    myNPolygons = 0u;
-    mypPolygons = 0L;
-  }
+  }  
+
+  myLines.Clear(myAlloc);
+  myPolygons.Clear(myAlloc);
+  myFans.Clear(myAlloc);
+ 
   myType = Type_None;
   myIsDrawPolygons = Standard_False;
   myPolygonType = static_cast<unsigned int>(Polygon_Default);
+  myTriMode = static_cast<unsigned int>(TriMode_Triangles);
   if (GetDrawer().IsNull() == Standard_False) {
     GetDrawer()->SetUpdated(NIS_Drawer::Draw_Normal,
                             NIS_Drawer::Draw_Top,
@@ -131,16 +232,10 @@ void NIS_Triangulated::SetPolygonsPrs (const Standard_Integer nPolygons,
   if (nPolygons <= 0)
     myType &= ~Type_Polygons;
   else {
-    myType |= Type_Polygons;
-    if (myNPolygons) {
-      for (unsigned int i = 0; i < myNPolygons; i++)
-        myAlloc->Free(mypPolygons[i]);
-      myAlloc->Free(mypPolygons);
-    }
-    myNPolygons = static_cast<unsigned int>(nPolygons);
-    mypPolygons = static_cast<Standard_Integer **>
-      (myAlloc->Allocate(sizeof(Standard_Integer *)*nPolygons));
+    myType |= Type_Polygons;    
+    
     allocateNodes (nNodes);
+    myPolygons.InitArray(myIndexType, nPolygons, myAlloc);    
   }
 }
 
@@ -167,6 +262,29 @@ void NIS_Triangulated::SetTriangulationPrs (const Standard_Integer nTri,
 }
 
 //=======================================================================
+//function : SetTriangulationFanPrs
+//purpose  : 
+//=======================================================================
+
+void NIS_Triangulated::SetTriangulationFanPrs
+                                        (const Standard_Integer nFanTriangles,
+                                         const Standard_Integer nNodes)
+{  
+  if (nFanTriangles <= 0)
+    myType &= ~Type_Triangulation;
+  else {
+    myTriMode = static_cast<unsigned int>(TriMode_Triangle_Fan);
+    if (!IsTriangulation())
+      myType |= Type_Triangulation;    
+    
+    if (nNodes != myNNodes)
+      allocateNodes (nNodes);
+
+    myFans.InitArray(myIndexType, nFanTriangles, myAlloc);    
+  }
+}
+
+//=======================================================================
 //function : SetLinePrs
 //purpose  : 
 //=======================================================================
@@ -181,14 +299,12 @@ void NIS_Triangulated::SetLinePrs (const Standard_Integer nPoints,
     myType |= Type_Line;
     if (isClosed)
       myType |= Type_Loop;
-    if (myNLineNodes)
-      myAlloc->Free(mypLines);
+   
     myType &= ~Type_Segments;
     allocateNodes (nNodes);
 
-    myNLineNodes = nPoints;
-    const Standard_Size nBytes = NBytesInd(nPoints, myIndexType);
-    mypLines = static_cast<Standard_Integer *> (myAlloc->Allocate(nBytes));
+    myLines.InitArray(myIndexType, 1, myAlloc);
+    myLines.SetArray(0, nPoints, myAlloc);   
   }
 }
 
@@ -204,14 +320,12 @@ void NIS_Triangulated::SetSegmentPrs (const Standard_Integer nSegments,
     myType &= ~(Type_Loop | Type_Segments);
   else {
     myType |= Type_Segments;
-    if (myNLineNodes)
-      myAlloc->Free(mypLines);
+
     myType &= ~(Type_Line | Type_Loop);
     allocateNodes (nNodes);
-
-    myNLineNodes = nSegments*2;
-    const Standard_Size nBytes = NBytesInd(myNLineNodes, myIndexType);
-    mypLines = static_cast<Standard_Integer *> (myAlloc->Allocate(nBytes));
+    
+    myLines.InitArray(myIndexType, 1, myAlloc);
+    myLines.SetArray(0, nSegments*2, myAlloc);    
   }
 }
 
@@ -374,6 +488,29 @@ void NIS_Triangulated::SetTriangle   (const Standard_Integer  ind,
 }
 
 //=======================================================================
+//function : NFanInList 
+//purpose  : 
+//=======================================================================
+
+Standard_Integer NIS_Triangulated::NFanInList (const Standard_Integer ind) const
+{
+  return myFans.NArrayIndexes(ind);  
+}
+
+//=======================================================================
+//function : SetFanTriangles
+//purpose  : 
+//=======================================================================
+
+void NIS_Triangulated::SetFanTriangles(const Standard_Integer ind,
+                                       const Standard_Integer nbTris,
+                                       const Standard_Integer startNodeIdx,
+                                       const int* triList)
+{  
+  myFans.SetArray (ind, nbTris+2, triList, myAlloc, startNodeIdx);
+}
+
+//=======================================================================
 //function : SetLineNode
 //purpose  : 
 //=======================================================================
@@ -381,26 +518,7 @@ void NIS_Triangulated::SetTriangle   (const Standard_Integer  ind,
 void NIS_Triangulated::SetLineNode      (const Standard_Integer ind,
                                          const Standard_Integer iNode)
 {
-  if (ind >= myNLineNodes)
-    Standard_OutOfRange::Raise ("NIS_Triangulated::SetTriangle");
-  switch (myIndexType) {
-    case 0: // 8bit
-    {
-      unsigned char * pInd =
-        reinterpret_cast<unsigned char *>(mypLines) + ind;
-      pInd[0] = static_cast<unsigned char>(iNode);
-    }
-    break;
-    case 1: // 16bit
-    {
-      unsigned short * pInd =
-        reinterpret_cast<unsigned short *>(mypLines) + ind;
-      pInd[0] = static_cast<unsigned short>(iNode);
-    }
-    break;
-    default: // 32bit
-      mypLines[ind] = iNode;
-  }
+  myLines.SetArrayIndex(0, ind, iNode);
 }
 
 //=======================================================================
@@ -412,38 +530,7 @@ void NIS_Triangulated::SetPolygonNode         (const Standard_Integer indPoly,
                                                const Standard_Integer ind,
                                                const Standard_Integer iNode)
 {
-  if (indPoly >= static_cast<Standard_Integer>(myNPolygons))
-    Standard_OutOfRange::Raise ("NIS_Triangulated::SetPolygonNode");
-    
-  Standard_Integer * aPoly  = mypPolygons[indPoly];
-  switch (myIndexType) {
-  case 0: // 8bit
-  {
-    unsigned char aNNode =  * (reinterpret_cast<unsigned char *>(aPoly));
-    if (static_cast<unsigned char>(ind) >= aNNode)
-      Standard_OutOfRange::Raise ("NIS_Triangulated::SetPolygonNode");
-
-    unsigned char * pInd =
-      reinterpret_cast<unsigned char *>(aPoly) + ind + 1;
-    pInd[0] = static_cast<unsigned char>(iNode);   
-  }
-  break;
-  case 1: // 16bit
-  {
-    unsigned short aNNode =  * (reinterpret_cast<unsigned short *>(aPoly));
-    if (static_cast<unsigned short>(ind) >= aNNode)
-      Standard_OutOfRange::Raise ("NIS_Triangulated::SetPolygonNode");
-
-    unsigned short * pInd =
-      reinterpret_cast<unsigned short *>(aPoly) + ind + 1;
-    pInd[0] = static_cast<unsigned short>(iNode);
-  }
-  break;
-  default: // 32bit
-    if (ind >= aPoly[0])
-      Standard_OutOfRange::Raise ("NIS_Triangulated::SetPolygonNode");
-    aPoly[ind + 1] = iNode;
-  }
+  myPolygons.SetArrayIndex(indPoly, ind, iNode);
 }
 
 //=======================================================================
@@ -452,30 +539,8 @@ void NIS_Triangulated::SetPolygonNode         (const Standard_Integer indPoly,
 //=======================================================================
 Standard_Integer NIS_Triangulated::NPolygonNodes
                                          (const Standard_Integer indPoly)const
-{
-  Standard_Integer aResult(0);
-  if (indPoly >= static_cast<Standard_Integer>(myNPolygons))
-    Standard_OutOfRange::Raise ("NIS_Triangulated::PolygonNode");
-  Standard_Integer * aPoly  = mypPolygons[indPoly];
-  switch (myIndexType) {
-    case 0: // 8bit
-    {
-      unsigned char aNNode =  * (reinterpret_cast<unsigned char *>(aPoly));
-      aResult = static_cast<Standard_Integer>(aNNode);
-    }
-    break;
-    case 1: // 16bit
-    {
-      unsigned short aNNode =  * (reinterpret_cast<unsigned short *>(aPoly));
-      aResult = static_cast<Standard_Integer>(aNNode);
-    }
-    break;
-    default: // 32bit
-    {
-      aResult = aPoly[0];
-    }
-  }
-  return aResult;
+{  
+  return myPolygons.NArrayIndexes(indPoly);  
 }
 
 //=======================================================================
@@ -486,40 +551,8 @@ Standard_Integer NIS_Triangulated::NPolygonNodes
 Standard_Integer NIS_Triangulated::PolygonNode 
                                             (const Standard_Integer indPoly,
                                              const Standard_Integer ind)const
-{
-  Standard_Integer aResult(-1);
-  if (indPoly >= static_cast<Standard_Integer>(myNPolygons))
-    Standard_OutOfRange::Raise ("NIS_Triangulated::PolygonNode");
-  const Standard_Integer * aPoly  = mypPolygons[indPoly];
-  switch (myIndexType) {
-    case 0: // 8bit
-    {
-      const unsigned char * pInd =
-        reinterpret_cast<const unsigned char *>(aPoly);
-      if (static_cast<unsigned char>(ind) >= pInd[0])
-        Standard_OutOfRange::Raise ("NIS_Triangulated::PolygonNode");
-
-      aResult = static_cast<Standard_Integer>(pInd[ind + 1]);
-    }
-    break;
-    case 1: // 16bit
-    {
-      const unsigned short * pInd =
-        reinterpret_cast<const unsigned short *>(aPoly);
-      if (static_cast<unsigned short>(ind) >= pInd[0])
-        Standard_OutOfRange::Raise ("NIS_Triangulated::PolygonNode");
-
-      aResult = static_cast<Standard_Integer>(pInd[ind + 1]);
-    }
-    break;
-    default: // 32bit
-    {
-      if (ind >= aPoly[0])
-        Standard_OutOfRange::Raise ("NIS_Triangulated::PolygonNode");
-      aResult = aPoly[ind + 1];
-    }
-  }
-  return aResult;
+{  
+  return myPolygons.ArrayIndex(indPoly, ind);
 }
 
 //=======================================================================
@@ -529,34 +562,8 @@ Standard_Integer NIS_Triangulated::PolygonNode
 
 void NIS_Triangulated::SetPolygon (const Standard_Integer  ind,
                                    const Standard_Integer  theSz)
-{
-  if (ind >= static_cast<Standard_Integer>(myNPolygons))
-    Standard_OutOfRange::Raise ("NIS_Triangulated::SetPolygon");
-  switch (myIndexType) {
-    case 0: // 8bit
-    {
-      unsigned char * anArray  = static_cast <unsigned char *>
-        (myAlloc->Allocate (sizeof(unsigned char) * (theSz+1)));
-      mypPolygons[ind] = reinterpret_cast<Standard_Integer *> (anArray);
-      anArray[0] = static_cast<unsigned char>(theSz);
-    }
-    break;
-    case 1: // 16bit
-    {
-      unsigned short * anArray  = static_cast <unsigned short *>
-        (myAlloc->Allocate (sizeof(unsigned short) * (theSz+1)));
-      mypPolygons[ind] = reinterpret_cast<Standard_Integer *> (anArray);
-      anArray[0] = static_cast<unsigned short>(theSz);
-    }
-    break;
-    default: // 32bit
-    {
-      Standard_Integer * anArray  = static_cast <Standard_Integer *>
-        (myAlloc->Allocate (sizeof(Standard_Integer) * (theSz+1)));
-      mypPolygons[ind] = anArray;
-      anArray[0] = theSz;
-    }
-  } 
+{  
+  myPolygons.SetArray (ind, theSz, myAlloc);
 }
 
 //=======================================================================
@@ -603,67 +610,6 @@ void NIS_Triangulated::SetPolygonType
 }
 
 //=======================================================================
-//function : SetColor
-//purpose  : Set the normal color for presentation.
-//=======================================================================
-
-void NIS_Triangulated::SetColor (const Quantity_Color&  theColor)
-{
-  const Handle(NIS_TriangulatedDrawer) aDrawer =
-    static_cast<NIS_TriangulatedDrawer *>(DefaultDrawer(0L));
-  aDrawer->Assign (GetDrawer());
-  aDrawer->myColor[NIS_Drawer::Draw_Normal] = theColor;
-  aDrawer->myColor[NIS_Drawer::Draw_Top] = theColor;
-  aDrawer->myColor[NIS_Drawer::Draw_Transparent] = theColor;
-  SetDrawer (aDrawer);
-}
-
-//=======================================================================
-//function : GetColor
-//purpose  : Get Normal, Transparent or Hilighted color of the presentation.
-//=======================================================================
-
-Quantity_Color NIS_Triangulated::GetColor
-                        (const NIS_Drawer::DrawType theDrawType) const
-{
-  Handle(NIS_TriangulatedDrawer) aDrawer = 
-    Handle(NIS_TriangulatedDrawer)::DownCast( GetDrawer() );
-  if (aDrawer.IsNull() == Standard_False)
-  {
-    return aDrawer->myColor[theDrawType];
-  }
-  return Quantity_Color(); // return null color object
-}
-
-//=======================================================================
-//function : SetHilightColor
-//purpose  : Set the color for hilighted presentation.
-//=======================================================================
-
-void NIS_Triangulated::SetHilightColor (const Quantity_Color&  theColor)
-{
-  const Handle(NIS_TriangulatedDrawer) aDrawer =
-    static_cast<NIS_TriangulatedDrawer *>(DefaultDrawer(0L));
-  aDrawer->Assign (GetDrawer());
-  aDrawer->myColor[NIS_Drawer::Draw_Hilighted] = theColor;
-  SetDrawer (aDrawer);
-}
-
-//=======================================================================
-//function : SetDynHilightColor
-//purpose  : Set the color for dynamic hilight presentation.
-//=======================================================================
-
-void NIS_Triangulated::SetDynHilightColor(const Quantity_Color&  theColor)
-{
-  const Handle(NIS_TriangulatedDrawer) aDrawer =
-    static_cast<NIS_TriangulatedDrawer *>(DefaultDrawer(0L));
-  aDrawer->Assign (GetDrawer());
-  aDrawer->myColor[NIS_Drawer::Draw_DynHilighted] = theColor;
-  SetDrawer (aDrawer);
-}
-
-//=======================================================================
 //function : SetLineWidth
 //purpose  : Set the width of line presentations in pixels.
 //=======================================================================
@@ -675,6 +621,33 @@ void NIS_Triangulated::SetLineWidth (const Standard_Real    theWidth)
   aDrawer->Assign (GetDrawer());
   aDrawer->myLineWidth = (Standard_ShortReal) theWidth;
   SetDrawer (aDrawer);
+}
+
+//=======================================================================
+//function : GetLineWidth
+//purpose  : Get the width of line presentation in pixels.
+//=======================================================================
+
+Standard_Real NIS_Triangulated::GetLineWidth () const
+{
+    const Handle(NIS_TriangulatedDrawer) aDrawer =
+        static_cast<NIS_TriangulatedDrawer*>(DefaultDrawer(0L));
+    aDrawer->Assign(GetDrawer());
+    return (Standard_Real)(aDrawer->myLineWidth);
+}
+
+//=======================================================================
+//function : SetLineStyle
+//purpose  : Set the type of line presentation.
+//=======================================================================
+
+void NIS_Triangulated::SetLineStyle  (const Standard_Integer theStyle)
+{
+    const Handle(NIS_TriangulatedDrawer) aDrawer =
+        static_cast<NIS_TriangulatedDrawer*>(DefaultDrawer(0L));
+    aDrawer->Assign(GetDrawer());
+    aDrawer->myLineType = theStyle;
+    SetDrawer(aDrawer);
 }
 
 //=======================================================================
@@ -712,27 +685,14 @@ void NIS_Triangulated::Clone (const Handle_NCollection_BaseAllocator& theAlloc,
       memcpy(aNewObj->mypTriangles, mypTriangles, nBytes);
     }
     // copy lines/segments
-    aNewObj->myNLineNodes = myNLineNodes;
-    if (myNLineNodes) {
-      const Standard_Size nBytes = NBytesInd(myNLineNodes, myIndexType);
-      aNewObj->mypLines = static_cast<Standard_Integer *>
-        (theAlloc->Allocate(nBytes));
-      memcpy(aNewObj->mypLines, mypLines, nBytes);
-    }
+    myLines.Clone(theAlloc, aNewObj->myLines);
+    
     // copy polygons
-    aNewObj->myNPolygons = myNPolygons;
-    if (myNPolygons) {
-      const Standard_Size nBytes = sizeof(Standard_Integer *)*myNPolygons;
-      aNewObj->mypPolygons = static_cast<Standard_Integer **>
-        (theAlloc->Allocate(nBytes));
-      for (unsigned int i = 0; i < myNPolygons; i++) {
-        const Standard_Integer nNodes = NPolygonNodes(i);
-        const Standard_Size nBytes = NBytesInd(nNodes+1, myIndexType);
-        aNewObj->mypPolygons[i] = static_cast <Standard_Integer *>
-          (theAlloc->Allocate (nBytes));
-        memcpy(aNewObj->mypPolygons[i], mypPolygons[i], nBytes);
-      }
-    }
+    myPolygons.Clone(theAlloc, aNewObj->myPolygons);
+    aNewObj->myTriMode = myTriMode;
+
+    // copy fans
+    myFans.Clone(theAlloc, aNewObj->myFans);    
   }
   aNewObj->myType = myType;
   aNewObj->myIsDrawPolygons = myIsDrawPolygons;
@@ -794,81 +754,21 @@ Standard_Boolean NIS_Triangulated::Intersect
     }
   }
   if (aResult == isFullIn) {
-    if (myType & Type_Segments) {
-      for (Standard_Integer i = 0; i < myNLineNodes; i+=2) {
-        const gp_Pnt aPnt[2] = {
-          nodeAtInd(mypLines, i+0).Transformed(theTrf),
-          nodeAtInd(mypLines, i+1).Transformed(theTrf)
-        };
-        if (isFullIn) {
-          if (seg_box_included (theBox, aPnt) == 0) {
-            aResult = Standard_False;
-            break;
-          }
-        } else {
-          if (seg_box_intersect (theBox, aPnt)) {
-            aResult = Standard_True;
-            break;
-          }
-        }
-      }
+    if ((myType & Type_Segments) && (NLineNodes() > 0)) {
+      const Standard_Integer * anSegs = static_cast <Standard_Integer *>(myLines.ArrayIndexes(0));
+      const Standard_Integer nNodes = myLines.NArrayIndexes(0);
+      aResult = intersectArray (anSegs, nNodes, theBox, theTrf, isFullIn, 2);      
     } else if (myType & Type_Line) {
-      for (Standard_Integer i = 1; i < myNLineNodes; i++) {
-        const gp_Pnt aPnt[2] = {
-          nodeAtInd(mypLines, i-1).Transformed(theTrf),
-          nodeAtInd(mypLines, i+0).Transformed(theTrf)
-        };
-        if (isFullIn) {
-          if (seg_box_included (theBox, aPnt) == 0) {
-            aResult = Standard_False;
-            break;
-          }
-        } else {
-          if (seg_box_intersect (theBox, aPnt)) {
-            aResult = Standard_True;
-            break;
-          }
-        }
-      }
-      if (aResult == isFullIn && (myType & Type_Loop)) {
-        const gp_Pnt aPntLast[2] = {
-          nodeAtInd(mypLines, myNLineNodes-1).Transformed(theTrf),
-          nodeAtInd(mypLines, 0).Transformed(theTrf)
-        };
-        if (isFullIn) {
-          if (seg_box_included (theBox, aPntLast) == 0)
-            aResult = Standard_False;
-        } else {
-          if (seg_box_intersect (theBox, aPntLast))
-            aResult = Standard_True;
-        }
-      }
-    } else if ((myType & Type_Polygons) && myIsDrawPolygons) {
-      for (unsigned int iPoly = 0; iPoly < myNPolygons; iPoly++) {
-        const Standard_Integer * aPoly = mypPolygons[iPoly];
-        const Standard_Integer nNodes = NPolygonNodes(iPoly);
-        for (Standard_Integer i = 1; i < nNodes; i++) {
-          // index is incremented by 1 for the head number in the array
-          const gp_Pnt aPnt[2] = {
-            nodeAtInd(aPoly, i+0).Transformed(theTrf),
-            nodeAtInd(aPoly, i+1).Transformed(theTrf)
-          };
-          if (isFullIn) {
-            if (seg_box_included (theBox, aPnt) == 0) {
-              aResult = Standard_False;
-              break;
-            }
-          } else {
-            if (seg_box_intersect (theBox, aPnt)) {
-              aResult = Standard_True;
-              break;
-            }
-          }
-        }
-        if (aResult == isFullIn) {
+      for (Standard_Integer iLine = 0; iLine < NLines(); iLine++) {
+        const Standard_Integer* aLine = static_cast <Standard_Integer *>(myLines.ArrayIndexes(iLine));
+        const Standard_Integer nNodes = myLines.NArrayIndexes(iLine);
+        aResult = intersectArray (aLine, nNodes, theBox, theTrf, isFullIn);
+        
+        if (aResult == isFullIn && (myType & Type_Loop)) {          
+          // check edge between first and last points
           const gp_Pnt aPntLast[2] = {
-            nodeAtInd(aPoly, nNodes).Transformed(theTrf),
-            nodeAtInd(aPoly, 1).Transformed(theTrf)
+            nodeAtInd(aLine, nNodes-1).Transformed(theTrf),
+            nodeAtInd(aLine, 0).Transformed(theTrf)
           };
           if (isFullIn) {
             if (seg_box_included (theBox, aPntLast) == 0)
@@ -878,9 +778,82 @@ Standard_Boolean NIS_Triangulated::Intersect
               aResult = Standard_True;
           }
         }
+        
+        if (aResult != isFullIn) {
+          // aResult==true, isFullIn==false, so at least one element is included
+          // or
+          // aResult==false, isFullIn==true, so at least one element is NOT included
+          break;
+        }
+      }
+    } else if ((myType & Type_Polygons) && myIsDrawPolygons) {      
+      for (Standard_Integer iPoly = 0; iPoly < NPolygons(); iPoly++) {
+        const Standard_Integer* aPoly = static_cast <Standard_Integer *>(myPolygons.ArrayIndexes(iPoly));
+        const Standard_Integer nNodes = myPolygons.NArrayIndexes(iPoly);
+        aResult = intersectArray (aPoly, nNodes, theBox, theTrf, isFullIn);
+
+        if (aResult == isFullIn) {          
+          // check edge between first and last points
+          const gp_Pnt aPntLast[2] = {
+            nodeAtInd(aPoly, nNodes-1).Transformed(theTrf),
+            nodeAtInd(aPoly, 0).Transformed(theTrf)
+          };
+          if (isFullIn) {
+            if (seg_box_included (theBox, aPntLast) == 0)
+              aResult = Standard_False;
+          } else {
+            if (seg_box_intersect (theBox, aPntLast))
+              aResult = Standard_True;
+          }
+        }
+        
+        if (aResult != isFullIn) {
+          // aResult==true, isFullIn==false, so at least one element is included
+          // or
+          // aResult==false, isFullIn==true, so at least one element is NOT included
+          break;
+        }
       }
     }
   }
+  return aResult;
+}
+
+//=======================================================================
+//function : intersectArray 
+//purpose  : 
+//=======================================================================
+
+Standard_Boolean NIS_Triangulated::intersectArray
+                        (const Standard_Integer* theArray,
+                         const Standard_Integer theNNodes,
+                         const Bnd_B3f&         theBox,
+                         const gp_Trsf&         theTrf,
+                         const Standard_Boolean isFullIn,
+                         const Standard_Integer theIncremIdx) const 
+{
+  Standard_Boolean aResult = Standard_False;
+  if (!theArray)
+    return aResult;
+
+  for (Standard_Integer i = 0; i < theNNodes-1; i += theIncremIdx) {
+    const gp_Pnt aPnt[2] = {
+      nodeAtInd(theArray, i+0).Transformed(theTrf),
+      nodeAtInd(theArray, i+1).Transformed(theTrf)
+    };
+    if (isFullIn) {
+      if (seg_box_included (theBox, aPnt) == 0) {
+        aResult = Standard_False;
+        break;
+      }
+    } else {
+      if (seg_box_intersect (theBox, aPnt)) {
+        aResult = Standard_True;
+        break;
+      }
+    }
+  }
+  
   return aResult;
 }
 
@@ -896,79 +869,95 @@ Standard_Real NIS_Triangulated::Intersect (const gp_Ax1&       theAxis,
   Standard_Real start[3], dir[3];
   theAxis.Location().Coord(start[0], start[1], start[2]);
   theAxis.Direction().Coord(dir[0], dir[1], dir[2]);
-  double anInter;
+  double anInter (RealLast());
+  const Standard_Real anOver2 = theOver*theOver;
 
   if ((myType & Type_Triangulation) && (myIsDrawPolygons == Standard_False))
+  {
     for (Standard_Integer i = 0; i < myNTriangles; i++) {
       Standard_Boolean isIntersect(Standard_False);
+      Standard_Integer idx1 = -1, idx2 = -1, idx3 = -1;
       if (myIndexType == 0) {
         const unsigned char * pTri =
           reinterpret_cast<unsigned char *>(mypTriangles) + (3 * i);
-        if (myNodeCoord > 2)
-          isIntersect = tri_line_intersect (start, dir,
-                                            &mypNodes[myNodeCoord * pTri[0]],
-                                            &mypNodes[myNodeCoord * pTri[1]],
-                                            &mypNodes[myNodeCoord * pTri[2]],
-                                            &anInter);
-        else
-          isIntersect = tri2d_line_intersect (start, dir,
-                                              &mypNodes[myNodeCoord * pTri[0]],
-                                              &mypNodes[myNodeCoord * pTri[1]],
-                                              &mypNodes[myNodeCoord * pTri[2]],
-                                              &anInter);
+        idx1 = myNodeCoord * pTri[0];
+        idx2 = myNodeCoord * pTri[1];
+        idx3 = myNodeCoord * pTri[2];
       } else if (myIndexType == 1) {
         const unsigned short * pTri =
           reinterpret_cast<unsigned short *>(mypTriangles) + (3 * i);
-        if (myNodeCoord > 2)
-          isIntersect = tri_line_intersect (start, dir,
-                                            &mypNodes[myNodeCoord * pTri[0]],
-                                            &mypNodes[myNodeCoord * pTri[1]],
-                                            &mypNodes[myNodeCoord * pTri[2]],
-                                            &anInter);
-        else
-          isIntersect = tri2d_line_intersect (start, dir,
-                                              &mypNodes[myNodeCoord * pTri[0]],
-                                              &mypNodes[myNodeCoord * pTri[1]],
-                                              &mypNodes[myNodeCoord * pTri[2]],
-                                              &anInter);
+        idx1 = myNodeCoord * pTri[0];
+        idx2 = myNodeCoord * pTri[1];
+        idx3 = myNodeCoord * pTri[2];
       } else {
         const Standard_Integer * pTri = &mypTriangles[3 * i];
-        if (myNodeCoord > 2)
-          isIntersect = tri_line_intersect (start, dir,
-                                            &mypNodes[myNodeCoord * pTri[0]],
-                                            &mypNodes[myNodeCoord * pTri[1]],
-                                            &mypNodes[myNodeCoord * pTri[2]],
-                                            &anInter);
-        else
-          isIntersect = tri2d_line_intersect (start, dir,
-                                              &mypNodes[myNodeCoord * pTri[0]],
-                                              &mypNodes[myNodeCoord * pTri[1]],
-                                              &mypNodes[myNodeCoord * pTri[2]],
-                                              &anInter);
+        idx1 = myNodeCoord * pTri[0];
+        idx2 = myNodeCoord * pTri[1];
+        idx3 = myNodeCoord * pTri[2];
       }
+
+      if (myNodeCoord > 2)
+        isIntersect = tri_line_intersect (start, dir,
+                                          &mypNodes[idx1],
+                                          &mypNodes[idx2],
+                                          &mypNodes[idx3],
+                                          &anInter);
+      else
+        isIntersect = tri2d_line_intersect (start, dir, anOver2,
+                                            &mypNodes[idx1],
+                                            &mypNodes[idx2],
+                                            &mypNodes[idx3],
+                                            &anInter);
       if (isIntersect && anInter < aResult)
         aResult = anInter;
     }
-
-  const Standard_Real anOver2 = theOver*theOver;
-  if (myType & Type_Segments) {
+    for (Standard_Integer i = 0; i < myFans.NArrays(); i++) 
+    {   
+       Standard_Integer idx1 = myFans.ArrayIndex(i, 0);
+       Standard_Integer nbTriIdx = myFans.NArrayIndexes(i);
+       for (Standard_Integer j = 1; j < nbTriIdx-1; j++) {
+         Standard_Boolean isIntersect(Standard_False);
+         Standard_Integer idx2 = myFans.ArrayIndex(i, j);
+         Standard_Integer idx3 = myFans.ArrayIndex(i, j+1);
+       
+         if (myNodeCoord > 2)
+           isIntersect = tri_line_intersect (start, dir,
+                                             Node(idx1),
+                                             Node(idx2),
+                                             Node(idx3),
+                                             &anInter);
+         else{
+           isIntersect = tri2d_line_intersect (start, dir, anOver2,
+                                               Node(idx1),
+                                               Node(idx2),
+                                               Node(idx3),
+                                               &anInter);           
+         }
+         if (isIntersect && anInter < aResult)
+           aResult = anInter;
+       }
+     }     
+  }
+  if ((myType & Type_Segments) && (NLineNodes() > 0)) {
     Standard_Integer i = 0;
-    if (myNodeCoord > 2)
-      for (; i < myNLineNodes; i+=2) {
+    Standard_Integer * aSegs = static_cast <Standard_Integer *>(myLines.ArrayIndexes(0));
+    if (myNodeCoord > 2) {      
+      for (; i < NLineNodes()-1; i+=2) {
         if (seg_line_intersect (theAxis.Location().XYZ(),
                                 theAxis.Direction().XYZ(), anOver2,
-                                nodeArrAtInd(mypLines, i+0),
-                                nodeArrAtInd(mypLines, i+1),
+                                nodeArrAtInd(aSegs, i+0),
+                                nodeArrAtInd(aSegs, i+1),
                                 &anInter))
           if (anInter < aResult)
             aResult = anInter;
       }
+    }
     else
-      for (; i < myNLineNodes; i+=2) {
+      for (; i < NLineNodes()-1; i+=2) {
         if (seg2d_line_intersect (theAxis.Location().XYZ(),
                                   theAxis.Direction().XYZ(), anOver2,
-                                  nodeArrAtInd(mypLines, i+0),
-                                  nodeArrAtInd(mypLines, i+1),
+                                  nodeArrAtInd(aSegs, i+0),
+                                  nodeArrAtInd(aSegs, i+1),
                                   &anInter))
           if (anInter < aResult)
             aResult = anInter;
@@ -976,52 +965,59 @@ Standard_Real NIS_Triangulated::Intersect (const gp_Ax1&       theAxis,
   } else if (myType & Type_Line) {
     Standard_Integer i = 1;
     if (myNodeCoord > 2) {
-      for (; i < myNLineNodes; i++) {
-        if (seg_line_intersect (theAxis.Location().XYZ(),
-                                theAxis.Direction().XYZ(), anOver2,
-                                nodeArrAtInd(mypLines, i-1),
-                                nodeArrAtInd(mypLines, i-0),
-                                &anInter))
+      for (Standard_Integer iLine = 0; iLine < NLines(); iLine++) {
+        const Standard_Integer* aLine = static_cast <Standard_Integer *>(myLines.ArrayIndexes(iLine));
+        const Standard_Integer nNodes = NLineNodes(iLine);
+        for (; i < nNodes; i++) {      
+          if (seg_line_intersect (theAxis.Location().XYZ(),
+                                  theAxis.Direction().XYZ(), anOver2,
+                                  nodeArrAtInd(aLine, i-1),
+                                  nodeArrAtInd(aLine, i-0),
+                                  &anInter))
+            if (anInter < aResult)
+              aResult = anInter;
+        }
+        if (myType & Type_Loop)
+          if (seg_line_intersect (theAxis.Location().XYZ(),
+                                  theAxis.Direction().XYZ(), anOver2,
+                                  nodeArrAtInd(aLine, nNodes-1),
+                                  nodeArrAtInd(aLine, 0),
+                                  &anInter))
           if (anInter < aResult)
             aResult = anInter;
       }
-      if (myType & Type_Loop)
-        if (seg_line_intersect (theAxis.Location().XYZ(),
-                                theAxis.Direction().XYZ(), anOver2,
-                                nodeArrAtInd(mypLines, myNLineNodes-1),
-                                nodeArrAtInd(mypLines, 0),
-                                &anInter))
-          if (anInter < aResult)
-            aResult = anInter;
     } else {
-      for (; i < myNLineNodes; i++) {
-        if (seg2d_line_intersect (theAxis.Location().XYZ(),
-                                  theAxis.Direction().XYZ(), anOver2,
-                                  nodeArrAtInd(mypLines, i-1),
-                                  nodeArrAtInd(mypLines, i-0),
-                                  &anInter))
+      for (Standard_Integer iLine = 0; iLine < NLines(); iLine++) {
+        const Standard_Integer* aLine = static_cast <Standard_Integer *>(myLines.ArrayIndexes(iLine));
+        const Standard_Integer nNodes = NLineNodes(iLine);
+        for (; i < nNodes; i++) {      
+          if (seg2d_line_intersect (theAxis.Location().XYZ(),
+                                    theAxis.Direction().XYZ(), anOver2,
+                                    nodeArrAtInd(aLine, i-1),
+                                    nodeArrAtInd(aLine, i-0),
+                                    &anInter))
+            if (anInter < aResult)
+              aResult = anInter;
+        }
+        if (myType & Type_Loop)
+          if (seg2d_line_intersect (theAxis.Location().XYZ(),
+                                    theAxis.Direction().XYZ(), anOver2,
+                                    nodeArrAtInd(aLine, nNodes-1),
+                                    nodeArrAtInd(aLine, 0),
+                                    &anInter))
           if (anInter < aResult)
             aResult = anInter;
       }
-      if (myType & Type_Loop)
-        if (seg2d_line_intersect (theAxis.Location().XYZ(),
-                                  theAxis.Direction().XYZ(), anOver2,
-                                  nodeArrAtInd(mypLines, myNLineNodes-1),
-                                  nodeArrAtInd(mypLines, 0),
-                                  &anInter))
-          if (anInter < aResult)
-            aResult = anInter;
     }
   }
 
   if ((myType & Type_Polygons) && myIsDrawPolygons) {
-    for (unsigned int iPoly = 0; iPoly < myNPolygons; iPoly++) {
-      const Standard_Integer * aPoly = mypPolygons[iPoly];
-      const Standard_Integer nNodes = NPolygonNodes(iPoly);
-      Standard_Integer i = 1;
+    for (Standard_Integer iPoly = 0; iPoly < NPolygons(); iPoly++) {
+      const Standard_Integer * aPoly = static_cast <Standard_Integer *>(myPolygons.ArrayIndexes(iPoly));
+      const Standard_Integer nNodes = NPolygonNodes(iPoly) - 1;
+      Standard_Integer i = 0;
       if (myNodeCoord > 2) {
-        for (; i < nNodes; i++) {
-          // Node index is incremented for the head of polygon indice array
+        for (; i < nNodes; i++) {          
           if (seg_line_intersect (theAxis.Location().XYZ(),
                                   theAxis.Direction().XYZ(), anOver2,
                                   nodeArrAtInd(aPoly, i+0),
@@ -1033,7 +1029,7 @@ Standard_Real NIS_Triangulated::Intersect (const gp_Ax1&       theAxis,
         if (seg_line_intersect (theAxis.Location().XYZ(),
                                 theAxis.Direction().XYZ(), anOver2,
                                 nodeArrAtInd(aPoly, nNodes),
-                                nodeArrAtInd(aPoly, 1),
+                                nodeArrAtInd(aPoly, 0),
                                 &anInter))
           if (anInter < aResult)
             aResult = anInter;
@@ -1051,7 +1047,7 @@ Standard_Real NIS_Triangulated::Intersect (const gp_Ax1&       theAxis,
         if (seg2d_line_intersect (theAxis.Location().XYZ(),
                                   theAxis.Direction().XYZ(), anOver2,
                                   nodeArrAtInd(aPoly, nNodes),
-                                  nodeArrAtInd(aPoly, 1),
+                                  nodeArrAtInd(aPoly, 0),
                                   &anInter))
           if (anInter < aResult)
             aResult = anInter;
@@ -1098,11 +1094,12 @@ Standard_Boolean NIS_Triangulated::Intersect
     }
   }
   if (aResult == isFullIn) {
-    if (myType & Type_Segments) {
-      for (Standard_Integer i = 0; i < myNLineNodes; i+=2) {
+    if ((myType & Type_Segments) && (NLineNodes() > 0)) {
+      Standard_Integer * aSegs = static_cast <Standard_Integer *>(myLines.ArrayIndexes(0));
+      for (Standard_Integer i = 0; i < NLineNodes()-1; i+=2) {
         const gp_Pnt aPnt[2] = {
-          nodeAtInd(mypLines, i+0).Transformed(theTrf),
-          nodeAtInd(mypLines, i+1).Transformed(theTrf)
+          nodeAtInd(aSegs, i+0).Transformed(theTrf),
+          nodeAtInd(aSegs, i+1).Transformed(theTrf)
         };
         const gp_XY aP2d[2] = { gp_XY(aPnt[0].X(), aPnt[0].Y()),
                                 gp_XY(aPnt[1].X(), aPnt[1].Y()) };
@@ -1120,49 +1117,53 @@ Standard_Boolean NIS_Triangulated::Intersect
         }
       }
     } else if (myType & Type_Line) {
-      for (Standard_Integer i = 1; i < myNLineNodes; i++) {
-        const gp_Pnt aPnt[2] = {
-          nodeAtInd(mypLines, i-1).Transformed(theTrf),
-          nodeAtInd(mypLines, i+0).Transformed(theTrf)
-        };
-        const gp_XY aP2d[2] = { gp_XY(aPnt[0].X(), aPnt[0].Y()),
-                                gp_XY(aPnt[1].X(), aPnt[1].Y()) };
-        if (isFullIn) {
-          if (seg_polygon_included (thePolygon, aP2d) == 0) {
-            aResult = Standard_False;
-            break;
-          }
-        } else {
-          if (seg_polygon_intersect (thePolygon, aP2d)) {
-            aResult = Standard_True;
-            break;
+      for (Standard_Integer iLine = 0; iLine < NLines(); iLine++) {
+        const Standard_Integer* aLine = static_cast <Standard_Integer *>(myLines.ArrayIndexes(iLine));
+        const Standard_Integer nNodes = NLineNodes(iLine);
+        for (Standard_Integer i = 0; i < nNodes-1; i++) {      
+          const gp_Pnt aPnt[2] = {
+            nodeAtInd(aLine, i+0).Transformed(theTrf),
+            nodeAtInd(aLine, i+1).Transformed(theTrf)
+          };
+          const gp_XY aP2d[2] = { gp_XY(aPnt[0].X(), aPnt[0].Y()),
+                                  gp_XY(aPnt[1].X(), aPnt[1].Y()) };
+          if (isFullIn) {
+            if (seg_polygon_included (thePolygon, aP2d) == 0) {
+              aResult = Standard_False;
+              break;
+            }
+          } else {
+            if (seg_polygon_intersect (thePolygon, aP2d)) {
+              aResult = Standard_True;
+              break;
+            }
           }
         }
-      }
-      if (aResult == isFullIn && (myType & Type_Loop)) {
-        const gp_Pnt aPntLast[2] = {
-          nodeAtInd(mypLines, myNLineNodes-1).Transformed(theTrf),
-          nodeAtInd(mypLines, 0).Transformed(theTrf)
-        };
-        const gp_XY aP2dLast[2] = { gp_XY(aPntLast[0].X(), aPntLast[0].Y()),
-                                    gp_XY(aPntLast[1].X(), aPntLast[1].Y()) };
+        if (aResult == isFullIn && (myType & Type_Loop)) {
+          const gp_Pnt aPntLast[2] = {
+            nodeAtInd(aLine, nNodes-1).Transformed(theTrf),
+            nodeAtInd(aLine, 0).Transformed(theTrf)
+          };
+          const gp_XY aP2dLast[2] = { gp_XY(aPntLast[0].X(), aPntLast[0].Y()),
+                                      gp_XY(aPntLast[1].X(), aPntLast[1].Y()) };
 
-        if (isFullIn) {
-          if (seg_polygon_included (thePolygon, aP2dLast) == 0)
-            aResult = Standard_False;
-        } else {
-          if (seg_polygon_intersect (thePolygon, aP2dLast))
-            aResult = Standard_True;
+          if (isFullIn) {
+            if (seg_polygon_included (thePolygon, aP2dLast) == 0)
+              aResult = Standard_False;
+          } else {
+            if (seg_polygon_intersect (thePolygon, aP2dLast))
+              aResult = Standard_True;
+          }
         }
       }
     } else if ((myType & Type_Polygons) && myIsDrawPolygons) {
-      for (unsigned int iPoly = 0; iPoly < myNPolygons; iPoly++) {
-        const Standard_Integer * aPoly = mypPolygons[iPoly];
-        const Standard_Integer nNodes = NPolygonNodes(iPoly);
+      for (Standard_Integer iPoly = 0; iPoly < NPolygons(); iPoly++) {
+        const Standard_Integer * aPoly = static_cast <Standard_Integer *>(myPolygons.ArrayIndexes(iPoly));
+        const Standard_Integer nNodes = NPolygonNodes(iPoly);      
         for (Standard_Integer i = 1; i < nNodes; i++) {
           const gp_Pnt aPnt[2] = {
-            nodeAtInd(aPoly, i+0).Transformed(theTrf),
-            nodeAtInd(aPoly, i+1).Transformed(theTrf)
+            nodeAtInd(aPoly, i-1).Transformed(theTrf),
+            nodeAtInd(aPoly, i+0).Transformed(theTrf)
           };
           const gp_XY aP2d[2] = { gp_XY(aPnt[0].X(), aPnt[0].Y()),
                                   gp_XY(aPnt[1].X(), aPnt[1].Y()) };
@@ -1180,8 +1181,8 @@ Standard_Boolean NIS_Triangulated::Intersect
         }
         if (aResult == isFullIn) {
           const gp_Pnt aPntLast[2] = {
-            nodeAtInd(aPoly, nNodes).Transformed(theTrf),
-            nodeAtInd(aPoly, 1).Transformed(theTrf)
+            nodeAtInd(aPoly, nNodes-1).Transformed(theTrf),
+            nodeAtInd(aPoly, 0).Transformed(theTrf)
           };
           const gp_XY aP2dLast[2] = { gp_XY(aPntLast[0].X(), aPntLast[0].Y()),
                                       gp_XY(aPntLast[1].X(), aPntLast[1].Y()) };
@@ -1281,6 +1282,8 @@ Purpose    : Intersect a 2D triangle with a 3D line. Z coordinate of triangle
            : is zero
 Parameters : start  - coordinates of the origin of the line
              dir    - coordinates of the direction of the line (normalized)
+             over2  - maximal square distance between the line and one side of 
+                      triangle in intersection state.
              V0     - first vertex of the triangle
              V1     - second vertex of the triangle
              V2     - third vertex of the triangle
@@ -1291,6 +1294,7 @@ Returns    : int = 1 if intersection found, 0 otherwise
 
 int NIS_Triangulated::tri2d_line_intersect (const double      start[3],
                                             const double      dir[3],
+                                            const double      over2,
                                             const float       V0[2],
                                             const float       V1[2],
                                             const float       V2[2],
@@ -1321,14 +1325,49 @@ int NIS_Triangulated::tri2d_line_intersect (const double      start[3],
     const double dot11 = v[1][0]*v[1][0] + v[1][1]*v[1][1];
     const double dot12 = v[1][0]*v[2][0] + v[1][1]*v[2][1];
     const double denom = (dot00 * dot11 - dot01 * dot01);
-    if (denom * denom < conf) {
-      // Point on the 1st side of the triangle
-      res = (dot01 > -conf && dot00 < dot11 + conf);
+    if (denom * denom < conf * conf) {
+      // Find the bounding box of the triangle
+      double bbox[][2] = { { V0[0], V0[1] }, { V0[0], V0[1] }};
+      if (V1[0] < V0[0])
+        bbox[0][0] = V1[0];
+      else
+        bbox[1][0] = V1[0];
+      if (V1[1] < V0[1])
+        bbox[0][1] = V1[1];
+      else
+        bbox[1][1] = V1[1];
+      if (V2[0] < bbox[0][0])
+        bbox[0][0] = V2[0];
+      else if (V2[0] > bbox[1][0])
+        bbox[1][0] = V2[0];
+      if (V2[1] < bbox[0][1])
+        bbox[0][1] = V2[1];
+      else if (V2[1] > bbox[1][1])
+        bbox[1][1] = V2[1];
+      // Classify toward the bounding box
+      if (p2d[0] > bbox[0][0] - conf && p2d[0] < bbox[1][0] + conf &&
+          p2d[1] > bbox[0][1] - conf && p2d[1] < bbox[1][1] + conf)
+        // Point on the 1st side of the triangle
+        res = (dot01 > -conf && dot00 < dot11 + conf);
     } else {
       // Barycentric coordinates of the point
-      const double u = (dot11 * dot02 - dot01 * dot12) / denom;
-      const double v = (dot00 * dot12 - dot01 * dot02) / denom;
-      res = (u > -conf) && (v > -conf) && (u + v < 1. + conf);
+      const double uc = (dot11 * dot02 - dot01 * dot12) / denom;
+      const double vc = (dot00 * dot12 - dot01 * dot02) / denom;
+      if ((uc > -conf) && (vc > -conf) && (uc + vc < 1. + conf))
+        res = 1;
+      else if (over2 > conf) {
+        // seek the proximity to the border of the triangle - two sides enough
+        if (dot02 > 0. && dot02 < dot00) {
+          const double aD = v[0][0]*v[2][1] - v[0][1]*v[2][0];
+          if (aD * aD < dot00 * over2)
+            res = 1;
+        }
+        if (res == 0 && dot12 > 0. && dot12 < dot11) {
+          const double aD = v[1][0]*v[2][1] - v[1][1]*v[2][0];
+          if (aD * aD < dot11 * over2)
+            res = 1;
+        }
+      }
     }
   }
   if (res && tInter)
@@ -1736,12 +1775,13 @@ void NIS_Triangulated::allocateNodes (const Standard_Integer nNodes)
     myNNodes = nNodes;
     mypNodes = static_cast<Standard_ShortReal*>
       (myAlloc->Allocate(sizeof(Standard_ShortReal) * myNodeCoord * nNodes));
+
     if (nNodes < 256)
       myIndexType = 0;
     else if (nNodes < 65536)
       myIndexType = 1;
     else
-      myIndexType = 2;
+      myIndexType = 2;    
   }
 }
 
@@ -1799,3 +1839,4 @@ float* NIS_Triangulated::nodeArrAtInd (const Standard_Integer * theArray,
   }
   return pResult;
 }
+

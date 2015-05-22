@@ -23,7 +23,8 @@ uses
     Transformation        from Geom,
     Shape                 from TopoDS,
     PresentationManager3d from PrsMgr,
-    Presentation          from Prs3d
+    Presentation          from Prs3d,
+    Drawer                from Prs3d
 
 is
     Create(Sh:Shape from TopoDS) returns mutable Shape from StdSelect;
@@ -60,6 +61,9 @@ is
     Shape(me:mutable;sh : Shape from TopoDS);
     	---C++: inline
 
+    SetDrawer(me : mutable; aDrawer : Drawer from Prs3d);
+
 fields
     mysh : Shape  from TopoDS;
+    myDrawer : Drawer from Prs3d;
 end Shape;

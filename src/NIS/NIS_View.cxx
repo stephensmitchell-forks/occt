@@ -13,6 +13,9 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
+#include <OpenGl_GlCore11.hxx>
+#include <OpenGl_Context.hxx>
+
 #include <NIS_View.hxx>
 #include <NIS_InteractiveContext.hxx>
 #include <NIS_InteractiveObject.hxx>
@@ -25,6 +28,8 @@
 
 IMPLEMENT_STANDARD_HANDLE  (NIS_View, V3d_OrthographicView)
 IMPLEMENT_STANDARD_RTTIEXT (NIS_View, V3d_OrthographicView)
+IMPLEMENT_STANDARD_HANDLE  (NIS_ViewData, Standard_Transient)
+IMPLEMENT_STANDARD_RTTIEXT (NIS_ViewData, Standard_Transient)
 
 //=======================================================================
 //function : NIS_View()
@@ -34,11 +39,21 @@ IMPLEMENT_STANDARD_RTTIEXT (NIS_View, V3d_OrthographicView)
 NIS_View::NIS_View (const Handle(V3d_Viewer)&    theViewer,
                     const Handle(Aspect_Window)& theWindow)
   : V3d_OrthographicView (theViewer),
-    myIsTopHilight(Standard_False),
-    myDoHilightSelected(Standard_True)
+    myIsTopHilight       (Standard_False),
+    myIsTopDynHilight    (Standard_False),
+    myDoHilightSelected  (Standard_True),
+    myGlCtx              (NULL),
+    myHDC                (0L),
+    myHGLRC              (0L)
 {
-  if (!theWindow.IsNull())
+  if (!theWindow.IsNull()) {
+    myViewport[0] = -1;
     V3d_View::SetWindow (theWindow, NULL, &MyCallback, this);
+  }
+  myViewport[0] = 0;
+  myViewport[1] = 0;
+  myViewport[2] = 0;
+  myViewport[3] = 0;
 }
 
 //=======================================================================
@@ -48,7 +63,11 @@ NIS_View::NIS_View (const Handle(V3d_Viewer)&    theViewer,
 
 void NIS_View::SetWindow(const Handle(Aspect_Window) &theWindow)
 {
+  myViewport[0] = -1;
   V3d_View::SetWindow (theWindow, NULL, &MyCallback, this);
+  myViewport[0] = 0;
+  myHDC = 0L;
+  myHGLRC = 0L;
 }
 
 // //=======================================================================
@@ -90,11 +109,17 @@ void NIS_View::RemoveContext (NIS_InteractiveContext * theCtx)
       break;
     }
 
+  // If draw lists are shared in this Context then they should be
+  // destroyed when we detach from the last view (1 remaining view is detached).
+  Standard_Boolean isForcedDestroy(Standard_False);
+  if (theCtx->myIsShareDrawList && theCtx->myViews.Extent() == 1)
+    isForcedDestroy = Standard_True;
+
   NCollection_Map<Handle_NIS_Drawer>::Iterator anIterD (theCtx->GetDrawers ());
   for (; anIterD.More(); anIterD.Next()) {
     const Handle(NIS_Drawer)& aDrawer = anIterD.Value();
     if (aDrawer.IsNull() == Standard_False) {
-      aDrawer->UpdateExListId(this);
+      aDrawer->UpdateExListId(isForcedDestroy ? 0L : this);
     }
   }
 }
@@ -186,6 +211,46 @@ Standard_Boolean NIS_View::FitAll3d (const Quantity_Coefficient theCoef)
 }
 
 //=======================================================================
+//function : GetViewData
+//purpose  : get or create a new ViewData instance.
+//           For thread safety the instances are kept in a list instead of
+//           map: operation List::Append is atomic thus safe.
+//=======================================================================
+
+Handle_NIS_ViewData& NIS_View::GetViewData (const char * theKey)
+{
+  NCollection_List<struct NamedViewData>::Iterator anIter(myViewData);
+  for (; anIter.More(); anIter.Next()) {
+    const NamedViewData& aData = anIter.Value();
+    if (aData.Name.IsEqual(theKey))
+      break;
+  }
+  if (anIter.More())
+    return anIter.ChangeValue().Data;
+  struct NamedViewData aNewData;
+  aNewData.Name = theKey;
+  return myViewData.Append(aNewData).Data; 
+}
+
+//=======================================================================
+//function : Remove
+//purpose  : Expressly close internal data structures
+//=======================================================================
+
+void NIS_View::Remove ()
+{
+  if (!myGlCtx.IsNull())
+  {
+    if (myGlCtx->MakeCurrent())
+    {
+      myGlCtx.Nullify();
+      myViewData.Clear();
+    }
+  }
+  V3d_View::Remove();
+}
+
+//=======================================================================
 //function : GetBndBox
 //purpose  :
 //=======================================================================
@@ -262,42 +327,141 @@ void NIS_View::GetBndBox( Standard_Integer& theXMin, Standard_Integer& theXMax,
   }
 }
 
+//=======================================================================
+//function : MakeCurrent
+//purpose  : 
+//=======================================================================
+
+Standard_Boolean NIS_View::MakeCurrent() const
+{
+  Standard_Boolean aResult(Standard_False);
+  HDC anActiveHdc     = wglGetCurrentDC();
+  HGLRC anActiveGlCtx = wglGetCurrentContext();
+  if (myHDC == anActiveHdc && myHGLRC == anActiveGlCtx)
+    aResult = Standard_True;
+  else if (wglMakeCurrent(reinterpret_cast<HDC>(myHDC),
+                          reinterpret_cast<HGLRC>(myHGLRC)))
+    aResult = Standard_True;
+  return aResult;
+}
 
 //=======================================================================
 //function : MyCallback
+//purpose  : 
+//=======================================================================
+
+int NIS_View::MyCallback (Aspect_Drawable /* Window ID */,
+                          void*                         theUserData, 
+                          Aspect_GraphicCallbackStruct* thecallData)
+{
+  // NKV 14.07.11: Avoid double rendering of the scene
+  // (workaround of integration from BUG OCC22377, that calls view
+  // call back twice: before drawing overlay layer and after drawing,
+  // see comments to OCC_PRE_OVERLAY definition)
+  NIS_View* thisView = static_cast<NIS_View*> (theUserData);
+  if ((thecallData->reason & OCC_PRE_OVERLAY) == 0) {
+    Handle(OpenGl_Context) aGlContext = 
+      Handle(OpenGl_Context)::DownCast(thecallData->glContext);
+    thisView->myGlCtx = aGlContext;
+    if (!thisView->myHDC)
+      thisView->myHDC = wglGetCurrentDC();
+    if (!thisView->myHGLRC)
+      thisView->myHGLRC = wglGetCurrentContext();
+    if (thisView->myViewport[0] >= 0) {
+      thisView->redrawCallback();
+    }
+  }
+
+  return 0;
+}
+
+//=======================================================================
+//function : redrawCallback
 //purpose  :
 //=======================================================================
 
-int NIS_View::MyCallback (Aspect_Drawable                /* Window ID */,
-                          void*                          ptrData,
-                          Aspect_GraphicCallbackStruct*  callData /* call data */)
+void NIS_View::redrawCallback()
 {
-  // Avoid multiple rendering of the scene ( accordingly with update of
-  // callback mechanism, that invokes additional callbacks before
-  // underlay and overlay redrawing with OCC_PRE_REDRAW and OCC_PRE_OVERLAY
-  // bits added to the "reason" value of the callback data structure;
-  // see comments to OCC_REDRAW_ADDITIONAL_CALLBACKS definition )
-  if (callData->reason & OCC_REDRAW_ADDITIONAL_CALLBACKS)
-    return 0;
+  // cache render mode state
+  GLint aRendMode = GL_RENDER;
+  glGetIntegerv (GL_RENDER_MODE, &aRendMode);
 
-  const Handle(NIS_View) thisView (static_cast<NIS_View *> (ptrData));
-  NCollection_List<NIS_InteractiveContext *>::Iterator anIter;
+  if (myGlCtx.IsNull() == Standard_False) {
+    myGlCtx->Init();
+    myGlCtx->SetFeedback (aRendMode == GL_FEEDBACK);
+  }
+
+  const Handle(NIS_View) thisView = this;
+
+  // ==== Get pixel size
+  {
+    glGetIntegerv(GL_VIEWPORT, myViewport);
+    Standard_Integer anX(myViewport[0] + myViewport[2]/2);
+    Standard_Integer anY(myViewport[1] + myViewport[3]/2);
+    const gp_XYZ aPnt[3] = {
+      UnConvert (anX, anY),
+      UnConvert (anX + 5, anY),
+      UnConvert (anX, anY + 5)
+    };
+    myPixelSize.SetCoord(0.2 * (aPnt[1] - aPnt[0]).Modulus(),
+                         0.2 * (aPnt[2] - aPnt[0]).Modulus());
+  }
+
+  // ==== Get view transformation
+  {
+    Standard_Real anX, anY, aZ;
+    // vector orthogonal to the view plane
+    Proj (anX, anY, aZ);
+    myProj.SetCoord (anX, anY, aZ);
+
+    // 3D point for the 3D coordinates
+    Convert(myViewport[0] + myViewport[2] / 2,
+            myViewport[1] + myViewport[3] / 2, anX, anY, aZ);
+    const gp_Pnt anEye (anX, anY, aZ);
+
+    // 3D point for the 3D coordinates
+    Convert(myViewport[0] + myViewport[2],
+            myViewport[1] + myViewport[3] / 2, anX, anY, aZ);
+    const gp_XYZ anXdir (gp_XYZ(anX, anY, aZ) - anEye.XYZ());
+    myViewSize.SetX(anXdir.Modulus());
+    Convert(myViewport[0] + myViewport[2] / 2, myViewport[1], anX, anY, aZ);
+    myViewSize.SetY((gp_XYZ(anX, anY, aZ) - anEye.XYZ()).Modulus());
+    if (anXdir.SquareModulus() > 1e-20) {
+      const gp_Ax3 anAx3 (anEye, myProj, anXdir);
+      myTrsf.SetTransformation (anAx3);
+    }
+  }
+
+  // ==== Manage the ViewData
+  NCollection_List<NamedViewData>::Iterator anIterVD(myViewData);
+  for (; anIterVD.More(); anIterVD.Next()) {
+    const Handle(NIS_ViewData)& aData = anIterVD.Value().Data;
+    if (aData.IsNull() == Standard_False) {
+      aData->Init();
+      if (aData->myView != this)
+        aData->myView = this;
+    }
+  }
+
 #ifdef CLIP
   // Find the bounding box of all displayed objects by summing the boxes stored
   // in the relevant DrawList instances.
   Bnd_B3f aBndBox;
-  for (anIter = thisView->myContexts; anIter.More(); anIter.Next())
+  NCollection_List<NIS_InteractiveContext *>::Iterator anIter = myContexts;
+  for (; anIter.More(); anIter.Next())
+  {
     anIter.Value()->GetBox (aBndBox, pView);
+  }
 
   if (aBndBox.IsVoid() == Standard_False) {
     const gp_XYZ aBoxSize   = 0.5 * (aBndBox.CornerMax() - aBndBox.CornerMin());
     const gp_XYZ aBoxCenter = 0.5 * (aBndBox.CornerMax() + aBndBox.CornerMin());
 
     // Find the ray passing through the clicked point in the view window.
-    Standard_Real anX, anY, aZ;
-    thisView->Convert(0, 0, anX, anY, aZ);  // 3D point for the 3D coordinates
+    Standard_Real aZ;
+    Convert(0, 0, anX, anY, aZ);  // 3D point for the 3D coordinates
     const gp_Pnt anEye (anX, anY, aZ);
-    thisView->Proj (anX, anY, aZ);  // vector orthogonal to the view plane
+    Proj (anX, anY, aZ);  // vector orthogonal to the view plane
     const gp_Dir aProj (anX, anY, aZ);
     const gp_Ax1 anAxis (anEye, aProj);
 
@@ -335,12 +499,13 @@ int NIS_View::MyCallback (Aspect_Drawable                /* Window ID */,
   glDisableClientState(GL_TEXTURE_COORD_ARRAY);
   if (!isDepthTest) {
     glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
     glClearDepth(1.);
     glClear(GL_DEPTH_BUFFER_BIT);
   }
+  glDepthFunc(GL_LEQUAL);
+  glDepthMask(GL_TRUE);
 
-  TColStd_MapIteratorOfPackedMapOfInteger anIterM(thisView->myExListId);
+  TColStd_MapIteratorOfPackedMapOfInteger anIterM (myExListId);
   for (; anIterM.More(); anIterM.Next())
     if (anIterM.Key() != 0) {
 #ifdef ARRAY_LISTS
@@ -349,33 +514,56 @@ int NIS_View::MyCallback (Aspect_Drawable                /* Window ID */,
       glDeleteLists (anIterM.Key(), 1);
     }
 #endif
-  thisView->myExListId.Clear();
+  myExListId.Clear();
 
-  for (anIter = thisView->myContexts; anIter.More(); anIter.Next())
-    anIter.Value()->redraw (thisView, NIS_Drawer::Draw_Normal);
+  redraw (thisView, NIS_Drawer::Draw_Normal);
 
   // #818151 - selected object is hidden by covered unselected one
   // display hilighted objects always above the rest ones
-  if (thisView->myIsTopHilight == Standard_True) {
+  if (myIsTopHilight == Standard_True) {
     glDepthFunc(GL_ALWAYS);
   }
 
-  for (anIter = thisView->myContexts; anIter.More(); anIter.Next())
-    anIter.Value()->redraw (thisView, NIS_Drawer::Draw_Hilighted);
-  for (anIter = thisView->myContexts; anIter.More(); anIter.Next())
-    anIter.Value()->redraw (thisView, NIS_Drawer::Draw_DynHilighted);
-  for (anIter = thisView->myContexts; anIter.More(); anIter.Next())
-    anIter.Value()->redraw (thisView, NIS_Drawer::Draw_Transparent);
+  redraw (thisView, NIS_Drawer::Draw_Hilighted);
+
+  // Depth buffer should be read-only for transparent objects,
+  // the same for further types
+  glDepthMask(GL_FALSE);
+  redraw (thisView, NIS_Drawer::Draw_Transparent);
+  if (myIsTopDynHilight == Standard_False)
+  {
+    redraw (thisView, NIS_Drawer::Draw_DynHilighted);
+  }
 
   // draw top objects always above
-  if (thisView->myIsTopHilight == Standard_False) {
+  if (myIsTopHilight == Standard_False)
+  {
     glDepthFunc(GL_ALWAYS);
   }
+  if (myIsTopDynHilight == Standard_True)
+  {
+    redraw (thisView, NIS_Drawer::Draw_DynHilighted);
+  }
 
-  for (anIter = thisView->myContexts; anIter.More(); anIter.Next())
-    anIter.Value()->redraw (thisView, NIS_Drawer::Draw_Top);
+  redraw (thisView, NIS_Drawer::Draw_Top);
+}
 
-  return 0;
+//=======================================================================
+//function : redraw
+//purpose  :
+//=======================================================================
+
+void NIS_View::redraw (const Handle(NIS_View)&    theView,
+                       const NIS_Drawer::DrawType theType)
+{
+  for (Standard_Integer aPriority = 0; aPriority < NIS_Drawer::Priority_LevelsNb; ++aPriority)
+  {
+    for (NCollection_List<NIS_InteractiveContext *>::Iterator anIter = myContexts;
+         anIter.More(); anIter.Next())
+    {
+      anIter.Value()->redraw (theView, theType, (NIS_Drawer::PriorityLevel )aPriority);
+    }
+  }
 }
 
 //=======================================================================
@@ -383,19 +571,24 @@ int NIS_View::MyCallback (Aspect_Drawable                /* Window ID */,
 //purpose  :
 //=======================================================================
 
-void NIS_View::DynamicHilight  (const Standard_Integer theX,
-                                const Standard_Integer theY)
+Standard_Boolean NIS_View::DynamicHilight  (const Standard_Integer theX,
+                                            const Standard_Integer theY)
 {
+  Standard_Boolean aResult(Standard_False);
   myDetected.Clear();
-  const Handle(NIS_InteractiveObject) aSelected = Pick (theX, theY);
+
+  const Handle(NIS_InteractiveObject) aSelected =
+    Pick (theX, theY, NIS_SelectFilter::DynHilight);
 
   // ASV: if at least one Context returns IsSelectable()==False,
   // hilight is canceled, this method returns
-  if (aSelected.IsNull() == Standard_False) {
-    if (aSelected->IsSelectable() == Standard_False)
-      return;
-  }
-  if (aSelected != myDynHilighted) {
+  if ((aSelected.IsNull() == Standard_False &&
+       aSelected->IsSelectable() == Standard_False) ||
+      aSelected == myDynHilighted)
+  {
+    ;//DrawDirect(theX, theY);
+  } else {
+    //DrawDirect(theX, theY, Standard_False);
     const Handle(NIS_View) aView (this);
     if (myDynHilighted.IsNull() == Standard_False)
       if (myDynHilighted->GetDrawer().IsNull() == Standard_False)
@@ -415,7 +608,9 @@ void NIS_View::DynamicHilight  (const Standard_Integer theX,
       myDynHilighted = aSelected;
     }
     Redraw();
+    aResult = Standard_True;
   }
+  return aResult;
 }
 
 //=======================================================================
@@ -425,7 +620,7 @@ void NIS_View::DynamicHilight  (const Standard_Integer theX,
 
 void NIS_View::DynamicUnhilight(const Handle_NIS_InteractiveObject& theObj)
 {
-  if (theObj == myDynHilighted && theObj.IsNull() == Standard_False) {
+  if (theObj.IsNull() == Standard_False && theObj == myDynHilighted) {
     const Handle(NIS_View) aView (this);
     if (myDynHilighted->GetDrawer().IsNull() == Standard_False)
       myDynHilighted->GetDrawer()->SetDynamicHilighted (Standard_False,
@@ -442,21 +637,32 @@ void NIS_View::DynamicUnhilight(const Handle_NIS_InteractiveObject& theObj)
 
 void NIS_View::Select (const Standard_Integer theX,
                        const Standard_Integer theY,
-                       const Standard_Boolean isForceMultiple,
+                       const Standard_Boolean isModifierUsed,
                        const Standard_Boolean theRedraw)
 {
   myDetected.Clear();
-  const Handle(NIS_InteractiveObject) aSelected = Pick (theX, theY);
+  Standard_Real anOver;
+  const gp_Ax1 anAxis = PickAxis(theX, theY, anOver);
+  const Handle(NIS_InteractiveObject) aSelected =
+    Pick(anAxis, anOver, Standard_True, 0L, NIS_SelectFilter::Pick);
+
   NCollection_List<NIS_InteractiveContext *>::Iterator anIter (myContexts);
-  for (; anIter.More(); anIter.Next())
-    anIter.Value()->ProcessSelection (aSelected, isForceMultiple);
+  Standard_Boolean isProcessed(Standard_False);
+  for (; anIter.More(); anIter.Next()) {
+    NIS_InteractiveContext* aCtx = anIter.Value();
+    if (aCtx != 0L)
+      if (aCtx->ProcessSelection (aSelected, isModifierUsed))
+        isProcessed = Standard_True;
+  }
   if (aSelected == myDynHilighted && aSelected.IsNull() == Standard_False)
   {
     myDynHilighted.Nullify();
     const Handle(NIS_Drawer)& aDrawer = aSelected->GetDrawer();
     aDrawer->SetDynamicHilighted (Standard_False, aSelected, this);
+    isProcessed = Standard_True;
   }
-  if (theRedraw) Redraw();
+  if (theRedraw && isProcessed)
+    Redraw();
 }
 
 //=======================================================================
@@ -468,7 +674,7 @@ void NIS_View::Select (const Standard_Integer  theXmin,
                        const Standard_Integer  theYmin,
                        const Standard_Integer  theXmax,
                        const Standard_Integer  theYmax,
-                       const Standard_Boolean  isForceMult,
+                       const Standard_Boolean  isModifierUsed,
                        const Standard_Boolean  isFullyIncluded,
                        const Standard_Boolean  theRedraw)
 {
@@ -506,7 +712,7 @@ void NIS_View::Select (const Standard_Integer  theXmin,
     NIS_InteractiveContext * pCtx = anIterC.Value();
     mapSelected.Clear();
     pCtx->selectObjects (mapSelected, aBoxSel, aTrfInv, aTrf, isFullyIncluded);
-    pCtx->ProcessSelection (mapSelected, isForceMult);
+    pCtx->ProcessSelection (mapSelected, isModifierUsed);
   }
   if (theRedraw) Redraw();
 }
@@ -517,12 +723,12 @@ void NIS_View::Select (const Standard_Integer  theXmin,
 //=======================================================================
 
 void  NIS_View::Select (const NCollection_List<gp_XY> &thePolygon,
-                        const Standard_Boolean         isForceMult,
+                        const Standard_Boolean         isModifierUsed,
                         const Standard_Boolean         isFullyIncluded,
                         const Standard_Boolean         theRedraw)
 {
   myDetected.Clear();
-  if (thePolygon.IsEmpty())
+  if (thePolygon.Extent() < 3)
     return;
 
   Standard_Real anX, anY, aZ;
@@ -578,32 +784,50 @@ void  NIS_View::Select (const NCollection_List<gp_XY> &thePolygon,
     NIS_InteractiveContext * pCtx = anIterC.Value();
     mapSelected.Clear();
     pCtx->selectObjects (mapSelected, aPoints, aPolyBox, aTrf, isFullyIncluded);
-    pCtx->ProcessSelection (mapSelected, isForceMult);
+    pCtx->ProcessSelection (mapSelected, isModifierUsed);
   }
 
   if (theRedraw) Redraw();
 }
 
 //=======================================================================
-//function : Pick
+//function : PickAxis
 //purpose  :
 //=======================================================================
 
-Handle_NIS_InteractiveObject NIS_View::Pick (const Standard_Integer theX,
-                                             const Standard_Integer theY)
+gp_Ax1 NIS_View::PickAxis       (const Standard_Integer theX,
+                                 const Standard_Integer theY,
+                                 Standard_Real&         theOver)
 {
   // Find the ray passing through the clicked point in the view window.
-  Standard_Real anX, anY, aZ, anOver;
+  Standard_Real anX, anY, aZ;
   Convert(theX, theY, anX, anY, aZ);  // 3D point for the 3D coordinates
   const gp_Pnt anEye (anX, anY, aZ);
+#ifdef OBSOLETE
   Proj (anX, anY, aZ);                // vector orthogonal to the view plane
   const gp_Dir aProj (-anX, -anY, -aZ);
   const gp_Ax1 anAxis (anEye, aProj);
 
   Convert (theX+1, theY+1, anX, anY, aZ);
-  anOver = ((gp_XYZ(anX, anY, aZ) - anEye.XYZ()) ^ aProj.XYZ()).Modulus() * 1.5;
+  theOver= ((gp_XYZ(anX, anY, aZ) - anEye.XYZ()) ^ aProj.XYZ()).Modulus() * 1.5;
+#endif
+  theOver = 2 * myPixelSize.Modulus();
+  return gp_Ax1(anEye, -gp_Dir(myProj));
+}
 
-  return Pick(anAxis, anOver, Standard_True);
+//=======================================================================
+//function : Pick
+//purpose  : 
+//=======================================================================
+
+Handle_NIS_InteractiveObject NIS_View::Pick
+                                (const Standard_Integer theX,
+                                 const Standard_Integer theY,
+                                 const NIS_SelectFilter::Event theEvent)
+{
+  Standard_Real anOver;
+  const gp_Ax1 anAxis = PickAxis(theX, theY, anOver);
+  return Pick(anAxis, anOver, Standard_True, 0L, theEvent);
 }
 
 //=======================================================================
@@ -612,32 +836,101 @@ Handle_NIS_InteractiveObject NIS_View::Pick (const Standard_Integer theX,
 //=======================================================================
 
 Handle_NIS_InteractiveObject NIS_View::Pick
-                                (const gp_Ax1&          theAxis,
-                                 const Standard_Real    theOver,
-                                 const Standard_Boolean isOnlySelectable)
+                                (const gp_Ax1&           theAxis,
+                                 const Standard_Real     theOver,
+                                 const Standard_Boolean  isOnlySelectable,
+                                 Standard_Real*          theDistance,
+                                 const NIS_SelectFilter::Event theEvent)
 {
   typedef NCollection_List<NIS_InteractiveContext::DetectedEnt> LstDetected;
-  Standard_Real                 aDistance (0.1 * RealLast());
-  Handle(NIS_InteractiveObject) aSelected, aTmpSel;
   LstDetected aDetected;
-
-  NCollection_List<NIS_InteractiveContext *>::Iterator anIterC (myContexts);
-  for (; anIterC.More(); anIterC.Next()) {
-    const Standard_Real aDist =
-      anIterC.Value()->selectObject (aTmpSel, aDetected, theAxis, theOver,
-                                     isOnlySelectable);
-    if (aDist < aDistance) {
-      aDistance = aDist;
-      aSelected = aTmpSel;
-    }
+  for (NCollection_List<NIS_InteractiveContext*>::Iterator anIterC (myContexts);
+       anIterC.More(); anIterC.Next())
+  {
+    anIterC.Value()->selectObject (aDetected, theAxis, theOver, isOnlySelectable, theEvent);
   }
 
   // simple iterating is enough to create list of detected objects
   // in the order of increasing distance
   myDetected.Clear();
-  for (LstDetected::Iterator anIt(aDetected); anIt.More(); anIt.Next())
-    myDetected.Append(anIt.Value().PObj);
+  for (LstDetected::Iterator anIt (aDetected); anIt.More(); anIt.Next())
+  {
+    myDetected.Append (anIt.Value().PObj);
+  }
 
+  Handle(NIS_InteractiveObject) aSelected = aDetected.IsEmpty() ? (NIS_InteractiveObject* )NULL : aDetected.First().PObj;
+  if (theDistance != NULL)
+  {
+    *theDistance = aDetected.IsEmpty() ? (0.1 * RealLast()) : aDetected.First().Dist;
+  }
+
+  if (aSelected.IsNull())
+  {
+    return aSelected;
+  }
+
+  // notify the SelectFilter if available
+  NIS_InteractiveContext* aSelectedCtx = aSelected->GetDrawer()->GetContext();
+  if (aSelectedCtx != NULL
+   && !aSelectedCtx->GetFilter().IsNull()
+   && aSelectedCtx->GetFilter()->ActsOn (aSelected->DynamicType()))
+  {
+    NIS_SelectFilter::Event aFinalEvent = NIS_SelectFilter::Indefinite;
+    if (theEvent == NIS_SelectFilter::Pick)
+    {
+      aFinalEvent = NIS_SelectFilter::Picked;
+    }
+    else if (theEvent == NIS_SelectFilter::DynHilight)
+    {
+      aFinalEvent = NIS_SelectFilter::DynHilighted;
+    }
+    aSelectedCtx->GetFilter()->IsOk (aSelected.operator->(), theAxis,
+                                     theOver, aFinalEvent);
+  }
   return aSelected;
 }
 
+//=======================================================================
+//function : UnConvert
+//purpose  : 2d pixel coord => 3d point coord in Ortho viewer
+//=======================================================================
+
+gp_XYZ NIS_View::UnConvert (const Standard_Integer theX,
+                            const Standard_Integer theY) const
+{
+  const Visual3d_ViewOrientation anOri = ViewOrientation();
+  Standard_Real anX, anY, aZ, anXp, anYp;
+  anOri.ViewReferencePoint().Coord(anX, anY, aZ);
+  gp_XYZ anOrigin(anX, anY, aZ);
+  anOri.ViewReferencePlane().Coord(anX, anY, aZ);
+  gp_XYZ aNorm(anX, anY, aZ);
+  anOri.ViewReferenceUp().Coord(anX, anY, aZ);
+  gp_XYZ anYdir(anX, anY, aZ);
+  gp_XYZ anXdir = anYdir ^ aNorm;
+  Convert(theX, theY, anXp, anYp);
+  return (anOrigin + anXdir * anXp + anYdir * anYp);
+}
+
+//=======================================================================
+//function : ClipToViewport
+//purpose  : Test and clip the given coordinates to fit to the Viewport
+//=======================================================================
+
+Standard_Boolean NIS_View::ClipToViewport  (Standard_Integer& theX,
+                                            Standard_Integer& theY) const
+{
+  Standard_Integer iResult(0);
+  if (theX < myViewport[0])
+    theX = myViewport[0];
+  else if (theX >= myViewport[0] + myViewport[2])
+    theX = myViewport[0] + myViewport[2] - 1;
+  else
+    iResult |= 0x1; 
+  if (theY < myViewport[1])
+    theY = myViewport[1];
+  else if (theY >= myViewport[1] + myViewport[3])
+    theY = myViewport[1] + myViewport[3] - 1;
+  else
+    iResult |= 0x2;
+  return iResult == 0x3;
+}

@@ -106,6 +106,12 @@ is
     ExtensionSize (me) returns Real from Standard;
     ---Purpose: Returns extension size.
 
+    SetShortExtensionSize (me : mutable; theSize : Real from Standard);
+    ---Purpose: Set size for the short extension (without text).
+
+    ShortExtensionSize (me) returns Real from Standard;
+    ---Purpose: Returns extension size.
+
     SetValueStringFormat (me : mutable; theFormat : AsciiString from TCollection);
     ---Purpose: Sets "sprintf"-syntax format for formatting dimension value labels.
 
@@ -138,7 +144,10 @@ fields
 
     myExtensionSize : Real from Standard;
     ---Purpose: Size of arrow extensions.
-    -- The length of arrow tails if arrows are located outside dimension line.
+    -- The length of arrow tail with text if arrows are located outside dimension line.
+
+    myShortExtensionSize : Real from Standard;
+    ---Purpose: Size of the short extension (extension without text).
 
     myValueStringFormat : AsciiString from TCollection;
     ---Purpose: "sprintf"-syntax format for formatting dimension value labels.

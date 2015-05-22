@@ -22,6 +22,7 @@
 #include <TColStd_MapIteratorOfPackedMapOfInteger.hxx>
 #include <NIS_DrawList.hxx>
 #include <Bnd_B3f.hxx>
+#include <Quantity_Color.hxx>
 
 #ifdef WNT
 #pragma warning (push)
@@ -102,26 +103,59 @@ template <class A> class NCollection_Vector;
  * Drawer instances coincide.
  * <p>
  * @section nis_drawer_cloning Cloning Drawer instances
- * It is possible to clone a Drawer instance with the viryual method Assign().
+ * It is possible to clone a Drawer instance with the virtual method Assign().
  * This method copies all visual properties and other important data from the
  * Drawer provided as parameter. Method Clone() also should be very carefully
  * implemented for any new Drawer type, to make sure that all necessary data
  * fields and structures are properly copied.
+ * <p>
+ * @section nis_drawer_compiled Compiled lists
+ * By default a drawer class maintains a number of draw lists each corresponding
+ * to a set of interactive objects shown inside a common OpenGl list. This is
+ * the optimal way to achieve the performance but some OpenGL features may be
+ * incompatible with it. For instance, if you need to provide a pixel position
+ * or width to GL command (like glDrawPixels) then GL lists will be irelevant -
+ * normally the lists are not recompiled at any change of viewport geometry.
+ * <br>
+ * To overcome this limitation you can define a drawer with IsCompiled property
+ * set to False, this will guarantee that every refresh will follow the whole
+ * code of Draw() method including the values that are variable or cannot be
+ * stored in GL lists. 
+ * @ingroup nis_library
  */
 
 class NIS_Drawer : public Standard_Transient
 {
  public:
-#if defined(WNT) && (_MSC_VER >= 1400)
-  enum DrawType : unsigned int {
+
+  //! Drawing scenarious
+#if defined(_MSC_VER) && (_MSC_VER >= 1400)
+  enum DrawType : unsigned int
 #else
-  enum DrawType {
+  enum DrawType
 #endif
-    Draw_Normal         = 0,
-    Draw_Top            = 1,
-    Draw_Transparent    = 2,
-    Draw_Hilighted      = 3,
-    Draw_DynHilighted   = 4
+  {
+    Draw_Normal         = 0, //!< normal object
+    Draw_Top            = 1, //!< normal object witj topmost flag
+    Draw_Transparent    = 2, //!< transparent object, drawn after opaque objects
+    Draw_Hilighted      = 3, //!< hilighted (selected) object
+    Draw_DynHilighted   = 4, //!< dynamic hilighted (mouse picking without click)
+    Draw_TypeNb
+  };
+
+  //! Drawing priority (within drawing scenario)
+#if defined(_MSC_VER) && (_MSC_VER >= 1400)
+  enum PriorityLevel : unsigned int
+#else
+  enum PriorityLevel
+#endif
+  {
+    Priority_Bottommost = 0, //!< objects to be drawn before others
+    Priority_Bottom     = 1, //!< objects to be drawn before others
+    Priority_Default    = 2, //!< default priority
+    Priority_Top        = 3, //!< objects to be drawn after  others
+    Priority_Topmost    = 4, //!< objects to be drawn after  others
+    Priority_LevelsNb
   };
 
  public:
@@ -131,12 +165,18 @@ class NIS_Drawer : public Standard_Transient
   /**
    * Empty constructor.
    */
-  inline NIS_Drawer ()
-   : myTransparency     (0.f),
-     myIniId            (0),
-     myObjPerDrawer     (1024),
-     myCtx              (0L)
-   {}
+  Standard_EXPORT NIS_Drawer
+                (const Quantity_Color &theHilight = Quantity_NOC_GRAY65,
+                 const Quantity_Color &theDynHilight = Quantity_NOC_CYAN1);
+
+  /**
+   * Set or reset the status 'Compiled'. By default it is "True" meaning that
+   * every draw list would be compiled once and then called multiple times
+   * when needed. The value "False" means that all GL commands will be executed
+   * as they are defined in methods BeforeDraw, Draw and AfterDraw without
+   * building an OpenGL list.
+   */
+  Standard_EXPORT void SetCompiled (const Standard_Boolean isCompiled);
 
   /**
    * Destructor.
@@ -148,6 +188,11 @@ class NIS_Drawer : public Standard_Transient
    */
   inline NIS_InteractiveContext * GetContext () const
   { return myCtx; }
+
+  /**
+   * Sets the Interactive Context.
+   */
+  Standard_EXPORT void SetContext ( NIS_InteractiveContext *theCtx );
 
   /**
    * Copy the relevant information from another instance of Drawer.
@@ -166,19 +211,19 @@ class NIS_Drawer : public Standard_Transient
   /**
    * Mark all draw lists for update
    */
-  Standard_EXPORT void          SetUpdated (const DrawType theType) const;
+  Standard_EXPORT virtual void          SetUpdated (const DrawType theType) const;
 
-  Standard_EXPORT void          SetUpdated (const DrawType theType1,
-                                            const DrawType theType2) const;
+  Standard_EXPORT virtual void          SetUpdated (const DrawType theType1,
+                                                    const DrawType theType2) const;
 
-  Standard_EXPORT void          SetUpdated (const DrawType theType1,
-                                            const DrawType theType2,
-                                            const DrawType theType3) const;
+  Standard_EXPORT virtual void          SetUpdated (const DrawType theType1,
+                                                    const DrawType theType2,
+                                                    const DrawType theType3) const;
 
-  Standard_EXPORT void          SetUpdated (const DrawType theType1,
-                                            const DrawType theType2,
-                                            const DrawType theType3,
-                                            const DrawType theType4) const;
+  Standard_EXPORT virtual void          SetUpdated (const DrawType theType1,
+                                                    const DrawType theType2,
+                                                    const DrawType theType3,
+                                                    const DrawType theType4) const;
 
   /**
    * Switch on/off the dynamic hilight of the given object in the
@@ -191,7 +236,7 @@ class NIS_Drawer : public Standard_Transient
    *   View where the status of object must be changed. If NULL, the object
    *   is hilighted/unhilighted in all views.
    */
-  Standard_EXPORT void          SetDynamicHilighted
+  Standard_EXPORT virtual void  SetDynamicHilighted
                                    (const Standard_Boolean      isHilighted,
                                     const Handle_NIS_InteractiveObject& theObj,
                                     const Handle_NIS_View&      theView = 0L);
@@ -200,13 +245,37 @@ class NIS_Drawer : public Standard_Transient
    * Hash value, for Map interface.
    */ 
   Standard_EXPORT virtual Standard_Integer
-                                HashCode(const Standard_Integer theN) const;
+                                HashCode (const Standard_Integer theN) const;
 
   /**
    * Matching two instances, for Map interface.
    */
   Standard_EXPORT virtual Standard_Boolean
                                 IsEqual (const Handle_NIS_Drawer& theOth) const;
+
+  /**
+   * Set the color for presentation.
+   * @param theDrawType
+   *   Draw type for which the color is defined
+   * @param theColor
+   *   New color to use for the presentation.
+   */
+  Standard_EXPORT virtual void  SetColor (const DrawType        theDrawType,
+                                          const Quantity_Color& theColor);
+
+  /**
+   * Get color of the presentation in the given DrawType.
+   * @param theDrawType
+   *   The draw type, for which the color is retrieved.
+   */
+  Standard_EXPORT virtual Quantity_Color
+                                GetColor (const DrawType theDrawType) const;
+
+  /**
+   * Get the transparency value.
+   */
+  inline Standard_ShortReal     Transparency     () const
+  { return myTransparency; }
 
   /**
    * Obtain the iterator of IDs of associated objects.
@@ -216,18 +285,46 @@ class NIS_Drawer : public Standard_Transient
   { return TColStd_MapIteratorOfPackedMapOfInteger (myMapID); }
 
   /**
+   * Obtain map of IDs of associated objects.
+   */
+  inline const TColStd_PackedMapOfInteger& ObjectsMap() const
+  { return myMapID; }
+
+  /**
    * Query associated draw lists.
    */
   inline NCollection_List<NIS_DrawList *>
-                                GetLists() const
+                                GetLists () const
   { return myLists; }
- 
+
+  /**
+   * @return drawer priority within drawing scenario
+   */
+  inline PriorityLevel Priority() const
+  { return (PriorityLevel)myPriority; }
+
+  /**
+   * Setup drawer priority within drawing scenario
+   */
+  inline void SetPriority (const PriorityLevel thePriority)
+  { myPriority = thePriority; }
+
+  /**
+   * Draw a single object.
+   * @returns
+   *   True if the object was drawn, False if refused.
+   */
+  Standard_EXPORT virtual Standard_Boolean
+                        drawObject      (const Handle_NIS_InteractiveObject&,
+                                         const DrawType       theType,
+                                         const NIS_DrawList&  theDrawList);
+
 protected:
   /**
    * Called to add draw list IDs to ex-list Ids of view. These draw lists are
    * eventually released in the callback function, before anything is displayed
    */
-  Standard_EXPORT void UpdateExListId   (const Handle_NIS_View& theView) const;
+  Standard_EXPORT void UpdateExListId    (const Handle_NIS_View& theView) const;
 
   // ---------- PROTECTED METHODS ----------
 
@@ -265,6 +362,10 @@ protected:
   Standard_EXPORT virtual NIS_DrawList*
                         createDefaultList (const Handle_NIS_View&) const;
 
+  Standard_EXPORT static Standard_Boolean
+                        areEqual        (const Quantity_Color& theColor0,
+                                         const Quantity_Color& theColor1);
+
  protected:
   //! Get the number of interactive objects in this drawer
   inline Standard_Integer      NObjects() const
@@ -291,7 +392,11 @@ protected:
   //! Maximal range of IDs of objects in one drawer. Limits the size of
   //! draw lists. Can be initialized only in constructor (default 1024). It is
   //! strictly prohibited to change this value outside the constructor.
-  Standard_Integer                      myObjPerDrawer;
+  Standard_Integer                      myObjPerDrawer : 24;
+  Standard_Integer                      myPriority     : 3;
+  Standard_Boolean                      myIsCompiled   : 1;
+  //! Colors for different draw modes: Normal, Top, Transparent, Hilight, DynHi
+  Quantity_Color                        myColor[5];
 
  private:
   // ---------- PRIVATE FIELDS ----------

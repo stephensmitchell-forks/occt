@@ -14,7 +14,6 @@
 // commercial license or contractual agreement.
 
 #include <NIS_TriangulatedDrawer.hxx>
-#include <NIS_InteractiveObject.hxx>
 #include <NIS_Triangulated.hxx>
 #ifdef _DEBUG
 #include <Standard_ProgramError.hxx>
@@ -44,16 +43,14 @@ NIS_TriangulatedDrawer::NIS_TriangulatedDrawer
                                 (const Quantity_Color theNormal,
                                  const Quantity_Color theHilight,
                                  const Quantity_Color theDynHilight)
-  : myPolygonAsLineLoop (Standard_False),
-    myLineWidth      (1.f),
-    myIsDrawPolygons (Standard_False),
-    myPolygonType    (NIS_Triangulated::Polygon_Default)
+  : NIS_Drawer          (theHilight, theDynHilight),
+    myPolygonAsLineLoop (Standard_False),
+    myLineWidth         (1.f),
+    myLineType          (0),
+    myIsDrawPolygons    (Standard_False),
+    myPolygonType       (NIS_Triangulated::Polygon_Default)
 {
-  myColor[Draw_Normal]       = theNormal;
-  myColor[Draw_Top]          = theNormal;
-  myColor[Draw_Transparent]  = theNormal;
-  myColor[Draw_Hilighted]    = theHilight;
-  myColor[Draw_DynHilighted] = theDynHilight;
+  SetColor(Draw_Normal, theNormal);
 }
 
 //=======================================================================
@@ -67,12 +64,8 @@ void NIS_TriangulatedDrawer::Assign (const Handle_NIS_Drawer& theOther)
     NIS_Drawer::Assign (theOther);
     const Handle(NIS_TriangulatedDrawer)& anOther =
       static_cast <const Handle(NIS_TriangulatedDrawer)&> (theOther);
-    myColor[Draw_Normal]       = anOther->myColor[Draw_Normal];
-    myColor[Draw_Top]          = anOther->myColor[Draw_Top];
-    myColor[Draw_Transparent]  = anOther->myColor[Draw_Transparent];
-    myColor[Draw_Hilighted]    = anOther->myColor[Draw_Hilighted];
-    myColor[Draw_DynHilighted] = anOther->myColor[Draw_DynHilighted];
     myLineWidth                = anOther->myLineWidth;
+    myLineType                 = anOther->myLineType;
     myIsDrawPolygons           = anOther->myIsDrawPolygons;
     myPolygonType              = anOther->myPolygonType;
   }
@@ -93,14 +86,9 @@ Standard_Boolean NIS_TriangulatedDrawer::IsEqual
   const Handle(NIS_TriangulatedDrawer) anOther =
     Handle(NIS_TriangulatedDrawer)::DownCast (theOther);
   if (NIS_Drawer::IsEqual(theOther))
-    aResult = (anOther->myColor[Draw_Normal]
-               .SquareDistance (myColor[Draw_Normal]) < anEpsilon2 &&
-               anOther->myColor[Draw_Hilighted]
-               .SquareDistance (myColor[Draw_Hilighted]) < anEpsilon2 &&
-               anOther->myColor[Draw_DynHilighted]
-               .SquareDistance (myColor[Draw_DynHilighted]) < anEpsilon2 &&
-               (anOther->myLineWidth - myLineWidth) *
+    aResult = ((anOther->myLineWidth - myLineWidth) *
                (anOther->myLineWidth - myLineWidth) < 0.01 &&
+               anOther->myLineType == myLineType &&
                anOther->myIsDrawPolygons == myIsDrawPolygons &&
                anOther->myPolygonType == myPolygonType);
   return aResult;
@@ -144,7 +132,7 @@ void NIS_TriangulatedDrawer::BeforeDraw (const DrawType      theType,
       anOffsetHilighted = 1;
 #endif
     }
-    myColor[theType].Values (aValue[0], aValue[1], aValue[2], bidTC);
+    GetColor(theType).Values (aValue[0], aValue[1], aValue[2], bidTC);
     glColor3d (aValue[0], aValue[1], aValue[2]);
     break;
   case Draw_Normal:
@@ -153,7 +141,7 @@ void NIS_TriangulatedDrawer::BeforeDraw (const DrawType      theType,
 #ifndef NEGATIVE_POFFSET
     anOffsetHilighted = 11;
 #endif
-    myColor[theType].Values (aValue[0], aValue[1], aValue[2], bidTC);
+    GetColor(theType).Values (aValue[0], aValue[1], aValue[2], bidTC);
     aValue[3] = 1. - myTransparency;
     if (myTransparency > 0.01) {
       glEnable(GL_BLEND);
@@ -182,6 +170,11 @@ void NIS_TriangulatedDrawer::BeforeDraw (const DrawType      theType,
     }
   glEnableClientState (GL_VERTEX_ARRAY);
   glLineWidth (aLineWidth);
+  if (myLineType > 0)
+  {
+      glEnable(GL_LINE_STIPPLE);
+      glLineStipple(1, (GLushort)myLineType);
+  }
   glShadeModel(GL_FLAT);
   glDisable(GL_LIGHTING);
 }
@@ -219,6 +212,11 @@ void NIS_TriangulatedDrawer::AfterDraw (const DrawType      theType,
   if (myPolygonType == NIS_Triangulated::Polygon_Line ||
       (myPolygonType == NIS_Triangulated::Polygon_Default && myIsDrawPolygons))
     glPolygonMode (GL_FRONT_AND_BACK, GL_FILL);
+  
+  if (myLineType > 0)
+  {
+      glDisable(GL_LINE_STIPPLE);
+  }
 }
 
 //=======================================================================
@@ -249,8 +247,19 @@ void NIS_TriangulatedDrawer::Draw (const Handle_NIS_InteractiveObject& theObj,
 
   if (myIsDrawPolygons == Standard_False) {
     if (pObject->IsTriangulation()) {
-      glDrawElements (GL_TRIANGLES, pObject->NTriangles()*3,
-                      aType, pObject->mypTriangles);
+      if (pObject->IsFanTriangulation()) {        
+        Standard_Integer i;
+        for (i = 0; i < pObject->myFans.NArrays(); i++) 
+        {                       
+          Standard_Integer nbFanTri = pObject->NFanInList(i);
+          if (nbFanTri > 0) 
+            glDrawElements(GL_TRIANGLE_FAN, nbFanTri,
+                           aType, pObject->myFans.ArrayIndexes(i)); 
+        } 
+      }
+      if (pObject->NTriangles() > 0)
+        glDrawElements (GL_TRIANGLES, pObject->NTriangles()*3,
+                        aType, pObject->mypTriangles);
     }
   } else {
     if (pObject->IsPolygons()) {
@@ -263,35 +272,26 @@ void NIS_TriangulatedDrawer::Draw (const Handle_NIS_InteractiveObject& theObj,
       const Standard_Integer nPoly = pObject->NPolygons();
       for (Standard_Integer i = 0; i < nPoly; i++) {
         const Standard_Integer nSize = pObject->NPolygonNodes(i);
-        void* anArray;
-        if (pObject->myIndexType == 0)
-          anArray = reinterpret_cast<unsigned char *>(pObject->mypPolygons[i]) + 1;
-        else if (pObject->myIndexType == 1)
-          anArray = reinterpret_cast<unsigned short *>(pObject->mypPolygons[i]) + 1;
-        else
-          anArray = pObject->mypPolygons[i] + 1;
-        glDrawElements (aMode, nSize, aType, anArray);
+        glDrawElements (aMode, nSize, aType,
+                        pObject->myPolygons.ArrayIndexes(i));
       }
     }
   }
-  if (pObject->IsSegments())
-    glDrawElements (GL_LINES, pObject->NLineNodes(),
-                    aType, pObject->mypLines);
+  if (pObject->IsSegments() && pObject->NLineNodes() > 0) {    
+    glDrawElements (GL_LINES, pObject->NLineNodes(0),
+                    aType, pObject->myLines.ArrayIndexes(0));
+  }
   else {
     Standard_Boolean isLoop;
     if (pObject->IsLine(isLoop))
     {
-      if (isLoop) {
-//         glPolygonMode (GL_FRONT_AND_BACK, GL_LINE);
-        glDrawElements (GL_LINE_LOOP, pObject->NLineNodes(),
-                        aType, pObject->mypLines);
-//         glPolygonMode (GL_FRONT_AND_BACK, GL_FILL);
-      } else {
-        glDrawElements (GL_LINE_STRIP, pObject->NLineNodes(),
-                        aType, pObject->mypLines);
+      const GLenum lineType = (isLoop ? GL_LINE_LOOP : GL_LINE_STRIP);
+      const Standard_Integer nLine = pObject->NLines();
+      for (Standard_Integer i = 0; i < nLine; i++) {
+        const Standard_Integer nSize = pObject->NLineNodes(i);
+        glDrawElements (lineType, nSize,
+                          aType, pObject->myLines.ArrayIndexes(i));
       }
     }
   }
-
 }
-

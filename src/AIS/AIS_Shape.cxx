@@ -464,7 +464,7 @@ void AIS_Shape::ComputeSelection(const Handle(SelectMgr_Selection)& aSelection,
   }
 
   // insert the drawer in the BrepOwners for hilight...
-  StdSelect::SetDrawerForBRepOwner(aSelection,myDrawer);
+  // StdSelect::SetDrawerForBRepOwner(aSelection,myDrawer);
 }
 
 Quantity_NameOfColor AIS_Shape::Color() const {

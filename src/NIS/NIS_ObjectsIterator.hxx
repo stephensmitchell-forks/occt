@@ -38,6 +38,7 @@ class Handle_NIS_InteractiveContext;
  *   anIter.Next();
  * }
  * @endcode
+ * @ingroup nis_library
  */
 
 class NIS_ObjectsIterator 

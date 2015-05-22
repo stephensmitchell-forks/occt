@@ -23,6 +23,7 @@ class NIS_Triangulated;
 
 /**
  * Drawer for interactive object type NIS_Triangulated.
+ * @ingroup nis_library
  */
 
 class NIS_TriangulatedDrawer : public NIS_Drawer
@@ -79,8 +80,8 @@ protected:
    */
   Standard_Boolean    myPolygonAsLineLoop;
 
-  Quantity_Color      myColor[5];
   Standard_ShortReal  myLineWidth;
+  Standard_Integer    myLineType;
   Standard_Boolean    myIsDrawPolygons;
   unsigned int        myPolygonType;
 

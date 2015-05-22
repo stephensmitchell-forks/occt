@@ -18,12 +18,13 @@
 
 #include <NIS_Drawer.hxx>
 #include <gp_Trsf.hxx>
-#include <Quantity_Color.hxx>
+//#include <Quantity_Color.hxx>
 
 class NIS_Surface;
 
 /**
  * Drawer for interactive object type NIS_Surface.
+ * @ingroup nis_library
  */
 
 class NIS_SurfaceDrawer : public NIS_Drawer
@@ -41,11 +42,6 @@ class NIS_SurfaceDrawer : public NIS_Drawer
                                                         = Quantity_NOC_CYAN1);
 
   /**
-   * Sets the color of the drawer.
-   */
-  Standard_EXPORT void         SetColor (const Quantity_Color &theColor);
-
-  /**
    * Define the color used for the back side of rendered triangles.
    * By default this color is the same as the 'Normal' color. 
    */
@@ -53,6 +49,15 @@ class NIS_SurfaceDrawer : public NIS_Drawer
   {
     myBackColor = theColor;
   }
+
+  /**
+   * Define the specularity that is the property of displayed material for both
+   * Front and Back faces. Can be in the range 0 to 1. Default value is 0.58
+   */
+  inline void                   SetSpecularity   (const Standard_Real theValue)
+  {
+    mySpecularity = static_cast<Standard_ShortReal>(theValue);
+  } 
 
   /**
    * Sets the transformation to the drawer.
@@ -117,17 +122,26 @@ class NIS_SurfaceDrawer : public NIS_Drawer
   Standard_EXPORT virtual Standard_Boolean
                                IsEqual  (const Handle_NIS_Drawer& theOth)const;
 
- protected:
+
+protected:
   Standard_EXPORT virtual void redraw   (const DrawType         theType,
                                          const Handle_NIS_View& theView);
 
+private:
+  void                  drawEdges       (const NIS_Surface *    pObject,
+                                         const DrawType         theType);
 
 private:
-  Quantity_Color      myColor[5];
   Quantity_Color      myBackColor;
+  Quantity_Color      myFreeEdgeColor;
+  Standard_ShortReal  mySpecularity;
   gp_Trsf             myTrsf;
   Standard_ShortReal  myPolygonOffset;
-  Standard_Boolean    myIsWireframe;
+  Standard_Boolean    myIsWireframe;  
+  Standard_Boolean    myHilightIsWireframe;  
+  Standard_Boolean    myIsShowEdges;  
+
+  Standard_Boolean    myIsBlend;        // defined and used internally
 
   friend class NIS_Surface;
 

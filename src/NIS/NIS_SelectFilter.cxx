@@ -19,6 +19,23 @@ IMPLEMENT_STANDARD_HANDLE  (NIS_SelectFilter, Standard_Transient)
 IMPLEMENT_STANDARD_RTTIEXT (NIS_SelectFilter, Standard_Transient)
 
 //=======================================================================
+//function : IsOk
+//purpose  : 
+//=======================================================================
+
+Standard_Boolean NIS_SelectFilter::IsOk
+                                (const NIS_InteractiveObject * theObject,
+                                 const gp_Ax1&,
+                                 const Standard_Real,
+                                 const Event theEvent) const
+{
+  Standard_Boolean aResult(Standard_False);
+  if (theEvent == Indefinite || (theEvent & myEventFlags) != 0)
+    aResult = IsOk(theObject, theEvent);
+  return aResult;
+}
+
+//=======================================================================
 //function : ActsOn
 //purpose  : 
 //=======================================================================
@@ -27,5 +44,4 @@ Standard_Boolean NIS_SelectFilter::ActsOn (const Handle_Standard_Type&) const
 {
   return Standard_True;
 }
-
 

@@ -20,9 +20,43 @@
 #include <TColStd_MapIteratorOfPackedMapOfInteger.hxx>
 #include <Standard_TypeMismatch.hxx>
 #include <Standard_NoSuchObject.hxx>
+#include <Standard_OutOfRange.hxx>
+#include <Standard_NullValue.hxx>
 
 IMPLEMENT_STANDARD_HANDLE  (NIS_Drawer, Standard_Transient)
 IMPLEMENT_STANDARD_RTTIEXT (NIS_Drawer, Standard_Transient)
+
+//=======================================================================
+//function : NIS_Drawer
+//purpose  : Constructor
+//=======================================================================
+
+NIS_Drawer::NIS_Drawer (const Quantity_Color& theHilight,
+                        const Quantity_Color& theDynHilight)
+: myTransparency     (0.f),
+  myIniId            (0),
+  myObjPerDrawer     (1024),
+  myPriority         (Priority_Default),
+  myIsCompiled       (Standard_True),
+  myCtx              (0L)
+{
+  myColor[Draw_Hilighted]    = theHilight;
+  myColor[Draw_DynHilighted] = theDynHilight;
+}
+
+//=======================================================================
+//function : SetCompiled
+//purpose  : 
+//=======================================================================
+
+void NIS_Drawer::SetCompiled (const Standard_Boolean isCompiled)
+{
+  if (isCompiled) {
+    if (myIsCompiled == Standard_False)
+      SetUpdated(Draw_Normal, Draw_Top, Draw_Transparent, Draw_Hilighted);
+  }
+  myIsCompiled = isCompiled;
+}
 
 //=======================================================================
 //function : NIS_Drawer
@@ -47,7 +81,14 @@ void NIS_Drawer::Assign (const Handle_NIS_Drawer& theOther)
     Standard_TypeMismatch::Raise ("NIS_Drawer::Assign");
   myIniId        = theOther->myIniId;
   myObjPerDrawer = theOther->myObjPerDrawer;
+  myPriority     = theOther->myPriority;
+  myIsCompiled   = theOther->myIsCompiled;
   myTransparency = theOther->myTransparency;
+  myColor[Draw_Normal]       = theOther->myColor[Draw_Normal];
+  myColor[Draw_Top]          = theOther->myColor[Draw_Top];
+  myColor[Draw_Transparent]  = theOther->myColor[Draw_Transparent];
+  myColor[Draw_Hilighted]    = theOther->myColor[Draw_Hilighted];
+  myColor[Draw_DynHilighted] = theOther->myColor[Draw_DynHilighted];
 }
 
 //=======================================================================
@@ -63,23 +104,42 @@ Standard_Integer NIS_Drawer::HashCode(const Standard_Integer theN) const
 }
 
 //=======================================================================
+//function : areEqual
+//purpose  : Compare two colors, return True if they seem to be equal
+//=======================================================================
+
+Standard_Boolean NIS_Drawer::areEqual (const Quantity_Color& theColor0,
+                                       const Quantity_Color& theColor1)
+{
+  static const Standard_Real anEps2 = 1e-7;
+  return (theColor0.SquareDistance(theColor1) < anEps2);
+}
+
+//=======================================================================
 //function : IsEqual
 //purpose  : 
 //=======================================================================
 
 Standard_Boolean NIS_Drawer::IsEqual (const Handle_NIS_Drawer& theOther) const
 {
-  Standard_Boolean aResult (Standard_False);
-  if (theOther.IsNull() == Standard_False)
-    if (DynamicType() == theOther->DynamicType())
-      if (theOther->myIniId/theOther->myObjPerDrawer == myIniId/myObjPerDrawer)
-        aResult = Standard_True;
+  if (theOther.IsNull()
+   || DynamicType() != theOther->DynamicType()
+   || (theOther->myIniId/theOther->myObjPerDrawer != myIniId/myObjPerDrawer)
+   || theOther->myPriority   != myPriority
+   || theOther->myIsCompiled != myIsCompiled
+   || fabs(myTransparency - theOther->myTransparency) > 0.01)
+  {
+    return Standard_False;
+  }
 
-  if (aResult)
-    if (fabs(myTransparency - theOther->myTransparency) > 0.01)
-      aResult = Standard_False;
-
-  return aResult;
+  for (Standard_Integer i = 0; i < 5; i++)
+  {
+    if (!areEqual (theOther->myColor[i], myColor[i]))
+    {
+      return Standard_False;
+    }
+  }
+  return Standard_True;
 }
 
 //=======================================================================
@@ -147,10 +207,13 @@ void NIS_Drawer::redraw (const DrawType           theType,
       NIS_DrawList& aDrawList = * anIter.ChangeValue();
       const Handle_NIS_View& aView = aDrawList.GetView();
       if (aView == theView || aView.IsNull()) {
-        if (aDrawList.IsUpdated(theType)) {
+        if (aDrawList.IsUpdated(theType) || myIsCompiled == Standard_False) {
           // Get the IDs of objects concerned
           TColStd_PackedMapOfInteger mapObj;
-          mapObj.Intersection (myCtx->myMapObjects[theType], myMapID);
+          if (theType != NIS_Drawer::Draw_DynHilighted)
+          {
+            mapObj.Intersection (myCtx->GetObjectsOfType (theType), myMapID);
+          }
 #ifndef ARRAY_LISTS
           // Release the list that is no more in use
           if (mapObj.IsEmpty() && theType != Draw_DynHilighted) {
@@ -158,9 +221,10 @@ void NIS_Drawer::redraw (const DrawType           theType,
             break;
           }
 #endif
-          aDrawList.BeginPrepare(theType);
+          if (myIsCompiled)
+            aDrawList.BeginPrepare(theType);
           prepareList (theType, aDrawList, mapObj);
-          aDrawList.EndPrepare(theType);
+          aDrawList.EndPrepare(theType, myIsCompiled);
         }
         if (aDrawList.GetListID(theType) > 0)
           aDrawList.Call(theType);
@@ -282,21 +346,53 @@ void NIS_Drawer::SetDynamicHilighted
 //=======================================================================
 
 void NIS_Drawer::removeObject (const NIS_InteractiveObject * theObj,
-                               const Standard_Boolean      isUpdateViews)
+                               const Standard_Boolean        isUpdateViews)
 {
   const Standard_Integer anID = theObj->ID();
   myMapID.Remove (anID);
+
   // Stop dynamic hilighting if it has been activated
   if (theObj->IsDynHilighted())
+  {
     SetDynamicHilighted (Standard_False, theObj);
-  if (myMapID.IsEmpty()) {
-    UpdateExListId(NULL);
-    // Remove the drawer from context.
-    myCtx->myDrawers.Remove(this);
   }
-  // Set Updated for the draw type.
+  if (myMapID.IsEmpty())
+  {
+    UpdateExListId(NULL);
+
+    // Remove the drawer from context.
+    if (myCtx->myDrawers.Remove(this))
+    {
+      --myCtx->myPriorities[myPriority];
+    }
+  }
   else if (theObj->IsHidden() == Standard_False && isUpdateViews)
+  {
+    // Set Updated for the draw type.
     SetUpdated (theObj->DrawType());
+  }
+}
+
+//=======================================================================
+//function : drawObject
+//purpose  : Draw a single object
+//=======================================================================
+
+Standard_Boolean NIS_Drawer::drawObject
+                            (const Handle_NIS_InteractiveObject& theObj,
+                             const DrawType                   theType,
+                             const NIS_DrawList&              theDrawList)
+{
+  Standard_Boolean aResult(Standard_False);
+  if (theObj->IsHidden() == Standard_False &&
+      theObj->GetDrawer().operator->() == this)
+  {
+    BeforeDraw(theType, theDrawList);
+    Draw(theObj, theType, theDrawList);
+    AfterDraw(theType, theDrawList);
+    aResult = Standard_True;
+  }
+  return aResult;
 }
 
 //=======================================================================
@@ -313,7 +409,8 @@ void NIS_Drawer::addObject (const NIS_InteractiveObject * theObj,
   // Fill the drawer (if new) with DrawList instances for available Views.
   if ( myLists.IsEmpty())
   {
-    if (isShareList)
+    // only compiled lists may be shared between views
+    if (isShareList && myIsCompiled)
       myLists.Append (createDefaultList(NULL));
     else {
       NCollection_List<Handle_NIS_View>::Iterator anIter(GetContext()->myViews);
@@ -411,4 +508,53 @@ NIS_DrawList* NIS_Drawer::createDefaultList
                         (const Handle_NIS_View& theView) const
 {
   return new NIS_DrawList(theView);
+}
+
+//=======================================================================
+//function : SetColor
+//purpose  : Set the color for hilight or dynamic hilight presentation.
+//=======================================================================
+
+void NIS_Drawer::SetColor (const NIS_Drawer::DrawType theDrawType,
+                           const Quantity_Color&      theColor)
+{
+  Standard_OutOfRange_Raise_if(theDrawType < Draw_Normal ||
+                               theDrawType > Draw_DynHilighted,
+                               "NISDrawer::SetColor: Irrelevant DrawType"); 
+  if (theDrawType == Draw_Normal) {
+    myColor[Draw_Top] = theColor;
+    myColor[Draw_Transparent] = theColor;
+  }
+  myColor[theDrawType] = theColor;
+}
+
+//=======================================================================
+//function : GetColor
+//purpose  : Get Hilighted color of the presentation.
+//=======================================================================
+
+Quantity_Color NIS_Drawer::GetColor
+                                (const NIS_Drawer::DrawType theDrawType) const
+{
+  Standard_OutOfRange_Raise_if(theDrawType < Draw_Normal ||
+                               theDrawType > Draw_DynHilighted,
+                               "NISDrawer::GetColor: Irrelevant DrawType"); 
+  return myColor[theDrawType];
+}
+
+//=======================================================================
+//function : SetContext
+//purpose  : Sets the Interactive Context.
+//=======================================================================
+
+void NIS_Drawer::SetContext ( NIS_InteractiveContext *theCtx )
+{
+    Standard_NullValue_Raise_if
+        (theCtx == 0L, "NIS_InteractiveObject::SetContext: context is NULL");
+
+    myCtx = theCtx;
+    if (myCtx->myDrawers.Add (this))
+    {
+      ++myCtx->myPriorities[myPriority];
+    }
 }

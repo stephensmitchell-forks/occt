@@ -420,10 +420,22 @@ Standard_Integer Standard_GUID::Hash(const Standard_Integer Upper) const
       Raise("Standard_GUID::Hash: Try to apply HashCode method with negative or null argument.");
   }
 
-  char sguid[Standard_GUID_SIZE_ALLOC];
-  ToCString(sguid);
-
-  return ::HashCode(sguid,Upper);
+  // ==== AGV 16/12/2012: More optimal hash function ===
+   //char sguid[Standard_GUID_SIZE_ALLOC];
+   //ToCString(sguid);
+   //return ::HashCode(sguid,Upper);
+  // ===================================================
+  unsigned int aHash = ((static_cast<unsigned int>(my8b6) << 24) |
+                        (static_cast<unsigned int>(my8b5) << 16) |
+                        (static_cast<unsigned int>(my8b4) << 8) |
+                        (static_cast<unsigned int>(my8b3)));
+  aHash = (aHash ^ (aHash >> 11)) & 0x07ffffff;
+  aHash = (aHash * 31 + ((static_cast<unsigned int>(my8b2) << 24) |
+                         (static_cast<unsigned int>(my8b1) << 16) |
+                         (static_cast<unsigned int>(my16b3)))) & 0x07ffffff;
+  aHash = (aHash * 31 + ((static_cast<unsigned int>(my16b2) << 16) |
+                         (static_cast<unsigned int>(my16b1)))) & 0x07ffffff;
+  return (aHash * 31 + my32b) % Upper;
 }
 
 Standard_Boolean Standard_GUID::IsEqual(const Standard_GUID& aGuid1,const Standard_GUID& aGuid2)

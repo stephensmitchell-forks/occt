@@ -128,11 +128,24 @@ void OpenGl_Workspace::RedrawImmediatMode()
   }
   glDisable (GL_LIGHTING);
 
+  const GLboolean wasDepthTestEnabled = glIsEnabled(GL_DEPTH_TEST);
+  if (wasDepthTestEnabled)
+  {
+    glDisable (GL_DEPTH_TEST);
+  }
+
   Handle(OpenGl_Workspace) aWS (this);
+  NamedStatus |= OPENGL_NS_IMMEDIATE;
   for (Standard_Integer anIter = 1; anIter <= myTransientList.Size(); ++anIter)
   {
     const OpenGl_Structure* aStructure = myTransientList.Value (anIter);
     aStructure->Render (aWS);
+  }
+  NamedStatus &= ~OPENGL_NS_IMMEDIATE;
+
+  if (wasDepthTestEnabled)
+  {
+    glEnable (GL_DEPTH_TEST);
   }
 
   if (isDoubleBuffer && myTransientDrawToFront)

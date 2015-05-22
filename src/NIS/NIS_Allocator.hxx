@@ -22,6 +22,7 @@
  * Subclass of Incremental Allocator. It is aware of the total
  * allocated and released memory. Used in NIS_Interactive context as
  * private allocator that manages all memory used by interactive objects.
+ * @ingroup nis_library
  */
 
 class NIS_Allocator : public NCollection_IncAllocator

@@ -253,6 +253,14 @@ public:
   //! @return tool for management of shader programs within this context.
   inline const Handle(OpenGl_ShaderManager)& ShaderManager() const { return myShaderManager; }
 
+  //! @return a window - owner of GL context.
+#if defined(_WIN32) || !defined(__APPLE__) || defined(MACOSX_USE_GLX)
+  inline void* GetWindow()
+  {
+    return myWindow;
+  }
+#endif
+
 public:
 
   //! @return maximum degree of anisotropy texture filter

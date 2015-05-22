@@ -100,7 +100,11 @@ void StdSelect_BRepOwner::Hilight(const Handle(PrsMgr_PresentationManager)& PM,
 
     // generate new presentable shape
     if(myPrsSh.IsNull())
-      myPrsSh = new StdSelect_Shape (myShape);
+    {
+      myPrsSh = new StdSelect_Shape(myShape);
+      if (!myDrawer.IsNull())
+          myPrsSh->SetDrawer(myDrawer);
+    }
 
     // highlight and set layer
     PM->Highlight (myPrsSh, M);
@@ -155,6 +159,9 @@ void StdSelect_BRepOwner::HilightWithColor(const Handle(PrsMgr_PresentationManag
       }
       else
         myPrsSh = new StdSelect_Shape(myShape);
+
+      if (!myDrawer.IsNull())
+        myPrsSh->SetDrawer(myDrawer);
     }
 
     // highlight with color and set layer
@@ -233,4 +240,14 @@ void StdSelect_BRepOwner::SetZLayer
 {
   if (!myPrsSh.IsNull())
     thePrsMgr->SetZLayer (myPrsSh, theLayerId);
+}
+
+void StdSelect_BRepOwner::SetDrawer(const Handle(Prs3d_Drawer)& drawer)
+{
+    myDrawer = drawer;
+}
+
+const Handle(Prs3d_Drawer)& StdSelect_BRepOwner::GetDrawer()
+{
+    return myDrawer;
 }

@@ -197,6 +197,16 @@ public:
 
   Standard_EXPORT virtual void SetModelUnits (const TCollection_AsciiString& theUnits);
 
+  //! Principle of horizontal text alignment settings:
+  //! - divide circle into two halfs according to attachment points
+  //! - if aTextPos is between attach points -> Center + positive flyout
+  //! - if aTextPos is not between attach points but in this half -> Left or Right + positive flyout
+  //! - if aTextPos is between reflections of attach points -> Center + negative flyout
+  //! - if aTextPos is not between reflections of attach points -> Left or Right + negative flyout
+  Standard_EXPORT virtual void SetTextPosition (const gp_Pnt& theTextPos);
+
+  Standard_EXPORT virtual const gp_Pnt GetTextPosition () const;
+
 public:
 
   DEFINE_STANDARD_RTTI (AIS_AngleDimension)
@@ -212,7 +222,7 @@ protected:
   //! @return the center of the dimension arc (the main dimension line in case of angle). 
   Standard_EXPORT gp_Pnt GetCenterOnArc (const gp_Pnt& theFirstAttach,
                                          const gp_Pnt& theSecondAttach,
-                                         const gp_Pnt& theCenter);
+                                         const gp_Pnt& theCenter) const;
 
   //! Draws main dimension line (arc).
   //! @param thePresentation [in] the dimension presentation.
@@ -246,6 +256,15 @@ protected:
                                         const Standard_Real theTextWidth,
                                         const Standard_Integer theMode,
                                         const Standard_Integer theLabelPosition);
+
+  //! Fits text alignment relatively to the dimension line.
+  //! @param theLabelPosition [out] the label position, contains bits that defines
+  //! vertical and horizontal alignment. (for internal usage in count text position)
+  //! @param theIsArrowExternal [out] is the arrows external,
+  //! if arrow orientation in the dimension aspect is Prs3d_DAO_Fit, it fits arrow
+  //! orientation automatically.
+  Standard_EXPORT void FitTextAlignment (Standard_Integer& theLabelPosition,
+                                         Standard_Boolean& theIsArrowsExternal) const;
 
 protected:
 

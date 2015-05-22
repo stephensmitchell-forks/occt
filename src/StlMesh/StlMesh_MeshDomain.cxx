@@ -89,9 +89,3 @@ Standard_Integer StlMesh_MeshDomain::AddOnlyNewVertex(const Standard_Real X,
   nbVertices++;
   return nbVertices;
 }
-
-
-
-
-
-

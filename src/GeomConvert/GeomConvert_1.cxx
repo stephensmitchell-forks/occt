@@ -865,16 +865,31 @@ Handle(BSplineSurface) GeomConvert::SplitBSplineSurface
 
     else { // In other cases => Approx
       Standard_Real Tol3d=1.e-4;
-      Standard_Integer MaxDegree =14, MaxSeg;
-      GeomAbs_Shape cont;
+      Standard_Integer MaxDegree = 14, MaxSeg;
+      GeomAbs_Shape ucont = GeomAbs_C0, vcont = GeomAbs_C0;
       GeomAdaptor_Surface AS(Sr);
-      if (AS.NbUIntervals(GeomAbs_C2) > 1 || AS.NbVIntervals(GeomAbs_C2) > 1 ) 
-         cont=GeomAbs_C1;
-      else
-         cont=GeomAbs_C2;
+      //
+      if (Sr->IsCNu(2)) 
+      {
+        ucont=GeomAbs_C2;
+      }
+      else if(Sr->IsCNu(1)) 
+      {
+        ucont=GeomAbs_C1;
+      }
+      //
+      if (Sr->IsCNv(2)) 
+      {
+        vcont=GeomAbs_C2;
+      }
+      else if(Sr->IsCNv(1)) 
+      {
+        vcont=GeomAbs_C1;
+      }
+      //
       MaxSeg = 4*(AS.NbUIntervals(GeomAbs_CN)+1)*(AS.NbVIntervals(GeomAbs_CN)+1);      
-      GeomConvert_ApproxSurface BSpS(Sr,Tol3d,cont,cont,
-				     MaxDegree,MaxDegree,MaxSeg,1);
+      GeomConvert_ApproxSurface BSpS(Sr, Tol3d, ucont, vcont,
+                                     MaxDegree, MaxDegree, MaxSeg, 1);
       TheSurface = BSpS.Surface();
     }
   } // Fin du cas direct

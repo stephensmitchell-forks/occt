@@ -44,6 +44,8 @@
 //=======================================================================
 Standard_Integer BRepFill_SectionLaw::NbLaw() const
 {
+  if (myLaws.IsNull())
+    return 0;
   return myLaws->Length();
 }
 

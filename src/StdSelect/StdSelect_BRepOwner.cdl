@@ -148,11 +148,18 @@ is
       is redefined virtual;
     ---Purpose: Set Z layer ID and update all presentations.
 
+    ---Purpose: Defines a drawer for highlighting of shapes.
+    SetDrawer(me : mutable; aDrawer : Drawer from Prs3d);
+    GetDrawer(me : mutable)
+    ---C++: return const &
+    returns Drawer from Prs3d;
+
 fields
     myPrsSh   		: Shape   from StdSelect; 
     myCurMode 		: Integer from Standard;
     myFromDecomposition : Boolean from Standard is protected;
     myShape             : Shape from TopoDS     is protected;
+    myDrawer                           : Drawer from Prs3d;
 end BRepOwner;
 
 

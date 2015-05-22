@@ -1311,7 +1311,8 @@ Standard_Boolean ShapeFix_Wire::FixShifted()
     TopoDS_Edge E1 = sbwdOring->Edge ( i );
     if ( BRep_Tool::Degenerated(E1) && !sae.HasPCurve(E1,Face()))
       continue;
-    
+    if (sae.FirstVertex(E1).IsNull())
+      continue;
     sbwd->Add(E1);
   }
   

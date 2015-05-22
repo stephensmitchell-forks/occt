@@ -1,0 +1,87 @@
+// File:      Poly_IBuffer.lxx
+// Created:   15.06.07 07:56
+// Author:    Alexander GRIGORIEV
+// Copyright: Open CASCADE 2007
+
+//! Constructor.
+inline Poly_IBuffer::Interval::Interval (const gp_XY&        theXZfirst,
+                                         const gp_XY&        theXZlast,
+                                         const unsigned long theModID)
+  : myNext      (0L),
+    myModID     (theModID)
+{
+  U.myModX = RealLast();
+  myXZ[0] = theXZfirst;
+  myXZ[1] = theXZlast;
+}
+
+//! Query the beginning (ind==0) or end (ind == 1) of the interval.
+inline const gp_XY& Poly_IBuffer::Interval::XZ (const Standard_Integer i) const
+{
+  return myXZ[i&0x1];
+}
+
+//! Query the beginning (ind==0) or end (ind == 1) of the interval for modif
+inline gp_XY& Poly_IBuffer::Interval::XZ (const Standard_Integer i)
+{
+  return myXZ[i&0x1];
+}
+
+//! Query the next interval in the buffer.
+inline Poly_IBuffer::Interval *  Poly_IBuffer::Interval::Next () const
+{
+  return myNext;
+}
+
+//! Query the previous interval in the buffer.
+inline Poly_IBuffer::Interval *  Poly_IBuffer::Interval::Previous () const
+{
+  return U.myPrev;
+}
+
+//! Set the modification ID.
+inline void Poly_IBuffer::Interval::SetModificationID
+                                        (const unsigned long theValue)
+{
+  myModID = theValue;
+}
+
+//! Query the RejectID field indicating the modification status of the interval
+inline unsigned long Poly_IBuffer::Interval::GetModificationID () const
+{
+  return myModID;
+}
+
+//! Query the abscisse value required for modification.
+inline Standard_Real Poly_IBuffer::Interval::GetModificationAbscisse() const
+{
+  return U.myModX;
+}
+
+//! Returns the head of the list of intervals.
+/** Other intervals can be obtained by iterative calling Next() of each
+ *  returned interval.
+ */
+inline const Poly_IBuffer::Interval * Poly_IBuffer::First () const
+{
+  return myIndex ? myIndex[0].Int : 0L;
+}
+
+//! Default constructor
+inline Poly_IBuffer::Poly_IBuffer()
+  : myTol       (0.),
+    myMinOrd    (0.),
+    myMaxOrd    (0.),
+    myNIntervals(0),
+    myNHoles    (0),
+    myIndex     (0L)
+{}
+
+//! Get extents of the buffer along the ordinate, excepting the 
+//! artificial intervals at infinite ordinate
+inline void Poly_IBuffer::GetOrdinateExtents (Standard_Real& theMin,
+                                              Standard_Real& theMax) const
+{
+  theMin = myMinOrd;
+  theMax = myMaxOrd;
+}
