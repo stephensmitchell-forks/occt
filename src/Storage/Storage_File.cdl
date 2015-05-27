@@ -19,6 +19,7 @@ class File from Storage inherits IODevice from Storage
 uses Position    from Storage,
      AsciiString from TCollection,
      OpenMode    from Storage,
+     SeekMode    from Storage,
      Error       from Storage,
      FStream     from Standard,
      ExtendedString from TCollection
@@ -45,7 +46,8 @@ is
     Tell (me: mutable) returns Position from Storage is redefined;
     ---Purpose: returns a position in the device. Return -1 upon error.
 
-    Seek (me: mutable; thePos: Position from Storage) returns Boolean from Standard is redefined;
+    Seek( me: mutable; aPos : Position from Storage; aMode: SeekMode from Storage = Storage_SMBegin )
+    returns Boolean from Standard is redefined;
    
     Close (me: mutable) returns Boolean from Standard;
 

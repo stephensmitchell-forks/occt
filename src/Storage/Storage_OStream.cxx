@@ -50,7 +50,7 @@ TCollection_ExtendedString Storage_OStream::Name() const
 //=======================================================================
 Storage_Error Storage_OStream::Open (const Storage_OpenMode theMode)
 {
-  if (theMode != Storage_VSWrite)
+  if (theMode != Storage_VSWrite || theMode != Storage_VSAppend)
   {
     return Storage_VSOpenError;
   }
@@ -69,7 +69,10 @@ Storage_Error Storage_OStream::Open (const Storage_OpenMode theMode)
       
       // clear flags and set the position where the next character is to be inserted 
       myStream->clear();
-      myStream->seekp(0, ios::beg);
+      if ( theMode == Storage_VSWrite )
+        myStream->seekp(0, ios::beg);
+      else
+        myStream->seekp(0, ios::end);
     }
   }
   else
@@ -102,9 +105,21 @@ Storage_Position Storage_OStream::Tell()
 //function : Seek
 //purpose  : 
 //=======================================================================
-Standard_Boolean Storage_OStream::Seek (const Storage_Position& thePos)
+Standard_Boolean Storage_OStream::Seek (const Storage_Position& thePos, const Storage_SeekMode aMode )
 {
-  myStream->seekp (thePos);
+  switch ( aMode )
+  {
+  case Storage_SMEnd:
+    myStream->seekp(thePos, ios::end);
+    break;
+  case Storage_SMCur:
+    myStream->seekp(thePos, ios::cur);
+    break;
+  case Storage_SMBegin:
+  default:
+    myStream->seekp(thePos, ios::beg);
+    break;
+  }
 
   return !myStream->fail();
 }

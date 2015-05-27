@@ -102,9 +102,21 @@ Storage_Position Storage_IStream::Tell()
 //function : Seek
 //purpose  : 
 //=======================================================================
-Standard_Boolean Storage_IStream::Seek (const Storage_Position& thePos)
+Standard_Boolean Storage_IStream::Seek (const Storage_Position& thePos, const Storage_SeekMode aMode )
 {
-  myStream->seekg (thePos);
+  switch ( aMode )
+  {
+  case Storage_SMEnd:
+    myStream->seekg(thePos, ios::end);
+    break;
+  case Storage_SMCur:
+    myStream->seekg(thePos, ios::cur);
+    break;
+  case Storage_SMBegin:
+  default:
+    myStream->seekg(thePos, ios::beg);
+    break;
+  }
 
   return !myStream->fail();
 }

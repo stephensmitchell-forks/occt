@@ -86,12 +86,20 @@ is
     	-- -   Storage_VSInternalError : an internal error  has been detected
     	-- -   Storage_VSExtCharParityError : an error
     	--   has occurred while reading 16 bit characte   
- 
+
+    enumeration SeekMode
+    is
+        SMBegin,
+    	SMCur,
+	SMEnd
+    end;
+
     enumeration OpenMode
     is
         VSNone,
     	VSRead,
 	VSWrite,
+	VSAppend,
 	VSReadWrite
     end;
     	---Purpose:

@@ -79,15 +79,19 @@ Storage_Error Storage_File::Open (const Storage_OpenMode theMode)
   {
     if (theMode == Storage_VSRead)
     {
-      myStream.open(aFilePath, ios::in | ios::binary );
+      myStream.open( aFilePath, ios::in | ios::binary );
     }
     else if (theMode == Storage_VSWrite)
     {
-      myStream.open(aFilePath, ios::out | ios::binary );
+      myStream.open( aFilePath, ios::out | ios::binary );
+    }
+    else if (theMode == Storage_VSAppend)
+    {
+      myStream.open( aFilePath, ios::in | ios::out | ios::binary | ios::ate );
     }
     else if (theMode == Storage_VSReadWrite)
     {
-      myStream.open(aFilePath, ios::in | ios::out);
+      myStream.open( aFilePath, ios::in | ios::out | ios::binary );
     }
     
     if (!myStream.rdbuf()->is_open()) {
@@ -128,12 +132,27 @@ Storage_Position Storage_File::Tell()
 //function : Seek
 //purpose  : 
 //=======================================================================
-Standard_Boolean Storage_File::Seek (const Storage_Position& thePos)
+Standard_Boolean Storage_File::Seek (const Storage_Position& thePos, const Storage_SeekMode aMode)
 {
+  ios::seekdir dir = ios::beg;
+  switch ( aMode )
+  {
+  case Storage_SMEnd:
+    dir = ios::end;
+    break;
+  case Storage_SMCur:
+    dir = ios::cur;
+    break;
+  case Storage_SMBegin:
+  default:
+    dir = ios::beg;
+    break;
+  }
+
   if ( OpenMode() == Storage_VSRead )
-    myStream.seekg( thePos );
+    myStream.seekg( thePos, dir );
   else
-    myStream.seekp( thePos );
+    myStream.seekp( thePos, dir );
 
   return !myStream.fail();
 }
@@ -166,7 +185,7 @@ Standard_Boolean Storage_File::CanRead() const
 //=======================================================================
 Standard_Boolean Storage_File::CanWrite() const
 {
-  return myStream.good() && ( OpenMode() == Storage_VSWrite || OpenMode() == Storage_VSReadWrite );
+  return myStream.good() && ( OpenMode() == Storage_VSWrite || OpenMode() == Storage_VSAppend || OpenMode() == Storage_VSReadWrite );
 }
 
 //=======================================================================

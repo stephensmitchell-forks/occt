@@ -109,90 +109,24 @@ Standard_ExtString CDF_Store::Name() const {
 }
 
 Standard_Boolean CDF_Store::SetDevice(const Handle(Storage_IODevice)& aDevice) {
-  /*
-  TCollection_ExtendedString theFolder(aFolder);
-  Standard_Integer l = theFolder.Length();
-
-  // if the last character is the folder separator (which is always the first character)
-  // it is removed.
-	// This is correct for Unix systems but not for Windows! VMS and MAC? Thomas Haller, 23.11.01
-  if(l > 1) {
-#ifndef WNT
-    if(theFolder.Value(l) == theFolder.Value(1)) theFolder.Trunc(l-1);
-#else
-	if (theFolder.Value(l) == '/' || theFolder.Value(l) == '\\')
-		theFolder.Trunc(l-1);
-#endif
-  }
-
-  if(theMetaDataDriver->FindFolder(theFolder))  {
-  */
-    myCurrentDocument->SetRequestedDevice(aDevice);
-    return Standard_True;
-    /*
-  }
-  return Standard_False;
-    */
+  myCurrentDocument->SetRequestedDevice(aDevice);
+  return Standard_True;
 }
 
 CDF_StoreSetNameStatus CDF_Store::RecheckName () {
   //   return SetName(myCurrentDocument->RequestedName());
   return CDF_SSNS_OK;
 }
-/*
-CDF_StoreSetNameStatus CDF_Store::SetName(const TCollection_ExtendedString&  aName)
-{
-  TCollection_ExtendedString theName=theMetaDataDriver->SetName(myCurrentDocument,aName);
-
-  if(myCurrentDocument->IsStored ()) { 
-    Handle(CDM_MetaData)  E = myCurrentDocument->MetaData();
-    if(   E->Folder() == myCurrentDocument->RequestedFolder() 
-       && E->Name()   == theName) return CDF_SSNS_OK;
-  }
-  
-  if(myCurrentDocument->HasRequestedFolder()) {
-    if (theMetaDataDriver->Find(myCurrentDocument->RequestedFolder(),theName)) {
-      if(theMetaDataDriver->MetaData(myCurrentDocument->RequestedFolder(),theName)->IsRetrieved())
-	return CDF_SSNS_OpenDocument;
-      else {
-	myCurrentDocument->SetRequestedName(theName);
-	return CDF_SSNS_ReplacingAnExistentDocument;
-      }
-    }
-  }
-  myCurrentDocument->SetRequestedName(theName);
-  return  CDF_SSNS_OK;
-}
-
-CDF_StoreSetNameStatus CDF_Store::SetName(const Standard_ExtString aName)
-{
-  TCollection_ExtendedString theName(aName);
-  return SetName(theName);
-}
-*/
 
 void CDF_Store::Realize() {
   Standard_ProgramError_Raise_if(!myList->IsConsistent(),"information are missing");
   Handle(CDM_MetaData) m;
   myText = "";
 
-  myCurrentDocument->RequestedDevice()->Open (Storage_VSWrite);
   myStatus = myList->Store(m,myText);
-  myCurrentDocument->RequestedDevice()->Close();
 }
-/*
-Standard_ExtString CDF_Store::Path() const {
-  return myPath.ToExtString();
-}
-*/
 
 Handle(Storage_IODevice) CDF_Store::MetaDataDevice() const {
-  /*
-  static TCollection_ExtendedString retv;
-  retv="";
-  if(myCurrentDocument->IsStored()) retv=myCurrentDocument->MetaData()->Path();
-  return retv.ToExtString();
-  */
   return myCurrentDocument->MetaData()->Device();
 }
 

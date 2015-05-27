@@ -115,16 +115,17 @@ void XmlLDrivers_DocumentStorageDriver::Write
 
   if (WriteToDomDocument (theDocument, anElement, theDevice) == Standard_False) {
     // Write DOM_Document into XML file,
-    //FILE * aFile = OSD_OpenFile(theFileName, "wt");
+    theDevice->Open( Storage_VSWrite );
 
     if (theDevice->CanWrite()) {
       LDOM_XmlWriter aWriter (theDevice);
       aWriter.SetIndentation(1);
       aWriter << aDOMDoc;
-      //fclose(aFile);
+      theDevice->Close();
       ::take_time (0, " +++++ Fin formatting to XML : ", aMessageDriver);
-
-    }else{
+    }
+    else
+    {
       SetIsError (Standard_True);
       TCollection_ExtendedString aMsg =
         TCollection_ExtendedString("Error: the device ") + theDevice->Name() +

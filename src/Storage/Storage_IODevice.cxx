@@ -38,7 +38,8 @@ void Storage_IODevice::ReadLine( Standard_CString& aBuffer, const Standard_Integ
   {
     Standard_Character c;
     Read( &c, sizeof( Standard_Character ) );
-    if ( aFin = ( c == anEndSymbol ) )
+    aFin = ( c == anEndSymbol );
+    if ( aFin )
       aBuf[i++] = '\0';
     else
       aBuf[i++] = c;

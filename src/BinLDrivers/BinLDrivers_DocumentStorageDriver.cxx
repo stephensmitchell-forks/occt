@@ -100,29 +100,15 @@ void BinLDrivers_DocumentStorageDriver::Write
         return;
     }
 
-    theDevice->Open( Storage_VSWrite );
+    theDevice->Open( Storage_VSAppend );
+    Standard_Size aP = theDevice->Tell();
 
-    /*
-#if defined(_WIN32)
-    ofstream anOS ((const wchar_t*) theFileName.ToExtString(), ios::in | ios::binary | ios::ate);
-#elif !defined(IRIX) // 10.10.2005
-    ofstream anOS (aFileName.ToCString(), ios::in | ios::binary | ios::ate);
-#else
-    ofstream anOS (aFileName.ToCString(), ios::ate);
-    //ofstream anOS (aFileName.ToCString(), ios::out| ios::binary | ios::ate);
-#endif
-#ifdef DEB
-    const Standard_Integer aP = (Standard_Integer) anOS.tellp();
-    cout << "POS = " << aP <<endl;
-#endif
-//#endif
-*/
     if (theDevice->CanWrite()) {
 
 //  2. Write the Table of Contents of Sections
-      BinLDrivers_VectorOfDocumentSection::Iterator anIterS (mySections);
-      for (; anIterS.More(); anIterS.Next())
-        anIterS.ChangeValue().WriteTOC (theDevice);
+    BinLDrivers_VectorOfDocumentSection::Iterator anIterS (mySections);
+    for (; anIterS.More(); anIterS.Next())
+      anIterS.ChangeValue().WriteTOC (theDevice);
 
       // Shapes Section is the last one, it indicates the end of the table.
       BinLDrivers_DocumentSection aShapesSection (SHAPESECTION_POS,
@@ -172,12 +158,14 @@ void BinLDrivers_DocumentStorageDriver::Write
       WriteMessage (anErrorStr + "BinLDrivers_DocumentStorageDriver, Problem with the file stream.";
 #else
       TCollection_ExtendedString aStr =
-        anErrorStr + aMethStr + "Problem writing the file ";
-      WriteMessage (aStr + theFileName);
+        anErrorStr + aMethStr + "Problem writing the file.";
+      WriteMessage (aStr);
 #endif
       SetIsError(Standard_True);
       SetStoreStatus(PCDM_SS_WriteFailure);
     }
+
+    theDevice->Close();
   }
 }
 
@@ -368,7 +356,6 @@ void BinLDrivers_DocumentStorageDriver::WriteInfoSection
   if (aFileDriver.Open( theDevice, Storage_VSWrite ) != Storage_VSOk) {
     WriteMessage (TCollection_ExtendedString("Error: Cannot open the device ") +
                   theDevice->Name());
-#endif
     SetIsError(Standard_True);
     return;
   }

@@ -21,6 +21,7 @@ uses Position    from Storage,
      AsciiString from TCollection,
      OpenMode    from Storage,
      Error       from Storage,
+     SeekMode    from Storage,
      ExtendedString from TCollection,
      SequenceOfAsciiString from TColStd,
      SequenceOfExtendedString from TColStd
@@ -48,7 +49,8 @@ is
     Tell( me : mutable ) returns Position from Storage is deferred;
     ---Purpose: return position in the device. Return -1 upon error.
 
-    Seek( me: mutable; aPos : Position from Storage ) returns Boolean from Standard is deferred;
+    Seek( me: mutable; aPos : Position from Storage; aMode: SeekMode from Storage = Storage_SMBegin )
+    returns Boolean from Standard is deferred;
     ---Purpose: Set new absolute position within the stream
    
     Close(me : mutable) returns Boolean from Standard is deferred;

@@ -111,16 +111,25 @@ Standard_OStream& BinObjMgt_Persistent::Write (Standard_OStream& theOS)
 
 void BinObjMgt_Persistent::Write (const Handle(Storage_IODevice)& theDevice)
 {
-  if (!theDevice->CanWrite())
+  Standard_Integer nbWritten = 0;
+  Standard_Integer *aData = (Standard_Integer*) myData(1);
+  // update data length
+  aData[2] = mySize - BP_HEADSIZE;
+#if DO_INVERSE
+  aData[0] = InverseInt (aData[0]);
+  aData[1] = InverseInt (aData[1]);
+  aData[2] = InverseInt (aData[2]);
+#endif
+  for (Standard_Integer i=1; theDevice->CanWrite() && nbWritten < mySize && i <= myData.Length(); i++)
   {
-    return;
+    Standard_Integer nbToWrite = Min(mySize - nbWritten, BP_PIECESIZE);
+    theDevice->Write( (char*)myData(i), nbToWrite );
+    nbWritten += nbToWrite;
   }
-
-  Handle(Storage_OStream) aStream = Handle(Storage_OStream)::DownCast(theDevice);
-  if (!aStream.IsNull())
-  {
-    Write (*aStream->Stream());
-  }
+  myIndex = 1;
+  myOffset = BP_HEADSIZE;
+  mySize = BP_HEADSIZE;
+  myIsError = Standard_False;
 }
 
 //=======================================================================
