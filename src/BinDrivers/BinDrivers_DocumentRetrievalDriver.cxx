@@ -73,7 +73,7 @@ void BinDrivers_DocumentRetrievalDriver::ReadShapeSection( BinLDrivers_DocumentS
           aNamedShapeDriver->ReadShapeSection( aStrStream );
       }
       else
-        WriteMessage( "BinDrivers_DocumentRetrievalDriver: can't read all section data." );
+        WriteMessage( "BinDrivers_DocumentRetrievalDriver: can't read all shape section data." );
     }
     catch(Standard_Failure) {
       if ( aBuf )
