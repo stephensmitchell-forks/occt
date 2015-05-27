@@ -17,7 +17,7 @@
 package FWOSDriver
 
 uses
-    CDM,CDF,TCollection
+    CDM,CDF,TCollection,Storage
 
 is
     class Driver;

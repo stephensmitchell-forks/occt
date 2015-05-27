@@ -96,7 +96,7 @@ Standard_Boolean FWOSDriver_Driver::HasReadPermission(const TCollection_Extended
 //function : MetaData
 //purpose  :
 //==============================================================================
-Handle(CDM_MetaData) FWOSDriver_FWOSDriver::MetaData(const Handle(Storage_IODevice)& aDevice,
+Handle(CDM_MetaData) FWOSDriver_Driver::MetaData(const Handle(Storage_IODevice)& aDevice,
                                                      const TCollection_ExtendedString& /*aVersion*/)
 {
   //  TCollection_ExtendedString p = Concatenate(aFolder,aName);
@@ -107,7 +107,7 @@ Handle(CDM_MetaData) FWOSDriver_FWOSDriver::MetaData(const Handle(Storage_IODevi
 //function : CreateMetaData
 //purpose  :
 //==============================================================================
-Handle(CDM_MetaData) FWOSDriver_FWOSDriver::CreateMetaData(const Handle(CDM_Document)& aDocument)
+Handle(CDM_MetaData) FWOSDriver_Driver::CreateMetaData(const Handle(CDM_Document)& aDocument)
 {
   return CDM_MetaData::LookUp(aDocument->RequestedDevice(),!aDocument->RequestedDevice()->CanWrite());
 }
@@ -116,7 +116,7 @@ Handle(CDM_MetaData) FWOSDriver_FWOSDriver::CreateMetaData(const Handle(CDM_Docu
 //function : BuildFileName
 //purpose  :
 //==============================================================================
-TCollection_ExtendedString FWOSDriver_FWOSDriver::BuildFileName(const Handle(CDM_Document)& aDocument)
+TCollection_ExtendedString FWOSDriver_Driver::BuildFileName(const Handle(CDM_Document)& aDocument)
 {
 /*
   TCollection_ExtendedString retstr = TCollection_ExtendedString(aDocument->RequestedFolder());
@@ -189,7 +189,7 @@ TCollection_ExtendedString FWOSDriver_Driver::DefaultFolder()
 //function : BuildMetaData
 //purpose  :
 //==============================================================================
-Handle(CDM_MetaData) FWOSDriver_FWOSDriver::BuildMetaData(const Handle(Storage_IODevice)& aDevice)
+Handle(CDM_MetaData) FWOSDriver_Driver::BuildMetaData(const Handle(Storage_IODevice)& aDevice)
 {
 /*
   OSD_Path p = UTL::Path(aFileName);
@@ -208,7 +208,7 @@ Handle(CDM_MetaData) FWOSDriver_FWOSDriver::BuildMetaData(const Handle(Storage_I
 //function : SetName
 //purpose  :
 //==============================================================================
-TCollection_ExtendedString FWOSDriver_FWOSDriver::SetName(const Handle(CDM_Document)& aDocument,
+TCollection_ExtendedString FWOSDriver_Driver::SetName(const Handle(CDM_Document)& aDocument,
                                                       const TCollection_ExtendedString& aName)
 {
   

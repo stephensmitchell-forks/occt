@@ -623,11 +623,6 @@ Storage_BaseDriver& FSD_CmpFile::GetReal(Standard_Real& aValue)
     Storage_StreamTypeMismatchError::Raise();
 
   return *this;
-#else
-  if (!(myStream >> aValue)) Storage_StreamTypeMismatchError::Raise();
-
-  return *this;
-#endif
 }
 
 //=======================================================================
@@ -645,10 +640,6 @@ Storage_BaseDriver& FSD_CmpFile::GetShortReal(Standard_ShortReal& aValue)
     Storage_StreamTypeMismatchError::Raise();
 
   return *this;
-#else
-  if (!(myStream >> aValue)) Storage_StreamTypeMismatchError::Raise();
- return *this;
-#endif
 }
 
 //=======================================================================

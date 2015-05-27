@@ -54,7 +54,6 @@ TCollection_ExtendedString UTL::Extension(const TCollection_ExtendedString& aFil
   OSD_Path p = OSD_Path(ASCII(aFileName));
 
   TCollection_AsciiString theExtension=p.Extension();
-/*
   TCollection_AsciiString theGoodExtension=theExtension;;
 
   if(TCollection_AsciiString(theExtension.Value(1))==".") 
@@ -62,7 +61,6 @@ TCollection_ExtendedString UTL::Extension(const TCollection_ExtendedString& aFil
 
   return UNICODE(theGoodExtension);
 }
-*/
 void UTL::AddToUserInfo(const Handle(Storage_Data)& aData, const TCollection_ExtendedString& anInfo) {
   aData->AddToUserInfo(ASCII(anInfo));
 }
