@@ -240,7 +240,6 @@ p BinMDataXtd
 p BinMDocStd
 p BinMFunction
 p BinMNaming
-p BinMPrsStd
 p BinObjMgt
 p BinTools
 p CDF
@@ -253,7 +252,6 @@ p MDataXtd
 p MDocStd
 p MFunction
 p MNaming
-p MPrsStd
 p MgtBRep
 p MgtGeom
 p MgtGeom2d
@@ -277,7 +275,6 @@ p PGeom2d
 p PMMgt
 p PNaming
 p PPoly
-p PPrsStd
 p PShort
 p PStandard
 p PTColStd
@@ -301,7 +298,6 @@ p XmlMDataXtd
 p XmlMDocStd
 p XmlMFunction
 p XmlMNaming
-p XmlMPrsStd
 p XmlObjMgt
 r StdResource
 r XmlOcafResource
@@ -318,6 +314,7 @@ t TKCDF
 t TKLCAF
 t TKPCAF
 t TKPLCAF
+t TKVCAF
 t TKPShape
 t TKShapeSchema
 t TKStdLSchema

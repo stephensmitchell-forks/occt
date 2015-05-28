@@ -13,7 +13,7 @@
 -- Alternatively, this file may be used under the terms of Open CASCADE
 -- commercial license or contractual agreement.
 
-class PositionDriver from XmlMPrsStd  inherits ADriver from XmlMDF
+class PresentationDriver from XmlMDataXtd  inherits ADriver from XmlMDF
 
         ---Purpose: Attribute Driver.
 
@@ -26,7 +26,7 @@ uses
 
 is
     Create (theMessageDriver:MessageDriver from CDM)
-        returns PositionDriver from XmlMPrsStd;
+        returns PresentationDriver from XmlMDataXtd;
 
     NewEmpty (me)  returns Attribute from TDF;
 
@@ -39,4 +39,4 @@ is
               Target     : in out Persistent from XmlObjMgt;
               RelocTable : out SRelocationTable from XmlObjMgt);
 
-end PositionDriver;
+end PresentationDriver;

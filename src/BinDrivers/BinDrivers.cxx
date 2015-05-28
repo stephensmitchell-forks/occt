@@ -21,7 +21,6 @@
 #include <BinMNaming.hxx>
 #include <BinMDocStd.hxx>
 #include <BinMFunction.hxx>
-#include <BinMPrsStd.hxx>
 #include <Standard_Failure.hxx>
 #include <BinDrivers_DocumentStorageDriver.hxx>
 #include <BinDrivers_DocumentRetrievalDriver.hxx>
@@ -76,7 +75,6 @@ Handle(BinMDF_ADriverTable) BinDrivers::AttributeDrivers
   BinMNaming    ::AddDrivers (aTable, aMsgDrv);
   BinMDocStd    ::AddDrivers (aTable, aMsgDrv);
   BinMFunction  ::AddDrivers (aTable, aMsgDrv);
-  BinMPrsStd    ::AddDrivers (aTable, aMsgDrv);
   return aTable;
 }
 

@@ -14,15 +14,15 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#include <PPrsStd_AISPresentation_1.ixx>
+#include <PDataXtd_Presentation_1.ixx>
 
 
 //=======================================================================
-//function : PPrsStd_AISPresentation
+//function : PDataXtd_Presentation_1
 //purpose  : 
 //=======================================================================
 
-PPrsStd_AISPresentation_1::PPrsStd_AISPresentation_1() :
+PDataXtd_Presentation_1::PDataXtd_Presentation_1() :
     myIsDisplayed(Standard_False),
     myTransparency(0.),
     myColor(0),
@@ -38,7 +38,7 @@ PPrsStd_AISPresentation_1::PPrsStd_AISPresentation_1() :
 //purpose  : 
 //=======================================================================
 
-void PPrsStd_AISPresentation_1::SetDisplayed (const Standard_Boolean B)       
+void PDataXtd_Presentation_1::SetDisplayed (const Standard_Boolean B)
 {
   myIsDisplayed = B ;
 }
@@ -48,7 +48,7 @@ void PPrsStd_AISPresentation_1::SetDisplayed (const Standard_Boolean B)
 //purpose  : 
 //=======================================================================
 
-Standard_Boolean PPrsStd_AISPresentation_1::IsDisplayed() const 
+Standard_Boolean PDataXtd_Presentation_1::IsDisplayed() const 
 {
     return myIsDisplayed;
 }
@@ -58,7 +58,7 @@ Standard_Boolean PPrsStd_AISPresentation_1::IsDisplayed() const
 //function : SetDriverGUID
 //purpose  : 
 //=======================================================================
-void PPrsStd_AISPresentation_1::SetDriverGUID( const Handle(PCollection_HExtendedString)&  guid)
+void PDataXtd_Presentation_1::SetDriverGUID( const Handle(PCollection_HExtendedString)&  guid)
 {
   myDriverGUID = guid;
 }
@@ -67,7 +67,7 @@ void PPrsStd_AISPresentation_1::SetDriverGUID( const Handle(PCollection_HExtende
 //function : GetDriverGUID
 //purpose  : 
 //=======================================================================
-Handle(PCollection_HExtendedString) PPrsStd_AISPresentation_1::GetDriverGUID( void ) const
+Handle(PCollection_HExtendedString) PDataXtd_Presentation_1::GetDriverGUID( void ) const
 {
   return myDriverGUID;
 }
@@ -76,7 +76,7 @@ Handle(PCollection_HExtendedString) PPrsStd_AISPresentation_1::GetDriverGUID( vo
 //function : Color
 //purpose  : 
 //=======================================================================
-Standard_Integer PPrsStd_AISPresentation_1::Color() const
+Standard_Integer PDataXtd_Presentation_1::Color() const
 {
   return myColor;
 }
@@ -85,7 +85,7 @@ Standard_Integer PPrsStd_AISPresentation_1::Color() const
 //function : SetColor
 //purpose  : 
 //=======================================================================
-void PPrsStd_AISPresentation_1::SetColor(const Standard_Integer C) 
+void PDataXtd_Presentation_1::SetColor(const Standard_Integer C) 
 {
   myColor = C;
 }
@@ -94,7 +94,7 @@ void PPrsStd_AISPresentation_1::SetColor(const Standard_Integer C)
 //function : Transparency
 //purpose  : 
 //=======================================================================
-Standard_Real PPrsStd_AISPresentation_1::Transparency() const
+Standard_Real PDataXtd_Presentation_1::Transparency() const
 {
   return myTransparency;
 }
@@ -103,7 +103,7 @@ Standard_Real PPrsStd_AISPresentation_1::Transparency() const
 //function : SetTransparency
 //purpose  : 
 //=======================================================================
-void PPrsStd_AISPresentation_1::SetTransparency(const Standard_Real T) 
+void PDataXtd_Presentation_1::SetTransparency(const Standard_Real T) 
 {
   myTransparency = T;
 }
@@ -112,7 +112,7 @@ void PPrsStd_AISPresentation_1::SetTransparency(const Standard_Real T)
 //function : Material
 //purpose  : 
 //=======================================================================
-Standard_Integer PPrsStd_AISPresentation_1::Material() const
+Standard_Integer PDataXtd_Presentation_1::Material() const
 {
   return myMaterial;
 }
@@ -121,7 +121,7 @@ Standard_Integer PPrsStd_AISPresentation_1::Material() const
 //function : SetMaterial
 //purpose  : 
 //=======================================================================
-void PPrsStd_AISPresentation_1::SetMaterial(const Standard_Integer M) 
+void PDataXtd_Presentation_1::SetMaterial(const Standard_Integer M) 
 {
    myMaterial = M;
 }
@@ -130,7 +130,7 @@ void PPrsStd_AISPresentation_1::SetMaterial(const Standard_Integer M)
 //function : Width 
 //purpose  : 
 //=======================================================================
-Standard_Real PPrsStd_AISPresentation_1::Width() const
+Standard_Real PDataXtd_Presentation_1::Width() const
 {
   return myWidth;  
 }
@@ -143,7 +143,7 @@ Standard_Real PPrsStd_AISPresentation_1::Width() const
 //purpose  : 
 //=======================================================================
 
-void PPrsStd_AISPresentation_1::SetWidth(const Standard_Real W) 
+void PDataXtd_Presentation_1::SetWidth(const Standard_Real W) 
 {
   myWidth = W;
 }
@@ -155,7 +155,7 @@ void PPrsStd_AISPresentation_1::SetWidth(const Standard_Real W)
 //purpose  : 
 //=======================================================================
 
-Standard_Integer PPrsStd_AISPresentation_1::Mode() const
+Standard_Integer PDataXtd_Presentation_1::Mode() const
 {
   return myMode;
 }
@@ -166,7 +166,7 @@ Standard_Integer PPrsStd_AISPresentation_1::Mode() const
 //purpose  : 
 //=======================================================================
 
-void PPrsStd_AISPresentation_1::SetMode(const Standard_Integer M) 
+void PDataXtd_Presentation_1::SetMode(const Standard_Integer M) 
 {
    myMode = M;
 }

@@ -22,7 +22,6 @@
 #include <MNaming.hxx>  
 #include <MDocStd.hxx> 
 #include <MFunction.hxx>
-#include <MPrsStd.hxx>
 #include <CDM_MessageDriver.hxx>
 //=======================================================================
 //function : PAppStd_DocumentRetrievalDriver
@@ -47,7 +46,6 @@ Handle(MDF_ARDriverTable) StdDrivers_DocumentRetrievalDriver::AttributeDrivers(c
   MDocStd::AddRetrievalDrivers(HARSeq, theMsgDriver);
   MFunction::AddRetrievalDrivers(HARSeq, theMsgDriver);
   MNaming::AddRetrievalDrivers(HARSeq, theMsgDriver); 
-  MPrsStd::AddRetrievalDrivers(HARSeq, theMsgDriver); 
  
   //
   aRetrievalTable->SetDrivers(HARSeq);

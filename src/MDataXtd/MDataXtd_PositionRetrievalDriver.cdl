@@ -14,38 +14,36 @@
 -- Alternatively, this file may be used under the terms of Open CASCADE
 -- commercial license or contractual agreement.
 
-class PositionStorageDriver from MPrsStd inherits ASDriver from MDF
+class PositionRetrievalDriver from MDataXtd inherits ARDriver from MDF
+	    ---Purpose: Retrieval drivers for graphic attributes from
+	    --          PDataXtd
 
-	---Purpose: Storage driver for graphic attributes from
-	--          TPrsStd
 
-uses SRelocationTable from MDF,
-     Attribute        from TDF,
-     Attribute        from PDF, 
+uses RRelocationTable from MDF,
+     Attribute        from PDF,
+     Attribute        from TDF, 
      MessageDriver    from CDM
-
 
 is
 
-    Create(theMessageDriver : MessageDriver from CDM)  
-    returns PositionStorageDriver from MPrsStd;
 
+    Create(theMessageDriver : MessageDriver from CDM)  -- Version 0
+    returns PositionRetrievalDriver from MDataXtd;
+    
 
     VersionNumber(me) returns Integer from Standard;
 	---Purpose: Returns the version number from which the driver
 	--          is available: 0.
 
     SourceType(me) returns Type from Standard;
-	---Purpose: Returns the type: ColorAttribute from TGraphicAttribute.
+	---Purpose: Returns the type: ColorAttribute from PGraphicAttribute.
 
-    NewEmpty (me) returns Attribute from PDF;
+    NewEmpty (me)  returns Attribute from TDF;
 
 
     Paste(me;
-    	  Source     :         Attribute from TDF;
-    	  Target     : Attribute from PDF;
-    	  RelocTable : SRelocationTable from MDF);
+    	  Source     :         Attribute from PDF;
+    	  Target     : Attribute from TDF;
+    	  RelocTable : RRelocationTable  from MDF);
 
-
-end PositionStorageDriver;
-
+end PositionRetrievalDriver;
