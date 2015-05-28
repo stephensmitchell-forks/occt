@@ -32,7 +32,8 @@ uses
     Curve         from Geom2d,
     Geometry      from Geom2d,	
     SequenceOfPnt from TColgp,
-    Curve         from Geom2dAdaptor
+    Curve         from Geom2dAdaptor,
+    JoinType      from GeomAbs
 
 is
     Create
@@ -45,6 +46,7 @@ is
     
     IntersectWith( me : in out;
     	    	   Edge1 , Edge2 :        Edge          from TopoDS;
+		   theJoinType   :        JoinType      from GeomAbs;
 		   Params        : in out SequenceOfPnt from TColgp)
     is static;
 

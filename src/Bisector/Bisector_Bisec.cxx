@@ -81,6 +81,7 @@ void Bisector_Bisec::Perform(const Handle(Geom2d_Curve)& afirstcurve   ,
 			     const gp_Vec2d&             afirstvector  ,
 			     const gp_Vec2d&             asecondvector ,
 			     const Standard_Real         adirection    ,
+                             const GeomAbs_JoinType      ajointype     ,
 			     const Standard_Real         tolerance     ,
 			     const Standard_Boolean      oncurve       )
 {
@@ -110,6 +111,7 @@ void Bisector_Bisec::Perform(const Handle(Geom2d_Curve)& afirstcurve   ,
 		     afirstvector  ,
 		     asecondvector ,
 		     adirection    ,
+                     ajointype     ,
 		     tolerance     ,
 		     oncurve       );
      UFirst = BisAna->ParameterOfStartPoint();
