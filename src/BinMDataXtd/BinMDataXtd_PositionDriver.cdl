@@ -13,9 +13,9 @@
 -- Alternatively, this file may be used under the terms of Open CASCADE
 -- commercial license or contractual agreement.
 
-class AISPresentationDriver from BinMPrsStd inherits ADriver from BinMDF
+class PositionDriver from BinMDataXtd inherits ADriver from BinMDF
 
-	---Purpose: AISPresentation Attribute Driver.
+	---Purpose: Position Attribute Driver.
 
 uses
     SRelocationTable from BinObjMgt,
@@ -27,7 +27,7 @@ uses
 is
 
     Create (theMessageDriver:MessageDriver from CDM)
-        returns AISPresentationDriver from BinMPrsStd;
+    returns PositionDriver from BinMDataXtd;
 
     NewEmpty (me)  returns Attribute from TDF;
 
@@ -39,6 +39,5 @@ is
     Paste(me; Source     : Attribute from TDF;
               Target     : in out Persistent from BinObjMgt;
               RelocTable : out SRelocationTable from BinObjMgt);
-    
 
-end AISPresentationDriver;
+end PositionDriver;

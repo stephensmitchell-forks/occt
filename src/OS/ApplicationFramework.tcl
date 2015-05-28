@@ -21,6 +21,7 @@ proc ApplicationFramework:toolkits { } {
 		TKCDF \
 		TKLCAF \
                 TKCAF \
+                TKVCAF \
                 TKBinL \
                 TKXmlL \
 		TKShapeSchema \

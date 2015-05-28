@@ -74,7 +74,6 @@ Handle(BinMDF_ADriverTable) BinLDrivers::AttributeDrivers
   BinMDocStd    ::AddDrivers (aTable, aMsgDrv);
 
 //  BinMNaming    ::AddDrivers (aTable, aMsgDrv);
-//  BinMPrsStd    ::AddDrivers (aTable, aMsgDrv);
   return aTable;
 }
 

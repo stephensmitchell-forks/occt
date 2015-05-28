@@ -1,6 +1,6 @@
--- Created on: 1999-07-08
--- Created by: Sergey RUIN
--- Copyright (c) 1999 Matra Datavision
+-- Created on: 1998-04-07
+-- Created by: Jean-Pierre COMBE
+-- Copyright (c) 1998-1999 Matra Datavision
 -- Copyright (c) 1999-2014 OPEN CASCADE SAS
 --
 -- This file is part of Open CASCADE Technology software library.
@@ -14,36 +14,38 @@
 -- Alternatively, this file may be used under the terms of Open CASCADE
 -- commercial license or contractual agreement.
 
-class AISPresentationRetrievalDriver from MPrsStd  inherits ARDriver from MDF
+class PositionStorageDriver from MDataXtd inherits ASDriver from MDF
 
-	    ---Purpose: Retrieval drivers for graphic attributes from
-	    --          PPrsStd
+	---Purpose: Storage driver for graphic attributes from
+	--          TPrsStd
 
-uses RRelocationTable from MDF,
-     Attribute        from PDF,
-     Attribute        from TDF, 
-     MessageDriver from CDM
+uses SRelocationTable from MDF,
+     Attribute        from TDF,
+     Attribute        from PDF, 
+     MessageDriver    from CDM
+
 
 is
 
+    Create(theMessageDriver : MessageDriver from CDM)  
+    returns PositionStorageDriver from MDataXtd;
 
-    Create(theMessageDriver : MessageDriver from CDM)  -- Version 0
-    returns AISPresentationRetrievalDriver from MPrsStd;
-    
 
     VersionNumber(me) returns Integer from Standard;
 	---Purpose: Returns the version number from which the driver
 	--          is available: 0.
 
     SourceType(me) returns Type from Standard;
-	---Purpose: Returns the type: AISPresentation from PPrsStd.
+	---Purpose: Returns the type: ColorAttribute from TGraphicAttribute.
 
-    NewEmpty (me)  returns Attribute from TDF;
+    NewEmpty (me) returns Attribute from PDF;
 
 
     Paste(me;
-    	  Source     :         Attribute from PDF;
-    	  Target     : Attribute from TDF;
-    	  RelocTable : RRelocationTable  from MDF);
+    	  Source     :         Attribute from TDF;
+    	  Target     : Attribute from PDF;
+    	  RelocTable : SRelocationTable from MDF);
 
-end AISPresentationRetrievalDriver;
+
+end PositionStorageDriver;
+
