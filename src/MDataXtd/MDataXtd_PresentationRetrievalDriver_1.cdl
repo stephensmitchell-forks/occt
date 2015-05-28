@@ -1,6 +1,6 @@
--- Created on: 1998-04-07
--- Created by: Jean-Pierre COMBE
--- Copyright (c) 1998-1999 Matra Datavision
+-- Created on: 1999-07-08
+-- Created by: Sergey RUIN
+-- Copyright (c) 1999 Matra Datavision
 -- Copyright (c) 1999-2014 OPEN CASCADE SAS
 --
 -- This file is part of Open CASCADE Technology software library.
@@ -14,10 +14,10 @@
 -- Alternatively, this file may be used under the terms of Open CASCADE
 -- commercial license or contractual agreement.
 
-class PositionRetrievalDriver from MPrsStd inherits ARDriver from MDF
-	---Purpose: 
+class PresentationRetrievalDriver_1 from MDataXtd  inherits ARDriver from MDF
 
-
+	    ---Purpose: Retrieval drivers for graphic attributes from
+	    --          PDataXtd
 
 uses RRelocationTable from MDF,
      Attribute        from PDF,
@@ -27,16 +27,16 @@ uses RRelocationTable from MDF,
 is
 
 
-    Create(theMessageDriver : MessageDriver from CDM)  -- Version 0
-    returns mutable PositionRetrievalDriver from MPrsStd;
+    Create (theMessageDriver : MessageDriver from CDM) -- Version 1
+    returns mutable PresentationRetrievalDriver_1 from MDataXtd;
     
 
     VersionNumber(me) returns Integer from Standard;
 	---Purpose: Returns the version number from which the driver
-	--          is available: 0.
+	--          is available: 1.
 
     SourceType(me) returns Type from Standard;
-	---Purpose: Returns the type: ColorAttribute from PGraphicAttribute.
+	---Purpose: Returns the type: Presentation from PDataXtd.
 
     NewEmpty (me)  returns mutable Attribute from TDF;
 
@@ -46,4 +46,5 @@ is
     	  Target     : mutable Attribute from TDF;
     	  RelocTable : RRelocationTable  from MDF);
 
-end PositionRetrievalDriver;
+ 
+end PresentationRetrievalDriver_1;

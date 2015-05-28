@@ -55,6 +55,9 @@ is
 	
 	class PatternStdStorageDriver;
 
+        class PresentationStorageDriver;
+
+        class PositionStorageDriver;
  
     
     	---Purpose: Retrieval drivers for PDataXtd attributes
@@ -75,6 +78,12 @@ is
 	class PlacementRetrievalDriver;
 	
 	class PatternStdRetrievalDriver;
+
+	class PresentationRetrievalDriver;
+
+	class PresentationRetrievalDriver_1;
+	
+	class PositionRetrievalDriver;
 
 
 

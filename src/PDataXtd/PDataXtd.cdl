@@ -58,7 +58,11 @@ is
     
     class PatternStd;
     
-    class Shape; 
+    class Shape;
+
+    class Presentation;
+
+    class Presentation_1;
      
  
 end PDataXtd;

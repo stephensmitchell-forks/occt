@@ -13,7 +13,7 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#include <XmlMPrsStd_PositionDriver.ixx>
+#include <XmlMDataXtd_PositionDriver.ixx>
 
 #include <XmlObjMgt.hxx>
 #include <TDataXtd_Position.hxx>
@@ -22,19 +22,19 @@
 #include <stdio.h>
 
 //=======================================================================
-//function : XmlMPrsStd_PositionDriver
+//function : XmlMDataXtd_PositionDriver
 //purpose  : Constructor
 //=======================================================================
-XmlMPrsStd_PositionDriver::XmlMPrsStd_PositionDriver
+XmlMDataXtd_PositionDriver::XmlMDataXtd_PositionDriver
                         (const Handle(CDM_MessageDriver)& theMsgDriver)
-      : XmlMDF_ADriver (theMsgDriver, NULL)
+: XmlMDF_ADriver (theMsgDriver, NULL)
 {}
 
 //=======================================================================
 //function : NewEmpty
 //purpose  : 
 //=======================================================================
-Handle(TDF_Attribute) XmlMPrsStd_PositionDriver::NewEmpty() const
+Handle(TDF_Attribute) XmlMDataXtd_PositionDriver::NewEmpty() const
 {
   return (new TDataXtd_Position());
 }
@@ -43,7 +43,7 @@ Handle(TDF_Attribute) XmlMPrsStd_PositionDriver::NewEmpty() const
 //function : Paste
 //purpose  : persistent -> transient (retrieve)
 //=======================================================================
-Standard_Boolean XmlMPrsStd_PositionDriver::Paste
+Standard_Boolean XmlMDataXtd_PositionDriver::Paste
                 (const XmlObjMgt_Persistent&  theSource,
                  const Handle(TDF_Attribute)& theTarget,
                  XmlObjMgt_RRelocationTable&  ) const
@@ -107,7 +107,7 @@ Standard_Boolean XmlMPrsStd_PositionDriver::Paste
 //function : Paste
 //purpose  : transient -> persistent (store)
 //=======================================================================
-void XmlMPrsStd_PositionDriver::Paste
+void XmlMDataXtd_PositionDriver::Paste
                 (const Handle(TDF_Attribute)& theSource,
                  XmlObjMgt_Persistent&        theTarget,
                  XmlObjMgt_SRelocationTable&  ) const

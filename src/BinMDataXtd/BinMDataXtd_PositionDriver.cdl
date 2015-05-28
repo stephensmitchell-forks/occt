@@ -1,6 +1,6 @@
--- Created on: 2001-09-04
--- Created by: Julia DOROVSKIKH
--- Copyright (c) 2001-2014 OPEN CASCADE SAS
+-- Created on: 2004-05-17
+-- Created by: Sergey ZARITCHNY <szy@opencascade.com>
+-- Copyright (c) 2004-2014 OPEN CASCADE SAS
 --
 -- This file is part of Open CASCADE Technology software library.
 --
@@ -13,30 +13,31 @@
 -- Alternatively, this file may be used under the terms of Open CASCADE
 -- commercial license or contractual agreement.
 
-class AISPresentationDriver from XmlMPrsStd  inherits ADriver from XmlMDF
+class PositionDriver from BinMDataXtd inherits ADriver from BinMDF
 
-        ---Purpose: Attribute Driver.
+	---Purpose: Position Attribute Driver.
 
 uses
-    SRelocationTable from XmlObjMgt,
-    RRelocationTable from XmlObjMgt,
-    Persistent       from XmlObjMgt,
+    SRelocationTable from BinObjMgt,
+    RRelocationTable from BinObjMgt,
+    Persistent       from BinObjMgt,
     MessageDriver    from CDM,
     Attribute        from TDF
 
 is
+
     Create (theMessageDriver:MessageDriver from CDM)
-        returns mutable AISPresentationDriver from XmlMPrsStd;
+    returns PositionDriver from BinMDataXtd;
 
     NewEmpty (me)  returns mutable Attribute from TDF;
 
-    Paste(me; Source     : Persistent from XmlObjMgt;
+    Paste(me; Source     : Persistent from BinObjMgt;
               Target     : mutable Attribute from TDF;
-              RelocTable : out RRelocationTable from XmlObjMgt)
+              RelocTable : out RRelocationTable from BinObjMgt)
         returns Boolean from Standard;
 
     Paste(me; Source     : Attribute from TDF;
-              Target     : in out Persistent from XmlObjMgt;
-              RelocTable : out SRelocationTable from XmlObjMgt);
+              Target     : in out Persistent from BinObjMgt;
+              RelocTable : out SRelocationTable from BinObjMgt);
 
-end AISPresentationDriver;
+end PositionDriver;

@@ -34,6 +34,8 @@
 #include <MDataXtd_ConstraintStorageDriver.hxx>
 #include <MDataXtd_PlacementStorageDriver.hxx>
 #include <MDataXtd_PatternStdStorageDriver.hxx>
+#include <MDataXtd_PositionStorageDriver.hxx>
+#include <MDataXtd_PositionRetrievalDriver.hxx>
 
 // Retrieval
 #include <MDataXtd_ShapeRetrievalDriver.hxx>
@@ -44,6 +46,9 @@
 #include <MDataXtd_ConstraintRetrievalDriver.hxx>
 #include <MDataXtd_PlacementRetrievalDriver.hxx>
 #include <MDataXtd_PatternStdRetrievalDriver.hxx>
+#include <MDataXtd_PresentationStorageDriver.hxx>
+#include <MDataXtd_PresentationRetrievalDriver.hxx>
+#include <MDataXtd_PresentationRetrievalDriver_1.hxx>
 
 // enums
 #include <TDataStd_RealEnum.hxx>
@@ -83,6 +88,8 @@ void MDataXtd::AddStorageDrivers
   aDriverSeq->Append(new MDataXtd_ConstraintStorageDriver(theMsgDriver));
   aDriverSeq->Append(new MDataXtd_PlacementStorageDriver(theMsgDriver));
   aDriverSeq->Append(new MDataXtd_PatternStdStorageDriver(theMsgDriver));
+  aDriverSeq->Append(new MDataXtd_PresentationStorageDriver(theMsgDriver));
+  aDriverSeq->Append(new MDataXtd_PositionStorageDriver(theMsgDriver));
 }
 
 
@@ -102,6 +109,9 @@ void MDataXtd::AddRetrievalDrivers
   aDriverSeq->Append(new MDataXtd_ConstraintRetrievalDriver(theMsgDriver));
   aDriverSeq->Append(new MDataXtd_PlacementRetrievalDriver(theMsgDriver));
   aDriverSeq->Append(new MDataXtd_PatternStdRetrievalDriver(theMsgDriver));
+  aDriverSeq->Append(new MDataXtd_PresentationRetrievalDriver(theMsgDriver));
+  aDriverSeq->Append(new MDataXtd_PresentationRetrievalDriver_1(theMsgDriver));
+  aDriverSeq->Append(new MDataXtd_PositionRetrievalDriver(theMsgDriver));
 }
 
 //=======================================================================

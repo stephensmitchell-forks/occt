@@ -105,6 +105,8 @@ is
     class Axis;
     
     class Plane;
+
+    class Presentation;
     
     deferred class Pattern;
 	

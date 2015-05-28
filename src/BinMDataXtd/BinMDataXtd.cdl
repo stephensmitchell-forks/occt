@@ -43,6 +43,10 @@ is
     class PatternStdDriver;
 
     class ShapeDriver; 
+
+    class PresentationDriver;
+
+    class PositionDriver;
      
 
     AddDrivers (theDriverTable : ADriverTable  from BinMDF;

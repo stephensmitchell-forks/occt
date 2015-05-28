@@ -14,9 +14,10 @@
 -- Alternatively, this file may be used under the terms of Open CASCADE
 -- commercial license or contractual agreement.
 
-class AISPresentationStorageDriver from MPrsStd inherits ASDriver from MDF
+class PresentationStorageDriver from MDataXtd inherits ASDriver from MDF
 
-	---Purpose: 
+	---Purpose: Storage driver for graphic attributes from
+	--          TDataXtd
 
 uses SRelocationTable from MDF,
      Attribute        from TDF,
@@ -27,7 +28,7 @@ uses SRelocationTable from MDF,
 is
 
     Create (theMessageDriver : MessageDriver from CDM)
-    returns mutable AISPresentationStorageDriver from MPrsStd;
+    returns mutable PresentationStorageDriver from MDataXtd;
 
 
     VersionNumber(me) returns Integer from Standard;
@@ -35,7 +36,7 @@ is
 	--          is available: 0.
 
     SourceType(me) returns Type from Standard;
-	---Purpose: Returns the type: AISPresentation from TPrsStd.
+	---Purpose: Returns the type: Presentation from TDataXtd.
 
     NewEmpty (me) returns mutable Attribute from PDF;
 
@@ -46,5 +47,5 @@ is
     	  RelocTable : SRelocationTable from MDF);
 
 
-end AISPresentationStorageDriver;
+end PresentationStorageDriver;
 

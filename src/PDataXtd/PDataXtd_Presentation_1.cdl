@@ -14,7 +14,7 @@
 -- Alternatively, this file may be used under the terms of Open CASCADE
 -- commercial license or contractual agreement.
 
-class AISPresentation_1 from PPrsStd 
+class Presentation_1 from PDataXtd 
     inherits Attribute from PDF
 
 	---Purpose: 
@@ -22,7 +22,7 @@ class AISPresentation_1 from PPrsStd
 uses    HExtendedString from PCollection
 is
 
-    Create returns mutable AISPresentation_1 from PPrsStd;
+    Create returns mutable Presentation_1 from PDataXtd;
 	
     IsDisplayed(me) returns Boolean from Standard;
     SetDisplayed(me : mutable; B : Boolean from Standard);
@@ -53,4 +53,4 @@ fields
     myMaterial            : Integer              from Standard;
     myWidth               : Real                 from Standard; 
     myMode                : Integer              from Standard;
-end AISPresentation_1;
+end Presentation_1;

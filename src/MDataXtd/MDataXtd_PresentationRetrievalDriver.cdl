@@ -14,36 +14,35 @@
 -- Alternatively, this file may be used under the terms of Open CASCADE
 -- commercial license or contractual agreement.
 
-class AISPresentationRetrievalDriver_1 from MPrsStd  inherits ARDriver from MDF
+class PresentationRetrievalDriver from MDataXtd  inherits ARDriver from MDF
 
-	---Purpose: 
+	    ---Purpose: Retrieval drivers for graphic attributes from
+	    --          MDataXtd
 
 uses RRelocationTable from MDF,
      Attribute        from PDF,
      Attribute        from TDF, 
-     MessageDriver    from CDM
+     MessageDriver from CDM
 
 is
 
-
-    Create (theMessageDriver : MessageDriver from CDM) -- Version 1
-    returns mutable AISPresentationRetrievalDriver_1 from MPrsStd;
+    Create(theMessageDriver : MessageDriver from CDM)  -- Version 0
+    returns mutable PresentationRetrievalDriver from MDataXtd;
     
 
     VersionNumber(me) returns Integer from Standard;
 	---Purpose: Returns the version number from which the driver
-	--          is available: 1.
+	--          is available: 0.
 
     SourceType(me) returns Type from Standard;
-	---Purpose: Returns the type: AISPresentation from PPrsStd.
+	---Purpose: Returns the type: Presentation from PDataXtd.
 
     NewEmpty (me)  returns mutable Attribute from TDF;
 
 
     Paste(me;
-    	  Source     :         Attribute from PDF;
+    	  Source     : Attribute from PDF;
     	  Target     : mutable Attribute from TDF;
     	  RelocTable : RRelocationTable  from MDF);
 
- 
-end AISPresentationRetrievalDriver_1;
+end PresentationRetrievalDriver;

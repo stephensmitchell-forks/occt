@@ -14,52 +14,57 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#include <MPrsStd_PositionStorageDriver.ixx>
+#include <MDataXtd_PositionRetrievalDriver.ixx>
 
 #include <PDataXtd_Position.hxx>
 #include <TDataXtd_Position.hxx>
 #include <CDM_MessageDriver.hxx>
 
 //=======================================================================
-//function : MPrsStd_PositionStorageDriver
+//function : MDataXtd_PositionRetrievalDriver
 //purpose  : 
 //=======================================================================
-MPrsStd_PositionStorageDriver::MPrsStd_PositionStorageDriver(const Handle(CDM_MessageDriver)& theMsgDriver):MDF_ASDriver(theMsgDriver)
-{
-}
+MDataXtd_PositionRetrievalDriver::MDataXtd_PositionRetrievalDriver(const Handle(CDM_MessageDriver)& theMsgDriver)
+: MDF_ARDriver(theMsgDriver)
+{}
 
 //=======================================================================
 //function : VersionNumber
 //purpose  : 
 //=======================================================================
-Standard_Integer MPrsStd_PositionStorageDriver::VersionNumber() const
-{ return 0; }
+Standard_Integer MDataXtd_PositionRetrievalDriver::VersionNumber() const
+{
+  return 0;
+}
 
 //=======================================================================
 //function : SourceType
 //purpose  : 
 //=======================================================================
-Handle(Standard_Type) MPrsStd_PositionStorageDriver::SourceType() const
-{ return STANDARD_TYPE(TDataXtd_Position); }
+Handle(Standard_Type) MDataXtd_PositionRetrievalDriver::SourceType() const
+{
+  return STANDARD_TYPE(PDataXtd_Position);
+}
 
 //=======================================================================
 //function : NewEmpty
 //purpose  : 
 //=======================================================================
-Handle(PDF_Attribute) MPrsStd_PositionStorageDriver::NewEmpty() const
-{ return new PDataXtd_Position; }
+Handle(TDF_Attribute) MDataXtd_PositionRetrievalDriver::NewEmpty() const
+{
+  return new TDataXtd_Position;
+}
 
 //=======================================================================
 //function : Paste
 //purpose  : 
 //=======================================================================
-void MPrsStd_PositionStorageDriver::Paste(const Handle(TDF_Attribute)& Source,
-							  const Handle(PDF_Attribute)& Target,
-							  const Handle(MDF_SRelocationTable)& /*RelocTable*/) const
+void MDataXtd_PositionRetrievalDriver::Paste(const Handle(PDF_Attribute)& Source,
+                                            const Handle(TDF_Attribute)& Target,
+                                            const Handle(MDF_RRelocationTable)& /*RelocTable*/) const
 {
-  Handle(TDataXtd_Position) S = Handle(TDataXtd_Position)::DownCast (Source);
-  Handle(PDataXtd_Position) T = Handle(PDataXtd_Position)::DownCast (Target);  
+  Handle(PDataXtd_Position) S = Handle(PDataXtd_Position)::DownCast(Source);
+  Handle(TDataXtd_Position) T = Handle(TDataXtd_Position)::DownCast(Target);
   T->SetPosition(S->GetPosition());
 }
-
 
