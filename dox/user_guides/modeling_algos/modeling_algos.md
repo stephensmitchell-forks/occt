@@ -2366,6 +2366,12 @@ The shape defining the construction of a feature can be either a supporting edge
 In case of supporting edge, this contour can be attached to a face of the basis shape by binding. When the contour is bound to this face, the information that the contour will slide on the face becomes available 
 to the relevant class methods. In case of the concerned area of a face, you can, for example, cut it out and move it at a different height, which defines the limiting face of a protrusion or depression.
 
+Briefly, the algorithm can be described as follows:
+1. For every profile (several profiles are supported too) a corresponding parameter on the path is found. For definition this parameter (in case when the profile is not planar), the profile is approximated by a plane (location is barycenter of the profile, normal is its upper axe of inertia). If the profile is segment of some line (approximation problem has infinite solution) the position on the path will coincide with the nearest point to the profile (which is found by Curve-Curve-Extrema algorithm).
+  1. If this plane intersect the path then result will cover given path fully. It is recommended for good work of the algorithm.
+  2. Otherwise (when condition in item "a" is not satisfied) the feature will be made from intersection point the plane and the path. In most cases this result is unexpected. Therefore, if it is necessary, you can use special options for translating the profile in order to provide its contact with the path.
+2. The profile is created in every point of the path. This profile is obtained from the source profiles with some translation. The translation is defined by Frenet's trihedron (tangent, normal and bi-normal).
+
 Topological definition with local operations of this sort makes calculations simpler 
 and faster than a global operation. The latter would entail a second phase 
 of removing unwanted matter to get the same result.
