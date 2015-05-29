@@ -77,6 +77,7 @@
 #include <ShapeFix_Edge.hxx>
 #include <ShapeFix_Shell.hxx>
 #include <ShapeUpgrade_RemoveLocations.hxx>
+#include <TopTools_MapOfShape.hxx>
 
 
 //=======================================================================
@@ -634,18 +635,17 @@ static Standard_Boolean MergeEdges(const TopTools_SequenceOfShape& SeqEdges,
       TopoDS_Vertex VM = sae.LastVertex(edge1);
       gp_Pnt PVM = BRep_Tool::Pnt(VM);
       GC_MakeCircle MC (PV1,PVM,PV2);
-      Handle(Geom_Circle) C = MC.Value();
       TopoDS_Edge E;
-      if (!MC.IsDone() || C.IsNull()) {
+      if (!MC.IsDone() || MC.Value().IsNull()) {
         // jfa for Mantis issue 0020228
         if (PV1.Distance(PV2) > Precision::Confusion()) continue;
         // closed chain
-        C = C1;
-        B.MakeEdge (E,C,Precision::Confusion());
+        B.MakeEdge (E,C1,Precision::Confusion());
         B.Add(E,V1);
         B.Add(E,V2);
       }
       else {
+        Handle(Geom_Circle) C = MC.Value();
         gp_Pnt P0 = C->Location();
         gp_Dir D1(gp_Vec(P0,PV1));
         gp_Dir D2(gp_Vec(P0,PV2));
@@ -1181,6 +1181,10 @@ void ShapeUpgrade_UnifySameDomain::UnifyEdges()
     // creating map of edge faces
     TopTools_IndexedDataMapOfShapeListOfShape aMapEdgeFaces;
     TopExp::MapShapesAndAncestors(aSolid, TopAbs_EDGE, TopAbs_FACE, aMapEdgeFaces);
+   
+    // creating map of vertex edges
+    TopTools_IndexedDataMapOfShapeListOfShape aMapEdgesVertex;
+    TopExp::MapShapesAndAncestors(aSolid, TopAbs_VERTEX, TopAbs_EDGE, aMapEdgesVertex);
 
     //Handle(ShapeBuild_ReShape) aContext = new ShapeBuild_ReShape;
     TopoDS_Shape aRes = aSolid;
@@ -1218,11 +1222,38 @@ void ShapeUpgrade_UnifySameDomain::UnifyEdges()
       for (Standard_Integer i=1; i<=aMapFacesEdges.Extent(); i++) {
         const TopTools_ListOfShape& ListEdges = aMapFacesEdges.FindFromIndex(i);
         TopTools_SequenceOfShape SeqEdges;
+        ShapeAnalysis_Edge sae;
         TopTools_ListIteratorOfListOfShape anIter(ListEdges);
-        for ( ; anIter.More(); anIter.Next()) {
+        Standard_Boolean IsSharedVertexPresent = Standard_False;
+        for ( ; anIter.More(); anIter.Next())
           SeqEdges.Append(anIter.Value());
+        if (SeqEdges.Length()==1) 
+          continue;  
+        TopTools_SequenceOfShape SeqVertexes;
+        TopTools_MapOfShape  MapVertexes;
+        for (int k = 1; k <= SeqEdges.Length(); k++ )
+        {
+          TopoDS_Vertex aV1 = sae.FirstVertex(TopoDS::Edge(SeqEdges(k)));
+          TopoDS_Vertex aV2 = sae.LastVertex(TopoDS::Edge(SeqEdges(k)));
+          if (!MapVertexes.Add(aV1))
+            SeqVertexes.Append(aV1);
+          if (!MapVertexes.Add(aV2))
+            SeqVertexes.Append(aV2);
         }
-        if (SeqEdges.Length()==1) continue;
+
+        for (Standard_Integer k = 1; k <= SeqVertexes.Length() && !IsSharedVertexPresent; k++ )
+        {
+          const TopTools_ListOfShape& ListEdgesV1 = aMapEdgesVertex.FindFromKey(SeqVertexes(k));
+          TopTools_MapOfShape aMapOfEdges;
+          TopTools_ListIteratorOfListOfShape iter(ListEdgesV1);
+          for (; iter.More(); iter.Next())
+            aMapOfEdges.Add(iter.Value());
+          if (aMapOfEdges.Extent() > 2)
+            IsSharedVertexPresent = Standard_True;
+        }
+
+        if (IsSharedVertexPresent)
+          continue;
         TopoDS_Edge E;
         if ( MergeEdges(SeqEdges,aFace,Tol,myConcatBSplines,E) ) {
           // now we have only one edge - aChain.Value(1)
