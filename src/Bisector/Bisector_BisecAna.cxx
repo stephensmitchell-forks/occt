@@ -78,6 +78,7 @@ Standard_Real Bisector_BisecAna::Distance (
    const Handle(GccInt_Bisec)& abisector,
    const gp_Vec2d&             afirstvector ,
    const gp_Vec2d&             asecondvector,
+   const Standard_Boolean      AreVectorsNotTangents,
    const Standard_Real         adirection,
    Standard_Real&              aparameter,
    Standard_Boolean&           asense,
@@ -184,6 +185,13 @@ Standard_Real Bisector_BisecAna::Distance (
           //  Modified by Sergey KHROMOV - Thu Oct 31 14:16:54 2002
         }
       }
+      //jgv: for OCC26185
+      if (AreVectorsNotTangents &&
+          afirstdir * aseconddir > 0. &&
+          afirstdir * tangdir < 0. &&
+          aseconddir * tangdir < 0.)
+        asense = Standard_False;
+      ///////////////////
       //  Modified by Sergey KHROMOV - Tue Oct 22 16:35:51 2002 End
     }
   }
@@ -339,11 +347,11 @@ void Bisector_BisecAna::Perform(const Handle(Geom2d_Curve)& afirstcurve   ,
 // 			       adirection,parameter,sense,ok);
       if (oncurve)
 	distanceptsol = Distance(apoint,solution,
-				 tan2,tan1,
+				 tan2,tan1,Standard_False,
 				 adirection,parameter,sense,ok);
       else
 	distanceptsol = Distance(apoint,solution,
-				 afirstvector,asecondvector,
+				 afirstvector,asecondvector,Standard_True,
 				 adirection,parameter,sense,ok);
 //  Modified by skv - Tue Feb 15 17:51:29 2005 Integration End
       Handle(Geom2d_Curve) bisectorcurve = new Geom2d_Line(line);
@@ -412,7 +420,7 @@ void Bisector_BisecAna::Perform(const Handle(Geom2d_Curve)& afirstcurve   ,
 	sense = Standard_True;
 	if (oncurve) {
 	  distanceptsol = Distance(apoint,solution,
-				   tan1,tan2,
+				   tan1,tan2,Standard_False,
 				   adirection,parameter,sense,ok);
 	}
 	else {ok = Standard_True;}
@@ -426,11 +434,11 @@ void Bisector_BisecAna::Perform(const Handle(Geom2d_Curve)& afirstcurve   ,
 // 			       adirection,parameter,sense,ok);
 	  if (oncurve)
 	    distanceptsol = Distance(apoint,solution,
-				     tan2,tan1,
+				     tan2,tan1,Standard_False,
 				     adirection,parameter,sense,ok);
 	  else
 	    distanceptsol = Distance(apoint,solution,
-				     afirstvector,asecondvector,
+				     afirstvector,asecondvector,Standard_True,
 				     adirection,parameter,sense,ok);
 //  Modified by skv - Tue Feb 15 17:51:29 2005 Integration End
 	  if (distanceptsol <= distancemini) {
@@ -568,7 +576,7 @@ void Bisector_BisecAna::Perform(const Handle(Geom2d_Curve)& afirstcurve   ,
 	Handle(GccInt_Bisec) solution = Bisector.ThisSolution(i);
 	Degenerate(solution,tolerance);
 	sense = Standard_True;
-	distanceptsol = Distance(apoint,solution,tan1,tan2,
+	distanceptsol = Distance(apoint,solution,tan1,tan2,Standard_False,
 				 adirection,parameter,sense,ok);
 	theSense = sense;
 	if (ok || !oncurve) {
@@ -579,11 +587,11 @@ void Bisector_BisecAna::Perform(const Handle(Geom2d_Curve)& afirstcurve   ,
 // 			       adirection,parameter,sense,ok);
 	  if (oncurve)
 	    distanceptsol = Distance(apoint,solution,
-				     tan2,tan1,
+				     tan2,tan1,Stasndard_False,
 				     adirection,parameter,sense,ok);
 	  else
 	    distanceptsol = Distance(apoint,solution,
-				     afirstvector,asecondvector,
+				     afirstvector,asecondvector,Standard_True,
 				     adirection,parameter,sense,ok);
 //  Modified by skv - Tue Feb 15 17:51:29 2005 Integration End
 	  if (distanceptsol <= distancemini) {
@@ -699,11 +707,11 @@ void Bisector_BisecAna::Perform(const Handle(Geom2d_Curve)& afirstcurve   ,
 // 			       adirection,parameter,sense,ok);
       if (oncurve)
 	distanceptsol = Distance(apoint,solution,
-				 tan2,tan1,
+				 tan2,tan1,Standard_False,
 				 adirection,parameter,sense,ok);
       else
 	distanceptsol = Distance(apoint,solution,
-				 afirstvector,asecondvector,
+				 afirstvector,asecondvector,Standard_True,
 				 adirection,parameter,sense,ok);
 //  Modified by skv - Tue Feb 15 17:51:29 2005 Integration End
 // 	if (distanceptsol <= distancemini) {
@@ -733,11 +741,11 @@ void Bisector_BisecAna::Perform(const Handle(Geom2d_Curve)& afirstcurve   ,
 // 			       adirection,parameter,sense,ok);
       if (oncurve)
 	distanceptsol = Distance(apoint,solution,
-				 tan2,tan1,
+				 tan2,tan1,Standard_False,
 				 adirection,parameter,sense,ok);
       else
 	distanceptsol = Distance(apoint,solution,
-				 afirstvector,asecondvector,
+				 afirstvector,asecondvector,Standard_True,
 				 adirection,parameter,sense,ok, Standard_True);
 //  Modified by skv - Tue Feb 15 17:51:29 2005 Integration End
       if (ok || !oncurve) {
@@ -841,7 +849,7 @@ void Bisector_BisecAna::Perform(const Handle(Geom2d_Curve)& afirstcurve  ,
 	  Degenerate(solution,tolerance);
 	  sense = Standard_False;
 	  distanceptsol = Distance(apoint,solution,
-				   afirstvector,asecondvector,
+				   afirstvector,asecondvector,Standard_True,
 				   adirection,parameter,sense,ok);
 
 	  if (distanceptsol <= distancemini) {
@@ -958,7 +966,7 @@ void Bisector_BisecAna::Perform(const Handle(Geom2d_Curve)& afirstcurve  ,
       }
       sense = Standard_False;
       distanceptsol = Distance(apoint,solution,
-			       afirstvector,asecondvector,
+			       afirstvector,asecondvector,Standard_True,
 			       adirection,parameter,sense,ok);
 
       if (ok || !oncurve) {
@@ -1052,7 +1060,7 @@ void Bisector_BisecAna::Perform(const Handle(Geom2d_Point)& afirstpoint  ,
 
   sense = Standard_False;
   distanceptsol = Distance(apoint,solution,
-			   afirstvector,asecondvector,
+			   afirstvector,asecondvector,Standard_True,
 			   adirection,parameter,sense,ok);
   if (ok || !oncurve) {
     Handle(Geom2d_Curve) bisectorcurve = new Geom2d_Line(line);
