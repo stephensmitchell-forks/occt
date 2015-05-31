@@ -587,7 +587,7 @@ void Bisector_BisecAna::Perform(const Handle(Geom2d_Curve)& afirstcurve   ,
 // 			       adirection,parameter,sense,ok);
 	  if (oncurve)
 	    distanceptsol = Distance(apoint,solution,
-				     tan2,tan1,Stasndard_False,
+				     tan2,tan1,Standard_False,
 				     adirection,parameter,sense,ok);
 	  else
 	    distanceptsol = Distance(apoint,solution,
