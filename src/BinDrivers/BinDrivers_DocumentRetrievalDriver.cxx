@@ -66,7 +66,7 @@ void BinDrivers_DocumentRetrievalDriver::ReadShapeSection( BinLDrivers_DocumentS
       OCC_CATCH_SIGNALS
 
       aBuf = (Standard_Character*)malloc( theSection.Length() + 1 );
-      Standard_Size aSize = theDevice->Read( aBuf, theSection.Length() );
+      Standard_Size aSize = theDevice->Read( (Standard_Address)aBuf, theSection.Length() );
       if ( aSize == theSection.Length() )
       {
           Standard_SStream aStrStream( std::string( aBuf, aSize ), Standard_SStream::in | Standard_SStream::binary );

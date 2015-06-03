@@ -137,7 +137,7 @@ void BinLDrivers_DocumentSection::WriteTOC (const Handle(Storage_IODevice)& theD
 #else
     aBufSz[0] = (Standard_Integer)aBufSize;
 #endif
-    theDevice->Write( &aBuf[0], aBufSize + sizeof(Standard_Integer) );
+    theDevice->Write( (Standard_Address)&aBuf[0], aBufSize + sizeof(Standard_Integer) );
 
     // Store the address of Offset word in the file
     myValue[0] = (Standard_Size) theDevice->Tell();
@@ -148,7 +148,7 @@ void BinLDrivers_DocumentSection::WriteTOC (const Handle(Storage_IODevice)& theD
     aBufSz[0] = 0;
     aBufSz[1] = 0;
     aBufSz[2] = 0;
-    theDevice->Write(&aBuf[0], 3*sizeof(Standard_Integer));
+    theDevice->Write( (Standard_Address)&aBuf[0], 3*sizeof(Standard_Integer));
   }
 }
 
@@ -175,7 +175,7 @@ void BinLDrivers_DocumentSection::Write (const Handle(Storage_IODevice)& theDevi
   aVal[2] = InverseSize(aVal[2]);
 #endif
 
-  theDevice->Write((char*)&aVal[0], 3*sizeof(Standard_Integer));
+  theDevice->Write((Standard_Address)&aVal[0], 3*sizeof(Standard_Integer));
   theDevice->Seek(aSectionEnd);
 }
 
@@ -189,7 +189,7 @@ void BinLDrivers_DocumentSection::ReadTOC( BinLDrivers_DocumentSection& theSecti
 {
   char aBuf[512];
   Standard_Integer aNameBufferSize;
-  theDevice->Read( (char*)&aNameBufferSize, sizeof(Standard_Integer) );
+  theDevice->Read( (Standard_Address)&aNameBufferSize, sizeof(Standard_Integer) );
 #if DO_INVERSE
   aNameBufferSize = InverseSize(aNameBufferSize);
 #endif

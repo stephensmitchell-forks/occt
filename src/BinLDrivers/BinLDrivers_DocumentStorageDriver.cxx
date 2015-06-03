@@ -245,7 +245,7 @@ void BinLDrivers_DocumentStorageDriver::WriteSubTree(const TDF_Label&          t
 #if DO_INVERSE
   anEndLabel = (BinLDrivers_Marker) InverseInt (anEndLabel);
 #endif
-  theDevice->Write((char*)&anEndLabel, sizeof(anEndLabel));
+  theDevice->Write( (Standard_Address)&anEndLabel, sizeof(anEndLabel));
 }
 
 //=======================================================================

@@ -255,7 +255,7 @@ void FSD_CmpFile::WriteExtendedLine(const TCollection_ExtendedString& buffer)
     PutExtCharacter(extBuffer[i]);
   }
 
-  Device()->Write("\n", 1);
+  Device()->Write((Standard_Address)"\n", 1);
 }
 
 //=======================================================================

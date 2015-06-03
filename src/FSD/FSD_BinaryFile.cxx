@@ -200,7 +200,7 @@ Storage_BaseDriver& FSD_BinaryFile::PutReference(const Standard_Integer aValue)
   Standard_Integer t = aValue;
 #endif
 
-  if ( Device()->Write( &t, sizeof(Standard_Integer) ) != sizeof(Standard_Integer) )
+  if ( Device()->Write( (Standard_Address)&t, sizeof(Standard_Integer) ) != sizeof(Standard_Integer) )
     Storage_StreamWriteError::Raise();
 
   return *this;
@@ -237,7 +237,7 @@ Storage_BaseDriver& FSD_BinaryFile::PutExtCharacter(const Standard_ExtCharacter 
   Standard_ExtCharacter t = aValue;
 #endif
 
-  if ( Device()->Write(&t, sizeof(Standard_ExtCharacter)) != sizeof(Standard_ExtCharacter) )
+  if ( Device()->Write((Standard_Address)&t, sizeof(Standard_ExtCharacter)) != sizeof(Standard_ExtCharacter) )
     Storage_StreamWriteError::Raise();
 
   return *this;
@@ -259,7 +259,7 @@ Storage_BaseDriver& FSD_BinaryFile::PutInteger(const Standard_Integer aValue)
   Standard_Integer t = aValue;
 #endif
   
-  if ( Device()->Write(&t,sizeof(Standard_Integer)) != sizeof(Standard_Integer))
+  if ( Device()->Write((Standard_Address)&t,sizeof(Standard_Integer)) != sizeof(Standard_Integer))
     Storage_StreamWriteError::Raise();
 
   return *this;
@@ -281,7 +281,7 @@ Storage_BaseDriver& FSD_BinaryFile::PutBoolean(const Standard_Boolean aValue)
   Standard_Integer t = (Standard_Integer)aValue;
 #endif
   
-  if ( Device()->Write(&t,sizeof(Standard_Integer)) != sizeof(Standard_Integer) )
+  if ( Device()->Write((Standard_Address)&t,sizeof(Standard_Integer)) != sizeof(Standard_Integer) )
     Storage_StreamWriteError::Raise();
 
   return *this;
@@ -303,7 +303,7 @@ Storage_BaseDriver& FSD_BinaryFile::PutReal(const Standard_Real aValue)
   Standard_Real t = aValue;
 #endif
   
-  if ( Device()->Write(&t,sizeof(Standard_Real)) != sizeof(Standard_Real) )
+  if ( Device()->Write((Standard_Address)&t,sizeof(Standard_Real)) != sizeof(Standard_Real) )
     Storage_StreamWriteError::Raise();
 
   return *this;
@@ -325,7 +325,7 @@ Storage_BaseDriver& FSD_BinaryFile::PutShortReal(const Standard_ShortReal aValue
   Standard_ShortReal t = aValue;
 #endif
 
-  if ( Device()->Write(&t,sizeof(Standard_ShortReal)) != sizeof(Standard_ShortReal) )
+  if ( Device()->Write((Standard_Address)&t,sizeof(Standard_ShortReal)) != sizeof(Standard_ShortReal) )
     Storage_StreamWriteError::Raise();
 
   return *this;
@@ -341,7 +341,7 @@ Storage_BaseDriver& FSD_BinaryFile::GetReference(Standard_Integer& aValue)
   if ( Device().IsNull() )
     Storage_StreamReadError::Raise();
 
-  if ( Device()->Read(&aValue,sizeof(Standard_Integer)) != sizeof(Standard_Integer) )
+  if ( Device()->Read( (Standard_Address)&aValue,sizeof(Standard_Integer)) != sizeof(Standard_Integer) )
     Storage_StreamTypeMismatchError::Raise();
 #if DO_INVERSE
   aValue = InverseInt (aValue);
@@ -359,7 +359,7 @@ Storage_BaseDriver& FSD_BinaryFile::GetCharacter(Standard_Character& aValue)
   if ( Device().IsNull() )
     Storage_StreamReadError::Raise();
 
-  if ( Device()->Read(&aValue,sizeof(Standard_Character)) != sizeof(Standard_Character) )
+  if ( Device()->Read( (Standard_Address)&aValue,sizeof(Standard_Character)) != sizeof(Standard_Character) )
     Storage_StreamTypeMismatchError::Raise();
 
   return *this;
@@ -375,7 +375,7 @@ Storage_BaseDriver& FSD_BinaryFile::GetExtCharacter(Standard_ExtCharacter& aValu
   if ( Device().IsNull() )
     Storage_StreamReadError::Raise();
 
-  if ( Device()->Read(&aValue,sizeof(Standard_ExtCharacter)) != sizeof(Standard_ExtCharacter) )
+  if ( Device()->Read( (Standard_Address)&aValue,sizeof(Standard_ExtCharacter)) != sizeof(Standard_ExtCharacter) )
     Storage_StreamTypeMismatchError::Raise();
 #if DO_INVERSE
   aValue = InverseExtChar (aValue);
@@ -393,7 +393,7 @@ Storage_BaseDriver& FSD_BinaryFile::GetInteger(Standard_Integer& aValue)
   if ( Device().IsNull() )
     Storage_StreamReadError::Raise();
 
-  if ( Device()->Read(&aValue,sizeof(Standard_Integer)) != sizeof(Standard_Integer) )
+  if ( Device()->Read((Standard_Address)&aValue,sizeof(Standard_Integer)) != sizeof(Standard_Integer) )
     Storage_StreamTypeMismatchError::Raise();
 #if DO_INVERSE
   aValue = InverseInt (aValue);
@@ -411,7 +411,7 @@ Storage_BaseDriver& FSD_BinaryFile::GetBoolean(Standard_Boolean& aValue)
   if ( Device().IsNull() )
     Storage_StreamReadError::Raise();
 
-  if ( Device()->Read(&aValue,sizeof(Standard_Boolean)) != sizeof(Standard_Boolean) )
+  if ( Device()->Read((Standard_Address)&aValue,sizeof(Standard_Boolean)) != sizeof(Standard_Boolean) )
     Storage_StreamTypeMismatchError::Raise();
 #if DO_INVERSE
   aValue = InverseInt ((Standard_Integer) aValue);
@@ -429,7 +429,7 @@ Storage_BaseDriver& FSD_BinaryFile::GetReal(Standard_Real& aValue)
   if ( Device().IsNull() )
     Storage_StreamReadError::Raise();
 
-  if ( Device()->Read(&aValue,sizeof(Standard_Real)) != sizeof(Standard_Real))
+  if ( Device()->Read((Standard_Address)&aValue,sizeof(Standard_Real)) != sizeof(Standard_Real))
     Storage_StreamTypeMismatchError::Raise();
 #if DO_INVERSE
   aValue = InverseReal (aValue);
@@ -447,7 +447,7 @@ Storage_BaseDriver& FSD_BinaryFile::GetShortReal(Standard_ShortReal& aValue)
   if ( Device().IsNull() )
     Storage_StreamReadError::Raise();
 
-  if ( Device()->Read(&aValue,sizeof(Standard_ShortReal)) != sizeof(Standard_ShortReal))
+  if ( Device()->Read((Standard_Address)&aValue,sizeof(Standard_ShortReal)) != sizeof(Standard_ShortReal))
     Storage_StreamTypeMismatchError::Raise();
 #if DO_INVERSE
   aValue = InverseShortReal (aValue);
@@ -1160,7 +1160,7 @@ void FSD_BinaryFile::ReadString(TCollection_AsciiString& aString)
   GetInteger(size);
   if (size > 0) {
     Standard_Character *c = (Standard_Character *)Standard::Allocate((size+1) * sizeof(Standard_Character));
-    if ( Device().IsNull() || Device()->Read(c,size) != size )
+    if ( Device().IsNull() || Device()->Read((Standard_Address)c,size) != size )
       Storage_StreamReadError::Raise();
     c[size] = '\0';
     aString = c;
