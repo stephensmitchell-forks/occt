@@ -168,7 +168,7 @@ void FSD_BinaryFile::ReadChar(TCollection_AsciiString& buffer, const Standard_Si
   buffer.Clear();
 
   while (!IsEnd() && (ccount < rsize)) {
-    Device()->Read(&c, sizeof(char));
+    Device()->Read((Standard_Address)&c, sizeof(char));
     buffer += c;
     ccount++;
   }
@@ -1143,7 +1143,7 @@ void FSD_BinaryFile::WriteString(const TCollection_AsciiString& aString)
   PutInteger(size);
 
   if (size > 0) {
-    if ( Device().IsNull() || Device()->Write((Standard_Address)aString.ToCString(),size) != size )
+    if ( Device().IsNull() || Device()->Write((Standard_Address)aString.ToCString(),size) != (Standard_Size)size )
       Storage_StreamWriteError::Raise();
   }
 }
@@ -1160,7 +1160,7 @@ void FSD_BinaryFile::ReadString(TCollection_AsciiString& aString)
   GetInteger(size);
   if (size > 0) {
     Standard_Character *c = (Standard_Character *)Standard::Allocate((size+1) * sizeof(Standard_Character));
-    if ( Device().IsNull() || Device()->Read((Standard_Address)c,size) != size )
+    if ( Device().IsNull() || Device()->Read((Standard_Address)c,size) != (Standard_Size)size )
       Storage_StreamReadError::Raise();
     c[size] = '\0';
     aString = c;
@@ -1218,7 +1218,7 @@ void FSD_BinaryFile::ReadExtendedString(TCollection_ExtendedString& aString)
   if (size > 0) {
     Standard_ExtCharacter *c = (Standard_ExtCharacter *)
       Standard::Allocate((size+1) * sizeof(Standard_ExtCharacter));
-    if ( Device().IsNull() || Device()->Read(c,size*sizeof(Standard_ExtCharacter)) != size*sizeof(Standard_ExtCharacter) )
+    if ( Device().IsNull() || Device()->Read((Standard_Address)c,size*sizeof(Standard_ExtCharacter)) != size*sizeof(Standard_ExtCharacter) )
       Storage_StreamWriteError::Raise();
     c[size] = '\0';
 #if DO_INVERSE

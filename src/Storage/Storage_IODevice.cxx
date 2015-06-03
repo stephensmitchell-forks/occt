@@ -37,7 +37,7 @@ void Storage_IODevice::ReadLine( Standard_CString& aBuffer, const Standard_Integ
   while ( CanRead() && !IsEnd() && i < aSize && !aFin )
   {
     Standard_Character c;
-    Read( &c, sizeof( Standard_Character ) );
+    Read( (Standard_Address)&c, sizeof( Standard_Character ) );
     aFin = ( c == anEndSymbol );
     if ( aFin )
       aBuf[i++] = '\0';
@@ -53,7 +53,7 @@ TCollection_AsciiString Storage_IODevice::ReadLine( const Standard_Character anE
   while ( CanRead() && !IsEnd() && !aFin )
   {
     Standard_Character c;
-    Read( &c, sizeof( Standard_Character ) );
+    Read( (Standard_Address)&c, sizeof( Standard_Character ) );
     aFin = ( c == anEndSymbol );
     if ( !aFin )
       aLine += c;
