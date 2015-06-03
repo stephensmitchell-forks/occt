@@ -207,7 +207,7 @@ void FSD_CmpFile::WriteLine(const TCollection_AsciiString& aStr, const Standard_
   if ( putNewLine )
     buffer += TCollection_AsciiString("\n");
 
-  if ( Device()->Write( (Standard_Address)buffer.ToCString(), buffer.Length() ) != buffer.Length() )
+  if ( Device()->Write( (Standard_Address)buffer.ToCString(), buffer.Length() ) != (Standard_Size)buffer.Length() )
     Storage_StreamWriteError::Raise();
 }
 
@@ -226,7 +226,7 @@ void FSD_CmpFile::ReadLine(TCollection_AsciiString& buffer)
   while (!IsEnd && !FSD_CmpFile::IsEnd())
   {
     Standard_Character c;
-    Device()->Read( &c, 1 );
+    Device()->Read( (Standard_Address)&c, 1 );
     if ( c != '\n' && c != '\r')
     {
       buffer += c;
@@ -291,7 +291,7 @@ void FSD_CmpFile::ReadChar(TCollection_AsciiString& buffer, const Standard_Size 
   buffer.Clear();
 
   while (!IsEnd() && (ccount < rsize)) {
-    Device()->Read( &c, sizeof( char ) );
+    Device()->Read( (Standard_Address)&c, sizeof( char ) );
     buffer += c;
     ccount++;
   }
@@ -311,7 +311,7 @@ void FSD_CmpFile::ReadString(TCollection_AsciiString& buffer)
   while (!IsEnd && !FSD_CmpFile::IsEnd())
   {
     char c;
-    Device()->Read(&c, sizeof(c));
+    Device()->Read((Standard_Address)&c, sizeof(c));
     if (isFirstTime)
     {
       if (c == '\n' || c == ' ')
@@ -353,7 +353,7 @@ void FSD_CmpFile::ReadWord(TCollection_AsciiString& buffer)
   buffer.Clear();
 
   while (!IsEnd && !FSD_CmpFile::IsEnd()) {
-    Device()->Read( &c, sizeof(char) );
+    Device()->Read( (Standard_Address)&c, sizeof(char) );
     if ((c != ' ') && (c != '\n'))
     {
       IsEnd = Standard_True;
@@ -372,7 +372,7 @@ void FSD_CmpFile::ReadWord(TCollection_AsciiString& buffer)
     }
     *tmpb = c;
     tmpb++; i++;
-    Device()->Read( &c, sizeof(char) );
+    Device()->Read( (Standard_Address)&c, sizeof(char) );
     if ((c == '\n') || (c == ' '))
     {
       IsEnd = Standard_True;
@@ -423,7 +423,7 @@ void FSD_CmpFile::SkipObject()
 Storage_BaseDriver& FSD_CmpFile::PutReference(const Standard_Integer aValue)
 {
   TCollection_AsciiString aStr = TCollection_AsciiString( aValue ) + " ";
-  if ( Device()->Write( (Standard_Address)aStr.ToCString(), aStr.Length() ) != aStr.Length() )
+  if ( Device()->Write( (Standard_Address)aStr.ToCString(), aStr.Length() ) != (Standard_Size)aStr.Length() )
     Storage_StreamWriteError::Raise();
   return *this;
 }
@@ -437,7 +437,7 @@ Storage_BaseDriver& FSD_CmpFile::PutCharacter(const Standard_Character aValue)
 {
   Standard_Integer i = aValue;
   TCollection_AsciiString aStr = TCollection_AsciiString( i ) + " ";
-  if ( Device()->Write( (Standard_Address)aStr.ToCString(), aStr.Length() ) != aStr.Length() )
+  if ( Device()->Write( (Standard_Address)aStr.ToCString(), aStr.Length() ) != (Standard_Size)aStr.Length() )
     Storage_StreamWriteError::Raise();
 
   return *this;
@@ -452,7 +452,7 @@ Storage_BaseDriver& FSD_CmpFile::PutExtCharacter(const Standard_ExtCharacter aVa
 {
   Standard_Integer i = aValue;
   TCollection_AsciiString aStr = TCollection_AsciiString( i ) + " ";
-  if ( Device()->Write( (Standard_Address)aStr.ToCString(), aStr.Length() ) != aStr.Length() )
+  if ( Device()->Write( (Standard_Address)aStr.ToCString(), aStr.Length() ) != (Standard_Size)aStr.Length() )
     Storage_StreamWriteError::Raise();
 
   return *this;
@@ -466,7 +466,7 @@ Storage_BaseDriver& FSD_CmpFile::PutExtCharacter(const Standard_ExtCharacter aVa
 Storage_BaseDriver& FSD_CmpFile::PutInteger(const Standard_Integer aValue)
 {
   TCollection_AsciiString aStr = TCollection_AsciiString( aValue ) + " ";
-  if ( Device()->Write( (Standard_Address)aStr.ToCString(), aStr.Length() ) != aStr.Length() )
+  if ( Device()->Write( (Standard_Address)aStr.ToCString(), aStr.Length() ) != (Standard_Size)aStr.Length() )
     Storage_StreamWriteError::Raise();
 
   return *this;
@@ -480,7 +480,7 @@ Storage_BaseDriver& FSD_CmpFile::PutInteger(const Standard_Integer aValue)
 Storage_BaseDriver& FSD_CmpFile::PutBoolean(const Standard_Boolean aValue)
 {
   TCollection_AsciiString aStr = TCollection_AsciiString( (Standard_Integer)aValue ) + " ";
-  if ( Device()->Write( (Standard_Address)aStr.ToCString(), aStr.Length() ) != aStr.Length() )
+  if ( Device()->Write( (Standard_Address)aStr.ToCString(), aStr.Length() ) != (Standard_Size)aStr.Length() )
     Storage_StreamWriteError::Raise();
 
   return *this;
@@ -494,7 +494,7 @@ Storage_BaseDriver& FSD_CmpFile::PutBoolean(const Standard_Boolean aValue)
 Storage_BaseDriver& FSD_CmpFile::PutReal(const Standard_Real aValue)
 {
   TCollection_AsciiString aStr = TCollection_AsciiString( aValue ) + " ";
-  if ( Device()->Write( (Standard_Address)aStr.ToCString(), aStr.Length() ) != aStr.Length() )
+  if ( Device()->Write( (Standard_Address)aStr.ToCString(), aStr.Length() ) != (Standard_Size)aStr.Length() )
     Storage_StreamWriteError::Raise();
 
   return *this;
@@ -508,7 +508,7 @@ Storage_BaseDriver& FSD_CmpFile::PutReal(const Standard_Real aValue)
 Storage_BaseDriver& FSD_CmpFile::PutShortReal(const Standard_ShortReal aValue)
 {
   TCollection_AsciiString aStr = TCollection_AsciiString( aValue ) + " ";
-  if ( Device()->Write( (Standard_Address)aStr.ToCString(), aStr.Length() ) != aStr.Length() )
+  if ( Device()->Write( (Standard_Address)aStr.ToCString(), aStr.Length() ) != (Standard_Size)aStr.Length() )
     Storage_StreamWriteError::Raise();
 
   return *this;
@@ -632,7 +632,7 @@ Storage_BaseDriver& FSD_CmpFile::GetShortReal(Standard_ShortReal& aValue)
   TCollection_AsciiString aStr;
   ReadWord( aStr );
   if ( aStr.IsRealValue() )
-    aValue = aStr.RealValue();
+    aValue = (Standard_ShortReal)aStr.RealValue();
   else
     Storage_StreamTypeMismatchError::Raise();
 
@@ -1243,24 +1243,24 @@ void FSD_CmpFile::ReadPersistentObjectHeader(Standard_Integer& aRef,
 {
   char c;
 
-  Device()->Read( &c, sizeof( char ) );
+  Device()->Read( (Standard_Address)&c, sizeof( char ) );
 
   while (c != '#') {
     if (IsEnd() || (c != ' ') || (c == '\r')|| (c == '\n')) {
       Storage_StreamFormatError::Raise();
     }
-    Device()->Read( &c, sizeof( char ) );
+    Device()->Read( (Standard_Address)&c, sizeof( char ) );
   }
 
   GetInteger (aRef);
 
-  Device()->Read( &c, sizeof( char ) );
+  Device()->Read( (Standard_Address)&c, sizeof( char ) );
 
   while (c != '%') {
     if (IsEnd() || (c != ' ') || (c == '\r')|| (c == '\n')) {
       Storage_StreamFormatError::Raise();
     }
-    Device()->Read( &c, sizeof( char ) );
+    Device()->Read( (Standard_Address)&c, sizeof( char ) );
   }
 
   GetInteger (aType);
@@ -1302,15 +1302,15 @@ void FSD_CmpFile::EndReadPersistentObjectData()
 {
   char c;
 
-  Device()->Read( &c, sizeof( char ) );
+  Device()->Read( (Standard_Address)&c, sizeof( char ) );
   while (c != '\n' && (c != '\r')) {
     if (IsEnd() || (c != ' ')) {
       Storage_StreamFormatError::Raise();
     }
-    Device()->Read( &c, sizeof( char ) );
+    Device()->Read( (Standard_Address)&c, sizeof( char ) );
   }
  if (c == '\r') {
-   Device()->Read( &c, sizeof( char ) );
+   Device()->Read( (Standard_Address)&c, sizeof( char ) );
  }
 }
 
