@@ -124,6 +124,11 @@ is
     	---C++: inline
     	is static;
 
+    SetTangency(me: mutable; IsTangency: Boolean from Standard)
+    
+    	---C++: inline
+    	is static;
+
 
     NbPoints(me)
     
@@ -307,6 +312,13 @@ is
 	
 	is static;
 
+    IsTangency(me)
+    
+    	returns Boolean from Standard
+    	---C++: inline
+	
+	is static;
+
 
 fields
 
@@ -323,5 +335,6 @@ fields
     vcttg         : Vec              from gp;
     istgtbeg      : Boolean          from Standard;
     istgtend      : Boolean          from Standard;
+    istangency    : Boolean          from Standard;
   
 end IWLine;
