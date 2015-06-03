@@ -123,7 +123,7 @@ void BinObjMgt_Persistent::Write (const Handle(Storage_IODevice)& theDevice)
   for (Standard_Integer i=1; theDevice->CanWrite() && nbWritten < mySize && i <= myData.Length(); i++)
   {
     Standard_Integer nbToWrite = Min(mySize - nbWritten, BP_PIECESIZE);
-    theDevice->Write( (char*)myData(i), nbToWrite );
+    theDevice->Write( (Standard_Address)myData(i), nbToWrite );
     nbWritten += nbToWrite;
   }
   myIndex = 1;

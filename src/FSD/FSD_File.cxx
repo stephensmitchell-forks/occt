@@ -243,11 +243,11 @@ void FSD_File::WriteExtendedLine(const TCollection_ExtendedString& buffer)
     char cc = (char)c;
     char cd = (char)d;
 
-    Device()->Write( &cc, sizeof(char) );
-    Device()->Write( &cd, sizeof(char) );
+    Device()->Write( (Standard_Address)&cc, sizeof(char) );
+    Device()->Write( (Standard_Address)&cd, sizeof(char) );
   }
 
-  Device()->Write("\0\n", 2);
+  Device()->Write((Standard_Address)"\0\n", 2);
 }
 
 //=======================================================================
