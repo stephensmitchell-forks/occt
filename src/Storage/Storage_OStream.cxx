@@ -183,7 +183,9 @@ Standard_Size Storage_OStream::Write (const Standard_Address theBuffer, const St
 //=======================================================================
 TCollection_AsciiString Storage_OStream::Signature() const
 {
-  return TCollection_AsciiString( (Standard_Integer)myStream );
+  Standard_Character buf[256];
+  sprintf( buf, "%lx", (unsigned long)myStream );
+  return TCollection_AsciiString( buf );
 }
 
 //=======================================================================
