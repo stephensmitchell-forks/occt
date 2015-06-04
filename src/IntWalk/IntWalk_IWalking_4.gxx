@@ -397,9 +397,10 @@ void IntWalk_IWalking::ComputeCloseLine(const TColStd_SequenceOfReal& Umult,
                 gp_Vec   newd3d;
                 gp_Dir2d newd2d;
                 Standard_Boolean IsDiscriminantNull;
-                ComputeDirOfTangentialIntersection(Func, StepSignTangent,
-                                                   IsDiscriminantNull, SignOfBcoeff,
-                                                   newd3d, newd2d);
+                Standard_Boolean DirComputed =
+                  ComputeDirOfTangentialIntersection(Func, StepSignTangent,
+                                                     IsDiscriminantNull, SignOfBcoeff,
+                                                     newd3d, newd2d);
                 if (!IsDiscriminantNull) //we have gone from tangent line
                 {
                   //take line from prevprevP to prevP
@@ -419,30 +420,33 @@ void IntWalk_IWalking::ComputeCloseLine(const TColStd_SequenceOfReal& Umult,
                   Uvap(2) = ProjCurSol.Y();
                   Func.Values(Uvap, FuncVal, D);
                   /////////
-                  ComputeDirOfTangentialIntersection(Func, StepSignTangent,
-                                                     IsDiscriminantNull, SignOfBcoeff,
-                                                     newd3d, newd2d);
+                  DirComputed = ComputeDirOfTangentialIntersection(Func, StepSignTangent,
+                                                                    IsDiscriminantNull, SignOfBcoeff,
+                                                                    newd3d, newd2d);
                 }
-                if (SignOfBcoeff == 0) //point of branching
-                  Status = IntWalk_ArretSurPoint;
-                else
+                if (DirComputed)
                 {
-                  if (PrevSignOfBcoeff == 0 ||
-                      SignOfBcoeff == PrevSignOfBcoeff)
-                  {                  
-                    Status = IntWalk_OKtangent;
-                    MakeWalkingPoint(2, Uvap(1), Uvap(2), Func, previousPoint);
-                    previousd3d = newd3d;
-                    previousd2d = newd2d;
-                    CurrentLine->AddPoint(previousPoint);
-                  }
-                  else //change of sign of Bcoeff
+                  if (SignOfBcoeff == 0) //point of branching
+                    Status = IntWalk_ArretSurPoint;
+                  else
                   {
-                    MakeWalkingPoint(1, Uvap(1), Uvap(2), Func, Psol);
-                    FindExactCuspPoint(Func, Psol,
-                                       PrevSignOfBcoeff, SignOfBcoeff);
-                    Psol.ParametersOnSurface(reversed, Uvap(1), Uvap(2));
-                    //Status = IntWalk_ArretSurPoint;
+                    if (PrevSignOfBcoeff == 0 ||
+                        SignOfBcoeff == PrevSignOfBcoeff)
+                    {                  
+                      Status = IntWalk_OKtangent;
+                      MakeWalkingPoint(2, Uvap(1), Uvap(2), Func, previousPoint);
+                      previousd3d = newd3d;
+                      previousd2d = newd2d;
+                      CurrentLine->AddPoint(previousPoint);
+                    }
+                    else //change of sign of Bcoeff
+                    {
+                      MakeWalkingPoint(1, Uvap(1), Uvap(2), Func, Psol);
+                      FindExactCuspPoint(Func, Psol,
+                                         PrevSignOfBcoeff, SignOfBcoeff);
+                      Psol.ParametersOnSurface(reversed, Uvap(1), Uvap(2));
+                      //Status = IntWalk_ArretSurPoint;
+                    }
                   }
                 }
               }
@@ -776,31 +780,33 @@ void IntWalk_IWalking::ComputeCloseLine(const TColStd_SequenceOfReal& Umult,
               gp_Vec   newd3d;
               gp_Dir2d newd2d;
               Standard_Boolean IsDiscriminantNull;
-              ComputeDirOfTangentialIntersection(Func, StepSignTangent,
-                                                 IsDiscriminantNull, SignOfBcoeff,
-                                                 newd3d, newd2d);
-              if (SignOfBcoeff == 0) //point of branching
+              if (ComputeDirOfTangentialIntersection(Func, StepSignTangent,
+                                                     IsDiscriminantNull, SignOfBcoeff,
+                                                     newd3d, newd2d))
               {
-                //Status = IntWalk_ArretSurPoint;
-              }
-              else
-              {
-                if (PrevSignOfBcoeff == 0 ||
-                    SignOfBcoeff == PrevSignOfBcoeff)
+                if (SignOfBcoeff == 0) //point of branching
                 {
-                  Status = IntWalk_OKtangent;
-                  MakeWalkingPoint(2, Uvap(1), Uvap(2), Func, previousPoint);
-                  previousd3d = newd3d;
-                  previousd2d = newd2d;
-                  CurrentLine->AddPoint(previousPoint);
-                }
-                else //change of sign of Bcoeff
-                {
-                  MakeWalkingPoint(1, Uvap(1), Uvap(2), Func, Psol);
-                  FindExactCuspPoint(Func, Psol,
-                                     PrevSignOfBcoeff, SignOfBcoeff);
-                  Psol.ParametersOnSurface(reversed, Uvap(1), Uvap(2));
                   //Status = IntWalk_ArretSurPoint;
+                }
+                else
+                {
+                  if (PrevSignOfBcoeff == 0 ||
+                      SignOfBcoeff == PrevSignOfBcoeff)
+                  {
+                    Status = IntWalk_OKtangent;
+                    MakeWalkingPoint(2, Uvap(1), Uvap(2), Func, previousPoint);
+                    previousd3d = newd3d;
+                    previousd2d = newd2d;
+                    CurrentLine->AddPoint(previousPoint);
+                  }
+                  else //change of sign of Bcoeff
+                  {
+                    MakeWalkingPoint(1, Uvap(1), Uvap(2), Func, Psol);
+                    FindExactCuspPoint(Func, Psol,
+                                       PrevSignOfBcoeff, SignOfBcoeff);
+                    Psol.ParametersOnSurface(reversed, Uvap(1), Uvap(2));
+                    //Status = IntWalk_ArretSurPoint;
+                  }
                 }
               }
               if (Status == IntWalk_ArretSurPoint) {

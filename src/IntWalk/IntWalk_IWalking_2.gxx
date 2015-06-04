@@ -214,16 +214,16 @@ Standard_Boolean IntWalk_IWalking::TestArretPassage
     previousPoint.ParametersOnS1(Up,Vp);
   }
 
-  IntWalk_VectorOfWalkingData wdata [2] = {wd2, wd3};
+  IntWalk_VectorOfWalkingData* wdata [2] = {&wd2, &wd3};
   for (Standard_Integer ind = 0; ind < 2; ind++)
-    for (size_t i = 1; i < wdata[ind].size(); i++) { 
-      if (wdata[ind][i].etat > 0) { 
+    for (size_t i = 1; i < wdata[ind]->size(); i++) { 
+      if ((*(wdata[ind]))[i].etat > 0) { 
         // debug jag 05.04.94
         
         //      if ((Up-wd2[i].ustart)*(UV(1)-wd2[i].ustart) +
         //	  (Vp-wd2[i].vstart)*(UV(2)-wd2[i].vstart) <= 0)
-        Utest = wdata[ind][i].ustart;
-        Vtest = wdata[ind][i].vstart;
+        Utest = (*(wdata[ind]))[i].ustart;
+        Vtest = (*(wdata[ind]))[i].vstart;
         
         Du  = UV(1)-Utest;
         Dv  = UV(2)-Vtest;
@@ -237,7 +237,7 @@ Standard_Boolean IntWalk_IWalking::TestArretPassage
         if ((Abs(Du) < tolu2 && Abs(Dv) < tolv2) ||
             (Abs(Dup) < tolu2 && Abs(Dvp) < tolv2)) { 
           
-          wdata[ind][i].etat = -wdata[ind][i].etat;
+          (*(wdata[ind]))[i].etat = -(*(wdata[ind]))[i].etat;
         }
         else {
           Standard_Real DDu = (UV(1)-Up);
@@ -247,7 +247,7 @@ Standard_Boolean IntWalk_IWalking::TestArretPassage
           if(DD1<=DDD) { 
             Standard_Real DD2 = Dup*Dup+Dvp*Dvp;
             if(DD2<=DDD && ((Du*Dup) + (Dv*Dvp*tolu/tolv) <= 0.)) { 	
-              wdata[ind][i].etat = -wdata[ind][i].etat;
+              (*(wdata[ind]))[i].etat = -(*(wdata[ind]))[i].etat;
             }
           }
         }

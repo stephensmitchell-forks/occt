@@ -303,9 +303,10 @@ void IntWalk_IWalking::OpenLine(const Standard_Integer N,
     gp_Vec   newd3d;
     gp_Dir2d newd2d;
     Standard_Boolean IsDiscriminantNull;
-    ComputeDirOfTangentialIntersection(sp, theSign,
-                                       IsDiscriminantNull, theSignOfBcoeff,
-                                       newd3d, newd2d);
+    if (!ComputeDirOfTangentialIntersection(sp, theSign,
+                                            IsDiscriminantNull, theSignOfBcoeff,
+                                            newd3d, newd2d))
+      StdFail_UndefinedDerivative::Raise();
     previousd3d = newd3d;
     previousd2d = newd2d;
   }
