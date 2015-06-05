@@ -259,8 +259,46 @@ PCDM_ReaderStatus TDocStd_Application::Open( Standard_IStream& theIStream,
 PCDM_StoreStatus TDocStd_Application::SaveAs(const Handle(TDocStd_Document)& theDoc,
                                              const TCollection_ExtendedString& thePath)
 {
-  Handle(Storage_File) aDevice = new Storage_File(thePath);
-  return SaveAs (theDoc, aDevice);
+  Handle(Storage_File) aDevice = new Storage_File( thePath );
+  return SaveAs( theDoc, aDevice );
+}
+
+//=======================================================================
+//function : SaveAs
+//purpose  :
+//=======================================================================
+
+PCDM_StoreStatus TDocStd_Application::SaveAs(const Handle(TDocStd_Document)& theDoc,
+                                             const TCollection_ExtendedString& thePath,
+                                             TCollection_ExtendedString& theStatusMessage)
+{
+  Handle(Storage_File) aDevice = new Storage_File( thePath );
+  return SaveAs( theDoc, aDevice, theStatusMessage );
+}
+
+//=======================================================================
+//function : SaveAs
+//purpose  :
+//=======================================================================
+
+PCDM_StoreStatus TDocStd_Application::SaveAs(const Handle(TDocStd_Document)& theDoc,
+                                             Standard_OStream& theOStream)
+{
+  Handle(Storage_OStream) aDevice = new Storage_OStream( theOStream );
+  return SaveAs( theDoc, aDevice );
+}
+
+//=======================================================================
+//function : SaveAs
+//purpose  :
+//=======================================================================
+
+PCDM_StoreStatus TDocStd_Application::SaveAs(const Handle(TDocStd_Document)& theDoc,
+                                             Standard_OStream& theOStream,
+                                             TCollection_ExtendedString& theStatusMessage)
+{
+  Handle(Storage_OStream) aDevice = new Storage_OStream( theOStream );
+  return SaveAs( theDoc, aDevice, theStatusMessage );
 }
 
 //=======================================================================
@@ -270,55 +308,45 @@ PCDM_StoreStatus TDocStd_Application::SaveAs(const Handle(TDocStd_Document)& the
 
 PCDM_StoreStatus TDocStd_Application::SaveAs(const Handle(TDocStd_Document)& D,
                                              const Handle(Storage_IODevice)& aDevice)
-                                             {
-  /*
-  TDocStd_PathParser tool (path);
-  TCollection_ExtendedString directory = tool.Trek();
-  TCollection_ExtendedString file = tool.Name();
-  file+=".";
-  file+=tool.Extension();
-  */
-  D->Open(this);
-  CDF_Store storer (D);
-  if (!storer.SetDevice(aDevice))
-  {
-    TCollection_ExtendedString aMsg ("TDocStd_Application::SaveAs() - device ");
-    aMsg += " not valid";
-    if(!MessageDriver().IsNull())
-      MessageDriver()->Write(aMsg.ToExtString());
-    return storer.StoreStatus(); //CDF_SS_Failure;
-  }
-  //  storer.SetName (file);
-  try {
-    OCC_CATCH_SIGNALS
-    storer.Realize();
-  }
-  catch (Standard_Failure) {
-    Handle(Standard_Failure) F = Standard_Failure::Caught();
-    if (!F.IsNull() && !MessageDriver().IsNull()) {
-      TCollection_ExtendedString aString (F->GetMessageString());
-      MessageDriver()->Write(aString.ToExtString());
-    }
-  }
-  if(storer.StoreStatus() == PCDM_SS_OK)
-    D->SetSaved();
-#ifdef OCCT_DEBUG
-  cout<<"TDocStd_Application::SaveAs(): The status = "<<storer.StoreStatus()<<endl;
-#endif
-  return storer.StoreStatus();
+{
+  TCollection_ExtendedString aStatusMessage;
+  return SaveAs( D, aDevice, aStatusMessage );
 }
 
 //=======================================================================
-//function : Save
-//purpose  :
+//function : SaveAs
+//purpose  : 
 //=======================================================================
 
-
-PCDM_StoreStatus TDocStd_Application::SaveAs(const Handle(TDocStd_Document)& theDoc,
-                                             Standard_OStream& theOStream)
-{
-  Handle(Storage_OStream) aDevice = new Storage_OStream (theOStream);
-  return SaveAs (theDoc, aDevice);
+PCDM_StoreStatus TDocStd_Application::SaveAs(const Handle(TDocStd_Document)& D,
+                                             const Handle(Storage_IODevice)& aDev,
+                                             TCollection_ExtendedString& theStatusMessage) 
+{ 
+  PCDM_StoreStatus aStatus = PCDM_SS_Failure;
+  D->Open(this);
+  CDF_Store storer (D);  
+  if (storer.SetDevice(aDev)) {
+    try {
+      OCC_CATCH_SIGNALS
+      storer.Realize();
+    }
+    catch (Standard_Failure) {
+      Handle(Standard_Failure) F = Standard_Failure::Caught();
+      if (!F.IsNull() && !MessageDriver().IsNull()) {
+        TCollection_ExtendedString aString (F->GetMessageString());
+        MessageDriver()->Write(aString.ToExtString());
+      }
+    }
+    if(storer.StoreStatus() == PCDM_SS_OK)
+      D->SetSaved();
+    theStatusMessage = storer.AssociatedStatusText();
+    aStatus = storer.StoreStatus();
+  } else {
+    theStatusMessage =
+      TCollection_ExtendedString("TDocStd_Application::SaveAs: No valid device ");
+    aStatus = PCDM_SS_Failure;
+  }
+  return aStatus;
 }
 
 //=======================================================================
@@ -382,50 +410,6 @@ PCDM_StoreStatus TDocStd_Application::Save (const Handle(TDocStd_Document)& D) {
 //   InitViewer(D);
 // }
 
-
-//=======================================================================
-//function : SaveAs
-//purpose  : 
-//=======================================================================
-
-PCDM_StoreStatus TDocStd_Application::SaveAs(const Handle(TDocStd_Document)& D,
-                                             const Handle(Storage_IODevice)& aDev,
-					      TCollection_ExtendedString& theStatusMessage) 
-{ 
-  PCDM_StoreStatus aStatus = PCDM_SS_Failure;
-  /*
-  TDocStd_PathParser tool (path);
-  TCollection_ExtendedString directory = tool.Trek();   
-  TCollection_ExtendedString file = tool.Name();   
-  file+=".";   
-  file+=tool.Extension();
-  */
-  D->Open(this);
-  CDF_Store storer (D);  
-  if (storer.SetDevice(aDev)) {
-    //    storer.SetName (file);
-    try {
-      OCC_CATCH_SIGNALS
-      storer.Realize();
-    }
-    catch (Standard_Failure) {
-      Handle(Standard_Failure) F = Standard_Failure::Caught();
-      if (!F.IsNull() && !MessageDriver().IsNull()) {
-        TCollection_ExtendedString aString (F->GetMessageString());
-        MessageDriver()->Write(aString.ToExtString());
-      }
-    }
-    if(storer.StoreStatus() == PCDM_SS_OK)
-      D->SetSaved();
-    theStatusMessage = storer.AssociatedStatusText();
-    aStatus = storer.StoreStatus();
-  } else {
-    theStatusMessage =
-      TCollection_ExtendedString("TDocStd_Application::SaveAs: No valid device ");
-    aStatus = PCDM_SS_Failure;
-  }
-  return aStatus;
-}
 
 //=======================================================================
 //function : Save
