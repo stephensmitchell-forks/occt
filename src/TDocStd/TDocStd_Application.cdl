@@ -215,16 +215,37 @@ is
     	--           path <thePath> ; overwrites  the file  if  it already exists.
     returns StoreStatus from PCDM;
 
+    SaveAs (me : mutable; theDoc : Document from TDocStd;
+                          thePath: ExtendedString from TCollection;
+    	    	          theStatusMessage: out ExtendedString from TCollection)
+    	---Purpose:  Save the  active document  in the
+    	--           path <thePath> ; overwrites  the file  if  it already exists.
+    returns StoreStatus from PCDM;
+
+    SaveAs (me : mutable; theDoc    : Document from TDocStd;
+                          theOStream: in out OStream from Standard)
+    	---Purpose:  Save the  active document  in the stream  <theOStream>;
+    returns StoreStatus from PCDM;
+
+    SaveAs (me : mutable; theDoc    : Document from TDocStd;
+                          theOStream: in out OStream from Standard;
+    	    	    	  theStatusMessage: out ExtendedString from TCollection)
+    	---Purpose:  Save the  active document  in the stream  <theOStream>;
+    returns StoreStatus from PCDM;
+
     SaveAs (me : mutable; theDoc   : Document from TDocStd;
                           theDevice: IODevice from Storage)
     	---Purpose:  Save the  active document  in the device  <theDevice>;
     	--           overwrites  the file  if  it already exists.
     returns StoreStatus from PCDM is protected;
     
-    SaveAs (me : mutable; theDoc    : Document from TDocStd;
-                          theOStream: in out OStream from Standard)
-    	---Purpose:  Save the  active document  in the stream  <theOStream>;
-    returns StoreStatus from PCDM;
+    SaveAs (me : mutable; aDoc : Document from TDocStd;
+                          aDev : IODevice from Storage;
+    	    	    	  theStatusMessage:  out  ExtendedString from TCollection)
+    	---Purpose:  Save the  active document  in the file  <name> in the
+    	--           path <path>.  overwrite  the file  if  it
+    	--          already exist. 
+    returns StoreStatus from PCDM is protected;
 
     Save (me : mutable; aDoc : Document from TDocStd)
     	---Purpose: Save aDoc active document.  
@@ -232,14 +253,6 @@ is
     	--  Standard_NotImplemented if the document
     	-- was not retrieved in the applicative session by using Open. 
     returns StoreStatus from PCDM;
-    
-    SaveAs (me : mutable; aDoc : Document from TDocStd;
-                          aDev : IODevice from Storage;
-    	    	    	  theStatusMessage:  out  ExtendedString from TCollection)
-    	---Purpose:  Save the  active document  in the file  <name> in the
-    	--           path <path>  .  overwrite  the file  if  it
-    	--          already exist. 
-    returns StoreStatus from PCDM;    
     
     Save (me : mutable; aDoc : Document from TDocStd; 
     	    	    	theStatusMessage:  out  ExtendedString from TCollection)
