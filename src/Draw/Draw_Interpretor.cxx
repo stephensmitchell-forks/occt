@@ -199,7 +199,7 @@ static Standard_Integer CommandCmd
 
     if (cc && Draw::Atoi(cc)) {
 #ifdef WNT
-      Tcl_Exit(0);
+      Tcl_Finalize();
 #else      
       Tcl_Eval(interp,"exit");
 #endif
@@ -558,7 +558,7 @@ Draw_Interpretor::~Draw_Interpretor()
 #if ((TCL_MAJOR_VERSION > 8) || ((TCL_MAJOR_VERSION == 8) && (TCL_MINOR_VERSION >= 4)))
   try {
     OCC_CATCH_SIGNALS
-    Tcl_Exit(0);
+    Tcl_Finalize();
   }
   catch (Standard_Failure) {
 #ifdef OCCT_DEBUG
@@ -567,7 +567,7 @@ Draw_Interpretor::~Draw_Interpretor()
   }
 #else
 #ifdef WNT
-  Tcl_Exit(0);
+  Tcl_Finalize();
 #endif  
 #endif
 }

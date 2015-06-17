@@ -1206,7 +1206,7 @@ static void StdinProc(ClientData clientData, int )
   if (count < 0) {
     if (!gotPartial) {
       if (tty) {
-        Tcl_Exit(0);
+        Tcl_Finalize();
       } else {
         Tcl_DeleteChannelHandler(chan, StdinProc, (ClientData) chan);
       }
@@ -2103,7 +2103,7 @@ static DWORD WINAPI tkLoop(VOID)
       fprintf (stderr, "%s\n", interp->result);
 #endif
       cout << "tkLoop: Tk_MainWindow() returned NULL. Exiting...\n";
-      Tcl_Exit (0);
+      Tcl_Finalize();
     }
     Tk_Name(mainWindow) = Tk_GetUid (Tk_SetAppName (mainWindow, "Draw"));
   }
@@ -2147,7 +2147,7 @@ static DWORD WINAPI tkLoop(VOID)
     toLoop = (Tk_GetNumMainWindows() > 0) || Draw_VirtualWindows;
   #endif
   }
-  Tcl_Exit(0);
+  Tcl_Finalize();
   return 0;
 }
 
