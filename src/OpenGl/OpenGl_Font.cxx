@@ -234,3 +234,33 @@ void OpenGl_Font::RenderGlyph (const Handle(OpenGl_Context)& theCtx,
 
   thePen.x() += myFont->AdvanceX (theUChar, theUCharNext);
 }
+
+// =======================================================================
+// function : RenderGlyph
+// purpose  :
+// =======================================================================
+bool OpenGl_Font::RenderGlyph (const Handle(OpenGl_Context)& theCtx,
+                               const Standard_Utf32Char      theUChar,
+                               Tile&                         theGlyph)
+{
+  Standard_Integer aTileId = 0;
+  if (!myGlyphMap.Find (theUChar,aTileId))
+  {
+    if (renderGlyph (theCtx, theUChar))
+    {
+      aTileId = myLastTileId;
+    }
+    else
+    {
+      return false;
+    }
+
+    myGlyphMap.Bind (theUChar, aTileId);
+  }
+
+  const OpenGl_Font::Tile& aTile = myTiles.Value (aTileId);
+  theGlyph.uv      = aTile.uv;
+  theGlyph.texture = aTile.texture;
+
+  return true;
+}

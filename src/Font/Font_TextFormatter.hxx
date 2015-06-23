@@ -13,25 +13,19 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef _OpenGl_TextFormatter_H__
-#define _OpenGl_TextFormatter_H__
+#ifndef Font_TextFormatter_Header
+#define Font_TextFormatter_Header
 
-#include <OpenGl_Font.hxx>
-#include <OpenGl_VertexBufferEditor.hxx>
-
-#include <Graphic3d_HorizontalTextAlignment.hxx>
-#include <Graphic3d_VerticalTextAlignment.hxx>
-
-#include <NCollection_String.hxx>
+#include <Font_FTFont.hxx>
+#include <NCollection_Vector.hxx>
 
 //! This class intended to prepare formatted text.
-class OpenGl_TextFormatter : public Standard_Transient
+class Font_TextFormatter : public Standard_Transient
 {
-
 public:
 
   //! Default constructor.
-  Standard_EXPORT OpenGl_TextFormatter();
+  Standard_EXPORT Font_TextFormatter();
 
   //! Setup alignment style.
   Standard_EXPORT void SetupAlignment (const Graphic3d_HorizontalTextAlignment theAlignX,
@@ -41,24 +35,30 @@ public:
   Standard_EXPORT void Reset();
 
   //! Render specified text to inner buffer.
-  Standard_EXPORT void Append (const Handle(OpenGl_Context)& theCtx,
-                               const NCollection_String&     theString,
-                               OpenGl_Font&                  theFont);
+  Standard_EXPORT void Append (const NCollection_String& theString,
+                               Font_FTFont&              theFont);
 
   //! Perform formatting on the buffered text.
   //! Should not be called more than once after initialization!
   Standard_EXPORT void Format();
 
-  //! Retrieve formatting results.
-  Standard_EXPORT void Result (NCollection_Vector<GLuint>& theTextures,
-                               NCollection_Vector< NCollection_Handle <NCollection_Vector <OpenGl_Vec2> > >& theVertsPerTexture,
-                               NCollection_Vector< NCollection_Handle <NCollection_Vector <OpenGl_Vec2> > >& theTCrdsPerTexture) const;
+  //! Returns specific glyph rectangle.
+  inline const Font_FTFont::Rect& Rect (const Standard_Integer theIndex) const
+  {
+    return myRects.Value (theIndex);
+  }
 
-  //! Retrieve formatting results.
-  Standard_EXPORT void Result (const Handle(OpenGl_Context)&                    theCtx,
-                               NCollection_Vector<GLuint>&                      theTextures,
-                               NCollection_Vector<Handle(OpenGl_VertexBuffer)>& theVertsPerTexture,
-                               NCollection_Vector<Handle(OpenGl_VertexBuffer)>& theTCrdsPerTexture) const;
+  //! Returns current rendering string.
+  inline const NCollection_String& String() const
+  {
+    return myString;
+  }
+
+  //! Returns tab size.
+  inline Standard_Integer TabSize() const
+  {
+    return myTabSize;
+  }
 
   //! @return width of formatted text.
   inline Standard_ShortReal ResultWidth() const
@@ -106,8 +106,9 @@ protected: //! @name configuration
 protected: //! @name input data
 
   NCollection_String myString;        //!< currently rendered text
-  OpenGl_Vec2        myPen;           //!< current pen position
-  NCollection_Vector<OpenGl_Font::Tile>
+  NCollection_Vec2<Standard_ShortReal>
+                     myPen;           //!< current pen position
+  NCollection_Vector<Font_FTFont::Rect>
                      myRects;         //!< glyphs rectangles
   Standard_Integer   myRectsNb;       //!< rectangles number
   NCollection_Vector<Standard_ShortReal>
@@ -115,10 +116,6 @@ protected: //! @name input data
   Standard_ShortReal myLineSpacing;   //!< line spacing (computed as maximum of all fonts involved in text formatting)
   Standard_ShortReal myAscender;      //!<
   bool               myIsFormatted;   //!< formatting state
-
-protected:
-
-  mutable OpenGl_VertexBufferEditor<OpenGl_Vec2> myVboEditor;
 
 protected: //! @name temporary variables for formatting routines
 
@@ -132,14 +129,15 @@ protected: //! @name temporary variables for formatting routines
   Standard_ShortReal myLineTail;
   Standard_ShortReal myBndTop;
   Standard_ShortReal myBndWidth;
-  OpenGl_Vec2        myMoveVec;       //!< local variable
+  NCollection_Vec2<Standard_ShortReal>
+                     myMoveVec;       //!< local variable
 
 public:
 
-  DEFINE_STANDARD_RTTI(OpenGl_TextFormatter) // Type definition
+  DEFINE_STANDARD_RTTI(Font_TextFormatter) // Type definition
 
 };
 
-DEFINE_STANDARD_HANDLE(OpenGl_TextFormatter, Standard_Transient)
+DEFINE_STANDARD_HANDLE(Font_TextFormatter, Standard_Transient)
 
-#endif // _OpenGl_TextFormatter_H__
+#endif // Font_TextFormatter_Header

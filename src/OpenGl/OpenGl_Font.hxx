@@ -128,6 +128,11 @@ public:
                                     Tile&                         theGlyph,
                                     OpenGl_Vec2&                  thePen);
 
+  //! Render glyph to texture if not already.
+  Standard_EXPORT bool RenderGlyph (const Handle(OpenGl_Context)& theCtx,
+                                    const Standard_Utf32Char      theUChar,
+                                    Tile&                         theGlyph);
+
 protected:
 
   //! Render new glyph to the texture.

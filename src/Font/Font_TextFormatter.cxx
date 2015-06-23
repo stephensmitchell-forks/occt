@@ -13,18 +13,14 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#include <OpenGl_TextFormatter.hxx>
-
-#include <OpenGl_VertexBufferCompat.hxx>
-
-#include <cmath>
+#include <Font_TextFormatter.hxx>
 
 namespace
 {
 
   //! Auxiliary function to translate rectangle by the vector.
-  inline void move (Font_FTFont::Rect& theRect,
-                    const OpenGl_Vec2& theVec)
+  inline void move (Font_FTFont::Rect&                          theRect,
+                    const NCollection_Vec2<Standard_ShortReal>& theVec)
   {
     theRect.Left   += theVec.x();
     theRect.Right  += theVec.x();
@@ -33,41 +29,27 @@ namespace
   }
 
   //! Auxiliary function to translate rectangles by the vector.
-  inline void move (NCollection_Vector<OpenGl_Font::Tile>& theRects,
-                    const OpenGl_Vec2&                     theMoveVec,
-                    Standard_Integer                       theCharLower,
-                    const Standard_Integer                 theCharUpper)
+  inline void move (NCollection_Vector<Font_FTFont::Rect>&      theRects,
+                    const NCollection_Vec2<Standard_ShortReal>& theMoveVec,
+                    Standard_Integer                            theCharLower,
+                    const Standard_Integer                      theCharUpper)
   {
     for(; theCharLower <= theCharUpper; ++theCharLower)
     {
-      Font_FTFont::Rect& aRect = theRects.ChangeValue (theCharLower).px;
+      Font_FTFont::Rect& aRect = theRects.ChangeValue (theCharLower);
       move (aRect, theMoveVec);
     }
   }
 
-  //! Auxiliary function to translate rectangles in horizontal direction.
-  /*inline void moveX (NCollection_Vector<OpenGl_Font::Tile>& theRects,
-                     const Standard_ShortReal               theMoveVec,
-                     Standard_Integer                       theCharLower,
-                     const Standard_Integer                 theCharUpper)
-  {
-    for (; theCharLower <= theCharUpper; ++theCharLower)
-    {
-      Font_FTFont::Rect& aRect = theRects.ChangeValue (theCharLower).px;
-      aRect.Left  += theMoveVec;
-      aRect.Right += theMoveVec;
-    }
-  }*/
-
   //! Auxiliary function to translate rectangles in vertical direction.
-  inline void moveY (NCollection_Vector<OpenGl_Font::Tile>& theRects,
+  inline void moveY (NCollection_Vector<Font_FTFont::Rect>& theRects,
                      const Standard_ShortReal               theMoveVec,
                      Standard_Integer                       theCharLower,
                      const Standard_Integer                 theCharUpper)
   {
     for(; theCharLower <= theCharUpper; ++theCharLower)
     {
-      Font_FTFont::Rect& aRect = theRects.ChangeValue (theCharLower).px;
+      Font_FTFont::Rect& aRect = theRects.ChangeValue (theCharLower);
       aRect.Top    += theMoveVec;
       aRect.Bottom += theMoveVec;
     }
@@ -76,23 +58,24 @@ namespace
   //! Apply floor to vector components.
   //! @param  theVec - vector to change (by reference!)
   //! @return modified vector
-  inline OpenGl_Vec2& floor (OpenGl_Vec2& theVec)
+  inline NCollection_Vec2<Standard_ShortReal>& floor (NCollection_Vec2<Standard_ShortReal>& theVec)
   {
     theVec.x() = std::floor (theVec.x());
     theVec.y() = std::floor (theVec.y());
     return theVec;
   }
 
-};
+}
 
-IMPLEMENT_STANDARD_HANDLE (OpenGl_TextFormatter, Standard_Transient)
-IMPLEMENT_STANDARD_RTTIEXT(OpenGl_TextFormatter, Standard_Transient)
+
+IMPLEMENT_STANDARD_HANDLE (Font_TextFormatter, Standard_Transient)
+IMPLEMENT_STANDARD_RTTIEXT(Font_TextFormatter, Standard_Transient)
 
 // =======================================================================
-// function : OpenGl_TextFormatter
+// function : Font_TextFormatter
 // purpose  :
 // =======================================================================
-OpenGl_TextFormatter::OpenGl_TextFormatter()
+Font_TextFormatter::Font_TextFormatter()
 : myAlignX (Graphic3d_HTA_LEFT),
   myAlignY (Graphic3d_VTA_TOP),
   myTabSize (8),
@@ -121,8 +104,8 @@ OpenGl_TextFormatter::OpenGl_TextFormatter()
 // function : SetupAlignment
 // purpose  :
 // =======================================================================
-void OpenGl_TextFormatter::SetupAlignment (const Graphic3d_HorizontalTextAlignment theAlignX,
-                                           const Graphic3d_VerticalTextAlignment   theAlignY)
+void Font_TextFormatter::SetupAlignment (const Graphic3d_HorizontalTextAlignment theAlignX,
+                                         const Graphic3d_VerticalTextAlignment   theAlignY)
 {
   myAlignX = theAlignX;
   myAlignY = theAlignY;
@@ -132,7 +115,7 @@ void OpenGl_TextFormatter::SetupAlignment (const Graphic3d_HorizontalTextAlignme
 // function : Reset
 // purpose  :
 // =======================================================================
-void OpenGl_TextFormatter::Reset()
+void Font_TextFormatter::Reset()
 {
   myIsFormatted = false;
   myString.Clear();
@@ -144,141 +127,11 @@ void OpenGl_TextFormatter::Reset()
 }
 
 // =======================================================================
-// function : Result
-// purpose  :
-// =======================================================================
-void OpenGl_TextFormatter::Result (NCollection_Vector<GLuint>& theTextures,
-                                   NCollection_Vector< NCollection_Handle <NCollection_Vector <OpenGl_Vec2> > >& theVertsPerTexture,
-                                   NCollection_Vector< NCollection_Handle <NCollection_Vector <OpenGl_Vec2> > >& theTCrdsPerTexture) const
-{
-  OpenGl_Vec2 aVec (0.0f, 0.0f);
-  theTextures.Clear();
-  theVertsPerTexture.Clear();
-  theTCrdsPerTexture.Clear();
-  for (Standard_Integer aRectIter = 0; aRectIter < myRectsNb; ++aRectIter)
-  {
-    const Font_FTFont::Rect& aRect    = myRects.Value (aRectIter).px;
-    const Font_FTFont::Rect& aRectUV  = myRects.Value (aRectIter).uv;
-    const GLuint             aTexture = myRects.Value (aRectIter).texture;
-
-    Standard_Integer aListId = 0;
-    for (aListId = 0; aListId < theTextures.Length(); ++aListId)
-    {
-      if (theTextures.Value (aListId) == aTexture)
-      {
-        break;
-      }
-    }
-    if (aListId >= theTextures.Length())
-    {
-      theTextures.Append (aTexture);
-      theVertsPerTexture.Append (new NCollection_Vector<OpenGl_Vec2>());
-      theTCrdsPerTexture.Append (new NCollection_Vector<OpenGl_Vec2>());
-    }
-
-    NCollection_Vector<OpenGl_Vec2>& aVerts = *theVertsPerTexture.ChangeValue (aListId);
-    NCollection_Vector<OpenGl_Vec2>& aTCrds = *theTCrdsPerTexture.ChangeValue (aListId);
-
-    // apply floor on position to avoid blurring issues
-    // due to cross-pixel coordinates
-    aVerts.Append (floor(aRect.TopRight   (aVec)));
-    aVerts.Append (floor(aRect.TopLeft    (aVec)));
-    aVerts.Append (floor(aRect.BottomLeft (aVec)));
-    aTCrds.Append (aRectUV.TopRight   (aVec));
-    aTCrds.Append (aRectUV.TopLeft    (aVec));
-    aTCrds.Append (aRectUV.BottomLeft (aVec));
-
-    aVerts.Append (floor(aRect.BottomRight (aVec)));
-    aVerts.Append (floor(aRect.TopRight    (aVec)));
-    aVerts.Append (floor(aRect.BottomLeft  (aVec)));
-    aTCrds.Append (aRectUV.BottomRight (aVec));
-    aTCrds.Append (aRectUV.TopRight    (aVec));
-    aTCrds.Append (aRectUV.BottomLeft  (aVec));
-  }
-}
-
-// =======================================================================
-// function : Result
-// purpose  :
-// =======================================================================
-void OpenGl_TextFormatter::Result (const Handle(OpenGl_Context)&                    theCtx,
-                                   NCollection_Vector<GLuint>&                      theTextures,
-                                   NCollection_Vector<Handle(OpenGl_VertexBuffer)>& theVertsPerTexture,
-                                   NCollection_Vector<Handle(OpenGl_VertexBuffer)>& theTCrdsPerTexture) const
-{
-  NCollection_Vector< NCollection_Handle <NCollection_Vector <OpenGl_Vec2> > > aVertsPerTexture;
-  NCollection_Vector< NCollection_Handle <NCollection_Vector <OpenGl_Vec2> > > aTCrdsPerTexture;
-  Result (theTextures, aVertsPerTexture, aTCrdsPerTexture);
-
-  if (theVertsPerTexture.Length() != theTextures.Length())
-  {
-    for (Standard_Integer aTextureIter = 0; aTextureIter < theVertsPerTexture.Length(); ++aTextureIter)
-    {
-      theVertsPerTexture.Value (aTextureIter)->Release (theCtx.operator->());
-      theTCrdsPerTexture.Value (aTextureIter)->Release (theCtx.operator->());
-    }
-    theVertsPerTexture.Clear();
-    theTCrdsPerTexture.Clear();
-
-    const bool isNormalMode = theCtx->ToUseVbo();
-    Handle(OpenGl_VertexBuffer) aVertsVbo, aTcrdsVbo;
-    while (theVertsPerTexture.Length() < theTextures.Length())
-    {
-      if (isNormalMode)
-      {
-        aVertsVbo = new OpenGl_VertexBuffer();
-        aTcrdsVbo = new OpenGl_VertexBuffer();
-      }
-      else
-      {
-        aVertsVbo = new OpenGl_VertexBufferCompat();
-        aTcrdsVbo = new OpenGl_VertexBufferCompat();
-      }
-      theVertsPerTexture.Append (aVertsVbo);
-      theTCrdsPerTexture.Append (aTcrdsVbo);
-      aVertsVbo->Create (theCtx);
-      aTcrdsVbo->Create (theCtx);
-    }
-  }
-
-  for (Standard_Integer aTextureIter = 0; aTextureIter < theTextures.Length(); ++aTextureIter)
-  {
-    const NCollection_Vector<OpenGl_Vec2>& aVerts = *aVertsPerTexture.Value (aTextureIter);
-    Handle(OpenGl_VertexBuffer)& aVertsVbo = theVertsPerTexture.ChangeValue (aTextureIter);
-    if (!aVertsVbo->Init (theCtx, 2, aVerts.Length(), (GLfloat* )NULL)
-     || !myVboEditor.Init (theCtx, aVertsVbo))
-    {
-      continue;
-    }
-    for (Standard_Integer aVertIter = 0; aVertIter < aVerts.Length(); ++aVertIter, myVboEditor.Next())
-    {
-      myVboEditor.Value() = aVerts.Value (aVertIter);
-    }
-    myVboEditor.Flush();
-
-    const NCollection_Vector<OpenGl_Vec2>& aTCrds = *aTCrdsPerTexture.Value (aTextureIter);
-    Handle(OpenGl_VertexBuffer)& aTCrdsVbo = theTCrdsPerTexture.ChangeValue (aTextureIter);
-    if (!aTCrdsVbo->Init (theCtx, 2, aVerts.Length(), (GLfloat* )NULL)
-     || !myVboEditor.Init (theCtx, aTCrdsVbo))
-    {
-      continue;
-    }
-    for (Standard_Integer aVertIter = 0; aVertIter < aVerts.Length(); ++aVertIter, myVboEditor.Next())
-    {
-      myVboEditor.Value() = aTCrds.Value (aVertIter);
-    }
-    myVboEditor.Flush();
-  }
-  myVboEditor.Init (NULL, NULL);
-}
-
-// =======================================================================
 // function : Append
 // purpose  :
 // =======================================================================
-void OpenGl_TextFormatter::Append (const Handle(OpenGl_Context)& theCtx,
-                                   const NCollection_String&     theString,
-                                   OpenGl_Font&                  theFont)
+void Font_TextFormatter::Append (const NCollection_String& theString,
+                                   Font_FTFont&              theFont)
 {
   if (theString.IsEmpty())
   {
@@ -292,8 +145,7 @@ void OpenGl_TextFormatter::Append (const Handle(OpenGl_Context)& theCtx,
   int aSymbolsCounter = 0; // special counter to process tabulation symbols
 
   // first pass - render all symbols using associated font on single ZERO baseline
-  OpenGl_Font::Tile aTile;
-  memset (&aTile, 0, sizeof(aTile));
+  Font_FTFont::Rect aRect = {};
   for (NCollection_Utf8Iter anIter = theString.Iterator(); *anIter != 0;)
   {
     const Standard_Utf32Char aCharThis =   *anIter;
@@ -328,10 +180,18 @@ void OpenGl_TextFormatter::Append (const Handle(OpenGl_Context)& theCtx,
     }
 
     ++aSymbolsCounter;
-    theFont.RenderGlyph (theCtx,
-                         aCharThis, aCharNext,
-                         aTile, myPen);
-    myRects.Append (aTile);
+
+    theFont.RenderGlyph (aCharThis);
+    theFont.GlyphRect   (aRect);
+
+    aRect.Top    += myPen.y();
+    aRect.Bottom += myPen.y();
+    aRect.Left   += myPen.x();
+    aRect.Right  += myPen.x();
+
+    myPen.x() += theFont.AdvanceX (aCharThis, aCharNext);
+
+    myRects.Append (aRect);
 
     ++myRectsNb;
   }
@@ -341,7 +201,7 @@ void OpenGl_TextFormatter::Append (const Handle(OpenGl_Context)& theCtx,
 // function : newLine
 // purpose  :
 // =======================================================================
-void OpenGl_TextFormatter::newLine (const Standard_Integer theLastRect)
+void Font_TextFormatter::newLine (const Standard_Integer theLastRect)
 {
   if (myRectLineStart >= myRectsNb)
   {
@@ -386,7 +246,7 @@ void OpenGl_TextFormatter::newLine (const Standard_Integer theLastRect)
   myRectLineStart = myRectWordStart = theLastRect + 1;
   if (myRectLineStart < myRectsNb)
   {
-    myLineLeft = myRects.Value (myRectLineStart).px.Left;
+    myLineLeft = myRects.Value (myRectLineStart).Left;
   }
 }
 
@@ -394,7 +254,7 @@ void OpenGl_TextFormatter::newLine (const Standard_Integer theLastRect)
 // function : Format
 // purpose  :
 // =======================================================================
-void OpenGl_TextFormatter::Format()
+void Font_TextFormatter::Format()
 {
   if (myRectsNb == 0 || myIsFormatted)
   {
@@ -413,6 +273,7 @@ void OpenGl_TextFormatter::Format()
   myPenCurrLine = -myAscender;
   Standard_Integer aRectIter = 0;
   myNewLineNb = 0;
+  Standard_ShortReal aMaxLineWidth = -1.0f;
   for (NCollection_Utf8Iter anIter = myString.Iterator(); *anIter != 0; ++anIter)
   {
     const Standard_Utf32Char aCharThis = *anIter;
@@ -426,6 +287,16 @@ void OpenGl_TextFormatter::Format()
     }
     else if (aCharThis == '\x0A') // LF (line feed, new line)
     {
+      // calculate max line width
+      if (myNewLineNb == 0)
+      {
+        aMaxLineWidth = myNewLines.Value(0);
+      }
+      else
+      {
+        aMaxLineWidth = Max (aMaxLineWidth, myNewLines.Value (myNewLineNb) - myNewLines.Value (myNewLineNb - 1));
+      }
+
       const Standard_Integer aLastRect = aRectIter - 1; // last rect on current line
       newLine (aLastRect);
       ++myNewLineNb;
@@ -438,11 +309,20 @@ void OpenGl_TextFormatter::Format()
       continue;
     }
 
-    Standard_ShortReal aWidth = myRects.Value (aRectIter).px.Right - myLineLeft;
-    myBndWidth = Max (myBndWidth, aWidth);
-
     ++aRectIter;
   }
+
+  // If only one line
+  if (aMaxLineWidth < 0.0f)
+  {
+    aMaxLineWidth = myPen.x();
+  }
+  else // Consider last line
+  {
+    aMaxLineWidth = Max (aMaxLineWidth, myPen.x() - myNewLines.Value (myNewLineNb - 1));
+  }
+
+  myBndWidth = aMaxLineWidth;
 
   // move last line
   newLine (myRectsNb - 1);
