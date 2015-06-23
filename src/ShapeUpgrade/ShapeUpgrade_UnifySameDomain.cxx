@@ -569,11 +569,11 @@ static Standard_Boolean MergeEdges(const TopTools_SequenceOfShape& SeqEdges,
   }
   // union edges in chain
   // first step: union lines and circles
-  TopLoc_Location Loc;
   Standard_Real fp1,lp1,fp2,lp2;
   for(j=1; j<aChain.Length(); j++) {
     TopoDS_Edge edge1 = TopoDS::Edge(aChain.Value(j));
-    Handle(Geom_Curve) c3d1 = BRep_Tool::Curve(edge1,Loc,fp1,lp1);
+    Handle(Geom_Curve) c3d1 = BRep_Tool::Curve(edge1,fp1,lp1);
+
     if(c3d1.IsNull()) break;
     while(c3d1->IsKind(STANDARD_TYPE(Geom_TrimmedCurve))) {
       Handle(Geom_TrimmedCurve) tc =
@@ -581,7 +581,7 @@ static Standard_Boolean MergeEdges(const TopTools_SequenceOfShape& SeqEdges,
       c3d1 = tc->BasisCurve();
     }
     TopoDS_Edge edge2 = TopoDS::Edge(aChain.Value(j+1));
-    Handle(Geom_Curve) c3d2 = BRep_Tool::Curve(edge2,Loc,fp2,lp2);
+    Handle(Geom_Curve) c3d2 = BRep_Tool::Curve(edge2,fp2,lp2);
     if(c3d2.IsNull()) break;
     while(c3d2->IsKind(STANDARD_TYPE(Geom_TrimmedCurve))) {
       Handle(Geom_TrimmedCurve) tc =
@@ -691,6 +691,7 @@ static Standard_Boolean MergeEdges(const TopTools_SequenceOfShape& SeqEdges,
     bool NeedUnion = true;
     for(j=1; j<=aChain.Length(); j++) {
       TopoDS_Edge edge = TopoDS::Edge(aChain.Value(j));
+      TopLoc_Location Loc;
       Handle(Geom_Curve) c3d = BRep_Tool::Curve(edge,Loc,fp1,lp1);
       if(c3d.IsNull()) continue;
       while(c3d->IsKind(STANDARD_TYPE(Geom_TrimmedCurve))) {
