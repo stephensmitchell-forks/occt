@@ -31,10 +31,10 @@ IMPLEMENT_STANDARD_RTTIEXT(AIS_TextLabel, AIS_InteractiveObject)
 //purpose  :
 //=======================================================================
 AIS_TextLabel::AIS_TextLabel()
-: myText       ("?"),
-  myPosition   (0.0, 0.0, 0.0),
-  myFont       ("Courier"),
-  myFontAspect (Font_FA_Regular)
+: myText             ("?"),
+  myFont             ("Courier"),
+  myFontAspect       (Font_FA_Regular),
+  myHasOrientation3D (Standard_False)
 {
   myDrawer->SetTextAspect (new Prs3d_TextAspect());
 
@@ -76,7 +76,7 @@ void AIS_TextLabel::SetText (const TCollection_ExtendedString& theText)
 //=======================================================================
 void AIS_TextLabel::SetPosition (const gp_Pnt& thePosition)
 {
-  myPosition = thePosition;
+  myOrientation3D.SetLocation (thePosition);
 }
 
 //=======================================================================
@@ -144,6 +144,43 @@ void AIS_TextLabel::SetFont (Standard_CString theFont)
 }
 
 //=======================================================================
+//function : Set3dOrientation
+//purpose  :
+//=======================================================================
+void AIS_TextLabel::SetOrientation3D (const gp_Ax2& theOrientation)
+{
+  myHasOrientation3D = Standard_True;
+  myOrientation3D    = theOrientation;
+}
+
+//=======================================================================
+//function : Position
+//purpose  :
+//=======================================================================
+const gp_Pnt& AIS_TextLabel::Position() const
+{
+  return myOrientation3D.Location();
+}
+
+//=======================================================================
+//function : Orientation3D
+//purpose  :
+//=======================================================================
+const gp_Ax2& AIS_TextLabel::Orientation3D() const
+{
+  return myOrientation3D;
+}
+
+//=======================================================================
+//function : HasOrientation3D()
+//purpose  :
+//=======================================================================
+Standard_Boolean AIS_TextLabel::HasOrientation3D() const
+{
+  return myHasOrientation3D;
+}
+
+//=======================================================================
 //function : Compute
 //purpose  :
 //=======================================================================
@@ -156,7 +193,16 @@ void AIS_TextLabel::Compute (const Handle(PrsMgr_PresentationManager3d)& /*thePr
     case 0:
     {
       Handle(Prs3d_TextAspect) anAsp = myDrawer->TextAspect();
-      Prs3d_Text::Draw (thePrs, anAsp, myText, myPosition);
+
+      if (myHasOrientation3D)
+      {
+        Prs3d_Text::Draw (thePrs, anAsp, myText, myOrientation3D);
+      }
+      else
+      {
+        Prs3d_Text::Draw (thePrs, anAsp, myText, Position());
+      }
+
       break;
     }
   }
@@ -174,7 +220,7 @@ void AIS_TextLabel::ComputeSelection (const Handle(SelectMgr_Selection)& theSele
     case 0:
     {
       Handle(SelectMgr_EntityOwner)   anEntityOwner   = new SelectMgr_EntityOwner (this, 10);
-      Handle(Select3D_SensitivePoint) aSensitivePoint = new Select3D_SensitivePoint (anEntityOwner, myPosition);
+      Handle(Select3D_SensitivePoint) aSensitivePoint = new Select3D_SensitivePoint (anEntityOwner, Position());
       theSelection->Add (aSensitivePoint);
       break;
     }

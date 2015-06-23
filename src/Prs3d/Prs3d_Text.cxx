@@ -31,12 +31,9 @@ void Prs3d_Text::Draw (
   Standard_Real x,y,z;
   AttachmentPoint.Coord(x,y,z);
 
-  
-// POP Graphic3d_Grup accepte de l'extended
   Prs3d_Root::CurrentGroup(aPresentation)->Text(
-//                     TCollection_AsciiString(aText).ToCString(),
-		      aText,
-	             Graphic3d_Vertex(x,y,z),
+                     aText,
+                     Graphic3d_Vertex(x,y,z),
                      anAspect->Height(),
                      anAspect->Angle(),
                      anAspect->Orientation(),
@@ -54,3 +51,22 @@ void Prs3d_Text::Draw (
   
   Prs3d_Text::Draw(aPresentation,aDrawer->TextAspect(),aText,AttachmentPoint);
   }
+
+// =======================================================================
+// function : Draw
+// purpose  :
+// =======================================================================
+void Prs3d_Text::Draw (const Handle(Prs3d_Presentation)& thePresentation,
+                       const Handle(Prs3d_TextAspect)&   theAspect,
+		                   const TCollection_ExtendedString& theText,
+		                   const gp_Ax2&                     theOrientation)
+{
+  Prs3d_Root::CurrentGroup (thePresentation)->SetPrimitivesAspect(theAspect->Aspect());
+  Prs3d_Root::CurrentGroup (thePresentation)->Text(theText,
+                                                   theOrientation,
+                                                   theAspect->Height(),
+                                                   theAspect->Angle(),
+                                                   theAspect->Orientation(),
+                                                   theAspect->HorizontalJustification(),
+                                                   theAspect->VerticalJustification());
+}

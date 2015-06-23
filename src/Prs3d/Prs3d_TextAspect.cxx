@@ -23,7 +23,8 @@ Prs3d_TextAspect::Prs3d_TextAspect ()
   myHeight(16.),
   myHorizontalJustification(Graphic3d_HTA_LEFT),
   myVerticalJustification(Graphic3d_VTA_BOTTOM),
-  myOrientation(Graphic3d_TP_RIGHT) {
+  myOrientation(Graphic3d_TP_RIGHT)
+{
 
   myTextAspect = new Graphic3d_AspectText3d (
                                              Quantity_Color(Quantity_NOC_YELLOW),

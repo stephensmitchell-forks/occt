@@ -18,6 +18,7 @@
 #include <AIS_InteractiveObject.hxx>
 
 #include <gp_Pnt.hxx>
+#include <gp_Ax2.hxx>
 #include <Graphic3d_VerticalTextAlignment.hxx>
 #include <Graphic3d_HorizontalTextAlignment.hxx>
 #include <Font_FontAspect.hxx>
@@ -64,6 +65,18 @@ public:
   //! Setup font.
   Standard_EXPORT void SetFont (Standard_CString theFont);
 
+  //! Setup orientation 3D.
+  Standard_EXPORT void SetOrientation3D (const gp_Ax2& theOrientation);
+
+  //! Returns position.
+  Standard_EXPORT const gp_Pnt& Position() const;
+
+  //! Returns orientation 3D.
+  Standard_EXPORT const gp_Ax2& Orientation3D() const;
+
+  //! Returns true if current text placement in 3D.
+  Standard_EXPORT Standard_Boolean HasOrientation3D() const;
+
 private:
 
   //! Compute
@@ -78,9 +91,10 @@ private:
 protected:
 
   TCollection_ExtendedString myText;
-  gp_Pnt                     myPosition;
   TCollection_AsciiString    myFont;
   Font_FontAspect            myFontAspect;
+  gp_Ax2                     myOrientation3D;
+  Standard_Boolean           myHasOrientation3D;
 
 public:
 

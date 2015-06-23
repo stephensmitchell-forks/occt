@@ -2430,6 +2430,12 @@ static int VDrawText (Draw_Interpretor& theDI,
 
   aTextPrs->SetText (aText);
 
+
+  Standard_Boolean aHasPlane = Standard_False;
+  gp_Dir           aNormal;
+  gp_Dir           aDirection;
+  gp_Pnt           aPos;
+
   for (; anArgIt < theArgsNb; ++anArgIt)
   {
     TCollection_AsciiString aParam (theArgVec[anArgIt]);
@@ -2448,7 +2454,6 @@ static int VDrawText (Draw_Interpretor& theDI,
         return 1;
       }
 
-      gp_Pnt aPos;
       aPos.SetX (Draw::Atof (theArgVec[++anArgIt]));
       aPos.SetY (Draw::Atof (theArgVec[++anArgIt]));
       aPos.SetZ (Draw::Atof (theArgVec[++anArgIt]));
@@ -2616,11 +2621,36 @@ static int VDrawText (Draw_Interpretor& theDI,
 
       aTextPrs->SetFont (theArgVec[anArgIt]);
     }
+    else if (aParam == "-plane")
+    {
+      if (anArgIt + 6 >= theArgsNb)
+      {
+        std::cout << "Error: wrong number of values for parameter '" << aParam.ToCString() << "'.\n";
+        return 1;
+      }
+
+      Standard_Real aX = Draw::Atof (theArgVec[++anArgIt]);
+      Standard_Real aY = Draw::Atof (theArgVec[++anArgIt]);
+      Standard_Real aZ = Draw::Atof (theArgVec[++anArgIt]);
+      aNormal.SetCoord (aX, aY, aZ);
+
+      aX = Draw::Atof (theArgVec[++anArgIt]);
+      aY = Draw::Atof (theArgVec[++anArgIt]);
+      aZ = Draw::Atof (theArgVec[++anArgIt]);
+      aDirection.SetCoord (aX, aY, aZ);
+
+      aHasPlane = Standard_True;
+    }
     else
     {
       std::cout << "Error: unknown argument '" << aParam << "'\n";
       return 1;
     }
+  }
+
+  if (aHasPlane)
+  {
+    aTextPrs->SetOrientation3D (gp_Ax2 (aPos, aNormal, aDirection));
   }
 
   ViewerTest::Display (aName, aTextPrs, Standard_False);
@@ -6005,6 +6035,7 @@ void ViewerTest::ObjectCommands(Draw_Interpretor& theCommands)
                    "\n\t\t: [-aspect {regular|bold|italic|bolditalic}=regular]"
                    "\n\t\t: [-font font=Times]"
                    "\n\t\t: [-noupdate]"
+                   "\n\t\t: [-plane NormX NormY NormZ DirX DirY DirZ]"
                    "\n\t\t: Display text label at specified position.",
     __FILE__, VDrawText, group);
 

@@ -1,0 +1,28 @@
+puts "==========="
+puts "0026149: "
+puts ""
+puts "==========="
+
+pload ALL
+vinit View1
+vclear
+vaxo
+
+set x 10
+set y 50
+set z 30
+
+box b $x $y $z
+vdisplay b
+vtrihedron tri0
+
+vdrawtext t0 "Top text in plane yOz" -pos $x 0 $z -color green -height 20 -plane 1 0 0 0 1 0 -valign top
+vdrawtext t1 "Bottom text in plane yOz" -pos 0 $y 0 -color green -height 20 -plane -1 0 0 0 -1 0 -valign bottom
+
+vdrawtext t2 "Some text on the top face" -pos $x/2 $y/2 $z -color red -height 20 -plane 0 0 1 0 1 0 -valign center -halign center
+
+vdrawtext t3 "First line\nSecond line" -pos $x/2 0 $z/2 -color 0.0 0.0 1.0 -height 20 -plane 0 -1 0 0 0 1 -valign center -halign center
+
+vfit
+
+vdump ${imagedir}/${casename}.png

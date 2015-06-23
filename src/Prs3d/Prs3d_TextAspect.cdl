@@ -66,10 +66,10 @@ is
     
     SetVerticalJustification(me:  mutable;  aJustification:  VerticalTextAlignment  from  Graphic3d);
         --- Purpose: Sets the vertical alignment of text.
-    
+
     SetOrientation(me: mutable;  anOrientation:  TextPath  from  Graphic3d); 
-        ---Purpose: Sets the orientation of text. 
-    
+        ---Purpose: Sets the orientation of text.
+
     HorizontalJustification(me)  returns  HorizontalTextAlignment  from  Graphic3d; 
         --- Purpose: Returns the horizontal alignment of the text.
         -- The range of values includes:
@@ -87,15 +87,15 @@ is
         -- -   half
         -- -   base
         -- -   bottom 
-    
+
     Orientation(me) returns  TextPath  from  Graphic3d; 
         --- Purpose: Returns the orientation of the text.
         -- Text can be displayed in the following directions:
         -- -   up
         -- -   down
         -- -   left, or
-        -- -   right   
-    
+        -- -   right
+
     Aspect(me) returns AspectText3d  from  Graphic3d;  
         ---Purpose: Returns the purely textual attributes used in the display of text.
         -- These include:
@@ -112,7 +112,7 @@ fields
     myHeight: Real from Standard;
     myHorizontalJustification:  HorizontalTextAlignment  from  Graphic3d; 
     myVerticalJustification:  VerticalTextAlignment  from  Graphic3d; 
-    myOrientation: TextPath  from  Graphic3d; 
+    myOrientation: TextPath  from  Graphic3d;
     
 end TextAspect from Prs3d;
 

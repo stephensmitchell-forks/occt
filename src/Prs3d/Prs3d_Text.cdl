@@ -22,7 +22,8 @@ uses
     Pnt from gp,
     Drawer from Prs3d,
     TextAspect from Prs3d,
-    ExtendedString from TCollection
+    ExtendedString from TCollection,
+    Ax2 from gp
     
 is
     Draw(myclass; aPresentation: Presentation from Prs3d;
@@ -36,7 +37,14 @@ is
     	-- static void Draw (const Handle(Prs3d_Presentation)&
     	-- aPresentation, const Handle(Prs3d_TextAspect)&
     	-- anAspect, const TCollection_ExtendedString& aText,
-    	-- const gp_Pnt& AttachmentPoint);    
+      -- const gp_Pnt& AttachmentPoint);
+
+    Draw(myclass;
+         thePresentation : Presentation   from Prs3d;
+         theAspect       : TextAspect     from Prs3d;
+         theText         : ExtendedString from TCollection;
+         theOrientation  : Ax2            from gp);
+      ---Purpose: Defines the display of the text theText at the orientation 3d space.
 
     Draw(myclass; aPresentation: Presentation from Prs3d;
     	          anAspect: TextAspect from Prs3d;

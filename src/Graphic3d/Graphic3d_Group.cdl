@@ -46,6 +46,9 @@ deferred class Group from Graphic3d inherits TShared
         -- 
         --        Developers are strongly recommended to take all the above into account when filling Graphic3d_Group
         --        with aspects and primitives and choose the group usage model beforehand out of application needs.
+        --
+        --        Note that some Graphic3d_Group class virtual methods contain only base implementation
+        --        that is extended by the descendant class in OpenGl package.
 
         ---Warning:
         ---References:
@@ -331,7 +334,7 @@ deferred class Group from Graphic3d inherits TShared
         --      AAngle  : Orientation of the text
         --            (with respect to the horizontal).
         ---Category: Methods to create Text
-    
+
         Text ( me           : mutable;
                AText        : ExtendedString from TCollection;
                APoint       : Vertex from Graphic3d;
@@ -353,7 +356,33 @@ deferred class Group from Graphic3d inherits TShared
         --      AHta    : HTA_LEFT
         --      AVta    : VTA_BOTTOM
         ---Category: Methods to create Text
-    
+
+        Text (me              : mutable;
+              theTextUtf      : CString                 from Standard;
+              theOrientation  : Ax2                     from gp;
+              theHeight       : Real                    from Standard;
+              theAngle        : PlaneAngle              from Quantity;
+              theTp           : TextPath                from Graphic3d;
+              theHTA          : HorizontalTextAlignment from Graphic3d;
+              theVTA          : VerticalTextAlignment   from Graphic3d;
+              theToEvalMinMax : Boolean                 from Standard = Standard_True) is virtual;
+        ---Level: Public
+        ---Purpose: Creates the string <theText> at orientation <theOrientation> in 3D space.
+        ---Category: Methods to create Text
+
+        Text (me : mutable;
+              theText         : ExtendedString          from TCollection;
+              theOrientation  : Ax2                     from gp;
+              theHeight       : Real                    from Standard;
+              theAngle        : PlaneAngle              from Quantity;
+              theTp           : TextPath                from Graphic3d;
+              theHTA          : HorizontalTextAlignment from Graphic3d;
+              theVTA          : VerticalTextAlignment   from Graphic3d;
+              theToEvalMinMax : Boolean                 from Standard = Standard_True) is static;
+        ---Level: Internal
+        ---Purpose: Creates the string <theText> at orientation <theOrientation> in 3D space.
+        ---Category: Methods to create Text
+
         ---------------------------------------
         ---Category: Methods to create Triangle
         ---------------------------------------
