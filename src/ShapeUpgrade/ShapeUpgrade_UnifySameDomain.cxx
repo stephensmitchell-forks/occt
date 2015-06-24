@@ -597,7 +597,7 @@ static Standard_Boolean MergeEdges(const TopTools_SequenceOfShape& SeqEdges,
       //if(!Dir1.IsEqual(Dir2,Precision::Angular())) { 
       //if(!Dir1.IsParallel(Dir2,Precision::Angular())) { 
       if(!Dir1.IsParallel(Dir2,Tol)) { 
-        continue;
+        return Standard_False;
       }
       // can union lines => create new edge
       TopoDS_Vertex V1 = sae.FirstVertex(edge1);
@@ -626,7 +626,8 @@ static Standard_Boolean MergeEdges(const TopTools_SequenceOfShape& SeqEdges,
       Handle(Geom_Circle) C2 = Handle(Geom_Circle)::DownCast(c3d2);
       gp_Pnt P01 = C1->Location();
       gp_Pnt P02 = C2->Location();
-      if (P01.Distance(P02) > Precision::Confusion()) continue;
+      if (P01.Distance(P02) > Precision::Confusion())
+        return Standard_False;
       // can union circles => create new edge
       TopoDS_Vertex V1 = sae.FirstVertex(edge1);
       gp_Pnt PV1 = BRep_Tool::Pnt(V1);
@@ -638,7 +639,8 @@ static Standard_Boolean MergeEdges(const TopTools_SequenceOfShape& SeqEdges,
       TopoDS_Edge E;
       if (!MC.IsDone() || MC.Value().IsNull()) {
         // jfa for Mantis issue 0020228
-        if (PV1.Distance(PV2) > Precision::Confusion()) continue;
+        if (PV1.Distance(PV2) > Precision::Confusion())
+          return Standard_False;
         // closed chain
         B.MakeEdge (E,C1,Precision::Confusion());
         B.Add(E,V1);
