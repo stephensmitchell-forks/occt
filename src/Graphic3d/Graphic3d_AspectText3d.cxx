@@ -128,6 +128,11 @@ void Graphic3d_AspectText3d::SetFont (const Standard_CString AFont) {
   MyFont = aTemp;  
 }
 
+const TCollection_AsciiString& Graphic3d_AspectText3d::GetFont() const
+{
+  return MyFont;
+}
+
 void Graphic3d_AspectText3d::SetSpace (const Standard_Real ASpace) {
 
   MySpace = ASpace;

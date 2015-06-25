@@ -103,6 +103,11 @@ is
     ---AFont may be to take means from User(example "Courier New") 
     ---or Font name defined in Font_NameOfFont(example Font_NOF_ASCII_MONO)
     ---or use default font("Courier")
+    
+    GetFont (me) returns AsciiString from TCollection;
+    ---Level: Public
+    ---Purpose: Returns font name.
+    ---C++: return const&
 
 
     SetSpace ( me       : mutable;
