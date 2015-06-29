@@ -138,7 +138,8 @@ uses
     EntityOwner           from SelectMgr,
     TypeOfFacingModel 	  from Aspect,
     Array1OfPnt2d         from TColgp,
-    Transformation 	  from Geom
+    Transformation        from Geom,
+    SequenceOfShape       from TopTools
 
 is
 
@@ -2104,6 +2105,7 @@ fields
     -- InitDetected(), MoreDetected(), NextDetected(), DetectedCurrentShape(), DetectedCurrentObject().
     myZDetectionFlag:	Boolean from Standard;
     -- This variables is used by SetZDetection() and ZDetection() methods
+    myAISDetectedShapes : SequenceOfShape from TopTools;
 
     -- abd:
     myIsAutoActivateSelMode : Boolean from Standard;

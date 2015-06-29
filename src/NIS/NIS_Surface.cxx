@@ -31,6 +31,8 @@
 #include <TopExp_Explorer.hxx>
 #include <TopLoc_Location.hxx>
 #include <TopTools_MapOfShape.hxx>
+#include <TopTools_DataMapOfShapeInteger.hxx>
+#include <TopTools_DataMapIteratorOfDataMapOfShapeInteger.hxx>
 #include <TopoDS.hxx>
 #include <TopoDS_Face.hxx>
 #include <TopoDS_Edge.hxx>
@@ -57,15 +59,16 @@ inline Standard_Boolean IsEqual(const Handle_Poly_Triangulation& theT0,
 //=======================================================================
 
 NIS_Surface::NIS_Surface(const Handle_NCollection_BaseAllocator& theAlloc)
-  : myAlloc      (theAlloc),
-    mypNodes     (NULL),
-    mypNormals   (NULL),
-    mypTriangles (NULL),
-    mypEdges     (NULL),
-    myNNodes     (0),
-    myNTriangles (0),
-    myNEdges     (0),
-    myIsWireframe(0)
+  : myAlloc             (theAlloc),
+    mypNodes            (NULL),
+    mypNormals          (NULL),
+    mypTriangles        (NULL),
+    myNNodes            (0),
+    myNTriangles        (0),
+    myIsWireframe       (Standard_False),
+    myHilightIsWireframe(Standard_False),
+    myIsShowFreeBoundary(Standard_False),
+    myIsShowEdges       (Standard_True)
 {
   if (myAlloc.IsNull())
     myAlloc = NCollection_BaseAllocator::CommonBaseAllocator();  
@@ -78,14 +81,15 @@ NIS_Surface::NIS_Surface(const Handle_NCollection_BaseAllocator& theAlloc)
 
 NIS_Surface::NIS_Surface (const Handle(Poly_Triangulation)&       theTri,
                           const Handle_NCollection_BaseAllocator& theAlloc)
-  : myAlloc      (theAlloc),
-    mypNodes     (NULL),
-    mypNormals   (NULL),
-    mypEdges     (NULL),
-    myNNodes     (0),
-    myNTriangles (0),
-    myNEdges     (0),
-    myIsWireframe(0)
+  : myAlloc             (theAlloc),
+    mypNodes            (NULL),
+    mypNormals          (NULL),
+    myNNodes            (0),
+    myNTriangles        (0),
+    myIsWireframe       (Standard_False),
+    myHilightIsWireframe(Standard_False),
+    myIsShowFreeBoundary(Standard_False),
+    myIsShowEdges       (Standard_True)
 {
   if (myAlloc.IsNull())
     myAlloc = NCollection_BaseAllocator::CommonBaseAllocator();
@@ -147,18 +151,20 @@ NIS_Surface::NIS_Surface (const Handle(Poly_Triangulation)&       theTri,
 //purpose  : Constructor
 //=======================================================================
 
-NIS_Surface::NIS_Surface (const TopoDS_Shape&                     theShape,
-                          const Standard_Real                     theDeflection,
+NIS_Surface::NIS_Surface (const TopoDS_Shape&                theShape,
+                          const Standard_Real                theDeflection,
+                          const Standard_Boolean             theIsFreeBoundary,
                           const Handle_NCollection_BaseAllocator& theAlloc)
-  : myAlloc       (theAlloc),
-    mypNodes      (NULL),
-    mypNormals    (NULL),
-    mypTriangles  (NULL),
-    mypEdges      (NULL),
-    myNNodes      (0),
-    myNTriangles  (0),
-    myNEdges      (0),
-    myIsWireframe (0)
+  : myAlloc             (theAlloc),
+    mypNodes            (NULL),
+    mypNormals          (NULL),
+    mypTriangles        (NULL),
+    myNNodes            (0),
+    myNTriangles        (0),
+    myIsWireframe       (Standard_False),
+    myHilightIsWireframe(Standard_False),
+    myIsShowFreeBoundary(theIsFreeBoundary),
+    myIsShowEdges       (Standard_True)
 {
   if (myAlloc.IsNull())
     myAlloc = NCollection_BaseAllocator::CommonBaseAllocator();
@@ -174,35 +180,86 @@ void NIS_Surface::Init (const TopoDS_Shape& theShape,
                         const Standard_Real theDeflection)
 {
   TopLoc_Location  aLoc, aLocSurf;
+  Clear();
+
+  //Upon initialization by TopoDS_Shape the check of triangulation is performed.
+  //If at least one face has no triangulation but has a surface then the whole
+  // shape is triangulated using BRepMesh. 
+  //The whole shape triangulation is required to respect boundary connection
+  Standard_Boolean hasTri = Standard_True;
+  TopExp_Explorer eexp;
+  TopExp_Explorer fexp (theShape, TopAbs_FACE);
+  for (; fexp.More() && hasTri; fexp.Next())
+  {
+    const TopoDS_Face& aFace = TopoDS::Face(fexp.Current());
+
+    const Handle(Poly_Triangulation)& aTriangulation
+      = BRep_Tool::Triangulation (aFace, aLoc);
+    const Handle(Geom_Surface)& aSurface = BRep_Tool::Surface(aFace, aLoc);
+
+    if ((aTriangulation.IsNull() && Standard_False == aSurface.IsNull()) ||
+        (Standard_False == aTriangulation.IsNull() &&
+            theDeflection < aTriangulation->Deflection() ))
+    {
+      hasTri = Standard_False;
+      break;
+    }
+    for (eexp.Init(aFace, TopAbs_EDGE); eexp.More(); eexp.Next())
+    {
+      const TopoDS_Edge& anEdge = TopoDS::Edge(eexp.Current());          
+
+      const Handle(Poly_PolygonOnTriangulation)& aPolygon =
+        BRep_Tool::PolygonOnTriangulation(anEdge, aTriangulation, aLoc);
+      if (aPolygon.IsNull()) 
+      {
+        hasTri = Standard_False;
+        break;
+      }
+    }
+  }
+
+  if( hasTri == Standard_False )
+  {
+      const Standard_Real anAngularDeflection = 20.0 * M_PI / 180.0;
+      BRepMesh_IncrementalMesh aMeshTool(theShape, theDeflection,
+          Standard_False, anAngularDeflection);
+  }
 
   // Count the nodes and triangles in faces
-  NCollection_Map<Handle_Poly_Triangulation> mapTri;
-  TopExp_Explorer fexp (theShape, TopAbs_FACE);
-  for (; fexp.More(); fexp.Next())
+  for (fexp.Init(theShape, TopAbs_FACE); fexp.More(); fexp.Next())
   {
     const TopoDS_Face& aFace = TopoDS::Face(fexp.Current());
     
     const Handle(Poly_Triangulation)& aTriangulation
       = BRep_Tool::Triangulation (aFace, aLoc);
-    
-    if (aTriangulation.IsNull())
-      BRepMesh_IncrementalMesh aMeshTool(aFace, theDeflection); 
 
     if (aTriangulation.IsNull() == Standard_False)
     {
       myNNodes     += aTriangulation->NbNodes();
       myNTriangles += aTriangulation->NbTriangles();
-      mapTri.Add(aTriangulation);
     }
   }
 
   // Create map of edges, to build wireframe for all edges.
-  TopTools_MapOfShape mapEdges;
-  TopExp_Explorer eexp (theShape, TopAbs_EDGE);
-  for (; eexp.More(); eexp.Next())
+  TopTools_DataMapOfShapeInteger mapEdges;  
+  for (eexp.Init(theShape, TopAbs_EDGE); eexp.More(); eexp.Next())
   {
     const TopoDS_Shape& anEdge = eexp.Current();
-    mapEdges.Add(anEdge);
+    if (mapEdges.IsBound(anEdge))
+      mapEdges.ChangeFind(anEdge) += 1;
+    else
+      mapEdges.Bind(anEdge, 1);
+  }
+
+  Standard_Integer nbFreeEdges = 0, nbEdges = 0;
+  TopTools_DataMapIteratorOfDataMapOfShapeInteger anEIt(mapEdges);
+  for (; anEIt.More(); anEIt.Next())
+  {
+    const Standard_Integer nb = anEIt.Value();
+    if (nb > 1)
+      nbEdges += 1;      
+    else
+      nbFreeEdges += 1;      
   }
 
   // Allocate arrays of entities
@@ -213,13 +270,12 @@ void NIS_Surface::Init (const TopoDS_Shape& theShape,
       (myAlloc->Allocate(sizeof(Standard_ShortReal) * 3 * myNNodes));
     mypTriangles = static_cast<Standard_Integer *>
       (myAlloc->Allocate(sizeof(Standard_Integer) * 3 * myNTriangles));
-    mypEdges = static_cast<Standard_Integer **>
-      (myAlloc->Allocate(sizeof(Standard_Integer *) * mapEdges.Extent()));
-    myNEdges = 0;
+    myEdges.InitArray (2, nbEdges, myAlloc.operator->());
+    myFreeEdges.InitArray (2, nbFreeEdges, myAlloc.operator->());
 
     // The second loop: copy all nodes and triangles face-by-face
     const Standard_Real eps2 = Precision::SquareConfusion();
-    Standard_Integer nNodes (0), nTriangles (0);
+    Standard_Integer nNodes (0), nTriangles (0), nEdges (0), nFEdges (0);
     for (fexp.ReInit(); fexp.More(); fexp.Next())
     {
       const TopoDS_Face& aFace = TopoDS::Face(fexp.Current());
@@ -317,18 +373,21 @@ void NIS_Surface::Init (const TopoDS_Shape& theShape,
         // Store all edge polygons on the current face.
         for (eexp.Init(aFace, TopAbs_EDGE); eexp.More(); eexp.Next())
         {
-          const TopoDS_Edge& anEdge = TopoDS::Edge(eexp.Current());
-          if (mapEdges.Remove(anEdge)) {
+          const TopoDS_Edge& anEdge = TopoDS::Edge(eexp.Current());          
+          if (mapEdges.IsBound(anEdge)) {
+            Standard_Integer nbE = mapEdges.Find(anEdge);
+            mapEdges.UnBind(anEdge);
+
             const Handle(Poly_PolygonOnTriangulation)& aPolygon =
               BRep_Tool::PolygonOnTriangulation(anEdge, aTriangulation, aLoc);
             if (aPolygon.IsNull() == Standard_False) {
               const TColStd_Array1OfInteger& arrNode = aPolygon->Nodes();
               // Allocate memory to store the current polygon indices.
               Standard_Integer aLen = arrNode.Length();
-              Standard_Integer * pEdge = static_cast<Standard_Integer *>
-                (myAlloc->Allocate(sizeof(Standard_Integer) * (aLen + 1)));
+              int * pEdge = static_cast<int *>
+                (myAlloc->Allocate(sizeof(int) * (aLen)));
               const gp_Pnt* pLast = &tabNode(arrNode(arrNode.Lower()));
-              pEdge[1] = arrNode(arrNode.Lower()) + nNodes1;
+              pEdge[0] = arrNode(arrNode.Lower()) + nNodes1;              
               Standard_Integer iPNode(arrNode.Lower() + 1), iENode(1);
               for (; iPNode <= arrNode.Upper(); iPNode++)
               {
@@ -338,27 +397,33 @@ void NIS_Surface::Init (const TopoDS_Shape& theShape,
                   aLen--;
                 } else {
                   pLast = &tabNode(aN);
-                  pEdge[++iENode] = aN + nNodes1;
+                  pEdge[iENode++] = aN + nNodes1;
                 }
               }
               // Do not save very short polygons
               if (aLen > 1) {
-                pEdge[0] = aLen;
-                mypEdges[myNEdges++] = pEdge;
+                if (nbE > 1)
+                  myEdges.SetArray(nEdges++, aLen, pEdge, myAlloc.operator->());
+                else
+                  myFreeEdges.SetArray(nFEdges++, aLen, pEdge,
+                                       myAlloc.operator->());
               }
+              myAlloc->Free(pEdge);
             }
           }
         }
         nNodes += tabNode.Length();
       }
     }
+    myEdges.SetRealNumbersOfArrays(nEdges);
+    myFreeEdges.SetRealNumbersOfArrays(nFEdges);
     myNTriangles = nTriangles;
   }
   if (GetDrawer().IsNull() == Standard_False)
   {
     setDrawerUpdate();
   }
-  setIsUpdateBox(Standard_True);  
+  setIsUpdateBox(Standard_True);
 }
 
 //=======================================================================
@@ -387,13 +452,10 @@ void NIS_Surface::Clear ()
     myNTriangles = 0;
     myAlloc->Free(mypTriangles);
   }
-  if (mypEdges) {
-    for (Standard_Integer i = 0; i < myNEdges; i++) {
-      myAlloc->Free(mypEdges[i]);
-    }
-    myNEdges = 0;
-    myAlloc->Free(mypEdges);
-  }
+
+  myEdges.Clear(myAlloc.operator->());
+  myFreeEdges.Clear(myAlloc.operator->());
+  
   if (GetDrawer().IsNull() == Standard_False) {
     GetDrawer()->SetUpdated(NIS_Drawer::Draw_Normal,
                             NIS_Drawer::Draw_Top,
@@ -419,22 +481,6 @@ NIS_Drawer * NIS_Surface::DefaultDrawer (NIS_Drawer * theDrawer) const
 }
 
 //=======================================================================
-//function : SetColor
-//purpose  : Set the normal color for presentation.
-//=======================================================================
-
-void NIS_Surface::SetColor (const Quantity_Color&  theColor)
-{
-  const Handle(NIS_SurfaceDrawer) aDrawer =
-    static_cast<NIS_SurfaceDrawer *>(DefaultDrawer(0L));
-  aDrawer->Assign (GetDrawer());
-  aDrawer->myColor[NIS_Drawer::Draw_Normal] = theColor;
-  aDrawer->myColor[NIS_Drawer::Draw_Top] = theColor;
-  aDrawer->myColor[NIS_Drawer::Draw_Transparent] = theColor;
-  SetDrawer (aDrawer);
-}
-
-//=======================================================================
 //function : SetBackColor
 //purpose  : Set the normal color for presentation of back side of triangles.
 //=======================================================================
@@ -445,6 +491,20 @@ void NIS_Surface::SetBackColor (const Quantity_Color&  theColor)
     static_cast<NIS_SurfaceDrawer *>(DefaultDrawer(0L));
   aDrawer->Assign (GetDrawer());
   aDrawer->myBackColor = theColor;
+  SetDrawer (aDrawer);
+}
+
+//=======================================================================
+//function : SetSpecularity
+//purpose  : 
+//=======================================================================
+
+void NIS_Surface::SetSpecularity (const Standard_Real  theValue)
+{
+  const Handle(NIS_SurfaceDrawer) aDrawer =
+    static_cast<NIS_SurfaceDrawer *>(DefaultDrawer(0L));
+  aDrawer->Assign (GetDrawer());
+  aDrawer->SetSpecularity(theValue);
   SetDrawer (aDrawer);
 }
 
@@ -463,6 +523,21 @@ void NIS_Surface::SetPolygonOffset (const Standard_Real theValue)
 }
 
 //=======================================================================
+//function : SetTransformation
+//purpose  : 
+//=======================================================================
+
+void NIS_Surface::SetTransformation (const gp_Trsf& theTrsf)
+{
+  const Handle(NIS_SurfaceDrawer) aDrawer =
+    static_cast<NIS_SurfaceDrawer *>(DefaultDrawer(0L));
+  aDrawer->Assign (GetDrawer());
+  aDrawer->SetTransformation(theTrsf);
+  SetDrawer (aDrawer);
+  setIsUpdateBox(Standard_True);
+}
+
+//=======================================================================
 //function : SetDisplayMode
 //purpose  : Set the display mode: Shading or Wireframe.
 //=======================================================================
@@ -473,12 +548,28 @@ void  NIS_Surface::SetDisplayMode (const NIS_Surface::DisplayMode theMode)
   if (myIsWireframe) {
     if (theMode != Wireframe) {
       myIsWireframe = Standard_False;
+      myIsShowEdges = (theMode != PureShading);
       isUpdate = Standard_True;
     }
   } else {
     if (theMode == Wireframe) {
       myIsWireframe = Standard_True;
+      myIsShowEdges = Standard_True;
       isUpdate = Standard_True;
+    }
+    else {
+      if (myIsShowEdges) {
+        if (theMode == PureShading) {
+          myIsShowEdges = Standard_False;
+          isUpdate = Standard_True;
+        }
+      }
+      else {
+        if (theMode != PureShading) {
+          myIsShowEdges = Standard_True;
+          isUpdate = Standard_True;
+        }
+      }
     }
   }
   if (isUpdate && !GetDrawer().IsNull()) {
@@ -486,7 +577,8 @@ void  NIS_Surface::SetDisplayMode (const NIS_Surface::DisplayMode theMode)
       static_cast<NIS_SurfaceDrawer *>(DefaultDrawer(0L));
     aDrawer->Assign (GetDrawer());
     aDrawer->myIsWireframe = myIsWireframe;
-    SetDrawer(aDrawer);
+    aDrawer->myIsShowEdges = myIsShowEdges;
+    SetDrawer(aDrawer);    
   }
 }
 
@@ -497,7 +589,86 @@ void  NIS_Surface::SetDisplayMode (const NIS_Surface::DisplayMode theMode)
 
 NIS_Surface::DisplayMode NIS_Surface::GetDisplayMode () const
 {
-  return myIsWireframe ? Wireframe : Shading;
+  return myIsWireframe ? Wireframe : (myIsShowEdges ? Shading : PureShading);
+}
+
+//=======================================================================
+//function : SetHilightDisplayMode
+//purpose  : Set the hilight display mode: Shading or Wireframe.
+//=======================================================================
+
+void  NIS_Surface::SetHilightDisplayMode(const NIS_Surface::DisplayMode theMode)
+{
+  Standard_Boolean isUpdate = Standard_False;
+  if (myIsWireframe == Standard_True) 
+  {
+    if (myHilightIsWireframe) 
+    {
+      myHilightIsWireframe = Standard_False;
+      isUpdate = Standard_True;
+    }
+  } 
+  else 
+  {
+    if (myHilightIsWireframe) {
+      if (theMode != Wireframe) {
+        myHilightIsWireframe = Standard_False;
+        isUpdate = Standard_True;
+      }
+    } 
+    else {
+      if (theMode == Wireframe) {
+        myHilightIsWireframe = Standard_True;
+        isUpdate = Standard_True;
+      }
+    }
+  }
+  if (isUpdate) {
+    const Handle(NIS_Drawer)& aCurrDrawer = GetDrawer();
+    if (aCurrDrawer.IsNull() == Standard_False) {
+      const Handle(NIS_SurfaceDrawer) aDrawer =
+        static_cast<NIS_SurfaceDrawer *>(DefaultDrawer(0L));
+      aDrawer->Assign (GetDrawer());
+      aDrawer->myHilightIsWireframe = myHilightIsWireframe;
+      SetDrawer(aDrawer);
+    }
+  }
+}
+
+//=======================================================================
+//function : GetHilightDisplayMode
+//purpose  : Query the current hilight display mode: Shading or Wireframe.
+//=======================================================================
+
+NIS_Surface::DisplayMode NIS_Surface::GetHilightDisplayMode () const
+{
+  return myHilightIsWireframe ? Wireframe : Shading;
+}
+
+//=======================================================================
+//function : ShowFreeBoundary 
+//purpose  : Display free boundary of the surface object with the
+//           specified color
+//=======================================================================
+void NIS_Surface::ShowFreeBoundary (const Quantity_Color& theColor)
+{
+  myIsShowFreeBoundary = Standard_True;
+  const Handle(NIS_SurfaceDrawer) aDrawer =
+    static_cast<NIS_SurfaceDrawer *>(DefaultDrawer(0L));
+  aDrawer->Assign (GetDrawer());
+  aDrawer->myFreeEdgeColor = theColor;
+  SetDrawer (aDrawer);
+//   setDrawerUpdate(); - already called in SetDrawer()
+}
+
+//=======================================================================
+//function : HideFreeBoundary
+//purpose  : Hides special precentation of free boundaries
+//=======================================================================
+void NIS_Surface::HideFreeBoundary ()
+{
+  myIsShowFreeBoundary = Standard_False;
+  setDrawerUpdate();
 }
 
 //=======================================================================
@@ -532,19 +703,34 @@ void NIS_Surface::Clone (const Handle_NCollection_BaseAllocator& theAlloc,
     aNewObj->mypTriangles = (Standard_Integer *)theAlloc->Allocate(nBytes);
     memcpy(aNewObj->mypTriangles, mypTriangles, nBytes);
   }
-  aNewObj->myNEdges = myNEdges;
-  if (myNEdges > 0) {
-    aNewObj->mypEdges = static_cast<Standard_Integer **>
-      (theAlloc->Allocate(sizeof(Standard_Integer *) * myNEdges));
-    for (Standard_Integer i = 0; i < myNEdges; i++) {
-      const Standard_Integer * pEdge = mypEdges[i];
-      const Standard_Size nBytes = sizeof(Standard_Integer) * (pEdge[0] + 1);
-      aNewObj->mypEdges[i] =
-        static_cast<Standard_Integer *> (theAlloc->Allocate(nBytes));
-      memcpy(aNewObj->mypEdges[i], pEdge, nBytes);
-    }
-  }
+
+  myEdges.Clone(theAlloc, aNewObj->myEdges);
+  myFreeEdges.Clone(theAlloc, aNewObj->myFreeEdges);
+  
   aNewObj->myIsWireframe = myIsWireframe;
+  aNewObj->myIsShowFreeBoundary = myIsShowFreeBoundary;
+  aNewObj->myIsShowEdges = myIsShowEdges;
+}
+
+//=======================================================================
+//function : NEdgeNodeInList 
+//purpose  : 
+//=======================================================================
+
+Standard_Integer NIS_Surface::NEdgeNodeInList (const Standard_Integer ind) const
+{
+  return myEdges.NArrayIndexes(ind);  
+}
+
+//=======================================================================
+//function : NFreeEdgeNodeInList 
+//purpose  : 
+//=======================================================================
+
+Standard_Integer NIS_Surface::NFreeEdgeNodeInList
+                                        (const Standard_Integer ind) const
+{
+  return myFreeEdges.NArrayIndexes(ind);  
 }
 
 //=======================================================================
@@ -556,10 +742,22 @@ Standard_Real NIS_Surface::Intersect (const gp_Ax1&       theAxis,
                                       const Standard_Real theOver) const
 {
   Standard_Real aResult (RealLast());
-  Standard_Real start[3], dir[3];
-  theAxis.Location().Coord(start[0], start[1], start[2]);
-  theAxis.Direction().Coord(dir[0], dir[1], dir[2]);
-  double anInter;
+  Standard_Real start[3], dir[3], anInter;
+
+  // Obtain the current Transformation from the Drawer
+  const Handle(NIS_SurfaceDrawer)& aDrawer =
+    static_cast<const Handle(NIS_SurfaceDrawer)&> (GetDrawer());
+
+  if (aDrawer.IsNull()) {
+    theAxis.Location().Coord(start[0], start[1], start[2]);
+    theAxis.Direction().Coord(dir[0], dir[1], dir[2]);
+  } else {
+    gp_Trsf aTrsf = aDrawer->GetTransformation();
+    aTrsf.Invert();
+    const gp_Ax1 anAxis = theAxis.Transformed(aTrsf);
+    anAxis.Location().Coord(start[0], start[1], start[2]);
+    anAxis.Direction().Coord(dir[0], dir[1], dir[2]);
+  }
 
   if (myIsWireframe == Standard_False)
     for (Standard_Integer i = 0; i < myNTriangles; i++) {
@@ -573,24 +771,97 @@ Standard_Real NIS_Surface::Intersect (const gp_Ax1&       theAxis,
           aResult = anInter;
     }
   else {
-    const Standard_Real anOver2 = theOver*theOver;
-    for (Standard_Integer iEdge = 0; iEdge < myNEdges; iEdge++) {
-      const Standard_Integer * anEdge = mypEdges[iEdge];
-      const Standard_Integer nNodes = anEdge[0];
-      for (Standard_Integer i = 1; i < nNodes; i++) {
-        // Node index is incremented for the head of polygon indice array
-        if (NIS_Triangulated::seg_line_intersect (theAxis.Location().XYZ(),
-                                                  theAxis.Direction().XYZ(),
-                                                  anOver2,
-                                                  &mypNodes[3*anEdge[i+0]],
-                                                  &mypNodes[3*anEdge[i+1]],
-                                                  &anInter))
-          if (anInter < aResult)
-            aResult = anInter;
-      }
-    }
+    anInter = intersectEdges(myEdges, theAxis, theOver);
+    if (anInter < aResult)
+      aResult = anInter;    
+    anInter = intersectEdges(myFreeEdges, theAxis, theOver);      
+    if (anInter < aResult)
+      aResult = anInter;    
   }
 
+  return aResult;
+}
+
+//=======================================================================
+//function : Normal
+//purpose  : 
+//=======================================================================
+
+Standard_Boolean NIS_Surface::Intersect (const gp_Ax1& theAxis, gp_Vec& theNormal) const
+{
+  Standard_Real aResult (RealLast());
+  Standard_Real start[3], dir[3], anInter;
+  Standard_Integer anIndex(-1);
+
+  // Obtain the current Transformation from the Drawer
+  const Handle(NIS_SurfaceDrawer)& aDrawer =
+    static_cast<const Handle(NIS_SurfaceDrawer)&> (GetDrawer());
+
+  if (aDrawer.IsNull()) {
+    theAxis.Location().Coord(start[0], start[1], start[2]);
+    theAxis.Direction().Coord(dir[0], dir[1], dir[2]);
+  } else {
+    gp_Trsf aTrsf = aDrawer->GetTransformation();
+    aTrsf.Invert();
+    const gp_Ax1 anAxis = theAxis.Transformed(aTrsf);
+    anAxis.Location().Coord(start[0], start[1], start[2]);
+    anAxis.Direction().Coord(dir[0], dir[1], dir[2]);
+  }
+
+  if (myIsWireframe == Standard_False)
+    for (Standard_Integer i = 0; i < myNTriangles; i++) {
+      const Standard_Integer * pTri = &mypTriangles[3*i];
+      if (NIS_Triangulated::tri_line_intersect (start, dir,
+                                                &mypNodes[3*pTri[0]],
+                                                &mypNodes[3*pTri[1]],
+                                                &mypNodes[3*pTri[2]],
+                                                &anInter))
+        if (anInter < aResult) {
+          aResult = anInter;
+          anIndex = i;
+        }
+    }
+
+  if (anIndex < 0) 
+    return Standard_False;
+
+  const Standard_Integer * pTri = &mypTriangles[3*anIndex];
+  gp_XYZ aPnt0(mypNodes[3*pTri[0]+0], mypNodes[3*pTri[0]+1], mypNodes[3*pTri[0]+2]);
+  gp_XYZ aPnt1(mypNodes[3*pTri[1]+0], mypNodes[3*pTri[1]+1], mypNodes[3*pTri[1]+2]);
+  gp_XYZ aPnt2(mypNodes[3*pTri[2]+0], mypNodes[3*pTri[2]+1], mypNodes[3*pTri[2]+2]);
+  theNormal.SetXYZ(((aPnt1 - aPnt0) ^ (aPnt2 - aPnt0)));
+
+  return Standard_True;
+}
+
+//=======================================================================
+//function : intersectEdges
+//purpose  : 
+//=======================================================================
+
+Standard_Real NIS_Surface::intersectEdges(const NIS_IndexLists&  theEdges, 
+                                          const gp_Ax1&       theAxis,
+                                          const Standard_Real theOver) const
+{
+  const Standard_Real anOver2 = theOver*theOver;
+  double anInter;
+  Standard_Real aResult (RealLast());
+  for (Standard_Integer iEdge = 0; iEdge < theEdges.NArrays(); iEdge++) {     
+    const Standard_Integer * anEdge =
+      static_cast <Standard_Integer *>(theEdges.ArrayIndexes(iEdge));
+    const Standard_Integer nNodes = theEdges.NArrayIndexes(iEdge);
+    for (Standard_Integer i = 0; i < nNodes-1; i++) {
+      // Node index is incremented for the head of polygon indice array
+      if (NIS_Triangulated::seg_line_intersect (theAxis.Location().XYZ(),
+                                                theAxis.Direction().XYZ(),
+                                                anOver2,
+                                                &mypNodes[3*anEdge[i+0]],
+                                                &mypNodes[3*anEdge[i+1]],
+                                                &anInter))
+      if (anInter < aResult)
+        aResult = anInter;
+    }
+  }
   return aResult;
 }
 
@@ -604,6 +875,14 @@ Standard_Boolean NIS_Surface::Intersect (const Bnd_B3f&         theBox,
                                          const Standard_Boolean isFullIn) const
 {
   Standard_Boolean aResult (isFullIn);
+  gp_Trsf aTrsf = theTrf;
+
+  // Obtain the current Transformation from the Drawer
+  const Handle(NIS_SurfaceDrawer)& aDrawer =
+    static_cast<const Handle(NIS_SurfaceDrawer)&> (GetDrawer());
+
+  if (aDrawer.IsNull() == Standard_False)
+    aTrsf *= aDrawer->GetTransformation();
 
   if (myIsWireframe == Standard_False) {
     if (myNTriangles > 0) {
@@ -611,7 +890,7 @@ Standard_Boolean NIS_Surface::Intersect (const Bnd_B3f&         theBox,
         gp_XYZ aPnt (static_cast<Standard_Real>(mypNodes[iNode+0]),
                      static_cast<Standard_Real>(mypNodes[iNode+1]),
                      static_cast<Standard_Real>(mypNodes[iNode+2]));
-        theTrf.Transforms(aPnt);
+        aTrsf.Transforms(aPnt);
         if (theBox.IsOut (aPnt) == isFullIn) {
           aResult = !isFullIn;
           break;
@@ -619,31 +898,48 @@ Standard_Boolean NIS_Surface::Intersect (const Bnd_B3f&         theBox,
       }
     }
   } else {
-    for (Standard_Integer iEdge = 0; iEdge < myNEdges; iEdge++) {
-      const Standard_Integer * anEdge = mypEdges[iEdge];
-      const Standard_Integer nNodes = anEdge[0];
-      for (Standard_Integer i = 1; i < nNodes; i++) {
-        // index is incremented by 1 for the head number in the array
-        gp_Pnt aPnt[2] = {
-          gp_Pnt(static_cast<Standard_Real>(mypNodes[3*anEdge[i+0]+0]),
-                 static_cast<Standard_Real>(mypNodes[3*anEdge[i+0]+1]),
-                 static_cast<Standard_Real>(mypNodes[3*anEdge[i+0]+2])),
-          gp_Pnt(static_cast<Standard_Real>(mypNodes[3*anEdge[i+1]+0]),
-                 static_cast<Standard_Real>(mypNodes[3*anEdge[i+1]+1]),
-                 static_cast<Standard_Real>(mypNodes[3*anEdge[i+1]+2]))
-        };
-        aPnt[0].Transform(theTrf);
-        aPnt[1].Transform(theTrf);
-        if (isFullIn) {
-          if (NIS_Triangulated::seg_box_included (theBox, aPnt) == 0) {
-            aResult = Standard_False;
-            break;
-          }
-        } else {
-          if (NIS_Triangulated::seg_box_intersect (theBox, aPnt)) {
-            aResult = Standard_True;
-            break;
-          }
+    aResult = intersectEdges(myEdges, aTrsf, theBox, isFullIn);
+    if(!aResult)
+      aResult = intersectEdges(myFreeEdges, aTrsf, theBox, isFullIn);    
+  }
+  return aResult;
+}
+
+//=======================================================================
+//function : intersectEdges
+//purpose  : 
+//=======================================================================
+
+Standard_Boolean NIS_Surface::intersectEdges(const NIS_IndexLists&  theEdges, 
+                                             const gp_Trsf&         theTrf,
+                                             const Bnd_B3f&         theBox,
+                                             const Standard_Boolean isFullIn) const
+{
+  Standard_Boolean aResult (isFullIn);
+  for (Standard_Integer iEdge = 0; iEdge < theEdges.NArrays(); iEdge++) {     
+    const Standard_Integer * anEdge =
+      static_cast <Standard_Integer *>(theEdges.ArrayIndexes(iEdge));
+    const Standard_Integer nNodes = theEdges.NArrayIndexes(iEdge);
+    for (Standard_Integer i = 0; i < nNodes-1; i++) {        
+      gp_Pnt aPnt[2] = {
+        gp_Pnt(static_cast<Standard_Real>(mypNodes[3*anEdge[i+0]+0]),
+               static_cast<Standard_Real>(mypNodes[3*anEdge[i+0]+1]),
+               static_cast<Standard_Real>(mypNodes[3*anEdge[i+0]+2])),
+        gp_Pnt(static_cast<Standard_Real>(mypNodes[3*anEdge[i+1]+0]),
+               static_cast<Standard_Real>(mypNodes[3*anEdge[i+1]+1]),
+               static_cast<Standard_Real>(mypNodes[3*anEdge[i+1]+2]))
+      };
+      aPnt[0].Transform(theTrf);
+      aPnt[1].Transform(theTrf);
+      if (isFullIn) {
+        if (NIS_Triangulated::seg_box_included (theBox, aPnt) == 0) {
+          aResult = Standard_False;
+          break;
+        }
+      } else {
+        if (NIS_Triangulated::seg_box_intersect (theBox, aPnt)) {
+          aResult = Standard_True;
+          break;
         }
       }
     }
@@ -662,6 +958,14 @@ Standard_Boolean NIS_Surface::Intersect
                      const Standard_Boolean         isFullIn) const
 {
   Standard_Boolean aResult (isFullIn);
+  gp_Trsf aTrsf = theTrf;
+
+  // Obtain the current Transformation from the Drawer
+  const Handle(NIS_SurfaceDrawer)& aDrawer =
+    static_cast<const Handle(NIS_SurfaceDrawer)&> (GetDrawer());
+
+  if (aDrawer.IsNull() == Standard_False)
+    aTrsf *= aDrawer->GetTransformation();
 
   if (myIsWireframe == Standard_False) {
     if (myNTriangles > 0) {
@@ -669,7 +973,7 @@ Standard_Boolean NIS_Surface::Intersect
         gp_XYZ aPnt (static_cast<Standard_Real>(mypNodes[iNode+0]),
                      static_cast<Standard_Real>(mypNodes[iNode+1]),
                      static_cast<Standard_Real>(mypNodes[iNode+2]));
-        theTrf.Transforms(aPnt);
+        aTrsf.Transforms(aPnt);
         gp_XY aP2d(aPnt.X(), aPnt.Y());
 
         if (!NIS_Triangulated::IsIn(thePolygon, aP2d)) {
@@ -686,33 +990,52 @@ Standard_Boolean NIS_Surface::Intersect
       }
     }
   } else {
-    for (Standard_Integer iEdge = 0; iEdge < myNEdges; iEdge++) {
-      const Standard_Integer * anEdge = mypEdges[iEdge];
-      const Standard_Integer nNodes = anEdge[0];
-      for (Standard_Integer i = 1; i < nNodes; i++) {
-        // index is incremented by 1 for the head number in the array
-        gp_Pnt aPnt[2] = {
-          gp_Pnt(static_cast<Standard_Real>(mypNodes[3*anEdge[i+0]+0]),
-                 static_cast<Standard_Real>(mypNodes[3*anEdge[i+0]+1]),
-                 static_cast<Standard_Real>(mypNodes[3*anEdge[i+0]+2])),
-          gp_Pnt(static_cast<Standard_Real>(mypNodes[3*anEdge[i+1]+0]),
-                 static_cast<Standard_Real>(mypNodes[3*anEdge[i+1]+1]),
-                 static_cast<Standard_Real>(mypNodes[3*anEdge[i+1]+2]))
-        };
-        aPnt[0].Transform(theTrf);
-        aPnt[1].Transform(theTrf);
-        const gp_XY aP2d[2] = { gp_XY(aPnt[0].X(), aPnt[0].Y()),
-                                gp_XY(aPnt[1].X(), aPnt[1].Y()) };
-        if (isFullIn) {
-          if (NIS_Triangulated::seg_polygon_included (thePolygon, aP2d) == 0) {
-            aResult = Standard_False;
-            break;
-          }
-        } else {
-          if (NIS_Triangulated::seg_polygon_intersect (thePolygon, aP2d)) {
-            aResult = Standard_True;
-            break;
-          }
+    aResult = intersectEdges(myEdges, aTrsf, thePolygon, isFullIn);
+    if(!aResult)
+      aResult = intersectEdges(myFreeEdges, aTrsf, thePolygon, isFullIn);    
+  }
+  return aResult;
+}
+
+//=======================================================================
+//function : intersectEdges
+//purpose  : 
+//=======================================================================
+
+Standard_Boolean NIS_Surface::intersectEdges
+                                (const NIS_IndexLists&          theEdges, 
+                                 const gp_Trsf&                 theTrf,
+                                 const NCollection_List<gp_XY>& thePolygon,
+                                 const Standard_Boolean         isFullIn) const
+{
+  Standard_Boolean aResult (isFullIn);
+  for (Standard_Integer iEdge = 0; iEdge < theEdges.NArrays(); iEdge++)
+  {     
+    const Standard_Integer * anEdge =
+      static_cast <Standard_Integer *>(theEdges.ArrayIndexes(iEdge));
+    const Standard_Integer nNodes = theEdges.NArrayIndexes(iEdge);
+    for (Standard_Integer i = 0; i < nNodes-1; i++) {                  
+      gp_Pnt aPnt[2] = {
+        gp_Pnt(static_cast<Standard_Real>(mypNodes[3*anEdge[i+0]+0]),
+               static_cast<Standard_Real>(mypNodes[3*anEdge[i+0]+1]),
+               static_cast<Standard_Real>(mypNodes[3*anEdge[i+0]+2])),
+        gp_Pnt(static_cast<Standard_Real>(mypNodes[3*anEdge[i+1]+0]),
+               static_cast<Standard_Real>(mypNodes[3*anEdge[i+1]+1]),
+               static_cast<Standard_Real>(mypNodes[3*anEdge[i+1]+2]))
+      };
+      aPnt[0].Transform(theTrf);
+      aPnt[1].Transform(theTrf);
+      const gp_XY aP2d[2] = { gp_XY(aPnt[0].X(), aPnt[0].Y()),
+                              gp_XY(aPnt[1].X(), aPnt[1].Y()) };
+      if (isFullIn) {
+        if (NIS_Triangulated::seg_polygon_included (thePolygon, aP2d) == 0) {
+          aResult = Standard_False;
+          break;
+        }
+      } else {
+        if (NIS_Triangulated::seg_polygon_intersect (thePolygon, aP2d)) {
+          aResult = Standard_True;
+          break;
         }
       }
     }

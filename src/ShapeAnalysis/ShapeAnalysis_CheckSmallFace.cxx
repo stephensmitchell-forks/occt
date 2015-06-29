@@ -345,6 +345,8 @@ static Standard_Boolean MinMaxSmall
       continue; // ignore seam edge
     TopoDS_Vertex V1,V2;
     TopExp::Vertices (E,V1,V2);
+    if (V1.IsNull() || V2.IsNull())
+      continue;
     gp_Pnt p1,p2;
     p1 = BRep_Tool::Pnt (V1);
     p2 = BRep_Tool::Pnt (V2);

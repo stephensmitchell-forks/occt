@@ -61,6 +61,8 @@
 #include <BRep_TEdge.hxx>
 #include <BRep_GCurve.hxx>
 #include <BRep_ListIteratorOfListOfCurveRepresentation.hxx>
+#include <TopExp_Explorer.hxx>
+#include <Geom2d_Line.hxx>
 
 static void GeomLib_ChangeUBounds(Handle(Geom_BSplineSurface)& aSurface,
                   const Standard_Real newU1,
@@ -152,7 +154,39 @@ Standard_Boolean BRepTools_NurbsConvertModification::NewSurface
   {
     Standard_Real Up = S->UPeriod();
     if (U2 - U1 > Up)
+    {
+      //Try to define "exact" U1 according to pcurve of seem edge
+      TopExp_Explorer anExp(F, TopAbs_EDGE);
+      for(; anExp.More(); anExp.Next())
+      {
+        const TopoDS_Edge& anE = TopoDS::Edge(anExp.Current());
+        if(BRep_Tool::IsClosed(anE, F))
+        {
+          Standard_Real f, l;
+          Handle(Geom2d_Curve) aC2d = BRep_Tool::CurveOnSurface(anE, F, f, l);
+          Handle(Standard_Type) aType = aC2d->DynamicType();
+          if(aType == STANDARD_TYPE(Geom2d_TrimmedCurve))
+          {
+            Handle(Geom2d_TrimmedCurve) aC2dT = Handle(Geom2d_TrimmedCurve)::DownCast(aC2d);
+            aC2d = aC2dT->BasisCurve();
+            aType = aC2d->DynamicType();
+          }
+          if(aType == STANDARD_TYPE(Geom2d_Line))
+          {
+            Handle(Geom2d_Line) aLin = Handle(Geom2d_Line)::DownCast(aC2d);
+            gp_XY anYDir(0., 1.);
+            gp_XY aD = aLin->Direction().XY();
+            if(aD.IsEqual(anYDir, Precision::Confusion()) ||
+               aD.IsEqual(-anYDir, Precision::Confusion())  )
+            {
+              U1 = aLin->Location().X();
+              break;
+            }
+          }
+        }
+      }
       U2 = U1 + Up;
+    }
   }
   if (IsVp)
   {
@@ -494,7 +528,7 @@ Standard_Boolean BRepTools_NurbsConvertModification::NewCurve2d
       TopoDS_Edge ERevers = E;
       ERevers.Reverse();
       C2dBis = BRep_Tool::CurveOnSurface(ERevers,F,f2dBis,l2dBis);
-      Handle(Standard_Type) TheTypeC2dBis = C2dBis->DynamicType();
+      //Handle(Standard_Type) TheTypeC2dBis = C2dBis->DynamicType();
       C2dBis = new Geom2d_TrimmedCurve(C2dBis,f2dBis, l2dBis);
       Geom2dAdaptor_Curve   G2dACBis(C2dBis, f2dBis, l2dBis); 
       Handle(Geom2dAdaptor_HCurve) G2dAHCBis = new Geom2dAdaptor_HCurve(G2dACBis);
@@ -568,7 +602,9 @@ Standard_Boolean BRepTools_NurbsConvertModification::NewCurve2d
       }
       else {
         Curve2d = Geom2dConvert::CurveToBSplineCurve(C2d);
-        mylcu.Append(C2dBis);
+        //mylcu.Append(C2dBis);
+        Handle(Geom2d_Curve) aC2dBisBspl = Geom2dConvert::CurveToBSplineCurve(C2dBis);
+        mylcu.Append(aC2dBisBspl);
         return Standard_True;
       }
     }

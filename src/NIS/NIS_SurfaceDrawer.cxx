@@ -20,10 +20,10 @@
 
 #include <OpenGl_GlCore11.hxx>
 
-static void setColor(GLenum               theFace,
-                     Quantity_Parameter * theAmbient,
-                     const Standard_Real  theSpecularity,
-                     GLint                theShininess);
+static void setColor(Quantity_Parameter *     theAmbientFront,
+                     Quantity_Parameter *     theAmbientBack,
+                     const Standard_ShortReal theSpecularity,
+                     GLint                    theShininess);
 
 IMPLEMENT_STANDARD_HANDLE  (NIS_SurfaceDrawer, NIS_Drawer)
 IMPLEMENT_STANDARD_RTTIEXT (NIS_SurfaceDrawer, NIS_Drawer)
@@ -37,27 +37,17 @@ NIS_SurfaceDrawer::NIS_SurfaceDrawer
                                 (const Quantity_Color   &theNormal,
                                  const Quantity_Color   &theHilight,
                                  const Quantity_Color   &theDynHilight)
-  : myBackColor     (theNormal),
-    myPolygonOffset (0.f),
-    myIsWireframe   (Standard_False)
+  : NIS_Drawer(theHilight, theDynHilight),
+    myBackColor         (theNormal),
+    myFreeEdgeColor     (theNormal),
+    mySpecularity       (0.58f),
+    myPolygonOffset     (0.f),
+    myIsWireframe       (Standard_False),
+    myHilightIsWireframe(Standard_False),
+    myIsShowEdges       (Standard_True)
 {
-  myColor[Draw_Normal]       = theNormal;
-  myColor[Draw_Top]          = theNormal;
-  myColor[Draw_Transparent]  = theNormal;
-  myColor[Draw_Hilighted]    = theHilight;
-  myColor[Draw_DynHilighted] = theDynHilight;
-}
-
-//=======================================================================
-//function : SetColor
-//purpose  :
-//=======================================================================
-
-void NIS_SurfaceDrawer::SetColor(const Quantity_Color &theColor)
-{
-  myColor[Draw_Normal]      = theColor;
-  myColor[Draw_Top]         = theColor;
-  myColor[Draw_Transparent] = theColor;
+  SetColor(Draw_Normal, theNormal);
+  myObjPerDrawer = 4;
 }
 
 //=======================================================================
@@ -71,14 +61,14 @@ void NIS_SurfaceDrawer::Assign (const Handle_NIS_Drawer& theOther)
     NIS_Drawer::Assign (theOther);
     const Handle(NIS_SurfaceDrawer)& anOther =
       static_cast <const Handle(NIS_SurfaceDrawer)&> (theOther);
-    myColor[Draw_Normal]       = anOther->myColor[Draw_Normal];
-    myColor[Draw_Top]          = anOther->myColor[Draw_Top];
-    myColor[Draw_Transparent]  = anOther->myColor[Draw_Transparent];
-    myColor[Draw_Hilighted]    = anOther->myColor[Draw_Hilighted];
-    myColor[Draw_DynHilighted] = anOther->myColor[Draw_DynHilighted];
     myBackColor                = anOther->myBackColor;
+    myFreeEdgeColor            = anOther->myFreeEdgeColor;
+    mySpecularity              = anOther->mySpecularity;
     myPolygonOffset            = anOther->myPolygonOffset;
-    myIsWireframe              = anOther->myIsWireframe;
+    myIsWireframe              = anOther->myIsWireframe;    
+    myHilightIsWireframe       = anOther->myHilightIsWireframe;
+    myIsShowEdges              = anOther->myIsShowEdges;    
+    myTrsf                     = anOther->myTrsf;
   }
 }
 
@@ -90,20 +80,19 @@ void NIS_SurfaceDrawer::Assign (const Handle_NIS_Drawer& theOther)
 Standard_Boolean NIS_SurfaceDrawer::IsEqual
                                 (const Handle_NIS_Drawer& theOther)const
 {
-  static const Standard_Real       anEpsilon2 (1e-7);
   Standard_Boolean                 aResult (Standard_False);
   const Handle(NIS_SurfaceDrawer) anOther =
                         Handle(NIS_SurfaceDrawer)::DownCast (theOther);
   if (NIS_Drawer::IsEqual(theOther))
-    aResult = (anOther->myColor[Draw_Normal]
-               .SquareDistance (myColor[Draw_Normal]) < anEpsilon2 &&
-               anOther->myColor[Draw_Hilighted]
-               .SquareDistance (myColor[Draw_Hilighted]) < anEpsilon2 &&
-               anOther->myColor[Draw_DynHilighted]
-               .SquareDistance (myColor[Draw_DynHilighted]) < anEpsilon2 &&
-               anOther->myBackColor.SquareDistance(myBackColor) < anEpsilon2 &&
+    aResult = (areEqual(anOther->myBackColor, myBackColor) &&
+               areEqual(anOther->myFreeEdgeColor, myFreeEdgeColor) &&
+               fabs(anOther->mySpecularity - mySpecularity) < 0.01 &&
                fabs(anOther->myPolygonOffset - myPolygonOffset) < 0.999 &&
-               myIsWireframe == anOther->myIsWireframe);
+               myIsWireframe == anOther->myIsWireframe && 
+               myHilightIsWireframe == anOther->myHilightIsWireframe &&
+               myIsShowEdges == anOther->myIsShowEdges && 
+               fabs(anOther->myTrsf.TranslationPart().SquareModulus() -
+                    myTrsf.TranslationPart().SquareModulus()) < 0.0001);
   if (aResult) {
     // Arbitrary point for test
     gp_XYZ aPnt[2] = {
@@ -112,7 +101,7 @@ Standard_Boolean NIS_SurfaceDrawer::IsEqual
     };
     anOther->myTrsf.Transforms(aPnt[0]);
     myTrsf.Transforms(aPnt[1]);
-    if ((aPnt[0] - aPnt[1]).SquareModulus() > anEpsilon2)
+    if ((aPnt[0] - aPnt[1]).SquareModulus() > 1e-6)
       aResult = Standard_False;
   }
   return aResult;
@@ -152,7 +141,6 @@ void NIS_SurfaceDrawer::BeforeDraw (const DrawType      theType,
                                     const NIS_DrawList&)
 {
   glEnable(GL_LIGHTING);
-  //  glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, 1);
   glEnableClientState (GL_VERTEX_ARRAY);
   if (myIsWireframe == Standard_False) {
     glPolygonMode (GL_FRONT_AND_BACK, GL_FILL);
@@ -160,24 +148,45 @@ void NIS_SurfaceDrawer::BeforeDraw (const DrawType      theType,
     glShadeModel(GL_SMOOTH);
   }
 
-  Quantity_Parameter   aValueCol[4] = {0., 0., 0., 1.};
+  Quantity_Parameter aValueCol[][4] = {
+    {0., 0., 0., 1. - myTransparency},           // front color
+    {0., 0., 0., 1. - myTransparency}            // back color
+  };
+  Quantity_Color aBackColor = myBackColor;
   Quantity_TypeOfColor bidTC (Quantity_TOC_RGB);
   GLfloat aLineWidth (1.f);
   GLfloat anOffset = myPolygonOffset;
-  static const GLfloat gColorN[4]  = {0.f, 0.f, 0.f, 1.f};
+  DrawType aDrawType = theType;
+  myIsBlend = Standard_False;
 
   switch (theType) {
-  case Draw_DynHilighted:
-    aLineWidth = 3.f;
-    myColor[theType].Values (aValueCol[0], aValueCol[1], aValueCol[2], bidTC);
-    setColor(GL_FRONT_AND_BACK, &aValueCol[0], 0.1, 5);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, &gColorN[0]);
-    glLineWidth (aLineWidth);
-    if (myIsWireframe == Standard_False)
-      glPolygonOffset(1.f, -(anOffset + 11.f));
-    return;
   case Draw_Hilighted:
+    if (myHilightIsWireframe)
+    {
+      aDrawType = Draw_Normal;
+      glEnableClientState (GL_NORMAL_ARRAY);
+      if (myTransparency > 0.) {
+        glEnable(GL_BLEND);
+        glEnable(GL_CULL_FACE);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        // don't write triangles into depth test
+        glDepthMask(GL_FALSE);
+        myIsBlend = Standard_True;
+      }      
+  case Draw_DynHilighted:  
+      aLineWidth = 3.f;
+      GetColor(aDrawType).Values(aValueCol[0][0], aValueCol[0][1],
+                                 aValueCol[0][2], bidTC);
+      aBackColor.Values(aValueCol[1][0],aValueCol[1][1],aValueCol[1][2], bidTC);
+      setColor(aValueCol[0], aValueCol[1], mySpecularity, 10);
+
+      glLineWidth (aLineWidth);
+      if (myIsWireframe == Standard_False)
+        glPolygonOffset(1.f, -(anOffset + 11.f));
+      return;
+    }    
     anOffset += 10.f;
+    aBackColor = GetColor(theType);
   case Draw_Normal:
   case Draw_Top:
   case Draw_Transparent:
@@ -185,29 +194,23 @@ void NIS_SurfaceDrawer::BeforeDraw (const DrawType      theType,
       glPolygonOffset(1.f, -anOffset);
       glEnableClientState (GL_NORMAL_ARRAY);
     }
-    myColor[theType].Values (aValueCol[0], aValueCol[1], aValueCol[2], bidTC);
-    aValueCol[3] = 1. - myTransparency;
+    GetColor(theType).Values(aValueCol[0][0], aValueCol[0][1],
+                             aValueCol[0][2], bidTC);
+    aBackColor.Values(aValueCol[1][0], aValueCol[1][1], aValueCol[1][2], bidTC);
     if (theType == Draw_Transparent) {
       glEnable(GL_BLEND);
+      glEnable(GL_CULL_FACE);
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-      // don't write triangles into depth test
-      glDepthMask(GL_FALSE);
+      myIsBlend = Standard_True;
     }
     break;
   default:
     return;
   }
-  //  glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, 0);
-  if (theType == Draw_Hilighted ||
-      myBackColor.SquareDistance(myColor[Draw_Normal]) < 1.e-7)
-  {
-    setColor(GL_FRONT_AND_BACK, &aValueCol[0], 0.5, 10);
-  } else {
-    setColor(GL_FRONT, &aValueCol[0], 0.4, 10);
-    myBackColor.Values (aValueCol[0], aValueCol[1], aValueCol[2], bidTC);
-    setColor(GL_BACK, &aValueCol[0], 0.8, 5);
-  }
-  glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, &gColorN[0]);
+  glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, 0);
+  glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, 1);
+  setColor(aValueCol[0], aValueCol[1], mySpecularity, 10);
+
   glLineWidth (aLineWidth);
 }
 
@@ -221,17 +224,23 @@ void NIS_SurfaceDrawer::AfterDraw (const DrawType      theType,
 {
   glDisable(GL_LIGHTING);
   glDisableClientState(GL_VERTEX_ARRAY);
-  switch (theType) {
-    case Draw_Transparent:
+  if (theType != Draw_DynHilighted)
+  {
+    if (myIsBlend)
+    {
       glDisable(GL_BLEND);
-      glDepthMask(GL_TRUE);
-    case Draw_Hilighted:
-    case Draw_Normal:
-    case Draw_Top:
-      if (myIsWireframe == Standard_False)
-        glDisableClientState(GL_NORMAL_ARRAY);
-    default:;
+      glDisable(GL_CULL_FACE);
+      if (theType == Draw_Hilighted)
+      {
+        glDepthMask (GL_TRUE);
+      }
+    }
+    if (myIsWireframe == Standard_False)
+    {
+      glDisableClientState(GL_NORMAL_ARRAY);      
+    }
   }
+  
   if (myIsWireframe == Standard_False)
     glDisable(GL_POLYGON_OFFSET_FILL);
 }
@@ -258,23 +267,67 @@ void NIS_SurfaceDrawer::Draw (const Handle_NIS_InteractiveObject& theObj,
   // In Highlited mode the shape must be shown as wireframe
   Standard_Boolean isWireframe(myIsWireframe);
   if (isWireframe == Standard_False && theType == Draw_DynHilighted)
-    if (pObject->NEdges() > 0)
+    if (pObject->NEdges() > 0 || pObject->NFreeEdges() > 0)
       isWireframe = Standard_True;
 
-  if (isWireframe)
-  {
-    for (Standard_Integer i = 0; i < pObject->NEdges(); i++) {
-      const GLint * pEdge = static_cast<const GLint *> (pObject->Edge(i));
-      glDrawElements (GL_LINE_STRIP, pEdge[0], GL_UNSIGNED_INT, &pEdge[1]);
-    }
-  } else {
+  if (!isWireframe)
+  {    
     if (pObject->NTriangles()) {
       if (theType != Draw_DynHilighted)
         glNormalPointer (GL_FLOAT, 0, pObject->Normal(0));
+      if (myIsBlend) {
+        // Drawing BACK faces before FRONT ones improves the transparency
+        glCullFace(GL_FRONT);
+        glDrawElements (GL_TRIANGLES, pObject->NTriangles()*3,
+                        GL_UNSIGNED_INT, pObject->Triangle(0));
+        glCullFace(GL_BACK);
+      }
       glDrawElements (GL_TRIANGLES, pObject->NTriangles()*3,
                       GL_UNSIGNED_INT, pObject->Triangle(0));
     }
   }
+  if (myIsShowEdges || isWireframe || pObject->IsShowFreeBounds() ||
+      (theType == Draw_Hilighted && myHilightIsWireframe == Standard_True))
+  {
+    if (pObject->NEdges() > 0 || pObject->NFreeEdges() > 0) {
+      glDisable (GL_LIGHTING);
+      Quantity_Parameter R1, R2, R3;
+      GetColor(theType).Values(R1, R2, R3, Quantity_TOC_RGB);
+      glColor3d (R1, R2, R3);
+      drawEdges(pObject, theType);
+      glEnable (GL_LIGHTING);
+    }
+  }
+}
+
+//=======================================================================
+//function : drawEdges 
+//purpose  : 
+//=======================================================================
+
+void NIS_SurfaceDrawer::drawEdges (const NIS_Surface * pObject,
+                                   const DrawType    theType)
+{
+  // Draw non-free edges
+  for (Standard_Integer i = 0; i < pObject->NEdges(); i++) {        
+    glDrawElements (GL_LINE_STRIP, pObject->NEdgeNodeInList(i),
+                    GL_UNSIGNED_INT, pObject->Edge(i));
+  }
+
+  // Set color to show free edges, if they are requested
+  if (pObject->IsShowFreeBounds() && theType != Draw_DynHilighted &&
+      !(theType == Draw_Hilighted && myHilightIsWireframe == Standard_True))
+  {
+    Quantity_Parameter R1, R2, R3;
+    myFreeEdgeColor.Values(R1, R2, R3, Quantity_TOC_RGB);
+    glColor3d (R1, R2, R3);
+    glLineWidth (2.5f);
+  }
+
+  // Draw free edges
+  for (Standard_Integer i = 0; i < pObject->NFreeEdges(); i++)
+    glDrawElements (GL_LINE_STRIP, pObject->NFreeEdgeNodeInList(i),
+                    GL_UNSIGNED_INT, pObject->FreeEdge(i));
 }
 
 //=======================================================================
@@ -282,24 +335,38 @@ void NIS_SurfaceDrawer::Draw (const Handle_NIS_InteractiveObject& theObj,
 //purpose  :
 //=======================================================================
 
-void setColor(GLenum               theFace,
-              Quantity_Parameter * theAmbient,
-              const Standard_Real  theSpecularity,
-              GLint                theShininess)
+void setColor(Quantity_Parameter *     theAmbientFront,
+              Quantity_Parameter *     theAmbientBack,
+              const Standard_ShortReal theSpecularity,
+              GLint                    theShininess)
 {
-  GLfloat aSpec = static_cast<GLfloat>(theSpecularity);
+  static const GLfloat gColorN[4]  = {0.f, 0.f, 0.f, 1.f};
   GLfloat aValueCol[4] = {
-    GLfloat(theAmbient[0]),
-    GLfloat(theAmbient[1]),
-    GLfloat(theAmbient[2]),
-    GLfloat(theAmbient[3])
+    GLfloat(theAmbientFront[0]),
+    GLfloat(theAmbientFront[1]),
+    GLfloat(theAmbientFront[2]),
+    GLfloat(theAmbientFront[3])
   };
-  glMaterialfv(theFace, GL_AMBIENT_AND_DIFFUSE, &aValueCol[0]);
-  aValueCol[0] = aSpec * (aValueCol[0] - 1.f) + 1.f;
-  aValueCol[1] = aSpec * (aValueCol[1] - 1.f) + 1.f;
-  aValueCol[2] = aSpec * (aValueCol[2] - 1.f) + 1.f;
+  glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, &aValueCol[0]);
+
+  aValueCol[0] = GLfloat(theAmbientBack[0]);
+  aValueCol[1] = GLfloat(theAmbientBack[1]);
+  aValueCol[2] = GLfloat(theAmbientBack[2]);
+  aValueCol[3] = GLfloat(theAmbientBack[3]);
+  glMaterialfv(GL_BACK, GL_AMBIENT_AND_DIFFUSE, &aValueCol[0]);
+
+  const GLfloat aSpec(theSpecularity < 0. ? 0.f :
+                      theSpecularity > 1.f ? 1.f :
+                      theSpecularity);
+  aValueCol[0] = aSpec;
+  aValueCol[1] = aSpec;
+  aValueCol[2] = aSpec;
   aValueCol[3] = 1.f;
-  glMaterialfv(theFace, GL_SPECULAR, &aValueCol[0]);
-  glMateriali(theFace, GL_SHININESS, theShininess);
+  glMaterialfv(GL_FRONT, GL_SPECULAR, &aValueCol[0]);
+  glMateriali(GL_FRONT, GL_SHININESS, theShininess);
+  glMaterialfv(GL_BACK, GL_SPECULAR, &aValueCol[0]);
+  glMateriali(GL_BACK, GL_SHININESS, theShininess);
+  glMaterialfv(GL_FRONT, GL_EMISSION, &gColorN[0]);
+  glMaterialfv(GL_BACK, GL_EMISSION, &gColorN[0]);
 }
 

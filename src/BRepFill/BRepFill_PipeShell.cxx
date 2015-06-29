@@ -686,7 +686,8 @@ void BRepFill_PipeShell::SetForceApproxC1(const Standard_Boolean ForceApproxC1)
   // 1) Preparation
   Prepare();
 
-  if (myStatus != GeomFill_PipeOk) {
+  if (myStatus != GeomFill_PipeOk ||
+      !mySection->NbLaw()) {
     BRep_Builder B;
     TopoDS_Shell Sh;
     B.MakeShell(Sh); 

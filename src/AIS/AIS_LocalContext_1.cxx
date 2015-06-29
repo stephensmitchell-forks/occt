@@ -127,6 +127,7 @@ AIS_StatusOfDetection AIS_LocalContext::MoveTo(const Standard_Integer Xpix,
     //Nullify class members storing information about detected AIS objects.
     myAISCurDetected = 0;
     myAISDetectedSeq.Clear();
+    myAISDetectedShapes.Clear();
 #endif
     myCurDetected = 0;
     myDetectedSeq.Clear();
@@ -142,8 +143,20 @@ AIS_StatusOfDetection AIS_LocalContext::MoveTo(const Standard_Integer Xpix,
 	  myDetectedSeq.Append(i_detect); // normallly they are already arranged in correct order...
 #ifdef IMP160701
         Handle(AIS_InteractiveObject) anObj = Handle(AIS_InteractiveObject)::DownCast(EO->Selectable());
-        if(!Handle(AIS_Shape)::DownCast(anObj).IsNull())
+        Handle(AIS_Shape) aisShape = Handle(AIS_Shape)::DownCast(anObj);
+        if(!aisShape.IsNull())
+        {
           myAISDetectedSeq.Append(anObj);
+          
+          // Memorize detected shape.
+          TopoDS_Shape detectedShape;
+          Handle(StdSelect_BRepOwner) BO = Handle(StdSelect_BRepOwner)::DownCast(EO);
+          if (!BO.IsNull() && BO->HasShape())
+            detectedShape = BO->Shape();
+          else if (!aisShape->Shape().IsNull())
+            detectedShape = aisShape->Shape();
+          myAISDetectedShapes.Append(detectedShape);
+        }
 #endif
       }
     }
@@ -1017,7 +1030,9 @@ void AIS_LocalContext::AddOrRemoveSelected(const Handle(AIS_InteractiveObject)& 
       }
     }
     if(EO.IsNull()) 
+    {
       EO = new SelectMgr_EntityOwner(anIObj);
+    }
 #ifndef OCC138
     EO->State(1);
 #endif
@@ -1596,7 +1611,11 @@ const TopoDS_Shape& AIS_LocalContext::DetectedCurrentShape() const
 {
   static TopoDS_Shape bidsh;
   if (MoreDetected())
-    return Handle(AIS_Shape)::DownCast(myAISDetectedSeq(myAISCurDetected))->Shape();
+  {
+    if (myAISDetectedShapes(myAISCurDetected).IsNull())
+      return Handle(AIS_Shape)::DownCast(myAISDetectedSeq(myAISCurDetected))->Shape();
+    return myAISDetectedShapes(myAISCurDetected);
+  }
   return bidsh;
 }
 

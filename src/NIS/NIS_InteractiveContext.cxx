@@ -24,6 +24,15 @@ IMPLEMENT_STANDARD_HANDLE  (NIS_InteractiveContext, Standard_Transient)
 IMPLEMENT_STANDARD_RTTIEXT (NIS_InteractiveContext, Standard_Transient)
 
 static void markAllDrawersUpdated   (const NCollection_Map<Handle_NIS_Drawer>&);
+static Standard_Boolean CanBeAllocated(const Standard_Size theNeedTotal,
+                                          const Standard_Size theBlockSize);
+
+#ifdef WNT
+#include <windows.h>
+static const Standard_Integer aSizeAlloc = 0x80000; // 512k
+#else
+static const Standard_Integer aSizeAlloc = 0x20000; // 128k
+#endif
 
 //=======================================================================
 //function : NIS_InteractiveContext()
@@ -31,7 +40,7 @@ static void markAllDrawersUpdated   (const NCollection_Map<Handle_NIS_Drawer>&);
 //=======================================================================
 
 NIS_InteractiveContext::NIS_InteractiveContext ()
-  : myAllocator       (new NIS_Allocator(1024*100)),
+  : myAllocator       (new NIS_Allocator(aSizeAlloc)),
     myLastObjectId    (0),
     myObjects         (1000),
 //     myDrawers       (101, myAllocator),
@@ -40,6 +49,10 @@ NIS_InteractiveContext::NIS_InteractiveContext ()
 {
   // ID == 0 is invalid so we reserve this item from subsequent allocation.
   myObjects.SetValue(myLastObjectId, NULL);
+  for (Standard_Integer aPriority = 0; aPriority < NIS_Drawer::Priority_LevelsNb; ++aPriority)
+  {
+    myPriorities[aPriority] = 0;
+  }
 }
 
 //=======================================================================
@@ -51,15 +64,11 @@ NIS_InteractiveContext::~NIS_InteractiveContext ()
 {
   // Unregister this context in all referred views
   NCollection_List<Handle_NIS_View>::Iterator anIterV (myViews);
-  for (; anIterV.More(); anIterV.Next())
-    if (anIterV.Value().IsNull() == Standard_False)
-      anIterV.Value()->RemoveContext(this);
-
-//   // Unregister this context in all referred drawers
-//   NCollection_Map<Handle_NIS_Drawer>::Iterator anIterD (myDrawers);
-//   for (; anIterD.More(); anIterD.Next())
-//     if (anIterD.Value().IsNull() == Standard_False)
-//       anIterD.Value()->myCtx = 0L;
+  while (anIterV.More())
+    if (anIterV.Value().IsNull())
+      anIterV.Next();
+    else
+      detachView(anIterV);
 }
 
 
@@ -84,6 +93,10 @@ void NIS_InteractiveContext::AttachView (const Handle_NIS_View& theView)
         if (aDrawer.IsNull() == Standard_False)
           aDrawer->myLists.Append(aDrawer->createDefaultList(theView));
       }
+      if (myIsShareDrawList && NbObjects() > 0)
+      {
+          markAllDrawersUpdated( myDrawers );
+      }
     }
   }
 }
@@ -99,23 +112,45 @@ void NIS_InteractiveContext::DetachView (const Handle_NIS_View& theView)
     NCollection_List<Handle_NIS_View>::Iterator anIter (myViews);
     for (; anIter.More(); anIter.Next())
       if (anIter.Value() == theView) {
-        myViews.Remove(anIter);
-        theView->RemoveContext(this);
-        NCollection_Map<Handle_NIS_Drawer>::Iterator anIterD (myDrawers);
-        for (; anIterD.More(); anIterD.Next()) {
-          const Handle(NIS_Drawer)& aDrawer = anIterD.Value();
-          if (aDrawer.IsNull() == Standard_False) {
-            NCollection_List<NIS_DrawList*>::Iterator anIterL(aDrawer->myLists);
-            for (; anIterL.More(); anIterL.Next())
-              if (anIterL.Value()->GetView() == theView) {
-                delete anIterL.Value();
-                aDrawer->myLists.Remove (anIterL);
-                break;
-              }
-          }
-        }
+        detachView(anIter);
         break;
       }
+  }
+}
+
+//=======================================================================
+//function : detachView
+//purpose  : 
+//=======================================================================
+
+void NIS_InteractiveContext::detachView
+                (NCollection_List<Handle_NIS_View>::Iterator& theIter)
+{
+  if (theIter.More()) {
+    const Handle(NIS_View)& aView = theIter.Value();
+    // If draw lists are shared in this Context then they should be
+    // destroyed when we detach from the last view.
+    Standard_Boolean isForcedDestroy(Standard_False); 
+    aView->RemoveContext(this); // must be called before myViews.Remove()
+    myViews.Remove(theIter);
+    if (myIsShareDrawList && myViews.IsEmpty())
+      isForcedDestroy = Standard_True;
+
+    NCollection_Map<Handle_NIS_Drawer>::Iterator anIterD (myDrawers);
+    for (; anIterD.More(); anIterD.Next()) {
+      const Handle(NIS_Drawer)& aDrawer = anIterD.Value();
+      if (aDrawer.IsNull() == Standard_False) {
+        NCollection_List<NIS_DrawList*>::Iterator anIterL(aDrawer->myLists);
+        for (; anIterL.More(); anIterL.Next()) {
+          NIS_DrawList* pList = anIterL.Value();
+          if (isForcedDestroy || pList->GetView() == aView) {
+            delete pList;
+            aDrawer->myLists.Remove (anIterL);
+            break;
+          }
+        }
+      }
+    }
   }
 }
 
@@ -137,16 +172,28 @@ const Handle_NIS_InteractiveObject& NIS_InteractiveContext::GetObject
 
 //=======================================================================
 //function : redraw
-//purpose  : 
+//purpose  :
 //=======================================================================
 
-void NIS_InteractiveContext::redraw (const Handle(NIS_View)&    theView,
-                                     const NIS_Drawer::DrawType theType)
+void NIS_InteractiveContext::redraw (const Handle(NIS_View)&         theView,
+                                     const NIS_Drawer::DrawType      theType,
+                                     const NIS_Drawer::PriorityLevel thePriority)
 {
+  if (thePriority >= NIS_Drawer::Priority_LevelsNb
+   || myPriorities[thePriority] < 1)
+  {
+    return;
+  }
+
   NCollection_Map <Handle_NIS_Drawer>::Iterator anIter (myDrawers);
   for (; anIter.More(); anIter.Next())
-    if (anIter.Value().IsNull() == Standard_False)
+  {
+    if (anIter.Value().IsNull()    == Standard_False
+     && anIter.Value()->Priority() == thePriority)
+    {
       anIter.Value()->redraw (theType, theView);
+    }
+  }
 }
 
 //=======================================================================
@@ -379,6 +426,10 @@ void NIS_InteractiveContext::RemoveAll ()
   }
   // Remove Drawers
   myDrawers.Clear();
+  for (Standard_Integer anIter = 0; anIter < NIS_Drawer::Priority_LevelsNb; ++anIter)
+  {
+    myPriorities[anIter] = 0;
+  }
 
   // Release memory
   myAllocator->Reset();
@@ -474,7 +525,7 @@ Standard_Boolean NIS_InteractiveContext::SetSelected
 
 Standard_Boolean NIS_InteractiveContext::ProcessSelection
                         (const Handle_NIS_InteractiveObject& theObj,
-                         const Standard_Boolean              isMultiple)
+                         const Standard_Boolean              isModifierUsed)
 {
   Standard_Boolean aResult (Standard_False);
   Standard_Integer anID (0);
@@ -492,16 +543,18 @@ Standard_Boolean NIS_InteractiveContext::ProcessSelection
   switch (mySelectionMode) {
   case Mode_Normal:
   case Mode_Additive:
-    if (isMultiple == Standard_False) {
-      ClearSelected();
+    if (isModifierUsed == Standard_False) {
+      if (mySelectionMode == Mode_Normal)
+        ClearSelected();
+      wasSelected = myMapObjects[NIS_Drawer::Draw_Hilighted].Contains (anID);
       aResult = Standard_True;
-    } else if (wasSelected && mySelectionMode == Mode_Normal) {
+    } else if (wasSelected) {
       myMapObjects[NIS_Drawer::Draw_Hilighted].Remove( anID );
       deselectObj (theObj, anID);
       aResult = Standard_True;
       break;
     }
-    if (wasSelected == Standard_False && IsSelectable(anID) == Standard_True) {
+    if (wasSelected == Standard_False && IsSelectable(anID) == Standard_True && anID > 0) {
       myMapObjects[NIS_Drawer::Draw_Hilighted].Add( anID );
       selectObj (theObj, anID);
       aResult = Standard_True;
@@ -526,7 +579,7 @@ Standard_Boolean NIS_InteractiveContext::ProcessSelection
 
 void NIS_InteractiveContext::ProcessSelection
                         (const TColStd_PackedMapOfInteger& mapSel,
-                         const Standard_Boolean            isMultiple)
+                         const Standard_Boolean            isModifierUsed)
 {
   //subtract non-selectable objects
   TColStd_PackedMapOfInteger aMap;
@@ -535,14 +588,27 @@ void NIS_InteractiveContext::ProcessSelection
   TColStd_MapIteratorOfPackedMapOfInteger anIter;
   switch (mySelectionMode) {
   case Mode_Normal:
-    if (isMultiple == Standard_False) {
-      ClearSelected();
-      myMapObjects[NIS_Drawer::Draw_Hilighted] = aMap;
-      for (anIter.Initialize (aMap); anIter.More(); anIter.Next()) {
-        const Standard_Integer anID = anIter.Key();
-        selectObj (myObjects(anID), anID);
-      }
-    } else {
+  case Mode_Additive:
+    if (isModifierUsed == Standard_False) {
+        if (mySelectionMode == Mode_Normal)
+        {
+          ClearSelected();
+          myMapObjects[NIS_Drawer::Draw_Hilighted] = aMap;
+          for (anIter.Initialize (aMap); anIter.More(); anIter.Next()) {
+            const Standard_Integer anID = anIter.Key();
+            selectObj (myObjects(anID), anID);
+          }
+        }
+        else
+        {
+          aMap.Subtract (myMapObjects[NIS_Drawer::Draw_Hilighted]);
+          myMapObjects[NIS_Drawer::Draw_Hilighted].Unite (aMap);
+          for (anIter.Initialize (aMap); anIter.More(); anIter.Next()) {
+            const Standard_Integer anID = anIter.Key();
+            selectObj (myObjects(anID), anID);
+          }
+        }
+    } else { // the modifier is pressed
       TColStd_PackedMapOfInteger aMapSub;
       aMapSub.Intersection(aMap, myMapObjects[NIS_Drawer::Draw_Hilighted]);
       aMap.Subtract (myMapObjects[NIS_Drawer::Draw_Hilighted]);
@@ -556,14 +622,6 @@ void NIS_InteractiveContext::ProcessSelection
         const Standard_Integer anID = anIter.Key();
         deselectObj (myObjects(anID), anID);
       }
-    }
-    break;
-  case Mode_Additive:
-    aMap.Subtract (myMapObjects[NIS_Drawer::Draw_Hilighted]);
-    myMapObjects[NIS_Drawer::Draw_Hilighted].Unite (aMap);
-    for (anIter.Initialize (aMap); anIter.More(); anIter.Next()) {
-      const Standard_Integer anID = anIter.Key();
-      selectObj (myObjects(anID), anID);
     }
     break;
   case Mode_Exclusive:
@@ -650,58 +708,78 @@ void NIS_InteractiveContext::SetSelected
 
 //=======================================================================
 //function : selectObject
-//purpose  : 
+//purpose  :
 //=======================================================================
 
 Standard_Real NIS_InteractiveContext::selectObject
-                                (Handle_NIS_InteractiveObject&  theSel,
-                                 NCollection_List<DetectedEnt>& theDetected,
+                                //(Handle_NIS_InteractiveObject&  theSel,
+                                (NCollection_List<DetectedEnt>& theDetected,
                                  const gp_Ax1&                  theAxis,
                                  const Standard_Real            theOver,
-                                 const Standard_Boolean         isOnlySel) const
+                                 const Standard_Boolean         isOnlySel,
+                                 const NIS_SelectFilter::Event  theEvent) const
 {
   static const Standard_Real anInfiniteDist = 0.5 * RealLast();
-  Standard_Real aMinDist(anInfiniteDist);
-  if (mySelectionMode != Mode_NoSelection || isOnlySel == Standard_False)
+  if (mySelectionMode == Mode_NoSelection && isOnlySel)
   {
-    DetectedEnt anEnt;
-    NCollection_SparseArray <Handle_NIS_InteractiveObject>::ConstIterator
-      anIter(myObjects);
-    for (; anIter.More(); anIter.Next()) {
-      const Handle(NIS_InteractiveObject)& anObj = anIter.Value();
-      if (anObj.IsNull() == Standard_False)
-        if (anObj->IsDisplayed() &&
-            (!myMapNonSelectableObjects.Contains (anObj->ID()) ||
-             isOnlySel == Standard_False))
+    return anInfiniteDist;
+  }
+
+  Standard_Real aMinDist = anInfiniteDist;
+  DetectedEnt anEnt;
+
+  for (NCollection_SparseArray <Handle_NIS_InteractiveObject>::ConstIterator anIter (myObjects);
+       anIter.More(); anIter.Next())
+  {
+    const Handle(NIS_InteractiveObject)& anObj = anIter.Value();
+
+    // check object is selectable
+    if (anObj.IsNull() || !anObj->IsDisplayed()
+     || (isOnlySel && myMapNonSelectableObjects.Contains (anObj->ID()))
+     // early-out - check the intersection with the bounding box
+     || anObj->IsOut (theAxis, Standard_False, theOver))
+    {
+      continue;
+    }
+
+    // pass the object through the SelectFilter if available
+    if (!mySelectFilter.IsNull())
+    {
+      if (!mySelectFilter->ActsOn (anObj->DynamicType())
+       || !mySelectFilter->IsOk   (anObj.operator->(), theAxis,
+                                   theOver, theEvent))
+      {
+        continue;
+      }
+    }
+
+    anEnt.Dist = anObj->Intersect (theAxis, theOver);
+    if (anEnt.Dist < anInfiniteDist)
+    {
+      // insert the detected entity in the sorted list
+      anEnt.PObj = anObj.operator->();
+      anEnt.Prio = anObj->GetDrawer()->Priority();
+      NCollection_List<DetectedEnt>::Iterator anIterD(theDetected);
+      for (; anIterD.More(); anIterD.Next())
+      {
+        const DetectedEnt& anEntOther = anIterD.Value();
+        if (anEnt.Dist < anEntOther.Dist - Precision::Confusion()
+         || (anEnt.Prio > anEntOther.Prio
+          && anEnt.Dist < anEntOther.Dist + Precision::Confusion())
+         || (anEnt.Prio == anEntOther.Prio
+          && anEnt.Dist <= anEntOther.Dist))
         {
-          // Pass the object through the SelectFilter if available
-          if (mySelectFilter.IsNull() == Standard_False)
-            if (mySelectFilter->IsOk (anObj.operator->()) == Standard_False)
-              continue;
-          // Check the intersection with the box
-          const Bnd_B3f& aBox = anObj->GetBox();
-          if (aBox.IsOut (theAxis, Standard_False, theOver) == Standard_False)
-          {
-            anEnt.Dist = anObj->Intersect (theAxis, theOver);
-            if (anEnt.Dist < anInfiniteDist) {
-              anEnt.PObj = anObj.operator->();
-              // Insert the detected entity in the sorted list
-              NCollection_List<DetectedEnt>::Iterator anIterD(theDetected);
-              for (; anIterD.More(); anIterD.Next()) {
-                if (anEnt.Dist < anIterD.Value().Dist) {
-                  theDetected.InsertBefore(anEnt, anIterD);
-                  break;
-                }
-              }
-              if (anIterD.More() == Standard_False)
-                theDetected.Append(anEnt);
-              if (anEnt.Dist < aMinDist) {
-                aMinDist = anEnt.Dist;
-                theSel = anObj;
-              }
-            }
-          }
+          theDetected.InsertBefore (anEnt, anIterD);
+          break;
         }
+      }
+
+      if (!anIterD.More())
+      {
+        theDetected.Append (anEnt);
+      }
+
+      aMinDist = Min (aMinDist, anEnt.Dist);
     }
   }
   return aMinDist;
@@ -754,9 +832,12 @@ Standard_Boolean NIS_InteractiveContext::selectObjects
       if (anObj.IsNull() == Standard_False)
         if (anObj->IsDisplayed()) {
           // Pass the object through the SelectFilter if available
-          if (mySelectFilter.IsNull() == Standard_False)
+          if (mySelectFilter.IsNull() == Standard_False) {
+            if (mySelectFilter->ActsOn(anObj->DynamicType()) == Standard_False)
+              continue;
             if (mySelectFilter->IsOk (anObj.operator->()) == Standard_False)
               continue;
+          }
           // Check the intersection with the box
           const Bnd_B3f& aBox = anObj->GetBox();
           if (aBox.IsIn (theBox, theTrf)) {
@@ -798,9 +879,12 @@ Standard_Boolean NIS_InteractiveContext::selectObjects
       if (anObj.IsNull() == Standard_False)
         if (anObj->IsDisplayed()) {
           // Pass the object through the SelectFilter if available
-          if (mySelectFilter.IsNull() == Standard_False)
+          if (mySelectFilter.IsNull() == Standard_False) {
+            if (!mySelectFilter->ActsOn(anObj->DynamicType()))
+              continue;
             if (mySelectFilter->IsOk (anObj.operator->()) == Standard_False)
               continue;
+          }
 
           // Comvert 3d box to 2d one
           const Bnd_B3f    &aBox = anObj->GetBox();
@@ -846,9 +930,11 @@ void NIS_InteractiveContext::deselectObj
 {
   if (theObj.IsNull() == Standard_False) {
     const Handle(NIS_Drawer)& aDrawer = theObj->GetDrawer();
+    NIS_Drawer::DrawType aType = theObj->myBaseType;
     if (theObj->IsTransparent()) {
       myMapObjects[NIS_Drawer::Draw_Transparent].Add(theID);
       aDrawer->SetUpdated(NIS_Drawer::Draw_Transparent);
+      aType = NIS_Drawer::Draw_Transparent;
     } else if (theObj->myBaseType == NIS_Drawer::Draw_Top) {
       myMapObjects[NIS_Drawer::Draw_Top].Add(theID);
       aDrawer->SetUpdated(NIS_Drawer::Draw_Top);
@@ -856,8 +942,8 @@ void NIS_InteractiveContext::deselectObj
       myMapObjects[NIS_Drawer::Draw_Normal].Add(theID);
       aDrawer->SetUpdated(NIS_Drawer::Draw_Normal);
     }
+    theObj->myDrawType = aType;
     aDrawer->SetUpdated(NIS_Drawer::Draw_Hilighted);
-    theObj->myDrawType = theObj->myBaseType;
   }
 }
 
@@ -872,7 +958,7 @@ void NIS_InteractiveContext::selectObj
 {
   if (theObj.IsNull() == Standard_False) {
     const Handle(NIS_Drawer)& aDrawer = theObj->GetDrawer();
-    if (theObj->IsTransparent()) {
+    if (theObj->myDrawType == NIS_Drawer::Draw_Transparent) {
       myMapObjects[NIS_Drawer::Draw_Transparent].Remove(theID);
       aDrawer->SetUpdated(NIS_Drawer::Draw_Transparent);
     } else if (theObj->myDrawType == NIS_Drawer::Draw_Top) {
@@ -882,8 +968,8 @@ void NIS_InteractiveContext::selectObj
       myMapObjects[NIS_Drawer::Draw_Normal].Remove(theID);
       aDrawer->SetUpdated(NIS_Drawer::Draw_Normal);
     }
-    aDrawer->SetUpdated(NIS_Drawer::Draw_Hilighted);
     theObj->myDrawType = NIS_Drawer::Draw_Hilighted;
+    aDrawer->SetUpdated(NIS_Drawer::Draw_Hilighted);
   }
 }
 
@@ -945,9 +1031,17 @@ Handle_NIS_Allocator NIS_InteractiveContext::compactObjects()
   // Check if the memory used by objects has to be compacted.
   const Standard_Size nAllocated = myAllocator->NAllocated();
 
-  if (nAllocated > 1024*1024) {
+  if (nAllocated > 4 * aSizeAlloc) {
     const Standard_Size nFreed = myAllocator->NFreed();
-    if ((nFreed * 5) / 3 > nAllocated || nFreed > 20*1024*1024)
+    Standard_Boolean toCompact = (nFreed * 5) / 2 > nAllocated;
+    if (toCompact)
+    {
+      // evaluate if there is enough memory to allocate clones
+      const Standard_Size nUsed = nAllocated - nFreed;
+      if (!CanBeAllocated(nUsed, aSizeAlloc))
+        toCompact = Standard_False;
+    }
+    if (toCompact)
     {
       for (anIterV.Init(myViews); anIterV.More(); anIterV.Next()) {
         const Handle(NIS_View)& aView = anIterV.Value();
@@ -958,7 +1052,7 @@ Handle_NIS_Allocator NIS_InteractiveContext::compactObjects()
       }
       // Compact the memory: clone all objects to a new allocator, release
       // the old allocator instance.
-      aNewAlloc = new NIS_Allocator;
+      aNewAlloc = new NIS_Allocator(aSizeAlloc);
       NCollection_SparseArray<Handle_NIS_InteractiveObject>::Iterator
         anIter(myObjects);
       for (; anIter.More(); anIter.Next()) {
@@ -972,6 +1066,18 @@ Handle_NIS_Allocator NIS_InteractiveContext::compactObjects()
     }
   }
   return aNewAlloc;
+}
+
+//=======================================================================
+//function : CompactObjects
+//purpose  : 
+//=======================================================================
+
+void NIS_InteractiveContext::CompactObjects()
+{
+    const Handle_NIS_Allocator aNewAlloc = compactObjects();
+    if (aNewAlloc.IsNull() == Standard_False)
+        myAllocator = aNewAlloc;
 }
 
 //=======================================================================
@@ -991,4 +1097,55 @@ void markAllDrawersUpdated (const NCollection_Map<Handle_NIS_Drawer>& lstDrv)
                            NIS_Drawer::Draw_Hilighted);
     }
   }
+}
+
+//=======================================================================
+//function : GetObjectsOfType
+//purpose  : 
+//=======================================================================
+
+const TColStd_PackedMapOfInteger& NIS_InteractiveContext
+  ::GetObjectsOfType (const NIS_Drawer::DrawType theDrawType) const
+{
+  // notice that there are no map for Draw_DynHilighted type!
+  Standard_OutOfRange_Raise_if (theDrawType <  NIS_Drawer::Draw_Normal ||
+                                theDrawType >= NIS_Drawer::Draw_DynHilighted,
+                                "NIS_InteractiveContext::GetObjectsOfType: Irrelevant DrawType");
+  return myMapObjects[theDrawType];
+}
+
+//=======================================================================
+//function : CanBeAllocated
+//purpose  : 
+//=======================================================================
+
+Standard_Boolean CanBeAllocated(const Standard_Size theNeedTotal,
+                                   const Standard_Size theBlockSize)
+{
+    NCollection_List<void*> aList;
+    Standard_Size aNAlloc = 0;
+    while (aNAlloc < theNeedTotal)
+    {
+#ifdef WNT
+        void* pMem = VirtualAlloc(NULL, theBlockSize, MEM_RESERVE, PAGE_READWRITE);
+#else
+        void* pMem = malloc(theBlockSize);
+#endif
+        if (!pMem)
+        {
+            break;
+        }
+        aNAlloc += theBlockSize;
+        aList.Append(pMem);
+    }
+    NCollection_List<void*>::Iterator it(aList);
+    for (; it.More(); it.Next())
+    {
+#ifdef WNT
+        VirtualFree(it.Value(), 0, MEM_RELEASE);
+#else
+        free(it.Value());
+#endif
+    }
+    return aNAlloc >= theNeedTotal;
 }

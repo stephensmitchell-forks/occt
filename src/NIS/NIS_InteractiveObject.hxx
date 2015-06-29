@@ -48,7 +48,7 @@
  * method should not be called by any custom code, it is used internally by
  * NIS algorithms (in NIS_InteractiveContext::Display() for instance). If you
  * develop your own InteractiveObject type, you will need to call SetDrawer
- * whenever you change the visual aspect, for example:
+ * whenever you change a visual aspect, for example:
  * @code
  * void MyIOClass::SetColor (const Quantity_Color&  theColor);
  * {
@@ -74,7 +74,7 @@
  *     Parameter theOver provides the tolerance for intersection of thin
  *     geometries (lines, vertices)</li>
  * <li>Intersect (theBox, theTrsf, isFullIn) : check if the interactive object
- *     intersects with a 3D box. Transformation 'theTrf' is the <b>inverse</b>
+ *     intersects with a 3D box. Transformation 'theTrsf' is the <b>inverse</b>
  *     box transformation, so it is applied to the interactive object rather
  *     than to the 3D box (3D box stays axis-aligned during intersection
  *     test). Parameter IsFullIn defines the condition for the result: if
@@ -93,9 +93,9 @@
  * because NIS_InteractiveContext should completely manage all its objects,
  * meaning that it destroys/reallocates them automatically. To support that,
  * the virtual method Clone() should be correctly defined for every interactive
- * object subtype. Supposing that MyIOClass inherits MyBaseIOBase :
+ * object subtype. Supposing that MyIOClass inherits MyIOBase :
  * @code
- * void MyIOCalss::Clone (const Handle_NCollection_BaseAllocator& theAlloc,
+ * void MyIOClass::Clone (const Handle_NCollection_BaseAllocator& theAlloc,
  *                        Handle_NIS_InteractiveObject&           theDest) const
  * {
  *   Handle(MyIOClass) aNewObj;
@@ -118,6 +118,7 @@
  * stored as a pointer. It can accommodate an integer/float/boolean value or
  * a pointer to some structure. This attribute is NOT automatically destroyed
  * with the InteractiveObject.  
+ * @ingroup nis_library
  */
 
 class NIS_InteractiveObject : public Standard_Transient
@@ -341,6 +342,50 @@ class NIS_InteractiveObject : public Standard_Transient
        Intersect     (const NCollection_List<gp_XY> &thePolygon,
                       const gp_Trsf                 &theTrf,
                       const Standard_Boolean         isFull) const;
+  /**
+   * Set the color for presentation.
+   * @param theColor
+   *   New color to use for the presentation.
+   * @param theType
+   *   Draw type for which the color is defined
+   */
+  Standard_EXPORT virtual void SetColor
+        (const Quantity_Color&      theColor,
+         const NIS_Drawer::DrawType theType = NIS_Drawer::Draw_Normal);
+
+  /**
+   * Set the color for hilighted presentation.
+   * @param theColor
+   *   New color to use for the presentation.
+   */
+  inline void SetHilightColor (const Quantity_Color& theColor)
+  {
+    return SetColor (theColor, NIS_Drawer::Draw_Hilighted);
+  }
+
+  /**
+   * Set the color for dynamic hilight presentation.
+   * @param theColor
+   *   New color to use for the presentation.
+   */
+  inline void SetDynHilightColor (const Quantity_Color& theColor)
+  {
+    SetColor (theColor, NIS_Drawer::Draw_DynHilighted);
+  }
+
+  /**
+   * Set the colors for hilight and dynamic hilight presentations.
+   */
+  Standard_EXPORT void SetHilightColors(const Quantity_Color& theHLColor,
+                                        const Quantity_Color& theDHLColor);
+
+  /**
+   * Get Normal, Transparent or Hilighted color of the presentation.  
+   * @param theType
+   *   The draw type, for which the color is retrieved.
+   */
+  Standard_EXPORT Quantity_Color GetColor 
+        (const NIS_Drawer::DrawType theType = NIS_Drawer::Draw_Normal) const;
 
   /**
    * Set the pointer to custom (arbitrary) data associated with the Object.
@@ -353,6 +398,15 @@ class NIS_InteractiveObject : public Standard_Transient
    */
   inline void *           GetAttribute  () const
   { return myAttributePtr; }
+
+  /**
+   * Check the intersection a line/ray with the bounding box of object.
+   * @see Bnd_B3f::IsOut().
+   */
+  Standard_EXPORT virtual Standard_Boolean
+                          IsOut         (const gp_Ax1&          theAxis,
+                                         const Standard_Boolean isRay = 0,
+                                         const Standard_Real    theOver = 0.0);
 
  protected:
   // ---------- PROTECTED METHODS ----------

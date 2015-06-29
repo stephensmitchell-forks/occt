@@ -35,6 +35,9 @@ class Bnd_B3f;
 class Bnd_B2f;
 
 /**
+@defgroup nis_library NIS Library (New Interactive Services)
+*/
+/**
  * InteractiveContext is the central NIS structure that stores and manages
  * all NIS_InteractiveObject instances as well as the Drawers for their
  * visualisation.
@@ -122,6 +125,7 @@ class Bnd_B2f;
  * <p>
  * This mechanism works when either UpdateViews() or RebuildViews() is called
  * from time to time, only these two methods can call compactObjects().
+ * @ingroup nis_library
  */
 
 class NIS_InteractiveContext : public Standard_Transient
@@ -168,6 +172,12 @@ class NIS_InteractiveContext : public Standard_Transient
                        GetObject  (const Standard_Integer theID) const;
 
   /**
+   * Access map of objects with specified draw type.
+   */
+  Standard_EXPORT const TColStd_PackedMapOfInteger&
+    GetObjectsOfType (const NIS_Drawer::DrawType theType) const;
+
+  /**
    * Query the total number of InteractiveObject instances. This number can be
    * smaller than the greatest object ID, therefore you should not iterate till
    * this number using GetObject; use class NIS_ObjectsIterator instead.
@@ -192,6 +202,13 @@ class NIS_InteractiveContext : public Standard_Transient
   inline NCollection_Map<Handle_NIS_Drawer>::Iterator
                         GetDrawers () const
   { return NCollection_Map<Handle_NIS_Drawer>::Iterator(myDrawers); }
+
+  /**
+   * Access to views.
+   */
+  inline NCollection_List<Handle_NIS_View>::Iterator
+                        GetViews () const
+  { return NCollection_List<Handle_NIS_View>::Iterator(myViews); }
 
   // ================ BEGIN Mangement of Objects ================
   ///@name Management of Objects
@@ -364,14 +381,16 @@ class NIS_InteractiveContext : public Standard_Transient
    * This method does not update the views.
    * @param O
    *   Object to be selected or deselected
-   * @param isMultiple
-   *   If True, then the objects are not automatically deselected.
+   * @param isModifierUsed
+   *   If True, then the modification of the current selection mode happens.
+   *   E.g. if True and selection mode is normal, the objects are not automatically
+   *   deselected.
    * @return
    *   True if the selection status has been changed, False if nothing changed
    */
   Standard_EXPORT Standard_Boolean
                         ProcessSelection(const Handle_NIS_InteractiveObject& O,
-                                         const Standard_Boolean     isMultiple
+                                         const Standard_Boolean     isModifierUsed
                                             = Standard_False);
 
   /**
@@ -380,11 +399,13 @@ class NIS_InteractiveContext : public Standard_Transient
    * selection mode is respected.
    * @param map
    *   Container of IDs of objects to be processed
-   * @param isMultiple
-   *   If True, then the objects are not automatically deselected.
+   * @param isModifierUsed
+   *   If True, then the modification of the current selection mode happens.
+   *   E.g. if True and selection mode is normal, the objects are not automatically
+   *   deselected.
    */
   Standard_EXPORT void  ProcessSelection(const TColStd_PackedMapOfInteger& map,
-                                         const Standard_Boolean     isMultiple
+                                         const Standard_Boolean     isModifierUsed
                                             = Standard_False);
 
   /**
@@ -464,6 +485,11 @@ class NIS_InteractiveContext : public Standard_Transient
   inline void             SetShareDrawList  (Standard_Boolean isShare)
   { myIsShareDrawList = isShare; }
 
+  /**
+   * Compresses the allocated memory.
+   */
+  Standard_EXPORT void CompactObjects();
+
   //@}
   // ====== END Selection API ================
 
@@ -471,19 +497,19 @@ class NIS_InteractiveContext : public Standard_Transient
   //! Structure referencing one detected (picked) interactive entity.
   struct DetectedEnt
   {
-    Standard_Real          Dist; //!< Distance on the view direction
-    NIS_InteractiveObject* PObj; //!< Pointer to interactive object
+    Standard_Real             Dist; //!< Distance on the view direction
+    NIS_InteractiveObject*    PObj; //!< Pointer to interactive object
+    NIS_Drawer::PriorityLevel Prio; //!< Selected object drawer priority
   };
 
   // ---------- PROTECTED METHODS ----------
 
-  Standard_EXPORT void redraw           (const Handle_NIS_View&     theView,
-                                         const NIS_Drawer::DrawType theType);
+  Standard_EXPORT void redraw (const Handle_NIS_View&          theView,
+                               const NIS_Drawer::DrawType      theType,
+                               const NIS_Drawer::PriorityLevel thePriority);
 
   /**
    * Detect the object selected by the given ray.
-   * @param theSel
-   *   <tt>[out]</tt> The selected object that has the lowest ray distance.
    * @param theDet
    *   <tt>[out]</tt> Sorted list of all detected objects with ray distances
    * @param theAxis
@@ -493,16 +519,17 @@ class NIS_InteractiveContext : public Standard_Transient
    * @param isOnlySelectable
    *   If False, any displayed object can be picked, otherwise only selectable
    *   ones.
+   * @param theEvent
+   *   Describes the evernt that invokes this method.
    * @return
    *   The ray distance of the intersection point between the ray and theSel. 
    */
   Standard_EXPORT Standard_Real
-                       selectObject     (Handle_NIS_InteractiveObject& theSel,
-                                         NCollection_List<DetectedEnt>& theDet,
-                                         const gp_Ax1&                 theAxis,
-                                         const Standard_Real           theOver,
-                                         const Standard_Boolean isOnlySelectable
-                                         = Standard_True) const;
+         selectObject (NCollection_List<DetectedEnt>& theDet,
+                       const gp_Ax1&                  theAxis,
+                       const Standard_Real            theOver,
+                       const Standard_Boolean         isOnlySelectable = Standard_True,
+                       const NIS_SelectFilter::Event  theEvent = NIS_SelectFilter::Indefinite) const;
 
   /**
    * Build a list of objects that are inside or touched by an oriented box.
@@ -572,6 +599,8 @@ private:
   Handle_NIS_Allocator
         compactObjects          ();
 
+  void  detachView              (NCollection_List<Handle_NIS_View>::Iterator&);
+
  private:
   // ---------- PRIVATE FIELDS ----------
 
@@ -610,6 +639,11 @@ private:
    * <br>Each object can have only one entry in these maps.
    */
   TColStd_PackedMapOfInteger                        myMapObjects[4];
+
+  /**
+   * Number of drawers per priority.
+   */
+  Standard_Integer myPriorities[NIS_Drawer::Priority_LevelsNb];
 
   /**
    * Objects contained in this map are ignored by SetSelected methods,

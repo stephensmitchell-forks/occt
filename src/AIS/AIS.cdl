@@ -241,7 +241,8 @@ is
     KOI_Datum,
     KOI_Shape,
     KOI_Object,
-    KOI_Relation;
+    KOI_Relation,
+    KOI_Dimension;
     	 --- Purpose: Declares the type of Interactive Object. 
     	 -- This is one of the following:
     	 -- -   the Datum

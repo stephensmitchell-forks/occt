@@ -15,18 +15,13 @@
  commercial license or contractual agreement.
 */ 
 
-/*======================================================================
-*/ 
-/*Purpose :       Set of functions to measure the CPU user time
-*/ 
-/*25/09/2001 : AGV : (const char *) in prototypes;
-*/ 
-/*09/11/2001 : AGV : Add functions perf_*_imeter for performance
-*/ 
-/*Add function perf_tick_meter
-*/ 
-/*14/05/2002 : AGV : Portability UNIX/Windows
-*/ 
+/*======================================================================*/ 
+/*Purpose :       Set of functions to measure the CPU user time         */ 
+/*25/09/2001 : AGV : (const char *) in prototypes;                      */ 
+/*09/11/2001 : AGV : Add functions perf_*_imeter for performance        */ 
+/*                   Add function perf_tick_meter                       */ 
+/*14/05/2002 : AGV : Portability UNIX/Windows                           */
+/*22/09/2014 : AGV : Add function perf_output_all_meters
 /*======================================================================*/ 
 #include <string.h>
 #include <stdio.h>
@@ -224,12 +219,30 @@ Returns  :      none
 ======================================================================*/
 void perf_print_all_meters (void)
 {
+  perf_output_all_meters(NULL);
+}
+
+/*======================================================================
+Function :      perf_output_all_meters
+Purpose  :      Prints to open file stream the cumulated time and the number
+                of enters for each meter in MeterTable;
+                resets all meters
+                Useful in applications that have no stdout
+Output   :      none
+Returns  :      none
+======================================================================*/
+void perf_output_all_meters (void* theFile)
+{
   int i;
-  for (i=0; i<nb_meters; i++) {
+  for (i = 0; i < nb_meters; i++) {
     const t_TimeCounter * const ptc = &MeterTable[i];
     if (ptc && ptc->nb_enter) {
-      printf ("          Perf meter results               :"
-              "   enters  seconds  \xe6sec/enter\n");
+      const char* str = "          Perf meter results               :"
+        "   enters  seconds  \xe6sec/enter\n";
+      if (theFile)
+        fprintf((FILE *)theFile, str);
+      else
+        printf(str);
       break;
     }
   }
@@ -240,13 +253,20 @@ void perf_print_all_meters (void)
     if (ptc && ptc->nb_enter) {
       const double secs = ptc->cumul_time;
 
-      if (ptc->start_time)
-        printf ("Warning : meter %s has not been stopped\n", ptc->name);
-
-      printf ("%-42s : %7d %8.2f %10.2f\n",
-              ptc->name, ptc->nb_enter, secs,
-              (secs>0. ? 1000000 * secs/ptc->nb_enter : 0.));
-
+      if (theFile) {
+        if (ptc->start_time)
+          fprintf ((FILE *)theFile,
+                   "Warning : meter %s has not been stopped\n", ptc->name);
+        fprintf ((FILE *)theFile, "%-42s : %7d %8.2f %10.2f\n",
+                 ptc->name, ptc->nb_enter, secs,
+                 (secs>0. ? 1000000 * secs/ptc->nb_enter : 0.));
+      } else {
+        if (ptc->start_time)
+          printf ("Warning : meter %s has not been stopped\n", ptc->name);
+        printf ("%-42s : %7d %8.2f %10.2f\n",
+                ptc->name, ptc->nb_enter, secs,
+                (secs>0. ? 1000000 * secs/ptc->nb_enter : 0.));
+      }
       ptc->cumul_time = 0;
       ptc->start_time = 0;
       ptc->nb_enter   = 0;

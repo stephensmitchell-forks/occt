@@ -58,6 +58,7 @@ is
     	--          the current Step ChildStepren.
     
     Value(me) returns TreeNode from TDataStd;
+        ---C++: return const &
     	---C++: inline
 	---Purpose: Returns the current item; a null Step if there is
 	--          no one.

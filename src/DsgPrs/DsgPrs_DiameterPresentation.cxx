@@ -65,6 +65,8 @@ void DsgPrs_DiameterPresentation::Add (const Handle(Prs3d_Presentation)& aPresen
   // sideline
   gp_Pnt        center  = aCircle.Location();
   gp_Vec        vecrap  (ptoncirc,center);
+  if (vecrap.SquareMagnitude() < Precision::Confusion())
+    return;
 
   Standard_Real dist    = center.Distance(AttachmentPoint);
   Standard_Real aRadius = aCircle.Radius();

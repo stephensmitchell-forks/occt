@@ -72,6 +72,24 @@ Standard_Integer HashCodes (const Standard_CString Value,
   return hash;
 }
 
+//============================================================================
+//==== HashCode of a CString (case-insensitive)
+//============================================================================
+Standard_Integer HASHCODES (const Standard_CString Value,
+                            const Standard_Integer Len)
+{
+  // compute DJB2 hash of a string
+  Standard_Integer hash = 0;
+  const Standard_Character *c = Value;
+  for (Standard_Integer i = 0; i < Len; i++, c++)
+  {
+    /* hash = hash * 33 ^ c */
+    hash = ((hash << 5) + hash) ^ (c[0] & 0xdf);
+  }
+
+  return hash;
+}
+
 //======================================================================
 // Locale-independent equivalents of C functions dealing with conversion
 // of string to real and vice-versa

@@ -257,7 +257,7 @@ void TNaming_NamedShape::Clear()
 {
   if (Label().IsNull()) {
 #ifdef DEB
-    cout << "attention etat fantomatique" << endl;
+    //cout << "attention etat fantomatique" << endl;
 #endif
     return;
   }
@@ -666,7 +666,7 @@ void TNaming_Builder::Generated(const TopoDS_Shape& newShape)
   
   if (myShapes->myMap.IsBound(newShape)) {
 #ifdef DEB
-    cout <<"TNaming_Builder::Generate : the shape is already in the attribute"<<endl;
+    //cout <<"TNaming_Builder::Generate : the shape is already in the attribute"<<endl;
 #endif
     pns = myShapes->myMap.ChangeFind(newShape);
     if (pns->FirstUse()->myAtt  == myAtt.operator->()) {
@@ -707,7 +707,7 @@ void TNaming_Builder::Delete(const TopoDS_Shape& oldShape)
     pos = myShapes->myMap.ChangeFind(oldShape); 
   else {
 #ifdef DEB
-    cout <<"TNaming_Builder::Delete : the shape is not in the data"<<endl;
+    //cout <<"TNaming_Builder::Delete : the shape is not in the data"<<endl;
 #endif
     pos = new TNaming_RefShape(oldShape);  
     myShapes->myMap.Bind(oldShape, pos);
@@ -733,7 +733,7 @@ void TNaming_Builder::Generated(const TopoDS_Shape& oldShape,
 
   if (oldShape.IsSame(newShape)) {
 #ifdef DEB
-    cout <<"TNaming_Builder::Generate : oldShape IsSame newShape"<<endl;
+    //cout <<"TNaming_Builder::Generate : oldShape IsSame newShape"<<endl;
 #endif
     return;
   }
@@ -776,7 +776,7 @@ void TNaming_Builder::Modify(const TopoDS_Shape& oldShape,
 
   if (oldShape.IsSame(newShape)) {
 #ifdef DEB
-    cout <<"TNaming_Builder::Modify : oldShape IsSame newShape"<<endl;
+    //cout <<"TNaming_Builder::Modify : oldShape IsSame newShape"<<endl;
 #endif
     return;
   }
@@ -886,7 +886,7 @@ TNaming_Iterator::TNaming_Iterator(const TDF_Label&       Lab,
   else {
     myNode = 0L;
 #ifdef DEB
-    cout <<"TNaming_Iterator : No Shape for this label"<<endl;
+    //cout <<"TNaming_Iterator : No Shape for this label"<<endl;
 #endif
   }
 }
@@ -1458,7 +1458,7 @@ Standard_Boolean TNaming_Tool::HasLabel (const TDF_Label&    access,
     return (US->Map().IsBound(S));
   }
 #ifdef MDTV_DEB_HASL
-  cout << "##==> Sub-Shape has no Label!" <<endl;
+  //cout << "##==> Sub-Shape has no Label!" <<endl;
 #endif
   return Standard_False;
 }

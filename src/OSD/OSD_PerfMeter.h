@@ -147,6 +147,12 @@ Standard_EXPORTEXTERNC void    perf_print_all_meters   (void);
    Resets all meters
 */
 
+Standard_EXPORTEXTERNC void    perf_output_all_meters  (void* theFile);
+/* Prints to file the same output as perf_print_all_meters().
+   Parameter theFile is a file stream (FILE*) that should be opened and
+   closed in the caller.
+*/
+
 Standard_EXPORTEXTERNC void    perf_destroy_all_meters (void);
 /* Deletes all meters and frees memory
 */

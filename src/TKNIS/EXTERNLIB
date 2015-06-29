@@ -6,6 +6,8 @@ TKService
 TKG2d
 TKG3d
 TKMesh
+TKGeomBase
+TKOpenGl
 CSF_OpenGlLibs
 CSF_user32
 CSF_gdi32

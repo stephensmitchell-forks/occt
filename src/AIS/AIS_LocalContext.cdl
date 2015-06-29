@@ -77,7 +77,8 @@ uses
     LocalStatus               from AIS, 
     StatusOfPick              from AIS,
     StatusOfDetection         from AIS,
-    SequenceOfInteractive     from AIS
+    SequenceOfInteractive     from AIS,
+    SequenceOfShape           from TopTools
 
 is
 
@@ -629,6 +630,7 @@ fields
     myAISCurDetected : Integer from Standard;
     -- This variables is used by following functions:
     -- InitDetected(), MoreDetected(), NextDetected(), DetectedCurrentShape(), DetectedCurrentObject().
+    myAISDetectedShapes : SequenceOfShape from TopTools;
     
 friends 
 

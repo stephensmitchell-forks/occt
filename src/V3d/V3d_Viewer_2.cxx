@@ -108,5 +108,6 @@ void V3d_Viewer::SetDefaultLights()
   }
 
   SetLightOn (new V3d_DirectionalLight (this, V3d_Zneg, Quantity_NOC_WHITE, Standard_True));
-  SetLightOn (new V3d_AmbientLight (this));
+  // AGV 011014 : ambient already installed elsewhere
+  //SetLightOn (new V3d_AmbientLight (this));
 }

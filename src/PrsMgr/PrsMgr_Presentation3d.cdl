@@ -62,6 +62,9 @@ is
     SetVisible (me: mutable; theValue: Boolean from Standard) is redefined static private;
 
     Highlight(me: mutable) is redefined static private;
+
+    HighlightWithColor(me:mutable; theColor: NameOfColor from Quantity)
+    is static private;
     
     Unhighlight (me) is redefined static private;
     
@@ -93,9 +96,6 @@ is
     --          
     is redefined static private;
 
-
-    Color(me:mutable; aColor: NameOfColor from Quantity)
-    is static private;
     
     BoundBox(me)
     is static private;
@@ -164,7 +164,7 @@ is
 fields
 
     myStructure: Prs from PrsMgr;
-    myDisplayReason: Boolean from Standard;
+    myDisplayForHighlight: Boolean from Standard;
     myPresentableObject: PresentableObjectPointer from PrsMgr;
 friends 
     class PresentationManager3d from PrsMgr,

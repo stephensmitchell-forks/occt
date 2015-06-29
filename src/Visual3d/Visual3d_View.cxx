@@ -974,7 +974,7 @@ void Visual3d_View::SetViewOrientation (const Visual3d_ViewOrientation& VO) {
             for (j = 0; j < 4; j++) {
              if (!CustomIsModified) CustomIsModified =
                MyCView.Orientation.ModelViewMatrix[i][j] != MyViewOrientation.MyModelViewMatrix->Value(i,j);
-            }
+              MyCView.Orientation.ModelViewMatrix[i][j] = MyViewOrientation.MyModelViewMatrix->Value(i,j);             }
         }
 
 #ifdef TRACE_TRSF

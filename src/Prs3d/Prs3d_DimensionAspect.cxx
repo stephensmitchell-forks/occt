@@ -46,9 +46,10 @@ Prs3d_DimensionAspect::Prs3d_DimensionAspect()
   myArrowAspect->SetColor (Quantity_NOC_LAWNGREEN);
   myArrowAspect->SetAngle (M_PI * 20.0 / 180.0);
   myArrowAspect->SetLength (6.0);
-  myExtensionSize     = 6.0;
-  myValueStringFormat = "%g";
-  myToDisplayUnits    = Standard_False;
+  myExtensionSize      = 6.0;
+  myShortExtensionSize = 6.0;
+  myValueStringFormat  = "%g";
+  myToDisplayUnits     = Standard_False;
 }
 
 //=======================================================================
@@ -259,6 +260,24 @@ void Prs3d_DimensionAspect::SetExtensionSize (const Standard_Real theSize)
 Standard_Real Prs3d_DimensionAspect::ExtensionSize() const
 {
   return myExtensionSize;
+}
+
+//=======================================================================
+//function : SetShortExtensionSize
+//purpose  : 
+//=======================================================================
+void Prs3d_DimensionAspect::SetShortExtensionSize (const Standard_Real theSize)
+{
+  myShortExtensionSize = theSize;
+}
+
+//=======================================================================
+//function : ShortExtensionSize
+//purpose  : 
+//=======================================================================
+Standard_Real Prs3d_DimensionAspect::ShortExtensionSize() const
+{
+  return myShortExtensionSize;
 }
 
 //=======================================================================

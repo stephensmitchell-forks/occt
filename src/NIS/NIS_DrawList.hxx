@@ -27,6 +27,7 @@ class NIS_InteractiveContext;
  * in the given drawer are removed.
  * When the macro is undefined every draw list is created when needed and it is
  * destroyed when there is no objects to show in this draw list.
+ * @ingroup nis_library
  */
 //#define ARRAY_LISTS
 
@@ -47,7 +48,9 @@ class NIS_DrawList
   Standard_EXPORT NIS_DrawList ();
 
   /**
-   * Constructor
+   * Constructor.
+   * @param theView
+   *   View instance where the list is created; for shared lists it is NULL.
    */
   Standard_EXPORT NIS_DrawList (const Handle_NIS_View& theView);
 
@@ -95,8 +98,12 @@ class NIS_DrawList
    * by BeginPrepare.
    * @param theType
    *   Integer value coinciding with the enumerated NIS_Drawer::DrawType.
+   * @param isComp
+   *   Defines if the list should be compiled and then called. Otherwise
+   *   OpenGL list is not created but the commands are executed immediately.
    */
-  Standard_EXPORT virtual void  EndPrepare     (const Standard_Integer theType);
+  Standard_EXPORT virtual void  EndPrepare     (const Standard_Integer theType,
+                                                const Standard_Boolean isComp);
 
   /**
    * Call the previously prepared list when the screen is redrawn.
@@ -153,7 +160,7 @@ class NIS_DrawList
  NIS_DrawList             (const NIS_DrawList& theOther);
  // NIS_DrawList& operator = (const NIS_DrawList& theOther);
 
- private:
+ protected:
   // ---------- PRIVATE FIELDS ----------
 
   Handle_NIS_View                                myView;
@@ -163,6 +170,7 @@ class NIS_DrawList
   Standard_Integer                               myListID[5];
 #endif
   Standard_Boolean                               myIsUpdated[5];
+  Standard_Boolean                               myIsCompiled;
   NCollection_List<Handle_NIS_InteractiveObject> myDynHilighted;
 };
 

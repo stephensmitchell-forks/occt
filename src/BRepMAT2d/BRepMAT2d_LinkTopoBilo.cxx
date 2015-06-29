@@ -30,7 +30,7 @@
 #include <MAT_Graph.hxx>
 #include <MAT_BasicElt.hxx>
 #include <BRepTools_WireExplorer.hxx>
-#include <BRepMAT2d_SequenceOfBasicElt.hxx>
+#include <MAT_SequenceOfBasicElt.hxx>
 #include <BRepMAT2d_DataMapOfShapeSequenceOfBasicElt.hxx>
 #include <TColStd_DataMapIteratorOfDataMapOfIntegerInteger.hxx>
 #include <TColStd_DataMapOfIntegerInteger.hxx>
@@ -170,7 +170,7 @@ void BRepMAT2d_LinkTopoBilo::LinkToWire(const TopoDS_Wire&              W,
   Handle(MAT_BasicElt)         BE;
   Handle(Standard_Type)        Type;
   TopTools_SequenceOfShape     TopoSeq;
-  BRepMAT2d_SequenceOfBasicElt EmptySeq;
+  MAT_SequenceOfBasicElt       EmptySeq;
 
   TColStd_DataMapIteratorOfDataMapOfIntegerInteger Ite;
   TColStd_DataMapOfIntegerInteger LinkBECont;

@@ -41,7 +41,8 @@ const Handle_NIS_Drawer& NIS_InteractiveObject::SetDrawer
                                          const Standard_Boolean    setUpdated)
 {
   NIS_InteractiveContext * aCtx = theDrawer->GetContext();
-  if (myDrawer.IsNull() == Standard_False) {
+  if (myDrawer.IsNull() == Standard_False)
+  {
     if (aCtx == 0L)
     {
       aCtx = myDrawer->GetContext();
@@ -65,9 +66,12 @@ const Handle_NIS_Drawer& NIS_InteractiveObject::SetDrawer
   {
     // Move the Object from the old drawer to the new one.
     if (myDrawer.IsNull() == Standard_False)
+    {
       myDrawer->removeObject(this, Standard_True);
+    }
     myDrawer = aDrawer;
 
+    ++aCtx->myPriorities[myDrawer->Priority()];
     myDrawer->addObject(this, aCtx->myIsShareDrawList, Standard_True);
   }
   if (setUpdated)
@@ -107,7 +111,7 @@ void NIS_InteractiveObject::SetTransparency (const Standard_Real theValue)
         (aCtx == 0L, "NIS_InteractiveObject::SetTransparency: "
                      "NULL drawer context");
       if (IsTransparent()) {
-        if (myDrawType == NIS_Drawer::Draw_Normal) {
+        if (myDrawType != NIS_Drawer::Draw_Transparent) {
           aCtx->myMapObjects[NIS_Drawer::Draw_Transparent].Add(myID);
           aCtx->myMapObjects[NIS_Drawer::Draw_Normal].Remove(myID);
           myDrawType = NIS_Drawer::Draw_Transparent;
@@ -117,7 +121,7 @@ void NIS_InteractiveObject::SetTransparency (const Standard_Real theValue)
         if (myDrawType == NIS_Drawer::Draw_Transparent) {
           aCtx->myMapObjects[NIS_Drawer::Draw_Normal].Add(myID);
           aCtx->myMapObjects[NIS_Drawer::Draw_Transparent].Remove(myID);
-          myDrawType = NIS_Drawer::Draw_Normal;
+          myDrawType = myBaseType;
         }
         myDrawer->SetUpdated (NIS_Drawer::Draw_Transparent);
       }
@@ -237,4 +241,57 @@ void NIS_InteractiveObject::SetSelectable (const Standard_Boolean isSel) const
       }
     }
   }
+}
+
+//=======================================================================
+//function : SetColor
+//purpose  : Set the color for presentation.
+//=======================================================================
+
+void NIS_InteractiveObject::SetColor (const Quantity_Color&      theColor,
+                                      const NIS_Drawer::DrawType theType)
+{
+  const Handle(NIS_Drawer) aDrawer = DefaultDrawer(0L);
+  aDrawer->Assign (GetDrawer());
+  aDrawer->SetColor(theType, theColor); 
+  SetDrawer (aDrawer);
+}
+
+//=======================================================================
+//function : GetColor
+//purpose  : Get the color for presentation.
+//=======================================================================
+
+Quantity_Color NIS_InteractiveObject::GetColor
+                        (const NIS_Drawer::DrawType theType) const
+{
+  return myDrawer.IsNull() ? Quantity_Color() : myDrawer->GetColor(theType);
+}
+
+//=======================================================================
+//function : SetHilightColors
+//purpose  : Set the colors for hilight and dynamic hilight presentations.
+//=======================================================================
+
+void NIS_InteractiveObject::SetHilightColors (const Quantity_Color& theHLColor,
+                                              const Quantity_Color& theDHLColor)
+{
+  const Handle(NIS_Drawer) aDrawer = DefaultDrawer(0L);
+  aDrawer->Assign (GetDrawer());
+  aDrawer->SetColor(NIS_Drawer::Draw_Hilighted, theHLColor); 
+  aDrawer->SetColor(NIS_Drawer::Draw_DynHilighted, theDHLColor); 
+  SetDrawer (aDrawer);
+}
+
+//=======================================================================
+//function : IsOut
+//purpose  : Check the intersection a line/ray with the bounding box of object.
+//=======================================================================
+
+Standard_Boolean NIS_InteractiveObject::IsOut
+                                        (const gp_Ax1&          theAxis,
+                                         const Standard_Boolean isRay,
+                                         const Standard_Real    theOver)
+{
+    return GetBox().IsOut (theAxis, isRay, theOver);
 }

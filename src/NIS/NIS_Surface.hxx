@@ -17,6 +17,7 @@
 #define NIS_Surface_HeaderFile
 
 #include <NIS_InteractiveObject.hxx>
+#include <NIS_IndexLists.hxx>
 #include <NCollection_BaseAllocator.hxx>
 #include <gp_XYZ.hxx>
 
@@ -39,14 +40,16 @@ class TopoDS_Shape;
  * <p>
  * This class is conceived as replacement of AIS_Shape; both wireframe and
  * shading modes are available for dynamic switching.
+ * @ingroup nis_library
  */
 
 class NIS_Surface : public NIS_InteractiveObject
 {
 public:
   enum DisplayMode {
+    Wireframe,
     Shading,
-    Wireframe
+    PureShading
   };
 
   /**
@@ -61,11 +64,14 @@ public:
    *   Source geometry. It should contain triangulations inside.
    * @param theDeflection
    *   Absolute deflection for meshing 'theShape' if such meshing is needed.
+   * @param isFreeBnd
+   *   To show or not to show the free boundary.
    * @param theAl
    *   Allocator used for nodes and triangles in this presentation.
    */
-  Standard_EXPORT NIS_Surface(const TopoDS_Shape& theShape,
-                              const Standard_Real theDeflection,
+  Standard_EXPORT NIS_Surface(const TopoDS_Shape&    theShape,
+                              const Standard_Real    theDeflection,
+                              const Standard_Boolean isFreeBnd=Standard_False,
                               const Handle_NCollection_BaseAllocator& theAl=0L);
 
   /**
@@ -86,6 +92,18 @@ public:
   Standard_EXPORT void              Clear       ();
 
   /**
+   * Query the number of nodes in Edge List.
+   */
+  Standard_EXPORT Standard_Integer  NEdgeNodeInList
+                                            (const Standard_Integer ind) const;
+
+  /**
+   * Query the number of nodes in Free Edge List.
+   */
+  Standard_EXPORT Standard_Integer  NFreeEdgeNodeInList
+                                            (const Standard_Integer ind) const;
+
+  /**
    * Query the number of nodes.
    */
   inline Standard_Integer           NNodes      () const { return myNNodes; }
@@ -98,7 +116,12 @@ public:
   /**
    * Query the number of edges for wireframe display.
    */
-  inline Standard_Integer           NEdges      () const { return myNEdges; }
+  inline Standard_Integer           NEdges      () const { return myEdges.NArrays(); }
+
+  /**
+   * Query the number of free edges for wireframe display.
+   */
+  inline Standard_Integer           NFreeEdges  () const { return myFreeEdges.NArrays(); }
 
   /**
    * Query the node by its index.
@@ -125,13 +148,23 @@ public:
   /**
    * Access to array of integers that represents an Edge.
    * @return
-   *   Pointer to array where the 0th element is the number of nodes in the edge
-   *   and the elements starting from the 1st are node indices.
+   *   Pointer to array without the 0 element.
    */
   inline const Standard_Integer*
                         Edge            (const Standard_Integer theIndex) const
   {
-    return mypEdges[theIndex];
+    return static_cast <Standard_Integer *>(myEdges.ArrayIndexes(theIndex));
+  }
+
+  /**
+   * Access to array of integers that represents an Free Edge.
+   * @return
+   *   Pointer to array without the 0 element.
+   */
+  inline const Standard_Integer*
+                        FreeEdge            (const Standard_Integer theIndex) const
+  {
+    return static_cast <Standard_Integer *>(myFreeEdges.ArrayIndexes(theIndex));
   }
 
   /**
@@ -146,17 +179,18 @@ public:
   }
 
   /**
+   * Returns status of displayin of free boundaries 
+   */
+  inline Standard_Boolean IsShowFreeBounds() const                  
+  {
+    return myIsShowFreeBoundary;
+  }
+
+  /**
    * Create a default drawer instance.
    */
   Standard_EXPORT virtual NIS_Drawer *
                         DefaultDrawer   (NIS_Drawer *) const;
-
-  /**
-   * Set the normal color for presentation.
-   * @param theColor
-   *   New color to use for the presentation.
-   */
-  Standard_EXPORT void  SetColor        (const Quantity_Color& theColor);
 
   /**
    * Set the color for presentation of the back side of triangles.
@@ -166,11 +200,25 @@ public:
   Standard_EXPORT void  SetBackColor    (const Quantity_Color& theColor);
 
   /**
+   * Define the specularity that is the property of displayed material for both
+   * Front and Back faces. Can be in the range 0 to 1. Default value is 0.58
+   */
+  Standard_EXPORT void  SetSpecularity  (const Standard_Real theValue);
+
+  /**
    * Set the offset for the presentation.
    * @param theValue
    *   New offset to use for the presentation.
    */
   Standard_EXPORT void  SetPolygonOffset (const Standard_Real theValue);
+
+  /**
+   * Set the transformation for this object.
+   * This method is suitable if you need to define transformation for
+   * individual NIS_Surface. For a group of NIS_Surface instances you can
+   * consider the correspondin method of NIS_SurfaceDrawer (it will be faster) 
+   */
+  Standard_EXPORT void  SetTransformation(const gp_Trsf& theTrsf);
 
   /**
    * Set the display mode: Shading or Wireframe.
@@ -185,6 +233,32 @@ public:
                         GetDisplayMode   () const;
 
   /**
+   * Set the hilight display mode: Shading or Wireframe.
+   * The default mode is Shading.
+   * NOTE: this Function works only in a shading mode when rendering the shape.
+   * If the Shape is rendered in Wireframe mode - the hilight display mode
+   * is wireframe
+   */
+  Standard_EXPORT void  SetHilightDisplayMode   (const DisplayMode theMode);
+
+  /**
+   * Query the current hilight display mode: Shading or Wireframe.
+   */
+  Standard_EXPORT DisplayMode
+                        GetHilightDisplayMode   () const;
+
+  /**
+   * Display free boundary of the surface object with the
+   * specified color   
+   */
+  Standard_EXPORT void  ShowFreeBoundary (const Quantity_Color& theColor);
+
+  /**
+   * Hides special precentation of free boundaries
+   */
+  Standard_EXPORT void  HideFreeBoundary ();
+
+  /**
    * Create a copy of theObject except its ID.
    * @param theAll
    *   Allocator where the Dest should store its private data.
@@ -193,8 +267,8 @@ public:
    *   passed NULL then the target should be created.
    */
   Standard_EXPORT virtual void
-                          Clone (const Handle_NCollection_BaseAllocator& theAll,
-                                 Handle_NIS_InteractiveObject& theDest) const;
+                        Clone (const Handle_NCollection_BaseAllocator& theAll,
+                               Handle_NIS_InteractiveObject& theDest) const;
 
   /**
    * Intersect the surface shading/wireframe geometry with a line/ray.
@@ -208,8 +282,22 @@ public:
    *   on the ray. May be negative.
    */
   Standard_EXPORT virtual Standard_Real
-                          Intersect     (const gp_Ax1&       theAxis,
-                                         const Standard_Real theOver) const;
+                        Intersect     (const gp_Ax1&       theAxis,
+                                       const Standard_Real theOver) const;
+
+  /**
+   * Query the normal vector at the intersection point of the surface shading 
+   * geometry with a line/ray.
+   * @param theAxis
+   *   The line or ray in 3D space.
+   * @param theNormal
+   *   The normal direction of intersected triangle.
+   * @return
+   *   True if intersection is found and normal direction is computed.
+   */
+  Standard_EXPORT Standard_Boolean
+                        Intersect     (const gp_Ax1& theAxis,
+                                       gp_Vec&       theNormal) const;
 
   /**
    * Intersect the surface shading/wireframe geometry with an oriented box.
@@ -220,12 +308,12 @@ public:
    * @param isFull
    *   True if full inclusion is required, False - if partial.
    * @return
-   *   True if the InteractiveObject geometry intersects the box or is inside it
+   *   True if the InteractiveObject geometry intersects or is inside the box.
    */
   Standard_EXPORT virtual Standard_Boolean
-                             Intersect     (const Bnd_B3f&         theBox,
-                                            const gp_Trsf&         theTrf,
-                                            const Standard_Boolean isFull)const;
+                        Intersect     (const Bnd_B3f&         theBox,
+                                       const gp_Trsf&         theTrf,
+                                       const Standard_Boolean isFull) const;
 
   /**
    * Intersect the surface shading/wireframe geometry with a selection polygon.
@@ -241,10 +329,10 @@ public:
    *   True if the InteractiveObject geometry intersects the polygon or is
    *   inside it
    */
-  Standard_EXPORT virtual Standard_Boolean Intersect
-                    (const NCollection_List<gp_XY> &thePolygon,
-                     const gp_Trsf                 &theTrf,
-                     const Standard_Boolean         isFullIn) const;
+  Standard_EXPORT virtual Standard_Boolean
+                        Intersect  (const NCollection_List<gp_XY> &thePolygon,
+                                    const gp_Trsf                 &theTrf,
+                                    const Standard_Boolean      isFullIn) const;
 
 protected:
 
@@ -262,8 +350,38 @@ protected:
    * Compute normal to the surface at the node with the given index.
    * Returns true if the vertex is artificial at this node.
    */
-  Standard_Boolean computeNormal (Standard_Integer theIndex,
-                                  gp_XYZ& theNormal) const;
+  Standard_EXPORT Standard_Boolean
+                        computeNormal (Standard_Integer theIndex,
+                                       gp_XYZ&          theNormal) const;
+  
+  /**
+   * Auxiulary function computing intersection of an axis with edges.
+   * This function is used in "intersect" functions.
+   */
+  Standard_EXPORT Standard_Real
+                        intersectEdges(const NIS_IndexLists&    theEdges, 
+                                       const gp_Ax1&            theAxis,
+                                       const Standard_Real      theOver) const;
+
+  /**
+   * Auxiulary function computing intersection of an box (2d rectangle) with
+   * edges. This function is used in "intersect" functions.
+   */
+  Standard_EXPORT Standard_Boolean
+                        intersectEdges(const NIS_IndexLists&    theEdges, 
+                                       const gp_Trsf&           theTrf,
+                                       const Bnd_B3f&           theBox,
+                                       const Standard_Boolean   isFullIn)const;
+
+  /**
+   * Auxiulary function computing intersection of a 2d polygon with edges.
+   * This function is used in "intersect" functions.
+   */
+  Standard_EXPORT Standard_Boolean
+                        intersectEdges(const NIS_IndexLists&    theEdges, 
+                                       const gp_Trsf&           theTrf,
+                                       const NCollection_List<gp_XY> &thePolyg,
+                                       const Standard_Boolean   isFullIn)const;
 
 private:
   Handle_NCollection_BaseAllocator myAlloc;
@@ -274,12 +392,16 @@ private:
   //! Array of triangles (node indices)
   Standard_Integer                 * mypTriangles;
   //! Array of edges, each edge is an array of indices prefixed by N nodes
-  Standard_Integer                 ** mypEdges;
+  NIS_IndexLists                   myEdges;
+  //! Array of free edges, each edge is an array of indices prefixed by N nodes
+  NIS_IndexLists                   myFreeEdges;
   //! Number of nodes in triangles
   Standard_Integer                 myNNodes;
-  Standard_Integer                 myNTriangles;
-  Standard_Integer                 myNEdges;
-  Standard_Boolean                 myIsWireframe;
+  Standard_Integer                 myNTriangles         : 28;
+  Standard_Boolean                 myIsWireframe        :  1;
+  Standard_Boolean                 myHilightIsWireframe :  1;
+  Standard_Boolean                 myIsShowFreeBoundary :  1;
+  Standard_Boolean                 myIsShowEdges        :  1;
 
 public:
 // Declaration of CASCADE RTTI

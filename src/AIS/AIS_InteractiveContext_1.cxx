@@ -51,6 +51,7 @@
 #include <TColStd_ListIteratorOfListOfInteger.hxx>
 #include <SelectMgr_Selection.hxx>
 #include <SelectBasics_SensitiveEntity.hxx>
+#include <StdSelect_BRepOwner.hxx>
 
 #ifdef IMP150501
 #include <Visual3d_TransientManager.hxx>
@@ -146,6 +147,7 @@ AIS_StatusOfDetection AIS_InteractiveContext::MoveTo(const Standard_Integer XPix
     //Nullify class members storing information about detected AIS objects.
   myAISCurDetected = 0;
   myAISDetectedSeq.Clear();
+  myAISDetectedShapes.Clear();
 #endif
 
   // OCC11904 - local variables made non-static - it looks and works better like this
@@ -183,7 +185,16 @@ AIS_StatusOfDetection AIS_InteractiveContext::MoveTo(const Standard_Integer XPix
         Handle(AIS_InteractiveObject) anObj = 
 		Handle(AIS_InteractiveObject)::DownCast(anEntityOwner->Selectable());
         if(!Handle(AIS_Shape)::DownCast(anObj).IsNull())
+        {
           myAISDetectedSeq.Append(anObj);
+          
+          // Memorize detected shape.
+          TopoDS_Shape detectedShape;
+          Handle(StdSelect_BRepOwner) aBRepOwner = Handle(StdSelect_BRepOwner)::DownCast(anEntityOwner);
+          if (!aBRepOwner.IsNull() && aBRepOwner->HasShape())
+            detectedShape = aBRepOwner->Shape();
+          myAISDetectedShapes.Append(detectedShape);
+        }
       }
   }
 #endif
@@ -1418,7 +1429,11 @@ const TopoDS_Shape& AIS_InteractiveContext::DetectedCurrentShape() const
   static TopoDS_Shape bidsh;
   if(myAISCurDetected > 0 &&
      myAISCurDetected <= myAISDetectedSeq.Length())
-    return Handle(AIS_Shape)::DownCast(myAISDetectedSeq(myAISCurDetected))->Shape();
+  {
+    if (myAISDetectedShapes(myAISCurDetected).IsNull())
+      return Handle(AIS_Shape)::DownCast(myAISDetectedSeq(myAISCurDetected))->Shape();
+    return myAISDetectedShapes(myAISCurDetected);
+  }
   return bidsh;
 }
 

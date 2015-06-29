@@ -229,9 +229,9 @@ void VrmlData_ShapeConvert::Convert (const Standard_Boolean theExtractFaces,
                 TopLoc_Location aL;
 
                 Standard_Boolean found = Standard_False;
-                for(i = 1; ; i++) {
+                for(Standard_Integer j = 1; Standard_True; j++) {
                   
-                  BRep_Tool::PolygonOnTriangulation(aEdge, aPT, aT, aL, i);
+                  BRep_Tool::PolygonOnTriangulation(aEdge, aPT, aT, aL, j);
 
                   if(aPT.IsNull() || aT.IsNull()) break;
 

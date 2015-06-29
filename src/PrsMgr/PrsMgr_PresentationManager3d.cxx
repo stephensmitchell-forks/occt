@@ -86,7 +86,7 @@ void PrsMgr_PresentationManager3d::Color(const Handle(PrsMgr_PresentableObject)&
   else if(Presentation(aPresentableObject,aMode)->MustBeUpdated()){
     Update(aPresentableObject,aMode);
   }
-  CastPresentation(aPresentableObject,aMode)->Color(aColor); 
+  CastPresentation(aPresentableObject,aMode)->HighlightWithColor (aColor);
   
   if(myImmediateMode)
     Add(aPresentableObject,aMode);
