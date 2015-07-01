@@ -73,9 +73,10 @@ Handle(CDM_MetaData) CDM_MetaData::LookUp(const Handle(Storage_IODevice)& aDevic
   if ( !aDevice.IsNull() )
     aSig = aDevice->Signature();
 
-  if( !getLookUpTable().IsBound(aSig) ) {
+  if ( aSig.IsEmpty() || !getLookUpTable().IsBound(aSig) ) {
     theMetaData = new CDM_MetaData(aDevice, ReadOnly);
-    getLookUpTable().Bind(aSig, theMetaData);
+    if ( !aSig.IsEmpty() )
+        getLookUpTable().Bind(aSig, theMetaData);
   }
   else
     theMetaData = getLookUpTable()(aSig);
@@ -89,9 +90,10 @@ Handle(CDM_MetaData) CDM_MetaData::LookUp(const Handle(Storage_IODevice)& aDevic
   if ( !aDevice.IsNull() )
     aSig = aDevice->Signature();
 
-  if( !getLookUpTable().IsBound(aSig) ) {
+  if ( aSig.IsEmpty() || !getLookUpTable().IsBound(aSig) ) {
     theMetaData = new CDM_MetaData(aDevice, aVersion, ReadOnly);
-    getLookUpTable().Bind(aSig, theMetaData);
+    if ( !aSig.IsEmpty() )
+        getLookUpTable().Bind(aSig, theMetaData);
   }
   else
     theMetaData = getLookUpTable()(aSig);

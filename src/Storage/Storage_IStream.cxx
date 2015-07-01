@@ -177,9 +177,7 @@ Standard_Size Storage_IStream::Write (const Standard_Address /*theBuffer*/, cons
 //=======================================================================
 TCollection_AsciiString Storage_IStream::Signature() const
 {
-  Standard_Character buf[256];
-  sprintf( buf, "%lx", (unsigned long)myStream );
-  return TCollection_AsciiString( buf );
+  return TCollection_AsciiString();
 }
 
 //=======================================================================
