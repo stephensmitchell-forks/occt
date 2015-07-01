@@ -31,14 +31,25 @@ public:
   //! theHasUVNodes flag indicates whether 2D nodes will be associated with 3D ones, (i.e. to enable a 2D representation).
   Standard_EXPORT Poly_Mesh (const Standard_Boolean theHasUVNodes = Standard_False);
 
-  //! Adds triangle to the mesh.
+  //! Adds element to the mesh.
+  //! @param theN1 index of the first node.
+  //! @param theN2 index of the second node.
+  //! @param theN3 index of the third node.
   //! @return index of the added element.
-  Standard_EXPORT Standard_Integer AddTriangle (const Poly_Triangle& theTriangle) Standard_OVERRIDE;
+  Standard_EXPORT Standard_Integer AddElement (const Standard_Integer theN1,
+                                               const Standard_Integer theN2,
+                                               const Standard_Integer theN3);
 
   //! Adds element to the mesh.
+  //! @param theN1 index of the first node.
+  //! @param theN2 index of the second node.
+  //! @param theN3 index of the third node.
+  //! @param theN4 index of the fourth node.
   //! @return index of the added element.
-  //! Raises exception if at least one of the element indices is less than 1 or greater than NbTriangles.
-  Standard_EXPORT Standard_Integer AddElement (const Poly_Element& theElement);
+  Standard_EXPORT Standard_Integer AddElement (const Standard_Integer theN1,
+                                               const Standard_Integer theN2,
+                                               const Standard_Integer theN3,
+                                               const Standard_Integer theN4);
 
   //! @return the number of elements for this mesh.
   Standard_Integer NbElements() const { return myElements.Size(); }
@@ -53,6 +64,13 @@ public:
   //! Give access to the element at the given index.
   //! Raises Standard_OutOfRange exception if theIndex is less than 1 or greater than NbElements.
   Standard_EXPORT void SetElement (const Standard_Integer theIndex, const Poly_Element& theElement);
+
+protected:
+
+  //! Adds element to the mesh.
+  //! @param theElement element to add.
+  //! @return index of the added element.
+  Standard_EXPORT Standard_Integer addElement (const Poly_Element& theElement);
 
 private:
 

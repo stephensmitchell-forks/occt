@@ -29,14 +29,16 @@ Poly_Mesh::Poly_Mesh (const Standard_Boolean theHasUVNodes)
 {}
 
 //=======================================================================
-//function : AddTriangle
+//function : AddElement
 //purpose  :
 //=======================================================================
 
-Standard_Integer Poly_Mesh::AddTriangle (const Poly_Triangle& theTriangle)
+Standard_Integer Poly_Mesh::AddElement (const Standard_Integer theN1,
+                                        const Standard_Integer theN2,
+                                        const Standard_Integer theN3)
 {
-  Standard_Integer anIndex = Poly_Triangulation::AddTriangle (theTriangle);
-  return AddElement (Poly_Element (anIndex, 0));
+  Standard_Integer anIndex = Poly_Triangulation::AddTriangle ( Poly_Triangle(theN1, theN2, theN3) );
+  return addElement( Poly_Element(anIndex, 0) );
 }
 
 //=======================================================================
@@ -44,14 +46,14 @@ Standard_Integer Poly_Mesh::AddTriangle (const Poly_Triangle& theTriangle)
 //purpose  :
 //=======================================================================
 
-Standard_Integer Poly_Mesh::AddElement (const Poly_Element& theElement)
+Standard_Integer Poly_Mesh::AddElement (const Standard_Integer theN1,
+                                        const Standard_Integer theN2,
+                                        const Standard_Integer theN3,
+                                        const Standard_Integer theN4)
 {
-  myElements.Append (theElement);
-  if (theElement.Value (2) != 0)
-  {
-    myNbQuads++;
-  }
-  return myElements.Size();
+  Standard_Integer anIndex1 = Poly_Triangulation::AddTriangle ( Poly_Triangle(theN1, theN2, theN3) );
+  Standard_Integer anIndex2 = Poly_Triangulation::AddTriangle ( Poly_Triangle(theN1, theN3, theN4) );
+  return addElement( Poly_Element(anIndex1, anIndex2) );
 }
 
 //=======================================================================
@@ -86,4 +88,19 @@ void Poly_Mesh::SetElement (const Standard_Integer theIndex, const Poly_Element&
   }
 
   myElements.SetValue (theIndex - 1, theElement);
+}
+
+//=======================================================================
+//function : addElement
+//purpose  :
+//=======================================================================
+
+Standard_Integer Poly_Mesh::addElement (const Poly_Element& theElement)
+{
+  myElements.Append (theElement);
+  if (theElement.Value (2) != 0)
+  {
+    myNbQuads++;
+  }
+  return myElements.Size();
 }
