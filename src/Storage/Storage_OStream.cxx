@@ -167,14 +167,9 @@ Standard_Size Storage_OStream::Read( const Standard_Address /*theBuffer*/, const
 //purpose  : 
 //=======================================================================
 Standard_Size Storage_OStream::Write (const Standard_Address theBuffer, const Standard_Size theSize)
-{ 
-  Storage_Position aPosBefore = Tell();
-
-  myStream->write ((char*)theBuffer, theSize);
-
-  Storage_Position aPosAfter = Tell();
-
-  return aPosAfter - aPosBefore;
+{
+  myStream->write((char*)theBuffer, theSize);
+  return theSize;
 }
 
 //=======================================================================
@@ -183,9 +178,7 @@ Standard_Size Storage_OStream::Write (const Standard_Address theBuffer, const St
 //=======================================================================
 TCollection_AsciiString Storage_OStream::Signature() const
 {
-  Standard_Character buf[256];
-  sprintf( buf, "%lx", (unsigned long)myStream );
-  return TCollection_AsciiString( buf );
+  return TCollection_AsciiString();
 }
 
 //=======================================================================
