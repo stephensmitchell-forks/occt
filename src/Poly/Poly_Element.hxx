@@ -41,7 +41,7 @@ public:
 
   //! Returns the triangles indices of this element in theTriangle1, theTriangle2.
   Standard_EXPORT void Get (Standard_Integer& theTriangle1,
-                            Standard_Integer& theTriangle2);
+                            Standard_Integer& theTriangle2) const;
 
   //! @return the triangle index of given element theIndex.
   //! Raises OutOfRange from Standard if theIndex is not in 1,2.

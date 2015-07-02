@@ -53,7 +53,7 @@ void Poly_Element::Set (const Standard_Integer theTriangle1,
 //=======================================================================
 
 void Poly_Element::Get (Standard_Integer& theTriangle1,
-                        Standard_Integer& theTriangle2)
+                        Standard_Integer& theTriangle2) const
 {
   theTriangle1 = myTriangles[0];
   theTriangle2 = myTriangles[1];
