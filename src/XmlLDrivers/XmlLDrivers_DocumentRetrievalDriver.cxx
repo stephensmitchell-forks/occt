@@ -199,16 +199,35 @@ void XmlLDrivers_DocumentRetrievalDriver::Read
   LDOMParser aParser;
 
   Standard_Boolean aRes = Standard_True;
-  Handle(Storage_File) aFile = Handle(Storage_File)::DownCast(theDevice);
-  Handle(Storage_IStream) aStream = Handle(Storage_IStream)::DownCast(theDevice);
+  Handle(Storage_File) aFile = Handle(Storage_File)::DownCast(myDevice);
   if ( !aFile.IsNull() )
   {
     TCollection_AsciiString aPath( aFile->Path() );
     aRes = aParser.parse( aPath.ToCString() );
   }
-  else if ( !aStream.IsNull() && aStream->Stream() )
+  else if ( !myDevice.IsNull() && myDevice->CanRead() )
   {
-    aRes = aParser.parse( *aStream->Stream() );
+    if ( myDevice->Open( Storage_VSRead ) == Storage_VSOk )
+    {
+        Standard_Size aSize = 8000;
+        char* aBuf = (char*)malloc( aSize );
+        std::string aStr;
+        while ( !myDevice->IsEnd() )
+        {
+            Standard_Size aNum = myDevice->Read( aBuf, aSize );
+            aStr.append( aBuf, aNum );
+        }
+        free( aBuf );
+
+        myDevice->Close();
+
+        Standard_SStream aStream( std::ios::in );
+        aStream.str( aStr );
+
+        aRes = aParser.parse( aStream );
+    }
+    else
+        myReaderStatus = PCDM_RS_OpenError;
   }
 
   if (aRes)

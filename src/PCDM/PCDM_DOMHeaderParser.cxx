@@ -22,17 +22,29 @@ Standard_Boolean PCDM_DOMHeaderParser::parse( const Handle(Storage_IODevice)& an
 {
   Standard_Boolean aRes = Standard_True;
   Handle(Storage_File) aFile = Handle(Storage_File)::DownCast(anInput);
-  Handle(Storage_IStream) aStream = Handle(Storage_IStream)::DownCast(anInput);
   if ( !aFile.IsNull() )
   {
     TCollection_AsciiString aPath( aFile->Path() );
     aRes = LDOMParser::parse( aPath.ToCString() );
   }
-  else if ( !aStream.IsNull() && aStream->Stream() )
+  else if ( !anInput.IsNull() && anInput->CanRead() )
   {
-    aStream->Open(Storage_VSRead);
-    aRes = LDOMParser::parse( *aStream->Stream() );
-    aStream->Close();
+    Standard_Size aSize = 8000;
+    char* aBuf = (char*)malloc( aSize );
+    anInput->Open(Storage_VSRead);
+    std::string aStr;
+    while ( !anInput->IsEnd() )
+    {
+        Standard_Size aNum = anInput->Read( aBuf, aSize );
+        aStr.append( aBuf, aNum );
+    }
+    anInput->Close();
+    free( aBuf );
+
+    Standard_SStream aStream( std::ios::in );
+    aStream.str( aStr );
+
+    aRes = LDOMParser::parse( aStream );
   }
   return aRes;
 }

@@ -200,8 +200,6 @@ PCDM_ReaderStatus CDF_Application::CanRetrieve(Handle(Storage_IODevice)& aDevice
     }
   }
 
-  aDevice->Close();
-
   return PCDM_RS_OK;
 }
 

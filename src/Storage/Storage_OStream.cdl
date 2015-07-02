@@ -23,6 +23,7 @@ uses Position       from Storage,
      Error          from Storage,
      OStream        from Standard,
      OStreamPtr     from Standard,
+     SStream        from Standard,
      ExtendedString from TCollection
 
 raises StreamTypeMismatchError from Storage,
@@ -34,8 +35,6 @@ is
     Create (theStream: in out OStream from Standard) returns OStream from Storage;
 
     Delete (me: mutable) is redefined;
-
-    Stream (me) returns OStreamPtr from Standard;
 
     Name (me) returns ExtendedString from TCollection is redefined;
 
@@ -69,5 +68,6 @@ is
     ---C++: return &
 
 fields
-    myStream: OStreamPtr from Standard;
+    myBuffer : SStream from Standard;
+    myStream : OStreamPtr from Standard;
 end;

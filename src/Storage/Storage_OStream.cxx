@@ -5,6 +5,8 @@
 
 #include <Storage_OStream.ixx>
 
+#include <Standard_SStream.hxx>
+
 #include <TCollection_AsciiString.hxx>
 #include <TCollection_ExtendedString.hxx>
 
@@ -12,9 +14,10 @@
 //function : Storage_OStream
 //purpose  : Constructor
 //=======================================================================
-Storage_OStream::Storage_OStream (Standard_OStream& theStream)
+Storage_OStream::Storage_OStream( Standard_OStream& theStream )
   : Storage_IODevice(),
-    myStream (&theStream)
+    myStream( &theStream ),
+    myBuffer( std::ios::out | std::ios::binary )
 {
 }
 
@@ -24,15 +27,6 @@ Storage_OStream::Storage_OStream (Standard_OStream& theStream)
 //=======================================================================
 void Storage_OStream::Delete()
 {
-}
-
-//=======================================================================
-//function : Stream
-//purpose  : 
-//=======================================================================
-Standard_OStreamPtr Storage_OStream::Stream() const
-{
-  return myStream;
 }
 
 //=======================================================================
@@ -50,7 +44,7 @@ TCollection_ExtendedString Storage_OStream::Name() const
 //=======================================================================
 Storage_Error Storage_OStream::Open (const Storage_OpenMode theMode)
 {
-  if (theMode != Storage_VSWrite || theMode != Storage_VSAppend)
+  if (theMode != Storage_VSWrite && theMode != Storage_VSAppend)
   {
     return Storage_VSOpenError;
   }
@@ -68,11 +62,11 @@ Storage_Error Storage_OStream::Open (const Storage_OpenMode theMode)
       SetOpenMode (theMode);
       
       // clear flags and set the position where the next character is to be inserted 
-      myStream->clear();
+      myBuffer.clear();
       if ( theMode == Storage_VSWrite )
-        myStream->seekp(0, ios::beg);
+        myBuffer.seekp(0, ios::beg);
       else
-        myStream->seekp(0, ios::end);
+        myBuffer.seekp(0, ios::end);
     }
   }
   else
@@ -89,7 +83,7 @@ Storage_Error Storage_OStream::Open (const Storage_OpenMode theMode)
 //=======================================================================
 Standard_Boolean Storage_OStream::IsEnd() const
 {
-  return myStream->eof();
+  return myBuffer.eof();
 }
 
 //=======================================================================
@@ -98,7 +92,7 @@ Standard_Boolean Storage_OStream::IsEnd() const
 //=======================================================================
 Storage_Position Storage_OStream::Tell()
 {
-  return Storage_Position (myStream->tellp());
+  return Storage_Position( myBuffer.tellp() );
 }
 
 //=======================================================================
@@ -110,18 +104,18 @@ Standard_Boolean Storage_OStream::Seek (const Storage_Position& thePos, const St
   switch ( aMode )
   {
   case Storage_SMEnd:
-    myStream->seekp(thePos, ios::end);
+    myBuffer.seekp(thePos, ios::end);
     break;
   case Storage_SMCur:
-    myStream->seekp(thePos, ios::cur);
+    myBuffer.seekp(thePos, ios::cur);
     break;
   case Storage_SMBegin:
   default:
-    myStream->seekp(thePos, ios::beg);
+    myBuffer.seekp(thePos, ios::beg);
     break;
   }
 
-  return !myStream->fail();
+  return !myBuffer.fail();
 }
 
 //=======================================================================
@@ -131,6 +125,10 @@ Standard_Boolean Storage_OStream::Seek (const Storage_Position& thePos, const St
 Standard_Boolean Storage_OStream::Close()
 {
   SetOpenMode( Storage_VSNone );
+
+  std::string aStr = myBuffer.str();
+
+  myStream->write( aStr.c_str(), aStr.size() );
 
   return Standard_True;
 }
@@ -150,7 +148,7 @@ Standard_Boolean Storage_OStream::CanRead() const
 //=======================================================================
 Standard_Boolean Storage_OStream::CanWrite() const
 {
-  return myStream->good();
+  return myBuffer.good() && myStream->good();
 }
 
 //=======================================================================
@@ -168,7 +166,7 @@ Standard_Size Storage_OStream::Read( const Standard_Address /*theBuffer*/, const
 //=======================================================================
 Standard_Size Storage_OStream::Write (const Standard_Address theBuffer, const Standard_Size theSize)
 {
-  myStream->write((char*)theBuffer, theSize);
+  myBuffer.write((char*)theBuffer, theSize);
   return theSize;
 }
 
