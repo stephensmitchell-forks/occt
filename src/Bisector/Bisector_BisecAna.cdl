@@ -127,7 +127,7 @@ is
 	     Bis   :        Bisec   from GccInt     ;
              V1    :        Vec2d   from gp         ;
              V2    :        Vec2d   from gp         ; 
-	     AreVectorsNotTangents : Boolean from Standard;
+	     VecRef:        Vec2d   from gp         ;
              Sense :        Real    from Standard   ;
              U     :    out Real    from Standard   ;
     	     sense :    out Boolean from Standard   ;
