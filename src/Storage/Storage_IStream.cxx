@@ -5,6 +5,8 @@
 
 #include <Storage_IStream.ixx>
 
+#include <Standard_SStream.hxx>
+
 #include <TCollection_AsciiString.hxx>
 #include <TCollection_ExtendedString.hxx>
 
@@ -14,7 +16,8 @@
 //=======================================================================
 Storage_IStream::Storage_IStream (Standard_IStream& theStream)
   : Storage_IODevice(),
-    myStream (&theStream)
+    myStream( &theStream ),
+    myBuffer( std::ios::in | std::ios::binary )
 {
 }
 
@@ -24,15 +27,6 @@ Storage_IStream::Storage_IStream (Standard_IStream& theStream)
 //=======================================================================
 void Storage_IStream::Delete()
 {
-}
-
-//=======================================================================
-//function : Path
-//purpose  : 
-//=======================================================================
-Standard_IStreamPtr Storage_IStream::Stream() const
-{
-  return myStream;
 }
 
 //=======================================================================
@@ -59,17 +53,15 @@ Storage_Error Storage_IStream::Open (const Storage_OpenMode theMode)
   
   if (OpenMode() == Storage_VSNone)
   {
-    if (!myStream->good()) // not good for eof
-    {
+    if ( !myBuffer.good() ) // not good for eof
       anOpenResult = Storage_VSOpenError;
-    }
     else
     {
       SetOpenMode (theMode);
-      
+
       // clear flags and set the position where the next character is to be inserted 
-      myStream->clear();
-      Seek(0);
+      myBuffer.clear();
+      Seek( 0 );
     }
   }
   else
@@ -86,7 +78,7 @@ Storage_Error Storage_IStream::Open (const Storage_OpenMode theMode)
 //=======================================================================
 Standard_Boolean Storage_IStream::IsEnd() const
 {
-  return myStream->eof();
+  return myBuffer.eof() && myStream->eof();
 }
 
 //=======================================================================
@@ -95,7 +87,7 @@ Standard_Boolean Storage_IStream::IsEnd() const
 //=======================================================================
 Storage_Position Storage_IStream::Tell()
 {
-  return Storage_Position (myStream->tellg());
+  return Storage_Position( myBuffer.tellg() );
 }
 
 //=======================================================================
@@ -104,21 +96,37 @@ Storage_Position Storage_IStream::Tell()
 //=======================================================================
 Standard_Boolean Storage_IStream::Seek (const Storage_Position& thePos, const Storage_SeekMode aMode )
 {
-  switch ( aMode )
+  if ( aMode == Storage_SMEnd )
   {
-  case Storage_SMEnd:
-    myStream->seekg(thePos, ios::end);
-    break;
-  case Storage_SMCur:
-    myStream->seekg(thePos, ios::cur);
-    break;
-  case Storage_SMBegin:
-  default:
-    myStream->seekg(thePos, ios::beg);
-    break;
+    fillBuffer();
+    myBuffer.seekg( thePos, ios::end );
+  }
+  else
+  {
+    Standard_Size aCur = myBuffer.tellg();
+    Standard_Size aPos = aMode == Storage_SMBegin ? thePos : aCur + thePos;
+    if ( aPos > aCur )
+    {
+      myBuffer.seekg( 0, ios::end );
+      Standard_Size aLast = myBuffer.tellg();
+      if ( aLast < aPos )
+      {
+        Standard_Size aCount = aPos - aLast;
+        char* aBuf = (char*)malloc( aCount );
+        myStream->read( aBuf, aCount );
+        Standard_Size aNum = (Standard_Size)myStream->gcount();
+        std::string& aStr = myBuffer.str();
+        aStr.append( (char*)aBuf, aNum );
+        myBuffer.str( aStr );
+        free( aBuf );
+        aPos = aLast + aNum;
+      }
+    }
+    if ( aPos != aCur )
+      myBuffer.seekg( aPos );
   }
 
-  return !myStream->fail();
+  return !myBuffer.fail();
 }
 
 //=======================================================================
@@ -128,8 +136,7 @@ Standard_Boolean Storage_IStream::Seek (const Storage_Position& thePos, const St
 Standard_Boolean Storage_IStream::Close()
 {
   SetOpenMode( Storage_VSNone );
-  myStream->clear();
-  Seek(0);
+  myBuffer.clear();
 
   return Standard_True;
 }
@@ -140,7 +147,7 @@ Standard_Boolean Storage_IStream::Close()
 //=======================================================================
 Standard_Boolean Storage_IStream::CanRead() const
 {
-  return myStream->good();
+    return myBuffer.good() || myStream->good();
 }
 
 //=======================================================================
@@ -156,10 +163,28 @@ Standard_Boolean Storage_IStream::CanWrite() const
 //function : Read
 //purpose  : 
 //=======================================================================
-Standard_Size Storage_IStream::Read (const Standard_Address theBuffer, const Standard_Size theSize)
+Standard_Size Storage_IStream::Read( const Standard_Address theBuffer, const Standard_Size theSize )
 {
-  myStream->read((char*)theBuffer, theSize);
-  return (Standard_Size)myStream->gcount();
+  myBuffer.read((char*)theBuffer, theSize);
+  Standard_Size aCount = (Standard_Size)myBuffer.gcount();
+  if ( aCount < theSize )
+  {
+    myStream->read((char*)theBuffer + aCount, theSize - aCount  );
+    Standard_Size aNum = (Standard_Size)myStream->gcount();
+
+    if ( aNum > 0 )
+    {
+      std::string aStr = myBuffer.str();
+      aStr.append( (char*)theBuffer + aCount, aNum );
+      myBuffer.str( aStr );
+      aCount += aNum;
+
+      myBuffer.clear();
+      myBuffer.seekg( 0, std::ios::end );
+    }
+  }
+
+  return aCount;
 }
 
 //=======================================================================
@@ -187,4 +212,27 @@ TCollection_AsciiString Storage_IStream::Signature() const
 Standard_OStream& Storage_IStream::Print (Standard_OStream& theOStream) const
 {
   return theOStream;
+}
+
+//=======================================================================
+//function : fillBuffer
+//purpose  : 
+//=======================================================================
+void Storage_IStream::fillBuffer()
+{
+  Standard_Size aCur = myBuffer.tellg();
+
+  Standard_Size aSize = 8000;
+  char* aBuf = (char*)malloc( aSize );
+  while ( !myStream->eof() )
+  {
+    myStream->read( aBuf, aSize );
+    Standard_Size aNum = (Standard_Size)myStream->gcount();
+    std::string aStr = myBuffer.str();
+    aStr.append( (char*)aBuf, aNum );
+    myBuffer.str( aStr );
+  }
+  free( aBuf );
+
+  myBuffer.seekg( aCur );
 }
