@@ -59,7 +59,15 @@ public:
 
   //! @return element at the given index.
   //! Raises Standard_OutOfRange exception if theIndex is less than 1 or greater than NbElements.
-  Standard_EXPORT const Poly_Element& Element (const Standard_Integer theIndex);
+  Standard_EXPORT const Poly_Element& Element (const Standard_Integer theIndex) const;
+
+  //! @return nodes of the element at the given index.
+  //! Raises Standard_OutOfRange exception if theIndex is less than 1 or greater than NbElements.
+  Standard_EXPORT void Element (const Standard_Integer theIndex,
+                                Standard_Integer& theN1,
+                                Standard_Integer& theN2,
+                                Standard_Integer& theN3,
+                                Standard_Integer& theN4) const;
 
   //! Give access to the element at the given index.
   //! Raises Standard_OutOfRange exception if theIndex is less than 1 or greater than NbElements.

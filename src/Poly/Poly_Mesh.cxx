@@ -61,11 +61,40 @@ Standard_Integer Poly_Mesh::AddElement (const Standard_Integer theN1,
 //purpose  :
 //=======================================================================
 
-const Poly_Element& Poly_Mesh::Element (const Standard_Integer theIndex)
+const Poly_Element& Poly_Mesh::Element (const Standard_Integer theIndex) const
 {
   Standard_OutOfRange_Raise_if (theIndex < 1 || theIndex > myElements.Size(),
                                 "Poly_Element::Element : index out of range");
   return myElements.Value (theIndex - 1);
+}
+
+//=======================================================================
+//function : Element
+//purpose  :
+//=======================================================================
+
+void Poly_Mesh::Element (const Standard_Integer theIndex,
+                         Standard_Integer& theN1,
+                         Standard_Integer& theN2,
+                         Standard_Integer& theN3,
+                         Standard_Integer& theN4) const
+{
+  const Poly_Element& anElem = Element(theIndex);
+  Standard_Integer aTriIdx1, aTriIdx2;
+  anElem.Get(aTriIdx1, aTriIdx2);
+
+  // Get node indices for the first triangle
+  const Poly_Triangle& aTri1 = Poly_Triangulation::Triangle(aTriIdx1);
+  aTri1.Get(theN1, theN2, theN3);
+
+  // If the second triangle exists, take its node indices for quad
+  if (aTriIdx2)
+  {
+    const Poly_Triangle& aTri2 = Poly_Triangulation::Triangle(aTriIdx2);
+    aTri2.Get(theN1, theN3, theN4);
+  }
+  else
+    theN4 = 0;
 }
 
 //=======================================================================
