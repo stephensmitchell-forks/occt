@@ -115,7 +115,7 @@ Standard_Boolean Storage_IStream::Seek (const Storage_Position& thePos, const St
         char* aBuf = (char*)malloc( aCount );
         myStream->read( aBuf, aCount );
         Standard_Size aNum = (Standard_Size)myStream->gcount();
-        std::string& aStr = myBuffer.str();
+        std::string aStr = myBuffer.str();
         aStr.append( (char*)aBuf, aNum );
         myBuffer.str( aStr );
         free( aBuf );
