@@ -88,12 +88,15 @@ is
     Perform(me: in out;
             Pnts1    : ThePOPIterator;
             Pnts2    : ThePOLIterator;
+	    Pnts3    : ThePOLIterator;
             Func     : in out TheIWFunction;
 	    S        : ThePSurface;
             Reversed : Boolean from Standard = Standard_False)
      
-    	---Purpose: Searches a set of polylines starting on a point of Pnts1
-    	--          or Pnts2.
+    	---Purpose: Searches a set of polylines starting on a point of
+    	--          Pnts1 (border start points),
+    	--          or Pnts2 (inner start points),
+    	--          or Pnts3 (inner tangent start points)
     	--          Each point on a resulting polyline verifies F(u,v)=0
 
         is static;
@@ -180,7 +183,6 @@ is
 
         is static;
     
-
 -- -- private
 
     Cadrage(me; BornInf, BornSup, UVap : in out Vector from math;
@@ -206,16 +208,25 @@ is
     returns Boolean from Standard
     is static protected;		      
 
+    TestArretPassageTang (me: in out; Umult  : SequenceOfReal from TColStd;
+                                  Vmult  : SequenceOfReal from TColStd;
+                                  UV     : Vector from math;
+                                  Index  : Integer from Standard;
+	          	          Irang  : out Integer from Standard) 
+    returns Boolean from Standard
+    is static protected;		      
+
     TestArretAjout(me: in out; Section: in out TheIWFunction;
 		               UV     : in out Vector from math;
     	                       Irang  : out Integer from Standard; 
-                               PSol   : out PntOn2S from IntSurf )
+                               PSol   : out PntOn2S from IntSurf;
+			       OnPrevTangency : out Boolean from Standard)
     returns Boolean from Standard
     is static protected;		      
 		    
     TestArretCadre(me : in out; Umult  : SequenceOfReal from TColStd;
                                 Vmult  : SequenceOfReal from TColStd;
-                                Line   : TheIWLine;
+                                Line   : mutable TheIWLine;
 				Section: in out TheIWFunction;
                                 UV     : in out Vector from math;
                                 Irang  : out Integer from Standard)
@@ -227,9 +238,12 @@ is
                                UV              : Vector from math;
 		               StatusPrecedent : StatusDeflection from IntWalk;
                                NbDivision      : in out Integer from Standard;
-                               Step           : in out Real from Standard;
+                               Step            : in out Real from Standard;
 --                               StepV           : in out Real from Standard;
-                               StepSign        : Integer from Standard)
+                               StepSign        : Integer from Standard;
+			       CurNbPoints     : Integer from Standard;
+			       ArretAjout      : Boolean from Standard;
+			       OnPrevTangency  : Boolean from Standard)
     returns StatusDeflection from IntWalk		    
     is static protected;		      
 
@@ -244,20 +258,21 @@ is
                           Psol   : PntOn2S from IntSurf;
 			  Pnts1  : ThePOPIterator;
  			  Section: in out TheIWFunction;
-                          Line   : TheIWLine)
+                          Line   : mutable TheIWLine)
     is static protected;	
 
     ComputeCloseLine(me : in out; Umult  : SequenceOfReal from TColStd;
                                   Vmult  : SequenceOfReal from TColStd;
                                   Pnts1  : ThePOPIterator;
 				  Pnts2  : ThePOLIterator;
+				  Pnts3  : ThePOLIterator;
                                   Section: in out TheIWFunction;
                                   Rajout : in out Boolean from Standard)
     is static protected;	
 
     AddPointInCurrentLine(me ; N           : Integer from Standard;
                                PathPnt     : ThePointOfPath;
-                               CurrentLine : TheIWLine)
+                               CurrentLine : mutable TheIWLine)
     is static protected;
 
     MakeWalkingPoint(me : in out ; Case    : Integer from Standard;
@@ -265,6 +280,26 @@ is
 				   Section : in out TheIWFunction;
                                    Psol    : in out PntOn2S from IntSurf)
 
+    is static protected;
+    
+    FindExactCuspPoint(me : in out ; Section : in out TheIWFunction;
+    	    	    	    	     Psol    : in out PntOn2S from IntSurf;
+				     PrevSignOfBcoeff : Integer from Standard;
+				     SignOfBcoeff     : Integer from Standard)
+    is static protected;
+    
+    FindExactTangentPoint(me : in out ; TolTang : Real from Standard;
+    	    	    	    	    	Section : in out TheIWFunction;
+    	    	    	    	    	Psol    : in out PntOn2S from IntSurf)
+    is static protected;
+    
+    ComputeDirOfTangentialIntersection(me : in out; Section : in out TheIWFunction;
+    	    	    	    	     	    	    StepSign: in out Integer from Standard;
+						    IsDiscriminantNull: out Boolean from Standard;
+						    SignOfBcoeff: in out Integer from Standard;
+						    NewD3d: out Vec   from gp;
+						    NewD2d: out Dir2d from gp)
+    returns Boolean from Standard
     is static protected;
     
     Clear (me: in out) is static protected;
@@ -283,6 +318,7 @@ fields
 
     wd1                 : VectorOfWalkingData from IntWalk;
     wd2                 : VectorOfWalkingData from IntWalk;
+    wd3                 : VectorOfWalkingData from IntWalk;
     nbMultiplicities    : VectorOfInteger   from IntWalk;
     Um                  : Real              from Standard; -- Min U de la surf
     UM                  : Real              from Standard; -- Max U de la surf
@@ -291,7 +327,9 @@ fields
     previousPoint       : PntOn2S           from IntSurf;
     previousd3d         : Vec               from gp;
     previousd2d         : Dir2d             from gp;
+    IsTangentialIntersection : Boolean      from Standard;
     seqAjout            : SequenceOfInteger from TColStd; 
     lines               : SequenceOfIWLine;
+    
 end IWalking;
 
