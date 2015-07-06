@@ -842,10 +842,7 @@ void OpenGl_Window::Init()
   eglQuerySurface ((EGLDisplay )myGlContext->myDisplay, (EGLSurface )myGlContext->myWindow, EGL_WIDTH,  &myWidth);
   eglQuerySurface ((EGLDisplay )myGlContext->myDisplay, (EGLSurface )myGlContext->myWindow, EGL_HEIGHT, &myHeight);
 #elif defined(_WIN32)
-  RECT cr;
-  GetClientRect ((HWND )myGlContext->myWindow, &cr);
-  myWidth  = cr.right - cr.left;
-  myHeight = cr.bottom - cr.top;
+  //
 #else
   Window aRootWin;
   int aDummy;

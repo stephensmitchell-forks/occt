@@ -206,6 +206,12 @@ is
   ---Level: Public
   ---Purpose: Invalidates view content but does not redraw it.
 
+  IsInvalidated ( me )
+  returns Boolean from Standard
+  is static;
+  ---Level: Public
+  ---Purpose: Returns true if cached view content has been invalidated.
+
 	Redraw ( me	: mutable;
 		 AnUnderLayer	: Layer from Visual3d;
 		 AnOverLayer	: Layer from Visual3d;
