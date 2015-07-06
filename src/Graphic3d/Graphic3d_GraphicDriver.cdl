@@ -238,6 +238,12 @@ is
     is deferred;
     ---Purpose: Invalidates content of the view but does not redraw it
 
+    IsInvalidated ( me;
+                    theCView : CView from Graphic3d )
+    returns Boolean from Standard
+    is deferred;
+    ---Purpose: Returns true if cached view content has been invalidated
+
     RemoveView ( me     : mutable;
                 ACView  : CView from Graphic3d )
         is deferred;

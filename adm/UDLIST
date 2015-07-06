@@ -204,6 +204,7 @@ p Image
 p MeshVS
 p NIS
 p OpenGl
+p D3DHost
 p Prs3d
 p PrsMgr
 p Select3D
@@ -223,6 +224,7 @@ r Shaders
 t TKMeshVS
 t TKNIS
 t TKOpenGl
+t TKD3DHost
 t TKService
 t TKV3d
 t TKVoxel

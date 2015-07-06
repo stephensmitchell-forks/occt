@@ -204,6 +204,12 @@ is
         ---Level: Public
         ---Purpose: Invalidates view content but does not redraw it.
 
+        IsInvalidated ( me )
+        returns Boolean from Standard
+        is static;
+        ---Level: Public
+        ---Purpose: Returns true if cached view content has been invalidated.
+
         Redraw ( me ;x,y,width,height: Integer from Standard);
         ---Level: Public
         ---Purpose: Redisplays the view area after esxposure.
