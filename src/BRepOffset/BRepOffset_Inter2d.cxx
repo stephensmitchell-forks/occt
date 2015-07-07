@@ -805,7 +805,6 @@ static void RefEdgeInter(const TopoDS_Face&              F,
   }
 }
 
-
 //======================================================================
 //function : EvaluateMaxSegment
 //purpose  : return MaxSegment to pass in approximation
@@ -1465,7 +1464,8 @@ void BRepOffset_Inter2d::ConnexIntByInt
  BRepOffset_Offset&            OFI,
  TopTools_DataMapOfShapeShape& MES,
  const TopTools_DataMapOfShapeShape& Build,
- const Handle(BRepAlgo_AsDes)&     AsDes,
+ const Handle(BRepAlgo_AsDes)& AsDes,
+ const Handle(BRepAlgo_AsDes)& AsDes2d,
  const Standard_Real           Offset,
  const Standard_Real           Tol)
 //  Modified by skv - Fri Dec 26 16:53:18 2003 OCC4455 End
@@ -1503,10 +1503,18 @@ void BRepOffset_Inter2d::ConnexIntByInt
       }
     } 
   }
-  
+
   TopoDS_Face           FIO = TopoDS::Face(OFI.Face());
   if (MES.IsBound(FIO)) FIO = TopoDS::Face(MES(FIO));
-
+  //
+  TopTools_MapOfShape aME;
+  const TopTools_ListOfShape& aLE = AsDes->Descendant(FIO);
+  TopTools_ListIteratorOfListOfShape aItLE(aLE);
+  for (; aItLE.More(); aItLE.Next()) {
+    const TopoDS_Shape& aE = aItLE.Value();
+    aME.Add(aE);
+  }
+  //
   BRepAdaptor_Surface BAsurf(FIO);
   
   TopExp_Explorer exp(FI.Oriented(TopAbs_FORWARD),TopAbs_WIRE);
@@ -1573,7 +1581,28 @@ void BRepOffset_Inter2d::ConnexIntByInt
         for (Exp1.Init(NE1,TopAbs_EDGE) ; Exp1.More(); Exp1.Next()) {
           for (Exp2.Init(NE2,TopAbs_EDGE) ; Exp2.More(); Exp2.Next()) {
             RefEdgeInter(FIO,BAsurf,TopoDS::Edge(Exp1.Current()),TopoDS::Edge(Exp2.Current()),
-                         AsDes,Tol,Standard_True/*Standard_False*/, Pref);
+                         AsDes2d,Tol,Standard_True/*Standard_False*/, Pref);
+          }
+        }
+        //
+        if (Build.IsBound(Vref)) {
+          TopoDS_Shape NE3 = Build(Vref);
+          //
+          for (Exp2.Init(NE3,TopAbs_EDGE) ; Exp2.More(); Exp2.Next()) {
+            const TopoDS_Edge& aE3 = *(TopoDS_Edge*)&Exp2.Current();
+            if (!aME.Contains(aE3)) {
+              continue;
+            }
+            //
+            for (Exp1.Init(NE1,TopAbs_EDGE) ; Exp1.More(); Exp1.Next()) {
+              RefEdgeInter(FIO,BAsurf,TopoDS::Edge(Exp1.Current()),aE3,
+                           AsDes2d,Tol,Standard_True/*Standard_False*/, Pref);
+            }
+            //
+            for (Exp1.Init(NE2,TopAbs_EDGE) ; Exp1.More(); Exp1.Next()) {
+              RefEdgeInter(FIO,BAsurf,TopoDS::Edge(Exp1.Current()),aE3,
+                           AsDes2d,Tol,Standard_True/*Standard_False*/, Pref);
+            }
           }
         }
       }
@@ -1581,18 +1610,15 @@ void BRepOffset_Inter2d::ConnexIntByInt
         if (MES.IsBound(CEO)) {
           TopoDS_Vertex  V = CommonVertex(CEO,NEO); 
           UpdateVertex  (V,CEO,TopoDS::Edge(MES(CEO)),Tol);
-          AsDes->Add     (MES(CEO),V);
+          AsDes2d->Add     (MES(CEO),V);
         }
         else if (MES.IsBound(NEO)) {
           TopoDS_Vertex V = CommonVertex(CEO,NEO); 
           UpdateVertex (V,NEO,TopoDS::Edge(MES(NEO)),Tol);
-          AsDes->Add    (MES(NEO),V);
+          AsDes2d->Add    (MES(NEO),V);
         }
       }
       CurE = NextE;
     }
   }
 }
-
-
-
