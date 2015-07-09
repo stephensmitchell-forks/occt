@@ -28,8 +28,13 @@ class Poly_Mesh : public Poly_Triangulation
 public:
 
   //! Constructs an empty mesh.
-  //! theHasUVNodes flag indicates whether 2D nodes will be associated with 3D ones, (i.e. to enable a 2D representation).
+  //! @param theHasUVNodes indicates whether 2D nodes will be associated with
+  //!        3D ones, (i.e. to enable a 2D representation).
   Standard_EXPORT Poly_Mesh (const Standard_Boolean theHasUVNodes = Standard_False);
+
+  //! Constructs a mesh from existing triangulation.
+  //! @param theTriangulation source triangulation.
+  Standard_EXPORT Poly_Mesh (const Handle(Poly_Triangulation)& theTriangulation);
 
   //! Adds element to the mesh.
   //! @param theN1 index of the first node.
