@@ -1,0 +1,84 @@
+-- Created on: 2015-07-31
+-- Created by: data exchange team
+-- Copyright (c) 2000-2015 OPEN CASCADE SAS
+--
+-- This file is part of Open CASCADE Technology software library.
+--
+-- This library is free software; you can redistribute it and/or modify it under
+-- the terms of the GNU Lesser General Public License version 2.1 as published
+-- by the Free Software Foundation, with special exception defined in the file
+-- OCCT_LGPL_EXCEPTION.txt. Consult the file LICENSE_LGPL_21.txt included in OCCT
+-- distribution for complete text of the license and disclaimer of any warranty.
+--
+-- Alternatively, this file may be used under the terms of Open CASCADE
+-- commercial license or contractual agreement.
+
+class GeomToleranceObject from XCAFDimTolObjects inherits Transient from Standard
+
+	---Purpose: attribute to store dimension and tolerance
+
+uses
+    HArray1OfReal from TColStd,
+    HAsciiString from TCollection,
+    GeomToleranceType from XCAFDimTolObjects,
+    GeomToleranceTypeValue from XCAFDimTolObjects,
+    GeomToleranceMatReqModif from XCAFDimTolObjects,
+    GeomToleranceZoneModif from XCAFDimTolObjects,
+    GeomToleranceModifiersSequence from XCAFDimTolObjects,
+    GeomToleranceModif from XCAFDimTolObjects
+    
+is
+
+    Create returns GeomToleranceObject from XCAFDimTolObjects;
+    
+    Create(theObj : GeomToleranceObject from XCAFDimTolObjects) returns GeomToleranceObject from XCAFDimTolObjects;
+    
+    ---Category: class methods
+    --           =============
+
+    SetType (me : mutable; theType : GeomToleranceType from XCAFDimTolObjects);
+
+    GetType (me) returns GeomToleranceType from XCAFDimTolObjects;
+
+    SetTypeOfValue (me : mutable; theTypeOfValue : GeomToleranceTypeValue from XCAFDimTolObjects);
+
+    GetTypeOfValue (me) returns GeomToleranceTypeValue from XCAFDimTolObjects;
+
+    SetValue (me : mutable; theValue : Real from Standard);
+
+    GetValue (me) returns Real from Standard;
+
+    SetMaterialRequirementModifier (me : mutable; theGeomToleranceMatReqModif : GeomToleranceMatReqModif from XCAFDimTolObjects);
+
+    GetMaterialRequirementModifier (me) returns GeomToleranceMatReqModif from XCAFDimTolObjects;
+
+    SetZoneModifier (me : mutable; theGeomToleranceZoneModif : GeomToleranceZoneModif from XCAFDimTolObjects);
+
+    GetZoneModifier (me) returns GeomToleranceZoneModif from XCAFDimTolObjects;
+
+    SetValueOfZoneModifier (me : mutable; theValue : Real from Standard);
+
+    GetValueOfZoneModifier (me) returns Real from Standard;
+
+    SetModifiers (me : mutable; theModifiers : GeomToleranceModifiersSequence from XCAFDimTolObjects);
+
+    AddModifier (me : mutable; theModifier : GeomToleranceModif from XCAFDimTolObjects);
+
+    GetModifiers (me) returns GeomToleranceModifiersSequence from XCAFDimTolObjects;
+
+    SetMaxValueModifier (me : mutable; theModifier : Real from Standard);
+
+    GetMaxValueModifier (me) returns Real from Standard;
+ 
+
+fields
+    myType :  GeomToleranceType from XCAFDimTolObjects;
+    myTypeOfValue : GeomToleranceTypeValue from XCAFDimTolObjects ;
+    myValue : Real from Standard ;
+    myMatReqModif : GeomToleranceMatReqModif from XCAFDimTolObjects ;
+    myZoneModif : GeomToleranceZoneModif from XCAFDimTolObjects;
+    myValueOfZoneModif : Real from Standard;
+    myModifiers : GeomToleranceModifiersSequence from XCAFDimTolObjects;
+    myMaxValueModif : Real from Standard ;
+    
+end GeomToleranceObject;

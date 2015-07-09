@@ -1,0 +1,291 @@
+-- Created on: 2015-07-31
+-- Created by: data exchange team
+-- Copyright (c) 2000-2015 OPEN CASCADE SAS
+--
+-- This file is part of Open CASCADE Technology software library.
+--
+-- This library is free software; you can redistribute it and/or modify it under
+-- the terms of the GNU Lesser General Public License version 2.1 as published
+-- by the Free Software Foundation, with special exception defined in the file
+-- OCCT_LGPL_EXCEPTION.txt. Consult the file LICENSE_LGPL_21.txt included in OCCT
+-- distribution for complete text of the license and disclaimer of any warranty.
+--
+-- Alternatively, this file may be used under the terms of Open CASCADE
+-- commercial license or contractual agreement.
+
+package XCAFDimTolObjects
+
+    ---Purpose:
+        
+uses
+    TCollection,
+    TColStd,
+    TopoDS,
+    gp,
+    TColgp,
+    XCAFDoc,
+    TDocStd
+    
+is
+
+    enumeration DimensionType is
+	---Purpose: Defines types of dimension
+        DimensionType_Location_None,
+        DimensionType_Location_CurvedDistance,        
+        DimensionType_Location_LinearDistance,        
+        DimensionType_Location_LinearDistance_FromCenterToOuter,        
+        DimensionType_Location_LinearDistance_FromCenterToInner,        
+        DimensionType_Location_LinearDistance_FromOuterToCenter,        
+        DimensionType_Location_LinearDistance_FromOuterToOuter,        
+        DimensionType_Location_LinearDistance_FromOuterToInner,        
+        DimensionType_Location_LinearDistance_FromInnerToCenter,        
+        DimensionType_Location_LinearDistance_FromInnerToOuter,
+        DimensionType_Location_LinearDistance_FromInnerToInner,        
+        DimensionType_Location_Angular,
+        DimensionType_Location_Oriented,
+        DimensionType_Location_WithPath,
+        DimensionType_Size_CurveLength,
+        DimensionType_Size_Diameter,
+        DimensionType_Size_SphericalDiameter,
+        DimensionType_Size_Radius,
+        DimensionType_Size_SphericalRadius,
+        DimensionType_Size_ToroidalMinorDiameter,
+        DimensionType_Size_ToroidalMajorDiameter,
+        DimensionType_Size_ToroidalMinorRadius,
+        DimensionType_Size_ToroidalMajorRadius,
+        DimensionType_Size_ToroidalHighMajorDiameter,
+        DimensionType_Size_ToroidalLowMajorDiameter,
+        DimensionType_Size_ToroidalHighMajorRadius,
+        DimensionType_Size_ToroidalLowMajorRadius,
+        DimensionType_Size_Thickness,
+        DimensionType_Size_Angular,
+        DimensionType_Size_WithPath
+    end DimensionType;
+
+    enumeration DimensionQualifier is
+	---Purpose: Defines types of qualifier
+        DimensionQualifier_None,        
+        DimensionQualifier_Min,
+	DimensionQualifier_Max,
+	DimensionQualifier_Avg 
+    end DimensionQualifier;
+
+    enumeration DimensionFormVariance is
+	---Purpose: Defines value of form variance
+        DimensionFormVariance_None,        
+        DimensionFormVariance_A,
+        DimensionFormVariance_B,
+        DimensionFormVariance_C,
+        DimensionFormVariance_CD,
+        DimensionFormVariance_D,
+        DimensionFormVariance_E,
+        DimensionFormVariance_EF,
+        DimensionFormVariance_F,
+        DimensionFormVariance_FG,
+        DimensionFormVariance_G,
+        DimensionFormVariance_H,
+        DimensionFormVariance_JS,
+        DimensionFormVariance_J,
+        DimensionFormVariance_K,
+        DimensionFormVariance_M,
+        DimensionFormVariance_N,
+        DimensionFormVariance_P,
+        DimensionFormVariance_R,
+        DimensionFormVariance_S,
+        DimensionFormVariance_T,
+        DimensionFormVariance_U,
+        DimensionFormVariance_V,
+        DimensionFormVariance_X,
+        DimensionFormVariance_Y,
+        DimensionFormVariance_Z,
+        DimensionFormVariance_ZA,
+        DimensionFormVariance_ZB,
+        DimensionFormVariance_ZC
+    end DimensionFormVariance;
+
+    enumeration DimensionGrade is
+	---Purpose: Defines value of grade
+        DimensionGrade_IT01,        
+        DimensionGrade_IT0,
+        DimensionGrade_IT1,
+        DimensionGrade_IT2,
+        DimensionGrade_IT3,
+        DimensionGrade_IT4,
+        DimensionGrade_IT5,
+        DimensionGrade_IT6,
+        DimensionGrade_IT7,
+        DimensionGrade_IT8,
+        DimensionGrade_IT9,
+        DimensionGrade_IT10,
+        DimensionGrade_IT11,
+        DimensionGrade_IT12,
+        DimensionGrade_IT13,
+        DimensionGrade_IT14,
+        DimensionGrade_IT15,
+        DimensionGrade_IT16,
+        DimensionGrade_IT17,
+        DimensionGrade_IT18 
+    end DimensionGrade;
+
+    enumeration GeomToleranceType is
+	---Purpose: Defines types of geom tolerance
+        GeomToleranceType_None,
+        GeomToleranceType_Angularity,        
+        GeomToleranceType_CircularRunout,        
+        GeomToleranceType_CircularityOrRoundness,        
+        GeomToleranceType_Coaxiality,        
+        GeomToleranceType_Concentricity,        
+        GeomToleranceType_Cylindricity,        
+        GeomToleranceType_Flatness,        
+        GeomToleranceType_Parallelism,        
+        GeomToleranceType_Perpendicularity,        
+        GeomToleranceType_Position,        
+        GeomToleranceType_ProfileOfLine,        
+        GeomToleranceType_ProfileOfSurface,        
+        GeomToleranceType_Straightness,        
+        GeomToleranceType_Symmetry,
+        GeomToleranceType_TotalRunout
+    end GeomToleranceType;
+
+    enumeration GeomToleranceTypeValue is
+	---Purpose: Defines types of value of tolerane
+        GeomToleranceTypeValue_None,        
+        GeomToleranceTypeValue_Diameter,
+        GeomToleranceTypeValue_SphericalDiameter
+    end GeomToleranceTypeValue;
+
+    enumeration GeomToleranceMatReqModif is
+	---Purpose: Defines types of material requirement
+        GeomToleranceMatReqModif_None,        
+        GeomToleranceMatReqModif_M,        
+        GeomToleranceMatReqModif_L
+    end GeomToleranceMatReqModif;
+
+    enumeration GeomToleranceZoneModif is
+	---Purpose: Defines types of zone
+        GeomToleranceZoneModif_None,        
+        GeomToleranceZoneModif_P,
+        GeomToleranceZoneModif_NonUniform
+    end GeomToleranceZoneModif;
+
+
+    enumeration DatumSingleModif is
+	---Purpose: Defines modifirs 
+        DatumSingleModif_AnyCrossSection,
+        DatumSingleModif_Any_LongitudinalSection,
+        DatumSingleModif_Basic,
+        DatumSingleModif_ContactingFeature,
+        DatumSingleModif_DegreeOfFreedomConstraintU,
+        DatumSingleModif_DegreeOfFreedomConstraintV,
+        DatumSingleModif_DegreeOfFreedomConstraintW,
+        DatumSingleModif_DegreeOfFreedomConstraintX,
+        DatumSingleModif_DegreeOfFreedomConstraintY,
+        DatumSingleModif_DegreeOfFreedomConstraintZ,
+        DatumSingleModif_DistanceVariable,
+        DatumSingleModif_FreeState,
+        DatumSingleModif_LeastMaterialRequirement,
+        DatumSingleModif_Line,
+        DatumSingleModif_MajorDiameter,
+        DatumSingleModif_MaximumMaterialRequirement,
+        DatumSingleModif_MinorDiameter,
+        DatumSingleModif_Orientation,
+        DatumSingleModif_PitchDiameter,
+        DatumSingleModif_Plane,
+        DatumSingleModif_Point,
+        DatumSingleModif_Translation 
+    end DatumSingleModif;
+
+    enumeration DatumModifWithValue is
+	---Purpose: Defines modifirs 
+        DatumModifWithValue_None,
+        DatumModifWithValue_CircularOrCylindrical,
+        DatumModifWithValue_Distance,
+        DatumModifWithValue_Projected,
+        DatumModifWithValue_Spherical 
+    end DatumModifWithValue;
+
+    enumeration DimensionModif is
+	---Purpose: Defines modifirs
+        DimensionModif_ControlledRadius,
+        DimensionModif_Square,
+        DimensionModif_StatisticalTolerance,
+        DimensionModif_ContinuousFeature,
+        DimensionModif_TwoPointSize,
+        DimensionModif_LocalSizeDefinedBySphere,
+        DimensionModif_LeastSquaresAssociationCriterion,
+        DimensionModif_MaximumInscribedAssociation,
+        DimensionModif_MinimumCircumscribedAssociation,
+        DimensionModif_CircumferenceDiameter,
+        DimensionModif_AreaDiameter,
+        DimensionModif_VolumeDiameter,
+        DimensionModif_MaximumSize,
+        DimensionModif_MinimumSize,
+        DimensionModif_AverageSize,
+        DimensionModif_MedianSize,
+        DimensionModif_MidRangeSize,
+        DimensionModif_RangeOfSizes,
+        DimensionModif_AnyRestrictedPortionOfFeature,
+        DimensionModif_AnyCrossSection,
+        DimensionModif_SpecificFixedCrossSection,
+        DimensionModif_CommonTolerance,
+        DimensionModif_FreeStateCondition,
+        DimensionModif_Between
+    end DimensionModif;
+
+    enumeration GeomToleranceModif is
+	---Purpose: Defines modifirs 
+        GeomToleranceModif_Any_Cross_Section,
+        GeomToleranceModif_Common_Zone,
+        GeomToleranceModif_Each_Radial_Element,
+        GeomToleranceModif_Free_State,
+        GeomToleranceModif_Least_Material_Requirement,
+        GeomToleranceModif_Line_Element,
+        GeomToleranceModif_Major_Diameter,
+        GeomToleranceModif_Maximum_Material_Requirement,
+        GeomToleranceModif_Minor_Diameter,
+        GeomToleranceModif_Not_Convex,
+        GeomToleranceModif_Pitch_Diameter,
+        GeomToleranceModif_Reciprocity_Requirement,
+        GeomToleranceModif_Separate_Requirement,
+        GeomToleranceModif_Statistical_Tolerance,
+        GeomToleranceModif_Tangent_Plane
+    end GeomToleranceModif;
+
+        
+    class DimensionObject;
+
+    class GeomToleranceObject;
+
+    class DatumObject;
+
+    class Tool;
+    
+    class DimensionObjectSequence instantiates Sequence from TCollection
+    	(DimensionObject from XCAFDimTolObjects);
+    	---Purpose: class for containing Dimension.
+
+    class GeomToleranceObjectSequence instantiates Sequence from TCollection
+    	(GeomToleranceObject from XCAFDimTolObjects);
+    	---Purpose: class for containing GeomTolerances.
+
+    class DatumObjectSequence instantiates Sequence from TCollection
+    	(DatumObject from XCAFDimTolObjects);
+    	---Purpose: class for containing Datums.
+
+    class DimensionModifiersSequence instantiates Sequence from TCollection
+    	(DimensionModif from XCAFDimTolObjects);
+    	---Purpose: class for containing modifiers of Dimension.
+
+    class GeomToleranceModifiersSequence instantiates Sequence from TCollection
+    	(GeomToleranceModif from XCAFDimTolObjects);
+    	---Purpose: class for containing modifiers of GeomTolerances.
+
+    class DatumModifiersSequence instantiates Sequence from TCollection
+    	(DatumSingleModif from XCAFDimTolObjects);
+    	---Purpose: class for containing modifiers of Datums.
+
+    class DataMapOfToleranceDatum instantiates DataMap from TCollection 
+    (GeomToleranceObject from XCAFDimTolObjects,DatumObject from XCAFDimTolObjects,MapTransientHasher  from  TColStd); 
+    	---Purpose:
+                                                                                                 	    	
+end XCAFDimTolObjects;                                                  

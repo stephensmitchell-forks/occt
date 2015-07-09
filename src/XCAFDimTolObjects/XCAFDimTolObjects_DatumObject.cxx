@@ -11,162 +11,132 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#include <XCAFDoc_DimTol.ixx>
-
-#include <TDF_RelocationTable.hxx>
+#include <XCAFDimTolObjects_DatumObject.ixx>
 
 
 //=======================================================================
-//function : XCAFDoc_DimTol
+//function : XCAFDimTolObjects_DatumObject
 //purpose  : 
 //=======================================================================
 
-XCAFDoc_DimTol::XCAFDoc_DimTol()
+XCAFDimTolObjects_DatumObject::XCAFDimTolObjects_DatumObject()
 {
 }
 
-
 //=======================================================================
-//function : GetID
+//function : XCAFDimTolObjects_DatumObject
 //purpose  : 
 //=======================================================================
 
-const Standard_GUID& XCAFDoc_DimTol::GetID() 
+XCAFDimTolObjects_DatumObject::XCAFDimTolObjects_DatumObject(const Handle(XCAFDimTolObjects_DatumObject)& theObj)
 {
-  static Standard_GUID DGTID ("58ed092d-44de-11d8-8776-001083004c77");
-  //static Standard_GUID ID("efd212e9-6dfd-11d4-b9c8-0060b0ee281b");
-  return DGTID; 
-  //return ID;
+  myName = theObj->myName;
+  myModifiers = theObj->myModifiers;
+  myModifierWithValue = theObj->myModifierWithValue;
+  myValueOfModifier = theObj->myValueOfModifier;
+  myDatumTarget = theObj->myDatumTarget;
 }
-
-
-//=======================================================================
-//function : Set
-//purpose  : 
-//=======================================================================
-
-Handle(XCAFDoc_DimTol) XCAFDoc_DimTol::Set(const TDF_Label& label,
-                                           const Standard_Integer kind,
-                                           const Handle(TColStd_HArray1OfReal)& aVal,
-                                           const Handle(TCollection_HAsciiString)& aName,
-                                           const Handle(TCollection_HAsciiString)& aDescription) 
-{
-  Handle(XCAFDoc_DimTol) A;
-  if (!label.FindAttribute(XCAFDoc_DimTol::GetID(), A)) {
-    A = new XCAFDoc_DimTol();
-    label.AddAttribute(A);
-  }
-  A->Set(kind,aVal,aName,aDescription); 
-  return A;
-}
-
-
-//=======================================================================
-//function : Set
-//purpose  : 
-//=======================================================================
-
-void XCAFDoc_DimTol::Set(const Standard_Integer kind,
-                         const Handle(TColStd_HArray1OfReal)& aVal,
-                         const Handle(TCollection_HAsciiString)& aName,
-                         const Handle(TCollection_HAsciiString)& aDescription) 
-{
-  Backup();
-  myKind = kind;
-  myVal = aVal;
-  myName = aName;
-  myDescription = aDescription;
-}
-
-
-//=======================================================================
-//function : GetKind
-//purpose  : 
-//=======================================================================
-
-Standard_Integer XCAFDoc_DimTol::GetKind() const
-{
-  return myKind;
-}
-
-
-//=======================================================================
-//function : GetVal
-//purpose  : 
-//=======================================================================
-
-Handle(TColStd_HArray1OfReal) XCAFDoc_DimTol::GetVal() const
-{
-  return myVal;
-}
-
 
 //=======================================================================
 //function : GetName
 //purpose  : 
 //=======================================================================
 
-Handle(TCollection_HAsciiString) XCAFDoc_DimTol::GetName() const
+Handle(TCollection_HAsciiString) XCAFDimTolObjects_DatumObject::GetName() const
 {
+  if(myName.IsNull())
+    return new TCollection_HAsciiString();
   return myName;
 }
 
-
 //=======================================================================
-//function : GetDescription
+//function : SetName
 //purpose  : 
 //=======================================================================
 
-Handle(TCollection_HAsciiString) XCAFDoc_DimTol::GetDescription() const
+void XCAFDimTolObjects_DatumObject::SetName(const Handle(TCollection_HAsciiString)& theName)
 {
-  return myDescription;
+  myName = theName;
 }
 
-
 //=======================================================================
-//function : ID
+//function : GetModifiers
 //purpose  : 
 //=======================================================================
 
-const Standard_GUID& XCAFDoc_DimTol::ID() const
+XCAFDimTolObjects_DatumModifiersSequence XCAFDimTolObjects_DatumObject::GetModifiers() const
 {
-  return GetID();
+  return myModifiers;
 }
 
-
 //=======================================================================
-//function : Restore
+//function : SetModifiers
 //purpose  : 
 //=======================================================================
 
-void XCAFDoc_DimTol::Restore(const Handle(TDF_Attribute)& With) 
+void XCAFDimTolObjects_DatumObject::SetModifiers(const XCAFDimTolObjects_DatumModifiersSequence& theModifiers)
 {
-  myKind = Handle(XCAFDoc_DimTol)::DownCast(With)->GetKind();
-  myVal = Handle(XCAFDoc_DimTol)::DownCast(With)->GetVal();
-  myName = Handle(XCAFDoc_DimTol)::DownCast(With)->GetName();
-  myDescription = Handle(XCAFDoc_DimTol)::DownCast(With)->GetDescription();
+  myModifiers = theModifiers;
 }
 
-
 //=======================================================================
-//function : NewEmpty
+//function : SetModifierWithValue
 //purpose  : 
 //=======================================================================
 
-Handle(TDF_Attribute) XCAFDoc_DimTol::NewEmpty() const
+void XCAFDimTolObjects_DatumObject::SetModifierWithValue(const XCAFDimTolObjects_DatumModifWithValue theModifier, const Standard_Real theValue)
 {
-  return new XCAFDoc_DimTol();
+  myModifierWithValue = theModifier;
+  myValueOfModifier = theValue;
 }
 
-
 //=======================================================================
-//function : Paste
+//function : GetModifierWithValue
 //purpose  : 
 //=======================================================================
 
-void XCAFDoc_DimTol::Paste(const Handle(TDF_Attribute)& Into,
-                           const Handle(TDF_RelocationTable)& /*RT*/) const
+void XCAFDimTolObjects_DatumObject::GetModifierWithValue(XCAFDimTolObjects_DatumModifWithValue& theModifier, Standard_Real& theValue) const
 {
-  Handle(XCAFDoc_DimTol)::DownCast(Into)->Set(myKind,myVal,myName,myDescription);
+  theModifier = myModifierWithValue;
+  theValue = myValueOfModifier;
+}
+  
+//=======================================================================
+//function : AddModifier
+//purpose  : 
+//=======================================================================
+
+void XCAFDimTolObjects_DatumObject::AddModifier(const XCAFDimTolObjects_DatumSingleModif theModifier)
+{
+  myModifiers.Append(theModifier);
 }
 
+//=======================================================================
+//function : GetDatumTarget
+//purpose  : 
+//=======================================================================
+
+TopoDS_Shape XCAFDimTolObjects_DatumObject::GetDatumTarget()  const
+{
+  return myDatumTarget;
+}
+
+//=======================================================================
+//function : SetDatumTarget
+//purpose  : 
+//=======================================================================
+
+void XCAFDimTolObjects_DatumObject::SetDatumTarget (const TopoDS_Shape& theShape) 
+{
+  myDatumTarget = theShape;
+}
+  
+//=======================================================================
+//function : IsDatumTarget
+//purpose  : 
+//=======================================================================
+
+Standard_Boolean XCAFDimTolObjects_DatumObject::IsDatumTarget()  const
+{
+  return !myDatumTarget.IsNull();
+}

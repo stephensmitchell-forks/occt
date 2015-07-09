@@ -402,6 +402,7 @@ p VrmlAPI
 p VrmlConverter
 p VrmlData
 p XCAFApp
+p XCAFDimTolObjects
 p XCAFDoc
 p XCAFDrivers
 p XCAFPrs

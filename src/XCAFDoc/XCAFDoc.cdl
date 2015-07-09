@@ -34,12 +34,14 @@ uses
     Quantity,
     TCollection,
     TColStd,
+    TColgp,
     TopLoc,
     TopoDS,
     TopTools,
     TDF,
     TDocStd,
     TDataStd,
+    XCAFDimTolObjects,
     gp
     
 is
@@ -56,7 +58,6 @@ is
 	ColorSurf,  -- color of surfaces
 	ColorCurv   -- color of curves
     end ColorType;
-
         
     class DocumentTool;
     
@@ -65,9 +66,13 @@ is
     class Color;
     
     class DimTol;
-    
+
+    class Dimension;
+
+    class GeomTolerance;
+
     class Datum;
-    
+
     class Material;
     
     class Volume;
@@ -93,6 +98,7 @@ is
     class GraphNodeSequence instantiates Sequence from TCollection
     	(GraphNode from XCAFDoc);
     	---Purpose: class for containing GraphNodes.
+
 	    	
     class DataMapOfShapeLabel instantiates
     	  DataMap from TCollection (Shape from TopoDS,
@@ -113,9 +119,15 @@ is
 	
     DimTolRefGUID returns GUID from Standard;
     	---Purpose: Return GUIDs for TreeNode representing specified types of DGT
+
+    DimensionRefGUID returns GUID from Standard;
+    	---Purpose: Return GUIDs for TreeNode representing specified types of Dimension
 	
     DatumRefGUID returns GUID from Standard;
     	---Purpose: Return GUIDs for TreeNode representing specified types of datum
+
+    GeomToleranceRefGUID returns GUID from Standard;
+    	---Purpose: Return GUIDs for TreeNode representing specified types of GeomTolerance
 	
     DatumTolRefGUID returns GUID from Standard;
     	---Purpose: Return GUIDs for TreeNode representing connections Datum-Toler

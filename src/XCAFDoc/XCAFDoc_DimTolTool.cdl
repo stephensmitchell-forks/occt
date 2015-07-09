@@ -27,6 +27,9 @@ uses
     LabelSequence from TDF,
     Document from TDocStd,
     ShapeTool from XCAFDoc,
+    GeomTolerance from XCAFDoc,
+    Datum from XCAFDoc,
+    Dimension from XCAFDoc,
     RelocationTable from TDF,
     HArray1OfReal from TColStd,
     HAsciiString from TCollection
@@ -51,6 +54,61 @@ is
     ShapeTool (me: mutable) returns ShapeTool from XCAFDoc;
     	---Purpose: Returns internal XCAFDoc_ShapeTool tool
 	---C++: return const &
+
+
+
+    -- Methods for Dimension:
+
+    IsDimension (me; theLab: Label from TDF) returns Boolean;
+    	---Purpose: Returns True if label belongs to a dimtoltable and
+        --          is a Dimension definition 
+
+    GetDimensionLabels (me; theLabels: out LabelSequence from TDF);
+    	---Purpose: Returns a sequence of Dimensions labels currently stored 
+        --          in the DGTtable
+
+
+    SetDimension (me; theFirstL: Label from TDF;
+                   theSecondL: Label from TDF;
+		   theDimTolL: Label from TDF);
+    	---Purpose: Sets a link with GUID
+
+    SetDimension (me; theL: Label from TDF;
+		   theDimTolL: Label from TDF);
+    	---Purpose: Sets a link with GUID
+
+    GetRefDimensionLabels (me; theShapeL: Label from TDF; theDimensions: out LabelSequence from TDF) 
+    returns Boolean;
+    	---Purpose: Returns all Dimension labels defined for label ShapeL
+
+    AddDimension (me : mutable)
+    returns Label from TDF;
+    	---Purpose: Adds a dimension definition to a DGTtable and returns its label
+
+
+
+    -- Methods for GeomTolerance:
+
+    IsGeomTolerance (me; theLab: Label from TDF) returns Boolean;
+    	---Purpose: Returns True if label belongs to a dimtoltable and
+        --          is a DimTol definition 
+
+    GetGeomToleranceLabels (me; theLabels: out LabelSequence from TDF);
+    	---Purpose: Returns a sequence of Tolerance labels currently stored 
+        --          in the DGTtable
+
+    SetGeomTolerance (me; theL: Label from TDF;
+		   theDimTolL: Label from TDF);
+    	---Purpose: Sets a link with GUID
+
+    GetRefGeomToleranceLabels (me; theShapeL: Label from TDF; theDimTols: out LabelSequence from TDF) 
+    returns Boolean;
+    	---Purpose: Returns all GeomTolerance labels defined for label ShapeL
+
+    AddGeomTolerance (me : mutable)
+    returns Label from TDF;
+    	---Purpose: Adds a GeomTolerance definition to a DGTtable and returns its label
+
 
 
     -- Methods for DimTol:
@@ -98,12 +156,12 @@ is
     	---Purpose: Sets a link with GUID
     	--          Adds a DimTol as necessary
     
-    GetRefShapeLabel (me; DimTolL: Label from TDF; ShapeL: out Label from TDF) 
+    GetRefShapeLabel (me; theDimTolL: Label from TDF; theShapeL: out LabelSequence from TDF) 
     returns Boolean;
     	---Purpose: Returns ShapeL defined for label DimTolL
 	--          Returns False if the DimTolL is not in DGTtable
 
-    GetRefDGTLabels (me; ShapeL: Label from TDF; DimTols: out LabelSequence from TDF) 
+    GetRefDGTLabels (me; theShapeL: Label from TDF; theDimTols: out LabelSequence from TDF) 
     returns Boolean;
     	---Purpose: Returns all DimTol labels defined for label ShapeL
 
@@ -117,14 +175,14 @@ is
 
     -- Methods for Datum:
 
-    IsDatum (me; lab: Label from TDF) returns Boolean;
+    IsDatum (me; theLab: Label from TDF) returns Boolean;
     	---Purpose: Returns True if label belongs to a dimtoltable and
         --          is a Datum definition 
     
-    GetDatumLabels (me; Labels: out LabelSequence from TDF);
-    	---Purpose: Returns a sequence of Datumss currently stored 
+    GetDatumLabels (me; theLabels: out LabelSequence from TDF);
+    	---Purpose: Returns a sequence of Datum labels currently stored 
         --          in the DGTtable
-    
+   
     FindDatum (me; aName : HAsciiString from TCollection;
 		   aDescription : HAsciiString from TCollection;
 		   anIdentification : HAsciiString from TCollection;
@@ -138,8 +196,12 @@ is
     returns Label from TDF;
     	---Purpose: Adds a datum definition to a DGTtable and returns its label
 
-    SetDatum (me; L: Label from TDF;
-		  DatumL: Label from TDF);
+    AddDatum (me : mutable)
+    returns Label from TDF;
+    	---Purpose: Adds a datum definition to a DGTtable and returns its label
+
+    SetDatum (me; theL: Label from TDF;
+		  theDatumL: Label from TDF);
     	---Purpose: Sets a link with GUID
     
     SetDatum (me; L: Label from TDF; TolerL: Label from TDF;
@@ -149,6 +211,11 @@ is
     	---Purpose: Sets a link with GUID for Datum
     	--          Adds a Datum as necessary
 	--          Sets connection between Datum and Tolerance
+
+    SetDatumToGeomTol (me; theL: Label from TDF; theTolerL: Label from TDF);
+    	---Purpose: Sets a link with GUID for Datum
+	--          Sets connection between Datum and Tolerance
+
     
     GetDatum (me; DatumL: Label from TDF;
     	    	  aName : out HAsciiString from TCollection;
@@ -157,10 +224,21 @@ is
         ---Purpose: Returns datum assigned to <DatumL>
     	--          Returns False if no such datum is assigned
     
-    GetDatumTolerLabels (me; DimTolL: Label from TDF; Datums: out LabelSequence from TDF) 
+    GetDatumOfTolerLabels (me; theDimTolL: Label from TDF; theDatums: out LabelSequence from TDF) 
     returns Boolean;
     	---Purpose: Returns all Datum labels defined for label DimTolL
 
+    GetTolerOfDatumLabels (me; theDatumL: Label from TDF; theTols: out LabelSequence from TDF) 
+    returns Boolean;
+    	---Purpose: Returns all GeomToleranses labels defined for label DatumL
+
+    GetRefDatumLabel (me; theShapeL: Label from TDF; theDatum: out Label from TDF) 
+    returns Boolean;
+    	---Purpose: Returns Datum label defined for label ShapeL
+
+    GetRefDatum (me; theShape: Shape from TopoDS; theDatum: out Datum from XCAFDoc) 
+    returns Boolean;
+    	---Purpose: Returns Datum label defined for label Shape
 
     ID (me)
     	---C++: return const & 

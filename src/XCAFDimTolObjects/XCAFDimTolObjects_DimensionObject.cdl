@@ -1,0 +1,128 @@
+-- Created on: 2015-07-31
+-- Created by: data exchange team
+-- Copyright (c) 2000-2015 OPEN CASCADE SAS
+--
+-- This file is part of Open CASCADE Technology software library.
+--
+-- This library is free software; you can redistribute it and/or modify it under
+-- the terms of the GNU Lesser General Public License version 2.1 as published
+-- by the Free Software Foundation, with special exception defined in the file
+-- OCCT_LGPL_EXCEPTION.txt. Consult the file LICENSE_LGPL_21.txt included in OCCT
+-- distribution for complete text of the license and disclaimer of any warranty.
+--
+-- Alternatively, this file may be used under the terms of Open CASCADE
+-- commercial license or contractual agreement.
+
+class DimensionObject from XCAFDimTolObjects inherits Transient from Standard
+
+	---Purpose: object to store dimension
+
+uses
+    HArray1OfReal from TColStd,
+    DimensionQualifier from XCAFDimTolObjects,
+    DimensionType from XCAFDimTolObjects,
+    DimensionFormVariance from XCAFDimTolObjects,
+    DimensionGrade from XCAFDimTolObjects,
+    Edge from TopoDS,
+    Dir from gp,
+    HArray1OfPnt from TColgp,
+    DimensionModifiersSequence from XCAFDimTolObjects,
+    DimensionModif from XCAFDimTolObjects
+
+is
+
+    Create returns DimensionObject from XCAFDimTolObjects;
+
+    Create(theObj : DimensionObject from XCAFDimTolObjects) returns DimensionObject from XCAFDimTolObjects;
+    
+    ---Category: class methods
+    --           =============
+
+    SetQualifier (me : mutable; theQualifier : DimensionQualifier from XCAFDimTolObjects);
+
+    GetQualifier (me) returns DimensionQualifier from XCAFDimTolObjects;
+
+    HasQualifier (me) returns Boolean;
+
+    SetType (me : mutable; theTyupe : DimensionType from XCAFDimTolObjects);
+
+    GetType (me) returns DimensionType from XCAFDimTolObjects;
+
+    GetValue (me) returns Real from Standard ;
+
+    GetValues (me) returns HArray1OfReal from TColStd ;
+
+    SetValue (me : mutable; theValue : Real from Standard );
+
+    SetValues (me : mutable; theValue : HArray1OfReal from TColStd );
+
+    IsDimWithRange (me) returns Boolean;
+
+    SetUpperBound(me : mutable; theUpperBound : Real from Standard);
+
+    SetLowerBound(me : mutable; theLowerBound : Real from Standard);
+
+    GetUpperBound(me) returns Real from Standard;
+
+    GetLowerBound(me) returns Real from Standard;
+
+    IsDimWithPlusMinusTolerance (me) returns Boolean;
+
+    SetUpperTolValue(me : mutable; theUperTolValue : Real from Standard) returns Boolean from Standard;
+
+    SetLowerTolValue(me : mutable; theLowerTolValue : Real from Standard) returns Boolean from Standard;
+
+    GetUpperTolValue(me) returns Real from Standard;
+
+    GetLowerTolValue(me) returns Real from Standard;
+
+    IsDimWithClassOfTolerance (me) returns Boolean;
+
+    SetClassOfTolerance(me : mutable; theHole : Boolean from Standard;
+                                      theFormVariance : DimensionFormVariance from XCAFDimTolObjects;
+                                      theGrade : DimensionGrade from XCAFDimTolObjects);
+
+    GetClassOfTolerance(me; theHole : out Boolean from Standard;
+                                      theFormVariance : out DimensionFormVariance from XCAFDimTolObjects;
+                                      theGrade : out DimensionGrade from XCAFDimTolObjects)
+    returns Boolean from Standard;
+
+    SetNbOfDecimalPlaces(me : mutable; theL : Integer from Standard;
+                                      theR : Integer from Standard);
+
+    GetNbOfDecimalPlaces(me; theL : out Integer from Standard;
+                             theR : out Integer from Standard);
+
+    GetModifiers(me) returns DimensionModifiersSequence from XCAFDimTolObjects;
+
+    SetModifiers(me : mutable; theModifiers : DimensionModifiersSequence from XCAFDimTolObjects );
+
+    AddModifier(me : mutable; theModifier : DimensionModif from XCAFDimTolObjects);
+
+    GetPath(me) returns Edge from TopoDS;
+
+    SetPath(me : mutable; thePath : Edge from TopoDS);
+
+    GetDirection(me; theDir : out Dir from gp) returns Boolean from Standard;
+
+    SetDirection(me : mutable; theDir : Dir from gp)returns Boolean from Standard;
+
+    GetPoints(me) returns HArray1OfPnt from TColgp;
+
+    SetPoints(me : mutable; thePnts : HArray1OfPnt from TColgp);
+
+fields
+    myType : DimensionType from XCAFDimTolObjects;
+    myVal : HArray1OfReal from TColStd;
+    myQualifier : DimensionQualifier from XCAFDimTolObjects; 
+    myIsHole : Boolean from Standard;
+    myFormVariance : DimensionFormVariance from XCAFDimTolObjects;
+    myGrade : DimensionGrade from XCAFDimTolObjects;
+    myL : Integer from Standard; 
+    myR : Integer from Standard;
+    myModifiers : DimensionModifiersSequence from XCAFDimTolObjects;
+    myPath : Edge from TopoDS;
+    myDir : Dir from gp;
+    myPnts : HArray1OfPnt from TColgp;
+
+end DimensionObject;
