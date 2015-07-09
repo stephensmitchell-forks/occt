@@ -20,9 +20,11 @@ class Datum from XCAFDoc inherits Attribute from TDF
 uses
     Label from TDF,
     RelocationTable from TDF,
-    HAsciiString from TCollection
+    HAsciiString from TCollection,
+    DatumObject from XCAFDimTolObjects
 
 is
+ 
     Create returns Datum from XCAFDoc;
     
     ---Category: class methods
@@ -38,15 +40,23 @@ is
     	    	  anIdentification : HAsciiString from TCollection)
     returns Datum from XCAFDoc;
 
+    Set (myclass; label : Label from TDF)
+    returns Datum from XCAFDoc;
+
+
     Set (me : mutable; aName : HAsciiString from TCollection;
     	    	       aDescription : HAsciiString from TCollection;
     	    	       anIdentification : HAsciiString from TCollection);
 	     
     GetName (me) returns HAsciiString from TCollection;
-
+                                                                   
     GetDescription (me) returns HAsciiString from TCollection;
 
     GetIdentification (me) returns HAsciiString from TCollection;
+
+    GetObject (me) returns DatumObject from XCAFDimTolObjects;
+
+    SetObject (me : mutable; theObject : DatumObject from XCAFDimTolObjects);
 
     ID (me)
     	---C++: return const & 

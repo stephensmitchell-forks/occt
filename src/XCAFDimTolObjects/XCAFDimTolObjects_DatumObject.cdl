@@ -1,0 +1,63 @@
+-- Created on: 2015-07-31
+-- Created by: data exchange team
+-- Copyright (c) 2000-2015 OPEN CASCADE SAS
+--
+-- This file is part of Open CASCADE Technology software library.
+--
+-- This library is free software; you can redistribute it and/or modify it under
+-- the terms of the GNU Lesser General Public License version 2.1 as published
+-- by the Free Software Foundation, with special exception defined in the file
+-- OCCT_LGPL_EXCEPTION.txt. Consult the file LICENSE_LGPL_21.txt included in OCCT
+-- distribution for complete text of the license and disclaimer of any warranty.
+--
+-- Alternatively, this file may be used under the terms of Open CASCADE
+-- commercial license or contractual agreement.
+
+class DatumObject from XCAFDimTolObjects inherits Transient from Standard
+
+	---Purpose: object to store datum
+
+uses
+    HAsciiString from TCollection,
+    DatumModifWithValue from XCAFDimTolObjects,
+    DatumModifiersSequence from XCAFDimTolObjects,
+    DatumSingleModif from XCAFDimTolObjects,
+    Shape from TopoDS
+
+is
+    Create returns DatumObject from XCAFDimTolObjects;
+
+    Create(theObj : DatumObject from XCAFDimTolObjects) returns DatumObject from XCAFDimTolObjects;
+    
+    ---Category: class methods
+    --           =============
+
+	     
+    GetName (me) returns HAsciiString from TCollection;
+
+    SetName (me : mutable; theTag : HAsciiString from TCollection);
+
+    GetModifiers (me) returns DatumModifiersSequence from XCAFDimTolObjects;
+
+    SetModifiers (me : mutable; theModifiers : DatumModifiersSequence from XCAFDimTolObjects);
+
+    GetModifierWithValue (me; theModifier : out DatumModifWithValue from XCAFDimTolObjects; theValue : out Real from Standard);
+
+    SetModifierWithValue (me : mutable; theModifier : DatumModifWithValue from XCAFDimTolObjects; theValue : Real from Standard);
+
+    AddModifier (me : mutable; theModifier : DatumSingleModif from XCAFDimTolObjects);
+
+    GetDatumTarget (me) returns Shape from TopoDS;
+
+    SetDatumTarget (me : mutable; theShape : Shape from TopoDS);
+
+    IsDatumTarget (me) returns Boolean from Standard;
+
+fields
+    myName : HAsciiString from TCollection;
+    myModifiers : DatumModifiersSequence from XCAFDimTolObjects;
+    myModifierWithValue : DatumModifWithValue from XCAFDimTolObjects;
+    myValueOfModifier : Real from Standard;
+    myDatumTarget : Shape from TopoDS;
+
+end DatumObject;

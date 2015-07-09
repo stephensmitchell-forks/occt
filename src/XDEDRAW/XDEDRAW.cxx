@@ -75,6 +75,7 @@
 
 #include <XDEDRAW_Shapes.hxx>
 #include <XDEDRAW_Colors.hxx>
+#include <XDEDRAW_GDTs.hxx>
 #include <XDEDRAW_Layers.hxx>
 #include <XDEDRAW_Props.hxx>
 #include <XDEDRAW_Common.hxx>
@@ -600,8 +601,6 @@ static Standard_Integer XAttributeValue (Draw_Interpretor& di, Standard_Integer 
     else if ( att->ID() == XCAFDoc::ColorRefGUID(XCAFDoc_ColorGen) ) type = "Generic Color Link";
     else if ( att->ID() == XCAFDoc::ColorRefGUID(XCAFDoc_ColorSurf) ) type = "Surface Color Link";
     else if ( att->ID() == XCAFDoc::ColorRefGUID(XCAFDoc_ColorCurv) ) type = "Curve Color Link";
-    else if ( att->ID() == XCAFDoc::DimTolRefGUID() ) type = "DGT Link";
-    else if ( att->ID() == XCAFDoc::DatumRefGUID() ) type = "Datum Link";
     else if ( att->ID() == XCAFDoc::MaterialRefGUID() ) type = "Material Link";
     Handle(TDataStd_TreeNode) TN = Handle(TDataStd_TreeNode)::DownCast(att);
     TCollection_AsciiString ref;
@@ -767,6 +766,12 @@ static Standard_Integer XAttributeValue (Draw_Interpretor& di, Standard_Integer 
     }
     else if ( att->ID() == XCAFDoc::DatumTolRefGUID() ) {
       type = "DatumToler Link";
+    }
+    else if ( att->ID() == XCAFDoc::DimTolRefGUID() ){
+      type = "DGT Link";
+    }
+    else if ( att->ID() == XCAFDoc::DatumRefGUID() ){
+      type = "Datum Link";
     }
     else return 0;
 
@@ -1140,6 +1145,7 @@ void XDEDRAW::Init(Draw_Interpretor& di)
   XDEDRAW_Colors::InitCommands ( di );
   XDEDRAW_Layers::InitCommands ( di );
   XDEDRAW_Props::InitCommands ( di );
+  XDEDRAW_GDTs::InitCommands ( di );
   XDEDRAW_Common::InitCommands ( di );//moved from EXE
 
 }

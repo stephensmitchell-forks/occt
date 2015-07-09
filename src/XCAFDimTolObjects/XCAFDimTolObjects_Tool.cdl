@@ -1,0 +1,62 @@
+-- Created on: 2004-01-09
+-- Created by: Sergey KUUL
+-- Copyright (c) 2004-2014 OPEN CASCADE SAS
+--
+-- This file is part of Open CASCADE Technology software library.
+--
+-- This library is free software; you can redistribute it and/or modify it under
+-- the terms of the GNU Lesser General Public License version 2.1 as published
+-- by the Free Software Foundation, with special exception defined in the file
+-- OCCT_LGPL_EXCEPTION.txt. Consult the file LICENSE_LGPL_21.txt included in OCCT
+-- distribution for complete text of the license and disclaimer of any warranty.
+--
+-- Alternatively, this file may be used under the terms of Open CASCADE
+-- commercial license or contractual agreement.
+
+class Tool from XCAFDimTolObjects
+
+	---Purpose:
+uses
+    Shape from TopoDS,
+    Document from TDocStd,
+    DimTolTool from XCAFDoc,
+    GeomToleranceObject from XCAFDimTolObjects,
+    DatumObject from XCAFDimTolObjects,
+    DimensionObject from XCAFDimTolObjects,
+    DimensionObjectSequence from XCAFDimTolObjects,
+    DatumObjectSequence from XCAFDimTolObjects,
+    GeomToleranceObjectSequence from XCAFDimTolObjects,
+    DataMapOfToleranceDatum from XCAFDimTolObjects
+
+is
+    Create (theDoc : Document from TDocStd) returns Tool from XCAFDimTolObjects;
+
+
+    GetDimensions (me; theDimensionObjectSequence: out DimensionObjectSequence from XCAFDimTolObjects);
+    	---Purpose: Returns a sequence of Dimensions currently stored 
+        --          in the DGTtable
+
+    GetRefDimensions (me; theShape: Shape from TopoDS; theDimensions: out DimensionObjectSequence from XCAFDimTolObjects) 
+    returns Boolean;
+    	---Purpose: Returns all Dimensions defined for Shape
+
+    GetGeomTolerances (me; theGeomToleranceObjectSequence : out GeomToleranceObjectSequence from XCAFDimTolObjects;
+                           theDatumObjectSequence : out DatumObjectSequence from XCAFDimTolObjects;
+                           theMap : out DataMapOfToleranceDatum from XCAFDimTolObjects);
+    	---Purpose: Returns a sequence of Tolerancess currently stored 
+        --          in the DGTtable
+    GetRefGeomTolerances (me; theShape: Shape from TopoDS;
+                              theGeomToleranceObjectSequence: out GeomToleranceObjectSequence from XCAFDimTolObjects;
+                              theDatumObjectSequence : out DatumObjectSequence from XCAFDimTolObjects;
+                              theMap : out DataMapOfToleranceDatum from XCAFDimTolObjects) 
+    returns Boolean;
+    	---Purpose: Returns all GeomTolerances defined for Shape
+
+    GetRefDatum (me; theShape: Shape from TopoDS; theDatum: out DatumObject from XCAFDimTolObjects) 
+    returns Boolean;
+    	---Purpose: Returns DatumObject defined for Shape
+fields
+    myDimTolTool : DimTolTool from XCAFDoc;
+
+                                                                                                    	    	
+end Tool;
