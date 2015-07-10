@@ -327,6 +327,15 @@ public:
     return aCopy;
   }
 
+  //! Convert the vector.
+  template<class T>
+  NCollection_Vec3<T> Convert() const
+  {
+    return NCollection_Vec3<T> (static_cast<T> (v[0]),
+                                static_cast<T> (v[1]),
+                                static_cast<T> (v[2]));
+  }
+
   //! Computes the cross product.
   static NCollection_Vec3 Cross (const NCollection_Vec3& theVec1,
                                  const NCollection_Vec3& theVec2)

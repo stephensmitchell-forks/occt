@@ -1,4 +1,4 @@
-// Created on: 2008-05-06
+// Created on: 2008-05-13
 // Created by: Vladislav ROMASHKO
 // Copyright (c) 2008-2014 OPEN CASCADE SAS
 //
@@ -16,134 +16,60 @@
 #ifndef _Voxel_Prs_HeaderFile
 #define _Voxel_Prs_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
-#include <Standard_Address.hxx>
+#include <Handle_Voxel_Prs.hxx>
 #include <AIS_InteractiveObject.hxx>
-#include <Voxel_VoxelDisplayMode.hxx>
-#include <Quantity_HArray1OfColor.hxx>
-#include <Standard_Real.hxx>
-#include <Standard_Integer.hxx>
 #include <PrsMgr_PresentationManager3d.hxx>
+#include <Handle_Prs3d_Presentation.hxx>
+#include <Handle_SelectMgr_Selection.hxx>
+#include <Prs3d_Presentation.hxx>
 #include <SelectMgr_Selection.hxx>
-#include <Standard_Boolean.hxx>
-#include <Standard_Byte.hxx>
-class Poly_Triangulation;
-class Quantity_Color;
-class Prs3d_Presentation;
+#include <Graphic3d_VolumeData.hxx>
+#include <Graphic3d_TransferFunction.hxx>
 
-
-class Voxel_Prs;
-DEFINE_STANDARD_HANDLE(Voxel_Prs, AIS_InteractiveObject)
-
-//! Interactive object for voxels.
+//! Interactive object for volumetric data.
 class Voxel_Prs : public AIS_InteractiveObject
 {
+public:
+
+  //! Creates empty voxel presentation.
+  Standard_EXPORT Voxel_Prs();
+
+  //! Releases resources of voxel presentation.
+  Standard_EXPORT ~Voxel_Prs();
 
 public:
 
-  
-  //! An empty constructor.
-  Standard_EXPORT Voxel_Prs();
-  
-  //! <theVoxels> is a Voxel_BoolDS* object.
-  Standard_EXPORT void SetBoolVoxels (const Standard_Address theVoxels);
-  
-  //! <theVoxels> is a Voxel_ColorDS* object.
-  Standard_EXPORT void SetColorVoxels (const Standard_Address theVoxels);
-  
-  //! <theVoxels> is a Voxel_ROctBoolDS* object.
-  Standard_EXPORT void SetROctBoolVoxels (const Standard_Address theVoxels);
-  
-  //! Sets a triangulation for visualization.
-  Standard_EXPORT void SetTriangulation (const Handle(Poly_Triangulation)& theTriangulation);
-  
-  //! Sets a display mode for voxels.
-  Standard_EXPORT void SetDisplayMode (const Voxel_VoxelDisplayMode theMode);
-  
-  //! Defines the color of points, quadrangles ... for BoolDS.
-  Standard_EXPORT virtual void SetColor (const Quantity_Color& theColor) Standard_OVERRIDE;
-  
-  //! Defines the color of points, quadrangles... for ColorDS.
-  //! For ColorDS the size of array is 0 .. 15.
-  //! 0 - means no color, this voxel is not drawn.
-  Standard_EXPORT void SetColors (const Handle(Quantity_HArray1OfColor)& theColors);
-  
-  //! Defines the size of points for all types of voxels.
-  Standard_EXPORT void SetPointSize (const Standard_Real theSize);
-  
-  //! Defines the size of quadrangles in per cents (0 .. 100).
-  Standard_EXPORT void SetQuadrangleSize (const Standard_Integer theSize);
-  
-  //! Defines the transparency value [0 .. 1] for quadrangular visualization.
-  Standard_EXPORT virtual void SetTransparency (const Standard_Real theTransparency) Standard_OVERRIDE;
-  
-  //! Highlights a voxel.
-  //! It doesn't re-computes the whole interactive object,
-  //! but only marks a voxels as "highlighted".
-  //! The voxel becomes highlighted on next swapping of buffers.
-  //! In order to unhighlight a voxel, set ix = iy = iz = -1.
-  Standard_EXPORT void Highlight (const Standard_Integer ix, const Standard_Integer iy, const Standard_Integer iz);
-  
-  //! A destructor of presentation data.
-  Standard_EXPORT void Destroy();
-~Voxel_Prs()
-{
-  Destroy();
-}
-  
-  //! Simplifies visualization of voxels in case of view rotation, panning and zooming.
-  Standard_EXPORT void SetDegenerateMode (const Standard_Boolean theDegenerate);
-  
-  //! GL lists accelerate view rotation, panning and zooming operations, but
-  //! it takes additional memory...
-  //! It is up to the user of this interactive object to decide whether
-  //! he has enough memory and may use GL lists or
-  //! he is lack of memory and usage of GL lists is not recommended.
-  //! By default, usage of GL lists is on.
-  //! Also, as I noticed, the view without GL lists looks more precisely.
-  Standard_EXPORT void SetUsageOfGLlists (const Standard_Boolean theUsage);
-  
-  //! Switches visualization of points from smooth to rough.
-  Standard_EXPORT void SetSmoothPoints (const Standard_Boolean theSmooth);
-  
-  //! Defines min-max values for visualization of voxels of ColorDS structure.
-  //! By default, min value = 1, max value = 15 (all non-zero values).
-  Standard_EXPORT void SetColorRange (const Standard_Byte theMinValue, const Standard_Byte theMaxValue);
-  
-  //! Defines the displayed area of voxels.
-  //! By default, the range is equal to the box of voxels (all voxels are displayed).
-  Standard_EXPORT void SetSizeRange (const Standard_Real theDisplayedXMin, const Standard_Real theDisplayedXMax, const Standard_Real theDisplayedYMin, const Standard_Real theDisplayedYMax, const Standard_Real theDisplayedZMin, const Standard_Real theDisplayedZMax);
+  //! Returns 3D volume object.
+  Handle(Graphic3d_Volume) Volume() const
+  {
+    return myVolume;
+  }
 
-
-
-  DEFINE_STANDARD_RTTI(Voxel_Prs,AIS_InteractiveObject)
+  //! Sets 3D volume object.
+  void SetVolume (const Handle(Graphic3d_Volume)& theVolume)
+  {
+    myVolume  = theVolume;
+  }
 
 protected:
 
-  
-  Standard_EXPORT virtual void Compute (const Handle(PrsMgr_PresentationManager3d)& thePresentationManager, const Handle(Prs3d_Presentation)& thePresentation, const Standard_Integer theMode = 0) Standard_OVERRIDE;
+  //! Computes 3D volume presentation.
+  Standard_EXPORT virtual void Compute (const Handle(PrsMgr_PresentationManager3d)& theManager,
+                                        const Handle(Prs3d_Presentation)&           thePresentation,
+                                        const Standard_Integer                      theMode = 0);
 
+  //! Computes 3D volume selection.
+  Standard_EXPORT void ComputeSelection (const Handle(SelectMgr_Selection)& theSelection,
+                                         const Standard_Integer theMode);
 
+protected:
 
-private:
+  //! 3D volume object.
+  Handle(Graphic3d_Volume) myVolume;
 
-  
-  Standard_EXPORT void ComputeSelection (const Handle(SelectMgr_Selection)& theSelection, const Standard_Integer theMode);
-  
-  //! Allocates the data structure of visualization.
-  Standard_EXPORT void Allocate();
+public:
 
-  Standard_Address myVisData;
-
-
+  DEFINE_STANDARD_RTTI (Voxel_Prs)
 };
-
-
-
-
-
-
 
 #endif // _Voxel_Prs_HeaderFile

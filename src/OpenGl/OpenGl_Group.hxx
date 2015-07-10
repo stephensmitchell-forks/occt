@@ -19,6 +19,7 @@
 #include <InterfaceGraphic_Graphic3d.hxx>
 #include <Graphic3d_Group.hxx>
 #include <Graphic3d_Structure.hxx>
+#include <Graphic3d_Volume.hxx>
 
 #include <NCollection_List.hxx>
 #include <OpenGl_AspectLine.hxx>
@@ -66,6 +67,10 @@ public:
                                                   const Handle(Graphic3d_Buffer)&      theAttribs,
                                                   const Handle(Graphic3d_BoundBuffer)& theBounds,
                                                   const Standard_Boolean               theToEvalMinMax);
+
+  //! Add a volume data for display
+  Standard_EXPORT virtual void AddVolume (const Handle(Graphic3d_Volume)& theVolume,
+                                          const Standard_Boolean theToEvalMinMax = Standard_True);
 
   //! Add text element
   Standard_EXPORT virtual void Text (const Standard_CString                  theTextUtf,

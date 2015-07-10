@@ -1,0 +1,70 @@
+// Created on: 2015-01-28
+// Created by: Denis BOGOLEPOV
+// Copyright (c) 2015 OPEN CASCADE SAS
+//
+// This file is part of Open CASCADE Technology software library.
+//
+// This library is free software; you can redistribute it and/or modify it under
+// the terms of the GNU Lesser General Public License version 2.1 as published
+// by the Free Software Foundation, with special exception defined in the file
+// OCCT_LGPL_EXCEPTION.txt. Consult the file LICENSE_LGPL_21.txt included in OCCT
+// distribution for complete text of the license and disclaimer of any warranty.
+//
+// Alternatively, this file may be used under the terms of Open CASCADE
+// commercial license or contractual agreement.
+
+#include <Standard_Assert.hxx>
+#include <NCollection_Vec3.hxx>
+
+namespace Graphic3d_TransferFunctionTools
+{
+  template<class PointType, class ValueType>
+  struct Nearest
+  {
+    static ValueType Get (const Graphic3d_TransferFunctionNode<PointType, ValueType>& theNode1,
+                          const Graphic3d_TransferFunctionNode<PointType, ValueType>& theNode2,
+                          const PointType&                                            thePoint)
+    {
+      const PointType aHalfDistance = (theNode2.Point - theNode1.Point) / static_cast<PointType>(2);
+      if ( (thePoint - theNode1.Point) < aHalfDistance)
+      {
+        return theNode1.Value;
+      }
+      else
+      {
+        return theNode2.Value;
+      }
+    }
+  };
+}
+
+//========================================================================
+//function : Value
+//purpose  :
+//========================================================================
+template<typename PointType, typename ValueType>
+ValueType Graphic3d_TransferFunctionNearestFilter<PointType, ValueType>::Value (const PointType thePoint) const
+{
+  Standard_ASSERT_RAISE (myCount > 1,
+    "Error! Transfer function must contain a least 2 control points");
+
+  if (thePoint <= myNodes[0].Point)
+  {
+    return myNodes[0].Value;
+  }
+  else
+  {
+    for (Standard_Integer anIndex = 1; anIndex < myCount; ++anIndex)
+    {
+      const Node& aLeft  = myNodes[anIndex - 1];
+      const Node& aRight = myNodes[anIndex    ];
+      
+      if (thePoint <= aRight.Point)
+      {
+        return Graphic3d_TransferFunctionTools::Nearest<PointType, ValueType>::Get (aLeft, aRight, thePoint);
+      }
+    }
+    
+    return myNodes[myCount - 1].Value;
+  }
+}

@@ -1,4 +1,4 @@
-// Created on: 2008-09-01
+// Created on: 2014-11-14
 // Created by: Vladislav ROMASHKO
 // Copyright (c) 2008-2014 OPEN CASCADE SAS
 //
@@ -13,20 +13,18 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
+#ifndef _Handle_Voxel_Prs_HeaderFile
+#define _Handle_Voxel_Prs_HeaderFile
 
-#include <Voxel_SplitData.hxx>
+#include <Standard.hxx>
+#include <Standard_DefineHandle.hxx>
+#include <Handle_AIS_InteractiveObject.hxx>
 
-Voxel_SplitData::Voxel_SplitData():myValues(0),mySplitData(0)
-{
+class Standard_Transient;
+class Handle(Standard_Type);
+class Handle(AIS_InteractiveObject);
+class Voxel_Prs;
 
-}
+DEFINE_STANDARD_HANDLE(Voxel_Prs, AIS_InteractiveObject)
 
-Standard_Address& Voxel_SplitData::GetValues()
-{
-  return myValues;
-}
-
-Standard_Address& Voxel_SplitData::GetSplitData()
-{
-  return mySplitData;
-}
+#endif // _Handle_Voxel_Prs_HeaderFile

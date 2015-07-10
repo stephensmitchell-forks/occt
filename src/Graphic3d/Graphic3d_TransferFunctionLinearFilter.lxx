@@ -1,0 +1,70 @@
+// Created on: 2015-01-28
+// Created by: Denis BOGOLEPOV
+// Copyright (c) 2015 OPEN CASCADE SAS
+//
+// This file is part of Open CASCADE Technology software library.
+//
+// This library is free software; you can redistribute it and/or modify it under
+// the terms of the GNU Lesser General Public License version 2.1 as published
+// by the Free Software Foundation, with special exception defined in the file
+// OCCT_LGPL_EXCEPTION.txt. Consult the file LICENSE_LGPL_21.txt included in OCCT
+// distribution for complete text of the license and disclaimer of any warranty.
+//
+// Alternatively, this file may be used under the terms of Open CASCADE
+// commercial license or contractual agreement.
+
+#include <Standard_Assert.hxx>
+#include <NCollection_Vec3.hxx>
+
+namespace Graphic3d_TransferFunctionTools
+{
+  template<typename T>
+  struct Mix
+  {
+    static T Get (const T             theVal1,
+                  const T             theVal2,
+                  const Standard_Real theAlpha)
+    {
+      return static_cast<T> (theVal1 * (1.0 - theAlpha) + theVal2 * theAlpha);
+    }
+
+    static NCollection_Vec3<T> Get (const NCollection_Vec3<T>& theVal1,
+                                    const NCollection_Vec3<T>& theVal2,
+                                    const Standard_Real        theAlpha)
+    {
+      return NCollection_Vec3<T> (Get (theVal1.x(), theVal2.x(), theAlpha),
+                                  Get (theVal1.y(), theVal2.y(), theAlpha),
+                                  Get (theVal1.z(), theVal2.z(), theAlpha));
+    }
+  };
+}
+
+//========================================================================
+//function : Value
+//purpose  :
+//========================================================================
+template<typename PointType, typename ValueType>
+ValueType Graphic3d_TransferFunctionLinearFilter<PointType, ValueType>::Value (const PointType thePoint) const
+{
+  Standard_ASSERT_RAISE (myCount > 1,
+    "Error! Transfer function must contain a least 2 control points");
+
+  if (thePoint <= myNodes[0].Point)
+  {
+    return myNodes[0].Value;
+  }
+
+  for (Standard_Integer anIndex = 1; anIndex < myCount; ++anIndex)
+  {
+    if (thePoint < myNodes[anIndex].Point)
+    {
+      const Node& aLft = myNodes[anIndex - 1];
+      const Node& aRgh = myNodes[anIndex    ];
+
+      return Graphic3d_TransferFunctionTools::Mix<ValueType>::Get (
+        aLft.Value, aRgh.Value, (thePoint - aLft.Point) / static_cast<Standard_Real> (aRgh.Point - aLft.Point));
+    }
+  }
+
+  return myNodes[myCount - 1].Value;
+}

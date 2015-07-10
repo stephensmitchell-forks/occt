@@ -101,6 +101,20 @@ protected:
 
 };
 
+//! 2D Axis aligned box on single precision reals.
+typedef BVH_Box<Standard_ShortReal, 2> BVH_Box2f;
+//! 3D Axis aligned box on single precision reals.
+typedef BVH_Box<Standard_ShortReal, 3> BVH_Box3f;
+//! 4D Axis aligned box on single precision reals.
+typedef BVH_Box<Standard_ShortReal, 4> BVH_Box4f;
+
+//! 2D Axis aligned box on double precision reals.
+typedef BVH_Box<Standard_Real, 2> BVH_Box2d;
+//! 3D Axis aligned box on double precision reals.
+typedef BVH_Box<Standard_Real, 3> BVH_Box3d;
+//! 4D Axis aligned box on double precision reals.
+typedef BVH_Box<Standard_Real, 4> BVH_Box4d;
+
 namespace BVH
 {
   //! Tool class for calculating box center along the given axis.

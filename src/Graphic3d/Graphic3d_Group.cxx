@@ -1066,6 +1066,36 @@ void Graphic3d_Group::AddPrimitiveArray (const Graphic3d_TypeOfPrimitiveArray th
 }
 
 // =======================================================================
+// function : AddVolume
+// purpose  :
+// =======================================================================
+void Graphic3d_Group::AddVolume (const Handle(Graphic3d_Volume)& theVolume,
+                                 const Standard_Boolean theToEvalMinMax)
+{
+  if (IsDeleted())
+  {
+    return;
+  }
+
+  if (theToEvalMinMax && !theVolume->VolumeData().IsNull())
+  {
+    const BVH_Box3d& aBounds = theVolume->VolumeData()->Bounds();
+
+    myBounds.Add (BVH_Vec4f (static_cast<Standard_ShortReal> (aBounds.CornerMin().x()),
+                             static_cast<Standard_ShortReal> (aBounds.CornerMin().y()),
+                             static_cast<Standard_ShortReal> (aBounds.CornerMin().z()),
+                             1.f));
+
+    myBounds.Add (BVH_Vec4f (static_cast<Standard_ShortReal> (aBounds.CornerMax().x()),
+                             static_cast<Standard_ShortReal> (aBounds.CornerMax().y()),
+                             static_cast<Standard_ShortReal> (aBounds.CornerMax().z()),
+                             1.f));
+  }
+
+  Update();
+}
+
+// =======================================================================
 // function : Marker
 // purpose  :
 // =======================================================================

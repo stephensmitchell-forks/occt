@@ -747,3 +747,94 @@ bool OpenGl_Texture::InitRectangle (const Handle(OpenGl_Context)& theCtx,
   return false;
 #endif
 }
+
+// =======================================================================
+// function : Init3D
+// purpose  :
+// =======================================================================
+bool OpenGl_Texture::Init3D (const Handle(OpenGl_Context)& theCtx,
+                             const Standard_Integer        theSizeX,
+                             const Standard_Integer        theSizeY,
+                             const Standard_Integer        theSizeZ,
+                             const OpenGl_TextureFormat&   theFormat,
+                             const void*                   thePixels)
+{
+  if (!Create (theCtx) || !theCtx->IsGlGreaterEqual (1, 2))
+  {
+    return false;
+  }
+
+  myTarget = GL_TEXTURE_3D;
+
+  const GLsizei aSizeX = Min (theCtx->MaxTextureSize(), theSizeX);
+  const GLsizei aSizeY = Min (theCtx->MaxTextureSize(), theSizeY);
+  const GLsizei aSizeZ = Min (theCtx->MaxTextureSize(), theSizeZ);
+
+  Bind (theCtx);
+
+  if (myParams->Filter() == Graphic3d_TOTF_NEAREST)
+  {
+    glTexParameteri (myTarget, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri (myTarget, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  }
+  else
+  {
+    glTexParameteri (myTarget, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri (myTarget, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  }
+
+  //const GLint anIntFormat = theFormat.Internal();
+  //myTextFormat = theFormat.Format();
+
+  theCtx->core15->glTexImage3D (GL_PROXY_TEXTURE_3D,
+                                0,
+                                theFormat.Internal(),
+                                aSizeX,
+                                aSizeY,
+                                aSizeZ,
+                                0,
+                                theFormat.Format(),
+                                theFormat.DataType(),
+                                NULL);
+
+  GLint aTestSizeX = 0;
+  GLint aTestSizeY = 0;
+  GLint aTestSizeZ = 0;
+
+  glGetTexLevelParameteriv (
+    GL_PROXY_TEXTURE_3D, 0, GL_TEXTURE_WIDTH,  &aTestSizeX);
+  glGetTexLevelParameteriv (
+    GL_PROXY_TEXTURE_3D, 0, GL_TEXTURE_HEIGHT, &aTestSizeY);
+  glGetTexLevelParameteriv (
+    GL_PROXY_TEXTURE_3D, 0, GL_TEXTURE_DEPTH,  &aTestSizeZ);
+
+  if (aTestSizeX == 0 || aTestSizeY == 0 || aTestSizeZ == 0)
+  {
+    Unbind (theCtx);
+    return false;
+  }
+
+  theCtx->core15->glTexImage3D (GL_TEXTURE_3D,
+                                0,
+                                theFormat.Internal(),
+                                aSizeX,
+                                aSizeY,
+                                aSizeZ,
+                                0,
+                                theFormat.Format(),
+                                theFormat.DataType(),
+                                thePixels);
+
+  if (glGetError() != GL_NO_ERROR)
+  {
+    Unbind (theCtx);
+    return false;
+  }
+
+  mySizeX = aSizeX;
+  mySizeY = aSizeY;
+  mySizeZ = aSizeZ;
+
+  Unbind (theCtx);
+  return true;
+}

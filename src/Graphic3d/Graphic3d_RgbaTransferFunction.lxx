@@ -1,0 +1,178 @@
+// Created on: 2015-01-28
+// Created by: Denis BOGOLEPOV
+// Copyright (c) 2015 OPEN CASCADE SAS
+//
+// This file is part of Open CASCADE Technology software library.
+//
+// This library is free software; you can redistribute it and/or modify it under
+// the terms of the GNU Lesser General Public License version 2.1 as published
+// by the Free Software Foundation, with special exception defined in the file
+// OCCT_LGPL_EXCEPTION.txt. Consult the file LICENSE_LGPL_21.txt included in OCCT
+// distribution for complete text of the license and disclaimer of any warranty.
+//
+// Alternatively, this file may be used under the terms of Open CASCADE
+// commercial license or contractual agreement.
+
+#include <algorithm>
+#include <NCollection_Vec4.hxx>
+
+//========================================================================
+//function : Graphic3d_RgbaTransferFunction
+//purpose  : 
+//========================================================================
+template<typename PointType, class ValueType>
+Graphic3d_RgbaTransferFunction<PointType, ValueType>::Graphic3d_RgbaTransferFunction()
+: Graphic3d_TransferFunction()
+{
+  // Set default filter -- linear
+  myColorFilter = new Graphic3d_TransferFunctionLinearFilter<PointType, ColorType>;
+  myAlphaFilter = new Graphic3d_TransferFunctionLinearFilter<PointType, ValueType>;
+}
+
+//========================================================================
+//function : ~Graphic3d_RgbaTransferFunction
+//purpose  : 
+//========================================================================
+template<typename PointType, class ValueType>
+Graphic3d_RgbaTransferFunction<PointType, ValueType>::~Graphic3d_RgbaTransferFunction()
+{
+  //
+}
+
+namespace Graphic3d_TransferFunctionTools
+{
+  //! Node comparator.
+  template<class Node>
+  struct NodeComparator
+  {
+    bool operator() (const Node& theNode1, const Node& theNode2) const
+    {
+      return theNode1.Point < theNode2.Point;
+    }
+  };
+
+  //! Image constructor.
+  template<class T>
+  struct ImageConstructor
+  {
+    /* Not defined */
+  };
+
+  template<>
+  struct ImageConstructor<Standard_ShortReal>
+  {
+    static Handle(Image_PixMap) Create (const Standard_Integer theSize)
+    {
+      Handle(Image_PixMap) anImage = new Image_PixMap;
+
+      return anImage->InitZero (Image_PixMap::ImgRGBAF, theSize, 1) ? anImage : NULL;
+    }
+  };
+
+  template<>
+  struct ImageConstructor<unsigned char>
+  {
+    static Handle(Image_PixMap) Create (const Standard_Integer theSize)
+    {
+      Handle(Image_PixMap) anImage = new Image_PixMap;
+
+      return anImage->InitZero (Image_PixMap::ImgRGBA, theSize, 1) ? anImage : NULL;
+    }
+  };
+}
+
+namespace Graphic3d_TransferFunctionTools
+{
+  //! Performs normalization of integral values to [0, 1] range.
+  template<class T>
+  struct ValueNormalizer
+  {
+    static Standard_Real Get (const T theValue)
+    {
+      const T aMinValue = std::numeric_limits<T>::min();
+      const T aMaxValue = std::numeric_limits<T>::max();
+
+      return (theValue - aMinValue) /
+        static_cast<Standard_Real> (aMaxValue - aMinValue);
+    }
+  };
+
+  template<>
+  struct ValueNormalizer<Standard_Real>
+  {
+    static Standard_Real Get (const Standard_Real theValue)
+    {
+      return theValue;
+    }
+  };
+
+  template<>
+  struct ValueNormalizer<Standard_ShortReal>
+  {
+    static Standard_Real Get (const Standard_ShortReal theValue)
+    {
+      return theValue;
+    }
+  };
+}
+
+//========================================================================
+//function : ImageTable
+//purpose  : 
+//========================================================================
+template<typename PointType, class ValueType>
+Handle(Image_PixMap) Graphic3d_RgbaTransferFunction<PointType, ValueType>::ImageTable (Standard_Real&         theNormMinValue,
+                                                                                       Standard_Real&         theNormMaxValue,
+                                                                                       const Standard_Integer theNumberOfRows) const
+{
+  if (myColorNodes.Size() < 2
+   || myAlphaNodes.Size() < 2)
+  {
+    return NULL;
+  }
+
+  std::vector<ColorNode> aColorNodes (myColorNodes.begin(), myColorNodes.end());
+  std::vector<AlphaNode> aAlphaNodes (myAlphaNodes.begin(), myAlphaNodes.end());
+
+  std::sort (aColorNodes.begin(), aColorNodes.end(),
+    Graphic3d_TransferFunctionTools::NodeComparator<ColorNode>());
+  std::sort (aAlphaNodes.begin(), aAlphaNodes.end(),
+    Graphic3d_TransferFunctionTools::NodeComparator<AlphaNode>());
+
+  Handle(Image_PixMap) aImageTable =
+    Graphic3d_TransferFunctionTools::ImageConstructor<ValueType>::Create (theNumberOfRows);
+
+  if (aImageTable.IsNull())
+  {
+    return NULL;
+  }
+
+  const PointType aMinValue = std::min (aColorNodes.front().Point,
+                                        aAlphaNodes.front().Point);
+
+  const PointType aMaxValue = std::max (aColorNodes.back().Point,
+                                        aAlphaNodes.back().Point);
+
+  theNormMinValue = Graphic3d_TransferFunctionTools::ValueNormalizer<PointType>::Get (aMinValue);
+  theNormMaxValue = Graphic3d_TransferFunctionTools::ValueNormalizer<PointType>::Get (aMaxValue);
+
+  myColorFilter->Init (&aColorNodes.front(), myColorNodes.Size());
+  myAlphaFilter->Init (&aAlphaNodes.front(), myAlphaNodes.Size());
+
+  Standard_Real aStep = (aMaxValue - aMinValue) / static_cast<Standard_Real> (theNumberOfRows - 1);
+
+  for (Standard_Integer anIndex = 0; anIndex < theNumberOfRows; ++anIndex)
+  {
+    const PointType aPoint = static_cast<PointType> (aMinValue + aStep * anIndex);
+
+    const ColorType aColor = myColorFilter->Value (aPoint);
+    const ValueType aAlpha = myAlphaFilter->Value (aPoint);
+
+    NCollection_Vec4<ValueType>& aPixel = aImageTable->ChangeValue<NCollection_Vec4<ValueType> > (0, anIndex);
+
+    aPixel = NCollection_Vec4<ValueType> (
+      aColor.x(), aColor.y(), aColor.z(), aAlpha);
+  }
+
+  return aImageTable;
+}
