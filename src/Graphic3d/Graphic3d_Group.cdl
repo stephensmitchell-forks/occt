@@ -88,6 +88,7 @@ deferred class Group from Graphic3d inherits TShared
         BoundBuffer                 from Graphic3d,
         TransModeFlags              from Graphic3d,
         BndBox4f                    from Graphic3d,
+        Volume                      from Graphic3d,
         Ax2                         from gp
     
     raises
@@ -372,6 +373,12 @@ deferred class Group from Graphic3d inherits TShared
                        theToEvalMinMax : Boolean from Standard = Standard_True );
     ---Level: Public
     ---Purpose: Adds an array of primitives for display
+
+    AddVolume (me              : mutable;
+               theVolume       : Volume from Graphic3d;
+               theToEvalMinMax : Boolean from Standard = Standard_True) is virtual;
+    ---Level: Public
+    ---Purpose: Adds volume of voxels for display
 
     Marker ( me              : mutable;
              thePoint        : Vertex from Graphic3d;

@@ -22,6 +22,7 @@
 #include <OpenGl_Structure.hxx>
 #include <OpenGl_Text.hxx>
 #include <OpenGl_Workspace.hxx>
+#include <OpenGl_Volume.hxx>
 
 #include <Graphic3d_ArrayOfPrimitives.hxx>
 #include <Graphic3d_CUserDraw.hxx>
@@ -200,6 +201,23 @@ void OpenGl_Group::AddPrimitiveArray (const Graphic3d_TypeOfPrimitiveArray theTy
   AddElement (anArray);
 
   Graphic3d_Group::AddPrimitiveArray (theType, theIndices, theAttribs, theBounds, theToEvalMinMax);
+}
+
+// =======================================================================
+// function : AddVolume
+// purpose  :
+// =======================================================================
+void OpenGl_Group::AddVolume (const Handle(Graphic3d_Volume)& theVolume,
+                              const Standard_Boolean theToEvalMinMax)
+{
+  if (IsDeleted())
+  {
+    return;
+  }
+
+  AddElement (new OpenGl_Volume (theVolume));
+
+  Graphic3d_Group::AddVolume (theVolume, theToEvalMinMax);
 }
 
 // =======================================================================

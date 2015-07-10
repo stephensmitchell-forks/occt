@@ -168,3 +168,5 @@ OpenGl_Sphere.hxx
 OpenGl_Sphere.cxx
 OpenGl_BackgroundArray.hxx
 OpenGl_BackgroundArray.cxx
+OpenGl_Volume.hxx
+OpenGl_Volume.cxx

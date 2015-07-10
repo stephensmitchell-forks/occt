@@ -1,2 +1,7 @@
-Voxel_VisData.h
 Voxel_TypeDef.hxx
+Handle_Voxel_Prs.hxx
+Voxel_Prs.cxx
+Voxel_Prs.hxx
+Voxel_BaseReader.hxx
+Voxel_DicomReader.hxx
+Voxel_DicomReader.cxx

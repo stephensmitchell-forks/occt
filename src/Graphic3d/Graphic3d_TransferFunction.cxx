@@ -1,6 +1,6 @@
-// Created on: 2008-09-17
-// Created by: Vlad Romashko
-// Copyright (c) 2008-2014 OPEN CASCADE SAS
+// Created on: 2015-01-28
+// Created by: Denis BOGOLEPOV
+// Copyright (c) 2015 OPEN CASCADE SAS
 //
 // This file is part of Open CASCADE Technology software library.
 //
@@ -13,9 +13,7 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#include <ViewerTest.hxx>
+#include <Graphic3d_TransferFunction.hxx>
 
-void ViewerTest::VoxelCommands(Draw_Interpretor& theCommands)
-{
-
-}
+IMPLEMENT_STANDARD_HANDLE (Graphic3d_TransferFunction, Standard_Transient)
+IMPLEMENT_STANDARD_RTTIEXT(Graphic3d_TransferFunction, Standard_Transient)

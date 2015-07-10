@@ -38,16 +38,20 @@ inline Standard_Boolean IsEqual(const iXYZ& one, const iXYZ& two)
 
 #include <NCollection_DataMap.hxx>
 
-typedef NCollection_DataMap<iXYZ, Standard_Integer> iXYZIndex;
-typedef NCollection_DataMap<iXYZ, Standard_Byte> iXYZBool;
+template<typename T>
+struct iXYZMap
+{
+  typedef NCollection_DataMap<iXYZ, T> Type;
+};
 
 // Defines
 
-#define VOXELS  "Voxels"
-#define ASCII   "Ascii"
-#define BINARY  "Binary"
-#define BOOL    "Bool"
-#define COLOR   "Color"
-#define FLOAT   "Float"
+#define VOXELS        "Voxels"
+#define ASCII         "Ascii"
+#define BINARY        "Binary"
+#define BOOL          "Bool"
+#define COLOR         "Color"
+#define FLOAT         "Float"
+#define VOXELTEMPLATE "VoxelTemplate"
 
 #endif // _VOXEL_TYPEDEF_HXX_

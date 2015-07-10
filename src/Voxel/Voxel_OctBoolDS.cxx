@@ -275,6 +275,8 @@ void Voxel_OctBoolDS::OptimizeMemory()
     value = itr.Value();
     if (value == 0 || value == 255)
     {
+
+
       xyz = itr.Key();
       ixs.Append(xyz.ix);
       iys.Append(xyz.iy);
