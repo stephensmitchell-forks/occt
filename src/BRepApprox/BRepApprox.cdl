@@ -40,11 +40,6 @@ is
 	
     class SurfaceTool;
     
-    class Approx instantiates Approx from ApproxInt
-    	(Surface                 from BRepAdaptor,
-	 SurfaceTool             from BRepApprox,
-	 Quadric                 from IntSurf,
-	 QuadricTool             from IntSurf,
-	 ApproxLine              from BRepApprox);
+    imported Approx;
 
 end BRepApprox;

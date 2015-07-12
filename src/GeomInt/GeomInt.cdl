@@ -47,12 +47,7 @@ is
 
     class LineTool;
 
-    class WLApprox instantiates Approx from ApproxInt
-    	(HSurface     from Adaptor3d,
-	 HSurfaceTool from Adaptor3d,
-	 Quadric      from IntSurf,
-	 QuadricTool  from IntSurf,
-	 WLine        from IntPatch);
+    imported WLApprox;
 	 
     private class ParameterAndOrientation;
 
