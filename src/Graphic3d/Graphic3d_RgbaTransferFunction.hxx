@@ -102,7 +102,7 @@ public:
   {
     std::ifstream aStream;
 
-    OSD_OpenStream (aStream, theFileName, std::ios_base::binary);
+    aStream.open (theFileName, std::ios_base::binary);
 
     if (!aStream.is_open())
     {
