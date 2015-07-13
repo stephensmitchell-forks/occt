@@ -19,8 +19,6 @@
 #include <Handle_Voxel_Prs.hxx>
 #include <AIS_InteractiveObject.hxx>
 #include <PrsMgr_PresentationManager3d.hxx>
-#include <Handle_Prs3d_Presentation.hxx>
-#include <Handle_SelectMgr_Selection.hxx>
 #include <Prs3d_Presentation.hxx>
 #include <SelectMgr_Selection.hxx>
 #include <Graphic3d_VolumeData.hxx>
