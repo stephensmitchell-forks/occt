@@ -667,10 +667,12 @@ protected: //! @name data types related to ray-tracing
     OpenGl_RT_uSphereMapForBack,
     OpenGl_RT_uTexSamplersArray,
     OpenGl_RT_uBlockedRngEnabled,
+    OpenGl_RT_uMaxRadiance,
 
     // sampled frame params
     OpenGl_RT_uSampleWeight,
     OpenGl_RT_uFrameRndSeed,
+    OpenGl_RT_uBilateralEnabled,
 
     // adaptive FSAA params
     OpenGl_RT_uOffsetX,

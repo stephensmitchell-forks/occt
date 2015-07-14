@@ -1566,6 +1566,8 @@ Standard_Boolean OpenGl_View::initRaytraceResources (const Handle(OpenGl_Context
         aShaderProgram->GetUniformLocation (theGlContext, "uSampleWeight");
       myUniformLocations[anIndex][OpenGl_RT_uFrameRndSeed] =
         aShaderProgram->GetUniformLocation (theGlContext, "uFrameRndSeed");
+      myUniformLocations[anIndex][OpenGl_RT_uMaxRadiance] =
+        aShaderProgram->GetUniformLocation (theGlContext, "uMaxRadiance");
 
       myUniformLocations[anIndex][OpenGl_RT_uBackColorTop] =
         aShaderProgram->GetUniformLocation (theGlContext, "uBackColorTop");
@@ -1574,6 +1576,9 @@ Standard_Boolean OpenGl_View::initRaytraceResources (const Handle(OpenGl_Context
     }
 
     theGlContext->BindProgram (myOutImageProgram);
+
+    myUniformLocations[0][OpenGl_RT_uBilateralEnabled] =
+      myOutImageProgram->GetUniformLocation (theGlContext, "uBilateralEnabled");
 
     myOutImageProgram->SetSampler (theGlContext,
       "uInputTexture", OpenGl_RT_PrevAccumTexture);
@@ -2421,14 +2426,53 @@ Standard_Boolean OpenGl_View::runRaytraceShaders (const Standard_Integer        
 
     // Set frame accumulation weight
     myRaytraceProgram->SetUniform (theGlContext,
-      myUniformLocations[0][OpenGl_RT_uSampleWeight], 1.f / (myAccumFrames + 1));
+      myUniformLocations[0][OpenGl_RT_uMaxRadiance], static_cast<Standard_ShortReal> (theCView.RenderParams.RadianceClampValue));
 
     // Set random number generator seed
     myRaytraceProgram->SetUniform (theGlContext,
       myUniformLocations[0][OpenGl_RT_uFrameRndSeed], static_cast<Standard_Integer> (myRNG.NextInt() >> 2));
-  }
 
-  theGlContext->core20fwd->glDrawArrays (GL_TRIANGLES, 0, 6);
+    Standard_Integer aSamplesPerPixel = theCView.RenderParams.SamplesPerPixel;
+
+    if (aSamplesPerPixel == 0)
+    {
+      // Set frame accumulation weight
+      myRaytraceProgram->SetUniform (theGlContext,
+        myUniformLocations[0][OpenGl_RT_uSampleWeight], 1.f / (myAccumFrames + 1));
+
+      theGlContext->core20fwd->glDrawArrays (GL_TRIANGLES, 0, 6);
+    }
+    else
+    {
+      for (int aPassIndex = 0; aPassIndex < aSamplesPerPixel; ++aPassIndex)
+      {
+        aRenderFramebuffer = myAccumFrames % 2 ? myRaytraceFBO1 : myRaytraceFBO2;
+        anAccumFramebuffer = myAccumFrames % 2 ? myRaytraceFBO2 : myRaytraceFBO1;
+
+        aRenderFramebuffer->BindBuffer (theGlContext);
+
+        anAccumFramebuffer->ColorTexture()->Bind (
+          theGlContext, GL_TEXTURE0 + OpenGl_RT_PrevAccumTexture);
+
+        // Set frame accumulation weight
+        myRaytraceProgram->SetUniform (theGlContext,
+          myUniformLocations[0][OpenGl_RT_uSampleWeight], 1.f / (myAccumFrames + 1));
+
+        // Set random number generator seed
+        myRaytraceProgram->SetUniform (theGlContext,
+          myUniformLocations[0][OpenGl_RT_uFrameRndSeed], static_cast<Standard_Integer> (myRNG.NextInt() >> 2));
+
+        theGlContext->core20fwd->glDrawArrays (GL_TRIANGLES, 0, 6);
+        ++myAccumFrames;
+        glFinish();
+      }
+    }
+  }
+  else
+  {
+    theGlContext->core20fwd->glDrawArrays (GL_TRIANGLES, 0, 6);
+    ++myAccumFrames;
+  }
 
   if (myRaytraceParameters.GlobalIllumination)
   {
@@ -2448,6 +2492,9 @@ Standard_Boolean OpenGl_View::runRaytraceShaders (const Standard_Integer        
 
     aRenderFramebuffer->ColorTexture()->Bind (
       theGlContext, GL_TEXTURE0 + OpenGl_RT_PrevAccumTexture);
+
+    myOutImageProgram->SetUniform (theGlContext,
+      myUniformLocations[0][OpenGl_RT_uBilateralEnabled], theCView.RenderParams.IsGIFilteringEnabled ? 1 : 0);
 
     theGlContext->core20fwd->glDrawArrays (GL_TRIANGLES, 0, 6);
   }

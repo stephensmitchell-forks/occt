@@ -13,7 +13,8 @@ uniform sampler2D uAccumTexture;
 //! Increases performance up to 4 times, but noise becomes structured.
 uniform int uBlockedRngEnabled;
 
-#define MAX_RADIANCE vec3 (10.f)
+//! Maximum value for radiance clamping.
+uniform float uMaxRadiance;
 
 // =======================================================================
 // function : main
@@ -46,7 +47,7 @@ void main (void)
     aColor.rgb = ZERO;
   }
 
-  aColor.rgb = min (aColor.rgb, MAX_RADIANCE);
+  aColor.rgb = min (aColor.rgb, vec3 (uMaxRadiance));
 
   OutColor = mix (texture2D (uAccumTexture, vPixel), aColor, uSampleWeight);
 #else
