@@ -410,6 +410,11 @@ void AIS_Dimension::DrawText (const Handle(Prs3d_Presentation)& thePresentation,
                               const TCollection_ExtendedString& theText,
                               const Standard_Integer theLabelPosition)
 {
+  if (!myDrawer->HasOwnShadingAspect())
+  {
+      myDrawer->SetShadingAspect (new Prs3d_ShadingAspect());
+  }
+
   if (myDrawer->DimensionAspect()->IsText3d())
   {
     // getting font parameters
