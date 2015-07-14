@@ -8354,6 +8354,8 @@ static Standard_Integer VRenderParams (Draw_Interpretor& theDI,
     theDI << "gleam:        " << (aParams.IsTransparentShadowEnabled  ? "on" : "off") << "\n";
     theDI << "GI:           " << (aParams.IsGlobalIlluminationEnabled ? "on" : "off") << "\n";
     theDI << "blocked RNG:  " << (aParams.CoherentPathTracingMode     ? "on" : "off") << "\n";
+    theDI << "samples:      " <<  aParams.SamplesPerPixel                             << "\n";
+    theDI << "filtering:    " << (aParams.IsGIFilteringEnabled        ? "on" : "off") << "\n";
     theDI << "shadingModel: ";
     switch (aView->ShadingModel())
     {
@@ -8450,6 +8452,32 @@ static Standard_Integer VRenderParams (Draw_Interpretor& theDI,
       else
       {
         aParams.RaytracingDepth = aDepth;
+      }
+    }
+    else if (aFlag == "-samples"
+          || aFlag == "-spp")
+    {
+      if (toPrint)
+      {
+        theDI << aParams.SamplesPerPixel << " ";
+        continue;
+      }
+      else if (++anArgIter >= theArgNb)
+      {
+        std::cerr << "Error: wrong syntax at argument '" << anArg << "'\n";
+        return 1;
+      }
+
+      const Standard_Integer aSamples = Draw::Atoi (theArgVec[anArgIter]);
+
+      if (aSamples < 0)
+      {
+        std::cerr << "Error: invalid ray-tracing samples per pixel " << aSamples << ". SPP should be a positive number.\n";
+        return 1;
+      }
+      else
+      {
+        aParams.SamplesPerPixel = aSamples;
       }
     }
     else if (aFlag == "-shad"
@@ -8554,6 +8582,22 @@ static Standard_Integer VRenderParams (Draw_Interpretor& theDI,
         --anArgIter;
       }
       aParams.CoherentPathTracingMode = toEnable;
+    }
+    else if (aFlag == "-filter" || aFlag == "-pp" )
+    {
+      if (toPrint)
+      {
+        theDI << (aParams.IsGIFilteringEnabled ? "on" : "off") << " ";
+        continue;
+      }
+
+      Standard_Boolean toEnable = Standard_True;
+      if (++anArgIter < theArgNb
+      && !parseOnOff (theArgVec[anArgIter], toEnable))
+      {
+        --anArgIter;
+      }
+      aParams.IsGIFilteringEnabled = toEnable;
     }
     else if (aFlag == "-env")
     {

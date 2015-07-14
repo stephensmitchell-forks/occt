@@ -55,6 +55,7 @@ public:
     IsReflectionEnabled         (Standard_False),
     IsAntialiasingEnabled       (Standard_False),
     IsTransparentShadowEnabled  (Standard_False),
+    IsGIFilteringEnabled        (Standard_False),
     CoherentPathTracingMode     (Standard_False),
 
     UseEnvironmentMapBackground (Standard_False),
@@ -85,6 +86,7 @@ public:
   Standard_Boolean        IsAntialiasingEnabled;       //!< enables/disables adaptive anti-aliasing, False by default
   Standard_Boolean        IsTransparentShadowEnabled;  //!< enables/disables light propagation through transparent media, False by default
   Standard_Boolean        UseEnvironmentMapBackground; //!< enables/disables environment map background
+  Standard_Boolean        IsGIFilteringEnabled;        //!< enables/disables post-processing of GI rendering results
   Standard_Boolean        CoherentPathTracingMode;     //!< enables/disables 'coherent' tracing mode (single RNG seed within 16x16 image blocks)
 
   Graphic3d_StereoMode    StereoMode;                  //!< stereoscopic output mode, Graphic3d_StereoMode_QuadBuffer by default

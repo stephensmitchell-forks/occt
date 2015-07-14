@@ -350,6 +350,7 @@ protected: //! @name data types related to ray-tracing
     // sampled frame params
     OpenGl_RT_uSampleWeight,
     OpenGl_RT_uFrameRndSeed,
+    OpenGl_RT_BilateralFilteringEnabled,
 
     // adaptive FSAA params
     OpenGl_RT_uOffsetX,
