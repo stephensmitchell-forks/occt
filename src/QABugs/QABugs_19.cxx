@@ -48,10 +48,12 @@
 #include <BRepAlgo_Cut.hxx>
 #include <NCollection_Map.hxx>
 #include <NCollection_Handle.hxx>
+#include <NCollection_IncAllocator.hxx>
 #include <TCollection_HAsciiString.hxx>
 #include <GeomFill_Trihedron.hxx>
 #include <BRepOffsetAPI_MakePipe.hxx>
 #include <Standard_Atomic.hxx>
+#include <TopExp_Explorer.hxx>
 
 #include <Standard_Version.hxx>
 
@@ -3866,6 +3868,74 @@ static Standard_Integer OCC24923(
   return 0;
 }
 
+//=======================================================================
+//function : OCC26407
+//purpose  :
+//=======================================================================
+#include <BRepBuilderAPI_MakeWire.hxx>
+#include <BRepBuilderAPI_MakeEdge.hxx>
+#include <BRepMesh_IncrementalMesh.hxx>
+#include <TCollection_AsciiString.hxx>
+static Standard_Integer OCC26407 (Draw_Interpretor& theDI, Standard_Integer theArgNb, const char** theArgVec)
+{
+  if (theArgNb != 2)
+  {
+    std::cerr << "Error: wrong number of arguments! See usage:\n";
+    theDI.PrintHelp (theArgVec[0]);
+    return 1;
+  }
+
+  // Construct vertices.
+  std::vector<TopoDS_Vertex> wire_vertices;
+  wire_vertices.push_back(BRepBuilderAPI_MakeVertex(gp_Pnt(587.90000000000009094947, 40.6758179230516248026106, 88.5)));
+  wire_vertices.push_back(BRepBuilderAPI_MakeVertex(gp_Pnt(807.824182076948432040808, 260.599999999999965893949, 88.5)));
+  wire_vertices.push_back(BRepBuilderAPI_MakeVertex(gp_Pnt(644.174182076948454778176, 424.249999999999943156581, 88.5000000000000142108547)));
+  wire_vertices.push_back(BRepBuilderAPI_MakeVertex(gp_Pnt(629.978025792618950617907, 424.25, 88.5)));
+  wire_vertices.push_back(BRepBuilderAPI_MakeVertex(gp_Pnt(793.628025792618700506864, 260.599999999999852207111, 88.5)));
+  wire_vertices.push_back(BRepBuilderAPI_MakeVertex(gp_Pnt(587.900000000000204636308, 54.8719742073813492311274, 88.5)));
+  wire_vertices.push_back(BRepBuilderAPI_MakeVertex(gp_Pnt(218.521974207381418864315, 424.250000000000056843419, 88.5)));
+  wire_vertices.push_back(BRepBuilderAPI_MakeVertex(gp_Pnt(204.325817923051886282337, 424.249999999999943156581, 88.5)));
+
+  // Construct wire.
+  BRepBuilderAPI_MakeWire wire_builder;
+  for (size_t i = 0; i < wire_vertices.size(); i++)
+  {
+    const TopoDS_Vertex &v = wire_vertices[i];
+    const TopoDS_Vertex &w = wire_vertices[(i+1) % wire_vertices.size()];
+
+    wire_builder.Add(BRepBuilderAPI_MakeEdge(v, w));
+  }
+
+  // Create face and triangulate it.
+  // Construct face.
+  gp_Pnt v0 = BRep_Tool::Pnt(wire_vertices[0]);
+  gp_Pnt v1 = BRep_Tool::Pnt(wire_vertices[1]);
+  gp_Pnt v2 = BRep_Tool::Pnt(wire_vertices[wire_vertices.size() - 1]);
+
+  gp_Vec face_normal = gp_Vec(v0, v1).Crossed(gp_Vec(v0, v2));
+
+  TopoDS_Face face = BRepBuilderAPI_MakeFace(gp_Pln(v0, face_normal), wire_builder);
+  BRepMesh_IncrementalMesh m(face, 1e-7);
+
+  if (m.GetStatusFlags() != 0)
+  {
+    theDI << "Failed. Status for face constructed from vertices: " << m.GetStatusFlags() << "\n";
+    return 1;
+  }
+  DBRep::Set(theArgVec[1], face);
+  char buf[256];
+  sprintf(buf, "isos %s 0", theArgVec[1]);
+  theDI.Eval(buf);
+
+  sprintf(buf, "triangles %s", theArgVec[1]);
+  theDI.Eval(buf);
+
+  theDI.Eval("smallview; fit");
+
+  theDI << "Test completed\n";
+  return 0;
+}
+
 void QABugs::Commands_19(Draw_Interpretor& theCommands) {
   const char *group = "QABugs";
 
@@ -3938,5 +4008,6 @@ void QABugs::Commands_19(Draw_Interpretor& theCommands) {
   theCommands.Add ("xprojponf", "xprojponf p f", __FILE__, xprojponf, group);
   theCommands.Add ("OCC24923", "OCC24923", __FILE__, OCC24923, group);
   theCommands.Add ("OCC26139", "OCC26139 [-boxsize value] [-boxgrid value] [-compgrid value]", __FILE__, OCC26139, group);
+  theCommands.Add ("OCC26407", "OCC26407 result_name", __FILE__, OCC26407, group);
   return;
 }
