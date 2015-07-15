@@ -461,7 +461,7 @@ protected: //! @name data types related to ray-tracing
     : StackSize (THE_DEFAULT_STACK_SIZE),
       NbBounces (THE_DEFAULT_NB_BOUNCES),
       TransparentShadows (Standard_False),
-      GlobalIllumination  (Standard_False),
+      GlobalIllumination  (Standard_True),
       UseBindlessTextures (Standard_False)
     {
       //
