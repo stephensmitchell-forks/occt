@@ -11,11 +11,16 @@ out vec4 OutColor;
 
 const float rI = 0.270 * 1.0f;  // The intensity radius (in pixels).
 const float rL = 1.71 * 0.5f;   // The geometric radius (in pixels).
-const int WindowSize = 8;       // The window size (in pixels).
+const int WindowSize = 6;       // The window size (in pixels).
 
 float gaussian (float theL, float theR)
 {
   return exp (-theL * theL / (2.0f * theR * theR));
+}
+
+vec4 posprocess (vec4 theColor)
+{
+  return clamp (theColor, 0.f, 1.f);
 }
 
 vec4 bilateral()
@@ -23,7 +28,7 @@ vec4 bilateral()
   // Get the sizes
   int aWindow   = WindowSize / 2;
   vec4 anOutCol = vec4 (0.f, 0.f, 0.f, 0.f);
-  vec4 aRefCol  = texelFetch (uInputTexture, ivec2 (gl_FragCoord.xy), 0);
+  vec4 aRefCol  = posprocess (texelFetch (uInputTexture, ivec2 (gl_FragCoord.xy), 0));
   float aNorm   = 0.f;
 
   // Compute the kernel
@@ -31,7 +36,8 @@ vec4 bilateral()
   {
     for (int j = -aWindow; j <= aWindow; j++)
     {
-      vec4 aCol = texelFetch (uInputTexture, ivec2 (gl_FragCoord.xy) + ivec2 (j, i), 0);
+      vec4 aCol = posprocess (
+        texelFetch (uInputTexture, ivec2 (gl_FragCoord.xy) + ivec2 (j, i), 0));
       float A = gaussian (distance (aCol, aRefCol), rI);
       float B = gaussian (length (vec2(j, i)), rL);
       anOutCol += aCol * A * B;
