@@ -1,1 +1,3 @@
 GeomLib_CMPLRS.edl
+GeomLib_CheckCurveOnSurface.cxx
+GeomLib_CheckCurveOnSurface.hxx

@@ -1211,14 +1211,14 @@ void Draft_Modification::Perform ()
 		Extrema_ExtPC myExtPC( pfv, TheCurve );
 		Dist2Min = RealLast();
 		for (i = 1; i <= myExtPC.NbExt(); i++)
-		  {
-		    Dist2 = myExtPC.SquareDistance(i);
-		    if (Dist2 < Dist2Min)
-		      {
-			Dist2Min = Dist2;
-			pmin = myExtPC.Point(i).Parameter();
-		      }
-		  }
+		{
+                  Dist2 = myExtPC.SquareDistance(i);
+                  if (Dist2 < Dist2Min)
+                  {
+                    Dist2Min = Dist2;
+                    pmin = myExtPC.Point(i).Parameter();
+                  }
+                }
 
 		newC->D1(pmin,pfv,newd1);
 		Standard_Boolean YaRev = d1fv.Dot(newd1) < 0.; 
@@ -1503,6 +1503,7 @@ void Draft_Modification::Perform ()
 
       for (Vinf.InitEdgeIterator();Vinf.MoreEdge(); Vinf.NextEdge()) {
 	const TopoDS_Edge& Edg = Vinf.Edge();
+        Standard_Real initpar = Vinf.Parameter(Edg);
 	//const Draft_EdgeInfo& Einf = myEMap(Edg);
 	Draft_EdgeInfo& Einf = myEMap(Edg);
 	//Vinf.ChangeParameter(Edg) = Parameter(Einf.Geometry(),pvt);
@@ -1515,7 +1516,19 @@ void Draft_Modification::Perform ()
 	    Vinf.ChangeParameter(Edg) = SmartParameter( Einf, BRep_Tool::Tolerance(Edg), pvt, done, S1, S2 );
 	  }
 	else
+        {
+          if(Abs(initpar - param) > Precision::PConfusion())
+          {
+            Standard_Real f, l;
+            TopLoc_Location Loc;
+            const Handle(Geom_Curve)& aC = BRep_Tool::Curve(Edg, Loc, f, l);
+            if(aC->DynamicType() == STANDARD_TYPE(Geom_TrimmedCurve))
+            {
+              Einf.SetNewGeometry(Standard_True);
+            }
+          }
 	  Vinf.ChangeParameter(Edg) = param;
+      }
       }
       itv.Next();
     }
