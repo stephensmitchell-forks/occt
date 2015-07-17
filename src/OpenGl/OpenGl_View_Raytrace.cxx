@@ -2429,6 +2429,10 @@ Standard_Boolean OpenGl_View::runRaytraceShaders (const Graphic3d_CView&        
         myRaytraceProgram->SetUniform (theGlContext,
           myUniformLocations[0][OpenGl_RT_uSampleWeight], 1.f / (myAccumFrames + 1));
 
+        // Set random number generator seed
+        myRaytraceProgram->SetUniform (theGlContext,
+          myUniformLocations[0][OpenGl_RT_uFrameRndSeed], static_cast<Standard_Integer> (myRNG.NextInt() >> 2));
+
         theGlContext->core20fwd->glDrawArrays (GL_TRIANGLES, 0, 6);
         ++myAccumFrames;
         glFinish();
