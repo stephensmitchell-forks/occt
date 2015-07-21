@@ -35,6 +35,7 @@ class TColgp_Array1OfPnt;
 class Poly_Array1OfTriangle;
 class TColgp_Array1OfPnt2d;
 class TShort_Array1OfShortReal;
+class Handle_Poly_Triangulation;
 
 //! Provides a triangulation for a surface, a set of surfaces, or more generally a shape.
 //! A triangulation consists of an approximate representation of the actual shape, using a collection of points and triangles.
@@ -74,6 +75,9 @@ public:
   Standard_EXPORT Poly_Triangulation (const TColgp_Array1OfPnt&    theNodes,
                                       const TColgp_Array1OfPnt2d&  theUVNodes,
                                       const Poly_Array1OfTriangle& theTriangles);
+
+  //! Creates full copy of current triangulation
+  Standard_EXPORT virtual Handle(Poly_Triangulation) Copy() const;
 
   //! Copy constructor for triangulation.
   Standard_EXPORT Poly_Triangulation (const Handle(Poly_Triangulation)& theTriangulation);

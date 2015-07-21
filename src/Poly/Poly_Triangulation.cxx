@@ -100,6 +100,23 @@ Poly_Triangulation::Poly_Triangulation (const TColgp_Array1OfPnt&    theNodes,
 }
 
 //=======================================================================
+//function : Copy
+//purpose  : 
+//=======================================================================
+
+Handle(Poly_Triangulation) Poly_Triangulation::Copy() const
+{
+  Handle(Poly_Triangulation) aCopy = new Poly_Triangulation(NbNodes(), NbTriangles(), HasUVNodes());
+  aCopy->myNodes = myNodes;
+  aCopy->myTriangles = myTriangles;
+  aCopy->myUVNodes = myUVNodes;
+  aCopy->myDeflection = myDeflection;
+  aCopy->myNormals = myNormals;
+  return aCopy;
+}
+
+//=======================================================================
+//=======================================================================
 //function : Poly_Triangulation
 //purpose  : 
 //=======================================================================

@@ -37,7 +37,7 @@ is
        	returns Copy from BRepBuilderAPI;
 
 
-    Create(S: Shape from TopoDS; copyGeom: Boolean = Standard_True)
+    Create(S: Shape from TopoDS; copyGeom: Boolean = Standard_True; copyMesh: Boolean = Standard_False)
 	---Purpose: Constructs a copy framework and copies the shape S.
     	-- Use the function Shape to access the result.
     	-- If copyGeom is False, only topological objects will be copied, while 
@@ -47,7 +47,7 @@ is
     	returns Copy from BRepBuilderAPI;
 
 
-    Perform(me: in out; S: Shape from TopoDS; copyGeom: Boolean = Standard_True)
+    Perform(me: in out; S: Shape from TopoDS; copyGeom: Boolean = Standard_True; copyMesh: Boolean = Standard_False)
 	---Purpose: Copies the shape S.
     	-- Use the function Shape to access the result.
     	-- If copyGeom is False, only topological objects will be copied, while 

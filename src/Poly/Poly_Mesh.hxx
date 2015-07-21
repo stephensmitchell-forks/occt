@@ -36,6 +36,9 @@ public:
   //! @param theTriangulation source triangulation.
   Standard_EXPORT Poly_Mesh (const Handle(Poly_Triangulation)& theTriangulation);
 
+  //! Creates full copy of current mesh
+  Standard_EXPORT virtual Handle(Poly_Triangulation) Copy() const;
+
   //! Adds element to the mesh.
   //! @param theN1 index of the first node.
   //! @param theN2 index of the second node.

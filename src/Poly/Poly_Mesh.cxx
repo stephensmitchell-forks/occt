@@ -48,6 +48,39 @@ Poly_Mesh::Poly_Mesh (const Handle(Poly_Triangulation)& theTriangulation)
 }
 
 //=======================================================================
+//function : Copy
+//purpose  :
+//=======================================================================
+
+Handle(Poly_Triangulation) Poly_Mesh::Copy() const
+{
+  const Standard_Boolean hasUV = HasUVNodes();
+  Handle(Poly_Mesh) aCopy = new Poly_Mesh(hasUV);
+  // Copy nodes
+  Standard_Integer aNbNodes = NbNodes();
+  for ( Standard_Integer i = 1; i <= aNbNodes; ++i )
+  {
+    aCopy->AddNode(Node(i));
+    if ( hasUV )
+      aCopy->ChangeUVNode(i) = UVNode(i);
+  }
+  // Copy triangles
+  Standard_Integer aNbTriangles = NbTriangles();
+  const Standard_Boolean hasNormals = HasNormals();
+  for ( Standard_Integer i = 1; i <= aNbTriangles; ++i )
+  {
+    aCopy->AddTriangle(Triangle(i));
+    // Pass normal vector (if any)
+    if ( hasNormals )
+      aCopy->SetNormal(i, Normal(i));
+  }
+  // Copy quads
+  aCopy->myNbQuads = myNbQuads;
+  aCopy->myElements = myElements;
+  return aCopy;
+}
+
+//=======================================================================
 //function : AddElement
 //purpose  :
 //=======================================================================

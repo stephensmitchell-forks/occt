@@ -23,13 +23,16 @@
 #include <BRep_Tool.hxx>
 #include <TopoDS_Vertex.hxx>
 #include <gp_Pnt.hxx>
+#include <Poly_Triangulation.hxx>
 
 //! Tool class implementing necessary functionality for copying geometry
 class BRepBuilderAPI_Copy_Modification : public BRepTools_Modification 
 {
 public:
-  BRepBuilderAPI_Copy_Modification (const Standard_Boolean copyGeom)
-    : myCopyGeom(copyGeom)
+  BRepBuilderAPI_Copy_Modification (const Standard_Boolean copyGeom,
+                                    const Standard_Boolean copyMesh = Standard_False)
+    : myCopyGeom(copyGeom),
+      myCopyMesh(copyMesh)
   {
   }
 
@@ -47,6 +50,22 @@ public:
       S = Handle(Geom_Surface)::DownCast(S->Copy());
 
     return Standard_True;
+  }
+
+  //! Returns true to indicate the need to copy triangulation;
+  //! copies it if required
+  Standard_Boolean NewTriangulation(const TopoDS_Face& F, Handle(Poly_Triangulation)& T)
+  {
+    TopLoc_Location L;
+    T = BRep_Tool::Triangulation(F, L);
+
+    if (!T.IsNull() && myCopyMesh)
+    {
+      T = T->Copy();
+      return Standard_True;
+    }
+
+    return Standard_False;
   }
 
   //! Returns true to indicate the need to copy edge;
@@ -117,6 +136,7 @@ public:
 
 private: 
   Standard_Boolean myCopyGeom;
+  Standard_Boolean myCopyMesh;
 };
 
 DEFINE_STANDARD_HANDLE(BRepBuilderAPI_Copy_Modification, BRepTools_Modification)
@@ -140,9 +160,9 @@ BRepBuilderAPI_Copy::BRepBuilderAPI_Copy ()
 //purpose  : 
 //=======================================================================
 
-BRepBuilderAPI_Copy::BRepBuilderAPI_Copy(const TopoDS_Shape& S, const Standard_Boolean copyGeom)
+BRepBuilderAPI_Copy::BRepBuilderAPI_Copy(const TopoDS_Shape& S, const Standard_Boolean copyGeom, const Standard_Boolean copyMesh)
 {
-  myModification = new BRepBuilderAPI_Copy_Modification(copyGeom);
+  myModification = new BRepBuilderAPI_Copy_Modification(copyGeom, copyMesh);
   DoModif(S);
 }
 
@@ -152,9 +172,9 @@ BRepBuilderAPI_Copy::BRepBuilderAPI_Copy(const TopoDS_Shape& S, const Standard_B
 //purpose  : 
 //=======================================================================
 
-void BRepBuilderAPI_Copy::Perform(const TopoDS_Shape& S, const Standard_Boolean copyGeom)
+void BRepBuilderAPI_Copy::Perform(const TopoDS_Shape& S, const Standard_Boolean copyGeom, const Standard_Boolean copyMesh)
 {
-  myModification = new BRepBuilderAPI_Copy_Modification(copyGeom);
+  myModification = new BRepBuilderAPI_Copy_Modification(copyGeom, copyMesh);
   NotDone(); // on force la copie si on vient deja d`en faire une
   DoModif(S);
 }
