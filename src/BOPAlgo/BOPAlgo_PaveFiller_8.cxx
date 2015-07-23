@@ -244,7 +244,7 @@ static
                                      const Handle(BOPDS_PaveBlock)& aPBD)
 {
   Standard_Boolean bXDir, bIsDone, bReject;
-  Standard_Integer nE, aNbPoints, j;
+  Standard_Integer nE, aNbPoints, j, anInd;
   Standard_Real aTD1, aTD2, aT1, aT2, aTolInter, aX, aDT;
   Standard_Real aTolCmp;
   gp_Pnt2d aP2d1, aP2d2, aP2D;
@@ -330,7 +330,7 @@ static
       }
       //
       bReject=Standard_False;
-      if (aPBD->ContainsParameter(aX, aDT)) {
+      if (aPBD->ContainsParameter(aX, aDT, anInd)) {
         continue;
       }
       aPave.SetParameter(aX);
