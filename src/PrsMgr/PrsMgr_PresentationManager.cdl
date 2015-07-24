@@ -25,6 +25,7 @@ inherits TShared from MMgt
 uses 
 
   StructureManager    from Graphic3d,
+  ZLayerId            from Graphic3d,
   PresentableObject   from PrsMgr,
   ListOfPresentations from PrsMgr,
   Length,NameOfColor  from Quantity,
@@ -32,7 +33,7 @@ uses
   Transformation      from Geom,
   NameOfMaterial      from Graphic3d,
   Presentation        from PrsMgr,
-  View                from V3d,
+  Viewer              from V3d,
   ViewManager         from Visual3d,
   ShadingAspect       from Prs3d,
   Presentation        from Prs3d
@@ -148,29 +149,39 @@ is
   ---Purpose: Resets the transient list of presentations previously displayed in immediate mode
   -- and begins accumulation of new list by following AddToImmediateList()/Color()/Highlight() calls.
 
-  ClearImmediateDraw (me : mutable);
+  ClearImmediateDraw (me : mutable)
+    is static;
   ---Purpose: Resets the transient list of presentations previously displayed in immediate mode.
 
   AddToImmediateList (me     : mutable;
-                      thePrs : Presentation from Prs3d);
+                      thePrs : Presentation from Prs3d)
+    is static;
   ---Purpose: Stores thePrs in the transient list of presentations to be displayed in immediate mode.
   -- Will be taken in account in EndImmediateDraw method.
 
-  EndImmediateDraw (me      : mutable;
-                    theView : View from V3d);
-  ---Purpose: Allows rapid drawing of the view theView by avoiding an update of the whole background.
+  EndImmediateDraw (me        : mutable;
+                    theViewer : Viewer from V3d)
+    is static;
+  ---Purpose: Allows rapid drawing of the each view in theViewer by avoiding an update of the whole background.
 
-  IsImmediateModeOn (me) returns Boolean from Standard;
+  RedrawImmediate (me        : mutable;
+                   theViewer : Viewer from V3d)
+    is static;
+  ---Purpose: Clears and redisplays immediate structures of the viewer taking into account its affinity
+
+  IsImmediateModeOn (me) returns Boolean from Standard
+    is static;
   ---C++: inline
   ---Purpose: Returns true if Presentation Manager is accumulating transient list of presentations to be displayed in immediate mode.
 
 ---Category: Hilighting methods.
 
-  Color (me           : mutable;
-         thePrsObject : PresentableObject from PrsMgr;
-         theColor     : NameOfColor from Quantity = Quantity_NOC_YELLOW;
-         theMode      : Integer from Standard = 0;
-         theSelObj    : PresentableObject from PrsMgr = NULL)
+  Color (me                        : mutable;
+         thePrsObject              : PresentableObject from PrsMgr;
+         theColor                  : NameOfColor from Quantity = Quantity_NOC_YELLOW;
+         theMode                   : Integer from Standard = 0;
+         theSelObj                 : PresentableObject from PrsMgr = NULL;
+         theImmediateStructLayerId : ZLayerId from Graphic3d = Graphic3d_ZLayerId_Topmost)
   ---Purpose: Highlights the graphic object thePrsObject in the color theColor.
   -- thePrsObject has the display mode theMode;
   -- this has the default value of 0, that is, the wireframe display mode.
@@ -251,12 +262,17 @@ is
   ---Purpose: Removes a presentation of the presentable object thePrsObject to this framework. thePrsObject has the display mode theMode.
   is protected;
 
+  displayImmediate (me        : mutable;
+                    theViewer : Viewer from V3d);
+  ---Purpose: Handles the structures from <myImmediateList> and displays it separating view-dependent structures and taking into account
+  --          structure visibility by setting proper affinity.
+
 fields
 
-  myStructureManager : ViewManager         from Visual3d  is protected;
-  myImmediateModeOn  : Integer             from Standard  is protected;
-  myImmediateList    : ListOfPresentations from PrsMgr    is protected;
-  myImmediateView    : View                from V3d       is protected;
-  mySelectionColor   : Color               from Quantity  is protected;
+  myStructureManager           : ViewManager         from Visual3d  is protected;
+  myImmediateModeOn            : Integer             from Standard  is protected;
+  myImmediateList              : ListOfPresentations from PrsMgr    is protected;
+  myViewDependentImmediateList : ListOfPresentations from PrsMgr    is protected;
+  mySelectionColor             : Color               from Quantity  is protected;
 
 end PresentationManager from PrsMgr;

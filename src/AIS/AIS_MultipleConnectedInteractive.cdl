@@ -37,6 +37,7 @@ uses
     Projector             from Prs3d,
     Transformation        from Geom,
     Integer                from Standard,
+    EntityOwner            from SelectMgr,
     Selection              from SelectMgr,
     Trsf                  from gp,
     Pnt                   from gp,
@@ -126,6 +127,10 @@ is
         ---Purpose:  Informs the graphic context that the interactive Object
         -- may be decomposed into sub-shapes for dynamic selection.
 
+    GlobalSelOwner(me)
+    returns EntityOwner from SelectMgr
+    is redefined virtual;
+    ---Purpose: Returns the owner of mode for selection of object as a whole.
 
     ComputeSelection(me:mutable; aSelection : Selection from SelectMgr;
                                  aMode      :        Integer   from Standard)

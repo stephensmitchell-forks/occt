@@ -680,6 +680,14 @@ is
 	---Level: Advanced
 	---Purpose: Returns the view manager handle which manage this view
 
+    IsComputed (me;
+                theStructId       : Integer from Standard;
+                theComputedStruct : out Structure from Graphic3d)
+      returns Boolean from Standard
+      is static;
+    ---Purpose: Returns Standard_True in case if the structure with the given <theStructId> is
+    --          in list of structures to be computed and stores computed struct to <theComputedStruct>.
+
 	----------------------------
 	-- Category: Private methods
 	----------------------------
@@ -781,30 +789,6 @@ is
 	---Level: Internal
 	---Purpose: Display the structure <AStructure> to the view <me>.
 	---Category: Private methods
-
-  DisplayImmediate ( me : mutable;
-                     theStructure    : Structure from Graphic3d;
-                     theIsSingleView : Boolean   from Standard = Standard_True)
-  returns Boolean from Standard
-  is static;
-  ---Level: Internal
-  ---Purpose: Add structure to the list of immediate presentations.
-  -- @return true if structure has not been registered in this view
-
-  EraseImmediate ( me : mutable;
-                   theStructure : Structure from Graphic3d )
-  returns Boolean from Standard
-  is static;
-  ---Level: Internal
-  ---Purpose: Removes the structure from the list of immediate presentations.
-  -- @return true if structure has been registered in view
-
-  ClearImmediate ( me : mutable )
-  returns Boolean from Standard
-  is static;
-  ---Level: Internal
-  ---Purpose: Clears list of immediate presentations.
-  -- @return true if list was not empty
 
 	Erase ( me		: mutable;
 		AStructure	: Structure from Graphic3d )
@@ -1125,7 +1109,6 @@ fields
 
   -- the displayed structures in the view
   myStructsDisplayed    : MapOfStructure from Graphic3d;
-  myImmediateStructures : MapOfStructure from Graphic3d;
 
   myGTrihedron     : GraduatedTrihedron from Graphic3d;
 

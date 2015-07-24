@@ -30,8 +30,10 @@ OpenGl_Caps::OpenGl_Caps()
   keepArrayData     (Standard_False),
 #if !defined(GL_ES_VERSION_2_0)
   ffpEnable         (Standard_True),
+  useSystemBuffer   (Standard_False),
 #else
   ffpEnable         (Standard_False),
+  useSystemBuffer   (Standard_True),
 #endif
   buffersNoSwap     (Standard_False),
   contextStereo     (Standard_False),
@@ -64,6 +66,7 @@ OpenGl_Caps& OpenGl_Caps::operator= (const OpenGl_Caps& theCopy)
   pntSpritesDisable = theCopy.pntSpritesDisable;
   keepArrayData     = theCopy.keepArrayData;
   ffpEnable         = theCopy.ffpEnable;
+  useSystemBuffer   = theCopy.useSystemBuffer;
   buffersNoSwap     = theCopy.buffersNoSwap;
   contextStereo     = theCopy.contextStereo;
   contextDebug      = theCopy.contextDebug;

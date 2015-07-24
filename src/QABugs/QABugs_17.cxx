@@ -398,21 +398,21 @@ static Standard_Integer  OCC138 (Draw_Interpretor& di, Standard_Integer /*argc*/
   aContext->Display(ais2);
   aContext->Display(ais3);
 
-  aContext->AddOrRemoveCurrentObject(ais1);
-  aContext->AddOrRemoveCurrentObject(ais2);
-  aContext->AddOrRemoveCurrentObject(ais3);
+  aContext->AddOrRemoveSelected(ais1);
+  aContext->AddOrRemoveSelected(ais2);
+  aContext->AddOrRemoveSelected(ais3);
 
-  di << "\n No of currents = " << aContext->NbCurrents();
+  di << "\n No of currents = " << aContext->NbSelected();
 
-  aContext->InitCurrent();
+  aContext->InitSelected();
 
   int count = 1;
-  while(aContext->MoreCurrent())
+  while(aContext->MoreSelected())
   {
     di << "\n count is = " << count++;
-    Handle(AIS_InteractiveObject) ais = aContext->Current();
-    aContext->AddOrRemoveCurrentObject(ais);
-    aContext->InitCurrent();
+    Handle(AIS_InteractiveObject) ais = aContext->SelectedInteractive();
+    aContext->AddOrRemoveSelected(ais);
+    aContext->InitSelected();
   }
 
   return 0; 
@@ -694,51 +694,51 @@ static Standard_Integer  OCC189 (Draw_Interpretor& di, Standard_Integer /*argc*/
   aContext2->Display(ais2);
   aContext2->Display(ais3);
 
-  aContext1->AddOrRemoveCurrentObject(ais1);
-  aContext1->AddOrRemoveCurrentObject(ais2);
-  aContext1->AddOrRemoveCurrentObject(ais3);
+  aContext1->AddOrRemoveSelected(ais1);
+  aContext1->AddOrRemoveSelected(ais2);
+  aContext1->AddOrRemoveSelected(ais3);
 
   di << "\n Stage : 1";
-  di << "\n \t No of currents on aContext1 = " << aContext1->NbCurrents();
-  di << "\n \t No of currents on aContext2 = " << aContext2->NbCurrents() << "\n\n";
+  di << "\n \t No of currents on aContext1 = " << aContext1->NbSelected();
+  di << "\n \t No of currents on aContext2 = " << aContext2->NbSelected() << "\n\n";
 
-  di << "\n aContext1->IsCurrent = " << (Standard_Integer) aContext1->IsCurrent(ais1) << ", aContext2->IsCurrent = " << (Standard_Integer) aContext2->IsCurrent(ais1) << " ";
+  di << "\n aContext1->IsSelected = " << (Standard_Integer) aContext1->IsCurrent(ais1) << ", aContext2->IsCurrent = " << (Standard_Integer) aContext2->IsCurrent(ais1) << " ";
 
-  aContext2->AddOrRemoveCurrentObject(ais1);
-  aContext2->AddOrRemoveCurrentObject(ais2);
-  aContext2->AddOrRemoveCurrentObject(ais3);
+  aContext2->AddOrRemoveSelected(ais1);
+  aContext2->AddOrRemoveSelected(ais2);
+  aContext2->AddOrRemoveSelected(ais3);
 
   di << "\n Stage : 2";
-  di << "\n \t No of currents on aContext1 = " << aContext1->NbCurrents();
-  di << "\n \t No of currents on aContext2 = " << aContext2->NbCurrents() << "\n\n";
+  di << "\n \t No of currents on aContext1 = " << aContext1->NbSelected();
+  di << "\n \t No of currents on aContext2 = " << aContext2->NbSelected() << "\n\n";
 
-  aContext1->InitCurrent();
+  aContext1->InitSelected();
   int count1 = 1;
-  while(aContext1->MoreCurrent())
+  while(aContext1->MoreSelected())
   {
     di << "\n count1 is = " << count1++;
-    Handle(AIS_InteractiveObject) ais = aContext1->Current();
-    aContext1->AddOrRemoveCurrentObject(ais);
-    aContext1->InitCurrent();
+    Handle(AIS_InteractiveObject) ais = aContext1->SelectedInteractive();
+    aContext1->AddOrRemoveSelected(ais);
+    aContext1->InitSelected();
   }
 
   di << "\n Stage : 3";
-  di << "\n \t No of currents on aContext1 = " << aContext1->NbCurrents();
-  di << "\n \t No of currents on aContext2 = " << aContext2->NbCurrents() << "\n\n";
+  di << "\n \t No of currents on aContext1 = " << aContext1->NbSelected();
+  di << "\n \t No of currents on aContext2 = " << aContext2->NbSelected() << "\n\n";
 
-  aContext2->InitCurrent();
+  aContext2->InitSelected();
   int count2 = 1;
-  while(aContext2->MoreCurrent())
+  while(aContext2->MoreSelected())
   {
     di << "\n count2 is = " << count2++;
-    Handle(AIS_InteractiveObject) ais = aContext2->Current();
-    aContext2->AddOrRemoveCurrentObject(ais);
-    aContext2->InitCurrent();
+    Handle(AIS_InteractiveObject) ais = aContext2->SelectedInteractive();
+    aContext2->AddOrRemoveSelected(ais);
+    aContext2->InitSelected();
   }
 
   di << "\n\n Stage : 4";
-  di << "\n \t No of currents on aContext1 = " << aContext1->NbCurrents();
-  di << "\n \t No of currents on aContext2 = " << aContext2->NbCurrents();
+  di << "\n \t No of currents on aContext1 = " << aContext1->NbSelected();
+  di << "\n \t No of currents on aContext2 = " << aContext2->NbSelected();
 
   return 0; 
 }

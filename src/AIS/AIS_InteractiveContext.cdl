@@ -50,7 +50,7 @@ class InteractiveContext from AIS inherits TShared from MMgt
     	-- -   working on only a few objects,
     	-- -   working on a single object.
     	--   1. When you want ot work on one type of entity, you
-    	-- should open a local context with the option
+    	-- may open a local context with the option
     	-- UseDisplayedObjects set to false. DisplayedObjects
     	-- allows you to recover the visualized Interactive
     	-- Objects which have a given Type and
@@ -80,6 +80,14 @@ class InteractiveContext from AIS inherits TShared from MMgt
     	--   of setting up the different contexts of
     	--   selection/presentation according to the operation
     	--   which you want to perform.
+        --
+        -- Selection of parts of the objects can also be done without opening a local context.
+        -- Interactive context itself supports decomposed object selection with selection filters
+        -- support. Note that each selectable object must specify the selection mode that is
+        -- responsible for selection of object as a whole (global selection mode). By default, global
+        -- selection mode is equal to 0, but it might be redefined if needed. Sub-part selection
+        -- of the objects without using local context provides a possibility to activate part
+        -- selection modes along with global selection mode.
 
 uses
     Address               from Standard,
@@ -416,17 +424,6 @@ is
 -- Standard_False, the presentation of the Interactive
 -- Object returns to the default selection mode; the
 -- object is displayed but no viewer will be updated.		     
-    SetSelectionMode(me:mutable;
-    	    	     aniobj:InteractiveObject from AIS;
-		     aMode :Integer from Standard);
----Purpose:
--- Sets the selection mode of Interactive Objects.
--- aMode provides the selection mode index of the entity aniobj.		     
-    UnsetSelectionMode(me     : mutable;
-    	    	     aniobj : InteractiveObject from AIS);
----Purpose:
--- Removes selection mode from Interactive Objects.
--- aMode provides the selection mode index of the entity aniobj.
 
     SetPixelTolerance(me:mutable;
 			aPrecision: Real from Standard = 2.0);
@@ -700,13 +697,21 @@ is
     returns Boolean from Standard;
 
     IsHilighted(me;
-    	    	anIobj   : InteractiveObject from AIS;
-		WithColor: out Boolean from Standard;
-    	    	theHiCol : out NameOfColor from Quantity)
+                anIobj   : InteractiveObject from AIS;
+                WithColor: out Boolean from Standard;
+                theHiCol : out NameOfColor from Quantity)
     returns Boolean from Standard;
     ---Purpose: if <anIObj> is hilighted with a specific color
     --          <WithColor> will be returned TRUE
     --          <theHiCol> gives the name of the hilightcolor
+
+    IsHilighted (me;
+                 theOwner           : EntityOwner from SelectMgr;
+                 theIsCustomColor   : out Boolean from Standard;
+                 theCustomColorName : out NameOfColor from Quantity)
+    returns Boolean from Standard;
+    ---Purpose: if <theOwner> is hilighted with a specific color, than <theIsCustomColor> will be set
+    -- to true and <theCustomColorName> will have the name of the color stored
 
     DisplayPriority(me;anIobj: InteractiveObject from AIS)
     returns Integer from Standard;
@@ -1130,136 +1135,159 @@ is
     	    	    --           The Selected objects are objects picked
     	    	    --           when a local context is opened
 
+    ---Category: Obsolete methods that are valid for local context only
 
     SetCurrentObject(me:mutable;
-    	    	     aniobj: InteractiveObject from AIS;
-    	    	     updateviewer : Boolean from Standard = Standard_True);
---- Purpose:
--- Updates the view of the current object in open context.
--- Objects selected when there is no open local context
--- are called current objects; those selected in open
--- local context, selected objects.
--- If a local context is open and if updateviewer equals
--- Standard_False, the presentation of the Interactive
--- Object activates the selection mode; the object is
--- displayed but no viewer will be updated.
-        
-    AddOrRemoveCurrentObject(me:mutable;
-    	    	             aniobj : InteractiveObject from AIS;
-    	    	             updateviewer : Boolean from Standard = Standard_True);
----Purpose:
--- Allows you to add a current object to the list of current
--- objects or remove it from that list.
--- Objects selected when there is no open local context
--- are called current objects; those selected in open
--- local context, selected objects.
--- If a local context is open and if updateviewer equals
--- Standard_False, the presentation of the Interactive
--- Object activates the selection mode; the object is
--- displayed but no viewer will be updated.			     
+                     aniobj: InteractiveObject from AIS;
+                     updateviewer : Boolean from Standard = Standard_True);
+    --- Purpose:
+    -- Updates the view of the current object in open context.
+    -- Objects selected when there is no open local context
+    -- are called current objects; those selected in open
+    -- local context, selected objects.
+    -- If a local context is open and if updateviewer equals
+    -- Standard_False, the presentation of the Interactive
+    -- Object activates the selection mode; the object is
+    -- displayed but no viewer will be updated.
+
+    AddOrRemoveCurrentObject (me                  : mutable;
+                              theObj              : InteractiveObject from AIS;
+                              theIsToUpdateViewer : Boolean from Standard = Standard_True);
+    ---Purpose:
+    -- Allows to add or remove the object given to the list of current and highlight/unhighlight it
+    -- correspondingly. Is valid for global context only; for local context use method AddOrRemoveSelected.
+    -- Since this method makes sence only for neutral point selection of a whole object, if 0 selection
+    -- of the object is empty this method simply does nothing.
+
     UpdateCurrent (me:mutable);
     ---Purpose: Updates the list of current objects, i.e. hilights new
--- current objects, removes hilighting from former current objects.
--- Objects selected when there is no open local context
--- are called current objects; those selected in open
--- local context, selected objects.
-    --          
+    -- current objects, removes hilighting from former current objects.
+    -- Objects selected when there is no open local context
+    -- are called current objects; those selected in open
+    -- local context, selected objects.
 
     WasCurrentTouched(me) returns Boolean from Standard;
-    	---Purpose:
-    	-- Returns the current selection touched by the cursor.
-    	-- Objects selected when there is no open local context
-    	-- are called current objects; those selected in open
-    	-- local context, selected objects.
- 	---C++: inline
+    ---Purpose:
+    -- Returns the current selection touched by the cursor.
+    -- Objects selected when there is no open local context
+    -- are called current objects; those selected in open
+    -- local context, selected objects.
+    ---C++: inline
     
     SetOkCurrent(me:mutable);
     ---C++: inline
 
-    IsCurrent(me;aniobj: InteractiveObject from AIS) returns Boolean  from  Standard;
---- Purpose:
--- Returns true if there is a non-null interactive object in Neutral Point.
--- Objects selected when there is no open local context
--- are called current objects; those selected in open
--- local context, selected objects.  
-    
+    IsCurrent (me;
+               theObject : InteractiveObject from AIS)
+      returns Boolean from  Standard;
+    --- Purpose: Returns true if there is a non-null interactive object in Neutral Point.
+    -- Objects selected when there is no open local context are called current objects;
+    -- those selected in open local context, selected objects.
+
     InitCurrent(me:mutable);
---- Purpose:
--- Initializes a scan of the current selected objects in
--- Neutral Point.
--- Objects selected when there is no open local context
--- are called current objects; those selected in open
--- local context, selected objects.   
-    
-    MoreCurrent(me) returns Boolean from Standard;
---- Purpose:
--- Returns true if there is another object found by the
--- scan of the list of current objects.
--- Objects selected when there is no open local context
--- are called current objects; those selected in open
--- local context, selected objects.   
-    
-    NextCurrent(me:mutable);
----Purpose:
--- Continues the scan to the next object in the list of
--- current objects.
--- Objects selected when there is no open local context
--- are called current objects; those selected in open
--- local context, selected objects.    
-    
-    Current(me) returns InteractiveObject from AIS;
----Purpose:
--- Returns the current interactive object.
--- Objects selected when there is no open local context
--- are called current objects; those selected in open
--- local context, selected objects.    
-    
+    --- Purpose:
+    -- Initializes a scan of the current selected objects in
+    -- Neutral Point.
+    -- Objects selected when there is no open local context
+    -- are called current objects; those selected in open
+    -- local context, selected objects.   
+        
+        MoreCurrent(me) returns Boolean from Standard;
+    --- Purpose:
+    -- Returns true if there is another object found by the
+    -- scan of the list of current objects.
+    -- Objects selected when there is no open local context
+    -- are called current objects; those selected in open
+    -- local context, selected objects.   
+        
+        NextCurrent(me:mutable);
+    ---Purpose:
+    -- Continues the scan to the next object in the list of
+    -- current objects.
+    -- Objects selected when there is no open local context
+    -- are called current objects; those selected in open
+    -- local context, selected objects.    
+        
+        Current(me) returns InteractiveObject from AIS;
+    ---Purpose:
+    -- Returns the current interactive object.
+    -- Objects selected when there is no open local context
+    -- are called current objects; those selected in open
+    -- local context, selected objects.    
+        
     NbCurrents(me:mutable) returns Integer from Standard;
-    
-    FirstCurrentObject(me:mutable) returns InteractiveObject from AIS;
----Purpose:
--- Returns the first current object in the list of current objects.
--- Objects selected when there is no open local context
--- are called current objects; those selected in open
--- local context, selected objects.
+
+    HilightCurrents (me                : mutable;
+                     theToUpdateViewer : Boolean from Standard = Standard_True);
+    ---Purpose:
+    --- Highlights current objects.
+    -- Objects selected when there is no open local context
+    -- are called current objects; those selected in open
+    -- local context, selected objects.
+    -- If a local context is open and if updateviewer equals
+    -- Standard_False, the presentation of the Interactive
+    -- Object activates the selection mode; the object is
+    -- displayed but no viewer will be updated.   
         
-    HilightCurrents(me : mutable; 
-    	            updateviewer : Boolean from Standard=Standard_True);
- ---Purpose:
---- Highlights current objects.
--- Objects selected when there is no open local context
--- are called current objects; those selected in open
--- local context, selected objects.
--- If a local context is open and if updateviewer equals
--- Standard_False, the presentation of the Interactive
--- Object activates the selection mode; the object is
--- displayed but no viewer will be updated.   
-    
     UnhilightCurrents(me : mutable; 
-    	            updateviewer : Boolean from Standard=Standard_True);
----Purpose:
--- Removes highlighting from current objects.
--- Objects selected when there is no open local context
--- are called current objects; those selected in open
--- local context, selected objects.
--- If a local context is open and if updateviewer equals
--- Standard_False, the presentation of the Interactive
--- Object activates the selection mode; the object is
--- displayed but no viewer will be updated.
-        
-    ClearCurrents(me:mutable; 
-    	            updateviewer : Boolean from Standard=Standard_True);
----Purpose:
--- Empties previous current objects in order to get the
--- current objects detected by the selector using
--- UpdateCurrent.
--- Objects selected when there is no open local context
--- are called current objects; those selected in open
--- local context, selected objects.
--- If a local context is open and if updateviewer equals
--- Standard_False, the presentation of the Interactive
--- Object activates the selection mode; the object is
--- displayed but no viewer will be updated.
+                      updateviewer : Boolean from Standard=Standard_True);
+    ---Purpose:
+    -- Removes highlighting from current objects.
+    -- Objects selected when there is no open local context
+    -- are called current objects; those selected in open
+    -- local context, selected objects.
+    -- If a local context is open and if updateviewer equals
+    -- Standard_False, the presentation of the Interactive
+    -- Object activates the selection mode; the object is
+    -- displayed but no viewer will be updated.
+            
+    ClearCurrents (me                : mutable;
+                   theToUpdateViewer : Boolean from Standard = Standard_True);
+    ---Purpose:
+    -- Empties previous current objects in order to get the
+    -- current objects detected by the selector using
+    -- UpdateCurrent.
+    -- Objects selected when there is no open local context
+    -- are called current objects; those selected in open
+    -- local context, selected objects.
+    -- If a local context is open and if updateviewer equals
+    -- Standard_False, the presentation of the Interactive
+    -- Object activates the selection mode; the object is
+    -- displayed but no viewer will be updated.
+
+    DetectedCurrentShape(me) returns Shape from TopoDS;
+    ---C++: return const &
+    ---Purpose:
+    -- @return current mouse-detected shape or empty (null) shape, if current interactive object
+    -- is not a shape (AIS_Shape) or there is no current mouse-detected interactive object at all.
+    DetectedCurrentObject(me) returns InteractiveObject from AIS;
+    --Purpose:
+    -- @return current mouse-detected interactive object or null object if there is no current detected.
+
+    ---Category: Selection mehods valid for both local and interactive context
+
+    SetSelected (me                : mutable;
+                theOwners         : EntityOwner from SelectMgr;
+                theToUpdateViewer : Boolean from Standard = Standard_True);
+    ---Purpose: Unhighlights previously selected owners and marks them as not selected.
+    -- Marks owner given as selected and highlights it.
+
+    AddOrRemoveSelected (me                : mutable;
+                         theOwner          : EntityOwner from SelectMgr;
+                         theToUpdateViewer : Boolean from Standard = Standard_True);
+    ---Purpose: Allows to highlight or unhighlight the owner given depending on its selection status
+
+    IsSelected (me;
+               theOwner : EntityOwner from SelectMgr)
+      returns Boolean from Standard;
+    ---Purpose: Returns true is the owner given is selected
+    
+    FirstSelectedObject(me:mutable) returns InteractiveObject from AIS;
+    ---Purpose:
+    -- Returns the first current object in the list of current objects.
+    -- Objects selected when there is no open local context
+    -- are called current objects; those selected in open
+    -- local context, selected objects.
 
     SetSelected(me:mutable;aniObj: InteractiveObject from AIS; 
     	            updateviewer : Boolean from Standard=Standard_True);
@@ -1270,8 +1298,6 @@ is
     -- Object activates the selection mode; the object is
     -- displayed but no viewer will be updated.
 
-    SetSelectedCurrent(me:mutable);
-    ---Purpose: puts the selected list in the current objects List. 
     UpdateSelected(me:mutable; 
     	            updateviewer : Boolean from Standard=Standard_True);
     ---Purpose: updates the list of selected objects
@@ -1281,126 +1307,120 @@ is
     	    	    	aniobj : InteractiveObject from AIS; 
     	                updateviewer : Boolean from Standard=Standard_True);
     ---Purpose:Allows you to add a selected object to the list of
--- selected objects or remove it from that list. This entity
--- can be an Interactive Object aniobj or its owner
--- aShape as can be seen in the two syntaxes above.
--- Objects selected when there is no open local context
--- are called current objects; those selected in open
--- local context, selected objects.
--- If a local context is open and if updateviewer equals
--- Standard_False, the presentation of the Interactive
--- Object activates the selection mode; the object is
--- displayed but no viewer will be updated. 
+    -- selected objects or remove it from that list. This entity
+    -- can be an Interactive Object aniobj or its owner
+    -- aShape as can be seen in the two syntaxes above.
+    -- Objects selected when there is no open local context
+    -- are called current objects; those selected in open
+    -- local context, selected objects.
+    -- If a local context is open and if updateviewer equals
+    -- Standard_False, the presentation of the Interactive
+    -- Object activates the selection mode; the object is
+    -- displayed but no viewer will be updated. 
 
     HilightSelected(me : mutable; 
     	            updateviewer : Boolean from Standard=Standard_True);
----Purpose:
--- Highlights selected objects.
--- Objects selected when there is no open local context
--- are called current objects; those selected in open
--- local context, selected objects.
--- If a local context is open and if updateviewer equals
--- Standard_False, the presentation of the Interactive
--- Object activates the selection mode; the object is
--- displayed but no viewer will be updated.
+    ---Purpose:
+    -- Highlights selected objects.
+    -- Objects selected when there is no open local context
+    -- are called current objects; those selected in open
+    -- local context, selected objects.
+    -- If a local context is open and if updateviewer equals
+    -- Standard_False, the presentation of the Interactive
+    -- Object activates the selection mode; the object is
+    -- displayed but no viewer will be updated.
         
     UnhilightSelected(me : mutable; 
     	            updateviewer : Boolean from Standard=Standard_True);
----Purpose:
--- Removes highlighting from selected objects.
--- Objects selected when there is no open local context
--- are called current objects; those selected in open
--- local context, selected objects.
--- If a local context is open and if updateviewer equals
--- Standard_False, the presentation of the Interactive
--- Object activates the selection mode; the object is
--- displayed but no viewer will be updated.
+    ---Purpose:
+    -- Removes highlighting from selected objects.
+    -- Objects selected when there is no open local context
+    -- are called current objects; those selected in open
+    -- local context, selected objects.
+    -- If a local context is open and if updateviewer equals
+    -- Standard_False, the presentation of the Interactive
+    -- Object activates the selection mode; the object is
+    -- displayed but no viewer will be updated.
         
     ClearSelected(me:mutable; 
     	            updateviewer : Boolean from Standard=Standard_True);
----Purpose:
--- Empties previous selected objects in order to get the
--- selected objects detected by the selector using
--- UpdateSelected.
--- Objects selected when there is no open local context
--- are called current objects; those selected in open
--- local context, selected objects.
--- If a local context is open and if updateviewer equals
--- Standard_False, the presentation of the Interactive
--- Object activates the selection mode; the object is
--- displayed but no viewer will be updated.
+    ---Purpose:
+    -- Empties previous selected objects in order to get the
+    -- selected objects detected by the selector using
+    -- UpdateSelected.
+    -- Objects selected when there is no open local context
+    -- are called current objects; those selected in open
+    -- local context, selected objects.
+    -- If a local context is open and if updateviewer equals
+    -- Standard_False, the presentation of the Interactive
+    -- Object activates the selection mode; the object is
+    -- displayed but no viewer will be updated.
         
     AddOrRemoveSelected(me:mutable;aShape:Shape from TopoDS; 
     	            updateviewer : Boolean from Standard=Standard_True);
-     ---Purpose:  No right to Add a selected Shape (Internal Management 
-     --           of shape Selection).
-     --           A Previous selected shape may only be removed.
-    
-    
-    AddOrRemoveSelected(me:mutable;anOwner : EntityOwner from SelectMgr;
-    	    	        updateviewer: Boolean from Standard=Standard_True);
-    ---Purpose: allows to add/remove in the selected list the entities
-    --          represented by <anOwner> in the selection process.
+    ---Purpose:  No right to Add a selected Shape (Internal Management 
+    --           of shape Selection).
+    --           A Previous selected shape may only be removed.
   
 		    ---Category: Selection Process
     
     IsSelected(me;aniobj: InteractiveObject from AIS) returns Boolean  from  Standard;
-   --- Purpose:
--- Finds the selected object aniobj in local context and
--- returns its name.
--- Objects selected when there is no open local context
--- are called current objects; those selected in open
---  local context, selected objects.
+    --- Purpose:
+    -- Finds the selected object aniobj in local context and
+    -- returns its name.
+    -- Objects selected when there is no open local context
+    -- are called current objects; those selected in open
+    --  local context, selected objects.
     
     InitSelected(me:mutable);
----Purpose:
--- Initializes a scan of the selected objects in local context.
--- Objects selected when there is no open local context
--- are called current objects; those selected in open
--- local context, selected objects.    
+    ---Purpose:
+    -- Initializes a scan of the selected objects in local context.
+    -- Objects selected when there is no open local context
+    -- are called current objects; those selected in open
+    -- local context, selected objects.    
     
     MoreSelected(me) returns Boolean from Standard;
----Purpose:
--- Returns true if there is another object found by the
--- scan of the list of selected objects.
--- Objects selected when there is no open local context
--- are called current objects; those selected in open
--- local context, selected objects.    
+    ---Purpose:
+    -- Returns true if there is another object found by the
+    -- scan of the list of selected objects.
+    -- Objects selected when there is no open local context
+    -- are called current objects; those selected in open
+    -- local context, selected objects.    
   
     
     NextSelected(me:mutable);
----Purpose:
--- Continues the scan to the next object in the list of
--- selected objects.
--- Objects selected when there is no open local context
--- are called current objects; those selected in open
--- local context, selected objects.    
+    ---Purpose:
+    -- Continues the scan to the next object in the list of
+    -- selected objects.
+    -- Objects selected when there is no open local context
+    -- are called current objects; those selected in open
+    -- local context, selected objects.    
     
     NbSelected(me:mutable) returns Integer from Standard;
     
     HasSelectedShape(me) returns Boolean from Standard;
---- Purpose:
--- Returns true if the interactive context has a shape
--- selected in it which results from the decomposition of
--- another entity in local context.
--- If HasSelectedShape returns true, SelectedShape
--- returns the shape which has been shown to be
--- selected. Interactive returns the Interactive Object
--- from which the shape has been selected.
--- If HasSelectedShape returns false, Interactive
--- returns the interactive entity selected by the click of the mouse.   
+    --- Purpose:
+    -- Returns true if the interactive context has a shape
+    -- selected in it which results from the decomposition of
+    -- another entity in local context.
+    -- If HasSelectedShape returns true, SelectedShape
+    -- returns the shape which has been shown to be
+    -- selected. Interactive returns the Interactive Object
+    -- from which the shape has been selected.
+    -- If HasSelectedShape returns false, Interactive
+    -- returns the interactive entity selected by the click of the mouse.   
     
     SelectedShape(me) returns Shape from TopoDS;	
----Purpose:
---        Returns the selected shape in the open local context.
--- Objects selected when there is no open local context
--- are called current objects; those selected in open
--- local context, selected objects.  
+    ---Purpose:
+    --        Returns the selected shape in the open local context.
+    -- Objects selected when there is no open local context
+    -- are called current objects; those selected in open
+    -- local context, selected objects.  
         
     SelectedOwner(me) returns EntityOwner from SelectMgr;
----Purpose:
--- Returns the owner of the selected entity resulting
--- from the decomposition of another entity in local context. 
+    ---Purpose:
+    -- Returns the owner of the selected entity resulting
+    -- from the decomposition of another entity in local context. 
      
     EntityOwners(me;  theOwners :  out IndexedMapOfOwner from SelectMgr; 
     	    	      theIObj   :  InteractiveObject from AIS; 
@@ -1410,8 +1430,6 @@ is
     ---         the selection mode theMode (in all active modes  
     ---         if the Mode == -1) 
     
-    Interactive(me) returns  InteractiveObject from AIS;
-    ---Purpose: Returns the location of the selected Interactive Object.
     SelectedInteractive(me) returns InteractiveObject from AIS;
     
     HasApplicative(me) returns Boolean from Standard;
@@ -1480,14 +1498,6 @@ is
     ---Purpose:
     -- Gets next current object during iteration through mouse-detected
     -- interactive objects.
-    DetectedCurrentShape(me) returns Shape from TopoDS;
-    ---C++: return const &
-    ---Purpose:
-    -- @return current mouse-detected shape or empty (null) shape, if current interactive object
-    -- is not a shape (AIS_Shape) or there is no current mouse-detected interactive object at all.
-    DetectedCurrentObject(me) returns InteractiveObject from AIS;
-    --Purpose:
-    -- @return current mouse-detected interactive object or null object if there is no current detected.
 
 
 		    ---Category:  SPECIFIC LOCAL CONTEXT ACTIONS.
@@ -1998,6 +2008,12 @@ is
                     theStatus          : DisplayStatus from AIS = AIS_DS_None) is static;
     ---Purpose: Query objects visible or hidden in specified view due to affinity mask.
 
+    RedrawImmediate (me        : mutable;
+                     theViewer : Viewer from V3d)
+      is static;
+    ---Purpose: Redraws immediate structures in all views of the viewer given taking into
+    --          account their visibility.
+
     InitAttributes(me:mutable) is static private;
 
 
@@ -2013,6 +2029,30 @@ is
                           theIObj           : InteractiveObject from AIS;
                           theToUpdateViewer : Boolean from Standard = Standard_True) is static private;
    ---Purpose: UNKNOWN
+
+   unhighlightOwners (me                : mutable;
+                      theObject         : InteractiveObject from AIS)
+    is static private;
+  ---Purpose: Helper function to unhighlight all entity owners currently highlighted with seleciton color.
+
+    highlightWithColor (me             : mutable;
+                        theOwner       : EntityOwner from SelectMgr;
+                        theColor       : NameOfColor from Quantity;
+                        theViewer      : Viewer from V3d = NULL)
+      is static private;
+    ---Purpose: Helper function that highlights the owner given with <theColor> without
+    -- performing AutoHighlight checks, e.g. is used for dynamic highlight.
+    -- If the parameter <theViewer> is set and <theIsImmediate> is true, highlight will be synchronized
+    -- automatically in all views of the viewer.
+
+    highlightSelected (me             : mutable;
+                       theOwner       : EntityOwner from SelectMgr;
+                       theSelColor    : NameOfColor from Quantity)
+      is static private;
+    ---Purpose: Helper function that highlights the owner given with <theColor> with check
+    -- for AutoHighlight, e.g. is used for selection.
+    -- If the parameter <theViewer> is set and <theIsImmediate> is true, selection color will be synchronized
+    -- automatically in all views of the viewer.
 
 fields
 
@@ -2030,8 +2070,8 @@ fields
     mySelectionName : AsciiString from TCollection;
     myCurrentName   : AsciiString from TCollection;
 
-    myLastPicked    : InteractiveObject from AIS;    
-    myLastinMain    : InteractiveObject from AIS;
+    myLastPicked    : EntityOwner from SelectMgr;
+    myLastinMain    : EntityOwner from SelectMgr;
     
     
     myWasLastMain       : Boolean from Standard;

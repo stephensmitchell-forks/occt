@@ -29,7 +29,7 @@ proc Visualization:toolkits { } {
     if { "$::tcl_platform(platform)" == "windows" } {
       if { [info exists ::env(HAVE_D3D)] && "$::env(HAVE_D3D)" == "true" } {
         lappend aResult "TKD3DHost"
-      } elseif { [info exists ::env(VCVER)] && "$::env(VCVER)" != "vc8" && "$::env(VCVER)" != "vc9" && "$::env(VCVER)" != "vc10" } {
+      } elseif { [info exists ::env(VCVER)] && "$::env(VCVER)" != "vc8" && "$::env(VCVER)" != "vc9" && "$::env(VCVER)" != "vc10" && "$::env(VCVER)" != "vc11" } {
         lappend aResult "TKD3DHost"
       }
     }

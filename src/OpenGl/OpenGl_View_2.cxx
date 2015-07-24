@@ -568,7 +568,9 @@ void OpenGl_View::RenderStructs (const Handle(OpenGl_Workspace)& theWorkspace,
   }
 
   Standard_Boolean toRenderGL = theToDrawImmediate ||
-    theCView.RenderParams.Method != Graphic3d_RM_RAYTRACING || myRaytraceInitStatus == OpenGl_RT_FAIL;
+    theCView.RenderParams.Method != Graphic3d_RM_RAYTRACING ||
+    myRaytraceInitStatus == OpenGl_RT_FAIL ||
+    aCtx->IsFeedback();
 
   if (!toRenderGL)
   {
@@ -912,26 +914,6 @@ void OpenGl_View::DisplayStructure (const Handle(Graphic3d_Structure)& theStruct
 }
 
 //=======================================================================
-//function : DisplayImmediateStructure
-//purpose  :
-//=======================================================================
-
-void OpenGl_View::DisplayImmediateStructure (const Handle(Graphic3d_Structure)& theStructure)
-{
-  const OpenGl_Structure* aStruct = reinterpret_cast<const OpenGl_Structure*> (theStructure->CStructure().operator->());
-  for (OpenGl_SequenceOfStructure::Iterator anIter (myImmediateList);
-       anIter.More(); anIter.Next())
-  {
-    if (anIter.Value() == aStruct)
-    {
-      return;
-    }
-  }
-
-  myImmediateList.Append (aStruct);
-}
-
-//=======================================================================
 //function : EraseStructure
 //purpose  :
 //=======================================================================
@@ -939,24 +921,6 @@ void OpenGl_View::DisplayImmediateStructure (const Handle(Graphic3d_Structure)& 
 void OpenGl_View::EraseStructure (const Handle(Graphic3d_Structure)& theStructure)
 {
   myZLayers.RemoveStructure (theStructure);
-}
-
-//=======================================================================
-//function : EraseImmediateStructure
-//purpose  :
-//=======================================================================
-
-void OpenGl_View::EraseImmediateStructure (const OpenGl_Structure* theStructure)
-{
-  for (OpenGl_SequenceOfStructure::Iterator anIter (myImmediateList);
-       anIter.More(); anIter.Next())
-  {
-    if (anIter.Value() == theStructure)
-    {
-      myImmediateList.Remove (anIter);
-      return;
-    }
-  }
 }
 
 //=======================================================================
