@@ -25,6 +25,8 @@
 #include <TDF_DeltaOnAddition.hxx>
 #include <TDF_Tool.hxx>
 #include <TCollection_ExtendedString.hxx>
+#include <TColStd_ListOfInteger.hxx>
+#include <TColStd_ListIteratorOfListOfInteger.hxx>
 #include <TPrsStd_AISViewer.hxx>
 #include <AIS_InteractiveContext.hxx>
 #include <AIS_InteractiveObject.hxx>
@@ -570,17 +572,12 @@ void TPrsStd_AISPresentation::SetSelectionMode(const Standard_Integer theSelecti
 {
   // OCC2932 correction
   if(hasOwnSelectionMode && mySelectionMode == theSelectionMode && !myAIS.IsNull())
-    if(myAIS->SelectionMode() == theSelectionMode )
       return;
 
   Backup();
   mySelectionMode = theSelectionMode;
   hasOwnSelectionMode = Standard_True;
   if( myAIS.IsNull() ) AISUpdate();
-  if( !myAIS.IsNull() ) {
-    if(  myAIS->SelectionMode() == theSelectionMode ) return;
-    myAIS->SetSelectionMode(theSelectionMode);
-  }
 }
 
 //=======================================================================
@@ -590,15 +587,12 @@ void TPrsStd_AISPresentation::SetSelectionMode(const Standard_Integer theSelecti
 void TPrsStd_AISPresentation::UnsetSelectionMode()
 {
   if(!hasOwnSelectionMode && !myAIS.IsNull())
-    if(!myAIS->HasSelectionMode())
       return;
 
   Backup();
   hasOwnSelectionMode = Standard_False;
   if( myAIS.IsNull() ) AISUpdate();
-  if( !myAIS.IsNull() &&  myAIS->HasSelectionMode() ) {
-    myAIS->UnsetSelectionMode();
-  }
+  mySelectionMode = myAIS->GlobalSelectionMode();
 }
 
 //=======================================================================
@@ -915,9 +909,25 @@ void TPrsStd_AISPresentation::AISUpdate ()
            
     }
 
-    if (hasOwnSelectionMode) { 
-      if (myAIS->SelectionMode() != mySelectionMode ) {
-	myAIS->SetSelectionMode(mySelectionMode); 
+    if (hasOwnSelectionMode) {
+      const Handle(AIS_InteractiveContext) aContext =
+        ctx.IsNull() ? myAIS->GetContext() : ctx;
+      if (!aContext.IsNull())
+      {
+        TColStd_ListOfInteger anActivatedModes;
+        aContext->ActivatedModes (myAIS, anActivatedModes);
+        Standard_Boolean isActivated = Standard_False;
+        for (TColStd_ListIteratorOfListOfInteger aModeIter (anActivatedModes); aModeIter.More(); aModeIter.Next())
+        {
+          if (aModeIter.Value() == mySelectionMode)
+          {
+            isActivated = Standard_True;
+            break;
+          }
+        }
+
+        if (!isActivated)
+          aContext->Activate (myAIS, mySelectionMode, Standard_False);
       } 
     }
 

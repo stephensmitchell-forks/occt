@@ -516,14 +516,14 @@ void ViewerTest::StandardModeActivation(const Standard_Integer mode )
 
     if(!aContext->HasOpenedContext()) {
       // To unhilight the preselected object
-      aContext->UnhilightCurrents(Standard_False);
+      aContext->UnhilightSelected(Standard_False);
       // Open a local Context in order to be able to select subshape from
       // the selected shape if any or for all if there is no selection
-      if (!aContext->FirstCurrentObject().IsNull()){
+      if (!aContext->FirstSelectedObject().IsNull()){
 	aContext->OpenLocalContext(Standard_False);
 
-	for(aContext->InitCurrent();aContext->MoreCurrent();aContext->NextCurrent()){
-	  aContext->Load(	aContext->Current(),-1,Standard_True);
+	for(aContext->InitSelected();aContext->MoreSelected();aContext->NextSelected()){
+	  aContext->Load(	aContext->SelectedInteractive(),-1,Standard_True);
 	}
       }
       else
@@ -992,18 +992,13 @@ static int VDispMode (Draw_Interpretor& , Standard_Integer argc, const char** ar
   //unset displaymode.. comportement particulier...
   if(TypeOfOperation==4){
     if(argc==1){
-      if(Ctx->NbCurrents()==0 ||
-	 Ctx->NbSelected()==0){
+      if(Ctx->NbSelected()==0){
 	Handle(AIS_InteractiveObject) IO;
 	VwrTst_DispErase(IO,-1,4,Standard_False);
       }
-      else if(!Ctx->HasOpenedContext()){
-      	for(Ctx->InitCurrent();Ctx->MoreCurrent();Ctx->NextCurrent())
-	  VwrTst_DispErase(Ctx->Current(),-1,4,Standard_False);
-      }
       else{
 	for(Ctx->InitSelected();Ctx->MoreSelected();Ctx->NextSelected())
-	  VwrTst_DispErase(Ctx->Interactive(),-1,4,Standard_False);}
+	  VwrTst_DispErase(Ctx->SelectedInteractive(),-1,4,Standard_False);}
       Ctx->UpdateCurrentViewer();
     }
     else{
@@ -1018,20 +1013,20 @@ static int VDispMode (Draw_Interpretor& , Standard_Integer argc, const char** ar
   }
   else if(argc==2){
     Standard_Integer Dmode = Draw::Atoi(argv[1]);
-    if(Ctx->NbCurrents()==0 && TypeOfOperation==3){
+    if(Ctx->NbSelected()==0 && TypeOfOperation==3){
       Handle(AIS_InteractiveObject) IO;
       VwrTst_DispErase(IO,Dmode,TypeOfOperation,Standard_True);
     }
     if(!Ctx->HasOpenedContext()){
       // set/unset display mode sur le Contexte...
-      for(Ctx->InitCurrent();Ctx->MoreCurrent();Ctx->NextCurrent()){
-	VwrTst_DispErase(Ctx->Current(),Dmode,TypeOfOperation,Standard_False);
+      for(Ctx->InitSelected();Ctx->MoreSelected();Ctx->NextSelected()){
+	VwrTst_DispErase(Ctx->SelectedInteractive(),Dmode,TypeOfOperation,Standard_False);
       }
       Ctx->UpdateCurrentViewer();
     }
     else{
       for(Ctx->InitSelected();Ctx->MoreSelected();Ctx->NextSelected())
-	Ctx->Display(Ctx->Interactive(),Dmode);
+	Ctx->Display(Ctx->SelectedInteractive(),Dmode);
     }
   }
   else{
@@ -1056,30 +1051,22 @@ static int VSubInt(Draw_Interpretor& di, Standard_Integer argc, const char** arg
   Standard_Integer On = Draw::Atoi(argv[1]);
   const Handle(AIS_InteractiveContext)& Ctx = ViewerTest::GetAISContext();
 
-  if(argc==2){
+  if(argc==2)
+  {
+    TCollection_AsciiString isOnOff = On == 1 ? "on" : "off";
+    di << "Sub intensite is turned " << isOnOff << " for " << Ctx->NbSelected() << "objects\n";
+    for (Ctx->InitSelected(); Ctx->MoreSelected(); Ctx->NextSelected())
+    {
+      if(On==1)
+      {
+        Ctx->SubIntensityOn (Ctx->SelectedInteractive(), Standard_False);
+      }
+      else
+      {
+        Ctx->SubIntensityOff (Ctx->SelectedInteractive(), Standard_False);
+      }
+    }
 
-    if(!Ctx->HasOpenedContext()){
-      di<<"sub intensite ";
-      if(On==1) di<<"On";
-      else di<<"Off";
-      di<<" pour "<<Ctx->NbCurrents()<<"  objets"<<"\n";
-      for(Ctx->InitCurrent();Ctx->MoreCurrent();Ctx->NextCurrent()){
-	if(On==1){
-	  Ctx->SubIntensityOn(Ctx->Current(),Standard_False);}
-	else{
-	  di <<"passage dans off"<<"\n";
-	  Ctx->SubIntensityOff(Ctx->Current(),Standard_False);
-	}
-      }
-    }
-    else{
-      for(Ctx->InitSelected();Ctx->MoreSelected();Ctx->NextSelected()){
-	if(On==1){
-	  Ctx->SubIntensityOn(Ctx->Interactive(),Standard_False);}
-	else{
-	  Ctx->SubIntensityOff(Ctx->Interactive(),Standard_False);}
-      }
-    }
     Ctx->UpdateCurrentViewer();
   }
   else {
@@ -1134,11 +1121,11 @@ public:
       mySource = IterSource_List;
       mySeqIter = NCollection_Sequence<TCollection_AsciiString>::Iterator (mySeq);
     }
-    else if (aCtx->NbCurrents() > 0)
+    else if (aCtx->NbSelected() > 0)
     {
       mySource  = IterSource_Selected;
       mySelIter = aCtx;
-      mySelIter->InitCurrent();
+      mySelIter->InitSelected();
     }
     else
     {
@@ -1170,7 +1157,7 @@ public:
     {
       case IterSource_All:      return myMapIter.More();
       case IterSource_List:     return mySeqIter.More();
-      case IterSource_Selected: return mySelIter->MoreCurrent();
+      case IterSource_Selected: return mySelIter->MoreSelected();
     }
     return Standard_False;
   }
@@ -1195,7 +1182,7 @@ public:
       }
       case IterSource_Selected:
       {
-        mySelIter->NextCurrent();
+        mySelIter->NextSelected();
         break;
       }
     }
@@ -1235,10 +1222,10 @@ private:
       }
       case IterSource_Selected:
       {
-        if (mySelIter->MoreCurrent())
+        if (mySelIter->MoreSelected())
         {
-          myCurrentName = GetMapOfAIS().Find1 (mySelIter->Current());
-          myCurrent     = mySelIter->Current();
+          myCurrentName = GetMapOfAIS().Find1 (mySelIter->SelectedInteractive());
+          myCurrent     = mySelIter->SelectedInteractive();
         }
         break;
       }
@@ -2237,14 +2224,14 @@ static int VDonly2 (Draw_Interpretor& ,
   if (anArgIter >= theArgNb)
   {
     // display only selected objects
-    if (aCtx->NbCurrents() < 1)
+    if (aCtx->NbSelected() < 1)
     {
       return 0;
     }
 
-    for (aCtx->InitCurrent(); aCtx->MoreCurrent(); aCtx->NextCurrent())
+    for (aCtx->InitSelected(); aCtx->MoreSelected(); aCtx->NextSelected())
     {
-      aDispSet.Add (aCtx->Current());
+      aDispSet.Add (aCtx->SelectedInteractive());
     }
   }
   else
@@ -2579,7 +2566,7 @@ int VErase (Draw_Interpretor& theDI,
       }
     }
   }
-  else if (!toEraseAll && aCtx->NbCurrents() > 0)
+  else if (!toEraseAll && aCtx->NbSelected() > 0)
   {
     // Erase selected objects
     for (ViewerTest_DoubleMapIteratorOfDoubleMapOfInteractiveAndName anIter (GetMapOfAIS());
@@ -2587,7 +2574,7 @@ int VErase (Draw_Interpretor& theDI,
     {
       const Handle(AIS_InteractiveObject) anIO = Handle(AIS_InteractiveObject)::DownCast (anIter.Key1());
       if (!anIO.IsNull()
-       && aCtx->IsCurrent (anIO))
+       && aCtx->IsSelected (anIO))
       {
         theDI << anIter.Key2().ToCString() << " ";
         if (toEraseInView)
@@ -2861,12 +2848,12 @@ int VBounding (Draw_Interpretor& theDI,
       bndPresentation (theDI, aPrs, aName, anAction);
     }
   }
-  else if (aCtx->NbCurrents() > 0)
+  else if (aCtx->NbSelected() > 0)
   {
     // remove all currently selected objects
-    for (aCtx->InitCurrent(); aCtx->MoreCurrent(); aCtx->NextCurrent())
+    for (aCtx->InitSelected(); aCtx->MoreSelected(); aCtx->NextSelected())
     {
-      Handle(AIS_InteractiveObject) anIO = aCtx->Current();
+      Handle(AIS_InteractiveObject) anIO = aCtx->SelectedInteractive();
       Handle(PrsMgr_Presentation)   aPrs = findPresentation (aCtx, anIO, aMode);
       if (!aPrs.IsNull())
       {
@@ -3498,7 +3485,7 @@ static int VDisplay2 (Draw_Interpretor& theDI,
           && aCtx->GetAutoActivateSelection()
           && aShape->GetTransformPersistenceMode() == 0))
         {
-          aSelMode = aShape->HasSelectionMode() ? aShape->SelectionMode() : -1;
+          aSelMode = aShape->GlobalSelectionMode();
         }
 
         aCtx->Display (aShape, aDispMode, aSelMode,
@@ -3555,7 +3542,7 @@ static int VDisplay2 (Draw_Interpretor& theDI,
         && aCtx->GetAutoActivateSelection()
         && aShape->GetTransformPersistenceMode() == 0))
       {
-        aSelMode = aShape->HasSelectionMode() ? aShape->SelectionMode() : -1;
+        aSelMode = aShape->GlobalSelectionMode();
       }
 
       if (aShape->Type() == AIS_KOI_Datum)
@@ -3963,11 +3950,11 @@ static int VActivatedMode (Draw_Interpretor& di, Standard_Integer argc, const ch
         // on load tous les objets displayees et on Activate les objets de la liste
         AIS_ListOfInteractive ListOfIO;
         // on sauve dans une AISListOfInteractive tous les objets currents
-        if (TheAISContext()->NbCurrents()>0 ){
-          TheAISContext()->UnhilightCurrents(Standard_False);
+        if (TheAISContext()->NbSelected()>0 ){
+          TheAISContext()->UnhilightSelected(Standard_False);
 
-          for (TheAISContext()->InitCurrent(); TheAISContext()->MoreCurrent(); TheAISContext()->NextCurrent() ){
-            ListOfIO.Append(TheAISContext()->Current() );
+          for (TheAISContext()->InitSelected(); TheAISContext()->MoreSelected(); TheAISContext()->NextSelected() ){
+            ListOfIO.Append(TheAISContext()->SelectedInteractive() );
 	  }
 	}
 
@@ -4015,7 +4002,7 @@ static int VActivatedMode (Draw_Interpretor& di, Standard_Integer argc, const ch
 	  TheAISContext()->UnhilightSelected(Standard_False);
 	  // il y a des objets selected,on les parcourt
 	  for (TheAISContext()->InitSelected(); TheAISContext()->MoreSelected(); TheAISContext()->NextSelected() ){
-	    Handle(AIS_InteractiveObject) aIO=TheAISContext()->Interactive();
+	    Handle(AIS_InteractiveObject) aIO=TheAISContext()->SelectedInteractive();
 
 
 	    if (HaveMode(aIO,aMode) ) {
@@ -4346,12 +4333,12 @@ static Standard_Integer VState (Draw_Interpretor& theDI,
     return 0;
   }
 
-  if (aCtx->NbCurrents() > 0
+  if (aCtx->NbSelected() > 0
    && !toShowAll)
   {
-    for (aCtx->InitCurrent(); aCtx->MoreCurrent(); aCtx->NextCurrent())
+    for (aCtx->InitSelected(); aCtx->MoreSelected(); aCtx->NextSelected())
     {
-      Handle(AIS_InteractiveObject) anObj = aCtx->Current();
+      Handle(AIS_InteractiveObject) anObj = aCtx->SelectedInteractive();
       TCollection_AsciiString aName = GetMapOfAIS().Find1 (anObj);
       aName.LeftJustify (20, ' ');
       theDI << aName << " ";
@@ -5012,7 +4999,7 @@ static Standard_Integer VLoadSelection (Draw_Interpretor& /*theDi*/,
       }
 
       aCtx->Load (aShape, -1, Standard_False);
-      aCtx->Activate (aShape, aShape->SelectionMode(), Standard_True);
+      aCtx->Activate (aShape, aShape->GlobalSelectionMode(), Standard_True);
     }
   }
 

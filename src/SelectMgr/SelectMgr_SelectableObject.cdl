@@ -239,6 +239,22 @@ is
     ---C++: return const&
     ---Purpose: Returns common entity owner if the object is an assembly
 
+    GlobalSelectionMode (me)
+      returns Integer from Standard;
+      ---C++:  inline
+      ---Purpose: Returns the mode for selection of object as a whole
+
+    GlobalSelOwner (me)
+      returns EntityOwner from SelectMgr
+      is virtual;
+    ---Purpose: Returns the owner of mode for selection of object as a whole
+
+    setGlobalSelMode (me      : mutable;
+                      theMode : Integer from Standard)
+      is static protected;
+    ---Purpose: Allows derived classes to redefine global selection mode.
+    ---C++: inline
+
 fields
 
     myselections        : SequenceOfSelection is protected;
@@ -250,6 +266,7 @@ fields
 
     mySelectionPrs      : Presentation from Prs3d;
     myHilightPrs        : Presentation from Prs3d;
+    myGlobalSelMode     : Integer from Standard;
     
 friends
     class SelectionManager from SelectMgr

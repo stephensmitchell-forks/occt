@@ -991,6 +991,8 @@ void MeshVS_Mesh::HilightSelected ( const Handle(PrsMgr_PresentationManager3d)& 
 
   IsNeedToRedisplay = Standard_True;
 
+  aSelectionPrs->SetZLayer (Graphic3d_ZLayerId_Top);
+
   if ( IsNeedToRedisplay )
   {
     aSelectionPrs->SetDisplayPriority(9);
@@ -1104,6 +1106,8 @@ void MeshVS_Mesh::HilightOwnerWithColor ( const Handle(PrsMgr_PresentationManage
       }
     }    
   }
+
+  aHilightPrs->SetZLayer (Graphic3d_ZLayerId_Topmost);
 
   if (PM->IsImmediateModeOn())
   {

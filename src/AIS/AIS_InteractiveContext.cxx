@@ -126,6 +126,10 @@ void AIS_InteractiveContext::Delete() const
   {
     Handle(AIS_InteractiveObject) anObj = anObjIter.Key();
     anObj->SetContext (aNullContext);
+    for (anObj->Init(); anObj->More(); anObj->Next())
+    {
+      anObj->CurrentSelection()->UpdateBVHStatus (SelectMgr_TBU_Renew);
+    }
   }
   MMgt_TShared::Delete();
 }
@@ -1049,7 +1053,44 @@ Standard_Boolean AIS_InteractiveContext::IsHilighted(const Handle(AIS_Interactiv
   return Standard_False;
 }
 
+//=======================================================================
+//function : IsHilighted
+//purpose  : Returns true if the objects global status is set to highlighted.
+//           theIsCustomColor flag defines if highlight color is not equal to OCCT's
+//           default Quantity_NOC_WHITE color. If theIsCustomColor is true,
+//           custom highlight color name will be stored to theCustomColorName
+//=======================================================================
+Standard_Boolean AIS_InteractiveContext::IsHilighted (const Handle(SelectMgr_EntityOwner)& theOwner,
+                                                      Standard_Boolean& theIsCustomColor,
+                                                      Quantity_NameOfColor& theCustomColorName) const
+{
+  if (theOwner.IsNull() || !theOwner->HasSelectable())
+    return Standard_False;
 
+  const Handle(AIS_InteractiveObject) anObj =
+    Handle(AIS_InteractiveObject)::DownCast (theOwner->Selectable());
+
+  if (!myObjects.IsBound (anObj))
+    return Standard_False;
+
+  const Handle(AIS_GlobalStatus)& anObjStatus = myObjects (anObj);
+  if (anObjStatus->IsHilighted())
+  {
+    if (anObjStatus->HilightColor() != Quantity_NOC_WHITE)
+    {
+      theIsCustomColor = Standard_True;
+      theCustomColorName = anObjStatus->HilightColor();
+    }
+    else
+    {
+      theIsCustomColor = Standard_False;
+    }
+
+    return Standard_True;
+  }
+
+  return Standard_False;
+}
 
 //=======================================================================
 //function : IsDisplayed
@@ -1521,6 +1562,12 @@ void AIS_InteractiveContext::SetDisplayMode (const AIS_DisplayMode  theMode,
     if (aStatus->GraphicStatus() == AIS_DS_Displayed)
     {
       myMainPM->Display (anObj, theMode);
+      if (!myLastPicked.IsNull() && myLastPicked->Selectable() == anObj)
+      {
+        myMainPM->BeginImmediateDraw();
+        myMainPM->Unhighlight (anObj, myDisplayMode);
+        myMainPM->EndImmediateDraw (myMainVwr);
+      }
       if (aStatus->IsSubIntensityOn())
       {
         myMainPM->Color (anObj, mySubIntensity, theMode);
@@ -2054,6 +2101,19 @@ void AIS_InteractiveContext::SetWidth (const Handle(AIS_InteractiveObject)& theI
 
   theIObj->SetWidth (theWidth);
   redisplayPrsRecModes (theIObj, theToUpdateViewer);
+  if (!myLastinMain.IsNull() && myLastinMain->Selectable() == theIObj)
+  {
+    if (myLastinMain->IsAutoHilight())
+    {
+      const Standard_Integer aHiMode =
+        theIObj->HasHilightMode() ? theIObj->HilightMode() : 0;
+      myLastinMain->HilightWithColor (myMainPM, myLastinMain->IsSelected() ? mySelectionColor : myHilightColor, aHiMode);
+    }
+    else
+    {
+      theIObj->HilightOwnerWithColor (myMainPM, myLastinMain->IsSelected() ? mySelectionColor : myHilightColor, myLastinMain);
+    }
+  }
 }
 
 //=======================================================================
@@ -2270,7 +2330,6 @@ void AIS_InteractiveContext::Status (const Handle(AIS_InteractiveObject)& theIOb
     theStatus += TCollection_AsciiString (aDispModeIter.Value());
     theStatus += "\n";
   }
-  if (IsCurrent (theIObj))  theStatus +="\t| Current\n";
   if (IsSelected(theIObj)) theStatus +="\t| Selected\n";
 
   theStatus += "\t| Active Selection Modes in the MainViewer :\n";
@@ -2303,7 +2362,7 @@ void AIS_InteractiveContext::GetDefModes (const Handle(AIS_InteractiveObject)& t
                ? myDisplayMode
                : 0);
   theHiMode  = theIObj->HasHilightMode()   ? theIObj->HilightMode()   : theDispMode;
-  theSelMode = theIObj->HasSelectionMode() ? theIObj->SelectionMode() : -1;
+  theSelMode = theIObj->GlobalSelectionMode();
 }
 
 //=======================================================================
@@ -2338,7 +2397,7 @@ void AIS_InteractiveContext::EraseGlobal (const Handle(AIS_InteractiveObject)& t
     myMainPM->SetVisibility (theIObj, aDispModeIter.Value(), Standard_False);
   }
 
-  if (IsCurrent (theIObj)
+  if (IsSelected (theIObj)
   && !aStatus->IsDModeIn (aDispMode))
   {
     myMainPM->SetVisibility (theIObj, aDispMode, Standard_False);
@@ -2348,11 +2407,37 @@ void AIS_InteractiveContext::EraseGlobal (const Handle(AIS_InteractiveObject)& t
   {
     mgrSelector->Deactivate (theIObj, aSelModeIter.Value(), myMainSel);
   }
+  aStatus->ClearSelectionModes();
   aStatus->SetGraphicStatus (AIS_DS_Erased);
 
   if (theToUpdateviewer)
   {
     myMainVwr->Update();
+  }
+}
+
+//=======================================================================
+//function : unhighlightOwners
+//purpose  :
+//=======================================================================
+void AIS_InteractiveContext::unhighlightOwners (const Handle(AIS_InteractiveObject)& theObject)
+{
+  Handle(AIS_Selection) aSel = AIS_Selection::Selection (myCurrentName.ToCString());
+  aSel->Init();
+  while (aSel->More())
+  {
+    const Handle(SelectMgr_EntityOwner) anOwner =
+      Handle(SelectMgr_EntityOwner)::DownCast (aSel->Value());
+    if (anOwner->Selectable() == theObject)
+    {
+      if (anOwner->IsSelected())
+      {
+        AddOrRemoveSelected (anOwner, Standard_False);
+        aSel->Init();
+        continue;
+      }
+    }
+    aSel->Next();
   }
 }
 
@@ -2373,27 +2458,11 @@ void AIS_InteractiveContext::ClearGlobal (const Handle(AIS_InteractiveObject)& t
   }
 
   Handle(AIS_GlobalStatus) aStatus = myObjects (theIObj);
+  unhighlightOwners (theIObj);
   for (TColStd_ListIteratorOfListOfInteger aDispModeIter (aStatus->DisplayedModes()); aDispModeIter.More(); aDispModeIter.Next())
   {
-    if (aStatus->IsHilighted())
-    {
-      if (IsCurrent (theIObj))
-      {
-        AddOrRemoveCurrentObject (theIObj, theToUpdateviewer);
-      }
-      else if (myMainPM->IsHighlighted (theIObj, aDispModeIter.Value()))
-      {
-        myMainPM->Unhighlight (theIObj, aDispModeIter.Value());
-      }
-    }
     myMainPM->Erase (theIObj, aDispModeIter.Value());
     myMainPM->Clear (theIObj, aDispModeIter.Value());
-    if (theIObj->HasHilightMode())
-    {
-      Standard_Integer im = theIObj->HilightMode();
-      myMainPM->Unhighlight (theIObj, im);
-      myMainPM->Erase       (theIObj, im);
-    }
   }
 
   // Object removes from Detected sequence
@@ -2407,15 +2476,6 @@ void AIS_InteractiveContext::ClearGlobal (const Handle(AIS_InteractiveObject)& t
     }
   }
 
-  if (myLastinMain == theIObj)
-  {
-    myLastinMain.Nullify();
-  }
-  if (myLastPicked == theIObj)
-  {
-    myLastPicked.Nullify();
-  }
-
   // remove IO from the selection manager to avoid memory leaks
   mgrSelector->Remove (theIObj);
 
@@ -2426,8 +2486,13 @@ void AIS_InteractiveContext::ClearGlobal (const Handle(AIS_InteractiveObject)& t
     myMainVwr->DefinedView()->View()->ChangeHiddenObjects()->Remove (theIObj);
   }
 
-  if (theToUpdateviewer
-   && aStatus->GraphicStatus() == AIS_DS_Displayed)
+  if (!myLastinMain.IsNull() && myLastinMain->Selectable() == theIObj)
+    myLastinMain.Nullify();
+  if (!myLastPicked.IsNull() && myLastPicked->Selectable() == theIObj)
+    myLastPicked.Nullify();
+  myMainPM->ClearImmediateDraw();
+
+  if (theToUpdateviewer && aStatus->GraphicStatus() == AIS_DS_Displayed)
   {
     myMainVwr->Update();
   }
@@ -2568,25 +2633,6 @@ void AIS_InteractiveContext::IsoOnPlane (const Standard_Boolean theToSwitchOn)
 Standard_Boolean AIS_InteractiveContext::IsoOnPlane() const
 {
   return myDefaultDrawer->IsoOnPlane();
-}
-
-//=======================================================================
-//function : SetSelectionMode
-//purpose  :
-//=======================================================================
-void AIS_InteractiveContext::SetSelectionMode (const Handle(AIS_InteractiveObject)& ,
-                                               const Standard_Integer )
-{
-  //
-}
-
-//=======================================================================
-//function : UnsetSelectionMode
-//purpose  :
-//=======================================================================
-void AIS_InteractiveContext::UnsetSelectionMode (const Handle(AIS_InteractiveObject)& )
-{
-  //
 }
 
 //=======================================================================

@@ -50,6 +50,7 @@ uses
     ShapeEnum                 from TopAbs,    
     Shape                     from TopoDS,
     View                      from V3d,
+    Viewer                    from V3d,
     PresentationManager3d     from PrsMgr,
     IndexedMapOfOwner         from SelectMgr,
     EntityOwner               from SelectMgr,
@@ -465,10 +466,10 @@ is
     ---Purpose: Stores presentation theMode of object theObj in the transient list of presentations to be displayed in immediate mode.
     -- Will be taken in account in EndImmediateDraw method.
 
-    EndImmediateDraw (me      : mutable;
-                      theView : View from V3d)
+    EndImmediateDraw (me        : mutable;
+                      theViewer : Viewer from V3d)
     returns Boolean from Standard;
-    ---Purpose: Allows rapid drawing of the view theView by avoiding an update of the whole background.
+    ---Purpose: Allows rapid drawing of the each view in theViewer by avoiding an update of the whole background.
 
     IsImmediateModeOn (me) returns Boolean from Standard;
     ---Purpose: Returns true if Presentation Manager is accumulating transient list of presentations to be displayed in immediate mode.
