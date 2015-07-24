@@ -316,24 +316,17 @@ public:
   Poly_Helper(TopTools_IndexedMapOfShape& themN2V, 
     TopTools_IndexedDataMapOfShapeListOfShape& themV2E, 
     NCollection_DoubleMap<Poly_MakeLoops2D::Link, TopoDS_Edge>& themPL2E,
-    NCollection_DataMap<TopoDS_Edge, TopoLink>& themE2EInfo) : 
-  mymN2V (themN2V), mymV2E (themV2E), mymPL2E (themPL2E), mymE2EInfo (themE2EInfo)
+    NCollection_DataMap<TopoDS_Edge, TopoLink>& themE2EInfo,
+    const NCollection_DataMap<int, Poly_MakeLoops2D::ListOfLink>& themNode2ListOfLinks) : 
+  mymN2V (themN2V), mymV2E (themV2E), mymPL2E (themPL2E), mymE2EInfo (themE2EInfo),
+  mymNode2ListOfLinks (themNode2ListOfLinks)
   {
     //Poly_MakeLoops2D::Helper();
   };
   Poly_Helper(const Poly_Helper&);
   virtual const Poly_MakeLoops2D::ListOfLink& GetAdjacentLinks (Standard_Integer theNode) const
   {
-    TopoDS_Vertex V = TopoDS::Vertex(mymN2V(theNode));
-    TopTools_ListOfShape Edges = mymV2E.FindFromKey(V);
-    TopTools_ListIteratorOfListOfShape It(Edges);
-    myListOfLinks.Clear();
-    for (;It.More(); It.Next())
-    {
-      TopoDS_Edge E = TopoDS::Edge(It.Value());
-      myListOfLinks.Append(mymPL2E.Find2(E));
-    }
-    return myListOfLinks;
+    return mymNode2ListOfLinks(theNode);
   }
   virtual Standard_Boolean GetFirstTangent(const Poly_MakeLoops2D::Link& theLink, gp_Dir2d& theDir) const
   {
@@ -354,8 +347,7 @@ private:
   TopTools_IndexedDataMapOfShapeListOfShape& mymV2E;
   NCollection_DoubleMap<Poly_MakeLoops2D::Link, TopoDS_Edge>& mymPL2E;
   NCollection_DataMap<TopoDS_Edge, TopoLink>& mymE2EInfo;
-  
-  mutable Poly_MakeLoops2D::ListOfLink myListOfLinks; //todo remove mutable
+  const NCollection_DataMap<int, Poly_MakeLoops2D::ListOfLink>& mymNode2ListOfLinks;
 
 };
 
@@ -3298,8 +3290,23 @@ static bool RemoveLoops(TopoDS_Shape& theInputSh, const TopoDS_Face& theWorkSpin
         aLink.flags = Poly_MakeLoops2D::LF_Fwd;
         mPL2E.Bind(aLink, E);
       }
-       
-      Poly_Helper helper(mN2V, mV2E, mPL2E, mE2EInfo);
+
+      NCollection_DataMap<int, Poly_MakeLoops2D::ListOfLink> mNode2ListOfLinks;
+      for (int i = 1; i <= mN2V.Extent(); i++)
+      {
+        TopoDS_Vertex V = TopoDS::Vertex(mN2V(i));
+        TopTools_ListOfShape Edges = mV2E.FindFromKey(V);
+        TopTools_ListIteratorOfListOfShape It(Edges);
+        Poly_MakeLoops2D::ListOfLink aListOfLinks;
+        for (;It.More(); It.Next())
+        {
+          TopoDS_Edge E = TopoDS::Edge(It.Value());
+          aListOfLinks.Append(mPL2E.Find2(E));
+        }
+        mNode2ListOfLinks.Bind(i, aListOfLinks);
+      }
+
+      Poly_Helper helper(mN2V, mV2E, mPL2E, mE2EInfo, mNode2ListOfLinks);
       Poly_MakeLoops2D aLoopMaker(1, &helper, NCollection_BaseAllocator::CommonBaseAllocator() );
       for (NCollection_DoubleMap<Poly_MakeLoops2D::Link, TopoDS_Edge>::Iterator aMapIt (mPL2E); aMapIt.More(); aMapIt.Next())
         aLoopMaker.AddLink(aMapIt.Key1());
