@@ -192,13 +192,11 @@ public:
     {
       Handle_Geom2d_Curve aCur1;
       double f, l;
-      TopLoc_Location Loc;
-      aCur1 = BRep_Tool::CurveOnSurface(E1, BRep_Tool::Surface(myWFace), Loc, f, l ); 
+      aCur1 = BRep_Tool::CurveOnSurface(E1, myWFace, f, l ); 
 
       Handle_Geom2d_Curve aCur2;
       double f2, l2;
-      TopLoc_Location Loc2;
-      aCur2 = BRep_Tool::CurveOnSurface(E2, BRep_Tool::Surface(myWFace), Loc2, f2, l2 ); 
+      aCur2 = BRep_Tool::CurveOnSurface(E2, myWFace, f2, l2 ); 
 
       double IntPrec = Precision::Confusion();
       Geom2dAPI_InterCurveCurve inter(aCur1, aCur2, IntPrec);
@@ -245,7 +243,10 @@ public:
          Handle_Geom_Curve aCur2 = BRep_Tool::Curve(E2, Loc2, f_2, l_2 ); 
 	       aCur1->D0(Param1, p3d1);
          aCur2->D0(Param2, p3d2);
-         //todo take loc1 loc2 into account
+         if (!Loc1.IsIdentity())
+           p3d1.Transform(Loc1.Transformation());
+         if (!Loc2.IsIdentity())
+           p3d2.Transform(Loc2.Transformation());
          gp_Pnt IntPnt((p3d1.X() + p3d2.X())/2., (p3d1.Y() + p3d2.Y())/2., (p3d1.Z() + p3d2.Z())/2.); 
          double TolE1 = BRep_Tool::Tolerance(E1);
          double TolE2 = BRep_Tool::Tolerance(E2);
@@ -272,6 +273,9 @@ public:
 
         }
       }
+      aCur1.Nullify();
+      aCur2.Nullify();
+
 
     }
     return Standard_True;
@@ -3017,8 +3021,7 @@ static bool RemoveLoops(TopoDS_Shape& theInputSh, const TopoDS_Face& theWorkSpin
     for (int i = 1; i <= Seq.Length(); i++)
     {
       double f, l;
-      TopLoc_Location Loc;
-      Handle_Geom2d_Curve aCur = BRep_Tool::CurveOnSurface(TopoDS::Edge(Seq(i)), BRep_Tool::Surface(theWorkSpine), Loc, f, l ); 
+      Handle_Geom2d_Curve aCur = BRep_Tool::CurveOnSurface(TopoDS::Edge(Seq(i)), theWorkSpine, f, l ); 
       Bnd_Box2d aBox;
       BndLib_Add2dCurve::Add( aCur, f, l, 0., aBox );
       //aBox.Enlarge(1e-4);
@@ -3050,7 +3053,6 @@ static bool RemoveLoops(TopoDS_Shape& theInputSh, const TopoDS_Face& theWorkSpin
       NCollection_Sequence<double> Params = aMapIt.Value();
       Handle_Geom_Curve aCur;
       double f, l;
-      TopLoc_Location Loc;
       aCur = BRep_Tool::Curve(E, f, l );
       
       NCollection_Sequence<double> ParamSeq;
@@ -3334,7 +3336,6 @@ static bool RemoveLoops(TopoDS_Shape& theInputSh, const TopoDS_Face& theWorkSpin
             Stat = false;
             break;
           }
-          //todo check if wire closed
           aLoops.Append(W);
         }
       }
@@ -3377,9 +3378,9 @@ static bool RemoveLoops(TopoDS_Shape& theInputSh, const TopoDS_Face& theWorkSpin
           if ( i == j )
             continue;
           double f, l;
-          TopLoc_Location Loc;
           TopExp_Explorer ExpE( InnerMWires(j), TopAbs_EDGE );
-          Handle_Geom2d_Curve aCur = BRep_Tool::CurveOnSurface(TopoDS::Edge(ExpE.Current()), BRep_Tool::Surface(theWorkSpine), Loc, f, l ); 
+          Handle_Geom2d_Curve aCur = BRep_Tool::CurveOnSurface(TopoDS::Edge(ExpE.Current()), theWorkSpine, f, l ); 
+                    
           gp_Pnt2d MP = aCur->Value((l + f) / 2.0);
           if (FClass.Perform(MP) != TopAbs_IN)
           {
