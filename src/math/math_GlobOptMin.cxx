@@ -221,10 +221,10 @@ void math_GlobOptMin::Perform()
 
   myE1 = minLength * myTol;
   myE2 = maxLength * myTol;
-  if (myC > 1.0)
-    myE3 = - maxLength * myTol / 4.0;
-  else
-    myE3 = - maxLength * myTol * myC / 4.0;
+    if (myC > 1.0)
+      myE3 = - maxLength * myTol / 4.0;
+    else
+      myE3 = - maxLength * myTol * myC / 4.0;
 
   computeGlobalExtremum(myN);
 
@@ -384,13 +384,18 @@ void math_GlobOptMin::computeGlobalExtremum(Standard_Integer j)
   Standard_Real aRealStep = 0.0;
   math_Vector aStepBestPoint(1, myN);
   Standard_Boolean isInside = Standard_False;
+  Standard_Boolean isReached = Standard_False;
   Standard_Real r;
 
-
-  for(myX(j) = myA(j) + myE1; myX(j) < myB(j) + myE1; myX(j) += myV(j))
+  for(myX(j) = myA(j) + myE1; 
+     (myX(j) < myB(j) + myE1) && (!isReached);
+      myX(j) += myV(j))
   {
     if (myX(j) > myB(j))
+    {
       myX(j) = myB(j);
+      isReached = Standard_True;
+    }
 
     if (j == 1)
     {
@@ -480,21 +485,21 @@ Standard_Boolean math_GlobOptMin::isStored(const math_Vector& thePnt)
   Standard_Integer i,j;
   Standard_Boolean isSame = Standard_True;
 
-  for(i = 0; i < mySolCount; i++)
-  {
-    isSame = Standard_True;
-    for(j = 1; j <= myN; j++)
+    for(i = 0; i < mySolCount; i++)
     {
-      if ((Abs(thePnt(j) - myY(i * myN + j))) > (myB(j) -  myA(j)) * mySameTol)
+      isSame = Standard_True;
+      for(j = 1; j <= myN; j++)
       {
-        isSame = Standard_False;
-        break;
+      if ((Abs(thePnt(j) - myY(i * myN + j))) > (myB(j) -  myA(j)) * mySameTol)
+        {
+          isSame = Standard_False;
+          break;
+        }
       }
-    }
-    if (isSame == Standard_True)
-      return Standard_True;
+      if (isSame == Standard_True)
+        return Standard_True;
 
-  }
+      }
   return Standard_False;
 }
 
