@@ -22,6 +22,7 @@
 #include <Graphic3d_TypeOfComposition.hxx>
 #include <Graphic3d_ViewAffinity.hxx>
 #include <Graphic3d_StructureManager.hxx>
+#include <Graphic3d_TransformPers.hxx>
 #include <Graphic3d_Vec3.hxx>
 #include <Graphic3d_ZLayerId.hxx>
 #include <Standard_Transient.hxx>
@@ -147,7 +148,7 @@ public:
   unsigned IsMutable      : 1;
   unsigned Is2dText       : 1;
 
-  CALL_DEF_TRANSFORM_PERSISTENCE TransformPersistence;
+  Graphic3d_TransformPers TransformPersistence;
 
 protected:
 

@@ -31,6 +31,7 @@
 #include <NCollection_List.hxx>
 #include <Message.hxx>
 #include <OpenGl_Caps.hxx>
+#include <OpenGl_MatrixState.hxx>
 #include <OpenGl_Vec.hxx>
 #include <OpenGl_Resource.hxx>
 #include <Standard_Transient.hxx>
@@ -38,7 +39,6 @@
 #include <TColStd_PackedMapOfInteger.hxx>
 #include <OpenGl_Clipping.hxx>
 #include <OpenGl_GlCore11.hxx>
-#include <OpenGl_Utils.hxx>
 
 //! Forward declarations
 #if defined(__APPLE__)
@@ -681,9 +681,9 @@ private: //! @name fields tracking current state
 
 public:
 
-  OpenGl_Utils::MatrixState<Standard_ShortReal> ModelWorldState; //!< state of orientation matrix
-  OpenGl_Utils::MatrixState<Standard_ShortReal> WorldViewState;  //!< state of orientation matrix
-  OpenGl_Utils::MatrixState<Standard_ShortReal> ProjectionState; //!< state of projection  matrix
+  OpenGl_MatrixState<Standard_ShortReal> ModelWorldState; //!< state of orientation matrix
+  OpenGl_MatrixState<Standard_ShortReal> WorldViewState;  //!< state of orientation matrix
+  OpenGl_MatrixState<Standard_ShortReal> ProjectionState; //!< state of projection  matrix
 
 private:
 

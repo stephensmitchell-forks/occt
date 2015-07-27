@@ -36,6 +36,7 @@
 #include <SelectMgr_Selection.hxx>
 #include <SelectMgr_SelectableObject.hxx>
 #include <SelectMgr_SelectableObjectSet.hxx>
+#include <SelectMgr_SelectableObjectTrsfPersSet.hxx>
 #include <Handle_SelectMgr_EntityOwner.hxx>
 #include <SelectMgr_StateOfSelection.hxx>
 #include <Standard_OStream.hxx>
@@ -67,7 +68,7 @@ class SelectMgr_ToleranceMap
 public:
 
   //! Sets tolerance values to -1.0
-  SelectMgr_ToleranceMap();
+  Standard_EXPORT SelectMgr_ToleranceMap();
 
   Standard_EXPORT ~SelectMgr_ToleranceMap();
 
@@ -132,7 +133,7 @@ public:
   Standard_EXPORT void Clear();
 
   //! returns the Sensitivity of picking
-  Standard_Real Sensitivity() const;
+  Standard_EXPORT Standard_Real Sensitivity() const;
 
   //! Sorts the detected entites by priority and distance.
   //!          to be redefined if other criterion are used...
@@ -230,21 +231,21 @@ public:
                                               const Standard_Boolean theIsForce = Standard_False);
 
   //! Initializes internal iterator for stored detected sensitive entities
-  Standard_EXPORT void InitDetected();
+  void InitDetected();
 
   //! Makes a step along the map of detected sensitive entities and their owners
-  Standard_EXPORT void NextDetected();
+  void NextDetected();
 
   //! Returns true if iterator of map of detected sensitive entities has reached
   //! its end
-  Standard_EXPORT Standard_Boolean MoreDetected();
+  Standard_Boolean MoreDetected();
 
   //! Returns sensitive entity that was detected during the previous run of
   //! selection algorithm
   Standard_EXPORT const Handle(SelectBasics_SensitiveEntity)& DetectedEntity() const;
 
   //! Returns instance of selecting volume manager of the viewer selector
-  Standard_EXPORT SelectMgr_SelectingVolumeManager& GetManager();
+  SelectMgr_SelectingVolumeManager& GetManager();
 
   friend class SelectMgr_SelectionManager;
 
@@ -269,23 +270,23 @@ protected:
   //! Internal function that checks if there is possible overlap
   //! between some entity of selectable object theObject and
   //! current selecting volume
-  void traverseObject (const Handle(SelectMgr_SelectableObject)& theObject);
+  Standard_EXPORT void traverseObject (const Handle(SelectMgr_SelectableObject)& theObject);
 
   //! Internal function that checks if a particular sensitive
   //! entity theEntity overlaps current selecting volume precisely
-  void checkOverlap (const Handle(SelectBasics_SensitiveEntity)& theEntity,
-                     const Standard_Integer theEntityIdx,
-                     SelectMgr_SelectingVolumeManager& theMgr);
+  Standard_EXPORT void checkOverlap (const Handle(SelectBasics_SensitiveEntity)& theEntity,
+                                     const Standard_Integer theEntityIdx,
+                                     SelectMgr_SelectingVolumeManager& theMgr);
 
   //! Marks all added sensitive entities of all objects as non-selectable
-  void resetSelectionActivationStatus();
+  Standard_EXPORT void resetSelectionActivationStatus();
 
   //! Checks if the entity given requires to scale current selecting frustum
-  Standard_Boolean isToScaleFrustum (const Handle(SelectBasics_SensitiveEntity)& theEntity);
+  Standard_EXPORT Standard_Boolean isToScaleFrustum (const Handle(SelectBasics_SensitiveEntity)& theEntity);
 
   //! Applies given scale and transformation matrices to the default selecting volume manager
-  SelectMgr_SelectingVolumeManager scaleAndTransform (const Standard_Real theScale,
-                                                      const gp_Trsf& theTrsf);
+  Standard_EXPORT SelectMgr_SelectingVolumeManager scaleAndTransform (const Standard_Real theScale,
+                                                                      const gp_Trsf& theTrsf);
 
 private:
 
@@ -298,13 +299,14 @@ private:
 
 protected:
 
-  Standard_Boolean preferclosest;
-  Standard_Real mytolerance;
-  Standard_Boolean myToUpdateTolerance;
-  SelectMgr_IndexedDataMapOfOwnerCriterion mystored;
-  SelectMgr_SelectingVolumeManager mySelectingVolumeMgr;
-  mutable NCollection_Handle<SelectMgr_SelectableObjectSet> mySelectableObjects;
-  SelectMgr_ToleranceMap myTolerances;
+  Standard_Boolean                              preferclosest;
+  Standard_Real                                 mytolerance;
+  Standard_Boolean                              myToUpdateTolerance;
+  SelectMgr_IndexedDataMapOfOwnerCriterion      mystored;
+  SelectMgr_SelectingVolumeManager              mySelectingVolumeMgr;
+  mutable SelectMgr_SelectableObjectSet         mySelectableObjects;
+  mutable SelectMgr_SelectableObjectTrsfPersSet mySelectableObjectsTrsfPers;
+  SelectMgr_ToleranceMap                        myTolerances;
 
 private:
 

@@ -62,7 +62,7 @@ uses
     TransModeFlags         from Graphic3d, 
     Pnt                    from gp,
     Trsf                   from gp, 
-    CTransPersStruct       from  Graphic3d,
+    TransformPers          from Graphic3d,
     ZLayerId from Graphic3d
 
 raises
@@ -192,19 +192,21 @@ is
    
     
    GetTransformPersistenceMode( me )  returns  TransModeFlags  from  Graphic3d  is  static;
-    
    ---Level:    Public 
    ---Purpose:  Gets  Transform  Persistence Mode  for  this  object 
    ---Category: Graphic attributes management
 
    GetTransformPersistencePoint( me )  returns  Pnt  from  gp  is  static;
-    
    ---Level:    Public 
    ---Purpose:  Gets  point  of  transform  persistence for  this  object 
    ---Category: Graphic attributes management
-    
    --   ABD 29/10/04  Transform Persistence of Presentation( pan, zoom, rotate )
-    
+
+   TransformPersistence(me) returns TransformPers from Graphic3d is static;
+   ---Purpose: @return transform persistence of the presentable object.
+   ---C++: inline
+   ---C++: return const&
+
    SetTypeOfPresentation(me:mutable; aType: TypeOfPresentation3d from PrsMgr);    
 
    SetToUpdate    (me:mutable;aMode:Integer from Standard);
@@ -321,14 +323,14 @@ is
    -- implementation propagate clip planes to every presentation.
 
 fields
-    myPresentations: Presentations from PrsMgr is protected;
-    myTypeOfPresentation3d: TypeOfPresentation3d from PrsMgr is protected;
-    myClipPlanes : SequenceOfHClipPlane from Graphic3d is protected;
-    myTransformPersistence  :  CTransPersStruct  from  Graphic3d;
-    myIsMutable : Boolean from Standard is protected;
-    myZLayer    : ZLayerId from Graphic3d is protected;
+    myPresentations        : Presentations from PrsMgr is protected;
+    myTypeOfPresentation3d : TypeOfPresentation3d from PrsMgr is protected;
+    myClipPlanes           : SequenceOfHClipPlane from Graphic3d is protected;
+    myTransformPersistence : TransformPers from Graphic3d;
+    myIsMutable            : Boolean from Standard is protected;
+    myZLayer               : ZLayerId from Graphic3d is protected;
 
-    myHasOwnPresentations : Boolean from Standard is protected; -- shows if object should have own presentations.
+    myHasOwnPresentations  : Boolean from Standard is protected; -- shows if object should have own presentations.
 
     myParent : PresentableObjectPointer from PrsMgr; -- Reference to parent object in scene hierarchy.
  

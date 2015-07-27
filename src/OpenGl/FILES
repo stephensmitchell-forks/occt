@@ -70,7 +70,6 @@ OpenGl_Resource.hxx
 OpenGl_Resource.cxx
 OpenGl_telem_util.hxx
 OpenGl_telem_util.cxx
-OpenGl_transform_persistence.hxx
 OpenGl_Font.hxx
 OpenGl_Font.cxx
 OpenGl_tgl_funcs.hxx
@@ -152,11 +151,13 @@ OpenGl_BVHTreeSelector.hxx
 OpenGl_BVHTreeSelector.cxx
 OpenGl_BVHClipPrimitiveSet.cxx
 OpenGl_BVHClipPrimitiveSet.hxx
+OpenGl_BVHClipPrimitiveTrsfPersSet.cxx
+OpenGl_BVHClipPrimitiveTrsfPersSet.hxx
 OpenGl_ArbTexBindless.hxx
 Handle_OpenGl_Sampler.hxx
 OpenGl_Sampler.hxx
 OpenGl_Sampler.cxx
-OpenGl_Utils.hxx
+OpenGl_MatrixState.hxx
 OpenGl_Quadric.hxx
 OpenGl_Quadric.cxx
 OpenGl_Cylinder.hxx

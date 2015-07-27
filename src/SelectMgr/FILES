@@ -3,6 +3,8 @@ SelectMgr_FrustumBuilder.hxx
 SelectMgr_FrustumBuilder.cxx
 SelectMgr_SelectableObjectSet.hxx
 SelectMgr_SelectableObjectSet.cxx
+SelectMgr_SelectableObjectTrsfPersSet.hxx
+SelectMgr_SelectableObjectTrsfPersSet.cxx
 SelectMgr_BaseFrustum.hxx
 SelectMgr_BaseFrustum.cxx
 SelectMgr_Frustum.hxx

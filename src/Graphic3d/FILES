@@ -40,7 +40,6 @@ Graphic3d.edl
 Graphic3d_CMPLRS.edl
 Graphic3d_WOKSteps.edl
 Graphic3d_TransModeFlags.hxx
-Graphic3d_CTransPersStruct.hxx
 Graphic3d_NListOfHAsciiString.hxx
 Graphic3d_AspectText3d.cxx
 Graphic3d_PtrFrameBuffer.hxx
@@ -65,3 +64,6 @@ Graphic3d_Camera.cxx
 Graphic3d_Camera.hxx
 Graphic3d_RenderingParams.hxx
 Graphic3d_NMapOfTransient.hxx
+Graphic3d_TransformPers.hxx
+Graphic3d_TransformUtils.hxx
+Graphic3d_WorldViewProjState.hxx

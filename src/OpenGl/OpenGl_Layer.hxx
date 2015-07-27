@@ -23,9 +23,11 @@
 
 #include <Handle_OpenGl_Workspace.hxx>
 #include <OpenGl_BVHClipPrimitiveSet.hxx>
+#include <OpenGl_BVHClipPrimitiveTrsfPersSet.hxx>
 #include <OpenGl_BVHTreeSelector.hxx>
 
 #include <Graphic3d_ZLayerSettings.hxx>
+#include <Graphic3d_Camera.hxx>
 #include <OpenGl_GlCore11.hxx>
 
 class Handle(OpenGl_Workspace);
@@ -35,6 +37,8 @@ struct OpenGl_GlobalLayerSettings
   GLint DepthFunc;
   GLboolean DepthMask;
 };
+
+typedef NCollection_Array1<OpenGl_SequenceOfStructure> OpenGl_ArrayOfStructure;
 
 //! Presentations list sorted within priorities.
 class OpenGl_Layer
@@ -105,12 +109,25 @@ protected:
 
 private:
 
-  OpenGl_ArrayOfStructure            myArray;
-  Standard_Integer                   myNbStructures;
-  Graphic3d_ZLayerSettings           myLayerSettings;             //!< Layer setting flags
-  mutable OpenGl_BVHClipPrimitiveSet myBVHPrimitives;             //<! Set of OpenGl_Structures for building BVH tree
-  mutable Standard_Boolean           myBVHIsLeftChildQueuedFirst; //<! Is needed for implementation of stochastic order of BVH traverse
-  mutable Standard_Boolean           myIsBVHPrimitivesNeedsReset; //<! Defines if the primitive set for BVH is outdated
+  OpenGl_ArrayOfStructure myArray;
+
+  //! Overall number of structures rendered in the layer.
+  Standard_Integer myNbStructures;
+
+  //! Layer setting flags.
+  Graphic3d_ZLayerSettings myLayerSettings;
+
+  //! Set of OpenGl_Structures structures for building BVH tree.
+  mutable OpenGl_BVHClipPrimitiveSet myBVHPrimitives;
+
+  //! Set of transform persistent OpenGl_Structures for building BVH tree.
+  mutable OpenGl_BVHClipPrimitiveTrsfPersSet myBVHPrimitivesTrsfPers;
+
+  //! Is needed for implementation of stochastic order of BVH traverse.
+  mutable Standard_Boolean myBVHIsLeftChildQueuedFirst;
+
+  //! Defines if the primitive set for BVH is outdated.
+  mutable Standard_Boolean myIsBVHPrimitivesNeedsReset;
 
 public:
 

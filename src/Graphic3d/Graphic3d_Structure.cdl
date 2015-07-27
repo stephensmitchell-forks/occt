@@ -63,6 +63,7 @@ uses
     IndexedMapOfAddress     from Graphic3d,
     StructureManager        from Graphic3d,
     StructureManagerPtr     from Graphic3d,
+    TransformPers           from Graphic3d,
     TypeOfComposition       from Graphic3d,
     TypeOfConnection        from Graphic3d,
     TypeOfPrimitive         from Graphic3d,
@@ -773,6 +774,11 @@ is
         ---Level: Public
 	---Purpose: Get the current point of relative modelling transform persistence
         is static;
+
+   TransformPersistence(me) returns TransformPers from Graphic3d is static;
+   ---Purpose: @return transform persistence of the presentable object.
+   ---C++: inline
+   ---C++: return const&
 
   SetMutable ( me           : mutable;
                theIsMutable : Boolean from Standard )

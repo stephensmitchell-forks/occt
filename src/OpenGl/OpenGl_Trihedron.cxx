@@ -19,6 +19,7 @@
 
 #include <Graphic3d_ArrayOfSegments.hxx>
 #include <Graphic3d_ArrayOfPolylines.hxx>
+#include <Graphic3d_TransformUtils.hxx>
 #include <OpenGl_View.hxx>
 #include <OpenGl_Workspace.hxx>
 #include <Precision.hxx>
@@ -86,25 +87,25 @@ void OpenGl_Trihedron::resetTransformations (const Handle(OpenGl_Workspace)& the
   {
     case Aspect_TOTP_LEFT_LOWER:
     {
-      OpenGl_Utils::Translate (aProjMatrix,
+      Graphic3d_TransformUtils::Translate (aProjMatrix,
         -0.5 * anU + myScale, -0.5 * aV + myScale, 0.0);
       break;
     }
     case Aspect_TOTP_LEFT_UPPER:
     {
-      OpenGl_Utils::Translate (aProjMatrix,
+      Graphic3d_TransformUtils::Translate (aProjMatrix,
         -0.5 * anU + myScale, 0.5 * aV - myScale - myScale / 3.0, 0.0);
       break;
     }
     case Aspect_TOTP_RIGHT_LOWER:
     {
-      OpenGl_Utils::Translate (aProjMatrix,
+      Graphic3d_TransformUtils::Translate (aProjMatrix,
         0.5 * anU - myScale - myScale / 3.0, -0.5 * aV + myScale, 0.0);
       break;
     }
     case Aspect_TOTP_RIGHT_UPPER:
     {
-      OpenGl_Utils::Translate (aProjMatrix,
+      Graphic3d_TransformUtils::Translate (aProjMatrix,
         0.5 * anU - myScale - myScale / 3.0, 0.5 * aV - myScale - myScale / 3.0, 0.0);
       break;
     }
@@ -231,7 +232,7 @@ void OpenGl_Trihedron::redraw (const Handle(OpenGl_Workspace)& theWorkspace) con
   const OpenGl_AspectFace* anOldAspectFace = theWorkspace->SetAspectFace(&anAspectZ);
   theWorkspace->SetAspectLine (&anAspectLine);
   myLine.Render (theWorkspace);
-  OpenGl_Utils::Translate (aModelViewZ, 0.0, 0.0, aLineLength);
+  Graphic3d_TransformUtils::Translate (aModelViewZ, 0.0, 0.0, aLineLength);
   aContext->WorldViewState.SetCurrent<Standard_Real>(aModelViewZ);
   aContext->ApplyWorldViewMatrix();
   myDisk.Render (theWorkspace);
@@ -239,7 +240,7 @@ void OpenGl_Trihedron::redraw (const Handle(OpenGl_Workspace)& theWorkspace) con
 
   // X axis
   theWorkspace->SetAspectFace (&anAspectX);
-  OpenGl_Utils::Rotate (aModelViewX, 90.0, 0.0, aScale, 0.0);
+  Graphic3d_TransformUtils::Rotate (aModelViewX, 90.0, 0.0, aScale, 0.0);
   aContext->WorldViewState.SetCurrent<Standard_Real> (aModelViewX);
   aContext->ApplyWorldViewMatrix();
 
@@ -249,7 +250,7 @@ void OpenGl_Trihedron::redraw (const Handle(OpenGl_Workspace)& theWorkspace) con
   anAspectLine.SetAspect (aLineAspect);
   theWorkspace->SetAspectLine (&anAspectLine);
   myLine.Render (theWorkspace);
-  OpenGl_Utils::Translate (aModelViewX, 0.0, 0.0, aLineLength);
+  Graphic3d_TransformUtils::Translate (aModelViewX, 0.0, 0.0, aLineLength);
   aContext->WorldViewState.SetCurrent<Standard_Real> (aModelViewX);
   aContext->ApplyWorldViewMatrix();
   myDisk.Render (theWorkspace);
@@ -257,7 +258,7 @@ void OpenGl_Trihedron::redraw (const Handle(OpenGl_Workspace)& theWorkspace) con
 
   // Y axis
   theWorkspace->SetAspectFace (&anAspectY);
-  OpenGl_Utils::Rotate (aModelViewY, -90.0, aScale, 0.0, 0.0);
+  Graphic3d_TransformUtils::Rotate (aModelViewY, -90.0, aScale, 0.0, 0.0);
   aContext->WorldViewState.SetCurrent<Standard_Real> (aModelViewY);
   aContext->ApplyWorldViewMatrix();
 
@@ -267,7 +268,7 @@ void OpenGl_Trihedron::redraw (const Handle(OpenGl_Workspace)& theWorkspace) con
   anAspectLine.SetAspect (aLineAspect);
   theWorkspace->SetAspectLine (&anAspectLine);
   myLine.Render (theWorkspace);
-  OpenGl_Utils::Translate (aModelViewY, 0.0, 0.0, aLineLength);
+  Graphic3d_TransformUtils::Translate (aModelViewY, 0.0, 0.0, aLineLength);
   aContext->WorldViewState.SetCurrent<Standard_Real> (aModelViewY);
   aContext->ApplyWorldViewMatrix();
   myDisk.Render (theWorkspace);
@@ -411,7 +412,7 @@ void OpenGl_Trihedron::redrawZBuffer (const Handle(OpenGl_Workspace)& theWorkspa
     // Z axis
     theWorkspace->SetAspectFace (&anAspectZ);
     myCylinder.Render (theWorkspace);
-    OpenGl_Utils::Translate (aModelViewZ, 0.0, 0.0, aScale * THE_CYLINDER_LENGTH);
+    Graphic3d_TransformUtils::Translate (aModelViewZ, 0.0, 0.0, aScale * THE_CYLINDER_LENGTH);
     aContext->WorldViewState.SetCurrent<Standard_Real> (aModelViewZ);
     aContext->ApplyWorldViewMatrix();
     myDisk.Render (theWorkspace);
@@ -419,11 +420,11 @@ void OpenGl_Trihedron::redrawZBuffer (const Handle(OpenGl_Workspace)& theWorkspa
 
     // X axis
     theWorkspace->SetAspectFace (&anAspectX);
-    OpenGl_Utils::Rotate (aModelViewX, 90.0, aTriedronAxeY[0], aTriedronAxeY[1], aTriedronAxeY[2]);
+    Graphic3d_TransformUtils::Rotate (aModelViewX, 90.0, aTriedronAxeY[0], aTriedronAxeY[1], aTriedronAxeY[2]);
     aContext->WorldViewState.SetCurrent<Standard_Real> (aModelViewX);
     aContext->ApplyWorldViewMatrix();
     myCylinder.Render (theWorkspace);
-    OpenGl_Utils::Translate (aModelViewX, 0.0, 0.0, aScale * THE_CYLINDER_LENGTH);
+    Graphic3d_TransformUtils::Translate (aModelViewX, 0.0, 0.0, aScale * THE_CYLINDER_LENGTH);
     aContext->WorldViewState.SetCurrent<Standard_Real> (aModelViewX);
     aContext->ApplyWorldViewMatrix();
     myDisk.Render (theWorkspace);
@@ -431,11 +432,11 @@ void OpenGl_Trihedron::redrawZBuffer (const Handle(OpenGl_Workspace)& theWorkspa
 
     // Y axis
     theWorkspace->SetAspectFace (&anAspectY);
-    OpenGl_Utils::Rotate (aModelViewY, -90.0, aTriedronAxeX[0], aTriedronAxeX[1], aTriedronAxeX[2]);
+    Graphic3d_TransformUtils::Rotate (aModelViewY, -90.0, aTriedronAxeX[0], aTriedronAxeX[1], aTriedronAxeX[2]);
     aContext->WorldViewState.SetCurrent<Standard_Real> (aModelViewY);
     aContext->ApplyWorldViewMatrix();
     myCylinder.Render (theWorkspace);
-    OpenGl_Utils::Translate (aModelViewY, 0.0, 0.0, aScale * THE_CYLINDER_LENGTH);
+    Graphic3d_TransformUtils::Translate (aModelViewY, 0.0, 0.0, aScale * THE_CYLINDER_LENGTH);
     aContext->WorldViewState.SetCurrent<Standard_Real> (aModelViewY);
     aContext->ApplyWorldViewMatrix();
     myDisk.Render (theWorkspace);
@@ -644,7 +645,7 @@ void OpenGl_Trihedron::Render (const Handle(OpenGl_Workspace)& theWorkspace) con
   }
 
   const Handle(OpenGl_Texture) aPrevTexture = theWorkspace->DisableTexture();
-  theWorkspace->ActiveView()->EndTransformPersistence (theWorkspace->GetGlContext());
+
   theWorkspace->GetGlContext()->ApplyModelViewMatrix();
 
   if (myIsWireframe)

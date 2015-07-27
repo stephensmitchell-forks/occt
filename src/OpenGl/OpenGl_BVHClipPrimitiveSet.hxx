@@ -17,13 +17,11 @@
 #define _OpenGl_BVHClipPrimitiveSet_HeaderFile
 
 #include <BVH_PrimitiveSet.hxx>
-#include <NCollection_Array1.hxx>
+#include <NCollection_IndexedMap.hxx>
 
 #include <OpenGl_Vec.hxx>
 #include <OpenGl_Structure.hxx>
 #include <OpenGl_SequenceOfStructure.hxx>
-
-typedef NCollection_Array1<OpenGl_SequenceOfStructure> OpenGl_ArrayOfStructure;
 
 //! Set of OpenGl_Structures for building BVH tree.
 class OpenGl_BVHClipPrimitiveSet : public BVH_PrimitiveSet<Standard_ShortReal, 4>
@@ -51,15 +49,13 @@ public:
   virtual void Swap (const Standard_Integer theIdx1,
                      const Standard_Integer theIdx2);
 
-  //! Replaces the set by the given array taking into account
-  //! if each structure is cullable or not.
-  void Assign (const OpenGl_ArrayOfStructure& theStructs);
-
   //! Adds structure theStruct to the set.
-  void Add (const OpenGl_Structure* theStruct);
+  //! @return true if structure added, otherwise returns false (structure already in the set).
+  Standard_Boolean Add (const OpenGl_Structure* theStruct);
 
   //! Removes the given OpenGl_Structure from the set.
-  void Remove (const OpenGl_Structure* theStruct);
+  //! @return true if structure removed, otherwise returns false (structure is not in the set).
+  Standard_Boolean Remove (const OpenGl_Structure* theStruct);
 
   //! Cleans the whole primitive set.
   void Clear();
@@ -69,7 +65,7 @@ public:
 
 private:
 
-  NCollection_Sequence<const OpenGl_Structure*> myStructs;    //!< Sequence of structures
+  NCollection_IndexedMap<const OpenGl_Structure*> myStructs;    //!< Sequence of structures
 
 };
 

@@ -406,12 +406,11 @@ is
     imported transient class ClipPlane;
     ---Category: Imported types
 
-
     imported CTexture;
 
-    imported CTransPersStruct;
     imported TransModeFlags;
-    
+    imported TransformPers;
+
     imported transient class MarkerImage;
     imported transient class Camera;
 
