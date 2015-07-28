@@ -3232,13 +3232,15 @@ static bool RemoveLoops(TopoDS_Shape& theInputSh, const TopoDS_Face& theWorkSpin
         Handle_Geom_Curve cur;
         double f, l;
         cur = BRep_Tool::Curve(E, f, l);
-        cur->D0(f + (l-f)/5., MP1);
-        cur->D0(f + (l-f)*(2/5.), MP2);
+        if ( Abs(l - f ) <  3 * Precision::Confusion())
+          continue;
+        cur->D0(f + (0.3)*(l-f), MP1);
+        cur->D0(f + (0.6)*(l-f), MP2);
         TopoDS_Vertex MV1 = BRepLib_MakeVertex(MP1);
         TopoDS_Vertex MV2 = BRepLib_MakeVertex(MP2);
-        TopoDS_Edge DE1 = BRepBuilderAPI_MakeEdge(cur, VF, MV1, f, f + (l-f)/5 );
-        TopoDS_Edge DE2 = BRepBuilderAPI_MakeEdge(cur, MV1, MV2, f + (l-f)/5, f + (l-f)*(2/5.) );
-        TopoDS_Edge DE3 = BRepBuilderAPI_MakeEdge(cur, MV2, VL, f + (l-f)*(2/5.), l );
+        TopoDS_Edge DE1 = BRepBuilderAPI_MakeEdge(cur, VF, MV1, f, f + (0.3)*(l-f) );
+        TopoDS_Edge DE2 = BRepBuilderAPI_MakeEdge(cur, MV1, MV2, f + (0.3)*(l-f), f + (0.6)*(l-f) );
+        TopoDS_Edge DE3 = BRepBuilderAPI_MakeEdge(cur, MV2, VL, f + (0.6)*(l-f), l );
         TopoDS_Wire W = BRepBuilderAPI_MakeWire(DE1, DE2, DE3);
         TopTools_IndexedMapOfShape DummyM;
         TopExp::MapShapes(W, TopAbs_VERTEX, DummyM);
@@ -3300,6 +3302,8 @@ static bool RemoveLoops(TopoDS_Shape& theInputSh, const TopoDS_Face& theWorkSpin
         gp_Vec2d Vec;
 
         aCur = BRep_Tool::CurveOnSurface(E, theWorkSpine, f, l ); 
+        if (aCur.IsNull())
+          continue;
         if (E.Orientation() == TopAbs_FORWARD)
         {
           anEngeInfo.myFV = TopExp::FirstVertex(E); 
@@ -3332,6 +3336,8 @@ static bool RemoveLoops(TopoDS_Shape& theInputSh, const TopoDS_Face& theWorkSpin
       for (; ExpE.More(); ExpE.Next())
       {
         TopoDS_Edge E = TopoDS::Edge(ExpE.Current());
+        if (!mE2EInfo.IsBound(E))
+          continue;
         TopoLink L = mE2EInfo(E);
         int Node1 = mN2V.FindIndex(L.myFV);
         int Node2 = mN2V.FindIndex(L.myLV);
@@ -3350,7 +3356,10 @@ static bool RemoveLoops(TopoDS_Shape& theInputSh, const TopoDS_Face& theWorkSpin
         for (;It.More(); It.Next())
         {
           TopoDS_Edge E = TopoDS::Edge(It.Value());
-          aListOfLinks.Append(mPL2E.Find2(E));
+          if (!mPL2E.IsBound2(E))
+            continue;
+          Poly_MakeLoops2D::Link aL = mPL2E.Find2(E);
+          aListOfLinks.Append(aL);
         }
         mNode2ListOfLinks.Bind(i, aListOfLinks);
       }
@@ -3362,6 +3371,10 @@ static bool RemoveLoops(TopoDS_Shape& theInputSh, const TopoDS_Face& theWorkSpin
       
       aLoopMaker.Perform();
       int NbLoops = aLoopMaker.GetNbLoops();
+      int NbHangs = aLoopMaker.GetNbHanging();
+
+      if (NbLoops == 0 || NbHangs != 0 )
+        continue;
 
       NCollection_Sequence<TopoDS_Wire> aLoops;
       for (int i = 1; i <= NbLoops; i++)
