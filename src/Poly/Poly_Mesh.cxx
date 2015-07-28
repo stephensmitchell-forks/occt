@@ -34,43 +34,17 @@ Poly_Mesh::Poly_Mesh (const Standard_Boolean theHasUVNodes)
 //=======================================================================
 
 Poly_Mesh::Poly_Mesh (const Handle(Poly_Triangulation)& theTriangulation)
-: Poly_Triangulation ( theTriangulation->NbNodes(),
-                       theTriangulation->NbTriangles(),
-                       theTriangulation->HasUVNodes() ),
+: Poly_Triangulation ( theTriangulation ),
   myNbQuads (0)
 {
-  // Copy nodes
-  const Standard_Boolean hasUV = theTriangulation->HasUVNodes();
-  for ( Standard_Integer i = 1; i <= theTriangulation->NbNodes(); ++i )
-  {
-    Poly_Triangulation::ChangeNode(i) = theTriangulation->Node(i);
+  // Fill collection of elements
+  myElements.SetValue( theTriangulation->NbTriangles(), Poly_Element() );
 
-    if ( hasUV )
-      Poly_Triangulation::ChangeUVNode(i) = theTriangulation->UVNode(i);
-  }
-
-  // Populate elements
-  const Standard_Boolean hasNormals = theTriangulation->HasNormals();
-  Standard_Integer aN1, aN2, aN3;
+  // Populate elements with triangles
   for ( Standard_Integer i = 1; i <= theTriangulation->NbTriangles(); ++i )
   {
-    const Poly_Triangle& aNewTri = theTriangulation->Triangle(i);
-    Poly_Triangle&       aTri    = Poly_Triangulation::ChangeTriangle(i);
-
-    // Copy node indices to the new triangle
-    aNewTri.Get(aN1, aN2, aN3);
-    aTri.Set(aN1, aN2, aN3);
-
-    // Add element to mesh
-    addElement( Poly_Element(i, 0) );
-
-    // Pass normal vector (if any)
-    if ( hasNormals )
-      Poly_Triangulation::SetNormal( i, theTriangulation->Normal(i) );
+    myElements(i - 1).Set(i, 0);
   }
-
-  // Set deflection
-  Poly_Triangulation::Deflection( theTriangulation->Deflection() );
 }
 
 //=======================================================================
@@ -108,8 +82,11 @@ Standard_Integer Poly_Mesh::AddElement (const Standard_Integer theN1,
 
 const Poly_Element& Poly_Mesh::Element (const Standard_Integer theIndex) const
 {
-  Standard_OutOfRange_Raise_if(theIndex < 1 || theIndex > myElements.Size(),
-                               "Poly_Element::Element : index out of range");
+  if ( theIndex < 1 || theIndex > myElements.Size() )
+  {
+    Standard_OutOfRange::Raise("Poly_Mesh::Element : index out of range");
+  }
+
   return myElements.Value(theIndex - 1);
 }
 
@@ -124,6 +101,11 @@ void Poly_Mesh::Element (const Standard_Integer theIndex,
                          Standard_Integer& theN3,
                          Standard_Integer& theN4) const
 {
+  if ( theIndex < 1 || theIndex > myElements.Size() )
+  {
+    Standard_OutOfRange::Raise("Poly_Mesh::Element : index out of range");
+  }
+
   const Poly_Element& anElem = Element(theIndex);
   Standard_Integer aTriIdx1, aTriIdx2;
   anElem.Get(aTriIdx1, aTriIdx2);
@@ -133,7 +115,7 @@ void Poly_Mesh::Element (const Standard_Integer theIndex,
   aTri1.Get(theN1, theN2, theN3);
 
   // If the second triangle exists, take its node indices for quad
-  if (aTriIdx2)
+  if ( aTriIdx2 )
   {
     const Poly_Triangle& aTri2 = Poly_Triangulation::Triangle(aTriIdx2);
     aTri2.Get(theN1, theN3, theN4);
@@ -149,14 +131,16 @@ void Poly_Mesh::Element (const Standard_Integer theIndex,
 
 void Poly_Mesh::SetElement (const Standard_Integer theIndex, const Poly_Element& theElement)
 {
-  Standard_OutOfRange_Raise_if(theIndex < 1 || theIndex > myElements.Size(),
-                               "Poly_Element::SetElement : index out of range");
+  if ( theIndex < 1 || theIndex > myElements.Size() )
+  {
+    Standard_OutOfRange::Raise("Poly_Mesh::SetElement : index out of range");
+  }
 
-  if (myElements.Value(theIndex - 1).Value(2) == 0 && theElement.Value(2) != 0)
+  if ( myElements.Value(theIndex - 1).Value(2) == 0 && theElement.Value(2) != 0 )
   {
     myNbQuads++;
   }
-  else if (myElements.Value(theIndex - 1).Value(2) != 0 && theElement.Value(2) == 0)
+  else if ( myElements.Value(theIndex - 1).Value(2) != 0 && theElement.Value(2) == 0 )
   {
     myNbQuads--;
   }
@@ -172,7 +156,7 @@ void Poly_Mesh::SetElement (const Standard_Integer theIndex, const Poly_Element&
 Standard_Integer Poly_Mesh::addElement(const Poly_Element& theElement)
 {
   myElements.Append(theElement);
-  if (theElement.Value(2) != 0)
+  if ( theElement.Value(2) != 0 )
   {
     myNbQuads++;
   }

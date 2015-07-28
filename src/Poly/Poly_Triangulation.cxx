@@ -100,6 +100,24 @@ Poly_Triangulation::Poly_Triangulation (const TColgp_Array1OfPnt&    theNodes,
 }
 
 //=======================================================================
+//function : Poly_Triangulation
+//purpose  : 
+//=======================================================================
+
+Poly_Triangulation::Poly_Triangulation (const Handle(Poly_Triangulation)& theTriangulation)
+: myHasUVNodes ( theTriangulation->myHasUVNodes ),
+  myDeflection ( theTriangulation->myDeflection )
+{
+  myNodes.Assign(theTriangulation->myNodes);
+  if (myHasUVNodes)
+  {
+    myUVNodes.Assign(theTriangulation->myUVNodes);
+  }
+  myTriangles.Assign(theTriangulation->myTriangles);
+  myNormals.Assign(theTriangulation->myNormals);
+}
+
+//=======================================================================
 //function : Deflection
 //purpose  : 
 //=======================================================================

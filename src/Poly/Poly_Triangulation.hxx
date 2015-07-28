@@ -75,6 +75,9 @@ public:
                                       const TColgp_Array1OfPnt2d&  theUVNodes,
                                       const Poly_Array1OfTriangle& theTriangles);
 
+  //! Copy constructor for triangulation.
+  Standard_EXPORT Poly_Triangulation (const Handle(Poly_Triangulation)& theTriangulation);
+
   //! Returns the deflection of this triangulation.
   Standard_EXPORT Standard_Real Deflection() const;
 
@@ -143,7 +146,7 @@ public:
   //! Raises Standard_OutOfRange exception.
   Standard_EXPORT const gp_Dir Normal (const Standard_Integer theIndex) const;
 
-private:
+protected:
 
   Standard_Boolean                       myHasUVNodes;
   Standard_Real                          myDeflection;
