@@ -29,7 +29,9 @@
 #include <Interface_Static.hxx>
 #include <Message_Msg.hxx>
 #include <OSD_Process.hxx>
+#include <Precision.hxx>
 #include <Quantity_Date.hxx>
+#include <Standard_NumericError.hxx>
 #include <TCollection_HAsciiString.hxx>
 #include <UnitsMethods.hxx>
 
@@ -148,7 +150,20 @@ void IGESData_GlobalSection::Init(const Handle(Interface_ParamSet)& params,
     if (fpt == Interface_ParamInteger) {
        // but a real is expected 
       if ( i == 13 || i == 17 || i == 19 || i == 20)
-	realval = Atof(val);
+      {
+        realval = Atof(val);
+
+        if(Precision::IsIllegal(realval))
+        {
+          Standard_NumericError::Raise();
+        }
+
+        if(Precision::IsInfinitesimal(realval))
+        {
+          realval = 0.0;
+        }
+      }
+
       intval  = atoi(val);
     }
 
@@ -164,6 +179,16 @@ void IGESData_GlobalSection::Init(const Handle(Interface_ParamSet)& params,
         if (val[k] == '\0') break;
       }
       realval = Atof(text);
+
+      if(Precision::IsIllegal(realval))
+      {
+        Standard_NumericError::Raise();
+      }
+
+      if(Precision::IsInfinitesimal(realval))
+      {
+        realval  = 0.0;
+      }
     }
 
     // if the param is a text

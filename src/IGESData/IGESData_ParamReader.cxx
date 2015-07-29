@@ -30,6 +30,8 @@
 #include <Interface_ParamList.hxx>
 #include <Interface_Static.hxx>
 #include <Message_Msg.hxx>
+#include <Precision.hxx>
+#include <Standard_NumericError.hxx>
 #include <TCollection_HAsciiString.hxx>
 
 #include <stdio.h>
@@ -1255,8 +1257,19 @@ Standard_Boolean IGESData_ParamReader::ReadingReal (const Standard_Integer num,
       text[j++] = orig[i];  
     if (orig[i] == '\0') break;
   }
-  if (FP.ParamType() == Interface_ParamReal) 
+  if (FP.ParamType() == Interface_ParamReal)
+  {
     val = Atof(text);
+    if(Precision::IsIllegal(val))
+    {
+      Standard_NumericError::Raise();
+    }
+
+    if(Precision::IsInfinitesimal(val))
+    {
+      val  = 0.0;
+    }
+  }
   else if (FP.ParamType() == Interface_ParamEnum) {  // convention
     if (!pbrealform) {
       if (testconv < 0) testconv = 0; //Interface_Static::IVal("iges.convert.read");
@@ -1273,6 +1286,15 @@ Standard_Boolean IGESData_ParamReader::ReadingReal (const Standard_Integer num,
     // -> un message avertissement + on ajoute le point puis on convertit
     
     val = Atof(text);
+    if(Precision::IsIllegal(val))
+    {
+      Standard_NumericError::Raise();
+    }
+
+    if(Precision::IsInfinitesimal(val))
+    {
+      val  = 0.0;
+    }
   } else if (FP.ParamType() == Interface_ParamVoid) {
     val = 0.0;    // DEFAULT
   } else {
@@ -1323,8 +1345,19 @@ Standard_Boolean IGESData_ParamReader::ReadingReal
       text[j++] = orig[i];  
     if (orig[i] == '\0') break;
   }
-  if (FP.ParamType() == Interface_ParamReal) 
+  if (FP.ParamType() == Interface_ParamReal)
+  {
     val = Atof(text);
+    if(Precision::IsIllegal(val))
+    {
+      Standard_NumericError::Raise();
+    }
+
+    if(Precision::IsInfinitesimal(val))
+    {
+      val  = 0.0;
+    }
+  }
   else if (FP.ParamType() == Interface_ParamEnum) {  // convention
     if (!pbrealform) {
       if (testconv < 0) testconv = 0; //Interface_Static::IVal("iges.convert.read");
@@ -1341,6 +1374,15 @@ Standard_Boolean IGESData_ParamReader::ReadingReal
     // -> un message avertissement + on ajoute le point puis on convertit
     
     val = Atof(text);
+    if(Precision::IsIllegal(val))
+    {
+      Standard_NumericError::Raise();
+    }
+
+    if(Precision::IsInfinitesimal(val))
+    {
+      val  = 0.0;
+    }
   } else if (FP.ParamType() == Interface_ParamVoid) {
     val = 0.0;    // DEFAULT
   } else {

@@ -22,6 +22,8 @@
 #include <Interface_Static.hxx>
 #include <Message.hxx>
 #include <Message_Messenger.hxx>
+#include <Precision.hxx>
+#include <Standard_NumericError.hxx>
 #include <Standard_Transient.hxx>
 #include <Standard_Type.hxx>
 #include <StepData_EnumTool.hxx>
@@ -489,145 +491,299 @@ Standard_Integer StepData_StepReaderData::ReadSub(const Standard_Integer numsub,
   Handle(TColStd_HArray1OfReal)      hre;
   Handle(Interface_HArray1OfHAsciiString)  hst;
   Standard_Integer kod = 0;
-  switch (FT0) {
-    case Interface_ParamMisc    : return -1;
-    case Interface_ParamInteger : kod = 1;  break;
-    case Interface_ParamReal    : kod = 5;  break;
-    case Interface_ParamIdent   : kod = 7;  break;
-    case Interface_ParamVoid    : kod = 0;  break;
-    case Interface_ParamText    : kod = 6;  break;
-    case Interface_ParamEnum    : kod = 4;  break;  // a confirmer(logical)
-      /*      kod = 4;
-	      if ( str[0] == '.' && str[2] == '.' && str[3] == '\0' &&
-	      (str[1] == 'T' || str[1] == 'F' || str[1] == 'U') ) kod = 3;
-	      break; */ // svv #2
-    case Interface_ParamLogical : return -1;
-    case Interface_ParamSub     : kod = 0;  break;
-    case Interface_ParamHexa    : return -1;
-    case Interface_ParamBinary  : return -1;
-    default :  return -1;
+  switch (FT0)
+  {
+  case Interface_ParamMisc:
+    return -1;
+  case Interface_ParamInteger:
+    kod = 1;
+    break;
+  case Interface_ParamReal:
+    kod = 5;
+    break;
+  case Interface_ParamIdent:
+    kod = 7;
+    break;
+  case Interface_ParamVoid:
+    kod = 0;
+    break;
+  case Interface_ParamText:
+    kod = 6;
+    break;
+  case Interface_ParamEnum:
+    kod = 4;
+    break;  // a confirmer(logical)
+    /*      kod = 4;
+    if ( str[0] == '.' && str[2] == '.' && str[3] == '\0' &&
+    (str[1] == 'T' || str[1] == 'F' || str[1] == 'U') ) kod = 3;
+    break; */ // svv #2
+  case Interface_ParamLogical:
+    return -1;
+  case Interface_ParamSub:
+    kod = 0;
+    break;
+  case Interface_ParamHexa:
+    return -1;
+  case Interface_ParamBinary:
+    return -1;
+  default:
+    return -1;
   }
-  if (kod == 1 || kod == 3) { hin = new TColStd_HArray1OfInteger (1,nbp); val = hin; }
-  else if (kod == 5) { hre = new TColStd_HArray1OfReal   (1,nbp); val = hre; }
-  else if (kod == 6) { hst = new Interface_HArray1OfHAsciiString (1,nbp); val = hst; }
-  else            { htr = new TColStd_HArray1OfTransient (1,nbp); val = htr; }
+  if (kod == 1 || kod == 3)
+  {
+    hin = new TColStd_HArray1OfInteger (1,nbp); val = hin;
+  }
+  else if (kod == 5)
+  {
+    hre = new TColStd_HArray1OfReal(1,nbp);
+    val = hre;
+  }
+  else if (kod == 6)
+  {
+    hst = new Interface_HArray1OfHAsciiString(1,nbp);
+    val = hst;
+  }
+  else
+  {
+    htr = new TColStd_HArray1OfTransient(1,nbp);
+    val = htr;
+  }
 //  Attention : si type variable, faudra changer son fusil d epaule -> htr
 
-  for (Standard_Integer ip = 1; ip <= nbp; ip ++) {
+  for (Standard_Integer ip = 1; ip <= nbp; ip ++)
+  {
     const Interface_FileParameter& FP = Param(numsub,ip);
     str = FP.CValue();
     FT  = FP.ParamType();
-    switch (kod) {
-      case 1 : {
-	if (FT != Interface_ParamInteger) { kod = 0; break; }
-	hin->SetValue (ip,atoi(str));	break;
-      }
-      case 2 :
-      case 3 : {
-	if (FT != Interface_ParamEnum)    { kod = 0; break; }
-	if      (!strcmp(str,".F.")) hin->SetValue (ip,0);
-	else if (!strcmp(str,".T.")) hin->SetValue (ip,1);
-	else if (!strcmp(str,".U.")) hin->SetValue (ip,2);
-	else    kod = 0;
-	break;
-      }
-      case 4 : {
-	if (FT != Interface_ParamEnum)    { kod = 0; break; }
-	Handle(StepData_SelectNamed) sn = new StepData_SelectNamed;
-	sn->SetEnum (-1,str);
-	htr->SetValue (ip,sn);  break;
-      }
-      case 5 : {
-	if (FT != Interface_ParamReal)    { kod = 0; break; }
-	hre->SetValue (ip,Interface_FileReaderData::Fastof(str));   break;
-      }
-      case 6 : {
-	if (FT != Interface_ParamText)    { kod = 0; break; }
-	Handle(TCollection_HAsciiString) txt = new TCollection_HAsciiString(str);
-	CleanText (txt);  hst->SetValue (ip,txt);  break;
-      }
-      case 7 : {
-	Handle(Standard_Transient) ent = BoundEntity (FP.EntityNumber());
-	htr->SetValue (ip,ent);  break;
-      }
-      default : break;
-    }
-//    Restent les autres cas ... tout est possible. cf le type du Param
-    if (kod > 0) continue;
-//    Il faut passer au transient ...
-    if (htr.IsNull()) {
-      htr = new TColStd_HArray1OfTransient (1,nbp);  val = htr;
-      Standard_Integer jp;	
-      if (!hin.IsNull()) {
-	for (jp = 1; jp < ip; jp ++) {
-	  Handle(StepData_SelectInt) sin = new StepData_SelectInt;
-	  sin->SetInt (hin->Value(jp));
-	  htr->SetValue (jp,sin);
-	}
-      }
-      if (!hre.IsNull()) {
-	for (jp = 1; jp < ip; jp ++) {
-	  Handle(StepData_SelectReal) sre = new StepData_SelectReal;
-	  sre->SetReal (hre->Value(jp));
-	  htr->SetValue (jp,sre);
-	}
-      }
-      if (!hst.IsNull()) {
-	for (jp = 1; jp < ip; jp ++) {
-	  htr->SetValue (jp,hst->Value(jp));
-	}
-      }
-    }
-//    A present, faut y aller : lire le champ et le mettre en place
-//    Ce qui suit ressemble fortement a ReadAny ...
+    switch (kod)
+    {
+    case 1:
+      {
+        if (FT != Interface_ParamInteger)
+        {
+          kod = 0;
+          break;
+        }
 
-    switch (FT) {
-    case Interface_ParamMisc : break;
-    case Interface_ParamInteger : {
-      Handle(StepData_SelectInt) sin = new StepData_SelectInt;
-      sin->SetInteger (atoi(str));
-      htr->SetValue (ip,sin); break;
-    }
-    case Interface_ParamReal : {
-      Handle(StepData_SelectReal) sre = new StepData_SelectReal;
-      sre->SetReal (Interface_FileReaderData::Fastof(str));   break;
-      //htr->SetValue (ip,sre); break; svv #2: unreachable
-    }
-    case Interface_ParamIdent : htr->SetValue (ip,BoundEntity (FP.EntityNumber()));  break;
-    case Interface_ParamVoid : break;
-    case Interface_ParamEnum : {
-      Handle(StepData_SelectInt)   sin;
-      Handle(StepData_SelectNamed) sna;
-      Standard_Integer logic = -1;
-// PTV 16.09.2000
-// set the default value of StepData_Logical
-      StepData_Logical slog = StepData_LUnknown;
-      if ( str[0] == '.' && str[2] == '.' && str[3] == '\0') {
-	if (str[1] == 'F')       {  slog = StepData_LFalse;    logic = 0;  }
-	else if (str[1] == 'T')  {  slog = StepData_LTrue;     logic = 1;  }
-	else if (str[1] == 'U')  {  slog = StepData_LUnknown;  logic = 2;  }
+        hin->SetValue (ip,atoi(str));	break;
       }
-      if (logic >= 0)
-	{ sin = new StepData_SelectInt; sin->SetLogical(slog); htr->SetValue(ip,sin); }
-      else { sna = new StepData_SelectNamed;
-	     sna->SetEnum (logic,str); htr->SetValue (ip,sna);  }
+    case 2:
+    case 3:
+      {
+        if (FT != Interface_ParamEnum)
+        {
+          kod = 0;
+          break;
+        }
+
+        if(!strcmp(str,".F."))
+          hin->SetValue (ip,0);
+        else if(!strcmp(str,".T."))
+          hin->SetValue (ip,1);
+        else if (!strcmp(str,".U."))
+          hin->SetValue (ip,2);
+        else
+          kod = 0;
+        break;
+      }
+    case 4:
+      {
+        if (FT != Interface_ParamEnum)
+        {
+          kod = 0;
+          break;
+        }
+
+        Handle(StepData_SelectNamed) sn = new StepData_SelectNamed;
+        sn->SetEnum (-1,str);
+        htr->SetValue (ip,sn);
+        break;
+      }
+    case 5:
+      {
+        if (FT != Interface_ParamReal)
+        {
+          kod = 0;
+          break;
+        }
+
+        Standard_Real aValue = Interface_FileReaderData::Fastof(str);
+        if(Precision::IsIllegal(aValue))
+        {
+          Standard_NumericError::Raise();
+        }
+
+        if(Precision::IsInfinitesimal(aValue))
+        {
+          aValue = 0.0;
+        }
+
+        hre->SetValue (ip,aValue);
+        break;
+      }
+    case 6:
+      {
+        if (FT != Interface_ParamText)
+        {
+          kod = 0;
+          break;
+        }
+
+        Handle(TCollection_HAsciiString) txt = new TCollection_HAsciiString(str);
+        CleanText (txt);
+        hst->SetValue (ip,txt);
+        break;
+      }
+    case 7:
+      {
+        Handle(Standard_Transient) ent = BoundEntity (FP.EntityNumber());
+        htr->SetValue (ip,ent);
+        break;
+      }
+    default:
       break;
     }
-    case Interface_ParamLogical : break;
-    case Interface_ParamText : {
-      Handle(TCollection_HAsciiString) txt = new TCollection_HAsciiString(str);
-      CleanText (txt);  htr->SetValue (ip,txt);  break;
+    //    Restent les autres cas ... tout est possible. cf le type du Param
+    if (kod > 0)
+      continue;
+    //    Il faut passer au transient ...
+    if (htr.IsNull())
+    {
+      htr = new TColStd_HArray1OfTransient (1,nbp);  val = htr;
+      Standard_Integer jp;	
+      if (!hin.IsNull())
+      {
+        for (jp = 1; jp < ip; jp ++)
+        {
+          Handle(StepData_SelectInt) sin = new StepData_SelectInt;
+          sin->SetInt (hin->Value(jp));
+          htr->SetValue (jp,sin);
+        }
+      }
+      if (!hre.IsNull())
+      {
+        for (jp = 1; jp < ip; jp ++)
+        {
+          Handle(StepData_SelectReal) sre = new StepData_SelectReal;
+          sre->SetReal (hre->Value(jp));
+          htr->SetValue (jp,sre);
+        }
+      }
+      if (!hst.IsNull())
+      {
+        for (jp = 1; jp < ip; jp ++)
+        {
+          htr->SetValue (jp,hst->Value(jp));
+        }
+      }
     }
-    case Interface_ParamSub  : {
-      Handle(Standard_Transient) sub;
-      Standard_Integer nent = FP.EntityNumber();
-      Standard_Integer kind = ReadSub (nent,mess,ach,descr,sub);   if (kind < 0) break;
-      htr->SetValue(ip,sub);  break;
+    //    A present, faut y aller : lire le champ et le mettre en place
+    //    Ce qui suit ressemble fortement a ReadAny ...
+
+    switch (FT)
+    {
+    case Interface_ParamMisc:
+      break;
+    case Interface_ParamInteger:
+      {
+        Handle(StepData_SelectInt) sin = new StepData_SelectInt;
+        sin->SetInteger (atoi(str));
+        htr->SetValue (ip,sin);
+        break;
+      }
+    case Interface_ParamReal:
+      {
+        Handle(StepData_SelectReal) sre = new StepData_SelectReal;
+
+        Standard_Real aValue = Interface_FileReaderData::Fastof(str);
+        if(Precision::IsIllegal(aValue))
+        {
+          Standard_NumericError::Raise();
+        }
+
+        if(Precision::IsInfinitesimal(aValue))
+        {
+          aValue = 0.0;
+        }
+
+        sre->SetReal (aValue);
+        break;
+        //htr->SetValue (ip,sre); break; svv #2: unreachable
+      }
+    case Interface_ParamIdent:
+      htr->SetValue (ip,BoundEntity (FP.EntityNumber()));
+      break;
+    case Interface_ParamVoid:
+      break;
+    case Interface_ParamEnum:
+      {
+        Handle(StepData_SelectInt)   sin;
+        Handle(StepData_SelectNamed) sna;
+        Standard_Integer logic = -1;
+
+        // PTV 16.09.2000
+        // set the default value of StepData_Logical
+
+        StepData_Logical slog = StepData_LUnknown;
+
+        if ( str[0] == '.' && str[2] == '.' && str[3] == '\0')
+        {
+          if (str[1] == 'F')
+          {
+            slog = StepData_LFalse;
+            logic = 0;
+          }
+          else if (str[1] == 'T')
+          {
+            slog = StepData_LTrue;
+            logic = 1;
+          }
+          else if (str[1] == 'U')
+          {
+            slog = StepData_LUnknown;
+            logic = 2;
+          }
+        }
+
+        if (logic >= 0)
+        {
+          sin = new StepData_SelectInt; sin->SetLogical(slog); htr->SetValue(ip,sin);
+        }
+        else
+        {
+          sna = new StepData_SelectNamed;
+          sna->SetEnum (logic,str); htr->SetValue (ip,sna);
+        }
+        break;
+      }
+    case Interface_ParamLogical:
+      break;
+    case Interface_ParamText:
+      {
+        Handle(TCollection_HAsciiString) txt = new TCollection_HAsciiString(str);
+        CleanText (txt);
+        htr->SetValue (ip,txt);
+        break;
+      }
+    case Interface_ParamSub:
+      {
+        Handle(Standard_Transient) sub;
+        Standard_Integer nent = FP.EntityNumber();
+        Standard_Integer kind = ReadSub (nent,mess,ach,descr,sub);
+        if (kind < 0)
+          break;
+
+        htr->SetValue(ip,sub);  break;
+      }
+
+    case Interface_ParamHexa:
+      break;
+    case Interface_ParamBinary:
+      break;
+    default:
+      break;
     }
-    case Interface_ParamHexa : break;
-    case Interface_ParamBinary  : break;
-    default                  : break;
-    }
+
     return -1;
   }
   return 8;  // pour Any
@@ -682,7 +838,20 @@ Standard_Boolean StepData_StepReaderData::ReadField(const Standard_Integer num,
     case Interface_ParamMisc    : OK = Standard_False;  break;
     case Interface_ParamInteger : fild.SetInteger (atoi(str)); break;
     case Interface_ParamReal    :
-      fild.SetReal (Interface_FileReaderData::Fastof(str));   break;
+      {
+        Standard_Real aValue = Interface_FileReaderData::Fastof(str);
+        if(Precision::IsIllegal(aValue))
+        {
+          Standard_NumericError::Raise();
+        }
+
+        if(Precision::IsInfinitesimal(aValue))
+        {
+          aValue = 0.0;
+        }
+
+        fild.SetReal (aValue);   break;
+      }
     case Interface_ParamIdent   :
       nent = FP.EntityNumber();
       if (nent > 0) fild.SetEntity (BoundEntity(nent));
@@ -768,12 +937,33 @@ Standard_Boolean StepData_StepReaderData::ReadAny(const Standard_Integer num,
     }
     case Interface_ParamReal : {
       if (!val.IsNull()) {
-	DeclareAndCast(StepData_SelectMember,sm,val);
-	sm->SetReal (Interface_FileReaderData::Fastof(str));
-	return Standard_True;
+        DeclareAndCast(StepData_SelectMember,sm,val);
+        Standard_Real aValue = Interface_FileReaderData::Fastof(str);
+        if(Precision::IsIllegal(aValue))
+        {
+          Standard_NumericError::Raise();
+        }
+        if(Precision::IsInfinitesimal(aValue))
+        {
+          aValue = 0.0;
+        }
+
+        sm->SetReal (aValue);
+        return Standard_True;
       }
       Handle(StepData_SelectReal) sre = new StepData_SelectReal;
-      sre->SetReal (Interface_FileReaderData::Fastof(str));
+      Standard_Real aValue = Interface_FileReaderData::Fastof(str);
+      if(Precision::IsIllegal(aValue))
+      {
+        Standard_NumericError::Raise();
+      }
+
+      if(Precision::IsInfinitesimal(aValue))
+      {
+        aValue = 0.0;
+      }
+
+      sre->SetReal (aValue);
       val = sre;
       return Standard_True;
     }
@@ -894,13 +1084,35 @@ Standard_Boolean StepData_StepReaderData::ReadXY(const Standard_Integer num,
   if (numsub != 0) {
     if (NbParams(numsub) == 2) {
       const Interface_FileParameter& FPX = Param(numsub,1);
-      if (FPX.ParamType() == Interface_ParamReal)  X =
-	Interface_FileReaderData::Fastof(FPX.CValue());
+      if (FPX.ParamType() == Interface_ParamReal)
+      {
+        X = Interface_FileReaderData::Fastof(FPX.CValue());
+        if(Precision::IsIllegal(X))
+        {
+          Standard_NumericError::Raise();
+        }
+
+        if(Precision::IsInfinitesimal(X))
+        {
+          X = 0.0;
+        }
+      }
       else errmess = new String("Parameter n0.%d (%s) : (X,Y) X not a Real");
 
       const Interface_FileParameter& FPY = Param(numsub,2);
-      if (FPY.ParamType() == Interface_ParamReal)  Y = 
-	Interface_FileReaderData::Fastof( FPY.CValue());
+      if (FPY.ParamType() == Interface_ParamReal)
+      {
+        Y = Interface_FileReaderData::Fastof( FPY.CValue());
+        if(Precision::IsIllegal(Y))
+        {
+          Standard_NumericError::Raise();
+        }
+
+        if(Precision::IsInfinitesimal(Y))
+        {
+          Y = 0.0;
+        }
+      }
       else errmess = new String("Parameter n0.%d (%s) : (X,Y) Y not a Real");
 
     }
@@ -932,18 +1144,51 @@ Standard_Boolean StepData_StepReaderData::ReadXYZ(const Standard_Integer num,
   if (numsub != 0) {
     if (NbParams(numsub) == 3) {
       const Interface_FileParameter& FPX = Param(numsub,1);
-      if (FPX.ParamType() == Interface_ParamReal)  X =
-	Interface_FileReaderData::Fastof(FPX.CValue());
+      if (FPX.ParamType() == Interface_ParamReal)
+      {
+        X = Interface_FileReaderData::Fastof(FPX.CValue());
+        if(Precision::IsIllegal(X))
+        {
+          Standard_NumericError::Raise();
+        }
+
+        if(Precision::IsInfinitesimal(X))
+        {
+          X = 0.0;
+        }
+      }
       else errmess = new String("Parameter n0.%d (%s) : (X,Y,Z) X not a Real");
 
       const Interface_FileParameter& FPY = Param(numsub,2);
-      if (FPY.ParamType() == Interface_ParamReal)  Y =
-	Interface_FileReaderData::Fastof(FPY.CValue());
+      if (FPY.ParamType() == Interface_ParamReal)
+      {
+        Y = Interface_FileReaderData::Fastof(FPY.CValue());
+        if(Precision::IsIllegal(Y))
+        {
+          Standard_NumericError::Raise();
+        }
+
+        if(Precision::IsInfinitesimal(Y))
+        {
+          Y = 0.0;
+        }
+      }
       else errmess = new String("Parameter n0.%d (%s) : (X,Y,Z) Y not a Real");
 
       const Interface_FileParameter& FPZ = Param(numsub,3);
-      if (FPZ.ParamType() == Interface_ParamReal)  Z =
-	Interface_FileReaderData::Fastof(FPZ.CValue());
+      if (FPZ.ParamType() == Interface_ParamReal)
+      {
+        Z = Interface_FileReaderData::Fastof(FPZ.CValue());
+        if(Precision::IsIllegal(Z))
+        {
+          Standard_NumericError::Raise();
+        }
+
+        if(Precision::IsInfinitesimal(Z))
+        {
+          Z = 0.0;
+        }
+      }
       else errmess = new String("Parameter n0.%d (%s) : (X,Y,Z) Z not a Real");
 
     }
@@ -972,8 +1217,19 @@ Standard_Boolean StepData_StepReaderData::ReadReal(const Standard_Integer num,
   Handle(String) errmess;  // Null si pas d erreur
   if (nump > 0 && nump <= NbParams(num)) {
     const Interface_FileParameter& FP = Param(num,nump);
-    if (FP.ParamType() == Interface_ParamReal)  val =
-      Interface_FileReaderData::Fastof(FP.CValue());
+    if (FP.ParamType() == Interface_ParamReal)
+    {
+      val = Interface_FileReaderData::Fastof(FP.CValue());
+      if(Precision::IsIllegal(val))
+      {
+        Standard_NumericError::Raise();
+      }
+
+      if(Precision::IsInfinitesimal(val))
+      {
+        val = 0.0;
+      }
+    }
     else errmess = new String("Parameter n0.%d (%s) not a Real");
   }
   else errmess = new String("Parameter n0.%d (%s) absent");
