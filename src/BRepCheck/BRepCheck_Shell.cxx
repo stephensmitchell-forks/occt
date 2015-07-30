@@ -823,15 +823,13 @@ BRepCheck_Status BRepCheck_Shell::Orientation(const Standard_Boolean Update)
 }
 
 //=======================================================================
-//function : SetUnorientable
+//function : SetStatus
 //purpose  : 
 //=======================================================================
-
-void BRepCheck_Shell::SetUnorientable()
+void BRepCheck_Shell::SetStatus(const BRepCheck_Status theStatus)
 {
-  BRepCheck::Add(myMap(myShape),BRepCheck_UnorientableShape);
+  BRepCheck::Add(myMap(myShape),theStatus);
 }
-
 
 //=======================================================================
 //function : IsUnorientable
@@ -932,3 +930,4 @@ Standard_Integer BRepCheck_Shell::NbConnectedSet(TopTools_ListOfShape& theSets)
   }
   return theSets.Extent();
 }
+

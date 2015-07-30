@@ -241,7 +241,9 @@ public:
   //! Returns the parameters of the vertex on the face.
   Standard_EXPORT static gp_Pnt2d Parameters (const TopoDS_Vertex& V, const TopoDS_Face& F);
 
-
+  //! Checks if theShape is really closed.
+  //! If that is TRUE, method sets "Closed" flag for it.
+  Standard_EXPORT static void BRep_Tool::SetClosedFlag(TopoDS_Shape& theShape);
 
 
 protected:

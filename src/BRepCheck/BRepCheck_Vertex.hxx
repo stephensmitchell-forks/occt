@@ -46,6 +46,8 @@ public:
   
   Standard_EXPORT Standard_Real Tolerance();
 
+  //! Sets status of the Vertex
+  Standard_EXPORT void SetStatus(const BRepCheck_Status theStatus);
 
 
 

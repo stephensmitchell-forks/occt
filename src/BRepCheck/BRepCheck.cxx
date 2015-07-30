@@ -45,6 +45,7 @@ void BRepCheck::Add(BRepCheck_ListOfStatus& lst, const BRepCheck_Status stat)
   }
   lst.Append(stat);
 }
+
 //=======================================================================
 //function : SelfIntersection
 //purpose  : 
@@ -58,6 +59,7 @@ Standard_Boolean BRepCheck::SelfIntersection(const TopoDS_Wire& W,
   BRepCheck_Status stat = chkw->SelfIntersect(myFace,RetE1,RetE2);
   return (stat == BRepCheck_SelfIntersectingWire);
 }
+
 //=======================================================================
 //function : Print
 //purpose  : 
@@ -168,6 +170,9 @@ void BRepCheck::Print(const BRepCheck_Status stat,
     break;
   case BRepCheck_InvalidPolygonOnTriangulation:
     OS << "BRepCheck_InvalidPolygonOnTriangulation\n";
+    break;
+  case BRepCheck_IncorrectFlagValue:
+    OS << "BRepCheck_IncorrectFlagValue\n";
     break;
   case BRepCheck_InvalidToleranceValue:
     OS << "BRepCheck_InvalidToleranceValue\n";

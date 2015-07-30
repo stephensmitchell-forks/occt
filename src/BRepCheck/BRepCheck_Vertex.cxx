@@ -363,4 +363,11 @@ Standard_Real BRepCheck_Vertex::Tolerance()
   return sqrt(Tol*1.05);
 }
 
-
+//=======================================================================
+//function : SetStatus
+//purpose  : 
+//=======================================================================
+void BRepCheck_Vertex::SetStatus(const BRepCheck_Status theStatus)
+{
+  BRepCheck::Add(myMap(myShape),theStatus);
+}

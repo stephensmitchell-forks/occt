@@ -475,17 +475,6 @@ BRepCheck_Status BRepCheck_Face::OrientationOfWires
   return myOrires;
 }
 
-
-//=======================================================================
-//function : SetUnorientable
-//purpose  : 
-//=======================================================================
-
-void BRepCheck_Face::SetUnorientable()
-{
-  BRepCheck::Add(myMap(myShape),BRepCheck_UnorientableShape);
-}
-
 //=======================================================================
 //function :   SetStatus
 //purpose  : 

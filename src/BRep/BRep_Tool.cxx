@@ -1538,3 +1538,16 @@ Standard_Boolean IsPlane(const Handle(Geom_Surface)& aS)
   return bRet;
 }
 
+//=======================================================================
+//function : SetClosedFlag
+//purpose  : 
+//=======================================================================
+void BRep_Tool::SetClosedFlag(TopoDS_Shape& theShape)
+{
+  if(theShape.IsNull())
+    return;
+
+  const Standard_Boolean isClosed = IsClosed(theShape);
+
+  theShape.Closed(isClosed);
+}

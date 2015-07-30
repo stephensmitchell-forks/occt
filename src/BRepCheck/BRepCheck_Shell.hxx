@@ -66,7 +66,8 @@ public:
   
   Standard_EXPORT Standard_Integer NbConnectedSet (TopTools_ListOfShape& theSets);
 
-
+  //! Sets status of the Shell
+  Standard_EXPORT void SetStatus(const BRepCheck_Status theStatus);
 
 
   DEFINE_STANDARD_RTTI(BRepCheck_Shell,BRepCheck_Result)
