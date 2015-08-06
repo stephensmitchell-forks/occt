@@ -175,6 +175,7 @@ public:
     : BRepFill_BndBoxTreeSelector::Selector(), mySeqOfEdges (theSeqOfEdges), myWFace (theWFace) {}
 
   BRepFill_BndBoxTreeSelector(const BRepFill_BndBoxTreeSelector& );
+  BRepFill_BndBoxTreeSelector& operator=(const BRepFill_BndBoxTreeSelector& );
 
   Standard_Boolean Reject (const Bnd_Box2d& theBox) const
   {
@@ -257,7 +258,7 @@ public:
            double TolE1 = BRep_Tool::Tolerance(E1);
            double TolE2 = BRep_Tool::Tolerance(E2);
            
-           myBuilder.MakeVertex(V, IntPnt, 1.01* (std::max(TolE1, TolE2) + (p3d1.Distance(p3d2)/2.)));
+           myBuilder.MakeVertex(V, IntPnt, 1.01* ((TolE1 > TolE2 ? TolE1 : TolE2)  + (p3d1.Distance(p3d2)/2.)));
 
            NCollection_List<BRepFill_BndBoxTreeSelector::EdgeParam> aList;
            BRepFill_BndBoxTreeSelector::EdgeParam ep;
@@ -409,7 +410,12 @@ public:
   {
     //Poly_MakeLoops2D::Helper();
   };
-  Poly_Helper(const Poly_Helper&);
+  Poly_Helper(const Poly_Helper& theOther) : Poly_MakeLoops2D::Helper(theOther), mymN2V (theOther.mymN2V), mymV2E (theOther.mymV2E), mymPL2E (theOther.mymPL2E), mymE2EInfo (theOther.mymE2EInfo),
+  mymNode2ListOfLinks (theOther.mymNode2ListOfLinks)
+  {
+  };
+
+  Poly_Helper& operator= (const Poly_Helper &theOther);
 
   virtual const Poly_MakeLoops2D::ListOfLink& GetAdjacentLinks (Standard_Integer theNode) const
   {
@@ -3206,8 +3212,8 @@ static bool RemoveLoops(TopoDS_Shape& theInputSh, const TopoDS_Face& theWorkSpin
     // Prepare wire for Poly_MakeLoops algo:
     // Insert neccesary vertices if two edges shares same (two) vertices
     bool Stat = true;
-    for (int i = 1; i <= EdgesInInter.Extent(); i++)
-      for (int j = i; j <= EdgesInInter.Extent(); j++)
+    for (int i = 1; i <= EdgesInInter.Extent() && Stat; i++)
+      for (int j = i; j <= EdgesInInter.Extent() && Stat; j++)
       {
         TopoDS_Edge E1 = TopoDS::Edge(EdgesInInter(i));
         TopoDS_Edge E2 = TopoDS::Edge(EdgesInInter(j));
@@ -3224,8 +3230,20 @@ static bool RemoveLoops(TopoDS_Shape& theInputSh, const TopoDS_Face& theWorkSpin
           cur = BRep_Tool::Curve(E1, f, l);
           cur->D0(f + (l-f)/2., MP);
           TopoDS_Vertex MV = BRepLib_MakeVertex(MP);
-          TopoDS_Edge DE1 = BRepBuilderAPI_MakeEdge(cur, VF1, MV, f, f + (l-f)/2 );
-          TopoDS_Edge DE2 = BRepBuilderAPI_MakeEdge(cur, MV, VL1, f + (l-f)/2, l );
+          TopoDS_Edge DE1, DE2;
+          BRepBuilderAPI_MakeEdge MEB;
+          MEB.Init(cur, VF1, MV, f, f + (l-f)/2 );
+          if (!MEB.IsDone()) {
+            Stat = false;
+            break;
+          }
+          DE1 = MEB.Edge();
+          MEB.Init(cur, MV, VL1, f + (l-f)/2, l );
+          if (!MEB.IsDone()) {
+            Stat = false;
+            break;
+          }
+          DE2 = MEB.Edge();
           TopoDS_Wire W = BRepBuilderAPI_MakeWire(DE1, DE2);
           TopTools_IndexedMapOfShape DummyM;
           TopExp::MapShapes(W, TopAbs_VERTEX, DummyM);
@@ -3259,9 +3277,26 @@ static bool RemoveLoops(TopoDS_Shape& theInputSh, const TopoDS_Face& theWorkSpin
         cur->D0(f + (0.6)*(l-f), MP2);
         TopoDS_Vertex MV1 = BRepLib_MakeVertex(MP1);
         TopoDS_Vertex MV2 = BRepLib_MakeVertex(MP2);
-        TopoDS_Edge DE1 = BRepBuilderAPI_MakeEdge(cur, VF, MV1, f, f + (0.3)*(l-f) );
-        TopoDS_Edge DE2 = BRepBuilderAPI_MakeEdge(cur, MV1, MV2, f + (0.3)*(l-f), f + (0.6)*(l-f) );
-        TopoDS_Edge DE3 = BRepBuilderAPI_MakeEdge(cur, MV2, VL, f + (0.6)*(l-f), l );
+        BRepBuilderAPI_MakeEdge MEB;
+        TopoDS_Edge DE1, DE2, DE3;
+        MEB.Init(cur, VF, MV1, f, f + (0.3)*(l-f) );
+        if (!MEB.IsDone()) {
+          Stat = false;
+          break;
+        }
+        DE1 = MEB.Edge();
+        MEB.Init(cur, MV1, MV2, f + (0.3)*(l-f), f + (0.6)*(l-f) );
+        if (!MEB.IsDone()) {
+          Stat = false;
+          break;
+        }
+        DE2 = MEB.Edge();
+        MEB.Init(cur, MV2, VL, f + (0.6)*(l-f), l );
+        if (!MEB.IsDone()) {
+          Stat = false;
+          break;
+        }
+        DE3 = MEB.Edge();
         TopoDS_Wire W = BRepBuilderAPI_MakeWire(DE1, DE2, DE3);
         TopTools_IndexedMapOfShape DummyM;
         TopExp::MapShapes(W, TopAbs_VERTEX, DummyM);
