@@ -1,0 +1,26 @@
+puts "================================================================"
+puts "CR26507"
+puts "Visualization - Improved presentations of dimensions"
+puts "================================================================"
+puts ""
+puts "Radius dimension line not continued to the center of a circle"
+
+#set anImage1 $imagedir/${casename}_1.png
+
+vinit Viewer1/View
+vright
+
+vpoint aCircleP1 0 0 60
+vpoint aCircleP2 60 0 0
+vpoint aCircleP3 120 0 60
+vcircle aCircle aCircleP1 aCircleP2 aCircleP3 0
+
+#Check all text and arrow positions
+vdimension aDim1 -radius -shapes aCircle -text 3d -plane zox -label hfit -arrow external -hidedimline
+vdimension aDim2 -radius -shapes aCircle -circleparam 20 -text 3d -plane zox -label right -arrow external -hidedimline
+vdimension aDim3 -radius -shapes aCircle -circleparam 40 -text 3d -plane zox -label vcenter -arrow internal -hidedimline
+vdimension aDim3 -radius -shapes aCircle -circleparam 40 -text 3d -plane zox -label hfit -arrow internal -hidedimline
+vfit
+
+#finalize and dump
+set only_screen 1

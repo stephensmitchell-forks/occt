@@ -516,3 +516,51 @@ TopoDS_Shape Font_BRepFont::RenderText (const NCollection_String& theString)
   }
   return aResult;
 }
+
+// =======================================================================
+// function : BoundingBox
+// purpose  :
+// =======================================================================
+Font_FTFont::Rect Font_BRepFont::BoundingBox (const NCollection_String& theString)
+{
+  Rect aBox;
+  aBox.Left   = 0.f;
+  aBox.Right  = 0.f;
+  aBox.Bottom = 0.f;
+  aBox.Top    = static_cast<float> (Ascender());
+
+  Standard_Integer aLine = 0;
+  Standard_Real aCurrWidth = 0.;
+  for (NCollection_Utf8Iter anIter = theString.Iterator(); *anIter != 0;)
+  {
+    const Standard_Utf32Char aCharCurr =   *anIter;
+    const Standard_Utf32Char aCharNext = *++anIter;
+    if (aCharCurr == '\x0D' // CR  (carriage return)
+     || aCharCurr == '\a'   // BEL (alarm)
+     || aCharCurr == '\f'   // FF  (form feed) NP (new page)
+     || aCharCurr == '\b'   // BS  (backspace)
+     || aCharCurr == '\v')  // VT  (vertical tab)
+    {
+      continue; // skip unsupported carriage control codes
+    }
+    else if (aCharCurr == ' ' || aCharCurr == '\t')
+    {
+      aCurrWidth += AdvanceX (aCharCurr, aCharNext);
+      continue;
+    }
+    else if (aCharCurr == '\n')
+    {
+      aBox.Right = Max (aBox.Right, static_cast<float> (aCurrWidth));
+      aCurrWidth = 0;
+      ++aLine;
+      continue;
+    }
+
+    aCurrWidth += AdvanceX (aCharCurr, aCharNext);
+  }
+
+  aBox.Right  = Max (aBox.Right, static_cast<float> (aCurrWidth));
+  aBox.Bottom = aBox.Top - static_cast<float> (LineSpacing() * Standard_Real (aLine + 1));
+
+  return aBox;
+}

@@ -78,11 +78,13 @@ is
   -- DTHP_Fit    - value label located automatically at left side if does not fits
   --               the dimension space, otherwise the value label is placed at center.
 
-  enumeration DimensionTextVerticalPosition is DTVP_Above, DTVP_Below, DTVP_Center;
+  enumeration DimensionTextVerticalPosition is DTVP_Above, DTVP_FirstLine, DTVP_Below, DTVP_LastLine, DTVP_Center;
   ---Purpose: Specifies options for positioning dimension value label in vertical direction
   -- with respect to dimension (extension) line.
   -- DTVP_Above - text label is located above the dimension or extension line.
+  -- DTVP_FirstLine - for multi-line text: first line alignment (is by default for multi-line label)
   -- DTVP_Below - text label is located below the dimension or extension line.
+  -- DTVP_LastLine - for multi-line text: last line alignment (is by default for multi-line label)
   -- DTVP_Center - the text label middle-point is in line with dimension or extension line.
 
   enumeration DimensionArrowOrientation is DAO_Internal, DAO_External, DAO_Fit;
