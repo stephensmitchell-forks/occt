@@ -124,7 +124,8 @@
 #include <NCollection_DoubleMap.hxx>
 #include <TColStd_ListOfInteger.hxx>
 #include <NCollection_UBTree.hxx>
-#include <NCollection_Array1.hxx>
+#include <NCollection_Vector.hxx>
+#include <TopTools_Array1OfShape.hxx>
 
 #include <stdio.h>
 #ifdef OCCT_DEBUG
@@ -170,12 +171,9 @@ public:
   };
 
 public:
-  BRepFill_BndBoxTreeSelector( TopTools_SequenceOfShape& theSeqOfEdges,
+  BRepFill_BndBoxTreeSelector( const TopTools_Array1OfShape& theSeqOfEdges,
                                const TopoDS_Face& theWFace) 
     : BRepFill_BndBoxTreeSelector::Selector(), mySeqOfEdges (theSeqOfEdges), myWFace (theWFace) {}
-
-  BRepFill_BndBoxTreeSelector(const BRepFill_BndBoxTreeSelector& );
-  BRepFill_BndBoxTreeSelector& operator=(const BRepFill_BndBoxTreeSelector& );
 
   Standard_Boolean Reject (const Bnd_Box2d& theBox) const
   {
@@ -258,7 +256,7 @@ public:
            double TolE1 = BRep_Tool::Tolerance(E1);
            double TolE2 = BRep_Tool::Tolerance(E2);
            
-           myBuilder.MakeVertex(V, IntPnt, 1.01* ((TolE1 > TolE2 ? TolE1 : TolE2)  + (p3d1.Distance(p3d2)/2.)));
+           myBuilder.MakeVertex(V, IntPnt, 1.01 * (::Max(TolE1, TolE2)  + (p3d1.Distance(p3d2)/2.)));
 
            NCollection_List<BRepFill_BndBoxTreeSelector::EdgeParam> aList;
            BRepFill_BndBoxTreeSelector::EdgeParam ep;
@@ -386,7 +384,11 @@ public:
   }
 
 private:
-  TopTools_SequenceOfShape& mySeqOfEdges; //edges to be intersected with each other
+  BRepFill_BndBoxTreeSelector(const BRepFill_BndBoxTreeSelector& );
+  BRepFill_BndBoxTreeSelector& operator=(const BRepFill_BndBoxTreeSelector& );
+
+private:
+  const TopTools_Array1OfShape& mySeqOfEdges; //edges to be intersected with each other
   const TopoDS_Face& myWFace; //work spine face
   NCollection_DataMap<TopoDS_Edge, NCollection_Sequence<double>> myOutMapOfResult; // map "edge to it's intersection parameters"
   NCollection_List<BRepFill_BndBoxTreeSelector::EdgeParam> myListOfVertexEdgePar;  
@@ -410,12 +412,6 @@ public:
   {
     //Poly_MakeLoops2D::Helper();
   };
-  Poly_Helper(const Poly_Helper& theOther) : Poly_MakeLoops2D::Helper(theOther), mymN2V (theOther.mymN2V), mymV2E (theOther.mymV2E), mymPL2E (theOther.mymPL2E), mymE2EInfo (theOther.mymE2EInfo),
-  mymNode2ListOfLinks (theOther.mymNode2ListOfLinks)
-  {
-  };
-
-  Poly_Helper& operator= (const Poly_Helper &theOther);
 
   virtual const Poly_MakeLoops2D::ListOfLink& GetAdjacentLinks (Standard_Integer theNode) const
   {
@@ -434,6 +430,10 @@ public:
     theDir = mymE2EInfo(E).myD1L;
     return true;
   }
+
+private:
+  Poly_Helper(const Poly_Helper& theOther);
+  Poly_Helper& operator= (const Poly_Helper &theOther);
 
 private:
   TopTools_IndexedMapOfShape& mymN2V;   //map 'node to vertex'
@@ -3080,6 +3080,456 @@ static void QuasiFleche(const Adaptor3d_Curve& C,
   }
 }
 
+static bool AddIntersectionVertices(const Handle_Geom_Plane& theRefPlane,
+                                    const TopoDS_Face& theWorkSpine,
+                                    const TopTools_Array1OfShape& Seq,
+                                    Handle(BRepTools_ReShape)& reshape,
+                                    TopoDS_Wire& aW,
+                                    TopTools_IndexedMapOfShape& EdgesInInter,
+                                    TopTools_MapOfShape& InterV )
+{
+  NCollection_DataMap<TopoDS_Edge, NCollection_Sequence<double>> ME2IP;   //map edge to params on this edges
+  gp_Pln pl = theRefPlane->Pln();   
+
+  //Prepare UBTree filler
+  // Used to speedup the intersection process by using overlapped 2d bounding boxes 
+  BRepFill_BndBoxTree aTree;
+  NCollection_UBTreeFiller <Standard_Integer, Bnd_Box2d> aTreeFiller (aTree);
+  
+  BRepFill_BndBoxTreeSelector aSelector(Seq, theWorkSpine);
+
+  // Prepare bounding boxes
+  int EdgeSize = Seq.Length();
+  NCollection_Array1<Bnd_Box2d> BndBoxesOfEdges(1, EdgeSize);
+  for (int i = 1; i <= EdgeSize; i++)
+  {
+    double f, l;
+    Handle_Geom2d_Curve aCur = BRep_Tool::CurveOnSurface(TopoDS::Edge(Seq(i)), theWorkSpine, f, l ); 
+    Bnd_Box2d aBox;
+    BndLib_Add2dCurve::Add( aCur, f, l, 0., aBox );
+    //aBox.Enlarge(1e-4);
+    aTreeFiller.Add(i, aBox);
+    BndBoxesOfEdges.SetValue(i, aBox);
+  }
+
+  aTreeFiller.Fill();
+  
+  //Perform searching and intersecting of edges
+  aSelector.ClearResult();
+  for (int i = 1; i <= BndBoxesOfEdges.Size(); i++)
+  {
+    aSelector.SetCurrentBox(BndBoxesOfEdges(i), i);
+    aTree.Select(aSelector);
+  }
+
+  aSelector.GetResult(ME2IP);  //Retrieve result from algo
+  NCollection_List<BRepFill_BndBoxTreeSelector::EdgeParam> LVEP;
+  aSelector.GetListOfVertexEdgePar(LVEP);
+
+  if (ME2IP.IsEmpty())
+    return false;           //if no intersection point => go to the next wire
+
+  for (NCollection_DataMap<TopoDS_Edge, NCollection_Sequence<double>>::Iterator aMapIt (ME2IP); aMapIt.More(); aMapIt.Next()) 
+  {
+    TopoDS_Edge E = aMapIt.Key();
+    //NCollection_Sequence<double> Params = aMapIt.Value(); 
+    Handle_Geom_Curve aCur;
+    double f, l;
+    aCur = BRep_Tool::Curve(E, f, l );
+    
+    //prepare params on the edge
+    NCollection_Sequence<double> ParamSeq = aMapIt.Value();
+    ParamSeq.Append(f);
+    ParamSeq.Append(l);
+    //ParamSeq.Append(Params);
+
+    //sort parameters
+    NCollection_QuickSort<NCollection_Sequence<double>, double>::Perform(ParamSeq, NCollection_Comparator<double>(), ParamSeq.Lower(), ParamSeq.Upper());
+    NCollection_Sequence<TopoDS_Vertex> aVOnEdge;  //Vertexes on the edge which divide it in the intersection points into sequence of edges
+    TopoDS_Vertex VF, VL;
+    VF = TopExp::FirstVertex(E);
+    VL = TopExp::LastVertex(E);
+    aVOnEdge.Append(VF);
+    
+    for (int i = 2; i <= ParamSeq.Length() - 1; i++)
+    {
+      double P = ParamSeq(i);
+      TopoDS_Vertex MV;
+      for (NCollection_List<BRepFill_BndBoxTreeSelector::EdgeParam>::Iterator anIt (LVEP); anIt.More(); anIt.Next())
+      {
+        BRepFill_BndBoxTreeSelector::EdgeParam ep = anIt.Value();
+        if (ep.myEdgeInt == E && ep.myParamInt == P)
+        {
+          MV = anIt.Value().myIntVertex;
+          InterV.Add(MV);
+          break;
+        }
+      }
+
+      aVOnEdge.Append(MV);
+    }
+    aVOnEdge.Append(VL);
+
+    //Split old edge => Construct a new sequence of new edges
+    NCollection_Array1<TopoDS_Edge> NewEdgeSeq (1, aVOnEdge.Length() - 1);
+    TopoDS_Edge DE;
+    for (int j = 1; j < aVOnEdge.Length(); j++)
+    {
+      DE = BRepBuilderAPI_MakeEdge(aCur, aVOnEdge(j), aVOnEdge(j+1), ParamSeq(j), ParamSeq(j+1));
+      BRep_Builder BB;
+      BB.UpdateEdge(DE, BRep_Tool::Tolerance(E));
+      NewEdgeSeq.SetValue(j, DE);
+    }
+
+    BRepBuilderAPI_MakeWire MW;
+    for (int i = 1; i <= NewEdgeSeq.Length(); i++)
+    {
+      MW.Add(NewEdgeSeq(i));
+      EdgesInInter.Add(NewEdgeSeq(i));
+    }
+    MW.Build();
+    TopoDS_Wire TW = MW.Wire(); //make wire from the sequence of edges
+    TW.Orientation(E.Orientation());
+    reshape->Replace(E, TW);   //replace old edge with wire
+  }
+  
+  aW = TopoDS::Wire(reshape->Apply(aW));
+  return true;
+}
+
+static bool AddAdditionalVertices( Handle(BRepTools_ReShape)& reshape,
+                                   TopoDS_Wire& aW,
+                                   TopTools_IndexedMapOfShape& EdgesInInter,
+                                   TopTools_MapOfShape& InterV )
+{
+  bool Stat = true;
+  // Prepare wire for Poly_MakeLoops algo:
+  // Insert neccesary vertices if two edges shares same (two) vertices
+  for (int i = 1; i <= EdgesInInter.Extent() && Stat; i++)
+    for (int j = i; j <= EdgesInInter.Extent() && Stat; j++)
+    {
+      TopoDS_Edge E1 = TopoDS::Edge(EdgesInInter(i));
+      TopoDS_Edge E2 = TopoDS::Edge(EdgesInInter(j));
+      if (E1 == E2)
+        continue;
+      TopoDS_Vertex VF1, VL1, VF2, VL2;
+      TopExp::Vertices(E1, VF1, VL1);
+      TopExp::Vertices(E2, VF2, VL2);
+      if ((VF1.IsSame(VF2) && VL1.IsSame(VL2)) || (VF1.IsSame(VL2) && VL1.IsSame(VF2)))
+      {
+        gp_Pnt MP;
+        Handle_Geom_Curve cur;
+        double f, l;
+        cur = BRep_Tool::Curve(E1, f, l);
+        cur->D0(f + (l-f)/2., MP);
+        TopoDS_Vertex MV = BRepLib_MakeVertex(MP);
+        TopoDS_Edge DE1, DE2;
+        BRepBuilderAPI_MakeEdge MEB;
+        MEB.Init(cur, VF1, MV, f, f + (l-f)/2 );
+        if (!MEB.IsDone()) {
+          Stat = false;
+          break;
+        }
+        DE1 = MEB.Edge();
+        MEB.Init(cur, MV, VL1, f + (l-f)/2, l );
+        if (!MEB.IsDone()) {
+          Stat = false;
+          break;
+        }
+        DE2 = MEB.Edge();
+        TopoDS_Wire W = BRepBuilderAPI_MakeWire(DE1, DE2);
+        TopTools_IndexedMapOfShape DummyM;
+        TopExp::MapShapes(W, TopAbs_VERTEX, DummyM);
+        if (DummyM.Extent() !=3 ) 
+        {
+          Stat = false;
+          break;
+        }
+        reshape->Replace(E1, W.Oriented(E1.Orientation()));
+      }
+    }
+
+  aW = TopoDS::Wire(reshape->Apply(aW));
+  // If edges contains only one vertex => insert another two vertices
+  TopExp_Explorer ExpE( aW, TopAbs_EDGE );
+  for (; ExpE.More() && Stat; ExpE.Next())
+  {
+    TopoDS_Edge E = TopoDS::Edge(ExpE.Current());
+    TopoDS_Vertex VF, VL;      
+    TopExp::Vertices(E, VF, VL);
+
+    if (VF.IsSame( VL ) && (InterV.Contains(VL) || InterV.Contains(VF)))
+    {
+      gp_Pnt MP1, MP2;
+      Handle_Geom_Curve cur;
+      double f, l;
+      cur = BRep_Tool::Curve(E, f, l);
+      if ( Abs(l - f ) <  3 * Precision::Confusion())
+        continue;
+      cur->D0(f + (0.3)*(l-f), MP1);
+      cur->D0(f + (0.6)*(l-f), MP2);
+      TopoDS_Vertex MV1 = BRepLib_MakeVertex(MP1);
+      TopoDS_Vertex MV2 = BRepLib_MakeVertex(MP2);
+      BRepBuilderAPI_MakeEdge MEB;
+      TopoDS_Edge DE1, DE2, DE3;
+      MEB.Init(cur, VF, MV1, f, f + (0.3)*(l-f) );
+      if (!MEB.IsDone()) {
+        Stat = false;
+        break;
+      }
+      DE1 = MEB.Edge();
+      MEB.Init(cur, MV1, MV2, f + (0.3)*(l-f), f + (0.6)*(l-f) );
+      if (!MEB.IsDone()) {
+        Stat = false;
+        break;
+      }
+      DE2 = MEB.Edge();
+      MEB.Init(cur, MV2, VL, f + (0.6)*(l-f), l );
+      if (!MEB.IsDone()) {
+        Stat = false;
+        break;
+      }
+      DE3 = MEB.Edge();
+      TopoDS_Wire W = BRepBuilderAPI_MakeWire(DE1, DE2, DE3);
+      TopTools_IndexedMapOfShape DummyM;
+      TopExp::MapShapes(W, TopAbs_VERTEX, DummyM);
+      if (DummyM.Extent() !=3 ) 
+      {
+        Stat = false;
+        break;
+      }
+      reshape->Replace(E, W.Oriented(E.Orientation()));
+    }
+  }
+  return Stat;
+}
+
+bool DoReorder( Handle(BRepTools_ReShape)& reshape,
+                TopoDS_Wire& aW)
+{
+  //Perform reorder of wire
+  aW = TopoDS::Wire(reshape->Apply(aW));
+  Handle(ShapeExtend_WireData) aWireData  = new ShapeExtend_WireData;
+  Handle(ShapeFix_Wire) aShFixWire = new ShapeFix_Wire;
+  
+  Handle(ShapeAnalysis_Wire) aWireAnalyzer;
+  ShapeAnalysis_WireOrder aWireOrder;
+
+  aShFixWire->Load(aWireData);
+  aShFixWire->SetPrecision(1e-7);
+
+  TopExp_Explorer Exp1( aW, TopAbs_EDGE );
+  for (; Exp1.More(); Exp1.Next())
+    aWireData->Add(TopoDS::Edge(Exp1.Current()));            
+
+  aWireOrder.KeepLoopsMode() = 0;
+  aWireAnalyzer = aShFixWire->Analyzer();
+  aShFixWire->ModifyTopologyMode() = Standard_True;
+  //aShFixWire->FixConnected(1e-7);
+  aWireAnalyzer->CheckOrder(aWireOrder, Standard_True);
+  aWireOrder.Perform(1);
+  aShFixWire->ClosedWireMode() = 1;
+  aShFixWire->FixReorder(aWireOrder);
+  //aShFixWire->FixDegenerated();
+  bool IsDone = !aShFixWire->StatusReorder(ShapeExtend_FAIL);
+  
+  if (!IsDone)
+    return false;
+  else
+  {
+    aW = aWireData->Wire();
+    return true;
+  }
+}
+
+static bool ExtractLoopsFromWire(TopoDS_Wire& aW,
+                                 const TopoDS_Face& theWorkSpine,
+                                 NCollection_Vector<TopoDS_Wire>& aLoops)
+{
+  // Prepare 'TopoLink' info for Poly_MakeLoops algo => Calculate derivatives of the edges
+  NCollection_DataMap<TopoDS_Edge, TopoLink> mE2EInfo;
+  TopExp_Explorer ExpE(aW, TopAbs_EDGE);
+  for (; ExpE.More(); ExpE.Next())
+  {
+    TopoLink anEngeInfo;
+    TopoDS_Edge E = TopoDS::Edge(ExpE.Current());
+    Handle_Geom2d_Curve aCur;
+    double f, l;
+    gp_Pnt2d Pnt;
+    gp_Vec2d Vec;
+
+    aCur = BRep_Tool::CurveOnSurface(E, theWorkSpine, f, l ); 
+    if (aCur.IsNull())
+      continue;
+    if (E.Orientation() == TopAbs_FORWARD)
+    {
+      anEngeInfo.myFV = TopExp::FirstVertex(E); 
+      anEngeInfo.myLV = TopExp::LastVertex(E); 
+      aCur->D1(f, Pnt, Vec);
+      anEngeInfo.myD1F.SetCoord(Vec.X(), Vec.Y());
+      aCur->D1(l, Pnt, Vec);
+      anEngeInfo.myD1L.SetCoord(Vec.X(), Vec.Y());
+    }
+    else
+    {
+      anEngeInfo.myFV = TopExp::LastVertex(E); 
+      anEngeInfo.myLV = TopExp::FirstVertex(E); 
+      aCur->D1(l, Pnt, Vec);
+      anEngeInfo.myD1F.SetCoord(-Vec.X(), -Vec.Y());
+      aCur->D1(f, Pnt, Vec);
+      anEngeInfo.myD1L.SetCoord(-Vec.X(), -Vec.Y());
+    }
+    mE2EInfo.Bind(E, anEngeInfo);
+  }
+
+  TopTools_IndexedMapOfShape mN2V;
+  TopExp::MapShapes(aW, TopAbs_VERTEX, mN2V);
+
+  TopTools_IndexedDataMapOfShapeListOfShape mV2E;
+  TopExp::MapShapesAndAncestors(aW, TopAbs_VERTEX, TopAbs_EDGE, mV2E);
+
+  //Create links for Poly_MakeLoops algo and bind them to the existing edges
+  NCollection_DoubleMap<Poly_MakeLoops2D::Link, TopoDS_Edge> mPL2E;
+  ExpE.Init(aW, TopAbs_EDGE);
+  for (; ExpE.More(); ExpE.Next())
+  {
+    TopoDS_Edge E = TopoDS::Edge(ExpE.Current());
+    if (!mE2EInfo.IsBound(E))
+      continue;
+    TopoLink L = mE2EInfo(E);
+    int Node1 = mN2V.FindIndex(L.myFV);
+    int Node2 = mN2V.FindIndex(L.myLV);
+    Poly_MakeLoops2D::Link aLink(Node1, Node2);
+    aLink.flags = Poly_MakeLoops2D::LF_Fwd;
+    mPL2E.Bind(aLink, E);
+  }
+
+  NCollection_DataMap<int, Poly_MakeLoops2D::ListOfLink> mNode2ListOfLinks;
+  for (int i = 1; i <= mN2V.Extent(); i++)
+  {
+    TopoDS_Vertex V = TopoDS::Vertex(mN2V(i));
+    TopTools_ListOfShape Edges = mV2E.FindFromKey(V);
+    TopTools_ListIteratorOfListOfShape It(Edges);
+    Poly_MakeLoops2D::ListOfLink aListOfLinks;
+    for (;It.More(); It.Next())
+    {
+      TopoDS_Edge E = TopoDS::Edge(It.Value());
+      if (!mPL2E.IsBound2(E))
+        continue;
+      Poly_MakeLoops2D::Link aL = mPL2E.Find2(E);
+      aListOfLinks.Append(aL);
+    }
+    mNode2ListOfLinks.Bind(i, aListOfLinks);
+  }
+
+  Poly_Helper helper(mN2V, mV2E, mPL2E, mE2EInfo, mNode2ListOfLinks);
+  Poly_MakeLoops2D aLoopMaker(1, &helper, NCollection_BaseAllocator::CommonBaseAllocator() );
+  for (NCollection_DoubleMap<Poly_MakeLoops2D::Link, TopoDS_Edge>::Iterator aMapIt (mPL2E); aMapIt.More(); aMapIt.Next())
+    aLoopMaker.AddLink(aMapIt.Key1());
+  
+  aLoopMaker.Perform();   //try to find loops
+  int NbLoops = aLoopMaker.GetNbLoops();
+  int NbHangs = aLoopMaker.GetNbHanging();
+
+  if (NbLoops == 0 || NbHangs != 0 ) 
+    return false;
+
+  for (int i = 1; i <= NbLoops; i++)  //try to construct loops
+  {
+    Poly_MakeLoops2D::Loop aLoop = aLoopMaker.GetLoop(i);
+    Poly_MakeLoops2D::Loop::Iterator it(aLoop);
+    BRepBuilderAPI_MakeWire aWM;
+    TopoDS_Edge E;
+    for (;it.More(); it.Next())
+    {
+      E = mPL2E.Find1(it.Value());
+      aWM.Add(E);
+    }
+    if (aWM.IsDone())
+    {
+      TopoDS_Wire W = aWM.Wire();
+      if (!W.Closed())
+        return false;
+      aLoops.Append(W);
+    }
+  }
+  return true;
+}
+
+static bool CollectNeccessaryLoops(const NCollection_Vector<TopoDS_Wire>& aLoops,
+                                   const Handle(Geom_Plane)& theRefPlane,
+                                   const TopoDS_Face& theWorkSpine,
+                                   TopoDS_Compound& Co)
+{
+  // try to classify wires
+  NCollection_Vector<TopoDS_Wire> InnerMWires; // interior wires
+  NCollection_Vector<TopoDS_Wire> ExtMWires; //wires which defines a hole
+  for (int i = 0; i < aLoops.Length(); i++)
+  {
+    TopoDS_Face af = BRepBuilderAPI_MakeFace (theRefPlane, Precision::Confusion() ); //TopoDS::Face ( myWorkSpine.EmptyCopied() );
+    af.Orientation ( TopAbs_REVERSED );
+    BRep_Builder BB;  
+    BB.Add (af, aLoops(i));
+ 
+    BRepTopAdaptor_FClass2d FClass(af, Precision::PConfusion());
+    if (FClass.PerformInfinitePoint() == TopAbs_OUT)
+      InnerMWires.Append(aLoops(i));
+    else
+      ExtMWires.Append(aLoops(i));
+  }
+
+  if (InnerMWires.Length() == ExtMWires.Length())
+    return false; 
+
+  if (InnerMWires.Length() < ExtMWires.Length())
+    //probably incorrect orientation 
+    return false; 
+  //try to find an outer wire
+  int IndOfOuterW = -1;
+  for (int i = 0; i < InnerMWires.Length(); i++)
+  {
+    bool IsInside = true;
+    BRepBuilderAPI_MakeFace aDB(theRefPlane, InnerMWires(i));
+    TopoDS_Face aDummyFace = TopoDS::Face(aDB.Shape());
+    BRepTopAdaptor_FClass2d FClass(aDummyFace, Precision::PConfusion());
+    for (int j = 0; j < InnerMWires.Length(); j++)
+    {              
+      if ( i == j )
+        continue;
+      double f, l;
+      TopExp_Explorer ExpE( InnerMWires(j), TopAbs_EDGE );
+      Handle_Geom2d_Curve aCur = BRep_Tool::CurveOnSurface(TopoDS::Edge(ExpE.Current()), theWorkSpine, f, l ); 
+                
+      gp_Pnt2d MP = aCur->Value((l + f) / 2.0);
+      if (FClass.Perform(MP) != TopAbs_IN)
+      {
+        IsInside = false;
+        break;
+      }
+    }
+    if (IsInside)
+    {
+      IndOfOuterW = i;
+      break;
+    }
+
+  }
+
+  if (IndOfOuterW == -1)
+    return false; //cant find an outer wire
+
+  TopoDS_Wire OuterWire = InnerMWires(IndOfOuterW);
+  //make compound: outer wire + holes
+  BRep_Builder BBC; 
+  BBC.MakeCompound(Co);
+  BBC.Add(Co, OuterWire);
+
+  for (int i = 0; i < ExtMWires.Length(); i++)
+    BBC.Add(Co, ExtMWires(i));
+
+  return true;
+}
+
 //! Used to remove loops from offset result
 static bool RemoveLoops(TopoDS_Shape& theInputSh, const TopoDS_Face& theWorkSpine, const Handle(Geom_Plane)& theRefPlane )
 {
@@ -3095,442 +3545,37 @@ static bool RemoveLoops(TopoDS_Shape& theInputSh, const TopoDS_Face& theWorkSpin
       continue;
     TopoDS_Wire aW = TopoDS::Wire( Exp.Current() );
 
+    int NbEdges = 0;
     TopExp_Explorer ExpE( aW, TopAbs_EDGE );
-    TopTools_SequenceOfShape Seq; 
     for (; ExpE.More(); ExpE.Next())
-      Seq.Append( ExpE.Current() );
+      NbEdges++;
 
-    NCollection_DataMap<TopoDS_Edge, NCollection_Sequence<double>> ME2IP;   //map edge to params on this edges
-    gp_Pln pl = theRefPlane->Pln();   
-
-    //Prepare UBTree filler
-    // Used to speedup the intersection process by using overlapped 2d bounding boxes 
-    BRepFill_BndBoxTree aTree;
-    NCollection_UBTreeFiller <Standard_Integer, Bnd_Box2d> aTreeFiller (aTree);
-    
-    BRepFill_BndBoxTreeSelector aSelector(Seq, theWorkSpine);
-
-    // Prepare bounding boxes
-    NCollection_Sequence<Bnd_Box2d> BndBoxesOfEdges;
-    for (int i = 1; i <= Seq.Length(); i++)
-    {
-      double f, l;
-      Handle_Geom2d_Curve aCur = BRep_Tool::CurveOnSurface(TopoDS::Edge(Seq(i)), theWorkSpine, f, l ); 
-      Bnd_Box2d aBox;
-      BndLib_Add2dCurve::Add( aCur, f, l, 0., aBox );
-      //aBox.Enlarge(1e-4);
-      aTreeFiller.Add(i, aBox);
-      BndBoxesOfEdges.Append(aBox);
-    }
-
-    aTreeFiller.Fill();
-    
-    //Perform searching and intersecting of edges
-    aSelector.ClearResult();
-    for (int i = 1; i <= BndBoxesOfEdges.Size(); i++)
-    {
-      aSelector.SetCurrentBox(BndBoxesOfEdges(i), i);
-      aTree.Select(aSelector);
-    }
-
-    aSelector.GetResult(ME2IP);  //Retrieve result from algo
-    NCollection_List<BRepFill_BndBoxTreeSelector::EdgeParam> LVEP;
-    aSelector.GetListOfVertexEdgePar(LVEP);
-
-    if (ME2IP.IsEmpty())
-      continue;           //if no intersection point => go to the next wire
-
-    TopTools_MapOfShape InterV; 
-    TopTools_IndexedMapOfShape EdgesInInter; 
-
-    for (NCollection_DataMap<TopoDS_Edge, NCollection_Sequence<double>>::Iterator aMapIt (ME2IP); aMapIt.More(); aMapIt.Next()) 
-    {
-      TopoDS_Edge E = aMapIt.Key();
-      NCollection_Sequence<double> Params = aMapIt.Value(); 
-      Handle_Geom_Curve aCur;
-      double f, l;
-      aCur = BRep_Tool::Curve(E, f, l );
-      
-      //prepare params on the edge
-      NCollection_Sequence<double> ParamSeq;
-      ParamSeq.Append(f);
-      ParamSeq.Append(l);
-      ParamSeq.Append(Params);
-
-      //sort parameters
-      NCollection_QuickSort<NCollection_Sequence<double>, double>::Perform(ParamSeq, NCollection_Comparator<double>(), ParamSeq.Lower(), ParamSeq.Upper());
-      NCollection_Sequence<TopoDS_Vertex> aVOnEdge;  //Vertexes on the edge which divide it in the intersection points into sequence of edges
-      NCollection_Sequence<TopoDS_Edge> NewEdgeSeq;
-      TopoDS_Vertex VF, VL;
-      VF = TopExp::FirstVertex(E);
-      VL = TopExp::LastVertex(E);
-      aVOnEdge.Append(VF);
-      
-      for (int i = 2; i <= ParamSeq.Length() - 1; i++)
-      {
-        double P = ParamSeq(i);
-        TopoDS_Vertex MV;
-        for (NCollection_List<BRepFill_BndBoxTreeSelector::EdgeParam>::Iterator anIt (LVEP); anIt.More(); anIt.Next())
-        {
-          BRepFill_BndBoxTreeSelector::EdgeParam ep = anIt.Value();
-          if (ep.myEdgeInt == E && ep.myParamInt == P)
-          {
-            MV = anIt.Value().myIntVertex;
-            InterV.Add(MV);
-            break;
-          }
-        }
-
-        aVOnEdge.Append(MV);
-      }
-      aVOnEdge.Append(VL);
-
-      //Split old edge => Construct a new sequence of new edges
-      TopoDS_Edge DE;
-      for (int j = 1; j < aVOnEdge.Length(); j++)
-      {
-        DE = BRepBuilderAPI_MakeEdge(aCur, aVOnEdge(j), aVOnEdge(j+1), ParamSeq(j), ParamSeq(j+1));
-        BRep_Builder BB;
-        BB.UpdateEdge(DE, BRep_Tool::Tolerance(E));
-        NewEdgeSeq.Append(DE);
-      }
-
-      BRepBuilderAPI_MakeWire MW;
-      for (int i = 1; i <= NewEdgeSeq.Length(); i++)
-      {
-        MW.Add(NewEdgeSeq(i));
-        EdgesInInter.Add(NewEdgeSeq(i));
-      }
-      MW.Build();
-      TopoDS_Wire TW = MW.Wire(); //make wire from the sequence of edges
-      TW.Orientation(E.Orientation());
-      reshape->Replace(E, TW);   //replace old edge with wire
-    }
-
-    aW = TopoDS::Wire(reshape->Apply(aW));
-
-    // Prepare wire for Poly_MakeLoops algo:
-    // Insert neccesary vertices if two edges shares same (two) vertices
-    bool Stat = true;
-    for (int i = 1; i <= EdgesInInter.Extent() && Stat; i++)
-      for (int j = i; j <= EdgesInInter.Extent() && Stat; j++)
-      {
-        TopoDS_Edge E1 = TopoDS::Edge(EdgesInInter(i));
-        TopoDS_Edge E2 = TopoDS::Edge(EdgesInInter(j));
-        if (E1 == E2)
-          continue;
-        TopoDS_Vertex VF1, VL1, VF2, VL2;
-        TopExp::Vertices(E1, VF1, VL1);
-        TopExp::Vertices(E2, VF2, VL2);
-        if ((VF1.IsSame(VF2) && VL1.IsSame(VL2)) || (VF1.IsSame(VL2) && VL1.IsSame(VF2)))
-        {
-          gp_Pnt MP;
-          Handle_Geom_Curve cur;
-          double f, l;
-          cur = BRep_Tool::Curve(E1, f, l);
-          cur->D0(f + (l-f)/2., MP);
-          TopoDS_Vertex MV = BRepLib_MakeVertex(MP);
-          TopoDS_Edge DE1, DE2;
-          BRepBuilderAPI_MakeEdge MEB;
-          MEB.Init(cur, VF1, MV, f, f + (l-f)/2 );
-          if (!MEB.IsDone()) {
-            Stat = false;
-            break;
-          }
-          DE1 = MEB.Edge();
-          MEB.Init(cur, MV, VL1, f + (l-f)/2, l );
-          if (!MEB.IsDone()) {
-            Stat = false;
-            break;
-          }
-          DE2 = MEB.Edge();
-          TopoDS_Wire W = BRepBuilderAPI_MakeWire(DE1, DE2);
-          TopTools_IndexedMapOfShape DummyM;
-          TopExp::MapShapes(W, TopAbs_VERTEX, DummyM);
-          if (DummyM.Extent() !=3 ) 
-          {
-            Stat = false;
-            break;
-          }
-          reshape->Replace(E1, W.Oriented(E1.Orientation()));
-        }
-      }
-
-    aW = TopoDS::Wire(reshape->Apply(aW));
-    // If edges contains only one vertex => insert another two vertices
+    TopTools_Array1OfShape Seq (1, NbEdges); 
     ExpE.Init( aW, TopAbs_EDGE );
-    for (; ExpE.More() && Stat; ExpE.Next())
-    {
-      TopoDS_Edge E = TopoDS::Edge(ExpE.Current());
-      TopoDS_Vertex VF, VL;      
-      TopExp::Vertices(E, VF, VL);
+    for (int i = 1; ExpE.More(); ExpE.Next(), i++ )
+      Seq.SetValue(i, ExpE.Current() );
 
-      if (VF.IsSame( VL ) && (InterV.Contains(VL) || InterV.Contains(VF)))
-      {
-        gp_Pnt MP1, MP2;
-        Handle_Geom_Curve cur;
-        double f, l;
-        cur = BRep_Tool::Curve(E, f, l);
-        if ( Abs(l - f ) <  3 * Precision::Confusion())
-          continue;
-        cur->D0(f + (0.3)*(l-f), MP1);
-        cur->D0(f + (0.6)*(l-f), MP2);
-        TopoDS_Vertex MV1 = BRepLib_MakeVertex(MP1);
-        TopoDS_Vertex MV2 = BRepLib_MakeVertex(MP2);
-        BRepBuilderAPI_MakeEdge MEB;
-        TopoDS_Edge DE1, DE2, DE3;
-        MEB.Init(cur, VF, MV1, f, f + (0.3)*(l-f) );
-        if (!MEB.IsDone()) {
-          Stat = false;
-          break;
-        }
-        DE1 = MEB.Edge();
-        MEB.Init(cur, MV1, MV2, f + (0.3)*(l-f), f + (0.6)*(l-f) );
-        if (!MEB.IsDone()) {
-          Stat = false;
-          break;
-        }
-        DE2 = MEB.Edge();
-        MEB.Init(cur, MV2, VL, f + (0.6)*(l-f), l );
-        if (!MEB.IsDone()) {
-          Stat = false;
-          break;
-        }
-        DE3 = MEB.Edge();
-        TopoDS_Wire W = BRepBuilderAPI_MakeWire(DE1, DE2, DE3);
-        TopTools_IndexedMapOfShape DummyM;
-        TopExp::MapShapes(W, TopAbs_VERTEX, DummyM);
-        if (DummyM.Extent() !=3 ) 
-        {
-          Stat = false;
-          break;
-        }
-        reshape->Replace(E, W.Oriented(E.Orientation()));
-      }
-    }
-    if (!Stat)
-      continue;
-    
-    //Perform reorder of wire
-    aW = TopoDS::Wire(reshape->Apply(aW));
-    Handle(ShapeExtend_WireData) aWireData  = new ShapeExtend_WireData;
-    Handle(ShapeFix_Wire) aShFixWire = new ShapeFix_Wire;
-    
-    Handle(ShapeAnalysis_Wire) aWireAnalyzer;
-    ShapeAnalysis_WireOrder aWireOrder;
-
-    aShFixWire->Load(aWireData);
-    aShFixWire->SetPrecision(1e-7);
-
-    TopExp_Explorer Exp1( aW, TopAbs_EDGE );
-    for (; Exp1.More(); Exp1.Next())
-      aWireData->Add(TopoDS::Edge(Exp1.Current()));            
-
-    aWireOrder.KeepLoopsMode() = 0;
-    aWireAnalyzer = aShFixWire->Analyzer();
-    aShFixWire->ModifyTopologyMode() = Standard_True;
-    //aShFixWire->FixConnected(1e-7);
-    aWireAnalyzer->CheckOrder(aWireOrder, Standard_True);
-    aWireOrder.Perform(1);
-    aShFixWire->ClosedWireMode() = 1;
-    aShFixWire->FixReorder(aWireOrder);
-    //aShFixWire->FixDegenerated();
-    bool IsDone = !aShFixWire->StatusReorder(ShapeExtend_FAIL);
-    
-    if (!IsDone)
+    TopTools_IndexedMapOfShape EdgesInInter;
+    TopTools_MapOfShape InterV;
+    if (!AddIntersectionVertices(theRefPlane, theWorkSpine, Seq, reshape, aW, EdgesInInter, InterV))
       continue;
 
-    aW = aWireData->Wire();
+    if (!AddAdditionalVertices(reshape, aW, EdgesInInter, InterV))
+      continue;
+    
+    if (!DoReorder(reshape, aW))
+      continue;
 
- 
-    if (Stat)
-    {
-      aW = TopoDS::Wire(reshape->Apply(aW));
-      
-      // Prepare 'TopoLink' info for Poly_MakeLoops algo => Calculate derivatives of the edges
-      NCollection_DataMap<TopoDS_Edge, TopoLink> mE2EInfo;
-      ExpE.Init(aW, TopAbs_EDGE);
-      for (; ExpE.More(); ExpE.Next())
-      {
-        TopoLink anEngeInfo;
-        TopoDS_Edge E = TopoDS::Edge(ExpE.Current());
-        Handle_Geom2d_Curve aCur;
-        double f, l;
-        gp_Pnt2d Pnt;
-        gp_Vec2d Vec;
+    NCollection_Vector<TopoDS_Wire> aLoops;
+    if (!ExtractLoopsFromWire (aW, theWorkSpine, aLoops))
+      continue;
 
-        aCur = BRep_Tool::CurveOnSurface(E, theWorkSpine, f, l ); 
-        if (aCur.IsNull())
-          continue;
-        if (E.Orientation() == TopAbs_FORWARD)
-        {
-          anEngeInfo.myFV = TopExp::FirstVertex(E); 
-          anEngeInfo.myLV = TopExp::LastVertex(E); 
-          aCur->D1(f, Pnt, Vec);
-          anEngeInfo.myD1F.SetCoord(Vec.X(), Vec.Y());
-          aCur->D1(l, Pnt, Vec);
-          anEngeInfo.myD1L.SetCoord(Vec.X(), Vec.Y());
-        }
-        else
-        {
-          anEngeInfo.myFV = TopExp::LastVertex(E); 
-          anEngeInfo.myLV = TopExp::FirstVertex(E); 
-          aCur->D1(l, Pnt, Vec);
-          anEngeInfo.myD1F.SetCoord(-Vec.X(), -Vec.Y());
-          aCur->D1(f, Pnt, Vec);
-          anEngeInfo.myD1L.SetCoord(-Vec.X(), -Vec.Y());
-        }
-        mE2EInfo.Bind(E, anEngeInfo);
-      }
+    TopoDS_Compound Co;
+    if (!CollectNeccessaryLoops(aLoops, theRefPlane, theWorkSpine, Co))
+      continue;
 
-      TopTools_IndexedMapOfShape mN2V;
-      TopExp::MapShapes(aW, TopAbs_VERTEX, mN2V);
-
-      TopTools_IndexedDataMapOfShapeListOfShape mV2E;
-      TopExp::MapShapesAndAncestors(aW, TopAbs_VERTEX, TopAbs_EDGE, mV2E);
-
-      //Create links for Poly_MakeLoops algo and bind them to the existing edges
-      NCollection_DoubleMap<Poly_MakeLoops2D::Link, TopoDS_Edge> mPL2E;
-      ExpE.Init(aW, TopAbs_EDGE);
-      for (; ExpE.More(); ExpE.Next())
-      {
-        TopoDS_Edge E = TopoDS::Edge(ExpE.Current());
-        if (!mE2EInfo.IsBound(E))
-          continue;
-        TopoLink L = mE2EInfo(E);
-        int Node1 = mN2V.FindIndex(L.myFV);
-        int Node2 = mN2V.FindIndex(L.myLV);
-        Poly_MakeLoops2D::Link aLink(Node1, Node2);
-        aLink.flags = Poly_MakeLoops2D::LF_Fwd;
-        mPL2E.Bind(aLink, E);
-      }
-
-      NCollection_DataMap<int, Poly_MakeLoops2D::ListOfLink> mNode2ListOfLinks;
-      for (int i = 1; i <= mN2V.Extent(); i++)
-      {
-        TopoDS_Vertex V = TopoDS::Vertex(mN2V(i));
-        TopTools_ListOfShape Edges = mV2E.FindFromKey(V);
-        TopTools_ListIteratorOfListOfShape It(Edges);
-        Poly_MakeLoops2D::ListOfLink aListOfLinks;
-        for (;It.More(); It.Next())
-        {
-          TopoDS_Edge E = TopoDS::Edge(It.Value());
-          if (!mPL2E.IsBound2(E))
-            continue;
-          Poly_MakeLoops2D::Link aL = mPL2E.Find2(E);
-          aListOfLinks.Append(aL);
-        }
-        mNode2ListOfLinks.Bind(i, aListOfLinks);
-      }
-
-      Poly_Helper helper(mN2V, mV2E, mPL2E, mE2EInfo, mNode2ListOfLinks);
-      Poly_MakeLoops2D aLoopMaker(1, &helper, NCollection_BaseAllocator::CommonBaseAllocator() );
-      for (NCollection_DoubleMap<Poly_MakeLoops2D::Link, TopoDS_Edge>::Iterator aMapIt (mPL2E); aMapIt.More(); aMapIt.Next())
-        aLoopMaker.AddLink(aMapIt.Key1());
-      
-      aLoopMaker.Perform();   //try to find loops
-      int NbLoops = aLoopMaker.GetNbLoops();
-      int NbHangs = aLoopMaker.GetNbHanging();
-
-      if (NbLoops == 0 || NbHangs != 0 ) 
-        continue;
-
-      NCollection_Sequence<TopoDS_Wire> aLoops;
-      for (int i = 1; i <= NbLoops; i++)  //try to construct loops
-      {
-        Poly_MakeLoops2D::Loop aLoop = aLoopMaker.GetLoop(i);
-        Poly_MakeLoops2D::Loop::Iterator it(aLoop);
-        BRepBuilderAPI_MakeWire aWM;
-        TopoDS_Edge E;
-        for (;it.More(); it.Next())
-        {
-          E = mPL2E.Find1(it.Value());
-          aWM.Add(E);
-        }
-        if (aWM.IsDone())
-        {
-          TopoDS_Wire W = aWM.Wire();
-          if (!W.Closed())
-          {
-            Stat = false;
-            break;
-          }
-          aLoops.Append(W);
-        }
-      }
-
-      if (!Stat)
-        continue;
-      
-      // try to classify wires
-      NCollection_Sequence<TopoDS_Wire> InnerMWires; // interior wires
-      NCollection_Sequence<TopoDS_Wire> ExtMWires; //wires which defines a hole
-      for (int i = 1; i <= aLoops.Length(); i++)
-      {
-        TopoDS_Face af = BRepBuilderAPI_MakeFace (theRefPlane, Precision::Confusion() ); //TopoDS::Face ( myWorkSpine.EmptyCopied() );
-        af.Orientation ( TopAbs_REVERSED );
-        BRep_Builder BB;  
-        BB.Add (af, aLoops(i));
- 
-        BRepTopAdaptor_FClass2d FClass(af, Precision::PConfusion());
-        if (FClass.PerformInfinitePoint() == TopAbs_OUT)
-          InnerMWires.Append(aLoops(i));
-        else
-          ExtMWires.Append(aLoops(i));
-      }
-
-      if (InnerMWires.Length() == ExtMWires.Length())
-        continue; 
-
-      if (InnerMWires.Length() < ExtMWires.Length())
-        //probably incorrect orientation 
-        continue; 
-      //try to find an outer wire
-      int IndOfOuterW = -1;
-      for (int i = 1; i <= InnerMWires.Length(); i++)
-      {
-        bool IsInside = true;
-        BRepBuilderAPI_MakeFace aDB(theRefPlane, InnerMWires(i));
-        TopoDS_Face aDummyFace = TopoDS::Face(aDB.Shape());
-        BRepTopAdaptor_FClass2d FClass(aDummyFace, Precision::PConfusion());
-        for (int j = 1; j <= InnerMWires.Length(); j++)
-        {              
-          if ( i == j )
-            continue;
-          double f, l;
-          TopExp_Explorer ExpE( InnerMWires(j), TopAbs_EDGE );
-          Handle_Geom2d_Curve aCur = BRep_Tool::CurveOnSurface(TopoDS::Edge(ExpE.Current()), theWorkSpine, f, l ); 
-                    
-          gp_Pnt2d MP = aCur->Value((l + f) / 2.0);
-          if (FClass.Perform(MP) != TopAbs_IN)
-          {
-            IsInside = false;
-            break;
-          }
-        }
-        if (IsInside)
-        {
-          IndOfOuterW = i;
-          break;
-        }
-
-      }
-
-      if (IndOfOuterW == -1)
-        continue; //cant find an outer wire
-
-      TopoDS_Wire OuterWire = InnerMWires(IndOfOuterW);
-      //make compound: outer wire + holes
-      BRep_Builder BBC;
-      TopoDS_Compound Co; 
-      BBC.MakeCompound(Co);
-      BBC.Add(Co, OuterWire);
-
-      for (int i = 1; i <= ExtMWires.Length(); i++)
-        BBC.Add(Co, ExtMWires(i));
-
-      ExtReShape->Replace(InitialW, Co);
-    }
+    ExtReShape->Replace(InitialW, Co);
+    
   }
 
   theInputSh = ExtReShape->Apply(theInputSh);
