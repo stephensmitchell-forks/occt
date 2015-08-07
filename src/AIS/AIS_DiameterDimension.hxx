@@ -58,7 +58,7 @@ public:
 
   //! Construct diameter dimension for the circle.
   //! @param theCircle [in] the circle to measure.
-  Standard_EXPORT AIS_DiameterDimension (const gp_Circ& theCircle);
+  Standard_EXPORT AIS_DiameterDimension (const gp_Circ& theCircle, const Standard_Real theParameter = 0);
 
   //! Construct diameter dimension for the circle and orient it correspondingly
   //! to the passed plane.
@@ -105,7 +105,7 @@ public:
   //! The dimension will become invalid if the diameter of the circle
   //! is less than Precision::Confusion().
   //! @param theCircle [in] the circle to measure.
-  Standard_EXPORT void SetMeasuredGeometry (const gp_Circ& theCircle);
+  Standard_EXPORT void SetMeasuredGeometry (const gp_Circ& theCircle, const Standard_Real theParameter = 0);
 
   //! Measure diameter on the passed shape, if applicable.
   //! The dimension will become invalid if the passed shape is not

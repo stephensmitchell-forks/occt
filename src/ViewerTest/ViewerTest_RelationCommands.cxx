@@ -38,6 +38,7 @@
 #include <Draw_Appli.hxx>
 #include <Draw_Window.hxx>
 #include <DBRep.hxx>
+#include <ElCLib.hxx>
 #include <ElSLib.hxx>
 #include <GC_MakePlane.hxx>
 #include <Geom_CartesianPoint.hxx>
@@ -168,16 +169,21 @@ static Standard_Boolean Get3DPointAtMousePosition (const gp_Pnt& theFirstPoint,
 //           length, angle, radius and diameter dimension.
 //
 //draw args: -text [3d|2d] [wf|sh|wireframe|shading] [Size]
-//           -label [left|right|hcenter|hfit] [top|bottom|vcenter|vfit]
+//           -label [left|right|hcenter|hfit] [top|bottom|vcenter|firstline|lastline|vfit]
 //           -arrow [external|internal|fit] [Length(int)]
 //           -arrowangle ArrowAngle(degrees)
 //           -plane xoy|yoz|zox
 //           -flyout FloatValue -extension FloatValue
 //           -value CustomNumberValue
+//           -valuetext CustomText
 //           -dispunits DisplayUnitsString
 //           -modelunits ModelUnitsString
-//           -showunits
+//           -showunits (DEFAULT)
 //           -hideunits
+//           -drawdimline (DEFAULT)
+//           -hidedimline
+//           -aligntext DirX DirY DirZ
+//           -segment Length
 //
 // Warning! flyout is not an aspect value, it is for dimension parameter
 // likewise text position, but text position override other paramaters.
@@ -190,6 +196,8 @@ static int ParseDimensionParams (Standard_Integer  theArgNum,
                                  Standard_Boolean& theIsCustomPlane, gp_Pln& thePlane,
                                  NCollection_DataMap<TCollection_AsciiString, Standard_Real>& theRealParams,
                                  NCollection_DataMap<TCollection_AsciiString, TCollection_AsciiString>& theStringParams,
+                                 NCollection_DataMap<TCollection_AsciiString, Standard_Boolean>& theBooleanParams,
+                                 Standard_Boolean& theIsTextAligned, gp_Dir& theTextDir,
                                  NCollection_List<Handle(AIS_InteractiveObject)>* theShapeList = NULL)
 {
   theRealParams.Clear();
@@ -208,7 +216,7 @@ static int ParseDimensionParams (Standard_Integer  theArgNum,
       continue;
     }
 
-    // Boolean flags
+    // BOOLEAN flags
     if (aParam.IsEqual ("-showunits"))
     {
       theAspect->MakeUnitsDisplayed (Standard_True);
@@ -220,14 +228,25 @@ static int ParseDimensionParams (Standard_Integer  theArgNum,
       continue;
     }
 
-    // Before all non-boolean flags parsing check if a flag have at least one value.
+    if (aParam.IsEqual ("-drawdimline"))
+    {
+      theBooleanParams.Bind ("drawdimline", Standard_True);
+      continue;
+    }
+    else if (aParam.IsEqual ("-hidedimline"))
+    {
+      theBooleanParams.Bind ("drawdimline", Standard_False);
+      continue;
+    }
+
+    // Before all NON-BOOLEAN flags parsing check if a flag have at least one value.
     if (anIt + 1 >= theArgNum)
     {
       std::cerr << "Error: "<< aParam <<" flag should have value.\n";
       return 1;
     }
 
-    // Non-boolean flags
+    // NON-BOOLEAN flags
     if (aParam.IsEqual ("-shape")
      || aParam.IsEqual ("-shapes"))
     {
@@ -305,13 +324,15 @@ static int ParseDimensionParams (Standard_Integer  theArgNum,
         TCollection_AsciiString aParamValue (theArgVec[anIt]);
         aParamValue.LowerCase();
 
-        if (aParamValue == "left")         { theAspect->SetTextHorizontalPosition (Prs3d_DTHP_Left);  }
-        else if (aParamValue == "right")   { theAspect->SetTextHorizontalPosition (Prs3d_DTHP_Right); }
-        else if (aParamValue == "hcenter") { theAspect->SetTextHorizontalPosition (Prs3d_DTHP_Center);}
-        else if (aParamValue == "hfit")    { theAspect->SetTextHorizontalPosition (Prs3d_DTHP_Fit);   }
-        else if (aParamValue == "above")   { theAspect->SetTextVerticalPosition   (Prs3d_DTVP_Above); }
-        else if (aParamValue == "below")   { theAspect->SetTextVerticalPosition   (Prs3d_DTVP_Below); }
-        else if (aParamValue == "vcenter") { theAspect->SetTextVerticalPosition   (Prs3d_DTVP_Center);}
+        if      (aParamValue == "left")      { theAspect->SetTextHorizontalPosition (Prs3d_DTHP_Left);      }
+        else if (aParamValue == "right")     { theAspect->SetTextHorizontalPosition (Prs3d_DTHP_Right);     }
+        else if (aParamValue == "hcenter")   { theAspect->SetTextHorizontalPosition (Prs3d_DTHP_Center);    }
+        else if (aParamValue == "hfit")      { theAspect->SetTextHorizontalPosition (Prs3d_DTHP_Fit);       }
+        else if (aParamValue == "above")     { theAspect->SetTextVerticalPosition   (Prs3d_DTVP_Above);     }
+        else if (aParamValue == "below")     { theAspect->SetTextVerticalPosition   (Prs3d_DTVP_Below);     }
+        else if (aParamValue == "vcenter")   { theAspect->SetTextVerticalPosition   (Prs3d_DTVP_Center);    }
+        else if (aParamValue == "firstline") { theAspect->SetTextVerticalPosition   (Prs3d_DTVP_FirstLine); }
+        else if (aParamValue == "lastline")  { theAspect->SetTextVerticalPosition   (Prs3d_DTVP_LastLine);  }
         else
         {
           std::cerr << "Error: invalid label position: '" << aParamValue << "'.\n";
@@ -334,7 +355,7 @@ static int ParseDimensionParams (Standard_Integer  theArgNum,
       TCollection_AsciiString aValue (theArgVec[++anIt]);
       if (!aValue.IsRealValue())
       {
-        std::cerr << "Error: arrow lenght should be float degree value.\n";
+        std::cerr << "Error: arrow length should be float degree value.\n";
         return 1;
       }
       theAspect->ArrowAspect()->SetLength (Draw::Atof (aValue.ToCString()));
@@ -388,6 +409,20 @@ static int ParseDimensionParams (Standard_Integer  theArgNum,
         return 1;
       }
     }
+    else if (aParam.IsEqual ("-aligntext"))
+    {
+      theIsTextAligned = Standard_True;
+      TCollection_AsciiString aParam1 (theArgVec[++anIt]);
+      TCollection_AsciiString aParam2 (theArgVec[++anIt]);
+      TCollection_AsciiString aParam3 (theArgVec[++anIt]);
+      if (!aParam1.IsRealValue() || !aParam2.IsRealValue() || !aParam3.IsRealValue())
+      {
+        std::cerr << "Error: direction coordinate should be real value.\n";
+        return 1;
+      }
+      theTextDir.SetCoord (aParam1.RealValue(), aParam2.RealValue(), aParam3.RealValue());
+    }
+    // REAL parameters
     else if (aParam.IsEqual ("-flyout"))
     {
       TCollection_AsciiString aParam (theArgVec[++anIt]);
@@ -402,13 +437,43 @@ static int ParseDimensionParams (Standard_Integer  theArgNum,
     else if (aParam.IsEqual ("-value"))
     {
       TCollection_AsciiString aParam (theArgVec[++anIt]);
+
+      // Custom real value
       if (!aParam.IsRealValue())
       {
-        std::cerr << "Error: dimension value for dimension should be real value.\n";
+        std::cerr << "Error: custom value should be real value.\n";
+        return 1;
+      }
+      theRealParams.Bind ("value", Draw::Atof (aParam.ToCString()));
+
+    }
+    else if (aParam.IsEqual ("-circleparam"))
+    {
+      TCollection_AsciiString aParam (theArgVec[++anIt]);
+      if (!aParam.IsRealValue())
+      {
+        std::cerr << "Error: circle parameter should be real value.\n";
         return 1;
       }
 
-      theRealParams.Bind ("value", Draw::Atof (aParam.ToCString()));
+      theRealParams.Bind ("circleparam", aParam.RealValue());
+    }
+    else if (aParam.IsEqual ("-segment"))
+    {
+       TCollection_AsciiString aParam (theArgVec[++anIt]);
+      if (!aParam.IsRealValue() || aParam.RealValue() < 0.0)
+      {
+        std::cerr << "Error: segment length should be positive real value.\n";
+        return 1;
+      }
+
+      theRealParams.Bind ("segment", aParam.RealValue());
+    }
+    // STRING parameters
+    else if (aParam.IsEqual ("-valuetext"))
+    {
+      TCollection_AsciiString aParam (theArgVec[++anIt]);
+      theStringParams.Bind ("valuetext", aParam);
     }
     else if (aParam.IsEqual ("-modelunits"))
     {
@@ -438,7 +503,8 @@ static int ParseDimensionParams (Standard_Integer  theArgNum,
 //=======================================================================
 static void SetDimensionParams (const Handle(AIS_Dimension)& theDim,
                                 const NCollection_DataMap<TCollection_AsciiString, Standard_Real>& theRealParams,
-                                const NCollection_DataMap<TCollection_AsciiString, TCollection_AsciiString>& theStringParams)
+                                const NCollection_DataMap<TCollection_AsciiString, TCollection_AsciiString>& theStringParams,
+                                const NCollection_DataMap<TCollection_AsciiString, Standard_Boolean>& theBooleanParams)
 {
   if (theRealParams.IsBound ("flyout"))
   {
@@ -449,6 +515,10 @@ static void SetDimensionParams (const Handle(AIS_Dimension)& theDim,
   {
     theDim->SetCustomValue (theRealParams.Find ("value"));
   }
+  else if (theStringParams.IsBound ("valuetext"))
+  {
+    theDim->SetTextLabel (theStringParams.Find ("valuetext"));
+  }
 
   if (theStringParams.IsBound ("modelunits"))
   {
@@ -458,6 +528,16 @@ static void SetDimensionParams (const Handle(AIS_Dimension)& theDim,
   if (theStringParams.IsBound ("dispunits"))
   {
     theDim->SetDisplayUnits (theStringParams.Find ("dispunits"));
+  }
+
+  if (theBooleanParams.IsBound ("drawdimline"))
+  {
+    theDim->SetToDrawDimensionLine (theBooleanParams.Find ("drawdimline"));
+  }
+
+  if (theRealParams.IsBound ("segment"))
+  {
+    theDim->SetLeaderSegment (theRealParams.Find ("segment"));
   }
 }
 
@@ -483,9 +563,12 @@ static int VDimBuilder (Draw_Interpretor& /*theDi*/,
   Handle(Prs3d_DimensionAspect) anAspect = new Prs3d_DimensionAspect;
   Standard_Boolean isPlaneCustom = Standard_False;
   gp_Pln aWorkingPlane;
+  Standard_Boolean isTextAligned = Standard_False;
+  gp_Dir aTextDir (1.0, 0.0, 0.0);
 
   NCollection_DataMap<TCollection_AsciiString, Standard_Real> aRealParams;
   NCollection_DataMap<TCollection_AsciiString, TCollection_AsciiString> aStringParams;
+  NCollection_DataMap<TCollection_AsciiString, Standard_Boolean> aBoolParams;
 
   TCollection_AsciiString aDimType(theArgs[2]);
   aDimType.LowerCase();
@@ -515,7 +598,7 @@ static int VDimBuilder (Draw_Interpretor& /*theDi*/,
 
   if (ParseDimensionParams (theArgsNb, theArgs, 3,
                             anAspect,isPlaneCustom,aWorkingPlane,
-                            aRealParams, aStringParams, &aShapes))
+                            aRealParams, aStringParams, aBoolParams, isTextAligned, aTextDir, &aShapes))
   {
     return 1;
   }
@@ -656,7 +739,15 @@ static int VDimBuilder (Draw_Interpretor& /*theDi*/,
         {
           Handle(AIS_Circle) aShape = Handle(AIS_Circle)::DownCast (aShapes.First());
           gp_Circ aCircle = aShape->Circle()->Circ();
-          aDim = new AIS_RadiusDimension (aCircle);
+          Standard_Real aParam = 0;
+
+          // Check if circle parameter is set
+          if (aRealParams.IsBound ("circleparam"))
+          {
+            aParam = aRealParams.Find ("circleparam");
+          }
+
+          aDim = new AIS_RadiusDimension (aCircle, aParam);
         }
         else
         {
@@ -685,7 +776,16 @@ static int VDimBuilder (Draw_Interpretor& /*theDi*/,
         {
           Handle(AIS_Circle) aShape = Handle(AIS_Circle)::DownCast (aShapes.First());
           gp_Circ aCircle = aShape->Circle()->Circ();
-          aDim = new AIS_DiameterDimension (aCircle);
+
+          Standard_Real aParam = 0;
+
+          // Check if circle parameter is set
+          if (aRealParams.IsBound ("circleparam"))
+          {
+            aParam = aRealParams.Find ("circleparam");
+          }
+
+          aDim = new AIS_DiameterDimension (aCircle, aParam);
         }
         else
         {
@@ -713,6 +813,11 @@ static int VDimBuilder (Draw_Interpretor& /*theDi*/,
     }
   }
 
+  if (isTextAligned)
+  {
+    aDim->SetToAlignText (isTextAligned, aTextDir);
+  }
+
   // Check dimension geometry
   if (!aDim->IsValid())
   {
@@ -723,7 +828,7 @@ static int VDimBuilder (Draw_Interpretor& /*theDi*/,
 
   aDim->SetDimensionAspect (anAspect);
 
-  SetDimensionParams (aDim, aRealParams, aStringParams);
+  SetDimensionParams (aDim, aRealParams, aStringParams, aBoolParams);
 
   VDisplayAISObject (aName,aDim);
 
@@ -2544,10 +2649,13 @@ static int VDimParam (Draw_Interpretor& theDi, Standard_Integer theArgNum, const
   TCollection_AsciiString aName (theArgVec[1]);
   gp_Pln aWorkingPlane;
   Standard_Boolean isCustomPlane = Standard_False;
+  Standard_Boolean isTextAligned = Standard_False;
+  gp_Dir aTextDir (1.0, 0.0, 0.0);
   Standard_Boolean toUpdate = Standard_True;
 
   NCollection_DataMap<TCollection_AsciiString, Standard_Real> aRealParams;
   NCollection_DataMap<TCollection_AsciiString, TCollection_AsciiString> aStringParams;
+  NCollection_DataMap<TCollection_AsciiString, Standard_Boolean> aBoolParams;
 
   if (!GetMapOfAIS().IsBound2 (aName))
   {
@@ -2558,7 +2666,7 @@ static int VDimParam (Draw_Interpretor& theDi, Standard_Integer theArgNum, const
   Handle(AIS_InteractiveObject) anObject = Handle(AIS_InteractiveObject)::DownCast(GetMapOfAIS().Find2 (aName));
   if (anObject->Type() != AIS_KOI_Dimension)
   {
-    theDi << theArgVec[0] << "error: no dimension with this name.\n";
+    theDi << theArgVec[0] << "error: no dimension with the name: " << aName.ToCString() << ".\n";
     return 1;
   }
 
@@ -2567,7 +2675,7 @@ static int VDimParam (Draw_Interpretor& theDi, Standard_Integer theArgNum, const
 
   if (ParseDimensionParams (theArgNum, theArgVec, 2, anAspect,
                             isCustomPlane, aWorkingPlane,
-                            aRealParams, aStringParams))
+                            aRealParams, aStringParams, aBoolParams, isTextAligned, aTextDir))
   {
     return 1;
   }
@@ -2577,7 +2685,12 @@ static int VDimParam (Draw_Interpretor& theDi, Standard_Integer theArgNum, const
     aDim->SetCustomPlane (aWorkingPlane);
   }
 
-  SetDimensionParams (aDim, aRealParams, aStringParams);
+  if (isTextAligned)
+  {
+    aDim->SetToAlignText (isTextAligned, aTextDir);
+  }
+
+  SetDimensionParams (aDim, aRealParams, aStringParams, aBoolParams);
 
   if (!aDim->IsValid())
   {

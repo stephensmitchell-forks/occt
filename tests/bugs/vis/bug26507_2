@@ -1,0 +1,29 @@
+puts "================================================================"
+puts "CR26507"
+puts "Visualization - Improved presentations of dimensions"
+puts "================================================================"
+puts ""
+puts "User-defined orientation of text label"
+puts "Line segment aligned with text"
+
+#set anImage1 $imagedir/${casename}_1.png
+
+vinit Viewer1/View
+vbottom
+
+vpoint lengthP1 0 0 0
+vpoint lengthP2 50 100 0
+vpoint lengthP3 -50 100 0
+# Text in center - custom aligment does not taken into account
+vdimension dim1 -length -plane xoy -shapes lengthP1 lengthP2 -text 3d -aligntext 1.0 0.0 0.0 -flyout -10
+
+# Text on the right side - it is aligned
+vdimension dim2 -length -plane xoy -shapes lengthP1 lengthP3 -text 3d -aligntext 1.0 0.0 0.0 -segment 15 -label right
+
+# Text on the left side - it is aligned
+vdimension dim3 -length -plane xoy -shapes lengthP2 lengthP3 -text 3d -flyout -10 -aligntext 1.0 0.0 0.0 -segment 10 -label left
+
+
+vfit
+#finalize and dump
+set only_screen 1

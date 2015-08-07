@@ -195,10 +195,12 @@ protected:
     LabelPosition_HCenter = 0x04,
     LabelPosition_HMask   = LabelPosition_Left | LabelPosition_Right | LabelPosition_HCenter,
 
-    LabelPosition_Above   = 0x10,
-    LabelPosition_Below   = 0x20,
-    LabelPosition_VCenter = 0x40,
-    LabelPosition_VMask   = LabelPosition_Above | LabelPosition_Below | LabelPosition_VCenter
+    LabelPosition_Above     = 0x0010,
+    LabelPosition_FirstLine = 0x0020,
+    LabelPosition_Below     = 0x0040,
+    LabelPosition_LastLine  = 0x0080,
+    LabelPosition_VCenter   = 0x0100,
+    LabelPosition_VMask     = LabelPosition_Above | LabelPosition_Below | LabelPosition_VCenter | LabelPosition_FirstLine | LabelPosition_LastLine
   };
 
 public:
@@ -224,16 +226,21 @@ public:
   //! compute it on its own in model space coordinates.
   //! @return the dimension value (in model units) which is used
   //! during display of the presentation.
-  Standard_Real GetValue() const
-  {
-    return myIsValueCustom ? myCustomValue : ComputeValue();
-  }
+  Standard_EXPORT Standard_Real GetValue() const;
 
   //! Sets user-defined dimension value.
   //! The user-defined dimension value is specified in model space,
   //! and affect by unit conversion during the display.
   //! @param theValue [in] the user-defined value to display.
   Standard_EXPORT void SetCustomValue (const Standard_Real theValue);
+
+  //! Sets nultiline text for dimension label.
+  //! @param theValue [in] multiline string of Unicode symbols.
+  //! Can be used along with spectial symbol (like radius and diameter symbol)
+  Standard_EXPORT void SetTextLabel (const TCollection_ExtendedString& theValue);
+
+  //! @return the text for text label.
+  Standard_EXPORT TCollection_ExtendedString GetTextLabel() const;
 
   //! Get the dimension plane in which the 2D dimension presentation is computed.
   //! By default, if plane is not defined by user, it is computed automatically
@@ -375,6 +382,26 @@ public:
     return myIsGeometryValid && CheckPlane (GetPlane());
   }
 
+  //! @return state that shows if the radius inner segment
+  //! is to be displayed.
+  Standard_EXPORT const Standard_Boolean ToDrawDimensionLine() const;
+
+  //! Sets the flag that defines whether the dimenion line segment is displayed
+  //! @warning Dimension line won't be displayed only if arrows and label are moved
+  //! outside on dimension line extensions
+  Standard_EXPORT void SetToDrawDimensionLine (const Standard_Boolean theToDrawInnerSegment);
+
+  Standard_EXPORT void SetToAlignText (const Standard_Boolean theToAlign,
+                                       const gp_Dir& theAlignmentDir = gp_Dir (1.0, 0.0, 0.0));
+
+  Standard_EXPORT const Standard_Boolean IsTextAligned() const;
+
+  Standard_EXPORT const gp_Dir& TextAlignmentDir() const;
+
+  Standard_EXPORT void SetLeaderSegment (const Standard_Real& theLength);
+
+  Standard_EXPORT void UnsetLeaderSegment();
+
 public:
 
   DEFINE_STANDARD_RTTI(AIS_Dimension)
@@ -383,10 +410,9 @@ protected:
 
   Standard_EXPORT Standard_Real ValueToDisplayUnits() const;
 
-  //! Get formatted value string and its model space width.
-  //! @param theWidth [out] the model space with of the string.
-  //! @return formatted dimension value string.
-  Standard_EXPORT TCollection_ExtendedString GetValueString (Standard_Real& theWidth) const;
+  Standard_EXPORT void getLabelSizes (const TCollection_ExtendedString& theLabel,
+                                      Standard_Real& theWidth, Standard_Real& theHeight,
+                                      Standard_Real& theSymbolWidth, Standard_Real& theSymbolHeight) const;
 
   //! Performs drawing of 2d or 3d arrows on the working plane
   //! @param theLocation [in] the location of the arrow tip.
@@ -434,11 +460,15 @@ protected:
   //! @param theFirstPoint [in] the first attach point of linear dimension.
   //! @param theSecondPoint [in] the second attach point of linear dimension.
   //! @param theIsOneSide [in] specifies whether the dimension has only one flyout line.
+  //! @param theToDrawDimensionLine [in] specifies whether the dimension line is to be displayed.
+  //! @warning Dimension line won't be displayed only if arrows and label are moved
+  //! outside on dimension line extensions
   Standard_EXPORT void DrawLinearDimension (const Handle(Prs3d_Presentation)& thePresentation,
                                             const Standard_Integer theMode,
                                             const gp_Pnt& theFirstPoint,
                                             const gp_Pnt& theSecondPoint,
-                                            const Standard_Boolean theIsOneSide = Standard_False);
+                                            const Standard_Boolean theIsOneSide = Standard_False,
+                                            const Standard_Boolean theToDrawDimensionLine = Standard_True);
 
   //! Compute selection sensitives for linear dimension flyout lines (length, diameter, radius).
   //! Please note that this method uses base dimension properties: working plane and flyout length.
@@ -650,29 +680,57 @@ protected: //! @name Selection geometry
 
   Standard_Real mySelToleranceForText2d; //!< Sensitive point tolerance for 2d text selection.
 
-protected: //! @name Value properties
+protected:
 
-  Standard_Real    myCustomValue;   //!< Value of the dimension (computed or user-defined).
-  Standard_Boolean myIsValueCustom; //!< Is user-defined value.
+  enum TypeOfLabel
+  {
+    TOL_Computed = 0, //< is default
+    TOL_Value    = 1,
+    TOL_Text 
+  };
+
+protected: //! @name Label properties
+
+  TypeOfLabel myTypeOfLabel;
+
+  Standard_Real              myCustomValue; //!< Value of the dimension (computed or user-defined).
+  TCollection_ExtendedString myLabel;        //!< Label text. Sets the user defined multiline text
 
 protected: //! @name Fixed text position properties
 
-  gp_Pnt                  myFixedTextPosition;   //!< Stores text position fixed by user.
-  Standard_Boolean        myIsTextPositionFixed; //!< Is the text label position fixed by user.
+  gp_Pnt                   myFixedTextPosition;   //!< Stores text position fixed by user.
+  Standard_Boolean         myIsTextPositionFixed; //!< Is the text label position fixed by user.
 
 protected: //! @name Units properties
 
   Standard_ExtCharacter    mySpecialSymbol;        //!< Special symbol.
   AIS_DisplaySpecialSymbol myDisplaySpecialSymbol; //!< Special symbol display options.
 
+protected:
+
+  //! Shows if the dimension line is to be drawn
+  //! It is used only if the text is placed on the one of the dimension line extensions.
+  //! By default it is TRUE
+  //! @warning Dimension line won't be displayed only if arrows and label are moved
+  //! outside on dimension line extensions
+  Standard_Boolean myToDrawDimensionLine;
+
 protected: //! @name Geometrical properties
 
   GeometryType myGeometryType;  //!< defines type of shapes on which the dimension is to be built. 
 
-  gp_Pln           myPlane;           //!< Plane where dimension will be built (computed or user defined).
-  Standard_Boolean myIsPlaneCustom;   //!< Is plane defined by user (otherwise it will be computed automatically).
-  Standard_Real    myFlyout;          //!< Flyout distance.
-  Standard_Boolean myIsGeometryValid; //!< Is dimension geometry properly defined.
+  gp_Pln           myPlane;               //!< Plane where dimension will be built (computed or user defined).
+  Standard_Boolean myIsPlaneCustom;       //!< Is plane defined by user (otherwise it will be computed automatically).
+  Standard_Real    myFlyout;              //!< Flyout distance.
+  
+  //! Shows if the text label is aligned to user-defined direction myTextDir
+  //! Otherwise it is alligned to the dimension line extension direction
+  //! @warning Only for text placed outside of the dimension line
+  Standard_Boolean myIsTextAligned;       
+  gp_Dir           myTextDir;             //!< Alignment direction for the text
+  Standard_Real    myLeaderSegmentLength; //!< Length of leader line segment aligned with text to myTextDir direction
+  
+  Standard_Boolean myIsGeometryValid;     //!< Is dimension geometry properly defined.
 
 private:
 
