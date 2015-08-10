@@ -2892,10 +2892,14 @@ void ViewerTest::RelationCommands(Draw_Interpretor& theCommands)
       "[{-arrowangle|-arangle} ArrowAngle(degrees)]\n"
       "[-plane xoy|yoz|zox]\n"
       "[-flyout FloatValue -extension FloatValue]\n"
-      "[-value CustomNumberValue]\n"
+      "[-value CustomNumberValue] OR [-valuetext CustomMultilineLabel]\n"
       "[-dispunits DisplayUnitsString]\n"
       "[-modelunits ModelUnitsString]\n"
       "[-showunits | -hideunits]\n"
+      "[-drawdimline] <- dimension line is displayed by default\n"
+      "[-hidedimline]/n"
+      "[-aligntext DirX DirY DirZ]\n"
+      "[-segment Length\n"
       " -Builds angle, length, radius and diameter dimensions.\n"
       " -See also: vdimparam, vmovedim.\n",
       __FILE__,VDimBuilder,group);
@@ -2913,6 +2917,11 @@ void ViewerTest::RelationCommands(Draw_Interpretor& theCommands)
     "[-dispunits DisplayUnitsString]\n"
     "[-modelunits ModelUnitsString]\n"
     "[-showunits | -hideunits]\n"
+    "[-drawdimline] <- dimension line is displayed by default\n"
+    "[-hidedimline]/n"
+    "[-aligntext DirX DirY DirZ]\n"
+    "[-segment Length\n"
+    " -Builds angle, length, radius and diameter dimensions.\n"
     " -Sets parameters for angle, length, radius and diameter dimensions.\n"
     " -See also: vmovedim, vdimension.\n",
     __FILE__,VDimParam,group);
