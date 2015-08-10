@@ -20,6 +20,7 @@ vdimension aDim1 -radius -shapes aCircle -circleparam 10 -text 3d -label right -
 vdimension aDim2 -diameter -shapes aCircle -circleparam 5 -text 3d -label left -arrow external -hidedimline -valuetext "+4.0\n -6.0" -aligntext 1.0 0.0 0.0 -segment 15 -label left firstline
 vdimension aDim3 -radius -shapes aCircle -circleparam 20 -text 3d -plane zox -label right -arrow external -hidedimline
 vdimension aDim4 -radius -shapes aCircle -circleparam 40 -text 3d -plane zox -label vcenter -arrow internal -hidedimline
+vdimparam aDim1 -text 6
 vdimparam aDim3 -text 6
 vfit
 

@@ -529,7 +529,7 @@ void AIS_Dimension::DrawText (const Handle(Prs3d_Presentation)& thePresentation,
   const Standard_Real aFontHeight = aTextAspect->Height();
 
   Font_FTFont aFont;
-  aFont.Init (aFontName, anAspectText3d->GetTextFontAspect(), myDrawer->TextAspect()->Height(), 96);
+  aFont.Init (aFontName, anAspectText3d->GetTextFontAspect(), aFontHeight, 96);
 
   const Standard_Real aHeightOfLine = aFont.LineSpacing();
 
@@ -797,9 +797,11 @@ void AIS_Dimension::DrawExtension (const Handle(Prs3d_Presentation)& thePresenta
   Standard_Boolean isShortLine =  !myDrawer->DimensionAspect()->IsText3d()
                                || theLabelPosition & LabelPosition_VCenter;
 
+
+
   // Compute graphical primitives and sensitives for extension line
   gp_Pnt anExtStart = theExtensionStart;
-  gp_Pnt   anExtEnd = !hasLabel || isShortLine
+  gp_Pnt   anExtEnd = !hasLabel || !(theLabelPosition & LabelPosition_Above || theLabelPosition & LabelPosition_Below)
     ? ElCLib::Value (theExtensionSize, anExtensionLine)
     : ElCLib::Value (theExtensionSize + theLabelWidth, anExtensionLine);
 
