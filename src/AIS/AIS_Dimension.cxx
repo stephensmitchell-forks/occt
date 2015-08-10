@@ -425,8 +425,8 @@ void  AIS_Dimension::getLabelSizes (const TCollection_ExtendedString& theLabel,
   theSymbolWidth = 0;
   theSymbolHeight = 0;
 
-
-  Handle(Graphic3d_AspectText3d) anAspectText = myDrawer->TextAspect()->Aspect();
+  const Handle(Prs3d_TextAspect)& aTextAspect = myDrawer->DimensionAspect()->TextAspect();
+  const Handle(Graphic3d_AspectText3d)& anAspectText = aTextAspect->Aspect();
   Quantity_Color aColor;
   Standard_CString aFontName;
   Standard_Real anExpFactor, aSpace;
@@ -434,7 +434,7 @@ void  AIS_Dimension::getLabelSizes (const TCollection_ExtendedString& theLabel,
 
   // Initialize font with specific settings.
   Font_FTFont aFont;
-  aFont.Init (aFontName, anAspectText->GetTextFontAspect(), myDrawer->TextAspect()->Height(), 96);
+  aFont.Init (aFontName, anAspectText->GetTextFontAspect(), aTextAspect->Height(), 96);
 
   Font_FTFont::Rect aBndBox;
 
@@ -542,7 +542,7 @@ void AIS_Dimension::DrawText (const Handle(Prs3d_Presentation)& thePresentation,
   Standard_Real aSymbolWidth = 0.0;
   Standard_Real aSymbolHeight = 0.0;
   getLabelSizes (theText, aWidth, aHeight, aSymbolWidth, aSymbolHeight);
-
+  aWidth += aSymbolWidth;
     // Compute label offsets
   Standard_Real aMarginSize    = aFontHeight * THE_3D_TEXT_MARGIN;
   Standard_Real aCenterHOffset = 0.0;
@@ -575,6 +575,7 @@ void AIS_Dimension::DrawText (const Handle(Prs3d_Presentation)& thePresentation,
       case LabelPosition_Right   : aCenterHOffset = aWidth / 2.0 + aMarginSize; break;
       case LabelPosition_Left    : aCenterHOffset = -aWidth / 2.0 - aMarginSize; break;
     }
+
     switch (aVLabelPos)
     {
       case LabelPosition_FirstLine:
@@ -582,6 +583,7 @@ void AIS_Dimension::DrawText (const Handle(Prs3d_Presentation)& thePresentation,
         if (myTypeOfLabel == TOL_Text && aHeight > aHeightOfLine)
         {
           aCenterVOffset = aHeight / 2.0 - aHeightOfLine;
+          aSymbolVOffset = aCenterVOffset - aHeightOfLine / 2.0 + aMarginSize;
         }
         break;
       }
@@ -590,6 +592,7 @@ void AIS_Dimension::DrawText (const Handle(Prs3d_Presentation)& thePresentation,
         if (myTypeOfLabel == TOL_Text && aHeight > aHeightOfLine)
         {
           aCenterVOffset = aHeightOfLine - aHeight / 2.0 ;
+          aSymbolVOffset = aCenterVOffset - aHeight + aHeightOfLine / 2.0 - aMarginSize; 
         }
         break;
       }
@@ -618,7 +621,7 @@ void AIS_Dimension::DrawText (const Handle(Prs3d_Presentation)& thePresentation,
     gp_Dir aTextDir  = (aHLabelPos == LabelPosition_Left ? -theTextDir : theTextDir);
 
     // Compute shape offset transformation
-    Standard_Real aShapeHOffset = aCenterHOffset - aWidth / 2.0 /*+ aSymbolWidth*/;
+    Standard_Real aShapeHOffset = aCenterHOffset - aWidth / 2.0 + aSymbolWidth / 2.0;
     Standard_Real aShapeVOffset = aCenterVOffset - aHeight / 2.0;
 
     // center shape in its bounding box (suppress border spacing added by FT_Font)
@@ -643,19 +646,23 @@ void AIS_Dimension::DrawText (const Handle(Prs3d_Presentation)& thePresentation,
     aTextPlaneTrsf.SetTransformation (aTextCoordSystem, gp_Ax3 (gp::XOY()));
     aTextShape.Move (aTextPlaneTrsf);
 
+
+
     if (!aSymbolShape.IsNull())
     {
+      aSymbolVOffset += aYalign - aHeight / 2.0;
+
       // Modify transformation for a special symbol relative! to the main text
-      anOffsetTrsf.SetTranslation (gp::Origin(), gp_Pnt (aShapeHOffset - aSymbolWidth, aSymbolVOffset - aHeight / 2.0 + aYalign, 0.0));
+      anOffsetTrsf.SetTranslation (gp::Origin(), gp_Pnt (aShapeHOffset - aSymbolWidth, aSymbolVOffset, 0.0));
       aSymbolShape.Move (anOffsetTrsf);
       aSymbolShape.Move (aTextPlaneTrsf);
     }
 
-    // set text flipping anchors
+    
+    // Set text flipping anchors
     gp_Trsf aCenterOffsetTrsf;
     gp_Pnt aCenterOffset (aCenterHOffset, aCenterVOffset, 0.0);
     aCenterOffsetTrsf.SetTranslation (gp::Origin(), aCenterOffset);
-
     gp_Pnt aCenterOfLabel (gp::Origin());
     aCenterOfLabel.Transform (aCenterOffsetTrsf);
     aCenterOfLabel.Transform (aTextPlaneTrsf);
@@ -692,7 +699,7 @@ void AIS_Dimension::DrawText (const Handle(Prs3d_Presentation)& thePresentation,
 
     mySelectionGeom.TextPos    = aCenterOfLabel;
     mySelectionGeom.TextDir    = aTextDir;
-    mySelectionGeom.TextWidth  = aWidth + aSymbolWidth + aMarginSize * 2.0;
+    mySelectionGeom.TextWidth  = aWidth + aMarginSize * 2.0;
     mySelectionGeom.TextHeight = aHeight + aSymbolHeight;
 
     return;
@@ -1203,7 +1210,7 @@ void AIS_Dimension::DrawLinearDimension (const Handle(Prs3d_Presentation)& thePr
         Prs3d_Root::NewGroup (thePresentation);
 
         DrawArrow (thePresentation, aSecondArrowBegin, aSecondArrowDir);
-        if (!theIsOneSide)
+        if (!theIsOneSide && theToDrawDimensionLine)
         {
           DrawArrow (thePresentation, aFirstArrowBegin, aFirstArrowDir);
         }
@@ -1216,9 +1223,12 @@ void AIS_Dimension::DrawLinearDimension (const Handle(Prs3d_Presentation)& thePr
         // add extension lines for external arrows
         Prs3d_Root::NewGroup (thePresentation);
 
-        DrawExtension (thePresentation, aDimensionAspect->ArrowTailSize(),
-                       aFirstArrowEnd, aFirstExtensionDir,
-                       THE_EMPTY_LABEL, 0.0, theMode, LabelPosition_None);
+        if (theToDrawDimensionLine)
+        {
+          DrawExtension (thePresentation, aDimensionAspect->ArrowTailSize(),
+                         aFirstArrowEnd, aFirstExtensionDir,
+                         THE_EMPTY_LABEL, 0.0, theMode, LabelPosition_None);
+        }
       }
 
       break;
