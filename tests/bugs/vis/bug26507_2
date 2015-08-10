@@ -14,16 +14,21 @@ vbottom
 vpoint lengthP1 0 0 0
 vpoint lengthP2 50 100 0
 vpoint lengthP3 -50 100 0
+vpoint lengthP4 0 200 0
 # Text in center - custom aligment does not taken into account
 vdimension dim1 -length -plane xoy -shapes lengthP1 lengthP2 -text 3d -aligntext 1.0 0.0 0.0 -flyout -10
 
 # Text on the right side - it is aligned
-vdimension dim2 -length -plane xoy -shapes lengthP1 lengthP3 -text 3d -aligntext 1.0 0.0 0.0 -segment 15 -label right
+vdimension dim2 -length -plane xoy -shapes lengthP1 lengthP3 -text 3d -aligntext 1.0 0.0 0.0 -segment 0 -label right
 
 # Text on the left side - it is aligned
-vdimension dim3 -length -plane xoy -shapes lengthP2 lengthP3 -text 3d -flyout -10 -aligntext 1.0 0.0 0.0 -segment 10 -label left
+vdimension dim3 -length -plane xoy -shapes lengthP2 lengthP3 -text 3d -flyout -10 -aligntext 1.0 0.0 0.0 -segment 5 -label left
 
+# Text on the left side - it is aligned
+vdimension dim4 -length -plane xoy -shapes lengthP2 lengthP4 -text 3d -flyout -10 -aligntext 1.0 0.0 0.0 -segment 25 -label left
 
+# Text on the left side - it is aligned
+vdimension dim5 -length -plane xoy -shapes lengthP4 lengthP3 -text 3d -flyout -10 -aligntext 1.0 0.0 0.0 -label left above -segment 10 
 vfit
 #finalize and dump
 set only_screen 1

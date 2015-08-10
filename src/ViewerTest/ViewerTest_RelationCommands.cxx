@@ -2886,7 +2886,7 @@ void ViewerTest::RelationCommands(Draw_Interpretor& theCommands)
   theCommands.Add("vdimension",
       "vdimension name {-angle|-length|-radius|-diameter} -shapes shape1 [shape2 [shape3]]\n"
       "[-text 3d|2d wf|sh|wireframe|shading IntegerSize]\n"
-      "[-label left|right|hcenter|hfit top|bottom|vcenter|vfit]\n"
+      "[-label left|right|hcenter|hfit above|below|vcenter|vfit]\n"
       "[-arrow external|internal|fit]\n"
       "[{-arrowlength|-arlen} RealArrowLength]\n"
       "[{-arrowangle|-arangle} ArrowAngle(degrees)]\n"

@@ -128,9 +128,6 @@ Standard_Real AIS_Dimension::GetValue() const
       return ComputeValue();
     case TOL_Value:
       {
-        /*Standard_PCharacter aCString;
-        myLabel.ToUTF8CString (aCString);
-        return atof (aCString);*/
         return myCustomValue;
       }
     case TOL_Text:
@@ -211,7 +208,7 @@ const gp_Pln& AIS_Dimension::GetPlane() const
 //function : GetGeometryType
 //purpose  : 
 //=======================================================================
-const Standard_Integer AIS_Dimension::GetGeometryType () const
+const Standard_Integer AIS_Dimension::GetGeometryType() const
 {
   return myGeometryType;
 }
@@ -816,24 +813,16 @@ void AIS_Dimension::DrawExtension (const Handle(Prs3d_Presentation)& thePresenta
     if (hasLabel && myLeaderSegmentLength > 0 && myIsTextAligned)
     {
       gp_Lin aSegmentLine (anExtEnd, aTextDir);
-      Standard_Real aSegmentLength = isShortLine ? myLeaderSegmentLength : theLabelWidth + myLeaderSegmentLength;
+      Standard_Real aSegmentLength = (theLabelPosition & LabelPosition_VCenter) ? myLeaderSegmentLength : theLabelWidth + myLeaderSegmentLength;
       aSegmentPoint  = ElCLib::Value (aSegmentLength, aSegmentLine);
-      DrawText (thePresentation,
-                aSegmentPoint,
-                aTextDir,
-                theLabelString,
-                theLabelPosition);
-    }
-    else
-    {
-      DrawText (thePresentation,
-                aTextPos,
-                aTextDir,
-                theLabelString,
-                theLabelPosition);
+      aTextPos = (theLabelPosition & LabelPosition_VCenter) ? aSegmentPoint : ElCLib::Value (myLeaderSegmentLength, aSegmentLine);
     }
 
-
+    DrawText (thePresentation,
+              aTextPos,
+              aTextDir,
+              theLabelString,
+              theLabelPosition);
   }
 
   if (theMode != ComputeMode_All && theMode != ComputeMode_Line)
@@ -988,7 +977,9 @@ void AIS_Dimension::DrawLinearDimension (const Handle(Prs3d_Presentation)& thePr
                                               : (aCenterLineBegin.XYZ() + aCenterLineEnd.XYZ()) * 0.5;
 
       // Choose a text direction
-      gp_Dir aTextDir = aDimensionLine.Direction();
+      gp_Dir aTextDir = myIsTextAligned
+        ? myTextDir
+        : aDimensionLine.Direction();
 
       // add text primitives
       if (theMode == ComputeMode_All || theMode == ComputeMode_Text)
@@ -1144,7 +1135,7 @@ void AIS_Dimension::DrawLinearDimension (const Handle(Prs3d_Presentation)& thePr
         Prs3d_Root::NewGroup (thePresentation);
 
         DrawArrow (thePresentation, aFirstArrowBegin, aFirstArrowDir);
-        if (!theIsOneSide && theToDrawDimensionLine)
+        if (!theIsOneSide && (theToDrawDimensionLine || (!isArrowsExternal && !theToDrawDimensionLine) ))
         {
           DrawArrow (thePresentation, aSecondArrowBegin, aSecondArrowDir);
         }
@@ -1210,7 +1201,7 @@ void AIS_Dimension::DrawLinearDimension (const Handle(Prs3d_Presentation)& thePr
         Prs3d_Root::NewGroup (thePresentation);
 
         DrawArrow (thePresentation, aSecondArrowBegin, aSecondArrowDir);
-        if (!theIsOneSide && theToDrawDimensionLine)
+        if (!theIsOneSide && (theToDrawDimensionLine || (!theToDrawDimensionLine && !isArrowsExternal) ))
         {
           DrawArrow (thePresentation, aFirstArrowBegin, aFirstArrowDir);
         }
