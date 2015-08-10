@@ -25,7 +25,7 @@ vdimension dim2 -length -plane xoy -shapes lengthP1 lengthP3 -text 3d -aligntext
 vdimension dim3 -length -plane xoy -shapes lengthP2 lengthP3 -text 3d -flyout -10 -aligntext 1.0 0.0 0.0 -segment 5 -label left
 
 # Text on the left side - it is aligned
-vdimension dim4 -length -plane xoy -shapes lengthP2 lengthP4 -text 3d -flyout -10 -aligntext 1.0 0.0 0.0 -segment 25 -label left
+vdimension dim4 -length -plane xoy -shapes lengthP2 lengthP4 -text 3d -flyout -10 -aligntext 1.0 0.0 0.0 -segment 25 -label right
 
 # Text on the left side - it is aligned
 vdimension dim5 -length -plane xoy -shapes lengthP4 lengthP3 -text 3d -flyout -10 -aligntext 1.0 0.0 0.0 -label left above -segment 10 

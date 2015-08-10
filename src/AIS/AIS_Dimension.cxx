@@ -813,9 +813,11 @@ void AIS_Dimension::DrawExtension (const Handle(Prs3d_Presentation)& thePresenta
     if (hasLabel && myLeaderSegmentLength > 0 && myIsTextAligned)
     {
       gp_Lin aSegmentLine (anExtEnd, aTextDir);
-      Standard_Real aSegmentLength = (theLabelPosition & LabelPosition_VCenter) ? myLeaderSegmentLength : theLabelWidth + myLeaderSegmentLength;
+      Standard_Real aSegmentLength = !(theLabelPosition & LabelPosition_Above || theLabelPosition & LabelPosition_Below)
+        ? myLeaderSegmentLength : theLabelWidth + myLeaderSegmentLength;
       aSegmentPoint  = ElCLib::Value (aSegmentLength, aSegmentLine);
-      aTextPos = (theLabelPosition & LabelPosition_VCenter) ? aSegmentPoint : ElCLib::Value (myLeaderSegmentLength, aSegmentLine);
+      aTextPos = !(theLabelPosition & LabelPosition_Above || theLabelPosition & LabelPosition_Below)
+        ? aSegmentPoint : ElCLib::Value (myLeaderSegmentLength, aSegmentLine);
     }
 
     DrawText (thePresentation,
