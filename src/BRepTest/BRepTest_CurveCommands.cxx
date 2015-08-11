@@ -1525,7 +1525,9 @@ Standard_Integer mkoffset(Draw_Interpretor& di,
 
     if ( !Paral.IsDone())
     {
+#ifdef Offset2D_DEBUG
       di << " Error: Offset is not done." << "\n";
+#endif
       return 1;
     }
     else
