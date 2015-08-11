@@ -3199,8 +3199,7 @@ static bool AddIntersectionVertices(const Handle_Geom_Plane& theRefPlane,
 
 static bool AddAdditionalVertices( Handle(BRepTools_ReShape)& reshape,
                                    TopoDS_Wire& aW,
-                                   TopTools_IndexedMapOfShape& EdgesInInter,
-                                   TopTools_MapOfShape& InterV )
+                                   TopTools_IndexedMapOfShape& EdgesInInter)
 {
   bool Stat = true;
   // Prepare wire for Poly_MakeLoops algo:
@@ -3249,59 +3248,38 @@ static bool AddAdditionalVertices( Handle(BRepTools_ReShape)& reshape,
       }
     }
 
-  aW = TopoDS::Wire(reshape->Apply(aW));
-  // If edges contains only one vertex => insert another two vertices
+  if (Stat)
+    aW = TopoDS::Wire(reshape->Apply(aW));
+  return Stat;
+}
+
+bool RemoveEdgeLoop(Handle(BRepTools_ReShape)& reshape,
+                    TopoDS_Wire& aW,
+                    NCollection_Vector<TopoDS_Wire>& EdgeLoop )
+{
+  // If edges contains only one vertex => check if it's a loop
+  // If it's a loop then remove it from wire
+  //bool Stat = true;
   TopExp_Explorer ExpE( aW, TopAbs_EDGE );
-  for (; ExpE.More() && Stat; ExpE.Next())
+  for (; ExpE.More(); ExpE.Next())
   {
     TopoDS_Edge E = TopoDS::Edge(ExpE.Current());
     TopoDS_Vertex VF, VL;      
     TopExp::Vertices(E, VF, VL);
 
-    if (VF.IsSame( VL ) && (InterV.Contains(VL) || InterV.Contains(VF)))
+    if (VF.IsSame( VL )/* && (InterV.Contains(VL) || InterV.Contains(VF))*/)
     {
-      gp_Pnt MP1, MP2;
-      Handle_Geom_Curve cur;
-      double f, l;
-      cur = BRep_Tool::Curve(E, f, l);
-      if ( Abs(l - f ) <  3 * Precision::Confusion())
+      reshape->Remove(E, true);
+      if (BRep_Tool::Degenerated(E))
         continue;
-      cur->D0(f + (0.3)*(l-f), MP1);
-      cur->D0(f + (0.6)*(l-f), MP2);
-      TopoDS_Vertex MV1 = BRepLib_MakeVertex(MP1);
-      TopoDS_Vertex MV2 = BRepLib_MakeVertex(MP2);
-      BRepBuilderAPI_MakeEdge MEB;
-      TopoDS_Edge DE1, DE2, DE3;
-      MEB.Init(cur, VF, MV1, f, f + (0.3)*(l-f) );
-      if (!MEB.IsDone()) {
-        Stat = false;
-        break;
-      }
-      DE1 = MEB.Edge();
-      MEB.Init(cur, MV1, MV2, f + (0.3)*(l-f), f + (0.6)*(l-f) );
-      if (!MEB.IsDone()) {
-        Stat = false;
-        break;
-      }
-      DE2 = MEB.Edge();
-      MEB.Init(cur, MV2, VL, f + (0.6)*(l-f), l );
-      if (!MEB.IsDone()) {
-        Stat = false;
-        break;
-      }
-      DE3 = MEB.Edge();
-      TopoDS_Wire W = BRepBuilderAPI_MakeWire(DE1, DE2, DE3);
-      TopTools_IndexedMapOfShape DummyM;
-      TopExp::MapShapes(W, TopAbs_VERTEX, DummyM);
-      if (DummyM.Extent() !=3 ) 
-      {
-        Stat = false;
-        break;
-      }
-      reshape->Replace(E, W.Oriented(E.Orientation()));
+      BRepBuilderAPI_MakeWire WM(E);
+      if (WM.Wire().Closed())
+        EdgeLoop.Append(WM.Wire());
+      else
+        return false;
     }
   }
-  return Stat;
+  return true;
 }
 
 bool DoReorder( Handle(BRepTools_ReShape)& reshape,
@@ -3555,18 +3533,21 @@ static bool RemoveLoops(TopoDS_Shape& theInputSh, const TopoDS_Face& theWorkSpin
     for (int i = 1; ExpE.More(); ExpE.Next(), i++ )
       Seq.SetValue(i, ExpE.Current() );
 
+    if (!DoReorder(reshape, aW))
+      continue;
+
     TopTools_IndexedMapOfShape EdgesInInter;
     TopTools_MapOfShape InterV;
     if (!AddIntersectionVertices(theRefPlane, theWorkSpine, Seq, reshape, aW, EdgesInInter, InterV))
       continue;
 
-    if (!AddAdditionalVertices(reshape, aW, EdgesInInter, InterV))
-      continue;
-    
-    if (!DoReorder(reshape, aW))
+    if (!AddAdditionalVertices(reshape, aW, EdgesInInter))
       continue;
 
     NCollection_Vector<TopoDS_Wire> aLoops;
+    if (!RemoveEdgeLoop(reshape, aW, aLoops))
+      continue;
+    
     if (!ExtractLoopsFromWire (aW, theWorkSpine, aLoops))
       continue;
 
