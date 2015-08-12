@@ -84,8 +84,8 @@ namespace
   static const TCollection_AsciiString    THE_UNDEFINED_UNITS;
 
   // default text margin and resolution
-  static const Standard_Real THE_3D_TEXT_MARGIN    = 0.1;
-  static const unsigned int  THE_2D_TEXT_RESOLUTION = 72;
+  static const Standard_Real THE_3D_TEXT_MARGIN  = 0.1;
+  static const unsigned int  THE_FONT_RESOLUTION = 96;
 
   // default selection priorities
   static const Standard_Integer THE_NEUTRAL_SEL_PRIORITY = 5;
@@ -409,45 +409,61 @@ Standard_Real AIS_Dimension::ValueToDisplayUnits() const
 }
 
 // =======================================================================
-// function : getWidthAndHeight
+// function : getLabelSizes
 // purpose  :
 // =======================================================================
 void  AIS_Dimension::getLabelSizes (const TCollection_ExtendedString& theLabel,
-                                    Standard_Real& theWidth, Standard_Real& theHeight,
-                                    Standard_Real& theSymbolWidth, Standard_Real& theSymbolHeight
-                                    ) const
+                                    Standard_Real& theWidth,
+                                    Standard_Real& theHeight,
+                                    Standard_Real& theSymbolWidth,
+                                    Standard_Real& theSymbolHeight) const
 {
-  theWidth = 0;
-  theHeight = 0;
-  theSymbolWidth = 0;
-  theSymbolHeight = 0;
+  Handle(Prs3d_DimensionAspect) anAspect    = myDrawer->DimensionAspect();
+  Handle(Prs3d_TextAspect)      aTextAspect = myDrawer->DimensionAspect()->TextAspect();
+  Standard_Real                 aFontHeight = aTextAspect->Height();
 
-  const Handle(Prs3d_TextAspect)& aTextAspect = myDrawer->DimensionAspect()->TextAspect();
-  const Handle(Graphic3d_AspectText3d)& anAspectText = aTextAspect->Aspect();
   Quantity_Color aColor;
   Standard_CString aFontName;
   Standard_Real anExpFactor, aSpace;
-  anAspectText->Values (aColor, aFontName, anExpFactor, aSpace);
+  aTextAspect->Aspect()->Values (aColor, aFontName, anExpFactor, aSpace);
 
-  // Initialize font with specific settings.
-  Font_FTFont aFont;
-  aFont.Init (aFontName, anAspectText->GetTextFontAspect(), aTextAspect->Height(), 96);
-
-  Font_FTFont::Rect aBndBox;
-
-  if (myDisplaySpecialSymbol != AIS_DSS_No)
+  NCollection_String aText   ((Standard_Utf16Char*) theLabel.ToExtString());
+  NCollection_String aSymbol;
+  if (DisplaySpecialSymbol() != AIS_DSS_No)
   {
-    const NCollection_String aString ((Standard_Utf16Char*) TCollection_ExtendedString (mySpecialSymbol).ToExtString());
-    aBndBox = aFont.BoundingBox (aString.ToCString(), Graphic3d_HTA_LEFT, Graphic3d_VTA_TOP);
-    theSymbolWidth = aBndBox.Width();
-    theSymbolHeight = aBndBox.Height();
+    aSymbol.FromUnicode ((Standard_Utf16Char*) TCollection_ExtendedString (mySpecialSymbol).ToExtString());
   }
 
-  // Compute bounding box for the main text of label
-  const NCollection_String aString ((Standard_Utf16Char*) theLabel.ToExtString());
-  aBndBox = aFont.BoundingBox (aString.ToCString(), Graphic3d_HTA_LEFT, Graphic3d_VTA_TOP);
-  theWidth = aBndBox.Width();
-  theHeight = aBndBox.Height();
+  Font_FTFont::Rect aTextBox;
+  Font_FTFont::Rect aSymbolBox;
+
+  if (!anAspect->IsText3d())
+  {
+    Font_FTFont aFont;
+    aFont.Init (aFontName,
+                aTextAspect->Aspect()->GetTextFontAspect(),
+                static_cast<Standard_Integer> (aFontHeight),
+                THE_FONT_RESOLUTION);
+    aTextBox = aFont.BoundingBox (aText, Graphic3d_HTA_LEFT, Graphic3d_VTA_TOP);
+    if (!aSymbol.IsEmpty())
+    {
+      aSymbolBox = aFont.BoundingBox (aSymbol, Graphic3d_HTA_LEFT, Graphic3d_VTA_TOP);
+    }
+  }
+  else
+  {
+    Font_BRepFont aFont (aFontName, aTextAspect->Aspect()->GetTextFontAspect(), aFontHeight);
+    aTextBox = aFont.BoundingBox (aText);
+    if (!aSymbol.IsEmpty())
+    {
+      aSymbolBox = aFont.BoundingBox (aSymbol);
+    }
+  }
+
+  theWidth        = aTextBox.Width();
+  theHeight       = aTextBox.Height();
+  theSymbolWidth  = aSymbolBox.Width();
+  theSymbolHeight = aSymbolBox.Height();
 }
 
 //=======================================================================
@@ -528,19 +544,14 @@ void AIS_Dimension::DrawText (const Handle(Prs3d_Presentation)& thePresentation,
   Font_FontAspect aFontAspect = anAspectText3d->GetTextFontAspect();
   const Standard_Real aFontHeight = aTextAspect->Height();
 
-  Font_FTFont aFont;
-  aFont.Init (aFontName, anAspectText3d->GetTextFontAspect(), aFontHeight, 96);
-
-  const Standard_Real aHeightOfLine = aFont.LineSpacing();
-
-  // Text sizes
-  Standard_Real aWidth = 0.0;
+  Standard_Real aWidth  = 0.0;
   Standard_Real aHeight = 0.0;
   Standard_Real aSymbolWidth = 0.0;
   Standard_Real aSymbolHeight = 0.0;
   getLabelSizes (theText, aWidth, aHeight, aSymbolWidth, aSymbolHeight);
   aWidth += aSymbolWidth;
-    // Compute label offsets
+
+  // Compute label offsets
   Standard_Real aMarginSize    = aFontHeight * THE_3D_TEXT_MARGIN;
   Standard_Real aCenterHOffset = 0.0;
   Standard_Real aCenterVOffset = 0.0;
@@ -563,15 +574,16 @@ void AIS_Dimension::DrawText (const Handle(Prs3d_Presentation)& thePresentation,
       aSymbolShape = aFont.RenderText (anUTFSymbol);
     }
 
- 
     // Formating text position in XOY plane
     Standard_Integer aHLabelPos = theLabelPosition & LabelPosition_HMask;
     switch (aHLabelPos)
     {
       case LabelPosition_HCenter : aCenterHOffset =  0.0; break;
-      case LabelPosition_Right   : aCenterHOffset = aWidth / 2.0 + aMarginSize; break;
+      case LabelPosition_Right   : aCenterHOffset =  aWidth / 2.0 + aMarginSize; break;
       case LabelPosition_Left    : aCenterHOffset = -aWidth / 2.0 - aMarginSize; break;
     }
+
+    const Standard_Real aHeightOfLine = aFont.LineSpacing();
 
     switch (aVLabelPos)
     {
@@ -643,8 +655,6 @@ void AIS_Dimension::DrawText (const Handle(Prs3d_Presentation)& thePresentation,
     aTextPlaneTrsf.SetTransformation (aTextCoordSystem, gp_Ax3 (gp::XOY()));
     aTextShape.Move (aTextPlaneTrsf);
 
-
-
     if (!aSymbolShape.IsNull())
     {
       aSymbolVOffset += aYalign - aHeight / 2.0;
@@ -655,7 +665,6 @@ void AIS_Dimension::DrawText (const Handle(Prs3d_Presentation)& thePresentation,
       aSymbolShape.Move (aTextPlaneTrsf);
     }
 
-    
     // Set text flipping anchors
     gp_Trsf aCenterOffsetTrsf;
     gp_Pnt aCenterOffset (aCenterHOffset, aCenterVOffset, 0.0);
@@ -707,25 +716,18 @@ void AIS_Dimension::DrawText (const Handle(Prs3d_Presentation)& thePresentation,
 
   gp_Pnt aTextPos = theTextPos;
 
+  Font_FTFont aFont;
+  aFont.Init (aFontName,
+              anAspectText3d->GetTextFontAspect(),
+              static_cast<Standard_Integer>(aFontHeight),
+              THE_FONT_RESOLUTION);
+  const Standard_Real aHeightOfLine = aFont.LineSpacing();
+
   switch (aVLabelPos)
   {
-    case LabelPosition_FirstLine:
-    {
-      if (myTypeOfLabel == TOL_Text && aHeight > aHeightOfLine)
-      {
-        //aTextPos.SetY (aTextPos.Y() + aHeight / 2.0 - aHeightOfLine);
-      }
-      break;
-    }
-    case LabelPosition_LastLine:
-    {
-      if (myTypeOfLabel == TOL_Text && aHeight > aHeightOfLine)
-      {
-        //aTextPos.SetY (aTextPos.Y() + aHeightOfLine - aHeight / 2.0);
-      }
-      break;
-    }
-    case LabelPosition_VCenter : break;
+    case LabelPosition_FirstLine: break;
+    case LabelPosition_LastLine : break;
+    case LabelPosition_VCenter  : break;
     case LabelPosition_Above:
     {
       if (myTypeOfLabel == TOL_Text && aHeight > aHeightOfLine)
@@ -794,11 +796,6 @@ void AIS_Dimension::DrawExtension (const Handle(Prs3d_Presentation)& thePresenta
     ? (myTextDir*theExtensionDir < 0 ? -myTextDir : myTextDir)
     : theExtensionDir;
 
-  Standard_Boolean isShortLine =  !myDrawer->DimensionAspect()->IsText3d()
-                               || theLabelPosition & LabelPosition_VCenter;
-
-
-
   // Compute graphical primitives and sensitives for extension line
   gp_Pnt anExtStart = theExtensionStart;
   gp_Pnt   anExtEnd = !hasLabel || !(theLabelPosition & LabelPosition_Above || theLabelPosition & LabelPosition_Below)
@@ -834,7 +831,6 @@ void AIS_Dimension::DrawExtension (const Handle(Prs3d_Presentation)& thePresenta
     return;
   }
 
-
   // Add graphical primitives
   Handle(Graphic3d_ArrayOfSegments) anExtPrimitive = new Graphic3d_ArrayOfSegments ((hasLabel && myLeaderSegmentLength > 0 && myIsTextAligned) ? 4 : 2);
   anExtPrimitive->AddVertex (anExtStart);
@@ -845,9 +841,6 @@ void AIS_Dimension::DrawExtension (const Handle(Prs3d_Presentation)& thePresenta
     anExtPrimitive->AddVertex (anExtEnd);
     anExtPrimitive->AddVertex (aSegmentPoint);
   }
-
-
-
 
   // Add selection primitives
   SelectionGeometry::Curve& aSensitiveCurve = mySelectionGeom.NewCurve();
