@@ -35,6 +35,7 @@
 #include <BRepOffset_MakeLoops.hxx>
 #include <TopTools_MapOfShape.hxx>
 #include <BRepOffset_DataMapOfShapeOffset.hxx>
+#include <BRepBuilderAPI_Copy.hxx>
 class BRepAlgo_AsDes;
 class TopoDS_Shape;
 class TopoDS_Face;
@@ -93,6 +94,8 @@ public:
   //! Returns the list of closing faces stores by AddFace
   Standard_EXPORT const TopTools_IndexedMapOfShape& ClosingFaces() const;
 
+  //! Returns image of input shape for history support.
+  Standard_EXPORT TopoDS_Shape GetInitImage(const TopoDS_Shape& theShape);
 
 
 
@@ -143,7 +146,9 @@ private:
 
   Standard_Real myOffset;
   Standard_Real myTol;
-  TopoDS_Shape myShape;
+  TopoDS_Shape myShape; // shape for modifications.
+  TopoDS_Shape myInitShape; // Init shape.
+  BRepBuilderAPI_Copy myCopy; // Stored to get bijection between items in myInitShape and myShape.
   BRepOffset_Mode myMode;
   Standard_Boolean myInter;
   Standard_Boolean mySelfInter;

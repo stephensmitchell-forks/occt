@@ -516,7 +516,12 @@ void BRepOffset_MakeOffset::Initialize(const TopoDS_Shape&    S,
 				       const Standard_Boolean Thickening)
 {
   myOffset     = Offset;
-  myShape      = S;
+
+  // Copy object and store bijection.
+  myInitShape = S;
+  myCopy.Perform(myInitShape);
+  myShape =  myCopy.Shape();
+
   myTol        = Tol;
   myMode       = Mode;
   myInter      = Inter;
@@ -550,14 +555,16 @@ void BRepOffset_MakeOffset::Clear()
 //purpose  : 
 //=======================================================================
 
-void BRepOffset_MakeOffset::AddFace(const TopoDS_Face& F) {
-  myFaces.Add(F);    
+void BRepOffset_MakeOffset::AddFace(const TopoDS_Face& F)
+{
+  TopoDS_Shape aF = GetInitImage(F);
+  myFaces.Add(aF);    
   //-------------
   // MAJ SD.
   //-------------
-  myInitOffsetFace.SetRoot (F)  ;    
-  myInitOffsetFace.Bind    (F,F);
-  myImageOffset.SetRoot    (F)  ;  
+  myInitOffsetFace.SetRoot (aF)  ;    
+  myInitOffsetFace.Bind    (aF,aF);
+  myImageOffset.SetRoot    (aF)  ;  
 }
 
 //=======================================================================
@@ -568,8 +575,9 @@ void BRepOffset_MakeOffset::AddFace(const TopoDS_Face& F) {
 void BRepOffset_MakeOffset::SetOffsetOnFace(const TopoDS_Face&  F, 
 					    const Standard_Real Off)
 {
-  if ( myFaceOffset.IsBound(F)) myFaceOffset.UnBind(F);
-  myFaceOffset.Bind(F,Off);
+  TopoDS_Shape aF = GetInitImage(F);
+  if ( myFaceOffset.IsBound(aF)) myFaceOffset.UnBind(aF);
+  myFaceOffset.Bind(aF,Off);
 }
 
 //=======================================================================
@@ -577,8 +585,8 @@ void BRepOffset_MakeOffset::SetOffsetOnFace(const TopoDS_Face&  F,
 //purpose  : 
 //=======================================================================
 
-static void RemoveCorks (TopoDS_Shape&               S,
-			 TopTools_IndexedMapOfShape& Faces)
+static void RemoveCorks(TopoDS_Shape&               S,
+                        TopTools_IndexedMapOfShape& Faces)
 {  
   TopoDS_Compound SS;
   BRep_Builder    B;
@@ -670,6 +678,7 @@ void BRepOffset_MakeOffset::MakeOffsetShape()
   //------------------------------------------
   // Construction of myShape without caps.
   //------------------------------------------
+
   if(!myFaces.IsEmpty())
   {
     RemoveCorks (myShape,myFaces);
@@ -3392,4 +3401,12 @@ void CorrectSolid(TopoDS_Solid& theSol, TopTools_ListOfShape& theSolList)
     }
   }
   theSol = aNewSol;
+}
+//=======================================================================
+//function : GetInitImage
+//purpose  : 
+//=======================================================================
+TopoDS_Shape BRepOffset_MakeOffset::GetInitImage(const TopoDS_Shape& theShape)
+{
+  return myCopy.Modified(theShape).First();
 }

@@ -85,15 +85,18 @@ const TopTools_ListOfShape& BRepOffsetAPI_MakeOffsetShape::Generated (const Topo
 
 {  
   myGenerated.Clear();
-  if (!myOffsetShape.ClosingFaces().Contains(S)) {
-    myOffsetShape.OffsetFacesFromShapes ().LastImage (S, myGenerated);
+  if (!myOffsetShape.ClosingFaces().Contains(S))
+  {
+    TopoDS_Shape aImShape = myOffsetShape.GetInitImage(S);
+    myOffsetShape.OffsetFacesFromShapes().LastImage (aImShape, myGenerated);
    
-    if (!myOffsetShape.ClosingFaces().IsEmpty()) {
+    if (!myOffsetShape.ClosingFaces().IsEmpty())
+    {
       // Reverse generated shapes in case of small solids.
       // Useful only for faces without influence on others.
       TopTools_ListIteratorOfListOfShape it(myGenerated);
       for (; it.More(); it.Next())
-	it.Value().Reverse();
+        it.Value().Reverse();
     }
   }
   return myGenerated;
@@ -111,7 +114,8 @@ const TopTools_ListOfShape& BRepOffsetAPI_MakeOffsetShape::GeneratedEdge (const 
 
 {  
   myGenerated.Clear();
-  myOffsetShape.OffsetEdgesFromShapes ().LastImage (S, myGenerated);
+  TopoDS_Shape aImShape = myOffsetShape.GetInitImage(S);
+  myOffsetShape.OffsetEdgesFromShapes ().LastImage (aImShape, myGenerated);
 
   if (!myGenerated.IsEmpty()) {
     if (S.IsSame(myGenerated.First()))
