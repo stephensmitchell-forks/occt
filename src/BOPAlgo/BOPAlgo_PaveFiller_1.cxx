@@ -17,7 +17,6 @@
 
 #include <BOPAlgo_PaveFiller.ixx>
 
-#include <NCollection_IncAllocator.hxx>
 #include <NCollection_BaseAllocator.hxx>
 
 #include <Bnd_Box.hxx>
@@ -41,11 +40,11 @@
 // function: PerformVV
 // purpose: 
 //=======================================================================
-  void BOPAlgo_PaveFiller::PerformVV() 
+void BOPAlgo_PaveFiller::PerformVV() 
 {
   Standard_Boolean bWithSubShape;
   Standard_Integer n1, n2, iFlag, nX, n, aSize, i, j, k, aNbBlocks;
-  Handle(NCollection_IncAllocator) aAllocator;
+  Handle(NCollection_BaseAllocator) aAllocator;
   BOPCol_DataMapIteratorOfDataMapOfIntegerListOfInteger aItMILI;
   BOPCol_ListIteratorOfListOfInteger aItLI, aItLI2;
   TopoDS_Vertex aVn;
@@ -65,7 +64,8 @@
   aVVs.SetIncrement(aSize);
   //
   //-----------------------------------------------------scope f
-  aAllocator=new NCollection_IncAllocator();
+  aAllocator=
+    NCollection_BaseAllocator::CommonBaseAllocator();
   BOPCol_IndexedDataMapOfIntegerListOfInteger aMILI(100, aAllocator);
   BOPCol_DataMapOfIntegerListOfInteger aMBlocks(100, aAllocator);
   BOPCol_ListOfShape aLV(aAllocator);
@@ -134,5 +134,4 @@
   aLV.Clear();
   aMBlocks.Clear();
   aMILI.Clear();
-  aAllocator.Nullify();
 }
