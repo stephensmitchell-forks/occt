@@ -20,7 +20,6 @@
 #include <NCollection_List.hxx>
 #include <NCollection_DataMap.hxx>
 #include <NCollection_UBTreeFiller.hxx>
-#include <NCollection_IncAllocator.hxx>
 //
 #include <gp_Pnt2d.hxx>
 #include <gp_Pln.hxx>
@@ -457,7 +456,8 @@ void BOPAlgo_BuilderSolid::PerformLoops()
   myErrorStatus=0;
   myLoops.Clear();
   //
-  aAlr=new NCollection_IncAllocator();
+  aAlr=
+    NCollection_BaseAllocator::CommonBaseAllocator();
   BOPAlgo_ShellSplitter aSSp(aAlr);
   //
   // 1. Shells Usual
