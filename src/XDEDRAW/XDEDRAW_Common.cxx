@@ -519,6 +519,51 @@ static Standard_Integer Expand (Draw_Interpretor& di, Standard_Integer argc, con
   return 0;
 }
 
+
+static Standard_Integer Compact (Draw_Interpretor& di, Standard_Integer argc, const char** argv)
+{
+  if (argc < 2) {
+    di<<"Use: "<<argv[0]<<" Doc or Doc label1 label2 ... or Doc shape1 shape2 ..."<<"\n";
+    return 1;
+  }
+  Handle(TDocStd_Document) Doc;   
+  DDocStd::GetDocument(argv[1], Doc);
+  if ( Doc.IsNull() ) { di << argv[1] << " is not a document" << "\n"; return 1; }
+
+  Handle(XCAFDoc_ShapeTool) aShapeTool = XCAFDoc_DocumentTool::ShapeTool(Doc->Main());
+
+  if (argc == 2)
+  {
+    if(!XCAFDoc_Editor::Compact(Doc->Main())){
+      di << "The shape is  not assembly" << "\n";
+      return 1;
+    }
+  }
+  else 
+  {
+    for (Standard_Integer i = 2; i < argc; i++)
+    {
+      TDF_Label aLabel;
+      TDF_Tool::Label(Doc->GetData(), argv[i], aLabel);
+      if(aLabel.IsNull()){
+        TopoDS_Shape aShape;
+        aShape = DBRep::Get(argv[i]);
+        aLabel = aShapeTool->FindShape(aShape);
+      }
+
+      if (!aLabel.IsNull()){
+        if(!XCAFDoc_Editor::Compact(Doc->Main(), aLabel)){
+          di << "The shape is not assembly" << "\n";
+          return 1;
+        }
+      }
+      else
+      { di << argv[i] << " is not a shape" << "\n"; return 1; }
+    }
+  }
+  return 0;
+}
+
 void XDEDRAW_Common::InitCommands(Draw_Interpretor& di) {
 
   static Standard_Boolean initactor = Standard_False;
@@ -539,4 +584,6 @@ void XDEDRAW_Common::InitCommands(Draw_Interpretor& di) {
   di.Add("XExpand", "XExpand Doc recursively(0/1) or XExpand Doc recursively(0/1) label1 abel2 ..."  
           "or XExpand Doc recursively(0/1) shape1 shape2 ...",__FILE__, Expand, g);
 
+  di.Add("XCompact", "XCompact Doc or XCompact Doc label1 abel2 ..."  
+          "or XCompact Doc shape1 shape2 ...",__FILE__, Compact, g);
 }

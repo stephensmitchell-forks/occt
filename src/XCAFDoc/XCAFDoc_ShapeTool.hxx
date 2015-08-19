@@ -203,12 +203,13 @@ public:
   Standard_EXPORT TDF_Label NewShape() const;
   
   //! Sets representation (TopoDS_Shape) for top-level shape.
+  //! If you set theProtection = Standard_False you can set shape for subshapes(not top-level)
   //! If S has location(location.IsIdentity() is false),
   //! command will be skipped. Sub-shapes of S which is
   //! subshape of old shape, will be stored ( all atributes will be stored).
   //! If a sub-label of L is not a sub-shape of the new shape,
   //! it will be removed.
-  Standard_EXPORT void SetShape (const TDF_Label& L, const TopoDS_Shape& S);
+  Standard_EXPORT void SetShape (const TDF_Label& L, const TopoDS_Shape& S, const Standard_Boolean theProtection = Standard_True);
   
   //! Adds a new top-level (creates and returns a new label)
   //! If makeAssembly is True, treats TopAbs_COMPOUND shapes

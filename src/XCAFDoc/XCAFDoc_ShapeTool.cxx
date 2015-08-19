@@ -399,9 +399,10 @@ TDF_Label XCAFDoc_ShapeTool::NewShape() const
 //purpose  : 
 //=======================================================================
 
-void XCAFDoc_ShapeTool::SetShape (const TDF_Label& L, const TopoDS_Shape& S)
+void XCAFDoc_ShapeTool::SetShape (const TDF_Label& L, const TopoDS_Shape& S,
+                                  const Standard_Boolean theProtection)
 { 
-  if(IsReference(L) || !IsTopLevel(L) || /*IsAssembly(L) ||*/ !S.Location().IsIdentity())
+  if(IsReference(L) || ((!IsTopLevel(L) ||!S.Location().IsIdentity()) && theProtection))
     return;
 
   TDF_LabelSequence aSubShapes;

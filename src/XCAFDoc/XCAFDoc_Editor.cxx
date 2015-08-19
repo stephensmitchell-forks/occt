@@ -31,6 +31,7 @@
 #include <XCAFDoc_ShapeMapTool.hxx>
 #include <XCAFDoc_Location.hxx>
 #include <TNaming_NamedShape.hxx>
+#include <BRep_Builder.hxx>
 
 //=======================================================================
 //function : Expand
@@ -213,4 +214,137 @@ Standard_Boolean XCAFDoc_Editor::setParams (const TDF_Label& Doc, const TDF_Labe
     TDataStd_Name::Set(Label, TCollection_ExtendedString(aName));
   }
   return Standard_True;
+}
+
+//=======================================================================
+//function : Compress
+//purpose  : Convert assembly to compound
+//=======================================================================
+
+Standard_Boolean XCAFDoc_Editor::Compact (const TDF_Label& Doc, const TDF_Label& Shape)
+{
+  if(Doc.IsNull() || Shape.IsNull())
+    return Standard_False;
+
+  Handle(XCAFDoc_ShapeTool) aShapeTool = XCAFDoc_DocumentTool::ShapeTool(Doc);
+
+  TopoDS_Shape aS = aShapeTool->GetShape(Shape);
+  if (!aS.IsNull() && aS.ShapeType() == TopAbs_COMPOUND && aShapeTool->IsAssembly(Shape))
+  {
+    Shape.ForgetAttribute(XCAFDoc::AssemblyGUID());
+
+    TopoDS_Compound Comp;//new compound for Shape label
+    BRep_Builder B;
+    B.MakeCompound(Comp);
+
+    //convert assembly to compound 
+    TDF_ChildIterator anIter(Shape);
+    for(; anIter.More(); anIter.Next())
+    {
+      TDF_Label aChild = anIter.Value();
+      TopoDS_Shape aChildShape = aShapeTool->GetShape(aChild);
+
+      TDF_Label aPart;
+      if(aShapeTool->GetReferredShape(aChild, aPart))
+      {
+        if (aChildShape.ShapeType() == TopAbs_COMPOUND && aShapeTool->IsAssembly(aPart))
+        {
+          //iterate next level if it needed
+          Compact(Doc, aPart);
+        }
+        //get location
+        Handle(XCAFDoc_Location) LocationAttribute;
+        aChild.FindAttribute(XCAFDoc_Location::GetID(), LocationAttribute);
+
+        TopLoc_Location aLoc;
+        if(!LocationAttribute.IsNull())
+        {
+          aLoc = LocationAttribute->Get();
+        }
+
+        if(aChildShape.ShapeType() != TopAbs_COMPOUND)
+        {
+          TDF_LabelSequence aLayers;
+          TDF_LabelSequence aColors;
+          Handle(TDataStd_Name) aName;
+          getParams(Doc, aPart, aColors, aLayers, aName);
+
+          aChild.ForgetAllAttributes(Standard_False);
+          //move shape
+          aShapeTool->SetShape(aChild, aChildShape.Located(aLoc), Standard_False);
+
+          aChildShape.Free(Standard_True);
+          B.Add(Comp, aChildShape.Located(aLoc));
+
+          setParams(Doc, aChild, aColors, aLayers, aName);
+        }
+        else
+        {
+          aChild.ForgetAllAttributes(Standard_False);
+        }
+
+        //move subshapes
+        TDF_LabelSequence aSub;
+        aShapeTool->GetSubShapes(aPart,aSub);
+        for(Standard_Integer i = 1; i <= aSub.Length(); i++)
+        {
+          TopoDS_Shape aShapeSub = aShapeTool->GetShape(aSub(i));
+
+          TDF_LabelSequence aLayers;
+          TDF_LabelSequence aColors;
+          Handle(TDataStd_Name) aName;
+          getParams(Doc, aSub(i), aColors, aLayers, aName);
+
+          aSub(i).ForgetAllAttributes(Standard_False);
+
+          TDF_TagSource aTag;
+          TDF_Label aSubC = aTag.NewChild(Shape);
+
+          TopLoc_Location loc = aLoc;
+          if(aChildShape.ShapeType() == TopAbs_COMPOUND)
+          {
+            loc = aShapeSub.Location().Multiplied(aLoc);
+          }
+
+          //set shape
+          aShapeTool->SetShape(aSubC, aShapeSub.Located(loc), Standard_False);
+          aSubC.ForgetAttribute(XCAFDoc_ShapeMapTool::GetID() );
+          if(aChildShape.ShapeType() == TopAbs_COMPOUND)
+          {
+            aShapeSub.Free(Standard_True);
+            B.Add(Comp, aShapeSub.Located(loc));
+          }
+          setParams(Doc, aSubC, aColors, aLayers, aName);
+        }
+        //remove part
+        aPart.ForgetAllAttributes();
+      }
+    }
+    aShapeTool->SetShape(Shape, Comp);
+    return Standard_True;
+  }
+  return Standard_False;
+}
+
+//=======================================================================
+//function : Compress
+//purpose  : Convert all assambly in Doc to compound
+//=======================================================================
+
+Standard_Boolean XCAFDoc_Editor::Compact (const TDF_Label& Doc)
+{
+  Standard_Boolean result = Standard_False;
+  TDF_LabelSequence aLabels;
+  Handle(XCAFDoc_ShapeTool) aShapeTool = XCAFDoc_DocumentTool::ShapeTool(Doc);
+  aShapeTool->GetFreeShapes(aLabels);
+  for(Standard_Integer i = 1; i <= aLabels.Length(); i++)
+  {
+    TopoDS_Shape aS = aShapeTool->GetShape(aLabels(i));
+    if (!aS.IsNull() && aS.ShapeType() == TopAbs_COMPOUND && aShapeTool->IsAssembly(aLabels(i)))
+      if (Compact(Doc, aLabels(i)))
+      {
+        result = Standard_True;
+      }
+  }
+  return result;
 }

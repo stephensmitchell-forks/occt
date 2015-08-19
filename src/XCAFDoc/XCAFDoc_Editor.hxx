@@ -41,6 +41,11 @@ public:
   //! Convert all compounds in Doc to assembly
   Standard_EXPORT static   Standard_Boolean Expand (const TDF_Label& Doc, const Standard_Boolean recursively = Standard_True) ;
 
+  //! Convert Shape(assembly) to compound
+  Standard_EXPORT static   Standard_Boolean Compact (const TDF_Label& Doc, const TDF_Label& Shape) ;
+  
+  //! Convert all assembly in Doc to compounds
+  Standard_EXPORT static   Standard_Boolean Compact (const TDF_Label& Doc) ;
 
 
 
