@@ -82,6 +82,10 @@ public:
         && myFresnelData == theOther.myFresnelData;
   }
 
+  Graphic3d_FresnelModel GetFresnelModel() const { return myFresnelType; }
+
+  Graphic3d_Vec3 GetFresnelData() const { return myFresnelData; }
+
 protected:
 
   //! Creates new Fresnel reflectance factor.
