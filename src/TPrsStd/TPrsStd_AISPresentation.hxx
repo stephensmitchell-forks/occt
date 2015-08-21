@@ -27,6 +27,7 @@
 #include <Standard_Integer.hxx>
 #include <Standard_Boolean.hxx>
 #include <TDF_Attribute.hxx>
+#include <TDataXtd_Presentation.hxx>
 class AIS_InteractiveObject;
 class Standard_GUID;
 class TDF_Label;
@@ -197,6 +198,10 @@ protected:
 
 private:
 
+
+  Handle(TDataXtd_Presentation) getData() const;
+
+  Handle(AIS_InteractiveContext) getAISContext() const;
   
   //! Updates AIS_InteractiveObject stored in the attribute
   //! and applies the visualization settings
@@ -211,20 +216,11 @@ private:
   Standard_EXPORT void AISErase (const Standard_Boolean remove = Standard_False);
 
   Standard_GUID myDriverGUID;
-  Standard_Real myTransparency;
-  Quantity_NameOfColor myColor;
-  Graphic3d_NameOfMaterial myMaterial;
-  Standard_Real myWidth;
-  Standard_Integer myMode;
-  Standard_Integer mySelectionMode;
-  Standard_Boolean isDisplayed;
-  Standard_Boolean hasOwnColor;
-  Standard_Boolean hasOwnMaterial;
-  Standard_Boolean hasOwnTransparency;
-  Standard_Boolean hasOwnWidth;
-  Standard_Boolean hasOwnMode;
-  Standard_Boolean hasOwnSelectionMode;
   Handle(AIS_InteractiveObject) myAIS;
+  Standard_Boolean isDisplayed;
+  Standard_Integer mySelectionMode;
+  Standard_Boolean hasOwnSelectionMode;
+  
 
 
 };
