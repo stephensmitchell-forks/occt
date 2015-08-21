@@ -29,6 +29,7 @@
 #include <Standard_Boolean.hxx>
 #include <Storage_Position.hxx>
 #include <Standard_Integer.hxx>
+#include <Storage_IODevice.hxx>
 #include <TColStd_SequenceOfAsciiString.hxx>
 #include <TColStd_SequenceOfExtendedString.hxx>
 #include <Standard_Character.hxx>
@@ -56,14 +57,14 @@ public:
   
   Standard_EXPORT FSD_BinaryFile();
   
-  Standard_EXPORT Storage_Error Open (const TCollection_AsciiString& aName, const Storage_OpenMode aMode);
+  Standard_EXPORT Storage_Error Open (const Handle(Storage_IODevice)& aDevice, const Storage_OpenMode aMode);
   
   Standard_EXPORT Standard_Boolean IsEnd();
   
   //! return position in the file. Return -1 upon error.
   Standard_EXPORT Storage_Position Tell();
   
-  Standard_EXPORT static Storage_Error IsGoodFileType (const TCollection_AsciiString& aName);
+  Standard_EXPORT static Storage_Error IsGoodFileType (const Handle(Storage_IODevice)& aDevice);
   
   Standard_EXPORT Storage_Error BeginWriteInfoSection();
   

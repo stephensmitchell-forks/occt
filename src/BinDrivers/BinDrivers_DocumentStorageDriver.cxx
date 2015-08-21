@@ -13,7 +13,7 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#include <BinDrivers_DocumentStorageDriver.ixx>
+#include <BinDrivers_DocumentStorageDriver.hxx>
 #include <Standard_ErrorHandler.hxx>
 #include <Standard_SStream.hxx>
 #include <TCollection_AsciiString.hxx>

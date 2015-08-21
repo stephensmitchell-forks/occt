@@ -48,19 +48,19 @@ public:
   
   Standard_EXPORT void WriteReferenceCounter (const Handle(Storage_Data)& aData, const Handle(CDM_Document)& aDocument) const;
   
-  Standard_EXPORT void WriteReferences (const Handle(Storage_Data)& aData, const Handle(CDM_Document)& aDocument, const TCollection_ExtendedString& theReferencerFileName) const;
+  Standard_EXPORT void WriteReferences (const Handle(Storage_Data)& aData, const Handle(CDM_Document)& aDocument, const Handle(Storage_IODevice)& theReferencer) const;
   
   Standard_EXPORT void WriteExtensions (const Handle(Storage_Data)& aData, const Handle(CDM_Document)& aDocument) const;
   
   Standard_EXPORT void WriteVersion (const Handle(Storage_Data)& aData, const Handle(CDM_Document)& aDocument) const;
   
-  Standard_EXPORT Standard_Integer ReadReferenceCounter (const TCollection_ExtendedString& aFileName, const Handle(CDM_MessageDriver)& theMsgDriver) const;
+  Standard_EXPORT Standard_Integer ReadReferenceCounter (const Handle(Storage_IODevice)& aDevice, const Handle(CDM_MessageDriver)& theMsgDriver) const;
   
-  Standard_EXPORT void ReadReferences (const TCollection_ExtendedString& aFileName, PCDM_SequenceOfReference& theReferences, const Handle(CDM_MessageDriver)& theMsgDriver) const;
+  Standard_EXPORT void ReadReferences (const Handle(Storage_IODevice)& aDevice, PCDM_SequenceOfReference& theReferences, const Handle(CDM_MessageDriver)& theMsgDriver) const;
   
-  Standard_EXPORT void ReadExtensions (const TCollection_ExtendedString& aFileName, TColStd_SequenceOfExtendedString& theExtensions, const Handle(CDM_MessageDriver)& theMsgDriver) const;
+  Standard_EXPORT void ReadExtensions (const Handle(Storage_IODevice)& aDevice, TColStd_SequenceOfExtendedString& theExtensions, const Handle(CDM_MessageDriver)& theMsgDriver) const;
   
-  Standard_EXPORT Standard_Integer ReadDocumentVersion (const TCollection_ExtendedString& aFileName, const Handle(CDM_MessageDriver)& theMsgDriver) const;
+  Standard_EXPORT Standard_Integer ReadDocumentVersion (const Handle(Storage_IODevice)& aDevice, const Handle(CDM_MessageDriver)& theMsgDriver) const;
 
 
 
@@ -75,7 +75,7 @@ protected:
 private:
 
   
-  Standard_EXPORT static void ReadUserInfo (const TCollection_ExtendedString& aFileName, const TCollection_AsciiString& Start, const TCollection_AsciiString& End, TColStd_SequenceOfExtendedString& theUserInfo, const Handle(CDM_MessageDriver)& theMsgDriver);
+  Standard_EXPORT static void ReadUserInfo (const Handle(Storage_IODevice)& aDevice, const TCollection_AsciiString& Start, const TCollection_AsciiString& End, TColStd_SequenceOfExtendedString& theUserInfo, const Handle(CDM_MessageDriver)& theMsgDriver);
 
 
 

@@ -21,6 +21,7 @@
 #include <BinMDataStd.hxx>
 #include <BinMDataXtd.hxx>
 #include <BinMDF.hxx>
+#include <BinMNaming.hxx>
 #include <BinMDF_ADriverTable.hxx>
 #include <BinMDocStd.hxx>
 #include <BinMFunction.hxx>

@@ -24,6 +24,7 @@
 #include <Standard_Boolean.hxx>
 #include <Storage_Position.hxx>
 #include <Standard_Integer.hxx>
+#include <Storage_IODevice.hxx>
 class BinMDF_ADriverTable;
 class CDM_MessageDriver;
 class BinLDrivers_DocumentSection;
@@ -44,9 +45,9 @@ public:
   
   Standard_EXPORT virtual Handle(BinMDF_ADriverTable) AttributeDrivers (const Handle(CDM_MessageDriver)& theMsgDriver) Standard_OVERRIDE;
   
-  Standard_EXPORT virtual void ReadShapeSection (BinLDrivers_DocumentSection& theSection, Standard_IStream& theIS, const Standard_Boolean isMess = Standard_False) Standard_OVERRIDE;
+  Standard_EXPORT virtual void ReadShapeSection (BinLDrivers_DocumentSection& theSection, const Handle(Storage_IODevice)& theDevice, const Standard_Boolean isMess = Standard_False) Standard_OVERRIDE;
   
-  Standard_EXPORT virtual void CheckShapeSection (const Storage_Position& thePos, Standard_IStream& theIS) Standard_OVERRIDE;
+  Standard_EXPORT virtual void CheckShapeSection (const Storage_Position& thePos, const Handle(Storage_IODevice)& theDevice) Standard_OVERRIDE;
   
   Standard_EXPORT virtual void PropagateDocumentVersion (const Standard_Integer theVersion) Standard_OVERRIDE;
 

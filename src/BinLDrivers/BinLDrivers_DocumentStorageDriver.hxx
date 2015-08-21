@@ -29,6 +29,7 @@
 #include <Standard_OStream.hxx>
 #include <Standard_Boolean.hxx>
 #include <Standard_Type.hxx>
+#include <Storage_IODevice.hxx>
 class BinMDF_ADriverTable;
 class CDM_MessageDriver;
 class TCollection_ExtendedString;
@@ -55,7 +56,7 @@ public:
   Standard_EXPORT virtual TCollection_ExtendedString SchemaName() const Standard_OVERRIDE;
   
   //! Write <theDocument> to the binary file <theFileName>
-  Standard_EXPORT virtual void Write (const Handle(CDM_Document)& theDocument, const TCollection_ExtendedString& theFileName) Standard_OVERRIDE;
+  Standard_EXPORT virtual void Write (const Handle(CDM_Document)& theDocument, const Handle(Storage_IODevice)& theDevice) Standard_OVERRIDE;
   
   Standard_EXPORT virtual Handle(BinMDF_ADriverTable) AttributeDrivers (const Handle(CDM_MessageDriver)& theMsgDriver);
   
@@ -71,13 +72,13 @@ protected:
 
   
   //! Write the tree under <theLabel> to the stream <theOS>
-  Standard_EXPORT void WriteSubTree (const TDF_Label& theData, Standard_OStream& theOS);
+  Standard_EXPORT void WriteSubTree (const TDF_Label& theData, const Handle(Storage_IODevice)& theDevice);
   
   //! define the procedure of writing a section to file.
-  Standard_EXPORT virtual void WriteSection (const TCollection_AsciiString& theName, const Handle(CDM_Document)& theDoc, Standard_OStream& theOS);
+  Standard_EXPORT virtual void WriteSection (const TCollection_AsciiString& theName, const Handle(CDM_Document)& theDoc, const Handle(Storage_IODevice)& theDevice);
   
   //! defines the procedure of writing a shape  section to file
-  Standard_EXPORT virtual void WriteShapeSection (BinLDrivers_DocumentSection& theDocSection, Standard_OStream& theOS);
+  Standard_EXPORT virtual void WriteShapeSection (BinLDrivers_DocumentSection& theDocSection, const Handle(Storage_IODevice)& theDevice);
   
   //! write  theMessage  to  the  MessageDriver  of  the
   //! Application
@@ -97,7 +98,7 @@ private:
   Standard_EXPORT Standard_Boolean FirstPassSubTree (const TDF_Label& L, TDF_LabelList& ListOfEmptyL);
   
   //! Write info secton using FSD_BinaryFile driver
-  Standard_EXPORT void WriteInfoSection (const Handle(CDM_Document)& theDocument, const TCollection_AsciiString& theFile);
+  Standard_EXPORT void WriteInfoSection (const Handle(CDM_Document)& theDocument, const Handle(Storage_IODevice)& theDevice);
   
   Standard_EXPORT void UnsupportedAttrMsg (const Handle(Standard_Type)& theType);
 

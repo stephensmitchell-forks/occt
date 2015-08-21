@@ -22,8 +22,7 @@
 #include <Standard_Handle.hxx>
 
 #include <Standard_Integer.hxx>
-#include <TCollection_ExtendedString.hxx>
-class TCollection_ExtendedString;
+#include <Storage_IODevice.hxx>
 
 
 
@@ -36,11 +35,11 @@ public:
   
   Standard_EXPORT PCDM_Reference();
   
-  Standard_EXPORT PCDM_Reference(const Standard_Integer aReferenceIdentifier, const TCollection_ExtendedString& aFileName, const Standard_Integer aDocumentVersion);
+  Standard_EXPORT PCDM_Reference::PCDM_Reference(const Standard_Integer aReferenceIdentifier, const Handle(Storage_IODevice)& aDevice, const Standard_Integer aDocumentVersion);
   
   Standard_EXPORT Standard_Integer ReferenceIdentifier() const;
   
-  Standard_EXPORT TCollection_ExtendedString FileName() const;
+  Standard_EXPORT Handle(Storage_IODevice) PCDM_Reference::Device() const;
   
   Standard_EXPORT Standard_Integer DocumentVersion() const;
 
@@ -58,7 +57,7 @@ private:
 
 
   Standard_Integer myReferenceIdentifier;
-  TCollection_ExtendedString myFileName;
+  Handle(Storage_IODevice) myDevice;
   Standard_Integer myDocumentVersion;
 
 

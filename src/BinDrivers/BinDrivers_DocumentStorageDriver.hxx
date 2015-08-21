@@ -21,6 +21,7 @@
 
 #include <BinLDrivers_DocumentStorageDriver.hxx>
 #include <Standard_OStream.hxx>
+#include <Storage_IODevice.hxx>
 class BinMDF_ADriverTable;
 class CDM_MessageDriver;
 class BinLDrivers_DocumentSection;
@@ -42,7 +43,7 @@ public:
   Standard_EXPORT virtual Handle(BinMDF_ADriverTable) AttributeDrivers (const Handle(CDM_MessageDriver)& theMsgDriver) Standard_OVERRIDE;
   
   //! implements the procedure of writing a shape section to file
-  Standard_EXPORT virtual void WriteShapeSection (BinLDrivers_DocumentSection& theDocSection, Standard_OStream& theOS) Standard_OVERRIDE;
+  Standard_EXPORT virtual void WriteShapeSection (BinLDrivers_DocumentSection& theDocSection, const Handle(Storage_IODevice)& theDevice) Standard_OVERRIDE;
 
 
 

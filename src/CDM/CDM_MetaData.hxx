@@ -29,6 +29,7 @@
 #include <CDM_Application.hxx>
 #include <Standard_OStream.hxx>
 #include <CDM_MetaDataLookUpTable.hxx>
+#include <Storage_IODevice.hxx>
 class Standard_NoSuchObject;
 class CDM_Reference;
 class CDM_Document;
@@ -46,18 +47,14 @@ class CDM_MetaData : public Standard_Transient
 public:
 
   
-  Standard_EXPORT static Handle(CDM_MetaData) LookUp (const TCollection_ExtendedString& aFolder, const TCollection_ExtendedString& aName, const TCollection_ExtendedString& aPath, const TCollection_ExtendedString& aFileName, const Standard_Boolean ReadOnly);
+  Standard_EXPORT static Handle(CDM_MetaData) LookUp (const Handle(Storage_IODevice)& aDevice, const Standard_Boolean ReadOnly);
   
-  Standard_EXPORT static Handle(CDM_MetaData) LookUp (const TCollection_ExtendedString& aFolder, const TCollection_ExtendedString& aName, const TCollection_ExtendedString& aPath, const TCollection_ExtendedString& aVersion, const TCollection_ExtendedString& aFileName, const Standard_Boolean ReadOnly);
+  Standard_EXPORT static Handle(CDM_MetaData) LookUp (const Handle(Storage_IODevice)& aDevice, const TCollection_ExtendedString& aVersion, const Standard_Boolean ReadOnly);
   
   Standard_EXPORT Standard_Boolean IsRetrieved() const;
   
   Standard_EXPORT Handle(CDM_Document) Document() const;
-  
-  //! returns the folder in which the meta-data has to be created
-  //! or has to be found.
-  Standard_EXPORT TCollection_ExtendedString Folder() const;
-  
+   
   //! returns the name under which the meta-data has to be created
   //! or has to be found.
   Standard_EXPORT TCollection_ExtendedString Name() const;
@@ -70,12 +67,12 @@ public:
   //! searching the corresponding meta-data.
   Standard_EXPORT Standard_Boolean HasVersion() const;
   
-  Standard_EXPORT TCollection_ExtendedString FileName() const;
   
   Standard_EXPORT Standard_OStream& Print (Standard_OStream& anOStream) const;
-Standard_OStream& operator << (Standard_OStream& anOStream);
   
-  Standard_EXPORT TCollection_ExtendedString Path() const;
+  Standard_OStream& operator << (Standard_OStream& anOStream);
+  
+  Standard_EXPORT Handle(Storage_IODevice) Device() const;
   
   Standard_EXPORT void UnsetDocument();
   
@@ -106,9 +103,9 @@ protected:
 private:
 
   
-  Standard_EXPORT CDM_MetaData(const TCollection_ExtendedString& aFolder, const TCollection_ExtendedString& aName, const TCollection_ExtendedString& aPath, const TCollection_ExtendedString& aFileName, const Standard_Boolean ReadOnly);
+  Standard_EXPORT CDM_MetaData(const Handle(Storage_IODevice)& aDevice, const Standard_Boolean ReadOnly);
   
-  Standard_EXPORT CDM_MetaData(const TCollection_ExtendedString& aFolder, const TCollection_ExtendedString& aName, const TCollection_ExtendedString& aPath, const TCollection_ExtendedString& aVersion, const TCollection_ExtendedString& aFileName, const Standard_Boolean ReadOnly);
+  Standard_EXPORT CDM_MetaData(const Handle(Storage_IODevice)& aDevice, const TCollection_ExtendedString& aVersion, const Standard_Boolean ReadOnly);
   
   Standard_EXPORT void SetDocument (const Handle(CDM_Document)& aDocument);
   
@@ -118,12 +115,10 @@ private:
 
   Standard_Boolean myIsRetrieved;
   CDM_DocumentPointer myDocument;
-  TCollection_ExtendedString myFolder;
   TCollection_ExtendedString myName;
   TCollection_ExtendedString myVersion;
   Standard_Boolean myHasVersion;
-  TCollection_ExtendedString myFileName;
-  TCollection_ExtendedString myPath;
+  Handle(Storage_IODevice) myDevice;
   Standard_Integer myDocumentVersion;
   Standard_Boolean myIsReadOnly;
 

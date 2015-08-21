@@ -23,6 +23,7 @@
 #include <Standard_Transient.hxx>
 #include <Standard_Boolean.hxx>
 #include <Standard_Integer.hxx>
+#include <Storage_IODevice.hxx>
 class Standard_NotImplemented;
 class CDM_MetaData;
 class TCollection_ExtendedString;
@@ -77,7 +78,7 @@ public:
   //! MetaData is called by GetMetaData
   //! If the version is  set to NULL, MetaData should return
   //! the last version of the metadata
-  Standard_EXPORT virtual Handle(CDM_MetaData) MetaData (const TCollection_ExtendedString& aFolder, const TCollection_ExtendedString& aName, const TCollection_ExtendedString& aVersion) = 0;
+  Standard_EXPORT virtual Handle(CDM_MetaData) MetaData (const Handle(Storage_IODevice)& aDevice, const TCollection_ExtendedString& aVersion) = 0;
   
   //! by default returns aMetaDATA
   //! should return the MetaData stored in the DBMS with the meta-data
@@ -94,7 +95,7 @@ public:
   //! CreateMetaData is called by CreateData
   //! If the metadata-driver
   //! has version capabilities, version must be set in the returned Data.
-  Standard_EXPORT virtual Handle(CDM_MetaData) CreateMetaData (const Handle(CDM_Document)& aDocument, const TCollection_ExtendedString& aFileName) = 0;
+  Standard_EXPORT virtual Handle(CDM_MetaData) CreateMetaData (const Handle(CDM_Document)& aDocument) = 0;
   
   Standard_EXPORT virtual Standard_Boolean FindFolder (const TCollection_ExtendedString& aFolder) = 0;
   
@@ -106,7 +107,7 @@ public:
   Standard_EXPORT Standard_Boolean Find (const TCollection_ExtendedString& aFolder, const TCollection_ExtendedString& aName);
   
   //! calls MetaData with an empty version
-  Standard_EXPORT Handle(CDM_MetaData) MetaData (const TCollection_ExtendedString& aFolder, const TCollection_ExtendedString& aName);
+  Standard_EXPORT Handle(CDM_MetaData) MetaData (const Handle(Storage_IODevice)& aDevice);
 
 
 

@@ -29,6 +29,7 @@
 #include <CDF_TypeOfActivation.hxx>
 #include <Standard_ExtString.hxx>
 #include <Standard_Integer.hxx>
+#include <Storage_IODevice.hxx>
 class Standard_NoSuchObject;
 class CDF_Session;
 class Standard_GUID;
@@ -89,7 +90,7 @@ public:
   //!
   //! Since  the version is not specified in  this syntax, the  latest wil be used.
   //! A link is kept with the database through an instance of CDM_MetaData
-  Standard_EXPORT Handle(CDM_Document) Retrieve (const TCollection_ExtendedString& aFolder, const TCollection_ExtendedString& aName, const Standard_Boolean UseStorageConfiguration = Standard_True);
+  Standard_EXPORT Handle(CDM_Document) Retrieve (Handle(Storage_IODevice)& aDevice, const Standard_Boolean UseStorageConfiguration = Standard_True);
   
   //! This method retrieves  a  document from the database.
   //! If the  Document references other documents which have
@@ -105,20 +106,20 @@ public:
   //! Handle(CDM_Document) theDocument=myApplication->Retrieve("|user|cascade","box","2");
   //! A link is kept with the database through an instance
   //! of CDM_MetaData
-  Standard_EXPORT Handle(CDM_Document) Retrieve (const TCollection_ExtendedString& aFolder, const TCollection_ExtendedString& aName, const TCollection_ExtendedString& aVersion, const Standard_Boolean UseStorageConfiguration = Standard_True);
+  Standard_EXPORT Handle(CDM_Document) Retrieve (Handle(Storage_IODevice)& aDevice, const TCollection_ExtendedString& aVersion, const Standard_Boolean UseStorageConfiguration = Standard_True);
   
-  Standard_EXPORT PCDM_ReaderStatus CanRetrieve (const TCollection_ExtendedString& aFolder, const TCollection_ExtendedString& aName);
+  Standard_EXPORT PCDM_ReaderStatus CanRetrieve (Handle(Storage_IODevice)& aDevice);
   
-  Standard_EXPORT PCDM_ReaderStatus CanRetrieve (const TCollection_ExtendedString& aFolder, const TCollection_ExtendedString& aName, const TCollection_ExtendedString& aVersion);
+  Standard_EXPORT PCDM_ReaderStatus CanRetrieve (Handle(Storage_IODevice)& aDevice, const TCollection_ExtendedString& aVersion);
   
   Standard_EXPORT virtual void Formats (TColStd_SequenceOfExtendedString& Formats) = 0;
   
   //! Checks  status  after  Retrieve
     PCDM_ReaderStatus GetRetrieveStatus() const;
   
-  Standard_EXPORT Standard_Boolean FindReader (const TCollection_ExtendedString& aFileName);
+  Standard_EXPORT Standard_Boolean FindReader (const Handle(Storage_IODevice)& aDevice);
   
-  Standard_EXPORT Handle(PCDM_Reader) Reader (const TCollection_ExtendedString& aFileName);
+  Standard_EXPORT Handle(PCDM_Reader) Reader (const Handle(Storage_IODevice)& aDevice);
   
   Standard_EXPORT Standard_Boolean FindReaderFromFormat (const TCollection_ExtendedString& aFormat);
   
@@ -127,7 +128,7 @@ public:
   //! try to  retrieve a Format  directly in the  file or in
   //! application   resource  by using   extension. returns
   //! True if found;
-  Standard_EXPORT Standard_Boolean Format (const TCollection_ExtendedString& aFileName, TCollection_ExtendedString& theFormat);
+  Standard_EXPORT Standard_Boolean Format (const Handle(Storage_IODevice)& aDevice, TCollection_ExtendedString& theFormat);
   
   Standard_EXPORT Standard_ExtString DefaultFolder();
   
@@ -173,7 +174,7 @@ private:
   
   Standard_EXPORT Standard_Integer DocumentVersion (const Handle(CDM_MetaData)& theMetaData);
   
-  Standard_EXPORT Standard_Boolean FindReader (const TCollection_ExtendedString& aFileName, Standard_GUID& PluginIn, TCollection_ExtendedString& ResourceName);
+  Standard_EXPORT Standard_Boolean FindReader (const Handle(Storage_IODevice)& aDevice, Standard_GUID& PluginIn, TCollection_ExtendedString& ResourceName);
   
   Standard_EXPORT Standard_Boolean FindReaderFromFormat (const TCollection_ExtendedString& aFormat, Standard_GUID& PluginIn, TCollection_ExtendedString& ResourceName);
   

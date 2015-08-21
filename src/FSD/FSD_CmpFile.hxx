@@ -25,6 +25,7 @@
 #include <Storage_BaseDriver.hxx>
 #include <Storage_Error.hxx>
 #include <Storage_OpenMode.hxx>
+#include <Storage_IODevice.hxx>
 #include <Standard_Boolean.hxx>
 #include <Storage_Position.hxx>
 #include <Standard_Integer.hxx>
@@ -56,14 +57,14 @@ public:
   
   Standard_EXPORT FSD_CmpFile();
   
-  Standard_EXPORT Storage_Error Open (const TCollection_AsciiString& aName, const Storage_OpenMode aMode);
+  Standard_EXPORT Storage_Error Open (const Handle(Storage_IODevice)& aDevice, const Storage_OpenMode aMode);
   
   Standard_EXPORT Standard_Boolean IsEnd();
   
   //! return position in the file. Return -1 upon error.
   Standard_EXPORT Storage_Position Tell();
   
-  Standard_EXPORT static Storage_Error IsGoodFileType (const TCollection_AsciiString& aName);
+  Standard_EXPORT static Storage_Error IsGoodFileType (const Handle(Storage_IODevice)& aDevice);
   
   Standard_EXPORT Storage_Error BeginWriteInfoSection();
   
@@ -265,6 +266,9 @@ protected:
   
   //! read extended chars (unicode) from the current position to the end of line.
   Standard_EXPORT void ReadExtendedLine (TCollection_ExtendedString& buffer);
+
+  //! write the line.
+  Standard_EXPORT void WriteLine(const TCollection_AsciiString& buffer, Standard_Boolean putNewLine = Standard_True);
   
   //! write from the current position to the end of line.
   Standard_EXPORT void WriteExtendedLine (const TCollection_ExtendedString& buffer);
@@ -288,9 +292,6 @@ private:
   Standard_EXPORT static const Standard_CString MagicNumber();
   
   Standard_EXPORT void RaiseError (const Handle(Standard_Type)& theFailure);
-
-
-  FSD_FStream myStream;
 
 
 };

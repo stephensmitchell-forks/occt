@@ -38,6 +38,7 @@
 #include <Standard_OStream.hxx>
 #include <Standard_IStream.hxx>
 #include <Standard_Address.hxx>
+#include <Storage_IODevice.hxx>
 class TCollection_AsciiString;
 class TCollection_ExtendedString;
 class TDF_Label;
@@ -291,11 +292,15 @@ operator Standard_Boolean () const { return IsOK(); }
   //! inline Standard_OStream& operator<< (Standard_OStream&,
   //! BinObjMgt_Persistent&) is also available
   Standard_EXPORT Standard_OStream& Write (Standard_OStream& theOS);
+
+  Standard_EXPORT void Write (const Handle(Storage_IODevice)& theDevice);
   
   //! Retrieves <me> from the stream.
   //! inline Standard_IStream& operator>> (Standard_IStream&,
   //! BinObjMgt_Persistent&) is also available
   Standard_EXPORT Standard_IStream& Read (Standard_IStream& theIS);
+
+  Standard_EXPORT void Read (const Handle(Storage_IODevice)& aDevice);
   
   //! Frees the allocated memory;
   //! This object can be reused after call to Init

@@ -35,6 +35,7 @@
 #include <PCDM_TypeOfFileDriver.hxx>
 #include <PCDM_WriteError.hxx>
 #include <PCDM_ReadError.hxx>
+#include <UTL.hxx>
 
 #define START_REF "START_REF"
 #define END_REF "END_REF"

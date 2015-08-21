@@ -1,4 +1,4 @@
-// Created on: 1997-12-18
+// Created on: 1997-08-01
 // Created by: Jean-Louis Frenkel
 // Copyright (c) 1997-1999 Matra Datavision
 // Copyright (c) 1999-2014 OPEN CASCADE SAS
@@ -14,52 +14,24 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef _PCDM_Writer_HeaderFile
-#define _PCDM_Writer_HeaderFile
+#ifndef _PCDM_ReadError_HeaderFile
+#define _PCDM_ReadError_HeaderFile
 
-#include <Standard.hxx>
 #include <Standard_Type.hxx>
-#include <Storage_IODevice.hxx>
+#include <Standard_DefineException.hxx>
+#include <Standard_SStream.hxx>
+#include <Standard_Failure.hxx>
 
-#include <Standard_Transient.hxx>
-class PCDM_DriverError;
-class CDM_Document;
-class TCollection_ExtendedString;
+class PCDM_ReadError;
+DEFINE_STANDARD_HANDLE(PCDM_ReadError, Standard_Failure)
 
+#if !defined No_Exception && !defined No_PCDM_ReadError
+  #define PCDM_ReadError_Raise_if(CONDITION, MESSAGE) \
+  if (CONDITION) PCDM_ReadError::Raise(MESSAGE);
+#else
+  #define PCDM_ReadError_Raise_if(CONDITION, MESSAGE)
+#endif
 
-class PCDM_Writer;
-DEFINE_STANDARD_HANDLE(PCDM_Writer, Standard_Transient)
+DEFINE_STANDARD_EXCEPTION(PCDM_ReadError, Standard_Failure)
 
-
-class PCDM_Writer : public Standard_Transient
-{
-
-public:
-
-  
-  Standard_EXPORT virtual void Write (const Handle(CDM_Document)& aDocument, const Handle(Storage_IODevice)& aDevice) = 0;
-
-
-
-
-  DEFINE_STANDARD_RTTI(PCDM_Writer,Standard_Transient)
-
-protected:
-
-
-
-
-private:
-
-
-
-
-};
-
-
-
-
-
-
-
-#endif // _PCDM_Writer_HeaderFile
+#endif // _PCDM_ReadError_HeaderFile

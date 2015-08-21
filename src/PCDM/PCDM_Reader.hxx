@@ -22,6 +22,7 @@
 
 #include <PCDM_ReaderStatus.hxx>
 #include <Standard_Transient.hxx>
+#include <Storage_IODevice.hxx>
 class PCDM_DriverError;
 class CDM_Document;
 class TCollection_ExtendedString;
@@ -42,7 +43,7 @@ public:
   Standard_EXPORT virtual Handle(CDM_Document) CreateDocument() = 0;
   
   //! retrieves the content of the file into a new Document.
-  Standard_EXPORT virtual void Read (const TCollection_ExtendedString& aFileName, const Handle(CDM_Document)& aNewDocument, const Handle(CDM_Application)& anApplication) = 0;
+  Standard_EXPORT virtual void Read (const Handle(Storage_IODevice)& aDevice, const Handle(CDM_Document)& aNewDocument, const Handle(CDM_Application)& anApplication) = 0;
   
     PCDM_ReaderStatus GetStatus() const;
 

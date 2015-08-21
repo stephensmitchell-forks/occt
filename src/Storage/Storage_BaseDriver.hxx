@@ -22,6 +22,7 @@
 #include <Standard_Handle.hxx>
 
 #include <Storage_OpenMode.hxx>
+#include <Storage_IODevice.hxx>
 #include <TCollection_AsciiString.hxx>
 #include <Storage_Error.hxx>
 #include <Standard_Boolean.hxx>
@@ -54,13 +55,14 @@ public:
 
   
   Standard_EXPORT void Delete();
-Standard_EXPORT virtual ~Storage_BaseDriver(){Delete();}
+
+  Standard_EXPORT virtual ~Storage_BaseDriver() {Delete();}
   
-  Standard_EXPORT virtual Storage_Error Open (const TCollection_AsciiString& aName, const Storage_OpenMode aMode) = 0;
+  Standard_EXPORT virtual Storage_Error Open (const Handle(Storage_IODevice)& aDevice, const Storage_OpenMode aMode) = 0;
   
-    TCollection_AsciiString Name() const;
+  Standard_EXPORT Handle(Storage_IODevice) Device() const;
   
-    Storage_OpenMode OpenMode() const;
+  Storage_OpenMode OpenMode() const;
   
   //! returns True if we are at end of the stream
   Standard_EXPORT virtual Standard_Boolean IsEnd() = 0;
@@ -256,9 +258,9 @@ protected:
   
   Standard_EXPORT Storage_BaseDriver();
   
-    void SetName (const TCollection_AsciiString& aName);
+  void SetDevice( const Handle(Storage_IODevice)& theDevice );
   
-    void SetOpenMode (const Storage_OpenMode aMode);
+  void SetOpenMode (const Storage_OpenMode aMode);
 
 
 
@@ -266,10 +268,7 @@ protected:
 private:
 
 
-
-  Storage_OpenMode myOpenMode;
-  TCollection_AsciiString myName;
-
+  Handle(Storage_IODevice) myDevice;
 
 };
 

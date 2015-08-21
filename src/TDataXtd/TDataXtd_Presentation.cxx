@@ -14,7 +14,7 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#include <TDataXtd_Presentation.ixx>
+#include <TDataXtd_Presentation.hxx>
 
 #include <TDF_DefaultDeltaOnRemoval.hxx>
 #include <TDF_DefaultDeltaOnModification.hxx>

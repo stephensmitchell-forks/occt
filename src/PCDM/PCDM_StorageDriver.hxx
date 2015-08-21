@@ -26,6 +26,7 @@
 #include <PCDM_Writer.hxx>
 #include <PCDM_SequenceOfDocument.hxx>
 #include <TColStd_SequenceOfExtendedString.hxx>
+#include <Storage_IODevice.hxx>
 class Standard_NoSuchObject;
 class PCDM_DriverError;
 class PCDM_Document;
@@ -74,7 +75,7 @@ public:
   //!
   //! by  default  Write will  use Make   method to build a persistent
   //! document and the Schema method to write the persistent document.
-  Standard_EXPORT virtual void Write (const Handle(CDM_Document)& aDocument, const TCollection_ExtendedString& aFileName) Standard_OVERRIDE;
+  Standard_EXPORT virtual void Write (const Handle(CDM_Document)& aDocument, const Handle(Storage_IODevice)& aDevice) Standard_OVERRIDE;
   
   Standard_EXPORT void SetFormat (const TCollection_ExtendedString& aformat);
   

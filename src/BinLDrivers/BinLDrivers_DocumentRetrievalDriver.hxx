@@ -28,6 +28,7 @@
 #include <Standard_IStream.hxx>
 #include <Storage_Position.hxx>
 #include <Standard_Boolean.hxx>
+#include <Storage_IODevice.hxx>
 class BinMDF_ADriverTable;
 class CDM_MessageDriver;
 class TCollection_ExtendedString;
@@ -63,7 +64,7 @@ public:
   Standard_EXPORT virtual Handle(CDM_Document) CreateDocument() Standard_OVERRIDE;
   
   //! retrieves the content of the file into a new Document.
-  Standard_EXPORT virtual void Read (const TCollection_ExtendedString& theFileName, const Handle(CDM_Document)& theNewDocument, const Handle(CDM_Application)& theApplication) Standard_OVERRIDE;
+  Standard_EXPORT virtual void Read (const Handle(Storage_IODevice)& theDevice, const Handle(CDM_Document)& theNewDocument, const Handle(CDM_Application)& theApplication) Standard_OVERRIDE;
   
   Standard_EXPORT virtual Handle(BinMDF_ADriverTable) AttributeDrivers (const Handle(CDM_MessageDriver)& theMsgDriver);
 
@@ -76,19 +77,19 @@ protected:
 
   
   //! Read the tree from the stream <theIS> to <theLabel>
-  Standard_EXPORT virtual Standard_Integer ReadSubTree (Standard_IStream& theIS, const TDF_Label& theData);
+  Standard_EXPORT virtual Standard_Integer ReadSubTree (const Handle(Storage_IODevice)& theDevice, const TDF_Label& theData);
   
   //! Read the  info  section  of  theFile into theData,
   //! return a file  position  corresponding to the info
   //! section end
-  Standard_EXPORT Storage_Position ReadInfoSection (const TCollection_AsciiString& theFile, Handle(Storage_HeaderData)& theData);
+  Standard_EXPORT Storage_Position ReadInfoSection (const Handle(Storage_IODevice)& theDevice, Handle(Storage_HeaderData)& theData);
   
   //! define the procedure of reading a section to file.
-  Standard_EXPORT virtual void ReadSection (BinLDrivers_DocumentSection& theSection, const Handle(CDM_Document)& theDoc, Standard_IStream& theIS);
+  Standard_EXPORT virtual void ReadSection (BinLDrivers_DocumentSection& theSection, const Handle(CDM_Document)& theDoc, const Handle(Storage_IODevice)&   theDevice);
   
-  Standard_EXPORT virtual void ReadShapeSection (BinLDrivers_DocumentSection& theSection, Standard_IStream& theIS, const Standard_Boolean isMess = Standard_False);
+  Standard_EXPORT virtual void ReadShapeSection (BinLDrivers_DocumentSection& theSection, const Handle(Storage_IODevice)& theDevice, const Standard_Boolean isMess = Standard_False);
   
-  Standard_EXPORT virtual void CheckShapeSection (const Storage_Position& thePos, Standard_IStream& theIS);
+  Standard_EXPORT virtual void CheckShapeSection (const Storage_Position& thePos, const Handle(Storage_IODevice)& theDevice);
   
   Standard_EXPORT virtual void PropagateDocumentVersion (const Standard_Integer theVersion);
   

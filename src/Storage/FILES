@@ -15,6 +15,8 @@ Storage_DataMapIteratorOfMapOfPers.hxx
 Storage_DefaultCallBack.cxx
 Storage_DefaultCallBack.hxx
 Storage_Error.hxx
+Storage_File.cxx
+Storage_File.hxx
 Storage_HArrayOfCallBack.hxx
 Storage_HArrayOfSchema.hxx
 Storage_HeaderData.cxx
@@ -23,10 +25,17 @@ Storage_HPArray.hxx
 Storage_HSeqOfRoot.hxx
 Storage_InternalData.cxx
 Storage_InternalData.hxx
+Storage_IODevice.cxx
+Storage_IODevice.hxx
+Storage_IODevice.lxx
+Storage_IStream.cxx
+Storage_IStream.hxx
 Storage_Macros.hxx
 Storage_MapOfCallBack.hxx
 Storage_MapOfPers.hxx
 Storage_OpenMode.hxx
+Storage_OStream.cxx
+Storage_OStream.hxx
 Storage_PArray.hxx
 Storage_Position.hxx
 Storage_PType.hxx
@@ -34,6 +43,7 @@ Storage_Root.cxx
 Storage_Root.hxx
 Storage_RootData.cxx
 Storage_RootData.hxx
+Storage_SeekMode.hxx
 Storage_Schema.cxx
 Storage_Schema.hxx
 Storage_Schema.lxx

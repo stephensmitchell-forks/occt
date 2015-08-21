@@ -22,6 +22,7 @@
 
 #include <CDF_MetaDataDriver.hxx>
 #include <Standard_Boolean.hxx>
+#include <Storage_IODevice.hxx>
 class TCollection_ExtendedString;
 class CDM_MetaData;
 class CDM_Document;
@@ -66,13 +67,13 @@ protected:
 private:
 
   
-  Standard_EXPORT Handle(CDM_MetaData) MetaData (const TCollection_ExtendedString& aFolder, const TCollection_ExtendedString& aName, const TCollection_ExtendedString& aVersion);
+  Standard_EXPORT Handle(CDM_MetaData) MetaData (const Handle(Storage_IODevice)& aDevice, const TCollection_ExtendedString& aVersion);
   
-  Standard_EXPORT Handle(CDM_MetaData) CreateMetaData (const Handle(CDM_Document)& aDocument, const TCollection_ExtendedString& aFileName);
+  Standard_EXPORT Handle(CDM_MetaData) CreateMetaData (const Handle(CDM_Document)& aDocument);
   
   Standard_EXPORT static TCollection_ExtendedString Concatenate (const TCollection_ExtendedString& aFolder, const TCollection_ExtendedString& aName);
   
-  Standard_EXPORT Handle(CDM_MetaData) BuildMetaData (const TCollection_ExtendedString& aFileName);
+  Standard_EXPORT Handle(CDM_MetaData) BuildMetaData (const Handle(Storage_IODevice)& aDevice);
 
 
 

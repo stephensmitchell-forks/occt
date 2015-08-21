@@ -3,7 +3,7 @@
 // Author:    stv@NETEX
 // Copyright: Open CASCADE 2015
 
-#include <Storage_IODevice.ixx>
+#include <Storage_IODevice.hxx>
 
 //=======================================================================
 //function : Storage_IODevice

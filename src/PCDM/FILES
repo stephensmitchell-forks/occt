@@ -6,6 +6,8 @@ PCDM_Document.hxx
 PCDM_DOMHeaderParser.cxx
 PCDM_DOMHeaderParser.hxx
 PCDM_DriverError.hxx
+PCDM_ReadError.hxx
+PCDM_WriteError.hxx
 PCDM_Reader.cxx
 PCDM_Reader.hxx
 PCDM_Reader.lxx

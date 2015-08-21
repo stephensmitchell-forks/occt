@@ -65,12 +65,15 @@ public:
   //! in the case of a subcomponent for which no storage driver exists,
   //! returns the name of the subcomponent if there is one.
   Standard_EXPORT Standard_ExtString LastName() const;
+
+  Standard_EXPORT Handle(Storage_IODevice) Device() const;
   
-  //! returns the folder in which the current document will be stored.
-  Standard_EXPORT Standard_ExtString Folder() const;
-  
-  //! returns the name under which the current document will be stored
+    //! returns the name under which the current document will be stored
   Standard_EXPORT Standard_ExtString Name() const;
+
+  Standard_EXPORT Standard_Boolean SetDevice(const Handle(Storage_IODevice)& aDevice);
+
+  Standard_EXPORT Handle(Storage_IODevice) CDF_Store::MetaDataDevice() const;
   
   //! returns true if the current document is already stored
   Standard_EXPORT Standard_Boolean IsStored() const;

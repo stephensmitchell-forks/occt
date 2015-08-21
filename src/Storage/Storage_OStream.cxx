@@ -3,8 +3,7 @@
 // Author:    
 // Copyright: Open CASCADE 2015
 
-#include <Storage_OStream.ixx>
-
+#include <Storage_OStream.hxx>
 #include <Standard_SStream.hxx>
 
 #include <TCollection_AsciiString.hxx>

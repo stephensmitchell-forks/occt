@@ -26,6 +26,7 @@
 #include <TColStd_SequenceOfExtendedString.hxx>
 #include <PCDM_SequenceOfReference.hxx>
 #include <Standard_Integer.hxx>
+#include <Storage_IODevice.hxx>
 class Standard_NoSuchObject;
 class PCDM_DriverError;
 class CDM_MetaData;
@@ -55,7 +56,7 @@ public:
   //! by  default  Read will  use the Schema method to read the file
   //! into a persistent document. and the Make   method to build a
   //! transient document.
-  Standard_EXPORT virtual void Read (const TCollection_ExtendedString& aFileName, const Handle(CDM_Document)& aNewDocument, const Handle(CDM_Application)& anApplication) Standard_OVERRIDE;
+  Standard_EXPORT virtual void Read (const Handle(Storage_IODevice)& aDevice, const Handle(CDM_Document)& aNewDocument, const Handle(CDM_Application)& anApplication) Standard_OVERRIDE;
   
   Standard_EXPORT virtual void Make (const Handle(PCDM_Document)& aPCDM, const Handle(CDM_Document)& aNewDocument) = 0;
   
@@ -63,11 +64,11 @@ public:
   
   Standard_EXPORT virtual void LoadExtensions (const Handle(Storage_Schema)& aSchema, const TColStd_SequenceOfExtendedString& Extensions, const Handle(CDM_MessageDriver)& theMsgDriver);
   
-  Standard_EXPORT static void RaiseIfUnknownTypes (const Handle(Storage_Schema)& aSchema, const TCollection_ExtendedString& aFileName);
+  Standard_EXPORT static void RaiseIfUnknownTypes (const Handle(Storage_Schema)& aSchema, const Handle(Storage_IODevice)& aDevice);
   
-  Standard_EXPORT static Standard_Integer DocumentVersion (const TCollection_ExtendedString& aFileName, const Handle(CDM_MessageDriver)& theMsgDriver);
+  Standard_EXPORT static Standard_Integer DocumentVersion (const Handle(Storage_IODevice)& aDevice, const Handle(CDM_MessageDriver)& theMsgDriver);
   
-  Standard_EXPORT static Standard_Integer ReferenceCounter (const TCollection_ExtendedString& aFileName, const Handle(CDM_MessageDriver)& theMsgDriver);
+  Standard_EXPORT static Standard_Integer ReferenceCounter (const Handle(Storage_IODevice)& aDevice, const Handle(CDM_MessageDriver)& theMsgDriver);
   
   Standard_EXPORT void SetFormat (const TCollection_ExtendedString& aformat);
   
@@ -88,9 +89,9 @@ protected:
 private:
 
   
-  Standard_EXPORT static void References (const TCollection_ExtendedString& aFileName, PCDM_SequenceOfReference& theReferences, const Handle(CDM_MessageDriver)& theMsgDriver);
+  Standard_EXPORT static void References (const Handle(Storage_IODevice)& aDevice, PCDM_SequenceOfReference& theReferences, const Handle(CDM_MessageDriver)& theMsgDriver);
   
-  Standard_EXPORT static void Extensions (const TCollection_ExtendedString& aFileName, TColStd_SequenceOfExtendedString& theExtensions, const Handle(CDM_MessageDriver)& theMsgDriver);
+  Standard_EXPORT static void Extensions (const Handle(Storage_IODevice)& aDevice, TColStd_SequenceOfExtendedString& theExtensions, const Handle(CDM_MessageDriver)& theMsgDriver);
   
   Standard_EXPORT static void UserInfo (const TCollection_ExtendedString& aFileName, const TCollection_AsciiString& Start, const TCollection_AsciiString& End, TColStd_SequenceOfExtendedString& theUserInfo, const Handle(CDM_MessageDriver)& theMsgDriver);
 

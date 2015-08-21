@@ -689,7 +689,6 @@ void TPrsStd_AISPresentation::SetSelectionMode(const Standard_Integer theSelecti
   // OCC2932 correction
   if(hasOwnSelectionMode && mySelectionMode == theSelectionMode && !myAIS.IsNull())
       return;
-  }
 
   Backup();
   mySelectionMode = theSelectionMode;
@@ -970,20 +969,18 @@ void TPrsStd_AISPresentation::AISUpdate()
         myAIS->SetDisplayMode(aMode);
     }
 
-    if ( HasOwnSelectionMode() )
+    /*if ( HasOwnSelectionMode() )
     {
       const Standard_Integer aMode = SelectionMode();
       if (myAIS->SelectionMode() != aMode )
         myAIS->SetSelectionMode(aMode);
-    }
-  }
+    }*/
 
   if ( !aContext.IsNull() && IsDisplayed() )
     aContext->Redisplay(myAIS, Standard_False);
 
     if (hasOwnSelectionMode) {
-      const Handle(AIS_InteractiveContext) aContext =
-        ctx.IsNull() ? myAIS->GetContext() : ctx;
+      //aContext = aContext.IsNull() ? myAIS->GetContext() : aContext;
       if (!aContext.IsNull())
       {
         TColStd_ListOfInteger anActivatedModes;
@@ -1005,7 +1002,7 @@ void TPrsStd_AISPresentation::AISUpdate()
 
   }
   
-  if( isDisplayed && !ctx.IsNull() ) ctx->Redisplay(myAIS, Standard_False);
+  if( isDisplayed && !aContext.IsNull() ) aContext->Redisplay(myAIS, Standard_False);
  
   return;
 }

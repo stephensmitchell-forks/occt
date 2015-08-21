@@ -24,6 +24,7 @@
 #include <Standard_Boolean.hxx>
 #include <PCDM_TypeOfFileDriver.hxx>
 #include <PCDM_BaseDriverPointer.hxx>
+#include <Storage_IODevice.hxx>
 class CDM_Document;
 class PCDM_StorageDriver;
 class Storage_Schema;
@@ -73,7 +74,7 @@ protected:
 private:
 
   
-  Standard_EXPORT static PCDM_TypeOfFileDriver FileDriverType (const TCollection_AsciiString& aFileName, PCDM_BaseDriverPointer& aBaseDriver);
+  Standard_EXPORT static PCDM_TypeOfFileDriver FileDriverType (const Handle(Storage_IODevice)& aDevice, PCDM_BaseDriverPointer& aBaseDriver);
 
 
 

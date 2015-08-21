@@ -26,6 +26,7 @@
 #include <Standard_Boolean.hxx>
 #include <XmlObjMgt_Element.hxx>
 #include <Standard_Integer.hxx>
+#include <Storage_IODevice.hxx>
 class XmlMDF_ADriverTable;
 class TCollection_ExtendedString;
 class CDM_Document;
@@ -47,7 +48,7 @@ public:
   
   Standard_EXPORT virtual TCollection_ExtendedString SchemaName() const Standard_OVERRIDE;
   
-  Standard_EXPORT virtual void Write (const Handle(CDM_Document)& theDocument, const TCollection_ExtendedString& theFileName) Standard_OVERRIDE;
+  Standard_EXPORT virtual void Write (const Handle(CDM_Document)& theDocument, const Handle(Storage_IODevice)& theDevice) Standard_OVERRIDE;
   
   Standard_EXPORT virtual Handle(XmlMDF_ADriverTable) AttributeDrivers (const Handle(CDM_MessageDriver)& theMsgDriver);
 
@@ -59,7 +60,7 @@ public:
 protected:
 
   
-  Standard_EXPORT virtual Standard_Boolean WriteToDomDocument (const Handle(CDM_Document)& theDocument, XmlObjMgt_Element& thePDoc, const TCollection_ExtendedString& theFileName);
+  Standard_EXPORT virtual Standard_Boolean WriteToDomDocument (const Handle(CDM_Document)& theDocument, XmlObjMgt_Element& thePDoc, const Handle(Storage_IODevice)& theDevice);
   
   Standard_EXPORT virtual Standard_Integer MakeDocument (const Handle(CDM_Document)& theDocument, XmlObjMgt_Element& thePDoc);
   

@@ -3,10 +3,8 @@
 // Author:    
 // Copyright: Open CASCADE 2015
 
-#include <Storage_File.ixx>
-
+#include <Storage_File.hxx>
 #include <TDocStd_PathParser.hxx>
-
 #include <TCollection_AsciiString.hxx>
 
 //=======================================================================

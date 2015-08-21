@@ -14,23 +14,15 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef _Storage_OpenMode_HeaderFile
-#define _Storage_OpenMode_HeaderFile
+#ifndef _Storage_SeekMode_HeaderFile
+#define _Storage_SeekMode_HeaderFile
 
 
-//! Specifies opening modes for a file:
-//! -   Storage_VSNone : no mode is specified
-//! -   Storage_VSRead : the file is open for  reading operations
-//! -   Storage_VSWrite : the file is open for writing operations
-//! -   Storage_VSReadWrite : the file is open
-//! for both reading and writing operations.
-enum Storage_OpenMode
+enum Storage_SeekMode
 {
-Storage_VSNone,
-Storage_VSRead,
-Storage_VSWrite,
-Storage_VSAppend,
-Storage_VSReadWrite
+  Storage_SMBegin,
+  Storage_SMCur,
+  Storage_SMEnd
 };
 
-#endif // _Storage_OpenMode_HeaderFile
+#endif // _Storage_SeekMode_HeaderFile

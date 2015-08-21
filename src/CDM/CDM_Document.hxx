@@ -19,6 +19,7 @@
 
 #include <Standard.hxx>
 #include <Standard_Type.hxx>
+#include <Storage_IODevice.hxx>
 
 #include <TColStd_SequenceOfExtendedString.hxx>
 #include <TCollection_ExtendedString.hxx>
@@ -252,15 +253,17 @@ public:
   Standard_EXPORT void UnsetIsStored();
   
   Standard_EXPORT Handle(CDM_MetaData) MetaData() const;
+
+  Standard_EXPORT Handle(Storage_IODevice) Device() const;
   
   Standard_EXPORT TCollection_ExtendedString Folder() const;
   
-  //! defines the folder in which the object should be stored.
-  Standard_EXPORT void SetRequestedFolder (const TCollection_ExtendedString& aFolder);
+  //! defines the device in which the object should be stored.
+  Standard_EXPORT void SetRequestedDevice (const Handle(Storage_IODevice)& aDevice);
   
-  Standard_EXPORT TCollection_ExtendedString RequestedFolder() const;
+  Standard_EXPORT Handle(Storage_IODevice) RequestedDevice() const;
   
-  Standard_EXPORT Standard_Boolean HasRequestedFolder() const;
+  Standard_EXPORT Standard_Boolean HasRequestedDevice() const;
   
   //! defines the name under which the object should be stored.
   Standard_EXPORT void SetRequestedName (const TCollection_ExtendedString& aName);
@@ -420,10 +423,7 @@ private:
   Standard_Integer myStorageVersion;
   Handle(CDM_MetaData) myMetaData;
   TCollection_ExtendedString myRequestedComment;
-  TCollection_ExtendedString myRequestedFolder;
-  Standard_Boolean myRequestedFolderIsDefined;
-  TCollection_ExtendedString myRequestedName;
-  Standard_Boolean myRequestedNameIsDefined;
+  Handle(Storage_IODevice) myRequestedDevice;
   Standard_Boolean myRequestedPreviousVersionIsDefined;
   TCollection_ExtendedString myRequestedPreviousVersion;
   TCollection_ExtendedString myFileExtension;

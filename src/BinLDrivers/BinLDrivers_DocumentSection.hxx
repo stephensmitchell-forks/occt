@@ -24,6 +24,7 @@
 #include <Standard_Boolean.hxx>
 #include <Standard_OStream.hxx>
 #include <Standard_IStream.hxx>
+#include <Storage_IODevice.hxx>
 class TCollection_AsciiString;
 
 
@@ -64,15 +65,15 @@ public:
   Standard_EXPORT void SetLength (const Standard_Size theLength);
   
   //! Create a Section entry in the Document TOC (list of sections)
-  Standard_EXPORT void WriteTOC (Standard_OStream& theOS);
+  Standard_EXPORT void WriteTOC (const Handle(Storage_IODevice)& theDevice);
   
   //! Save Offset and Length data into the Section entry
   //! in the Document TOC (list of sections)
-  Standard_EXPORT void Write (Standard_OStream& theOS, const Standard_Size theOffset);
+  Standard_EXPORT void Write (const Handle(Storage_IODevice)& theDevice, const Standard_Size theOffset);
   
   //! Fill a DocumentSection instance from the data that are read
   //! from TOC.
-  Standard_EXPORT static void ReadTOC (BinLDrivers_DocumentSection& theSection, Standard_IStream& theIS);
+  Standard_EXPORT static void ReadTOC (BinLDrivers_DocumentSection& theSection, const Handle(Storage_IODevice)& theDevice);
 
 
 
