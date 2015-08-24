@@ -55,8 +55,7 @@
 #include <TDF_RelocationTable.hxx>
 #include <TDF_Tool.hxx>
 
-#include <DDF_IOStream.hxx>
-
+#include <Storage_Error.hxx>
 
 //=======================================================================
 //function : Children

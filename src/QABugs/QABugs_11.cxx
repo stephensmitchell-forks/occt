@@ -822,7 +822,7 @@ static Standard_Integer OCC381_SaveAs (Draw_Interpretor& di, Standard_Integer nb
   if (!DDocStd::Find(A)) return 1;
 
   TCollection_ExtendedString theStatusMessage;
-  PCDM_StoreStatus theStatus = A->SaveAs(D,path, theStatusMessage);
+  PCDM_StoreStatus theStatus = PCDM_SS_Failure; //A->SaveAs(D,path, theStatusMessage);
   if (theStatus != PCDM_SS_OK ) {
     switch ( theStatus ) {
       case PCDM_SS_DriverFailure: {

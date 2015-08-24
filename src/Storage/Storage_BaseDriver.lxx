@@ -12,23 +12,22 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-inline TCollection_AsciiString Storage_BaseDriver::Name() const
+#include <Storage_IODevice.hxx>
+
+inline Handle(Storage_IODevice) Storage_BaseDriver::Device() const
 {
-  return myName;
+  return myDevice;
 }
 
 inline Storage_OpenMode Storage_BaseDriver::OpenMode() const
 {
-  return myOpenMode;
+  Storage_OpenMode aMode = Storage_VSNone;
+  if ( !Device().IsNull() )
+    aMode = Device()->OpenMode();
+  return aMode;
 }
 
-inline void Storage_BaseDriver::SetName(const TCollection_AsciiString& aName)
+inline void Storage_BaseDriver::SetDevice( const Handle(Storage_IODevice)& theDevice )
 {
-  myName = aName;
+  myDevice = theDevice;
 }
-
-inline void Storage_BaseDriver::SetOpenMode(const Storage_OpenMode aMode)
-{
-  myOpenMode = aMode;
-}
-

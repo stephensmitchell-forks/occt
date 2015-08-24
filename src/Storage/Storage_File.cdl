@@ -1,0 +1,75 @@
+-- Created on: 2015-05-20
+-- Created by: 
+-- Copyright (c) 2015 OPEN CASCADE SAS
+--
+-- This file is part of Open CASCADE Technology software library.
+--
+-- This library is free software; you can redistribute it and/or modify it under
+-- the terms of the GNU Lesser General Public License version 2.1 as published
+-- by the Free Software Foundation, with special exception defined in the file
+-- OCCT_LGPL_EXCEPTION.txt. Consult the file LICENSE_LGPL_21.txt included in OCCT
+-- distribution for complete text of the license and disclaimer of any warranty.
+--
+-- Alternatively, this file may be used under the terms of Open CASCADE
+-- commercial license or contractual agreement.
+
+class File from Storage inherits IODevice from Storage
+    	---Purpose: Store/Retrieve a data to/from a file
+
+uses Position    from Storage,
+     AsciiString from TCollection,
+     OpenMode    from Storage,
+     SeekMode    from Storage,
+     Error       from Storage,
+     FStream     from Standard,
+     ExtendedString from TCollection
+
+raises StreamTypeMismatchError from Storage,
+       StreamFormatError from Storage,
+       StreamWriteError from Storage,
+       StreamExtCharParityError from Storage
+       
+is
+    Create (theFilePath: ExtendedString from TCollection) returns File from Storage;
+
+    Delete (me: mutable) is redefined;
+
+    Path (me) returns ExtendedString from TCollection;
+
+    Name (me) returns ExtendedString from TCollection is redefined;
+
+    Open (me: mutable; theMode: OpenMode from Storage ) returns Error from Storage;
+    
+    IsEnd (me) returns Boolean from Standard;
+    ---Purpose: returns True if the end of the device data has been reached.
+
+    Tell (me: mutable) returns Position from Storage is redefined;
+    ---Purpose: returns a position in the device. Return -1 upon error.
+
+    Seek( me: mutable; aPos : Position from Storage; aMode: SeekMode from Storage = Storage_SMBegin )
+    returns Boolean from Standard is redefined;
+   
+    Close (me: mutable) returns Boolean from Standard;
+
+    CanRead (me) returns Boolean from Standard;
+
+    CanWrite (me) returns Boolean from Standard;
+
+    Read (me: mutable; theBuffer: Address from Standard; theSize: Size from Standard)
+    returns Size from Standard;
+
+    Write (me: mutable; theBuffer: Address from Standard; theSize: Size from Standard)
+    returns Size from Standard;
+
+    Signature (me) returns AsciiString from TCollection;
+   
+    Print (me; theOStream: in out OStream from Standard)
+    returns OStream from Standard is redefined;
+    ---C++: return &
+
+fields
+
+    myStream   : FStream from Standard;
+    myFilePath : ExtendedString from TCollection;
+
+end;

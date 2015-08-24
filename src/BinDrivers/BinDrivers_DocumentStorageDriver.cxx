@@ -15,11 +15,15 @@
 
 #include <BinDrivers_DocumentStorageDriver.ixx>
 #include <Standard_ErrorHandler.hxx>
+#include <Standard_SStream.hxx>
 #include <TCollection_AsciiString.hxx>
 #include <BinDrivers.hxx>
 #include <BinMDF_ADriver.hxx>
 #include <BinMNaming_NamedShapeDriver.hxx>
 #include <TNaming_NamedShape.hxx>
+
+#include <string>
+
 //=======================================================================
 //function : BinDrivers_DocumentStorageDriver
 //purpose  : Constructor
@@ -45,25 +49,37 @@ Handle(BinMDF_ADriverTable) BinDrivers_DocumentStorageDriver::AttributeDrivers
 //purpose  : Implements WriteShapeSection
 //=======================================================================
 void BinDrivers_DocumentStorageDriver::WriteShapeSection
-                               (BinLDrivers_DocumentSection&   theSection,
-                                Standard_OStream&              theOS)
+                               (BinLDrivers_DocumentSection&    theSection,
+                                const Handle(Storage_IODevice)& theDevice)
 {
-  const Standard_Size aShapesSectionOffset = (Standard_Size) theOS.tellp();
+  if (!theDevice->CanWrite())
+  {
+    return;
+  }
+
+  const Standard_Size aShapesSectionOffset = theDevice->Tell();
   
   Handle(BinMNaming_NamedShapeDriver) aNamedShapeDriver;
   if (myDrivers->GetDriver(STANDARD_TYPE(TNaming_NamedShape), aNamedShapeDriver)) {   
     try { 
-      OCC_CATCH_SIGNALS  aNamedShapeDriver->WriteShapeSection (theOS);
+      OCC_CATCH_SIGNALS
+
+      Standard_SStream aStrStream( Standard_SStream::out | Standard_SStream::binary );
+      aNamedShapeDriver->WriteShapeSection( aStrStream );
+
+      std::string aData = aStrStream.str();
+      Standard_Size aSize = theDevice->Write( (Standard_Address)aData.c_str(), aData.length() );
+      if ( aSize < aData.length() )
+        WriteMessage( "BinDrivers_DocumentRetrievalDriver: can't write all shape section data." );
     }
     catch(Standard_Failure) {
       TCollection_ExtendedString anErrorStr ("Error: ");
       Handle(Standard_Failure) aFailure = Standard_Failure::Caught();
-      TCollection_ExtendedString aStr = 
-	anErrorStr + "BinDrivers_DocumentStorageDriver, Shape Section :";
+      TCollection_ExtendedString aStr = anErrorStr + "BinDrivers_DocumentStorageDriver, Shape Section :";
       WriteMessage (aStr  + aFailure->GetMessageString());
     }
   }
    
   // Write the section info in the TOC.
-  theSection.Write (theOS, aShapesSectionOffset);
+  theSection.Write (theDevice, aShapesSectionOffset);
 }

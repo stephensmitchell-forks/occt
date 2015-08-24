@@ -17,6 +17,7 @@ package XmlLDrivers
 
 uses
     Standard,
+    Storage,
     TDF,
     TDocStd,
     TCollection,

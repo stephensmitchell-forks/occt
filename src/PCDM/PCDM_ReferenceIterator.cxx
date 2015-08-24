@@ -16,6 +16,7 @@
 
 #include <PCDM_ReferenceIterator.ixx>
 #include <Storage_Data.hxx>
+#include <Storage_IODevice.hxx>
 #include <UTL.hxx>
 #include <CDM_Document.hxx>
 #include <CDM_Application.hxx>
@@ -62,8 +63,7 @@ void PCDM_ReferenceIterator::Init(const Handle(CDM_MetaData)& theMetaData) {
 
   myReferences.Clear();
   // mod. by szy
-  PCDM_RetrievalDriver::References(theMetaData->FileName(), myReferences, 
-    myMessageDriver);
+  PCDM_RetrievalDriver::References(theMetaData->Device(), myReferences, myMessageDriver);
   myIterator=1;  
 }
 
@@ -92,8 +92,9 @@ void PCDM_ReferenceIterator::Next() {
 
 Handle(CDM_MetaData) PCDM_ReferenceIterator::MetaData(const Standard_Boolean ) const {
   
-  TCollection_ExtendedString theFolder,theName;
-  TCollection_ExtendedString theFile=myReferences(myIterator).FileName();
+  //  TCollection_ExtendedString theFolder,theName;
+  Handle(Storage_IODevice) theDevice = myReferences(myIterator).Device();
+  /*
   TCollection_ExtendedString f(theFile);
 #ifndef WNT
   
@@ -133,8 +134,9 @@ Handle(CDM_MetaData) PCDM_ReferenceIterator::MetaData(const Standard_Boolean ) c
   theFolder = dirRet;
   theName   = UTL::Name(p); theName+= UTL::Extension(p);
 #endif  // WNT
-  
   return CDM_MetaData::LookUp(theFolder,theName,theFile,theFile,UTL::IsReadOnly(theFile));
+  */
+  return CDM_MetaData::LookUp(theDevice,!theDevice->CanWrite());
 }
 //=======================================================================
 //function : ReferenceIdentifier

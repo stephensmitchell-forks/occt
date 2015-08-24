@@ -23,7 +23,6 @@
 #include <XmlMDataXtd.hxx>
 #include <XmlMDocStd.hxx>
 #include <XmlMNaming.hxx>
-#include <XmlMPrsStd.hxx>
 #include <XmlMFunction.hxx>
 
 #include <Standard_GUID.hxx>
@@ -82,7 +81,6 @@ Handle(XmlMDF_ADriverTable) XmlDrivers::AttributeDrivers
   XmlMNaming    ::AddDrivers (aTable, theMessageDriver);
   XmlMFunction  ::AddDrivers (aTable, theMessageDriver); 
   XmlMDocStd    ::AddDrivers (aTable, theMessageDriver); 
-  XmlMPrsStd    ::AddDrivers (aTable, theMessageDriver); 
   //
   return aTable;
 }

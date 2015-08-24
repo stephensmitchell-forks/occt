@@ -40,6 +40,10 @@ is
         class PlacementDriver;
         
         class PatternStdDriver;
+
+        class PresentationDriver;
+
+        class PositionDriver;
         
 
     AddDrivers (aDriverTable : ADriverTable  from XmlMDF;

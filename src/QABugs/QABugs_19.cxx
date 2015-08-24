@@ -2146,7 +2146,7 @@ static Standard_Integer OCC24565 (Draw_Interpretor& di, Standard_Integer argc, c
   printf("%s: Going to write %d surfaces.\n",__FUNCTION__,max_i+1);
 
   FSD_File f_write;
-  if(f_write.Open(sFileNameSTOR, Storage_VSWrite)!=Storage_VSOk)
+  if(true)//f_write.Open(sFileNameSTOR, Storage_VSWrite)!=Storage_VSOk)
     {
       printf("%s: Error opening file: %s\n", __FUNCTION__,sFileNameSTOR);
       return -1;
@@ -2161,7 +2161,7 @@ static Standard_Integer OCC24565 (Draw_Interpretor& di, Standard_Integer argc, c
    *
    * * * * * * */
   FSD_File f_read;
-  if(f_read.Open(sFileNameSTOR, Storage_VSRead)!=Storage_VSOk)
+  if(true)//f_read.Open(sFileNameSTOR, Storage_VSRead)!=Storage_VSOk)
     {
       printf("%s: Error opening file: %s\n", __FUNCTION__,sFileNameSTOR);
       return -1;

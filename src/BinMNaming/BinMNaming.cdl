@@ -22,7 +22,8 @@ uses BinMDF,
      BRepTools, 
      BinTools,
      TDF,
-     CDM
+     CDM,
+     Storage
 
 is 
 

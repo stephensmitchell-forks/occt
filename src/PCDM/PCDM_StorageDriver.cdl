@@ -39,6 +39,7 @@ uses
     Data from Storage,
     ExtendedString from TCollection,
     Schema from Storage,
+    IODevice from Storage,
     SequenceOfExtendedString from TColStd,
     SequenceOfDocument from PCDM,
     StoreStatus from PCDM
@@ -65,7 +66,7 @@ is
     LoadExtensions(me: mutable; aSchema: Schema from Storage; Extensions: SequenceOfExtendedString from TColStd)
     is virtual;
     
-    Write(me: mutable; aDocument: Document from CDM; aFileName: ExtendedString from TCollection)
+    Write(me: mutable; aDocument: Document from CDM; aDevice: IODevice from Storage)
     raises DriverError
     ---Purpose:  Warning! raises DriverError if an error occurs during inside the
     --          Make method.
