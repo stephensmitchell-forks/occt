@@ -37,11 +37,14 @@ Poly_Mesh::Poly_Mesh (const Handle(Poly_Triangulation)& theTriangulation)
 : Poly_Triangulation ( theTriangulation ),
   myNbQuads (0)
 {
+  const Standard_Integer aNbTris = theTriangulation->NbTriangles();
+  
   // Fill collection of elements
-  myElements.SetValue( theTriangulation->NbTriangles(), Poly_Element() );
+  if ( aNbTris )
+    myElements.SetValue( aNbTris - 1, Poly_Element() );
 
   // Populate elements with triangles
-  for ( Standard_Integer i = 1; i <= theTriangulation->NbTriangles(); ++i )
+  for ( Standard_Integer i = 1; i <= aNbTris; ++i )
   {
     myElements(i - 1).Set(i, 0);
   }
