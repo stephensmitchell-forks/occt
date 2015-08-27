@@ -318,8 +318,7 @@ static
 
 static 
   Standard_Boolean IsMicroEdge(const TopoDS_Edge& theEdge,
-                               const Handle(IntTools_Context)& theCtx,
-                               Standard_Real& theFuzz);
+                               const Handle(IntTools_Context)& theCtx);
 
 static 
   Standard_Boolean ComputeBiNormal(const TopoDS_Face& theF,
@@ -762,10 +761,9 @@ void BRepOffset_MakeOffset::BuildOffsetByInter()
   Handle(BRepAlgo_AsDes) AsDes2d = new BRepAlgo_AsDes();
   for (Exp.Init(myShape,TopAbs_FACE) ; Exp.More(); Exp.Next()) {
     const TopoDS_Face& FI = TopoDS::Face(Exp.Current());
-//  Modified by skv - Mon Jan 12 11:50:02 2004 OCC4455 Begin
-//    BRepOffset_Inter2d::ConnexIntByInt (FI,MapSF(FI),MES,Build,AsDes2d,myTol);
-    BRepOffset_Inter2d::ConnexIntByInt (FI,MapSF(FI),MES,Build,AsDes,AsDes2d,myOffset, myTol);
-//  Modified by skv - Mon Jan 12 11:50:03 2004 OCC4455 End
+    Standard_Real aCurrFaceTol = BRep_Tool::Tolerance(FI);
+    BRepOffset_Inter2d::ConnexIntByInt (FI, MapSF(FI), MES, Build, 
+                                        AsDes, AsDes2d, myOffset, aCurrFaceTol);
   }
   //-----------------------------------------------------------
   // Great restriction of new edges and update of AsDes.
@@ -899,7 +897,8 @@ void BRepOffset_MakeOffset::BuildOffsetByInter()
   TopTools_ListIteratorOfListOfShape itLFE(LFE);
   for (; itLFE.More(); itLFE.Next()) {
     const TopoDS_Face& NEF = TopoDS::Face(itLFE.Value());
-    BRepOffset_Inter2d::Compute(AsDes,NEF,NewEdges,myTol);
+    Standard_Real aCurrFaceTol = BRep_Tool::Tolerance(NEF);
+    BRepOffset_Inter2d::Compute(AsDes, NEF, NewEdges, aCurrFaceTol);
   }
   //----------------------------------------------
   // Intersections 2d on caps.
@@ -907,7 +906,8 @@ void BRepOffset_MakeOffset::BuildOffsetByInter()
   Standard_Integer i;
   for (i = 1; i <= myFaces.Extent(); i++) {
     const TopoDS_Face& Cork = TopoDS::Face(myFaces(i));
-    BRepOffset_Inter2d::Compute(AsDes,Cork,NewEdges,myTol);
+    Standard_Real aCurrFaceTol = BRep_Tool::Tolerance(Cork);
+    BRepOffset_Inter2d::Compute(AsDes, Cork, NewEdges, aCurrFaceTol);
   }
 
   //-------------------------------
@@ -1189,7 +1189,6 @@ void BRepOffset_MakeOffset::BuildSplitsOfFaces
   aBB.MakeCompound(aFaces);
   //
   // firstly it is necessary to fuse all the edges
-  Standard_Real aFuzz = 0.;
   Handle(IntTools_Context) aCtx = new IntTools_Context();
   //
   aItLF.Initialize(theLF);
@@ -1204,7 +1203,7 @@ void BRepOffset_MakeOffset::BuildSplitsOfFaces
         continue;
       }
       //
-      if (IsMicroEdge(aE, aCtx, aFuzz)) {
+      if (IsMicroEdge(aE, aCtx)) {
         continue;
       }
       //
@@ -1216,7 +1215,6 @@ void BRepOffset_MakeOffset::BuildSplitsOfFaces
     BOPAlgo_Builder aGFE;
     //
     aGFE.SetArguments(aLS);
-    aGFE.SetFuzzyValue(aFuzz);
     aGFE.Perform();
     if (aGFE.ErrorStatus() == 0) {
       // fill map with edges images
@@ -1261,7 +1259,6 @@ void BRepOffset_MakeOffset::BuildSplitsOfFaces
       }
     }
     //
-    aFuzz = 0.;
     // the edges by which the offset face should be split
     const TopTools_ListOfShape& aLE = theAsDes->Descendant(aF);
     aItLE.Initialize(aLE);
@@ -1277,7 +1274,7 @@ void BRepOffset_MakeOffset::BuildSplitsOfFaces
         for (; aItLE1.More(); aItLE1.Next()) {
           const TopoDS_Edge& aEIm = *(TopoDS_Edge*)&aItLE1.Value();
           // check for micro edge
-          if (IsMicroEdge(aEIm, aCtx, aFuzz)) {
+          if (IsMicroEdge(aEIm, aCtx)) {
             continue;
           }
           //
@@ -1288,7 +1285,7 @@ void BRepOffset_MakeOffset::BuildSplitsOfFaces
         }
       }
       else {
-        if (IsMicroEdge(aE, aCtx, aFuzz)) {
+        if (IsMicroEdge(aE, aCtx)) {
           continue;
         }
         aLS.Append(aE);
@@ -1311,7 +1308,6 @@ void BRepOffset_MakeOffset::BuildSplitsOfFaces
     BOPAlgo_Builder aGF;
     //
     aGF.SetArguments(aLS);
-    aGF.SetFuzzyValue(aFuzz);
     aGF.Perform();
     if (aGF.ErrorStatus()) {
       theLFailed.Append(aF);
@@ -2367,7 +2363,8 @@ void BRepOffset_MakeOffset::Intersection2D(const TopTools_IndexedMapOfShape& Mod
   Standard_Integer i;
   for (i = 1; i <= Modif.Extent(); i++) {
     const TopoDS_Face& F  = TopoDS::Face(Modif(i));
-    BRepOffset_Inter2d::Compute(myAsDes,F,NewEdges,myTol);
+    Standard_Real aCurrFaceTol = BRep_Tool::Tolerance(F);
+    BRepOffset_Inter2d::Compute(myAsDes,F,NewEdges,aCurrFaceTol);
   }
 
 #ifdef OCCT_DEBUG
@@ -2445,15 +2442,29 @@ void BRepOffset_MakeOffset::MakeFaces(TopTools_IndexedMapOfShape& /*Modif*/)
   TopTools_ListIteratorOfListOfShape itr;
   const TopTools_ListOfShape& Roots = myInitOffsetFace.Roots();
   TopTools_ListOfShape        LOF;
+  TopTools_MapOfShape aMFence;
   //----------------------------------
   // Loop on all faces //.
   //----------------------------------
   for (itr.Initialize(Roots); itr.More(); itr.Next()) {
     TopoDS_Face F = TopoDS::Face(myInitOffsetFace.Image(itr.Value()).First());
-    LOF.Append(F);
+    if (!myImageOffset.HasImage(F) && aMFence.Add(F)) {
+      LOF.Append(F);
+    }
   }
-  myMakeLoops.BuildFaces(LOF,myAsDes,myImageOffset);
-  
+  //
+  if ((myJoin == GeomAbs_Intersection) && myInter) {
+    TopTools_ListOfShape aLFailed;
+    TopTools_IndexedDataMapOfShapeListOfShape anOr;
+    BuildSplitsOfFaces(LOF, myAsDes, anOr, myImageOffset, aLFailed, Standard_True);
+    if (aLFailed.Extent()) {
+      myMakeLoops.Build(aLFailed, myAsDes, myImageOffset);
+    }
+  }
+  else {
+    myMakeLoops.BuildFaces(LOF,myAsDes,myImageOffset);
+  }
+  //
 #ifdef OCCT_DEBUG
   if ( ChronBuild) Clock.Show();
 #endif
@@ -4017,8 +4028,7 @@ void UpdateOrigins(TopTools_IndexedDataMapOfShapeListOfShape& theOrigins,
 //purpose  : 
 //=======================================================================
 Standard_Boolean IsMicroEdge(const TopoDS_Edge& theEdge,
-                             const Handle(IntTools_Context)& theCtx,
-                             Standard_Real& theFuzz)
+                             const Handle(IntTools_Context)& theCtx)
 {
   TopoDS_Vertex aV1, aV2;
   TopExp::Vertices(theEdge, aV1, aV2);
@@ -4061,9 +4071,12 @@ Standard_Boolean IsMicroEdge(const TopoDS_Edge& theEdge,
   }
   //
   if (bMicro) {
-    Standard_Real aLen = CPnts_AbscissaPoint::Length(aBAC);
-    if (aLen > theFuzz) {
-      theFuzz = aLen;
+    if (aBAC.GetType() == GeomAbs_Line) {
+      BRep_Builder aBB;
+      Standard_Real aLen = CPnts_AbscissaPoint::Length(aBAC);
+      //
+      aBB.UpdateVertex(aV1, aLen/2.);
+      aBB.UpdateVertex(aV2, aLen/2.);
     }
   }
   //
