@@ -108,7 +108,7 @@ Select3D_SensitiveCircle::Select3D_SensitiveCircle(const Handle(SelectBasics_Ent
 
   if (mySensType == Select3D_TOS_BOUNDARY)
   {
-    SetSensitivityFactor (6.0);
+    SetSensitivityFactor (6);
   }
 }
 
@@ -166,7 +166,7 @@ Select3D_SensitiveCircle::Select3D_SensitiveCircle (const Handle(SelectBasics_En
 
   if (mySensType == Select3D_TOS_BOUNDARY)
   {
-    SetSensitivityFactor (6.0);
+    SetSensitivityFactor (6);
   }
 }
 
@@ -177,7 +177,7 @@ Select3D_SensitiveCircle::Select3D_SensitiveCircle (const Handle(SelectBasics_En
 Select3D_SensitiveCircle::Select3D_SensitiveCircle(const Handle(SelectBasics_EntityOwner)& theOwnerId,
                                                    const Handle(TColgp_HArray1OfPnt)& thePnts3d,
                                                    const Standard_Boolean theIsFilled)
-: Select3D_SensitivePoly (theOwnerId, thePnts3d, !theIsFilled),
+: Select3D_SensitivePoly (theOwnerId, thePnts3d, static_cast<Standard_Boolean> (!theIsFilled)),
   myStart (0),
   myEnd (0)
 {
@@ -190,7 +190,7 @@ Select3D_SensitiveCircle::Select3D_SensitiveCircle(const Handle(SelectBasics_Ent
 
   if (mySensType == Select3D_TOS_BOUNDARY)
   {
-    SetSensitivityFactor (6.0);
+    SetSensitivityFactor (6);
   }
 }
 
@@ -215,7 +215,7 @@ Select3D_SensitiveCircle::Select3D_SensitiveCircle(const Handle(SelectBasics_Ent
 
   if (mySensType == Select3D_TOS_BOUNDARY)
   {
-    SetSensitivityFactor (6.0);
+    SetSensitivityFactor (6);
   }
 }
 
@@ -256,9 +256,10 @@ Standard_Boolean Select3D_SensitiveCircle::Matches (SelectBasics_SelectingVolume
     if (!theMgr.IsOverlapAllowed())
     {
       thePickResult = SelectBasics_PickResult (aDepth, aDistToCOG);
-      if (!theMgr.Overlaps (myBndBox.CornerMin(), myBndBox.CornerMax(), Standard_False))
+      for (Standard_Integer aPntIdx = anArrayOfPnt->Lower(); aPntIdx <= anArrayOfPnt->Upper(); ++aPntIdx)
       {
-        return Standard_False;
+        if (!theMgr.Overlaps (anArrayOfPnt->Value (aPntIdx)))
+          return Standard_False;
       }
       return Standard_True;
     }
