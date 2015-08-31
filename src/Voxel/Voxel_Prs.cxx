@@ -16,6 +16,8 @@
 #include <Voxel_Prs.hxx>
 #include <Graphic3d_AspectFillArea3d.hxx>
 #include <Graphic3d_Group.hxx>
+#include <Prs3d_Root.hxx>
+#include <Standard_DefineHandle.hxx>
 
 IMPLEMENT_STANDARD_HANDLE (Voxel_Prs, AIS_InteractiveObject)
 IMPLEMENT_STANDARD_RTTIEXT(Voxel_Prs, AIS_InteractiveObject)

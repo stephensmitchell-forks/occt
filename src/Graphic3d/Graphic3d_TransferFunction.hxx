@@ -65,7 +65,7 @@ protected:
 
 public:
 
-  DEFINE_STANDARD_RTTI (Graphic3d_TransferFunction)
+  DEFINE_STANDARD_RTTI (Graphic3d_TransferFunction, Standard_Transient)
 
 };
 

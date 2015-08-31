@@ -138,7 +138,7 @@ private:
 
 public:
 
-  DEFINE_STANDARD_RTTI (Graphic3d_VolumeData)
+  DEFINE_STANDARD_RTTI (Graphic3d_VolumeData, Standard_Transient)
 
 };
 

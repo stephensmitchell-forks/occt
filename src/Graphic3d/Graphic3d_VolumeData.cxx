@@ -14,9 +14,10 @@
 // commercial license or contractual agreement.
 
 #include <Graphic3d_VolumeData.hxx>
+#include <Standard_DefineHandle.hxx>
 
 IMPLEMENT_STANDARD_HANDLE (Graphic3d_VolumeData, Standard_Transient)
-IMPLEMENT_STANDARD_RTTIEXT(Graphic3d_VolumeData, Standard_Transient)
+IMPLEMENT_STANDARD_RTTIEXT (Graphic3d_VolumeData)
 
 //========================================================================
 //function : Graphic3d_VolumeData

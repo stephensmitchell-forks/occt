@@ -15,9 +15,10 @@
 
 #include <Graphic3d_Volume.hxx>
 #include <Graphic3d_ShaderObject.hxx>
+#include <Standard_DefineHandle.hxx>
 
 IMPLEMENT_STANDARD_HANDLE (Graphic3d_Volume, Standard_Transient)
-IMPLEMENT_STANDARD_RTTIEXT(Graphic3d_Volume, Standard_Transient)
+IMPLEMENT_STANDARD_RTTIEXT (Graphic3d_Volume)
 
 //=================================================
 //function : Graphic3d_Volume

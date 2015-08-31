@@ -160,10 +160,8 @@ OpenGl_BVHTreeSelector.cxx
 OpenGl_BVHClipPrimitiveSet.cxx
 OpenGl_BVHClipPrimitiveSet.hxx
 OpenGl_ArbTexBindless.hxx
-Handle_OpenGl_Sampler.hxx
 OpenGl_Sampler.hxx
 OpenGl_Sampler.cxx
-OpenGl_Utils.hxx
 OpenGl_Quadric.hxx
 OpenGl_Quadric.cxx
 OpenGl_Cylinder.hxx
@@ -176,3 +174,5 @@ OpenGl_BackgroundArray.hxx
 OpenGl_BackgroundArray.cxx
 OpenGl_Volume.hxx
 OpenGl_Volume.cxx
+OpenGl_TextBuilder.hxx
+OpenGl_TextBuilder.cxx

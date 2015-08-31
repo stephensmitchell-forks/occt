@@ -44,6 +44,7 @@
 #include <Graphic3d_IndexBuffer.hxx>
 #include <Graphic3d_Buffer.hxx>
 #include <Graphic3d_BoundBuffer.hxx>
+#include <Graphic3d_Volume.hxx>
 #include <Standard_Address.hxx>
 #include <Graphic3d_GroupAspect.hxx>
 
@@ -274,6 +275,10 @@ public:
 
   //! Return true if primitive arrays within this graphic group form closed volume (do no contain open shells).
   Standard_EXPORT Standard_Boolean IsClosed() const;
+
+  //! Adds a volume.
+  Standard_EXPORT void AddVolume (const Handle(Graphic3d_Volume)& theVolume,
+                                  const Standard_Boolean theToEvalMinMax = Standard_False);
 
 friend class Graphic3d_Structure;
 

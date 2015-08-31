@@ -21,6 +21,7 @@
 #include <PrsMgr_PresentationManager3d.hxx>
 #include <Prs3d_Presentation.hxx>
 #include <SelectMgr_Selection.hxx>
+#include <Graphic3d_Volume.hxx>
 #include <Graphic3d_VolumeData.hxx>
 #include <Graphic3d_TransferFunction.hxx>
 
@@ -46,7 +47,7 @@ public:
   //! Sets 3D volume object.
   void SetVolume (const Handle(Graphic3d_Volume)& theVolume)
   {
-    myVolume  = theVolume;
+    myVolume = theVolume;
   }
 
 protected:
@@ -67,7 +68,7 @@ protected:
 
 public:
 
-  DEFINE_STANDARD_RTTI (Voxel_Prs)
+  DEFINE_STANDARD_RTTI (Voxel_Prs, AIS_InteractiveObject)
 };
 
 #endif // _Voxel_Prs_HeaderFile

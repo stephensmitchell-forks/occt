@@ -1114,8 +1114,8 @@ void Graphic3d_Camera::ZFitAll (const Standard_Real theScaleFactor, const Bnd_Bo
       // To avoid numeric errors... (See comments in the beginning of the method).
       // Choose between model distance and graphical distance, as the model boundaries
       // might be infinite if all structures have infinite flag.
-      const Standard_Real aGraphicDepth = aGraphicMaxDist >= aGraphicMinDist
-        ? aGraphicMaxDist - aGraphicMinDist : RealLast();
+      const Standard_Real aGraphicDepth = aGraphMaxDist >= aGraphMinDist
+        ? aGraphMaxDist - aGraphMinDist : RealLast();
 
       const Standard_Real aModelDepth = aModelMaxDist >= aModelMinDist
         ? aModelMaxDist - aModelMinDist : RealLast();

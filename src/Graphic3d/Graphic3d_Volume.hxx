@@ -230,7 +230,7 @@ protected:
 
 public:
 
-  DEFINE_STANDARD_RTTI (Graphic3d_Volume)
+  DEFINE_STANDARD_RTTI (Graphic3d_Volume, Standard_Transient)
 
 };
 

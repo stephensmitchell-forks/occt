@@ -18,11 +18,9 @@
 
 #include <Standard.hxx>
 #include <Standard_DefineHandle.hxx>
-#include <Handle_AIS_InteractiveObject.hxx>
+#include <AIS_InteractiveObject.hxx>
 
 class Standard_Transient;
-class Handle(Standard_Type);
-class Handle(AIS_InteractiveObject);
 class Voxel_Prs;
 
 DEFINE_STANDARD_HANDLE(Voxel_Prs, AIS_InteractiveObject)
