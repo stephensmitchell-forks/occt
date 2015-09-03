@@ -43,65 +43,85 @@ class IntTools_EdgeEdge
 public:
 
   DEFINE_STANDARD_ALLOC
-
-  
+    
+    
 
   //! Empty contructor
     IntTools_EdgeEdge();
-~IntTools_EdgeEdge();
+  ~IntTools_EdgeEdge();
   
-
+  
   //! Contructor
-    IntTools_EdgeEdge(const TopoDS_Edge& theEdge1, const TopoDS_Edge& theEdge2);
+  IntTools_EdgeEdge(const TopoDS_Edge& theEdge1, 
+                    const TopoDS_Edge& theEdge2);
   
-
+  
   //! Contructor
-    IntTools_EdgeEdge(const TopoDS_Edge& theEdge1, const Standard_Real aT11, const Standard_Real aT12, const TopoDS_Edge& theEdge2, const Standard_Real aT21, const Standard_Real aT22);
+  IntTools_EdgeEdge(const TopoDS_Edge& theEdge1, 
+                    const Standard_Real aT11, 
+                    const Standard_Real aT12, 
+                    const TopoDS_Edge& theEdge2, 
+                    const Standard_Real aT21, 
+                    const Standard_Real aT22);
   
-
+  
   //! Sets the first edge
-    void SetEdge1 (const TopoDS_Edge& theEdge);
+  void SetEdge1 (const TopoDS_Edge& theEdge);
   
-
+  
   //! Sets the first edge and its range
-    void SetEdge1 (const TopoDS_Edge& theEdge, const Standard_Real aT1, const Standard_Real aT2);
+  void SetEdge1 (const TopoDS_Edge& theEdge, 
+                 const Standard_Real aT1, 
+                 const Standard_Real aT2);
   
-
+  
   //! Sets the range for the first edge
-    void SetRange1 (const IntTools_Range& theRange1);
+  void SetRange1 (const IntTools_Range& theRange1);
   
-
+  
   //! Sets the range for the first edge
-    void SetRange1 (const Standard_Real aT1, const Standard_Real aT2);
+  void SetRange1 (const Standard_Real aT1, 
+                  const Standard_Real aT2);
   
-
+  
   //! Sets the second edge
-    void SetEdge2 (const TopoDS_Edge& theEdge);
+  void SetEdge2 (const TopoDS_Edge& theEdge);
   
-
+  
   //! Sets the first edge and its range
-    void SetEdge2 (const TopoDS_Edge& theEdge, const Standard_Real aT1, const Standard_Real aT2);
+  void SetEdge2 (const TopoDS_Edge& theEdge, 
+                 const Standard_Real aT1, 
+                 const Standard_Real aT2);
   
-
+  
   //! Sets the range for the second edge
-    void SetRange2 (const IntTools_Range& theRange);
+  void SetRange2 (const IntTools_Range& theRange);
   
-
+  
   //! Sets the range for the second edge
-    void SetRange2 (const Standard_Real aT1, const Standard_Real aT2);
-  
+  void SetRange2 (const Standard_Real aT1, 
+                  const Standard_Real aT2);
 
+
+  //! Sets the Fuzzy value
+  void SetFuzzyValue (const Standard_Real theFuzz);
+  
+  
   //! Performs the intersection between edges
   Standard_EXPORT void Perform();
   
-
+  
   //! Returns TRUE if common part(s) is(are) found
-    Standard_Boolean IsDone() const;
+  Standard_Boolean IsDone() const;
   
 
+  //! Returns Fuzzy value
+  Standard_Real FuzzyValue() const;
+  
+  
   //! Returns common parts
-    const IntTools_SequenceOfCommonPrts& CommonParts() const;
-
+  const IntTools_SequenceOfCommonPrts& CommonParts() const;
+  
 
 
 
@@ -110,7 +130,7 @@ protected:
   
 
   //! Checks the data
-    void CheckData();
+  void CheckData();
   
 
   //! Prepares the data
@@ -163,6 +183,7 @@ protected:
   Standard_Real myTol1;
   Standard_Real myTol2;
   Standard_Real myTol;
+  Standard_Real myFuzzyValue;
   Standard_Real myRes1;
   Standard_Real myRes2;
   Standard_Real myResCoeff1;

@@ -36,6 +36,7 @@
 #include <BOPCol_MapOfInteger.hxx>
 #include <BOPCol_DataMapOfIntegerReal.hxx>
 #include <BOPCol_ListOfInteger.hxx>
+#include <BOPDS_CommonBlock.hxx>
 #include <BOPDS_IndexedMapOfPaveBlock.hxx>
 #include <BOPCol_DataMapOfShapeInteger.hxx>
 #include <BOPDS_DataMapOfPaveBlockListOfPaveBlock.hxx>
@@ -85,13 +86,6 @@ Standard_EXPORT virtual ~BOPAlgo_PaveFiller();
   
   Standard_EXPORT virtual void Perform() Standard_OVERRIDE;
   
-  //! Sets the additional tolerance
-  Standard_EXPORT void SetFuzzyValue (const Standard_Real theFuzz);
-  
-  //! Returns the additional tolerance
-  Standard_EXPORT Standard_Real FuzzyValue() const;
-
-
 
 
 protected:
@@ -275,26 +269,20 @@ protected:
   Standard_EXPORT void UpdatePaveBlocks (const BOPCol_DataMapOfIntegerInteger& theDMI);
 
 
+  //! Updates pave blocks which have the paves with indices contained
+  //! in the map <theDMI>.
+  Standard_EXPORT Standard_Real ComputeTolerance (const Handle(BOPDS_CommonBlock)& theCB);
+
+
   BOPCol_ListOfShape myArguments;
   BOPDS_PDS myDS;
   BOPDS_PIterator myIterator;
   Handle(IntTools_Context) myContext;
   BOPAlgo_SectionAttribute mySectionAttribute;
-  Standard_Real myFuzzyValue;
 
 
 private:
 
-
-
-
-
 };
-
-
-
-
-
-
 
 #endif // _BOPAlgo_PaveFiller_HeaderFile

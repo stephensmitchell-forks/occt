@@ -37,8 +37,7 @@
 //=======================================================================
 BOPAlgo_PaveFiller::BOPAlgo_PaveFiller()
 :
-  BOPAlgo_Algo(),
-  myFuzzyValue(0.)
+  BOPAlgo_Algo()
 {
   myDS=NULL;
   myIterator=NULL;
@@ -50,8 +49,7 @@ BOPAlgo_PaveFiller::BOPAlgo_PaveFiller()
 BOPAlgo_PaveFiller::BOPAlgo_PaveFiller
   (const Handle(NCollection_BaseAllocator)& theAllocator)
 :
-  BOPAlgo_Algo(theAllocator),
-  myFuzzyValue(0.)
+  BOPAlgo_Algo(theAllocator)
 {
   myDS=NULL;
   myIterator=NULL;
@@ -129,22 +127,6 @@ const BOPCol_ListOfShape& BOPAlgo_PaveFiller::Arguments()const
   return myArguments;
 }
 //=======================================================================
-//function : SetFuzzyValue
-//purpose  : 
-//=======================================================================
-void BOPAlgo_PaveFiller::SetFuzzyValue(const Standard_Real theFuzz)
-{
-  myFuzzyValue = (theFuzz < 0.) ? 0. : theFuzz;
-}
-//=======================================================================
-//function : FuzzyValue
-//purpose  : 
-//=======================================================================
-Standard_Real BOPAlgo_PaveFiller::FuzzyValue() const
-{
-  return myFuzzyValue;
-}
-//=======================================================================
 // function: Init
 // purpose: 
 //=======================================================================
@@ -163,8 +145,7 @@ void BOPAlgo_PaveFiller::Init()
   // 1.myDS 
   myDS=new BOPDS_DS(myAllocator);
   myDS->SetArguments(myArguments);
-  myDS->SetFuzzyValue(myFuzzyValue);
-  myDS->Init();
+  myDS->Init(myFuzzyValue);
   //
   // 2.myIterator 
   myIterator=new BOPDS_Iterator(myAllocator);
@@ -193,8 +174,6 @@ void BOPAlgo_PaveFiller::Perform()
   catch (Standard_Failure) {
     myErrorStatus=11;
   } 
-  //
-  myDS->SetDefaultTolerances();
 }
 //=======================================================================
 // function: PerformInternal
@@ -213,6 +192,15 @@ void BOPAlgo_PaveFiller::PerformInternal()
   if (myErrorStatus) {
     return; 
   }
+  //
+  // set flag locked to all shapes
+  Standard_Integer j, nbS = myDS->NbSourceShapes();
+  for (j = 0; j < nbS; ++j) {
+    BOPDS_ShapeInfo& aSI = myDS->ChangeShapeInfo(j);
+    TopoDS_Shape aS = aSI.Shape();
+    aS.Locked(Standard_True);
+  }
+  //
   // 00
   PerformVV();
   if (myErrorStatus) {
@@ -224,27 +212,36 @@ void BOPAlgo_PaveFiller::PerformInternal()
     return; 
   }
   //
+  myDS->UpdatePaveBlocksWithSDVertices();
   myDS->UpdatePaveBlocks();
   // 11
   PerformEE();
   if (myErrorStatus) {
     return; 
   }
+  //
+  myDS->UpdatePaveBlocksWithSDVertices();
   // 02
   PerformVF();
   if (myErrorStatus) {
     return; 
   }
+  //
+  myDS->UpdatePaveBlocksWithSDVertices();
   // 12
   PerformEF();
   if (myErrorStatus) {
     return; 
   }
   //
+  myDS->UpdatePaveBlocksWithSDVertices();
+  //
   MakeSplitEdges();
   if (myErrorStatus) {
     return; 
   }
+  //
+  myDS->UpdatePaveBlocksWithSDVertices();
   //
   // 22
   PerformFF();
@@ -288,5 +285,11 @@ void BOPAlgo_PaveFiller::PerformInternal()
   PerformZZ();
   if (myErrorStatus) {
     return;
+  }
+  //
+  for (j = 0; j < nbS; ++j) {
+    BOPDS_ShapeInfo& aSI = myDS->ChangeShapeInfo(j);
+    TopoDS_Shape aS = aSI.Shape();
+    aS.Locked(Standard_False);
   }
 } 

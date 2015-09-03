@@ -48,8 +48,8 @@ class BOPAlgo_VertexEdge : public BOPAlgo_Algo {
 
   BOPAlgo_VertexEdge() : 
     BOPAlgo_Algo(),
-    myIV(-1), myIE(-1), myIVx(-1), myFlag(-1), myT(-1.) {
-  };
+    myIV(-1), myIE(-1), myIVx(-1), myFlag(-1), myT(-1.), myTol(0.) {
+    };
   //
   virtual ~BOPAlgo_VertexEdge(){
   };
@@ -94,6 +94,10 @@ class BOPAlgo_VertexEdge : public BOPAlgo_Algo {
     return myT;
   }
   //
+  Standard_Real Tolerance()const {
+    return myTol;
+  }
+  //
   void SetContext(const Handle(IntTools_Context)& aContext) {
     myContext=aContext;
   }
@@ -104,7 +108,7 @@ class BOPAlgo_VertexEdge : public BOPAlgo_Algo {
   //
   virtual void Perform() {
     BOPAlgo_Algo::UserBreak();
-    myFlag=myContext->ComputeVE (myV, myE, myT);
+    myFlag=myContext->ComputeVE (myV, myE, myT, myTol, myFuzzyValue);
   };
   //
  protected:
@@ -113,6 +117,7 @@ class BOPAlgo_VertexEdge : public BOPAlgo_Algo {
   Standard_Integer myIVx;
   Standard_Integer myFlag;
   Standard_Real myT;
+  Standard_Real myTol;
   TopoDS_Vertex myV;
   TopoDS_Edge myE;
   Handle(IntTools_Context) myContext;
@@ -140,11 +145,10 @@ void BOPAlgo_PaveFiller::PerformVE()
 {
   Standard_Boolean bJustAdd;
   Standard_Integer iSize, nV, nE, nVSD, iFlag, nVx,  k, aNbVE;
-  Standard_Real aT, aTolE, aTolV;
+  Standard_Real aT, aTolVNew;
   BOPDS_Pave aPave;
   BOPDS_PassKey aPK;
   BOPDS_MapOfPassKey aMPK;
-  BRep_Builder aBB;
   BOPAlgo_VectorOfVertexEdge aVVE;
   //
   myErrorStatus=0;
@@ -196,6 +200,7 @@ void BOPAlgo_PaveFiller::PerformVE()
     aVESolver.SetIndices(nV, nE, nVx);
     aVESolver.SetVertex(aV);
     aVESolver.SetEdge(aE);
+    aVESolver.SetFuzzyValue(myFuzzyValue);
     aVESolver.SetProgressIndicator(myProgressIndicator);
     //
   }// for (; myIterator->More(); myIterator->Next()) {
@@ -211,8 +216,6 @@ void BOPAlgo_PaveFiller::PerformVE()
     if (!iFlag) {
       aVESolver.Indices(nV, nE, nVx);
       aT=aVESolver.Parameter();
-      const TopoDS_Vertex& aV=aVESolver.Vertex();
-      const TopoDS_Edge& aE=aVESolver.Edge();
       // 1
       BOPDS_InterfVE& aVE=aVEs.Append1();
       aVE.SetIndices(nV, nE);
@@ -223,17 +226,14 @@ void BOPAlgo_PaveFiller::PerformVE()
       BOPDS_ListOfPaveBlock& aLPB=myDS->ChangePaveBlocks(nE);
       Handle(BOPDS_PaveBlock)& aPB=*((Handle(BOPDS_PaveBlock)*)&aLPB.First());
       // 
+      // Make Intersection vertex
+      aTolVNew = aVESolver.Tolerance();
+      nVx = myDS->MakeIntersectionVertex(nV, aTolVNew);
+      //
+      // append ext pave to pave block
       aPave.SetIndex(nVx);
       aPave.SetParameter(aT);
       aPB->AppendExtPave(aPave);
-      aTolV = BRep_Tool::Tolerance(aV);
-      aTolE = BRep_Tool::Tolerance(aE);
-      if ( aTolV < aTolE) {
-        aBB.UpdateVertex(aV, aTolE);
-        BOPDS_ShapeInfo& aSIDS=myDS->ChangeShapeInfo(nVx);
-        Bnd_Box& aBoxDS=aSIDS.ChangeBox();
-        BRepBndLib::Add(aV, aBoxDS);
-      }
     }
   }//for (k=0; k < aNbVE; ++k) {
 } 

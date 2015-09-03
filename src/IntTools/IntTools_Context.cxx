@@ -548,6 +548,51 @@ Standard_Integer IntTools_Context::ComputeVE
   }
   return 0;
 }
+
+//=======================================================================
+//function : ComputeVE
+//purpose  : 
+//=======================================================================
+Standard_Integer IntTools_Context::ComputeVE
+  (const TopoDS_Vertex& theV, 
+   const TopoDS_Edge&   theE,
+   Standard_Real& theT,
+   Standard_Real& theTol,
+   const Standard_Real theFuzz)
+{
+  if (BRep_Tool::Degenerated(theE)) {
+    return -1;
+  }
+  if (!BRep_Tool::IsGeometric(theE)) { 
+    return -2;
+  }
+  Standard_Real aDist, aTolV, aTolE, aTolSum;
+  Standard_Integer aNbProj;
+  gp_Pnt aP;
+  //
+  aP=BRep_Tool::Pnt(theV);
+  //
+  GeomAPI_ProjectPointOnCurve& aProjector=ProjPC(theE);
+  aProjector.Perform(aP);
+
+  aNbProj=aProjector.NbPoints();
+  if (!aNbProj) {
+    return -3;
+  }
+  //
+  aDist=aProjector.LowerDistance();
+
+  aTolV=BRep_Tool::Tolerance(theV);
+  aTolE=BRep_Tool::Tolerance(theE);
+  aTolSum = aTolV + aTolE + theFuzz;
+  //
+  theTol = aDist + aTolE;
+  theT = aProjector.LowerDistanceParameter();
+  if (aDist > aTolSum) {
+    return -4;
+  }
+  return 0;
+}
 //=======================================================================
 //function : ComputeVS
 //purpose  : 
@@ -586,6 +631,53 @@ Standard_Integer IntTools_Context::ComputeVF
   //
   gp_Pnt2d aP2d(U, V);
   Standard_Boolean pri=IsPointInFace (aF2, aP2d);
+  if (!pri) {//  the point lays on the surface but out of the face 
+    return -3;
+  }
+  return 0;
+}
+
+//=======================================================================
+//function : ComputeVF
+//purpose  : 
+//=======================================================================
+Standard_Integer IntTools_Context::ComputeVF
+  (const TopoDS_Vertex& theVertex, 
+   const TopoDS_Face&   theFace,
+   Standard_Real& theU,
+   Standard_Real& theV,
+   Standard_Real& theTol,
+   const Standard_Real theFuzz)
+{
+  Standard_Real aTolV, aTolF, aTolSum, aDist;
+  gp_Pnt aP;
+
+  aP = BRep_Tool::Pnt(theVertex);
+  //
+  // 1. Check if the point is projectable on the surface
+  GeomAPI_ProjectPointOnSurf& aProjector=ProjPS(theFace);
+  aProjector.Perform(aP);
+  //
+  if (!aProjector.IsDone()) { // the point is not  projectable on the surface
+    return -1;
+  }
+  //
+  // 2. Check the distance between the projection point and 
+  //    the original point
+  aDist = aProjector.LowerDistance();
+  aTolV = BRep_Tool::Tolerance(theVertex);
+  aTolF = BRep_Tool::Tolerance(theFace);
+  aTolSum = aTolV + aTolF + theFuzz;
+  theTol = aDist + aTolF;
+  aProjector.LowerDistanceParameters(theU, theV);
+  //
+  if (aDist > aTolSum) {
+    // the distance is too large
+    return -2;
+  }
+  //
+  gp_Pnt2d aP2d(theU, theV);
+  Standard_Boolean pri = IsPointInFace (theFace, aP2d);
   if (!pri) {//  the point lays on the surface but out of the face 
     return -3;
   }

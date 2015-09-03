@@ -78,7 +78,7 @@
     const TopoDS_Vertex& aV1=(*(TopoDS_Vertex *)(&myDS->Shape(n1))); 
     const TopoDS_Vertex& aV2=(*(TopoDS_Vertex *)(&myDS->Shape(n2))); 
     //
-    iFlag=BOPTools_AlgoTools::ComputeVV(aV1, aV2);
+    iFlag=BOPTools_AlgoTools::ComputeVV(aV1, aV2, myFuzzyValue);
     if (!iFlag) {
       BOPAlgo_Tools::FillMap(n1, n2, aMILI, aAllocator);
     }

@@ -54,6 +54,8 @@
 #include <TopoDS_Edge.hxx>
 #include <TopoDS_Face.hxx>
 #include <TopoDS_Vertex.hxx>
+#include <GeomAPI_ProjectPointOnCurve.hxx>
+#include <GeomAPI_ProjectPointOnSurf.hxx>
 
 static
   Standard_Boolean IsBasedOnPlane(const TopoDS_Face& aF);
@@ -75,6 +77,7 @@ class BOPAlgo_SplitEdge : public BOPAlgo_Algo  {
     BOPAlgo_Algo() {
     myT1=0.;
     myT2=0.;
+    myTol=0.;
   }
   //
   virtual ~BOPAlgo_SplitEdge() {
@@ -105,6 +108,14 @@ class BOPAlgo_SplitEdge : public BOPAlgo_Algo  {
     myCB=aCB;
   }
   //
+  void SetTolerance(const Standard_Real aTol) {
+    myTol = aTol;
+  }
+  //
+  Standard_Real Tolerance() const {
+    return myTol;
+  }
+  //
   Handle(BOPDS_CommonBlock)& CommonBlock() {
     return myCB;
   }
@@ -133,6 +144,7 @@ class BOPAlgo_SplitEdge : public BOPAlgo_Algo  {
   Standard_Real myT1;
   TopoDS_Vertex myV2;
   Standard_Real myT2;
+  Standard_Real myTol;
   // <->
   Handle(BOPDS_PaveBlock) myPB;
   Handle(BOPDS_CommonBlock) myCB;
@@ -327,14 +339,15 @@ void BOPAlgo_PaveFiller::MakeSplitEdges()
   //
   Standard_Boolean bCB, bV1, bV2;
   Standard_Integer i, nE, nV1, nV2, nSp, aNbPB, aNbVBSE, k;
-  Standard_Real aT1, aT2;
+  Standard_Real aT1, aT2, aTol, aTolV;
   BOPDS_ListIteratorOfListOfPaveBlock aItPB, aItPBCB;
   Handle(BOPDS_PaveBlock) aPB;
   BOPDS_MapOfPaveBlock aMPB(100);
   TopoDS_Vertex aV1, aV2;
   TopoDS_Edge aE;
   BOPAlgo_VectorOfSplitEdge aVBSE;
-  
+  //
+  aTolV = Precision::Confusion();
   //
   for (i=0; i<aNbPBP; ++i) {
     BOPDS_ListOfPaveBlock& aLPB=aPBP(i);
@@ -343,13 +356,16 @@ void BOPAlgo_PaveFiller::MakeSplitEdges()
     if (aNbPB==1) {
       aPB=aLPB.First();
       aPB->Indices(nV1, nV2);
+      //
       bV1=myDS->IsNewShape(nV1);
       bV2=myDS->IsNewShape(nV2);
       //
       if (!(bV1 || bV2)) {
-        nE=aPB->OriginalEdge();
-        aPB->SetEdge(nE);
-        continue;
+        if (!myDS->IsCommonBlock(aPB)) {
+          nE=aPB->OriginalEdge();
+          aPB->SetEdge(nE);
+          continue;
+        }
       }
     }
     //
@@ -357,10 +373,19 @@ void BOPAlgo_PaveFiller::MakeSplitEdges()
     for (; aItPB.More(); aItPB.Next()) {
       aPB=aItPB.Value();
       const Handle(BOPDS_CommonBlock)& aCB=myDS->CommonBlock(aPB);
+      //
       bCB=!aCB.IsNull();
       if (bCB) {
         myDS->SortPaveBlocks(aCB);
         aPB=aCB->PaveBlock1();
+        //
+        aPB->Indices(nV1, nV2);
+        myDS->MakeIntersectionVertex(nV1, aTolV);
+        myDS->MakeIntersectionVertex(nV2, aTolV);
+        myDS->UpdateCommonBlockWithSDVertices(aCB);
+      }
+      else {
+        myDS->UpdatePaveBlockWithSDVertices(aPB);
       }
       //
       if (aMPB.Add(aPB)) {
@@ -382,6 +407,8 @@ void BOPAlgo_PaveFiller::MakeSplitEdges()
         aBSE.SetData(aE, aV1, aT1, aV2, aT2);
         aBSE.SetPaveBlock(aPB);
         if (bCB) {
+          aTol = ComputeTolerance(aCB);
+          aBSE.SetTolerance(aTol);
           aBSE.SetCommonBlock(aCB);
         }
         aBSE.SetProgressIndicator(myProgressIndicator);
@@ -411,6 +438,9 @@ void BOPAlgo_PaveFiller::MakeSplitEdges()
     aSI.ChangeBox()=aBox;
     //
     nSp=myDS->Append(aSI);
+    //
+    aTol = aBSE.Tolerance();
+    myDS->UpdateEdgeTolerance(nSp, aTol);
     //
     if (!aCBk.IsNull()) {
       aCBk->SetEdge(nSp);
@@ -770,4 +800,110 @@ Standard_Boolean IsBasedOnPlane(const TopoDS_Face& aF)
   }
   //
   return (!aGP.IsNull()); 
+}
+
+//=======================================================================
+//function : ComputeTolerance
+//purpose  : 
+//=======================================================================
+Standard_Real BOPAlgo_PaveFiller::ComputeTolerance(const Handle(BOPDS_CommonBlock)& theCB)
+{
+  Standard_Real aTolMax = 0.;
+  if (theCB.IsNull()) {
+    return aTolMax;
+  }
+  //
+  const Handle(BOPDS_PaveBlock)& aPBR = theCB->PaveBlock1();
+  Standard_Integer nE = aPBR->OriginalEdge();
+  const TopoDS_Edge& aEOr = *(TopoDS_Edge*)&myDS->Shape(nE);
+  aTolMax = BRep_Tool::Tolerance(aEOr);
+  //
+  const BOPDS_ListOfPaveBlock& aLPB = theCB->PaveBlocks();
+  const BOPCol_ListOfInteger& aLFI = theCB->Faces();
+  //
+  if ((aLPB.Extent() < 2) && aLFI.IsEmpty()) {
+    return aTolMax;
+  }
+  //
+  const Standard_Integer aNbPnt = 11;
+  Standard_Real aTol, aT, aT1, aT2, aDt;
+  gp_Pnt aP;
+  //
+  const Handle(Geom_Curve)& aC3D = BRep_Tool::Curve(aEOr, aT1, aT2);
+  //
+  aPBR->Range(aT1, aT2);
+  aDt = (aT2 - aT1) / aNbPnt;
+  //
+  // compute max tolerance for common blocks on edges
+  if (aLPB.Extent() > 1) {
+    // compute max distance between edges
+    BOPDS_ListIteratorOfListOfPaveBlock aItPB;
+    GeomAPI_ProjectPointOnCurve aProjPC;
+    //
+    aItPB.Initialize(aLPB);
+    for (; aItPB.More(); aItPB.Next()) {
+      const Handle(BOPDS_PaveBlock)& aPB = aItPB.Value();
+      if (aPB == aPBR) {
+        continue;
+      }
+      //
+      nE = aPB->OriginalEdge();
+      const TopoDS_Edge& aE = *(TopoDS_Edge*)&myDS->Shape(nE);
+      //
+      aTol = BRep_Tool::Tolerance(aE);
+      if (aTol > aTolMax) {
+        aTolMax = aTol;
+      }
+      //
+      aProjPC = myContext->ProjPC(aE);
+      //
+      aT = aT1;
+      while (aT <= aT2) {
+        aC3D->D0(aT, aP);
+        aProjPC.Perform(aP);
+        if (aProjPC.NbPoints()) {
+          aTol = aProjPC.LowerDistance();
+          if (aTol > aTolMax) {
+            aTolMax = aTol;
+          }
+        }
+        aT += aDt;
+      }
+    }
+  }
+  //
+  // compute max tolerance for common blocks on faces
+  if (aLFI.Extent()) {
+    Standard_Integer nF;
+    GeomAPI_ProjectPointOnSurf aProjPS;
+    BOPCol_ListIteratorOfListOfInteger aItLI;
+    //
+    aItLI.Initialize(aLFI);
+    for (; aItLI.More(); aItLI.Next()) {
+      nF = aItLI.Value();
+      const TopoDS_Face& aF = *(TopoDS_Face*)&myDS->Shape(nF);
+      //
+      aTol = BRep_Tool::Tolerance(aF);
+      if (aTol > aTolMax) {
+        aTolMax = aTol;
+      }
+      //
+      aProjPS = myContext->ProjPS(aF);
+      //
+      aT = aT1;
+      while (aT <= aT2) {
+        aC3D->D0(aT, aP);
+        aProjPS.Perform(aP);
+        if (aProjPS.NbPoints()) {
+          aTol = aProjPS.LowerDistance();
+          if (aTol > aTolMax) {
+            aTolMax = aTol;
+          }
+        }
+        aT += aDt;
+      }
+    }
+  }
+  //
+  return aTolMax;
 }

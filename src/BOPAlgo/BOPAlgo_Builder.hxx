@@ -93,17 +93,8 @@ Standard_EXPORT virtual ~BOPAlgo_Builder();
   //! Returns mySplits.
   Standard_EXPORT const BOPCol_DataMapOfShapeListOfShape& Splits() const;
   
-  //! Sets the additional tolerance
-  Standard_EXPORT void SetFuzzyValue (const Standard_Real theFuzz);
-  
-  //! Returns the additional tolerance
-  Standard_EXPORT Standard_Real FuzzyValue() const;
-
-
-
 
 protected:
-
   
   //! Prepare information for history support
   Standard_EXPORT virtual void PrepareHistory() Standard_OVERRIDE;
@@ -161,21 +152,10 @@ protected:
   BOPCol_DataMapOfShapeShape myShapesSD;
   BOPCol_DataMapOfShapeListOfShape mySplits;
   BOPCol_DataMapOfShapeShape myOrigins;
-  Standard_Real myFuzzyValue;
-
 
 private:
 
-
-
-
-
 };
-
-
-
-
-
 
 
 #endif // _BOPAlgo_Builder_HeaderFile

@@ -41,7 +41,6 @@
 #include <BOPDS_VectorOfInterfFZ.hxx>
 #include <BOPDS_VectorOfInterfZZ.hxx>
 #include <Standard_Real.hxx>
-#include <BOPCol_DataMapOfIntegerReal.hxx>
 #include <Standard_Boolean.hxx>
 #include <BOPDS_ListOfPaveBlock.hxx>
 #include <BOPDS_IndexedMapOfPaveBlock.hxx>
@@ -112,7 +111,7 @@ Standard_EXPORT virtual ~BOPDS_DS();
 
   //! Initializes the data structure for
   //! the arguments
-  Standard_EXPORT void Init();
+  Standard_EXPORT void Init(const Standard_Real theFuzz = 1.e-7);
   
 
   //! Selector
@@ -214,6 +213,22 @@ Standard_EXPORT virtual ~BOPDS_DS();
 
   //! Update the pave block thePB
   Standard_EXPORT void UpdatePaveBlock (const Handle(BOPDS_PaveBlock)& thePB);
+
+
+  //! Update the pave blocks for the all shapes in data structure
+  Standard_EXPORT void UpdatePaveBlocksWithSDVertices();
+
+
+  //! Update the pave block for the all shapes in data structure
+  Standard_EXPORT void UpdatePaveBlockWithSDVertices(const Handle(BOPDS_PaveBlock)& thePB);
+
+  //! Update the pave block of the common block for the all shapes in data structure
+  Standard_EXPORT void UpdateCommonBlockWithSDVertices(const Handle(BOPDS_CommonBlock)& theCB);
+
+
+  //! Update the pave blocks for the all shapes in data structure
+  Standard_EXPORT Standard_Integer MakeIntersectionVertex(const Standard_Integer nV,
+                                                          const Standard_Real aTolNew);
   
 
   //! Update the common block theCB
@@ -440,17 +455,6 @@ Standard_EXPORT virtual ~BOPDS_DS();
   //! Updates tolerance of the sub-shapes of the shape with index <theIndex>.
   Standard_EXPORT void UpdateEdgeTolerance (const Standard_Integer theIndex, const Standard_Real theTolerance);
   
-  //! Sets the extended tolerance
-    void SetFuzzyValue (const Standard_Real theFuzz);
-  
-  //! Returns the extended tolerance
-    Standard_Real FuzzyValue() const;
-  
-  //! Reverts the tolerance values of unchanged entities to default values.
-  Standard_EXPORT void SetDefaultTolerances();
-
-
-
 
 protected:
 
@@ -494,8 +498,6 @@ protected:
   BOPDS_VectorOfInterfEZ myInterfEZ;
   BOPDS_VectorOfInterfFZ myInterfFZ;
   BOPDS_VectorOfInterfZZ myInterfZZ;
-  Standard_Real myFuzzyValue;
-  BOPCol_DataMapOfIntegerReal myToleranceMap;
 
 
 private:

@@ -138,6 +138,10 @@ class BOPAlgo_FaceFace :
     return myTolFF;
   }
   //
+  void SetFuzzyValue(const Standard_Real theFuzz) {
+    IntTools_FaceFace::SetFuzzyValue(theFuzz);
+  }
+  //
   virtual void Perform() {
     BOPAlgo_Algo::UserBreak();
     IntTools_FaceFace::Perform(myF1, myF2);
@@ -207,21 +211,21 @@ void BOPAlgo_PaveFiller::PerformFF()
     const TopoDS_Face& aF1=(*(TopoDS_Face *)(&myDS->Shape(nF1)));
     const TopoDS_Face& aF2=(*(TopoDS_Face *)(&myDS->Shape(nF2)));
     //
+    if (aMI.Add(nF1)) {
+      myDS->UpdateFaceInfoOn(nF1);
+      myDS->UpdateFaceInfoIn(nF1);
+    }
+    if (aMI.Add(nF2)) {
+      myDS->UpdateFaceInfoOn(nF2);
+      myDS->UpdateFaceInfoIn(nF2);
+    }
+    //
     aBAS1.Initialize(aF1, Standard_False);
     aBAS2.Initialize(aF2, Standard_False);
     //
     if (aBAS1.GetType() == GeomAbs_Plane && 
         aBAS2.GetType() == GeomAbs_Plane) {
       Standard_Boolean bToIntersect;
-      //
-      if (aMI.Add(nF1)) {
-        myDS->UpdateFaceInfoOn(nF1);
-        myDS->UpdateFaceInfoIn(nF1);
-      }
-      if (aMI.Add(nF2)) {
-        myDS->UpdateFaceInfoOn(nF2);
-        myDS->UpdateFaceInfoIn(nF2);
-      }
       //
       bToIntersect = CheckPlanes(nF1, nF2);
       if (!bToIntersect) {
@@ -249,6 +253,7 @@ void BOPAlgo_PaveFiller::PerformFF()
     }
     //
     aFaceFace.SetParameters(bApp, bCompC2D1, bCompC2D2, aApproxTol);
+    aFaceFace.SetFuzzyValue(myFuzzyValue);
     aFaceFace.SetProgressIndicator(myProgressIndicator);
   }//for (; myIterator->More(); myIterator->Next()) {
   //
@@ -1033,11 +1038,12 @@ void BOPAlgo_PaveFiller::UpdateFaceInfo
 {
   Standard_Boolean bRet;
   Standard_Integer nV, iFlag;
-  Standard_Real aTolV;
+  Standard_Real aTolV, aTolCheck;
   gp_Pnt aPV;
   Bnd_Box aBoxP;
   BOPCol_MapIteratorOfMapOfInteger aIt;
   //
+  aTolCheck = theTolR3D + myFuzzyValue;
   bRet=Standard_True;
   //
   aBoxP.Add(aP);
@@ -1055,7 +1061,7 @@ void BOPAlgo_PaveFiller::UpdateFaceInfo
     aBoxV.Enlarge(aTolV);
     //
     if (!aBoxP.IsOut(aBoxV)) {
-      iFlag=BOPTools_AlgoTools::ComputeVV(aV, aP, theTolR3D);
+      iFlag=BOPTools_AlgoTools::ComputeVV(aV, aP, aTolCheck);
       if (!iFlag) {
         return bRet;
       }
@@ -1079,7 +1085,7 @@ void BOPAlgo_PaveFiller::UpdateFaceInfo
     return !bRet;
   } 
   //
-  Standard_Real aT1, aT2, aTm, aTx, aTol;
+  Standard_Real aT1, aT2, aTm, aTx, aTolE, aTolCheck;
   Standard_Integer nE, iFlag;
   gp_Pnt aPm;
   Bnd_Box aBoxPm;
@@ -1098,9 +1104,9 @@ void BOPAlgo_PaveFiller::UpdateFaceInfo
     const Bnd_Box& aBoxE=aSIE.Box();
     if (!aBoxE.IsOut(aBoxPm)) {
       const TopoDS_Edge& aE=(*(TopoDS_Edge *)(&aSIE.Shape()));
-      aTol = BRep_Tool::Tolerance(aE);
-      aTol = aTol > theTolR3D ? aTol : theTolR3D;
-      iFlag=myContext->ComputePE(aPm, aTol, aE, aTx);
+      aTolE = BRep_Tool::Tolerance(aE);
+      aTolCheck = Max(aTolE, theTolR3D) + myFuzzyValue;
+      iFlag = myContext->ComputePE(aPm, aTolCheck, aE, aTx);
       if (!iFlag) {
         return bRet;
       }
@@ -1121,12 +1127,13 @@ void BOPAlgo_PaveFiller::UpdateFaceInfo
      Handle(BOPDS_PaveBlock)& aPBOut)
 {
   Standard_Boolean bRet;
-  Standard_Real aT1, aT2, aTm, aTx;
+  Standard_Real aT1, aT2, aTm, aTx, aTolCheck;
   Standard_Integer nSp, iFlag1, iFlag2, nV11, nV12, nV21, nV22, i, aNbPB;
   gp_Pnt aP1, aPm, aP2;
   Bnd_Box aBoxP1, aBoxPm, aBoxP2;
   //
   bRet=Standard_False;
+  aTolCheck = theTolR3D + myFuzzyValue;
   const IntTools_Curve& aIC=theNC.Curve();
   //
   thePB->Range(aT1, aT2);
@@ -1159,24 +1166,22 @@ void BOPAlgo_PaveFiller::UpdateFaceInfo
     iFlag2 = (nV12 == nV21 || nV12 == nV22) ? 2 : 
       (!aBoxSp.IsOut(aBoxP2) ? 1 : 0);
     if (iFlag1 && iFlag2) {
-      if (aBoxSp.IsOut(aBoxPm) || myContext->ComputePE(aPm, 
-                                                       theTolR3D, 
-                                                       aSp, 
-                                                       aTx)) {
+      if (aBoxSp.IsOut(aBoxPm) || 
+          myContext->ComputePE(aPm, aTolCheck, aSp, aTx)) {
         continue;
       }
       //
       if (iFlag1 == 1) {
-        iFlag1 = !myContext->ComputePE(aP1, theTolR3D, aSp, aTx);
+        iFlag1 = !myContext->ComputePE(aP1, aTolCheck, aSp, aTx);
       }
       //
       if (iFlag2 == 1) {
-        iFlag2 = !myContext->ComputePE(aP2, theTolR3D, aSp, aTx);
+        iFlag2 = !myContext->ComputePE(aP2, aTolCheck, aSp, aTx);
       }
       //
       if (iFlag1 && iFlag2) {
         aPBOut = aPB;
-        bRet=Standard_True;
+        bRet = Standard_True;
         break;
       }
     }
@@ -1734,12 +1739,12 @@ void BOPAlgo_PaveFiller::RemoveUsedVertices(BOPDS_Curve& aNC,
   Handle(BOPDS_PaveBlock)& aPB=aNC.ChangePaveBlock1();
   const IntTools_Curve& aIC = aNC.Curve();
   //
-  bIsVertexOnLine=myContext->IsVertexOnLine(aV, aIC, aTolR3D, aT);
+  bIsVertexOnLine=myContext->IsVertexOnLine(aV, aIC, aTolR3D + myFuzzyValue, aT);
   if (!bIsVertexOnLine && iCheckExtend) {
     aTol = BRep_Tool::Tolerance(aV);
     //
     ExtendedTolerance(nV, aMI, aTol, iCheckExtend);
-    bIsVertexOnLine=myContext->IsVertexOnLine(aV, aTol, aIC, aTolR3D, aT);
+    bIsVertexOnLine=myContext->IsVertexOnLine(aV, aTol, aIC, aTolR3D + myFuzzyValue, aT);
   }
   //
   if (bIsVertexOnLine) {
@@ -1766,7 +1771,7 @@ void BOPAlgo_PaveFiller::RemoveUsedVertices(BOPDS_Curve& aNC,
 }
 
 //=======================================================================
-//function : ProcessOldPaveBlocks
+//function : ProcessExistingPaveBlocks
 //purpose  : 
 //=======================================================================
   void BOPAlgo_PaveFiller::ProcessExistingPaveBlocks

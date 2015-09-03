@@ -53,6 +53,7 @@ public:
   
   Standard_EXPORT static void Factory (Draw_Interpretor& aDI);
 
+  Standard_EXPORT static void AdditionalCommands (Draw_Interpretor& aDI);
 
 
 

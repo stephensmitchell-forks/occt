@@ -166,6 +166,7 @@ void BOPAlgo_PaveFiller::FillShrunkData(const TopAbs_ShapeEnum aType1,
   BOPAlgo_ShrunkRangeCnt::Perform(myRunParallel, aVSD, myContext);
   //=============================================================
   //
+  Standard_Real aFuzz = myFuzzyValue / 2.;
   for (k=0; k < aNbVSD; ++k) {
     BOPAlgo_ShrunkRange& aSD=aVSD(k);
     iWrn=aSD.WarningStatus();
@@ -175,7 +176,8 @@ void BOPAlgo_PaveFiller::FillShrunkData(const TopAbs_ShapeEnum aType1,
     //
     Handle(BOPDS_PaveBlock)& aPB=aSD.PaveBlock();
     aSD.ShrunkRange(aTS1, aTS2);
-    const Bnd_Box& aBox=aSD.BndBox();
+    Bnd_Box aBox=aSD.BndBox();
+    aBox.SetGap(aBox.GetGap() + aFuzz);
     //
     aPB->SetShrunkData(aTS1, aTS2, aBox);
   }

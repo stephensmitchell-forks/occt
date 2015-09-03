@@ -44,7 +44,6 @@
 #include <BRep_Tool.hxx>
 #include <BRepBndLib.hxx>
 #include <BRepTools.hxx>
-#include <GeomAPI_ProjectPointOnCurve.hxx>
 #include <gp_Pnt.hxx>
 #include <IntTools_CommonPrt.hxx>
 #include <IntTools_Context.hxx>
@@ -62,12 +61,6 @@
 #include <TopoDS_Face.hxx>
 #include <TopoDS_Vertex.hxx>
 
-//
-//
-//
-//
-//
-//
 /////////////////////////////////////////////////////////////////////////
 //=======================================================================
 //class    : BOPAlgo_EdgeEdge
@@ -105,6 +98,10 @@ class BOPAlgo_EdgeEdge :
     return myPB2;
   }
   // 
+  void SetFuzzyValue(const Standard_Real theFuzz) {
+    IntTools_EdgeEdge::SetFuzzyValue(theFuzz);
+  }
+  //
   virtual void Perform() {
     BOPAlgo_Algo::UserBreak();
     IntTools_EdgeEdge::Perform();
@@ -358,6 +355,7 @@ void BOPAlgo_PaveFiller::PerformEE()
         //
         anEdgeEdge.SetEdge1(aE1, aT11, aT12);
         anEdgeEdge.SetEdge2(aE2, aT21, aT22);
+        anEdgeEdge.SetFuzzyValue(myFuzzyValue);
         anEdgeEdge.SetProgressIndicator(myProgressIndicator);
       }//for (; aIt2.More(); aIt2.Next()) {
     }//for (; aIt1.More(); aIt1.Next()) {
@@ -894,8 +892,8 @@ void BOPAlgo_PaveFiller::ForceInterfVE(const Standard_Integer nV,
                                        Handle(BOPDS_PaveBlock)& aPB,
                                        BOPDS_MapOfPaveBlock& aMPBToUpdate)
 {
-  Standard_Integer aNbPnt, nE;
-  gp_Pnt aP;
+  Standard_Integer nE, nVx, nVSD, iFlag;
+  Standard_Real aT, aTolVNew;
   //
   nE = aPB->OriginalEdge();
   //
@@ -906,7 +904,7 @@ void BOPAlgo_PaveFiller::ForceInterfVE(const Standard_Integer nV,
   //
   if (myDS->HasInterf(nV, nE)) {
     return;
-  }   
+  }
   //
   if (myDS->HasInterfShapeSubShapes(nV, nE)) {
     return;
@@ -916,22 +914,17 @@ void BOPAlgo_PaveFiller::ForceInterfVE(const Standard_Integer nV,
     return;
   }
   //
-  const TopoDS_Vertex& aV = *(TopoDS_Vertex*)&myDS->Shape(nV);
+  nVx = nV;
+  if (myDS->HasShapeSD(nV, nVSD)) {
+    nVx = nVSD;
+  }
+  //
+  const TopoDS_Vertex& aV = *(TopoDS_Vertex*)&myDS->Shape(nVx);
   const TopoDS_Edge&   aE = *(TopoDS_Edge*)  &myDS->Shape(nE);
-  aP=BRep_Tool::Pnt(aV);
   //
-  GeomAPI_ProjectPointOnCurve& aProjector=myContext->ProjPC(aE);
-  aProjector.Perform(aP);
-  //
-  aNbPnt = aProjector.NbPoints();
-  if (aNbPnt) {
-    Standard_Real aT, aDist;
-    //Standard_Integer i;
-    BRep_Builder aBB;
+  iFlag = myContext->ComputeVE(aV, aE, aT, aTolVNew, myFuzzyValue);
+  if (iFlag == 0 || iFlag == -4) {
     BOPDS_Pave aPave;
-    //
-    aDist=aProjector.LowerDistance();
-    aT=aProjector.LowerDistanceParameter();
     //
     BOPDS_VectorOfInterfVE& aVEs=myDS->InterfVE();
     aVEs.SetIncrement(10);
@@ -941,12 +934,10 @@ void BOPAlgo_PaveFiller::ForceInterfVE(const Standard_Integer nV,
     //
     myDS->AddInterf(nV, nE);
     //
-    aBB.UpdateVertex(aV, aDist);
-    BOPDS_ShapeInfo& aSIDS=myDS->ChangeShapeInfo(nV);
-    Bnd_Box& aBox=aSIDS.ChangeBox();
-    BRepBndLib::Add(aV, aBox);
+    // Make Intersection vertex
+    nVx = myDS->MakeIntersectionVertex(nV, aTolVNew);
     //
-    aPave.SetIndex(nV);
+    aPave.SetIndex(nVx);
     aPave.SetParameter(aT);
     aPB->AppendExtPave(aPave);
     //

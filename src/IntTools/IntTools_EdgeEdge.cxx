@@ -157,8 +157,9 @@ void IntTools_EdgeEdge::Prepare()
     mySwap = Standard_True;
   }
   //
-  myTol1 = myCurve1.Tolerance();
-  myTol2 = myCurve2.Tolerance();
+  Standard_Real aFuzz = myFuzzyValue / 2.;
+  myTol1 = myCurve1.Tolerance() + aFuzz;
+  myTol2 = myCurve2.Tolerance() + aFuzz;
   myTol = myTol1 + myTol2;
   //
   if (iCT1 != 0 || iCT2 != 0) {

@@ -98,8 +98,7 @@ void BOPAlgo_CheckerSI::Init()
   // 1. myDS
   myDS=new BOPDS_DS(myAllocator);
   myDS->SetArguments(myArguments);
-  myDS->SetFuzzyValue(myFuzzyValue);
-  myDS->Init();
+  myDS->Init(myFuzzyValue);
   //
   // 2.myIterator 
   BOPDS_PIteratorSI theIterSI=new BOPDS_IteratorSI(myAllocator);
