@@ -549,15 +549,18 @@ void AIS_Dimension::DrawText (const Handle(Prs3d_Presentation)& thePresentation,
   Standard_Real aSymbolWidth = 0.0;
   Standard_Real aSymbolHeight = 0.0;
   getLabelSizes (theText, aWidth, aHeight, aSymbolWidth, aSymbolHeight);
-  aWidth += aSymbolWidth;
 
   // Compute label offsets
   Standard_Real aMarginSize    = aFontHeight * THE_3D_TEXT_MARGIN;
   Standard_Real aCenterHOffset = 0.0;
   Standard_Real aCenterVOffset = 0.0;
   Standard_Real aSymbolVOffset = 0.0; //< Offset of symbol relative to the main text
+  Standard_Real aSymbolHOffset = 0.0;
+  Standard_Real aShapeHOffset = 0.0;
+  Standard_Real aShapeVOffset = 0.0;
 
   Standard_Integer aVLabelPos = theLabelPosition & LabelPosition_VMask;
+  Standard_Integer aHLabelPos = theLabelPosition & LabelPosition_HMask;
 
   if (myDrawer->DimensionAspect()->IsText3d())
   {
@@ -565,6 +568,7 @@ void AIS_Dimension::DrawText (const Handle(Prs3d_Presentation)& thePresentation,
     Font_BRepFont aFont (aFontName, aFontAspect, aFontHeight);
     NCollection_Utf8String anUTFString = (Standard_Utf16Char* )theText.ToExtString();
     TopoDS_Shape aTextShape = aFont.RenderText (anUTFString);
+    const Standard_Real aHeightOfLine = aFont.LineSpacing();
 
     // Add special symbol
     TopoDS_Shape aSymbolShape;
@@ -575,15 +579,22 @@ void AIS_Dimension::DrawText (const Handle(Prs3d_Presentation)& thePresentation,
     }
 
     // Formating text position in XOY plane
-    Standard_Integer aHLabelPos = theLabelPosition & LabelPosition_HMask;
     switch (aHLabelPos)
     {
       case LabelPosition_HCenter : aCenterHOffset =  0.0; break;
-      case LabelPosition_Right   : aCenterHOffset =  aWidth / 2.0 + aMarginSize; break;
-      case LabelPosition_Left    : aCenterHOffset = -aWidth / 2.0 - aMarginSize; break;
+      case LabelPosition_Right   : aCenterHOffset =  (aWidth + aSymbolWidth) / 2.0 + aMarginSize; break;
+      case LabelPosition_Left    : aCenterHOffset = -(aWidth + aSymbolWidth) / 2.0 - aMarginSize; break;
     }
 
-    const Standard_Real aHeightOfLine = aFont.LineSpacing();
+    // Correct text direction
+    gp_Dir aTextDir  = (aHLabelPos == LabelPosition_Left ? -theTextDir : theTextDir);
+
+    // Transform text to myWorkingPlane coordinate system
+    gp_Ax3 aTextCoordSystem (theTextPos, GetPlane().Axis().Direction(), aTextDir);
+    gp_Trsf aTextPlaneTrsf;
+    aTextPlaneTrsf.SetTransformation (aTextCoordSystem, gp_Ax3 (gp::XOY()));
+
+    // ALIGNMENT: Vertical
 
     switch (aVLabelPos)
     {
@@ -591,8 +602,8 @@ void AIS_Dimension::DrawText (const Handle(Prs3d_Presentation)& thePresentation,
       {
         if (myTypeOfLabel == TOL_Text && aHeight > aHeightOfLine)
         {
-          aCenterVOffset = aHeight / 2.0 - aHeightOfLine;
-          aSymbolVOffset = aCenterVOffset - aHeightOfLine / 2.0 + aMarginSize;
+          aShapeVOffset = aHeightOfLine - aHeight / 2.0 ;
+          aSymbolVOffset = aShapeVOffset - aHeightOfLine / 2.0 + aMarginSize;
         }
         break;
       }
@@ -600,15 +611,22 @@ void AIS_Dimension::DrawText (const Handle(Prs3d_Presentation)& thePresentation,
       {
         if (myTypeOfLabel == TOL_Text && aHeight > aHeightOfLine)
         {
-          aCenterVOffset = aHeightOfLine - aHeight / 2.0 ;
-          aSymbolVOffset = aCenterVOffset - aHeight + aHeightOfLine / 2.0 - aMarginSize; 
+          aShapeVOffset = aHeight / 2.0 - aHeightOfLine;
+          aSymbolVOffset = aShapeVOffset - aHeight / 2.0 - aMarginSize; 
         }
         break;
       }
-      case LabelPosition_VCenter : aCenterVOffset =  0.0; break;
+      case LabelPosition_VCenter :
+      {
+        if (myTypeOfLabel == TOL_Text && aHeight > aHeightOfLine)
+        {
+          aSymbolVOffset = aCenterVOffset - aHeight / 2.0 + aHeightOfLine / 2.0; 
+        }
+      }
+      break;
       case LabelPosition_Above:
       {
-        aCenterVOffset =  aHeight / 2.0 + aMarginSize;
+        aCenterVOffset = aHeight / 2.0 + aMarginSize;
         if (myTypeOfLabel == TOL_Text)
         {
           aSymbolVOffset = aCenterVOffset / 2;
@@ -617,7 +635,7 @@ void AIS_Dimension::DrawText (const Handle(Prs3d_Presentation)& thePresentation,
       }
       case LabelPosition_Below:
       {
-        aCenterVOffset = -aHeight / 2.0 - aMarginSize;
+        aCenterVOffset = - aHeight / 2.0 - aMarginSize;
         if (myTypeOfLabel == TOL_Text)
         {
           aSymbolVOffset = aCenterVOffset / 2;
@@ -626,46 +644,63 @@ void AIS_Dimension::DrawText (const Handle(Prs3d_Presentation)& thePresentation,
       }
     }
 
-    // Correct text direction
-    gp_Dir aTextDir  = (aHLabelPos == LabelPosition_Left ? -theTextDir : theTextDir);
+    // ALIGNMENT: Horisontal
 
-    // Compute shape offset transformation
-    Standard_Real aShapeHOffset = aCenterHOffset - aWidth / 2.0 + aSymbolWidth / 2.0;
-    Standard_Real aShapeVOffset = aCenterVOffset - aHeight / 2.0;
-
-    // center shape in its bounding box (suppress border spacing added by FT_Font)
+    // Center shape in its bounding box (suppress border spacing added by FT_Font)
     Bnd_Box aShapeBnd;
     BRepBndLib::AddClose (aTextShape, aShapeBnd);
-
     Standard_Real aXmin, aYmin, aZmin, aXmax, aYmax, aZmax;
     aShapeBnd.Get (aXmin, aYmin, aZmin, aXmax, aYmax, aZmax);
-
     Standard_Real aXalign = aWidth  * 0.5 - (aXmax + aXmin) * 0.5;
     Standard_Real aYalign = aHeight * 0.5 - (aYmax + aYmin) * 0.5;
-    aShapeHOffset += aXalign;
-    aShapeVOffset += aYalign;
+
+    // Compute where to place main part of label (without special symbol) relative to the input text position
+    aShapeHOffset = aCenterHOffset - aWidth / 2.0 + aXalign;
+    aShapeVOffset += aCenterVOffset - aHeight / 2.0 + aYalign;
 
     gp_Trsf anOffsetTrsf;
-    anOffsetTrsf.SetTranslation (gp::Origin(), gp_Pnt (aShapeHOffset, aShapeVOffset, 0.0));
-    aTextShape.Move (anOffsetTrsf);
-
-    // transform text to myWorkingPlane coordinate system
-    gp_Ax3 aTextCoordSystem (theTextPos, GetPlane().Axis().Direction(), aTextDir);
-    gp_Trsf aTextPlaneTrsf;
-    aTextPlaneTrsf.SetTransformation (aTextCoordSystem, gp_Ax3 (gp::XOY()));
-    aTextShape.Move (aTextPlaneTrsf);
-
     if (!aSymbolShape.IsNull())
     {
+      Bnd_Box aSymbolBnd;
+      BRepBndLib::AddClose (aSymbolShape, aSymbolBnd);
+      aSymbolBnd.Get (aXmin, aYmin, aZmin, aXmax, aYmax, aZmax);
+      aXalign = aSymbolWidth  * 0.5 - (aXmax + aXmin) * 0.5;
+
+      aSymbolHOffset = aCenterHOffset + aXalign;
       aSymbolVOffset += aYalign - aHeight / 2.0;
 
+      switch (myDisplaySpecialSymbol)
+      {
+        case AIS_DSS_After:
+        {
+          aSymbolHOffset += aWidth * 0.5;
+          aShapeHOffset -= aSymbolWidth * 0.5;
+          break;
+        }
+        case AIS_DSS_Before:
+        {
+          aSymbolHOffset -= (aWidth + aSymbolWidth) * 0.5;
+          aShapeHOffset += aSymbolWidth * 0.5;
+          break;
+        }
+        case AIS_DSS_No:
+        default:
+        {
+          break;
+        }
+      }
+
       // Modify transformation for a special symbol relative! to the main text
-      anOffsetTrsf.SetTranslation (gp::Origin(), gp_Pnt (aShapeHOffset - aSymbolWidth, aSymbolVOffset, 0.0));
+      anOffsetTrsf.SetTranslation (gp::Origin(), gp_Pnt (aSymbolHOffset, aSymbolVOffset, 0.0));
       aSymbolShape.Move (anOffsetTrsf);
       aSymbolShape.Move (aTextPlaneTrsf);
     }
 
-    // Set text flipping anchors
+    anOffsetTrsf.SetTranslation (gp::Origin(), gp_Pnt (aShapeHOffset, aShapeVOffset, 0.0));
+    aTextShape.Move (anOffsetTrsf);
+    aTextShape.Move (aTextPlaneTrsf);
+
+    // Compute anchor point for flipping options
     gp_Trsf aCenterOffsetTrsf;
     gp_Pnt aCenterOffset (aCenterHOffset, aCenterVOffset, 0.0);
     aCenterOffsetTrsf.SetTranslation (gp::Origin(), aCenterOffset);
@@ -688,7 +723,6 @@ void AIS_Dimension::DrawText (const Handle(Prs3d_Presentation)& thePresentation,
       myDrawer->ShadingAspect()->Aspect()->SetBackInteriorColor (aColor);
       myDrawer->ShadingAspect()->SetMaterial (aShadeMat);
 
-      // Drawing text
       StdPrs_ShadedShape::Add (thePresentation, aTextShape, myDrawer);
       StdPrs_ShadedShape::Add (thePresentation, aSymbolShape, myDrawer);
     }
@@ -696,11 +730,11 @@ void AIS_Dimension::DrawText (const Handle(Prs3d_Presentation)& thePresentation,
     {
       // Setting color for text
       myDrawer->FreeBoundaryAspect()->Aspect()->SetColor (aColor);
-      
-      // Drawing text
+
       StdPrs_WFShape::Add (thePresentation, aTextShape, myDrawer);
       StdPrs_WFShape::Add (thePresentation, aSymbolShape, myDrawer);
     }
+
     Prs3d_Root::CurrentGroup (thePresentation)->SetFlippingOptions (Standard_False, gp_Ax2());
 
     mySelectionGeom.TextPos    = aCenterOfLabel;
@@ -711,7 +745,8 @@ void AIS_Dimension::DrawText (const Handle(Prs3d_Presentation)& thePresentation,
     return;
   }
 
-  // Generate primitives for 2D text
+  // 2D text
+
   myDrawer->DimensionAspect()->TextAspect()->Aspect()->SetDisplayType (Aspect_TODT_DIMENSION);
 
   gp_Pnt aTextPos = theTextPos;
@@ -732,7 +767,7 @@ void AIS_Dimension::DrawText (const Handle(Prs3d_Presentation)& thePresentation,
     {
       if (myTypeOfLabel == TOL_Text && aHeight > aHeightOfLine)
       {
-        aSymbolVOffset = -aWidth / 2;
+        aSymbolVOffset = -aHeight / 2;
       }
       break;
     }
@@ -740,33 +775,32 @@ void AIS_Dimension::DrawText (const Handle(Prs3d_Presentation)& thePresentation,
     {
       if (myTypeOfLabel == TOL_Text && aHeight > aHeightOfLine)
       {
-        aSymbolVOffset = aWidth / 2;
+        aSymbolVOffset = aHeight / 2;
       }
       break;
     }
   }
 
-  Prs3d_Text::Draw (thePresentation, myDrawer->DimensionAspect()->TextAspect(),
-                    theText, aTextPos);
-
+  // NOTE: for 2d text that is always parallel to view plane,
+  //       multiline text alignment with special symbol does not applied.
+  TCollection_ExtendedString aText = theText;
   switch (myDisplaySpecialSymbol)
   {
     case AIS_DSS_Before:
     {
-      gp_Pnt aSymbolPos (theTextPos.X(), theTextPos.Y() + aSymbolVOffset, theTextPos.Z());
-      Prs3d_Text::Draw (thePresentation, myDrawer->DimensionAspect()->TextAspect(),
-                        TCollection_ExtendedString (mySpecialSymbol), aSymbolPos);
+      aText.Insert (1, mySpecialSymbol);
       break;
     }
     case AIS_DSS_After:
     {
-       gp_Pnt aSymbolPos (theTextPos.X() + aWidth, theTextPos.Y() + aSymbolVOffset, theTextPos.Z());
-       Prs3d_Text::Draw (thePresentation, myDrawer->DimensionAspect()->TextAspect(),
-         TCollection_ExtendedString (mySpecialSymbol), aSymbolPos);
-       break;
+      aText += mySpecialSymbol;
+      break;
     }
     case AIS_DSS_No: break;
   }
+
+  
+  Prs3d_Text::Draw (thePresentation, aTextAspect, aText, aTextPos);
 
   mySelectionGeom.TextPos    = theTextPos;
   mySelectionGeom.TextDir    = theTextDir;
@@ -793,7 +827,7 @@ void AIS_Dimension::DrawExtension (const Handle(Prs3d_Presentation)& thePresenta
   Standard_Boolean hasLabel = theLabelString.Length() > 0;
 
   gp_Dir aTextDir = myIsTextAligned
-    ? (myTextDir*theExtensionDir < 0 ? -myTextDir : myTextDir)
+    ? (myTextDir * theExtensionDir < 0 ? -myTextDir : myTextDir)
     : theExtensionDir;
 
   // Compute graphical primitives and sensitives for extension line
@@ -1109,7 +1143,7 @@ void AIS_Dimension::DrawLinearDimension (const Handle(Prs3d_Presentation)& thePr
       // add dimension line primitives
       if (theMode == ComputeMode_All || theMode == ComputeMode_Line)
       {
-        if (theToDrawDimensionLine || !isArrowsExternal)
+        if (theToDrawDimensionLine || !isArrowsExternal || abs(myFlyout) > Precision::Confusion() )
         {
           // add central dimension line
           Prs3d_Root::NewGroup (thePresentation);
@@ -1176,7 +1210,7 @@ void AIS_Dimension::DrawLinearDimension (const Handle(Prs3d_Presentation)& thePr
 
       if (theMode == ComputeMode_All || theMode == ComputeMode_Line)
       {
-        if (theToDrawDimensionLine || !isArrowsExternal)
+        if (theToDrawDimensionLine || !isArrowsExternal || abs(myFlyout) > Precision::Confusion())
         {
           // add central dimension line
           Prs3d_Root::NewGroup (thePresentation);
