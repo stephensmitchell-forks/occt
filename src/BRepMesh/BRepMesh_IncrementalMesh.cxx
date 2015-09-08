@@ -70,6 +70,7 @@ IMPLEMENT_STANDARD_RTTIEXT(BRepMesh_IncrementalMesh, BRepMesh_DiscretRoot)
 BRepMesh_IncrementalMesh::BRepMesh_IncrementalMesh()
 : myRelative  (Standard_False),
   myInParallel(Standard_False),
+  myAdaptiveMin(Standard_False),
   myMinSize   (Precision::Confusion()),
   myInternalVerticesMode(Standard_True),
   myIsControlSurfaceDeflection(Standard_True)
@@ -88,6 +89,7 @@ BRepMesh_IncrementalMesh::BRepMesh_IncrementalMesh(
   const Standard_Boolean isInParallel)
   : myRelative  (isRelative),
     myInParallel(isInParallel),
+    myAdaptiveMin(Standard_False),
     myMinSize   (Precision::Confusion()),
     myInternalVerticesMode(Standard_True),
     myIsControlSurfaceDeflection(Standard_True)
@@ -148,6 +150,8 @@ void BRepMesh_IncrementalMesh::init()
     myAngle, aBox, Standard_True, Standard_True, 
     myRelative, Standard_True, myInParallel, myMinSize,
     myInternalVerticesMode, myIsControlSurfaceDeflection);
+
+  myMesh->AdaptiveParametricTolerance() = myAdaptiveMin;
 
   myMesh->InitSharedFaces(myShape);
 }

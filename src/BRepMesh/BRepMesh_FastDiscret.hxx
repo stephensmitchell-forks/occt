@@ -115,6 +115,15 @@ public:
     Process(face);
   }
   
+  //! Returns modifiable adaptive parametric tolerance flag.
+  //! If this flag is set to true the minimal parametric tolerance
+  //! is computed taking minimal parametric distance between vertices
+  //! into account
+  inline Standard_Boolean& AdaptiveParametricTolerance()
+  {
+    return myAdaptiveMin;
+  }
+
   //! Request algorithm to launch in multiple threads <br>
   //! to improve performance (should be supported by plugin). <br>
   inline void SetParallel(const Standard_Boolean theInParallel)
@@ -362,6 +371,7 @@ private:
   Standard_Boolean                                 myRelative;
   Standard_Boolean                                 myShapetrigu;
   Standard_Boolean                                 myInshape;
+  Standard_Boolean                                 myAdaptiveMin;
   TopTools_DataMapOfShapeReal                      myMapdefle;
 
   // Data shared for whole shape

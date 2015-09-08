@@ -139,7 +139,8 @@ options:\n\
                         (enabled by default)\n\
         -surf_def_off   disables control of deflection of mesh from real\n\
                         surface (enabled by default)\n\
-        -parallel       enables parallel execution (switched off by default)\n";
+        -parallel       enables parallel execution (switched off by default)\n\
+        -adaptive       enables adaptive computation of minimal value in parametric space\n";
     return 0;
   }
 
@@ -157,6 +158,7 @@ options:\n\
   Standard_Boolean isInParallel    = Standard_False;
   Standard_Boolean isIntVertices   = Standard_True;
   Standard_Boolean isControlSurDef = Standard_True;
+  Standard_Boolean isAdaptiveMin   = Standard_False;
 
   if (nbarg > 3)
   {
@@ -176,6 +178,8 @@ options:\n\
         isIntVertices = Standard_False;
       else if (aOpt == "-surf_def_off")
         isControlSurDef = Standard_False;
+      else if (aOpt == "-adaptive")
+        isAdaptiveMin   = Standard_True;
       else if (i < nbarg)
       {
         Standard_Real aVal = Draw::Atof(argv[i++]);
@@ -201,6 +205,7 @@ options:\n\
   aMesher.SetMinSize   (aMinSize);
   aMesher.SetInternalVerticesMode(isIntVertices);
   aMesher.SetControlSurfaceDeflection(isControlSurDef);
+  aMesher.AdaptiveParametricTolerance() = isAdaptiveMin;
   aMesher.Perform();
 
   di << "Meshing statuses: ";

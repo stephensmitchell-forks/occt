@@ -101,6 +101,7 @@ BRepMesh_FastDiscret::BRepMesh_FastDiscret(
   myRelative (theRelative),
   myShapetrigu (theShapetrigu), 
   myInshape (theInshape),
+  myAdaptiveMin(Standard_False),
   myBoundaryVertices(new BRepMesh::DMapOfVertexInteger),
   myBoundaryPoints(new BRepMesh::DMapOfIntegerPnt),
   myMinSize(theMinSize),
@@ -135,6 +136,7 @@ BRepMesh_FastDiscret::BRepMesh_FastDiscret(
   myRelative (theRelative),
   myShapetrigu (theShapetrigu),
   myInshape (theInshape),
+  myAdaptiveMin(Standard_False),
   myBoundaryVertices(new BRepMesh::DMapOfVertexInteger),
   myBoundaryPoints(new BRepMesh::DMapOfIntegerPnt),
   myMinSize(theMinSize),
@@ -249,6 +251,7 @@ Standard_Integer BRepMesh_FastDiscret::Add(const TopoDS_Face& theFace)
 
       myAttributes.Bind(theFace, myAttribute);
     }
+    myAttribute->AdaptiveParametricTolerance() = myAdaptiveMin;
 
     BRepMesh::HIMapOfInteger&            aVertexEdgeMap = myAttribute->ChangeVertexEdgeMap();
     BRepMesh::HDMapOfShapePairOfPolygon& aInternalEdges = myAttribute->ChangeInternalEdges();
