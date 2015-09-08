@@ -84,6 +84,15 @@ public: //! @name main geometrical properties.
   
   //! Returns V tolerance of face calculated regarding its parameters.
   Standard_EXPORT Standard_Real ToleranceV() const;
+
+  //! Returns modifiable adaptive parametric tolerance flag.
+  //! If this flag is set to true the minimal parametric tolerance
+  //! is computed taking minimal parametric distance between vertices
+  //! into account
+  inline Standard_Boolean& AdaptiveParametricTolerance()
+  {
+    return myAdaptiveMin;
+  }
   
   //! Gives face deflection parameter.
   inline Standard_Real GetDefFace() const
@@ -361,7 +370,9 @@ private:
   Standard_Real                           myVMax;          //!< Describes maximal value in V domain
   Standard_Real                           myDeltaX;
   Standard_Real                           myDeltaY;
+  Standard_Real                           myMinStep;
   Standard_Integer                        myStatus;
+  Standard_Boolean                        myAdaptiveMin;
 
   BRepMesh::HDMapOfVertexInteger          myBoundaryVertices;
   BRepMesh::HDMapOfIntegerPnt             myBoundaryPoints;
