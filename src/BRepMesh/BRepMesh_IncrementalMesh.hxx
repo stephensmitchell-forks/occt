@@ -78,7 +78,16 @@ public: //! @name accessing to parameters.
   {
     return myRelative;
   }
-  
+
+  //! Returns modifiable adaptive parametric tolerance flag.
+  //! If this flag is set to true the minimal parametric tolerance
+  //! is computed taking minimal parametric distance between vertices
+  //! into account
+  inline Standard_Boolean& AdaptiveParametricTolerance()
+  {
+    return myAdaptiveMin;
+  }
+
   //! Returns modified flag.
   inline Standard_Boolean IsModified() const
   {
@@ -227,6 +236,7 @@ protected:
   BRepMesh::DMapOfEdgeListOfTriangulationBool myEdges;
   Handle(BRepMesh_FastDiscret)                myMesh;
   Standard_Boolean                            myModified;
+  Standard_Boolean                            myAdaptiveMin;
   TopTools_DataMapOfShapeReal                 myEdgeDeflection;
   Standard_Real                               myMaxShapeSize;
   Standard_Integer                            myStatus;
