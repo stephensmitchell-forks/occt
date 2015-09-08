@@ -263,8 +263,7 @@ static Standard_Boolean KPartCircle
     C = Ct->BasisCurve();
   }
 
-  if ((C->IsKind(STANDARD_TYPE(Geom_Circle)) && BRep_Tool::IsClosed(E)) || //closed circle
-      IsOpenResult)
+  if ((C->IsKind(STANDARD_TYPE(Geom_Circle)) && BRep_Tool::IsClosed(E))) //closed circle      
   {
     Standard_Real anOffset = myOffset;
     if (E.Orientation() == TopAbs_REVERSED) anOffset *= -1;

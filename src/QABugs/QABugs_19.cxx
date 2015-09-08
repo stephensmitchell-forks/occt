@@ -3126,6 +3126,31 @@ static Standard_Integer OCC25446 (Draw_Interpretor& theDI,
   return 0;
 }
 
+#include <ShapeFix_Edge.hxx>
+#include <TopoDS_Edge.hxx>
+
+static Standard_Integer OCC26640 (Draw_Interpretor& /*theDI*/, Standard_Integer /*theArgc*/, const char** theArgv)
+{
+  TopoDS_Face aFace = TopoDS::Face(DBRep::Get(theArgv[1]));
+
+  TopExp_Explorer anExp(aFace, TopAbs_EDGE);
+  const TopoDS_Edge& anEdg = TopoDS::Edge(anExp.Current());
+
+  Handle(ShapeBuild_ReShape) aContext = new ShapeBuild_ReShape;
+  const TopoDS_Shape& aResult = aContext->Apply(aFace);
+
+  ShapeFix_Edge sfe;
+
+  sfe.FixRemovePCurve(anEdg, aFace);
+  sfe.FixAddPCurve(anEdg, aFace, Standard_False);
+
+  aContext->Replace(aFace, aResult);
+
+  return 0;
+}
+
+
+
 void QABugs::Commands_19(Draw_Interpretor& theCommands) {
   const char *group = "QABugs";
 
@@ -3187,5 +3212,8 @@ void QABugs::Commands_19(Draw_Interpretor& theCommands) {
   theCommands.Add ("OCC25348", "OCC25348", __FILE__, OCC25348, group);
   theCommands.Add ("OCC25413", "OCC25413 shape", __FILE__, OCC25413, group);
   theCommands.Add ("OCC25446", "OCC25446 res b1 b2 op", __FILE__, OCC25446, group);
+
+  theCommands.Add ("OCC26640", "OCC26640 face", __FILE__, OCC26640, group);
+
   return;
 }
