@@ -32,6 +32,8 @@ class ReShape from BRepTools inherits TShared from MMgt
 uses 
     ShapeEnum from TopAbs, 
     Shape     from TopoDS,
+    Vertex    from TopoDS,
+    Pnt       from gp,
     DataMapOfShapeShape from TopTools
 
 is
@@ -57,6 +59,24 @@ is
     	--          Else, whatever the orientation, and the new shape takes the
     	--          same orientation as <newshape> if the replaced one has the
     	--          same as <shape>, else it is reversed
+
+    CopyVertex(me: mutable; theV: Vertex from TopoDS;
+                            theTol: Real from Standard = -1.0)
+        returns Vertex from TopoDS;
+        ---Purpose: Returns modified copy of vertex if original one is not
+        --          recorded or returns modified original vertex otherwise.
+        --          theV - original vertex.
+        --          theTol - new tolerance of vertex, optional.
+
+    CopyVertex(me: mutable; theV: Vertex from TopoDS;
+                            theNewPos: Pnt from gp;
+                            theTol: Real from Standard)
+        returns Vertex from TopoDS;
+        ---Purpose: Returns modified copy of vertex if original one is not
+        --          recorded or returns modified original vertex otherwise.
+        --          theV - original vertex.
+        --          theNewPos - new position for vertex copy.
+        --          theTol - new tolerance of vertex.
 
     IsRecorded (me; shape: Shape from TopoDS)
 	returns Boolean is virtual;

@@ -31,6 +31,7 @@ uses
     Face     from TopoDS,
     Location from TopLoc,
     Status   from ShapeExtend,
+    ReShape  from ShapeBuild,
     ProjectCurveOnSurface from ShapeConstruct
 
 is
@@ -193,9 +194,16 @@ is
 
     Status (me; status: Status from ShapeExtend) returns Boolean;
     	---Purpose: Returns the status (in the form of True/False) of last Fix
+
+    SetContext (me: mutable; context: ReShape from ShapeBuild);
+      ---Purpose: Sets context
+
+    Context(me) returns ReShape from ShapeBuild;
+      ---Purpose: Returns context
 	
 fields
 
+    myContext: ReShape from ShapeBuild;
     myStatus: Integer is protected;
     myProjector: ProjectCurveOnSurface from ShapeConstruct is protected;
 
