@@ -54,6 +54,7 @@
 #include <ShapeFix_ShapeTolerance.hxx>
 #include <Geom2d_OffsetCurve.hxx>
 #include <ShapeAnalysis_Curve.hxx>
+#include <ShapeBuild_ReShape.hxx>
 
 
 //=======================================================================
@@ -576,18 +577,32 @@ Standard_Boolean ShapeFix_Edge::FixVertexTolerance(const TopoDS_Edge& edge,
                                                    const TopoDS_Face& face)
 {
   myStatus = ShapeExtend::EncodeStatus ( ShapeExtend_OK );
+  TopoDS_Edge anEdgeCopy = edge;
   ShapeAnalysis_Edge sae;
+  if (!Context().IsNull())
+  {
+    anEdgeCopy = TopoDS::Edge(Context()->Apply(edge));
+  }
+
   Standard_Real toler1, toler2;
-  if (!sae.CheckVertexTolerance (edge, face, toler1, toler2)) return Standard_False;
+  if (!sae.CheckVertexTolerance (anEdgeCopy, face, toler1, toler2)) return Standard_False;
   if (sae.Status (ShapeExtend_DONE1))
     myStatus = ShapeExtend::EncodeStatus (ShapeExtend_DONE1);
   if (sae.Status (ShapeExtend_DONE2))
     myStatus = ShapeExtend::EncodeStatus (ShapeExtend_DONE2);
   BRep_Builder B;
-  TopoDS_Vertex V1 = sae.FirstVertex(edge);
-  TopoDS_Vertex V2 = sae.LastVertex(edge);
+  TopoDS_Vertex V1 = sae.FirstVertex(anEdgeCopy);
+  TopoDS_Vertex V2 = sae.LastVertex(anEdgeCopy);
+  if (! Context().IsNull())
+  {
+    Context()->CopyVertex(V1,toler1);
+    Context()->CopyVertex(V2,toler2);
+  }
+  else
+  {
   B.UpdateVertex (V1, toler1);
   B.UpdateVertex (V2, toler2);
+  }
   return Standard_True;
 }
 
@@ -599,18 +614,31 @@ Standard_Boolean ShapeFix_Edge::FixVertexTolerance(const TopoDS_Edge& edge,
 Standard_Boolean ShapeFix_Edge::FixVertexTolerance(const TopoDS_Edge& edge)
 {
   myStatus = ShapeExtend::EncodeStatus ( ShapeExtend_OK );
+  TopoDS_Edge anEdgeCopy = edge;
   ShapeAnalysis_Edge sae;
+  if (!Context().IsNull())
+  {
+    anEdgeCopy = TopoDS::Edge(Context()->Apply(edge));
+  }
   Standard_Real toler1, toler2;
-  if (!sae.CheckVertexTolerance (edge, toler1, toler2)) return Standard_False;
+  if (!sae.CheckVertexTolerance (anEdgeCopy, toler1, toler2)) return Standard_False;
   if (sae.Status (ShapeExtend_DONE1))
     myStatus = ShapeExtend::EncodeStatus (ShapeExtend_DONE1);
   if (sae.Status (ShapeExtend_DONE2))
     myStatus = ShapeExtend::EncodeStatus (ShapeExtend_DONE2);
   BRep_Builder B;
-  TopoDS_Vertex V1 = sae.FirstVertex(edge);
-  TopoDS_Vertex V2 = sae.LastVertex(edge);
+  TopoDS_Vertex V1 = sae.FirstVertex(anEdgeCopy);
+  TopoDS_Vertex V2 = sae.LastVertex(anEdgeCopy);
+  if (! Context().IsNull())
+  {
+    Context()->CopyVertex(V1,toler1);
+    Context()->CopyVertex(V2,toler2);
+  }
+  else
+  {
   B.UpdateVertex (V1, toler1);
   B.UpdateVertex (V2, toler2);
+  }
   return Standard_True;
 }
 
@@ -679,13 +707,15 @@ Standard_Boolean ShapeFix_Edge::FixSameParameter(const TopoDS_Edge& edge,
 {
   myStatus = ShapeExtend::EncodeStatus ( ShapeExtend_OK );
   
-  if ( BRep_Tool::Degenerated ( edge ) ) {
+  if ( BRep_Tool::Degenerated ( edge ) )
+  {
     BRep_Builder B;
     if ( ! BRep_Tool::SameRange (edge) )
       TempSameRange ( edge, Precision::PConfusion() );
     B.SameParameter ( edge, Standard_True );
     return Standard_False;
   }
+
   ShapeFix_ShapeTolerance SFST;
   ShapeAnalysis_Edge sae;
   BRep_Builder B;
@@ -699,12 +729,14 @@ Standard_Boolean ShapeFix_Edge::FixSameParameter(const TopoDS_Edge& edge,
   
   Standard_Boolean wasSP = BRep_Tool::SameParameter ( edge ), SP = Standard_False;
   {
-    try {
+    try
+    {
       OCC_CATCH_SIGNALS
       if ( ! BRep_Tool::SameRange (edge) )
 	TempSameRange ( edge, Precision::PConfusion() );
       //#81 rln 15.03.99 S4135: for not SP edge choose the best result (either BRepLib or deviation only)
-      if ( ! wasSP ) {
+      if ( ! wasSP )
+      {
 	//create copyedge as copy of edge with the same vertices and copy of pcurves on the same surface(s)
 	copyedge = ShapeBuild_Edge().Copy ( edge, Standard_False );
 	B.SameParameter ( copyedge, Standard_False );
@@ -715,13 +747,13 @@ Standard_Boolean ShapeFix_Edge::FixSameParameter(const TopoDS_Edge& edge,
         Standard_Real aF, aL;
         BRep_Tool::Range (edge, aF, aL);
         B.Range (copyedge, aF, aL, Standard_True); // only 3D
-	BRepLib::SameParameter ( copyedge, ( tolerance >= Precision::Confusion() ? 
-					    tolerance : tol ) );
+        BRepLib::SameParameter ( copyedge, ( tolerance >= Precision::Confusion() ? tolerance : tol ) );
 	SP = BRep_Tool::SameParameter ( copyedge );
 	if ( ! SP ) myStatus |= ShapeExtend::EncodeStatus ( ShapeExtend_FAIL2 );
       }
     }
-    catch(Standard_Failure) {
+    catch(Standard_Failure)
+    {
 #ifdef OCCT_DEBUG
       cout << "\nWarning: ShapeFix_Edge: Exception in SameParameter: "; 
       Standard_Failure::Caught()->Print(cout); cout << endl;
@@ -738,14 +770,16 @@ Standard_Boolean ShapeFix_Edge::FixSameParameter(const TopoDS_Edge& edge,
     myStatus |= ShapeExtend::EncodeStatus ( ShapeExtend_FAIL1 );
   
   // if BRepLib was OK, compare and select the best variant
-  if ( SP ) {
+  if ( SP )
+  {
     Standard_Real BRLTol = BRep_Tool::Tolerance ( copyedge ), BRLDev;
     sae.CheckSameParameter ( copyedge, BRLDev );
     myStatus |= ShapeExtend::EncodeStatus ( ShapeExtend_DONE3 );
     if ( BRLTol < BRLDev ) BRLTol = BRLDev;
     
     //chose the best result
-    if ( BRLTol < maxdev ) {
+    if ( BRLTol < maxdev )
+    {
       if ( sae.Status ( ShapeExtend_FAIL2 ) )
 	myStatus |= ShapeExtend::EncodeStatus ( ShapeExtend_FAIL1 );
       //copy pcurves and tolerances from copyedge
@@ -755,11 +789,13 @@ Standard_Boolean ShapeFix_Edge::FixSameParameter(const TopoDS_Edge& edge,
       myStatus |= ShapeExtend::EncodeStatus ( ShapeExtend_DONE5 );
     }
   }
+
   //restore tolerances because they could be modified by BRepLib
   if ( ! V1.IsNull() ) SFST.SetTolerance ( V1, Max (maxdev, TolFV), TopAbs_VERTEX);
   if ( ! V2.IsNull() ) SFST.SetTolerance ( V2, Max (maxdev, TolLV), TopAbs_VERTEX);
   
-  if ( maxdev > tol ) { 
+  if ( maxdev > tol )
+  { 
     myStatus |= ShapeExtend::EncodeStatus ( ShapeExtend_DONE1 );
     B.UpdateEdge ( edge, maxdev );
     FixVertexTolerance(edge);
@@ -777,4 +813,24 @@ Standard_Boolean ShapeFix_Edge::FixSameParameter(const TopoDS_Edge& edge,
  Standard_Boolean ShapeFix_Edge::Status(const ShapeExtend_Status status) const
 {
   return ShapeExtend::DecodeStatus (myStatus, status);
+}
+
+//=======================================================================
+//function : Context
+//purpose  : 
+//=======================================================================
+
+inline Handle(ShapeBuild_ReShape) ShapeFix_Edge::Context() const
+{
+  return myContext;
+}
+
+//=======================================================================
+//function : SetContext
+//purpose  : 
+//=======================================================================
+
+void ShapeFix_Edge::SetContext (const Handle(ShapeBuild_ReShape)& context) 
+{
+  myContext = context;
 }
