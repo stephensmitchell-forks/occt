@@ -132,7 +132,7 @@ public:
   //! If the standard projector fails, internal one is used.
   Standard_EXPORT Standard_Boolean PerformAdvanced (Handle(Geom_Curve)& c3d, const Standard_Real First, const Standard_Real Last, Handle(Geom2d_Curve)& c2d);
 
-
+  Standard_EXPORT Standard_Boolean ApproxPCurve (const Standard_Integer nbrPnt, const TColgp_Array1OfPnt& points, const TColStd_Array1OfReal& params, TColgp_Array1OfPnt2d& points2d, Handle(Geom2d_Curve)& c2d);
 
 
   DEFINE_STANDARD_RTTI(ShapeConstruct_ProjectCurveOnSurface,MMgt_TShared)
@@ -163,8 +163,6 @@ private:
 
   
   Standard_EXPORT Handle(Geom2d_Curve) ProjectAnalytic (const Handle(Geom_Curve)& c3d) const;
-  
-  Standard_EXPORT Standard_Boolean ApproxPCurve (const Standard_Integer nbrPnt, const TColgp_Array1OfPnt& points, const TColStd_Array1OfReal& params, TColgp_Array1OfPnt2d& points2d, Handle(Geom2d_Curve)& c2d);
   
   Standard_EXPORT Handle(Geom2d_Curve) InterpolatePCurve (const Standard_Integer nbrPnt, Handle(TColgp_HArray1OfPnt2d)& points2d, Handle(TColStd_HArray1OfReal)& params, const Handle(Geom_Curve)& orig) const;
   
