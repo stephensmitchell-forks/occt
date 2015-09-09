@@ -1376,6 +1376,7 @@ void ShapeUpgrade_UnifySameDomain::UnifyFaces()
       TopoDS_Shape aResult = myContext->Apply(aShell);
 
       ShapeFix_Edge sfe;
+      if (!myContext.IsNull()) sfe.SetContext(myContext);
       for (exp.Init(aResult,TopAbs_EDGE); exp.More(); exp.Next()) {
         TopoDS_Edge E = TopoDS::Edge(exp.Current());
         sfe.FixVertexTolerance (E);
