@@ -597,9 +597,14 @@ void AIS_AngleDimension::Compute (const Handle(PrsMgr_PresentationManager3d)& /*
 
   Quantity_Length anArrowLength = aDimensionAspect->ArrowAspect()->Length();
 
-  // prepare label string and compute its geometrical width
-  Standard_Real aLabelWidth;
-  TCollection_ExtendedString aLabelString = GetValueString (aLabelWidth);
+  TCollection_ExtendedString aLabelString = GetTextLabel();
+
+  // Text sizes
+  Standard_Real aLabelWidth = 0.0;
+  Standard_Real aLabelHeight = 0.0;
+  Standard_Real aSymbolWidth = 0.0;
+  Standard_Real aSymbolHeight = 0.0;
+  getLabelSizes (aLabelString, aLabelWidth, aLabelHeight, aSymbolWidth, aSymbolHeight);
 
   // add margins to label width
   if (aDimensionAspect->IsText3d())
@@ -1159,8 +1164,15 @@ const gp_Pnt AIS_AngleDimension::GetTextPosition() const
   Handle(Prs3d_DimensionAspect) aDimensionAspect = myDrawer->DimensionAspect();
 
   // Prepare label string and compute its geometrical width
-  Standard_Real aLabelWidth;
-  TCollection_ExtendedString aLabelString = GetValueString (aLabelWidth);
+  TCollection_ExtendedString aLabelString = GetTextLabel();
+
+  // Text sizes
+  Standard_Real aLabelWidth = 0.0;
+  Standard_Real aLabelHeight = 0.0;
+  Standard_Real aSymbolWidth = 0.0;
+  Standard_Real aSymbolHeight = 0.0;
+  getLabelSizes (aLabelString, aLabelWidth, aLabelHeight, aSymbolWidth, aSymbolHeight);
+
 
   gp_Pnt aFirstAttach = myCenterPoint.Translated (gp_Vec(myCenterPoint, myFirstPoint).Normalized() * GetFlyout());
   gp_Pnt aSecondAttach = myCenterPoint.Translated (gp_Vec(myCenterPoint, mySecondPoint).Normalized() * GetFlyout());
@@ -1339,8 +1351,15 @@ void AIS_AngleDimension::FitTextAlignment (const Prs3d_DimensionTextHorizontalPo
   Quantity_Length anArrowLength = aDimensionAspect->ArrowAspect()->Length();
 
   // Prepare label string and compute its geometrical width
-  Standard_Real aLabelWidth;
-  TCollection_ExtendedString aLabelString = GetValueString (aLabelWidth);
+  TCollection_ExtendedString aLabelString = GetTextLabel();
+
+  // Text sizes
+  Standard_Real aLabelWidth = 0.0;
+  Standard_Real aLabelHeight = 0.0;
+  Standard_Real aSymbolWidth = 0.0;
+  Standard_Real aSymbolHeight = 0.0;
+  getLabelSizes (aLabelString, aLabelWidth, aLabelHeight, aSymbolWidth, aSymbolHeight);
+
 
   // add margins to label width
   if (aDimensionAspect->IsText3d())

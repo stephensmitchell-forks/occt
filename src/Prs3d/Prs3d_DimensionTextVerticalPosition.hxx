@@ -25,7 +25,9 @@
 enum Prs3d_DimensionTextVerticalPosition
 {
 Prs3d_DTVP_Above,
+Prs3d_DTVP_FirstLine,
 Prs3d_DTVP_Below,
+Prs3d_DTVP_LastLine,
 Prs3d_DTVP_Center
 };
 

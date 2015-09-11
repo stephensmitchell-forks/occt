@@ -39,13 +39,21 @@ DEFINE_STANDARD_HANDLE (AIS_RadiusDimension,AIS_Dimension)
 //! In case if the dimension is built on the arbitrary shape,
 //! it can be considered as invalid if the shape does not contain
 //! circle geometry.
+//! Use IsValid() method to check that created dimension is valid.
 class AIS_RadiusDimension : public AIS_Dimension
 {
+protected:
+  
+  //! Setting of default construction parameters
+  void init();
+
 public:
 
   //! Create radius dimension for the circle geometry.
   //! @param theCircle [in] the circle to measure.
-  Standard_EXPORT AIS_RadiusDimension (const gp_Circ& theCircle);
+  //! @param theParameter [in] the value of parameter for parametric representation of the input circle
+  //! that defines the point where the dimension is to be attached.
+  Standard_EXPORT AIS_RadiusDimension (const gp_Circ& theCircle, const Standard_Real theParameter = 0);
 
   //! Create radius dimension for the circle geometry and define its
   //! orientation by location of the first point on that circle.
@@ -62,22 +70,13 @@ public:
 public:
 
   //! @return measured geometry circle.
-  const gp_Circ& Circle() const
-  {
-    return myCircle;
-  }
+  Standard_EXPORT const gp_Circ& Circle() const;
 
   //! @return anchor point on circle for radius dimension.
-  const gp_Pnt& AnchorPoint() const
-  {
-    return myAnchorPoint;
-  }
+  Standard_EXPORT const gp_Pnt& AnchorPoint() const;
 
   //! @return the measured shape.
-  const TopoDS_Shape& Shape() const
-  {
-    return myShape;
-  }
+  Standard_EXPORT const TopoDS_Shape& Shape() const;
 
 public:
 
@@ -85,7 +84,9 @@ public:
   //! The dimension will become invalid if the radius of the circle
   //! is less than Precision::Confusion().
   //! @param theCircle [in] the circle to measure.
-  Standard_EXPORT void SetMeasuredGeometry (const gp_Circ& theCircle);
+  //! @param theParameter [in] the value of parameter for parametric representation of the input circle
+  //! that defines the point where the dimension is to be attached.
+  Standard_EXPORT void SetMeasuredGeometry (const gp_Circ& theCircle, const Standard_Real theParameter = 0);
 
   //! Measure radius of the circle and orient the dimension so
   //! the dimension lines attaches to anchor point on the circle.
@@ -122,16 +123,16 @@ public:
 
 protected:
 
-  Standard_EXPORT virtual void ComputePlane();
+  Standard_EXPORT virtual void ComputePlane() Standard_OVERRIDE;
 
   //! Checks if anchor point and the center of the circle are on the plane.
-  Standard_EXPORT virtual Standard_Boolean CheckPlane (const gp_Pln& thePlane) const;
+  Standard_EXPORT virtual Standard_Boolean CheckPlane (const gp_Pln& thePlane) const Standard_OVERRIDE;
 
-  Standard_EXPORT virtual Standard_Real ComputeValue() const;
+  Standard_EXPORT virtual Standard_Real ComputeValue() const Standard_OVERRIDE;
 
   Standard_EXPORT virtual void Compute (const Handle(PrsMgr_PresentationManager3d)& thePresentationManager,
                                         const Handle(Prs3d_Presentation)& thePresentation,
-                                        const Standard_Integer theMode = 0);
+                                        const Standard_Integer theMode = 0) Standard_OVERRIDE;
 
 protected:
 
