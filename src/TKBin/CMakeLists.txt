@@ -3,7 +3,6 @@ project(TKBin)
 set (TOOLKIT_MODULES
   BinDrivers
   BinMDataXtd
-  BinMPrsStd
   BinMNaming
 )
 

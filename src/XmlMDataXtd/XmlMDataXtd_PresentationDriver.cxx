@@ -19,7 +19,6 @@
 #include <Standard_Type.hxx>
 #include <TDF_Attribute.hxx>
 #include <TPrsStd_AISPresentation.hxx>
-#include <XmlMPrsStd_AISPresentationDriver.hxx>
 #include <XmlObjMgt.hxx>
 #include <XmlObjMgt_Persistent.hxx>
 

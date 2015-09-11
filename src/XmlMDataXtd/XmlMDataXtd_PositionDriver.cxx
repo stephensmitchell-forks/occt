@@ -20,7 +20,6 @@
 #include <Standard_Type.hxx>
 #include <TDataXtd_Position.hxx>
 #include <TDF_Attribute.hxx>
-#include <XmlMPrsStd_PositionDriver.hxx>
 #include <XmlObjMgt.hxx>
 #include <XmlObjMgt_Persistent.hxx>
 
