@@ -882,17 +882,25 @@ void AIS_Dimension::DrawExtension (const Handle(Prs3d_Presentation)& thePresenta
   Handle(Graphic3d_ArrayOfSegments) anExtPrimitive = new Graphic3d_ArrayOfSegments ((hasLabel && myLeaderSegmentLength > 0 && myIsTextAligned) ? 4 : 2);
   anExtPrimitive->AddVertex (anExtStart);
   anExtPrimitive->AddVertex (anExtEnd);
-  // Draw segment
-  if (hasLabel && myLeaderSegmentLength > 0 && myIsTextAligned)
-  {
-    anExtPrimitive->AddVertex (anExtEnd);
-    anExtPrimitive->AddVertex (aSegmentPoint);
-  }
 
   // Add selection primitives
   SelectionGeometry::Curve& aSensitiveCurve = mySelectionGeom.NewCurve();
   aSensitiveCurve.Append (anExtStart);
   aSensitiveCurve.Append (anExtEnd);
+
+  // Draw segment
+  if (hasLabel && myLeaderSegmentLength > 0 && myIsTextAligned)
+  {
+    anExtPrimitive->AddVertex (anExtEnd);
+    anExtPrimitive->AddVertex (aSegmentPoint);
+
+    // Add selection primitives
+    SelectionGeometry::Curve& aSensitiveCurve = mySelectionGeom.NewCurve();
+    aSensitiveCurve.Append (anExtEnd);
+    aSensitiveCurve.Append (aSegmentPoint);
+  }
+
+
 
   if (!myDrawer->DimensionAspect()->IsText3d() && theMode == ComputeMode_All)
   {
