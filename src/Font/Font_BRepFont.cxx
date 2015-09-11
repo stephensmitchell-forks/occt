@@ -464,3 +464,38 @@ Standard_Boolean Font_BRepFont::renderGlyph (const Standard_Utf32Char theChar,
   myCache.Bind (theChar, theShape);
   return !theShape.IsNull();
 }
+
+
+// =======================================================================
+// function : BoundingBox
+// purpose  :
+// =======================================================================
+Font_FTFont::Rect Font_BRepFont::BoundingBox (const NCollection_String& theString,
+                                              const Graphic3d_HorizontalTextAlignment theHAlign,
+                                              const Graphic3d_VerticalTextAlignment   theVAlign)
+{
+  Rect aBox;
+  aBox.Left   = 0.0f;
+  aBox.Right  = 0.0f;
+  aBox.Bottom = 0.0f;
+  aBox.Top    = static_cast<float> (Ascender());
+
+  // Initialize text formatter
+  Font_TextFormatter aFormatter;
+  aFormatter.Reset();
+  aFormatter.SetupAlignment (theHAlign, theVAlign);
+  aFormatter.Append (theString, *(reinterpret_cast<Font_FTFont*> (this)));
+  aFormatter.Format();
+
+  // Get bounding box
+  aFormatter.BndBox (aBox);
+
+  // Apply BRepFont scale to box limits
+  Standard_Real aScaleUnits = Scale();
+  aBox.Left = aBox.Left * aScaleUnits;
+  aBox.Top = aBox.Top * aScaleUnits;
+  aBox.Right = aBox.Right * aScaleUnits;
+  aBox.Bottom = aBox.Bottom * aScaleUnits;
+
+  return aBox;
+}

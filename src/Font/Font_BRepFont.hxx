@@ -96,6 +96,12 @@ public:
   //! Notice that altering this flag clears currently accumulated cache!
   Standard_EXPORT void SetCompositeCurveMode (const Standard_Boolean theToConcatenate);
 
+  //! Compute bounding rectangle of resultant BRep text shape from input string
+  //! @return bounding rectangle
+  Standard_EXPORT Font_FTFont::Rect BoundingBox (const NCollection_String& theString,
+                                                 const Graphic3d_HorizontalTextAlignment theHAlign = Graphic3d_HTA_LEFT,
+                                                 const Graphic3d_VerticalTextAlignment   theVAlign = Graphic3d_VTA_BOTTOM);
+
 public:
 
   //! @return vertical distance from the horizontal baseline to the highest character coordinate.
@@ -163,6 +169,8 @@ public:
   {
     return myMutex;
   }
+
+
 
 protected:
 

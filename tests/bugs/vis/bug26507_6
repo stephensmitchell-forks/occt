@@ -1,0 +1,27 @@
+puts "================================================================"
+puts "CR26507"
+puts "Visualization - Improved presentations of dimensions"
+puts "================================================================"
+puts ""
+puts "Radius dimension vertical alignment with multiline custom text"
+
+#set anImage1 $imagedir/${casename}_1.png
+
+vinit Viewer1/View
+vright
+
+vpoint aCircleP1 0 0 100
+vpoint aCircleP2 100 0 0
+vpoint aCircleP3 200 0 100
+vcircle aCircle aCircleP1 aCircleP2 aCircleP3 0
+
+#Check all text and arrow positions
+vdimension aDim1 -radius -shapes aCircle -circleparam 10 -text 3d -label right -arrow external -hidedimline -valuetext "+2.0\n -3.0\nThickness" -aligntext 1.0 0.0 0.0 -segment 15 -label left firstline
+vdimension aDim2 -radius -shapes aCircle -circleparam 20 -text 3d -label right -arrow external -hidedimline -valuetext "Thickness\n+3.0\n -4.0" -aligntext 1.0 0.0 0.0 -segment 15 -label left lastline
+vdimension aDim3 -radius -shapes aCircle -circleparam 30 -text 3d -label right -arrow external -hidedimline -valuetext "+4.0\n -5.0\nThickness" -aligntext 1.0 0.0 0.0 -flyout -70 -segment 15 -label left vcenter
+vdimension aDim4 -radius -shapes aCircle -circleparam 15 -text 3d -label right -arrow external -hidedimline -valuetext "+0.5\n -0.5" -aligntext 1.0 0.0 0.0 -segment 15 -label left lastline
+
+vfit
+
+#finalize and dump
+set only_screen 1

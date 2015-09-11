@@ -31,10 +31,8 @@ namespace
 //function : Constructor
 //purpose  : 
 //=======================================================================
-AIS_RadiusDimension::AIS_RadiusDimension (const gp_Circ& theCircle)
-: AIS_Dimension (AIS_KOD_RADIUS)
+void AIS_RadiusDimension::init()
 {
-  SetMeasuredGeometry (theCircle);
   SetSpecialSymbol (THE_RADIUS_SYMBOL);
   SetDisplaySpecialSymbol (AIS_DSS_Before);
   SetFlyout (0.0);
@@ -45,13 +43,23 @@ AIS_RadiusDimension::AIS_RadiusDimension (const gp_Circ& theCircle)
 //purpose  : 
 //=======================================================================
 AIS_RadiusDimension::AIS_RadiusDimension (const gp_Circ& theCircle,
+                                          const Standard_Real theParameter)
+: AIS_Dimension (AIS_KOD_RADIUS)
+{
+  init();
+  SetMeasuredGeometry (theCircle, theParameter);
+}
+
+//=======================================================================
+//function : Constructor
+//purpose  : 
+//=======================================================================
+AIS_RadiusDimension::AIS_RadiusDimension (const gp_Circ& theCircle,
                                           const gp_Pnt& theAttachPoint)
 : AIS_Dimension (AIS_KOD_RADIUS)
 {
+  init();
   SetMeasuredGeometry (theCircle, theAttachPoint);
-  SetSpecialSymbol (THE_RADIUS_SYMBOL);
-  SetDisplaySpecialSymbol (AIS_DSS_Before);
-  SetFlyout (0.0);
 }
 
 //=======================================================================
@@ -61,22 +69,21 @@ AIS_RadiusDimension::AIS_RadiusDimension (const gp_Circ& theCircle,
 AIS_RadiusDimension::AIS_RadiusDimension (const TopoDS_Shape& theShape)
 : AIS_Dimension (AIS_KOD_RADIUS)
 {
+  init();
   SetMeasuredGeometry (theShape);
-  SetSpecialSymbol (THE_RADIUS_SYMBOL);
-  SetDisplaySpecialSymbol (AIS_DSS_Before);
-  SetFlyout (0.0);
 }
 
 //=======================================================================
 //function : SetMeasuredGeometry
 //purpose  : 
 //=======================================================================
-void AIS_RadiusDimension::SetMeasuredGeometry (const gp_Circ& theCircle)
+void AIS_RadiusDimension::SetMeasuredGeometry (const gp_Circ& theCircle,
+                                               const Standard_Real theParameter)
 {
   myCircle          = theCircle;
   myGeometryType    = GeometryType_Edge;
   myShape           = BRepLib_MakeEdge (theCircle);
-  myAnchorPoint     = ElCLib::Value (0, myCircle);
+  myAnchorPoint     = ElCLib::Value (theParameter, myCircle);
   myIsGeometryValid = IsValidCircle (myCircle);
 
   if (myIsGeometryValid)
@@ -126,6 +133,33 @@ void AIS_RadiusDimension::SetMeasuredGeometry (const TopoDS_Shape& theShape)
   }
 
   SetToUpdate();
+}
+
+//=======================================================================
+//function : Circle
+//purpose  : 
+//=======================================================================
+const gp_Circ& AIS_RadiusDimension::Circle() const
+{
+  return myCircle;
+}
+
+//=======================================================================
+//function : AnchorPoint
+//purpose  : 
+//=======================================================================
+const gp_Pnt& AIS_RadiusDimension::AnchorPoint() const
+{
+  return myAnchorPoint;
+}
+
+//=======================================================================
+//function : Shape
+//purpose  : 
+//=======================================================================
+const TopoDS_Shape& AIS_RadiusDimension::Shape() const
+{
+  return myShape;
 }
 
 //=======================================================================
@@ -228,7 +262,7 @@ void AIS_RadiusDimension::Compute (const Handle(PrsMgr_PresentationManager3d)& /
     return;
   }
 
-  DrawLinearDimension (thePresentation, theMode, myAnchorPoint, myCircle.Location(), Standard_True);
+  DrawLinearDimension (thePresentation, theMode, myAnchorPoint, myCircle.Location(), Standard_True, myToDrawDimensionLine);
 }
 
 //=======================================================================
