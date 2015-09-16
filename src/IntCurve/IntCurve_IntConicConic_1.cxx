@@ -1229,12 +1229,12 @@ void IntCurve_IntConicConic::Perform(const gp_Lin2d& L1
   //--                             2 : Confondues a la tolerance pres
   Standard_Integer nbsol;
   IntRes2d_IntersectionPoint PtSeg1,PtSeg2;
-  Standard_Real SINL1L2;
+  Standard_Real aHalfSinL1L2;
   Standard_Real Tol = TolR;
   if(TolR< 1e-10) Tol = 1e-10;
   
 
-  LineLineGeometricIntersection(L1,L2,Tol,U1,U2,SINL1L2,nbsol);
+  LineLineGeometricIntersection(L1,L2,Tol,U1,U2,aHalfSinL1L2,nbsol);
 
   gp_Vec2d Tan1=L1.Direction();
   gp_Vec2d Tan2=L2.Direction();
@@ -1254,7 +1254,7 @@ void IntCurve_IntConicConic::Perform(const gp_Lin2d& L1
     //--  d une distance superieure a Tol.
     //---------------------------------------------------
     IntRes2d_Position Pos1a,Pos2a,Pos1b,Pos2b;
-    Standard_Real d=Tol/(SINL1L2);
+    Standard_Real d = 0.5 * Tol / aHalfSinL1L2;
     Standard_Real U1inf=U1-d;
     Standard_Real U1sup=U1+d;
     Standard_Real U1mU2=U1-U2;
@@ -1345,7 +1345,7 @@ void IntCurve_IntConicConic::Perform(const gp_Lin2d& L1
         //------------------------------------------------------
       
     
-    }  //---------------   Fin du cas  :   1 seul point --------------------
+      }  //---------------   Fin du cas  :   1 seul point --------------------
       
       else {
 	//-- Intersection AND Domain1  --------> Segment ---------------------
@@ -1364,7 +1364,7 @@ void IntCurve_IntConicConic::Perform(const gp_Lin2d& L1
 	if(Res2sup_m_Res2inf < 0.0) {
 	  //-- Pas de solutions On retourne Vide
 	}
-	else if(((Res2sup-Res2inf) > LongMiniSeg)  
+	else if((Res2sup_m_Res2inf > LongMiniSeg)  
 		|| ((Pos2a==Pos2b)&&(Pos2a!=IntRes2d_Middle)))     {
 	  //----------- Calcul des attributs du segment --------------
 	  //-- Attention, les bornes Res1inf(sup) bougent donc il faut
@@ -1646,17 +1646,41 @@ void IntCurve_IntConicConic::Perform(const gp_Lin2d& L1
 	  //-- Attention Res1sup peut etre  different de  U2
 	  //--   Mais on a Res1sup-Res1inf < Tol 
 
-    //gka #0022833
+          //gka #0022833
     IntRes2d_TypeTrans aCurTrans = ( ProdVectTan >= TOLERANCE_ANGULAIRE ? 
            IntRes2d_In : ( ProdVectTan <= -TOLERANCE_ANGULAIRE ? IntRes2d_Out : IntRes2d_Undecided ) );
 
-    IntRes2d_IntersectionPoint NewPoint1;
+          IntRes2d_IntersectionPoint NewPoint1;
     if( computeIntPoint(Domain2, Domain1, L2, L1, aCosT1T2, U2, U1, Res2inf, Res2sup, 2, aCurTrans, NewPoint1 ) )
-      Append(NewPoint1);
+            Append(NewPoint1);
 	
 	}
       }
     }
+
+//#ifdef OCCT_DEBUG
+//  if (NbPoints() || NbSegments())
+//  {
+//    static int cnt = 0; cnt++;
+//
+//    printf("line l1_%03d %.15g %.15g %.15g %.15g\n", cnt, L1.Location().X(), L1.Location().Y(), L1.Direction().X(), L1.Direction().Y());
+//
+//    if (Domain1.HasFirstPoint() && Domain1.HasLastPoint())
+//      printf("trim l1_%03d l1_%03d %.15g %.15g\n", cnt, cnt, Domain1.FirstParameter(), Domain1.LastParameter());
+//
+//    printf("line l2_%03d %.15g %.15g %.15g %.15g\n", cnt, L2.Location().X(), L2.Location().Y(), L2.Direction().X(), L2.Direction().Y());
+//
+//    if (Domain2.HasFirstPoint() && Domain2.HasLastPoint())
+//      printf("trim l2_%03d l2_%03d %.15g %.15g\n", cnt, cnt, Domain2.FirstParameter(), Domain2.LastParameter());
+//
+//    for (int i=1; i <= NbPoints(); i++)
+//      printf("point p%d_%03d %.15g %.15g\n", i, cnt, Point(i).Value().X(), Point(i).Value().Y());
+//
+//    for (int i=1; i <= NbSegments(); i++)
+//      printf("point s1_%d_%03d %.15g %.15g; point s2_%d_%03d %.15g %.15g\n", i, cnt, Segment(i).FirstPoint().Value().X(), Segment(i).FirstPoint().Value().Y(), i, cnt, Segment(i).LastPoint().Value().X(), Segment(i).LastPoint().Value().Y());
+//  }
+//#endif
+
   }
   else {
     if(nbsol==2) {  //== Droites confondues a la tolerance pres 
