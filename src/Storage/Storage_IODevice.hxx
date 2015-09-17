@@ -89,7 +89,7 @@ public:
   
   Standard_EXPORT void WriteLine( const TCollection_AsciiString& aLine, const Standard_Character anEndSymbol );
 
-  Standard_EXPORT Storage_OpenMode Storage_IODevice::OpenMode() const;
+  Standard_EXPORT Storage_OpenMode OpenMode() const;
 
 
 private:
