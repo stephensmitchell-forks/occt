@@ -58,7 +58,7 @@ proc ApplicationFramework:alias { } {
     return CAF
 }
 proc ApplicationFramework:depends { } {
-    return [list ModelingAlgorithms]
+    return [list Visualization]
 }
 ;#
 ;# Pre-requis pour la compilation ( -I ... )
