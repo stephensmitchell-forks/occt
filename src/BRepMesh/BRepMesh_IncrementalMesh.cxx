@@ -197,12 +197,18 @@ void BRepMesh_IncrementalMesh::collectFaces()
 //=======================================================================
 void BRepMesh_IncrementalMesh::Perform()
 {
+  const Standard_Real aMinSize = myMinSize;
+  if (!(myMinSize > Precision::Confusion()))
+    myMinSize = Max(Precision::Confusion(), Deflection() * 0.1);
+
   init();
 
   if (myMesh.IsNull())
     return;
 
   update();
+
+  myMinSize = aMinSize;
 }
 
 //=======================================================================
