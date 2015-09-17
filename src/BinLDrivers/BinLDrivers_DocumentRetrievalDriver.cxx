@@ -205,7 +205,7 @@ void BinLDrivers_DocumentRetrievalDriver::Read (const Handle(Storage_IODevice)& 
   }
 
   // skip info section
-  theDevice->Seek ((streampos) anInfoSectionEnd);
+  theDevice->Seek (anInfoSectionEnd);
 
   // propagate the opened document version to data drivers
   PropagateDocumentVersion(aFileVer);
@@ -217,7 +217,7 @@ void BinLDrivers_DocumentRetrievalDriver::Read (const Handle(Storage_IODevice)& 
   mySections.Clear();
   myPAtt.Init();
   Handle(TDF_Data) aData = new TDF_Data();
-  streampos aDocumentPos = -1;
+  Storage_Position aDocumentPos = -1;
 
   // 2b. Read the TOC of Sections
   if (aFileVer >= 3) {
@@ -233,7 +233,7 @@ void BinLDrivers_DocumentRetrievalDriver::Read (const Handle(Storage_IODevice)& 
     for (; anIterS.More(); anIterS.Next()) {
       BinLDrivers_DocumentSection& aCurSection = anIterS.ChangeValue();
       if (aCurSection.IsPostRead() == Standard_False) {
-        theDevice->Seek((streampos) aCurSection.Offset());
+        theDevice->Seek((Storage_Position)aCurSection.Offset());
         if (aCurSection.Name().IsEqual ((Standard_CString)SHAPESECTION_POS)) 
           ReadShapeSection (aCurSection, theDevice);
         else
@@ -270,7 +270,7 @@ void BinLDrivers_DocumentRetrievalDriver::Read (const Handle(Storage_IODevice)& 
 #endif
       if(aShapeSectionPos) { 
 	aDocumentPos = theDevice->Tell();
-	theDevice->Seek ((streampos) aShapeSectionPos);
+	theDevice->Seek (aShapeSectionPos);
 
 	//CheckShapeSection(aShapeSectionPos, theDevice);
 	// Read Shapes
@@ -307,7 +307,7 @@ void BinLDrivers_DocumentRetrievalDriver::Read (const Handle(Storage_IODevice)& 
     for (; anIterS.More(); anIterS.Next()) {
       BinLDrivers_DocumentSection& aCurSection = anIterS.ChangeValue();
       if (aCurSection.IsPostRead()) {
-	theDevice->Seek ((streampos) aCurSection.Offset());
+	theDevice->Seek ((Storage_Position)aCurSection.Offset());
 	ReadSection (aCurSection, theNewDocument, theDevice); 
       }
     }
