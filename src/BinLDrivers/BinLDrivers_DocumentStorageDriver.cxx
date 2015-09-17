@@ -94,7 +94,6 @@ void BinLDrivers_DocumentStorageDriver::Write
     }
 
     theDevice->Open( Storage_VSAppend );
-    Standard_Size aP = theDevice->Tell();
 
     if (theDevice->CanWrite()) {
 

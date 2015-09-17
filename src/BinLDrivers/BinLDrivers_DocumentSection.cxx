@@ -161,7 +161,7 @@ void BinLDrivers_DocumentSection::Write (const Handle(Storage_IODevice)& theDevi
                                          const Standard_Size theOffset)
 {
   const Standard_Size aSectionEnd = (Standard_Size)theDevice->Tell();
-  theDevice->Seek(myValue[0]);
+  theDevice->Seek((Storage_Position)myValue[0]);
   myValue[0] = theOffset;
   myValue[1] = aSectionEnd - theOffset;
   Standard_Integer aVal[3] = {
@@ -176,7 +176,7 @@ void BinLDrivers_DocumentSection::Write (const Handle(Storage_IODevice)& theDevi
 #endif
 
   theDevice->Write((Standard_Address)&aVal[0], 3*sizeof(Standard_Integer));
-  theDevice->Seek(aSectionEnd);
+  theDevice->Seek((Storage_Position)aSectionEnd);
 }
 
 //=======================================================================
