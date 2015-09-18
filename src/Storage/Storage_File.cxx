@@ -97,6 +97,8 @@ Storage_Error Storage_File::Open (const Storage_OpenMode theMode)
     }
     else
     {
+      myStream.precision(17);
+      myStream.imbue (std::locale::classic()); // use always C locale
       SetOpenMode (theMode);
     }
   }

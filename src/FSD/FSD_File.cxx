@@ -81,48 +81,6 @@ Storage_Error FSD_File::Open(const Handle(Storage_IODevice)& aDevice, const Stor
     return Storage_VSOpenError;
 
   return Device()->Open(aMode);
-  /*
-  Storage_Error result = Storage_VSOk;
-
-  if (OpenMode() == Storage_VSNone) {
-
-#ifdef _WIN32
-    TCollection_ExtendedString aWName(aName);
-    if (aMode == Storage_VSRead) {
-      myStream.open( (const wchar_t*) aWName.ToExtString(),ios::in); // ios::nocreate is not portable
-    }
-    else if (aMode == Storage_VSWrite) {
-      myStream.open( (const wchar_t*) aWName.ToExtString(),ios::out);
-    }
-    else if (aMode == Storage_VSReadWrite) {
-      myStream.open( (const wchar_t*) aWName.ToExtString(),ios::in|ios::out);
-#else
-    if (aMode == Storage_VSRead) {
-      myStream.open(aName.ToCString(),ios::in); // ios::nocreate is not portable
-    }
-    else if (aMode == Storage_VSWrite) {
-      myStream.open(aName.ToCString(),ios::out);
-    }
-    else if (aMode == Storage_VSReadWrite) {
-      myStream.open(aName.ToCString(),ios::in|ios::out);
-#endif
-    }
-    
-    if (myStream.fail()) {
-      result = Storage_VSOpenError;
-    }
-    else {
-      myStream.precision(17);
-      myStream.imbue (std::locale::classic()); // use always C locale
-      SetOpenMode(aMode);
-    }
-  }
-  else {
-    result = Storage_VSAlreadyOpen;
-  }
-
-  return result;
-  */
 }
 
 //=======================================================================
