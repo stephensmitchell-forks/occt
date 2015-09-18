@@ -199,7 +199,7 @@ void BRepMesh_IncrementalMesh::Perform()
 {
   const Standard_Real aMinSize = myMinSize;
   if (!(myMinSize > Precision::Confusion()))
-    myMinSize = Max(Precision::Confusion(), Deflection() * 0.1);
+    myMinSize = Max(Precision::Confusion(), Deflection() * 0.01);
 
   init();
 
