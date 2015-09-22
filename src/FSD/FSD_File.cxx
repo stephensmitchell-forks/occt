@@ -15,6 +15,7 @@
 
 #include <FSD_File.hxx>
 #include <OSD.hxx>
+#include <Storage_File.hxx>
 #include <Storage_BaseDriver.hxx>
 #include <Storage_StreamExtCharParityError.hxx>
 #include <Storage_StreamFormatError.hxx>
@@ -27,7 +28,6 @@ const Standard_CString MAGICNUMBER = "FSDFILE";
 const Standard_CString ENDOFNORMALEXTENDEDSECTION = "BEGIN_REF_SECTION";
 const Standard_Integer SIZEOFNORMALEXTENDEDSECTION = 16;
 
-//#define USEOSDREAL 1
 
 //=======================================================================
 //function : FSD_File
@@ -67,6 +67,20 @@ Storage_Error FSD_File::IsGoodFileType(const Handle(Storage_IODevice)& aDevice)
 
   return s;
 }
+
+//=======================================================================
+//function : Open
+//purpose  : 
+//=======================================================================
+
+Storage_Error FSD_File::Open(const TCollection_AsciiString& aName, const Storage_OpenMode aMode)
+{
+
+  Handle(Storage_File) aFile = new Storage_File(TCollection_ExtendedString(aName));
+  return Open(aFile, aMode);
+}
+
+
 
 //=======================================================================
 //function : Open
@@ -129,22 +143,6 @@ const Standard_CString FSD_File::MagicNumber()
 
 void FSD_File::FlushEndOfLine()
 {
-  TCollection_AsciiString aDummy;
-  ReadLine (aDummy); // flush is nothing more than to read till the line-break
-/*  static char Buffer[8192];
-  char c;
-  Standard_Boolean IsEnd = Standard_False;
-
-  while (!IsEnd && !FSD_File::IsEnd()) {
-    Buffer[0] = '\0';
-    myStream.get(Buffer,8192,'\n');
-
-    if (myStream.get(c) && c != '\n') {
-    }
-    else {
-      IsEnd = Standard_True;
-    }
-  }*/
 }
 
 //=======================================================================
@@ -169,19 +167,18 @@ void FSD_File::WriteLine(const TCollection_AsciiString& aStr, const Standard_Boo
 
 void FSD_File::ReadLine(TCollection_AsciiString& buffer)
 {
-  //  char Buffer[8193];
   Standard_Boolean IsEnd = Standard_False;
   
   buffer.Clear();
 
   while ( !IsEnd && !FSD_File::IsEnd() )
   {
-    //    Buffer[0] = '\0';
-    //    myStream.getline(Buffer,8192,'\n');
     Standard_Character c;
     Device()->Read( (Standard_Address)&c, 1 );
     if ( c != '\n')
+    {
       buffer += c;
+    }
     else
     {
       buffer += '\0';

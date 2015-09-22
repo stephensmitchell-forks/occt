@@ -39,7 +39,7 @@ public:
   
   Standard_EXPORT Standard_Integer ReferenceIdentifier() const;
   
-  Standard_EXPORT Handle(Storage_IODevice) PCDM_Reference::Device() const;
+  Standard_EXPORT Handle(Storage_IODevice) Device() const;
   
   Standard_EXPORT Standard_Integer DocumentVersion() const;
 

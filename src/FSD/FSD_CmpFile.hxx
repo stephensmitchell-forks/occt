@@ -56,6 +56,8 @@ public:
 
   
   Standard_EXPORT FSD_CmpFile();
+
+  Standard_EXPORT Storage_Error Open (const TCollection_AsciiString& aName, const Storage_OpenMode aMode);
   
   Standard_EXPORT Storage_Error Open (const Handle(Storage_IODevice)& aDevice, const Storage_OpenMode aMode);
   

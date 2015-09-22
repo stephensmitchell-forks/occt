@@ -15,6 +15,7 @@
 
 #include <FSD_CmpFile.hxx>
 #include <OSD.hxx>
+#include <Storage_File.hxx>
 #include <Standard_PCharacter.hxx>
 #include <Storage_BaseDriver.hxx>
 #include <Storage_StreamExtCharParityError.hxx>
@@ -72,6 +73,18 @@ Storage_Error FSD_CmpFile::IsGoodFileType(const Handle(Storage_IODevice)& aDevic
 //purpose  : 
 //=======================================================================
 
+Storage_Error FSD_CmpFile::Open(const TCollection_AsciiString& aName, const Storage_OpenMode aMode)
+{
+
+  Handle(Storage_File) aFile = new Storage_File(TCollection_ExtendedString(aName));
+  return Open(aFile, aMode);
+}
+
+//=======================================================================
+//function : Open
+//purpose  : 
+//=======================================================================
+
 Storage_Error FSD_CmpFile::Open(const Handle(Storage_IODevice)& aDevice,const Storage_OpenMode aMode)
 {
   SetDevice(aDevice);
@@ -80,61 +93,6 @@ Storage_Error FSD_CmpFile::Open(const Handle(Storage_IODevice)& aDevice,const St
     return Storage_VSOpenError;
 
   return Device()->Open(aMode);
-
-  /*
-  Storage_Error result = Storage_VSOk;
-
-  SetName(aName);
-
-  if (OpenMode() == Storage_VSNone) {
-
-#if defined(_WNT32)
-    TCollection_ExtendedString aWName(aName);
-    if (aMode == Storage_VSRead) {
-      myStream.open((const wchar_t*)aWName.ToExtString(),ios::in|ios::binary); // ios::nocreate is not portable
-    }
-    else if (aMode == Storage_VSWrite) {
-      myStream.open((const wchar_t*)aWName.ToExtString(),ios::out|ios::binary);
-    }
-    else if (aMode == Storage_VSReadWrite) {
-      myStream.open((const wchar_t*)aWName.ToExtString(),ios::in|ios::out|ios::binary);
-    }
-#elif !defined(IRIX) && !defined(DECOSF1)
-    if (aMode == Storage_VSRead) {
-      myStream.open(aName.ToCString(),ios::in|ios::binary); // ios::nocreate is not portable
-    }
-    else if (aMode == Storage_VSWrite) {
-      myStream.open(aName.ToCString(),ios::out|ios::binary);
-    }
-    else if (aMode == Storage_VSReadWrite) {
-      myStream.open(aName.ToCString(),ios::in|ios::out|ios::binary);
-    }
-#else
-    if (aMode == Storage_VSRead) {
-      myStream.open(aName.ToCString(),ios::in); // ios::nocreate is not portable
-    }
-    else if (aMode == Storage_VSWrite) {
-      myStream.open(aName.ToCString(),ios::out);
-    }
-    else if (aMode == Storage_VSReadWrite) {
-      myStream.open(aName.ToCString(),ios::in|ios::out);
-    }
-#endif
-
-    if (myStream.fail()) {
-      result = Storage_VSOpenError;
-    }
-    else {
-      myStream.precision(17);
-      myStream.imbue (std::locale::classic()); // use always C locale
-      SetOpenMode(aMode);
-    }
-  }
-  else {
-    result = Storage_VSAlreadyOpen;
-  }
-  return result;
-  */
 }
 
 //=======================================================================
@@ -183,24 +141,6 @@ const Standard_CString FSD_CmpFile::MagicNumber()
 
 void FSD_CmpFile::FlushEndOfLine()
 {
-//  TCollection_AsciiString aDummy;
-//  ReadLine (aDummy); // flush is nothing more than to read till the line-break
-  /*
-  static char Buffer[8192];
-  char c;
-  Standard_Boolean IsEnd = Standard_False;
-
-  while (!IsEnd && !FSD_CmpFile::IsEnd()) {
-    Buffer[0] = '\0';
-    myStream.get(Buffer,8192,'\n');
-
-    if (myStream.get(c) && c != '\r' && c != '\n') {
-    }
-    else {
-      IsEnd = Standard_True;
-    }
-  }
-  */
 }
 
 //=======================================================================
@@ -218,7 +158,6 @@ void FSD_CmpFile::WriteLine(const TCollection_AsciiString& aStr, const Standard_
     Storage_StreamWriteError::Raise();
 }
 
-
 //=======================================================================
 //function : ReadLine
 //purpose  : read from the current position to the end of line.
@@ -230,14 +169,14 @@ void FSD_CmpFile::ReadLine(TCollection_AsciiString& buffer)
   
   buffer.Clear();
 
-  while (!IsEnd && !FSD_CmpFile::IsEnd())
+  while ( !IsEnd && !FSD_CmpFile::IsEnd() )
   {
     Standard_Character c;
     Device()->Read( (Standard_Address)&c, 1 );
     if ( c != '\n' && c != '\r')
     {
       buffer += c;
-    }  
+    }
     else
     {
       buffer += '\0';

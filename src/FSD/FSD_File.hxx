@@ -69,6 +69,13 @@ public:
   //! The function returns Storage_VSOk if the file
   //! is opened correctly, or any other value of the
   //! Storage_Error enumeration which specifies the problem encountered.
+  Standard_EXPORT Storage_Error Open (const TCollection_AsciiString& aName, const Storage_OpenMode aMode);
+
+  //! Opens source specified by device. aMode precises if the device is
+  //! opened in read or write mode.
+  //! The function returns Storage_VSOk if the file
+  //! is opened correctly, or any other value of the
+  //! Storage_Error enumeration which specifies the problem encountered.
   Standard_EXPORT Storage_Error Open (const Handle(Storage_IODevice)& aDevice, const Storage_OpenMode aMode);
   
   Standard_EXPORT Standard_Boolean IsEnd();
