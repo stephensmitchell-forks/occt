@@ -37,10 +37,11 @@ namespace
 //function : Constructor
 //purpose  : 
 //=======================================================================
-AIS_DiameterDimension::AIS_DiameterDimension (const gp_Circ& theCircle)
+AIS_DiameterDimension::AIS_DiameterDimension (const gp_Circ& theCircle,
+                                              const Standard_Real theParameter)
 : AIS_Dimension (AIS_KOD_DIAMETER)
 {
-  SetMeasuredGeometry (theCircle);
+  SetMeasuredGeometry (theCircle, theParameter);
   SetSpecialSymbol (THE_DIAMETER_SYMBOL);
   SetDisplaySpecialSymbol (AIS_DSS_Before);
   SetFlyout (0.0);
@@ -107,7 +108,8 @@ gp_Pnt AIS_DiameterDimension::AnchorPoint()
 //function : SetMeasuredGeometry
 //purpose  : 
 //=======================================================================
-void AIS_DiameterDimension::SetMeasuredGeometry (const gp_Circ& theCircle)
+void AIS_DiameterDimension::SetMeasuredGeometry (const gp_Circ& theCircle, 
+                                                 const Standard_Real theParameter)
 {
   myCircle          = theCircle;
   myGeometryType    = GeometryType_Edge;
@@ -122,7 +124,7 @@ void AIS_DiameterDimension::SetMeasuredGeometry (const gp_Circ& theCircle)
   else if (!myIsPlaneCustom)
   {
     ComputePlane();
-    myAnchorPoint = ElCLib::Value (0.0, myCircle);
+    myAnchorPoint = ElCLib::Value (theParameter, myCircle);
   }
 
   SetToUpdate();
@@ -294,7 +296,7 @@ void AIS_DiameterDimension::Compute (const Handle(PrsMgr_PresentationManager3d)&
   gp_Pnt aSecondPnt (gp::Origin());
   ComputeSidePoints (myCircle, aFirstPnt, aSecondPnt);
 
-  DrawLinearDimension (thePresentation, theMode, aFirstPnt, aSecondPnt);
+  DrawLinearDimension (thePresentation, theMode, aFirstPnt, aSecondPnt, Standard_False, myToDrawDimensionLine);
 }
 
 //=======================================================================

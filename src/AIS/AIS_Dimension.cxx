@@ -24,6 +24,7 @@
 #include <Bnd_Box.hxx>
 #include <ElCLib.hxx>
 #include <Font_BRepFont.hxx>
+#include <Font_FTFont.hxx>
 #include <GC_MakeCircle.hxx>
 #include <Geom_Line.hxx>
 #include <GeomAdaptor_Curve.hxx>
@@ -83,8 +84,8 @@ namespace
   static const TCollection_AsciiString    THE_UNDEFINED_UNITS;
 
   // default text margin and resolution
-  static const Standard_Real THE_3D_TEXT_MARGIN    = 0.1;
-  static const unsigned int  THE_2D_TEXT_RESOLUTION = 72;
+  static const Standard_Real THE_3D_TEXT_MARGIN  = 0.1;
+  static const unsigned int  THE_FONT_RESOLUTION = 96;
 
   // default selection priorities
   static const Standard_Integer THE_NEUTRAL_SEL_PRIORITY = 5;
@@ -98,17 +99,41 @@ namespace
 AIS_Dimension::AIS_Dimension (const AIS_KindOfDimension theType)
 : AIS_InteractiveObject  (),
   mySelToleranceForText2d(0.0),
-  myCustomValue          (0.0),
-  myIsValueCustom        (Standard_False),
+  myTypeOfLabel          (TOL_Computed),
+  myLabel                (""),
   myIsTextPositionFixed  (Standard_False), 
   mySpecialSymbol        (' '),
   myDisplaySpecialSymbol (AIS_DSS_No),
+  myToDrawDimensionLine  (Standard_True),
   myGeometryType         (GeometryType_UndefShapes),
   myIsPlaneCustom        (Standard_False),
   myFlyout               (0.0),
+  myIsTextAligned        (Standard_False),
+  myTextDir              (1.0, 0.0, 0.0),
+  myLeaderSegmentLength  (0.0),
   myIsGeometryValid      (Standard_False),
   myKindOfDimension      (theType)
 {
+}
+
+//=======================================================================
+//function : GetValue
+//purpose  : 
+//=======================================================================
+Standard_Real AIS_Dimension::GetValue() const
+{
+  switch (myTypeOfLabel)
+  {
+    case TOL_Computed:
+      return ComputeValue();
+    case TOL_Value:
+      {
+        return myCustomValue;
+      }
+    case TOL_Text:
+    default:
+      return 0.0;
+  };
 }
 
 //=======================================================================
@@ -117,16 +142,57 @@ AIS_Dimension::AIS_Dimension (const AIS_KindOfDimension theType)
 //=======================================================================
 void AIS_Dimension::SetCustomValue (const Standard_Real theValue)
 {
-  if (myIsValueCustom && myCustomValue == theValue)
+  if (myTypeOfLabel == TOL_Value && GetValue() == theValue)
   {
     return;
   }
 
-  myIsValueCustom = Standard_True;
+  myTypeOfLabel = TOL_Value;
 
   myCustomValue = theValue;
 
   SetToUpdate();
+}
+
+//=======================================================================
+//function : SetTextLabel
+//purpose  : 
+//=======================================================================
+void AIS_Dimension::SetTextLabel (const TCollection_ExtendedString& theValue)
+{
+  myTypeOfLabel = TOL_Text;
+  myLabel = theValue;
+}
+
+//=======================================================================
+//function : GetTextLabel
+//purpose  : 
+//=======================================================================
+TCollection_ExtendedString AIS_Dimension::GetTextLabel() const
+{
+  if (myTypeOfLabel == TOL_Text)
+  {
+    return myLabel;
+  }
+  else
+  {
+    TCollection_ExtendedString aString;
+
+    // Format value string using "sprintf"
+    TCollection_AsciiString aFormatStr = myDrawer->DimensionAspect()->ValueStringFormat();
+
+    char aFmtBuffer[256];
+    sprintf (aFmtBuffer, aFormatStr.ToCString(), ValueToDisplayUnits());
+    aString = TCollection_ExtendedString (aFmtBuffer);
+
+    // Add units to values string
+    if (myDrawer->DimensionAspect()->IsUnitsDisplayed())
+    {
+      aString += " ";
+      aString += TCollection_ExtendedString (GetDisplayUnits());
+    }
+    return aString;
+  }
 }
 
 //=======================================================================
@@ -142,7 +208,7 @@ const gp_Pln& AIS_Dimension::GetPlane() const
 //function : GetGeometryType
 //purpose  : 
 //=======================================================================
-const Standard_Integer AIS_Dimension::GetGeometryType () const
+const Standard_Integer AIS_Dimension::GetGeometryType() const
 {
   return myGeometryType;
 }
@@ -245,6 +311,75 @@ void AIS_Dimension::SetFlyout (const Standard_Real theFlyout)
 }
 
 //=======================================================================
+//function : ToDrawDimensionLine
+//purpose  : 
+//=======================================================================
+const Standard_Boolean AIS_Dimension::ToDrawDimensionLine() const
+{
+  return myToDrawDimensionLine;
+}
+
+//=======================================================================
+//function : SetToDrawDimensionLine
+//purpose  : 
+//=======================================================================
+void AIS_Dimension::SetToDrawDimensionLine (const Standard_Boolean theToDraw)
+{
+  myToDrawDimensionLine = theToDraw;
+}
+
+//=======================================================================
+//function : SetToAlignText
+//purpose  : 
+//=======================================================================
+void AIS_Dimension::SetToAlignText (const Standard_Boolean theToAlign,
+                                    const gp_Dir& theAlignmentDir)
+{
+  myIsTextAligned = theToAlign;
+  myTextDir = theAlignmentDir;
+  if (theToAlign && !myTextDir.IsNormal (myPlane.Axis().Direction(), Precision::Angular() ) )
+  {
+    myIsTextAligned = Standard_False;
+  }
+}
+
+//=======================================================================
+//function : IsTextAligned
+//purpose  : 
+//=======================================================================
+const Standard_Boolean AIS_Dimension::IsTextAligned() const
+{
+  return myIsTextAligned;
+}
+
+//=======================================================================
+//function : TextAlignmentDir
+//purpose  : 
+//=======================================================================
+const gp_Dir& AIS_Dimension::TextAlignmentDir() const
+{
+  return myTextDir;
+}
+
+//=======================================================================
+//function : SetLeaderSegment
+//purpose  : 
+//=======================================================================
+void AIS_Dimension::SetLeaderSegment (const Standard_Real& theLength)
+{
+  myLeaderSegmentLength = theLength;
+}
+
+//=======================================================================
+//function : UnsetLeaderSegment
+//purpose  : 
+//=======================================================================
+void AIS_Dimension::UnsetLeaderSegment()
+{
+  myLeaderSegmentLength = 0.0;
+}
+
+//=======================================================================
 //function : GetDisplayUnits
 //purpose  :
 //=======================================================================
@@ -273,73 +408,62 @@ Standard_Real AIS_Dimension::ValueToDisplayUnits() const
                              GetDisplayUnits().ToCString());
 }
 
-//=======================================================================
-//function : GetValueString
-//purpose  : 
-//=======================================================================
-TCollection_ExtendedString AIS_Dimension::GetValueString (Standard_Real& theWidth) const
+// =======================================================================
+// function : getLabelSizes
+// purpose  :
+// =======================================================================
+void  AIS_Dimension::getLabelSizes (const TCollection_ExtendedString& theLabel,
+                                    Standard_Real& theWidth,
+                                    Standard_Real& theHeight,
+                                    Standard_Real& theSymbolWidth,
+                                    Standard_Real& theSymbolHeight) const
 {
-  // format value string using "sprintf"
-  TCollection_AsciiString aFormatStr = myDrawer->DimensionAspect()->ValueStringFormat();
+  Handle(Prs3d_DimensionAspect) anAspect    = myDrawer->DimensionAspect();
+  Handle(Prs3d_TextAspect)      aTextAspect = myDrawer->DimensionAspect()->TextAspect();
+  Standard_Real                 aFontHeight = aTextAspect->Height();
 
-  char aFmtBuffer[256];
-  sprintf (aFmtBuffer, aFormatStr.ToCString(), ValueToDisplayUnits());
-  TCollection_ExtendedString aValueStr = TCollection_ExtendedString (aFmtBuffer);
-
-  // add units to values string
-  if (myDrawer->DimensionAspect()->IsUnitsDisplayed())
-  {
-    aValueStr += " ";
-    aValueStr += TCollection_ExtendedString (GetDisplayUnits());
-  }
-
-  switch (myDisplaySpecialSymbol)
-  {
-    case AIS_DSS_Before : aValueStr.Insert (1, mySpecialSymbol); break;
-    case AIS_DSS_After  : aValueStr.Insert (aValueStr.Length() + 1, mySpecialSymbol); break;
-    case AIS_DSS_No     : break;
-  }
-
-  // Get text style parameters
-  Quantity_Color aColor; 
+  Quantity_Color aColor;
   Standard_CString aFontName;
-  Standard_Real aFactor;
-  Standard_Real aSpace;
-  myDrawer->DimensionAspect()->TextAspect()->Aspect()->Values (aColor, aFontName, aFactor, aSpace);
-  Font_FontAspect aFontAspect = myDrawer->DimensionAspect()->TextAspect()->Aspect()->GetTextFontAspect();
-  Standard_Real   aFontHeight = myDrawer->DimensionAspect()->TextAspect()->Height();
+  Standard_Real anExpFactor, aSpace;
+  aTextAspect->Aspect()->Values (aColor, aFontName, anExpFactor, aSpace);
 
-  NCollection_Utf8String anUTFString = (Standard_Utf16Char* )aValueStr.ToExtString();
-
-  theWidth = 0.0;
-
-  if (myDrawer->DimensionAspect()->IsText3d())
+  NCollection_String aText   ((Standard_Utf16Char*) theLabel.ToExtString());
+  NCollection_String aSymbol;
+  if (DisplaySpecialSymbol() != AIS_DSS_No)
   {
-    // text width produced by BRepFont
-    Font_BRepFont aFont (aFontName, aFontAspect, aFontHeight);
+    aSymbol.FromUnicode ((Standard_Utf16Char*) TCollection_ExtendedString (mySpecialSymbol).ToExtString());
+  }
 
-    for (NCollection_Utf8Iter anIter = anUTFString.Iterator(); *anIter != 0; )
+  Font_FTFont::Rect aTextBox;
+  Font_FTFont::Rect aSymbolBox;
+
+  if (!anAspect->IsText3d())
+  {
+    Font_FTFont aFont;
+    aFont.Init (aFontName,
+                aTextAspect->Aspect()->GetTextFontAspect(),
+                static_cast<Standard_Integer> (aFontHeight),
+                THE_FONT_RESOLUTION);
+    aTextBox = aFont.BoundingBox (aText, Graphic3d_HTA_LEFT, Graphic3d_VTA_TOP);
+    if (!aSymbol.IsEmpty())
     {
-      Standard_Utf32Char aCurrChar = *anIter;
-      Standard_Utf32Char aNextChar = *(++anIter);
-      theWidth += aFont.AdvanceX (aCurrChar, aNextChar);
+      aSymbolBox = aFont.BoundingBox (aSymbol, Graphic3d_HTA_LEFT, Graphic3d_VTA_TOP);
     }
   }
   else
   {
-    // Text width for 1:1 scale 2D case
-    Handle(Font_FTFont) aFont = new Font_FTFont();
-    aFont->Init (aFontName, aFontAspect, (const unsigned int)aFontHeight, THE_2D_TEXT_RESOLUTION);
-
-    for (NCollection_Utf8Iter anIter = anUTFString.Iterator(); *anIter != 0; )
+    Font_BRepFont aFont (aFontName, aTextAspect->Aspect()->GetTextFontAspect(), aFontHeight);
+    aTextBox = aFont.BoundingBox (aText);
+    if (!aSymbol.IsEmpty())
     {
-      Standard_Utf32Char aCurrChar = *anIter;
-      Standard_Utf32Char aNextChar = *(++anIter);
-      theWidth += (Standard_Real) aFont->AdvanceX (aCurrChar, aNextChar);
+      aSymbolBox = aFont.BoundingBox (aSymbol);
     }
   }
 
-  return aValueStr;
+  theWidth        = aTextBox.Width();
+  theHeight       = aTextBox.Height();
+  theSymbolWidth  = aSymbolBox.Width();
+  theSymbolHeight = aSymbolBox.Height();
 }
 
 //=======================================================================
@@ -410,59 +534,104 @@ void AIS_Dimension::DrawText (const Handle(Prs3d_Presentation)& thePresentation,
                               const TCollection_ExtendedString& theText,
                               const Standard_Integer theLabelPosition)
 {
+  // Prepare font
+  const Handle(Prs3d_TextAspect)& aTextAspect = myDrawer->DimensionAspect()->TextAspect();
+  Handle(Graphic3d_AspectText3d) anAspectText3d = aTextAspect->Aspect();
+  Quantity_Color aColor;
+  Standard_CString aFontName;
+  Standard_Real anExpFactor, aSpace;
+  anAspectText3d->Values (aColor, aFontName, anExpFactor, aSpace);
+  Font_FontAspect aFontAspect = anAspectText3d->GetTextFontAspect();
+  const Standard_Real aFontHeight = aTextAspect->Height();
+
+  Standard_Real aWidth  = 0.0;
+  Standard_Real aHeight = 0.0;
+  Standard_Real aSymbolWidth = 0.0;
+  Standard_Real aSymbolHeight = 0.0;
+  getLabelSizes (theText, aWidth, aHeight, aSymbolWidth, aSymbolHeight);
+  aWidth += aSymbolWidth;
+
+  // Compute label offsets
+  Standard_Real aMarginSize    = aFontHeight * THE_3D_TEXT_MARGIN;
+  Standard_Real aCenterHOffset = 0.0;
+  Standard_Real aCenterVOffset = 0.0;
+  Standard_Real aSymbolVOffset = 0.0; //< Offset of symbol relative to the main text
+
+  Standard_Integer aVLabelPos = theLabelPosition & LabelPosition_VMask;
+
   if (myDrawer->DimensionAspect()->IsText3d())
   {
-    // getting font parameters
-    Quantity_Color aColor;
-    Standard_CString aFontName;
-    Standard_Real anExpansionFactor;
-    Standard_Real aSpace;
-    myDrawer->DimensionAspect()->TextAspect()->Aspect()->Values (aColor, aFontName, anExpansionFactor, aSpace);
-    Font_FontAspect aFontAspect = myDrawer->DimensionAspect()->TextAspect()->Aspect()->GetTextFontAspect();
-    Standard_Real aFontHeight = myDrawer->DimensionAspect()->TextAspect()->Height();
-
-    // creating TopoDS_Shape for text
+    // Creating TopoDS_Shape for text
     Font_BRepFont aFont (aFontName, aFontAspect, aFontHeight);
     NCollection_Utf8String anUTFString = (Standard_Utf16Char* )theText.ToExtString();
     TopoDS_Shape aTextShape = aFont.RenderText (anUTFString);
 
-    // compute text width with kerning
-    Standard_Real aTextWidth  = 0.0;
-    Standard_Real aTextHeight = aFont.Ascender() + aFont.Descender();
-
-    for (NCollection_Utf8Iter anIter = anUTFString.Iterator(); *anIter != 0; )
+    // Add special symbol
+    TopoDS_Shape aSymbolShape;
+    if (myDisplaySpecialSymbol != AIS_DSS_No)
     {
-      Standard_Utf32Char aCurrChar = *anIter;
-      Standard_Utf32Char aNextChar = *(++anIter);
-      aTextWidth += aFont.AdvanceX (aCurrChar, aNextChar);
+      NCollection_Utf8String anUTFSymbol = (Standard_Utf16Char* )TCollection_ExtendedString (mySpecialSymbol).ToExtString();
+      aSymbolShape = aFont.RenderText (anUTFSymbol);
     }
 
-    // formating text position in XOY plane
+    // Formating text position in XOY plane
     Standard_Integer aHLabelPos = theLabelPosition & LabelPosition_HMask;
-    Standard_Integer aVLabelPos = theLabelPosition & LabelPosition_VMask;
-
-    gp_Dir aTextDir (aHLabelPos == LabelPosition_Left ? -theTextDir : theTextDir);
-
-    // compute label offsets
-    Standard_Real aMarginSize    = aFontHeight * THE_3D_TEXT_MARGIN;
-    Standard_Real aCenterHOffset = 0.0;
-    Standard_Real aCenterVOffset = 0.0;
     switch (aHLabelPos)
     {
       case LabelPosition_HCenter : aCenterHOffset =  0.0; break;
-      case LabelPosition_Right   : aCenterHOffset =  aTextWidth / 2.0 + aMarginSize; break;
-      case LabelPosition_Left    : aCenterHOffset = -aTextWidth / 2.0 - aMarginSize; break;
-    }
-    switch (aVLabelPos)
-    {
-      case LabelPosition_VCenter : aCenterVOffset =  0.0; break;
-      case LabelPosition_Above   : aCenterVOffset =  aTextHeight / 2.0 + aMarginSize; break;
-      case LabelPosition_Below   : aCenterVOffset = -aTextHeight / 2.0 - aMarginSize; break;
+      case LabelPosition_Right   : aCenterHOffset =  aWidth / 2.0 + aMarginSize; break;
+      case LabelPosition_Left    : aCenterHOffset = -aWidth / 2.0 - aMarginSize; break;
     }
 
-    // compute shape offset transformation
-    Standard_Real aShapeHOffset = aCenterHOffset - aTextWidth / 2.0;
-    Standard_Real aShapeVOffset = aCenterVOffset - aTextHeight / 2.0;
+    const Standard_Real aHeightOfLine = aFont.LineSpacing();
+
+    switch (aVLabelPos)
+    {
+      case LabelPosition_FirstLine:
+      {
+        if (myTypeOfLabel == TOL_Text && aHeight > aHeightOfLine)
+        {
+          aCenterVOffset = aHeight / 2.0 - aHeightOfLine;
+          aSymbolVOffset = aCenterVOffset - aHeightOfLine / 2.0 + aMarginSize;
+        }
+        break;
+      }
+      case LabelPosition_LastLine:
+      {
+        if (myTypeOfLabel == TOL_Text && aHeight > aHeightOfLine)
+        {
+          aCenterVOffset = aHeightOfLine - aHeight / 2.0 ;
+          aSymbolVOffset = aCenterVOffset - aHeight + aHeightOfLine / 2.0 - aMarginSize; 
+        }
+        break;
+      }
+      case LabelPosition_VCenter : aCenterVOffset =  0.0; break;
+      case LabelPosition_Above:
+      {
+        aCenterVOffset =  aHeight / 2.0 + aMarginSize;
+        if (myTypeOfLabel == TOL_Text)
+        {
+          aSymbolVOffset = aCenterVOffset / 2;
+        }
+        break;
+      }
+      case LabelPosition_Below:
+      {
+        aCenterVOffset = -aHeight / 2.0 - aMarginSize;
+        if (myTypeOfLabel == TOL_Text)
+        {
+          aSymbolVOffset = aCenterVOffset / 2;
+        }
+        break;
+      }
+    }
+
+    // Correct text direction
+    gp_Dir aTextDir  = (aHLabelPos == LabelPosition_Left ? -theTextDir : theTextDir);
+
+    // Compute shape offset transformation
+    Standard_Real aShapeHOffset = aCenterHOffset - aWidth / 2.0 + aSymbolWidth / 2.0;
+    Standard_Real aShapeVOffset = aCenterVOffset - aHeight / 2.0;
 
     // center shape in its bounding box (suppress border spacing added by FT_Font)
     Bnd_Box aShapeBnd;
@@ -471,8 +640,8 @@ void AIS_Dimension::DrawText (const Handle(Prs3d_Presentation)& thePresentation,
     Standard_Real aXmin, aYmin, aZmin, aXmax, aYmax, aZmax;
     aShapeBnd.Get (aXmin, aYmin, aZmin, aXmax, aYmax, aZmax);
 
-    Standard_Real aXalign = aTextWidth  * 0.5 - (aXmax + aXmin) * 0.5;
-    Standard_Real aYalign = aTextHeight * 0.5 - (aYmax + aYmin) * 0.5;
+    Standard_Real aXalign = aWidth  * 0.5 - (aXmax + aXmin) * 0.5;
+    Standard_Real aYalign = aHeight * 0.5 - (aYmax + aYmin) * 0.5;
     aShapeHOffset += aXalign;
     aShapeVOffset += aYalign;
 
@@ -486,11 +655,20 @@ void AIS_Dimension::DrawText (const Handle(Prs3d_Presentation)& thePresentation,
     aTextPlaneTrsf.SetTransformation (aTextCoordSystem, gp_Ax3 (gp::XOY()));
     aTextShape.Move (aTextPlaneTrsf);
 
-    // set text flipping anchors
+    if (!aSymbolShape.IsNull())
+    {
+      aSymbolVOffset += aYalign - aHeight / 2.0;
+
+      // Modify transformation for a special symbol relative! to the main text
+      anOffsetTrsf.SetTranslation (gp::Origin(), gp_Pnt (aShapeHOffset - aSymbolWidth, aSymbolVOffset, 0.0));
+      aSymbolShape.Move (anOffsetTrsf);
+      aSymbolShape.Move (aTextPlaneTrsf);
+    }
+
+    // Set text flipping anchors
     gp_Trsf aCenterOffsetTrsf;
     gp_Pnt aCenterOffset (aCenterHOffset, aCenterVOffset, 0.0);
     aCenterOffsetTrsf.SetTranslation (gp::Origin(), aCenterOffset);
-
     gp_Pnt aCenterOfLabel (gp::Origin());
     aCenterOfLabel.Transform (aCenterOffsetTrsf);
     aCenterOfLabel.Transform (aTextPlaneTrsf);
@@ -498,7 +676,7 @@ void AIS_Dimension::DrawText (const Handle(Prs3d_Presentation)& thePresentation,
     gp_Ax2 aFlippingAxes (aCenterOfLabel, GetPlane().Axis().Direction(), aTextDir);
     Prs3d_Root::CurrentGroup (thePresentation)->SetFlippingOptions (Standard_True, aFlippingAxes);
 
-    // draw text
+    // Draw text
     if (myDrawer->DimensionAspect()->IsTextShaded())
     {
       // Setting text shading and color parameters
@@ -510,33 +688,85 @@ void AIS_Dimension::DrawText (const Handle(Prs3d_Presentation)& thePresentation,
       myDrawer->ShadingAspect()->Aspect()->SetBackInteriorColor (aColor);
       myDrawer->ShadingAspect()->SetMaterial (aShadeMat);
 
-      // drawing text
+      // Drawing text
       StdPrs_ShadedShape::Add (thePresentation, aTextShape, myDrawer);
+      StdPrs_ShadedShape::Add (thePresentation, aSymbolShape, myDrawer);
     }
     else
     {
-      // setting color for text
+      // Setting color for text
       myDrawer->FreeBoundaryAspect()->Aspect()->SetColor (aColor);
-      // drawing text
+      
+      // Drawing text
       StdPrs_WFShape::Add (thePresentation, aTextShape, myDrawer);
+      StdPrs_WFShape::Add (thePresentation, aSymbolShape, myDrawer);
     }
     Prs3d_Root::CurrentGroup (thePresentation)->SetFlippingOptions (Standard_False, gp_Ax2());
 
     mySelectionGeom.TextPos    = aCenterOfLabel;
     mySelectionGeom.TextDir    = aTextDir;
-    mySelectionGeom.TextWidth  = aTextWidth + aMarginSize * 2.0;
-    mySelectionGeom.TextHeight = aTextHeight;
+    mySelectionGeom.TextWidth  = aWidth + aMarginSize * 2.0;
+    mySelectionGeom.TextHeight = aHeight + aSymbolHeight;
 
     return;
   }
 
-  // generate primitives for 2D text
+  // Generate primitives for 2D text
   myDrawer->DimensionAspect()->TextAspect()->Aspect()->SetDisplayType (Aspect_TODT_DIMENSION);
 
-  Prs3d_Text::Draw (thePresentation,
-                    myDrawer->DimensionAspect()->TextAspect(),
-                    theText,
-                    theTextPos);
+  gp_Pnt aTextPos = theTextPos;
+
+  Font_FTFont aFont;
+  aFont.Init (aFontName,
+              anAspectText3d->GetTextFontAspect(),
+              static_cast<Standard_Integer>(aFontHeight),
+              THE_FONT_RESOLUTION);
+  const Standard_Real aHeightOfLine = aFont.LineSpacing();
+
+  switch (aVLabelPos)
+  {
+    case LabelPosition_FirstLine: break;
+    case LabelPosition_LastLine : break;
+    case LabelPosition_VCenter  : break;
+    case LabelPosition_Above:
+    {
+      if (myTypeOfLabel == TOL_Text && aHeight > aHeightOfLine)
+      {
+        aSymbolVOffset = -aWidth / 2;
+      }
+      break;
+    }
+    case LabelPosition_Below:
+    {
+      if (myTypeOfLabel == TOL_Text && aHeight > aHeightOfLine)
+      {
+        aSymbolVOffset = aWidth / 2;
+      }
+      break;
+    }
+  }
+
+  Prs3d_Text::Draw (thePresentation, myDrawer->DimensionAspect()->TextAspect(),
+                    theText, aTextPos);
+
+  switch (myDisplaySpecialSymbol)
+  {
+    case AIS_DSS_Before:
+    {
+      gp_Pnt aSymbolPos (theTextPos.X(), theTextPos.Y() + aSymbolVOffset, theTextPos.Z());
+      Prs3d_Text::Draw (thePresentation, myDrawer->DimensionAspect()->TextAspect(),
+                        TCollection_ExtendedString (mySpecialSymbol), aSymbolPos);
+      break;
+    }
+    case AIS_DSS_After:
+    {
+       gp_Pnt aSymbolPos (theTextPos.X() + aWidth, theTextPos.Y() + aSymbolVOffset, theTextPos.Z());
+       Prs3d_Text::Draw (thePresentation, myDrawer->DimensionAspect()->TextAspect(),
+         TCollection_ExtendedString (mySpecialSymbol), aSymbolPos);
+       break;
+    }
+    case AIS_DSS_No: break;
+  }
 
   mySelectionGeom.TextPos    = theTextPos;
   mySelectionGeom.TextDir    = theTextDir;
@@ -561,11 +791,33 @@ void AIS_Dimension::DrawExtension (const Handle(Prs3d_Presentation)& thePresenta
   gp_Lin anExtensionLine (theExtensionStart, theExtensionDir);
 
   Standard_Boolean hasLabel = theLabelString.Length() > 0;
+
+  gp_Dir aTextDir = myIsTextAligned
+    ? (myTextDir*theExtensionDir < 0 ? -myTextDir : myTextDir)
+    : theExtensionDir;
+
+  // Compute graphical primitives and sensitives for extension line
+  gp_Pnt anExtStart = theExtensionStart;
+  gp_Pnt   anExtEnd = !hasLabel || !(theLabelPosition & LabelPosition_Above || theLabelPosition & LabelPosition_Below)
+    ? ElCLib::Value (theExtensionSize, anExtensionLine)
+    : ElCLib::Value (theExtensionSize + theLabelWidth, anExtensionLine);
+
+  gp_Pnt aSegmentPoint;
+
   if (hasLabel && (theMode == ComputeMode_All || theMode == ComputeMode_Text))
   {
     // compute text primitives; get its model width
     gp_Pnt aTextPos = ElCLib::Value (theExtensionSize, anExtensionLine);
-    gp_Dir aTextDir = theExtensionDir;
+
+    if (hasLabel && myLeaderSegmentLength > 0 && myIsTextAligned)
+    {
+      gp_Lin aSegmentLine (anExtEnd, aTextDir);
+      Standard_Real aSegmentLength = !(theLabelPosition & LabelPosition_Above || theLabelPosition & LabelPosition_Below)
+        ? myLeaderSegmentLength : theLabelWidth + myLeaderSegmentLength;
+      aSegmentPoint  = ElCLib::Value (aSegmentLength, aSegmentLine);
+      aTextPos = !(theLabelPosition & LabelPosition_Above || theLabelPosition & LabelPosition_Below)
+        ? aSegmentPoint : ElCLib::Value (myLeaderSegmentLength, aSegmentLine);
+    }
 
     DrawText (thePresentation,
               aTextPos,
@@ -579,21 +831,18 @@ void AIS_Dimension::DrawExtension (const Handle(Prs3d_Presentation)& thePresenta
     return;
   }
 
-  Standard_Boolean isShortLine =  !myDrawer->DimensionAspect()->IsText3d()
-                               || theLabelPosition & LabelPosition_VCenter;
-
-  // compute graphical primitives and sensitives for extension line
-  gp_Pnt anExtStart = theExtensionStart;
-  gp_Pnt anExtEnd   = !hasLabel || isShortLine
-    ? ElCLib::Value (theExtensionSize, anExtensionLine)
-    : ElCLib::Value (theExtensionSize + theLabelWidth, anExtensionLine);
-
-  // add graphical primitives
-  Handle(Graphic3d_ArrayOfSegments) anExtPrimitive = new Graphic3d_ArrayOfSegments (2);
+  // Add graphical primitives
+  Handle(Graphic3d_ArrayOfSegments) anExtPrimitive = new Graphic3d_ArrayOfSegments ((hasLabel && myLeaderSegmentLength > 0 && myIsTextAligned) ? 4 : 2);
   anExtPrimitive->AddVertex (anExtStart);
   anExtPrimitive->AddVertex (anExtEnd);
+  // Draw segment
+  if (hasLabel && myLeaderSegmentLength > 0 && myIsTextAligned)
+  {
+    anExtPrimitive->AddVertex (anExtEnd);
+    anExtPrimitive->AddVertex (aSegmentPoint);
+  }
 
-  // add selection primitives
+  // Add selection primitives
   SelectionGeometry::Curve& aSensitiveCurve = mySelectionGeom.NewCurve();
   aSensitiveCurve.Append (anExtStart);
   aSensitiveCurve.Append (anExtEnd);
@@ -619,7 +868,8 @@ void AIS_Dimension::DrawLinearDimension (const Handle(Prs3d_Presentation)& thePr
                                          const Standard_Integer theMode,
                                          const gp_Pnt& theFirstPoint,
                                          const gp_Pnt& theSecondPoint,
-                                         const Standard_Boolean theIsOneSide)
+                                         const Standard_Boolean theIsOneSide,
+                                         const Standard_Boolean theToDrawDimensionLine)
 {
   // do not build any dimension for equal points
   if (theFirstPoint.IsEqual (theSecondPoint, Precision::Confusion()))
@@ -632,9 +882,14 @@ void AIS_Dimension::DrawLinearDimension (const Handle(Prs3d_Presentation)& thePr
   // For extensions we need to know arrow size, text size and extension size: get it from aspect
   Quantity_Length anArrowLength   = aDimensionAspect->ArrowAspect()->Length();
   Standard_Real   anExtensionSize = aDimensionAspect->ExtensionSize();
-  // prepare label string and compute its geometrical width
-  Standard_Real aLabelWidth;
-  TCollection_ExtendedString aLabelString = GetValueString (aLabelWidth);
+
+  // Prepare label string and compute its geometrical sizes
+  Standard_Real aLabelWidth, aLabelHeight;
+  Standard_Real aSymbolWidth, aSymbolHeight;
+  TCollection_ExtendedString aLabel = GetTextLabel();
+  getLabelSizes (aLabel, aLabelWidth, aLabelHeight, aSymbolWidth, aSymbolHeight);
+  aLabelHeight += aSymbolHeight;
+  aLabelWidth += aSymbolWidth;
 
   // add margins to cut dimension lines for 3d text
   if (aDimensionAspect->IsText3d())
@@ -659,7 +914,7 @@ void AIS_Dimension::DrawLinearDimension (const Handle(Prs3d_Presentation)& thePr
   FitTextAlignmentForLinear (theFirstPoint, theSecondPoint, theIsOneSide, aHorisontalTextPos,
                              aLabelPosition, isArrowsExternal);
 
-    // compute dimension line points
+  // compute dimension line points
   gp_Ax1 aPlaneNormal = GetPlane().Axis();
   gp_Dir aTargetPointsVector = gce_MakeDir (theFirstPoint, theSecondPoint);
 
@@ -717,7 +972,11 @@ void AIS_Dimension::DrawLinearDimension (const Handle(Prs3d_Presentation)& thePr
 
       gp_Pnt aTextPos = IsTextPositionCustom() ? myFixedTextPosition
                                               : (aCenterLineBegin.XYZ() + aCenterLineEnd.XYZ()) * 0.5;
-      gp_Dir aTextDir = aDimensionLine.Direction();
+
+      // Choose a text direction
+      gp_Dir aTextDir = myIsTextAligned
+        ? myTextDir
+        : aDimensionLine.Direction();
 
       // add text primitives
       if (theMode == ComputeMode_All || theMode == ComputeMode_Text)
@@ -725,15 +984,18 @@ void AIS_Dimension::DrawLinearDimension (const Handle(Prs3d_Presentation)& thePr
         DrawText (thePresentation,
                   aTextPos,
                   aTextDir,
-                  aLabelString,
+                  aLabel,
                   aLabelPosition);
       }
 
       // add dimension line primitives
       if (theMode == ComputeMode_All || theMode == ComputeMode_Line)
       {
-        Standard_Boolean isLineBreak = aDimensionAspect->TextVerticalPosition() == Prs3d_DTVP_Center
-                                    && aDimensionAspect->IsText3d();
+        // Line break is made only for 3d text (for 2d text it is managed with stensil test)
+        // and for special alignment for multi-line text
+        Standard_Boolean isLineBreak = aDimensionAspect->IsText3d() &&
+         (aDimensionAspect->TextVerticalPosition() == Prs3d_DTVP_Center || (myTypeOfLabel == TOL_Text &&
+           (aDimensionAspect->TextVerticalPosition() == Prs3d_DTVP_FirstLine || aDimensionAspect->TextVerticalPosition() == Prs3d_DTVP_LastLine) ) );
 
         Handle(Graphic3d_ArrayOfSegments) aPrimSegments = new Graphic3d_ArrayOfSegments (isLineBreak ? 4 : 2);
 
@@ -770,11 +1032,15 @@ void AIS_Dimension::DrawLinearDimension (const Handle(Prs3d_Presentation)& thePr
 
         // set text label justification
         Graphic3d_VerticalTextAlignment aTextJustificaton = Graphic3d_VTA_BOTTOM;
+
+        // TODO check it!
         switch (aLabelPosition & LabelPosition_VMask)
         {
-          case LabelPosition_Above   :
-          case LabelPosition_VCenter : aTextJustificaton = Graphic3d_VTA_BOTTOM; break;
-          case LabelPosition_Below   : aTextJustificaton = Graphic3d_VTA_TOP;    break;
+          case LabelPosition_Above     :
+          case LabelPosition_LastLine  :
+          case LabelPosition_VCenter   : aTextJustificaton = Graphic3d_VTA_BOTTOM; break;
+          case LabelPosition_FirstLine :
+          case LabelPosition_Below     : aTextJustificaton = Graphic3d_VTA_TOP;    break;
         }
         aDimensionAspect->TextAspect()->SetVerticalJustification (aTextJustificaton);
 
@@ -835,7 +1101,7 @@ void AIS_Dimension::DrawLinearDimension (const Handle(Prs3d_Presentation)& thePr
                        ? aFirstArrowEnd
                        : aFirstArrowBegin,
                      aFirstExtensionDir,
-                     aLabelString,
+                     aLabel,
                      aLabelWidth,
                      theMode,
                      aLabelPosition);
@@ -843,27 +1109,30 @@ void AIS_Dimension::DrawLinearDimension (const Handle(Prs3d_Presentation)& thePr
       // add dimension line primitives
       if (theMode == ComputeMode_All || theMode == ComputeMode_Line)
       {
-        // add central dimension line
-        Prs3d_Root::NewGroup (thePresentation);
+        if (theToDrawDimensionLine || !isArrowsExternal)
+        {
+          // add central dimension line
+          Prs3d_Root::NewGroup (thePresentation);
 
-        // add graphical primitives
-        Handle(Graphic3d_ArrayOfSegments) aPrimSegments = new Graphic3d_ArrayOfSegments (2);
-        aPrimSegments->AddVertex (aCenterLineBegin);
-        aPrimSegments->AddVertex (aCenterLineEnd);
+          // add graphical primitives
+          Handle(Graphic3d_ArrayOfSegments) aPrimSegments = new Graphic3d_ArrayOfSegments (2);
+          aPrimSegments->AddVertex (aCenterLineBegin);
+          aPrimSegments->AddVertex (aCenterLineEnd);
 
-        Prs3d_Root::CurrentGroup (thePresentation)->SetPrimitivesAspect (aDimensionAspect->LineAspect()->Aspect());
-        Prs3d_Root::CurrentGroup (thePresentation)->AddPrimitiveArray (aPrimSegments);
+          Prs3d_Root::CurrentGroup (thePresentation)->SetPrimitivesAspect (aDimensionAspect->LineAspect()->Aspect());
+          Prs3d_Root::CurrentGroup (thePresentation)->AddPrimitiveArray (aPrimSegments);
 
-        // add selection primitives
-        SelectionGeometry::Curve& aSensitiveCurve = mySelectionGeom.NewCurve();
-        aSensitiveCurve.Append (aCenterLineBegin);
-        aSensitiveCurve.Append (aCenterLineEnd);
+          // add selection primitives
+          SelectionGeometry::Curve& aSensitiveCurve = mySelectionGeom.NewCurve();
+          aSensitiveCurve.Append (aCenterLineBegin);
+          aSensitiveCurve.Append (aCenterLineEnd);
+        }
 
         // add arrows to presentation
         Prs3d_Root::NewGroup (thePresentation);
 
         DrawArrow (thePresentation, aFirstArrowBegin, aFirstArrowDir);
-        if (!theIsOneSide)
+        if (!theIsOneSide && (theToDrawDimensionLine || (!isArrowsExternal && !theToDrawDimensionLine) ))
         {
           DrawArrow (thePresentation, aSecondArrowBegin, aSecondArrowDir);
         }
@@ -876,9 +1145,12 @@ void AIS_Dimension::DrawLinearDimension (const Handle(Prs3d_Presentation)& thePr
         // add extension lines for external arrows
         Prs3d_Root::NewGroup (thePresentation);
 
-        DrawExtension (thePresentation, aDimensionAspect->ArrowTailSize(),
-                       aSecondArrowEnd, aSecondExtensionDir,
-                       THE_EMPTY_LABEL, 0.0, theMode, LabelPosition_None);
+        if (theToDrawDimensionLine)
+        {
+          DrawExtension (thePresentation, aDimensionAspect->ArrowTailSize(),
+            aSecondArrowEnd, aSecondExtensionDir,
+            THE_EMPTY_LABEL, 0.0, theMode, LabelPosition_None);
+        }
       }
 
       break;
@@ -898,32 +1170,35 @@ void AIS_Dimension::DrawLinearDimension (const Handle(Prs3d_Presentation)& thePr
                        ? aSecondArrowEnd
                        : aSecondArrowBegin,
                      aSecondExtensionDir,
-                     aLabelString, aLabelWidth,
+                     aLabel, aLabelWidth,
                      theMode,
                      aLabelPosition);
 
       if (theMode == ComputeMode_All || theMode == ComputeMode_Line)
       {
-        // add central dimension line
-        Prs3d_Root::NewGroup (thePresentation);
+        if (theToDrawDimensionLine || !isArrowsExternal)
+        {
+          // add central dimension line
+          Prs3d_Root::NewGroup (thePresentation);
 
-        // add graphical primitives
-        Handle(Graphic3d_ArrayOfSegments) aPrimSegments = new Graphic3d_ArrayOfSegments (2);
-        aPrimSegments->AddVertex (aCenterLineBegin);
-        aPrimSegments->AddVertex (aCenterLineEnd);
-        Prs3d_Root::CurrentGroup (thePresentation)->SetPrimitivesAspect (aDimensionAspect->LineAspect()->Aspect());
-        Prs3d_Root::CurrentGroup (thePresentation)->AddPrimitiveArray (aPrimSegments);
+          // add graphical primitives
+          Handle(Graphic3d_ArrayOfSegments) aPrimSegments = new Graphic3d_ArrayOfSegments (2);
+          aPrimSegments->AddVertex (aCenterLineBegin);
+          aPrimSegments->AddVertex (aCenterLineEnd);
+          Prs3d_Root::CurrentGroup (thePresentation)->SetPrimitivesAspect (aDimensionAspect->LineAspect()->Aspect());
+          Prs3d_Root::CurrentGroup (thePresentation)->AddPrimitiveArray (aPrimSegments);
 
-        // add selection primitives
-        SelectionGeometry::Curve& aSensitiveCurve = mySelectionGeom.NewCurve();
-        aSensitiveCurve.Append (aCenterLineBegin);
-        aSensitiveCurve.Append (aCenterLineEnd);
+          // add selection primitives
+          SelectionGeometry::Curve& aSensitiveCurve = mySelectionGeom.NewCurve();
+          aSensitiveCurve.Append (aCenterLineBegin);
+          aSensitiveCurve.Append (aCenterLineEnd);
+        }
 
         // add arrows to presentation
         Prs3d_Root::NewGroup (thePresentation);
 
         DrawArrow (thePresentation, aSecondArrowBegin, aSecondArrowDir);
-        if (!theIsOneSide)
+        if (!theIsOneSide && (theToDrawDimensionLine || (!theToDrawDimensionLine && !isArrowsExternal) ))
         {
           DrawArrow (thePresentation, aFirstArrowBegin, aFirstArrowDir);
         }
@@ -936,9 +1211,12 @@ void AIS_Dimension::DrawLinearDimension (const Handle(Prs3d_Presentation)& thePr
         // add extension lines for external arrows
         Prs3d_Root::NewGroup (thePresentation);
 
-        DrawExtension (thePresentation, aDimensionAspect->ArrowTailSize(),
-                       aFirstArrowEnd, aFirstExtensionDir,
-                       THE_EMPTY_LABEL, 0.0, theMode, LabelPosition_None);
+        if (theToDrawDimensionLine)
+        {
+          DrawExtension (thePresentation, aDimensionAspect->ArrowTailSize(),
+                         aFirstArrowEnd, aFirstExtensionDir,
+                         THE_EMPTY_LABEL, 0.0, theMode, LabelPosition_None);
+        }
       }
 
       break;
@@ -1582,8 +1860,15 @@ void AIS_Dimension::FitTextAlignmentForLinear (const gp_Pnt& theFirstPoint,
   Quantity_Length anArrowLength = aDimensionAspect->ArrowAspect()->Length();
 
   // prepare label string and compute its geometrical width
-  Standard_Real aLabelWidth;
-  TCollection_ExtendedString aLabelString = GetValueString (aLabelWidth);
+  TCollection_ExtendedString aLabelString = GetTextLabel();
+
+  // Text sizes
+  Standard_Real aLabelWidth = 0.0;
+  Standard_Real aLabelHeight = 0.0;
+  Standard_Real aSymbolWidth = 0.0;
+  Standard_Real aSymbolHeight = 0.0;
+  getLabelSizes (aLabelString, aLabelWidth, aLabelHeight, aSymbolWidth, aSymbolHeight);
+
 
   // Add margins to cut dimension lines for 3d text
   if (aDimensionAspect->IsText3d())
@@ -1617,7 +1902,7 @@ void AIS_Dimension::FitTextAlignmentForLinear (const gp_Pnt& theFirstPoint,
   switch (theHorizontalTextPos)
   {
     case Prs3d_DTHP_Left  : theLabelPosition |= LabelPosition_Left; break;
-    case Prs3d_DTHP_Right : theLabelPosition |= LabelPosition_Right; break;
+    case Prs3d_DTHP_Right : theLabelPosition |= theIsOneSide ? LabelPosition_Left : LabelPosition_Right; break;
     case Prs3d_DTHP_Center: theLabelPosition |= LabelPosition_HCenter; break;
     case Prs3d_DTHP_Fit:
     {
@@ -1634,7 +1919,9 @@ void AIS_Dimension::FitTextAlignmentForLinear (const gp_Pnt& theFirstPoint,
   switch (aDimensionAspect->TextVerticalPosition())
   {
     case Prs3d_DTVP_Above  : theLabelPosition |= LabelPosition_Above; break;
+    case Prs3d_DTVP_FirstLine : theLabelPosition |= LabelPosition_FirstLine; break;
     case Prs3d_DTVP_Below  : theLabelPosition |= LabelPosition_Below; break;
+    case Prs3d_DTVP_LastLine : theLabelPosition |= LabelPosition_LastLine; break;
     case Prs3d_DTVP_Center : theLabelPosition |= LabelPosition_VCenter; break;
   }
 }

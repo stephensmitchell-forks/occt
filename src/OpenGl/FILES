@@ -26,8 +26,6 @@ OpenGl_Element.hxx
 OpenGl_Element.cxx
 OpenGl_Text.hxx
 OpenGl_Text.cxx
-OpenGl_TextFormatter.hxx
-OpenGl_TextFormatter.cxx
 OpenGl_PointSprite.hxx
 OpenGl_PointSprite.cxx
 Handle_OpenGl_PointSprite.hxx
@@ -169,3 +167,5 @@ OpenGl_Sphere.hxx
 OpenGl_Sphere.cxx
 OpenGl_BackgroundArray.hxx
 OpenGl_BackgroundArray.cxx
+OpenGl_TextBuilder.hxx
+OpenGl_TextBuilder.cxx
