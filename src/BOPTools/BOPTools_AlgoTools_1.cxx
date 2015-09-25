@@ -85,11 +85,13 @@
 
 static 
   void CheckEdge (const TopoDS_Edge& E,
-                  const Standard_Real aMaxTol);
+                  const Standard_Real aMaxTol,
+                  const BOPCol_IndexedMapOfShape& aMapToAvoid);
 static 
   void CorrectEdgeTolerance (const TopoDS_Edge& myShape,
                              const TopoDS_Face& S,
-                             const Standard_Real aMaxTol);
+                             const Standard_Real aMaxTol,
+                             const BOPCol_IndexedMapOfShape& aMapToAvoid);
 static 
   Standard_Boolean Validate(const Adaptor3d_Curve& CRef,
                             const Adaptor3d_Curve& Other,
@@ -98,15 +100,23 @@ static
                             Standard_Real& aNewTolerance);
 
 static
-  void CorrectVertexTolerance(const TopoDS_Edge& aE);
+  void CorrectVertexTolerance(const TopoDS_Edge& aE,
+                              const BOPCol_IndexedMapOfShape& aMapToAvoid);
 
 static
-  void CorrectWires(const TopoDS_Face& aF);
+  void CorrectWires(const TopoDS_Face& aF,
+                    const BOPCol_IndexedMapOfShape& aMapToAvoid);
 
 
 
 static
-  void UpdateEdges(const TopoDS_Face& aF);
+  void UpdateEdges(const TopoDS_Face& aF,
+                   const BOPCol_IndexedMapOfShape& aMapToAvoid);
+
+static
+  void UpdateShape(const TopoDS_Shape& aS,
+                   const Standard_Real aTol,
+                   const BOPCol_IndexedMapOfShape& aMapToAvoid);
 
 static 
   Standard_Real IntersectCurves2d(const gp_Pnt& aPV,
@@ -124,7 +134,7 @@ static
 class BOPTools_CPC {
  public:
   BOPTools_CPC()
-    : myMaxTol(1.e-7) {
+    : myMaxTol(1.e-7), mypMapToAvoid(0L) {
   }
   //
   ~BOPTools_CPC() {
@@ -146,13 +156,19 @@ class BOPTools_CPC {
     return myMaxTol;
   }
   //
+  void SetMapToAvoid(const BOPCol_IndexedMapOfShape& aMapToAvoid) {
+    mypMapToAvoid = &aMapToAvoid;
+  }
+  //
   void Perform() {
-    CheckEdge(myEdge, myMaxTol);
+    Standard_ProgramError_Raise_if(!mypMapToAvoid, "mypMapToAvoid is null");
+    CheckEdge(myEdge, myMaxTol, *mypMapToAvoid);
   }
   
  protected:
   Standard_Real myMaxTol;
   TopoDS_Edge myEdge;
+  const BOPCol_IndexedMapOfShape* mypMapToAvoid;
 };
 //
 //=======================================================================
@@ -172,7 +188,7 @@ typedef BOPCol_Cnt
 //=======================================================================
 class BOPTools_CWT {
  public:
-  BOPTools_CWT() {
+  BOPTools_CWT() : mypMapToAvoid(0L) {
   }
   //
   ~BOPTools_CWT() {
@@ -182,12 +198,18 @@ class BOPTools_CWT {
     myFace=aF;
   }
   //
+  void SetMapToAvoid(const BOPCol_IndexedMapOfShape& aMapToAvoid) {
+    mypMapToAvoid = &aMapToAvoid;
+  }
+  //
   void Perform() {
-    CorrectWires(myFace);
+    Standard_ProgramError_Raise_if(!mypMapToAvoid, "mypMapToAvoid is null");
+    CorrectWires(myFace, *mypMapToAvoid);
   }
   //
  protected:
   TopoDS_Face myFace;
+  const BOPCol_IndexedMapOfShape* mypMapToAvoid;
 };
 //=======================================================================
 typedef BOPCol_NCVector<BOPTools_CWT> BOPTools_VectorOfCWT; 
@@ -207,7 +229,7 @@ typedef BOPCol_Cnt
 class BOPTools_CDT {
  public:
   BOPTools_CDT() 
-    : myMaxTol(1.e-7) {
+    : myMaxTol(1.e-7), mypMapToAvoid(0L) {
   }
   //
   ~BOPTools_CDT() {
@@ -225,14 +247,20 @@ class BOPTools_CDT {
     myMaxTol=aMaxTol;
   }
   //
+  void SetMapToAvoid(const BOPCol_IndexedMapOfShape& aMapToAvoid) {
+    mypMapToAvoid = &aMapToAvoid;
+  }
+  //
   void Perform() {
-    CorrectEdgeTolerance (myEdge, myFace, myMaxTol);
+    Standard_ProgramError_Raise_if(!mypMapToAvoid, "mypMapToAvoid is null");
+    CorrectEdgeTolerance (myEdge, myFace, myMaxTol, *mypMapToAvoid);
   }
   //
  protected:
   Standard_Real myMaxTol;
   TopoDS_Edge myEdge;
   TopoDS_Face myFace;
+  const BOPCol_IndexedMapOfShape* mypMapToAvoid;
 };
 //=======================================================================
 typedef BOPCol_NCVector<BOPTools_CDT> BOPTools_VectorOfCDT; 
@@ -251,7 +279,7 @@ typedef BOPCol_Cnt
 //=======================================================================
 class BOPTools_CVT {
  public:
-  BOPTools_CVT() {
+  BOPTools_CVT() : mypMapToAvoid(0L) {
   }
   //
   ~BOPTools_CVT() {
@@ -261,12 +289,18 @@ class BOPTools_CVT {
     myEdge=aE;
   }
   //
+  void SetMapToAvoid(const BOPCol_IndexedMapOfShape& aMapToAvoid) {
+    mypMapToAvoid = &aMapToAvoid;
+  }
+  //
   void Perform() {
-    CorrectVertexTolerance(myEdge);
+    Standard_ProgramError_Raise_if(!mypMapToAvoid, "mypMapToAvoid is null");
+    CorrectVertexTolerance(myEdge, *mypMapToAvoid);
   }
   //
  protected:
   TopoDS_Edge myEdge;
+  const BOPCol_IndexedMapOfShape* mypMapToAvoid;
 };
 //
 //=======================================================================
@@ -286,7 +320,7 @@ typedef BOPCol_Cnt
 //=======================================================================
 class BOPTools_CET {
  public:
-  BOPTools_CET() {
+  BOPTools_CET() : mypMapToAvoid(0L) {
   }
   //
   ~BOPTools_CET() {
@@ -296,12 +330,18 @@ class BOPTools_CET {
     myFace=aF;
   }
   //
+  void SetMapToAvoid(const BOPCol_IndexedMapOfShape& aMapToAvoid) {
+    mypMapToAvoid = &aMapToAvoid;
+  }
+  //
   void Perform() {
-    UpdateEdges(myFace);
+    Standard_ProgramError_Raise_if(!mypMapToAvoid, "mypMapToAvoid is null");
+    UpdateEdges(myFace, *mypMapToAvoid);
   }
   //
  protected:
   TopoDS_Face myFace;
+  const BOPCol_IndexedMapOfShape* mypMapToAvoid;
 };
 //=======================================================================
 typedef BOPCol_NCVector<BOPTools_CET> BOPTools_VectorOfCET; 
@@ -323,11 +363,12 @@ typedef BOPCol_Cnt
 //=======================================================================
 void BOPTools_AlgoTools::CorrectTolerances
   (const TopoDS_Shape& aShape,
+   const BOPCol_IndexedMapOfShape& aMapToAvoid,
    const Standard_Real aMaxTol,
    const Standard_Boolean bRunParallel)
 {
-  BOPTools_AlgoTools::CorrectPointOnCurve(aShape, aMaxTol, bRunParallel);
-  BOPTools_AlgoTools::CorrectCurveOnSurface(aShape, aMaxTol, bRunParallel);
+  BOPTools_AlgoTools::CorrectPointOnCurve(aShape, aMapToAvoid, aMaxTol, bRunParallel);
+  BOPTools_AlgoTools::CorrectCurveOnSurface(aShape, aMapToAvoid, aMaxTol, bRunParallel);
 }
 //
 //=======================================================================
@@ -336,6 +377,7 @@ void BOPTools_AlgoTools::CorrectTolerances
 //=======================================================================
 void BOPTools_AlgoTools::CorrectPointOnCurve
   (const TopoDS_Shape& aS,
+   const BOPCol_IndexedMapOfShape& aMapToAvoid,
    const Standard_Real aMaxTol,
    const Standard_Boolean bRunParallel)
 {
@@ -348,6 +390,7 @@ void BOPTools_AlgoTools::CorrectPointOnCurve
     BOPTools_CPC& aCPC=aVCPC.Append1();
     aCPC.SetEdge(aE);
     aCPC.SetMaxTol(aMaxTol);
+    aCPC.SetMapToAvoid(aMapToAvoid);
   }
   //
   //======================================================
@@ -360,6 +403,7 @@ void BOPTools_AlgoTools::CorrectPointOnCurve
 //=======================================================================
 void BOPTools_AlgoTools::CorrectCurveOnSurface
   (const TopoDS_Shape& aS,
+   const BOPCol_IndexedMapOfShape& aMapToAvoid,
    const Standard_Real aMaxTol,
    const Standard_Boolean bRunParallel)
 {
@@ -373,6 +417,7 @@ void BOPTools_AlgoTools::CorrectCurveOnSurface
     //
     BOPTools_CWT& aCWT=aVCWT.Append1();
     aCWT.SetFace(aF);
+    aCWT.SetMapToAvoid(aMapToAvoid);
     //
     aExpE.Init(aF, TopAbs_EDGE);
     for (; aExpE.More(); aExpE.Next()) {
@@ -382,6 +427,7 @@ void BOPTools_AlgoTools::CorrectCurveOnSurface
       aCDT.SetEdge(aE);
       aCDT.SetFace(aF);
       aCDT.SetMaxTol(aMaxTol);
+      aCDT.SetMapToAvoid(aMapToAvoid);
     }
   }
   //
@@ -397,6 +443,7 @@ void BOPTools_AlgoTools::CorrectCurveOnSurface
 //=======================================================================
 void BOPTools_AlgoTools::CorrectShapeTolerances
   (const TopoDS_Shape& aShape,
+   const BOPCol_IndexedMapOfShape& aMapToAvoid,
    const Standard_Boolean bRunParallel)
 { 
   TopExp_Explorer aExp;
@@ -408,6 +455,7 @@ void BOPTools_AlgoTools::CorrectShapeTolerances
     const TopoDS_Edge& aE = *(TopoDS_Edge*)&aExp.Current();
     BOPTools_CVT& aCVT=aVCVT.Append1();
     aCVT.SetEdge(aE);
+    aCVT.SetMapToAvoid(aMapToAvoid);
   }
   //
   //======================================================
@@ -419,6 +467,7 @@ void BOPTools_AlgoTools::CorrectShapeTolerances
     const TopoDS_Face& aF = *(TopoDS_Face*)&aExp.Current();
     BOPTools_CET& aCET=aVCET.Append1();
     aCET.SetFace(aF);
+    aCET.SetMapToAvoid(aMapToAvoid);
   }
   //
   //======================================================
@@ -431,7 +480,8 @@ void BOPTools_AlgoTools::CorrectShapeTolerances
 // purpose :  Correct tolerances for Vertices on Edge 
 //=======================================================================
 void CheckEdge (const TopoDS_Edge& Ed, 
-                const Standard_Real aMaxTol)
+                const Standard_Real aMaxTol,
+                const BOPCol_IndexedMapOfShape& aMapToAvoid)
 {
   Standard_Real aTolE, aTol, aD2, aNewTolerance, dd;
   gp_Pnt aPC;
@@ -483,7 +533,7 @@ void CheckEdge (const TopoDS_Edge& Ed,
               if (aD2 > aTol) {
                 aNewTolerance=sqrt(aD2)+dd;
                 if (aNewTolerance<aMaxTol)
-                  TV->UpdateTolerance(aNewTolerance);
+                  UpdateShape(aV, aNewTolerance, aMapToAvoid);
               }
             }
             aItPR.Next();
@@ -505,7 +555,7 @@ void CheckEdge (const TopoDS_Edge& Ed,
             if (aD2 > aTol) {
               aNewTolerance=sqrt(aD2)+dd;
               if (aNewTolerance<aMaxTol) 
-                TV->UpdateTolerance(aNewTolerance);
+                UpdateShape(aV, aNewTolerance, aMapToAvoid);
             }
           }
         }
@@ -518,7 +568,8 @@ void CheckEdge (const TopoDS_Edge& Ed,
 // Function : CorrectWires
 // purpose : 
 //=======================================================================
-void CorrectWires(const TopoDS_Face& aFx)
+void CorrectWires(const TopoDS_Face& aFx,
+                  const BOPCol_IndexedMapOfShape& aMapToAvoid)
 {
   Standard_Boolean bIsPeriodic; 
   Standard_Integer i, aNbV;
@@ -593,10 +644,8 @@ void CorrectWires(const TopoDS_Face& aFx)
       }// for (; aIt1.More(); aIt1.Next()) {
     }// for (; aIt.More(); aIt.Next()) {
     if (aD2max>aTol2) {
-      BRep_Builder aBB;
-      //
       aTol=sqrt(aD2max);
-      aBB.UpdateVertex(aV, aTol);
+      UpdateShape(aV, aTol, aMapToAvoid);
     }
   }// for (i=1; i<=aNbV; ++i) {
 }
@@ -666,7 +715,8 @@ Standard_Real IntersectCurves2d(const gp_Pnt& aPV,
 //=======================================================================
 void CorrectEdgeTolerance (const TopoDS_Edge& myShape, 
                            const TopoDS_Face& S,
-                           const Standard_Real aMaxTol)
+                           const Standard_Real aMaxTol,
+                           const BOPCol_IndexedMapOfShape& aMapToAvoid)
 {
   // 
   // 1. Minimum of conditions to Perform
@@ -806,9 +856,8 @@ void CorrectEdgeTolerance (const TopoDS_Edge& myShape,
                       Tol, SameParameter, aNewTol);
         if (ok) {
           if (aNewTol<aMaxTol) {
-            TE->UpdateTolerance(aNewTol+Delta); 
-            //
-            CorrectVertexTolerance(myShape);
+            UpdateShape(myShape, aNewTol+Delta, aMapToAvoid);
+            CorrectVertexTolerance(myShape, aMapToAvoid);
           }
         }
         
@@ -820,8 +869,8 @@ void CorrectEdgeTolerance (const TopoDS_Edge& myShape,
           ok = Validate(myHCurve->Curve(),ACS,Tol,SameParameter, aNewTol);
           if (ok) {
             if (aNewTol<aMaxTol) {
-              TE->UpdateTolerance(aNewTol+Delta);
-              CorrectVertexTolerance(myShape);
+              UpdateShape(myShape, aNewTol+Delta, aMapToAvoid);
+              CorrectVertexTolerance(myShape, aMapToAvoid);
             } 
           }
         }
@@ -876,8 +925,8 @@ void CorrectEdgeTolerance (const TopoDS_Edge& myShape,
                                         Tol,Standard_True, aNewTol); 
         if (okx) {
           if (aNewTol<aMaxTol) {
-            TE->UpdateTolerance(aNewTol+Delta);
-            CorrectVertexTolerance(myShape);
+            UpdateShape(myShape, aNewTol+Delta, aMapToAvoid);
+            CorrectVertexTolerance(myShape, aMapToAvoid);
           }
         }
       }
@@ -888,7 +937,8 @@ void CorrectEdgeTolerance (const TopoDS_Edge& myShape,
 //function : CorrectVertexTolerance
 //purpose  : 
 //=======================================================================
-void CorrectVertexTolerance(const TopoDS_Edge& aE)
+void CorrectVertexTolerance(const TopoDS_Edge& aE,
+                            const BOPCol_IndexedMapOfShape& aMapToAvoid)
 {
   Standard_Real aTolE, aTolV;
   TopoDS_Iterator aIt;
@@ -899,8 +949,7 @@ void CorrectVertexTolerance(const TopoDS_Edge& aE)
     const TopoDS_Vertex& aV=*((TopoDS_Vertex*)&aIt.Value());
     aTolV=BRep_Tool::Tolerance(aV);
     if (aTolV<aTolE) {
-      Handle(BRep_TVertex)& aTV= *((Handle(BRep_TVertex)*)&aV.TShape());
-      aTV->UpdateTolerance(aTolE);
+      UpdateShape(aV, aTolE, aMapToAvoid);
     }
   }
 }
@@ -1022,11 +1071,11 @@ Standard_Boolean Validate(const Adaptor3d_Curve& CRef,
 // Function : UpdateEdges
 // purpose : 
 //=======================================================================
-void UpdateEdges(const TopoDS_Face& aF)
+void UpdateEdges(const TopoDS_Face& aF,
+                 const BOPCol_IndexedMapOfShape& aMapToAvoid)
 {
   Standard_Real aTolF, aTolE, aTolV;
   TopoDS_Iterator aItF, aItW, aItE;
-  BRep_Builder aBB;
   //
   aTolE=aTolF= BRep_Tool::Tolerance(aF);
   aItF.Initialize(aF);
@@ -1038,19 +1087,43 @@ void UpdateEdges(const TopoDS_Face& aF)
         const TopoDS_Edge& aE=*((TopoDS_Edge*)&aItW.Value());
         aTolE = BRep_Tool::Tolerance(aE);
         if (aTolE < aTolF) {
-          aBB.UpdateEdge(aE, aTolF);
+          UpdateShape(aE, aTolF, aMapToAvoid);
           aTolE = aTolF;
         }
-        //UpdateVertices(aE);
       }
     }
     else {
       const TopoDS_Vertex& aV=*(TopoDS_Vertex*)&aItF.Value();
       aTolV = BRep_Tool::Tolerance(aV);
       if (aTolV < aTolE) {
-        aBB.UpdateVertex(aV, aTolF);
+        UpdateShape(aV, aTolF, aMapToAvoid);
       }
     }
+  }
+}
+//=======================================================================
+//function : UpdateShape
+//purpose  : 
+//=======================================================================
+void UpdateShape(const TopoDS_Shape& aS,
+                 const Standard_Real aTol,
+                 const BOPCol_IndexedMapOfShape& aMapToAvoid)
+{
+  if (aMapToAvoid.Contains(aS)) {
+    return;
+  }
+  //
+  TopAbs_ShapeEnum aType;
+  BRep_Builder aBB;
+  //
+  aType=aS.ShapeType();
+  if (aType==TopAbs_EDGE) {
+    const TopoDS_Edge& aE = *((TopoDS_Edge*)&aS);
+    aBB.UpdateEdge(aE, aTol);
+  }
+  else if (aType==TopAbs_VERTEX) {
+   const TopoDS_Vertex& aV = *((TopoDS_Vertex*)&aS);
+   aBB.UpdateVertex(aV, aTol); 
   }
 }
 //=======================================================================

@@ -39,6 +39,8 @@ BOPAlgo_PaveFiller::BOPAlgo_PaveFiller()
 {
   myDS=NULL;
   myIterator=NULL;
+  myNonDestructive=Standard_False;
+  myIsPrimary=Standard_True;
 }
 //=======================================================================
 //function : 
@@ -52,6 +54,8 @@ BOPAlgo_PaveFiller::BOPAlgo_PaveFiller
 {
   myDS=NULL;
   myIterator=NULL;
+  myNonDestructive=Standard_False;
+  myIsPrimary=Standard_True;
 }
 //=======================================================================
 //function : ~
@@ -60,6 +64,38 @@ BOPAlgo_PaveFiller::BOPAlgo_PaveFiller
 BOPAlgo_PaveFiller::~BOPAlgo_PaveFiller()
 {
   Clear();
+}
+//=======================================================================
+//function : SetNonDestructive
+//purpose  : 
+//=======================================================================
+void BOPAlgo_PaveFiller::SetNonDestructive(const Standard_Boolean bFlag)
+{
+  myNonDestructive=bFlag;
+}
+//=======================================================================
+//function : NonDestructive
+//purpose  : 
+//=======================================================================
+Standard_Boolean BOPAlgo_PaveFiller::NonDestructive()const 
+{
+  return myNonDestructive;
+}
+//=======================================================================
+//function : SetIsPrimary
+//purpose  : 
+//=======================================================================
+void BOPAlgo_PaveFiller::SetIsPrimary(const Standard_Boolean bFlag)
+{
+  myIsPrimary=bFlag;
+}
+//=======================================================================
+//function : IsPrimary
+//purpose  : 
+//=======================================================================
+Standard_Boolean BOPAlgo_PaveFiller::IsPrimary()const 
+{
+  return myIsPrimary;
 }
 //=======================================================================
 //function : Clear
@@ -171,6 +207,7 @@ void BOPAlgo_PaveFiller::Init()
   //
   // 0 Clear
   Clear();
+  
   //
   // 1.myDS 
   myDS=new BOPDS_DS(myAllocator);
@@ -186,6 +223,9 @@ void BOPAlgo_PaveFiller::Init()
   //
   // 3 myContext
   myContext=new IntTools_Context;
+  //
+  // 4 NonDestructive flag
+  SetNonDestructive();
   //
   myErrorStatus=0;
 }
@@ -236,33 +276,41 @@ void BOPAlgo_PaveFiller::PerformInternal()
     return; 
   }
   //
+  UpdatePaveBlocksWithSDVertices();
   myDS->UpdatePaveBlocks();
   // 11
   PerformEE();
   if (myErrorStatus) {
     return; 
   }
+  UpdatePaveBlocksWithSDVertices();
   // 02
   PerformVF();
   if (myErrorStatus) {
     return; 
   }
+  UpdatePaveBlocksWithSDVertices();
   // 12
   PerformEF();
   if (myErrorStatus) {
     return; 
   }
-  //
-  MakeSplitEdges();
-  if (myErrorStatus) {
-    return; 
-  }
+  UpdatePaveBlocksWithSDVertices();
   //
   // 22
   PerformFF();
   if (myErrorStatus) {
     return; 
   }
+  //
+  UpdateBlocksWithSharedVertices();
+  //
+  MakeSplitEdges();
+  if (myErrorStatus) {
+    return; 
+  }
+  //
+  UpdatePaveBlocksWithSDVertices();
   //
   MakeBlocks();
   if (myErrorStatus) {
@@ -280,7 +328,6 @@ void BOPAlgo_PaveFiller::PerformInternal()
   if (myErrorStatus) {
     return; 
   }
-  //
   // 03
   PerformVZ();
   if (myErrorStatus) {
