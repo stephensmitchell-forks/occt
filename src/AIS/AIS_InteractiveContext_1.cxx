@@ -1037,7 +1037,7 @@ void AIS_InteractiveContext::SetSelected (const Handle(SelectMgr_EntityOwner)& t
         anObjToClear.Add (anInteractive);
     }
     anOwner->State (0);
-    if (theOwner == anObject->GlobalSelOwner())
+    if (anOwner == anObject->GlobalSelOwner())
     {
       myObjects.ChangeFind (anObject)->SetHilightStatus (Standard_False);
     }
