@@ -46,6 +46,7 @@ uses
     Iterator  from BOPDS, 
     PIterator from BOPDS, 
     PaveBlock from BOPDS, 
+    CommonBlock from BOPDS, 
     Curve from BOPDS,  
     IndexedDataMapOfShapeCoupleOfPaveBlocks from BOPDS,
     MapOfPaveBlock from BOPDS,  
@@ -435,12 +436,67 @@ is
     ---Purpose: 
     -- Updates pave blocks which have the paves with indices contained  
     -- in the map <theDMI>.
+ 
+    UpdateVertex(me:out;   
+            nV  : Integer from Standard; 
+            aTolNew: Real from Standard) 
+        returns Integer from Standard 
+        is protected;
+    ---Purpose:      
+    --  Updates tolerance vertex nV due to V/E interference; 
+    --  It always creates new vertex if nV is from arguments  
+    --  Returns: DS index of updated vertex.  
+     
+    ComputeTolerance(me:out; 
+            theCB:CommonBlock from BOPDS) 
+        returns Real from Standard   
+        is protected;   
+         
+    UpdatePaveBlocksWithSDVertices(me:out)  
+        is protected;   
+ 
+    UpdateCommonBlocksWithSDVertices (me:out)  
+        is protected;  
+     
+    UpdateBlocksWithSharedVertices  (me:out) 
+        is protected;   
+     
+    EstimatePaveOnCurve  (me:out; 
+        nV        : Integer from Standard;  
+        theNC     : out Curve from BOPDS; 
+        theTolR3D : Real from Standard) 
+        returns Boolean from Standard
+        is protected;       
         
+    UpdateEdgeTolerance(me:out;   
+            nE  : Integer from Standard; 
+            aTolNew: Real from Standard) 
+        is protected;   
+       
+    SetNonDestructive(me:out;  
+            theFlag:Boolean from Standard) 
+        is protected;   
+        
+    SetNonDestructive(me:out) 
+        is protected;  
+    
+    NonDestructive(me) 
+        returns Boolean from Standard; 
+     
+    SetIsPrimary(me:out;  
+            theFlag:Boolean from Standard) 
+        is protected;  
+     
+    IsPrimary(me) 
+        returns Boolean from Standard 
+        is protected; 
+    
 fields  
     myArguments   : ListOfShape from BOPCol is protected;  
     myDS          : PDS from BOPDS is protected; 
     myIterator    : PIterator from BOPDS is protected; 
     myContext     : Context from BOPInt is protected;   
     mySectionAttribute : SectionAttribute from BOPAlgo is protected;
-
+    myNonDestructive : Boolean from Standard is protected;   
+    myIsPrimary : Boolean from Standard is protected;   
 end PaveFiller;

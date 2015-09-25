@@ -27,37 +27,74 @@
 //function : 
 //purpose  : 
 //=======================================================================
-  BOPAlgo_PaveFiller::BOPAlgo_PaveFiller()
+BOPAlgo_PaveFiller::BOPAlgo_PaveFiller()
 :
   BOPAlgo_Algo()
 {
   myDS=NULL;
   myIterator=NULL;
+  myNonDestructive=Standard_False;
+  myIsPrimary=Standard_True;
 }
 //=======================================================================
 //function : 
 //purpose  : 
 //=======================================================================
-  BOPAlgo_PaveFiller::BOPAlgo_PaveFiller(const Handle(NCollection_BaseAllocator)& theAllocator)
+BOPAlgo_PaveFiller::BOPAlgo_PaveFiller
+  (const Handle(NCollection_BaseAllocator)& theAllocator)
 :
   BOPAlgo_Algo(theAllocator)
 {
   myDS=NULL;
   myIterator=NULL;
+  myNonDestructive=Standard_False;
+  myIsPrimary=Standard_True;
 }
 //=======================================================================
 //function : ~
 //purpose  : 
 //=======================================================================
-  BOPAlgo_PaveFiller::~BOPAlgo_PaveFiller()
+BOPAlgo_PaveFiller::~BOPAlgo_PaveFiller()
 {
   Clear();
+}
+//=======================================================================
+//function : SetNonDestructive
+//purpose  : 
+//=======================================================================
+void BOPAlgo_PaveFiller::SetNonDestructive(const Standard_Boolean bFlag)
+{
+  myNonDestructive=bFlag;
+}
+//=======================================================================
+//function : NonDestructive
+//purpose  : 
+//=======================================================================
+Standard_Boolean BOPAlgo_PaveFiller::NonDestructive()const 
+{
+  return myNonDestructive;
+}
+//=======================================================================
+//function : SetIsPrimary
+//purpose  : 
+//=======================================================================
+void BOPAlgo_PaveFiller::SetIsPrimary(const Standard_Boolean bFlag)
+{
+  myIsPrimary=bFlag;
+}
+//=======================================================================
+//function : IsPrimary
+//purpose  : 
+//=======================================================================
+Standard_Boolean BOPAlgo_PaveFiller::IsPrimary()const 
+{
+  return myIsPrimary;
 }
 //=======================================================================
 //function : Clear
 //purpose  : 
 //=======================================================================
-  void BOPAlgo_PaveFiller::Clear()
+void BOPAlgo_PaveFiller::Clear()
 {
   if (myIterator) {
     delete myIterator;
@@ -73,7 +110,7 @@
 //function : DS
 //purpose  : 
 //=======================================================================
-  const BOPDS_DS& BOPAlgo_PaveFiller::DS()
+const BOPDS_DS& BOPAlgo_PaveFiller::DS()
 {
   return *myDS;
 }
@@ -81,7 +118,7 @@
 //function : PDS
 //purpose  : 
 //=======================================================================
-  BOPDS_PDS BOPAlgo_PaveFiller::PDS()
+BOPDS_PDS BOPAlgo_PaveFiller::PDS()
 {
   return myDS;
 }
@@ -89,7 +126,7 @@
 //function : Context
 //purpose  : 
 //=======================================================================
-  Handle(BOPInt_Context) BOPAlgo_PaveFiller::Context()
+Handle(BOPInt_Context) BOPAlgo_PaveFiller::Context()
 {
   return myContext;
 }
@@ -97,7 +134,8 @@
 //function : SectionAttribute
 //purpose  : 
 //=======================================================================
-  void  BOPAlgo_PaveFiller::SetSectionAttribute(const BOPAlgo_SectionAttribute& theSecAttr)
+void  BOPAlgo_PaveFiller::SetSectionAttribute
+  (const BOPAlgo_SectionAttribute& theSecAttr)
 {
   mySectionAttribute = theSecAttr;
 }
@@ -105,7 +143,7 @@
 //function : SetArguments
 //purpose  : 
 //=======================================================================
-  void BOPAlgo_PaveFiller::SetArguments(const BOPCol_ListOfShape& theLS)
+void BOPAlgo_PaveFiller::SetArguments(const BOPCol_ListOfShape& theLS)
 {
   myArguments=theLS;
 }
@@ -113,7 +151,7 @@
 //function : Arguments
 //purpose  : 
 //=======================================================================
-  const BOPCol_ListOfShape& BOPAlgo_PaveFiller::Arguments()const
+const BOPCol_ListOfShape& BOPAlgo_PaveFiller::Arguments()const
 {
   return myArguments;
 }
@@ -121,7 +159,7 @@
 // function: Init
 // purpose: 
 //=======================================================================
-  void BOPAlgo_PaveFiller::Init()
+void BOPAlgo_PaveFiller::Init()
 {
   myErrorStatus=0;
   //
@@ -132,6 +170,7 @@
   //
   // 0 Clear
   Clear();
+  
   //
   // 1.myDS 
   myDS=new BOPDS_DS(myAllocator);
@@ -145,6 +184,9 @@
   //
   // 3 myContext
   myContext=new BOPInt_Context;
+  // 
+  // 4 NonDestructive flag
+  SetNonDestructive();
   //
   myErrorStatus=0;
 }
@@ -152,7 +194,7 @@
 // function: Perform
 // purpose: 
 //=======================================================================
-  void BOPAlgo_PaveFiller::Perform()
+void BOPAlgo_PaveFiller::Perform()
 {
   myErrorStatus=0;
   //
@@ -171,34 +213,41 @@
     return; 
   }
   //
+  UpdatePaveBlocksWithSDVertices();
   myDS->UpdatePaveBlocks();
   // 11
   PerformEE();
   if (myErrorStatus) {
     return; 
   }
+  UpdatePaveBlocksWithSDVertices();
   // 02
   PerformVF();
   if (myErrorStatus) {
     return; 
   }
+  UpdatePaveBlocksWithSDVertices();
   // 12
-
   PerformEF();
   if (myErrorStatus) {
     return; 
   }
-  //
-  MakeSplitEdges();
-  if (myErrorStatus) {
-    return; 
-  }
+  UpdatePaveBlocksWithSDVertices();
   //
   // 22
   PerformFF();
   if (myErrorStatus) {
     return; 
   }
+  //
+  UpdateBlocksWithSharedVertices();
+  //
+  MakeSplitEdges();
+  if (myErrorStatus) {
+    return; 
+  } 
+  //
+  UpdatePaveBlocksWithSDVertices();
   //
   MakeBlocks();
   if (myErrorStatus) {
@@ -216,5 +265,5 @@
   if (myErrorStatus) {
     return; 
   }
-  //
 }
+

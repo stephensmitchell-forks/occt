@@ -59,13 +59,12 @@
 #include <BOPDS_BoxBndTree.hxx>
 
 #include <BOPAlgo_Tools.hxx>
-#include <GeomAPI_ProjectPointOnCurve.hxx>
 
 //=======================================================================
 // function: PerformEE
 // purpose: 
 //=======================================================================
-  void BOPAlgo_PaveFiller::PerformEE()
+void BOPAlgo_PaveFiller::PerformEE()
 {
   Standard_Boolean bJustAdd, bOrder;
   Standard_Integer i, iX, iSize, nE1, nE2, aDiscretize;
@@ -156,10 +155,6 @@
           continue;
         }
         //
-        // -----------f
-        //DEBft
-        //printf(" nE1=%d nE2=%d\n", nE1, nE2);
-        //
         IntTools_EdgeEdge aEdgeEdge;
         //
         aEdgeEdge.SetEdge1 (aE1);
@@ -220,8 +215,10 @@
           aPBn2=aPB1;
         }
         //
-        IntTools_Range aR11(aPBR1.First(), aSR1.First()), aR12(aSR1.Last(), aPBR1.Last()),
-                       aR21(aPBR2.First(), aSR2.First()), aR22(aSR2.Last(), aPBR2.Last());
+        IntTools_Range aR11(aPBR1.First(), aSR1.First()), 
+          aR12(aSR1.Last(), aPBR1.Last()),
+          aR21(aPBR2.First(), aSR2.First()), 
+          aR22(aSR2.Last(), aPBR2.Last());
         //
         const IntTools_SequenceOfCommonPrts& aCPrts=aEdgeEdge.CommonParts();
         //
@@ -248,8 +245,10 @@
               aPBn1->Indices(nV[0], nV[1]);
               aPBn2->Indices(nV[2], nV[3]);
               //
-              if((bIsOnPave[0] && bIsOnPave[2]) || (bIsOnPave[0] && bIsOnPave[3]) ||
-                 (bIsOnPave[1] && bIsOnPave[2]) || (bIsOnPave[1] && bIsOnPave[3])) {
+              if((bIsOnPave[0] && bIsOnPave[2]) || 
+                 (bIsOnPave[0] && bIsOnPave[3]) ||
+                 (bIsOnPave[1] && bIsOnPave[2]) || 
+                 (bIsOnPave[1] && bIsOnPave[3])) {
                 continue;
               }
               //
@@ -385,12 +384,12 @@
   aAllocator.Nullify();
 }
 //=======================================================================
-//function : PerformVertices
+//function : PerformVerticesEE
 //purpose  : 
 //=======================================================================
-  Standard_Integer BOPAlgo_PaveFiller::PerformVerticesEE
-    (BOPDS_IndexedDataMapOfShapeCoupleOfPaveBlocks& theMVCPB,
-     Handle(NCollection_BaseAllocator)& theAllocator)
+Standard_Integer BOPAlgo_PaveFiller::PerformVerticesEE
+  (BOPDS_IndexedDataMapOfShapeCoupleOfPaveBlocks& theMVCPB,
+   Handle(NCollection_BaseAllocator)& theAllocator)
 {
   Standard_Integer aNbV, iRet;
   //
@@ -523,9 +522,9 @@
 //function : TreatNewVertices
 //purpose  : 
 //=======================================================================
-  void BOPAlgo_PaveFiller::TreatNewVertices(
-       const BOPCol_IndexedDataMapOfShapeInteger& aMapVI,
-       BOPCol_IndexedDataMapOfShapeListOfShape& myImages)
+void BOPAlgo_PaveFiller::TreatNewVertices
+(const BOPCol_IndexedDataMapOfShapeInteger& aMapVI,
+ BOPCol_IndexedDataMapOfShapeListOfShape& myImages)
 {
   Standard_Integer j, i, aNbV, aNbVSD;
   Standard_Real aTol;
@@ -540,7 +539,8 @@
   //
   BOPDS_BoxBndTreeSelector aSelector;
   BOPDS_BoxBndTree aBBTree;
-  NCollection_UBTreeFiller <Standard_Integer, Bnd_Box> aTreeFiller(aBBTree);
+  NCollection_UBTreeFiller <Standard_Integer, 
+                           Bnd_Box> aTreeFiller(aBBTree);
   //
   aNbV = aMapVI.Extent();
   for (i=1; i<=aNbV; ++i) {
@@ -656,12 +656,11 @@
     }
   }
 }
-
 //=======================================================================
 //function : FillShrunkData
 //purpose  : 
 //=======================================================================
-  void BOPAlgo_PaveFiller::FillShrunkData(Handle(BOPDS_PaveBlock)& thePB)
+void BOPAlgo_PaveFiller::FillShrunkData(Handle(BOPDS_PaveBlock)& thePB)
 {
   Standard_Integer nE, nV1, nV2, iErr;
   Standard_Real aT1, aT2, aTS1, aTS2;
@@ -706,8 +705,8 @@ void BOPAlgo_PaveFiller::ForceInterfVE(const Standard_Integer nV,
                                        Handle(BOPDS_PaveBlock)& aPB,
                                        BOPDS_MapOfPaveBlock& aMPBToUpdate)
 {
-  Standard_Integer aNbPnt, nE;
-  gp_Pnt aP;
+  Standard_Integer nI, nE, nVx, nVSD, iFlag;
+  Standard_Real aT, aTolVNew;
   //
   nE = aPB->OriginalEdge();
   //
@@ -724,60 +723,45 @@ void BOPAlgo_PaveFiller::ForceInterfVE(const Standard_Integer nV,
     return;
   }
   //
-  if (aPB->Pave1().Index() == nV || aPB->Pave2().Index() == nV) {
+  if (aPB->Pave1().Index() == nV || 
+      aPB->Pave2().Index() == nV) {
     return;
   }
   //
-  const TopoDS_Vertex& aV = *(TopoDS_Vertex*)&myDS->Shape(nV);
-  const TopoDS_Edge&   aE = *(TopoDS_Edge*)  &myDS->Shape(nE);
-  aP=BRep_Tool::Pnt(aV);
+  nVx = nV;
+  if (myDS->HasShapeSD(nV, nVSD)) {
+    nVx = nVSD;
+  }
   //
-  GeomAPI_ProjectPointOnCurve& aProjector=myContext->ProjPC(aE);
-  aProjector.Perform(aP);
+  const TopoDS_Vertex& aV = *(TopoDS_Vertex*)&myDS->Shape(nVx);
+  const TopoDS_Edge& aE = *(TopoDS_Edge*)&myDS->Shape(nE);
   //
-  aNbPnt = aProjector.NbPoints();
-  if (aNbPnt) {
-    Standard_Real aT, aDist;
-    Standard_Integer i;
-    BRep_Builder aBB;
+  iFlag = myContext->ComputeVE(aV, aE, aT, aTolVNew);
+  if (iFlag == 0 || iFlag == -4) {
     BOPDS_Pave aPave;
     //
-    aDist=aProjector.LowerDistance();
-    aT=aProjector.LowerDistanceParameter();
-    //
     BOPDS_VectorOfInterfVE& aVEs=myDS->InterfVE();
-    i=aVEs.Append()-1;
-    BOPDS_InterfVE& aVE=aVEs(i);
+    aVEs.SetIncrement(10);
+    // 1
+    nI=aVEs.Append()-1;
+    BOPDS_InterfVE& aVE=aVEs(nI);
+    //
     aVE.SetIndices(nV, nE);
     aVE.SetParameter(aT);
-    //
+    // 2
     myDS->AddInterf(nV, nE);
     //
-    aBB.UpdateVertex(aV, aDist);
-    BOPDS_ShapeInfo& aSIDS=myDS->ChangeShapeInfo(nV);
-    Bnd_Box& aBox=aSIDS.ChangeBox();
-    BRepBndLib::Add(aV, aBox);
-    //
-    aPave.SetIndex(nV);
+    // 3 update vertex V/E if necessary
+    nVx=UpdateVertex(nV, aTolVNew);
+    // 4
+    if (myDS->IsNewShape(nVx)) {
+      aVE.SetIndexNew(nVx);
+    }
+    // 5 append ext pave to pave block
+    aPave.SetIndex(nVx);
     aPave.SetParameter(aT);
     aPB->AppendExtPave(aPave);
     //
     aMPBToUpdate.Add(aPB);
   }
 }
-
- /*
-  // DEBf
-  { 
-    TopoDS_Compound aCx;
-    BRep_Builder aBBx;
-    aBBx.MakeCompound(aCx);
-    aItMVCPB.Initialize(theMVCPB);
-    for (; aItMVCPB.More(); aItMVCPB.Next()) {
-      const TopoDS_Shape& aS=aItMVCPB.Key();
-      aBBx.Add(aCx, aS);
-    }
-    BRepTools::Write(aCx, "cx");
-  }
-  // DEBt
-  */

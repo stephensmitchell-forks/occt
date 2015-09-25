@@ -432,13 +432,28 @@
   }
   return 0;
 }
+
+
 //=======================================================================
 //function : ComputeVE
 //purpose  : 
 //=======================================================================
-  Standard_Integer BOPInt_Context::ComputeVE(const TopoDS_Vertex& aV1, 
-                                             const TopoDS_Edge&   aE2,
-                                             Standard_Real& aT)
+Standard_Integer BOPInt_Context::ComputeVE(const TopoDS_Vertex& aV1, 
+                                           const TopoDS_Edge&   aE2,
+                                           Standard_Real& aT)
+{
+  Standard_Real aTolVnew;
+  //
+  return ComputeVE(aV1, aE2, aT, aTolVnew);
+}
+//=======================================================================
+//function : ComputeVE
+//purpose  : 
+//=======================================================================
+Standard_Integer BOPInt_Context::ComputeVE(const TopoDS_Vertex& aV1, 
+                                           const TopoDS_Edge&   aE2,
+                                           Standard_Real& aT,
+                                           Standard_Real& aTolVnew)
 {
   if (BRep_Tool::Degenerated(aE2)) {
     return -1;
@@ -469,6 +484,8 @@
   aTolE2=BRep_Tool::Tolerance(aE2);
   aTolSum = aTolV1 + aTolE2 + Precision::Confusion();
   //
+  aTolVnew=aDist+aTolE2;
+  //
   aT=aProjector.LowerDistanceParameter();
   if (aDist > aTolSum) {
     return -4;
@@ -476,13 +493,27 @@
   return 0;
 }
 //=======================================================================
-//function : ComputeVS
+//function : ComputeVF
 //purpose  : 
 //=======================================================================
-  Standard_Integer BOPInt_Context::ComputeVF(const TopoDS_Vertex& aV1, 
-                                             const TopoDS_Face&   aF2,
-                                             Standard_Real& U,
-                                             Standard_Real& V)
+Standard_Integer BOPInt_Context::ComputeVF(const TopoDS_Vertex& aV1, 
+                                           const TopoDS_Face&   aF2,
+                                           Standard_Real& U,
+                                           Standard_Real& V)
+{ 
+  Standard_Real aTolVnew;
+  //
+  return ComputeVF(aV1, aF2, U, V, aTolVnew);
+}
+//=======================================================================
+//function : ComputeVF
+//purpose  : 
+//=======================================================================
+Standard_Integer BOPInt_Context::ComputeVF(const TopoDS_Vertex& aV1, 
+                                           const TopoDS_Face&   aF2,
+                                           Standard_Real& U,
+                                           Standard_Real& V,
+                                           Standard_Real& aTolVnew)
 {
   Standard_Real aTolV1, aTolF2, aTolSum, aDist;
   gp_Pnt aP;
@@ -500,10 +531,13 @@
   // 2. Check the distance between the projection point and 
   //    the original point
   aDist=aProjector.LowerDistance();
-
+  //
   aTolV1=BRep_Tool::Tolerance(aV1);
   aTolF2=BRep_Tool::Tolerance(aF2);
-  aTolSum=aTolV1+aTolF2;
+  //
+  aTolSum=aTolV1 + aTolF2 + Precision::Confusion();
+  aTolVnew=aDist+aTolF2;
+  //
   if (aDist > aTolSum) {
     // the distance is too large
     return -2;

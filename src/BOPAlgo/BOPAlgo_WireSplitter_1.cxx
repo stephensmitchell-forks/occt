@@ -133,7 +133,7 @@ static
 //function : SplitBlock
 //purpose  : 
 //=======================================================================
-  void BOPAlgo_WireSplitter::SplitBlock(BOPTools_ConnexityBlock& aCB)
+void BOPAlgo_WireSplitter::SplitBlock(BOPTools_ConnexityBlock& aCB)
 {
   Standard_Boolean bNothingToDo;
   Standard_Integer aIx, aNb, i, aCntIn, aCntOut;
@@ -150,8 +150,6 @@ static
   const BOPCol_ListOfShape& myEdges=aCB.Shapes();
   //
   // 1.Filling mySmartMap
-  BOPTools_AlgoTools2D::BuildPCurveForEdgesOnPlane(myEdges, myFace);
-  //
   aIt.Initialize(myEdges);
   for(; aIt.More(); aIt.Next()) {
     const TopoDS_Edge& aE=(*(TopoDS_Edge *)&aIt.Value());

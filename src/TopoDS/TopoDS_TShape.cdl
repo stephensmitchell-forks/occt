@@ -152,7 +152,16 @@ is
 	---C++: return &
 	---C++: inline
     is static private;
-
+ 
+ 
+    Locked(me:mutable; 
+           bFlag:Boolean from Standard); 
+    ---C++: inline
+     
+    Locked(me) 
+        returns Boolean from Standard; 
+    ---C++: inline 
+ 
 fields
     myShapes   : ListOfShape from TopoDS;
     myFlags    : Integer     from Standard;

@@ -246,8 +246,6 @@ void BOPAlgo_Builder::BuildSplitFaces()
       aLE.Append(aSp);
     }
     //
-    BOPTools_AlgoTools2D::BuildPCurveForEdgesOnPlane (aLE, aFF);
-    //
     // 3 Build split faces
     BOPAlgo_BuilderFace& aBF=aVBF.Append1();
     aBF.SetFace(aF);

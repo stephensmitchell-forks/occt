@@ -22,8 +22,13 @@
 #include <TopoDS_Compound.hxx>
 #include <BRep_Builder.hxx>
 
+#include <BOPCol_IndexedMapOfShape.hxx>
+
+#include <BOPDS_ShapeInfo.hxx>
+#include <BOPDS_DS.hxx>
 
 #include <BOPTools_AlgoTools.hxx>
+
 
 //=======================================================================
 //function : 
@@ -36,7 +41,6 @@ BOPAlgo_Builder::BOPAlgo_Builder()
   myMapFence(100, myAllocator),
   myPaveFiller(NULL),
   myDS(NULL),
-  //myContext(NULL),
   myEntryPoint(0),
   myImages(100, myAllocator),
   myShapesSD(100, myAllocator),
@@ -57,7 +61,6 @@ BOPAlgo_Builder::BOPAlgo_Builder
   myMapFence(100, myAllocator),
   myPaveFiller(NULL),
   myDS(NULL),
-  //myContext(NULL),
   myEntryPoint(0),
   myImages(100, myAllocator), 
   myShapesSD(100, myAllocator),
@@ -371,18 +374,30 @@ void BOPAlgo_Builder::PerformInternal(const BOPAlgo_PaveFiller& theFiller)
   PostTreat();
   
 }
-//
-// myErrorStatus
-// 
-// 0  - Ok
-// 
 //=======================================================================
 //function : PostTreat
 //purpose  : 
 //=======================================================================
 void BOPAlgo_Builder::PostTreat()
 {
-  //BRepLib::SameParameter(myShape, 1.e-7, Standard_True);
-  BOPTools_AlgoTools::CorrectTolerances(myShape, 0.05);
-  BOPTools_AlgoTools::CorrectShapeTolerances(myShape);
+  Standard_Integer i, aNbS;
+  TopAbs_ShapeEnum aType;
+  BOPCol_IndexedMapOfShape aMA;
+  if (myPaveFiller->NonDestructive()) {
+    // MapToAvoid
+    aNbS=myDS->NbSourceShapes();
+    for (i=0; i<aNbS; ++i) {
+      const BOPDS_ShapeInfo& aSI=myDS->ShapeInfo(i);
+      aType=aSI.ShapeType();
+      if (aType==TopAbs_VERTEX ||
+          aType==TopAbs_EDGE||
+          aType==TopAbs_FACE) {
+        const TopoDS_Shape& aS=aSI.Shape();
+        aMA.Add(aS);
+      }
+    }
+  }
+  //
+  BOPTools_AlgoTools::CorrectTolerances(myShape, aMA, 0.05);
+  BOPTools_AlgoTools::CorrectShapeTolerances(myShape, aMA);
 }

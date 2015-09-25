@@ -36,15 +36,14 @@
 // function: PerformVE
 // purpose: 
 //=======================================================================
-  void BOPAlgo_PaveFiller::PerformVE()
+void BOPAlgo_PaveFiller::PerformVE()
 {
-  Standard_Boolean bJustAdd;
+  Standard_Boolean bJustAdd, bHasShapeSD;
   Standard_Integer iSize, nV, nE, nVSD, iFlag, nVx, i;
-  Standard_Real aT, aTolE, aTolV;
+  Standard_Real aT, aTolVnew;
   BOPDS_Pave aPave;
   BOPDS_PassKey aPK;
   BOPDS_MapOfPassKey aMPK;
-  BRep_Builder aBB;
   //
   myErrorStatus=0;
   //
@@ -80,7 +79,8 @@
     }
     //
     nVx=nV;
-    if (myDS->HasShapeSD(nV, nVSD)) {
+    bHasShapeSD=myDS->HasShapeSD(nV, nVSD);
+    if (bHasShapeSD) {
       nVx=nVSD;
     }
     //
@@ -89,10 +89,10 @@
       continue;
     }
     //
-    const TopoDS_Edge& aE=(*(TopoDS_Edge *)(&aSIE.Shape())); 
-    const TopoDS_Vertex& aV=(*(TopoDS_Vertex *)(&myDS->Shape(nVx))); 
+    const TopoDS_Edge& aE=(*(TopoDS_Edge *)(&aSIE.Shape()));
+    const TopoDS_Vertex& aVx=(*(TopoDS_Vertex *)(&myDS->Shape(nVx))); 
     //
-    iFlag=myContext->ComputeVE (aV, aE, aT);
+    iFlag=myContext->ComputeVE (aVx, aE, aT, aTolVnew);
     if (!iFlag) {
       // 1
       i=aVEs.Append()-1;
@@ -101,21 +101,21 @@
       aVE.SetParameter(aT);
       // 2
       myDS->AddInterf(nV, nE);
-      // 3
+      //
+      // 
       BOPDS_ListOfPaveBlock& aLPB=myDS->ChangePaveBlocks(nE);
       Handle(BOPDS_PaveBlock)& aPB=*((Handle_BOPDS_PaveBlock*)&aLPB.First());
-      // 
+      //
+      // 3 update vertex V/E if necessary
+      nVx=UpdateVertex(nV, aTolVnew);
+      //4
+      if (myDS->IsNewShape(nVx)) {
+        aVE.SetIndexNew(nVx);
+      }
+      //5 append ext pave to pave block
       aPave.SetIndex(nVx);
       aPave.SetParameter(aT);
       aPB->AppendExtPave(aPave);
-      aTolV = BRep_Tool::Tolerance(aV);
-      aTolE = BRep_Tool::Tolerance(aE);
-      if ( aTolV < aTolE) {
-        aBB.UpdateVertex(aV, aTolE);
-        BOPDS_ShapeInfo& aSIDS=myDS->ChangeShapeInfo(nVx);
-        Bnd_Box& aBoxDS=aSIDS.ChangeBox();
-        BRepBndLib::Add(aV, aBoxDS);
-      }
     }
   }//for (; myIterator->More(); myIterator->Next()) {
-} 
+}

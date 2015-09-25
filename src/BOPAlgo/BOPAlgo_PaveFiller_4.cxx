@@ -22,8 +22,6 @@
 #include <TopoDS_Vertex.hxx>
 #include <TopoDS_Face.hxx>
 #include <BRep_Tool.hxx>
-#include <BRep_Builder.hxx>
-#include <BRepBndLib.hxx>
 
 #include <BOPCol_MapOfInteger.hxx>
 
@@ -41,12 +39,11 @@
 // function: PerformVF
 // purpose: 
 //=======================================================================
-  void BOPAlgo_PaveFiller::PerformVF()
+void BOPAlgo_PaveFiller::PerformVF()
 {
   Standard_Boolean bJustAdd;
   Standard_Integer iSize, nV, nF, nVSD, iFlag, nVx, i;
-  Standard_Real aT1, aT2, aTolF, aTolV;
-  BRep_Builder aBB;
+  Standard_Real aT1, aT2, aTolF, aTolV, aTolVnew;
   //
   myErrorStatus=0;
   //
@@ -89,27 +86,29 @@
       aTolV = BRep_Tool::Tolerance(aV);
       aTolF = BRep_Tool::Tolerance(aF);
       //
-      iFlag=myContext->ComputeVF(aV, aF, aT1, aT2);
-      if (!iFlag) {
-        // 1
-        i=aVFs.Append()-1;
-        BOPDS_InterfVF& aVF=aVFs(i);
-        aVF.SetIndices(nVx, nF);
-        aVF.SetUV(aT1, aT2);
-        // 2
-        myDS->AddInterf(nVx, nF);
-        //
-        BOPDS_FaceInfo& aFI=myDS->ChangeFaceInfo(nF);
-        BOPCol_MapOfInteger& aMVIn=aFI.ChangeVerticesIn();
-        aMVIn.Add(nVx);
-        //
-        if (aTolV < aTolF) {
-          aBB.UpdateVertex(aV, aTolF);
-          BOPDS_ShapeInfo& aSIV = myDS->ChangeShapeInfo(nVx);
-          Bnd_Box& aBoxV = aSIV.ChangeBox();
-          BRepBndLib::Add(aV, aBoxV);
-        }
+      iFlag=myContext->ComputeVF(aV, aF, aT1, aT2, aTolVnew);
+      if (iFlag) {
+        continue; 
       }
+      // 1
+      i=aVFs.Append()-1;
+      BOPDS_InterfVF& aVF=aVFs(i);
+      aVF.SetIndices(nVx, nF);
+      aVF.SetUV(aT1, aT2);
+      // 2
+      myDS->AddInterf(nVx, nF);
+      //
+      // 3 update vertex V/F if necessary
+      nVx=UpdateVertex(nVx, aTolVnew);
+      //
+      // 4
+      if (myDS->IsNewShape(nVx)) {
+        aVF.SetIndexNew(nVx);
+      }
+      // update FaceInfo
+      BOPDS_FaceInfo& aFI=myDS->ChangeFaceInfo(nF);
+      BOPCol_MapOfInteger& aMVIn=aFI.ChangeVerticesIn();
+      aMVIn.Add(nVx);
     }// for (; myIterator->More(); myIterator->Next()) {
   }// if (iSize) {
   else {
@@ -122,13 +121,11 @@
   //
   TreatVerticesEE();
 } 
-
-
 //=======================================================================
 //function : TreatVerticesEE
 //purpose  : 
 //=======================================================================
-  void BOPAlgo_PaveFiller::TreatVerticesEE()
+void BOPAlgo_PaveFiller::TreatVerticesEE()
 {
   Standard_Integer i, aNbS, aNbEEs, nF, nV, iFlag;
   Standard_Real aT1, aT2;
@@ -143,7 +140,6 @@
   //
   myErrorStatus=0;
   //
-  
   aNbS=myDS->NbSourceShapes();
   //
   BOPDS_VectorOfInterfEE& aEEs=myDS->InterfEE();

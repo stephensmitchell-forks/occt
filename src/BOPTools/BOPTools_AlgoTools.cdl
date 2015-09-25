@@ -44,7 +44,7 @@ uses
 --raises
 
 is  
-    ComputeVV(myclass;  
+    ComputeVV(myclass; 
         aV1:Vertex from TopoDS;  
         aP2:Pnt from gp; 
         aTolP2:Real from Standard) 
@@ -74,7 +74,7 @@ is
         theF2: Face from TopoDS;
         theCurve:Curve from IntTools;
         thePC1:Boolean from Standard; 
-    	thePC2:Boolean from Standard);  
+        thePC2:Boolean from Standard);  
     
     MakeContainer(myclass; 
         theType:ShapeEnum from TopAbs; 
@@ -283,31 +283,7 @@ is
     OrientFacesOnShell (myclass; 
         theS   :out Shape from TopoDS); 
      
-    CorrectTolerances (myclass;  
-        theS: Shape  from  TopoDS; 
-         theTolMax: Real from Standard =0.0001);  
-    ---Purpose:	 
-    --- Provides valid values of tolerances for the shape <theS>         
-    --- <theTolMax> is max value of the tolerance that can be 
-    --- accepted for correction.  If real value of the tolerance 
-    --- will be greater than  <aTolMax>, the correction does not 
-    --- perform. 
-    ---
-    CorrectCurveOnSurface  (myclass;  
-         theS: Shape  from  TopoDS; 
-         theTolMax: Real from Standard =0.0001); 
-    ---Purpose:	 
-    --- Provides valid values of tolerances for the shape <theS> 
-    --- in  terms of BRepCheck_InvalidCurveOnSurface.   
-    ---
-    CorrectPointOnCurve    (myclass;  
-         theS: Shape  from  TopoDS; 
-         theTolMax: Real from Standard =0.0001);  	 
-    ---Purpose:	 
-    --- Provides valid values of tolerances for the shape <theS> 
-    --- in  terms of BRepCheck_InvalidPointOnCurve.   
-    ---
-    --fields 
+    
  
     --copy from BOPTools_AlgoTools.cdl
     MakeNewVertex  (myclass;  
@@ -433,18 +409,61 @@ is
       returns Boolean from Standard; 
     ---Purpose: 
     --- Checks if it is possible to compute shrunk range for the edge <aE>. 
-    ---  
- 
-    CorrectShapeTolerances (myclass;
-        theS: Shape from TopoDS);
-    ---Purpose: 
-    --- Corrects tolerance values of the sub-shapes of the shape <theS> if needed. 
-    ---
- 
+    ---   
     Dimension(myclass; 
         theS:Shape from TopoDS) 
     returns Integer from Standard;
     ---Purpose: 
     --- Retutns dimension of the shape <theS>. 
+     
+    CorrectTolerances (myclass;  
+        theS: Shape  from  TopoDS;  
+        theTolMax: Real from Standard =0.0001);  
+    ---Purpose:	 
+    --- Provides valid values of tolerances for the shape <theS>         
+    --- <theTolMax> is max value of the tolerance that can be 
+    --- accepted for correction.  If real value of the tolerance 
+    --- will be greater than  <aTolMax>, the correction does not 
+    --- perform. 
+    ---
+    CorrectCurveOnSurface  (myclass;  
+         theS: Shape  from  TopoDS; 
+         theTolMax: Real from Standard =0.0001); 
+    ---Purpose:	 
+    --- Provides valid values of tolerances for the shape <theS> 
+    --- in  terms of BRepCheck_InvalidCurveOnSurface.   
+    ---
+    CorrectPointOnCurve    (myclass;  
+         theS: Shape  from  TopoDS; 
+         theTolMax: Real from Standard =0.0001);  	 
+    ---Purpose:	 
+    --- Provides valid values of tolerances for the shape <theS> 
+    --- in  terms of BRepCheck_InvalidPointOnCurve.   
+    ---
+    CorrectShapeTolerances (myclass;
+        theS: Shape from TopoDS);
+    ---Purpose: 
+    --- Corrects tolerance values of the sub-shapes of the shape <theS> if needed. 
+    ---  
+    
+    CorrectTolerances (myclass;  
+        theS: Shape  from  TopoDS;  
+        theMapToAvoid:IndexedMapOfShape from BOPCol;
+        theTolMax: Real from Standard =0.0001);  
+     
+    CorrectCurveOnSurface  (myclass;  
+        theS: Shape  from  TopoDS;  
+        theMapToAvoid:IndexedMapOfShape from BOPCol;
+        theTolMax: Real from Standard =0.0001); 
+        
+    CorrectPointOnCurve    (myclass;  
+        theS: Shape  from  TopoDS;  
+        theMapToAvoid:IndexedMapOfShape from BOPCol;
+        theTolMax: Real from Standard =0.0001);     
+         
+    CorrectShapeTolerances (myclass;
+        theS: Shape from TopoDS; 
+        theMapToAvoid:IndexedMapOfShape from BOPCol);
+ 
     
 end AlgoTools;

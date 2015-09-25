@@ -344,7 +344,15 @@ is
 
     TShape(me : in out; T : TShape from TopoDS)
 	---C++: inline
-    is static;
+    is static; 
+     
+    Locked(me:out; 
+           bFlag:Boolean from Standard); 
+    ---C++: inline
+     
+    Locked(me) 
+        returns Boolean from Standard; 
+    ---C++: inline 
 	
 fields
     myTShape   : TShape      from TopoDS;

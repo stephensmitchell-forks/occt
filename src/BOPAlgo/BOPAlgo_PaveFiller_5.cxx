@@ -19,6 +19,8 @@
 
 #include <NCollection_IncAllocator.hxx>
 
+#include <Precision.hxx>
+
 #include <Bnd_Box.hxx>
 
 #include <TopoDS_Vertex.hxx>
@@ -53,12 +55,11 @@
 #include <BRep_Builder.hxx>
 #include <GeomAPI_ProjectPointOnSurf.hxx>
 
-
 //=======================================================================
 //function : PerformEF
 //purpose  : 
 //=======================================================================
-  void BOPAlgo_PaveFiller::PerformEF()
+void BOPAlgo_PaveFiller::PerformEF()
 {
   Standard_Integer iSize;
   //
@@ -213,11 +214,25 @@
             if (bIsOnPave[j]) {
               bV[j]=CheckFacePaves(nV[j], aMIFOn, aMIFIn);
               if (bV[j]) {
-                const TopoDS_Vertex& aV = (*(TopoDS_Vertex *)(&myDS->Shape(nV[j])));
-                BOPTools_AlgoTools::UpdateVertex(aE, aT, aV);
-                BOPDS_ShapeInfo& aSIDS=myDS->ChangeShapeInfo(nV[j]);
-                Bnd_Box& aBoxDS=aSIDS.ChangeBox();
-                BRepBndLib::Add(aV, aBoxDS);
+                const TopoDS_Vertex& aV = 
+                  (*(TopoDS_Vertex *)(&myDS->Shape(nV[j])));
+                //
+                Standard_Real f, l, aTolVnew, aDistPP, aTolPC, aTolV;
+                //
+                const Handle(Geom_Curve)& aCur = BRep_Tool::Curve(aE, f, l);
+                //
+                gp_Pnt aP1 = BRep_Tool::Pnt(aV);
+                gp_Pnt aP2 = aCur->Value(aT);
+                //
+                
+                aDistPP=aP1.Distance(aP2);
+                
+                aTolPC=Precision::PConfusion();
+                aTolV=BRep_Tool::Tolerance(aV);
+                if (aDistPP > (aTolV+aTolPC)) {
+                  aTolVnew=Max(aTolE, aDistPP);
+                  UpdateVertex(nV[j], aTolVnew);
+                }
               }
               else {
                 bIsOnPave[j] = ForceInterfVF(nV[j], nF);
@@ -268,11 +283,6 @@
             myDS->AddInterf(nE, nF);
             break;
           }
-          //update tolerance of edge if needed
-          if (aTolE < aTolF) {
-            myDS->UpdateEdgeTolerance(nE, aTolF);
-            aTolE = aTolF;
-          }
           aEF.SetCommonPart(aCPart);
           // 2
           myDS->AddInterf(nE, nF);
@@ -304,22 +314,19 @@
   }
   // Refine FaceInfoOn to remove all formal pave blocks 
   // made during EF processing 
-  //myDS->RefineFaceInfoOn();
   //-----------------------------------------------------scope t
   aMIEFC.Clear();
   aMVCPB.Clear();
   aMPBLI.Clear();
   aAllocator.Nullify();
-  //
-  
 }
 //=======================================================================
 //function : PerformVertices1
 //purpose  : 
 //=======================================================================
-  Standard_Integer BOPAlgo_PaveFiller::PerformVerticesEF
-    (BOPDS_IndexedDataMapOfShapeCoupleOfPaveBlocks& theMVCPB,
-     Handle(NCollection_BaseAllocator)& theAllocator)
+Standard_Integer BOPAlgo_PaveFiller::PerformVerticesEF
+  (BOPDS_IndexedDataMapOfShapeCoupleOfPaveBlocks& theMVCPB,
+   Handle(NCollection_BaseAllocator)& theAllocator)
 {
   Standard_Integer aNbV, iRet;
   //
@@ -353,6 +360,8 @@
   }
   //
   // 2 Fuse vertices
+  aPF.SetIsPrimary(Standard_False);
+  aPF.SetNonDestructive(myNonDestructive);
   aPF.SetArguments(aLS);
   aPF.Perform();
   iErr=aPF.ErrorStatus();
@@ -432,7 +441,7 @@
       }
     }
   }
-  // 6  Split PaveBlocksa
+  // 6  Split PaveBlocks
   for (i=1; i<=aNbPBLI; ++i) {
     Handle(BOPDS_PaveBlock) aPB=aMPBLI.FindKey(i);
     nE=aPB->OriginalEdge();
@@ -452,9 +461,10 @@
 // function: CheckFacePaves
 // purpose: 
 //=======================================================================
-  Standard_Boolean BOPAlgo_PaveFiller::CheckFacePaves (const Standard_Integer nVx,
-                                                       const BOPCol_MapOfInteger& aMIFOn,
-                                                       const BOPCol_MapOfInteger& aMIFIn)
+Standard_Boolean BOPAlgo_PaveFiller::CheckFacePaves 
+  (const Standard_Integer nVx,
+   const BOPCol_MapOfInteger& aMIFOn,
+   const BOPCol_MapOfInteger& aMIFIn)
 {
   Standard_Boolean bRet;
   Standard_Integer nV;
@@ -485,8 +495,9 @@
 // function: CheckFacePaves
 // purpose: 
 //=======================================================================
-  Standard_Boolean BOPAlgo_PaveFiller::CheckFacePaves (const TopoDS_Vertex& aVnew,
-                                                       const BOPCol_MapOfInteger& aMIF)
+Standard_Boolean BOPAlgo_PaveFiller::CheckFacePaves 
+  (const TopoDS_Vertex& aVnew,
+   const BOPCol_MapOfInteger& aMIF)
 {
   Standard_Boolean bRet;
   Standard_Integer nV, iFlag;
@@ -510,50 +521,43 @@
 //function : ForceInterfVF
 //purpose  : 
 //=======================================================================
-Standard_Boolean BOPAlgo_PaveFiller::ForceInterfVF(const Standard_Integer nV, 
-                                                   const Standard_Integer nF)
+Standard_Boolean BOPAlgo_PaveFiller::ForceInterfVF
+  (const Standard_Integer nV, 
+   const Standard_Integer nF)
 {
   Standard_Boolean bRet;
+  Standard_Integer iFlag, nI, nVx;
+  Standard_Real U, V, aTolVNew;
   //
   bRet = Standard_False;
   const TopoDS_Vertex& aV = *(TopoDS_Vertex*)&myDS->Shape(nV);
   const TopoDS_Face&   aF = *(TopoDS_Face*)  &myDS->Shape(nF);
   //
-  GeomAPI_ProjectPointOnSurf& aProj = myContext->ProjPS(aF);
-  const gp_Pnt& aP = BRep_Tool::Pnt(aV);
-  aProj.Perform(aP);
-  if (!aProj.IsDone()) {
-    return bRet;
-  }
-  Standard_Real aDist, U, V;
-  //
-  aDist=aProj.LowerDistance();
-  aProj.LowerDistanceParameters(U, V);
-  //
-  gp_Pnt2d aP2d(U, V);
-  bRet = myContext->IsPointInFace (aF, aP2d);
-  if (bRet) {
-    Standard_Integer i;
-    BRep_Builder aBB;
+  iFlag = myContext->ComputeVF(aV, aF, U, V, aTolVNew);
+  if (iFlag == 0 || iFlag == -2) {
+    bRet=!bRet;
     //
     BOPDS_VectorOfInterfVF& aVFs=myDS->InterfVF();
-    i=aVFs.Append()-1;
-    BOPDS_InterfVF& aVF=aVFs(i);
+    aVFs.SetIncrement(10);
+    // 1
+    nI=aVFs.Append()-1;
+    BOPDS_InterfVF& aVF=aVFs(nI);
+    //
     aVF.SetIndices(nV, nF);
     aVF.SetUV(U, V);
-    //
+    // 2
     myDS->AddInterf(nV, nF);
     //
-    aBB.UpdateVertex(aV, aDist);
-    BOPDS_ShapeInfo& aSIDS=myDS->ChangeShapeInfo(nV);
-    Bnd_Box& aBoxDS=aSIDS.ChangeBox();
-    BRepBndLib::Add(aV, aBoxDS);
+    // 3 update vertex V/F if necessary
+    nVx=UpdateVertex(nV, aTolVNew);
+    // 4
+    if (myDS->IsNewShape(nVx)) {
+      aVF.SetIndexNew(nVx);
+    }
     //
     BOPDS_FaceInfo& aFI=myDS->ChangeFaceInfo(nF);
     BOPCol_MapOfInteger& aMVIn=aFI.ChangeVerticesIn();
-    aMVIn.Add(nV);
+    aMVIn.Add(nVx);
   }
-  //
   return bRet;
 }
-
