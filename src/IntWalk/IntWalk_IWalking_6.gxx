@@ -12,11 +12,111 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
+#include <Geom2d_Line.hxx>
+#include <GCE2d_MakeLine.hxx>
+
+
 #ifndef OCCT_DEBUG
 #define No_Standard_RangeError
 #define No_Standard_OutOfRange
 #endif
 
+
+const Standard_Real TolDiscr = 1.e-8;
+const Standard_Real TolB = 1.e-5;
+
+static Standard_Integer RealSign(const Standard_Real aValue)
+{
+  if (aValue >= 0.)
+    return 1;
+  else return -1;
+}
+
+static Standard_Boolean ComputeB11orB22(TheIWFunction& sp,
+                                        Standard_Boolean& IsDiscriminantNull,
+                                        Standard_Integer& SignOfBcoeff,
+                                        gp_Vec& Pu,
+                                        gp_Vec& Pv,
+                                        Standard_Real& B11,
+                                        Standard_Real& B22,
+                                        Standard_Real& B12)
+{
+  gp_Vec Puu, Puv, Pvv;
+  gp_Vec Iu, Iv, Iuu, Iuv, Ivv;
+  gp_Vec NormalP, NormalI;
+
+  if (!sp.DerivativesAndNormalOnPSurf(Pu, Pv, NormalP, Puu, Pvv, Puv))
+    return Standard_False;
+  if (!sp.DerivativesAndNormalOnISurf(Iu, Iv, NormalI, Iuu, Ivv, Iuv))
+    return Standard_False;
+
+  Standard_Real Lp, Mp, Np, Li, Mi, Ni; //second fundamental form coefficients
+  Lp = Puu * NormalP;
+  Mp = Puv * NormalP;
+  Np = Pvv * NormalP;
+  Li = Iuu * NormalI;
+  Mi = Iuv * NormalI;
+  Ni = Ivv * NormalI;
+
+  gp_Vec Normal;
+  if (NormalP * NormalI < 0.)
+    NormalI.Reverse();
+  Normal.SetXYZ(0.5*(NormalP.XYZ() + NormalI.XYZ()));
+  Normal.Normalize();
+
+  Standard_Real A11, A12, A21, A22;
+  Standard_Real NormIdotNorm = (Iu ^ Iv) * Normal;
+  A11 = ((Pu ^ Iv) * Normal) / NormIdotNorm;
+  A12 = ((Pv ^ Iv) * Normal) / NormIdotNorm;
+  A21 = ((Iu ^ Pu) * Normal) / NormIdotNorm;
+  A22 = ((Iu ^ Pv) * Normal) / NormIdotNorm;
+
+  //Standard_Real B11, B12, B22;
+  B11 = A11*A11*Li + 2*A11*A21*Mi + A21*A21*Ni - Lp;
+  B12 = A11*A12*Li + (A11*A22 + A21*A12)*Mi + A21*A22*Ni - Mp;
+  B22 = A12*A12*Li + 2*A12*A22*Mi + A22*A22*Ni - Np;
+
+  Standard_Real Discriminant = B12*B12 - B11*B22;
+
+  if (Abs(Discriminant) < TolDiscr)
+  {
+    IsDiscriminantNull = Standard_True;
+    if (Abs(B11) <= TolB && Abs(B22) <= TolB)
+    {
+#ifdef DRAW
+      cout<<"Possible branching"<<endl<<endl;
+#endif
+      SignOfBcoeff = 0;
+    }
+    else
+    {
+      gp_Vec NewPreviousD3d;
+      gp_Dir2d NewPreviousD2d;
+      if (Abs(B11) > TolB)
+      {
+#ifdef DRAW
+        cout<<"B11 = "<<B11<<endl;
+#endif
+        SignOfBcoeff = RealSign(B11);
+      }
+      else
+      {
+#ifdef DRAW
+        cout<<"B22 = "<<B22<<endl;
+#endif
+        SignOfBcoeff = RealSign(B22);
+      }
+    }
+  }
+  else
+  {
+    IsDiscriminantNull = Standard_False;
+#ifdef DRAW
+    cout<<"Discriminant = "<<Discriminant<<endl;
+#endif
+  }
+  return Standard_True;
+}
 
 void IntWalk_IWalking::AddPointInCurrentLine
          (const Standard_Integer N,
@@ -39,7 +139,6 @@ void IntWalk_IWalking::MakeWalkingPoint
 	  IntSurf_PntOn2S& Psol )
 
 {
-
 // Case == 1      : make a WalkinkPoint.
 // Case == 2      : make a WalkinkPoint.
 //                  The computation of the tangency on is done  
@@ -60,15 +159,117 @@ void IntWalk_IWalking::MakeWalkingPoint
     UV(1) = U;
     UV(2) = V;
     sp.Values(UV, FF, DD);
-    MakeWalkingPoint(Case - 10, U, V, sp, Psol); 
+    MakeWalkingPoint(Case - 10, U, V, sp, Psol);
   }
   else {
     Standard_ConstructionError::Raise();
   }
-
-
 }
 
+Standard_Boolean
+ IntWalk_IWalking::ComputeDirOfTangentialIntersection(TheIWFunction& sp,
+                                                      Standard_Integer& StepSignTangent,
+                                                      Standard_Boolean& IsDiscriminantNull,
+                                                      Standard_Integer& SignOfBcoeff,
+                                                      gp_Vec&   newd3d,
+                                                      gp_Dir2d& newd2d)
+{
+  gp_Vec Pu, Pv;
+  Standard_Real B11, B22, B12;
+  if (!ComputeB11orB22(sp, IsDiscriminantNull, SignOfBcoeff,
+                       Pu, Pv, B11, B22, B12))
+    return Standard_False;
+  
+  if (IsDiscriminantNull)
+  {
+    if (SignOfBcoeff != 0)
+    {
+      gp_Vec NewPreviousD3d;
+      gp_Dir2d NewPreviousD2d;
+      if (Abs(B11) > TolB)
+      {
+#ifdef DRAW
+        cout<<"B11 = "<<B11<<endl;
+#endif
+        Standard_Real CoefPu = -B12/B11;
+        NewPreviousD3d = CoefPu*Pu + Pv;
+        NewPreviousD3d.Normalize();
+        NewPreviousD2d = gp_Dir2d(CoefPu, 1.);
+      }
+      else
+      {
+#ifdef DRAW
+        cout<<"B22 = "<<B22<<endl;
+#endif
+        Standard_Real CoefPv = -B12/B22;
+        NewPreviousD3d = Pu + CoefPv*Pv;
+        NewPreviousD3d.Normalize();
+        NewPreviousD2d = gp_Dir2d(1., CoefPv);
+      }
+      
+      if (!IsTangentialIntersection)
+      {
+        IsTangentialIntersection = Standard_True;
+        if (NewPreviousD3d * previousd3d < 0)
+          StepSignTangent = -1;
+        else
+          StepSignTangent = 1;
+      }
+      newd3d = StepSignTangent * NewPreviousD3d;
+      newd2d = StepSignTangent * NewPreviousD2d;
+    }
+  }
+  return Standard_True;
+}
+
+void IntWalk_IWalking::FindExactCuspPoint(TheIWFunction& sp,
+                                          IntSurf_PntOn2S& Psol,
+                                          const Standard_Integer SignFirst,
+                                          const Standard_Integer /*SignLast*/)
+{
+  IntSurf_PntOn2S EndPoint = Psol;
+
+  IntSurf_PntOn2S Pfirst, Plast;
+
+  Standard_Real newU, newV;
+  IntSurf_PntOn2S newPoint;
+
+  Pfirst = previousPoint;
+  Plast =  EndPoint;
+
+  Standard_Integer newSign = 0;
+
+  for (;;)
+  {
+    Standard_Real Ufirst, Vfirst, Ulast, Vlast;
+    Pfirst.ParametersOnSurface(reversed, Ufirst, Vfirst);
+    Plast.ParametersOnSurface(reversed, Ulast, Vlast);
+    
+    newU = 0.5*(Ufirst + Ulast);
+    newV = 0.5*(Vfirst + Vlast);
+
+    if (Abs(newU - Ufirst) < tolerance(1) &&
+        Abs(newV - Vfirst) < tolerance(2))
+      break;
+    
+    MakeWalkingPoint(11, newU, newV, sp, newPoint);
+    Standard_Boolean IsDiscriminantNull;
+    gp_Vec Pu, Pv;
+    Standard_Real B11, B22, B12;
+    ComputeB11orB22(sp, IsDiscriminantNull, newSign,
+                    Pu, Pv, B11, B22, B12);
+    
+    if (newSign == 0)
+      break;
+
+    if (newSign == SignFirst)
+      Pfirst = newPoint;
+    else //newSign == SignLast
+      Plast = newPoint;
+  }
+
+  Psol = newPoint;
+}
 
 
 void IntWalk_IWalking::OpenLine(const Standard_Integer N,
@@ -94,8 +295,27 @@ void IntWalk_IWalking::OpenLine(const Standard_Integer N,
     previousPoint.ParametersOnS1(UV(1),UV(2));
   }
   sp.Values(UV, FF, DD);
-  previousd3d = sp.Direction3d();
-  previousd2d = sp.Direction2d();
+  if (sp.IsTangent())
+  {
+    IsTangentialIntersection = Standard_True;
+    Standard_Integer theSign = 1;
+    Standard_Integer theSignOfBcoeff = 0;
+    gp_Vec   newd3d;
+    gp_Dir2d newd2d;
+    Standard_Boolean IsDiscriminantNull;
+    if (!ComputeDirOfTangentialIntersection(sp, theSign,
+                                            IsDiscriminantNull, theSignOfBcoeff,
+                                            newd3d, newd2d))
+      StdFail_UndefinedDerivative::Raise();
+    previousd3d = newd3d;
+    previousd2d = newd2d;
+  }
+  else
+  {
+    IsTangentialIntersection = Standard_False;
+    previousd3d = sp.Direction3d();
+    previousd2d = sp.Direction2d();
+  }
 
   if (N>0) { //departure point given at input
     PathPnt = Pnts1.Value(N);

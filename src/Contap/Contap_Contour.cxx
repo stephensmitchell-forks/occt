@@ -1493,7 +1493,8 @@ void Contap_Contour::Perform
   if (seqpdep.Length() != 0 || seqpins.Length() != 0) {
 
     Contap_TheIWalking iwalk(Preci,Fleche,Pas);
-    iwalk.Perform(seqpdep,seqpins,mySFunc ,Surf);
+    IntSurf_SequenceOfInteriorPoint seqptang; //dummy
+    iwalk.Perform(seqpdep,seqpins,seqptang,mySFunc ,Surf);
     if(!iwalk.IsDone()) {
       return;
     }

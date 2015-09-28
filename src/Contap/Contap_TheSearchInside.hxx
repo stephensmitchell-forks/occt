@@ -55,7 +55,11 @@ public:
   
     Standard_Integer NbPoints() const;
   
-    const IntSurf_InteriorPoint& Value (const Standard_Integer Index) const;
+      Standard_Integer NbTangentPoints()  const;
+  
+     const  IntSurf_InteriorPoint& Value (const Standard_Integer Index)  const;
+  
+     const  IntSurf_InteriorPoint& TangentPoint (const Standard_Integer Index)  const;
 
 
 
@@ -72,6 +76,7 @@ private:
 
   Standard_Boolean done;
   IntSurf_SequenceOfInteriorPoint list;
+  IntSurf_SequenceOfInteriorPoint myTangentPoints;
 
 
 };
