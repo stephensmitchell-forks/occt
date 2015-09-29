@@ -1,18 +1,49 @@
-# !!!! This file is generated automatically, do not edit manually! See end script
+
 set filename trj5_pm3-id-214.stp
 
-set ref_data {
-DATA        : Faulties = 0  ( 0 )  Warnings = 0  ( 0 )  Summary  = 0  ( 0 )
-TPSTAT      : Faulties = 0  ( 0 )  Warnings = 9  ( 9 )  Summary  = 9  ( 9 )
-CHECKSHAPE  : Wires    = 0  ( 0 )  Faces    = 0  ( 0 )  Shells   = 0  ( 0 )   Solids   = 0 ( 0 )
-NBSHAPES    : Solid    = 24  ( 24 )  Shell    = 24  ( 24 )  Face     = 2161  ( 2161 )   Summary  = 15061  ( 14810 )
-STATSHAPE   : Solid    = 117  ( 117 )  Shell    = 117  ( 117 )  Face     = 10150  ( 10150 )   FreeWire = 0  ( 0 )   FreeEdge  = 490 ( 490 )   SharedEdge = 5871  ( 5871 )
-TOLERANCE   : MaxTol   = 0.004460511696  ( 0.004460511696 )  AvgTol   =  2.957595905e-005  (  2.957595904e-005 )
-LABELS      : N0Labels = 52  ( 52 )  N1Labels = 161  ( 161 )  N2Labels = 0  ( 0 )   TotalLabels = 213  ( 213 )   NameLabels = 121  ( 121 )   ColorLabels = 114  ( 114 )   LayerLabels = 0  ( 0 )
-PROPS       : Centroid = 24  ( 24 )  Volume   = 24  ( 24 )  Area     = 24  ( 24 )
-NCOLORS     : NColors  = 18  ( 18 )
-COLORS      : Colors   = ALICEBLUE BLANCHEDALMOND BROWN DARKGREEN DEEPSKYBLUE2 DEEPSKYBLUE3 GOLD GRAY45 LIGHTBLUE2 LIGHTSEAGREEN LIGHTSKYBLUE1 LIGHTSKYBLUE2 MAGENTA1 ROYALBLUE ROYALBLUE1 SKYBLUE1 SKYBLUE3 SLATEBLUE1  ( ALICEBLUE BLANCHEDALMOND BROWN DARKGREEN DEEPSKYBLUE2 DEEPSKYBLUE3 GOLD GRAY45 LIGHTBLUE2 LIGHTSEAGREEN LIGHTSKYBLUE1 LIGHTSKYBLUE2 MAGENTA1 ROYALBLUE ROYALBLUE1 SKYBLUE1 SKYBLUE3 SLATEBLUE1 )
-NLAYERS     : NLayers  = 0  ( 0 )
-LAYERS      : Layers   =   (  )
 
-}
+ReadFileToDoc ${filename}
+
+puts "Check document D_First"
+puts "Compare with reference data"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 9 -max_faults 0
+checkxstat D_First -n0 52 -n1 161 -n2 0 -total 213 -withname 121 -withcolor 114 -withlayer 0 -centroid 24 -volume 24 -area 24 -colors { ALICEBLUE BLANCHEDALMOND BROWN DARKGREEN DEEPSKYBLUE2 DEEPSKYBLUE3 GOLD GRAY45 LIGHTBLUE2 LIGHTSEAGREEN LIGHTSKYBLUE1 LIGHTSKYBLUE2 MAGENTA1 ROYALBLUE ROYALBLUE1 SKYBLUE1 SKYBLUE3 SLATEBLUE1 } -nbcolors 18 -layers {  } -nblayers 0
+
+XGetOneShape res_1 D_First
+
+puts "Check shape from document D_First"
+checkshapeff res_1 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+checknbshapes res_1 -solid 24 -shell 24 -face 2161 -shape 14810
+checkstatshape res_1 -solid 117 -shell 117 -face 10150 -freewire 0 -freeedge 490 -sharededge 5871
+set max_tol_res_1 [checkmaxtol res_1 -tol 0.004460511696 -avg 2.957595904e-005]
+
+ReOpenDoc ${filename}
+
+XGetOneShape res_2 D_Second
+
+puts "Check document D_Second"
+puts "Compare with document D_First"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 9 -max_faults 0
+puts "Compare with reference data"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 9 -max_faults 0
+
+puts "Compare with doc D_First"
+checkxstat D_Second -n0 52 -n1 161 -n2 0 -total 213 -withname 121 -withcolor 114 -withlayer 0 -centroid 24 -volume 24 -area 24 -nbcolors 18 -nblayers 0
+
+puts "Compare with reference values"
+checkxstat D_Second -n0 52 -n1 161 -n2 0 -total 213 -withname 121 -withcolor 114 -withlayer 0 -centroid 24 -volume 24 -area 24 -colors { ALICEBLUE BLANCHEDALMOND BROWN DARKGREEN DEEPSKYBLUE2 DEEPSKYBLUE3 GOLD GRAY45 LIGHTBLUE2 LIGHTSEAGREEN LIGHTSKYBLUE1 LIGHTSKYBLUE2 MAGENTA1 ROYALBLUE ROYALBLUE1 SKYBLUE1 SKYBLUE3 SLATEBLUE1  } -nbcolors 18 -layers {   } -nblayers 0
+
+puts "Check shape from document D_Second"
+puts "Compare with shape res_1"
+checkshapeff res_2 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+puts "Compare with reference data"
+checkshapeff res_2 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+set nbshapes_res_1 [nbshapes res_1]
+regexp {SHAPE +: +([-0-9.+eE]+)} ${nbshapes_res_1} full shape_res_1
+checknbshapes res_2 -solid 24 -shell 24 -face 2161 -shape 15061 -not_de_iges ${shape_res_1}
+checkstatshape res_2 -solid 117 -shell 117 -face 10150 -freewire 0 -freeedge 490 -sharededge 5871 -max_solid 117 -max_shell 117 -max_face 10150 -max_freewire 0 -max_freeedge 490
+checkmaxtol res_2 -tol 0.004460511696 -avg 2.957595905e-005 -max_tol ${max_tol_res_1}
+

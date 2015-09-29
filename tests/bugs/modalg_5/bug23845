@@ -16,9 +16,9 @@ set CMP_TOL 1.e-6
 
 # 1
 checkshape aa
-checkmaxtol aa -min_tol ${CMP_TOL}
+checkmaxtol aa -max_tol ${CMP_TOL}
 
 # 2
 checkshape bb
-checkmaxtol bb -min_tol ${CMP_TOL}
+checkmaxtol bb -max_tol ${CMP_TOL}
 

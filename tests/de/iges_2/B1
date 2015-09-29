@@ -1,24 +1,56 @@
-# !!!! This file is generated automatically, do not edit manually! See end script
 puts "TODO CR23096 ALL: NBSHAPES : Faulty" 
 puts "TODO CR23096 ALL: LABELS : Faulty" 
 puts "TODO CR23096 ALL: LAYERS : Faulty" 
-puts "TODO CR25013 ALL: Error : 3 differences with reference data found" 
-
+puts "TODO CR25013 ALL: Error :  is WRONG because number of SHAPE entities in shape" 
+puts "TODO CR25013 ALL: STATSHAPE : Faulty ref number of shared edges in command statshape" 
 
 set filename CATIA01.igs
 
-set ref_data {
-DATA        : Faulties = 0  ( 0 )  Warnings = 0  ( 0 )  Summary  = 0  ( 0 )
-TPSTAT      : Faulties = 0  ( 480 )  Warnings = 322  ( 4629 )  Summary  = 322  ( 5109 )
-CHECKSHAPE  : Wires    = 1  ( 0 )  Faces    = 1  ( 0 )  Shells   = 0  ( 0 )   Solids   = 0 ( 0 )
-NBSHAPES    : Solid    = 0  ( 0 )  Shell    = 0  ( 0 )  Face     = 732  ( 732 )   Summary  = 60876  ( 60888 )
-STATSHAPE   : Solid    = 0  ( 0 )  Shell    = 0  ( 0 )  Face     = 732  ( 732 )   FreeWire = 1612  ( 1613 )   FreeEdge  = 16359 ( 16359 )   SharedEdge = 22927  ( 22933 )
-TOLERANCE   : MaxTol   =   0.6032674714  (   0.6032674714 )  AvgTol   =  0.001483351096  (   0.00148733059 )
-LABELS      : N0Labels = 4  ( 7 )  N1Labels = 11017  ( 17868 )  N2Labels = 0  ( 0 )   TotalLabels = 11021  ( 17875 )   NameLabels = 10620  ( 13085 )   ColorLabels = 11018  ( 17867 )   LayerLabels = 10517  ( 17715 )
-PROPS       : Centroid = 0  ( 0 )  Volume   = 0  ( 0 )  Area     = 0  ( 0 )
-NCOLORS     : NColors  = 17  ( 17 )
-COLORS      : Colors   = BLUE1 CYAN1 DARKGOLDENROD1 DARKSLATEGRAY1 GREEN GREEN4 LIGHTPINK1 MAGENTA1 MEDIUMPURPLE1 MEDIUMSPRINGGREEN PURPLE RED RED3 ROYALBLUE2 SEAGREEN2 WHITE YELLOW  ( BLUE1 CYAN1 DARKGOLDENROD1 DARKSLATEGRAY1 GREEN GREEN4 LIGHTPINK1 MAGENTA1 MEDIUMPURPLE1 MEDIUMSPRINGGREEN PURPLE RED RED3 ROYALBLUE2 SEAGREEN2 WHITE YELLOW )
-NLAYERS     : NLayers  = 16  ( 17 )
-LAYERS      : Layers   = 1 101 102 104 106 107 108 152 154 156 158 2 240 255 6 7  ( 1 101 102 104 106 107 108 152 154 156 158 2 239 240 255 6 7 )
 
-}
+ReadFileToDoc ${filename}
+
+puts "Check document D_First"
+puts "Compare with reference data"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 4693 -max_faults 480
+checkxstat D_First -n0 7 -n1 17868 -n2 0 -total 17875 -withname 13085 -withcolor 17867 -withlayer 17715 -centroid 0 -volume 0 -area 0 -colors { BLUE1 CYAN1 DARKGOLDENROD1 DARKSLATEGRAY1 GREEN GREEN4 LIGHTPINK1 MAGENTA1 MEDIUMPURPLE1 MEDIUMSPRINGGREEN PURPLE RED RED3 ROYALBLUE2 SEAGREEN2 WHITE YELLOW } -nbcolors 17 -layers { 1 101 102 104 106 107 108 152 154 156 158 2 239 240 255 6 7 } -nblayers 17
+
+XGetOneShape res_1 D_First
+
+puts "Check shape from document D_First"
+checkshapeff res_1 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+checknbshapes res_1 -solid 0 -shell 0 -face 732 -shape 60888
+checkstatshape res_1 -solid 0 -shell 0 -face 732 -freewire 1613 -freeedge 16359 -sharededge 22933
+set max_tol_res_1 [checkmaxtol res_1 -tol 0.6032674714 -avg 0.00148733059]
+
+ReOpenDoc ${filename}
+
+XGetOneShape res_2 D_Second
+
+puts "Check document D_Second"
+puts "Compare with document D_First"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 4693 -max_faults 480
+puts "Compare with reference data"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 321 -max_faults 0
+
+puts "Compare with doc D_First"
+checkxstat D_Second -n0 7 -n1 17868 -n2 0 -total 17875 -withname 13085 -withcolor 17867 -withlayer 17715 -centroid 0 -volume 0 -area 0 -nbcolors 17 -nblayers 17
+
+puts "Compare with reference values"
+checkxstat D_Second -n0 4 -n1 11017 -n2 0 -total 11021 -withname 10620 -withcolor 11018 -withlayer 10517 -centroid 0 -volume 0 -area 0 -colors { BLUE1 CYAN1 DARKGOLDENROD1 DARKSLATEGRAY1 GREEN GREEN4 LIGHTPINK1 MAGENTA1 MEDIUMPURPLE1 MEDIUMSPRINGGREEN PURPLE RED RED3 ROYALBLUE2 SEAGREEN2 WHITE YELLOW  } -nbcolors 17 -layers { 1 101 102 104 106 107 108 152 154 156 158 2 240 255 6 7  } -nblayers 16
+
+puts "Check shape from document D_Second"
+puts "Compare with shape res_1"
+checkshapeff res_2 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+puts "Compare with reference data"
+checkshapeff res_2 -max_wires 1 -max_faces 1 -max_shells 0 -max_solids 0
+set nbshapes_res_1 [nbshapes res_1]
+regexp {SHAPE +: +([-0-9.+eE]+)} ${nbshapes_res_1} full shape_res_1
+regexp {COMPOUND +: +([-0-9.+eE]+)} ${nbshapes_res_1} full comp_res_1
+set shape_comp_res_1 [expr ${shape_res_1} - ${comp_res_1}]
+checknbshapes res_2 -solid 0 -shell 0 -face 732 -shape 60876 -de_iges ${shape_comp_res_1}
+checkstatshape res_2 -solid 0 -shell 0 -face 732 -freewire 1612 -freeedge 16359 -sharededge 22927 -max_solid 0 -max_shell 0 -max_face 732 -max_freewire 1613 -max_freeedge 16359
+checkmaxtol res_2 -tol 0.6032674714 -avg 0.001483351096 -max_tol ${max_tol_res_1}
+

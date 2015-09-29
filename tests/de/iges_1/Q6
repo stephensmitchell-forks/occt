@@ -1,22 +1,53 @@
-# !!!! This file is generated automatically, do not edit manually! See end script
 puts "TODO CR23096 ALL: LABELS : Faulty" 
 puts "TODO CR23096 ALL: COLORS : Faulty" 
 
-
 set filename Amino_komatsu.igs
 
-set ref_data {
-DATA        : Faulties = 0  ( 2 )  Warnings = 0  ( 1 )  Summary  = 0  ( 3 )
-TPSTAT      : Faulties = 0  ( 0 )  Warnings = 0  ( 21 )  Summary  = 0  ( 21 )
-CHECKSHAPE  : Wires    = 1  ( 1 )  Faces    = 1  ( 1 )  Shells   = 0  ( 0 )   Solids   = 0 ( 0 )
-NBSHAPES    : Solid    = 0  ( 0 )  Shell    = 0  ( 0 )  Face     = 181  ( 181 )   Summary  = 2235  ( 2235 )
-STATSHAPE   : Solid    = 0  ( 0 )  Shell    = 0  ( 0 )  Face     = 181  ( 181 )   FreeWire = 3  ( 3 )   FreeEdge  = 16 ( 16 )   SharedEdge = 934  ( 934 )
-TOLERANCE   : MaxTol   =   0.1814235482  (   0.1814235485 )  AvgTol   =  0.003745633978  (  0.003756752925 )
-LABELS      : N0Labels = 184  ( 359 )  N1Labels = 0  ( 3 )  N2Labels = 0  ( 0 )   TotalLabels = 184  ( 362 )   NameLabels = 184  ( 360 )   ColorLabels = 181  ( 187 )   LayerLabels = 181  ( 187 )
-PROPS       : Centroid = 0  ( 0 )  Volume   = 0  ( 0 )  Area     = 0  ( 0 )
-NCOLORS     : NColors  = 1  ( 3 )
-COLORS      : Colors   = WHITE  ( BLACK WHITE YELLOW )
-NLAYERS     : NLayers  = 4  ( 4 )
-LAYERS      : Layers   = 241 5 6 8  ( 241 5 6 8 )
 
-}
+ReadFileToDoc ${filename}
+
+puts "Check document D_First"
+puts "Compare with reference data"
+checkdoc "data c" -max_warns 1 -max_faults 2
+checkdoc "tpstat c" -max_warns 22 -max_faults 0
+checkxstat D_First -n0 359 -n1 3 -n2 0 -total 362 -withname 360 -withcolor 187 -withlayer 187 -centroid 0 -volume 0 -area 0 -colors { BLACK WHITE YELLOW } -nbcolors 3 -layers { 241 5 6 8 } -nblayers 4
+
+XGetOneShape res_1 D_First
+
+puts "Check shape from document D_First"
+checkshapeff res_1 -max_wires 1 -max_faces 1 -max_shells 0 -max_solids 0
+checknbshapes res_1 -solid 0 -shell 0 -face 181 -shape 2235
+checkstatshape res_1 -solid 0 -shell 0 -face 181 -freewire 3 -freeedge 16 -sharededge 934
+set max_tol_res_1 [checkmaxtol res_1 -tol 0.1814235485 -avg 0.003756752925]
+
+ReOpenDoc ${filename}
+
+XGetOneShape res_2 D_Second
+
+puts "Check document D_Second"
+puts "Compare with document D_First"
+checkdoc "data c" -max_warns 1 -max_faults 2
+checkdoc "tpstat c" -max_warns 22 -max_faults 0
+puts "Compare with reference data"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 0 -max_faults 0
+
+puts "Compare with doc D_First"
+checkxstat D_Second -n0 359 -n1 3 -n2 0 -total 362 -withname 360 -withcolor 187 -withlayer 187 -centroid 0 -volume 0 -area 0 -nbcolors 3 -nblayers 4
+
+puts "Compare with reference values"
+checkxstat D_Second -n0 184 -n1 0 -n2 0 -total 184 -withname 184 -withcolor 181 -withlayer 181 -centroid 0 -volume 0 -area 0 -colors { WHITE  } -nbcolors 1 -layers { 241 5 6 8  } -nblayers 4
+
+puts "Check shape from document D_Second"
+puts "Compare with shape res_1"
+checkshapeff res_2 -max_wires 1 -max_faces 1 -max_shells 0 -max_solids 0
+puts "Compare with reference data"
+checkshapeff res_2 -max_wires 1 -max_faces 1 -max_shells 0 -max_solids 0
+set nbshapes_res_1 [nbshapes res_1]
+regexp {SHAPE +: +([-0-9.+eE]+)} ${nbshapes_res_1} full shape_res_1
+regexp {COMPOUND +: +([-0-9.+eE]+)} ${nbshapes_res_1} full comp_res_1
+set shape_comp_res_1 [expr ${shape_res_1} - ${comp_res_1}]
+checknbshapes res_2 -solid 0 -shell 0 -face 181 -shape 2235 -de_iges ${shape_comp_res_1}
+checkstatshape res_2 -solid 0 -shell 0 -face 181 -freewire 3 -freeedge 16 -sharededge 934 -max_solid 0 -max_shell 0 -max_face 181 -max_freewire 3 -max_freeedge 16
+checkmaxtol res_2 -tol 0.1814235482 -avg 0.003745633978 -max_tol ${max_tol_res_1}
+

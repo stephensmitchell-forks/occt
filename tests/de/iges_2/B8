@@ -1,24 +1,56 @@
-# !!!! This file is generated automatically, do not edit manually! See end script
 puts "TODO CR23096 ALL: CHECKSHAPE : Faulty" 
 puts "TODO CR23096 ALL: LABELS : Faulty" 
 puts "TODO CR23096 ALL: NBSHAPES : Faulty" 
-puts "TODO CR23096 ALL: Error : 2 differences with reference data found" 
+puts "TODO CR23096 ALL: STATSHAPE : Faulty ref number of shared edges in command statshape"
+puts "TODO CR23096 ALL: Error :  is WRONG because number of SHAPE entities in shape"
 
-set LinuxDiff 1
 set filename FRA62468-2.igs
 
-set ref_data {
-DATA        : Faulties = 0  ( 0 )  Warnings = 0  ( 0 )  Summary  = 0  ( 0 )
-TPSTAT      : Faulties = 0  ( 0 )  Warnings = 253  ( 4993 )  Summary  = 253  ( 4993 )
-CHECKSHAPE  : Wires    = 8  ( 11 )  Faces    = 8  ( 7 )  Shells   = 0  ( 0 )   Solids   = 0 ( 0 )
-NBSHAPES    : Solid    = 0  ( 0 )  Shell    = 0  ( 0 )  Face     = 4729  ( 4729 )   Summary  = 63158  ( 63146 )
-STATSHAPE   : Solid    = 0  ( 0 )  Shell    = 0  ( 0 )  Face     = 4729  ( 4729 )   FreeWire = 18  ( 18 )   FreeEdge  = 452 ( 452 )   SharedEdge = 26798  ( 26797 )
-TOLERANCE   : MaxTol   =   0.9804479161  (   0.9805459497 )  AvgTol   =   0.01153089031  (   0.01154870945 )
-LABELS      : N0Labels = 5089  ( 5165 )  N1Labels = 26  ( 3688 )  N2Labels = 0  ( 0 )   TotalLabels = 5115  ( 8853 )   NameLabels = 5089  ( 5165 )   ColorLabels = 5086  ( 8777 )   LayerLabels = 5086  ( 8777 )
-PROPS       : Centroid = 0  ( 0 )  Volume   = 0  ( 0 )  Area     = 0  ( 0 )
-NCOLORS     : NColors  = 3  ( 3 )
-COLORS      : Colors   = BLUE1 CYAN1 GREEN  ( BLUE1 CYAN1 GREEN )
-NLAYERS     : NLayers  = 3  ( 3 )
-LAYERS      : Layers   = 1 200 51  ( 1 200 51 )
 
-}
+ReadFileToDoc ${filename}
+
+puts "Check document D_First"
+puts "Compare with reference data"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 5002 -max_faults 0
+checkxstat D_First -n0 5165 -n1 3688 -n2 0 -total 8853 -withname 5165 -withcolor 8777 -withlayer 8777 -centroid 0 -volume 0 -area 0 -colors { BLUE1 CYAN1 GREEN } -nbcolors 3 -layers { 1 200 51 } -nblayers 3
+
+XGetOneShape res_1 D_First
+
+puts "Check shape from document D_First"
+checkshapeff res_1 -max_wires 11 -max_faces 7 -max_shells 0 -max_solids 0
+checknbshapes res_1 -solid 0 -shell 0 -face 4729 -shape 63146
+checkstatshape res_1 -solid 0 -shell 0 -face 4729 -freewire 18 -freeedge 452 -sharededge 26797
+set max_tol_res_1 [checkmaxtol res_1 -tol 0.9805459497 -avg 0.01154870945]
+
+ReOpenDoc ${filename}
+
+XGetOneShape res_2 D_Second
+
+puts "Check document D_Second"
+puts "Compare with document D_First"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 5002 -max_faults 0
+puts "Compare with reference data"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 349 -max_faults 0
+
+puts "Compare with doc D_First"
+checkxstat D_Second -n0 5165 -n1 3688 -n2 0 -total 8853 -withname 5165 -withcolor 8777 -withlayer 8777 -centroid 0 -volume 0 -area 0 -nbcolors 3 -nblayers 3
+
+puts "Compare with reference values"
+checkxstat D_Second -n0 5089 -n1 26 -n2 0 -total 5115 -withname 5089 -withcolor 5086 -withlayer 5086 -centroid 0 -volume 0 -area 0 -colors { BLUE1 CYAN1 GREEN  } -nbcolors 3 -layers { 1 200 51  } -nblayers 3
+
+puts "Check shape from document D_Second"
+puts "Compare with shape res_1"
+checkshapeff res_2 -max_wires 11 -max_faces 7 -max_shells 0 -max_solids 0
+puts "Compare with reference data"
+checkshapeff res_2 -max_wires 8 -max_faces 8 -max_shells 0 -max_solids 0
+set nbshapes_res_1 [nbshapes res_1]
+regexp {SHAPE +: +([-0-9.+eE]+)} ${nbshapes_res_1} full shape_res_1
+regexp {COMPOUND +: +([-0-9.+eE]+)} ${nbshapes_res_1} full comp_res_1
+set shape_comp_res_1 [expr ${shape_res_1} - ${comp_res_1}]
+checknbshapes res_2 -solid 0 -shell 0 -face 4729 -shape 63158 -de_iges ${shape_comp_res_1}
+checkstatshape res_2 -solid 0 -shell 0 -face 4729 -freewire 18 -freeedge 452 -sharededge 26798 -max_solid 0 -max_shell 0 -max_face 4729 -max_freewire 18 -max_freeedge 452
+checkmaxtol res_2 -tol 0.9804479161 -avg 0.01153089031 -max_tol ${max_tol_res_1}
+

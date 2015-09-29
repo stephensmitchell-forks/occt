@@ -1001,6 +1001,25 @@ Example
 checkshape result
 ~~~~~
 
+It is possible to compare number of problem elements obtained by command *checkshape result ff*
+with reference data or/and with max possible value:
+
+Use: checkshapeff aShape [options...]
+
+Allowed options are:
+ *   -wires N:      reference number of problem wires
+ *   -faces N:      reference number of problem faces
+ *   -shells N:     reference number of problem shells
+ *   -solids N:     reference number of problem solids
+ *   -max_wires N:  max possible number of problem wires
+ *   -max_faces N:  max possible number of problem faces
+ *   -max_shells N: max possible number of problem shells
+ *   -max_solids N: max possible number of problem solids
+
+~~~~~
+checkshapeff results -wires 2 -faces 4
+~~~~~
+
 To check the number of faults in the shape command *checkfaults* can be used.
 
 Use: checkfaults shape source_shape [ref_value=0]
@@ -1041,19 +1060,21 @@ regexp { *EDGE +: +MAX=([-0-9.+eE]+)} $tolerance dummy max_edgee
 regexp { *VERTEX +: +MAX=([-0-9.+eE]+)} $tolerance dummy max_vertex
 ~~~~~
 
-It is possible to use command *checkmaxtol* to check maximal tolerance of shape and compare it with reference value.
+It is possible to use command *checkmaxtol* to check maximal and average tolerances of shape and compare them with reference value.
 
 Use: checkmaxtol shape [options...]
 
 Allowed options are:
- *   -ref: reference value of maximum tolerance
- *   -source: list of shapes to compare with
- *   -min_tol: minimum tolerance for comparison
- *   -multi_tol: tolerance multiplier
+ *   -tol N: N is a reference value of maximum tolerance.
+ *   -avg N: N is a reference value of average tolerance.
+ *   -source: list of shapes to compare with, e.g.: -source {shape1 shape2 shape3} (is used only for max tolerance).
+ *   -max_tol: max possible value of max tolerance.
+ *   -max_avg: max possible value of average tolerance.
+ *   -multi_tol: tolerance multiplier (is used only for max tolerance).
 
 The default syntax of *checkmaxtol* command for comparison with the reference value:
 ~~~~~
-checkmaxtol result -ref 0.00001
+checkmaxtol result -tol 0.00001
 ~~~~~
 
 There is an opportunity to compare max tolerance of resulting shape with max tolerance of source shape.
@@ -1167,24 +1188,60 @@ Compare number of sub-shapes in "shape" with given reference data
 
 Use: checknbshapes shape [options...]
 Allowed options are:
- * -vertex N
- * -edge N
- * -wire N
- * -face N
- * -shell N
- * -solid N
- * -compsolid N
- * -compound N
- * -shape N
+ * -vertex N:        compare number of vertexes with reference value N
+ * -edge N:          compare number of edges with reference value N
+ * -wire N:          compare number of wires with reference value N
+ * -face N:          compare number of faces with reference value N
+ * -shell N:         compare number of shells with reference value N
+ * -solid N:         compare number of solids with reference value N
+ * -compsolid N:     compare number of compsolids with reference value N
+ * -compound N:      compare number of compounds with reference value N
+ * -shape N:         compare number of shapes with reference value N
+ * -max_vertex N:    compare number of vertexes with max possible number of vertexes N
+ * -max_edge N:      compare number of edges with max possible number of edges N
+ * -max_wire N:      compare number of wires with max possible number of wires N
+ * -max_face N:      compare number of faces with max possible number of faces N
+ * -max_shell N:     compare number of shells with max possible number of shells N
+ * -max_solid N:     compare number of solids with max possible number of solids N
+ * -max_compsolid N: compare number of compsolids with max possible number of compsolids N
+ * -max_compound N:  compare number of compounds with max possible number of compounds N
+ * -max_shape N:     compare number of shapes with max possible number of shapes N
  * -t: compare the number of sub-shapes in "shape" counting
       the same sub-shapes with different location as different sub-shapes.
  * -m msg: print "msg" in case of error
+ * -ref [nbshapes a]: compare the number of sub-shapes in "shape" and in "a".
+                       -vertex N, -edge N and other options are still working.
 
 ~~~~~
 checknbshapes result -vertex 8 -edge 4
 ~~~~~
 
-@subsubsection testmanual_5_3_9 Check pixel color
+@subsubsection testmanual_5_3_9 Check statistic of shape
+
+Compare statistic of shape with given reference data.
+
+Use: checkstatshape shape [options...]
+
+  Allowed options are:
+ *   -freeedge N:       compare number of free edges with reference N
+ *   -sharededge N:     compare number of shared edges with reference N
+ *   -freewire N:       compare number of free wires with reference N
+ *   -face N:           compare number of faces with reference N
+ *   -shell N:          compare number of shells with reference N
+ *   -solid N:          compare number of solids with reference N
+ *   -max_freeedge N:   compare number of free edges with max possible number N
+ *   -max_sharededge N: compare number of shared edges with max possible number N
+ *   -max_freewire N:   compare number of free wires with max possible number N
+ *   -max_face N:       compare number of faces with max possible number N
+ *   -max_shell N:      compare number of shells with max possible number N
+ *   -max_solid N:      compare number of solids with max possible number N
+
+~~~~~
+ReadStep Doc1 D:/D1.stp
+checkdoc Doc1 -warns 5 -faults 0
+~~~~~
+
+@subsubsection testmanual_5_3_10 Check pixel color
 
 To check pixel color command *checkcolor* can be used.
 
@@ -1200,4 +1257,55 @@ Next example will compare color of point with coordinates x=100 y=100 with RGB c
 If colors are not equal, procedure will check the nearest ones points (5x5 area)
 ~~~~~
 checkcolor 100 100 1 0 0
+~~~~~
+
+@subsubsection testmanual_5_3_11 Check OCAF document validity
+
+To check number of faults and/or warnings in output of commands 'data c' and 'tpstat c' command *checkdoc* can be used.
+
+It can be used after opening of document.
+
+Usage:
+  * checkdoc "data c" [options...]
+  * checkdoc "tpstat c" [options...]
+
+Allowed options are:
+  * -warns N:      reference number of warnings
+  * -faults N:     reference number of faults
+  * -max_warns N:  max possible number of warnings
+  * -max_faults N: max possible number of faults
+
+~~~~~
+ReadStep Doc1 D:/D1.stp
+checkdoc "data c" -warns 5 -faults 0
+checkdoc "tpstat c" -warns 0 -max_faults 1
+~~~~~
+
+@subsubsection testmanual_5_3_12 Check statistic of OCAF document
+
+Compare statistic of layers in document with given reference data.
+
+Use: checkxstat Doc [options...]
+
+Allowed options are:
+ *   -n0 N:        compare number of level N0 layers in document Doc with reference value
+ *   -n1 N:        compare number of level N1 layers in document Doc with reference value
+ *   -n2 N:        compare number of level N2 layers in document Doc with reference value
+ *   -total N:     compare number of layers in document Doc with reference value
+ *   -withname N:  compare number of layers with name in document Doc with reference value
+ *   -withcolor N: compare number of layers with color link in document Doc with reference value
+ *   -withlayer N: compare number of layers with layer link in document Doc with reference value
+ *   -centroid N:  compare number of Centroid Props in document Doc with reference value
+ *   -volume N:    compare number of Volume Props in document Doc with reference value
+ *   -area N:      compare number of Area Props in document Doc with reference value
+ *   -nbcolors N:  compare number of colors in document Doc with reference value
+ *   -colors N:    compare colors of layers in document Doc with reference value
+ *   -nblayers N:  compare number of layers in document Doc with reference value
+ *   -layers N:    compare number of layers in document Doc with reference value
+
+All options are independent and can be used in any order.
+
+~~~~~
+ReadStep Doc1 D:/D1.stp
+checkdoc Doc1 -n0 5 -n1 4 -n2 0 -colors 3
 ~~~~~

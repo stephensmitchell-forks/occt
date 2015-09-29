@@ -1,18 +1,49 @@
-# !!!! This file is generated automatically, do not edit manually! See end script
+
 set filename trj12_pm10-ac-214.stp
 
-set ref_data {
-DATA        : Faulties = 0  ( 0 )  Warnings = 0  ( 0 )  Summary  = 0  ( 0 )
-TPSTAT      : Faulties = 0  ( 0 )  Warnings = 57  ( 95 )  Summary  = 57  ( 95 )
-CHECKSHAPE  : Wires    = 0  ( 0 )  Faces    = 0  ( 0 )  Shells   = 0  ( 0 )   Solids   = 0 ( 0 )
-NBSHAPES    : Solid    = 20  ( 20 )  Shell    = 20  ( 20 )  Face     = 1441  ( 1441 )   Summary  = 9567  ( 9567 )
-STATSHAPE   : Solid    = 40  ( 40 )  Shell    = 40  ( 40 )  Face     = 2036  ( 2036 )   FreeWire = 0  ( 0 )   FreeEdge  = 0 ( 0 )   SharedEdge = 3936  ( 3936 )
-TOLERANCE   : MaxTol   = 0.004932484407  ( 0.004932484407 )  AvgTol   =  2.75392155e-005  (  2.77391027e-005 )
-LABELS      : N0Labels = 41  ( 41 )  N1Labels = 50  ( 50 )  N2Labels = 0  ( 0 )   TotalLabels = 91  ( 91 )   NameLabels = 91  ( 91 )   ColorLabels = 20  ( 20 )   LayerLabels = 20  ( 20 )
-PROPS       : Centroid = 0  ( 0 )  Volume   = 0  ( 0 )  Area     = 0  ( 0 )
-NCOLORS     : NColors  = 15  ( 15 )
-COLORS      : Colors   = CYAN4 DARKOLIVEGREEN1 DARKSLATEGRAY1 GAINSBORO LIGHTSLATEBLUE MATRAGRAY MEDIUMSPRINGGREEN PURPLE PURPLE SKYBLUE1 SKYBLUE1 SPRINGGREEN2 SPRINGGREEN4 STEELBLUE VIOLET  ( CYAN4 DARKOLIVEGREEN1 DARKSLATEGRAY1 GAINSBORO LIGHTSLATEBLUE MATRAGRAY MEDIUMSPRINGGREEN PURPLE PURPLE SKYBLUE1 SKYBLUE1 SPRINGGREEN2 SPRINGGREEN4 STEELBLUE VIOLET )
-NLAYERS     : NLayers  = 17  ( 17 )
-LAYERS      : Layers   = 072498_01A|MODEL 072498_01B|MODEL 082399_02|Model 082399_03|MODEL 082399_04A|MODEL 082399_04B|MODEL 082399_05|MODEL 082399_06|MODEL 082399_07|MODEL 082499_03|MODEL 082599_02|Model 082599_03A|Model 082599_03B|Model 082699_01|MODEL LE_Diode|Model Optics_Housing|MODEL Phototransistor|Model  ( 072498_01A|MODEL 072498_01B|MODEL 082399_02|Model 082399_03|MODEL 082399_04A|MODEL 082399_04B|MODEL 082399_05|MODEL 082399_06|MODEL 082399_07|MODEL 082499_03|MODEL 082599_02|Model 082599_03A|Model 082599_03B|Model 082699_01|MODEL {LE Diode|Model} {Optics Housing|MODEL} Phototransistor|Model )
 
-}
+ReadFileToDoc ${filename}
+
+puts "Check document D_First"
+puts "Compare with reference data"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 98 -max_faults 0
+checkxstat D_First -n0 41 -n1 50 -n2 0 -total 91 -withname 91 -withcolor 20 -withlayer 20 -centroid 0 -volume 0 -area 0 -colors { CYAN4 DARKOLIVEGREEN1 DARKSLATEGRAY1 GAINSBORO LIGHTSLATEBLUE MATRAGRAY MEDIUMSPRINGGREEN PURPLE PURPLE SKYBLUE1 SKYBLUE1 SPRINGGREEN2 SPRINGGREEN4 STEELBLUE VIOLET } -nbcolors 15 -layers { "072498_01A|MODEL" "072498_01B|MODEL" "082499_03|MODEL" "Optics Housing|MODEL" "LE Diode|Model" "Phototransistor|Model" "082399_04A|MODEL" "082399_04B|MODEL" "082399_07|MODEL" "082399_05|MODEL" "082399_03|MODEL" "082699_01|MODEL" "082599_02|Model" "082399_02|Model" "082399_06|MODEL" "082599_03A|Model" "082599_03B|Model"  } -nblayers 17
+
+XGetOneShape res_1 D_First
+
+puts "Check shape from document D_First"
+checkshapeff res_1 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+checknbshapes res_1 -solid 20 -shell 20 -face 1441 -shape 9567
+checkstatshape res_1 -solid 40 -shell 40 -face 2036 -freewire 0 -freeedge 0 -sharededge 3936
+set max_tol_res_1 [checkmaxtol res_1 -tol 0.004932484407 -avg 2.77391027e-005]
+
+ReOpenDoc ${filename}
+
+XGetOneShape res_2 D_Second
+
+puts "Check document D_Second"
+puts "Compare with document D_First"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 98 -max_faults 0
+puts "Compare with reference data"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 57 -max_faults 0
+
+puts "Compare with doc D_First"
+checkxstat D_Second -n0 41 -n1 50 -n2 0 -total 91 -withname 91 -withcolor 20 -withlayer 20 -centroid 0 -volume 0 -area 0 -nbcolors 15 -nblayers 17
+
+puts "Compare with reference values"
+checkxstat D_Second -n0 41 -n1 50 -n2 0 -total 91 -withname 91 -withcolor 20 -withlayer 20 -centroid 0 -volume 0 -area 0 -colors { CYAN4 DARKOLIVEGREEN1 DARKSLATEGRAY1 GAINSBORO LIGHTSLATEBLUE MATRAGRAY MEDIUMSPRINGGREEN PURPLE PURPLE SKYBLUE1 SKYBLUE1 SPRINGGREEN2 SPRINGGREEN4 STEELBLUE VIOLET  } -nbcolors 15 -layers { "072498_01A|MODEL" "072498_01B|MODEL" "082499_03|MODEL" "Optics_Housing|MODEL" "LE_Diode|Model" "Phototransistor|Model" "082399_04A|MODEL" "082399_04B|MODEL" "082399_07|MODEL" "082399_05|MODEL" "082399_03|MODEL" "082699_01|MODEL" "082599_02|Model" "082399_02|Model" "082399_06|MODEL" "082599_03A|Model" "082599_03B|Model"  } -nblayers 17
+
+puts "Check shape from document D_Second"
+puts "Compare with shape res_1"
+checkshapeff res_2 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+puts "Compare with reference data"
+checkshapeff res_2 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+set nbshapes_res_1 [nbshapes res_1]
+regexp {SHAPE +: +([-0-9.+eE]+)} ${nbshapes_res_1} full shape_res_1
+checknbshapes res_2 -solid 20 -shell 20 -face 1441 -shape 9567 -not_de_iges ${shape_res_1}
+checkstatshape res_2 -solid 40 -shell 40 -face 2036 -freewire 0 -freeedge 0 -sharededge 3936 -max_solid 40 -max_shell 40 -max_face 2036 -max_freewire 0 -max_freeedge 0
+checkmaxtol res_2 -tol 0.004932484407 -avg 2.75392155e-005 -max_tol ${max_tol_res_1}
+

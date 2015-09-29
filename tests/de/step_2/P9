@@ -1,18 +1,49 @@
-# !!!! This file is generated automatically, do not edit manually! See end script
+
 set filename r_47-sd.stp
 
-set ref_data {
-DATA        : Faulties = 0  ( 0 )  Warnings = 0  ( 0 )  Summary  = 0  ( 0 )
-TPSTAT      : Faulties = 0  ( 0 )  Warnings = 0  ( 0 )  Summary  = 0  ( 0 )
-CHECKSHAPE  : Wires    = 0  ( 0 )  Faces    = 0  ( 0 )  Shells   = 0  ( 0 )   Solids   = 0 ( 0 )
-NBSHAPES    : Solid    = 10  ( 10 )  Shell    = 10  ( 10 )  Face     = 696  ( 696 )   Summary  = 4505  ( 4505 )
-STATSHAPE   : Solid    = 10  ( 10 )  Shell    = 10  ( 10 )  Face     = 696  ( 696 )   FreeWire = 0  ( 0 )   FreeEdge  = 0 ( 0 )   SharedEdge = 1819  ( 1819 )
-TOLERANCE   : MaxTol   = 3.748730253e-007  ( 3.749497799e-007 )  AvgTol   =  1.004579305e-007  (  1.004580612e-007 )
-LABELS      : N0Labels = 13  ( 13 )  N1Labels = 14  ( 14 )  N2Labels = 0  ( 0 )   TotalLabels = 27  ( 27 )   NameLabels = 25  ( 25 )   ColorLabels = 12  ( 12 )   LayerLabels = 0  ( 0 )
-PROPS       : Centroid = 0  ( 0 )  Volume   = 0  ( 0 )  Area     = 0  ( 0 )
-NCOLORS     : NColors  = 8  ( 8 )
-COLORS      : Colors   = BLUEVIOLET CHARTREUSE3 GOLD3 RED RED2 SEAGREEN1 WHITE YELLOW  ( BLUEVIOLET CHARTREUSE3 GOLD3 RED RED2 SEAGREEN1 WHITE YELLOW )
-NLAYERS     : NLayers  = 0  ( 0 )
-LAYERS      : Layers   =   (  )
 
-}
+ReadFileToDoc ${filename}
+
+puts "Check document D_First"
+puts "Compare with reference data"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 0 -max_faults 0
+checkxstat D_First -n0 13 -n1 14 -n2 0 -total 27 -withname 25 -withcolor 12 -withlayer 0 -centroid 0 -volume 0 -area 0 -colors { BLUEVIOLET CHARTREUSE3 GOLD3 RED RED2 SEAGREEN1 WHITE YELLOW } -nbcolors 8 -layers {  } -nblayers 0
+
+XGetOneShape res_1 D_First
+
+puts "Check shape from document D_First"
+checkshapeff res_1 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+checknbshapes res_1 -solid 10 -shell 10 -face 696 -shape 4505
+checkstatshape res_1 -solid 10 -shell 10 -face 696 -freewire 0 -freeedge 0 -sharededge 1819
+set max_tol_res_1 [checkmaxtol res_1 -tol 3.749497799e-007 -avg 1.004580612e-007]
+
+ReOpenDoc ${filename}
+
+XGetOneShape res_2 D_Second
+
+puts "Check document D_Second"
+puts "Compare with document D_First"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 0 -max_faults 0
+puts "Compare with reference data"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 0 -max_faults 0
+
+puts "Compare with doc D_First"
+checkxstat D_Second -n0 13 -n1 14 -n2 0 -total 27 -withname 25 -withcolor 12 -withlayer 0 -centroid 0 -volume 0 -area 0 -nbcolors 8 -nblayers 0
+
+puts "Compare with reference values"
+checkxstat D_Second -n0 13 -n1 14 -n2 0 -total 27 -withname 25 -withcolor 12 -withlayer 0 -centroid 0 -volume 0 -area 0 -colors { BLUEVIOLET CHARTREUSE3 GOLD3 RED RED2 SEAGREEN1 WHITE YELLOW  } -nbcolors 8 -layers {   } -nblayers 0
+
+puts "Check shape from document D_Second"
+puts "Compare with shape res_1"
+checkshapeff res_2 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+puts "Compare with reference data"
+checkshapeff res_2 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+set nbshapes_res_1 [nbshapes res_1]
+regexp {SHAPE +: +([-0-9.+eE]+)} ${nbshapes_res_1} full shape_res_1
+checknbshapes res_2 -solid 10 -shell 10 -face 696 -shape 4505 -not_de_iges ${shape_res_1}
+checkstatshape res_2 -solid 10 -shell 10 -face 696 -freewire 0 -freeedge 0 -sharededge 1819 -max_solid 10 -max_shell 10 -max_face 696 -max_freewire 0 -max_freeedge 0
+checkmaxtol res_2 -tol 3.748730253e-007 -avg 1.004579305e-007 -max_tol ${max_tol_res_1}
+

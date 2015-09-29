@@ -12,7 +12,7 @@ restore [locate_data_file bug24065_e.brep] e
 # 1
 set CMP_TOL 1.e-7
 
-checkmaxtol f -min_tol ${CMP_TOL}
+checkmaxtol f -max_tol ${CMP_TOL}
 
 mksurface s f
 mkcurve c e

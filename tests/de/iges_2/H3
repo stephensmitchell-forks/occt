@@ -1,25 +1,56 @@
-# !!!! This file is generated automatically, do not edit manually! See end script
 puts "TODO CR23096 ALL: DATA : Faulty" 
 puts "TODO CR23096 ALL: NBSHAPES : Faulty" 
 puts "TODO CR23096 ALL: LABELS : Faulty" 
 puts "TODO CR23096 ALL: COLORS : Faulty" 
 puts "TODO CR23096 ALL: LAYERS : Faulty" 
 
-
 set filename UKI60028-1.igs
 
-set ref_data {
-DATA        : Faulties = 4  ( 0 )  Warnings = 0  ( 0 )  Summary  = 4  ( 0 )
-TPSTAT      : Faulties = 8  ( 150 )  Warnings = 42  ( 788 )  Summary  = 50  ( 938 )
-CHECKSHAPE  : Wires    = 0  ( 0 )  Faces    = 0  ( 0 )  Shells   = 0  ( 0 )   Solids   = 0 ( 0 )
-NBSHAPES    : Solid    = 0  ( 0 )  Shell    = 0  ( 0 )  Face     = 159  ( 159 )   Summary  = 7579  ( 7684 )
-STATSHAPE   : Solid    = 0  ( 0 )  Shell    = 0  ( 0 )  Face     = 159  ( 159 )   FreeWire = 189  ( 284 )   FreeEdge  = 1726 ( 1726 )   SharedEdge = 3033  ( 3035 )
-TOLERANCE   : MaxTol   =   0.6023944505  (   0.6023945025 )  AvgTol   =  0.007298261126  (  0.008822197287 )
-LABELS      : N0Labels = 8  ( 11 )  N1Labels = 949  ( 1809 )  N2Labels = 0  ( 0 )   TotalLabels = 957  ( 1820 )   NameLabels = 955  ( 1263 )   ColorLabels = 949  ( 1807 )   LayerLabels = 917  ( 1774 )
-PROPS       : Centroid = 0  ( 0 )  Volume   = 0  ( 0 )  Area     = 0  ( 0 )
-NCOLORS     : NColors  = 12  ( 14 )
-COLORS      : Colors   = BLUE1 CHOCOLATE2 DARKGOLDENROD4 DEEPSKYBLUE2 GOLD4 GREEN KHAKI1 KHAKI2 LEMONCHIFFON1 RED WHITE YELLOW  ( BLUE1 CHOCOLATE2 DARKGOLDENROD4 DEEPSKYBLUE2 FIREBRICK4 GOLD4 GREEN KHAKI1 KHAKI2 LEMONCHIFFON1 RED TURQUOISE4 WHITE YELLOW )
-NLAYERS     : NLayers  = 10  ( 13 )
-LAYERS      : Layers   = 12 13 23 249 252 50 52 54 60 71  ( 12 13 23 244 246 249 252 50 52 54 60 70 71 )
 
-}
+ReadFileToDoc ${filename}
+
+puts "Check document D_First"
+puts "Compare with reference data"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 787 -max_faults 150
+checkxstat D_First -n0 11 -n1 1809 -n2 0 -total 1820 -withname 1263 -withcolor 1807 -withlayer 1774 -centroid 0 -volume 0 -area 0 -colors { BLUE1 CHOCOLATE2 DARKGOLDENROD4 DEEPSKYBLUE2 FIREBRICK4 GOLD4 GREEN KHAKI1 KHAKI2 LEMONCHIFFON1 RED TURQUOISE4 WHITE YELLOW } -nbcolors 14 -layers { 12 13 23 244 246 249 252 50 52 54 60 70 71 } -nblayers 13
+
+XGetOneShape res_1 D_First
+
+puts "Check shape from document D_First"
+checkshapeff res_1 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+checknbshapes res_1 -solid 0 -shell 0 -face 159 -shape 7684
+checkstatshape res_1 -solid 0 -shell 0 -face 159 -freewire 284 -freeedge 1726 -sharededge 3035
+set max_tol_res_1 [checkmaxtol res_1 -tol 0.6023945025 -avg 0.008822197287]
+
+ReOpenDoc ${filename}
+
+XGetOneShape res_2 D_Second
+
+puts "Check document D_Second"
+puts "Compare with document D_First"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 787 -max_faults 150
+puts "Compare with reference data"
+checkdoc "data c" -max_warns 0 -max_faults 4
+checkdoc "tpstat c" -max_warns 43 -max_faults 8
+
+puts "Compare with doc D_First"
+checkxstat D_Second -n0 11 -n1 1809 -n2 0 -total 1820 -withname 1263 -withcolor 1807 -withlayer 1774 -centroid 0 -volume 0 -area 0 -nbcolors 14 -nblayers 13
+
+puts "Compare with reference values"
+checkxstat D_Second -n0 8 -n1 949 -n2 0 -total 957 -withname 955 -withcolor 949 -withlayer 917 -centroid 0 -volume 0 -area 0 -colors { BLUE1 CHOCOLATE2 DARKGOLDENROD4 DEEPSKYBLUE2 GOLD4 GREEN KHAKI1 KHAKI2 LEMONCHIFFON1 RED WHITE YELLOW  } -nbcolors 12 -layers { 12 13 23 249 252 50 52 54 60 71  } -nblayers 10
+
+puts "Check shape from document D_Second"
+puts "Compare with shape res_1"
+checkshapeff res_2 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+puts "Compare with reference data"
+checkshapeff res_2 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+set nbshapes_res_1 [nbshapes res_1]
+regexp {SHAPE +: +([-0-9.+eE]+)} ${nbshapes_res_1} full shape_res_1
+regexp {COMPOUND +: +([-0-9.+eE]+)} ${nbshapes_res_1} full comp_res_1
+set shape_comp_res_1 [expr ${shape_res_1} - ${comp_res_1}]
+checknbshapes res_2 -solid 0 -shell 0 -face 159 -shape 7579 -de_iges ${shape_comp_res_1}
+checkstatshape res_2 -solid 0 -shell 0 -face 159 -freewire 189 -freeedge 1726 -sharededge 3033 -max_solid 0 -max_shell 0 -max_face 159 -max_freewire 284 -max_freeedge 1726
+checkmaxtol res_2 -tol 0.6023944505 -avg 0.007298261126 -max_tol ${max_tol_res_1}
+

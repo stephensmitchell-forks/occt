@@ -1,4 +1,3 @@
-# !!!! This file is generated automatically, do not edit manually! See end script
 puts "TODO CR23096 ALL: DATA : Faulty"
 puts "TODO CR25923 ALL: TPSTAT : Faulty"  
 puts "TODO CR23096 ALL: CHECKSHAPE : Faulty" 
@@ -7,21 +6,53 @@ puts "TODO CR23096 ALL: LABELS : Faulty"
 puts "TODO CR23096 ALL: COLORS : Faulty" 
 puts "TODO CR23096 ALL: LAYERS : Faulty" 
 
-set LinuxDiff 5
 set filename UKI60094.igs
 
-set ref_data {
-DATA        : Faulties = 2  ( 0 )  Warnings = 0  ( 0 )  Summary  = 2  ( 0 )
-TPSTAT      : Faulties = 4  ( 33 )  Warnings = 125  ( 319 )  Summary  = 129  ( 352 )
-CHECKSHAPE  : Wires    = 1  ( 1 )  Faces    = 3  ( 2 )  Shells   = 0  ( 0 )   Solids   = 0 ( 0 )
-NBSHAPES    : Solid    = 0  ( 0 )  Shell    = 0  ( 0 )  Face     = 421  ( 159 )   Summary  = 7850  ( 4452 )
-STATSHAPE   : Solid    = 0  ( 0 )  Shell    = 0  ( 0 )  Face     = 421  ( 419 )   FreeWire = 66  ( 114 )   FreeEdge  = 430 ( 430 )   SharedEdge = 3347  ( 1892 )
-TOLERANCE   : MaxTol   =    3.181671051  (    2716.882548 )  AvgTol   =  0.008547757257  (     3.678737151 )
-LABELS      : N0Labels = 3  ( 3 )  N1Labels = 325  ( 1665 )  N2Labels = 0  ( 0 )   TotalLabels = 328  ( 1668 )   NameLabels = 328  ( 425 )   ColorLabels = 325  ( 1665 )   LayerLabels = 193  ( 1453 )
-PROPS       : Centroid = 0  ( 0 )  Volume   = 0  ( 0 )  Area     = 0  ( 0 )
-NCOLORS     : NColors  = 6  ( 7 )
-COLORS      : Colors   = GREEN MATRABLUE RED RED4 WHITE YELLOW  ( GREEN MAGENTA1 MATRABLUE RED RED4 WHITE YELLOW )
-NLAYERS     : NLayers  = 2  ( 3 )
-LAYERS      : Layers   = 1 253  ( 1 2 253 )
 
-}
+ReadFileToDoc ${filename}
+
+puts "Check document D_First"
+puts "Compare with reference data"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 319 -max_faults 33
+checkxstat D_First -n0 3 -n1 1665 -n2 0 -total 1668 -withname 425 -withcolor 1665 -withlayer 1453 -centroid 0 -volume 0 -area 0 -colors { GREEN MAGENTA1 MATRABLUE RED RED4 WHITE YELLOW } -nbcolors 7 -layers { 1 2 253 } -nblayers 3
+
+XGetOneShape res_1 D_First
+
+puts "Check shape from document D_First"
+checkshapeff res_1 -max_wires 1 -max_faces 2 -max_shells 0 -max_solids 0
+checknbshapes res_1 -solid 0 -shell 0 -face 159 -shape 4452
+checkstatshape res_1 -solid 0 -shell 0 -face 419 -freewire 114 -freeedge 430 -sharededge 1892
+set max_tol_res_1 [checkmaxtol res_1 -tol 2716.882548 -avg 3.678737151]
+
+ReOpenDoc ${filename}
+
+XGetOneShape res_2 D_Second
+
+puts "Check document D_Second"
+puts "Compare with document D_First"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 319 -max_faults 33
+puts "Compare with reference data"
+checkdoc "data c" -max_warns 0 -max_faults 2
+checkdoc "tpstat c" -max_warns 390 -max_faults 4
+
+puts "Compare with doc D_First"
+checkxstat D_Second -n0 3 -n1 1665 -n2 0 -total 1668 -withname 425 -withcolor 1665 -withlayer 1453 -centroid 0 -volume 0 -area 0 -nbcolors 7 -nblayers 3
+
+puts "Compare with reference values"
+checkxstat D_Second -n0 3 -n1 325 -n2 0 -total 328 -withname 328 -withcolor 325 -withlayer 193 -centroid 0 -volume 0 -area 0 -colors { GREEN MATRABLUE RED RED4 WHITE YELLOW  } -nbcolors 6 -layers { 1 253  } -nblayers 2
+
+puts "Check shape from document D_Second"
+puts "Compare with shape res_1"
+checkshapeff res_2 -max_wires 1 -max_faces 2 -max_shells 0 -max_solids 0
+puts "Compare with reference data"
+checkshapeff res_2 -max_wires 1 -max_faces 3 -max_shells 0 -max_solids 0
+set nbshapes_res_1 [nbshapes res_1]
+regexp {SHAPE +: +([-0-9.+eE]+)} ${nbshapes_res_1} full shape_res_1
+regexp {COMPOUND +: +([-0-9.+eE]+)} ${nbshapes_res_1} full comp_res_1
+set shape_comp_res_1 [expr ${shape_res_1} - ${comp_res_1}]
+checknbshapes res_2 -solid 0 -shell 0 -face 421 -shape 7850 -de_iges ${shape_comp_res_1}
+checkstatshape res_2 -solid 0 -shell 0 -face 421 -freewire 66 -freeedge 430 -sharededge 3347 -max_solid 0 -max_shell 0 -max_face 419 -max_freewire 114 -max_freeedge 430
+checkmaxtol res_2 -tol 3.181671051 -avg 0.008547757257 -max_tol ${max_tol_res_1}
+

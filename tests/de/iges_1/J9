@@ -1,21 +1,52 @@
-# !!!! This file is generated automatically, do not edit manually! See end script
 puts "TODO CR23096 ALL: TPSTAT : Faulty" 
-
 
 set filename CTS21655.igs
 
-set ref_data {
-DATA        : Faulties = 0  ( 12 )  Warnings = 0  ( 1 )  Summary  = 0  ( 13 )
-TPSTAT      : Faulties = 0  ( 28 )  Warnings = 116  ( 7 )  Summary  = 116  ( 35 )
-CHECKSHAPE  : Wires    = 0  ( 0 )  Faces    = 0  ( 0 )  Shells   = 0  ( 1 )   Solids   = 0 ( 1 )
-NBSHAPES    : Solid    = 0  ( 18 )  Shell    = 0  ( 18 )  Face     = 1190  ( 1190 )   Summary  = 15073  ( 7693 )
-STATSHAPE   : Solid    = 0  ( 18 )  Shell    = 0  ( 18 )  Face     = 1190  ( 1190 )   FreeWire = 0  ( 0 )   FreeEdge  = 0 ( 0 )   SharedEdge = 6283  ( 3134 )
-TOLERANCE   : MaxTol   =   0.2496383637  (   0.2496258832 )  AvgTol   =   0.00219239232  (  0.004111699336 )
-LABELS      : N0Labels = 27  ( 27 )  N1Labels = 0  ( 0 )  N2Labels = 0  ( 0 )   TotalLabels = 27  ( 27 )   NameLabels = 27  ( 27 )   ColorLabels = 0  ( 0 )   LayerLabels = 0  ( 0 )
-PROPS       : Centroid = 0  ( 0 )  Volume   = 0  ( 0 )  Area     = 0  ( 0 )
-NCOLORS     : NColors  = 0  ( 0 )
-COLORS      : Colors   =   (  )
-NLAYERS     : NLayers  = 0  ( 0 )
-LAYERS      : Layers   =   (  )
 
-}
+ReadFileToDoc ${filename}
+
+puts "Check document D_First"
+puts "Compare with reference data"
+checkdoc "data c" -max_warns 1 -max_faults 12
+checkdoc "tpstat c" -max_warns 7 -max_faults 28
+checkxstat D_First -n0 27 -n1 0 -n2 0 -total 27 -withname 27 -withcolor 0 -withlayer 0 -centroid 0 -volume 0 -area 0 -colors {  } -nbcolors 0 -layers {  } -nblayers 0
+
+XGetOneShape res_1 D_First
+
+puts "Check shape from document D_First"
+checkshapeff res_1 -max_wires 0 -max_faces 0 -max_shells 1 -max_solids 1
+checknbshapes res_1 -solid 18 -shell 18 -face 1190 -shape 7693
+checkstatshape res_1 -solid 18 -shell 18 -face 1190 -freewire 0 -freeedge 0 -sharededge 3134
+set max_tol_res_1 [checkmaxtol res_1 -tol 0.2496258832 -avg 0.004111699336]
+
+ReOpenDoc ${filename}
+
+XGetOneShape res_2 D_Second
+
+puts "Check document D_Second"
+puts "Compare with document D_First"
+checkdoc "data c" -max_warns 1 -max_faults 12
+checkdoc "tpstat c" -max_warns 7 -max_faults 28
+puts "Compare with reference data"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 126 -max_faults 0
+
+puts "Compare with doc D_First"
+checkxstat D_Second -n0 27 -n1 0 -n2 0 -total 27 -withname 27 -withcolor 0 -withlayer 0 -centroid 0 -volume 0 -area 0 -nbcolors 0 -nblayers 0
+
+puts "Compare with reference values"
+checkxstat D_Second -n0 27 -n1 0 -n2 0 -total 27 -withname 27 -withcolor 0 -withlayer 0 -centroid 0 -volume 0 -area 0 -colors {   } -nbcolors 0 -layers {   } -nblayers 0
+
+puts "Check shape from document D_Second"
+puts "Compare with shape res_1"
+checkshapeff res_2 -max_wires 0 -max_faces 0 -max_shells 1 -max_solids 1
+puts "Compare with reference data"
+checkshapeff res_2 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+set nbshapes_res_1 [nbshapes res_1]
+regexp {SHAPE +: +([-0-9.+eE]+)} ${nbshapes_res_1} full shape_res_1
+regexp {COMPOUND +: +([-0-9.+eE]+)} ${nbshapes_res_1} full comp_res_1
+set shape_comp_res_1 [expr ${shape_res_1} - ${comp_res_1}]
+checknbshapes res_2 -solid 0 -shell 0 -face 1190 -shape 15073 -de_iges ${shape_comp_res_1}
+checkstatshape res_2 -solid 0 -shell 0 -face 1190 -freewire 0 -freeedge 0 -sharededge 6283 -max_solid 18 -max_shell 18 -max_face 1190 -max_freewire 0 -max_freeedge 0
+checkmaxtol res_2 -tol 0.2496383637 -avg 0.00219239232 -max_tol ${max_tol_res_1}
+

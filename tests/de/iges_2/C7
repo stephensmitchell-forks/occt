@@ -1,22 +1,53 @@
-# !!!! This file is generated automatically, do not edit manually! See end script
 puts "TODO CR23096 ALL: LABELS : Faulty" 
 puts "TODO CR23096 ALL: LAYERS : Faulty" 
 
-
 set filename Rich.igs
 
-set ref_data {
-DATA        : Faulties = 1  ( 126 )  Warnings = 0  ( 7 )  Summary  = 1  ( 133 )
-TPSTAT      : Faulties = 2  ( 212 )  Warnings = 6  ( 559 )  Summary  = 8  ( 771 )
-CHECKSHAPE  : Wires    = 0  ( 0 )  Faces    = 0  ( 0 )  Shells   = 0  ( 0 )   Solids   = 0 ( 0 )
-NBSHAPES    : Solid    = 0  ( 0 )  Shell    = 0  ( 0 )  Face     = 9  ( 9 )   Summary  = 20802  ( 16067 )
-STATSHAPE   : Solid    = 0  ( 0 )  Shell    = 0  ( 0 )  Face     = 9  ( 9 )   FreeWire = 477  ( 477 )   FreeEdge  = 9018 ( 9018 )   SharedEdge = 9072  ( 6875 )
-TOLERANCE   : MaxTol   = 0.002386883227  ( 0.002386886993 )  AvgTol   =  1.573805359e-06  (  1.573804854e-06 )
-LABELS      : N0Labels = 2053  ( 2148 )  N1Labels = 381  ( 253 )  N2Labels = 0  ( 0 )   TotalLabels = 2434  ( 2401 )   NameLabels = 2053  ( 2148 )   ColorLabels = 1932  ( 2306 )   LayerLabels = 1559  ( 2306 )
-PROPS       : Centroid = 0  ( 0 )  Volume   = 0  ( 0 )  Area     = 0  ( 0 )
-NCOLORS     : NColors  = 13  ( 13 )
-COLORS      : Colors   = BLUE1 CYAN1 CYAN3 DARKORANGE2 DEEPPINK4 GREEN GREEN4 LIGHTPINK2 MAGENTA1 MATRAGRAY RED SIENNA3 YELLOW  ( BLUE1 CYAN1 CYAN3 DARKORANGE2 DEEPPINK4 GREEN GREEN4 LIGHTPINK2 MAGENTA1 MATRAGRAY RED SIENNA3 YELLOW )
-NLAYERS     : NLayers  = 21  ( 22 )
-LAYERS      : Layers   = 501 510 511 512 513 515 550 560 651 700 701 702 703 704 705 706 707 708 801 851 894  ( 1000 501 510 511 512 513 515 550 560 651 700 701 702 703 704 705 706 707 708 801 851 894 )
 
-}
+ReadFileToDoc ${filename}
+
+puts "Check document D_First"
+puts "Compare with reference data"
+checkdoc "data c" -max_warns 7 -max_faults 126
+checkdoc "tpstat c" -max_warns 559 -max_faults 212
+checkxstat D_First -n0 2148 -n1 253 -n2 0 -total 2401 -withname 2148 -withcolor 2306 -withlayer 2306 -centroid 0 -volume 0 -area 0 -colors { BLUE1 CYAN1 CYAN3 DARKORANGE2 DEEPPINK4 GREEN GREEN4 LIGHTPINK2 MAGENTA1 MATRAGRAY RED SIENNA3 YELLOW } -nbcolors 13 -layers { 1000 501 510 511 512 513 515 550 560 651 700 701 702 703 704 705 706 707 708 801 851 894 } -nblayers 22
+
+XGetOneShape res_1 D_First
+
+puts "Check shape from document D_First"
+checkshapeff res_1 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+checknbshapes res_1 -solid 0 -shell 0 -face 9 -shape 16067
+checkstatshape res_1 -solid 0 -shell 0 -face 9 -freewire 477 -freeedge 9018 -sharededge 6875
+set max_tol_res_1 [checkmaxtol res_1 -tol 0.002386886993 -avg 1.573804854e-06]
+
+ReOpenDoc ${filename}
+
+XGetOneShape res_2 D_Second
+
+puts "Check document D_Second"
+puts "Compare with document D_First"
+checkdoc "data c" -max_warns 7 -max_faults 126
+checkdoc "tpstat c" -max_warns 559 -max_faults 212
+puts "Compare with reference data"
+checkdoc "data c" -max_warns 0 -max_faults 1
+checkdoc "tpstat c" -max_warns 6 -max_faults 2
+
+puts "Compare with doc D_First"
+checkxstat D_Second -n0 2148 -n1 253 -n2 0 -total 2401 -withname 2148 -withcolor 2306 -withlayer 2306 -centroid 0 -volume 0 -area 0 -nbcolors 13 -nblayers 22
+
+puts "Compare with reference values"
+checkxstat D_Second -n0 2053 -n1 381 -n2 0 -total 2434 -withname 2053 -withcolor 1932 -withlayer 1559 -centroid 0 -volume 0 -area 0 -colors { BLUE1 CYAN1 CYAN3 DARKORANGE2 DEEPPINK4 GREEN GREEN4 LIGHTPINK2 MAGENTA1 MATRAGRAY RED SIENNA3 YELLOW  } -nbcolors 13 -layers { 501 510 511 512 513 515 550 560 651 700 701 702 703 704 705 706 707 708 801 851 894  } -nblayers 21
+
+puts "Check shape from document D_Second"
+puts "Compare with shape res_1"
+checkshapeff res_2 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+puts "Compare with reference data"
+checkshapeff res_2 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+set nbshapes_res_1 [nbshapes res_1]
+regexp {SHAPE +: +([-0-9.+eE]+)} ${nbshapes_res_1} full shape_res_1
+regexp {COMPOUND +: +([-0-9.+eE]+)} ${nbshapes_res_1} full comp_res_1
+set shape_comp_res_1 [expr ${shape_res_1} - ${comp_res_1}]
+checknbshapes res_2 -solid 0 -shell 0 -face 9 -shape 20802 -de_iges ${shape_comp_res_1}
+checkstatshape res_2 -solid 0 -shell 0 -face 9 -freewire 477 -freeedge 9018 -sharededge 9072 -max_solid 0 -max_shell 0 -max_face 9 -max_freewire 477 -max_freeedge 9018
+checkmaxtol res_2 -tol 0.002386883227 -avg 1.573805359e-06 -max_tol ${max_tol_res_1}
+

@@ -28,7 +28,7 @@ if { [catch { offsetshape result rthru2 -0.5 rthru2_2 rthru2_3 } catch_result] }
    puts "Faulty ${BugNumber} : offsetshape is wrong"
 }
 
-checkmaxtol result -min_tol 1.
+checkmaxtol result -max_tol 1.
 
 set square 982.254
 

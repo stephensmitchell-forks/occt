@@ -1,26 +1,57 @@
-# !!!! This file is generated automatically, do not edit manually! See end script
 puts "TODO CR23096 ALL: CHECKSHAPE : Faulty" 
 puts "TODO CR23096 ALL: NBSHAPES : Faulty" 
 puts "TODO CR23096 ALL: LABELS : Faulty" 
 puts "TODO CR23096 ALL: COLORS : Faulty" 
 puts "TODO CR23096 ALL: LAYERS : Faulty" 
-puts "TODO CR25013 ALL: Error : 1 differences with reference data found" 
-
+puts "TODO CR25013 ALL: Error: Avg tolerance of res_1" 
 
 set filename BUC60215.igs
 
-set ref_data {
-DATA        : Faulties = 0  ( 0 )  Warnings = 0  ( 0 )  Summary  = 0  ( 0 )
-TPSTAT      : Faulties = 0  ( 201 )  Warnings = 12  ( 487 )  Summary  = 12  ( 688 )
-CHECKSHAPE  : Wires    = 1  ( 0 )  Faces    = 1  ( 0 )  Shells   = 0  ( 0 )   Solids   = 0 ( 0 )
-NBSHAPES    : Solid    = 0  ( 0 )  Shell    = 0  ( 0 )  Face     = 117  ( 117 )   Summary  = 9970  ( 10003 )
-STATSHAPE   : Solid    = 0  ( 0 )  Shell    = 0  ( 0 )  Face     = 117  ( 117 )   FreeWire = 60  ( 93 )   FreeEdge  = 2720 ( 2720 )   SharedEdge = 3521  ( 3521 )
-TOLERANCE   : MaxTol   =   0.7859817704  (   0.7859817704 )  AvgTol   =  0.005733330289  (  0.006491446419 )
-LABELS      : N0Labels = 2  ( 2 )  N1Labels = 2639  ( 3216 )  N2Labels = 0  ( 0 )   TotalLabels = 2641  ( 3218 )   NameLabels = 2641  ( 2850 )   ColorLabels = 2639  ( 3216 )   LayerLabels = 2607  ( 3179 )
-PROPS       : Centroid = 0  ( 0 )  Volume   = 0  ( 0 )  Area     = 0  ( 0 )
-NCOLORS     : NColors  = 7  ( 9 )
-COLORS      : Colors   = CYAN1 DARKOLIVEGREEN2 GRAY67 LIGHTSKYBLUE1 MAGENTA3 MEDIUMPURPLE1 TAN1  ( CYAN1 DARKOLIVEGREEN2 GRAY67 HONEYDEW LIGHTSKYBLUE1 MAGENTA3 MEDIUMPURPLE1 PALETURQUOISE1 TAN1 )
-NLAYERS     : NLayers  = 6  ( 7 )
-LAYERS      : Layers   = 120 130 131 70 71 73  ( 120 121 130 131 70 71 73 )
 
-}
+ReadFileToDoc ${filename}
+
+puts "Check document D_First"
+puts "Compare with reference data"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 506 -max_faults 201
+checkxstat D_First -n0 2 -n1 3216 -n2 0 -total 3218 -withname 2850 -withcolor 3216 -withlayer 3179 -centroid 0 -volume 0 -area 0 -colors { CYAN1 DARKOLIVEGREEN2 GRAY67 HONEYDEW LIGHTSKYBLUE1 MAGENTA3 MEDIUMPURPLE1 PALETURQUOISE1 TAN1 } -nbcolors 9 -layers { 120 121 130 131 70 71 73 } -nblayers 7
+
+XGetOneShape res_1 D_First
+
+puts "Check shape from document D_First"
+checkshapeff res_1 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+checknbshapes res_1 -solid 0 -shell 0 -face 117 -shape 10003
+checkstatshape res_1 -solid 0 -shell 0 -face 117 -freewire 93 -freeedge 2720 -sharededge 3521
+set max_tol_res_1 [checkmaxtol res_1 -tol 0.7859817704 -avg 0.006491446419]
+
+ReOpenDoc ${filename}
+
+XGetOneShape res_2 D_Second
+
+puts "Check document D_Second"
+puts "Compare with document D_First"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 506 -max_faults 201
+puts "Compare with reference data"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 12 -max_faults 0
+
+puts "Compare with doc D_First"
+checkxstat D_Second -n0 2 -n1 3216 -n2 0 -total 3218 -withname 2850 -withcolor 3216 -withlayer 3179 -centroid 0 -volume 0 -area 0 -nbcolors 9 -nblayers 7
+
+puts "Compare with reference values"
+checkxstat D_Second -n0 2 -n1 2639 -n2 0 -total 2641 -withname 2641 -withcolor 2639 -withlayer 2607 -centroid 0 -volume 0 -area 0 -colors { CYAN1 DARKOLIVEGREEN2 GRAY67 LIGHTSKYBLUE1 MAGENTA3 MEDIUMPURPLE1 TAN1  } -nbcolors 7 -layers { 120 130 131 70 71 73  } -nblayers 6
+
+puts "Check shape from document D_Second"
+puts "Compare with shape res_1"
+checkshapeff res_2 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+puts "Compare with reference data"
+checkshapeff res_2 -max_wires 1 -max_faces 1 -max_shells 0 -max_solids 0
+set nbshapes_res_1 [nbshapes res_1]
+regexp {SHAPE +: +([-0-9.+eE]+)} ${nbshapes_res_1} full shape_res_1
+regexp {COMPOUND +: +([-0-9.+eE]+)} ${nbshapes_res_1} full comp_res_1
+set shape_comp_res_1 [expr ${shape_res_1} - ${comp_res_1}]
+checknbshapes res_2 -solid 0 -shell 0 -face 117 -shape 9970 -de_iges ${shape_comp_res_1}
+checkstatshape res_2 -solid 0 -shell 0 -face 117 -freewire 60 -freeedge 2720 -sharededge 3521 -max_solid 0 -max_shell 0 -max_face 117 -max_freewire 93 -max_freeedge 2720
+checkmaxtol res_2 -tol 0.7859817704 -avg 0.005733330289 -max_tol ${max_tol_res_1}
+

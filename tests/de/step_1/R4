@@ -1,18 +1,49 @@
-# !!!! This file is generated automatically, do not edit manually! See end script
+
 set filename pe_as1-A.stp
 
-set ref_data {
-DATA        : Faulties = 0  ( 0 )  Warnings = 0  ( 0 )  Summary  = 0  ( 0 )
-TPSTAT      : Faulties = 0  ( 0 )  Warnings = 0  ( 0 )  Summary  = 0  ( 0 )
-CHECKSHAPE  : Wires    = 0  ( 0 )  Faces    = 0  ( 0 )  Shells   = 0  ( 0 )   Solids   = 0 ( 0 )
-NBSHAPES    : Solid    = 5  ( 5 )  Shell    = 5  ( 5 )  Face     = 53  ( 53 )   Summary  = 350  ( 350 )
-STATSHAPE   : Solid    = 18  ( 18 )  Shell    = 18  ( 18 )  Face     = 160  ( 160 )   FreeWire = 0  ( 0 )   FreeEdge  = 0 ( 0 )   SharedEdge = 126  ( 126 )
-TOLERANCE   : MaxTol   = 0.0001544499144  ( 0.0001544499144 )  AvgTol   =  4.000129905e-005  (  4.000130031e-005 )
-LABELS      : N0Labels = 6  ( 6 )  N1Labels = 71  ( 71 )  N2Labels = 0  ( 0 )   TotalLabels = 77  ( 77 )   NameLabels = 24  ( 24 )   ColorLabels = 0  ( 0 )   LayerLabels = 53  ( 53 )
-PROPS       : Centroid = 0  ( 0 )  Volume   = 0  ( 0 )  Area     = 0  ( 0 )
-NCOLORS     : NColors  = 0  ( 0 )
-COLORS      : Colors   =   (  )
-NLAYERS     : NLayers  = 2  ( 2 )
-LAYERS      : Layers   = NUTS REST  ( NUTS REST )
 
-}
+ReadFileToDoc ${filename}
+
+puts "Check document D_First"
+puts "Compare with reference data"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 0 -max_faults 0
+checkxstat D_First -n0 6 -n1 71 -n2 0 -total 77 -withname 24 -withcolor 0 -withlayer 53 -centroid 0 -volume 0 -area 0 -colors {  } -nbcolors 0 -layers { NUTS REST } -nblayers 2
+
+XGetOneShape res_1 D_First
+
+puts "Check shape from document D_First"
+checkshapeff res_1 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+checknbshapes res_1 -solid 5 -shell 5 -face 53 -shape 350
+checkstatshape res_1 -solid 18 -shell 18 -face 160 -freewire 0 -freeedge 0 -sharededge 126
+set max_tol_res_1 [checkmaxtol res_1 -tol 0.0001544499144 -avg 4.000130031e-005]
+
+ReOpenDoc ${filename}
+
+XGetOneShape res_2 D_Second
+
+puts "Check document D_Second"
+puts "Compare with document D_First"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 0 -max_faults 0
+puts "Compare with reference data"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 0 -max_faults 0
+
+puts "Compare with doc D_First"
+checkxstat D_Second -n0 6 -n1 71 -n2 0 -total 77 -withname 24 -withcolor 0 -withlayer 53 -centroid 0 -volume 0 -area 0 -nbcolors 0 -nblayers 2
+
+puts "Compare with reference values"
+checkxstat D_Second -n0 6 -n1 71 -n2 0 -total 77 -withname 24 -withcolor 0 -withlayer 53 -centroid 0 -volume 0 -area 0 -colors {   } -nbcolors 0 -layers { NUTS REST  } -nblayers 2
+
+puts "Check shape from document D_Second"
+puts "Compare with shape res_1"
+checkshapeff res_2 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+puts "Compare with reference data"
+checkshapeff res_2 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+set nbshapes_res_1 [nbshapes res_1]
+regexp {SHAPE +: +([-0-9.+eE]+)} ${nbshapes_res_1} full shape_res_1
+checknbshapes res_2 -solid 5 -shell 5 -face 53 -shape 350 -not_de_iges ${shape_res_1}
+checkstatshape res_2 -solid 18 -shell 18 -face 160 -freewire 0 -freeedge 0 -sharededge 126 -max_solid 18 -max_shell 18 -max_face 160 -max_freewire 0 -max_freeedge 0
+checkmaxtol res_2 -tol 0.0001544499144 -avg 4.000129905e-005 -max_tol ${max_tol_res_1}
+

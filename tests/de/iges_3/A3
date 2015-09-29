@@ -1,4 +1,3 @@
-# !!!! This file is generated automatically, do not edit manually! See end script
 puts "TODO CR23096 ALL: DATA : Faulty" 
 puts "TODO CR23096 ALL: TPSTAT : Faulty" 
 puts "TODO CR23096 ALL: NBSHAPES : Faulty" 
@@ -6,21 +5,53 @@ puts "TODO CR23096 ALL: LABELS : Faulty"
 puts "TODO CR23096 ALL: COLORS : Faulty" 
 puts "TODO CR23096 ALL: LAYERS : Faulty" 
 
-set LinuxDiff 1
 set filename UKI60107-6.igs
 
-set ref_data {
-DATA        : Faulties = 1  ( 0 )  Warnings = 0  ( 239 )  Summary  = 1  ( 239 )
-TPSTAT      : Faulties = 2  ( 0 )  Warnings = 15  ( 316 )  Summary  = 17  ( 316 )
-CHECKSHAPE  : Wires    = 0  ( 0 )  Faces    = 0  ( 0 )  Shells   = 0  ( 0 )   Solids   = 0 ( 0 )
-NBSHAPES    : Solid    = 0  ( 0 )  Shell    = 0  ( 0 )  Face     = 79  ( 79 )   Summary  = 3800  ( 3951 )
-STATSHAPE   : Solid    = 0  ( 0 )  Shell    = 0  ( 0 )  Face     = 79  ( 79 )   FreeWire = 79  ( 230 )   FreeEdge  = 865 ( 865 )   SharedEdge = 1481  ( 1481 )
-TOLERANCE   : MaxTol   =  0.06847151261  (   0.8635005927 )  AvgTol   =   0.00133710651  (  0.003525405269 )
-LABELS      : N0Labels = 1  ( 1 )  N1Labels = 596  ( 1004 )  N2Labels = 0  ( 0 )   TotalLabels = 597  ( 1005 )   NameLabels = 597  ( 745 )   ColorLabels = 596  ( 1004 )   LayerLabels = 577  ( 985 )
-PROPS       : Centroid = 0  ( 0 )  Volume   = 0  ( 0 )  Area     = 0  ( 0 )
-NCOLORS     : NColors  = 5  ( 7 )
-COLORS      : Colors   = DODGERBLUE2 GREEN MAGENTA3 TURQUOISE2 WHITE  ( DODGERBLUE2 GRAY80 GREEN MAGENTA3 TURQUOISE2 WHITE YELLOW3 )
-NLAYERS     : NLayers  = 8  ( 10 )
-LAYERS      : Layers   = 1 10 13 16 19 31 4 5  ( 1 10 13 16 19 191 210 31 4 5 )
 
-}
+ReadFileToDoc ${filename}
+
+puts "Check document D_First"
+puts "Compare with reference data"
+checkdoc "data c" -max_warns 239 -max_faults 0
+checkdoc "tpstat c" -max_warns 318 -max_faults 0
+checkxstat D_First -n0 1 -n1 1004 -n2 0 -total 1005 -withname 745 -withcolor 1004 -withlayer 985 -centroid 0 -volume 0 -area 0 -colors { DODGERBLUE2 GRAY80 GREEN MAGENTA3 TURQUOISE2 WHITE YELLOW3 } -nbcolors 7 -layers { 1 10 13 16 19 191 210 31 4 5 } -nblayers 10
+
+XGetOneShape res_1 D_First
+
+puts "Check shape from document D_First"
+checkshapeff res_1 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+checknbshapes res_1 -solid 0 -shell 0 -face 79 -shape 3951
+checkstatshape res_1 -solid 0 -shell 0 -face 79 -freewire 230 -freeedge 865 -sharededge 1481
+set max_tol_res_1 [checkmaxtol res_1 -tol 0.8635005927 -avg 0.003525405269]
+
+ReOpenDoc ${filename}
+
+XGetOneShape res_2 D_Second
+
+puts "Check document D_Second"
+puts "Compare with document D_First"
+checkdoc "data c" -max_warns 239 -max_faults 0
+checkdoc "tpstat c" -max_warns 318 -max_faults 0
+puts "Compare with reference data"
+checkdoc "data c" -max_warns 0 -max_faults 1
+checkdoc "tpstat c" -max_warns 15 -max_faults 2
+
+puts "Compare with doc D_First"
+checkxstat D_Second -n0 1 -n1 1004 -n2 0 -total 1005 -withname 745 -withcolor 1004 -withlayer 985 -centroid 0 -volume 0 -area 0 -nbcolors 7 -nblayers 10
+
+puts "Compare with reference values"
+checkxstat D_Second -n0 1 -n1 596 -n2 0 -total 597 -withname 597 -withcolor 596 -withlayer 577 -centroid 0 -volume 0 -area 0 -colors { DODGERBLUE2 GREEN MAGENTA3 TURQUOISE2 WHITE  } -nbcolors 5 -layers { 1 10 13 16 19 31 4 5  } -nblayers 8
+
+puts "Check shape from document D_Second"
+puts "Compare with shape res_1"
+checkshapeff res_2 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+puts "Compare with reference data"
+checkshapeff res_2 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+set nbshapes_res_1 [nbshapes res_1]
+regexp {SHAPE +: +([-0-9.+eE]+)} ${nbshapes_res_1} full shape_res_1
+regexp {COMPOUND +: +([-0-9.+eE]+)} ${nbshapes_res_1} full comp_res_1
+set shape_comp_res_1 [expr ${shape_res_1} - ${comp_res_1}]
+checknbshapes res_2 -solid 0 -shell 0 -face 79 -shape 3800 -de_iges ${shape_comp_res_1}
+checkstatshape res_2 -solid 0 -shell 0 -face 79 -freewire 79 -freeedge 865 -sharededge 1481 -max_solid 0 -max_shell 0 -max_face 79 -max_freewire 230 -max_freeedge 865
+checkmaxtol res_2 -tol 0.06847151261 -avg 0.00133710651 -max_tol ${max_tol_res_1}
+

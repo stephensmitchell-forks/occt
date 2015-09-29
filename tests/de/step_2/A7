@@ -1,21 +1,50 @@
-# !!!! This file is generated automatically, do not edit manually! See end script
 puts "TODO CR23096 ALL: LABELS : Faulty" 
-
 
 set filename trj5_pm3-ac-214.stp
 
-set ref_data {
-DATA        : Faulties = 0  ( 1 )  Warnings = 0  ( 0 )  Summary  = 0  ( 1 )
-TPSTAT      : Faulties = 0  ( 0 )  Warnings = 20  ( 31 )  Summary  = 20  ( 31 )
-CHECKSHAPE  : Wires    = 0  ( 0 )  Faces    = 0  ( 0 )  Shells   = 0  ( 0 )   Solids   = 0 ( 0 )
-NBSHAPES    : Solid    = 49  ( 49 )  Shell    = 49  ( 49 )  Face     = 615  ( 615 )   Summary  = 4330  ( 4234 )
-STATSHAPE   : Solid    = 88  ( 88 )  Shell    = 88  ( 88 )  Face     = 1079  ( 1079 )   FreeWire = 0  ( 0 )   FreeEdge  = 96 ( 96 )   SharedEdge = 1611  ( 1611 )
-TOLERANCE   : MaxTol   = 0.007650852625  (  0.00792935897 )  AvgTol   =  8.776936133e-05  (  8.913893466e-05 )
-LABELS      : N0Labels = 78  ( 78 )  N1Labels = 196  ( 202 )  N2Labels = 0  ( 0 )   TotalLabels = 274  ( 280 )   NameLabels = 178  ( 178 )   ColorLabels = 145  ( 145 )   LayerLabels = 145  ( 151 )
-PROPS       : Centroid = 74  ( 74 )  Volume   = 74  ( 74 )  Area     = 74  ( 74 )
-NCOLORS     : NColors  = 16  ( 16 )
-COLORS      : Colors   = BLUE1 CYAN1 DARKGREEN DARKORANGE1 DEEPPINK2 FIREBRICK FIREBRICK1 GREEN LIGHTGOLDENROD1 MAGENTA1 ORANGE4 PALEGREEN PURPLE RED WHITE YELLOW  ( BLUE1 CYAN1 DARKGREEN DARKORANGE1 DEEPPINK2 FIREBRICK FIREBRICK1 GREEN LIGHTGOLDENROD1 MAGENTA1 ORANGE4 PALEGREEN PURPLE RED WHITE YELLOW )
-NLAYERS     : NLayers  = 10  ( 10 )
-LAYERS      : Layers   = 0 15 18 26 27 9153S07|06 9153S08|07 9153S09|08 GU2_assy|26 TEMP  ( 0 15 18 26 27 9153S07|06 9153S08|07 9153S09|08 GU2_assy|26 TEMP )
 
-}
+ReadFileToDoc ${filename}
+
+puts "Check document D_First"
+puts "Compare with reference data"
+checkdoc "data c" -max_warns 0 -max_faults 1
+checkdoc "tpstat c" -max_warns 31 -max_faults 0
+checkxstat D_First -n0 78 -n1 202 -n2 0 -total 280 -withname 178 -withcolor 145 -withlayer 151 -centroid 74 -volume 74 -area 74 -colors { BLUE1 CYAN1 DARKGREEN DARKORANGE1 DEEPPINK2 FIREBRICK FIREBRICK1 GREEN LIGHTGOLDENROD1 MAGENTA1 ORANGE4 PALEGREEN PURPLE RED WHITE YELLOW } -nbcolors 16 -layers { "0" "15" "TEMP" "18" "27" "26" "9153S07|06" "GU2_assy|26" "9153S08|07" "9153S09|08" } -nblayers 10
+
+XGetOneShape res_1 D_First
+
+puts "Check shape from document D_First"
+checkshapeff res_1 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+checknbshapes res_1 -solid 49 -shell 49 -face 615 -shape 4234
+checkstatshape res_1 -solid 88 -shell 88 -face 1079 -freewire 0 -freeedge 96 -sharededge 1611
+set max_tol_res_1 [checkmaxtol res_1 -tol 0.00792935897 -avg 8.913893466e-05]
+
+ReOpenDoc ${filename}
+
+XGetOneShape res_2 D_Second
+
+puts "Check document D_Second"
+puts "Compare with document D_First"
+checkdoc "data c" -max_warns 0 -max_faults 1
+checkdoc "tpstat c" -max_warns 31 -max_faults 0
+puts "Compare with reference data"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 20 -max_faults 0
+
+puts "Compare with doc D_First"
+checkxstat D_Second -n0 78 -n1 202 -n2 0 -total 280 -withname 178 -withcolor 145 -withlayer 151 -centroid 74 -volume 74 -area 74 -nbcolors 16 -nblayers 10
+
+puts "Compare with reference values"
+checkxstat D_Second -n0 78 -n1 196 -n2 0 -total 274 -withname 178 -withcolor 145 -withlayer 145 -centroid 74 -volume 74 -area 74 -colors { BLUE1 CYAN1 DARKGREEN DARKORANGE1 DEEPPINK2 FIREBRICK FIREBRICK1 GREEN LIGHTGOLDENROD1 MAGENTA1 ORANGE4 PALEGREEN PURPLE RED WHITE YELLOW  } -nbcolors 16 -layers { "0" "15" "TEMP" "18" "27" "26" "9153S07|06" "GU2_assy|26" "9153S08|07" "9153S09|08" } -nblayers 10
+
+puts "Check shape from document D_Second"
+puts "Compare with shape res_1"
+checkshapeff res_2 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+puts "Compare with reference data"
+checkshapeff res_2 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+set nbshapes_res_1 [nbshapes res_1]
+regexp {SHAPE +: +([-0-9.+eE]+)} ${nbshapes_res_1} full shape_res_1
+checknbshapes res_2 -solid 49 -shell 49 -face 615 -shape 4330 -not_de_iges ${shape_res_1}
+checkstatshape res_2 -solid 88 -shell 88 -face 1079 -freewire 0 -freeedge 96 -sharededge 1611 -max_solid 88 -max_shell 88 -max_face 1079 -max_freewire 0 -max_freeedge 96
+checkmaxtol res_2 -tol 0.007650852625 -avg 8.776936133e-05 -max_tol ${max_tol_res_1}
+

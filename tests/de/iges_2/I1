@@ -1,25 +1,56 @@
-# !!!! This file is generated automatically, do not edit manually! See end script
 puts "TODO CR23096 ALL: NBSHAPES : Faulty" 
 puts "TODO CR23096 ALL: STATSHAPE : Faulty" 
 puts "TODO CR23096 ALL: LABELS : Faulty" 
 puts "TODO CR23096 ALL: COLORS : Faulty" 
 puts "TODO CR23096 ALL: LAYERS : Faulty" 
 
-
 set filename himm03.igs
 
-set ref_data {
-DATA        : Faulties = 0  ( 0 )  Warnings = 0  ( 1 )  Summary  = 0  ( 1 )
-TPSTAT      : Faulties = 0  ( 0 )  Warnings = 330  ( 1385 )  Summary  = 330  ( 1385 )
-CHECKSHAPE  : Wires    = 0  ( 0 )  Faces    = 0  ( 0 )  Shells   = 0  ( 0 )   Solids   = 0 ( 0 )
-NBSHAPES    : Solid    = 0  ( 0 )  Shell    = 0  ( 0 )  Face     = 152  ( 152 )   Summary  = 11567  ( 11582 )
-STATSHAPE   : Solid    = 0  ( 0 )  Shell    = 0  ( 0 )  Face     = 152  ( 152 )   FreeWire = 305  ( 441 )   FreeEdge  = 2665 ( 2588 )   SharedEdge = 5140  ( 5064 )
-TOLERANCE   : MaxTol   =   0.9892459055  (   0.9892459128 )  AvgTol   =  0.004744883571  (   0.01316570987 )
-LABELS      : N0Labels = 10  ( 10 )  N1Labels = 553  ( 1961 )  N2Labels = 0  ( 0 )   TotalLabels = 563  ( 1971 )   NameLabels = 563  ( 909 )   ColorLabels = 553  ( 1970 )   LayerLabels = 533  ( 1938 )
-PROPS       : Centroid = 0  ( 0 )  Volume   = 0  ( 0 )  Area     = 0  ( 0 )
-NCOLORS     : NColors  = 6  ( 8 )
-COLORS      : Colors   = BLACK BLUE1 GREEN RED WHITE YELLOW  ( BLACK BLUE1 CYAN1 GREEN MAGENTA1 RED WHITE YELLOW )
-NLAYERS     : NLayers  = 11  ( 13 )
-LAYERS      : Layers   = 1 101 103 2 3 32 4 52 61 70 77  ( 1 101 102 103 2 3 30 32 4 52 61 70 77 )
 
-}
+ReadFileToDoc ${filename}
+
+puts "Check document D_First"
+puts "Compare with reference data"
+checkdoc "data c" -max_warns 1 -max_faults 0
+checkdoc "tpstat c" -max_warns 1392 -max_faults 0
+checkxstat D_First -n0 10 -n1 1961 -n2 0 -total 1971 -withname 909 -withcolor 1970 -withlayer 1938 -centroid 0 -volume 0 -area 0 -colors { BLACK BLUE1 CYAN1 GREEN MAGENTA1 RED WHITE YELLOW } -nbcolors 8 -layers { 1 101 102 103 2 3 30 32 4 52 61 70 77 } -nblayers 13
+
+XGetOneShape res_1 D_First
+
+puts "Check shape from document D_First"
+checkshapeff res_1 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+checknbshapes res_1 -solid 0 -shell 0 -face 152 -shape 11582
+checkstatshape res_1 -solid 0 -shell 0 -face 152 -freewire 441 -freeedge 2588 -sharededge 5064
+set max_tol_res_1 [checkmaxtol res_1 -tol 0.9892459128 -avg 0.01316570987]
+
+ReOpenDoc ${filename}
+
+XGetOneShape res_2 D_Second
+
+puts "Check document D_Second"
+puts "Compare with document D_First"
+checkdoc "data c" -max_warns 1 -max_faults 0
+checkdoc "tpstat c" -max_warns 1392 -max_faults 0
+puts "Compare with reference data"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 330 -max_faults 0
+
+puts "Compare with doc D_First"
+checkxstat D_Second -n0 10 -n1 1961 -n2 0 -total 1971 -withname 909 -withcolor 1970 -withlayer 1938 -centroid 0 -volume 0 -area 0 -nbcolors 8 -nblayers 13
+
+puts "Compare with reference values"
+checkxstat D_Second -n0 10 -n1 553 -n2 0 -total 563 -withname 563 -withcolor 553 -withlayer 533 -centroid 0 -volume 0 -area 0 -colors { BLACK BLUE1 GREEN RED WHITE YELLOW  } -nbcolors 6 -layers { 1 101 103 2 3 32 4 52 61 70 77  } -nblayers 11
+
+puts "Check shape from document D_Second"
+puts "Compare with shape res_1"
+checkshapeff res_2 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+puts "Compare with reference data"
+checkshapeff res_2 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+set nbshapes_res_1 [nbshapes res_1]
+regexp {SHAPE +: +([-0-9.+eE]+)} ${nbshapes_res_1} full shape_res_1
+regexp {COMPOUND +: +([-0-9.+eE]+)} ${nbshapes_res_1} full comp_res_1
+set shape_comp_res_1 [expr ${shape_res_1} - ${comp_res_1}]
+checknbshapes res_2 -solid 0 -shell 0 -face 152 -shape 11567 -de_iges ${shape_comp_res_1}
+checkstatshape res_2 -solid 0 -shell 0 -face 152 -freewire 305 -freeedge 2665 -sharededge 5140 -max_solid 0 -max_shell 0 -max_face 152 -max_freewire 441 -max_freeedge 2588
+checkmaxtol res_2 -tol 0.9892459055 -avg 0.004744883571 -max_tol ${max_tol_res_1}
+

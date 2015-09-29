@@ -1,18 +1,49 @@
-# !!!! This file is generated automatically, do not edit manually! See end script
+
 set filename trj4_pm2-ug-203.stp
 
-set ref_data {
-DATA        : Faulties = 0  ( 0 )  Warnings = 0  ( 0 )  Summary  = 0  ( 0 )
-TPSTAT      : Faulties = 0  ( 0 )  Warnings = 44  ( 491 )  Summary  = 44  ( 491 )
-CHECKSHAPE  : Wires    = 0  ( 0 )  Faces    = 0  ( 0 )  Shells   = 0  ( 0 )   Solids   = 0 ( 0 )
-NBSHAPES    : Solid    = 81  ( 81 )  Shell    = 82  ( 82 )  Face     = 2729  ( 2729 )   Summary  = 17300  ( 17300 )
-STATSHAPE   : Solid    = 99  ( 99 )  Shell    = 100  ( 100 )  Face     = 3044  ( 3044 )   FreeWire = 0  ( 0 )   FreeEdge  = 0 ( 0 )   SharedEdge = 6925  ( 6925 )
-TOLERANCE   : MaxTol   = 0.009468939314  (  0.02905820302 )  AvgTol   =  0.0002800110602  (  0.0005350104835 )
-LABELS      : N0Labels = 91  ( 91 )  N1Labels = 102  ( 102 )  N2Labels = 0  ( 0 )   TotalLabels = 193  ( 193 )   NameLabels = 193  ( 193 )   ColorLabels = 0  ( 0 )   LayerLabels = 0  ( 0 )
-PROPS       : Centroid = 91  ( 91 )  Volume   = 91  ( 91 )  Area     = 91  ( 91 )
-NCOLORS     : NColors  = 0  ( 0 )
-COLORS      : Colors   =   (  )
-NLAYERS     : NLayers  = 0  ( 0 )
-LAYERS      : Layers   =   (  )
 
-}
+ReadFileToDoc ${filename}
+
+puts "Check document D_First"
+puts "Compare with reference data"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 493 -max_faults 0
+checkxstat D_First -n0 91 -n1 102 -n2 0 -total 193 -withname 193 -withcolor 0 -withlayer 0 -centroid 91 -volume 91 -area 91 -colors {  } -nbcolors 0 -layers {  } -nblayers 0
+
+XGetOneShape res_1 D_First
+
+puts "Check shape from document D_First"
+checkshapeff res_1 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+checknbshapes res_1 -solid 81 -shell 82 -face 2729 -shape 17300
+checkstatshape res_1 -solid 99 -shell 100 -face 3044 -freewire 0 -freeedge 0 -sharededge 6925
+set max_tol_res_1 [checkmaxtol res_1 -tol 0.02905820302 -avg 0.0005350104835]
+
+ReOpenDoc ${filename}
+
+XGetOneShape res_2 D_Second
+
+puts "Check document D_Second"
+puts "Compare with document D_First"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 493 -max_faults 0
+puts "Compare with reference data"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 34 -max_faults 0
+
+puts "Compare with doc D_First"
+checkxstat D_Second -n0 91 -n1 102 -n2 0 -total 193 -withname 193 -withcolor 0 -withlayer 0 -centroid 91 -volume 91 -area 91 -nbcolors 0 -nblayers 0
+
+puts "Compare with reference values"
+checkxstat D_Second -n0 91 -n1 102 -n2 0 -total 193 -withname 193 -withcolor 0 -withlayer 0 -centroid 91 -volume 91 -area 91 -colors {   } -nbcolors 0 -layers {   } -nblayers 0
+
+puts "Check shape from document D_Second"
+puts "Compare with shape res_1"
+checkshapeff res_2 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+puts "Compare with reference data"
+checkshapeff res_2 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+set nbshapes_res_1 [nbshapes res_1]
+regexp {SHAPE +: +([-0-9.+eE]+)} ${nbshapes_res_1} full shape_res_1
+checknbshapes res_2 -solid 81 -shell 82 -face 2729 -shape 17300 -not_de_iges ${shape_res_1}
+checkstatshape res_2 -solid 99 -shell 100 -face 3044 -freewire 0 -freeedge 0 -sharededge 6925 -max_solid 99 -max_shell 100 -max_face 3044 -max_freewire 0 -max_freeedge 0
+checkmaxtol res_2 -tol 0.009468939314 -avg 0.0002800110602 -max_tol ${max_tol_res_1}
+

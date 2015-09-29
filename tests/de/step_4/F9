@@ -1,18 +1,49 @@
-# !!!! This file is generated automatically, do not edit manually! See end script
+
 set filename trj8_b1-ac-214.stp
 
-set ref_data {
-DATA        : Faulties = 0  ( 0 )  Warnings = 0  ( 0 )  Summary  = 0  ( 0 )
-TPSTAT      : Faulties = 0  ( 0 )  Warnings = 146  ( 164 )  Summary  = 146  ( 164 )
-CHECKSHAPE  : Wires    = 0  ( 0 )  Faces    = 0  ( 0 )  Shells   = 0  ( 0 )   Solids   = 0 ( 0 )
-NBSHAPES    : Solid    = 1  ( 1 )  Shell    = 1  ( 1 )  Face     = 500  ( 500 )   Summary  = 3324  ( 3230 )
-STATSHAPE   : Solid    = 1  ( 1 )  Shell    = 1  ( 1 )  Face     = 500  ( 500 )   FreeWire = 0  ( 0 )   FreeEdge  = 94 ( 94 )   SharedEdge = 1327  ( 1327 )
-TOLERANCE   : MaxTol   = 0.007482480837  ( 0.007482835673 )  AvgTol   =  0.0004883286474  (  0.0004975892507 )
-LABELS      : N0Labels = 3  ( 3 )  N1Labels = 96  ( 96 )  N2Labels = 0  ( 0 )   TotalLabels = 99  ( 99 )   NameLabels = 5  ( 5 )   ColorLabels = 95  ( 95 )   LayerLabels = 95  ( 95 )
-PROPS       : Centroid = 0  ( 0 )  Volume   = 0  ( 0 )  Area     = 0  ( 0 )
-NCOLORS     : NColors  = 2  ( 2 )
-COLORS      : Colors   = DARKORANGE1 RED  ( DARKORANGE1 RED )
-NLAYERS     : NLayers  = 3  ( 3 )
-LAYERS      : Layers   = 0 AMV_17_HATCH AMV_18_HATCH  ( 0 AMV_17_HATCH AMV_18_HATCH )
 
-}
+ReadFileToDoc ${filename}
+
+puts "Check document D_First"
+puts "Compare with reference data"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 164 -max_faults 0
+checkxstat D_First -n0 3 -n1 96 -n2 0 -total 99 -withname 5 -withcolor 95 -withlayer 95 -centroid 0 -volume 0 -area 0 -colors { DARKORANGE1 RED } -nbcolors 2 -layers { "0" "AMV_18_HATCH" "AMV_17_HATCH" } -nblayers 3
+
+XGetOneShape res_1 D_First
+
+puts "Check shape from document D_First"
+checkshapeff res_1 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+checknbshapes res_1 -solid 1 -shell 1 -face 500 -shape 3230
+checkstatshape res_1 -solid 1 -shell 1 -face 500 -freewire 0 -freeedge 94 -sharededge 1327
+set max_tol_res_1 [checkmaxtol res_1 -tol 0.007482835673 -avg 0.0004975892507]
+
+ReOpenDoc ${filename}
+
+XGetOneShape res_2 D_Second
+
+puts "Check document D_Second"
+puts "Compare with document D_First"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 164 -max_faults 0
+puts "Compare with reference data"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 146 -max_faults 0
+
+puts "Compare with doc D_First"
+checkxstat D_Second -n0 3 -n1 96 -n2 0 -total 99 -withname 5 -withcolor 95 -withlayer 95 -centroid 0 -volume 0 -area 0 -nbcolors 2 -nblayers 3
+
+puts "Compare with reference values"
+checkxstat D_Second -n0 3 -n1 96 -n2 0 -total 99 -withname 5 -withcolor 95 -withlayer 95 -centroid 0 -volume 0 -area 0 -colors { DARKORANGE1 RED  } -nbcolors 2 -layers { "0" "AMV_18_HATCH" "AMV_17_HATCH" } -nblayers 3
+
+puts "Check shape from document D_Second"
+puts "Compare with shape res_1"
+checkshapeff res_2 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+puts "Compare with reference data"
+checkshapeff res_2 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+set nbshapes_res_1 [nbshapes res_1]
+regexp {SHAPE +: +([-0-9.+eE]+)} ${nbshapes_res_1} full shape_res_1
+checknbshapes res_2 -solid 1 -shell 1 -face 500 -shape 3324 -not_de_iges ${shape_res_1}
+checkstatshape res_2 -solid 1 -shell 1 -face 500 -freewire 0 -freeedge 94 -sharededge 1327 -max_solid 1 -max_shell 1 -max_face 500 -max_freewire 0 -max_freeedge 94
+checkmaxtol res_2 -tol 0.007482480837 -avg 0.0004883286474 -max_tol ${max_tol_res_1}
+

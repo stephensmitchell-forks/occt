@@ -1,18 +1,51 @@
-# !!!! This file is generated automatically, do not edit manually! See end script
+
 set filename waaier_para.igs
 
-set ref_data {
-DATA        : Faulties = 0  ( 1 )  Warnings = 0  ( 1 )  Summary  = 0  ( 2 )
-TPSTAT      : Faulties = 0  ( 0 )  Warnings = 40  ( 617 )  Summary  = 40  ( 617 )
-CHECKSHAPE  : Wires    = 2  ( 2 )  Faces    = 3  ( 3 )  Shells   = 0  ( 0 )   Solids   = 0 ( 0 )
-NBSHAPES    : Solid    = 0  ( 0 )  Shell    = 0  ( 0 )  Face     = 162  ( 162 )   Summary  = 4900  ( 4895 )
-STATSHAPE   : Solid    = 0  ( 0 )  Shell    = 0  ( 0 )  Face     = 162  ( 162 )   FreeWire = 0  ( 0 )   FreeEdge  = 0 ( 0 )   SharedEdge = 2291  ( 2288 )
-TOLERANCE   : MaxTol   =   0.9221218176  (   0.9410156556 )  AvgTol   =   0.01501963159  (   0.01437988685 )
-LABELS      : N0Labels = 162  ( 162 )  N1Labels = 0  ( 0 )  N2Labels = 0  ( 0 )   TotalLabels = 162  ( 162 )   NameLabels = 162  ( 162 )   ColorLabels = 162  ( 162 )   LayerLabels = 162  ( 162 )
-PROPS       : Centroid = 0  ( 0 )  Volume   = 0  ( 0 )  Area     = 0  ( 0 )
-NCOLORS     : NColors  = 1  ( 1 )
-COLORS      : Colors   = MATRAGRAY  ( MATRAGRAY )
-NLAYERS     : NLayers  = 1  ( 1 )
-LAYERS      : Layers   = 1  ( 1 )
 
-}
+ReadFileToDoc ${filename}
+
+puts "Check document D_First"
+puts "Compare with reference data"
+checkdoc "data c" -max_warns 1 -max_faults 1
+checkdoc "tpstat c" -max_warns 622 -max_faults 0
+checkxstat D_First -n0 162 -n1 0 -n2 0 -total 162 -withname 162 -withcolor 162 -withlayer 162 -centroid 0 -volume 0 -area 0 -colors { MATRAGRAY } -nbcolors 1 -layers { 1 } -nblayers 1
+
+XGetOneShape res_1 D_First
+
+puts "Check shape from document D_First"
+checkshapeff res_1 -max_wires 2 -max_faces 3 -max_shells 0 -max_solids 0
+checknbshapes res_1 -solid 0 -shell 0 -face 162 -shape 4895
+checkstatshape res_1 -solid 0 -shell 0 -face 162 -freewire 0 -freeedge 0 -sharededge 2288
+set max_tol_res_1 [checkmaxtol res_1 -tol 0.9410156556 -avg 0.01437988685]
+
+ReOpenDoc ${filename}
+
+XGetOneShape res_2 D_Second
+
+puts "Check document D_Second"
+puts "Compare with document D_First"
+checkdoc "data c" -max_warns 1 -max_faults 1
+checkdoc "tpstat c" -max_warns 622 -max_faults 0
+puts "Compare with reference data"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 40 -max_faults 0
+
+puts "Compare with doc D_First"
+checkxstat D_Second -n0 162 -n1 0 -n2 0 -total 162 -withname 162 -withcolor 162 -withlayer 162 -centroid 0 -volume 0 -area 0 -nbcolors 1 -nblayers 1
+
+puts "Compare with reference values"
+checkxstat D_Second -n0 162 -n1 0 -n2 0 -total 162 -withname 162 -withcolor 162 -withlayer 162 -centroid 0 -volume 0 -area 0 -colors { MATRAGRAY  } -nbcolors 1 -layers { 1  } -nblayers 1
+
+puts "Check shape from document D_Second"
+puts "Compare with shape res_1"
+checkshapeff res_2 -max_wires 2 -max_faces 3 -max_shells 0 -max_solids 0
+puts "Compare with reference data"
+checkshapeff res_2 -max_wires 2 -max_faces 3 -max_shells 0 -max_solids 0
+set nbshapes_res_1 [nbshapes res_1]
+regexp {SHAPE +: +([-0-9.+eE]+)} ${nbshapes_res_1} full shape_res_1
+regexp {COMPOUND +: +([-0-9.+eE]+)} ${nbshapes_res_1} full comp_res_1
+set shape_comp_res_1 [expr ${shape_res_1} - ${comp_res_1}]
+checknbshapes res_2 -solid 0 -shell 0 -face 162 -shape 4900 -de_iges ${shape_comp_res_1}
+checkstatshape res_2 -solid 0 -shell 0 -face 162 -freewire 0 -freeedge 0 -sharededge 2291 -max_solid 0 -max_shell 0 -max_face 162 -max_freewire 0 -max_freeedge 0
+checkmaxtol res_2 -tol 0.9221218176 -avg 0.01501963159 -max_tol ${max_tol_res_1}
+

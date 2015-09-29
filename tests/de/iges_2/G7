@@ -1,25 +1,57 @@
-# !!!! This file is generated automatically, do not edit manually! See end script
 puts "TODO CR23096 ALL: CHECKSHAPE : Faulty" 
 puts "TODO CR23096 ALL: NBSHAPES : Faulty" 
 puts "TODO CR23096 ALL: LABELS : Faulty" 
 puts "TODO CR23096 ALL: COLORS : Faulty" 
-puts "TODO CR25013 ALL: Error : 3 differences with reference data found" 
-
+puts "TODO CR25013 ALL: Error :  is WRONG because number of SHAPE entities in shape" 
+puts "TODO CR25013 ALL: STATSHAPE : Faulty ref number of shared edges in command statshape"
 
 set filename PRO18777-3.igs
 
-set ref_data {
-DATA        : Faulties = 0  ( 0 )  Warnings = 0  ( 0 )  Summary  = 0  ( 0 )
-TPSTAT      : Faulties = 0  ( 0 )  Warnings = 75  ( 1414 )  Summary  = 75  ( 1414 )
-CHECKSHAPE  : Wires    = 1  ( 0 )  Faces    = 2  ( 1 )  Shells   = 0  ( 0 )   Solids   = 0 ( 0 )
-NBSHAPES    : Solid    = 0  ( 0 )  Shell    = 0  ( 0 )  Face     = 1568  ( 1568 )   Summary  = 19289  ( 19302 )
-STATSHAPE   : Solid    = 0  ( 0 )  Shell    = 0  ( 0 )  Face     = 1568  ( 1568 )   FreeWire = 0  ( 14 )   FreeEdge  = 28 ( 28 )   SharedEdge = 8150  ( 8149 )
-TOLERANCE   : MaxTol   =   0.9978911708  (   0.9978911666 )  AvgTol   =   0.01219320525  (    0.0121152761 )
-LABELS      : N0Labels = 1  ( 1 )  N1Labels = 1596  ( 5152 )  N2Labels = 0  ( 0 )   TotalLabels = 1597  ( 5153 )   NameLabels = 1597  ( 2712 )   ColorLabels = 1596  ( 5152 )   LayerLabels = 1596  ( 5152 )
-PROPS       : Centroid = 0  ( 0 )  Volume   = 0  ( 0 )  Area     = 0  ( 0 )
-NCOLORS     : NColors  = 2  ( 7 )
-COLORS      : Colors   = BLUE1 WHITE  ( BLUE1 CYAN1 GREEN MAGENTA1 RED WHITE YELLOW )
-NLAYERS     : NLayers  = 2  ( 2 )
-LAYERS      : Layers   = 1 254  ( 1 254 )
 
-}
+ReadFileToDoc ${filename}
+
+puts "Check document D_First"
+puts "Compare with reference data"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 1468 -max_faults 0
+checkxstat D_First -n0 1 -n1 5152 -n2 0 -total 5153 -withname 2712 -withcolor 5152 -withlayer 5152 -centroid 0 -volume 0 -area 0 -colors { BLUE1 CYAN1 GREEN MAGENTA1 RED WHITE YELLOW } -nbcolors 7 -layers { 1 254 } -nblayers 2
+
+XGetOneShape res_1 D_First
+
+puts "Check shape from document D_First"
+checkshapeff res_1 -max_wires 0 -max_faces 1 -max_shells 0 -max_solids 0
+checknbshapes res_1 -solid 0 -shell 0 -face 1568 -shape 19302
+checkstatshape res_1 -solid 0 -shell 0 -face 1568 -freewire 14 -freeedge 28 -sharededge 8149
+set max_tol_res_1 [checkmaxtol res_1 -tol 0.9978911666 -avg 0.0121152761]
+
+ReOpenDoc ${filename}
+
+XGetOneShape res_2 D_Second
+
+puts "Check document D_Second"
+puts "Compare with document D_First"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 1468 -max_faults 0
+puts "Compare with reference data"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 83 -max_faults 0
+
+puts "Compare with doc D_First"
+checkxstat D_Second -n0 1 -n1 5152 -n2 0 -total 5153 -withname 2712 -withcolor 5152 -withlayer 5152 -centroid 0 -volume 0 -area 0 -nbcolors 7 -nblayers 2
+
+puts "Compare with reference values"
+checkxstat D_Second -n0 1 -n1 1596 -n2 0 -total 1597 -withname 1597 -withcolor 1596 -withlayer 1596 -centroid 0 -volume 0 -area 0 -colors { BLUE1 WHITE  } -nbcolors 2 -layers { 1 254  } -nblayers 2
+
+puts "Check shape from document D_Second"
+puts "Compare with shape res_1"
+checkshapeff res_2 -max_wires 0 -max_faces 1 -max_shells 0 -max_solids 0
+puts "Compare with reference data"
+checkshapeff res_2 -max_wires 1 -max_faces 2 -max_shells 0 -max_solids 0
+set nbshapes_res_1 [nbshapes res_1]
+regexp {SHAPE +: +([-0-9.+eE]+)} ${nbshapes_res_1} full shape_res_1
+regexp {COMPOUND +: +([-0-9.+eE]+)} ${nbshapes_res_1} full comp_res_1
+set shape_comp_res_1 [expr ${shape_res_1} - ${comp_res_1}]
+checknbshapes res_2 -solid 0 -shell 0 -face 1568 -shape 19289 -de_iges ${shape_comp_res_1}
+checkstatshape res_2 -solid 0 -shell 0 -face 1568 -freewire 0 -freeedge 28 -sharededge 8150 -max_solid 0 -max_shell 0 -max_face 1568 -max_freewire 14 -max_freeedge 28
+checkmaxtol res_2 -tol 0.9978911708 -avg 0.01219320525 -max_tol ${max_tol_res_1}
+

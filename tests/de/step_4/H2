@@ -1,18 +1,49 @@
-# !!!! This file is generated automatically, do not edit manually! See end script
+
 set filename trj10_pm8-ac-214.stp
 
-set ref_data {
-DATA        : Faulties = 0  ( 0 )  Warnings = 0  ( 0 )  Summary  = 0  ( 0 )
-TPSTAT      : Faulties = 0  ( 0 )  Warnings = 117  ( 120 )  Summary  = 117  ( 120 )
-CHECKSHAPE  : Wires    = 0  ( 0 )  Faces    = 0  ( 0 )  Shells   = 0  ( 0 )   Solids   = 0 ( 0 )
-NBSHAPES    : Solid    = 25  ( 25 )  Shell    = 25  ( 25 )  Face     = 2995  ( 2995 )   Summary  = 19246  ( 19240 )
-STATSHAPE   : Solid    = 41  ( 41 )  Shell    = 41  ( 41 )  Face     = 4431  ( 4431 )   FreeWire = 0  ( 0 )   FreeEdge  = 12 ( 12 )   SharedEdge = 8025  ( 8025 )
-TOLERANCE   : MaxTol   = 0.009679269696  ( 0.009679269696 )  AvgTol   =  1.720173689e-005  (  1.724163883e-005 )
-LABELS      : N0Labels = 55  ( 55 )  N1Labels = 76  ( 76 )  N2Labels = 0  ( 0 )   TotalLabels = 131  ( 131 )   NameLabels = 125  ( 125 )   ColorLabels = 31  ( 31 )   LayerLabels = 31  ( 31 )
-PROPS       : Centroid = 0  ( 0 )  Volume   = 0  ( 0 )  Area     = 0  ( 0 )
-NCOLORS     : NColors  = 21  ( 21 )
-COLORS      : Colors   = BLUE1 BURLYWOOD2 DARKGOLDENROD1 DARKGREEN DARKORANGE1 DARKSLATEBLUE DARKSLATEGRAY GRAY15 GRAY9 KHAKI4 KHAKI4 LIGHTGOLDENROD4 MAGENTA1 MATRABLUE MEDIUMPURPLE1 MEDIUMSPRINGGREEN ORANGE4 RED STEELBLUE TURQUOISE4 YELLOW  ( BLUE1 BURLYWOOD2 DARKGOLDENROD1 DARKGREEN DARKORANGE1 DARKSLATEBLUE DARKSLATEGRAY GRAY15 GRAY9 KHAKI4 KHAKI4 LIGHTGOLDENROD4 MAGENTA1 MATRABLUE MEDIUMPURPLE1 MEDIUMSPRINGGREEN ORANGE4 RED STEELBLUE TURQUOISE4 YELLOW )
-NLAYERS     : NLayers  = 2  ( 2 )
-LAYERS      : Layers   = 0 Slider_Button|AMV_9_HATCH  ( 0 Slider_Button|AMV_9_HATCH )
 
-}
+ReadFileToDoc ${filename}
+
+puts "Check document D_First"
+puts "Compare with reference data"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 120 -max_faults 0
+checkxstat D_First -n0 55 -n1 76 -n2 0 -total 131 -withname 125 -withcolor 31 -withlayer 31 -centroid 0 -volume 0 -area 0 -colors { BLUE1 BURLYWOOD2 DARKGOLDENROD1 DARKGREEN DARKORANGE1 DARKSLATEBLUE DARKSLATEGRAY GRAY15 GRAY9 KHAKI4 KHAKI4 LIGHTGOLDENROD4 MAGENTA1 MATRABLUE MEDIUMPURPLE1 MEDIUMSPRINGGREEN ORANGE4 RED STEELBLUE TURQUOISE4 YELLOW } -nbcolors 21 -layers { "0" "Slider_Button|AMV_9_HATCH" } -nblayers 2
+
+XGetOneShape res_1 D_First
+
+puts "Check shape from document D_First"
+checkshapeff res_1 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+checknbshapes res_1 -solid 25 -shell 25 -face 2995 -shape 19240
+checkstatshape res_1 -solid 41 -shell 41 -face 4431 -freewire 0 -freeedge 12 -sharededge 8025
+set max_tol_res_1 [checkmaxtol res_1 -tol 0.009679269696 -avg 1.724163883e-005]
+
+ReOpenDoc ${filename}
+
+XGetOneShape res_2 D_Second
+
+puts "Check document D_Second"
+puts "Compare with document D_First"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 120 -max_faults 0
+puts "Compare with reference data"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 117 -max_faults 0
+
+puts "Compare with doc D_First"
+checkxstat D_Second -n0 55 -n1 76 -n2 0 -total 131 -withname 125 -withcolor 31 -withlayer 31 -centroid 0 -volume 0 -area 0 -nbcolors 21 -nblayers 2
+
+puts "Compare with reference values"
+checkxstat D_Second -n0 55 -n1 76 -n2 0 -total 131 -withname 125 -withcolor 31 -withlayer 31 -centroid 0 -volume 0 -area 0 -colors { BLUE1 BURLYWOOD2 DARKGOLDENROD1 DARKGREEN DARKORANGE1 DARKSLATEBLUE DARKSLATEGRAY GRAY15 GRAY9 KHAKI4 KHAKI4 LIGHTGOLDENROD4 MAGENTA1 MATRABLUE MEDIUMPURPLE1 MEDIUMSPRINGGREEN ORANGE4 RED STEELBLUE TURQUOISE4 YELLOW  } -nbcolors 21 -layers { "0" "Slider_Button|AMV_9_HATCH" } -nblayers 2
+
+puts "Check shape from document D_Second"
+puts "Compare with shape res_1"
+checkshapeff res_2 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+puts "Compare with reference data"
+checkshapeff res_2 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+set nbshapes_res_1 [nbshapes res_1]
+regexp {SHAPE +: +([-0-9.+eE]+)} ${nbshapes_res_1} full shape_res_1
+checknbshapes res_2 -solid 25 -shell 25 -face 2995 -shape 19246 -not_de_iges ${shape_res_1}
+checkstatshape res_2 -solid 41 -shell 41 -face 4431 -freewire 0 -freeedge 12 -sharededge 8025 -max_solid 41 -max_shell 41 -max_face 4431 -max_freewire 0 -max_freeedge 12
+checkmaxtol res_2 -tol 0.009679269696 -avg 1.720173689e-005 -max_tol ${max_tol_res_1}
+

@@ -1,6 +1,53 @@
-# !!!! This file is generated automatically, do not edit manually! See end script
-puts "TODO CR23096 ALL: Error: First - file was not read - exception " 
-puts "TODO CR23096 ALL: Error : Here is reading problem" 
-
+puts "TODO CR23096 ALL: Error: file tr9_r0301-pe-adjusted.stp was not read"
+puts "TODO CR23096 ALL: DATA : Faulty comparison ref number of faults in command data c with max possible"
+puts "TODO CR23096 ALL: Tcl Exception: res_1 is not a topological shape"
+puts "TODO CR23096 ALL: TEST INCOMPLETE"
 
 set filename tr9_r0301-pe-adjusted.stp
+
+
+ReadFileToDoc ${filename}
+
+puts "Check document D_First"
+puts "Compare with reference data"
+checkdoc "data c" -max_warns 0 -max_faults 9
+checkdoc "tpstat c" -max_warns 39 -max_faults 0
+checkxstat D_First -n0 3 -n1 3 -n2 1 -total 7 -withname 5 -withcolor 0 -withlayer 0 -centroid 0 -volume 0 -area 0 -colors {  } -nbcolors 0 -layers {  } -nblayers 0
+
+XGetOneShape res_1 D_First
+
+puts "Check shape from document D_First"
+checkshapeff res_1 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+checknbshapes res_1 -solid 10 -shell 12 -face 269 -shape 1636
+checkstatshape res_1 -solid 10 -shell 12 -face 269 -freewire 0 -freeedge 0 -sharededge 636
+set max_tol_res_1 [checkmaxtol res_1 -tol 0.01008857108 -avg 0.0003616303196]
+
+ReOpenDoc ${filename}
+
+XGetOneShape res_2 D_Second
+
+puts "Check document D_Second"
+puts "Compare with document D_First"
+checkdoc "data c" -max_warns 0 -max_faults 9
+checkdoc "tpstat c" -max_warns 39 -max_faults 0
+puts "Compare with reference data"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 0 -max_faults 0
+
+puts "Compare with doc D_First"
+checkxstat D_Second -n0 3 -n1 3 -n2 1 -total 7 -withname 5 -withcolor 0 -withlayer 0 -centroid 0 -volume 0 -area 0 -nbcolors 0 -nblayers 0
+
+puts "Compare with reference values"
+checkxstat D_Second -n0 3 -n1 2 -n2 0 -total 5 -withname 5 -withcolor 0 -withlayer 0 -centroid 0 -volume 0 -area 0 -colors {   } -nbcolors 0 -layers {   } -nblayers 0
+
+puts "Check shape from document D_Second"
+puts "Compare with shape res_1"
+checkshapeff res_2 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+puts "Compare with reference data"
+checkshapeff res_2 -max_wires 0 -max_faces 1 -max_shells 0 -max_solids 0
+set nbshapes_res_1 [nbshapes res_1]
+regexp {SHAPE +: +([-0-9.+eE]+)} ${nbshapes_res_1} full shape_res_1
+checknbshapes res_2 -solid 10 -shell 12 -face 269 -shape 1638 -not_de_iges ${shape_res_1}
+checkstatshape res_2 -solid 10 -shell 12 -face 269 -freewire 0 -freeedge 0 -sharededge 636 -max_solid 10 -max_shell 12 -max_face 269 -max_freewire 0 -max_freeedge 0
+checkmaxtol res_2 -tol 0.01008857123 -avg 0.0003104589496 -max_tol ${max_tol_res_1}
+

@@ -1,22 +1,53 @@
-# !!!! This file is generated automatically, do not edit manually! See end script
 puts "TODO CR23096 ALL: NBSHAPES : Faulty" 
 puts "TODO CR23096 ALL: LABELS : Faulty" 
 
-
 set filename t_cat_424_002_sgi_hybdrw_vw_dosenhalter_standard.igs
 
-set ref_data {
-DATA        : Faulties = 0  ( 0 )  Warnings = 0  ( 0 )  Summary  = 0  ( 0 )
-TPSTAT      : Faulties = 0  ( 569 )  Warnings = 152  ( 8440 )  Summary  = 152  ( 9009 )
-CHECKSHAPE  : Wires    = 0  ( 0 )  Faces    = 0  ( 0 )  Shells   = 0  ( 0 )   Solids   = 0 ( 0 )
-NBSHAPES    : Solid    = 0  ( 0 )  Shell    = 0  ( 0 )  Face     = 9171  ( 9171 )   Summary  = 288412  ( 288510 )
-STATSHAPE   : Solid    = 0  ( 0 )  Shell    = 0  ( 0 )  Face     = 9171  ( 9171 )   FreeWire = 998  ( 1096 )   FreeEdge  = 28215 ( 28215 )   SharedEdge = 122275  ( 122275 )
-TOLERANCE   : MaxTol   =   0.6305328468  (   0.6305328468 )  AvgTol   =  0.0003777026264  (  0.0003780896454 )
-LABELS      : N0Labels = 1  ( 1 )  N1Labels = 31624  ( 37142 )  N2Labels = 0  ( 0 )   TotalLabels = 31625  ( 37143 )   NameLabels = 31621  ( 36777 )   ColorLabels = 31624  ( 37142 )   LayerLabels = 29174  ( 34054 )
-PROPS       : Centroid = 0  ( 0 )  Volume   = 0  ( 0 )  Area     = 0  ( 0 )
-NCOLORS     : NColors  = 4  ( 4 )
-COLORS      : Colors   = GOLD3 MAGENTA1 WHITE YELLOW  ( GOLD3 MAGENTA1 WHITE YELLOW )
-NLAYERS     : NLayers  = 36  ( 36 )
-LAYERS      : Layers   = 1 101 102 103 104 105 106 107 108 110 111 112 113 116 117 118 123 190 192 2 200 22 229 241 253 3 34 50 51 52 54 55 56 57 58 59  ( 1 101 102 103 104 105 106 107 108 110 111 112 113 116 117 118 123 190 192 2 200 22 229 241 253 3 34 50 51 52 54 55 56 57 58 59 )
 
-}
+ReadFileToDoc ${filename}
+
+puts "Check document D_First"
+puts "Compare with reference data"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 8440 -max_faults 569
+checkxstat D_First -n0 1 -n1 37142 -n2 0 -total 37143 -withname 36777 -withcolor 37142 -withlayer 34054 -centroid 0 -volume 0 -area 0 -colors { GOLD3 MAGENTA1 WHITE YELLOW } -nbcolors 4 -layers { 1 101 102 103 104 105 106 107 108 110 111 112 113 116 117 118 123 190 192 2 200 22 229 241 253 3 34 50 51 52 54 55 56 57 58 59 } -nblayers 36
+
+XGetOneShape res_1 D_First
+
+puts "Check shape from document D_First"
+checkshapeff res_1 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+checknbshapes res_1 -solid 0 -shell 0 -face 9171 -shape 288510
+checkstatshape res_1 -solid 0 -shell 0 -face 9171 -freewire 1096 -freeedge 28215 -sharededge 122275
+set max_tol_res_1 [checkmaxtol res_1 -tol 0.6305328468 -avg 0.0003780896454]
+
+ReOpenDoc ${filename}
+
+XGetOneShape res_2 D_Second
+
+puts "Check document D_Second"
+puts "Compare with document D_First"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 8440 -max_faults 569
+puts "Compare with reference data"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 154 -max_faults 0
+
+puts "Compare with doc D_First"
+checkxstat D_Second -n0 1 -n1 37142 -n2 0 -total 37143 -withname 36777 -withcolor 37142 -withlayer 34054 -centroid 0 -volume 0 -area 0 -nbcolors 4 -nblayers 36
+
+puts "Compare with reference values"
+checkxstat D_Second -n0 1 -n1 31624 -n2 0 -total 31625 -withname 31621 -withcolor 31624 -withlayer 29174 -centroid 0 -volume 0 -area 0 -colors { GOLD3 MAGENTA1 WHITE YELLOW  } -nbcolors 4 -layers { 1 101 102 103 104 105 106 107 108 110 111 112 113 116 117 118 123 190 192 2 200 22 229 241 253 3 34 50 51 52 54 55 56 57 58 59  } -nblayers 36
+
+puts "Check shape from document D_Second"
+puts "Compare with shape res_1"
+checkshapeff res_2 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+puts "Compare with reference data"
+checkshapeff res_2 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+set nbshapes_res_1 [nbshapes res_1]
+regexp {SHAPE +: +([-0-9.+eE]+)} ${nbshapes_res_1} full shape_res_1
+regexp {COMPOUND +: +([-0-9.+eE]+)} ${nbshapes_res_1} full comp_res_1
+set shape_comp_res_1 [expr ${shape_res_1} - ${comp_res_1}]
+checknbshapes res_2 -solid 0 -shell 0 -face 9171 -shape 288412 -de_iges ${shape_comp_res_1}
+checkstatshape res_2 -solid 0 -shell 0 -face 9171 -freewire 998 -freeedge 28215 -sharededge 122275 -max_solid 0 -max_shell 0 -max_face 9171 -max_freewire 1096 -max_freeedge 28215
+checkmaxtol res_2 -tol 0.6305328468 -avg 0.0003777026264 -max_tol ${max_tol_res_1}
+

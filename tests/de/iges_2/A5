@@ -1,23 +1,54 @@
-# !!!! This file is generated automatically, do not edit manually! See end script
 puts "TODO CR23096 ALL: NBSHAPES : Faulty" 
 puts "TODO CR23096 ALL: LABELS : Faulty" 
 puts "TODO CR23096 ALL: LAYERS : Faulty" 
 
-
 set filename t_cat_424_002_sgi_hybdrw_vw_tuer_standard.igs
 
-set ref_data {
-DATA        : Faulties = 0  ( 0 )  Warnings = 0  ( 0 )  Summary  = 0  ( 0 )
-TPSTAT      : Faulties = 0  ( 733 )  Warnings = 64  ( 4345 )  Summary  = 64  ( 5078 )
-CHECKSHAPE  : Wires    = 0  ( 0 )  Faces    = 0  ( 0 )  Shells   = 0  ( 0 )   Solids   = 0 ( 0 )
-NBSHAPES    : Solid    = 0  ( 0 )  Shell    = 0  ( 0 )  Face     = 2263  ( 2263 )   Summary  = 81570  ( 81625 )
-STATSHAPE   : Solid    = 0  ( 0 )  Shell    = 0  ( 0 )  Face     = 2263  ( 2263 )   FreeWire = 2854  ( 2907 )   FreeEdge  = 19507 ( 19507 )   SharedEdge = 29768  ( 29768 )
-TOLERANCE   : MaxTol   =   0.7925892163  (   0.7925891552 )  AvgTol   =  0.001587410529  (  0.001648822728 )
-LABELS      : N0Labels = 28  ( 28 )  N1Labels = 13487  ( 17629 )  N2Labels = 0  ( 0 )   TotalLabels = 13515  ( 17657 )   NameLabels = 13515  ( 17494 )   ColorLabels = 13489  ( 17629 )   LayerLabels = 13438  ( 17573 )
-PROPS       : Centroid = 0  ( 0 )  Volume   = 0  ( 0 )  Area     = 0  ( 0 )
-NCOLORS     : NColors  = 18  ( 18 )
-COLORS      : Colors   = BLUE1 CYAN1 DARKKHAKI DARKSEAGREEN2 DEEPSKYBLUE2 DODGERBLUE2 GOLD3 GREEN GREEN4 KHAKI1 LIGHTPINK1 LIGHTSEAGREEN ORANGE PALEVIOLETRED4 PLUM1 RED WHITE YELLOW  ( BLUE1 CYAN1 DARKKHAKI DARKSEAGREEN2 DEEPSKYBLUE2 DODGERBLUE2 GOLD3 GREEN GREEN4 KHAKI1 LIGHTPINK1 LIGHTSEAGREEN ORANGE PALEVIOLETRED4 PLUM1 RED WHITE YELLOW )
-NLAYERS     : NLayers  = 45  ( 46 )
-LAYERS      : Layers   = 1 11 12 121 122 123 124 125 127 128 129 13 131 136 137 139 14 140 141 142 144 145 146 147 148 149 150 151 16 17 181 2 238 239 240 241 242 252 254 3 4 5 7 8 9  ( 1 11 12 121 122 123 124 125 127 128 129 13 131 136 137 139 14 140 141 142 144 145 146 147 148 149 150 151 16 17 181 2 238 239 240 241 242 250 252 254 3 4 5 7 8 9 )
 
-}
+ReadFileToDoc ${filename}
+
+puts "Check document D_First"
+puts "Compare with reference data"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 4336 -max_faults 733
+checkxstat D_First -n0 28 -n1 17629 -n2 0 -total 17657 -withname 17494 -withcolor 17629 -withlayer 17573 -centroid 0 -volume 0 -area 0 -colors { BLUE1 CYAN1 DARKKHAKI DARKSEAGREEN2 DEEPSKYBLUE2 DODGERBLUE2 GOLD3 GREEN GREEN4 KHAKI1 LIGHTPINK1 LIGHTSEAGREEN ORANGE PALEVIOLETRED4 PLUM1 RED WHITE YELLOW } -nbcolors 18 -layers { 1 11 12 121 122 123 124 125 127 128 129 13 131 136 137 139 14 140 141 142 144 145 146 147 148 149 150 151 16 17 181 2 238 239 240 241 242 250 252 254 3 4 5 7 8 9 } -nblayers 46
+
+XGetOneShape res_1 D_First
+
+puts "Check shape from document D_First"
+checkshapeff res_1 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+checknbshapes res_1 -solid 0 -shell 0 -face 2263 -shape 81625
+checkstatshape res_1 -solid 0 -shell 0 -face 2263 -freewire 2907 -freeedge 19507 -sharededge 29768
+set max_tol_res_1 [checkmaxtol res_1 -tol 0.7925891552 -avg 0.001648822728]
+
+ReOpenDoc ${filename}
+
+XGetOneShape res_2 D_Second
+
+puts "Check document D_Second"
+puts "Compare with document D_First"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 4336 -max_faults 733
+puts "Compare with reference data"
+checkdoc "data c" -max_warns 0 -max_faults 0
+checkdoc "tpstat c" -max_warns 68 -max_faults 0
+
+puts "Compare with doc D_First"
+checkxstat D_Second -n0 28 -n1 17629 -n2 0 -total 17657 -withname 17494 -withcolor 17629 -withlayer 17573 -centroid 0 -volume 0 -area 0 -nbcolors 18 -nblayers 46
+
+puts "Compare with reference values"
+checkxstat D_Second -n0 28 -n1 13487 -n2 0 -total 13515 -withname 13515 -withcolor 13489 -withlayer 13438 -centroid 0 -volume 0 -area 0 -colors { BLUE1 CYAN1 DARKKHAKI DARKSEAGREEN2 DEEPSKYBLUE2 DODGERBLUE2 GOLD3 GREEN GREEN4 KHAKI1 LIGHTPINK1 LIGHTSEAGREEN ORANGE PALEVIOLETRED4 PLUM1 RED WHITE YELLOW  } -nbcolors 18 -layers { 1 11 12 121 122 123 124 125 127 128 129 13 131 136 137 139 14 140 141 142 144 145 146 147 148 149 150 151 16 17 181 2 238 239 240 241 242 252 254 3 4 5 7 8 9  } -nblayers 45
+
+puts "Check shape from document D_Second"
+puts "Compare with shape res_1"
+checkshapeff res_2 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+puts "Compare with reference data"
+checkshapeff res_2 -max_wires 0 -max_faces 0 -max_shells 0 -max_solids 0
+set nbshapes_res_1 [nbshapes res_1]
+regexp {SHAPE +: +([-0-9.+eE]+)} ${nbshapes_res_1} full shape_res_1
+regexp {COMPOUND +: +([-0-9.+eE]+)} ${nbshapes_res_1} full comp_res_1
+set shape_comp_res_1 [expr ${shape_res_1} - ${comp_res_1}]
+checknbshapes res_2 -solid 0 -shell 0 -face 2263 -shape 81570 -de_iges ${shape_comp_res_1}
+checkstatshape res_2 -solid 0 -shell 0 -face 2263 -freewire 2854 -freeedge 19507 -sharededge 29768 -max_solid 0 -max_shell 0 -max_face 2263 -max_freewire 2907 -max_freeedge 19507
+checkmaxtol res_2 -tol 0.7925892163 -avg 0.001587410529 -max_tol ${max_tol_res_1}
+
