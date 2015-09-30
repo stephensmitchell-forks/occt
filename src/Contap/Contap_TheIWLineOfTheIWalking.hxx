@@ -71,6 +71,8 @@ public:
   
     void SetTangencyAtEnd (const Standard_Boolean IsTangent);
   
+    void SetTangency (const Standard_Boolean IsTangency) ;
+  
     Standard_Integer NbPoints() const;
   
     const IntSurf_PntOn2S& Value (const Standard_Integer Index) const;
@@ -100,6 +102,8 @@ public:
     Standard_Boolean IsTangentAtBegining() const;
   
     Standard_Boolean IsTangentAtEnd() const;
+  
+    Standard_Boolean IsTangency()  const;
 
 
 
@@ -127,6 +131,7 @@ private:
   gp_Vec vcttg;
   Standard_Boolean istgtbeg;
   Standard_Boolean istgtend;
+  Standard_Boolean istangency;
 
 
 };
