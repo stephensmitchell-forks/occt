@@ -1,0 +1,21 @@
+puts "========"
+puts "OCC28585"
+puts "========"
+puts ""
+#################################################
+# Wrong value of area computation
+#################################################
+
+# The face in Steps To Reproduce is based on infinite planar surface.
+# If we convert this surface to trimmed planar surface then
+# the area of obtained face will be significantly different from source one.
+
+restore [locate_data_file bug28585_planarface.brep] result
+
+smallview
+donly result
+fit
+
+xwd ${imagedir}/${test_image}.png
+
+set square 253.417

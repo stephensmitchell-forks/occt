@@ -14,6 +14,12 @@
 // commercial license or contractual agreement.
 
 #include <BRep_Tool.hxx>
+#include <TopTools_MapOfShape.hxx>
+#include <Geom2d_Line.hxx>
+#include <TopExp_Explorer.hxx>
+#include <TopoDS.hxx>
+#include <Precision.hxx>
+#include <TopoDS_Edge.hxx>
 
 //=======================================================================
 //function : BRepGProp_Face
@@ -46,7 +52,21 @@ inline BRepGProp_Face::BRepGProp_Face(const TopoDS_Face      &F,
 
 inline Standard_Boolean BRepGProp_Face::NaturalRestriction() const
 {
-  return BRep_Tool::NaturalRestriction(mySurface.Face());
+  const TopoDS_Face& aF = mySurface.Face();
+  TopoDS_Iterator anItW(aF);
+
+  TopLoc_Location aL;
+  Handle(Geom_Surface) aS = BRep_Tool::Surface(aF, aL);
+  Standard_Real aUm = 0.0, aUM = 0.0, aVm = 0.0, aVM = 0.0;
+  aS->Bounds(aUm, aUM, aVm, aVM);
+  
+  if ((Precision::IsInfinite(aUm) || Precision::IsInfinite(aUM) ||
+       Precision::IsInfinite(aVm) || Precision::IsInfinite(aVM)) && anItW.More())
+  {
+    return Standard_False;
+  }
+
+  return BRep_Tool::NaturalRestriction(aF);
 }
 
 //=======================================================================
