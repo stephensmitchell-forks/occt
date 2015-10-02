@@ -86,6 +86,9 @@ myZLayerGenId (1, IntegerLast())
   myRGrid = new V3d_RectangularGrid (this, Color1, Color2);
   myCGrid = new V3d_CircularGrid (this, Color1, Color2);
   myGridType = Aspect_GT_Rectangular;
+
+  // Create the default rendering params.
+  myDefaultRenderingParams = new Graphic3d_RenderingParams();
 }
 
 // ========================================================================
@@ -94,7 +97,10 @@ myZLayerGenId (1, IntegerLast())
 // ========================================================================
 Handle(V3d_View) V3d_Viewer::CreateView ()
 {
-  return new V3d_View(this, MyDefaultTypeOfView);
+  Handle(V3d_View) aNewView = new V3d_View(this, MyDefaultTypeOfView);
+  aNewView->ChangeRenderingParams() = myDefaultRenderingParams;
+
+  return aNewView;
 }
 
 // ========================================================================
@@ -533,4 +539,13 @@ Standard_ExtString V3d_Viewer::NextName() const
 void V3d_Viewer::IncrCount()
 {
   myNextCount++;
+}
+
+//=======================================================================
+//function : DefaultRenderingParams
+//purpose  :
+//=======================================================================
+Handle(Graphic3d_RenderingParams)& V3d_Viewer::DefaultRenderingParams()
+{
+  return myDefaultRenderingParams;
 }

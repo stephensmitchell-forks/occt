@@ -28,6 +28,7 @@ Graphic3d_CView::Graphic3d_CView (const Handle(Graphic3d_StructureManager)& theM
   myVisualization          (Graphic3d_TOV_WIREFRAME)
 {
   myId = myStructureManager->Identification (this);
+  myRenderParams = new Graphic3d_RenderingParams();
 }
 
 //=======================================================================

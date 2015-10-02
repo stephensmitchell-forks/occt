@@ -976,10 +976,10 @@ public:
   Standard_EXPORT const Handle(Graphic3d_Camera)& Camera() const;
 
   //! Returns current rendering parameters and effect settings.
-  Standard_EXPORT const Graphic3d_RenderingParams& RenderingParams() const;
+  Standard_EXPORT const Handle(Graphic3d_RenderingParams)& RenderingParams() const;
 
   //! Returns reference to current rendering parameters and effect settings.
-  Standard_EXPORT Graphic3d_RenderingParams& ChangeRenderingParams();
+  Standard_EXPORT Handle(Graphic3d_RenderingParams)& ChangeRenderingParams();
 
   //! @return flag value of objects culling mechanism
   Standard_EXPORT Standard_Boolean IsCullingEnabled() const;

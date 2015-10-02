@@ -251,7 +251,7 @@ void OpenGl_View::DrawBackground (const Handle(OpenGl_Workspace)& theWorkspace)
 //=======================================================================
 void OpenGl_View::Redraw()
 {
-  if (myRenderParams.Method == Graphic3d_RM_RAYTRACING
+  if (myRenderParams->Method == Graphic3d_RM_RAYTRACING
   && !myCaps->vboDisable
   && !myCaps->keepArrayData)
   {
@@ -271,7 +271,7 @@ void OpenGl_View::Redraw()
   myWindow->SetSwapInterval();
 
   ++myFrameCounter;
-  const Graphic3d_StereoMode      aStereoMode  = myRenderParams.StereoMode;
+  const Graphic3d_StereoMode      aStereoMode  = myRenderParams->StereoMode;
   Graphic3d_Camera::Projection    aProjectType = myCamera->ProjectionType();
   Handle(OpenGl_Context)          aCtx         = myWorkspace->GetGlContext();
 
@@ -501,7 +501,7 @@ void OpenGl_View::RedrawImmediate()
     return;
   }
 
-  const Graphic3d_StereoMode   aStereoMode  = myRenderParams.StereoMode;
+  const Graphic3d_StereoMode   aStereoMode  = myRenderParams->StereoMode;
   Graphic3d_Camera::Projection aProjectType = myCamera->ProjectionType();
   OpenGl_FrameBuffer*          aFrameBuffer = (OpenGl_FrameBuffer* )myFBO;
 
@@ -1029,7 +1029,7 @@ void OpenGl_View::renderStructs (OpenGl_FrameBuffer*    theReadDrawFbo,
   }
 
   Standard_Boolean toRenderGL = theToDrawImmediate ||
-    myRenderParams.Method != Graphic3d_RM_RAYTRACING ||
+    myRenderParams->Method != Graphic3d_RM_RAYTRACING ||
     myRaytraceInitStatus == OpenGl_RT_FAIL ||
     aCtx->IsFeedback();
 
@@ -1290,7 +1290,7 @@ void OpenGl_View::renderScene (OpenGl_FrameBuffer*    theReadDrawFbo,
 
     case Graphic3d_TOD_ENVIRONMENT:
       myWorkspace->NamedStatus |= OPENGL_NS_FORBIDSETTEX;
-      if (myRenderParams.Method != Graphic3d_RM_RAYTRACING)
+      if (myRenderParams->Method != Graphic3d_RM_RAYTRACING)
       {
         myWorkspace->EnableTexture (myTextureEnv);
       }
@@ -1310,7 +1310,7 @@ void OpenGl_View::renderScene (OpenGl_FrameBuffer*    theReadDrawFbo,
       if (myWorkspace->NamedStatus & OPENGL_NS_2NDPASSNEED)
       {
         myWorkspace->NamedStatus |= OPENGL_NS_2NDPASSDO;
-        if (myRenderParams.Method != Graphic3d_RM_RAYTRACING)
+        if (myRenderParams->Method != Graphic3d_RM_RAYTRACING)
         {
           myWorkspace->EnableTexture (myTextureEnv);
         }
@@ -1580,18 +1580,18 @@ void OpenGl_View::drawStereoPair()
 
   myWindow->PlatformWindow()->Position (aGeom.left, aGeom.top, aGeom.right, aGeom.bottom);
 
-  Standard_Boolean toReverse = myRenderParams.ToReverseStereo;
+  Standard_Boolean toReverse = myRenderParams->ToReverseStereo;
   const Standard_Boolean isOddY = (aGeom.top + aGeom.dy()) % 2 == 1;
   const Standard_Boolean isOddX =  aGeom.left % 2 == 1;
   if (isOddY
-   && (myRenderParams.StereoMode == Graphic3d_StereoMode_RowInterlaced
-    || myRenderParams.StereoMode == Graphic3d_StereoMode_ChessBoard))
+   && (myRenderParams->StereoMode == Graphic3d_StereoMode_RowInterlaced
+    || myRenderParams->StereoMode == Graphic3d_StereoMode_ChessBoard))
   {
     toReverse = !toReverse;
   }
   if (isOddX
-   && (myRenderParams.StereoMode == Graphic3d_StereoMode_ColumnInterlaced
-    || myRenderParams.StereoMode == Graphic3d_StereoMode_ChessBoard))
+   && (myRenderParams->StereoMode == Graphic3d_StereoMode_ColumnInterlaced
+    || myRenderParams->StereoMode == Graphic3d_StereoMode_ChessBoard))
   {
     toReverse = !toReverse;
   }
@@ -1611,14 +1611,14 @@ void OpenGl_View::drawStereoPair()
 
   const Handle(OpenGl_ShaderManager)& aManager = aCtx->ShaderManager();
   if (aVerts->IsValid()
-   && aManager->BindStereoProgram (myRenderParams.StereoMode))
+   && aManager->BindStereoProgram (myRenderParams->StereoMode))
   {
-    if (myRenderParams.StereoMode == Graphic3d_StereoMode_Anaglyph)
+    if (myRenderParams->StereoMode == Graphic3d_StereoMode_Anaglyph)
     {
       OpenGl_Mat4 aFilterL, aFilterR;
       aFilterL.SetDiagonal (Graphic3d_Vec4 (0.0f, 0.0f, 0.0f, 0.0f));
       aFilterR.SetDiagonal (Graphic3d_Vec4 (0.0f, 0.0f, 0.0f, 0.0f));
-      switch (myRenderParams.AnaglyphFilter)
+      switch (myRenderParams->AnaglyphFilter)
       {
         case Graphic3d_RenderingParams::Anaglyph_RedCyan_Simple:
         {
@@ -1667,8 +1667,8 @@ void OpenGl_View::drawStereoPair()
         }
         case Graphic3d_RenderingParams::Anaglyph_UserDefined:
         {
-          aFilterL = myRenderParams.AnaglyphLeft;
-          aFilterR = myRenderParams.AnaglyphRight;
+          aFilterL = myRenderParams->AnaglyphLeft;
+          aFilterR = myRenderParams->AnaglyphRight;
           break;
         }
       }

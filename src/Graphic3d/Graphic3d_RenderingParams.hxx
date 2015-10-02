@@ -22,7 +22,7 @@
 #include <Graphic3d_Vec4.hxx>
 
 //! Helper class to store rendering parameters.
-class Graphic3d_RenderingParams
+class Graphic3d_RenderingParams : public Standard_Transient
 {
 public:
   //! Default pixels density.
@@ -103,6 +103,10 @@ public:
                                                        //!< Note that using difference resolution in different Views in same Viewer
                                                        //!< will lead to performance regression (for example, text will be recreated every time).
 
+public:
+  DEFINE_STANDARD_RTTI(Graphic3d_RenderingParams, Standard_Transient)
 };
+
+DEFINE_STANDARD_HANDLE(Graphic3d_RenderingParams, Standard_Transient)
 
 #endif // _Graphic3d_RenderingParams_HeaderFile

@@ -1560,6 +1560,11 @@ public:
   //! Redraws immediate structures in all views of the viewer given taking into account its visibility.
   Standard_EXPORT void RedrawImmediate (const Handle(V3d_Viewer)& theViewer);
 
+  //! Sets a new resolution for default rendering params.
+  Standard_EXPORT void SetDefaultResolution (const unsigned int theResolution);
+
+  //! Returns default rendering params.
+  Standard_EXPORT const Handle(Graphic3d_RenderingParams)& DefaultRenderingParams() const;
 
 friend class AIS_LocalContext;
 

@@ -65,7 +65,7 @@ Standard_Boolean V3d_View::IsGLLightEnabled() const
 //function : RenderingParams
 //purpose  :
 //=============================================================================
-const Graphic3d_RenderingParams& V3d_View::RenderingParams() const
+const Handle(Graphic3d_RenderingParams)& V3d_View::RenderingParams() const
 {
   return myView->RenderingParams();
 }
@@ -74,7 +74,7 @@ const Graphic3d_RenderingParams& V3d_View::RenderingParams() const
 //function : ChangeRenderingParams
 //purpose  :
 //=============================================================================
-Graphic3d_RenderingParams& V3d_View::ChangeRenderingParams()
+Handle(Graphic3d_RenderingParams)& V3d_View::ChangeRenderingParams()
 {
   return myView->ChangeRenderingParams();
 }
