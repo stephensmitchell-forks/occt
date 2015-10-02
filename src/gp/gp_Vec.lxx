@@ -86,6 +86,13 @@ inline Standard_Real gp_Vec::Z() const
 inline const gp_XYZ& gp_Vec::XYZ () const
 { return coord; }
 
+inline Standard_Real gp_Vec::AngleWithRef ( const gp_Vec& theOther,
+                                            const gp_Vec& theVref) const
+{
+  const gp_XYZ aNormal(coord.Crossed (theOther.coord));
+  return Sign(Angle(theOther), aNormal.Dot(theVref.coord));
+} 
+
 inline Standard_Boolean gp_Vec::IsNormal
 (const gp_Vec& Other,
  const Standard_Real AngularTolerance) const
@@ -96,46 +103,20 @@ inline Standard_Boolean gp_Vec::IsNormal
 }    
 
 inline Standard_Boolean gp_Vec::IsOpposite
-(const gp_Vec& Other,
- const Standard_Real AngularTolerance) const
+(const gp_Vec& theOther,
+ const Standard_Real theAngularTolerance) const
 {
-  Standard_Real Ang = M_PI - Angle(Other);
-  return Ang <= AngularTolerance;
+  const Standard_Real anAng = Angle(theOther);
+  return !(M_PI - anAng > theAngularTolerance);
 }    
 
 inline Standard_Boolean gp_Vec::IsParallel
-(const gp_Vec& Other,
- const Standard_Real AngularTolerance) const
+(const gp_Vec& theOther,
+ const Standard_Real theAngularTolerance) const
 {
-  Standard_Real Ang = Angle (Other);
-  return   Ang <= AngularTolerance || M_PI - Ang <= AngularTolerance;
+  const Standard_Real anAng = Angle(theOther);
+  return !((anAng > theAngularTolerance) && (M_PI - anAng > theAngularTolerance));
 }    
-
-inline Standard_Real gp_Vec::Angle (const gp_Vec& Other) const
-{
-  //    Commentaires :
-  //    Au dessus de 45 degres l'arccos donne la meilleur precision pour le
-  //    calcul de l'angle. Sinon il vaut mieux utiliser l'arcsin.
-  //    Les erreurs commises sont loin d'etre negligeables lorsque l'on est
-  //    proche de zero ou de 90 degres.
-  //    En 3d les valeurs angulaires sont toujours positives et comprises entre
-  //    0 et Pi.
-  
-  gp_VectorWithNullMagnitude_Raise_if
-    (coord.Modulus()       <= gp::Resolution() ||
-     Other.coord.Modulus() <= gp::Resolution(), " ");
-  return (gp_Dir(coord)).Angle(Other);
-}
-
-inline Standard_Real gp_Vec::AngleWithRef (const gp_Vec& Other,
-					   const gp_Vec& Vref) const
-{
-  gp_VectorWithNullMagnitude_Raise_if
-    (coord.Modulus()       <= gp::Resolution() ||
-     Vref.coord.Modulus () <= gp::Resolution() ||
-     Other.coord.Modulus() <= gp::Resolution(), " ");
-  return (gp_Dir(coord)).AngleWithRef(Other,Vref);
-} 
 
 inline Standard_Real gp_Vec::Magnitude() const
 { return coord.Modulus(); }
@@ -229,11 +210,9 @@ inline void gp_Vec::Normalize()
 
 inline gp_Vec gp_Vec::Normalized() const
 { 
-  Standard_Real D = coord.Modulus();
-  Standard_ConstructionError_Raise_if (D <= gp::Resolution(), "");
   gp_Vec V = *this;
-  V.coord.Divide (D);
-  return V; 
+  V.Normalize();
+  return V;
 }
 
 inline void gp_Vec::Reverse()

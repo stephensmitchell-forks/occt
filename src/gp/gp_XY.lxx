@@ -65,7 +65,7 @@ inline Standard_Real gp_XY::Y () const
 
 inline Standard_Real gp_XY::Modulus () const
 { 
-  return sqrt (x * x + y * y);
+  return sqrt (SquareModulus());
 }
 
 inline Standard_Real gp_XY::SquareModulus () const
@@ -88,13 +88,11 @@ inline Standard_Real gp_XY::Crossed (const gp_XY& Right) const {
 
 inline Standard_Real gp_XY::CrossMagnitude (const gp_XY& Right) const
 {
-  Standard_Real val = x * Right.y - y * Right.x;
-  if (val < 0) val = - val;
-  return val;
+  return Abs(x * Right.y - y * Right.x);
 }
 
 inline Standard_Real gp_XY::CrossSquareMagnitude (const gp_XY& Right) const {
-  Standard_Real Zresult =  x * Right.y - y * Right.x;
+  const Standard_Real Zresult = CrossMagnitude(Right);
   return Zresult * Zresult;
 }
 
@@ -152,7 +150,8 @@ inline void gp_XY::Normalize ()
 {
   Standard_Real D = Modulus();
   Standard_ConstructionError_Raise_if (D <= gp::Resolution(), "");
-  x = x / D;   y = y / D;
+  x = x / D;
+  y = y / D;
 }
 
 inline gp_XY gp_XY::Normalized () const

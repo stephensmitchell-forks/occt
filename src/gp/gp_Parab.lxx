@@ -25,19 +25,17 @@ inline gp_Parab::gp_Parab (const gp_Ax2& A2,
 			   focalLength (Focal)
 { Standard_ConstructionError_Raise_if(Focal < 0.0,""); }
 
-inline gp_Parab::gp_Parab (const gp_Ax1& D,
-			   const gp_Pnt& F)
+inline gp_Parab::gp_Parab ( const gp_Ax1& theDirectrix,
+                            const gp_Pnt& theFocus)
 {
-  gp_Lin Droite(D);
-  focalLength = Droite.Distance(F) / 2.;
-  gp_Ax1 Ax = Droite.Normal(F).Position();
-  gp_Ax1 Ay = Droite.Position();     
+  gp_Lin aDirectrix(theDirectrix);
+  focalLength = aDirectrix.Distance(theFocus) / 2.;
+  gp_Ax1 Ax = aDirectrix.Normal(theFocus).Position();
+  gp_Ax1 Ay = aDirectrix.Position();     
   const gp_Dir& DD = Ax.Direction();
-  pos = gp_Ax2 (gp_Pnt(F.X() - focalLength * DD.X(),
-		       F.Y() - focalLength * DD.Y(),
-		       F.Z() - focalLength * DD.Z()),
-		Ax.Direction().Crossed(Ay.Direction()),
-		Ax.Direction());
+  pos = gp_Ax2( gp_Pnt(theFocus.XYZ() - focalLength * DD.XYZ()),
+                Ax.Direction().Crossed(Ay.Direction()),
+                Ax.Direction());
 }
 
 inline void gp_Parab::SetAxis (const gp_Ax1& A1)
@@ -62,9 +60,7 @@ inline gp_Ax1 gp_Parab::Directrix() const
 {
   const gp_Pnt& PP = pos.Location  ();
   const gp_Dir& DD = pos.XDirection();
-  gp_Pnt P (PP.X() - focalLength * DD.X(),
-	    PP.Y() - focalLength * DD.Y(),
-	    PP.Z() - focalLength * DD.Z());
+  gp_Pnt P (PP.XYZ() - focalLength * DD.XYZ());
   return gp_Ax1 (P, pos.YDirection());
 }
 
@@ -75,9 +71,7 @@ inline gp_Pnt gp_Parab::Focus() const
 {
   const gp_Pnt& PP = pos.Location  ();
   const gp_Dir& DD = pos.XDirection();
-  return gp_Pnt (PP.X() + focalLength * DD.X(),
-		 PP.Y() + focalLength * DD.Y(),
-		 PP.Z() + focalLength * DD.Z());
+  return gp_Pnt (PP.XYZ() + focalLength * DD.XYZ());
 }
 
 inline const gp_Pnt& gp_Parab::Location () const

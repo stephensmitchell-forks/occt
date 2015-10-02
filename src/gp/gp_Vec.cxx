@@ -32,23 +32,68 @@
 #include <Standard_DomainError.hxx>
 #include <Standard_OutOfRange.hxx>
 
-Standard_Boolean gp_Vec::IsEqual
-(const gp_Vec& Other, 
- const Standard_Real LinearTolerance,
- const Standard_Real AngularTolerance) const
+Standard_Boolean gp_Vec::IsEqual( const gp_Vec& theOther,
+                                  const Standard_Real theLinearTolerance,
+                                  const Standard_Real theAngularTolerance) const
 {
-  if (Magnitude ()       <= LinearTolerance || 
-      Other.Magnitude () <= LinearTolerance) {
-    Standard_Real val = Magnitude() - Other.Magnitude();
-    if (val < 0) val = - val;
-    return val <= LinearTolerance;
+  const Standard_Real aSqLinTol = theLinearTolerance*theLinearTolerance;
+  const Standard_Real aMySqNorm = SquareMagnitude();
+  const Standard_Real aOtherSqNorm = theOther.SquareMagnitude();
+
+  const Standard_Boolean  aMyCond = (aMySqNorm < aSqLinTol),
+                          aOCond = (aOtherSqNorm < aSqLinTol);
+
+  if(aMyCond && aOCond)
+    return Standard_True;
+
+  if(!aMyCond && !aOCond)
+  {
+    const Standard_Boolean aCond = Abs(sqrt(aMySqNorm)-sqrt(aOtherSqNorm)) < theLinearTolerance;
+    return aCond && IsCoincide(theOther, theAngularTolerance);
   }
-  else {
-    Standard_Real val = Magnitude() - Other.Magnitude();
-    if (val < 0) val = - val;
-    return val <= LinearTolerance && Angle(Other) <= AngularTolerance;
-  }
-}    
+
+  return Standard_False;
+}
+
+Standard_Real gp_Vec::Angle (const gp_Vec& theOther) const
+{
+  const Standard_Real aNormProduct = sqrt(SquareMagnitude() * theOther.SquareMagnitude());
+  if (aNormProduct <= gp::Resolution())
+    gp_VectorWithNullMagnitude::Raise();
+
+  //Cosine and sine of Angle
+  const Standard_Real aCosinus = coord.Dot   (theOther.coord) / aNormProduct;
+  const Standard_Real aSinus = coord.Crossed (theOther.coord).Modulus() / aNormProduct;
+
+  //  According to Thaylor series expanding,
+  //      \arccos (x_{0}+\Delta x) \approx \arccos x_{0} - \frac{\Delta x}{\sqrt{1-x_{0}^{2}}},
+  //      \arcsin (x_{0}+\Delta x) \approx \arcsin x_{0} + \frac{\Delta x}{\sqrt{1-x_{0}^{2}}},
+
+  //where @{ x_{0} \in \left [ 0,1 \right ] }@.
+
+  //  In order to compute @{ \arccos x }@ (where @{ x \cong 1.0 }@) there are two ways:
+  //1. To take reference point (@{ x_{0} }@) quite far from 1 (e.g. @{ x_{0} = 0.0 }@).
+  //    It results in using too many series member.
+  //2. To take reference point (@{ x_{0} \cong 1 }@). In this case,
+  //      \sqrt {\frac{1}{1-x_{0}^{2}}}\rightarrow \infty.
+  //Therefore, it will require to use too many series member, too.
+
+  //  Consequently, it is difficult to compute precise value of
+  //@{ \arccos x }@ and @{ \arcsin x }@ function, if @{ x \cong 1 }@.
+
+  //  However, if @{ \sin \alpha \cong 1 }@ then @{ \cos \alpha \cong 0 }@
+  //(and vice versa). In this case Angle value is better to be computed as
+  //"arccos" function (from known value).
+
+  if ((-M_SQRT1_2 < aCosinus) && (aCosinus < M_SQRT1_2))
+    return Sign(acos(aCosinus), aSinus);
+
+  const Standard_Real anArcSin = asin(aSinus);
+  if(aCosinus < 0.0)
+    return (Sign(M_PI, aSinus) - anArcSin);
+
+  return anArcSin;
+}
 
 void gp_Vec::Mirror (const gp_Vec& V)
 {

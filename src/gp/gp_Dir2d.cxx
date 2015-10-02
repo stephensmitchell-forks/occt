@@ -23,27 +23,40 @@
 #include <Standard_DomainError.hxx>
 #include <Standard_OutOfRange.hxx>
 
-Standard_Real gp_Dir2d::Angle (const gp_Dir2d& Other) const
+Standard_Real gp_Dir2d::Angle (const gp_Dir2d& theOther) const
 {
-  //    Commentaires :
-  //    Au dessus de 45 degres l'arccos donne la meilleur precision pour le
-  //    calcul de l'angle. Sinon il vaut mieux utiliser l'arcsin.
-  //    Les erreurs commises sont loin d'etre negligeables lorsque l'on est
-  //    proche de zero ou de 90 degres.
-  //    En 2D les valeurs angulaires sont comprises entre -PI et PI
-  Standard_Real Cosinus = coord.Dot   (Other.coord);
-  Standard_Real Sinus = coord.Crossed (Other.coord);
-  if (Cosinus > -0.70710678118655 && Cosinus < 0.70710678118655) { 
-    if (Sinus > 0.0) return   acos (Cosinus);
-    else             return - acos (Cosinus);
-  }
-  else {
-    if (Cosinus > 0.0)  return      asin (Sinus);
-    else { 
-      if (Sinus > 0.0) return  M_PI - asin (Sinus);
-      else             return -M_PI - asin (Sinus);
-    }
-  }
+  //Cosine and sine of Angle
+  const Standard_Real aCosinus = coord.Dot   (theOther.coord);
+  const Standard_Real aSinus = coord.Crossed (theOther.coord);
+
+  //  According to Thaylor series expanding,
+  //      \arccos (x_{0}+\Delta x) \approx \arccos x_{0} - \frac{\Delta x}{\sqrt{1-x_{0}^{2}}},
+  //      \arcsin (x_{0}+\Delta x) \approx \arcsin x_{0} + \frac{\Delta x}{\sqrt{1-x_{0}^{2}}},
+
+  //where @{ x_{0} \in \left [ 0,1 \right ] }@.
+
+  //  In order to compute @{ \arccos x }@ (where @{ x \cong 1.0 }@) there are two ways:
+  //1. To take reference point (@{ x_{0} }@) quite far from 1 (e.g. @{ x_{0} = 0.0 }@).
+  //    It results in using too many series member.
+  //2. To take reference point (@{ x_{0} \cong 1 }@). In this case,
+  //      \sqrt {\frac{1}{1-x_{0}^{2}}}\rightarrow \infty.
+  //Therefore, it will require to use too many series member, too.
+
+  //  Consequently, it is difficult to compute precise value of
+  //@{ \arccos x }@ and @{ \arcsin x }@ function, if @{ x \cong 1 }@.
+
+  //  However, if @{ \sin \alpha \cong 1 }@ then @{ \cos \alpha \cong 0 }@
+  //(and vice versa). In this case Angle value is better to be computed as
+  //"arccos" function (from known value).
+
+  if ((-M_SQRT1_2 < aCosinus) && (aCosinus < M_SQRT1_2))
+    return Sign(acos(aCosinus), aSinus);
+
+  const Standard_Real anArcSin = asin(aSinus);
+  if(aCosinus < 0.0)
+    return (Sign(M_PI, aSinus) - anArcSin);
+
+  return anArcSin;
 }
 
 void gp_Dir2d::Mirror (const gp_Ax2d& A2)
@@ -67,7 +80,11 @@ void gp_Dir2d::Transform (const gp_Trsf2d& T)
     if (T.ScaleFactor() < 0.0) { coord.Reverse(); }
   }
   else {
+    //Apply transformation, set by the homogeneous vectorial part of T
     coord.Multiply (T.HVectorialPart());
+
+    //After transformation, earlier normalized vector "coord" will be able to
+    //be not normalized. Therefore, we must normalize it again.
     Standard_Real D = coord.Modulus();
     coord.Divide(D);
     if (T.ScaleFactor() < 0.0) { coord.Reverse(); }

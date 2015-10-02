@@ -60,20 +60,14 @@ inline Standard_Boolean gp_Lin::Contains
 { return Distance(P) <= LinearTolerance; }
 
 inline Standard_Real gp_Lin::Distance (const gp_Pnt& P) const {
-  gp_XYZ Coord = P.XYZ();
-  Coord.Subtract ((pos.Location()).XYZ());
-  Coord.Cross ((pos.Direction()).XYZ());
-  return Coord.Modulus();
+  return sqrt(SquareDistance(P));
 }
 
 inline Standard_Real gp_Lin::SquareDistance (const gp_Pnt& P) const
 {
-  const gp_Pnt& Loc = pos.Location();
-  gp_Vec V (P.X() - Loc.X(),
-	    P.Y() - Loc.Y(),
-	    P.Z() - Loc.Z());
-  V.Cross (pos.Direction());
-  return V.SquareMagnitude ();                                          
+  gp_Vec aCoord(pos.Location(), P);
+  Standard_Real aVal = aCoord.Crossed(pos.Direction()).SquareMagnitude();
+  return aVal;
 }
 
 inline Standard_Real gp_Lin::SquareDistance (const gp_Lin& Other) const
@@ -82,14 +76,13 @@ inline Standard_Real gp_Lin::SquareDistance (const gp_Lin& Other) const
   return D * D;
 }
 
-inline gp_Lin gp_Lin::Normal (const gp_Pnt& P) const
+inline gp_Lin gp_Lin::Normal (const gp_Pnt& theP) const
 {
-  const gp_Pnt& Loc = pos.Location();
-  gp_Dir V (P.X() - Loc.X(),
-	    P.Y() - Loc.Y(),
-	    P.Z() - Loc.Z());
-  V = pos.Direction().CrossCrossed(V, pos.Direction());
-  return gp_Lin (P, V);
+  const gp_Pnt& aLLoc = pos.Location();
+  const gp_Vec& aLDir = pos.Direction();
+  gp_Vec aV (aLLoc, theP);
+  const gp_Vec aNDir(aV-aLDir*aV.Dot(aLDir));
+  return gp_Lin (theP, aNDir);
 }
 
 inline void gp_Lin::Rotate (const gp_Ax1& A1,

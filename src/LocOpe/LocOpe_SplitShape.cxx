@@ -1453,6 +1453,10 @@ static void ChoixUV(const TopoDS_Edge& Last,
 
     if (!Last.IsSame(anEdge)) {
       ang = ref2d.Angle(gp_Dir2d(v2d));
+      if(IsEqual(ang, M_PI))
+      {//This edge will be ignored
+        ang = -M_PI;
+      }
     }
     else {
       ang = -M_PI;

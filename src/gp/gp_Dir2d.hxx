@@ -46,18 +46,18 @@ public:
 
   DEFINE_STANDARD_ALLOC
 
-  
-  //! Creates a direction corresponding to X axis.
+
+    //! Creates a direction corresponding to X axis.
     gp_Dir2d();
-  
+
   //! Normalizes the vector V and creates a Direction. Raises ConstructionError if V.Magnitude() <= Resolution from gp.
-    gp_Dir2d(const gp_Vec2d& V);
-  
+  gp_Dir2d(const gp_Vec2d& V);
+
   //! Creates a Direction from a doublet of coordinates. Raises ConstructionError if Coord.Modulus() <= Resolution from gp.
-    gp_Dir2d(const gp_XY& Coord);
-  
+  gp_Dir2d(const gp_XY& Coord);
+
   //! Creates a Direction with its 2 cartesian coordinates. Raises ConstructionError if Sqrt(Xv*Xv + Yv*Yv) <= Resolution from gp.
-    gp_Dir2d(const Standard_Real Xv, const Standard_Real Yv);
+  gp_Dir2d(const Standard_Real Xv, const Standard_Real Yv);
   
 
   //! For this unit vector, assigns:
@@ -76,8 +76,8 @@ public:
   //! value Xi and the other coordinate of this vector that
   //! was not directly modified.
   //! Raises OutOfRange if Index != {1, 2}.
-    void SetCoord (const Standard_Integer Index, const Standard_Real Xi);
-  
+  void SetCoord (const Standard_Integer Index, const Standard_Real Xi);
+
 
   //! For this unit vector, assigns:
   //! -   the values Xv and Yv to its two coordinates,
@@ -93,8 +93,8 @@ public:
   //! value Xi and the other coordinate of this vector that
   //! was not directly modified.
   //! Raises OutOfRange if Index != {1, 2}.
-    void SetCoord (const Standard_Real Xv, const Standard_Real Yv);
-  
+  void SetCoord (const Standard_Real Xv, const Standard_Real Yv);
+
 
   //! Assigns the given value to the X coordinate of this unit   vector,
   //! and then normalizes it.
@@ -108,8 +108,8 @@ public:
   //! -   the modulus of the number pair formed from the new
   //! X or Y coordinate and the other coordinate of this
   //! vector that was not directly modified.
-    void SetX (const Standard_Real X);
-  
+  void SetX (const Standard_Real X);
+
 
   //! Assigns  the given value to the Y coordinate of this unit   vector,
   //! and then normalizes it.
@@ -123,8 +123,8 @@ public:
   //! -   the modulus of the number pair formed from the new
   //! X or Y coordinate and the other coordinate of this
   //! vector that was not directly modified.
-    void SetY (const Standard_Real Y);
-  
+  void SetY (const Standard_Real Y);
+
 
   //! Assigns:
   //! -   the two coordinates of Coord to this unit vector,
@@ -139,86 +139,90 @@ public:
   //! -   the modulus of the number pair formed from the new
   //! X or Y coordinate and the other coordinate of this
   //! vector that was not directly modified.
-    void SetXY (const gp_XY& Coord);
-  
+  void SetXY (const gp_XY& Coord);
+
 
   //! For this unit vector returns the coordinate of range Index :
   //! Index = 1 => X is returned
   //! Index = 2 => Y is returned
   //! Raises OutOfRange if Index != {1, 2}.
-    Standard_Real Coord (const Standard_Integer Index) const;
-  
+  Standard_Real Coord (const Standard_Integer Index) const;
+
   //! For this unit vector returns its two coordinates Xv and Yv.
   //! Raises OutOfRange if Index != {1, 2}.
-    void Coord (Standard_Real& Xv, Standard_Real& Yv) const;
-  
+  void Coord (Standard_Real& Xv, Standard_Real& Yv) const;
+
   //! For this unit vector, returns its X coordinate.
-    Standard_Real X() const;
-  
+  Standard_Real X() const;
+
   //! For this unit vector, returns its Y coordinate.
-    Standard_Real Y() const;
-  
+  Standard_Real Y() const;
+
   //! For this unit vector, returns its two coordinates as a number pair.
   //! Comparison between Directions
   //! The precision value is an input data.
-    const gp_XY& XY() const;
+  const gp_XY& XY() const;
   
-
   //! Returns True if the two vectors have the same direction
   //! i.e. the angle between this unit vector and the
   //! unit vector Other is less than or equal to AngularTolerance.
     Standard_Boolean IsEqual (const gp_Dir2d& Other, const Standard_Real AngularTolerance) const;
-  
+
 
   //! Returns True if the angle between this unit vector and the
   //! unit vector Other is equal to Pi/2 or -Pi/2 (normal)
   //! i.e. Abs(Abs(<me>.Angle(Other)) - PI/2.) <= AngularTolerance
     Standard_Boolean IsNormal (const gp_Dir2d& Other, const Standard_Real AngularTolerance) const;
-  
+
 
   //! Returns True if the angle between this unit vector and the
   //! unit vector Other is equal to Pi or -Pi (opposite).
-  //! i.e.  PI - Abs(<me>.Angle(Other)) <= AngularTolerance
-    Standard_Boolean IsOpposite (const gp_Dir2d& Other, const Standard_Real AngularTolerance) const;
-  
+  //! I.e. returns True if Abs(<me>.Angle(Other)) == PI +/- AngularTolerance.
+  Standard_Boolean IsOpposite ( const gp_Dir2d& theOther,
+                                const Standard_Real theAngularTolerance) const;
 
-  //! returns true if if the angle between this unit vector and unit
-  //! vector Other is equal to 0, Pi or -Pi.
-  //! i.e.  Abs(Angle(<me>, Other)) <= AngularTolerance or
-  //! PI - Abs(Angle(<me>, Other)) <= AngularTolerance
-    Standard_Boolean IsParallel (const gp_Dir2d& Other, const Standard_Real AngularTolerance) const;
-  
+  //! Returns True if Abs(<me>.Angle(Other)) <= AngularTolerance.
+  Standard_Boolean IsCoincide ( const gp_Dir2d& theOther,
+                                const Standard_Real theAngularTolerance) const
+  {
+    const Standard_Real anAng = Abs(Angle(theOther));
+    return !(anAng > theAngularTolerance);
+  }  
+
+  //! Returns IsOpposite(...) || IsCoincide(...).
+  Standard_Boolean IsParallel ( const gp_Dir2d& theOther,
+                                const Standard_Real theAngularTolerance) const;
 
   //! Computes the angular value in radians between <me> and
   //! <Other>. Returns the angle in the range [-PI, PI].
   Standard_EXPORT Standard_Real Angle (const gp_Dir2d& Other) const;
-  
+
 
   //! Computes the cross product between two directions.
-    Standard_Real Crossed (const gp_Dir2d& Right) const;
+  Standard_Real Crossed (const gp_Dir2d& Right) const;
   Standard_Real operator ^ (const gp_Dir2d& Right) const
-{
-  return Crossed(Right);
-}
-  
+  {
+    return Crossed(Right);
+  }
+
   //! Computes the scalar product
-    Standard_Real Dot (const gp_Dir2d& Other) const;
+  Standard_Real Dot (const gp_Dir2d& Other) const;
   Standard_Real operator * (const gp_Dir2d& Other) const
-{
-  return Dot(Other);
-}
-  
-    void Reverse();
-  
+  {
+    return Dot(Other);
+  }
+
+  void Reverse();
+
   //! Reverses the orientation of a direction
-    gp_Dir2d Reversed() const;
+  gp_Dir2d Reversed() const;
   gp_Dir2d operator -() const
-{
-  return Reversed();
-}
-  
+  {
+    return Reversed();
+  }
+
   Standard_EXPORT void Mirror (const gp_Dir2d& V);
-  
+
 
   //! Performs the symmetrical transformation of a direction
   //! with respect to the direction V which is the center of

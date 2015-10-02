@@ -104,8 +104,10 @@ public:
   //! Note: This syntax allows direct modification of the returned value.
     gp_XYZ& ChangeCoord();
   
-  //! Assigns the result of the following expression to this point
-  //! (Alpha*this + Beta*P) / (Alpha + Beta)
+  //! Computes a Bary-center of the system two points:
+  //! <this> (with mass Alpha) and P (with mass Beta).
+  //! I.e. computes value
+  //!     (Alpha*this + Beta*P) / (Alpha + Beta)
     void BaryCenter (const Standard_Real Alpha, const gp_Pnt& P, const Standard_Real Beta);
   
   //! Comparison

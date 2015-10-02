@@ -85,8 +85,12 @@ public:
   //! A * X + B * Y + C * Z + D = 0.0
   //! Raises ConstructionError if Sqrt (A*A + B*B + C*C) <= Resolution from gp.
   Standard_EXPORT gp_Pln(const Standard_Real A, const Standard_Real B, const Standard_Real C, const Standard_Real D);
-  
 
+  //! Creates a plane, which goes throw three given points.
+  //! Location is the barycenter of the triangle.
+  //! Raises ConstructionError if points lie in one line.
+  Standard_EXPORT gp_Pln(const gp_Pnt& theP1, const gp_Pnt& theP2, const gp_Pnt& theP3);
+  
   //! Returns the coefficients of the plane's cartesian equation :
   //! A * X + B * Y + C * Z + D = 0.
     void Coefficients (Standard_Real& A, Standard_Real& B, Standard_Real& C, Standard_Real& D) const;
@@ -245,6 +249,8 @@ public:
 
 protected:
 
+  //! Initializes the plane with its location and direction.
+  Standard_EXPORT void gp_Pln::Init(const gp_Pnt& P, const gp_Dir& V);
 
 
 

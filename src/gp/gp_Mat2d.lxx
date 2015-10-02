@@ -14,6 +14,7 @@
 
 #include <gp.hxx>
 #include <Standard_OutOfRange.hxx>
+#include <Standard_ConstructionError.hxx>
 
 #define Mat2d00 ((Standard_Real*)M)[0]
 #define Mat2d01 ((Standard_Real*)M)[1]
@@ -131,6 +132,11 @@ inline gp_Mat2d gp_Mat2d::Added (const gp_Mat2d& Other) const
 
 inline void gp_Mat2d::Divide (const Standard_Real Scalar)
 {
+  Standard_Real val = Scalar;
+  if (val < 0) val = - val;
+  Standard_ConstructionError_Raise_if
+      (val <= gp::Resolution(),"gp_Mat2d : Divide by 0");
+
   const Standard_Address M = (Standard_Address)&(matrix[0][0]);
   Mat2d00 /= Scalar;
   Mat2d01 /= Scalar;
@@ -140,6 +146,11 @@ inline void gp_Mat2d::Divide (const Standard_Real Scalar)
 
 inline gp_Mat2d gp_Mat2d::Divided (const Standard_Real Scalar) const
 {
+  Standard_Real val = Scalar;
+  if (val < 0) val = - val;
+  Standard_ConstructionError_Raise_if
+      (val <= gp::Resolution(),"gp_Mat2d : Divide by 0");
+
   gp_Mat2d NewMat2d;
   const Standard_Address M = (Standard_Address)&(         matrix[0][0]);
   const Standard_Address N = (Standard_Address)&(NewMat2d.matrix[0][0]);

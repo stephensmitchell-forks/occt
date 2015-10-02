@@ -60,18 +60,13 @@ inline gp_Dir::gp_Dir (const Standard_Real Xv,
 inline void gp_Dir::SetCoord (const Standard_Integer Index,
 			      const Standard_Real Xi)
 {
-  Standard_Real X = coord.X();
-  Standard_Real Y = coord.Y();
-  Standard_Real Z = coord.Z();
   Standard_OutOfRange_Raise_if (Index < 1 || Index > 3, " ");
-  if      (Index == 1)  X = Xi;
-  else if (Index == 2)  Y = Xi;
-  else                  Z = Xi;
-  Standard_Real D = sqrt (X * X + Y * Y + Z * Z);
-  Standard_ConstructionError_Raise_if (D <= gp::Resolution(), "");
-  coord.SetX(X / D);
-  coord.SetY(Y / D);
-  coord.SetZ(Z / D);
+  if(Index == 1)
+    SetX(Xi);
+  else if (Index == 2)
+    SetY(Xi);
+  else
+    SetZ(Xi);
 }
 
 inline void gp_Dir::SetCoord (const Standard_Real Xv,
@@ -150,9 +145,11 @@ inline  const gp_XYZ& gp_Dir::XYZ () const
 { return coord; }
 
 inline Standard_Boolean gp_Dir::IsEqual
-(const gp_Dir& Other, 
- const Standard_Real AngularTolerance) const
-{ return   Angle (Other) <= AngularTolerance; }    
+(const gp_Dir& theOther, 
+ const Standard_Real theAngularTolerance) const
+{
+  return IsCoincide(theOther, theAngularTolerance);
+}
 
 inline Standard_Boolean gp_Dir::IsNormal
 (const gp_Dir& Other,
@@ -164,16 +161,20 @@ inline Standard_Boolean gp_Dir::IsNormal
 }    
 
 inline Standard_Boolean gp_Dir::IsOpposite
-(const gp_Dir& Other,
- const Standard_Real AngularTolerance) const
-{ return M_PI - Angle (Other) <= AngularTolerance; }    
+(const gp_Dir& theOther,
+ const Standard_Real theAngularTolerance) const
+{
+  const Standard_Real anAng = Abs(Angle(theOther));
+  return !(M_PI - anAng > theAngularTolerance);
+}
 
 inline Standard_Boolean gp_Dir::IsParallel
-(const gp_Dir& Other, 
- const Standard_Real AngularTolerance) const
+(const gp_Dir& theOther, 
+ const Standard_Real theAngularTolerance) const
 {
-  Standard_Real Ang = Angle (Other);
-  return Ang <= AngularTolerance || M_PI - Ang <= AngularTolerance;
+  const Standard_Real anAng = Abs(Angle(theOther));
+  return !((anAng > theAngularTolerance) &&
+            (M_PI - anAng > theAngularTolerance));
 }    
 
 inline void gp_Dir::Cross (const gp_Dir& Right)

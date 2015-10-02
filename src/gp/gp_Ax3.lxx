@@ -125,12 +125,12 @@ inline Standard_Boolean gp_Ax3::IsCoplanar
  const Standard_Real LinearTolerance, 
  const Standard_Real AngularTolerance)const 
 {
+  const Standard_Real aSQLTol = LinearTolerance*LinearTolerance;
   gp_Vec vec(axis.Location(),A1.Location());
   Standard_Real D1 = gp_Vec(axis.Direction()).Dot(vec);
   if (D1 < 0) D1 = - D1;
-  Standard_Real D2 = (gp_Vec(A1.Direction()).Crossed(vec)).Magnitude();
-  if (D2 < 0) D2 = - D2;
-  return (D1 <= LinearTolerance && D2 <= LinearTolerance &&
+  Standard_Real D2 = (gp_Vec(A1.Direction()).Crossed(vec)).SquareMagnitude();
+  return (D1 <= LinearTolerance && D2 <= aSQLTol &&
           axis.IsNormal (A1, AngularTolerance));
 }
 

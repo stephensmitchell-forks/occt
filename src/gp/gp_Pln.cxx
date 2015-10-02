@@ -34,6 +34,83 @@
 gp_Pln::gp_Pln (const gp_Pnt& P,
 		const gp_Dir& V)
 {
+  Init(P, V);
+}
+
+gp_Pln::gp_Pln (const Standard_Real A,
+		const Standard_Real B,
+		const Standard_Real C,
+		const Standard_Real D)
+{
+  //The algorithm of X-axe computing is same
+  //as in gp_Pln::gp_Pln (const gp_Pnt& P, const gp_Dir& V)
+  //constructor.
+
+  //On the one hand:
+  //    A*x+B*y+C*z+D==0
+  //On the other hand
+  //    A*(x-pos.X)+B*(y-pos.Y)+C*(z-pos.Z)==0
+
+  Standard_Real Aabs = A;
+  if (Aabs < 0) Aabs = - Aabs;
+  Standard_Real Babs = B;
+  if (Babs < 0) Babs = - Babs;
+  Standard_Real Cabs = C;
+  if (Cabs < 0) Cabs = - Cabs;
+  if (Babs <= Aabs && Babs <= Cabs)
+  {
+    if (Aabs > Cabs)
+      pos = gp_Ax3( gp_Pnt(-D/A, 0., 0.),
+				  gp_Dir(A,B,C),
+				  gp_Dir(-C,0., A));
+    else
+      pos = gp_Ax3( gp_Pnt(0., 0., -D/C),
+				  gp_Dir(A,B,C),
+				  gp_Dir( C,0.,-A));
+  }
+  else if (Aabs <= Babs && Aabs <= Cabs)
+  {
+    if (Babs > Cabs)
+      pos = gp_Ax3( gp_Pnt(0., -D/B, 0.),
+				  gp_Dir(A,B,C),
+				  gp_Dir(0.,-C, B));
+    else
+      pos = gp_Ax3( gp_Pnt(0., 0.,-D/C),
+				  gp_Dir(A,B,C),
+				  gp_Dir(0., C,-B));
+  }
+  else
+  {
+    if (Aabs > Babs)
+      pos = gp_Ax3( gp_Pnt(-D/A,  0.,  0.),
+				  gp_Dir(A,B,C),
+				  gp_Dir(-B, A, 0.));
+    else
+      pos = gp_Ax3( gp_Pnt(0., -D/B, 0.),
+				  gp_Dir(A,B,C),
+				  gp_Dir( B,-A, 0.));
+  }
+} 
+
+gp_Pln::gp_Pln (const gp_Pnt& theP1,
+                const gp_Pnt& theP2,
+                const gp_Pnt& theP3)
+{
+  //Barry-center of the triangle;
+  const gp_Pnt aLoc((theP1.XYZ() + theP2.XYZ() + theP3.XYZ())/3.0);
+  const gp_Vec anOP1(aLoc, theP1);
+  const gp_Vec anOP2(aLoc, theP2);
+  const gp_Vec anOP3(aLoc, theP3);
+
+  gp_Vec aDir = anOP1.Crossed(anOP2) +
+                anOP2.Crossed(anOP3) +
+                anOP3.Crossed(anOP1);
+
+  Init(aLoc, aDir);
+}
+
+void gp_Pln::Init(const gp_Pnt& P, const gp_Dir& V)
+{
   Standard_Real A = V.X();
   Standard_Real B = V.Y();
   Standard_Real C = V.Z();
@@ -44,10 +121,10 @@ gp_Pln::gp_Pln (const gp_Pnt& P,
   Standard_Real Cabs = C;
   if (Cabs < 0) Cabs = - Cabs;
 
-  //  pour determiner l'axe X :
-  //  on dit que le produit scalaire Vx.V = 0. 
-  //  et on recherche le max(A,B,C) pour faire la division.
-  //  l'une des coordonnees du vecteur est nulle. 
+  // Now we define X-axe for the plane:
+  //  By definition dot-product Vx.V = 0. 
+  //  Let it to be depend on max(|A|,|B|,|C|) parameter.
+  //  One of coordinates should be equal to 0. 
 
   if( Babs <= Aabs && Babs <= Cabs) {
     if (Aabs > Cabs)  pos = gp_Ax3 (P, V, gp_Dir (-C,0., A));
@@ -62,43 +139,6 @@ gp_Pln::gp_Pln (const gp_Pnt& P,
     else              pos = gp_Ax3 (P, V, gp_Dir ( B,-A,0.));
   }
 }
-
-gp_Pln::gp_Pln (const Standard_Real A,
-		const Standard_Real B,
-		const Standard_Real C,
-		const Standard_Real D)
-{
-  Standard_Real Aabs = A;
-  if (Aabs < 0) Aabs = - Aabs;
-  Standard_Real Babs = B;
-  if (Babs < 0) Babs = - Babs;
-  Standard_Real Cabs = C;
-  if (Cabs < 0) Cabs = - Cabs;
-  if (Babs <= Aabs && Babs <= Cabs) {
-    if (Aabs > Cabs) pos = gp_Ax3(gp_Pnt(-D/A,  0.,  0.),
-				  gp_Dir(A,B,C),
-				  gp_Dir(-C,0., A));
-    else             pos = gp_Ax3(gp_Pnt(  0.,  0.,-D/C),
-				  gp_Dir(A,B,C),
-				  gp_Dir( C,0.,-A));
-  }
-  else if (Aabs <= Babs && Aabs <= Cabs) {
-    if (Babs > Cabs) pos = gp_Ax3(gp_Pnt(  0.,-D/B,  0.),
-				  gp_Dir(A,B,C),
-				  gp_Dir(0.,-C, B));
-    else             pos = gp_Ax3(gp_Pnt(  0.,  0.,-D/C),
-				  gp_Dir(A,B,C),
-				  gp_Dir(0., C,-B));
-  }
-  else {
-    if (Aabs > Babs) pos = gp_Ax3(gp_Pnt(-D/A,  0.,  0.),
-				  gp_Dir(A,B,C),
-				  gp_Dir(-B, A, 0.));
-    else             pos = gp_Ax3(gp_Pnt(  0.,-D/B,  0.),
-				  gp_Dir(A,B,C),
-				  gp_Dir( B,-A, 0.));
-  }
-} 
 
 void gp_Pln::Mirror (const gp_Pnt& P)
 { pos.Mirror(P);  }

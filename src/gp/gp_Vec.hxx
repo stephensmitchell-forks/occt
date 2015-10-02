@@ -120,28 +120,37 @@ public:
   //! Other.Magnitude() <= Resolution from gp
     Standard_Boolean IsNormal (const gp_Vec& Other, const Standard_Real AngularTolerance) const;
   
-
-  //! Returns True if PI - <me>.Angle(Other) <= AngularTolerance
+  //! Returns True if <me>.Angle(Other) == PI +/- AngularTolerance
   //! Raises VectorWithNullMagnitude if <me>.Magnitude() <= Resolution or
-  //! Other.Magnitude() <= Resolution from gp
-    Standard_Boolean IsOpposite (const gp_Vec& Other, const Standard_Real AngularTolerance) const;
+  //! Other.Magnitude() <= gp::Resolution().
+  Standard_Boolean IsOpposite ( const gp_Vec& theOther,
+                                const Standard_Real theAngularTolerance) const;
   
+  //! Returns True if <me>.Angle(Other) <= AngularTolerance
+  //! Raises VectorWithNullMagnitude if <me>.Magnitude() <= Resolution or
+  //! Other.Magnitude() <= gp::Resolution().
+  Standard_Boolean IsCoincide ( const gp_Vec& theOther,
+                                const Standard_Real theAngularTolerance) const
+  {
+    const Standard_Real anAng = Angle(theOther);
+    return !(anAng > theAngularTolerance);
+  }
 
-  //! Returns True if Angle(<me>, Other) <= AngularTolerance or
-  //! PI - Angle(<me>, Other) <= AngularTolerance
+  //! Returns IsOpposite(...) || IsCoincide(...)
   //! This definition means that two parallel vectors cannot define
   //! a plane but two vectors with opposite directions are considered
   //! as parallel. Raises VectorWithNullMagnitude if <me>.Magnitude() <= Resolution or
-  //! Other.Magnitude() <= Resolution from gp
-    Standard_Boolean IsParallel (const gp_Vec& Other, const Standard_Real AngularTolerance) const;
+  //! Other.Magnitude() <= gp::Resolution()
+  Standard_Boolean IsParallel ( const gp_Vec& theOther,
+                                const Standard_Real theAngularTolerance) const;
   
 
   //! Computes the angular value between <me> and <Other>
   //! Returns the angle value between 0 and PI in radian.
-  //! Raises VectorWithNullMagnitude if <me>.Magnitude() <= Resolution from gp or
-  //! Other.Magnitude() <= Resolution because the angular value is
+  //! Raises VectorWithNullMagnitude if <me>.Magnitude() <= gp::Resolution() or
+  //! Other.Magnitude() <= gp::Resolution() because the angular value is
   //! indefinite if one of the vectors has a null magnitude.
-    Standard_Real Angle (const gp_Vec& Other) const;
+    Standard_EXPORT Standard_Real Angle (const gp_Vec& Other) const;
   
   //! Computes the angle, in radians, between this vector and
   //! vector Other. The result is a value between -Pi and Pi.
@@ -167,73 +176,73 @@ public:
   
   //! Adds two vectors
     void Add (const gp_Vec& Other);
-  void operator += (const gp_Vec& Other)
-{
-  Add(Other);
-}
+    void operator += (const gp_Vec& Other)
+    {
+      Add(Other);
+    }
   
   //! Adds two vectors
     gp_Vec Added (const gp_Vec& Other) const;
-  gp_Vec operator + (const gp_Vec& Other) const
-{
-  return Added(Other);
-}
+    gp_Vec operator + (const gp_Vec& Other) const
+    {
+      return Added(Other);
+    }
   
   //! Subtracts two vectors
     void Subtract (const gp_Vec& Right);
-  void operator -= (const gp_Vec& Right)
-{
-  Subtract(Right);
-}
+    void operator -= (const gp_Vec& Right)
+    {
+      Subtract(Right);
+    }
   
   //! Subtracts two vectors
     gp_Vec Subtracted (const gp_Vec& Right) const;
-  gp_Vec operator - (const gp_Vec& Right) const
-{
-  return Subtracted(Right);
-}
+    gp_Vec operator - (const gp_Vec& Right) const
+    {
+      return Subtracted(Right);
+    }
   
   //! Multiplies a vector by a scalar
     void Multiply (const Standard_Real Scalar);
-  void operator *= (const Standard_Real Scalar)
-{
-  Multiply(Scalar);
-}
+    void operator *= (const Standard_Real Scalar)
+    {
+      Multiply(Scalar);
+    }
   
   //! Multiplies a vector by a scalar
     gp_Vec Multiplied (const Standard_Real Scalar) const;
-  gp_Vec operator * (const Standard_Real Scalar) const
-{
-  return Multiplied(Scalar);
-}
+    gp_Vec operator * (const Standard_Real Scalar) const
+    {
+      return Multiplied(Scalar);
+    }
   
   //! Divides a vector by a scalar
     void Divide (const Standard_Real Scalar);
-  void operator /= (const Standard_Real Scalar)
-{
-  Divide(Scalar);
-}
+    void operator /= (const Standard_Real Scalar)
+    {
+      Divide(Scalar);
+    }
   
   //! Divides a vector by a scalar
     gp_Vec Divided (const Standard_Real Scalar) const;
-  gp_Vec operator / (const Standard_Real Scalar) const
-{
-  return Divided(Scalar);
-}
+    gp_Vec operator / (const Standard_Real Scalar) const
+    {
+      return Divided(Scalar);
+    }
   
   //! computes the cross product between two vectors
     void Cross (const gp_Vec& Right);
-  void operator ^= (const gp_Vec& Right)
-{
-  Cross(Right);
-}
+    void operator ^= (const gp_Vec& Right)
+    {
+      Cross(Right);
+    }
   
   //! computes the cross product between two vectors
     gp_Vec Crossed (const gp_Vec& Right) const;
-  gp_Vec operator ^ (const gp_Vec& Right) const
-{
-  return Crossed(Right);
-}
+    gp_Vec operator ^ (const gp_Vec& Right) const
+    {
+      return Crossed(Right);
+    }
   
 
   //! Computes the magnitude of the cross
@@ -257,10 +266,10 @@ public:
   
   //! computes the scalar product
     Standard_Real Dot (const gp_Vec& Other) const;
-  Standard_Real operator * (const gp_Vec& Other) const
-{
-  return Dot(Other);
-}
+    Standard_Real operator * (const gp_Vec& Other) const
+    {
+      return Dot(Other);
+    }
   
   //! Computes the triple scalar product <me> * (V1 ^ V2).
     Standard_Real DotCross (const gp_Vec& V1, const gp_Vec& V2) const;
@@ -280,10 +289,10 @@ public:
   
   //! Reverses the direction of a vector
     gp_Vec Reversed() const;
-  gp_Vec operator -() const
-{
-  return Reversed();
-}
+    gp_Vec operator -() const
+    {
+      return Reversed();
+    }
   
 
   //! <me> is set to the following linear form :

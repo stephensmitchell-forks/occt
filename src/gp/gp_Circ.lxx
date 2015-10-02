@@ -66,16 +66,21 @@ inline gp_Ax1 gp_Circ::YAxis () const
 {return gp_Ax1(pos.Location(), pos.YDirection());}
 
 inline Standard_Real gp_Circ::Distance (const gp_Pnt& P) const
-{ return sqrt(SquareDistance(P)); }
+{
+  const gp_Vec aV(Location(),P);
+  const gp_Dir aN(pos.Direction());
+
+  const gp_Vec aVPlane(aV.XYZ() + aN.XYZ()*aV.Dot(aN));
+  Standard_Real aDist = aVPlane.Magnitude() - radius;
+  if(aDist < 0.0)
+    aDist = -aDist;
+  return aDist;
+}
 
 inline Standard_Real gp_Circ::SquareDistance (const gp_Pnt& P) const
 {
-  gp_Vec V(Location(),P);
-  Standard_Real x = V.Dot(pos.XDirection());
-  Standard_Real y = V.Dot(pos.YDirection());
-  Standard_Real z = V.Dot(pos.Direction ());
-  Standard_Real t = sqrt( x*x + y*y) - radius;
-  return (t*t + z*z);
+  const Standard_Real aDist = Distance(P);
+  return (aDist*aDist);
 }
 
 inline Standard_Boolean gp_Circ::Contains

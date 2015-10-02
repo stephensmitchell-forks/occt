@@ -69,11 +69,10 @@ inline Standard_Boolean gp_Lin2d::Contains
 
 inline Standard_Real gp_Lin2d::Distance (const gp_Pnt2d& P) const
 {
-  gp_XY Coord = P.XY();
-  Coord.Subtract ((pos.Location()).XY());
-  Standard_Real val = Coord.Crossed (pos.Direction().XY());
-  if (val < 0) val = - val;
-  return val;
+  gp_Vec2d aCoord(pos.Location(), P);
+  Standard_Real aVal = aCoord.Crossed(pos.Direction().XY());
+  if (aVal < 0) aVal = - aVal;
+  return aVal;
 }
 
 inline Standard_Real gp_Lin2d::Distance (const gp_Lin2d& Other) const

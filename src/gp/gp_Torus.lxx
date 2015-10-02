@@ -52,13 +52,38 @@ inline void gp_Torus::SetPosition (const gp_Ax3& A3)
 { pos = A3; }
 
 inline Standard_Real gp_Torus::Area () const
-{ return 4.0 * M_PI * M_PI * minorRadius * majorRadius; }
+{
+  //https://en.wikipedia.org/wiki/Torus
+  return 4.0 * M_PI * M_PI * minorRadius * majorRadius;
+}
 
 inline void gp_Torus::UReverse()
-{ pos.YReverse(); }
+{
+  //Let
+  //                (R + r*cos(V))*cos(U) = Xdir
+  //  S(U, V) =     (R + r*cos(V))*sin(U) = Ydir
+  //                r*sin(V)              = Zdir
+  //Therefore,
+  //               (R + r*cos(V))*cos(U)  = Xdir
+  //  S(-U, V) =  -(R + r*cos(V))*sin(U)  = -Ydir
+  //                r*sin(V)              = Zdir
+
+  pos.YReverse();
+}
 
 inline void gp_Torus::VReverse()
-{ pos.ZReverse(); }
+{
+  //Let
+  //                (R + r*cos(V))*cos(U) = Xdir
+  //  S(U, V) =     (R + r*cos(V))*sin(U) = Ydir
+  //                r*sin(V)              = Zdir
+  //Therefore,
+  //               (R + r*cos(V))*cos(U)  = Xdir
+  //  S(U, -V) =   (R + r*cos(V))*sin(U)  = Ydir
+  //              -r*sin(V)               = -Zdir
+
+  pos.ZReverse();
+}
 
 inline Standard_Boolean gp_Torus::Direct() const
 { return pos.Direct(); }
@@ -79,7 +104,10 @@ inline Standard_Real gp_Torus::MinorRadius () const
 { return minorRadius; }
 
 inline Standard_Real gp_Torus::Volume () const
-{ return (M_PI * minorRadius * minorRadius) * (2.0 * M_PI * majorRadius); }
+{
+  //https://en.wikipedia.org/wiki/Torus
+  return (2.0 * M_PI * M_PI * majorRadius * minorRadius * minorRadius);
+}
 
 inline gp_Ax1 gp_Torus::XAxis () const
 { return gp_Ax1(pos.Location(), pos.XDirection()); }

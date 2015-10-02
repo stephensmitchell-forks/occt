@@ -118,12 +118,11 @@ public:
   //! Computes the square distance between two lines.
     Standard_Real SquareDistance (const gp_Lin& Other) const;
   
-
   //! Computes the line normal to the direction of <me>, passing
-  //! through the point P.  Raises ConstructionError
-  //! if the distance between <me> and the point P is lower
-  //! or equal to Resolution from gp because there is an infinity of
-  //! solutions in 3D space.
+  //! through the point P. The normal always directs from line to the point.
+  //! Raises ConstructionError if the distance between <me> and
+  //! the point P is lower or equal to Resolution from gp because
+  //! there is an infinity solutions in 3D space.
     gp_Lin Normal (const gp_Pnt& P) const;
   
   Standard_EXPORT void Mirror (const gp_Pnt& P);

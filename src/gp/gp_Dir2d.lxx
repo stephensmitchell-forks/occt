@@ -57,15 +57,11 @@ inline gp_Dir2d::gp_Dir2d (const Standard_Real Xv,
 inline void gp_Dir2d::SetCoord (const Standard_Integer Index,
 				const Standard_Real Xi)
 {
-  Standard_Real X = coord.X();
-  Standard_Real Y = coord.Y();
   Standard_OutOfRange_Raise_if (Index < 1 || Index > 2, " ");
-  if      (Index == 1) X = Xi;
-  else                 Y = Xi;
-  Standard_Real D = sqrt (X * X + Y * Y);
-  Standard_ConstructionError_Raise_if (D <= gp::Resolution(), "");
-  coord.SetX(X / D);
-  coord.SetY(Y / D);
+  if(Index == 1)
+    SetX(Xi);
+  else
+    SetY(Xi);
 }
 
 inline void gp_Dir2d::SetCoord (const Standard_Real Xv,
@@ -121,12 +117,10 @@ inline const gp_XY& gp_Dir2d::XY () const
 { return coord; }
 
 inline Standard_Boolean gp_Dir2d::IsEqual
-(const gp_Dir2d& Other,
- const Standard_Real AngularTolerance) const
+(const gp_Dir2d& theOther,
+ const Standard_Real theAngularTolerance) const
 {
-  Standard_Real Ang = Angle(Other);
-  if (Ang < 0) Ang = - Ang;
-  return   Ang <= AngularTolerance;
+  return IsCoincide(theOther, theAngularTolerance);
 }    
 
 inline Standard_Boolean gp_Dir2d::IsNormal
@@ -140,22 +134,20 @@ inline Standard_Boolean gp_Dir2d::IsNormal
   return   Ang <= AngularTolerance;
 }    
 
-inline Standard_Boolean gp_Dir2d::IsOpposite
-(const gp_Dir2d& Other,
- const Standard_Real AngularTolerance) const
-{ 
-  Standard_Real Ang = Angle(Other);
-  if (Ang < 0) Ang = - Ang;
-  return M_PI - Ang <= AngularTolerance;
+inline Standard_Boolean gp_Dir2d::IsOpposite( const gp_Dir2d& theOther,
+                                              const Standard_Real theAngularTolerance) const
+{
+  const Standard_Real anAng = Abs(Angle(theOther));
+  return !(M_PI - anAng > theAngularTolerance);
 }    
 
 inline Standard_Boolean gp_Dir2d::IsParallel
-(const gp_Dir2d& Other,
- const Standard_Real AngularTolerance) const
+(const gp_Dir2d& theOther,
+ const Standard_Real theAngularTolerance) const
 {
-  Standard_Real Ang = Angle(Other);
-  if (Ang < 0) Ang = - Ang;
-  return   Ang <= AngularTolerance || M_PI - Ang <= AngularTolerance;
+  const Standard_Real anAng = Abs(Angle(theOther));
+  return !((anAng > theAngularTolerance) &&
+          (M_PI - anAng > theAngularTolerance));
 }    
 
 inline Standard_Real gp_Dir2d::Crossed (const gp_Dir2d& Right) const

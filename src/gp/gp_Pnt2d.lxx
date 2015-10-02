@@ -70,22 +70,16 @@ inline  gp_XY& gp_Pnt2d::ChangeCoord ()
 inline Standard_Boolean gp_Pnt2d::IsEqual
 (const gp_Pnt2d& Other,
  const Standard_Real LinearTolerance) const
-{ return Distance (Other) <= LinearTolerance; }
+{ return SquareDistance(Other) <= LinearTolerance*LinearTolerance; }
 
 inline Standard_Real gp_Pnt2d::Distance (const gp_Pnt2d& Other) const
 {
-  const gp_XY& XY = Other.coord;
-  Standard_Real X = coord.X() - XY.X();
-  Standard_Real Y = coord.Y() - XY.Y();
-  return sqrt (X * X + Y * Y);
+  return (coord - Other.XY()).Modulus();
 }
 
 inline Standard_Real gp_Pnt2d::SquareDistance (const gp_Pnt2d& Other) const
 {
-  const gp_XY& XY = Other.coord;
-  Standard_Real X = coord.X() - XY.X();
-  Standard_Real Y = coord.Y() - XY.Y();
-  return (X * X + Y * Y);
+  return (coord - Other.XY()).SquareModulus();
 }
 
 inline void gp_Pnt2d::Rotate (const gp_Pnt2d& P,

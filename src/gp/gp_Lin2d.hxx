@@ -132,9 +132,10 @@ public:
   //! Computes the square distance between two lines.
     Standard_Real SquareDistance (const gp_Lin2d& Other) const;
   
-
   //! Computes the line normal to the direction of <me>,
-  //! passing through the point <P>.
+  //! passing through the point <P>. Direction of the
+  //! normal is got by rotation the direction of <me>
+  //! on the 90 degree angle anticlockwise.
     gp_Lin2d Normal (const gp_Pnt2d& P) const;
   
   Standard_EXPORT void Mirror (const gp_Pnt2d& P);

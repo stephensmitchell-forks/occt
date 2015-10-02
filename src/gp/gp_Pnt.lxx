@@ -89,26 +89,16 @@ inline void gp_Pnt::BaryCenter(const Standard_Real A,
 inline Standard_Boolean gp_Pnt::IsEqual
 (const gp_Pnt& Other,
  const Standard_Real LinearTolerance) const
-{ return Distance (Other) <= LinearTolerance; }
+{ return SquareDistance(Other) <= LinearTolerance*LinearTolerance; }
 
 inline Standard_Real gp_Pnt::Distance (const gp_Pnt& Other) const
 {
-  Standard_Real d=0,dd;
-  const gp_XYZ& XYZ = Other.coord;
-  dd = coord.X(); dd -= XYZ.X(); dd *= dd; d += dd;
-  dd = coord.Y(); dd -= XYZ.Y(); dd *= dd; d += dd;
-  dd = coord.Z(); dd -= XYZ.Z(); dd *= dd; d += dd;
-  return(sqrt(d));
+  return (coord - Other.XYZ()).Modulus();
 }
 
 inline Standard_Real gp_Pnt::SquareDistance (const gp_Pnt& Other) const
 {
-  Standard_Real d=0,dd;
-  const gp_XYZ& XYZ = Other.coord;
-  dd = coord.X(); dd -= XYZ.X(); dd *= dd; d += dd;
-  dd = coord.Y(); dd -= XYZ.Y(); dd *= dd; d += dd;
-  dd = coord.Z(); dd -= XYZ.Z(); dd *= dd; d += dd;
-  return(d);
+  return (coord - Other.XYZ()).SquareModulus();
 }
 
 inline void gp_Pnt::Rotate (const gp_Ax1& A1,

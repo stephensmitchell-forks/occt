@@ -71,43 +71,38 @@ inline   const gp_Ax3& gp_Pln::Position() const
 
 inline Standard_Real gp_Pln::Distance(const gp_Pnt& P) const
 {
+  //Dist = ||gp_Vec(loc, P).Dot(dir)||
   const gp_Pnt& loc = pos.Location ();
   const gp_Dir& dir = pos.Direction();
   Standard_Real D = (dir.X() * (P.X() - loc.X()) +
 		     dir.Y() * (P.Y() - loc.Y()) +
 		     dir.Z() * (P.Z() - loc.Z()));
-  if (D < 0) D = - D;
+  if (D < 0)
+    D = - D;
   return D;
 }
 
 inline Standard_Real gp_Pln::Distance (const gp_Lin& L)  const
 {
-  Standard_Real D = 0.0;
-  if ((pos.Direction()).IsNormal (L.Direction(), gp::Resolution())) {
+  if ((pos.Direction()).IsNormal(
+              L.Direction(), gp::Resolution()))
+  {
     const gp_Pnt& P   = L  .Location ();
-    const gp_Pnt& loc = pos.Location ();
-    const gp_Dir& dir = pos.Direction();
-    D = (dir.X() * (P.X() - loc.X()) +
-	 dir.Y() * (P.Y() - loc.Y()) +
-	 dir.Z() * (P.Z() - loc.Z()));
-    if (D < 0) D = - D;
+    return Distance(P);
   }
-  return D;
+
+  return 0.0;
 }
 
 inline Standard_Real gp_Pln::Distance(const gp_Pln& Other) const
 {
-  Standard_Real D = 0.0;
-  if ((pos.Direction()).IsParallel(Other.pos.Direction(), gp::Resolution())){
+  if ((pos.Direction()).IsParallel(
+              Other.pos.Direction(), gp::Resolution()))
+  {
     const gp_Pnt& P = Other.pos.Location();
-    const gp_Pnt& loc = pos.Location ();
-    const gp_Dir& dir = pos.Direction();
-    D = (dir.X() * (P.X() - loc.X()) +
-	 dir.Y() * (P.Y() - loc.Y()) +
-	 dir.Z() * (P.Z() - loc.Z()));
-    if (D < 0) D = - D;
+    return Distance(P);
   }
-  return D;
+  return 0.0;
 }
 
 inline Standard_Real gp_Pln::SquareDistance (const gp_Pnt& P) const

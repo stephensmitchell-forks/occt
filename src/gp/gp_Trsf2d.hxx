@@ -45,9 +45,9 @@ class gp_Mat2d;
 //! previous elementary transformations using the method Multiply.
 //! The transformations can be represented as follow :
 //!
-//! V1   V2   T       XY        XY
+//!   V1   V2   T        XY        XY
 //! | a11  a12  a13 |   | x |     | x'|
-//! | a21  a22  a23 |   | y |     | y'|
+//! | a21  a22  a23 | = | y |  =  | y'|
 //! |  0    0    1  |   | 1 |     | 1 |
 //!
 //! where {V1, V2} defines the vectorial part of the transformation
