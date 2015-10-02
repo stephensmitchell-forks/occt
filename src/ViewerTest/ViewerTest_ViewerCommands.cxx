@@ -1986,7 +1986,7 @@ static LRESULT WINAPI ViewerWindowProc( HWND hwnd,
     case WM_MOVE:
     case WM_MOVING:
     case WM_SIZING:
-      switch (aView->RenderingParams().StereoMode)
+      switch (aView->RenderingParams()->StereoMode)
       {
         case Graphic3d_StereoMode_RowInterlaced:
         case Graphic3d_StereoMode_ColumnInterlaced:
@@ -5097,9 +5097,9 @@ static int VFps (Draw_Interpretor& theDI,
         << "CPU: " << (1000.0 * aCpuAver) << " msec\n";
 
   // compute additional statistics in ray-tracing mode
-  Graphic3d_RenderingParams& aParams = aView->ChangeRenderingParams();
+  Handle(Graphic3d_RenderingParams) aParams = aView->ChangeRenderingParams();
 
-  if (aParams.Method == Graphic3d_RM_RAYTRACING)
+  if (aParams->Method == Graphic3d_RM_RAYTRACING)
   {
     Standard_Integer aSizeX;
     Standard_Integer aSizeY;
@@ -5107,7 +5107,7 @@ static int VFps (Draw_Interpretor& theDI,
     aView->Window()->Size (aSizeX, aSizeY);
 
     // 1 shadow ray and 1 secondary ray pew each bounce
-    const Standard_Real aMRays = aSizeX * aSizeY * aFpsAver * aParams.RaytracingDepth * 2 / 1.0e6f;
+    const Standard_Real aMRays = aSizeX * aSizeY * aFpsAver * aParams->RaytracingDepth * 2 / 1.0e6f;
 
     theDI << "MRays/sec (upper bound): " << aMRays << "\n";
   }
@@ -7338,12 +7338,12 @@ static int VStereo (Draw_Interpretor& theDI,
     return 0;
   }
 
-  Handle(Graphic3d_Camera) aCamera;
-  Graphic3d_RenderingParams*   aParams   = NULL;
-  Graphic3d_StereoMode         aMode     = Graphic3d_StereoMode_QuadBuffer;
+  Handle(Graphic3d_Camera)          aCamera;
+  Handle(Graphic3d_RenderingParams) aParams   = NULL;
+  Graphic3d_StereoMode              aMode     = Graphic3d_StereoMode_QuadBuffer;
   if (!aView.IsNull())
   {
-    aParams   = &aView->ChangeRenderingParams();
+    aParams   = aView->ChangeRenderingParams();
     aMode     = aParams->StereoMode;
     aCamera   = aView->Camera();
   }
@@ -8118,14 +8118,14 @@ static Standard_Integer VRenderParams (Draw_Interpretor& theDI,
     return 1;
   }
 
-  Graphic3d_RenderingParams& aParams = aView->ChangeRenderingParams();
+  Handle(Graphic3d_RenderingParams) aParams = aView->ChangeRenderingParams();
   TCollection_AsciiString aCmdName (theArgVec[0]);
   aCmdName.LowerCase();
   if (aCmdName == "vraytrace")
   {
     if (theArgNb == 1)
     {
-      theDI << (aParams.Method == Graphic3d_RM_RAYTRACING ? "on" : "off") << " ";
+      theDI << (aParams->Method == Graphic3d_RM_RAYTRACING ? "on" : "off") << " ";
       return 0;
     }
     else if (theArgNb == 2)
@@ -8135,14 +8135,14 @@ static Standard_Integer VRenderParams (Draw_Interpretor& theDI,
       if (aValue == "on"
        || aValue == "1")
       {
-        aParams.Method = Graphic3d_RM_RAYTRACING;
+        aParams->Method = Graphic3d_RM_RAYTRACING;
         aView->Redraw();
         return 0;
       }
       else if (aValue == "off"
             || aValue == "0")
       {
-        aParams.Method = Graphic3d_RM_RASTERIZATION;
+        aParams->Method = Graphic3d_RM_RASTERIZATION;
         aView->Redraw();
         return 0;
       }
@@ -8162,19 +8162,19 @@ static Standard_Integer VRenderParams (Draw_Interpretor& theDI,
   if (theArgNb < 2)
   {
     theDI << "renderMode:  ";
-    switch (aParams.Method)
+    switch (aParams->Method)
     {
       case Graphic3d_RM_RASTERIZATION: theDI << "rasterization "; break;
       case Graphic3d_RM_RAYTRACING:    theDI << "raytrace ";      break;
     }
     theDI << "\n";
-    theDI << "fsaa:         " << (aParams.IsAntialiasingEnabled       ? "on" : "off") << "\n";
-    theDI << "shadows:      " << (aParams.IsShadowEnabled             ? "on" : "off") << "\n";
-    theDI << "reflections:  " << (aParams.IsReflectionEnabled         ? "on" : "off") << "\n";
-    theDI << "rayDepth:     " <<  aParams.RaytracingDepth                             << "\n";
-    theDI << "gleam:        " << (aParams.IsTransparentShadowEnabled  ? "on" : "off") << "\n";
-    theDI << "GI:           " << (aParams.IsGlobalIlluminationEnabled ? "on" : "off") << "\n";
-    theDI << "blocked RNG:  " << (aParams.CoherentPathTracingMode     ? "on" : "off") << "\n";
+    theDI << "fsaa:         " << (aParams->IsAntialiasingEnabled       ? "on" : "off") << "\n";
+    theDI << "shadows:      " << (aParams->IsShadowEnabled             ? "on" : "off") << "\n";
+    theDI << "reflections:  " << (aParams->IsReflectionEnabled         ? "on" : "off") << "\n";
+    theDI << "rayDepth:     " <<  aParams->RaytracingDepth                             << "\n";
+    theDI << "gleam:        " << (aParams->IsTransparentShadowEnabled  ? "on" : "off") << "\n";
+    theDI << "GI:           " << (aParams->IsGlobalIlluminationEnabled ? "on" : "off") << "\n";
+    theDI << "blocked RNG:  " << (aParams->CoherentPathTracingMode     ? "on" : "off") << "\n";
     theDI << "shadingModel: ";
     switch (aView->ShadingModel())
     {
@@ -8210,7 +8210,7 @@ static Standard_Integer VRenderParams (Draw_Interpretor& theDI,
     {
       if (toPrint)
       {
-        switch (aParams.Method)
+        switch (aParams->Method)
         {
           case Graphic3d_RM_RASTERIZATION: theDI << "rasterization "; break;
           case Graphic3d_RM_RAYTRACING:    theDI << "ray-tracing ";   break;
@@ -8228,11 +8228,11 @@ static Standard_Integer VRenderParams (Draw_Interpretor& theDI,
     {
       if (toPrint)
       {
-        theDI << (aParams.Method == Graphic3d_RM_RAYTRACING ? "true" : "false") << " ";
+        theDI << (aParams->Method == Graphic3d_RM_RAYTRACING ? "true" : "false") << " ";
         continue;
       }
 
-      aParams.Method = Graphic3d_RM_RAYTRACING;
+      aParams->Method = Graphic3d_RM_RAYTRACING;
     }
     else if (aFlag == "-rast"
           || aFlag == "-raster"
@@ -8240,18 +8240,18 @@ static Standard_Integer VRenderParams (Draw_Interpretor& theDI,
     {
       if (toPrint)
       {
-        theDI << (aParams.Method == Graphic3d_RM_RASTERIZATION ? "true" : "false") << " ";
+        theDI << (aParams->Method == Graphic3d_RM_RASTERIZATION ? "true" : "false") << " ";
         continue;
       }
 
-      aParams.Method = Graphic3d_RM_RASTERIZATION;
+      aParams->Method = Graphic3d_RM_RASTERIZATION;
     }
     else if (aFlag == "-raydepth"
           || aFlag == "-ray_depth")
     {
       if (toPrint)
       {
-        theDI << aParams.RaytracingDepth << " ";
+        theDI << aParams->RaytracingDepth << " ";
         continue;
       }
       else if (++anArgIter >= theArgNb)
@@ -8263,14 +8263,14 @@ static Standard_Integer VRenderParams (Draw_Interpretor& theDI,
       const Standard_Integer aDepth = Draw::Atoi (theArgVec[anArgIter]);
 
       // We allow RaytracingDepth be more than 10 in case of GI enabled
-      if (aDepth < 1 || (aDepth > 10 && !aParams.IsGlobalIlluminationEnabled))
+      if (aDepth < 1 || (aDepth > 10 && !aParams->IsGlobalIlluminationEnabled))
       {
         std::cerr << "Error: invalid ray-tracing depth " << aDepth << ". Should be within range [1; 10]\n";
         return 1;
       }
       else
       {
-        aParams.RaytracingDepth = aDepth;
+        aParams->RaytracingDepth = aDepth;
       }
     }
     else if (aFlag == "-shad"
@@ -8278,7 +8278,7 @@ static Standard_Integer VRenderParams (Draw_Interpretor& theDI,
     {
       if (toPrint)
       {
-        theDI << (aParams.IsShadowEnabled ? "on" : "off") << " ";
+        theDI << (aParams->IsShadowEnabled ? "on" : "off") << " ";
         continue;
       }
 
@@ -8288,14 +8288,14 @@ static Standard_Integer VRenderParams (Draw_Interpretor& theDI,
       {
         --anArgIter;
       }
-      aParams.IsShadowEnabled = toEnable;
+      aParams->IsShadowEnabled = toEnable;
     }
     else if (aFlag == "-refl"
           || aFlag == "-reflections")
     {
       if (toPrint)
       {
-        theDI << (aParams.IsReflectionEnabled ? "on" : "off") << " ";
+        theDI << (aParams->IsReflectionEnabled ? "on" : "off") << " ";
         continue;
       }
 
@@ -8305,13 +8305,13 @@ static Standard_Integer VRenderParams (Draw_Interpretor& theDI,
       {
         --anArgIter;
       }
-      aParams.IsReflectionEnabled = toEnable;
+      aParams->IsReflectionEnabled = toEnable;
     }
     else if (aFlag == "-fsaa")
     {
       if (toPrint)
       {
-        theDI << (aParams.IsAntialiasingEnabled ? "on" : "off") << " ";
+        theDI << (aParams->IsAntialiasingEnabled ? "on" : "off") << " ";
         continue;
       }
 
@@ -8321,13 +8321,13 @@ static Standard_Integer VRenderParams (Draw_Interpretor& theDI,
       {
         --anArgIter;
       }
-      aParams.IsAntialiasingEnabled = toEnable;
+      aParams->IsAntialiasingEnabled = toEnable;
     }
     else if (aFlag == "-gleam")
     {
       if (toPrint)
       {
-        theDI << (aParams.IsTransparentShadowEnabled ? "on" : "off") << " ";
+        theDI << (aParams->IsTransparentShadowEnabled ? "on" : "off") << " ";
         continue;
       }
 
@@ -8337,13 +8337,13 @@ static Standard_Integer VRenderParams (Draw_Interpretor& theDI,
       {
         --anArgIter;
       }
-      aParams.IsTransparentShadowEnabled = toEnable;
+      aParams->IsTransparentShadowEnabled = toEnable;
     }
     else if (aFlag == "-gi")
     {
       if (toPrint)
       {
-        theDI << (aParams.IsGlobalIlluminationEnabled ? "on" : "off") << " ";
+        theDI << (aParams->IsGlobalIlluminationEnabled ? "on" : "off") << " ";
         continue;
       }
 
@@ -8353,10 +8353,10 @@ static Standard_Integer VRenderParams (Draw_Interpretor& theDI,
       {
         --anArgIter;
       }
-      aParams.IsGlobalIlluminationEnabled = toEnable;
+      aParams->IsGlobalIlluminationEnabled = toEnable;
       if (!toEnable)
       {
-        aParams.RaytracingDepth = Min (aParams.RaytracingDepth, 10);
+        aParams->RaytracingDepth = Min (aParams->RaytracingDepth, 10);
       }
     }
     else if (aFlag == "-blockedrng"
@@ -8364,7 +8364,7 @@ static Standard_Integer VRenderParams (Draw_Interpretor& theDI,
     {
       if (toPrint)
       {
-        theDI << (aParams.CoherentPathTracingMode ? "on" : "off") << " ";
+        theDI << (aParams->CoherentPathTracingMode ? "on" : "off") << " ";
         continue;
       }
 
@@ -8374,13 +8374,13 @@ static Standard_Integer VRenderParams (Draw_Interpretor& theDI,
       {
         --anArgIter;
       }
-      aParams.CoherentPathTracingMode = toEnable;
+      aParams->CoherentPathTracingMode = toEnable;
     }
     else if (aFlag == "-env")
     {
       if (toPrint)
       {
-        theDI << (aParams.UseEnvironmentMapBackground ? "on" : "off") << " ";
+        theDI << (aParams->UseEnvironmentMapBackground ? "on" : "off") << " ";
         continue;
       }
 
@@ -8390,7 +8390,7 @@ static Standard_Integer VRenderParams (Draw_Interpretor& theDI,
       {
         --anArgIter;
       }
-      aParams.UseEnvironmentMapBackground = toEnable;
+      aParams->UseEnvironmentMapBackground = toEnable;
     }
     else if (aFlag == "-shademodel"
           || aFlag == "-shadingmodel"
@@ -8455,7 +8455,7 @@ static Standard_Integer VRenderParams (Draw_Interpretor& theDI,
       TCollection_AsciiString aResolution (theArgVec[anArgIter]);
       if (aResolution.IsIntegerValue())
       {
-        aView->ChangeRenderingParams().Resolution = static_cast<unsigned int> (Draw::Atoi (aResolution.ToCString()));
+        aView->ChangeRenderingParams()->Resolution = static_cast<unsigned int> (Draw::Atoi (aResolution.ToCString()));
       }
       else
       {

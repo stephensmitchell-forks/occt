@@ -3014,3 +3014,26 @@ void AIS_InteractiveContext::FitSelected (const Handle(V3d_View)& theView,
 
   theView->FitAll (aBndSelected, theMargin, theToUpdate);
 }
+
+//=======================================================================
+//function : SetResolution
+//purpose  :
+//=======================================================================
+void AIS_InteractiveContext::SetDefaultResolution (const unsigned int theResolution)
+{
+  for (myMainVwr->InitDefinedViews(); myMainVwr->MoreDefinedViews(); myMainVwr->NextDefinedViews())
+  {
+    myMainVwr->DefinedView()->Redraw();
+  }
+
+  myMainVwr->DefaultRenderingParams()->Resolution = theResolution;
+}
+
+//=======================================================================
+//function : SetDefaultRenderingParams
+//purpose  :
+//=======================================================================
+const Handle(Graphic3d_RenderingParams)& AIS_InteractiveContext::DefaultRenderingParams() const
+{
+  return myMainVwr->DefaultRenderingParams();
+}

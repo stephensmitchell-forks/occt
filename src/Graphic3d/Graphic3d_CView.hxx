@@ -396,10 +396,10 @@ public:
   Standard_EXPORT virtual void CopySettings (const Handle(Graphic3d_CView)& theOther);
 
   //! Returns current rendering parameters and effect settings.
-  const Graphic3d_RenderingParams& RenderingParams() const { return myRenderParams; }
+  const Handle(Graphic3d_RenderingParams)& RenderingParams() const { return myRenderParams; }
 
   //! Returns reference to current rendering parameters and effect settings.
-  Graphic3d_RenderingParams& ChangeRenderingParams() { return myRenderParams; }
+  Handle(Graphic3d_RenderingParams)& ChangeRenderingParams() { return myRenderParams; }
 
   //! Returns true if anti-aliasing is enabled for the view.
   virtual Standard_Boolean IsAntialiasingEnabled() const = 0;
@@ -571,7 +571,7 @@ protected:
 protected:
 
   Standard_Integer myId;
-  Graphic3d_RenderingParams myRenderParams;
+  Handle(Graphic3d_RenderingParams) myRenderParams;
   Handle(Graphic3d_StructureManager) myStructureManager;
   Graphic3d_SequenceOfStructure myStructsToCompute;
   Graphic3d_SequenceOfStructure myStructsComputed;

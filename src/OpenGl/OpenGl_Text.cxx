@@ -428,7 +428,7 @@ void OpenGl_Text::Render (const Handle(OpenGl_Workspace)& theWorkspace) const
             *aTextAspect,
             *theWorkspace->HighlightColor,
             *theWorkspace->HighlightColor,
-            theWorkspace->View()->RenderingParams().Resolution);
+            theWorkspace->View()->RenderingParams()->Resolution);
   }
   else
   {
@@ -437,7 +437,7 @@ void OpenGl_Text::Render (const Handle(OpenGl_Workspace)& theWorkspace) const
             *aTextAspect,
             aTextAspect->Color(),
             aTextAspect->SubtitleColor(),
-            theWorkspace->View()->RenderingParams().Resolution);
+            theWorkspace->View()->RenderingParams()->Resolution);
   }
 
   aCtx->BindProgram (NULL);

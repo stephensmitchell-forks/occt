@@ -1266,9 +1266,9 @@ Standard_Boolean OpenGl_View::initRaytraceResources (const Handle(OpenGl_Context
       }
     }
 
-    if (myRenderParams.RaytracingDepth != myRaytraceParameters.NbBounces)
+    if (myRenderParams->RaytracingDepth != myRaytraceParameters.NbBounces)
     {
-      myRaytraceParameters.NbBounces = myRenderParams.RaytracingDepth;
+      myRaytraceParameters.NbBounces = myRenderParams->RaytracingDepth;
       aToRebuildShaders = Standard_True;
     }
 
@@ -1278,15 +1278,15 @@ Standard_Boolean OpenGl_View::initRaytraceResources (const Handle(OpenGl_Context
       aToRebuildShaders = Standard_True;
     }
 
-    if (myRenderParams.IsTransparentShadowEnabled != myRaytraceParameters.TransparentShadows)
+    if (myRenderParams->IsTransparentShadowEnabled != myRaytraceParameters.TransparentShadows)
     {
-      myRaytraceParameters.TransparentShadows = myRenderParams.IsTransparentShadowEnabled;
+      myRaytraceParameters.TransparentShadows = myRenderParams->IsTransparentShadowEnabled;
       aToRebuildShaders = Standard_True;
     }
 
-    if (myRenderParams.IsGlobalIlluminationEnabled != myRaytraceParameters.GlobalIllumination)
+    if (myRenderParams->IsGlobalIlluminationEnabled != myRaytraceParameters.GlobalIllumination)
     {
-      myRaytraceParameters.GlobalIllumination = myRenderParams.IsGlobalIlluminationEnabled;
+      myRaytraceParameters.GlobalIllumination = myRenderParams->IsGlobalIlluminationEnabled;
       aToRebuildShaders = Standard_True;
     }
 
@@ -1344,7 +1344,7 @@ Standard_Boolean OpenGl_View::initRaytraceResources (const Handle(OpenGl_Context
       return safeFailBack ("Ray-tracing requires EXT_framebuffer_blit extension", theGlContext);
     }
 
-    myRaytraceParameters.NbBounces = myRenderParams.RaytracingDepth;
+    myRaytraceParameters.NbBounces = myRenderParams->RaytracingDepth;
 
     TCollection_AsciiString aFolder = Graphic3d_ShaderProgram::ShadersFolder();
 
@@ -2238,14 +2238,14 @@ Standard_Boolean OpenGl_View::setUniformState (const OpenGl_Vec3*            the
 
   // Set run-time rendering options
   theProgram->SetUniform (theGlContext,
-    myUniformLocations[theProgramId][OpenGl_RT_uShadowsEnabled], myRenderParams.IsShadowEnabled ?  1 : 0);
+    myUniformLocations[theProgramId][OpenGl_RT_uShadowsEnabled], myRenderParams->IsShadowEnabled ?  1 : 0);
   theProgram->SetUniform (theGlContext,
-    myUniformLocations[theProgramId][OpenGl_RT_uReflectEnabled], myRenderParams.IsReflectionEnabled ?  1 : 0);
+    myUniformLocations[theProgramId][OpenGl_RT_uReflectEnabled], myRenderParams->IsReflectionEnabled ?  1 : 0);
 
-  if (myRenderParams.IsGlobalIlluminationEnabled)
+  if (myRenderParams->IsGlobalIlluminationEnabled)
   {
     theProgram->SetUniform (theGlContext,
-      myUniformLocations[theProgramId][OpenGl_RT_uBlockedRngEnabled], myRenderParams.CoherentPathTracingMode ?  1 : 0);
+      myUniformLocations[theProgramId][OpenGl_RT_uBlockedRngEnabled], myRenderParams->CoherentPathTracingMode ?  1 : 0);
   }
 
   // Set array of 64-bit texture handles
@@ -2279,7 +2279,7 @@ Standard_Boolean OpenGl_View::setUniformState (const OpenGl_Vec3*            the
   }
 
   theProgram->SetUniform (theGlContext,
-    myUniformLocations[theProgramId][OpenGl_RT_uSphereMapForBack], myRenderParams.UseEnvironmentMapBackground ?  1 : 0);
+    myUniformLocations[theProgramId][OpenGl_RT_uSphereMapForBack], myRenderParams->UseEnvironmentMapBackground ?  1 : 0);
 
   return Standard_True;
 }
@@ -2373,7 +2373,7 @@ Standard_Boolean OpenGl_View::runRaytraceShaders (const Standard_Integer        
 
     aRenderFramebuffer->BindBuffer (theGlContext);
   }
-  else if (myRenderParams.IsAntialiasingEnabled) // if 2-pass ray-tracing is used
+  else if (myRenderParams->IsAntialiasingEnabled) // if 2-pass ray-tracing is used
   {
     myRaytraceFBO1->BindBuffer (theGlContext);
 
@@ -2429,7 +2429,7 @@ Standard_Boolean OpenGl_View::runRaytraceShaders (const Standard_Integer        
 
     ++myAccumFrames;
   }
-  else if (myRenderParams.IsAntialiasingEnabled)
+  else if (myRenderParams->IsAntialiasingEnabled)
   {
     myRaytraceFBO1->ColorTexture()->Bind (theGlContext, GL_TEXTURE0 + OpenGl_RT_FsaaInputTexture);
 

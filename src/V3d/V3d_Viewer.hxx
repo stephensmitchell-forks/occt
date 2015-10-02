@@ -439,6 +439,8 @@ public:
 
   Standard_EXPORT Standard_CString Domain() const;
 
+  Standard_EXPORT Handle(Graphic3d_RenderingParams)& DefaultRenderingParams();
+
 friend class V3d_View;
 friend class V3d_Light;
 
@@ -505,6 +507,8 @@ private:
   Graphic3d_Vertex myGridEchoLastVert;
   TColStd_MapOfInteger myLayerIds;
   Aspect_GenId myZLayerGenId;
+
+  Handle(Graphic3d_RenderingParams) myDefaultRenderingParams;
 };
 
 #endif // _V3d_Viewer_HeaderFile

@@ -507,7 +507,7 @@ void OpenGl_GraphicDriver::TextSize (const Handle(Graphic3d_CView)& theView,
   aTextAspect.SetAspect(aDefaultContextText);
   TCollection_ExtendedString anExtText = theText;
   NCollection_String aText = (Standard_Utf16Char* )anExtText.ToExtString();
-  OpenGl_Text::StringSize(aCtx, aText, aTextAspect, aTextParam, theView->RenderingParams().Resolution, theWidth, theAscent, theDescent);
+  OpenGl_Text::StringSize(aCtx, aText, aTextAspect, aTextParam, theView->RenderingParams()->Resolution, theWidth, theAscent, theDescent);
 }
 
 //=======================================================================
