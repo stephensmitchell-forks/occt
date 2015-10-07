@@ -121,8 +121,8 @@ IntWalk_StatusDeflection IntWalk_IWalking::TestDeflection
     if (CurNbPoints == 1 && Status == IntWalk_OK &&
         !ArretAjout && !OnPrevTangency)
     {
-      tolerance(1) = Du/2.;
-      tolerance(2) = Dv/2.;
+      tolerance(1) = Abs(Du)/2.;
+      tolerance(2) = Abs(Dv)/2.;
       if (tolerance(1) <= gp::Resolution())
         tolerance(1) = tolerance(2);
       if (tolerance(2) <= gp::Resolution())
