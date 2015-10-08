@@ -39,9 +39,9 @@ uses Shape       from TopoDS,
      Dir      from gp,
      
      ErrorStatus               from Draft,
-     DataMapOfFaceFaceInfo     from Draft,
-     DataMapOfEdgeEdgeInfo     from Draft,
-     DataMapOfVertexVertexInfo from Draft
+     IndexedDataMapOfFaceFaceInfo     from Draft,
+     IndexedDataMapOfEdgeEdgeInfo     from Draft,
+     IndexedDataMapOfVertexVertexInfo from Draft
 
 
 raises NotDone           from StdFail,
@@ -317,9 +317,9 @@ is
 
 fields
 
-    myFMap  : DataMapOfFaceFaceInfo     from Draft;
-    myEMap  : DataMapOfEdgeEdgeInfo     from Draft;
-    myVMap  : DataMapOfVertexVertexInfo from Draft;
+    myFMap  : IndexedDataMapOfFaceFaceInfo     from Draft;
+    myEMap  : IndexedDataMapOfEdgeEdgeInfo     from Draft;
+    myVMap  : IndexedDataMapOfVertexVertexInfo from Draft;
     myComp  : Boolean                   from Standard;
     myShape : Shape                     from TopoDS;
     badShape: Shape                     from TopoDS;

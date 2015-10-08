@@ -51,21 +51,21 @@ is
     end ErrorStatus;
     
     
-    class DataMapOfFaceFaceInfo instantiates
-    	DataMap from TCollection(Face           from TopoDS,
-	                         FaceInfo       from Draft,
+    class IndexedDataMapOfFaceFaceInfo instantiates
+    	IndexedDataMap from TCollection(Face           from TopoDS,
+	                                    FaceInfo       from Draft,
 				 ShapeMapHasher from TopTools);
 
 
-    class DataMapOfEdgeEdgeInfo instantiates
-    	DataMap from TCollection(Edge           from TopoDS,
-	                         EdgeInfo       from Draft,
+    class IndexedDataMapOfEdgeEdgeInfo instantiates
+    	IndexedDataMap from TCollection(Edge           from TopoDS,
+	                                    EdgeInfo       from Draft,
 				 ShapeMapHasher from TopTools);
 
 
-    class DataMapOfVertexVertexInfo instantiates
-    	DataMap from TCollection(Vertex         from TopoDS,
-	                         VertexInfo     from Draft,
+    class IndexedDataMapOfVertexVertexInfo instantiates
+    	IndexedDataMap from TCollection(Vertex         from TopoDS,
+	                                    VertexInfo     from Draft,
 				 ShapeMapHasher from TopTools);
 
 
