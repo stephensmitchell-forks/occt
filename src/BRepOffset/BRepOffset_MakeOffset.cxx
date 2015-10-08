@@ -1299,9 +1299,11 @@ void BRepOffset_MakeOffset::BuildSplitsOfFaces
     //
     // split the face by the edges
     if (!iCountE) {
-      aLFImages.Append(aF);
-      theImage.Bind(aF, aLFImages);
-      aBB.Add(aFaces, aF);
+      if (bLimited) {
+        aLFImages.Append(aF);
+        theImage.Bind(aF, aLFImages);
+        aBB.Add(aFaces, aF);
+      }
       continue;
     }
     //
@@ -1404,7 +1406,7 @@ void BRepOffset_MakeOffset::BuildSplitsOfFaces
       //
       UpdateOrigins(theOrigins, aGF);
       //
-      if (aLFImages.Extent() > 1) {
+      if (aLFImages.Extent() >= 1) {
         TopTools_ListOfShape aLFKeep;
         //
         // check offset faces on the coincidence of the 
@@ -2954,123 +2956,146 @@ void BRepOffset_MakeOffset::MakeShells()
         aMV1.Perform();
         bDone = (aMV1.ErrorStatus() == 0);
         if (bDone) {
+          //
+          TopoDS_Shape aResult = aMV1.Shape();
+          //
+          TopTools_IndexedMapOfShape aMFResult;
+          TopExp::MapShapes(aResult, TopAbs_FACE, aMFResult);
+          //
+          // check the result
+          Standard_Boolean bGood = Standard_True;
+          BOPCol_ListIteratorOfListOfShape aItLSF(aLSF);
+          for (; aItLSF.More(); aItLSF.Next()) {
+            const TopoDS_Shape& aFx = aItLSF.Value();
+            if (!aMFResult.Contains(aFx)) {
+              const TopTools_ListOfShape& aLFMx = aMV1.Modified(aFx);
+              if (aLFMx.IsEmpty()) {
+                bGood = Standard_False;
+                break;
+              }
+            }
+          }
+          //
           TopoDS_Compound aShells;
           //
           aBB.MakeCompound(aShells);
           //
-          TopoDS_Shape aResult = aMV1.Shape();
-          //
-          // collect images of the faces
-          TopTools_MapOfShape aMFaces;
-          aNb = myFaces.Extent();
-          for (i = 1; i <= aNb; ++i) {
-            const TopoDS_Shape& aFEx = myFaces(i);
-            const TopTools_ListOfShape& aLFEx = aMV1.Modified(aFEx);
-            if (!aLFEx.IsEmpty()) {
-              aItLS.Initialize(aLFEx);
-              for (; aItLS.More(); aItLS.Next()) {
-                const TopoDS_Face& aFExIm = *(TopoDS_Face*)&aItLS.Value();
-                aMFaces.Add(aFExIm);
-              }
-            }
-            else {
-              aMFaces.Add(aFEx);
-            }
+          if (!bGood) {
+            myOffsetShape = aShells;
           }
-          //
-          if (aResult.ShapeType() == TopAbs_COMPOUND) {
-            // collect faces attached to only one solid
-            BOPCol_IndexedDataMapOfShapeListOfShape aMFS;
-            BOPCol_ListOfShape aLSF2;
-            //
-            BOPTools::MapShapesAndAncestors(aResult, TopAbs_FACE, TopAbs_SOLID, aMFS);
-            aNb = aMFS.Extent();
-            bDone = (aNb > 0);
-            //
-            if (bDone) {
-              for (i = 1; i <= aNb; ++i) {
-                const BOPCol_ListOfShape& aLSx = aMFS(i);
-                if (aLSx.Extent() == 1) {
-                  const TopoDS_Shape& aFx = aMFS.FindKey(i);
-                  aLSF2.Append(aFx);
+          else {
+            // collect images of the faces
+            TopTools_MapOfShape aMFaces;
+            aNb = myFaces.Extent();
+            for (i = 1; i <= aNb; ++i) {
+              const TopoDS_Shape& aFEx = myFaces(i);
+              const TopTools_ListOfShape& aLFEx = aMV1.Modified(aFEx);
+              if (!aLFEx.IsEmpty()) {
+                aItLS.Initialize(aLFEx);
+                for (; aItLS.More(); aItLS.Next()) {
+                  const TopoDS_Face& aFExIm = *(TopoDS_Face*)&aItLS.Value();
+                  aMFaces.Add(aFExIm);
                 }
               }
+              else {
+                aMFaces.Add(aFEx);
+              }
+            }
+            //
+            if (aResult.ShapeType() == TopAbs_COMPOUND) {
+              // collect faces attached to only one solid
+              BOPCol_IndexedDataMapOfShapeListOfShape aMFS;
+              BOPCol_ListOfShape aLSF2;
               //
-              // make solids from the new list
-              BOPAlgo_MakerVolume aMV2;
+              BOPTools::MapShapesAndAncestors(aResult, TopAbs_FACE, TopAbs_SOLID, aMFS);
+              aNb = aMFS.Extent();
+              bDone = (aNb > 0);
               //
-              aMV2.SetArguments(aLSF2);
-              aMV2.SetIntersect(Standard_False);
-              //
-              aMV2.Perform();
-              bDone = (aMV2.ErrorStatus() == 0);
               if (bDone) {
-                aResult = aMV2.Shape();
-                if (aResult.ShapeType() == TopAbs_COMPOUND) {
-                  BOPCol_ListOfShape aLSF3;
-                  //
-                  aExp.Init(aResult, TopAbs_FACE);
-                  for (; aExp.More(); aExp.Next()) {
-                    const TopoDS_Face& aF = *(TopoDS_Face*)&aExp.Current();
+                for (i = 1; i <= aNb; ++i) {
+                  const BOPCol_ListOfShape& aLSx = aMFS(i);
+                  if (aLSx.Extent() == 1) {
+                    const TopoDS_Shape& aFx = aMFS.FindKey(i);
+                    aLSF2.Append(aFx);
+                  }
+                }
+                //
+                // make solids from the new list
+                BOPAlgo_MakerVolume aMV2;
+                //
+                aMV2.SetArguments(aLSF2);
+                aMV2.SetIntersect(Standard_False);
+                //
+                aMV2.Perform();
+                bDone = (aMV2.ErrorStatus() == 0);
+                if (bDone) {
+                  aResult = aMV2.Shape();
+                  if (aResult.ShapeType() == TopAbs_COMPOUND) {
+                    BOPCol_ListOfShape aLSF3;
                     //
-                    // check orientation
-                    if (!anOrigins.Contains(aF)) {
-                      aLSF3.Append(aF);
-                      continue;
-                    }
-                    //
-                    const TopTools_ListOfShape& aLFOr = anOrigins.FindFromKey(aF);
-                    aItLS.Initialize(aLFOr);
-                    for (; aItLS.More(); aItLS.Next()) {
-                      const TopoDS_Face& aFOr = *(TopoDS_Face*)&aItLS.Value();
+                    aExp.Init(aResult, TopAbs_FACE);
+                    for (; aExp.More(); aExp.Next()) {
+                      const TopoDS_Face& aF = *(TopoDS_Face*)&aExp.Current();
                       //
-                      if (CheckNormals(aF, aFOr)) {
+                      // check orientation
+                      if (!anOrigins.Contains(aF)) {
                         aLSF3.Append(aF);
-                        break;
+                        continue;
+                      }
+                      //
+                      const TopTools_ListOfShape& aLFOr = anOrigins.FindFromKey(aF);
+                      aItLS.Initialize(aLFOr);
+                      for (; aItLS.More(); aItLS.Next()) {
+                        const TopoDS_Face& aFOr = *(TopoDS_Face*)&aItLS.Value();
+                        //
+                        if (CheckNormals(aF, aFOr)) {
+                          aLSF3.Append(aF);
+                          break;
+                        }
                       }
                     }
-                  }
-                  //
-                  // make solid containing most outer faces
-                  BOPAlgo_MakerVolume aMV3;
-                  //
-                  aMV3.SetArguments(aLSF3);
-                  aMV3.SetIntersect(Standard_False);
-                  //
-                  aMV3.Perform();
-                  bDone = (aMV3.ErrorStatus() == 0);
-                  if (bDone) {
-                    aResult = aMV3.Shape();
+                    //
+                    // make solid containing most outer faces
+                    BOPAlgo_MakerVolume aMV3;
+                    //
+                    aMV3.SetArguments(aLSF3);
+                    aMV3.SetIntersect(Standard_False);
+                    //
+                    aMV3.Perform();
+                    bDone = (aMV3.ErrorStatus() == 0);
+                    if (bDone) {
+                      aResult = aMV3.Shape();
+                    }
                   }
                 }
               }
             }
-          }
-          //
-          TopExp_Explorer aExp(aResult, TopAbs_SHELL);
-          bDone = aExp.More();
-          for (; aExp.More(); aExp.Next()) {
-            const TopoDS_Shell& aSh = *(TopoDS_Shell*)&aExp.Current();
             //
-            TopoDS_Shell aShellNew;
-            if (bFaces) {
-              aBB.MakeShell(aShellNew);
+            TopExp_Explorer aExp(aResult, TopAbs_SHELL);
+            bDone = aExp.More();
+            for (; aExp.More(); aExp.Next()) {
+              const TopoDS_Shell& aSh = *(TopoDS_Shell*)&aExp.Current();
               //
-              TopExp_Explorer aExp(aSh, TopAbs_FACE);
-              for (; aExp.More(); aExp.Next()) {
-                const TopoDS_Face& aFSh = *(TopoDS_Face*)&aExp.Current();
-                if (!aMFaces.Contains(aFSh)) {
-                  aBB.Add(aShellNew, aFSh);
+              TopoDS_Shell aShellNew;
+              if (bFaces) {
+                aBB.MakeShell(aShellNew);
+                //
+                TopExp_Explorer aExp(aSh, TopAbs_FACE);
+                for (; aExp.More(); aExp.Next()) {
+                  const TopoDS_Face& aFSh = *(TopoDS_Face*)&aExp.Current();
+                  if (!aMFaces.Contains(aFSh)) {
+                    aBB.Add(aShellNew, aFSh);
+                  }
                 }
               }
+              else {
+                aShellNew = aSh;
+              }
+              //
+              aBB.Add(aShells, aShellNew);
             }
-            else {
-              aShellNew = aSh;
-            }
-            //
-            aBB.Add(aShells, aShellNew);
+            myOffsetShape = aShells;
           }
-          myOffsetShape = aShells;
         }
       }
     }
@@ -4126,17 +4151,16 @@ Standard_Boolean CheckBiNormals
    const TopTools_IndexedDataMapOfShapeListOfShape& theOrigins,
    const TopTools_MapOfShape& theMFence,
    Standard_Boolean& bKeep,
-   Standard_Boolean& bRem)
+   Standard_Boolean& bRemove)
 {
   Standard_Boolean bChecked;
+  Standard_Integer aNbEdgesChecked;
   Standard_Real anAngle;
+  TopTools_ListOfShape aLEInv;
   //
-  bKeep = Standard_False;
-  bRem = Standard_True;
-  bChecked = Standard_False;
+  aNbEdgesChecked = 0;
   //
   const TopoDS_Wire& aWIm = BRepTools::OuterWire(aFIm);
-  //
   TopExp_Explorer aExp(aWIm, TopAbs_EDGE);
   for (; aExp.More(); aExp.Next()) {
     const TopoDS_Edge& aEIm = *(TopoDS_Edge*)&aExp.Current();
@@ -4152,7 +4176,6 @@ Standard_Boolean CheckBiNormals
     const TopTools_ListOfShape& aLEOr = theOrigins.FindFromKey(aEIm);
     const TopoDS_Shape& aSOr = aLEOr.First();
     if (aSOr.ShapeType() != TopAbs_EDGE) {
-      bRem = Standard_False;
       continue;
     }
     //
@@ -4180,13 +4203,6 @@ Standard_Boolean CheckBiNormals
       }
     }
     //
-    if (theMFence.Contains(aEIm)) {
-      bChecked = Standard_True;
-      bKeep = Standard_True;
-      bRem = Standard_False;
-      break;
-    }      
-    //
     const TopoDS_Edge& aEOr = *(TopoDS_Edge*)&aLEOr.First();
     //
     TopoDS_Edge aEOrF;
@@ -4206,16 +4222,41 @@ Standard_Boolean CheckBiNormals
       continue;
     }
     //
-    bChecked = Standard_True;
-    // check coincidence of bi-normals
+    ++aNbEdgesChecked;
+    //
     anAngle = aDB1.Angle(aDB2);
     if (Abs(anAngle - M_PI) < Precision::Confusion()) {
-      bRem = bRem && Standard_True;
+      aLEInv.Append(aEIm);
     }
-    else {
-      bRem = Standard_False;
-      bKeep = Standard_True;
+  }
+  //
+  bChecked = (aNbEdgesChecked > 0);
+  if (!bChecked) {
+    return bChecked;
+  }
+  //
+  // decide whether to remove the split face or not
+  bKeep = Standard_True;
+  bRemove = Standard_False;
+  //
+  if (aLEInv.IsEmpty()) {
+    return bChecked;
+  }
+  //
+  TopTools_ListIteratorOfListOfShape aItLS(aLEInv);
+  for (; aItLS.More(); aItLS.Next()) {
+    const TopoDS_Shape& aE = aItLS.Value();
+    if (theMFence.Contains(aE)) {
+      bKeep = Standard_False;
+      bRemove = Standard_True;
       break;
+    }
+  }
+  //
+  if (!bRemove) {
+    if (aNbEdgesChecked == aLEInv.Extent()) {
+      bKeep = Standard_False;
+      bRemove = Standard_True;
     }
   }
   //
