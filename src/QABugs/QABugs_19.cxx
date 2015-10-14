@@ -4611,6 +4611,83 @@ static Standard_Integer OCC26750( Draw_Interpretor& theDI,
   return 0;
 }
 
+//=======================================================================
+//function : OCC26772
+//purpose  :
+//=======================================================================
+static Standard_Integer OCC26772 (Draw_Interpretor& theDi,
+                                  Standard_Integer theArgNb,
+                                  const char ** theArgs)
+{
+  if (ViewerTest::GetAISContext().IsNull())
+  {
+    std::cerr << "Error: No opened context!\n";
+    return 1;
+  }
+
+  if (theArgNb > 2)
+  {
+    std::cerr << "Error: Wrong number of arguments! See usage:\n";
+    theDi.PrintHelp (theArgs[0]);
+    return 1;
+  }
+
+  Standard_Boolean isLocal = Standard_False;
+  if (theArgNb == 2)
+  {
+    TCollection_AsciiString anArg (theArgs[1]);
+    anArg.LowerCase();
+    if (anArg == "-local")
+    {
+      isLocal = Standard_True;
+    }
+    else
+    {
+      std::cerr << "Error: Wrong arguments! See usage:\n";
+      theDi.PrintHelp (theArgs[0]);
+      return 1;
+    }
+  }
+
+  BRepPrimAPI_MakeBox aBuilder (1.0, 1.0, 1.0);
+  Handle(AIS_InteractiveObject) aBox = new AIS_Shape (aBuilder.Shape());
+
+  const Handle(AIS_InteractiveContext) aCtx = ViewerTest::GetAISContext();
+  aCtx->RemoveAll();
+  if (isLocal)
+  {
+    aCtx->OpenLocalContext();
+  }
+
+  aCtx->Display (aBox, 1, 0, Standard_False, Standard_True, AIS_DS_Displayed);
+  ViewerTest::CurrentView()->FitAll();
+
+  if (isLocal)
+  {
+    aCtx->LocalContext()->Load (aBox, 1, 0);
+    aCtx->LocalContext()->ActivateMode (aBox, 0);
+    aCtx->AddOrRemoveSelected (aBox);
+  }
+  else
+  {
+    aCtx->Load (aBox, 1, 0);
+    aCtx->Activate (aBox, 0);
+    aCtx->AddOrRemoveCurrentObject (aBox);
+  }
+
+  aCtx->SetDisplayMode (aBox, 0, Standard_True);
+  if (isLocal)
+    aCtx->ClearSelected();
+  else
+    aCtx->ClearCurrents();
+  aCtx->SetDisplayMode (aBox, 1);
+  aCtx->SetDisplayMode (aBox, 0);
+
+  aCtx->UpdateCurrentViewer();
+
+  return 0;
+}
+
 void QABugs::Commands_19(Draw_Interpretor& theCommands) {
   const char *group = "QABugs";
 
@@ -4705,6 +4782,11 @@ void QABugs::Commands_19(Draw_Interpretor& theCommands) {
 
   theCommands.Add ("OCC24537", "OCC24537 [file]", __FILE__, OCC24537, group);
   theCommands.Add ("OCC26750", "OCC26750", __FILE__, OCC26750, group);
+  theCommands.Add ("OCC26772",
+                   "OCC26772 [-local] : reproduces a test case to check if the selected shape is displayed"
+                   "\n\t\t properly after switching display modes\n"
+                   "\n\t\t: [-local] the test case will be reproduced in a newely opened local context\n",
+                   __FILE__, OCC26772, group);
 
   return;
 }

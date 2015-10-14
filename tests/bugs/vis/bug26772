@@ -1,0 +1,50 @@
+puts "============"
+puts "CR26772"
+puts "============"
+puts ""
+
+##########################################################################################
+puts "Visualization - wireframe presentation of a selected shape disappears after switching display modes"
+##########################################################################################
+
+pload VISUALIZATION QAcommands
+
+vinit
+
+# check displaying of the shape and its selection in global context
+OCC26772
+if {[vreadpixel 204 204 name] != "YELLOW 1"} {
+  puts "ERROR: the wireframe presentation is not displayed!"
+}
+if {[vreadpixel 205 204 name] != "BLACK 0"} {
+  puts "ERROR: the wireframe presentation is not displayed!"
+}
+vmoveto 200 200
+if {[vreadpixel 204 204 name] != "CYAN1 1"} {
+  puts "ERROR: dynamic highlight of the box is broken!"
+}
+vselect 200 200
+if {[vreadpixel 204 204 name] != "GRAY80 1"} {
+  puts "ERROR: selection highlight of the box is broken!"
+}
+
+vselect 0 0
+
+# check displaying of the shape and its selection in local context
+OCC26772 -local
+if {[vreadpixel 204 204 name] != "YELLOW 1"} {
+  puts "ERROR: the wireframe presentation is not displayed in local context!"
+}
+if {[vreadpixel 205 204 name] != "BLACK 0"} {
+  puts "ERROR: the wireframe presentation is not displayed in local context!"
+}
+vmoveto 200 200
+if {[vreadpixel 204 204 name] != "CYAN1 1"} {
+  puts "ERROR: dynamic highlight of the box is broken in local context!"
+}
+vselect 200 200
+if {[vreadpixel 204 204 name] != "GRAY80 1"} {
+  puts "ERROR: selection highlight of the box is broken in local context!"
+}
+
+set only_screen 1
