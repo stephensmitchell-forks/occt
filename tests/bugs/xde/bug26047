@@ -1,0 +1,34 @@
+puts "=========="
+puts "OCC26047 - Lost colors for IGES export"
+puts "=========="
+puts ""
+
+pload DCAF
+set anIgesOrig [locate_data_file pencil.igs]
+
+# display original model
+ReadIges D $anIgesOrig
+XShow D
+vfit
+vsetdispmode 1
+vdump "$::imagedir/${::casename}_orig.png"
+set aColorOrig [vreadpixel 360 290 rgb name]
+
+# export a copy
+set anIgesCopy "$::imagedir/${::casename}_exported.igs"
+WriteIges D $anIgesCopy
+Close D
+
+# display an exported model
+ReadIges D $anIgesCopy
+XShow D
+vfit
+vsetdispmode 1
+vdump "$::imagedir/${::casename}_exported.png"
+
+set aColorNew [vreadpixel 360 290 rgb name]
+if { "$aColorOrig" == "$aColorNew" } {
+  puts "OK: Image of exported model matches original"
+} else {
+  puts "Error: Image of exported model is wrong!"
+}
