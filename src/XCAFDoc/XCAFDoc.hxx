@@ -77,7 +77,10 @@ public:
   Standard_EXPORT static Standard_GUID DimTolRefGUID();
 
   //! Return GUIDs for TreeNode representing specified types of Dimension
-  Standard_EXPORT static   Standard_GUID DimensionRefGUID() ;
+  Standard_EXPORT static   Standard_GUID DimensionRefFirstGUID() ;
+
+  //! Return GUIDs for TreeNode representing specified types of Dimension
+  Standard_EXPORT static   Standard_GUID DimensionRefSecondGUID() ;
 
   //! Return GUIDs for TreeNode representing specified types of GeomTolerance
   Standard_EXPORT static   Standard_GUID GeomToleranceRefGUID() ;
