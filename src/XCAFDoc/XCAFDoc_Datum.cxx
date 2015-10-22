@@ -309,8 +309,12 @@ Handle(XCAFDimTolObjects_DatumObject) XCAFDoc_Datum::GetObject() const
   {
     anObj->IsDatumTarget((aIsDTarget->Get() != 0));
   }
+  else
+  {
+    return anObj;
+  }
 
-  if (aIsDTarget != 0)
+  if (aIsDTarget->Get() != 0)
   {
     Handle(TDataStd_Integer) aDTargetType;
     if(Label().FindChild(ChildLab_DTargetType).FindAttribute(TDataStd_Integer::GetID(), aDTargetType))
