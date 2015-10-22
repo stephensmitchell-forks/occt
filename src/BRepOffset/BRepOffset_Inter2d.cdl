@@ -18,8 +18,8 @@
 
 class Inter2d from BRepOffset 
 
-	---Purpose: Computes the intersections betwwen edges on a face
-	--          stores result is SD as AsDes from BRepOffset.
+        ---Purpose: Computes the intersections betwwen edges on a face
+        --          stores result is SD as AsDes from BRepOffset.
 
 uses
     AsDes               from BRepAlgo,
@@ -30,27 +30,28 @@ uses
     Real                from Standard
 
 is
-    Compute(myclass ; AsDes    : AsDes      from BRepAlgo;
-    	    	      F        :         Face       from TopoDS;
-       	    	      NewEdges :         IndexedMapOfShape from TopTools;
-		      Tol      :         Real       from Standard);
-		      
-      	---Purpose: Computes the intersections between the edges stored
-      	--          is AsDes as descendants of <F> . Intersections is computed
-      	--          between two edges if one of them is bound in NewEdges.
+    Compute(myclass ; AsDes    : AsDes             from BRepAlgo;
+                      F        : Face              from TopoDS;
+                      NewEdges : IndexedMapOfShape from TopTools;
+                      Tol      : Real              from Standard);
+                      
+              ---Purpose: Computes the intersections between the edges stored
+              --          is AsDes as descendants of <F> . Intersections is computed
+              --          between two edges if one of them is bound in NewEdges.
 
     
     --  Modified by skv - Fri Dec 26 16:53:16 2003 OCC4455 Begin
     --  Add another parameter: offset value.
     ConnexIntByInt(myclass ; 
-      	    	   FI    :          Face                from TopoDS;
-    	    	   OFI   : in out   Offset              from BRepOffset;
-		   MES   : in out   DataMapOfShapeShape from TopTools;  
-		   Build :          DataMapOfShapeShape from TopTools;  
-		   AsDes :  AsDes               from BRepAlgo; 
-    	    	   Offset:          Real                from Standard;
-    	    	   Tol   :          Real                from Standard);
+                   FI      :          Face                from TopoDS;
+                   OFI     : in out   Offset              from BRepOffset;
+                   MES     : in out   DataMapOfShapeShape from TopTools;  
+                   Build   :          DataMapOfShapeShape from TopTools;  
+                   AsDes   :          AsDes               from BRepAlgo; 
+                   AsDes2d :          AsDes               from BRepAlgo; 
+                   Offset  :          Real                from Standard;
+                   Tol     :          Real                from Standard);
     --  Modified by skv - Fri Dec 26 16:53:16 2003 OCC4455 End
-			    
+                            
 end Inter2d;
 

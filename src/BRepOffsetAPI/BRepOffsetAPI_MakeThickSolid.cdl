@@ -53,7 +53,8 @@ is
 	     Mode         : Mode        from BRepOffset = BRepOffset_Skin;
     	     Intersection : Boolean     from Standard   = Standard_False;
 	     SelfInter    : Boolean     from Standard   = Standard_False;
-             Join         : JoinType    from GeomAbs    = GeomAbs_Arc)
+             Join         : JoinType    from GeomAbs    = GeomAbs_Arc;
+             RemoveIntEdges : Boolean   from Standard   = Standard_False)
     	---Purpose:  Constructs a hollowed solid from
     	-- the solid S by removing the set of faces ClosingFaces from S, where:
     	--       Offset defines the thickness of the walls. Its sign indicates
@@ -88,6 +89,8 @@ is
     	--   then the parallels to the two adjacent faces are
     	--   enlarged and intersected, so that there are no free
     	--   edges on parallels to faces.
+        -- - RemoveIntEdges flag defines whether to remove the INTERNAL edges 
+        --   from the result or not.
     	--   Warnings
     	-- Since the algorithm of MakeThickSolid is based on
     	-- MakeOffsetShape algorithm, the warnings are the same as for
