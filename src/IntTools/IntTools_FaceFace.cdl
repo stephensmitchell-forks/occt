@@ -127,7 +127,8 @@ is
     ----------------------------------------------------------
     MakeCurve(me: in out; Index   : Integer from Standard;
                        D1      : TopolTool from Adaptor3d;
-                       D2      : TopolTool from Adaptor3d)
+                       D2      : TopolTool from Adaptor3d;
+                       theTol: Real from Standard)
         is protected; 
  
     ComputeTolReached3d(me:out) 
