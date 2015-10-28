@@ -45,27 +45,31 @@ is
 
     Create;
     
-    Create ( S            : Shape    from TopoDS;
-             Offset       : Real     from Standard;
-             Tol          : Real     from Standard;
-             Mode         : Mode     from BRepOffset = BRepOffset_Skin;
-                 Intersection : Boolean  from Standard   = Standard_False;
-             SelfInter    : Boolean  from Standard   = Standard_False;
-             Join         : JoinType from GeomAbs    = GeomAbs_Arc;
-             Thickening   : Boolean  from Standard   = Standard_False)
+    Create ( S              : Shape    from TopoDS;
+             Offset         : Real     from Standard;
+             Tol            : Real     from Standard;
+             Mode           : Mode     from BRepOffset = BRepOffset_Skin;
+             Intersection   : Boolean  from Standard   = Standard_False;
+             SelfInter      : Boolean  from Standard   = Standard_False;
+             Join           : JoinType from GeomAbs    = GeomAbs_Arc; 
+             RemoveIntEdges : Boolean  from Standard   = Standard_False;
+             Thickening     : Boolean  from Standard   = Standard_False; 
+             RemoveInvalidFaces: Boolean from Standard = Standard_False)
     returns MakeOffset from BRepOffset;             
              
 ---Category: Initialization.
 
     Initialize (me : in out;
-                    S            : Shape    from TopoDS;
-                Offset       : Real     from Standard;
-                Tol          : Real     from Standard;
-                Mode         : Mode     from BRepOffset = BRepOffset_Skin;
-                    Intersection : Boolean  from Standard   = Standard_False;
-                SelfInter    : Boolean  from Standard   = Standard_False;
-                Join         : JoinType from GeomAbs    = GeomAbs_Arc; 
-                Thickening   : Boolean  from Standard   = Standard_False)
+                S              : Shape    from TopoDS;
+                Offset         : Real     from Standard;
+                Tol            : Real     from Standard;
+                Mode           : Mode     from BRepOffset = BRepOffset_Skin;
+                Intersection   : Boolean  from Standard   = Standard_False;
+                SelfInter      : Boolean  from Standard   = Standard_False;
+                Join           : JoinType from GeomAbs    = GeomAbs_Arc; 
+                RemoveIntEdges : Boolean  from Standard   = Standard_False;
+                Thickening     : Boolean  from Standard   = Standard_False;
+                RemoveInvalidFaces: Boolean from Standard = Standard_False)
     is static;
     
     Clear (me : in out) 
@@ -209,7 +213,11 @@ is
 
     MakeMissingWalls (me: in out)
         ---Purpose: Private method used to build walls for thickening the shell
-    is static private; 
+    is static private;  
+     
+    RemoveInternalEdges (me: in out)
+        ---Purpose: Removes INTERNAL edges from the faces
+    is static private;  
 
 fields
 
@@ -219,9 +227,11 @@ fields
     myMode           : Mode       from BRepOffset;
     myInter          : Boolean    from Standard;
     mySelfInter      : Boolean    from Standard;
-    myJoin           : JoinType   from GeomAbs; 
+    myJoin           : JoinType   from GeomAbs;  
+    myRemoveIntEdges : Boolean    from Standard;
     myThickening     : Boolean    from Standard;
-     
+    myRemoveInvalidFaces : Boolean from Standard;
+    
     myFaceOffset     : DataMapOfShapeReal from TopTools;
     
     myFaces          : IndexedMapOfShape from TopTools;

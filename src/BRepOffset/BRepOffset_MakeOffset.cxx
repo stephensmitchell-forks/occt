@@ -330,13 +330,15 @@ static
                                   const TopTools_IndexedDataMapOfShapeListOfShape& theOrigins,
                                   const TopTools_MapOfShape& theMFence,
                                   Standard_Boolean& bKeep,
-                                  Standard_Boolean& bRem);
+                                  Standard_Boolean& bRem,
+                                  const Standard_Boolean RemoveInvalidFaces);
 
 static 
   void CheckBiNormals(TopTools_ListOfShape&  theLFImages,
                       const TopoDS_Face& theF,
                       const TopTools_IndexedDataMapOfShapeListOfShape& theOrigins,
-                      TopTools_ListOfShape& theLFKeep);
+                      TopTools_ListOfShape& theLFKeep,
+                      const Standard_Boolean RemoveInvalidFaces);
 
 static 
   Standard_Boolean CheckNormals(const TopoDS_Face& theFIm,
@@ -347,6 +349,10 @@ static
                         BRepAlgo_Image&         myImageOffset,
                         const TopoDS_Shape&     myOffsetShape,
                         const TopAbs_ShapeEnum &theShapeType);
+
+static 
+  void RemoveShapes(TopoDS_Shape& theS,
+                    const TopTools_ListOfShape& theLS);
 
 //=======================================================================
 
@@ -371,17 +377,21 @@ BRepOffset_MakeOffset::BRepOffset_MakeOffset(const TopoDS_Shape&    S,
                                              const Standard_Boolean Inter, 
                                              const Standard_Boolean SelfInter, 
                                              const GeomAbs_JoinType Join,
-                                             const Standard_Boolean Thickening)
+                                             const Standard_Boolean RemoveIntEdges,
+                                             const Standard_Boolean Thickening,
+                                             const Standard_Boolean RemInvFaces)
 : 
-myOffset     (Offset),
-myTol        (Tol),
-myShape      (S),
-myMode       (Mode),
-myInter      (Inter),
-mySelfInter  (SelfInter),
-myJoin       (Join),
-myThickening (Thickening),
-myDone     (Standard_False)
+myOffset        (Offset),
+myTol           (Tol),
+myShape         (S),
+myMode          (Mode),
+myInter         (Inter),
+mySelfInter     (SelfInter),
+myJoin          (Join),
+myRemoveIntEdges(RemoveIntEdges),
+myThickening    (Thickening),
+myRemoveInvalidFaces(RemInvFaces),
+myDone          (Standard_False)
 
 {
   myAsDes = new BRepAlgo_AsDes();
@@ -399,17 +409,21 @@ void BRepOffset_MakeOffset::Initialize(const TopoDS_Shape&    S,
                                        const Standard_Boolean Inter,
                                        const Standard_Boolean SelfInter,
                                        const GeomAbs_JoinType Join,
-                                       const Standard_Boolean Thickening)
+                                       const Standard_Boolean RemoveIntEdges,
+                                       const Standard_Boolean Thickening,
+                                       const Standard_Boolean RemInvFaces)
 {
-  myOffset     = Offset;
-  myShape      = S;
-  myTol        = Tol;
-  myMode       = Mode;
-  myInter      = Inter;
-  mySelfInter  = SelfInter;
-  myJoin       = Join;
-  myThickening = Thickening;
-  myDone     = Standard_False;
+  myOffset         = Offset;
+  myShape          = S;
+  myTol            = Tol;
+  myMode           = Mode;
+  myInter          = Inter;
+  mySelfInter      = SelfInter;
+  myJoin           = Join;
+  myRemoveIntEdges = RemoveIntEdges;
+  myThickening     = Thickening;
+  myRemoveInvalidFaces = RemInvFaces;
+  myDone           = Standard_False;
   Clear();
 }
 
@@ -537,6 +551,12 @@ void BRepOffset_MakeOffset::MakeOffsetShape()
   // Unwinding 3D.
   //--------------
   SelectShells ();
+  //----------------------------------
+  // Remove INTERNAL edges if necessasry
+  //----------------------------------
+  if (myRemoveIntEdges) {
+    RemoveInternalEdges();
+  }
   //----------------------------------
   // Coding of regularities.
   //----------------------------------
@@ -1411,7 +1431,7 @@ void BRepOffset_MakeOffset::BuildSplitsOfFaces
         //
         // check offset faces on the coincidence of the 
         // bi-normal directions with the original faces
-        CheckBiNormals(aLFImages, aF, theOrigins, aLFKeep);
+        CheckBiNormals(aLFImages, aF, theOrigins, aLFKeep, myRemoveInvalidFaces);
         //
         // limit the face
         if (aLFImages.Extent() > 1) {
@@ -2964,14 +2984,16 @@ void BRepOffset_MakeOffset::MakeShells()
           //
           // check the result
           Standard_Boolean bGood = Standard_True;
-          BOPCol_ListIteratorOfListOfShape aItLSF(aLSF);
-          for (; aItLSF.More(); aItLSF.Next()) {
-            const TopoDS_Shape& aFx = aItLSF.Value();
-            if (!aMFResult.Contains(aFx)) {
-              const TopTools_ListOfShape& aLFMx = aMV1.Modified(aFx);
-              if (aLFMx.IsEmpty()) {
-                bGood = Standard_False;
-                break;
+          if (myRemoveInvalidFaces) {
+            BOPCol_ListIteratorOfListOfShape aItLSF(aLSF);
+            for (; aItLSF.More(); aItLSF.Next()) {
+              const TopoDS_Shape& aFx = aItLSF.Value();
+              if (!aMFResult.Contains(aFx)) {
+                const TopTools_ListOfShape& aLFMx = aMV1.Modified(aFx);
+                if (aLFMx.IsEmpty()) {
+                  bGood = Standard_False;
+                  break;
+                }
               }
             }
           }
@@ -3407,10 +3429,87 @@ void BRepOffset_MakeOffset::EncodeRegularity ()
 #endif
 }
 
+//=======================================================================
+//function : RemoveInternalEdges
+//purpose  : 
+//=======================================================================
+void BRepOffset_MakeOffset::RemoveInternalEdges()
+{
+  Standard_Boolean bRemoveWire, bRemoveEdge;
+  TopExp_Explorer aExpF, aExpW, aExpE;
+  TopTools_IndexedDataMapOfShapeListOfShape aDMELF;
+  //
+  TopExp::MapShapesAndAncestors(myOffsetShape, TopAbs_EDGE, TopAbs_FACE, aDMELF);
+  //
+  aExpF.Init(myOffsetShape, TopAbs_FACE);
+  for (; aExpF.More(); aExpF.Next()) {
+    TopoDS_Face& aF = *(TopoDS_Face*)&aExpF.Current();
+    //
+    TopTools_ListOfShape aLIW;
+    //
+    aExpW.Init(aF, TopAbs_WIRE);
+    for (; aExpW.More(); aExpW.Next()) {
+      TopoDS_Wire& aW = *(TopoDS_Wire*)&aExpW.Current();
+      //
+      bRemoveWire = Standard_True;
+      TopTools_ListOfShape aLIE;
+      //
+      aExpE.Init(aW, TopAbs_EDGE);
+      for (; aExpE.More(); aExpE.Next()) {
+        const TopoDS_Edge& aE = *(TopoDS_Edge*)&aExpE.Current();
+        if (aE.Orientation() != TopAbs_INTERNAL) {
+          bRemoveWire = Standard_False;
+          continue;
+        }
+        //
+        const TopTools_ListOfShape& aLF = aDMELF.FindFromKey(aE);
+        bRemoveEdge = (aLF.Extent() == 1);
+        if (bRemoveEdge) {
+          aLIE.Append(aE);
+        }
+        else {
+          bRemoveWire = Standard_False;
+        }
+      }
+      //
+      if (bRemoveWire) {
+        aLIW.Append(aW);
+      }
+      else if (aLIE.Extent()) {
+        RemoveShapes(aW, aLIE);
+      }
+    }
+    //
+    if (aLIW.Extent()) {
+      RemoveShapes(aF, aLIW);
+    }
+  }
+}
 
 //=======================================================================
 // static methods implementation
 //=======================================================================
+
+//=======================================================================
+//function : RemoveShapes
+//purpose  : Removes the shapes <theLS> from the shape <theS>
+//=======================================================================
+void RemoveShapes(TopoDS_Shape& theS,
+                  const TopTools_ListOfShape& theLS)
+{
+  BRep_Builder aBB;
+  //
+  Standard_Boolean bFree = theS.Free();
+  theS.Free(Standard_True);
+  //
+  TopTools_ListIteratorOfListOfShape aIt(theLS);
+  for (; aIt.More(); aIt.Next()) {
+    const TopoDS_Shape& aSI = aIt.Value();
+    aBB.Remove(theS, aSI);
+  }
+  //
+  theS.Free(bFree);
+}
 
 //=======================================================================
 //function : UpDateTolerance
@@ -4151,12 +4250,13 @@ Standard_Boolean CheckBiNormals
    const TopTools_IndexedDataMapOfShapeListOfShape& theOrigins,
    const TopTools_MapOfShape& theMFence,
    Standard_Boolean& bKeep,
-   Standard_Boolean& bRemove)
+   Standard_Boolean& bRemove,
+   const Standard_Boolean RemoveInvalidFaces)
 {
   Standard_Boolean bChecked;
   Standard_Integer aNbEdgesChecked;
   Standard_Real anAngle;
-  TopTools_ListOfShape aLEInv;
+  TopTools_IndexedMapOfShape aMEInv;
   //
   aNbEdgesChecked = 0;
   //
@@ -4203,6 +4303,15 @@ Standard_Boolean CheckBiNormals
       }
     }
     //
+    if (!RemoveInvalidFaces) {
+      if (theMFence.Contains(aEIm)) {
+        bChecked = Standard_True;
+        bKeep = Standard_True;
+        bRemove = Standard_False;
+        return bChecked;
+      }
+    }
+    //
     const TopoDS_Edge& aEOr = *(TopoDS_Edge*)&aLEOr.First();
     //
     TopoDS_Edge aEOrF;
@@ -4225,8 +4334,8 @@ Standard_Boolean CheckBiNormals
     ++aNbEdgesChecked;
     //
     anAngle = aDB1.Angle(aDB2);
-    if (Abs(anAngle - M_PI) < Precision::Confusion()) {
-      aLEInv.Append(aEIm);
+    if (Abs(anAngle - M_PI) < 1.e-4) {
+      aMEInv.Add(aEIm);
     }
   }
   //
@@ -4239,24 +4348,24 @@ Standard_Boolean CheckBiNormals
   bKeep = Standard_True;
   bRemove = Standard_False;
   //
-  if (aLEInv.IsEmpty()) {
+  Standard_Integer  aNb = aMEInv.Extent();
+  if (aNb == 0) {
     return bChecked;
   }
   //
-  TopTools_ListIteratorOfListOfShape aItLS(aLEInv);
-  for (; aItLS.More(); aItLS.Next()) {
-    const TopoDS_Shape& aE = aItLS.Value();
-    if (theMFence.Contains(aE)) {
-      bKeep = Standard_False;
-      bRemove = Standard_True;
-      break;
-    }
+  if (aNb == aNbEdgesChecked) {
+    bKeep = Standard_False;
+    bRemove = Standard_True;
   }
   //
   if (!bRemove) {
-    if (aNbEdgesChecked == aLEInv.Extent()) {
-      bKeep = Standard_False;
-      bRemove = Standard_True;
+    for (Standard_Integer i = 1; i <= aNb; ++i) {
+      const TopoDS_Shape& aE = aMEInv(i);
+      if (theMFence.Contains(aE)) {
+        bKeep = Standard_False;
+        bRemove = Standard_True;
+        break;
+      }
     }
   }
   //
@@ -4271,7 +4380,8 @@ void CheckBiNormals
   (TopTools_ListOfShape&  theLFImages,
    const TopoDS_Face& theF,
    const TopTools_IndexedDataMapOfShapeListOfShape& theOrigins,
-   TopTools_ListOfShape& theLFKeep)
+   TopTools_ListOfShape& theLFKeep,
+   const Standard_Boolean RemoveInvalidFaces)
 {
   Standard_Boolean bChecked, bKeep, bRem;
   Standard_Integer i, aNb;
@@ -4302,7 +4412,7 @@ void CheckBiNormals
   for (; aItLF.More(); ) {
     const TopoDS_Face& aFIm = *(TopoDS_Face*)&aItLF.Value();
     //
-    bChecked = CheckBiNormals(aFIm, aFOr, theOrigins, aMEToKeep, bKeep, bRem);
+    bChecked = CheckBiNormals(aFIm, aFOr, theOrigins, aMEToKeep, bKeep, bRem, RemoveInvalidFaces);
     //
     if (bChecked) {
       if (bRem) {
