@@ -1394,7 +1394,7 @@ void IntTools_FaceFace::MakeCurve(const Standard_Integer Index,
       // 
       Standard_Real tol2d = myTolApprox;
       //         
-      theapp3d.SetParameters(myTolApprox, tol2d, 4, 8, 0, Standard_True);
+      theapp3d.SetParameters(myTolApprox, tol2d, 4, 8, 0, 30, Standard_True);
       
       aNbParts=myLConstruct.NbParts();
       for (i=1; i<=aNbParts; i++) {
@@ -1578,17 +1578,18 @@ void IntTools_FaceFace::MakeCurve(const Standard_Integer Index,
       }
         
       if(myHS1 == myHS2) { 
-        theapp3d.SetParameters(myTolApprox, tol2d, 4, 8, 0, Standard_False, aParType);
+        theapp3d.SetParameters(myTolApprox, tol2d, 4, 8, 0, 30, Standard_False, aParType);
         rejectSurface = Standard_True;
       }
       else { 
         if(reApprox && !rejectSurface)
-          theapp3d.SetParameters(myTolApprox, tol2d, 4, 8, 0, Standard_False, aParType);
+          theapp3d.SetParameters(myTolApprox, tol2d, 4, 8, 0, 30, Standard_False, aParType);
         else {
           Standard_Integer iDegMax, iDegMin, iNbIter;
           //
           ApproxParameters(myHS1, myHS2, iDegMin, iDegMax, iNbIter);
-          theapp3d.SetParameters(myTolApprox, tol2d, iDegMin, iDegMax, iNbIter, Standard_True, aParType);
+          theapp3d.SetParameters(myTolApprox, tol2d, iDegMin, iDegMax,
+                                                  iNbIter, 30, Standard_True, aParType);
         }
       }
       //
@@ -1654,7 +1655,8 @@ void IntTools_FaceFace::MakeCurve(const Standard_Integer Index,
             if ((typs1==GeomAbs_BezierSurface || typs1==GeomAbs_BSplineSurface) &&
                 (typs2==GeomAbs_BezierSurface || typs2==GeomAbs_BSplineSurface)) {
              
-              theapp3d.SetParameters(myTolApprox, tol2d, 4, 8, 0, Standard_True, aParType);
+              theapp3d.SetParameters(myTolApprox, tol2d, 4, 8, 0, 30,
+                                                                Standard_True, aParType);
               
               Standard_Boolean bUseSurfaces;
               bUseSurfaces = IntTools_WLineTool::NotUseSurfacesForApprox(myFace1, myFace2, WL, ifprm,  ilprm);
@@ -1662,7 +1664,8 @@ void IntTools_FaceFace::MakeCurve(const Standard_Integer Index,
                 // ######
                 rejectSurface = Standard_True;
                 // ######
-                theapp3d.SetParameters(myTolApprox, tol2d, 4, 8, 0, Standard_False, aParType);
+                theapp3d.SetParameters(myTolApprox, tol2d, 4, 8, 0, 30,
+                                                                Standard_False, aParType);
               }
             }
           }

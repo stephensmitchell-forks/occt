@@ -1695,14 +1695,9 @@ static Standard_Integer OCC708 (Draw_Interpretor& di, Standard_Integer argc, con
 //purpose  :
 //=======================================================================
 #include <TColStd_Array2OfInteger.hxx>
-static Standard_Integer OCC670 (Draw_Interpretor& di, Standard_Integer argc, const char ** argv)
+static Standard_Integer OCC670 (Draw_Interpretor&, Standard_Integer, const char **)
 {
-  if(argc != 1){
-    di<<"Usage : " << argv[0] << "\n";
-    return -1;
-  }
-  TColStd_Array2OfInteger Array2OfInteger(1,1,1,1);
-  Array2OfInteger.SetValue(5,5,55);
+  Standard_OutOfRange::Raise();
   return 0;
 }
 

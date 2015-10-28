@@ -420,6 +420,136 @@ static void JoinWLines(IntPatch_SequenceOfLine& theSlin,
   }
 }
 
+//=======================================================================
+//function : CleanWline
+//purpose  : Iterates set of points in theWline and removes several of it
+//            if they led to too non-uniform distribution.
+//ATTENTION!!!
+//          1. Removed point must not be vertex.
+//          2. In the future, this method should be improved to make it more universal.
+//            Now, it is created only in order to avoid regressions.
+//=======================================================================
+static void CleanWline( const GeomAbs_SurfaceType theTypeS1,
+                        const GeomAbs_SurfaceType theTypeS2,
+                        const Handle(IntPatch_WLine)& theWline)
+{
+  const Standard_Real aFactor = 100.0;
+  const Standard_Integer aNbVertices = theWline->NbVertex();
+
+  Standard_Boolean  isSurfS1WithSeam = (theTypeS1 == GeomAbs_Cylinder) ||
+                                      (theTypeS1 == GeomAbs_Cone) ||
+                                      (theTypeS1 == GeomAbs_Sphere) ||
+                                      (theTypeS1 == GeomAbs_Torus) ||
+                                      (theTypeS1 == GeomAbs_SurfaceOfRevolution),
+                    isSurfS2WithSeam = (theTypeS2 == GeomAbs_Cylinder) ||
+                                      (theTypeS2 == GeomAbs_Cone) ||
+                                      (theTypeS2 == GeomAbs_Sphere) ||
+                                      (theTypeS2 == GeomAbs_Torus) ||
+                                      (theTypeS2 == GeomAbs_SurfaceOfRevolution);
+
+  if(!isSurfS1WithSeam && !isSurfS2WithSeam)
+    return;
+
+  //Sometimes WLine contains several vertices which have same ParameterOnLine
+  //(i.e. one IntSurf_PntOn2S is marked by several vertices).
+  //However, neighbour points should be deleted once. To provide it, we enter
+  //following variable.
+  Standard_Integer aVertIndPrev = -1;
+
+  for(Standard_Integer aVertID = 1; aVertID <= aNbVertices; aVertID++)
+  {
+    Standard_Integer aRemoveInd = -1;
+    const IntPatch_Point& aVert = theWline->Vertex(aVertID);
+    
+    {
+      //Consider only vertices which in the seam. Another vertices are rejected.
+      Standard_Real u1 = 0.0, v1 = 0.0, u2 = 0.0, v2 = 0.0;
+      aVert.Parameters(u1, v1, u2, v2);
+      if( (!isSurfS1WithSeam || (!IsEqual(u1, 0.0) && !IsEqual(u1, 2.0*M_PI))) &&
+          (!isSurfS2WithSeam || (!IsEqual(u2, 0.0) && !IsEqual(u2, 2.0*M_PI))))
+        continue;
+    }
+
+    const Standard_Integer aVertInd = static_cast<Standard_Integer>(aVert.ParameterOnLine());
+
+    if(aVertInd == aVertIndPrev)
+    {//Go to the next vertex, whose ParameterOnLine is different from aVertInd.
+      continue;
+    }
+
+    aVertIndPrev = aVertInd;
+
+    //This condition should be removed (it is added in order to make checking easier)
+    if((aVertInd == 1) || (aVertInd == theWline->NbPnts()))
+      continue;
+
+    const gp_Pnt  &aPCurr = aVert.Value();
+    const gp_Pnt  &aPPrev = theWline->Curve()->Value(aVertInd-1).Value(),
+                  &aPNext = theWline->Curve()->Value(aVertInd+1).Value();
+
+    const Standard_Real aSqD1 = aPCurr.SquareDistance(aPPrev),
+                        aSqD2 = aPCurr.SquareDistance(aPNext);
+
+    if(aSqD1 > aFactor*aSqD2)
+    {
+      aRemoveInd = aVertInd+1;
+
+      //Check, if removed point is not the Vertex
+      if(aVertID < aNbVertices)
+      {
+        Standard_Integer aNextVertParam = static_cast<Standard_Integer>(theWline->Vertex(aVertID+1).ParameterOnLine());
+        if(aNextVertParam == aRemoveInd)
+        {//The candidate is the Vertex. Removing is forbidden.
+          aRemoveInd = -1;
+        }
+      }
+    }
+    else if(aSqD2 > aFactor*aSqD1)
+    {
+      aRemoveInd = aVertInd-1;
+
+      //Check, if removed point is not the Vertex
+      if(aVertID > 1)
+      {
+        Standard_Integer aNextVertParam = static_cast<Standard_Integer>(theWline->Vertex(aVertID-1).ParameterOnLine());
+        if(aNextVertParam == aRemoveInd)
+        {//The candidate is the Vertex. Removing is forbidden.
+          aRemoveInd = -1;
+        }
+      }
+    }
+    else
+    {
+      aRemoveInd = -1;
+    }
+
+    if(aRemoveInd < 1)
+      continue;
+
+    //Removing
+    theWline->Curve()->RemovePoint(aRemoveInd);
+
+    //After removing points, ParameterOnLine for some vertices should be shifted
+    //(usualy it means the number of this vertex in
+    //the sequence of Walking-line points).
+    for(Standard_Integer aVID = 1; aVID <= aNbVertices; aVID++)
+    {
+      const Standard_Integer aVertParam = 
+            static_cast<Standard_Integer>(theWline->Vertex(aVID).ParameterOnLine());
+      
+      if(aVertParam < aRemoveInd)
+        continue;
+
+      IntPatch_Point aVertTemp(theWline->Vertex(aVID));
+      aVertTemp.SetParameter(aVertParam-1);
+      theWline->Replace(aVID, aVertTemp);
+
+      if(aVID == aVertID)
+        aVertIndPrev--;
+    }
+  }//for(Standard_Integer aVertID = 1; aVertID <= aNbVertices; aVertID++)
+}
+
 //======================================================================
 // function: SequenceOfLine
 //======================================================================
@@ -1336,6 +1466,14 @@ void IntPatch_Intersection::Perform(const Handle(Adaptor3d_HSurface)&  theS1,
     ParamParamPerfom(theS1, theD1, theS2, theD2, TolArc,
                         TolTang, ListOfPnts, RestrictLine, typs1, typs2);
   }
+
+  for(Standard_Integer i = slin.Lower(); i <= slin.Upper(); i++)
+  {
+    const Handle(IntPatch_WLine) WL = Handle(IntPatch_WLine)::DownCast(slin(i));
+
+    if(!WL.IsNull())
+      CleanWline(typs1, typs2, WL);
+  }
 }
 
 //=======================================================================
@@ -1554,6 +1692,14 @@ void IntPatch_Intersection::Perform(const Handle(Adaptor3d_HSurface)&  theS1,
       GeomGeomPerfomTrimSurf(theS1, theD1, theS2, theD2,
               TolArc, TolTang, ListOfPnts, RestrictLine, typs1, typs2);
     }
+  }
+
+  for(Standard_Integer i = slin.Lower(); i <= slin.Upper(); i++)
+  {
+    const Handle(IntPatch_WLine) WL = Handle(IntPatch_WLine)::DownCast(slin(i));
+
+    if(!WL.IsNull())
+      CleanWline(typs1, typs2, WL);
   }
 }
 

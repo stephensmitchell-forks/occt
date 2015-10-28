@@ -783,32 +783,6 @@ void Approx_ComputeLine::Perform(const MultiLine& Line)
   }
 }
 
-
-
-const TColStd_Array1OfReal& Approx_ComputeLine::Parameters(const Standard_Integer Index) const
-{
-  return (myPar.Value(Index))->Array1();
-}
-
-
-Standard_Integer Approx_ComputeLine::NbMultiCurves()const
-{
-  return myMultiCurves.Length();
-}
-
-AppParCurves_MultiCurve& Approx_ComputeLine::ChangeValue(const Standard_Integer Index)
-{
-  return myMultiCurves.ChangeValue(Index);
-}
-
-
-const AppParCurves_MultiCurve& Approx_ComputeLine::Value(const Standard_Integer Index)
-const
-{
-  return myMultiCurves.Value(Index);
-}
-
-
 const AppParCurves_MultiBSpCurve& Approx_ComputeLine::SplineValue()
 {
   Approx_MCurvesToBSpCurve Trans;
@@ -816,10 +790,6 @@ const AppParCurves_MultiBSpCurve& Approx_ComputeLine::SplineValue()
   myspline = Trans.Value();
   return myspline;
 }
-
-
-
-
 
 void Approx_ComputeLine::Parameters(const MultiLine& Line, 
 			       const Standard_Integer firstP,
@@ -879,7 +849,6 @@ void Approx_ComputeLine::Parameters(const MultiLine& Line,
     }
   }
 }  
-
 
 Standard_Boolean Approx_ComputeLine::Compute(const MultiLine& Line,
 					     const Standard_Integer fpt,
@@ -978,9 +947,6 @@ Standard_Boolean Approx_ComputeLine::Compute(const MultiLine& Line,
 
   return Standard_False;
 }
-
-
-
 
 Standard_Boolean  Approx_ComputeLine::ComputeCurve(const MultiLine& Line,
 				      const Standard_Integer firstpt,
@@ -1208,8 +1174,6 @@ Standard_Boolean  Approx_ComputeLine::ComputeCurve(const MultiLine& Line,
   return mydone;
 }
 
-
-
 void Approx_ComputeLine::Init(const Standard_Integer degreemin,
 			      const Standard_Integer degreemax,
 			      const Standard_Real Tolerance3d,
@@ -1227,54 +1191,4 @@ void Approx_ComputeLine::Init(const Standard_Integer degreemin,
   mysquares = Squares;
   mycut = cutting;
   myitermax = NbIterations;
-}
-
-
-
-void Approx_ComputeLine::SetDegrees(const Standard_Integer degreemin,
-				    const Standard_Integer degreemax)
-{
-  mydegremin = degreemin;
-  mydegremax = degreemax;
-}
-
-
-void Approx_ComputeLine::SetTolerances(const Standard_Real Tolerance3d,
-				       const Standard_Real Tolerance2d)
-{
-  mytol3d = Tolerance3d;
-  mytol2d = Tolerance2d;
-}
-
-
-void Approx_ComputeLine::SetConstraints(const AppParCurves_Constraint FirstC,
-					const AppParCurves_Constraint LastC)
-{
-  myfirstC = FirstC;
-  mylastC = LastC;
-}
-
-
-
-Standard_Boolean Approx_ComputeLine::IsAllApproximated()
-const {
-  return alldone;
-}
-
-Standard_Boolean Approx_ComputeLine::IsToleranceReached()
-const {
-  return tolreached;
-}
-
-void Approx_ComputeLine::Error(const Standard_Integer Index,
-			       Standard_Real& tol3d,
-			       Standard_Real& tol2d) const
-{
-  tol3d = Tolers3d.Value(Index);
-  tol2d = Tolers2d.Value(Index);
-}
-
-void Approx_ComputeLine::Parametrization(Approx_ParametrizationType& partype) const
-{
-  partype = Par;
 }

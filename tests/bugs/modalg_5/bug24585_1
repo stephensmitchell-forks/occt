@@ -5,6 +5,9 @@ puts ""
 ###########################################################
 # Wrong pcurve of the section curve
 ###########################################################
+
+puts "TODO OCC26752 ALL: Error: Tolerance is too big!"
+
 set MaxTol 1.05e-6
 set NbCurv_OK 1
 

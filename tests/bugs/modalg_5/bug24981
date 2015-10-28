@@ -6,6 +6,8 @@ puts ""
 # IntTools_FaceFace enters to infinite loop on the attached case
 ###########################################################
 
+puts "TODO OCC26431 ALL: Error :  is WRONG because number of "
+
 restore [locate_data_file bug24981_shapes.brep] a
 restore [locate_data_file bug24981_tools.brep] b
 

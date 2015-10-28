@@ -562,7 +562,7 @@ void GeomInt_IntSS::MakeCurve(const Standard_Integer Index,
       GeomInt_WLApprox theapp3d;
       Standard_Real tol2d = myTolApprox;
       // 	
-      theapp3d.SetParameters(myTolApprox, tol2d, 4, 8, 0, Standard_True);
+      theapp3d.SetParameters(myTolApprox, tol2d, 4, 8, 0, 30, Standard_True);
 
       aNbParts=myLConstruct.NbParts();
       for (i=1; i<=aNbParts; i++) {
@@ -658,12 +658,17 @@ void GeomInt_IntSS::MakeCurve(const Standard_Integer Index,
   }// case IntPatch_Analytic:
   break;
 
-                          //########################################  
-                          // Walking
-                          //######################################## 
+  //########################################  
+  // Walking
+  //######################################## 
   case IntPatch_Walking:{
     Handle(IntPatch_WLine) WL = 
       Handle(IntPatch_WLine)::DownCast(L);
+
+#ifdef OCCT_DEBUG
+    //WL->Dump(0);
+#endif
+
     //
     Standard_Integer ifprm, ilprm;
     //
@@ -701,10 +706,10 @@ void GeomInt_IntSS::MakeCurve(const Standard_Integer Index,
       tol2d = myTolApprox;
       aTolSS=2.e-7;
       if(myHS1 == myHS2) { 
-        theapp3d.SetParameters(myTolApprox, tol2d, 4, 8, 0, Standard_False);	  
+        theapp3d.SetParameters(myTolApprox, tol2d, 4, 8, 0, 30, Standard_False);
       }
       else { 
-        theapp3d.SetParameters(myTolApprox, tol2d, 4, 8, 0, Standard_True);
+        theapp3d.SetParameters(myTolApprox, tol2d, 4, 8, 0, 30, Standard_True);
       }
       //
       bIsDecomposited = 
@@ -749,7 +754,7 @@ void GeomInt_IntSS::MakeCurve(const Standard_Integer Index,
             if ((typs1==GeomAbs_BezierSurface || typs1==GeomAbs_BSplineSurface) &&
               (typs2==GeomAbs_BezierSurface || typs2==GeomAbs_BSplineSurface)) {
 
-                theapp3d.SetParameters(myTolApprox, tol2d, 4, 8, 0, Standard_True);
+                theapp3d.SetParameters(myTolApprox, tol2d, 4, 8, 0, 30, Standard_True);
                 //Standard_Boolean bUseSurfaces;
                 //bUseSurfaces=NotUseSurfacesForApprox(myFace1, myFace2, WL, ifprm,  ilprm);
                 //if (bUseSurfaces) {
@@ -2134,6 +2139,9 @@ void GeomInt_IntSS::TreatRLine(const Handle(IntPatch_RLine)& theRL,
     anAHC2d = theRL->ArcOnS1();
     theRL->ParamOnS1(tf, tl);
     theC2d1 = Geom2dAdaptor::MakeCurve(anAHC2d->Curve2d());
+    tf = Max(tf, theC2d1->FirstParameter());
+    tl = Min(tl, theC2d1->LastParameter());
+    theC2d1 = new Geom2d_TrimmedCurve(theC2d1, tf, tl);
   }
   else if (theRL->IsArcOnS2())
   {
@@ -2141,6 +2149,9 @@ void GeomInt_IntSS::TreatRLine(const Handle(IntPatch_RLine)& theRL,
     anAHC2d = theRL->ArcOnS2();
     theRL->ParamOnS2(tf, tl);
     theC2d2 = Geom2dAdaptor::MakeCurve(anAHC2d->Curve2d());
+    tf = Max(tf, theC2d2->FirstParameter());
+    tl = Min(tl, theC2d2->LastParameter());
+    theC2d2 = new Geom2d_TrimmedCurve(theC2d2, tf, tl);
   }
   else
   {

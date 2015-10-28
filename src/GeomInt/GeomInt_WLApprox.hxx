@@ -63,9 +63,15 @@ public:
   
   Standard_EXPORT void Perform (const Handle(IntPatch_WLine)& aLine, const Standard_Boolean ApproxXYZ = Standard_True, const Standard_Boolean ApproxU1V1 = Standard_True, const Standard_Boolean ApproxU2V2 = Standard_True, const Standard_Integer indicemin = 0, const Standard_Integer indicemax = 0);
   
-  Standard_EXPORT void SetParameters (const Standard_Real Tol3d, const Standard_Real Tol2d, const Standard_Integer DegMin, const Standard_Integer DegMax, const Standard_Integer NbIterMax, const Standard_Boolean ApproxWithTangency = Standard_True, const Approx_ParametrizationType Parametrization = Approx_ChordLength);
-  
-  Standard_EXPORT void SetParameters (const Standard_Real Tol3d, const Standard_Real Tol2d, const Standard_Boolean RelativeTol, const Standard_Integer DegMin, const Standard_Integer DegMax, const Standard_Integer NbIterMax, const Standard_Integer NbPntMax, const Standard_Boolean ApproxWithTangency = Standard_True, const Approx_ParametrizationType Parametrization = Approx_ChordLength);
+  Standard_EXPORT 
+      void SetParameters (const Standard_Real Tol3d, const Standard_Real Tol2d,
+                          const Standard_Integer DegMin, 
+                          const Standard_Integer DegMax,
+                          const Standard_Integer NbIterMax,
+                          const Standard_Integer NbPntMax = 30,
+                          const Standard_Boolean ApproxWithTangency = Standard_True,
+                          const Approx_ParametrizationType
+                                          Parametrization = Approx_ChordLength);
   
   Standard_EXPORT void Perform();
   
@@ -77,7 +83,8 @@ public:
   
   Standard_EXPORT Standard_Integer NbMultiCurves() const;
   
-  Standard_EXPORT const AppParCurves_MultiBSpCurve& Value (const Standard_Integer Index) const;
+  Standard_EXPORT const AppParCurves_MultiBSpCurve&
+                                      Value (const Standard_Integer Index) const;
 
 
 
@@ -90,11 +97,19 @@ protected:
 
 private:
 
-  Standard_EXPORT Standard_Integer CorrectFinishIdx(const Standard_Integer theMinIdx,
-                                                    const Standard_Integer theMaxIdx,
-                                                    const Handle(IntPatch_WLine)& theline);
+Standard_EXPORT Standard_Integer
+                    CorrectFinishIdx( const Standard_Integer theMinIdx,
+                                      const Standard_Integer theMaxIdx,
+                                      const Handle(IntPatch_WLine)& theline);
 
-  Standard_EXPORT void Perform (const Handle(Adaptor3d_HSurface)& Surf1, const IntSurf_Quadric& Surf2, const Handle(IntPatch_WLine)& aLine, const Standard_Boolean ApproxXYZ, const Standard_Boolean ApproxU1V1, const Standard_Boolean ApproxU2V2, const Standard_Integer indicemin, const Standard_Integer indicemax);
+  Standard_EXPORT void Perform (const Handle(Adaptor3d_HSurface)& Surf1,
+                                const IntSurf_Quadric& Surf2,
+                                const Handle(IntPatch_WLine)& aLine,
+                                const Standard_Boolean ApproxXYZ,
+                                const Standard_Boolean ApproxU1V1,
+                                const Standard_Boolean ApproxU2V2,
+                                const Standard_Integer indicemin,
+                                const Standard_Integer indicemax);
   
   Standard_EXPORT void Perform (const IntSurf_Quadric& Surf1, const Handle(Adaptor3d_HSurface)& Surf2, const Handle(IntPatch_WLine)& aLine, const Standard_Boolean ApproxXYZ, const Standard_Boolean ApproxU1V1, const Standard_Boolean ApproxU2V2, const Standard_Integer indicemin, const Standard_Integer indicemax);
   
@@ -104,22 +119,16 @@ private:
   GeomInt_TheComputeLineOfWLApprox myComputeLine;
   GeomInt_TheComputeLineBezierOfWLApprox myComputeLineBezier;
   Approx_MCurvesToBSpCurve myBezToBSpl;
-  Standard_Boolean myTolReached;
   Standard_Boolean myApproxBez;
   Standard_Boolean myWithTangency;
   Standard_Real myTol3d;
   Standard_Real myTol2d;
-  Standard_Boolean myRelativeTol;
   Standard_Integer myDegMin;
   Standard_Integer myDegMax;
   Standard_Integer myNbPntMax;
   Standard_Integer myNbIterMax;
-  Standard_Real myMinFactorXYZ;
-  Standard_Real myMinFactorUV;
   Standard_Real myTolReached3d;
   Standard_Real myTolReached2d;
-
-
 };
 
 

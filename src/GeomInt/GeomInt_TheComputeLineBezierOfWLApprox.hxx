@@ -83,50 +83,89 @@ public:
   Standard_EXPORT void Perform (const GeomInt_TheMultiLineOfWLApprox& Line);
   
   //! changes the degrees of the approximation.
-  Standard_EXPORT void SetDegrees (const Standard_Integer degreemin, const Standard_Integer degreemax);
+  Standard_EXPORT void SetDegrees ( const Standard_Integer degreemin,
+                                    const Standard_Integer degreemax)
+  {
+    mydegremin = degreemin;
+    mydegremax = degreemax;
+  }
   
   //! Changes the tolerances of the approximation.
-  Standard_EXPORT void SetTolerances (const Standard_Real Tolerance3d, const Standard_Real Tolerance2d);
+  Standard_EXPORT void SetTolerances (const Standard_Real Tolerance3d,
+                                      const Standard_Real Tolerance2d)
+  {
+    mytol3d = Tolerance3d;
+    mytol2d = Tolerance2d;
+  }
   
   //! changes the first and the last constraint points.
-  Standard_EXPORT void SetConstraints (const AppParCurves_Constraint firstC, const AppParCurves_Constraint lastC);
+  Standard_EXPORT void SetConstraints ( const AppParCurves_Constraint FirstC,
+                                        const AppParCurves_Constraint LastC)
+  {
+    myfirstC = FirstC;
+    mylastC = LastC;
+  }
   
   //! returns False if at a moment of the approximation,
   //! the status NoApproximation has been sent by the user
   //! when more points were needed.
-  Standard_EXPORT Standard_Boolean IsAllApproximated() const;
+  Standard_EXPORT Standard_Boolean IsAllApproximated() const
+  {
+    return alldone;
+  }
   
   //! returns False if the status NoPointsAdded has been sent.
-  Standard_EXPORT Standard_Boolean IsToleranceReached() const;
+  Standard_EXPORT Standard_Boolean IsToleranceReached() const
+  {
+    return tolreached;
+  }
   
   //! returns the tolerances 2d and 3d of the <Index> MultiCurve.
-  Standard_EXPORT void Error (const Standard_Integer Index, Standard_Real& tol3d, Standard_Real& tol2d) const;
+  Standard_EXPORT void Error (const Standard_Integer Index, Standard_Real& tol3d,
+                              Standard_Real& tol2d) const
+  {
+    tol3d = Tolers3d.Value(Index);
+    tol2d = Tolers2d.Value(Index);
+  }
   
   //! Returns the number of MultiCurve doing the approximation
   //! of the MultiLine.
-  Standard_EXPORT Standard_Integer NbMultiCurves() const;
+  Standard_EXPORT Standard_Integer NbMultiCurves() const
+  {
+    return myMultiCurves.Length();
+  }
   
   //! returns the result of the approximation.
-  Standard_EXPORT const AppParCurves_MultiCurve& Value (const Standard_Integer Index = 1) const;
+  Standard_EXPORT const AppParCurves_MultiCurve& 
+                                        Value (const Standard_Integer Index = 1) const
+  {
+    return myMultiCurves.Value(Index);
+  }
   
   //! returns the result of the approximation.
-  Standard_EXPORT AppParCurves_MultiCurve& ChangeValue (const Standard_Integer Index = 1);
+  Standard_EXPORT AppParCurves_MultiCurve& ChangeValue (const Standard_Integer Index = 1)
+  {
+    return myMultiCurves.ChangeValue(Index);
+  }
   
   //! returns the result of the approximation.
   Standard_EXPORT const AppParCurves_MultiBSpCurve& SplineValue();
   
   //! returns the type  of  parametrization
-  Standard_EXPORT void Parametrization (Approx_ParametrizationType& partype) const;
-  
+  Standard_EXPORT Approx_ParametrizationType Parametrization () const
+  {
+    return Par;
+  }
+
   //! returns the new parameters of the approximation
   //! corresponding to the points of the multicurve <Index>.
-  Standard_EXPORT const TColStd_Array1OfReal& Parameters (const Standard_Integer Index = 1) const;
-
-
-
+  Standard_EXPORT const TColStd_Array1OfReal&
+                                        Parameters (const Standard_Integer Index = 1) const
+  {
+    return (myPar.Value(Index))->Array1();
+  }
 
 protected:
-
 
 
 

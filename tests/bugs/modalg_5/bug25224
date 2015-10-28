@@ -6,6 +6,8 @@ puts ""
 # The section curve between two cylindrical faces is incomplete
 #######################################################################
 
+puts "TODO OCC26431 ALL: Faulty shapes in variables faulty_1 to faulty_2"
+
 restore [locate_data_file bug25224_Input_5.brep]  b1
 restore [locate_data_file bug25224_Input_21.brep] b2
 
