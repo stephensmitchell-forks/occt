@@ -984,6 +984,14 @@ const OpenGl_AspectFace* OpenGl_Workspace::AspectFace (const Standard_Boolean th
       DisableTexture();
     }
   }
+  else
+  {
+    if (AspectFace_set->DoTextureMap())
+    {
+      EnableTexture (AspectFace_set->TextureRes (myGlContext),
+                     AspectFace_set->TextureParams());
+    }
+  }
 
   AspectFace_applied = AspectFace_set;
   return AspectFace_set;
