@@ -281,4 +281,18 @@ namespace BVH
 
 #include <BVH_Box.lxx>
 
+//! 2D box of double precision reals.
+typedef BVH_Box<Standard_Real, 2> BVH_Box2d;
+//! 3D box of double precision reals.
+typedef BVH_Box<Standard_Real, 3> BVH_Box3d;
+//! 4D box of double precision reals.
+typedef BVH_Box<Standard_Real, 4> BVH_Box4d;
+
+//! 2D box of single precision reals.
+typedef BVH_Box<Standard_ShortReal, 2> BVH_Box2f;
+//! 3D box of single precision reals.
+typedef BVH_Box<Standard_ShortReal, 3> BVH_Box3f;
+//! 4D box of single precision reals.
+typedef BVH_Box<Standard_ShortReal, 4> BVH_Box4f;
+
 #endif // _BVH_Box_Header

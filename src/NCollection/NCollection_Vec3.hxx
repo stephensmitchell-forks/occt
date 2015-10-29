@@ -351,6 +351,15 @@ public:
     return NCollection_Vec3 (Element_t(0), Element_t(0), Element_t(1));
   }
 
+  //! Convert the vector.
+  template<class T>
+  NCollection_Vec3<T> Convert() const
+  {
+    return NCollection_Vec3<T> (static_cast<T> (v[0]),
+                                static_cast<T> (v[1]),
+                                static_cast<T> (v[2]));
+  }
+
 private:
 
   Element_t v[3]; //!< define the vector as array to avoid structure alignment issues

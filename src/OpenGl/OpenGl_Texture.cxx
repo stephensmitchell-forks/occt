@@ -183,7 +183,7 @@ bool OpenGl_Texture::GetDataFormat (const Handle(OpenGl_Context)& theCtx,
     {
       if (theCtx->core11 == NULL)
       {
-        theTextFormat  = GL_R8;  // GL_R32F
+        theTextFormat  = GL_R32F;
         thePixelFormat = GL_RED;
       }
       else
@@ -198,7 +198,7 @@ bool OpenGl_Texture::GetDataFormat (const Handle(OpenGl_Context)& theCtx,
     {
       if (theCtx->core11 == NULL)
       {
-        theTextFormat  = GL_R8;  // GL_R32F
+        theTextFormat  = GL_R32F;
         thePixelFormat = GL_RED;
       }
       else
@@ -211,7 +211,7 @@ bool OpenGl_Texture::GetDataFormat (const Handle(OpenGl_Context)& theCtx,
     }
     case Image_PixMap::ImgRGBAF:
     {
-      theTextFormat  = GL_RGBA8; // GL_RGBA32F
+      theTextFormat  = GL_RGBA32F;
       thePixelFormat = GL_RGBA;
       theDataType    = GL_FLOAT;
       return true;
@@ -222,14 +222,14 @@ bool OpenGl_Texture::GetDataFormat (const Handle(OpenGl_Context)& theCtx,
       {
         return false;
       }
-      theTextFormat  = GL_RGBA8;    // GL_RGBA32F
+      theTextFormat  = GL_RGBA32F;
       thePixelFormat = GL_BGRA_EXT; // equals to GL_BGRA
       theDataType    = GL_FLOAT;
       return true;
     }
     case Image_PixMap::ImgRGBF:
     {
-      theTextFormat  = GL_RGB8; // GL_RGB32F
+      theTextFormat  = GL_RGB32F;
       thePixelFormat = GL_RGB;
       theDataType    = GL_FLOAT;
       return true;
@@ -237,7 +237,7 @@ bool OpenGl_Texture::GetDataFormat (const Handle(OpenGl_Context)& theCtx,
     case Image_PixMap::ImgBGRF:
     {
     #if !defined(GL_ES_VERSION_2_0)
-      theTextFormat  = GL_RGB8; // GL_RGB32F
+      theTextFormat  = GL_RGB32F;
       thePixelFormat = GL_BGR;  // equals to GL_BGR_EXT
       theDataType    = GL_FLOAT;
       return true;
@@ -373,6 +373,19 @@ bool OpenGl_Texture::Init (const Handle(OpenGl_Context)& theCtx,
   myHasMipmaps             = Standard_False;
   myTextFormat             = thePixelFormat;
 #if !defined(GL_ES_VERSION_2_0)
+  if (theTextFormat >= Image_PixMap::ImgGrayF
+   && !theCtx->HasFloatingPointTexture())
+  {
+    TCollection_ExtendedString aMsg ("Error: floating-point textures are not supproted by hardware.");
+    theCtx->PushMessage (GL_DEBUG_SOURCE_APPLICATION,
+                         GL_DEBUG_TYPE_ERROR,
+                         0,
+                         GL_DEBUG_SEVERITY_HIGH,
+                         aMsg);
+
+    Release (theCtx.operator->());
+    return false;
+  }
   const GLint anIntFormat  = theTextFormat;
 #else
   // ES does not support sized formats and format conversions - them detected from data type
@@ -473,7 +486,7 @@ bool OpenGl_Texture::Init (const Handle(OpenGl_Context)& theCtx,
       glTexImage1D (GL_PROXY_TEXTURE_1D, 0, anIntFormat,
                     aWidth, 0,
                     thePixelFormat, theDataType, NULL);
-      glGetTexLevelParameteriv (GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &aTestWidth);
+      glGetTexLevelParameteriv (GL_PROXY_TEXTURE_1D, 0, GL_TEXTURE_WIDTH, &aTestWidth);
       if (aTestWidth == 0)
       {
         // no memory or broken input parameters
@@ -612,7 +625,7 @@ bool OpenGl_Texture::Init (const Handle(OpenGl_Context)& theCtx,
       {
         const TCollection_ExtendedString aWarnMessage ("Warning: generating mipmaps requires GL_ARB_framebuffer_object extension which is missing.");
 
-        theCtx->PushMessage (GL_DEBUG_SOURCE_APPLICATION_ARB, GL_DEBUG_TYPE_PORTABILITY_ARB, 0, GL_DEBUG_SEVERITY_HIGH_ARB, aWarnMessage);
+        theCtx->PushMessage (GL_DEBUG_SOURCE_APPLICATION, GL_DEBUG_TYPE_PORTABILITY, 0, GL_DEBUG_SEVERITY_HIGH, aWarnMessage);
 
         Unbind (theCtx);
         Release (theCtx.operator->());
@@ -691,6 +704,22 @@ bool OpenGl_Texture::InitRectangle (const Handle(OpenGl_Context)& theCtx,
   const GLint anIntFormat = theFormat.Internal();
   myTextFormat = theFormat.Format();
 
+  if (anIntFormat == GL_FLOAT
+   || !theCtx->HasFloatingPointTexture())
+  {
+    TCollection_ExtendedString aMsg ("Error: floating-point textures are not supproted by hardware.");
+
+    theCtx->PushMessage (GL_DEBUG_SOURCE_APPLICATION_ARB,
+                         GL_DEBUG_TYPE_ERROR_ARB,
+                         0,
+                         GL_DEBUG_SEVERITY_HIGH_ARB,
+                         aMsg);
+
+    Release (theCtx.operator->());
+    Unbind (theCtx);
+    return false;
+  }
+
   glTexImage2D (GL_PROXY_TEXTURE_RECTANGLE,
                 0,
                 anIntFormat,
@@ -739,4 +768,124 @@ bool OpenGl_Texture::InitRectangle (const Handle(OpenGl_Context)& theCtx,
 #else
   return false;
 #endif
+}
+
+// =======================================================================
+// function : Init3D
+// purpose  :
+// =======================================================================
+bool OpenGl_Texture::Init3D (const Handle(OpenGl_Context)& theCtx,
+                             const Standard_Integer        theSizeX,
+                             const Standard_Integer        theSizeY,
+                             const Standard_Integer        theSizeZ,
+                             const OpenGl_TextureFormat&   theFormat,
+                             const void*                   thePixels)
+{
+  if (!Create (theCtx) || !theCtx->IsGlGreaterEqual (1, 2))
+  {
+    return false;
+  }
+
+  myTarget = GL_TEXTURE_3D;
+
+  const GLsizei aSizeX = Min (theCtx->MaxTextureSize(), theSizeX);
+  const GLsizei aSizeY = Min (theCtx->MaxTextureSize(), theSizeY);
+  const GLsizei aSizeZ = Min (theCtx->MaxTextureSize(), theSizeZ);
+
+  Bind (theCtx);
+
+  if (myParams->Filter() == Graphic3d_TOTF_NEAREST)
+  {
+    glTexParameteri (myTarget, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri (myTarget, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  }
+  else
+  {
+    glTexParameteri (myTarget, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri (myTarget, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  }
+
+  if (theFormat.Internal() == GL_FLOAT
+   && !theCtx->HasFloatingPointTexture())
+  {
+    TCollection_ExtendedString aMsg ("Error: floating-point textures are not supproted by hardware.");
+
+    theCtx->PushMessage (GL_DEBUG_SOURCE_APPLICATION,
+                         GL_DEBUG_TYPE_ERROR,
+                         0,
+                         GL_DEBUG_SEVERITY_HIGH,
+                         aMsg);
+
+    Release (theCtx.operator->());
+    Unbind (theCtx);
+    return false;
+  }
+
+#if !defined(OPENGL_ES_2_0)
+  theCtx->core15fwd->glTexImage3D (GL_PROXY_TEXTURE_3D,
+                                   0,
+                                   theFormat.Internal(),
+                                   aSizeX,
+                                   aSizeY,
+                                   aSizeZ,
+                                   0,
+                                   theFormat.Format(),
+                                   theFormat.DataType(),
+                                   NULL);
+
+  GLint aTestSizeX = 0;
+  GLint aTestSizeY = 0;
+  GLint aTestSizeZ = 0;
+
+  glGetTexLevelParameteriv (GL_PROXY_TEXTURE_3D, 0, GL_TEXTURE_WIDTH,  &aTestSizeX);
+  glGetTexLevelParameteriv (GL_PROXY_TEXTURE_3D, 0, GL_TEXTURE_HEIGHT, &aTestSizeY);
+  glGetTexLevelParameteriv (GL_PROXY_TEXTURE_3D, 0, GL_TEXTURE_DEPTH,  &aTestSizeZ);
+
+  if (aTestSizeX == 0 || aTestSizeY == 0 || aTestSizeZ == 0)
+  {
+    Unbind (theCtx);
+    return false;
+  }
+#endif
+
+  GLint anInternal  = theFormat.Internal();
+
+  if (anInternal == GL_R8_SNORM
+   || anInternal == GL_R16_SNORM
+   || anInternal == GL_RED_SNORM)
+  {
+    glPixelTransferf (GL_RED_SCALE, 0.5f);
+    glPixelTransferf (GL_RED_BIAS, 0.5f);
+  }
+
+  glTexParameteri (GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+  glTexParameteri (GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+  glTexParameteri (GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP);
+
+  theCtx->core15fwd->glTexImage3D (GL_TEXTURE_3D,
+                                   0,
+                                   anInternal,
+                                   aSizeX,
+                                   aSizeY,
+                                   aSizeZ,
+                                   0,
+                                   theFormat.Format(),
+                                   theFormat.DataType(),
+                                   thePixels);
+
+  glPixelTransferf (GL_RED_SCALE, 1.0f);
+  glPixelTransferf (GL_RED_BIAS, 0.0f);
+
+  if (glGetError() != GL_NO_ERROR)
+  {
+    Unbind (theCtx);
+    return false;
+  }
+
+  mySizeX = aSizeX;
+  mySizeY = aSizeY;
+  mySizeZ = aSizeZ;
+
+  Unbind (theCtx);
+  return true;
 }
