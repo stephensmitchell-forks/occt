@@ -502,6 +502,11 @@ void AIS_Dimension::DrawText (const Handle(Prs3d_Presentation)& thePresentation,
     // draw text
     if (myDrawer->DimensionAspect()->IsTextShaded())
     {
+      if (!myDrawer->HasOwnShadingAspect())
+      {
+        myDrawer->SetShadingAspect (new Prs3d_ShadingAspect());
+      }
+
       // Setting text shading and color parameters
       Graphic3d_MaterialAspect aShadeMat (Graphic3d_NOM_DEFAULT);
       aShadeMat.SetReflectionModeOff (Graphic3d_TOR_AMBIENT);
