@@ -8512,7 +8512,7 @@ static Standard_Integer VRenderParams (Draw_Interpretor& theDI,
 
       Standard_Boolean toEnable = Standard_True;
       if (++anArgIter < theArgNb
-      && !parseOnOff (theArgVec[anArgIter], toEnable))
+      && !ViewerTest::ParseOnOff (theArgVec[anArgIter], toEnable))
       {
         --anArgIter;
       }
