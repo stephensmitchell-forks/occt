@@ -21,6 +21,8 @@
 XCAFDimTolObjects_GeomToleranceObject::XCAFDimTolObjects_GeomToleranceObject()
 {
   myHasAxis = Standard_False;
+  myHasPlane = Standard_False;
+  myHasPnt = Standard_False;
 }
 
 //=======================================================================
@@ -38,8 +40,12 @@ XCAFDimTolObjects_GeomToleranceObject::XCAFDimTolObjects_GeomToleranceObject(con
   myValueOfZoneModif = theObj->myValueOfZoneModif;
   myModifiers = theObj->myModifiers;
   myMaxValueModif = theObj->myMaxValueModif;
-  myAxis = theObj->GetAxis();
-  myHasAxis = Standard_False;
+  myAxis = theObj->myAxis;
+  myPlane = theObj->myPlane;
+  myPnt= theObj->myPnt;
+  myHasAxis = theObj->myHasAxis;
+  myHasPlane = theObj->myHasPlane;
+  myHasPnt = theObj->myHasPnt;
 }
 
 //=======================================================================
@@ -241,4 +247,66 @@ gp_Ax2 XCAFDimTolObjects_GeomToleranceObject::GetAxis()  const
 Standard_Boolean XCAFDimTolObjects_GeomToleranceObject::HasAxis () const 
 {
   return myHasAxis;
+}
+
+//=======================================================================
+//function : GetPlane
+//purpose  : 
+//=======================================================================
+
+gp_Ax2 XCAFDimTolObjects_GeomToleranceObject::GetPlane() const
+{
+  return myPlane;
+}
+
+//=======================================================================
+//function : SetPlane
+//purpose  : 
+//=======================================================================
+
+void XCAFDimTolObjects_GeomToleranceObject::SetPlane(const gp_Ax2& thePlane)
+{
+  myPlane = thePlane;
+  myHasPlane = Standard_True;
+}
+
+//=======================================================================
+//function : GetPoint
+//purpose  : 
+//=======================================================================
+
+gp_Pnt XCAFDimTolObjects_GeomToleranceObject::GetPoint() const
+{
+  return myPnt;
+}
+
+//=======================================================================
+//function : SetPoint
+//purpose  : 
+//=======================================================================
+
+void XCAFDimTolObjects_GeomToleranceObject::SetPoint(const gp_Pnt& thePnt)
+{
+  myPnt = thePnt;
+  myHasPlane = Standard_True;
+}
+
+//=======================================================================
+//function :
+//purpose  : 
+//=======================================================================
+
+Standard_Boolean XCAFDimTolObjects_GeomToleranceObject::HasPlane () const 
+{
+  return myHasPlane;
+}
+
+//=======================================================================
+//function :
+//purpose  : 
+//=======================================================================
+
+Standard_Boolean XCAFDimTolObjects_GeomToleranceObject::HasPoint () const 
+{
+  return myHasPnt;
 }

@@ -24,6 +24,7 @@
 
 XCAFDimTolObjects_DimensionObject::XCAFDimTolObjects_DimensionObject()
 {
+  myHasPlane = Standard_False;
 }
 
 //=======================================================================
@@ -45,6 +46,8 @@ XCAFDimTolObjects_DimensionObject::XCAFDimTolObjects_DimensionObject(const Handl
   myPath = theObj->myPath;
   myDir = theObj->myDir;
   myPnts = theObj->myPnts;
+  myHasPlane = theObj->myHasPlane;
+  myPlane = theObj->myPlane;
 }
 
 //=======================================================================
@@ -427,4 +430,45 @@ Handle(TColgp_HArray1OfPnt) XCAFDimTolObjects_DimensionObject::GetPoints ()  con
 void XCAFDimTolObjects_DimensionObject::SetPoints (const Handle(TColgp_HArray1OfPnt)& thePnts)
 {
   myPnts = thePnts;
+}
+
+//=======================================================================
+//function : GetPlane
+//purpose  : 
+//=======================================================================
+
+gp_Ax2 XCAFDimTolObjects_DimensionObject::GetPlane() const
+{
+  return myPlane;
+}
+
+//=======================================================================
+//function : SetPlane
+//purpose  : 
+//=======================================================================
+
+void XCAFDimTolObjects_DimensionObject::SetPlane(const gp_Ax2& thePlane)
+{
+  myPlane = thePlane;
+  myHasPlane = Standard_True;
+}
+
+//=======================================================================
+//function :
+//purpose  : 
+//=======================================================================
+
+Standard_Boolean XCAFDimTolObjects_DimensionObject::HasPlane () const 
+{
+  return myHasPlane;
+}
+
+//=======================================================================
+//function :
+//purpose  : 
+//=======================================================================
+
+Standard_Boolean XCAFDimTolObjects_DimensionObject::HasPoints () const 
+{
+  return myPnts->Length() > 0;
 }

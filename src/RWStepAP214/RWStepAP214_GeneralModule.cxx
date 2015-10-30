@@ -1268,6 +1268,11 @@
 #include <RWStepRepr_RWCompShAspAndDatumFeatAndShAsp.hxx>
 #include <RWStepRepr_RWIntegerRepresentationItem.hxx>
 #include <RWStepRepr_RWValueRepresentationItem.hxx>
+#include <RWStepAP242_RWDraughtingModelItemAssociation.hxx>
+#include <RWStepVisual_RWAnnotationCurveOccurrence.hxx>
+#include <RWStepVisual_RWAnnotationOccurrence.hxx>
+#include <RWStepVisual_RWAnnotationPlane.hxx>
+#include <RWStepVisual_RWDraughtingCallout.hxx>
 
 #include <StepRepr_Apex.hxx>
 #include <StepRepr_CentreOfSymmetry.hxx>
@@ -1311,6 +1316,10 @@
 #include <StepRepr_CompShAspAndDatumFeatAndShAsp.hxx>
 #include <StepRepr_IntegerRepresentationItem.hxx>
 #include <StepRepr_ValueRepresentationItem.hxx>
+#include <StepAP242_DraughtingModelItemAssociation.hxx>
+#include <StepVisual_AnnotationCurveOccurrence.hxx>
+#include <StepVisual_AnnotationPlane.hxx>
+#include <StepVisual_DraughtingCallout.hxx>
 
 static Standard_Integer catsh,catdr,catstr,catdsc,cataux;
 
@@ -1387,10 +1396,17 @@ void RWStepAP214_GeneralModule::FillSharedCase(const Standard_Integer CN,
 	tool.Share(anent,iter);
       }
       break;
+    case 4:
+      {
+	DeclareAndCast(StepVisual_AnnotationCurveOccurrence,anent,ent);
+	RWStepVisual_RWAnnotationCurveOccurrence tool;
+	tool.Share(anent,iter);
+      }
+      break;
     case 7:
       {
-	DeclareAndCast(StepVisual_StyledItem,anent,ent);
-	RWStepVisual_RWStyledItem tool;
+	DeclareAndCast(StepVisual_AnnotationOccurrence,anent,ent);
+	RWStepVisual_RWAnnotationOccurrence tool;
 	tool.Share(anent,iter);
       }
       break;
@@ -1856,6 +1872,13 @@ void RWStepAP214_GeneralModule::FillSharedCase(const Standard_Integer CN,
       {
 	DeclareAndCast(StepVisual_StyledItem,anent,ent);
 	RWStepVisual_RWStyledItem tool;
+	tool.Share(anent,iter);
+      }
+      break;
+    case 107:
+      {
+	DeclareAndCast(StepVisual_DraughtingCallout,anent,ent);
+	RWStepVisual_RWDraughtingCallout tool;
 	tool.Share(anent,iter);
       }
       break;
@@ -4978,6 +5001,21 @@ void RWStepAP214_GeneralModule::FillSharedCase(const Standard_Integer CN,
       RWStepRepr_RWFeatureForDatumTargetRelationship tool;
       tool.Share(anent,iter);
     }
+    break;
+  case 703:
+    {
+      DeclareAndCast(StepAP242_DraughtingModelItemAssociation,anent,ent);
+      RWStepAP242_RWDraughtingModelItemAssociation tool;
+      tool.Share(anent,iter);
+    }
+    break;
+  case 704:
+    {
+      DeclareAndCast(StepVisual_AnnotationPlane,anent,ent);
+      RWStepVisual_RWAnnotationPlane tool;
+      tool.Share(anent,iter);
+    }
+    break;
 
     default : break;
     }
@@ -5131,6 +5169,9 @@ Standard_Boolean RWStepAP214_GeneralModule::NewVoid
     break;
   case 3 : 
     ent = new StepShape_AdvancedFace;
+    break;
+  case 4 : 
+    ent = new StepVisual_AnnotationCurveOccurrence;
     break;
   case 7 : 
     ent = new StepVisual_AnnotationOccurrence;
@@ -5392,6 +5433,9 @@ Standard_Boolean RWStepAP214_GeneralModule::NewVoid
     break;
   case 106 : 
     ent = new StepVisual_AnnotationOccurrence;
+    break;
+  case 107 : 
+    ent = new StepVisual_DraughtingCallout;
     break;
   case 108 : 
     ent = new StepVisual_DraughtingPreDefinedColour;
@@ -6928,6 +6972,12 @@ Standard_Boolean RWStepAP214_GeneralModule::NewVoid
   case 702:
     ent = new StepRepr_FeatureForDatumTargetRelationship;
     break;
+  case 703:
+    ent = new StepAP242_DraughtingModelItemAssociation;
+    break;
+  case 704:
+    ent = new StepVisual_AnnotationPlane;
+    break;
 
   default: 
     return Standard_False;
@@ -7508,7 +7558,10 @@ Standard_Integer  RWStepAP214_GeneralModule::CategoryNumber
   case 698:
   case 699:
   case 700:
-  case 701: return catdr;
+  case 701:
+  case 702:
+  case 703:
+  case 704: return catdr;
     
   default : break;
   }

@@ -93,6 +93,9 @@
 #include <StepDimTol_GeoTolAndGeoTolWthDatRefAndGeoTolWthMod.hxx>
 #include <StepDimTol_GeoTolAndGeoTolWthMod.hxx>
 #include <StepDimTol_GeometricToleranceWithMaximumTolerance.hxx>
+#include <StepGeom_Axis2Placement3d.hxx>
+#include <StepGeom_Plane.hxx>
+#include <StepGeom_Polyline.hxx>
 #include <StepDimTol_PlacedDatumTargetFeature.hxx>
 #include <StepRepr_AssemblyComponentUsage.hxx>
 #include <StepRepr_CharacterizedDefinition.hxx>
@@ -141,6 +144,7 @@
 #include <StepShape_DimensionalLocation.hxx>
 #include <StepShape_EdgeCurve.hxx>
 #include <StepShape_EdgeLoop.hxx>
+#include <StepShape_GeometricCurveSet.hxx>
 #include <StepShape_GeometricSet.hxx>
 #include <StepShape_HArray1OfFace.hxx>
 #include <StepShape_HArray1OfFaceBound.hxx>
@@ -161,8 +165,13 @@
 #include <StepShape_ToleranceValue.hxx>
 #include <StepShape_ValueFormatTypeQualifier.hxx>
 #include <StepShape_Vertex.hxx>
+#include <StepVisual_AnnotationCurveOccurrence.hxx>
+#include <StepVisual_AnnotationPlane.hxx>
+#include <StepVisual_DraughtingCallout.hxx>
+#include <StepVisual_DraughtingCalloutElement.hxx>
 #include <StepVisual_Invisibility.hxx>
 #include <StepVisual_LayeredItem.hxx>
+#include <StepVisual_PlanarBox.hxx>
 #include <StepVisual_PresentationLayerAssignment.hxx>
 #include <StepVisual_PresentationStyleByContext.hxx>
 #include <StepVisual_StyleContextSelect.hxx>
@@ -216,6 +225,7 @@
 #include <XCAFDimTolObjects_DatumObject.hxx>
 #include <XSControl_TransferReader.hxx>
 #include <XSControl_WorkSession.hxx>
+#include <StepAP242_DraughtingModelItemAssociation.hxx>
 #include <StepAP242_GeometricItemSpecificUsage.hxx>
 #include <StepGeom_CartesianPoint.hxx>
 #include <STEPConstruct_GDTProperty.hxx>
@@ -1690,6 +1700,171 @@ static Standard_Boolean GetMassConversionFactor(Handle(StepBasic_NamedUnit)& NU,
   return Standard_True;
 }
 
+//=======================================================================
+//function : ReadGDTPosition
+//purpose  : return annotation plane and position for given GDT 
+// (Dimension, Geometric_Tolerance, Datum_Feature or Placed_Datum_Target_Feature)
+//=======================================================================
+static void ReadGDTPosition(const Interface_Graph &theGraph,
+                            const Handle(Standard_Transient) theGDT,
+                            Handle(Standard_Transient)& theDimObject)
+{
+  // find the proper DraughtingModelItemAssociation
+  Interface_EntityIterator subs = theGraph.Sharings(theGDT);
+  Handle(StepAP242_DraughtingModelItemAssociation) aDMIA;
+  for (subs.Start(); subs.More() && aDMIA.IsNull(); subs.Next()) {
+    if (!subs.Value()->IsKind(STANDARD_TYPE(StepAP242_DraughtingModelItemAssociation)))
+      continue;
+    aDMIA = Handle(StepAP242_DraughtingModelItemAssociation)::DownCast(subs.Value());
+    Handle(TCollection_HAsciiString) aName = aDMIA->Name();
+    aName->LowerCase();
+    if (!aName->Search(new TCollection_HAsciiString("pmi representation to presentation link"))) {
+      aDMIA = NULL;
+    }
+  }
+  if (aDMIA.IsNull() || aDMIA->NbIdentifiedItem() == 0)
+    return;
+
+  // retrieve AnnotationPlane
+  Standard_Boolean isHasPlane = Standard_False;
+  gp_Ax2 aPlaneAxes;
+  Handle(StepRepr_RepresentationItem) aDMIAE = aDMIA->IdentifiedItemValue(1);
+  if (aDMIAE.IsNull())
+    return;
+  subs = theGraph.Sharings(aDMIAE);
+  Handle(StepVisual_AnnotationPlane) anAnPlane;
+  for (subs.Start(); subs.More() && anAnPlane.IsNull(); subs.Next()) {
+    anAnPlane = Handle(StepVisual_AnnotationPlane)::DownCast(subs.Value());
+  }
+  if (!anAnPlane.IsNull()) {
+    Handle(StepRepr_RepresentationItem) aPlaneItem = anAnPlane->Item();
+    Handle(StepGeom_Axis2Placement3d) aA2P3D;
+    //retrieve axes from AnnotationPlane
+    if (aPlaneItem->IsKind(STANDARD_TYPE(StepGeom_Plane))) {
+      Handle(StepGeom_Plane) aPlane = Handle(StepGeom_Plane)::DownCast(aPlaneItem);
+      aA2P3D = aPlane->Position();
+    }
+    else if (aPlaneItem->IsKind(STANDARD_TYPE(StepVisual_PlanarBox))) {
+      Handle(StepVisual_PlanarBox) aBox = Handle(StepVisual_PlanarBox)::DownCast(aPlaneItem);
+      aA2P3D = aBox->Placement().Axis2Placement3d();
+    }
+    // build gp_Ax2 from axes
+    if (!aA2P3D.IsNull())
+    {
+      Handle(StepGeom_Direction) anAxis = aA2P3D->Axis(), 
+                                 aRefDir = aA2P3D->RefDirection();
+      if (!anAxis.IsNull() && !aRefDir.IsNull()) {
+        Handle(TColStd_HArray1OfReal) aCoords;
+        aCoords = anAxis->DirectionRatios();
+        gp_Dir aXDir(aCoords->Value(1), aCoords->Value(2), aCoords->Value(3));
+        aCoords = aRefDir->DirectionRatios();
+        gp_Dir aYDir(aCoords->Value(1), aCoords->Value(2), aCoords->Value(3));
+        aPlaneAxes.SetDirection(aXDir.Crossed(aYDir));
+        aPlaneAxes.SetYDirection(aYDir);
+        isHasPlane = Standard_True;
+      }
+    }
+  }
+  
+  // set plane axes to XCAF
+  if (isHasPlane) {
+    if (theDimObject->IsKind(STANDARD_TYPE(XCAFDimTolObjects_DimensionObject))) {
+      Handle(XCAFDimTolObjects_DimensionObject) anObj = 
+        Handle(XCAFDimTolObjects_DimensionObject)::DownCast(theDimObject);
+      anObj->SetPlane(aPlaneAxes);
+    }
+    else if (theDimObject->IsKind(STANDARD_TYPE(XCAFDimTolObjects_DatumObject))) {
+      Handle(XCAFDimTolObjects_DatumObject) anObj = 
+        Handle(XCAFDimTolObjects_DatumObject)::DownCast(theDimObject);
+      anObj->SetPlane(aPlaneAxes);
+    }
+    else if (theDimObject->IsKind(STANDARD_TYPE(XCAFDimTolObjects_GeomToleranceObject))) {
+      Handle(XCAFDimTolObjects_GeomToleranceObject) anObj = 
+        Handle(XCAFDimTolObjects_GeomToleranceObject)::DownCast(theDimObject);
+      anObj->SetPlane(aPlaneAxes);
+    }
+  }
+
+  // Retrieve connecton point
+  // Take AnnotationCurveOccurence (other types are not processed now)
+  Handle(StepVisual_AnnotationCurveOccurrence) anACO;
+  if (aDMIAE->IsKind(STANDARD_TYPE(StepVisual_AnnotationCurveOccurrence))) {
+    anACO = Handle(StepVisual_AnnotationCurveOccurrence)::DownCast(aDMIAE);
+  }
+  else if (aDMIAE->IsKind(STANDARD_TYPE(StepVisual_DraughtingCallout))) {
+    Handle(StepVisual_DraughtingCallout) aDCallout = 
+      Handle(StepVisual_DraughtingCallout)::DownCast(aDMIAE);
+    for (Standard_Integer i = 1; i <= aDCallout->NbContents() && anACO.IsNull(); i++) {
+      anACO = aDCallout->ContentsValue(i).AnnotationCurveOccurrence();
+    }
+  }
+  if (anACO.IsNull())
+    return;
+
+  // Take the first polyline (it is not a rule, but temporary solution)
+  Handle(StepRepr_RepresentationItem) aCurveItem = anACO->Item();
+  Handle(StepGeom_Polyline) aCurve;
+  // for Dimensional_Location (and its subtypes)
+  Standard_Boolean isDimLoc = theGDT->IsKind(STANDARD_TYPE(StepShape_DimensionalLocation));
+  Handle(StepGeom_Polyline) aCurve2;
+  if (aCurveItem->IsKind(STANDARD_TYPE(StepShape_GeometricCurveSet))) {
+    Handle(StepShape_GeometricCurveSet) aCurveSet = 
+      Handle(StepShape_GeometricCurveSet)::DownCast(aCurveItem);
+    Standard_Integer i = 1;
+    for ( ; i <= aCurveSet->NbElements() && aCurve.IsNull(); i++) {
+      aCurve = Handle(StepGeom_Polyline)::DownCast(aCurveSet->ElementsValue(i).Curve());
+    }
+    if (isDimLoc) {
+      for ( ; i <= aCurveSet->NbElements() && aCurve2.IsNull(); i++) {
+        aCurve2 = Handle(StepGeom_Polyline)::DownCast(aCurveSet->ElementsValue(i).Curve());
+      }
+    }
+  }
+  else {
+    aCurve = Handle(StepGeom_Polyline)::DownCast(aCurveItem);
+  }
+  if (aCurve.IsNull() || aCurve->NbPoints() < 1)
+    return;
+
+  isDimLoc = isDimLoc && !aCurve2.IsNull() && aCurve2->NbPoints() > 0;
+
+  // Take the first point of polyline (it is not a rule, but temporary solution)
+  Handle(StepGeom_CartesianPoint) aPnt = aCurve->PointsValue(1);
+  Handle(TColStd_HArray1OfReal) aCoords = aPnt->Coordinates();
+  gp_Pnt aPoint(aCoords->Value(1), aCoords->Value(2), aCoords->Value(3));
+
+  gp_Pnt aPoint2;
+  if (isDimLoc) {
+    Handle(StepGeom_CartesianPoint) aPnt = aCurve2->PointsValue(1);
+    Handle(TColStd_HArray1OfReal) aCoords = aPnt->Coordinates();
+    aPoint2.SetCoord(aCoords->Value(1), aCoords->Value(2), aCoords->Value(3));
+  }
+
+  // set point to XCAF
+  if (theDimObject->IsKind(STANDARD_TYPE(XCAFDimTolObjects_DimensionObject))) {
+    Handle(XCAFDimTolObjects_DimensionObject) anObj = 
+      Handle(XCAFDimTolObjects_DimensionObject)::DownCast(theDimObject);
+    Handle(TColgp_HArray1OfPnt) aPnts;
+    if (isDimLoc)
+      aPnts = new TColgp_HArray1OfPnt(1, 2);
+    else
+      aPnts = new TColgp_HArray1OfPnt(1, 1);
+    aPnts->SetValue(1, aPoint);
+    if (isDimLoc)
+      aPnts->SetValue(2, aPoint2);
+    anObj->SetPoints(aPnts);
+  }
+  else if (theDimObject->IsKind(STANDARD_TYPE(XCAFDimTolObjects_DatumObject))) {
+    Handle(XCAFDimTolObjects_DatumObject) anObj = 
+      Handle(XCAFDimTolObjects_DatumObject)::DownCast(theDimObject);
+    anObj->SetPoint(aPoint);
+  }
+  else if (theDimObject->IsKind(STANDARD_TYPE(XCAFDimTolObjects_GeomToleranceObject))) {
+    Handle(XCAFDimTolObjects_GeomToleranceObject) anObj = 
+      Handle(XCAFDimTolObjects_GeomToleranceObject)::DownCast(theDimObject);
+    anObj->SetPoint(aPoint);
+  }
+}
 
 //=======================================================================
 //function : ReadDatums
@@ -1698,7 +1873,7 @@ static Standard_Boolean GetMassConversionFactor(Handle(StepBasic_NamedUnit)& NU,
 static Standard_Boolean ReadDatums(const Handle(XCAFDoc_ShapeTool) &STool,
                                    const Handle(XCAFDoc_DimTolTool) &DGTTool,
                                    const Interface_Graph &graph,
-                                   Handle(Transfer_TransientProcess) &TP,
+                                   const Handle(Transfer_TransientProcess) &TP,
                                    const TDF_Label TolerL,
                                    const Handle(StepDimTol_GeometricToleranceWithDatumReference) GTWDR)
 {
@@ -1972,8 +2147,10 @@ static Standard_Boolean setDatumToXCAF(const Handle(StepDimTol_Datum)& theDat,
         aDatObj->SetModifierWithValue(aXCAFModifWithVal, aModifValue);
       aDGTTool->SetDatumToGeomTol(aDatL, theGDTL);
     }
-    if(!aDatObj.IsNull())
+    if(!aDatObj.IsNull()) {
+      ReadGDTPosition(aGraph, aSAR->RelatingShapeAspect(), aDatObj);
       aDat->SetObject(aDatObj);
+    }
   }
   return !aDat.IsNull();
 }
@@ -2936,6 +3113,8 @@ static void setDimObjectToXCAF(const Handle(Standard_Transient)& theEnt,
   }
   aDimObj->SetType(aType);
 
+  ReadGDTPosition(aGraph, theEnt, aDimObj);
+
   if(!aDimObj.IsNull())
   {
     Handle(XCAFDoc_Dimension) aDim;
@@ -3147,6 +3326,7 @@ static void setGeomTolObjectToXCAF(const Handle(Standard_Transient)& theEnt,
     aTolObj->SetMaxValueModifier(aVal);
   }
 
+  ReadGDTPosition(aGraph, theEnt, aTolObj);
   aGTol->SetObject(aTolObj);
 }
 

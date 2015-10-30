@@ -22,6 +22,8 @@
 XCAFDimTolObjects_DatumObject::XCAFDimTolObjects_DatumObject()
 {
   myIsDTarget = Standard_False;
+  myHasPlane = Standard_False;
+  myHasPnt = Standard_False;
 }
 
 //=======================================================================
@@ -39,6 +41,10 @@ XCAFDimTolObjects_DatumObject::XCAFDimTolObjects_DatumObject(const Handle(XCAFDi
   myIsDTarget = theObj->myIsDTarget;
   myAxis = theObj->myAxis;
   myDTargetType = theObj->myDTargetType;
+  myPlane = theObj->myPlane;
+  myPnt= theObj->myPnt;
+  myHasPlane = theObj->myHasPlane;
+  myHasPnt = theObj->myHasPnt;
 }
 
 //=======================================================================
@@ -254,4 +260,64 @@ Standard_Real XCAFDimTolObjects_DatumObject::GetDatumTargetWidth() const
 void XCAFDimTolObjects_DatumObject::SetDatumTargetWidth(const Standard_Real theWidth)
 {
   myWidth = theWidth;
+}
+
+//=======================================================================
+//function : GetPlane
+//purpose  : 
+//=======================================================================
+
+gp_Ax2 XCAFDimTolObjects_DatumObject::GetPlane() const
+{
+  return myPlane;
+}
+
+//=======================================================================
+//function : SetPlane
+//purpose  : 
+//=======================================================================
+
+void XCAFDimTolObjects_DatumObject::SetPlane(const gp_Ax2& thePlane)
+{
+  myPlane = thePlane;
+}
+
+//=======================================================================
+//function : GetPoint
+//purpose  : 
+//=======================================================================
+
+gp_Pnt XCAFDimTolObjects_DatumObject::GetPoint() const
+{
+  return myPnt;
+}
+
+//=======================================================================
+//function : SetPoint
+//purpose  : 
+//=======================================================================
+
+void XCAFDimTolObjects_DatumObject::SetPoint(const gp_Pnt& thePnt)
+{
+  myPnt = thePnt;
+}
+
+//=======================================================================
+//function :
+//purpose  : 
+//=======================================================================
+
+Standard_Boolean XCAFDimTolObjects_DatumObject::HasPlane () const 
+{
+  return myHasPlane;
+}
+
+//=======================================================================
+//function :
+//purpose  : 
+//=======================================================================
+
+Standard_Boolean XCAFDimTolObjects_DatumObject::HasPoint () const 
+{
+  return myHasPnt;
 }

@@ -44,6 +44,10 @@ enum ChildLab
   ChildLab_DTargetLength,
   ChildLab_DTargetWidth,
   ChildLab_DatumTarget,
+  ChildLab_PlaneLoc,
+  ChildLab_PlaneN,
+  ChildLab_PlaneRef,
+  ChildLab_Pnt,
 };
 
 //=======================================================================
@@ -241,12 +245,12 @@ void XCAFDoc_Datum::SetObject(const Handle(XCAFDimTolObjects_DatumObject)& theOb
       aLoc->SetValue(aLoc->Upper()+2,anAx.Location().Z());
 
       aN->SetValue(aN->Upper(),anAx.Axis().Direction().X());
-      aN->SetValue(aN->Upper(),anAx.Axis().Direction().X());
-      aN->SetValue(aN->Upper(),anAx.Axis().Direction().X());
+      aN->SetValue(aN->Upper()+1,anAx.Axis().Direction().Y());
+      aN->SetValue(aN->Upper()+2,anAx.Axis().Direction().Z());
 
       aR->SetValue(aR->Upper(),anAx.Direction().X());
-      aR->SetValue(aR->Upper(),anAx.Direction().X());
-      aR->SetValue(aR->Upper(),anAx.Direction().X());
+      aR->SetValue(aR->Upper()+1,anAx.Direction().Y());
+      aR->SetValue(aR->Upper()+2,anAx.Direction().Z());
 
       Label().FindChild(ChildLab_AxisLoc).AddAttribute(aLoc);
       Label().FindChild(ChildLab_AxisN).AddAttribute(aN);
@@ -265,6 +269,39 @@ void XCAFDoc_Datum::SetObject(const Handle(XCAFDimTolObjects_DatumObject)& theOb
         }
       }
     }
+  }
+
+  if (theObject->HasPlane())
+  {
+    Handle(TDataStd_RealArray) aLoc = new TDataStd_RealArray();
+    Handle(TDataStd_RealArray) aN = new TDataStd_RealArray();
+    Handle(TDataStd_RealArray) aR = new TDataStd_RealArray();
+    gp_Ax2 anPln = theObject->GetPlane();
+    aLoc->SetValue(aLoc->Upper(),anPln.Location().X());
+    aLoc->SetValue(aLoc->Upper()+1,anPln.Location().Y());
+    aLoc->SetValue(aLoc->Upper()+2,anPln.Location().Z());
+
+    aN->SetValue(aN->Upper(),anPln.Axis().Direction().X());
+    aN->SetValue(aN->Upper(),anPln.Axis().Direction().X());
+    aN->SetValue(aN->Upper(),anPln.Axis().Direction().X());
+
+    aR->SetValue(aR->Upper(),anPln.Direction().X());
+    aR->SetValue(aR->Upper(),anPln.Direction().X());
+    aR->SetValue(aR->Upper(),anPln.Direction().X());
+
+    Label().FindChild(ChildLab_PlaneLoc).AddAttribute(aLoc);
+    Label().FindChild(ChildLab_PlaneN).AddAttribute(aN);
+    Label().FindChild(ChildLab_PlaneRef).AddAttribute(aR);
+  }
+
+  if (theObject->HasPoint())
+  {
+    Handle(TDataStd_RealArray) aLoc = new TDataStd_RealArray();
+    gp_Pnt aPnt = theObject->GetPoint();
+    aLoc->SetValue(aLoc->Upper(),aPnt.X());
+    aLoc->SetValue(aLoc->Upper()+1,aPnt.Y());
+    aLoc->SetValue(aLoc->Upper()+2,aPnt.Z());
+    Label().FindChild(ChildLab_Pnt).AddAttribute(aLoc);
   }
 }
 
@@ -302,6 +339,27 @@ Handle(XCAFDimTolObjects_DatumObject) XCAFDoc_Datum::GetObject() const
     {
       anObj->SetModifierWithValue((XCAFDimTolObjects_DatumModifWithValue)aModifierWithValueM->Get(),aModifierWithValueV->Get());
     }
+  }
+
+  Handle(TDataStd_RealArray) aLoc;
+  Handle(TDataStd_RealArray) aN;
+  Handle(TDataStd_RealArray) aR;
+  if(Label().FindChild(ChildLab_PlaneLoc).FindAttribute(TDataStd_RealArray::GetID(), aLoc) && aLoc->Length() == 3 &&
+    Label().FindChild(ChildLab_PlaneN).FindAttribute(TDataStd_RealArray::GetID(), aN) && aN->Length() == 3 &&
+    Label().FindChild(ChildLab_PlaneRef).FindAttribute(TDataStd_RealArray::GetID(), aR) && aR->Length() == 3 )
+  {
+    gp_Pnt aL(aLoc->Value(aLoc->Upper()), aLoc->Value(aLoc->Upper()+1), aLoc->Value(aLoc->Upper()+2));
+    gp_Dir aD(aN->Value(aN->Upper()), aN->Value(aN->Upper()+1), aN->Value(aN->Upper()+2));
+    gp_Dir aDR(aR->Value(aR->Upper()), aR->Value(aR->Upper()+1), aR->Value(aR->Upper()+2));
+    gp_Ax2 anAx(aL, aD, aDR);
+    anObj->SetPlane(anAx);
+  }
+
+  Handle(TDataStd_RealArray) aPnt;
+  if(Label().FindChild(ChildLab_Pnt).FindAttribute(TDataStd_RealArray::GetID(), aPnt) && aPnt->Length() == 3 )
+  {
+    gp_Pnt aP(aLoc->Value(aPnt->Upper()), aPnt->Value(aPnt->Upper()+1), aPnt->Value(aPnt->Upper()+2));
+    anObj->SetPoint(aP);
   }
 
   Handle(TDataStd_Integer) aIsDTarget;
@@ -363,7 +421,6 @@ Handle(XCAFDimTolObjects_DatumObject) XCAFDoc_Datum::GetObject() const
       }
     }
   }
-
   return anObj;
 }
 
