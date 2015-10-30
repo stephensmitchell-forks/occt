@@ -41,7 +41,10 @@ enum ChildLab
   ChildLab_Modifiers,
   ChildLab_Path,
   ChildLab_Dir,
-  ChildLab_Pnts
+  ChildLab_Pnts,
+  ChildLab_PlaneLoc,
+  ChildLab_PlaneN,
+  ChildLab_PlaneRef,
 };
 
 //=======================================================================
@@ -171,17 +174,46 @@ void XCAFDoc_Dimension::SetObject (const Handle(XCAFDimTolObjects_DimensionObjec
   Handle(TColgp_HArray1OfPnt) aP = theObject->GetPoints();
   if(!aP.IsNull() && aP->Length() > 0)
   {
-    anArrR = new TColStd_HArray1OfReal(1,6);
+    anArrR = new TColStd_HArray1OfReal(1,aP->Length() * 3);
     Handle(TDataStd_RealArray) aPnts;
     anArrR->SetValue(1,aP->Value(1).X());
     anArrR->SetValue(2,aP->Value(1).Y());
     anArrR->SetValue(3,aP->Value(1).Z());
-    anArrR->SetValue(4,aP->Value(2).X());
-    anArrR->SetValue(5,aP->Value(2).Y());
-    anArrR->SetValue(6,aP->Value(2).Z());
+    if (aP->Length() == 2) {
+      anArrR->SetValue(4,aP->Value(2).X());
+      anArrR->SetValue(5,aP->Value(2).Y());
+      anArrR->SetValue(6,aP->Value(2).Z());
+    }
     aPnts = new TDataStd_RealArray();
     Label().FindChild(ChildLab_Pnts).AddAttribute(aPnts);
     aPnts->ChangeArray(anArrR);
+  }
+
+  if (theObject->HasPlane())
+  {
+    Handle(TDataStd_RealArray) aLoc = new TDataStd_RealArray();
+    Handle(TDataStd_RealArray) aN = new TDataStd_RealArray();
+    Handle(TDataStd_RealArray) aR = new TDataStd_RealArray();
+    gp_Ax2 anAx = theObject->GetPlane();
+
+    Handle(TColStd_HArray1OfReal) aLocArr = new TColStd_HArray1OfReal(1, 3);
+    for (Standard_Integer i = 1; i <= 3; i++)
+      aLocArr->SetValue(i, anAx.Location().Coord(i));
+    aLoc->ChangeArray(aLocArr);
+
+    Handle(TColStd_HArray1OfReal) aNArr = new TColStd_HArray1OfReal(1, 3);
+    for (Standard_Integer i = 1; i <= 3; i++)
+      aNArr->SetValue(i, anAx.Direction().Coord(i));
+    aN->ChangeArray(aNArr);
+
+    Handle(TColStd_HArray1OfReal) aRArr = new TColStd_HArray1OfReal(1, 3);
+    for (Standard_Integer i = 1; i <= 3; i++)
+      aRArr->SetValue(i, anAx.XDirection().Coord(i));
+    aR->ChangeArray(aRArr);
+
+    Label().FindChild(ChildLab_PlaneLoc).AddAttribute(aLoc);
+    Label().FindChild(ChildLab_PlaneN).AddAttribute(aN);
+    Label().FindChild(ChildLab_PlaneRef).AddAttribute(aR);
   }
 }
 
@@ -256,10 +288,25 @@ Handle(XCAFDimTolObjects_DimensionObject) XCAFDoc_Dimension::GetObject()  const
   if(Label().FindChild(ChildLab_Pnts).FindAttribute(TDataStd_RealArray::GetID(), aPnts) 
      && !aPnts->Array().IsNull() && aPnts->Array()->Length() > 0)
   {
-    Handle(TColgp_HArray1OfPnt) aP = new TColgp_HArray1OfPnt(1,2);
+    Handle(TColgp_HArray1OfPnt) aP = new TColgp_HArray1OfPnt(1,aPnts->Array()->Length());
     aP->SetValue(1, gp_Pnt(aPnts->Array()->Value(1), aPnts->Array()->Value(2), aPnts->Array()->Value(3)));
-    aP->SetValue(2, gp_Pnt(aPnts->Array()->Value(4), aPnts->Array()->Value(5), aPnts->Array()->Value(6)));
+    if (aPnts->Array()->Length() == 2)
+    {
+      aP->SetValue(2, gp_Pnt(aPnts->Array()->Value(4), aPnts->Array()->Value(5), aPnts->Array()->Value(6)));
+    }
     anObj->SetPoints(aP);
+  }
+
+  Handle(TDataStd_RealArray) aLoc, aN, aR;
+  if(Label().FindChild(ChildLab_PlaneLoc).FindAttribute(TDataStd_RealArray::GetID(), aLoc) && aLoc->Length() == 3 &&
+    Label().FindChild(ChildLab_PlaneN).FindAttribute(TDataStd_RealArray::GetID(), aN) && aN->Length() == 3 &&
+    Label().FindChild(ChildLab_PlaneRef).FindAttribute(TDataStd_RealArray::GetID(), aR) && aR->Length() == 3 )
+  {
+    gp_Pnt aL(aLoc->Value(aLoc->Lower()), aLoc->Value(aLoc->Lower()+1), aLoc->Value(aLoc->Lower()+2));
+    gp_Dir aD(aN->Value(aN->Lower()), aN->Value(aN->Lower()+1), aN->Value(aN->Lower()+2));
+    gp_Dir aDR(aR->Value(aR->Lower()), aR->Value(aR->Lower()+1), aR->Value(aR->Lower()+2));
+    gp_Ax2 anAx(aL, aD, aDR);
+    anObj->SetPlane(anAx);
   }
 
   return anObj;

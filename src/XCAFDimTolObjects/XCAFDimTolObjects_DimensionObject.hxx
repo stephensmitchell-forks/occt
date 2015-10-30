@@ -32,6 +32,7 @@
 #include <XCAFDimTolObjects_DimensionModifiersSequence.hxx>
 #include <TopoDS_Edge.hxx>
 #include <gp_Dir.hxx>
+#include <gp_Ax2.hxx>
 #include <TColgp_HArray1OfPnt.hxx>
 #include <Standard_Transient.hxx>
 #include <Standard_Real.hxx>
@@ -116,6 +117,17 @@ public:
   
   Standard_EXPORT void SetPoints (const Handle(TColgp_HArray1OfPnt)& thePnts);
 
+  void SetPlane (const gp_Ax2& thePlane)
+  {
+    myPlane    = thePlane;
+    myHasPlane = Standard_True;
+  }
+
+  const gp_Ax2& GetPlane() const { return myPlane; }
+
+  Standard_Boolean HasPlane() const { return myHasPlane; }
+
+  Standard_Boolean HasPoints() const { !myPnts.IsNull() && myPnts->Length() > 0; }
 
   DEFINE_STANDARD_RTTIEXT(XCAFDimTolObjects_DimensionObject,Standard_Transient)
 
@@ -133,6 +145,8 @@ private:
   TopoDS_Edge myPath;
   gp_Dir myDir;
   Handle(TColgp_HArray1OfPnt) myPnts;
+  gp_Ax2 myPlane;
+  Standard_Boolean myHasPlane;
 
 };
 

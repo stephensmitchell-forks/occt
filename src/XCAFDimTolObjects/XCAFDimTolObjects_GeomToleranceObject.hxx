@@ -84,6 +84,26 @@ public:
    
   Standard_EXPORT Standard_Boolean HasAxis () const;
 
+  void SetPlane (const gp_Ax2& thePlane)
+  {
+    myPlane = thePlane;
+    myHasPlane = Standard_True;
+  }
+
+  const gp_Ax2& GetPlane() const { return myPlane; }
+
+  void SetPoint (const gp_Pnt& thePnt)
+  {
+    myPnt = thePnt;
+    myHasPnt = Standard_True;
+  }
+
+  const gp_Pnt& GetPoint() const { return myPnt; }
+
+  Standard_Boolean HasPlane() const { return myHasPlane; }
+
+  Standard_Boolean HasPoint() const { return myHasPnt; }
+
   DEFINE_STANDARD_RTTIEXT(XCAFDimTolObjects_GeomToleranceObject,Standard_Transient)
 
 private: 
@@ -98,6 +118,11 @@ private:
   Standard_Real myMaxValueModif;
   gp_Ax2 myAxis;
   Standard_Boolean myHasAxis;
+  gp_Ax2 myPlane;
+  gp_Pnt myPnt;
+  Standard_Boolean myHasPlane;
+  Standard_Boolean myHasPnt;
+
 };
 
 

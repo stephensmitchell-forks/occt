@@ -24,6 +24,8 @@ IMPLEMENT_STANDARD_RTTIEXT(XCAFDimTolObjects_DatumObject,Standard_Transient)
 XCAFDimTolObjects_DatumObject::XCAFDimTolObjects_DatumObject()
 {
   myIsDTarget = Standard_False;
+  myHasPlane = Standard_False;
+  myHasPnt = Standard_False;
 }
 
 //=======================================================================
@@ -41,6 +43,10 @@ XCAFDimTolObjects_DatumObject::XCAFDimTolObjects_DatumObject(const Handle(XCAFDi
   myIsDTarget = theObj->myIsDTarget;
   myAxis = theObj->myAxis;
   myDTargetType = theObj->myDTargetType;
+  myPlane = theObj->myPlane;
+  myPnt= theObj->myPnt;
+  myHasPlane = theObj->myHasPlane;
+  myHasPnt = theObj->myHasPnt;
 }
 
 //=======================================================================

@@ -91,6 +91,25 @@ public:
 
   Standard_EXPORT void SetDatumTargetNumber (const Standard_Integer theNumber);
 
+  void SetPlane (const gp_Ax2& thePlane)
+  {
+    myPlane = thePlane;
+    myHasPlane = Standard_True;
+  }
+
+  const gp_Ax2& GetPlane() const { return myPlane; }
+
+  void SetPoint (const gp_Pnt& thePnt)
+  {
+    myPnt = thePnt;
+    myHasPnt = Standard_True;
+  }
+
+  const gp_Pnt& GetPoint() const { return myPnt; }
+
+  Standard_Boolean HasPlane() const { return myHasPlane; }
+
+  Standard_Boolean HasPoint() const { return myHasPnt; }
 
   DEFINE_STANDARD_RTTIEXT(XCAFDimTolObjects_DatumObject,Standard_Transient)
 
@@ -108,6 +127,10 @@ private:
   Standard_Real myLength;
   Standard_Real myWidth;
   Standard_Integer myDatumTargetNumber;
+  gp_Ax2 myPlane;
+  gp_Pnt myPnt;
+  Standard_Boolean myHasPlane;
+  Standard_Boolean myHasPnt;
 
 };
 
