@@ -71,7 +71,7 @@ Standard_Integer OSD_Disk::DiskSize(){
 struct statvfs buffer;
 
   if ( statvfs(DiskName.ToCString(),&buffer) == 0 ){
-    int BSize512 = buffer.f_frsize / 512 ;
+    int BSize512 = (int)(buffer.f_frsize / 512) ;
     return buffer.f_blocks * BSize512 ;
   }
   else {
@@ -84,7 +84,7 @@ Standard_Integer OSD_Disk::DiskFree(){
 
 struct statvfs buffer;
   if ( statvfs (DiskName.ToCString(),&buffer) == 0 ){
-    int BSize512 = buffer.f_frsize / 512 ;
+    int BSize512 = (int)(buffer.f_frsize / 512) ;
     return buffer.f_bavail * BSize512 ;
   }
   else {

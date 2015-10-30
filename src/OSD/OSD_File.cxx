@@ -284,7 +284,6 @@ OSD_File OSD_File::BuildTemporary(){
 void  OSD_File::Read(TCollection_AsciiString& Buffer, 
                      const Standard_Integer Nbyte){
  Standard_PCharacter readbuf;
- int status;
 
   if ( OSD_File::KindOfFile ( ) == OSD_DIRECTORY ) { 
     Standard_ProgramError::Raise("OSD_File::Read : it is a directory");
@@ -304,7 +303,7 @@ void  OSD_File::Read(TCollection_AsciiString& Buffer,
  TCollection_AsciiString transfert(Nbyte,' ');
  readbuf = (Standard_PCharacter)transfert.ToCString();  
 
- status = read (myFileChannel, readbuf, Nbyte);
+ ssize_t status = read (myFileChannel, readbuf, Nbyte);
  //
  Buffer = transfert;  // Copy transfert to Buffer
 
@@ -391,8 +390,6 @@ void  OSD_File::Read(      Standard_Address&  Buffer,
                      const Standard_Integer   Nbyte,
                            Standard_Integer&  Readbyte)
 {
-  int status;
-  
   Readbyte = 0;
   if ( OSD_File::KindOfFile ( ) == OSD_DIRECTORY ) { 
     Standard_ProgramError::Raise("OSD_File::Read : it is a directory");
@@ -412,12 +409,12 @@ void  OSD_File::Read(      Standard_Address&  Buffer,
   if (Buffer == NULL)
     Standard_ProgramError::Raise("OSD_File::Read : Buffer is null");
   
-  status = read (myFileChannel, (char*) Buffer, Nbyte);
+  ssize_t status = read (myFileChannel, (char*) Buffer, Nbyte);
   
   if (status == -1) myError.SetValue (errno, Iam, "Read");
   else{
     if ( status < Nbyte ) myIO = EOF;
-    Readbyte = status;
+    Readbyte = (Standard_Integer)status;
   }
 }
 
@@ -427,8 +424,6 @@ void  OSD_File::Write(const TCollection_AsciiString &Buffer,
                       const Standard_Integer Nbyte){
 
  Standard_CString writebuf;
- int status;
-
  if ( OSD_File::KindOfFile ( ) == OSD_DIRECTORY ) { 
    Standard_ProgramError::Raise("OSD_File::Write : it is a directory");
  }
@@ -446,7 +441,7 @@ void  OSD_File::Write(const TCollection_AsciiString &Buffer,
 
  writebuf = Buffer.ToCString();
 
- status = write (myFileChannel, writebuf, Nbyte);
+ ssize_t status = write (myFileChannel, writebuf, Nbyte);
 
  if ( status == -1) myError.SetValue (errno, Iam, "Write");
  else
@@ -457,9 +452,6 @@ void  OSD_File::Write(const TCollection_AsciiString &Buffer,
 void  OSD_File::Write(const Standard_Address   Buffer, 
                       const Standard_Integer   Nbyte)
 {
-
-  int status;
-  
   if (myFileChannel == -1)
     Standard_ProgramError::Raise("OSD_File::Write : file is not open");
   
@@ -471,7 +463,7 @@ void  OSD_File::Write(const Standard_Address   Buffer,
   if (Nbyte <= 0)
     Standard_ProgramError::Raise("OSD_File::Write : Nbyte is null");
   
-  status = write (myFileChannel, (const char *)Buffer, Nbyte);
+  ssize_t status = write (myFileChannel, (const char *)Buffer, Nbyte);
   
   if ( status == -1) myError.SetValue (errno, Iam, "Write");
   else

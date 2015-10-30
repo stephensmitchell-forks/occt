@@ -152,9 +152,9 @@ public:
   void AppendAxisY(const Standard_Integer i,const Standard_Integer v);
   void AppendAxisZ(const Standard_Integer i,const Standard_Integer v);
 
-  void Add(long unsigned t) { int o=t&31;    int k=t>>5;    p[k]|=_P2[o];          }
-  int Val(long unsigned t)  { int o=t&31;    int k=t>>5;    return(p[k]&_P2[o]);   }
-  void Raz(long unsigned t) { int o=t&31;    int k=t>>5;    p[k]&= ~(_P2[o]);      }
+  void Add(Standard_Integer t) { int o=t&31;    int k=t>>5;    p[k]|=_P2[o];          }
+  unsigned long Val(Standard_Integer t)  { int o=t&31;    int k=t>>5;    return(p[k]&_P2[o]);   }
+//  void Raz(long unsigned t) { int o=t&31;    int k=t>>5;    p[k]&= ~(_P2[o]);      }
   
   Standard_Integer NbAxisX(const Standard_Integer i) {   return(axisX[0][i]);   }
   Standard_Integer NbAxisY(const Standard_Integer i) {   return(axisY[0][i]);   }
@@ -457,7 +457,7 @@ void Bnd_BoundSortBox::SortBoxes()
 	  for (lacaseX=firstcaseX; lacaseX<=lastcaseX; lacaseX++) {
 	    for (lacaseY=firstcaseY; lacaseY<=lastcaseY; lacaseY++) {
 	      for (lacaseZ=firstcaseZ; lacaseZ<=lastcaseZ; lacaseZ++) {
-		long unsigned t=Map->GrilleInteger(lacaseX-1,lacaseY-1,lacaseZ-1);
+		Standard_Integer t=Map->GrilleInteger(lacaseX-1,lacaseY-1,lacaseZ-1);
 		Map->Add(t);
 	      }
 	    }
@@ -578,7 +578,7 @@ void Bnd_BoundSortBox::Add(const Bnd_Box& theBox,
       for (theGapX=firstGapX; theGapX<=lastGapX; theGapX++) {
 	for (theGapY=firstGapY; theGapY<=lastGapY; theGapY++) {
 	  for (theGapZ=firstGapZ; theGapZ<=lastGapZ; theGapZ++) {
-	    long unsigned t=Map->GrilleInteger(theGapX-1,theGapY-1,theGapZ-1);
+	    Standard_Integer t=Map->GrilleInteger(theGapX-1,theGapY-1,theGapZ-1);
 	    Map->Add(t);
 	  }
 	}
@@ -668,7 +668,7 @@ const TColStd_ListOfInteger& Bnd_BoundSortBox::Compare (const Bnd_Box& theBox)
   for(Standard_Integer i=i0; touch==Standard_False && i<=i1;i++) { 
     for(Standard_Integer j=j0; touch==Standard_False && j<=j1;j++) { 
       for(Standard_Integer k=k0;  touch==Standard_False && k<=k1;k++) {
-	long unsigned t=Map->GrilleInteger(i,j,k);
+	Standard_Integer t=Map->GrilleInteger(i,j,k);
 	if(Map->Val(t)) { 
 	  touch = Standard_True;
 	}

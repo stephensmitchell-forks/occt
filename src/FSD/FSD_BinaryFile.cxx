@@ -437,7 +437,7 @@ Storage_Error FSD_BinaryFile::BeginWriteInfoSection()
               myStream))
     Storage_StreamWriteError::Raise();
   
-  myHeader.binfo = ftell(myStream);
+  myHeader.binfo = (Standard_Integer)ftell(myStream);
   WriteHeader();
 
   return Storage_VSOk;
@@ -483,7 +483,7 @@ void FSD_BinaryFile::WriteInfo(const Standard_Integer nbObj,
 
 Storage_Error FSD_BinaryFile::EndWriteInfoSection() 
 {
-  myHeader.einfo = ftell(myStream);
+  myHeader.einfo = (Standard_Integer)ftell(myStream);
 
   return Storage_VSOk;
 }
@@ -565,7 +565,7 @@ Storage_Error FSD_BinaryFile::EndReadInfoSection()
 
 Storage_Error FSD_BinaryFile::BeginWriteCommentSection() 
 {
-  myHeader.bcomment = ftell(myStream);
+  myHeader.bcomment = (Standard_Integer)ftell(myStream);
   return Storage_VSOk;
 }
 
@@ -592,7 +592,7 @@ void FSD_BinaryFile::WriteComment(const TColStd_SequenceOfExtendedString& aCom)
 
 Storage_Error FSD_BinaryFile::EndWriteCommentSection() 
 {
-  myHeader.ecomment = ftell(myStream);
+  myHeader.ecomment = (Standard_Integer)ftell(myStream);
 
   return Storage_VSOk;
 }
@@ -643,7 +643,7 @@ Storage_Error FSD_BinaryFile::EndReadCommentSection()
 
 Storage_Error FSD_BinaryFile::BeginWriteTypeSection() 
 {
-  myHeader.btype = ftell(myStream);
+  myHeader.btype = (Standard_Integer)ftell(myStream);
 
   return Storage_VSOk;
 }
@@ -677,7 +677,7 @@ void FSD_BinaryFile::WriteTypeInformations(const Standard_Integer typeNum,
 
 Storage_Error FSD_BinaryFile::EndWriteTypeSection() 
 {
-  myHeader.etype = ftell(myStream);
+  myHeader.etype = (Standard_Integer)ftell(myStream);
 
   return Storage_VSOk;
 }
@@ -736,7 +736,7 @@ Storage_Error FSD_BinaryFile::EndReadTypeSection()
 
 Storage_Error FSD_BinaryFile::BeginWriteRootSection() 
 {
-  myHeader.broot = ftell(myStream);
+  myHeader.broot = (Standard_Integer)ftell(myStream);
 
   return Storage_VSOk;
 }
@@ -770,7 +770,7 @@ void FSD_BinaryFile::WriteRoot(const TCollection_AsciiString& rootName, const St
 
 Storage_Error FSD_BinaryFile::EndWriteRootSection() 
 {
-  myHeader.eroot = ftell(myStream);
+  myHeader.eroot = (Standard_Integer)ftell(myStream);
 
   return Storage_VSOk;
 }
@@ -830,7 +830,7 @@ Storage_Error FSD_BinaryFile::EndReadRootSection()
 
 Storage_Error FSD_BinaryFile::BeginWriteRefSection() 
 {
-  myHeader.bref = ftell(myStream);
+  myHeader.bref = (Standard_Integer)ftell(myStream);
 
   return Storage_VSOk;
 }
@@ -863,7 +863,7 @@ void FSD_BinaryFile::WriteReferenceType(const Standard_Integer reference,const S
 
 Storage_Error FSD_BinaryFile::EndWriteRefSection() 
 {
-  myHeader.eref = ftell(myStream);
+  myHeader.eref = (Standard_Integer)ftell(myStream);
 
   return Storage_VSOk;
 }
@@ -923,7 +923,7 @@ Storage_Error FSD_BinaryFile::EndReadRefSection()
 
 Storage_Error FSD_BinaryFile::BeginWriteDataSection() 
 {
-  myHeader.bdata = ftell(myStream);
+  myHeader.bdata = (Standard_Integer)ftell(myStream);
 
   return Storage_VSOk;
 }
@@ -983,7 +983,7 @@ void FSD_BinaryFile::EndWritePersistentObjectData()
 
 Storage_Error FSD_BinaryFile::EndWriteDataSection() 
 {
-  myHeader.edata = ftell(myStream);
+  myHeader.edata = (Standard_Integer)ftell(myStream);
   
   fseek(myStream,myHeader.binfo,SEEK_SET);
   WriteHeader();

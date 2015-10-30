@@ -45,7 +45,7 @@ Standard_Integer IntPatch_PrmPrmIntersection_T3Bits::And(IntPatch_PrmPrmIntersec
     Standard_Integer r=((Standard_Integer *) p)[k] & ((Standard_Integer *) Oth.p)[k];
     if(r)
     {
-      unsigned long int c=0;
+      unsigned int c=0;
       do
       {
         if(r&1)

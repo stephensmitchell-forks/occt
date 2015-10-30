@@ -182,7 +182,7 @@ public:
   //! @return glyphs number in this font.
   inline Standard_Integer GlyphsNumber() const
   {
-    return myFTFace->num_glyphs;
+    return (Standard_Integer)myFTFace->num_glyphs;
   }
 
   //! Retrieve glyph bitmap rectangle

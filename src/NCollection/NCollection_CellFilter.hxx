@@ -371,9 +371,9 @@ protected:
 		   const Cell& theCellMin, const Cell& theCellMax, 
                    const Target& theTarget)
   {
-    int start = theCellMin.index[idim];
-    int end   = theCellMax.index[idim];
-    for (int i=start; i <= end; i++) {
+    long start = theCellMin.index[idim];
+    long end   = theCellMax.index[idim];
+    for (long i=start; i <= end; i++) {
       theCell.index[idim] = i;
       if ( idim ) // recurse
         iterateAdd (idim-1, theCell, theCellMin, theCellMax, theTarget);
@@ -414,9 +414,9 @@ protected:
                       const Cell& theCellMin, const Cell& theCellMax, 
                       const Target& theTarget)
   {
-    int start = theCellMin.index[idim];
-    int end   = theCellMax.index[idim];
-    for (int i=start; i <= end; i++) {
+    long start = theCellMin.index[idim];
+    long end   = theCellMax.index[idim];
+    for (long i=start; i <= end; i++) {
       theCell.index[idim] = i;
       if ( idim ) // recurse
         iterateRemove (idim-1, theCell, theCellMin, theCellMax, theTarget);
@@ -457,9 +457,9 @@ protected:
 	               const Cell& theCellMin, const Cell& theCellMax, 
                        Inspector& theInspector) 
   {
-    int start = theCellMin.index[idim];
-    int end   = theCellMax.index[idim];
-    for (int i=start; i <= end; i++) {
+    long start = theCellMin.index[idim];
+    long end   = theCellMax.index[idim];
+    for (long i=start; i <= end; i++) {
       theCell.index[idim] = i;
       if ( idim ) // recurse
         iterateInspect (idim-1, theCell, theCellMin, theCellMax, theInspector);

@@ -2207,7 +2207,7 @@ YY_MALLOC_DECL
  */
 #ifndef YY_INPUT
 #define YY_INPUT(buf,result,max_size) \
-	if ( (result = read( fileno(yyin), (char *) buf, max_size )) < 0 ) \
+	if ( (result = (int)read( fileno(yyin), (char *) buf, max_size )) < 0 ) \
 		YY_FATAL_ERROR( "input in flex scanner failed" );
 #endif
 
@@ -2827,7 +2827,7 @@ static int input()
 
 		else
 			{ /* need more input */
-			int offset = yy_c_buf_p - yytext_ptr;
+			long offset = yy_c_buf_p - yytext_ptr;
 			++yy_c_buf_p;
 
 			switch ( yy_get_next_buffer() )
