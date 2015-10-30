@@ -81,8 +81,20 @@ public:
   Standard_EXPORT void SetAxis (const gp_Ax2 theAxis);
   
   Standard_EXPORT gp_Ax2 GetAxis() const;
+
+  Standard_EXPORT void SetPlane(const gp_Ax2& thePlane);
+  
+  Standard_EXPORT gp_Ax2 GetPlane() const;
+
+  Standard_EXPORT void SetPoint (const gp_Pnt& thePnt);
+
+  Standard_EXPORT gp_Pnt GetPoint () const;
    
   Standard_EXPORT Standard_Boolean HasAxis () const;
+
+  Standard_EXPORT Standard_Boolean HasPlane () const;
+
+  Standard_EXPORT Standard_Boolean HasPoint () const;
 
   DEFINE_STANDARD_RTTI(XCAFDimTolObjects_GeomToleranceObject,Standard_Transient)
 
@@ -98,6 +110,11 @@ private:
   Standard_Real myMaxValueModif;
   gp_Ax2 myAxis;
   Standard_Boolean myHasAxis;
+  gp_Ax2 myPlane;
+  gp_Pnt myPnt;
+  Standard_Boolean myHasPlane;
+  Standard_Boolean myHasPnt;
+
 };
 
 
