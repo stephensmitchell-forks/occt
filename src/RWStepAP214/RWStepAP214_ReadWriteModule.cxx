@@ -1318,8 +1318,14 @@ Handle(atype) result = Handle(atype)::DownCast (start)
 #include <RWStepRepr_RWCompShAspAndDatumFeatAndShAsp.hxx>
 #include <RWStepRepr_RWIntegerRepresentationItem.hxx>
 #include <RWStepRepr_RWValueRepresentationItem.hxx>
+#include <RWStepRepr_RWValueRepresentationItem.hxx>
+#include <RWStepAP242_RWDraughtingModelItemAssociation.hxx>
 #include <RWStepDimTol_RWGeoTolAndGeoTolWthDatRefAndGeoTolWthMaxTol.hxx>
 #include <RWStepDimTol_RWGeoTolAndGeoTolWthMaxTol.hxx>
+#include <RWStepVisual_RWAnnotationCurveOccurrence.hxx>
+#include <RWStepVisual_RWAnnotationOccurrence.hxx>
+#include <RWStepVisual_RWAnnotationPlane.hxx>
+#include <RWStepVisual_RWDraughtingCallout.hxx>
 
 #include <StepRepr_Apex.hxx>
 #include <StepRepr_CentreOfSymmetry.hxx>
@@ -1363,8 +1369,12 @@ Handle(atype) result = Handle(atype)::DownCast (start)
 #include <StepRepr_CompShAspAndDatumFeatAndShAsp.hxx>
 #include <StepRepr_IntegerRepresentationItem.hxx>
 #include <StepRepr_ValueRepresentationItem.hxx>
+#include <StepAP242_DraughtingModelItemAssociation.hxx>
 #include <StepDimTol_GeoTolAndGeoTolWthDatRefAndGeoTolWthMaxTol.hxx>
 #include <StepDimTol_GeoTolAndGeoTolWthMaxTol.hxx>
+#include <StepVisual_AnnotationCurveOccurrence.hxx>
+#include <StepVisual_AnnotationPlane.hxx>
+#include <StepVisual_DraughtingCallout.hxx>
 
 
 // -- General Declarations (Recognize, StepType) ---
@@ -1994,6 +2004,8 @@ static TCollection_AsciiString Reco_GeneralDatumReference("GENERAL_DATUM_REFEREN
 static TCollection_AsciiString Reco_IntegerRepresentationItem("INTEGER_REPRESENTATION_ITEM");
 static TCollection_AsciiString Reco_ValueRepresentationItem("VALUE_REPRESENTATION_ITEM");
 static TCollection_AsciiString Reco_FeatureForDatumTargetRelationship("FEATURE_FOR_DATUM_TARGET_RELATIONSHIP");
+static TCollection_AsciiString Reco_DraughtingModelItemAssociation("DRAUGHTING_MODEL_ITEM_ASSOCIATION");
+static TCollection_AsciiString Reco_AnnotationPlane("ANNOTATION_PLANE");
 
 // -- Definition of the libraries --
 
@@ -2638,6 +2650,8 @@ RWStepAP214_ReadWriteModule::RWStepAP214_ReadWriteModule ()
   typenums->SetItem (Reco_IntegerRepresentationItem, 700);
   typenums->SetItem (Reco_ValueRepresentationItem, 701);
   typenums->SetItem (Reco_FeatureForDatumTargetRelationship, 702);
+  typenums->SetItem (Reco_DraughtingModelItemAssociation, 703);
+  typenums->SetItem (Reco_AnnotationPlane, 704);
 
 //    SHORT NAMES
 //    NB : la liste est celle de AP203
@@ -3176,6 +3190,8 @@ RWStepAP214_ReadWriteModule::RWStepAP214_ReadWriteModule ()
   typeshor->SetItem ("TLZNFR",684);
   typeshor->SetItem ("INRPIT",700);
   typeshor->SetItem ("VLRPIT",701);
+  typeshor->SetItem ("DMIA", 703);
+  typeshor->SetItem ("ANNPLN", 704);
     
 }
 
@@ -4446,6 +4462,8 @@ const TCollection_AsciiString& RWStepAP214_ReadWriteModule::StepType
   case 700: return Reco_IntegerRepresentationItem;
   case 701: return Reco_ValueRepresentationItem;
   case 702: return Reco_FeatureForDatumTargetRelationship;
+  case 703: return Reco_DraughtingModelItemAssociation;
+  case 704: return Reco_AnnotationPlane;
 
   default : return PasReco;
   }
@@ -4799,11 +4817,17 @@ void RWStepAP214_ReadWriteModule::ReadStep(const Standard_Integer CN,
       tool.ReadStep (data,num,ach,anent);
     }
     break;
-
+  case 4 :
+    {
+      DeclareAndCast(StepVisual_AnnotationCurveOccurrence, anent, ent);
+      RWStepVisual_RWAnnotationCurveOccurrence tool;
+      tool.ReadStep (data,num,ach,anent);
+    }
+    break;
   case 7 : 
     {
-      DeclareAndCast(StepVisual_StyledItem, anent, ent);
-      RWStepVisual_RWStyledItem tool;
+      DeclareAndCast(StepVisual_AnnotationOccurrence, anent, ent);
+      RWStepVisual_RWAnnotationOccurrence tool;
       tool.ReadStep (data,num,ach,anent);
     }
     
@@ -5494,6 +5518,13 @@ void RWStepAP214_ReadWriteModule::ReadStep(const Standard_Integer CN,
       tool.ReadStep (data,num,ach,anent);
     }
     
+    break;
+  case 107 :
+    {
+      DeclareAndCast(StepVisual_DraughtingCallout, anent, ent);
+      RWStepVisual_RWDraughtingCallout tool;
+      tool.ReadStep (data,num,ach,anent);
+    }
     break;
   case 108 : 
     {
@@ -9185,6 +9216,20 @@ void RWStepAP214_ReadWriteModule::ReadStep(const Standard_Integer CN,
       tool.ReadStep (data,num,ach,anent);
     }
     break;
+  case 703:
+    {
+      DeclareAndCast(StepAP242_DraughtingModelItemAssociation,anent,ent);
+      RWStepAP242_RWDraughtingModelItemAssociation tool;
+      tool.ReadStep (data,num,ach,anent);
+    }
+    break;
+  case 704:
+    {
+      DeclareAndCast(StepVisual_AnnotationPlane,anent,ent);
+      RWStepVisual_RWAnnotationPlane tool;
+      tool.ReadStep (data,num,ach,anent);
+    }
+    break;
   case 705:
     {
       DeclareAndCast(StepDimTol_GeoTolAndGeoTolWthDatRefAndGeoTolWthMaxTol,anent,ent);
@@ -9245,11 +9290,17 @@ void RWStepAP214_ReadWriteModule::WriteStep(const Standard_Integer CN,
     }
     
     break;
+  case 4 :
+    {
+      DeclareAndCast(StepVisual_AnnotationCurveOccurrence, anent, ent);
+      RWStepVisual_RWAnnotationCurveOccurrence tool;
+      tool.WriteStep (SW,anent);
+    }
+    break;
   case 7 : 
     {
-      DeclareAndCast(StepVisual_StyledItem, anent, ent);
-      RWStepVisual_RWStyledItem tool;
-//      if (anent.IsNull()) return; 
+      DeclareAndCast(StepVisual_AnnotationOccurrence, anent, ent);
+      RWStepVisual_RWAnnotationOccurrence tool;
       tool.WriteStep (SW,anent);
     }
     
@@ -10027,6 +10078,13 @@ void RWStepAP214_ReadWriteModule::WriteStep(const Standard_Integer CN,
       tool.WriteStep (SW,anent);
     }
     
+    break;
+  case 107 :
+    {
+      DeclareAndCast(StepVisual_DraughtingCallout, anent, ent);
+      RWStepVisual_RWDraughtingCallout tool;
+      tool.WriteStep (SW,anent);
+    }
     break;
   case 108 : 
     {
@@ -13904,6 +13962,20 @@ void RWStepAP214_ReadWriteModule::WriteStep(const Standard_Integer CN,
     {
       DeclareAndCast(StepRepr_FeatureForDatumTargetRelationship,anent,ent);
       RWStepRepr_RWFeatureForDatumTargetRelationship tool;
+      tool.WriteStep (SW,anent);
+    }
+    break;
+  case 703:
+    {
+      DeclareAndCast(StepAP242_DraughtingModelItemAssociation,anent,ent);
+      RWStepAP242_RWDraughtingModelItemAssociation tool;
+      tool.WriteStep (SW,anent);
+    }
+    break;
+  case 704:
+    {
+      DeclareAndCast(StepVisual_AnnotationPlane,anent,ent);
+      RWStepVisual_RWAnnotationPlane tool;
       tool.WriteStep (SW,anent);
     }
     break;
