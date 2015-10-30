@@ -89,5 +89,6 @@ is
     pointer PArgumentAnalyzer to ArgumentAnalyzer from BOPAlgo;  
     -- 
     imported ListOfCheckResult; 
+    imported CellsBuilder;
     
 end BOPAlgo;

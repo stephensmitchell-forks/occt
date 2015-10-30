@@ -23,7 +23,8 @@ uses
     Builder from BOPAlgo, 
     PBuilder from BOPAlgo, 
     BOP from BOPAlgo, 
-    Section from BOPAlgo  
+    Section from BOPAlgo,
+    CellsBuilder from BOPAlgo
  
 --raises
 
@@ -49,6 +50,10 @@ is
  
     Section(myclass) 
      returns Section from BOPAlgo;  
+    ---C++: return &  
+ 
+    CellsBuilder(myclass) 
+     returns CellsBuilder from BOPAlgo;  
     ---C++: return &  
  
     Shapes(myclass)   
