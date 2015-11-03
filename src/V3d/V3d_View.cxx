@@ -2163,9 +2163,9 @@ void V3d_View::Gravity (Standard_Real& theX,
                         Standard_Real& theY,
                         Standard_Real& theZ) const
 {
-  theX = myCamera->Center().X();
-  theY = myCamera->Center().Y();
-  theZ = myCamera->Center().Z();
+  theX = Camera()->Center().X();
+  theY = Camera()->Center().Y();
+  theZ = Camera()->Center().Z();
 }
 
 //=======================================================================
