@@ -280,6 +280,7 @@ gp_Ax2 XCAFDimTolObjects_DatumObject::GetPlane() const
 void XCAFDimTolObjects_DatumObject::SetPlane(const gp_Ax2& thePlane)
 {
   myPlane = thePlane;
+  myHasPlane = Standard_True;
 }
 
 //=======================================================================
@@ -300,6 +301,7 @@ gp_Pnt XCAFDimTolObjects_DatumObject::GetPoint() const
 void XCAFDimTolObjects_DatumObject::SetPoint(const gp_Pnt& thePnt)
 {
   myPnt = thePnt;
+  myHasPnt = Standard_True;
 }
 
 //=======================================================================
