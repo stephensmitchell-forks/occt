@@ -2442,8 +2442,8 @@ Standard_Boolean OpenGl_View::runRaytraceShaders (const Standard_Integer        
     {
       for (int aPassIndex = 0; aPassIndex < aSamplesPerPixel; ++aPassIndex)
       {
-        aRenderFramebuffer = myAccumFrames % 2 ? myRaytraceFBO1[aFBOIdx] : myRaytraceFBO2[aFBOIdx];
-        anAccumFramebuffer = myAccumFrames % 2 ? myRaytraceFBO2[aFBOIdx] : myRaytraceFBO1[aFBOIdx];
+        aRenderFramebuffer = (myAccumFrames + aPassIndex) % 2 ? myRaytraceFBO1[aFBOIdx] : myRaytraceFBO2[aFBOIdx];
+        anAccumFramebuffer = (myAccumFrames + aPassIndex) % 2 ? myRaytraceFBO2[aFBOIdx] : myRaytraceFBO1[aFBOIdx];
 
         aRenderFramebuffer->BindBuffer (theGlContext);
 
@@ -2452,14 +2452,14 @@ Standard_Boolean OpenGl_View::runRaytraceShaders (const Standard_Integer        
 
         // Set frame accumulation weight
         myRaytraceProgram->SetUniform (theGlContext,
-          myUniformLocations[0][OpenGl_RT_uSampleWeight], 1.f / (myAccumFrames + 1));
+          myUniformLocations[0][OpenGl_RT_uSampleWeight], 1.f / (myAccumFrames + aPassIndex + 1));
 
         // Set random number generator seed
         myRaytraceProgram->SetUniform (theGlContext,
           myUniformLocations[0][OpenGl_RT_uFrameRndSeed], static_cast<Standard_Integer> (myRNG.NextInt() >> 2));
 
         theGlContext->core20fwd->glDrawArrays (GL_TRIANGLES, 0, 6);
-        ++myAccumFrames;
+        //++myAccumFrames;
         glFinish();
       }
     }
