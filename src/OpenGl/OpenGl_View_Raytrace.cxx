@@ -2428,7 +2428,7 @@ Standard_Boolean OpenGl_View::runRaytraceShaders (const Standard_Integer        
     myRaytraceProgram->SetUniform (theGlContext,
       myUniformLocations[0][OpenGl_RT_uMaxRadiance], static_cast<Standard_ShortReal> (myRenderParams.RadianceClampValue));
 
-    Standard_Integer aSamplesPerPixel =myRenderParams.SamplesPerPixel;
+    Standard_Integer aSamplesPerPixel = myRenderParams.SamplesPerPixel;
 
     if (aSamplesPerPixel == 0)
     {
