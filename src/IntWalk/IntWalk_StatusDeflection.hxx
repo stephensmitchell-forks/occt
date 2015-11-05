@@ -24,7 +24,8 @@ IntWalk_PasTropGrand,
 IntWalk_PointConfondu,
 IntWalk_ArretSurPointPrecedent,
 IntWalk_ArretSurPoint,
-IntWalk_OK
+IntWalk_OK,
+IntWalk_OKtangent
 };
 
 #endif // _IntWalk_StatusDeflection_HeaderFile
