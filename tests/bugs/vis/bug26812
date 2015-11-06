@@ -1,0 +1,35 @@
+set aPathToData ""
+set aTmpFolder ""
+
+pload ALL
+vinit
+# restore $aPathToData/occ/fuse.brep f
+# vdisplay f
+# restore $aTmpFolder/bearing.brep f
+meshfromstl m $aTmpFolder/bearing.stl
+# restore $aTmpFolder/bearing.brep f
+# vdisplay f
+# meshfromstl f $aPathToData/stl/bearing.stl
+vfit
+# meshgenlods f 2 -debug -mesh m -save D:/OCCT-tests/LOD
+meshlod m -path $aTmpFolder/f_LOD0.stl -from 0.5 -to 1
+meshlod m -path $aTmpFolder/f_LOD1.stl -from 1 -to 3
+
+
+##########################################################################
+# to generate brep file for LODs generaion, it is requred to use
+# iges shapes. the following sequence of commands creates both
+# stl and brep files for the iges shape
+##########################################################################
+igesbrep $aPathToData/iges/bearing.iges res *
+vdisplay res
+# write created brep to file
+save res $aTmpFolder/bearing.brep
+trinfo res
+# copy maximal deflection value, then re-mesh the shape with proper
+# deflection
+tclean res
+incmesh res $maxDeflection
+# save corresponding stl with the same triangulation as will be used
+# for generaion of LODs
+writestl res $aTmpFolder/bearing.stl

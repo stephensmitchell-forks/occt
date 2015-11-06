@@ -35,8 +35,10 @@
 
 class OpenGl_Structure;
 class OpenGl_GraphicDriver;
+class OpenGl_LOD;
 
 typedef NCollection_List<const OpenGl_Structure* > OpenGl_ListOfStructure;
+typedef NCollection_Vector<Handle(OpenGl_LOD)> OpenGl_VectorOfLODs;
 
 //! Implementation of low-level graphic structure.
 class OpenGl_Structure : public Graphic3d_CStructure
@@ -98,8 +100,15 @@ public:
   //! Create new group within this structure
   Standard_EXPORT virtual Handle(Graphic3d_Group) NewGroup (const Handle(Graphic3d_Structure)& theStruct);
 
+  //! Create new LOD within this structure
+  Standard_EXPORT virtual Handle(Graphic3d_LOD) NewLOD (const Handle(Graphic3d_Structure)& theStruct) Standard_OVERRIDE;
+
   //! Remove group from this structure
   Standard_EXPORT virtual void RemoveGroup (const Handle(Graphic3d_Group)& theGroup);
+
+  Standard_EXPORT virtual void SetDetailLevelRange (const Standard_Integer theIdOfLOD,
+                                                    const Standard_Real theFrom,
+                                                    const Standard_Real theTo) Standard_OVERRIDE;
 
 public:
 
@@ -192,12 +201,21 @@ public:
   //! Is the structure ray-tracable (contains ray-tracable elements)?
   Standard_Boolean IsRaytracable() const;
 
+  Standard_EXPORT virtual Standard_Integer GetDetailLevelsNb() const Standard_OVERRIDE
+  {
+    return (Standard_Integer)myLODVec.Size();
+  }
+
 protected:
 
   Standard_EXPORT virtual ~OpenGl_Structure();
 
   //! Updates ray-tracable status for structure and its parents.
   void UpdateStateIfRaytracable (const Standard_Boolean toCheck = Standard_True) const;
+
+private:
+  void findCurrentLOD (const Handle(OpenGl_Workspace)& theWorkspace) const;
+  Standard_Integer binSearchLOD (const Standard_Integer theFirst, const Standard_Integer theLast, const Standard_Real theMetrics) const;
 
 protected:
 
@@ -218,6 +236,10 @@ protected:
   mutable Standard_Boolean   myIsCulled; //!< A status specifying is structure needs to be rendered after BVH tree traverse.
 
   Standard_Boolean           myIsMirrored; //!< Used to tell OpenGl to interpret polygons in clockwise order.
+
+private:
+  mutable OpenGl_VectorOfLODs myLODVec;
+  mutable Standard_Integer    myCurrentLodId;
 
 public:
 

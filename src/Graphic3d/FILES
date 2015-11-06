@@ -77,6 +77,8 @@ Graphic3d_InitialisationError.hxx
 Graphic3d_LevelOfTextureAnisotropy.hxx
 Graphic3d_ListIteratorOfListOfShortReal.hxx
 Graphic3d_ListOfShortReal.hxx
+Graphic3d_LOD.hxx
+Graphic3d_LOD.cxx
 Graphic3d_MapIteratorOfMapOfStructure.hxx
 Graphic3d_MapOfObject.hxx
 Graphic3d_MapOfStructure.hxx
