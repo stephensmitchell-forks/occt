@@ -89,7 +89,8 @@ is
              S2: HSurface from Adaptor3d; D2: TopolTool from Adaptor3d;
              TolArc,TolTang: Real from Standard;
              isGeomInt : Boolean from Standard = Standard_True;
-             theIsReqToKeepRLine: Boolean from Standard = Standard_False)   	     
+             theIsReqToKeepRLine: Boolean from Standard = Standard_False;
+             theIsReqToPostWLProc: Boolean from Standard = Standard_True)   	     
 
       ---Purpose: Flag theIsReqToKeepRLine has been enterred only for
       --          compatibility with TopOpeBRep package. It shall be deleted
@@ -97,6 +98,11 @@ is
       --          When intersection result returns IntPatch_RLine and another
       --          IntPatch_Line (not restriction) we (in case of theIsReqToKeepRLine==TRUE)
       --          will always keep both lines even if they are coincided.
+      --          Flag theIsReqToPostWLProc has been enterred only for
+      --          compatibility with TopOpeBRep package. It shall be deleted
+      --          after deleting TopOpeBRep.
+      --          If theIsReqToPostWLProc == FALSE, then we will work with Walking-line
+      --          obtained after intersection algorithm directly (wothout any post-processing).
              
       raises ConstructionError from Standard    
       is static;
@@ -108,10 +114,23 @@ is
               TolArc,TolTang: Real from Standard;
               LOfPnts: in out ListOfPntOn2S from IntSurf;
               RestrictLine: Boolean from Standard = Standard_True;
-              isGeomInt : Boolean from Standard = Standard_True)
+              isGeomInt : Boolean from Standard = Standard_True;
+              theIsReqToKeepRLine: Boolean from Standard = Standard_False;
+              theIsReqToPostWLProc: Boolean from Standard = Standard_True)
               
       ---Purpose: If isGeomInt == Standard_False, then method 
       --          Param-Param intersection will be used.
+      --          Flag theIsReqToKeepRLine has been enterred only for
+      --          compatibility with TopOpeBRep package. It shall be deleted
+      --          after deleting TopOpeBRep.
+      --          When intersection result returns IntPatch_RLine and another
+      --          IntPatch_Line (not restriction) we (in case of theIsReqToKeepRLine==TRUE)
+      --          will always keep both lines even if they are coincided.
+      --          Flag theIsReqToPostWLProc has been enterred only for
+      --          compatibility with TopOpeBRep package. It shall be deleted
+      --          after deleting TopOpeBRep.
+      --          If theIsReqToPostWLProc == FALSE, then we will work with Walking-line
+      --          obtained after intersection algorithm directly (wothout any post-processing). 
       
       raises ConstructionError from Standard
       is static;
@@ -121,6 +140,8 @@ is
               S2: HSurface from Adaptor3d; D2: TopolTool from Adaptor3d;
               U1,V1,U2,V2 : Real from Standard;
               TolArc,TolTang: Real from Standard)
+	      
+      ---Purpose: Perform with start point
               
       raises ConstructionError from Standard
       is static;
@@ -129,6 +150,8 @@ is
              S1: HSurface from Adaptor3d; D1: TopolTool from Adaptor3d;
              TolArc,TolTang: Real from Standard)
       
+      ---Purpose: Uses for finding self-intersected surfaces.
+
       raises ConstructionError from Standard
       is static;
   

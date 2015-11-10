@@ -1,7 +1,5 @@
-puts "TODO OCC25925 ALL: ERROR. offsetperform operation not done."
-puts "TODO OCC25925 ALL: Faulty OCC5805 : result is not Closed shape"
-puts "TODO OCC25925 ALL: Tcl Exception: result is not a topological shape!!!"
-puts "TODO OCC25925 ALL: TEST INCOMPLETE"
+puts "TODO OCC25925 ALL: Faulty shapes in variables faulty_1 to faulty_"
+puts "TODO OCC25925 ALL: Error : Result shape is WRONG"
 
 puts "============"
 puts "OCC5805"
@@ -38,7 +36,7 @@ catch { OFFSETSHAPE $distance {s_2} $calcul $type }
 # Bad result
 
 
-set square 495.635
+set square 358.795
 
 set nb_v_good 2
 set nb_e_good 3

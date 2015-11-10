@@ -86,12 +86,10 @@ public:
   
   Standard_EXPORT const AppParCurves_MultiBSpCurve& SplineValue();
   
-  Standard_EXPORT void Parametrization (Approx_ParametrizationType& partype) const;
+  //! returns the type  of  parametrization
+  Standard_EXPORT Approx_ParametrizationType Parametrization () const;
   
   Standard_EXPORT const TColStd_Array1OfReal& Parameters (const Standard_Integer Index = 1) const;
-
-
-
 
 protected:
 

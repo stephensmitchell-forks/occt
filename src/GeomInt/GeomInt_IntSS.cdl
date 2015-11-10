@@ -33,7 +33,9 @@ uses Intersection    from IntPatch,
      Line            from IntPatch,
      RLine           from IntPatch,
      Box2d           from Bnd,
-     VectorOfReal    from GeomInt
+     VectorOfReal    from GeomInt,
+     WLine           from IntPatch,
+     BSplineCurve    from Geom2d
      
 
 raises NotDone    from StdFail,
@@ -214,6 +216,17 @@ is
     ---Purpose: puts into theArrayOfParameters the parameters of intersection
     --          points of given theC2d1 and theC2d2 curves with the boundaries
     --          of the source surface.
+
+    MakeBSpline(myclass; WL: WLine from IntPatch;
+                ideb: Integer from Standard;
+                ifin: Integer from Standard)
+        returns Curve from Geom;
+
+    MakeBSpline2d(myclass; WL: WLine from IntPatch;
+                  ideb: Integer from Standard;
+                  ifin: Integer from Standard;
+                  onFirst: Boolean from Standard)
+        returns BSplineCurve from Geom2d;
 
 --- Private methods
 --  

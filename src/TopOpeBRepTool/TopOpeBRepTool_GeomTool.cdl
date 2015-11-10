@@ -68,12 +68,6 @@ is
     SetTolerances(me : in out; tol3d,tol2d : Real from Standard)
     is static;
 
-    GetTolerances(me; tol3d,tol2d : out Real from Standard; relative : out Boolean from Standard)
-    is static;
-
-    SetTolerances(me : in out; tol3d,tol2d : Real from Standard; relative : Boolean from Standard)
-    is static;
-
     NbPntMax(me) returns Integer from Standard is static;
     
     SetNbPntMax(me : in out; NbPntMax : Integer from Standard)
@@ -92,7 +86,6 @@ fields
     myCompPC2     : Boolean from Standard is protected;
     myTol3d       : Real from Standard;
     myTol2d       : Real from Standard;
-    myRelativeTol : Boolean from Standard;
     myNbPntMax    : Integer from Standard;
     
 end GeomTool;

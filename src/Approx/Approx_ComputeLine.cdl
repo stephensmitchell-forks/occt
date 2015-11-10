@@ -221,8 +221,9 @@ is
     returns MultiBSpCurve from AppParCurves
     is static;
 
-    Parametrization(me; partype :  in  out ParametrizationType from Approx) 
+    Parametrization(me)
     	---Purpose: returns the type  of  parametrization
+    returns ParametrizationType from Approx
     is static;
 
 

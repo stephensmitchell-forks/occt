@@ -18,9 +18,13 @@ class LineTool from GeomInt
 
 	---Purpose: 
 
-uses Line  from IntPatch,
-     Point from IntPatch,
-     Pnt2d from gp
+uses Line            from IntPatch,
+     Point           from IntPatch,
+     Pnt2d           from gp,
+     WLine           from IntPatch,
+     HSurface        from GeomAdaptor,
+     LineConstructor from GeomInt,
+     SequenceOfLine  from IntPatch
 
 is
 
@@ -43,6 +47,14 @@ is
     LastParameter(myclass; L: Line from IntPatch)
     
     	returns Real from Standard;
+
+    DecompositionOfWLine(myclass; theWLine: WLine from IntPatch;
+                         theSurface1: HSurface from GeomAdaptor;
+                         theSurface2: HSurface from GeomAdaptor;
+                         aTolSum: Real from Standard;
+                         theLConstructor: LineConstructor from GeomInt;
+                         theNewLines: out SequenceOfLine from IntPatch)
+        returns Boolean from Standard;
 
 
 end LineTool;

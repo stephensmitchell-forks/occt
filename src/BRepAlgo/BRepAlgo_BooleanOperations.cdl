@@ -41,13 +41,11 @@ is
     ---Purpose: Defines the arguments.
 
     SetApproxParameters(me : in out; NbPntMax : Integer from Standard;
-                                     Tol3D, Tol2D : Real from Standard;
-                                     RelativeTol : Boolean from Standard);
+                                     Tol3D, Tol2D : Real from Standard);
     ---Purpose: Sets different parameters for the curve approximations :
     --          NbPntMax : Maximum number of points to be approximated at
     --                     the same time in one curve.
     --          Tol3D, Tol2D : Tolerances to be reached by the approximation.
-    --          RelativeTol : The given tolerances are relative.
 
     Perform(me : in out)
     ---Purpose: Performs the global boolean operation.
@@ -133,6 +131,5 @@ fields
     myApproxNbPntMax : Integer from Standard;
     myApproxTol3D : Real from Standard;
     myApproxTol2D : Real from Standard;
-    myApproxRelativeTol : Boolean from Standard;
 
 end BooleanOperations from BRepAlgo;

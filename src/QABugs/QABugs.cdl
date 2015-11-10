@@ -47,4 +47,5 @@ is
     Commands_17(DI : in out Interpretor from Draw);
     Commands_18(DI : in out Interpretor from Draw);
     Commands_19(DI : in out Interpretor from Draw);
+    Commands_20(DI : in out Interpretor from Draw);
 end;
