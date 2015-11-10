@@ -1,0 +1,89 @@
+-- File:	Unfolding_FaceDataContainer.cdl
+-- Created:	Fri Sep 19 16:52:05 2008
+-- Author:	Sergey KHROMOV
+--		<skv@kurox>
+---Copyright:	 Matra Datavision 2008
+
+class FaceDataContainer from Unfolding inherits TShared from MMgt
+    ---Purpose: This class represents a data container for data constructed
+    --          during unfolding operation.
+
+uses
+
+    Face                      from TopoDS,
+    Edge                      from TopoDS,
+    Trsf                      from gp,
+    Real                      from Standard,
+    ListOfShape               from TopTools,
+    DataMapOfShapeListOfShape from TopTools
+
+is
+
+    Create
+    	---Purpose: Empty constructor
+	---C++: inline
+    returns FaceDataContainer from Unfolding;
+
+    SetFace(me: mutable; theFace: Face from TopoDS);
+    	---Purpose: Sets the original face.
+
+    GetFace(me)
+    	---Purpose: Returns the original face.
+    	---C++: inline
+    	---C++: return const &
+    returns Face from TopoDS;
+
+    SetUnfoldedFace(me: mutable; theUnfoldedFace: Face from TopoDS);
+    	---Purpose: Sets the unfolded face for the original one.
+    	---C++: inline
+
+    GetUnfoldedFace(me)
+    	---Purpose: Returns the unfolded face for the original one.
+    	---C++: inline
+    	---C++: return const &
+    returns Face from TopoDS;
+
+    SetDistortionArea(me: mutable; theDistortionArea: Real from Standard);
+    	---Purpose: Sets the distortion area.
+    	---C++: inline
+
+    GetDistortionArea(me)
+    	---Purpose: Returns the distortion area.
+    	---C++: inline
+    returns Real from Standard;
+
+    SetMaxGaussCurvature(me: mutable; theCurvature: Real from Standard);
+    	---Purpose: Sets the maximal Gauss curvature.
+    	---C++: inline
+
+    GetMaxGaussCurvature(me)
+    	---Purpose: Returns the maximal Gauss curvature.
+    	---C++: inline
+    returns Real from Standard;
+
+    Reset(me: mutable);
+    	---Purpose: Resets the data container.
+	---C++: inline
+
+    ApplyTrsf(me: mutable; theTrsf: Trsf from gp);
+    	---Purpose: Applies the transformation to all unfolded shapes.
+
+    SetEdgesForEdge(me: mutable;
+    	    	    theEdge         : Edge        from TopoDS;
+    	    	    theUnfoldedEdges: ListOfShape from TopTools);
+    	---Purpose: Associates unfolded edges with the source edge.
+
+    GetEdgesForEdge(me; theEdge: Edge from TopoDS)
+    	---Purpose: Returns unfolded edges associated to the source edge.
+    	---C++: return const &
+    returns ListOfShape from TopTools;
+
+fields
+
+    myFace           : Face                      from TopoDS;
+    myUnfoldedFace   : Face                      from TopoDS;
+    myEdgeMap        : DataMapOfShapeListOfShape from TopTools;
+    myDistortionArea : Real                      from Standard;
+    myCurvature      : Real                      from Standard;
+
+end;

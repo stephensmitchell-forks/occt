@@ -1,0 +1,32 @@
+-- File:	Unfolding_FaceDataMapHasher.cdl
+-- Created:	Fri Sep 19 16:52:05 2008
+-- Author:	Sergey KHROMOV
+--		<skv@kurox>
+---Copyright:	 Matra Datavision 2008
+
+class FaceDataMapHasher from Unfolding
+	---Purpose: Hash tool, used for generating maps of face data containers.
+
+uses
+
+    FaceDataContainer from Unfolding,
+    Integer           from Standard,
+    Boolean           from Standard
+
+is
+
+    HashCode(myclass; theKey  : FaceDataContainer from Unfolding;
+	              theUpper: Integer           from Standard)
+	---Purpose: Returns a HasCode value  for  the  Key <K>  in the
+	--          range 0..theUpper.
+	---C++: inline
+    returns Integer from Standard;
+	
+    IsEqual(myclass; theKey1, theKey2 : FaceDataContainer from Unfolding)
+	---Purpose: Returns True  when the two  keys are the same. Two
+	--          same  keys  must   have  the  same  hashcode,  the
+	--          contrary is not necessary.
+	---C++: inline
+    returns Boolean from Standard;
+
+end;

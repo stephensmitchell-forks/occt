@@ -1,0 +1,35 @@
+-- File:	HelixGeom.cdl
+
+
+package HelixGeom 
+
+	---Purpose: 
+
+uses  
+    MMgt,
+    gp, 
+    TColStd,
+    GeomAbs,  
+    Geom,  
+    TColGeom,
+    GeomAdaptor, 
+    Adaptor3d, 
+    GeomFill 
+    
+is  
+    
+    deferred class BuilderApproxCurve;
+    deferred class BuilderHelixGen;
+     
+    class HelixCurve;  
+    class HHelixCurve;   
+    class BuilderHelixCoil;
+    class BuilderHelix;
+    class Tools; 
+
+    -- 
+    private class GHHelixCurve instantiates GenHCurve from Adaptor3d
+            (HelixCurve from HelixGeom);
+
+end HelixGeom;
+

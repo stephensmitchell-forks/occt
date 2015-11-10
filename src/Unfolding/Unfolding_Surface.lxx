@@ -1,0 +1,132 @@
+// File:	Unfolding_Surface.lxx
+// Created:	Tue Jul 22 16:13:39 2008
+// Author:	Sergey KHROMOV
+//		<skv@dimox>
+
+
+#include <Unfolding_FaceDataContainer.hxx>
+
+
+//=======================================================================
+//function : SetFace
+//purpose  : 
+//=======================================================================
+
+inline void Unfolding_Surface::SetFace (const TopoDS_Face &theFace)
+{
+  myDataContainer->SetFace(theFace);
+  Reset();
+}
+
+//=======================================================================
+//function : GetFace
+//purpose  : 
+//=======================================================================
+
+inline const TopoDS_Face &Unfolding_Surface::GetFace () const
+{
+  return myDataContainer->GetFace();
+}
+
+//=======================================================================
+//function : SetPlane
+//purpose  : 
+//=======================================================================
+
+inline void Unfolding_Surface::SetPlane (const gp_Pln &thePlane)
+{
+  myPlane = thePlane;
+  Reset();
+}
+
+//=======================================================================
+//function : GetPlane
+//purpose  : 
+//=======================================================================
+
+inline const gp_Pln &Unfolding_Surface::GetPlane () const
+{
+  return myPlane;
+}
+
+//=======================================================================
+//function : SetTolerance
+//purpose  : 
+//=======================================================================
+
+inline void Unfolding_Surface::SetContourTolerance (const Standard_Real theTolerance)
+{
+  myTolContour = theTolerance;
+  Reset();
+}
+
+//=======================================================================
+//function : GetTolerance
+//purpose  : 
+//=======================================================================
+
+inline Standard_Real Unfolding_Surface::GetContourTolerance () const
+{
+  return myTolContour;
+}
+
+ 
+inline void Unfolding_Surface::SetCurvatureTolerance(const Standard_Real theTolerance) 
+{
+  myTolCurvature = theTolerance;
+  Reset();
+}
+
+ 
+inline Standard_Real Unfolding_Surface::GetCurvatureTolerance() const
+{
+  return myTolCurvature;
+}
+
+inline void Unfolding_Surface::SetDeflection(const Standard_Real theDeflection) 
+{
+  myDeflection = theDeflection;
+  Reset();
+}
+
+ 
+inline Standard_Real Unfolding_Surface::GetDeflection() const
+{
+  return myDeflection;
+}
+
+
+//=======================================================================
+//function : ErrorStatus
+//purpose  : 
+//=======================================================================
+
+inline Unfolding_ErrorStatus Unfolding_Surface::ErrorStatus () const
+{
+  return myErrorStatus;
+}
+
+//=======================================================================
+//function : GetDataContainer
+//purpose  : 
+//=======================================================================
+
+inline Handle(Unfolding_FaceDataContainer)
+                                Unfolding_Surface::GetDataContainer() const
+{
+  return myDataContainer;
+}
+
+//=======================================================================
+//function : Reset
+//purpose  : 
+//=======================================================================
+
+inline void Unfolding_Surface::Reset()
+{
+  myDataContainer->Reset();
+  myErrorStatus = Unfolding_NotDone;
+
+  if (!myGrid.IsNull())
+    myGrid.Nullify();
+}

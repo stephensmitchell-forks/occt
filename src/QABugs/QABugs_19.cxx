@@ -3270,47 +3270,6 @@ struct OCC25545_Functor
   mutable volatile int myIsRaceDetected;
 };
 
-//=======================================================================
-//function : OCC25545
-//purpose  : Tests data race when concurrently accessing TopLoc_Location::Transformation()
-//=======================================================================
-#ifdef HAVE_TBB
-static Standard_Integer OCC25545 (Draw_Interpretor& di, 
-                                  Standard_Integer, 
-                                  const char **)
-{
-  // Place vertices in a vector, giving the i-th vertex the
-  // transformation that translates it on the vector (i,0,0) from the origin.
-  size_t n = 1000;
-  std::vector<TopoDS_Shape> aShapeVec (n);
-  std::vector<TopLoc_Location> aLocVec (n);
-  TopoDS_Shape aShape = BRepBuilderAPI_MakeVertex (gp::Origin ());
-  aShapeVec[0] = aShape;
-  for (size_t i = 1; i < n; ++i) {
-    gp_Trsf aT;
-    aT.SetTranslation (gp_Vec (1, 0, 0));
-    aLocVec[i] = aLocVec[i - 1] * aT;
-    aShapeVec[i] = aShape.Moved (aLocVec[i]);
-  }
-
-  // Evaluator function will access vertices geometry
-  // concurrently
-  OCC25545_Functor aFunc(aShapeVec);
-
-  //concurrently process
-  tbb::parallel_for (size_t (0), n, aFunc, tbb::simple_partitioner ());
-  QVERIFY (!aFunc.myIsRaceDetected);
-  return 0;
-}
-#else
-static Standard_Integer OCC25545 (Draw_Interpretor&, 
-                                  Standard_Integer, 
-                                  const char **argv)
-{
-  cout << "Test skipped: command " << argv[0] << " requires TBB library" << endl;
-  return 0;
-}
-#endif
 
 //=======================================================================
 //function : OCC25547
@@ -4368,10 +4327,6 @@ void QABugs::Commands_19(Draw_Interpretor& theCommands) {
   theCommands.Add ("OCC25348", "OCC25348", __FILE__, OCC25348, group);
   theCommands.Add ("OCC25413", "OCC25413 shape", __FILE__, OCC25413, group);
   theCommands.Add ("OCC25446", "OCC25446 res b1 b2 op", __FILE__, OCC25446, group);
-  theCommands.Add ("OCC25545", 
-                   "no args; tests data race when concurrently accessing \n"
-                   "\t\tTopLoc_Location::Transformation()",
-                   __FILE__, OCC25545, group);
   theCommands.Add ("OCC25547", "OCC25547", __FILE__, OCC25547, group);
   theCommands.Add ("OCC24881", "OCC24881 shape", __FILE__, OCC24881, group);
   theCommands.Add ("OCC26172", "OCC26172", __FILE__, OCC26172, group);

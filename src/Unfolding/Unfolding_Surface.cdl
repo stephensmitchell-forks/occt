@@ -1,0 +1,200 @@
+-- File:	Unfolding_Surface.cdl
+-- Created:	Tue Jul 22 12:50:10 2008
+-- Author:	Sergey KHROMOV
+--		<skv@dimox>
+---Copyright:	Open CASCADE 2008
+
+
+class Surface from Unfolding
+    ---Purpose: This class is used to perform unfolding of a face onto a plane.
+    --          To perform  this  operation it  is necessary  to initialize the
+    --          object by a  face to  be unfolded,  a plane and a tolerance for
+    --          operation. Then to call  the method Perform. The  result planar
+    --          face can be  obtained using the  method GetResult. Error status
+    --          can be obtained by the method ErrorStatus.
+
+uses
+
+    ErrorStatus           from Unfolding,
+    HArray2OfPoint        from Unfolding,
+    FaceDataContainer     from Unfolding,
+    Face                  from TopoDS,
+    Wire                  from TopoDS,
+    Edge                  from TopoDS,
+    Vertex                from TopoDS,
+    ListOfShape           from TopTools,
+    Pln                   from gp,
+    XY                    from gp,
+    Real                  from Standard,
+    DataMapOfShapeInteger from TopTools
+
+is
+
+    Create
+    ---Purpose:  Empty constructor
+    ---C++: inline
+    returns Surface from Unfolding;
+
+    Create (theFace              : Face from TopoDS;
+    	    thePlane             : Pln  from gp;
+    	    theContourTolerance  : Real from Standard;
+	    theCurvatureTolerance: Real from Standard = 0.001;
+    	    theDeflection        : Real from Standard = 0.001)
+    ---Purpose: Constructor. Initializes the object with the face, the plane and
+    --          the tolerance for operation.
+    returns Surface from Unfolding;
+
+    SetFace (me: in out; theFace: Face from TopoDS);
+    ---Purpose: Sets the face.
+    ---C++: inline
+
+    GetFace (me)
+    ---Purpose: Returns the face.
+    ---C++: inline
+    ---C++: return const &
+    returns Face from TopoDS;
+
+    SetPlane (me: in out; thePlane: Pln from gp);
+    ---Purpose: Sets the plane.
+    ---C++: inline
+
+    GetPlane (me)
+    ---Purpose: Returns the plane.
+    ---C++: inline
+    ---C++: return const &
+    returns Pln from gp;
+
+    SetCurvatureTolerance (me: in out; theTolerance: Real from Standard);
+    ---Purpose: Sets the tolerance for the operation.
+    ---C++: inline
+
+    GetCurvatureTolerance (me)
+    ---Purpose: Returns the tolerance for the operation.
+    ---C++: inline
+    returns Real from Standard;
+    
+    SetContourTolerance (me: in out; theTolerance: Real from Standard);
+    ---Purpose: Sets the tolerance for the operation.
+    ---C++: inline
+
+    GetContourTolerance (me)
+    ---Purpose: Returns the tolerance for the operation.
+    ---C++: inline
+    returns Real from Standard;
+
+    SetDeflection (me: in out; theDeflection: Real from Standard);
+    ---Purpose: Sets the tolerance for the operation.
+    ---C++: inline
+
+    GetDeflection (me)
+    ---Purpose: Returns the tolerance for the operation.
+    ---C++: inline
+    returns Real from Standard;
+
+    Perform (me: in out; theMapEdgeNbSamples: DataMapOfShapeInteger from TopTools)
+    ---Purpose: Performs computation of  the unfolded  surface. It returns
+    --          Standard_True if the operation  succeeds otherwise returns
+    --          Standard_False. It is  possible to get the error status of
+    --          the  performed operation  using the  method ErrorStatus().
+    --          theMapEdgeNbSamples  is  the  map  of  edges as  keys  and
+    --          number of samples  for this  edge  as item. It is required
+    --          for predefined sampling of  edges of a face. If an edge is
+    --          absent in this map its sampling is automatically computed.
+    --          This feature is used to get same sampling for shared edges
+    --          on different faces.
+    returns Boolean from Standard;
+
+    ErrorStatus (me)
+    ---Purpose: Returns error status of the operation. The error status can have
+    --          one of the following values:
+    --            - Unfolding_Done: operation is succeeded;
+    --            - Unfolding_NotDone: the method Perform() is not called yet;
+    --            - Unfolding_Failure: the operation is failed;
+    --            - Unfolding_InvalidSurface: the surface cannot be unfolded
+    --              without distortion;
+    --            - Unfolding_InvalidInput: invalid input for the operation.
+    ---C++: inline
+    returns ErrorStatus from Unfolding;
+
+    GetDataContainer(me)
+    ---Purpose: Returns data container. That stores all results of the operation.
+    ---C++: inline
+    returns FaceDataContainer from Unfolding;
+
+    --protected
+    Reset(me: in out)
+    ---Purpose: Resets data to the initial state.
+    ---C++: inline
+    is protected;
+
+    --private
+    InitGrid(me: in out)
+    ---Purpose: Initializes the grid on surface. Computes a rectangular grid in
+    --          the parametric space of the face and computes the corresponding
+    --          3d points on the surface.
+    returns Boolean from Standard
+    is private;
+
+    NbPoints(me; theUMin     :     Real    from Standard;
+                 theUMax     :     Real    from Standard;
+                 theVMin     :     Real    from Standard;
+                 theVMax     :     Real    from Standard;
+                 theNbPointsU: out Integer from Standard;
+                 theNbPointsV: out Integer from Standard)
+    ---Purpose: Computes and returns the numbers of sampling points
+    --          for U and V directions.
+    is private;
+
+    Unfolding(me: in out)
+    ---Purpose: Performs unfolding of the grid of points onto the plane. Returns
+    --          Standard_True in  case of success and  Standard_False otherwise.
+    --          Initializes the error status of the operation.
+    returns Boolean from Standard
+    is private;
+
+    BuildPlanarFace(me: in out;
+    	    	    theMapEdgeNbSamples: DataMapOfShapeInteger from TopTools)
+    ---Purpose: Constructs and returns a planar face.
+    returns Boolean from Standard
+    is private;
+
+    BuildPlanarWire(me: in out;
+    	    	    theWire            :     Wire                  from TopoDS;
+    	    	    theMapEdgeNbSamples:     DataMapOfShapeInteger from TopTools;
+    	    	    thePlanarWire      : out Wire                  from TopoDS)
+    ---Purpose: Constructs and returns planar unfolded wire from original one.
+    returns Boolean from Standard
+    is private;
+
+    UnfoldEdge(me;
+    	       theEdge            :        Edge                  from TopoDS;
+    	       theStartVtx        :        Vertex                from TopoDS;
+    	       theEndVtx          :        Vertex                from TopoDS;
+    	       theMapEdgeNbSamples:        DataMapOfShapeInteger from TopTools;
+	       theStartPnt        : in out XY                    from gp;
+	       theEndPnt          :    out XY                    from gp;
+               thePlnEdges        :    out ListOfShape           from TopTools)
+    ---Purpose: Constructs and returns a set of planar unfolded edges
+    --          from theEdge.
+    returns Boolean from Standard
+    is private;
+
+    ComputePointOnPlane(me; thePoint       :     XY   from gp;
+                            theEdgeTol     :     Real from Standard;
+                            thePointOnPlane: out XY   from gp)
+    ---Purpose: Computes and returns a point on plane that corresponds
+    --          to a point on a surface.
+    returns Boolean from Standard
+    is private;
+
+fields
+
+    myDataContainer  : FaceDataContainer from Unfolding;
+    myPlane          : Pln               from gp;
+    myTolContour     : Real              from Standard;
+    myTolCurvature   : Real              from Standard;
+    myDeflection     : Real              from Standard;
+    myGrid           : HArray2OfPoint    from Unfolding;
+    myErrorStatus    : ErrorStatus       from Unfolding;
+
+end;

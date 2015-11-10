@@ -1,0 +1,82 @@
+-- File:	Unfolding_Point.cdl
+-- Created:	Mon Jul 28 14:56:12 2008
+-- Author:	Sergey KHROMOV
+--		<skv@dimox>
+---Copyright:	 Matra Datavision 2008
+
+
+class Point from Unfolding
+    ---Purpose: This class represents a data container for a point. It contains
+    --          a point  on a  surface, its  U and V  parameters on  a surface,
+    --          corresponding point on an unfolding plane.
+
+uses
+
+    XY   from gp,
+    XYZ  from gp,
+    Real from Standard
+
+is
+
+    Create
+    ---Purpose: Empty constructor.
+    ---C++: inline
+    returns Point from Unfolding;
+
+    SetPointOnSurface(me: in out; thePOnSurface: XYZ from gp);
+    ---Purpose: Sets the point on a surface.
+    ---C++: inline
+
+    GetPointOnSurface(me)
+    ---Purpose: Returns the point on a surface.
+    ---C++: return const &
+    ---C++: inline
+    returns XYZ from gp;
+
+    SetParameters(me: in out; theU: Real from Standard;
+                              theV: Real from Standard);
+    ---Purpose: Sets the U and V parameters of the point on a surface.
+    ---C++: inline
+
+    GetParameters(me; theU: out Real from Standard;
+                      theV: out Real from Standard);
+    ---Purpose: Returns the U and V parameters of the point on a surface.
+    ---C++: inline
+
+    GetU(me)
+    ---Purpose: Returns the U parameter of the point on a surface.
+    ---C++: inline
+    returns Real from Standard;
+
+    GetV(me)
+    ---Purpose: Returns the V parameter of the point on a surface.
+    ---C++: inline
+    returns Real from Standard;
+
+    SetAngle(me:  in  out;  theAngle:  Real  from  Standard);
+    ---Purpose: Sets the angle between DU and DV directions.
+    ---C++: inline
+
+    GetAngle(me)
+    ---Purpose: Returns the angle between DU and DV directions.
+    ---C++: inline
+    returns Real from Standard;
+
+    SetPointOnPlane(me: in out; thePOnPlane: XY from gp);
+    ---Purpose: Sets the point on an unfolding plane.
+    ---C++: inline
+
+    GetPointOnPlane(me)
+    ---Purpose: Returns the point on an unfolding plane.
+    ---C++: return const &
+    ---C++: inline
+    returns XY from gp;
+
+fields
+
+    myPoint2d    : XY   from gp;
+    myPOnSurface : XYZ  from gp;
+    myPOnPlane   : XY   from gp;
+    myAngle      : Real from Standard;
+
+end;

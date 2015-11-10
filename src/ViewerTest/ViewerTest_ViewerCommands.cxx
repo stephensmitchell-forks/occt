@@ -13,7 +13,6 @@
 //
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
-
 #include <OpenGl_GlCore20.hxx>
 #include <AIS_Shape.hxx>
 #include <AIS_InteractiveObject.hxx>
@@ -2117,8 +2116,8 @@ static LRESULT WINAPI ViewerWindowProc( HWND hwnd,
         }
       }
       break;
-
-    case WM_MOUSEWHEEL:
+#if _MSC_VER >= 1500
+	case WM_MOUSEWHEEL:
     {
       int aDelta = GET_WHEEL_DELTA_WPARAM (wParam);
       if (wParam & MK_CONTROL)
@@ -2134,12 +2133,13 @@ static LRESULT WINAPI ViewerWindowProc( HWND hwnd,
           }
         }
       }
-      else
+     else
       {
         aView->Zoom (0, 0, aDelta / 40, aDelta / 40);
       }
       break;
     }
+#endif
 
     case WM_MOUSEMOVE:
       {

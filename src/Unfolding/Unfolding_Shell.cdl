@@ -1,0 +1,167 @@
+-- File:	Unfolding_Shell.cdl
+-- Created:	Tue Sep  9 16:56:09 2008
+-- Author:	Mikhail KLOKOV
+--		<mkk@kurox>
+---Copyright:	Open CASCADE 2008
+
+class Shell from Unfolding
+
+    ---Purpose: This class is used to perform unfolding of a shell onto a plane.
+    --          To perform  this  operation it  is necessary  to initialize the
+    --          object by a  shell to  be unfolded,  a plane and a tolerance for
+    --          operation. Then to call  the method Perform. The  result planar
+    --          shell can be  obtained using the  method GetResult. Error status
+    --          can be obtained by the method ErrorStatus.
+
+uses
+
+    ErrorStatus                   from Unfolding,
+    Shell                         from TopoDS,
+    Face                          from TopoDS,
+    ListOfShape                   from TopTools,
+    Pln                           from gp,
+    Real                          from Standard,
+    IndexedMapOfFaceDataContainer from Unfolding,
+    FaceDataContainer             from Unfolding
+
+is
+
+    Create
+    ---Purpose:  Empty constructor
+    returns Shell from Unfolding;
+
+    Create (theShell     : Shell from TopoDS;
+    	    thePlane    : Pln  from gp;
+    	    theContourTolerance: Real from Standard;
+	    theCurvatureTolerance: Real from Standard = 0.001;
+    	    theDeflection: Real from Standard = 0.001)
+    ---Purpose: Constructor. Initializes the object with the shell, the plane and
+    --          the tolerances for operation.
+    returns Shell from Unfolding;
+
+    SetShell (me: in out; theShell: Shell from TopoDS);
+    ---Purpose: Sets the face.
+    ---C++: inline
+
+    GetShell (me)
+    ---Purpose: Returns the shell.
+    ---C++: inline
+    ---C++: return const &
+    returns Shell from TopoDS;
+
+    SetPlane (me: in out; thePlane: Pln from gp);
+    ---Purpose: Sets the plane.
+    ---C++: inline
+
+    GetPlane (me)
+    ---Purpose: Returns the plane.
+    ---C++: inline
+    ---C++: return const &
+    returns Pln from gp;
+
+    SetCurvatureTolerance (me: in out; theTolerance: Real from Standard);
+    ---Purpose: Sets the tolerance for the operation.
+    ---C++: inline
+
+    GetCurvatureTolerance (me)
+    ---Purpose: Returns the tolerance for the operation.
+    ---C++: inline
+    returns Real from Standard;
+    
+    SetContourTolerance (me: in out; theTolerance: Real from Standard);
+    ---Purpose: Sets the tolerance for the operation.
+    ---C++: inline
+
+    GetContourTolerance (me)
+    ---Purpose: Returns the tolerance for the operation.
+    ---C++: inline
+    returns Real from Standard;
+
+    SetDeflection (me: in out; theDeflection: Real from Standard);
+    ---Purpose: Sets the tolerance for the operation.
+    ---C++: inline
+
+    GetDeflection (me)
+    ---Purpose: Returns the tolerance for the operation.
+    ---C++: inline
+    returns Real from Standard;
+
+    Perform (me: in out)
+    ---Purpose: Performs computation of  the unfolded surface. It returns
+    --          Standard_True if the operation succeeds otherwise returns
+    --          Standard_False. It is possible to get the error status of
+    --          the performed operation using the method ErrorStatus().
+    returns Boolean from Standard;
+
+    ErrorStatus (me)
+    ---Purpose: Returns error status of the operation. The error status can have
+    --          one of the following values:
+    --            - Unfolding_Done: operation is succeeded;
+    --            - Unfolding_NotDone: the method Perform() is not called yet;
+    --            - Unfolding_Failure: the operation is failed;
+    --            - Unfolding_InvalidSurface: the surface cannot be unfolded
+    --              without distortion;
+    --            - Unfolding_InvalidInput: invalid input for the operation;
+    --            - Unfolding_InvalidShape: can be returned by
+    --              Unfolding::ToShape method;
+    --            - Unfolding_ComplexShape: can be returned by
+    --              Unfolding::ToShape method;
+    ---C++: inline
+    returns ErrorStatus from Unfolding;
+
+    GetResult (me)
+    ---Purpose: Returns the result of the operation. If the operation is failed,
+    --          it returns a null shape.
+    ---C++: inline
+    ---C++: return const &
+    returns Face from TopoDS;
+
+
+    GetAreaError(me)
+    ---Purpose: Returns the area cumulated during primitive patches mergin.
+    --          It shows computed distortion.
+    ---C++: inline
+    returns Real from Standard;
+    
+    GetMaxGaussCurvature(me)
+    ---Purpose: Returns the gauss curvature computed in the mesh points.
+    ---C++: inline
+    returns Real from Standard;
+
+
+
+    --protected
+    Reset(me: in out)
+    ---Purpose: Resets data to the initial state.
+    ---C++: inline
+    is protected;
+
+    --private
+    ComputeTransformed(me: in out; theResult: in out ListOfShape from TopTools)
+    returns Boolean from Standard
+    is private;
+
+    MoveFace2ToFace1(me: in out; theFaceData1  : FaceDataContainer from Unfolding;
+    	    	    	         theFaceData2  : FaceDataContainer from Unfolding;
+				 theCommonEdges: ListOfShape       from TopTools;
+                                 theIsFixed    : Boolean           from Standard)
+    ---Purpose: Perform transformation of unfolded face2 to glue with unfolded
+    --          face1. If theIsFixed is Standard_True, the face 2 is not
+    --          transformed only estimations of distortions are performed.
+    returns Boolean from Standard
+    is private;
+
+fields
+
+    myShell          : Shell                         from TopoDS;
+    myPlane          : Pln                           from gp;
+    myTolContour     : Real                          from Standard;
+    myTolCurvature   : Real                          from Standard;
+    myDeflection     : Real                          from Standard;
+    myMapFaceData    : IndexedMapOfFaceDataContainer from Unfolding;
+    myResult         : Face                          from TopoDS;
+    myErrorStatus    : ErrorStatus                   from Unfolding;
+    myDistortionArea : Real                          from Standard;
+    myCurvature      : Real                          from Standard;
+
+end Shell from Unfolding;

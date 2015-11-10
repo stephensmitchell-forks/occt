@@ -1,0 +1,101 @@
+// File:	Unfolding_FaceDataContainer.lxx
+// Created:	Tue Jul 22 13:12:24 2008
+// Author:	Sergey KHROMOV
+//		<skv@dimox>
+
+
+//=======================================================================
+//function : Empty constructor
+//purpose  : 
+//=======================================================================
+
+inline Unfolding_FaceDataContainer::Unfolding_FaceDataContainer()
+     : myDistortionArea(0.),
+       myCurvature(0.)
+{
+}
+
+//=======================================================================
+//function : GetFace
+//purpose  : 
+//=======================================================================
+
+inline const TopoDS_Face &Unfolding_FaceDataContainer::GetFace() const
+{
+  return myFace;
+}
+
+//=======================================================================
+//function : SetUnfoldedFace
+//purpose  : 
+//=======================================================================
+
+inline void Unfolding_FaceDataContainer::SetUnfoldedFace
+                                      (const TopoDS_Face &theUnfoldedFace)
+{
+  myUnfoldedFace = theUnfoldedFace;
+}
+
+//=======================================================================
+//function : GetUnfoldedFace
+//purpose  : 
+//=======================================================================
+
+inline const TopoDS_Face &Unfolding_FaceDataContainer::GetUnfoldedFace() const
+{
+  return myUnfoldedFace;
+}
+
+//=======================================================================
+//function : SetDistortionArea
+//purpose  : 
+//=======================================================================
+
+inline void Unfolding_FaceDataContainer::SetDistortionArea
+                                     (const Standard_Real theDistortionArea)
+{
+  myDistortionArea = theDistortionArea;
+}
+
+//=======================================================================
+//function : GetDistortionArea
+//purpose  : 
+//=======================================================================
+
+inline Standard_Real Unfolding_FaceDataContainer::GetDistortionArea() const
+{
+  return myDistortionArea;
+}
+
+//=======================================================================
+//function : SetMaxGaussCurvature
+//purpose  : 
+//=======================================================================
+
+inline void Unfolding_FaceDataContainer::SetMaxGaussCurvature
+                                            (const Standard_Real theCurvature)
+{
+  myCurvature = theCurvature;
+}
+
+//=======================================================================
+//function : GetMaxGaussCurvature
+//purpose  : 
+//=======================================================================
+
+inline Standard_Real Unfolding_FaceDataContainer::GetMaxGaussCurvature() const
+{
+  return myCurvature;
+}
+
+//=======================================================================
+//function : Reset
+//purpose  : 
+//=======================================================================
+
+inline void Unfolding_FaceDataContainer::Reset()
+{
+  myUnfoldedFace.Nullify();
+  myDistortionArea = 0.;
+  myCurvature      = 0.;
+}

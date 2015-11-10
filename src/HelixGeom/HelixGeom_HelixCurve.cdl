@@ -1,0 +1,140 @@
+-- File:	HelixGeom_HelixCurve.cdl
+
+class HelixCurve from HelixGeom  
+    inherits Curve from Adaptor3d
+
+	---Purpose: Adaptor  class  for  calculation  helix  curve
+
+uses
+    Shape from GeomAbs, 
+    Pnt from gp, 
+    Vec from gp,
+    Array1OfReal from TColStd 
+    
+raises 
+    ConstructionError from Standard,
+    OutOfRange from Standard, 
+    DomainError from Standard
+is 
+    Create  
+	---Purpose: Adaptor  class  for  calculation  helix  curve 
+	--          implementation  of  analytical  expressions
+    	returns HelixCurve from HelixGeom;  
+	 
+    Load(me:out); 
+	---Purpose:  Sets  default  values  for  parameters
+     
+    Load(me:out; 
+    	    aT1:Real from Standard;
+    	    aT2:Real from Standard;
+    	    aPitch:Real from Standard;
+    	    aRStart:Real from Standard;
+    	    aTaperAngle:Real from Standard;
+    	    aIsCW:Boolean from Standard) 
+	---Purpose:  Sets  helix  parameters
+    	raises ConstructionError from Standard; 
+	 
+    FirstParameter(me)  
+	---Purpose:  Gets  first  parameter
+    	returns Real from Standard 
+    	is redefined; 
+	 
+    LastParameter(me)  
+	---Purpose:  Gets  last  parameter
+    	returns Real from Standard 
+    	is redefined; 
+	 
+    Continuity(me)  
+	---Purpose:  Gets  continuity
+    	returns Shape from GeomAbs
+    	is redefined;  
+
+    NbIntervals(me;  
+    	    S : Shape from GeomAbs)  
+	---Purpose:  Gets number  of  intervals
+    	returns Integer from Standard
+    	is redefined;  
+	 
+    Intervals(me;  
+    	    T :out Array1OfReal from TColStd; 
+    	    S : Shape from GeomAbs) 
+	---Purpose:  Gets  parametric  intervals
+	is redefined; 
+	 
+    Resolution(me; R3d :Real  from Standard)  
+	---Purpose:  Gets  parametric  resolution
+    	returns Real from Standard
+    	is redefined; 
+	 
+    IsClosed(me)  
+	---Purpose:  Returns  False
+    	returns Boolean from Standard
+    	is redefined; 
+     
+    IsPeriodic(me)  
+	---Purpose:  Returns  False
+    	returns Boolean from Standard
+    	is redefined; 
+	 
+    Period(me)  
+	---Purpose:  Returns  2*PI
+    	returns Real from Standard
+    	raises DomainError from Standard 
+    	is redefined; 
+	 
+    Value(me;  
+    	    U : Real from Standard)  
+	---Purpose:  Gets  curve  point  for  parameter  U
+    	returns Pnt from gp
+    	is redefined; 
+     
+    D0 (me;  
+    	    U : Real from Standard;  
+    	    P : out Pnt from gp) 
+	---Purpose:  Gets  curve  point  for  parameter  U
+    	is redefined; 
+	 
+    D1 (me;  
+    	    U : Real from Standard;  
+    	    P : out Pnt from gp;  
+    	    V1: out Vec from gp) 
+	---Purpose:  Gets  curve  point  and  first  derivatives   
+        --           for  parameter  U
+    	is redefined;  
+	 
+	 
+    D2 (me;  
+    	    U : Real from Standard;  
+    	    P  : out Pnt from gp;  
+    	    V1 : out Vec from gp; 
+    	    V2 : out Vec from gp) 
+	---Purpose:  Gets  curve  point,  first and  second derivatives   
+        --           for  parameter  U
+    	is redefined; 
+	 
+	 
+    DN (me;  
+    	    U : Real from Standard; 
+    	    N : Integer from Standard) 
+	---Purpose:  Gets  curve  derivative  of  demanded  order  
+        --           for  parameter  U
+    	returns Vec from gp 
+    	raises  OutOfRange from Standard
+    	is redefined;  
+	 
+fields 
+    myFirst      : Real from Standard is protected;
+    myLast       : Real from Standard is protected; 
+    myPitch      : Real from Standard is protected; 
+    myRStart     : Real from Standard is protected; 
+    myTaperAngle : Real from Standard is protected; 
+    myIsClockWise: Boolean from Standard is protected; 
+    -- 
+    -- private
+    myC1         : Real from Standard is protected; 
+    myTgBeta     : Real from Standard is protected; 
+    myTolAngle   : Real from Standard is protected; 
+    
+end HelixCurve;
+
+
