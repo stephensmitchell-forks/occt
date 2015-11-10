@@ -61,6 +61,9 @@ public:
   Standard_EXPORT virtual void Render  (const Handle(OpenGl_Workspace)& theWorkspace) const;
   Standard_EXPORT virtual void Release (OpenGl_Context* theContext);
 
+  //! Destructor
+  Standard_EXPORT virtual ~OpenGl_Text();
+
 public: //! @name methods for compatibility with layers
 
   //! Empty constructor
@@ -97,9 +100,6 @@ public: //! @name methods for compatibility with layers
                                const OpenGl_AspectText&             theTextAspect) const;
 
 protected:
-
-  //! Destructor
-  Standard_EXPORT virtual ~OpenGl_Text();
 
   friend class OpenGl_Trihedron;
   friend class OpenGl_GraduatedTrihedron;

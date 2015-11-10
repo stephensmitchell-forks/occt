@@ -1594,8 +1594,8 @@ void OpenGl_View::updateCamera (const OpenGl_Mat4& theOrientation,
   {
     for (Standard_Integer aX = -1; aX <= 1; aX += 2)
     {
-      OpenGl_Vec4 aOrigin (GLfloat(aX),
-                           GLfloat(aY),
+      OpenGl_Vec4 aOrigin (static_cast<GLfloat>(aX),
+                           static_cast<GLfloat>(aY),
                           -1.0f,
                            1.0f);
 
@@ -1605,8 +1605,8 @@ void OpenGl_View::updateCamera (const OpenGl_Mat4& theOrientation,
       aOrigin.y() = aOrigin.y() / aOrigin.w();
       aOrigin.z() = aOrigin.z() / aOrigin.w();
 
-      OpenGl_Vec4 aDirect (GLfloat(aX),
-                           GLfloat(aY),
+      OpenGl_Vec4 aDirect (static_cast<GLfloat>(aX),
+                           static_cast<GLfloat>(aY),
                            1.0f,
                            1.0f);
 

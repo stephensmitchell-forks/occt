@@ -509,7 +509,8 @@ Standard_Boolean SelectMgr_RectangularFrustum::Overlaps (const Handle(TColgp_HAr
   }
   else if (theSensType == Select3D_TOS_INTERIOR)
   {
-    gp_Vec aPolyNorm (gp_XYZ (RealLast(), RealLast(), RealLast()));
+    //gp_Vec aPolyNorm (gp_XYZ (RealLast(), RealLast(), RealLast()));
+    gp_Vec aPolyNorm (RealLast(), RealLast(), RealLast());
     if (!hasOverlap (theArrayOfPnts, aPolyNorm))
       return Standard_False;
 
@@ -545,7 +546,8 @@ Standard_Boolean SelectMgr_RectangularFrustum::Overlaps (const gp_Pnt& thePnt1,
   }
   else if (theSensType == Select3D_TOS_INTERIOR)
   {
-    gp_Vec aTriangleNormal (gp_XYZ (RealLast(), RealLast(), RealLast()));
+    //gp_Vec aTriangleNormal (gp_XYZ (RealLast(), RealLast(), RealLast()));
+    gp_Vec aTriangleNormal (RealLast(), RealLast(), RealLast());
     if (!hasOverlap (thePnt1, thePnt2, thePnt3, aTriangleNormal))
       return Standard_False;
 

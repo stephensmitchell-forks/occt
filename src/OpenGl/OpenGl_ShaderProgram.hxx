@@ -561,7 +561,7 @@ struct OpenGl_VariableSetter : public OpenGl_SetterInterface
   {
     theProgram->SetUniform (theCtx,
                             theVariable->Name().ToCString(),
-                            theVariable->Value()->As<T>());
+                            theVariable->Value()->template As<T>());
   }
 };
 

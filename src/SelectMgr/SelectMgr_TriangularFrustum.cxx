@@ -230,7 +230,8 @@ Standard_Boolean SelectMgr_TriangularFrustum::Overlaps (const Handle(TColgp_HArr
   }
   else if (theSensType == Select3D_TOS_INTERIOR)
   {
-    gp_Vec aNorm (gp_XYZ (RealLast(), RealLast(), RealLast()));
+    //gp_Vec aNorm (gp_XYZ (RealLast(), RealLast(), RealLast()));
+    gp_Vec aNorm (RealLast(), RealLast(), RealLast());
     return hasOverlap (theArrayOfPnts, aNorm);
   }
 
@@ -271,7 +272,8 @@ Standard_Boolean SelectMgr_TriangularFrustum::Overlaps (const gp_Pnt& thePnt1,
   }
   else if (theSensType == Select3D_TOS_INTERIOR)
   {
-    gp_Vec aNorm (gp_XYZ (RealLast(), RealLast(), RealLast()));
+    //gp_Vec aNorm (gp_XYZ (RealLast(), RealLast(), RealLast()));
+    gp_Vec aNorm (RealLast(), RealLast(), RealLast());
     return hasOverlap (thePnt1, thePnt2, thePnt3, aNorm);
   }
 

@@ -2224,8 +2224,11 @@ void BRepFill_Evolved::MakePipe(const TopoDS_Edge& SE,
   }
 #endif
 
-  BRepFill_Pipe Pipe(BRepLib_MakeWire(SE), GenProf);	
-  //BRepFill_Pipe Pipe = BRepFill_Pipe(BRepLib_MakeWire(SE),GenProf);	
+TopoDS_Wire SW = BRepLib_MakeWire(SE);
+  BRepFill_Pipe Pipe(SW, GenProf);    
+
+//  BRepFill_Pipe Pipe(BRepLib_MakeWire(SE), GenProf);	
+//  BRepFill_Pipe Pipe = BRepFill_Pipe(BRepLib_MakeWire(SE),GenProf);	
   
 #ifdef DRAW
   if (AffichGeom) {
