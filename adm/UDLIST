@@ -482,3 +482,11 @@ p IVtkTools
 t TKIVtk
 p IVtkDraw
 t TKIVtkDraw
+p HelixBRep
+p HelixGeom
+p HelixTest
+t TKHelix
+p Unfolding
+p UnfoldingTest
+t TKUnfolding
+t TKUnfoldingTest
