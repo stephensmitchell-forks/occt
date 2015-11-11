@@ -66,7 +66,21 @@ PSO_Particle* math_PSOParticlesPool::GetParticle(const Standard_Integer theIdx)
 //=======================================================================
 PSO_Particle* math_PSOParticlesPool::GetBestParticle()
 {
-  return &*std::min_element(myParticlesPool.begin(), myParticlesPool.end());
+  //return &*std::min_element(myParticlesPool.begin(), myParticlesPool.end());
+  Standard_Real aMinValue = myParticlesPool.First().Distance;
+  Standard_Integer aMinIdx = myParticlesPool.Lower();
+  for(Standard_Integer i = myParticlesPool.Lower();
+                       i <= myParticlesPool.Upper();
+                       i++)
+  {
+    if (myParticlesPool(i).Distance < aMinValue)
+    {
+      aMinIdx = i;
+      aMinValue = myParticlesPool(i).Distance;
+    }
+  }
+
+  return &myParticlesPool(aMinIdx);
 }
 
 //=======================================================================
@@ -75,5 +89,19 @@ PSO_Particle* math_PSOParticlesPool::GetBestParticle()
 //=======================================================================
 PSO_Particle* math_PSOParticlesPool::GetWorstParticle()
 {
-  return &*std::max_element(myParticlesPool.begin(), myParticlesPool.end());
+  //return &*std::max_element(myParticlesPool.begin(), myParticlesPool.end());
+  Standard_Real aMaxValue = myParticlesPool.First().Distance;
+  Standard_Integer aMaxIdx = myParticlesPool.Lower();
+  for(Standard_Integer i = myParticlesPool.Lower();
+                       i <= myParticlesPool.Upper();
+                       i++)
+  {
+    if (myParticlesPool(i).Distance > aMaxValue)
+    {
+      aMaxIdx = i;
+      aMaxValue = myParticlesPool(i).Distance;
+    }
+  }
+
+  return &myParticlesPool(aMaxIdx);
 }
