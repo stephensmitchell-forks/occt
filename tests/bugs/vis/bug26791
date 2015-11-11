@@ -1,0 +1,25 @@
+puts "============"
+puts "OCC26790 apply view resolution to built-in markers"
+puts "============"
+puts ""
+pload VISUALIZATION
+
+vclear
+vclose all
+
+vinit View1
+
+for { set aMarkerType 0 } { $aMarkerType < 13 } { incr aMarkerType } {
+  set aRow [expr $aMarkerType - 7]
+  set aCol 5
+  vmarkerstest m${aMarkerType} $aCol $aRow 0 MarkerType=$aMarkerType PointsOnSide=1
+}
+
+vright
+vfit
+
+vdump $imagedir/${casename}_1.png
+
+vrenderparams -resolution 144
+
+vdump $imagedir/${casename}_2.png

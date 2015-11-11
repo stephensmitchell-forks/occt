@@ -140,7 +140,8 @@ OpenGl_Context::OpenGl_Context (const Handle(OpenGl_Caps)& theCaps)
   myReadBuffer (0),
   myDrawBuffer (0),
   myDefaultVao (0),
-  myIsGlDebugCtx (Standard_False)
+  myIsGlDebugCtx (Standard_False),
+  myResolutionRatio (1.0f)
 {
   // system-dependent fields
 #if defined(HAVE_EGL)
@@ -2672,7 +2673,7 @@ void OpenGl_Context::SetPointSize (const Standard_ShortReal theSize)
 {
   if (!myActiveProgram.IsNull())
   {
-    myActiveProgram->SetUniform (this, myActiveProgram->GetStateLocation (OpenGl_OCCT_POINT_SIZE), theSize);
+    myActiveProgram->SetUniform (this, myActiveProgram->GetStateLocation (OpenGl_OCCT_POINT_SIZE), theSize * myResolutionRatio);
   #if !defined(GL_ES_VERSION_2_0)
     //myContext->core11fwd->glEnable (GL_VERTEX_PROGRAM_POINT_SIZE);
   #endif
@@ -2680,7 +2681,7 @@ void OpenGl_Context::SetPointSize (const Standard_ShortReal theSize)
 #if !defined(GL_ES_VERSION_2_0)
   //else
   {
-    core11fwd->glPointSize (theSize);
+    core11fwd->glPointSize (theSize * myResolutionRatio);
     if (core20fwd != NULL)
     {
       //myContext->core11fwd->glDisable (GL_VERTEX_PROGRAM_POINT_SIZE);
