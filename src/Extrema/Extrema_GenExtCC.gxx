@@ -284,7 +284,17 @@ void Extrema_GenExtCC::Perform()
   // Sort points lexicographically and check midpoint between each two neighboring points.
   // If all midpoints functional value is acceptable
   // then set myParallel flag to true and return one soulution.
-  std::sort(aPnts.begin(), aPnts.end(), comp);
+  
+  //std::sort(aPnts.begin(), aPnts.end(), comp);
+  for (Standard_Integer i = aPnts.Lower(); i < aPnts.Upper(); i++)
+    for (Standard_Integer j = i+1; j <= aPnts.Upper(); j++)
+      if (comp(aPnts(i),aPnts(j)) == Standard_False)
+      {
+        gp_XY aPoint = aPnts(i);
+        aPnts(i) = aPnts(j);
+        aPnts(j) = aPoint;
+      }
+  /////////////////////////////////////////////
   Standard_Boolean isParallel = Standard_False;
   Standard_Real aVal = 0.0;
   math_Vector aVec(1,2, 0.0);
