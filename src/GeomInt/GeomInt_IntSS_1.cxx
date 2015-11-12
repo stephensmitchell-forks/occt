@@ -2426,5 +2426,13 @@ void GeomInt_IntSS::TrimILineOnSurfBoundaries(const Handle(Geom2d_Curve)& theC2d
   IntersectCurveAndBoundary(theC2d2, aCurS2Bounds,
                         aNumberOfCurves, anIntTol, theArrayOfParameters);
 
-  std::sort(theArrayOfParameters.begin(), theArrayOfParameters.end());
+  //std::sort(theArrayOfParameters.begin(), theArrayOfParameters.end());
+  for (Standard_Integer i = theArrayOfParameters.Lower(); i < theArrayOfParameters.Upper(); i++)
+    for (Standard_Integer j = i+1; j <= theArrayOfParameters.Upper(); j++)
+      if (theArrayOfParameters(i) > theArrayOfParameters(j))
+      {
+        Standard_Real aParam = theArrayOfParameters(i);
+        theArrayOfParameters(i) = theArrayOfParameters(j);
+        theArrayOfParameters(j) = aParam;
+      }
 }
