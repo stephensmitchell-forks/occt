@@ -687,6 +687,7 @@ void SelectMgr_SelectionManager::RecomputeSelection (const Handle(SelectMgr_Sele
   for(theObject->Init(); theObject->More(); theObject->Next())
   {
     const Handle(SelectMgr_Selection)& aSelection = theObject->CurrentSelection();
+    aSelection->UpdateStatus (SelectMgr_TOU_Full);
     Standard_Integer aSelMode = aSelection->Mode();
 
     for (TColStd_MapIteratorOfMapOfTransient aSelectorIter (mySelectors); aSelectorIter.More(); aSelectorIter.Next())
@@ -697,10 +698,10 @@ void SelectMgr_SelectionManager::RecomputeSelection (const Handle(SelectMgr_Sele
           ClearSelectionStructures (theObject, aSelMode, aCurSelector);
           theObject->RecomputePrimitives(aSelMode);
           RestoreSelectionStructures (theObject, aSelMode, aCurSelector);
+          aSelection->UpdateStatus (SelectMgr_TOU_None);
+          aSelection->UpdateBVHStatus (SelectMgr_TBU_None);
       }
     }
-    aSelection->UpdateStatus (SelectMgr_TOU_None);
-    aSelection->UpdateBVHStatus (SelectMgr_TBU_None);
   }
 }
 
