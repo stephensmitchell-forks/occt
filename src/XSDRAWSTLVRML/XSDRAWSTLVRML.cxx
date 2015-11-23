@@ -1488,7 +1488,7 @@ static int MeshLod (Draw_Interpretor& theDI,
 
   Handle(MeshVS_LODDataSource) aLod = new MeshVS_LODDataSource (aSTLMesh);
   aLod->ComputePrs (aMesh);
-  Standard_Integer aIdOfLod = aMesh->Presentation()->GetDetailLevelsNb();
+  Standard_Integer aIdOfLod = aMesh->Presentation()->NbDetailLevels();
   aMesh->Presentation()->SetDetailLevelRange (aIdOfLod - 1, aFromRange, aToRange);
 
   return 0;

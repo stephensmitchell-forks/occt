@@ -30,16 +30,15 @@ public:
   Standard_EXPORT virtual ~Graphic3d_LOD();
 
   Standard_EXPORT virtual void SetRange (const Standard_Real theFrom, const Standard_Real theTo);
-  Standard_EXPORT virtual Handle(Graphic3d_Group) NewGroup();
+  Standard_EXPORT virtual Handle(Graphic3d_Group) NewGroup (const Handle(Graphic3d_Structure)& theParentStruct);
 
-  Standard_EXPORT Standard_Real ComputeMetrics (const Handle(Graphic3d_Camera)& theCamera) const;
-  Standard_EXPORT void SetParent (const Handle(Graphic3d_Structure)& theParent);
+  Standard_EXPORT Standard_Real ComputeMetrics (const Handle(Graphic3d_Camera)& theCamera,
+                                                const Handle(Graphic3d_CStructure)& theParentStruct) const;
 
   DEFINE_STANDARD_RTTI (Graphic3d_LOD, Standard_Transient)
 
 protected:
-  Graphic3d_SequenceOfGroup   myGroups;
-  Handle(Graphic3d_Structure) myParent;
+  Graphic3d_SequenceOfGroup myGroups;
 };
 
 DEFINE_STANDARD_HANDLE (Graphic3d_LOD, Standard_Transient)

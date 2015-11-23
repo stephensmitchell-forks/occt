@@ -497,7 +497,7 @@ public:
   //! Returns the low-level structure
     const Handle(Graphic3d_CStructure)& CStructure() const;
 
-  Standard_EXPORT Standard_Integer GetDetailLevelsNb() const;
+  Standard_EXPORT Standard_Integer NbDetailLevels() const;
 
   Standard_EXPORT void SetDetailLevelRange (const Standard_Integer theIdOfLOD, const Standard_Real theFrom, const Standard_Real theTo);
 

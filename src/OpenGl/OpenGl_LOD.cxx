@@ -39,9 +39,9 @@ void OpenGl_LOD::SetRange (const Standard_Real theFrom, const Standard_Real theT
 // function : NewGroup
 // purpose  :
 //=======================================================================
-Handle(Graphic3d_Group) OpenGl_LOD::NewGroup()
+Handle(Graphic3d_Group) OpenGl_LOD::NewGroup (const Handle(Graphic3d_Structure)& theParentStruct)
 {
-  Handle(OpenGl_Group) aGroup = new OpenGl_Group (myParent);
+  Handle(OpenGl_Group) aGroup = new OpenGl_Group (theParentStruct);
   myGroups.Append (aGroup);
   return aGroup;
 }

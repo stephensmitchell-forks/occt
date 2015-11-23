@@ -114,12 +114,12 @@ public:
   virtual Handle(Graphic3d_Group) NewGroup (const Handle(Graphic3d_Structure)& theStruct) = 0;
 
   //! Create new LOD within this structure
-  virtual Handle(Graphic3d_LOD) NewLOD (const Handle(Graphic3d_Structure)& theStruct) = 0;
+  virtual Handle(Graphic3d_LOD) NewLOD() = 0;
 
   //! Remove group from this structure
   virtual void RemoveGroup (const Handle(Graphic3d_Group)& theGroup) = 0;
 
-  virtual Standard_Integer GetDetailLevelsNb() const = 0;
+  virtual Standard_Integer NbDetailLevels() const = 0;
 
   virtual void SetDetailLevelRange (const Standard_Integer theIdOfLOD, const Standard_Real theFrom, const Standard_Real theTo) = 0;
 

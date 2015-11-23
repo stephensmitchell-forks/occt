@@ -101,7 +101,7 @@ public:
   Standard_EXPORT virtual Handle(Graphic3d_Group) NewGroup (const Handle(Graphic3d_Structure)& theStruct);
 
   //! Create new LOD within this structure
-  Standard_EXPORT virtual Handle(Graphic3d_LOD) NewLOD (const Handle(Graphic3d_Structure)& theStruct) Standard_OVERRIDE;
+  Standard_EXPORT virtual Handle(Graphic3d_LOD) NewLOD() Standard_OVERRIDE;
 
   //! Remove group from this structure
   Standard_EXPORT virtual void RemoveGroup (const Handle(Graphic3d_Group)& theGroup);
@@ -201,7 +201,7 @@ public:
   //! Is the structure ray-tracable (contains ray-tracable elements)?
   Standard_Boolean IsRaytracable() const;
 
-  Standard_EXPORT virtual Standard_Integer GetDetailLevelsNb() const Standard_OVERRIDE
+  Standard_EXPORT virtual Standard_Integer NbDetailLevels() const Standard_OVERRIDE
   {
     return (Standard_Integer)myLODVec.Size();
   }

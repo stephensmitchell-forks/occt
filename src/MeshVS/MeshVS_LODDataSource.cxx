@@ -186,7 +186,7 @@ void MeshVS_LODDataSource::ComputePrs (const Handle(AIS_InteractiveObject) theMe
   if (aMesh.IsNull())
     return;
 
-  Standard_Boolean hasNodes = !myNodeIdxs.IsEmpty();
+  // Standard_Boolean hasNodes = !myNodeIdxs.IsEmpty();
   Standard_Boolean hasTrgs  = !myTriangleIdxs.IsEmpty();
   Handle(Prs3d_Presentation) aMainPrs = theMesh->Presentation();
   const Standard_Integer aDispMode = theMesh->DisplayMode();
@@ -591,12 +591,12 @@ void MeshVS_LODDataSource::drawArrays (const Handle(Prs3d_Presentation)& theBase
   Aspect_TypeOfLine aType;
   Standard_Real aWidth;
 
-  Handle(Graphic3d_LOD) aNewLod = Prs3d_Root::NewLOD (theBasePrs);
+  Handle(Graphic3d_LOD) aNewLod = theBasePrs->NewLOD();
   theFillAsp->Values (aStyle, anIntColor, aBackColor, anEdgeColor, aType, aWidth);
 
   if (isPolygons && theFillAsp->FrontMaterial().Transparency() < 0.01)
   {
-    Handle (Graphic3d_Group) aGroup = aNewLod->NewGroup();
+    Handle (Graphic3d_Group) aGroup = aNewLod->NewGroup (theBasePrs);
 
     theFillAsp->SetEdgeOff();
 
@@ -626,7 +626,7 @@ void MeshVS_LODDataSource::drawArrays (const Handle(Prs3d_Presentation)& theBase
 
   if (isPolylines && !theIsPolygonsEdgesOff)
   {
-    Handle (Graphic3d_Group) aLGroup = aNewLod->NewGroup();
+    Handle (Graphic3d_Group) aLGroup = aNewLod->NewGroup (theBasePrs);
 
     theFillAsp->SetEdgeOff();
     if (theIsSelected)
@@ -642,7 +642,7 @@ void MeshVS_LODDataSource::drawArrays (const Handle(Prs3d_Presentation)& theBase
 
   if (isLinkPolylines)
   {
-    Handle (Graphic3d_Group) aBeamGroup = aNewLod->NewGroup();
+    Handle (Graphic3d_Group) aBeamGroup = aNewLod->NewGroup (theBasePrs);
 
     theFillAsp->SetEdgeOff();
     if (!theIsSelected)
@@ -654,7 +654,7 @@ void MeshVS_LODDataSource::drawArrays (const Handle(Prs3d_Presentation)& theBase
 
   if (isPolygons && theFillAsp->FrontMaterial().Transparency() >= 0.01)
   {
-    Handle (Graphic3d_Group) aGroup = aNewLod->NewGroup();
+    Handle (Graphic3d_Group) aGroup = aNewLod->NewGroup (theBasePrs);
 
     theFillAsp->SetEdgeOff();
 

@@ -437,10 +437,9 @@ Handle(Graphic3d_Group) OpenGl_Structure::NewGroup (const Handle(Graphic3d_Struc
 // function : NewLOD
 // purpose  :
 // =======================================================================
-Handle(Graphic3d_LOD) OpenGl_Structure::NewLOD (const Handle(Graphic3d_Structure)& theStruct)
+Handle(Graphic3d_LOD) OpenGl_Structure::NewLOD()
 {
   Handle(OpenGl_LOD) aLOD = new OpenGl_LOD();
-  aLOD->SetParent (theStruct);
   myLODVec.Append (aLOD);
   return aLOD;
 }
@@ -539,7 +538,7 @@ void OpenGl_Structure::Render (const Handle(OpenGl_Workspace) &theWorkspace) con
     return;
   }
 
-  Handle(OpenGl_LOD) aLODToRender = NULL;
+  Handle(OpenGl_LOD) aLODToRender;
   if (myLODVec.Size() > 0)
   {
     findCurrentLOD (theWorkspace);
@@ -818,7 +817,7 @@ Standard_Integer OpenGl_Structure::binSearchLOD (const Standard_Integer theFirst
 //=======================================================================
 void OpenGl_Structure::findCurrentLOD (const Handle(OpenGl_Workspace)& theWorkspace) const
 {
-  Standard_Real aMetric = myLODVec.Value (0)->ComputeMetrics (theWorkspace->View()->Camera());
+  Standard_Real aMetric = myLODVec.Value (0)->ComputeMetrics (theWorkspace->View()->Camera(), this);
   std::cout << aMetric << std::endl;
   if (myCurrentLodId != -1 && myLODVec.Value (myCurrentLodId)->GetRange().IsIn (aMetric))
     return;

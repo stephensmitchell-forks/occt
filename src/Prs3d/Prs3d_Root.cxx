@@ -25,12 +25,3 @@ Handle (Graphic3d_Group) Prs3d_Root::NewGroup (const Handle (Prs3d_Presentation)
 {
   return Prs3d->NewGroup();
 }
-
-//=======================================================================
-//function : CreateLOD
-//purpose  :
-//=======================================================================
-Handle(Graphic3d_LOD) Prs3d_Root::NewLOD (const Handle (Prs3d_Presentation)& theParentPrs)
-{
-  return theParentPrs->NewLOD();
-}

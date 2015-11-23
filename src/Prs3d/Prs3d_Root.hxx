@@ -45,8 +45,6 @@ public:
   //! objects in the display.
   //! A group also contains the attributes whose ranges are limited to the primitives in it.
   Standard_EXPORT static Handle(Graphic3d_Group) NewGroup (const Handle(Prs3d_Presentation)& Prs3d);
-
-  Standard_EXPORT static Handle(Graphic3d_LOD) NewLOD (const Handle (Prs3d_Presentation)& theParentPrs);
 };
 
 

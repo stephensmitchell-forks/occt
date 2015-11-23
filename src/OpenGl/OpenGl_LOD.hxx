@@ -25,12 +25,11 @@ struct OpenGl_RangeOfLOD
 {
 public:
   OpenGl_RangeOfLOD (const Standard_Real theFrom, const Standard_Real theTo)
+    : myTo (theTo),
+      myFrom (theFrom)
   {
     Standard_ASSERT_RAISE (theFrom < theTo,
       "The upper boundary of the interval must be greater than lower one!");
-
-    myTo = theTo;
-    myFrom = theFrom;
   }
 
   Standard_Boolean IsIn (const Standard_Real theVal) const
@@ -72,7 +71,7 @@ public:
     return myRange;
   }
 
-  Standard_EXPORT virtual Handle(Graphic3d_Group) NewGroup() Standard_OVERRIDE;
+  Standard_EXPORT virtual Handle(Graphic3d_Group) NewGroup (const Handle(Graphic3d_Structure)& theParentStruct) Standard_OVERRIDE;
 
   const Graphic3d_SequenceOfGroup& DrawGroups() const
   {
@@ -82,7 +81,7 @@ public:
   DEFINE_STANDARD_RTTI (OpenGl_LOD, Graphic3d_LOD)
 
 private:
-  OpenGl_RangeOfLOD  myRange;
+  OpenGl_RangeOfLOD myRange;
 };
 
 DEFINE_STANDARD_HANDLE (OpenGl_LOD, Graphic3d_LOD)

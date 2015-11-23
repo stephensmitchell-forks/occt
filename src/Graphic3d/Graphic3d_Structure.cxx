@@ -1749,16 +1749,16 @@ Handle(Graphic3d_Group) Graphic3d_Structure::NewGroup()
 //=============================================================================
 Handle(Graphic3d_LOD) Graphic3d_Structure::NewLOD()
 {
-  return myCStructure->NewLOD (this);
+  return myCStructure->NewLOD();
 }
 
 //=============================================================================
-//function : GetDetailLevelsNb
+//function : NbDetailLevels
 //purpose  :
 //=============================================================================
-Standard_Integer Graphic3d_Structure::GetDetailLevelsNb() const
+Standard_Integer Graphic3d_Structure::NbDetailLevels() const
 {
-  return myCStructure->GetDetailLevelsNb();
+  return myCStructure->NbDetailLevels();
 }
 
 //=============================================================================
