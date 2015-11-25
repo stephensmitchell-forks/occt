@@ -28,32 +28,10 @@ Graphic3d_LOD::~Graphic3d_LOD()
 // function : SetRange
 // purpose  :
 //=======================================================================
-void Graphic3d_LOD::SetRange (const Standard_Real /*theFrom*/, const Standard_Real /*theTo*/)
+void Graphic3d_LOD::SetRange (const Standard_Real theFrom, const Standard_Real theTo)
 {
-  return;
-}
+    Standard_ASSERT_RAISE (theFrom < theTo,
+    "The upper boundary of the interval must be greater than lower one!");
 
-//=======================================================================
-// function : NewGroup
-// purpose  :
-//=======================================================================
-Handle(Graphic3d_Group) Graphic3d_LOD::NewGroup (const Handle(Graphic3d_Structure)& /*theParentStruct*/)
-{
-  return NULL;
-}
-
-//=======================================================================
-// function : ComputeMetrics
-// purpose  :
-//=======================================================================
-Standard_Real Graphic3d_LOD::ComputeMetrics (const Handle(Graphic3d_Camera)& theCamera,
-                                             const Handle(Graphic3d_CStructure)& theParentStruct) const
-{
-  if (theParentStruct.IsNull())
-    return std::numeric_limits<Standard_Real>::max();
-
-  Graphic3d_BndBox4f aBndBox = theParentStruct->BoundingBox();
-  const Graphic3d_Vec4 aCenter = aBndBox.Center();
-  const gp_Pnt aGpCenter = gp_Pnt (aCenter.x(), aCenter.y(), aCenter.z());
-  return (theCamera->Eye().Distance (aGpCenter)) / theCamera->Scale();
+  myRange = Graphic3d_RangeOfLOD (theFrom, theTo);
 }

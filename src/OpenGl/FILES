@@ -112,8 +112,9 @@ OpenGl_LayerList.cxx
 OpenGl_LayerList.hxx
 OpenGl_LayerFilter.hxx
 OpenGl_LOD.hxx
-OpenGl_LOD.lxx
 OpenGl_LOD.cxx
+OpenGl_LODManager.hxx
+OpenGl_LODManager.cxx
 OpenGl_GraphicDriver.cxx
 OpenGl_GraphicDriver.hxx
 OpenGl_IndexBuffer.cxx

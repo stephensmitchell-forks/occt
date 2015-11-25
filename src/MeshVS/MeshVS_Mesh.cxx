@@ -27,6 +27,7 @@
 #include <MeshVS_Drawer.hxx>
 #include <MeshVS_DrawerAttribute.hxx>
 #include <MeshVS_DummySensitiveEntity.hxx>
+#include <MeshVS_LODBuilder.hxx>
 #include <MeshVS_Mesh.hxx>
 #include <MeshVS_MeshEntityOwner.hxx>
 #include <MeshVS_MeshOwner.hxx>
@@ -168,10 +169,16 @@ void MeshVS_Mesh::Compute ( const Handle(PrsMgr_PresentationManager3d)& thePrsMg
 
   thePresentation->Clear();
   Standard_Integer len = myBuilders.Length();
+  Handle(MeshVS_LODBuilder) aLODBldr;
   if ( theMode > 0 )
     for ( Standard_Integer i=1; i<=len; i++ )
     {
       Handle (MeshVS_PrsBuilder) aCurrent = myBuilders.Value ( i );
+      if (!Handle(MeshVS_LODBuilder)::DownCast (aCurrent))
+      {
+        aLODBldr = Handle(MeshVS_LODBuilder)::DownCast (aCurrent);
+        continue;
+      }
       if ( !aCurrent.IsNull() && aCurrent->TestFlags ( theMode ) )
       {
         aCurrent->SetPresentationManager( thePrsMgr );
@@ -182,6 +189,18 @@ void MeshVS_Mesh::Compute ( const Handle(PrsMgr_PresentationManager3d)& thePrsMg
       }
     }
 
+  if (myLODDataSources.Size() > 0 && !aLODBldr.IsNull() && aLODBldr->TestFlags (theMode))
+  {
+    for (Standard_Integer aLodIdx = 0; aLodIdx < myLODDataSources.Size(); ++aLodIdx)
+    {
+      const TColStd_PackedMapOfInteger aVertIdxs = myLODDataSources.Value (aLodIdx)->GetAllNodes();
+      const TColStd_PackedMapOfInteger aTrgIdxs = myLODDataSources.Value (aLodIdx)->GetAllElements();
+      if (HasNodes)
+        aLODBldr->Build (thePresentation, aVertIdxs, aNodesToExclude, Standard_False, theMode);
+      if (HasElements)
+        aLODBldr->Build (thePresentation, aTrgIdxs, aElemsToExclude, Standard_True,  theMode);
+    }
+  }
 
   if ( ShowComputeTime )
   {
@@ -867,6 +886,15 @@ Handle(MeshVS_DataSource) MeshVS_Mesh::GetDataSource() const
 void MeshVS_Mesh::SetDataSource( const Handle(MeshVS_DataSource)& theDataSource )
 {
   myDataSource = theDataSource;
+}
+
+//================================================================
+// Function : AddDataSource
+// Purpose  :
+//================================================================
+void MeshVS_Mesh::AddDataSource (const Handle(MeshVS_DataSource)& theDataSource)
+{
+  myLODDataSources.Append (theDataSource);
 }
 
 //================================================================

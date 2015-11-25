@@ -79,6 +79,11 @@ Graphic3d_ListIteratorOfListOfShortReal.hxx
 Graphic3d_ListOfShortReal.hxx
 Graphic3d_LOD.hxx
 Graphic3d_LOD.cxx
+Graphic3d_LODSelector.hxx
+Graphic3d_LODDistanceSelector.hxx
+Graphic3d_LODDistanceSelector.cxx
+Graphic3d_LODManager.hxx
+Graphic3d_LODManager.cxx
 Graphic3d_MapIteratorOfMapOfStructure.hxx
 Graphic3d_MapOfObject.hxx
 Graphic3d_MapOfStructure.hxx

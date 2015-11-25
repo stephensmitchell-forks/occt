@@ -101,7 +101,7 @@ public:
   Standard_EXPORT virtual Handle(Graphic3d_Group) NewGroup (const Handle(Graphic3d_Structure)& theStruct);
 
   //! Create new LOD within this structure
-  Standard_EXPORT virtual Handle(Graphic3d_LOD) NewLOD() Standard_OVERRIDE;
+  Standard_EXPORT virtual Handle(Graphic3d_LOD) NewLOD (const Handle(Graphic3d_Structure)& theStruct) Standard_OVERRIDE;
 
   //! Remove group from this structure
   Standard_EXPORT virtual void RemoveGroup (const Handle(Graphic3d_Group)& theGroup);
@@ -113,10 +113,7 @@ public:
 public:
 
   //! @return graphic groups
-  virtual const Graphic3d_SequenceOfGroup& DrawGroups() const
-  {
-    return myGroups;
-  }
+  virtual const Graphic3d_SequenceOfGroup& DrawGroups() const;
 
   //! Access graphic driver
   OpenGl_GraphicDriver* GlDriver() const
@@ -201,10 +198,7 @@ public:
   //! Is the structure ray-tracable (contains ray-tracable elements)?
   Standard_Boolean IsRaytracable() const;
 
-  Standard_EXPORT virtual Standard_Integer NbDetailLevels() const Standard_OVERRIDE
-  {
-    return (Standard_Integer)myLODVec.Size();
-  }
+  Standard_EXPORT virtual Standard_Integer NbDetailLevels() const Standard_OVERRIDE;
 
 protected:
 
@@ -212,10 +206,6 @@ protected:
 
   //! Updates ray-tracable status for structure and its parents.
   void UpdateStateIfRaytracable (const Standard_Boolean toCheck = Standard_True) const;
-
-private:
-  void findCurrentLOD (const Handle(OpenGl_Workspace)& theWorkspace) const;
-  Standard_Integer binSearchLOD (const Standard_Integer theFirst, const Standard_Integer theLast, const Standard_Real theMetrics) const;
 
 protected:
 
@@ -236,10 +226,6 @@ protected:
   mutable Standard_Boolean   myIsCulled; //!< A status specifying is structure needs to be rendered after BVH tree traverse.
 
   Standard_Boolean           myIsMirrored; //!< Used to tell OpenGl to interpret polygons in clockwise order.
-
-private:
-  mutable OpenGl_VectorOfLODs myLODVec;
-  mutable Standard_Integer    myCurrentLodId;
 
 public:
 

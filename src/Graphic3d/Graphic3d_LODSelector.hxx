@@ -1,4 +1,4 @@
-// Created on: 2015-10-29
+// Created on: 2015-11-25
 // Created by: Varvara POSKONINA
 // Copyright (c) 2005-2014 OPEN CASCADE SAS
 //
@@ -13,10 +13,25 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-struct IsLessLOD
+#ifndef _Graphic3d_LODSelector_Header
+#define _Graphic3d_LODSelector_Header
+
+#include <Standard.hxx>
+#include <Standard_Handle.hxx>
+#include <Standard_Transient.hxx>
+
+class Graphic3d_CStructure;
+class Graphic3d_Camera;
+
+class Graphic3d_LODSelector : public Standard_Transient
 {
-  inline bool operator() (const Handle(OpenGl_LOD)& theLod1, const Handle(OpenGl_LOD)& theLod2) const
-  {
-    return theLod1->GetRange() < theLod2->GetRange();
-  }
+public:
+  virtual Standard_Real ComputeMetric (const Handle(Graphic3d_CStructure)& theParentStructure,
+                                       const Handle(Graphic3d_Camera)& theCamera) = 0;
+
+  DEFINE_STANDARD_RTTI (Graphic3d_LODSelector, Standard_Transient)
 };
+
+DEFINE_STANDARD_HANDLE (Graphic3d_LODSelector, Standard_Transient)
+
+#endif // _Graphic3d_LODSelector_Header

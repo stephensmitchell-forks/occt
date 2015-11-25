@@ -18,6 +18,7 @@
 #include <OpenGl_GlCore11.hxx>
 #include <OpenGl_GraphicDriver.hxx>
 #include <OpenGl_LOD.hxx>
+#include <OpenGl_LODManager.hxx>
 #include <OpenGl_ShaderManager.hxx>
 #include <OpenGl_ShaderProgram.hxx>
 #include <OpenGl_StructureShadow.hxx>
@@ -27,6 +28,7 @@
 #include <OpenGl_Workspace.hxx>
 
 #include <Graphic3d_SequenceOfHClipPlane.hxx>
+#include <Graphic3d_LODManager.hxx>
 
 
 //! Auxiliary class for bounding box presentation
@@ -128,8 +130,7 @@ OpenGl_Structure::OpenGl_Structure (const Handle(Graphic3d_StructureManager)& th
   myIsRaytracable      (Standard_False),
   myModificationState  (0),
   myIsCulled           (Standard_True),
-  myIsMirrored         (Standard_False),
-  myCurrentLodId       (-1)
+  myIsMirrored         (Standard_False)
 {
   //
 }
@@ -437,11 +438,13 @@ Handle(Graphic3d_Group) OpenGl_Structure::NewGroup (const Handle(Graphic3d_Struc
 // function : NewLOD
 // purpose  :
 // =======================================================================
-Handle(Graphic3d_LOD) OpenGl_Structure::NewLOD()
+Handle(Graphic3d_LOD) OpenGl_Structure::NewLOD (const Handle(Graphic3d_Structure)& theStruct)
 {
-  Handle(OpenGl_LOD) aLOD = new OpenGl_LOD();
-  myLODVec.Append (aLOD);
-  return aLOD;
+  if (myLODManager.IsNull())
+  {
+    myLODManager = new OpenGl_LODManager (theStruct);
+  }
+  return myLODManager->AddNewLOD();
 }
 
 // =======================================================================
@@ -538,14 +541,8 @@ void OpenGl_Structure::Render (const Handle(OpenGl_Workspace) &theWorkspace) con
     return;
   }
 
-  Handle(OpenGl_LOD) aLODToRender;
-  if (myLODVec.Size() > 0)
-  {
-    findCurrentLOD (theWorkspace);
-    if (myCurrentLodId == -1)
-      return;
-    aLODToRender = myLODVec.Value (myCurrentLodId);
-  }
+  if (!myLODManager.IsNull() && myLODManager->GetCurrentLODIdx (theWorkspace->View()->Camera()) == -1)
+    return;
 
   const Handle(OpenGl_Context)& aCtx = theWorkspace->GetGlContext();
 
@@ -669,7 +666,7 @@ void OpenGl_Structure::Render (const Handle(OpenGl_Workspace) &theWorkspace) con
   }
 
   // Render groups
-  const Graphic3d_SequenceOfGroup& aGroups = !aLODToRender.IsNull() ? aLODToRender->DrawGroups() : DrawGroups();
+  const Graphic3d_SequenceOfGroup& aGroups = DrawGroups();
   for (OpenGl_Structure::GroupIterator aGroupIter (aGroups); aGroupIter.More(); aGroupIter.Next())
   {
     aGroupIter.Value()->Render (theWorkspace);
@@ -788,50 +785,6 @@ Handle(Graphic3d_CStructure) OpenGl_Structure::ShadowLink (const Handle(Graphic3
 }
 
 //=======================================================================
-//function : binSearchLOD
-//purpose  :
-//=======================================================================
-Standard_Integer OpenGl_Structure::binSearchLOD (const Standard_Integer theFirst,
-                                                 const Standard_Integer theLast,
-                                                 const Standard_Real theMetrics) const
-{
-  if (theFirst > theLast)
-    return -1;
-  else
-  {
-    Standard_Integer aMid = (theFirst + theLast) / 2;
-
-    if (myLODVec.Value (aMid)->GetRange().IsIn (theMetrics))
-      return aMid;
-    else
-      if (myLODVec.Value (aMid)->GetRange().IsLess (theMetrics))
-        return binSearchLOD (aMid + 1, theLast, theMetrics);
-      else
-        return binSearchLOD (theFirst, aMid - 1, theMetrics);
-  }
-}
-
-//=======================================================================
-//function : findCurrentLOD
-//purpose  :
-//=======================================================================
-void OpenGl_Structure::findCurrentLOD (const Handle(OpenGl_Workspace)& theWorkspace) const
-{
-  Standard_Real aMetric = myLODVec.Value (0)->ComputeMetrics (theWorkspace->View()->Camera(), this);
-  std::cout << aMetric << std::endl;
-  if (myCurrentLodId != -1 && myLODVec.Value (myCurrentLodId)->GetRange().IsIn (aMetric))
-    return;
-
-  if (myLODVec.Last()->GetRange().IsGreater (aMetric))
-  {
-    myCurrentLodId = myLODVec.Size() - 1;
-    return;
-  }
-
-  myCurrentLodId = binSearchLOD (0, (Standard_Integer)myLODVec.Size() - 1, aMetric);
-}
-
-//=======================================================================
 //function : SetDetailLevelRange
 //purpose  :
 //=======================================================================
@@ -842,9 +795,26 @@ void OpenGl_Structure::SetDetailLevelRange (const Standard_Integer theIdOfLOD,
   Standard_ASSERT_RAISE (theFrom < theTo,
     "The upper boundary of the interval must be greater than lower one!");
 
-  if (theIdOfLOD < 0 || theIdOfLOD > myLODVec.Size())
+  if (theIdOfLOD < 0 || theIdOfLOD > myLODManager->NbOfDetailLevels())
     return;
 
-  myLODVec.Value( theIdOfLOD)->SetRange (theFrom, theTo);
-  std::sort (myLODVec.begin(), myLODVec.end(), IsLessLOD());
+  myLODManager->SetRange (theIdOfLOD, theFrom, theTo);
+}
+
+//=======================================================================
+//function : DrawGroups
+//purpose  :
+//=======================================================================
+const Graphic3d_SequenceOfGroup& OpenGl_Structure::DrawGroups() const
+{
+  return myLODManager.IsNull() ? myGroups : myLODManager->GetCurrentGroups();
+}
+
+//=======================================================================
+//function : NbDetailLevels
+//purpose  :
+//=======================================================================
+Standard_Integer OpenGl_Structure::NbDetailLevels() const
+{
+  return myLODManager->NbOfDetailLevels();
 }

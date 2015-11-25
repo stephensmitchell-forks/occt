@@ -21,67 +21,16 @@
 #include <OpenGl_AspectLine.hxx>
 #include <OpenGl_Structure.hxx>
 
-struct OpenGl_RangeOfLOD
-{
-public:
-  OpenGl_RangeOfLOD (const Standard_Real theFrom, const Standard_Real theTo)
-    : myTo (theTo),
-      myFrom (theFrom)
-  {
-    Standard_ASSERT_RAISE (theFrom < theTo,
-      "The upper boundary of the interval must be greater than lower one!");
-  }
-
-  Standard_Boolean IsIn (const Standard_Real theVal) const
-  {
-    return (myFrom < theVal) && (theVal < myTo);
-  }
-
-  Standard_Boolean IsLess (const Standard_Real theVal) const
-  {
-    return myFrom < theVal;
-  }
-
-  Standard_Boolean IsGreater (const Standard_Real theVal) const
-  {
-    return myTo < theVal;
-  }
-
-  bool operator < (const OpenGl_RangeOfLOD& theOther) const
-  {
-    return myFrom < theOther.myFrom;
-  }
-
-private:
-  Standard_Real myFrom;
-  Standard_Real myTo;
-};
-
 class OpenGl_LOD : public Graphic3d_LOD
 {
 public:
 
-  Standard_EXPORT OpenGl_LOD();
+  Standard_EXPORT OpenGl_LOD() : Graphic3d_LOD () {};
   Standard_EXPORT ~OpenGl_LOD() {};
-
-  Standard_EXPORT virtual void SetRange (const Standard_Real theFrom, const Standard_Real theTo) Standard_OVERRIDE;
-
-  inline const OpenGl_RangeOfLOD& GetRange() const
-  {
-    return myRange;
-  }
 
   Standard_EXPORT virtual Handle(Graphic3d_Group) NewGroup (const Handle(Graphic3d_Structure)& theParentStruct) Standard_OVERRIDE;
 
-  const Graphic3d_SequenceOfGroup& DrawGroups() const
-  {
-    return myGroups;
-  }
-
   DEFINE_STANDARD_RTTI (OpenGl_LOD, Graphic3d_LOD)
-
-private:
-  OpenGl_RangeOfLOD myRange;
 };
 
 DEFINE_STANDARD_HANDLE (OpenGl_LOD, Graphic3d_LOD)

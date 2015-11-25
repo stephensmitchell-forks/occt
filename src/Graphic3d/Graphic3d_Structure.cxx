@@ -1749,7 +1749,7 @@ Handle(Graphic3d_Group) Graphic3d_Structure::NewGroup()
 //=============================================================================
 Handle(Graphic3d_LOD) Graphic3d_Structure::NewLOD()
 {
-  return myCStructure->NewLOD();
+  return myCStructure->NewLOD (this);
 }
 
 //=============================================================================

@@ -1,4 +1,4 @@
-// Created on: 2015-10-29
+// Created on: 2015-11-25
 // Created by: Varvara POSKONINA
 // Copyright (c) 2005-2014 OPEN CASCADE SAS
 //
@@ -13,15 +13,20 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#include <OpenGl_LOD.hxx>
+#include <Graphic3d_BndBox4f.hxx>
+#include <Graphic3d_Camera.hxx>
+#include <Graphic3d_CStructure.hxx>
+#include <Graphic3d_LODDistanceSelector.hxx>
 
 //=======================================================================
-// function : NewGroup
+// function : ComputeMetric
 // purpose  :
 //=======================================================================
-Handle(Graphic3d_Group) OpenGl_LOD::NewGroup (const Handle(Graphic3d_Structure)& theParentStruct)
+Standard_Real Graphic3d_LODDistanceSelector::ComputeMetric (const Handle(Graphic3d_CStructure)& theParentStructure,
+                                                            const Handle(Graphic3d_Camera)& theCamera)
 {
-  Handle(OpenGl_Group) aGroup = new OpenGl_Group (theParentStruct);
-  myGroups.Append (aGroup);
-  return aGroup;
+  const Graphic3d_BndBox4f& aBndBox = theParentStructure->BoundingBox();
+  const Graphic3d_Vec4 aCenter = aBndBox.Center();
+  const gp_Pnt aGpCenter = gp_Pnt (aCenter.x(), aCenter.y(), aCenter.z());
+  return (theCamera->Eye().Distance (aGpCenter)) / theCamera->Scale();
 }

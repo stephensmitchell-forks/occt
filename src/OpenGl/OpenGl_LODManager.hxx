@@ -1,4 +1,4 @@
-// Created on: 2015-10-29
+// Created on: 2015-11-25
 // Created by: Varvara POSKONINA
 // Copyright (c) 2005-2014 OPEN CASCADE SAS
 //
@@ -13,15 +13,26 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#include <OpenGl_LOD.hxx>
+#ifndef _OpenGl_LODManager_Header
+#define _OpenGl_LODManager_Header
 
-//=======================================================================
-// function : NewGroup
-// purpose  :
-//=======================================================================
-Handle(Graphic3d_Group) OpenGl_LOD::NewGroup (const Handle(Graphic3d_Structure)& theParentStruct)
+#include <Graphic3d_LODManager.hxx>
+
+class OpenGl_LODManager : public Graphic3d_LODManager
 {
-  Handle(OpenGl_Group) aGroup = new OpenGl_Group (theParentStruct);
-  myGroups.Append (aGroup);
-  return aGroup;
-}
+public:
+  Standard_EXPORT OpenGl_LODManager (const Handle(Graphic3d_Structure)& theParentStructure);
+
+  Standard_EXPORT virtual ~OpenGl_LODManager() {};
+
+  Standard_EXPORT virtual Handle(Graphic3d_LOD)& AddNewLOD() Standard_OVERRIDE;
+
+  DEFINE_STANDARD_RTTI (OpenGl_LODManager, Graphic3d_LODManager)
+
+protected:
+  Standard_EXPORT virtual void sortLODs() Standard_OVERRIDE;
+};
+
+DEFINE_STANDARD_HANDLE (OpenGl_LODManager, Graphic3d_LODManager)
+
+#endif // _OpenGl_LODManager_Header

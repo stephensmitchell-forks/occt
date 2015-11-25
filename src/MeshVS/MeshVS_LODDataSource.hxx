@@ -79,21 +79,7 @@ public:
   //! This method returns map of all elements the object consist of.
   Standard_EXPORT virtual const TColStd_PackedMapOfInteger& GetAllElements() const Standard_OVERRIDE;
 
-  Standard_EXPORT void ComputePrs (const Handle(AIS_InteractiveObject) theMesh);
-
   DEFINE_STANDARD_RTTI (MeshVS_LODDataSource, MeshVS_DataSource)
-
-protected:
-  void drawArrays (const Handle(Prs3d_Presentation)& theBasePrs,
-                   const Handle(Graphic3d_ArrayOfPrimitives)& thePolygons,
-                   const Handle(Graphic3d_ArrayOfPrimitives)& theLines,
-                   const Handle(Graphic3d_ArrayOfPrimitives)& theLinkLines,
-                   const Handle(Graphic3d_ArrayOfPrimitives)& theVolumesInShad,
-                   const Standard_Boolean theIsPolygonsEdgesOff,
-                   const Standard_Boolean theIsSelected,
-                   const Standard_Boolean theIsSupressBackFaces,
-                   const Handle(Graphic3d_AspectFillArea3d)& theFillAsp,
-                   const Handle(Graphic3d_AspectLine3d)& theLineAsp) const;
 
 private:
   TColStd_PackedMapOfInteger myNodeIdxs;
