@@ -51,7 +51,7 @@ public:
 
   Standard_EXPORT const Graphic3d_SequenceOfGroup& GetCurrentGroups() const;
 
-  Standard_EXPORT virtual Handle(Graphic3d_LOD)& AddNewLOD() = 0;
+  Standard_EXPORT virtual Handle(Graphic3d_LOD) AddNewLOD() = 0;
 
   DEFINE_STANDARD_RTTI (Graphic3d_LODManager, Standard_Transient)
 

@@ -41,7 +41,7 @@ public:
 
   Standard_Boolean IsLess (const Standard_Real theVal) const
   {
-    return myFrom < theVal;
+    return theVal < myFrom;
   }
 
   Standard_Boolean IsGreater (const Standard_Real theVal) const

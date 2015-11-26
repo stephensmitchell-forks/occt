@@ -25,7 +25,7 @@ public:
 
   Standard_EXPORT virtual ~OpenGl_LODManager() {};
 
-  Standard_EXPORT virtual Handle(Graphic3d_LOD)& AddNewLOD() Standard_OVERRIDE;
+  Standard_EXPORT virtual Handle(Graphic3d_LOD) AddNewLOD() Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTI (OpenGl_LODManager, Graphic3d_LODManager)
 

@@ -35,6 +35,4 @@ public:
 
 DEFINE_STANDARD_HANDLE (OpenGl_LOD, Graphic3d_LOD)
 
-#include <OpenGl_LOD.lxx>
-
 #endif // _OpenGl_LOD_Header

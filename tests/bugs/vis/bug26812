@@ -3,18 +3,7 @@ set aTmpFolder ""
 
 pload ALL
 vinit
-# restore $aPathToData/occ/fuse.brep f
-# vdisplay f
-# restore $aTmpFolder/bearing.brep f
-meshfromstl m $aTmpFolder/bearing.stl
-# restore $aTmpFolder/bearing.brep f
-# vdisplay f
-# meshfromstl f $aPathToData/stl/bearing.stl
-vfit
-# meshgenlods f 2 -debug -mesh m -save D:/OCCT-tests/LOD
-meshlod m -path $aTmpFolder/f_LOD0.stl -from 0.5 -to 1
-meshlod m -path $aTmpFolder/f_LOD1.stl -from 1 -to 3
-
+meshlod m $aTmpFolder/lod_data.txt
 
 ##########################################################################
 # to generate brep file for LODs generaion, it is requred to use

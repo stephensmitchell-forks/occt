@@ -39,19 +39,24 @@ Standard_Integer Graphic3d_LODManager::GetCurrentLODIdx (const Handle(Graphic3d_
   myPrevCameraState = theCamera->WorldViewProjState();
   const Standard_Real aMetric = mySelector->ComputeMetric (myStructure->CStructure(), theCamera);
   if (myLODs.Value (0)->GetRange().IsLess (aMetric))
-    return -1;
-
-  for (Standard_Integer aLodIdx = 1; aLodIdx < myLODs.Size(); ++aLodIdx)
   {
-    if (myLODs.Value (aLodIdx)->GetRange().IsIn (aMetric))
+    myCurrentLODIdx = -1;
+  }
+  else if (myLODs.Value (myLODs.Size() - 1)->GetRange().IsGreater (aMetric))
+  {
+    myCurrentLODIdx = myLODs.Size() - 1;
+  }
+  else
+  {
+    for (Standard_Integer aLodIdx = 0; aLodIdx < myLODs.Size(); ++aLodIdx)
     {
-      myCurrentLODIdx = aLodIdx;
-      break;
+      if (myLODs.Value (aLodIdx)->GetRange().IsIn (aMetric))
+      {
+        myCurrentLODIdx = aLodIdx;
+        break;
+      }
     }
   }
-
-  if (myLODs.Value (myLODs.Size() - 1)->GetRange().IsGreater (aMetric))
-    myCurrentLODIdx = myLODs.Size() - 1;
 
   return myCurrentLODIdx;
 }
@@ -65,6 +70,7 @@ void Graphic3d_LODManager::SetRange (const Standard_Integer theLodIdx,
                                      const Standard_Real theTo)
 {
   myLODs.ChangeValue (theLodIdx)->SetRange (theFrom, theTo);
+  sortLODs();
 }
 
 //=======================================================================

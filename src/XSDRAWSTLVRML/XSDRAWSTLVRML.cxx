@@ -1419,11 +1419,26 @@ static int MeshGenLods (Draw_Interpretor& theDI,
   return 0;
 }
 
+#include <MeshVS_LODBuilder.hxx>
 static int MeshLod (Draw_Interpretor& theDI,
                     Standard_Integer  theArgNum,
                     const char**      theArgs)
 {
-  if (theArgNum < 6)
+  struct DetailLevelData
+  {
+  public:
+    DetailLevelData()
+      : myMesh (NULL),
+        myFrom (-DBL_MAX),
+        myTo (DBL_MAX) {}
+
+  public:
+    Handle(StlMesh_Mesh) myMesh;
+    Standard_Real        myFrom;
+    Standard_Real        myTo;
+  };
+
+  if (theArgNum < 3)
   {
     std::cout << "Error! Wrong number of arguments. See usage:\n";
     theDI.PrintHelp (theArgs[0]);
@@ -1438,58 +1453,103 @@ static int MeshLod (Draw_Interpretor& theDI,
   }
 
   Standard_CString aShapeName = theArgs[1];
-  if (!GetMapOfAIS().IsBound2 (aShapeName))
+  if (GetMapOfAIS().IsBound2 (aShapeName))
   {
-    std::cout << "Error! No interactive object with the name " << aShapeName << "." << std::endl;
+    std::cout << "Error! The context already has an interactive object with the name " << aShapeName << "." << std::endl;
     return 1;
   }
-  Handle(MeshVS_Mesh) aMesh = Handle(MeshVS_Mesh)::DownCast (GetMapOfAIS().Find2 (aShapeName));
-  if (aMesh.IsNull())
+  const TCollection_AsciiString aPathToLODInfo = Draw::Atoi (theArgs[2]);
+  if (aPathToLODInfo == "")
   {
-    std::cout << "Error! No mesh with the name " << aShapeName << "." << std::endl;
-    return 1;
-  }
-  const TCollection_AsciiString aPathToLOD = Draw::Atoi (theArgs[3]);
-  if (aPathToLOD == "")
-  {
-    std::cout << "Error! Path to LOD must not be empty!" << std::endl;
-    return 1;
-  }
-  Standard_Real aFromRange = -DBL_MAX;
-  Standard_Real aToRange = DBL_MAX;
-  for (Standard_Integer anArgIdx = 4; anArgIdx < theArgNum; ++anArgIdx)
-  {
-    TCollection_AsciiString anArg (theArgs[anArgIdx]);
-    anArg.LowerCase();
-    if (anArg == "-from")
-    {
-      aFromRange = Draw::Atof (theArgs[++anArgIdx]);
-    }
-    else if (anArg == "-to")
-    {
-      aToRange = Draw::Atof (theArgs[++anArgIdx]);
-    }
-  }
-  if (aFromRange > aToRange)
-  {
-    std::cout << "Error! From range must be less than to! Current values are:" << std::endl;
-    std::cout << "from: " << aFromRange << "; to: " << aToRange << std::endl;
+    std::cout << "Error! Path to LOD info must not be empty!" << std::endl;
     return 1;
   }
 
-  OSD_Path aFile (theArgs[3]);
-  Handle(Draw_ProgressIndicator) aProgress = new Draw_ProgressIndicator (theDI, 1);
-  Handle(StlMesh_Mesh) aSTLMesh = RWStl::ReadFile (aFile, aProgress);
-  if (aSTLMesh.IsNull())
+  std::ifstream aLODInfoFile (theArgs[2]);
+  NCollection_List<DetailLevelData> myLODDataList;
+  Handle(StlMesh_Mesh) aLargestMesh;
+  for (std::string aLODInfoStr; getline (aLODInfoFile, aLODInfoStr);)
   {
-    std::cout << "Error! Can not read LOD located at the path: " << aPathToLOD << std::endl;
+    DetailLevelData aData;
+    std::istringstream aStream (aLODInfoStr);
+    std::vector<std::string> aTokens;
+    std::copy (std::istream_iterator<std::string> (aStream),
+               std::istream_iterator<std::string>(),
+               std::back_inserter (aTokens));
+    for (Standard_Integer aTokenIdx = 0; aTokenIdx < aTokens.size(); ++aTokenIdx)
+    {
+      if (aTokens[aTokenIdx] == "-path")
+      {
+        OSD_Path aFile (aTokens[++aTokenIdx].c_str());
+        Handle(Draw_ProgressIndicator) aProgress = new Draw_ProgressIndicator (theDI, 1);
+        Handle(StlMesh_Mesh) aSTLMesh = RWStl::ReadFile (aFile, aProgress);
+        if (aSTLMesh.IsNull())
+        {
+          std::cout << "Error! Can not read LOD located at the path: " << aTokens[aTokenIdx] << std::endl;
+          return 1;
+        }
+        aData.myMesh = aSTLMesh;
+        if (aLargestMesh.IsNull() || aSTLMesh->Triangles().Length() > aLargestMesh->Triangles().Length())
+        {
+          aLargestMesh = aSTLMesh;
+        }
+      }
+      else if (aTokens[aTokenIdx] == "-from")
+      {
+        aData.myFrom = Draw::Atof (aTokens[++aTokenIdx].c_str());
+      }
+      else if (aTokens[aTokenIdx] == "-to")
+      {
+        aData.myTo = Draw::Atof (aTokens[++aTokenIdx].c_str());
+      }
+    }
+    myLODDataList.Append (aData);
+  }
+
+  if (aLargestMesh.IsNull())
+  {
+    std::cout << "Error! No meshes found in lod info file!" << std::endl;
     return 1;
   }
 
-  Handle(MeshVS_LODDataSource) aLod = new MeshVS_LODDataSource (aSTLMesh);
-  aMesh->AddDataSource (aLod);
-  Standard_Integer aIdOfLod = aMesh->Presentation()->NbDetailLevels();
-  aMesh->Presentation()->SetDetailLevelRange (aIdOfLod - 1, aFromRange, aToRange);
+  Handle(MeshVS_Mesh) anOriginMesh = new MeshVS_Mesh();
+  Handle(XSDRAWSTLVRML_DataSource) anOriginDataSource = new XSDRAWSTLVRML_DataSource (aLargestMesh);
+  anOriginMesh->SetDataSource (anOriginDataSource);
+  Handle(MeshVS_MeshPrsBuilder) anOriginBuilder = new MeshVS_MeshPrsBuilder (anOriginMesh.operator->());
+  anOriginMesh->AddBuilder (anOriginBuilder, Standard_True);
+  anOriginMesh->GetDrawer()->SetColor (MeshVS_DA_EdgeColor, Quantity_NOC_YELLOW);
+
+  for (NCollection_List<DetailLevelData>::Iterator aLodDataIter (myLODDataList); aLodDataIter.More(); aLodDataIter.Next())
+  {
+    Handle(MeshVS_LODDataSource) aLod = new MeshVS_LODDataSource (aLodDataIter.Value().myMesh);
+    anOriginMesh->AddDataSource (aLod);
+    Handle(MeshVS_LODBuilder) aLODBuilder = new MeshVS_LODBuilder (anOriginMesh.operator->());
+    aLODBuilder->SetDataSource (aLod);
+    aLODBuilder->SetDrawer (anOriginBuilder->GetDrawer());
+    anOriginMesh->AddBuilder (aLODBuilder);
+  }
+
+  // Hide all nodes by default
+  Handle(TColStd_HPackedMapOfInteger) aNodes = new TColStd_HPackedMapOfInteger();
+  Standard_Integer aLen = aLargestMesh->Vertices().Length();
+  for (Standard_Integer anIndex = 1; anIndex <= aLen; ++anIndex)
+    aNodes->ChangeMap().Add (anIndex);
+  anOriginMesh->SetHiddenNodes (aNodes);
+  anOriginMesh->SetSelectableNodes (aNodes);
+
+  VDisplayAISObject (aShapeName, anOriginMesh);
+  aCtx->Deactivate (anOriginMesh);
+
+  Standard_Integer aLodIdx = 0;
+  for (NCollection_List<DetailLevelData>::Iterator aLodDataIter (myLODDataList); aLodDataIter.More(); aLodDataIter.Next())
+  {
+    anOriginMesh->Presentation()->SetDetailLevelRange (aLodIdx, aLodDataIter.Value().myFrom, aLodDataIter.Value().myTo);
+  }
+
+  Draw::Set (aShapeName, new XSDRAWSTLVRML_DrawableMesh (anOriginMesh));
+  Handle(V3d_View) aView = ViewerTest::CurrentView();
+  if (!aView.IsNull())
+    aView->FitAll();
 
   return 0;
 }
@@ -1532,8 +1592,15 @@ void  XSDRAWSTLVRML::InitCommands (Draw_Interpretor& theCommands)
                    "\n\t\t: [-debug] enables printing of meshing status and each LOD's info.",
                    __FILE__, MeshGenLods, g);
   theCommands.Add ("meshlod",
-                   "meshlod shapeName [-path pathToLOD] [-from rangeFrom] [-to rangeTo]"
-                   "\n\t\t: Adds LOD to the shape with shapeName. It will be visible in range [rangeFrom; rangeTo]."
+                   "meshlod shapeName pathToFileWithLodInfo"
+                   "\n\t\t: Creates an object with the name shapeName that has LODs described in file stored at"
+                   "\n\t\t: pathToFileWithLodInfo. Each string in the file is a full description of LOD. It must"
+                   "\n\t\t: be filled using the following form:"
+                   "\n\t\t: -path pathToLOD [-from fromRange] [-to toRange], where"
+                   "\n\t\t: pathToLOD is a path to STL file with LOD mesh, fromRange and toRange define a depth"
+                   "\n\t\t: range where the LOD will be visible. Each of range parameters is optional, but in this"
+                   "\n\t\t: case, it will be equal to positive and negative max double correspondingly."
+                   "\n\t\t: It is assumed that ranges are non-overlapping segments of the real axis."
                    __FILE__, MeshLod, g);
 }
 

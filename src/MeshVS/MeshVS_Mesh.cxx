@@ -169,14 +169,12 @@ void MeshVS_Mesh::Compute ( const Handle(PrsMgr_PresentationManager3d)& thePrsMg
 
   thePresentation->Clear();
   Standard_Integer len = myBuilders.Length();
-  Handle(MeshVS_LODBuilder) aLODBldr;
   if ( theMode > 0 )
     for ( Standard_Integer i=1; i<=len; i++ )
     {
       Handle (MeshVS_PrsBuilder) aCurrent = myBuilders.Value ( i );
-      if (!Handle(MeshVS_LODBuilder)::DownCast (aCurrent))
+      if (!Handle(MeshVS_LODBuilder)::DownCast (aCurrent).IsNull())
       {
-        aLODBldr = Handle(MeshVS_LODBuilder)::DownCast (aCurrent);
         continue;
       }
       if ( !aCurrent.IsNull() && aCurrent->TestFlags ( theMode ) )
@@ -189,16 +187,20 @@ void MeshVS_Mesh::Compute ( const Handle(PrsMgr_PresentationManager3d)& thePrsMg
       }
     }
 
-  if (myLODDataSources.Size() > 0 && !aLODBldr.IsNull() && aLODBldr->TestFlags (theMode))
+  if (myLODDataSources.Size() > 0)
   {
-    for (Standard_Integer aLodIdx = 0; aLodIdx < myLODDataSources.Size(); ++aLodIdx)
+    for (Standard_Integer aLodBldrIdx = 1; aLodBldrIdx <= myBuilders.Length(); ++aLodBldrIdx)
     {
-      const TColStd_PackedMapOfInteger aVertIdxs = myLODDataSources.Value (aLodIdx)->GetAllNodes();
-      const TColStd_PackedMapOfInteger aTrgIdxs = myLODDataSources.Value (aLodIdx)->GetAllElements();
+      const Handle(MeshVS_LODBuilder) aLodBldr = Handle(MeshVS_LODBuilder)::DownCast (myBuilders.Value (aLodBldrIdx));
+      if (aLodBldr.IsNull() || !aLodBldr->TestFlags (theMode))
+        continue;
+
+      const TColStd_PackedMapOfInteger aVertIdxs = aLodBldr->GetDataSource()->GetAllNodes();
+      const TColStd_PackedMapOfInteger aTrgIdxs = aLodBldr->GetDataSource()->GetAllElements();
       if (HasNodes)
-        aLODBldr->Build (thePresentation, aVertIdxs, aNodesToExclude, Standard_False, theMode);
+        aLodBldr->Build (thePresentation, aVertIdxs, aNodesToExclude, Standard_False, theMode);
       if (HasElements)
-        aLODBldr->Build (thePresentation, aTrgIdxs, aElemsToExclude, Standard_True,  theMode);
+        aLodBldr->Build (thePresentation, aTrgIdxs, aElemsToExclude, Standard_True,  theMode);
     }
   }
 

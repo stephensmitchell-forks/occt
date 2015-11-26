@@ -57,7 +57,7 @@ OpenGl_LODManager::OpenGl_LODManager (const Handle(Graphic3d_Structure)& thePare
 // function : AddNewLOD
 // purpose  :
 //=======================================================================
-Handle(Graphic3d_LOD)& OpenGl_LODManager::AddNewLOD()
+Handle(Graphic3d_LOD) OpenGl_LODManager::AddNewLOD()
 {
   Handle(Graphic3d_LOD) aNewLOD = new OpenGl_LOD();
   myLODs.Append (aNewLOD);

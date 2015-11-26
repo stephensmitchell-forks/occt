@@ -36,9 +36,7 @@ MeshVS_LODBuilder::MeshVS_LODBuilder (const Handle(MeshVS_Mesh)& theParentMesh,
                                       const Standard_Integer theId,
                                       const MeshVS_BuilderPriority& thePriority)
   : MeshVS_PrsBuilder (theParentMesh, theFlags, theDataSource, theId, thePriority)
-{
-  Standard_ASSERT_RAISE (!theDataSource.IsNull(), "LOD data source is null!");
-}
+{}
 
 //=======================================================================
 // function : Build
