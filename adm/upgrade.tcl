@@ -477,6 +477,71 @@ proc ConvertTColFwd {thePackagePath theHeaderExtensions} {
   }
 }
 
+# try to find source file corresponding to the specified header and either
+# inject macro IMPLEMENT_STANDARD_RTTIEXT in it, or check it already present,
+# and depending on this, return suffix to be used for corresponding macro
+# DEFINE_STANDARD_RTTI... (either inline or out-of-line variant)
+proc DefineExplicitRtti {hxxfile class base theSourceExtensions} {
+  # if current file is not a header (by extension), exit with "inline" variant
+  # (there is no need to bother with out-of-line instantiations for local class)
+  set ext [file extension $hxxfile]
+  if { [lsearch -exact [split $theSourceExtensions ,] $ext] >=0 } {
+    return "_INLINE"
+  }
+
+  # try to find source file with the same name but source-type extension 
+  # in the same folder
+  set filename [file rootname $hxxfile]
+  foreach ext [split $theSourceExtensions ,] {
+#    puts "Checking ${filename}.$ext"
+    if { ! [file readable ${filename}.$ext] } { continue }
+
+    # check the file content
+    set aFileContent [ReadFileToList ${filename}.$ext aFileRawContent aEOL]
+
+    # try to find existing macro IMPLEMENT_STANDARD_RTTIEXT and check that 
+    # it is consistent
+    foreach line $aFileContent {
+      if { [regexp {^\s*IMPLEMENT_STANDARD_RTTIEXT\s*\(\s*$class\s*,\s*([A-Za-z]+)\s*\)} $line res impl_base] } {
+        # implementation is in place, just report warning if second argument
+        # is different
+        if { $base != $impl_base } {
+          logwarn "Warning in ${filename}.$ext: second argument of macro"
+          logwarn "        IMPLEMENT_STANDARD_RTTIEXT($class,$impl_base)"
+          logwarn "        is not the same as detected base class, $base"
+        }
+        return "EXT"
+      }
+    }
+
+    # inject a new macro before the first non-empty, non-comment, and 
+    # non-preprocessor line
+    set aNewFileContent {}
+    set injected 0
+    foreach line $aFileContent {
+      if { ! $injected && ! [regexp {^\s*//} $line] &&
+           ! [regexp {^\s*$} $line] && ! [regexp {^\s*\#\s*include} $line] } {
+        set injected 1
+        lappend aNewFileContent "IMPLEMENT_STANDARD_RTTIEXT($class,$base)"
+        if { ! [regexp "^IMPLEMENT_" $line] } {
+          lappend aNewFileContent ""
+        }
+      }
+      lappend aNewFileContent $line
+    }
+    if { ! $injected } {
+      lappend aNewFileContent "IMPLEMENT_STANDARD_RTTIEXT($class,$base)"
+    }
+    SaveListToFile ${filename}.$ext $aNewFileContent $aEOL
+
+    return "EXT"
+  }
+
+  logwarn "Warning in ${hxxfile}: cannot find corresponding source file,"
+  logwarn "           will use inline version of DEFINE_STANDARD_RTTI"
+  return "_INLINE"
+}
+
 # Parse source files and:
 #
 # - add second argument to macro DEFINE_STANDARD_RTTI specifying first base 
@@ -521,7 +586,7 @@ proc ConvertRtti {theProcessedPath theIncPaths theCheckMode theCompatibleMode \
 
     # find all instances of DEFINE_STANDARD_RTTI with single or two arguments
     set index 0
-    set pattern_rtti {^(\s*DEFINE_STANDARD_RTTI\s*)\(\s*([A-Za-z_0-9,\s]+)\s*\)}
+    set pattern_rtti {^(\s*DEFINE_STANDARD_RTTI)\s*\(\s*([A-Za-z_0-9,\s]+)\s*\)}
     while { [regexp -start $index -indices -lineanchor $pattern_rtti \
                     $aProcessedFileContent location start clist] } {
       set index [lindex $location 1]
@@ -538,7 +603,12 @@ proc ConvertRtti {theProcessedPath theIncPaths theCheckMode theCompatibleMode \
               logwarn "macro DEFINE_STANDARD_RTTI is changed assuming it inherits $inherits($class), please check!"
             }
             set change_flag 1
-            ReplaceSubString aProcessedFileContent $location "${start}($class, $inherits($class))" index
+            # try to inject macro IMPLEMENT_STANDARD_RTTIEXT in the 
+            # corresponding source file (or check it already present),
+            # and depending on this, use either inline or out-of-line variant
+            set rtti_suffix [DefineExplicitRtti $aProcessedFile $class $inherits($class) $theSourceExtensions]
+            ReplaceSubString aProcessedFileContent $location \
+                             "${start}${rtti_suffix}($class,$inherits($class))" index
           }
         } else {
           logwarn "Error in $aProcessedFile: Macro DEFINE_STANDARD_RTTI used for class $class whose declaration is not found in this file, cannot fix"
@@ -550,10 +620,15 @@ proc ConvertRtti {theProcessedPath theIncPaths theCheckMode theCompatibleMode \
           logwarn "Warning in $aProcessedFile: Macro DEFINE_STANDARD_RTTI used for class $class whose declaration is not found in this file"
         } elseif { $base != $inherits($class) } {
           logwarn "Warning in $aProcessedFile: Second argument in macro DEFINE_STANDARD_RTTI for class $class is $base while $class seems to inherit from $inherits($class)"
-          if { ! $theCheckMode && ! [info exists inherits($class,multiple)] } {
-            set change_flag 1
-            ReplaceSubString aProcessedFileContent $location "${start}($class, $inherits($class))" index
+          if { ! [info exists inherits($class,multiple)] } {
+            set base $inherits($class)
           }
+        }
+        if { ! $theCheckMode } {
+          set change_flag 1
+          set rtti_suffix [DefineExplicitRtti $aProcessedFile $class $base $theSourceExtensions]
+          ReplaceSubString aProcessedFileContent $location \
+                           "${start}${rtti_suffix}($class,$base)" index
         }
       }
     }
@@ -578,8 +653,12 @@ proc ConvertRtti {theProcessedPath theIncPaths theCheckMode theCompatibleMode \
       set index 0
       set first_newline \n\n
       set pattern_implement {\\?\n\s*IMPLEMENT_(DOWNCAST|STANDARD_[A-Z_]+|HARRAY1|HARRAY2|HUBTREE|HEBTREE|HSEQUENCE)\s*\([A-Za-z0-9_ ,]*\)\s*;?}
-      while { [regexp -start $index -indices -lineanchor $pattern_implement $aProcessedFileContent location] } {
+      while { [regexp -start $index -indices -lineanchor $pattern_implement $aProcessedFileContent location macro] } {
         set index [lindex $location 1]
+        # macro IMPLEMENT_STANDARD_RTTIEXT is retained
+        if { [eval string range \$aProcessedFileContent $macro] == "STANDARD_RTTIEXT" } {
+          continue
+        }
         if { ! $theCheckMode } {
           set change_flag 1
           ReplaceSubString aProcessedFileContent $location $first_newline index
@@ -1081,10 +1160,11 @@ proc ReadFileToList {theFilePath theFileContent theFileEOL} {
     regsub -all {$aFileEOL} $aFileContent "\n" aFileContent
   }
 
-  set aList {}
-  foreach aLine [split $aFileContent "\n"] {
-    lappend aList [string trimright $aLine]
-  }
+  set aList [split $aFileContent "\n"]
+#  set aList {}
+#  foreach aLine [split $aFileContent "\n"] {
+#    lappend aList [string trimright $aLine]
+#  }
 
   return $aList
 }
@@ -1154,6 +1234,8 @@ proc SaveListToFile {theFilePath theData {theEOL "auto"}} {
   fconfigure $aFile -translation binary
   puts -nonewline $aFile [join $theData $anUsedEol]
   close $aFile
+
+  loginfo "File $theFilePath modified"
 }
 
 # collect all subdirs of theBaseDir
