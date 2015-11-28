@@ -27,12 +27,29 @@
 
 //! Helper macro to be included in definition of the classes inheriting
 //! Standard_Transient to enable use of OCCT RTTI and smart pointers (handles).
-#define DEFINE_STANDARD_RTTI(Class,Base) \
+//!
+//! Inline version, does not require IMPLEMENT_STANDARD_RTTIEXT but
+//! leading to increase of size of binaries.
+#define DEFINE_STANDARD_RTTI_INLINE(Class,Base) \
 public: \
   typedef Base base_type; \
   static const char* get_type_name () { return #Class; } \
   virtual const Handle(Standard_Type)& DynamicType() const Standard_OVERRIDE \
   { return STANDARD_TYPE(Class); }
+
+//! Helper macro to be included in definition of the classes inheriting
+//! Standard_Transient to enable use of OCCT RTTI and smart pointers (handles).
+//!
+//! Out-of-line version, requires IMPLEMENT_STANDARD_RTTIEXT.
+#define DEFINE_STANDARD_RTTIEXT(Class,Base) \
+public: \
+  typedef Base base_type; \
+  static const char* get_type_name () { return #Class; } \
+  virtual const Handle(Standard_Type)& DynamicType() const Standard_OVERRIDE;
+
+//! Defines implementation of DynamicType() function
+#define IMPLEMENT_STANDARD_RTTIEXT(Class,Base) \
+  const Handle(Standard_Type)& Class::DynamicType() const { return STANDARD_TYPE(Class); }
 
 // forward declaration of type_instance class
 namespace opencascade {
