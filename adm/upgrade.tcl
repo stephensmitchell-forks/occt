@@ -484,7 +484,7 @@ proc ConvertTColFwd {thePackagePath theHeaderExtensions} {
 proc DefineExplicitRtti {hxxfile class base theSourceExtensions} {
   # if current file is not a header (by extension), exit with "inline" variant
   # (there is no need to bother with out-of-line instantiations for local class)
-  set ext [file extension $hxxfile]
+  set ext [string range [file extension $hxxfile] 1 end]
   if { [lsearch -exact [split $theSourceExtensions ,] $ext] >=0 } {
     return "_INLINE"
   }
@@ -518,13 +518,19 @@ proc DefineExplicitRtti {hxxfile class base theSourceExtensions} {
     # non-preprocessor line
     set aNewFileContent {}
     set injected 0
+    set inc_found 0
     foreach line $aFileContent {
-      if { ! $injected && ! [regexp {^\s*//} $line] &&
-           ! [regexp {^\s*$} $line] && ! [regexp {^\s*\#\s*include} $line] } {
-        set injected 1
-        lappend aNewFileContent "IMPLEMENT_STANDARD_RTTIEXT($class,$base)"
-        if { ! [regexp "^IMPLEMENT_" $line] } {
-          lappend aNewFileContent ""
+      if { ! $injected } {
+        # add macro before first non-empty line after #includes
+        if { [regexp {^\s*$} $line] } {
+        } elseif { [regexp {^\s*\#\s*include} $line] } {
+          set inc_found 1
+        } elseif { $inc_found } {
+          set injected 1
+          lappend aNewFileContent "IMPLEMENT_STANDARD_RTTIEXT($class,$base)"
+          if { ! [regexp "^IMPLEMENT_" $line] } {
+            lappend aNewFileContent ""
+          }
         }
       }
       lappend aNewFileContent $line

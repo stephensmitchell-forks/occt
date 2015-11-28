@@ -20,6 +20,5 @@
 #include <PrsMgr_PresentationManager.hxx>
 
 typedef PrsMgr_PresentationManager PrsMgr_PresentationManager3d;
-typedef Handle_PrsMgr_PresentationManager Handle_PrsMgr_PresentationManager3d;
 
 #endif // _PrsMgr_PresentationManager3d_HeaderFile
