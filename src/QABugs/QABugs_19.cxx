@@ -1695,7 +1695,7 @@ public:
     std::cerr << "QABugs_HandleClass[" << this << "] " << theArgVec[0] << "\n";
     return 0;
   }
-  DEFINE_STANDARD_RTTI(QABugs_HandleClass, Standard_Transient) // Type definition
+  DEFINE_STANDARD_RTTI_INLINE(QABugs_HandleClass,Standard_Transient) // Type definition
 };
 DEFINE_STANDARD_HANDLE    (QABugs_HandleClass, Standard_Transient)
 

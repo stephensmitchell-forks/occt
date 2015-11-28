@@ -54,7 +54,7 @@ public:
     myOrientation = theOrientation;
   }
   
-  DEFINE_STANDARD_RTTI(StepDimTol_RunoutZoneDefinition,StepDimTol_ToleranceZoneDefinition)
+  DEFINE_STANDARD_RTTIEXT(StepDimTol_RunoutZoneDefinition,StepDimTol_ToleranceZoneDefinition)
 
 private: 
   Handle(StepDimTol_RunoutZoneOrientation) myOrientation;

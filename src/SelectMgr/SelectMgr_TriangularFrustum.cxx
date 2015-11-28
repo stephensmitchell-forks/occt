@@ -15,6 +15,8 @@
 
 #include <SelectMgr_TriangularFrustum.hxx>
 
+IMPLEMENT_STANDARD_RTTIEXT(SelectMgr_TriangularFrustum,SelectMgr_Frustum)
+
 SelectMgr_TriangularFrustum::~SelectMgr_TriangularFrustum()
 {
   Clear();

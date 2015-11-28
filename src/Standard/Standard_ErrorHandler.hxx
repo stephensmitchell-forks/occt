@@ -25,6 +25,7 @@
 #include <Standard_HandlerStatus.hxx>
 #include <Standard_ThreadId.hxx>
 #include <Standard_Type.hxx>
+#include <Standard_Failure.hxx>
 
 //! @file
 //! Support of handling of C signals as C++-style exceptions, and implementation

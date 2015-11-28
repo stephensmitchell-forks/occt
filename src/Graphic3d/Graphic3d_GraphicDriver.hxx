@@ -140,7 +140,7 @@ public:
   
   Standard_EXPORT void ResetDeviceLostFlag();
 
-  DEFINE_STANDARD_RTTI(Graphic3d_GraphicDriver,MMgt_TShared)
+  DEFINE_STANDARD_RTTIEXT(Graphic3d_GraphicDriver,MMgt_TShared)
 
 protected:
 

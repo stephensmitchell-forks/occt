@@ -301,7 +301,7 @@ public:
 
 
 
-  DEFINE_STANDARD_RTTI(Geom_OffsetCurve,Geom_Curve)
+  DEFINE_STANDARD_RTTIEXT(Geom_OffsetCurve,Geom_Curve)
 
 protected:
 

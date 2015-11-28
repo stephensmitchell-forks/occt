@@ -88,7 +88,7 @@ public:
   Standard_EXPORT void SetDatumTargetWidth (const Standard_Real theWidth);
 
 
-  DEFINE_STANDARD_RTTI(XCAFDimTolObjects_DatumObject,Standard_Transient)
+  DEFINE_STANDARD_RTTIEXT(XCAFDimTolObjects_DatumObject,Standard_Transient)
 
 private: 
 

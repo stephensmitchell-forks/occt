@@ -572,7 +572,7 @@ public:
 
 
 
-  DEFINE_STANDARD_RTTI(Geom_BezierSurface,Geom_BoundedSurface)
+  DEFINE_STANDARD_RTTIEXT(Geom_BezierSurface,Geom_BoundedSurface)
 
 protected:
 

@@ -20,6 +20,6 @@
 #include <PrsMgr_Presentation.hxx>
 
 typedef PrsMgr_Presentation PrsMgr_Presentation3d;
-typedef Handle_PrsMgr_Presentation Handle_PrsMgr_Presentation3d;
+typedef Handle(PrsMgr_Presentation) Handle(PrsMgr_Presentation3d);
 
 #endif // _PrsMgr_Presentation3d_HeaderFile

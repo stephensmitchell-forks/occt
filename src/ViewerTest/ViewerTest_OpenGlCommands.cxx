@@ -62,7 +62,7 @@ class VUserDrawObj : public AIS_InteractiveObject
 {
 public:
     // CASCADE RTTI
-    DEFINE_STANDARD_RTTI(VUserDrawObj, AIS_InteractiveObject);
+    DEFINE_STANDARD_RTTI_INLINE(VUserDrawObj,AIS_InteractiveObject);
 
     VUserDrawObj()
     {

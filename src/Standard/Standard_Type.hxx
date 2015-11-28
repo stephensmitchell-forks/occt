@@ -45,7 +45,7 @@ public: \
 public: \
   typedef Base base_type; \
   static const char* get_type_name () { return #Class; } \
-  virtual const Handle(Standard_Type)& DynamicType() const Standard_OVERRIDE;
+  Standard_EXPORT virtual const Handle(Standard_Type)& DynamicType() const Standard_OVERRIDE;
 
 //! Defines implementation of DynamicType() function
 #define IMPLEMENT_STANDARD_RTTIEXT(Class,Base) \
@@ -134,7 +134,7 @@ public:
   Standard_EXPORT ~Standard_Type ();
 
   // Define own RTTI
-  DEFINE_STANDARD_RTTI(Standard_Type, Standard_Transient)
+  DEFINE_STANDARD_RTTIEXT(Standard_Type,Standard_Transient)
 
 private:
 
@@ -204,7 +204,7 @@ inline Standard_OStream& operator << (Standard_OStream& theStream, const Handle(
   return theStream;
 }
 
-//! Definition of Handle_Standard_Type as typedef for compatibility
+//! Definition of Handle(Standard_Type) as typedef for compatibility
 DEFINE_STANDARD_HANDLE(Standard_Type,Standard_Transient)
 
 #endif // _Standard_Type_HeaderFile

@@ -15,6 +15,8 @@
 
 #include <Xw_Window.hxx>
 
+IMPLEMENT_STANDARD_RTTIEXT(Xw_Window,Aspect_Window)
+
 #if !defined(_WIN32) && (!defined(__APPLE__) || defined(MACOSX_USE_GLX)) && !defined(__ANDROID__) && !defined(__QNX__)
 
 #include <Aspect_Convert.hxx>

@@ -32,6 +32,8 @@
 #include <XCAFDoc_GraphNode.hxx>
 #include <XCAFDoc_ShapeTool.hxx>
 
+IMPLEMENT_STANDARD_RTTIEXT(XCAFDoc_DimTolTool,TDF_Attribute)
+
 //=======================================================================
 //function : XCAFDoc_DimTolTool
 //purpose  : 

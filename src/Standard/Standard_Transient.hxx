@@ -108,7 +108,7 @@ inline Standard_Integer HashCode (const Standard_Transient* theObject, const Sta
   return ::HashCode ((Standard_Address*)theObject, theUpper);
 }
 
-//! Definition of Handle_Standard_Transient as typedef for compatibility
-typedef opencascade::handle<Standard_Transient> Handle_Standard_Transient;
+//! Definition of Handle(Standard_Transient) as typedef for compatibility
+typedef opencascade::handle<Standard_Transient> Handle(Standard_Transient);
 
 #endif 

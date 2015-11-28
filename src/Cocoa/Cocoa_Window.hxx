@@ -158,7 +158,7 @@ protected:
 
 public:
 
-  DEFINE_STANDARD_RTTI(Cocoa_Window, Aspect_Window)
+  DEFINE_STANDARD_RTTI_INLINE(Cocoa_Window,Aspect_Window)
 
 };
 

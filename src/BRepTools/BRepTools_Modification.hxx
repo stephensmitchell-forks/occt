@@ -113,7 +113,7 @@ public:
 
 
 
-  DEFINE_STANDARD_RTTI(BRepTools_Modification,MMgt_TShared)
+  DEFINE_STANDARD_RTTIEXT(BRepTools_Modification,MMgt_TShared)
 
 protected:
 

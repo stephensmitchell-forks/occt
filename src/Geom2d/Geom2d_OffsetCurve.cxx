@@ -42,6 +42,8 @@
 #include <Standard_RangeError.hxx>
 #include <Standard_Type.hxx>
 
+IMPLEMENT_STANDARD_RTTIEXT(Geom2d_OffsetCurve,Geom2d_Curve)
+
 typedef Geom2d_OffsetCurve         OffsetCurve;
 typedef Geom2d_Curve               Curve;
 typedef gp_Dir2d  Dir2d;

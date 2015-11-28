@@ -571,7 +571,7 @@ protected:
 
 private:
 
-  DEFINE_STANDARD_RTTI (Graphic3d_CView, Graphic3d_DataStructureManager)
+  DEFINE_STANDARD_RTTIEXT(Graphic3d_CView,Graphic3d_DataStructureManager)
 };
 
 #endif // _Graphic3d_CView_HeaderFile
