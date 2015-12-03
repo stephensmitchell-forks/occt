@@ -163,16 +163,22 @@ TCollection_ExtendedString PCDM_ReadWriter::FileFormat (Standard_IStream& theISt
   TCollection_ExtendedString aFormat;
 
   Storage_BaseDriver* aFileDriver;
-  if (PCDM::FileDriverType (theIStream, aFileDriver) == PCDM_TOFD_Unknown)
+
+  PCDM_TypeOfFileDriver aFileDriverType = PCDM::FileDriverType (theIStream, aFileDriver);
+  if (aFileDriverType == PCDM_TOFD_Unknown)
   {
     return ::TryXmlDriverType (theIStream);
   }
   
   // the stream starts with a magic number, FileDriverType has read
-  // them already but returned the stream pos to initial state,
-  // thus we should read them before reading of info section
-  aFileDriver->ReadMagicNumber(theIStream);
-
+  // them already but returned the stream pos to initial state
+  // (except FSD_BinaryFile), thus we should read them before
+  // reading of info section
+  if (aFileDriverType != PCDM_TOFD_CmpFile)
+  {
+    aFileDriver->ReadMagicNumber(theIStream);
+  }
+  
   aFileDriver->ReadCompleteInfo (theIStream, theData);
 
   for (Standard_Integer i = 1; i <= theData->HeaderData()->UserInfo().Length(); i++)

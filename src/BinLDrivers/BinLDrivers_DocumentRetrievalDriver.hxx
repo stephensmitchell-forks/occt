@@ -23,6 +23,7 @@
 #include <BinObjMgt_RRelocationTable.hxx>
 #include <TColStd_MapOfInteger.hxx>
 #include <BinLDrivers_VectorOfDocumentSection.hxx>
+#include <NCollection_List.hxx>
 #include <PCDM_RetrievalDriver.hxx>
 #include <Standard_Integer.hxx>
 #include <Standard_IStream.hxx>
@@ -83,8 +84,11 @@ protected:
 
   
   //! Read the tree from the stream <theIS> to <theLabel>
-  Standard_EXPORT virtual Standard_Integer ReadSubTree (Standard_IStream& theIS, const TDF_Label& theData);
-  
+  Standard_EXPORT virtual Standard_Integer ReadSubTree (Standard_IStream& theIS, const TDF_Label& theData, const Standard_Boolean theReadOnly = Standard_False);
+ 
+  // Translate of each label of prepared tree by OnlyReadSubTree method 
+  // from persistent being to transient one
+  Standard_EXPORT virtual void UpdateTree();
   
   //! define the procedure of reading a section to file.
   Standard_EXPORT virtual void ReadSection (BinLDrivers_DocumentSection& theSection, const Handle(CDM_Document)& theDoc, Standard_IStream& theIS);
@@ -113,7 +117,7 @@ protected:
 private:
 
 
-  BinObjMgt_Persistent myPAtt;
+  NCollection_List<BinObjMgt_Persistent*> myPAttList;
   Handle(CDM_MessageDriver) myMsgDriver;
   TColStd_MapOfInteger myMapUnsupported;
   BinLDrivers_VectorOfDocumentSection mySections;

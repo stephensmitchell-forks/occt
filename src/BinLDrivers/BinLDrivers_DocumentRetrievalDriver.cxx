@@ -244,30 +244,42 @@ void BinLDrivers_DocumentRetrievalDriver::Read (Standard_IStream&               
   // 2a. Retrieve data from the stream:
   myRelocTable.Clear();
   mySections.Clear();
-  myPAtt.Init();
   Handle(TDF_Data) aData = new TDF_Data();
   streampos aDocumentPos = -1;
+  Standard_Integer nbRead = -1;
 
   // 2b. Read the TOC of Sections
   if (aFileVer >= 3) {
     BinLDrivers_DocumentSection aSection;
-    do {
+    NCollection_Sequence <BinLDrivers_DocumentSection> aSectionSeq;
+    do
+    {
       BinLDrivers_DocumentSection::ReadTOC (aSection, theIStream);
-      mySections.Append(aSection);
-    } while
-      (!aSection.Name().IsEqual((Standard_CString)SHAPESECTION_POS));
-    aDocumentPos = theIStream.tellg(); // position of root label
+      if (aSectionSeq.IsEmpty())
+      {
+        aSectionSeq.Append(aSection);
+      }
+      else
+      {
+        NCollection_Sequence <BinLDrivers_DocumentSection>::Iterator anIterS (aSectionSeq);
+        for (; anIterS.More(); anIterS.Next())
+        {
+          BinLDrivers_DocumentSection& aCurSection = anIterS.ChangeValue();
 
-    BinLDrivers_VectorOfDocumentSection::Iterator anIterS (mySections);
+          if (aCurSection.Offset() > aSection.Offset())
+          {
+            anIterS.Previous(); // do one step back to get the possibility to do correct insertion
+            aSectionSeq.InsertAfter (anIterS, aSection);
+            break;
+          }
+        }
+      }
+    } while (!aSection.Name().IsEqual((Standard_CString)SHAPESECTION_POS));
+
+    NCollection_Sequence <BinLDrivers_DocumentSection>::Iterator anIterS (aSectionSeq);
     for (; anIterS.More(); anIterS.Next()) {
       BinLDrivers_DocumentSection& aCurSection = anIterS.ChangeValue();
-      if (aCurSection.IsPostRead() == Standard_False) {
-        theIStream.seekg ((streampos) aCurSection.Offset());
-        if (aCurSection.Name().IsEqual ((Standard_CString)SHAPESECTION_POS)) 
-          ReadShapeSection (aCurSection, theIStream);
-        else
-          ReadSection (aCurSection, theDoc, theIStream); 
-      }
+      mySections.Append(aCurSection); // fill mySection
     }
   } else { //aFileVer < 3
     aDocumentPos = theIStream.tellg(); // position of root label
@@ -307,20 +319,42 @@ void BinLDrivers_DocumentRetrievalDriver::Read (Standard_IStream&               
 	ReadShapeSection (aCurSection, theIStream, Standard_False);
       }
     }
-  } // end of reading Sections or shape section
 
-  // Return to read of the Document structure
-  theIStream.seekg(aDocumentPos);
+    // Return to read of the Document structure
+    theIStream.seekg(aDocumentPos);
+
+  } // end of reading Sections or shape section
 
   // read the header (tag) of the root label
   Standard_Integer aTag;
   theIStream.read ((char*)&aTag, sizeof(Standard_Integer));
 
   // read sub-tree of the root label
-  Standard_Integer nbRead = ReadSubTree (theIStream, aData->Root());
-  myPAtt.Destroy();    // free buffer
-  myRelocTable.Clear();
-  myMapUnsupported.Clear();
+  if (aFileVer >= 3)
+  {
+    nbRead = ReadSubTree (theIStream, aData->Root(), Standard_True);
+
+    BinLDrivers_VectorOfDocumentSection::Iterator aSectIter (mySections);
+    for (; aSectIter.More(); aSectIter.Next())
+    {
+      BinLDrivers_DocumentSection& aCurSection = aSectIter.ChangeValue();
+      if (aCurSection.Name().IsEqual ((Standard_CString)SHAPESECTION_POS))
+      {
+        ReadShapeSection (aCurSection, theIStream);
+      }
+      else
+      {
+        ReadSection (aCurSection, theDoc, theIStream);
+      }
+    }
+
+    UpdateTree();
+  }
+  else
+  {
+    // read sub-tree of the root label
+    nbRead = ReadSubTree (theIStream, aData->Root());
+  }
     
   if (nbRead > 0) {
     // attach data to the document
@@ -330,17 +364,9 @@ void BinLDrivers_DocumentRetrievalDriver::Read (Standard_IStream&               
     myReaderStatus = PCDM_RS_OK;
   }
 
-  // Read Sections (post-reading type)
-  if (aFileVer >= 3) {
-    BinLDrivers_VectorOfDocumentSection::Iterator aSectIter (mySections);
-    for (; aSectIter.More(); aSectIter.Next()) {
-      BinLDrivers_DocumentSection& aCurSection = aSectIter.ChangeValue();
-      if (aCurSection.IsPostRead()) {
-	theIStream.seekg ((streampos) aCurSection.Offset());
-	ReadSection (aCurSection, theDoc, theIStream); 
-      }
-    }
-  }
+  myPAttList.Clear();
+  myRelocTable.Clear();
+  myMapUnsupported.Clear();
 }
 
 //=======================================================================
@@ -350,28 +376,39 @@ void BinLDrivers_DocumentRetrievalDriver::Read (Standard_IStream&               
 
 Standard_Integer BinLDrivers_DocumentRetrievalDriver::ReadSubTree
                          (Standard_IStream& theIS,
-                          const TDF_Label&  theLabel)
+                          const TDF_Label&  theLabel,
+                          const Standard_Boolean theReadOnly)
 {
   Standard_Integer nbRead = 0;
   static TCollection_ExtendedString aMethStr
     ("BinLDrivers_DocumentRetrievalDriver: ");
 
   // Read attributes:
-  theIS >> myPAtt;
-  while (theIS && myPAtt.TypeId() > 0 &&             // not an end marker ?
-         myPAtt.Id() > 0) {                          // not a garbage ?
+  myPAttList.Prepend(new BinObjMgt_Persistent());
+
+  BinObjMgt_Persistent* myPAtt = myPAttList.First();
+  theIS >> *myPAtt;
+
+  while (theIS && myPAtt->TypeId() > 0 &&             // not an end marker ?
+         myPAtt->Id() > 0) {                          // not a garbage ?
     // get a driver according to TypeId
-    Handle(BinMDF_ADriver) aDriver = myDrivers->GetDriver (myPAtt.TypeId());
+    Handle(BinMDF_ADriver) aDriver = myDrivers->GetDriver (myPAtt->TypeId());
     if (!aDriver.IsNull()) {
       // create transient attribute
       nbRead++;
-      Standard_Integer anID = myPAtt.Id();
+      Standard_Integer anID = myPAtt->Id();
       Handle(TDF_Attribute) tAtt;
       Standard_Boolean isBound = myRelocTable.IsBound(anID);
       if (isBound)
         tAtt = Handle(TDF_Attribute)::DownCast(myRelocTable.Find(anID));
       else
+      {
         tAtt = aDriver->NewEmpty();
+        if (theReadOnly)
+        {
+          myRelocTable.Bind (anID, tAtt);
+        }
+      }
       if (tAtt->Label().IsNull())
 	theLabel.AddAttribute (tAtt);
       else
@@ -379,27 +416,49 @@ Standard_Integer BinLDrivers_DocumentRetrievalDriver::ReadSubTree
 		      "warning: attempt to attach attribute " +
 		      aDriver->TypeName() + " to a second label");
 
-      Standard_Boolean ok = aDriver->Paste (myPAtt, tAtt, myRelocTable);
-      if (!ok) {
-        // error converting persistent to transient
-        WriteMessage (aMethStr + "warning: failure reading attribute " +
-                      aDriver->TypeName());
+      if (!theReadOnly)
+      {
+        Standard_Boolean ok = aDriver->Paste (*myPAtt, tAtt, myRelocTable);
+        if (!ok) {
+          // error converting persistent to transient
+          WriteMessage (aMethStr + "warning: failure reading attribute " +
+            aDriver->TypeName());
+        }
+        else if (!isBound)
+          myRelocTable.Bind (anID, tAtt);
       }
-      else if (!isBound)
-        myRelocTable.Bind (anID, tAtt);
     }
-    else if (!myMapUnsupported.Contains(myPAtt.TypeId()))
+    else if (!myMapUnsupported.Contains(myPAtt->TypeId()))
       WriteMessage (aMethStr + "warning: type ID not registered in header: "
-                    + myPAtt.TypeId());
+                    + myPAtt->TypeId());
 
     // read next attribute
-    theIS >> myPAtt;
+    if (theReadOnly)
+    {
+      myPAttList.Prepend(new BinObjMgt_Persistent());
+      myPAtt = myPAttList.First();
+    }
+
+    theIS >> *myPAtt;
   }
-  if (!theIS || myPAtt.TypeId() != BinLDrivers_ENDATTRLIST) {
+  if (!theIS || myPAtt->TypeId() != BinLDrivers_ENDATTRLIST) {
+    if (theReadOnly)
+    {
+      delete myPAttList.First();
+      myPAttList.RemoveFirst();
+    }
+    
     // unexpected EOF or garbage data
     WriteMessage (aMethStr + "error: unexpected EOF or garbage data");
     myReaderStatus = PCDM_RS_UnrecognizedFileFormat;
     return -1;
+  }
+
+  if (theReadOnly)
+  {
+    // remove last added dummy element (at first position)
+    delete myPAttList.First();
+    myPAttList.RemoveFirst();
   }
 
   // Read children:
@@ -414,7 +473,7 @@ Standard_Integer BinLDrivers_DocumentRetrievalDriver::ReadSubTree
     TDF_Label aLab = theLabel.FindChild (aTag, Standard_True);
 
     // read sub-tree
-    Standard_Integer nbSubRead = ReadSubTree(theIS, aLab);
+    Standard_Integer nbSubRead = ReadSubTree(theIS, aLab, theReadOnly);
     // check for error
     if (nbSubRead == -1)
       return -1;
@@ -434,6 +493,43 @@ Standard_Integer BinLDrivers_DocumentRetrievalDriver::ReadSubTree
   }
 
   return nbRead;
+}
+
+//=======================================================================
+//function : UpdateTree
+//purpose  :
+//=======================================================================
+void BinLDrivers_DocumentRetrievalDriver::UpdateTree()
+{
+  static TCollection_ExtendedString aMethStr ("BinLDrivers_DocumentRetrievalDriver::UpdateTree: ");
+
+  NCollection_List<BinObjMgt_Persistent*>::Iterator anAttIter (myPAttList);
+  for (; anAttIter.More(); anAttIter.Next())
+  {
+    BinObjMgt_Persistent* aCurPatt = anAttIter.Value();
+
+    // get a driver according to TypeId
+    Handle(BinMDF_ADriver) aDriver = myDrivers->GetDriver (aCurPatt->TypeId());
+
+    if (!aDriver.IsNull())
+    {
+      // create transient attribute
+      Standard_Integer anID = aCurPatt->Id();
+      Handle(TDF_Attribute) tAtt = Handle(TDF_Attribute)::DownCast(myRelocTable.Find(anID));
+
+      if (!aDriver->Paste (*aCurPatt, tAtt, myRelocTable))
+      {
+        // error converting persistent to transient
+        WriteMessage (aMethStr + "warning: failure reading attribute " + aDriver->TypeName());
+      }
+    }
+    else if (!myMapUnsupported.Contains(aCurPatt->TypeId()))
+    {
+      WriteMessage (aMethStr + "warning: type ID not registered in header: " + aCurPatt->TypeId());
+    }
+
+    delete aCurPatt;
+  }
 }
 
 //=======================================================================

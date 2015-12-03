@@ -120,12 +120,16 @@ PCDM_TypeOfFileDriver PCDM::FileDriverType (Standard_IStream& theIStream, PCDM_B
     // read magic number from the file
     aReadMagicNumber = Storage_BaseDriver::ReadMagicNumber (theIStream);
 
-    if (!theIStream.good())
+    // don not seek for FSD_BinaryFile
+    if (aReadMagicNumber != FSD_BinaryFile::MagicNumber())
     {
-      theIStream.clear();
-    }
+      if (!theIStream.good())
+      {
+        theIStream.clear();
+      }
 
-    theIStream.seekg(aDocumentPos);
+      theIStream.seekg(aDocumentPos);
+    }
   }
 
   if(aReadMagicNumber == FSD_CmpFile::MagicNumber())
