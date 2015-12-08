@@ -28,6 +28,8 @@
 
 class Graphic3d_GraphicDriver;
 class Graphic3d_StructureManager;
+class Graphic3d_LOD;
+class Graphic3d_LODManager;
 
 //! Low-level graphic structure interface
 class Graphic3d_CStructure : public Standard_Transient
@@ -112,8 +114,15 @@ public:
   //! Create new group within this structure
   virtual Handle(Graphic3d_Group) NewGroup (const Handle(Graphic3d_Structure)& theStruct) = 0;
 
+  //! Create new LOD within this structure
+  virtual Handle(Graphic3d_LOD) NewLOD (const Handle(Graphic3d_Structure)& theStruct) = 0;
+
   //! Remove group from this structure
   virtual void RemoveGroup (const Handle(Graphic3d_Group)& theGroup) = 0;
+
+  virtual Standard_Integer NbDetailLevels() const = 0;
+
+  virtual void SetDetailLevelRange (const Standard_Integer theIdOfLOD, const Standard_Real theFrom, const Standard_Real theTo) = 0;
 
 public:
 
@@ -157,6 +166,7 @@ protected:
   Graphic3d_SequenceOfGroup       myGroups;
   Graphic3d_BndBox4f              myBndBox;
   Graphic3d_SequenceOfHClipPlane  myClipPlanes;
+  Handle(Graphic3d_LODManager)    myLODManager;
 
 public:
 

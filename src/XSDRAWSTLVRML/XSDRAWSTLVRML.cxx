@@ -55,6 +55,7 @@
 #include <TopoDS_Shape.hxx>
 #include <V3d_View.hxx>
 #include <ViewerTest.hxx>
+#include <ViewerTest_DoubleMapOfInteractiveAndName.hxx>
 #include <VrmlAPI.hxx>
 #include <VrmlAPI_Writer.hxx>
 #include <VrmlData_DataMapOfShapeAppearance.hxx>
@@ -80,6 +81,7 @@
 extern Standard_Boolean VDisplayAISObject (const TCollection_AsciiString& theName,
                                            const Handle(AIS_InteractiveObject)& theAISObj,
                                            Standard_Boolean theReplaceIfExists = Standard_True);
+extern ViewerTest_DoubleMapOfInteractiveAndName& GetMapOfAIS();
 
 static Standard_Integer writestl
 (Draw_Interpretor& di, Standard_Integer argc, const char** argv)
@@ -1202,6 +1204,358 @@ static Standard_Integer meshinfo(Draw_Interpretor& di,
   return 0;
 }
 
+#include <AIS_InteractiveObject.hxx>
+#include <BRepBuilderAPI_Copy.hxx>
+#include <BRepMesh_IncrementalMesh.hxx>
+#include <BRepTools.hxx>
+#include <MeshVS_LODDataSource.hxx>
+#include <TopExp_Explorer.hxx>
+#include <TopoDS.hxx>
+#include <ViewerTest_AutoUpdater.hxx>
+//=======================================================================
+//function : VGenLods
+//purpose  : Generates sequence of LODs for the shape given
+//=======================================================================
+static int MeshGenLods (Draw_Interpretor& theDI,
+                        Standard_Integer  theArgNum,
+                        const char**      theArgs)
+{
+  if (theArgNum < 3)
+  {
+    std::cout << "Error! Wrong number of arguments. See usage:\n";
+    theDI.PrintHelp (theArgs[0]);
+    return 1;
+  }
+
+  Handle(AIS_InteractiveContext) aCtx = ViewerTest::GetAISContext();
+  if (aCtx.IsNull())
+  {
+    std::cout << "Error! No opened viewer." << std::endl;
+    return 1;
+  }
+
+  Standard_CString aShapeName = theArgs[1];
+  const TopoDS_Shape aShape = DBRep::Get (aShapeName);
+  if (aShape.IsNull())
+  {
+    std::cout << "Error! No shape with the name " << aShapeName << "." << std::endl;
+    return 1;
+  }
+  const Standard_Integer aLodsNb = Draw::Atoi (theArgs[2]);
+  if (aLodsNb <= 0)
+  {
+    std::cout << "Error! Incorrect amount of LODs passed: " << aLodsNb << "." << std::endl;
+    std::cout << "Must be greater than zero." << std::endl;
+    return 1;
+  }
+  Standard_Boolean toPrintInfo = Standard_False;
+  TCollection_AsciiString aSavePath = "";
+  Handle(MeshVS_Mesh) aMesh = NULL;
+  if (theArgNum > 3)
+  {
+    for (Standard_Integer anArgIdx = 3; anArgIdx < theArgNum; ++anArgIdx)
+    {
+      TCollection_AsciiString anArg (theArgs[anArgIdx]);
+      anArg.LowerCase();
+      if (anArg == "-debug")
+      {
+        toPrintInfo = Standard_True;
+      }
+      else if (anArg == "-mesh")
+      {
+        aMesh = Handle(MeshVS_Mesh)::DownCast (GetMapOfAIS().Find2 (theArgs[++anArgIdx]));
+      }
+      else if (anArg == "-save")
+      {
+        aSavePath = TCollection_AsciiString (theArgs[++anArgIdx]);
+      }
+    }
+  }
+
+  // Determine max deflection of a shape
+  Handle(Poly_Triangulation) aFaceTrg;
+  TopLoc_Location aFaceLoc;
+  Standard_Real aMaxDefl = 0.0;
+  for (TopExp_Explorer anExplorer (aShape, TopAbs_FACE); anExplorer.More(); anExplorer.Next())
+  {
+    TopoDS_Face aCurFace = TopoDS::Face (anExplorer.Current());
+    aFaceTrg = BRep_Tool::Triangulation (aCurFace, aFaceLoc);
+    if (!aFaceTrg.IsNull())
+    {
+      if (aFaceTrg->Deflection() > aMaxDefl)
+        aMaxDefl = aFaceTrg->Deflection();
+    }
+  }
+
+  BRepTools::Clean (aShape);
+  BRepMesh_FastDiscret::Parameters aMeshParams;
+  aMeshParams.Deflection = aMaxDefl;
+  aMeshParams.Angle = 0.5;
+  aMeshParams.Relative =  Standard_False;
+  aMeshParams.InParallel = Standard_False;
+  aMeshParams.MinSize = Precision::Confusion();
+  aMeshParams.InternalVerticesMode = Standard_True;
+  aMeshParams.ControlSurfaceDeflection = Standard_True;
+  aMeshParams.AdaptiveMin = Standard_False;
+  BRepMesh_IncrementalMesh aBaseMesher (aShape, aMeshParams);
+  aBaseMesher.Perform();
+  ViewerTest_AutoUpdater anAutoUpd (aCtx, ViewerTest::CurrentView());
+
+
+  // compute the shape for each LOD
+  TopoDS_Shape* aLodShapes = new TopoDS_Shape[aLodsNb];
+  BRepBuilderAPI_Copy aMainCopyAlgo;
+  aMainCopyAlgo.Perform (aShape, Standard_True, Standard_True);
+  aLodShapes[0] = aMainCopyAlgo.Shape();
+  Standard_Real aDeflDecrFactor = aMaxDefl / aLodsNb;
+  for (Standard_Integer aLodIdx = 1; aLodIdx < aLodsNb; ++aLodIdx)
+  {
+    BRepBuilderAPI_Copy aCopyAlgo;
+    aCopyAlgo.Perform (aShape, Standard_True, Standard_True);
+    aLodShapes[aLodIdx] = aCopyAlgo.Shape();
+    BRepTools::Clean (aLodShapes[aLodIdx]);
+    BRepMesh_FastDiscret::Parameters aParams;
+    aParams.Deflection = aMaxDefl - aLodIdx * aDeflDecrFactor;
+    aParams.Angle = 0.5;
+    aParams.Relative =  Standard_False;
+    aParams.InParallel = Standard_False;
+    aParams.MinSize = Precision::Confusion();
+    aParams.InternalVerticesMode = Standard_True;
+    aParams.ControlSurfaceDeflection = Standard_True;
+    aParams.AdaptiveMin = Standard_False;
+    BRepMesh_IncrementalMesh aMesher (aLodShapes[aLodIdx], aParams);
+    aMesher.Perform();
+    if (toPrintInfo)
+    {
+      Standard_Integer aStatus = aMesher.GetStatusFlags();
+      std::cout << "LOD #" << aLodIdx << " meshing status: ";
+      if (!aStatus)
+        std::cout << " OK" << std::endl;
+      else
+      {
+        for (Standard_Integer aBitIdx = 0; aBitIdx < 4; ++aBitIdx)
+        {
+          if ((aStatus >> aBitIdx) & 1)
+          {
+            switch (aBitIdx + 1)
+            {
+            case 1:
+              std::cout << " OpenWire ";
+              break;
+            case 2:
+              std::cout << " SelfIntersectingWire ";
+              break;
+            case 3:
+              std::cout << " Failure ";
+              break;
+            case 4:
+              std::cout << " ReMesh ";
+              break;
+            }
+          }
+        }
+        std::cout << std::endl;
+      }
+    }
+  }
+
+  if (toPrintInfo)
+  {
+    std::cout << std::endl;
+    for (Standard_Integer aLodIdx = 0; aLodIdx < aLodsNb; ++aLodIdx)
+    {
+      std::cout << "LOD #" << aLodIdx + 1 << " info:" << std::endl;
+      if (aLodShapes[aLodIdx].IsNull())
+      {
+        std::cout << "The shape is null!" << std::endl;
+      }
+
+      Handle(Poly_Triangulation) aCurTrg;
+      TopLoc_Location aCurLoc;
+      Standard_Real aDefl = 0.0;
+      Standard_Integer aTrgsNb = 0, aNodesNb = 0;
+      for (TopExp_Explorer aShapeExp (aLodShapes[aLodIdx], TopAbs_FACE); aShapeExp.More(); aShapeExp.Next())
+      {
+        TopoDS_Face aCurFace = TopoDS::Face (aShapeExp.Current());
+        aCurTrg = BRep_Tool::Triangulation (aCurFace, aCurLoc);
+        if (!aCurTrg.IsNull())
+        {
+          aTrgsNb += aCurTrg->NbTriangles();
+          aNodesNb += aCurTrg->NbNodes();
+          if (aCurTrg->Deflection() > aDefl)
+            aDefl = aCurTrg->Deflection();
+        }
+      }
+      std::cout << "deflection  : " << aDefl << std::endl;
+      std::cout << "triangles nb: " << aTrgsNb << std::endl;
+      std::cout << "nodes nb    : " << aNodesNb << std::endl;
+      std::cout << std::endl;
+    }
+  }
+
+  if (!aMesh.IsNull() && aSavePath != "")
+  {
+    if (aSavePath.Value (aSavePath.Length()) != '/')
+    {
+      aSavePath = aSavePath + "/";
+    }
+    aSavePath = aSavePath + aShapeName + "_LOD";
+    for (Standard_Integer aLodIdx = 0; aLodIdx < aLodsNb; ++aLodIdx)
+    {
+      StlAPI_Writer aWriter;
+      aWriter.ASCIIMode() = Standard_False;
+      TCollection_AsciiString aPath = aSavePath + aLodIdx + ".stl";
+      StlAPI_ErrorStatus aStatus = aWriter.Write (aLodShapes[aLodIdx], aPath.ToCString());
+      switch (aStatus)
+      {
+      case StlAPI_CannotOpenFile:
+        std::cout << "Error! Cannot create/open a file with the name: " << aPath << std::endl;
+        break;
+      case StlAPI_StatusOK:
+      default:
+        std::cout << "LOD" << aLodIdx << " was written sucessfully to the file " << aPath << std::endl;
+      }
+    }
+  }
+
+  return 0;
+}
+
+#include <MeshVS_LODBuilder.hxx>
+static int MeshLod (Draw_Interpretor& theDI,
+                    Standard_Integer  theArgNum,
+                    const char**      theArgs)
+{
+  struct DetailLevelData
+  {
+  public:
+    DetailLevelData()
+      : myMesh (NULL),
+        myFrom (-DBL_MAX),
+        myTo (DBL_MAX) {}
+
+  public:
+    Handle(StlMesh_Mesh) myMesh;
+    Standard_Real        myFrom;
+    Standard_Real        myTo;
+  };
+
+  if (theArgNum < 3)
+  {
+    std::cout << "Error! Wrong number of arguments. See usage:\n";
+    theDI.PrintHelp (theArgs[0]);
+    return 1;
+  }
+
+  Handle(AIS_InteractiveContext) aCtx = ViewerTest::GetAISContext();
+  if (aCtx.IsNull())
+  {
+    std::cout << "Error! No opened viewer." << std::endl;
+    return 1;
+  }
+
+  Standard_CString aShapeName = theArgs[1];
+  if (GetMapOfAIS().IsBound2 (aShapeName))
+  {
+    std::cout << "Error! The context already has an interactive object with the name " << aShapeName << "." << std::endl;
+    return 1;
+  }
+  const TCollection_AsciiString aPathToLODInfo = Draw::Atoi (theArgs[2]);
+  if (aPathToLODInfo == "")
+  {
+    std::cout << "Error! Path to LOD info must not be empty!" << std::endl;
+    return 1;
+  }
+
+  std::ifstream aLODInfoFile (theArgs[2]);
+  NCollection_List<DetailLevelData> myLODDataList;
+  Handle(StlMesh_Mesh) aLargestMesh;
+  for (std::string aLODInfoStr; getline (aLODInfoFile, aLODInfoStr);)
+  {
+    DetailLevelData aData;
+    std::istringstream aStream (aLODInfoStr);
+    std::vector<std::string> aTokens;
+    std::copy (std::istream_iterator<std::string> (aStream),
+               std::istream_iterator<std::string>(),
+               std::back_inserter (aTokens));
+    for (Standard_Integer aTokenIdx = 0; aTokenIdx < aTokens.size(); ++aTokenIdx)
+    {
+      if (aTokens[aTokenIdx] == "-path")
+      {
+        OSD_Path aFile (aTokens[++aTokenIdx].c_str());
+        Handle(Draw_ProgressIndicator) aProgress = new Draw_ProgressIndicator (theDI, 1);
+        Handle(StlMesh_Mesh) aSTLMesh = RWStl::ReadFile (aFile, aProgress);
+        if (aSTLMesh.IsNull())
+        {
+          std::cout << "Error! Can not read LOD located at the path: " << aTokens[aTokenIdx] << std::endl;
+          return 1;
+        }
+        aData.myMesh = aSTLMesh;
+        if (aLargestMesh.IsNull() || aSTLMesh->Triangles().Length() > aLargestMesh->Triangles().Length())
+        {
+          aLargestMesh = aSTLMesh;
+        }
+      }
+      else if (aTokens[aTokenIdx] == "-from")
+      {
+        aData.myFrom = Draw::Atof (aTokens[++aTokenIdx].c_str());
+      }
+      else if (aTokens[aTokenIdx] == "-to")
+      {
+        aData.myTo = Draw::Atof (aTokens[++aTokenIdx].c_str());
+      }
+    }
+    myLODDataList.Append (aData);
+  }
+
+  if (aLargestMesh.IsNull())
+  {
+    std::cout << "Error! No meshes found in lod info file!" << std::endl;
+    return 1;
+  }
+
+  Handle(MeshVS_Mesh) anOriginMesh = new MeshVS_Mesh();
+  Handle(XSDRAWSTLVRML_DataSource) anOriginDataSource = new XSDRAWSTLVRML_DataSource (aLargestMesh);
+  anOriginMesh->SetDataSource (anOriginDataSource);
+  Handle(MeshVS_MeshPrsBuilder) anOriginBuilder = new MeshVS_MeshPrsBuilder (anOriginMesh.operator->());
+  anOriginMesh->AddBuilder (anOriginBuilder, Standard_True);
+  anOriginMesh->GetDrawer()->SetColor (MeshVS_DA_EdgeColor, Quantity_NOC_YELLOW);
+
+  for (NCollection_List<DetailLevelData>::Iterator aLodDataIter (myLODDataList); aLodDataIter.More(); aLodDataIter.Next())
+  {
+    Handle(MeshVS_LODDataSource) aLod = new MeshVS_LODDataSource (aLodDataIter.Value().myMesh);
+    anOriginMesh->AddDataSource (aLod);
+    Handle(MeshVS_LODBuilder) aLODBuilder = new MeshVS_LODBuilder (anOriginMesh.operator->());
+    aLODBuilder->SetDataSource (aLod);
+    aLODBuilder->SetDrawer (anOriginBuilder->GetDrawer());
+    anOriginMesh->AddBuilder (aLODBuilder);
+  }
+
+  // Hide all nodes by default
+  Handle(TColStd_HPackedMapOfInteger) aNodes = new TColStd_HPackedMapOfInteger();
+  Standard_Integer aLen = aLargestMesh->Vertices().Length();
+  for (Standard_Integer anIndex = 1; anIndex <= aLen; ++anIndex)
+    aNodes->ChangeMap().Add (anIndex);
+  anOriginMesh->SetHiddenNodes (aNodes);
+  anOriginMesh->SetSelectableNodes (aNodes);
+
+  VDisplayAISObject (aShapeName, anOriginMesh);
+  aCtx->Deactivate (anOriginMesh);
+
+  Standard_Integer aLodIdx = 0;
+  for (NCollection_List<DetailLevelData>::Iterator aLodDataIter (myLODDataList); aLodDataIter.More(); aLodDataIter.Next())
+  {
+    anOriginMesh->Presentation()->SetDetailLevelRange (aLodIdx, aLodDataIter.Value().myFrom, aLodDataIter.Value().myTo);
+  }
+
+  Draw::Set (aShapeName, new XSDRAWSTLVRML_DrawableMesh (anOriginMesh));
+  Handle(V3d_View) aView = ViewerTest::CurrentView();
+  if (!aView.IsNull())
+    aView->FitAll();
+
+  return 0;
+}
+
 //-----------------------------------------------------------------------------
 
 void  XSDRAWSTLVRML::InitCommands (Draw_Interpretor& theCommands)
@@ -1232,6 +1586,24 @@ void  XSDRAWSTLVRML::InitCommands (Draw_Interpretor& theCommands)
   theCommands.Add ("meshdeform",      "display deformed mesh",                        __FILE__, meshdeform,      g );
   theCommands.Add ("mesh_edge_width", "set width of edges",                           __FILE__, mesh_edge_width, g );
   theCommands.Add ("meshinfo",        "displays the number of nodes and triangles",   __FILE__, meshinfo,        g );
+  theCommands.Add ("meshgenlods",
+                   "meshgenlods shapeName lodsNb [-save pathToFolder] [-mesh meshName] [-debug]"
+                   "\n\t\t: Generates sequence of LODs for the shape with shapeName in amount of lodsNb."
+                   "\n\t\t: lodsNb means the exact amount of physical LODs to generate, e.g. the main"
+                   "\n\t\t: object's presentation is not considered as a separate level of detail here."
+                   "\n\t\t: [-debug] enables printing of meshing status and each LOD's info.",
+                   __FILE__, MeshGenLods, g);
+  theCommands.Add ("meshlod",
+                   "meshlod shapeName pathToFileWithLodInfo"
+                   "\n\t\t: Creates an object with the name shapeName that has LODs described in file stored at"
+                   "\n\t\t: pathToFileWithLodInfo. Each string in the file is a full description of LOD. It must"
+                   "\n\t\t: be filled using the following form:"
+                   "\n\t\t: -path pathToLOD [-from fromRange] [-to toRange], where"
+                   "\n\t\t: pathToLOD is a path to STL file with LOD mesh, fromRange and toRange define a depth"
+                   "\n\t\t: range where the LOD will be visible. Each of range parameters is optional, but in this"
+                   "\n\t\t: case, it will be equal to positive and negative max double correspondingly."
+                   "\n\t\t: It is assumed that ranges are non-overlapping segments of the real axis."
+                   __FILE__, MeshLod, g);
 }
 
 //==============================================================================

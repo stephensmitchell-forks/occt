@@ -17,6 +17,8 @@
 #include <OpenGl_Context.hxx>
 #include <OpenGl_GlCore11.hxx>
 #include <OpenGl_GraphicDriver.hxx>
+#include <OpenGl_LOD.hxx>
+#include <OpenGl_LODManager.hxx>
 #include <OpenGl_ShaderManager.hxx>
 #include <OpenGl_ShaderProgram.hxx>
 #include <OpenGl_StructureShadow.hxx>
@@ -26,6 +28,7 @@
 #include <OpenGl_Workspace.hxx>
 
 #include <Graphic3d_SequenceOfHClipPlane.hxx>
+#include <Graphic3d_LODManager.hxx>
 
 
 IMPLEMENT_STANDARD_RTTIEXT(OpenGl_Structure,Graphic3d_CStructure)
@@ -424,6 +427,19 @@ Handle(Graphic3d_Group) OpenGl_Structure::NewGroup (const Handle(Graphic3d_Struc
 }
 
 // =======================================================================
+// function : NewLOD
+// purpose  :
+// =======================================================================
+Handle(Graphic3d_LOD) OpenGl_Structure::NewLOD (const Handle(Graphic3d_Structure)& theStruct)
+{
+  if (myLODManager.IsNull())
+  {
+    myLODManager = new OpenGl_LODManager (theStruct);
+  }
+  return myLODManager->AddNewLOD();
+}
+
+// =======================================================================
 // function : RemoveGroup
 // purpose  :
 // =======================================================================
@@ -503,7 +519,8 @@ void OpenGl_Structure::renderGeometry (const Handle(OpenGl_Workspace)& theWorksp
     myInstancedStructure->renderGeometry (theWorkspace, theHasClosed);
   }
 
-  for (OpenGl_Structure::GroupIterator aGroupIter (myGroups); aGroupIter.More(); aGroupIter.Next())
+  const Graphic3d_SequenceOfGroup& aGroups = DrawGroups();
+  for (OpenGl_Structure::GroupIterator aGroupIter (aGroups); aGroupIter.More(); aGroupIter.Next())
   {
     theHasClosed = theHasClosed || aGroupIter.Value()->IsClosed();
     aGroupIter.Value()->Render (theWorkspace);
@@ -541,6 +558,9 @@ void OpenGl_Structure::Render (const Handle(OpenGl_Workspace) &theWorkspace) con
   {
     return;
   }
+
+  if (!myLODManager.IsNull() && myLODManager->GetCurrentLODIdx (theWorkspace->View()->Camera()) == -1)
+    return;
 
   const Handle(OpenGl_Context)& aCtx = theWorkspace->GetGlContext();
 
@@ -761,4 +781,39 @@ void OpenGl_Structure::ReleaseGlResources (const Handle(OpenGl_Context)& theGlCt
 Handle(Graphic3d_CStructure) OpenGl_Structure::ShadowLink (const Handle(Graphic3d_StructureManager)& theManager) const
 {
   return new OpenGl_StructureShadow (theManager, this);
+}
+
+//=======================================================================
+//function : SetDetailLevelRange
+//purpose  :
+//=======================================================================
+void OpenGl_Structure::SetDetailLevelRange (const Standard_Integer theIdOfLOD,
+                                            const Standard_Real theFrom,
+                                            const Standard_Real theTo)
+{
+  Standard_ASSERT_RAISE (theFrom < theTo,
+    "The upper boundary of the interval must be greater than lower one!");
+
+  if (theIdOfLOD < 0 || theIdOfLOD > myLODManager->NbOfDetailLevels())
+    return;
+
+  myLODManager->SetRange (theIdOfLOD, theFrom, theTo);
+}
+
+//=======================================================================
+//function : DrawGroups
+//purpose  :
+//=======================================================================
+const Graphic3d_SequenceOfGroup& OpenGl_Structure::DrawGroups() const
+{
+  return myLODManager.IsNull() ? myGroups : myLODManager->GetCurrentGroups();
+}
+
+//=======================================================================
+//function : NbDetailLevels
+//purpose  :
+//=======================================================================
+Standard_Integer OpenGl_Structure::NbDetailLevels() const
+{
+  return myLODManager->NbOfDetailLevels();
 }

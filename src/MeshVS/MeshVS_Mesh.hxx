@@ -127,7 +127,10 @@ public:
   
   //! Sets default builders' data source
   Standard_EXPORT void SetDataSource (const Handle(MeshVS_DataSource)& aDataSource);
-  
+
+  //! Adds data source to define LOD
+  Standard_EXPORT void AddDataSource (const Handle(MeshVS_DataSource)& theDataSource);
+
   //! Returns default builders' drawer
   Standard_EXPORT Handle(MeshVS_Drawer) GetDrawer() const;
   
@@ -191,7 +194,6 @@ friend class MeshVS_PrsBuilder;
 
 protected:
 
-
   MeshVS_DataMapOfIntegerOwner myNodeOwners;
   MeshVS_DataMapOfIntegerOwner myElementOwners;
   MeshVS_DataMapOfIntegerOwner my0DOwners;
@@ -205,9 +207,7 @@ protected:
   Handle(MeshVS_Drawer) myHilightDrawer;
   Handle(SelectMgr_EntityOwner) myWholeMeshOwner;
 
-
 private:
-
 
   MeshVS_SequenceOfPrsBuilder myBuilders;
   Handle(MeshVS_PrsBuilder) myHilighter;
@@ -216,14 +216,7 @@ private:
   Handle(TColStd_HPackedMapOfInteger) mySelectableNodes;
   Handle(MeshVS_DataSource) myDataSource;
   MeshVS_MeshSelectionMethod mySelectionMethod;
-
-
+  NCollection_Vector<Handle(MeshVS_DataSource)> myLODDataSources;
 };
-
-
-
-
-
-
 
 #endif // _MeshVS_Mesh_HeaderFile
