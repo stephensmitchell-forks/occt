@@ -723,7 +723,8 @@ void MeshVS_MeshPrsBuilder::AddFaceWirePrs (const TColStd_Array1OfReal&         
 // Function : AddFaceSolidPrs
 // Purpose  :
 //================================================================
-void MeshVS_MeshPrsBuilder::AddFaceSolidPrs (const Standard_Integer                    theID,
+void MeshVS_MeshPrsBuilder::AddFaceSolidPrs (const Handle(MeshVS_DataSource)&          theDataSource,
+                                             const Standard_Integer                    theID,
                                              const TColStd_Array1OfReal&               theCoords,
                                              const Standard_Integer                    theNbNodes,
                                              const Standard_Integer                    theMaxNodes,
@@ -733,9 +734,7 @@ void MeshVS_MeshPrsBuilder::AddFaceSolidPrs (const Standard_Integer             
                                              const Standard_Real                       theShrinkingCoef,
                                              const Standard_Boolean                    theIsSmoothShading) const
 {
-  Handle(MeshVS_DataSource) aDataSource = myParentMesh->GetDataSource();
-
-  if (aDataSource.IsNull())
+  if (theDataSource.IsNull())
     return;
 
   Standard_Real aCenterX = 0.0;
@@ -758,7 +757,7 @@ void MeshVS_MeshPrsBuilder::AddFaceSolidPrs (const Standard_Integer             
     {
       for (Standard_Integer aNodeIdx = 1; aNodeIdx <= theNbNodes; ++aNodeIdx)
       {
-        if (!aDataSource->GetNodeNormal (aNodeIdx, theID, aNormalX, aNormalY, aNormalZ))
+        if (!theDataSource->GetNodeNormal (aNodeIdx, theID, aNormalX, aNormalY, aNormalZ))
           break;
 
         aVertexNormals.Append (gp_XYZ (aNormalX, aNormalY, aNormalZ));
@@ -767,7 +766,7 @@ void MeshVS_MeshPrsBuilder::AddFaceSolidPrs (const Standard_Integer             
 
     if (!theIsSmoothShading || aVertexNormals.Size() != theNbNodes)
     {
-      aDataSource->GetNormal (theID, theMaxNodes, aNormalX, aNormalY, aNormalZ);
+      theDataSource->GetNormal (theID, theMaxNodes, aNormalX, aNormalY, aNormalZ);
     }
   }
 
@@ -819,6 +818,26 @@ void MeshVS_MeshPrsBuilder::AddFaceSolidPrs (const Standard_Integer             
     }
   }
 }
+
+//================================================================
+// Function : AddFaceSolidPrs
+// Purpose  :
+//================================================================
+void MeshVS_MeshPrsBuilder::AddFaceSolidPrs (const Standard_Integer                    theID,
+                                             const TColStd_Array1OfReal&               theCoords,
+                                             const Standard_Integer                    theNbNodes,
+                                             const Standard_Integer                    theMaxNodes,
+                                             const Handle(Graphic3d_ArrayOfTriangles)& theTriangles,
+                                             const Standard_Boolean                    theIsShaded,
+                                             const Standard_Boolean                    theIsShrinked,
+                                             const Standard_Real                       theShrinkingCoef,
+                                             const Standard_Boolean                    theIsSmoothShading) const
+{
+  Handle(MeshVS_DataSource) aDataSource = myParentMesh->GetDataSource();
+  AddFaceSolidPrs (aDataSource, theID, theCoords, theNbNodes, theMaxNodes, theTriangles,
+    theIsShaded, theIsShrinked, theShrinkingCoef, theIsSmoothShading);
+}
+
 
 //================================================================
 // Function : AddVolumePrs

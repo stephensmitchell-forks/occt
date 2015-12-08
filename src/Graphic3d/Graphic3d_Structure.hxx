@@ -33,6 +33,7 @@
 #include <Graphic3d_ZLayerId.hxx>
 #include <Graphic3d_SequenceOfHClipPlane.hxx>
 #include <Standard_Real.hxx>
+#include <TColStd_Array1OfReal.hxx>
 #include <TColStd_Array2OfReal.hxx>
 #include <Graphic3d_SequenceOfGroup.hxx>
 #include <Graphic3d_TypeOfConnection.hxx>
@@ -54,6 +55,7 @@ class Graphic3d_AspectFillArea3d;
 class Graphic3d_AspectText3d;
 class Graphic3d_AspectMarker3d;
 class Graphic3d_DataStructureManager;
+class Graphic3d_LOD;
 class Bnd_Box;
 class gp_Pnt;
 class Graphic3d_Vector;
@@ -254,6 +256,9 @@ public:
   
   //! Append new group to this structure.
   Standard_EXPORT Handle(Graphic3d_Group) NewGroup();
+
+  //! Append new LOD to this structure.
+  Standard_EXPORT Handle(Graphic3d_LOD) NewLOD();
   
   //! Returns the highlight color for the Highlight method
   //! with the highlight method TOHM_COLOR or TOHM_BOUNDBOX.
@@ -478,6 +483,10 @@ public:
   
   //! Returns the low-level structure
     const Handle(Graphic3d_CStructure)& CStructure() const;
+
+  Standard_EXPORT Standard_Integer NbDetailLevels() const;
+
+  Standard_EXPORT void SetDetailLevelRange (const Standard_Integer theIdOfLOD, const Standard_Real theFrom, const Standard_Real theTo);
 
 friend class Graphic3d_Group;
 

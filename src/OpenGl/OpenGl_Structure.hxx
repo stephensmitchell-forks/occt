@@ -35,8 +35,10 @@
 
 class OpenGl_Structure;
 class OpenGl_GraphicDriver;
+class OpenGl_LOD;
 
 typedef NCollection_List<const OpenGl_Structure* > OpenGl_ListOfStructure;
+typedef NCollection_Vector<Handle(OpenGl_LOD)> OpenGl_VectorOfLODs;
 
 //! Implementation of low-level graphic structure.
 class OpenGl_Structure : public Graphic3d_CStructure
@@ -98,16 +100,20 @@ public:
   //! Create new group within this structure
   Standard_EXPORT virtual Handle(Graphic3d_Group) NewGroup (const Handle(Graphic3d_Structure)& theStruct) Standard_OVERRIDE;
 
+  //! Create new LOD within this structure
+  Standard_EXPORT virtual Handle(Graphic3d_LOD) NewLOD (const Handle(Graphic3d_Structure)& theStruct) Standard_OVERRIDE;
+
   //! Remove group from this structure
   Standard_EXPORT virtual void RemoveGroup (const Handle(Graphic3d_Group)& theGroup) Standard_OVERRIDE;
+
+  Standard_EXPORT virtual void SetDetailLevelRange (const Standard_Integer theIdOfLOD,
+                                                    const Standard_Real theFrom,
+                                                    const Standard_Real theTo) Standard_OVERRIDE;
 
 public:
 
   //! @return graphic groups
-  virtual const Graphic3d_SequenceOfGroup& DrawGroups() const
-  {
-    return myGroups;
-  }
+  virtual const Graphic3d_SequenceOfGroup& DrawGroups() const;
 
   //! Access graphic driver
   OpenGl_GraphicDriver* GlDriver() const
@@ -196,6 +202,8 @@ public:
 
   //! Is the structure ray-tracable (contains ray-tracable elements)?
   Standard_Boolean IsRaytracable() const;
+
+  Standard_EXPORT virtual Standard_Integer NbDetailLevels() const Standard_OVERRIDE;
 
 protected:
 

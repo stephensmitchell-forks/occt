@@ -43,6 +43,10 @@ MeshVS_ElementalColorPrsBuilder.cxx
 MeshVS_ElementalColorPrsBuilder.hxx
 MeshVS_EntityType.hxx
 MeshVS_HArray1OfSequenceOfInteger.hxx
+MeshVS_LODBuilder.hxx
+MeshVS_LODBuilder.cxx
+MeshVS_LODDataSource.hxx
+MeshVS_LODDataSource.cxx
 MeshVS_MapIteratorOfMapOfTwoNodes.hxx
 MeshVS_MapOfTwoNodes.hxx
 MeshVS_Mesh.cxx

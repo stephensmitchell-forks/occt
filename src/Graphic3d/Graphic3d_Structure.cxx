@@ -1710,6 +1710,33 @@ Handle(Graphic3d_Group) Graphic3d_Structure::NewGroup()
 }
 
 //=============================================================================
+//function : NewLOD
+//purpose  :
+//=============================================================================
+Handle(Graphic3d_LOD) Graphic3d_Structure::NewLOD()
+{
+  return myCStructure->NewLOD (this);
+}
+
+//=============================================================================
+//function : NbDetailLevels
+//purpose  :
+//=============================================================================
+Standard_Integer Graphic3d_Structure::NbDetailLevels() const
+{
+  return myCStructure->NbDetailLevels();
+}
+
+//=============================================================================
+//function : SetDetailLevelRange
+//purpose  :
+//=============================================================================
+void Graphic3d_Structure::SetDetailLevelRange (const Standard_Integer theIdOfLOD, const Standard_Real theFrom, const Standard_Real theTo)
+{
+  myCStructure->SetDetailLevelRange (theIdOfLOD, theFrom, theTo);
+}
+
+//=============================================================================
 //function : Remove
 //purpose  :
 //=============================================================================
