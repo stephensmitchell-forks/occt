@@ -376,18 +376,26 @@ const
 //function : ParametricTransformation
 //purpose  : 
 //=======================================================================
-
+const static Standard_Real GeomTestScaleFactor = 2.*Epsilon(1.);
 gp_GTrsf2d Geom_SurfaceOfLinearExtrusion::ParametricTransformation
 (const gp_Trsf& T) const
 {
   // transformation in the V Direction
   gp_GTrsf2d TV;
-  gp_Ax2d Axis(gp::Origin2d(),gp::DX2d());
-  TV.SetAffinity(Axis, Abs(T.ScaleFactor()));
+  Standard_Real aScalefactor = Abs(T.ScaleFactor());
+  if(Abs(aScalefactor - 1.) > GeomTestScaleFactor)
+  {
+    gp_Ax2d Axis(gp::Origin2d(),gp::DX2d());
+    TV.SetAffinity(Axis, aScalefactor);
+  }
   // transformation in the U Direction
   gp_GTrsf2d TU;
-  Axis = gp_Ax2d(gp::Origin2d(),gp::DY2d());
-  TU.SetAffinity(Axis, basisCurve->ParametricTransformation(T));
+  aScalefactor = basisCurve->ParametricTransformation(T);
+  if(Abs(aScalefactor - 1.) > GeomTestScaleFactor)
+  {
+    gp_Ax2d Axis(gp::Origin2d(),gp::DY2d());
+    TU.SetAffinity(Axis, aScalefactor);
+  }
  
   return TU * TV;
 }

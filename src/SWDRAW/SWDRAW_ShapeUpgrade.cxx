@@ -1272,6 +1272,13 @@ static Standard_Integer removeloc (Draw_Interpretor& di,
     aRemLoc.SetRemoveLevel((TopAbs_ShapeEnum)Draw::Atoi(argv[3]));
   aRemLoc.Remove(aShape);
   TopoDS_Shape aNewShape = aRemLoc.GetResult();
+
+  TopExp_Explorer anExp(aNewShape, TopAbs_FACE);
+  for(; anExp.More(); anExp.Next())
+  {
+    TopoDS_Face aF = TopoDS::Face(anExp.Current());
+    BRepTools::UpdateFaceUVPoints(aF);
+  }
   
   DBRep::Set(argv[1],aNewShape);
   return 0;

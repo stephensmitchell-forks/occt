@@ -559,7 +559,7 @@ static void ChangeTransition(const ChFiDS_CommonPoint&    Precedant,
   TopoDS_Shape aLocalShape = Arc.Reversed();
   PCurve2 = BRep_Tool::CurveOnSurface(TopoDS::Edge(aLocalShape), F, f, l);
 //  PCurve2 = BRep_Tool::CurveOnSurface(TopoDS::Edge(Arc.Reversed()), F, f, l);
-  if (PCurve1 != PCurve2) { 
+  if (PCurve1 != PCurve2 && Precedant.HasVector()) { 
     // This is a cutting edge, it is necessary to make a small Geometric test
     gp_Vec tgarc;
     gp_Pnt P;

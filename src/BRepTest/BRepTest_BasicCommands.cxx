@@ -192,6 +192,90 @@ static Standard_Integer transform(Draw_Interpretor& ,Standard_Integer n,const ch
   }
   return 0;
 }
+//=======================================================================
+// transform
+//=======================================================================
+
+static Standard_Integer tttmmm(Draw_Interpretor& ,Standard_Integer n,const char** a)
+{
+  if (n <= 1) return 1;
+
+  gp_Trsf T;
+  Standard_Integer last = n;
+  const char* aName = a[0];
+
+  Standard_Boolean isBasic = Standard_False;
+
+  if (!strcmp(aName,"reset")) {
+  }
+  else {
+    isBasic = (aName[0] == 'b');
+    aName++;
+
+    if (!strcmp(aName,"move")) {
+      if (n < 3) return 1;
+      TopoDS_Shape SL = DBRep::Get(a[n-1]);
+      if (SL.IsNull()) return 0;
+      T = SL.Location().Transformation();
+      last = n-1;
+    }
+    else if (!strcmp(aName,"translate")) {
+      if (n < 5) return 1;
+      T.SetTranslation(gp_Vec(Draw::Atof(a[n-3]),Draw::Atof(a[n-2]),Draw::Atof(a[n-1])));
+      last = n-3;
+    }
+    else if (!strcmp(aName,"rotate")) {
+      if (n < 9) return 1;
+      T.SetRotation(gp_Ax1(gp_Pnt(Draw::Atof(a[n-7]),Draw::Atof(a[n-6]),Draw::Atof(a[n-5])),
+                    gp_Vec(Draw::Atof(a[n-4]),Draw::Atof(a[n-3]),Draw::Atof(a[n-2]))),
+                    Draw::Atof(a[n-1])* (M_PI / 180.0));
+      last = n-7;
+    }
+    else if (!strcmp(aName,"mirror")) {
+      if (n < 8) return 1;
+      T.SetMirror(gp_Ax2(gp_Pnt(Draw::Atof(a[n-6]),Draw::Atof(a[n-5]),Draw::Atof(a[n-4])),
+                  gp_Vec(Draw::Atof(a[n-3]),Draw::Atof(a[n-2]),Draw::Atof(a[n-1]))));
+      last = n-6;
+    }
+    else  {
+      if (n < 6) return 1;
+      T.SetScale(gp_Pnt(Draw::Atof(a[n-4]),Draw::Atof(a[n-3]),Draw::Atof(a[n-2])),Draw::Atof(a[n-1]));
+      last = n-4;
+    }
+  }
+
+  if (T.Form() == gp_Identity || isBasic) {
+    TopLoc_Location L(T);
+    for (Standard_Integer i = 1; i < last; i++) {
+      TopoDS_Shape S = DBRep::Get(a[i]);
+      if (S.IsNull())
+      {
+        std::cerr << "Error: " << a[i] << " is not a valid shape\n";
+        return 1;
+      }
+      else
+        DBRep::Set(a[i],S.Located(L));
+    }
+  }
+  else {
+    //BRepBuilderAPI_Transform trf(T);
+    for (Standard_Integer i = 1; i < last; i++) {
+      TopoDS_Shape S = DBRep::Get(a[i]);
+      if (S.IsNull()) {
+        std::cerr << "Error: " << a[i] << " is not a valid shape\n";
+        return 1;
+      }
+      else {
+        TopLoc_Location L(T);
+        TopoDS_Shape aSMoved = S.Moved(L);
+        char nn[8];
+        sprintf(nn, "mv_%d", i);
+        DBRep::Set(a[i],aSMoved);
+      }
+    }
+  }
+  return 0;
+}
 
 ///=======================================================================
 // gtransform
@@ -1429,6 +1513,10 @@ void  BRepTest::BasicCommands(Draw_Interpretor& theCommands)
 		  __FILE__,
 		  transform,g);
 
+    theCommands.Add("tttmmm",
+		  "tttmmm name1 x y z scale, ",
+		  __FILE__,
+		  tttmmm,g);
   theCommands.Add("ttranslate",
 		  "ttranslate name1 name2 ... dx dy dz [-copy]",
 		  __FILE__,

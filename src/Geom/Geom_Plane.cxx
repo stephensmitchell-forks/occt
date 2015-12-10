@@ -374,10 +374,14 @@ const
 //function : ParametricTransformation
 //purpose  : 
 //=======================================================================
-
+const static Standard_Real GeomTestScaleFactor = 2.*Epsilon(1.);
 gp_GTrsf2d Geom_Plane::ParametricTransformation(const gp_Trsf& T) const
 {
   gp_Trsf2d T2;
-  T2.SetScale(gp::Origin2d(), Abs(T.ScaleFactor()));
+  Standard_Real aScalefactor = Abs(T.ScaleFactor());
+  if(Abs(aScalefactor - 1.) > GeomTestScaleFactor)
+  {
+    T2.SetScale(gp::Origin2d(), aScalefactor);
+  }
   return gp_GTrsf2d(T2);
 }

@@ -398,9 +398,11 @@ void BRepCheck_Edge::InContext(const TopoDS_Shape& S)
             Sb = Handle(Geom_Surface)::DownCast
               //	      (Su->Transformed(L.Transformation()));
               (Su->Transformed(/*L*/(Floc * TFloc).Transformation()));
-            Handle(Geom2d_Curve) PC = cr->PCurve();
+            TopoDS_Edge aLocEdge = TopoDS::Edge(myShape.Oriented(TopAbs_FORWARD));
+            Handle(Geom2d_Curve) PC = 
+              BRep_Tool::CurveOnSurface(aLocEdge, TopoDS::Face(S), ff, ll);
             Handle(GeomAdaptor_HSurface) GAHS = new GeomAdaptor_HSurface(Sb);
-            Handle(Geom2dAdaptor_HCurve) GHPC = new Geom2dAdaptor_HCurve(PC,f,l);
+            Handle(Geom2dAdaptor_HCurve) GHPC = new Geom2dAdaptor_HCurve(PC,ff,ll);
             Adaptor3d_CurveOnSurface ACS(GHPC,GAHS);
             Standard_Boolean ok = 
               Validate(myHCurve->Curve() ,ACS,Tol,SameParameter);
@@ -419,7 +421,11 @@ void BRepCheck_Edge::InContext(const TopoDS_Shape& S)
               //  Modified by skv - Tue Apr 27 11:53:01 2004 End
             }
             if (cr->IsCurveOnClosedSurface()) {
-              GHPC->ChangeCurve2d().Load(cr->PCurve2(),f,l); // same bounds
+              TopoDS_Edge aLocEdge = TopoDS::Edge(myShape.Oriented(TopAbs_REVERSED));
+              Handle(Geom2d_Curve) PC = 
+                BRep_Tool::CurveOnSurface(aLocEdge, TopoDS::Face(S), ff, ll);
+              //GHPC->ChangeCurve2d().Load(cr->PCurve2(),f,l); // same bounds
+              GHPC->ChangeCurve2d().Load(PC, ff, ll); // same bounds
               ACS.Load(GHPC, GAHS); // sans doute inutile
               ok = Validate(myHCurve->Curve(),ACS,Tol,SameParameter);
               if (!ok) {

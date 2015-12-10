@@ -1,6 +1,6 @@
-puts "TODO OCC641 ALL: An exception was caught"
-puts "TODO OCC641 ALL: \\*\\* Exception \\*\\*.*"
-puts "TODO OCC641 ALL: Error : result shape is displayed wrongly"
+#puts "TODO OCC641 ALL: An exception was caught"
+#puts "TODO OCC641 ALL: \\*\\* Exception \\*\\*.*"
+#puts "TODO OCC641 ALL: Error : result shape is displayed wrongly"
 
 puts "================"
 puts "OCC641"

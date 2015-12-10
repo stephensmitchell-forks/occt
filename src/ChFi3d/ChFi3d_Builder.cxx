@@ -79,6 +79,7 @@
 #include <TopOpeBRepDS_PointIterator.hxx>
 #include <TopTools_ListIteratorOfListOfShape.hxx>
 #include <TopTools_ListOfShape.hxx>
+#include <BRepTools.hxx>
 
 #ifdef OCCT_DEBUG
 #include <OSD_Chronometer.hxx>
@@ -420,6 +421,20 @@ void  ChFi3d_Builder::Compute()
       Standard_Integer i=1,n=DStr.NbShapes();
       for (;i<=n;i++) {
 	const TopoDS_Shape S = DStr.Shape(i);
+  if(S.ShapeType() == TopAbs_FACE)
+  {
+    Standard_Boolean issplitIN = myCoup->IsSplit(S,TopAbs_IN);
+    if(issplitIN) 
+    {
+      TopTools_ListIteratorOfListOfShape it(myCoup->Splits(S,TopAbs_IN));
+      for (; it.More(); it.Next() )
+      {
+        const TopoDS_Face& Sspl = TopoDS::Face(it.Value());
+        BRepTools::Update(Sspl);
+      }
+    }
+  }
+
 	if (S.ShapeType() != TopAbs_EDGE) continue;
 	Standard_Boolean issplitIN = myCoup->IsSplit(S,TopAbs_IN);
 	if ( !issplitIN ) continue;
@@ -581,8 +596,10 @@ void  ChFi3d_Builder::Compute()
       const TopTools_ListOfShape& aLF=myCoup->NewFaces(iF);
       aIt.Initialize(aLF);
       for (; aIt.More(); aIt.Next()) {
-	const TopoDS_Shape& aF=aIt.Value();
-	BRepLib::SameParameter(aF, SameParTol, Standard_True);
+	const TopoDS_Face& aF = TopoDS::Face(aIt.Value());
+  BRepTools::Update(aF);
+
+  	BRepLib::SameParameter(aF, SameParTol, Standard_True);
 	ShapeFix::SameParameter(aF, Standard_False, SameParTol);
       }
     }

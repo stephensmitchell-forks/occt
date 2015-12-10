@@ -149,7 +149,10 @@ public:
   {
     Tol = BRep_Tool::Tolerance(E);
     Standard_Real f, l;
-    C = BRep_Tool::CurveOnSurface (E, F, f, l);
+    TopLoc_Location L;
+    const Handle(Geom_Surface)& S = BRep_Tool::Surface(F,L);
+    C = BRep_Tool::CurveOnSurface(E, S, L, f, l);
+    //C = BRep_Tool::CurveOnSurface (E, F, f, l);
 
     if ( ! C.IsNull() && myCopyGeom )
       C = Handle(Geom2d_Curve)::DownCast (C->Copy());

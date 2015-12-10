@@ -1298,7 +1298,7 @@ static Standard_Integer veriftriangles(Draw_Interpretor& di, Standard_Integer n,
 //function : tri2d
 //purpose  : 
 //=======================================================================
-
+#include <gp_GTrsf2d.hxx>
 Standard_Integer tri2d(Draw_Interpretor&, Standard_Integer n, const char** a)
 {
 
@@ -1355,6 +1355,10 @@ Standard_Integer tri2d(Draw_Interpretor&, Standard_Integer n, const char** a)
 
     // Display the edges
     if (T->HasUVNodes()) {
+      const Handle(Geom_Surface)& S = BRep_Tool::Surface(F,L);
+      const gp_Trsf& aTrsf = L.Transformation();
+      gp_GTrsf2d aGTrsf = S->ParametricTransformation(aTrsf);
+
       const TColgp_Array1OfPnt2d& Nodes2d = T->UVNodes();
 
       Handle(Draw_Segment2D) Seg;
@@ -1363,9 +1367,11 @@ Standard_Integer tri2d(Draw_Interpretor&, Standard_Integer n, const char** a)
       Standard_Integer nn;
       nn = Free.Length() / 2;
       for (i = 1; i <= nn; i++) {
-        Seg = new Draw_Segment2D(Nodes2d(Free(2*i-1)),
-          Nodes2d(Free(2*i)),
-          Draw_rouge);
+        gp_Pnt2d aP1 = Nodes2d(Free(2*i-1));
+        aP1.SetXY(aGTrsf.Transformed(aP1.XY()));
+        gp_Pnt2d aP2 = Nodes2d(Free(2*i));
+        aP2.SetXY(aGTrsf.Transformed(aP2.XY()));
+        Seg = new Draw_Segment2D(aP1, aP2, Draw_rouge);
         dout << Seg;
       }
 
@@ -1373,9 +1379,11 @@ Standard_Integer tri2d(Draw_Interpretor&, Standard_Integer n, const char** a)
 
       nn = nInternal;
       for (i = 1; i <= nn; i++) {
-        Seg = new Draw_Segment2D(Nodes2d(Internal(2*i-1)),
-          Nodes2d(Internal(2*i)),
-          Draw_bleu);
+        gp_Pnt2d aP1 = Nodes2d(Internal(2*i-1));
+        aP1.SetXY(aGTrsf.Transformed(aP1.XY()));
+        gp_Pnt2d aP2 = Nodes2d(Internal(2*i));
+        aP2.SetXY(aGTrsf.Transformed(aP2.XY()));
+        Seg = new Draw_Segment2D(aP1, aP2, Draw_bleu);
         dout << Seg;
       }
     }

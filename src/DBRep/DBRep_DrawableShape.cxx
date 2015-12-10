@@ -244,7 +244,8 @@ Standard_EXPORT Draw_Color DBRep_ColorOrientation (const TopAbs_Orientation Or);
 
 static void PlotIso (Draw_Display& dis,
 			 Handle(DBRep_Face)& F, 
-			 BRepAdaptor_Surface& S, 
+			 //BRepAdaptor_Surface& S, 
+			 Adaptor3d_Surface& S, 
 			 GeomAbs_IsoType T,
 			 Standard_Real& U, 
 			 Standard_Real& V, 
@@ -386,13 +387,18 @@ void  DBRep_DrawableShape::DrawOn(Draw_Display& dis) const
     dis.SetColor(F->Color());
 
     Handle(Geom_Surface) aSurf = BRep_Tool::Surface(F->Face(), aTempLoc);
+    if(!aTempLoc.IsIdentity())
+    {
+      const gp_Trsf& aTrsf = aTempLoc.Transformation();
+      aSurf = Handle(Geom_Surface)::DownCast(aSurf->Transformed(aTrsf));
+    }
 
     if (!aSurf.IsNull()) {
 
       Standard_Boolean restriction = Standard_False;
+      Standard_Real SU1 = 0., SU2 = 0., SV1 = 0., SV2 = 0.;
+      Standard_Real FU1 = 0., FU2 = 0., FV1 = 0., FV2 = 0.;
       if(aSurf->IsUPeriodic() || aSurf->IsVPeriodic()) {
-        Standard_Real SU1 = 0., SU2 = 0., SV1 = 0., SV2 = 0.;
-        Standard_Real FU1 = 0., FU2 = 0., FV1 = 0., FV2 = 0.;
         aSurf->Bounds(SU1,SU2,SV1,SV2);
         BRepTools::UVBounds (F->Face(),FU1,FU2,FV1,FV2);
         if(aSurf->IsUPeriodic()) {
@@ -417,9 +423,17 @@ void  DBRep_DrawableShape::DrawOn(Draw_Display& dis) const
           restriction = Standard_False;
       }
 
-      BRepAdaptor_Surface S(F->Face(),restriction);
-
+      //BRepAdaptor_Surface S(F->Face(),restriction);
       //BRepAdaptor_Surface S(F->Face(),Standard_False);
+      GeomAdaptor_Surface S;
+      if(restriction)
+      {
+        S.Load(aSurf, FU1, FU2, FV1, FV2);
+      }
+      else
+      {
+        S.Load(aSurf);
+      }
       
       GeomAbs_SurfaceType SurfType = S.GetType();
 

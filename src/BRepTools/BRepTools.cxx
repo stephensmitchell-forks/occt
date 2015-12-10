@@ -560,7 +560,10 @@ void  BRepTools::UpdateFaceUVPoints(const TopoDS_Face& F)
     {
       const TopoDS_Edge& E = TopoDS::Edge(EdgeIt.Value());
       Standard_Real f,l;
-      Handle(Geom2d_Curve) C = BRep_Tool::CurveOnSurface(E,F,f,l);
+      //Handle(Geom2d_Curve) C = BRep_Tool::CurveOnSurface(E,F,f,l);
+      TopLoc_Location L;
+      const Handle(Geom_Surface)& S = BRep_Tool::Surface(F, L);
+      Handle(Geom2d_Curve) C = BRep_Tool::CurveOnSurface(E, S, L, f, l);
 
       aFSeq.Append(f);
       aLSeq.Append(l);

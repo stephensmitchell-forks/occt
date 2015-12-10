@@ -260,8 +260,12 @@ Standard_Integer BRepMesh_FastDiscret::Add(const TopoDS_Face& theFace)
         }
 
         Standard_Real aFirstParam, aLastParam;
-        Handle(Geom2d_Curve) aCurve2d = 
-          BRep_Tool::CurveOnSurface(aEdge, aFace, aFirstParam, aLastParam);
+        TopLoc_Location L;
+        const Handle(Geom_Surface)& S = BRep_Tool::Surface(aFace, L);
+        Handle(Geom2d_Curve) aCurve2d = BRep_Tool::CurveOnSurface(aEdge, S, L,
+                                                                  aFirstParam, aLastParam);
+        //Handle(Geom2d_Curve) aCurve2d = 
+        //  BRep_Tool::CurveOnSurface(aEdge, aFace, aFirstParam, aLastParam);
 
         if (aCurve2d.IsNull())
           continue;

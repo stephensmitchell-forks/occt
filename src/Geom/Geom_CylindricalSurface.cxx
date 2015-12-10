@@ -365,12 +365,16 @@ const
 //function : ParametricTransformation
 //purpose  : 
 //=======================================================================
-
+const static Standard_Real GeomTestScaleFactor = 2.*Epsilon(1.);
 gp_GTrsf2d Geom_CylindricalSurface::ParametricTransformation(const gp_Trsf& T)
 const
 {
   gp_GTrsf2d T2;
-  gp_Ax2d Axis(gp::Origin2d(),gp::DX2d());
-  T2.SetAffinity(Axis, Abs(T.ScaleFactor()));
+  Standard_Real aScalefactor = Abs(T.ScaleFactor());
+  if(Abs(aScalefactor - 1.) > GeomTestScaleFactor)
+  {
+    gp_Ax2d Axis(gp::Origin2d(),gp::DX2d());
+    T2.SetAffinity(Axis, aScalefactor);
+  }
   return T2;
 }

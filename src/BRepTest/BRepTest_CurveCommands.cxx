@@ -67,6 +67,8 @@
 #include <TopOpeBRep_EdgesIntersector.hxx>
 #include <TopOpeBRep_Point2d.hxx>
 #include <TopOpeBRepDS_Transition.hxx>
+#include <gp_GTrsf2d.hxx>
+#include <GeomLib.hxx>
 
 #include <stdio.h>
 #ifdef _WIN32
@@ -467,7 +469,24 @@ static Standard_Integer mk2dcurve(Draw_Interpretor& di,
     di << "\n";
     return 1;
   }
-  C = new Geom2d_TrimmedCurve(C,f,l);
+  if(!hasFace && !C.IsNull() && !L.IsIdentity())
+  {
+    C = new Geom2d_TrimmedCurve(C, f, l);
+    const gp_Trsf& aTrsf = L.Transformation();
+    gp_GTrsf2d aGTrsf = Surf->ParametricTransformation(aTrsf);
+
+    if ( aGTrsf.Form() != gp_Identity) {
+      C = GeomLib::GTransform(C,aGTrsf);
+      if (!C.IsNull())
+      {
+        f = C->FirstParameter();
+        l = C->LastParameter();
+      }
+    }
+  }
+  if (C->DynamicType() != STANDARD_TYPE(Geom2d_TrimmedCurve)) {
+    C = new Geom2d_TrimmedCurve(C,f,l);
+  }
   DrawTrSurf::Set(a[1],C);
 
   return 0;
