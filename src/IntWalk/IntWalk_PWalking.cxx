@@ -1211,6 +1211,7 @@ void IntWalk_PWalking::Perform(const TColStd_Array1OfReal& ParDep,
             break;
           }
         case IntWalk_OK:
+        case IntWalk_OKtangent:
         case IntWalk_ArretSurPoint://006
           {
             //=======================================================
@@ -1803,6 +1804,7 @@ Standard_Boolean IntWalk_PWalking::ExtendLineInCommonZone(const IntImp_ConstIsop
           break;
         }
       case IntWalk_OK:
+      case IntWalk_OKtangent:
       case IntWalk_ArretSurPoint:
         {
           //

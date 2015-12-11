@@ -76,6 +76,8 @@ public:
   
     void SetTangencyAtEnd (const Standard_Boolean IsTangent);
   
+    void SetTangency (const Standard_Boolean IsTangency) ;
+  
   //! Returns the number of points of the line (including first
   //! point and end point : see HasLastPoint and HasFirstPoint).
     Standard_Integer NbPoints() const;
@@ -139,6 +141,8 @@ public:
     Standard_Boolean IsTangentAtBegining() const;
   
     Standard_Boolean IsTangentAtEnd() const;
+  
+    Standard_Boolean IsTangency()  const;
 
 
 
@@ -166,6 +170,7 @@ private:
   gp_Vec vcttg;
   Standard_Boolean istgtbeg;
   Standard_Boolean istgtend;
+  Standard_Boolean istangency;
 
 
 };
