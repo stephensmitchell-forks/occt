@@ -9,51 +9,41 @@ puts ""
 restore [locate_data_file bug25542-cyl.brep] b1
 restore [locate_data_file bug25542-con.brep] b2
 
-bop b1 b2
+smallview
 
-vinit
+bop b1 b2
 
 puts ""
 puts "FUSE"
 
 bopfuse rfu
-vdisplay rfu
-vfit
-vsetdispmode 1
-vdump ${imagedir}/${casename}_rfu.png
-
-vclear
+donly rfu
+fit
+xwd ${imagedir}/${casename}_rfu.png
 
 puts ""
 puts "COMMON"
 
 bopcommon rco
-vdisplay rco
-vfit
-vsetdispmode 1
-vdump ${imagedir}/${casename}_rco.png
-
-vclear    
+donly rco
+fit
+xwd ${imagedir}/${casename}_rco.png
 
 puts ""
 puts "CUT"
 
 bopcut rcu
-vdisplay rcu
-vfit
-vsetdispmode 1
-vdump ${imagedir}/${casename}_rcu.png
-
-vclear
+donly rcu
+fit
+xwd ${imagedir}/${casename}_rcu.png
 
 puts ""
 puts "TUC"
 
 boptuc rtu
-vdisplay rtu
-vfit
-vsetdispmode 1
-vdump ${imagedir}/${casename}_rtu.png
+donly rtu
+fit
+xwd ${imagedir}/${casename}_rtu.png
 
 
 set exp_nbshapes_rfu "
@@ -117,3 +107,8 @@ checkshape rfu
 checkshape rco
 checkshape rcu
 checkshape rtu
+
+checkprops rfu -s 59099.9
+checkprops rco -s 6951.3
+checkprops rcu -s 57145.3
+checkprops rtu -s 7759.96
