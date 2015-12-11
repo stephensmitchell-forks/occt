@@ -1,0 +1,119 @@
+puts "============"
+puts "OCC25542"
+puts "============"
+puts ""
+#############################################################################################
+## Boolean operation failure for Cylinder and Cone in critical location.
+#############################################################################################
+
+restore [locate_data_file bug25542-cyl.brep] b1
+restore [locate_data_file bug25542-con.brep] b2
+
+bop b1 b2
+
+vinit
+
+puts ""
+puts "FUSE"
+
+bopfuse rfu
+vdisplay rfu
+vfit
+vsetdispmode 1
+vdump ${imagedir}/${casename}_rfu.png
+
+vclear
+
+puts ""
+puts "COMMON"
+
+bopcommon rco
+vdisplay rco
+vfit
+vsetdispmode 1
+vdump ${imagedir}/${casename}_rco.png
+
+vclear    
+
+puts ""
+puts "CUT"
+
+bopcut rcu
+vdisplay rcu
+vfit
+vsetdispmode 1
+vdump ${imagedir}/${casename}_rcu.png
+
+vclear
+
+puts ""
+puts "TUC"
+
+boptuc rtu
+vdisplay rtu
+vfit
+vsetdispmode 1
+vdump ${imagedir}/${casename}_rtu.png
+
+
+set exp_nbshapes_rfu "
+Number of shapes in shape
+ VERTEX    : 6
+ EDGE      : 14
+ WIRE      : 8
+ FACE      : 8
+ SHELL     : 1
+ SOLID     : 1
+ COMPSOLID : 0
+ COMPOUND  : 1
+ SHAPE     : 39
+"
+
+set exp_nbshapes_rco "
+Number of shapes in shape
+ VERTEX    : 3
+ EDGE      : 5
+ WIRE      : 3
+ FACE      : 3
+ SHELL     : 1
+ SOLID     : 1
+ COMPSOLID : 0
+ COMPOUND  : 1
+ SHAPE     : 17
+"
+
+set exp_nbshapes_rcu "
+Number of shapes in shape
+ VERTEX    : 5
+ EDGE      : 9
+ WIRE      : 5
+ FACE      : 5
+ SHELL     : 1
+ SOLID     : 1
+ COMPSOLID : 0
+ COMPOUND  : 1
+ SHAPE     : 27
+"
+
+set exp_nbshapes_rtu "
+Number of shapes in shape
+ VERTEX    : 4
+ EDGE      : 8
+ WIRE      : 4
+ FACE      : 4
+ SHELL     : 1
+ SOLID     : 1
+ COMPSOLID : 0
+ COMPOUND  : 1
+ SHAPE     : 23
+"
+
+checknbshapes rfu -ref ${exp_nbshapes_rfu} -t -m "FUSE"
+checknbshapes rco -ref ${exp_nbshapes_rco} -t -m "COMMON"
+checknbshapes rcu -ref ${exp_nbshapes_rcu} -t -m "CUT"
+checknbshapes rtu -ref ${exp_nbshapes_rtu} -t -m "TUC"
+
+checkshape rfu
+checkshape rco
+checkshape rcu
+checkshape rtu
