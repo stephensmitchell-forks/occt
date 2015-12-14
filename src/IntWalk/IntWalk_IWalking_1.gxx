@@ -1638,14 +1638,14 @@ Standard_Boolean IntWalk_IWalking::
   if(aNbPoints >= theMinNbPoints)
     return Standard_True;
 
-  const Standard_Real aU1bFirst = theASurf1->FirstUParameter();
-  const Standard_Real aU1bLast = theASurf1->LastUParameter();
-  const Standard_Real aU2bFirst = theASurf2->FirstUParameter();
-  const Standard_Real aU2bLast = theASurf2->LastUParameter();
-  const Standard_Real aV1bFirst = theASurf1->FirstVParameter();
-  const Standard_Real aV1bLast = theASurf1->LastVParameter();
-  const Standard_Real aV2bFirst = theASurf2->FirstVParameter();
-  const Standard_Real aV2bLast = theASurf2->LastVParameter();
+  //const Standard_Real aU1bFirst = theASurf1->FirstUParameter();
+  //const Standard_Real aU1bLast = theASurf1->LastUParameter();
+  //const Standard_Real aU2bFirst = theASurf2->FirstUParameter();
+  //const Standard_Real aU2bLast = theASurf2->LastUParameter();
+  //const Standard_Real aV1bFirst = theASurf1->FirstVParameter();
+  //const Standard_Real aV1bLast = theASurf1->LastVParameter();
+  //const Standard_Real aV2bFirst = theASurf2->FirstVParameter();
+  //const Standard_Real aV2bLast = theASurf2->LastVParameter();
 
   Standard_Integer aLastPoint = theToPoint;
   
@@ -1667,28 +1667,28 @@ Standard_Boolean IntWalk_IWalking::
       line->Value(lp).Parameters(U1l, V1l, U2l, V2l);
 
       U1prec = 0.5*(U1f+U1l);
-      if(U1prec < aU1bFirst)
-        U1prec = aU1bFirst;
-      if(U1prec > aU1bLast)
-        U1prec = aU1bLast;
+      //if(U1prec < aU1bFirst)
+      //  U1prec = aU1bFirst;
+      //if(U1prec > aU1bLast)
+      //  U1prec = aU1bLast;
 
       V1prec = 0.5*(V1f+V1l);
-      if(V1prec < aV1bFirst)
-        V1prec = aV1bFirst;
-      if(V1prec > aV1bLast)
-        V1prec = aV1bLast;
+      //if(V1prec < aV1bFirst)
+      //  V1prec = aV1bFirst;
+      //if(V1prec > aV1bLast)
+      //  V1prec = aV1bLast;
 
       U2prec = 0.5*(U2f+U2l);
-      if(U2prec < aU2bFirst)
-        U2prec = aU2bFirst;
-      if(U2prec > aU2bLast)
-        U2prec = aU2bLast;
+      //if(U2prec < aU2bFirst)
+      //  U2prec = aU2bFirst;
+      //if(U2prec > aU2bLast)
+      //  U2prec = aU2bLast;
 
       V2prec = 0.5*(V2f+V2l);
-      if(V2prec < aV2bFirst)
-        V2prec = aV2bFirst;
-      if(V2prec > aV2bLast)
-        V2prec = aV2bLast;
+      //if(V2prec < aV2bFirst)
+      //  V2prec = aV2bFirst;
+      //if(V2prec > aV2bLast)
+      //  V2prec = aV2bLast;
 
       Standard_Boolean aStatus = Standard_False;
       Standard_Integer aNbIter = 5;
@@ -1725,6 +1725,17 @@ Standard_Boolean IntWalk_IWalking::
 
       if(aStatus)
       {
+        //const Standard_Real aU1Rf = !theASurf1->IsUPeriodic() ? aU1bFirst : Min(U1f, aU1bFirst);
+
+        const Standard_Real aU1bFirst = Min(U1f, U1l);
+        const Standard_Real aU1bLast = Max(U1f, U1l);
+        const Standard_Real aU2bFirst = Min(U2f, U2l);
+        const Standard_Real aU2bLast = Max(U2f, U2l);
+        const Standard_Real aV1bFirst = Min(V1f, V1l);
+        const Standard_Real aV1bLast = Max(V1f, V1l);
+        const Standard_Real aV2bFirst = Min(V2f, V2l);
+        const Standard_Real aV2bLast = Max(V2f, V2l);
+
         if(U1prec < aU1bFirst)
           U1prec = aU1bFirst;
         if(U1prec > aU1bLast)

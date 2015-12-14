@@ -842,7 +842,11 @@ static Standard_Boolean isTreatAnalityc(const TopoDS_Face& theF1,
   aType2=myHS2->Surface().GetType();
   //
   bCase1=((aType1==GeomAbs_Plane && aType2==GeomAbs_SurfaceOfExtrusion) ||
-	  (aType2==GeomAbs_Plane && aType1==GeomAbs_SurfaceOfExtrusion));
+	        (aType2==GeomAbs_Plane && aType1==GeomAbs_SurfaceOfExtrusion));
+
+  bCase1 = bCase1 || ((aType1==GeomAbs_Cylinder && aType2==GeomAbs_BSplineSurface) ||
+	                    (aType2==GeomAbs_Cylinder && aType1==GeomAbs_BSplineSurface));
+
   //
   if (aType1==GeomAbs_Cylinder && aType2==GeomAbs_Cylinder) {
     if (aNbLin==2){ 
@@ -1220,9 +1224,9 @@ reapprox:;
     DumpWLine(aWLineX);
 #endif
     //
-    if(!myListOfPnts.IsEmpty()) {
-      bAvoidLineConstructor = Standard_True;
-    }
+    //if(!myListOfPnts.IsEmpty()) {
+    //  bAvoidLineConstructor = Standard_True;
+    //}
 
     Standard_Integer nbp = aWLine->NbPnts();
     const IntSurf_PntOn2S& p1 = aWLine->Point(1);
