@@ -2785,21 +2785,3 @@ for (i=0; i <= 2; i++)
 }
 
 ~~~~~
-
-@section occt_visu_5 Mesh Visualization Services
-
-<i>MeshVS</i> (Mesh Visualization Service) component extends 3D visualization capabilities of Open CASCADE Technology. It provides flexible means of displaying meshes along with associated pre- and post-processor data.
-
-From a developer's point of view, it is easy to integrate the *MeshVS* component into any mesh-related application with the following guidelines:
-
-* Derive a data source class from the *MeshVS_DataSource* class.
-* Re-implement its virtual methods, so as to give the <i>MeshVS</i> component access to the application data model. This is the most important part of the job, since visualization performance is affected by performance of data retrieval methods of your data source class.
-* Create an instance of <i>MeshVS_Mesh</i> class.
-* Create an instance of your data source class and pass it to a <i>MeshVS_Mesh</i> object through the <i>SetDataSource()</i> method.
-* Create one or several objects of <i>MeshVS_PrsBuilder</i>-derived classes (standard, included in the <i>MeshVS</i> package, or your custom ones).
-* Each <i>PrsBuilder</i> is responsible for drawing a <i> MeshVS_Mesh</i> presentation in a certain display mode(s) specified as a <i>PrsBuilder</i> constructor's argument. Display mode is treated by <i>MeshVS</i> classes as a combination of bit flags (two least significant bits are used to encode standard display modes: wireframe, shading and shrink).
-* Pass these objects to the <i>MeshVS_Mesh::AddBuilder()</i> method. <i>MeshVS_Mesh</i> takes advantage of improved selection highlighting mechanism: it highlights its selected entities itself, with the help of so called "highlighter" object. You can set one of <i>PrsBuilder</i> objects to act as a highlighter with the help of a corresponding argument of the <i>AddBuilder()</i> method.
-
-Visual attributes of the <i>MeshVS_Mesh</i> object (such as shading color, shrink coefficient and so on)  are controlled through <i>MeshVS_Drawer</i> object. It maintains a map "Attribute ID --> attribute value" and can be easily extended with any number of custom attributes.
-
-In all other respects, <i>MeshVS_Mesh</i> is very similar to any other class derived from <i>AIS_InteractiveObject</i> and it should be used accordingly (refer to the description of <i>AIS package</i> in the documentation).
