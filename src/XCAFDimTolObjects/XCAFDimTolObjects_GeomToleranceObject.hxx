@@ -100,9 +100,19 @@ public:
 
   const gp_Pnt& GetPoint() const { return myPnt; }
 
+  void SetPoint2 (const gp_Pnt& thePnt)
+  {
+    myPnt2 = thePnt;
+    myHasPnt2 = Standard_True;
+  }
+
+  const gp_Pnt& GetPoint2() const { return myPnt2; }
+
   Standard_Boolean HasPlane() const { return myHasPlane; }
 
   Standard_Boolean HasPoint() const { return myHasPnt; }
+  
+  Standard_Boolean HasPoint2() const { return myHasPnt2; }
 
   DEFINE_STANDARD_RTTIEXT(XCAFDimTolObjects_GeomToleranceObject,Standard_Transient)
 
@@ -120,8 +130,10 @@ private:
   Standard_Boolean myHasAxis;
   gp_Ax2 myPlane;
   gp_Pnt myPnt;
+  gp_Pnt myPnt2;
   Standard_Boolean myHasPlane;
   Standard_Boolean myHasPnt;
+  Standard_Boolean myHasPnt2;
 
 };
 
