@@ -6,8 +6,8 @@ puts ""
 ## Boolean operation failure for Cylinder and Cone in critical location.
 #############################################################################################
 
-restore [locate_data_file bug25542-cyl.brep] b1
-restore [locate_data_file bug25542-con.brep] b2
+restore [locate_data_file bug25542_cylinder.brep] b1
+restore [locate_data_file bug25542_cone.brep] b2
 
 smallview
 
