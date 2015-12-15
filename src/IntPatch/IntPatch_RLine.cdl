@@ -69,7 +69,7 @@ is
 
 	---C++: inline
 
-    	is static;
+    	is redefined;
 
     
     Replace(me: mutable; Index: Integer from Standard; Pnt: Point from IntPatch)
@@ -234,7 +234,7 @@ is
     	returns Integer from Standard
 	---C++: inline
 	
-	is static;
+	is redefined;
 
 
     Vertex(me; Index: Integer from Standard)
@@ -249,7 +249,7 @@ is
 	--- The exception OutOfRange is raised if Index <= 0 or
 	--  Index > NbVertex.
 	
-	is static;
+	is redefined;
 
 
     HasPolygon(me)
@@ -270,7 +270,7 @@ is
 	raises DomainError from Standard
 	--- The exception DomainError is raised if HasPolygon returns False.
 
-	is static;
+	is redefined;
 
 
     Point(me; Index: Integer from Standard)
@@ -286,7 +286,7 @@ is
 	--- The exception DomainError is raised if HasPolygon returns False.
 	--- The exception OutOfRange is raised if Index <= 0 or Index > NbPnts.
 	
-	is static;
+	is redefined;
     
 
     SetPoint(me:mutable; Index: Integer from Standard; Pnt: Point from IntPatch)
@@ -302,7 +302,31 @@ is
     	--             its parameter is modified
     	--          else a new point in the line is inserted.
         is static; 
- 
+    
+    Curve(me) returns LineOn2S from IntSurf
+    
+        ---Purpose: Returns set of intersection points
+	---C++: inline
+        is redefined;
+
+    ClearVertexes(me: mutable)
+    
+        ---Purpose: Removes vertices from the line
+	---C++: inline
+        is redefined;
+    
+    SetCurve(me: mutable; theNewCurve: LineOn2S from IntSurf)
+    
+	---C++: inline
+        is static;
+
+    Dump(me; theMode: Integer from Standard)
+    
+        ---Purpose: if (theMode == 0) then prints the information about WLine
+        --          if (theMode == 1) then prints the list of 3d-points
+        --          if (theMode == 2) then prints the list of 2d-points on the 1st surface
+        --          Otherwise,             prints list of 2d-points on the 2nd surface
+        is static;
 
 fields
 

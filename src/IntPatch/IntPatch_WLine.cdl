@@ -69,7 +69,7 @@ is
 
 	---C++: inline
 
-    	is static;
+    	is redefined;
 
     
     SetPoint(me:mutable; Index: Integer from Standard; Pnt: Point from IntPatch)
@@ -110,7 +110,7 @@ is
     	returns Integer from Standard
 	---C++: inline
 	
-	is static;
+	is redefined;
 
 
     Point(me; Index: Integer from Standard)
@@ -124,7 +124,7 @@ is
 	raises OutOfRange from Standard
 	--- The exception OutOfRange is raised if Index <= 0 or Index > NbPnts.
 	
-	is static;
+	is redefined;
 
 
     HasFirstPoint(me)
@@ -218,7 +218,7 @@ is
     	returns Integer from Standard
 	---C++: inline
 	
-	is static;
+	is redefined;
 
 
     Vertex(me; Index: Integer from Standard)
@@ -233,7 +233,7 @@ is
 	--- The exception OutOfRange is raised if Index <= 0 or
 	--  Index > NbVertex.
 
-	is static;
+	is redefined;
 
 
     ComputeVertexParameters(me: mutable;
@@ -247,9 +247,10 @@ is
         is static; 
 
     Curve(me) 
-    
+
+        ---Purpose: Returns set of intersection points
        returns LineOn2S from IntSurf
-       is static;
+       is redefined;
        
 
     IsOutSurf1Box(me: mutable; P1: Pnt2d from gp )
@@ -310,7 +311,9 @@ is
         returns HCurve2d from Adaptor2d;
 
     ClearVertexes(me: mutable)
-      is static;
+
+        ---Purpose: Removes vertices from the line (i.e. cleans svtx member)
+      is redefined;
     
     RemoveVertex(me: mutable;
                   theIndex : Integer from Standard)

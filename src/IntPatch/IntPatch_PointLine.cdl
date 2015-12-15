@@ -27,7 +27,9 @@ inherits Line from IntPatch
 
 uses TypeTrans          from IntSurf,
      Situation          from IntSurf,
-     PntOn2S            from IntSurf     
+     PntOn2S            from IntSurf,
+     LineOn2S           from IntSurf,
+     Point              from IntPatch
 
 
 raises DomainError from Standard,
@@ -53,8 +55,18 @@ is
     ---Purpose: To initialize the fields, when the transitions
     --          are Undecided.
 
+  AddVertex(me: mutable; Pnt: Point from IntPatch)
+    ---Purpose: Adds a vertex in the list.
+  
+    is deferred;
+
   NbPnts(me) returns Integer from Standard
     ---Purpose: Returns the number of intersection points.
+  
+    is deferred;
+
+  NbVertex(me) returns Integer from Standard
+    ---Purpose: Returns number of vertices (IntPatch_Point) of the line
   
     is deferred;
 
@@ -67,6 +79,26 @@ is
            DomainError from Standard
     --- The exception DomainError is raised if HasPolygon returns False.
     --- The exception OutOfRange is raised if Index <= 0 or Index > NbPnts.
+    
+    is deferred;
+
+  Vertex(me; Index : Integer from Standard) returns Point from IntPatch
+    ---Purpose: Returns the vertex of range Index on the line.
+
+    ---C++: return const&
+    
+    raises OutOfRange  from Standard
+    --- The exception OutOfRange is raised if Index <= 0 or Index > NbVertex.
+    
+    is deferred;
+    
+  ClearVertexes(me: mutable)
+    ---Purpose: Removes vertices from the line
+    
+    is deferred;
+    
+  Curve(me) returns LineOn2S from IntSurf
+    ---Purpose: Returns set of intersection points
     
     is deferred;
     
