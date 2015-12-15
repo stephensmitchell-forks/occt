@@ -52,6 +52,7 @@ enum ChildLab
   ChildLab_PlaneN,
   ChildLab_PlaneRef,
   ChildLab_Pnt,
+  ChildLab_Pnt2,
 };
 
 //=======================================================================
@@ -325,6 +326,19 @@ void XCAFDoc_Datum::SetObject(const Handle(XCAFDimTolObjects_DatumObject)& theOb
 
     Label().FindChild(ChildLab_Pnt).AddAttribute(aLoc);
   }
+
+  if (theObject->HasPoint2())
+  {
+    Handle(TDataStd_RealArray) aLoc = new TDataStd_RealArray();
+    gp_Pnt aPnt2 = theObject->GetPoint2();
+
+    Handle(TColStd_HArray1OfReal) aLocArr = new TColStd_HArray1OfReal(1, 3);
+    for (Standard_Integer i = 1; i <= 3; i++)
+      aLocArr->SetValue(i, aPnt2.Coord(i));
+    aLoc->ChangeArray(aLocArr);
+
+    Label().FindChild(ChildLab_Pnt2).AddAttribute(aLoc);
+  }
 }
 
 //=======================================================================
@@ -386,6 +400,13 @@ Handle(XCAFDimTolObjects_DatumObject) XCAFDoc_Datum::GetObject() const
   {
     gp_Pnt aP(aLoc->Value(aPnt->Lower()), aPnt->Value(aPnt->Lower()+1), aPnt->Value(aPnt->Lower()+2));
     anObj->SetPoint(aP);
+  }
+
+  Handle(TDataStd_RealArray) aPnt2;
+  if(Label().FindChild(ChildLab_Pnt2).FindAttribute(TDataStd_RealArray::GetID(), aPnt2) && aPnt2->Length() == 3 )
+  {
+    gp_Pnt aP (aPnt2->Value(aPnt2->Lower()), aPnt2->Value(aPnt2->Lower()+1), aPnt2->Value(aPnt2->Lower()+2));                          
+    anObj->SetPoint2(aP);
   }
 
   Handle(TDataStd_Integer) aIsDTarget;
