@@ -21,6 +21,7 @@ class UnifySameDomain from ShapeUpgrade inherits TShared from MMgt
 uses
     Shape from TopoDS,
     ListOfShape from TopTools,
+    DataMapOfShapeShape from TopTools,
     ReShape from ShapeBuild
 
 is
@@ -69,6 +70,6 @@ fields
     myShape : Shape from TopoDS;
     
     myContext   : ReShape from ShapeBuild;
-    --myOldNewMap : DataMapOfShapeShape  from TopTools;
+    myOldShapes : DataMapOfShapeShape from TopTools;
     
 end UnifySameDomain;
