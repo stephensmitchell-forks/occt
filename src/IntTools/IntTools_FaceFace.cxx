@@ -153,7 +153,7 @@ static
                                 Standard_Real&      thevmin, 
                                 Standard_Real&      thevmax);
 
-static
+static 
   Standard_Boolean NotUseSurfacesForApprox
           (const TopoDS_Face& aF1,
            const TopoDS_Face& aF2,
@@ -195,7 +195,7 @@ static
 static 
   Standard_Boolean IsCurveValid(Handle(Geom2d_Curve)& thePCurve);
 
-static 
+static
   Standard_Boolean IsPointOnBoundary(const Standard_Real theParameter,
                                      const Standard_Real theFirstBoundary,
                                      const Standard_Real theSecondBoundary,
@@ -852,12 +852,12 @@ Standard_Real IntTools_FaceFace::ComputeTolerance()
       }
       //
       const TopoDS_Face& aF = !i ? myFace1 : myFace2;
-      aD = FindMaxDistance(aC3D, aFirst, aLast, aF, myContext);
+        aD = FindMaxDistance(aC3D, aFirst, aLast, aF, myContext);
       if (aD > aDMax) {
-        aDMax = aD;
+          aDMax = aD;
+        }
       }
     }
-  }
   //
   return aDMax;
 }
@@ -1033,6 +1033,8 @@ Standard_Real IntTools_FaceFace::ComputeTolerance()
            (aType2==GeomAbs_Plane && aType1==GeomAbs_SurfaceOfExtrusion) ||
            (aType1==GeomAbs_Plane && aType2==GeomAbs_BSplineSurface) ||
            (aType2==GeomAbs_Plane && aType1==GeomAbs_BSplineSurface) ||
+           (aType1==GeomAbs_Cylinder && aType2==GeomAbs_BSplineSurface) ||
+           (aType2==GeomAbs_Cylinder && aType1==GeomAbs_BSplineSurface)||
            !myApprox) {
     //
     Standard_Real aDMax;
@@ -1048,8 +1050,8 @@ Standard_Real IntTools_FaceFace::ComputeTolerance()
 //function : MakeCurve
 //purpose  : 
 //=======================================================================
-  void IntTools_FaceFace::MakeCurve(const Standard_Integer Index,
-                                    const Handle(Adaptor3d_TopolTool)& dom1,
+void IntTools_FaceFace::MakeCurve(const Standard_Integer Index,
+                                  const Handle(Adaptor3d_TopolTool)& dom1,
                                     const Handle(Adaptor3d_TopolTool)& dom2) 
 {
   Standard_Boolean bDone, rejectSurface, reApprox, bAvoidLineConstructor;
@@ -1088,13 +1090,31 @@ Standard_Real IntTools_FaceFace::ComputeTolerance()
       return;
     }
     L = anewL;
-    
+
     //const Handle(IntPatch_WLine)& aWLineX = Handle(IntPatch_WLine)::DownCast(L);
     //DumpWLine(aWLineX);
 
     //
     if(!myListOfPnts.IsEmpty()) {
-      bAvoidLineConstructor = Standard_True;
+      //char aBuff[10000];
+      //const IntSurf_PntOn2S& aPt = myListOfPnts.First();
+      //Standard_Real u1, v1, u2, v2;
+      //aPt.Parameters(u1, v1, u2, v2);
+
+      //Sprintf(aBuff,"bopcurves f1 f2 -2d");
+      //IntSurf_ListIteratorOfListOfPntOn2S IterLOP1(myListOfPnts);
+      //for(;IterLOP1.More(); IterLOP1.Next())
+      //{
+      //  const IntSurf_PntOn2S& aPt = IterLOP1.Value();
+      //  Standard_Real u1, v1, u2, v2;
+      //  aPt.Parameters(u1, v1, u2, v2);
+
+      //  Sprintf(aBuff, "%s -p %+10.20f %+10.20f %+10.20f %+10.20f", aBuff, u1, v1, u2, v2);
+      //}
+
+      //cout << aBuff << endl;
+
+      //bAvoidLineConstructor = Standard_True;
     }
 
     Standard_Integer nbp = aWLine->NbPnts();
@@ -1803,15 +1823,15 @@ Standard_Real IntTools_FaceFace::ComputeTolerance()
       //
       Standard_Real aReachedTol = Precision::Confusion();
       bIsDecomposited=DecompositionOfWLine(WL,
-                                           myHS1, 
-                                           myHS2, 
-                                           myFace1, 
-                                           myFace2, 
-                                           myLConstruct, 
-                                           bAvoidLineConstructor, 
-                                           aSeqOfL, 
-                                           aReachedTol,
-                                           myContext);
+                             myHS1, 
+                             myHS2, 
+                             myFace1, 
+                             myFace2, 
+                             myLConstruct, 
+                             bAvoidLineConstructor, 
+                             aSeqOfL, 
+                             aReachedTol,
+                             myContext);
       if ( bIsDecomposited && ( myTolReached3d < aReachedTol ) ) {
         myTolReached3d = aReachedTol;
       }
@@ -2739,7 +2759,7 @@ Handle(Geom2d_BSplineCurve) MakeBSpline2d(const Handle(IntPatch_WLine)& theWLine
 // because inside degenerated zone of the surface the approx. algo.
 // uses wrong values of normal, etc., and resulting curve will have
 // oscillations that we would not like to have. 
- 
+
 
 
 static
@@ -3067,7 +3087,7 @@ Standard_Boolean FindPoint(const gp_Pnt2d&     theFirstPoint,
                            const Standard_Real theVmin,
                            const Standard_Real theVmax,
                            gp_Pnt2d&           theNewPoint) {
-  
+
   gp_Vec2d aVec(theFirstPoint, theLastPoint);
   Standard_Integer i = 0, j = 0;
 
