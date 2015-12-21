@@ -128,7 +128,7 @@ inline Standard_Real gp_Vec::Angle (const gp_Vec& Other) const
 }
 
 inline Standard_Real gp_Vec::AngleWithRef (const gp_Vec& Other,
-					   const gp_Vec& Vref) const
+                                           const gp_Vec& Vref) const
 {
   gp_VectorWithNullMagnitude_Raise_if
     (coord.Modulus()       <= gp::Resolution() ||
@@ -229,11 +229,9 @@ inline void gp_Vec::Normalize()
 
 inline gp_Vec gp_Vec::Normalized() const
 { 
-  Standard_Real D = coord.Modulus();
-  Standard_ConstructionError_Raise_if (D <= gp::Resolution(), "");
   gp_Vec V = *this;
-  V.coord.Divide (D);
-  return V; 
+  V.Normalize();
+  return V;
 }
 
 inline void gp_Vec::Reverse()

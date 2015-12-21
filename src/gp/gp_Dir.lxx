@@ -60,18 +60,13 @@ inline gp_Dir::gp_Dir (const Standard_Real Xv,
 inline void gp_Dir::SetCoord (const Standard_Integer Index,
 			      const Standard_Real Xi)
 {
-  Standard_Real X = coord.X();
-  Standard_Real Y = coord.Y();
-  Standard_Real Z = coord.Z();
   Standard_OutOfRange_Raise_if (Index < 1 || Index > 3, " ");
-  if      (Index == 1)  X = Xi;
-  else if (Index == 2)  Y = Xi;
-  else                  Z = Xi;
-  Standard_Real D = sqrt (X * X + Y * Y + Z * Z);
-  Standard_ConstructionError_Raise_if (D <= gp::Resolution(), "");
-  coord.SetX(X / D);
-  coord.SetY(Y / D);
-  coord.SetZ(Z / D);
+  if(Index == 1)
+    SetX(Xi);
+  else if (Index == 2)
+    SetY(Xi);
+  else
+    SetZ(Xi);
 }
 
 inline void gp_Dir::SetCoord (const Standard_Real Xv,
@@ -152,21 +147,20 @@ inline  const gp_XYZ& gp_Dir::XYZ () const
 inline Standard_Boolean gp_Dir::IsEqual
 (const gp_Dir& Other, 
  const Standard_Real AngularTolerance) const
-{ return   Angle (Other) <= AngularTolerance; }    
+{ return   Angle (Other) <= AngularTolerance; }
 
 inline Standard_Boolean gp_Dir::IsNormal
 (const gp_Dir& Other,
  const Standard_Real AngularTolerance) const
 {
-  Standard_Real Ang = M_PI / 2.0 - Angle (Other);
-  if (Ang < 0) Ang = - Ang;
-  return   Ang <= AngularTolerance;
+  Standard_Real Ang = Abs(M_PI_2 - Angle (Other));
+  return (Ang <= AngularTolerance);
 }    
 
 inline Standard_Boolean gp_Dir::IsOpposite
 (const gp_Dir& Other,
  const Standard_Real AngularTolerance) const
-{ return M_PI - Angle (Other) <= AngularTolerance; }    
+{ return M_PI - Angle (Other) <= AngularTolerance; }
 
 inline Standard_Boolean gp_Dir::IsParallel
 (const gp_Dir& Other, 

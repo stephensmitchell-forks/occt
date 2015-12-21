@@ -190,6 +190,8 @@ public:
       return Dot(Other);
     }
 
+    //! Returns the vector obtained by rotation <me> to
+    //! right angle clockwise.
     gp_Vec2d GetNormal() const;
   
     void Multiply (const Standard_Real Scalar);

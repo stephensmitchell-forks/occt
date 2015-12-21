@@ -28,7 +28,7 @@ void gp_Sphere::Coefficients
  Standard_Real& C1, Standard_Real& C2, Standard_Real& C3,
  Standard_Real& D) const
 {
-  // Dans le repere local de la sphere :
+  // Main equation of sphere is:
   // X*X + Y*Y + Z*Z - radius * radius = 0
   gp_Trsf T;
   T.SetTransformation (pos);
@@ -44,6 +44,19 @@ void gp_Sphere::Coefficients
   Standard_Real T32 = T.Value (3, 2);
   Standard_Real T33 = T.Value (3, 3);
   Standard_Real T34 = T.Value (3, 4);
+
+  //Now 
+  //  Transposed([X Y Z 1]) = T*Transposed([X Y Z 1]),
+  //I.e.
+  //  X = T11*X+T12*Y+T13*Z+T14.
+  //Analogicaly for Y and Z.
+  //After substitution new X, Y and Z in equation,
+  //we will obtain
+  //  A1 * X*X + A2 * Y*Y + A3 * Z*Z +
+  //  2. * (B1 * X * Y + B2 * X * Z + B3 * Y * Z) +
+  //  2. * (C1 * X + C2 * Y + C3 * Z) + D = 0.0,
+  //where
+
   A1 = T11 * T11 + T21 * T21 + T31 * T31;
   A2 = T12 * T12 + T22 * T22 + T32 * T32;
   A3 = T13 * T13 + T23 * T23 + T33 * T33;

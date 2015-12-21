@@ -30,7 +30,14 @@ Standard_Real gp_Lin::Distance (const gp_Lin& Other) const
   if (pos.IsParallel (Other.pos, gp::Resolution())) { 
     return Other.Distance(pos.Location());
   }
-  else {
+  else
+  {
+    //Lines can be skewed. In this case, we shift 2nd line to the
+    //location of 1st line (pos.Location()). After that, we will
+    //have two lines intersected. They define a plane unambiguously
+    //(location is location of the 1st line, normal is cross-product
+    //of the directions of every given lines). Distance found is 
+    //distance between location of the 2nd line and this plane.
     gp_Dir dir(pos.Direction().Crossed(Other.pos.Direction()));
     Standard_Real D = gp_Vec (pos.Location(),Other.pos.Location())
       .Dot(gp_Vec(dir));

@@ -37,10 +37,32 @@ inline Standard_Real gp_Sphere::Area () const
 { return 4.0 * M_PI * radius * radius; }
 
 inline void gp_Sphere::UReverse()
-{ pos.YReverse(); }
+{
+  //Let
+  //                radius*cos(U)*cos(V)  = Xdir
+  //  S(U, V) =     radius*sin(U)*cos(V)  = Ydir
+  //                radius*sin(V)         = Zdir
+  //Therefore,
+  //                radius*cos(-U)*cos(V) = Xdir
+  //  S(-U, V) =    radius*sin(-U)*cos(V) = -Ydir
+  //                radius*sin(V)         = Zdir
+
+  pos.YReverse();
+}
 
 inline void gp_Sphere::VReverse()
-{ pos.ZReverse(); }
+{
+  //Let
+  //                radius*cos(U)*cos(V)  = Xdir
+  //  S(U, V) =     radius*sin(U)*cos(V)  = Ydir
+  //                radius*sin(V)         = Zdir
+  //Therefore,
+  //                radius*cos(U)*cos(-V) = Xdir
+  //  S(U, -V) =    radius*sin(U)*cos(-V) = Ydir
+  //                radius*sin(-V)        = -Zdir
+
+  pos.ZReverse();
+}
 
 inline Standard_Boolean gp_Sphere::Direct() const
 { return pos.Direct(); }

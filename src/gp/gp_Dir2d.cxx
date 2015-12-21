@@ -33,7 +33,7 @@ Standard_Real gp_Dir2d::Angle (const gp_Dir2d& Other) const
   //    En 2D les valeurs angulaires sont comprises entre -PI et PI
   Standard_Real Cosinus = coord.Dot   (Other.coord);
   Standard_Real Sinus = coord.Crossed (Other.coord);
-  if (Cosinus > -0.70710678118655 && Cosinus < 0.70710678118655) { 
+  if (Cosinus > -M_SQRT1_2 && Cosinus < M_SQRT1_2) { 
     if (Sinus > 0.0) return   acos (Cosinus);
     else             return - acos (Cosinus);
   }
@@ -67,7 +67,11 @@ void gp_Dir2d::Transform (const gp_Trsf2d& T)
     if (T.ScaleFactor() < 0.0) { coord.Reverse(); }
   }
   else {
+    //Apply transformation, set by the homogeneous vectorial part of T
     coord.Multiply (T.HVectorialPart());
+
+    //After transformation, earlier normalized vector "coord" might become
+    //not normalized. Therefore, we must normalize it again.
     Standard_Real D = coord.Modulus();
     coord.Divide(D);
     if (T.ScaleFactor() < 0.0) { coord.Reverse(); }

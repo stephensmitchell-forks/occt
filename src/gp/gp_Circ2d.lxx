@@ -76,19 +76,13 @@ inline Standard_Boolean gp_Circ2d::Contains
 
 inline Standard_Real gp_Circ2d::Distance (const gp_Pnt2d& P) const
 {
-  gp_XY Coord = P.XY();
-  Coord.Subtract (pos.Location().XY());
-  Standard_Real D = radius - Coord.Modulus();
-  if (D < 0) D = - D;
-  return D;
+  return Abs(pos.Location().Distance(P) - radius);
 }
 
 inline Standard_Real gp_Circ2d::SquareDistance (const gp_Pnt2d& P) const
 {
-  gp_XY Coord = P.XY();
-  Coord.Subtract (pos.Location().XY());        
-  Standard_Real D = radius - Coord.Modulus();
-  return D * D;
+  const Standard_Real aDist = pos.Location().Distance(P) - radius;
+  return (aDist*aDist);
 }
 
 inline   Standard_Real gp_Circ2d::Length() const

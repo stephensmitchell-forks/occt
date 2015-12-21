@@ -32,23 +32,29 @@
 #include <Standard_DomainError.hxx>
 #include <Standard_OutOfRange.hxx>
 
-Standard_Boolean gp_Vec::IsEqual
-(const gp_Vec& Other, 
- const Standard_Real LinearTolerance,
- const Standard_Real AngularTolerance) const
+Standard_Boolean gp_Vec::IsEqual( const gp_Vec& theOther,
+                                  const Standard_Real theLinearTolerance,
+                                  const Standard_Real theAngularTolerance) const
 {
-  if (Magnitude ()       <= LinearTolerance || 
-      Other.Magnitude () <= LinearTolerance) {
-    Standard_Real val = Magnitude() - Other.Magnitude();
-    if (val < 0) val = - val;
-    return val <= LinearTolerance;
+  const Standard_Real aSqLinTol = theLinearTolerance*theLinearTolerance;
+  const Standard_Real aMySqNorm = SquareMagnitude();
+  const Standard_Real aOtherSqNorm = theOther.SquareMagnitude();
+
+  const Standard_Boolean  aMyCond = (aMySqNorm <= aSqLinTol),
+                          aOCond = (aOtherSqNorm <= aSqLinTol);
+
+  if(aMyCond && aOCond)
+    return Standard_True;
+
+  if(!aMyCond && !aOCond)
+  {
+    //Value of Angle(...) >= 0.0, always
+    return  (Abs(sqrt(aMySqNorm)-sqrt(aOtherSqNorm)) <= theLinearTolerance) &&
+            (Angle(theOther) <= theAngularTolerance);
   }
-  else {
-    Standard_Real val = Magnitude() - Other.Magnitude();
-    if (val < 0) val = - val;
-    return val <= LinearTolerance && Angle(Other) <= AngularTolerance;
-  }
-}    
+
+  return Standard_False;
+}
 
 void gp_Vec::Mirror (const gp_Vec& V)
 {

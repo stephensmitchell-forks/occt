@@ -48,11 +48,11 @@ class gp_Mat;
 //! Multiply.
 //! The transformations can be represented as follow :
 //!
-//! V1   V2   V3    T       XYZ        XYZ
-//! | a11  a12  a13   a14 |   | x |      | x'|
-//! | a21  a22  a23   a24 |   | y |      | y'|
-//! | a31  a32  a33   a34 |   | z |   =  | z'|
-//! |  0    0    0     1  |   | 1 |      | 1 |
+//!    V1   V2   V3    T         XYZ        XYZ
+//! | a11  a12  a13   a14 |     | x |      | x'|
+//! | a21  a22  a23   a24 |     | y |      | y'|
+//! | a31  a32  a33   a34 |  *  | z |   =  | z'|
+//! |  0    0    0     1  |     | 1 |      | 1 |
 //!
 //! where {V1, V2, V3} defines the vectorial part of the
 //! transformation and T defines the translation part of the

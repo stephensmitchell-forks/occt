@@ -34,7 +34,7 @@ Standard_Real gp_Dir::Angle (const gp_Dir& Other) const
   //    En 3d les valeurs angulaires sont toujours positives et comprises entre
   //    0 et PI
   Standard_Real Cosinus = coord.Dot (Other.coord);
-  if (Cosinus > -0.70710678118655 && Cosinus < 0.70710678118655)
+  if (Cosinus > -M_SQRT1_2 && Cosinus < M_SQRT1_2)
     return acos (Cosinus);
   else {
     Standard_Real Sinus = (coord.Crossed (Other.coord)).Modulus ();
@@ -43,22 +43,22 @@ Standard_Real gp_Dir::Angle (const gp_Dir& Other) const
   }
 }
 
-Standard_Real gp_Dir::AngleWithRef (const gp_Dir& Other,
-				    const gp_Dir& Vref) const
+Standard_Real gp_Dir::AngleWithRef(const gp_Dir& Other,
+                                   const gp_Dir& Vref) const
 {
   Standard_Real Ang;
   gp_XYZ XYZ = coord.Crossed (Other.coord);
   Standard_Real Cosinus = coord.Dot(Other.coord);
-  Standard_Real Sinus   = XYZ.Modulus ();
   if (Cosinus > -0.70710678118655 && Cosinus < 0.70710678118655)
     Ang =  acos (Cosinus);
   else {
+    Standard_Real Sinus   = XYZ.Modulus ();
     if(Cosinus < 0.0)  Ang = M_PI - asin (Sinus);
     else               Ang =      asin (Sinus);
   }
   if (XYZ.Dot (Vref.coord) >= 0.0)  return  Ang;
   else                              return -Ang;
-} 
+}
 
 void gp_Dir::Mirror (const gp_Dir& V)
 {
@@ -111,7 +111,12 @@ void gp_Dir::Transform (const gp_Trsf& T)
     if (T.ScaleFactor() < 0.0) { coord.Reverse(); }
   }
   else {
+    //Apply transformation, set by the homogeneous vectorial part of T
     coord.Multiply (T.HVectorialPart());
+
+    //After transformation, earlier normalized vector "coord" might become
+    //not normalized. Therefore, we must normalize it again.
+
     Standard_Real D = coord.Modulus();
     coord.Divide(D);
     if (T.ScaleFactor() < 0.0) { coord.Reverse(); }
