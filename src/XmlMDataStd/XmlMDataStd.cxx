@@ -43,6 +43,7 @@
 #include <XmlMDataStd_TreeNodeDriver.hxx>
 #include <XmlMDataStd_UAttributeDriver.hxx>
 #include <XmlMDataStd_VariableDriver.hxx>
+#include <XmlMDataStd_MeshDriver.hxx>
 #include <XmlMDF_ADriverTable.hxx>
 
 static Standard_Integer myDocumentVersion = -1;
@@ -80,6 +81,7 @@ void XmlMDataStd::AddDrivers (const Handle(XmlMDF_ADriverTable)& aDriverTable,
   aDriverTable-> AddDriver (new XmlMDataStd_NamedDataDriver     (anMsgDrv));
   aDriverTable-> AddDriver (new XmlMDataStd_AsciiStringDriver   (anMsgDrv));
   aDriverTable-> AddDriver (new XmlMDataStd_IntPackedMapDriver  (anMsgDrv));
+  aDriverTable-> AddDriver (new XmlMDataStd_MeshDriver          (anMsgDrv));
 }
 
 //=======================================================================

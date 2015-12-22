@@ -41,6 +41,7 @@
 #include <BinMDataStd_TreeNodeDriver.hxx>
 #include <BinMDataStd_UAttributeDriver.hxx>
 #include <BinMDataStd_VariableDriver.hxx>
+#include <BinMDataStd_MeshDriver.hxx>
 #include <BinMDF_ADriverTable.hxx>
 #include <CDM_MessageDriver.hxx>
 
@@ -80,6 +81,7 @@ void BinMDataStd::AddDrivers (const Handle(BinMDF_ADriverTable)& theDriverTable,
   theDriverTable->AddDriver (new BinMDataStd_NamedDataDriver     (theMsgDriver) );
   theDriverTable->AddDriver (new BinMDataStd_AsciiStringDriver   (theMsgDriver) );
   theDriverTable->AddDriver (new BinMDataStd_IntPackedMapDriver  (theMsgDriver) );
+  theDriverTable->AddDriver (new BinMDataStd_MeshDriver          (theMsgDriver) );
 }
 
 //=======================================================================
