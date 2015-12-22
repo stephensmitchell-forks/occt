@@ -46,14 +46,9 @@ Standard_Boolean gp_Vec::IsEqual( const gp_Vec& theOther,
   if(aMyCond && aOCond)
     return Standard_True;
 
-  if(!aMyCond && !aOCond)
-  {
-    //Value of Angle(...) >= 0.0, always
-    return  (Abs(sqrt(aMySqNorm)-sqrt(aOtherSqNorm)) <= theLinearTolerance) &&
-            (Angle(theOther) <= theAngularTolerance);
-  }
-
-  return Standard_False;
+  //Value of Angle(...) >= 0.0, always
+  return  (Abs(sqrt(aMySqNorm)-sqrt(aOtherSqNorm)) <= theLinearTolerance) &&
+          (Angle(theOther) <= theAngularTolerance);
 }
 
 void gp_Vec::Mirror (const gp_Vec& V)

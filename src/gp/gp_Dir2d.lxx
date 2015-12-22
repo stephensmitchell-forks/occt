@@ -146,11 +146,8 @@ inline Standard_Boolean gp_Dir2d::IsParallel
 {
   const Standard_Real anAng = Abs(Angle(theOther));
 
-  if(anAng <= theAngularTolerance)
-    return Standard_True;
-
   //anAng is not greather than M_PI
-  return (M_PI - anAng <= theAngularTolerance);
+  return ((anAng <= theAngularTolerance) && (M_PI - anAng <= theAngularTolerance)) ;
 }    
 
 inline Standard_Real gp_Dir2d::Crossed (const gp_Dir2d& Right) const

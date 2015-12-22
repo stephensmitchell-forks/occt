@@ -42,13 +42,8 @@ Standard_Boolean gp_Vec2d::IsEqual( const gp_Vec2d& theOther,
   if(aMyCond && aOCond)
     return Standard_True;
 
-  if(!aMyCond && !aOCond)
-  {
-    return  (Abs(sqrt(aMySqNorm)-sqrt(aOtherSqNorm)) <= theLinearTolerance) &&
-            (Abs(Angle(theOther)) <= theAngularTolerance);
-  }
-
-  return Standard_False;
+  return  (Abs(sqrt(aMySqNorm)-sqrt(aOtherSqNorm)) <= theLinearTolerance) &&
+          (Abs(Angle(theOther)) <= theAngularTolerance);
 }    
 
 //=======================================================================

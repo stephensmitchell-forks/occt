@@ -49,7 +49,7 @@ Standard_Real gp_Dir::AngleWithRef(const gp_Dir& Other,
   Standard_Real Ang;
   gp_XYZ XYZ = coord.Crossed (Other.coord);
   Standard_Real Cosinus = coord.Dot(Other.coord);
-  if (Cosinus > -0.70710678118655 && Cosinus < 0.70710678118655)
+  if (Cosinus > -M_SQRT1_2 && Cosinus < M_SQRT1_2)
     Ang =  acos (Cosinus);
   else {
     Standard_Real Sinus   = XYZ.Modulus ();
