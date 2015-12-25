@@ -44,10 +44,10 @@ gp_Pln::gp_Pln (const gp_Pnt& P,
   Standard_Real Cabs = C;
   if (Cabs < 0) Cabs = - Cabs;
 
-  //  pour determiner l'axe X :
-  //  on dit que le produit scalaire Vx.V = 0. 
-  //  et on recherche le max(A,B,C) pour faire la division.
-  //  l'une des coordonnees du vecteur est nulle. 
+  // Now we define X-axe for the plane:
+  //  By definition dot-product Vx.V = 0. 
+  //  Let it to be depend on max(|A|,|B|,|C|) parameter.
+  //  One of coordinates should be equal to 0. 
 
   if( Babs <= Aabs && Babs <= Cabs) {
     if (Aabs > Cabs)  pos = gp_Ax3 (P, V, gp_Dir (-C,0., A));
@@ -68,33 +68,51 @@ gp_Pln::gp_Pln (const Standard_Real A,
 		const Standard_Real C,
 		const Standard_Real D)
 {
+  //The algorithm of X-axe computing is same
+  //as in gp_Pln::gp_Pln (const gp_Pnt& P, const gp_Dir& V)
+  //constructor.
+
+  //On the one hand:
+  //    A*x+B*y+C*z+D==0
+  //On the other hand
+  //    A*(x-pos.X)+B*(y-pos.Y)+C*(z-pos.Z)==0
+
   Standard_Real Aabs = A;
   if (Aabs < 0) Aabs = - Aabs;
   Standard_Real Babs = B;
   if (Babs < 0) Babs = - Babs;
   Standard_Real Cabs = C;
   if (Cabs < 0) Cabs = - Cabs;
-  if (Babs <= Aabs && Babs <= Cabs) {
-    if (Aabs > Cabs) pos = gp_Ax3(gp_Pnt(-D/A,  0.,  0.),
+  if (Babs <= Aabs && Babs <= Cabs)
+  {
+    if (Aabs > Cabs)
+      pos = gp_Ax3( gp_Pnt(-D/A, 0., 0.),
 				  gp_Dir(A,B,C),
 				  gp_Dir(-C,0., A));
-    else             pos = gp_Ax3(gp_Pnt(  0.,  0.,-D/C),
+    else
+      pos = gp_Ax3( gp_Pnt(0., 0., -D/C),
 				  gp_Dir(A,B,C),
 				  gp_Dir( C,0.,-A));
   }
-  else if (Aabs <= Babs && Aabs <= Cabs) {
-    if (Babs > Cabs) pos = gp_Ax3(gp_Pnt(  0.,-D/B,  0.),
+  else if (Aabs <= Babs && Aabs <= Cabs)
+  {
+    if (Babs > Cabs)
+      pos = gp_Ax3( gp_Pnt(0., -D/B, 0.),
 				  gp_Dir(A,B,C),
 				  gp_Dir(0.,-C, B));
-    else             pos = gp_Ax3(gp_Pnt(  0.,  0.,-D/C),
+    else
+      pos = gp_Ax3( gp_Pnt(0., 0.,-D/C),
 				  gp_Dir(A,B,C),
 				  gp_Dir(0., C,-B));
   }
-  else {
-    if (Aabs > Babs) pos = gp_Ax3(gp_Pnt(-D/A,  0.,  0.),
+  else
+  {
+    if (Aabs > Babs)
+      pos = gp_Ax3( gp_Pnt(-D/A,  0.,  0.),
 				  gp_Dir(A,B,C),
 				  gp_Dir(-B, A, 0.));
-    else             pos = gp_Ax3(gp_Pnt(  0.,-D/B,  0.),
+    else
+      pos = gp_Ax3( gp_Pnt(0., -D/B, 0.),
 				  gp_Dir(A,B,C),
 				  gp_Dir( B,-A, 0.));
   }

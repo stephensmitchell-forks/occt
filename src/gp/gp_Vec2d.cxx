@@ -28,28 +28,29 @@
 #include <Standard_ConstructionError.hxx>
 #include <Standard_OutOfRange.hxx>
 
-Standard_Boolean gp_Vec2d::IsEqual
-(const gp_Vec2d& Other, 
- const Standard_Real LinearTolerance,
- const Standard_Real AngularTolerance) const
+Standard_Boolean gp_Vec2d::IsEqual( const gp_Vec2d& theOther, 
+                                    const Standard_Real theLinearTolerance,
+                                    const Standard_Real theAngularTolerance) const
 {
-  const Standard_Real theNorm = Magnitude();
-  const Standard_Real theOtherNorm = Other.Magnitude();
-  Standard_Real val = theNorm - theOtherNorm;
-  if (val < 0.0) val = -val;
-  // Check for equal lengths
-  const Standard_Boolean isEqualLength = (val <= LinearTolerance);
-  // Check for small vectors
-  if (theNorm > LinearTolerance && theOtherNorm > LinearTolerance)
-  {
-    Standard_Real Ang = Angle(Other);
-    if (Ang < 0.0) Ang = -Ang;
-    // Check for zero angle
-    return isEqualLength && (Ang <= AngularTolerance);
-  }
-  return isEqualLength;
+  const Standard_Real aSqLinTol = theLinearTolerance*theLinearTolerance;
+  const Standard_Real aMySqNorm = SquareMagnitude();
+  const Standard_Real aOtherSqNorm = theOther.SquareMagnitude();
+
+  const Standard_Boolean  aMyCond = (aMySqNorm < aSqLinTol),
+                          aOCond = (aOtherSqNorm < aSqLinTol);
+
+  if(aMyCond && aOCond)
+    return Standard_True;
+
+  return  (Abs(sqrt(aMySqNorm)-sqrt(aOtherSqNorm)) <= theLinearTolerance) &&
+          (Abs(Angle(theOther)) <= theAngularTolerance);
 }    
 
+//=======================================================================
+//function : Angle 
+//purpose  : Computes value of the angle between two vectors. Returns
+//            the number in [-PI, +PI] range.
+//=======================================================================
 Standard_Real gp_Vec2d::Angle (const gp_Vec2d& Other) const
 {
   //    Commentaires :
@@ -66,7 +67,7 @@ Standard_Real gp_Vec2d::Angle (const gp_Vec2d& Other) const
   const Standard_Real D = theNorm * theOtherNorm;
   const Standard_Real Cosinus = coord.Dot   (Other.coord) / D;
   const Standard_Real Sinus = coord.Crossed (Other.coord) / D;
-  if (Cosinus > -0.70710678118655 && Cosinus < 0.70710678118655)
+  if (Cosinus > -M_SQRT1_2 && Cosinus < M_SQRT1_2)
   {
     if (Sinus > 0.0)  return  acos (Cosinus);
     else              return -acos (Cosinus); 

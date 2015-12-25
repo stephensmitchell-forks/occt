@@ -71,7 +71,7 @@ inline Standard_Real gp_XYZ::Z () const
 { return z; }
 
 inline Standard_Real gp_XYZ::Modulus () const { 
-  return sqrt (x * x + y * y + z * z);
+  return sqrt (SquareModulus ());
 }
 
 inline Standard_Real gp_XYZ::SquareModulus () const {
@@ -100,47 +100,34 @@ inline void gp_XYZ::Cross (const gp_XYZ& Right)
 
 inline gp_XYZ gp_XYZ::Crossed (const gp_XYZ& Right) const
 {
-  return gp_XYZ (y * Right.z - z * Right.y,
-		 z * Right.x - x * Right.z,
-		 x * Right.y - y * Right.x);
+  gp_XYZ aXYZ(*this);
+  aXYZ.Cross(Right);
+  return aXYZ;
 }
 
 inline Standard_Real gp_XYZ::CrossMagnitude (const gp_XYZ& Right) const
 {
-  Standard_Real Xresult = y * Right.z - z * Right.y;
-  Standard_Real Yresult = z * Right.x - x * Right.z;
-  Standard_Real Zresult = x * Right.y - y * Right.x;
-  return sqrt(Xresult * Xresult + Yresult * Yresult + Zresult * Zresult);
+  gp_XYZ aXYZ(this->Crossed(Right));
+  return aXYZ.Modulus();
 }
 
 inline Standard_Real gp_XYZ::CrossSquareMagnitude (const gp_XYZ& Right) const
 {
-  Standard_Real Xresult = y * Right.z - z * Right.y;
-  Standard_Real Yresult = z * Right.x - x * Right.z;
-  Standard_Real Zresult = x * Right.y - y * Right.x;
-  return Xresult * Xresult + Yresult * Yresult + Zresult * Zresult;
+  gp_XYZ aXYZ(this->Crossed(Right));
+  return aXYZ.SquareModulus();
 }
 
 inline void gp_XYZ::CrossCross (const gp_XYZ& Coord1,
 				const gp_XYZ& Coord2)
 {
-  Standard_Real Xresult = 
-    y * (Coord1.x * Coord2.y - Coord1.y * Coord2.x) -
-      z * (Coord1.z * Coord2.x - Coord1.x * Coord2.z);
-  Standard_Real Yresult  = 
-    z * (Coord1.y * Coord2.z - Coord1.z * Coord2.y) -
-      x * (Coord1.x * Coord2.y - Coord1.y * Coord2.x);
-  z = 
-    x * (Coord1.z * Coord2.x - Coord1.x * Coord2.z) -
-      y * (Coord1.y * Coord2.z - Coord1.z * Coord2.y);
-  x = Xresult;
-  y = Yresult;
+  gp_XYZ aXYZ(Coord1.Crossed(Coord2));
+  this->Cross(aXYZ);
 }
 
 inline gp_XYZ gp_XYZ::CrossCrossed (const gp_XYZ& Coord1,
 				    const gp_XYZ& Coord2) const
 {
-  gp_XYZ Coord0 = *this;
+  gp_XYZ Coord0(*this);
   Coord0.CrossCross (Coord1, Coord2);
   return Coord0;
 }
@@ -163,10 +150,8 @@ inline Standard_Real gp_XYZ::Dot (const gp_XYZ& Other) const {
 inline Standard_Real gp_XYZ::DotCross (const gp_XYZ& Coord1,
 				       const gp_XYZ& Coord2) const
 {
-  Standard_Real Xresult = Coord1.y * Coord2.z - Coord1.z * Coord2.y;
-  Standard_Real Yresult = Coord1.z * Coord2.x - Coord1.x * Coord2.z;
-  Standard_Real Zresult = Coord1.x * Coord2.y - Coord1.y * Coord2.x;
-  return ( x * Xresult + y * Yresult + z * Zresult);
+  gp_XYZ aXYZ(Coord1.Crossed(Coord2));
+  return Dot(aXYZ);
 }
 
 inline void gp_XYZ::Multiply (const Standard_Real Scalar)

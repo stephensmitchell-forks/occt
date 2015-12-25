@@ -74,25 +74,25 @@ inline Standard_Boolean gp_Vec2d::IsNormal
  const Standard_Real theAngularTolerance) const
 {
   const Standard_Real anAng = Abs(M_PI_2 - Abs(Angle(theOther)));
-  return !(anAng > theAngularTolerance);
+  return (anAng <= theAngularTolerance);
 }    
 
 inline Standard_Boolean gp_Vec2d::IsOpposite
-(const gp_Vec2d& Other,
- const Standard_Real AngularTolerance) const
+(const gp_Vec2d& theOther,
+ const Standard_Real theAngularTolerance) const
 {
-  Standard_Real Ang = Angle(Other);
-  if (Ang < 0) Ang = - Ang;
-  return M_PI - Ang <= AngularTolerance;
+  const Standard_Real anAng = Abs(Angle(theOther));
+  return (M_PI - anAng <= theAngularTolerance);
 }    
 
 inline Standard_Boolean gp_Vec2d::IsParallel
-(const gp_Vec2d& Other,
- const Standard_Real AngularTolerance) const
+(const gp_Vec2d& theOther,
+ const Standard_Real theAngularTolerance) const
 {
-  Standard_Real Ang = Angle(Other);
-  if (Ang < 0) Ang = - Ang;
-  return   Ang <= AngularTolerance || M_PI - Ang <= AngularTolerance;
+  const Standard_Real anAng = Abs(Angle(theOther));
+
+  //anAng is not greather than M_PI
+  return ((anAng <= theAngularTolerance) || (M_PI - anAng <= theAngularTolerance));
 }    
 
 inline Standard_Real gp_Vec2d::Magnitude() const
@@ -152,11 +152,9 @@ inline void gp_Vec2d::Normalize()
 }
 
 inline gp_Vec2d gp_Vec2d::Normalized() const
-{ 
-  Standard_Real D = coord.Modulus();
-  Standard_ConstructionError_Raise_if (D <= gp::Resolution(), "");
+{
   gp_Vec2d V = *this;
-  V.coord.Divide (D);
+  V.Normalize();
   return V; 
 }
 
@@ -239,6 +237,6 @@ inline gp_Vec2d operator* (const Standard_Real Scalar,
 
 inline gp_Vec2d gp_Vec2d::GetNormal() const
 {
-  return gp_Vec2d(this->Y(), (-1)*this->X());
+  return gp_Vec2d((-1.0)*this->Y(), this->X());
 }
 

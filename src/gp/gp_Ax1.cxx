@@ -33,16 +33,18 @@ Standard_Boolean gp_Ax1::IsCoaxial
  const Standard_Real AngularTolerance,
  const Standard_Real LinearTolerance) const
 {
+  const Standard_Real aSQDistTol = LinearTolerance*LinearTolerance;
   gp_XYZ XYZ1 = loc.XYZ();
   XYZ1.Subtract (Other.loc.XYZ());
   XYZ1.Cross (Other.vdir.XYZ());
-  Standard_Real D1 = XYZ1.Modulus();
   gp_XYZ XYZ2 = Other.loc.XYZ();
   XYZ2.Subtract (loc.XYZ());
   XYZ2.Cross (vdir.XYZ());
-  Standard_Real D2 = XYZ2.Modulus();
+
+  Standard_Real D1 = XYZ1.SquareModulus();
+  Standard_Real D2 = XYZ2.SquareModulus();
   return (vdir.IsEqual (Other.vdir, AngularTolerance) &&
-          D1 <= LinearTolerance && D2 <= LinearTolerance);
+          (D1 <= aSQDistTol) && (D2 <= aSQDistTol));
 }
 
 void gp_Ax1::Mirror (const gp_Pnt& P)
