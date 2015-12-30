@@ -270,22 +270,35 @@ static void RecModif (const TopoDS_Shape &S,
 		      const Handle(ShapeExtend_MsgRegistrator) &msg,
 		      TopTools_DataMapOfShapeShape &map,
 		      Handle(ShapeExtend_MsgRegistrator) &myMsg,
-		      const TopAbs_ShapeEnum until)
+		      const TopAbs_ShapeEnum until,
+          Standard_Boolean theResetLocation = Standard_False)
 {
   if(S.IsNull())
     return;
   //gka  -modification to keep history for shape with location (OCC21617)
   TopLoc_Location aNullLoc;
   TopoDS_Shape aS = S.Located(aNullLoc);
-  TopoDS_Shape r = aS;
- 
-  if ( map.IsBound ( r ) ) 
-    r = map.Find ( r );
+  TopoDS_Shape aSh = S;
+
+  if(aSh.ShapeType() == TopAbs_COMPOUND || theResetLocation)
+  {
+    aSh.Location(aNullLoc);
+    theResetLocation = Standard_False;
+  }
+
+  TopoDS_Shape r = aSh;
+  if ( map.IsBound ( aS ) )   
+    r = map.Find ( aS );
   if ( ! r.IsNull() ) {
     TopoDS_Shape res;
-    if ( repl->Status (r, res, Standard_True ) && res != r ) 
+    if ( repl->Status (r, res, Standard_True ) > 0 && res != r ) 
+    {
+      if(res.ShapeType() <  S.ShapeType())
+      {
+        theResetLocation = Standard_True;
+      }
       map.Bind ( aS, res );
-    
+    }
     // Treat special case: if S was split, r will be a compound of
     // resulting shapes, recursive procedure should be applied
     else if ( r.ShapeType() < S.ShapeType() ) {
@@ -314,17 +327,21 @@ static void RecModif (const TopoDS_Shape &S,
   }
 
   if ( until == TopAbs_SHAPE || S.ShapeType() >= until ) return;
-  
-  for ( TopoDS_Iterator it(S,Standard_False/*,Standard_False*/); it.More(); it.Next() ) {
-    RecModif ( it.Value(), repl, msg, map, myMsg, until );
+
+  Standard_Integer i = 1;
+  for ( TopoDS_Iterator it(aSh,Standard_False/*,Standard_False*/); it.More(); it.Next(),i++ ) {
+    RecModif ( it.Value(), repl, msg, map, myMsg, until, theResetLocation );
   }
+
 }
 
 void ShapeProcess_ShapeContext::RecordModification (const Handle(ShapeBuild_ReShape) &repl,
                                                     const Handle(ShapeExtend_MsgRegistrator) &msg)
 {
-  
-  RecModif ( myShape, repl, msg, myMap, myMsg, myUntil );
+  TopLoc_Location aNullLoc;
+  TopoDS_Shape aS = myShape;
+  aS = myShape.Located(aNullLoc);
+  RecModif ( aS, repl, msg, myMap, myMsg, myUntil );
   if ( myMap.IsBound(myShape) ) 
   {
     myResult = myMap.Find ( myShape );

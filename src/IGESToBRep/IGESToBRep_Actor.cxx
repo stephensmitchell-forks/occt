@@ -185,7 +185,7 @@ Handle(Transfer_Binder) IGESToBRep_Actor::Transfer
       theeps = eps*CAS.GetUnitFactor();
 //      Interface_Static::SetRVal("lastpreci",theeps);
     }
-    Standard_Integer nbTPitems = TP->NbMapped();
+    //Standard_Integer nbTPitems = TP->NbMapped();
     {
       try {
         OCC_CATCH_SIGNALS
@@ -205,7 +205,7 @@ Handle(Transfer_Binder) IGESToBRep_Actor::Transfer
                                                    "read.iges.resource.name", 
                                                    "read.iges.sequence", info,
                                                    TP->GetProgress() );
-    XSAlgo::AlgoContainer()->MergeTransferInfo(TP, info, nbTPitems);
+    XSAlgo::AlgoContainer()->MergeTransferInfo(TP, info);
   }
 
   ShapeExtend_Explorer SBE;
