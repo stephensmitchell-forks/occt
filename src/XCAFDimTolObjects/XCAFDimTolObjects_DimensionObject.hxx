@@ -135,7 +135,7 @@ public:
 
   Standard_Boolean HasPlane() const { return myHasPlane; }
 
-  Standard_Boolean HasPoints() const { !myPnts.IsNull() && myPnts->Length() > 0; }
+  Standard_Boolean HasPoints() const { return (!myPnts.IsNull() && myPnts->Length() > 0); }
 
   Standard_Boolean HasPoint2() const { return myHasPnt2; }
 

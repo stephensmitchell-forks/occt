@@ -1376,6 +1376,17 @@ Handle(atype) result = Handle(atype)::DownCast (start)
 #include <StepVisual_AnnotationPlane.hxx>
 #include <StepVisual_DraughtingCallout.hxx>
 
+#include <StepVisual_TessellatedAnnotationOccurrence.hxx>
+#include <StepVisual_TessellatedItem.hxx>
+#include <StepVisual_TessellatedGeometricSet.hxx>
+#include <StepVisual_TessellatedCurveSet.hxx>
+#include <StepVisual_CoordinatesList.hxx>
+
+#include <RWStepVisual_RWTessellatedAnnotationOccurrence.hxx>
+#include <RWStepVisual_RWTessellatedItem.hxx>
+#include <RWStepVisual_RWTessellatedGeometricSet.hxx>
+#include <RWStepVisual_RWTessellatedCurveSet.hxx>
+#include <RWStepVisual_RWCoordinatesList.hxx>
 
 // -- General Declarations (Recognize, StepType) ---
 
@@ -2007,6 +2018,10 @@ static TCollection_AsciiString Reco_FeatureForDatumTargetRelationship("FEATURE_F
 static TCollection_AsciiString Reco_DraughtingModelItemAssociation("DRAUGHTING_MODEL_ITEM_ASSOCIATION");
 static TCollection_AsciiString Reco_AnnotationPlane("ANNOTATION_PLANE");
 
+static TCollection_AsciiString Reco_TessellatedAnnotationOccurrence("TESSELLATED_ANNOTATION_OCCURRENCE");
+static TCollection_AsciiString Reco_TessellatedGeometricSet("TESSELLATED_GEOMETRIC_SET");
+static TCollection_AsciiString Reco_TessellatedCurveSet("TESSELLATED_CURVE_SET");
+static TCollection_AsciiString Reco_CoordinatesList("COORDINATES_LIST");
 // -- Definition of the libraries --
 
 static Handle(Dico_DictionaryOfInteger) typenums;
@@ -2653,6 +2668,13 @@ RWStepAP214_ReadWriteModule::RWStepAP214_ReadWriteModule ()
   typenums->SetItem (Reco_DraughtingModelItemAssociation, 703);
   typenums->SetItem (Reco_AnnotationPlane, 704);
 
+  typenums->SetItem (Reco_TessellatedAnnotationOccurrence,707);
+  typenums->SetItem (Reco_TessellatedGeometricSet, 709);
+
+  typenums->SetItem ( Reco_TessellatedCurveSet, 710);
+  typenums->SetItem ( Reco_CoordinatesList, 711);
+
+  
 //    SHORT NAMES
 //    NB : la liste est celle de AP203
 //    Directement exploite pour les types simples
@@ -4464,6 +4486,12 @@ const TCollection_AsciiString& RWStepAP214_ReadWriteModule::StepType
   case 702: return Reco_FeatureForDatumTargetRelationship;
   case 703: return Reco_DraughtingModelItemAssociation;
   case 704: return Reco_AnnotationPlane;
+
+  case 707 : return Reco_TessellatedAnnotationOccurrence;
+  case 709 : return Reco_TessellatedGeometricSet;
+
+  case 710 : return Reco_TessellatedCurveSet;
+  case 711 : return Reco_CoordinatesList;
 
   default : return PasReco;
   }
@@ -9244,6 +9272,43 @@ void RWStepAP214_ReadWriteModule::ReadStep(const Standard_Integer CN,
       tool.ReadStep (data,num,ach,anent);
     }
     break;
+    case 707:
+    {
+      DeclareAndCast(StepVisual_TessellatedAnnotationOccurrence,anent,ent);
+      RWStepVisual_RWTessellatedAnnotationOccurrence tool;
+      tool.ReadStep (data,num,ach,anent);
+    }
+    break;
+
+     case 708:
+    {
+      DeclareAndCast(StepVisual_TessellatedItem,anent,ent);
+      RWStepVisual_RWTessellatedItem tool;
+      tool.ReadStep (data,num,ach,anent);
+    }
+    break;
+
+     case 709:
+    {
+      DeclareAndCast(StepVisual_TessellatedGeometricSet,anent,ent);
+      RWStepVisual_RWTessellatedGeometricSet tool;
+      tool.ReadStep (data,num,ach,anent);
+    }
+    break;
+     case 710:
+    {
+      DeclareAndCast(StepVisual_TessellatedCurveSet,anent,ent);
+      RWStepVisual_RWTessellatedCurveSet tool;
+      tool.ReadStep (data,num,ach,anent);
+    }
+    break;
+     case 711:
+    {
+      DeclareAndCast(StepVisual_CoordinatesList,anent,ent);
+      RWStepVisual_RWCoordinatesList tool;
+      tool.ReadStep (data,num,ach,anent);
+    }
+    break;
 
   default: 
     ach->AddFail("Type Mismatch when reading - Entity");
@@ -13991,6 +14056,44 @@ void RWStepAP214_ReadWriteModule::WriteStep(const Standard_Integer CN,
       DeclareAndCast(StepDimTol_GeoTolAndGeoTolWthMaxTol,anent,ent);
       RWStepDimTol_RWGeoTolAndGeoTolWthMaxTol tool;
       tool.WriteStep (SW,anent);
+    }
+    break;
+    case 707:
+    {
+      DeclareAndCast(StepVisual_TessellatedAnnotationOccurrence,anent,ent);
+      RWStepVisual_RWTessellatedAnnotationOccurrence tool;
+      tool.WriteStep (SW,anent);
+    }
+    break;
+
+     case 708:
+    {
+      DeclareAndCast(StepVisual_TessellatedItem,anent,ent);
+      RWStepVisual_RWTessellatedItem tool;
+      tool.WriteStep (SW,anent);
+    }
+    break;
+
+     case 709:
+    {
+      DeclareAndCast(StepVisual_TessellatedGeometricSet,anent,ent);
+      RWStepVisual_RWTessellatedGeometricSet tool;
+      tool.WriteStep (SW,anent);
+    }
+    break;
+     case 710:
+    {
+      DeclareAndCast(StepVisual_TessellatedCurveSet,anent,ent);
+      RWStepVisual_RWTessellatedCurveSet tool;
+      tool.WriteStep (SW,anent);
+    }
+    break;
+      case 711:
+    {
+       DeclareAndCast(StepVisual_CoordinatesList,anent,ent);
+      RWStepVisual_RWCoordinatesList tool;
+      tool.WriteStep(SW,anent);
+     
     }
     break;
 

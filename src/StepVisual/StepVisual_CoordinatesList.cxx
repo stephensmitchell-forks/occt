@@ -13,11 +13,19 @@
 
 
 #include <Standard_Type.hxx>
-#include <StepVisual_AnnotationOccurrence.hxx>
+#include <StepVisual_CoordinatesList.hxx>
+#include <StepVisual_TessellatedItem.hxx>
+IMPLEMENT_STANDARD_RTTIEXT(StepVisual_CoordinatesList,StepGeom_TessellatedItem)
 
-IMPLEMENT_STANDARD_RTTIEXT(StepVisual_AnnotationOccurrence,StepVisual_StyledItem)
+StepVisual_CoordinatesList::StepVisual_CoordinatesList ()  {}
 
-StepVisual_AnnotationOccurrence::StepVisual_AnnotationOccurrence ()  {}
+void StepVisual_CoordinatesList::Init(const Handle(TCollection_HAsciiString)& theName,const Handle(TColgp_HArray1OfXYZ)& thePoints)
+{
+  StepRepr_RepresentationItem::Init(theName);
+  myPoints = thePoints;
+}
 
-
-
+Handle(TColgp_HArray1OfXYZ) StepVisual_CoordinatesList::Points() const
+{
+  return myPoints;
+}
