@@ -13,11 +13,21 @@
 
 
 #include <Standard_Type.hxx>
-#include <StepVisual_AnnotationOccurrence.hxx>
-
-IMPLEMENT_STANDARD_RTTIEXT(StepVisual_AnnotationOccurrence,StepVisual_StyledItem)
-
-StepVisual_AnnotationOccurrence::StepVisual_AnnotationOccurrence ()  {}
+#include <StepVisual_TessellatedGeometricSet.hxx>
 
 
+IMPLEMENT_STANDARD_RTTIEXT(StepVisual_TessellatedGeometricSet,StepGeom_TessellatedItem)
 
+
+StepVisual_TessellatedGeometricSet::StepVisual_TessellatedGeometricSet ()  {}
+
+void StepVisual_TessellatedGeometricSet::Init(const Handle(TCollection_HAsciiString)& theName, const NCollection_Handle<StepVisual_Array1OfTessellaltedItem>& theItems)
+{
+  StepRepr_RepresentationItem::Init(theName);
+  myItems = theItems;
+}
+
+NCollection_Handle<StepVisual_Array1OfTessellaltedItem> StepVisual_TessellatedGeometricSet::Items() const
+{
+  return myItems;
+}

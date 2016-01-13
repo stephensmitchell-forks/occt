@@ -24,6 +24,7 @@
 #include <Standard_Integer.hxx>
 class Standard_Transient;
 class StepVisual_AnnotationCurveOccurrence;
+class StepVisual_TessellatedAnnotationOccurrence;
 
 class StepVisual_DraughtingCalloutElement  : public StepData_SelectType
 {
@@ -41,5 +42,8 @@ public:
   
   //! returns Value as a AnnotationCurveOccurrence (Null if another type)
   Standard_EXPORT Handle(StepVisual_AnnotationCurveOccurrence) AnnotationCurveOccurrence()  const;
+
+    //! returns Value as a AnnotationOccurrence for Tesselated Anotation Occurence
+  Standard_EXPORT Handle(StepVisual_TessellatedAnnotationOccurrence) TessellatedAnnotationOccurrence()  const;
 };
 #endif // StepVisual_DraughtingCalloutElement

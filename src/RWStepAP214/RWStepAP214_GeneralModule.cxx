@@ -1093,6 +1093,19 @@
 #include <StepVisual_ViewVolume.hxx>
 #include <TCollection_HAsciiString.hxx>
 
+#include <StepVisual_TessellatedAnnotationOccurrence.hxx>
+#include <StepVisual_TessellatedItem.hxx>
+#include <StepVisual_TessellatedGeometricSet.hxx>
+#include <StepVisual_TessellatedCurveSet.hxx>
+#include <StepVisual_CoordinatesList.hxx>
+
+#include <RWStepVisual_RWTessellatedAnnotationOccurrence.hxx>
+#include <RWStepVisual_RWTessellatedItem.hxx>
+#include <RWStepVisual_RWTessellatedGeometricSet.hxx>
+#include <RWStepVisual_RWTessellatedCurveSet.hxx>
+#include <RWStepVisual_RWCoordinatesList.hxx>
+
+
 IMPLEMENT_STANDARD_RTTIEXT(RWStepAP214_GeneralModule,StepData_GeneralModule)
 
 //#define DeclareAndCast(atype,result,start) \  NON car Name
@@ -1326,6 +1339,19 @@ IMPLEMENT_STANDARD_RTTIEXT(RWStepAP214_GeneralModule,StepData_GeneralModule)
 #include <StepVisual_AnnotationCurveOccurrence.hxx>
 #include <StepVisual_AnnotationPlane.hxx>
 #include <StepVisual_DraughtingCallout.hxx>
+
+#include <StepVisual_TessellatedAnnotationOccurrence.hxx>
+#include <StepVisual_TessellatedItem.hxx>
+#include <StepVisual_TessellatedGeometricSet.hxx>
+#include <StepVisual_TessellatedCurveSet.hxx>
+#include <StepVisual_CoordinatesList.hxx>
+
+#include <RWStepVisual_RWTessellatedAnnotationOccurrence.hxx>
+#include <RWStepVisual_RWTessellatedItem.hxx>
+#include <RWStepVisual_RWTessellatedGeometricSet.hxx>
+#include <RWStepVisual_RWTessellatedCurveSet.hxx>
+#include <RWStepVisual_RWCoordinatesList.hxx>
+
 
 static Standard_Integer catsh,catdr,catstr,catdsc,cataux;
 
@@ -5037,6 +5063,44 @@ void RWStepAP214_GeneralModule::FillSharedCase(const Standard_Integer CN,
     }
     break;
 
+    case 707:
+    {
+      DeclareAndCast(StepVisual_TessellatedAnnotationOccurrence,anent,ent);
+      RWStepVisual_RWTessellatedAnnotationOccurrence tool;
+      tool.Share(anent,iter);
+    }
+    break;
+
+     case 708:
+    {
+      DeclareAndCast(StepVisual_TessellatedItem,anent,ent);
+      RWStepVisual_RWTessellatedItem tool;
+      tool.Share(anent,iter);
+    }
+    break;
+
+     case 709:
+    {
+      DeclareAndCast(StepVisual_TessellatedGeometricSet,anent,ent);
+      RWStepVisual_RWTessellatedGeometricSet tool;
+      tool.Share(anent,iter);
+    }
+    break;
+     case 710:
+    {
+      DeclareAndCast(StepVisual_TessellatedCurveSet,anent,ent);
+      RWStepVisual_RWTessellatedCurveSet tool;
+      tool.Share(anent,iter);
+    }
+    break;
+    
+      case 711:
+    {
+      DeclareAndCast(StepVisual_CoordinatesList,anent,ent);
+      RWStepVisual_RWCoordinatesList tool;
+      tool.Share(anent,iter);
+    }
+    break;
     default : break;
     }
 }
@@ -7005,6 +7069,26 @@ Standard_Boolean RWStepAP214_GeneralModule::NewVoid
     ent = new StepDimTol_GeoTolAndGeoTolWthMaxTol;
     break;
 
+   case 707:
+        ent = new StepVisual_TessellatedAnnotationOccurrence;
+     break;
+
+   case 708:
+     ent = new StepVisual_TessellatedItem;     
+    break;
+
+     case 709:
+       ent = new StepVisual_TessellatedGeometricSet;
+     break;
+
+     case 710:
+       ent = new StepVisual_TessellatedCurveSet;
+     break;
+    
+      case 711:
+          ent = new StepVisual_CoordinatesList;
+      break;
+    
   default: 
     return Standard_False;
   }
@@ -7589,7 +7673,13 @@ Standard_Integer  RWStepAP214_GeneralModule::CategoryNumber
   case 703:
   case 704: return catdr;
   case 705:
-  case 706: return cataux;
+  case 706: 
+  case 707:  
+  case 708: 
+  case 709:
+  case 710:
+  case 711: 
+    return cataux;
     
   default : break;
   }

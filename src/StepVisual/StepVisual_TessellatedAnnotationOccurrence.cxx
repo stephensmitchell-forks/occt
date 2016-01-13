@@ -1,4 +1,6 @@
-// Copyright (c) 1999-2014 OPEN CASCADE SAS
+// Created on: 2015-10-29
+// Created by: Irina KRYLOVA
+// Copyright (c) 2015 OPEN CASCADE SAS
 //
 // This file is part of Open CASCADE Technology software library.
 //
@@ -11,13 +13,9 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-
 #include <Standard_Type.hxx>
-#include <StepVisual_AnnotationOccurrence.hxx>
+#include <StepVisual_TessellatedAnnotationOccurrence.hxx>
 
-IMPLEMENT_STANDARD_RTTIEXT(StepVisual_AnnotationOccurrence,StepVisual_StyledItem)
+IMPLEMENT_STANDARD_RTTIEXT(StepVisual_TessellatedAnnotationOccurrence,StepVisual_StyledItem);
 
-StepVisual_AnnotationOccurrence::StepVisual_AnnotationOccurrence ()  {}
-
-
-
+StepVisual_TessellatedAnnotationOccurrence::StepVisual_TessellatedAnnotationOccurrence ()  {}

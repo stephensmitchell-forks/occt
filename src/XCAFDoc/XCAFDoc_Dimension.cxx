@@ -300,13 +300,15 @@ Handle(XCAFDimTolObjects_DimensionObject) XCAFDoc_Dimension::GetObject()  const
 
   Handle(TDataStd_RealArray) aPnts;
   if(Label().FindChild(ChildLab_Pnts).FindAttribute(TDataStd_RealArray::GetID(), aPnts) 
-     && !aPnts->Array().IsNull() && aPnts->Array()->Length() > 0)
+     && !aPnts->Array().IsNull() && aPnts->Array()->Length() > 2)
   {
-    Handle(TColgp_HArray1OfPnt) aP = new TColgp_HArray1OfPnt(1,aPnts->Array()->Length());
-    aP->SetValue(1, gp_Pnt(aPnts->Array()->Value(1), aPnts->Array()->Value(2), aPnts->Array()->Value(3)));
-    if (aPnts->Array()->Length() == 2)
+    Handle(TColgp_HArray1OfPnt) aP = new TColgp_HArray1OfPnt(1,aPnts->Array()->Length()/3);
+    gp_Pnt aP1(aPnts->Array()->Value(1), aPnts->Array()->Value(2), aPnts->Array()->Value(3)); 
+    aP->SetValue(1, aP1);
+    if (aPnts->Array()->Length() == 6)
     {
-      aP->SetValue(2, gp_Pnt(aPnts->Array()->Value(4), aPnts->Array()->Value(5), aPnts->Array()->Value(6)));
+      gp_Pnt aP2(aPnts->Array()->Value(4), aPnts->Array()->Value(5), aPnts->Array()->Value(6)); 
+      aP->SetValue(2, aP2);
     }
     anObj->SetPoints(aP);
   }

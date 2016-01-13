@@ -13,11 +13,8 @@
 
 
 #include <Standard_Type.hxx>
-#include <StepVisual_AnnotationOccurrence.hxx>
+#include <StepVisual_TessellatedItem.hxx>
 
-IMPLEMENT_STANDARD_RTTIEXT(StepVisual_AnnotationOccurrence,StepVisual_StyledItem)
+IMPLEMENT_STANDARD_RTTIEXT(StepVisual_TessellatedItem,StepGeom_GeometricRepresentationItem)
 
-StepVisual_AnnotationOccurrence::StepVisual_AnnotationOccurrence ()  {}
-
-
-
+StepVisual_TessellatedItem::StepVisual_TessellatedItem ()  {}

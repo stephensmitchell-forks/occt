@@ -733,6 +733,12 @@ static Standard_CString schemaAP203    = "CONFIG_CONTROL_DESIGN";
 #include <StepVisual_DraughtingCallout.hxx>
 
 
+#include <StepVisual_TessellatedAnnotationOccurrence.hxx>
+#include <StepVisual_TessellatedItem.hxx>
+#include <StepVisual_TessellatedGeometricSet.hxx>
+#include <StepVisual_TessellatedCurveSet.hxx>
+#include <StepVisual_CoordinatesList.hxx>
+
 static int init = 0;
 static Interface_DataMapOfTransientInteger types(800);
 
@@ -1425,7 +1431,16 @@ StepAP214_Protocol::StepAP214_Protocol ()
   types.Bind (STANDARD_TYPE(StepVisual_AnnotationPlane), 704);
   types.Bind (STANDARD_TYPE(StepDimTol_GeoTolAndGeoTolWthDatRefAndGeoTolWthMaxTol), 705);
   types.Bind (STANDARD_TYPE(StepDimTol_GeoTolAndGeoTolWthMaxTol), 706);
+  //AP242 tesselated
+  types.Bind (STANDARD_TYPE(StepVisual_TessellatedAnnotationOccurrence), 707);
+  types.Bind (STANDARD_TYPE(StepVisual_TessellatedItem), 708);
+  types.Bind (STANDARD_TYPE(StepVisual_TessellatedGeometricSet), 709);
+  types.Bind (STANDARD_TYPE(StepVisual_TessellatedCurveSet), 710);
+
+  types.Bind (STANDARD_TYPE(StepVisual_CoordinatesList), 711);
 }
+
+
 
 //=======================================================================
 //function : TypeNumber
