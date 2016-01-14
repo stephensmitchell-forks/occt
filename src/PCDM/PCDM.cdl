@@ -80,7 +80,7 @@ is
     
     ---Category: type of FileDriver;
     --           
-    private enumeration TypeOfFileDriver is TOFD_File, TOFD_CmpFile, TOFD_Unknown
+    private enumeration TypeOfFileDriver is TOFD_File, TOFD_CmpFile, TOFD_XmlFile, TOFD_Unknown
     end TypeOfFileDriver from PCDM;
     
     private pointer BaseDriverPointer to BaseDriver from Storage;    
