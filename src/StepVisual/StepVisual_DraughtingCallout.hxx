@@ -35,8 +35,8 @@ public:
   Standard_EXPORT StepVisual_DraughtingCallout();
 
   //! Init
-  Standard_EXPORT void StepVisual_DraughtingCallout::Init (const Handle(TCollection_HAsciiString)& theName,
-                                                           const Handle(StepVisual_HArray1OfDraughtingCalloutElement)& theContents);
+  Standard_EXPORT void Init (const Handle(TCollection_HAsciiString)& theName,
+                             const Handle(StepVisual_HArray1OfDraughtingCalloutElement)& theContents);
   
   //! Returns field Contents
   inline Handle(StepVisual_HArray1OfDraughtingCalloutElement) Contents () const
