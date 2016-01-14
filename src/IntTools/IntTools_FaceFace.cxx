@@ -353,7 +353,8 @@ static Standard_Boolean isTreatAnalityc(const TopoDS_Face& theF1,
   const Standard_Real Tolang = 1.e-8;
   const Standard_Real aTolF1=BRep_Tool::Tolerance(theF1);
   const Standard_Real aTolF2=BRep_Tool::Tolerance(theF2);
-  const Standard_Real aTolSum = aTolF1 + aTolF2 + Precision::Confusion();
+  //const Standard_Real aTolSum = aTolF1 + aTolF2;
+  const Standard_Real aTolSum = Min(aTolF1, aTolF2);
   Standard_Real aHigh = 0.0;
 
   const BRepAdaptor_Surface aBAS1(theF1), aBAS2(theF2);
@@ -482,7 +483,8 @@ void IntTools_FaceFace::Perform(const TopoDS_Face& aF1,
   const Standard_Real aTolF1=BRep_Tool::Tolerance(myFace1);
   const Standard_Real aTolF2=BRep_Tool::Tolerance(myFace2);
 
-  Standard_Real TolArc = aTolF1 + aTolF2 + Precision::Confusion();
+  //Standard_Real TolArc = aTolF1 + aTolF2;
+  Standard_Real TolArc = Min(aTolF1, aTolF2);
   Standard_Real TolTang = TolArc;
 
   const Standard_Boolean isFace1Quad = (aType1 == GeomAbs_Cylinder ||
