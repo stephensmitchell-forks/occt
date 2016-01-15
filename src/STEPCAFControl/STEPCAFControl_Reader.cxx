@@ -231,7 +231,7 @@
 #include <StepAP242_DraughtingModelItemAssociation.hxx>
 #include <StepAP242_GeometricItemSpecificUsage.hxx>
 #include <StepGeom_CartesianPoint.hxx>
-#include <STEPConstruct_GDTProperty.hxx>
+#include <STEPCAFControl_GDTProperty.hxx>
 #include <StepVisual_TessellatedAnnotationOccurrence.hxx>
 #include <StepVisual_TessellatedAnnotationOccurrence.hxx>
 #include <StepVisual_TessellatedItem.hxx>
@@ -243,6 +243,7 @@
 #include <TColgp_HArray1OfXYZ.hxx>
 #include <BRepBuilderAPI_MakeEdge.hxx>
 #include <BRepTools.hxx>
+#include <Transfer_ActorOfTransientProcess.hxx>
 
 // skl 21.08.2003 for reading G&DT
 //#include <StepRepr_CompoundItemDefinition.hxx>
@@ -1717,16 +1718,20 @@ static Standard_Boolean GetMassConversionFactor(Handle(StepBasic_NamedUnit)& NU,
 }
 
 //=======================================================================
-//function : ReadGDTPosition
+//function : readAnnotation
 //purpose  : return annotation plane and position for given GDT
 // (Dimension, Geometric_Tolerance, Datum_Feature or Placed_Datum_Target_Feature)
 //=======================================================================
-static void ReadGDTPosition(const Interface_Graph &theGraph,
-                            const Handle(Standard_Transient) theGDT,
-                            Handle(Standard_Transient)& theDimObject)
+TopoDS_Shape readAnnotation(const Handle(XSControl_TransferReader)& theTR, 
+  const Handle(Standard_Transient) theGDT,
+  Handle(Standard_Transient)& theDimObject,
+  Handle(TCollection_HAsciiString)& theName)
 {
+  TopoDS_Compound aResAnnotation;
+  Handle(Transfer_TransientProcess) aTP = theTR->TransientProcess();
+  const Interface_Graph& aGraph = aTP->Graph();
   // find the proper DraughtingModelItemAssociation
-  Interface_EntityIterator subs = theGraph.Sharings(theGDT);
+  Interface_EntityIterator subs = aGraph.Sharings(theGDT);
   Handle(StepAP242_DraughtingModelItemAssociation) aDMIA;
   for (subs.Start(); subs.More() && aDMIA.IsNull(); subs.Next()) {
     if (!subs.Value()->IsKind(STANDARD_TYPE(StepAP242_DraughtingModelItemAssociation)))
@@ -1739,15 +1744,15 @@ static void ReadGDTPosition(const Interface_Graph &theGraph,
     }
   }
   if (aDMIA.IsNull() || aDMIA->NbIdentifiedItem() == 0)
-    return;
+    return aResAnnotation;
 
   // retrieve AnnotationPlane
   Standard_Boolean isHasPlane = Standard_False;
   gp_Ax2 aPlaneAxes;
   Handle(StepRepr_RepresentationItem) aDMIAE = aDMIA->IdentifiedItemValue(1);
   if (aDMIAE.IsNull())
-    return;
-  subs = theGraph.Sharings(aDMIAE);
+    return aResAnnotation;
+  subs = aGraph.Sharings(aDMIAE);
   Handle(StepVisual_AnnotationPlane) anAnPlane;
   for (subs.Start(); subs.More() && anAnPlane.IsNull(); subs.Next()) {
     anAnPlane = Handle(StepVisual_AnnotationPlane)::DownCast(subs.Value());
@@ -1768,7 +1773,7 @@ static void ReadGDTPosition(const Interface_Graph &theGraph,
     if (!aA2P3D.IsNull())
     {
       Handle(StepGeom_Direction) anAxis = aA2P3D->Axis(), 
-                                 aRefDir = aA2P3D->RefDirection();
+        aRefDir = aA2P3D->RefDirection();
       if (!anAxis.IsNull() && !aRefDir.IsNull()) {
         Handle(TColStd_HArray1OfReal) aCoords;
         aCoords = anAxis->DirectionRatios();
@@ -1788,11 +1793,11 @@ static void ReadGDTPosition(const Interface_Graph &theGraph,
   }
 
   // set plane axes to XCAF
- 
+
   if (isHasPlane) {
     if (theDimObject->IsKind(STANDARD_TYPE(XCAFDimTolObjects_DimensionObject))) {
-        Handle(XCAFDimTolObjects_DimensionObject) anObj = 
-      Handle(XCAFDimTolObjects_DimensionObject)::DownCast(theDimObject);
+      Handle(XCAFDimTolObjects_DimensionObject) anObj = 
+        Handle(XCAFDimTolObjects_DimensionObject)::DownCast(theDimObject);
 
       Handle(TColgp_HArray1OfPnt) aPnts = new TColgp_HArray1OfPnt(1, 1);
       anObj->SetPlane(aPlaneAxes);
@@ -1813,162 +1818,209 @@ static void ReadGDTPosition(const Interface_Graph &theGraph,
       //anObj->SetPoint(aPlaneAxes.Location());
     }
   }
-  
-  
+
+
   // Retrieve connecton point
+  // Take AnnotationCurveOccurence (other types are not processed now)
   // Take AnnotationCurveOccurence (other types are not processed now)
   Handle(StepVisual_AnnotationCurveOccurrence) anACO;
   NCollection_Vector<Handle(StepVisual_TessellatedAnnotationOccurrence)> aTesselations;
-  if (aDMIAE->IsKind(STANDARD_TYPE(StepVisual_AnnotationCurveOccurrence))) {
+  NCollection_Vector<Handle(StepVisual_StyledItem)> anAnnotations;
+  if (aDMIAE->IsKind(STANDARD_TYPE(StepVisual_AnnotationCurveOccurrence))) 
+  {
     anACO = Handle(StepVisual_AnnotationCurveOccurrence)::DownCast(aDMIAE);
-    
+    if( !anACO.IsNull())
+      anAnnotations.Append(anACO);
   }
-  else if (aDMIAE->IsKind(STANDARD_TYPE(StepVisual_DraughtingCallout))) {
+
+  else if (aDMIAE->IsKind(STANDARD_TYPE(StepVisual_DraughtingCallout))) 
+  {
     Handle(StepVisual_DraughtingCallout) aDCallout =
       Handle(StepVisual_DraughtingCallout)::DownCast(aDMIAE);
     for (Standard_Integer i = 1; i <= aDCallout->NbContents() && anACO.IsNull(); i++) {
       anACO = aDCallout->ContentsValue(i).AnnotationCurveOccurrence();
-      if(anACO.IsNull())
+      if(!anACO.IsNull())
       {
-        Handle(StepVisual_TessellatedAnnotationOccurrence) aTesselation = 
-          aDCallout->ContentsValue(i).TessellatedAnnotationOccurrence();
-        if( !aTesselation.IsNull())
-          aTesselations.Append(aTesselation);
+        anAnnotations.Append(anACO);
+        continue;
       }
+      Handle(StepVisual_TessellatedAnnotationOccurrence) aTesselation = 
+        aDCallout->ContentsValue(i).TessellatedAnnotationOccurrence();
+      if( !aTesselation.IsNull())
+        anAnnotations.Append(aTesselation);
     }
   }
-  if (anACO.IsNull() && !aTesselations.Length())
-    return;
 
- 
+  if (!anAnnotations.Length())
+    return aResAnnotation;
+
+
   // for Dimensional_Location (and its subtypes)
   Standard_Boolean isDimLoc = theGDT->IsKind(STANDARD_TYPE(StepShape_DimensionalLocation));
   gp_Pnt aPoint(0.,0.,0.);
   gp_Pnt aPoint2(0.,0.,0.);
+  
+  BRep_Builder aB;
+  aB.MakeCompound(aResAnnotation);
 
-  if(!anACO.IsNull())
+  Standard_Integer i =0;
+  for( ; i < anAnnotations.Length(); i++)
   {
-   // Take the first polyline (it is not a rule, but temporary solution)
-  Handle(StepRepr_RepresentationItem) aCurveItem = anACO->Item();
-  Handle(StepGeom_Polyline) aCurve;
-  Handle(StepGeom_Polyline) aCurve2;
-  if (aCurveItem->IsKind(STANDARD_TYPE(StepShape_GeometricCurveSet))) {
-    Handle(StepShape_GeometricCurveSet) aCurveSet =
-      Handle(StepShape_GeometricCurveSet)::DownCast(aCurveItem);
-    Standard_Integer i = 1;
-    for ( ; i <= aCurveSet->NbElements() && aCurve.IsNull(); i++) {
-      aCurve = Handle(StepGeom_Polyline)::DownCast(aCurveSet->ElementsValue(i).Curve());
-    }
-    if (isDimLoc) {
-      for ( ; i <= aCurveSet->NbElements() && aCurve2.IsNull(); i++) {
-        aCurve2 = Handle(StepGeom_Polyline)::DownCast(aCurveSet->ElementsValue(i).Curve());
-      }
-    }
-  }
-  else {
-    aCurve = Handle(StepGeom_Polyline)::DownCast(aCurveItem);
-  }
-  if (aCurve.IsNull() || aCurve->NbPoints() < 1)
-    return;
-
-  isDimLoc = isDimLoc && !aCurve2.IsNull() && aCurve2->NbPoints() > 0;
-
-  // Take the first point of polyline (it is not a rule, but temporary solution)
-  Handle(StepGeom_CartesianPoint) aPnt = aCurve->PointsValue(1);
-  Handle(TColStd_HArray1OfReal) aCoords = aPnt->Coordinates();
-  aPoint.SetCoord(aCoords->Value(1), aCoords->Value(2), aCoords->Value(3));
-
-  gp_Pnt aPoint2;
-  if (isDimLoc) {
-    Handle(StepGeom_CartesianPoint) aPnt = aCurve2->PointsValue(1);
-    Handle(TColStd_HArray1OfReal) aCoords = aPnt->Coordinates();
-    aPoint2.SetCoord(aCoords->Value(1), aCoords->Value(2), aCoords->Value(3));
-  }
-  }
-  //case of tesselated entities
-  else
-  {
-    gp_XYZ aXYZ1(0.,0.,0.),aXYZ2(0.,0.,0.) ;
-   
-    Standard_Integer nb = aTesselations.Length(), j =0, nbP =0;
-    for( ;j < nb; j++)
+    Handle(StepVisual_StyledItem) anItem = anAnnotations(i);
+  
+    theName = anItem->Name();
+      //debug name of dimension====================
+    TCollection_AsciiString aCurName = theName.IsNull() ? 
+      (TCollection_AsciiString("Size") + TCollection_AsciiString(numsize++)) : theName->String();
+    aCurName += "_";
+    aCurName += TCollection_AsciiString(i);
+    aCurName += ".brep";
+    //========================
+    Handle(StepVisual_AnnotationCurveOccurrence) anACO = 
+      Handle(StepVisual_AnnotationCurveOccurrence)::DownCast(anItem);
+    TopoDS_Shape anAnotationShape;
+    if(!anACO.IsNull())
     {
-      if( aTesselations(j).IsNull())
-        continue;
-      Handle(TCollection_HAsciiString) aName = aTesselations(j)->Name();
-      TCollection_AsciiString aCurName = aName.IsNull() ? 
-        (TCollection_AsciiString("Size") + TCollection_AsciiString(numsize++)) : aName->String();
-      aCurName += "_";
-      aCurName += TCollection_AsciiString(j);
-      aCurName += ".brep";
-      Handle(StepRepr_RepresentationItem) aTessItem = aTesselations(j)->Item();
-      if(aTessItem.IsNull())
-        return;
-    Handle(StepVisual_TessellatedGeometricSet) aTessSet = Handle(StepVisual_TessellatedGeometricSet)::DownCast(aTessItem);
-    if( aTessSet.IsNull())
-      return;
-    NCollection_Handle<StepVisual_Array1OfTessellaltedItem> aListItems = aTessSet->Items();
-    Standard_Integer n = 1, nb = aListItems.IsNull() ? 0 : aListItems->Length();
-    Handle(StepVisual_TessellatedCurveSet) aTessCurve;
-    for( ; n <= nb && aTessCurve.IsNull(); n++)
-    {
-      aTessCurve = Handle(StepVisual_TessellatedCurveSet)::DownCast(aListItems->Value(n));
-
-    }
-    if( aTessCurve.IsNull())
-      return;
-     Handle(StepVisual_CoordinatesList) aCoordList = aTessCurve->CoordList();
-     if( aCoordList.IsNull())
-       return;
-     Handle(TColgp_HArray1OfXYZ)  aPoints = aCoordList->Points();
-     
-     isDimLoc = !aPoints.IsNull() && aPoints->Length() > 0;
-     if( isDimLoc)
-     {
-        //debug
-      NCollection_Handle<StepVisual_VectorOfHSequenceOfInteger> aCurves = aTessCurve->Curves();
-      Standard_Integer aNbC = (aCurves.IsNull() ? 0 : aCurves->Length());
-      BRep_Builder aB;
-      TopoDS_Wire aCurW;
-      aB.MakeWire(aCurW);
-      Standard_Integer k = 1; 
-
-
-     /* for( ; k < aPoints->Length(); k++)
+      // Take the first polyline (it is not a rule, but temporary solution)
+      Handle(StepRepr_RepresentationItem) aCurveItem = anACO->Item();
+      Handle(StepGeom_Polyline) aCurve;
+      Handle(StepGeom_Polyline) aCurve2;
+      anAnotationShape = STEPConstruct::FindShape (aTP,aCurveItem);
+      if( anAnotationShape.IsNull())
       {
-        gp_Pnt aP1(aPoints->Value(k));
-         gp_Pnt aP2(aPoints->Value(k+1));
-        BRepBuilderAPI_MakeEdge aMaker(aP1, aP2);
-        if( aMaker.IsDone())
-        {
-          TopoDS_Edge aCurE = aMaker.Edge();
-          aB.Add(aCurW, aCurE);
+        Handle(Transfer_Binder) binder = theTR->Actor()->Transfer(aCurveItem, aTP);
+        if ( ! binder.IsNull() && binder->HasResult() ) {
+          anAnotationShape = TransferBRep::ShapeResult ( aTP, binder );
         }
+        
       }
 
-      BRepTools::Write(aCurW, aCurName.ToCString());*/
-       //
-       aXYZ1 += aPoints->Value(1);
-       aXYZ2 += aPoints->Value(aPoints->Length());
-       nbP++;
-      
+      //if (aCurveItem->IsKind(STANDARD_TYPE(StepShape_GeometricCurveSet))) {
+      //  Handle(StepShape_GeometricCurveSet) aCurveSet =
+      //    Handle(StepShape_GeometricCurveSet)::DownCast(aCurveItem);
 
-      /* aPoint = gp_Pnt(aPoints->Value(1));
-       aPoint2 = gp_Pnt(aPoints->Value(aPoints->Length()));*/
-     }
+
+
+      //  Standard_Integer i = 1;
+      //  for ( ; i <= aCurveSet->NbElements() && aCurve.IsNull(); i++) {
+      //    aCurve = Handle(StepGeom_Polyline)::DownCast(aCurveSet->ElementsValue(i).Curve());
+      //  }
+      //  if (isDimLoc) {
+      //    for ( ; i <= aCurveSet->NbElements() && aCurve2.IsNull(); i++) {
+      //      aCurve2 = Handle(StepGeom_Polyline)::DownCast(aCurveSet->ElementsValue(i).Curve());
+      //    }
+      //  }
+      //}
+      //else {
+      //  aCurve = Handle(StepGeom_Polyline)::DownCast(aCurveItem);
+      //}
+
+      //isDimLoc = isDimLoc && !aCurve2.IsNull() && aCurve2->NbPoints() > 0;
+
+      //// Take the first point of polyline (it is not a rule, but temporary solution)
+      //Handle(StepGeom_CartesianPoint) aPnt = aCurve->PointsValue(1);
+      //Handle(TColStd_HArray1OfReal) aCoords = aPnt->Coordinates();
+      //aPoint.SetCoord(aCoords->Value(1), aCoords->Value(2), aCoords->Value(3));
+
+      //gp_Pnt aPoint2;
+      //if (isDimLoc) {
+      //  Handle(StepGeom_CartesianPoint) aPnt = aCurve2->PointsValue(1);
+      //  Handle(TColStd_HArray1OfReal) aCoords = aPnt->Coordinates();
+      //  aPoint2.SetCoord(aCoords->Value(1), aCoords->Value(2), aCoords->Value(3));
+      //}
     }
-    if(nbP)
+    //case of tesselated entities
+    else
     {
-      aPoint = gp_Pnt(aXYZ1/ nbP);
-      aPoint2 = gp_Pnt(aXYZ2/ nbP);
+      Handle(StepRepr_RepresentationItem) aTessItem = anItem->Item();
+      if(aTessItem.IsNull())
+        continue;
+      Handle(StepVisual_TessellatedGeometricSet) aTessSet = Handle(StepVisual_TessellatedGeometricSet)::DownCast(aTessItem);
+      if( aTessSet.IsNull())
+        continue;
+      NCollection_Handle<StepVisual_Array1OfTessellaltedItem> aListItems = aTessSet->Items();
+      Standard_Integer n = 1, nb = aListItems.IsNull() ? 0 : aListItems->Length();
+      Handle(StepVisual_TessellatedCurveSet) aTessCurve;
+      for( ; n <= nb && aTessCurve.IsNull(); n++)
+      {
+        aTessCurve = Handle(StepVisual_TessellatedCurveSet)::DownCast(aListItems->Value(n));
+
+      }
+      if( aTessCurve.IsNull())
+        continue;
+      Handle(StepVisual_CoordinatesList) aCoordList = aTessCurve->CoordList();
+      if( aCoordList.IsNull())
+        continue;
+      Handle(TColgp_HArray1OfXYZ)  aPoints = aCoordList->Points();
+
+      isDimLoc = !aPoints.IsNull() && aPoints->Length() > 0;
+      if( isDimLoc)
+      {
+        //debug
+        NCollection_Handle<StepVisual_VectorOfHSequenceOfInteger> aCurves = aTessCurve->Curves();
+        Standard_Integer aNbC = (aCurves.IsNull() ? 0 : aCurves->Length());
+        //BRep_Builder aB;
+        TopoDS_Compound aComp;
+        aB.MakeCompound(aComp);
+        // TopoDS_Wire aCurW;
+        //aB.MakeWire(aCurW);
+        Standard_Integer k = 0; 
+        for( ; k < aNbC; k++)
+        {
+          Handle(TColStd_HSequenceOfInteger) anIndexes = aCurves->Value(k);
+          BRep_Builder aB;
+          TopoDS_Wire aCurW;
+          aB.MakeWire(aCurW);
+
+          Standard_Integer n =1;
+          for( ; n< anIndexes->Length(); n++)
+          {
+            Standard_Integer ind = anIndexes->Value(n);
+            Standard_Integer indnext = anIndexes->Value(n+1);
+            if( ind > aPoints->Length() || indnext >aPoints->Length())
+              continue;
+            gp_Pnt aP1(aPoints->Value(ind));
+            gp_Pnt aP2(aPoints->Value(indnext));
+            BRepBuilderAPI_MakeEdge aMaker(aP1, aP2);
+            if( aMaker.IsDone())
+            {
+              TopoDS_Edge aCurE = aMaker.Edge();
+              aB.Add(aCurW, aCurE);
+            }
+          }
+          aB.Add(aComp, aCurW);
+
+        }
+        anAnotationShape = aComp;
+      }
+
+
+      ////
+      // aXYZ1 += aPoints->Value(1);
+      // aXYZ2 += aPoints->Value(aPoints->Length());
+      // nbP++;
     }
+    if(!anAnotationShape.IsNull())
+    {
+      aCurName.RemoveAll(' ');
+      //BRepTools::Write(anAnotationShape, aCurName.ToCString());
+      aB.Add(aResAnnotation, anAnotationShape);
+    }
+    /*if(nbP)
+    {
+    aPoint = gp_Pnt(aXYZ1/ nbP);
+    aPoint2 = gp_Pnt(aXYZ2/ nbP);
+    }*/
   }
+  //////////////////////
+
 
   // set point to XCAF
-  if (theDimObject->IsKind(STANDARD_TYPE(XCAFDimTolObjects_DimensionObject))) {
+ /* if (theDimObject->IsKind(STANDARD_TYPE(XCAFDimTolObjects_DimensionObject))) 
+  {
     Handle(XCAFDimTolObjects_DimensionObject) anObj = 
       Handle(XCAFDimTolObjects_DimensionObject)::DownCast(theDimObject);
-    
+
     Handle(TColgp_HArray1OfPnt) aPnts;
     if (isDimLoc)
       aPnts = new TColgp_HArray1OfPnt(1, 2);
@@ -1980,7 +2032,7 @@ static void ReadGDTPosition(const Interface_Graph &theGraph,
       aPnts->SetValue(1, aPoint);
       aPnts->SetValue(2, aPoint2);
     }
-   
+
     anObj->SetPoints(aPnts);
   }
   else if (theDimObject->IsKind(STANDARD_TYPE(XCAFDimTolObjects_DatumObject))) {
@@ -1992,8 +2044,8 @@ static void ReadGDTPosition(const Interface_Graph &theGraph,
     Handle(XCAFDimTolObjects_GeomToleranceObject) anObj =
       Handle(XCAFDimTolObjects_GeomToleranceObject)::DownCast(theDimObject);
     anObj->SetPoint(aPoint);
-  }
-  
+  }*/
+  return aResAnnotation;
 }
 
 //=======================================================================
@@ -2180,7 +2232,7 @@ static Standard_Boolean setDatumToXCAF(const Handle(StepDimTol_Datum)& theDat,
           aDatObj->SetDatumTargetNumber(0);
         aDatObj->IsDatumTarget(Standard_True);
         XCAFDimTolObjects_DatumTargetType aType;
-        if(STEPConstruct_GDTProperty::GetDatumTargetType(aSA->Description(),aType))
+        if(STEPCAFControl_GDTProperty::GetDatumTargetType(aSA->Description(),aType))
         {
           aDatObj->SetDatumTargetType(aType);
           if(aType == XCAFDimTolObjects_DatumTargetType_Area)
@@ -2288,7 +2340,16 @@ static Standard_Boolean setDatumToXCAF(const Handle(StepDimTol_Datum)& theDat,
       aDGTTool->SetDatumToGeomTol(aDatL, theGDTL);
     }
     if(!aDatObj.IsNull()) {
-      ReadGDTPosition(aGraph, aSAR->RelatingShapeAspect(), aDatObj);
+      Handle(TCollection_HAsciiString) aName;
+      TopoDS_Shape anAnnotation = readAnnotation(aTR, aSAR->RelatingShapeAspect(), aDatObj,aName);
+        
+      TDF_Label aL = aSTool->AddShape(anAnnotation, Standard_False);
+      if( !aName.IsNull() && !aL.IsNull())
+      {
+        TCollection_ExtendedString str ( aName->String() );
+        TDataStd_Name::Set ( aL, str );
+      }
+      
       aDat->SetObject(aDatObj);
     }
   }
@@ -3099,7 +3160,7 @@ static void setDimObjectToXCAF(const Handle(Standard_Transient)& theEnt,
   if(!aTQ.IsNull()) 
   {
     XCAFDimTolObjects_DimensionQualifier aQ;
-    if (STEPConstruct_GDTProperty::GetDimQualifierType(aTQ->Name(), aQ))
+    if (STEPCAFControl_GDTProperty::GetDimQualifierType(aTQ->Name(), aQ))
     {
         aDimObj->SetQualifier(aQ);
     }
@@ -3121,7 +3182,7 @@ static void setDimObjectToXCAF(const Handle(Standard_Transient)& theEnt,
     Standard_Boolean aHolle = Standard_False;
     XCAFDimTolObjects_DimensionFormVariance aFV = XCAFDimTolObjects_DimensionFormVariance_None;
     XCAFDimTolObjects_DimensionGrade aG = XCAFDimTolObjects_DimensionGrade_IT01;
-    STEPConstruct_GDTProperty::GetDimClassOfTolerance(aLAF, aHolle, aFV, aG);
+    STEPCAFControl_GDTProperty::GetDimClassOfTolerance(aLAF, aHolle, aFV, aG);
     aDimObj->SetClassOfTolerance(aHolle, aFV, aG);
   }
 
@@ -3129,7 +3190,7 @@ static void setDimObjectToXCAF(const Handle(Standard_Transient)& theEnt,
   {
     //get modifiers
     XCAFDimTolObjects_DimensionModifiersSequence aModifiers;
-    STEPConstruct_GDTProperty::GetDimModifiers(aCRI, aModifiers);
+    STEPCAFControl_GDTProperty::GetDimModifiers(aCRI, aModifiers);
     if(aModifiers.Length() > 0)
       aDimObj->SetModifiers(aModifiers);
   }
@@ -3144,7 +3205,7 @@ static void setDimObjectToXCAF(const Handle(Standard_Transient)& theEnt,
     aName = aDimLocation->Name();
   }
   XCAFDimTolObjects_DimensionType aType = XCAFDimTolObjects_DimensionType_Location_None;
-  if (!STEPConstruct_GDTProperty::GetDimType(aName, aType))
+  if (!STEPCAFControl_GDTProperty::GetDimType(aName, aType))
   {
     if(!aDimSize.IsNull())
     {
@@ -3253,8 +3314,17 @@ static void setDimObjectToXCAF(const Handle(Standard_Transient)& theEnt,
   }
   aDimObj->SetType(aType);
 
-  ReadGDTPosition(aGraph, theEnt, aDimObj);
+  Handle(TCollection_HAsciiString) anAnnotName;
+    
+  TopoDS_Shape anAnnotation = readAnnotation(aTR, theEnt, aDimObj, anAnnotName);
+  aSTool->AddShape(anAnnotation, Standard_False);
 
+  TDF_Label aL = aSTool->AddShape(anAnnotation, Standard_False);
+  if( !anAnnotName.IsNull() && !aL.IsNull())
+  {
+    TCollection_ExtendedString str ( anAnnotName->String() );
+    TDataStd_Name::Set ( aL, str );
+  }
   if(!aDimObj.IsNull())
   {
     Handle(XCAFDoc_Dimension) aDim;
@@ -3278,37 +3348,37 @@ static Standard_Boolean getTolType(const Handle(Standard_Transient)& theEnt,
   if (theEnt->IsKind(STANDARD_TYPE(StepDimTol_GeoTolAndGeoTolWthDatRef)))
   {
     Handle(StepDimTol_GeoTolAndGeoTolWthDatRef) anE = Handle(StepDimTol_GeoTolAndGeoTolWthDatRef)::DownCast(theEnt);
-    theType = STEPConstruct_GDTProperty::GetGeomToleranceType(anE->GetToleranceType());
+    theType = STEPCAFControl_GDTProperty::GetGeomToleranceType(anE->GetToleranceType());
   }
   else if (theEnt->IsKind(STANDARD_TYPE(StepDimTol_GeoTolAndGeoTolWthDatRefAndGeoTolWthMaxTol)))
   {
     Handle(StepDimTol_GeoTolAndGeoTolWthDatRefAndGeoTolWthMaxTol) anE = 
       Handle(StepDimTol_GeoTolAndGeoTolWthDatRefAndGeoTolWthMaxTol)::DownCast(theEnt);
-    theType = STEPConstruct_GDTProperty::GetGeomToleranceType(anE->GetToleranceType());
+    theType = STEPCAFControl_GDTProperty::GetGeomToleranceType(anE->GetToleranceType());
   }
   else if (theEnt->IsKind(STANDARD_TYPE(StepDimTol_GeoTolAndGeoTolWthDatRefAndGeoTolWthMod)))
   {
     Handle(StepDimTol_GeoTolAndGeoTolWthDatRefAndGeoTolWthMod) anE = 
       Handle(StepDimTol_GeoTolAndGeoTolWthDatRefAndGeoTolWthMod)::DownCast(theEnt);
-    theType = STEPConstruct_GDTProperty::GetGeomToleranceType(anE->GetToleranceType());
+    theType = STEPCAFControl_GDTProperty::GetGeomToleranceType(anE->GetToleranceType());
   }
   else if (theEnt->IsKind(STANDARD_TYPE(StepDimTol_GeoTolAndGeoTolWthMaxTol)))
   {
     Handle(StepDimTol_GeoTolAndGeoTolWthMaxTol) anE = 
       Handle(StepDimTol_GeoTolAndGeoTolWthMaxTol)::DownCast(theEnt);
-    theType = STEPConstruct_GDTProperty::GetGeomToleranceType(anE->GetToleranceType());
+    theType = STEPCAFControl_GDTProperty::GetGeomToleranceType(anE->GetToleranceType());
   }
   else if (theEnt->IsKind(STANDARD_TYPE(StepDimTol_GeoTolAndGeoTolWthMod)))
   {
     Handle(StepDimTol_GeoTolAndGeoTolWthMod) anE = 
       Handle(StepDimTol_GeoTolAndGeoTolWthMod)::DownCast(theEnt);
-    theType = STEPConstruct_GDTProperty::GetGeomToleranceType(anE->GetToleranceType());
+    theType = STEPCAFControl_GDTProperty::GetGeomToleranceType(anE->GetToleranceType());
   }
   else if (theEnt->IsKind(STANDARD_TYPE(StepDimTol_GeoTolAndGeoTolWthDatRefAndUneqDisGeoTol)))
   {
     Handle(StepDimTol_GeoTolAndGeoTolWthDatRefAndUneqDisGeoTol) anE = 
       Handle(StepDimTol_GeoTolAndGeoTolWthDatRefAndUneqDisGeoTol)::DownCast(theEnt);
-    theType = STEPConstruct_GDTProperty::GetGeomToleranceType(anE->GetToleranceType());
+    theType = STEPCAFControl_GDTProperty::GetGeomToleranceType(anE->GetToleranceType());
   }
   else if(theEnt->IsKind(STANDARD_TYPE(StepDimTol_AngularityTolerance)))
   {
@@ -3417,7 +3487,7 @@ static void setGeomTolObjectToXCAF(const Handle(Standard_Transient)& theEnt,
     if(anIter.Value()->IsKind(STANDARD_TYPE(StepDimTol_ToleranceZone))){
       Handle(StepDimTol_ToleranceZoneForm) aForm 
                             = Handle(StepDimTol_ToleranceZone)::DownCast(anIter.Value())->Form();
-      STEPConstruct_GDTProperty::GetTolValueType(aForm->Name(), aTypeV);
+      STEPCAFControl_GDTProperty::GetTolValueType(aForm->Name(), aTypeV);
       Interface_EntityIterator anIt = aGraph.Sharings(anIter.Value());
       for(anIt.Start(); anIt.More(); anIt.Next()) {
         if(anIt.Value()->IsKind(STANDARD_TYPE(StepDimTol_ProjectedZoneDefinition))){
@@ -3524,8 +3594,15 @@ static void setGeomTolObjectToXCAF(const Handle(Standard_Transient)& theEnt,
     if(GetAngleConversionFactor(NU,aFact)) aVal=aVal*aFact;
     aTolObj->SetMaxValueModifier(aVal);
   }
+  Handle(TCollection_HAsciiString) aName;
+  TopoDS_Shape anAnnotation = readAnnotation(aTR, theEnt, aTolObj, aName);
 
-  ReadGDTPosition(aGraph, theEnt, aTolObj);
+  TDF_Label aL = aSTool->AddShape(anAnnotation, Standard_False);
+  if( !aName.IsNull() && !aL.IsNull())
+  {
+    TCollection_ExtendedString str ( aName->String() );
+    TDataStd_Name::Set ( aL, str );
+  }
   aGTol->SetObject(aTolObj);
 }
 
