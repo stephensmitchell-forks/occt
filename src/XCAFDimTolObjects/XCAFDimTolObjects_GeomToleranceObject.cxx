@@ -25,7 +25,7 @@ XCAFDimTolObjects_GeomToleranceObject::XCAFDimTolObjects_GeomToleranceObject()
   myHasAxis = Standard_False;
   myHasPlane = Standard_False;
   myHasPnt = Standard_False;
-  myHasPnt2 = Standard_False;
+  myHasPntText = Standard_False;
 }
 
 //=======================================================================
@@ -47,10 +47,10 @@ XCAFDimTolObjects_GeomToleranceObject::XCAFDimTolObjects_GeomToleranceObject(con
   myHasAxis = theObj->myHasAxis;
   myPlane = theObj->myPlane;
   myPnt= theObj->myPnt;
-  myPnt2= theObj->myPnt2;
+  myPntText= theObj->myPntText;
   myHasPlane = theObj->myHasPlane;
   myHasPnt = theObj->myHasPnt;
-  myHasPnt2 = theObj->myHasPnt2;
+  myHasPntText = theObj->myHasPntText;
 }
 
 //=======================================================================

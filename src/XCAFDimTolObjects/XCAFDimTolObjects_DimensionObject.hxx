@@ -117,13 +117,13 @@ public:
   
   Standard_EXPORT void SetPoints (const Handle(TColgp_HArray1OfPnt)& thePnts);
 
-  void SetPoint2 (const gp_Pnt& thePnt)
+  void SetPointTextAttach (const gp_Pnt& thePntText)
   {
-    myPnt2 = thePnt;
-    myHasPnt2 = Standard_True;
+    myPntText = thePntText;
+    myHasPntText = Standard_True;
   }
 
-  const gp_Pnt& GetPoint2() const { return myPnt2; }
+  const gp_Pnt& GetPointTextAttach() const { return myPntText; }
 
   void SetPlane (const gp_Ax2& thePlane)
   {
@@ -137,7 +137,7 @@ public:
 
   Standard_Boolean HasPoints() const { return (!myPnts.IsNull() && myPnts->Length() > 0); }
 
-  Standard_Boolean HasPoint2() const { return myHasPnt2; }
+  Standard_Boolean HasPoint2() const { return myHasPntText; }
 
   DEFINE_STANDARD_RTTIEXT(XCAFDimTolObjects_DimensionObject,Standard_Transient)
 
@@ -155,10 +155,11 @@ private:
   TopoDS_Edge myPath;
   gp_Dir myDir;
   Handle(TColgp_HArray1OfPnt) myPnts;
-  gp_Pnt myPnt2;
   gp_Ax2 myPlane;
   Standard_Boolean myHasPlane;
-  Standard_Boolean myHasPnt2;
+  Standard_Boolean myHasPnt;
+  Standard_Boolean myHasPntText;
+  gp_Pnt myPntText;
 
 };
 

@@ -26,7 +26,7 @@ XCAFDimTolObjects_DatumObject::XCAFDimTolObjects_DatumObject()
   myIsDTarget = Standard_False;
   myHasPlane = Standard_False;
   myHasPnt = Standard_False;
-  myHasPnt2 = Standard_False;
+  myHasPntText = Standard_False;
 }
 
 //=======================================================================
@@ -46,10 +46,10 @@ XCAFDimTolObjects_DatumObject::XCAFDimTolObjects_DatumObject(const Handle(XCAFDi
   myDTargetType = theObj->myDTargetType;
   myPlane = theObj->myPlane;
   myPnt= theObj->myPnt;
-  myPnt2= theObj->myPnt2;
+  myPntText= theObj->myPntText;
   myHasPlane = theObj->myHasPlane;
   myHasPnt = theObj->myHasPnt;
-  myHasPnt2 = theObj->myHasPnt2;
+  myHasPntText = theObj->myHasPntText;
 }
 
 //=======================================================================

@@ -11,7 +11,7 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-
+#include <XCAFDoc_DimTolTool.hxx>
 #include <Precision.hxx>
 #include <Standard_GUID.hxx>
 #include <Standard_Type.hxx>
@@ -33,6 +33,7 @@
 #include <XCAFDoc_DocumentTool.hxx>
 #include <XCAFDoc_GraphNode.hxx>
 #include <XCAFDoc_ShapeTool.hxx>
+
 
 IMPLEMENT_STANDARD_RTTIEXT(XCAFDoc_DimTolTool,TDF_Attribute)
 
@@ -885,6 +886,62 @@ Standard_Boolean XCAFDoc_DimTolTool::GetTolerOfDatumLabels(const TDF_Label& theD
   return Standard_True;
 }
 
+//=======================================================================
+//function : SetPresentation
+//purpose  : 
+//=======================================================================
+Standard_Boolean XCAFDoc_DimTolTool::SetPresentation(const TDF_Label& theDimLabel, const TopoDS_Shape& theShape)
+{
+  TDF_Label aShapeL;
+  if ( ! ShapeTool()->Search (theShape, aShapeL ) ) 
+    return Standard_False;
+  SetPresentation( theDimLabel,aShapeL);
+  return Standard_True;
+}
+
+//=======================================================================
+//function : SetPresentation
+//purpose  : 
+//=======================================================================
+
+void XCAFDoc_DimTolTool::SetPresentation(const TDF_Label& theDimLabel,
+  const TDF_Label& theShapeLabel)
+{
+  Handle(TDataStd_TreeNode) refNode, mainNode;
+  mainNode = TDataStd_TreeNode::Set ( theDimLabel, XCAFDoc::ShapeRefGUID() );
+  refNode  = TDataStd_TreeNode::Set ( theShapeLabel,    XCAFDoc::ShapeRefGUID() );
+  refNode->Remove(); // abv: fix against bug in TreeNode::Append()
+  mainNode->Append(refNode);
+ 
+}
+
+//=======================================================================
+//function : GetPresentation
+//purpose  : 
+//=======================================================================
+
+TopoDS_Shape XCAFDoc_DimTolTool::GetPresentation (const TDF_Label& theDimLabel) 
+{
+  TDF_Label aPresentLabel = GetPresentationLabel ( theDimLabel);
+  TopoDS_Shape aShape;
+  if( !aPresentLabel.IsNull())
+    aShape = ShapeTool()->GetShape(aPresentLabel);
+	return aShape;
+}
+//=======================================================================
+//function : GetPresentation
+//purpose  : 
+//=======================================================================
+TDF_Label XCAFDoc_DimTolTool::GetPresentationLabel(const TDF_Label& theDimLabel)
+{
+  TDF_Label aShapeLabel;
+  Handle(TDataStd_TreeNode) Node;
+  if ( ! theDimLabel.FindAttribute ( XCAFDoc::ShapeRefGUID(), Node) ||
+       ! Node->HasFather() ) 
+       return aShapeLabel;
+  aShapeLabel = Node->Father()->Label();
+  return aShapeLabel;
+}
 
 //=======================================================================
 //function : ID

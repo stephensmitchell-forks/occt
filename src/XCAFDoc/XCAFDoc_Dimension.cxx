@@ -45,7 +45,9 @@ enum ChildLab
   ChildLab_PlaneLoc,
   ChildLab_PlaneN,
   ChildLab_PlaneRef,
-  ChildLab_Pnt2,
+  ChildLab_PntText,
+  ChildLab_Presentation
+  
 };
 
 //=======================================================================
@@ -217,18 +219,21 @@ void XCAFDoc_Dimension::SetObject (const Handle(XCAFDimTolObjects_DimensionObjec
     Label().FindChild(ChildLab_PlaneRef).AddAttribute(aR);
   }
 
-  if (theObject->HasPoint2())
+  if (theObject->HasTextPoint())
   {
     Handle(TDataStd_RealArray) aLoc = new TDataStd_RealArray();
-    gp_Pnt aPnt2 = theObject->GetPoint2();
+    gp_Pnt aPntText = theObject->GetPointTextAttach();
 
     Handle(TColStd_HArray1OfReal) aLocArr = new TColStd_HArray1OfReal(1, 3);
     for (Standard_Integer i = 1; i <= 3; i++)
-      aLocArr->SetValue(i, aPnt2.Coord(i));
+      aLocArr->SetValue(i, aPntText.Coord(i));
     aLoc->ChangeArray(aLocArr);
 
-    Label().FindChild(ChildLab_Pnt2).AddAttribute(aLoc);
+    Label().FindChild(ChildLab_PntText).AddAttribute(aLoc);
   }
+
+  
+  
 }
 
 //=======================================================================
@@ -325,13 +330,18 @@ Handle(XCAFDimTolObjects_DimensionObject) XCAFDoc_Dimension::GetObject()  const
     anObj->SetPlane(anAx);
   }
 
-  Handle(TDataStd_RealArray) aPnt2;
-  if(Label().FindChild(ChildLab_Pnt2).FindAttribute(TDataStd_RealArray::GetID(), aPnt2) && aPnt2->Length() == 3 )
+  Handle(TDataStd_RealArray) aPntText;
+  if(Label().FindChild(ChildLab_PntText).FindAttribute(TDataStd_RealArray::GetID(), aPntText) && aPntText->Length() == 3 )
   {
-    gp_Pnt aP(aPnt2->Value(aPnt2->Lower()), aPnt2->Value(aPnt2->Lower()+1), aPnt2->Value(aPnt2->Lower()+2));
-    anObj->SetPoint2(aP);
+    gp_Pnt aP(aPntText->Value(aPntText->Lower()), aPntText->Value(aPntText->Lower()+1), aPntText->Value(aPntText->Lower()+2));
+    anObj->SetPointTextAttach(aP);
   }
 
+  /* Handle(TNaming_NamedShape) NS;
+   TDF_Label aLPres = Label().FindChild( ChildLab_Presentation);
+   if ( ! aLPres.FindAttribute(TNaming_NamedShape::GetID(), NS) ) 
+     return Standard_False;
+  TopoDS_Shape aPresShape = TNaming_Tool::GetShape(NS);*/
   return anObj;
 }
 

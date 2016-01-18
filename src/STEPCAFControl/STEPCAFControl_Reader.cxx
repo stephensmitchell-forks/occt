@@ -244,6 +244,8 @@
 #include <BRepBuilderAPI_MakeEdge.hxx>
 #include <BRepTools.hxx>
 #include <Transfer_ActorOfTransientProcess.hxx>
+#include <Bnd_Box.hxx>
+#include <BRepBndLib.hxx>
 
 // skl 21.08.2003 for reading G&DT
 //#include <StepRepr_CompoundItemDefinition.hxx>
@@ -1864,17 +1866,18 @@ TopoDS_Shape readAnnotation(const Handle(XSControl_TransferReader)& theTR,
   aB.MakeCompound(aResAnnotation);
 
   Standard_Integer i =0;
+  Bnd_Box aBox;
   for( ; i < anAnnotations.Length(); i++)
   {
     Handle(StepVisual_StyledItem) anItem = anAnnotations(i);
   
     theName = anItem->Name();
       //debug name of dimension====================
-    TCollection_AsciiString aCurName = theName.IsNull() ? 
+  /*  TCollection_AsciiString aCurName = theName.IsNull() ? 
       (TCollection_AsciiString("Size") + TCollection_AsciiString(numsize++)) : theName->String();
     aCurName += "_";
     aCurName += TCollection_AsciiString(i);
-    aCurName += ".brep";
+    aCurName += ".brep";*/
     //========================
     Handle(StepVisual_AnnotationCurveOccurrence) anACO = 
       Handle(StepVisual_AnnotationCurveOccurrence)::DownCast(anItem);
@@ -1894,26 +1897,29 @@ TopoDS_Shape readAnnotation(const Handle(XSControl_TransferReader)& theTR,
         }
         
       }
+            
+     // //get text attacment point
+     //// if( i == anAnnotations.Length() -1)
+     //// {
+     //   if (aCurveItem->IsKind(STANDARD_TYPE(StepShape_GeometricCurveSet))) 
+     //   {
+     //     Handle(StepShape_GeometricCurveSet) aCurveSet =
+     //     Handle(StepShape_GeometricCurveSet)::DownCast(aCurveItem);
 
-      //if (aCurveItem->IsKind(STANDARD_TYPE(StepShape_GeometricCurveSet))) {
-      //  Handle(StepShape_GeometricCurveSet) aCurveSet =
-      //    Handle(StepShape_GeometricCurveSet)::DownCast(aCurveItem);
-
-
-
-      //  Standard_Integer i = 1;
-      //  for ( ; i <= aCurveSet->NbElements() && aCurve.IsNull(); i++) {
-      //    aCurve = Handle(StepGeom_Polyline)::DownCast(aCurveSet->ElementsValue(i).Curve());
-      //  }
-      //  if (isDimLoc) {
-      //    for ( ; i <= aCurveSet->NbElements() && aCurve2.IsNull(); i++) {
-      //      aCurve2 = Handle(StepGeom_Polyline)::DownCast(aCurveSet->ElementsValue(i).Curve());
-      //    }
-      //  }
-      //}
-      //else {
-      //  aCurve = Handle(StepGeom_Polyline)::DownCast(aCurveItem);
-      //}
+     //     Standard_Integer n = 1;
+     //     for ( ; n <= aCurveSet->NbElements() && aCurve.IsNull(); n++) 
+     //     {
+     //       aCurve = Handle(StepGeom_Polyline)::DownCast(aCurveSet->ElementsValue(n).Curve());
+     //     }
+     //     if (isDimLoc) {
+     //       for ( ; i <= aCurveSet->NbElements() && aCurve2.IsNull(); i++) {
+     //         aCurve2 = Handle(StepGeom_Polyline)::DownCast(aCurveSet->ElementsValue(i).Curve());
+     //     }
+     //   }
+     // }
+     // else {
+     //   aCurve = Handle(StepGeom_Polyline)::DownCast(aCurveItem);
+     // }
 
       //isDimLoc = isDimLoc && !aCurve2.IsNull() && aCurve2->NbPoints() > 0;
 
@@ -1956,14 +1962,12 @@ TopoDS_Shape readAnnotation(const Handle(XSControl_TransferReader)& theTR,
       isDimLoc = !aPoints.IsNull() && aPoints->Length() > 0;
       if( isDimLoc)
       {
-        //debug
+        
         NCollection_Handle<StepVisual_VectorOfHSequenceOfInteger> aCurves = aTessCurve->Curves();
         Standard_Integer aNbC = (aCurves.IsNull() ? 0 : aCurves->Length());
-        //BRep_Builder aB;
         TopoDS_Compound aComp;
         aB.MakeCompound(aComp);
-        // TopoDS_Wire aCurW;
-        //aB.MakeWire(aCurW);
+      
         Standard_Integer k = 0; 
         for( ; k < aNbC; k++)
         {
@@ -1994,57 +1998,51 @@ TopoDS_Shape readAnnotation(const Handle(XSControl_TransferReader)& theTR,
         anAnotationShape = aComp;
       }
 
-
-      ////
-      // aXYZ1 += aPoints->Value(1);
-      // aXYZ2 += aPoints->Value(aPoints->Length());
-      // nbP++;
     }
     if(!anAnotationShape.IsNull())
     {
-      aCurName.RemoveAll(' ');
+      //aCurName.RemoveAll(' ');
       //BRepTools::Write(anAnotationShape, aCurName.ToCString());
+      
       aB.Add(aResAnnotation, anAnotationShape);
+      if( i == anAnnotations.Length()-1)
+        BRepBndLib::AddClose(anAnotationShape, aBox);
     }
-    /*if(nbP)
-    {
-    aPoint = gp_Pnt(aXYZ1/ nbP);
-    aPoint2 = gp_Pnt(aXYZ2/ nbP);
-    }*/
+       
   }
-  //////////////////////
-
+  
+  gp_Pnt aPtext(0.,0.,0.);
+  if( !aBox.IsVoid())
+  {
+    Standard_Real aXmin, aYmin, aZmin,aXmax, aYmax, aZmax; 
+    aBox.Get(aXmin, aYmin, aZmin,aXmax, aYmax, aZmax);
+    aPtext = gp_Pnt((aXmin + aXmax) *0.5, (aYmin + aYmax) *0.5, (aZmin + aZmax) *0.5);
+    //TopoDS_Vertex aV1;
+    //debug add point of text location
+    //aB.MakeVertex(aV1, aPtext , 0);
+    //aB.Add(aResAnnotation,aV1);
+    //Handle(TColgp_HArray1OfPnt) aPnts = new TColgp_HArray1OfPnt(1, 1);
+    //aPnts->SetValue(1, aP);
+  }
 
   // set point to XCAF
- /* if (theDimObject->IsKind(STANDARD_TYPE(XCAFDimTolObjects_DimensionObject))) 
+  if (theDimObject->IsKind(STANDARD_TYPE(XCAFDimTolObjects_DimensionObject))) 
   {
     Handle(XCAFDimTolObjects_DimensionObject) anObj = 
       Handle(XCAFDimTolObjects_DimensionObject)::DownCast(theDimObject);
-
-    Handle(TColgp_HArray1OfPnt) aPnts;
-    if (isDimLoc)
-      aPnts = new TColgp_HArray1OfPnt(1, 2);
-    else
-      aPnts = new TColgp_HArray1OfPnt(1, 1);
-    aPnts->SetValue(1, aPoint);
-    if (isDimLoc)
-    {
-      aPnts->SetValue(1, aPoint);
-      aPnts->SetValue(2, aPoint2);
-    }
-
-    anObj->SetPoints(aPnts);
+    anObj->SetPointTextAttach(aPtext);
+    
   }
   else if (theDimObject->IsKind(STANDARD_TYPE(XCAFDimTolObjects_DatumObject))) {
     Handle(XCAFDimTolObjects_DatumObject) anObj =
       Handle(XCAFDimTolObjects_DatumObject)::DownCast(theDimObject);
-    anObj->SetPoint(aPoint);
+    anObj->SetPointTextAttach(aPtext);
   }
   else if (theDimObject->IsKind(STANDARD_TYPE(XCAFDimTolObjects_GeomToleranceObject))) {
     Handle(XCAFDimTolObjects_GeomToleranceObject) anObj =
       Handle(XCAFDimTolObjects_GeomToleranceObject)::DownCast(theDimObject);
-    anObj->SetPoint(aPoint);
-  }*/
+    anObj->SetPointTextAttach(aPtext);
+  }
   return aResAnnotation;
 }
 
@@ -2343,11 +2341,14 @@ static Standard_Boolean setDatumToXCAF(const Handle(StepDimTol_Datum)& theDat,
       Handle(TCollection_HAsciiString) aName;
       TopoDS_Shape anAnnotation = readAnnotation(aTR, aSAR->RelatingShapeAspect(), aDatObj,aName);
         
-      TDF_Label aL = aSTool->AddShape(anAnnotation, Standard_False);
-      if( !aName.IsNull() && !aL.IsNull())
+      TDF_Label aPresentLabel = aSTool->AddShape(anAnnotation, Standard_False);
+      TDF_Label aDatL = aDat->Label();
+      if( !aPresentLabel.IsNull())
+        aDGTTool->SetPresentation( aDatL, aPresentLabel);
+      if( !aName.IsNull() && !aPresentLabel.IsNull())
       {
         TCollection_ExtendedString str ( aName->String() );
-        TDataStd_Name::Set ( aL, str );
+        TDataStd_Name::Set ( aPresentLabel, str );
       }
       
       aDat->SetObject(aDatObj);
@@ -3314,22 +3315,27 @@ static void setDimObjectToXCAF(const Handle(Standard_Transient)& theEnt,
   }
   aDimObj->SetType(aType);
 
-  Handle(TCollection_HAsciiString) anAnnotName;
-    
-  TopoDS_Shape anAnnotation = readAnnotation(aTR, theEnt, aDimObj, anAnnotName);
-  aSTool->AddShape(anAnnotation, Standard_False);
-
-  TDF_Label aL = aSTool->AddShape(anAnnotation, Standard_False);
-  if( !anAnnotName.IsNull() && !aL.IsNull())
-  {
-    TCollection_ExtendedString str ( anAnnotName->String() );
-    TDataStd_Name::Set ( aL, str );
-  }
+  
   if(!aDimObj.IsNull())
   {
+
     Handle(XCAFDoc_Dimension) aDim;
+
     if(aDimL.FindAttribute(XCAFDoc_Dimension::GetID(),aDim))
     {
+      Handle(TCollection_HAsciiString) anAnnotName;
+
+      TopoDS_Shape anAnnotation = readAnnotation(aTR, theEnt, aDimObj, anAnnotName);
+      aSTool->AddShape(anAnnotation, Standard_False);
+
+      TDF_Label aPresentLabel = aSTool->AddShape(anAnnotation, Standard_False);
+      if( !aPresentLabel.IsNull())
+        aDGTTool->SetPresentation( aDimL, aPresentLabel);
+      if( !anAnnotName.IsNull() && !aPresentLabel.IsNull())
+      {
+        TCollection_ExtendedString str ( anAnnotName->String() );
+        TDataStd_Name::Set ( aPresentLabel, str );
+      }
       aDim->SetObject(aDimObj);
     }
   }
@@ -3598,6 +3604,8 @@ static void setGeomTolObjectToXCAF(const Handle(Standard_Transient)& theEnt,
   TopoDS_Shape anAnnotation = readAnnotation(aTR, theEnt, aTolObj, aName);
 
   TDF_Label aL = aSTool->AddShape(anAnnotation, Standard_False);
+  if( !aL.IsNull())
+    aDGTTool->SetPresentation(aGTol->Label(), aL);
   if( !aName.IsNull() && !aL.IsNull())
   {
     TCollection_ExtendedString str ( aName->String() );

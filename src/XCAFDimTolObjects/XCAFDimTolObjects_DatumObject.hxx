@@ -105,21 +105,31 @@ public:
     myHasPnt = Standard_True;
   }
 
-  const gp_Pnt& GetPoint() const { return myPnt; }
-
-  void SetPoint2 (const gp_Pnt& thePnt)
-  {
-    myPnt2 = thePnt;
-    myHasPnt2 = Standard_True;
+  const gp_Pnt& GetPoint() const 
+  { 
+    return myPnt; 
   }
 
-  const gp_Pnt& GetPoint2() const { return myPnt2; }
+ 
+  void SetPointTextAttach (const gp_Pnt& thePntText)
+  {
+    myPntText = thePntText;
+    myHasPntText = Standard_True;
+  }
+
+  const gp_Pnt& GetPointTextAttach() const 
+  { 
+    return myPntText; 
+  }
 
   Standard_Boolean HasPlane() const { return myHasPlane; }
 
   Standard_Boolean HasPoint() const { return myHasPnt; }
 
-  Standard_Boolean HasPoint2() const { return myHasPnt2; }
+  Standard_Boolean HasTextPoint() const 
+  { 
+    return myHasPntText; 
+  }
 
   DEFINE_STANDARD_RTTIEXT(XCAFDimTolObjects_DatumObject,Standard_Transient)
 
@@ -139,10 +149,10 @@ private:
   Standard_Integer myDatumTargetNumber;
   gp_Ax2 myPlane;
   gp_Pnt myPnt;
-  gp_Pnt myPnt2;
+  gp_Pnt myPntText;
   Standard_Boolean myHasPlane;
   Standard_Boolean myHasPnt;
-  Standard_Boolean myHasPnt2;
+  Standard_Boolean myHasPntText;
 };
 
 #endif // _XCAFDimTolObjects_DatumObject_HeaderFile

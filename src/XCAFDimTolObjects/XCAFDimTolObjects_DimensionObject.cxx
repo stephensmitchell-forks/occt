@@ -27,7 +27,7 @@ IMPLEMENT_STANDARD_RTTIEXT(XCAFDimTolObjects_DimensionObject,Standard_Transient)
 XCAFDimTolObjects_DimensionObject::XCAFDimTolObjects_DimensionObject()
 {
   myHasPlane = Standard_False;
-  myHasPnt2 = Standard_False;
+  myHasPntText = Standard_False;
 }
 
 //=======================================================================
@@ -49,10 +49,10 @@ XCAFDimTolObjects_DimensionObject::XCAFDimTolObjects_DimensionObject(const Handl
   myPath = theObj->myPath;
   myDir = theObj->myDir;
   myPnts = theObj->myPnts;
-  myPnt2= theObj->myPnt2;
+  myPntText= theObj->myPntText;
   myHasPlane = theObj->myHasPlane;
   myPlane = theObj->myPlane;
-  myHasPnt2 = theObj->myHasPnt2;
+  myHasPntText = theObj->myHasPntText;
 }
 
 //=======================================================================
