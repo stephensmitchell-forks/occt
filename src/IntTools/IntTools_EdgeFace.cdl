@@ -26,10 +26,8 @@ uses
     Curve   from BRepAdaptor, 
     Surface from  BRepAdaptor,     
     SequenceOfRanges     from IntTools, 
-    CArray1OfReal        from IntTools, 
     CommonPrt            from IntTools,
     FClass2d             from IntTools, 
-    SequenceOfRoots      from IntTools,
     SequenceOfCommonPrts from IntTools, 
     Context              from IntTools,
     Range                from IntTools 
@@ -99,11 +97,6 @@ is
             anEpsT:Real from Standard);
      ---Purpose: 
      --- Initializes algorithm by parameter tolerance
-     
-    SetEpsilonNull (me:out;  
-            anEpsNull:Real from Standard);
-    ---Purpose:
-    --- Initializes algorithm by distance tolerance
        
     SetRange (me:out;  
             aRange:Range from IntTools);
@@ -160,17 +153,29 @@ is
     ---C++:  return  const&
     ---Purpose:
     --- Returns boundaries for edge
+
+    UseQuickCoincidenceCheck(me: in out; bFlag: Boolean from Standard);
+    ---C++: inline 
+    ---Purpose: 
+    -- Sets the flag myQuickCoincidenceCheck
+
+    IsCoincidenceCheckedQuickly(me)
+    returns Boolean from Standard;
+    ---C++: inline 
+    ---Purpose: 
+    -- Returns the flag myQuickCoincidenceCheck
+    
+    -------------------------------------------------------
+    --  Block  of  protected methods of  the  algorithm  --
+    -------------------------------------------------------    
  
     IsEqDistance(myclass; 
             aP:  Pnt from gp; 
             aS:  Surface from  BRepAdaptor; 
             aT:  Real from Standard; 
             aD:out Real from Standard)  
-        returns Boolean from Standard;
-    
-    -------------------------------------------------------
-    --  Block  of  protected methods of  the  algorithm  --
-    -------------------------------------------------------    
+        returns Boolean from Standard
+        is protected;
 
     CheckData (me:out)          
         is protected;
@@ -194,48 +199,10 @@ is
         returns  Real from Standard   
         is protected; 
 
-    DerivativeFunction (me:out; 
-            t:Real from Standard)   
-        returns  Real from Standard   
-        is protected;  
- 
-    PrepareArgsFuncArrays (me:out; 
-            t1,t2:Real from Standard)   
-        is protected; 
-  
-
-    AddDerivativePoints(me:out;   
-            t,f:CArray1OfReal from IntTools)  
-        is protected; 
-
-
-    FindSimpleRoot (me:out;  
-            IP:Integer  from  Standard; 
-            ta, tb, fA:Real from Standard) 
-        returns  Real from Standard   
-        is  protected;    
-  
-    FindGoldRoot (me:out;   
-            ta, tb, coeff:Real from Standard) 
-        returns  Real from Standard   
-        is  protected;   
-
     MakeType (me:out;  
             aCP: out CommonPrt from IntTools) 
             returns  Integer from Standard   
         is  protected; 
-       
-    
-    IsIntersection (me:out;  
-            ta,tb:Real from Standard)   
-        is  protected;  
-  
-    FindDerivativeRoot(me:out; 
-            t,f:CArray1OfReal from IntTools)   
-        is  protected;  
-
-    RemoveIdenticalRoots(me:out) 
-        is protected;   
   
     CheckTouch (me: out;   
             aCP: CommonPrt from IntTools; 
@@ -249,6 +216,11 @@ is
         returns Boolean from Standard 
         is protected; 
 
+    IsCoincident(me)
+        returns Boolean from Standard
+        is protected;
+        ---Purpose: Checks if the edges are coincident really.
+
 fields
 --        Data
     myEdge            :  Edge  from  TopoDS; 
@@ -259,13 +231,10 @@ fields
     myDiscret         :  Integer from Standard;  
                
     myEpsT            :  Real from Standard;           
-    myEpsNull         :  Real from Standard;  
     myDeflection      :  Real from Standard;   
 
 --   data  curves
     myC              :   Curve from BRepAdaptor;  
-    myTmin           :   Real  from Standard;  
-    myTmax           :   Real  from Standard;   
     
     myS              :   Surface from  BRepAdaptor; 
 
@@ -279,14 +248,16 @@ fields
     myContext         :  Context from IntTools;
     myProjectableRanges: SequenceOfRanges from IntTools;    
     myFClass2d         : FClass2d from IntTools; 
-    myFuncArray       :  CArray1OfReal from IntTools; 
-    myArgsArray       :  CArray1OfReal from IntTools; 
-    mySequenceOfRoots :  SequenceOfRoots   from IntTools;  
     mySeqOfCommonPrts :  SequenceOfCommonPrts from IntTools;  
 
-    myPar1            :  Real from  Standard; 
-    myParallel        :  Boolean  from  Standard;   
-    
     myRange           :  Range from IntTools; 
+    
+    -- Allows avoiding use Edge-Edge intersection
+    -- algorithm (i.e. speeding up the Boolean algorithm)
+    -- if the edges are coincided really.
+    -- If it is not evidently set of this flag should
+    -- be avoided (otherwise, the performance of
+    -- Boolean algorithm will be slower).
+    myQuickCoincidenceCheck: Boolean from Standard is protected; 
     
 end EdgeFace;

@@ -208,7 +208,24 @@ is
     ---C++: return  const&   
     ---Purpose: 
     -- Returns common parts
-    
+
+    UseQuickCoincidenceCheck(me: in out; bFlag: Boolean from Standard);
+    ---C++: inline 
+    ---Purpose: 
+    -- Sets the flag myQuickCoincidenceCheck
+
+    IsCoincidenceCheckedQuickly(me)
+    returns Boolean from Standard;
+    ---C++: inline 
+    ---Purpose: 
+    -- Returns the flag myQuickCoincidenceCheck
+
+    IsCoincident(me)
+    returns Boolean from Standard
+    is protected;
+    ---Purpose: 
+    -- Checks if the edges are coincident really.
+
 fields  
     -- source data
     myEdge1  : Edge  from TopoDS is protected; 
@@ -240,5 +257,13 @@ fields
     mySwap        : Boolean from Standard is protected; 
     myErrorStatus : Integer from Standard is protected; 
     myCommonParts : SequenceOfCommonPrts from IntTools is protected;
+    
+    -- Allows avoiding use Edge-Edge intersection
+    -- algorithm (i.e. speeding up the Boolean algorithm)
+    -- if the edges are coincided really.
+    -- If it is not evidently set of this flag should
+    -- be avoided (otherwise, the performance of
+    -- Boolean algorithm will be slower).
+    myQuickCoincidenceCheck: Boolean from Standard is protected; 
     
 end EdgeEdge;

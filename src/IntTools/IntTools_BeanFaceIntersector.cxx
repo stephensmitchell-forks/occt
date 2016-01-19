@@ -21,6 +21,7 @@
 #include <Geom_Surface.hxx>
 #include <TColStd_Array1OfReal.hxx>
 #include <TColStd_Array1OfBoolean.hxx>
+#include <IntTools_CArray1OfReal.hxx>
 #include <TColStd_ListOfInteger.hxx>
 #include <TColStd_ListIteratorOfListOfInteger.hxx>
 #include <IntTools_EdgeFace.hxx>

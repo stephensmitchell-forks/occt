@@ -1,5 +1,5 @@
 puts "TODO OCC12345 ALL: Faulty : Section is incorrect"
-puts "TODO OCC12345 ALL: Error : The length of result shape is"
+puts "TODO OCC27024 ALL: Error : The length of result shape is"
 
 puts "============="
 puts "BUC60462"
