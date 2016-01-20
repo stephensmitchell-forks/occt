@@ -1,10 +1,10 @@
+puts "TODO OCC26556 ALL: ERROR. offsetperform operation not done."
+
 ## ======================================
 ## Grid    : CCV002
 ## Test    : D1
 ## Comment : From CV tests serie page 60
 ## ======================================
-
-puts "TODO ?OCC26556 ALL: ERROR. offsetperform operation not done."
 
 restore [locate_data_file CCV_2_d1_gsw.rle] s
 explode s F
