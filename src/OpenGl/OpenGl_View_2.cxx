@@ -640,6 +640,10 @@ void OpenGl_View::RenderStructs (const Handle(OpenGl_Workspace)& theWorkspace,
         aCtx->arbFBO->glBindFramebuffer (GL_FRAMEBUFFER, 0);
       }
 
+      // Reset OpenGl aspects state to default to avoid enabling of
+      // backface culling which is not supported in ray-tracing.
+      theWorkspace->ResetAppliedAspect();
+
       // Ray-tracing polygonal primitive arrays
       raytrace (theCView, aSizeX, aSizeY, theReadDrawFbo, aCtx);
 
