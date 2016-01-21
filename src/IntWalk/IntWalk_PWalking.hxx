@@ -142,6 +142,7 @@ public:
 
 
 protected:
+  Standard_EXPORT Standard_Boolean CalculateStepData(const TColStd_Array1OfReal& theParams, const Standard_Real theArrMaxStep[]);
 
 
 

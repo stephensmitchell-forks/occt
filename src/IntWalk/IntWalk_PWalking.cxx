@@ -819,6 +819,11 @@ void IntWalk_PWalking::Perform(const TColStd_Array1OfReal& ParDep,
   Standard_Integer LevelOfIterWithoutAppend = -1;
   //
 
+  const Standard_Real aStepMax[4] = { 0.1*(u1max - u1min),
+                                      0.1*(v1max - v1min),
+                                      0.1*(u2max - u2min),
+                                      0.1*(v2max - v2min)};
+
   const Standard_Real aTol[4] = { Epsilon(u1max - u1min),
                                   Epsilon(v1max - v1min),
                                   Epsilon(u2max - u2min),
@@ -854,15 +859,37 @@ void IntWalk_PWalking::Perform(const TColStd_Array1OfReal& ParDep,
     previousPoint.Parameters(Param(1),Param(2),Param(3),Param(4));
     //
     //--ofv.begin
-    Standard_Real aIncKey, aEps, dP1, dP2, dP3, dP4;
-    //
-    dP1 = sensCheminement * pasuv[0] * previousd1.X() /f;
-    dP2 = sensCheminement * pasuv[1] * previousd1.Y() /f;
-    dP3 = sensCheminement * pasuv[2] * previousd2.X() /f; 
-    dP4 = sensCheminement * pasuv[3] * previousd2.Y() /f;
-    //
-    aIncKey=5.*(Standard_Real)IncKey;
-    aEps=1.e-7;
+    const Standard_Real aEps = Precision::Confusion();
+    Standard_Real dP1, dP2, dP3, dP4;
+
+    if((Status == IntWalk_OK) && CalculateStepData(Param, aStepMax))
+    {
+#ifdef INTWALK_PWALKING_DEBUG
+      printf("+++++++ The steps have been recomputed by ADAPTIVE algorith. New value:\n"
+             "    dU1 = %10.20f;\n    dV1 = %10.20f;\n    dU2 = %10.20f;\n    dV2 = %10.20f. -------\n", pasuv[0], pasuv[1], pasuv[2], pasuv[3]);
+#endif
+
+      dP1 = dP2 = dP3 = dP4 = 1.0;
+    }
+    else
+    {//
+#ifdef INTWALK_PWALKING_DEBUG
+      printf("+++++++ The steps have been kept as PREVIOUS:\n"
+             "    dU1 = %10.20f;\n    dV1 = %10.20f;\n    dU2 = %10.20f;\n    dV2 = %10.20f. -------\n", pasuv[0], pasuv[1], pasuv[2], pasuv[3]);
+#endif
+
+      dP1 = previousd1.X() /f;
+      dP2 = previousd1.Y() /f;
+      dP3 = previousd2.X() /f;
+      dP4 = previousd2.Y() /f;
+    }
+
+    dP1 *= (sensCheminement * pasuv[0]);
+    dP2 *= (sensCheminement * pasuv[1]);
+    dP3 *= (sensCheminement * pasuv[2]);
+    dP4 *= (sensCheminement * pasuv[3]);
+
+    const Standard_Real aIncKey = 5.*(Standard_Real)IncKey;
     if(ChoixIso == IntImp_UIsoparametricOnCaro1 && Abs(dP1) < aEps)
     {
       dP1 *= aIncKey;
@@ -882,12 +909,48 @@ void IntWalk_PWalking::Perform(const TColStd_Array1OfReal& ParDep,
     {
       dP4 *= aIncKey;
     }
-    //--ofv.end
+
     //
     Param(1) += dP1;
     Param(2) += dP2;
     Param(3) += dP3; 
     Param(4) += dP4;
+
+    //
+    //if (Param(1) < UFirst1)
+    //{
+    //  Param(1) = UFirst1;
+    //}
+    //if (ULast1 < Param(1))
+    //{
+    //  Param(1) = ULast1;
+    //}
+    //if (Param(2) < VFirst1)
+    //{
+    //  Param(2) = VFirst1;
+    //}
+    //if (VLast1 < Param(2))
+    //{
+    //  Param(2) = ULast1;
+    //}
+    ////
+    //if (Param(3) < UFirst2)
+    //{
+    //  Param(3) = UFirst2;
+    //}
+    //if (ULast2 < Param(3))
+    //{
+    //  Param(3) = ULast2;
+    //}
+    //if (Param(4) < VFirst2)
+    //{
+    //  Param(4) = VFirst2;
+    //}
+    //if (VLast2 < Param(4))
+    //{
+    //  Param(4) = ULast2;
+    //}
+
     //==========================
     SvParam[0]=Param(1); 
     SvParam[1]=Param(2);
@@ -1298,6 +1361,7 @@ void IntWalk_PWalking::Perform(const TColStd_Array1OfReal& ParDep,
 
                     if(RejectIndex >= RejectIndexMAX)
                     {
+                      Arrive = Standard_True;
                       break;
                     }
 
@@ -1385,6 +1449,7 @@ void IntWalk_PWalking::Perform(const TColStd_Array1OfReal& ParDep,
 
                       if(RejectIndex >= RejectIndexMAX)
                       {
+                        Arrive = Standard_True;
                         break;
                       }
 
@@ -3250,3 +3315,194 @@ TestArret(const Standard_Boolean DejaReparti,
   }
 }
 
+//=======================================================================
+//function : CalculateStepData
+//purpose  : Computes new step (in UV-coordinates) which depends on
+//            the local curvature of the intersection line.
+//           If the step has been computed successfuly the method
+//            returns TRUE. 
+//=======================================================================
+Standard_Boolean IntWalk_PWalking::CalculateStepData(const TColStd_Array1OfReal& theParams,
+                                                     const Standard_Real theArrMaxStep[])
+{
+  //return Standard_False;
+
+  const Standard_Real aCoefStepMin = 100.0;
+  //sqrt(z*(2-z))*(1-z)/(1-2*z*(2-z)), when z = 0.01 maximal relative error while
+  //approximation the curve by circle
+  const Standard_Real aCoef = 0.125;
+  //As same as in approximation (see ApproxInt_ImpPrmSvSurfaces::Compute(...))
+  const Standard_Real aNullValue =  Precision::Approximation()*
+                                    Precision::Approximation();
+
+  const Handle(Adaptor3d_HSurface) &aSurf1 = myIntersectionOn2S.Function().AuxillarSurface1(),
+                                   &aSurf2 = myIntersectionOn2S.Function().AuxillarSurface2();
+
+  if((aSurf1->UContinuity() < GeomAbs_C2) || (aSurf2->VContinuity() < GeomAbs_C2))
+  {
+    return Standard_False;
+  }
+
+  if((aSurf2->UContinuity() < GeomAbs_C2) || (aSurf2->VContinuity() < GeomAbs_C2))
+  {
+    return Standard_False;
+  }
+
+  //if(aSurf1->IsUPeriodic() || aSurf1->IsVPeriodic())
+  //  return Standard_False;
+
+  //if(aSurf2->IsUPeriodic() || aSurf2->IsVPeriodic())
+  //  return Standard_False;
+ 
+  gp_Pnt aPt;
+  gp_Vec aDU1, aDV1, aDUU1, aDUV1, aDVV1;
+  gp_Vec aDU2, aDV2, aDUU2, aDUV2, aDVV2;
+  
+  aSurf1->D2(theParams(1), theParams(2), aPt, aDU1, aDV1, aDUU1, aDVV1, aDUV1);
+  aSurf2->D2(theParams(3), theParams(4), aPt, aDU2, aDV2, aDUU2, aDVV2, aDUV2);
+
+#ifdef INTWALK_PWALKING_DEBUG
+  int aTestID = 0;
+  Standard_Real anExpectedSqRad = -1.0;
+  switch(aTestID)
+  {
+  case 1:
+    //Intersection between two spherical surfaces: O1(0.0, 0.0, 0.0), R1 = 3
+    //and O2(5.0, 0.0, 0.0), R2 = 5.0.
+    //Considered point has coordinates: (0.9, 0.0, 0.3*sqrt(91.0)).
+
+    aDU1.SetCoord(0.00000000000000000, 0.90000000000000002, 0.00000000000000000);
+    aDV1.SetCoord(-2.8618176042508372, 0.00000000000000000, 0.90000000000000002);
+    aDUU1.SetCoord(-0.90000000000000002, 0.00000000000000000, 0.00000000000000000);
+    aDUV1.SetCoord(0.00000000000000000, -2.8618176042508372, 0.00000000000000000);
+    aDVV1.SetCoord(-0.90000000000000002, 0.00000000000000000, -2.8618176042508372);
+    aDU2.SetCoord(0.00000000000000000, -4.0999999999999996, 0.00000000000000000);
+    aDV2.SetCoord(-2.8618176042508372, 0.00000000000000000, -4.0999999999999996);
+    aDUU2.SetCoord(4.0999999999999996, 0.00000000000000000, 0.00000000000000000);
+    aDUV2.SetCoord(0.00000000000000000, -2.8618176042508372, 0.00000000000000000);
+    aDVV2.SetCoord(4.0999999999999996, 0.00000000000000000, -2.8618176042508372);
+    anExpectedSqRad = 819.0/100.0;
+    break;
+  case 2:
+    //Intersection between spherical surfaces: O1(0.0, 0.0, 0.0), R1 = 10
+    //and the plane 3*x+4*y+z=26.
+    //Considered point has coordinates: (-1.68, 5.76, 8.0).
+
+    aDU1.SetCoord(-5.76, -1.68, 0.0);
+    aDV1.SetCoord(2.24, -7.68, 6.0);
+    aDUU1.SetCoord(1.68, -5.76, 0.0);
+    aDUV1.SetCoord(7.68, 2.24, 0.0);
+    aDVV1.SetCoord(1.68, -5.76, -8.0);
+    aDU2.SetCoord(1.0, 0.0, -3.0);
+    aDV2.SetCoord(0.0, 1.0, -4.0);
+    aDUU2.SetCoord(0.0, 0.0, 0.0);
+    aDUV2.SetCoord(0.0, 0.0, 0.0);
+    aDVV2.SetCoord(0.0, 0.0, 0.0);
+    anExpectedSqRad = 74.0;
+    break;
+  default:
+    aTestID = 0;
+    break;
+  }
+#endif
+
+  const gp_Vec aN1(aDU1.Crossed(aDV1)), aN2(aDU2.Crossed(aDV2));
+  //Tangent vactor to the intersection curve
+  const gp_Vec aCTan(aN1.Crossed(aN2));
+  const Standard_Real aSqMagnFDer = aCTan.SquareMagnitude();
+  
+  if(aSqMagnFDer < aNullValue)
+    return Standard_False;
+
+  Standard_Real aDuS1 = 0.0, aDvS1 = 0.0, aDuS2 = 0.0, aDvS2 = 1.0;
+
+  {
+    //This algorithm is described in NonSingularProcessing() function
+    //in ApproxInt_ImpPrmSvSurfaces.gxx file
+    Standard_Real aSqNMagn = aN1.SquareMagnitude();
+    gp_Vec aTgU(aCTan.Crossed(aDU1)), aTgV(aCTan.Crossed(aDV1));
+    Standard_Real aDeltaU = aTgV.SquareMagnitude()/aSqNMagn;
+    Standard_Real aDeltaV = aTgU.SquareMagnitude()/aSqNMagn;
+
+    aDuS1 = Sign(sqrt(aDeltaU), aTgV.Dot(aN1));
+    aDvS1 = -Sign(sqrt(aDeltaV), aTgU.Dot(aN1));
+
+    aSqNMagn = aN2.SquareMagnitude();
+    aTgU.SetXYZ(aCTan.Crossed(aDU2).XYZ());
+    aTgV.SetXYZ(aCTan.Crossed(aDV2).XYZ());
+    aDeltaU = aTgV.SquareMagnitude()/aSqNMagn;
+    aDeltaV = aTgU.SquareMagnitude()/aSqNMagn;
+
+    aDuS2 = Sign(sqrt(aDeltaU), aTgV.Dot(aN2));
+    aDvS2 = -Sign(sqrt(aDeltaV), aTgU.Dot(aN2));
+  }
+
+  //According to "Marching along surface/surface intersection curves with an adaptive step length"
+  //by Tz.E.Stoyagov (http://www.sciencedirect.com/science/article/pii/016783969290046R)
+  //we obtain the system:
+  //            {A*a+B*b=F1
+  //            {B*a+C*b=F2
+  //where a and b should be found.
+  //After that, 2nd intersection curve derivative can be computed as
+  //            r''(t)=a*N1+b*N2.
+
+  const Standard_Real aA = aN1.Dot(aN1), aB = aN1.Dot(aN2), aC = aN2.Dot(aN2);
+  const Standard_Real aDetSyst = aB*aB - aA*aC;
+
+  if(Abs(aDetSyst) < aNullValue)
+  {//Indetermined system solution
+    return Standard_False;
+  }
+
+  const Standard_Real aF1 = aDuS1*aDuS1*aDUU1.Dot(aN1) + 2.0*aDuS1*aDvS1*aDUV1.Dot(aN1) + aDvS1*aDvS1*aDVV1.Dot(aN1);
+  const Standard_Real aF2 = aDuS2*aDuS2*aDUU2.Dot(aN2) + 2.0*aDuS2*aDvS2*aDUV2.Dot(aN2) + aDvS2*aDvS2*aDVV2.Dot(aN2);
+
+  //Principal normal to the intersection curve
+  const gp_Vec aCNorm((aF1*aC-aF2*aB)/aDetSyst*aN1 + (aA*aF2-aF1*aB)/aDetSyst*aN2);
+  const Standard_Real aSqMagnSDer = aCNorm.CrossSquareMagnitude(aCTan);
+
+  if(aSqMagnSDer < aNullValue)
+  {//Intersection curve has null curvature in observed point
+    return Standard_False;
+  }
+
+#ifdef INTWALK_PWALKING_DEBUG
+  if(aTestID)
+  {
+    //square of curvature radius
+    const Standard_Real aFactSqRad = aSqMagnFDer*aSqMagnFDer*aSqMagnFDer/aSqMagnSDer;
+
+    if(Abs(aFactSqRad - anExpectedSqRad) < Precision::Confusion())
+    {
+      printf("OK: Curvature radius is equal to expected (%5.10g)", anExpectedSqRad);
+    }
+    else
+    {
+      printf("Error: Curvature radius is not equal to expected: %5.10g != %5.10g", aFactSqRad, anExpectedSqRad);
+    }
+
+    return Standard_False;
+  }
+#endif
+
+
+  //Current step-system ([aDuS1 aDvS1 aDuS2 aDvS2]) provides the length of the
+  //intersection curve tangent to be equal to Lc=sqrt(aSqMagnFDer).
+  //We need in tangent length to be equal to Ln=aCoef*sqrt((aSqMagnFDer^3)/aSqMagnSDer).
+  //For that, new step-system step-system should be (Ln/Lc)*[aDuS1 aDvS1 aDuS2 aDvS2].
+
+  //(Ln/Lc)
+  const Standard_Real aRatio = aCoef*aSqMagnFDer/sqrt(aSqMagnSDer);
+
+  pasuv[0] = Min(Abs(aDuS1*aRatio), theArrMaxStep[0]);
+  pasuv[1] = Min(Abs(aDvS1*aRatio), theArrMaxStep[1]);
+  pasuv[2] = Min(Abs(aDuS2*aRatio), theArrMaxStep[2]);
+  pasuv[3] = Min(Abs(aDvS2*aRatio), theArrMaxStep[3]);
+
+  pasuv[0] = Max(pasuv[0], aCoefStepMin*ResoU1);
+  pasuv[1] = Max(pasuv[1], aCoefStepMin*ResoV1);
+  pasuv[2] = Max(pasuv[2], aCoefStepMin*ResoU2);
+  pasuv[3] = Max(pasuv[3], aCoefStepMin*ResoV2);
+
+  return Standard_True;
+}

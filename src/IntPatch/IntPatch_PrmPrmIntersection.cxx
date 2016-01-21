@@ -2341,13 +2341,13 @@ void IntPatch_PrmPrmIntersection::Perform (const Handle(Adaptor3d_HSurface)& Sur
                     //Try to extend the intersection line to boundary, if it is possibly
                     Standard_Boolean hasBeenAdded = PW.PutToBoundary(Surf1, Surf2);
 
-                    const Standard_Integer aMinNbPoints = 40;
-                    if(iPWNbPoints < aMinNbPoints)
-                    {
-                      hasBeenAdded = 
-                        PW.SeekAdditionalPoints(Surf1, Surf2, aMinNbPoints) || hasBeenAdded;
-                      iPWNbPoints = PW.NbPoints();
-                    }
+                    //const Standard_Integer aMinNbPoints = 40;
+                    //if(iPWNbPoints < aMinNbPoints)
+                    //{
+                    //  hasBeenAdded = 
+                    //    PW.SeekAdditionalPoints(Surf1, Surf2, aMinNbPoints) || hasBeenAdded;
+                    //  iPWNbPoints = PW.NbPoints();
+                    //}
                     
                     RejectLine = Standard_False;
                     Point3dDebut = PW.Value(1).Value();
@@ -2581,11 +2581,11 @@ void IntPatch_PrmPrmIntersection::Perform (const Handle(Adaptor3d_HSurface)& Sur
           {
             if(PW.NbPoints()>2)
             { 
-              const Standard_Integer aMinNbPoints = 40;
-              if(PW.NbPoints() < aMinNbPoints)
-              {
-                PW.SeekAdditionalPoints(Surf1, Surf2, aMinNbPoints);
-              }
+              //const Standard_Integer aMinNbPoints = 40;
+              //if(PW.NbPoints() < aMinNbPoints)
+              //{
+              //  PW.SeekAdditionalPoints(Surf1, Surf2, aMinNbPoints);
+              //}
 
               //-----------------------------------------------
               //-- Verification a posteriori : 
