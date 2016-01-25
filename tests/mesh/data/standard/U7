@@ -8,7 +8,7 @@ set bug_freenodes "OCC22687"
 if { [string compare $command "shading"] == 0 } {
 ##set nbt 14
   set nbt 8
-  set nbl 8
+  set nbl 6
   set nbn 83
   set nbwithouttri([checkplatform]) $nbt
   set nbfree([checkplatform]) $nbl

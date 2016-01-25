@@ -7,6 +7,7 @@ set bug_freenodes "OCC22687"
 
 set bug_withouttri "OCC22687"
 if { [string compare $command "shading"] == 0 } {
+  puts "TODO OCC22687 ALL: Error: Improvement: The current area difference is" 
   set bug_area "OCC22687"
   set rel_tol 1.3
   set nbwithouttri(ALL) 6

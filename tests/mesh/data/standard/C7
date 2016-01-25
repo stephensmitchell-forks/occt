@@ -3,13 +3,16 @@ set bug_freenodes "OCC22687"
 if { [string compare $command "shading"] == 0 } {
    set nbfreenodes(All) 1
 } else {
-   set bug_freelinks "OCC23105"
+   set bug_withouttri "OCC27226"
+###   set bug_freelinks "OCC23105"
 ###   set nbfree(ALL) 4
    if { [string compare $command "mesh"] == 0 } {
 ###     set nbfree(ALL) 8  ### OCC23106
      set nbfree(ALL) 2
+     set nbwithouttri(All) 3
    } else {
      set nbfree(ALL) 2
+     set nbwithouttri(All) 3
    }
    set nbfreenodes(All) 4
 }

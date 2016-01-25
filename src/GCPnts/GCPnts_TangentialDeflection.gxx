@@ -21,6 +21,9 @@
 #include <gp_Pnt.hxx>
 #include <gp_Vec.hxx>
 #include <gp.hxx>
+#include <NCollection_List.hxx>
+#include <math_PSO.hxx>
+#include <math_BrentMinimum.hxx>
 
 #define Us3 0.3333333333333333333333333333
 
@@ -369,6 +372,7 @@ void GCPnts_TangentialDeflection::PerformCurve (const TheCurve& C)
   Standard_Integer aIdx[2] = {Intervs.Lower(), Intervs.Lower()}; // Indexes of intervals of U1 and U2, used to handle non-uniform case.
   Standard_Boolean isNeedToCheck = Standard_False;
   gp_Pnt aPrevPoint = points.Last();
+  Standard_Integer MaxNbCorr = 100;
 
   while (MorePoints) {
     aIdx[0] = getIntervalIdx(U1, Intervs, aIdx[0]);
@@ -383,12 +387,12 @@ void GCPnts_TangentialDeflection::PerformCurve (const TheCurve& C)
     else D0 (C, U2, CurrentPoint);           //Point suivant
 
     Standard_Real Coef = 0.0, ACoef = 0., FCoef = 0.;
-    Standard_Boolean Correction, TooLarge, TooSmall;
+    Standard_Boolean Correction, TooLarge;
     TooLarge   = Standard_False;
     Correction = Standard_True;
-    TooSmall = Standard_False;
+    Standard_Integer nbcorr = 0;
 
-    while (Correction) {                     //Ajustement Du
+    while (Correction && (++nbcorr <= MaxNbCorr)) {                     //Ajustement Du
       if (isNeedToCheck)
       {
         aIdx[1] = getIntervalIdx(U2, Intervs, aIdx[0]);
@@ -447,19 +451,14 @@ void GCPnts_TangentialDeflection::PerformCurve (const TheCurve& C)
           Correction = Standard_False;
         }
         else {
-          if (Coef >= 0.55 || TooLarge) { 
+          if (Coef >= 0.55 || TooLarge || nbcorr == MaxNbCorr) { 
             parameters.Append (U2);
             points    .Append (CurrentPoint);
             aPrevPoint = CurrentPoint;
             Correction = Standard_False;
             isNeedToCheck = Standard_True;
           }
-          else if (TooSmall) {
-            Correction = Standard_False;
-            aPrevPoint = CurrentPoint;
-          }
           else {
-            TooSmall = Standard_True;
             //Standard_Real UUU2 = U2;
             Du += Min((U2-U1)*(1.-Coef), Du*Us3);
 
@@ -478,9 +477,9 @@ void GCPnts_TangentialDeflection::PerformCurve (const TheCurve& C)
             parameters.Append (U1);
             points    .Append (aPrevPoint);
           }
-          U2 = MiddleU;
+          U2 = 0.9*MiddleU + 0.1*U2;
           Du  = U2-U1;
-          CurrentPoint = MiddlePoint;
+          D0 (C, U2, CurrentPoint);
         }
         else {
           Du*=0.9;
@@ -562,4 +561,86 @@ void GCPnts_TangentialDeflection::PerformCurve (const TheCurve& C)
       i++;
     }
   }
+  //Additional check for intervals
+  Standard_Real MinLen2 = myMinLen * myMinLen;
+  Standard_Integer MaxNbp = 10 * Nbp;
+  for(i = 1; i < Nbp; ++i)
+  {
+    U1 = parameters(i);
+    U2 = parameters(i + 1);
+    // Check maximal deflection on interval;
+    Standard_Real dmax = 0.;
+    Standard_Real umax = 0.;
+    Standard_Real amax = 0.;
+    EstimDefl(C, U1, U2, dmax, umax);
+    const gp_Pnt& P1 = points(i);
+    const gp_Pnt& P2 = points(i+1);
+    D0(C, umax, MiddlePoint);
+    amax = EstimAngl(P1, MiddlePoint, P2);
+    if(dmax > curvatureDeflection || amax > AngleMax)
+    {
+      if(umax - U1 > uTol && U2 - umax > uTol)
+      {
+        if (P1.SquareDistance(MiddlePoint) > MinLen2 && P2.SquareDistance(MiddlePoint) > MinLen2)
+        {
+          parameters.InsertAfter(i, umax);
+          points.InsertAfter(i, MiddlePoint);
+          ++Nbp;
+          --i; //To compensate ++i in loop header: i must point to first part of splitted interval
+          if(Nbp > MaxNbp)
+          {
+            break;
+          }
+        }
+      }
+    }
+  }
+  // 
+}
+
+//=======================================================================
+//function : EstimDefl
+//purpose  : Estimation of maximal deflection for interval [U1, U2]
+//           
+//=======================================================================
+void GCPnts_TangentialDeflection::EstimDefl (const TheCurve& C,
+                            const Standard_Real U1, const Standard_Real U2, 
+                            Standard_Real& MaxDefl, Standard_Real& UMax)
+{
+  Standard_Real Du = (lastu - firstu);
+  //
+  TheMaxCurvLinDist aFunc(C, U1, U2);
+ //
+  if(U2 - U1 < 0.01 * Du)
+  {
+    math_BrentMinimum anOptLoc(uTol);
+    anOptLoc.Perform(aFunc, U1, (U1+U2)/2., U2);
+    if(anOptLoc.IsDone())
+    {
+      MaxDefl = Sqrt(-anOptLoc.Minimum());
+      UMax = anOptLoc.Location();
+      return;
+    }
+  }
+  //
+  math_Vector aLowBorder(1,1);
+  math_Vector aUppBorder(1,1);
+  math_Vector aSteps(1,1);
+  //
+  aSteps(1) = Max(0.001 * Du, 10. * uTol);
+  Standard_Integer aNbParticles = Max(8, RealToInt(64 * (U2 - U1) / Du));
+  //
+  aLowBorder(1) = U1;
+  aUppBorder(1) = U2;
+  //
+  //
+  Standard_Real aValue;
+  math_Vector aT(1,1);
+  TheMaxCurvLinDistMV aFuncMV(aFunc);
+
+  math_PSO aFinder(&aFuncMV, aLowBorder, aUppBorder, aSteps, aNbParticles); 
+  aFinder.Perform(aSteps, aValue, aT);
+  MaxDefl = Sqrt(-aValue);
+  UMax = aT(1);
+  //
 }
