@@ -62,6 +62,12 @@ inline const gp_Dir& IntWalk_PWalking::TangentAtLine
   return tgdir;
 }
 
+inline Standard_Real IntWalk_PWalking::MaxStep(Standard_Integer theIndex) const
+{
+  Standard_OutOfRange_Raise_if((theIndex < 0) || (theIndex > 3), "");
+  return pasInit[theIndex];
+}
+
 #define REGLAGE 0
 
 inline void IntWalk_PWalking::AddAPoint(Handle(IntSurf_LineOn2S)& theLine,

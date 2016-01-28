@@ -524,7 +524,7 @@ void IntPatch_Intersection::Perform(const Handle(Adaptor3d_HSurface)&  S1,
     default:
     {
       IntPatch_PrmPrmIntersection interpp;
-      interpp.Perform(S1,D1,TolArc,TolTang,myFleche,myUVMaxStep);
+      interpp.Perform(S1,D1,TolTang,TolArc,myFleche,myUVMaxStep);
       if (interpp.IsDone())
       {
         done = Standard_True;
@@ -1329,7 +1329,7 @@ void IntPatch_Intersection::Perform(const Handle(Adaptor3d_HSurface)&  theS1,
     ParamParamPerfom(theS1, theD1, theS2, theD2, TolArc,
                         TolTang, ListOfPnts, RestrictLine, typs1, typs2);
   }
-}
+  }
 
 //=======================================================================
 //function : Perform
@@ -1548,7 +1548,7 @@ void IntPatch_Intersection::Perform(const Handle(Adaptor3d_HSurface)&  theS1,
               TolArc, TolTang, ListOfPnts, RestrictLine, typs1, typs2);
     }
   }
-}
+  }
 
 //=======================================================================
 //function : ParamParamPerfom
@@ -1571,10 +1571,10 @@ void IntPatch_Intersection::ParamParamPerfom(const Handle(Adaptor3d_HSurface)&  
     Standard_Boolean ClearFlag = Standard_True;
     if(!ListOfPnts.IsEmpty())
     {
-      interpp.Perform(theS1,theD1,theS2,theD2,TolArc,TolTang,myFleche,myUVMaxStep, ListOfPnts, RestrictLine);
+      interpp.Perform(theS1,theD1,theS2,theD2,TolTang,TolArc,myFleche,myUVMaxStep, ListOfPnts, RestrictLine);
       ClearFlag = Standard_False;
     }
-    interpp.Perform(theS1,theD1,theS2,theD2,TolArc,TolTang,myFleche,myUVMaxStep,ClearFlag);   //double call!!!!!!!
+    interpp.Perform(theS1,theD1,theS2,theD2,TolTang,TolArc,myFleche,myUVMaxStep,ClearFlag);   //double call!!!!!!!
   }
   else if((theD1->DomainIsInfinite()) ^ (theD2->DomainIsInfinite()))
   {
@@ -1587,7 +1587,7 @@ void IntPatch_Intersection::ParamParamPerfom(const Handle(Adaptor3d_HSurface)&  
       const Standard_Real AP = Max(MU, MV);
       Handle(Adaptor3d_HSurface) SS;
       FUN_TrimInfSurf(pMinXYZ, pMaxXYZ, theS1, AP, SS);
-      interpp.Perform(SS,theD1,theS2,theD2,TolArc,TolTang,myFleche,myUVMaxStep);
+      interpp.Perform(SS,theD1,theS2,theD2,TolTang,TolArc,myFleche,myUVMaxStep);
     }
     else
     {
@@ -1597,7 +1597,7 @@ void IntPatch_Intersection::ParamParamPerfom(const Handle(Adaptor3d_HSurface)&  
       const Standard_Real AP = Max(MU, MV);
       Handle(Adaptor3d_HSurface) SS;
       FUN_TrimInfSurf(pMinXYZ, pMaxXYZ, theS2, AP, SS);
-      interpp.Perform(theS1, theD1, SS, theD2,TolArc,TolTang,myFleche,myUVMaxStep);
+      interpp.Perform(theS1, theD1, SS, theD2,TolTang, TolArc,myFleche,myUVMaxStep);
     }
   }//(theD1->DomainIsInfinite()) ^ (theD2->DomainIsInfinite())
   else
@@ -1636,7 +1636,7 @@ void IntPatch_Intersection::ParamParamPerfom(const Handle(Adaptor3d_HSurface)&  
       Handle(Adaptor3d_HSurface) nS1 = theS1;
       Handle(Adaptor3d_HSurface) nS2 = theS2;
       FUN_TrimBothSurf(theS1,typs1,theS2,typs2,1.e+8,nS1,nS2);
-      interpp.Perform(nS1,theD1,nS2,theD2,TolArc,TolTang,myFleche,myUVMaxStep);
+      interpp.Perform(nS1,theD1,nS2,theD2,TolTang,TolArc,myFleche,myUVMaxStep);
     }// 'NON - COLLINEAR LINES'
   }// both domains are infinite
 
@@ -1906,10 +1906,10 @@ void IntPatch_Intersection::
         }
 
         JoinWLines( slin, spnt, theTolTang,
-                    theS1->IsUPeriodic()? theS1->UPeriod() : 0.0,
-                    theS2->IsUPeriodic()? theS2->UPeriod() : 0.0,
-                    theS1->IsVPeriodic()? theS1->VPeriod() : 0.0,
-                    theS2->IsVPeriodic()? theS2->VPeriod() : 0.0,
+                                        theS1->IsUPeriodic()? theS1->UPeriod() : 0.0,
+                                        theS2->IsUPeriodic()? theS2->UPeriod() : 0.0,
+                                        theS1->IsVPeriodic()? theS1->VPeriod() : 0.0,
+                                        theS2->IsVPeriodic()? theS2->VPeriod() : 0.0,
                     theS1->FirstUParameter(), theS1->LastUParameter(),
                     theS1->FirstVParameter(), theS1->LastVParameter(),
                     theS2->FirstUParameter(), theS2->LastUParameter(),
@@ -1982,7 +1982,7 @@ void IntPatch_Intersection::Perform(const Handle(Adaptor3d_HSurface)&  S1,
   else
   {
     IntPatch_PrmPrmIntersection interpp;
-    interpp.Perform(S1,D1,S2,D2,U1,V1,U2,V2,TolArc,TolTang,myFleche,myUVMaxStep);
+    interpp.Perform(S1,D1,S2,D2,U1,V1,U2,V2,TolTang,TolArc,myFleche,myUVMaxStep);
     if (interpp.IsDone())
     {
       done = Standard_True;
@@ -1993,7 +1993,7 @@ void IntPatch_Intersection::Perform(const Handle(Adaptor3d_HSurface)&  S1,
       for (; i<=nblm; i++) slin.Append(interpp.Line(i));
     }
   }
-}
+  }
 //======================================================================
 #include <IntPatch_IType.hxx>
 #include <IntPatch_LineConstructor.hxx>
@@ -2053,7 +2053,7 @@ void IntPatch_Intersection::Dump(const Standard_Integer ,
     NR1[nbR1]=0;
     nbR1++;
   }
-  for(D2->Init();D2->More() && nbR2<MAXR; D2->Next()) { 
+  for(D2->Init();D2->More() && nbR2<MAXR; D2->Next()) {
     R2[nbR2]=D2->Value();
     NR2[nbR2]=0;
     nbR2++;
