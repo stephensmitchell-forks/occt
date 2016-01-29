@@ -112,7 +112,7 @@ static Standard_Integer xdistcc(Draw_Interpretor& , Standard_Integer n, const ch
 //function : xdistc2dc2dss
 //purpose  : 
 //=======================================================================
-static Standard_Integer xdistc2dc2dss(Draw_Interpretor& , Standard_Integer n, const char** a)
+static Standard_Integer xdistc2dc2dss(Draw_Interpretor& di, Standard_Integer n, const char** a)
 {
   if (n < 7)
   {
@@ -132,28 +132,28 @@ static Standard_Integer xdistc2dc2dss(Draw_Interpretor& , Standard_Integer n, co
   aC2d1=DrawTrSurf::GetCurve2d(a[1]);
   if (aC2d1.IsNull())
   {
-    cout<<a[1]<<" is null 2dcurve"<<endl;
+    di<<a[1]<<" is null 2dcurve\n";
     return 0;
   }
 
   aC2d2=DrawTrSurf::GetCurve2d(a[2]);
   if (aC2d2.IsNull())
   {
-    cout<<a[2]<<" is null 2dcurve"<<endl;
+    di<<a[2]<<" is null 2dcurve\n";
     return 0;
   }
 
   aS1=DrawTrSurf::GetSurface(a[3]);
   if (aS1.IsNull())
   {
-    cout<<a[3]<<" is null surface"<<endl;
+    di<<a[3]<<" is null surface\n";
     return 0;
   }
 
   aS2=DrawTrSurf::GetSurface(a[4]);
   if (aS2.IsNull())
   {
-    cout<<a[4]<<" is null surface"<<endl;
+    di<<a[4]<<" is null surface\n";
     return 0;
   }
 
@@ -192,14 +192,16 @@ static Standard_Integer xdistc2dc2dss(Draw_Interpretor& , Standard_Integer n, co
       aMaxDist = aD;
     }
 
-    printf(" T=%lg\tD=%lg\n", aT, aD);
+    char aMsg[256];
+    sprintf(aMsg," T=%lg\tD=%lg\n", aT, aD);
+    di << aMsg;
 
     aMr=new Draw_Marker3D(aP1, Draw_Plus, aColor, iSize);
     dout << aMr;
   }
 
-  cout << "Max distance = "  << aMaxDist << endl;
-  cout << "Param = " << aMaxParam << endl;
+  di << "Max distance = "  << aMaxDist << "\n";
+  di << "Param = " << aMaxParam << "\n";
 
   return 0;
 }
