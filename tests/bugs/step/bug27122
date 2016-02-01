@@ -1,0 +1,52 @@
+puts "================"
+puts "OCC27122"
+puts "================"
+puts ""
+#####################################################################
+# STEP import regression: invalid shapes are produced during model translation due to huge face tolerance
+#####################################################################
+
+pload XDE
+
+# procedure to check distance between pcurves
+proc checkdist {c2d1 c2d2 s threshold} {
+    
+  set prop [uplevel xdistc2dc2dss $c2d1 $c2d2 $s $s 0 1 25]
+
+  # get distance value
+  if { ! [regexp {Max distance\s*=\s*([0-9.e+-]+)} $prop res dist] } {
+    puts "Error: cannot get distance value"
+    return
+  }
+
+  # compare with expected value
+  if { $dist < $threshold } {
+    puts "Error: coinciding curves (distance = $dist)"
+  }
+}
+
+#procedure to check thin faces
+proc checkface {face} {
+  uplevel mksurface s $face
+  uplevel explode $face e
+  uplevel mk2dcurve c1 ${face}_1 $face
+  uplevel mk2dcurve c2 ${face}_2 $face
+  
+  uplevel reverse c2
+  uplevel checkdist c1 c2 s 0.03
+  
+  uplevel incmesh $face 0.01
+  set log [uplevel tricheck $face]
+  if {[llength $log] != 0} {
+    puts "Error: failed to mesh face $face"
+  }
+}
+
+stepread [locate_data_file 280696.stp] a *
+renamevar a_1 result
+
+explode result f
+checkface result_3
+checkface result_8
+
+
