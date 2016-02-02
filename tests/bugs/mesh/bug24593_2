@@ -10,7 +10,7 @@ pload XDE
 
 set refnbfaces 23
 
-stepread [locate_data_file "281946.stp"] a *
+stepread [locate_data_file bug24593_281946.stp] a *
 renamevar a_1 result
 
 #1

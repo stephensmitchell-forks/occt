@@ -10,7 +10,7 @@ pload XDE
 
 set refnbfaces 13
 
-stepread [locate_data_file "ICK 0433.STP"] a *
+stepread [locate_data_file bug25045_ick_0433.stp] a *
 renamevar a_1 result
 
 #1
