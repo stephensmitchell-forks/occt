@@ -42,7 +42,7 @@ proc checkface {face} {
   }
 }
 
-stepread [locate_data_file 280696.stp] a *
+stepread [locate_data_file bug27122_280696.stp] a *
 renamevar a_1 result
 
 explode result f

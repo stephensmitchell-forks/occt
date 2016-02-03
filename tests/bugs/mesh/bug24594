@@ -1,16 +1,16 @@
 puts "========"
-puts "OCC25045"
+puts "OCC24594"
 puts "========"
 puts ""
 #################################
-# STEP Import fails to find all surfaces
+# Missing surfaces from STL output (second example)
 #################################
 
 pload XDE
 
 set refnbfaces 22
 
-stepread [locate_data_file "284965.stp"] a *
+stepread [locate_data_file bug24594_284965.stp] a *
 renamevar a_1 result
 
 #1
