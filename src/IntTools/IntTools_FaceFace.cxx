@@ -285,17 +285,18 @@ static
   Standard_Boolean CheckPCurve(const Handle(Geom2d_Curve)& aPC, 
                                const TopoDS_Face& aFace);
 
-//
 static
   Standard_Real MaxDistance(const Handle(Geom_Curve)& theC,
                             const Standard_Real aT,
                             GeomAPI_ProjectPointOnSurf& theProjPS);
+
 static
   Standard_Real FindMaxDistance(const Handle(Geom_Curve)& theC,
                                 const Standard_Real theFirst,
                                 const Standard_Real theLast,
                                 GeomAPI_ProjectPointOnSurf& theProjPS,
                                 const Standard_Real theEps);
+
 static
   Standard_Real FindMaxDistance(const Handle(Geom_Curve)& theCurve,
                                 const Standard_Real theFirst,
@@ -825,10 +826,12 @@ Standard_Real IntTools_FaceFace::ComputeTolerance()
   aS1 = myHS1->ChangeSurface().Surface();
   aS2 = myHS2->ChangeSurface().Surface();
   //
-  for (i = 1; i <= aNbLin; ++i) {
+  for (i = 1; i <= aNbLin; ++i)
+  {
     const IntTools_Curve& aIC = mySeqOfCurve(i);
     const Handle(Geom_Curve)& aC3D = aIC.Curve();
-    if (aC3D.IsNull()) {
+    if (aC3D.IsNull())
+    {
       continue;
     }
     //
@@ -838,24 +841,31 @@ Standard_Real IntTools_FaceFace::ComputeTolerance()
     const Handle(Geom2d_Curve)& aC2D1 = aIC.FirstCurve2d();
     const Handle(Geom2d_Curve)& aC2D2 = aIC.SecondCurve2d();
     //
-    for (j = 0; j < 2; ++j) {
+    for (j = 0; j < 2; ++j)
+    {
       const Handle(Geom2d_Curve)& aC2D = !j ? aC2D1 : aC2D2;
       const Handle(Geom_Surface)& aS = !j ? aS1 : aS2;
       //
-      if (!aC2D.IsNull()) {
+      if (!aC2D.IsNull())
+      {
         if (IntTools_Tools::ComputeTolerance
-            (aC3D, aC2D, aS, aFirst, aLast, aD, aT)) {
-          if (aD > aDMax) {
+            (aC3D, aC2D, aS, aFirst, aLast, aD, aT))
+        {
+          if (aD > aDMax)
+          {
             aDMax = aD;
           }
         }
       }
-      //
-      const TopoDS_Face& aF = !i ? myFace1 : myFace2;
-      aD = FindMaxDistance(aC3D, aFirst, aLast, aF, myContext);
-      if (aD > aDMax) {
-        aDMax = aD;
-      }
+      else
+      {
+        const TopoDS_Face& aF = !j ? myFace1 : myFace2;
+        aD = FindMaxDistance(aC3D, aFirst, aLast, aF, myContext);
+        if (aD > aDMax)
+        {
+          aDMax = aD;
+    }
+  }
     }
   }
   //
@@ -868,7 +878,7 @@ Standard_Real IntTools_FaceFace::ComputeTolerance()
 //=======================================================================
   void IntTools_FaceFace::ComputeTolReached3d()
 {
-  Standard_Integer aNbLin, i;
+  Standard_Integer aNbLin;
   GeomAbs_SurfaceType aType1, aType2;
   //
   aNbLin=myIntersector.NbLines();
@@ -879,8 +889,10 @@ Standard_Real IntTools_FaceFace::ComputeTolerance()
   aType1=myHS1->Surface().GetType();
   aType2=myHS2->Surface().GetType();
   //
-  if (aType1==GeomAbs_Cylinder && aType2==GeomAbs_Cylinder) {
-    if (aNbLin==2){ 
+  if (aType1==GeomAbs_Cylinder && aType2==GeomAbs_Cylinder)
+  {
+    if (aNbLin==2)
+    { 
       Handle(IntPatch_Line) aIL1, aIL2;
       IntPatch_IType aTL1, aTL2;
       //
@@ -899,150 +911,21 @@ Standard_Real IntTools_FaceFace::ComputeTolerance()
         aL2=Handle(IntPatch_GLine)::DownCast(aIL2)->Line();
         aD=aL1.Distance(aL2);
         aD=0.5*aD;
-        if (aD<aDTresh) {
+        if (aD<aDTresh)
+        {//In order to avoid creation too thin face
           myTolReached3d=aD+dTol;
         }
-        return;
       }
     }
-    //ZZ
-    if (aNbLin) {// Check the distances
-      Standard_Real aDMax;
-      //
-      aDMax = ComputeTolerance();
-      if (aDMax > 0.) {
-        myTolReached3d = aDMax;
-      }
-    }// if (aNbLin) 
   }// if (aType1==GeomAbs_Cylinder && aType2==GeomAbs_Cylinder) {
   //
-  //904/G3 f
-  else if (aType1==GeomAbs_Plane && aType2==GeomAbs_Plane) {
-    Standard_Real aTolF1, aTolF2, aTolFMax, aTolTresh;
-    //
-    aTolTresh=1.e-7;
-    //
-    aTolF1 = BRep_Tool::Tolerance(myFace1);
-    aTolF2 = BRep_Tool::Tolerance(myFace2);
-    aTolFMax=Max(aTolF1, aTolF2);
-    //
-    if (aTolFMax>aTolTresh) {
-      myTolReached3d=aTolFMax;
-    }
-  }//if (aType1==GeomAbs_Plane && aType2==GeomAbs_Plane) {
-  //t
-  //IFV Bug OCC20297 
-  else if((aType1 == GeomAbs_Cylinder && aType2 == GeomAbs_Plane) ||
-          (aType2 == GeomAbs_Cylinder && aType1 == GeomAbs_Plane)) {
-    if(aNbLin == 1) {
-      const Handle(IntPatch_Line)& aIL1 = myIntersector.Line(1);
-      if(aIL1->ArcType() == IntPatch_Circle) {
-        gp_Circ aCir = Handle(IntPatch_GLine)::DownCast(aIL1)->Circle();
-        gp_XYZ aCirDir = aCir.Axis().Direction().XYZ();
-        gp_XYZ aPlDir;
-        gp_Pln aPln;
-        if(aType1 == GeomAbs_Plane) {
-          aPln = myHS1->Surface().Plane();
-        }
-        else {
-          aPln = myHS2->Surface().Plane();
-        }
-        aPlDir = aPln.Axis().Direction().XYZ();
-        Standard_Real cs = aCirDir*aPlDir;
-        if(cs < 0.) aPlDir.Reverse();
-        Standard_Real eps = 1.e-14;
-        if(!aPlDir.IsEqual(aCirDir, eps)) {
-          Standard_Integer aNbP = 11;
-          Standard_Real dt = 2.*M_PI / (aNbP - 1), t;
-          for(t = 0.; t < 2.*M_PI; t += dt) {
-            Standard_Real d = aPln.Distance(ElCLib::Value(t, aCir)); 
-            if(myTolReached3d < d) myTolReached3d = d;
-          }
-          myTolReached3d *= 1.1;
-        }
-      } //aIL1->ArcType() == IntPatch_Circle
-    } //aNbLin == 1
-  } // aType1 == GeomAbs_Cylinder && aType2 == GeomAbs_Plane) 
-  //End IFV Bug OCC20297
-  //
-  else if ((aType1==GeomAbs_Plane && aType2==GeomAbs_Torus) ||
-           (aType2==GeomAbs_Plane && aType1==GeomAbs_Torus)) {
-    aNbLin=mySeqOfCurve.Length();
-    if (aNbLin!=1) {
-      return;
-    }
-    //
-    Standard_Integer aNbP;
-    Standard_Real aT, aT1, aT2, dT, aUT, aVT, aUP, aVP;
-    Standard_Real aDP, aDT, aDmax;
-    gp_Pln aPln;
-    gp_Torus aTorus;
-    gp_Pnt aP, aPP, aPT;
-    //
-    const IntTools_Curve& aIC=mySeqOfCurve(1);
-    const Handle(Geom_Curve)& aC3D=aIC.Curve();
-    const Handle(Geom_BSplineCurve)& aBS=
-      Handle(Geom_BSplineCurve)::DownCast(aC3D);
-    if (aBS.IsNull()) {
-      return;
-    }
-    //
-    aT1=aBS->FirstParameter();
-    aT2=aBS->LastParameter();
-    //
-    aPln  =(aType1==GeomAbs_Plane) ? myHS1->Plane() : myHS2->Plane();
-    aTorus=(aType1==GeomAbs_Plane) ? myHS2->Torus() : myHS1->Torus();
-    //
-    aDmax=-1.;
-    aNbP=11;
-    dT=(aT2-aT1)/(aNbP-1);
-    for (i=0; i<aNbP; ++i) {
-      aT=aT1+i*dT;
-      if (i==aNbP-1) {
-        aT=aT2;
-      }
-      //
-      aC3D->D0(aT, aP);
-      //
-      ElSLib::Parameters(aPln, aP, aUP, aVP);
-      aPP=ElSLib::Value(aUP, aVP, aPln);
-      aDP=aP.SquareDistance(aPP);
-      if (aDP>aDmax) {
-        aDmax=aDP;
-      }
-      //
-      ElSLib::Parameters(aTorus, aP, aUT, aVT);
-      aPT=ElSLib::Value(aUT, aVT, aTorus);
-      aDT=aP.SquareDistance(aPT);
-      if (aDT>aDmax) {
-        aDmax=aDT;
-      }
-    }
-    //
-    if (aDmax > myTolReached3d*myTolReached3d) {
-      myTolReached3d=sqrt(aDmax);
-      myTolReached3d=1.1*myTolReached3d;
-    }
-  }// if ((aType1==GeomAbs_Plane && aType2==GeomAbs_Torus) ||
-  //
-  else if ((aType1==GeomAbs_SurfaceOfRevolution && aType2==GeomAbs_Cylinder) ||
-           (aType2==GeomAbs_SurfaceOfRevolution && aType1==GeomAbs_Cylinder) ||
-           (aType1==GeomAbs_Plane && aType2==GeomAbs_Sphere) ||
-           (aType2==GeomAbs_Plane && aType1==GeomAbs_Sphere) ||
-           (aType1==GeomAbs_Plane && aType2==GeomAbs_SurfaceOfExtrusion) ||
-           (aType2==GeomAbs_Plane && aType1==GeomAbs_SurfaceOfExtrusion) ||
-           (aType1==GeomAbs_Plane && aType2==GeomAbs_BSplineSurface) ||
-           (aType2==GeomAbs_Plane && aType1==GeomAbs_BSplineSurface) ||
-           !myApprox) {
-    //
-    Standard_Real aDMax;
-    //
-    aDMax = ComputeTolerance();
-    if (aDMax > myTolReached3d) {
+
+  Standard_Real aDMax = ComputeTolerance();
+  if (aDMax > myTolReached3d)
+  {
       myTolReached3d = aDMax;
     }
   }
-}
 
 //=======================================================================
 //function : MakeCurve
@@ -4841,6 +4724,7 @@ void RefineVector(gp_Vec2d& aV2D)
   }
   aV2D.SetCoord(aC[0], aC[1]);
 }
+
 //=======================================================================
 // Function : FindMaxDistance
 // purpose : 
@@ -4877,6 +4761,7 @@ Standard_Real FindMaxDistance(const Handle(Geom_Curve)& theCurve,
   //
   return aDMax;
 }
+
 //=======================================================================
 // Function : FindMaxDistance
 // purpose : 
@@ -4932,6 +4817,7 @@ Standard_Real FindMaxDistance(const Handle(Geom_Curve)& theC,
   //
   return aF;
 }
+
 //=======================================================================
 // Function : MaxDistance
 // purpose : 

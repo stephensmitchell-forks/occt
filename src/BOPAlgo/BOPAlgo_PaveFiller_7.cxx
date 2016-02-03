@@ -57,6 +57,8 @@
 #include <BOPDS_MapOfPaveBlock.hxx>
 #include <BOPDS_Curve.hxx>
 #include <BOPDS_Iterator.hxx>
+#include <Precision.hxx>
+#include <BOPDS_MapOfCommonBlock.hxx>
 
 #include <BOPTools_AlgoTools.hxx>
 #include <BOPTools_AlgoTools2D.hxx>
@@ -359,13 +361,17 @@ void BOPAlgo_PaveFiller::MakeSplitEdges()
   Standard_Boolean bCB, bV1, bV2;
   Standard_Integer i, nE, nV1, nV2, nSp, aNbPB, aNbVBSE, k;
   Standard_Real aT1, aT2;
-  BOPDS_ListIteratorOfListOfPaveBlock aItPB, aItPBCB;
+  BOPDS_ListIteratorOfListOfPaveBlock aItPB;
   Handle(BOPDS_PaveBlock) aPB;
   BOPDS_MapOfPaveBlock aMPB(100);
   TopoDS_Vertex aV1, aV2;
   TopoDS_Edge aE;
   BOPAlgo_VectorOfSplitEdge aVBSE;
   
+  //
+  UpdateCommonBlocksWithSDVertices();
+  //
+  aNbPBP=aPBP.Extent();
   //
   for (i=0; i<aNbPBP; ++i) {
     BOPDS_ListOfPaveBlock& aLPB=aPBP(i);
@@ -376,17 +382,26 @@ void BOPAlgo_PaveFiller::MakeSplitEdges()
       aPB->Indices(nV1, nV2);
       bV1=myDS->IsNewShape(nV1);
       bV2=myDS->IsNewShape(nV2);
+      bCB=myDS->IsCommonBlock(aPB);
       //
-      if (!(bV1 || bV2)) {
-        nE=aPB->OriginalEdge();
-        aPB->SetEdge(nE);
-        continue;
+      if (!(bV1 || bV2)) { // no new vertices here
+        if (!myNonDestructive || (myNonDestructive && !bCB)) {
+          nE=aPB->OriginalEdge();
+          aPB->SetEdge(nE);
+          continue;
+        }
       }
     }
     //
     aItPB.Initialize(aLPB);
     for (; aItPB.More(); aItPB.Next()) {
       aPB=aItPB.Value();
+      nE=aPB->OriginalEdge();
+      const BOPDS_ShapeInfo& aSIE=myDS->ShapeInfo(nE);
+      if (aSIE.HasFlag()){
+        continue;
+      }
+      //
       const Handle(BOPDS_CommonBlock)& aCB=myDS->CommonBlock(aPB);
       bCB=!aCB.IsNull();
       if (bCB) {
@@ -444,12 +459,60 @@ void BOPAlgo_PaveFiller::MakeSplitEdges()
     nSp=myDS->Append(aSI);
     //
     if (!aCBk.IsNull()) {
+      Standard_Real aTolCB = ComputeTolerance(aCBk);
+      myDS->UpdateEdgeTolerance(nSp, aTolCB);
       aCBk->SetEdge(nSp);
     }
     else {
       aPBk->SetEdge(nSp);
     }
   }
+}
+//=======================================================================
+//function : ComputeTolerance
+//purpose  : 
+//=======================================================================
+Standard_Real BOPAlgo_PaveFiller::ComputeTolerance
+  (const Handle(BOPDS_CommonBlock)& theCB)
+{
+  Standard_Integer nE, nF;
+  Standard_Real aTol, aTolMax;
+  BOPDS_ListIteratorOfListOfPaveBlock aItPB;
+  BOPCol_ListIteratorOfListOfInteger aItLI;
+  //
+  const Handle(BOPDS_PaveBlock)& aPBR = theCB->PaveBlock1();
+  nE = aPBR->OriginalEdge();
+  const TopoDS_Edge& aEOr = *(TopoDS_Edge*)&myDS->Shape(nE);
+  aTolMax = BRep_Tool::Tolerance(aEOr);
+  //
+  const BOPDS_ListOfPaveBlock& aLPB = theCB->PaveBlocks();
+  aItPB.Initialize(aLPB);
+  for (; aItPB.More(); aItPB.Next()) {
+    const Handle(BOPDS_PaveBlock)& aPB = aItPB.Value();
+    if (aPB == aPBR) {
+      continue;
+    }
+    //
+    nE = aPB->OriginalEdge();
+    const TopoDS_Edge& aE = *(TopoDS_Edge*)&myDS->Shape(nE);
+    aTol = BRep_Tool::Tolerance(aE);
+    if (aTol > aTolMax) {
+      aTolMax=aTol;
+    }
+  }
+  //
+  const BOPCol_ListOfInteger& aLFI = theCB->Faces();
+  aItLI.Initialize(aLFI);
+  for (; aItLI.More(); aItLI.Next()) {
+    nF = aItLI.Value();
+    const TopoDS_Face& aF = *(TopoDS_Face*)&myDS->Shape(nF);
+    //
+    aTol=BRep_Tool::Tolerance(aF);
+    if (aTol > aTolMax) {
+      aTolMax=aTol;
+    }
+  } 
+  return aTolMax;
 }
 //=======================================================================
 // function: SplitEdge
@@ -732,6 +795,10 @@ void UpdateVertices(const TopoDS_Edge& aE,
 //=======================================================================
 void BOPAlgo_PaveFiller::Prepare()
 {
+  if (myNonDestructive) {
+    // do not allow storing pcurves in original edges if non-destructive mode is on
+    return;
+  }
   TopAbs_ShapeEnum aType[] = {
     TopAbs_VERTEX,
     TopAbs_EDGE,

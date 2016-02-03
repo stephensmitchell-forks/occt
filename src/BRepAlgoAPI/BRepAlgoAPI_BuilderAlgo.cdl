@@ -20,6 +20,7 @@ class BuilderAlgo from BRepAlgoAPI
 uses
     Shape from TopoDS, 
     ListOfShape from TopTools,
+    ListOfShape from BOPCol,
     --
     PPaveFiller from BOPAlgo, 
     PaveFiller from BOPAlgo,
@@ -47,11 +48,11 @@ is
     ---Purpose: Returns the additional tolerance   
     
     SetArguments(me:out; 
-        theLS: ListOfShape from TopTools);  
+        theLS: ListOfShape from BOPCol);  
     ---Purpose: Sets the arguments    
             
     Arguments(me) 
-        returns ListOfShape from TopTools; 
+        returns ListOfShape from BOPCol; 
     ---C++: return const & 
     ---Purpose: Gets the arguments   
     
@@ -111,5 +112,5 @@ fields
     myDSFiller   : PPaveFiller from BOPAlgo  is protected;
     myBuilder    : PBuilder    from BOPAlgo  is protected;
     myFuzzyValue : Real        from Standard is protected; 
-    myArguments  : ListOfShape from TopTools is protected;   
+    myArguments  : ListOfShape from BOPCol is protected;   
 end BuilderAlgo;

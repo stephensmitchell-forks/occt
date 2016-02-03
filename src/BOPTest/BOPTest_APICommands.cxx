@@ -35,9 +35,11 @@
 #include <BRepAlgoAPI_Cut.hxx>
 #include <BRepAlgoAPI_Section.hxx>
 
+#include <stdio.h>
+#include <string.h>
 static 
   void ConvertList(const BOPCol_ListOfShape& aLSB,
-                   TopTools_ListOfShape& aLS);
+                   BOPCol_ListOfShape& aLS);
 
 static Standard_Integer bapibuild(Draw_Interpretor&, Standard_Integer, const char**); 
 static Standard_Integer bapibop  (Draw_Interpretor&, Standard_Integer, const char**); 
@@ -114,7 +116,7 @@ Standard_Integer bapibop(Draw_Interpretor& di,
   BOPCol_ListOfShape& aLSB=BOPTest_Objects::Shapes();
   BOPCol_ListOfShape& aLTB=BOPTest_Objects::Tools();
   //
-  TopTools_ListOfShape aLS, aLT;
+  BOPCol_ListOfShape aLS, aLT;
   ConvertList(aLSB, aLS);
   ConvertList(aLTB, aLT);
   //
@@ -172,7 +174,7 @@ Standard_Integer bapibuild(Draw_Interpretor& di,
   BOPCol_ListOfShape& aLSB=BOPTest_Objects::Shapes();
   BOPCol_ListOfShape& aLTB=BOPTest_Objects::Tools();
   //
-  TopTools_ListOfShape aLS;
+  BOPCol_ListOfShape aLS;
   ConvertList(aLSB, aLS);
   ConvertList(aLTB, aLS);
   //
@@ -205,7 +207,7 @@ Standard_Integer bapibuild(Draw_Interpretor& di,
 //purpose  : 
 //=======================================================================
 void ConvertList(const BOPCol_ListOfShape& aLSB,
-                 TopTools_ListOfShape& aLS)
+                 BOPCol_ListOfShape& aLS)
 {
   BOPCol_ListIteratorOfListOfShape aItB;
   //

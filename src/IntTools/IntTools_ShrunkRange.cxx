@@ -187,8 +187,10 @@ void IntTools_ShrunkRange::Perform()
     return;
   }
   //
-  aTol1 = aTolV1+aTolE;
-  aTol2 = aTolV2+aTolE;
+  //aTol1 = aTolV1+aTolE;
+  //aTol2 = aTolV2+aTolE;
+  aTol1 = Max(aTolV1, aTolE);
+  aTol2 = Max(aTolV2, aTolE);
   //
   aCoeff1 = (aTolE>0.05) ? 1. : 2.;
   aCoeff2 = aCoeff1;

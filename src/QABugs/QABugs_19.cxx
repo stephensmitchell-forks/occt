@@ -2727,14 +2727,14 @@ static Standard_Integer OCC25043 (Draw_Interpretor& theDI,
         }
         else 
         {
-          theDI << "Info. Faulty shape if found in source shape\n";
+          theDI << "Info. Faulty shape is found in source shape\n";
         }
       }
     }
   }
   else 
   {
-    theDI << "Error. Problems are not detected. Test is not performed.";
+    theDI << "Problems are not detected. Test is not performed.";
   }
 
   return 0;

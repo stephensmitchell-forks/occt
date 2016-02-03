@@ -28,8 +28,8 @@ Release
 /adm/lin
 /adm/mac
 /adm/make
-/adm/cmake
 *.vcproj*user
+*.vcxproj*user
 *.csproj*user
 *.ncb
 *.suo
@@ -44,12 +44,12 @@ Release
 # Emacs backup files
 *~
 
-#Generated files
+# Generated files
 /*.am
 /*.m4
 /*.ac
 /*.sh
-/*.bat
+/custom.bat
 /autom4te.cache
 /build_configure
 /configure
@@ -58,3 +58,5 @@ Release
 /Makefile
 /libtool
 /stamp*
+/build*
+/install

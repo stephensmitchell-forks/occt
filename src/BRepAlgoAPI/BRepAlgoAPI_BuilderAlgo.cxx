@@ -88,7 +88,7 @@ void BRepAlgoAPI_BuilderAlgo::Clear()
 //purpose  : 
 //=======================================================================
 void BRepAlgoAPI_BuilderAlgo::SetArguments
-  (const TopTools_ListOfShape& theLS)
+  (const BOPCol_ListOfShape& theLS)
 {
   myArguments=theLS;
 }
@@ -96,7 +96,7 @@ void BRepAlgoAPI_BuilderAlgo::SetArguments
 //function : Arguments
 //purpose  : 
 //=======================================================================
-const TopTools_ListOfShape& BRepAlgoAPI_BuilderAlgo::Arguments()const
+const BOPCol_ListOfShape& BRepAlgoAPI_BuilderAlgo::Arguments()const
 {
   return myArguments;
 }

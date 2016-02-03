@@ -191,7 +191,7 @@ void BRepAlgoAPI_BooleanOperation::Clear()
 //purpose  : 
 //=======================================================================
 void BRepAlgoAPI_BooleanOperation::SetTools
-  (const TopTools_ListOfShape& theLS)
+  (const BOPCol_ListOfShape& theLS)
 {
   myTools=theLS;
 }
@@ -199,7 +199,7 @@ void BRepAlgoAPI_BooleanOperation::SetTools
 //function : Tools
 //purpose  : 
 //=======================================================================
-const TopTools_ListOfShape& BRepAlgoAPI_BooleanOperation::Tools()const
+const BOPCol_ListOfShape& BRepAlgoAPI_BooleanOperation::Tools()const
 {
   return myTools;
 }
@@ -285,7 +285,7 @@ void BRepAlgoAPI_BooleanOperation::Build()
   //
   //-----------------------------------------------
   TopTools_ListOfShape aLS;
-  TopTools_ListIteratorOfListOfShape aIt;
+  BOPCol_ListIteratorOfListOfShape aIt;
   //
   aIt.Initialize(myArguments);
   for (; aIt.More(); aIt.Next()) {
@@ -382,8 +382,8 @@ void BRepAlgoAPI_BooleanOperation::RefineEdges ()
   }
   //
   TopTools_IndexedMapOfShape mapOldEdges;
-  TopTools_ListOfShape aLS;
-  TopTools_ListIteratorOfListOfShape aIt;
+  BOPCol_ListOfShape aLS;
+  BOPCol_ListIteratorOfListOfShape aIt;
   //
   aIt.Initialize(myArguments);
   for (; aIt.More(); aIt.Next()) {

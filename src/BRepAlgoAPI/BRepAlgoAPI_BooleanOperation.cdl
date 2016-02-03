@@ -30,6 +30,7 @@ uses
     Shape from TopoDS, 
     DataMapOfShapeShape from TopTools, 
     ListOfShape from TopTools, 
+    ListOfShape from BOPCol,    
     --
     Operation   from BOPAlgo,
     PaveFiller from BOPAlgo 
@@ -79,11 +80,11 @@ is
     ---C++: return const &
       
     SetTools(me:out; 
-           theLS: ListOfShape from TopTools); 
+           theLS: ListOfShape from BOPCol); 
     ---Purpose: Sets the tools    
      
     Tools(me) 
-      returns ListOfShape from TopTools; 
+      returns ListOfShape from BOPCol; 
     ---C++: return const &   
     ---Purpose: Gets the tools    
      
@@ -181,7 +182,7 @@ is
     
     
 fields 
-    myTools    : ListOfShape from TopTools is protected; 
+    myTools    : ListOfShape from BOPCol is protected; 
     myOperation: Operation from BOPAlgo   is protected;   
     -- 
     myBuilderCanWork : Boolean from Standard is protected;   

@@ -210,7 +210,21 @@ is
 	
 	raises NotDone from StdFail
 	is static;
+      
+      
+    MaxStep(me ; Index : Integer from Standard)
+    
+    	---Purpose: Returns the point of range Index on the polyline. 
+    	--          An exception is raised if IsDone returns False.
+    	--          An exception is raised if Index<=0 or Index>NbPoints.
 
+    	returns  Real from Standard
+	---C++: inline
+
+    	raises OutOfRange from Standard
+	
+	is static;
+    	
 
     TangentAtLine(me; Index: out Integer from Standard)
     
@@ -249,6 +263,12 @@ is
     line  : in  out  LineOn2S  from  IntSurf  ;     
     POn2S :          PntOn2S   from  IntSurf  ) ;
     ---C++: inline
+    
+  ComputePasInit(me          : in out;
+                 theDeltaU1, theDeltaV1, theDeltaU2, theDeltaV2: Real from Standard)
+
+  is protected;
+
     
     ExtendLineInCommonZone(me: in out; theChoixIso: ConstIsoparametric  from IntImp;
 theDirectionFlag: Boolean from Standard)
@@ -317,9 +337,11 @@ fields
     fleche             : Real     from Standard;   -- max possible vector
     pasMax             : Real     from Standard;   -- max possible uv ratio
     tolconf            : Real     from Standard;   -- tol of confusion of 2 points
+    myTolTang          : Real     from Standard;
     pasuv              : Real     from Standard[4];-- uv step on squares 
     pasSav             : Real     from Standard[4];-- first saved step
     pasInit            : Real     from Standard[4];-- saving of steps  
+    myStepMin          : Real     from Standard[4];
 
     Um1                : Real from Standard;
     UM1                : Real from Standard;

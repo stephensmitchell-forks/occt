@@ -34,10 +34,10 @@ uses
 is
 
     enumeration StatusDeflection is 
-                PasTropGrand, PointConfondu, ArretSurPointPrecedent,
+                PasTropGrand, StepTooSmall, PointConfondu, ArretSurPointPrecedent,
                 ArretSurPoint, OK;
 
--- StepTooGreat, ConfusedPoint, StopOnPreviousPoint, StopOnPoint, OK
+-- StepTooGreat, StepTooSmall, ConfusedPoint, StopOnPreviousPoint, StopOnPoint, OK
     
 --class of result objects marching on a biparametric surface
 
