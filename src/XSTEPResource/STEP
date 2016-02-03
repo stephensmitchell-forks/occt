@@ -8,8 +8,8 @@
 
 ToSTEP.exec.op : SplitCommonVertex,DirectFaces
 
-FromSTEP.exec.op : FixShape
-
+FromSTEP.exec.op : FixShape, FixFaceSize, FixShape
+FromSTEP.FixFaceSize.Tolerance			: &Runtime.Tolerance
 FromSTEP.FixShape.Tolerance3d			: &Runtime.Tolerance
 FromSTEP.FixShape.MaxTolerance3d		: &Runtime.MaxTolerance
 FromSTEP.FixShape.MinTolerance3d		: 1.e-7
