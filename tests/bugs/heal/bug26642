@@ -6,7 +6,7 @@ puts ""
 # ShapeUpgrade_UnifySameDomain introduces extremely high vertex tolerances
 ############################################################################
 
-restore [locate_data_file OCC26656_unify.input.brep] i
+restore [locate_data_file bug26656_unify.input.brep] i
 
 set bug_info [tolerance i]
 set value_1 [lindex $bug_info 1]
