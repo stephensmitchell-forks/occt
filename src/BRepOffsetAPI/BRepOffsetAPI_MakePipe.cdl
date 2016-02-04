@@ -36,8 +36,8 @@ uses
     ListOfShape from TopTools
 
 is
- 
-    
+
+
     Create( Spine   : Wire  from TopoDS;
     	    Profile : Shape from TopoDS )
 	---Purpose: Constructs a pipe by sweeping the shape Profile along
@@ -52,7 +52,7 @@ is
     	-- Standard_DomainError if the profile is a solid or a
     	-- composite solid.
     returns MakePipe from BRepOffsetAPI;
-    
+
     Create( Spine   : Wire  from TopoDS;
     	    Profile : Shape from TopoDS;
 	    aMode   : Trihedron from GeomFill;
@@ -72,7 +72,7 @@ is
     Build(me : in out)
     is redefined;
 	---Purpose: Builds the resulting shape (redefined from MakeShape).
-	---Level: Public    
+	---Level: Public
 
 
     FirstShape (me : in out)
@@ -84,6 +84,11 @@ is
     ---Purpose: Returns the TopoDS Shape of the top of the prism.
     returns Shape from TopoDS;
 
+    Generated (me: in out; S: Shape from TopoDS)
+    returns ListOfShape from TopTools
+    is redefined;
+    ---C++: return const &
+    ---Level: Public
 
     Generated (me: in out; SSpine, SProfile : Shape from TopoDS)
         ---Level: Public
@@ -99,4 +104,4 @@ fields
 
     myPipe : Pipe from BRepFill;
 
-end MakePipe; 
+end MakePipe;
