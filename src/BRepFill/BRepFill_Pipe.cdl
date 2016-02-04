@@ -15,11 +15,11 @@
 -- commercial license or contractual agreement.
 
 
-class Pipe from BRepFill 
+class Pipe from BRepFill
 
 	---Purpose: Create a  shape by sweeping a shape  (the profile)
 	--          along a wire (the spine).
-	--          
+	--
 	--          For each edge  or vertex from the spine  the  user
 	--          may ask for the shape generated from each subshape
 	--          of the profile.
@@ -28,38 +28,40 @@ uses
 
     HArray2OfShape from TopTools,
     MapOfShape     from TopTools,
+		ListOfShape from TopTools,
     DataMapOfShapeHArray2OfShape from BRepFill,
+		DataMapOfShapeListOfShape from TopTools,
     LocationLaw  from BRepFill,
     Shape  from TopoDS,
     Face   from TopoDS,
     Wire   from TopoDS,
     Edge   from TopoDS,
-    Vertex from TopoDS,  
+    Vertex from TopoDS,
     Pnt    from  gp,
     Trsf   from  gp,
     Shape  from GeomAbs,
     Trihedron from GeomFill
 
 raises
-    DomainError from Standard, 
+    DomainError from Standard,
     NotDone     from StdFail
 
 is
 
     Create returns Pipe from BRepFill;
-    
-    Create ( Spine   : Wire from TopoDS; 
+
+    Create ( Spine   : Wire from TopoDS;
     	     Profile : Shape from TopoDS;
 	     aMode   : Trihedron from GeomFill = GeomFill_IsCorrectedFrenet;
 	     ForceApproxC1 : Boolean from Standard = Standard_False;
-             GeneratePartCase : Boolean from Standard = Standard_False) 
+             GeneratePartCase : Boolean from Standard = Standard_False)
     returns Pipe from BRepFill;
-    
-    Perform (me : in out;  Spine   : Wire from TopoDS; 
+
+    Perform (me : in out;  Spine   : Wire from TopoDS;
     	    	    	   Profile : Shape from TopoDS;
-                           GeneratePartCase : Boolean from Standard = Standard_False) 
+                           GeneratePartCase : Boolean from Standard = Standard_False)
     is static;
-    
+
     Spine(me) returns Shape from TopoDS
 	---C++ : return const &
     is static;
@@ -74,7 +76,7 @@ is
 
     ErrorOnSurface (me)
     returns Real from Standard;
-    
+
     FirstShape(me) returns Shape from TopoDS
 	---C++ : return const &
     is static;
@@ -83,27 +85,30 @@ is
 	---C++ : return const &
     is static;
 
+    Generated(me: in out; S: Shape from TopoDS; L: in out ListOfShape from TopTools);
+    ---Purpose: Returns the list of shapes generated from the shape <S>.
+
     Face(me : in out; ESpine, EProfile : Edge from TopoDS)
     returns Face from TopoDS
 	---Purpose: Returns the face created from an edge of the spine
 	--          and an edge of the profile.
     raises
-    	DomainError from Standard 
+    	DomainError from Standard
 	---Purpose: if the edges are not in the spine or the profile
-	
+
     is static;
-    
+
     Edge(me : in out; ESpine : Edge from TopoDS; VProfile : Vertex from TopoDS)
     returns Edge from TopoDS
 	---Purpose: Returns the edge created from an edge of the spine
 	--          and a vertex of the profile.
     raises
-    	DomainError from Standard 
+    	DomainError from Standard
 	---Purpose: if the edge or the vertex are not in  the spine or
 	--          the profile.
-	
+
     is static;
-    
+
     Section(me; VSpine : Vertex from TopoDS)
     returns Shape from TopoDS
 	---Purpose: Returns  the shape created from the profile at the
@@ -111,50 +116,50 @@ is
     raises
     	DomainError from Standard
 	---Purpose: if the vertex is not in the Spine
-    is static; 
-     
-     
-    PipeLine(me : in out;  Point :  Pnt  from  gp)  
+    is static;
+
+
+    PipeLine(me : in out;  Point :  Pnt  from  gp)
 	---Purpose: Create a Wire by sweeping the Point along the <spine>
-    returns  Wire  from  TopoDS 
+    returns  Wire  from  TopoDS
     raises
     	DomainError from Standard
-	---Purpose: if the <Spine> is undefined      
+	---Purpose: if the <Spine> is undefined
     is  static;
 
 
     --
     --  Private methods
-    --  
-    
-    MakeShape(me : in out; S : Shape from TopoDS; 
+    --
+
+    MakeShape(me : in out; S : Shape from TopoDS;
     	    	    	   FirstShape,  LastShape  :  Shape  from  TopoDS)
     returns Shape from TopoDS
 	---Purpose: Auxiliary  recursive  method  used  to  build  the
-	--          result. 
+	--          result.
     is static private;
 
 
-    FindEdge(me;  S : Shape from TopoDS;  
-    	          E : Edge  from  TopoDS;  
-		  Init  : in  out Integer)	 
+    FindEdge(me;  S : Shape from TopoDS;
+    	          E : Edge  from  TopoDS;
+		  Init  : in  out Integer)
 	---Purpose: Auxiliary recursive method used to find the edge's index
     returns  Integer
     is static private;
 
-    FindVertex(me;  S : Shape from TopoDS;  
-    	            V : Vertex  from  TopoDS;  
-		    Init  : in  out Integer) 
+    FindVertex(me;  S : Shape from TopoDS;
+    	            V : Vertex  from  TopoDS;
+		    Init  : in  out Integer)
     returns  Integer
-    is static private; 
-  
+    is static private;
+
     DefineRealSegmax(me : in out)
-    is static private; 
-    
+    is static private;
+
     RebuildTopOrBottomFace(me; aFace: Shape from TopoDS;
     	    	    	       IsTop: Boolean from Standard)
-    is static private; 
-    
+    is static private;
+
     ShareFaces(me: in out; theShape: Shape from TopoDS;
                            theInitialFacesLen: Integer;
                            theInitialEdgesLen: Integer;
@@ -164,30 +169,31 @@ is
 	--          Returns the shared shape. If theShape is not modified this
 	--          method returns it.
     returns Shape from TopoDS
-    is static private; 
-     
+    is static private;
+
 fields
     mySpine   : Wire  from TopoDS;
     myProfile : Shape from TopoDS;
-    myShape   : Shape from TopoDS; 
-    myTrsf    : Trsf  from  gp; 
+    myShape   : Shape from TopoDS;
+    myTrsf    : Trsf  from  gp;
     myLoc     : LocationLaw  from BRepFill;
-    mySections: HArray2OfShape from TopTools; 
-    myFaces   : HArray2OfShape from TopTools;  
-    myEdges   : HArray2OfShape from TopTools;  
-    myReversedEdges : MapOfShape from TopTools;  
+    mySections: HArray2OfShape from TopTools;
+    myFaces   : HArray2OfShape from TopTools;
+    myEdges   : HArray2OfShape from TopTools;
+    myReversedEdges : MapOfShape from TopTools;
     myTapes   : DataMapOfShapeHArray2OfShape from BRepFill;
     myRails   : DataMapOfShapeHArray2OfShape from BRepFill;
     myCurIndexOfSectionEdge : Integer from Standard;
-    myFirst   :  Shape  from  TopoDS; 
-    myLast    :  Shape  from  TopoDS; 
-     
+    myFirst   :  Shape  from  TopoDS;
+    myLast    :  Shape  from  TopoDS;
+		myGenMap  : DataMapOfShapeListOfShape from TopTools;
+
     myDegmax  : Integer from Standard;
     mySegmax  : Integer from Standard;
     myContinuity : Shape from GeomAbs;
     myMode    : Trihedron from GeomFill;
     myForceApproxC1 : Boolean from Standard;
-    
+
     myErrorOnSurf : Real from Standard;
-    
+
 end Pipe;
