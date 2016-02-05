@@ -14,87 +14,77 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#include <Standard_Stream.hxx>
 
-#include <stdio.h>
-
-#include <MeshTest.ixx>
-
+#include <AppCont_ContMatrices.hxx>
+#include <Bnd_Box.hxx>
+#include <BRep_Builder.hxx>
+#include <BRep_Tool.hxx>
+#include <BRepAdaptor_Surface.hxx>
+#include <BRepBndLib.hxx>
+#include <BRepBuilderAPI_MakeFace.hxx>
+#include <BRepBuilderAPI_MakePolygon.hxx>
+#include <BRepBuilderAPI_MakeVertex.hxx>
+#include <BRepLib.hxx>
+#include <BRepMesh_DataStructureOfDelaun.hxx>
+#include <BRepMesh_Delaun.hxx>
+#include <BRepMesh_Edge.hxx>
+#include <BRepMesh_FastDiscret.hxx>
+#include <BRepMesh_IncrementalMesh.hxx>
+#include <BRepMesh_Triangle.hxx>
+#include <BRepMesh_Vertex.hxx>
+#include <BRepTest.hxx>
+#include <BRepTools.hxx>
+#include <CSLib.hxx>
+#include <CSLib_DerivativeStatus.hxx>
+#include <DBRep.hxx>
+#include <Draw.hxx>
+#include <Draw_Appli.hxx>
+#include <Draw_Interpretor.hxx>
+#include <Draw_Marker3D.hxx>
+#include <Draw_MarkerShape.hxx>
+#include <Draw_Segment2D.hxx>
+#include <DrawTrSurf.hxx>
+#include <Extrema_LocateExtPC.hxx>
+#include <GCPnts_UniformAbscissa.hxx>
+#include <Geom_Curve.hxx>
+#include <Geom_Plane.hxx>
+#include <Geom_Surface.hxx>
+#include <GeomAdaptor_Curve.hxx>
+#include <GeometryTest.hxx>
+#include <gp_Pln.hxx>
+#include <gp_Trsf.hxx>
+#include <math.hxx>
+#include <math_Matrix.hxx>
+#include <math_Vector.hxx>
+#include <MeshTest.hxx>
 #include <MeshTest_DrawableMesh.hxx>
+#include <PLib.hxx>
+#include <Poly_Connect.hxx>
+#include <Poly_PolygonOnTriangulation.hxx>
+#include <Poly_Triangulation.hxx>
+#include <Precision.hxx>
+#include <Standard_Stream.hxx>
+#include <TColgp_Array1OfPnt2d.hxx>
+#include <TCollection_AsciiString.hxx>
+#include <TColStd_HArray1OfInteger.hxx>
+#include <TColStd_ListIteratorOfListOfInteger.hxx>
+#include <TColStd_MapIteratorOfMapOfInteger.hxx>
 #include <TopAbs_ShapeEnum.hxx>
+#include <TopExp_Explorer.hxx>
+#include <TopLoc_Location.hxx>
 #include <TopoDS.hxx>
+#include <TopoDS_Compound.hxx>
 #include <TopoDS_Edge.hxx>
 #include <TopoDS_Face.hxx>
 #include <TopoDS_Shape.hxx>
-#include <TopoDS_Compound.hxx>
-#include <TopExp_Explorer.hxx>
-#include <TopTools_ListIteratorOfListOfShape.hxx>
-#include <DBRep.hxx>
-#include <BRepTest.hxx>
-#include <GeometryTest.hxx>
-#include <BRep_Tool.hxx>
-#include <BRep_Builder.hxx>
-#include <Draw_MarkerShape.hxx>
-#include <Draw_Appli.hxx>
-#include <Draw.hxx>
-#include <DrawTrSurf.hxx>
-#include <BRepMesh_Triangle.hxx>
-#include <BRepMesh_DataStructureOfDelaun.hxx>
-#include <BRepMesh_Delaun.hxx>
-#include <BRepMesh_FastDiscret.hxx>
-#include <BRepMesh_Vertex.hxx>
-#include <BRepMesh_Edge.hxx>
-#include <BRepMesh_IncrementalMesh.hxx>
-#include <TColStd_ListIteratorOfListOfInteger.hxx>
-#include <TColStd_MapIteratorOfMapOfInteger.hxx>
-#include <Bnd_Box.hxx>
-#include <Precision.hxx>
-#include <Draw_Interpretor.hxx>
-#include <Geom_Plane.hxx>
-#include <Geom_Surface.hxx>
-#include <Draw_Marker3D.hxx>
-#include <Draw_Segment2D.hxx>
-#include <TCollection_AsciiString.hxx>
-
-#include <GCPnts_UniformAbscissa.hxx>
-#include <GeomAdaptor_Curve.hxx>
-#include <Geom_Curve.hxx>
-#include <Extrema_LocateExtPC.hxx>
-
-#include <TopLoc_Location.hxx>
-#include <gp_Trsf.hxx>
-#include <Poly_Triangulation.hxx>
-#include <Poly_Connect.hxx>
-#include <TColgp_Array1OfPnt2d.hxx>
-#include <TColStd_HArray1OfInteger.hxx>
-#include <TopExp_Explorer.hxx>
-#include <gp_Pln.hxx>
-
-#include <PLib.hxx>
-#include <AppCont_ContMatrices.hxx>
-#include <math_Vector.hxx>
-#include <math_Matrix.hxx>
-#include <math.hxx>
-
-#include <CSLib_DerivativeStatus.hxx>
-#include <CSLib.hxx>
-#include <BRepAdaptor_Surface.hxx>
-#include <Bnd_Box.hxx>
-#include <BRepBndLib.hxx>
-#include <BRepLib.hxx>
-
-
-//epa Memory leaks test
-#include <BRepBuilderAPI_MakePolygon.hxx>
 #include <TopoDS_Wire.hxx>
-#include <BRepBuilderAPI_MakeFace.hxx>
-#include <BRepTools.hxx>
-
-//OAN: for triepoints
-#include <BRepBuilderAPI_MakeVertex.hxx>
-#include <Poly_PolygonOnTriangulation.hxx>
+#include <TopTools_ListIteratorOfListOfShape.hxx>
 #include <TopTools_MapIteratorOfMapOfShape.hxx>
+#include <BRepMesh_RestoreOrientationTool.hxx>
 
+#include <stdio.h>
+//epa Memory leaks test
+//OAN: for triepoints
 #ifdef WNT
 Standard_IMPORT Draw_Viewer dout;
 #endif
@@ -1616,6 +1606,45 @@ Standard_Integer correctnormals (Draw_Interpretor& theDI,
 }
 
 //=======================================================================
+//function : RestoreOrientation
+//purpose  : Makes normals of a shape consistently oriented
+//=======================================================================
+Standard_Integer RestoreOrientation (Draw_Interpretor& /*theDI*/,
+                                     Standard_Integer theNArg,
+                                     const char** theArgVal)
+{
+  bool aVisibilityOnly = false;
+
+  if (theNArg < 2)
+  {
+    std::cout << "restoreorient shape [-visibility]\n";
+    std::cout << "Please specify the shape\n";
+  }
+
+  if (theNArg > 2)
+  {
+    if (!strcmp (theArgVal[2], "-visibility"))
+    {
+      aVisibilityOnly = true;
+    }
+  }
+
+  TopoDS_Shape aShape = DBRep::Get (theArgVal[1]);
+
+  Handle(BRepMesh_RestoreOrientationTool) aTool = new BRepMesh_RestoreOrientationTool (aShape, aVisibilityOnly);
+  aTool->Perform();
+
+  if (aTool->IsDone())
+  {
+    std::string aShapeName = std::string (theArgVal[1]) + "_restored";
+    DBRep::Set (aShapeName.c_str(), aTool->Shape());
+    std::cout << "Resulting shape:  " << aShapeName << std::endl;
+  }
+
+  return 0;
+}
+
+//=======================================================================
 void  MeshTest::Commands(Draw_Interpretor& theCommands)
 //=======================================================================
 {
@@ -1650,6 +1679,8 @@ void  MeshTest::Commands(Draw_Interpretor& theCommands)
   theCommands.Add("triepoints", "triepoints shape1 [shape2 ...]",__FILE__, triedgepoints, g);
 
   theCommands.Add("correctnormals", "correctnormals shape",__FILE__, correctnormals, g);
+
+  theCommands.Add("restoreorient", "restoreorient shape [-visibility]",__FILE__, RestoreOrientation, g);
 
 #if 0
   theCommands.Add("extrema","extrema ",__FILE__, extrema, g);
