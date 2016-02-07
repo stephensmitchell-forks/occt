@@ -448,11 +448,22 @@ static Standard_Integer lintang (Draw_Interpretor& di,Standard_Integer n, const 
 static Standard_Integer interpol (Draw_Interpretor& di,Standard_Integer n, const char** a)
 //==================================================================================
 {
-  if (n == 1) {
-    di <<"give a name to your curve !\n";
+  if (n == 1)
+  {
+    di <<"Interpolate: \n"
+       << "interpol resCurveName \n"
+       << "interpolation via getting points from the axonometric view \n"
+       << "\n"
+       << "interpol resCurveName fileWithPoints.txt \n" 
+       << "interpolate curve using data from file \n"
+       << "\n"
+       << "interpol [3d/2d] [Natural/Clamped] [x y [z]] \n"
+       << "interpolate dataset from input \n";
     return 0;
   }
-  if (n == 2) {
+  if (n == 2) 
+  {
+    // Read points from axonometric viewer.
     Standard_Integer id,XX,YY,b, i, j;
     di << "Pick points \n";
     dout.Select(id, XX, YY, b);
@@ -463,7 +474,7 @@ static Standard_Integer interpol (Draw_Interpretor& di,Standard_Integer n, const
     gp_Pnt2d P2d;
     Standard_Boolean newcurve;
 
-    if (dout.Is3D(id)) {
+    if (dout.Is3D(id)){
       Handle(Draw_Marker3D) mark;
       Handle(TColgp_HArray1OfPnt) Points = new TColgp_HArray1OfPnt(1, 1);
       P.SetCoord((Standard_Real)XX/zoom,(Standard_Real)YY/zoom, 0.0);
@@ -584,51 +595,171 @@ static Standard_Integer interpol (Draw_Interpretor& di,Standard_Integer n, const
 
     }
   }
-  else if (n == 3) {
-    // lecture du fichier.
-    // nbpoints, 2d ou 3d, puis valeurs.
+  else if (n == 3)
+  {
+    // Read data set from file
     const char* nomfic = a[2];
     ifstream iFile(nomfic, ios::in);
-    if (!iFile) return 1;
-    Standard_Integer nbp, i;
+    if (!iFile)
+      return 1;
+    Standard_Integer nbp;
     Standard_Real x, y, z;
     iFile >> nbp;
     char dimen[3];
-    iFile >> dimen;
-    if (!strcmp(dimen,"3d")) {
-      Handle(TColgp_HArray1OfPnt) Point =
-        new TColgp_HArray1OfPnt(1, nbp);
-      for (i = 1; i <= nbp; i++) {
+    std::string aBC; // boundary condition type.
+    iFile >> dimen >> aBC;
+
+    GeomInterpolate_BCType aBCType = GeomInterpolate_CLAMPED;
+    if (!aBC.compare("Natural"))
+      aBCType = GeomInterpolate_NATURAL;
+    else if (!aBC.compare("Clamped"))
+      aBCType = GeomInterpolate_CLAMPED;
+    else
+    {
+      di << "Incorrect boundary type, \n"
+         << "supported boundary conditions are: \"Natural\" or \"Clamped\" \n";
+      return 1;
+    }
+
+    if (!strcmp(dimen,"3d"))
+    {
+      // 3D case.
+      Handle(TColgp_HArray1OfPnt) Point = new TColgp_HArray1OfPnt(1, nbp);
+      for (Standard_Integer i = 1; i <= nbp; i++)
+      {
         iFile >> x >> y >> z;
         Point->SetValue(i, gp_Pnt(x, y, z));
       }
-      GeomAPI_Interpolate  anInterpolator(Point,
-        Standard_False,
-        1.0e-5) ;
-      anInterpolator.Perform() ;
-      if (anInterpolator.IsDone()) { 
-        Handle(Geom_BSplineCurve) C = 
-          anInterpolator.Curve();
+
+      GeomAPI_Interpolate  anInterpolator(Point, Standard_False, 1.0e-5, aBCType);
+      anInterpolator.Perform();
+
+      if (anInterpolator.IsDone())
+      {
+        Handle(Geom_BSplineCurve) C = anInterpolator.Curve();
         DrawTrSurf::Set(a[1], C);
       }
     }
-    else if (!strcmp(dimen,"2d")) {
-      Handle(TColgp_HArray1OfPnt2d)  PointPtr = 
-        new TColgp_HArray1OfPnt2d(1, nbp);
-      for (i = 1; i <= nbp; i++) {
+    else if (!strcmp(dimen,"2d"))
+    {
+      // 2D case.
+      Handle(TColgp_HArray1OfPnt2d)  PointPtr = new TColgp_HArray1OfPnt2d(1, nbp);
+      for (Standard_Integer i = 1; i <= nbp; i++)
+      {
         iFile >> x >> y;
         PointPtr->SetValue(i, gp_Pnt2d(x, y));
       }
-      Geom2dAPI_Interpolate   a2dInterpolator(PointPtr,
-        Standard_False,
-        1.0e-5);
-      a2dInterpolator.Perform() ;
-      if (a2dInterpolator.IsDone()) {
-        Handle(Geom2d_BSplineCurve) C = a2dInterpolator.Curve() ;
+
+      Geom2dAPI_Interpolate a2dInterpolator(PointPtr, Standard_False, 1.0e-5, aBCType);
+      a2dInterpolator.Perform();
+
+      if (a2dInterpolator.IsDone())
+      {
+        Handle(Geom2d_BSplineCurve) C = a2dInterpolator.Curve();
         DrawTrSurf::Set(a[1], C);
       }
     }
+    else
+    {
+      di << "Incorrect dimension type, \n"
+         << "supported dimensions are: \"3d\" or \"2d\" \n";
+      return 1;
+    }
   }
+  else if (n > 4)
+  {
+    // Read points from draw command.
+
+    // a[0] - method name.
+    // a[1] - result curve.
+    // a[2] - 3d/2d.
+    // a[3] - Natural / Clamped.
+    // a[4...] - points.
+
+    std::string aDim(a[2]);
+    Standard_Integer aDimInt = 0;
+    if (!aDim.compare("3d"))
+      aDimInt = 3;
+    else if (!aDim.compare("2d"))
+      aDimInt = 2;
+    else
+    {
+      di << "Incorrect dimension type, \n"
+         << "supported dimensions are: \"3d\" or \"2d\" \n";
+      return 1;
+    }
+
+    std::string aBC(a[3]);
+    GeomInterpolate_BCType aBCType = GeomInterpolate_CLAMPED;
+    if (!aBC.compare("Natural"))
+      aBCType = GeomInterpolate_NATURAL;
+    else if (!aBC.compare("Clamped"))
+      aBCType = GeomInterpolate_CLAMPED;
+    else
+    {
+      di << "Incorrect boundary type, \n"
+         << "supported boundary conditions are: \"Natural\" or \"Clamped\" \n";
+      return 1;
+    }
+
+    // Check for dimension / consistence.
+    Standard_Integer aMod = (n - 4) % aDimInt;
+    if (aMod)
+    {
+      di << "Incorrect number of input points \n"
+         << "Number of points should correspond to the dimension \n";
+      return 1;
+    }
+
+    // Perform interpolation.
+    Standard_Integer aPntNb = (n - 4) / aDimInt,
+                     anIdx  = 4;
+    Standard_Real aCoords[3];
+    if (aDimInt == 2)
+    {
+      // Read points.
+      Handle(TColgp_HArray1OfPnt2d)  PointPtr = new TColgp_HArray1OfPnt2d(1, aPntNb);
+      for (Standard_Integer aPntIdx = 1; aPntIdx <= aPntNb; ++aPntIdx)
+      {
+        for (Standard_Integer aDimIdx = 1; aDimIdx <= aDimInt; ++aDimIdx)
+          aCoords[aDimIdx - 1] = Atof(a[anIdx++]);
+
+        PointPtr->SetValue(aPntIdx, gp_Pnt2d(aCoords[0], aCoords[1]));
+      }
+
+      // Compute result.
+      Geom2dAPI_Interpolate  anInterpolator(PointPtr, Standard_False, 1.0e-5, aBCType);
+      anInterpolator.Perform();
+
+      if (anInterpolator.IsDone())
+      {
+        Handle(Geom2d_BSplineCurve) aC2D = anInterpolator.Curve();
+        DrawTrSurf::Set(a[1], aC2D);
+      }
+    } // if (aDimInt == 2)
+    else // 3d case
+    {
+      // Read points.
+      Handle(TColgp_HArray1OfPnt)  PointPtr = new TColgp_HArray1OfPnt(1, aPntNb);
+      for (Standard_Integer aPntIdx = 1; aPntIdx <= aPntNb; ++aPntIdx)
+      {
+        for (Standard_Integer aDimIdx = 1; aDimIdx <= aDimInt; ++aDimIdx)
+          aCoords[aDimIdx - 1] = Atof(a[anIdx++]);
+
+        PointPtr->SetValue(aPntIdx, gp_Pnt(aCoords[0], aCoords[1], aCoords[2]));
+      }
+
+      // Compute result.
+      GeomAPI_Interpolate  anInterpolator(PointPtr, Standard_False, 1.0e-5, aBCType);
+      anInterpolator.Perform();
+
+      if (anInterpolator.IsDone())
+      {
+        Handle(Geom_BSplineCurve) aC3D = anInterpolator.Curve();
+        DrawTrSurf::Set(a[1], aC3D);
+      }
+    } // else // 3d case
+  } // else if (n > 4)
   return 0;
 }
 
@@ -816,7 +947,7 @@ void  GeometryTest::ConstraintCommands(Draw_Interpretor& theCommands)
 
 
   theCommands.Add("interpol",
-    "interpol cname [fic]", 
+    "run \"interpol\" without parameters for help",
     __FILE__,
     interpol, g);
   theCommands.Add("tanginterpol",

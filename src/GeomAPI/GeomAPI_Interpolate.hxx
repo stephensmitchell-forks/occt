@@ -17,6 +17,8 @@
 #ifndef _GeomAPI_Interpolate_HeaderFile
 #define _GeomAPI_Interpolate_HeaderFile
 
+#include <Geom_Interpolate.hxx>
+
 #include <Standard.hxx>
 #include <Standard_DefineAlloc.hxx>
 #include <Standard_Handle.hxx>
@@ -29,8 +31,6 @@
 #include <TColStd_HArray1OfReal.hxx>
 #include <TColgp_Array1OfVec.hxx>
 #include <Geom_BSplineCurve.hxx>
-
-class gp_Vec;
 
 
 //! This  class  is  used  to  interpolate a  BsplineCurve
@@ -94,7 +94,11 @@ public:
   //! -   conditions relating to the respective
   //! number of elements in the parallel tables
   //! Points and Parameters are not respected.
-  Standard_EXPORT GeomAPI_Interpolate(const Handle(TColgp_HArray1OfPnt)& Points, const Standard_Boolean PeriodicFlag, const Standard_Real Tolerance);
+  //! Last parameter sets the boundary condition type.
+  Standard_EXPORT GeomAPI_Interpolate(const Handle(TColgp_HArray1OfPnt)& Points,
+                                      const Standard_Boolean PeriodicFlag,
+                                      const Standard_Real Tolerance,
+                                      const GeomInterpolate_BCType theBCType = GeomInterpolate_CLAMPED);
   
   //! Initializes an algorithm for constructing a
   //! constrained BSpline curve passing through the points of the table
@@ -134,7 +138,12 @@ public:
   //! -   conditions relating to the respective
   //! number of elements in the parallel tables
   //! Points and Parameters are not respected.
-  Standard_EXPORT GeomAPI_Interpolate(const Handle(TColgp_HArray1OfPnt)& Points, const Handle(TColStd_HArray1OfReal)& Parameters, const Standard_Boolean PeriodicFlag, const Standard_Real Tolerance);
+  //! Last parameter sets the boundary condition type.
+  Standard_EXPORT GeomAPI_Interpolate(const Handle(TColgp_HArray1OfPnt)& Points, 
+                                      const Handle(TColStd_HArray1OfReal)& Parameters,
+                                      const Standard_Boolean PeriodicFlag,
+                                      const Standard_Real Tolerance,
+                                      const GeomInterpolate_BCType theBCType = GeomInterpolate_CLAMPED);
   
   //! Assigns this constrained BSpline curve to be
   //! tangential to vectors InitialTangent and FinalTangent
@@ -173,14 +182,17 @@ Standard_EXPORT operator Handle(Geom_BSplineCurve)() const;
   //! Note: in this case, the result is given by the function Curve.
   Standard_EXPORT Standard_Boolean IsDone() const;
 
+  //! Get boundary condition type.
+  GeomInterpolate_BCType GetBoundaryCondition()
+  {
+    return myBCType;
+  }
 
-
-
-protected:
-
-
-
-
+  //! Set boundary condition type.
+  void GetBoundaryCondition(const GeomInterpolate_BCType theBCType)
+  {
+    myBCType = theBCType;
+  }
 
 private:
 
@@ -201,6 +213,7 @@ private:
   Handle(TColStd_HArray1OfReal) myParameters;
   Standard_Boolean myPeriodic;
   Standard_Boolean myTangentRequest;
+  GeomInterpolate_BCType myBCType; // type of boundary conditions
 
 
 };

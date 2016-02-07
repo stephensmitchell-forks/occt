@@ -1,0 +1,26 @@
+puts "========"
+puts "OCC27112"
+puts "========"
+puts ""
+##############################################
+# GeomAPI_Interpolate produces wrong result
+##############################################
+
+interpol result 3d Natural \
+1.0  1.0 0.0 \
+8.0 -2.0 0.0 \
+15.0 -6.0 0.0 \
+16.0 -8.0 0.0 \
+16.5 -7.0 0.0 \
+52.0 -1.0 0.0 \
+
+# Result length check.
+mkedge anEdge result
+checkprops anEdge -l 59.3204
+
+# Visual check.
+donly result
+top
+fit
+display result
+checkview -screenshot -2d -path ${imagedir}/${test_image}.png

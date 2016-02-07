@@ -41,6 +41,8 @@ Geom_Geometry.hxx
 Geom_HSequenceOfBSplineSurface.hxx
 Geom_Hyperbola.cxx
 Geom_Hyperbola.hxx
+Geom_Interpolate.cxx
+Geom_Interpolate.hxx
 Geom_Line.cxx
 Geom_Line.hxx
 Geom_OffsetCurve.cxx
