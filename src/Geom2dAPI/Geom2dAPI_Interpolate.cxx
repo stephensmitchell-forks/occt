@@ -127,114 +127,149 @@ static void  BuildParameters(const Standard_Boolean        PeriodicFlag,
 			    ParametersPtr->Value(ii) + distance) ;
   }
 }
+
 //=======================================================================
 //function : BuildPeriodicTangents
 //purpose  : 
 //=======================================================================
-		
-static void BuildPeriodicTangent(
-		      const TColgp_Array1OfPnt2d&      PointsArray,
-		      TColgp_Array1OfVec2d&            TangentsArray,
-		      TColStd_Array1OfBoolean&       TangentFlags,
-		      const TColStd_Array1OfReal&    ParametersArray)
+static void BuildPeriodicTangent(const TColgp_Array1OfPnt2d&      PointsArray,
+                                 TColgp_Array1OfVec2d&            TangentsArray,
+                                 TColStd_Array1OfBoolean&       TangentFlags,
+                                 const TColStd_Array1OfReal&    ParametersArray,
+                                 const Interpolate_BCType   theBCType)
 {
-  Standard_Integer 
-    ii,
-    degree ;
-  Standard_Real *point_array,
-  *parameter_array,
-  eval_result[2][2] ;
-  
-  gp_Vec2d a_vector ;
-  
-  if (PointsArray.Length() < 3) {
-    Standard_ConstructionError::Raise(); 
-    }   
- 
-  if (!TangentFlags.Value(1)) {
-    degree = 3 ;
-    if (PointsArray.Length() == 3) {
-      degree = 2 ;
-    }
-    point_array = (Standard_Real *) &PointsArray.Value(PointsArray.Lower()) ; 
-    parameter_array =
-      (Standard_Real *) &ParametersArray.Value(1) ;
-    TangentFlags.SetValue(1,Standard_True) ;
-    PLib::EvalLagrange(ParametersArray.Value(1),
-		       1,
-		       degree,
-		       2,
-		       point_array[0],
-		       parameter_array[0],
-		       eval_result[0][0]) ;
-    for (ii = 1 ; ii <= 2 ; ii++) {
-      a_vector.SetCoord(ii,eval_result[1][ii-1]) ;
-    }
-    TangentsArray.SetValue(1,a_vector) ;
+  gp_Vec2d aCurTangent;
+  Standard_Integer degree = 3;
+
+  if (PointsArray.Length() < 3)
+    Standard_ConstructionError::Raise();
+  if (PointsArray.Length() == 3 &&
+      theBCType == Interpolate_CLAMPED)
+  {
+    degree = 2;
   }
+
+  if (TangentFlags.Value(1))
+    return; // yet computed.
+  else
+    TangentFlags.SetValue(1,Standard_True);
+
+  if (theBCType == Interpolate_NATURAL)
+  {
+    // Compute tangent in second point.
+    aCurTangent = PLib::
+      ComputeLagrangeTangent2d(PointsArray, ParametersArray, PointsArray.Lower() + 1);
+
+    // Compute tangent in the first point to satisfy
+    // f''(0) = 0 condition approximation:
+    // This is approximation due to usage of the tangent approximation in the second point
+    // instead of the equation below directly in solver.
+    //
+    // Formula from the Golovanov book "Geometrical modeling", 2011, pp. 18:
+    //
+    // q0 = 1.5 * (p1 - p0) / (t1 - t0) - 0.5 q1
+    //
+    // q1=p0*(t1-t2)/((t0-t1)(t0-t2)) + p1 (2t1-t0-t2)/((t1-t0)(t1-t2))+ p2(t1-t0)/((t2-t0)(t2-t1))
+    //
+    // Where:
+    // t - parameter
+    // p - point
+    // q - tangent vectors
+    gp_Vec2d aVec(PointsArray(1), PointsArray(2));
+    aCurTangent = 1.5 * aVec / (ParametersArray(2) - ParametersArray(1)) - 0.5 * aCurTangent;
+  }
+  else if (theBCType == Interpolate_CLAMPED)
+  {
+    Standard_Real *point_array, *parameter_array, eval_result[2][2];
+    point_array = (Standard_Real *) &PointsArray.Value(PointsArray.Lower());
+    parameter_array = (Standard_Real *) &ParametersArray.Value(1);
+
+    PLib::EvalLagrange(ParametersArray.Value(1), 1, degree, 2, point_array[0],
+      parameter_array[0], eval_result[0][0]);
+    for (Standard_Integer ii = 1 ; ii <= 2 ; ii++)
+      aCurTangent.SetCoord(ii,eval_result[1][ii-1]);
+  }
+
+  TangentsArray.SetValue(1,aCurTangent);
  } 
 //=======================================================================
 //function : BuildTangents
 //purpose  : 
 //=======================================================================
-		
 static void BuildTangents(const TColgp_Array1OfPnt2d&      PointsArray,
-			  TColgp_Array1OfVec2d&            TangentsArray,
-			  TColStd_Array1OfBoolean&       TangentFlags,
-		          const TColStd_Array1OfReal&    ParametersArray)
+                          TColgp_Array1OfVec2d&            TangentsArray,
+                          TColStd_Array1OfBoolean&       TangentFlags,
+                          const TColStd_Array1OfReal&    ParametersArray,
+                          const Interpolate_BCType       theBCType)
 {
- Standard_Integer ii,
- degree ;
- Standard_Real *point_array,
- *parameter_array,
- 
- eval_result[2][2] ;
- gp_Vec2d a_vector ;
- 
- degree = 3 ;
+  gp_Vec2d aCurTangent;
+  Standard_Integer ii, degree = 3;
+  if (PointsArray.Length() < 3)
+    Standard_ConstructionError::Raise();
+  if (PointsArray.Length() == 3 &&
+      theBCType == Interpolate_CLAMPED)
+  {
+    degree = 2;
+  }
 
- if ( PointsArray.Length() < 3) {
-   Standard_ConstructionError::Raise(); 
-   }   
- if (PointsArray.Length() == 3) {
-   degree = 2 ;
- }
- if (!TangentFlags.Value(1)) {
-   point_array = (Standard_Real *) &PointsArray.Value(PointsArray.Lower()) ; 
-   parameter_array =
-     (Standard_Real *) &ParametersArray.Value(1) ;
-   TangentFlags.SetValue(1,Standard_True) ;
-   PLib::EvalLagrange(ParametersArray.Value(1),
-		      1,
-		      degree,
-		      2,
-		      point_array[0],
-		      parameter_array[0],
-		      eval_result[0][0]) ;
-   for (ii = 1 ; ii <= 2 ; ii++) {
-     a_vector.SetCoord(ii,eval_result[1][ii-1]) ;
-   }
-   TangentsArray.SetValue(1,a_vector) ;
- }
- if (! TangentFlags.Value(TangentFlags.Upper())) {
-   point_array = 
-     (Standard_Real *) &PointsArray.Value(PointsArray.Upper() - degree) ;
-   TangentFlags.SetValue(TangentFlags.Upper(),Standard_True) ;
-   parameter_array =
-    (Standard_Real *)&ParametersArray.Value(ParametersArray.Upper() - degree) ;
-   PLib::EvalLagrange(ParametersArray.Value(ParametersArray.Upper()),
-		      1,
-		      degree,
-		      2,
-		      point_array[0],
-		      parameter_array[0],
-		      eval_result[0][0]) ;
-   for (ii = 1 ; ii <= 2 ; ii++) {
-     a_vector.SetCoord(ii,eval_result[1][ii-1]) ; 
-   }
-   TangentsArray.SetValue(TangentsArray.Upper(),a_vector) ;
- }
-} 
+  if (TangentFlags.Value(1) &&
+      TangentFlags.Value(TangentFlags.Upper()))
+  {
+    return;
+  }
+
+  if (theBCType == Interpolate_NATURAL)
+  {
+    // The formulas for tangent computation is stored in BuildPeriodicTangent.
+    if (!TangentFlags.Value(1))
+    {
+      // Compute tangent in second point.
+      aCurTangent = PLib::
+        ComputeLagrangeTangent2d(PointsArray, ParametersArray, PointsArray.Lower() + 1);
+
+      gp_Vec2d aVec(PointsArray(1), PointsArray(2));
+      aVec = 1.5 * aVec / (ParametersArray(2) - ParametersArray(1)) - 0.5 * aCurTangent;
+      TangentFlags.SetValue(1, Standard_True);
+      TangentsArray.SetValue(1, aVec);
+    } // if (!TangentFlags.Value(1))
+    if (!TangentFlags.Value(TangentFlags.Upper()))
+    {
+      // Compute tangent in last but one point.
+      aCurTangent = PLib::
+        ComputeLagrangeTangent2d(PointsArray, ParametersArray, PointsArray.Upper() - 1);
+
+      Standard_Integer aLastIdx = PointsArray.Upper();
+      gp_Vec2d aVec(PointsArray(aLastIdx - 1), PointsArray(aLastIdx));
+      aVec = 1.5 * aVec / (ParametersArray(aLastIdx) - ParametersArray(aLastIdx - 1)) - 0.5 * aCurTangent;
+      TangentFlags.SetValue(TangentFlags.Upper(), Standard_True);
+      TangentsArray.SetValue(TangentsArray.Upper(), aVec);
+    }
+  }
+  else if (theBCType == Interpolate_CLAMPED)
+  {
+    Standard_Real *point_array, *parameter_array, eval_result[2][2];
+    if (!TangentFlags.Value(1))
+    {
+      point_array = (Standard_Real *) &PointsArray.Value(PointsArray.Lower());
+      parameter_array = (Standard_Real *) &ParametersArray.Value(1);
+      PLib::EvalLagrange(ParametersArray.Value(1), 1, degree, 2, point_array[0], parameter_array[0], eval_result[0][0]) ;
+      for (ii = 1 ; ii <= 2 ; ii++)
+        aCurTangent.SetCoord(ii,eval_result[1][ii-1]);
+      TangentFlags.SetValue(1, Standard_True);
+      TangentsArray.SetValue(1, aCurTangent);
+    } // if (!TangentFlags.Value(1))
+    if (!TangentFlags.Value(TangentFlags.Upper()))
+    {
+      point_array = (Standard_Real *) &PointsArray.Value(PointsArray.Upper() - degree);
+      parameter_array = (Standard_Real *) &ParametersArray.Value(ParametersArray.Upper() - degree);
+      PLib::EvalLagrange(ParametersArray.Value(ParametersArray.Upper()), 1, degree, 2,point_array[0], parameter_array[0], eval_result[0][0]);
+      for (ii = 1 ; ii <= 2 ; ii++)
+        aCurTangent.SetCoord(ii,eval_result[1][ii-1]);
+      TangentFlags.SetValue(TangentFlags.Upper(), Standard_True);
+      TangentsArray.SetValue(TangentsArray.Upper(), aCurTangent);
+    }
+  }
+}
 //=======================================================================
 //function : BuildTangents
 //purpose  : scale the given tangent so that they have the length of
@@ -310,41 +345,28 @@ static void ScaleTangents(const TColgp_Array1OfPnt2d&      PointsArray,
 //purpose  : 
 //=======================================================================
 
-Geom2dAPI_Interpolate::Geom2dAPI_Interpolate
-   (const Handle(TColgp_HArray1OfPnt2d)& PointsPtr,
-    const Standard_Boolean            PeriodicFlag,
-    const Standard_Real               Tolerance) :
-myTolerance(Tolerance),
-myPoints(PointsPtr),
-myIsDone(Standard_False),
-myPeriodic(PeriodicFlag),
-myTangentRequest(Standard_False) 
-
+Geom2dAPI_Interpolate::Geom2dAPI_Interpolate(const Handle(TColgp_HArray1OfPnt2d)& PointsPtr,
+                                             const Standard_Boolean            PeriodicFlag,
+                                             const Standard_Real               Tolerance,
+                                             const Interpolate_BCType          theBCType)
+: myTolerance(Tolerance),
+  myPoints(PointsPtr),
+  myIsDone(Standard_False),
+  myPeriodic(PeriodicFlag),
+  myTangentRequest(Standard_False),
+  myBCType(theBCType)
 {
- Standard_Integer ii ;
- Standard_Boolean result = 
-   CheckPoints(PointsPtr->Array1(),
-	       Tolerance) ;
- myTangents = 
-     new TColgp_HArray1OfVec2d(myPoints->Lower(),
-			      myPoints->Upper()) ;
- myTangentFlags =
-      new TColStd_HArray1OfBoolean(myPoints->Lower(),
-				   myPoints->Upper()) ;
+  Standard_Boolean result =  CheckPoints(PointsPtr->Array1(), Tolerance);
+  myTangents = new TColgp_HArray1OfVec2d(myPoints->Lower(), myPoints->Upper());
+  myTangentFlags = new TColStd_HArray1OfBoolean(myPoints->Lower(), myPoints->Upper());
 
- if (!result) {
-   Standard_ConstructionError::Raise();
-   }
- BuildParameters(PeriodicFlag,
-		 PointsPtr->Array1(),
-		 myParameters) ;
+  if (!result)
+    Standard_ConstructionError::Raise();
 
-  for (ii = myPoints->Lower() ; ii <= myPoints->Upper() ; ii++) {
-    myTangentFlags->SetValue(ii,Standard_False) ;
-  }
+  BuildParameters(PeriodicFlag, PointsPtr->Array1(), myParameters);
 
- 
-		 
+  for (Standard_Integer ii = myPoints->Lower() ; ii <= myPoints->Upper() ; ii++)
+    myTangentFlags->SetValue(ii,Standard_False);
 }
 
 //=======================================================================
@@ -352,51 +374,40 @@ myTangentRequest(Standard_False)
 //purpose  : 
 //=======================================================================
 
-Geom2dAPI_Interpolate::Geom2dAPI_Interpolate
-   (const Handle(TColgp_HArray1OfPnt2d)&    PointsPtr,
-    const Handle(TColStd_HArray1OfReal)&  ParametersPtr,
-    const Standard_Boolean               PeriodicFlag,
-    const Standard_Real                  Tolerance) :
-myTolerance(Tolerance),
-myPoints(PointsPtr),
-myIsDone(Standard_False),
-myParameters(ParametersPtr),
-myPeriodic(PeriodicFlag),
-myTangentRequest(Standard_False) 
+Geom2dAPI_Interpolate::Geom2dAPI_Interpolate(const Handle(TColgp_HArray1OfPnt2d)  &PointsPtr,
+                                             const Handle(TColStd_HArray1OfReal)  &ParametersPtr,
+                                             const Standard_Boolean               PeriodicFlag,
+                                             const Standard_Real                  Tolerance,
+                                             const Interpolate_BCType            theBCType)
+: myTolerance(Tolerance),
+  myPoints(PointsPtr),
+  myIsDone(Standard_False),
+  myParameters(ParametersPtr),
+  myPeriodic(PeriodicFlag),
+  myTangentRequest(Standard_False),
+  myBCType(theBCType)
 {
- Standard_Integer ii ;
-    
-     
- Standard_Boolean result = 
-   CheckPoints(PointsPtr->Array1(),
-	       Tolerance) ;
+  Standard_Boolean result =  CheckPoints(PointsPtr->Array1(), Tolerance);
 
- if (PeriodicFlag) {
-   if ((PointsPtr->Length()) + 1 != ParametersPtr->Length()) {
-     Standard_ConstructionError::Raise();
-   }
- }
- myTangents = 
-     new TColgp_HArray1OfVec2d(myPoints->Lower(),
-			      myPoints->Upper()) ;
- myTangentFlags =
-      new TColStd_HArray1OfBoolean(myPoints->Lower(),
-				    myPoints->Upper()) ;
- 
- if (!result) {
-   Standard_ConstructionError::Raise();
-   }
- 		
- result =
- CheckParameters(ParametersPtr->Array1()) ;
- if (!result) {
-   Standard_ConstructionError::Raise();
-   }
-	
- for (ii = myPoints->Lower() ; ii <= myPoints->Upper() ; ii++) {
-   myTangentFlags->SetValue(ii,Standard_False) ;
- }
-	 
+  if (PeriodicFlag)
+  {
+    if ((PointsPtr->Length()) + 1 != ParametersPtr->Length())
+    {
+      Standard_ConstructionError::Raise();
+    }
+  }
+  myTangents = new TColgp_HArray1OfVec2d(myPoints->Lower(), myPoints->Upper());
+  myTangentFlags = new TColStd_HArray1OfBoolean(myPoints->Lower(), myPoints->Upper());
+
+  if (!result)
+    Standard_ConstructionError::Raise();
+
+  result = CheckParameters(ParametersPtr->Array1());
+  if (!result)
+    Standard_ConstructionError::Raise();
+
+  for (Standard_Integer ii = myPoints->Lower() ; ii <= myPoints->Upper() ; ii++)
+    myTangentFlags->SetValue(ii,Standard_False);
 }
 //=======================================================================
 //function : Load
@@ -566,14 +577,15 @@ void Geom2dAPI_Interpolate::PerformPeriodic()
     mults.SetValue(num_distinct_knots ,half_order) ;
     if (num_points >= 3) {
      
-//
-//   only enter here if there are more than 3 points otherwise
-//   it means we have already the tangent
-// 
+      //
+      //   only enter here if there are more than 3 points otherwise
+      //   it means we have already the tangent
+      // 
       BuildPeriodicTangent(myPoints->Array1(),
-			   myTangents->ChangeArray1(),
-			   myTangentFlags->ChangeArray1(),
-			   myParameters->Array1()) ;
+                           myTangents->ChangeArray1(),
+                           myTangentFlags->ChangeArray1(),
+                           myParameters->Array1(),
+                           myBCType);
     }
     contact_order_array.SetValue(2,1)  ;
     parameters.SetValue(1,myParameters->Value(1)) ;
@@ -787,9 +799,10 @@ void Geom2dAPI_Interpolate::PerformNonPeriodic()
 // if those where not given in advance 
 //
       BuildTangents(myPoints->Array1(),
-		    myTangents->ChangeArray1(),
-		    myTangentFlags->ChangeArray1(),
-		    myParameters->Array1()) ;
+                    myTangents->ChangeArray1(),
+                    myTangentFlags->ChangeArray1(),
+                    myParameters->Array1(),
+                    myBCType);
     }
     contact_order_array.SetValue(2,1)  ;
     parameters.SetValue(1,myParameters->Value(1)) ;

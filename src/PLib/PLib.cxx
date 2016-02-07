@@ -2047,3 +2047,61 @@ void PLib::JacobiParameters(const GeomAbs_Shape ConstraintOrder,
   }    
   while (Error > Tol && NbIter <= MaxNbIter);
 }  
+
+//=======================================================================
+//function : computeLagrangeTangent2d
+//purpose  : compute tangent of 3-point template in middle point
+//           using Lagrange polynomial.
+//=======================================================================
+gp_Vec2d PLib::ComputeLagrangeTangent2d(const TColgp_Array1OfPnt2d&      thePointsArray,
+                                        const TColStd_Array1OfReal&    theParametersArray,
+                                        const Standard_Integer theIdx)
+{
+    gp_Vec2d aCurTangent(0.0, 0.0);
+
+    if (theIdx == thePointsArray.Lower() ||
+        theIdx == thePointsArray.Upper())
+        return aCurTangent;
+
+    // Compute tangent in the second point.
+    Standard_Real t0 = theParametersArray(theIdx - 1);
+    Standard_Real t1 = theParametersArray(theIdx);
+    Standard_Real t2 = theParametersArray(theIdx + 1);
+    gp_Pnt2d p0 = thePointsArray(theIdx - 1);
+    gp_Pnt2d p1 = thePointsArray(theIdx);
+    gp_Pnt2d p2 = thePointsArray(theIdx + 1);
+    aCurTangent.SetXY(p0.XY() * (t1-t2)/((t0-t1)*(t0-t2))
+                    + p1.XY() * (2*t1-t0-t2)/((t1-t0)*(t1-t2))
+                    + p2.XY() * (t1-t0)/((t2-t0)*(t2-t1)));
+
+    return aCurTangent;
+}
+
+//=======================================================================
+//function : computeLagrangeTangent
+//purpose  : compute tangent of 3-point template in middle point
+//           using Lagrange polynomial.
+//=======================================================================
+gp_Vec PLib::ComputeLagrangeTangent(const TColgp_Array1OfPnt&      thePointsArray,
+                                    const TColStd_Array1OfReal&    theParametersArray,
+                                    const Standard_Integer theIdx)
+{
+    gp_Vec aCurTangent(0.0, 0.0, 0.0);
+
+    if (theIdx == thePointsArray.Lower() ||
+        theIdx == thePointsArray.Upper())
+        return aCurTangent;
+
+    // Compute tangent in the second point.
+    Standard_Real t0 = theParametersArray(theIdx - 1);
+    Standard_Real t1 = theParametersArray(theIdx);
+    Standard_Real t2 = theParametersArray(theIdx + 1);
+    gp_Pnt p0 = thePointsArray(theIdx - 1);
+    gp_Pnt p1 = thePointsArray(theIdx);
+    gp_Pnt p2 = thePointsArray(theIdx + 1);
+    aCurTangent.SetXYZ(p0.XYZ() * (t1-t2)/((t0-t1)*(t0-t2))
+                     + p1.XYZ() * (2*t1-t0-t2)/((t1-t0)*(t1-t2))
+                     + p2.XYZ() * (t1-t0)/((t2-t0)*(t2-t1)));
+
+    return aCurTangent;
+}

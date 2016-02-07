@@ -1,0 +1,32 @@
+puts "========"
+puts "OCC27112"
+puts "========"
+puts ""
+##############################################
+# GeomAPI_Interpolate produces wrong result
+# 2d case. Based on the well-known
+# "titanium heat" data set
+##############################################
+
+interpol result 2d Natural \
+0.0 1.0 \
+1.0 1.1 \
+2.0 1.1 \
+3.0 1.2 \
+4.0 1.3 \
+5.0 7.2 \
+6.0 3.1 \
+7.0 2.6 \
+8.0 1.9 \
+9.0 1.7 \
+10.0 1.6
+
+# Check length
+checklength result -l 19.112043076503149
+
+# Visual check.
+donly result
+v2d
+2dfit
+display result
+checkview -screenshot -2d -path ${imagedir}/${test_image}.png

@@ -26,10 +26,12 @@
 #include <Standard_Integer.hxx>
 #include <TColgp_Array1OfPnt.hxx>
 #include <TColStd_Array1OfReal.hxx>
+#include <gp_Vec2d.hxx>
+#include <gp_Vec.hxx>
+#include <TColgp_Array1OfPnt2d.hxx>
 class Geom_BSplineCurve;
 class StdFail_NotDone;
 class Standard_OutOfRange;
-
 
 //! this class is used to construct a BSpline curve by
 //! interpolation  of points  at given parameters  The
@@ -50,14 +52,13 @@ public:
   
 
   //! returns if everything went OK
-    Standard_Boolean IsDone() const;
-  
+  Standard_Boolean IsDone() const;
+
   //! returns the error type if any
-    GeomLib_InterpolationErrors Error() const;
-  
+  GeomLib_InterpolationErrors Error() const;
+
   //! returns the interpolated curve of the requested degree
   Standard_EXPORT Handle(Geom_BSplineCurve) Curve() const;
-
 
 
 

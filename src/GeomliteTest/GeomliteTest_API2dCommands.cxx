@@ -408,8 +408,6 @@ void GeomliteTest::API2dCommands(Draw_Interpretor& theCommands)
 
   theCommands.Add("2dapprox", "2dapprox result nbpoint [curve] [[x] y [x] y...]",__FILE__, 
 		  appro,g);
-  theCommands.Add("2dinterpole", "2dinterpole result nbpoint [curve] [[x] y [x] y ...]",__FILE__, 
-		  appro,g);
 
   g = "GEOMETRY curves and surfaces analysis";
 

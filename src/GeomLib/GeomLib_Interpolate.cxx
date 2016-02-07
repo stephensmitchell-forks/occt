@@ -145,4 +145,3 @@ Handle(Geom_BSplineCurve) GeomLib_Interpolate::Curve() const
 {
   return myCurve ;
 }
-  

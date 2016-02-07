@@ -36,6 +36,12 @@ class PLib_JacobiPolynomial;
 class PLib_HermitJacobi;
 class PLib_DoubleJacobiPolynomial;
 
+//! This enumeration represent boundary condition type for interpolation algorithm.
+enum Interpolate_BCType
+{
+  Interpolate_CLAMPED,
+  Interpolate_NATURAL
+};
 
 //! PLib means Polynomial  functions library.  This pk
 //! provides  basic       computation    functions for
@@ -337,7 +343,13 @@ public:
   
   Standard_EXPORT static void EvalLength (const Standard_Integer Degree, const Standard_Integer Dimension, Standard_Real& PolynomialCoeff, const Standard_Real U1, const Standard_Real U2, const Standard_Real Tol, Standard_Real& Length, Standard_Real& Error);
 
+  Standard_EXPORT static gp_Vec2d ComputeLagrangeTangent2d(const TColgp_Array1OfPnt2d &thePointsArray,
+                                                           const TColStd_Array1OfReal &theParametersArray,
+                                                           const Standard_Integer      theIdx);
 
+  Standard_EXPORT static gp_Vec ComputeLagrangeTangent(const TColgp_Array1OfPnt   &thePointsArray,
+                                                       const TColStd_Array1OfReal &theParametersArray,
+                                                       const Standard_Integer     theIdx);
 
 
 protected:

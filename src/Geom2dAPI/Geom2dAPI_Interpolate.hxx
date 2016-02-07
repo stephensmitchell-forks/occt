@@ -17,6 +17,8 @@
 #ifndef _Geom2dAPI_Interpolate_HeaderFile
 #define _Geom2dAPI_Interpolate_HeaderFile
 
+#include <PLib.hxx>
+
 #include <Standard.hxx>
 #include <Standard_DefineAlloc.hxx>
 #include <Standard_Handle.hxx>
@@ -31,8 +33,6 @@
 class Geom2d_BSplineCurve;
 class StdFail_NotDone;
 class Standard_ConstructionError;
-class gp_Vec2d;
-
 
 //! This  class  is  used  to  interpolate a  BsplineCurve
 //! passing   through  an  array  of  points,  with  a  C2
@@ -54,16 +54,25 @@ public:
   
   //! Tolerance is to check if the points are not too close to one an other
   //! It is also used to check if the tangent vector is not too small.
-  //! There should be at least 2 points
+  //! There should be at least 2 points.
   //! if PeriodicFlag is True then the curve will be periodic.
-  Standard_EXPORT Geom2dAPI_Interpolate(const Handle(TColgp_HArray1OfPnt2d)& Points, const Standard_Boolean PeriodicFlag, const Standard_Real Tolerance);
+  //! Last parameter sets the boundary condition type.
+  Standard_EXPORT Geom2dAPI_Interpolate(const Handle(TColgp_HArray1OfPnt2d)& Points,
+                                        const Standard_Boolean PeriodicFlag,
+                                        const Standard_Real Tolerance,
+                                        const Interpolate_BCType theBCType = Interpolate_CLAMPED);
   
   //! if PeriodicFlag is True then the curve will be periodic
   //! Warning:
-  //! There should be as many parameters as there are points
-  //! except if PeriodicFlag is True : then there should be one more
-  //! parameter to close the curve
-  Standard_EXPORT Geom2dAPI_Interpolate(const Handle(TColgp_HArray1OfPnt2d)& Points, const Handle(TColStd_HArray1OfReal)& Parameters, const Standard_Boolean PeriodicFlag, const Standard_Real Tolerance);
+  //! There should be as many parameters as there are points.
+  //! except if PeriodicFlag is True : then there should be one more.
+  //! parameter to close the curve.
+  //! Last parameter sets the boundary condition type.
+  Standard_EXPORT Geom2dAPI_Interpolate(const Handle(TColgp_HArray1OfPnt2d)& Points,
+                                        const Handle(TColStd_HArray1OfReal)& Parameters,
+                                        const Standard_Boolean PeriodicFlag,
+                                        const Standard_Real Tolerance,
+                                        const Interpolate_BCType theBCType = Interpolate_CLAMPED);
   
   //! Assigns this constrained BSpline curve to be
   //! tangential to vectors InitialTangent and FinalTangent
@@ -100,14 +109,17 @@ Standard_EXPORT operator Handle(Geom2d_BSplineCurve)() const;
   //! Note: in this case, the result is given by the function Curve.
   Standard_EXPORT Standard_Boolean IsDone() const;
 
+  //! Get boundary condition type.
+  Interpolate_BCType GetBoundaryCondition()
+  {
+    return myBCType;
+  }
 
-
-
-protected:
-
-
-
-
+  //! Set boundary condition type.
+  void SetBoundaryCondition(const Interpolate_BCType theBCType)
+  {
+    myBCType = theBCType;
+  }
 
 private:
 
@@ -128,6 +140,7 @@ private:
   Handle(TColStd_HArray1OfReal) myParameters;
   Standard_Boolean myPeriodic;
   Standard_Boolean myTangentRequest;
+  Interpolate_BCType myBCType;
 
 
 };
