@@ -611,7 +611,7 @@ void ProjLib_CompProjectedCurve::Init()
 
   gp_Pnt Triple, prevTriple;
 
-  //Basic loop  
+  //Basic loop
   while(t <= LastU) 
   {
     //Search for the begining a new continuous part
@@ -660,7 +660,8 @@ void ProjLib_CompProjectedCurve::Init()
 #ifdef OCCT_DEBUG_CHRONO
         InitChron(chr_init_point);
 #endif
-        initpoint=InitialPoint(CPoint, t,myCurve,mySurface, myTolU, myTolV, U, V);
+        // PConfusion - use geometric tolerances in extrema / optimization.
+        initpoint=InitialPoint(CPoint, t,myCurve,mySurface, Precision::PConfusion(), Precision::PConfusion(), U, V);
 #ifdef OCCT_DEBUG_CHRONO
         ResultChron(chr_init_point,t_init_point);
         init_point_count++;
@@ -855,10 +856,10 @@ void ProjLib_CompProjectedCurve::Init()
            (Abs (Triple.Z() - mySurface->FirstVParameter()) < Precision::Confusion() ||
             Abs (Triple.Z() - mySurface->LastVParameter() ) < Precision::Confusion() ))
         {
-          // Go out from possible attraktor.
-
+          // Go out from possible attractor.
           Standard_Real U,V;
-          InitialPoint(myCurve->Value(t), t, myCurve, mySurface, myTolU, myTolV, U, V);
+          // PConfusion - use geometric tolerances in extrema / optimization.
+          InitialPoint(myCurve->Value(t), t, myCurve, mySurface, Precision::PConfusion(), Precision::PConfusion(), U, V);
           if (Abs (Abs(U - Triple.Y()) - mySurface->UPeriod()) < Precision::Confusion())
           {
             // Handle period jump.
