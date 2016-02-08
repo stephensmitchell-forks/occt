@@ -1,0 +1,16 @@
+puts "========"
+puts "OCC23513"
+puts "========"
+puts ""
+#################################
+# BRepMesh doesn't stop until out-of-memory
+#################################
+
+restore [locate_data_file infface.brep] result
+
+#1
+vinit
+vsetdispmode 1
+vdisplay result
+vfit
+vdump ${imagedir}/${casename}.png
