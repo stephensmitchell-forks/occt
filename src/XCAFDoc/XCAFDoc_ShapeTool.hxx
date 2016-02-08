@@ -411,6 +411,9 @@ public:
   //! from upper_usage componet to next_usage
   //! Returns null attribute if no SHUO found
   Standard_EXPORT static Standard_Boolean FindSHUO (const TDF_LabelSequence& Labels, Handle(XCAFDoc_GraphNode)& theSHUOAttr);
+
+  Standard_EXPORT TDF_Label SetLocation(  const TDF_Label &theLabel,
+				    const TopLoc_Location &theLoc);
   
   //! Convert Shape (compound) to assembly
   Standard_EXPORT Standard_Boolean Expand (const TDF_Label& Shape) ;

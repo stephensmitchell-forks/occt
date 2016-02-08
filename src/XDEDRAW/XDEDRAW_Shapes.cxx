@@ -816,6 +816,34 @@ static Standard_Integer setStyledComponent (Draw_Interpretor& di, Standard_Integ
   
   return 0;
 }
+static Standard_Integer setLocation (Draw_Interpretor& di, Standard_Integer argc, const char** argv)
+{
+  if (argc < 3)
+  {
+    di << "Use: " << argv[0] << " result Doc label shape \n";
+    return 1;
+  }
+  Handle(TDocStd_Document) Doc;   
+  DDocStd::GetDocument(argv[2], Doc);
+  if ( Doc.IsNull() ) { di << argv[2] << " is not a document\n"; return 1; }
+  Handle(XCAFDoc_ShapeTool) myAssembly = XCAFDoc_DocumentTool::ShapeTool(Doc->Main());
+
+   TDF_Label aLabel;
+  TDF_Tool::Label(Doc->GetData(), argv[3], aLabel);
+  if (aLabel.IsNull()) {di<<"No such Label\n"; return 1;}
+  TopoDS_Shape aInitShape = DBRep::Get(argv[4]);
+  if (aInitShape.IsNull()) {
+    di << "Shape " << argv[2] << " is null\n";
+    return 1;
+  }
+  TopLoc_Location aLoc = aInitShape.Location();
+  TDF_Label aReflabel = myAssembly->SetLocation(aLabel, aLoc);
+  TopLoc_Location aNewLoc = myAssembly->GetLocation(aReflabel);
+  TopoDS_Shape aRes = myAssembly->GetShape(aReflabel);
+  DBRep::Set(argv[1], aRes);
+  return 0;
+}
+
 //=======================================================================
 //function : InitCommands
 //purpose  : 
@@ -913,5 +941,7 @@ void XDEDRAW_Shapes::InitCommands(Draw_Interpretor& di)
 
   di.Add ("XSetInstanceSHUO","Doc shape \t: sets the SHUO structure for indicated component",
                    __FILE__, setStyledComponent, g);
+
+    di.Add ("XSetLocation", "result Doc Label initshape", __FILE__, setLocation, g);
   
 }

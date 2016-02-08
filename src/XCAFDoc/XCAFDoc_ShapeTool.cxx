@@ -453,6 +453,41 @@ void XCAFDoc_ShapeTool::MakeReference (const TDF_Label &L,
     SetLabelNameByLink(L);
 }
 
+TDF_Label XCAFDoc_ShapeTool::SetLocation(  const TDF_Label &theLabel,
+				    const TopLoc_Location &theLoc)
+{
+  if(theLoc.IsIdentity())
+  {
+    return theLabel;
+  }
+
+  TDF_Label aRefLabel = theLabel;
+  
+  if (!IsReference (theLabel))
+  {
+    TDF_TagSource aTag;
+    aRefLabel = aTag.NewChild(Label());
+    MakeReference( aRefLabel,theLabel, theLoc);
+    return aRefLabel;
+
+  }
+  TDF_Label aShapeLabel;
+  TopLoc_Location anOldLoc;
+  GetReferredShape (aRefLabel, aShapeLabel);
+  anOldLoc = GetLocation(aRefLabel);
+  TopLoc_Location aNewLoc (theLoc.Transformation() * anOldLoc.Transformation());
+  aRefLabel.ForgetAllAttributes (Standard_True);
+  MakeReference(aRefLabel, aShapeLabel, aNewLoc);
+  return aRefLabel;
+}
+
+    /* XCAFDoc_Location::Set (aRefLabel, aNewLoc);
+
+      Handle(TDataStd_TreeNode) refNode, mainNode;
+      mainNode = TDataStd_TreeNode::Set ( aRefLabel, XCAFDoc::ShapeRefGUID() );
+      refNode  = TDataStd_TreeNode::Set ( aShapeLabel,    XCAFDoc::ShapeRefGUID() );
+      refNode->Remove();
+      mainNode->Append(refNode);*/
 //=======================================================================
 //function : addShape
 //purpose  : private
