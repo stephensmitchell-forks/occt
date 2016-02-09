@@ -17,4 +17,4 @@ donly result
 smallview
 fit
 display aE aF
-checkview -screenshot -2d -path ${imagedir}/${test_image}.png
+xwd ${imagedir}/${test_image}.png
