@@ -24,13 +24,17 @@
   #define THE_SHADER_IN  in
   #define THE_SHADER_OUT out
   #define THE_OUT        out
+  #define occTexture1D   texture
   #define occTexture2D   texture
+  #define occTexture3D   texture
 #else
   #define THE_ATTRIBUTE  attribute
   #define THE_SHADER_IN  varying
   #define THE_SHADER_OUT varying
   #define THE_OUT
+  #define occTexture1D   texture1D
   #define occTexture2D   texture2D
+  #define occTexture3D   texture3D
 #endif
 
 #ifdef GL_ES
@@ -46,9 +50,11 @@
   THE_ATTRIBUTE vec4 occTexCoord;
   THE_ATTRIBUTE vec4 occVertColor;
 #elif (__VERSION__ >= 130)
-  out vec4 occFragColor;
+  out vec4  occFragColor;
+  out float occFragDepth;
 #else
   #define occFragColor gl_FragColor
+  #define occFragDepth gl_FragDepth
 #endif
 
 // Matrix state

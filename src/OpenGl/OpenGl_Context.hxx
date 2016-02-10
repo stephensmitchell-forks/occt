@@ -284,6 +284,12 @@ public:
   Standard_EXPORT static Standard_Boolean CheckExtension (const char* theExtString,
                                                           const char* theExtName);
 
+  //! Returns true if hardware supports floating-point texture.
+  bool HasFloatingPointTexture()
+  {
+    return (IsGlGreaterEqual (3, 0) || CheckExtension ("GL_ARB_texture_float"));
+  }
+
   //! Auxiliary template to retrieve GL function pointer.
   //! Pointer to function retrieved from library is statically casted
   //! to requested type - there no way to check real signature of exported function.

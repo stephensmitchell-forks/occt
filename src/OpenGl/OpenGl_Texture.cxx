@@ -186,7 +186,7 @@ bool OpenGl_Texture::GetDataFormat (const Handle(OpenGl_Context)& theCtx,
     {
       if (theCtx->core11 == NULL)
       {
-        theTextFormat  = GL_R8;  // GL_R32F
+        theTextFormat  = GL_R32F;
         thePixelFormat = GL_RED;
       }
       else
@@ -201,7 +201,7 @@ bool OpenGl_Texture::GetDataFormat (const Handle(OpenGl_Context)& theCtx,
     {
       if (theCtx->core11 == NULL)
       {
-        theTextFormat  = GL_R8;  // GL_R32F
+        theTextFormat  = GL_R32F;
         thePixelFormat = GL_RED;
       }
       else
@@ -214,7 +214,7 @@ bool OpenGl_Texture::GetDataFormat (const Handle(OpenGl_Context)& theCtx,
     }
     case Image_PixMap::ImgRGBAF:
     {
-      theTextFormat  = GL_RGBA8; // GL_RGBA32F
+      theTextFormat  = GL_RGBA32F;
       thePixelFormat = GL_RGBA;
       theDataType    = GL_FLOAT;
       return true;
@@ -225,14 +225,14 @@ bool OpenGl_Texture::GetDataFormat (const Handle(OpenGl_Context)& theCtx,
       {
         return false;
       }
-      theTextFormat  = GL_RGBA8;    // GL_RGBA32F
+      theTextFormat  = GL_RGBA32F;
       thePixelFormat = GL_BGRA_EXT; // equals to GL_BGRA
       theDataType    = GL_FLOAT;
       return true;
     }
     case Image_PixMap::ImgRGBF:
     {
-      theTextFormat  = GL_RGB8; // GL_RGB32F
+      theTextFormat  = GL_RGB32F;
       thePixelFormat = GL_RGB;
       theDataType    = GL_FLOAT;
       return true;
@@ -240,7 +240,7 @@ bool OpenGl_Texture::GetDataFormat (const Handle(OpenGl_Context)& theCtx,
     case Image_PixMap::ImgBGRF:
     {
     #if !defined(GL_ES_VERSION_2_0)
-      theTextFormat  = GL_RGB8; // GL_RGB32F
+      theTextFormat  = GL_RGB32F;
       thePixelFormat = GL_BGR;  // equals to GL_BGR_EXT
       theDataType    = GL_FLOAT;
       return true;
@@ -376,6 +376,19 @@ bool OpenGl_Texture::Init (const Handle(OpenGl_Context)& theCtx,
   myHasMipmaps             = Standard_False;
   myTextFormat             = thePixelFormat;
 #if !defined(GL_ES_VERSION_2_0)
+  if (theTextFormat >= Image_PixMap::ImgGrayF
+   && !theCtx->HasFloatingPointTexture())
+  {
+    TCollection_ExtendedString aMsg ("Error: floating-point textures are not supproted by hardware.");
+    theCtx->PushMessage (GL_DEBUG_SOURCE_APPLICATION,
+                         GL_DEBUG_TYPE_ERROR,
+                         0,
+                         GL_DEBUG_SEVERITY_HIGH,
+                         aMsg);
+
+    Release (theCtx.operator->());
+    return false;
+  }
   const GLint anIntFormat  = theTextFormat;
 #else
   // ES does not support sized formats and format conversions - them detected from data type
@@ -477,7 +490,7 @@ bool OpenGl_Texture::Init (const Handle(OpenGl_Context)& theCtx,
       glTexImage1D (GL_PROXY_TEXTURE_1D, 0, anIntFormat,
                     aWidth, 0,
                     thePixelFormat, theDataType, NULL);
-      glGetTexLevelParameteriv (GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &aTestWidth);
+      glGetTexLevelParameteriv (GL_PROXY_TEXTURE_1D, 0, GL_TEXTURE_WIDTH, &aTestWidth);
       if (aTestWidth == 0)
       {
         // no memory or broken input parameters
@@ -746,6 +759,22 @@ bool OpenGl_Texture::InitRectangle (const Handle(OpenGl_Context)& theCtx,
 
   const GLint anIntFormat = theFormat.Internal();
   myTextFormat = theFormat.Format();
+
+  if (anIntFormat == GL_FLOAT
+   || !theCtx->HasFloatingPointTexture())
+  {
+    TCollection_ExtendedString aMsg ("Error: floating-point textures are not supproted by hardware.");
+
+    theCtx->PushMessage (GL_DEBUG_SOURCE_APPLICATION_ARB,
+                         GL_DEBUG_TYPE_ERROR_ARB,
+                         0,
+                         GL_DEBUG_SEVERITY_HIGH_ARB,
+                         aMsg);
+
+    Release (theCtx.operator->());
+    Unbind (theCtx);
+    return false;
+  }
 
   glTexImage2D (GL_PROXY_TEXTURE_RECTANGLE,
                 0,
