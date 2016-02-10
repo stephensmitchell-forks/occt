@@ -61,6 +61,9 @@ public:
     IsTransparentShadowEnabled  (Standard_False),
     UseEnvironmentMapBackground (Standard_False),
     CoherentPathTracingMode     (Standard_False),
+    IsGIFilteringEnabled        (Standard_False),
+    RadianceClampValue          (10.0),
+
     // stereoscopic parameters
     StereoMode (Graphic3d_StereoMode_QuadBuffer),
     AnaglyphFilter (Anaglyph_RedCyan_Optimized),
@@ -99,6 +102,8 @@ public:
   Standard_Boolean        IsTransparentShadowEnabled;  //!< enables/disables light propagation through transparent media, False by default
   Standard_Boolean        UseEnvironmentMapBackground; //!< enables/disables environment map background
   Standard_Boolean        CoherentPathTracingMode;     //!< enables/disables 'coherent' tracing mode (single RNG seed within 16x16 image blocks)
+  Standard_Boolean        IsGIFilteringEnabled;        //!< enables/disables post-processing of GI rendering results
+  Standard_Real           RadianceClampValue;          //!< maximum radiance value which will not be clamped.
 
   Graphic3d_StereoMode    StereoMode;                  //!< stereoscopic output mode, Graphic3d_StereoMode_QuadBuffer by default
   Anaglyph                AnaglyphFilter;              //!< filter for anaglyph output, Anaglyph_RedCyan_Optimized by default

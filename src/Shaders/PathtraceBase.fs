@@ -473,7 +473,7 @@ void sampleMaterial (in SMaterial theMaterial,
 
     theBounce = SPEC_REFLECT_BOUNCE; // specular bounce
   }
-  else //  specular transmission
+  else if (aKsi < aReflection) //  specular transmission
   {
     theWeight *= theMaterial.Kt.rgb * (aReflection / aPt) *
       sampleSpecularTransmission (theOutput, theInput, theBounce, theWeight, theMaterial.Fresnel);
@@ -493,12 +493,12 @@ void sampleMaterial (in SMaterial theMaterial,
 //=======================================================================
 float handlePointLight (in vec3 theInput, in vec3 theToLight, in float theRadius, in float theDistance)
 {
-  float aDistance = dot (theToLight, theToLight);
+  float aSquareLightDist = dot (theToLight, theToLight);
 
-  float aCosMax = inversesqrt (1.f + theRadius * theRadius / aDistance);
+  float aCosMax = inversesqrt (1.f + theRadius * theRadius / aSquareLightDist);
 
-  return float (aDistance < theDistance * theDistance) *
-    step (aCosMax, dot (theToLight, theInput) * inversesqrt (aDistance));
+  return float (aSquareLightDist < theDistance * theDistance) *
+    step (aCosMax, dot (theToLight, theInput) * inversesqrt (aSquareLightDist));
 }
 
 //=======================================================================
@@ -514,13 +514,12 @@ float handleDirectLight (in vec3 theInput, in vec3 theToLight, in float theCosMa
 // function : sampleLight
 // purpose  : general sampling function for directional and point lights
 //=======================================================================
-vec3 sampleLight (in vec3 theToLight, in bool isDirectional, in float theSmoothness, inout float thePDF)
+vec3 sampleLight (in vec3 theToLight, in float theDistance, in bool isDirectional, in float theSmoothness, inout float thePDF)
 {
   SLocalSpace aSpace = LocalSpace (theToLight);
 
   // for point lights smoothness defines radius
-  float aCosMax = isDirectional ? theSmoothness :
-    inversesqrt (1.f + theSmoothness * theSmoothness / dot (theToLight, theToLight));
+  float aCosMax = inversesqrt (1.f + theSmoothness * theSmoothness / (theDistance * theDistance));
 
   float aKsi1 = RandFloat();
   float aKsi2 = RandFloat();
@@ -593,8 +592,8 @@ vec3 intersectLight (in SRay theRay, in bool isViewRay, in int theBounce, in flo
   return aRadiance;
 }
 
-#define MIN_THROUGHPUT   vec3 (0.02f)
-#define MIN_CONTRIBUTION vec3 (0.01f)
+#define MIN_THROUGHPUT   vec3 (2.0e-2f)
+#define MIN_CONTRIBUTION vec3 (0.5e-2f)
 
 #define MATERIAL_KD(index)      (18 * index + 11)
 #define MATERIAL_KR(index)      (18 * index + 12)
@@ -732,7 +731,7 @@ vec4 PathTrace (in SRay theRay, in vec3 theInverse)
 
       float aPDF = 1.f / uLightCount, aDistance = length (aLight.xyz);
 
-      aLight.xyz = sampleLight (aLight.xyz * (1.f / aDistance),
+      aLight.xyz = sampleLight (aLight.xyz * (1.f / aDistance), aDistance,
         aLight.w == 0.f /* is infinite */, aParam.w /* angle cosine */, aPDF);
 
       vec3 aContrib = (1.f / aPDF) * aParam.rgb /* Le */ * handleMaterial (

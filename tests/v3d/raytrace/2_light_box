@@ -1,0 +1,40 @@
+puts "========"
+puts "Ray Tracing - check PT lights correctness"
+puts "========"
+
+pload ALL
+vinit
+vsetdispmode 1
+vvbo 0
+
+box b 500 500 1
+box b1 2 50 20
+
+vdisplay b
+vdisplay b1
+
+vsetlocation b -250 -250 0
+vsetlocation b1 -1 -25 0
+
+vlight del 0
+vlight del 0
+
+vlight add positional head 0 pos -10 0 20
+vlight change 0 sm 5.0
+
+vrenderparams -ray -gi
+vsetmaterial b plaster
+vsetmaterial b1 plaster
+
+vviewparams -scale 23.40302443511418 -proj 3.1690307533723025e-006 -0.053740375441171516 0.99855494192227556 -up 0.00011815109169240122 0.99855493498157033 0.05374037461975216 -at -0.039728087058276865 17.658749465576971 0.40052090530867673 -eye -0.038141096586915293 -9.2534108729671232 500.45788900604856 
+
+vlight change 0 int 20
+
+psphere s 5.0
+vdisplay s
+vsetlocation s 10 0 20
+
+vbsdf s -Kd 0.0 -Ks 0.0 -Kr 0.0 -Kt 0.0
+vbsdf s -Le 20.0
+
+vfps 500
