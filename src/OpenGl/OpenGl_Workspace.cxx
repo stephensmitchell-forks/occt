@@ -970,12 +970,17 @@ const OpenGl_AspectFace* OpenGl_Workspace::AspectFace (const Standard_Boolean th
     updateMaterial (TEL_BACK_MATERIAL);
   }
 
-  if ((NamedStatus & OPENGL_NS_FORBIDSETTEX) == 0)
+  if (AspectFace_set->DoTextureMap())
   {
-    if (AspectFace_set->DoTextureMap())
+    EnableTexture (AspectFace_set->TextureRes (myGlContext),
+                   AspectFace_set->TextureParams());
+  }
+  else
+  {
+    if (!myEnvironmentTexture.IsNull())
     {
-      EnableTexture (AspectFace_set->TextureRes (myGlContext),
-                     AspectFace_set->TextureParams());
+      EnableTexture (myEnvironmentTexture,
+                     myEnvironmentTexture->GetParams());
     }
     else
     {
