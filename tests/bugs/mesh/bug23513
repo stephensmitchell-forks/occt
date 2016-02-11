@@ -6,7 +6,7 @@ puts ""
 # BRepMesh doesn't stop until out-of-memory
 #################################
 
-restore [locate_data_file infface.brep] result
+restore [locate_data_file bug23513_infface.brep] result
 
 #1
 vinit
