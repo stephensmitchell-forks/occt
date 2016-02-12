@@ -132,6 +132,7 @@ gp_XY BRepMesh_ShapeTool::FindUV(
   const gp_Pnt2d&                       thePnt2d,
   const TopoDS_Vertex&                  theVertex,
   const Standard_Real                   theMinDistance,
+  const BRepMesh::PairOfReal&           theToleranceUV,
   const Handle(BRepMesh_FaceAttribute)& theFaceAttribute)
 {
   const gp_XY& aPnt2d = thePnt2d.Coord();
@@ -167,21 +168,14 @@ gp_XY BRepMesh_ShapeTool::FindUV(
   const Standard_Real aTolerance = 
     Min(2. * BRep_Tool::Tolerance(theVertex), theMinDistance);
 
-  // Get face limits
-  Standard_Real aDiffU = theFaceAttribute->GetUMax() - theFaceAttribute->GetUMin();
-  Standard_Real aDiffV = theFaceAttribute->GetVMax() - theFaceAttribute->GetVMin();
-
-  const Standard_Real Utol2d = .5 * aDiffU;
-  const Standard_Real Vtol2d = .5 * aDiffV;
-
   const Handle(BRepAdaptor_HSurface)& aSurface = theFaceAttribute->Surface();
   const gp_Pnt aPnt1 = aSurface->Value(aUV.X(), aUV.Y());
   const gp_Pnt aPnt2 = aSurface->Value(aPnt2d.X(), aPnt2d.Y());
 
   //! If selected point is too far from the given one in parametric space
   //! or their positions in 3d are different, add the given point as unique.
-  if (Abs(aUV.X() - aPnt2d.X()) > Utol2d ||
-      Abs(aUV.Y() - aPnt2d.Y()) > Vtol2d ||
+  if (Abs(aUV.X() - aPnt2d.X()) > theToleranceUV.first ||
+      Abs(aUV.Y() - aPnt2d.Y()) > theToleranceUV.second ||
       !aPnt1.IsEqual(aPnt2, aTolerance))
   {
     aUV = aPnt2d;
@@ -327,4 +321,23 @@ Standard_Boolean BRepMesh_ShapeTool::IsDegenerated(
     return Standard_True;
 
   return Standard_False;
+}
+
+//=======================================================================
+//function : UVPoints
+//purpose  : 
+//=======================================================================
+void BRepMesh_ShapeTool::UVPoints(
+    const TopoDS_Edge& theEdge,
+    const TopoDS_Face& theFace, 
+    gp_Pnt2d&          theFirstPoint2d, 
+    gp_Pnt2d&          theLastPoint2d)
+{
+
+  Standard_Real aFirstParam, aLastParam;
+  const Handle(Geom2d_Curve) aCurve2d = BRep_Tool::CurveOnSurface(
+    theEdge, theFace, aFirstParam, aLastParam);
+
+  aCurve2d->D0(aFirstParam, theFirstPoint2d);
+  aCurve2d->D0(aLastParam,  theLastPoint2d );
 }

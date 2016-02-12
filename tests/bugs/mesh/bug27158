@@ -1,0 +1,21 @@
+puts "========"
+puts "OCC27158"
+puts "========"
+puts ""
+###########################################
+## BRepMesh manage vertex tolerance in parametric space in improper way
+###########################################
+
+set BugNumber OCC27158
+
+restore [locate_data_file ZoneB_25.brep] result
+
+tclean result
+
+checkview -display result -3d -path ${imagedir}/${test_image}.png
+
+set faces [explode result f]
+set nbfaces [llength $faces]
+for {set i 1} {$i <= $nbfaces} {incr i} {
+  checktrinfo result_$i -tri -nod
+}

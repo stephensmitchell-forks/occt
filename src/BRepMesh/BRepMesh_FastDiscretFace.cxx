@@ -1351,8 +1351,12 @@ void BRepMesh_FastDiscretFace::add(const TopoDS_Vertex& theVertex)
 
     NCollection_Handle<FixedVExplorer> aFixedVExplorer = new FixedVExplorer(theVertex);
     Standard_Integer aIndex = myAttribute->GetVertexIndex(aFixedVExplorer);
+
+    const BRepMesh::PairOfReal aTolUV (.5 * (myAttribute->GetUMax() - myAttribute->GetUMin()),
+                                       .5 * (myAttribute->GetVMax() - myAttribute->GetVMin()));
+
     gp_XY anUV = BRepMesh_ShapeTool::FindUV(aIndex, aPnt2d,
-      theVertex, BRep_Tool::Tolerance(theVertex), myAttribute);
+      theVertex, BRep_Tool::Tolerance(theVertex), aTolUV, myAttribute);
 
     Standard_Integer aTmpId1, aTmpId2;
     anUV = myAttribute->Scale(anUV, Standard_True);

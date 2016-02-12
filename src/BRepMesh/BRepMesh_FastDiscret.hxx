@@ -146,9 +146,10 @@ public:
     return myParameters;
   }
     
-  
+  //! Builds bottom-up connectivity map for edges (with adjacent faces).
   Standard_EXPORT void InitSharedFaces(const TopoDS_Shape& theShape);
 
+  //! Returns map of faces shared by shape's edges.
   inline const TopTools_IndexedDataMapOfShapeListOfShape& SharedFaces() const
   {
     return mySharedFaces;
@@ -338,12 +339,84 @@ private:
     Handle(Poly_PolygonOnTriangulation)&       thePolygon,
     const Standard_Real                        theDeflection);
 
+  //! Performs discretization of face's boundary edges using current face attribute.
+  //! Returns True on success, False elsewhere.
+  Standard_Boolean discretizeFaceBoundary ();
+
   //! Resets temporary data structure used to collect unique nodes.
   void resetDataStructure();
 
-private:
+  //! Returns maximum UV distance to be used to knit two points correspondent to 
+  //! the given vertex in parametric space. It iterates over edges connected to
+  //! the given vertex and computes target value 
+  const BRepMesh::PairOfReal& toleranceUV (const TopoDS_Vertex& theVertex) const;
 
-  TopoDS_Face                                      myFace;
+  //! Tries to compute maximum UV distance to be used to knit two points correspondent to
+  //! the given vertex in parametric space. Implements specific logic for case of 
+  //! degenerative and seam edge connected to vertex. Degenerated case has a highest
+  //! priority.
+  //! @param theVertex vertex for which maximum UV distance should be computed.
+  //! @param theSharedEdges list of edges shared by the passed vertex.
+  //! @param[out] theToleranceUV computed UV distance.
+  //! @return FALSE in case if there is no seam edge connected to the vertex.
+  Standard_Boolean computeToleranceUVOnSpecialEdge (
+    const TopoDS_Vertex&        theVertex,
+    const TopTools_ListOfShape& theSharedEdges,
+    BRepMesh::PairOfReal&       theToleranceUV) const;
+
+  //! Tries to compute maximum UV distance to be used to knit two points correspondent to
+  //! the given vertex in parametric space. Implements specific logic for case of 
+  //! seam edge connected to vertex. 
+  //! @param theVertex vertex for which maximum UV distance should be computed.
+  //! @param theEdge seam edge to be processed.
+  //! @param theSharedEdges list of edges shared by the passed vertex.
+  //! @param[out] theToleranceUV computed UV distance.
+  //! @return FALSE in case if there is no seam edge connected to the vertex.
+  Standard_Boolean computeToleranceUVOnSeamEdge (
+    const TopoDS_Vertex&        theVertex,
+    const TopoDS_Edge&          theEdge,
+    const TopTools_ListOfShape& theSharedEdges,
+    BRepMesh::PairOfReal&       theToleranceUV) const;
+
+  //! Tries to compute maximum UV distance to be used to knit two points correspondent to
+  //! the given vertex in parametric space. Implements specific logic for degenerative edge case.
+  //! @param theEdge vertex for which maximum UV distance should be computed.
+  //! @param theEdge degenerative edge to be processed.
+  //! @param[out] theToleranceUV computed UV distance.
+  //! @return FALSE in case if there is no degenerative edge connected to the vertex.
+  Standard_Boolean computeToleranceUVOnDegenerativeEdge (
+    const TopoDS_Vertex&        theVertex,
+    const TopoDS_Edge&          theEdge,
+    const TopTools_ListOfShape& theSharedEdges,
+    BRepMesh::PairOfReal&       theToleranceUV) const;
+
+  //! Ñompute maximum UV distance to be used to knit two points correspondent to
+  //! the given vertex in parametric space. Implements logic for general case.
+  //! @param theVertex vertex for which maximum UV distance should be computed.
+  //! @param theSharedEdges list of edges shared by the passed vertex.
+  //! @param[out] theToleranceUV computed UV distance.
+  //! @return FALSE in case if there is not seam edge connected to the vertex.
+  void computeToleranceUVOnEdge (
+    const TopoDS_Vertex&        theVertex,
+    const TopTools_ListOfShape& theSharedEdges,
+    BRepMesh::PairOfReal&       theToleranceUV) const;
+
+  //! Computes maximum UV distance to be used to knit two points correspondent to
+  //! the given vertex in parametric space. The passed pair of 2D points represents 
+  //! the given vertex relatively edge previous to the specified iterator.
+  void computeToleranceUV (const TopoDS_Vertex&               theVertex,
+                           const gp_Pnt2d&                    thePointOnEdge,
+                           const gp_Pnt2d&                    theSamePointOnEdge,
+                           TopTools_ListIteratorOfListOfShape theEdgeIt,
+                           BRepMesh::PairOfReal&              theToleranceUV) const;
+
+  //! Returns point in parametric space of current face corresponded to vertex of the given edge.
+  //! Returns TRUE in case of success, false elsewhere.
+  Standard_Boolean pointOnEdge (const TopoDS_Vertex& theVertex,
+                                const TopoDS_Edge&   theEdge,
+                                gp_Pnt2d&            thePointOnEdge) const;
+
+private:
 
   BRepMesh::DMapOfShapePairOfPolygon               myEdges;
   BRepMesh::DMapOfFaceAttribute                    myAttributes;
@@ -356,6 +429,8 @@ private:
   // Fast access to attributes of current face
   Handle(BRepMesh_FaceAttribute)                   myAttribute;
   TopTools_IndexedDataMapOfShapeListOfShape        mySharedFaces;
+  TopTools_IndexedDataMapOfShapeListOfShape        mySharedEdges;
+  mutable BRepMesh::DMapOfVertexPairOfReal         myVertexTolUVCache;
 
   Parameters                                       myParameters;
 

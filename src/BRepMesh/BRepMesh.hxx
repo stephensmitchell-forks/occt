@@ -66,6 +66,8 @@ namespace BRepMesh
     gp_XY EndPnt;
   };
 
+  typedef std::pair<Standard_Real, Standard_Real>                                                   PairOfReal;
+
   //! Sequences
   typedef NCollection_Sequence<Bnd_B2d>                                                             SequenceOfBndB2d;
   typedef NCollection_Sequence<Standard_Integer>                                                    SequenceOfInteger;
@@ -98,7 +100,8 @@ namespace BRepMesh
 
   typedef NCollection_DataMap<Standard_Integer, Standard_Integer>                                   MapOfIntegerInteger;
   typedef NCollection_DataMap<TopoDS_Vertex, Standard_Integer, TopTools_ShapeMapHasher>             DMapOfVertexInteger;
-  typedef NCollection_DataMap<TopoDS_Face, Handle(BRepMesh_FaceAttribute), TopTools_ShapeMapHasher>  DMapOfFaceAttribute;
+  typedef NCollection_DataMap<TopoDS_Vertex, PairOfReal, TopTools_ShapeMapHasher>                   DMapOfVertexPairOfReal;
+  typedef NCollection_DataMap<TopoDS_Face, Handle(BRepMesh_FaceAttribute), TopTools_ShapeMapHasher> DMapOfFaceAttribute;
   typedef NCollection_DataMap<TopoDS_Shape, BRepMesh_PairOfPolygon, TopTools_ShapeMapHasher>        DMapOfShapePairOfPolygon;
   typedef NCollection_DataMap<Standard_Integer, gp_Pnt>                                             DMapOfIntegerPnt;
   typedef NCollection_DataMap<Standard_Integer, ListOfXY>                                           DMapOfIntegerListOfXY;
