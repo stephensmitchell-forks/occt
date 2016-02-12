@@ -164,7 +164,7 @@ namespace
 
       if (myFBO->GetVPSizeX() != theWorkspace->Width() || myFBO->GetVPSizeY() != theWorkspace->Height())
       {
-        myFBO->Init (aContext, theWorkspace->Width(), theWorkspace->Height());
+        myFBO->Init (aContext, theWorkspace->Width(), theWorkspace->Height(), GL_RGBA8, GL_DEPTH24_STENCIL8);
       }
 
       GLint aDrawFboId = 0;
