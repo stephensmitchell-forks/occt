@@ -745,7 +745,7 @@ Standard_Boolean BRepMesh_FastDiscret::computeToleranceUVOnDegenerativeEdge (
 {
   if (isDegenerated (theEdge))
   {
-    TopoDS_Vertex aRevVertex = TopoDS::Vertex (theVertex.Reversed ());
+    const TopoDS_Vertex aRevVertex = TopoDS::Vertex (theVertex.Reversed ());
     gp_Pnt2d aPnt2d1;
     if (!pointOnEdge (theVertex, theEdge, aPnt2d1))
       return Standard_False;
@@ -777,9 +777,7 @@ Standard_Boolean BRepMesh_FastDiscret::computeToleranceUVOnSeamEdge (
     return Standard_False;
 
   // Seam edge.
-  TopoDS_Edge aRevEdge = theEdge;
-  aRevEdge.Orientation (theEdge.Orientation () == TopAbs_FORWARD ?
-    TopAbs_REVERSED : TopAbs_FORWARD);
+  const TopoDS_Edge aRevEdge = TopoDS::Edge (theEdge.Reversed ());
 
   // Get 2d points correspondent to the seam edge.
   gp_Pnt2d aPnt2d;
