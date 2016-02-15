@@ -146,6 +146,9 @@ public:
   //! Set functional minimal value.
   Standard_EXPORT void SetFunctionalMinimalValue(const Standard_Real theMinimalValue);
 
+  //! Lock/Unlock Lipchitz constant for internal modifications.
+  Standard_EXPORT void SetLipConstState(const Standard_Boolean theFlag);
+
   //! Get functional minimal value.
   Standard_EXPORT Standard_Real GetFunctionalMinimalValue();
 
@@ -195,6 +198,7 @@ private:
   Standard_Real myInitC; // Lipchitz constant initial value.
   Standard_Boolean myIsFindSingleSolution; // Default value is false.
   Standard_Real myFunctionalMinimalValue; // Default value is -Precision::Infinite
+  Standard_Boolean myIsConstLocked;  // Is constant locked for modifications.
 
   // Output.
   Standard_Boolean myDone;
@@ -211,6 +215,7 @@ private:
   math_Vector myTmp; // Current modified solution.
   math_Vector myV; // Steps array.
   math_Vector myMaxV; // Max Steps array.
+  Standard_Real myLastStep; // Last step.
   math_Vector myExpandCoeff; // Define expand coefficient between neighboring indiced dimensions.
 
   NCollection_Array1<Standard_Real> myCellSize;

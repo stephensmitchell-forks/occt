@@ -200,13 +200,29 @@ void Extrema_GenExtCC::Perform()
 
   // Lipchitz constant approximation.
   Standard_Real aLC = 9.0; // Default value.
+  Standard_Boolean isConstLockedFlag = Standard_False;
   if (C1.GetType() == GeomAbs_Line)
-    aLC = Min(aLC, 1.0 / C2.Resolution(1.0));
+  {
+    Standard_Real aMaxDer = 1.0 / C2.Resolution(1.0);
+    if (aLC > aMaxDer)
+    {
+      isConstLockedFlag = Standard_True;
+      aLC = aMaxDer;
+    }
+  }
   if (C2.GetType() == GeomAbs_Line)
-    aLC = Min(aLC, 1.0 / C1.Resolution(1.0));
+  {
+    Standard_Real aMaxDer = 1.0 / C1.Resolution(1.0);
+    if (aLC > aMaxDer)
+    {
+      isConstLockedFlag = Standard_True;
+      aLC = aMaxDer;
+    }
+  }
 
   Extrema_GlobOptFuncCCC2 aFunc (C1, C2);
   math_GlobOptMin aFinder(&aFunc, myLowBorder, myUppBorder, aLC);
+  aFinder.SetLipConstState(isConstLockedFlag);
   Standard_Real aDiscTol = 1.0e-2;
   Standard_Real aValueTol = 1.0e-2;
   Standard_Real aSameTol = myCurveMinTol / (aDiscTol);

@@ -41,6 +41,7 @@ math_GlobOptMin::math_GlobOptMin(math_MultipleVarFunction* theFunc,
   myB(1, myN),
   myGlobA(1, myN),
   myGlobB(1, myN),
+  myIsConstLocked(Standard_False),
   myX(1, myN),
   myTmp(1, myN),
   myV(1, myN),
@@ -229,8 +230,11 @@ void math_GlobOptMin::Perform(const Standard_Boolean isFindSingleSolution)
     return;
   }
 
-  // Compute initial value for myC.
-  computeInitialValues();
+  if (!myIsConstLocked)
+  {
+    // Compute initial value for myC.
+    computeInitialValues();
+  }
 
   myE1 = minLength * myTol;
   myE2 = maxLength * myTol;
@@ -238,8 +242,7 @@ void math_GlobOptMin::Perform(const Standard_Boolean isFindSingleSolution)
   myIsFindSingleSolution = isFindSingleSolution;
   if (isFindSingleSolution)
   {
-    // Run local optimization 
-    // if current value better than optimal.
+    // Run local optimization if current value better than optimal.
     myE3 = 0.0;
   }
   else
@@ -257,6 +260,7 @@ void math_GlobOptMin::Perform(const Standard_Boolean isFindSingleSolution)
     return;
   }
 
+  myLastStep = 0.0;
   isFirstCellFilterInvoke = Standard_True;
   computeGlobalExtremum(myN);
 
@@ -368,8 +372,8 @@ void math_GlobOptMin::computeInitialValues()
   aLipConst *= Sqrt(myN) / aStep;
   if (aLipConst < myC * 0.1)
     myC = Max(aLipConst * 0.1, 0.01);
-  else if (aLipConst > myC * 10)
-    myC = Min(myC * 2, 30.0);
+  else if (aLipConst > myC * 5)
+    myC = Min(myC * 5, 50.0);
 
   // Clear all solutions except one.
   if (myY.Size() != myN)
@@ -393,7 +397,6 @@ void math_GlobOptMin::computeGlobalExtremum(Standard_Integer j)
   Standard_Real d; // Functional in moved point.
   Standard_Real val = RealLast(); // Local extrema computed in moved point.
   Standard_Real aStepBestValue = RealLast();
-  Standard_Real aRealStep = 0.0;
   math_Vector aStepBestPoint(1, myN);
   Standard_Boolean isInside = Standard_False;
   Standard_Real r;
@@ -417,7 +420,7 @@ void math_GlobOptMin::computeGlobalExtremum(Standard_Integer j)
     {
       isInside = Standard_False;
       myFunc->Value(myX, d);
-      r = (d + myZ * myC * myV(1) - myF) * myZ;
+      r = (d + myZ * myC * myLastStep - myF) * myZ;
       if(r > myE3)
       {
         isInside = computeLocalExtremum(myX, val, myTmp);
@@ -460,8 +463,8 @@ void math_GlobOptMin::computeGlobalExtremum(Standard_Integer j)
       if (CheckFunctionalStopCriteria())
         return; // Best possible value is obtained.
 
-      aRealStep = myE2 + Abs(myF - d) / myC;
-      myV(1) = Min(aRealStep, myMaxV(1));
+      myV(1) = Min(myE2 + Abs(myF - d) / myC, myMaxV(1));
+      myLastStep = myV(1);
     }
     else
     {
@@ -689,4 +692,13 @@ void math_GlobOptMin::ComputeInitSol()
   mySolCount = 1;
 
   myDone = Standard_False;
+}
+
+//=======================================================================
+//function : SetLipConstState
+//purpose  :
+//=======================================================================
+void math_GlobOptMin::SetLipConstState(const Standard_Boolean theFlag)
+{
+  myIsConstLocked = theFlag;
 }
