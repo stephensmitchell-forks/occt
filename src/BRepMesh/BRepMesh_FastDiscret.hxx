@@ -416,7 +416,7 @@ private:
                                 const TopoDS_Edge&   theEdge,
                                 gp_Pnt2d&            thePointOnEdge) const;
 
-  //! Returns True in case is the given edge is degenerated.
+  //! Returns True in case if the given edge is degenerated.
   inline Standard_Boolean isDegenerated (const TopoDS_Edge& theEdge) const {
     if (!myDegenerativeEdgesCache.IsBound (theEdge))
     {
