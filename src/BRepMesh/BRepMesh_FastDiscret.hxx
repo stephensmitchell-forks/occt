@@ -416,6 +416,17 @@ private:
                                 const TopoDS_Edge&   theEdge,
                                 gp_Pnt2d&            thePointOnEdge) const;
 
+  //! Returns True in case is the given edge is degenerated.
+  inline Standard_Boolean isDegenerated (const TopoDS_Edge& theEdge) const {
+    if (!myDegenerativeEdgesCache.IsBound (theEdge))
+    {
+      myDegenerativeEdgesCache.Bind (theEdge, 
+        BRepMesh_ShapeTool::IsDegenerated (theEdge, myAttribute->Face ()));
+    }
+
+    return myDegenerativeEdgesCache (theEdge);
+  }
+
 private:
 
   BRepMesh::DMapOfShapePairOfPolygon               myEdges;
@@ -431,6 +442,7 @@ private:
   TopTools_IndexedDataMapOfShapeListOfShape        mySharedFaces;
   TopTools_IndexedDataMapOfShapeListOfShape        mySharedEdges;
   mutable BRepMesh::DMapOfVertexPairOfReal         myVertexTolUVCache;
+  mutable BRepMesh::DMapOfEdgeBoolean              myDegenerativeEdgesCache;
 
   Parameters                                       myParameters;
 

@@ -586,6 +586,7 @@ Standard_Integer BRepMesh_FastDiscret::Add(const TopoDS_Face& theFace)
 
   mySharedEdges.Clear ();
   myVertexTolUVCache.Clear ();
+  myDegenerativeEdgesCache.Clear ();
 
   myAttribute->ChangeStructure().Nullify();
   return myAttribute->GetStatus();
@@ -669,8 +670,7 @@ Standard_Boolean BRepMesh_FastDiscret::pointOnEdge (
     return Standard_False;
 
   gp_Pnt2d aTmpPnt2d;
-  const Standard_Boolean isFirstVertex = 
-    BRepMesh_ShapeTool::IsDegenerated (theEdge, myAttribute->Face ()) ?
+  const Standard_Boolean isFirstVertex = isDegenerated (theEdge) ?
     theVertex.IsEqual (aFirstVertex) : 
     theVertex.IsSame  (aFirstVertex);
 
@@ -743,12 +743,9 @@ Standard_Boolean BRepMesh_FastDiscret::computeToleranceUVOnDegenerativeEdge (
   const TopTools_ListOfShape& theSharedEdges,
   BRepMesh::PairOfReal&       theToleranceUV) const
 {
-  if (BRepMesh_ShapeTool::IsDegenerated (theEdge, myAttribute->Face ()))
+  if (isDegenerated (theEdge))
   {
-    TopoDS_Vertex aRevVertex = theVertex;
-    aRevVertex.Orientation (theVertex.Orientation () == TopAbs_FORWARD ?
-      TopAbs_REVERSED : TopAbs_FORWARD);
-
+    TopoDS_Vertex aRevVertex = TopoDS::Vertex (theVertex.Reversed ());
     gp_Pnt2d aPnt2d1;
     if (!pointOnEdge (theVertex, theEdge, aPnt2d1))
       return Standard_False;
@@ -776,7 +773,7 @@ Standard_Boolean BRepMesh_FastDiscret::computeToleranceUVOnSeamEdge (
   const TopTools_ListOfShape& theSharedEdges,
   BRepMesh::PairOfReal&       theToleranceUV) const
 {
-  if (!BRep_Tool::IsClosed (theEdge, myAttribute->Face ()))
+  if (!BRepTools::IsReallyClosed (theEdge, myAttribute->Face ()))
     return Standard_False;
 
   // Seam edge.
@@ -976,7 +973,7 @@ void BRepMesh_FastDiscret::add(
   aNewParams(aNodesNb) = aEAttr.LastParam;
 
   const TopoDS_Face& aFace = myAttribute->Face();
-  if (!BRepMesh_ShapeTool::IsDegenerated(theEdge, aFace))
+  if (!isDegenerated (theEdge))
   {
     BRepMesh_EdgeParameterProvider aProvider(theEdge, aFace, aParams);
     for (Standard_Integer i = 2; i < aNodesNb; ++i)
@@ -1056,7 +1053,7 @@ void BRepMesh_FastDiscret::update(
   registerEdgeVertices(aEAttr, ipf, ivf, isvf, ipl, ivl, isvl);
 
   Handle(Poly_PolygonOnTriangulation) P1, P2;
-  if (BRepMesh_ShapeTool::IsDegenerated(theEdge, aFace))
+  if (isDegenerated (theEdge))
   {
     const Standard_Integer  aNodesNb = 2;
     TColStd_Array1OfInteger aNewNodes      (1, aNodesNb);
