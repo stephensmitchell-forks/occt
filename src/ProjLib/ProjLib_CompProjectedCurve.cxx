@@ -1622,11 +1622,17 @@ void ProjLib_CompProjectedCurve::UpdateTripleByTrapCriteria(gp_Pnt &thePoint) co
   // Check possible traps cases:
 
   // 25892 bug.
-  if (mySurface->GetType() == GeomAbs_SurfaceOfRevolution &&
-     (Abs (thePoint.Z() - mySurface->FirstVParameter()) < Precision::PConfusion() ||
-      Abs (thePoint.Z() - mySurface->LastVParameter() ) < Precision::PConfusion() ))
+  if (mySurface->GetType() == GeomAbs_SurfaceOfRevolution)
   {
-    isProblemsPossible = Standard_True;
+    // Compute maximal deviation from 3D and choose the biggest one.
+    Standard_Real aVRes = mySurface->VResolution(Precision::Confusion());
+    Standard_Real aMaxTol = Max(Precision::PConfusion(), aVRes);
+
+    if (Abs (thePoint.Z() - mySurface->FirstVParameter()) < aMaxTol ||
+        Abs (thePoint.Z() - mySurface->LastVParameter() ) < aMaxTol )
+    {
+      isProblemsPossible = Standard_True;
+    }
   }
 
   // 27135 bug. Trap on degenerated edge.
