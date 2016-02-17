@@ -365,6 +365,14 @@ void OpenGl_Layer::Render (const Handle(OpenGl_Workspace)&   theWorkspace,
     glDepthFunc (GL_ALWAYS);
   }
 
+  // save environment texture
+  Handle(OpenGl_Texture) anEnvironmentTexture = theWorkspace->EnvironmentTexture();
+  if (!myLayerSettings.UseEnvironmentTexture)
+  {
+    Handle(OpenGl_Texture) anEmptyTexture;
+    theWorkspace->SetEnvironmentTexture (anEmptyTexture);
+  }
+
   // handle depth offset
   if (IsSettingEnabled (Graphic3d_ZLayerDepthOffset))
   {
@@ -390,4 +398,10 @@ void OpenGl_Layer::Render (const Handle(OpenGl_Workspace)&   theWorkspace,
   theWorkspace->SetPolygonOffset (anAppliedOffsetParams.mode,
                                   anAppliedOffsetParams.factor,
                                   anAppliedOffsetParams.units);
+
+  // restore environment texture
+  if (!myLayerSettings.UseEnvironmentTexture)
+  {
+    theWorkspace->SetEnvironmentTexture (anEnvironmentTexture);
+  }
 }

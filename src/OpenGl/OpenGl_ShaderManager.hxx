@@ -19,7 +19,6 @@
 #include <Graphic3d_ShaderProgram.hxx>
 #include <Graphic3d_StereoMode.hxx>
 #include <Graphic3d_TypeOfShadingModel.hxx>
-#include <Graphic3d_TypeOfSurfaceDetail.hxx>
 
 #include <NCollection_DataMap.hxx>
 #include <NCollection_Sequence.hxx>
@@ -255,14 +254,6 @@ public:
 
 public:
 
-  //! Returns current state of OCCT surface detail.
-  Standard_EXPORT const OpenGl_SurfaceDetailState& SurfaceDetailState() const;
-
-  //! Updates state of OCCT surface detail.
-  Standard_EXPORT void UpdateSurfaceDetailStateTo (const Graphic3d_TypeOfSurfaceDetail theDetail);
-
-public:
-
   //! Pushes current state of OCCT graphics parameters to specified program.
   Standard_EXPORT void PushState (const Handle(OpenGl_ShaderProgram)& theProgram) const;
 
@@ -309,7 +300,7 @@ protected:
     {
       aBits |= OpenGl_PO_ClipPlanes;
     }
-    if (theEnableEnvMap && mySurfaceDetailState.Detail() == Graphic3d_TOD_ENVIRONMENT)
+    if (theEnableEnvMap)
     {
       // Environment map overwrites material texture
       aBits |= OpenGl_PO_TextureEnv;
@@ -413,7 +404,6 @@ protected:
   OpenGl_WorldViewState              myWorldViewState;     //!< State of OCCT world-view  transformation
   OpenGl_ClippingState               myClippingState;      //!< State of OCCT clipping planes
   OpenGl_LightSourceState            myLightSourceState;   //!< State of OCCT light sources
-  OpenGl_SurfaceDetailState          mySurfaceDetailState; //!< State of OCCT surface detail
 
 private:
 
