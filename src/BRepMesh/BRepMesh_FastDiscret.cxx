@@ -560,7 +560,27 @@ Standard_Integer BRepMesh_FastDiscret::Add(const TopoDS_Face& theFace)
   {
     OCC_CATCH_SIGNALS
 
-    TopExp::MapShapesAndAncestors(theFace, TopAbs_VERTEX, TopAbs_EDGE, mySharedEdges);
+    TopExp::MapShapesAndAncestors (theFace, TopAbs_VERTEX, TopAbs_EDGE, mySharedEdges);
+
+    TopExp_Explorer aWireIt (theFace, TopAbs_WIRE);
+    for (; aWireIt.More (); aWireIt.Next ())
+    {
+      const TopoDS_Shape& aWire = aWireIt.Current ();
+      TopExp_Explorer aEdgeIt (aWire, TopAbs_EDGE);
+      for (; aEdgeIt.More (); aEdgeIt.Next ())
+      {
+        const TopoDS_Edge& aEdge = TopoDS::Edge (aEdgeIt.Current ());
+        if (!myEdgeWires.IsBound (aEdge))
+          myEdgeWires.Bind (aEdge, BRepMesh::MapOfShape ());
+
+        myEdgeWires (aEdge).Add (aWire);
+
+        if (!myWireEdges.IsBound (aWire))
+          myWireEdges.Bind (aWire, BRepMesh::MapOfShape ());
+
+        myWireEdges (aWire).Add (aEdge);
+      }
+    }
 
     // Initialize face attributes
     myAttribute.Nullify();
@@ -584,6 +604,8 @@ Standard_Integer BRepMesh_FastDiscret::Add(const TopoDS_Face& theFace)
     myAttribute->SetStatus(BRepMesh_Failure);
   }
 
+  myEdgeWires.Clear ();
+  myWireEdges.Clear ();
   mySharedEdges.Clear ();
   myVertexTolUVCache.Clear ();
   myDegenerativeEdgesCache.Clear ();
@@ -681,21 +703,27 @@ Standard_Boolean BRepMesh_FastDiscret::pointOnEdge (
 
   const Standard_Real aTolerance = BRep_Tool::Tolerance (theVertex);
   const Handle(BRepAdaptor_HSurface)& aSurf = myAttribute->Surface ();
-  if (aSurf->IsUPeriodic ())
+
+  const Standard_Boolean isClosedSeam = 
+    isSeam (theEdge) && aFirstVertex.IsSame (aLastVertex);
+
+  if (aSurf->IsUPeriodic () || aSurf->IsUClosed() || isClosedSeam)
   {
     Standard_Real aU, aOffset;
     GeomInt::AdjustPeriodic (thePointOnEdge.X () + aSurf->UResolution (aTolerance), 
-      aSurf->FirstUParameter (), aSurf->LastUParameter (), aSurf->UPeriod (), 
+      aSurf->FirstUParameter (), aSurf->LastUParameter (), 
+      aSurf->IsUPeriodic () ? aSurf->UPeriod () : aSurf->LastUParameter () - aSurf->FirstUParameter (), 
       aU, aOffset);
 
     thePointOnEdge.SetX (aU);
   }
 
-  if (aSurf->IsVPeriodic ())
+  if (aSurf->IsVPeriodic () || aSurf->IsVClosed() || isClosedSeam)
   {
     Standard_Real aV, aOffset;
     GeomInt::AdjustPeriodic (thePointOnEdge.Y () + aSurf->VResolution (aTolerance), 
-      aSurf->FirstVParameter (), aSurf->LastVParameter (), aSurf->VPeriod (), 
+      aSurf->FirstVParameter (), aSurf->LastVParameter (),
+      aSurf->IsVPeriodic () ? aSurf->VPeriod () : aSurf->LastVParameter () - aSurf->FirstVParameter (), 
       aV, aOffset);
 
     thePointOnEdge.SetY (aV);
@@ -712,6 +740,7 @@ void BRepMesh_FastDiscret::computeToleranceUV (
   const TopoDS_Vertex&               theVertex,
   const gp_Pnt2d&                    thePointOnEdge,
   const gp_Pnt2d&                    theSamePointOnEdge,
+  const TopoDS_Edge&                 theRefEdge,
   TopTools_ListIteratorOfListOfShape theEdgeIt,
   BRepMesh::PairOfReal&              theToleranceUV) const
 {
@@ -719,18 +748,62 @@ void BRepMesh_FastDiscret::computeToleranceUV (
   for (; theEdgeIt.More (); theEdgeIt.Next ())
   {
     const TopoDS_Edge& aNextEdge = TopoDS::Edge (theEdgeIt.Value ());
-
-    gp_Pnt2d aNextPnt2d;
-    if (!pointOnEdge (theVertex, aNextEdge, aNextPnt2d))
+    if (!isSameWire (theRefEdge, aNextEdge))
       continue;
 
-    const gp_XY aD1 = thePointOnEdge    .Coord () - aNextPnt2d.Coord ();
-    const gp_XY aD2 = theSamePointOnEdge.Coord () - aNextPnt2d.Coord ();
+    gp_XY aD;
+    if (!aNextEdge.IsSame (theRefEdge) && isDegenerated (aNextEdge))
+    {
+      gp_Pnt2d aNextPnt2d1, aNextPnt2d2;
+      if (!degenerativeEdgePointsUV (theVertex, aNextEdge, aNextPnt2d1, aNextPnt2d2))
+        continue;
 
-    const gp_XY& aD = (aD1.SquareModulus () < aD2.SquareModulus ()) ? aD1 : aD2;
+      const gp_XY aD1_1 = thePointOnEdge    .Coord () - aNextPnt2d1.Coord ();
+      const gp_XY aD1_2 = thePointOnEdge    .Coord () - aNextPnt2d2.Coord ();
+      const gp_XY&  aD1 = (aD1_1.SquareModulus () > aD1_2.SquareModulus ()) ? aD1_1 : aD1_2;
+
+      const gp_XY aD2_1 = theSamePointOnEdge.Coord () - aNextPnt2d1.Coord ();
+      const gp_XY aD2_2 = theSamePointOnEdge.Coord () - aNextPnt2d2.Coord ();
+      const gp_XY&  aD2 = (aD2_1.SquareModulus () > aD2_2.SquareModulus ()) ? aD2_1 : aD2_2;
+
+      aD = (aD1.SquareModulus () > aD2.SquareModulus ()) ? aD1 : aD2;
+    }
+    else
+    {
+      gp_Pnt2d aNextPnt2d;
+      if (!pointOnEdge (theVertex, aNextEdge, aNextPnt2d))
+        continue;
+
+      const gp_XY aD1 = thePointOnEdge    .Coord () - aNextPnt2d.Coord ();
+      const gp_XY aD2 = theSamePointOnEdge.Coord () - aNextPnt2d.Coord ();
+
+      aD = (aD1.SquareModulus () < aD2.SquareModulus ()) ? aD1 : aD2;
+    }
+
     theToleranceUV.first  = Max (theToleranceUV.first,  Abs (aD.X ()));
     theToleranceUV.second = Max (theToleranceUV.second, Abs (aD.Y ()));
   }
+}
+
+//=======================================================================
+//function : degenerativeEdgePointsUV
+//purpose  : 
+//=======================================================================
+Standard_Boolean BRepMesh_FastDiscret::degenerativeEdgePointsUV (
+  const TopoDS_Vertex& theVertex,
+  const TopoDS_Edge&   theEdge,
+  gp_Pnt2d&            theFirstUV,
+  gp_Pnt2d&            theLastUV) const
+{
+  const TopoDS_Vertex aRevVertex = TopoDS::Vertex (theVertex.Reversed ());
+  if (!pointOnEdge (theVertex, theEdge, theFirstUV))
+    return Standard_False;
+
+  gp_Pnt2d aPnt2d2;
+  if (!pointOnEdge (aRevVertex, theEdge, theLastUV))
+    return Standard_False;
+
+  return Standard_True;
 }
 
 //=======================================================================
@@ -745,16 +818,10 @@ Standard_Boolean BRepMesh_FastDiscret::computeToleranceUVOnDegenerativeEdge (
 {
   if (isDegenerated (theEdge))
   {
-    const TopoDS_Vertex aRevVertex = TopoDS::Vertex (theVertex.Reversed ());
-    gp_Pnt2d aPnt2d1;
-    if (!pointOnEdge (theVertex, theEdge, aPnt2d1))
-      return Standard_False;
+    gp_Pnt2d aPnt2d1, aPnt2d2;
+    if (!degenerativeEdgePointsUV (theVertex, theEdge, aPnt2d1, aPnt2d2))
 
-    gp_Pnt2d aPnt2d2;
-    if (!pointOnEdge (aRevVertex, theEdge, aPnt2d2))
-      return Standard_False;
-
-    computeToleranceUV (theVertex, aPnt2d1, aPnt2d2, 
+    computeToleranceUV (theVertex, aPnt2d1, aPnt2d2, theEdge,
       TopTools_ListIteratorOfListOfShape (theSharedEdges), theToleranceUV);
 
     return Standard_True;
@@ -773,11 +840,40 @@ Standard_Boolean BRepMesh_FastDiscret::computeToleranceUVOnSeamEdge (
   const TopTools_ListOfShape& theSharedEdges,
   BRepMesh::PairOfReal&       theToleranceUV) const
 {
-  if (!BRepTools::IsReallyClosed (theEdge, myAttribute->Face ()))
-    return Standard_False;
+  TopoDS_Edge aRevEdge;
+  const Standard_Boolean isRealSeam = isSeam (theEdge);
+  if (isRealSeam)
+  {
+    aRevEdge = TopoDS::Edge (theEdge.Reversed ());
+  }
+  else
+  {
+    if (isDegenerated (theEdge))
+      return Standard_False;
 
-  // Seam edge.
-  const TopoDS_Edge aRevEdge = TopoDS::Edge (theEdge.Reversed ());
+    // Find another edge with same vertices.
+    TopoDS_Vertex aFirstVertex, aLastVertex;
+    TopExp::Vertices (theEdge, aFirstVertex, aLastVertex);
+
+    Standard_Boolean isFound = Standard_False;
+    TopTools_ListIteratorOfListOfShape aEdgeIt (theSharedEdges);
+    for (; aEdgeIt.More () && !isFound; aEdgeIt.Next ())
+    {
+      aRevEdge = TopoDS::Edge (aEdgeIt.Value ());
+      if (aRevEdge.IsEqual (theEdge))
+        continue;
+
+      TopoDS_Vertex aFirstVertexCurr, aLastVertexCurr;
+      TopExp::Vertices (aRevEdge , aFirstVertexCurr, aLastVertexCurr);
+
+      isFound = !isDegenerated (aRevEdge) &&
+        (aFirstVertex.IsSame (aFirstVertexCurr) && aLastVertex.IsSame (aLastVertexCurr)) ||
+        (aFirstVertex.IsSame (aLastVertexCurr)  && aLastVertex.IsSame (aFirstVertexCurr));
+    }
+
+    if (!isFound)
+      return Standard_False;
+  }
 
   // Get 2d points correspondent to the seam edge.
   gp_Pnt2d aPnt2d;
@@ -788,9 +884,18 @@ Standard_Boolean BRepMesh_FastDiscret::computeToleranceUVOnSeamEdge (
   if (!pointOnEdge (theVertex, aRevEdge, aRevPnt2d))
     return Standard_False;
 
-  // Compute tolerance using these points;
-  computeToleranceUV (theVertex, aPnt2d, aRevPnt2d, 
-    TopTools_ListIteratorOfListOfShape (theSharedEdges), theToleranceUV);
+  if (!isRealSeam && theSharedEdges.Size () == 2)
+  {
+    // Case of wire consisting of two edges
+    theToleranceUV.first  = Max (theToleranceUV.first,  Abs (aPnt2d.X () - aRevPnt2d.X ()));
+    theToleranceUV.second = Max (theToleranceUV.second, Abs (aPnt2d.Y () - aRevPnt2d.Y ()));
+  }
+  else
+  {
+    // Compute tolerance using these points;
+    computeToleranceUV (theVertex, aPnt2d, aRevPnt2d, theEdge,
+      TopTools_ListIteratorOfListOfShape (theSharedEdges), theToleranceUV);
+  }
 
   return Standard_True;
 }
@@ -804,19 +909,30 @@ Standard_Boolean BRepMesh_FastDiscret::computeToleranceUVOnSpecialEdge (
   const TopTools_ListOfShape& theSharedEdges,
   BRepMesh::PairOfReal&       theToleranceUV) const
 {
-  Standard_Boolean isSeam = Standard_False;
+  Standard_Boolean isSeam        = Standard_False;
+  Standard_Boolean isDegenerated = Standard_False;
   TopTools_ListIteratorOfListOfShape aSharedEdgeIt (theSharedEdges);
   for (; aSharedEdgeIt.More (); aSharedEdgeIt.Next ())
   {
     const TopoDS_Edge& aEdge = TopoDS::Edge (aSharedEdgeIt.Value ());
-    if (computeToleranceUVOnDegenerativeEdge (theVertex, aEdge, theSharedEdges, theToleranceUV))
-      return Standard_True;
+    BRepMesh::PairOfReal aTol (-1., -1.);
+    isDegenerated |= computeToleranceUVOnDegenerativeEdge (theVertex, 
+      aEdge, theSharedEdges, isDegenerated ? theToleranceUV : aTol);
 
-    if (!isSeam)
-      isSeam = computeToleranceUVOnSeamEdge (theVertex, aEdge, theSharedEdges, theToleranceUV);
+    if (isDegenerated && isSeam)
+    {
+      // Update tolerance by value taken for degenerative edge.
+      theToleranceUV = aTol;
+      isSeam = Standard_False;
+    }
+    else if (!isDegenerated)
+    {
+      isSeam |= computeToleranceUVOnSeamEdge (theVertex, 
+        aEdge, theSharedEdges, theToleranceUV);
+    }
   }
 
-  return isSeam;
+  return (isSeam || isDegenerated);
 }
 
 //=======================================================================
@@ -841,7 +957,7 @@ void BRepMesh_FastDiscret::computeToleranceUVOnEdge (
     aNextSharedEdgeIt.Next ();
 
     computeToleranceUV (theVertex, aCurrPnt2d, aCurrPnt2d, 
-      aNextSharedEdgeIt, theToleranceUV);
+      aEdge, aNextSharedEdgeIt, theToleranceUV);
   }
 }
 
@@ -877,6 +993,26 @@ const BRepMesh::PairOfReal& BRepMesh_FastDiscret::toleranceUV (
   }
 
   return myVertexTolUVCache.Find (theVertex);
+}
+
+//=======================================================================
+//function : isSameWire
+//purpose  : 
+//=======================================================================
+Standard_Boolean BRepMesh_FastDiscret::isSameWire (
+    const TopoDS_Edge& theFirstEdge,
+    const TopoDS_Edge& theSecondEdge) const
+{
+  const BRepMesh::MapOfShape& aWires = myEdgeWires (theFirstEdge);
+
+  Standard_Boolean isFound = Standard_False;
+  BRepMesh::MapOfShape::Iterator aWireIt (aWires);
+  for (; aWireIt.More () && !isFound; aWireIt.Next ())
+  {
+    isFound = myWireEdges (aWireIt.Value ()).Contains (theSecondEdge);
+  }
+
+  return isFound;
 }
 
 //=======================================================================

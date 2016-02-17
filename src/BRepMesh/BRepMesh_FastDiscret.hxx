@@ -34,6 +34,7 @@
 #include <BRepMesh_ShapeTool.hxx>
 #include <TopoDS_Vertex.hxx>
 #include <TopTools_IndexedDataMapOfShapeListOfShape.hxx>
+#include <BRepTools.hxx>
 
 class BRepMesh_DataStructureOfDelaun;
 class Bnd_Box;
@@ -390,7 +391,14 @@ private:
     const TopTools_ListOfShape& theSharedEdges,
     BRepMesh::PairOfReal&       theToleranceUV) const;
 
-  //! Ñompute maximum UV distance to be used to knit two points correspondent to
+  //! Returns UV end points of degenerative edge. 
+  Standard_Boolean degenerativeEdgePointsUV (
+    const TopoDS_Vertex& theVertex,
+    const TopoDS_Edge&   theEdge,
+    gp_Pnt2d&            theFirstUV,
+    gp_Pnt2d&            theLastUV) const;
+
+  //! Compute maximum UV distance to be used to knit two points correspondent to
   //! the given vertex in parametric space. Implements logic for general case.
   //! @param theVertex vertex for which maximum UV distance should be computed.
   //! @param theSharedEdges list of edges shared by the passed vertex.
@@ -407,6 +415,7 @@ private:
   void computeToleranceUV (const TopoDS_Vertex&               theVertex,
                            const gp_Pnt2d&                    thePointOnEdge,
                            const gp_Pnt2d&                    theSamePointOnEdge,
+                           const TopoDS_Edge&                 theRefEdge,
                            TopTools_ListIteratorOfListOfShape theEdgeIt,
                            BRepMesh::PairOfReal&              theToleranceUV) const;
 
@@ -417,7 +426,8 @@ private:
                                 gp_Pnt2d&            thePointOnEdge) const;
 
   //! Returns True in case if the given edge is degenerated.
-  inline Standard_Boolean isDegenerated (const TopoDS_Edge& theEdge) const {
+  inline Standard_Boolean isDegenerated (const TopoDS_Edge& theEdge) const
+  {
     if (!myDegenerativeEdgesCache.IsBound (theEdge))
     {
       myDegenerativeEdgesCache.Bind (theEdge, 
@@ -426,6 +436,23 @@ private:
 
     return myDegenerativeEdgesCache (theEdge);
   }
+
+  //! Returns True in case if the given edge is real seam edge.
+  inline Standard_Boolean isSeam (const TopoDS_Edge& theEdge) const
+  {
+    if (!mySeamEdgesCache.IsBound (theEdge))
+    {
+      mySeamEdgesCache.Bind (theEdge, 
+        BRepTools::IsReallyClosed (theEdge, myAttribute->Face ()));
+    }
+
+    return mySeamEdgesCache (theEdge);
+  }
+
+  //! Checks are the given edges related to the same wire or not.
+  Standard_Boolean isSameWire (
+    const TopoDS_Edge& theFirstEdge,
+    const TopoDS_Edge& theSecondEdge) const;
 
 private:
 
@@ -443,6 +470,9 @@ private:
   TopTools_IndexedDataMapOfShapeListOfShape        mySharedEdges;
   mutable BRepMesh::DMapOfVertexPairOfReal         myVertexTolUVCache;
   mutable BRepMesh::DMapOfEdgeBoolean              myDegenerativeEdgesCache;
+  mutable BRepMesh::DMapOfEdgeBoolean              mySeamEdgesCache;
+  BRepMesh::DMapOfEdgeMapOfShape                   myEdgeWires;
+  BRepMesh::DMapOfShapeMapOfShape                  myWireEdges;
 
   Parameters                                       myParameters;
 

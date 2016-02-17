@@ -166,7 +166,7 @@ gp_XY BRepMesh_ShapeTool::FindUV(
   }
 
   const Standard_Real aTolerance = 
-    Min(2. * BRep_Tool::Tolerance(theVertex), theMinDistance);
+    Max(2. * BRep_Tool::Tolerance(theVertex), theMinDistance);
 
   const Handle(BRepAdaptor_HSurface)& aSurface = theFaceAttribute->Surface();
   const gp_Pnt aPnt1 = aSurface->Value(aUV.X(), aUV.Y());
@@ -174,7 +174,7 @@ gp_XY BRepMesh_ShapeTool::FindUV(
 
   //! If selected point is too far from the given one in parametric space
   //! or their positions in 3d are different, add the given point as unique.
-  if (Abs(aUV.X() - aPnt2d.X()) > theToleranceUV.first ||
+  if (Abs(aUV.X() - aPnt2d.X()) > theToleranceUV.first  ||
       Abs(aUV.Y() - aPnt2d.Y()) > theToleranceUV.second ||
       !aPnt1.IsEqual(aPnt2, aTolerance))
   {
