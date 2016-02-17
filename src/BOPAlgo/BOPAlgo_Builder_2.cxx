@@ -59,6 +59,7 @@
 #include <BOPTools_ListOfCoupleOfShape.hxx>
 #include <BOPTools_MapOfSet.hxx>
 #include <BOPTools_DataMapOfShapeSet.hxx>
+#include <GeomLib.hxx>
 
 
 static
@@ -284,6 +285,9 @@ void BOPAlgo_Builder::BuildSplitFaces()
     }
     //
     const TopoDS_Face& aF=(*(TopoDS_Face*)(&aSI.Shape()));
+    Standard_Boolean isUClosed = Standard_False,
+                     isVClosed = Standard_False,
+                     isChecked = Standard_False;
     //
     bHasFaceInfo=myDS->HasFaceInfo(i);
     if(!bHasFaceInfo) {
@@ -321,8 +325,6 @@ void BOPAlgo_Builder::BuildSplitFaces()
     for (; aExp.More(); aExp.Next()) {
       const TopoDS_Edge& aE=(*(TopoDS_Edge*)(&aExp.Current()));
       anOriE=aE.Orientation();
-      bIsDegenerated=BRep_Tool::Degenerated(aE);
-      bIsClosed=BRep_Tool::IsClosed(aE, aF);
       //
       if (!myImages.IsBound(aE)) {
         if (anOriE==TopAbs_INTERNAL) {
@@ -335,8 +337,32 @@ void BOPAlgo_Builder::BuildSplitFaces()
         else {
           aLE.Append(aE);
         }
+
+        continue;
       }
-      else {//else 1
+
+      if(!isChecked)
+      {
+        const Handle(Geom_Surface) aSurf = BRep_Tool::Surface(aF);
+        GeomLib::IsClosed(aSurf, BRep_Tool::Tolerance(aE),
+          isUClosed, isVClosed);
+
+        isChecked = Standard_True;
+      }
+
+      bIsClosed = Standard_False;
+
+      if((isUClosed || isVClosed) && BRep_Tool::IsClosed(aE, aF)) 
+      {
+
+        Standard_Boolean isUIso = Standard_False, isVIso = Standard_False;
+        BOPTools_AlgoTools2D::IsEdgeIsoline(aE, aF, isUIso, isVIso);
+
+        bIsClosed = ((isUClosed && isUIso) || (isVClosed && isVIso));
+      }
+
+      bIsDegenerated=BRep_Tool::Degenerated(aE);
+
         const BOPCol_ListOfShape& aLIE=myImages.Find(aE);
         aIt.Initialize(aLIE);
         for (; aIt.More(); aIt.Next()) {
@@ -376,7 +402,6 @@ void BOPAlgo_Builder::BuildSplitFaces()
           }
           aLE.Append(aSp);
         }// for (; aIt.More(); aIt.Next()) {
-      }// else 1
     }// for (; aExp.More(); aExp.Next()) {
     // 
     //

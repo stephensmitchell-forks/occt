@@ -196,5 +196,13 @@ is
           ---Purpose:   
           --- Make empty  P-Curve <aC> of relevant to <PC> type  
           ---
+          
+    IsEdgeIsoline(myclass; 
+                  theE: Edge from TopoDS;
+                  theF: Face from TopoDS;
+                  isTheUIso, isTheVIso: in out Boolean from Standard);
+          --- Purpose: Checks if CurveOnSurface of theE on theF matches with
+           --         isoline of theF surface. Sets corresponding values for
+           --         isTheUIso and isTheVIso variables. 
 
 end AlgoTools2D;

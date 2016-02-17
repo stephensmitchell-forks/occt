@@ -1,7 +1,6 @@
-#puts "TODO OCC12345 ALL: Faulty shapes in variables faulty_1 to faulty_"
-#puts "TODO OCC12345 ALL: Error : The square of result shape is"
-puts "TODO OCC12345 ALL: Error : The command is not valid"
-puts "TODO OCC12345 ALL: Error : Result shape is WRONG because it must contains"
+puts "TODO OCC25917 ALL: Faulty shapes in variables faulty_1 to faulty_"
+puts "TODO OCC25917 ALL: Error : The square of result shape"
+puts "TODO OCC25917 ALL: Error : Result shape is WRONG"
 
 puts "========================"
 puts " OCC472 "
@@ -22,6 +21,6 @@ bfuse result b1 b2
 
 set nb_v_good 5
 set nb_e_edge 7
-set square 0
+set square 229.516
 set 2dviewer 0
 

@@ -287,6 +287,35 @@ is
      --                  1 for  quasysingular (ex.: sphere  pole) 
      --                  2 for conical singular  point      
      --                  3 if computation impossible  (for ex. DU||DV - tangent isolines)
+     
+    IsClosed(S: Surface from Geom ; Tol: Real from Standard;
+              isUClosed, isVClosed: in out Boolean from Standard);
+    --- Purpose: This method defines if opposite boundaries of surface
+     --          coincide with given tolerance
+    
+    IsBSplUClosed(S: BSplineSurface from Geom; U1, U2, Tol: Real from Standard)
+	       returns Boolean from  Standard;
+    --- Purpose: Returns true if the poles of U1-isoline and the poles of
+     --          U2-isoline of surface are identical according to tolerance criterion.
+     --          For rational surfaces Weights(i)*Poles(i) are checked.
+    
+    IsBSplVClosed(S: BSplineSurface from Geom; V1, V2, Tol: Real from Standard)
+	       returns Boolean from  Standard;
+    --- Purpose: Returns true if the poles of V1-isoline and the poles of
+     --          V2-isoline of surface are identical according to tolerance criterion.
+     --          For rational surfaces Weights(i)*Poles(i) are checked.
+     
+    IsBzUClosed(S: BezierSurface from Geom; U1, U2, Tol: Real from Standard)
+	       returns Boolean from  Standard;
+    --- Purpose: Returns true if the poles of U1-isoline and the poles of
+     --          U2-isoline of surface are identical according to tolerance criterion.
+    
+    IsBzVClosed(S: BezierSurface from Geom; V1, V2, Tol: Real from Standard)
+	       returns Boolean from  Standard;
+    --- Purpose: Returns true if the poles of V1-isoline and the poles of
+     --          V2-isoline of surface are identical according to tolerance criterion.
+        
+     
 
 
 end GeomLib;
