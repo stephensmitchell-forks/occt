@@ -5386,6 +5386,283 @@ static int VAutoActivateSelection (Draw_Interpretor& theDi,
   return 0;
 }
 
+#include <ObjDataSource.h>
+#include <MeshPresentation.h>
+#include <MeshVS_Drawer.hxx>
+#include <MeshPrsBuilder.h>
+#include <MeshVS_MeshPrsBuilder.hxx>
+#include <MeshVS_DrawerAttribute.hxx>
+#include <Message.hxx>
+#include <Message_Messenger.hxx>
+namespace
+{
+  std::vector<TCollection_AsciiString> Split (const TCollection_AsciiString& pSource,
+                                              const TCollection_AsciiString& pSeparator)
+  {
+    std::vector<TCollection_AsciiString> result;
+
+    TCollection_AsciiString token;
+    const Standard_Integer aSize = pSource.Length();
+    unsigned int previousPos = 1;
+    unsigned int currentPos = 1;
+    while ((currentPos = pSource.FirstLocationInSet(pSeparator, currentPos, aSize)) != 0)
+    {
+      result.push_back(pSource.SubString(previousPos, currentPos - previousPos));
+
+      previousPos = ++currentPos;
+    }
+
+    // Save last element.
+    result.push_back(pSource.SubString(previousPos, aSize));
+
+    return result;
+  }
+
+  //! Returns true for grayscale properties.
+  inline bool isGrayscaleProperty (const TCollection_AsciiString& theName)
+  {
+    return theName == "intensity";
+  }
+
+  Handle(MeshPresentation) createMeshPresentation (const Handle(MeshDataSource)&  theDataSource,
+                                                   const TCollection_AsciiString& theEntry,
+                                                   TCollection_AsciiString&       theSelEntry,
+                                                   Handle(MeshScalarProperty)&    theSelProperty)
+  {
+    theSelEntry.Clear();
+    theSelProperty.Nullify();
+    if (theDataSource.IsNull())
+    {
+      return Handle(MeshPresentation)();
+    }
+
+    theSelEntry = theEntry;
+    if (theEntry.IsEmpty())
+    {
+      if (theDataSource->HasTexture())
+      {
+        theSelEntry = "ply_textured";
+      }
+      else if (theDataSource->HasNodalColors())
+      {
+        theSelEntry = "ply_colored";
+      }
+      /*else if (theDataSource->HasNormals())
+      {
+      theSelEntry = "ply_smoothshaded";
+      }*/
+      else
+      {
+        theSelEntry = "ply_smoothshaded";
+        //theSelEntry = "ply_shaded";
+      }
+    }
+
+    std::cout << theSelEntry << std::endl;
+
+    Handle(MeshPresentation) aMesh = new MeshPresentation();
+    Handle(MeshVS_Drawer) aDrawer = aMesh->GetDrawer();
+    aDrawer->SetBoolean(MeshVS_DA_ShowEdges, Standard_False);
+    aDrawer->SetBoolean(MeshVS_DA_SmoothShading, theDataSource->HasNormals());
+    aMesh->SetDataSource(theDataSource);
+    aMesh->SetMaterial(Graphic3d_NOM_PLASTIC); // myMatAspect
+    if (theSelEntry == "ply_textured")
+    {
+      //myPrsCaps |= DisplayCaps_Texture;
+      aDrawer->SetBoolean(MeshVS_DA_SmoothShading, Standard_True);
+      aDrawer->SetColor(MeshVS_DA_InteriorColor, Quantity_NOC_GRAY65);
+      Handle(MeshPrsBuilder) aBuilder = new MeshPrsBuilder(aMesh, MeshVS_DMF_Shading);
+      aBuilder->SetMapTextures(Standard_True);
+      aMesh->AddBuilder(aBuilder, Standard_True);
+      aMesh->SetDisplayMode(MeshVS_DMF_Shading);
+    }
+    else if (theSelEntry == "ply_colored")
+    {
+      //myPrsCaps |= DisplayCaps_VertColor;
+      aDrawer->SetBoolean(MeshVS_DA_ColorReflection, Standard_True);
+
+      Handle(MeshVS_NodalColorPrsBuilder) aBuilder = new MeshVS_NodalColorPrsBuilder(aMesh, MeshVS_DMF_NodalColorDataPrs);
+      theDataSource->FillNodalColorsBuilder(aBuilder);
+      aMesh->AddBuilder(aBuilder, Standard_True);
+      aMesh->SetDisplayMode(MeshVS_DMF_NodalColorDataPrs);
+    }
+    else if (theSelEntry == "ply_wireframe")
+    {
+      aMesh->AddBuilder(new MeshVS_MeshPrsBuilder(aMesh.operator->()), Standard_True);
+      aMesh->SetDisplayMode(MeshVS_DMF_WireFrame);
+    }
+    else if (theSelEntry == "ply_smoothshaded")
+    {
+      aDrawer->SetBoolean(MeshVS_DA_SmoothShading, Standard_True);
+      aDrawer->SetColor(MeshVS_DA_InteriorColor, Quantity_NOC_GRAY65);
+      Handle(MeshPrsBuilder) aBuilder = new MeshPrsBuilder(aMesh, MeshVS_DMF_Shading);
+      aBuilder->SetMapTextures(Standard_False);
+      aMesh->AddBuilder(aBuilder, Standard_True);
+      aMesh->SetDisplayMode(MeshVS_DMF_Shading);
+    }
+    else if (theSelEntry == "ply_shaded")
+    {
+      aDrawer->SetColor(MeshVS_DA_InteriorColor, Quantity_NOC_GRAY65);
+      aDrawer->SetBoolean(MeshVS_DA_SmoothShading, Standard_False);
+      aMesh->AddBuilder(new MeshVS_MeshPrsBuilder(aMesh.operator->()), Standard_True);
+      aMesh->SetDisplayMode(MeshVS_DMF_Shading);
+    }
+    else if (theSelEntry == "ply_shrink")
+    {
+      aDrawer->SetColor(MeshVS_DA_InteriorColor, Quantity_NOC_GRAY65);
+      aMesh->AddBuilder(new MeshVS_MeshPrsBuilder(aMesh.operator->()), Standard_True);
+      aMesh->SetDisplayMode(MeshVS_DMF_Shrink);
+    }
+    //else if (theSelEntry.startsWith("ply_group_nodalprops\n"))
+    else if (theSelEntry.Search("ply_group_nodalprops\n") != -1)
+    {
+      //myPrsCaps |= DisplayCaps_Texture;
+      std::vector<TCollection_AsciiString> aList = Split(theEntry, "\n");
+      const int   aPropIndex = aList.size() != 2 ? 0 : aList.back().IntegerValue();
+
+      theSelProperty = theDataSource->NodalQuantities().Value(aPropIndex);
+      const Standard_Boolean isGrayscale = isGrayscaleProperty(theSelProperty->Name());
+      const Standard_Integer aMeshEdgesLimit = 100000;
+      if (!isGrayscale
+          && (aMeshEdgesLimit < 0 || theDataSource->NbNodes() <= aMeshEdgesLimit))
+      {
+        aDrawer->SetBoolean(MeshVS_DA_ShowEdges, Standard_True);
+      }
+      aDrawer->SetBoolean(MeshVS_DA_ColorReflection, Standard_True);
+
+      Handle(MeshPrsBuilder) aBuilder = new MeshPrsBuilder(aMesh, MeshVS_DMF_NodalColorDataPrs);
+      aBuilder->SetProperty(theSelProperty, Standard_False);
+      aBuilder->SetGrayscale(isGrayscale);
+
+      aMesh->AddBuilder(aBuilder, Standard_True);
+      aMesh->SetDisplayMode(MeshVS_DMF_NodalColorDataPrs);
+    }
+    //else if (theSelEntry.startsWith("ply_group_elemprops\n"))
+    else if (theSelEntry.Search("ply_group_elemprops\n") != -1)
+    {
+      //myPrsCaps |= DisplayCaps_Texture;
+      std::vector<TCollection_AsciiString> aList = Split(theEntry, "\n");
+      const int   aPropIndex = aList.size() != 2 ? 0 : aList.back().IntegerValue();
+
+      aDrawer->SetBoolean(MeshVS_DA_ColorReflection, Standard_True);
+
+      theSelProperty = theDataSource->ElementalQuantities().Value(aPropIndex);
+
+      Handle(MeshPrsBuilder) aBuilder = new MeshPrsBuilder(aMesh, MeshVS_DMF_ElementalColorDataPrs);
+      aBuilder->SetProperty(theSelProperty, Standard_True);
+      aBuilder->SetGrayscale(isGrayscaleProperty(theSelProperty->Name()));
+
+      aMesh->AddBuilder(aBuilder, Standard_True);
+      aMesh->SetDisplayMode(MeshVS_DMF_ElementalColorDataPrs);
+    }
+
+    return aMesh;
+  }
+}
+
+// =============================================================================
+// function : VDisplayObj
+// purpose  :
+// =============================================================================
+static int VDisplayObj (Draw_Interpretor& theDi,
+                        Standard_Integer  theArgNb,
+                        const char**      theArgVec)
+{
+  if (theArgNb < 3)
+  {
+    theDi << theArgVec[0] << "Error: wrong number of arguments.\n";
+    return 1;
+  }
+
+  const TCollection_AsciiString aName (theArgVec[1]);
+  const TCollection_AsciiString aPath (theArgVec[2]);
+
+  if (GetMapOfAIS().IsBound2(aName))
+  {
+    theDi << aName << "already exist.\n";
+    return 1;
+  }
+
+  Handle(ObjDataSource) aLoader = new ObjDataSource();
+
+  Standard_Boolean aResult = aLoader->Read (aPath, NULL, -1, -1);
+
+  if (!aResult)
+  {
+    theDi << "Error: can't read a file: '" << aPath.ToCString() << "'\n";
+    return 1;
+  }
+
+  /*const NCollection_Vector<MeshGroup>& aGroups = aLoader->Groups();
+  for (auto anIter = aGroups.cbegin(); anIter != aGroups.cend(); ++anIter)
+  {
+    const Quantity_Color& aDiffuseColor = anIter->Material.Aspect.DiffuseColor();
+    const Graphic3d_BSDF& aBSDF = anIter->Material.Aspect.BSDF();
+
+    std::cout << anIter->Material.Texture << std::endl;
+    std::cout << aDiffuseColor.Red() << ", " << aDiffuseColor.Green() << ", " << aDiffuseColor.Green() << std::endl;
+    std::cout << aBSDF.Kd.x() << ", " << aBSDF.Kd.y() << ", " << aBSDF.Kd.z() << std::endl << std::endl;
+  }*/
+
+  Handle(MeshScalarProperty) aProperty;
+  TCollection_AsciiString aSelEntry;
+  Handle(MeshVS_Mesh) aMesh = createMeshPresentation(aLoader, "", aSelEntry, aProperty);
+
+  ViewerTest::Display(aName, aMesh, Standard_False);
+
+  return 0;
+}
+
+#include <ObjDataWriter.h>
+#include <AIS_ListOfInteractive.hxx>
+// =============================================================================
+// function : VSaveObj
+// purpose  :
+// =============================================================================
+static int VSaveObj (Draw_Interpretor& theDi,
+                     Standard_Integer  theArgNb,
+                     const char**      theArgVec)
+{
+  if (theArgNb < 3)
+  {
+    theDi << theArgVec[0] << "Error: wrong number of arguments.\n";
+    return 1;
+  }
+
+  const TCollection_AsciiString aPath (theArgVec[1]);
+  AIS_ListOfInteractive aList;
+  Handle(ObjDataWriter) aWriter = new ObjDataWriter();
+
+  for (Standard_Integer anIter = 2; anIter < theArgNb; ++anIter)
+  {
+    TCollection_AsciiString aName (theArgVec[anIter]);
+
+    if (!GetMapOfAIS().IsBound2(aName))
+    {
+      theDi << aName << "is not exist.\n";
+      continue;
+    }
+
+    Handle(AIS_InteractiveObject) anObject = Handle(AIS_InteractiveObject)::DownCast(GetMapOfAIS().Find2(aName));
+    if (anObject.IsNull())
+    {
+      theDi << aName << "is not an interactive object.\n";
+      continue;
+    }
+
+    /*Handle(MeshVS_Mesh) aMesh = Handle(MeshVS_Mesh)::DownCast(anObject);
+    if (!aMesh.IsNull())
+    {
+      aWriter->Write (aMesh->GetDataSource(), aPath, NULL);
+    }*/
+
+    aList.Append(anObject);
+  }
+  aWriter->Write (aList, aPath, NULL);
+
+  return 0;
+}
+
 //==============================================================================
 //function : ViewerTest::Commands
 //purpose  : Add all the viewer command in the Draw_Interpretor
@@ -5434,6 +5711,14 @@ void ViewerTest::Commands(Draw_Interpretor& theCommands)
       "\n\t\t:  -highmode sets hilight mode for objects."
       "\n\t\t:  -redisplay recomputes presentation of objects.",
       __FILE__, VDisplay2, group);
+
+  theCommands.Add("vdisplayobj",
+                  "vdisplayobj name path",
+                  __FILE__, VDisplayObj, group);
+
+  theCommands.Add("vsaveobj",
+                  "vsaveobj file names",
+                  __FILE__, VSaveObj, group);
 
   theCommands.Add ("vupdate",
       "vupdate name1 [name2] ... [name n]"

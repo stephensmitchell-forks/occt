@@ -1,4 +1,6 @@
 TKGeomBase
+TKXCAF
+TKLCAF
 TKFillet
 TKBRep
 TKTopAlgo
@@ -15,6 +17,7 @@ TKTopTest
 TKG3d
 TKOffset
 TKMesh
+TKMeshVS
 TKV3d
 TKDraw
 TKOpenGl
