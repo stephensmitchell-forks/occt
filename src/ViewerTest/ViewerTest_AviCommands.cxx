@@ -419,6 +419,7 @@ protected:
       ::Message::DefaultMessenger()->Send (aMsg, Message_Fail);
       return Standard_False;
     }
+    myImgSrcRgba.SetTopDown(true);
 
     myScaleCtx = sws_getContext (aCodecCtx->width, aCodecCtx->height, myPixFmtSrc,
                                  aCodecCtx->width, aCodecCtx->height, aCodecCtx->pix_fmt,

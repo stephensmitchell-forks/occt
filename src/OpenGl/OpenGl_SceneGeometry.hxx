@@ -362,7 +362,7 @@ public:
   //! This is not restriction of the solution implemented, but
   //! rather the reasonable limit of the number of textures in
   //! various applications (can be increased if needed).
-  static const Standard_Integer MAX_TEX_NUMBER = 32;
+  static const Standard_Integer MAX_TEX_NUMBER = 64;
 
 public:
 
