@@ -475,7 +475,7 @@ void OpenGl_View::Redraw()
   if (myRenderParams.Method == Graphic3d_RM_RAYTRACING
    && myRenderParams.IsGlobalIlluminationEnabled)
   {
-    myAccumFrames++;
+    myAccumFrames += myRenderParams.SamplesPerPixel;
   }
 
   // bind default FBO
