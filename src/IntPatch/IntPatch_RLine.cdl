@@ -309,10 +309,29 @@ is
 	---C++: inline
         is redefined;
 
+    ChangeVertex(me: mutable; Index : Integer from Standard) returns Point from IntPatch
+        ---Purpose: Returns the vertex of range Index on the line.
+        ---C++: inline
+        ---C++: return &
+
+        raises OutOfRange from Standard
+        --- The exception OutOfRange is raised if Index <= 0 or Index
+        --  > NbVertex.
+        is redefined;
+
     ClearVertexes(me: mutable)
     
         ---Purpose: Removes vertices from the line
 	---C++: inline
+        is redefined;
+
+    RemoveVertex(me: mutable; Index : Integer from Standard)
+        ---Purpose: Removes single vertex from the line
+        ---C++: inline
+
+        raises OutOfRange from Standard
+        --- The exception OutOfRange is raised if Index <= 0 or Index
+        --  > NbVertex.
         is redefined;
     
     SetCurve(me: mutable; theNewCurve: LineOn2S from IntSurf)

@@ -91,10 +91,28 @@ is
     --- The exception OutOfRange is raised if Index <= 0 or Index > NbVertex.
     
     is deferred;
-    
+
+  ChangeVertex(me: mutable; Index : Integer from Standard) returns Point from IntPatch
+    ---Purpose: Returns the vertex of range Index on the line.
+
+    ---C++: return &
+
+    raises OutOfRange from Standard
+    --- The exception OutOfRange is raised if Index <= 0 or Index > NbVertex.
+
+    is deferred;
+
   ClearVertexes(me: mutable)
     ---Purpose: Removes vertices from the line
     
+    is deferred;
+
+  RemoveVertex(me: mutable; Index : Integer from Standard)
+    ---Purpose: Removes single vertex from the line
+
+    raises OutOfRange from Standard
+    --- The exception OutOfRange is raised if Index <= 0 or Index > NbVertex.
+
     is deferred;
     
   Curve(me) returns LineOn2S from IntSurf
