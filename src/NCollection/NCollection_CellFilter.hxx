@@ -164,6 +164,15 @@ public:
     myCellSize = theCellSize;
     resetAllocator ( theAlloc );
   }
+
+  //! Clear the data structures and set new cell sizes and allocator
+  void Reset (Standard_Real theCellSize[], 
+              const Handle(NCollection_IncAllocator)& theAlloc=0)
+  {
+    for (int i=0; i < mySize; i++)
+      myCellSize[i] = theCellSize[i];
+    resetAllocator ( theAlloc );
+  }
   
   //! Adds a target object for further search at a point (into only one cell)
   void Add (const Target& theTarget, const Point &thePnt)
