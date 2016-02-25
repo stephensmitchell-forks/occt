@@ -17,6 +17,7 @@
 #include <LocOpe_WiresOnShape.ixx>
 
 #include <TopExp_Explorer.hxx>
+
 #include <BRep_Builder.hxx>
 #include <BRep_Tool.hxx>
 #include <TopTools_MapOfShape.hxx>
@@ -81,9 +82,7 @@ static void PutPCurves(const TopoDS_Edge&,
 
 static void FindInternalIntersections(const TopoDS_Edge&,
                                       const TopoDS_Face&,
-                                      TopTools_IndexedDataMapOfShapeListOfShape&,
-                                      TopTools_DataMapOfShapeShape&,
-                                      TopTools_MapOfShape&);
+                                      TopTools_IndexedDataMapOfShapeListOfShape&);
 
 //=======================================================================
 //function : LocOpe_WiresOnShape
@@ -240,7 +239,7 @@ void LocOpe_WiresOnShape::BindAll()
       continue;
 
     if (myCheckInterior)
-      FindInternalIntersections(edg, fac, Splits, myMap, theMap);
+      FindInternalIntersections(edg, fac, Splits);//, myMap, theMap);
   }
 
   for (Ind = 1; Ind <= Splits.Extent(); Ind++)
@@ -259,13 +258,7 @@ void LocOpe_WiresOnShape::BindAll()
       myMapEF.Add(itl.Value(), aFace);
   }
   
-  // Il faut s`occuper maintenant des vertex "de changement de face", 
-  // et des vertex "libres"
-//  TopTools_DataMapIteratorOfDataMapOfShapeShape ite2;
-
-//  for (ite.Initialize(myMapEF); ite.More(); ite.Next()) {
-//    const TopoDS_Edge& edg = TopoDS::Edge(ite.Key());
-//    const TopoDS_Face& fac = TopoDS::Face(ite.Value());
+ 
   for (Ind = 1; Ind <= myMapEF.Extent(); Ind++) {
     const TopoDS_Edge& edg = TopoDS::Edge(myMapEF.FindKey(Ind));
     const TopoDS_Face& fac = TopoDS::Face(myMapEF(Ind));
@@ -278,11 +271,11 @@ void LocOpe_WiresOnShape::BindAll()
       if (theMap.Contains(vtx)) {
 	continue;
       }
-      ////
+      
       Standard_Real vtx_param = BRep_Tool::Parameter(vtx, edg);
       BRepAdaptor_Curve2d BAcurve2d(edg, fac);
       gp_Pnt2d p2d = BAcurve2d.Value(vtx_param);
-      ////
+
       TopoDS_Edge Epro;
       Standard_Real prm = 0.;
       Standard_Boolean ok = Project(vtx, p2d, fac, Epro, prm);
@@ -457,13 +450,24 @@ Standard_Boolean LocOpe_WiresOnShape::OnEdge(const TopoDS_Vertex& V,
   }
   
   Ed = TopoDS::Edge(myMap(V));
-  TopoDS_Face theFace = TopoDS::Face(myMapEF.FindFromKey(EdgeFrom));
+  if(!myMapEF.Contains(EdgeFrom))
+    return Standard_False;
+
+  TopoDS_Shape aShape = myMapEF.FindFromKey(EdgeFrom);
+  if(  aShape.ShapeType() == TopAbs_FACE)
+  {
   ////
-  Standard_Real vtx_param = BRep_Tool::Parameter(V, EdgeFrom);
-  BRepAdaptor_Curve2d BAcurve2d(EdgeFrom, theFace);
-  gp_Pnt2d p2d = BAcurve2d.Value(vtx_param);
+    TopoDS_Face aFace = TopoDS::Face(aShape);
+    Standard_Real vtx_param = BRep_Tool::Parameter(V, EdgeFrom);
+    BRepAdaptor_Curve2d BAcurve2d(EdgeFrom, aFace);
+    gp_Pnt2d p2d = BAcurve2d.Value(vtx_param);
+
   ////
-  prm = Project(V, p2d, Ed, theFace);
+    prm = Project(V, p2d, Ed, aFace);
+  }
+  else
+    prm = Project( V, TopoDS::Edge(Ed));
+	
   return Standard_True;
 }
 
@@ -506,12 +510,24 @@ Standard_Boolean Project(const TopoDS_Vertex& V,
 
   if(theEdge.IsNull())
     return Standard_False;
+  //compute distance in 3D space
+
+  Handle(Geom2d_Curve) aCrvBound = BRep_Tool::CurveOnSurface(theEdge, F, f, l);
+  gp_Pnt2d aPBound2d;
+  aCrvBound->D0(param,aPBound2d);
+  gp_Pnt aPBound;
+  Handle(Geom_Surface) aSurf = BRep_Tool::Surface(F);
+  aSurf->D0(aPBound2d.X(), aPBound2d.Y(), aPBound);
+  
+  gp_Pnt aPV;
+  aSurf->D0(p2d.X(), p2d.Y(), aPV);
+  Standard_Real aDist3d = aPV.Distance(aPBound);
 
   Standard_Real ttol = BRep_Tool::Tolerance(V) + BRep_Tool::Tolerance(theEdge);
-  if (dmin <= ttol) {
+  if (aDist3d <= ttol) {
     valret = Standard_True;
     BRep_Builder B;
-    B.UpdateVertex(V, Max(dmin, BRep_Tool::Tolerance(V)));
+    B.UpdateVertex(V, Max(aDist3d, BRep_Tool::Tolerance(V)));
   }
 #ifdef OCCT_DEBUG_MESH
   else {
@@ -540,7 +556,7 @@ Standard_Real Project(const TopoDS_Vertex& V,
   C = BRep_Tool::Curve(theEdge,Loc,f,l);
   if (!Loc.IsIdentity()) {
     Handle(Geom_Geometry) GG = C->Transformed(Loc.Transformation());
-    C = *((Handle(Geom_Curve)*)&GG);
+    C = Handle(Geom_Curve)::DownCast (GG);
   }
   proj.Init(toproj,C,f,l);
   
@@ -569,7 +585,7 @@ Standard_Real Project(const TopoDS_Vertex&,
   /*
   if (!Loc.IsIdentity()) {
     Handle(Geom_Geometry) GG = C->Transformed(Loc.Transformation());
-    C = *((Handle(Geom_Curve)*)&GG);
+    C = Handle(Geom_Curve)::DownCast (GG);
   }
   */
   proj.Init(p2d, PC, f, l);
@@ -593,7 +609,7 @@ void PutPCurve(const TopoDS_Edge& Edg,
   Handle(Standard_Type) styp = S->DynamicType();
 
   if (styp == STANDARD_TYPE(Geom_RectangularTrimmedSurface)) {
-    S = (*((Handle(Geom_RectangularTrimmedSurface)*)&(S)))->BasisSurface();
+    S = Handle(Geom_RectangularTrimmedSurface)::DownCast (S)->BasisSurface();
     styp = S->DynamicType();
   }
 
@@ -606,9 +622,6 @@ void PutPCurve(const TopoDS_Edge& Edg,
 
   Standard_Real f,l;
 
-  //if (!BRep_Tool::CurveOnSurface(Edg,Fac,f,l).IsNull()) {
-  //  return;
-  //}
   Handle(Geom2d_Curve) aC2d = BRep_Tool::CurveOnSurface(Edg,Fac,f,l);
   if ( !aC2d.IsNull() ) {
     gp_Pnt2d p2d;
@@ -635,7 +648,7 @@ void PutPCurve(const TopoDS_Edge& Edg,
   Handle(Geom_Curve) C = BRep_Tool::Curve(Edg,Loc,f,l);
   if (!Loc.IsIdentity()) {
     Handle(Geom_Geometry) GG = C->Transformed(Loc.Transformation());
-    C = *((Handle(Geom_Curve)*)&GG);
+    C = Handle(Geom_Curve)::DownCast (GG);
   }
 
   if (C->DynamicType() != STANDARD_TYPE(Geom_TrimmedCurve)) {
@@ -709,20 +722,6 @@ void PutPCurve(const TopoDS_Edge& Edg,
       }
     }
 
-/*
-    if (theUmin > Umax-tolu) {
-      while (theUmin > Umax-tolu) {
-	theUmin -= up;
-	nbtra--;
-      }
-    }
-    else if (theUmax < Umin+tolu) {
-      while (theUmax < Umin+tolu) {
-	theUmax += up;
-	nbtra++;
-      }
-    }
-*/
     if (nbtra !=0) {
       C2d->Translate(gp_Vec2d(nbtra*up,0.));
     }
@@ -822,7 +821,7 @@ void PutPCurves(const TopoDS_Edge& Efrom,
       S = BRep_Tool::Surface(Fac, LocFac);
       styp = S->DynamicType();
       if (styp == STANDARD_TYPE(Geom_RectangularTrimmedSurface)) {
-	S = (*((Handle(Geom_RectangularTrimmedSurface)*)&(S)))->BasisSurface();
+	S = Handle(Geom_RectangularTrimmedSurface)::DownCast (S)->BasisSurface();
 	styp = S->DynamicType();
       }
       if (styp == STANDARD_TYPE(Geom_Plane)) {
@@ -834,7 +833,7 @@ void PutPCurves(const TopoDS_Edge& Efrom,
       C = BRep_Tool::Curve(Efrom,Loc,f,l);
       if (!Loc.IsIdentity()) {
 	Handle(Geom_Geometry) GG = C->Transformed(Loc.Transformation());
-	C = *((Handle(Geom_Curve)*)&GG);
+	C = Handle(Geom_Curve)::DownCast (GG);
       }
       
       if (C->DynamicType() != STANDARD_TYPE(Geom_TrimmedCurve)) {
@@ -999,7 +998,7 @@ void PutPCurves(const TopoDS_Edge& Efrom,
     C = BRep_Tool::Curve(Efrom,Loc,f,l);
     if (!Loc.IsIdentity()) {
       Handle(Geom_Geometry) GG = C->Transformed(Loc.Transformation());
-      C = *((Handle(Geom_Curve)*)&GG);
+      C = Handle(Geom_Curve)::DownCast (GG);
     }
 
     gp_Pnt pt;
@@ -1007,18 +1006,18 @@ void PutPCurves(const TopoDS_Edge& Efrom,
 
     C->D1(f,pt,d1f);
 
-    ////
+
     TopoDS_Vertex FirstVertex = TopExp::FirstVertex(Efrom);
     Standard_Real vtx_param = BRep_Tool::Parameter(FirstVertex, Efrom);
     BRepAdaptor_Curve2d BAcurve2d(Efrom, Fac);
     gp_Pnt2d p2d = BAcurve2d.Value(vtx_param);
-    ////
+
     Standard_Real prmproj = Project(TopExp::FirstVertex(Efrom),p2d,Eto,Fac);
     
     C = BRep_Tool::Curve(Eto,Loc,f,l);
     if (!Loc.IsIdentity()) {
       Handle(Geom_Geometry) GG = C->Transformed(Loc.Transformation());
-      C = *((Handle(Geom_Curve)*)&GG);
+      C = Handle(Geom_Curve)::DownCast (GG);
     }
     
     C->D1(prmproj,pt,d1t);
@@ -1030,14 +1029,14 @@ void PutPCurves(const TopoDS_Edge& Efrom,
       S = BRep_Tool::Surface(Fac);
       styp = S->DynamicType();
       if (styp == STANDARD_TYPE(Geom_RectangularTrimmedSurface)) {
-	S = (*((Handle(Geom_RectangularTrimmedSurface)*)&(S)))->BasisSurface();
+	S = Handle(Geom_RectangularTrimmedSurface)::DownCast (S)->BasisSurface();
 	styp = S->DynamicType();
       }
       
       C = BRep_Tool::Curve(Efrom,Loc,f,l);
       if (!Loc.IsIdentity()) {
 	Handle(Geom_Geometry) GG = C->Transformed(Loc.Transformation());
-	C = *((Handle(Geom_Curve)*)&GG);
+	C = Handle(Geom_Curve)::DownCast (GG);
       }
       
       if (C->DynamicType() != STANDARD_TYPE(Geom_TrimmedCurve)) {
@@ -1136,9 +1135,7 @@ void PutPCurves(const TopoDS_Edge& Efrom,
 
 void FindInternalIntersections(const TopoDS_Edge& theEdge,
                                const TopoDS_Face& theFace,
-                               TopTools_IndexedDataMapOfShapeListOfShape& Splits,
-                               TopTools_DataMapOfShapeShape& GlobalMap,
-                               TopTools_MapOfShape& theMap)
+                               TopTools_IndexedDataMapOfShapeListOfShape& Splits)
 {
   Standard_Real TolExt = Precision::PConfusion();
   Standard_Integer i, j, aNbExt;
@@ -1159,7 +1156,7 @@ void FindInternalIntersections(const TopoDS_Edge& theEdge,
   Standard_Real /*theFpar, theLpar,*/ aFpar, aLpar;
   const Handle(Geom_Curve)& theCurve = BRep_Tool::Curve(theEdge, thePar[0], thePar[1]);
   GeomAdaptor_Curve theGAcurve(theCurve, thePar[0], thePar[1]);
-  
+  Standard_Real aDistMax = Precision::Confusion();
   TopExp_Explorer Explo(theFace, TopAbs_EDGE);
   for (; Explo.More(); Explo.Next())
   {
@@ -1191,43 +1188,24 @@ void FindInternalIntersections(const TopoDS_Edge& theEdge,
       anExtrema.Points(i, aPOnC1, aPOnC2);
       Standard_Real theIntPar = aPOnC1.Parameter();
       Standard_Real anIntPar = aPOnC2.Parameter();
-      Standard_Boolean IntersFound = Standard_False;
+      //Standard_Boolean IntersFound = Standard_False;
       for (j = 0; j < 2; j++) //try to find intersection on an extremity of "theEdge"
       {
-        if (Abs(theIntPar - thePar[j]) <= Precision::PConfusion() &&
-            aDist <= Precision::Confusion())
-        {
-          theMap.Add(theVertices[j]);
-          TopExp_Explorer exp2(anEdge, TopAbs_VERTEX);
-          for (; exp2.More(); exp2.Next())
-          {
-            const TopoDS_Vertex& aVertex = TopoDS::Vertex(exp2.Current());
-            if (aVertex.IsSame(theVertices[j]))
-            {
-              IntersFound = Standard_True;
-              break;
-            }
-            if (BRepTools::Compare(theVertices[j], aVertex))
-            {
-              GlobalMap.Bind(theVertices[j], aVertex);
-              IntersFound = Standard_True;
-              break;
-            }
-          }
-          if (!IntersFound)
-          {
-            GlobalMap.Bind(theVertices[j], anEdge);
-            IntersFound = Standard_True;
-            break;
-          }
-        }
+        if (Abs(theIntPar - thePar[j]) <= Precision::PConfusion())
+          break;
+                
       }
-      if (!IntersFound && aDist <= Precision::Confusion()) //intersection is inside "theEdge" => split
+      //intersection found in the middle of the edge
+      if (j >= 2)//!IntersFound) //intersection is inside "theEdge" => split
       {
         gp_Pnt aPoint = aCurve->Value(anIntPar);
         if (aPoint.Distance(thePnt[0]) > BRep_Tool::Tolerance(theVertices[0]) &&
             aPoint.Distance(thePnt[1]) > BRep_Tool::Tolerance(theVertices[1]))
+        {
           SplitPars.Append(theIntPar);
+          if( aDist > aDistMax)
+            aDistMax = aDist;
+        }
       }
     }
   }
@@ -1244,7 +1222,6 @@ void FindInternalIntersections(const TopoDS_Edge& theEdge,
         SplitPars(i) = SplitPars(j);
         SplitPars(j) = Tmp;
       }
-
   //Remove repeating points
   i = 1;
   while (i < SplitPars.Length())
@@ -1272,6 +1249,8 @@ void FindInternalIntersections(const TopoDS_Edge& theEdge,
       LastPar = SplitPars(i);
       gp_Pnt LastPoint = theCurve->Value(LastPar);
       LastVertex = BRepLib_MakeVertex(LastPoint);
+      BRep_Builder aB;
+      aB.UpdateVertex(LastVertex, aDistMax);
     }
     else
     {

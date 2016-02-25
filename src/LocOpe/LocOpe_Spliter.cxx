@@ -147,7 +147,7 @@ void LocOpe_Spliter::Perform(const Handle(LocOpe_WiresOnShape)& PW)
 
   TopTools_MapOfShape theFacesWithSection;
   for (PW->InitEdgeIterator(); PW->MoreEdge(); PW->NextEdge()) {
-    const TopoDS_Edge& edg = PW->Edge();
+    TopoDS_Edge edg = PW->Edge();
     for (exp.Init(edg,TopAbs_VERTEX); exp.More(); exp.Next()) {
       const TopoDS_Vertex& vtx = TopoDS::Vertex(exp.Current());
       if (!mapV.Contains(vtx)) {
@@ -290,7 +290,7 @@ void LocOpe_Spliter::Perform(const Handle(LocOpe_WiresOnShape)& PW)
       TopoDS_Shape ebase = lsubs.First();
       lsubs.Clear();
       lsubs.Append(e1.Oriented(ebase.Orientation()));
-      theSubs.Substitute(ebase.Oriented(TopAbs_FORWARD),lsubs);
+      theSubs.Substitute(ebase,lsubs);
     }
     else {
 #ifdef OCCT_DEBUG
@@ -602,7 +602,7 @@ static void Select(const TopoDS_Edge& Ebase,
 
   if (!Loc.IsIdentity()) {
     Handle(Geom_Geometry) GG = C->Transformed(Loc.Transformation());
-    C = *((Handle(Geom_Curve)*)&GG);
+    C = Handle(Geom_Curve)::DownCast (GG);
   }
   gp_Pnt Pt(C->Value((f+l)/2.));
 
@@ -615,7 +615,7 @@ static void Select(const TopoDS_Edge& Ebase,
     C = BRep_Tool::Curve(edg,Loc,f,l);
     if (!Loc.IsIdentity()) {
       Handle(Geom_Geometry) GG = C->Transformed(Loc.Transformation());
-      C = *((Handle(Geom_Curve)*)&GG);
+      C = Handle(Geom_Curve)::DownCast (GG);
     }
     proj.Init(Pt,C,f,l);
     if (proj.NbPoints() > 0) {
