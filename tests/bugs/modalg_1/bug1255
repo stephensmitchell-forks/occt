@@ -6,8 +6,6 @@ puts ""
 ## Exception in command 'section'
 ###############################################
 
-puts "TODO #OCC26815 ALL: Error : The length of result shape is"
-
 restore [locate_data_file OCC1255.brep] a 
 checkshape a
 
@@ -16,5 +14,7 @@ mkface f1 p1
 
 bsection result a f1
 
-set length 5840.24
+set length 5837.18
 set 2dviewer 0
+checkshape result
+checksection result

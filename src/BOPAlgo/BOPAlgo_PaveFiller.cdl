@@ -259,7 +259,6 @@ is
     IsExistingPaveBlock(me:out; 
         thePB:PaveBlock from BOPDS;  
         theNC:Curve from BOPDS;
-        theTolR3D:Real from Standard; 
         theLSE:ListOfInteger from BOPCol) 
       returns Boolean from Standard 
       is protected;   
