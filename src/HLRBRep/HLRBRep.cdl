@@ -48,6 +48,15 @@ uses
     HLRTopoBRep
 
 is
+
+    enumeration TypeOfResultingEdge is 
+                Undefined,
+    	    	IsoLine, -- isoparametric line
+    	    	OutLine, -- outline ("silhouette")
+    	    	Rg1Line, -- smooth edge of G1-continuity between two surfaces
+    	    	RgNLine, -- sewn edge of CN-continuity on one surface
+    	    	Sharp;   -- sharp edge (of C0-continuity)
+
     class CurveTool;
     class BCurveTool;
     class Curve;

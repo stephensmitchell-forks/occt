@@ -52,7 +52,8 @@ uses
     Curve    from HLRBRep,
     Algo     from HLRBRep,
     Data     from HLRBRep,
-    EdgeData from HLRBRep
+    EdgeData from HLRBRep,
+    TypeOfResultingEdge from HLRBRep
 
 is
     Create(A : Algo from HLRBRep)
@@ -60,6 +61,24 @@ is
     	---Purpose: Constructs a framework for filtering the
     	--- results of the HLRBRep_Algo algorithm, A.
     	-- Use the extraction filters to obtain the results you want for A.
+
+    CompoundOfEdges(me : in out;
+    	    	    type    : TypeOfResultingEdge from HLRBRep;
+		    visible : Boolean             from Standard;
+		    In3d    : Boolean             from Standard)
+    returns Shape from TopoDS
+    	---C++: inline
+    is static;
+
+    CompoundOfEdges(me : in out;
+    	    	    S  : Shape from TopoDS;
+    	    	    type    : TypeOfResultingEdge from HLRBRep;
+		    visible : Boolean             from Standard;
+		    In3d    : Boolean             from Standard)
+    returns Shape from TopoDS
+    	---C++: inline
+    is static;
+
     VCompound(me : in out) returns Shape from TopoDS
     	---C++: inline
     is static;
