@@ -37,6 +37,7 @@
 #include <SelectMgr_SequenceOfOwner.hxx>
 #include <Select3D_SensitiveGroup.hxx>
 #include <Select3D_SensitiveBox.hxx>
+#include <StdSelect_BRepSelectionTool.hxx>
 
 #include <Graphic3d_MaterialAspect.hxx>
 #include <Graphic3d_AspectFillArea3d.hxx>
@@ -51,6 +52,7 @@
 
 #include <Bnd_Box.hxx>
 
+#include <MeshVS_CommonSensitiveEntity.hxx>
 #include <MeshVS_DataSource.hxx>
 #include <MeshVS_MeshEntityOwner.hxx>
 #include <MeshVS_MeshOwner.hxx>
@@ -304,113 +306,16 @@ void MeshVS_Mesh::ComputeSelection ( const Handle(SelectMgr_Selection)& theSelec
       if( myWholeMeshOwner.IsNull() )
 	myWholeMeshOwner = new SelectMgr_EntityOwner( this );
       
-      switch( mySelectionMethod )
+      if (mySelectionMethod == MeshVS_MSM_BOX)
       {
-      case MeshVS_MSM_BOX:
-        {
-          Bnd_Box box;
-          TColStd_MapIteratorOfPackedMapOfInteger anIterN( anAllNodesMap );
-          for( ; anIterN.More(); anIterN.Next() )
-	  {
-            if( myDataSource->GetGeom( anIterN.Key(), Standard_False, aCoords, NbNodes, aType ) ) {
-              box.Add (gp_Pnt (aCoords(1), aCoords(2), aCoords(3)));
-            }
-	  }
-          if (!box.IsVoid())
-            theSelection->Add (new Select3D_SensitiveBox (myWholeMeshOwner, box));
-        }
-        break;
-
-      case MeshVS_MSM_NODES:
-        {
-          TColStd_MapIteratorOfPackedMapOfInteger anIterN( anAllNodesMap );
-          for( ; anIterN.More(); anIterN.Next() )
-            if( myDataSource->GetGeom( anIterN.Key(), Standard_False, aCoords, NbNodes, aType ) &&
-                IsSelectableNode( anIterN.Key() ) )
-              theSelection->Add( new Select3D_SensitivePoint( myWholeMeshOwner, gp_Pnt ( aCoords(1), aCoords(2), aCoords(3) ) ) );
-        }
-        break;
-
-      case MeshVS_MSM_PRECISE:
-        {
-          Handle( Select3D_SensitiveEntity ) anEnt;
-          TColStd_MapIteratorOfPackedMapOfInteger anIterMV( anAllElementsMap );
-
-          TColStd_PackedMapOfInteger aSharedNodes;
-          for( ; anIterMV.More(); anIterMV.Next() )
-          {
-            Standard_Integer aKey = anIterMV.Key();
-
-            if( IsSelectableElem( aKey ) && 
-                myDataSource->GetGeomType( aKey, Standard_True, aType ) && 
-                aType==MeshVS_ET_Face )
-            {
-              myDataSource->GetGeom ( aKey, Standard_True, aCoords, NbNodes, aType );
-              if( NbNodes==0 )
-                continue;
-
-              MeshVS_Buffer aNodesBuf (NbNodes*sizeof(Standard_Integer));
-              TColStd_Array1OfInteger aElemNodes(aNodesBuf, 1, NbNodes);
-              if ( !myDataSource->GetNodesByElement ( aKey, aElemNodes, NbNodes ) )
-                continue;
-
-              TColgp_Array1OfPnt Points( 1, NbNodes );
-              for ( Standard_Integer i=1; i<=NbNodes; i++ )
-              {
-                Points (i) = gp_Pnt ( aCoords (3*i-2), aCoords (3*i-1), aCoords (3*i) );
-                aSharedNodes.Add( aElemNodes( i ) );
-              }
-
-              anEnt = new Select3D_SensitiveFace( myWholeMeshOwner, Points, Select3D_TOS_INTERIOR);
-              theSelection->Add( anEnt );
-            }
-          }
-          for( anIterMV.Initialize( anAllElementsMap ); anIterMV.More(); anIterMV.Next() )
-          {
-            Standard_Integer aKey = anIterMV.Key();
-
-            if( IsSelectableElem( aKey ) && 
-                myDataSource->GetGeomType( aKey, Standard_True, aType ) && 
-                aType==MeshVS_ET_Link )
-            {
-              myDataSource->GetGeom ( aKey, Standard_True, aCoords, NbNodes, aType );
-              if( NbNodes==0 )
-                continue;
-
-              MeshVS_Buffer aNodesBuf (NbNodes*sizeof(Standard_Integer));
-              TColStd_Array1OfInteger aElemNodes(aNodesBuf, 1, NbNodes);
-              if ( !myDataSource->GetNodesByElement ( aKey, aElemNodes, NbNodes ) )
-                continue;
-
-              TColgp_Array1OfPnt Points( 1, NbNodes );
-              Standard_Boolean all_shared = Standard_True;
-              for ( Standard_Integer i=1; i<=NbNodes; i++ )
-              {
-                Points (i) = gp_Pnt ( aCoords (3*i-2), aCoords (3*i-1), aCoords (3*i) );
-                all_shared = all_shared && aSharedNodes.Contains( aElemNodes( i ) );
-                aSharedNodes.Add( aElemNodes( i ) );
-              }
-
-              if( !all_shared )
-              {
-                anEnt = new Select3D_SensitiveSegment( myWholeMeshOwner, Points.Value( 1 ), Points.Value( 2 ) );
-                theSelection->Add( anEnt );
-              }
-            }
-          }
-          for( anIterMV.Initialize( anAllNodesMap ); anIterMV.More(); anIterMV.Next() )
-          {
-            Standard_Integer aKey = anIterMV.Key();
-            if( IsSelectableElem( aKey ) && 
-                myDataSource->GetGeom ( aKey, Standard_False, aCoords, NbNodes, aType ) && 
-                !aSharedNodes.Contains( aKey ) )
-            {
-              anEnt = new Select3D_SensitivePoint( myWholeMeshOwner, gp_Pnt ( aCoords(1), aCoords(2), aCoords(3) ) ) ;
-              theSelection->Add( anEnt );
-            }
-          }
-        }
-        break;
+        Bnd_Box aBndBox;
+        BoundingBox (aBndBox);
+        if (!aBndBox.IsVoid())
+          theSelection->Add (new Select3D_SensitiveBox (myWholeMeshOwner, aBndBox));
+      }
+      else
+      {
+        theSelection->Add (new MeshVS_CommonSensitiveEntity (myWholeMeshOwner, this, mySelectionMethod));
       }
       break;
 
@@ -601,6 +506,8 @@ void MeshVS_Mesh::ComputeSelection ( const Handle(SelectMgr_Selection)& theSelec
       break;
     }
   }
+
+  StdSelect_BRepSelectionTool::PreBuildBVH (theSelection);
 
   if ( ShowComputeSelectionTime )
   {

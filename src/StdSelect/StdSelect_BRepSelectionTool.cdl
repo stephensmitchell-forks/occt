@@ -152,9 +152,8 @@ is
     	-- computed for the faces which have none. If it is false,
     	-- sensitive entities on these faces will be calculated.
 
-    preBuildBVH (myclass;
-                 theSelection : Selection from SelectMgr)
-        is private;
+    PreBuildBVH (myclass;
+                 theSelection : Selection from SelectMgr);
         ---Level: Internal
         ---Purpose: Traverses the selection given and pre-builds BVH trees for heavyweight
         -- sensitive entities containing more than BVH_PRIMITIVE_LIMIT (defined in .cxx file)
