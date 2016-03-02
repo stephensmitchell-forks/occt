@@ -56,29 +56,29 @@ public:
   //! Performs the intersection between <Caro1>  and
   //! <Caro2>.  Associated Polyhedrons <Polyhedron1>
   //! and <Polyhedron2> are given.
-  Standard_EXPORT void Perform (const Handle(Adaptor3d_HSurface)& Caro1, const IntPatch_Polyhedron& Polyhedron1, const Handle(Adaptor3d_TopolTool)& Domain1, const Handle(Adaptor3d_HSurface)& Caro2, const IntPatch_Polyhedron& Polyhedron2, const Handle(Adaptor3d_TopolTool)& Domain2, const Standard_Real TolTangency, const Standard_Real Epsilon, const Standard_Real Deflection, const Standard_Real Increment);
+  Standard_EXPORT void Perform (const Handle(Adaptor3d_HSurface)& Caro1, const IntPatch_Polyhedron& Polyhedron1, const Handle(Adaptor3d_TopolTool)& Domain1, const Handle(Adaptor3d_HSurface)& Caro2, const IntPatch_Polyhedron& Polyhedron2, const Handle(Adaptor3d_TopolTool)& Domain2, const Standard_Real TolTangency, const Standard_Real Epsilon, const Standard_Real Deflection);
   
-  Standard_EXPORT void Perform (const Handle(Adaptor3d_HSurface)& Caro1, const IntPatch_Polyhedron& Polyhedron1, const Handle(Adaptor3d_TopolTool)& Domain1, const Standard_Real TolTangency, const Standard_Real Epsilon, const Standard_Real Deflection, const Standard_Real Increment);
-  
-  //! Performs the intersection between <Caro1>  and
-  //! <Caro2>. The method computes the polyhedron on
-  //! each surface.
-  Standard_EXPORT void Perform (const Handle(Adaptor3d_HSurface)& Caro1, const Handle(Adaptor3d_TopolTool)& Domain1, const Handle(Adaptor3d_HSurface)& Caro2, const Handle(Adaptor3d_TopolTool)& Domain2, const Standard_Real TolTangency, const Standard_Real Epsilon, const Standard_Real Deflection, const Standard_Real Increment, const Standard_Boolean ClearFlag = Standard_True);
+  Standard_EXPORT void Perform (const Handle(Adaptor3d_HSurface)& Caro1, const IntPatch_Polyhedron& Polyhedron1, const Handle(Adaptor3d_TopolTool)& Domain1, const Standard_Real TolTangency, const Standard_Real Epsilon, const Standard_Real Deflection);
   
   //! Performs the intersection between <Caro1>  and
   //! <Caro2>. The method computes the polyhedron on
   //! each surface.
-  Standard_EXPORT void Perform (const Handle(Adaptor3d_HSurface)& Caro1, const Handle(Adaptor3d_TopolTool)& Domain1, const Handle(Adaptor3d_HSurface)& Caro2, const Handle(Adaptor3d_TopolTool)& Domain2, const Standard_Real TolTangency, const Standard_Real Epsilon, const Standard_Real Deflection, const Standard_Real Increment, IntSurf_ListOfPntOn2S& ListOfPnts, const Standard_Boolean RestrictLine);
+  Standard_EXPORT void Perform (const Handle(Adaptor3d_HSurface)& Caro1, const Handle(Adaptor3d_TopolTool)& Domain1, const Handle(Adaptor3d_HSurface)& Caro2, const Handle(Adaptor3d_TopolTool)& Domain2, const Standard_Real TolTangency, const Standard_Real Epsilon, const Standard_Real Deflection, const Standard_Boolean ClearFlag = Standard_True);
   
   //! Performs the intersection between <Caro1>  and
   //! <Caro2>. The method computes the polyhedron on
   //! each surface.
-  Standard_EXPORT void Perform (const Handle(Adaptor3d_HSurface)& Caro1, const Handle(Adaptor3d_TopolTool)& Domain1, const Handle(Adaptor3d_HSurface)& Caro2, const Handle(Adaptor3d_TopolTool)& Domain2, const Standard_Real U1, const Standard_Real V1, const Standard_Real U2, const Standard_Real V2, const Standard_Real TolTangency, const Standard_Real Epsilon, const Standard_Real Deflection, const Standard_Real Increment);
+  Standard_EXPORT void Perform (const Handle(Adaptor3d_HSurface)& Caro1, const Handle(Adaptor3d_TopolTool)& Domain1, const Handle(Adaptor3d_HSurface)& Caro2, const Handle(Adaptor3d_TopolTool)& Domain2, const Standard_Real TolTangency, const Standard_Real Epsilon, const Standard_Real Deflection, IntSurf_ListOfPntOn2S& ListOfPnts, const Standard_Boolean RestrictLine);
   
   //! Performs the intersection between <Caro1>  and
   //! <Caro2>. The method computes the polyhedron on
   //! each surface.
-  Standard_EXPORT void Perform (const Handle(Adaptor3d_HSurface)& Caro1, const Handle(Adaptor3d_TopolTool)& Domain1, const Standard_Real TolTangency, const Standard_Real Epsilon, const Standard_Real Deflection, const Standard_Real Increment);
+  Standard_EXPORT void Perform (const Handle(Adaptor3d_HSurface)& Caro1, const Handle(Adaptor3d_TopolTool)& Domain1, const Handle(Adaptor3d_HSurface)& Caro2, const Handle(Adaptor3d_TopolTool)& Domain2, const Standard_Real U1, const Standard_Real V1, const Standard_Real U2, const Standard_Real V2, const Standard_Real TolTangency, const Standard_Real Epsilon, const Standard_Real Deflection);
+  
+  //! Performs the intersection between <Caro1>  and
+  //! <Caro2>. The method computes the polyhedron on
+  //! each surface.
+  Standard_EXPORT void Perform (const Handle(Adaptor3d_HSurface)& Caro1, const Handle(Adaptor3d_TopolTool)& Domain1, const Standard_Real TolTangency, const Standard_Real Epsilon, const Standard_Real Deflection);
   
   //! Performs  the intersection between <Caro1> and
   //! <Caro2>.
@@ -86,7 +86,7 @@ public:
   //! The polyhedron which approximates     <Caro2>,
   //! <Polyhedron2> is given. The other one is
   //! computed.
-  Standard_EXPORT void Perform (const Handle(Adaptor3d_HSurface)& Caro1, const Handle(Adaptor3d_TopolTool)& Domain1, const Handle(Adaptor3d_HSurface)& Caro2, const IntPatch_Polyhedron& Polyhedron2, const Handle(Adaptor3d_TopolTool)& Domain2, const Standard_Real TolTangency, const Standard_Real Epsilon, const Standard_Real Deflection, const Standard_Real Increment);
+  Standard_EXPORT void Perform (const Handle(Adaptor3d_HSurface)& Caro1, const Handle(Adaptor3d_TopolTool)& Domain1, const Handle(Adaptor3d_HSurface)& Caro2, const IntPatch_Polyhedron& Polyhedron2, const Handle(Adaptor3d_TopolTool)& Domain2, const Standard_Real TolTangency, const Standard_Real Epsilon, const Standard_Real Deflection);
   
   //! Performs  the intersection between <Caro1> and
   //! <Caro2>.
@@ -94,7 +94,7 @@ public:
   //! The polyhedron which approximates     <Caro1>,
   //! <Polyhedron1> is given. The other one is
   //! computed.
-  Standard_EXPORT void Perform (const Handle(Adaptor3d_HSurface)& Caro1, const IntPatch_Polyhedron& Polyhedron1, const Handle(Adaptor3d_TopolTool)& Domain1, const Handle(Adaptor3d_HSurface)& Caro2, const Handle(Adaptor3d_TopolTool)& Domain2, const Standard_Real TolTangency, const Standard_Real Epsilon, const Standard_Real Deflection, const Standard_Real Increment);
+  Standard_EXPORT void Perform (const Handle(Adaptor3d_HSurface)& Caro1, const IntPatch_Polyhedron& Polyhedron1, const Handle(Adaptor3d_TopolTool)& Domain1, const Handle(Adaptor3d_HSurface)& Caro2, const Handle(Adaptor3d_TopolTool)& Domain2, const Standard_Real TolTangency, const Standard_Real Epsilon, const Standard_Real Deflection);
   
   //! Returns true if the calculus was succesfull.
     Standard_Boolean IsDone() const;

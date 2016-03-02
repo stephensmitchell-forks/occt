@@ -1496,11 +1496,45 @@ static Standard_Integer intersection (Draw_Interpretor& di,
   if (GS2.IsNull())
     return 1;
 
-  //
+  Handle(GeomAdaptor_HSurface) AS1,AS2;
   Standard_Real tol = Precision::Confusion();
-  if (n == 5 || n == 9 || n == 13 || n == 17)
-    tol = Draw::Atof(a[n-1]);
+  Standard_Real UVsta[4];
+  Standard_Boolean useStart = Standard_False, useBnd = Standard_False, isPostProcessingReq = Standard_True;
 
+  for(Standard_Integer i = 4; i < n; i++)
+  {
+    if(!strcmp(a[i], "-sp"))
+    {
+      useStart = Standard_True;
+      for(Standard_Integer j = 0; j < 4; j++)
+      {
+        UVsta[j] = Draw::Atof(a[++i]);
+      }
+    }
+
+    if(!strcmp(a[i], "-b"))
+    {
+      Standard_Real UVbnd[8];
+      useBnd = Standard_True;
+      for(Standard_Integer j = 0; j < 4; j++)
+      {
+        UVbnd[j] = Draw::Atof(a[++i]);
+      }
+
+      AS1 = new GeomAdaptor_HSurface(GS1,UVbnd[0],UVbnd[1],UVbnd[2],UVbnd[3]);
+      AS2 = new GeomAdaptor_HSurface(GS2,UVbnd[4],UVbnd[5],UVbnd[6],UVbnd[7]);
+    }
+
+    if(!strcmp(a[i], "-t"))
+    {
+      tol = Draw::Atof(a[++i]);
+    }
+
+    if(!strcmp(a[i], "-npp"))
+    {
+      isPostProcessingReq = Standard_False;
+    }
+  }
   //
   Handle(Geom_Curve) Result;
   gp_Pnt             Point;
@@ -1509,76 +1543,24 @@ static Standard_Integer intersection (Draw_Interpretor& di,
   if (GC1.IsNull())
   {
     GeomInt_IntSS Inters;
-    //
-    // Surface Surface
-    if (n <= 5)
+
+    if(!useStart && !useBnd)
     {
       // General case
-      Inters.Perform(GS1,GS2,tol,Standard_True);
+      Inters.Perform(GS1,GS2,tol,Standard_True, Standard_False, Standard_False, isPostProcessingReq);
     }
-    else if (n == 8 || n == 9 || n == 12 || n == 13 || n == 16 || n == 17)
+    else if (useStart && !useBnd)
     {
-      Standard_Boolean useStart = Standard_True, useBnd = Standard_True;
-      Standard_Integer ista1=0,ista2=0,ibnd1=0,ibnd2=0;
-      Standard_Real UVsta[4];
-      Handle(GeomAdaptor_HSurface) AS1,AS2;
-
-      //
-      if (n <= 9)          // user starting point
-      {
-        useBnd = Standard_False;
-        ista1 = 4;
-        ista2 = 7;
-      }
-      else if (n <= 13)   // user bounding
-      {
-        useStart = Standard_False;
-        ibnd1 = 4; ibnd2 = 11;
-      }
-      else        // both user starting point and bounding
-      {
-        ista1 = 4; ista2 = 7;
-        ibnd1 = 8; ibnd2 = 15;
-      }
-
-      if (useStart)
-      {
-        for (Standard_Integer i=ista1; i <= ista2; i++)
-        {
-          UVsta[i-ista1] = Draw::Atof(a[i]);
-        }
-      }
-
-      if (useBnd)
-      {
-        Standard_Real UVbnd[8];
-        for (Standard_Integer i=ibnd1; i <= ibnd2; i++)
-          UVbnd[i-ibnd1] = Draw::Atof(a[i]);
-
-        AS1 = new GeomAdaptor_HSurface(GS1,UVbnd[0],UVbnd[1],UVbnd[2],UVbnd[3]);
-        AS2 = new GeomAdaptor_HSurface(GS2,UVbnd[4],UVbnd[5],UVbnd[6],UVbnd[7]);
-      }
-
-      //
-      if (useStart && !useBnd)
-      {
-        Inters.Perform(GS1,GS2,tol,UVsta[0],UVsta[1],UVsta[2],UVsta[3]);
-      }
-      else if (!useStart && useBnd)
-      {
-        Inters.Perform(AS1,AS2,tol);
-      }
-      else
-      {
-        Inters.Perform(AS1,AS2,tol,UVsta[0],UVsta[1],UVsta[2],UVsta[3]);
-      }
-    }//else if (n == 8 || n == 9 || n == 12 || n == 13 || n == 16 || n == 17)
+      Inters.Perform(GS1,GS2,tol,UVsta[0],UVsta[1],UVsta[2],UVsta[3], Standard_True, Standard_False, Standard_False, Standard_True);
+    }
+    else if (!useStart && useBnd)
+    {
+      Inters.Perform(AS1,AS2,tol,Standard_True, Standard_False, Standard_False, Standard_True);
+    }
     else
     {
-      di<<"incorrect number of arguments\n";
-      return 1;
+      Inters.Perform(AS1,AS2,tol,UVsta[0],UVsta[1],UVsta[2],UVsta[3], Standard_True, Standard_False, Standard_False, Standard_True);
     }
-
     //
     if (!Inters.IsDone())
     {
@@ -1798,8 +1780,9 @@ void  GeometryTest::CurveCommands(Draw_Interpretor& theCommands)
   g = "GEOMETRY intersections";
 
   theCommands.Add("intersect",
-		  "intersect result surf1/curv1 surf2 [tolerance]\n\t\t  "
-                  "intersect result surf1 surf2 [u1 v1 u2 v2] [U1F U1L V1F V1L U2F U2L V2F V2L] [tolerance]",
+                  "intersect result surf1 surf2 [-sp u1 v1 u2 v2] [-b U1F U1L V1F V1L U2F U2L V2F V2L] [-t tolerance] [-npp] : "
+                  "Use:\n -sp option for setting start point;\n -b option for setting bounds;\n "
+                  "-t option for setting tolerance;\n -npp option for switching off post-processing intersection line (e.g. avoid purger)",
 		  __FILE__,
 		  intersection,g);
 

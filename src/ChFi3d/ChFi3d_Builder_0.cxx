@@ -3319,15 +3319,14 @@ Standard_Boolean ChFi3d_ComputeCurves(const Handle(Adaptor3d_HSurface)&   S1,
   // At this stage : 
   // classic intersections have failed, the path is approached in vain.
 
-  Standard_Real Step = 0.1;
-  for(;;) {
+  for(Standard_Integer aNbIter = 20;;) {
     //Attention the parameters of arrow for the path and
     //the tolerance for the approximation can't be taken as those of the  
     //Builder, so they are reestimated as much as possible.
     Standard_Real fleche = 1.e-3 * pdeb.Distance(pfin);
     Standard_Real tolap = 1.e-7;
     IntWalk_PWalking
-      IntKK(S1,S2,tol3d,tol3d,fleche,Step);
+      IntKK(S1,S2,tol3d,tol3d,fleche);
 
     //The extremities of the intersection (Pardeb,Parfin) are known,
     //one tries to find the start point at the 
@@ -3351,8 +3350,7 @@ Standard_Boolean ChFi3d_ComputeCurves(const Handle(Adaptor3d_HSurface)&   S1,
     IntKK.Perform(depart);
     if (!IntKK.IsDone()) return Standard_False;
     if (IntKK.NbPoints() <= 30) {
-      Step *= 0.5;
-      if (Step <= 0.0001) {
+      if (--aNbIter <= 0) {
         return Standard_False;
       }
     }

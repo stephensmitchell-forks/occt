@@ -521,7 +521,7 @@ void IntTools_FaceFace::Perform(const TopoDS_Face& aF1,
     myContext->UVBounds(myFace2, umin, umax, vmin, vmax);
     CorrectSurfaceBoundaries(myFace2, myTol * 2., umin, umax, vmin, vmax);
     myHS2->ChangeSurface().Load(S2, umin, umax, vmin, vmax);
-  }
+    }
   else if ((aType2==GeomAbs_Plane) && isFace1Quad)
   {
     Standard_Real umin, umax, vmin, vmax;
@@ -533,7 +533,7 @@ void IntTools_FaceFace::Perform(const TopoDS_Face& aF1,
     myContext->UVBounds(myFace2, umin, umax, vmin, vmax);
     CorrectPlaneBoundaries(umin, umax, vmin, vmax);
     myHS2->ChangeSurface().Load(S2, umin, umax, vmin, vmax);
-  }
+    }
   else
   {
     Standard_Real umin, umax, vmin, vmax;
@@ -553,12 +553,8 @@ void IntTools_FaceFace::Perform(const TopoDS_Face& aF1,
 
   Tolerances(myHS1, myHS2, TolTang);
 
-  {
-    const Standard_Real UVMaxStep = 0.001;
-    const Standard_Real Deflection = 0.1;
-    myIntersector.SetTolerances(TolArc, TolTang, UVMaxStep, Deflection); 
-  }
-  
+  myIntersector.SetTolerances(TolArc, TolTang, 0.1); 
+
   if((myHS1->IsUClosed() && !myHS1->IsUPeriodic()) || 
      (myHS1->IsVClosed() && !myHS1->IsVPeriodic()) ||
      (myHS2->IsUClosed() && !myHS2->IsUPeriodic()) || 

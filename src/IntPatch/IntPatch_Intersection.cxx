@@ -47,7 +47,7 @@ IntPatch_Intersection::IntPatch_Intersection ()
  : done(Standard_False),
    //empt, tgte, oppo,
    myTolArc(0.0), myTolTang(0.0),
-   myUVMaxStep(0.0), myFleche(0.0),
+   myFleche(0.0),
    myIsStartPnt(Standard_False)
    //myU1Start, myV1Start, myU2Start, myV2Start
 {
@@ -65,7 +65,7 @@ IntPatch_Intersection::IntPatch_Intersection(const Handle(Adaptor3d_HSurface)&  
  : done(Standard_False),
    //empt, tgte, oppo,
    myTolArc(TolArc), myTolTang(TolTang),
-   myUVMaxStep(0.0), myFleche(0.0),
+   myFleche(0.0),
    myIsStartPnt(Standard_False)
    //myU1Start, myV1Start, myU2Start, myV2Start
 {
@@ -86,7 +86,7 @@ IntPatch_Intersection::IntPatch_Intersection(const Handle(Adaptor3d_HSurface)&  
  : done(Standard_False),
    //empt, tgte, oppo,
    myTolArc(TolArc), myTolTang(TolTang),
-   myUVMaxStep(0.0), myFleche(0.0),
+   myFleche(0.0),
    myIsStartPnt(Standard_False)
    //myU1Start, myV1Start, myU2Start, myV2Start
 {
@@ -98,21 +98,17 @@ IntPatch_Intersection::IntPatch_Intersection(const Handle(Adaptor3d_HSurface)&  
 //======================================================================
 void IntPatch_Intersection::SetTolerances(const Standard_Real TolArc,
                                           const Standard_Real TolTang,
-                                          const Standard_Real UVMaxStep,
                                           const Standard_Real Fleche)
 { 
   myTolArc     = TolArc;
   myTolTang    = TolTang;
-  myUVMaxStep  = UVMaxStep;
   myFleche     = Fleche;
   if(myTolArc<1e-8) myTolArc=1e-8;
   if(myTolTang<1e-8) myTolTang=1e-8;
   if(myTolArc>0.5) myTolArc=0.5;
   if(myTolTang>0.5) myTolTang=0.5;  
   if(myFleche<1.0e-3) myFleche=1e-3;
-  if(myUVMaxStep<1.0e-3) myUVMaxStep=1e-3;
   if(myFleche>10) myFleche=10;
-  if(myUVMaxStep>0.5) myUVMaxStep=0.5;
 }
 
 //======================================================================
@@ -126,7 +122,6 @@ void IntPatch_Intersection::Perform(const Handle(Adaptor3d_HSurface)&  S1,
   myTolArc = TolArc;
   myTolTang = TolTang;
   if(myFleche == 0.0)  myFleche = 0.01;
-  if(myUVMaxStep==0.0) myUVMaxStep = 0.01;
 
   done = Standard_True;
   spnt.Clear();
@@ -169,7 +164,7 @@ void IntPatch_Intersection::Perform(const Handle(Adaptor3d_HSurface)&  S1,
   default:
     {
       IntPatch_PrmPrmIntersection interpp;
-      interpp.Perform(S1,D1,TolTang,TolArc,myFleche,myUVMaxStep);
+      interpp.Perform(S1,D1,TolTang,TolArc,myFleche);
       if (interpp.IsDone())
       {
         done = Standard_True;
@@ -746,8 +741,6 @@ void IntPatch_Intersection::Perform(const Handle(Adaptor3d_HSurface)&  theS1,
   myTolTang = TolTang;
   if(myFleche <= Precision::PConfusion())
     myFleche = 0.01;
-  if(myUVMaxStep <= Precision::PConfusion())
-    myUVMaxStep = 0.01;
 
   done = Standard_False;
   spnt.Clear();
@@ -1008,8 +1001,6 @@ void IntPatch_Intersection::Perform(const Handle(Adaptor3d_HSurface)&  theS1,
   myTolTang = TolTang;
   if(myFleche <= Precision::PConfusion())
     myFleche = 0.01;
-  if(myUVMaxStep <= Precision::PConfusion())
-    myUVMaxStep = 0.01;
     
   done = Standard_False;
   spnt.Clear();
@@ -1245,10 +1236,10 @@ void IntPatch_Intersection::ParamParamPerfom(const Handle(Adaptor3d_HSurface)&  
     Standard_Boolean ClearFlag = Standard_True;
     if(!ListOfPnts.IsEmpty())
     {
-      interpp.Perform(theS1,theD1,theS2,theD2,TolTang,TolArc,myFleche,myUVMaxStep, ListOfPnts, RestrictLine);
+      interpp.Perform(theS1,theD1,theS2,theD2,TolTang,TolArc,myFleche, ListOfPnts, RestrictLine);
       ClearFlag = Standard_False;
     }
-    interpp.Perform(theS1,theD1,theS2,theD2,TolTang,TolArc,myFleche,myUVMaxStep,ClearFlag);   //double call!!!!!!!
+    interpp.Perform(theS1,theD1,theS2,theD2,TolTang,TolArc,myFleche,ClearFlag);   //double call!!!!!!!
   }
   else if((theD1->DomainIsInfinite()) ^ (theD2->DomainIsInfinite()))
   {
@@ -1261,7 +1252,7 @@ void IntPatch_Intersection::ParamParamPerfom(const Handle(Adaptor3d_HSurface)&  
       const Standard_Real AP = Max(MU, MV);
       Handle(Adaptor3d_HSurface) SS;
       FUN_TrimInfSurf(pMinXYZ, pMaxXYZ, theS1, AP, SS);
-      interpp.Perform(SS,theD1,theS2,theD2,TolTang,TolArc,myFleche,myUVMaxStep);
+      interpp.Perform(SS,theD1,theS2,theD2,TolTang,TolArc,myFleche);
     }
     else
     {
@@ -1271,7 +1262,7 @@ void IntPatch_Intersection::ParamParamPerfom(const Handle(Adaptor3d_HSurface)&  
       const Standard_Real AP = Max(MU, MV);
       Handle(Adaptor3d_HSurface) SS;
       FUN_TrimInfSurf(pMinXYZ, pMaxXYZ, theS2, AP, SS);
-      interpp.Perform(theS1, theD1, SS, theD2,TolTang, TolArc,myFleche,myUVMaxStep);
+      interpp.Perform(theS1, theD1, SS, theD2,TolTang, TolArc,myFleche);
     }
   }//(theD1->DomainIsInfinite()) ^ (theD2->DomainIsInfinite())
   else
@@ -1310,7 +1301,7 @@ void IntPatch_Intersection::ParamParamPerfom(const Handle(Adaptor3d_HSurface)&  
       Handle(Adaptor3d_HSurface) nS1 = theS1;
       Handle(Adaptor3d_HSurface) nS2 = theS2;
       FUN_TrimBothSurf(theS1,typs1,theS2,typs2,1.e+8,nS1,nS2);
-      interpp.Perform(nS1,theD1,nS2,theD2,TolTang,TolArc,myFleche,myUVMaxStep);
+      interpp.Perform(nS1,theD1,nS2,theD2,TolTang,TolArc,myFleche);
     }// 'NON - COLLINEAR LINES'
   }// both domains are infinite
 
@@ -1505,11 +1496,11 @@ void IntPatch_Intersection::
       Handle(Adaptor3d_HSurface) nS1 = theS1;
       Handle(Adaptor3d_HSurface) nS2 = theS2;
       FUN_TrimBothSurf(theS1,typs1,theS2,typs2,1.e+5,nS1,nS2);
-      interip.Perform(nS1,theD1,nS2,theD2,myTolArc,myTolTang,myFleche,myUVMaxStep);
+      interip.Perform(nS1,theD1,nS2,theD2,myTolArc,myTolTang,myFleche, 0.001);
     }
   }
   else
-    interip.Perform(theS1,theD1,theS2,theD2,myTolArc,myTolTang,myFleche,myUVMaxStep);
+    interip.Perform(theS1,theD1,theS2,theD2,myTolArc,myTolTang,myFleche, 0.001);
 
   if (interip.IsDone()) 
   {
@@ -1557,13 +1548,6 @@ void IntPatch_Intersection::Perform(const Handle(Adaptor3d_HSurface)&  S1,
 #endif
     myFleche = 0.01;
   }
-  if(myUVMaxStep==0.0) {
-#if DEBUG
-    //cout<<" -- IntPatch_Intersection::myUVMaxStep fixe par defaut a 0.01 --"<<endl;
-    //cout<<" -- Utiliser la Methode SetTolerances( ... ) "<<endl;
-#endif
-    myUVMaxStep = 0.01;
-  }
 
   done = Standard_False;
   spnt.Clear();
@@ -1593,7 +1577,7 @@ void IntPatch_Intersection::Perform(const Handle(Adaptor3d_HSurface)&  S1,
   else
   {
     IntPatch_PrmPrmIntersection interpp;
-    interpp.Perform(S1,D1,S2,D2,U1,V1,U2,V2,TolTang,TolArc,myFleche,myUVMaxStep);
+    interpp.Perform(S1,D1,S2,D2,U1,V1,U2,V2,TolTang,TolArc,myFleche);
     if (interpp.IsDone())
     {
       done = Standard_True;

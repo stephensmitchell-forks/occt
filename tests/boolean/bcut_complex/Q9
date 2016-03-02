@@ -4,5 +4,11 @@ explode m
 compound m_2 m_3 m_4 m_5 c1
 
 bcut result m_1 c1
+
+set log [bopargcheck result #F]
+if { [string compare -nocase $log "Shape(s) seem(s) to be valid for BOP.\n"] } {
+  puts "ERROR. result is not valid for BOP"
+}
+
 checkprops result -s 57618.4
 checkview -display result -2d -s -otherwise { m_1 c1 } -path ${imagedir}/${test_image}.png

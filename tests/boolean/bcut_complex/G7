@@ -1,3 +1,5 @@
+puts "TODO OCCT ALL: Faulty shapes in variables faulty_1 to faulty_4"
+
 # Original bug : fra60810
 # Date : 30mar98
 
@@ -7,3 +9,23 @@ restore [locate_data_file CTO900_fra60810-tool.rle] tool
 bcut result part tool
 checkprops result -s 30948.9
 checkview -display result -2d -s -otherwise { part tool } -path ${imagedir}/${test_image}.png
+
+
+############
+# This fragment should be deleted later.
+# It is used for regression explanation. Intersection result seems to be valid.
+
+restore [locate_data_file CTO900_fra60810-part.rle] part
+restore [locate_data_file CTO900_fra60810-tool.rle] tool
+
+explode part f
+explode tool f
+
+donly part_9 part_10 part_23 part_24 tool_4 tool_13
+bclearobjects
+bcleartools
+baddobjects part_9 part_10 part_23 part_24
+baddtools tool_4 tool_13
+bfillds
+bbop rr 4
+

@@ -195,8 +195,9 @@ void TopOpeBRep_FacesIntersector::Perform(const TopoDS_Shape& F1,const TopoDS_Sh
   if (TopOpeBRepTool_GettraceKRO()) KRO_DSFILLER_INTFF.Start();
 #endif
 
-  Standard_Real Deflection=0.01,MaxUV=0.01;
+  Standard_Real Deflection=0.01;
   if (!myForceTolerances) {
+    Standard_Real MaxUV;
     FTOL_FaceTolerances3d(B1,B2,myFace1,myFace2,S1,S2,
 				myTol1,myTol2,Deflection,MaxUV);  
     myTol1 = (myTol1 > 1.e-4)? 1.e-4: myTol1;
@@ -211,11 +212,10 @@ void TopOpeBRep_FacesIntersector::Perform(const TopoDS_Shape& F1,const TopoDS_Sh
   if (TopOpeBRep_GettraceFITOL()) {
     cout<<"FacesIntersector : Perform tol1 = "<<tol1<<endl;
     cout<<"                           tol2 = "<<tol2<<endl;
-    cout<<"                           defl = "<<Deflection<<"  MaxUV = "<<MaxUV<<endl;
   }
 #endif
 
-  myIntersector.SetTolerances(myTol1,myTol2,MaxUV,Deflection); 
+  myIntersector.SetTolerances(myTol1,myTol2,Deflection); 
   myIntersector.Perform(mySurface1,myDomain1,mySurface2,myDomain2,
                         myTol1,myTol2,Standard_True,Standard_True,
                         Standard_False);

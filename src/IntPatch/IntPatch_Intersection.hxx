@@ -71,7 +71,7 @@ public:
   //! UVMaxStep is  a  parameter   used in  the  walking
   //! algorithms  to    compute the  distance between to
   //! points in their respective parametrtic spaces.
-  Standard_EXPORT void SetTolerances (const Standard_Real TolArc, const Standard_Real TolTang, const Standard_Real UVMaxStep, const Standard_Real Fleche);
+  Standard_EXPORT void SetTolerances (const Standard_Real TolArc, const Standard_Real TolTang, const Standard_Real Fleche);
   
   //! Flag theIsReqToKeepRLine has been enterred only for
   //! compatibility with TopOpeBRep package. It shall be deleted
@@ -178,7 +178,6 @@ private:
   IntPatch_SequenceOfLine slin;
   Standard_Real myTolArc;
   Standard_Real myTolTang;
-  Standard_Real myUVMaxStep;
   Standard_Real myFleche;
   Standard_Boolean myIsStartPnt;
   Standard_Real myU1Start;

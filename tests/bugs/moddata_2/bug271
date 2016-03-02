@@ -12,7 +12,7 @@ set U2 0.01131870392278708
 set V1 226.9760100729095
 set V2 203.7283534809051
 
-intersect result su1 su2 $U1 $V1 $U2 $V2
+intersect result su1 su2 -sp $U1 $V1 $U2 $V2
 
 set che [whatis result]
 

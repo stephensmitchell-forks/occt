@@ -25,6 +25,12 @@ IntWalk_StepTooSmall,
 IntWalk_PointConfondu,
 IntWalk_ArretSurPointPrecedent,
 IntWalk_ArretSurPoint,
+IntWalk_IntersectsBoundary,
+IntWalk_IntersectPointNotFound,
+IntWalk_TooManyPoints,
+IntWalk_AnotherDirection,
+IntWalk_DirectionNotFound,
+IntWalk_ForcefulAdding,
 IntWalk_OK
 };
 

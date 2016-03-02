@@ -1,0 +1,41 @@
+puts "========"
+puts "OCC23914"
+puts "========"
+puts ""
+#################################
+# Intersection algorithm produced too many intersection points
+#################################
+
+set max_time 0.05
+
+bsplinesurf s1 1 2 0 2 1000 2 1 2 200 2 2000 2 100 300 200 1 400 300 200 1 100 300 500 1 400 300 500 1
+bsplinesurf s2 1 2 0 2 100 2 1 2 500 2 1000 2 100 200 400 1 500 200 400 1 100 600 400 1 500 600 400 1
+
+dchrono cr reset
+dchrono cr start
+
+intersect result s1 s2 -npp
+# Only one curve must be found
+
+dchrono cr stop
+
+set chrono_info [dchrono cr show]
+regexp {CPU user time: ([-0-9.+eE]+) seconds} $chrono_info full CPU_time
+if { $CPU_time > ${max_time} } {
+  puts "CPU user time of Boolean operation is more than ${max_time} seconds - Error"
+} else {
+  puts "CPU user time of Boolean operation is less than ${max_time} seconds - OK"
+}
+
+mkedge ee result
+checkprops ee -l 300
+
+bounds result t1 t2
+xdistcs result s1 t1 t2 10 1.0e-7
+xdistcs result s2 t1 t2 10 1.0e-7
+
+smallview 
+donly s1 s2 result
+fit
+
+checkview -screenshot -2d -path ${imagedir}/${test_image}.png
