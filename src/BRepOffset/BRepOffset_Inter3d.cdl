@@ -61,7 +61,8 @@ is
 		   A      :        Analyse              from BRepOffset;
 		   MES    : in out DataMapOfShapeShape  from TopTools;
 		   Build  : in out DataMapOfShapeShape  from TopTools;
-		   Failed : in out ListOfShape          from TopTools)
+		   Failed : in out ListOfShape          from TopTools;
+                   bIsPlanar:      Boolean              from Standard = Standard_False)
     is static;
      
     ContextIntByInt( me             : in  out;   
@@ -71,7 +72,8 @@ is
 		     A              :        Analyse              from BRepOffset;
 		     MES            : in out DataMapOfShapeShape  from TopTools;
 		     Build          : in out DataMapOfShapeShape  from TopTools;
-		     Failed         : in out ListOfShape          from TopTools) 
+		     Failed         : in out ListOfShape          from TopTools;
+                     bIsPlanar      :        Boolean              from Standard = Standard_False)
     is  static; 
      
     ContextIntByArc(me : in out;

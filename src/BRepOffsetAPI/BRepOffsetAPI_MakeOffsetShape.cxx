@@ -47,7 +47,7 @@ BRepOffsetAPI_MakeOffsetShape::BRepOffsetAPI_MakeOffsetShape
  const Standard_Boolean RemoveIntEdges)
 {
   myOffsetShape.Initialize (S,Offset,Tol,Mode,Intersection,SelfInter,
-                            Join, RemoveIntEdges);
+                            Join, Standard_False, RemoveIntEdges);
   Build();
 }
 

@@ -157,7 +157,7 @@ void BRepOffset_Inter3d::CompletInt(const TopTools_ListOfShape& SetOfFaces,
   // Calculate the intersections of offset faces 
   // Distinction of intersection between faces // tangents.
   //---------------------------------------------------------------
-  TopoDS_Face                        F1,F2;
+  TopoDS_Face F2;
   TopTools_ListIteratorOfListOfShape it;
 
   //---------------------------------------------------------------
@@ -423,7 +423,8 @@ void BRepOffset_Inter3d::ConnexIntByInt
  const BRepOffset_Analyse&              Analyse,
  TopTools_DataMapOfShapeShape&          MES,
  TopTools_DataMapOfShapeShape&          Build,
- TopTools_ListOfShape&                  Failed)
+ TopTools_ListOfShape&                  Failed,
+ const Standard_Boolean                 bIsPlanar)
 {
   //TopExp_Explorer Exp(SI,TopAbs_EDGE);
   TopTools_IndexedMapOfShape VEmap;
@@ -436,8 +437,11 @@ void BRepOffset_Inter3d::ConnexIntByInt
   TopTools_ListIteratorOfListOfShape it, it1, itF1, itF2;
   //
   TopExp::MapShapes(SI, TopAbs_EDGE  , VEmap);
-  TopExp::MapShapes(SI, TopAbs_VERTEX, VEmap);
-  TopExp::MapShapesAndAncestors(SI, TopAbs_VERTEX, TopAbs_FACE, aMVF);
+  // map the shape for vertices
+  if (bIsPlanar) {
+    TopExp::MapShapes(SI, TopAbs_VERTEX, VEmap);
+    TopExp::MapShapesAndAncestors(SI, TopAbs_VERTEX, TopAbs_FACE, aMVF);
+  }
   //
   aNb = VEmap.Extent();
   for (i = 1; i <= aNb; ++i) {
@@ -648,9 +652,9 @@ void BRepOffset_Inter3d::ContextIntByInt
  const BRepOffset_Analyse&              Analyse,
  TopTools_DataMapOfShapeShape&          MES,
  TopTools_DataMapOfShapeShape&          Build,
- TopTools_ListOfShape&                  Failed)
+ TopTools_ListOfShape&                  Failed,
+ const Standard_Boolean                 bIsPlanar)
 {
-  TopTools_ListOfShape             LInt1,LInt2;
   TopTools_MapOfShape              MV;
   TopExp_Explorer                  exp;
   TopoDS_Face                      OF,NF,WCF;
@@ -679,7 +683,10 @@ void BRepOffset_Inter3d::ContextIntByInt
 
     TopTools_IndexedMapOfShape VEmap;
     TopExp::MapShapes(CF.Oriented(TopAbs_FORWARD), TopAbs_EDGE  , VEmap);
-    TopExp::MapShapes(CF.Oriented(TopAbs_FORWARD), TopAbs_VERTEX, VEmap);
+    //
+    if (bIsPlanar) {
+      TopExp::MapShapes(CF.Oriented(TopAbs_FORWARD), TopAbs_VERTEX, VEmap);
+    }
     //
     aNbVE = VEmap.Extent();
     for (j = 1; j <= aNbVE; ++j) {
@@ -920,11 +927,11 @@ void BRepOffset_Inter3d::ContextIntByArc(const TopTools_IndexedMapOfShape& Conte
 //                   LInt1,LInt2);
       LInt1.Clear(); LInt1.Append(OE);
       LInt2.Clear();    
-      TopAbs_Orientation O1,O2;
-      BRepOffset_Tool::OrientSection(OE,CF,OF1,O1,O2);
-//      if (mySide == TopAbs_OUT) O1 = TopAbs::Reverse(O1);
-      O1 = TopAbs::Reverse(O1);
-      LInt1.First().Orientation(O1);
+      TopAbs_Orientation anOri1, anOri2;
+      BRepOffset_Tool::OrientSection(OE,CF,OF1, anOri1,anOri2);
+//    if (mySide == TopAbs_OUT);
+      anOri1 = TopAbs::Reverse(anOri1);
+      LInt1.First().Orientation(anOri1);
       Store(CF,OF1,LInt1,LInt2);
       
       //------------------------------------------------------
@@ -1129,6 +1136,3 @@ void BRepOffset_Inter3d::Store(const TopoDS_Face& F1,
   }
   SetDone(F1,F2);
 }
-
-
-

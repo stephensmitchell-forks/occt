@@ -48,7 +48,7 @@ BRepOffsetAPI_MakeThickSolid::BRepOffsetAPI_MakeThickSolid
  const Standard_Boolean      RemoveIntEdges)
 {
   myOffsetShape.Initialize (S,Offset,Tol,Mode,Intersection,SelfInter,
-                            Join, RemoveIntEdges);
+                            Join, Standard_False, RemoveIntEdges);
   TopTools_ListIteratorOfListOfShape it(ClosingFaces);
   for (; it.More(); it.Next()) {
     myOffsetShape.AddFace(TopoDS::Face(it.Value()));
