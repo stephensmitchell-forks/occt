@@ -63,6 +63,9 @@ uniform isamplerBuffer uGeometryTriangTexture;
 uniform samplerBuffer uRaytraceMaterialTexture;
 //! Texture buffer of light source properties.
 uniform samplerBuffer uRaytraceLightSrcTexture;
+//! Texture buffer of clipping planes properties.
+uniform samplerBuffer uRaytraceClippingTexture;
+
 //! Environment map texture.
 uniform sampler2D uEnvironmentMapTexture;
 
@@ -378,12 +381,20 @@ struct SSubTree
   ivec4 SubData;
 };
 
+#define EMPTY_ROOT ivec4(0)
+
 #define TRS_OFFSET(treelet) treelet.SubData.x
 #define BVH_OFFSET(treelet) treelet.SubData.y
 #define VRT_OFFSET(treelet) treelet.SubData.z
 #define TRG_OFFSET(treelet) treelet.SubData.w
 
-#define EMPTY_ROOT ivec4(0)
+#define MAX_CLIP_PLANES 1
+
+#define IS_PLANE_ACTIVE(params) (params.x != -1.F)
+#define IS_PLANE_HIDDEN(params) (params.x == -1.F)
+
+#define PLANE_SETTINGS(trsf, index) (16 * int(trsf.w) + 2 * index + 0)
+#define PLANE_EQUATION(trsf, index) (16 * int(trsf.w) + 2 * index + 1)
 
 // =======================================================================
 // function : SceneNearestHit
@@ -398,6 +409,9 @@ ivec4 SceneNearestHit (in SRay theRay, in vec3 theInverse, inout SIntersect theH
   int aStop = -1; // BVH level switch
 
   SSubTree aSubTree = SSubTree (theRay, theInverse, EMPTY_ROOT);
+
+  float aClipMax =  MAXFLOAT;
+  float aClipMin = -MAXFLOAT;
 
   for (bool toContinue = true; toContinue;)
   {
@@ -475,7 +489,7 @@ ivec4 SceneNearestHit (in SRay theRay, in vec3 theInverse, inout SIntersect theH
         float aTime = IntersectTriangle (aSubTree.TrsfRay,
           aPoint0, aPoint1, aPoint2, aParams, aNormal);
 
-        if (aTime < theHit.Time)
+        if (aTime > aClipMin && aTime < aClipMax && aTime < theHit.Time)
         {
           aTriIndex = aTriangle;
 
@@ -496,12 +510,33 @@ ivec4 SceneNearestHit (in SRay theRay, in vec3 theInverse, inout SIntersect theH
     }
     else if (aData.x > 0) // switch node
     {
-      aSubTree.SubData = ivec4 (4 * aData.x - 4, aData.yzw); // store BVH sub-root
+      aClipMax =  MAXFLOAT;
+      aClipMin = -MAXFLOAT;
+
+      aSubTree.SubData = ivec4 (aData.x * 4 - 4, aData.yzw); // store BVH sub-root
 
       vec4 aInvTransf0 = texelFetch (uSceneTransformTexture, TRS_OFFSET (aSubTree) + 0);
       vec4 aInvTransf1 = texelFetch (uSceneTransformTexture, TRS_OFFSET (aSubTree) + 1);
       vec4 aInvTransf2 = texelFetch (uSceneTransformTexture, TRS_OFFSET (aSubTree) + 2);
       vec4 aInvTransf3 = texelFetch (uSceneTransformTexture, TRS_OFFSET (aSubTree) + 3);
+
+      for (int aPlaneIdx = 0; aInvTransf3.w >= 0.0 && aPlaneIdx < MAX_CLIP_PLANES; ++aPlaneIdx)
+      {
+        vec4 aSettings = texelFetch (uRaytraceClippingTexture, PLANE_SETTINGS (aInvTransf3, aPlaneIdx));
+        vec4 aEquation = texelFetch (uRaytraceClippingTexture, PLANE_EQUATION (aInvTransf3, aPlaneIdx));
+
+        float aNdotD = -dot (aEquation.xyz, theRay.Direct);
+
+        if (IS_PLANE_ACTIVE (aSettings))
+        {
+          float aPlaneTime = (dot (aEquation.xyz, theRay.Origin) + aEquation.w) / aNdotD;
+
+          if (aNdotD < 0.0)
+            aClipMin = max (aClipMin, aPlaneTime);
+          else
+            aClipMax = min (aClipMax, aPlaneTime);
+        }
+      }
 
       aSubTree.TrsfRay.Direct = MatrixColMultiplyDir (theRay.Direct,
                                                       aInvTransf0,
@@ -539,6 +574,9 @@ float SceneAnyHit (in SRay theRay, in vec3 theInverse, in float theDistance)
   int aStop = -1; // BVH level switch
 
   SSubTree aSubTree = SSubTree (theRay, theInverse, EMPTY_ROOT);
+
+  float aClipMax =  MAXFLOAT;
+  float aClipMin = -MAXFLOAT;
 
   for (bool toContinue = true; toContinue;)
   {
@@ -617,12 +655,12 @@ float SceneAnyHit (in SRay theRay, in vec3 theInverse, in float theDistance)
           aPoint0, aPoint1, aPoint2, aParams, aNormal);
 
 #ifdef TRANSPARENT_SHADOWS
-        if (aTime < theDistance)
+        if (aTime > aClipMin && aTime < aClipMax && aTime < theDistance)
         {
           aFactor *= 1.f - texelFetch (uRaytraceMaterialTexture, MATERIAL_TRAN (aTriangle.w)).x;
         }
 #else
-        if (aTime < theDistance)
+        if (aTime > aClipMin && aTime < aClipMax && aTime < theDistance)
         {
           aFactor = 0.f;
         }
@@ -640,12 +678,33 @@ float SceneAnyHit (in SRay theRay, in vec3 theInverse, in float theDistance)
     }
     else if (aData.x > 0) // switch node
     {
+      aClipMax =  MAXFLOAT;
+      aClipMin = -MAXFLOAT;
+
       aSubTree.SubData = ivec4 (4 * aData.x - 4, aData.yzw); // store BVH sub-root
 
       vec4 aInvTransf0 = texelFetch (uSceneTransformTexture, TRS_OFFSET (aSubTree) + 0);
       vec4 aInvTransf1 = texelFetch (uSceneTransformTexture, TRS_OFFSET (aSubTree) + 1);
       vec4 aInvTransf2 = texelFetch (uSceneTransformTexture, TRS_OFFSET (aSubTree) + 2);
       vec4 aInvTransf3 = texelFetch (uSceneTransformTexture, TRS_OFFSET (aSubTree) + 3);
+
+      for (int aPlaneIdx = 0; aInvTransf3.w >= 0.0 && aPlaneIdx < MAX_CLIP_PLANES; ++aPlaneIdx)
+      {
+        vec4 aSettings = texelFetch (uRaytraceClippingTexture, PLANE_SETTINGS (aInvTransf3, aPlaneIdx));
+        vec4 aEquation = texelFetch (uRaytraceClippingTexture, PLANE_EQUATION (aInvTransf3, aPlaneIdx));
+
+        float aNdotD = -dot (aEquation.xyz, theRay.Direct);
+
+        if (IS_PLANE_ACTIVE (aSettings))
+        {
+          float aPlaneTime = (dot (aEquation.xyz, theRay.Origin) + aEquation.w) / aNdotD;
+
+          if (aNdotD < 0.0)
+            aClipMin = max (aClipMin, aPlaneTime);
+          else
+            aClipMax = min (aClipMax, aPlaneTime);
+        }
+      }
 
       aSubTree.TrsfRay.Direct = MatrixColMultiplyDir (theRay.Direct,
                                                       aInvTransf0,

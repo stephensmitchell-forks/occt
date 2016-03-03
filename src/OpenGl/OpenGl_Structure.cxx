@@ -242,6 +242,20 @@ void OpenGl_Structure::SetAspectText (const CALL_DEF_CONTEXTTEXT &theAspect)
 }
 
 // =======================================================================
+// function : SetClipPlanes
+// purpose  :
+// =======================================================================
+void OpenGl_Structure::SetClipPlanes (const Graphic3d_SequenceOfHClipPlane &thePlanes)
+{
+  Graphic3d_CStructure::SetClipPlanes (thePlanes);
+
+  if (IsRaytracable())
+  {
+    ++myModificationState;
+  }
+}
+
+// =======================================================================
 // function : clearHighlightBox
 // purpose  :
 // =======================================================================

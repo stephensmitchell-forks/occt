@@ -75,4 +75,8 @@ vbsdf r -kd 0.5 0.9 0.3 -ks 0.0 -kr 0.3 -n
 vbsdf r -fresnel Constant 1.0
 vsetlocation r 0.5 0.65 0.1
 
+vclipplane create pln
+vclipplane change pln equation 0 0 -1 0.1
+vclipplane set pln object s
+
 vrenderparams -ray -gi -rayDepth 8
