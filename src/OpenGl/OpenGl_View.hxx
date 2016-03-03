@@ -702,12 +702,13 @@ protected: //! @name data types related to ray-tracing
 
     OpenGl_RT_RaytraceMaterialTexture = 9,
     OpenGl_RT_RaytraceLightSrcTexture = 10,
+    OpenGl_RT_RaytraceClippingTexture = 11,
 
-    OpenGl_RT_FsaaInputTexture = 11,
-    OpenGl_RT_PrevAccumTexture = 12,
+    OpenGl_RT_FsaaInputTexture = 12,
+    OpenGl_RT_PrevAccumTexture = 13,
 
-    OpenGl_RT_OpenGlColorTexture = 13,
-    OpenGl_RT_OpenGlDepthTexture = 14
+    OpenGl_RT_OpenGlColorTexture = 14,
+    OpenGl_RT_OpenGlDepthTexture = 15
   };
 
   //! Tool class for management of shader sources.
@@ -1032,6 +1033,8 @@ protected: //! @name fields related to ray-tracing
   Handle(OpenGl_TextureBufferArb) myRaytraceMaterialTexture;
   //! Texture buffer of light source properties.
   Handle(OpenGl_TextureBufferArb) myRaytraceLightSrcTexture;
+  //! Texture buffer of clipping planes parameters.
+  Handle(OpenGl_TextureBufferArb) myRaytraceClippingTexture;
 
   //! 1st framebuffer (FBO) to perform adaptive FSAA.
   Handle(OpenGl_FrameBuffer) myRaytraceFBO1[2];

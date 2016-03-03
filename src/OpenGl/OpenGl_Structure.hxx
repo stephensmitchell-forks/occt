@@ -129,6 +129,9 @@ public:
 
   Standard_EXPORT void Clear (const Handle(OpenGl_Context)& theGlCtx);
 
+  //! Pass clip planes to the associated graphic driver structure
+  void SetClipPlanes (const Graphic3d_SequenceOfHClipPlane& thePlanes);
+
   //! Renders groups of structure without applying any attributes (i.e. transform, material etc).
   //! @param theWorkspace current workspace
   //! @param theHasClosed flag will be set to TRUE if structure contains at least one group of closed primitives
