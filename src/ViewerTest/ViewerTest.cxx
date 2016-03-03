@@ -5027,6 +5027,9 @@ static Standard_Integer vr(Draw_Interpretor& , Standard_Integer , const char** a
   return 0;
 }
 
+#include <MeshPresentation.h>
+#include <MeshVS_Drawer.hxx>
+#include <MeshVS_DrawerAttribute.hxx>
 //===============================================================================================
 //function : VBsdf
 //purpose  :
@@ -5082,7 +5085,17 @@ static int VBsdf (Draw_Interpretor& theDi,
   }
 
   Handle(AIS_InteractiveObject) anIObj = Handle(AIS_InteractiveObject)::DownCast (aMap.Find2 (aName));
-  Graphic3d_MaterialAspect aMaterial = anIObj->Attributes()->ShadingAspect()->Material();
+  Graphic3d_MaterialAspect aMaterial;
+
+  Handle(MeshPresentation) aMeshPrs = Handle(MeshPresentation)::DownCast (anIObj);
+  if (aMeshPrs.IsNull())
+  {
+    aMaterial = anIObj->Attributes()->ShadingAspect()->Material();
+  }
+  else
+  {
+    aMeshPrs->GetDrawer()->GetMaterial(MeshVS_DA_FrontMaterial, aMaterial);
+  }
   Graphic3d_BSDF aBSDF = aMaterial.BSDF();
 
   if (aCmd.HasOption ("print"))

@@ -8846,6 +8846,69 @@ static Standard_Integer VXRotate (Draw_Interpretor& di,
   return 0;
 }
 
+static Standard_Integer VShiftCam (Draw_Interpretor& theDi,
+                                   Standard_Integer  theArgNb,
+                                   const char**      theArgVec)
+{
+  Handle(V3d_View) anAISView = ViewerTest::CurrentView();
+  if (anAISView.IsNull())
+  {
+    std::cout << theArgVec[0] << ": please initialize or activate view.\n";
+    return 1;
+  }
+
+  Standard_Real anAtX = 0.0;
+  Standard_Real anAtY = 0.0;
+  Standard_Real anAtZ = 0.0;
+  anAISView->At(anAtX, anAtY, anAtZ);
+
+  Standard_Real anEyeX = 0.0;
+  Standard_Real anEyeY = 0.0;
+  Standard_Real anEyeZ = 0.0;
+  anAISView->Eye(anEyeX, anEyeY, anEyeZ);
+
+  Graphic3d_Vec3 aDeltaVec(anAtX - anEyeX, anAtY - anEyeY, anAtZ - anEyeZ);
+  Standard_Real  aDelta = Draw::Atof (theArgVec[1]);
+  anAISView->SetEye (anEyeX + aDeltaVec.x() * aDelta,
+                     anEyeY + aDeltaVec.y() * aDelta,
+                     anEyeZ + aDeltaVec.z() * aDelta);
+  anAISView->SetAt (anAtX + aDeltaVec.x() * aDelta,
+                    anAtY + aDeltaVec.y() * aDelta,
+                    anAtZ + aDeltaVec.z() * aDelta);
+
+  return 0;
+}
+
+static Standard_Integer VCamChangeAt (Draw_Interpretor& theDI,
+                                      Standard_Integer  theArgNb,
+                                      const char**      theArgVec)
+{
+  Handle(V3d_View) anAISView = ViewerTest::CurrentView();
+  if (anAISView.IsNull())
+  {
+    std::cout << theArgVec[0] << ": please initialize or activate view.\n";
+    return 1;
+  }
+
+  Standard_Real anAtX = 0.0;
+  Standard_Real anAtY = 0.0;
+  Standard_Real anAtZ = 0.0;
+  anAISView->At(anAtX, anAtY, anAtZ);
+
+  Standard_Real anEyeX = 0.0;
+  Standard_Real anEyeY = 0.0;
+  Standard_Real anEyeZ = 0.0;
+  anAISView->Eye(anEyeX, anEyeY, anEyeZ);
+
+  Graphic3d_Vec3 aDeltaVec (anAtX - anEyeX, anAtY - anEyeY, anAtZ - anEyeZ);
+  Standard_Real  aDelta = Draw::Atof (theArgVec[1]);
+  anAISView->SetAt (anAtX + aDeltaVec.x() * aDelta,
+                    anAtY + aDeltaVec.y() * aDelta,
+                    anAtZ + aDeltaVec.z() * aDelta);
+
+  return 0;
+}
+
 //=======================================================================
 //function : ViewerCommands
 //purpose  :
@@ -9373,4 +9436,12 @@ void ViewerTest::ViewerCommands(Draw_Interpretor& theCommands)
     "vprogressive",
     __FILE__, VProgressiveMode, group);
 #endif
+
+  theCommands.Add("vshiftcam",
+                  "vshiftcam delta",
+                  __FILE__, VShiftCam, group);
+
+  theCommands.Add("vcamchangeat",
+                  "vcamchangeat delta",
+                  __FILE__, VCamChangeAt, group);
 }

@@ -8,23 +8,35 @@ global startTimeTyre
 global currentTimeTyre
 global endTimeTyre
 global stepTimeTyre
+global index
 
-set startTimeTyre   4805
-set currentTimeTyre 4805
-set endTimeTyre     5690
-set stepTimeTyre    15
-set SamplesPerPixel 30
+global paveStartKd
+global paveStartKt
+global paveCurrentKd
+global paveCurrentKt
+global paveDeltaKd
+global paveDeltaKt
 
 global folderTyre
 global folderTyre
 global folderVideo
 
-set folderTyre  "D:/TmpFiles/for_video/Tyre"
-set folderEnv   "D:/TmpFiles/for_video/Environment"
-set folderVideo "D:/TmpFiles/for_video/Result"
-
 global width
 global height
+
+set index 0
+set startTimeTyre   4805
+set currentTimeTyre 4805
+set endTimeTyre     5690
+set stepTimeTyre    15
+set SamplesPerPixel 1
+
+set folderTyre  "D:/TmpFiles/for_video/Tyre"
+set folderEnv   "D:/TmpFiles/for_video/Environment"
+set folderVideo "D:/TmpFiles/for_video/HighQuality"
+
+#set width 1280
+#set height 720
 set width 512
 set height 512
 
@@ -33,11 +45,18 @@ set isEditLight 1
 set isGI 1
 set isAnim 1
 
-vinit name=View1 w=${width} h=${height} t=256 l=1024
+set paveStartKd 0.243137
+set paveStartKt 0.0
+set paveCurrentKd ${paveStartKd}
+set paveCurrentKt ${paveStartKt}
+set paveDeltaKd 0.0020448142
+set paveDeltaKt 0.0114285714
+
+vinit name=View1 w=${width} h=${height} t=0 l=0
 vsetdispmode 1
 vcamera -persp -fovy 60
 
-vzbufftrihedron
+#vzbufftrihedron
 
 #building0
 puts "Loading the first building..."
@@ -56,7 +75,8 @@ vdisplayobj   bench1 "${folderEnv}/Scene Bench1.obj"
 #urn
 puts "Loading the urn..."
 vdisplayobj   urn "${folderEnv}/Scene Urn.obj"
-vsetmaterial  urn steel
+vsetmaterial  urn aluminium
+vbsdf         urn -roughness 128
 #pave00
 puts "Loading the first pave..."
 vdisplayobj   pave00 "${folderEnv}/Scene Pave00.obj"
@@ -68,8 +88,10 @@ vdisplayobj   pavement0 "${folderEnv}/Scene Pavement0.obj"
 puts "Loading the second pave..."
 vdisplayobj   pave01 "${folderEnv}/Scene Pave01.obj"
 vsetmaterial  pave01 stone
-#Tree0
-vdisplayobj   tree0 "${folderEnv}/Scene Tree00.obj"
+#Tree00
+vdisplayobj   tree00 "${folderEnv}/Scene Tree00.obj"
+#Tree01
+vdisplayobj   tree01 "${folderEnv}/Scene Tree01.obj"
 
 #building1
 puts "Loading the second building..."
@@ -83,6 +105,7 @@ vbsdf grass1 -kd 0.113 0.306 0.008
 puts "Loading the second pave..."
 vdisplayobj   pave10 "${folderEnv}/Scene Pave10.obj"
 vsetmaterial  pave10 stone
+vdisplayobj   test "${folderEnv}/Scene Pave10test.obj"
 #pavement
 vdisplayobj   pavement1 "${folderEnv}/Scene Pavement1.obj"
 #pave11
@@ -104,6 +127,9 @@ vbsdf grass2 -kd 0.113 0.306 0.008
 puts "Loading the ground..."
 vdisplayobj   ground "${folderEnv}/Scene Ground 1.obj"
 
+vdisplayobj   tyre "${folderTyre}/tyre_3.4805.obj"
+vbsdf         tyre -ks 0.3
+
 if { ${isEditLight} == 1 } {
   vlight change 0 head 0
   vlight change 0 sm 0.1
@@ -112,210 +138,319 @@ if { ${isEditLight} == 1 } {
 }
 
 vtextureenv on "${folderEnv}/sky_midafternoon.jpg"
-vrenderparams -ray -env on
+vrenderparams -env on
 
 if { ${isGI} == 1 } {
-  vrenderparams -gi
+  vrenderparams -ray -gi
   vrenderparams -brng
-  #vrenderparams -filter on
+  vrenderparams -rayDepth 5
 }
 
-vdisplayobj   tyre "${folderTyre}/tyre_3.5690.obj"
-
-global index
-set index 0
-if { 0 == 1 } {
-  #start position
-  puts "begin"
-  vviewparams -proj -0.20622021944287358 0.47082896669284285 0.85778395019718279
-  vviewparams -up 0.34414165473972619 -0.78572247727332134 0.51401041835791439
-  vviewparams -at -13354.357466784533 27218.390422097546 26205.999398111326
-  vviewparams -eye -15033.237088976141 31051.502227786012 33189.388311767325
-  vrenderparams -spp $SamplesPerPixel
-  vdump "${folderVideo}/Res_${index}.png"
-  vrenderparams -spp 1
-  set index [expr {$index + 1}]
-
-  #knot0
-  puts "knot 0"
-  vviewparams -proj -0.20622021944287344 0.47082896669284346 0.85778395019718257
-  vviewparams -up 0.34414165473972619 -0.78572247727332134 0.51401041835791439
-  vviewparams -at -13354.357466784533 27218.390422097546 26205.999398111326
-  vviewparams -eye -14254.556394169076 29273.667697737732 29950.424624606083
-  vrenderparams -spp $SamplesPerPixel
-  vdump "${folderVideo}/Res_${index}.png"
-  vrenderparams -spp 1
-  set index [expr {$index + 1}]
-
-  #knot1
-  puts "knot 1"
-  vviewparams -proj -0.41571695570910722 0.43430578177976742 0.79909817960537066
-  vviewparams -up 0.55255880993299089 -0.57726654320370485 0.60120054862174055
-  vviewparams -at -21230.015657075473 24204.803919974482 23556.870926717536
-  vviewparams -eye -23044.716220039514 26100.649003680352 27045.119112120185
-  vrenderparams -spp $SamplesPerPixel
-  vdump "${folderVideo}/Res_${index}.png"
-  vrenderparams -spp 1
-  set index [expr {$index + 1}]
-
-  #knot2
-  puts "knot 2"
-  vviewparams -proj -0.44762421794647089 0.53801207252628835 0.71426575539065151
-  vviewparams -up 0.45682847922240011 -0.54907495291086994 0.69987458637764166
-  vviewparams -at -22333.259756577103 25954.230943443392 21873.264333951254
-  vviewparams -eye -22341.274931712684 25963.864606711519 21886.054001921115
-  vrenderparams -spp $SamplesPerPixel
-  vdump "${folderVideo}/Res_${index}.png"
-  vrenderparams -spp 1
-  set index [expr {$index + 1}]
-
-  #knot3
-  puts "knot 3"
-  vviewparams -proj -0.44788044499548108 0.53779655646484081 0.71426743650064939
-  vviewparams -up 0.4570921661291803 -0.54885765333719594 0.69987286562383633
-  vviewparams -at -13707.386192562162 14482.648377528752 10849.765096470677
-  vviewparams -eye -15495.281424403387 16629.479992411649 13701.051323070391
-  vrenderparams -spp $SamplesPerPixel
-  vdump "${folderVideo}/Res_${index}.png"
-  vrenderparams -spp 1
-  set index [expr {$index + 1}]
-
-  #knot4
-  puts "knot 4"
-  vviewparams -proj -0.44718015336668421 0.53800674424855244 0.71454786654080893
-  vviewparams -up 0.45727400220364306 -0.54907136249035604 0.69958639623826779
-  vviewparams -at 11435.8 -15967.5 -28391.8
-  vviewparams -eye -13484.174719894208 14002.468293369575 11428.231554346788
-  vrenderparams -spp $SamplesPerPixel
-  vdump "${folderVideo}/Res_${index}.png"
-  vrenderparams -spp 1
-  set index [expr {$index + 1}]
-
-  #knot5
-  puts "knot 5"
-  vviewparams -proj -0.54095886294668194 0.72231331411763966 0.43084450193523982
-  vviewparams -up 0.28959797496449069 -0.32097294312176605 0.90172578020161875
-  vviewparams -at 17028.225461231897 -23490.280235621023 -17394.904746724318
-  vviewparams -eye -6852.4221626059334 8396.2658771283459 1624.7406202792517
-  vrenderparams -spp $SamplesPerPixel
-  vdump "${folderVideo}/Res_${index}.png"
-  vrenderparams -spp 1
-  set index [expr {$index + 1}]
-
-  #knot6
-  puts "knot 6"
-  vviewparams -proj -0.54095886294668194 0.72231331411763966 0.43084450193523988
-  vviewparams -up 0.28959797496449069 -0.32097294312176605 0.90172578020161875
-  vviewparams -at 18537.604312086372 -23905.520476230522 -14803.609241620072
-  vviewparams -eye -1565.2364759343 2936.7230793679955 1207.2171262471238
-  vrenderparams -spp $SamplesPerPixel
-  vdump "${folderVideo}/Res_${index}.png"
-  vrenderparams -spp 1
-  set index [expr {$index + 1}]
-
-  #knot7
-  puts "knot 7"
-  vviewparams -proj -0.62110268896811893 0.64641254663814718 0.44315039129550315
-  vviewparams -up 0.29662780874258493 -0.32948539230542279 0.89635446076756597
-  vviewparams -at 20691.468156274099 -22215.566058836219 -14958.801037599358
-  vviewparams -eye -2389.6365205911934 1806.0907756908309 1509.3301599623119
-  vrenderparams -spp $SamplesPerPixel
-  vdump "${folderVideo}/Res_${index}.png"
-  vrenderparams -spp 1
-  set index [expr {$index + 1}]
-
-  #knot8
-  puts "knot 8"
-  vviewparams -proj -0.87404055231429312 0.20603968241462572 0.44000086611347194
-  vviewparams -up 0.35531317939173412 -0.34659785485005534 0.86811431940953332
-  vviewparams -at 30853.661242490405 -7437.5407276112601 -15288.204166516902
-  vviewparams -eye -1626.9911814297993 219.20161955377262 1062.8852201417812
-  vrenderparams -spp $SamplesPerPixel
-  vdump "${folderVideo}/Res_${index}.png"
-  vrenderparams -spp 1
-  set index [expr {$index + 1}]
-
-  #knot9
-  puts "knot 9"
-  vviewparams -proj -0.75181851825962331 -0.31237650141434464 0.58068049473530503
-  vviewparams -up 0.53944967908272923 0.21501377057130752 0.81410264844321056
-  vviewparams -at 26512.037657317873 10567.979608932925 -19976.566463759911
-  vviewparams -eye -289.56414163475711 -567.94002980904588 724.13059853308005
-  vrenderparams -spp $SamplesPerPixel
-  vdump "${folderVideo}/Res_${index}.png"
-  vrenderparams -spp 1
-  set index [expr {$index + 1}]
-
-  #knot10
-  puts "knot 10"
-  vviewparams -proj -0.31369817861305538 -0.76634695237879957 0.5606298255663692
-  vviewparams -up 0.21238458206350391 0.51884353282430495 0.82806652978375184
-  vviewparams -at 13086.171886955321 29646.307936948524 -21897.75321880031
-  vviewparams -eye 317.39012410108262 -1547.1055307894094 922.14303961578844
-  vrenderparams -spp $SamplesPerPixel
-  vdump "${folderVideo}/Res_${index}.png"
-  vrenderparams -spp 1
-  set index [expr {$index + 1}]
+# Animation of movement of the camera.
+# Prepearing.
+proc StartMovementOfCamera {thePts theLocalPts theName} {
+  vviewparams -scale 0.76084571141153157
+  vviewparams -proj -0.55490690725196157 0.83079330518538119 0.043137087792445204
+  vviewparams -up 0.0038687080384806026 -0.049275302086848008 0.99877774189374235
+  vviewparams -at 904 -0.0925 3.5
+  vviewparams -eye -1875.1169546272422 4160.7348535943329 219.54166765447638
 }
-#end position
-puts "end position"
-vviewparams -proj 0.54593763262437844 -0.71028743797754057 0.44434655026880843
-vviewparams -up 0 0 0.1
-vviewparams -at 1261.5 29 1.5
-vviewparams -eye 1656.5277404797348 -782.74632298760184 468.51284756718968
+# Main animation.
+proc MovementOfCamera {thePts theLocalPts theName} {
+  global index
+  global folderVideo
+  global SamplesPerPixel
 
-vrenderparams -spp $SamplesPerPixel
-vdump "${folderVideo}/Res_${index}.png"
-vrenderparams -spp 1
-set index [expr {$index + 1}]
-
-# deformations
-set test 0
-if { ${test} == 1 } {
-  set tyres [glob -type f "${folderTyre}/tyre_*.obj"]
-  foreach mesh $tyres {
-    #erase previous tyre
-    vremove tyre
-
-    #loading current tyre
-    puts "loading tyre_3.${currentTimeTyre}..."
-    vrenderparams -spp 1
-    vdisplayobj tyre ${mesh}
-    vrenderparams -spp $SamplesPerPixel
-    vfps 1
-    #vrenderparams -spp $SamplesPerPixel
-    vdump "${folderVideo}/Res_${index}.png"
-    vrenderparams -spp 1
-    set index [expr {$index + 1}]
-
-    set currentTimeTyre [expr ${currentTimeTyre} + ${stepTimeTyre}]
-    set prevTimeTyre [expr ${currentTimeTyre} - ${stepTimeTyre}]
+  if { ${theLocalPts} < 3.0 } {
+    vshiftcam 0.01
+  } else {
+    vshiftcam 0.005
   }
+  
+  puts $index
+  vrenderparams -spp ${SamplesPerPixel}
+  vdump "${folderVideo}/Res_${index}.png"
+  vrenderparams -spp 1
+
+  set index [expr {${index} + 1}]
 }
 
-proc Anim0 {thePts theLocalPts theName} {
+# Animation of rotation of the camera.
+# Preparing.
+proc StartRotationOfCamera {thePts theLocalPts theName} {
+  global index
+  set index 91
+
+  vviewparams -scale 0.17291948306641733
+  vviewparams -proj -0.5549068942726707 0.8307933138774608 0.043137087351443816
+  vviewparams -up 0 0 1
+  vviewparams -at 904 -0.0925 3.5
+  vviewparams -eye 223.11633760908609 1019.310356524007 56.430205481013957
+}
+# Main animation.
+global z
+set z 3.5
+proc RotationOfCamera {thePts theLocalPts theName} {
+  global z
   global width
   global height
   global index
   global folderVideo
   global SamplesPerPixel
 
-  vmoveto ${width}/2 ${height}/20
-  vrenderparams -spp ${SamplesPerPixel}
-  vrotate 0.0872665 0 0
+  puts $index
 
+  vmoveto ${width}/2 ${height}/2
+  #vrotate -0.0349066 0 0
+  vrotate -0.1396264 0 0
+  #vrotate 0 -0.004363323 01
+  vrotate 0 -0.017453292 01
+  vviewparams -at 904 -0.0925 ${z} -up 0 0 1
+
+  vrenderparams -spp ${SamplesPerPixel}
+  vfps 1
+  vdump "${folderVideo}/Res_${index}.png"
+  vrenderparams -spp 1
+
+  set index [expr {${index} + 1}]
+  set z [expr {${z} - 1.5}]
+}
+
+# Animation of deformation of tyre.
+# Preparing.
+proc StartDeformationOfTyre {thePts theLocalPts theName} {
+  global index
+  set index 111
+  
+  vviewparams -scale 0.70209376404101775
+  vviewparams -proj 0.29616790541429666 -0.88265982860132486 0.36496054413592205
+  vviewparams -up -0.11609767165456701 0.34600221479170257 0.9310229846763316
+  vviewparams -at 904 -0.092499999999972715 -146.5
+  vviewparams -eye 1269.320051268 -1088.8442787782369 425.17506035310009
+  
+  #vviewparams -scale 0.68818212755896502
+  #vviewparams -proj 0.34824854701750618 -0.8177652576045038 0.45823894744470978
+  #vviewparams -up 0 0 1
+  #vviewparams -at 904 -0.092499999999972715 -146.5
+  #vviewparams -eye 1342.2445815876536 -1029.1885184186783 460.15922086382318
+}
+# Main animation.
+proc DeformationOfTyre {thePts theLocalPts theName} {
+  global index
+  global folderTyre
+  global folderVideo
+  global SamplesPerPixel
+  global currentTimeTyre
+  global stepTimeTyre
+  global endTimeTyre
+
+  if { ${currentTimeTyre} <= ${endTimeTyre} } {
+    #erase previous tyre
+    vremove tyre
+
+    #loading current tyre
+    puts "loading tyre_3.${currentTimeTyre}..."
+    vrenderparams -spp 1
+    vdisplayobj tyre "${folderTyre}/tyre_3.${currentTimeTyre}.obj"
+    vbsdf       tyre -ks 0.3
+    set bbox [vbounding -print tyre]
+    regexp {tyre+\n([-0-9.+eE]+) +([-0-9.+eE]+) +([-0-9.+eE]+) +([-0-9.+eE]+) +([-0-9.+eE]+) +([-0-9.+eE]+)} ${bbox} full x1 y1 z1 x2 y2 z2
+    vviewparams -at [expr {($x2 + $x1) * 0.5}] [expr {($y2 + $y1) * 0.5}] -131.5 -up 0 0 1
+    if { ${currentTimeTyre} <= 4955 } {
+      vshiftcam 0.01
+    } elseif { ${currentTimeTyre} < 5300 } {
+      vshiftcam 0.005
+    }
+    vrotate -0.003 0 0 
+
+    puts $index
+    vrenderparams -spp ${SamplesPerPixel}
+    vfps 1
+    vdump "${folderVideo}/Res_${index}.png"
+    vrenderparams -spp 1
+    
+    vrenderparams -spp 1
+    set index [expr {$index + 1}]
+
+    set currentTimeTyre [expr ${currentTimeTyre} + ${stepTimeTyre}]
+  }
+}
+
+# Rotation of the camera after deformation.
+# Preparing.
+proc StartRotationOfCameraAfterDeformation {thePts theLocalPts theName} {
+  global folderTyre
+  global endTimeTyre
+  global paveStartKd
+  global paveStartKt
+  global index
+  set index 171
+  
+  vrenderparams -gi off
+  vremove tyre
+  vdisplayobj tyre "${folderTyre}/tyre_3.${endTimeTyre}.obj"
+  vbsdf       tyre -ks 0.3
+  vrenderparams -gi on
+  
+  vviewparams -scale 0.89917874503252559
+  vviewparams -proj 0.12928743010777263 -0.87670185844940729 0.46333423336451535
+  vviewparams -up -0.066045096204520176 0.45860503872268371 0.88618252280526355
+  vviewparams -at 1262.0869750976562 14.405502319335938 -131.5
+  vviewparams -eye 1386.6074883792353 -829.97175321148939 314.75078022962293
+  
+  #vviewparams -scale 0.9280456841673036
+  #vviewparams -proj 0.18840463572798008 -0.84034129855590489 0.50826193559776089
+  #vviewparams -up -0.10946425274888763 0.49633667496588818 0.86120118581777039
+  #vviewparams -at 1262.0869750976562 14.405502319335938 -131.5
+  #vviewparams -eye 1437.9007346084109 -769.77670424046596 342.79534506079335
+  
+  vsetmaterial pave10 glass
+  vbsdf pave10 -absorpcoeff 1.0 -absorpcolor 1.0 1.0 1.0 -fresnel Constant 0.0 -kt ${paveStartKt} -kd ${paveStartKd}
+}
+# Main animation.
+proc RotationOfCameraAfterDeformation {thePts theLocalPts theName} {
+  global index
+  global folderVideo
+  global SamplesPerPixel
+
+  puts $index
+
+  vrotate 0 0.007853985 0
+  
+  vrenderparams -spp ${SamplesPerPixel}
+  vfps 1
+  vdump "${folderVideo}/Res_${index}.png"
+  vrenderparams -spp 1
+
+  set index [expr {$index + 1}]
+}
+
+# Idle animation.
+# Preparing.
+proc StartPaveTransparency {thePts theLocalPts theName} {
+  global folderTyre
+  global endTimeTyre
+  global index
+  set index 252
+
+  vrenderparams -gi off
+  vremove tyre
+  vdisplayobj tyre "${folderTyre}/tyre_3.${endTimeTyre}.obj"
+  vbsdf       tyre -ks 0.3
+  vrenderparams -gi on
+
+  vviewparams -scale 0.89917874503252926
+  vviewparams -proj 0.14323443575502989 -0.97766449080860029 -0.15380520090653158
+  vviewparams -up 0.023687355221058894 -0.15197656682365501 0.98810021371272183
+  vviewparams -at 1262.0869750976562 14.405502319335938 -131.5
+  vviewparams -eye 1400.0402582973147 -927.21182359687623 -279.63429694048989
+
+  #vviewparams -scale 0.92804568416730804
+  #vviewparams -proj 0.21658311425190047 -0.97083411217050375 -0.10282451685788761
+  #vviewparams -up 0.023884841470820248 -0.10002361570077746 0.99469834153378234
+  #vviewparams -at 1262.0869750976562 14.405502319335938 -131.5
+  #vviewparams -eye 1464.1960761611324 -891.54882551588094 -227.45286659911696
+}
+# Main animation.
+proc PaveTransparency {thePts theLocalPts theName} {
+  global index
+  global folderVideo
+  global paveStartKd
+  global paveStartKt
+  global paveCurrentKd
+  global paveCurrentKt
+  global paveDeltaKd
+  global paveDeltaKt
+  global SamplesPerPixel
+
+  puts $index
+
+  set paveCurrentKd [expr {$paveCurrentKd - $paveDeltaKd}]
+  set paveCurrentKt [expr {$paveCurrentKt + $paveDeltaKt}]
+  
+  vbsdf pave10 -kd ${paveCurrentKd} -kt ${paveCurrentKt}
+  
+  vrenderparams -spp ${SamplesPerPixel}
+  vfps 1
   vdump "${folderVideo}/Res_${index}.png"
   vrenderparams -spp 1
   set index [expr {$index + 1}]
 }
 
+# Idle animation.
+# Preparing.
+proc StartIdleAnim {thePts theLocalPts theName} {
+  global index
+  global endTimeTyre
+  global folderTyre
+  set index 313
+  
+  vbsdf pave10 -absorpcoeff 1.0 -absorpcolor 1.0 1.0 1.0 -fresnel Constant 0.0 -kt 0.8 -kd 0.1
+
+  vrenderparams -gi off
+  vremove tyre
+  vdisplayobj tyre "${folderTyre}/tyre_3.${endTimeTyre}.obj"
+  vbsdf       tyre -ks 0.3
+  vrenderparams -gi on
+
+  vviewparams -scale 0.89917874503252926
+  vviewparams -proj 0.14323443575502989 -0.97766449080860029 -0.15380520090653158
+  vviewparams -up 0.023687358041704527 -0.15197658016980603 0.98810021159237427
+  vviewparams -at 1262.0869750976562 14.405502319335938 -131.5
+  vviewparams -eye 1400.0402582973147 -927.21182359687623 -279.63429694048989
+
+  #vviewparams -scale 0.92804568416730826
+  #vviewparams -proj 0.21658311425190027 -0.97083411217050386 -0.10282451685788763
+  #vviewparams -up 0.023884838973521033 -0.10002359984931483 0.99469834318771899
+  #vviewparams -at 1262.0869750976562 14.405502319335938 -131.5
+  #vviewparams -eye 1464.1960761611322 -891.54882551588094 -227.45286659911696
+}
+# Main idle animation.
+proc IdleAnim {thePts theLocalPts theName} {
+  global index
+  global folderVideo
+  global SamplesPerPixel
+
+  puts $index
+  #vrenderparams -spp ${SamplesPerPixel}
+  #vfps 1
+  #vdump "${folderVideo}/Res_${index}.png"
+  #vrenderparams -spp 1
+  set index [expr {$index + 1}]
+}
+  
 if { ${isAnim} == 1 } {
+  set startTimeMovCam 0.0
+  set endTimeMovCam 4.5
+  set endTimeRotation 4.8
+  set endTimeDeformations 8.0
+
+  vlight change 0 head 0
   vrenderparams -spp 1
 
-  vanim anim0 -reset -onRedraw Anim0
-  vanim anim -reset -addSlice 0.0 3.5 anim0
-  #vanim -play anim -playFps 20 -record "${folderVideo}/video.mkv" -recWidth 1920 -recHeight 1080
-  vanim -play anim -playFps 20
-
+  vanim movcam -reset -onRedraw MovementOfCamera -onStart StartMovementOfCamera
+  vanim animcam0 -reset -addSlice 0.0 4.5 movcam
+  #vanim -play animcam0 -playFps 20
+  
+  vanim rotcam -reset -onRedraw RotationOfCamera -onStart StartRotationOfCamera
+  vanim animcam1 -reset -addSlice 0.0 1.0 rotcam
+  #vanim -play animcam1 -playFps 20
+  
+  vanim deftyre -reset -onRedraw DeformationOfTyre -onStart StartDeformationOfTyre
+  vanim animdef -reset -addSlice 0.0 3.0 deftyre
+  #vanim -play animdef -playFps 20
+  
+  vanim rotCamAfterDef -reset -onRedraw RotationOfCameraAfterDeformation -onStart StartRotationOfCameraAfterDeformation
+  vanim animRotCamAfterDef -reset -addSlice 0.0 4.0 rotCamAfterDef
+  #vanim -play animRotCamAfterDef -playFps 20
+  
+  vanim pavetrans -reset -onRedraw PaveTransparency -onStart StartPaveTransparency 
+  vanim animpavetrans -reset -addSlice 0.0 3.0 pavetrans
+  #vanim -play animpavetrans -playFps 20
+  
+  vanim idle -reset -onRedraw IdleAnim -onStart StartIdleAnim 
+  vanim animidle -reset -addSlice 0.0 2.0 idle
+  vanim -play animidle -playFps 20
+  
   vrenderparams -spp 1
 }
