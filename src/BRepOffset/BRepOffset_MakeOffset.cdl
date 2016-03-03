@@ -52,8 +52,8 @@ is
              Intersection   : Boolean  from Standard   = Standard_False;
              SelfInter      : Boolean  from Standard   = Standard_False;
              Join           : JoinType from GeomAbs    = GeomAbs_Arc; 
-             RemoveIntEdges : Boolean  from Standard   = Standard_False;
              Thickening     : Boolean  from Standard   = Standard_False; 
+             RemoveIntEdges : Boolean  from Standard   = Standard_False;
              RemoveInvalidFaces: Boolean from Standard = Standard_False)
     returns MakeOffset from BRepOffset;             
              
@@ -67,8 +67,8 @@ is
                 Intersection   : Boolean  from Standard   = Standard_False;
                 SelfInter      : Boolean  from Standard   = Standard_False;
                 Join           : JoinType from GeomAbs    = GeomAbs_Arc; 
-                RemoveIntEdges : Boolean  from Standard   = Standard_False;
                 Thickening     : Boolean  from Standard   = Standard_False;
+                RemoveIntEdges : Boolean  from Standard   = Standard_False;
                 RemoveInvalidFaces: Boolean from Standard = Standard_False)
     is static;
     
@@ -149,18 +149,12 @@ is
     
     BuildOffsetByInter ( me : in out )
     is static private;
- 
-    BuildSplitsOfFaces (me:in out; 
-        theLF    : ListOfShape from TopTools; 
-        theAsDes : AsDes from BRepAlgo; 
-        theOrMap : out IndexedDataMapOfShapeListOfShape from TopTools;
-        theImage : out Image from BRepAlgo;
-        theLFail : out ListOfShape from TopTools; 
-        bLimited : Boolean from Standard)
+
+    MakeOffsetFaces(me:in out;
+        theMapSF : out DataMapOfShapeOffset from BRepOffset)
     is static private;
     ---Purpose: 
-    -- Building splits of the offset faces by the section curves 
-    -- between the neighboring faces. 
+    -- Make Offset faces
  
     SelfInter  (me    : in out ; 
                     Modif : in out MapOfShape from TopTools)
@@ -219,6 +213,17 @@ is
         ---Purpose: Removes INTERNAL edges from the faces
     is static private;  
 
+    IntersectEdges (me: in out;
+        theShape : Shape from TopoDS;
+        theMapSF : out DataMapOfShapeOffset from BRepOffset;
+        theMES   : out DataMapOfShapeShape  from TopTools;
+        theBuild : out DataMapOfShapeShape  from TopTools;
+        theAsDes : out AsDes from BRepAlgo;
+        theAsDes2D : out AsDes from BRepAlgo)
+    is static private;
+    ---Purpose: Intersects edges
+
+
 fields
 
     myOffset         : Real       from Standard;
@@ -228,8 +233,8 @@ fields
     myInter          : Boolean    from Standard;
     mySelfInter      : Boolean    from Standard;
     myJoin           : JoinType   from GeomAbs;  
-    myRemoveIntEdges : Boolean    from Standard;
     myThickening     : Boolean    from Standard;
+    myRemoveIntEdges : Boolean    from Standard;
     myRemoveInvalidFaces : Boolean from Standard;
     
     myFaceOffset     : DataMapOfShapeReal from TopTools;
@@ -248,5 +253,7 @@ fields
     myError          : Error    from BRepOffset;
     
     myMakeLoops      : MakeLoops from BRepOffset;
-    
+
+    myIsPlanar       : Boolean from Standard;
+
 end MakeOffset;

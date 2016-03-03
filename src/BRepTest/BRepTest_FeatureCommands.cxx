@@ -816,12 +816,12 @@ Standard_Integer thickshell(Draw_Interpretor& ,
 
   GeomAbs_JoinType JT= GeomAbs_Arc;
   if (n > 4)
-    {
-      if (!strcmp(a[4],"i"))
-        JT = GeomAbs_Intersection;
-      if (!strcmp(a[4],"t"))
-        JT = GeomAbs_Tangent;
-    }
+  {
+    if (!strcmp(a[4],"i"))
+      JT = GeomAbs_Intersection;
+    if (!strcmp(a[4],"t"))
+      JT = GeomAbs_Tangent;
+  }
   
   Standard_Boolean Inter = Standard_False; //Standard_True;
   Standard_Real    Tol = Precision::Confusion();
@@ -829,7 +829,7 @@ Standard_Integer thickshell(Draw_Interpretor& ,
     Tol = Draw::Atof(a[5]);
 
   BRepOffset_MakeOffset B;
-  B.Initialize(S,Of,Tol,BRepOffset_Skin,Inter,0,JT, Standard_False, Standard_True);
+  B.Initialize(S,Of,Tol,BRepOffset_Skin,Inter,0,JT,Standard_True);
 
 //  Clock.Start();
 
@@ -849,7 +849,7 @@ Standard_Integer thickshell(Draw_Interpretor& ,
 //=======================================================================
 
 Standard_Integer offsetshape(Draw_Interpretor& ,
-			     Standard_Integer n, const char** a)
+                             Standard_Integer n, const char** a)
 {
 
   //OSD_Chronometer Clock;
@@ -974,7 +974,7 @@ Standard_Integer offsetparameter(Draw_Interpretor& di,
 //=======================================================================
 
 Standard_Integer offsetload(Draw_Interpretor& ,
-                            Standard_Integer n, const char** a)
+  Standard_Integer n, const char** a)
 {
   if ( n < 2) return 1;
   TopoDS_Shape  S  = DBRep::Get(a[1]);
@@ -985,7 +985,7 @@ Standard_Integer offsetload(Draw_Interpretor& ,
 //  Standard_Boolean Inter = Standard_True;
   
   TheOffset.Initialize(S,Of,TheTolerance,BRepOffset_Skin,TheInter,0,TheJoin,
-                       RemoveIntEdges,Standard_False,RemoveInvalidFaces);
+                       Standard_False, RemoveIntEdges, RemoveInvalidFaces);
   //------------------------------------------
   // recuperation et chargement des bouchons.
   //----------------------------------------

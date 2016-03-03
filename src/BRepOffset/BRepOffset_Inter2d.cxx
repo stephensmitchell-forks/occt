@@ -1520,6 +1520,13 @@ void BRepOffset_Inter2d::ConnexIntByInt
   TopExp_Explorer exp(FI.Oriented(TopAbs_FORWARD),TopAbs_WIRE);
   for (; exp.More(); exp.Next()) {
     const TopoDS_Wire&     W = TopoDS::Wire(exp.Current());
+    //
+    // check if wire is not internal
+    TopoDS_Iterator it(W);
+    if (it.Value().Orientation() == TopAbs_INTERNAL) {
+      continue;
+    }
+    //
     BRepTools_WireExplorer wexp;
     Standard_Boolean       end = Standard_False ;
     TopoDS_Edge            FirstE,CurE,NextE;
