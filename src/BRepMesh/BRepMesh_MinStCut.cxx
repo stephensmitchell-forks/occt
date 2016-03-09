@@ -18,6 +18,7 @@
 #pragma warning (disable: 4127)
 
 #include <stdio.h>
+#include <stdexcept>
 #include <BRepMesh_MinStCut.hxx>
 
 Graph::Graph (void (*theErrFun) (char*))
@@ -62,7 +63,10 @@ Graph::NodeId Graph::AddNode()
     NodeBlock* next = myNodeBlockFirst;
     myNodeBlockFirst = (NodeBlock*) new NodeBlock;
 
-    if (!myNodeBlockFirst) { if (myErrorFun) { (*myErrorFun) ("Not enough memory!"); } exit (1); }
+    if (!myNodeBlockFirst)
+    {
+      throw std::runtime_error ("Not enough memory!");
+    }
 
     myNodeBlockFirst->Current = & (myNodeBlockFirst->Nodes[0]);
     myNodeBlockFirst->Next = next;
@@ -87,7 +91,10 @@ void Graph::AddEdge (NodeId theFromNode, NodeId theToNode, CapacityType theCapac
     ArcForBlock* aNext = myArcForBlockFirst;
     char* aPtr = new char[sizeof (ArcForBlock) +1];
 
-    if (!aPtr) { if (myErrorFun) { (*myErrorFun) ("Not enough memory!"); } exit (1); }
+    if (!aPtr)
+    {
+      throw std::runtime_error ("Not enough memory!");
+    }
 
     if ( (int) aPtr & 1) { myArcForBlockFirst = (ArcForBlock*) (aPtr + 1); }
     else              { myArcForBlockFirst = (ArcForBlock*) aPtr; }
@@ -102,7 +109,10 @@ void Graph::AddEdge (NodeId theFromNode, NodeId theToNode, CapacityType theCapac
     ArcRevBlock* aNext = myArcREvBlockFirst;
     char* aPter = new char[sizeof (ArcRevBlock) +1];
 
-    if (!aPter) { if (myErrorFun) { (*myErrorFun) ("Not enough memory!"); } exit (1); }
+    if (!aPter)
+    {
+      throw std::runtime_error ("Not enough memory!");
+    }
 
     if ( (int) aPter & 1) { myArcREvBlockFirst = (ArcRevBlock*) (aPter + 1); }
     else              { myArcREvBlockFirst = (ArcRevBlock*) aPter; }
@@ -182,7 +192,10 @@ void Graph::prepareGraph()
 
       if (anArcFor + aK > &anArcBlockFor->ArcsFor[ARC_BLOCK_SIZE])
       {
-        if (aK > ARC_BLOCK_SIZE) { if (myErrorFun) { (*myErrorFun) ("# of arcs per node exceeds block size!"); } exit (1); }
+        if (aK > ARC_BLOCK_SIZE)
+        {
+          throw std::runtime_error ("# of arcs per node exceeds block size!");
+        }
 
         if (aForwardFlag) { anArcBlockFor = NULL; }
         else          { anArcBlockFor = anArcBlockFor->Next; anArcBlockREvScan = anArcBlockREvScan->Next; }
@@ -192,7 +205,10 @@ void Graph::prepareGraph()
           ArcForBlock* next = myArcForBlockFirst;
           char* ptr = new char[sizeof (ArcForBlock) +1];
 
-          if (!ptr) { if (myErrorFun) { (*myErrorFun) ("Not enough memory!"); } exit (1); }
+          if (!ptr)
+          {
+            throw std::runtime_error ("Not enough memory!");
+          }
 
           if ( (int) ptr & 1) { myArcForBlockFirst = (ArcForBlock*) (ptr + 1); }
           else              { myArcForBlockFirst = (ArcForBlock*) ptr; }
@@ -224,7 +240,10 @@ void Graph::prepareGraph()
 
       if (anArcRev + aK > &anArcBlockRev->ArcsRev[ARC_BLOCK_SIZE])
       {
-        if (aK > ARC_BLOCK_SIZE) { if (myErrorFun) { (*myErrorFun) ("# of arcs per node exceeds block size!"); } exit (1); }
+        if (aK > ARC_BLOCK_SIZE)
+        {
+          throw std::runtime_error ("# of arcs per node exceeds block size!");
+        }
 
         if (aReverseFlag) { anArcBlockRev = NULL; }
         else          { anArcBlockRev = anArcBlockRev->Next; }
@@ -234,7 +253,10 @@ void Graph::prepareGraph()
           ArcRevBlock* next = myArcREvBlockFirst;
           char* ptr = new char[sizeof (ArcRevBlock) +1];
 
-          if (!ptr) { if (myErrorFun) { (*myErrorFun) ("Not enough memory!"); } exit (1); }
+          if (!ptr)
+          {
+            throw std::runtime_error ("Not enough memory!");
+          }
 
           if ( (int) ptr & 1) { myArcREvBlockFirst = (ArcRevBlock*) (ptr + 1); }
           else              { myArcREvBlockFirst = (ArcRevBlock*) ptr; }

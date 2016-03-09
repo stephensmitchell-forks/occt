@@ -835,7 +835,14 @@ void BRepMesh_RestoreOrientationTool::Perform()
     }
   }
 
-  aGraph->Minimize();
+  try
+  {
+    aGraph->Minimize();
+  }
+  catch (std::exception& theError)
+  {
+    std::cout << theError.what() << std::endl;
+  }
 
   for (Standard_Size i = 0; i < myPatches.size(); ++i)
   {
