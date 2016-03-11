@@ -44,6 +44,7 @@ uses
     ListOfInteger           from BOPCol, 
     MapOfInteger            from BOPCol, 
     BaseAllocator           from BOPCol, 
+    DataMapOfIntegerListOfInteger from BOPCol, 
     --
     ShapeInfo  from BOPDS, 
     IndexRange from BOPDS, 
@@ -627,7 +628,17 @@ is
              ---Purpose: 
              --- Updates tolerance of the sub-shapes of the shape with index <theIndex>.
              ---
- 
+    UpdatePaveBlocksWithSDVertices(me:out);   
+      
+    UpdatePaveBlockWithSDVertices(me:out; 
+            thePB:PaveBlock from BOPDS);   
+            
+    UpdateCommonBlockWithSDVertices(me:out;      
+            theCB:CommonBlock from BOPDS); 
+             
+    InitPaveBlocksForVertex(me:out; 
+            theNV:Integer from Standard);        
+     
     BuildBndBoxSolid (me:out; 
                 theIndex:Integer from Standard;  
                 theBox:out Box from Bnd) 
@@ -665,6 +676,8 @@ fields
     --                 
     --same domain shapes 
     myShapesSD         : DataMapOfIntegerInteger from BOPCol is protected;  
+    -- 
+    myMapVE:   DataMapOfIntegerListOfInteger from BOPCol is protected;            
     -- 
     --interferences 
     myInterfTB         : MapOfPassKey     from BOPDS is protected; 

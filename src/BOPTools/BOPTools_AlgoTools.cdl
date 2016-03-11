@@ -288,10 +288,10 @@ is
             theS   :out Shape from TopoDS); 
      
     CorrectTolerances (myclass;  
-            theS: Shape  from  TopoDS; 
-            theTolMax: Real from Standard =0.0001;  
-            theRunParallel: Boolean from Standard=Standard_False);   
- 
+        theS: Shape  from  TopoDS;  
+        theMapToAvoid:IndexedMapOfShape from BOPCol;
+        theTolMax: Real from Standard =0.0001;
+        theRunParallel: Boolean from Standard=Standard_False);  
     ---Purpose:	 
     -- Provides valid values of tolerances for the shape <theS>         
     -- <theTolMax> is max value of the tolerance that can be 
@@ -300,21 +300,23 @@ is
     -- perform. 
  
     CorrectCurveOnSurface  (myclass;  
-            theS: Shape  from  TopoDS; 
-            theTolMax: Real from Standard =0.0001; 
-            theRunParallel: Boolean from Standard=Standard_False);   
+        theS: Shape  from  TopoDS;  
+        theMapToAvoid:IndexedMapOfShape from BOPCol;
+        theTolMax: Real from Standard =0.0001;
+        theRunParallel: Boolean from Standard=Standard_False); 
     ---Purpose:	 
     -- Provides valid values of tolerances for the shape <theS> 
     -- in  terms of BRepCheck_InvalidCurveOnSurface.   
  
     CorrectPointOnCurve    (myclass;  
-            theS: Shape  from  TopoDS; 
-            theTolMax: Real from Standard =0.0001; 
-            theRunParallel: Boolean from Standard=Standard_False);   
+        theS: Shape  from  TopoDS;  
+        theMapToAvoid:IndexedMapOfShape from BOPCol;
+        theTolMax: Real from Standard =0.0001; 
+        theRunParallel: Boolean from Standard=Standard_False);
     ---Purpose:	 
     -- Provides valid values of tolerances for the shape <theS> 
     -- in  terms of BRepCheck_InvalidPointOnCurve.   
- 
+
     MakeNewVertex  (myclass;  
             aP1 : Pnt  from  gp;  
             aTol: Real from Standard;
@@ -440,6 +442,7 @@ is
  
     CorrectShapeTolerances (myclass;
             theS: Shape from TopoDS; 
+            theMapToAvoid:IndexedMapOfShape from BOPCol; 
             theRunParallel: Boolean from Standard=Standard_False);   
     ---Purpose: 
     -- Corrects tolerance values of the sub-shapes of the shape <theS> if needed. 

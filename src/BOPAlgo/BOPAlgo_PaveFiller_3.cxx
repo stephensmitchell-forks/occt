@@ -569,7 +569,7 @@ void BOPAlgo_PaveFiller::PerformEE()
   aMPBToUpdate.Clear();
 }
 //=======================================================================
-//function : PerformVertices
+//function : PerformVerticesEE
 //purpose  : 
 //=======================================================================
 Standard_Integer BOPAlgo_PaveFiller::PerformVerticesEE
@@ -890,8 +890,8 @@ void BOPAlgo_PaveFiller::ForceInterfVE(const Standard_Integer nV,
                                        Handle(BOPDS_PaveBlock)& aPB,
                                        BOPDS_MapOfPaveBlock& aMPBToUpdate)
 {
-  Standard_Integer aNbPnt, nE;
-  gp_Pnt aP;
+  Standard_Integer nE, nVx, nVSD, iFlag;
+  Standard_Real aT, aTolVNew;
   //
   nE = aPB->OriginalEdge();
   //
@@ -908,60 +908,44 @@ void BOPAlgo_PaveFiller::ForceInterfVE(const Standard_Integer nV,
     return;
   }
   //
-  if (aPB->Pave1().Index() == nV || aPB->Pave2().Index() == nV) {
+  if (aPB->Pave1().Index() == nV || 
+      aPB->Pave2().Index() == nV) {
     return;
   }
   //
-  const TopoDS_Vertex& aV = *(TopoDS_Vertex*)&myDS->Shape(nV);
+  nVx = nV;
+  if (myDS->HasShapeSD(nV, nVSD)) {
+    nVx = nVSD;
+  }
+  //
+  const TopoDS_Vertex& aV = *(TopoDS_Vertex*)&myDS->Shape(nVx);
   const TopoDS_Edge&   aE = *(TopoDS_Edge*)  &myDS->Shape(nE);
-  aP=BRep_Tool::Pnt(aV);
   //
-  GeomAPI_ProjectPointOnCurve& aProjector=myContext->ProjPC(aE);
-  aProjector.Perform(aP);
-  //
-  aNbPnt = aProjector.NbPoints();
-  if (aNbPnt) {
-    Standard_Real aT, aDist;
-    //Standard_Integer i;
-    BRep_Builder aBB;
+  iFlag = myContext->ComputeVE(aV, aE, aT, aTolVNew);
+  if (iFlag == 0 || iFlag == -4) {
     BOPDS_Pave aPave;
     //
-    aDist=aProjector.LowerDistance();
-    aT=aProjector.LowerDistanceParameter();
     //
     BOPDS_VectorOfInterfVE& aVEs=myDS->InterfVE();
     aVEs.SetIncrement(10);
+    // 1
     BOPDS_InterfVE& aVE=aVEs.Append1();
     aVE.SetIndices(nV, nE);
     aVE.SetParameter(aT);
-    //
+    // 2
     myDS->AddInterf(nV, nE);
     //
-    aBB.UpdateVertex(aV, aDist);
-    BOPDS_ShapeInfo& aSIDS=myDS->ChangeShapeInfo(nV);
-    Bnd_Box& aBox=aSIDS.ChangeBox();
-    BRepBndLib::Add(aV, aBox);
-    //
-    aPave.SetIndex(nV);
+    // 3 update vertex V/E if necessary
+    nVx=UpdateVertex(nV, aTolVNew);
+    // 4
+    if (myDS->IsNewShape(nVx)) {
+      aVE.SetIndexNew(nVx);
+    }
+    // 5 append ext pave to pave block
+    aPave.SetIndex(nVx);
     aPave.SetParameter(aT);
     aPB->AppendExtPave(aPave);
     //
     aMPBToUpdate.Add(aPB);
   }
 }
-
- /*
-  // DEBf
-  { 
-    TopoDS_Compound aCx;
-    BRep_Builder aBBx;
-    aBBx.MakeCompound(aCx);
-    aItMVCPB.Initialize(theMVCPB);
-    for (; aItMVCPB.More(); aItMVCPB.Next()) {
-      const TopoDS_Shape& aS=aItMVCPB.Key();
-      aBBx.Add(aCx, aS);
-    }
-    BRepTools::Write(aCx, "cx");
-  }
-  // DEBt
-  */

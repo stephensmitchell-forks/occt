@@ -24,17 +24,19 @@
 #include <TopoDS_Vertex.hxx>
 #include <BRepBndLib.hxx>
 
+#include <BOPCol_DataMapOfIntegerInteger.hxx>
 #include <BOPCol_DataMapOfIntegerListOfInteger.hxx>
 #include <BOPCol_MapOfInteger.hxx>
 #include <BOPCol_ListOfShape.hxx>
 
 #include <BOPDS_DS.hxx>
 #include <BOPDS_Iterator.hxx>
-#include <BOPTools_AlgoTools.hxx>
+
 #include <BOPDS_VectorOfInterfVV.hxx>
 #include <BOPDS_ShapeInfo.hxx>
-#include <BOPAlgo_Tools.hxx>
+#include <BOPTools_AlgoTools.hxx>
 
+#include <BOPAlgo_Tools.hxx>
 
 //=======================================================================
 // function: PerformVV
@@ -100,7 +102,7 @@
     //
     BOPTools_AlgoTools::MakeVertex(aLV, aVn);
     //
-    // Appennd new vertex to the DS
+    // Append new vertex to the DS
     aSIn.SetShape(aVn);
     n=myDS->Append(aSIn);
     //
@@ -127,6 +129,15 @@
         }
       }
     }
+  }
+  //
+  BOPCol_DataMapIteratorOfDataMapOfIntegerInteger aItDMII;
+  //
+  BOPCol_DataMapOfIntegerInteger& aDMII=myDS->ShapesSD();
+  aItDMII.Initialize(aDMII);
+  for (; aItDMII.More(); aItDMII.Next()) {
+    n1=aItDMII.Key();
+    myDS->InitPaveBlocksForVertex(n1);
   }
   //
   //-----------------------------------------------------scope t

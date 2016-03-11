@@ -154,7 +154,24 @@ is
     --- 2. the edge does not contain 3d curve and pcurves (-2)
     --- 3. projection algorithm failed (-3)
     ---
-         
+
+    ComputeVE  (me:mutable;  
+       aV   : Vertex from  TopoDS; 
+       aE   : Edge   from  TopoDS; 
+       aT   :out Real from Standard; 
+       aTolVnew:out Real from Standard) 
+    returns Integer from Standard;
+    ---Purpose: 
+    --- Computes parameter of the vertex aV on
+    --- the edge aE.
+    --- Returns zero if the distance between vertex
+    --- and edge is less than sum of tolerances,
+    --- otherwise and for following conditions returns
+    --- negative value
+    --- 1. the edge is degenerated (-1)
+    --- 2. the edge does not contain 3d curve and pcurves (-2)
+    --- 3. projection algorithm failed (-3)
+
     ComputeVF  (me:mutable;  
        aV  :     Vertex from  TopoDS; 
        aF  :     Face   from  TopoDS; 
@@ -171,6 +188,23 @@ is
     --- 2. distance is more than sum of tolerances (-2)
     --- 3. projection point out or on the boundaries of face (-3)
     --- 
+ 
+    ComputeVF  (me:mutable;  
+       aV  :     Vertex from  TopoDS; 
+       aF  :     Face   from  TopoDS; 
+       U   : out Real from Standard; 
+       V   : out Real from Standard;  
+       aTolVnew:out Real from Standard)
+    returns Integer from Standard;
+    ---Purpose:
+    --- Computes UV parameters of the vertex aV on face aF
+    --- Returns zero if the distance between vertex and face is
+    --- less than or equal the sum of tolerances and the projection 
+    --- point lays inside boundaries of the face.
+    --- For following conditions returns negative value
+    --- 1. projection algorithm failed (-1)
+    --- 2. distance is more than sum of tolerances (-2)
+    --- 3. projection point out or on the boundaries of face (-3)
     
     StatePointFace(me:mutable;    
        aF   :  Face   from  TopoDS;
