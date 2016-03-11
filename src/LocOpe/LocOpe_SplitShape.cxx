@@ -179,15 +179,14 @@ void LocOpe_SplitShape::Add(const TopoDS_Vertex& V,
   le.Remove(itl);
   if (V.Orientation() == TopAbs_FORWARD ||
     V.Orientation() == TopAbs_REVERSED) {
-      //TopAbs_Orientation anOriEdge= edg.Orientation();
-      //////
+
       edg.Orientation(TopAbs_FORWARD);
       TopoDS_Vertex aCurV1, aCurV2;
       TopExp::Vertices(edg, aCurV1, aCurV2);
       Standard_Real aPar1 = BRep_Tool::Parameter(aCurV1,edg);
       
       Standard_Real aPar2 = BRep_Tool::Parameter(aCurV2,edg);
-      //////////
+
       TopoDS_Shape aLocalShape = edg.EmptyCopied();
       TopoDS_Edge E1 = TopoDS::Edge(aLocalShape);
       aLocalShape = edg.EmptyCopied();
@@ -197,23 +196,31 @@ void LocOpe_SplitShape::Add(const TopoDS_Vertex& V,
       E1.Orientation(TopAbs_FORWARD);
       E2.Orientation(TopAbs_FORWARD);
       TopoDS_Vertex newVtx = V;
-      
+      Standard_Real aTolSplitV = BRep_Tool::Tolerance(V);
       
       aCurV1.Orientation(TopAbs_FORWARD);
      
       B.Add(E1,aCurV1);
-      B.UpdateVertex(aCurV1,aPar1,E1,BRep_Tool::Tolerance(aCurV1));
+      //for degenerated edges tolerance of vertices should be set to maximal value
+      //from tolerance of the vertex of the edge and tolerance of splitting vertex
+      Standard_Real aTolV1 = ( BRep_Tool::Degenerated(edg) ?
+        Max(BRep_Tool::Tolerance(aCurV1), aTolSplitV) : BRep_Tool::Tolerance(aCurV1));
+     
+      B.UpdateVertex(aCurV1,aPar1,E1, aTolV1);
       newVtx.Orientation(TopAbs_REVERSED);
       B.Add(E1,newVtx);
       B.UpdateVertex(newVtx,P,E1,BRep_Tool::Tolerance(V));
-    
       newVtx.Orientation(TopAbs_FORWARD);
       B.Add(E2,newVtx);
       B.UpdateVertex(newVtx,P,E2,BRep_Tool::Tolerance(V));
       
       aCurV2.Orientation(TopAbs_REVERSED);
       B.Add(E2,aCurV2);
-      B.UpdateVertex(aCurV2,aPar2,E2,BRep_Tool::Tolerance(aCurV2));
+
+      //for degenerated edges tolerance of vertices should be set to maximal value
+      //from tolerance of the vertex of the edge and tolerance of splitting vertex
+      Standard_Real aTolV2 = ( BRep_Tool::Degenerated(edg) ? aTolV1 : BRep_Tool::Tolerance(aCurV2));
+      B.UpdateVertex(aCurV2,aPar2,E2,aTolV2);
       
       aNewList.Append(E1);
       aNewList.Append(E2);
@@ -591,6 +598,7 @@ Standard_Boolean LocOpe_SplitShape::Add(const TopoDS_Wire& W,
 }
 
 
+
 //=======================================================================
 //function : AddClosedWire
 //purpose  : 
@@ -618,7 +626,7 @@ Standard_Boolean LocOpe_SplitShape::AddClosedWire(const TopoDS_Wire& W,
   }
 
   BRep_Builder B;
- 
+
   TopAbs_Orientation orWire = W.Orientation();
   TopoDS_Shape aLocalFace = F.EmptyCopied();
   TopoDS_Face newFace = TopoDS::Face(aLocalFace);
@@ -692,16 +700,16 @@ Standard_Boolean LocOpe_SplitShape::AddOpenWire(const TopoDS_Wire& W,
   toll = BRep_Tool::Tolerance(Vlast);
   tol1 = Max(tolf, toll);
 
- 
+
   TopExp_Explorer exp,exp2;  
-  
+
   TopoDS_Wire wfirst,wlast;
   for (; itl.More(); itl.Next()) {
     TopoDS_Face fac = TopoDS::Face(itl.Value());
     if (!IsInside(fac,W)) {
       continue;
     }
-   
+    
     fac.Orientation(TopAbs_FORWARD);
     Standard_Boolean ffound = Standard_False;
     Standard_Boolean lfound = Standard_False;
@@ -776,6 +784,7 @@ Standard_Boolean LocOpe_SplitShape::AddOpenWire(const TopoDS_Wire& W,
     TopTools_MapOfOrientedShape MapE;
     TopoDS_Vertex vdeb,vfin;
     Standard_Integer nbPoss;
+
     // On recherche l`edge contenant Vlast
     TopoDS_Edge LastEdge;
     gp_Pnt2d pfirst,plast;
@@ -794,7 +803,6 @@ Standard_Boolean LocOpe_SplitShape::AddOpenWire(const TopoDS_Wire& W,
       if (exp2.More()) {
         LastEdge = edg;
         LastEdge.Orientation(edg.Orientation());
-        
         break;
       }
     }
@@ -826,8 +834,6 @@ Standard_Boolean LocOpe_SplitShape::AddOpenWire(const TopoDS_Wire& W,
       }
     }
     aLocalFace  = FaceRef.Oriented(wfirst.Orientation());
-   
-    //TopoDS_Edge aStartEdge = LastEdge;
     GetDirection(LastEdge, TopoDS::Face(aLocalFace),plast , dlast, Standard_False);
    
     Standard_Boolean cond;
@@ -839,7 +845,7 @@ Standard_Boolean LocOpe_SplitShape::AddOpenWire(const TopoDS_Wire& W,
     else {
       cond = !(Vfirst.IsSame(Vlast));
     }
-    
+        
     while (cond) {      
       PossE.Clear();
       
@@ -852,16 +858,8 @@ Standard_Boolean LocOpe_SplitShape::AddOpenWire(const TopoDS_Wire& W,
         TopExp::Vertices(edg,vdeb,vfin);
         
         if ((orient == TopAbs_FORWARD && Vlast.IsSame(vdeb)) || 
-          (orient == TopAbs_REVERSED && Vlast.IsSame(vfin))) {
-         /*   if(edg == aStartEdge)
-            {
-              PossE.Clear();
-              PossE.Add(edg);
-              break;
-            }*/
-            PossE.Add(edg);
-       
-        }
+          (orient == TopAbs_REVERSED && Vlast.IsSame(vfin))) 
+          PossE.Add(edg);
       }
       nbPoss = PossE.Extent();
       if (nbPoss == 0)
@@ -893,9 +891,8 @@ Standard_Boolean LocOpe_SplitShape::AddOpenWire(const TopoDS_Wire& W,
           return Standard_False;
         }
 
-        if (MapE.Contains(aNextEdge))
+        if (MapE.Contains(aNextEdge)) 
           break;
-        
         B.Add(newW1, aNextEdge);
         MapE.Add(aNextEdge);        
         LastEdge = aNextEdge;
