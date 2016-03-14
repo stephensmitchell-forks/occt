@@ -40,6 +40,7 @@ void  BOPTest::AllCommands(Draw_Interpretor& theCommands)
   BOPTest::PartitionCommands (theCommands);
   BOPTest::APICommands      (theCommands);
   BOPTest::OptionCommands   (theCommands);
+  BOPTest::DebugCommands     (theCommands);
 }
 //=======================================================================
 //function : Factory
