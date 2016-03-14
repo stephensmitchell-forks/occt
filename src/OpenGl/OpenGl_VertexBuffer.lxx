@@ -35,7 +35,15 @@ inline void OpenGl_VertexBuffer::bindAttribute (const Handle(OpenGl_Context)&   
   }
 
   theCtx->core20fwd->glEnableVertexAttribArray (theAttribute);
-  theCtx->core20fwd->glVertexAttribPointer (theAttribute, theNbComp, theDataType, theDataType != GL_FLOAT, theStride, theOffset);
+  if (theDataType == GL_UNSIGNED_INT
+   && theCtx->core32 != NULL)
+  {
+    theCtx->core32->glVertexAttribIPointer (theAttribute, theNbComp, theDataType, theStride, theOffset);
+  }
+  else
+  {
+    theCtx->core20fwd->glVertexAttribPointer (theAttribute, theNbComp, theDataType, theDataType != GL_FLOAT, theStride, theOffset);
+  }
 }
 
 #if !defined(GL_ES_VERSION_2_0)

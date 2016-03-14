@@ -15,7 +15,7 @@
 #ifndef _OpenGl_VertexBuffer_H__
 #define _OpenGl_VertexBuffer_H__
 
-#include <OpenGl_GlCore20.hxx>
+#include <OpenGl_GlCore32.hxx>
 #include <OpenGl_Resource.hxx>
 #include <OpenGl_Context.hxx>
 #include <OpenGl_ShaderProgram.hxx>
