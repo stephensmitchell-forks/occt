@@ -16,6 +16,10 @@ global paveCurrentKd
 global paveCurrentKt
 global paveDeltaKd
 global paveDeltaKt
+global tyrePlaneStartDistance
+global tyrePlaneCurrentDistance
+global tyrePlaneDeltaDistance
+global tyrePlaneEndDistance
 
 global folderTyre
 global folderTyre
@@ -29,16 +33,16 @@ set startTimeTyre   4805
 set currentTimeTyre 4805
 set endTimeTyre     5690
 set stepTimeTyre    15
-set SamplesPerPixel 1
+set SamplesPerPixel 256
 
 set folderTyre  "D:/TmpFiles/for_video/Tyre"
 set folderEnv   "D:/TmpFiles/for_video/Environment"
 set folderVideo "D:/TmpFiles/for_video/HighQuality"
 
-#set width 1280
-#set height 720
-set width 512
-set height 512
+set width 1280
+set height 720
+#set width 640
+#set height 360
 
 # Settings
 set isEditLight 1
@@ -49,8 +53,14 @@ set paveStartKd 0.243137
 set paveStartKt 0.0
 set paveCurrentKd ${paveStartKd}
 set paveCurrentKt ${paveStartKt}
-set paveDeltaKd 0.0020448142
-set paveDeltaKt 0.0114285714
+#set paveDeltaKd 0.0020448142
+set paveDeltaKd 0.0030392125
+#set paveDeltaKt 0.0114285714
+set paveDeltaKt 0.0125
+set tyrePlaneStartDistance 310
+set tyrePlaneCurrentDistance ${tyrePlaneStartDistance}
+set tyrePlaneDeltaDistance 1.5
+set tyrePlaneEndDistance 190
 
 vinit name=View1 w=${width} h=${height} t=0 l=0
 vsetdispmode 1
@@ -61,6 +71,7 @@ vcamera -persp -fovy 60
 #building0
 puts "Loading the first building..."
 vdisplayobj   building0 "${folderEnv}/Scene Building0.obj"
+vbsdf building0 -kd 0.6
 #grass0
 puts "Loading the first grass..."
 vdisplayobj   grass0 "${folderEnv}/Scene Grass0.obj"
@@ -76,7 +87,8 @@ vdisplayobj   bench1 "${folderEnv}/Scene Bench1.obj"
 puts "Loading the urn..."
 vdisplayobj   urn "${folderEnv}/Scene Urn.obj"
 vsetmaterial  urn aluminium
-vbsdf         urn -roughness 128
+vbsdf urn -ks 0.6
+vbsdf         urn -roughness 8
 #pave00
 puts "Loading the first pave..."
 vdisplayobj   pave00 "${folderEnv}/Scene Pave00.obj"
@@ -90,12 +102,15 @@ vdisplayobj   pave01 "${folderEnv}/Scene Pave01.obj"
 vsetmaterial  pave01 stone
 #Tree00
 vdisplayobj   tree00 "${folderEnv}/Scene Tree00.obj"
+vbsdf tree00 -ks 0 -kd 1
 #Tree01
 vdisplayobj   tree01 "${folderEnv}/Scene Tree01.obj"
+vbsdf tree01 -ks 0 -kd 1
 
 #building1
 puts "Loading the second building..."
 vdisplayobj   building1 "${folderEnv}/Scene Building1.obj"
+vbsdf building1 -kd 0.6
 #grass1
 puts "Loading the second grass..."
 vdisplayobj   grass1 "${folderEnv}/Scene Grass1.obj"
@@ -105,7 +120,6 @@ vbsdf grass1 -kd 0.113 0.306 0.008
 puts "Loading the second pave..."
 vdisplayobj   pave10 "${folderEnv}/Scene Pave10.obj"
 vsetmaterial  pave10 stone
-vdisplayobj   test "${folderEnv}/Scene Pave10test.obj"
 #pavement
 vdisplayobj   pavement1 "${folderEnv}/Scene Pavement1.obj"
 #pave11
@@ -113,10 +127,12 @@ vdisplayobj   pave11 "${folderEnv}/Scene Pave11.obj"
 vsetmaterial  pave11 stone
 #Tree10
 vdisplayobj   tree1 "${folderEnv}/Scene Tree10.obj"
+vbsdf tree1 -ks 0 -kd 1
 
 #building2
 puts "Loading the third building..."
 vdisplayobj   building2 "${folderEnv}/Scene Building2.obj"
+vbsdf building2 -kd 0.4
 #grass2
 puts "Loading the third grass..."
 vdisplayobj   grass2 "${folderEnv}/Scene Grass2.obj"
@@ -132,18 +148,20 @@ vbsdf         tyre -ks 0.3
 
 if { ${isEditLight} == 1 } {
   vlight change 0 head 0
-  vlight change 0 sm 0.1
-  vlight change 0 int 300
+  vlight change 0 sm 0.02
+  vlight change 0 color ANTIQUEWHITE
+  vlight change 0 int 9000
   vlight change 0 direction 1 0.2 -1
 }
 
 vtextureenv on "${folderEnv}/sky_midafternoon.jpg"
 vrenderparams -env on
+vclipplane create pln
 
 if { ${isGI} == 1 } {
   vrenderparams -ray -gi
   vrenderparams -brng
-  vrenderparams -rayDepth 5
+  vrenderparams -rayDepth 3
 }
 
 # Animation of movement of the camera.
@@ -312,10 +330,16 @@ proc RotationOfCameraAfterDeformation {thePts theLocalPts theName} {
   global index
   global folderVideo
   global SamplesPerPixel
+  global tyrePlaneCurrentDistance
+  global tyrePlaneDeltaDistance
 
   puts $index
 
   vrotate 0 0.007853985 0
+  
+  vclipplane change pln equation -0.1 0.98 0 ${tyrePlaneCurrentDistance}
+  vclipplane set pln object tyre
+  set tyrePlaneCurrentDistance [expr {$tyrePlaneCurrentDistance - $tyrePlaneDeltaDistance}]
   
   vrenderparams -spp ${SamplesPerPixel}
   vfps 1
@@ -331,7 +355,11 @@ proc StartPaveTransparency {thePts theLocalPts theName} {
   global folderTyre
   global endTimeTyre
   global index
+  global tyrePlaneEndDistance
   set index 252
+  
+  vclipplane change pln equation -0.1 0.98 0 190
+  vclipplane set pln object tyre
 
   vrenderparams -gi off
   vremove tyre
@@ -385,11 +413,13 @@ proc StartIdleAnim {thePts theLocalPts theName} {
   global folderTyre
   set index 313
   
-  vbsdf pave10 -absorpcoeff 1.0 -absorpcolor 1.0 1.0 1.0 -fresnel Constant 0.0 -kt 0.8 -kd 0.1
+  vbsdf pave10 -absorpcoeff 1.0 -absorpcolor 1.0 1.0 1.0 -fresnel Constant 0.0 -kt 1.0 -kd 0.0
+  vclipplane change pln equation -0.1 0.98 0 190
+  vclipplane set pln object tyre
 
   vrenderparams -gi off
   vremove tyre
-  vdisplayobj tyre "${folderTyre}/tyre_3.${endTimeTyre}.obj"
+  vdisplayobj tyre "${folderTyre}/tire_res.obj"
   vbsdf       tyre -ks 0.3
   vrenderparams -gi on
 
@@ -412,10 +442,9 @@ proc IdleAnim {thePts theLocalPts theName} {
   global SamplesPerPixel
 
   puts $index
-  #vrenderparams -spp ${SamplesPerPixel}
-  #vfps 1
-  #vdump "${folderVideo}/Res_${index}.png"
-  #vrenderparams -spp 1
+  vrenderparams -spp ${SamplesPerPixel}
+  vdump "${folderVideo}/Res_${index}.png"
+  vrenderparams -spp 1
   set index [expr {$index + 1}]
 }
   
@@ -442,11 +471,11 @@ if { ${isAnim} == 1 } {
   
   vanim rotCamAfterDef -reset -onRedraw RotationOfCameraAfterDeformation -onStart StartRotationOfCameraAfterDeformation
   vanim animRotCamAfterDef -reset -addSlice 0.0 4.0 rotCamAfterDef
-  #vanim -play animRotCamAfterDef -playFps 20
+  vanim -play animRotCamAfterDef -playFps 20
   
   vanim pavetrans -reset -onRedraw PaveTransparency -onStart StartPaveTransparency 
   vanim animpavetrans -reset -addSlice 0.0 3.0 pavetrans
-  #vanim -play animpavetrans -playFps 20
+  vanim -play animpavetrans -playFps 20
   
   vanim idle -reset -onRedraw IdleAnim -onStart StartIdleAnim 
   vanim animidle -reset -addSlice 0.0 2.0 idle

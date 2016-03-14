@@ -266,7 +266,7 @@ public:
     //! Returns state of clipping plane.
     ClipPlaneState State()
     {
-      return static_cast<ClipPlaneState> (mySettings.x());
+      return static_cast<ClipPlaneState> ((int)mySettings.x());
     }
 
     //! Sets state of clipping plane.

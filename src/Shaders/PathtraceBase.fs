@@ -247,7 +247,7 @@ void transmitted (in float theIndex, in vec3 theIncident, out vec3 theTransmit)
 //=======================================================================
 float handleLambertianReflection (in vec3 theInput, in vec3 theOutput)
 {
-  return max (0.f, theInput.z) * (1.f / M_PI);
+  return abs (theInput.z) * (1.f / M_PI);
 }
 
 //=======================================================================
@@ -298,7 +298,7 @@ vec3 handleBlinnReflection (in vec3 theInput, in vec3 theOutput, in vec3 theFres
 vec3 handleMaterial (in SMaterial theMaterial, in vec3 theInput, in vec3 theOutput)
 {
   return theMaterial.Kd.rgb * handleLambertianReflection (theInput, theOutput) +
-    theMaterial.Ks.rgb * handleBlinnReflection (theInput, theOutput, theMaterial.Fresnel, theMaterial.Ks.w);
+      theMaterial.Ks.rgb * handleBlinnReflection (theInput, theOutput, theMaterial.Fresnel, theMaterial.Ks.w);
 }
 
 //=======================================================================
@@ -698,10 +698,15 @@ vec4 PathTrace (in SRay theRay, in vec3 theInverse)
       aTexCoord.st = vec2 (dot (aTrsfRow1, aTexCoord),
                            dot (aTrsfRow2, aTexCoord));
 
-      vec3 aTexColor = textureLod (
-        sampler2D (uTextureSamplers[int (aMaterial.Kd.w)]), aTexCoord.st, 0.f).rgb;
+      vec4 aTexColor = textureLod (
+        sampler2D (uTextureSamplers[int (aMaterial.Kd.w)]), aTexCoord.st, 0.f);
 
-      aMaterial.Kd.rgb *= aTexColor;
+      aMaterial.Kd.rgb *= aTexColor.rgb * aTexColor.a;
+
+      if (aTexColor.a < 1.f)
+      {
+        aMaterial.Kt = 0.8f * vec3 (1.f - aTexColor.a);
+      }
     }
 #endif
 
@@ -783,8 +788,8 @@ vec4 PathTrace (in SRay theRay, in vec3 theInverse)
 
     anInput = normalize (fromLocalSpace (anInput, aSpace));
 
-    theRay = SRay (theRay.Origin + anInput * uSceneEpsilon +
-      aHit.Normal * mix (-uSceneEpsilon, uSceneEpsilon, step (0.f, dot (aHit.Normal, anInput))), anInput);
+    theRay = SRay (theRay.Origin + anInput * uSceneEpsilon, anInput);// +
+      //aHit.Normal * mix (-uSceneEpsilon, uSceneEpsilon, step (0.f, dot (aHit.Normal, anInput))), anInput);
 
     theInverse = InverseDirection (anInput);
 
