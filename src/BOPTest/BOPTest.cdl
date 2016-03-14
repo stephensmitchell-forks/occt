@@ -41,6 +41,7 @@ is
     PartitionCommands  (aDI:out Interpretor from Draw);
     APICommands        (aDI:out Interpretor from Draw); 
     OptionCommands     (aDI:out Interpretor from Draw); 
+    DebugCommands      (aDI:out Interpretor from Draw); 
     Factory            (aDI:out Interpretor from Draw);
     
 end BOPTest;
