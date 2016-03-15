@@ -4994,21 +4994,20 @@ void IntersectFaces(const TopTools_IndexedDataMapOfShapeListOfShape& theFToRebui
   }
   //
   // Collect vertices to avoid while trimming the edges
-  TopTools_MapOfShape aMVInv, aMVRInv;
+  TopTools_MapOfShape aMVInv, aMVRInv, aMVInvAll;
   //
   // get vertices from invalid edges
   aNbInv = theInvEdges.Extent();
   for (i = 1; i <= aNbInv; ++i) {
     const TopoDS_Shape& aEInv = theInvEdges(i);
-    //
-    if (theValidEdges.Contains(aEInv)) {
-      continue;
-    }
-    //
+    Standard_Boolean bValid = theValidEdges.Contains(aEInv);
     TopExp_Explorer aExp(aEInv, TopAbs_VERTEX);
     for (; aExp.More(); aExp.Next()) {
       const TopoDS_Shape& aV = aExp.Current();
-      aMVInv.Add(aV);
+      aMVInvAll.Add(aV);
+      if (!bValid) {
+        aMVInv.Add(aV);
+      }
     }
   }
   //
@@ -5109,18 +5108,31 @@ void IntersectFaces(const TopTools_IndexedDataMapOfShapeListOfShape& theFToRebui
       //
       // Using the map <aME> find chain of faces to be intersected;
       TopTools_ListOfShape aLFInt;
-      TopTools_IndexedMapOfShape aMFInt;
+      TopTools_IndexedMapOfShape aMFInt, aMFAvoid;
       Standard_Integer aNbE = aME.Extent();
       for (i = 1; i <= aNbE; ++i) {
-        const TopoDS_Shape& aE = aME(i);
-        if (aDMEF.IsBound(aE)) {
-          const TopTools_ListOfShape& aLF = aDMEF.Find(aE);
+        const TopoDS_Shape& aS = aME(i);
+        if (aDMEF.IsBound(aS)) {
+          const TopTools_ListOfShape& aLF = aDMEF.Find(aS);
           aItLE.Initialize(aLF);
           for (; aItLE.More(); aItLE.Next()) {
             const TopoDS_Shape& aF = aItLE.Value();
             if (!aMFInt.Contains(aF)) {
+              const TopTools_ListOfShape& aLFIm = theDMFFIm.FindFromKey(aF);
+              // check if this face is close to invalidity
+              if (theArtInvFaces.IsBound(aFInv) && theArtInvFaces.IsBound(aF)) {
+                if (aS.ShapeType() != TopAbs_EDGE && !aMVInvAll.Contains(aS)) {
+                  aMFAvoid.Add(aF);
+                }
+              }
+              //
               aMFInt.Add(aF);
-              aLFInt.Append(aF);
+              // Debug
+              TopTools_ListIteratorOfListOfShape aItLFIm(aLFIm);
+              for (; aItLFIm.More(); aItLFIm.Next()) {
+                const TopoDS_Shape& aFIm = aItLFIm.Value();
+                aLFInt.Append(aFIm);
+              }
             }
           }
         }
@@ -5300,6 +5312,10 @@ void IntersectFaces(const TopTools_IndexedDataMapOfShapeListOfShape& theFToRebui
               aLFDone.Append(aFj);
               aMDone.ChangeFind(aFj).Append(aFi);
             }
+            continue;
+          }
+          //
+          if (aMFAvoid.Contains(aFi) || aMFAvoid.Contains(aFj)) {
             continue;
           }
           //
