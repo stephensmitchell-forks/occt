@@ -1,0 +1,29 @@
+puts "================"
+puts "OCC27262"
+puts "================"
+puts ""
+#######################################################################
+# General Fuse operation is failed on the attached shapes
+#######################################################################
+
+restore [locate_data_file  bug27262_cmpd.brep] b
+explode b
+
+bclearobjects
+bcleartools
+baddobjects b_1
+baddtools b_2
+bfillds
+bbuild result
+checkshape result
+checknbshapes result -solid 22
+set only_screen_axo 1
+
+# result should have positive volume
+if { [regexp {Mass\s*:\s*([0-9.e+-]*)} [vprops result] dummy volume] } {
+  checkreal "Volume" $volume 16263.5 0.1 0.
+}
+
+smallview
+donly result
+fit
