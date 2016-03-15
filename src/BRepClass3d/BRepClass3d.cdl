@@ -33,22 +33,24 @@ uses
 
 
 is
-
+    
+    imported BndBoxTree;
     class Intersector3d;
+    class SolidExplorer;
+    class SClassifier;
+    class SolidClassifier;
 
     class MapOfInter instantiates  
        DataMap from TCollection(Shape          from TopoDS,
 	    	    	    	Address        from Standard,
                                 ShapeMapHasher from TopTools);
 
-    class SolidExplorer;
+    
         
     class SolidPassiveClassifier instantiates  
     	Classifier3d from TopClass  (Intersector3d  from BRepClass3d);
 
-    class SClassifier;       
 
-    class SolidClassifier;
        
     OuterShell(S : Solid from TopoDS)  
     	    returns Shell from TopoDS;

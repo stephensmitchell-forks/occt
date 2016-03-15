@@ -46,7 +46,8 @@ uses
 is
 
     Create(F    : Face from TopoDS;
-	   aTol : Real    from Standard)
+           aTol : Real    from Standard;
+           UseBToler : Boolean from Standard = Standard_True)
 	   
 	---Purpose: Load a Face.     
 	--          
@@ -91,6 +92,18 @@ is
     	---Purpose: True is returned when the intersection have been computed.
     	---C++: inline
     returns Boolean from Standard
+    is static;
+    
+    GetUseBoundToler(me)  
+    	---Purpose: Returns the boundary tolerance flag.
+    	---C++: inline
+    returns Boolean from Standard
+    is static;
+    
+    SetUseBoundToler(me: in out;
+                         UseBToler: Boolean from Standard)  
+    	---Purpose: Sets the boundary tolerance flag.
+    	---C++: inline
     is static;
     
     
@@ -196,6 +209,7 @@ fields
     face               :  Face                from TopoDS;
     PtrOnPolyhedron    :  Address             from Standard;
     PtrOnBndBounding   :  Address             from Standard;
+    myUseBoundTol      :  Boolean from Standard;
 
 
 end Intersector from IntCurvesFace;

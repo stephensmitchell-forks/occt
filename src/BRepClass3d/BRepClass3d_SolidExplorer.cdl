@@ -38,7 +38,9 @@ uses
     State        from TopAbs,
     Intersector  from IntCurvesFace,
     MapOfInter   from BRepClass3d,
-    HSurface     from BRepAdaptor
+    HSurface     from BRepAdaptor,
+    BndBoxTree   from BRepClass3d,
+    IndexedMapOfShape from TopTools
 is
 
     Create returns SolidExplorer from BRepClass3d;
@@ -122,7 +124,22 @@ is
     --          point index of succeseful search
 
 
+    GetShape(me)
+    ---C++: return  const &
+    returns Shape from TopoDS is static;
+    
+    
+    GetTree(me)
+    ---C++: return  const &
+    ---Purpose: Return UB-tree instance which is used for edge / vertex checks.  
+    returns BndBoxTree from BRepClass3d is static;
+    
+    GetMapEV(me)
+    ---C++: return  const &
+    ---Purpose: Return edge/vertices map for current shape.
+    returns IndexedMapOfShape from TopTools is static;
 
+    ---Purpose: Starts an exploration of the shells.
     InitShell(me: in out) is static ;
     ---Purpose: Starts an exploration of the shells.
     MoreShell(me) returns Boolean from Standard is static ;
@@ -213,7 +230,8 @@ fields
     myParamOnEdge   : Real     from Standard;
     myShellExplorer : Explorer from TopExp;
     myFaceExplorer  : Explorer from TopExp;
-
+    myMapEV         : IndexedMapOfShape from TopTools;
+    myTree          : BndBoxTree from BRepClass3d;
     myMapOfInter    : MapOfInter from BRepClass3d;
 
 end SolidExplorer;

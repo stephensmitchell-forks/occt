@@ -57,13 +57,15 @@ GeomAbs_SurfaceType IntCurvesFace_Intersector::SurfaceType() const
 //purpose  : 
 //=======================================================================
 IntCurvesFace_Intersector::IntCurvesFace_Intersector(const TopoDS_Face& Face,
-                                                     const Standard_Real aTol)
+                                                     const Standard_Real aTol,
+                                                     const Standard_Boolean UseBToler)
 : 
   Tol(aTol),
   done(Standard_False),
   nbpnt(0),
   PtrOnPolyhedron(NULL),
-  PtrOnBndBounding(NULL)
+  PtrOnBndBounding(NULL),
+  myUseBoundTol (UseBToler)
 { 
   BRepAdaptor_Surface surface;
   const Standard_Boolean aRestr = Standard_True;
@@ -146,8 +148,8 @@ void IntCurvesFace_Intersector::InternalCall(const IntCurveSurface_HInter &HICS,
       gp_Pnt2d Puv(HICSPointindex.U(),HICSPointindex.V());
 
       //TopAbs_State currentstate = myTopolTool->Classify(Puv,Tol);
-      TopAbs_State currentstate = myTopolTool->Classify(Puv, mintol2d);
-      if(currentstate == TopAbs_OUT && maxtol2d > mintol2d) {
+      TopAbs_State currentstate = myTopolTool->Classify(Puv, !myUseBoundTol ? 0 : mintol2d);
+      if(myUseBoundTol && currentstate == TopAbs_OUT && maxtol2d > mintol2d) {
         if(anAdditionalTool.IsNull())
         {
           anAdditionalTool = new BRepTopAdaptor_TopolTool(Hsurface);
@@ -408,5 +410,13 @@ void IntCurvesFace_Intersector::Destroy() {
   }
 }
 
+ void IntCurvesFace_Intersector::SetUseBoundToler(Standard_Boolean UseBToler)
+ {
+   myUseBoundTol = UseBToler;
+ }
 
+ Standard_Boolean IntCurvesFace_Intersector::GetUseBoundToler() const
+ {
+   return myUseBoundTol;
+ }
 

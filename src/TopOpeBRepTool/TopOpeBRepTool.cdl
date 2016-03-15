@@ -70,12 +70,8 @@ is
      	 ListOfC2DF from TopOpeBRepTool,
      	 ShapeMapHasher from TopTools);
     
-    class IndexedDataMapOfSolidClassifier 
-    instantiates IndexedDataMap from TCollection 
-    	(Shape from TopoDS,
-     	 SolidClassifier from BRepClass3d,
-     	 ShapeMapHasher from TopTools);
-	 
+    imported IndexedDataMapOfSolidClassifier;
+
     pointer Plos to ListOfShape from TopTools;
     class SolidClassifier;
     

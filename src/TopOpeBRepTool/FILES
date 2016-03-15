@@ -30,3 +30,4 @@ TopOpeBRepTool_define.hxx
 TopOpeBRepTool_defineG.hxx
 TopOpeBRepTool_tol.hxx
 TopOpeBRepTool_tol.cxx
+TopOpeBRepTool_IndexedDataMapOfSolidClassifier.hxx

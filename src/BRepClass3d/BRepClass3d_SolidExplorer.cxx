@@ -39,6 +39,7 @@
 #include <TopAbs_Orientation.hxx>
 #include <TopExp_Explorer.hxx>
 #include <BRepClass_Edge.hxx>
+#include <TopExp.hxx>
 
 #include <Bnd_Box.hxx>
 #include <BRepBndLib.hxx>
@@ -751,6 +752,9 @@ void BRepClass3d_SolidExplorer::Destroy() {
 
 void BRepClass3d_SolidExplorer::InitShape(const TopoDS_Shape& S)
 {
+  myMapEV.Clear();
+  myTree.Clear();
+
   myShape = S;
   myFirstFace = 0;
   myParamOnEdge = 0.512345;
@@ -775,7 +779,7 @@ void BRepClass3d_SolidExplorer::InitShape(const TopoDS_Shape& S)
       Expl.More();
       Expl.Next()) { 
     const TopoDS_Face Face = TopoDS::Face(Expl.Current());
-    void *ptr = (void *)(new IntCurvesFace_Intersector(Face,Precision::Confusion()));
+    void *ptr = (void *)(new IntCurvesFace_Intersector(Face,Precision::Confusion(), Standard_False));
     myMapOfInter.Bind(Face,ptr);
     myReject=Standard_False;  //-- at least one face in the solid 
   }
@@ -784,11 +788,31 @@ void BRepClass3d_SolidExplorer::InitShape(const TopoDS_Shape& S)
   if(myReject) { 
     cout<<"\nWARNING : BRepClass3d_SolidExplorer.cxx  (Solid without face)"<<endl;
   }
-#endif      
+#endif
 
 #if REJECTION
   BRepBndLib::Add(myShape,myBox);
 #endif
+
+  // Fill mapEV with vertices and edges from shape.
+  TopExp::MapShapes(myShape, TopAbs_EDGE, myMapEV);
+  TopExp::MapShapes(myShape, TopAbs_VERTEX, myMapEV);  
+
+  NCollection_UBTreeFiller <Standard_Integer, Bnd_Box> aTreeFiller (myTree);
+
+  for (Standard_Integer i = 1; i <= myMapEV.Extent(); i++)
+  {
+    Bnd_Box B;
+    const TopoDS_Shape& Sh = myMapEV(i);
+    TopAbs_Orientation ori = Sh.Orientation();
+    if (ori == TopAbs_EXTERNAL || ori == TopAbs_INTERNAL)
+      continue;
+    if (Sh.ShapeType() == TopAbs_EDGE && BRep_Tool::Degenerated(TopoDS::Edge(Sh)))
+      continue;
+    BRepBndLib::Add(Sh,B);
+    aTreeFiller.Add(i, B);
+  }
+  aTreeFiller.Fill();
 }
 
 //=======================================================================
@@ -955,4 +979,31 @@ void BRepClass3d_SolidExplorer::DumpSegment(const gp_Pnt&,
 #ifdef DEB
  
 #endif
+}
+
+//=======================================================================
+//function : GetShape
+//purpose  : 
+//=======================================================================
+const TopoDS_Shape& BRepClass3d_SolidExplorer::GetShape() const 
+{ 
+  return myShape;
+}
+
+//=======================================================================
+//function : GetTree
+//purpose  : 
+//=======================================================================
+const BRepClass3d_BndBoxTree& BRepClass3d_SolidExplorer::GetTree() const 
+{ 
+  return myTree;
+}
+
+//=======================================================================
+//function : GetMapEV
+//purpose  : 
+//=======================================================================
+const  TopTools_IndexedMapOfShape& BRepClass3d_SolidExplorer::GetMapEV() const 
+{ 
+  return myMapEV;
 }
