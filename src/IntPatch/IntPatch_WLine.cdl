@@ -328,6 +328,16 @@ is
     
       is static;
 
+    EnablePurging(me: mutable; theIsEnabled: Boolean from Standard)
+        ---Purpose: Allows or forbides purging of existing WLine C++:
+        --C++: inline
+    is static;
+
+    IsPurgingAllowed(me)
+        ---Purpose: Returns TRUE if purging is allowed or forbiden for existing WLine
+        --C++: inline
+    returns Boolean from Standard
+    is static;
  
 fields
 
@@ -351,5 +361,6 @@ fields
     theArcOnS1   : HCurve2d from Adaptor2d;
     hasArcOnS2   : Boolean from Standard;
     theArcOnS2   : HCurve2d from Adaptor2d;
+    myIsPurgerAllowed : Boolean from Standard;
     
 end WLine;

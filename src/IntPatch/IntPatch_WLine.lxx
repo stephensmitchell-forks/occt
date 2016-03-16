@@ -121,3 +121,13 @@ inline void IntPatch_WLine::InsertVertexBefore( const Standard_Integer theIndex,
   else
     svtx.InsertBefore(theIndex, thePnt);
 }
+
+inline void IntPatch_WLine::EnablePurging(const Standard_Boolean theIsEnabled)
+{
+  myIsPurgerAllowed = theIsEnabled;
+}
+ 
+inline Standard_Boolean IntPatch_WLine::IsPurgingAllowed() const
+{
+  return myIsPurgerAllowed;
+}
