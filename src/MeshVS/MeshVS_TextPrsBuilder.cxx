@@ -202,14 +202,14 @@ namespace
 
     Standard_EXPORT virtual void Release (OpenGl_Context* theContext)
     {
-      //
+      myFBO->Release (theContext);
     }
 
   protected:
 
     Standard_EXPORT virtual ~OpenGl_GrabDepthElement()
     {
-      //
+      Release (NULL);
     }
 
   protected:
