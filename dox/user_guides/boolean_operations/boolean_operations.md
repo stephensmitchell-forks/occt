@@ -1078,6 +1078,9 @@ The input data for this step is a *BOPAlgo_Builder* object after building result
 * The result of the operation Cut is defined for arguments *S1* and *S2* that have values of dimensions *Dim(S2)* that should not be less than *Dim(S1)*. The dimension of the result is equal to *Dim(S1)*. The result of the operation *Cut12* is not defined for other cases. For example, it is impossible to cut an edge from a solid, because a solid without an edge is not defined. 
 * The result of the operation *Cut12* for arguments *S1* and *S2* contains the parts of argument *S1* that have state **OUT** relative to the opposite argument *S2*.
 * The result of the operation *Cut21* for arguments *S1* and *S2* contains the parts of argument *S2* that have state **OUT** relative to the opposite argument *S1*.
+* For the arguments of collection type (WIRE, SHELL, COMPSOLID) containing overlapping parts the overlapping parts passed into result will be repeated for each container from the input shapes containing such parts.
+* The result of the operation Fuse for the arguments of collection type (WIRE, SHELL, COMPSOLID) will contain the same number of containers as the arguments. The overlapping parts (EDGES/FACES/SOLIDS) will be shared among them. For example, the result of Fuse operation between two wires will be two wires sharing coinciding edges if any.
+* The result of the operation Common for the arguments of collection type (WIRE, SHELL, COMPSOLID) will consist of the containers containing the same overlapping parts. For example, the result of Common operation between two fully/partially overlapping wires will be two wires containing the same edges.
 
 @subsection occt_algorithms_9_4 Examples
 
@@ -1498,7 +1501,7 @@ argument *S1* has a common part with solid *S2* so the corresponding part is not
   	
 @figure{/user_guides/boolean_operations/images/boolean_image065.png}	
 	
-* The result of *Cut21* operation is a  compound containing split part of the argument *S2*. In this case 
+* The result of *Cut21* operation is a compound containing split part of the argument *S2*. In this case 
 argument *S2* has a common part with solid *S1* so the corresponding part is not included into the result.
 @figure{/user_guides/boolean_operations/images/boolean_image066.png}
 
@@ -1521,6 +1524,28 @@ Let us consider two solids *S1* and *S2* that have overlapping vertices:
 * The result of *Cut21* operation is a  compound containing split part of the argument *S2*. 
 
 @figure{/user_guides/boolean_operations/images/boolean_image070.png}
+
+@subsubsection occt_algorithms_9_4_24	Case 24: Two Wires that have overlapping edges.
+
+Let us consider two Wires that have overlapping edges, *W1* is the object and *W2* is the tool:
+
+@figure{/user_guides/boolean_operations/images/boolean_image139.png}
+
+* The result of *Fuse* operation is a compound containing two Wires, which share an overlapping edge. The new Wires are created from the objects:
+
+@figure{/user_guides/boolean_operations/images/boolean_image140.png}
+ 	
+* The result of *Common* operation is a compound containing two Wires both consisting of an overlapping edge. The new Wires are created from the objects:
+
+@figure{/user_guides/boolean_operations/images/boolean_image141.png}	
+
+* The result of *Cut12* operation is a compound containing a wire split from object *W1*. Its common part with *W2* is not included into the result.
+  	
+@figure{/user_guides/boolean_operations/images/boolean_image142.png}	
+	
+* The result of *Cut21* operation is a compound containing a wire split from *W2*. Its common part with *W1* is not included into the result.
+	
+@figure{/user_guides/boolean_operations/images/boolean_image143.png}	
 
 
 @subsection occt_algorithms_9_5 Class BOPAlgo_BOP
