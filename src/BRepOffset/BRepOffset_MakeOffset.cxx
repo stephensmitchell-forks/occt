@@ -5059,6 +5059,8 @@ void IntersectFaces(const TopTools_IndexedDataMapOfShapeListOfShape& theFToRebui
     }
   }
   //
+  aMFence.Clear();
+  //
   aNbInv = theInvFaces.Extent();
   for (k = 1; k <= aNbInv; ++k) {
     const TopoDS_Shape& aFInv = theInvFaces.FindKey(k);
@@ -5087,8 +5089,7 @@ void IntersectFaces(const TopTools_IndexedDataMapOfShapeListOfShape& theFToRebui
     for (; aItLCB.More(); aItLCB.Next()) {
       const TopoDS_Shape& aCBInv = aItLCB.Value();
       //
-      // map of connection edges
-      TopTools_IndexedMapOfShape aME;
+      TopTools_MapOfShape aMEFence;
       //
       TopoDS_Compound aCBE;
       aBB.MakeCompound(aCBE);
@@ -5097,114 +5098,249 @@ void IntersectFaces(const TopTools_IndexedDataMapOfShapeListOfShape& theFToRebui
       for (; aExp.More(); aExp.Next()) {
         const TopoDS_Shape& aE = aExp.Current();
         if (theInvEdges.Contains(aE) || aMEAlone.Contains(aE)) {
-          if (!aME.Contains(aE)) {
-            aME.Add(aE);
+          if (aMEFence.Add(aE)) {
             aBB.Add(aCBE, aE);
           }
         }
       }
       //
-      TopExp::MapShapes(aCBE, TopAbs_VERTEX, aME);
+      // make connexity blocks of edges
+      BOPCol_ListOfShape aLCBE;
+      BOPTools_AlgoTools::MakeConnexityBlocks(aCBE, TopAbs_VERTEX, TopAbs_EDGE, aLCBE);
       //
-      // Using the map <aME> find chain of faces to be intersected;
-      TopTools_ListOfShape aLFInt;
-      TopTools_IndexedMapOfShape aMFInt, aMFAvoid;
-      Standard_Integer aNbE = aME.Extent();
-      for (i = 1; i <= aNbE; ++i) {
-        const TopoDS_Shape& aS = aME(i);
-        if (aDMEF.IsBound(aS)) {
-          const TopTools_ListOfShape& aLF = aDMEF.Find(aS);
-          aItLE.Initialize(aLF);
-          for (; aItLE.More(); aItLE.Next()) {
-            const TopoDS_Shape& aF = aItLE.Value();
-            if (!aMFInt.Contains(aF)) {
-              const TopTools_ListOfShape& aLFIm = theDMFFIm.FindFromKey(aF);
-              // check if this face is close to invalidity
-              if (theArtInvFaces.IsBound(aFInv) && theArtInvFaces.IsBound(aF)) {
-                if (aS.ShapeType() != TopAbs_EDGE && !aMVInvAll.Contains(aS)) {
-                  aMFAvoid.Add(aF);
+      BOPCol_ListIteratorOfListOfShape aItLCBE(aLCBE);
+      for (; aItLCBE.More(); aItLCBE.Next()) {
+        const TopoDS_Shape& aCBELoc = aItLCBE.Value();
+        // map of connection edges
+        TopTools_IndexedMapOfShape aME;
+        TopExp::MapShapes(aCBELoc, TopAbs_EDGE, aME);
+        TopExp::MapShapes(aCBELoc, TopAbs_VERTEX, aME);
+        //
+        // Using the map <aME> find chain of faces to be intersected;
+        TopTools_ListOfShape aLFInt;
+        TopTools_IndexedMapOfShape aMFInt, aMFAvoid;
+        Standard_Integer aNbE = aME.Extent();
+        for (i = 1; i <= aNbE; ++i) {
+          const TopoDS_Shape& aS = aME(i);
+          if (aDMEF.IsBound(aS)) {
+            const TopTools_ListOfShape& aLF = aDMEF.Find(aS);
+            aItLE.Initialize(aLF);
+            for (; aItLE.More(); aItLE.Next()) {
+              const TopoDS_Shape& aF = aItLE.Value();
+              if (!aMFInt.Contains(aF)) {
+                const TopTools_ListOfShape& aLFIm = theDMFFIm.FindFromKey(aF);
+                // check if this face is close to invalidity
+                if (theArtInvFaces.IsBound(aFInv) && theArtInvFaces.IsBound(aF)) {
+                  if (aS.ShapeType() != TopAbs_EDGE && !aMVInvAll.Contains(aS)) {
+                    aMFAvoid.Add(aF);
+                  }
                 }
-              }
-              //
-              aMFInt.Add(aF);
-              // Debug
-              TopTools_ListIteratorOfListOfShape aItLFIm(aLFIm);
-              for (; aItLFIm.More(); aItLFIm.Next()) {
-                const TopoDS_Shape& aFIm = aItLFIm.Value();
-                aLFInt.Append(aFIm);
+                //
+                aMFInt.Add(aF);
+                // Debug
+                TopTools_ListIteratorOfListOfShape aItLFIm(aLFIm);
+                for (; aItLFIm.More(); aItLFIm.Next()) {
+                  const TopoDS_Shape& aFIm = aItLFIm.Value();
+                  aLFInt.Append(aFIm);
+                }
               }
             }
           }
         }
-      }
-      //
-      // check if the face is artificially invalid
-      // in this case in pair of faces for intersection
-      // one of the faces must be invalid
-      //
-      TopTools_IndexedMapOfShape aMEToInt;
-      Standard_Integer aNb = aMFInt.Extent();
-      for (i = 1; i <= aNb; ++i) {
-        const TopoDS_Face& aFi = TopoDS::Face(aMFInt(i));
-        const TopTools_ListOfShape& aLFImi = theDMFFIm.FindFromKey(aFi);
         //
-        TopTools_ListOfShape& aLFEi = aFLE.ChangeFromKey(aFi);
+        // check if the face is artificially invalid
+        // in this case in pair of faces for intersection
+        // one of the faces must be invalid
         //
-        TopTools_ListOfShape& aLFDone = aMDone.ChangeFind(aFi);
-        //
-        for (j = i + 1; j <= aNb; ++j) {
-          const TopoDS_Face& aFj = TopoDS::Face(aMFInt(j));
-          const TopTools_ListOfShape& aLFImj = theDMFFIm.FindFromKey(aFj);
+        TopTools_IndexedMapOfShape aMEToInt;
+        Standard_Integer aNb = aMFInt.Extent();
+        for (i = 1; i <= aNb; ++i) {
+          const TopoDS_Face& aFi = TopoDS::Face(aMFInt(i));
+          const TopTools_ListOfShape& aLFImi = theDMFFIm.FindFromKey(aFi);
           //
-          Standard_Boolean bArtInvI = theArtInvFaces.IsBound(aFi);
-          Standard_Boolean bArtInvJ = theArtInvFaces.IsBound(aFj);
+          TopTools_ListOfShape& aLFEi = aFLE.ChangeFromKey(aFi);
           //
-          // check if both these faces are invalid and sharing edges
-          if (theInvFaces.Contains(aFi) && theInvFaces.Contains(aFj) && !bArtInvI && !bArtInvJ) {
-            const TopTools_ListOfShape& aLFInvi = theInvFaces.FindFromKey(aFi);
-            const TopTools_ListOfShape& aLFInvj = theInvFaces.FindFromKey(aFj);
+          TopTools_ListOfShape& aLFDone = aMDone.ChangeFind(aFi);
+          //
+          for (j = i + 1; j <= aNb; ++j) {
+            const TopoDS_Face& aFj = TopoDS::Face(aMFInt(j));
+            const TopTools_ListOfShape& aLFImj = theDMFFIm.FindFromKey(aFj);
             //
-            // try to find common parts between these two lists
-            TopTools_ListOfShape aLFInvij;
-            FindCommonParts(aLFInvi, aLFInvj, aLFInvij);
+            Standard_Boolean bArtInvI = theArtInvFaces.IsBound(aFi);
+            Standard_Boolean bArtInvJ = theArtInvFaces.IsBound(aFj);
             //
-            if (aLFInvij.Extent()) {
-              TopTools_ListIteratorOfListOfShape aItLEInv(aLFInvij);
-              for (; aItLEInv.More(); aItLEInv.Next()) {
-                const TopoDS_Shape& aEx = aItLEInv.Value();
-                if (theInvEdges.Contains(aEx) && !theValidEdges.Contains(aEx)) {
-                  TopExp_Explorer aExpV(aEx, TopAbs_VERTEX);
-                  for (; aExpV.More(); aExpV.Next()) {
-                    const TopoDS_Shape& aVx = aExpV.Current();
-                    aMVRInv.Add(aVx);
+            // check if both these faces are invalid and sharing edges
+            if (theInvFaces.Contains(aFi) && theInvFaces.Contains(aFj) && !bArtInvI && !bArtInvJ) {
+              const TopTools_ListOfShape& aLFInvi = theInvFaces.FindFromKey(aFi);
+              const TopTools_ListOfShape& aLFInvj = theInvFaces.FindFromKey(aFj);
+              //
+              // try to find common parts between these two lists
+              TopTools_ListOfShape aLFInvij;
+              FindCommonParts(aLFInvi, aLFInvj, aLFInvij);
+              //
+              if (aLFInvij.Extent()) {
+                TopTools_ListIteratorOfListOfShape aItLEInv(aLFInvij);
+                for (; aItLEInv.More(); aItLEInv.Next()) {
+                  const TopoDS_Shape& aEx = aItLEInv.Value();
+                  if (theInvEdges.Contains(aEx) && !theValidEdges.Contains(aEx)) {
+                    TopExp_Explorer aExpV(aEx, TopAbs_VERTEX);
+                    for (; aExpV.More(); aExpV.Next()) {
+                      const TopoDS_Shape& aVx = aExpV.Current();
+                      aMVRInv.Add(aVx);
+                    }
+                  }
+                }
+                //
+                continue;
+              }
+            }
+            // check if these two faces have already been treated
+            aItLE.Initialize(aLFDone);
+            for (; aItLE.More(); aItLE.Next()) {
+              const TopoDS_Shape& aF = aItLE.Value();
+              if (aF.IsSame(aFj)) {
+                break;
+              }
+            }
+            //
+            if (aItLE.More()) {
+              // Find common edges in these two lists
+              const TopTools_ListOfShape& aLEi = aFLE.FindFromKey(aFi);
+              const TopTools_ListOfShape& aLEj = aFLE.FindFromKey(aFj);
+              //
+              TopTools_MapOfShape aMEi;
+              aItLE.Initialize(aLEi);
+              for (; aItLE.More(); aItLE.Next()) {
+                const TopoDS_Shape& aE = aItLE.Value();
+                aMEi.Add(aE);
+              }
+              //
+              // find origins
+              TopTools_IndexedMapOfShape aMEToFindOrigins;
+              TopTools_ListOfShape aLEToFindOrigins;
+              if (!aFi.IsSame(aFInv)) {
+                FindCommonParts(aLFImi, aLFInv, aLEToFindOrigins);
+              }
+              if (!aFj.IsSame(aFInv)) {
+                FindCommonParts(aLFImj, aLFInv, aLEToFindOrigins);
+              }
+              //
+              TopTools_ListOfShape aLEOrInit;
+              aItLE.Initialize(aLEToFindOrigins);
+              for (; aItLE.More(); aItLE.Next()) {
+                const TopoDS_Shape& aEC = aItLE.Value();
+                aMEToFindOrigins.Add(aEC);
+              }
+              //
+              FindOrigins(aLFImi, aLFImj, aMEToFindOrigins, theEdgesOrigins, aLEOrInit);
+              //
+              aItLE.Initialize(aLEj);
+              for (; aItLE.More(); aItLE.Next()) {
+                const TopoDS_Shape& aE = aItLE.Value();
+                if (aMEi.Contains(aE)) {
+                  aMEToInt.Add(aE);
+                  if (!aDMEETrim.IsBound(aE)) {
+                    if (aLEOrInit.Extent()) {
+                      if (theEdgesOrigins.IsBound(aE)) {
+                        TopTools_ListOfShape& aLEOr = theEdgesOrigins.ChangeFind(aE);
+                        TopTools_ListIteratorOfListOfShape aItLEOr(aLEOrInit);
+                        for (; aItLEOr.More(); aItLEOr.Next()) {
+                          const TopoDS_Shape& aEOr = aItLEOr.Value();
+                          AppendToList(aLEOr, aEOr);
+                        }
+                      }
+                      else {
+                        theEdgesOrigins.Bind(aE, aLEOrInit);
+                      }
+                    }
                   }
                 }
               }
               //
               continue;
             }
-          }
-          // check if these two faces have already been treated
-          aItLE.Initialize(aLFDone);
-          for (; aItLE.More(); aItLE.Next()) {
-            const TopoDS_Shape& aF = aItLE.Value();
-            if (aF.IsSame(aFj)) {
-              break;
-            }
-          }
-          //
-          if (aItLE.More()) {
-            // Find common edges in these two lists
-            const TopTools_ListOfShape& aLEi = aFLE.FindFromKey(aFi);
-            const TopTools_ListOfShape& aLEj = aFLE.FindFromKey(aFj);
             //
-            TopTools_MapOfShape aMEi;
-            aItLE.Initialize(aLEi);
-            for (; aItLE.More(); aItLE.Next()) {
-              const TopoDS_Shape& aE = aItLE.Value();
-              aMEi.Add(aE);
+            TopTools_ListOfShape& aLFEj = aFLE.ChangeFromKey(aFj);
+            //
+            // if there are some common edges between faces
+            // it means that these faces have already been intersected,
+            // on the previous steps. This intersection edge is saved in the map
+            TopTools_ListOfShape aLEC;
+            FindCommonParts(aLFImi, aLFImj, aLEC);
+            //
+            if (aLEC.Extent()) {
+              Standard_Boolean bDone = Standard_False;
+              //
+              aItLE.Initialize(aLEC);
+              for (; aItLE.More(); aItLE.Next()) {
+                const TopoDS_Shape& aEC = aItLE.Value();
+                //
+                // check first if common edges are valid
+                if (theInvEdges.Contains(aEC) && !theValidEdges.Contains(aEC)) {
+                  continue;
+                }
+                //
+                // common edge should have connection to current invalidity
+                if (!aME.Contains(aEC)) {
+                  TopExp_Explorer aExpV(aEC, TopAbs_VERTEX);
+                  for (; aExpV.More(); aExpV.Next()) {
+                    const TopoDS_Shape& aVE = aExpV.Current();
+                    if (aME.Contains(aVE)) {
+                      break;
+                    }
+                  }
+                  //
+                  if (!aExpV.More()) {
+                    continue;
+                  }
+                }
+                //
+                bDone = Standard_True;
+                //
+                const TopoDS_Shape& aEInt = theETrimEInf.Find(aEC);
+                //
+                // bind unlimited edge to its trimmed part in face to update maps of 
+                // images and origins in the future
+                if (aDMEETrim.IsBound(aEInt)) {
+                  TopTools_ListOfShape& aLTAdded = aDMEETrim.ChangeFind(aEInt);
+                  AppendToList(aLTAdded, aEC);
+                }
+                else {
+                  TopTools_ListOfShape aLT;
+                  aLT.Append(aEC);
+                  aDMEETrim.Bind(aEInt, aLT);
+                }
+                //
+                if (aMEC.Add(aEC) && aMFence.Add(aEInt)) {
+                  aLFEi.Append(aEInt);
+                  aLFEj.Append(aEInt);
+                  aMEToInt.Add(aEInt);
+                }
+              }
+              //
+              if (bDone) {
+                aLFDone.Append(aFj);
+                aMDone.ChangeFind(aFj).Append(aFi);
+              }
+              continue;
             }
             //
+            if (aMFAvoid.Contains(aFi) || aMFAvoid.Contains(aFj)) {
+              continue;
+            }
+            //
+            aLFDone.Append(aFj);
+            aMDone.ChangeFind(aFj).Append(aFi);
+            //
+            // intersect faces
+            TopAbs_State aSide = TopAbs_OUT;
+            TopTools_ListOfShape aLInt1, aLInt2;
+            TopoDS_Edge aNullEdge;
+            BRepOffset_Tool::Inter3D(aFi, aFj, aLInt1, aLInt2, aSide, aNullEdge);
+            //
+            if (aLInt1.IsEmpty()) {
+              continue;
+            }
             // find origins
             TopTools_IndexedMapOfShape aMEToFindOrigins;
             TopTools_ListOfShape aLEToFindOrigins;
@@ -5214,7 +5350,6 @@ void IntersectFaces(const TopTools_IndexedDataMapOfShapeListOfShape& theFToRebui
             if (!aFj.IsSame(aFInv)) {
               FindCommonParts(aLFImj, aLFInv, aLEToFindOrigins);
             }
-            //
             TopTools_ListOfShape aLEOrInit;
             aItLE.Initialize(aLEToFindOrigins);
             for (; aItLE.More(); aItLE.Next()) {
@@ -5224,149 +5359,25 @@ void IntersectFaces(const TopTools_IndexedDataMapOfShapeListOfShape& theFToRebui
             //
             FindOrigins(aLFImi, aLFImj, aMEToFindOrigins, theEdgesOrigins, aLEOrInit);
             //
-            aItLE.Initialize(aLEj);
+            aItLE.Initialize(aLInt1);
             for (; aItLE.More(); aItLE.Next()) {
-              const TopoDS_Shape& aE = aItLE.Value();
-              if (aMEi.Contains(aE)) {
-                aMEToInt.Add(aE);
-                if (!aDMEETrim.IsBound(aE)) {
-                  if (aLEOrInit.Extent()) {
-                    if (theEdgesOrigins.IsBound(aE)) {
-                      TopTools_ListOfShape& aLEOr = theEdgesOrigins.ChangeFind(aE);
-                      TopTools_ListIteratorOfListOfShape aItLEOr(aLEOrInit);
-                      for (; aItLEOr.More(); aItLEOr.Next()) {
-                        const TopoDS_Shape& aEOr = aItLEOr.Value();
-                        AppendToList(aLEOr, aEOr);
-                      }
-                    }
-                    else {
-                      theEdgesOrigins.Bind(aE, aLEOrInit);
-                    }
-                  }
-                }
+              const TopoDS_Shape& aEInt = aItLE.Value();
+              aLFEi.Append(aEInt);
+              aLFEj.Append(aEInt);
+              //
+              if (aLEOrInit.Extent()) {
+                theEdgesOrigins.Bind(aEInt, aLEOrInit);
               }
+              //
+              aMEToInt.Add(aEInt);
             }
-            //
-            continue;
-          }
-          //
-          TopTools_ListOfShape& aLFEj = aFLE.ChangeFromKey(aFj);
-          //
-          // if there are some common edges between faces
-          // it means that these faces have already been intersected,
-          // on the previous steps. This intersection edge is saved in the map
-          TopTools_ListOfShape aLEC;
-          FindCommonParts(aLFImi, aLFImj, aLEC);
-          //
-          if (aLEC.Extent()) {
-            Standard_Boolean bDone = Standard_False;
-            //
-            aItLE.Initialize(aLEC);
-            for (; aItLE.More(); aItLE.Next()) {
-              const TopoDS_Shape& aEC = aItLE.Value();
-              //
-              // check first if common edges are valid
-              if (theInvEdges.Contains(aEC) && !theValidEdges.Contains(aEC)) {
-                continue;
-              }
-              //
-              // common edge should have connection to current invalidity
-              if (!aME.Contains(aEC)) {
-                TopExp_Explorer aExpV(aEC, TopAbs_VERTEX);
-                for (; aExpV.More(); aExpV.Next()) {
-                  const TopoDS_Shape& aVE = aExpV.Current();
-                  if (aME.Contains(aVE)) {
-                    break;
-                  }
-                }
-                //
-                if (!aExpV.More()) {
-                  continue;
-                }
-              }
-              //
-              bDone = Standard_True;
-              //
-              const TopoDS_Shape& aEInt = theETrimEInf.Find(aEC);
-              //
-              // bind unlimited edge to its trimmed part in face to update maps of 
-              // images and origins in the future
-              if (aDMEETrim.IsBound(aEInt)) {
-                TopTools_ListOfShape& aLTAdded = aDMEETrim.ChangeFind(aEInt);
-                AppendToList(aLTAdded, aEC);
-              }
-              else {
-                TopTools_ListOfShape aLT;
-                aLT.Append(aEC);
-                aDMEETrim.Bind(aEInt, aLT);
-              }
-              //
-              if (aMEC.Add(aEC) && aMFence.Add(aEInt)) {
-                aLFEi.Append(aEInt);
-                aLFEj.Append(aEInt);
-                aMEToInt.Add(aEInt);
-              }
-            }
-            //
-            if (bDone) {
-              aLFDone.Append(aFj);
-              aMDone.ChangeFind(aFj).Append(aFi);
-            }
-            continue;
-          }
-          //
-          if (aMFAvoid.Contains(aFi) || aMFAvoid.Contains(aFj)) {
-            continue;
-          }
-          //
-          aLFDone.Append(aFj);
-          aMDone.ChangeFind(aFj).Append(aFi);
-          //
-          // intersect faces
-          TopAbs_State aSide = TopAbs_OUT;
-          TopTools_ListOfShape aLInt1, aLInt2;
-          TopoDS_Edge aNullEdge;
-          BRepOffset_Tool::Inter3D(aFi, aFj, aLInt1, aLInt2, aSide, aNullEdge);
-          //
-          if (aLInt1.IsEmpty()) {
-            continue;
-          }
-          // find origins
-          TopTools_IndexedMapOfShape aMEToFindOrigins;
-          TopTools_ListOfShape aLEToFindOrigins;
-          if (!aFi.IsSame(aFInv)) {
-            FindCommonParts(aLFImi, aLFInv, aLEToFindOrigins);
-          }
-          if (!aFj.IsSame(aFInv)) {
-            FindCommonParts(aLFImj, aLFInv, aLEToFindOrigins);
-          }
-          TopTools_ListOfShape aLEOrInit;
-          aItLE.Initialize(aLEToFindOrigins);
-          for (; aItLE.More(); aItLE.Next()) {
-            const TopoDS_Shape& aEC = aItLE.Value();
-            aMEToFindOrigins.Add(aEC);
-          }
-          //
-          FindOrigins(aLFImi, aLFImj, aMEToFindOrigins, theEdgesOrigins, aLEOrInit);
-          //
-          aItLE.Initialize(aLInt1);
-          for (; aItLE.More(); aItLE.Next()) {
-            const TopoDS_Shape& aEInt = aItLE.Value();
-            aLFEi.Append(aEInt);
-            aLFEj.Append(aEInt);
-            //
-            if (aLEOrInit.Extent()) {
-              theEdgesOrigins.Bind(aEInt, aLEOrInit);
-            }
-            //
-            aMEToInt.Add(aEInt);
           }
         }
+        //
+        // intersect and trim edges for this chain
+        IntersectAndTrimEdges(theFToRebuild, aMFInt, aMEToInt, aDMEETrim,
+                              aMVInv, aMVRInv, aMVBounds, aEImages);
       }
-      //
-      // intersect and trim edges for this chain
-      IntersectAndTrimEdges(theFToRebuild, aMFInt, aMEToInt, aDMEETrim,
-                            aMVInv, aMVRInv, aMVBounds, aEImages);
     }
   }
   //
