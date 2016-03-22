@@ -1294,7 +1294,12 @@ static Standard_Integer unifysamedom(Draw_Interpretor& , Standard_Integer n, con
   if (aShape.IsNull())
     return 1;
 
+  Standard_Boolean isAllowInternal = Standard_False;
+  if (n > 3)
+    isAllowInternal = (strncmp(a[3], "+i", 2) == 0);
+
   ShapeUpgrade_UnifySameDomain Unifier(aShape);
+  Unifier.AllowInternalEdges(isAllowInternal);
   Unifier.Build();
   TopoDS_Shape Result = Unifier.Shape();
 

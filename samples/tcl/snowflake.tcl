@@ -1,6 +1,6 @@
 # Creation of 2d drawing
 
-#Category: Modeling 
+#Category: Modeling
 #Title: Snowflake - creation of 2d geometry
 
 pload MODELING AISV
@@ -85,6 +85,10 @@ bfuse w w w2
 bfuse w w w3
 bfuse w w w4
 bfuse w w w5
+shape wsh Sh
+foreach f [explode w f] {add $f wsh}
+renamevar wsh w
+save w w.brep
 unifysamedom r w
 
 # keep only wires in compound
