@@ -63,7 +63,8 @@ is
     --  Package methods to compute global properties.
     --
 
-    LinearProperties(S : Shape from TopoDS; LProps : in out GProps from GProp);
+    LinearProperties(S : Shape from TopoDS; LProps : in out GProps from GProp;
+                     SkipShared : Boolean from Standard = Standard_False);
 	---Purpose: Computes the linear global properties of the shape S,
 -- i.e. the global properties induced by each edge of the
 -- shape S, and brings them together with the global
@@ -93,8 +94,12 @@ is
 -- No check is performed to verify that the shape S
 -- retains truly linear properties. If S is simply a vertex, it
 -- is not considered to present any additional global properties.
+-- SkipShared is special flag, which allows to take in calculation shared topological entities or not
+-- For ex., if SkipShared = True, edges, shared by two or more faces, are taken into calculation only once.
+-- If we have cube with sizes 1, 1, 1, its linear properties = 12 for SkipEdges = true and 24 for SkipEdges = false.
 	
-    SurfaceProperties(S : Shape from TopoDS; SProps : in out GProps from GProp);
+    SurfaceProperties(S : Shape from TopoDS; SProps : in out GProps from GProp;
+                      SkipShared : Boolean from Standard = Standard_False);
 	---Purpose:  Computes the surface global properties of the
 -- shape S, i.e. the global properties induced by each
 -- face of the shape S, and brings them together with
@@ -127,9 +132,11 @@ is
 -- retains truly surface properties. If S is simply a
 -- vertex, an edge or a wire, it is not considered to
 -- present any additional global properties.
+-- SkipShared is special flag, which allows to take in calculation shared topological entities or not
+-- For ex., if SkipShared = True, faces, shared by two or more shells, are taken into calculation only once.
 	
     SurfaceProperties(S : Shape from TopoDS; SProps : in out GProps from GProp;  
-    	    	      Eps: Real) returns Real;
+    	    	      Eps: Real; SkipShared : Boolean from Standard = Standard_False) returns Real;
 	---Purpose: Updates <SProps> with the shape <S>, that contains its pricipal properties.
 	--          The surface properties of all the faces in <S> are computed.
 	--          Adaptive 2D Gauss integration is used. 
@@ -138,6 +145,8 @@ is
 	--          for two successive steps of adaptive integration. 
 	--          Method returns estimation of relative error reached for whole shape. 
 	--          WARNING: if Eps > 0.001 algorithm performs non-adaptive integration.	  
+        --          SkipShared is special flag, which allows to take in calculation shared topological entities or not
+        --          For ex., if SkipShared = True, faces, shared by two or more shells, are taken into calculation only once.
 	
  
 ------------------------ 
@@ -176,12 +185,16 @@ is
 -- oriented in a coherent way. Nonetheless, S must be
 -- exempt of any free boundary. Note that these
 -- conditions of coherence are not checked by this
--- algorithm, and results will be false if they are not respected.
+-- algorithm, and results will be false if they are not respected. 
+-- SkipShared is special flag, which allows to take in calculation shared topological entities or not
+-- For ex., if SkipShared = True, the volumes formed by the equal (the same TShape, location and orientation) faces are taken into calculation only once.
     VolumeProperties(S : Shape from TopoDS; VProps : in out GProps from GProp;  
-    	    	     OnlyClosed: Boolean = Standard_False);
+    	    	     OnlyClosed: Boolean = Standard_False;
+                     SkipShared: Boolean from Standard = Standard_False);
 
     VolumeProperties(S : Shape from TopoDS; VProps : in out GProps from GProp;  
-		     Eps: Real; OnlyClosed: Boolean = Standard_False) returns Real;
+		     Eps: Real; OnlyClosed: Boolean = Standard_False;
+                     SkipShared : Boolean from Standard = Standard_False) returns Real;
 	---Purpose: Updates <VProps> with the shape <S>, that contains its pricipal properties.
 	--          The volume properties of all the FORWARD and REVERSED faces in <S> are computed. 
 	--          If OnlyClosed is True then computed faces must belong to closed Shells.
@@ -191,6 +204,8 @@ is
 	--          for two successive steps of adaptive integration. 
 	--          Method returns estimation of relative error reached for whole shape. 
 	--          WARNING: if Eps > 0.001 algorithm performs non-adaptive integration.	  
+        --          SkipShared is special flag, which allows to take in calculation shared topological entities or not
+        --          For ex., if SkipShared = True, the volumes formed by the equal (the same TShape, location and orientation) faces are taken into calculation only once.
      
 
 
@@ -204,7 +219,8 @@ is
                        OnlyClosed:        Boolean from Standard = Standard_False; 
                        IsUseSpan :        Boolean from Standard = Standard_False; 
                        CGFlag    :        Boolean from Standard = Standard_False; 
-                       IFlag     :        Boolean from Standard = Standard_False)
+                       IFlag     :        Boolean from Standard = Standard_False;
+                       SkipShared:        Boolean from Standard = Standard_False)
  
      returns Real;
 	---Purpose: Updates <VProps> with the shape <S>, that contains its pricipal properties.
@@ -218,6 +234,8 @@ is
 	--          that is used for properties computation.
 	--          Method returns estimation of relative error reached for whole shape. 
         --          Returns negative value if the computation is failed.
+        --          SkipShared is special flag, which allows to take in calculation shared topological entities or not
+        --          For ex., if SkipShared = True, the volumes formed by the equal (the same TShape, location and orientation) faces are taken into calculation only once.
     VolumePropertiesGK(S         :        Shape   from TopoDS; 
                        VProps    : in out GProps  from GProp; 
                        thePln:  Pln  from  gp;
@@ -225,7 +243,8 @@ is
                        OnlyClosed:        Boolean from Standard = Standard_False; 
                        IsUseSpan :        Boolean from Standard = Standard_False; 
                        CGFlag    :        Boolean from Standard = Standard_False; 
-                       IFlag     :        Boolean from Standard = Standard_False) 
+                       IFlag     :        Boolean from Standard = Standard_False;
+                       SkipShared:        Boolean from Standard = Standard_False) 
      returns Real;
 	
 end BRepGProp;
