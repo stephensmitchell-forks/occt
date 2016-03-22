@@ -38,7 +38,13 @@ is
     	       UnifyEdges: Boolean from Standard = Standard_True;
 	       UnifyFaces: Boolean from Standard = Standard_True;
     	       ConcatBSplines: Boolean from Standard = Standard_False);
-    
+
+    AllowInternalEdges(me: mutable; theValue: Boolean from Standard);
+    	---Purpose: Sets the flag defining whether it is allowed to create
+        -- internal edges inside merged faces in the case of non-manifold 
+        -- topology. Without this flag merging through multi connected edge
+        -- is forbidden. Default value is false.
+        
     Build( me : mutable );
     	---Purpose: Builds the resulting shape
     
@@ -66,6 +72,7 @@ fields
     myUnifyFaces : Boolean from Standard;
     myUnifyEdges : Boolean from Standard;
     myConcatBSplines : Boolean from Standard;
+    myAllowInternal : Boolean from Standard;
     
     myShape : Shape from TopoDS;
     
