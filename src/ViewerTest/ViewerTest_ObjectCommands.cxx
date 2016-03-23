@@ -6295,6 +6295,143 @@ static int VPriority (Draw_Interpretor& theDI,
   return 0;
 }
 
+#include <MeshVS_Mesh.hxx>
+#include <MeshVS_DataSource.hxx>
+#include <MeshPresentation.h>
+// ======================================================================
+// function : VUpdateVertices
+// purpose  :
+// ======================================================================
+static Standard_Integer VUpdateVertices (Draw_Interpretor& theDI,
+                                         Standard_Integer  theArgNum,
+                                         const char**      theArgs)
+{
+  if (theArgNum < 3)
+  {
+    return 1;
+  }
+
+  const TCollection_AsciiString aShapeName (theArgs[1]);
+  const TCollection_AsciiString aNewShapeName (theArgs[2]);
+
+  Standard_Real a = 1.0;
+  Standard_Real k = 1.0;
+  Standard_Real f = 1.0;
+
+  for (Standard_Integer anIter = 3; anIter < theArgNum; ++anIter)
+  {
+    TCollection_AsciiString aValue(theArgs[anIter]);
+    aValue.LowerCase();
+
+    if (aValue == "-a")
+    {
+      if (++anIter >= theArgNum)
+      {
+        theDI << "Syntax error.\n";
+        return 1;
+      }
+
+      a = Draw::Atof(theArgs[anIter]);
+    }
+
+    if (aValue == "-k")
+    {
+      if (++anIter >= theArgNum)
+      {
+        theDI << "Syntax error.\n";
+        return 1;
+      }
+
+      k = Draw::Atof(theArgs[anIter]);
+    }
+
+    if (aValue == "-f")
+    {
+      if (++anIter >= theArgNum)
+      {
+        theDI << "Syntax error.\n";
+        return 1;
+      }
+
+      f = Draw::Atof(theArgs[anIter]);
+    }
+  }
+
+  TopoDS_Shape aShape = DBRep::Get (theArgs[1]);
+  if (aShape.IsNull())
+  {
+    theDI << "Error: This shape '" << aShapeName << "' is not exist.\n";
+    return 1;
+  }
+
+  TopLoc_Location aLocation;
+  TopExp_Explorer anExplorer;
+  BRep_Builder    aBuilder;
+  TopoDS_Compound aNewShape;
+
+  aBuilder.MakeCompound(aNewShape);
+
+  for (anExplorer.Init (aShape, TopAbs_FACE); anExplorer.More(); anExplorer.Next())
+  {
+    TopoDS_Shape               aCurrent = anExplorer.Current();
+    TopoDS_Face&               aFace = TopoDS::Face (aCurrent);
+    Handle(Poly_Triangulation) aTriangulation = BRep_Tool::Triangulation (aFace, aLocation);
+    TColgp_Array1OfPnt&        aNodes = aTriangulation->ChangeNodes();
+
+    for (Standard_Integer anIter = aNodes.Lower(); anIter <= aNodes.Upper(); ++anIter)
+    {
+      const Standard_Real aCurrentZ = aNodes.Value(anIter).Coord().Z();
+      const Standard_Real anAdd     = a * sin(k * aNodes.Value(anIter).Coord().Y() + f);
+
+      aNodes.ChangeValue(anIter).ChangeCoord().SetZ (aCurrentZ + anAdd);
+    }
+
+    if (!aTriangulation->HasNormals())
+    {
+      Handle(TShort_HArray1OfShortReal) aNormals = new TShort_HArray1OfShortReal(0, 3 * aTriangulation->NbNodes() - 1);
+      aTriangulation->SetNormals(aNormals);
+    }
+
+    if (aTriangulation->HasNormals())
+    {
+      TShort_Array1OfShortReal& aNormals = aTriangulation->ChangeNormals();
+      Standard_ShortReal*       aNormArr = &(aNormals.ChangeValue (aNormals.Lower()));
+
+      const Poly_Array1OfTriangle& aTriangles = aTriangulation->Triangles();
+      for (Standard_Integer anIter = aTriangles.Lower(); anIter <= aTriangles.Upper(); ++anIter)
+      {
+        Standard_Integer indices[3];
+        aTriangles.Value (anIter).Get (indices[0], indices[1], indices[2]);
+
+        const gp_Pnt& aVertex1 = aNodes.Value (indices[0]);
+        const gp_Pnt& aVertex2 = aNodes.Value (indices[1]);
+        const gp_Pnt& aVertex3 = aNodes.Value (indices[2]);
+
+        const gp_Dir aDir1 (aVertex2.XYZ() - aVertex1.XYZ());
+        const gp_Dir aDir2 (aVertex3.XYZ() - aVertex1.XYZ());
+        const gp_Dir aNormal = aDir1.Crossed(aDir2);
+
+        for (int i = 0; i < 3; ++i)
+        {
+          const Standard_Integer anId = 3 * (indices[i] - aNodes.Lower());
+          aNormArr[anId + 0] = aNormal.X();
+          aNormArr[anId + 1] = aNormal.Y();
+          aNormArr[anId + 2] = aNormal.Z();
+        }
+      }
+    }
+
+    aBuilder.Add (aNewShape, aCurrent);
+  }
+
+  DBRep::Set (aNewShapeName.ToCString(), aNewShape);
+
+  TCollection_AsciiString aScript ("vdisplay "); aScript += aNewShapeName;
+  theDI.Eval (aScript.ToCString());
+
+  return 0;
+}
+
 //=======================================================================
 //function : ObjectsCommands
 //purpose  :
@@ -6602,4 +6739,8 @@ void ViewerTest::ObjectCommands(Draw_Interpretor& theCommands)
     "vpriority [-noupdate|-update] name [value]\n\t\t  prints or sets the display priority for an object",
     __FILE__,
     VPriority, group);
+
+  theCommands.Add("vupdatevertices",
+                  "vupdatevertices shapeName newShapeName [-a value] [-k value] [-f value]",
+                  __FILE__, VUpdateVertices, group);
 }
