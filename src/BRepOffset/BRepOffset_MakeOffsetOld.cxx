@@ -490,7 +490,26 @@ void BRepOffset_MakeOffsetOld::MakeOffsetShape()
   if (! IsConnectedShell(myShape))
     Standard_ConstructionError::Raise("BRepOffset_MakeOffsetOld : Incorrect set of faces to remove, the remaining shell is not connected");
 
-  if (Abs(myOffset) < myTol) return;
+  if (Abs(myOffset) <= myTol)
+  {
+    // Check for face with non-null offset value.
+    Standard_Boolean isFound = Standard_False;
+    TopTools_DataMapIteratorOfDataMapOfShapeReal anIter(myFaceOffset);
+    for( ; anIter.More(); anIter.Next())
+    {
+      if (Abs(anIter.Value()) > myTol)
+      {
+        isFound = Standard_True;
+        break;
+      }
+    }
+
+    if (!isFound)
+    {
+      // No face with non-null offset found.
+      return;
+    }
+  }
 
   TopAbs_State       Side = TopAbs_IN;
   if (myOffset < 0.) Side = TopAbs_OUT;
@@ -498,10 +517,9 @@ void BRepOffset_MakeOffsetOld::MakeOffsetShape()
   // Preanalyse.
   // ------------
   EvalMax(myShape,myTol);
-  if (myTol > Abs(myOffset*0.5)) {
-    Standard_ConstructionError::Raise("BRepOffset_MakeOffsetOld : Tol > Offset");
-  }
-  Standard_Real TolAngle = 4*ASin(myTol/Abs(myOffset*0.5));
+  // There are possible second variant: analytical continuation of arcsin.
+  Standard_Real TolAngleCoeff = Min(myTol / (Abs(myOffset * 0.5) + Precision::Confusion()), 1.0);
+  Standard_Real TolAngle = 4*ASin(TolAngleCoeff);
   myAnalyse.Perform(myShape,TolAngle);
   //---------------------------------------------------
   // Construction of Offset from preanalysis.
@@ -2962,7 +2980,7 @@ void BRepOffset_MakeOffsetOld::MakeShells()
         aBB.Add(aCSF, aF);
       }
       //
-      bDone = ((myOffset > 0) || !bFaces);
+      bDone = ((myOffset >= 0.) || !bFaces);
       if (bDone) {
         UpdateOrigins(anOrigins, aGF);
         //
