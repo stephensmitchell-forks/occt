@@ -50,6 +50,8 @@
 #include <BRepFeat_MakeDPrism.hxx>
 #include <BRepFeat_MakeLinearForm.hxx>
 #include <BRepFeat_MakeRevolutionForm.hxx>
+#include <BRepOffset_MakeOffset.hxx>
+#include <BRepOffset_MakeOffsetOld.hxx>
 
 #include <LocOpe_FindEdges.hxx>
 #include <LocOpe_FindEdgesInFace.hxx>
@@ -902,6 +904,7 @@ Standard_Integer offsetshape(Draw_Interpretor& ,
 }
 
 static BRepOffset_MakeOffset TheOffset;
+static BRepOffset_MakeOffsetOld TheOffsetOld;
 static Standard_Real         TheRadius;
 static Standard_Boolean      theYaBouchon;
 static Standard_Real         TheTolerance = Precision::Confusion();
@@ -909,12 +912,13 @@ static Standard_Boolean      TheInter     = Standard_False;
 static GeomAbs_JoinType      TheJoin      = GeomAbs_Arc;
 static Standard_Boolean      RemoveIntEdges = Standard_False;
 static Standard_Boolean      RemoveInvalidFaces = Standard_False;
+static Standard_Boolean      UseNewOffsetAPI = Standard_False;
 
 Standard_Integer offsetparameter(Draw_Interpretor& di,
                                  Standard_Integer n, const char** a)
 {
   if ( n == 1 ) { 
-    di << " OffsetParameter Tol Inter(c/p) JoinType(a/i/t) [RemoveInternalEdges(r/k) RemoveInvalidFaces(r/k)] " << "\n";
+    di << " OffsetParameter Tol Inter(c/p) JoinType(a/i/t) [RemoveInternalEdges(r/k) RemoveInvalidFaces(r/k) UseNewOffsetAPI(n/o)] " << "\n";
     di << " Current Values" << "\n";
     di << "   --> Tolerance : " << TheTolerance << "\n";
     di << "   --> TheInter  : ";
@@ -947,6 +951,13 @@ Standard_Integer offsetparameter(Draw_Interpretor& di,
     else {
       di << "Keep";
     }
+    di << "\n" << "   --> Version of the Offset API : ";
+    if (UseNewOffsetAPI) {
+      di << "New";
+    }
+    else {
+      di << "Old";
+    }
     di << "\n";
     //
     return 0;
@@ -962,7 +973,8 @@ Standard_Integer offsetparameter(Draw_Interpretor& di,
   else if ( !strcmp(a[3],"t")) TheJoin = GeomAbs_Tangent;
   //
   RemoveIntEdges = (n >= 5) ? !strcmp(a[4], "r") : Standard_False;
-  RemoveInvalidFaces = (n == 6) ? !strcmp(a[5], "r") : Standard_False;
+  RemoveInvalidFaces = (n >= 6) ? !strcmp(a[5], "r") : Standard_False;
+  UseNewOffsetAPI = (n == 7) ? !strcmp(a[6], "n") : Standard_False;
   //
   return 0;
 }
@@ -983,16 +995,26 @@ Standard_Integer offsetload(Draw_Interpretor& ,
   Standard_Real    Of    = Draw::Atof(a[2]);
   TheRadius = Of;
 //  Standard_Boolean Inter = Standard_True;
-  
-  TheOffset.Initialize(S,Of,TheTolerance,BRepOffset_Skin,TheInter,0,TheJoin,
-                       Standard_False, RemoveIntEdges, RemoveInvalidFaces);
+  if (UseNewOffsetAPI) {
+    TheOffset.Initialize(S,Of,TheTolerance,BRepOffset_Skin,TheInter,0,TheJoin,
+                         Standard_False, RemoveIntEdges, RemoveInvalidFaces);
+  }
+  else {
+    TheOffsetOld.Initialize(S,Of,TheTolerance,BRepOffset_Skin,TheInter,0,TheJoin,
+                            Standard_False, RemoveIntEdges, RemoveInvalidFaces);
+  }
   //------------------------------------------
   // recuperation et chargement des bouchons.
   //----------------------------------------
   for (Standard_Integer i = 3 ; i < n; i++) {
     TopoDS_Shape  SF  = DBRep::Get(a[i],TopAbs_FACE);
     if (!SF.IsNull()) {
-      TheOffset.AddFace(TopoDS::Face(SF));
+      if (UseNewOffsetAPI) {
+        TheOffset.AddFace(TopoDS::Face(SF));
+      }
+      else {
+        TheOffsetOld.AddFace(TopoDS::Face(SF));
+      }
     }
   }
   if (n < 4)  theYaBouchon = Standard_False; //B.MakeOffsetShape();
@@ -1015,7 +1037,12 @@ Standard_Integer offsetonface(Draw_Interpretor&, Standard_Integer n, const char*
     TopoDS_Shape  SF  = DBRep::Get(a[i],TopAbs_FACE);
     if (!SF.IsNull()) {
       Standard_Real Of = Draw::Atof(a[i+1]);
-      TheOffset.SetOffsetOnFace(TopoDS::Face(SF),Of);
+      if (UseNewOffsetAPI) {
+        TheOffset.SetOffsetOnFace(TopoDS::Face(SF),Of);
+      }
+      else {
+        TheOffsetOld.SetOffsetOnFace(TopoDS::Face(SF),Of);
+      }
     }
   }
   
@@ -1032,20 +1059,34 @@ Standard_Integer offsetperform(Draw_Interpretor& theCommands,
   {
   if ( theNArg < 2) return 1;
 
-  if (theYaBouchon)
-    TheOffset.MakeThickSolid ();
-  else
-    TheOffset.MakeOffsetShape();
+  if (UseNewOffsetAPI) {
+    if (theYaBouchon)
+      TheOffset.MakeThickSolid ();
+    else
+      TheOffset.MakeOffsetShape();
 
-  if(TheOffset.IsDone())
-    {
-    DBRep::Set(a[1],TheOffset.Shape());
+    if(TheOffset.IsDone()) {
+      DBRep::Set(a[1],TheOffset.Shape());
     }
-  else
-    {
-    theCommands << "ERROR. offsetperform operation not done.";
-    return 1;
+    else {
+      theCommands << "ERROR. offsetperform operation not done.";
+      return 1;
     }
+  }
+  else {
+    if (theYaBouchon)
+      TheOffsetOld.MakeThickSolid ();
+    else
+      TheOffsetOld.MakeOffsetShape();
+
+    if(TheOffsetOld.IsDone()) {
+      DBRep::Set(a[1],TheOffsetOld.Shape());
+    }
+    else {
+      theCommands << "ERROR. offsetperform operation not done.";
+      return 1;
+    }
+  }
 
   return 0;
   }

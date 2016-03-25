@@ -76,6 +76,7 @@ is
     end Error;
     
     class MakeOffset;
+    class MakeOffsetOld;
     	
     --class Loop;
     
