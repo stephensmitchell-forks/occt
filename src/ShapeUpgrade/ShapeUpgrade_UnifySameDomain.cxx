@@ -86,6 +86,8 @@
 #include <gp_Circ.hxx>
 #include <BRepAdaptor_Curve.hxx>
 #include <BRepClass_FaceClassifier.hxx>
+#include <BRepAdaptor_Curve2d.hxx>
+#include <gp_Vec2d.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(ShapeUpgrade_UnifySameDomain,MMgt_TShared)
 
@@ -95,6 +97,42 @@ struct SubSequenceOfEdges
   TopoDS_Edge UnionEdges;
 };
 
+static Standard_Boolean IsLikeSeam(const TopoDS_Edge& anEdge,
+                                   const TopoDS_Face& aFace,
+                                   const Handle(Geom_Surface)& aBaseSurface)
+{
+  if (!aBaseSurface->IsUPeriodic() && !aBaseSurface->IsVPeriodic())
+    return Standard_False;
+
+  BRepAdaptor_Curve2d BAcurve2d(anEdge, aFace);
+  gp_Pnt2d FirstPoint, LastPoint;
+  gp_Vec2d FirstDir, LastDir;
+  BAcurve2d.D1(BAcurve2d.FirstParameter(), FirstPoint, FirstDir);
+  BAcurve2d.D1(BAcurve2d.LastParameter(),  LastPoint,  LastDir);
+  Standard_Real Length = FirstDir.Magnitude();
+  if (Length <= gp::Resolution())
+    return Standard_False;
+  else
+    FirstDir /= Length;
+  Length = LastDir.Magnitude();
+  if (Length <= gp::Resolution())
+    return Standard_False;
+  else
+    LastDir /= Length;
+  
+  Standard_Real Tol = 1.e-7;
+  if (aBaseSurface->IsUPeriodic() &&
+    (Abs(FirstDir.X()) < Tol) &&
+    (Abs(LastDir.X()) < Tol))
+    return Standard_True;
+
+  if (aBaseSurface->IsVPeriodic() &&
+    (Abs(FirstDir.Y()) < Tol) &&
+    (Abs(LastDir.Y()) < Tol))
+    return Standard_True;
+
+  return Standard_False;
+}
 
 //=======================================================================
 //function : AddOrdinaryEdges
@@ -837,26 +875,16 @@ static void GenerateSubSeq (const TopTools_SequenceOfShape& anInpEdgeSeq,
 //function : MergeEdges
 //purpose  : auxilary
 //=======================================================================
-static Standard_Boolean MergeEdges(const TopTools_SequenceOfShape& SeqEdges,
+static Standard_Boolean MergeEdges(TopTools_SequenceOfShape& SeqEdges,
                                    const Standard_Real Tol,
                                    const Standard_Boolean ConcatBSplines,
                                    NCollection_Sequence<SubSequenceOfEdges>& SeqOfSubSeqOfEdges,
                                    const TopTools_MapOfShape& NonMergVrt )
 {
-  // make chain for union
-  //BRep_Builder B;
-  ShapeAnalysis_Edge sae;
-  TopoDS_Edge FirstE = TopoDS::Edge(SeqEdges.Value(1));
-  TopoDS_Edge LastE = FirstE;
-  TopoDS_Vertex VF = sae.FirstVertex(FirstE);
-  TopoDS_Vertex VL = sae.LastVertex(LastE);
-  TopTools_SequenceOfShape aChain;
-  aChain.Append(FirstE);
-  TColStd_MapOfInteger IndUsedEdges;
-  IndUsedEdges.Add(1);
+  // skip degenerated edges, and forbid merging through them
+  TopTools_IndexedDataMapOfShapeListOfShape aMapVE;
   Standard_Integer j;
   TopTools_MapOfShape VerticesToAvoid;
-  TopTools_SequenceOfShape SeqEdges1;
   for (j = 1; j <= SeqEdges.Length(); j++)
   {
     TopoDS_Edge anEdge = TopoDS::Edge(SeqEdges(j));
@@ -866,38 +894,90 @@ static Standard_Boolean MergeEdges(const TopTools_SequenceOfShape& SeqEdges,
       TopExp::Vertices(anEdge, V1, V2);
       VerticesToAvoid.Add(V1);
       VerticesToAvoid.Add(V2);
-      continue;
+      SeqEdges.Remove(j--);
     }
-    SeqEdges1.Append(anEdge);
+    else
+    {
+      // fill in the map V-E
+      for (TopoDS_Iterator it(anEdge.Oriented(TopAbs_FORWARD)); it.More(); it.Next())
+      {
+        TopoDS_Shape aV = it.Value();
+        if (aV.Orientation() == TopAbs_FORWARD || aV.Orientation() == TopAbs_REVERSED)
+        {
+          if (!aMapVE.Contains(aV))
+            aMapVE.Add(aV, TopTools_ListOfShape());
+          aMapVE.ChangeFromKey(aV).Append(anEdge);
   }
+      }
+    }
+  }
+  VerticesToAvoid.Unite(NonMergVrt);
 
-  for(j=2; j<=SeqEdges1.Length(); j++) {
-    for(Standard_Integer k=2; k<=SeqEdges1.Length(); k++) {
-      if(IndUsedEdges.Contains(k)) continue;
-      TopoDS_Edge edge = TopoDS::Edge(SeqEdges1.Value(k));
-      TopoDS_Vertex VF2 = sae.FirstVertex(edge);
-      TopoDS_Vertex VL2 = sae.LastVertex(edge);
-      if(VF2.IsSame(VL)) {
+  // do loop while there are unused edges
+  TopTools_MapOfShape aUsedEdges;
+  for (;;)
+  {
+    TopoDS_Edge edge;
+    for(j=1; j <= SeqEdges.Length(); j++)
+    {
+      edge = TopoDS::Edge(SeqEdges.Value(j));
+      if (!aUsedEdges.Contains(edge))
+        break;
+    }
+    if (j > SeqEdges.Length())
+      break; // all edges have been used
+
+    // make chain for unite
+    TopTools_SequenceOfShape aChain;
         aChain.Append(edge);
-        LastE = edge;
-        VL = sae.LastVertex(LastE);
-        IndUsedEdges.Add(k);
-      }
-      else if(VL2.IsSame(VF)) {
+    aUsedEdges.Add(edge);
+    TopoDS_Vertex V[2];
+    TopExp::Vertices(edge, V[0], V[1], Standard_True);
+
+    // connect more edges to the chain in both directions
+    for (j = 0; j < 2; j++)
+    {
+      Standard_Boolean isAdded = Standard_True;
+      while (isAdded)
+      {
+        isAdded = Standard_False;
+        if (V[j].IsNull())
+          break;
+        const TopTools_ListOfShape& aLE = aMapVE.FindFromKey(V[j]);
+        for (TopTools_ListIteratorOfListOfShape itL(aLE); itL.More(); itL.Next())
+        {
+          edge = TopoDS::Edge(itL.Value());
+          if (!aUsedEdges.Contains(edge))
+          {
+            if (j == 0)
         aChain.Prepend(edge);
-        FirstE = edge;
-        VF = sae.FirstVertex(FirstE);
-        IndUsedEdges.Add(k);
+            else
+              aChain.Append(edge);
+            aUsedEdges.Add(edge);
+            TopoDS_Vertex VF2, VL2;
+            TopExp::Vertices(edge, VF2, VL2, Standard_True);
+            V[j] = (VF2.IsSame(V[j]) ? VL2 : VF2);
+            isAdded = Standard_True;
+            break;
       }
     }
   }
+    }
+
+    if (aChain.Length() < 2)
+      continue;
 
   Standard_Boolean IsClosed = Standard_False;
-  if (VF.IsSame ( VL ))
+    if (V[0].IsSame ( V[1] ))
     IsClosed = Standard_True;
 
-  VerticesToAvoid.Unite(NonMergVrt);
-  GenerateSubSeq(aChain, SeqOfSubSeqOfEdges, IsClosed, Tol, VerticesToAvoid);
+    // split chain by vertices at which merging is not possible
+    NCollection_Sequence<SubSequenceOfEdges> aOneSeq;
+    GenerateSubSeq(aChain, aOneSeq, IsClosed, Tol, VerticesToAvoid);
+
+    // put sub-chains in the result
+    SeqOfSubSeqOfEdges.Append(aOneSeq);
+  }
 
   for (int i = 1; i <= SeqOfSubSeqOfEdges.Length(); i++)
   {
@@ -916,7 +996,7 @@ static Standard_Boolean MergeEdges(const TopTools_SequenceOfShape& SeqEdges,
 //which lies on the same geometry
 //=======================================================================
 
-static Standard_Boolean MergeSeq (const TopTools_SequenceOfShape& SeqEdges,
+static Standard_Boolean MergeSeq (TopTools_SequenceOfShape& SeqEdges,
                                   const Standard_Real Tol,
                                   const Standard_Boolean ConcatBSplines,
                                   Handle(ShapeBuild_ReShape)& theContext,
@@ -988,11 +1068,11 @@ static void CheckSharedVertices(const TopTools_SequenceOfShape& theSeqEdges,
 //=======================================================================
 
 ShapeUpgrade_UnifySameDomain::ShapeUpgrade_UnifySameDomain()
+  : myUnifyFaces (Standard_True),
+    myUnifyEdges (Standard_True),
+    myConcatBSplines (Standard_False),
+    myAllowInternal (Standard_False)
 {
-  myUnifyEdges = Standard_True;
-  myUnifyFaces = Standard_True;
-  myConcatBSplines = Standard_False;
-
   myContext = new ShapeBuild_ReShape;
 }
 
@@ -1005,13 +1085,13 @@ ShapeUpgrade_UnifySameDomain::ShapeUpgrade_UnifySameDomain(const TopoDS_Shape& a
                                                            const Standard_Boolean UnifyEdges,
                                                            const Standard_Boolean UnifyFaces,
                                                            const Standard_Boolean ConcatBSplines)
+  : myInitShape (aShape),
+    myUnifyFaces (UnifyFaces),
+    myUnifyEdges (UnifyEdges),
+    myConcatBSplines (ConcatBSplines),
+    myAllowInternal (Standard_False),
+    myShape (aShape)
 {
-  myInitShape = aShape;
-  myShape = aShape;
-  myUnifyEdges = UnifyEdges;
-  myUnifyFaces = UnifyFaces;
-  myConcatBSplines = ConcatBSplines;
-
   myContext = new ShapeBuild_ReShape;
 }
 
@@ -1033,7 +1113,16 @@ void ShapeUpgrade_UnifySameDomain::Initialize(const TopoDS_Shape& aShape,
 
   myContext->Clear();
   myOldShapes.Clear();
-  //myGenerated.Clear();
+}
+
+//=======================================================================
+//function : AllowInternalEdges
+//purpose  : 
+//=======================================================================
+
+void ShapeUpgrade_UnifySameDomain::AllowInternalEdges (const Standard_Boolean theValue)
+{
+  myAllowInternal = theValue;
 }
 
 //=======================================================================
@@ -1074,13 +1163,18 @@ static void putIntWires(TopoDS_Shape& theFace, TopTools_SequenceOfShape& theWire
 
 void ShapeUpgrade_UnifySameDomain::UnifyFaces()
 {
-  // creating map of edge faces
-  TopTools_IndexedDataMapOfShapeListOfShape aMapEdgeFaces;
-  TopExp::MapShapesAndAncestors(myShape, TopAbs_EDGE, TopAbs_FACE, aMapEdgeFaces);
+  // creating map of edge faces for the whole shape
+  TopTools_IndexedDataMapOfShapeListOfShape aGMapEdgeFaces;
+  TopExp::MapShapesAndAncestors(myShape, TopAbs_EDGE, TopAbs_FACE, aGMapEdgeFaces);
+
   // processing each shell
   TopExp_Explorer exps;
   for (exps.Init(myShape, TopAbs_SHELL); exps.More(); exps.Next()) {
     TopoDS_Shell aShell = TopoDS::Shell(exps.Current());
+
+    // creating map of edge faces for the shell
+    TopTools_IndexedDataMapOfShapeListOfShape aMapEdgeFaces;
+    TopExp::MapShapesAndAncestors(aShell, TopAbs_EDGE, TopAbs_FACE, aMapEdgeFaces);
 
     // map of processed shapes
     TopTools_MapOfShape aProcessed;
@@ -1125,6 +1219,13 @@ void ShapeUpgrade_UnifySameDomain::UnifyFaces()
         if (BRep_Tool::Degenerated(edge))
           continue;
 
+        // get connectivity of the edge in the global shape
+        const TopTools_ListOfShape& aGList = aGMapEdgeFaces.FindFromKey(edge);
+        if (!myAllowInternal && aGList.Extent() != 2) {
+          // non mainfold case is not processed unless myAllowInternal
+          continue;
+        }
+        // process faces connected through the edge in the current shell
         const TopTools_ListOfShape& aList = aMapEdgeFaces.FindFromKey(edge);
         TopTools_ListIteratorOfListOfShape anIter(aList);
         for (; anIter.More(); anIter.Next()) {
@@ -1137,10 +1238,9 @@ void ShapeUpgrade_UnifySameDomain::UnifyFaces()
 
           if (IsSameDomain(aFace,anCheckedFace)) {
 
-            if (aList.Extent() != 2) {
-              // non mainfold case is not processed
+            // hotfix for 27271: prevent merging along periodic direction.
+            if (IsLikeSeam(edge, aFace, aBaseSurface))
               continue;
-            }
 
             // replacing pcurves
             TopoDS_Face aMockUpFace;
@@ -1156,6 +1256,72 @@ void ShapeUpgrade_UnifySameDomain::UnifyFaces()
             faces.Append(anCheckedFace);
             aProcessed.Add(anCheckedFace);
             break;
+          }
+        }
+      }
+
+      if (faces.Length() > 1) {
+        // fill in the connectivity map for selected faces
+        TopTools_IndexedDataMapOfShapeListOfShape aMapEF;
+        for (i = 1; i <= faces.Length(); i++) {
+          TopExp::MapShapesAndAncestors(faces(i), TopAbs_EDGE, TopAbs_FACE, aMapEF);
+        }
+
+        // Collect multiconnected edges, i.e. edges that are internal to
+        // the set of selected faces and have connections to other faces.
+        TopTools_ListOfShape aMultEdges;
+        for (i = 1; i <= aMapEF.Extent(); i++) {
+          const TopTools_ListOfShape& aLF = aMapEF(i);
+          if (aLF.Extent() == 2) {
+            const TopoDS_Shape& aE = aMapEF.FindKey(i);
+            const TopTools_ListOfShape& aGLF = aGMapEdgeFaces.FindFromKey(aE);
+            if (aGLF.Extent() > 2) {
+              aMultEdges.Append(aE);
+            }
+          }
+        }
+        if (!aMultEdges.IsEmpty()) {
+          if (!myAllowInternal) {
+            // Remove from the selection the faces containing multiconnected edges
+            TopTools_MapOfShape anAvoidFaces;
+            TopTools_ListIteratorOfListOfShape it(aMultEdges);
+            for (; it.More(); it.Next()) {
+              const TopoDS_Shape& aE = it.Value();
+              const TopTools_ListOfShape& aLF = aMapEF.FindFromKey(aE);
+              anAvoidFaces.Add(aLF.First());
+              anAvoidFaces.Add(aLF.Last());
+            }
+            for (i = 1; i <= faces.Length(); ) {
+              if (anAvoidFaces.Contains(faces(i))) {
+                // update the boundaries of merged area, for that
+                // remove from 'edges' the edges of this face and add to 'edges' 
+                // the edges of this face that were not present in 'edges' before
+                TopExp_Explorer ex(faces(i), TopAbs_EDGE);
+                for (; ex.More(); ex.Next()) {
+                  TopoDS_Shape aE = ex.Current();
+                  Standard_Integer j;
+                  for (j = 1; j <= edges.Length(); j++) {
+                    if (edges(j).IsSame(aE))
+                      break;
+                  }
+                  if (j <= edges.Length())
+                    edges.Remove(j);
+                  else
+                    edges.Append(aE);
+                }
+                faces.Remove(i);
+              }
+              else
+                i++;
+            }
+          }
+          else {
+            // add multiconnected edges as internal in new face
+            TopTools_ListIteratorOfListOfShape it(aMultEdges);
+            for (; it.More(); it.Next()) {
+              const TopoDS_Shape& aE = it.Value();
+              edges.Append(aE.Oriented(TopAbs_INTERNAL));
+            }
           }
         }
       }
