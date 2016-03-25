@@ -131,6 +131,15 @@ is
     	    Ut11, Ut12, Ut21, Ut22: Real)
 
     is static protected;
+    
+    GetSingleSolutionFlag (me) returns Boolean
+    ---Purpose: Returns single solution flag value.
+    is static;
+    
+    SetSingleSolutionFlag (me: in out;
+                           theFlag: Boolean)
+    ---Purpose: Sets single solution flag value.
+    is static;
 
 
     
@@ -139,6 +148,7 @@ fields
     myECC:    ECC from Extrema;
     myDone:   Boolean;
     myIsPar:  Boolean;
+    myIsFindSingleSolution: Boolean;
     mypoints: SequenceOfPOnCurv from Extrema;
     mySqDist: SequenceOfReal    from TColStd;
     mynbext:  Integer;

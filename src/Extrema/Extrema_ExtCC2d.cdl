@@ -131,11 +131,21 @@ is
             Period2 : Real from Standard = 0.0)
 
     is static protected;
+    
+    GetSingleSolutionFlag (me) returns Boolean
+    ---Purpose: Returns single solution flag value.
+    is static;
+    
+    SetSingleSolutionFlag (me: in out;
+                           theFlag: Boolean)
+    ---Purpose: Sets single solution flag value.
+    is static;
 
 
 fields
     myDone:   Boolean;
     myIsPar:  Boolean;
+    myIsFindSingleSolution: Boolean;
     mypoints: SequenceOfPOnCurv2d from Extrema;
     mySqDist:  SequenceOfReal      from TColStd;
     mynbext:  Integer;

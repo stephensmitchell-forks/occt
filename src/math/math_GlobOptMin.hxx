@@ -53,7 +53,8 @@ public:
 
   Standard_EXPORT ~math_GlobOptMin();
 
-  Standard_EXPORT void Perform();
+  //! @param isFindSingleSolution - defines whether to find single solution or all solutions.
+  Standard_EXPORT void Perform(const Standard_Boolean isFindSingleSolution = Standard_False);
 
   //! Get best functional value.
   Standard_EXPORT Standard_Real GetF();
@@ -65,6 +66,12 @@ public:
   Standard_EXPORT void Points(const Standard_Integer theIndex, math_Vector& theSol);
 
   Standard_Boolean isDone();
+
+  //! Get continuity of local borders splits.
+  inline Standard_Integer GetContinuity() const { return myCont; }
+
+  //! Set continuity of local borders splits.
+  inline void SetContinuity(const Standard_Integer theCont) { myCont = theCont; }
 
 private:
 
@@ -99,6 +106,7 @@ private:
                            // function values |val1 - val2| * 0.01 < mySameTol is equal,
                            // default value is 1.0e-7.
   Standard_Real myC; //Lipschitz constant, default 9
+  Standard_Boolean myIsFindSingleSolution; // Default value is false.
 
   // Output.
   Standard_Boolean myDone;
@@ -116,6 +124,9 @@ private:
   math_Vector myV; // Steps array.
   math_Vector myMaxV; // Max Steps array.
   math_Vector myExpandCoeff; // Define expand coefficient between neighboring indiced dimensions.
+
+  // Continuity of local borders.
+  Standard_Integer myCont;
 
   Standard_Real myF; // Current value of Global optimum.
 };

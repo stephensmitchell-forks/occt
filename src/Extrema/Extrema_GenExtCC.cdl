@@ -94,8 +94,18 @@ is
     	    	OutOfRange
 		-- if N < 1 or N > NbExt(me)
     	is static;
+        
+    GetSingleSolutionFlag (me) returns Boolean
+    ---Purpose: Returns single solution flag value.
+    is static;
+    
+    SetSingleSolutionFlag (me: in out;
+                           theFlag: Boolean)
+    ---Purpose: Sets single solution flag value.
+    is static;
 
 fields
+  myIsFindSingleSolution: Boolean;
   myCurveMinTol : Real from Standard;
   myLowBorder : Vector from math;
   myUppBorder : Vector from math;
@@ -103,5 +113,6 @@ fields
   myPoints2 : SequenceOfReal from TColStd;
   myC : Address from Standard [2];
   myDone : Boolean;
+  
 
 end GenExtCC;
