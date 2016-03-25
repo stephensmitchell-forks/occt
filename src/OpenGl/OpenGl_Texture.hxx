@@ -404,6 +404,15 @@ public:
                                const Standard_Integer        theSizeZ,
                                const void*                   thePixels);
 
+  //! Initializes 2D texture with specified format and size.
+  Standard_EXPORT bool Init2D (const Handle(OpenGl_Context)& theCtx,
+                               const GLint                   theTextFormat,
+                               const GLenum                  thePixelFormat,
+                               const GLenum                  theDataType,
+                               const Standard_Integer        theSizeX,
+                               const Standard_Integer        theSizeY,
+                               const void*                   thePixels);
+
   //! @return true if texture was generated within mipmaps
   Standard_EXPORT Standard_Boolean HasMipmaps() const;
 
