@@ -22,6 +22,8 @@
 
 #include <Geom_Curve.hxx>
 #include <Geom2d_Curve.hxx>
+#include <Geom_Line.hxx>
+#include <Geom_TrimmedCurve.hxx>
 
 #include <GeomAPI_ProjectPointOnCurve.hxx>
 #include <GeomAPI_ProjectPointOnSurf.hxx>
@@ -516,7 +518,8 @@ void BOPAlgo_PaveFiller::MakeBlocks()
           continue;
         }
         //
-        bExist=IsExistingPaveBlock(aPB, aNC, aTolR3D, aMPBOnIn, aPBOut);
+        Standard_Real aTolR3DNew = aTolR3D;
+        bExist=IsExistingPaveBlock(aPB, aNC, aTolR3DNew, aMPBOnIn, aPBOut);
         if (bExist) {
           if (aMPBAdd.Add(aPBOut)) {
             Standard_Boolean bInBothFaces = Standard_True;
@@ -527,8 +530,18 @@ void BOPAlgo_PaveFiller::MakeBlocks()
               nE = aPBOut->Edge();
               const TopoDS_Edge& aE = *(TopoDS_Edge*)&myDS->Shape(nE);
               aTolE = BRep_Tool::Tolerance(aE);
-              if (aTolR3D > aTolE) {
-                myDS->UpdateEdgeTolerance(nE, aTolR3D);
+              if (aTolR3DNew > aTolE) {
+                myDS->UpdateEdgeTolerance(aPBOut, aTolR3DNew);
+                // do not let tolerances of vertices to get 
+                // less than the tolerance of this edge
+                Standard_Integer nVE[2];
+                aPBOut->Indices(nVE[0], nVE[1]);
+                for (Standard_Integer iV = 0; iV < 2; ++iV) {
+                  Standard_Real *aTolEV = aMVTol.ChangeSeek(nVE[iV]);
+                  if (aTolEV && (*aTolEV < aTolR3DNew)) {
+                    *aTolEV = aTolR3DNew;
+                  }
+                }
               }
               bInBothFaces = Standard_False;
             } else {
@@ -1091,7 +1104,7 @@ void BOPAlgo_PaveFiller::UpdateFaceInfo
     return !bRet;
   } 
   //
-  Standard_Real aT1, aT2, aTm, aTx, aTol;
+  Standard_Real aT1, aT2, aTm, aTx, aTol, aDist;
   Standard_Integer nE, iFlag;
   gp_Pnt aPm;
   Bnd_Box aBoxPm;
@@ -1112,7 +1125,7 @@ void BOPAlgo_PaveFiller::UpdateFaceInfo
       const TopoDS_Edge& aE=(*(TopoDS_Edge *)(&aSIE.Shape()));
       aTol = BRep_Tool::Tolerance(aE);
       aTol = aTol > theTolR3D ? aTol : theTolR3D;
-      iFlag=myContext->ComputePE(aPm, aTol, aE, aTx);
+      iFlag=myContext->ComputePE(aPm, aTol, aE, aTx, aDist);
       if (!iFlag) {
         return bRet;
       }
@@ -1122,17 +1135,34 @@ void BOPAlgo_PaveFiller::UpdateFaceInfo
 }
 
 //=======================================================================
+//function : IsLine
+//purpose  : 
+//=======================================================================
+inline Standard_Boolean IsLine (const TopoDS_Edge& theEdge)
+{
+  TopLoc_Location aLoc;
+  Standard_Real f,l;
+  Handle(Geom_Curve) aCurve = BRep_Tool::Curve(theEdge, aLoc, f, l);
+  if (!aCurve->IsKind(STANDARD_TYPE(Geom_Line)))
+  {
+    const Handle(Geom_TrimmedCurve)& aTrimC = Handle(Geom_TrimmedCurve)::DownCast(aCurve);
+    return !aTrimC.IsNull() && aTrimC->BasisCurve()->IsKind(STANDARD_TYPE(Geom_Line));
+  }
+  return Standard_True;
+}
+
+//=======================================================================
 //function : IsExistingPaveBlock
 //purpose  : 
 //=======================================================================
   Standard_Boolean BOPAlgo_PaveFiller::IsExistingPaveBlock
     (const Handle(BOPDS_PaveBlock)& thePB,
      const BOPDS_Curve& theNC,
-     const Standard_Real theTolR3D,
+     Standard_Real& theTolR3D,
      const BOPDS_IndexedMapOfPaveBlock& theMPBOnIn,
      Handle(BOPDS_PaveBlock&) aPBOut)
 {
-  Standard_Boolean bRet;
+  Standard_Boolean bRet, bLineLine;
   Standard_Real aT1, aT2, aTm, aTx;
   Standard_Integer nSp, iFlag1, iFlag2, nV11, nV12, nV21, nV22, i, aNbPB;
   gp_Pnt aP1, aPm, aP2;
@@ -1171,19 +1201,30 @@ void BOPAlgo_PaveFiller::UpdateFaceInfo
     iFlag2 = (nV12 == nV21 || nV12 == nV22) ? 2 : 
       (!aBoxSp.IsOut(aBoxP2) ? 1 : 0);
     if (iFlag1 && iFlag2) {
-      if (aBoxSp.IsOut(aBoxPm) || myContext->ComputePE(aPm, 
-                                                       theTolR3D, 
-                                                       aSp, 
-                                                       aTx)) {
+      bLineLine = (iFlag1 == 2 && iFlag2 == 2 && aIC.Type() == GeomAbs_Line && IsLine(aSp));
+      if (aBoxSp.IsOut(aBoxPm) && !bLineLine) {
         continue;
       }
       //
-      if (iFlag1 == 1) {
-        iFlag1 = !myContext->ComputePE(aP1, theTolR3D, aSp, aTx);
+      Standard_Real aDist;
+      Standard_Integer iErr = myContext->ComputePE
+        (aPm, theTolR3D, aSp, aTx, aDist);
+      if (bLineLine && (iErr == -4)) {
+        // update tolerance 3D
+        theTolR3D += aDist;
+      }
+      else if (iErr != 0) {
+        continue;
       }
       //
-      if (iFlag2 == 1) {
-        iFlag2 = !myContext->ComputePE(aP2, theTolR3D, aSp, aTx);
+      if (!bLineLine) {
+        if (iFlag1 == 1) {
+          iFlag1 = !myContext->ComputePE(aP1, theTolR3D, aSp, aTx, aDist);
+        }
+        //
+        if (iFlag2 == 1) {
+          iFlag2 = !myContext->ComputePE(aP2, theTolR3D, aSp, aTx, aDist);
+        }
       }
       //
       if (iFlag1 && iFlag2) {

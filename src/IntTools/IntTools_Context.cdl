@@ -124,7 +124,8 @@ is
        theP   : Pnt from gp; 
        theTolP: Real from Standard; 
        theE   : Edge   from  TopoDS; 
-       theT   :out Real from Standard) 
+       theT   :out Real from Standard;
+       theDist:out Real from Standard) 
     returns Integer from Standard;  
     ---Purpose:
     --- Computes parameter of the Point theP on
