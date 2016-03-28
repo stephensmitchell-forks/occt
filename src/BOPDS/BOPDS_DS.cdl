@@ -622,7 +622,7 @@ is
             -- of the shape with index theIndex   
              
      UpdateEdgeTolerance(me:out; 
-                 theIndex:Integer from Standard; 
+                 thePB:PaveBlock from BOPDS;
                  theTolerance:Real from Standard); 
              ---Purpose: 
              --- Updates tolerance of the sub-shapes of the shape with index <theIndex>.

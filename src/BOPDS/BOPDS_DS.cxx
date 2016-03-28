@@ -21,11 +21,14 @@
 #include <gp_Pnt.hxx>
 #include <Bnd_Box.hxx>
 //
+#include <TopoDS.hxx>
 #include <TopoDS_Shape.hxx>
 #include <TopoDS_Iterator.hxx>
 #include <TopoDS_Vertex.hxx>
 #include <TopoDS_Edge.hxx>
 #include <TopoDS_Face.hxx>
+//
+#include <TopExp_Explorer.hxx>
 //
 #include <BRep_TVertex.hxx>
 #include <BRep_TEdge.hxx>
@@ -1354,15 +1357,20 @@ void BOPDS_DS::FaceInfoIn(const Standard_Integer theF,
   TopoDS_Iterator aItS;
   BOPDS_ListIteratorOfListOfPaveBlock aItPB;
   //
-  // 1. Pure internal vertices on the face
   const TopoDS_Shape& aF=Shape(theF);
+  // get all vertices from pave blocks from edges of the face
+  BOPCol_MapOfInteger aMVI;
+  BOPDS_IndexedMapOfPaveBlock aMPBx;
+  FaceInfoOn(theF, aMPBx, aMVI);
+  //
+  // 1. Pure internal vertices on the face
   aItS.Initialize(aF);
   for (; aItS.More(); aItS.Next()) {
     const TopoDS_Shape& aSx=aItS.Value();
     if (aSx.ShapeType()==TopAbs_VERTEX){
       nV=Index(aSx);
       if (HasShapeSD(nV, nVSD)) {
- nV=nVSD;
+        nV=nVSD;
       }
       theMI.Add(nV);
     }
@@ -1386,7 +1394,9 @@ void BOPDS_DS::FaceInfoIn(const Standard_Integer theF,
     BOPDS_InterfEF& aEF=aEFs(i);
     if(aEF.Contains(theF)) {
       if(aEF.HasIndexNew(nV)) {
-        theMI.Add(nV);
+        if (!aMVI.Contains(nV)) {
+          theMI.Add(nV);
+        }
       }
       else {
         nE=aEF.OppositeIndex(theF);
@@ -1860,29 +1870,31 @@ void BOPDS_DS::Paves(const Standard_Integer theEdge,
 // function: UpdateTolerance
 // purpose:
 //=======================================================================
-void BOPDS_DS::UpdateEdgeTolerance(const Standard_Integer nE,
+void BOPDS_DS::UpdateEdgeTolerance(const Handle(BOPDS_PaveBlock)& thePB,
                                    const Standard_Real aTol)
 {
-  Standard_Integer nV;
+  Standard_Integer i, nE, nV[2];
   Standard_Real aTolV;
   BRep_Builder aBB;
-  BOPCol_ListIteratorOfListOfInteger aIt;
   //
+  // update edge
+  if (!thePB->HasEdge(nE)) {
+    nE = thePB->OriginalEdge();
+  }
   const TopoDS_Edge& aE = *(TopoDS_Edge*)&Shape(nE);
   aBB.UpdateEdge(aE, aTol);
   BOPDS_ShapeInfo& aSIE=ChangeShapeInfo(nE);
   Bnd_Box& aBoxE=aSIE.ChangeBox();
   BRepBndLib::Add(aE, aBoxE);
   //
-  const BOPCol_ListOfInteger& aLI = aSIE.SubShapes();
-  aIt.Initialize(aLI);
-  for (; aIt.More(); aIt.Next()) {
-    nV = aIt.Value();
-    const TopoDS_Vertex& aV = *(TopoDS_Vertex*)&Shape(nV);
+  thePB->Indices(nV[0], nV[1]);
+  // update its vertices
+  for (i = 0; i < 2; ++i) {
+    const TopoDS_Vertex& aV = *(TopoDS_Vertex*)&Shape(nV[i]);
     aTolV = BRep_Tool::Tolerance(aV);
     if (aTolV < aTol) {
       aBB.UpdateVertex(aV, aTol);
-      BOPDS_ShapeInfo& aSIV = ChangeShapeInfo(nV);
+      BOPDS_ShapeInfo& aSIV = ChangeShapeInfo(nV[i]);
       Bnd_Box& aBoxV = aSIV.ChangeBox();
       BRepBndLib::Add(aV, aBoxV);
     }

@@ -372,7 +372,7 @@ void BOPAlgo_PaveFiller::PerformEF()
           }
           //update tolerance of edge if needed
           if (aTolE < aTolF) {
-            myDS->UpdateEdgeTolerance(nE, aTolF);
+            myDS->UpdateEdgeTolerance(aPB, aTolF);
             aTolE = aTolF;
           }
           aEF.SetCommonPart(aCPart);

@@ -250,7 +250,7 @@ is
     IsExistingPaveBlock(me:out; 
         thePB:PaveBlock from BOPDS;  
         theNC:Curve from BOPDS;
-        theTolR3D:Real from Standard; 
+        theTolR3D:out Real from Standard; 
         theMPB:IndexedMapOfPaveBlock from BOPDS; 
         thePBOut:out PaveBlock from BOPDS)
       returns Boolean from Standard 
