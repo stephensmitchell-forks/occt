@@ -20,7 +20,7 @@
 #include <BRepClass3d_SolidClassifier.hxx>
 #include <Precision.hxx>
 #include <TopoDS_Shape.hxx>
-#include <ShapeBuild_ReShape.hxx> 
+#include <ShapeBuild_ReShape.hxx>
 #include <TopoDS_Iterator.hxx>
 #include <TopoDS.hxx>
 #include <ShapeExtend.hxx>
@@ -244,9 +244,9 @@ static void CollectSolids(const TopTools_SequenceOfShape& aSeqShells ,
     }
   }
   for(TopTools_MapIteratorOfMapOfShape aIterHoles(aMapHoles);aIterHoles.More(); aIterHoles.Next())
-    aMapShellHoles.UnBind(aIterHoles.Key());
-    
-}
+    aMapShellHoles.UnBind (aIterHoles.Key());
+
+    }
 //=======================================================================
 //function : CreateSolids
 //purpose  : 
@@ -343,13 +343,30 @@ static Standard_Boolean CreateSolids(const TopoDS_Shape aShape,TopTools_IndexedM
     BRep_Builder aB;
     aB.MakeCompSolid(aCompSolid);
     isDone = (aShape.ShapeType() != TopAbs_COMPSOLID || isDone);
+    Standard_Integer nbSol = 0;
+
     for(TopTools_ListIteratorOfListOfShape lItSh(lshells);lItSh.More(); lItSh.Next()) {
       if(ShellSolid.Contains(lItSh.Value())) {
-        for(TopExp_Explorer aExpSol(ShellSolid.FindFromKey(lItSh.Value()),TopAbs_SOLID);aExpSol.More(); aExpSol.Next())
+        const TopoDS_Shape& aShape = ShellSolid.FindFromKey(lItSh.Value());
+        TopExp_Explorer aExpSol(aShape, TopAbs_SOLID);
+       
+        for(;aExpSol.More(); aExpSol.Next())
+        {
           aB.Add(aCompSolid,aExpSol.Current());
-        ShellSolid.ChangeFromKey(lItSh.Value()) = aCompSolid;
+          nbSol++;
+        }
+      
       }
     }
+    if(nbSol >1)
+    {
+      for(TopTools_ListIteratorOfListOfShape lItSh1(lshells);lItSh1.More(); lItSh1.Next()) 
+      {
+        if(ShellSolid.Contains(lItSh1.Value())) 
+          ShellSolid.ChangeFromKey(lItSh1.Value()) = aCompSolid;
+      }
+    }
+    
   }
   for(Standard_Integer kk =1 ; kk <= ShellSolid.Extent();kk++)
     if(!aMapSolids.Contains(ShellSolid.FindFromIndex(kk)))
@@ -433,22 +450,24 @@ Standard_Boolean ShapeFix_Solid::Perform(const Handle(Message_ProgressIndicator)
       
     if(isClosed || myCreateOpenSolidMode) {
       if(BRep_Tool::IsClosed(tmpShape)) {
-        TopoDS_Iterator itersh(tmpShape);
-        TopoDS_Shell aShell;
-        if(itersh.More() && itersh.Value().ShapeType() == TopAbs_SHELL)
-          aShell = TopoDS::Shell(itersh.Value());
-        if(!aShell.IsNull()) {
-          TopoDS_Solid aSol = SolidFromShell(aShell);
-          if(ShapeExtend::DecodeStatus(myStatus,ShapeExtend_DONE2)) {
-            SendWarning (Message_Msg ("FixAdvSolid.FixOrientation.MSG20"));// Orientaion of shell was corrected.
-            Context()->Replace(tmpShape,aSol);
-            tmpShape = aSol;
-          }
+      TopoDS_Iterator itersh(tmpShape);
+      TopoDS_Shell aShell;
+      if(itersh.More() && itersh.Value().ShapeType() == TopAbs_SHELL)
+        aShell = TopoDS::Shell(itersh.Value());
+      if(!aShell.IsNull()) {
+        TopoDS_Solid aSol = SolidFromShell(aShell);
+        if(ShapeExtend::DecodeStatus(myStatus,ShapeExtend_DONE2)) {
+          SendWarning (Message_Msg ("FixAdvSolid.FixOrientation.MSG20"));// Orientaion of shell was corrected.
+          Context()->Replace(tmpShape,aSol);
+          tmpShape = aSol;
         }
+      }
       }
       mySolid  = TopoDS::Solid(tmpShape);
     }
     else {
+      status = Standard_True;
+      myStatus |= ShapeExtend::EncodeStatus ( ShapeExtend_DONE3 );
       TopoDS_Iterator aIt(tmpShape,Standard_False);
       Context()->Replace(tmpShape,aIt.Value());
       SendFail (Message_Msg ("FixAdvSolid.FixShell.MSG10")); // Solid can not be created from open shell. 

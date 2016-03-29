@@ -33,6 +33,9 @@ uses
     Wire from TopoDS, 
     Shell from TopoDS,  
     Solid from TopoDS, 
+    Curve from Geom,
+    Curve from Geom2d,
+    Surface from Geom,
     --  
     BaseAllocator from BOPCol,
     ListOfShape from BOPCol,  
@@ -458,4 +461,44 @@ is
     	returns Boolean from Standard;  
     	---Purpose: Returns true if the solid <theSolid> is inverted 	
  
+    ComputeTolerance(myclass;
+        theCurve3D : Curve from Geom;
+        theCurve2D : Curve from Geom2d;
+        theSurf    : Surface from Geom;
+        theMaxDist : out Real from Standard; 
+        theMaxPar  : out Real from Standard)
+    returns Boolean from Standard; 
+    ---Purpose:  
+    -- Computes the max distance between points  
+    -- taken from 3D and 2D curves by the same parameter
+
+    ComputeTolerance(myclass;
+        theFace : Face from TopoDS;
+        theEdge : Edge from TopoDS;
+        theMaxDist : out Real from Standard; 
+        theMaxPar  : out Real from Standard)
+    returns Boolean from Standard;
+    ---Purpose:  
+    -- Computes the neccessary value of the tolerance for the edge
+ 
+    Deviation(myclass;
+        theEdge  : Edge from TopoDS; 
+        theFace  : Face from TopoDS;
+        theDist  : out Real from Standard;
+        theParam : out Real from Standard)
+    returns Boolean from Standard;
+    ---Purpose:  
+    -- Computes the max distance between edge and face
+ 
+    Deviation(myclass;
+        theCurve   : Curve from Geom;
+        theSurface : Surface from Geom;  
+        theFirst   : Real from Standard;
+        theLast    : Real from Standard;
+        theDist    : out Real from Standard;
+        theParam   : out Real from Standard)
+    returns Boolean from Standard;
+    ---Purpose:  
+    -- Computes the max distance between curve and surface
+
 end AlgoTools;

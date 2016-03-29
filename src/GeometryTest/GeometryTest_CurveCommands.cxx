@@ -925,7 +925,7 @@ static Standard_Integer crvpoints (Draw_Interpretor& di, Standard_Integer /*n*/,
 
   //check deviation
   ComputeDeviation(C,aPnts,dmax,ufmax,ulmax,imax);
-  di << "Max defl: " << dmax << " " << ufmax << " " << ulmax << " " << i << "\n"; 
+  di << "Max defl: " << dmax << " " << ufmax << " " << ulmax << " " << imax << "\n"; 
 
   return 0;
 } 
@@ -980,7 +980,7 @@ static Standard_Integer crvtpoints (Draw_Interpretor& di, Standard_Integer n, co
 
   //check deviation
   ComputeDeviation(C,aPnts,dmax,ufmax,ulmax,imax);
-  di << "Max defl: " << dmax << " " << ufmax << " " << ulmax << " " << i << "\n"; 
+  di << "Max defl: " << dmax << " " << ufmax << " " << ulmax << " " << imax << "\n"; 
 
   return 0;
 } 

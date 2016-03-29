@@ -1118,7 +1118,8 @@ static Standard_Boolean fixParam(Standard_Real& theParam)
 void CGeometryDoc::OnSimplify() 
 {
   CString initfile(((OCC_App*) AfxGetApp())->GetInitDataDir());
-  initfile += "\\..\\..\\Data\\";
+  //initfile += "\\..\\..\\Data\\";
+  initfile += "\\..\\Data\\";
   initfile += "shell1.brep";
 
   TCollection_AsciiString Path((Standard_CString)(LPCTSTR)initfile);
