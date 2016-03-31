@@ -71,7 +71,10 @@ void PrsMgr_PresentableObject::Fill (const Handle(PrsMgr_PresentationManager)& t
                                      const Standard_Integer                    theMode)
 {
   Handle(Prs3d_Presentation) aStruct3d = thePrs->Presentation();
-  Compute (thePrsMgr, aStruct3d, theMode);
+  if (!HasLevelsOfDetail())
+    Compute (thePrsMgr, aStruct3d, theMode);
+  else
+    ComputeLods (thePrsMgr, aStruct3d, theMode);
   UpdateTransformation (aStruct3d);
   aStruct3d->SetClipPlanes (myClipPlanes);
   aStruct3d->SetTransformPersistence (GetTransformPersistenceMode(), GetTransformPersistencePoint());
@@ -522,4 +525,27 @@ void PrsMgr_PresentableObject::SetMutable (const Standard_Boolean theIsMutable)
 Standard_Boolean PrsMgr_PresentableObject::IsMutable() const
 {
   return myIsMutable;
+}
+
+// =======================================================================
+// function : ComputeLods
+// purpose  :
+// =======================================================================
+void PrsMgr_PresentableObject::ComputeLods (const Handle(PrsMgr_PresentationManager3d)& /*thePrsMgr*/,
+                                            const Handle(Prs3d_Presentation)& /*thePrs*/,
+                                            const Standard_Integer /*theMode*/)
+{
+  if (HasLevelsOfDetail())
+  {
+    Standard_NotImplemented::Raise ("cannot compute levels of detail");
+  }
+}
+
+// =======================================================================
+// function : HasLevelsOfDetail
+// purpose  :
+// =======================================================================
+Standard_Boolean PrsMgr_PresentableObject::HasLevelsOfDetail() const
+{
+  return Standard_False;
 }

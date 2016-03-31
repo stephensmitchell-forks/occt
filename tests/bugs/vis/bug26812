@@ -10,15 +10,15 @@ meshlod m $aTmpFolder/lod_data.txt
 # iges shapes. the following sequence of commands creates both
 # stl and brep files for the iges shape
 ##########################################################################
-igesbrep $aPathToData/iges/bearing.iges res *
-vdisplay res
-# write created brep to file
-save res $aTmpFolder/bearing.brep
-trinfo res
-# copy maximal deflection value, then re-mesh the shape with proper
-# deflection
-tclean res
-incmesh res $maxDeflection
-# save corresponding stl with the same triangulation as will be used
-# for generaion of LODs
-writestl res $aTmpFolder/bearing.stl
+# igesbrep $aPathToData/iges/bearing.iges res *
+# vdisplay res
+# # write created brep to file
+# save res $aTmpFolder/bearing.brep
+# trinfo res
+# # copy maximal deflection value, then re-mesh the shape with proper
+# # deflection
+# tclean res
+# incmesh res $maxDeflection
+# # save corresponding stl with the same triangulation as will be used
+# # for generaion of LODs
+# writestl res $aTmpFolder/bearing.stl

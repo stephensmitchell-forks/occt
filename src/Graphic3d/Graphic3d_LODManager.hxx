@@ -53,6 +53,8 @@ public:
 
   Standard_EXPORT virtual Handle(Graphic3d_LOD) AddNewLOD() = 0;
 
+  Standard_EXPORT void GetCombinedBndBox (Graphic3d_BndBox4f& theBndBox) const;
+
   DEFINE_STANDARD_RTTIEXT (Graphic3d_LODManager, Standard_Transient)
 
 protected:

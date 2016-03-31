@@ -24,6 +24,7 @@
 #include <Graphic3d_DataStructureManager.hxx>
 #include <Graphic3d_GraphicDriver.hxx>
 #include <Graphic3d_Group.hxx>
+#include <Graphic3d_LODManager.hxx>
 #include <Graphic3d_MapIteratorOfMapOfStructure.hxx>
 #include <Graphic3d_MapOfStructure.hxx>
 #include <Graphic3d_MaterialAspect.hxx>
@@ -1768,9 +1769,17 @@ Handle(Graphic3d_StructureManager) Graphic3d_Structure::StructureManager() const
 Graphic3d_BndBox4f Graphic3d_Structure::minMaxCoord() const
 {
   Graphic3d_BndBox4f aBnd;
-  for (Graphic3d_SequenceOfGroup::Iterator aGroupIter (myCStructure->Groups()); aGroupIter.More(); aGroupIter.Next())
+  const Handle(Graphic3d_LODManager)& aLodMgr = myCStructure->GetLodManager();
+  if (aLodMgr.IsNull())
   {
-    aBnd.Combine (aGroupIter.Value()->BoundingBox());
+    for (Graphic3d_SequenceOfGroup::Iterator aGroupIter (myCStructure->Groups()); aGroupIter.More(); aGroupIter.Next())
+    {
+      aBnd.Combine (aGroupIter.Value()->BoundingBox());
+    }
+  }
+  else
+  {
+    aLodMgr->GetCombinedBndBox (aBnd);
   }
   return aBnd;
 }

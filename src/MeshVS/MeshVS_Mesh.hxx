@@ -181,12 +181,18 @@ public:
   //! Returns True if the given owner represents a whole mesh.
   Standard_EXPORT virtual Standard_Boolean IsWholeMeshOwner (const Handle(SelectMgr_EntityOwner)& theOwner) const;
 
+  Standard_EXPORT virtual Standard_Boolean HasLevelsOfDetail() const Standard_OVERRIDE;
+
 friend class MeshVS_PrsBuilder;
 
 
   DEFINE_STANDARD_RTTIEXT(MeshVS_Mesh,AIS_InteractiveObject)
 
 protected:
+
+  Standard_EXPORT virtual void ComputeLods (const Handle(PrsMgr_PresentationManager3d)& thePrsMgr,
+                                            const Handle(Prs3d_Presentation)& thePrs,
+                                            const Standard_Integer theMode = 0) Standard_OVERRIDE;
 
   //! Stores all vertices that belong to one of the faces to the given map
   //! @param theAllElements [in] the map of all mesh elements

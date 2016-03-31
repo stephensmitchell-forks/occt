@@ -80,6 +80,11 @@ public:
   //! Get z layer ID
   Graphic3d_ZLayerId ZLayer() const { return myZLayer; }
 
+  const Handle(Graphic3d_LODManager)& GetLodManager() const
+  {
+    return myLODManager;
+  }
+
 public:
 
   //! Update structure visibility state

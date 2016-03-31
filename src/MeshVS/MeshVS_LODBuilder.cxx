@@ -53,50 +53,6 @@ void MeshVS_LODBuilder::Build (const Handle(Prs3d_Presentation)& theBasePrs,
   if (myParentMesh == NULL)
     return;
 
-  //if (!theIsElement)
-  //{
-  //  Standard_Boolean hasSelectFlag = ((aDispMode & MeshVS_DMF_SelectionPrs) != 0);
-  //  Standard_Boolean hasHilightFlag = ((aDispMode & MeshVS_DMF_HilightPrs) != 0);
-
-  //  Standard_Real aCoordsBuf[3];
-  //  TColStd_Array1OfReal aCoords (*aCoordsBuf, 1, 3);
-  //  Standard_Integer aNodesNb;
-  //  MeshVS_EntityType aType;
-
-  //  TColStd_PackedMapOfInteger anIDs;
-  //  anIDs.Assign (myNodeIdxs);
-  //  if (!hasSelectFlag && !hasHilightFlag)
-  //  {
-  //    // subtract the hidden nodes and ids to exclude (to minimize allocated memory)
-  //    Handle(TColStd_HPackedMapOfInteger) aHiddenNodes = aMesh->GetHiddenNodes();
-  //    if (!aHiddenNodes.IsNull())
-  //      anIDs.Subtract (aHiddenNodes->Map());
-  //  }
-
-  //  Standard_Integer aSize = anIDs.Extent();
-  //  if (aSize > 0)
-  //  {
-  //    Handle(Graphic3d_ArrayOfPoints) aNodePoints = new Graphic3d_ArrayOfPoints (aSize);
-  //    Standard_Integer aPntsNb = 0;
-  //    for (TColStd_MapIteratorOfPackedMapOfInteger aNodeIdxsIter (myNodeIdxs); aNodeIdxsIter.More(); aNodeIdxsIter.Next())
-  //    {
-  //      const Standard_Integer aKey = aNodeIdxsIter.Key();
-  //      if (GetGeom (aKey, Standard_False, aCoords, aNodesNb, aType))
-  //      {
-  //        aPntsNb++;
-  //        aNodePoints->AddVertex (aCoords(1), aCoords(2), aCoords(3));
-  //      }
-  //    }
-
-  //    if (aPntsNb > 0)
-  //    {
-  //      Handle(Graphic3d_LOD) aNewLod = Prs3d_Root::NewLOD (aMainPrs);
-  //      Handle(Graphic3d_Group) aLODGroup = aNewLod->NewGroup();
-  //      aLODGroup->AddPrimitiveArray (aNodePoints);
-  //    }
-  //    return;
-  //  }
-  //}
   if (theIsElement)
   {
     Standard_Integer aMaxNodesNb;
@@ -424,6 +380,8 @@ void MeshVS_LODBuilder::Build (const Handle(Prs3d_Presentation)& theBasePrs,
   }
 }
 
+#include <Prs3d_Root.hxx>
+
 //================================================================
 // Function : drawArrays
 // Purpose  :
@@ -459,6 +417,8 @@ void MeshVS_LODBuilder::drawArrays (const Handle(Prs3d_Presentation)& theBasePrs
   if (isPolygons && theFillAsp->FrontMaterial().Transparency() < 0.01)
   {
     Handle (Graphic3d_Group) aGroup = aNewLod->NewGroup (theBasePrs);
+    //Prs3d_Root::NewGroup ( theBasePrs );
+    //Handle (Graphic3d_Group) aGroup = Prs3d_Root::CurrentGroup ( theBasePrs );
 
     theFillAsp->SetEdgeOff();
 
@@ -489,6 +449,8 @@ void MeshVS_LODBuilder::drawArrays (const Handle(Prs3d_Presentation)& theBasePrs
   if (isPolylines && !theIsPolygonsEdgesOff)
   {
     Handle (Graphic3d_Group) aLGroup = aNewLod->NewGroup (theBasePrs);
+    //Prs3d_Root::NewGroup ( theBasePrs );
+    //Handle (Graphic3d_Group) aLGroup = Prs3d_Root::CurrentGroup ( theBasePrs );
 
     theFillAsp->SetEdgeOff();
     if (theIsSelected)
@@ -505,6 +467,8 @@ void MeshVS_LODBuilder::drawArrays (const Handle(Prs3d_Presentation)& theBasePrs
   if (isLinkPolylines)
   {
     Handle (Graphic3d_Group) aBeamGroup = aNewLod->NewGroup (theBasePrs);
+    //Prs3d_Root::NewGroup ( theBasePrs );
+    //Handle (Graphic3d_Group) aBeamGroup = Prs3d_Root::CurrentGroup ( theBasePrs );
 
     theFillAsp->SetEdgeOff();
     if (!theIsSelected)
@@ -517,6 +481,8 @@ void MeshVS_LODBuilder::drawArrays (const Handle(Prs3d_Presentation)& theBasePrs
   if (isPolygons && theFillAsp->FrontMaterial().Transparency() >= 0.01)
   {
     Handle (Graphic3d_Group) aGroup = aNewLod->NewGroup (theBasePrs);
+    //Prs3d_Root::NewGroup ( theBasePrs );
+    //Handle (Graphic3d_Group) aGroup = Prs3d_Root::CurrentGroup ( theBasePrs );
 
     theFillAsp->SetEdgeOff();
 

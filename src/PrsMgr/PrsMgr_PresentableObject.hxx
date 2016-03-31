@@ -199,6 +199,8 @@ public:
   //! Returns parent of current object in scene hierarchy.
   Standard_EXPORT PrsMgr_PresentableObjectPointer Parent() const;
 
+  Standard_EXPORT virtual Standard_Boolean HasLevelsOfDetail() const;
+
 
 friend class PrsMgr_Presentation;
 friend class PrsMgr_PresentationManager;
@@ -219,7 +221,11 @@ protected:
   
   Standard_EXPORT PrsMgr_PresentableObject(const PrsMgr_TypeOfPresentation3d aTypeOfPresentation3d = PrsMgr_TOP_AllView);
 Standard_EXPORT virtual ~PrsMgr_PresentableObject();
-  
+
+  Standard_EXPORT virtual void ComputeLods (const Handle(PrsMgr_PresentationManager3d)& thePrsMgr,
+                                            const Handle(Prs3d_Presentation)& thePrs,
+                                            const Standard_Integer theMode = 0);
+
   //! Calculates the 3D view aPresentation and its
   //! updates. The latter are managed by aPresentationManager.
   //! aPresentableObject has the display mode aMode;

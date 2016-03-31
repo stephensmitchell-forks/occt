@@ -83,3 +83,19 @@ void Graphic3d_LODManager::SetRange (const Standard_Integer theLodIdx,
  {
    return myLODs.Value (myCurrentLODIdx)->GetDrawGroups();
  }
+
+ //=======================================================================
+// function : GetCombinedBndBox
+// purpose  :
+//=======================================================================
+ void Graphic3d_LODManager::GetCombinedBndBox (Graphic3d_BndBox4f& theBndBox) const
+ {
+   for (Standard_Integer aLodIdx = 0; aLodIdx < myLODs.Size(); ++aLodIdx)
+   {
+     const Graphic3d_SequenceOfGroup& aGroups = myLODs.Value (aLodIdx)->GetDrawGroups();
+     for (Graphic3d_SequenceOfGroup::Iterator aGroupIter (aGroups); aGroupIter.More(); aGroupIter.Next())
+     {
+       theBndBox.Combine (aGroupIter.Value()->BoundingBox());
+     }
+   }
+ }

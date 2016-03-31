@@ -795,7 +795,7 @@ void OpenGl_Structure::SetDetailLevelRange (const Standard_Integer theIdOfLOD,
   Standard_ASSERT_RAISE (theFrom < theTo,
     "The upper boundary of the interval must be greater than lower one!");
 
-  if (theIdOfLOD < 0 || theIdOfLOD > myLODManager->NbOfDetailLevels())
+  if (myLODManager.IsNull() || theIdOfLOD < 0 || theIdOfLOD > myLODManager->NbOfDetailLevels())
     return;
 
   myLODManager->SetRange (theIdOfLOD, theFrom, theTo);

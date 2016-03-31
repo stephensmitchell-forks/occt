@@ -139,6 +139,35 @@ MeshVS_Mesh::MeshVS_Mesh (const Standard_Boolean theIsAllowOverlapped )
 }
 
 //================================================================
+// Function : HasLevelsOfDetail
+// Purpose  :
+//================================================================
+Standard_Boolean MeshVS_Mesh::HasLevelsOfDetail() const
+{
+  return !myLODDataSources.IsEmpty();
+}
+
+//================================================================
+// Function : ComputeLods
+// Purpose  :
+//================================================================
+void MeshVS_Mesh::ComputeLods (const Handle(PrsMgr_PresentationManager3d)& thePrsMgr,
+                               const Handle(Prs3d_Presentation)& thePrs,
+                               const Standard_Integer theMode)
+{
+  for (Standard_Integer aLodBldrIdx = 1; aLodBldrIdx <= myBuilders.Length(); ++aLodBldrIdx)
+  {
+    const Handle(MeshVS_LODBuilder) aLodBldr = Handle(MeshVS_LODBuilder)::DownCast (myBuilders.Value (aLodBldrIdx));
+    if (aLodBldr.IsNull())
+      continue;
+
+    const TColStd_PackedMapOfInteger aTrgIdxs = aLodBldr->GetDataSource()->GetAllElements();
+    if (!aTrgIdxs.IsEmpty())
+      aLodBldr->Build (thePrs, aTrgIdxs, TColStd_PackedMapOfInteger(), Standard_True,  theMode);
+  }
+}
+
+//================================================================
 // Function : Compute
 // Purpose  :
 //================================================================
@@ -172,6 +201,7 @@ void MeshVS_Mesh::Compute ( const Handle(PrsMgr_PresentationManager3d)& thePrsMg
   thePresentation->Clear();
   Standard_Integer len = myBuilders.Length();
   if ( theMode > 0 )
+  {
     for ( Standard_Integer i=1; i<=len; i++ )
     {
       Handle (MeshVS_PrsBuilder) aCurrent = myBuilders.Value ( i );
@@ -187,22 +217,6 @@ void MeshVS_Mesh::Compute ( const Handle(PrsMgr_PresentationManager3d)& thePrsMg
         if( HasElements )
           aCurrent->Build ( thePresentation, aElems, aElemsToExclude, Standard_True,  theMode );
       }
-    }
-
-  if (myLODDataSources.Size() > 0)
-  {
-    for (Standard_Integer aLodBldrIdx = 1; aLodBldrIdx <= myBuilders.Length(); ++aLodBldrIdx)
-    {
-      const Handle(MeshVS_LODBuilder) aLodBldr = Handle(MeshVS_LODBuilder)::DownCast (myBuilders.Value (aLodBldrIdx));
-      if (aLodBldr.IsNull() || !aLodBldr->TestFlags (theMode))
-        continue;
-
-      const TColStd_PackedMapOfInteger aVertIdxs = aLodBldr->GetDataSource()->GetAllNodes();
-      const TColStd_PackedMapOfInteger aTrgIdxs = aLodBldr->GetDataSource()->GetAllElements();
-      if (HasNodes)
-        aLodBldr->Build (thePresentation, aVertIdxs, aNodesToExclude, Standard_False, theMode);
-      if (HasElements)
-        aLodBldr->Build (thePresentation, aTrgIdxs, aElemsToExclude, Standard_True,  theMode);
     }
   }
 
