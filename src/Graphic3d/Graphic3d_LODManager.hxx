@@ -55,6 +55,9 @@ public:
 
   Standard_EXPORT void GetCombinedBndBox (Graphic3d_BndBox4f& theBndBox) const;
 
+  //! Returns false if at least one of LODs has non-empty sequence of Graphic3d_Groups
+  Standard_EXPORT Standard_Boolean IsEmpty() const;
+
   DEFINE_STANDARD_RTTIEXT (Graphic3d_LODManager, Standard_Transient)
 
 protected:

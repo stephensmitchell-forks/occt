@@ -486,9 +486,16 @@ Standard_Boolean Graphic3d_Structure::IsEmpty() const
   }
 
   // structure is empty:
+  // - in case if it is represented by LODs, all LODs have no graphic groups
   // - if all these groups are empty
   // - or if all groups are empty and all their descendants are empty
   // - or if all its descendants are empty
+  // - or, in case if it is represented by LODs, all LODs have no graphic groups
+  if (!myCStructure->GetLodManager().IsNull())
+  {
+    return myCStructure->GetLodManager()->IsEmpty();
+  }
+
   for (Graphic3d_SequenceOfGroup::Iterator aGroupIter (myCStructure->Groups()); aGroupIter.More(); aGroupIter.Next())
   {
     if (!aGroupIter.Value()->IsEmpty())
@@ -505,6 +512,7 @@ Standard_Boolean Graphic3d_Structure::IsEmpty() const
       return Standard_False;
     }
   }
+
   return Standard_True;
 }
 
