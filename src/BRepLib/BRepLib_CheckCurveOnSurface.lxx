@@ -73,10 +73,11 @@ inline void BRepLib_CheckCurveOnSurface::CheckData()
     return;
   }
   //
-  if ((myCurve->FirstParameter() > myFirst) ||
-      (myCurve->LastParameter() < myLast) ||
-      (myPCurve->FirstParameter() > myFirst) ||
-      (myPCurve->LastParameter() < myLast)) {
+  if (((myCurve->FirstParameter() - myFirst) > myTolRange) ||
+      ((myCurve->LastParameter() - myLast) < -myTolRange) ||
+      ((myPCurve->FirstParameter() - myFirst) > myTolRange) ||
+      ((myPCurve->LastParameter() - myLast) < -myTolRange))
+  {
     myErrorStatus = 2;
   }
 }

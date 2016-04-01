@@ -43,6 +43,7 @@ is
     OptionCommands     (aDI:out Interpretor from Draw); 
     HistoryCommands    (aDI:out Interpretor from Draw); 
     CellsCommands      (aDI:out Interpretor from Draw); 
+    UtilityCommands    (aDI:out Interpretor from Draw);
 
     Factory            (aDI:out Interpretor from Draw);
     

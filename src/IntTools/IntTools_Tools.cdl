@@ -246,7 +246,8 @@ is
         theFirst   : Real from Standard;
         theLast    : Real from Standard;
         theMaxDist : out Real from Standard; 
-        theMaxPar  : out Real from Standard)
+        theMaxPar  : out Real from Standard;
+        theTolRange: Real from Standard = 0.000000001) -- 1.e-9
     returns Boolean from Standard; 
     ---Purpose:  
     -- Computes the max distance between points  

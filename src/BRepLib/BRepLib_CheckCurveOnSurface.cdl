@@ -49,7 +49,8 @@ is
         thePCurve  : Curve   from Geom2d;
         theSurface : Surface from Geom;
         theFirst   : Real from Standard;
-        theLast    : Real from Standard);
+        theLast    : Real from Standard;
+        theTolRange: Real from Standard = 0.000000001); -- 1.e-9
     ---Purpose:
     -- Contructor
 
@@ -64,7 +65,8 @@ is
         thePCurve  : Curve   from Geom2d;
         theSurface : Surface from Geom;
         theFirst   : Real from Standard;
-        theLast    : Real from Standard);
+        theLast    : Real from Standard;
+        theTolRange: Real from Standard = 0.000000001); -- 1.e-9
     ---Purpose:
     -- Sets the data for the algorithm
 
@@ -171,5 +173,6 @@ fields
     myErrorStatus  : Integer from Standard;
     myMaxDistance  : Real    from Standard;
     myMaxParameter : Real    from Standard;
+    myTolRange     : Real    from Standard;
 
 end CheckCurveOnSurface;

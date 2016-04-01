@@ -328,7 +328,8 @@ BRepLib_CheckCurveOnSurface::BRepLib_CheckCurveOnSurface()
   myLast(0.),
   myErrorStatus(0),
   myMaxDistance(RealLast()),
-  myMaxParameter(0.)
+  myMaxParameter(0.),
+  myTolRange(Precision::PConfusion())
 {
 }
 
@@ -342,7 +343,8 @@ BRepLib_CheckCurveOnSurface::BRepLib_CheckCurveOnSurface
 :
   myErrorStatus(0),
   myMaxDistance(RealLast()),
-  myMaxParameter(0.)
+  myMaxParameter(0.),
+  myTolRange(Precision::PConfusion())
 {
   Init(theEdge, theFace);
 }
@@ -356,13 +358,15 @@ BRepLib_CheckCurveOnSurface::BRepLib_CheckCurveOnSurface
    const Handle(Geom2d_Curve)& the2DCurve,
    const Handle(Geom_Surface)& theSurface,
    const Standard_Real theFirst,
-   const Standard_Real theLast)
+   const Standard_Real theLast,
+   const Standard_Real theTolRange)
 :
   myErrorStatus(0),
   myMaxDistance(RealLast()),
-  myMaxParameter(0.)
+  myMaxParameter(0.),
+  myTolRange(theTolRange)
 {
-  Init(the3DCurve, the2DCurve, theSurface, theFirst, theLast);
+  Init(the3DCurve, the2DCurve, theSurface, theFirst, theLast, myTolRange);
 }
 
 //=======================================================================
@@ -382,6 +386,7 @@ void BRepLib_CheckCurveOnSurface::Init
   myMaxParameter = 0.0;
   myFirst = 0.0;
   myLast = 0.0;
+  myTolRange = Precision::PConfusion();
 
   if (theEdge.IsNull() || theFace.IsNull()) {
     return;
@@ -419,7 +424,8 @@ void BRepLib_CheckCurveOnSurface::Init
    const Handle(Geom2d_Curve)& the2DCurve,
    const Handle(Geom_Surface)& theSurface,
    const Standard_Real theFirst,
-   const Standard_Real theLast)
+   const Standard_Real theLast,
+   const Standard_Real theTolRange)
 {
   myCurve = the3DCurve;
   myPCurve = the2DCurve;
@@ -430,6 +436,7 @@ void BRepLib_CheckCurveOnSurface::Init
   myErrorStatus = 0;
   myMaxDistance = RealLast();
   myMaxParameter = 0.0;
+  myTolRange = theTolRange;
 }
 
 //=======================================================================
