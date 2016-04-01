@@ -24,6 +24,7 @@
 #include <BRepMesh_FaceAttribute.hxx>
 #include <BRepAdaptor_Curve.hxx>
 #include <TopTools_IndexedDataMapOfShapeListOfShape.hxx>
+#include <TopoDS_Vertex.hxx>
 
 class Geom_Surface;
 class Geom2d_Curve;
@@ -76,6 +77,11 @@ private:
                     const Standard_Real         theLast,
                     const Standard_Integer      theNbIter);
 
+  //! Checks whether the given point lies within tolerance of the vertex.
+  Standard_Boolean isInToleranceOfVertex (
+    const gp_Pnt&        thePoint,
+    const TopoDS_Vertex& theVertex);
+
 private:
   NCollection_Handle<BRepMesh_GeomTool> myTool;
   Handle(BRepAdaptor_HSurface)          mySurface;
@@ -85,6 +91,8 @@ private:
   Standard_Real                         myEdgeSqTol;
   Standard_Real                         myFaceRangeU[2];
   Standard_Real                         myFaceRangeV[2];
+  TopoDS_Vertex                         myFirstVertex;
+  TopoDS_Vertex                         myLastVertex;
 };
 
 DEFINE_STANDARD_HANDLE(BRepMesh_EdgeTessellator, BRepMesh_IEdgeTool)

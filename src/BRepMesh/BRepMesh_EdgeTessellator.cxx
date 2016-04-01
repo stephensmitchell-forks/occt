@@ -30,7 +30,7 @@
 #include <TopTools_ListIteratorOfListOfShape.hxx>
 #include <TopTools_ListOfShape.hxx>
 #include <TColStd_Array1OfReal.hxx>
-
+#include <TopExp.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(BRepMesh_EdgeTessellator,BRepMesh_IEdgeTool)
 
@@ -47,6 +47,8 @@ BRepMesh_EdgeTessellator::BRepMesh_EdgeTessellator(
   const Standard_Real                              theMinSize)
   : mySurface(theFaceAttribute->Surface())
 {
+  TopExp::Vertices (theEdge, myFirstVertex, myLastVertex);
+
   Standard_Real aPreciseAngDef = 0.5 * theAngDeflection;
   Standard_Real aPreciseLinDef = 0.5 * theLinDeflection;
   if (theEdge.Orientation() == TopAbs_INTERNAL)
@@ -165,6 +167,20 @@ BRepMesh_EdgeTessellator::BRepMesh_EdgeTessellator(
 }
 
 //=======================================================================
+//function : isInToleranceOfVertex
+//purpose  : 
+//=======================================================================
+Standard_Boolean BRepMesh_EdgeTessellator::isInToleranceOfVertex (
+  const gp_Pnt&        thePoint,
+  const TopoDS_Vertex& theVertex)
+{
+  const gp_Pnt        aPoint     = BRep_Tool::Pnt       (theVertex);
+  const Standard_Real aTolerance = BRep_Tool::Tolerance (theVertex);
+
+  return (thePoint.SquareDistance (aPoint) < aTolerance * aTolerance);
+}
+
+//=======================================================================
 //function : Value
 //purpose  : 
 //=======================================================================
@@ -175,6 +191,12 @@ Standard_Boolean BRepMesh_EdgeTessellator::Value(
   gp_Pnt2d&              theUV)
 {
   myTool->Value(theIndex, mySurface, theParameter, thePoint, theUV);
+
+  if (isInToleranceOfVertex (thePoint, myFirstVertex) ||
+      isInToleranceOfVertex (thePoint, myLastVertex))
+  {
+    return Standard_False;
+  }
 
   // If point coordinates are out of surface range, 
   // it is necessary to re-project point.
