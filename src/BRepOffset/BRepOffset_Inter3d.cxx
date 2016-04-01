@@ -41,8 +41,8 @@
 #include <TopTools_MapOfShape.hxx>
 #include <Precision.hxx>
 #include <GeomAPI_ProjectPointOnCurve.hxx>
-
-
+//
+#include <BOPTools_AlgoTools.hxx>
 
 //=======================================================================
 //function : BRepOffset_Inter3d
@@ -429,65 +429,38 @@ void BRepOffset_Inter3d::ConnexIntByInt
   //TopExp_Explorer Exp(SI,TopAbs_EDGE);
   TopTools_IndexedMapOfShape VEmap;
   TopTools_IndexedDataMapOfShapeListOfShape aMVF;
-  TopoDS_Face     F1,F2,OF1,OF2,NF1,NF2;
+  TopoDS_Face     F1, F2, OF1, OF2, NF1, NF2;
   TopAbs_State    CurSide = mySide;
   BRep_Builder    B;
   Standard_Boolean bEdge;
   Standard_Integer i, aNb;
   TopTools_ListIteratorOfListOfShape it, it1, itF1, itF2;
   //
-  TopExp::MapShapes(SI, TopAbs_EDGE  , VEmap);
+  TopExp::MapShapes(SI, TopAbs_EDGE, VEmap);
   // map the shape for vertices
   if (bIsPlanar) {
     TopExp::MapShapes(SI, TopAbs_VERTEX, VEmap);
     TopExp::MapShapesAndAncestors(SI, TopAbs_VERTEX, TopAbs_FACE, aMVF);
   }
   //
-  aNb = VEmap.Extent();
-  for (i = 1; i <= aNb; ++i) {
-    const TopoDS_Shape& aS = VEmap(i);
-    //
-    TopoDS_Edge E;
-    TopTools_ListOfShape aLF1, aLF2;
-    //
-    bEdge = (aS.ShapeType() == TopAbs_EDGE);
-    if (bEdge) {
-      // faces connected by the edge
-      E = *(TopoDS_Edge*)&aS;
-      //
-      const BRepOffset_ListOfInterval& L = Analyse.Type(E);
-      if (L.IsEmpty()) {
+  TopTools_DataMapOfShapeListOfShape aDMVLF1, aDMVLF2;
+  TopTools_IndexedDataMapOfShapeListOfShape aDMIntE, aDMIntFF;
+  //
+  if (bIsPlanar) {
+    aNb = VEmap.Extent();
+    for (i = 1; i <= aNb; ++i) {
+      const TopoDS_Shape& aS = VEmap(i);
+      if (aS.ShapeType() != TopAbs_VERTEX) {
         continue;
       }
       //
-      BRepOffset_Type    OT   = L.First().Type();
-      if (OT != BRepOffset_Convex && OT != BRepOffset_Concave) {
-        continue;
-      }
-      //
-      if (OT == BRepOffset_Concave) CurSide = TopAbs_IN;
-      else                          CurSide = TopAbs_OUT;
-      //-----------------------------------------------------------
-      // edge is of the proper type, return adjacent faces.
-      //-----------------------------------------------------------
-      const TopTools_ListOfShape& Anc = Analyse.Ancestors(E);
-      if (Anc.Extent() != 2) {
-        continue;
-      }
-      //
-      F1  = TopoDS::Face(Anc.First());
-      F2  = TopoDS::Face(Anc.Last ());
-      //
-      aLF1.Append(F1);
-      aLF2.Append(F2);
-    }
-    else {
       // faces connected by the vertex
       const TopTools_ListOfShape& aLF = aMVF.FindFromKey(aS);
       if (aLF.Extent() < 2) {
         continue;
       }
       //
+      TopTools_ListOfShape aLF1, aLF2;
       Standard_Boolean bVertexOnly = Standard_False;
       TopTools_MapOfShape aMFence;
       //
@@ -533,6 +506,57 @@ void BRepOffset_Inter3d::ConnexIntByInt
         continue;
       }
       //
+      aDMVLF1.Bind(aS, aLF1);
+      aDMVLF2.Bind(aS, aLF2);
+    }
+  }
+  //
+  aNb = VEmap.Extent();
+  for (i = 1; i <= aNb; ++i) {
+    const TopoDS_Shape& aS = VEmap(i);
+    //
+    TopoDS_Edge E;
+    TopTools_ListOfShape aLF1, aLF2;
+    //
+    bEdge = (aS.ShapeType() == TopAbs_EDGE);
+    if (bEdge) {
+      // faces connected by the edge
+      E = *(TopoDS_Edge*)&aS;
+      //
+      const BRepOffset_ListOfInterval& L = Analyse.Type(E);
+      if (L.IsEmpty()) {
+        continue;
+      }
+      //
+      BRepOffset_Type    OT = L.First().Type();
+      if (OT != BRepOffset_Convex && OT != BRepOffset_Concave) {
+        continue;
+      }
+      //
+      if (OT == BRepOffset_Concave) CurSide = TopAbs_IN;
+      else                          CurSide = TopAbs_OUT;
+      //-----------------------------------------------------------
+      // edge is of the proper type, return adjacent faces.
+      //-----------------------------------------------------------
+      const TopTools_ListOfShape& Anc = Analyse.Ancestors(E);
+      if (Anc.Extent() != 2) {
+        continue;
+      }
+      //
+      F1 = TopoDS::Face(Anc.First());
+      F2 = TopoDS::Face(Anc.Last());
+      //
+      aLF1.Append(F1);
+      aLF2.Append(F2);
+    }
+    else {
+      if (!aDMVLF1.IsBound(aS)) {
+        continue;
+      }
+      //
+      aLF1 = aDMVLF1.Find(aS);
+      aLF2 = aDMVLF2.Find(aS);
+      //
       CurSide = mySide;
     }
     //
@@ -547,9 +571,9 @@ void BRepOffset_Inter3d::ConnexIntByInt
       if (!MES.IsBound(OF1)) {
         Standard_Boolean enlargeU = Standard_True;
         Standard_Boolean enlargeVfirst = Standard_True, enlargeVlast = Standard_True;
-        BRepOffset_Tool::CheckBounds( F1, Analyse, enlargeU, enlargeVfirst, enlargeVlast );
-        BRepOffset_Tool::EnLargeFace(OF1,NF1,Standard_True,Standard_True,enlargeU,enlargeVfirst,enlargeVlast);
-        MES.Bind(OF1,NF1);
+        BRepOffset_Tool::CheckBounds(F1, Analyse, enlargeU, enlargeVfirst, enlargeVlast);
+        BRepOffset_Tool::EnLargeFace(OF1, NF1, Standard_True, Standard_True, enlargeU, enlargeVfirst, enlargeVlast);
+        MES.Bind(OF1, NF1);
       }
       else {
         NF1 = TopoDS::Face(MES(OF1));
@@ -558,25 +582,25 @@ void BRepOffset_Inter3d::ConnexIntByInt
       if (!MES.IsBound(OF2)) {
         Standard_Boolean enlargeU = Standard_True;
         Standard_Boolean enlargeVfirst = Standard_True, enlargeVlast = Standard_True;
-        BRepOffset_Tool::CheckBounds( F2, Analyse, enlargeU, enlargeVfirst, enlargeVlast );
-        BRepOffset_Tool::EnLargeFace(OF2,NF2,Standard_True,Standard_True,enlargeU,enlargeVfirst,enlargeVlast);
-        MES.Bind(OF2,NF2); 
+        BRepOffset_Tool::CheckBounds(F2, Analyse, enlargeU, enlargeVfirst, enlargeVlast);
+        BRepOffset_Tool::EnLargeFace(OF2, NF2, Standard_True, Standard_True, enlargeU, enlargeVfirst, enlargeVlast);
+        MES.Bind(OF2, NF2);
       }
       else {
         NF2 = TopoDS::Face(MES(OF2));
       }
       //
-      if (!IsDone(NF1,NF2)) {
-        TopTools_ListOfShape LInt1,LInt2;
-        BRepOffset_Tool::Inter3D (NF1,NF2,LInt1,LInt2,CurSide,E,bEdge);
-        if (LInt1.Extent() > 1) { 
+      if (!IsDone(NF1, NF2)) {
+        TopTools_ListOfShape LInt1, LInt2;
+        BRepOffset_Tool::Inter3D(NF1, NF2, LInt1, LInt2, CurSide, E, bEdge);
+        if (LInt1.Extent() > 1) {
           // intersection is in seceral edges (free sewing)
           SelectEdge(aS, LInt1);
           SelectEdge(aS, LInt2);
         }
-        SetDone(NF1,NF2);
+        SetDone(NF1, NF2);
         if (!LInt1.IsEmpty()) {
-          Store (NF1,NF2,LInt1,LInt2);
+          Store(NF1, NF2, LInt1, LInt2);
           //
           TopoDS_Compound C;
           B.MakeCompound(C);
@@ -594,18 +618,40 @@ void BRepOffset_Inter3d::ConnexIntByInt
           for (; it.More(); it.Next()) {
             const TopoDS_Shape& aNE = it.Value();
             B.Add(C, aNE);
+            if (bEdge) {
+              TopoDS_Vertex aVO1, aVO2;
+              TopExp::Vertices(TopoDS::Edge(aS), aVO1, aVO2);
+              if (!aDMVLF1.IsBound(aVO1) && !aDMVLF1.IsBound(aVO2)) {
+                if (aDMIntE.Contains(aNE)) {
+                  aDMIntE.ChangeFromKey(aNE).Append(aS);
+                }
+                else {
+                  TopTools_ListOfShape aListS;
+                  aListS.Append(aS);
+                  aDMIntE.Add(aNE, aListS);
+                }
+                //
+                if (!aDMIntFF.Contains(aNE)) {
+                  TopTools_ListOfShape aLFF;
+                  aLFF.Append(NF1);
+                  aLFF.Append(NF2);
+                  aDMIntFF.Add(aNE, aLFF);
+                }
+              }
+            }
           }
           //
-          Build.Bind(aS,C);
+          Build.Bind(aS, C);
         }
         else {
           Failed.Append(aS);
         }
-      } else { // IsDone(NF1,NF2)
+      }
+      else { // IsDone(NF1,NF2)
         //  Modified by skv - Fri Dec 26 12:20:13 2003 OCC4455 Begin
         const TopTools_ListOfShape &aLInt1 = myAsDes->Descendant(NF1);
         const TopTools_ListOfShape &aLInt2 = myAsDes->Descendant(NF2);
-        
+
         if (!aLInt1.IsEmpty()) {
           TopoDS_Compound C;
           B.MakeCompound(C);
@@ -619,17 +665,39 @@ void BRepOffset_Inter3d::ConnexIntByInt
             }
           }
           //
-          for (it.Initialize(aLInt1) ; it.More(); it.Next()) {
+          TopTools_ListOfShape aLENew;
+          for (it.Initialize(aLInt1); it.More(); it.Next()) {
             const TopoDS_Shape &anE1 = it.Value();
             //
-            for (it1.Initialize(aLInt2) ; it1.More(); it1.Next()) {
+            for (it1.Initialize(aLInt2); it1.More(); it1.Next()) {
               const TopoDS_Shape &anE2 = it1.Value();
-              
-              if (anE1.IsSame(anE2))
+              if (anE1.IsSame(anE2)) {
                 B.Add(C, anE1);
+                if (bEdge) {
+                  TopoDS_Vertex aVO1, aVO2;
+                  TopExp::Vertices(TopoDS::Edge(aS), aVO1, aVO2);
+                  if (!aDMVLF1.IsBound(aVO1) && !aDMVLF1.IsBound(aVO2)) {
+                    if (aDMIntE.Contains(anE1)) {
+                      aDMIntE.ChangeFromKey(anE1).Append(aS);
+                    }
+                    else {
+                      TopTools_ListOfShape aListS;
+                      aListS.Append(aS);
+                      aDMIntE.Add(anE1, aListS);
+                    }
+                    //
+                    if (!aDMIntFF.Contains(anE1)) {
+                      TopTools_ListOfShape aLFF;
+                      aLFF.Append(NF1);
+                      aLFF.Append(NF2);
+                      aDMIntFF.Add(anE1, aLFF);
+                    }
+                  }
+                }
+              }
             }
           }
-          Build.Bind(aS,C);
+          Build.Bind(aS, C);
         }
         else {
           Failed.Append(aS);
@@ -637,6 +705,73 @@ void BRepOffset_Inter3d::ConnexIntByInt
       }
     }
     //  Modified by skv - Fri Dec 26 12:20:14 2003 OCC4455 End
+  }
+  //
+  aNb = aDMIntE.Extent();
+  for (i = 1; i <= aNb; ++i) {
+    const TopTools_ListOfShape& aLE = aDMIntE(i);
+    if (aLE.Extent() == 1) {
+      continue;
+    }
+    //
+    // make connexity blocks of edges
+    TopoDS_Compound aCE;
+    B.MakeCompound(aCE);
+    //
+    TopTools_ListIteratorOfListOfShape aItLE(aLE);
+    for (; aItLE.More(); aItLE.Next()) {
+      const TopoDS_Shape& aE = aItLE.Value();
+      B.Add(aCE, aE);
+    }
+    //
+    BOPCol_ListOfShape aLCBE;
+    BOPTools_AlgoTools::MakeConnexityBlocks(aCE, TopAbs_VERTEX, TopAbs_EDGE, aLCBE);
+    if (aLCBE.Extent() == 1) {
+      continue;
+    }
+    //
+    const TopoDS_Edge& aE = TopoDS::Edge(aDMIntE.FindKey(i));
+    const TopTools_ListOfShape& aLFF = aDMIntFF.FindFromKey(aE);
+    const TopoDS_Shape& aF1 = aLFF.First();
+    const TopoDS_Shape& aF2 = aLFF.Last();
+    //
+    TopTools_ListOfShape& aLFE1 = myAsDes->ChangeDescendant(aF1);
+    TopTools_ListOfShape& aLFE2 = myAsDes->ChangeDescendant(aF2);
+    //
+    BOPCol_ListIteratorOfListOfShape aItLCBE(aLCBE);
+    for (aItLCBE.Next(); aItLCBE.More(); aItLCBE.Next()) {
+      // make new edge with different tedge instance
+      TopoDS_Edge aNewEdge;
+      TopoDS_Vertex aV1, aV2;
+      Standard_Real aT1, aT2;
+      //
+      TopExp::Vertices(aE, aV1, aV2);
+      BRep_Tool::Range(aE, aT1, aT2);
+      //
+      BOPTools_AlgoTools::MakeSplitEdge(aE, aV1, aT1, aV2, aT2, aNewEdge);
+      //
+      aLFE1.Append(aNewEdge);
+      aLFE2.Append(aNewEdge);
+      //
+      const TopoDS_Shape& aCB = aItLCBE.Value();
+      TopoDS_Iterator aItCB(aCB);
+      for (; aItCB.More(); aItCB.Next()) {
+        const TopoDS_Shape& aS = aItCB.Value();
+        TopoDS_Shape& aCI = Build.ChangeFind(aS);
+        //
+        TopoDS_Compound aNewCI;
+        B.MakeCompound(aNewCI);
+        TopExp_Explorer aExp(aCI, TopAbs_EDGE);
+        for (; aExp.More(); aExp.Next()) {
+          const TopoDS_Shape& aSx = aExp.Current();
+          if (!aSx.IsSame(aE)) {
+            B.Add(aNewCI, aSx);
+          }
+        }
+        B.Add(aNewCI, aNewEdge);
+        aCI = aNewCI;
+      }
+    }
   }
 }
 
