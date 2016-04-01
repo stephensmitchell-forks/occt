@@ -206,7 +206,7 @@ options:\n\
   else
   {
     Standard_Integer i;
-    for( i = 0; i < 4; i++ )
+    for( i = 0; i < 5; i++ )
     {
       if( (statusFlags >> i) & (Standard_Integer)1 )
       {
@@ -223,6 +223,9 @@ options:\n\
             break;
           case 4:
             di << "ReMesh ";
+            break;
+          case 5:
+            di << "UnorientedWire ";
             break;
         }
       }

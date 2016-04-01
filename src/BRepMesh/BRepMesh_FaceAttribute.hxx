@@ -195,7 +195,9 @@ public: //! @name main geometrical properties.
   //! Returns TRUE in case if computed data is valid.
   inline Standard_Boolean IsValid() const
   {
-    return (myStatus == BRepMesh_NoError || myStatus == BRepMesh_ReMesh);
+    return (myStatus == BRepMesh_NoError || 
+            myStatus == BRepMesh_ReMesh  ||
+            myStatus == BRepMesh_UnorientedWire);
   }
 
 public: //! @name auxiliary structures

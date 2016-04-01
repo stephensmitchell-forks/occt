@@ -98,12 +98,14 @@ namespace BRepMesh
 
   typedef NCollection_DataMap<Standard_Integer, Standard_Integer>                                   MapOfIntegerInteger;
   typedef NCollection_DataMap<TopoDS_Vertex, Standard_Integer, TopTools_ShapeMapHasher>             DMapOfVertexInteger;
-  typedef NCollection_DataMap<TopoDS_Face, Handle(BRepMesh_FaceAttribute), TopTools_ShapeMapHasher>  DMapOfFaceAttribute;
+  typedef NCollection_DataMap<TopoDS_Edge, Standard_Boolean, TopTools_ShapeMapHasher>               DMapOfEdgeBoolean;
+  typedef NCollection_DataMap<TopoDS_Face, Handle(BRepMesh_FaceAttribute), TopTools_ShapeMapHasher> DMapOfFaceAttribute;
   typedef NCollection_DataMap<TopoDS_Shape, BRepMesh_PairOfPolygon, TopTools_ShapeMapHasher>        DMapOfShapePairOfPolygon;
   typedef NCollection_DataMap<Standard_Integer, gp_Pnt>                                             DMapOfIntegerPnt;
   typedef NCollection_DataMap<Standard_Integer, ListOfXY>                                           DMapOfIntegerListOfXY;
   typedef NCollection_DataMap<Standard_Integer, ListOfInteger>                                      DMapOfIntegerListOfInteger;
   typedef NCollection_DataMap<TopoDS_Edge, DMapOfTriangulationBool, TopTools_ShapeMapHasher>        DMapOfEdgeListOfTriangulationBool;
+  typedef NCollection_DataMap<TopoDS_Edge, Segment, TopTools_ShapeMapHasher>                        DMapOfVerticesUVToleranceOfEdge;
 
   typedef NCollection_IndexedMap<Standard_Integer>                                                  IMapOfInteger;
   typedef NCollection_IndexedMap<Standard_Real>                                                     IMapOfReal;

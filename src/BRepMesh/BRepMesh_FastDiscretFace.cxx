@@ -183,9 +183,9 @@ void BRepMesh_FastDiscretFace::initDataStructure()
   myStructure->Data()->SetCellSize ( uCellSize / deltaX, vCellSize / deltaY);
   myStructure->Data()->SetTolerance( aTolU     / deltaX, aTolV     / deltaY);
 
-  myAttribute->ChangeStructure() = myStructure;
-  myAttribute->ChangeSurfacePoints() = new BRepMesh::DMapOfIntegerPnt;
-  myAttribute->ChangeSurfaceVertices()= new BRepMesh::DMapOfVertexInteger;
+  myAttribute->ChangeStructure()       = myStructure;
+  myAttribute->ChangeSurfacePoints()   = new BRepMesh::DMapOfIntegerPnt;
+  myAttribute->ChangeSurfaceVertices() = new BRepMesh::DMapOfVertexInteger;
 
   // Check the necessity to fill the map of parameters
   const Handle(BRepAdaptor_HSurface)& gFace = myAttribute->Surface();
@@ -1346,8 +1346,12 @@ void BRepMesh_FastDiscretFace::add(const TopoDS_Vertex& theVertex)
 
     NCollection_Handle<FixedVExplorer> aFixedVExplorer = new FixedVExplorer(theVertex);
     Standard_Integer aIndex = myAttribute->GetVertexIndex(aFixedVExplorer);
+
+    const gp_XY aTolUV (.5 * (myAttribute->GetUMax() - myAttribute->GetUMin()),
+                        .5 * (myAttribute->GetVMax() - myAttribute->GetVMin()));
+
     gp_XY anUV = BRepMesh_ShapeTool::FindUV(aIndex, aPnt2d,
-      theVertex, BRep_Tool::Tolerance(theVertex), myAttribute);
+      theVertex, BRep_Tool::Tolerance(theVertex), aTolUV, myAttribute);
 
     Standard_Integer aTmpId1, aTmpId2;
     anUV = myAttribute->Scale(anUV, Standard_True);

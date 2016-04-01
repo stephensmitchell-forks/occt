@@ -34,6 +34,7 @@
 #include <BRepMesh_ShapeTool.hxx>
 #include <TopoDS_Vertex.hxx>
 #include <TopTools_IndexedDataMapOfShapeListOfShape.hxx>
+#include <TopoDS_Wire.hxx>
 
 class BRepMesh_DataStructureOfDelaun;
 class Bnd_Box;
@@ -46,6 +47,8 @@ class BRepMesh_Edge;
 class BRepMesh_Vertex;
 class gp_Pnt;
 class BRepMesh_FaceAttribute;
+class ShapeExtend_WireData;
+class ShapeAnalysis_WireOrder;
 
 //! Algorithm to mesh a shape with respect of the <br>
 //! frontier the deflection and by option the shared <br>
@@ -146,9 +149,10 @@ public:
     return myParameters;
   }
     
-  
+  //! Builds bottom-up connectivity map for edges (with adjacent faces).
   Standard_EXPORT void InitSharedFaces(const TopoDS_Shape& theShape);
 
+  //! Returns map of faces shared by shape's edges.
   inline const TopTools_IndexedDataMapOfShapeListOfShape& SharedFaces() const
   {
     return mySharedFaces;
@@ -280,39 +284,31 @@ private:
     NCollection_Handle<TopoDSVExplorer> LastVExtractor;
   };
 
-  //! Structure keeps geometrical parameters of edge's PCurve.
-  //! Used for caching.
-  struct EdgePCurve
-  {
-    Handle(Geom2d_Curve) Curve2d;
-    Standard_Real        FirstParam;
-    Standard_Real        LastParam;
-  };
-
   //! Fills structure of by attributes of the given edge.
   //! @return TRUE on success, FALSE elsewhere.
   Standard_Boolean getEdgeAttributes(
-    const TopoDS_Edge&  theEdge,
-    const EdgePCurve&   thePCurve,
-    const Standard_Real theDefEdge,
-    EdgeAttributes&     theAttributes) const;
+    const TopoDS_Edge&    theEdge,
+    const Standard_Real   theDefEdge,
+    EdgeAttributes&       theAttributes,
+    Handle(Geom2d_Curve)& thePCurve) const;
 
   //! Registers end vertices of the edge in mesh data 
   //! structure of currently processed face.
   void registerEdgeVertices(
-    EdgeAttributes&   theAttributes,
-    Standard_Integer& ipf,
-    Standard_Integer& ivf, 
-    Standard_Integer& isvf,
-    Standard_Integer& ipl,
-    Standard_Integer& ivl,
-    Standard_Integer& isvl);
+    const TopoDS_Edge&  theEdge,
+    EdgeAttributes&     theAttributes,
+    Standard_Integer&   ipf,
+    Standard_Integer&   ivf, 
+    Standard_Integer&   isvf,
+    Standard_Integer&   ipl,
+    Standard_Integer&   ivl,
+    Standard_Integer&   isvl);
 
   //! Adds tessellated representation of the given edge to
   //! mesh data structure of currently processed face.
-  void add(const TopoDS_Edge&  theEdge,
-           const EdgePCurve&   theCurve2D,
-           const Standard_Real theEdgeDeflection);
+  Standard_Boolean add(
+    const TopoDS_Edge&  theEdge,
+    const Standard_Real theEdgeDeflection);
 
   //! Updates tessellated representation of the given edge.
   //! If edge already has a polygon which deflection satisfies
@@ -344,28 +340,72 @@ private:
     Handle(Poly_PolygonOnTriangulation)&       thePolygon,
     const Standard_Real                        theDeflection);
 
+  //! Performs discretization of face's boundary edges using current face attribute.
+  //! Returns True on success, False elsewhere.
+  Standard_Boolean discretizeFaceBoundary ();
+
   //! Resets temporary data structure used to collect unique nodes.
   void resetDataStructure();
 
+  //! Returns maximum UV distance between the specified vertex of the edge
+  //! and end of adjacent edge to be used to knit vertices in parametric space.
+  gp_XY& toleranceUV (
+    const TopoDS_Edge&     theEdge,
+    const Standard_Boolean isFirstVertex) const;
+
+  //! Returns True in case if the given edge is degenerated.
+  inline Standard_Boolean isDegenerated (const TopoDS_Edge& theEdge) const
+  {
+    if (!myDegenerativeEdgesCache.IsBound (theEdge))
+    {
+      myDegenerativeEdgesCache.Bind (theEdge, 
+        BRepMesh_ShapeTool::IsDegenerated (theEdge, myAttribute->Face ()));
+    }
+
+    return myDegenerativeEdgesCache (theEdge);
+  }
+
+  //! Computes parametric tolerance for shared vertex of adjacent edges of the given wire.
+  Standard_Boolean computeUVToleranceForVerticesOfEdgesOf(const TopoDS_Wire& theWire);
+
+  //! Computes parametric tolerance for shared vertex of adjacent edges of the given wire.
+  void initUVToleranceForVerticesOfEdgesOf(
+    const Handle(ShapeExtend_WireData)& theWireData,
+    const ShapeAnalysis_WireOrder&      theOrderTool);
+
+  //! Updates parametric tolerance of shared vertex of adjacent edges of the given wire
+  //! due to enchanced degenerative cases..
+  void updateUVToleranceForVerticesOfEdgesOf(
+    const Handle(ShapeExtend_WireData)& theWireData,
+    const ShapeAnalysis_WireOrder&      theOrderTool);
+
+  //! Computes parametric tolerance for edge vertices using edge adjacency.
+  //! Stores computed value in cache.
+  BRepMesh::Segment& computeUVToleranceForVerticesOf(
+    const TopoDS_Edge& theEdge,
+    const TopoDS_Edge& thePrevEdge,
+    const TopoDS_Edge& theNextEdge,
+    gp_XY&             theDiff);
+
 private:
 
-  TopoDS_Face                                      myFace;
-
-  BRepMesh::DMapOfShapePairOfPolygon               myEdges;
-  mutable BRepMesh::DMapOfFaceAttribute            myAttributes;
-  TopTools_DataMapOfShapeReal                      myMapdefle;
+  BRepMesh::DMapOfShapePairOfPolygon                myEdges;
+  mutable BRepMesh::DMapOfFaceAttribute             myAttributes;
+  TopTools_DataMapOfShapeReal                       myMapdefle;
 
   // Data shared for whole shape
-  BRepMesh::HDMapOfVertexInteger                   myBoundaryVertices;
-  BRepMesh::HDMapOfIntegerPnt                      myBoundaryPoints;
+  BRepMesh::HDMapOfVertexInteger                    myBoundaryVertices;
+  BRepMesh::HDMapOfIntegerPnt                       myBoundaryPoints;
 
   // Fast access to attributes of current face
-  Handle(BRepMesh_FaceAttribute)                   myAttribute;
-  TopTools_IndexedDataMapOfShapeListOfShape        mySharedFaces;
+  Handle(BRepMesh_FaceAttribute)                    myAttribute;
+  TopTools_IndexedDataMapOfShapeListOfShape         mySharedFaces;
+  mutable BRepMesh::DMapOfEdgeBoolean               myDegenerativeEdgesCache;
+  mutable BRepMesh::DMapOfVerticesUVToleranceOfEdge myEdgeVerticesUVTolCache;
 
-  Parameters                                       myParameters;
+  Parameters                                        myParameters;
 
-  Standard_Real                                    myDtotale;
+  Standard_Real                                     myDtotale;
 };
 
 DEFINE_STANDARD_HANDLE(BRepMesh_FastDiscret, Standard_Transient)

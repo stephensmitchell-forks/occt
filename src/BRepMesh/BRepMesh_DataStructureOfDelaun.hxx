@@ -236,6 +236,10 @@ public: //! @name Auxilary API
   //! Dumps information about this structure.
   //! @param theStream stream to be used for dump.
   Standard_EXPORT void Statistics(Standard_OStream& theStream) const;
+
+  //! Dumps this structure to the specified BRep file.
+  static Standard_EXPORT void Dump (const Handle(BRepMesh_DataStructureOfDelaun)& theStructure,
+                                    Standard_CString theFileName);
   
   //! Returns memory allocator used by the structure.
   inline const Handle(NCollection_IncAllocator)& Allocator() const

@@ -29,6 +29,7 @@ class Bnd_Box;
 class TopoDS_Vertex;
 class gp_XY;
 class gp_Pnt2d;
+class Geom2d_Curve;
 
 class BRepMesh_ShapeTool
 {
@@ -73,6 +74,7 @@ public:
   //! regarding which they could be treated as distinct ones.
   //! This value is defined by mesher using parameters given by
   //! user in connection with shape metrics.
+  //! @param theToleranceUV the same as previous parameter to be used in 2d.
   //! @param theFaceAttribute attributes contining data calculated
   //! according to face geomtry and define limits of face in parametric 
   //! space. If defined, will be used instead of surface parameter.
@@ -85,6 +87,7 @@ public:
     const gp_Pnt2d&                       thePnt2d,
     const TopoDS_Vertex&                  theVertex,
     const Standard_Real                   theMinDistance,
+    const gp_XY&                          theToleranceUV,
     const Handle(BRepMesh_FaceAttribute)& theFaceAttribute);
 
   //! Stores the given triangulation into the given face.
@@ -147,6 +150,24 @@ public:
   Standard_EXPORT static Standard_Boolean IsDegenerated(
     const TopoDS_Edge& theEdge,
     const TopoDS_Face& theFace);
+
+  //! Gets the strict UV locations of the extremities of the edge using pcurve.
+  Standard_EXPORT static void UVPoints(
+    const TopoDS_Edge&      theEdge,
+    const TopoDS_Face&      theFace, 
+    gp_Pnt2d&               theFirstPoint2d, 
+    gp_Pnt2d&               theLastPoint2d,
+    const Standard_Boolean  isConsiderOrientation = Standard_False);
+
+  //! Gets the parametric range of the given edge on the given face.
+  Standard_EXPORT static void Range(
+    const TopoDS_Edge&      theEdge,
+    const TopoDS_Face&      theFace,
+    Handle(Geom2d_Curve)&   thePCurve,
+    Standard_Real&          theFirstParam,
+    Standard_Real&          theLastParam,
+    const Standard_Boolean  isConsiderOrientation = Standard_False);
+
 };
 
 #endif

@@ -577,3 +577,15 @@ Standard_CString BRepMesh_Dump(void*            theMeshHandlePtr,
 
   return theFileNameStr;
 }
+
+//=======================================================================
+//function : Dump
+//purpose  :
+//=======================================================================
+void BRepMesh_DataStructureOfDelaun::Dump (
+  const Handle(BRepMesh_DataStructureOfDelaun)& theStructure,
+  Standard_CString theFileName)
+{
+
+  BRepMesh_Dump ((void*)&theStructure, theFileName);
+}

@@ -153,8 +153,8 @@ void BRepMesh_FaceAttribute::init()
 
         // Get end points on 2d curve
         gp_Pnt2d aFirst2d, aLast2d;
-        BRep_Tool::UVPoints(anEdge, myFace, aFirst2d, aLast2d);
-        Standard_Real aDist =aFirst2d.Distance(aLast2d);
+        BRepMesh_ShapeTool::UVPoints (anEdge, myFace, aFirst2d, aLast2d);
+        Standard_Real aDist = aFirst2d.Distance(aLast2d);
         if (aDist < myMinStep) 
           myMinStep = aDist;
       }

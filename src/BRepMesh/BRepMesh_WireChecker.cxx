@@ -31,7 +31,9 @@
 #include <BRepMesh_Classifier.hxx>
 #include <BRepMesh_WireInterferenceChecker.hxx>
 #include <OSD_Parallel.hxx>
-
+#include <ShapeAnalysis_Wire.hxx>
+#include <ShapeAnalysis_WireOrder.hxx>
+#include <ShapeExtend_WireData.hxx>
 
 //=======================================================================
 //function : Selector::Constructor
@@ -156,15 +158,31 @@ BRepMesh_WireChecker::BRepMesh_WireChecker(
     ListOfEdges& aEdges = myWiresEdges.ChangeLast();
 
     // Start traversing the wires
-    BRepTools_WireExplorer aWireExplorer(aWire, aFace);
-    for (; aWireExplorer.More(); aWireExplorer.Next())
+    ShapeAnalysis_Wire aWireTool (aWire, aFace, Precision::Confusion());
+
+    ShapeAnalysis_WireOrder aOrderTool;
+    aWireTool.CheckOrder (aOrderTool, Standard_True, Standard_False);
+    if (aWireTool.LastCheckStatus (ShapeExtend_FAIL))
     {
-      const TopoDS_Edge& aEdge   = aWireExplorer.Current();
-      TopAbs_Orientation aOrient = aEdge.Orientation();
+      continue;
+    }
+
+    const Handle(ShapeExtend_WireData)& aWireData = aWireTool.WireData ();
+    const Standard_Integer aEdgesNb = aOrderTool.NbEdges ();
+    if (aEdgesNb != aWireData->NbEdges ())
+    {
+      continue;
+    }
+
+    for (Standard_Integer i = 1; i <= aEdgesNb; ++i)
+    {
+      const Standard_Integer aCurrIdx = aOrderTool.Ordered (i);
+      const TopoDS_Edge& aCurrEdge = aWireData->Edge (aCurrIdx);
+      TopAbs_Orientation aOrient = aCurrEdge.Orientation();
       if (aOrient != TopAbs_FORWARD && aOrient != TopAbs_REVERSED)
         continue;
 
-      aEdges.Append(aEdge);
+      aEdges.Append(aCurrEdge);
     }
 
     if (aEdges.IsEmpty())

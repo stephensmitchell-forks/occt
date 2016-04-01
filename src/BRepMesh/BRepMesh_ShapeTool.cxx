@@ -26,6 +26,7 @@
 #include <BRep_Builder.hxx>
 #include <TopExp.hxx>
 #include <BRepAdaptor_Curve.hxx>
+#include <ShapeAnalysis_Edge.hxx>
 
 namespace {
   //! Auxilary struct to take a tolerance of edge.
@@ -132,6 +133,7 @@ gp_XY BRepMesh_ShapeTool::FindUV(
   const gp_Pnt2d&                       thePnt2d,
   const TopoDS_Vertex&                  theVertex,
   const Standard_Real                   theMinDistance,
+  const gp_XY&                          theToleranceUV,
   const Handle(BRepMesh_FaceAttribute)& theFaceAttribute)
 {
   const gp_XY& aPnt2d = thePnt2d.Coord();
@@ -165,14 +167,7 @@ gp_XY BRepMesh_ShapeTool::FindUV(
   }
 
   const Standard_Real aTolerance = 
-    Min(2. * BRep_Tool::Tolerance(theVertex), theMinDistance);
-
-  // Get face limits
-  Standard_Real aDiffU = theFaceAttribute->GetUMax() - theFaceAttribute->GetUMin();
-  Standard_Real aDiffV = theFaceAttribute->GetVMax() - theFaceAttribute->GetVMin();
-
-  const Standard_Real Utol2d = .5 * aDiffU;
-  const Standard_Real Vtol2d = .5 * aDiffV;
+    Max(2. * BRep_Tool::Tolerance(theVertex), theMinDistance);
 
   const Handle(BRepAdaptor_HSurface)& aSurface = theFaceAttribute->Surface();
   const gp_Pnt aPnt1 = aSurface->Value(aUV.X(), aUV.Y());
@@ -180,8 +175,8 @@ gp_XY BRepMesh_ShapeTool::FindUV(
 
   //! If selected point is too far from the given one in parametric space
   //! or their positions in 3d are different, add the given point as unique.
-  if (Abs(aUV.X() - aPnt2d.X()) > Utol2d ||
-      Abs(aUV.Y() - aPnt2d.Y()) > Vtol2d ||
+  if (Abs(aUV.X() - aPnt2d.X()) > theToleranceUV.X() ||
+      Abs(aUV.Y() - aPnt2d.Y()) > theToleranceUV.Y() ||
       !aPnt1.IsEqual(aPnt2, aTolerance))
   {
     aUV = aPnt2d;
@@ -301,7 +296,8 @@ Standard_Boolean BRepMesh_ShapeTool::IsDegenerated(
     return Standard_False;
 
   Standard_Real wFirst, wLast;
-  BRep_Tool::Range(theEdge, theFace, wFirst, wLast);
+  Handle(Geom2d_Curve) aCurve2d;
+  Range (theEdge, theFace, aCurve2d, wFirst, wLast);
 
   // calculation of the length of the edge in 3D
   Standard_Real longueur = 0.0;
@@ -327,4 +323,43 @@ Standard_Boolean BRepMesh_ShapeTool::IsDegenerated(
     return Standard_True;
 
   return Standard_False;
+}
+
+//=======================================================================
+//function : UVPoints
+//purpose  : 
+//=======================================================================
+void BRepMesh_ShapeTool::UVPoints(
+  const TopoDS_Edge&      theEdge,
+  const TopoDS_Face&      theFace, 
+  gp_Pnt2d&               theFirstPoint2d, 
+  gp_Pnt2d&               theLastPoint2d,
+  const Standard_Boolean  isConsiderOrientation)
+{
+
+  Handle(Geom2d_Curve) aCurve2d;
+  Standard_Real aFirstParam, aLastParam;
+  Range (theEdge, theFace, aCurve2d, aFirstParam, aLastParam, isConsiderOrientation);
+
+  aCurve2d->D0 (aFirstParam, theFirstPoint2d);
+  aCurve2d->D0 (aLastParam,  theLastPoint2d);
+}
+
+//=======================================================================
+//function : Range
+//purpose  :
+//=======================================================================
+void BRepMesh_ShapeTool::Range(
+  const TopoDS_Edge&      theEdge,
+  const TopoDS_Face&      theFace,
+  Handle(Geom2d_Curve)&   thePCurve,
+  Standard_Real&          theFirstParam,
+  Standard_Real&          theLastParam,
+  const Standard_Boolean  isConsiderOrientation)
+{
+
+  ShapeAnalysis_Edge aEdge;
+  aEdge.PCurve (theEdge, theFace, thePCurve,
+                theFirstParam, theLastParam,
+                isConsiderOrientation);
 }
