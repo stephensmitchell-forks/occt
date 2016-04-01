@@ -58,6 +58,10 @@ public:
   //! Returns false if at least one of LODs has non-empty sequence of Graphic3d_Groups
   Standard_EXPORT Standard_Boolean IsEmpty() const;
 
+  Standard_EXPORT void Clear (const Standard_Boolean theWithDestruction);
+
+  Standard_EXPORT const Handle(Graphic3d_LOD)& GetLodById (const Standard_Integer theLodIdx);
+
   DEFINE_STANDARD_RTTIEXT (Graphic3d_LODManager, Standard_Transient)
 
 protected:

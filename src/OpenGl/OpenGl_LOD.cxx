@@ -27,3 +27,15 @@ Handle(Graphic3d_Group) OpenGl_LOD::NewGroup (const Handle(Graphic3d_Structure)&
   myGroups.Append (aGroup);
   return aGroup;
 }
+
+//=======================================================================
+// function : ReleaseGraphicResources
+// purpose  :
+//=======================================================================
+void OpenGl_LOD::ReleaseGraphicResources (const Handle(OpenGl_Context)& theGlCtx)
+{
+  for (OpenGl_Structure::GroupIterator aGroupIter (myGroups); aGroupIter.More(); aGroupIter.Next())
+  {
+    aGroupIter.ChangeValue()->Release (theGlCtx);
+  }
+}

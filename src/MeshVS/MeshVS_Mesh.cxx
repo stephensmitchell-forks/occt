@@ -155,15 +155,17 @@ void MeshVS_Mesh::ComputeLods (const Handle(PrsMgr_PresentationManager3d)& thePr
                                const Handle(Prs3d_Presentation)& thePrs,
                                const Standard_Integer theMode)
 {
+  TColStd_PackedMapOfInteger aDummy;
   for (Standard_Integer aLodBldrIdx = 1; aLodBldrIdx <= myBuilders.Length(); ++aLodBldrIdx)
   {
     const Handle(MeshVS_LODBuilder) aLodBldr = Handle(MeshVS_LODBuilder)::DownCast (myBuilders.Value (aLodBldrIdx));
     if (aLodBldr.IsNull())
       continue;
 
+    aLodBldr->SetPresentationManager (thePrsMgr);
     const TColStd_PackedMapOfInteger aTrgIdxs = aLodBldr->GetDataSource()->GetAllElements();
     if (!aTrgIdxs.IsEmpty())
-      aLodBldr->Build (thePrs, aTrgIdxs, TColStd_PackedMapOfInteger(), Standard_True,  theMode);
+      aLodBldr->Build (thePrs, aTrgIdxs, aDummy, Standard_True,  theMode);
   }
 }
 

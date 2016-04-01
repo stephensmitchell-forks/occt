@@ -187,6 +187,12 @@ void Graphic3d_Structure::Remove()
     ((Graphic3d_Structure *)myAncestors.FindKey (aStructIdx))->Remove (APtr, Graphic3d_TOC_DESCENDANT);
   }
 
+  // Clear LODs graphic groups if there are any
+  if (!myCStructure->GetLodManager().IsNull())
+  {
+    myCStructure->GetLodManager()->Clear (Standard_False);
+  }
+
   // Destruction of me in the graphic library
   const Standard_Integer aStructId = myCStructure->Id;
   myCStructure->GraphicDriver()->RemoveStructure (myCStructure);
@@ -641,6 +647,13 @@ void Graphic3d_Structure::GraphicClear (const Standard_Boolean theWithDestructio
   if (myCStructure.IsNull())
   {
     return;
+  }
+
+  if (!myCStructure->GetLodManager().IsNull())
+  {
+    myCStructure->GetLodManager()->Clear (theWithDestruction);
+    if (theWithDestruction)
+      myCStructure->Clear();
   }
 
   // clean and empty each group
@@ -1777,8 +1790,7 @@ Handle(Graphic3d_StructureManager) Graphic3d_Structure::StructureManager() const
 Graphic3d_BndBox4f Graphic3d_Structure::minMaxCoord() const
 {
   Graphic3d_BndBox4f aBnd;
-  const Handle(Graphic3d_LODManager)& aLodMgr = myCStructure->GetLodManager();
-  if (aLodMgr.IsNull())
+  if (myCStructure->GetLodManager().IsNull())
   {
     for (Graphic3d_SequenceOfGroup::Iterator aGroupIter (myCStructure->Groups()); aGroupIter.More(); aGroupIter.Next())
     {
@@ -1787,7 +1799,7 @@ Graphic3d_BndBox4f Graphic3d_Structure::minMaxCoord() const
   }
   else
   {
-    aLodMgr->GetCombinedBndBox (aBnd);
+    myCStructure->GetLodManager()->GetCombinedBndBox (aBnd);
   }
   return aBnd;
 }

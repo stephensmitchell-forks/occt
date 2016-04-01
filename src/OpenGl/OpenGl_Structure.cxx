@@ -753,6 +753,14 @@ void OpenGl_Structure::ReleaseGlResources (const Handle(OpenGl_Context)& theGlCt
   {
     aGroupIter.ChangeValue()->Release (theGlCtx);
   }
+  if (!myLODManager.IsNull())
+  {
+    for (Standard_Integer aLodIdx = 0; aLodIdx < myLODManager->NbOfDetailLevels(); ++aLodIdx)
+    {
+      Handle(OpenGl_LOD) aLod = Handle(OpenGl_LOD)::DownCast (myLODManager->GetLodById (aLodIdx));
+      aLod->ReleaseGraphicResources (theGlCtx);
+    }
+  }
   if (myAspectLine != NULL)
   {
     myAspectLine->Release (theGlCtx.operator->());

@@ -81,6 +81,8 @@ public:
     return myGroups;
   }
 
+  Standard_EXPORT virtual void Clear (const Standard_Boolean theWithDestruction);
+
   DEFINE_STANDARD_RTTIEXT (Graphic3d_LOD, Standard_Transient)
 
 protected:

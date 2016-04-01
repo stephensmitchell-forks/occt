@@ -23,6 +23,7 @@ IMPLEMENT_STANDARD_RTTIEXT (Graphic3d_LOD, Standard_Transient)
 //=======================================================================
 Graphic3d_LOD::~Graphic3d_LOD()
 {
+  Clear (Standard_True);
   myGroups.Clear();
 }
 
@@ -36,4 +37,27 @@ void Graphic3d_LOD::SetRange (const Standard_Real theFrom, const Standard_Real t
     "The upper boundary of the interval must be greater than lower one!");
 
   myRange = Graphic3d_RangeOfLOD (theFrom, theTo);
+}
+
+//=======================================================================
+// function : Clear
+// purpose  :
+//=======================================================================
+void Graphic3d_LOD::Clear (const Standard_Boolean theWithDestruction)
+{
+  for (Graphic3d_SequenceOfGroup::Iterator aGroupIter (myGroups); aGroupIter.More(); aGroupIter.Next())
+  {
+    aGroupIter.ChangeValue()->Clear();
+  }
+
+  if (!theWithDestruction)
+  {
+    return;
+  }
+
+  while (!myGroups.IsEmpty())
+  {
+    Handle(Graphic3d_Group) aGroup = myGroups.First();
+    aGroup->Remove();
+  }
 }

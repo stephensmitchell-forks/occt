@@ -30,6 +30,8 @@ public:
 
   Standard_EXPORT virtual Handle(Graphic3d_Group) NewGroup (const Handle(Graphic3d_Structure)& theParentStruct) Standard_OVERRIDE;
 
+  void ReleaseGraphicResources (const Handle(OpenGl_Context)& theGlCtx);
+
   DEFINE_STANDARD_RTTIEXT (OpenGl_LOD, Graphic3d_LOD)
 };
 

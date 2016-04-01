@@ -115,3 +115,27 @@ Standard_Boolean Graphic3d_LODManager::IsEmpty() const
 
   return Standard_True;
 }
+
+//=======================================================================
+// function : Clear
+// purpose  :
+//=======================================================================
+void Graphic3d_LODManager::Clear (const Standard_Boolean theWithDestruction)
+{
+  for (Standard_Integer aLodIdx = 0; aLodIdx < myLODs.Size(); ++aLodIdx)
+  {
+    myLODs.Value (aLodIdx)->Clear (theWithDestruction);
+  }
+}
+
+//=======================================================================
+// function : GetLodById
+// purpose  :
+//=======================================================================
+const Handle(Graphic3d_LOD)& Graphic3d_LODManager::GetLodById (const Standard_Integer theLodIdx)
+{
+  Standard_ASSERT_RAISE (theLodIdx >= 0 || theLodIdx < myLODs.Size(),
+    "Index of LOD is out of range");
+
+  return myLODs.Value (theLodIdx);
+}
