@@ -925,7 +925,7 @@ static Standard_Boolean ExtendPCurve(const Handle(Geom2d_Curve)& aPCurve,
 
 //  Modified by skv - Fri Dec 26 17:00:55 2003 OCC4455 Begin
 //static void ExtentEdge(const TopoDS_Edge& E,TopoDS_Edge& NE) 
-static void ExtentEdge(const TopoDS_Edge& E,TopoDS_Edge& NE, const Standard_Real theOffset)
+void BRepOffset_Inter2d::ExtentEdge(const TopoDS_Edge& E,TopoDS_Edge& NE, const Standard_Real theOffset)
 {
   //BRepLib::BuildCurve3d(E);
 
