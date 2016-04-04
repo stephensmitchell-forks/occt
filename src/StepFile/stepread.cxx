@@ -23,8 +23,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <iostream>
+#include <fstream>
 #include "recfile.ph"
 #include <OSD_OpenFile.hxx>
+#include "scanner.hpp"
+#include "zip.h"
 
 /*    StepFile_Error.c
 
@@ -41,37 +45,20 @@
       continuation a change
 */
 
-static int   lastno;
-extern int   steplineno;
-
-extern void StepFile_Interrupt (char* nomfic); /* rln 13.09.00 port on HP*/
-int stepparse(void);
-void  rec_debfile();
-void steprestart(FILE *input_file);
+void rec_debfile();
 void rec_finfile();
-
-void steperror (char *mess)
-{
-  char newmess[80];
-  if (steplineno == lastno) return;
-  lastno = steplineno;
-  sprintf    (newmess,"At line %d, %s",steplineno+1,mess);
-
-/*  yysbuf[0] = '\0';
-    yysptr    = yysbuf;
- *  yylineno  = 0;  */
-
-  StepFile_Interrupt(newmess);
-}
 
 /*   But de ce mini-programme : appeler yyparse et si besoin preciser un
      fichier d'entree
      StepFile_Error  redefinit yyerror pour ne pas stopper (s'y reporter)
 */
 
-extern FILE* stepin ;  /*  input de yyparse (executeur de lex-yacc)  */
-extern int   steplineno;  /*  compteur de ligne lex  (pour erreurs)  */
-
+bool stepread_checkzip(char* nomfic)
+{
+	std::string name(nomfic);
+	std::size_t posname = name.rfind(".zip");
+	return (posname != std::string::npos);
+}
 
 /*   Designation d'un fichier de lecture
     (par defaut, c'est l'entree standard)
@@ -81,40 +68,51 @@ extern int   steplineno;  /*  compteur de ligne lex  (pour erreurs)  */
      iflag retourne vaut 0 si c'est OK, 1 sinon
 */
 
-FILE* stepread_setinput (char* nomfic)
+std::istream* stepread_setinput(std::ifstream& stream, char* nomfic)
 {
-  FILE* newin ;
-  if (strlen(nomfic) == 0) return stepin ;
-  newin = OSD_OpenFile(nomfic,"r");
-
-  if (newin == NULL) {
-    return NULL ;
-  } else {
-    stepin = newin ; return newin ;
+  if (strlen(nomfic) == 0) return 0;
+  if ( !stepread_checkzip(nomfic) ) {
+    OSD_OpenStream(stream, nomfic, std::ios_base::in | std::ios_base::binary);
+    return &stream;
+  }
+  else {
+    std::string name(nomfic);
+    ZipFileReader archive(stream, name);
+    std::vector<std::string> filenames;
+    archive.Get_File_List(filenames);
+    if (filenames.size() == 1) {
+      std::string stepnamefile = filenames[0];
+	  std::size_t posnamefile = stepnamefile.find(".");
+	  std::string stepname = stepnamefile.substr(0, posnamefile);
+	  std::size_t firstpos = name.rfind(stepname);
+      std::size_t lastpos = name.rfind(".zip");
+	  std::string str = name.substr(firstpos, lastpos - firstpos);
+	  if (stepname == str)
+        return archive.Get_File(stream, stepnamefile);
+    }
+	return 0;
   }
 }
 
-void stepread_endinput (FILE* infic, char* nomfic)
+void stepread_endinput (std::ifstream& stream, char* nomfic)
 {
-  if (!infic) return;
+  if (!stream) return;
   if (strlen(nomfic) == 0) return;
-  fclose (infic);
+  stream.close();
 }
 
 /*  Lecture d'un fichier ia grammaire lex-yacc
     Appel : i = stepread() ;  i est la valeur retournee par yyparse
     (0 si OK, 1 si erreur)
 */
-int stepread ()
+int stepread(std::istream* stream)
 {
-  int letat;
-  lastno = 0;
-  steplineno = 0;
-  rec_debfile() ;
-  steprestart(stepin);
-  letat = stepparse() ;
-  rec_finfile() ;
+  int letat = 0;
+  rec_debfile();
+  yy::scanner scanner(stream);
+  scanner.yyrestart(stream);
+  yy::parser parser(&scanner);
+  letat = parser.parse();
+  rec_finfile();
   return letat;
 }
-
-int stepwrap ()  {  return 1;  }

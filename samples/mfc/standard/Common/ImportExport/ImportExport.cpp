@@ -386,7 +386,7 @@ Handle(TopTools_HSequenceOfShape) CImportExport::ReadSTEP()// not by reference -
                   NULL,
                   NULL,
                   OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT,
-                  L"STEP Files (*.stp;*.step)|*.stp; *.step|All Files (*.*)|*.*||",
+                  L"STEP Files (*.stp;*.step)|*.stp; *.step|ZIP Files (*.zip)|*.zip|All Files (*.*)|*.*||",
                   NULL );
 
 CString SHAREPATHValue;
