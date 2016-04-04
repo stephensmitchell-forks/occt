@@ -25,6 +25,7 @@ uses
     AsDes               from BRepAlgo,
     Offset              from BRepOffset,
     Face                from TopoDS,
+    Edge                from TopoDS,
     IndexedMapOfShape          from TopTools,
     DataMapOfShapeShape from TopTools,
     Real                from Standard
@@ -52,6 +53,12 @@ is
                    Offset  :          Real                from Standard;
                    Tol     :          Real                from Standard);
     --  Modified by skv - Fri Dec 26 16:53:16 2003 OCC4455 End
-                            
+
+    ExtentEdge(myclass ;
+               E       :     Edge from TopoDS;
+               NE      : out Edge from TopoDS;
+               Offset  :     Real from Standard);
+    ---Purpose: Extents the edge
+
 end Inter2d;
 
