@@ -5,6 +5,17 @@ project (mfcsample)
 add_definitions(-DWINVER=0x0501 -D_AFXEXT -DUNICODE -D_UNICODE)
 set (CMAKE_MFC_FLAG 2)
 
+# use zlib
+FIND_PRODUCT_DIR ("${3RDPARTY_DIR}" ZLIB ZLIB_ROOT_DIR)
+if (ZLIB_ROOT_DIR)
+    set(ZLIB_INCLUDE_DIR ${3RDPARTY_DIR}/${ZLIB_ROOT_DIR}/include)
+    set(ZLIB_LIBRARY ${3RDPARTY_DIR}/${ZLIB_ROOT_DIR}/lib)
+    find_package(ZLIB)
+	if (ZLIB_FOUND)
+	    add_definitions(-DHAVE_ZLIB)
+    endif()
+endif()
+
 # mfcsample
 set (mfcsample_SOURCE_FILES ${MFC_STANDARD_SAMPLES_DIR}/mfcsample/src/mfcsample.cpp
                             ${MFC_STANDARD_SAMPLES_DIR}/mfcsample/src/StdAfx.cpp )
@@ -39,9 +50,11 @@ set (COMMON_SOURCE_FILES ${MFC_STANDARD_COMMON_SAMPLES_DIR}/AISDialogs.cpp
 # Common ImportExport
 set (COMMON_IE_DIR          ${MFC_STANDARD_COMMON_SAMPLES_DIR}/ImportExport)
 set (COMMON_IE_HEADER_FILES ${COMMON_IE_DIR}/ImportExport.h
-                            ${COMMON_IE_DIR}/SaveSTEPDlg.h )
+                            ${COMMON_IE_DIR}/SaveSTEPDlg.h
+                            ${COMMON_IE_DIR}/Zip_Files.h )
 set (COMMON_IE_SOURCE_FILES ${COMMON_IE_DIR}/ImportExport.cpp
-                            ${COMMON_IE_DIR}/SaveSTEPDlg.cpp )
+                            ${COMMON_IE_DIR}/SaveSTEPDlg.cpp
+                            ${COMMON_IE_DIR}/Zip_Files.cpp )
 
 # Common ISession2D
 set (COMMON_ISESSION2D_DIR          ${MFC_STANDARD_COMMON_SAMPLES_DIR}/ISession2D)
@@ -154,12 +167,18 @@ else()
            LIBRARY DESTINATION "${INSTALL_DIR_LIB}d")
 endif()
 
-include_directories( ${CMAKE_BINARY_DIR}/inc
-                     ${MFC_STANDARD_COMMON_SAMPLES_DIR}
-                     ${COMMON_IE_DIR}
-                     ${COMMON_ISESSION2D_DIR}
-                     ${COMMON_PRIMITIVE_DIR}
-                     ${COMMON_RESOURCE2D_DIR})
+set (mfcsample_INCLUDE ${CMAKE_BINARY_DIR}/inc
+                       ${MFC_STANDARD_COMMON_SAMPLES_DIR}
+                       ${COMMON_IE_DIR}
+                       ${COMMON_ISESSION2D_DIR}
+                       ${COMMON_PRIMITIVE_DIR}
+                       ${COMMON_RESOURCE2D_DIR})
+					   
+if (EXISTS ${ZLIB_INCLUDE_DIR})
+    set(mfcsample_INCLUDE ${mfcsample_INCLUDE} ${ZLIB_INCLUDE_DIR})
+endif()
+
+include_directories(${mfcsample_INCLUDE})
 
 # OCCT libraries for using
 set (mfcsample_USED_LIBS  TKVRML
@@ -188,5 +207,9 @@ set (mfcsample_USED_LIBS  TKVRML
                           TKTopAlgo
                           TKMesh
                           TKV3d)
+
+if (EXISTS ${ZLIB_LIBRARY})
+    set(mfcsample_USED_LIBS ${mfcsample_USED_LIBS} ${ZLIB_LIBRARY}/zlibstatic.lib)
+endif()
 
 target_link_libraries (mfcsample ${mfcsample_USED_LIBS})

@@ -40,6 +40,7 @@
 #include <TColStd_HSequenceOfTransient.hxx>
 #include <STEPConstruct.hxx>
 #include <StepVisual_StyledItem.hxx>
+#include <Zip_Files.h>
 
 #ifdef _DEBUG
 #undef THIS_FILE
@@ -385,7 +386,7 @@ Handle(TopTools_HSequenceOfShape) CImportExport::ReadSTEP()// not by reference -
                   NULL,
                   NULL,
                   OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT,
-                  L"STEP Files (*.stp;*.step)|*.stp; *.step|All Files (*.*)|*.*||",
+                  L"STEP Files (*.stp;*.step;*.stpZ)|*.stp; *.step; *.stpZ|All Files (*.*)|*.*||",
                   NULL );
 
 CString SHAREPATHValue;
@@ -399,7 +400,7 @@ dlg.m_ofn.lpstrInitialDir = initdir;
   {
     SetCursor(AfxGetApp()->LoadStandardCursor(IDC_WAIT));
     TCollection_AsciiString aFileName ((const wchar_t* )dlg.GetPathName());
-	IFSelect_ReturnStatus ReturnStatus = ReadSTEP (aFileName.ToCString(), aSequence);
+    IFSelect_ReturnStatus ReturnStatus = ReadSTEP (aFileName.ToCString(), aSequence);
     switch (ReturnStatus) 
     {
        case IFSelect_RetError :
@@ -421,10 +422,38 @@ IFSelect_ReturnStatus CImportExport::ReadSTEP(const Standard_CString& aFileName,
                                               Handle(TopTools_HSequenceOfShape)& aHSequenceOfShape)
 {
   aHSequenceOfShape->Clear();
-
   // create additional log file
   STEPControl_Reader aReader;
-  IFSelect_ReturnStatus status = aReader.ReadFile(aFileName);
+  IFSelect_ReturnStatus status = IFSelect_RetError;
+
+  std::string name(aFileName);
+  std::size_t posname = name.rfind(".stpZ");
+  if (posname == std::string::npos) {
+    status = aReader.ReadFile(aFileName);
+  }
+  else {
+    std::ifstream ifstream;
+    ZipFileReader archive(ifstream, name);
+    if (ifstream) {
+      std::vector<std::string> filenames;
+      archive.Get_File_List(filenames);
+      if (filenames.size() == 1) {
+        std::string stepnamefile = filenames[0];
+        std::size_t posnamefile = stepnamefile.find(".");
+        std::string stepname = stepnamefile.substr(0, posnamefile);
+        std::size_t firstpos = name.rfind(stepname);
+        if (firstpos != std::string::npos) {
+          std::string str = name.substr(firstpos, posname - firstpos);
+          if (stepname == str) {
+            std::istream* istream;
+            istream = archive.Get_File(ifstream, stepnamefile);
+            status = aReader.ReadFile(aFileName, istream);
+          }
+        }
+      }
+    }
+  }
+
   if (status != IFSelect_RetDone)
     return status;
 

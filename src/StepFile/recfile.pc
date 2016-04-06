@@ -52,9 +52,10 @@
 
 static char txt_cart_p[]   = "CARTESIAN_POINT";
 
-void rec_restext(char* newtext, int lentext)         /* destine a etre appele de l'exterieur */
+void rec_restext(const char* constnewtext, int lentext)         /* destine a etre appele de l'exterieur */
 {
-  char *res, *text;
+  char *res, *text, *newtext;
+  newtext =  const_cast<char*>(constnewtext);
   if(strcmp(newtext,txt_cart_p)==0) {
     restext = txt_cart_p;
     return;
@@ -167,8 +168,17 @@ static char idzero[]   = "#0";
 
 
 /*              Trace pour controle            */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void recfile_modeprint(int mode)
 {  modeprint = mode;  }
+
+#ifdef __cplusplus
+}
+#endif
 
 static int   lastno;
 extern int   steplineno;
@@ -482,7 +492,9 @@ void scope_fin()
 
      La liberation de la memoire est faite par lir_file_fin, en une fois
 */
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 void lir_file_nbr(int* nbh, int* nbr, int* nbp)
 /*  initialise le traitement et retourne la taille du directory et du header */
 {
@@ -562,6 +574,9 @@ int lir_file_arg(int* type, char* *val)
  return (1) ;
 }
 
+#ifdef __cplusplus
+}
+#endif
 
 /*   Verification de l'integrite des donnees   */
 
@@ -598,7 +613,4 @@ void rec_check(int mode)
   if (mode == 0 && nr != nbrec) printf
     ("Liste des records pourrie, nb note %d relu %d\n",nbrec,nr) ;
 }
-
-void steperror (char *mess);
-int  steplex (void);
 

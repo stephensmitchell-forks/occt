@@ -58,7 +58,12 @@ public:
   //! or lets <mod> "Null" in case of Error
   //! Returns 0 if OK, 1 if Read Error, -1 if File not opened
   Standard_EXPORT Standard_Integer ReadFile (const Standard_CString name, Handle(Interface_InterfaceModel)& model, const Handle(Interface_Protocol)& protocol) const Standard_OVERRIDE;
-  
+
+  //! Reads a STEP File and returns a STEP Model (into <mod>),
+  //! or lets <mod> "Null" in case of Error
+  //! Returns 0 if OK, 1 if Read Error, -1 if File not opened
+  Standard_EXPORT Standard_Integer ReadFile(const Standard_CString name, std::istream* istream, Handle(Interface_InterfaceModel)& model, const Handle(Interface_Protocol)& protocol) const Standard_OVERRIDE;
+
   //! Writes a File from a STEP Model
   //! Returns False (and writes no file) if <ctx> does not bring a
   //! STEP Model

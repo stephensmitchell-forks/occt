@@ -25,13 +25,19 @@
 
 //   Compilation conditionnelle : concerne les mesures de performances
 
-
 #include <stdio.h>
+#include <iostream> 
 #include "recfile.ph"
 #include "stepread.ph"
-extern "C" void recfile_modeprint (int mode);  // controle trace recfile
-          // recfile_modeprint est declare a part
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+void recfile_modeprint (int mode);  // controle trace recfile
+          // recfile_modeprint est declare a part
+#ifdef __cplusplus
+}
+#endif
 #include <Interface_ParamType.hxx>
 #include <Interface_Protocol.hxx>
 #include <Interface_Check.hxx>
@@ -65,9 +71,9 @@ void StepFile_ReadTrace (const Standard_Integer mode)
   modepr = mode;   // recfile_modeprint est rappele a chaque lecture de fichier
 }
 
-
 static Standard_Integer StepFile_Read
  (char* nomfic,
+  std::istream* istream,
   const Handle(StepData_StepModel)& stepmodel,
   const Handle(StepData_Protocol)& protocol,
   const Handle(StepData_FileRecognizer)& recoheader,
@@ -81,7 +87,7 @@ Standard_Integer StepFile_Read
   const Handle(StepData_FileRecognizer)& recodata)
 {
   return StepFile_Read
-    (nomfic,stepmodel,
+    (nomfic,0,stepmodel,
      Handle(StepData_Protocol)::DownCast(Interface_Protocol::Active()),
      recoheader,recodata);
 }
@@ -93,7 +99,7 @@ Standard_Integer StepFile_Read
   const Handle(StepData_Protocol)& protocol)
 {
   Handle(StepData_FileRecognizer) nulreco;
-  return StepFile_Read (nomfic,stepmodel,protocol,recoheader,nulreco);
+  return StepFile_Read (nomfic,0,stepmodel,protocol,recoheader,nulreco);
 }
 
 Standard_Integer StepFile_Read
@@ -102,7 +108,17 @@ Standard_Integer StepFile_Read
   const Handle(StepData_Protocol)& protocol)
 {
   Handle(StepData_FileRecognizer) nulreco;
-  return StepFile_Read (nomfic,stepmodel,protocol,nulreco,nulreco);
+  return StepFile_Read (nomfic,0,stepmodel,protocol,nulreco,nulreco);
+}
+
+Standard_Integer StepFile_Read
+ (char* nomfic,
+  std::istream* istream,
+  const Handle(StepData_StepModel)& stepmodel,
+  const Handle(StepData_Protocol)& protocol)
+{
+  Handle(StepData_FileRecognizer) nulreco;
+  return StepFile_Read (nomfic,istream,stepmodel,protocol,nulreco,nulreco);
 }
 
 //  ##  ##  ##  ##  ##  ##    Corps de la Routine    ##  ##  ##  ##  ##  ##
@@ -111,6 +127,7 @@ static Interface_ParamType LesTypes[10];   // passage types (recstep/Interface)
 
 Standard_Integer StepFile_Read
  (char* nomfic,
+  std::istream* istream,
   const Handle(StepData_StepModel)& stepmodel,
   const Handle(StepData_Protocol)& protocol,
   const Handle(StepData_FileRecognizer)& recoheader,
@@ -122,8 +139,12 @@ Standard_Integer StepFile_Read
 
   checkread->Clear();
   recfile_modeprint ( (modepr > 0 ? modepr-1 : 0) );
-  FILE* newin = stepread_setinput(ficnom);
-  if (!newin) return -1;
+  std::ifstream newifstream;
+  if (!istream) {
+    stepread_setinput(newifstream, ficnom);
+    istream = &newifstream;
+  }
+  if (!istream) return -1;
 #ifdef CHRONOMESURE
   Standard_Integer n ; 
   OSD_Timer c ; 
@@ -134,7 +155,11 @@ Standard_Integer StepFile_Read
 
   try {
     OCC_CATCH_SIGNALS
-    if (stepread () != 0) {  lir_file_fin(3);  stepread_endinput (newin,ficnom);  return 1;  }
+    if (stepread(istream) != 0) {
+      lir_file_fin(3);
+      stepread_endinput(newifstream, ficnom);
+      return 1;
+	}
   }
   catch (Standard_Failure) {
 #ifdef OCCT_DEBUG
@@ -143,16 +168,16 @@ Standard_Integer StepFile_Read
     sout << "    ..." << endl;
 #endif
     lir_file_fin(3);  
-    stepread_endinput (newin,ficnom);  
+    stepread_endinput(newifstream, ficnom);
     return 1;
   }
-  // Continue reading of file despite of possible fails
-  //if (checkread->HasFailed()) {  lir_file_fin(3);  stepread_endinput (newin,ficnom);  return 1;  }
+
+// Continue reading of file despite of possible fails
+//  if (checkread->HasFailed()) { lir_file_fin(3); stepread_endinput(newifstream, ficnom);  return 1; }
 #ifdef CHRONOMESURE
   sout << "      ...    STEP File   Read    ... " << endl;  
   c.Show(); 
 #endif
-
 
 //  Creation du StepReaderData
 
@@ -223,8 +248,8 @@ Standard_Integer StepFile_Read
   n = stepmodel->NbEntities() ;
   sout << "  STEP Loading done : " << n << " Entities" << endl;
 #endif
-  
-  stepread_endinput (newin,ficnom);  return 0 ;
+  stepread_endinput(newifstream, ficnom);
+  return 0;
 }
 
 void StepFile_Interrupt (char* mess)

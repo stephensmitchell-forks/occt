@@ -170,7 +170,7 @@ public:
   //! Returns a integer status which can be :
   //! RetDone if OK,  RetVoid if no Protocol not defined,
   //! RetError for file not found, RetFail if fail during read
-  Standard_EXPORT IFSelect_ReturnStatus ReadFile (const Standard_CString filename);
+  Standard_EXPORT IFSelect_ReturnStatus ReadFile(const Standard_CString filename, std::istream* istream = 0);
   
   //! Returns the count of Entities stored in the Model, or 0
   Standard_EXPORT Standard_Integer NbStartingEntities() const;

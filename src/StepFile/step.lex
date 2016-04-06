@@ -13,12 +13,27 @@
  commercial license or contractual agreement.
 */ 
 
+%option outfile="lex.step.cxx"
+ /*
+    c++                 generate C++ parser class
+    8bit                don't fail on 8-bit input characters
+    warn                warn about inconsistencies
+    nodefault           don't create default echo-all rule
+    noyywrap            don't use yywrap() function
+    yylineno            maintains the number of the current line
+ */
+%option c++
+%option 8bit warn nodefault
+%option noyywrap
+%option yylineno
 %{
-#include "step.tab.h"
+#include "step.tab.hxx"
+#include "scanner.hpp"
 #include "recfile.ph"
 #include "stdio.h"
 #include <StepFile_CallFailure.hxx>
 
+typedef yy::parser::token token;
 /* skl 31.01.2002 for OCC133(OCC96,97) - uncorrect
 long string in files Henri.stp and 401.stp*/
 #define YY_FATAL_ERROR(msg) StepFile_CallFailure( msg )
@@ -30,15 +45,14 @@ long string in files Henri.stp and 401.stp*/
 void steperror ( FILE *input_file );
 void steprestart ( FILE *input_file );
 */
-void rec_restext(char *newtext, int lentext);
+
+void rec_restext(const char *constnewtext, int lentext);
 void rec_typarg(int argtype);
  
   int  steplineno;      /* Comptage de ligne (ben oui, fait tout faire)  */
 
   int  modcom = 0;      /* Commentaires type C */
   int  modend = 0;      /* Flag for finishing of the STEP file */
-  void resultat ()           /* Resultat alloue dynamiquement, "jete" une fois lu */
-      { if (modcom == 0) rec_restext(yytext,yyleng); }
 
 // MSVC specifics
 #ifdef _MSC_VER
@@ -48,7 +62,7 @@ void rec_typarg(int argtype);
 #if defined(__INTEL_COMPILER)
 #pragma warning(disable:177 1786 1736)
 #else
-#pragma warning(disable:4131 4244 4273 4267 4127)
+#pragma warning(disable:4131 4244 4273 4267 4127 4100)
 #endif
 
 // Avoid includion of unistd.h if parser is generated on Linux (flex 2.5.35)
@@ -62,43 +76,56 @@ void rec_typarg(int argtype);
 #endif
 
 %}
+
 %%
 "	"	{;}
 " "		{;}
 [\n]		{ steplineno ++; }
 [\r]            {;} /* abv 30.06.00: for reading DOS files */
 [\0]+		{;} /* fix from C21. for test load e3i file with line 15 with null symbols */
-
-#[0-9]+/=		{ resultat();  if (modcom == 0) return(ENTITY); }
-#[0-9]+/[ 	]*=	{ resultat();  if (modcom == 0) return(ENTITY); }
-#[0-9]+		{ resultat();  if (modcom == 0) return(IDENT); }
-[-+0-9][0-9]*	{ resultat();  if (modcom == 0) { rec_typarg(rec_argInteger); return(QUID); } }
-[-+\.0-9][\.0-9]+	{ resultat();  if (modcom == 0) { rec_typarg(rec_argFloat); return(QUID); } }
-[-+\.0-9][\.0-9]+E[-+0-9][0-9]*	{ resultat(); if (modcom == 0) { rec_typarg(rec_argFloat); return(QUID); } }
-[\']([\n]|[\000\011-\046\050-\176\201-\237\240-\777]|[\047][\047])*[\']	{ resultat(); if (modcom == 0) { rec_typarg(rec_argText); return(QUID); } }
-["][0-9A-F]+["] 	{ resultat();  if (modcom == 0) { rec_typarg(rec_argHexa); return(QUID); } }
-[.][A-Z0-9_]+[.]	{ resultat();  if (modcom == 0) { rec_typarg(rec_argEnum); return(QUID); } }
+#[0-9]+/=		{ if (modcom == 0) { rec_restext(YYText(),YYLeng()); return(token::ENTITY); } }
+#[0-9]+/[ 	]*=	{ if (modcom == 0) { rec_restext(YYText(),YYLeng()); return(token::ENTITY); } }
+#[0-9]+		{ if (modcom == 0) { rec_restext(YYText(),YYLeng()); return(token::IDENT); } }
+[-+0-9][0-9]*	{ if (modcom == 0) { rec_restext(YYText(),YYLeng()); rec_typarg(rec_argInteger); return(token::QUID); } }
+[-+\.0-9][\.0-9]+	{ if (modcom == 0) { rec_restext(YYText(),YYLeng()); rec_typarg(rec_argFloat); return(token::QUID); } }
+[-+\.0-9][\.0-9]+E[-+0-9][0-9]*	{ if (modcom == 0) { rec_restext(YYText(),YYLeng()); rec_typarg(rec_argFloat); return(token::QUID); } }
+[\']([\n]|[\000\011-\046\050-\176\201-\237\240-\777]|[\047][\047])*[\']	{ if (modcom == 0) { rec_restext(YYText(),YYLeng()); rec_typarg(rec_argText); return(token::QUID); } }
+["][0-9A-F]+["] 	{ if (modcom == 0) { rec_restext(YYText(),YYLeng()); rec_typarg(rec_argHexa); return(token::QUID); } }
+[.][A-Z0-9_]+[.]	{ if (modcom == 0) { rec_restext(YYText(),YYLeng()); rec_typarg(rec_argEnum); return(token::QUID); } }
 [(]		{ if (modcom == 0) return ('('); }
 [)]		{ if (modcom == 0) return (')'); }
 [,]		{ if (modcom == 0) return (','); }
-[$]		{ resultat();  if (modcom == 0) { rec_typarg(rec_argNondef); return(QUID); } }
+[$]		{ if (modcom == 0) { rec_restext(YYText(),YYLeng()); rec_typarg(rec_argNondef); return(token::QUID); } }
 [=]		{ if (modcom == 0) return ('='); }
 [;]		{ if (modcom == 0) return (';'); }
 "/*"		{ modcom = 1;  }
 "*/"		{ if (modend == 0) modcom = 0;  }
 
-STEP;		{ if (modcom == 0) return(STEP); }
-HEADER;		{ if (modcom == 0) return(HEADER); }
-ENDSEC;		{ if (modcom == 0) return(ENDSEC); }
-DATA;		{ if (modcom == 0) return(DATA); }
-ENDSTEP;	{ if (modend == 0) {modcom = 0;  return(ENDSTEP);} }
-"ENDSTEP;".*	{ if (modend == 0) {modcom = 0;  return(ENDSTEP);} }
-END-ISO[0-9\-]*; { modcom = 1; modend = 1; return(ENDSTEP); }
-ISO[0-9\-]*;	{ if (modend == 0) {modcom = 0;  return(STEP); } }
+STEP;		{ if (modcom == 0) return(token::STEP); }
+HEADER;		{ if (modcom == 0) return(token::HEADER); }
+ENDSEC;		{ if (modcom == 0) return(token::ENDSEC); }
+DATA;		{ if (modcom == 0) return(token::DATA); }
+ENDSTEP;	{ if (modend == 0) {modcom = 0;  return(token::ENDSTEP);} }
+"ENDSTEP;".*	{ if (modend == 0) {modcom = 0;  return(token::ENDSTEP);} }
+END-ISO[0-9\-]*; { modcom = 1; modend = 1; return(token::ENDSTEP); }
+ISO[0-9\-]*;	{ if (modend == 0) {modcom = 0;  return(token::STEP); } }
 
 [/]		{ if (modcom == 0) return ('/'); }
-&SCOPE		{ if (modcom == 0) return(SCOPE); }
-ENDSCOPE	{ if (modcom == 0) return(ENDSCOPE); }
-[a-zA-Z0-9_]+	{ resultat();  if (modcom == 0) return(TYPE); }
-![a-zA-Z0-9_]+	{ resultat();  if (modcom == 0) return(TYPE); }
-[^)]		{ resultat();  if (modcom == 0) { rec_typarg(rec_argMisc); return(QUID); } }
+&SCOPE		{ if (modcom == 0) return(token::SCOPE); }
+ENDSCOPE	{ if (modcom == 0) return(token::ENDSCOPE); }
+[a-zA-Z0-9_]+	{ if (modcom == 0) { rec_restext(YYText(),YYLeng()); return(token::TYPE); } }
+![a-zA-Z0-9_]+	{ if (modcom == 0) { rec_restext(YYText(),YYLeng()); return(token::TYPE); } }
+[^)]		{ if (modcom == 0) { rec_restext(YYText(),YYLeng()); rec_typarg(rec_argMisc); return(token::QUID); } }
+
+%%
+
+yy::scanner::scanner(std::istream* in, std::ostream* out)
+    : yyFlexLexer(in, out)
+{
+}
+
+int yyFlexLexer::yylex()
+{
+    throw std::logic_error(
+        "The yylex() exists for technical reasons and must not be used.");
+}
