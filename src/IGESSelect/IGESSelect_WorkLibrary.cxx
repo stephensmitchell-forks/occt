@@ -90,7 +90,17 @@ static  Handle(IGESData_FileProtocol) IGESProto;
   else             model.Nullify();
   return status;
 }
-
+    Standard_Integer  IGESSelect_WorkLibrary::ReadFile
+  (const Standard_CString name,
+  std::istream* istream,
+  Handle(Interface_InterfaceModel)& model,
+  const Handle(Interface_Protocol)& protocol) const
+{
+  if (!istream) return ReadFile(name, model, protocol);
+  Handle(Message_Messenger) sout = Message::DefaultMessenger();
+  sout << "Error when reading file : " << name << endl;
+  return 1;
+}
 
     Standard_Boolean  IGESSelect_WorkLibrary::WriteFile
   (IFSelect_ContextWrite& ctx) const

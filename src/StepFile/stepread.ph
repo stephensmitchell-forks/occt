@@ -16,18 +16,27 @@
 // stepread.h
 
 /* lecture du fichier STEP (par appel a lex+yac) */
+#include <iostream>
 
-extern "C" FILE* stepread_setinput (char* nomfic) ;
-extern "C" void stepread_endinput (FILE* infic, char* nomfic);
-extern "C" int  stepread() ;
-extern "C" void recfile_modeprint (int mode) ;     /* controle trace recfile */
+#ifdef __cplusplus
+extern "C" {
+#endif
 
+void recfile_modeprint (int mode) ;     /* controle trace recfile */
 /* creation du Direc a partir de recfile : entrys connues de c++ */
-extern "C" void lir_file_nbr(int* nbh, int* nbr, int* nbp) ;
-extern "C" int  lir_file_rec(char* *ident , char* *type , int* nbarg) ;
-extern "C" void lir_file_finrec() ;
-extern "C" int  lir_file_arg(int* type , char* *val) ;
-extern "C" void lir_file_fin(int mode);
+void lir_file_nbr(int* nbh, int* nbr, int* nbp) ;
+int  lir_file_rec(char* *ident , char* *type , int* nbarg) ;
+void lir_file_finrec() ;
+int  lir_file_arg(int* type , char* *val) ;
+void lir_file_fin(int mode);
 
 /* Interruption passant par C++  */
-extern "C" void StepFile_Interrupt (char* nomfic);
+
+#ifdef __cplusplus
+}
+#endif
+
+void stepread_setinput(std::ifstream& stream, char* nomfic);
+void stepread_endinput (std::ifstream& stream, char* nomfic);
+int stepread(std::istream* stream);
+void StepFile_Interrupt (char* nomfic);

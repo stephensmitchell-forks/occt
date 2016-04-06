@@ -100,7 +100,7 @@ Standard_EXPORT virtual ~XSControl_Reader() {}
   
   //! Loads a file and returns the read status
   //! Zero for a Model which compies with the Controller
-  Standard_EXPORT IFSelect_ReturnStatus ReadFile (const Standard_CString filename);
+  Standard_EXPORT IFSelect_ReturnStatus ReadFile (const Standard_CString filename, std::istream* istream = 0);
   
   //! Returns the model. It can then be consulted (header, product)
   Standard_EXPORT Handle(Interface_InterfaceModel) Model() const;

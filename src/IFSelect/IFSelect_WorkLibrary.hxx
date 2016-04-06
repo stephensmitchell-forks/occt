@@ -63,6 +63,15 @@ public:
   //! and recognize the Entities)
   Standard_EXPORT virtual Standard_Integer ReadFile (const Standard_CString name, Handle(Interface_InterfaceModel)& model, const Handle(Interface_Protocol)& protocol) const = 0;
   
+  //! Gives the way to Read a File and transfer it to a Model
+  //! <mod> is the resulting Model, which has to be created by this
+  //! method. In case of error, <mod> must be returned Null
+  //! Return value is a status with free values.
+  //! Simply, 0 is for "Execution OK"
+  //! The Protocol can be used to work (e.g. create the Model, read
+  //! and recognize the Entities)
+  Standard_EXPORT virtual Standard_Integer ReadFile(const Standard_CString name, std::istream* istream, Handle(Interface_InterfaceModel)& model, const Handle(Interface_Protocol)& protocol) const = 0;
+
   //! Gives the way to Write a File from a Model.
   //! <ctx> contains all necessary informations : the model, the
   //! protocol, the file name, and the list of File Modifiers to be

@@ -13,11 +13,35 @@
  commercial license or contractual agreement.
 */ 
 
+%output  "step.tab.cxx"
+%defines "step.tab.hxx"
+
+%language "C++"
+%require "2.7"
+/* C++ parser interface */
+%skeleton "lalr1.cc"
+
+%parse-param  {yy::scanner* scanner}
+
+%locations
+
 %token STEP HEADER ENDSEC DATA ENDSTEP SCOPE ENDSCOPE ENTITY TYPE INTEGER FLOAT IDENT TEXT NONDEF ENUM HEXA QUID
 %start stepf
-%{
+
+%code requires {
+#include "location.hh"
+#include <stdexcept>
+namespace yy {
+  class scanner;
+};
+}
+
+%code {
 #include "recfile.ph"		/* definitions des types d'arguments */
 #include "recfile.pc"		/* la-dedans, tout y est */
+#include "scanner.hpp"
+#undef yylex
+#define yylex scanner->lex
 /*
 #define stepparse STEPparse
 #define steplex STEPlex
@@ -31,6 +55,7 @@
 #define stepnerrs STEPnerrs
 #define steperror STEPerror
 */
+
 #define stepclearin yychar = -1
 #define steperrok yyerrflag = 0
 
@@ -52,12 +77,12 @@
 
 // disable MSVC warnings in bison code
 #ifdef _MSC_VER
-#pragma warning(disable:4244 4131 4127 4702)
+#pragma warning(disable:4065 4244 4131 4127 4702)
 #define YYMALLOC malloc
 #define YYFREE free
 #endif
-
-%}
+void StepFile_Interrupt (char* nomfic); /* rln 13.09.00 port on HP*/
+}
 %%
 /*  N.B. : les commentaires sont filtres par LEX  */
 /*  La fin vide (selon systeme emetteur) est filtree ici  */
@@ -85,7 +110,7 @@ unarg	: IDENT		{  rec_typarg(rec_argIdent);     rec_newarg();  }
 	| listarg	/*  rec_newent lors du ')' */ {  rec_newarg();  }
 	| listype listarg  /*  liste typee  */        {  rec_newarg();  }
 	| error		{  rec_typarg(rec_argMisc);      rec_newarg();
-			   yyerrstatus = 1; yyclearin;  }
+			   yyerrstatus_ = 1; yyclearin;  }
 /*  Erreur sur Parametre : tacher de le noter sans jeter l'Entite  */
 	;
 listype	: TYPE
@@ -97,7 +122,7 @@ deblist	: '('
 finlist	: ')'
 	{  if (modeprint > 0)
 		{  printf("Record no : %d -- ",nbrec+1);  rec_print(currec);  }
-	   rec_newent ();  yyerrstatus = 0; }
+	   rec_newent ();  yyerrstatus_ = 0; }
 	;
 listarg	: deblist finlist		/* liste vide (peut y en avoir) */
 	| deblist arglist finlist	/* liste normale, non vide */
@@ -146,3 +171,11 @@ entlab	: ENTITY
 enttype	: TYPE
 	{  rec_type ();  }
 	;
+%%
+
+void yy::parser::error(const parser::location_type& l, const std::string& m)
+{
+  char newmess[80];
+  sprintf(newmess, "At line %d, %s : %s", scanner->lineno() + 1, l, m.c_str());
+  StepFile_Interrupt(newmess);
+}

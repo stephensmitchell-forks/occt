@@ -316,7 +316,7 @@ Standard_CString  IFSelect_WorkSession::LoadedFile () const
 //=======================================================================
 
 IFSelect_ReturnStatus  IFSelect_WorkSession::ReadFile
-                                        (const Standard_CString filename)
+  (const Standard_CString filename, std::istream* istream)
 {
   if (thelibrary.IsNull()) return IFSelect_RetVoid;
   if (theprotocol.IsNull()) return IFSelect_RetVoid;
@@ -324,7 +324,11 @@ IFSelect_ReturnStatus  IFSelect_WorkSession::ReadFile
   IFSelect_ReturnStatus status = IFSelect_RetVoid;
   try {
     OCC_CATCH_SIGNALS
-    Standard_Integer stat = thelibrary->ReadFile (filename,model,theprotocol);
+    Standard_Integer stat;
+    if ( !istream )
+      stat = thelibrary->ReadFile(filename, model, theprotocol);
+    else
+      stat = thelibrary->ReadFile(filename, istream, model, theprotocol);
     if (stat == 0) status = IFSelect_RetDone;
     else if (stat < 0) status = IFSelect_RetError;
     else status = IFSelect_RetFail;

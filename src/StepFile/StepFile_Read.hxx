@@ -27,6 +27,7 @@
 #ifndef StepFile_Read_HeaderFile
 #define StepFile_Read_HeaderFile
 
+#include <iostream> 
 //# include <stepread.h>  : sauf recfile_modeprint, declare ici
 # include <StepData_StepModel.hxx>
 # include <StepData_FileRecognizer.hxx>
@@ -50,6 +51,12 @@ Standard_EXPORT Standard_Integer StepFile_Read
 
 Standard_EXPORT Standard_Integer StepFile_Read
  (char* nomfic,
+  const Handle(StepData_StepModel)& stepmodel,
+  const Handle(StepData_Protocol)& protocol);          // Header & Data
+  
+Standard_EXPORT Standard_Integer StepFile_Read
+ (char* nomfic,
+  std::istream* istream,
   const Handle(StepData_StepModel)& stepmodel,
   const Handle(StepData_Protocol)& protocol);          // Header & Data
 
