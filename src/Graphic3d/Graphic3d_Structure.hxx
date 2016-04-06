@@ -484,8 +484,13 @@ public:
   //! Returns the low-level structure
     const Handle(Graphic3d_CStructure)& CStructure() const;
 
+  //! Returns number of LODs created for this structure
   Standard_EXPORT Standard_Integer NbDetailLevels() const;
 
+  //! Sets range of LOD.
+  //! @param theLodIdx corresponds to the index of LOD in map of LOD manager. In case if no LOD was
+  //! removed, the LODs in map are located in order of addition and IDs are identical to the addition
+  //! iteration number
   Standard_EXPORT void SetDetailLevelRange (const Standard_Integer theIdOfLOD, const Standard_Real theFrom, const Standard_Real theTo);
 
 friend class Graphic3d_Group;

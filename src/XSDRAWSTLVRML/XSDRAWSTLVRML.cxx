@@ -1542,10 +1542,11 @@ static int MeshLod (Draw_Interpretor& theDI,
   VDisplayAISObject (aShapeName, anOriginMesh);
   aCtx->Deactivate (anOriginMesh);
 
-  Standard_Integer aLodIdx = 0;
+  Standard_Integer aLodIdx = 1;
   for (NCollection_List<DetailLevelData>::Iterator aLodDataIter (myLODDataList); aLodDataIter.More(); aLodDataIter.Next())
   {
     anOriginMesh->Presentation()->SetDetailLevelRange (aLodIdx, aLodDataIter.Value().myFrom, aLodDataIter.Value().myTo);
+    aLodIdx++;
   }
 
   Draw::Set (aShapeName, new XSDRAWSTLVRML_DrawableMesh (anOriginMesh));

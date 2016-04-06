@@ -21,6 +21,9 @@
 class Graphic3d_CStructure;
 class Graphic3d_Camera;
 
+//! This class implements computation of distance metrics for determinig
+//! LOD visibility. It computes distance from center of geometry of the object
+//! to camera's eye position.
 class Graphic3d_LODDistanceSelector : public Graphic3d_LODSelector
 {
 public:

@@ -23,36 +23,55 @@ IMPLEMENT_STANDARD_RTTIEXT (Graphic3d_LODManager, Standard_Transient)
 // purpose  :
 //=======================================================================
 Graphic3d_LODManager::Graphic3d_LODManager (const Handle(Graphic3d_Structure)& theParentStructure)
-  : myCurrentLODIdx (-1),
+  : myLodIndexes (NULL),
+    myIsToSortLods (Standard_False),
+    myCurrentLODIdx (-1),
     mySelector (new Graphic3d_LODDistanceSelector())
 {
   myStructure = theParentStructure.operator->();
 }
 
 //=======================================================================
+// function : Destructor
+// purpose  :
+//=======================================================================
+Graphic3d_LODManager::~Graphic3d_LODManager()
+{
+  Clear (Standard_True);
+
+  myLODs.Clear();
+  myLodIndexes.Nullify();
+  mySelector.Nullify();
+}
+
+//=======================================================================
 // function : GetCurrentLODIdx
 // purpose  :
 //=======================================================================
-Standard_Integer Graphic3d_LODManager::GetCurrentLODIdx (const Handle(Graphic3d_Camera)& theCamera)
+Standard_Boolean Graphic3d_LODManager::HasLodToDisplay (const Handle(Graphic3d_Camera)& theCamera)
 {
   if (theCamera->WorldViewProjState() == myPrevCameraState && myCurrentLODIdx != -1)
-    return myCurrentLODIdx;
+    return Standard_True;
+
+  if (myIsToSortLods)
+    sortLODs();
 
   myPrevCameraState = theCamera->WorldViewProjState();
   const Standard_Real aMetric = mySelector->ComputeMetric (myStructure->CStructure(), theCamera);
-  if (myLODs.Value (0)->GetRange().IsLess (aMetric))
+  if (myLODs.FindKey (1)->GetRange().IsLess (aMetric))
   {
     myCurrentLODIdx = -1;
+    return Standard_False;
   }
-  else if (myLODs.Value (myLODs.Size() - 1)->GetRange().IsGreater (aMetric))
+  else if (myLODs.FindKey (myLODs.Extent())->GetRange().IsGreater (aMetric))
   {
-    myCurrentLODIdx = myLODs.Size() - 1;
+    myCurrentLODIdx = myLODs.Extent();
   }
   else
   {
-    for (Standard_Integer aLodIdx = 0; aLodIdx < myLODs.Size(); ++aLodIdx)
+    for (Standard_Integer aLodIdx = 1; aLodIdx <= myLODs.Extent(); ++aLodIdx)
     {
-      if (myLODs.Value (aLodIdx)->GetRange().IsIn (aMetric))
+      if (myLODs.FindKey (aLodIdx)->GetRange().IsIn (aMetric))
       {
         myCurrentLODIdx = aLodIdx;
         break;
@@ -60,19 +79,22 @@ Standard_Integer Graphic3d_LODManager::GetCurrentLODIdx (const Handle(Graphic3d_
     }
   }
 
-  return myCurrentLODIdx;
+  return Standard_True;
 }
 
 //=======================================================================
 // function : SetRange
 // purpose  :
 //=======================================================================
-void Graphic3d_LODManager::SetRange (const Standard_Integer theLodIdx,
+void Graphic3d_LODManager::SetRange (Standard_Integer theLodIdx,
                                      const Standard_Real theFrom,
                                      const Standard_Real theTo)
 {
-  myLODs.ChangeValue (theLodIdx)->SetRange (theFrom, theTo);
-  sortLODs();
+  if (theLodIdx < 1 || theLodIdx > myLODs.Extent())
+    return;
+
+  myLODs.FindKey (theLodIdx)->SetRange (theFrom, theTo);
+  myIsToSortLods = Standard_True;
 }
 
 //=======================================================================
@@ -81,7 +103,7 @@ void Graphic3d_LODManager::SetRange (const Standard_Integer theLodIdx,
 //=======================================================================
 const Graphic3d_SequenceOfGroup& Graphic3d_LODManager::GetCurrentGroups() const
 {
-  return myLODs.Value (myCurrentLODIdx)->GetDrawGroups();
+  return myLODs.FindKey (myCurrentLODIdx)->GetDrawGroups();
 }
 
 //=======================================================================
@@ -90,9 +112,9 @@ const Graphic3d_SequenceOfGroup& Graphic3d_LODManager::GetCurrentGroups() const
 //=======================================================================
 void Graphic3d_LODManager::GetCombinedBndBox (Graphic3d_BndBox4f& theBndBox) const
 {
-  for (Standard_Integer aLodIdx = 0; aLodIdx < myLODs.Size(); ++aLodIdx)
+  for (Standard_Integer aLodIdx = 1; aLodIdx <= myLODs.Extent(); ++aLodIdx)
   {
-    const Graphic3d_SequenceOfGroup& aGroups = myLODs.Value (aLodIdx)->GetDrawGroups();
+    const Graphic3d_SequenceOfGroup& aGroups = myLODs.FindKey (aLodIdx)->GetDrawGroups();
     for (Graphic3d_SequenceOfGroup::Iterator aGroupIter (aGroups); aGroupIter.More(); aGroupIter.Next())
     {
       theBndBox.Combine (aGroupIter.Value()->BoundingBox());
@@ -106,9 +128,9 @@ void Graphic3d_LODManager::GetCombinedBndBox (Graphic3d_BndBox4f& theBndBox) con
 //=======================================================================
 Standard_Boolean Graphic3d_LODManager::IsEmpty() const
 {
-  for (Standard_Integer aLodIdx = 0; aLodIdx < myLODs.Size(); ++aLodIdx)
+  for (Standard_Integer aLodIdx = 1; aLodIdx <= myLODs.Extent(); ++aLodIdx)
   {
-    const Graphic3d_SequenceOfGroup& aGroups = myLODs.Value (aLodIdx)->GetDrawGroups();
+    const Graphic3d_SequenceOfGroup& aGroups = myLODs.FindKey (aLodIdx)->GetDrawGroups();
     if (!aGroups.IsEmpty())
       return Standard_False;
   }
@@ -122,9 +144,9 @@ Standard_Boolean Graphic3d_LODManager::IsEmpty() const
 //=======================================================================
 void Graphic3d_LODManager::Clear (const Standard_Boolean theWithDestruction)
 {
-  for (Standard_Integer aLodIdx = 0; aLodIdx < myLODs.Size(); ++aLodIdx)
+  for (Standard_Integer aLodIdx = 1; aLodIdx <= myLODs.Extent(); ++aLodIdx)
   {
-    myLODs.Value (aLodIdx)->Clear (theWithDestruction);
+    myLODs.FindKey (aLodIdx)->Clear (theWithDestruction);
   }
 }
 
@@ -134,8 +156,13 @@ void Graphic3d_LODManager::Clear (const Standard_Boolean theWithDestruction)
 //=======================================================================
 const Handle(Graphic3d_LOD)& Graphic3d_LODManager::GetLodById (const Standard_Integer theLodIdx)
 {
-  Standard_ASSERT_RAISE (theLodIdx >= 0 || theLodIdx < myLODs.Size(),
+  Standard_ASSERT_RAISE (theLodIdx > 0 || theLodIdx <= myLODs.Size(),
     "Index of LOD is out of range");
 
-  return myLODs.Value (theLodIdx);
+  return myLODs.FindKey (theLodIdx);
+}
+
+Standard_Boolean Graphic3d_LODManager::HasLod (const Handle(Graphic3d_LOD)& theLod) const
+{
+  return myLODs.Contains (theLod);
 }

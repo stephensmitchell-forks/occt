@@ -106,7 +106,7 @@ public:
   //! Remove group from this structure
   Standard_EXPORT virtual void RemoveGroup (const Handle(Graphic3d_Group)& theGroup) Standard_OVERRIDE;
 
-  Standard_EXPORT virtual void SetDetailLevelRange (const Standard_Integer theIdOfLOD,
+  Standard_EXPORT virtual void SetDetailLevelRange (const Standard_Integer theLodIdx,
                                                     const Standard_Real theFrom,
                                                     const Standard_Real theTo) Standard_OVERRIDE;
 

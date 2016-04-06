@@ -18,18 +18,28 @@
 
 #include <Graphic3d_LODManager.hxx>
 
+//! This class provides an API for LOD manager to TKOpenGl
+//! structures, such as OpenGl_Structure. It also implements
+//! the TKOpenGl-dependent functionality of LOD manager, for
+//! example, creation of a new LOD.
 class OpenGl_LODManager : public Graphic3d_LODManager
 {
 public:
+
+  //! Creates new empty manager and checks the parent structure pointer for validity
   Standard_EXPORT OpenGl_LODManager (const Handle(Graphic3d_Structure)& theParentStructure);
 
   Standard_EXPORT virtual ~OpenGl_LODManager() {};
 
+  //! Creates new LOD without any graphic groups and marks map of LODs for sorting
   Standard_EXPORT virtual Handle(Graphic3d_LOD) AddNewLOD() Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT (OpenGl_LODManager, Graphic3d_LODManager)
 
 protected:
+
+  //! Sorts added LODs according to its ranges in order to speed up
+  //! the process of picking the LOD to display
   Standard_EXPORT virtual void sortLODs() Standard_OVERRIDE;
 };
 

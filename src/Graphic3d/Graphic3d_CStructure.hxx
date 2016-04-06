@@ -125,9 +125,14 @@ public:
   //! Remove group from this structure
   virtual void RemoveGroup (const Handle(Graphic3d_Group)& theGroup) = 0;
 
+  //! Returns the number of LODs of the structure
   virtual Standard_Integer NbDetailLevels() const = 0;
 
-  virtual void SetDetailLevelRange (const Standard_Integer theIdOfLOD, const Standard_Real theFrom, const Standard_Real theTo) = 0;
+  //! Sets range of LOD.
+  //! @param theLodIdx corresponds to the index of LOD in map of LOD manager. In case if no LOD was
+  //! removed, the LODs in map are located in order of addition and IDs are identical to the addition
+  //! iteration number
+  virtual void SetDetailLevelRange (const Standard_Integer theLodIdx, const Standard_Real theFrom, const Standard_Real theTo) = 0;
 
 public:
 

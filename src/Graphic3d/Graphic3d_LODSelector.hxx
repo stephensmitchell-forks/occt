@@ -23,10 +23,14 @@
 class Graphic3d_CStructure;
 class Graphic3d_Camera;
 
+//! Base interface for classes implementing computation of
+//! LOD visibility metrics
 class Graphic3d_LODSelector : public Standard_Transient
 {
 public:
 
+  //! Computes the value of LOD visibility metrics according to current camera state
+  //! and choosen approach for metrics calculation
   virtual Standard_Real ComputeMetric (const Handle(Graphic3d_CStructure)& theParentStructure,
                                        const Handle(Graphic3d_Camera)& theCamera) = 0;
 

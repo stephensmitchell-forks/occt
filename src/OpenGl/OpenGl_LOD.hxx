@@ -21,6 +21,9 @@
 #include <OpenGl_AspectLine.hxx>
 #include <OpenGl_Structure.hxx>
 
+//! This class provides an implementation of TKOpenGl-dependent LOD
+//! functionality, such as creation of new graphic groups and cleaning
+//! up graphic resources
 class OpenGl_LOD : public Graphic3d_LOD
 {
 public:
@@ -28,8 +31,10 @@ public:
   Standard_EXPORT OpenGl_LOD() : Graphic3d_LOD () {};
   Standard_EXPORT ~OpenGl_LOD() {};
 
+  //! Creates new graphic group for LOD rendering and adds it to the map
   Standard_EXPORT virtual Handle(Graphic3d_Group) NewGroup (const Handle(Graphic3d_Structure)& theParentStruct) Standard_OVERRIDE;
 
+  //! Releases graphic resources of each created graphic group
   void ReleaseGraphicResources (const Handle(OpenGl_Context)& theGlCtx);
 
   DEFINE_STANDARD_RTTIEXT (OpenGl_LOD, Graphic3d_LOD)

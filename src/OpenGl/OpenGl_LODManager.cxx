@@ -28,19 +28,19 @@ namespace
   {
   public:
    
-    CompareLODS (const NCollection_Vector<Handle(Graphic3d_LOD)>& theLODs)
+    CompareLODS (const Graphic3d_MapOfLODs& theLODs)
       : myLODs (theLODs) {}
 
-    Standard_Boolean operator() (const Handle(Graphic3d_LOD)& theLeft, const Handle(Graphic3d_LOD)& theRight) const
+    Standard_Boolean operator() (const Standard_Integer theLeftIdx, const Standard_Integer theRightIdx) const
     {
-      return theLeft->GetRange() < theRight->GetRange();
+      return myLODs.FindKey (theLeftIdx)->GetRange() < myLODs.FindKey (theRightIdx)->GetRange();
     }
 
   private:
     void operator = (const CompareLODS&);
 
   private:
-    const NCollection_Vector<Handle(Graphic3d_LOD)>& myLODs;
+    const Graphic3d_MapOfLODs& myLODs;
   };
 }
 
@@ -62,8 +62,8 @@ OpenGl_LODManager::OpenGl_LODManager (const Handle(Graphic3d_Structure)& thePare
 Handle(Graphic3d_LOD) OpenGl_LODManager::AddNewLOD()
 {
   Handle(Graphic3d_LOD) aNewLOD = new OpenGl_LOD();
-  myLODs.Append (aNewLOD);
-  sortLODs();
+  myLODs.Add (aNewLOD);
+  myIsToSortLods = Standard_True;
   return aNewLOD;
 }
 
@@ -73,5 +73,14 @@ Handle(Graphic3d_LOD) OpenGl_LODManager::AddNewLOD()
 //=======================================================================
 void OpenGl_LODManager::sortLODs()
 {
-  std::sort (myLODs.begin(), myLODs.end(), CompareLODS (myLODs));
+  Standard_Integer aIndArrSize = myLODs.Extent();
+  myLodIndexes.Nullify();
+  myLodIndexes = new TColStd_HArray1OfInteger (0, aIndArrSize - 1);
+  for (Standard_Integer aIdx = 0; aIdx < aIndArrSize; ++aIdx)
+  {
+    myLodIndexes->SetValue (aIdx, aIdx + 1);
+  }
+  TColStd_Array1OfInteger& anIdxArr = myLodIndexes->ChangeArray1();
+  std::sort (anIdxArr.begin(), anIdxArr.end(), CompareLODS (myLODs));
+  myIsToSortLods = Standard_False;
 }
