@@ -188,9 +188,9 @@ void Graphic3d_Structure::Remove()
   }
 
   // Clear LODs graphic groups if there are any
-  if (!myCStructure->GetLodManager().IsNull())
+  if (!myCStructure->GetLODManager().IsNull())
   {
-    myCStructure->GetLodManager()->Clear (Standard_False);
+    myCStructure->GetLODManager()->Clear (Standard_False);
   }
 
   // Destruction of me in the graphic library
@@ -496,9 +496,9 @@ Standard_Boolean Graphic3d_Structure::IsEmpty() const
   // - if all these groups are empty
   // - or if all groups are empty and all their descendants are empty
   // - or if all its descendants are empty
-  if (!myCStructure->GetLodManager().IsNull())
+  if (!myCStructure->GetLODManager().IsNull())
   {
-    return myCStructure->GetLodManager()->IsEmpty();
+    return myCStructure->GetLODManager()->IsEmpty();
   }
 
   for (Graphic3d_SequenceOfGroup::Iterator aGroupIter (myCStructure->Groups()); aGroupIter.More(); aGroupIter.Next())
@@ -647,9 +647,9 @@ void Graphic3d_Structure::GraphicClear (const Standard_Boolean theWithDestructio
     return;
   }
 
-  if (!myCStructure->GetLodManager().IsNull())
+  if (!myCStructure->GetLODManager().IsNull())
   {
-    myCStructure->GetLodManager()->Clear (theWithDestruction);
+    myCStructure->GetLODManager()->Clear (theWithDestruction);
     if (theWithDestruction)
       myCStructure->Clear();
   }
@@ -1788,7 +1788,7 @@ Handle(Graphic3d_StructureManager) Graphic3d_Structure::StructureManager() const
 Graphic3d_BndBox4f Graphic3d_Structure::minMaxCoord() const
 {
   Graphic3d_BndBox4f aBnd;
-  if (myCStructure->GetLodManager().IsNull())
+  if (myCStructure->GetLODManager().IsNull())
   {
     for (Graphic3d_SequenceOfGroup::Iterator aGroupIter (myCStructure->Groups()); aGroupIter.More(); aGroupIter.Next())
     {
@@ -1797,7 +1797,7 @@ Graphic3d_BndBox4f Graphic3d_Structure::minMaxCoord() const
   }
   else
   {
-    myCStructure->GetLodManager()->GetCombinedBndBox (aBnd);
+    myCStructure->GetLODManager()->GetCombinedBndBox (aBnd);
   }
   return aBnd;
 }

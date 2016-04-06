@@ -226,7 +226,7 @@ protected:
 Standard_EXPORT virtual ~PrsMgr_PresentableObject();
 
   //! Computes levels of detail for the presentation.
-  Standard_EXPORT virtual void ComputeLods (const Handle(PrsMgr_PresentationManager3d)& thePrsMgr,
+  Standard_EXPORT virtual void ComputeLODs (const Handle(PrsMgr_PresentationManager3d)& thePrsMgr,
                                             const Handle(Prs3d_Presentation)& thePrs,
                                             const Standard_Integer theMode = 0);
 

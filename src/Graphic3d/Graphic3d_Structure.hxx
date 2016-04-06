@@ -488,10 +488,10 @@ public:
   Standard_EXPORT Standard_Integer NbDetailLevels() const;
 
   //! Sets range of LOD.
-  //! @param theLodIdx corresponds to the index of LOD in map of LOD manager. In case if no LOD was
+  //! @param theLODIdx corresponds to the index of LOD in map of LOD manager. In case if no LOD was
   //! removed, the LODs in map are located in order of addition and IDs are identical to the addition
   //! iteration number
-  Standard_EXPORT void SetDetailLevelRange (const Standard_Integer theIdOfLOD, const Standard_Real theFrom, const Standard_Real theTo);
+  Standard_EXPORT void SetDetailLevelRange (const Standard_Integer theLODIdx, const Standard_Real theFrom, const Standard_Real theTo);
 
 friend class Graphic3d_Group;
 

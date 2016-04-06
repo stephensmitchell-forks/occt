@@ -62,13 +62,13 @@ public:
   }
 
   //! For ranged LODs, sets the distance interval where the LOD will be visible.
-  //! @param theLodIdx the index of LOD in sorted list
-  Standard_EXPORT void SetRange (const Standard_Integer theLodIdx,
+  //! @param theLODIdx the index of LOD in sorted list
+  Standard_EXPORT void SetRange (const Standard_Integer theLODIdx,
                                  const Standard_Real theFrom,
                                  const Standard_Real theTo);
 
   //! Returns own index of the LOD that is displayed
-  Standard_EXPORT Standard_Boolean HasLodToDisplay (const Handle(Graphic3d_Camera)& theCamera);
+  Standard_EXPORT Standard_Boolean HasLODToDisplay (const Handle(Graphic3d_Camera)& theCamera);
 
   //! Returns graphic groups of the LOD that must be displayed according to the current
   //! camera state
@@ -94,10 +94,10 @@ public:
   //! to the index of the LOD in the map of LOD manager. Therefore, in case if no LOD was
   //! removed, the LODs in map are located in order of addition and IDs are identical to
   //! the addition iteration number
-  Standard_EXPORT const Handle(Graphic3d_LOD)& GetLodById (const Standard_Integer theLodIdx);
+  Standard_EXPORT const Handle(Graphic3d_LOD)& GetLODById (const Standard_Integer theLODIdx);
 
   //! Checks if the given LOD is added to this manager
-  Standard_EXPORT Standard_Boolean HasLod (const Handle(Graphic3d_LOD)& theLod) const;
+  Standard_EXPORT Standard_Boolean HasLOD (const Handle(Graphic3d_LOD)& theLOD) const;
 
   DEFINE_STANDARD_RTTIEXT (Graphic3d_LODManager, Standard_Transient)
 
@@ -107,13 +107,13 @@ protected:
   Standard_EXPORT Graphic3d_LODManager (const Handle(Graphic3d_Structure)& theParentStructure);
 
   //! Sorts LODs in the map according to its ranges to improve search for LOD to display.
-  //! After the sort is done, flag myIsToSortLods will be set to false.
+  //! After the sort is done, flag myIsToSortLODs will be set to false.
   Standard_EXPORT virtual void sortLODs() {};
 
 protected:
   Graphic3d_MapOfLODs              myLODs;          //!< Map of LODs
-  Handle(TColStd_HArray1OfInteger) myLodIndexes;    //!< Array of LOD indexes, for sorting purposes
-  Standard_Boolean                 myIsToSortLods;  //!< Is true when LODs must be sorted before picking procedure. For example, when new LOD was added
+  Handle(TColStd_HArray1OfInteger) myLODIndexes;    //!< Array of LOD indexes, for sorting purposes
+  Standard_Boolean                 myIsToSortLODs;  //!< Is true when LODs must be sorted before picking procedure. For example, when new LOD was added
 
 private:
   Standard_Integer              myCurrentLODIdx;    //!< Index of current LOD that should be rendered; is -1 by default.

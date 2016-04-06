@@ -63,7 +63,7 @@ Handle(Graphic3d_LOD) OpenGl_LODManager::AddNewLOD()
 {
   Handle(Graphic3d_LOD) aNewLOD = new OpenGl_LOD();
   myLODs.Add (aNewLOD);
-  myIsToSortLods = Standard_True;
+  myIsToSortLODs = Standard_True;
   return aNewLOD;
 }
 
@@ -73,14 +73,14 @@ Handle(Graphic3d_LOD) OpenGl_LODManager::AddNewLOD()
 //=======================================================================
 void OpenGl_LODManager::sortLODs()
 {
-  Standard_Integer aIndArrSize = myLODs.Extent();
-  myLodIndexes.Nullify();
-  myLodIndexes = new TColStd_HArray1OfInteger (0, aIndArrSize - 1);
-  for (Standard_Integer aIdx = 0; aIdx < aIndArrSize; ++aIdx)
+  Standard_Integer anIndArrSize = myLODs.Extent();
+  myLODIndexes.Nullify();
+  myLODIndexes = new TColStd_HArray1OfInteger (0, anIndArrSize - 1);
+  for (Standard_Integer anIdx = 0; anIdx < anIndArrSize; ++anIdx)
   {
-    myLodIndexes->SetValue (aIdx, aIdx + 1);
+    myLODIndexes->SetValue (anIdx, anIdx + 1);
   }
-  TColStd_Array1OfInteger& anIdxArr = myLodIndexes->ChangeArray1();
+  TColStd_Array1OfInteger& anIdxArr = myLODIndexes->ChangeArray1();
   std::sort (anIdxArr.begin(), anIdxArr.end(), CompareLODS (myLODs));
-  myIsToSortLods = Standard_False;
+  myIsToSortLODs = Standard_False;
 }

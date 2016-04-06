@@ -75,12 +75,12 @@ void MeshVS_LODBuilder::DrawArrays (const Handle(Prs3d_Presentation)& theBasePrs
   Aspect_TypeOfLine aType;
   Standard_Real aWidth;
 
-  Handle(Graphic3d_LOD) aNewLod = theBasePrs->NewLOD();
+  Handle(Graphic3d_LOD) aNewLOD = theBasePrs->NewLOD();
   theFillAsp->Values (aStyle, anIntColor, aBackColor, anEdgeColor, aType, aWidth);
 
   if (isPolygons && theFillAsp->FrontMaterial().Transparency() < 0.01)
   {
-    Handle (Graphic3d_Group) aGroup = aNewLod->NewGroup (theBasePrs);
+    Handle (Graphic3d_Group) aGroup = aNewLOD->NewGroup (theBasePrs);
 
     theFillAsp->SetEdgeOff();
 
@@ -110,7 +110,7 @@ void MeshVS_LODBuilder::DrawArrays (const Handle(Prs3d_Presentation)& theBasePrs
 
   if (isPolylines && !theIsPolygonsEdgesOff)
   {
-    Handle (Graphic3d_Group) aLGroup = aNewLod->NewGroup (theBasePrs);
+    Handle (Graphic3d_Group) aLGroup = aNewLOD->NewGroup (theBasePrs);
 
     theFillAsp->SetEdgeOff();
     if (theIsSelected)
@@ -126,7 +126,7 @@ void MeshVS_LODBuilder::DrawArrays (const Handle(Prs3d_Presentation)& theBasePrs
 
   if (isLinkPolylines)
   {
-    Handle (Graphic3d_Group) aBeamGroup = aNewLod->NewGroup (theBasePrs);
+    Handle (Graphic3d_Group) aBeamGroup = aNewLOD->NewGroup (theBasePrs);
 
     theFillAsp->SetEdgeOff();
     if (!theIsSelected)
@@ -138,7 +138,7 @@ void MeshVS_LODBuilder::DrawArrays (const Handle(Prs3d_Presentation)& theBasePrs
 
   if (isPolygons && theFillAsp->FrontMaterial().Transparency() >= 0.01)
   {
-    Handle (Graphic3d_Group) aGroup = aNewLod->NewGroup (theBasePrs);
+    Handle (Graphic3d_Group) aGroup = aNewLOD->NewGroup (theBasePrs);
 
     theFillAsp->SetEdgeOff();
 

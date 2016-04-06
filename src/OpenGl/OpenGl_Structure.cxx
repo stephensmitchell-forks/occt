@@ -560,7 +560,7 @@ void OpenGl_Structure::Render (const Handle(OpenGl_Workspace) &theWorkspace) con
     return;
   }
 
-  if (!myLODManager.IsNull() && !myLODManager->HasLodToDisplay (theWorkspace->View()->Camera()))
+  if (!myLODManager.IsNull() && !myLODManager->HasLODToDisplay (theWorkspace->View()->Camera()))
     return;
 
   const Handle(OpenGl_Context)& aCtx = theWorkspace->GetGlContext();
@@ -755,10 +755,10 @@ void OpenGl_Structure::ReleaseGlResources (const Handle(OpenGl_Context)& theGlCt
   }
   if (!myLODManager.IsNull())
   {
-    for (Standard_Integer aLodIdx = 1; aLodIdx <= myLODManager->NbOfDetailLevels(); ++aLodIdx)
+    for (Standard_Integer aLODIdx = 1; aLODIdx <= myLODManager->NbOfDetailLevels(); ++aLODIdx)
     {
-      Handle(OpenGl_LOD) aLod = Handle(OpenGl_LOD)::DownCast (myLODManager->GetLodById (aLodIdx));
-      aLod->ReleaseGraphicResources (theGlCtx);
+      Handle(OpenGl_LOD) aLOD = Handle(OpenGl_LOD)::DownCast (myLODManager->GetLODById (aLODIdx));
+      aLOD->ReleaseGraphicResources (theGlCtx);
     }
   }
   if (myAspectLine != NULL)
@@ -796,17 +796,17 @@ Handle(Graphic3d_CStructure) OpenGl_Structure::ShadowLink (const Handle(Graphic3
 //function : SetDetailLevelRange
 //purpose  :
 //=======================================================================
-void OpenGl_Structure::SetDetailLevelRange (const Standard_Integer theLodIdx,
+void OpenGl_Structure::SetDetailLevelRange (const Standard_Integer theLODIdx,
                                             const Standard_Real theFrom,
                                             const Standard_Real theTo)
 {
   Standard_ASSERT_RAISE (theFrom < theTo,
     "The upper boundary of the interval must be greater than lower one!");
 
-  if (myLODManager.IsNull() || theLodIdx < 1 || theLodIdx > myLODManager->NbOfDetailLevels())
+  if (myLODManager.IsNull() || theLODIdx < 1 || theLODIdx > myLODManager->NbOfDetailLevels())
     return;
 
-  myLODManager->SetRange (theLodIdx, theFrom, theTo);
+  myLODManager->SetRange (theLODIdx, theFrom, theTo);
 }
 
 //=======================================================================
