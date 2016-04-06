@@ -22,10 +22,7 @@
 #include <Poly_Triangle.hxx>
 #include <StlMesh_Mesh.hxx>
 
-//! TODO: VPA: think how to avoid copying mesh data. Now it is done for returning useless maps
-//!            in GetAllElements() and GetAllNodes() because they must return const links. Moreover,
-//!            copying data allows to avoid cases when indexation in Poly_Triangluation inner
-//!            arrays starts from arbitrary numbers (if it is really possible).
+//! The class is used to parse LOD data stored in StlMesh_Mesh object
 class MeshVS_LODDataSource : public MeshVS_DataSource
 {
 public:

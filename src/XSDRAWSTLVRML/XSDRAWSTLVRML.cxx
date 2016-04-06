@@ -1515,19 +1515,13 @@ static int MeshLod (Draw_Interpretor& theDI,
   }
 
   Handle(MeshVS_Mesh) anOriginMesh = new MeshVS_Mesh();
-  Handle(XSDRAWSTLVRML_DataSource) anOriginDataSource = new XSDRAWSTLVRML_DataSource (aLargestMesh);
-  anOriginMesh->SetDataSource (anOriginDataSource);
-  Handle(MeshVS_MeshPrsBuilder) anOriginBuilder = new MeshVS_MeshPrsBuilder (anOriginMesh.operator->());
-  anOriginMesh->AddBuilder (anOriginBuilder, Standard_True);
-  anOriginMesh->GetDrawer()->SetColor (MeshVS_DA_EdgeColor, Quantity_NOC_YELLOW);
-
   for (NCollection_List<DetailLevelData>::Iterator aLodDataIter (myLODDataList); aLodDataIter.More(); aLodDataIter.Next())
   {
     Handle(MeshVS_LODDataSource) aLod = new MeshVS_LODDataSource (aLodDataIter.Value().myMesh);
     anOriginMesh->AddDataSource (aLod);
     Handle(MeshVS_LODBuilder) aLODBuilder = new MeshVS_LODBuilder (anOriginMesh.operator->());
     aLODBuilder->SetDataSource (aLod);
-    aLODBuilder->SetDrawer (anOriginBuilder->GetDrawer());
+    aLODBuilder->GetDrawer()->SetColor (MeshVS_DA_EdgeColor, Quantity_NOC_YELLOW);
     anOriginMesh->AddBuilder (aLODBuilder);
   }
 

@@ -496,7 +496,6 @@ Standard_Boolean Graphic3d_Structure::IsEmpty() const
   // - if all these groups are empty
   // - or if all groups are empty and all their descendants are empty
   // - or if all its descendants are empty
-  // - or, in case if it is represented by LODs, all LODs have no graphic groups
   if (!myCStructure->GetLodManager().IsNull())
   {
     return myCStructure->GetLodManager()->IsEmpty();
@@ -518,7 +517,6 @@ Standard_Boolean Graphic3d_Structure::IsEmpty() const
       return Standard_False;
     }
   }
-
   return Standard_True;
 }
 

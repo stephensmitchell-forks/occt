@@ -95,6 +95,10 @@ public:
                                                  Standard_Integer& Vertices,
                                                  Standard_Integer& Bounds);
 
+  DEFINE_STANDARD_RTTIEXT(MeshVS_MeshPrsBuilder,MeshVS_PrsBuilder)
+
+protected:
+
   //! Add to array of polylines some lines representing link
   Standard_EXPORT void AddLinkPrs (const TColStd_Array1OfReal& theCoords,
                                    const Handle(Graphic3d_ArrayOfSegments)& theLines,
@@ -109,22 +113,6 @@ public:
                                        const Standard_Real theShrinkingCoef) const;
 
   //! Add to array of polygons a polygon representing face
-  Standard_EXPORT void AddFaceSolidPrs (const Handle(MeshVS_DataSource)& theDataSource,
-                                        const Standard_Integer ID,
-                                        const TColStd_Array1OfReal& theCoords,
-                                        const Standard_Integer theNbNodes,
-                                        const Standard_Integer theMaxNodes,
-                                        const Handle(Graphic3d_ArrayOfTriangles)& theTriangles,
-                                        const Standard_Boolean theIsReflected,
-                                        const Standard_Boolean theIsShrinked,
-                                        const Standard_Real theShrinkCoef,
-                                        const Standard_Boolean theIsMeshSmoothShading) const;
-
-  DEFINE_STANDARD_RTTIEXT(MeshVS_MeshPrsBuilder,MeshVS_PrsBuilder)
-
-protected:
-
-  //! Add to array of polygons a polygon representing face
   Standard_EXPORT void AddFaceSolidPrs (const Standard_Integer ID,
                                         const TColStd_Array1OfReal& theCoords,
                                         const Standard_Integer theNbNodes,
@@ -136,15 +124,15 @@ protected:
                                         const Standard_Boolean theIsMeshSmoothShading) const;
 
   //! Draw array of polygons and polylines in the certain order according to transparency
-  Standard_EXPORT void DrawArrays (const Handle(Prs3d_Presentation)& Prs,
-                                   const Handle(Graphic3d_ArrayOfPrimitives)& thePolygons,
-                                   const Handle(Graphic3d_ArrayOfPrimitives)& theLines,
-                                   const Handle(Graphic3d_ArrayOfPrimitives)& theLinkLines,
-                                   const Handle(Graphic3d_ArrayOfPrimitives)& theVolumesInShad,
-                                   const Standard_Boolean IsPolygonsEdgesOff,
-                                   const Standard_Boolean IsSelected,
-                                   const Handle(Graphic3d_AspectFillArea3d)& theFillAsp,
-                                   const Handle(Graphic3d_AspectLine3d)& theLineAsp) const;
+  Standard_EXPORT virtual void DrawArrays (const Handle(Prs3d_Presentation)& Prs,
+                                           const Handle(Graphic3d_ArrayOfPrimitives)& thePolygons,
+                                           const Handle(Graphic3d_ArrayOfPrimitives)& theLines,
+                                           const Handle(Graphic3d_ArrayOfPrimitives)& theLinkLines,
+                                           const Handle(Graphic3d_ArrayOfPrimitives)& theVolumesInShad,
+                                           const Standard_Boolean IsPolygonsEdgesOff,
+                                           const Standard_Boolean IsSelected,
+                                           const Handle(Graphic3d_AspectFillArea3d)& theFillAsp,
+                                           const Handle(Graphic3d_AspectLine3d)& theLineAsp) const;
 
   //! Default calculation of center of face or link. This method if useful for shrink mode presentation
   //! theCoords is array of nodes co-ordinates in the strict order X1, Y1, Z1, X2...

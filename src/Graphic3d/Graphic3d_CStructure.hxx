@@ -80,6 +80,9 @@ public:
   //! Get z layer ID
   Graphic3d_ZLayerId ZLayer() const { return myZLayer; }
 
+  //! Returns LOD manager for this structure. If the structure
+  //! is not represented through LODs, the return value will
+  //! be NULL pointer
   const Handle(Graphic3d_LODManager)& GetLodManager() const
   {
     return myLODManager;

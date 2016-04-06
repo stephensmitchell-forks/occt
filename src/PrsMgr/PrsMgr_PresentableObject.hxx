@@ -199,6 +199,9 @@ public:
   //! Returns parent of current object in scene hierarchy.
   Standard_EXPORT PrsMgr_PresentableObjectPointer Parent() const;
 
+  //! Must be redefined for objects represented through levels of detail.
+  //! Default implementation returns false, if the object is represented by
+  //! LODs, the method must return true.
   Standard_EXPORT virtual Standard_Boolean HasLevelsOfDetail() const;
 
 
@@ -222,6 +225,7 @@ protected:
   Standard_EXPORT PrsMgr_PresentableObject(const PrsMgr_TypeOfPresentation3d aTypeOfPresentation3d = PrsMgr_TOP_AllView);
 Standard_EXPORT virtual ~PrsMgr_PresentableObject();
 
+  //! Computes levels of detail for the presentation.
   Standard_EXPORT virtual void ComputeLods (const Handle(PrsMgr_PresentationManager3d)& thePrsMgr,
                                             const Handle(Prs3d_Presentation)& thePrs,
                                             const Standard_Integer theMode = 0);
