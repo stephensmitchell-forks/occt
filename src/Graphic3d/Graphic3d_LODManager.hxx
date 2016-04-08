@@ -67,6 +67,12 @@ public:
                                  const Standard_Real theFrom,
                                  const Standard_Real theTo);
 
+  //! For ranged LODs, returns the distance interval where the LOD will be visible.
+  //! @param theLODIdx the index of LOD in sorted list
+  Standard_EXPORT void GetRange (const Standard_Integer theLODIdx,
+                                 Standard_Real& theFrom,
+                                 Standard_Real& theTo) const;
+
   //! Returns own index of the LOD that is displayed
   Standard_EXPORT Standard_Boolean HasLODToDisplay (const Handle(Graphic3d_Camera)& theCamera);
 

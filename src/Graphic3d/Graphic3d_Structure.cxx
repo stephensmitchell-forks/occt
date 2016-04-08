@@ -1751,9 +1751,18 @@ Standard_Integer Graphic3d_Structure::NbDetailLevels() const
 //function : SetDetailLevelRange
 //purpose  :
 //=============================================================================
-void Graphic3d_Structure::SetDetailLevelRange (const Standard_Integer theIdOfLOD, const Standard_Real theFrom, const Standard_Real theTo)
+void Graphic3d_Structure::SetDetailLevelRange (const Standard_Integer theLODIdx, const Standard_Real theFrom, const Standard_Real theTo)
 {
-  myCStructure->SetDetailLevelRange (theIdOfLOD, theFrom, theTo);
+  myCStructure->SetDetailLevelRange (theLODIdx, theFrom, theTo);
+}
+
+//=============================================================================
+//function : GetDetailLevelRange
+//purpose  :
+//=============================================================================
+void Graphic3d_Structure::GetDetailLevelRange (const Standard_Integer theLODIdx, Standard_Real& theFrom, Standard_Real& theTo) const
+{
+  myCStructure->GetDetailLevelRange (theLODIdx, theFrom, theTo);
 }
 
 //=============================================================================

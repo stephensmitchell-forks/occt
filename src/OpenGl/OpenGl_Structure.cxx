@@ -810,6 +810,20 @@ void OpenGl_Structure::SetDetailLevelRange (const Standard_Integer theLODIdx,
 }
 
 //=======================================================================
+//function : GetDetailLevelRange
+//purpose  :
+//=======================================================================
+void OpenGl_Structure::GetDetailLevelRange (const Standard_Integer theLODIdx,
+                                            Standard_Real& theFrom,
+                                            Standard_Real& theTo) const
+{
+  if (myLODManager.IsNull() || theLODIdx < 1 || theLODIdx > myLODManager->NbOfDetailLevels())
+    return;
+
+  myLODManager->GetRange (theLODIdx, theFrom, theTo);
+}
+
+//=======================================================================
 //function : DrawGroups
 //purpose  :
 //=======================================================================

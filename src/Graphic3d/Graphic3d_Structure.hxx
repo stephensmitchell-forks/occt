@@ -493,6 +493,12 @@ public:
   //! iteration number
   Standard_EXPORT void SetDetailLevelRange (const Standard_Integer theLODIdx, const Standard_Real theFrom, const Standard_Real theTo);
 
+  //! Returns range of LOD.
+  //! @param theLODIdx corresponds to the index of LOD in map of LOD manager. In case if no LOD was
+  //! removed, the LODs in map are located in order of addition and IDs are identical to the addition
+  //! iteration number
+  Standard_EXPORT void GetDetailLevelRange (const Standard_Integer theLODIdx, Standard_Real& theFrom, Standard_Real& theTo) const;
+
 friend class Graphic3d_Group;
 
 

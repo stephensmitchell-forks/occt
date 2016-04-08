@@ -98,6 +98,22 @@ void Graphic3d_LODManager::SetRange (Standard_Integer theLODIdx,
 }
 
 //=======================================================================
+// function : GetRange
+// purpose  :
+//=======================================================================
+void Graphic3d_LODManager::GetRange (const Standard_Integer theLODIdx,
+                                     Standard_Real& theFrom,
+                                     Standard_Real& theTo) const
+{
+  if (theLODIdx < 1 || theLODIdx > myLODs.Extent())
+    return;
+
+  Graphic3d_RangeOfLOD aRange = myLODs.FindKey (theLODIdx)->GetRange();
+  theFrom = aRange.From();
+  theTo = aRange.To();
+}
+
+//=======================================================================
 // function : GetCurrentGroups
 // purpose  :
 //=======================================================================

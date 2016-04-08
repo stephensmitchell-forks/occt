@@ -163,9 +163,23 @@ void MeshVS_Mesh::ComputeLODs (const Handle(PrsMgr_PresentationManager3d)& thePr
       continue;
 
     aLODBldr->SetPresentationManager (thePrsMgr);
+    SetDataSource (aLODBldr->GetDataSource());
     const TColStd_PackedMapOfInteger aTrgIdxs = aLODBldr->GetDataSource()->GetAllElements();
     if (!aTrgIdxs.IsEmpty())
       aLODBldr->Build (thePrs, aTrgIdxs, aDummy, Standard_True,  theMode);
+  }
+
+  // Set up default ranges for LODs in shading or other display modes
+  if (theMode > 1)
+  {
+    const Handle(Prs3d_Presentation)& aWireframePrs = thePrsMgr->Presentation (this, 1)->Presentation();
+    for (Standard_Integer aLODIdx = 1; aLODIdx <= myBuilders.Length(); ++aLODIdx)
+    {
+      // Get range for wireframe mode
+      Standard_Real aFrom, aTo = std::numeric_limits<Standard_Real>::max();
+      aWireframePrs->GetDetailLevelRange (aLODIdx, aFrom, aTo);
+      thePrs->SetDetailLevelRange (aLODIdx, aFrom, aTo);
+    }
   }
 }
 

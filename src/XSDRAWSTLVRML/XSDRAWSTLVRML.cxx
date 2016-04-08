@@ -1292,7 +1292,7 @@ static int MeshGenLODs (Draw_Interpretor& theDI,
   aMeshParams.Deflection = aMaxDefl;
   aMeshParams.Angle = 0.5;
   aMeshParams.Relative =  Standard_False;
-  aMeshParams.InParallel = Standard_False;
+  aMeshParams.InParallel = Standard_True;
   aMeshParams.MinSize = Precision::Confusion();
   aMeshParams.InternalVerticesMode = Standard_True;
   aMeshParams.ControlSurfaceDeflection = Standard_True;
@@ -1318,7 +1318,7 @@ static int MeshGenLODs (Draw_Interpretor& theDI,
     aParams.Deflection = aMaxDefl - aLODIdx * aDeflDecrFactor;
     aParams.Angle = 0.5;
     aParams.Relative =  Standard_False;
-    aParams.InParallel = Standard_False;
+    aParams.InParallel = Standard_True;
     aParams.MinSize = Precision::Confusion();
     aParams.InternalVerticesMode = Standard_True;
     aParams.ControlSurfaceDeflection = Standard_True;
@@ -1393,7 +1393,7 @@ static int MeshGenLODs (Draw_Interpretor& theDI,
     }
   }
 
-  if (!aMesh.IsNull() && aSavePath != "")
+  if (aSavePath != "")
   {
     if (aSavePath.Value (aSavePath.Length()) != '/')
     {

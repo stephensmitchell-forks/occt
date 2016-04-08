@@ -59,5 +59,6 @@ void Graphic3d_LOD::Clear (const Standard_Boolean theWithDestruction)
   {
     Handle(Graphic3d_Group) aGroup = myGroups.First();
     aGroup->Remove();
+    myGroups.Remove (1);
   }
 }

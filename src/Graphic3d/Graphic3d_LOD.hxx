@@ -62,6 +62,16 @@ public:
     return myFrom < theOther.myFrom;
   }
 
+  const Standard_Real To() const
+  {
+    return myTo;
+  }
+
+  const Standard_Real From() const
+  {
+    return myFrom;
+  }
+
 private:
   Standard_Real myFrom;
   Standard_Real myTo;
