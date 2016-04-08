@@ -1543,7 +1543,6 @@ static int MeshLOD (Draw_Interpretor& theDI,
     aLODIdx++;
   }
 
-  Draw::Set (aShapeName, new XSDRAWSTLVRML_DrawableMesh (anOriginMesh));
   Handle(V3d_View) aView = ViewerTest::CurrentView();
   if (!aView.IsNull())
     aView->FitAll();
