@@ -735,9 +735,6 @@ void BRepOffset_Inter3d::ConnexIntByInt
     const TopoDS_Shape& aF1 = aLFF.First();
     const TopoDS_Shape& aF2 = aLFF.Last();
     //
-    TopTools_ListOfShape& aLFE1 = myAsDes->ChangeDescendant(aF1);
-    TopTools_ListOfShape& aLFE2 = myAsDes->ChangeDescendant(aF2);
-    //
     BOPCol_ListIteratorOfListOfShape aItLCBE(aLCBE);
     for (aItLCBE.Next(); aItLCBE.More(); aItLCBE.Next()) {
       // make new edge with different tedge instance
@@ -750,8 +747,8 @@ void BRepOffset_Inter3d::ConnexIntByInt
       //
       BOPTools_AlgoTools::MakeSplitEdge(aE, aV1, aT1, aV2, aT2, aNewEdge);
       //
-      aLFE1.Append(aNewEdge);
-      aLFE2.Append(aNewEdge);
+      myAsDes->Add(aF1, aNewEdge);
+      myAsDes->Add(aF2, aNewEdge);
       //
       const TopoDS_Shape& aCB = aItLCBE.Value();
       TopoDS_Iterator aItCB(aCB);
