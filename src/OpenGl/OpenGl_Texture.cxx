@@ -376,10 +376,9 @@ bool OpenGl_Texture::Init (const Handle(OpenGl_Context)& theCtx,
   myHasMipmaps             = Standard_False;
   myTextFormat             = thePixelFormat;
 #if !defined(GL_ES_VERSION_2_0)
-  if (theTextFormat >= Image_PixMap::ImgGrayF
-   && !theCtx->HasFloatingPointTexture())
+  if (theTextFormat >= Image_PixMap::ImgGrayF && !theCtx->arbTexFloat)
   {
-    TCollection_ExtendedString aMsg ("Error: floating-point textures are not supproted by hardware.");
+    TCollection_ExtendedString aMsg ("Error: floating-point textures are not supported by hardware.");
     theCtx->PushMessage (GL_DEBUG_SOURCE_APPLICATION,
                          GL_DEBUG_TYPE_ERROR,
                          0,
