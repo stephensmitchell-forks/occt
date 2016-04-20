@@ -13,179 +13,258 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef __BLOCK_H__
-#define __BLOCK_H__
+#ifndef _BRepMesh_Block_HeaderFile
+#define _BRepMesh_Block_HeaderFile
 
 #include <stdlib.h>
+#include <stdexcept>
 
-template <class Type> class Block
+template <class Type> class Storage
 {
 public:
-
-  Block (int theSize, void (*theErrFunction) (char*) = NULL)
+  Storage (int theSize)
   {
-    myFirst = myLast = NULL;
-    myBlockSize = theSize;
-    myErrorFun = theErrFunction;
+    m_first = m_last = NULL;
+    m_BlockSize = theSize;
   }
 
-  ~Block()
+  ~Storage()
   {
-    while (myFirst)
+    while (m_first)
     {
-      BlockStruct* aNext = myFirst->Next;
-      delete myFirst;
-      myFirst = aNext;
+      Block* next = m_first->Next;
+      delete[] ( (char*) m_first);
+      m_first = next;
     }
   }
 
-  Type* New (int theNum = 1)
+  Type* New (int aNum = 1)
   {
-    Type* aLast;
+    Type* aResult;
 
-    if (!myLast || myLast->Current + theNum > myLast->Last)
+    if (!m_last || m_last->Current + aNum > m_last->Last)
     {
-      if (myLast && myLast->Next) { myLast = myLast->Next; }
+      if (m_last && m_last->Next)
+      {
+        m_last = m_last->Next;
+      }
+
       else
       {
-        BlockStruct* aNext = (BlockStruct*) new char [sizeof (BlockStruct) + (myBlockSize-1) *sizeof (Type)];
+        Block* aNext = (Block*) new char [sizeof (Block) + (m_BlockSize - 1) *sizeof (Type)];
 
-        if (!aNext) { if (myErrorFun) { (*myErrorFun) ("Not enough memory!"); } exit (1); }
+        if (!aNext)
+        {
+          throw std::runtime_error ("Not enough memory!");
+        }
 
-        if (myLast) { myLast->Next = aNext; }
-        else { myFirst = aNext; }
+        if (m_last)
+        {
+          m_last->Next = aNext;
+        }
 
-        myLast = aNext;
-        myLast->Current = & (myLast->Data[0]);
-        myLast->Last = myLast->Current + myBlockSize;
-        myLast->Next = NULL;
+        else
+        {
+          m_first = aNext;
+        }
+
+        m_last = aNext;
+        m_last->Current = & (m_last->Data[0]);
+        m_last->Last = m_last->Current + m_BlockSize;
+        m_last->Next = NULL;
       }
     }
 
-    aLast = myLast->Current;
-    myLast->Current += theNum;
-    return aLast;
+    aResult = m_last->Current;
+    m_last->Current += aNum;
+    return aResult;
   }
 
   Type* ScanFirst()
   {
-    myScanCurrentBlock = myFirst;
+    for (m_scanCurrentBlock = m_first; m_scanCurrentBlock; m_scanCurrentBlock = m_scanCurrentBlock->Next)
+    {
+      m_scanCurrentData = & (m_scanCurrentBlock->Data[0]);
 
-    if (!myScanCurrentBlock) { return NULL; }
+      if (m_scanCurrentData < m_scanCurrentBlock->Current)
+      {
+        return m_scanCurrentData ++;
+      }
+    }
 
-    myScanCurrentData = & (myScanCurrentBlock->Data[0]);
-    return myScanCurrentData++;
+    return NULL;
   }
 
   Type* ScanNext()
   {
-    if (myScanCurrentData >= myScanCurrentBlock->Current)
+    while (m_scanCurrentData >= m_scanCurrentBlock->Current)
     {
-      myScanCurrentBlock = myScanCurrentBlock->Next;
+      m_scanCurrentBlock = m_scanCurrentBlock->Next;
 
-      if (!myScanCurrentBlock) { return NULL; }
+      if (!m_scanCurrentBlock)
+      {
+        return NULL;
+      }
 
-      myScanCurrentData = & (myScanCurrentBlock->Data[0]);
+      m_scanCurrentData = & (m_scanCurrentBlock->Data[0]);
     }
 
-    return myScanCurrentData++;
+    return m_scanCurrentData++;
+  }
+
+  struct BlockIterator;
+  Type* ScanFirst (BlockIterator& anIter)
+  {
+    for (anIter.ScanCurrentBlock = m_first; anIter.ScanCurrentBlock; anIter.ScanCurrentBlock = anIter.ScanCurrentBlock->Next)
+    {
+      anIter.ScanCurrentData = & (anIter.ScanCurrentBlock->Data[0]);
+
+      if (anIter.ScanCurrentData < anIter.ScanCurrentBlock->Current)
+      {
+        return anIter.ScanCurrentData ++;
+      }
+    }
+
+    return NULL;
+  }
+  Type* ScanNext (BlockIterator& anIter)
+  {
+    while (anIter.ScanCurrentData >= anIter.ScanCurrentBlock->Current)
+    {
+      anIter.ScanCurrentBlock = anIter.ScanCurrentBlock->Next;
+
+      if (!anIter.ScanCurrentBlock)
+      {
+        return NULL;
+      }
+
+      anIter.ScanCurrentData = & (anIter.ScanCurrentBlock->Data[0]);
+    }
+
+    return anIter.ScanCurrentData ++;
   }
 
   void Reset()
   {
-    BlockStruct* aBlock;
+    Block* aBlock;
 
-    if (!myFirst) { return; }
+    if (!m_first)
+    {
+      return;
+    }
 
-    for (aBlock = myFirst; ; aBlock = aBlock->Next)
+    for (aBlock = m_first; ; aBlock = aBlock->Next)
     {
       aBlock->Current = & (aBlock->Data[0]);
 
-      if (aBlock == myLast) { break; }
+      if (aBlock == m_last)
+      {
+        break;
+      }
     }
 
-    myLast = myFirst;
+    m_last = m_first;
   }
 
 private:
 
-  typedef struct BlockSt
+  typedef struct BlockStruct
   {
-    Type* Current;
-    Type* Last;
-    struct BlockSt* Next;
+    Type* Current, *Last;
+    struct BlockStruct* Next;
     Type Data[1];
-  } BlockStruct;
+  } Block;
 
-  int   myBlockSize;
-  BlockStruct* myFirst;
-  BlockStruct* myLast;
-
-  BlockStruct* myScanCurrentBlock;
-  Type*  myScanCurrentData;
-
-  void (*myErrorFun) (char*);
-};
-
-template <class Type> class DBlock
-{
+  int m_BlockSize;
+  Block* m_first;
+  Block* m_last;
 public:
 
-  DBlock (int theSize, void (*theErrFunction) (char*) = NULL) { myFirst = NULL; myFirstFree = NULL; myBLockSize = theSize; myErrFun = theErrFunction; }
+  struct BlockIterator
+  {
+    Block* ScanCurrentBlock;
+    Type* ScanCurrentData;
+  };
 
-  ~DBlock() { while (myFirst) { BlockStruct* aNext = myFirst->Next; delete myFirst; myFirst = aNext; } }
+private:
+  Block* m_scanCurrentBlock;
+  Type* m_scanCurrentData;
+};
+
+template <class Type> class DataBlock
+{
+public:
+  DataBlock (int size)
+  {
+    m_first = NULL;
+    m_firstFree = NULL;
+    m_blockSize = size;
+  }
+
+  ~DataBlock()
+  {
+    while (m_first)
+    {
+      Block* next = m_first->Next;
+      delete[] ( (char*) m_first);
+      m_first = next;
+    }
+  }
 
   Type* New()
   {
     BlockItem* anItem;
 
-    if (!myFirstFree)
+    if (!m_firstFree)
     {
-      BlockStruct* next = myFirst;
-      myFirst = (BlockStruct*) new char [sizeof (BlockStruct) + (myBLockSize-1) *sizeof (BlockItem)];
+      Block* next = m_first;
+      m_first = (Block*) new char [sizeof (Block) + (m_blockSize - 1) *sizeof (BlockItem)];
 
-      if (!myFirst) { if (myErrFun) { (*myErrFun) ("Not enough memory!"); } exit (1); }
+      if (!m_first)
+      {
+        throw std::runtime_error ("Not enough memory!");
+      }
 
-      myFirstFree = & (myFirst->Data[0]);
+      m_firstFree = & (m_first->Data[0]);
 
-      for (anItem=myFirstFree; anItem<myFirstFree+myBLockSize-1; anItem++)
-      { anItem->NextFree = anItem + 1; }
+      for (anItem = m_firstFree; anItem < m_firstFree + m_blockSize - 1; anItem++)
+      {
+        anItem->NextFree = anItem + 1;
+      }
 
       anItem->NextFree = NULL;
-      myFirst->Next = next;
+      m_first->Next = next;
     }
 
-    anItem = myFirstFree;
-    myFirstFree = anItem->NextFree;
+    anItem = m_firstFree;
+    m_firstFree = anItem->NextFree;
     return (Type*) anItem;
   }
 
   void Delete (Type* t)
   {
-    ( (BlockItem*) t)->NextFree = myFirstFree;
-    myFirstFree = (BlockItem*) t;
+    ( (BlockItem*) t)->NextFree = m_firstFree;
+    m_firstFree = (BlockItem*) t;
   }
 
 private:
 
-  typedef union BlockItemSt
+  typedef union BlockItemStruct
   {
-    Type      Item;
-    BlockItemSt* NextFree;
+    Type Val;
+    BlockItemStruct* NextFree;
   } BlockItem;
 
-  typedef struct BlockSt
+  typedef struct BlockStruct
   {
-    struct BlockSt*      Next;
-    BlockItem       Data[1];
-  } BlockStruct;
+    struct BlockStruct* Next;
+    BlockItem Data[1];
+  } Block;
 
-  int     myBLockSize;
-  BlockStruct*   myFirst;
-  BlockItem* myFirstFree;
-
-  void (*myErrFun) (char*);
+  int m_blockSize;
+  Block* m_first;
+  BlockItem* m_firstFree;
 };
 
-#endif
+#endif // _BRepMesh_Block_HeaderFile
 

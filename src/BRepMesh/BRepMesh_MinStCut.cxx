@@ -13,1264 +13,664 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#pragma warning (disable: 4706)
-#pragma warning (disable: 4701)
-#pragma warning (disable: 4127)
-
 #include <stdio.h>
+#include <string.h>
 #include <stdexcept>
+
 #include <BRepMesh_MinStCut.hxx>
 
-Graph::Graph (void (*theErrFun) (char*))
+GraphEval::GraphEval (const int theNodeNumMax)
+  : m_nodeNum (0), m_nodeNumMax (theNodeNumMax)
 {
-  myErrorFun = theErrFun;
-  myNodeBlockFirst = NULL;
-  myArcForBlockFirst = NULL;
-  myArcREvBlockFirst = NULL;
-  myFlow = 0;
+  m_nodes = (Node*) malloc (m_nodeNumMax * sizeof (Node));
+  m_edgeBlock  = new Storage<Edge> (EDGE_BLOCK_SIZE);
+  m_flow = 0;
 }
 
-Graph::~Graph()
+GraphEval::~GraphEval()
 {
-  while (myNodeBlockFirst)
-  {
-    NodeBlock* aNext = myNodeBlockFirst->Next;
-    delete myNodeBlockFirst;
-    myNodeBlockFirst = aNext;
-  }
-
-  while (myArcForBlockFirst)
-  {
-    ArcForBlock* next = myArcForBlockFirst->Next;
-    delete myArcForBlockFirst->Start;
-    myArcForBlockFirst = next;
-  }
-
-  while (myArcREvBlockFirst)
-  {
-    ArcRevBlock* next = myArcREvBlockFirst->Next;
-    delete myArcREvBlockFirst->Start;
-    myArcREvBlockFirst = next;
-  }
+  free (m_nodes);
+  delete m_edgeBlock;
 }
 
-Graph::NodeId Graph::AddNode()
+GraphEval::NodeId GraphEval::AddNode (int theNum)
 {
-  Node* aNode;
+  NodeId i = m_nodeNum;
+  m_nodeNum += theNum;
 
-  if (!myNodeBlockFirst || myNodeBlockFirst->Current+1 > &myNodeBlockFirst->Nodes[NODE_BLOCK_SIZE-1])
+  if (m_nodeNum > m_nodeNumMax)
   {
-    NodeBlock* next = myNodeBlockFirst;
-    myNodeBlockFirst = (NodeBlock*) new NodeBlock;
-
-    if (!myNodeBlockFirst)
-    {
-      throw std::runtime_error ("Not enough memory!");
-    }
-
-    myNodeBlockFirst->Current = & (myNodeBlockFirst->Nodes[0]);
-    myNodeBlockFirst->Next = next;
+    throw std::runtime_error ("Error: the number of nodes is exceeded!");
   }
 
-  aNode = myNodeBlockFirst->Current ++;
-  aNode->FirstOut = (ArcForward*) 0;
-  aNode->FirstIn = (ArcReverse*) 0;
+  memset (m_nodes + i, 0, theNum * sizeof (NodeStruct));
 
-  aNode->TrCapacity = 0;
-
-  return (NodeId) aNode;
+  return i;
 }
 
-void Graph::AddEdge (NodeId theFromNode, NodeId theToNode, CapacityType theCapacity, CapacityType theReverseCapacity)
+void GraphEval::AddEdge (NodeId theNodeFrom, NodeId theNodeTo, CapacityType theCap, CapacityType theRevCap)
 {
-  ArcForward* anArcFor;
-  ArcReverse* anArcRev;
+  Edge* a, *a_rev;
+  Node* from = m_nodes + theNodeFrom;
+  Node* to = m_nodes + theNodeTo;
 
-  if (!myArcForBlockFirst || myArcForBlockFirst->Current+1 > &myArcForBlockFirst->ArcsFor[ARC_BLOCK_SIZE])
-  {
-    ArcForBlock* aNext = myArcForBlockFirst;
-    char* aPtr = new char[sizeof (ArcForBlock) +1];
+  a = m_edgeBlock->New (2);
+  a_rev = a + 1;
 
-    if (!aPtr)
-    {
-      throw std::runtime_error ("Not enough memory!");
-    }
-
-    if ( (int) aPtr & 1) { myArcForBlockFirst = (ArcForBlock*) (aPtr + 1); }
-    else              { myArcForBlockFirst = (ArcForBlock*) aPtr; }
-
-    myArcForBlockFirst->Start = aPtr;
-    myArcForBlockFirst->Current = & (myArcForBlockFirst->ArcsFor[0]);
-    myArcForBlockFirst->Next = aNext;
-  }
-
-  if (!myArcREvBlockFirst || myArcREvBlockFirst->Current+1 > &myArcREvBlockFirst->ArcsRev[ARC_BLOCK_SIZE])
-  {
-    ArcRevBlock* aNext = myArcREvBlockFirst;
-    char* aPter = new char[sizeof (ArcRevBlock) +1];
-
-    if (!aPter)
-    {
-      throw std::runtime_error ("Not enough memory!");
-    }
-
-    if ( (int) aPter & 1) { myArcREvBlockFirst = (ArcRevBlock*) (aPter + 1); }
-    else              { myArcREvBlockFirst = (ArcRevBlock*) aPter; }
-
-    myArcREvBlockFirst->Start = aPter;
-    myArcREvBlockFirst->Current = & (myArcREvBlockFirst->ArcsRev[0]);
-    myArcREvBlockFirst->Next = aNext;
-  }
-
-  anArcFor = myArcForBlockFirst->Current ++;
-  anArcRev = myArcREvBlockFirst->Current ++;
-
-  anArcRev->Sister = (ArcForward*) theFromNode;
-  anArcFor->Shift  = (int) theToNode;
-  anArcFor->ResidualCap = theCapacity;
-  anArcFor->ReverseResidualCap = theReverseCapacity;
-
-  ( (Node*) theFromNode)->FirstOut =
-    (ArcForward*) ( (int) ( ( (Node*) theFromNode)->FirstOut) + 1);
-  ( (Node*) theToNode)->FirstIn =
-    (ArcReverse*) ( (int) ( ( (Node*) theToNode)->FirstIn) + 1);
+  a->Sister = a_rev;
+  a_rev->Sister = a;
+  a->Next = from->First;
+  from->First = a;
+  a_rev->Next = ( (Node*) to)->First;
+  to->First = a_rev;
+  a->Head = to;
+  a_rev->Head = from;
+  a->ReverseCap = theCap;
+  a_rev->ReverseCap = theRevCap;
 }
 
-void Graph::SetTWeights (NodeId theNode, CapacityType theCapacityToSource, CapacityType theCapacityToSink)
+void GraphEval::AddTWeights (NodeId theNode, CapacityType theCapSource, CapacityType theCapSink)
 {
-  myFlow += (theCapacityToSource < theCapacityToSink) ? theCapacityToSource : theCapacityToSink;
-  ( (Node*) theNode)->TrCapacity = theCapacityToSource - theCapacityToSink;
+  register CapacityType delta = m_nodes[theNode].TrCap;
+
+  if (delta > 0)
+  {
+    theCapSource += delta;
+  }
+
+  else
+  {
+    theCapSink   -= delta;
+  }
+
+  m_flow += (theCapSource < theCapSink) ? theCapSource : theCapSink;
+  m_nodes[theNode].TrCap = theCapSource - theCapSink;
 }
 
-void Graph::AddTWeights (NodeId theNode, CapacityType theCapacityToSource, CapacityType theCapacityToSink)
-{
-  register CapacityType delta = ( (Node*) theNode)->TrCapacity;
+#define TERM ( (Edge *) 1 )
+#define ORPH ( (Edge *) 2 )
 
-  if (delta > 0) { theCapacityToSource += delta; }
-  else           { theCapacityToSink   -= delta; }
+#define INFINITE 1000000000
 
-  myFlow += (theCapacityToSource < theCapacityToSink) ? theCapacityToSource : theCapacityToSink;
-  ( (Node*) theNode)->TrCapacity = theCapacityToSource - theCapacityToSink;
-}
-
-void Graph::prepareGraph()
-{
-  Node* aNode;
-  ArcForBlock* anArcBlockFor, *anArcBlockForFirst;
-  ArcRevBlock* anArcBlockRev, *anArcBlockRevFirst, *anArcBlockREvScan;
-  ArcForward* anArcFor;
-  ArcReverse* anArcRev, *anArcRevSCan, anArcREvTmp;
-  NodeBlock* aNodeBlock;
-  bool aForwardFlag = false, aReverseFlag = false;
-  int aK;
-
-  if (!myArcREvBlockFirst)
-  {
-    NodeId aNodeFrom = AddNode(), aNodeTo = AddNode();
-    AddEdge (aNodeFrom, aNodeTo, 1, 0);
-  }
-
-  /* FIRST STAGE */
-  anArcREvTmp.Sister = NULL;
-
-  for (anArcRev=myArcREvBlockFirst->Current; anArcRev<&myArcREvBlockFirst->ArcsRev[ARC_BLOCK_SIZE]; anArcRev++)
-  {
-    anArcRev->Sister = NULL;
-  }
-
-  anArcBlockFor = anArcBlockForFirst = myArcForBlockFirst;
-  anArcBlockRev = anArcBlockRevFirst = anArcBlockREvScan = myArcREvBlockFirst;
-  anArcFor = &anArcBlockFor->ArcsFor[0];
-  anArcRev = anArcRevSCan = &anArcBlockRev->ArcsRev[0];
-
-  for (aNodeBlock=myNodeBlockFirst; aNodeBlock; aNodeBlock=aNodeBlock->Next)
-  {
-    for (aNode=&aNodeBlock->Nodes[0]; aNode<aNodeBlock->Current; aNode++)
-    {
-      /* outgoing arcs */
-      aK = (int) aNode->FirstOut;
-
-      if (anArcFor + aK > &anArcBlockFor->ArcsFor[ARC_BLOCK_SIZE])
-      {
-        if (aK > ARC_BLOCK_SIZE)
-        {
-          throw std::runtime_error ("# of arcs per node exceeds block size!");
-        }
-
-        if (aForwardFlag) { anArcBlockFor = NULL; }
-        else          { anArcBlockFor = anArcBlockFor->Next; anArcBlockREvScan = anArcBlockREvScan->Next; }
-
-        if (anArcBlockFor == NULL)
-        {
-          ArcForBlock* next = myArcForBlockFirst;
-          char* ptr = new char[sizeof (ArcForBlock) +1];
-
-          if (!ptr)
-          {
-            throw std::runtime_error ("Not enough memory!");
-          }
-
-          if ( (int) ptr & 1) { myArcForBlockFirst = (ArcForBlock*) (ptr + 1); }
-          else              { myArcForBlockFirst = (ArcForBlock*) ptr; }
-
-          myArcForBlockFirst->Start = ptr;
-          myArcForBlockFirst->Current = & (myArcForBlockFirst->ArcsFor[0]);
-          myArcForBlockFirst->Next = next;
-          anArcBlockFor = myArcForBlockFirst;
-          aForwardFlag = true;
-        }
-        else { anArcRevSCan = &anArcBlockREvScan->ArcsRev[0]; }
-
-        anArcFor = &anArcBlockFor->ArcsFor[0];
-      }
-
-      if (anArcBlockREvScan)
-      {
-        anArcRevSCan += aK;
-        aNode->Parent = (ArcForward*) anArcRevSCan;
-      }
-      else { aNode->Parent = (ArcForward*) &anArcREvTmp; }
-
-      anArcFor += aK;
-      aNode->FirstOut = anArcFor;
-      anArcBlockFor->last_node = aNode;
-
-      /* incoming arcs */
-      aK = (int) aNode->FirstIn;
-
-      if (anArcRev + aK > &anArcBlockRev->ArcsRev[ARC_BLOCK_SIZE])
-      {
-        if (aK > ARC_BLOCK_SIZE)
-        {
-          throw std::runtime_error ("# of arcs per node exceeds block size!");
-        }
-
-        if (aReverseFlag) { anArcBlockRev = NULL; }
-        else          { anArcBlockRev = anArcBlockRev->Next; }
-
-        if (anArcBlockRev == NULL)
-        {
-          ArcRevBlock* next = myArcREvBlockFirst;
-          char* ptr = new char[sizeof (ArcRevBlock) +1];
-
-          if (!ptr)
-          {
-            throw std::runtime_error ("Not enough memory!");
-          }
-
-          if ( (int) ptr & 1) { myArcREvBlockFirst = (ArcRevBlock*) (ptr + 1); }
-          else              { myArcREvBlockFirst = (ArcRevBlock*) ptr; }
-
-          myArcREvBlockFirst->Start = ptr;
-          myArcREvBlockFirst->Current = & (myArcREvBlockFirst->ArcsRev[0]);
-          myArcREvBlockFirst->Next = next;
-          anArcBlockRev = myArcREvBlockFirst;
-          aReverseFlag = true;
-        }
-
-        anArcRev = &anArcBlockRev->ArcsRev[0];
-      }
-
-      anArcRev += aK;
-      aNode->FirstIn = anArcRev;
-      anArcBlockRev->last_node = aNode;
-    }
-
-    aNode->FirstOut = anArcFor;
-    aNode->FirstIn  = anArcRev;
-  }
-
-  for (anArcBlockFor=myArcForBlockFirst; anArcBlockFor; anArcBlockFor=anArcBlockFor->Next)
-  {
-    anArcBlockFor->Current = anArcBlockFor->last_node->FirstOut;
-  }
-
-  for (anArcBlockFor=anArcBlockForFirst, anArcBlockRev=anArcBlockRevFirst;
-       anArcBlockFor;
-       anArcBlockFor=anArcBlockFor->Next, anArcBlockRev=anArcBlockRev->Next)
-    for (anArcFor=&anArcBlockFor->ArcsFor[0], anArcRev=&anArcBlockRev->ArcsRev[0];
-         anArcFor<&anArcBlockFor->ArcsFor[ARC_BLOCK_SIZE];
-         anArcFor++, anArcRev++)
-    {
-      ArcForward* anArcForward;
-      ArcReverse* anArcReverse;
-      Node* aNodeFrom;
-      int aShift = 0, aShiftNew;
-      CapacityType aRCap, aReverseRCap, aRCapNew, aReverseRCapNew;
-
-      if (! (aNodeFrom= (Node*) (anArcRev->Sister))) { continue; }
-
-      anArcForward = anArcFor;
-      anArcReverse = anArcRev;
-
-      do
-      {
-        anArcReverse->Sister = NULL;
-
-        aShiftNew = (int)(((char*) (anArcForward->Shift)) - (char*) aNodeFrom);
-        aRCapNew = anArcForward->ResidualCap;
-        aReverseRCapNew = anArcForward->ReverseResidualCap;
-
-        if (aShift)
-        {
-          anArcForward->Shift = aShift;
-          anArcForward->ResidualCap = aRCap;
-          anArcForward->ReverseResidualCap = aReverseRCap;
-        }
-
-        aShift = aShiftNew;
-        aRCap = aRCapNew;
-        aReverseRCap = aReverseRCapNew;
-
-        anArcForward = -- aNodeFrom->FirstOut;
-
-        if ( (ArcReverse*) (aNodeFrom->Parent) != &anArcREvTmp)
-        {
-          aNodeFrom->Parent = (ArcForward*) ( ( (ArcReverse*) (aNodeFrom->Parent)) - 1);
-          anArcReverse = (ArcReverse*) (aNodeFrom->Parent);
-        }
-      }
-      while (aNodeFrom= (Node*) (anArcReverse->Sister));
-
-      anArcForward->Shift = aShift;
-      anArcForward->ResidualCap = aRCap;
-      anArcForward->ReverseResidualCap = aReverseRCap;
-    }
-
-  for (anArcBlockFor=myArcForBlockFirst; anArcBlockFor; anArcBlockFor=anArcBlockFor->Next)
-  {
-    aNode = anArcBlockFor->last_node;
-    anArcFor = aNode->FirstOut;
-    anArcBlockFor->Current->Shift     = anArcFor->Shift;
-    anArcBlockFor->Current->ResidualCap     = anArcFor->ResidualCap;
-    anArcBlockFor->Current->ReverseResidualCap = anArcFor->ReverseResidualCap;
-    anArcFor->Shift = (int) (anArcBlockFor->Current + 1);
-    aNode->FirstOut = (ArcForward*) ( ( (char*) anArcFor) - 1);
-  }
-
-  /* THIRD STAGE */
-  for (anArcBlockRev=myArcREvBlockFirst; anArcBlockRev; anArcBlockRev=anArcBlockRev->Next)
-  {
-    anArcBlockRev->Current = anArcBlockRev->last_node->FirstIn;
-  }
-
-  for (aNodeBlock = myNodeBlockFirst; aNodeBlock; aNodeBlock=aNodeBlock->Next)
-    for (aNode = &aNodeBlock->Nodes[0]; aNode<aNodeBlock->Current; aNode++)
-    {
-      ArcForward* aForwardFirst, *aForwardLAst;
-
-      aForwardFirst = aNode->FirstOut;
-
-      if (IS_ODD (aForwardFirst))
-      {
-        aForwardFirst = (ArcForward*) ( ( (char*) aForwardFirst) + 1);
-        aForwardLAst = (ArcForward*) ( (aForwardFirst ++)->Shift);
-      }
-      else { aForwardLAst = (aNode + 1)->FirstOut; }
-
-      for (anArcFor=aForwardFirst; anArcFor<aForwardLAst; anArcFor++)
-      {
-        Node* to = NEIGHBOR_NODE (aNode, anArcFor->Shift);
-        anArcRev = -- to->FirstIn;
-        anArcRev->Sister = anArcFor;
-      }
-    }
-
-  for (anArcBlockRev=myArcREvBlockFirst; anArcBlockRev; anArcBlockRev=anArcBlockRev->Next)
-  {
-    aNode = anArcBlockRev->last_node;
-    anArcRev = aNode->FirstIn;
-    anArcBlockRev->Current->Sister = anArcRev->Sister;
-    anArcRev->Sister = (ArcForward*) (anArcBlockRev->Current + 1);
-    aNode->FirstIn = (ArcReverse*) ( ( (char*) anArcRev) - 1);
-  }
-}
-
-#define TERMINAL ( (ArcForward *) 1 )
-#define ORPHAN   ( (ArcForward *) 2 )
-
-#define INFINITE_D 1000000000
-
-inline void Graph::setActive (Node* theNode)
+inline void GraphEval::setActive (Node* theNode)
 {
   if (!theNode->Next)
   {
-    if (myQueueLast[1]) { myQueueLast[1] -> Next = theNode; }
-    else               { myQueueFirst[1]        = theNode; }
-
-    myQueueLast[1] = theNode;
-    theNode -> Next = theNode;
-  }
-}
-
-inline Graph::Node* Graph::nextActive()
-{
-  Node* aNode;
-
-  while (true)
-  {
-    if (! (aNode=myQueueFirst[0]))
+    if (m_queueLast[1])
     {
-      myQueueFirst[0] = aNode = myQueueFirst[1];
-      myQueueLast[0]  = myQueueLast[1];
-      myQueueFirst[1] = NULL;
-      myQueueLast[1]  = NULL;
-
-      if (!aNode) { return NULL; }
+      m_queueLast[1]->Next = theNode;
     }
 
-    if (aNode->Next == aNode) { myQueueFirst[0] = myQueueLast[0] = NULL; }
-    else              { myQueueFirst[0] = aNode -> Next; }
+    else
+    {
+      m_queueFirst[1] = theNode;
+    }
 
-    aNode -> Next = NULL;
-
-    if (aNode->Parent) { return aNode; }
+    m_queueLast[1] = theNode;
+    theNode->Next = theNode;
   }
 }
 
-void Graph::maxflowInit()
+inline GraphEval::Node* GraphEval::nextActive()
 {
   Node* aNode;
-  NodeBlock* aNodeBlock;
 
-  myQueueFirst[0] = myQueueLast[0] = NULL;
-  myQueueFirst[1] = myQueueLast[1] = NULL;
-  myOrphanFirst = NULL;
-
-  for (aNodeBlock=myNodeBlockFirst; aNodeBlock; aNodeBlock=aNodeBlock->Next)
+  while (1)
   {
-    for (aNode=&aNodeBlock->Nodes[0]; aNode<aNodeBlock->Current; aNode++)
+    if (! (aNode = m_queueFirst[0]))
     {
-      aNode -> Next = NULL;
-      aNode -> TimeStamp = 0;
+      m_queueFirst[0] = aNode = m_queueFirst[1];
+      m_queueLast[0]  = m_queueLast[1];
+      m_queueFirst[1] = NULL;
+      m_queueLast[1]  = NULL;
 
-      if (aNode->TrCapacity > 0)
+      if (!aNode)
       {
-        aNode -> IsSink = 0;
-        aNode -> Parent = TERMINAL;
-        setActive (aNode);
-        aNode -> TimeStamp = 0;
-        aNode -> Distance = 1;
+        return NULL;
       }
-      else if (aNode->TrCapacity < 0)
-      {
-        aNode -> IsSink = 1;
-        aNode -> Parent = TERMINAL;
-        setActive (aNode);
-        aNode -> TimeStamp = 0;
-        aNode -> Distance = 1;
-      }
-      else
-      {
-        aNode -> Parent = NULL;
-      }
+    }
+
+    if (aNode->Next == aNode)
+    {
+      m_queueFirst[0] = m_queueLast[0] = NULL;
+    }
+
+    else
+    {
+      m_queueFirst[0] = aNode->Next;
+    }
+
+    aNode->Next = NULL;
+
+    if (aNode->Parent)
+    {
+      return aNode;
+    }
+  }
+}
+
+void GraphEval::maxflowInit()
+{
+  Node* aNode;
+
+  m_queueFirst[0] = m_queueLast[0] = NULL;
+  m_queueFirst[1] = m_queueLast[1] = NULL;
+  m_orphanFirst = NULL;
+
+  for (aNode = m_nodes; aNode < m_nodes + m_nodeNum; aNode++)
+  {
+    aNode->Next = NULL;
+    aNode->TS = 0;
+
+    if (aNode->TrCap > 0)
+    {
+      aNode->IsSink = 0;
+      aNode->Parent = TERM;
+      setActive (aNode);
+      aNode->TS = 0;
+      aNode->DIST = 1;
+    }
+
+    else if (aNode->TrCap < 0)
+    {
+      aNode->IsSink = 1;
+      aNode->Parent = TERM;
+      setActive (aNode);
+      aNode->TS = 0;
+      aNode->DIST = 1;
+    }
+
+    else
+    {
+      aNode->Parent = NULL;
     }
   }
 
-  myTime = 0;
+  m_time = 0;
 }
 
-void Graph::augment (Node* theSStart, Node* theTStart, CapacityType* theCapMiddle, CapacityType* theRevCapMiddle)
+void GraphEval::augment (Edge* theMiddleEdge)
 {
   Node* aNode;
-  ArcForward* anArc;
-  CapacityType aBottleneck;
+  Edge* anEdge;
+  TCapacityType aBottleneck;
   NodePtr* aNodePtr;
 
-  aBottleneck = *theCapMiddle;
+  aBottleneck = theMiddleEdge->ReverseCap;
 
-  for (aNode=theSStart; ;)
+  for (aNode = theMiddleEdge->Sister->Head; ; aNode = anEdge->Head)
   {
-    anArc = aNode -> Parent;
+    anEdge = aNode->Parent;
 
-    if (anArc == TERMINAL) { break; }
-
-    if (IS_ODD (anArc))
+    if (anEdge == TERM)
     {
-      anArc = MAKE_EVEN (anArc);
-
-      if (aBottleneck > anArc->ResidualCap) { aBottleneck = anArc -> ResidualCap; }
-
-      aNode = NEIGHBOR_NODE_REV (aNode, anArc -> Shift);
+      break;
     }
-    else
-    {
-      if (aBottleneck > anArc->ReverseResidualCap) { aBottleneck = anArc -> ReverseResidualCap; }
 
-      aNode = NEIGHBOR_NODE (aNode, anArc -> Shift);
+    if (aBottleneck > anEdge->Sister->ReverseCap)
+    {
+      aBottleneck = anEdge->Sister->ReverseCap;
     }
   }
 
-  if (aBottleneck > aNode->TrCapacity) { aBottleneck = aNode -> TrCapacity; }
-
-  for (aNode=theTStart; ;)
+  if (aBottleneck > aNode->TrCap)
   {
-    anArc = aNode -> Parent;
+    aBottleneck = aNode->TrCap;
+  }
 
-    if (anArc == TERMINAL) { break; }
+  for (aNode = theMiddleEdge->Head; ; aNode = anEdge->Head)
+  {
+    anEdge = aNode->Parent;
 
-    if (IS_ODD (anArc))
+    if (anEdge == TERM)
     {
-      anArc = MAKE_EVEN (anArc);
-
-      if (aBottleneck > anArc->ReverseResidualCap) { aBottleneck = anArc -> ReverseResidualCap; }
-
-      aNode = NEIGHBOR_NODE_REV (aNode, anArc -> Shift);
+      break;
     }
-    else
-    {
-      if (aBottleneck > anArc->ResidualCap) { aBottleneck = anArc -> ResidualCap; }
 
-      aNode = NEIGHBOR_NODE (aNode, anArc -> Shift);
+    if (aBottleneck > anEdge->ReverseCap)
+    {
+      aBottleneck = anEdge->ReverseCap;
     }
   }
 
-  if (aBottleneck > - aNode->TrCapacity) { aBottleneck = - aNode -> TrCapacity; }
-
-
-  *theRevCapMiddle += aBottleneck;
-  *theCapMiddle -= aBottleneck;
-
-  for (aNode=theSStart; ;)
+  if (aBottleneck > - aNode->TrCap)
   {
-    anArc = aNode -> Parent;
+    aBottleneck = - aNode->TrCap;
+  }
 
-    if (anArc == TERMINAL) { break; }
 
-    if (IS_ODD (anArc))
+  theMiddleEdge->Sister->ReverseCap += aBottleneck;
+  theMiddleEdge->ReverseCap -= aBottleneck;
+
+  for (aNode = theMiddleEdge->Sister->Head; ; aNode = anEdge->Head)
+  {
+    anEdge = aNode->Parent;
+
+    if (anEdge == TERM)
     {
-      anArc = MAKE_EVEN (anArc);
-      anArc -> ReverseResidualCap += aBottleneck;
-      anArc -> ResidualCap -= aBottleneck;
-
-      if (!anArc->ResidualCap)
-      {
-        aNode -> Parent = ORPHAN;
-        aNodePtr = myNodePtrBLock -> New();
-        aNodePtr -> Ptr = aNode;
-        aNodePtr -> Next = myOrphanFirst;
-        myOrphanFirst = aNodePtr;
-      }
-
-      aNode = NEIGHBOR_NODE_REV (aNode, anArc -> Shift);
+      break;
     }
-    else
+
+    anEdge->ReverseCap += aBottleneck;
+    anEdge->Sister->ReverseCap -= aBottleneck;
+
+    if (!anEdge->Sister->ReverseCap)
     {
-      anArc -> ResidualCap += aBottleneck;
-      anArc -> ReverseResidualCap -= aBottleneck;
-
-      if (!anArc->ReverseResidualCap)
-      {
-        aNode -> Parent = ORPHAN;
-        aNodePtr = myNodePtrBLock -> New();
-        aNodePtr -> Ptr = aNode;
-        aNodePtr -> Next = myOrphanFirst;
-        myOrphanFirst = aNodePtr;
-      }
-
-      aNode = NEIGHBOR_NODE (aNode, anArc -> Shift);
+      aNode->Parent = ORPH;
+      aNodePtr = m_nodePtrBlock->New();
+      aNodePtr->Ptr = aNode;
+      aNodePtr->Next = m_orphanFirst;
+      m_orphanFirst = aNodePtr;
     }
   }
 
-  aNode -> TrCapacity -= aBottleneck;
+  aNode->TrCap -= aBottleneck;
 
-  if (!aNode->TrCapacity)
+  if (!aNode->TrCap)
   {
-    aNode -> Parent = ORPHAN;
-    aNodePtr = myNodePtrBLock -> New();
-    aNodePtr -> Ptr = aNode;
-    aNodePtr -> Next = myOrphanFirst;
-    myOrphanFirst = aNodePtr;
+    aNode->Parent = ORPH;
+    aNodePtr = m_nodePtrBlock->New();
+    aNodePtr->Ptr = aNode;
+    aNodePtr->Next = m_orphanFirst;
+    m_orphanFirst = aNodePtr;
   }
 
-  for (aNode=theTStart; ;)
+  for (aNode = theMiddleEdge->Head; ; aNode = anEdge->Head)
   {
-    anArc = aNode -> Parent;
+    anEdge = aNode->Parent;
 
-    if (anArc == TERMINAL) { break; }
-
-    if (IS_ODD (anArc))
+    if (anEdge == TERM)
     {
-      anArc = MAKE_EVEN (anArc);
-      anArc -> ResidualCap += aBottleneck;
-      anArc -> ReverseResidualCap -= aBottleneck;
-
-      if (!anArc->ReverseResidualCap)
-      {
-        aNode -> Parent = ORPHAN;
-        aNodePtr = myNodePtrBLock -> New();
-        aNodePtr -> Ptr = aNode;
-        aNodePtr -> Next = myOrphanFirst;
-        myOrphanFirst = aNodePtr;
-      }
-
-      aNode = NEIGHBOR_NODE_REV (aNode, anArc -> Shift);
+      break;
     }
-    else
+
+    anEdge->Sister->ReverseCap += aBottleneck;
+    anEdge->ReverseCap -= aBottleneck;
+
+    if (!anEdge->ReverseCap)
     {
-      anArc -> ReverseResidualCap += aBottleneck;
-      anArc -> ResidualCap -= aBottleneck;
-
-      if (!anArc->ResidualCap)
-      {
-        aNode -> Parent = ORPHAN;
-        aNodePtr = myNodePtrBLock -> New();
-        aNodePtr -> Ptr = aNode;
-        aNodePtr -> Next = myOrphanFirst;
-        myOrphanFirst = aNodePtr;
-      }
-
-      aNode = NEIGHBOR_NODE (aNode, anArc -> Shift);
+      aNode->Parent = ORPH;
+      aNodePtr = m_nodePtrBlock->New();
+      aNodePtr->Ptr = aNode;
+      aNodePtr->Next = m_orphanFirst;
+      m_orphanFirst = aNodePtr;
     }
   }
 
-  aNode -> TrCapacity += aBottleneck;
+  aNode->TrCap += aBottleneck;
 
-  if (!aNode->TrCapacity)
+  if (!aNode->TrCap)
   {
-    aNode -> Parent = ORPHAN;
-    aNodePtr = myNodePtrBLock -> New();
-    aNodePtr -> Ptr = aNode;
-    aNodePtr -> Next = myOrphanFirst;
-    myOrphanFirst = aNodePtr;
+    aNode->Parent = ORPH;
+    aNodePtr = m_nodePtrBlock->New();
+    aNodePtr->Ptr = aNode;
+    aNodePtr->Next = m_orphanFirst;
+    m_orphanFirst = aNodePtr;
   }
 
-  myFlow += aBottleneck;
+
+  m_flow += aBottleneck;
 }
 
-void Graph::processSourceOrphan (Node* theNode)
+void GraphEval::processSourceOrphan (Node* theNode)
 {
   Node* aNode;
-  ArcForward* anArc0For, *anArc0ForFirst, *anArc0ForLast;
-  ArcReverse* anArc0Rev, *anArc0RevFirst, *anArc0RevLast;
-  ArcForward* anArc0Min = NULL, *anArc;
+  Edge* anEdge0, *anEdge0Min = NULL, *anEdge;
   NodePtr* aNodePtr;
-  int aDist, aDistMin = INFINITE_D;
+  int d, d_min = INFINITE;
 
-  anArc0ForFirst = theNode -> FirstOut;
-
-  if (IS_ODD (anArc0ForFirst))
-  {
-    anArc0ForFirst = (ArcForward*) ( ( (char*) anArc0ForFirst) + 1);
-    anArc0ForLast = (ArcForward*) ( (anArc0ForFirst ++) -> Shift);
-  }
-  else { anArc0ForLast = (theNode + 1) -> FirstOut; }
-
-  anArc0RevFirst = theNode -> FirstIn;
-
-  if (IS_ODD (anArc0RevFirst))
-  {
-    anArc0RevFirst = (ArcReverse*) ( ( (char*) anArc0RevFirst) + 1);
-    anArc0RevLast  = (ArcReverse*) ( (anArc0RevFirst ++) -> Sister);
-  }
-  else { anArc0RevLast = (theNode + 1) -> FirstIn; }
-
-
-  for (anArc0For=anArc0ForFirst; anArc0For<anArc0ForLast; anArc0For++)
-    if (anArc0For->ReverseResidualCap)
+  for (anEdge0 = theNode->First; anEdge0; anEdge0 = anEdge0->Next)
+    if (anEdge0->Sister->ReverseCap)
     {
-      aNode = NEIGHBOR_NODE (theNode, anArc0For -> Shift);
+      aNode = anEdge0->Head;
 
-      if (!aNode->IsSink && (anArc=aNode->Parent))
+      if (!aNode->IsSink && (anEdge = aNode->Parent))
       {
-        /* checking the origin of j */
-        aDist = 0;
+        d = 0;
 
-        while (true)
+        while (1)
         {
-          if (aNode->TimeStamp == myTime)
+          if (aNode->TS == m_time)
           {
-            aDist += aNode -> Distance;
+            d += aNode->DIST;
             break;
           }
 
-          anArc = aNode -> Parent;
-          aDist ++;
+          anEdge = aNode->Parent;
+          d ++;
 
-          if (anArc==TERMINAL)
+          if (anEdge == TERM)
           {
-            aNode -> TimeStamp = myTime;
-            aNode -> Distance = 1;
+            aNode->TS = m_time;
+            aNode->DIST = 1;
             break;
           }
 
-          if (anArc==ORPHAN) { aDist = INFINITE_D; break; }
+          if (anEdge == ORPH)
+          {
+            d = INFINITE;
+            break;
+          }
 
-          if (IS_ODD (anArc))
-          { aNode = NEIGHBOR_NODE_REV (aNode, MAKE_EVEN (anArc) -> Shift); }
-          else
-          { aNode = NEIGHBOR_NODE (aNode, anArc -> Shift); }
+          aNode = anEdge->Head;
         }
 
-        if (aDist<INFINITE_D)
+        if (d < INFINITE)
         {
-          if (aDist<aDistMin)
+          if (d < d_min)
           {
-            anArc0Min = anArc0For;
-            aDistMin = aDist;
+            anEdge0Min = anEdge0;
+            d_min = d;
           }
 
-          for (aNode=NEIGHBOR_NODE (theNode, anArc0For->Shift); aNode->TimeStamp!=myTime;)
+          for (aNode = anEdge0->Head; aNode->TS != m_time; aNode = aNode->Parent->Head)
           {
-            aNode -> TimeStamp = myTime;
-            aNode -> Distance = aDist --;
-            anArc = aNode->Parent;
-
-            if (IS_ODD (anArc))
-            { aNode = NEIGHBOR_NODE_REV (aNode, MAKE_EVEN (anArc) -> Shift); }
-            else
-            { aNode = NEIGHBOR_NODE (aNode, anArc -> Shift); }
+            aNode->TS = m_time;
+            aNode->DIST = d --;
           }
         }
       }
     }
 
-  for (anArc0Rev=anArc0RevFirst; anArc0Rev<anArc0RevLast; anArc0Rev++)
+  if (theNode->Parent = anEdge0Min)
   {
-    anArc0For = anArc0Rev -> Sister;
-
-    if (anArc0For->ResidualCap)
-    {
-      aNode = NEIGHBOR_NODE_REV (theNode, anArc0For -> Shift);
-
-      if (!aNode->IsSink && (anArc=aNode->Parent))
-      {
-        aDist = 0;
-
-        while (true)
-        {
-          if (aNode->TimeStamp == myTime)
-          {
-            aDist += aNode -> Distance;
-            break;
-          }
-
-          anArc = aNode -> Parent;
-          aDist ++;
-
-          if (anArc==TERMINAL)
-          {
-            aNode -> TimeStamp = myTime;
-            aNode -> Distance = 1;
-            break;
-          }
-
-          if (anArc==ORPHAN) { aDist = INFINITE_D; break; }
-
-          if (IS_ODD (anArc))
-          { aNode = NEIGHBOR_NODE_REV (aNode, MAKE_EVEN (anArc) -> Shift); }
-          else
-          { aNode = NEIGHBOR_NODE (aNode, anArc -> Shift); }
-        }
-
-        if (aDist<INFINITE_D)
-        {
-          if (aDist<aDistMin)
-          {
-            anArc0Min = MAKE_ODD (anArc0For);
-            aDistMin = aDist;
-          }
-
-          for (aNode=NEIGHBOR_NODE_REV (theNode,anArc0For->Shift); aNode->TimeStamp!=myTime;)
-          {
-            aNode -> TimeStamp = myTime;
-            aNode -> Distance = aDist --;
-            anArc = aNode->Parent;
-
-            if (IS_ODD (anArc))
-            { aNode = NEIGHBOR_NODE_REV (aNode, MAKE_EVEN (anArc) -> Shift); }
-            else
-            { aNode = NEIGHBOR_NODE (aNode, anArc -> Shift); }
-          }
-        }
-      }
-    }
+    theNode->TS = m_time;
+    theNode->DIST = d_min + 1;
   }
 
-  if (theNode->Parent = anArc0Min)
-  {
-    theNode -> TimeStamp = myTime;
-    theNode -> Distance = aDistMin + 1;
-  }
   else
   {
-    theNode -> TimeStamp = 0;
+    theNode->TS = 0;
 
-    for (anArc0For=anArc0ForFirst; anArc0For<anArc0ForLast; anArc0For++)
+    for (anEdge0 = theNode->First; anEdge0; anEdge0 = anEdge0->Next)
     {
-      aNode = NEIGHBOR_NODE (theNode, anArc0For -> Shift);
+      aNode = anEdge0->Head;
 
-      if (!aNode->IsSink && (anArc=aNode->Parent))
+      if (!aNode->IsSink && (anEdge = aNode->Parent))
       {
-        if (anArc0For->ReverseResidualCap) { setActive (aNode); }
-
-        if (anArc!=TERMINAL && anArc!=ORPHAN && IS_ODD (anArc) && NEIGHBOR_NODE_REV (aNode, MAKE_EVEN (anArc)->Shift) ==theNode)
+        if (anEdge0->Sister->ReverseCap)
         {
-          aNode -> Parent = ORPHAN;
-          aNodePtr = myNodePtrBLock -> New();
-          aNodePtr -> Ptr = aNode;
-
-          if (myOrphanLast) { myOrphanLast -> Next = aNodePtr; }
-          else             { myOrphanFirst        = aNodePtr; }
-
-          myOrphanLast = aNodePtr;
-          aNodePtr -> Next = NULL;
+          setActive (aNode);
         }
-      }
-    }
 
-    for (anArc0Rev=anArc0RevFirst; anArc0Rev<anArc0RevLast; anArc0Rev++)
-    {
-      anArc0For = anArc0Rev -> Sister;
-      aNode = NEIGHBOR_NODE_REV (theNode, anArc0For -> Shift);
-
-      if (!aNode->IsSink && (anArc=aNode->Parent))
-      {
-        if (anArc0For->ResidualCap) { setActive (aNode); }
-
-        if (anArc!=TERMINAL && anArc!=ORPHAN && !IS_ODD (anArc) && NEIGHBOR_NODE (aNode, anArc->Shift) ==theNode)
+        if (anEdge != TERM && anEdge != ORPH && anEdge->Head == theNode)
         {
-          aNode -> Parent = ORPHAN;
-          aNodePtr = myNodePtrBLock -> New();
-          aNodePtr -> Ptr = aNode;
+          aNode->Parent = ORPH;
+          aNodePtr = m_nodePtrBlock->New();
+          aNodePtr->Ptr = aNode;
 
-          if (myOrphanLast) { myOrphanLast -> Next = aNodePtr; }
-          else             { myOrphanFirst        = aNodePtr; }
+          if (m_orphanLast)
+          {
+            m_orphanLast->Next = aNodePtr;
+          }
 
-          myOrphanLast = aNodePtr;
-          aNodePtr -> Next = NULL;
+          else
+          {
+            m_orphanFirst        = aNodePtr;
+          }
+
+          m_orphanLast = aNodePtr;
+          aNodePtr->Next = NULL;
         }
       }
     }
   }
 }
 
-void Graph::processSinkOrphan (Node* theNode)
+void GraphEval::processSinkOrphan (Node* theNode)
 {
   Node* aNode;
-  ArcForward* anArc0For, *anArc0ForFirst, *anArc0ForLast;
-  ArcReverse* anArc0Rev, *anArc0RevFirst, *anArc0RevLast;
-  ArcForward* anArc0Min = NULL, *anArc;
+  Edge* anEdge0, *anEdge0Min = NULL, *anEdge;
   NodePtr* aNodePtr;
-  int aDist, aDistMin = INFINITE_D;
+  int d, d_min = INFINITE;
 
-  anArc0ForFirst = theNode -> FirstOut;
-
-  if (IS_ODD (anArc0ForFirst))
-  {
-    anArc0ForFirst = (ArcForward*) ( ( (char*) anArc0ForFirst) + 1);
-    anArc0ForLast = (ArcForward*) ( (anArc0ForFirst ++) -> Shift);
-  }
-  else { anArc0ForLast = (theNode + 1) -> FirstOut; }
-
-  anArc0RevFirst = theNode -> FirstIn;
-
-  if (IS_ODD (anArc0RevFirst))
-  {
-    anArc0RevFirst = (ArcReverse*) ( ( (char*) anArc0RevFirst) + 1);
-    anArc0RevLast  = (ArcReverse*) ( (anArc0RevFirst ++) -> Sister);
-  }
-  else { anArc0RevLast = (theNode + 1) -> FirstIn; }
-
-
-  for (anArc0For=anArc0ForFirst; anArc0For<anArc0ForLast; anArc0For++)
-    if (anArc0For->ResidualCap)
+  for (anEdge0 = theNode->First; anEdge0; anEdge0 = anEdge0->Next)
+    if (anEdge0->ReverseCap)
     {
-      aNode = NEIGHBOR_NODE (theNode, anArc0For -> Shift);
+      aNode = anEdge0->Head;
 
-      if (aNode->IsSink && (anArc=aNode->Parent))
+      if (aNode->IsSink && (anEdge = aNode->Parent))
       {
-        aDist = 0;
+        d = 0;
 
-        while (true)
+        while (1)
         {
-          if (aNode->TimeStamp == myTime)
+          if (aNode->TS == m_time)
           {
-            aDist += aNode -> Distance;
+            d += aNode->DIST;
             break;
           }
 
-          anArc = aNode -> Parent;
-          aDist ++;
+          anEdge = aNode->Parent;
+          d ++;
 
-          if (anArc==TERMINAL)
+          if (anEdge == TERM)
           {
-            aNode -> TimeStamp = myTime;
-            aNode -> Distance = 1;
+            aNode->TS = m_time;
+            aNode->DIST = 1;
             break;
           }
 
-          if (anArc==ORPHAN) { aDist = INFINITE_D; break; }
+          if (anEdge == ORPH)
+          {
+            d = INFINITE;
+            break;
+          }
 
-          if (IS_ODD (anArc))
-          { aNode = NEIGHBOR_NODE_REV (aNode, MAKE_EVEN (anArc) -> Shift); }
-          else
-          { aNode = NEIGHBOR_NODE (aNode, anArc -> Shift); }
+          aNode = anEdge->Head;
         }
 
-        if (aDist<INFINITE_D)
+        if (d < INFINITE)
         {
-          if (aDist<aDistMin)
+          if (d < d_min)
           {
-            anArc0Min = anArc0For;
-            aDistMin = aDist;
+            anEdge0Min = anEdge0;
+            d_min = d;
           }
 
-          for (aNode=NEIGHBOR_NODE (theNode, anArc0For->Shift); aNode->TimeStamp!=myTime;)
+          for (aNode = anEdge0->Head; aNode->TS != m_time; aNode = aNode->Parent->Head)
           {
-            aNode -> TimeStamp = myTime;
-            aNode -> Distance = aDist --;
-            anArc = aNode->Parent;
-
-            if (IS_ODD (anArc))
-            { aNode = NEIGHBOR_NODE_REV (aNode, MAKE_EVEN (anArc) -> Shift); }
-            else
-            { aNode = NEIGHBOR_NODE (aNode, anArc -> Shift); }
+            aNode->TS = m_time;
+            aNode->DIST = d --;
           }
         }
       }
     }
 
-  for (anArc0Rev=anArc0RevFirst; anArc0Rev<anArc0RevLast; anArc0Rev++)
+  if (theNode->Parent = anEdge0Min)
   {
-    anArc0For = anArc0Rev -> Sister;
-
-    if (anArc0For->ReverseResidualCap)
-    {
-      aNode = NEIGHBOR_NODE_REV (theNode, anArc0For -> Shift);
-
-      if (aNode->IsSink && (anArc=aNode->Parent))
-      {
-        aDist = 0;
-
-        while (true)
-        {
-          if (aNode->TimeStamp == myTime)
-          {
-            aDist += aNode -> Distance;
-            break;
-          }
-
-          anArc = aNode -> Parent;
-          aDist ++;
-
-          if (anArc==TERMINAL)
-          {
-            aNode -> TimeStamp = myTime;
-            aNode -> Distance = 1;
-            break;
-          }
-
-          if (anArc==ORPHAN) { aDist = INFINITE_D; break; }
-
-          if (IS_ODD (anArc))
-          { aNode = NEIGHBOR_NODE_REV (aNode, MAKE_EVEN (anArc) -> Shift); }
-          else
-          { aNode = NEIGHBOR_NODE (aNode, anArc -> Shift); }
-        }
-
-        if (aDist<INFINITE_D)
-        {
-          if (aDist<aDistMin)
-          {
-            anArc0Min = MAKE_ODD (anArc0For);
-            aDistMin = aDist;
-          }
-
-          for (aNode=NEIGHBOR_NODE_REV (theNode,anArc0For->Shift); aNode->TimeStamp!=myTime;)
-          {
-            aNode -> TimeStamp = myTime;
-            aNode -> Distance = aDist --;
-            anArc = aNode->Parent;
-
-            if (IS_ODD (anArc))
-            { aNode = NEIGHBOR_NODE_REV (aNode, MAKE_EVEN (anArc) -> Shift); }
-            else
-            { aNode = NEIGHBOR_NODE (aNode, anArc -> Shift); }
-          }
-        }
-      }
-    }
+    theNode->TS = m_time;
+    theNode->DIST = d_min + 1;
   }
 
-  if (theNode->Parent = anArc0Min)
-  {
-    theNode -> TimeStamp = myTime;
-    theNode -> Distance = aDistMin + 1;
-  }
   else
   {
-    theNode -> TimeStamp = 0;
+    theNode->TS = 0;
 
-    for (anArc0For=anArc0ForFirst; anArc0For<anArc0ForLast; anArc0For++)
+    for (anEdge0 = theNode->First; anEdge0; anEdge0 = anEdge0->Next)
     {
-      aNode = NEIGHBOR_NODE (theNode, anArc0For -> Shift);
+      aNode = anEdge0->Head;
 
-      if (aNode->IsSink && (anArc=aNode->Parent))
+      if (aNode->IsSink && (anEdge = aNode->Parent))
       {
-        if (anArc0For->ResidualCap) { setActive (aNode); }
-
-        if (anArc!=TERMINAL && anArc!=ORPHAN && IS_ODD (anArc) && NEIGHBOR_NODE_REV (aNode, MAKE_EVEN (anArc)->Shift) ==theNode)
+        if (anEdge0->ReverseCap)
         {
-          aNode -> Parent = ORPHAN;
-          aNodePtr = myNodePtrBLock -> New();
-          aNodePtr -> Ptr = aNode;
-
-          if (myOrphanLast) { myOrphanLast -> Next = aNodePtr; }
-          else             { myOrphanFirst        = aNodePtr; }
-
-          myOrphanLast = aNodePtr;
-          aNodePtr -> Next = NULL;
+          setActive (aNode);
         }
-      }
-    }
 
-    for (anArc0Rev=anArc0RevFirst; anArc0Rev<anArc0RevLast; anArc0Rev++)
-    {
-      anArc0For = anArc0Rev -> Sister;
-      aNode = NEIGHBOR_NODE_REV (theNode, anArc0For -> Shift);
-
-      if (aNode->IsSink && (anArc=aNode->Parent))
-      {
-        if (anArc0For->ReverseResidualCap) { setActive (aNode); }
-
-        if (anArc!=TERMINAL && anArc!=ORPHAN && !IS_ODD (anArc) && NEIGHBOR_NODE (aNode, anArc->Shift) ==theNode)
+        if (anEdge != TERM && anEdge != ORPH && anEdge->Head == theNode)
         {
-          aNode -> Parent = ORPHAN;
-          aNodePtr = myNodePtrBLock -> New();
-          aNodePtr -> Ptr = aNode;
+          aNode->Parent = ORPH;
+          aNodePtr = m_nodePtrBlock->New();
+          aNodePtr->Ptr = aNode;
 
-          if (myOrphanLast) { myOrphanLast -> Next = aNodePtr; }
-          else             { myOrphanFirst        = aNodePtr; }
+          if (m_orphanLast)
+          {
+            m_orphanLast->Next = aNodePtr;
+          }
 
-          myOrphanLast = aNodePtr;
-          aNodePtr -> Next = NULL;
+          else
+          {
+            m_orphanFirst        = aNodePtr;
+          }
+
+          m_orphanLast = aNodePtr;
+          aNodePtr->Next = NULL;
         }
       }
     }
   }
 }
 
-Graph::FlowType Graph::MaximumFlow()
+GraphEval::FlowType GraphEval::MaximumFlow()
 {
-  Node* aNode0, *aNode1, *aCurrentNode = NULL, *aSStart, *aTStart;
-  CapacityType* aCapacityMiddle, *aRevCapacityMiddle;
-  ArcForward* anArcFor, *anArcForFirst, *anArcForLast;
-  ArcReverse* anArcRev, *anArcRevFirst, *anArcRevLAst;
-  NodePtr* aNodePtr, *aNodePtrNext;
+  Node* i, *j, *current_node = NULL;
+  Edge* a;
+  NodePtr* np, *np_next;
 
-  prepareGraph();
   maxflowInit();
-  myNodePtrBLock = new DBlock<NodePtr> (NODEPTR_BLOCK_SIZE, myErrorFun);
+  m_nodePtrBlock = new DataBlock<NodePtr> (NODEPTR_BLOCK_SIZE);
 
-  while (true)
+  while (1)
   {
-    if (aNode0=aCurrentNode)
+    if (i = current_node)
     {
-      aNode0 -> Next = NULL;
+      i->Next = NULL;
 
-      if (!aNode0->Parent) { aNode0 = NULL; }
+      if (!i->Parent)
+      {
+        i = NULL;
+      }
     }
 
-    if (!aNode0)
+    if (!i)
     {
-      if (! (aNode0 = nextActive())) { break; }
+      if (! (i = nextActive()))
+      {
+        break;
+      }
     }
 
-    aSStart = NULL;
-
-    anArcForFirst = aNode0 -> FirstOut;
-
-    if (IS_ODD (anArcForFirst))
+    if (!i->IsSink)
     {
-      anArcForFirst = (ArcForward*) ( ( (char*) anArcForFirst) + 1);
-      anArcForLast = (ArcForward*) ( (anArcForFirst ++) -> Shift);
-    }
-    else { anArcForLast = (aNode0 + 1) -> FirstOut; }
-
-    anArcRevFirst = aNode0 -> FirstIn;
-
-    if (IS_ODD (anArcRevFirst))
-    {
-      anArcRevFirst = (ArcReverse*) ( ( (char*) anArcRevFirst) + 1);
-      anArcRevLAst = (ArcReverse*) ( (anArcRevFirst ++) -> Sister);
-    }
-    else { anArcRevLAst = (aNode0 + 1) -> FirstIn; }
-
-    if (!aNode0->IsSink)
-    {
-      for (anArcFor=anArcForFirst; anArcFor<anArcForLast; anArcFor++)
-        if (anArcFor->ResidualCap)
+      for (a = i->First; a; a = a->Next)
+        if (a->ReverseCap)
         {
-          aNode1 = NEIGHBOR_NODE (aNode0, anArcFor -> Shift);
+          j = a->Head;
 
-          if (!aNode1->Parent)
+          if (!j->Parent)
           {
-            aNode1 -> IsSink = 0;
-            aNode1 -> Parent = MAKE_ODD (anArcFor);
-            aNode1 -> TimeStamp = aNode0 -> TimeStamp;
-            aNode1 -> Distance = aNode0 -> Distance + 1;
-            setActive (aNode1);
+            j->IsSink = 0;
+            j->Parent = a->Sister;
+            j->TS = i->TS;
+            j->DIST = i->DIST + 1;
+            setActive (j);
           }
-          else if (aNode1->IsSink)
+
+          else if (j->IsSink)
           {
-            aSStart = aNode0;
-            aTStart = aNode1;
-            aCapacityMiddle     = & (anArcFor -> ResidualCap);
-            aRevCapacityMiddle = & (anArcFor -> ReverseResidualCap);
             break;
           }
-          else if (aNode1->TimeStamp <= aNode0->TimeStamp &&
-                   aNode1->Distance > aNode0->Distance)
+
+          else if (j->TS <= i->TS &&
+                   j->DIST > i->DIST)
           {
-            aNode1 -> Parent = MAKE_ODD (anArcFor);
-            aNode1 -> TimeStamp = aNode0 -> TimeStamp;
-            aNode1 -> Distance = aNode0 -> Distance + 1;
-          }
-        }
-
-      if (!aSStart)
-        for (anArcRev=anArcRevFirst; anArcRev<anArcRevLAst; anArcRev++)
-        {
-          anArcFor = anArcRev -> Sister;
-
-          if (anArcFor->ReverseResidualCap)
-          {
-            aNode1 = NEIGHBOR_NODE_REV (aNode0, anArcFor -> Shift);
-
-            if (!aNode1->Parent)
-            {
-              aNode1 -> IsSink = 0;
-              aNode1 -> Parent = anArcFor;
-              aNode1 -> TimeStamp = aNode0 -> TimeStamp;
-              aNode1 -> Distance = aNode0 -> Distance + 1;
-              setActive (aNode1);
-            }
-            else if (aNode1->IsSink)
-            {
-              aSStart = aNode0;
-              aTStart = aNode1;
-              aCapacityMiddle     = & (anArcFor -> ReverseResidualCap);
-              aRevCapacityMiddle = & (anArcFor -> ResidualCap);
-              break;
-            }
-            else if (aNode1->TimeStamp <= aNode0->TimeStamp &&
-                     aNode1->Distance > aNode0->Distance)
-            {
-              aNode1 -> Parent = anArcFor;
-              aNode1 -> TimeStamp = aNode0 -> TimeStamp;
-              aNode1 -> Distance = aNode0 -> Distance + 1;
-            }
+            j->Parent = a->Sister;
+            j->TS = i->TS;
+            j->DIST = i->DIST + 1;
           }
         }
     }
+
     else
     {
-      for (anArcFor=anArcForFirst; anArcFor<anArcForLast; anArcFor++)
-        if (anArcFor->ReverseResidualCap)
+      for (a = i->First; a; a = a->Next)
+        if (a->Sister->ReverseCap)
         {
-          aNode1 = NEIGHBOR_NODE (aNode0, anArcFor -> Shift);
+          j = a->Head;
 
-          if (!aNode1->Parent)
+          if (!j->Parent)
           {
-            aNode1 -> IsSink = 1;
-            aNode1 -> Parent = MAKE_ODD (anArcFor);
-            aNode1 -> TimeStamp = aNode0 -> TimeStamp;
-            aNode1 -> Distance = aNode0 -> Distance + 1;
-            setActive (aNode1);
+            j->IsSink = 1;
+            j->Parent = a->Sister;
+            j->TS = i->TS;
+            j->DIST = i->DIST + 1;
+            setActive (j);
           }
-          else if (!aNode1->IsSink)
+
+          else if (!j->IsSink)
           {
-            aSStart = aNode1;
-            aTStart = aNode0;
-            aCapacityMiddle     = & (anArcFor -> ReverseResidualCap);
-            aRevCapacityMiddle = & (anArcFor -> ResidualCap);
+            a = a->Sister;
             break;
           }
-          else if (aNode1->TimeStamp <= aNode0->TimeStamp &&
-                   aNode1->Distance > aNode0->Distance)
+
+          else if (j->TS <= i->TS &&
+                   j->DIST > i->DIST)
           {
-            aNode1 -> Parent = MAKE_ODD (anArcFor);
-            aNode1 -> TimeStamp = aNode0 -> TimeStamp;
-            aNode1 -> Distance = aNode0 -> Distance + 1;
+            j->Parent = a->Sister;
+            j->TS = i->TS;
+            j->DIST = i->DIST + 1;
           }
         }
-
-      for (anArcRev=anArcRevFirst; anArcRev<anArcRevLAst; anArcRev++)
-      {
-        anArcFor = anArcRev -> Sister;
-
-        if (anArcFor->ResidualCap)
-        {
-          aNode1 = NEIGHBOR_NODE_REV (aNode0, anArcFor -> Shift);
-
-          if (!aNode1->Parent)
-          {
-            aNode1 -> IsSink = 1;
-            aNode1 -> Parent = anArcFor;
-            aNode1 -> TimeStamp = aNode0 -> TimeStamp;
-            aNode1 -> Distance = aNode0 -> Distance + 1;
-            setActive (aNode1);
-          }
-          else if (!aNode1->IsSink)
-          {
-            aSStart = aNode1;
-            aTStart = aNode0;
-            aCapacityMiddle     = & (anArcFor -> ResidualCap);
-            aRevCapacityMiddle = & (anArcFor -> ReverseResidualCap);
-            break;
-          }
-          else if (aNode1->TimeStamp <= aNode0->TimeStamp &&
-                   aNode1->Distance > aNode0->Distance)
-          {
-            aNode1 -> Parent = anArcFor;
-            aNode1 -> TimeStamp = aNode0 -> TimeStamp;
-            aNode1 -> Distance = aNode0 -> Distance + 1;
-          }
-        }
-      }
     }
 
-    myTime ++;
+    m_time ++;
 
-    if (aSStart)
+    if (a)
     {
-      aNode0 -> Next = aNode0;
-      aCurrentNode = aNode0;
+      i->Next = i;
+      current_node = i;
 
-      augment (aSStart, aTStart, aCapacityMiddle, aRevCapacityMiddle);
+      augment (a);
 
-      while (aNodePtr=myOrphanFirst)
+      while (np = m_orphanFirst)
       {
-        aNodePtrNext = aNodePtr -> Next;
-        aNodePtr -> Next = NULL;
+        np_next = np->Next;
+        np->Next = NULL;
 
-        while (aNodePtr=myOrphanFirst)
+        while (np = m_orphanFirst)
         {
-          myOrphanFirst = aNodePtr -> Next;
-          aNode0 = aNodePtr -> Ptr;
-          myNodePtrBLock -> Delete (aNodePtr);
+          m_orphanFirst = np->Next;
+          i = np->Ptr;
+          m_nodePtrBlock->Delete (np);
 
-          if (!myOrphanFirst) { myOrphanLast = NULL; }
+          if (!m_orphanFirst)
+          {
+            m_orphanLast = NULL;
+          }
 
-          if (aNode0->IsSink) { processSinkOrphan (aNode0); }
-          else            { processSourceOrphan (aNode0); }
+          if (i->IsSink)
+          {
+            processSinkOrphan (i);
+          }
+
+          else
+          {
+            processSourceOrphan (i);
+          }
         }
 
-        myOrphanFirst = aNodePtrNext;
+        m_orphanFirst = np_next;
       }
     }
-    else { aCurrentNode = NULL; }
+
+    else
+    {
+      current_node = NULL;
+    }
   }
 
-  delete myNodePtrBLock;
+  delete m_nodePtrBlock;
 
-  return myFlow;
+  return m_flow;
 }
 
-Graph::TerminalType Graph::Label (NodeId i)
+GraphEval::TerminalType GraphEval::Label (NodeId theNode)
 {
-  if ( ( (Node*) i)->Parent && ! ( (Node*) i)->IsSink) { return SOURCE; }
+  if (m_nodes[theNode].Parent && ! (m_nodes[theNode].IsSink))
+  {
+    return SOURCE;
+  }
 
   return SINK;
 }

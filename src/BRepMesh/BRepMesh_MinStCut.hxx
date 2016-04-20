@@ -13,151 +13,92 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef __GRAPH_H__
-#define __GRAPH_H__
+#ifndef _BRepMesh_MinStCut_HeaderFile
+#define _BRepMesh_MinStCut_HeaderFile
 
-#include <assert.h>
+#include <cassert>
+
 #include <BRepMesh_Block.hxx>
 
-#define NODE_BLOCK_SIZE 512
-#define ARC_BLOCK_SIZE 1024
+#define EDGE_BLOCK_SIZE 1024
 #define NODEPTR_BLOCK_SIZE 128
 
-class Graph
+class GraphEval
 {
 public:
   typedef enum
   {
-    SOURCE  = 0,
-    SINK  = 1
+    SOURCE = 0,
+    SINK = 1
   } TerminalType;
 
+  typedef int NodeId;
   typedef double CapacityType;
   typedef double FlowType;
-  typedef void* NodeId;
+  typedef double TCapacityType;
 
-  Graph (void (*theErrFun) (char*) = NULL);
+  GraphEval (const int theNodeNumMax);
 
-  ~Graph();
+  ~GraphEval();
 
-  NodeId AddNode();
-
-  void AddEdge (NodeId theFromNode, NodeId theToNode, CapacityType theCapNode, CapacityType theRevCapacity);
-
-  void SetTWeights (NodeId theNode, CapacityType theCapacityToSource, CapacityType theCapacityToSink);
-
-  void AddTWeights (NodeId theNode, CapacityType theCapacityToSource, CapacityType theCapacityToSink);
-
-  TerminalType Label (NodeId i);
-
+  NodeId AddNode (int theNum = 1);
+  void AddEdge (NodeId theNodeFrom, NodeId theNodeTo, CapacityType theCap, CapacityType theRevCap);
+  void AddTWeights (NodeId theNode, CapacityType theCapSource, CapacityType theCapSink);
+  TerminalType Label (NodeId theNode);
   FlowType MaximumFlow();
 
 private:
+  struct EdgeStruct;
 
-  struct ArcForwardSt;
-  struct ArcReverseSt;
-
-#define IS_ODD(a) ((int)(a) & 1)
-#define MAKE_ODD(a)  ((ArcForward *) ((int)(a) | 1))
-#define MAKE_EVEN(a) ((ArcForward *) ((int)(a) & (~1)))
-#define MAKE_ODD_REV(a)  ((ArcReverse *) ((int)(a) | 1))
-#define MAKE_EVEN_REV(a) ((ArcReverse *) ((int)(a) & (~1)))
-
-  typedef struct NodeSt
+  typedef struct NodeStruct
   {
-    ArcForwardSt*  FirstOut;
-    ArcReverseSt*  FirstIn;
+    EdgeStruct* First;
 
-    ArcForwardSt*  Parent;
+    EdgeStruct* Parent;
+    NodeStruct* Next;
+    int TS;
+    int DIST;
+    short IsSink;
 
-    NodeSt*      Next;
-
-    int       TimeStamp;
-    int       Distance;
-    short     IsSink;
-
-    CapacityType      TrCapacity;
+    CapacityType TrCap;
   } Node;
 
-#define NEIGHBOR_NODE(i, shift) ((Node *) ((char *)(i) + (shift)))
-#define NEIGHBOR_NODE_REV(i, shift) ((Node *) ((char *)(i) - (shift)))
-  typedef struct ArcForwardSt
+  typedef struct EdgeStruct
   {
-    int Shift;
-    CapacityType ResidualCap;
-    CapacityType ReverseResidualCap;
-  } ArcForward;
+    NodeStruct* Head;
+    EdgeStruct* Next;
+    EdgeStruct* Sister;
 
-  typedef struct ArcReverseSt
-  {
-    ArcForward*    Sister;
-  } ArcReverse;
+    CapacityType ReverseCap;
+  } Edge;
 
-  typedef struct NodePtrSt
+  typedef struct NodePtrStruct
   {
-    NodeSt*      Ptr;
-    NodePtrSt*   Next;
+    NodeStruct* Ptr;
+    NodePtrStruct* Next;
   } NodePtr;
 
-  typedef struct NodeBLockSt
-  {
-    Node*          Current;
-    struct NodeBLockSt*  Next;
-    Node          Nodes[NODE_BLOCK_SIZE];
-  } NodeBlock;
+  NodeStruct* m_nodes;
+  int m_nodeNum, m_nodeNumMax;
+  Storage<Edge>* m_edgeBlock;
+  DataBlock<NodePtr>* m_nodePtrBlock;
 
-#define last_node LAST_NODE.LAST_NODE
+  FlowType m_flow;
 
-  typedef struct ArcForBlockSt
-  {
-    char*          Start;
-    ArcForward*        Current;
-    struct ArcForBlockSt*  Next;
-    ArcForward        ArcsFor[ARC_BLOCK_SIZE];
-    union
-    {
-      ArcForward      Dummy;
-      Node*        LAST_NODE;
-    }           LAST_NODE;
-  } ArcForBlock;
-
-  typedef struct ArcRevBlockSt
-  {
-    char*          Start;
-    ArcReverse*        Current;
-    struct ArcRevBlockSt*  Next;
-    ArcReverse        ArcsRev[ARC_BLOCK_SIZE];
-    union
-    {
-      ArcReverse      Dummy;
-      Node*        LAST_NODE;
-    }           LAST_NODE;
-  } ArcRevBlock;
-
-  NodeBlock*     myNodeBlockFirst;
-  ArcForBlock*   myArcForBlockFirst;
-  ArcRevBlock*   myArcREvBlockFirst;
-  DBlock<NodePtr>*   myNodePtrBLock;
-
-  void (*myErrorFun) (char*);
-
-  FlowType      myFlow;
-
-  Node*        myQueueFirst[2], *myQueueLast[2];
-  NodePtr*       myOrphanFirst, *myOrphanLast;
-  int         myTime;
+  Node* m_queueFirst[2], *m_queueLast[2];
+  NodePtr* m_orphanFirst, *m_orphanLast;
+  int m_time;
 
   void setActive (Node* theNode);
   Node* nextActive();
 
-  void prepareGraph();
   void maxflowInit();
-  void augment (Node* theSStart, Node* theTStart, CapacityType* theCapMiddle, CapacityType* theRevCapMiddle);
+  void augment (Edge* theMiddleEdge);
   void processSourceOrphan (Node* theNode);
   void processSinkOrphan (Node* theNode);
 };
 
-class Energy : Graph
+class Energy : GraphEval
 {
 public:
   typedef NodeId Var;
@@ -165,7 +106,7 @@ public:
   typedef CapacityType Value;
   typedef FlowType TotalValue;
 
-  Energy (void (*theErrFun) (char*) = NULL);
+  Energy (const int theMaxNodes);
 
   ~Energy();
 
@@ -184,23 +125,19 @@ public:
 
   int Label (Var x);
 
-private:
-
-  TotalValue  myEConst;
-  void (*myErrorFun) (char*);
 };
 
-inline Energy::Energy (void (*err_function) (char*)) : Graph (err_function)
+inline Energy::Energy (const int theMaxNodes)
+  : GraphEval (theMaxNodes)
 {
-  myEConst = 0;
-  myErrorFun = err_function;
 }
 
 inline Energy::~Energy() {}
 
-inline Energy::Var Energy::AddVariable() {  return AddNode(); }
-
-inline void Energy::AddConstant (Value A) { myEConst += A; }
+inline Energy::Var Energy::AddVariable()
+{
+  return AddNode();
+}
 
 inline void Energy::AddTerm (Var x,
                              Value A, Value B)
@@ -222,22 +159,24 @@ inline void Energy::AddPairwise (Var x, Var y,
   {
     AddTWeights (x, 0, B);
     AddTWeights (y, 0, -B);
-    AddEdge (x, y, 0, B+C);
+    AddEdge (x, y, 0, B + C);
   }
+
   else if (C < 0)
   {
     AddTWeights (x, 0, -C);
     AddTWeights (y, 0, C);
-    AddEdge (x, y, B+C, 0);
+    AddEdge (x, y, B + C, 0);
   }
+
   else
   {
     AddEdge (x, y, B, C);
   }
 }
 
-inline Energy::TotalValue Energy::Minimize() { return myEConst + MaximumFlow(); }
+inline Energy::TotalValue Energy::Minimize() { return MaximumFlow(); }
 
-inline int Energy::Label (Var x) { return (int) Graph::Label (x); }
+inline int Energy::Label (Var x) { return (int) GraphEval::Label (x); }
 
-#endif
+#endif // _BRepMesh_MinStCut_HeaderFile

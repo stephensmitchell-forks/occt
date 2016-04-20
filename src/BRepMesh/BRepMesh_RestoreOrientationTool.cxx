@@ -789,7 +789,7 @@ void BRepMesh_RestoreOrientationTool::Perform()
 #endif
 
   // Optimization
-  Energy* aGraph = new Energy();
+  Energy* aGraph = new Energy (myPatches.size());
 
   std::vector<Energy::Var> aVariables (myPatches.size());
 
@@ -856,19 +856,6 @@ void BRepMesh_RestoreOrientationTool::Perform()
   aTimer.Stop();
   std::cout << "Optimization time:  " << aTimer.ElapsedTime() << std::endl;
 #endif
-
-  Handle (BRepMesh_TriangulatedPatch) aMergedPatch = new BRepMesh_TriangulatedPatch(myFaceList[0]);
-  for (Standard_Size i = 0; i < myPatches.size(); ++i)
-  {
-    Handle (BRepMesh_TriangulatedPatch)& aTriPatch = myPatches[i];
-
-    if (aFlipped[i])
-    {
-      aTriPatch->Flip();
-    }
-
-    aMergedPatch->Append (aTriPatch);
-  }
 
   BRep_Builder aBuilder;
   TopoDS_Compound aCompound;
