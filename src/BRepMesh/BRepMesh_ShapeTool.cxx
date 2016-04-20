@@ -131,7 +131,6 @@ Standard_Real BRepMesh_ShapeTool::RelativeEdgeDeflection(
 gp_XY BRepMesh_ShapeTool::FindUV(
   const Standard_Integer                theIndexOfPnt3d,
   const gp_Pnt2d&                       thePnt2d,
-  const TopoDS_Vertex&                  theVertex,
   const Standard_Real                   theMinDistance,
   const gp_XY&                          theToleranceUV,
   const Handle(BRepMesh_FaceAttribute)& theFaceAttribute)
@@ -152,22 +151,19 @@ gp_XY BRepMesh_ShapeTool::FindUV(
 
   // Find the most closest 2d point to the given one.
   gp_XY aUV;
-  Standard_Real aMinDist = RealLast();
+  Standard_Real aSqMinDist = RealLast();
   BRepMesh::ListOfXY::Iterator aPoint2dIt(aPoints2d);
   for (; aPoint2dIt.More(); aPoint2dIt.Next())
   {
     const gp_XY& aCurPnt2d = aPoint2dIt.Value();
 
-    Standard_Real aDist = (aPnt2d - aCurPnt2d).Modulus();
-    if (aDist < aMinDist)
+    Standard_Real aSqDist = (aPnt2d - aCurPnt2d).SquareModulus();
+    if (aSqDist < aSqMinDist)
     {
-      aUV      = aCurPnt2d;
-      aMinDist = aDist;
+      aUV        = aCurPnt2d;
+      aSqMinDist = aSqDist;
     }
   }
-
-  const Standard_Real aTolerance = 
-    Max(2. * BRep_Tool::Tolerance(theVertex), theMinDistance);
 
   const Handle(BRepAdaptor_HSurface)& aSurface = theFaceAttribute->Surface();
   const gp_Pnt aPnt1 = aSurface->Value(aUV.X(), aUV.Y());
@@ -177,7 +173,7 @@ gp_XY BRepMesh_ShapeTool::FindUV(
   //! or their positions in 3d are different, add the given point as unique.
   if (Abs(aUV.X() - aPnt2d.X()) > theToleranceUV.X() ||
       Abs(aUV.Y() - aPnt2d.Y()) > theToleranceUV.Y() ||
-      !aPnt1.IsEqual(aPnt2, aTolerance))
+      !aPnt1.IsEqual (aPnt2, theMinDistance))
   {
     aUV = aPnt2d;
     aPoints2d.Append(aUV);

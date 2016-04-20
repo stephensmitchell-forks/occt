@@ -40,12 +40,12 @@
 #include <BRepMesh_Circle.hxx>
 #include <TopTools_ShapeMapHasher.hxx>
 #include <TopoDS_Face.hxx>
+#include <TopoDS_Edge.hxx>
 #include <TopoDS_Shape.hxx>
 
 #include <vector>
 
 class BRepMesh_Vertex;
-class TopoDS_Edge;
 class TopoDS_Vertex;
 class BRepMesh_FaceAttribute;
 class BRepMesh_VertexInspector;

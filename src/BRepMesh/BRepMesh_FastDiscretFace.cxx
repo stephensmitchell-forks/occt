@@ -1351,7 +1351,7 @@ void BRepMesh_FastDiscretFace::add(const TopoDS_Vertex& theVertex)
                         .5 * (myAttribute->GetVMax() - myAttribute->GetVMin()));
 
     gp_XY anUV = BRepMesh_ShapeTool::FindUV(aIndex, aPnt2d,
-      theVertex, BRep_Tool::Tolerance(theVertex), aTolUV, myAttribute);
+      2. * BRep_Tool::Tolerance(theVertex), aTolUV, myAttribute);
 
     Standard_Integer aTmpId1, aTmpId2;
     anUV = myAttribute->Scale(anUV, Standard_True);

@@ -16,17 +16,9 @@
 
 #include <Standard.hxx>
 #include <Standard_Type.hxx>
-#include <BRepMesh_FastDiscret.hxx>
-#include <BRepMesh_DataStructureOfDelaun.hxx>
-#include <TColStd_IndexedMapOfInteger.hxx>
 #include <BRepMesh_Status.hxx>
 #include <TopTools_DataMapOfShapeReal.hxx>
-#include <TopTools_ListOfShape.hxx>
-#include <TopTools_MutexForShapeProvider.hxx>
 #include <Standard_Transient.hxx>
-#include <BRepMesh_Delaun.hxx>
-#include <TopAbs_ShapeEnum.hxx>
-#include <BRepMesh_Triangle.hxx>
 #include <BRepMesh_FaceAttribute.hxx>
 #include <BRepMesh.hxx>
 #include <TColgp_Array1OfPnt.hxx>
@@ -34,19 +26,14 @@
 #include <BRepMesh_ShapeTool.hxx>
 #include <TopoDS_Vertex.hxx>
 #include <TopTools_IndexedDataMapOfShapeListOfShape.hxx>
-#include <TopoDS_Wire.hxx>
 
-class BRepMesh_DataStructureOfDelaun;
 class Bnd_Box;
 class TopoDS_Shape;
 class TopoDS_Face;
+class TopoDS_Wire;
 class TopoDS_Edge;
-class BRepAdaptor_HSurface;
 class Geom2d_Curve;
-class BRepMesh_Edge;
-class BRepMesh_Vertex;
 class gp_Pnt;
-class BRepMesh_FaceAttribute;
 class ShapeExtend_WireData;
 class ShapeAnalysis_WireOrder;
 

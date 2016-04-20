@@ -884,16 +884,20 @@ void BRepMesh_FastDiscret::registerEdgeVertices(
   gp_XY aTmpUV;
   // Process first vertex
   ipf = myAttribute->GetVertexIndex(aEAttr.FirstVExtractor, Standard_True);
-  aTmpUV = BRepMesh_ShapeTool::FindUV(ipf, aEAttr.FirstUV, aEAttr.FirstVertex, 
-    aEAttr.MinDist, toleranceUV (theEdge, Standard_True), myAttribute);
+
+  Standard_Real aMinDist = Max (2. * BRep_Tool::Tolerance (aEAttr.FirstVertex), aEAttr.MinDist);
+  aTmpUV = BRepMesh_ShapeTool::FindUV (ipf, aEAttr.FirstUV, aMinDist,
+    toleranceUV (theEdge, Standard_True), myAttribute);
 
   myAttribute->AddNode(ipf, aTmpUV, BRepMesh_Frontier, ivf, isvf);
 
   // Process last vertex
   ipl = aEAttr.LastVertex.IsSame(aEAttr.FirstVertex) ? ipf :
     myAttribute->GetVertexIndex(aEAttr.LastVExtractor, Standard_True);
-  aTmpUV = BRepMesh_ShapeTool::FindUV(ipl, aEAttr.LastUV, aEAttr.LastVertex, 
-    aEAttr.MinDist, toleranceUV (theEdge, Standard_False), myAttribute);
+
+  aMinDist = Max (2. * BRep_Tool::Tolerance (aEAttr.LastVertex), aEAttr.MinDist);
+  aTmpUV = BRepMesh_ShapeTool::FindUV (ipl, aEAttr.LastUV, aMinDist,
+    toleranceUV (theEdge, Standard_False), myAttribute);
 
   myAttribute->AddNode(ipl, aTmpUV, BRepMesh_Frontier, ivl, isvl);
 }
