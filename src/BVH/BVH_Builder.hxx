@@ -25,6 +25,14 @@ namespace BVH
   const Standard_Real THE_NODE_MIN_SIZE = 1e-5;
 }
 
+//! Type of metadata written in W component of
+//! BVH data vector corresponding to the node.
+enum BVH_NodeMetadata
+{
+  BVH_NODE_LEVEL = 0, //!< level (depth) of the node
+  BVH_NODE_PRIMS = 1  //!< number of node primitives
+};
+
 //! Performs construction of BVH tree using bounding
 //! boxes (AABBs) of abstract objects.
 //! \tparam T Numeric data type
@@ -46,6 +54,18 @@ public:
                       BVH_Tree<T, N>*      theBVH,
                       const BVH_Box<T, N>& theBox) = 0;
 
+  //! Returns type of metadata written in BVH node.
+  BVH_NodeMetadata MetadataType() const
+  {
+    return myMetadataType;
+  }
+
+  //! Sets type of metadata written in BVH node.
+  void SetMetadataType (const BVH_NodeMetadata theMetadata)
+  {
+    myMetadataType = theMetadata;
+  }
+
 protected:
 
   //! Updates depth of constructed BVH tree.
@@ -62,6 +82,7 @@ protected:
 
   Standard_Integer myMaxTreeDepth; //!< Maximum depth of constructed BVH
   Standard_Integer myLeafNodeSize; //!< Maximum number of objects per leaf
+  BVH_NodeMetadata myMetadataType; //!< Type of metadata written in BVH node
 
 };
 

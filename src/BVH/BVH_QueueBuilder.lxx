@@ -88,6 +88,13 @@ void BVH_QueueBuilder<T, N>::AddChildren (BVH_Tree<T, N>*                       
       myBuildQueue.Enqueue (aChildIndex);
     }
   }
+
+  // Correct node's metadata if necessary
+  if (myMetadataType != BVH_NODE_LEVEL)
+  {
+    theBVH->NodeInfoBuffer()[theNode].w() =
+      theSubNodes.Ranges[1].Final - theSubNodes.Ranges[0].Start + 1;
+  }
 }
 
 // =======================================================================
