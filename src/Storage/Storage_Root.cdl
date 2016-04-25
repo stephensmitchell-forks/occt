@@ -64,9 +64,9 @@ is
     Type(me) returns AsciiString from TCollection;
     	---Purpose: Returns the name of this root type.   
     
-    SetReference(me : mutable; aRef : Integer from Standard) is private;
-    Reference(me) returns Integer from Standard is private;
-    SetType(me : mutable; aType : AsciiString from TCollection) is private;
+    SetReference(me : mutable; aRef : Integer from Standard);
+    Reference(me) returns Integer from Standard;
+    SetType(me : mutable; aType : AsciiString from TCollection);
     
     fields
     	

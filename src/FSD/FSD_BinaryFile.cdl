@@ -26,7 +26,10 @@ uses Position    from Storage,
      SequenceOfExtendedString from TColStd,
      ExtendedString from TCollection,
      FileHeader from FSD,
-     BStream     from FSD
+     BStream     from FSD,
+     Data from Storage,
+     OStream from Standard,
+     HeaderData from Storage
      
 raises StreamTypeMismatchError from Storage,
        StreamFormatError from Storage,
@@ -61,8 +64,24 @@ is
 			   objectType : ExtendedString from TCollection;
     	    	    	   userInfo : SequenceOfAsciiString from TColStd)
     raises StreamWriteError;
+    
+    WriteInfo(myclass;     theOStream: in out OStream from Standard;
+                           nbObj : Integer from Standard; 
+    	    	    	   dbVersion : AsciiString from TCollection;
+    	    	    	   date : AsciiString from TCollection;
+    	    	    	   schemaName : AsciiString from TCollection;
+    	    	    	   schemaVersion : AsciiString from TCollection;
+    	    	    	   appName : ExtendedString from TCollection;
+    	    	    	   appVersion : AsciiString from TCollection;
+			   objectType : ExtendedString from TCollection;
+    	    	    	   userInfo : SequenceOfAsciiString from TColStd;
+                           theOnlyCount: Boolean = Standard_False)
+    returns Integer raises StreamWriteError;
 			   
     EndWriteInfoSection(me : in out) returns Error from Storage;
+
+    EndWriteInfoSection(me : in out; theOStream: in out OStream from Standard)
+    returns Error from Storage;
     
     -- read
     -- 
@@ -79,6 +98,9 @@ is
     	    	    	  userInfo : in out SequenceOfAsciiString from TColStd)
     raises StreamTypeMismatchError,StreamExtCharParityError;
     
+    ReadCompleteInfo(me: in out; theIStream: in out IStream from Standard;
+                                 theData: out Data from Storage) is redefined virtual;
+
     EndReadInfoSection(me : in out) returns Error from Storage;
 
     --	COMMENTS SECTION
@@ -86,16 +108,31 @@ is
     --	
     BeginWriteCommentSection(me : in out) returns Error from Storage;    
     
+    BeginWriteCommentSection(me : in out; theOStream: in out OStream from Standard)
+    returns Error from Storage;
+    
     WriteComment(me : in out; userComments : SequenceOfExtendedString from TColStd)
     raises StreamWriteError;
+
+    WriteComment(myclass; theOStream: in out OStream from Standard;
+                          userComments : SequenceOfExtendedString from TColStd;
+                          theOnlyCount: Boolean = Standard_False)
+    returns Integer raises StreamWriteError;
 			   
     EndWriteCommentSection(me : in out) returns Error from Storage;
+
+    EndWriteCommentSection(me : in out; theOStream: in out OStream from Standard)
+    returns Error from Storage;
     
     -- read
     -- 
     BeginReadCommentSection(me : in out) returns Error from Storage;
 
     ReadComment(me : in out;  userComments : in out SequenceOfExtendedString from TColStd)
+    raises StreamTypeMismatchError,StreamExtCharParityError;
+
+    ReadComment(myclass;  theIStream: in out IStream from Standard;
+                          userComments : in out SequenceOfExtendedString from TColStd)
     raises StreamTypeMismatchError,StreamExtCharParityError;
     
     EndReadCommentSection(me : in out) returns Error from Storage;
@@ -118,8 +155,16 @@ is
     
     TypeSectionSize(me : in out) returns Integer from Standard
     raises StreamTypeMismatchError;
+
+    TypeSectionSize(myclass; theIStream: in out IStream from Standard) returns Integer from Standard
+    raises StreamTypeMismatchError;
     
     ReadTypeInformations(me : in out; typeNum : in out Integer from Standard; typeName : in out AsciiString from TCollection)
+    raises StreamTypeMismatchError;
+
+    ReadTypeInformations(myclass; theIStream: in out IStream from Standard;
+                                  typeNum : in out Integer from Standard;
+                                  typeName : in out AsciiString from TCollection)
     raises StreamTypeMismatchError;
     
     EndReadTypeSection(me : in out) returns Error from Storage;
@@ -143,8 +188,17 @@ is
     
     RootSectionSize(me : in out) returns Integer from Standard
     raises StreamTypeMismatchError;
+
+    RootSectionSize(myclass; theIStream: in out IStream from Standard) returns Integer from Standard
+    raises StreamTypeMismatchError;
     
     ReadRoot(me : in out; rootName : in out AsciiString from TCollection; aRef : in out Integer from Standard; aType : in out AsciiString from TCollection)
+    raises StreamTypeMismatchError;
+
+    ReadRoot(myclass; theIStream: in out IStream from Standard;
+                      rootName : in out AsciiString from TCollection;
+                      aRef : in out Integer from Standard;
+                      aType : in out AsciiString from TCollection)
     raises StreamTypeMismatchError;
     
     EndReadRootSection(me : in out) returns Error from Storage;
@@ -168,8 +222,16 @@ is
     
     RefSectionSize(me : in out) returns Integer from Standard
     raises StreamTypeMismatchError;
+
+    RefSectionSize(myclass; theIStream: in out IStream from Standard) returns Integer from Standard
+    raises StreamTypeMismatchError;
     
     ReadReferenceType(me : in out; reference : in out Integer from Standard; typeNum : in out Integer from Standard)
+    raises StreamTypeMismatchError;
+
+    ReadReferenceType(myclass; theIStream: in out IStream from Standard;
+                               reference : in out Integer from Standard; 
+                               typeNum : in out Integer from Standard)
     raises StreamTypeMismatchError;
     
     EndReadRefSection(me : in out) returns Error from Storage;
@@ -235,6 +297,11 @@ is
     ---C++: alias operator <<
     ---C++: return &
 
+    PutInteger(myclass; theOStream: in out OStream from Standard;
+                        aValue : Integer from Standard;
+                        theOnlyCount: Boolean = Standard_False) returns Integer
+    raises StreamWriteError;
+
     PutInteger(me : in out; aValue : Integer from Standard) returns like me
     raises StreamWriteError;
     ---C++: alias operator <<
@@ -259,6 +326,10 @@ is
     	raises StreamTypeMismatchError;
     ---C++: return &
 
+    GetReference(myclass; theIStream: in out IStream from Standard;
+                          aValue : in out Integer from Standard)
+    	raises StreamTypeMismatchError;
+
     GetCharacter(me : in out; aValue : in out Character from Standard) returns like me
     	raises StreamTypeMismatchError;
     ---C++: alias operator >>
@@ -273,6 +344,10 @@ is
     	raises StreamTypeMismatchError;
     ---C++: alias operator >>
     ---C++: return &
+
+    GetInteger(myclass; theIStream: in out IStream from Standard;
+                        aValue : in out Integer from Standard)
+    	raises StreamTypeMismatchError;
     
     GetBoolean(me : in out; aValue : in out Boolean from Standard) returns like me
     	raises StreamTypeMismatchError;
@@ -294,11 +369,27 @@ is
     Destroy(me : in out);
     ---C++: alias ~
 
+    ReadHeader(myclass; theIStream: in out IStream from Standard;
+                        theFileHeader: in out FileHeader from FSD );
+
+    ReadHeaderData(myclass; theIStream: in out IStream from Standard;
+                            theHeaderData: HeaderData from Storage );
+
+    ReadString(myclass; theIStream: in out IStream from Standard;
+                        theBuffer: out AsciiString from TCollection);
+
+    ReadExtendedString(myclass; theIStream: in out IStream from Standard;
+                                theBuffer: out ExtendedString from TCollection);
+
+    WriteHeader(myclass; theOStream: in out OStream from Standard;
+                         theFileHeader: FileHeader from FSD;
+                         theOnlyCount: Boolean = Standard_False ) returns Integer;
+
     WriteHeader(me : in out) is private;
     ReadHeader(me : in out) is private;
     
     MagicNumber(myclass)
-    	returns CString from Standard is private;
+    	returns CString from Standard;
     ---C++: return const
  
     ReadChar(me : in out; buffer : in out AsciiString from TCollection; rsize : Size from Standard) is protected;
@@ -310,11 +401,21 @@ is
     WriteString(me : in out; buffer : AsciiString from TCollection) is protected;
     ---Purpose: write string at the current position.    
 
+    WriteString(myclass; theOStream: in out OStream from Standard;
+                         theString : AsciiString from TCollection;
+                         theOnlyCount: Boolean = Standard_False) returns Integer is protected;
+    ---Purpose: write string at the current position.
+
     ReadExtendedString(me : in out; buffer : in out ExtendedString from TCollection) is protected;
     ---Purpose: read string from the current position.    
 
     WriteExtendedString(me : in out; buffer : ExtendedString from TCollection) is protected;
     ---Purpose: write string at the current position.    
+
+    WriteExtendedString(myclass; theOStream: in out OStream from Standard;
+                                 theString : ExtendedString from TCollection;
+                                 theOnlyCount: Boolean = Standard_False) returns Integer is protected;
+    ---Purpose: write string at the current position.
     
     fields
     

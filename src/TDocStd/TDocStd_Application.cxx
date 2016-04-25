@@ -19,6 +19,8 @@
 #include <CDF_Session.hxx>
 #include <CDF_DirectoryIterator.hxx>
 #include <CDF_Directory.hxx>
+#include <PCDM_StorageDriver.hxx>
+#include <Plugin.hxx>
 
 #include <Standard_ErrorHandler.hxx>
 #include <Standard_NotImplemented.hxx>

@@ -41,7 +41,8 @@ uses
     Schema from Storage,
     SequenceOfExtendedString from TColStd,
     SequenceOfDocument from PCDM,
-    StoreStatus from PCDM
+    StoreStatus from PCDM,
+    OStream from Standard
 
 raises NoSuchObject from Standard,DriverError from PCDM
 is
@@ -75,6 +76,10 @@ is
     --          by  default  Write will  use Make   method to build a persistent
     --          document and the Schema method to write the persistent document.
     --          
+
+    Write(me: mutable; aDocument: Document from CDM; theOStream: in out OStream from Standard)
+    raises DriverError
+    is redefined virtual;
 
     SetFormat (me : mutable; aformat : ExtendedString from TCollection);
 

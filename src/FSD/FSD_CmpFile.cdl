@@ -25,7 +25,8 @@ uses Position    from Storage,
      SequenceOfAsciiString from TColStd,
      SequenceOfExtendedString from TColStd,
      ExtendedString from TCollection,
-     FStream     from FSD
+     FStream     from FSD,
+     Data from Storage
      
 raises StreamTypeMismatchError from Storage,
        StreamFormatError from Storage,
@@ -77,6 +78,9 @@ is
 			  objectType : in out ExtendedString from TCollection;
     	    	    	  userInfo : in out SequenceOfAsciiString from TColStd)
     raises StreamTypeMismatchError,StreamExtCharParityError;
+    
+    ReadCompleteInfo(me: in out; theIStream: in out IStream from Standard;
+                                 theData: out Data from Storage) is redefined virtual;
     
     EndReadInfoSection(me : in out) returns Error from Storage;
 
@@ -318,7 +322,7 @@ is
     FindTag(me : in out; aTag : CString from Standard) returns Error from Storage is protected; 
 
     MagicNumber(myclass)
-    	returns CString from Standard is private;
+    	returns CString from Standard;
     ---C++: return const
     
     RaiseError(me: in out ; theFailure: Type from Standard) is private;

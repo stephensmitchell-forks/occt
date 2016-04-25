@@ -27,3 +27,7 @@ void Storage_InternalData::Clear()
   myTypeBinding.Clear();
 }
 
+Handle(Storage_HPArray)& Storage_InternalData::ReadArray()
+{
+  return myReadArray;
+}

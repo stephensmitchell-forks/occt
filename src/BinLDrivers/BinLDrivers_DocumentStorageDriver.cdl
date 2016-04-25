@@ -47,6 +47,11 @@ is
         is redefined virtual;
         ---Purpose: Write <theDocument> to the binary file <theFileName>
 
+    Write(me: mutable; aDocument: Document from CDM;
+                       theOStream: in out OStream from Standard)
+        is redefined virtual;
+        ---Purpose: Write <theDocument> to theOStream
+
     AttributeDrivers  (me : mutable; theMsgDriver: MessageDriver from CDM)
         returns ADriverTable from BinMDF
         is virtual;
@@ -82,7 +87,7 @@ is
         --          attributes to store
     
     WriteInfoSection(me: mutable; theDocument  : Document from CDM;
-                                  theFile      : AsciiString from TCollection)
+                                  theOS        : in out OStream from Standard)
         is private;
         ---Purpose: Write info secton using FSD_BinaryFile driver
     
@@ -109,5 +114,6 @@ fields
     myTypesMap  :       IndexedMapOfTransient   from TColStd;
 
     mySections  :       VectorOfDocumentSection from BinLDrivers;
+    myFileName  :       ExtendedString          from TCollection;
 
 end DocumentStorageDriver;

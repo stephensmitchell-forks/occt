@@ -18,6 +18,7 @@ class DocumentRetrievalDriver from BinLDrivers inherits RetrievalDriver from PCD
 uses
     HeaderData                  from Storage,
     Position                    from Storage,
+    Data                        from Storage,
     AsciiString                 from TCollection,
     ExtendedString              from TCollection,
     Document                    from PCDM,
@@ -57,6 +58,12 @@ is
                      theApplication: Application from CDM) is redefined virtual;
         ---Purpose: retrieves the content of the file into a new Document.
 
+    Read(me:mutable; theIStream:    in out IStream from Standard;
+                     theStorageData: Data from Storage;
+                     theNewDocument: Document    from CDM;
+                     theApplication: Application from CDM) is redefined virtual;
+        ---Purpose: retrieves the content of the stream into a new Document.
+
     AttributeDrivers  (me : mutable; theMsgDriver: MessageDriver from CDM)
         returns ADriverTable from BinMDF
         is virtual;
@@ -69,13 +76,6 @@ is
         is virtual protected;
         ---Purpose: Read the tree from the stream <theIS> to <theLabel>
 
-    ReadInfoSection(me: mutable; theFile : AsciiString from TCollection;
-                                 theData : in out HeaderData from Storage)
-        returns Position from Storage is protected;
-        ---Purpose: Read the  info  section  of  theFile into theData,
-        --          return a file  position  corresponding to the info
-        --          section end
-    
     ReadSection    (me: mutable;
                     theSection : in out DocumentSection from BinLDrivers;
                     theDoc     : Document    from CDM;

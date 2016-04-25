@@ -42,15 +42,15 @@ is
 	
     -- PRIVATE
 
-    AddType(me : mutable; aName : AsciiString from TCollection; aTypeNum : Integer from Standard) is private;
+    AddType(me : mutable; aName : AsciiString from TCollection; aTypeNum : Integer from Standard);
     ---Purpose: add a type to the list
     
     Type(me; aTypeNum : Integer from Standard) returns AsciiString from TCollection
-      raises NoSuchObject is private;
+      raises NoSuchObject;
     ---Purpose: returns the name of the type with number <aTypeNum>
     
     Type(me; aTypeName : AsciiString from TCollection) returns Integer from Standard
-      raises NoSuchObject is private;
+      raises NoSuchObject;
     ---Purpose: returns the name of the type with number <aTypeNum>
 
     SetErrorStatus(me : mutable; anError : Error from Storage) is private;

@@ -25,7 +25,8 @@ uses
     Element			from XmlObjMgt,
     SRelocationTable		from XmlObjMgt,
     ADriverTable		from XmlMDF,
-    MessageDriver               from CDM
+    MessageDriver               from CDM,
+    OStream                     from Standard
 
 is
     Create (theCopyright: ExtendedString from TCollection)
@@ -40,9 +41,12 @@ is
 	is redefined virtual;
     -- Write <aDocument> to the xml file <theFileName>
 
+    Write	      (me: mutable;theDocument: Document       from CDM;
+				   theOStream: in out OStream from Standard)
+	is redefined virtual;
+
     WriteToDomDocument(me:mutable; theDocument: Document from CDM;
-			           thePDoc    : out Element from XmlObjMgt;
-   	    	    	    	   theFileName: ExtendedString from TCollection)
+			           thePDoc    : out Element from XmlObjMgt)
 	returns Boolean from Standard
 	is virtual protected;
 
@@ -67,5 +71,6 @@ fields
     mySeqOfNS	:	SequenceOfNamespaceDef	 from XmlLDrivers;
     myCopyright :       ExtendedString           from TCollection;
     myRelocTable:	SRelocationTable	 from XmlObjMgt  is protected;
+    myFileName  :       ExtendedString           from TCollection;
 
 end DocumentStorageDriver;

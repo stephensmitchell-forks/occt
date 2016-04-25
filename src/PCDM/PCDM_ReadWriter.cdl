@@ -85,4 +85,8 @@ is
     ---Purpose: tries  to get a format  in the  file.  returns an empty
     --          string if the file could not be read or does not have 
     --          a FileFormat information.
+
+    FileFormat(myclass; theIStream: in out IStream from Standard; theData: out Data from Storage)
+    returns ExtendedString from TCollection;
+
 end ReadWriter from PCDM;

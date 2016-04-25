@@ -108,4 +108,9 @@ is
     FileDriverType(aFileName: AsciiString from TCollection; aBaseDriver: out BaseDriverPointer from PCDM)
     returns TypeOfFileDriver from PCDM
     is private;
+
+    FileDriverType(theIStream: in out IStream from Standard; aBaseDriver: out BaseDriverPointer from PCDM)
+    returns TypeOfFileDriver from PCDM
+    is private;
+
 end PCDM;

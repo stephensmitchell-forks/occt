@@ -26,7 +26,9 @@ uses
     ADriverTable		from XmlMDF,
     RRelocationTable		from XmlObjMgt,
     Element			from XmlObjMgt,
-    MessageDriver               from CDM
+    MessageDriver               from CDM,
+    IStream                     from Standard,
+    Data                        from Storage
 
 is
     Create returns DocumentRetrievalDriver from XmlLDrivers;
@@ -49,6 +51,11 @@ is
     	    	     theNewDocument: Document    from CDM;
     	    	     theApplication: Application from CDM) is redefined virtual;
     -- 
+
+    Read(me:mutable; theIStream: in out IStream from Standard;
+                     theData: Data from Storage;
+    	    	     theNewDocument: Document    from CDM;
+    	    	     theApplication: Application from CDM) is redefined virtual;
 
     ReadFromDomDocument (me : mutable; theDomElement: Element from XmlObjMgt;
 				       theNewDocument: Document from CDM;

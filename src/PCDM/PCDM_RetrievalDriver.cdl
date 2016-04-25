@@ -27,7 +27,9 @@ uses
     SequenceOfReference from PCDM, 
     Schema from Storage, 
     MessageDriver from CDM,
-    Application from CDM
+    Application from CDM,
+    IStream from Standard,
+    Data from Storage
 
 raises NoSuchObject from Standard,  DriverError from PCDM
 
@@ -47,6 +49,13 @@ is
     --          into a persistent document. and the Make   method to build a
     --          transient document.
     --          
+
+    Read(me: mutable; theIStream:  in out IStream from Standard;
+                      theStorageData: Data from Storage;
+                      aNewDocument: Document from CDM;
+		      anApplication: Application from CDM)
+    raises DriverError from PCDM
+    is redefined virtual;
 
     Make(me : mutable; aPCDM: Document from PCDM; aNewDocument: Document from CDM)
     raises DriverError from PCDM

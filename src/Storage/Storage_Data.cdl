@@ -215,13 +215,14 @@ is
     	---Purpose: 
     	-- Gives the list of types of objects used in this set of data in a sequence.
 
+    HeaderData(me) returns HeaderData from Storage;
+    RootData(me) returns RootData from Storage;
+    TypeData(me) returns TypeData from Storage;
+    InternalData(me) returns InternalData from Storage;
+    Clear(me);
+
     -- PRIVATE
 
-    HeaderData(me) returns HeaderData from Storage is private;
-    RootData(me) returns RootData from Storage is private;
-    TypeData(me) returns TypeData from Storage is private;
-    InternalData(me) returns InternalData from Storage is private;
-    Clear(me) is private;
     SetErrorStatus(me : mutable; anError : Error from Storage) is private;    
     SetErrorStatusExtension(me : mutable; anErrorExt : AsciiString from TCollection) is private;    
     

@@ -25,4 +25,8 @@ is
     raises DriverError
     is deferred;
 
+    Write(me: mutable; aDocument: Document from CDM; theOStream: in out OStream from Standard)
+    raises DriverError
+    is deferred;
+
 end Writer from PCDM;

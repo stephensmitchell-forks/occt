@@ -21,8 +21,10 @@ uses
     Document from CDM, 
     ExtendedString from TCollection,  
     Application from CDM, 
-    ReaderStatus from PCDM
-
+    ReaderStatus from PCDM,
+    IStream from Standard,
+    Data from Storage
+		      
 raises  DriverError from PCDM
 
 
@@ -38,6 +40,14 @@ is
     raises DriverError from PCDM
     is deferred;
     ---Purpose: retrieves the content of the file into a new Document.  
+
+    Read(me: mutable; theIStream:  in out IStream from Standard;
+                      theStorageData: Data from Storage;
+                      aNewDocument: Document from CDM;
+		      anApplication: Application from CDM)
+    raises DriverError from PCDM
+    is deferred;
+    ---Purpose: retrieves the content of the stream into a new Document.  
     
     GetStatus(me) returns ReaderStatus from PCDM; 
     ---C++: inline

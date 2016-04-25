@@ -21,10 +21,12 @@
 #include <BinObjMgt_Persistent.hxx>
 #include <FSD_BinaryFile.hxx>
 #include <FSD_FileHeader.hxx>
+#include <OSD_OpenFile.hxx>
 #include <PCDM_ReadWriter.hxx>
 #include <Standard_ErrorHandler.hxx>
 #include <Standard_Stream.hxx>
 #include <Storage_Schema.hxx>
+#include <Storage_HeaderData.hxx>
 #include <TDF_Data.hxx>
 #include <TDocStd_Document.hxx>
 #include <TDocStd_Owner.hxx>

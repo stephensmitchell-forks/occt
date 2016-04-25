@@ -14,7 +14,7 @@
 -- Alternatively, this file may be used under the terms of Open CASCADE
 -- commercial license or contractual agreement.
 
-private class InternalData from Storage
+class InternalData from Storage
 
 inherits TShared from MMgt
 
@@ -23,6 +23,9 @@ uses BucketOfPersistent from Storage,
      MapOfCallBack from Storage         
 is
     Create returns InternalData from Storage;
+
+    ReadArray(me: mutable) returns HPArray from Storage;
+    ---C++: return &
     
     Clear(me : mutable);
     

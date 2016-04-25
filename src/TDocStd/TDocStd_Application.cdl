@@ -52,7 +52,9 @@ uses Manager                  from Resource,
      ExtendedString           from TCollection,
      SequenceOfExtendedString from TColStd,
      ReaderStatus             from PCDM,
-     StoreStatus              from PCDM
+     StoreStatus              from PCDM,
+     IStream                  from Standard,
+     OStream                  from Standard
 
 raises NoSuchObject from Standard
 
@@ -192,10 +194,20 @@ is
     	-- to depend on the value returned by IsInSession.
     returns ReaderStatus from PCDM;
 
+    Open (me : mutable; theIStream: in out IStream from Standard;
+                        aDoc : out Document from TDocStd)
+    	---Purpose: Retrieves aDoc from standard SEEKABLE stream theIStream.
+    returns ReaderStatus from PCDM;
+
     SaveAs (me : mutable; aDoc : Document from TDocStd;
                           path : ExtendedString from TCollection)
     	---Purpose:  Save the  active document  in the file  <name> in the
     	--           path <path> ; o verwrites  the file  if  it already exists.
+    returns StoreStatus from PCDM;
+
+    SaveAs (me : mutable; aDoc : Document from TDocStd;
+                          theOStream : in out OStream from Standard)
+    	---Purpose:  Save theDoc to standard SEEKABLE stream theOStream.
     returns StoreStatus from PCDM;
     
     
@@ -213,6 +225,12 @@ is
     	--           path <path>  .  overwrite  the file  if  it
     	--          already exist. 
     returns StoreStatus from PCDM;    
+
+    SaveAs (me : mutable; aDoc : Document from TDocStd;
+                          theOStream : in out OStream from Standard;
+                          theStatusMessage:  out  ExtendedString from TCollection)
+    	---Purpose:  Save theDoc to standard SEEKABLE stream theOStream.
+    returns StoreStatus from PCDM;
     
     Save (me : mutable; aDoc : Document from TDocStd; 
     	    	    	theStatusMessage:  out  ExtendedString from TCollection)

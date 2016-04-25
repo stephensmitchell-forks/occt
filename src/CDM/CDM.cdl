@@ -50,7 +50,7 @@ is
     ---Purpose: this map will allows to get a directory object from a name.
          
     private pointer DocumentPointer to Document from CDM;
-    private class Reference;    
+    class Reference;    
 
     private class ListOfReferences instantiates List from TCollection(Reference from CDM);
     deferred class Application;

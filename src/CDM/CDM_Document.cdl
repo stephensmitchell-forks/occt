@@ -448,8 +448,7 @@ is
 ---Category: private methods;
 --           
     Reference(me; aReferenceIdentifier: Integer from Standard)
-    returns Reference from CDM
-    is private;
+    returns Reference from CDM;
 
     ComputePresentation(me: mutable)
     is private;
@@ -471,13 +470,11 @@ is
     RemoveFromReference(me: mutable; aReferenceIdentifier: Integer from Standard)
     is private;
 
-    SetModifications(me: mutable; Modifications: Integer from Standard)
-    is private;
+    SetModifications(me: mutable; Modifications: Integer from Standard);
 
     ReferenceCounter(me) returns Integer from Standard;
     
-    SetReferenceCounter(me: mutable; aReferenceCounter: Integer from Standard)
-    is private;
+    SetReferenceCounter(me: mutable; aReferenceCounter: Integer from Standard);
 
 ---Category: obsolete methods
 

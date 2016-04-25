@@ -52,6 +52,7 @@ public:
   Standard_EXPORT virtual const Handle_Standard_Type& DynamicType() const;
   Standard_EXPORT         Standard_Boolean            IsKind(const Handle_Standard_Type&)const;
   Standard_EXPORT         Standard_Boolean            IsInstance(const Handle_Standard_Type&)const;  
+  Standard_Integer& TypeNum() { return _typenum; }
 };
 
 #include <Handle_Standard_Persistent.hxx>

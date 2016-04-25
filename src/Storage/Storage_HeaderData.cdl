@@ -82,14 +82,14 @@ is
     
     ClearErrorStatus(me : mutable);
     
+    SetNumberOfObjects(me : mutable; anObjectNumber : Integer from Standard);
+    SetStorageVersion(me : mutable; aVersion : AsciiString from TCollection);
+    SetCreationDate(me : mutable; aDate : AsciiString from TCollection);
+    SetSchemaVersion(me : mutable; aVersion : AsciiString from TCollection);
+    SetSchemaName(me : mutable; aName : AsciiString from TCollection);
 
     -- PRIVATE
 
-    SetNumberOfObjects(me : mutable; anObjectNumber : Integer from Standard) is private;
-    SetStorageVersion(me : mutable; aVersion : AsciiString from TCollection) is private;
-    SetCreationDate(me : mutable; aDate : AsciiString from TCollection) is private;
-    SetSchemaVersion(me : mutable; aVersion : AsciiString from TCollection) is private;
-    SetSchemaName(me : mutable; aName : AsciiString from TCollection) is private;
     SetErrorStatus(me : mutable; anError : Error from Storage) is private;
     SetErrorStatusExtension(me : mutable; anErrorExt : AsciiString from TCollection) is private;    
 

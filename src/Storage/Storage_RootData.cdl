@@ -57,8 +57,7 @@ is
     -- PRIVATE
 
     UpdateRoot(me : mutable; aName : AsciiString from TCollection; aPers : Persistent from Standard) 
-    raises NoSuchObject
-    is private;
+    raises NoSuchObject;
 
     SetErrorStatus(me : mutable; anError : Error from Storage) is private;
     SetErrorStatusExtension(me : mutable; anErrorExt : AsciiString from TCollection) is private;    

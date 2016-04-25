@@ -134,9 +134,10 @@ is
     
     class HSeqOfRoot instantiates HSequence from TCollection(Root from Storage,SeqOfRoot);
 
+    class InternalData;
+
     -- PRIVATE
     
-    private class InternalData;
     private class stCONSTclCOM;
 
     private class TypedCallBack;
@@ -159,8 +160,8 @@ is
     class ArrayOfSchema instantiates Array1 from TCollection(Schema from Storage);
     class HArrayOfSchema instantiates HArray1 from TCollection(Schema from Storage,ArrayOfSchema from Storage);
     
-    private class PArray instantiates Array1 from TCollection(Persistent from Standard);  
-    private class HPArray instantiates HArray1 from TCollection(Persistent from Standard, PArray from Storage);
+    class PArray instantiates Array1 from TCollection(Persistent from Standard);  
+    class HPArray instantiates HArray1 from TCollection(Persistent from Standard, PArray from Storage);
     
     -- METHODS
     

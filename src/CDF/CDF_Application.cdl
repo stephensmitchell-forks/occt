@@ -155,7 +155,10 @@ is
     Reader(me: mutable; aFileName: ExtendedString from TCollection) 
     returns Reader from PCDM
     raises NoSuchObject from Standard;
-    
+
+    Read(me: mutable; theIStream: in out IStream from Standard)
+    returns Document from CDM;
+
     FindReaderFromFormat(me: mutable; aFormat: ExtendedString from TCollection)
     returns Boolean from Standard;
     

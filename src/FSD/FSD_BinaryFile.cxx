@@ -15,6 +15,15 @@
 #include <FSD_BinaryFile.ixx>
 #include <OSD.hxx>
 #include <OSD_OpenFile.hxx>
+#include <Storage_HArrayOfCallBack.hxx>
+#include <Storage_HSeqOfRoot.hxx>
+#include <Storage_HPArray.hxx>
+#include <Storage_InternalData.hxx>
+#include <Storage_HeaderData.hxx>
+#include <Storage_InternalData.hxx>
+#include <Storage_Root.hxx>
+#include <Storage_RootData.hxx>
+#include <Storage_TypeData.hxx>
 
 const Standard_CString MAGICNUMBER = "BINFILE";
 

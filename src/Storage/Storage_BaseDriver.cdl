@@ -26,7 +26,9 @@ uses Position    from Storage,
      Error       from Storage,
      ExtendedString from TCollection,
      SequenceOfAsciiString from TColStd,
-     SequenceOfExtendedString from TColStd
+     SequenceOfExtendedString from TColStd,
+     IStream from Standard,
+     Data from Storage
      
 raises StreamTypeMismatchError from Storage,
        StreamFormatError from Storage,
@@ -46,6 +48,9 @@ is
         
     OpenMode(me) returns OpenMode from Storage;
     ---C++: inline
+
+    ReadMagicNumber(myclass; theIStream: in out IStream from Standard)
+        returns AsciiString from TCollection;
 
     IsEnd(me : in out) returns Boolean from Standard is deferred;
     ---Purpose: returns True if we are at end of the stream    
@@ -90,6 +95,10 @@ is
     raises StreamTypeMismatchError,StreamExtCharParityError
     is deferred;
     
+    ReadCompleteInfo(me: in out; theIStream: in out IStream from Standard;
+                                 theData: out Data from Storage)
+    is deferred;
+
     EndReadInfoSection(me : in out) returns Error from Storage 
     is deferred;
 

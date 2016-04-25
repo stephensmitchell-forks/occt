@@ -33,6 +33,7 @@
 #include <TCollection_AsciiString.hxx>
 #include <UTL.hxx>
 #include <OSD_Path.hxx>
+#include <OSD_OpenFile.hxx>
 
 #ifdef WNT
 # include <tchar.h>

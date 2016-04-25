@@ -14,7 +14,7 @@
 -- Alternatively, this file may be used under the terms of Open CASCADE
 -- commercial license or contractual agreement.
 
-private class Reference from CDM  inherits Transient from Standard
+class Reference from CDM  inherits Transient from Standard
 
 uses Document from CDM, DocumentPointer from CDM, Application from CDM, MetaData from CDM
 
