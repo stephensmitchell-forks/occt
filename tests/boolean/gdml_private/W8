@@ -1,2 +1,4 @@
+puts "TODO ?OCC26619 ALL: Faulty shapes in variables faulty_1 to faulty_"
+
 source [locate_data_file 200a0-1_be_piquage.prt.1.gdml.tcl]
 
