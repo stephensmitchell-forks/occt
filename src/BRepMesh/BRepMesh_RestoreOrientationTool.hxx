@@ -19,6 +19,7 @@
 #include <Standard.hxx>
 #include <TopoDS_Shape.hxx>
 #include <TopoDS_Face.hxx>
+#include <Message_ProgressIndicator.hxx>
 
 #include <BRepMesh_TriangulatedPatch.hxx>
 
@@ -102,7 +103,7 @@ public:
   Standard_EXPORT void Init (const TopoDS_Shape& theShape);
 
   //! Performs restoring of consistent orientation.
-  Standard_EXPORT void Perform();
+  Standard_EXPORT void Perform (const Handle(Message_ProgressIndicator) thePI = NULL);
 
   //! Returns "Visibility only" mode.
   bool VisibilityOnly() const

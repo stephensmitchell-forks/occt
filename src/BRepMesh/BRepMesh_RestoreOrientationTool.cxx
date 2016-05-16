@@ -27,7 +27,7 @@
 
 #include <NCollection_Map.hxx>
 #include <NCollection_DataMap.hxx>
-
+#include <Message_ProgressSentry.hxx>
 #include <Standard_Integer.hxx>
 
 #include <Precision.hxx>
@@ -36,8 +36,14 @@
 
 #include <set>
 #include <map>
+#include <memory>
 
 #include <BRepMesh_MinStCut.hxx>
+
+#include <Eigen/Core>
+#include <Eigen/Sparse>
+
+// #define MEASURE_PERFORMANCE
 
 IMPLEMENT_STANDARD_HANDLE (BRepMesh_RestoreOrientationTool, Standard_Transient)
 IMPLEMENT_STANDARD_RTTIEXT(BRepMesh_RestoreOrientationTool, Standard_Transient)
@@ -70,6 +76,60 @@ Standard_Integer sampleValue (Standard_Real theKsi, const std::vector<Standard_R
 }
 
 //! Utility class to manage coherence table.
+class SparseCoherencyTable
+{
+public:
+
+  //! Allocates square coherency table with theMaxSize * theMaxSize maximum number of elements.
+  SparseCoherencyTable (Standard_Size theMaxSize)
+    : myMaxSize (theMaxSize),
+      mySize (0),
+      myTable ((Standard_Integer)theMaxSize,
+               (Standard_Integer)theMaxSize)
+  {
+    //
+  }
+
+  void Reserve (Standard_Size theNumElements)
+  {
+    myTable.reserve ((Standard_Integer)theNumElements);
+  }
+
+  //! Sets coherence value.
+  void setCoherence (Standard_Size theI, Standard_Size theJ, Standard_Real theValue)
+  {
+    if (theI < theJ) std::swap (theI, theJ);
+    myTable.coeffRef ((Standard_Integer)theI, (Standard_Integer)theJ) = static_cast<Standard_ShortReal> (theValue);
+  }
+
+  //! Returns coherence value.
+  Standard_Real getCoherence (Standard_Size theI, Standard_Size theJ)
+  {
+    if (theI < theJ) std::swap (theI, theJ);
+    return static_cast<Standard_Real> (myTable.coeff ((Standard_Integer)theI, (Standard_Integer)theJ));
+  }
+
+  //! Returns actual table size.
+  Standard_Size Size()
+  {
+    return mySize;
+  }
+
+  //! Sets actual table size.
+  void SetSize (Standard_Size theSize)
+  {
+    mySize = theSize;
+  }
+
+private:
+
+  Standard_Size myMaxSize;
+  Standard_Size mySize;
+
+  Eigen::SparseMatrix<Standard_ShortReal> myTable;
+};
+
+//! Utility class to manage coherence table.
 class CoherencyTable
 {
 public:
@@ -78,7 +138,7 @@ public:
   CoherencyTable (Standard_Size theMaxSize)
     : myMaxSize (theMaxSize),
       mySize (0),
-      myTable (theMaxSize * theMaxSize, 0.0)
+      myTable (theMaxSize * theMaxSize, 0.f)
   {
     //
   }
@@ -86,12 +146,14 @@ public:
   //! Sets coherence value.
   void setCoherence (Standard_Size theI, Standard_Size theJ, Standard_Real theValue)
   {
+    if (theI < theJ) std::swap (theI, theJ);
     myTable[theI * myMaxSize + theJ] = static_cast<Standard_ShortReal> (theValue);
   }
 
   //! Returns coherence value.
-  Standard_Real getCoherence (size_t theI, size_t theJ)
+  Standard_Real getCoherence (Standard_Size theI, Standard_Size theJ)
   {
+    if (theI < theJ) std::swap (theI, theJ);
     return static_cast<Standard_Real> (myTable[theI * myMaxSize + theJ]);
   }
 
@@ -584,7 +646,7 @@ Standard_Real BRepMesh_RestoreOrientationTool::computeCoherence (Handle (BRepMes
 // function : Perform
 // purpose  :
 // =======================================================================
-void BRepMesh_RestoreOrientationTool::Perform()
+void BRepMesh_RestoreOrientationTool::Perform (const Handle(Message_ProgressIndicator) thePI)
 {
   Standard_Real aMaxArea = std::numeric_limits<Standard_Real>::epsilon();
 
@@ -592,8 +654,6 @@ void BRepMesh_RestoreOrientationTool::Perform()
   OSD_Timer aTimer;
   aTimer.Start();
 #endif
-
-  std::auto_ptr<CoherencyTable> aTable;
 
   // Flipped flags for all patches.
   std::vector<char> aFlipped (myPatches.size(), 0);
@@ -604,13 +664,20 @@ void BRepMesh_RestoreOrientationTool::Perform()
   const Standard_Real anEpsilon = std::max (1.0e-4, 1.0e-2 * myTriangulation.Box().Size().Modulus());
   BVH_Vec3d anEpsilonVec (anEpsilon, anEpsilon, anEpsilon);
 
+  std::unique_ptr<SparseCoherencyTable> aTable;
+
+  aTable->Reserve (myPatches.size());
+
   if (!myVisibilityOnly)
   {
-    aTable.reset (new CoherencyTable (myPatches.size() * 3));
+    aTable.reset (new SparseCoherencyTable (myPatches.size() * 3));
     aTable->SetSize (myPatches.size());
 
+    if (!thePI.IsNull()) thePI->NewScope ( 80, "Coherence" );
+    Message_ProgressSentry aPS (thePI, "Compute initial coherence", 0.0, (Standard_Real) (myPatches.size() - 1), 1.0);
+
     // Compute coherence
-    for (Standard_Size i = 0; i < myPatches.size() - 1; ++i)
+    for (Standard_Size i = 0; i < myPatches.size() - 1; ++i, aPS.Next())
     {
       Handle (BRepMesh_TriangulatedPatch)& aTriPatch1 = myPatches[i];
 
@@ -628,10 +695,11 @@ void BRepMesh_RestoreOrientationTool::Perform()
           aMaxCoherence = std::max (aMaxCoherence, aCoherence);
 
           aTable->setCoherence (i, j, aCoherence);
-          aTable->setCoherence (j, i, aCoherence);
         }
       }
     }
+
+    if (!thePI.IsNull()) thePI->EndScope();
 
     std::vector<BRepMesh_SuperPatch> aMetaPatches;
     aMetaPatches.reserve (myPatches.size() * 3);
@@ -688,7 +756,6 @@ void BRepMesh_RestoreOrientationTool::Perform()
           Standard_Real aCoherence = aTable->getCoherence (i, anIndex);
 
           aTable->setCoherence (i, anIndex, -aCoherence);
-          aTable->setCoherence (anIndex, i, -aCoherence);
         }
       }
 
@@ -709,7 +776,6 @@ void BRepMesh_RestoreOrientationTool::Perform()
           aNewCoherence += aTable->getCoherence (i, aBestPair.SecondPatch->Index);
 
           aTable->setCoherence (i, aNewPatch.Index, aNewCoherence);
-          aTable->setCoherence (aNewPatch.Index, i, aNewCoherence);
         }
       }
 
@@ -767,6 +833,9 @@ void BRepMesh_RestoreOrientationTool::Perform()
   // Ensure that BVH already built before parallel section
   myTriangulation.BVH();
 
+  if (!thePI.IsNull()) thePI->NewScope (myVisibilityOnly ? 100 : 20, "Visibility");
+  Message_ProgressSentry aPS (thePI, "Compute visibility", 0, aPatchesNb, 1);
+
   // Compute visibility
   #pragma omp parallel for
   for (Standard_Integer i = 0; i < aPatchesNb; ++i)
@@ -779,7 +848,17 @@ void BRepMesh_RestoreOrientationTool::Perform()
     {
       aTriPatch->FlipVisibility();
     }
+
+    if (!thePI.IsNull())
+    {
+      #pragma omp critical
+      {
+        aPS.Next();
+      }
+    }
   }
+
+  if (!thePI.IsNull()) thePI->EndScope();
 
 #ifdef MEASURE_PERFORMANCE
   aTimer.Stop();
@@ -789,7 +868,7 @@ void BRepMesh_RestoreOrientationTool::Perform()
 #endif
 
   // Optimization
-  Energy* aGraph = new Energy (myPatches.size());
+  Energy* aGraph = new Energy ((Standard_Integer)myPatches.size());
 
   std::vector<Energy::Var> aVariables (myPatches.size());
 
