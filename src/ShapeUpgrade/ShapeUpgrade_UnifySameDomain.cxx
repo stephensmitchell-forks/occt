@@ -873,16 +873,20 @@ static Standard_Boolean MergeEdges(TopTools_SequenceOfShape& SeqEdges,
           edge = TopoDS::Edge(itL.Value());
           if (!aUsedEdges.Contains(edge))
           {
-            if (j == 0)
-              aChain.Prepend(edge);
-            else
-              aChain.Append(edge);
-            aUsedEdges.Add(edge);
-            TopoDS_Vertex VF2, VL2;
-            TopExp::Vertices(edge, VF2, VL2, Standard_True);
-            V[j] = (VF2.IsSame(V[j]) ? VL2 : VF2);
-            isAdded = Standard_True;
-            break;
+            TopoDS_Vertex V2[2];
+            TopExp::Vertices(edge, V2[0], V2[1], Standard_True);
+            // the neighboring edge must have V[j] reversed and located on the opposite end
+            if (V2[1 - j].IsEqual(V[j].Reversed()))
+            {
+              if (j == 0)
+                aChain.Prepend(edge);
+              else
+                aChain.Append(edge);
+              aUsedEdges.Add(edge);
+              V[j] = V2[j];
+              isAdded = Standard_True;
+              break;
+            }
           }
         }
       }
