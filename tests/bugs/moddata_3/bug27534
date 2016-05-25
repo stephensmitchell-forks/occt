@@ -1,0 +1,35 @@
+puts "================"
+puts "OCC27534: "
+puts "================"
+puts ""
+####################
+## [Regression to 6.9.1]: Infinite loop in Curve on Surface projection algorithm
+####################
+
+# Create objects.
+sphere s 0 0 0 10
+circle c 0 0 0 0 0 1 10
+trim c c 0 pi
+mkface f s
+mkedge e c
+nurbsconvert f f
+nurbsconvert e e
+mksurface s f
+mkcurve c e
+
+# Set CPU limit to check infinite loop state.
+cpulimit 1.0
+
+# Run test.
+project result c s -t 0.2
+
+# Analyze results:
+
+# Result length.
+checklength result -l 3.141592653
+
+# Visual check to avoid orientation problems on curve bounds in case of periodic surface.
+view 1 -2D-  728 20 400 400
+don result
+2dfit
+checkview -screenshot -2d -path ${imagedir}/${test_image}.png
