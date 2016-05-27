@@ -16,6 +16,7 @@
 
 #include <BRepAlgo_AsDes.ixx>
 #include <TopTools_ListIteratorOfListOfShape.hxx>
+#include <TopTools_MapOfOrientedShape.hxx>
 
 //=======================================================================
 //function : BRepAlgo_AsDes
@@ -144,12 +145,18 @@ static void ReplaceInList(const TopoDS_Shape&   OldS,
 			  const TopoDS_Shape&   NewS,
 			  TopTools_ListOfShape& L)
 {
+  TopTools_MapOfOrientedShape aMS;
   TopTools_ListIteratorOfListOfShape it(L);
-  
+  for (; it.More(); it.Next()) {
+    aMS.Add(it.Value());
+  }
+  it.Initialize(L);
   while(it.More()) {
     if (it.Value().IsSame(OldS)) {
       TopAbs_Orientation O = it.Value().Orientation();
-      L.InsertBefore(NewS.Oriented(O),it);
+      if (aMS.Add(NewS.Oriented(O))) {
+        L.InsertBefore(NewS.Oriented(O),it);
+      }
       L.Remove(it);
     }
     else it.Next();
@@ -230,34 +237,53 @@ void BRepAlgo_AsDes::BackReplace(const TopoDS_Shape&         OldS,
 //function : Replace
 //purpose  : 
 //=======================================================================
-
 void BRepAlgo_AsDes::Replace(const TopoDS_Shape& OldS,
-			       const TopoDS_Shape& NewS)
+                             const TopoDS_Shape& NewS)
 {
-  Standard_Boolean InUp;
-
-  if (up.IsBound(OldS)) {
-    InUp = Standard_False;
-    BackReplace (OldS,NewS,up(OldS),InUp);
-    if (up.IsBound(NewS)) {
-      up(NewS).Append(up(OldS));
+  for (Standard_Integer i = 0; i < 2; ++i) {
+    TopTools_DataMapOfShapeListOfShape& aMap = !i ? up : down;
+    if (!aMap.IsBound(OldS)) {
+      continue;
+    }
+    //
+    TopTools_ListOfShape& aLSOld = aMap.ChangeFind(OldS);
+    //
+    Standard_Boolean InUp = !i ? Standard_False : Standard_True;
+    BackReplace(OldS, NewS, aLSOld, InUp);
+    //
+    if (!aMap.IsBound(NewS)) {
+      // filter the list
+      TopTools_MapOfOrientedShape aMS;
+      TopTools_ListIteratorOfListOfShape aIt(aLSOld);
+      for (; aIt.More(); ) {
+        if (!aMS.Add(aIt.Value())) {
+          aLSOld.Remove(aIt);
+        }
+        else {
+          aIt.Next();
+        }
+      }
+      aMap.Bind(NewS, aLSOld);
     }
     else {
-      up.Bind(NewS,up(OldS));
+      // avoid duplicates
+      TopTools_MapOfOrientedShape aMS;
+      TopTools_ListOfShape& aLSNew = aMap.ChangeFind(NewS);
+      TopTools_ListIteratorOfListOfShape aIt(aLSNew);
+      for (; aIt.More(); aIt.Next()) {
+        aMS.Add(aIt.Value());
+      }
+      //
+      aIt.Initialize(aLSOld);
+      for (; aIt.More(); aIt.Next()) {
+        const TopoDS_Shape& aS = aIt.Value();
+        if (aMS.Add(aS)) {
+          aLSNew.Append(aS);
+        }
+      }
     }
-    up.UnBind(OldS);
-  }
-  
-  if (down.IsBound(OldS)) {
-    InUp = Standard_True;
-    BackReplace(OldS,NewS,down (OldS),InUp);
-    if (down.IsBound(NewS)) {
-      down(NewS).Append(down(OldS));
-    }
-    else {
-      down.Bind(NewS,down(OldS));
-    }
-    down.UnBind(OldS);
+    //
+    aMap.UnBind(OldS);
   }
 }
 

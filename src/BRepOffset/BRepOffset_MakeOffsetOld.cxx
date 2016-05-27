@@ -803,13 +803,17 @@ void BRepOffset_MakeOffsetOld::BuildOffsetByInter()
   //---------------------------------------------------------------------------------
   // Extension of neighbor edges of new edges and intersection between neighbors.
   //--------------------------------------------------------------------------------
+  TopTools_IndexedDataMapOfShapeListOfShape aDMVV;
   Handle(BRepAlgo_AsDes) AsDes2d = new BRepAlgo_AsDes();
   for (Exp.Init(myShape,TopAbs_FACE) ; Exp.More(); Exp.Next()) {
     const TopoDS_Face& FI = TopoDS::Face(Exp.Current());
     Standard_Real aCurrFaceTol = BRep_Tool::Tolerance(FI);
     BRepOffset_Inter2d::ConnexIntByInt (FI, MapSF(FI), MES, Build, 
-                                        AsDes, AsDes2d, myOffset, aCurrFaceTol);
+                                        AsDes, AsDes2d, myOffset, aCurrFaceTol, aDMVV);
   }
+  //
+  // fuse vertices on edges
+  BRepOffset_Inter2d::FuseVertices(aDMVV, AsDes2d);
   //-----------------------------------------------------------
   // Great restriction of new edges and update of AsDes.
   //------------------------------------------ ----------------
@@ -939,11 +943,12 @@ void BRepOffset_MakeOffsetOld::BuildOffsetByInter()
     }
   }
   
+  aDMVV.Clear();
   TopTools_ListIteratorOfListOfShape itLFE(LFE);
   for (; itLFE.More(); itLFE.Next()) {
     const TopoDS_Face& NEF = TopoDS::Face(itLFE.Value());
     Standard_Real aCurrFaceTol = BRep_Tool::Tolerance(NEF);
-    BRepOffset_Inter2d::Compute(AsDes, NEF, NewEdges, aCurrFaceTol);
+    BRepOffset_Inter2d::Compute(AsDes, NEF, NewEdges, aCurrFaceTol, aDMVV);
   }
   //----------------------------------------------
   // Intersections 2d on caps.
@@ -952,9 +957,10 @@ void BRepOffset_MakeOffsetOld::BuildOffsetByInter()
   for (i = 1; i <= myFaces.Extent(); i++) {
     const TopoDS_Face& Cork = TopoDS::Face(myFaces(i));
     Standard_Real aCurrFaceTol = BRep_Tool::Tolerance(Cork);
-    BRepOffset_Inter2d::Compute(AsDes, Cork, NewEdges, aCurrFaceTol);
+    BRepOffset_Inter2d::Compute(AsDes, Cork, NewEdges, aCurrFaceTol, aDMVV);
   }
-
+  //
+  BRepOffset_Inter2d::FuseVertices(aDMVV, AsDes);
   //-------------------------------
   // Unwinding of extended Faces.
   //-------------------------------
@@ -2407,13 +2413,16 @@ void BRepOffset_MakeOffsetOld::Intersection2D(const TopTools_IndexedMapOfShape& 
   //-----------------------------------------------
   // Intersection of edges 2 by 2.
   //-----------------------------------------------
+  TopTools_IndexedDataMapOfShapeListOfShape aDMVV;
   Standard_Integer i;
   for (i = 1; i <= Modif.Extent(); i++) {
     const TopoDS_Face& F  = TopoDS::Face(Modif(i));
     Standard_Real aCurrFaceTol = BRep_Tool::Tolerance(F);
-    BRepOffset_Inter2d::Compute(myAsDes,F,NewEdges,aCurrFaceTol);
+    BRepOffset_Inter2d::Compute(myAsDes,F,NewEdges,aCurrFaceTol, aDMVV);
   }
-
+  //
+  BRepOffset_Inter2d::FuseVertices(aDMVV, myAsDes);
+  //
 #ifdef OCCT_DEBUG
   if (AffichInt2dOld) {
     DEBVerticesControlOld (NewEdges,myAsDes);

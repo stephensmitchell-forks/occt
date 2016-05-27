@@ -67,6 +67,9 @@
 #include <IntTools_ShrunkRange.hxx>
 #include <Precision.hxx>
 //
+#include <NCollection_Array1.hxx>
+#include <algorithm>
+//
 
 static
   Standard_Real AngleWithRef(const gp_Dir& theD1,
@@ -107,6 +110,25 @@ static
                           const TopoDS_Face& theF1,
                           const BOPTools_ListOfCoupleOfShape& theLCS,
                           const gp_Pnt& aP);
+
+//=======================================================================
+// function: BOPTools_AlgoTools_ComparePoints
+// purpose:  implementation of IsLess() function for two points
+//=======================================================================
+struct BOPTools_AlgoTools_ComparePoints {
+  bool operator()(const gp_Pnt& theP1, const gp_Pnt& theP2)
+  {
+    for (Standard_Integer i = 1; i <= 3; ++i) {
+      if (theP1.Coord(i) < theP2.Coord(i)) {
+        return Standard_True;
+      }
+      else if (theP1.Coord(i) > theP2.Coord(i)) {
+        return Standard_False;
+      }
+    }
+    return Standard_False;
+  }
+};
 
 //=======================================================================
 // function: MakeConnexityBlocks
@@ -1553,27 +1575,37 @@ void BOPTools_AlgoTools::MakeVertex(BOPCol_ListOfShape& aLV,
   }// else if (aNb==2) {
   //
   else { // if (aNb>2) 
-    Standard_Real aTi, aDi, aDmax;
-    gp_Pnt aPi, aP;
-    gp_XYZ aXYZ(0.,0.,0.), aXYZi;
-    BOPCol_ListIteratorOfListOfShape aIt;
+    // compute the point
     //
-    aIt.Initialize(aLV);
-    for (; aIt.More(); aIt.Next()) {
-      TopoDS_Vertex& aVi=*((TopoDS_Vertex*)(&aIt.Value()));
-      aPi=BRep_Tool::Pnt(aVi);
-      aXYZi=aPi.XYZ();
-      aXYZ=aXYZ+aXYZi;
+    // issue 0027540 - sum of doubles may depend on the order
+    // of addition, thus sort the coordinates for stable result
+    Standard_Integer i;
+    NCollection_Array1<gp_Pnt> aPoints(0, aNb-1);
+    BOPCol_ListIteratorOfListOfShape aIt(aLV);
+    for (i = 0; aIt.More(); aIt.Next(), ++i) {
+      const TopoDS_Vertex& aVi = *((TopoDS_Vertex*)(&aIt.Value()));
+      gp_Pnt aPi = BRep_Tool::Pnt(aVi);
+      aPoints(i) = aPi;
     }
     //
+    std::sort(aPoints.begin(), aPoints.end(), BOPTools_AlgoTools_ComparePoints());
+    //
+    gp_XYZ aXYZ(0., 0., 0.);
+    for (i = 0; i < aNb; ++i) {
+      aXYZ += aPoints(i).XYZ();
+    }
     aXYZ.Divide((Standard_Real)aNb);
-    aP.SetXYZ(aXYZ);
+    //
+    gp_Pnt aP(aXYZ);
+    //
+    // compute the tolerance for the new vertex
+    Standard_Real aTi, aDi, aDmax;
     //
     aDmax=-1.;
     aIt.Initialize(aLV);
     for (; aIt.More(); aIt.Next()) {
       TopoDS_Vertex& aVi=*((TopoDS_Vertex*)(&aIt.Value()));
-      aPi=BRep_Tool::Pnt(aVi);
+      gp_Pnt aPi=BRep_Tool::Pnt(aVi);
       aTi=BRep_Tool::Tolerance(aVi);
       aDi=aP.SquareDistance(aPi);
       aDi=sqrt(aDi);

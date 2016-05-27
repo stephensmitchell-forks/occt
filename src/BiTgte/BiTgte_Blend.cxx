@@ -1725,7 +1725,7 @@ void BiTgte_Blend::ComputeCenters()
   // -------------------------------------------------------------------
 
   // Proceed with MakeLoops 
-
+  TopTools_IndexedDataMapOfShapeListOfShape aDMVV;
   BRepOffset_Type    OT = BRepOffset_Concave;
   if (myRadius < 0.) OT = BRepOffset_Convex; 
    
@@ -1778,7 +1778,8 @@ void BiTgte_Blend::ComputeCenters()
       BRepOffset_Inter2d::Compute(myAsDes,
 				  CurOF,
 				  myEdges,
-				  myTol);
+				  myTol,
+                                  aDMVV);
     }
   }
 
@@ -1810,8 +1811,12 @@ void BiTgte_Blend::ComputeCenters()
     BRepOffset_Inter2d::Compute(myAsDes,
 				CurOF,
 				myEdges,
-				myTol);
+				myTol,
+                                aDMVV);
   }
+  //
+  // fuse vertices on edges stored in AsDes
+  BRepOffset_Inter2d::FuseVertices(aDMVV, myAsDes);
   // ------------
   // unwinding 
   // ------------

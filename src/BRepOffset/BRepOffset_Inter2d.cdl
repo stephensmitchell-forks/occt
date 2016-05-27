@@ -27,6 +27,7 @@ uses
     Face                from TopoDS,
     Edge                from TopoDS,
     IndexedMapOfShape          from TopTools,
+    IndexedDataMapOfShapeListOfShape from TopTools,
     DataMapOfShapeShape from TopTools,
     Real                from Standard
 
@@ -34,12 +35,15 @@ is
     Compute(myclass ; AsDes    : AsDes             from BRepAlgo;
                       F        : Face              from TopoDS;
                       NewEdges : IndexedMapOfShape from TopTools;
-                      Tol      : Real              from Standard);
+                      Tol      : Real              from Standard;
+                      theDMVV  : out IndexedDataMapOfShapeListOfShape from TopTools);
                       
               ---Purpose: Computes the intersections between the edges stored
               --          is AsDes as descendants of <F> . Intersections is computed
               --          between two edges if one of them is bound in NewEdges.
-
+              --          When all faces of the shape are treated the intersection
+              --          vertices have to be fused using the FuseVertices method.
+              --          theDMVV contains the vertices that should be fused
     
     --  Modified by skv - Fri Dec 26 16:53:16 2003 OCC4455 Begin
     --  Add another parameter: offset value.
@@ -51,8 +55,24 @@ is
                    AsDes   :          AsDes               from BRepAlgo; 
                    AsDes2d :          AsDes               from BRepAlgo; 
                    Offset  :          Real                from Standard;
-                   Tol     :          Real                from Standard);
+                   Tol     :          Real                from Standard;
+                   theDMVV : out      IndexedDataMapOfShapeListOfShape from TopTools);
     --  Modified by skv - Fri Dec 26 16:53:16 2003 OCC4455 End
+    ---Purpose: Computes the intersection between the offset edges
+    --          stored in AsDes as descendatnds on <F>. All intersection
+    --          vertices will be stored in AsDes2d. When all faces of the
+    --          shape are treated the intersection vertices have to be fused
+    --          using the FuseVertices method.
+    --          theDMVV contains the vertices that should be fused.
+
+
+    FuseVertices(myclass;
+                 theDMVV  : IndexedDataMapOfShapeListOfShape from TopTools;
+                 theAsDes : AsDes from BRepAlgo);
+    ---Purpose: Fuses the chains of vertices in the theDMVV
+    --          and updates AsDes by replacing the old vertices
+    --          with the new ones.
+                                  
 
     ExtentEdge(myclass ;
                E       :     Edge from TopoDS;
