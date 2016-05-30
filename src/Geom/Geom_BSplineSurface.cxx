@@ -541,7 +541,7 @@ void Geom_BSplineSurface::Segment(const Standard_Real U1,
   if ((U2 < U1) || (V2 < V1))
     Standard_DomainError::Raise("Geom_BSplineSurface::Segment");
   Standard_Real deltaU = Max(Abs(U2),Abs(U1));
-  Standard_Real EpsU = Epsilon(deltaU);
+  Standard_Real EpsU = Max (Epsilon(deltaU), Precision::PConfusion());
   deltaU = U2 - U1;
   if (uperiodic) {
     Standard_Real aUPeriod = uknots->Last() - uknots->First();
@@ -552,7 +552,7 @@ void Geom_BSplineSurface::Segment(const Standard_Real U1,
   }
   
   Standard_Real deltaV = Max(Abs(V2),Abs(V1));
-  Standard_Real EpsV = Epsilon(deltaV);
+  Standard_Real EpsV = Max (Epsilon(deltaV), Precision::PConfusion());
   deltaV = V2 - V1;
   if (vperiodic) {
     Standard_Real aVPeriod = vknots->Last() - vknots->First();
@@ -763,7 +763,7 @@ void Geom_BSplineSurface::CheckAndSegment(const Standard_Real U1,
   if ((U2 < U1) || (V2 < V1))
     Standard_DomainError::Raise("Geom_BSplineSurface::CheckAndSegment");
   Standard_Real deltaU = Max(Abs(U2),Abs(U1));
-  Standard_Real EpsU = Epsilon(deltaU);
+  Standard_Real EpsU = Max (Epsilon(deltaU), Precision::PConfusion());
   deltaU = U2 - U1;
   if (uperiodic) {
     Standard_Real aUPeriod = uknots->Last() - uknots->First();
@@ -774,7 +774,7 @@ void Geom_BSplineSurface::CheckAndSegment(const Standard_Real U1,
   }
   
   Standard_Real deltaV = Max(Abs(V2),Abs(V1));
-  Standard_Real EpsV = Epsilon(deltaV);
+  Standard_Real EpsV = Max (Epsilon(deltaV), Precision::PConfusion());
   deltaV = V2 - V1;
   if (vperiodic) {
     Standard_Real aVPeriod = vknots->Last() - vknots->First();
