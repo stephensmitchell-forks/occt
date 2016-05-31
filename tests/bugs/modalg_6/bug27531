@@ -1,0 +1,33 @@
+puts "========"
+puts "0027531: Make the algorithm Approx_SameParameter more clear and robust"
+puts "========"
+puts ""
+#puts "TODO OCC27651 ALL: Error: First pcurve is too far from 3d curve"
+
+
+restore [locate_data_file bug27531.brep] aS
+sewing result 0.2 aS
+
+# check result shape for validity.
+checkshape result
+
+# Check distances
+set MAX_DIST 1.0
+explode result E
+explode result F
+
+set log [xdistef result_3 result_1]
+regexp {Max Distance = +([-0-9.+eE]+); Parameter} ${log} full aDist
+if { $aDist > $MAX_DIST} {
+  puts "Error: First pcurve is too far from 3d curve"
+} else {
+  puts "OK: First pcurve is OK."
+}
+
+set log [xdistef result_3 result_2]
+regexp {Max Distance = +([-0-9.+eE]+); Parameter} ${log} full aDist
+if { $aDist > $MAX_DIST} {
+  puts "Error: Second pcurve is too far from 3d curve"
+} else {
+  puts "OK: Second pcurve is OK."
+}

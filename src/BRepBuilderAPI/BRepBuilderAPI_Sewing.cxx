@@ -122,9 +122,123 @@
 #include <TopTools_ListOfShape.hxx>
 #include <TopTools_MapOfShape.hxx>
 #include <TopTools_SequenceOfShape.hxx>
-
+//
+#include <Adaptor3d_CurveOnSurface.hxx>
+#include <Adaptor3d_HCurve.hxx>
+#include<GeomAdaptor_HSurface.hxx>
+#include<GeomAdaptor_HCurve.hxx>
+#include<Geom2dAdaptor_HCurve.hxx>
+#include<GeomProjLib.hxx>
+//
 IMPLEMENT_STANDARD_RTTIEXT(BRepBuilderAPI_Sewing,MMgt_TShared)
 
+static Standard_Real ComputeTol(const Handle(Adaptor3d_HCurve)& c3d,
+  const Handle(Adaptor2d_HCurve2d)& c2d, 
+  const Standard_Real first, const Standard_Real last,
+  const Handle(Adaptor3d_HSurface)& surf,
+  const Standard_Integer        nbp)
+
+{
+  Adaptor3d_CurveOnSurface  cons(c2d,surf);
+  Standard_Real d2 = 0.0; // Square max discrete deviation.
+  for(Standard_Integer i = 0; i <= nbp; i++)
+  {
+    Standard_Real t = IntToReal(i) / IntToReal(nbp);
+    Standard_Real u = first * (1.0 - t) + last * t;
+    gp_Pnt Pc3d = c3d->Value(u);
+    gp_Pnt Pcons = cons.Value(u);
+    if (Precision::IsInfinite(Pcons.X()) ||
+        Precision::IsInfinite(Pcons.Y()) ||
+        Precision::IsInfinite(Pcons.Z()))
+    {
+        d2=Precision::Infinite();
+        break;
+    }
+    d2 = Max(d2, Pc3d.SquareDistance(Pcons));
+  }
+
+  const Standard_Real aMult = 1.5; // To be tolerant to discrete tolerance computing.
+  Standard_Real aDeviation = aMult * sqrt(d2);
+  aDeviation = Max(aDeviation, Precision::Confusion()); // Tolerance in modeling space.
+  return aDeviation;
+}
+
+enum BoundaryType
+{
+  NotBoundary,
+  LowerBoundary,
+  RightBoundary,
+  UpperBoundary,
+  LeftBoundary
+};
+//----------------------------------------------------------------------------------------
+// function: CheckBndStatus
+// purpose : for periodic surfaces check and define possible position of pcurve 
+// relatively periodic boundary of surface 
+//
+//----------------------------------------------------------------------------------------
+static BoundaryType CheckBndStatus(const Handle(Geom2dAdaptor_HCurve)& gac2d, 
+                                       const Standard_Real first, const Standard_Real last, 
+                                       const Handle(GeomAdaptor_HSurface)& gasurf2)
+{
+  BoundaryType BndStatus = NotBoundary;
+  Standard_Real tol = Precision::PConfusion() * 1000.;
+  Standard_Integer i, nbp = 5;
+  Standard_Real r = 1./(nbp-1);
+  Standard_Real tmin = first + 0.001*(last - first),
+                tmax = last - 0.001*(last - first);
+  if(gasurf2->IsUPeriodic())
+  {
+    Standard_Real umin = gasurf2->FirstUParameter();
+    Standard_Real umax = umin + gasurf2->UPeriod();
+    Standard_Boolean isUmin = Standard_True, isUmax = Standard_True;
+    for(i = 0; i < nbp; ++i)
+    {
+      gp_Pnt2d aP = gac2d->Value(r*(i*tmax + (nbp-i-1)*tmin)); 
+      isUmin = isUmin && (Abs(aP.X()-umin) <= tol);
+      isUmax = isUmax && (Abs(aP.X()-umax) <= tol);
+
+      if((!isUmin) && (!isUmax))
+      {
+        break;
+      }
+    }
+    if(isUmin)
+    {
+      BndStatus = LeftBoundary;
+    }
+    else if(isUmax)
+    {
+      BndStatus = RightBoundary;
+    }
+  }
+  else if(gasurf2->IsVPeriodic())
+  {
+    Standard_Real vmin = gasurf2->FirstVParameter();
+    Standard_Real vmax = vmin + gasurf2->VPeriod();
+    Standard_Boolean isVmin = Standard_True, isVmax = Standard_True;
+    for(i = 0; i < nbp; ++i)
+    {
+      gp_Pnt2d aP = gac2d->Value(r*(i*tmax + (nbp-i-1)*tmin)); 
+      isVmin = isVmin && (Abs(aP.Y()-vmin) <= tol);
+      isVmax = isVmax && (Abs(aP.Y()-vmax) <= tol);
+
+      if((!isVmin) && (!isVmax))
+      {
+        break;
+      }
+    }
+    if(isVmin)
+    {
+      BndStatus = LowerBoundary;
+    }
+    else if(isVmax)
+    {
+      BndStatus = UpperBoundary;
+    }
+  }
+  return BndStatus;
+}
 //#include <LocalAnalysis_SurfaceContinuity.hxx>
 //=======================================================================
 //function : SameRange
@@ -586,6 +700,7 @@ TopoDS_Edge BRepBuilderAPI_Sewing::SameParameterEdge(const TopoDS_Edge& edgeFirs
 
   // Sort input edges
   TopoDS_Edge edge1, edge2;
+  Standard_Real aLen = Precision::Infinite();
   if (firstCall) {
     // Take the longest edge as first
     Standard_Real f, l;
@@ -598,11 +713,13 @@ TopoDS_Edge BRepBuilderAPI_Sewing::SameParameterEdge(const TopoDS_Edge& edgeFirs
     if (len1 < len2) {
       edge1 = edgeLast;
       edge2 = edgeFirst;
+      aLen = len2/2.;
       whichSec = 2;
     }
     else {
       edge1 = edgeFirst;
       edge2 = edgeLast;
+      aLen = len1/2.;
       whichSec = 1;
     }
   }
@@ -882,7 +999,59 @@ TopoDS_Edge BRepBuilderAPI_Sewing::SameParameterEdge(const TopoDS_Edge& edgeFirs
         else
           aBuilder.UpdateEdge(edge, c2d21,c2d2, surf2, loc2, Precision::Confusion());
       } 
-      else {
+      else 
+      {
+        Standard_Real maxtol = 100.*Max(BRep_Tool::Tolerance(edge), myTolerance);
+        const Standard_Integer nbp = 22;
+        Handle(GeomAdaptor_HCurve) gac3d = new GeomAdaptor_HCurve(c3d);
+        Handle(Geom2dAdaptor_HCurve) gac2d = new Geom2dAdaptor_HCurve(c2d2);
+        Handle(Geom_Surface) tsurf2 = surf2;
+        if (!loc2.IsIdentity()) {
+          tsurf2 = Handle(Geom_Surface)::DownCast(surf2->Transformed(loc2.Transformation()));
+        }
+        Handle(GeomAdaptor_HSurface) gasurf2 = new GeomAdaptor_HSurface(tsurf2);
+        Standard_Real tol1 = ComputeTol(gac3d, gac2d, first, last, gasurf2, nbp);  
+        if(tol1 > maxtol && tol1 > aLen)
+        {
+          BoundaryType BndStatus = CheckBndStatus(gac2d, first, last, gasurf2);
+          //Try to project c3d on surface
+          Standard_Real tolapp = BRep_Tool::Tolerance(edge);
+          Handle(Geom2d_Curve) pc2d = GeomProjLib::Curve2d (c3d, first, last, tsurf2, tolapp);
+          if(!pc2d.IsNull())
+          {
+            gac2d = new Geom2dAdaptor_HCurve(pc2d);
+            Standard_Real tol2 = ComputeTol(gac3d, gac2d, first, last, gasurf2, nbp); 
+            if(tol2 <= tol1)
+            {
+              if(BndStatus != NotBoundary)
+              {
+                BoundaryType BndStatus1 = CheckBndStatus(gac2d, first, last, gasurf2);
+                if(BndStatus != BndStatus1)
+                {
+                  gp_Vec2d aTV(0., 0.);
+                  if(BndStatus == LeftBoundary && BndStatus1 == RightBoundary)
+                  {
+                    aTV.SetX(-gasurf2->UPeriod());
+                  }
+                  else if(BndStatus == RightBoundary && BndStatus1 == LeftBoundary)
+                  {
+                    aTV.SetX(gasurf2->UPeriod());
+                  }
+                  else if(BndStatus == LowerBoundary && BndStatus1 == UpperBoundary)
+                  {
+                    aTV.SetY(-gasurf2->VPeriod());
+                  }
+                  else if(BndStatus == UpperBoundary && BndStatus1 == LowerBoundary)
+                  {
+                    aTV.SetY(gasurf2->VPeriod());
+                  }
+                  pc2d->Translate(aTV);
+                }
+              }
+              c2d2 = pc2d;
+            }
+          }
+        }
         aBuilder.UpdateEdge(edge, c2d2, surf2, loc2, Precision::Confusion());
       }
     }
@@ -892,7 +1061,9 @@ TopoDS_Edge BRepBuilderAPI_Sewing::SameParameterEdge(const TopoDS_Edge& edgeFirs
   try
   {
     if( isResEdge)
+    {
       SameParameter(edge);
+    }
     
 
     if( BRep_Tool::SameParameter(edge))

@@ -1541,8 +1541,6 @@ TopoDS_Edge BRepLib::SameParameter(const TopoDS_Edge& theEdge,
                   }
                 }
               }
-
-
             }
         }
 
@@ -1578,16 +1576,11 @@ TopoDS_Edge BRepLib::SameParameter(const TopoDS_Edge& theEdge,
           }
           else
           {
-            //Approx_SameParameter has failed.
-            //Consequently, the situation might be,
-            //when 3D and 2D-curve do not have same-range.
-            GeomLib::SameRange( Tol2d, PC[i], 
-                                GCurve->First(), GCurve->Last(),
-                                f3d,l3d,curPC);
-
+            //Approx_SameParameter has failed, 
+            //use pcurve as is.
             if (i == 0) GCurve->PCurve(curPC);
             else GCurve->PCurve2(curPC);
-
+            maxdist = Max(maxdist,SameP.TolReached());
             IsSameP = 0;
           }
 
@@ -1598,6 +1591,13 @@ TopoDS_Edge BRepLib::SameParameter(const TopoDS_Edge& theEdge,
         if (!IsSameP) {
           if (anEdgeTol >= error) {
             maxdist = Max(maxdist, anEdgeTol);
+            IsSameP = Standard_True;
+          }
+          else
+          {
+            maxdist = Max(maxdist, error);
+            aNTE->Modified(Standard_True);
+            B.UpdateEdge(aNE, maxdist);
             IsSameP = Standard_True;
           }
         }
