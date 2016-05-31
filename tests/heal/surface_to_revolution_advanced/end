@@ -12,8 +12,8 @@ regexp {Number +of +other +pcurves +- +([-0-9.+eE]+)} $expsh full nb_pcurve
 if { $nb_plane != 0 || $nb_other_surf != 0 || $nb_curve != 0 || $nb_pcurve != 0} {
    puts "Error : The resulting shape is not correct"
 }
-regexp {Mass +: +([-0-9.+eE]+)} [sprops a] full mass
-regexp {Mass +: +([-0-9.+eE]+)} [sprops result] full m
+regexp {Mass +: +([-0-9.+eE]+)} [sprops a 1.0e-4] full mass
+regexp {Mass +: +([-0-9.+eE]+)} [sprops result 1.0e-4] full m
 
 if { ($mass != 0 && [expr 1.*abs($mass - $m)/$mass] > $rel_tol) || ($mass == 0 && $m != 0) } {
    puts "Error : The area of the resulting shape is $m"

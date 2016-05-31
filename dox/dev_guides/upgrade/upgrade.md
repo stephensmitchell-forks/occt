@@ -1006,3 +1006,7 @@ Within this OCCT release, this first level of aspects has been completely remove
 
 Note that the 3rd level (defining several different aspects within the same graphic group) is also should be avoided in application code since it is deprecated functionality which can be removed in further releases.
 Graphic3d_Group::SetGroupPrimitivesAspect() should be the main method defining presentation attributes.
+
+@subsection upgrade_occt710_correction_of_SameParameter Correction in *Approx_SameParameter* class:
+
+1. Method Curve2d() return type is changed from Geom2d_BSplineCurve to Geom2d_Curve.
