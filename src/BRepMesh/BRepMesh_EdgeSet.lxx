@@ -1,0 +1,452 @@
+// Created on: 2015-08-28
+// Created by: Danila ULYANOV
+// Copyright (c) 2015 OPEN CASCADE SAS
+//
+// This file is part of Open CASCADE Technology software library.
+//
+// This library is free software; you can redistribute it and/or modify it under
+// the terms of the GNU Lesser General Public License version 2.1 as published
+// by the Free Software Foundation, with special exception defined in the file
+// OCCT_LGPL_EXCEPTION.txt. Consult the file LICENSE_LGPL_21.txt included in OCCT
+// distribution for complete text of the license and disclaimer of any warranty.
+//
+// Alternatively, this file may be used under the terms of Open CASCADE
+// commercial license or contractual agreement.
+
+#include <BRepMesh_LineBoxDistance.hxx>
+
+// =======================================================================
+// function : BRepMesh_EdgeSet
+// purpose  :
+// =======================================================================
+template<class T, int N>
+BRepMesh_EdgeSet<T, N>::BRepMesh_EdgeSet (const BVH_ArrayNt& theTriangulationVertices)
+  : Vertices (theTriangulationVertices)
+{
+  //
+}
+
+// =======================================================================
+// function : ~BRepMesh_EdgeSet
+// purpose  :
+// =======================================================================
+template<class T, int N>
+BRepMesh_EdgeSet<T, N>::~BRepMesh_EdgeSet()
+{
+  //
+}
+
+// =======================================================================
+// function : Size
+// purpose  :
+// =======================================================================
+template<class T, int N>
+Standard_Integer BRepMesh_EdgeSet<T, N>::Size() const
+{
+  return BVH::Array<Standard_Integer, 4>::Size (Elements);
+}
+
+// =======================================================================
+// function : Box
+// purpose  :
+// =======================================================================
+template<class T, int N>
+BVH_Box<T, N> BRepMesh_EdgeSet<T, N>::Box (const Standard_Integer theIndex) const
+{
+  const BVH_Vec4i& anIndex = BVH::Array<Standard_Integer, 4>::Value (Elements, theIndex);
+
+  const BVH_VecNt& aPoint0 = BVH::Array<T, N>::Value (Vertices, anIndex.x());
+  const BVH_VecNt& aPoint1 = BVH::Array<T, N>::Value (Vertices, anIndex.y());
+  
+  BVH_VecNt aMinPoint = aPoint0;
+  BVH_VecNt aMaxPoint = aPoint0;
+
+  BVH::BoxMinMax<T, N>::CwiseMin (aMinPoint, aPoint1);
+  BVH::BoxMinMax<T, N>::CwiseMax (aMaxPoint, aPoint1);
+
+  return BVH_Box<T, N> (aMinPoint, aMaxPoint);
+}
+
+// =======================================================================
+// function : Center
+// purpose  :
+// =======================================================================
+template<class T, int N>
+T BRepMesh_EdgeSet<T, N>::Center (const Standard_Integer theIndex,
+                                  const Standard_Integer theAxis) const
+{
+  const BVH_Vec4i& anIndex = BVH::Array<Standard_Integer, 4>::Value (Elements, theIndex);
+
+  const BVH_VecNt& aPoint0 = BVH::Array<T, N>::Value (Vertices, anIndex.x());
+  const BVH_VecNt& aPoint1 = BVH::Array<T, N>::Value (Vertices, anIndex.y());
+
+  return ( BVH::VecComp<T, N>::Get (aPoint0, theAxis) +
+           BVH::VecComp<T, N>::Get (aPoint1, theAxis) ) * static_cast<T> (1.0 / 2.0);
+}
+
+// =======================================================================
+// function : Swap
+// purpose  :
+// =======================================================================
+template<class T, int N>
+void BRepMesh_EdgeSet<T, N>::Swap (const Standard_Integer theIndex1,
+                                    const Standard_Integer theIndex2)
+{
+  BVH_Vec4i& anIndices1 = BVH::Array<Standard_Integer, 4>::ChangeValue (Elements, theIndex1);
+  BVH_Vec4i& anIndices2 = BVH::Array<Standard_Integer, 4>::ChangeValue (Elements, theIndex2);
+
+  std::swap (anIndices1, anIndices2);
+}
+
+// =======================================================================
+// function : ClosestEdge
+// purpose  :
+// =======================================================================
+template<class T, int N>
+Standard_Integer BRepMesh_EdgeSet<T, N>::ClosestEdge (const BVH_VecNt& theEdgeV1,
+                                                      const BVH_VecNt& theEdgeV2,
+                                                      T* theDist)
+{
+  Standard_Integer aStack[32];
+
+  const NCollection_Handle<BVH_Tree<T, N> >& aBVH = BVH();
+
+  if (aBVH.IsNull())
+  {
+    return -1;
+  }
+
+  Standard_Integer aNode = 0;
+
+  T aMinDist = std::numeric_limits<T>::max();
+  Standard_Integer aClosestEdge = 0;
+
+  Standard_Integer aHead = -1; // stack head position
+
+  for (;;)
+  {
+    if (aBVH->IsOuter (aNode))
+    {
+      for (Standard_Integer anElemNb = aBVH->BegPrimitive (aNode); anElemNb <= aBVH->EndPrimitive (aNode); ++anElemNb)
+      {
+        const BVH_Vec4i& anEdge = Elements[anElemNb];
+        const BVH_VecNt& aVrt0 = Vertices[anEdge.x()];
+        const BVH_VecNt& aVrt1 = Vertices[anEdge.y()];
+        T aDist = EdgeToEdgeDistance (theEdgeV1, theEdgeV2, aVrt0, aVrt1);
+
+        if (aDist < aMinDist)
+        {
+          aMinDist = aDist;
+          aClosestEdge = anElemNb;
+        }
+      }
+
+      if (aHead < 0)
+      {
+        break;
+      }
+
+      aNode = aStack[aHead--];
+    }
+    else
+    {
+      T aLftDist = EdgeToBoxDistance (theEdgeV1,
+                                      theEdgeV2,
+                                      aBVH->MinPoint (aBVH->LeftChild (aNode)),
+                                      aBVH->MaxPoint (aBVH->LeftChild (aNode)));
+
+      T aRghDist = EdgeToBoxDistance (theEdgeV1,
+                                      theEdgeV2,
+                                      aBVH->MinPoint (aBVH->RightChild (aNode)),
+                                      aBVH->MaxPoint (aBVH->RightChild (aNode)));
+
+      const bool aProceedLft = aLftDist < aMinDist;
+      const bool aProceedRgh = aRghDist < aMinDist;
+
+      if (aProceedLft && aProceedRgh)
+      {
+        int aLeft = aBVH->LeftChild (aNode);
+        int aRight = aBVH->RightChild (aNode);
+
+        aNode = (aLftDist < aRghDist) ? aLeft : aRight;
+        aStack[++aHead] = (aRghDist <= aLftDist) ? aLeft : aRight;
+      }
+      else
+      {
+        if (aProceedLft || aProceedRgh)
+        {
+          aNode = aProceedLft ? aBVH->LeftChild (aNode) : aBVH->RightChild (aNode);
+        }
+        else
+        {
+          if (aHead < 0)
+          {
+            break;
+          }
+
+          aNode = aStack[aHead--];
+        }
+      }
+    }
+  }
+
+  if (theDist != NULL)
+  {
+    *theDist = aMinDist;
+  }
+
+  return aClosestEdge;
+}
+
+// =======================================================================
+// function : CoherentEdge
+// purpose  :
+// =======================================================================
+template<class T, int N>
+Standard_Integer BRepMesh_EdgeSet<T, N>::CoherentEdge (const BVH_VecNt& theEdgeV1,
+                                                       const BVH_VecNt& theEdgeV2,
+                                                       T* theDist)
+{
+  Standard_Integer aStack[32];
+
+  const NCollection_Handle<BVH_Tree<T, N> >& aBVH = BVH();
+
+  if (aBVH.IsNull())
+  {
+    return -1;
+  }
+
+  Standard_Integer aNode = 0;
+
+  T aMinDist = std::numeric_limits<T>::max();
+  Standard_Integer aClosestEdge = 0;
+
+  Standard_Integer aHead = -1; // stack head position
+
+  for (;;)
+  {
+    if (aBVH->IsOuter (aNode))
+    {
+      for (Standard_Integer anElemNb = aBVH->BegPrimitive (aNode); anElemNb <= aBVH->EndPrimitive (aNode); ++anElemNb)
+      {
+        const BVH_Vec4i& anEdge = Elements[anElemNb];
+        const BVH_VecNt& aVrt0 = Vertices[anEdge.x()];
+        const BVH_VecNt& aVrt1 = Vertices[anEdge.y()];
+        T aDist = EdgeToEdgeDistance (theEdgeV1, theEdgeV2, aVrt0, aVrt1);
+
+        // add scaled vertex distances
+        aDist += (1e-6 * (theEdgeV1 - aVrt0).Modulus());
+        aDist += (1e-6 * (theEdgeV1 - aVrt1).Modulus());
+        aDist += (1e-6 * (theEdgeV2 - aVrt0).Modulus());
+        aDist += (1e-6 * (theEdgeV2 - aVrt1).Modulus());
+
+        if (aDist < aMinDist)
+        {
+          aMinDist = aDist;
+          aClosestEdge = anElemNb;
+        }
+      }
+
+      if (aHead < 0)
+      {
+        break;
+      }
+
+      aNode = aStack[aHead--];
+    }
+    else
+    {
+      T aLftDist = EdgeToBoxDistance (theEdgeV1,
+                                      theEdgeV2,
+                                      aBVH->MinPoint (aBVH->LeftChild (aNode)),
+                                      aBVH->MaxPoint (aBVH->LeftChild (aNode)));
+
+      T aRghDist = EdgeToBoxDistance (theEdgeV1,
+                                      theEdgeV2,
+                                      aBVH->MinPoint (aBVH->RightChild (aNode)),
+                                      aBVH->MaxPoint (aBVH->RightChild (aNode)));
+
+      const bool aProceedLft = aLftDist < aMinDist;
+      const bool aProceedRgh = aRghDist < aMinDist;
+
+      if (aProceedLft && aProceedRgh)
+      {
+        int aLeft = aBVH->LeftChild (aNode);
+        int aRight = aBVH->RightChild (aNode);
+
+        aNode = (aLftDist < aRghDist) ? aLeft : aRight;
+        aStack[++aHead] = (aRghDist <= aLftDist) ? aLeft : aRight;
+      }
+      else
+      {
+        if (aProceedLft || aProceedRgh)
+        {
+          aNode = aProceedLft ? aBVH->LeftChild (aNode) : aBVH->RightChild (aNode);
+        }
+        else
+        {
+          if (aHead < 0)
+          {
+            break;
+          }
+
+          aNode = aStack[aHead--];
+        }
+      }
+    }
+  }
+
+  if (theDist != NULL)
+  {
+    *theDist = aMinDist;
+  }
+
+  return aClosestEdge;
+}
+
+#define PARALLEL_THRESOLD 1e-8
+
+// =======================================================================
+// function : EdgeToEdgeDistance
+// purpose  :
+// =======================================================================
+template<class T, int N>
+T BRepMesh_EdgeSet<T, N>::EdgeToEdgeDistance (const BVH_VecNt& theE1V1,
+                                              const BVH_VecNt& theE1V2,
+                                              const BVH_VecNt& theE2V1,
+                                              const BVH_VecNt& theE2V2)
+{
+  BVH_VecNt u = theE1V2 - theE1V1;
+  BVH_VecNt v = theE2V2 - theE2V1;
+  BVH_VecNt w = theE1V1 - theE2V1;
+  Standard_Real a = u.Dot (u);       // always >= 0
+  Standard_Real b = u.Dot (v);
+  Standard_Real c = v.Dot (v);       // always >= 0
+  Standard_Real d = u.Dot (w);
+  Standard_Real e = v.Dot (w);
+  Standard_Real D = a * c - b * b;    // always >= 0
+  Standard_Real sc, sN, sD = D;       // sc = sN / sD, default sD = D >= 0
+  Standard_Real tc, tN, tD = D;       // tc = tN / tD, default tD = D >= 0
+
+  // compute the line parameters of the two closest points
+  if (D < PARALLEL_THRESOLD)   // the lines are almost parallel
+  {
+    sN = 0.0;         // force using point P0 on segment S1
+    sD = 1.0;         // to prevent possible division by 0.0 later
+    tN = e;
+    tD = c;
+  }
+  else                   // get the closest points on the infinite lines
+  {
+    sN = (b * e - c * d);
+    tN = (a * e - b * d);
+
+    if (sN < 0.0)          // sc < 0 => the s=0 edge is visible
+    {
+      sN = 0.0;
+      tN = e;
+      tD = c;
+    }
+    else if (sN > sD)    // sc > 1  => the s=1 edge is visible
+    {
+      sN = sD;
+      tN = e + b;
+      tD = c;
+    }
+  }
+
+  if (tN < 0.0)              // tc < 0 => the t=0 edge is visible
+  {
+    tN = 0.0;
+
+    // recompute sc for this edge
+    if (-d < 0.0)
+    {
+      sN = 0.0;
+    }
+    else if (-d > a)
+    {
+      sN = sD;
+    }
+    else
+    {
+      sN = -d;
+      sD = a;
+    }
+  }
+  else if (tN > tD)        // tc > 1  => the t=1 edge is visible
+  {
+    tN = tD;
+
+    // recompute sc for this edge
+    if ((-d + b) < 0.0)
+    {
+      sN = 0;
+    }
+    else if ((-d + b) > a)
+    {
+      sN = sD;
+    }
+    else
+    {
+      sN = (-d +  b);
+      sD = a;
+    }
+  }
+
+  // finally do the division to get sc and tc
+  sc = (abs (sN) < PARALLEL_THRESOLD ? 0.0 : sN / sD);
+  tc = (abs (tN) < PARALLEL_THRESOLD ? 0.0 : tN / tD);
+
+  // get the difference of the two closest points
+  BVH_VecNt dP = w + (u * sc) - (v * tc);  // =  S1(sc) - S2(tc)
+
+  return dP.Modulus(); // return the closest distance
+}
+
+#undef PARALLEL_THRESOLD
+
+// =======================================================================
+// function : EdgeToBoxDistance
+// purpose  :
+// =======================================================================
+template<class T, int N>
+T BRepMesh_EdgeSet<T, N>::EdgeToBoxDistance (const BVH_VecNt& theEV1,
+                                             const BVH_VecNt& theEV2,
+                                             const BVH_VecNt& theMinPoint,
+                                             const BVH_VecNt& theMaxPoint)
+{
+  T anSqrDist = std::numeric_limits<T>::max();
+
+  BVH_VecNt aVClosest = theEV1;
+  aVClosest = aVClosest.cwiseMax (theMinPoint);
+  aVClosest = aVClosest.cwiseMin (theMaxPoint);
+
+  anSqrDist = (theEV1 - aVClosest).SquareModulus();
+
+  if (anSqrDist == (T) 0.0)
+  {
+    return anSqrDist;
+  }
+
+  aVClosest = theEV2;
+  aVClosest = aVClosest.cwiseMax (theMinPoint);
+  aVClosest = aVClosest.cwiseMin (theMaxPoint);
+
+  anSqrDist = std::min (anSqrDist, (theEV2 - aVClosest).SquareModulus());
+
+  if (anSqrDist == (T) 0.0)
+  {
+    return anSqrDist;
+  }
+
+  LineToBoxDistance<T, N> aDist;
+  LineToBoxDistance<Standard_Real, 3>::Result aResult = aDist (theEV1, theEV2 - theEV1, theMinPoint, theMaxPoint);
+
+  if (aResult.lineParameter > (T) 0.0 && aResult.lineParameter < (T) 1.0)
+  {
+    anSqrDist = std::min (anSqrDist, aResult.sqrDistance);
+  }
+
+  return sqrt (anSqrDist);
+}
