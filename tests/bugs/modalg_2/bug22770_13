@@ -31,8 +31,8 @@ sewing result a b +c
 checkprops result -s 1.8847e+07 
 checkshape result
 
-checknbshapes result -vertex 964 -edge 1222 -wire 273 -face 259 -shell 18 -solid 0 -compsolid 0 -compound 1 -shape 2737
+checknbshapes result -vertex 966 -edge 1224 -wire 273 -face 259 -shell 18 -solid 0 -compsolid 0 -compound 1 -shape 2741
 checkmaxtol result -ref 0.046734236640099257
 checknbshapes result -shell 18
-checkfreebounds result 926
+checkfreebounds result 927
 checkview -display result -3d -path ${imagedir}/${test_image}.png

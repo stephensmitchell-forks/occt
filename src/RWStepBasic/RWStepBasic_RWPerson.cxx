@@ -68,71 +68,70 @@ void RWStepBasic_RWPerson::ReadStep
 	// --- own field : middleNames ---
 
 	Handle(Interface_HArray1OfHAsciiString) aMiddleNames;
-	Standard_Boolean hasAmiddleNames = Standard_True;
+	Standard_Boolean hasAmiddleNames = Standard_False;
 	if (data->IsParamDefined(num,4)) {
 	  Handle(TCollection_HAsciiString) aMiddleNamesItem;
 	  Standard_Integer nsub4;
 	  if (data->ReadSubList (num,4,"middle_names",ach,nsub4)) {
 	    Standard_Integer nb4 = data->NbParams(nsub4);
-	    aMiddleNames = new Interface_HArray1OfHAsciiString (1, nb4);
-	    for (Standard_Integer i4 = 1; i4 <= nb4; i4 ++) {
-	      //szv#4:S4163:12Mar99 `Standard_Boolean stat4 =` not needed
-	      if (data->ReadString (nsub4,i4,"middle_names",ach,aMiddleNamesItem))
-		aMiddleNames->SetValue(i4,aMiddleNamesItem);
-	    }
+            if (nb4 > 0)
+            {
+              hasAmiddleNames = Standard_True;
+              aMiddleNames = new Interface_HArray1OfHAsciiString(1, nb4);
+              for (Standard_Integer i4 = 1; i4 <= nb4; i4++) {
+                //szv#4:S4163:12Mar99 `Standard_Boolean stat4 =` not needed
+                if (data->ReadString(nsub4, i4, "middle_names", ach, aMiddleNamesItem))
+                  aMiddleNames->SetValue(i4, aMiddleNamesItem);
+              }
+            }
 	  }
-	}
-	else {
-	  hasAmiddleNames = Standard_False;
-	  aMiddleNames.Nullify();
 	}
 
 	// --- own field : prefixTitles ---
 
 	Handle(Interface_HArray1OfHAsciiString) aPrefixTitles;
-	Standard_Boolean hasAprefixTitles = Standard_True;
+	Standard_Boolean hasAprefixTitles = Standard_False;
 	if (data->IsParamDefined(num,5)) {
 	  Handle(TCollection_HAsciiString) aPrefixTitlesItem;
 	  Standard_Integer nsub5;
-	  if (data->ReadSubList (num,5,"prefix_titles",ach,nsub5)) {
-	    Standard_Integer nb5 = data->NbParams(nsub5);
-	    aPrefixTitles = new Interface_HArray1OfHAsciiString (1, nb5);
-	    for (Standard_Integer i5 = 1; i5 <= nb5; i5 ++) {
-	      //szv#4:S4163:12Mar99 `Standard_Boolean stat5 =` not needed
-	      if (data->ReadString (nsub5,i5,"prefix_titles",ach,aPrefixTitlesItem))
-		aPrefixTitles->SetValue(i5,aPrefixTitlesItem);
-	    }
+          if (data->ReadSubList(num, 5, "prefix_titles", ach, nsub5)) {
+            Standard_Integer nb5 = data->NbParams(nsub5);
+            if (nb5 > 0)
+            {
+              hasAprefixTitles = Standard_True;
+              aPrefixTitles = new Interface_HArray1OfHAsciiString(1, nb5);
+              for (Standard_Integer i5 = 1; i5 <= nb5; i5++) {
+                //szv#4:S4163:12Mar99 `Standard_Boolean stat5 =` not needed
+                if (data->ReadString(nsub5, i5, "prefix_titles", ach, aPrefixTitlesItem))
+                  aPrefixTitles->SetValue(i5, aPrefixTitlesItem);
+              }
+            }
 	  }
-	}
-	else {
-	  hasAprefixTitles = Standard_False;
-	  aPrefixTitles.Nullify();
 	}
 
 	// --- own field : suffixTitles ---
 
 	Handle(Interface_HArray1OfHAsciiString) aSuffixTitles;
-	Standard_Boolean hasAsuffixTitles = Standard_True;
+	Standard_Boolean hasAsuffixTitles = Standard_False;
 	if (data->IsParamDefined(num,6)) {
 	  Handle(TCollection_HAsciiString) aSuffixTitlesItem;
 	  Standard_Integer nsub6;
-	  if (data->ReadSubList (num,6,"suffix_titles",ach,nsub6)) {
-	    Standard_Integer nb6 = data->NbParams(nsub6);
-	    aSuffixTitles = new Interface_HArray1OfHAsciiString (1, nb6);
-	    for (Standard_Integer i6 = 1; i6 <= nb6; i6 ++) {
-	      //szv#4:S4163:12Mar99 `Standard_Boolean stat6 =` not needed
-	      if (data->ReadString (nsub6,i6,"suffix_titles",ach,aSuffixTitlesItem))
-		aSuffixTitles->SetValue(i6,aSuffixTitlesItem);
-	    }
+          if (data->ReadSubList(num, 6, "suffix_titles", ach, nsub6)) {
+            Standard_Integer nb6 = data->NbParams(nsub6);
+            if (nb6 > 0)
+            {
+              hasAsuffixTitles = Standard_True;
+              aSuffixTitles = new Interface_HArray1OfHAsciiString(1, nb6);
+              for (Standard_Integer i6 = 1; i6 <= nb6; i6++) {
+                //szv#4:S4163:12Mar99 `Standard_Boolean stat6 =` not needed
+                if (data->ReadString(nsub6, i6, "suffix_titles", ach, aSuffixTitlesItem))
+                  aSuffixTitles->SetValue(i6, aSuffixTitlesItem);
+              }
+            }
 	  }
-	}
-	else {
-	  hasAsuffixTitles = Standard_False;
-	  aSuffixTitles.Nullify();
 	}
 
 	//--- Initialisation of the read entity ---
-
 
 	ent->Init(aId, hasAlastName, aLastName, hasAfirstName, aFirstName, hasAmiddleNames, aMiddleNames, hasAprefixTitles, aPrefixTitles, hasAsuffixTitles, aSuffixTitles);
 }

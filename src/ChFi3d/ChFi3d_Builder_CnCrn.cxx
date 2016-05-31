@@ -2050,7 +2050,7 @@ void  ChFi3d_Builder::PerformMoreThreeCorner(const Standard_Integer Jndex,
   } 
 
 // declaration for plate 
-  GeomPlate_BuildPlateSurface PSurf(3,10,3,tol2d,tolesp,angular);
+  GeomPlate_BuildPlateSurface PSurf(3,10,1,tol2d,tolesp,angular);
 
 // calculation of curves on surface for each stripe 
   for (ic=0;ic<nedge;ic++) {

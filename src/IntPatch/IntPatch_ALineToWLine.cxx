@@ -583,8 +583,8 @@ void IntPatch_ALineToWLine::MakeWLine(const Handle(IntPatch_ALine)& theALine,
 
     if (aWLine->NbPnts() > 1)
     {
-      aWLine->EnablePurging(Standard_False);
-      theLines.Append(aWLine);
+    aWLine->EnablePurging(Standard_False);
+    theLines.Append(aWLine);
     }
   }//while(aParameter < theLPar)
 }
