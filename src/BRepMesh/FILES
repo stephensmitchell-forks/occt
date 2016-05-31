@@ -53,3 +53,13 @@ BRepMesh_WireChecker.cxx
 BRepMesh_WireChecker.hxx
 BRepMesh_WireInterferenceChecker.cxx
 BRepMesh_WireInterferenceChecker.hxx
+BRepMesh_RestoreOrientationTool.cxx
+BRepMesh_RestoreOrientationTool.hxx
+BRepMesh_TriangulatedPatch.cxx
+BRepMesh_TriangulatedPatch.hxx
+BRepMesh_EdgeSet.hxx
+BRepMesh_EdgeSet.lxx
+BRepMesh_Block.hxx
+BRepMesh_MinStCut.cxx
+BRepMesh_MinStCut.hxx
+BRepMesh_LineBoxDistance.hxx
