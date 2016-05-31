@@ -426,9 +426,16 @@ static Standard_Boolean FindParameter(const TopoDS_Vertex& V,
             gp_Pnt Pl = C->Value(l).Transformed(L.Transformation());
             Standard_Real tol = BRep_Tool::Tolerance(V);
             if (Pf.Distance(Pl) < tol) {
-              if (Pf.Distance(BRep_Tool::Pnt(V)) < tol) {
+              gp_Pnt aP = BRep_Tool::Pnt(V);
+              Standard_Real aDf = Pf.Distance(aP), aDl = Pl.Distance(aP);
+              if ( aDf < tol && aDf < aDl) {
                 if (V.Orientation() == TopAbs_FORWARD) res = f;//p = f;
                 else                                   res = l;//p = l;
+              }
+              else if (aDl < tol && aDl < aDf)
+              {
+                if (V.Orientation() == TopAbs_FORWARD) res = l;//p = f;
+                else                                   res = f;//p = l;
               }
             }
           }

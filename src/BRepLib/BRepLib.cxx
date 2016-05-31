@@ -1564,13 +1564,14 @@ TopoDS_Edge BRepLib::SameParameter(const TopoDS_Edge& theEdge,
           }
           else if (SameP.IsDone()) {
             Standard_Real tolreached = SameP.TolReached();
+            //Method SameP.TolReached() calculates tolerance exactly as
+            // corresponding method in BRepCheck
+            // Method ComputeTol(...) uses other algorithm,  so it is better
+            // using tolreached, then error to set edge tol
+            maxdist = Max(maxdist, tolreached);
             if(tolreached <= error) {
               curPC = SameP.Curve2d();
               updatepc = Standard_True;
-              maxdist = Max(maxdist,tolreached);
-            }
-            else {
-              maxdist = Max(maxdist, error);
             }
             if(updatepc){
               if (i == 0) GCurve->PCurve(curPC);

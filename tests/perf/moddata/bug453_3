@@ -1,7 +1,6 @@
 puts "TODO OCC24156 MacOS: Tcl Exception: tolerance ang"
 puts "TODO OCC24156 MacOS: TEST INCOMPLETE"
 puts "TODO OCC27203 ALL: Error: Max tolerance" 
-puts "TODO OCC27203 All: Error : The area of result shape is"
 
 puts "========"
 puts "OCC453"
@@ -29,7 +28,7 @@ dchrono h2 stop counter blend
 
 # Note: The reference values of area and tolerance are wanted theoretical values
 # Properties check
-checkprops result -s 3.51e+006
+checkprops result -s 3.5071e+006
 
 # Tolerance check
 checkmaxtol result -ref 1.

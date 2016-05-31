@@ -1792,7 +1792,17 @@ void BRepOffset_Inter2d::FuseVertices(const TopTools_IndexedDataMapOfShapeListOf
       for (; aItLE.More(); aItLE.Next()) {
         const TopoDS_Edge& aE = TopoDS::Edge(aItLE.Value());
         Standard_Real aTolE = BRep_Tool::Tolerance(aE);
-        Standard_Real aT = BRep_Tool::Parameter(aVOldInt, aE);
+        Standard_Real aT;
+        try 
+        {
+          aT = BRep_Tool::Parameter(aVOldInt, aE);
+        }
+        catch (Standard_NoSuchObject)
+        {
+          // this is protection against bad cases when an edge has very big tolerance,
+          // and not relevant vertices hit in its descendants.
+          continue;
+        }
         aBB.UpdateVertex(aVNewInt, aT, aE, aTolE);
       }
       // and replace the vertex

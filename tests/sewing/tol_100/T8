@@ -2,7 +2,7 @@ restore [locate_data_file ma-test3.rle] a
 
 sewing result $tol a
 
-checkmaxtol result -ref 1.75025e+002
+checkmaxtol result -ref 130.20550673668251 
 checknbshapes result -shell 1
 checkfreebounds result 0
 checkfaults result a 0
