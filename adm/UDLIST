@@ -363,6 +363,8 @@ n XCAFApp
 n XCAFDimTolObjects
 n XCAFDoc
 n XCAFPrs
+n XCAFDrivers
+n XCAFPersistent
 n XSAlgo
 n XSControl
 n XmlMXCAFDoc

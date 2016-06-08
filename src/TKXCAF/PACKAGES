@@ -2,3 +2,5 @@ XCAFApp
 XCAFDimTolObjects
 XCAFDoc
 XCAFPrs
+XCAFDrivers
+XCAFPersistent
