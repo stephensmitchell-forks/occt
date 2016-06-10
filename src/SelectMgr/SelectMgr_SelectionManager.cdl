@@ -32,6 +32,7 @@ uses
     AsciiString              from TCollection,
     ViewerSelector           from SelectMgr,
     SelectableObject         from SelectMgr,
+    Selection                from SelectMgr,
     CString                  from Standard,
     MapOfTransient           from TColStd,
     TypeOfUpdate             from SelectMgr,
@@ -163,7 +164,7 @@ is
                         theObject  : SelectableObject from SelectMgr;
                         theIsForce : Boolean from Standard  = Standard_False;
                         theMode    : Integer from Standard = -1);
-    ---Purpose: Recomputes activated selections of theObject for all known viewer selectors according to theMode specified.
+    ---Purpose: Recomputes all selections of theObject for all known viewer selectors according to theMode specified.
     -- If theMode is set to default (-1), then all activated selections will be recomputed. If theIsForce is set to true,
     -- then selection mode theMode for object theObject will be recomputed regardless of its activation status.
 
@@ -210,7 +211,11 @@ is
     --          changes previous sensitivity value of all sensitive entities in selection with theMode
     --          to the given theNewSensitivity.
 
-
+    recomputeSelectionMode (me           : mutable;
+                            theObject    : SelectableObject from SelectMgr;
+                            theSelection : Selection from SelectMgr;
+                            theMode      : Integer from Standard) is protected;
+    ---Purpose: Recomputes given selection mode and updates BVHs in all viewer selectors
 
     loadMode (me          : mutable;
               theObject   : SelectableObject from SelectMgr;
