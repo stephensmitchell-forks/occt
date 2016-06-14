@@ -1403,10 +1403,11 @@ const TopoDS_Shape&  BRepOffset_MakeOffset::Shape() const
 //purpose  : Trim the edge of the largest of descendants in AsDes2d.
 //           Order in AsDes two vertices that have trimmed the edge.
 //=======================================================================
-void TrimEdge(TopoDS_Edge&                  NE,
-              const Handle(BRepAlgo_AsDes)& AsDes2d,
-              Handle(BRepAlgo_AsDes)& AsDes,
-              TopTools_DataMapOfShapeShape& theETrimEInf)
+static 
+  Standard_Boolean TrimEdge(TopoDS_Edge&                  NE,
+                            const Handle(BRepAlgo_AsDes)& AsDes2d,
+                            Handle(BRepAlgo_AsDes)& AsDes,
+                            TopTools_DataMapOfShapeShape& theETrimEInf)
 {
   TopoDS_Edge aSourceEdge;
   TopoDS_Vertex V1,V2;
@@ -1490,6 +1491,7 @@ void TrimEdge(TopoDS_Edge&                  NE,
       theETrimEInf.Bind(NE, aSourceEdge);
     }
   }
+  return bTrim;
 }
 
 //=======================================================================
@@ -4076,12 +4078,13 @@ void TrimEdges(const TopoDS_Shape& theShape,
           theEdgesOrigins.Bind(NE, aLSx);
         }
         //
+        Standard_Boolean bTrimmed = Standard_True;
         if (theMES.IsBound(NE)) {
           NE = theMES(NE);
           NE.Orientation(aS.Orientation());
           if (theNewEdges.Add(NE))
           {
-            TrimEdge (TopoDS::Edge(NE), theAsDes2d, theAsDes, theETrimEInf);
+            bTrimmed = TrimEdge (TopoDS::Edge(NE), theAsDes2d, theAsDes, theETrimEInf);
           } 
         }
         else {
@@ -4093,7 +4096,9 @@ void TrimEdges(const TopoDS_Shape& theShape,
             theETrimEInf.Bind(anEdge, aNewEdge);
           }
         }
-        theAsDes->Add(NF, NE);
+        if (bTrimmed) {
+          theAsDes->Add(NF, NE);
+        }
       } 
     }
   }
@@ -7684,8 +7689,13 @@ void TrimNewIntersectionEdges(const TopTools_ListOfShape& theLE,
       TopoDS_Vertex aV1, aV2;
       TopExp::Vertices(TopoDS::Edge(aE), aV1, aV2);
       //
-      aGFE.AddArgument(aV1);
-      aGFE.AddArgument(aV2);
+      if (!aV1.IsNull()) {
+        aGFE.AddArgument(aV1);
+      }
+      //
+      if (!aV2.IsNull()) {
+        aGFE.AddArgument(aV2);
+      }
       //
       aGFE.Perform();
       //
@@ -7731,7 +7741,14 @@ void TrimNewIntersectionEdges(const TopTools_ListOfShape& theLE,
     //
     TopExp_Explorer aExp(aCEIm, TopAbs_EDGE);
     for (; aExp.More(); aExp.Next()) {
-      const TopoDS_Shape& aEIm = aExp.Current();
+      const TopoDS_Edge& aEIm = TopoDS::Edge(aExp.Current());
+      //
+      // check the split to be trimmed
+      Standard_Real aFirst, aLast;
+      BRep_Tool::Range(aEIm, aFirst, aLast);
+      if (Precision::IsInfinite(aFirst) || Precision::IsInfinite(aLast)) {
+        continue;
+      }
       //
       // check the split not to contain bounding vertices
       TopExp_Explorer aExpV(aEIm, TopAbs_VERTEX);

@@ -20,6 +20,7 @@
 #include <BRepOffset_Tool.hxx>
 #include <BRepOffset_Interval.hxx>
 #include <BRepOffset_ListOfInterval.hxx>
+#include <BRepOffset_ListIteratorOfListOfInterval.hxx>
 #include <BRepOffset_DataMapOfShapeOffset.hxx>
 #include <BRepOffset_Offset.hxx>
 #include <BRepAdaptor_Curve.hxx>
@@ -528,10 +529,19 @@ void BRepOffset_Inter3d::ConnexIntByInt
         continue;
       }
       //
-      BRepOffset_Type    OT = L.First().Type();
-      if (OT != BRepOffset_Convex && OT != BRepOffset_Concave) {
+      BRepOffset_Type OT = L.First().Type();
+      BRepOffset_ListIteratorOfListOfInterval aItInt(L);
+      for (; aItInt.More(); aItInt.Next()) {
+        OT = aItInt.Value().Type();
+        if (OT == BRepOffset_Convex || OT == BRepOffset_Concave) {
+          break;
+        }
+      }
+      //
+      if (!aItInt.More()) {
         continue;
       }
+      //
       //
       if (OT == BRepOffset_Concave) CurSide = TopAbs_IN;
       else                          CurSide = TopAbs_OUT;
@@ -539,15 +549,22 @@ void BRepOffset_Inter3d::ConnexIntByInt
       // edge is of the proper type, return adjacent faces.
       //-----------------------------------------------------------
       const TopTools_ListOfShape& Anc = Analyse.Ancestors(E);
-      if (Anc.Extent() != 2) {
+      if (Anc.Extent() < 2) {
         continue;
       }
       //
-      F1 = TopoDS::Face(Anc.First());
-      F2 = TopoDS::Face(Anc.Last());
-      //
-      aLF1.Append(F1);
-      aLF2.Append(F2);
+      it.Initialize(Anc);
+      for (; it.More(); it.Next()) {
+        F1 = TopoDS::Face(it.Value());
+        //
+        it1 = it;
+        for (it1.Next(); it1.More(); it1.Next()) {
+          F2 = TopoDS::Face(it1.Value());
+          //
+          aLF1.Append(F1);
+          aLF2.Append(F2);
+        }
+      }
     }
     else {
       if (!aDMVLF1.IsBound(aS)) {

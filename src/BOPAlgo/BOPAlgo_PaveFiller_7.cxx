@@ -360,7 +360,7 @@ void BOPAlgo_PaveFiller::MakeSplitEdges()
     }
     //
     aItPB.Initialize(aLPB);
-    for (; aItPB.More(); aItPB.Next()) {
+    for (; aItPB.More(); ) {
       aPB=aItPB.Value();
       const Handle(BOPDS_CommonBlock)& aCB=myDS->CommonBlock(aPB);
       bCB=!aCB.IsNull();
@@ -369,10 +369,15 @@ void BOPAlgo_PaveFiller::MakeSplitEdges()
         aPB=aCB->PaveBlock1();
       }
       //
+      aPB->Range(aT1, aT2);
+      if (aT2 - aT1 < Precision::PConfusion()) {
+        aLPB.Remove(aItPB);
+        continue;
+      }
+      //
       if (aMPB.Add(aPB)) {
         nE=aPB->OriginalEdge();
         aPB->Indices(nV1, nV2);
-        aPB->Range(aT1, aT2);
         //
         aE=(*(TopoDS_Edge *)(&myDS->Shape(nE))); 
         aE.Orientation(TopAbs_FORWARD);
@@ -392,6 +397,7 @@ void BOPAlgo_PaveFiller::MakeSplitEdges()
         }
         aBSE.SetProgressIndicator(myProgressIndicator);
       }
+      aItPB.Next();
     } // for (; aItPB.More(); aItPB.Next()) {
   }  // for (i=0; i<aNbPBP; ++i) {      
   //

@@ -210,6 +210,20 @@ void BRepOffset_Analyse::Perform (const TopoDS_Shape& S,
 #ifdef OCCT_DEBUG
 	cout <<"edge shared by more than two faces"<<endl;
 #endif	
+        // analyze each intersection
+        BRepOffset_ListOfInterval& aLEI = mapEdgeType(E);
+        TopTools_ListIteratorOfListOfShape aIt1, aIt2;
+        aIt1.Initialize(L);
+        for (; aIt1.More(); aIt1.Next()) {
+          const TopoDS_Face& F1 = TopoDS::Face(aIt1.Value());
+          //
+          aIt2 = aIt1;
+          for (aIt2.Next(); aIt2.More(); aIt2.Next()) {
+            const TopoDS_Face& F2 = TopoDS::Face(aIt2.Value());
+            //
+            EdgeAnalyse(E,F1,F2,SinTol,aLEI);
+          }
+        }
       }
     }
   }

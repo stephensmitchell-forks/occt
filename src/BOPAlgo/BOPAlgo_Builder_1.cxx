@@ -89,7 +89,9 @@
         const Handle(BOPDS_PaveBlock)& aPB=aItPB.Value();
         const Handle(BOPDS_PaveBlock)& aPBR=myDS->RealPaveBlock(aPB);
         //
-        nSpR=aPBR->Edge();
+        if (!aPBR->HasEdge(nSpR)) {
+          continue;
+        }
         const TopoDS_Shape& aSpR=myDS->Shape(nSpR);
         aLS.Append(aSpR);
         myOrigins.Bind(aSpR, aE);

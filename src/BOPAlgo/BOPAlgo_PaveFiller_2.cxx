@@ -185,6 +185,11 @@ void BOPAlgo_PaveFiller::PerformVE()
       continue;
     }
     //
+    BOPDS_ListOfPaveBlock& aLPB=myDS->ChangePaveBlocks(nE);
+    if (aLPB.IsEmpty()) {
+      continue;
+    }
+    //
     const TopoDS_Edge& aE=(*(TopoDS_Edge *)(&aSIE.Shape())); 
     const TopoDS_Vertex& aV=(*(TopoDS_Vertex *)(&myDS->Shape(nVx))); 
     //
@@ -217,8 +222,8 @@ void BOPAlgo_PaveFiller::PerformVE()
       // 2
       myDS->AddInterf(nV, nE);
       // 3
-      BOPDS_ListOfPaveBlock& aLPB=myDS->ChangePaveBlocks(nE);
-      Handle(BOPDS_PaveBlock)& aPB=*((Handle(BOPDS_PaveBlock)*)&aLPB.First());
+      const BOPDS_ListOfPaveBlock& aLPB=myDS->PaveBlocks(nE);
+      const Handle(BOPDS_PaveBlock)& aPB=*((Handle(BOPDS_PaveBlock)*)&aLPB.First());
       // 
       aPave.SetIndex(nVx);
       aPave.SetParameter(aT);
