@@ -360,15 +360,25 @@ namespace
                                            : -1;
         if (aDegenInTri != -1)
         {
+          aPoint = aNodes (anIndex[aDegenInTri]);
+          if (!aLoc.IsIdentity())
+          {
+            aPoint.Transform (aTrsf);
+            aV1.Transform (aTrsf);
+            if (aV1.SquareMagnitude() > aPreci)
+            {
+              aV1.Normalize();
+            }
+          }
           if (theHasTexels && aUVNodes.Upper() == aNodes.Upper())
           {
             const gp_Pnt2d aTexel = gp_Pnt2d ((-theUVOrigin.X() + (theUVRepeat.X() * (aUVNodes (anIndex[aDegenInTri]).X() - aUmin)) / dUmax) / theUVScale.X(),
                                               (-theUVOrigin.Y() + (theUVRepeat.Y() * (aUVNodes (anIndex[aDegenInTri]).Y() - aVmin)) / dVmax) / theUVScale.Y());
-            anIndex[aDegenInTri] = anArray->AddVertex (aNodes (anIndex[aDegenInTri]), aV1, aTexel);
+            anIndex[aDegenInTri] = anArray->AddVertex (aPoint, aV1, aTexel) - aDecal;
           }
           else
           {
-            anIndex[aDegenInTri] = anArray->AddVertex (aNodes (anIndex[aDegenInTri]), aV1);
+            anIndex[aDegenInTri] = anArray->AddVertex (aPoint, aV1) - aDecal;
           }
         }
 
