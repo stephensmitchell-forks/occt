@@ -20,9 +20,9 @@ regexp {([0-9]+) triangles} ${trinfo_s} str nbtri_s
 regexp {([0-9]+) nodes} ${trinfo_s} str nbnod_s
 regexp {deflection ([0-9.+e-]+)} ${trinfo_s} str defl_s
 
-set good_nbtri 2721
-set good_nbnod 1405
-set good_defl 0.044436924588798624
+set good_nbtri 1779
+set good_nbnod 936
+set good_defl 0.10452721084309395
 
 set good_percent 5
 
