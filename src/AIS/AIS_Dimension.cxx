@@ -99,7 +99,9 @@ AIS_Dimension::AIS_Dimension (const AIS_KindOfDimension theType)
 : AIS_InteractiveObject  (),
   mySelToleranceForText2d(0.0),
   myCustomValue          (0.0),
+  myCustomStringValue    (""),
   myIsValueCustom        (Standard_False),
+  myIsStringValueCustom  (Standard_False),
   myIsTextPositionFixed  (Standard_False), 
   mySpecialSymbol        (' '),
   myDisplaySpecialSymbol (AIS_DSS_No),
@@ -125,6 +127,24 @@ void AIS_Dimension::SetCustomValue (const Standard_Real theValue)
   myIsValueCustom = Standard_True;
 
   myCustomValue = theValue;
+
+  SetToUpdate();
+}
+
+//=======================================================================
+//function : SetCustomValue
+//purpose  : 
+//=======================================================================
+void AIS_Dimension::SetCustomValue (const TCollection_ExtendedString& theValue)
+{
+  if (myIsStringValueCustom && myCustomStringValue == theValue)
+  {
+    return;
+  }
+
+  myIsStringValueCustom = Standard_True;
+
+  myCustomStringValue = theValue;
 
   SetToUpdate();
 }
@@ -279,12 +299,18 @@ Standard_Real AIS_Dimension::ValueToDisplayUnits() const
 //=======================================================================
 TCollection_ExtendedString AIS_Dimension::GetValueString (Standard_Real& theWidth) const
 {
-  // format value string using "sprintf"
-  TCollection_AsciiString aFormatStr = myDrawer->DimensionAspect()->ValueStringFormat();
+  TCollection_ExtendedString aValueStr;
+  if (myIsStringValueCustom) {
+    aValueStr = myCustomStringValue;
+  }
+  else {
+    // format value string using "sprintf"
+    TCollection_AsciiString aFormatStr = myDrawer->DimensionAspect()->ValueStringFormat();
 
-  char aFmtBuffer[256];
-  sprintf (aFmtBuffer, aFormatStr.ToCString(), ValueToDisplayUnits());
-  TCollection_ExtendedString aValueStr = TCollection_ExtendedString (aFmtBuffer);
+    char aFmtBuffer[256];
+    sprintf (aFmtBuffer, aFormatStr.ToCString(), ValueToDisplayUnits());
+    aValueStr = TCollection_ExtendedString (aFmtBuffer);
+  }
 
   // add units to values string
   if (myDrawer->DimensionAspect()->IsUnitsDisplayed())

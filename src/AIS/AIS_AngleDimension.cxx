@@ -277,6 +277,8 @@ void AIS_AngleDimension::SetMeasuredGeometry (const TopoDS_Face& theFirstFace,
 //=======================================================================
 void AIS_AngleDimension::Init()
 {
+  SetAngleReversed (Standard_False);
+  SetArrowVisible (Standard_True, Standard_True);
   SetSpecialSymbol (THE_DEGREE_SYMBOL);
   SetDisplaySpecialSymbol (AIS_DSS_After);
   SetFlyout (15.0);
@@ -298,6 +300,12 @@ gp_Pnt AIS_AngleDimension::GetCenterOnArc (const gp_Pnt& theFirstAttach,
   }
   
   gp_Pln aPlane = aConstructPlane.Value();
+  if (myUseReverse) {
+    gp_Ax1 anAxis = aPlane.Axis();
+    gp_Dir aDir = anAxis.Direction();
+    aDir.Reverse();
+    aPlane.SetAxis(gp_Ax1(anAxis.Location(), aDir));
+  }
 
   Standard_Real aRadius = theFirstAttach.Distance (theCenter);
 
@@ -337,7 +345,13 @@ void AIS_AngleDimension::DrawArc (const Handle(Prs3d_Presentation)& thePresentat
   }
 
   gp_Pln aPlane = aConstructPlane.Value();
-
+  if (myUseReverse) {
+    gp_Ax1 anAxis = aPlane.Axis();
+    gp_Dir aDir = anAxis.Direction();
+    aDir.Reverse();
+    aPlane.SetAxis(gp_Ax1(anAxis.Location(), aDir));
+  }
+  
   // construct circle forming the arc
   gce_MakeCirc aConstructCircle (theCenter, aPlane, theRadius);
   if (!aConstructCircle.IsDone())
@@ -348,7 +362,7 @@ void AIS_AngleDimension::DrawArc (const Handle(Prs3d_Presentation)& thePresentat
   gp_Circ aCircle = aConstructCircle.Value();
 
   // construct the arc
-  GC_MakeArcOfCircle aConstructArc (aCircle, theFirstAttach, theSecondAttach, Standard_True);
+  GC_MakeArcOfCircle aConstructArc(aCircle, theFirstAttach, theSecondAttach, Standard_True);
   if (!aConstructArc.IsDone())
   {
     return;
@@ -362,7 +376,13 @@ void AIS_AngleDimension::DrawArc (const Handle(Prs3d_Presentation)& thePresentat
   // compute number of discretization elements in old-fanshioned way
   gp_Vec aCenterToFirstVec  (theCenter, theFirstAttach);
   gp_Vec aCenterToSecondVec (theCenter, theSecondAttach);
-  const Standard_Real anAngle = aCenterToFirstVec.Angle (aCenterToSecondVec);
+
+  gp_Ax1 anAxis = aPlane.Axis();
+  gp_Dir aDir = anAxis.Direction();
+  gp_Vec aRefVec(aDir);
+  Standard_Real anAngle = aCenterToFirstVec.AngleWithRef (aCenterToSecondVec, aRefVec);
+  if (anAngle < 0)
+    anAngle = 2.0 * M_PI + anAngle;
   const Standard_Integer aNbPoints = Max (4, Standard_Integer (50.0 * anAngle / M_PI));
 
   GCPnts_UniformAbscissa aMakePnts (anArcAdaptor, aNbPoints);
@@ -694,8 +714,8 @@ void AIS_AngleDimension::Compute (const Handle(PrsMgr_PresentationManager3d)& /*
       if (theMode == ComputeMode_All || theMode == ComputeMode_Line)
       {
         DrawArc (thePresentation,
-                 isArrowsExternal ? aFirstAttach : aFirstArrowEnd,
-                 isArrowsExternal ? aSecondAttach : aSecondArrowEnd,
+                 (isArrowsExternal || !myFirstArrowVisible) ? aFirstAttach : aFirstArrowEnd,
+                 (isArrowsExternal || !mySecondArrowVisible) ? aSecondAttach : aSecondArrowEnd,
                  myCenterPoint,
                  Abs (GetFlyout()),
                  theMode);
@@ -707,7 +727,7 @@ void AIS_AngleDimension::Compute (const Handle(PrsMgr_PresentationManager3d)& /*
     {
       DrawExtension (thePresentation,
                      anExtensionSize,
-                     isArrowsExternal ? aFirstArrowEnd : aFirstAttach,
+                     (isArrowsExternal && myFirstArrowVisible) ? aFirstArrowEnd : aFirstAttach,
                      aFirstExtensionDir,
                      aLabelString,
                      aLabelWidth,
@@ -720,7 +740,7 @@ void AIS_AngleDimension::Compute (const Handle(PrsMgr_PresentationManager3d)& /*
     {
       DrawExtension (thePresentation,
                      anExtensionSize,
-                     isArrowsExternal ? aSecondArrowEnd : aSecondAttach,
+                     (isArrowsExternal && mySecondArrowVisible) ? aSecondArrowEnd : aSecondAttach,
                      aSecondExtensionDir,
                      aLabelString,
                      aLabelWidth,
@@ -736,8 +756,8 @@ void AIS_AngleDimension::Compute (const Handle(PrsMgr_PresentationManager3d)& /*
     Prs3d_Root::NewGroup (thePresentation);
 
     DrawArc (thePresentation,
-             isArrowsExternal ? aFirstAttach  : aFirstArrowEnd,
-             isArrowsExternal ? aSecondAttach : aSecondArrowEnd,
+             (isArrowsExternal || !myFirstArrowVisible) ? aFirstAttach  : aFirstArrowEnd,
+             (isArrowsExternal || !mySecondArrowVisible) ? aSecondAttach : aSecondArrowEnd,
              myCenterPoint,
              Abs(GetFlyout ()),
              theMode);
@@ -748,15 +768,17 @@ void AIS_AngleDimension::Compute (const Handle(PrsMgr_PresentationManager3d)& /*
   {
     Prs3d_Root::NewGroup (thePresentation);
 
-    DrawArrow (thePresentation, aFirstArrowBegin,  gp_Dir (aFirstArrowVec));
-    DrawArrow (thePresentation, aSecondArrowBegin, gp_Dir (aSecondArrowVec));
+    if (myFirstArrowVisible)
+      DrawArrow (thePresentation, aFirstArrowBegin,  gp_Dir (aFirstArrowVec));
+    if (mySecondArrowVisible)
+      DrawArrow (thePresentation, aSecondArrowBegin, gp_Dir (aSecondArrowVec));
   }
 
   if ((theMode == ComputeMode_All || theMode == ComputeMode_Line) && isArrowsExternal)
   {
     Prs3d_Root::NewGroup (thePresentation);
 
-    if (aHPosition != LabelPosition_Left)
+    if (aHPosition != LabelPosition_Left && myFirstArrowVisible)
     {
       DrawExtension (thePresentation,
                      aDimensionAspect->ArrowTailSize(),
@@ -768,7 +790,7 @@ void AIS_AngleDimension::Compute (const Handle(PrsMgr_PresentationManager3d)& /*
                      LabelPosition_None);
     }
 
-    if (aHPosition != LabelPosition_Right)
+    if (aHPosition != LabelPosition_Right && mySecondArrowVisible)
     {
       DrawExtension (thePresentation,
                      aDimensionAspect->ArrowTailSize(),
@@ -902,13 +924,12 @@ Standard_Boolean AIS_AngleDimension::InitTwoEdgesAngle (gp_Pln& theComputedPlane
     // |
     // | <- dimension should be here
     // *----
-    myFirstPoint  = myCenterPoint.Distance (aFirstPoint1) > myCenterPoint.Distance (aLastPoint1)
-                  ? aFirstPoint1
-                  : aLastPoint1;
-
-    mySecondPoint = myCenterPoint.Distance (aFirstPoint2) > myCenterPoint.Distance (aLastPoint2)
-                  ? aFirstPoint2
-                  : aLastPoint2;
+    myFirstPoint  = !myCenterPoint.IsEqual(aFirstPoint1, Precision::Confusion())
+                    ? aFirstPoint1
+                    : aLastPoint1;
+    mySecondPoint = !myCenterPoint.IsEqual(aFirstPoint2, Precision::Confusion())
+                    ? aFirstPoint2
+                    : aLastPoint2;
   }
 
   return IsValidPoints (myFirstPoint, myCenterPoint, mySecondPoint);
@@ -1227,6 +1248,26 @@ void AIS_AngleDimension::SetTextPosition (const gp_Pnt& theTextPos)
 
   myIsTextPositionFixed = Standard_True;
   myFixedTextPosition = theTextPos;
+}
+
+//=======================================================================
+//function : SetAngleReversed
+//purpose  : 
+//=======================================================================
+void AIS_AngleDimension::SetAngleReversed(const Standard_Boolean& theUseReverse)
+{
+  myUseReverse = theUseReverse;
+}
+
+//=======================================================================
+//function : SetArrowVisible
+//purpose  : 
+//=======================================================================
+void AIS_AngleDimension::SetArrowVisible(const Standard_Boolean& theFirstArrowVisible,
+                                         const Standard_Boolean& theSecondArrowVisible)
+{
+  myFirstArrowVisible = theFirstArrowVisible;
+  mySecondArrowVisible = theSecondArrowVisible;
 }
 
 //=======================================================================

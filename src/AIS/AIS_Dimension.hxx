@@ -219,21 +219,16 @@ public:
   //! @param theType [in] the type of dimension.
   Standard_EXPORT AIS_Dimension (const AIS_KindOfDimension theType);
 
-  //! Gets dimension measurement value. If the value to display is not
-  //! specified by user, then the dimension object is responsible to
-  //! compute it on its own in model space coordinates.
-  //! @return the dimension value (in model units) which is used
-  //! during display of the presentation.
-  Standard_Real GetValue() const
-  {
-    return myIsValueCustom ? myCustomValue : ComputeValue();
-  }
-
   //! Sets user-defined dimension value.
   //! The user-defined dimension value is specified in model space,
   //! and affect by unit conversion during the display.
   //! @param theValue [in] the user-defined value to display.
   Standard_EXPORT void SetCustomValue (const Standard_Real theValue);
+
+  //! Sets user-defined dimension value.
+  //! Unit conversion during the display is not applyed.
+  //! @param theValue [in] the user-defined value to display.
+  Standard_EXPORT void SetCustomValue (const TCollection_ExtendedString& theValue);
 
   //! Get the dimension plane in which the 2D dimension presentation is computed.
   //! By default, if plane is not defined by user, it is computed automatically
@@ -382,6 +377,16 @@ public:
 protected:
 
   Standard_EXPORT Standard_Real ValueToDisplayUnits() const;
+
+  //! Gets dimension measurement value. If the value to display is not
+  //! specified by user, then the dimension object is responsible to
+  //! compute it on its own in model space coordinates.
+  //! @return the dimension value (in model units) which is used
+  //! during display of the presentation.
+  Standard_Real GetValue() const
+  {
+    return myIsValueCustom ? myCustomValue : ComputeValue();
+  }
 
   //! Get formatted value string and its model space width.
   //! @param theWidth [out] the model space with of the string.
@@ -655,13 +660,15 @@ protected: //! @name Value properties
   Standard_Real    myCustomValue;   //!< Value of the dimension (computed or user-defined).
   Standard_Boolean myIsValueCustom; //!< Is user-defined value.
 
+  TCollection_ExtendedString myCustomStringValue; //!< Value of the dimension (computed or user-defined).
+  Standard_Boolean myIsStringValueCustom; //!< Is user-defined value.
+
 protected: //! @name Fixed text position properties
 
   gp_Pnt                  myFixedTextPosition;   //!< Stores text position fixed by user.
   Standard_Boolean        myIsTextPositionFixed; //!< Is the text label position fixed by user.
 
 protected: //! @name Units properties
-
   Standard_ExtCharacter    mySpecialSymbol;        //!< Special symbol.
   AIS_DisplaySpecialSymbol myDisplaySpecialSymbol; //!< Special symbol display options.
 

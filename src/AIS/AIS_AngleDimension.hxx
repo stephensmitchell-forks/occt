@@ -207,6 +207,17 @@ public:
 
   Standard_EXPORT virtual const gp_Pnt GetTextPosition () const;
 
+  //! Sets state if the angle arc should be built reversing to the presentation plane.
+  //! Default state is not reversed
+  //! @param theUseReverse [in] the boolean state.
+  Standard_EXPORT void SetAngleReversed(const Standard_Boolean& theUseReverse);
+
+  //! Sets visible state of angle arrows. Default value is true for both
+  //! @param theFirstArrowVisible [in] the visibility of the first arrow.
+  //! @param theSecondArrowVisible [in] the visibility of the second arrow.
+  Standard_EXPORT void SetArrowVisible(const Standard_Boolean& theFirstArrowVisible,
+                                       const Standard_Boolean& theSecondArrowVisible);
+
 public:
 
   DEFINE_STANDARD_RTTI (AIS_AngleDimension)
@@ -335,6 +346,10 @@ protected:
                                                   const gp_Pnt& theSecondPoint) const;
 
 private:
+  Standard_Boolean myUseReverse;
+
+  Standard_Boolean myFirstArrowVisible;
+  Standard_Boolean mySecondArrowVisible;
 
   gp_Pnt myFirstPoint;
   gp_Pnt mySecondPoint;
