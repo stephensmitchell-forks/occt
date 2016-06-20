@@ -150,6 +150,15 @@ void AIS_Dimension::SetCustomValue (const TCollection_ExtendedString& theValue)
 }
 
 //=======================================================================
+//function : GetCustomValue
+//purpose  : 
+//=======================================================================
+const TCollection_ExtendedString& AIS_Dimension::GetCustomValue () const
+{
+  return myCustomStringValue;
+}
+
+//=======================================================================
 //function : GetPlane
 //purpose  : 
 //=======================================================================

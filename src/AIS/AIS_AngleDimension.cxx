@@ -1260,6 +1260,15 @@ void AIS_AngleDimension::SetAngleReversed(const Standard_Boolean& theUseReverse)
 }
 
 //=======================================================================
+//function : SetAngleReversed
+//purpose  : 
+//=======================================================================
+Standard_Boolean AIS_AngleDimension::GetAngleReversed() const
+{
+  return myUseReverse;
+}
+
+//=======================================================================
 //function : SetArrowVisible
 //purpose  : 
 //=======================================================================
@@ -1268,6 +1277,17 @@ void AIS_AngleDimension::SetArrowVisible(const Standard_Boolean& theFirstArrowVi
 {
   myFirstArrowVisible = theFirstArrowVisible;
   mySecondArrowVisible = theSecondArrowVisible;
+}
+
+//=======================================================================
+//function : GetArrowVisible
+//purpose  : 
+//=======================================================================
+void AIS_AngleDimension::GetArrowVisible(Standard_Boolean& theFirstArrowVisible,
+                                         Standard_Boolean& theSecondArrowVisible)
+{
+  theFirstArrowVisible = myFirstArrowVisible;
+  theSecondArrowVisible = mySecondArrowVisible;
 }
 
 //=======================================================================

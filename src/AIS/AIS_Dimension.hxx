@@ -240,6 +240,10 @@ public:
   //! @param theValue [in] the user-defined value to display.
   Standard_EXPORT void SetCustomValue (const TCollection_ExtendedString& theValue);
 
+  //! Gets user-defined dimension value.
+  //! @return dimension value string.
+  Standard_EXPORT const TCollection_ExtendedString& GetCustomValue () const;
+
   //! Get the dimension plane in which the 2D dimension presentation is computed.
   //! By default, if plane is not defined by user, it is computed automatically
   //! after dimension geometry is computed.

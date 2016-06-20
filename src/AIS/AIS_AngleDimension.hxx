@@ -212,11 +212,21 @@ public:
   //! @param theUseReverse [in] the boolean state.
   Standard_EXPORT void SetAngleReversed(const Standard_Boolean& theUseReverse);
 
+  //! Returns state if the angle arc is reversed to the presentation plane.
+  //! @return TRUE if the anble is build to be reversed
+  Standard_EXPORT Standard_Boolean GetAngleReversed() const;
+
   //! Sets visible state of angle arrows. Default value is true for both
   //! @param theFirstArrowVisible [in] the visibility of the first arrow.
   //! @param theSecondArrowVisible [in] the visibility of the second arrow.
   Standard_EXPORT void SetArrowVisible(const Standard_Boolean& theFirstArrowVisible,
                                        const Standard_Boolean& theSecondArrowVisible);
+
+  //! Gets visible state of angle arrows.
+  //! @param theFirstArrowVisible [out] the visibility of the first arrow.
+  //! @param theSecondArrowVisible [out] the visibility of the second arrow.
+  Standard_EXPORT void GetArrowVisible(Standard_Boolean& theFirstArrowVisible,
+                                       Standard_Boolean& theSecondArrowVisible);
 
 public:
 
