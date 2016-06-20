@@ -4178,6 +4178,8 @@ void IntersectTrimmedEdges(const TopTools_ListOfShape& theLF,
     //
     aGFE.SetArguments(aLS);
     aGFE.Perform();
+    if (aGFE.ErrorStatus())
+      return;
     TopTools_ListOfShape aLA;
     // fill map with edges images
     aIt.Initialize(aLS);
@@ -5086,6 +5088,8 @@ void IntersectAndTrimEdges(const TopTools_IndexedDataMapOfShapeListOfShape& theF
   //
   aGF.SetArguments(aLArgs);
   aGF.Perform();
+  if (aGF.ErrorStatus())
+    return;
   //
   // update vertices to avoid with sd vertices
   aIt.Initialize(aLVBounds);
@@ -7698,40 +7702,41 @@ void TrimNewIntersectionEdges(const TopTools_ListOfShape& theLE,
       }
       //
       aGFE.Perform();
-      //
-      // get images of bounding vertices to remove splits containing them
-      const TopTools_ListOfShape& aLV1Im = aGFE.Modified(aV1);
-      const TopTools_ListOfShape& aLV2Im = aGFE.Modified(aV2);
-      //
-      if (aLV1Im.Extent()) {
-        aMEVBounds.Add(aLV1Im.First());
-      }
-      else {
-        aMEVBounds.Add(aV1);
-      }
-      //
-      if (aLV2Im.Extent()) {
-        aMEVBounds.Add(aLV2Im.First());
-      }
-      else {
-        aMEVBounds.Add(aV2);
-      }
-      //
+      if (aGFE.ErrorStatus() == 0)
       {
-        TopTools_MapIteratorOfMapOfShape aItM(theMVBounds);
-        for (; aItM.More(); aItM.Next()) {
-          const TopoDS_Shape& aV = aItM.Key();
-          const TopTools_ListOfShape& aLVIm = aGFE.Modified(aV);
-          if (aLVIm.Extent()) {
-            aMEVBounds.Add(aLVIm.First());
-          }
-          else {
-            aMEVBounds.Add(aV);
+        // get images of bounding vertices to remove splits containing them
+        const TopTools_ListOfShape& aLV1Im = aGFE.Modified(aV1);
+        if (aLV1Im.Extent()) {
+          aMEVBounds.Add(aLV1Im.First());
+        }
+        else {
+          aMEVBounds.Add(aV1);
+        }
+        //
+        const TopTools_ListOfShape& aLV2Im = aGFE.Modified(aV2);
+        if (aLV2Im.Extent()) {
+          aMEVBounds.Add(aLV2Im.First());
+        }
+        else {
+          aMEVBounds.Add(aV2);
+        }
+        //
+        {
+          TopTools_MapIteratorOfMapOfShape aItM(theMVBounds);
+          for (; aItM.More(); aItM.Next()) {
+            const TopoDS_Shape& aV = aItM.Key();
+            const TopTools_ListOfShape& aLVIm = aGFE.Modified(aV);
+            if (aLVIm.Extent()) {
+              aMEVBounds.Add(aLVIm.First());
+            }
+            else {
+              aMEVBounds.Add(aV);
+            }
           }
         }
+        //
+        aCEIm = aGFE.Shape();
       }
-      //
-      aCEIm = aGFE.Shape();
     }
     else {
       aCEIm = aLEIm.First();
@@ -7798,6 +7803,20 @@ void IntersectEdges(const BOPCol_ListOfShape& theLA,
   BOPAlgo_Builder aGFA;
   aGFA.SetArguments(theLA);
   aGFA.Perform();
+  if (aGFA.ErrorStatus())
+  {
+    // just copy input to the result
+    TopoDS_Compound aSp;
+    BRep_Builder aBB;
+    aBB.MakeCompound(aSp);
+    BOPCol_ListOfShape::Iterator anIt(theLA);
+    for (; anIt.More(); anIt.Next()) {
+      const TopoDS_Shape& aE = anIt.Value();
+      aBB.Add(aSp, aE);
+    }
+    theSplits = aSp;
+    return;
+  }
   //
   UpdateImages(theLE, theEImages, aGFA, theModifiedEdges);
   //
