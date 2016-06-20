@@ -219,6 +219,16 @@ public:
   //! @param theType [in] the type of dimension.
   Standard_EXPORT AIS_Dimension (const AIS_KindOfDimension theType);
 
+  //! Gets dimension measurement value. If the value to display is not
+  //! specified by user, then the dimension object is responsible to
+  //! compute it on its own in model space coordinates.
+  //! @return the dimension value (in model units) which is used
+  //! during display of the presentation.
+  Standard_Real GetValue() const
+  {
+    return myIsValueCustom ? myCustomValue : ComputeValue();
+  }
+
   //! Sets user-defined dimension value.
   //! The user-defined dimension value is specified in model space,
   //! and affect by unit conversion during the display.
@@ -377,16 +387,6 @@ public:
 protected:
 
   Standard_EXPORT Standard_Real ValueToDisplayUnits() const;
-
-  //! Gets dimension measurement value. If the value to display is not
-  //! specified by user, then the dimension object is responsible to
-  //! compute it on its own in model space coordinates.
-  //! @return the dimension value (in model units) which is used
-  //! during display of the presentation.
-  Standard_Real GetValue() const
-  {
-    return myIsValueCustom ? myCustomValue : ComputeValue();
-  }
 
   //! Get formatted value string and its model space width.
   //! @param theWidth [out] the model space with of the string.
