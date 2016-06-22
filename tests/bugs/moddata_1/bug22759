@@ -30,13 +30,13 @@ regexp {deflection +([-0-9.+eE]+)} $tri_info full defl
 set env(os_type) $tcl_platform(platform)
 if { [string compare $env(os_type) "windows"] != 0 } {
    puts "OS = Linux"
-   set good_tri  392920
-   set good_nod  200191
+   set good_tri  310982
+   set good_nod  159222
    set good_defl 0.0092442421472207319
 } else {
    puts "OS = Windows NT"
-   set good_tri  392920
-   set good_nod  200191
+   set good_tri  310982
+   set good_nod  159222
    set good_defl 0.0092442421472207319
 }
 
