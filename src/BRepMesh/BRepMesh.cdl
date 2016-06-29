@@ -89,6 +89,7 @@ is    enumeration DegreeOfFreedom is
       imported VertexInspector from BRepMesh;
       imported VertexCellFilter from BRepMesh;
       imported VectorOfVertex from BRepMesh;
+      imported WireInterferenceChecker from BRepMesh;
 
       primitive PluginEntryType;
 
@@ -154,16 +155,6 @@ is    enumeration DegreeOfFreedom is
       class IndexedMapOfVertex instantiates IndexedMap from TCollection 
           (Vertex from  BRepMesh,  VertexHasher from  BRepMesh);
 
-
-      class DataMapOfShapeReal instantiates DataMap from TCollection
-                                            (Shape          from TopoDS,
-                                             Real           from Standard,
-                                             ShapeMapHasher from TopTools);
-
-      class BiPoint;
-  
-      class Array1OfBiPoint    instantiates Array1  from TCollection(BiPoint from BRepMesh);
-
       private class FastDiscretFace;
       
       class FastDiscret;
@@ -175,8 +166,9 @@ is    enumeration DegreeOfFreedom is
                                              FaceAttribute  from BRepMesh,
                                              ShapeMapHasher from TopTools);
               
-      private class Classifier;
+      imported Classifier from BRepMesh;
       imported ClassifierPtr; -- smart pointer on Classifier
+      imported WireChecker from BRepMesh;
 
       class IncrementalMesh from BRepMesh;
       ---Purpose: meshes faces from a Shape only if necessary.
