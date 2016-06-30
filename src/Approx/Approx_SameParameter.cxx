@@ -631,7 +631,6 @@ Standard_Boolean Approx_SameParameter::CheckSameParameter(Approx_SameParameter_D
     theData.myCOnS.D0(theData.myPC2d[ii],Pcons);
     myC3d->D0(theData.myPC3d[ii],Pc3d);
     dist2 = Pcons.SquareDistance(Pc3d);
-    Standard_Real aDistMin = RealLast();
 
     // Same parameter point.
     Standard_Boolean isUseParam = (dist2 <= Tol2  && // Good distance.
@@ -655,7 +654,6 @@ Standard_Boolean Approx_SameParameter::CheckSameParameter(Approx_SameParameter_D
     {
       // Local extrema is found.
       curp = Projector.Point().Parameter();
-      aDistMin = Projector.SquareDistance(); 
       isProjOk = Standard_True;
     }
     else
@@ -665,7 +663,6 @@ Standard_Boolean Approx_SameParameter::CheckSameParameter(Approx_SameParameter_D
       {
         // Projection is good.
         const gp_Pnt& ap1 =myC3d->Value(curp);
-        aDistMin = Pcons.SquareDistance(ap1);
       }
     }
     isProjOk = isProjOk && // Good projection.
@@ -702,7 +699,6 @@ Standard_Boolean Approx_SameParameter::CheckSameParameter(Approx_SameParameter_D
       curp = PR.Point(anIndMin).Parameter();
       if( curp > previousp + myDeltaMin && curp < bornesup)
       {
-        aDistMin = aCurDistMin;
         initp = previousp = theData.myPC3d[count] = curp;
         theData.myPC2d[count] = theData.myPC2d[ii];
         count++;
