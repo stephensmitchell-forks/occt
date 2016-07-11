@@ -5001,6 +5001,65 @@ static Standard_Integer OCC27048(Draw_Interpretor& theDI, Standard_Integer theAr
   return 0;
 }
 
+//=======================================================================
+//function : OCC27074
+//purpose  : Calculate value of B-spline surface using adaptor with multi-span cache
+//=======================================================================
+static Standard_Integer OCC27074(Draw_Interpretor& theDI, Standard_Integer theArgc, const char** theArgv)
+{
+  if (theArgc != 4)
+  {
+    std::cout << "Incorrect number of arguments. See usage:" << std::endl;
+    theDI.PrintHelp(theArgv[0]);
+    return 1;
+  }
+
+  Handle(Geom_Surface) aSurf = DrawTrSurf::GetSurface(theArgv[1]);
+  GeomAdaptor_Surface anAdaptor(aSurf);
+
+  Standard_Integer aMaxCachedSpans = Draw::Atoi(theArgv[2]);
+  Standard_Integer aNbValues = Draw::Atoi(theArgv[3]);
+
+  anAdaptor.SetMaxSpansCached(aMaxCachedSpans);
+
+  // Number of values to be calculated along each coordinate
+  Standard_Integer aNbU = (Standard_Integer)Sqrt(aNbValues);
+  Standard_Integer aNbV = (Standard_Integer)Ceiling((Standard_Real)aNbValues / aNbU);
+
+  Standard_Real aU1, aU2, aV1, aV2;
+  aSurf->Bounds(aU1, aU2, aV1, aV2);
+
+  Standard_Real aStepU = (aU2 - aU1) / (aNbU - 1);
+  Standard_Real aStepV = (aV2 - aV1) / (aNbV - 1);
+
+  // Calculate values of surface to fill multi-span cache as much as possible.
+  // The parameters are divided to clusters by NxN points. Each time it is calculated
+  // one point from cluster and then the point from next cluster is calculated.
+  Standard_Integer aClusterSize = 100;
+  if (aSurf->DynamicType() == STANDARD_TYPE(Geom_BSplineSurface))
+  {
+    Handle(Geom_BSplineSurface) aBSpl = Handle(Geom_BSplineSurface)::DownCast(aSurf);
+    Standard_Integer aScaleU = aNbU / (aBSpl->NbUKnots() - 1);
+    Standard_Integer aScaleV = aNbV / (aBSpl->NbVKnots() - 1);
+    aClusterSize = Min(aScaleU, aScaleV);
+  }
+
+  Standard_Real aCurU, aCurV;
+  for (Standard_Integer aClusterU = 0; aClusterU < aClusterSize; ++aClusterU)
+    for (Standard_Integer anIndU = aClusterU; anIndU < aNbU; anIndU += aClusterSize)
+    {
+      aCurU = aU1 + aStepU * anIndU;
+      for (Standard_Integer aClusterV = 0; aClusterV < aClusterSize; ++aClusterV)
+        for (Standard_Integer anIndV = aClusterV; anIndV < aNbV; anIndV += aClusterSize)
+        {
+          aCurV = aV1 + aStepV * anIndV;
+          anAdaptor.Value(aCurU, aCurV);
+        }
+    }
+
+  return 0;
+}
+
 //========================================================================
 //function : OCC27065
 //purpose  : Tests overloaded method "Generated" of BRepOffsetAPI_MakePipe
@@ -5301,6 +5360,10 @@ void QABugs::Commands_19(Draw_Interpretor& theCommands) {
   theCommands.Add ("OCC27523",
                    "OCC27523: Checks recomputation of deactivated selection mode after object's redisplaying",
                    __FILE__, OCC27523, group);
+
+  theCommands.Add ("OCC27074",
+                   "OCC27074 surf mc n\nCalculate value of surface n times using adaptor with mc cached spans",
+                   __FILE__, OCC27074, group);
 
   return;
 }

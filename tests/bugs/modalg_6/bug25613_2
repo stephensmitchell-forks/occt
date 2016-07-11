@@ -22,7 +22,7 @@ if { [ expr ($dist - $dist_good) ] < -$Tol } {
   puts "Error in xdistef command (cannot find maximal distance)"
 }
 
-if { $dist > $dist_good } {
+if { $dist > $dist_good + $Tol } {
 #Check if distance found is correct
 
   mkcurve c3d e

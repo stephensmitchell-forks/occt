@@ -1,0 +1,109 @@
+// Copyright (c) 2014 OPEN CASCADE SAS
+//
+// This file is part of Open CASCADE Technology software library.
+//
+// This library is free software; you can redistribute it and/or modify it under
+// the terms of the GNU Lesser General Public License version 2.1 as published
+// by the Free Software Foundation, with special exception defined in the file
+// OCCT_LGPL_EXCEPTION.txt. Consult the file LICENSE_LGPL_21.txt included in OCCT
+// distribution for complete text of the license and disclaimer of any warranty.
+//
+// Alternatively, this file may be used under the terms of Open CASCADE
+// commercial license or contractual agreement.
+
+#include <Standard_NegativeValue.hxx>
+
+template<class CACHE_TYPE>
+BSplCLib_MultiSpanCacheStorage<CACHE_TYPE>::BSplCLib_MultiSpanCacheStorage(const Standard_Integer theMaxSpans)
+  : myMaxSpansCount(MAX_SPANS_COUNT),
+    mySingleSpan(Standard_False),
+    myCaches(theMaxSpans)
+{
+  myLastCache.mySpan = -1;
+}
+
+template<class CACHE_TYPE>
+void BSplCLib_MultiSpanCacheStorage<CACHE_TYPE>::SetMaxSpansCached(const Standard_Integer theMaxSpans)
+{
+  // number of cached spans should not be lesser than 1
+  Standard_NegativeValue_Raise_if(theMaxSpans < 1, "Number of cached spans should be greater than 0");
+
+  for (Standard_Size i = myCaches.Size(); i > theMaxSpans; --i)
+    RemoveFirstUsedCache();
+  myMaxSpansCount = theMaxSpans;
+}
+
+template<class CACHE_TYPE>
+void BSplCLib_MultiSpanCacheStorage<CACHE_TYPE>::Clear()
+{
+  myCaches.Clear();
+  myCachedSpans.Clear();
+  myLastCache.mySpan = -1;
+  myLastCache.myCache.Nullify();
+}
+
+template<class CACHE_TYPE> Standard_Boolean
+BSplCLib_MultiSpanCacheStorage<CACHE_TYPE>::CreateNewCache(const Standard_Integer theSpanIndex,
+                                                           Handle(CACHE_TYPE)&    theCache)
+{
+  Standard_Boolean isNeedRebuild = Standard_False;
+  // Do not want to allocate memory. Update already existent cache if all slots are filled.
+  if (myMaxSpansCount == 1)
+  {
+    isNeedRebuild = myLastCache.myCache.IsNull();
+    if (isNeedRebuild)
+      theCache = new CACHE_TYPE;
+    else { // rebuild cache, if the curve/surface has more than one span
+      isNeedRebuild = !mySingleSpan;
+      theCache = myLastCache.myCache;
+    }
+  }
+  else
+  {
+    if (myCaches.Size() >= myMaxSpansCount)
+      theCache = RemoveFirstUsedCache(); // will rebuild existent cache to avoid memory reallocation
+    else
+      theCache = new CACHE_TYPE; // create new cache
+    myCaches.SetValue(theSpanIndex, theCache);
+    myCachedSpans.Append(theSpanIndex);
+    isNeedRebuild = Standard_True;
+  }
+
+  myLastCache.mySpan = theSpanIndex;
+  myLastCache.myCache = theCache;
+  return isNeedRebuild;
+}
+
+template<class CACHE_TYPE> Standard_Boolean
+BSplCLib_MultiSpanCacheStorage<CACHE_TYPE>::SetLatestCache(const Standard_Integer theSpanIndex)
+{
+  if (myMaxSpansCount > 1 && myCaches.HasValue(theSpanIndex))
+  {
+    // search given index and push it to back of the list
+    SpanArray::Iterator anIt(myCachedSpans);
+    for (; anIt.More(); anIt.Next())
+      if (anIt.Value() == theSpanIndex)
+      {
+        myCachedSpans.Remove(anIt);
+        myCachedSpans.Append(theSpanIndex);
+        break;
+      }
+
+    myLastCache.mySpan = theSpanIndex;
+    myLastCache.myCache = myCaches.Value(theSpanIndex);
+    return Standard_True;
+  }
+  return Standard_False;
+}
+
+template<class CACHE_TYPE>
+Handle(CACHE_TYPE) BSplCLib_MultiSpanCacheStorage<CACHE_TYPE>::RemoveFirstUsedCache()
+{
+  Standard_Integer aSpanIndex = myCachedSpans.First();
+  Handle(CACHE_TYPE) aRemovedCache = myCaches.Value(aSpanIndex);
+
+  myCaches.UnsetValue(aSpanIndex);
+  myCachedSpans.RemoveFirst();
+
+  return aRemovedCache;
+}

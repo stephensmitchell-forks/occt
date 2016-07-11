@@ -132,14 +132,18 @@ void GeomAdaptor_Surface::load(const Handle(Geom_Surface)& S,
   myULast  = ULast;
   myVFirst = VFirst;
   myVLast  = VLast;
-  mySurfaceCache.Nullify();
 
-  if ( mySurface != S) {
+  const Handle(Standard_Type)& TheType = S->DynamicType();
+  if (mySurface != S ||
+      TheType == STANDARD_TYPE(Geom_BezierSurface) ||
+      TheType == STANDARD_TYPE(Geom_BSplineSurface))
+  {
     mySurface = S;
+    mySurfaceCache.Nullify();
+    myCacheIsUsed = Standard_False;
     myNestedEvaluator.Nullify();
     myBSplineSurface.Nullify();
 
-    const Handle(Standard_Type)& TheType = S->DynamicType();
     if (TheType == STANDARD_TYPE(Geom_RectangularTrimmedSurface)) {
       Load(Handle(Geom_RectangularTrimmedSurface)::DownCast (S)->BasisSurface(),
            UFirst,ULast,VFirst,VLast);
@@ -181,10 +185,13 @@ void GeomAdaptor_Surface::load(const Handle(Geom_Surface)& S,
     else if (TheType == STANDARD_TYPE(Geom_BezierSurface))
     {
       mySurfaceType = GeomAbs_BezierSurface;
+      myCacheIsUsed = Standard_True;
     }
-    else if (TheType == STANDARD_TYPE(Geom_BSplineSurface)) {
+    else if (TheType == STANDARD_TYPE(Geom_BSplineSurface))
+    {
       mySurfaceType = GeomAbs_BSplineSurface;
       myBSplineSurface = Handle(Geom_BSplineSurface)::DownCast(mySurface);
+      myCacheIsUsed = Standard_True;
     }
     else if ( TheType == STANDARD_TYPE(Geom_OffsetSurface))
     {
@@ -653,42 +660,38 @@ Standard_Real GeomAdaptor_Surface::VPeriod() const
 }
 
 //=======================================================================
-//function : RebuildCache
+//function : CreateCache
 //purpose  : 
 //=======================================================================
-void GeomAdaptor_Surface::RebuildCache(const Standard_Real theU,
-                                       const Standard_Real theV) const
+
+void GeomAdaptor_Surface::CreateCache() const
 {
-  if (mySurfaceType == GeomAbs_BezierSurface)
+  switch (mySurfaceType)
   {
+  case GeomAbs_BezierSurface: {
     // Create cache for Bezier
     Handle(Geom_BezierSurface) aBezier = Handle(Geom_BezierSurface)::DownCast(mySurface);
     Standard_Integer aDegU = aBezier->UDegree();
     Standard_Integer aDegV = aBezier->VDegree();
-    TColStd_Array1OfReal aFlatKnotsU(BSplCLib::FlatBezierKnots(aDegU), 1, 2 * (aDegU + 1));
-    TColStd_Array1OfReal aFlatKnotsV(BSplCLib::FlatBezierKnots(aDegV), 1, 2 * (aDegV + 1));
-    if (mySurfaceCache.IsNull())
-      mySurfaceCache = new BSplSLib_Cache(
-        aDegU, aBezier->IsUPeriodic(), aFlatKnotsU,
-        aDegV, aBezier->IsVPeriodic(), aFlatKnotsV,
+    myBezierFlatKnotsU = new TColStd_HArray1OfReal(
+        TColStd_Array1OfReal(BSplCLib::FlatBezierKnots(aDegU), 1, 2 * (aDegU + 1)));
+    myBezierFlatKnotsV = new TColStd_HArray1OfReal(
+        TColStd_Array1OfReal(BSplCLib::FlatBezierKnots(aDegV), 1, 2 * (aDegV + 1)));
+    mySurfaceCache = new BSplSLib_MultiSpanCache(
+        aDegU, aBezier->IsUPeriodic(), myBezierFlatKnotsU->Array1(),
+        aDegV, aBezier->IsVPeriodic(), myBezierFlatKnotsV->Array1(),
         aBezier->Poles(), aBezier->Weights());
-    mySurfaceCache->BuildCache(theU, theV,
-      aDegU, aBezier->IsUPeriodic(), aFlatKnotsU,
-      aDegV, aBezier->IsVPeriodic(), aFlatKnotsV,
-      aBezier->Poles(), aBezier->Weights());
+    break;
   }
-  else if (mySurfaceType == GeomAbs_BSplineSurface)
-  {
+  case GeomAbs_BSplineSurface:
     // Create cache for B-spline
-    if (mySurfaceCache.IsNull())
-      mySurfaceCache = new BSplSLib_Cache(
+    mySurfaceCache = new BSplSLib_MultiSpanCache(
         myBSplineSurface->UDegree(), myBSplineSurface->IsUPeriodic(), myBSplineSurface->UKnotSequence(),
         myBSplineSurface->VDegree(), myBSplineSurface->IsVPeriodic(), myBSplineSurface->VKnotSequence(),
         myBSplineSurface->Poles(), myBSplineSurface->Weights());
-    mySurfaceCache->BuildCache(theU, theV,
-      myBSplineSurface->UDegree(), myBSplineSurface->IsUPeriodic(), myBSplineSurface->UKnotSequence(),
-      myBSplineSurface->VDegree(), myBSplineSurface->IsVPeriodic(), myBSplineSurface->VKnotSequence(),
-      myBSplineSurface->Poles(), myBSplineSurface->Weights());
+    break;
+  default: // avoid gcc compilation warnings
+    break;
   }
 }
 
@@ -717,9 +720,12 @@ void GeomAdaptor_Surface::D0(const Standard_Real U,
   {
   case GeomAbs_BezierSurface:
   case GeomAbs_BSplineSurface:
-    if (mySurfaceCache.IsNull() || !mySurfaceCache->IsCacheValid(U, V))
-      RebuildCache(U, V);
-    mySurfaceCache->D0(U, V, P);
+    if (myCacheIsUsed && mySurfaceCache.IsNull())
+      CreateCache();
+    if (mySurfaceCache.IsNull())
+      mySurface->D0(U, V, P);
+    else
+      mySurfaceCache->D0(U, V, P);
     break;
 
   case GeomAbs_OffsetSurface:
@@ -747,25 +753,31 @@ void GeomAdaptor_Surface::D1(const Standard_Real U,
                                    gp_Vec&       D1U, 
                                    gp_Vec&       D1V ) const 
 {
-  Standard_Integer Ideb, Ifin, IVdeb, IVfin, USide=0, VSide=0;
   Standard_Real u = U, v = V;
-  if (Abs(U-myUFirst) <= myTolU) {USide= 1; u = myUFirst;}
-  else if (Abs(U-myULast) <= myTolU) {USide= -1; u = myULast;}
-  if (Abs(V-myVFirst) <= myTolV) {VSide= 1; v = myVFirst;}
-  else if (Abs(V-myVLast) <= myTolV) {VSide= -1; v = myVLast;}
 
   switch(mySurfaceType) {
   case GeomAbs_BezierSurface:
   case GeomAbs_BSplineSurface: {
-    if (!myBSplineSurface.IsNull() &&
-        (USide != 0 || VSide != 0) && 
+    Standard_Integer Ideb, Ifin, IVdeb, IVfin, USide = 0, VSide = 0;
+    if (!myBSplineSurface.IsNull())
+    {
+      if (Abs(U - myUFirst) <= myTolU) { USide = 1; u = myUFirst; }
+      else if (Abs(U - myULast) <= myTolU) { USide = -1; u = myULast; }
+      if (Abs(V - myVFirst) <= myTolV) { VSide = 1; v = myVFirst; }
+      else if (Abs(V - myVLast) <= myTolV) { VSide = -1; v = myVLast; }
+    }
+
+    if ((USide != 0 || VSide != 0) && 
         IfUVBound(u, v, Ideb, Ifin, IVdeb, IVfin, USide, VSide))
       myBSplineSurface->LocalD1(u, v, Ideb, Ifin, IVdeb, IVfin, P, D1U, D1V);
     else
     {
-      if (mySurfaceCache.IsNull() || !mySurfaceCache->IsCacheValid(U, V))
-        RebuildCache(U, V);
-      mySurfaceCache->D1(U, V, P, D1U, D1V);
+      if (myCacheIsUsed && mySurfaceCache.IsNull())
+        CreateCache();
+      if (mySurfaceCache.IsNull())
+        mySurface->D1(U, V, P, D1U, D1V);
+      else
+        mySurfaceCache->D1(u, v, P, D1U, D1V);
     }
     break;
     }
@@ -797,25 +809,31 @@ void GeomAdaptor_Surface::D2(const Standard_Real U,
                                    gp_Vec&       D2V, 
                                    gp_Vec&       D2UV) const 
 { 
-  Standard_Integer Ideb, Ifin, IVdeb, IVfin, USide=0, VSide=0;
   Standard_Real u = U, v = V;
-  if (Abs(U-myUFirst) <= myTolU) {USide= 1; u = myUFirst;}
-  else if (Abs(U-myULast) <= myTolU) {USide= -1; u = myULast;}
-  if (Abs(V-myVFirst) <= myTolV) {VSide= 1; v = myVFirst;}
-  else if (Abs(V-myVLast) <= myTolV) {VSide= -1; v = myVLast;}
 
   switch(mySurfaceType) {
   case GeomAbs_BezierSurface:
   case  GeomAbs_BSplineSurface: {
-    if (!myBSplineSurface.IsNull() &&
-        (USide != 0 || VSide != 0) && 
+    Standard_Integer Ideb, Ifin, IVdeb, IVfin, USide = 0, VSide = 0;
+    if (!myBSplineSurface.IsNull())
+    {
+      if (Abs(U - myUFirst) <= myTolU) { USide = 1; u = myUFirst; }
+      else if (Abs(U - myULast) <= myTolU) { USide = -1; u = myULast; }
+      if (Abs(V - myVFirst) <= myTolV) { VSide = 1; v = myVFirst; }
+      else if (Abs(V - myVLast) <= myTolV) { VSide = -1; v = myVLast; }
+    }
+
+    if ((USide != 0 || VSide != 0) && 
         IfUVBound(u, v, Ideb, Ifin, IVdeb, IVfin, USide, VSide))
       myBSplineSurface->LocalD2(u, v, Ideb, Ifin, IVdeb, IVfin, P, D1U, D1V, D2U, D2V, D2UV);
     else
     {
-      if (mySurfaceCache.IsNull() || !mySurfaceCache->IsCacheValid(U, V))
-        RebuildCache(U, V);
-      mySurfaceCache->D2(U, V, P, D1U, D1V, D2U, D2V, D2UV);
+      if (myCacheIsUsed && mySurfaceCache.IsNull())
+        CreateCache();
+      if (mySurfaceCache.IsNull())
+        mySurface->D2(U, V, P, D1U, D1V, D2U, D2V, D2UV);
+      else
+        mySurfaceCache->D2(u, v, P, D1U, D1V, D2U, D2V, D2UV);
     }
     break;
   }
@@ -1445,4 +1463,23 @@ void GeomAdaptor_Surface::Span(const Standard_Integer Side,
 	  else {OutIdeb=Ideb;   OutIfin=Ifin+1;}
     } 
   }
+}
+
+//=======================================================================
+// function : SetMaxSpansCached
+// purpose  : Sets maximal number of cached spans for Bezier or B-spline surface
+//=======================================================================
+void GeomAdaptor_Surface::SetMaxSpansCached(const Standard_Integer theMaxSpans)
+{
+  myCacheIsUsed = theMaxSpans > 0;
+  if (!myCacheIsUsed)
+  {
+    mySurfaceCache.Nullify();
+    return;
+  }
+
+  if (mySurfaceCache.IsNull())
+    CreateCache();
+  if (!mySurfaceCache.IsNull())
+    mySurfaceCache->SetMaxSpansCached(theMaxSpans);
 }

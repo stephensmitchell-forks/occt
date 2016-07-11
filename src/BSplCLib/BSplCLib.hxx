@@ -190,6 +190,14 @@ public:
   Standard_EXPORT static void LocateParameter (const Standard_Integer Degree, const TColStd_Array1OfReal& Knots, const Standard_Real U, const Standard_Boolean IsPeriodic, const Standard_Integer FromK1, const Standard_Integer ToK2, Standard_Integer& KnotIndex, Standard_Real& NewU);
   
   Standard_EXPORT static void LocateParameter (const Standard_Integer Degree, const TColStd_Array1OfReal& Knots, const TColStd_Array1OfInteger* Mults, const Standard_Real U, const Standard_Boolean Periodic, Standard_Integer& Index, Standard_Real& NewU);
+
+  //! Adjust the parameter of periodical B-spline curves to be in the period
+  //! \param theMin       [in]     start value of period
+  //! \param theMax       [in]     end value of period
+  //! \param theParameter [in,out] the value to be normalized into the period
+  Standard_EXPORT static void PeriodicNormalization(const Standard_Real& theMin,
+                                                    const Standard_Real& theMax,
+                                                          Standard_Real& theParameter);
   
   //! Finds the greatest multiplicity in a set of knots
   //! between  K1  and K2.   Mults  is  the  multiplicity
@@ -1195,12 +1203,12 @@ public:
   //! Perform the evaluation of the Taylor expansion
   //! of the Bspline normalized between 0 and 1.
   //! Structure of result optimized for BSplCLib_Cache.
-  Standard_EXPORT static void BuildCache (const Standard_Real theParameter, const Standard_Real theSpanDomain, const Standard_Boolean thePeriodicFlag, const Standard_Integer theDegree, const TColStd_Array1OfReal& theFlatKnots, const TColgp_Array1OfPnt& thePoles, const TColStd_Array1OfReal* theWeights, TColStd_Array2OfReal& theCacheArray);
+  Standard_EXPORT static void BuildCache (const Standard_Real theParameter, const Standard_Real theSpanDomain, const Standard_Boolean thePeriodicFlag, const Standard_Integer theDegree, const Standard_Integer theSpanIndex, const TColStd_Array1OfReal& theFlatKnots, const TColgp_Array1OfPnt& thePoles, const TColStd_Array1OfReal* theWeights, TColStd_Array2OfReal& theCacheArray);
   
   //! Perform the evaluation of the Taylor expansion
   //! of the Bspline normalized between 0 and 1.
   //! Structure of result optimized for BSplCLib_Cache.
-  Standard_EXPORT static void BuildCache (const Standard_Real theParameter, const Standard_Real theSpanDomain, const Standard_Boolean thePeriodicFlag, const Standard_Integer theDegree, const TColStd_Array1OfReal& theFlatKnots, const TColgp_Array1OfPnt2d& thePoles, const TColStd_Array1OfReal* theWeights, TColStd_Array2OfReal& theCacheArray);
+  Standard_EXPORT static void BuildCache (const Standard_Real theParameter, const Standard_Real theSpanDomain, const Standard_Boolean thePeriodicFlag, const Standard_Integer theDegree, const Standard_Integer theSpanIndex, const TColStd_Array1OfReal& theFlatKnots, const TColgp_Array1OfPnt2d& thePoles, const TColStd_Array1OfReal* theWeights, TColStd_Array2OfReal& theCacheArray);
   
     static void PolesCoefficients (const TColgp_Array1OfPnt2d& Poles, TColgp_Array1OfPnt2d& CachePoles);
   

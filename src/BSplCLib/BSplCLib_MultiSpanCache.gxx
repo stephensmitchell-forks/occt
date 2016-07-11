@@ -1,0 +1,127 @@
+// Copyright (c) 2014 OPEN CASCADE SAS
+//
+// This file is part of Open CASCADE Technology software library.
+//
+// This library is free software; you can redistribute it and/or modify it under
+// the terms of the GNU Lesser General Public License version 2.1 as published
+// by the Free Software Foundation, with special exception defined in the file
+// OCCT_LGPL_EXCEPTION.txt. Consult the file LICENSE_LGPL_21.txt included in OCCT
+// distribution for complete text of the license and disclaimer of any warranty.
+//
+// Alternatively, this file may be used under the terms of Open CASCADE
+// commercial license or contractual agreement.
+
+#include <BSplCLib.hxx>
+
+template<class POINT_TYPE, class VEC_TYPE>
+BSplCLib_MultiSpanCacheBase<POINT_TYPE, VEC_TYPE>::BSplCLib_MultiSpanCacheBase(
+  const Standard_Integer&     theDegree,
+  const Standard_Boolean&     thePeriodic,
+  const TColStd_Array1OfReal& theFlatKnots,
+  const Array1OfPOINT&        thePoles,
+  const TColStd_Array1OfReal* theWeights,
+  const Standard_Integer      theMaxSpans)
+  : myDegree(theDegree),
+    myPeriodic(thePeriodic),
+    myFlatKnots(theFlatKnots),
+    myPoles(thePoles),
+    myWeights(theWeights)
+{
+  Standard_Integer aMaxSpansCount = theMaxSpans;
+
+  myFirstKnot = myFlatKnots.Value(myFlatKnots.Lower() + myDegree);
+  myLastKnot = myFlatKnots.Value(myFlatKnots.Upper() - myDegree);
+
+  // Verify the curve has just one span
+  if (!myPeriodic && myFlatKnots.Length() == (myDegree + 1) * 2)
+  {
+    SetSingleSpan(Standard_True);
+    aMaxSpansCount = 1;
+  }
+
+  SetMaxSpansCached(aMaxSpansCount);
+}
+
+template<class POINT_TYPE, class VEC_TYPE>
+void BSplCLib_MultiSpanCacheBase<POINT_TYPE, VEC_TYPE>::D0(const Standard_Real& theParameter,
+                                                                 POINT_TYPE&    thePoint)
+{
+  Standard_Real aPar = theParameter;
+  Handle(BSplCLib_Cache) aCache = FindCache(aPar);
+  aCache->D0(aPar, thePoint);
+}
+
+template<class POINT_TYPE, class VEC_TYPE>
+void BSplCLib_MultiSpanCacheBase<POINT_TYPE, VEC_TYPE>::D1(const Standard_Real& theParameter,
+                                                                 POINT_TYPE&    thePoint,
+                                                                 VEC_TYPE&      theTangent)
+{
+  Standard_Real aPar = theParameter;
+  Handle(BSplCLib_Cache) aCache = FindCache(aPar);
+  aCache->D1(aPar, thePoint, theTangent);
+}
+
+template<class POINT_TYPE, class VEC_TYPE>
+void BSplCLib_MultiSpanCacheBase<POINT_TYPE, VEC_TYPE>::D2(const Standard_Real& theParameter,
+                                                                 POINT_TYPE&    thePoint,
+                                                                 VEC_TYPE&      theTangent,
+                                                                 VEC_TYPE&      theCurvature)
+{
+  Standard_Real aPar = theParameter;
+  Handle(BSplCLib_Cache) aCache = FindCache(aPar);
+  aCache->D2(aPar, thePoint, theTangent, theCurvature);
+}
+
+template<class POINT_TYPE, class VEC_TYPE>
+void BSplCLib_MultiSpanCacheBase<POINT_TYPE, VEC_TYPE>::D3(const Standard_Real& theParameter,
+                                                                 POINT_TYPE&    thePoint,
+                                                                 VEC_TYPE&      theTangent,
+                                                                 VEC_TYPE&      theCurvature,
+                                                                 VEC_TYPE&      theTorsion)
+{
+  Standard_Real aPar = theParameter;
+  Handle(BSplCLib_Cache) aCache = FindCache(aPar);
+  aCache->D3(aPar, thePoint, theTangent, theCurvature, theTorsion);
+}
+
+template<class POINT_TYPE, class VEC_TYPE>
+Standard_Integer BSplCLib_MultiSpanCacheBase<POINT_TYPE, VEC_TYPE>::SpanIndex(Standard_Real& theParameter) const
+{
+  // Normalize the parameters for periodical B-splines
+  if (myPeriodic)
+    BSplCLib::PeriodicNormalization(myFirstKnot, myLastKnot, theParameter);
+
+  // Do not want to use LocateParameter due to lack of performance.
+  // Just check the last used cache is valid for the given parameter.
+  if (!LastCache().IsNull() && (IsSingleSpan() || LastCache()->IsCacheValid(theParameter)))
+    return LastSpan();
+
+  // Get index of a span
+  Standard_Integer aSpanIndex = 0;
+  BSplCLib::LocateParameter(myDegree, myFlatKnots, BSplCLib::NoMults(), theParameter,
+                            myPeriodic, aSpanIndex, theParameter);
+  return aSpanIndex;
+}
+
+template<class POINT_TYPE, class VEC_TYPE>
+const Handle(BSplCLib_Cache)&
+BSplCLib_MultiSpanCacheBase<POINT_TYPE, VEC_TYPE>::FindCache(Standard_Real& theParameter)
+{
+  Standard_Integer aSpanIndex = SpanIndex(theParameter);
+  // check the cache is used at previous call,
+  // if not, try to find it in the list of already cached spans
+  if (aSpanIndex == LastSpan() || SetLatestCache(aSpanIndex))
+    return LastCache();
+  // build new cache
+  return NewCache(aSpanIndex);
+}
+
+template<class POINT_TYPE, class VEC_TYPE>
+const Handle(BSplCLib_Cache)&
+BSplCLib_MultiSpanCacheBase<POINT_TYPE, VEC_TYPE>::NewCache(const Standard_Integer theSpanIndex)
+{
+  Handle(BSplCLib_Cache) aNewCache;
+  if (CreateNewCache(theSpanIndex, aNewCache))
+    aNewCache->BuildCache(myDegree, myPeriodic, myFlatKnots, theSpanIndex, myPoles, myWeights);
+  return LastCache();
+}
