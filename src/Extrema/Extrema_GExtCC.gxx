@@ -43,6 +43,95 @@
 #include <Extrema_ExtPElC.hxx>
 #include <Standard_NullObject.hxx>
 
+#include <NCollection_UBTreeFiller.hxx>
+#include <Bnd_Box.hxx>
+#include <BndLib_Add3dCurve.hxx>
+#include <TColgp_HArray1OfPnt.hxx>
+
+typedef NCollection_UBTreeFiller<Handle(Extrema_CCache), Bnd_Box> UBTreeFiller;
+typedef NCollection_UBTree<Handle(Extrema_CCache), Bnd_Box> UBTree;
+
+class ComputeIntervExtrema : public UBTree::Selector
+{
+  public:
+    /**
+    * Constructor
+    */
+    ComputeIntervExtrema(const Handle(Extrema_CCache)& theCache, Extrema_ECCOfExtCC& theECC, Extrema_GExtCC *theExt, const Standard_Boolean theIsFirst, const Standard_Real U11, const Standard_Real U12, const Standard_Real U21, const Standard_Real U22) : myECC(theECC), myExt(theExt), myIsFirst(theIsFirst), myU11(U11), myU12(U12), myU21(U21), myU22(U22)
+    {
+      if(theIsFirst)
+        myECC.SetCurveCache (1, theCache);
+      else
+        myECC.SetCurveCache (2, theCache);
+
+      //Initialize BndBox
+      myBox.SetVoid();
+
+      Curve1& aC = *(Curve1*)(theCache->CurvePtr());
+      const Standard_Real aFPar = theCache->FirstParameter(),
+                          aLPar = theCache->LastParameter();
+
+      BndLib_Add3dCurve::Add(aC, aFPar, aLPar, Precision::Confusion(), myBox);
+
+      myBox.Enlarge(Precision::Infinite());
+    };
+
+    /**
+    * Bounding box rejection - definition of virtual method.
+    */
+    Standard_EXPORT virtual Standard_Boolean Reject(const Bnd_Box& theBox) const;
+
+    /**
+    * Redefined from the base class
+    */
+    Standard_EXPORT virtual Standard_Boolean Accept(const Handle(Extrema_CCache)& theCache);
+
+protected:
+    ComputeIntervExtrema& operator=(ComputeIntervExtrema&);
+
+private:
+    Extrema_ECCOfExtCC& myECC;
+    Bnd_Box myBox;
+    Extrema_GExtCC *myExt;
+    const Standard_Boolean myIsFirst;
+
+    Standard_Real myU11;
+    Standard_Real myU12;
+    Standard_Real myU21;
+    Standard_Real myU22;
+}; //end fo clMinimumDistanceSelector
+
+Standard_Boolean ComputeIntervExtrema::Reject(const Bnd_Box& theBox) const
+{
+  return (theBox.IsOut(myBox));
+}
+
+Standard_Boolean ComputeIntervExtrema::Accept(const Handle(Extrema_CCache)& theCache)
+{
+  if(myIsFirst)
+    myECC.SetCurveCache (2, theCache);
+  else
+    myECC.SetCurveCache (1, theCache);
+
+  myECC.Perform();
+  
+  myExt->Results(myECC, myU11, myU12, myU21, myU22);
+
+  if(!myECC.IsDone() || myECC.NbExt() == 0)
+    return Standard_True;
+
+  Standard_Real aMinDist = RealLast();
+
+  for(Standard_Integer i = 1; i <= myECC.NbExt(); i++)
+  {
+    aMinDist = Min(aMinDist, myECC.SquareDistance(i));
+  }
+
+  myBox.SetGap(sqrt(aMinDist));
+
+  return Standard_True;
+}
+
 //=======================================================================
 //function : Extrema_GExtCC
 //purpose  : 
@@ -395,18 +484,34 @@ void Extrema_GExtCC::Perform()
       }
     }
 
-    //2. process each cache from one list with each cache from the other
-    TColStd_ListIteratorOfListOfTransient anIt1 (myCacheLists[0]);
-    for (; anIt1.More(); anIt1.Next()) {
-      Handle(Extrema_CCache) aCache1 = Handle(Extrema_CCache)::DownCast (anIt1.Value());
-      myECC.SetCurveCache (1, aCache1);
-      TColStd_ListIteratorOfListOfTransient anIt2 (myCacheLists[1]);
-      for (; anIt2.More(); anIt2.Next()) {
-        Handle(Extrema_CCache) aCache2 = Handle(Extrema_CCache)::DownCast (anIt2.Value());
-        myECC.SetCurveCache (2, aCache2);
-        myECC.Perform();
-        Results(myECC, U11, U12, U21, U22);
-      }
+    Bnd_Box aBox;
+    const Standard_Integer aFInd = (myCacheLists[0].Extent() > myCacheLists[1].Extent()) ? 1 : 0;
+    const Standard_Integer aSInd = (myCacheLists[0].Extent() > myCacheLists[1].Extent()) ? 0 : 1;
+
+    Handle(NCollection_IncAllocator) anAlloc = new NCollection_IncAllocator(5000);
+    UBTree aDeflTree (anAlloc);
+    UBTreeFiller aDeflTreeFiller(aDeflTree);
+   
+    TColStd_ListIteratorOfListOfTransient anIt2 (myCacheLists[aSInd]);
+    for (; anIt2.More(); anIt2.Next())
+    {
+      aBox.SetVoid();
+      const Handle(Extrema_CCache)& aCache2 = Handle(Extrema_CCache)::DownCast (anIt2.Value());
+      BndLib_Add3dCurve::Add(*(Curve1*)myC[aSInd], aCache2->FirstParameter(), aCache2->LastParameter(), Precision::Confusion(), aBox);
+      aDeflTreeFiller.Add(aCache2, aBox);
+    }
+
+    //Shake TreeFiller
+    aDeflTreeFiller.Fill();
+    aDeflTreeFiller.Reset();
+
+    TColStd_ListIteratorOfListOfTransient anIt1 (myCacheLists[aFInd]);
+    for (; anIt1.More(); anIt1.Next())
+    {
+      const Handle(Extrema_CCache)& aCache1 = Handle(Extrema_CCache)::DownCast (anIt1.Value());
+      ComputeIntervExtrema aSel(aCache1, myECC, this, aFInd == 0, U11, U12, U21, U22);
+      myFilter.Reset(myTol);
+      aDeflTree.Select(aSel);
     }
   }
 }
@@ -832,50 +937,58 @@ void Extrema_GExtCC::Results(const Extrema_ECC&   AlgExt,
 			     const Standard_Real  Ut21,
 			     const Standard_Real  Ut22)
 {
-  Standard_Integer i, j,NbExt;
-  Standard_Real Val, U, U2,Uj,U2j;
-  Extrema_POnCurv P1, P2,P1j,P2j;
-  Standard_Boolean IsExtrema;
+  Standard_Integer i, NbExt;
+  Standard_Real Val, U, U2;
+  Extrema_POnCurv P1, P2;
 
   myDone = AlgExt.IsDone();
   if (myDone) {
     NbExt = AlgExt.NbExt();
-    for (i = 1; i <= NbExt; i++) {
+
+    // Size computed to have cell index inside of int32 value.
+    Extrema_CCPointsInspector anInspector(myTol);
+
+    for (i = 1; i <= NbExt; i++)
+    {
       AlgExt.Points(i, P1, P2);
       U = P1.Parameter();
       U2 = P2.Parameter();
-      IsExtrema=Standard_True;
-      for  (j=1;j<=mynbext;j++)
-      { P1j=mypoints.Value(2*j-1);
-        P2j=mypoints.Value(2*j);
-        Uj=P1j.Parameter();
-        U2j=P2j.Parameter();
-        if ((Abs(Uj-U)<=myTol[0]) && (Abs(U2j-U2)<=myTol[1]))     
-        IsExtrema=Standard_False;}
-     
-      if (IsExtrema) 
-      {  
-//  Verification de la validite des parametres
-	if (Tool1::IsPeriodic(*((Curve1*)myC[0]))) {
-	  U = ElCLib::InPeriod(U, Ut11, Ut11+Tool1::Period(*((Curve1*)myC[0])));
-	}
-	if (Tool2::IsPeriodic(*((Curve2*)myC[1]))) {
-	  U2 = ElCLib::InPeriod(U2, Ut21, Ut21+Tool2::Period(*((Curve2*)myC[1])));
-	}
 
-         if ((U  >= Ut11 - RealEpsilon())  && 
-	   (U  <= Ut12 + RealEpsilon())  &&
-	   (U2 >= Ut21 - RealEpsilon())  &&
-	   (U2 <= Ut22 + RealEpsilon()))   
+      gp_XY aPnt2d(U, U2);
+      gp_XY aXYmin(U - myTol[0], U2 - myTol[1]);
+      gp_XY aXYmax(U + myTol[0], U2 + myTol[1]);
+
+      anInspector.ClearFind();
+      anInspector.SetCurrent(aPnt2d);
+      myFilter.Inspect(aXYmin, aXYmax, anInspector);
+
+      if (anInspector.isFind())
+      {
+        continue;
+      }
+
+      myFilter.Add(aPnt2d, aPnt2d);
+
+      //  Verification de la validite des parametres
+	if (Tool1::IsPeriodic(*((Curve1*)myC[0]))) {
+        U = ElCLib::InPeriod(U, Ut11, Ut11+Tool1::Period(*((Curve1*)myC[0])));
+      }
+      if (Tool2::IsPeriodic(*((Curve2*)myC[1]))) {
+        U2 = ElCLib::InPeriod(U2, Ut21, Ut21+Tool2::Period(*((Curve2*)myC[1])));
+      }
+
+      if( (U  >= Ut11 - RealEpsilon())  && 
+          (U  <= Ut12 + RealEpsilon())  &&
+          (U2 >= Ut21 - RealEpsilon())  &&
+          (U2 <= Ut22 + RealEpsilon()))   
          { mynbext++;
-	   Val = AlgExt.SquareDistance(i);
-	   mySqDist.Append(Val);
-	   P1.SetValues(U, P1.Value());
-	   P2.SetValues(U2, P2.Value());
-	   mypoints.Append(P1);
-	   mypoints.Append(P2);
-         }
+        Val = AlgExt.SquareDistance(i);
+        mySqDist.Append(Val);
+        P1.SetValues(U, P1.Value());
+        P2.SetValues(U2, P2.Value());
+        mypoints.Append(P1);
+        mypoints.Append(P2);
       }
     }
-  }  
+  }
 }
