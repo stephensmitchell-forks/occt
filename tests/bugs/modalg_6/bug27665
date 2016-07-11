@@ -1,0 +1,52 @@
+puts "========"
+puts "OCC27665"
+puts "========"
+puts ""
+#################################################
+# BrepExrtrema_DistShapeShape bad performance on OCCT 6.7.0
+#################################################
+
+restore [locate_data_file bug27665_wircmpd.brep] w
+explode w
+
+dset d1_val 1000
+dset d2_val 1000
+
+# Performance check
+chrono h reset; chrono h start
+distmini d1 w_1 w_2
+chrono h stop; set q1 [dchrono h show]
+
+chrono h reset; chrono h start
+distmini d2 w_2 w_1
+chrono h stop; set q2 [dchrono h show]
+
+
+regexp {CPU user time: ([-0-9.+eE]+) seconds} $q1 full aTime1
+regexp {CPU user time: ([-0-9.+eE]+) seconds} $q2 full aTime2
+
+set MAX_TIME 5.0
+
+if { $aTime1 > ${MAX_TIME} } {
+    puts "1st case: Elapsed time is more than ${MAX_TIME} seconds - Faulty"
+} else {
+    puts "1st case: Elapsed time is less than ${MAX_TIME} seconds - OK"
+}
+
+if { $aTime2 > ${MAX_TIME} } {
+    puts "2nd case: Elapsed time is more than ${MAX_TIME} seconds - Faulty"
+} else {
+    puts "2nd case: Elapsed time is less than ${MAX_TIME} seconds - OK"
+}
+
+if {[dval d1_val] > 1.0e-7} {
+  puts "1st case: Wrong result of distmini command - Error"
+} else {
+  puts "1st case: distmini command works properly - OK"
+}
+
+if {[dval d2_val] > 1.0e-7} {
+  puts "2nd case: Wrong result of distmini command - Error"
+} else {
+  puts "2nd case: distmini command works properly - OK"
+}

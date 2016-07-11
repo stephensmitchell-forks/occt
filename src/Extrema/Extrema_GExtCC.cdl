@@ -28,7 +28,8 @@ uses POnCurv           from Extrema,
      Pnt               from gp,
      HArray1OfPnt      from TColgp,
      SequenceOfReal    from TColStd,
-     ListOfTransient   from TColStd
+     ListOfTransient   from TColStd,
+     UBTFilterCCPoints from Extrema
 
 
 raises  InfiniteSolutions from StdFail,
@@ -138,12 +139,12 @@ is
     Results(me: in out; AlgExt: ExtElC from Extrema;
     	    Ut11, Ut12, Ut21, Ut22: Real)
 
-    is static protected;    	
+    is static;    	
 
     Results(me: in out;AlgExt: ECC;
     	    Ut11, Ut12, Ut21, Ut22: Real)
 
-    is static protected;
+    is static;
 
 
     
@@ -169,7 +170,8 @@ fields
     mydist12: Real;
     mydist21: Real;
     mydist22: Real;
-    
+    myFilter: UBTFilterCCPoints from Extrema;
+
 
 
 end GExtCC;

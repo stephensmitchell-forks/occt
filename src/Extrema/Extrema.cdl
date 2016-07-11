@@ -133,6 +133,8 @@ is
     generic class GExtCC2d, CCache2d, ECC2d;
     generic class GLocateExtCC2d, LCCache2d, ELCC2d, LocECC2d;
     
+    imported UBTFilterCCPoints;
+    
     --  Curve-Surface:                                  
     class ExtCS;
 
