@@ -1006,3 +1006,13 @@ Within this OCCT release, this first level of aspects has been completely remove
 
 Note that the 3rd level (defining several different aspects within the same graphic group) is also should be avoided in application code since it is deprecated functionality which can be removed in further releases.
 Graphic3d_Group::SetGroupPrimitivesAspect() should be the main method defining presentation attributes.
+
+@subsection upgrade_occt710_multispan Multi-span cache support in *Geom2dAdaptor_Curve, GeomAdaptor_Curve* and *GeomAdaptor_Surface*
+
+Multi-span cache has been implemented in *Geom2dAdaptor_Curve, GeomAdaptor_Curve* and *GeomAdaptor_Surface*. Number of cached spans can be changed by introduced method *SetMaxSpansCached*, if passing parameter is 0, the cache will not used.
+
+N.B.: Changing number of cached spans will affect Bezier/B-spline curve/surface only.
+
+The benefit of this change is decreased time of calculations (up to 5 times) on some cases.
+
+The same changes (use convenient number of cached spans) should be implemented in relevant places in the applications based on OCCT to get the maximum performance.
