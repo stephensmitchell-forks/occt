@@ -36,8 +36,8 @@ public:
   //! \param thePoles     [in] array of poles of the curve
   //! \param theWeights   [in] array of weights of corresponding poles
   //! \param theMaxSpans  [in] maximal spans to be cached
-  BSplCLib_MultiSpanCacheBase(const Standard_Integer&     theDegree,
-                              const Standard_Boolean&     thePeriodic,
+  BSplCLib_MultiSpanCacheBase(const Standard_Integer      theDegree,
+                              const Standard_Boolean      thePeriodic,
                               const TColStd_Array1OfReal& theFlatKnots,
                               const Array1OfPOINT&        thePoles,
                               const TColStd_Array1OfReal* theWeights = NULL,
@@ -46,25 +46,25 @@ public:
   //! Calculates the point on the curve for specified parameters
   //! \param theParameter [in]  parameter on the curve
   //! \param thePoint     [out] the result of calculation (the point on the curve)
-  Standard_EXPORT void D0(const Standard_Real& theParameter, POINT_TYPE& thePoint);
+  Standard_EXPORT void D0(const Standard_Real theParameter, POINT_TYPE& thePoint);
 
   //! Calculates the point on the curve and its first derivative
   //! \param theParameter [in]  parameter on the curve
   //! \param thePoint     [out] the result of calculation (the point on the curve)
   //! \param theTangent   [out] tangent vector in the calculated point
-  Standard_EXPORT void D1(const Standard_Real& theParameter,
-                                POINT_TYPE&    thePoint, 
-                                VEC_TYPE&      theTangent);
+  Standard_EXPORT void D1(const Standard_Real theParameter,
+                                POINT_TYPE&   thePoint, 
+                                VEC_TYPE&     theTangent);
 
   //! Calculates the point on the curve and derivatives till second order
   //! \param theParameter [in]  parameter on the curve
   //! \param thePoint     [out] the result of calculation (the point on the curve)
   //! \param theTangent   [out] tangent vector in the calculated point
   //! \param theCurvature [out] curvature vector (2nd derivative)
-  Standard_EXPORT void D2(const Standard_Real& theParameter,
-                                POINT_TYPE&    thePoint, 
-                                VEC_TYPE&      theTangent,
-                                VEC_TYPE&      theCurvature);
+  Standard_EXPORT void D2(const Standard_Real theParameter,
+                                POINT_TYPE&   thePoint, 
+                                VEC_TYPE&     theTangent,
+                                VEC_TYPE&     theCurvature);
 
   //! Calculates the point on the curve and three derivatives in the specified parameter
   //! \param theParameter [in]  parameter on the curve
@@ -72,11 +72,11 @@ public:
   //! \param theTangent   [out] tangent vector (1st derivative) in the calculated point
   //! \param theCurvature [out] curvature vector (2nd derivative)
   //! \param theTorsion   [out] second curvature vector (3rd derivative)
-  Standard_EXPORT void D3(const Standard_Real& theParameter,
-                                POINT_TYPE&    thePoint, 
-                                VEC_TYPE&      theTangent,
-                                VEC_TYPE&      theCurvature,
-                                VEC_TYPE&      theTorsion);
+  Standard_EXPORT void D3(const Standard_Real theParameter,
+                                POINT_TYPE&   thePoint, 
+                                VEC_TYPE&     theTangent,
+                                VEC_TYPE&     theCurvature,
+                                VEC_TYPE&     theTorsion);
 
 private:
   //! Calculate an index of a span by the parameter on the curve.
@@ -99,7 +99,7 @@ private:
   Standard_Boolean            myPeriodic;      ///< periodicity of the curve
   Standard_Real               myFirstKnot;     ///< value of the first knot (used for periodic normalization)
   Standard_Real               myLastKnot;      ///< value of the lsst knot (used for periodic normalization)
-  const TColStd_Array1OfReal& myFlatKnots;     ///< knots duplicated according to multiplicity
+  TColStd_Array1OfReal        myFlatKnots;     ///< knots duplicated according to multiplicity
   const Array1OfPOINT&        myPoles;         ///< array of poles
   const TColStd_Array1OfReal* myWeights;       ///< array of weights
 };
@@ -109,13 +109,14 @@ private:
 class BSplCLib_MultiSpanCache2D : public BSplCLib_MultiSpanCacheBase<gp_Pnt2d, gp_Vec2d>, public Standard_Transient
 {
 public:
-  Standard_EXPORT BSplCLib_MultiSpanCache2D(const Standard_Integer&     theDegree,
-                                            const Standard_Boolean&     thePeriodic,
+  Standard_EXPORT BSplCLib_MultiSpanCache2D(const Standard_Integer      theDegree,
+                                            const Standard_Boolean      thePeriodic,
                                             const TColStd_Array1OfReal& theFlatKnots,
                                             const TColgp_Array1OfPnt2d& thePoles,
                                             const TColStd_Array1OfReal* theWeights  = NULL,
                                             const Standard_Integer      theMaxSpans = MAX_SPANS_COUNT)
-    : BSplCLib_MultiSpanCacheBase(theDegree, thePeriodic, theFlatKnots, thePoles, theWeights, theMaxSpans)
+    : BSplCLib_MultiSpanCacheBase<gp_Pnt2d, gp_Vec2d>(theDegree, thePeriodic, theFlatKnots,
+                                                      thePoles, theWeights, theMaxSpans)
   {
   }
 
@@ -126,13 +127,14 @@ public:
 class BSplCLib_MultiSpanCache3D : public BSplCLib_MultiSpanCacheBase<gp_Pnt, gp_Vec>, public Standard_Transient
 {
 public:
-  Standard_EXPORT BSplCLib_MultiSpanCache3D(const Standard_Integer&     theDegree,
-                                            const Standard_Boolean&     thePeriodic,
+  Standard_EXPORT BSplCLib_MultiSpanCache3D(const Standard_Integer      theDegree,
+                                            const Standard_Boolean      thePeriodic,
                                             const TColStd_Array1OfReal& theFlatKnots,
                                             const TColgp_Array1OfPnt&   thePoles,
                                             const TColStd_Array1OfReal* theWeights  = NULL,
                                             const Standard_Integer      theMaxSpans = MAX_SPANS_COUNT)
-    : BSplCLib_MultiSpanCacheBase(theDegree, thePeriodic, theFlatKnots, thePoles, theWeights, theMaxSpans)
+    : BSplCLib_MultiSpanCacheBase<gp_Pnt, gp_Vec>(theDegree, thePeriodic, theFlatKnots,
+                                                  thePoles, theWeights, theMaxSpans)
   {
   }
 

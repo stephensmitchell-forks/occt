@@ -31,11 +31,11 @@ public:
   //! \param thePoles      [in] array of poles of the surface
   //! \param theWeights    [in] array of weights of corresponding poles
   //! \param theMaxSpans   [in] maximal spans to be cached
-  Standard_EXPORT BSplSLib_MultiSpanCache(const Standard_Integer&     theDegreeU,
-                                          const Standard_Boolean&     thePeriodicU,
+  Standard_EXPORT BSplSLib_MultiSpanCache(const Standard_Integer      theDegreeU,
+                                          const Standard_Boolean      thePeriodicU,
                                           const TColStd_Array1OfReal& theFlatKnotsU,
-                                          const Standard_Integer&     theDegreeV,
-                                          const Standard_Boolean&     thePeriodicV,
+                                          const Standard_Integer      theDegreeV,
+                                          const Standard_Boolean      thePeriodicV,
                                           const TColStd_Array1OfReal& theFlatKnotsV,
                                           const TColgp_Array2OfPnt&   thePoles,
                                           const TColStd_Array2OfReal* theWeights  = NULL,
@@ -48,7 +48,7 @@ public:
   //! \param theU     [in]  first parameter for calculation of the value
   //! \param theV     [in]  second parameter for calculation of the value
   //! \param thePoint [out] the result of calculation (the point on the surface)
-  Standard_EXPORT void D0(const Standard_Real& theU, const Standard_Real& theV, gp_Pnt& thePoint);
+  Standard_EXPORT void D0(const Standard_Real theU, const Standard_Real theV, gp_Pnt& thePoint);
 
   //! Calculates the point on the surface and its first derivative
   //! \param theU        [in]  first parameter of calculation of the value
@@ -56,11 +56,11 @@ public:
   //! \param thePoint    [out] the result of calculation (the point on the surface)
   //! \param theTangentU [out] tangent vector along U axis in the calculated point
   //! \param theTangentV [out] tangent vector along V axis in the calculated point
-  Standard_EXPORT void D1(const Standard_Real& theU, 
-                          const Standard_Real& theV, 
-                                gp_Pnt&        thePoint, 
-                                gp_Vec&        theTangentU, 
-                                gp_Vec&        theTangentV);
+  Standard_EXPORT void D1(const Standard_Real theU, 
+                          const Standard_Real theV, 
+                                gp_Pnt&       thePoint, 
+                                gp_Vec&       theTangentU, 
+                                gp_Vec&       theTangentV);
 
   //! Calculates the point on the surface and derivatives till second order
   //! \param theU           [in]  first parameter of calculation of the value
@@ -71,14 +71,14 @@ public:
   //! \param theCurvatureU  [out] curvature vector (2nd derivative on U) along U axis
   //! \param theCurvatureV  [out] curvature vector (2nd derivative on V) along V axis
   //! \param theCurvatureUV [out] 2nd mixed derivative on U anv V
-  Standard_EXPORT void D2(const Standard_Real& theU, 
-                          const Standard_Real& theV, 
-                                gp_Pnt&        thePoint, 
-                                gp_Vec&        theTangentU, 
-                                gp_Vec&        theTangentV, 
-                                gp_Vec&        theCurvatureU, 
-                                gp_Vec&        theCurvatureV, 
-                                gp_Vec&        theCurvatureUV);
+  Standard_EXPORT void D2(const Standard_Real theU, 
+                          const Standard_Real theV, 
+                                gp_Pnt&       thePoint, 
+                                gp_Vec&       theTangentU, 
+                                gp_Vec&       theTangentV, 
+                                gp_Vec&       theCurvatureU, 
+                                gp_Vec&       theCurvatureV, 
+                                gp_Vec&       theCurvatureUV);
 
 
   DEFINE_STANDARD_RTTI_INLINE(BSplSLib_MultiSpanCache, Standard_Transient)
@@ -115,8 +115,8 @@ private:
   Standard_Integer            myDegreeV;       ///< degree along V
   Standard_Boolean            myPeriodicU;     ///< periodicity along U
   Standard_Boolean            myPeriodicV;     ///< periodicity along V
-  const TColStd_Array1OfReal& myFlatKnotsU;    ///< knots along U (duplicated according to multiplicity)
-  const TColStd_Array1OfReal& myFlatKnotsV;    ///< knots along V (duplicated according to multiplicity)
+  TColStd_Array1OfReal        myFlatKnotsU;    ///< knots along U (duplicated according to multiplicity)
+  TColStd_Array1OfReal        myFlatKnotsV;    ///< knots along V (duplicated according to multiplicity)
   Standard_Real               myFirstKnotU;    ///< first knot along U (used for periodic normalization)
   Standard_Real               myLastKnotU;     ///< last knot along U (used for periodic normalization)
   Standard_Real               myFirstKnotV;    ///< first knot along V (used for periodic normalization)

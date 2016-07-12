@@ -56,22 +56,22 @@ public:
   //! \param theCachedSpanV index along V axis of span to be cached
   //! \param thePoles       array of poles of the surface
   //! \param theWeights     array of weights of corresponding poles
-  Standard_EXPORT void BuildCache(const Standard_Integer&        theDegreeU, 
-                                  const Standard_Boolean&        thePeriodicU, 
-                                  const TColStd_Array1OfReal&    theFlatKnotsU, 
-                                  const Standard_Integer&        theCachedSpanU,
-                                  const Standard_Integer&        theDegreeV,
-                                  const Standard_Boolean&        thePeriodicV, 
-                                  const TColStd_Array1OfReal&    theFlatKnotsV, 
-                                  const Standard_Integer&        theCachedSpanV,
-                                  const TColgp_Array2OfPnt&      thePoles,
-                                  const TColStd_Array2OfReal*    theWeights = NULL);
+  Standard_EXPORT void BuildCache(const Standard_Integer      theDegreeU, 
+                                  const Standard_Boolean      thePeriodicU, 
+                                  const TColStd_Array1OfReal& theFlatKnotsU, 
+                                  const Standard_Integer      theCachedSpanU,
+                                  const Standard_Integer      theDegreeV,
+                                  const Standard_Boolean      thePeriodicV, 
+                                  const TColStd_Array1OfReal& theFlatKnotsV, 
+                                  const Standard_Integer      theCachedSpanV,
+                                  const TColgp_Array2OfPnt&   thePoles,
+                                  const TColStd_Array2OfReal* theWeights = NULL);
 
   //! Calculates the point on the surface for specified parameters
   //! \param[in]  theU      first parameter for calculation of the value
   //! \param[in]  theV      second parameter for calculation of the value
   //! \param[out] thePoint  the result of calculation (the point on the surface)
-  Standard_EXPORT void D0(const Standard_Real& theU, const Standard_Real& theV, gp_Pnt& thePoint) const;
+  Standard_EXPORT void D0(const Standard_Real theU, const Standard_Real theV, gp_Pnt& thePoint) const;
 
   //! Calculates the point on the surface and its first derivative
   //! \param[in]  theU         first parameter of calculation of the value
@@ -79,11 +79,11 @@ public:
   //! \param[out] thePoint     the result of calculation (the point on the surface)
   //! \param[out] theTangentU  tangent vector along U axis in the calculated point
   //! \param[out] theTangentV  tangent vector along V axis in the calculated point
-  Standard_EXPORT void D1(const Standard_Real& theU, 
-                          const Standard_Real& theV, 
-                                gp_Pnt&        thePoint, 
-                                gp_Vec&        theTangentU, 
-                                gp_Vec&        theTangentV) const;
+  Standard_EXPORT void D1(const Standard_Real theU, 
+                          const Standard_Real theV, 
+                                gp_Pnt&       thePoint, 
+                                gp_Vec&       theTangentU, 
+                                gp_Vec&       theTangentV) const;
 
   //! Calculates the point on the surface and derivatives till second order
   //! \param[in]  theU            first parameter of calculation of the value
@@ -94,14 +94,14 @@ public:
   //! \param[out] theCurvatureU   curvature vector (2nd derivative on U) along U axis
   //! \param[out] theCurvatureV   curvature vector (2nd derivative on V) along V axis
   //! \param[out] theCurvatureUV  2nd mixed derivative on U anv V
-  Standard_EXPORT void D2(const Standard_Real& theU, 
-                          const Standard_Real& theV, 
-                                gp_Pnt&        thePoint, 
-                                gp_Vec&        theTangentU, 
-                                gp_Vec&        theTangentV, 
-                                gp_Vec&        theCurvatureU, 
-                                gp_Vec&        theCurvatureV, 
-                                gp_Vec&        theCurvatureUV) const;
+  Standard_EXPORT void D2(const Standard_Real theU, 
+                          const Standard_Real theV, 
+                                gp_Pnt&       thePoint, 
+                                gp_Vec&       theTangentU, 
+                                gp_Vec&       theTangentV, 
+                                gp_Vec&       theCurvatureU, 
+                                gp_Vec&       theCurvatureV, 
+                                gp_Vec&       theCurvatureUV) const;
 
 
   DEFINE_STANDARD_RTTIEXT(BSplSLib_Cache,Standard_Transient)

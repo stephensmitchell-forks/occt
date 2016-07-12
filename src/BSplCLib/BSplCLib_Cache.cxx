@@ -33,13 +33,14 @@ static Standard_Real* ConvertArray(const Handle(TColStd_HArray2OfReal)& theHArra
 
 
 BSplCLib_Cache::BSplCLib_Cache()
+  : myIsRational(Standard_False),
+    mySpanStart(0.0),
+    mySpanLength(0.0),
+    mySpanIndex(0),
+    mySpanIndexMin(0),
+    mySpanIndexMax(0),
+    myDegree(0)
 {
-  myPolesWeights.Nullify();
-  myIsRational = Standard_False;
-  mySpanStart = 0.0;
-  mySpanLength = 0.0;
-  mySpanIndex = 0;
-  myDegree = 0;
 }
 
 
@@ -51,12 +52,12 @@ Standard_Boolean BSplCLib_Cache::IsCacheValid(Standard_Real theParameter) const
 }
 
 
-void BSplCLib_Cache::BuildCache(const Standard_Integer&        theDegree,
-                                const Standard_Boolean&        thePeriodic,
-                                const TColStd_Array1OfReal&    theFlatKnots,
-                                const Standard_Integer&        theCachedSpan,
-                                const TColgp_Array1OfPnt2d&    thePoles2d,
-                                const TColStd_Array1OfReal*    theWeights)
+void BSplCLib_Cache::BuildCache(const Standard_Integer      theDegree,
+                                const Standard_Boolean      thePeriodic,
+                                const TColStd_Array1OfReal& theFlatKnots,
+                                const Standard_Integer      theCachedSpan,
+                                const TColgp_Array1OfPnt2d& thePoles2d,
+                                const TColStd_Array1OfReal* theWeights)
 {
   // Change the size of cached data if needed
   myIsRational = (theWeights != NULL);
@@ -77,12 +78,12 @@ void BSplCLib_Cache::BuildCache(const Standard_Integer&        theDegree,
                        myPolesWeights->ChangeArray2());
 }
 
-void BSplCLib_Cache::BuildCache(const Standard_Integer&        theDegree,
-                                const Standard_Boolean&        thePeriodic,
-                                const TColStd_Array1OfReal&    theFlatKnots,
-                                const Standard_Integer&        theCachedSpan,
-                                const TColgp_Array1OfPnt&      thePoles,
-                                const TColStd_Array1OfReal*    theWeights)
+void BSplCLib_Cache::BuildCache(const Standard_Integer      theDegree,
+                                const Standard_Boolean      thePeriodic,
+                                const TColStd_Array1OfReal& theFlatKnots,
+                                const Standard_Integer      theCachedSpan,
+                                const TColgp_Array1OfPnt&   thePoles,
+                                const TColStd_Array1OfReal* theWeights)
 {
   // Change the size of cached data if needed
   myIsRational = (theWeights != NULL);
@@ -104,9 +105,9 @@ void BSplCLib_Cache::BuildCache(const Standard_Integer&        theDegree,
 }
 
 
-void BSplCLib_Cache::CalculateDerivative(const Standard_Real&    theParameter, 
-                                         const Standard_Integer& theDerivative, 
-                                               Standard_Real&    theDerivArray) const
+void BSplCLib_Cache::CalculateDerivative(const Standard_Real    theParameter, 
+                                         const Standard_Integer theDerivative, 
+                                               Standard_Real&   theDerivArray) const
 {
   Standard_Real aNewParameter = (theParameter - mySpanStart) / mySpanLength;
   Standard_Real* aPolesArray = ConvertArray(myPolesWeights);
@@ -149,7 +150,7 @@ void BSplCLib_Cache::CalculateDerivative(const Standard_Real&    theParameter,
 }
 
 
-void BSplCLib_Cache::D0(const Standard_Real& theParameter, gp_Pnt2d& thePoint) const
+void BSplCLib_Cache::D0(const Standard_Real theParameter, gp_Pnt2d& thePoint) const
 {
   Standard_Real aNewParameter = (theParameter - mySpanStart) / mySpanLength;
   Standard_Real* aPolesArray = ConvertArray(myPolesWeights);
@@ -165,7 +166,7 @@ void BSplCLib_Cache::D0(const Standard_Real& theParameter, gp_Pnt2d& thePoint) c
     thePoint.ChangeCoord().Divide(aPoint[2]);
 }
 
-void BSplCLib_Cache::D0(const Standard_Real& theParameter, gp_Pnt& thePoint) const
+void BSplCLib_Cache::D0(const Standard_Real theParameter, gp_Pnt& thePoint) const
 {
   Standard_Real aNewParameter = (theParameter - mySpanStart) / mySpanLength;
   Standard_Real* aPolesArray = ConvertArray(myPolesWeights);
@@ -182,7 +183,7 @@ void BSplCLib_Cache::D0(const Standard_Real& theParameter, gp_Pnt& thePoint) con
 }
 
 
-void BSplCLib_Cache::D1(const Standard_Real& theParameter, gp_Pnt2d& thePoint, gp_Vec2d& theTangent) const
+void BSplCLib_Cache::D1(const Standard_Real theParameter, gp_Pnt2d& thePoint, gp_Vec2d& theTangent) const
 {
   Standard_Integer aDimension = myPolesWeights->RowLength(); // number of columns
   Standard_Real aPntDeriv[8]; // result storage (point and derivative coordinates)
@@ -195,7 +196,7 @@ void BSplCLib_Cache::D1(const Standard_Real& theParameter, gp_Pnt2d& thePoint, g
   theTangent.SetCoord(aPntDeriv[aDimension], aPntDeriv[aDimension + 1]);
 }
 
-void BSplCLib_Cache::D1(const Standard_Real& theParameter, gp_Pnt& thePoint, gp_Vec& theTangent) const
+void BSplCLib_Cache::D1(const Standard_Real theParameter, gp_Pnt& thePoint, gp_Vec& theTangent) const
 {
   Standard_Integer aDimension = myPolesWeights->RowLength(); // number of columns
   Standard_Real aPntDeriv[8]; // result storage (point and derivative coordinates)
@@ -208,7 +209,7 @@ void BSplCLib_Cache::D1(const Standard_Real& theParameter, gp_Pnt& thePoint, gp_
   theTangent.SetCoord(aPntDeriv[aDimension], aPntDeriv[aDimension + 1], aPntDeriv[aDimension + 2]);
 }
 
-void BSplCLib_Cache::D2(const Standard_Real& theParameter, gp_Pnt2d& thePoint, gp_Vec2d& theTangent, gp_Vec2d& theCurvature) const
+void BSplCLib_Cache::D2(const Standard_Real theParameter, gp_Pnt2d& thePoint, gp_Vec2d& theTangent, gp_Vec2d& theCurvature) const
 {
   Standard_Integer aDimension = myPolesWeights->RowLength(); // number of columns
   Standard_Real aPntDeriv[12]; // result storage (point and derivatives coordinates)
@@ -222,7 +223,7 @@ void BSplCLib_Cache::D2(const Standard_Real& theParameter, gp_Pnt2d& thePoint, g
   theCurvature.SetCoord(aPntDeriv[aDimension<<1], aPntDeriv[(aDimension<<1) + 1]);
 }
 
-void BSplCLib_Cache::D2(const Standard_Real& theParameter, gp_Pnt& thePoint, gp_Vec& theTangent, gp_Vec& theCurvature) const
+void BSplCLib_Cache::D2(const Standard_Real theParameter, gp_Pnt& thePoint, gp_Vec& theTangent, gp_Vec& theCurvature) const
 {
   Standard_Integer aDimension = myPolesWeights->RowLength(); // number of columns
   Standard_Real aPntDeriv[12]; // result storage (point and derivatives coordinates)
@@ -237,11 +238,11 @@ void BSplCLib_Cache::D2(const Standard_Real& theParameter, gp_Pnt& thePoint, gp_
 }
 
 
-void BSplCLib_Cache::D3(const Standard_Real& theParameter, 
-                              gp_Pnt2d&      thePoint, 
-                              gp_Vec2d&      theTangent, 
-                              gp_Vec2d&      theCurvature,
-                              gp_Vec2d&      theTorsion) const
+void BSplCLib_Cache::D3(const Standard_Real theParameter, 
+                              gp_Pnt2d&     thePoint, 
+                              gp_Vec2d&     theTangent, 
+                              gp_Vec2d&     theCurvature,
+                              gp_Vec2d&     theTorsion) const
 {
   Standard_Integer aDimension = myPolesWeights->RowLength(); // number of columns
   Standard_Real aPntDeriv[16]; // result storage (point and derivatives coordinates)
@@ -258,11 +259,11 @@ void BSplCLib_Cache::D3(const Standard_Real& theParameter,
   theTorsion.SetCoord(aPntDeriv[aShift], aPntDeriv[aShift + 1]);
 }
 
-void BSplCLib_Cache::D3(const Standard_Real& theParameter, 
-                              gp_Pnt&        thePoint, 
-                              gp_Vec&        theTangent, 
-                              gp_Vec&        theCurvature,
-                              gp_Vec&        theTorsion) const
+void BSplCLib_Cache::D3(const Standard_Real theParameter, 
+                              gp_Pnt&       thePoint, 
+                              gp_Vec&       theTangent, 
+                              gp_Vec&       theCurvature,
+                              gp_Vec&       theTorsion) const
 {
   Standard_Integer aDimension = myPolesWeights->RowLength(); // number of columns
   Standard_Real aPntDeriv[16]; // result storage (point and derivatives coordinates)

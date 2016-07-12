@@ -240,7 +240,7 @@ private:
   Handle(Geom_BSplineCurve) myBSplineCurve; ///< B-spline representation to prevent castings
   mutable Handle(BSplCLib_MultiSpanCache3D) myCurveCache; ///< Cached data for B-spline or Bezier curve
   Standard_Boolean myCacheIsUsed; ///< Indicates that the data of surface should be cached for evaluations
-  mutable Handle(TColStd_HArray1OfReal) myBezierFlatKnots;
+  Standard_Integer myMaxSpansCached; ///< Maximal number of cached spans
   Handle(GeomEvaluator_Curve) myNestedEvaluator; ///< Calculates value of offset curve
 
 

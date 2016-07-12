@@ -673,22 +673,32 @@ void GeomAdaptor_Surface::CreateCache() const
     Handle(Geom_BezierSurface) aBezier = Handle(Geom_BezierSurface)::DownCast(mySurface);
     Standard_Integer aDegU = aBezier->UDegree();
     Standard_Integer aDegV = aBezier->VDegree();
-    myBezierFlatKnotsU = new TColStd_HArray1OfReal(
-        TColStd_Array1OfReal(BSplCLib::FlatBezierKnots(aDegU), 1, 2 * (aDegU + 1)));
-    myBezierFlatKnotsV = new TColStd_HArray1OfReal(
-        TColStd_Array1OfReal(BSplCLib::FlatBezierKnots(aDegV), 1, 2 * (aDegV + 1)));
-    mySurfaceCache = new BSplSLib_MultiSpanCache(
-        aDegU, aBezier->IsUPeriodic(), myBezierFlatKnotsU->Array1(),
-        aDegV, aBezier->IsVPeriodic(), myBezierFlatKnotsV->Array1(),
-        aBezier->Poles(), aBezier->Weights());
+    TColStd_Array1OfReal aFlatKnotsU(BSplCLib::FlatBezierKnots(aDegU), 1, 2 * (aDegU + 1));
+    TColStd_Array1OfReal aFlatKnotsV(BSplCLib::FlatBezierKnots(aDegV), 1, 2 * (aDegV + 1));
+    if (myMaxSpansCached > 0)
+      mySurfaceCache = new BSplSLib_MultiSpanCache(
+          aDegU, aBezier->IsUPeriodic(), aFlatKnotsU,
+          aDegV, aBezier->IsVPeriodic(), aFlatKnotsV,
+          aBezier->Poles(), aBezier->Weights(), myMaxSpansCached);
+    else
+      mySurfaceCache = new BSplSLib_MultiSpanCache(
+          aDegU, aBezier->IsUPeriodic(), aFlatKnotsU,
+          aDegV, aBezier->IsVPeriodic(), aFlatKnotsV,
+          aBezier->Poles(), aBezier->Weights());
     break;
   }
   case GeomAbs_BSplineSurface:
     // Create cache for B-spline
-    mySurfaceCache = new BSplSLib_MultiSpanCache(
-        myBSplineSurface->UDegree(), myBSplineSurface->IsUPeriodic(), myBSplineSurface->UKnotSequence(),
-        myBSplineSurface->VDegree(), myBSplineSurface->IsVPeriodic(), myBSplineSurface->VKnotSequence(),
-        myBSplineSurface->Poles(), myBSplineSurface->Weights());
+    if (myMaxSpansCached > 0)
+      mySurfaceCache = new BSplSLib_MultiSpanCache(
+          myBSplineSurface->UDegree(), myBSplineSurface->IsUPeriodic(), myBSplineSurface->UKnotSequence(),
+          myBSplineSurface->VDegree(), myBSplineSurface->IsVPeriodic(), myBSplineSurface->VKnotSequence(),
+          myBSplineSurface->Poles(), myBSplineSurface->Weights(), myMaxSpansCached);
+    else
+      mySurfaceCache = new BSplSLib_MultiSpanCache(
+          myBSplineSurface->UDegree(), myBSplineSurface->IsUPeriodic(), myBSplineSurface->UKnotSequence(),
+          myBSplineSurface->VDegree(), myBSplineSurface->IsVPeriodic(), myBSplineSurface->VKnotSequence(),
+          myBSplineSurface->Poles(), myBSplineSurface->Weights());
     break;
   default: // avoid gcc compilation warnings
     break;
@@ -720,12 +730,14 @@ void GeomAdaptor_Surface::D0(const Standard_Real U,
   {
   case GeomAbs_BezierSurface:
   case GeomAbs_BSplineSurface:
-    if (myCacheIsUsed && mySurfaceCache.IsNull())
-      CreateCache();
-    if (mySurfaceCache.IsNull())
-      mySurface->D0(U, V, P);
-    else
+    if (myCacheIsUsed)
+    {
+      if (mySurfaceCache.IsNull())
+        CreateCache();
       mySurfaceCache->D0(U, V, P);
+    }
+    else
+      mySurface->D0(U, V, P);
     break;
 
   case GeomAbs_OffsetSurface:
@@ -772,12 +784,14 @@ void GeomAdaptor_Surface::D1(const Standard_Real U,
       myBSplineSurface->LocalD1(u, v, Ideb, Ifin, IVdeb, IVfin, P, D1U, D1V);
     else
     {
-      if (myCacheIsUsed && mySurfaceCache.IsNull())
-        CreateCache();
-      if (mySurfaceCache.IsNull())
-        mySurface->D1(U, V, P, D1U, D1V);
-      else
+      if (myCacheIsUsed)
+      {
+        if (mySurfaceCache.IsNull())
+          CreateCache();
         mySurfaceCache->D1(u, v, P, D1U, D1V);
+      }
+      else
+        mySurface->D1(U, V, P, D1U, D1V);
     }
     break;
     }
@@ -828,12 +842,14 @@ void GeomAdaptor_Surface::D2(const Standard_Real U,
       myBSplineSurface->LocalD2(u, v, Ideb, Ifin, IVdeb, IVfin, P, D1U, D1V, D2U, D2V, D2UV);
     else
     {
-      if (myCacheIsUsed && mySurfaceCache.IsNull())
-        CreateCache();
-      if (mySurfaceCache.IsNull())
-        mySurface->D2(U, V, P, D1U, D1V, D2U, D2V, D2UV);
-      else
+      if (myCacheIsUsed)
+      {
+        if (mySurfaceCache.IsNull())
+          CreateCache();
         mySurfaceCache->D2(u, v, P, D1U, D1V, D2U, D2V, D2UV);
+      }
+      else
+        mySurface->D2(U, V, P, D1U, D1V, D2U, D2V, D2UV);
     }
     break;
   }
@@ -1478,8 +1494,7 @@ void GeomAdaptor_Surface::SetMaxSpansCached(const Standard_Integer theMaxSpans)
     return;
   }
 
-  if (mySurfaceCache.IsNull())
-    CreateCache();
+  myMaxSpansCached = theMaxSpans;
   if (!mySurfaceCache.IsNull())
-    mySurfaceCache->SetMaxSpansCached(theMaxSpans);
+    mySurfaceCache->SetMaxSpansCached(myMaxSpansCached);
 }

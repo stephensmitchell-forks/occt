@@ -28,6 +28,7 @@
 //                   in TangExtendToConstraint; Continuity can be equal to 0
 
 #include <BSplCLib.hxx>
+#include <ElCLib.hxx>
 #include <gp_Pnt.hxx>
 #include <gp_Pnt2d.hxx>
 #include <gp_Vec.hxx>
@@ -257,8 +258,8 @@ void BSplCLib::LocateParameter
   }
   Standard_Integer Last1 = Last - 1;
   NewU = U;
-  if (IsPeriodic)
-    PeriodicNormalization(UFirst, ULast, NewU);
+  if (IsPeriodic && (NewU < UFirst || NewU > ULast))
+    NewU = ElCLib::InPeriod(NewU, UFirst, ULast);
   
   BSplCLib::Hunt (Knots, NewU, KnotIndex);
   
@@ -334,29 +335,6 @@ void BSplCLib::LocateParameter
 			      KnotIndex, NewU, Knots(first), Knots(last));
   else
     NewU = U;
-}
-
-
-//=======================================================================
-//function : PeriodicNormalization
-//purpose  : Adjust the parameter of periodical B-spline curves to be in the period
-//=======================================================================
-
-void BSplCLib::PeriodicNormalization(const Standard_Real& theMin,
-                                     const Standard_Real& theMax,
-                                           Standard_Real& theParameter)
-{
-  Standard_Real aPeriod = theMax - theMin;
-  if (theParameter < theMin)
-  {
-    Standard_Real aScale = IntegerPart((theMin - theParameter) / aPeriod);
-    theParameter += aPeriod * (aScale + 1.0);
-  }
-  if (theParameter > theMax)
-  {
-    Standard_Real aScale = IntegerPart((theParameter - theMax) / aPeriod);
-    theParameter -= aPeriod * (aScale + 1.0);
-  }
 }
 
 //=======================================================================

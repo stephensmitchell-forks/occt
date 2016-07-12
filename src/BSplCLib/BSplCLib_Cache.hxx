@@ -52,12 +52,12 @@ public:
   //! \param theCachedSpan index of span to be cached
   //! \param thePoles2d    array of poles of 2D curve
   //! \param theWeights    array of weights of corresponding poles
-  Standard_EXPORT void BuildCache(const Standard_Integer&        theDegree,
-                                  const Standard_Boolean&        thePeriodic,
-                                  const TColStd_Array1OfReal&    theFlatKnots,
-                                  const Standard_Integer&        theCachedSpan,
-                                  const TColgp_Array1OfPnt2d&    thePoles2d,
-                                  const TColStd_Array1OfReal*    theWeights = NULL);
+  Standard_EXPORT void BuildCache(const Standard_Integer      theDegree,
+                                  const Standard_Boolean      thePeriodic,
+                                  const TColStd_Array1OfReal& theFlatKnots,
+                                  const Standard_Integer      theCachedSpan,
+                                  const TColgp_Array1OfPnt2d& thePoles2d,
+                                  const TColStd_Array1OfReal* theWeights = NULL);
   //! Recomputes the cache data for 3D curves. Does not verify validity of the cache
   //! \param theDegree     degree of the curve
   //! \param thePeriodic   identify the curve is periodic
@@ -65,39 +65,39 @@ public:
   //! \param theCachedSpan index of span to be cached
   //! \param thePoles      array of poles of 3D curve
   //! \param theWeights    array of weights of corresponding poles
-  Standard_EXPORT void BuildCache(const Standard_Integer&        theDegree,
-                                  const Standard_Boolean&        thePeriodic,
-                                  const TColStd_Array1OfReal&    theFlatKnots,
-                                  const Standard_Integer&        theCachedSpan,
-                                  const TColgp_Array1OfPnt&      thePoles,
-                                  const TColStd_Array1OfReal*    theWeights = NULL);
+  Standard_EXPORT void BuildCache(const Standard_Integer      theDegree,
+                                  const Standard_Boolean      thePeriodic,
+                                  const TColStd_Array1OfReal& theFlatKnots,
+                                  const Standard_Integer      theCachedSpan,
+                                  const TColgp_Array1OfPnt&   thePoles,
+                                  const TColStd_Array1OfReal* theWeights = NULL);
 
   //! Calculates the point on the curve in the specified parameter
   //! \param[in]  theParameter parameter of calculation of the value
   //! \param[out] thePoint     the result of calculation (the point on the curve)
-  Standard_EXPORT void D0(const Standard_Real& theParameter, gp_Pnt2d& thePoint) const;
-  Standard_EXPORT void D0(const Standard_Real& theParameter, gp_Pnt&   thePoint) const;
+  Standard_EXPORT void D0(const Standard_Real theParameter, gp_Pnt2d& thePoint) const;
+  Standard_EXPORT void D0(const Standard_Real theParameter, gp_Pnt&   thePoint) const;
 
   //! Calculates the point on the curve and its first derivative in the specified parameter
   //! \param[in]  theParameter parameter of calculation of the value
   //! \param[out] thePoint     the result of calculation (the point on the curve)
   //! \param[out] theTangent   tangent vector (first derivatives) for the curve in the calculated point
-  Standard_EXPORT void D1(const Standard_Real& theParameter, gp_Pnt2d& thePoint, gp_Vec2d& theTangent) const;
-  Standard_EXPORT void D1(const Standard_Real& theParameter, gp_Pnt&   thePoint, gp_Vec&   theTangent) const;
+  Standard_EXPORT void D1(const Standard_Real theParameter, gp_Pnt2d& thePoint, gp_Vec2d& theTangent) const;
+  Standard_EXPORT void D1(const Standard_Real theParameter, gp_Pnt&   thePoint, gp_Vec&   theTangent) const;
 
   //! Calculates the point on the curve and two derivatives in the specified parameter
   //! \param[in]  theParameter parameter of calculation of the value
   //! \param[out] thePoint     the result of calculation (the point on the curve)
   //! \param[out] theTangent   tangent vector (1st derivatives) for the curve in the calculated point
   //! \param[out] theCurvature curvature vector (2nd derivatives) for the curve in the calculated point
-  Standard_EXPORT void D2(const Standard_Real& theParameter, 
-                                gp_Pnt2d&      thePoint, 
-                                gp_Vec2d&      theTangent, 
-                                gp_Vec2d&      theCurvature) const;
-  Standard_EXPORT void D2(const Standard_Real& theParameter, 
-                                gp_Pnt&        thePoint, 
-                                gp_Vec&        theTangent, 
-                                gp_Vec&        theCurvature) const;
+  Standard_EXPORT void D2(const Standard_Real theParameter, 
+                                gp_Pnt2d&     thePoint, 
+                                gp_Vec2d&     theTangent, 
+                                gp_Vec2d&     theCurvature) const;
+  Standard_EXPORT void D2(const Standard_Real theParameter, 
+                                gp_Pnt&       thePoint, 
+                                gp_Vec&       theTangent, 
+                                gp_Vec&       theCurvature) const;
 
   //! Calculates the point on the curve and three derivatives in the specified parameter
   //! \param[in]  theParameter parameter of calculation of the value
@@ -105,16 +105,16 @@ public:
   //! \param[out] theTangent   tangent vector (1st derivatives) for the curve in the calculated point
   //! \param[out] theCurvature curvature vector (2nd derivatives) for the curve in the calculated point
   //! \param[out] theTorsion   second curvature vector (3rd derivatives) for the curve in the calculated point
-  Standard_EXPORT void D3(const Standard_Real& theParameter, 
-                                gp_Pnt2d&      thePoint, 
-                                gp_Vec2d&      theTangent, 
-                                gp_Vec2d&      theCurvature,
-                                gp_Vec2d&      theTorsion) const;
-  Standard_EXPORT void D3(const Standard_Real& theParameter, 
-                                gp_Pnt&        thePoint, 
-                                gp_Vec&        theTangent, 
-                                gp_Vec&        theCurvature,
-                                gp_Vec&        theTorsion) const;
+  Standard_EXPORT void D3(const Standard_Real theParameter, 
+                                gp_Pnt2d&     thePoint, 
+                                gp_Vec2d&     theTangent, 
+                                gp_Vec2d&     theCurvature,
+                                gp_Vec2d&     theTorsion) const;
+  Standard_EXPORT void D3(const Standard_Real theParameter, 
+                                gp_Pnt&       thePoint, 
+                                gp_Vec&       theTangent, 
+                                gp_Vec&       theCurvature,
+                                gp_Vec&       theTorsion) const;
 
 
   DEFINE_STANDARD_RTTIEXT(BSplCLib_Cache,Standard_Transient)
@@ -125,9 +125,9 @@ protected:
   //! \param[in]  theDerivative maximal derivative to be calculated (computes all derivatives lesser than specified)
   //! \param[out] theDerivArray result array of derivatives (with size (theDerivative+1)*(PntDim+1), 
   //!                           where PntDim = 2 or 3 is a dimension of the curve)
-  void CalculateDerivative(const Standard_Real&    theParameter, 
-                           const Standard_Integer& theDerivative, 
-                                 Standard_Real&    theDerivArray) const;
+  void CalculateDerivative(const Standard_Real    theParameter, 
+                           const Standard_Integer theDerivative, 
+                                 Standard_Real&   theDerivArray) const;
 
 private:
   Handle(TColStd_HArray2OfReal) myPolesWeights; ///< array of poles and weights of calculated cache

@@ -14,13 +14,14 @@
 #include <BSplSLib_MultiSpanCache.hxx>
 
 #include <BSplCLib.hxx>
+#include <ElCLib.hxx>
 #include <Precision.hxx>
 
-BSplSLib_MultiSpanCache::BSplSLib_MultiSpanCache(const Standard_Integer&     theDegreeU,
-                                                 const Standard_Boolean&     thePeriodicU,
+BSplSLib_MultiSpanCache::BSplSLib_MultiSpanCache(const Standard_Integer      theDegreeU,
+                                                 const Standard_Boolean      thePeriodicU,
                                                  const TColStd_Array1OfReal& theFlatKnotsU,
-                                                 const Standard_Integer&     theDegreeV,
-                                                 const Standard_Boolean&     thePeriodicV,
+                                                 const Standard_Integer      theDegreeV,
+                                                 const Standard_Boolean      thePeriodicV,
                                                  const TColStd_Array1OfReal& theFlatKnotsV,
                                                  const TColgp_Array2OfPnt&   thePoles,
                                                  const TColStd_Array2OfReal* theWeights,
@@ -75,9 +76,9 @@ void BSplSLib_MultiSpanCache::Clear()
   myLastV.mySpan = -1;
 }
 
-void BSplSLib_MultiSpanCache::D0(const Standard_Real& theU,
-                                 const Standard_Real& theV,
-                                       gp_Pnt&        thePoint)
+void BSplSLib_MultiSpanCache::D0(const Standard_Real theU,
+                                 const Standard_Real theV,
+                                       gp_Pnt&       thePoint)
 {
   Standard_Real aU = theU;
   Standard_Real aV = theV;
@@ -85,11 +86,11 @@ void BSplSLib_MultiSpanCache::D0(const Standard_Real& theU,
   aCache->D0(aU, aV, thePoint);
 }
 
-void BSplSLib_MultiSpanCache::D1(const Standard_Real& theU,
-                                 const Standard_Real& theV, 
-                                       gp_Pnt&        thePoint, 
-                                       gp_Vec&        theTangentU, 
-                                       gp_Vec&        theTangentV)
+void BSplSLib_MultiSpanCache::D1(const Standard_Real theU,
+                                 const Standard_Real theV, 
+                                       gp_Pnt&       thePoint, 
+                                       gp_Vec&       theTangentU, 
+                                       gp_Vec&       theTangentV)
 {
   Standard_Real aU = theU;
   Standard_Real aV = theV;
@@ -97,14 +98,14 @@ void BSplSLib_MultiSpanCache::D1(const Standard_Real& theU,
   aCache->D1(aU, aV, thePoint, theTangentU, theTangentV);
 }
 
-void BSplSLib_MultiSpanCache::D2(const Standard_Real& theU,
-                                 const Standard_Real& theV, 
-                                       gp_Pnt&        thePoint, 
-                                       gp_Vec&        theTangentU, 
-                                       gp_Vec&        theTangentV, 
-                                       gp_Vec&        theCurvatureU, 
-                                       gp_Vec&        theCurvatureV, 
-                                       gp_Vec&        theCurvatureUV)
+void BSplSLib_MultiSpanCache::D2(const Standard_Real theU,
+                                 const Standard_Real theV, 
+                                       gp_Pnt&       thePoint, 
+                                       gp_Vec&       theTangentU, 
+                                       gp_Vec&       theTangentV, 
+                                       gp_Vec&       theCurvatureU, 
+                                       gp_Vec&       theCurvatureV, 
+                                       gp_Vec&       theCurvatureUV)
 {
   Standard_Real aU = theU;
   Standard_Real aV = theV;
@@ -119,10 +120,10 @@ Standard_Integer BSplSLib_MultiSpanCache::SpanIndex(Standard_Real&    theU,
                                                     Standard_Integer& theSpanIndexV) const
 {
   // Normalize the parameters for periodical B-splines
-  if (myPeriodicU)
-    BSplCLib::PeriodicNormalization(myFirstKnotU, myLastKnotU, theU);
-  if (myPeriodicV)
-    BSplCLib::PeriodicNormalization(myFirstKnotV, myLastKnotV, theV);
+  if (myPeriodicU && (theU > myLastKnotU || theU < myFirstKnotU))
+    theU = ElCLib::InPeriod(theU, myFirstKnotU, myLastKnotU);
+  if (myPeriodicV && (theV > myLastKnotV || theV < myFirstKnotV))
+    theV = ElCLib::InPeriod(theV, myFirstKnotV, myLastKnotV);
 
   // Do not want to use LocateParameter due to lack of performance.
   // Just check the last used cache is valid for the given parameters.

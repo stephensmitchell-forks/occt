@@ -28,7 +28,9 @@
 inline GeomAdaptor_Curve::GeomAdaptor_Curve()
  : myTypeCurve(GeomAbs_OtherCurve),
    myFirst(0.),
-   myLast(0.)
+   myLast(0.),
+   myCacheIsUsed(Standard_False),
+   myMaxSpansCached(0)
 {
 }
 
@@ -38,6 +40,7 @@ inline GeomAdaptor_Curve::GeomAdaptor_Curve()
 //=======================================================================
 
 inline GeomAdaptor_Curve::GeomAdaptor_Curve(const Handle(Geom_Curve)& C)
+  : myMaxSpansCached(0)
 {
   Load(C);
 }
@@ -50,6 +53,7 @@ inline GeomAdaptor_Curve::GeomAdaptor_Curve(const Handle(Geom_Curve)& C)
 inline GeomAdaptor_Curve::GeomAdaptor_Curve(const Handle(Geom_Curve)& C,
                                             const Standard_Real UFirst,
                                             const Standard_Real ULast)
+  : myMaxSpansCached(0)
 {
   Load(C,UFirst,ULast);
 }

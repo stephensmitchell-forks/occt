@@ -76,7 +76,6 @@ protected:
 
   //! Lift last used cache onto the top
   //! \param theSpanIndex  [in]  index of latest used span
-  //! \param theIndexInMap [in]  index of a cached span in the map (should be explicitly calculated, if 0)
   //! \return Standard_True, if the span is already cached
   Standard_Boolean SetLatestCache(const Standard_Integer theSpanIndex);
 
@@ -85,7 +84,7 @@ protected:
   { return myLastCache.myCache; }
 
   //! Return index of last cached span
-  const Standard_Integer& LastSpan() const
+  Standard_Integer LastSpan() const
   { return myLastCache.mySpan; }
 
 private:

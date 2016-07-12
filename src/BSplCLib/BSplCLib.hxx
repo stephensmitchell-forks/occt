@@ -190,14 +190,6 @@ public:
   Standard_EXPORT static void LocateParameter (const Standard_Integer Degree, const TColStd_Array1OfReal& Knots, const Standard_Real U, const Standard_Boolean IsPeriodic, const Standard_Integer FromK1, const Standard_Integer ToK2, Standard_Integer& KnotIndex, Standard_Real& NewU);
   
   Standard_EXPORT static void LocateParameter (const Standard_Integer Degree, const TColStd_Array1OfReal& Knots, const TColStd_Array1OfInteger* Mults, const Standard_Real U, const Standard_Boolean Periodic, Standard_Integer& Index, Standard_Real& NewU);
-
-  //! Adjust the parameter of periodical B-spline curves to be in the period
-  //! \param theMin       [in]     start value of period
-  //! \param theMax       [in]     end value of period
-  //! \param theParameter [in,out] the value to be normalized into the period
-  Standard_EXPORT static void PeriodicNormalization(const Standard_Real& theMin,
-                                                    const Standard_Real& theMax,
-                                                          Standard_Real& theParameter);
   
   //! Finds the greatest multiplicity in a set of knots
   //! between  K1  and K2.   Mults  is  the  multiplicity

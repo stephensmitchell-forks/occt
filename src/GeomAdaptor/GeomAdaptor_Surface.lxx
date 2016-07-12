@@ -30,7 +30,9 @@ inline GeomAdaptor_Surface::GeomAdaptor_Surface()
    myVLast (0.),
    myTolU(0.), 
    myTolV(0.),
-   mySurfaceType(GeomAbs_OtherSurface)
+   mySurfaceType(GeomAbs_OtherSurface),
+   myCacheIsUsed(Standard_False),
+   myMaxSpansCached(0)
 {
 } 
 
@@ -40,7 +42,8 @@ inline GeomAdaptor_Surface::GeomAdaptor_Surface()
 //=======================================================================
 
 inline GeomAdaptor_Surface::GeomAdaptor_Surface(const Handle(Geom_Surface)& S)
- : myTolU(0.), myTolV(0.)
+ : myTolU(0.), myTolV(0.),
+  myMaxSpansCached(0)
 {
   Load(S);
 }
@@ -57,6 +60,7 @@ inline GeomAdaptor_Surface::GeomAdaptor_Surface(const Handle(Geom_Surface)& S,
                                                 const Standard_Real VLast,
                                                 const Standard_Real TolU,
                                                 const Standard_Real TolV)
+  : myMaxSpansCached(0)
 {
   Load(S,UFirst,ULast,VFirst,VLast,TolU,TolV);
 }

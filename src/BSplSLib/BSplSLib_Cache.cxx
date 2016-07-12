@@ -33,14 +33,15 @@ static Standard_Real* ConvertArray(const Handle(TColStd_HArray2OfReal)& theHArra
 
 
 BSplSLib_Cache::BSplSLib_Cache()
+  : myIsRational(Standard_False)
 {
-  myPolesWeights.Nullify();
-  myIsRational = Standard_False;
-  mySpanStart[0]  = mySpanStart[1]  = 0.0;
+  mySpanStart[0] = mySpanStart[1] = 0.0;
   mySpanLength[0] = mySpanLength[1] = 0.0;
   mySpanLengthRec[0] = mySpanLengthRec[1] = 0.0;
   mySpanIndex[0] = mySpanIndex[1] = 0;
-  myDegree[0]     = myDegree[1]     = 0;
+  mySpanIndexMin[0] = mySpanIndexMin[1] = 0;
+  mySpanIndexMax[0] = mySpanIndexMax[1] = 0;
+  myDegree[0] = myDegree[1] = 0;
 }
 
 
@@ -56,16 +57,16 @@ Standard_Boolean BSplSLib_Cache::IsCacheValid(Standard_Real theParameterU,
 }
 
 
-void BSplSLib_Cache::BuildCache(const Standard_Integer&        theDegreeU, 
-                                const Standard_Boolean&        thePeriodicU, 
-                                const TColStd_Array1OfReal&    theFlatKnotsU, 
-                                const Standard_Integer&        theCachedSpanU,
-                                const Standard_Integer&        theDegreeV,
-                                const Standard_Boolean&        thePeriodicV, 
-                                const TColStd_Array1OfReal&    theFlatKnotsV, 
-                                const Standard_Integer&        theCachedSpanV,
-                                const TColgp_Array2OfPnt&      thePoles,
-                                const TColStd_Array2OfReal*    theWeights)
+void BSplSLib_Cache::BuildCache(const Standard_Integer      theDegreeU, 
+                                const Standard_Boolean      thePeriodicU, 
+                                const TColStd_Array1OfReal& theFlatKnotsU, 
+                                const Standard_Integer      theCachedSpanU,
+                                const Standard_Integer      theDegreeV,
+                                const Standard_Boolean      thePeriodicV, 
+                                const TColStd_Array1OfReal& theFlatKnotsV, 
+                                const Standard_Integer      theCachedSpanV,
+                                const TColgp_Array2OfPnt&   thePoles,
+                                const TColStd_Array2OfReal* theWeights)
 {
   Standard_Integer aMinDegree = Min(theDegreeU, theDegreeV);
   Standard_Integer aMaxDegree = Max(theDegreeU, theDegreeV);
@@ -105,9 +106,9 @@ void BSplSLib_Cache::BuildCache(const Standard_Integer&        theDegreeU,
 }
 
 
-void BSplSLib_Cache::D0(const Standard_Real& theU, 
-                        const Standard_Real& theV, 
-                              gp_Pnt&        thePoint) const
+void BSplSLib_Cache::D0(const Standard_Real theU, 
+                        const Standard_Real theV, 
+                              gp_Pnt&       thePoint) const
 {
   Standard_Real aNewU = (theU - mySpanStart[0]) / mySpanLength[0];
   Standard_Real aNewV = (theV - mySpanStart[1]) / mySpanLength[1];
@@ -149,11 +150,11 @@ void BSplSLib_Cache::D0(const Standard_Real& theU,
 }
 
 
-void BSplSLib_Cache::D1(const Standard_Real& theU, 
-                        const Standard_Real& theV, 
-                              gp_Pnt&        thePoint, 
-                              gp_Vec&        theTangentU, 
-                              gp_Vec&        theTangentV) const
+void BSplSLib_Cache::D1(const Standard_Real theU, 
+                        const Standard_Real theV, 
+                              gp_Pnt&       thePoint, 
+                              gp_Vec&       theTangentU, 
+                              gp_Vec&       theTangentV) const
 {
   Standard_Real aNewU = (theU - mySpanStart[0]) * mySpanLengthRec[0];
   Standard_Real aNewV = (theV - mySpanStart[1]) * mySpanLengthRec[1];
@@ -220,14 +221,14 @@ void BSplSLib_Cache::D1(const Standard_Real& theU,
 }
 
 
-void BSplSLib_Cache::D2(const Standard_Real& theU, 
-                        const Standard_Real& theV, 
-                              gp_Pnt&        thePoint, 
-                              gp_Vec&        theTangentU, 
-                              gp_Vec&        theTangentV, 
-                              gp_Vec&        theCurvatureU, 
-                              gp_Vec&        theCurvatureV, 
-                              gp_Vec&        theCurvatureUV) const
+void BSplSLib_Cache::D2(const Standard_Real theU, 
+                        const Standard_Real theV, 
+                              gp_Pnt&       thePoint, 
+                              gp_Vec&       theTangentU, 
+                              gp_Vec&       theTangentV, 
+                              gp_Vec&       theCurvatureU, 
+                              gp_Vec&       theCurvatureV, 
+                              gp_Vec&       theCurvatureUV) const
 {
   Standard_Real aNewU = (theU - mySpanStart[0]) * mySpanLengthRec[0];
   Standard_Real aNewV = (theV - mySpanStart[1]) * mySpanLengthRec[1];

@@ -61,7 +61,7 @@ foreach s $surfaces {
     lappend val_times $cpu
   }
 
-  puts "Elapsed times for surface $s:"
+  puts "CPU times for surface $s:"
   puts "$val_times"
   set first_val [lindex $val_times 0]
   set is_ok true

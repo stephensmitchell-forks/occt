@@ -12,11 +12,12 @@
 // commercial license or contractual agreement.
 
 #include <BSplCLib.hxx>
+#include <ElCLib.hxx>
 
 template<class POINT_TYPE, class VEC_TYPE>
 BSplCLib_MultiSpanCacheBase<POINT_TYPE, VEC_TYPE>::BSplCLib_MultiSpanCacheBase(
-  const Standard_Integer&     theDegree,
-  const Standard_Boolean&     thePeriodic,
+  const Standard_Integer      theDegree,
+  const Standard_Boolean      thePeriodic,
   const TColStd_Array1OfReal& theFlatKnots,
   const Array1OfPOINT&        thePoles,
   const TColStd_Array1OfReal* theWeights,
@@ -43,8 +44,8 @@ BSplCLib_MultiSpanCacheBase<POINT_TYPE, VEC_TYPE>::BSplCLib_MultiSpanCacheBase(
 }
 
 template<class POINT_TYPE, class VEC_TYPE>
-void BSplCLib_MultiSpanCacheBase<POINT_TYPE, VEC_TYPE>::D0(const Standard_Real& theParameter,
-                                                                 POINT_TYPE&    thePoint)
+void BSplCLib_MultiSpanCacheBase<POINT_TYPE, VEC_TYPE>::D0(const Standard_Real theParameter,
+                                                                 POINT_TYPE&   thePoint)
 {
   Standard_Real aPar = theParameter;
   Handle(BSplCLib_Cache) aCache = FindCache(aPar);
@@ -52,9 +53,9 @@ void BSplCLib_MultiSpanCacheBase<POINT_TYPE, VEC_TYPE>::D0(const Standard_Real& 
 }
 
 template<class POINT_TYPE, class VEC_TYPE>
-void BSplCLib_MultiSpanCacheBase<POINT_TYPE, VEC_TYPE>::D1(const Standard_Real& theParameter,
-                                                                 POINT_TYPE&    thePoint,
-                                                                 VEC_TYPE&      theTangent)
+void BSplCLib_MultiSpanCacheBase<POINT_TYPE, VEC_TYPE>::D1(const Standard_Real theParameter,
+                                                                 POINT_TYPE&   thePoint,
+                                                                 VEC_TYPE&     theTangent)
 {
   Standard_Real aPar = theParameter;
   Handle(BSplCLib_Cache) aCache = FindCache(aPar);
@@ -62,10 +63,10 @@ void BSplCLib_MultiSpanCacheBase<POINT_TYPE, VEC_TYPE>::D1(const Standard_Real& 
 }
 
 template<class POINT_TYPE, class VEC_TYPE>
-void BSplCLib_MultiSpanCacheBase<POINT_TYPE, VEC_TYPE>::D2(const Standard_Real& theParameter,
-                                                                 POINT_TYPE&    thePoint,
-                                                                 VEC_TYPE&      theTangent,
-                                                                 VEC_TYPE&      theCurvature)
+void BSplCLib_MultiSpanCacheBase<POINT_TYPE, VEC_TYPE>::D2(const Standard_Real theParameter,
+                                                                 POINT_TYPE&   thePoint,
+                                                                 VEC_TYPE&     theTangent,
+                                                                 VEC_TYPE&     theCurvature)
 {
   Standard_Real aPar = theParameter;
   Handle(BSplCLib_Cache) aCache = FindCache(aPar);
@@ -73,11 +74,11 @@ void BSplCLib_MultiSpanCacheBase<POINT_TYPE, VEC_TYPE>::D2(const Standard_Real& 
 }
 
 template<class POINT_TYPE, class VEC_TYPE>
-void BSplCLib_MultiSpanCacheBase<POINT_TYPE, VEC_TYPE>::D3(const Standard_Real& theParameter,
-                                                                 POINT_TYPE&    thePoint,
-                                                                 VEC_TYPE&      theTangent,
-                                                                 VEC_TYPE&      theCurvature,
-                                                                 VEC_TYPE&      theTorsion)
+void BSplCLib_MultiSpanCacheBase<POINT_TYPE, VEC_TYPE>::D3(const Standard_Real theParameter,
+                                                                 POINT_TYPE&   thePoint,
+                                                                 VEC_TYPE&     theTangent,
+                                                                 VEC_TYPE&     theCurvature,
+                                                                 VEC_TYPE&     theTorsion)
 {
   Standard_Real aPar = theParameter;
   Handle(BSplCLib_Cache) aCache = FindCache(aPar);
@@ -88,8 +89,8 @@ template<class POINT_TYPE, class VEC_TYPE>
 Standard_Integer BSplCLib_MultiSpanCacheBase<POINT_TYPE, VEC_TYPE>::SpanIndex(Standard_Real& theParameter) const
 {
   // Normalize the parameters for periodical B-splines
-  if (myPeriodic)
-    BSplCLib::PeriodicNormalization(myFirstKnot, myLastKnot, theParameter);
+  if (myPeriodic && (theParameter > myLastKnot || theParameter < myFirstKnot))
+    theParameter = ElCLib::InPeriod(theParameter, myFirstKnot, myLastKnot);
 
   // Do not want to use LocateParameter due to lack of performance.
   // Just check the last used cache is valid for the given parameter.
