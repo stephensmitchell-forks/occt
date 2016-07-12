@@ -15,9 +15,11 @@
 
 template<class CACHE_TYPE>
 BSplCLib_MultiSpanCacheStorage<CACHE_TYPE>::BSplCLib_MultiSpanCacheStorage(const Standard_Integer theMaxSpans)
-  : myMaxSpansCount(MAX_SPANS_COUNT),
+  : myMaxSpansCount(theMaxSpans),
     mySingleSpan(Standard_False),
-    myCaches(theMaxSpans)
+    myCaches(theMaxSpans),
+    myCachedSpans(theMaxSpans),
+    myNbSpans(0)
 {
   myLastCache.mySpan = -1;
 }
@@ -28,16 +30,19 @@ void BSplCLib_MultiSpanCacheStorage<CACHE_TYPE>::SetMaxSpansCached(const Standar
   // number of cached spans should not be lesser than 1
   Standard_NegativeValue_Raise_if(theMaxSpans < 1, "Number of cached spans should be greater than 0");
 
-  for (Standard_Size i = myCaches.Size(); i > theMaxSpans; --i)
-    RemoveFirstUsedCache();
+  if (theMaxSpans == myMaxSpansCount)
+    return;
+
+  Clear();
   myMaxSpansCount = theMaxSpans;
+  myCaches.Allocate(myMaxSpansCount);
+  myCachedSpans.Allocate(myMaxSpansCount);
 }
 
 template<class CACHE_TYPE>
 void BSplCLib_MultiSpanCacheStorage<CACHE_TYPE>::Clear()
 {
-  myCaches.Clear();
-  myCachedSpans.Clear();
+  myNbSpans = 0;
   myLastCache.mySpan = -1;
   myLastCache.myCache.Nullify();
 }
@@ -60,12 +65,21 @@ BSplCLib_MultiSpanCacheStorage<CACHE_TYPE>::CreateNewCache(const Standard_Intege
   }
   else
   {
-    if (myCaches.Size() >= myMaxSpansCount)
-      theCache = RemoveFirstUsedCache(); // will rebuild existent cache to avoid memory reallocation
+    Standard_Integer aSpanIndex = myNbSpans;
+    Standard_Integer aCacheIndex = myNbSpans;
+    if (myNbSpans >= myMaxSpansCount)
+    { // will rebuild existent cache to avoid memory reallocation
+      aSpanIndex -= 1; // to identify first cached span
+      aCacheIndex = myCachedSpans[aSpanIndex].myIndex;
+      theCache = myCaches[aCacheIndex];
+    }
     else
-      theCache = new CACHE_TYPE; // create new cache
-    myCaches.SetValue(theSpanIndex, theCache);
-    myCachedSpans.Append(theSpanIndex);
+    { // create new cache
+      theCache = new CACHE_TYPE;
+      myCaches[myNbSpans++] = theCache;
+    }
+    ShiftCachedSpans(aSpanIndex);
+    myCachedSpans[0] = IndexedSpan(theSpanIndex, aCacheIndex);
     isNeedRebuild = Standard_True;
   }
 
@@ -77,33 +91,30 @@ BSplCLib_MultiSpanCacheStorage<CACHE_TYPE>::CreateNewCache(const Standard_Intege
 template<class CACHE_TYPE> Standard_Boolean
 BSplCLib_MultiSpanCacheStorage<CACHE_TYPE>::SetLatestCache(const Standard_Integer theSpanIndex)
 {
-  if (myMaxSpansCount > 1 && myCaches.HasValue(theSpanIndex))
-  {
-    // search given index and push it to back of the list
-    SpanArray::Iterator anIt(myCachedSpans);
-    for (; anIt.More(); anIt.Next())
-      if (anIt.Value() == theSpanIndex)
-      {
-        myCachedSpans.Remove(anIt);
-        myCachedSpans.Append(theSpanIndex);
-        break;
-      }
+  if (myMaxSpansCount <= 1)
+    return Standard_False;
 
-    myLastCache.mySpan = theSpanIndex;
-    myLastCache.myCache = myCaches.Value(theSpanIndex);
-    return Standard_True;
-  }
-  return Standard_False;
+  // search given index and push it to back of the list
+  Standard_Integer anIndex = 0;
+  for (; anIndex < myNbSpans; ++anIndex)
+    if (myCachedSpans[anIndex].mySpan == theSpanIndex)
+    {
+      IndexedSpan anIndices = myCachedSpans[anIndex];
+      ShiftCachedSpans(anIndex);
+      myCachedSpans[0] = anIndices;
+      break;
+    }
+  if (anIndex == myNbSpans)
+    return Standard_False;
+
+  myLastCache.mySpan = theSpanIndex;
+  myLastCache.myCache = myCaches[myCachedSpans[0].myIndex];
+  return Standard_True;
 }
 
 template<class CACHE_TYPE>
-Handle(CACHE_TYPE) BSplCLib_MultiSpanCacheStorage<CACHE_TYPE>::RemoveFirstUsedCache()
+void BSplCLib_MultiSpanCacheStorage<CACHE_TYPE>::ShiftCachedSpans(Standard_Integer theNbElems)
 {
-  Standard_Integer aSpanIndex = myCachedSpans.First();
-  Handle(CACHE_TYPE) aRemovedCache = myCaches.Value(aSpanIndex);
-
-  myCaches.UnsetValue(aSpanIndex);
-  myCachedSpans.RemoveFirst();
-
-  return aRemovedCache;
+  for (Standard_Integer i = theNbElems; i > 0; --i)
+    myCachedSpans[i] = myCachedSpans[i - 1];
 }

@@ -15,9 +15,7 @@
 #define _BSplCLib_MultiSpanCacheStorage_Headerfile
 
 #include <BSplCLib_Cache.hxx>
-#include <NCollection_Array1.hxx>
-#include <NCollection_List.hxx>
-#include <NCollection_SparseArray.hxx>
+#include <NCollection_LocalArray.hxx>
 
 //! \brief Base container for list of caches for Bezier and B-spline curves or surfaces.
 //!
@@ -33,11 +31,22 @@
 template<class CACHE_TYPE>
 class BSplCLib_MultiSpanCacheStorage
 {
-  typedef NCollection_SparseArray<Handle(CACHE_TYPE)> CacheArray;
-  typedef NCollection_List<Standard_Integer>          SpanArray;
-
 protected:
   static const Standard_Integer MAX_SPANS_COUNT = 10;
+
+private:
+  struct IndexedSpan
+  {
+    Standard_Integer mySpan;
+    Standard_Integer myIndex;
+
+    IndexedSpan(const Standard_Integer theSpan = 0, const Standard_Integer theIndex = 0)
+      : mySpan(theSpan), myIndex(theIndex)
+    {}
+  };
+
+  typedef NCollection_LocalArray<Handle(CACHE_TYPE), MAX_SPANS_COUNT> CacheArray;
+  typedef NCollection_LocalArray<IndexedSpan, MAX_SPANS_COUNT>        SpanArray;
 
 public:
   //! Construct multi-span cache with given parameters
@@ -71,10 +80,6 @@ protected:
   //! \return Standard_True, if the span is already cached
   Standard_Boolean SetLatestCache(const Standard_Integer theSpanIndex);
 
-  ///! Remove oldest cache
-  ///! \return the cache has been removed from the list
-  Handle(CACHE_TYPE) RemoveFirstUsedCache();
-
   //! Return last used cache
   const Handle(CACHE_TYPE)& LastCache() const
   { return myLastCache.myCache; }
@@ -84,13 +89,17 @@ protected:
   { return myLastCache.mySpan; }
 
 private:
+  //! Shift theNbElems of cached spans to release a position for last used span
+  void ShiftCachedSpans(Standard_Integer theNbElems);
+
   BSplCLib_MultiSpanCacheStorage(const BSplCLib_MultiSpanCacheStorage&);
   const BSplCLib_MultiSpanCacheStorage& operator=(const BSplCLib_MultiSpanCacheStorage&);
 
 private:
   Standard_Integer            myMaxSpansCount; ///< maximal number of spans to be cached
   CacheArray                  myCaches;        ///< list of caches
-  SpanArray                   myCachedSpans;   ///< indices of used spans, which are sorted from oldest till last used
+  SpanArray                   myCachedSpans;   ///< indices of used spans, which are sorted from last used till oldest
+  Standard_Integer            myNbSpans;       ///< number of spans already cached
 
   struct {
     Standard_Integer   mySpan;
