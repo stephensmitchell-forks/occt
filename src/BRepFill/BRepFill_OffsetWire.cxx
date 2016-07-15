@@ -1934,6 +1934,14 @@ void UpdateDetromp (TopTools_ListOfShape&           Detromp1,
   TopoDS_Vertex    V1,V2;
 
   Handle(Geom2d_Curve) Bis = Bisec.Value();
+  Standard_Boolean ForceAdd = Standard_False;
+  Handle(Geom2d_TrimmedCurve) aTC = Handle(Geom2d_TrimmedCurve)::DownCast(Bis);
+  if(!aTC.IsNull() && aTC->BasisCurve()->IsPeriodic())
+  {
+    gp_Pnt2d Pf = Bis->Value(Bis->FirstParameter());
+    gp_Pnt2d Pl = Bis->Value(Bis->LastParameter());
+    ForceAdd = Pf.Distance(Pl) <= Precision::Confusion();
+  }
 
   U1 = Bis->FirstParameter();
   
@@ -1948,7 +1956,7 @@ void UpdateDetromp (TopTools_ListOfShape&           Detromp1,
     V2 = TopoDS::Vertex(Vertices.Value(ii));
 
     gp_Pnt2d P = Bis->Value((U2 + U1)*0.5);  
-    if (!Trim.IsInside(P)) {
+    if (!Trim.IsInside(P) || ForceAdd) {
       if (!V1.IsNull()) {
 	  Detromp1.Append(V1);
 	  Detromp2.Append(V1);
@@ -1966,7 +1974,7 @@ void UpdateDetromp (TopTools_ListOfShape&           Detromp1,
   if (!EOnE) {
     if (!Precision::IsInfinite(U2)) {
       gp_Pnt2d P = Bis->Value((U2 + U1)*0.5);  
-      if (!Trim.IsInside(P)) {
+      if (!Trim.IsInside(P) || ForceAdd) {
 	if (!V1.IsNull()) {
 	  Detromp1.Append(V1);
 	  Detromp2.Append(V1);
@@ -2143,19 +2151,20 @@ void TrimEdge (const TopoDS_Edge&              E,
 
 #ifdef DRAW
     if ( AffichEdge) {
-      sprintf(name,"TRIMEDGE_%d",NbTRIMEDGES);
+      sprintf(name,"TRIMEDGE_%d",++NbTRIMEDGES);
       DBRep::Set(name,NewEdge);  
     }
-    if (Affich2d) {
+    if (Affich2d || AffichEdge) {
+      if(!AffichEdge) ++NbTRIMEDGES;
       TopLoc_Location L;
       Standard_Real f,l;
       Handle(Geom_Surface) Surf;  
       Handle(Geom2d_Curve) C;
       BRep_Tool::CurveOnSurface(NewEdge,C,Surf,L,f,l);
-      sprintf(name,"OFFSET2d_%d",NbTRIMEDGES++);
+      sprintf(name,"OFFSET2d_%d",NbTRIMEDGES);
       Handle(Geom2d_TrimmedCurve) C2d = new Geom2d_TrimmedCurve(C,f,l);
       Handle(DrawTrSurf_Curve2d) dr =
-	new DrawTrSurf_Curve2d(C2d,Standard_False);
+	      new DrawTrSurf_Curve2d(C2d,Standard_False);
       dr->SetColor(Draw_bleu);
       Draw::Set(name,dr);
     }
