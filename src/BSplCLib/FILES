@@ -11,3 +11,5 @@ BSplCLib_CurveComputation.gxx
 BSplCLib_EvaluatorFunction.hxx
 BSplCLib_KnotDistribution.hxx
 BSplCLib_MultDistribution.hxx
+BSplCLib_MultiSpanCache.gxx
+BSplCLib_MultiSpanCache.hxx

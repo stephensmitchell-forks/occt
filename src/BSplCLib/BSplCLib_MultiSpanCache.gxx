@@ -1,0 +1,153 @@
+// Copyright (c) 2014 OPEN CASCADE SAS
+//
+// This file is part of Open CASCADE Technology software library.
+//
+// This library is free software; you can redistribute it and/or modify it under
+// the terms of the GNU Lesser General Public License version 2.1 as published
+// by the Free Software Foundation, with special exception defined in the file
+// OCCT_LGPL_EXCEPTION.txt. Consult the file LICENSE_LGPL_21.txt included in OCCT
+// distribution for complete text of the license and disclaimer of any warranty.
+//
+// Alternatively, this file may be used under the terms of Open CASCADE
+// commercial license or contractual agreement.
+
+#include <BSplCLib.hxx>
+#include <ElCLib.hxx>
+
+template<class POINT_TYPE, class VEC_TYPE>
+BSplCLib_MultiSpanCacheBase<POINT_TYPE, VEC_TYPE>::BSplCLib_MultiSpanCacheBase(
+  const Standard_Integer         theDegree,
+  const Standard_Boolean         thePeriodic,
+  const Array1OfPOINT&           thePoles,
+  const TColStd_Array1OfReal*    theWeights)
+  : myDegree(theDegree),
+    myPeriodic(thePeriodic),
+    myFirstKnot(0.),
+    myLastKnot(1.),
+    myKnots(NULL),
+    myMults(NULL),
+    myFlatKnots(NULL),
+    myPoles(thePoles),
+    myWeights(theWeights),
+    mySingleSpan(Standard_True),
+    myIsBezier(Standard_True)
+{
+}
+
+template<class POINT_TYPE, class VEC_TYPE>
+BSplCLib_MultiSpanCacheBase<POINT_TYPE, VEC_TYPE>::BSplCLib_MultiSpanCacheBase(
+  const Standard_Integer         theDegree,
+  const Standard_Boolean         thePeriodic,
+  const TColStd_Array1OfReal*    theKnots,
+  const TColStd_Array1OfInteger* theMults,
+  const TColStd_Array1OfReal*    theFlatKnots,
+  const Array1OfPOINT&           thePoles,
+  const TColStd_Array1OfReal*    theWeights)
+  : myDegree(theDegree),
+    myPeriodic(thePeriodic),
+    myFirstKnot(theKnots->First()),
+    myLastKnot(theKnots->Last()),
+    myKnots(theKnots),
+    myMults(theMults),
+    myFlatKnots(theFlatKnots),
+    myPoles(thePoles),
+    myWeights(theWeights),
+    mySingleSpan(theKnots->Length() == 2),
+    myIsBezier(Standard_False)
+{
+  if (!mySingleSpan)
+    myCaches = new CacheArray(theKnots->Lower(), theKnots->Upper());
+}
+
+template<class POINT_TYPE, class VEC_TYPE>
+void BSplCLib_MultiSpanCacheBase<POINT_TYPE, VEC_TYPE>::D0(const Standard_Real theParameter,
+                                                                 POINT_TYPE&   thePoint)
+{
+  Standard_Real aPar = theParameter;
+  FindCache(aPar);
+  myLastCache->D0(aPar, thePoint);
+}
+
+template<class POINT_TYPE, class VEC_TYPE>
+void BSplCLib_MultiSpanCacheBase<POINT_TYPE, VEC_TYPE>::D1(const Standard_Real theParameter,
+                                                                 POINT_TYPE&   thePoint,
+                                                                 VEC_TYPE&     theTangent)
+{
+  Standard_Real aPar = theParameter;
+  FindCache(aPar);
+  myLastCache->D1(aPar, thePoint, theTangent);
+}
+
+template<class POINT_TYPE, class VEC_TYPE>
+void BSplCLib_MultiSpanCacheBase<POINT_TYPE, VEC_TYPE>::D2(const Standard_Real theParameter,
+                                                                 POINT_TYPE&   thePoint,
+                                                                 VEC_TYPE&     theTangent,
+                                                                 VEC_TYPE&     theCurvature)
+{
+  Standard_Real aPar = theParameter;
+  FindCache(aPar);
+  myLastCache->D2(aPar, thePoint, theTangent, theCurvature);
+}
+
+template<class POINT_TYPE, class VEC_TYPE>
+void BSplCLib_MultiSpanCacheBase<POINT_TYPE, VEC_TYPE>::D3(const Standard_Real theParameter,
+                                                                 POINT_TYPE&   thePoint,
+                                                                 VEC_TYPE&     theTangent,
+                                                                 VEC_TYPE&     theCurvature,
+                                                                 VEC_TYPE&     theTorsion)
+{
+  Standard_Real aPar = theParameter;
+  FindCache(aPar);
+  myLastCache->D3(aPar, thePoint, theTangent, theCurvature, theTorsion);
+}
+
+template<class POINT_TYPE, class VEC_TYPE>
+Standard_Integer BSplCLib_MultiSpanCacheBase<POINT_TYPE, VEC_TYPE>::SpanIndex(const Standard_Real theParameter) const
+{
+  if (mySingleSpan)
+    return 1;
+
+  // Get index of a span
+  Standard_Integer aSpanIndex = 0;
+  Standard_Real aNewPar = theParameter; // unused parameter, because theParameter is already in period 
+  BSplCLib::LocateParameter(myDegree, *myKnots, myMults, theParameter, myPeriodic,
+                            aSpanIndex, aNewPar);
+  return aSpanIndex;
+}
+
+template<class POINT_TYPE, class VEC_TYPE>
+void BSplCLib_MultiSpanCacheBase<POINT_TYPE, VEC_TYPE>::FindCache(Standard_Real& theParameter)
+{
+  // Normalize the parameters for periodical B-splines
+  if (myPeriodic && (theParameter > myLastKnot || theParameter < myFirstKnot))
+    theParameter = ElCLib::InPeriod(theParameter, myFirstKnot, myLastKnot);
+
+  // Do not want to use LocateParameter due to lack of performance.
+  // Just check the last used cache is valid for the given parameter.
+  if (!myLastCache.IsNull() && (mySingleSpan || myLastCache->IsCacheValid(theParameter)))
+    return ;
+
+  Standard_Integer aSpanIndex = SpanIndex(theParameter);
+  // check the cache is already built
+  Handle(BSplCLib_Cache)& aCache =
+      myCaches.IsNull() ? myLastCache : myCaches->ChangeValue(aSpanIndex);
+  if (aCache.IsNull())
+  {
+    // build new cache
+    aCache = new BSplCLib_Cache;
+    if (myIsBezier)
+    {
+      TColStd_Array1OfReal aFlatKnots(BSplCLib::FlatBezierKnots(myDegree), 1, (myDegree + 1) * 2);
+      aCache->BuildCache(myDegree, myPeriodic, aFlatKnots, myDegree + 1, myPoles, myWeights);
+    }
+    else
+    {
+      // calculate index of cache for the flat knots
+      aSpanIndex = BSplCLib::FlatIndex(myDegree, aSpanIndex, *myMults, myPeriodic);
+      aCache->BuildCache(myDegree, myPeriodic, *myFlatKnots, aSpanIndex, myPoles, myWeights);
+    }
+  }
+
+  if (!myCaches.IsNull())
+    myLastCache = aCache;
+}
