@@ -23,7 +23,7 @@
 
 #include <GeomAbs_CurveType.hxx>
 #include <Standard_Real.hxx>
-#include <BSplCLib_Cache.hxx>
+#include <BSplCLib_MultiSpanCache.hxx>
 #include <Adaptor2d_Curve2d.hxx>
 #include <GeomAbs_Shape.hxx>
 #include <Standard_Integer.hxx>
@@ -46,7 +46,6 @@ class gp_Hypr2d;
 class gp_Parab2d;
 class Geom2d_BezierCurve;
 class Geom2d_BSplineCurve;
-
 
 //! An interface between the services provided by any
 //! curve from the package Geom2d and those required
@@ -169,7 +168,8 @@ public:
   
   Standard_EXPORT Handle(Geom2d_BSplineCurve) BSpline() const Standard_OVERRIDE;
 
-
+  //! Sets maximal number of cached spans for Bezier or B-spline surface
+  Standard_EXPORT void SetMaxSpansCached(const Standard_Integer theMaxSpans);
 
 
 protected:
@@ -187,9 +187,8 @@ private:
   //! Check theU relates to start or finish point of B-spline curve and return indices of span the point is located
   Standard_Boolean IsBoundary(const Standard_Real theU, Standard_Integer& theSpanStart, Standard_Integer& theSpanFinish) const;
 
-  //! Rebuilds B-spline cache
-  //! \param theParameter the value on the knot axis which identifies the caching span
-  void RebuildCache (const Standard_Real theParameter) const;
+  //! Allocates memory for a cache object
+  void CreateCache() const;
 
 
   Handle(Geom2d_Curve) myCurve;
@@ -198,7 +197,8 @@ private:
   Standard_Real myLast;
 
   Handle(Geom2d_BSplineCurve) myBSplineCurve; ///< B-spline representation to prevent castings
-  mutable Handle(BSplCLib_Cache) myCurveCache; ///< Cached data for B-spline or Bezier curve
+  mutable Handle(BSplCLib_MultiSpanCache2D) myCurveCache; ///< Cached data for B-spline or Bezier curve
+  Standard_Integer myMaxSpansCached; ///< Maximal number of cached spans
   Handle(Geom2dEvaluator_Curve) myNestedEvaluator; ///< Calculates value of offset curve
 
 

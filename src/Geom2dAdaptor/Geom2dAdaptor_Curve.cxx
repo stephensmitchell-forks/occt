@@ -24,7 +24,6 @@
 
 #include <Adaptor2d_HCurve2d.hxx>
 #include <BSplCLib.hxx>
-#include <BSplCLib_Cache.hxx>
 #include <Geom2d_BezierCurve.hxx>
 #include <Geom2d_BSplineCurve.hxx>
 #include <Geom2d_Circle.hxx>
@@ -136,7 +135,8 @@ GeomAbs_Shape Geom2dAdaptor_Curve::LocalContinuity(const Standard_Real U1,
 Geom2dAdaptor_Curve::Geom2dAdaptor_Curve()
 : myTypeCurve(GeomAbs_OtherCurve),
   myFirst    (0.0),
-  myLast     (0.0)
+  myLast     (0.0),
+  myMaxSpansCached(BSplCLib_MultiSpanCache2D::MAX_SPANS_COUNT)
 {
 }
 
@@ -148,7 +148,8 @@ Geom2dAdaptor_Curve::Geom2dAdaptor_Curve()
 Geom2dAdaptor_Curve::Geom2dAdaptor_Curve(const Handle(Geom2d_Curve)& theCrv)
 : myTypeCurve(GeomAbs_OtherCurve),
   myFirst    (0.0),
-  myLast     (0.0)
+  myLast     (0.0),
+  myMaxSpansCached(BSplCLib_MultiSpanCache2D::MAX_SPANS_COUNT)
 {
   Load(theCrv);
 }
@@ -163,7 +164,8 @@ Geom2dAdaptor_Curve::Geom2dAdaptor_Curve(const Handle(Geom2d_Curve)& theCrv,
                                          const Standard_Real theULast)
 : myTypeCurve(GeomAbs_OtherCurve),
   myFirst    (theUFirst),
-  myLast     (theULast)
+  myLast     (theULast),
+  myMaxSpansCached(BSplCLib_MultiSpanCache2D::MAX_SPANS_COUNT)
 {
   Load(theCrv, theUFirst, theULast);
 }
@@ -180,14 +182,17 @@ void Geom2dAdaptor_Curve::load(const Handle(Geom2d_Curve)& C,
 {
   myFirst = UFirst;
   myLast  = ULast;
-  myCurveCache.Nullify();
 
-  if ( myCurve != C) {
+  const Handle(Standard_Type)& TheType = C->DynamicType();
+  if (myCurve != C ||
+      TheType == STANDARD_TYPE(Geom2d_BezierCurve) ||
+      TheType == STANDARD_TYPE(Geom2d_BSplineCurve))
+  {
     myCurve = C;
+    myCurveCache.Nullify();
     myNestedEvaluator.Nullify();
     myBSplineCurve.Nullify();
 
-    Handle(Standard_Type) TheType = C->DynamicType();
     if ( TheType == STANDARD_TYPE(Geom2d_TrimmedCurve)) {
       Load(Handle(Geom2d_TrimmedCurve)::DownCast (C)->BasisCurve(),
 	   UFirst,ULast);
@@ -550,36 +555,6 @@ Standard_Real Geom2dAdaptor_Curve::Period() const
 }
 
 //=======================================================================
-//function : RebuildCache
-//purpose  : 
-//=======================================================================
-void Geom2dAdaptor_Curve::RebuildCache(const Standard_Real theParameter) const
-{
-  if (myTypeCurve == GeomAbs_BezierCurve)
-  {
-    // Create cache for Bezier
-    Handle(Geom2d_BezierCurve) aBezier = Handle(Geom2d_BezierCurve)::DownCast(myCurve);
-    Standard_Integer aDeg = aBezier->Degree();
-    TColStd_Array1OfReal aFlatKnots(BSplCLib::FlatBezierKnots(aDeg), 1, 2 * (aDeg + 1));
-    if (myCurveCache.IsNull())
-      myCurveCache = new BSplCLib_Cache(aDeg, aBezier->IsPeriodic(), aFlatKnots,
-        aBezier->Poles(), aBezier->Weights());
-    myCurveCache->BuildCache(theParameter, aDeg, aBezier->IsPeriodic(), aFlatKnots,
-      aBezier->Poles(), aBezier->Weights());
-  }
-  else if (myTypeCurve == GeomAbs_BSplineCurve)
-  {
-    // Create cache for B-spline
-    if (myCurveCache.IsNull())
-      myCurveCache = new BSplCLib_Cache(myBSplineCurve->Degree(), myBSplineCurve->IsPeriodic(),
-        myBSplineCurve->KnotSequence(), myBSplineCurve->Poles(), myBSplineCurve->Weights());
-    myCurveCache->BuildCache(theParameter, myBSplineCurve->Degree(),
-      myBSplineCurve->IsPeriodic(), myBSplineCurve->KnotSequence(),
-      myBSplineCurve->Poles(), myBSplineCurve->Weights());
-  }
-}
-
-//=======================================================================
 //function : IsBoundary
 //purpose  : 
 //=======================================================================
@@ -611,6 +586,34 @@ Standard_Boolean Geom2dAdaptor_Curve::IsBoundary(const Standard_Real theU,
 }
 
 //=======================================================================
+//function : CreateCache
+//purpose  : 
+//=======================================================================
+
+void Geom2dAdaptor_Curve::CreateCache() const
+{
+  switch (myTypeCurve)
+  {
+  case GeomAbs_BezierCurve: {
+    // Create cache for Bezier
+    Handle(Geom2d_BezierCurve) aBezier = Handle(Geom2d_BezierCurve)::DownCast(myCurve);
+    myCurveCache = new BSplCLib_MultiSpanCache2D(aBezier->Degree(), aBezier->IsPeriodic(), NULL,
+        aBezier->Poles(), aBezier->Weights(), myMaxSpansCached);
+    break;
+  }
+  case GeomAbs_BSplineCurve:
+    // Create cache for B-spline
+    myCurveCache = new BSplCLib_MultiSpanCache2D(
+        myBSplineCurve->Degree(), myBSplineCurve->IsPeriodic(),
+        &myBSplineCurve->KnotSequence(), myBSplineCurve->Poles(), myBSplineCurve->Weights(),
+        myMaxSpansCached);
+    break;
+  default: // avoid gcc compilation warnings
+    break; 
+  }
+}
+
+//=======================================================================
 //function : Value
 //purpose  : 
 //=======================================================================
@@ -636,15 +639,17 @@ void Geom2dAdaptor_Curve::D0(const Standard_Real U, gp_Pnt2d& P) const
   {
     Standard_Integer aStart = 0, aFinish = 0;
     if (IsBoundary(U, aStart, aFinish))
-    {
       myBSplineCurve->LocalD0(U, aStart, aFinish, P);
-    }
     else
     {
-      // use cached data
-      if (myCurveCache.IsNull() || !myCurveCache->IsCacheValid(U))
-        RebuildCache(U);
-      myCurveCache->D0(U, P);
+      if (myMaxSpansCached > 0)
+      {
+        if (myCurveCache.IsNull())
+          CreateCache();
+        myCurveCache->D0(U, P);
+      }
+      else
+        myCurve->D0(U, P);
     }
     break;
   }
@@ -673,15 +678,17 @@ void Geom2dAdaptor_Curve::D1(const Standard_Real U,
   {
     Standard_Integer aStart = 0, aFinish = 0;
     if (IsBoundary(U, aStart, aFinish))
-    {
       myBSplineCurve->LocalD1(U, aStart, aFinish, P, V);
-    }
     else
     {
-      // use cached data
-      if (myCurveCache.IsNull() || !myCurveCache->IsCacheValid(U))
-        RebuildCache(U);
-      myCurveCache->D1(U, P, V);
+      if (myMaxSpansCached > 0)
+      {
+        if (myCurveCache.IsNull())
+          CreateCache();
+        myCurveCache->D1(U, P, V);
+      }
+      else
+        myCurve->D1(U, P, V);
     }
     break;
   }
@@ -710,15 +717,17 @@ void Geom2dAdaptor_Curve::D2(const Standard_Real U,
   {
     Standard_Integer aStart = 0, aFinish = 0;
     if (IsBoundary(U, aStart, aFinish))
-    {
       myBSplineCurve->LocalD2(U, aStart, aFinish, P, V1, V2);
-    }
     else
     {
-      // use cached data
-      if (myCurveCache.IsNull() || !myCurveCache->IsCacheValid(U))
-        RebuildCache(U);
-      myCurveCache->D2(U, P, V1, V2);
+      if (myMaxSpansCached > 0)
+      {
+        if (myCurveCache.IsNull())
+          CreateCache();
+        myCurveCache->D2(U, P, V1, V2);
+      }
+      else
+        myCurve->D2(U, P, V1, V2);
     }
     break;
   }
@@ -748,15 +757,17 @@ void Geom2dAdaptor_Curve::D3(const Standard_Real U,
   {
     Standard_Integer aStart = 0, aFinish = 0;
     if (IsBoundary(U, aStart, aFinish))
-    {
       myBSplineCurve->LocalD3(U, aStart, aFinish, P, V1, V2, V3);
-    }
     else
     {
-      // use cached data
-      if (myCurveCache.IsNull() || !myCurveCache->IsCacheValid(U))
-        RebuildCache(U);
-      myCurveCache->D3(U, P, V1, V2, V3);
+      if (myMaxSpansCached > 0)
+      {
+        if (myCurveCache.IsNull())
+          CreateCache();
+        myCurveCache->D3(U, P, V1, V2, V3);
+      }
+      else
+        myCurve->D3(U, P, V1, V2, V3);
     }
     break;
   }
@@ -1016,4 +1027,20 @@ static Standard_Integer nbPoints(const Handle(Geom2d_Curve)& theCurve)
 Standard_Integer Geom2dAdaptor_Curve::NbSamples() const
 {
   return  nbPoints(myCurve);
+}
+
+//=======================================================================
+// function : SetMaxSpansCached
+// purpose  : Sets maximal number of cached spans for Bezier or B-spline surface
+//=======================================================================
+void Geom2dAdaptor_Curve::SetMaxSpansCached(const Standard_Integer theMaxSpans)
+{
+  myMaxSpansCached = theMaxSpans;
+  if (!myCurveCache.IsNull())
+  {
+    if (myMaxSpansCached > 0)
+      myCurveCache->SetMaxSpansCached(myMaxSpansCached);
+    else
+      myCurveCache.Nullify();
+  }
 }

@@ -1010,3 +1010,13 @@ Graphic3d_Group::SetGroupPrimitivesAspect() should be the main method defining p
 The implementation of Graphic3d_Group::SetGroupPrimitivesAspect() has been changed from copying aspect values to keeping passed object.
 Although it was not documented, previosly it was possible to modify single aspects instance (like Graphic3d_AspectFillArea3d) and set it to multiple groups.
 Now such code would produce unexpected result and therefore should be updated to create dedicated aspect instance.
+
+@subsection upgrade_occt710_multispan Multi-span cache support in *Geom2dAdaptor_Curve, GeomAdaptor_Curve* and *GeomAdaptor_Surface*
+
+Multi-span cache has been implemented in *Geom2dAdaptor_Curve, GeomAdaptor_Curve* and *GeomAdaptor_Surface*. Number of cached spans can be changed by introduced method *SetMaxSpansCached*, if passing parameter is 0, the cache will not used.
+
+N.B.: Changing number of cached spans will affect Bezier/B-spline curve/surface only.
+
+The benefit of this change is decreased time of calculations (up to 5 times) on some cases.
+
+The same changes (use convenient number of cached spans) should be implemented in relevant places in the applications based on OCCT to get the maximum performance.
