@@ -271,7 +271,6 @@ private:
   
   Handle(Geom_BSplineSurface) myBSplineSurface; ///< B-spline representation to prevent downcasts
   mutable Handle(BSplSLib_MultiSpanCache) mySurfaceCache; ///< Cached data for B-spline or Bezier surface
-  Standard_Boolean myCacheIsUsed; ///< Indicates that the data of surface should be cached for evaluations
   Standard_Integer myMaxSpansCached; ///< Maximal number of cached spans
 
 protected:

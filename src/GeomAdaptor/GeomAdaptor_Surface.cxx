@@ -140,7 +140,6 @@ void GeomAdaptor_Surface::load(const Handle(Geom_Surface)& S,
   {
     mySurface = S;
     mySurfaceCache.Nullify();
-    myCacheIsUsed = Standard_False;
     myNestedEvaluator.Nullify();
     myBSplineSurface.Nullify();
 
@@ -183,15 +182,11 @@ void GeomAdaptor_Surface::load(const Handle(Geom_Surface)& S,
         new GeomEvaluator_SurfaceOfExtrusion (aBaseAdaptor, myExtSurf->Direction());
     }
     else if (TheType == STANDARD_TYPE(Geom_BezierSurface))
-    {
       mySurfaceType = GeomAbs_BezierSurface;
-      myCacheIsUsed = Standard_True;
-    }
     else if (TheType == STANDARD_TYPE(Geom_BSplineSurface))
     {
       mySurfaceType = GeomAbs_BSplineSurface;
       myBSplineSurface = Handle(Geom_BSplineSurface)::DownCast(mySurface);
-      myCacheIsUsed = Standard_True;
     }
     else if ( TheType == STANDARD_TYPE(Geom_OffsetSurface))
     {
@@ -671,34 +666,18 @@ void GeomAdaptor_Surface::CreateCache() const
   case GeomAbs_BezierSurface: {
     // Create cache for Bezier
     Handle(Geom_BezierSurface) aBezier = Handle(Geom_BezierSurface)::DownCast(mySurface);
-    Standard_Integer aDegU = aBezier->UDegree();
-    Standard_Integer aDegV = aBezier->VDegree();
-    TColStd_Array1OfReal aFlatKnotsU(BSplCLib::FlatBezierKnots(aDegU), 1, 2 * (aDegU + 1));
-    TColStd_Array1OfReal aFlatKnotsV(BSplCLib::FlatBezierKnots(aDegV), 1, 2 * (aDegV + 1));
-    if (myMaxSpansCached > 0)
-      mySurfaceCache = new BSplSLib_MultiSpanCache(
-          aDegU, aBezier->IsUPeriodic(), aFlatKnotsU,
-          aDegV, aBezier->IsVPeriodic(), aFlatKnotsV,
-          aBezier->Poles(), aBezier->Weights(), myMaxSpansCached);
-    else
-      mySurfaceCache = new BSplSLib_MultiSpanCache(
-          aDegU, aBezier->IsUPeriodic(), aFlatKnotsU,
-          aDegV, aBezier->IsVPeriodic(), aFlatKnotsV,
-          aBezier->Poles(), aBezier->Weights());
+    mySurfaceCache = new BSplSLib_MultiSpanCache(
+        aBezier->UDegree(), aBezier->IsUPeriodic(), NULL,
+        aBezier->VDegree(), aBezier->IsVPeriodic(), NULL,
+        aBezier->Poles(), aBezier->Weights(), myMaxSpansCached);
     break;
   }
   case GeomAbs_BSplineSurface:
     // Create cache for B-spline
-    if (myMaxSpansCached > 0)
-      mySurfaceCache = new BSplSLib_MultiSpanCache(
-          myBSplineSurface->UDegree(), myBSplineSurface->IsUPeriodic(), myBSplineSurface->UKnotSequence(),
-          myBSplineSurface->VDegree(), myBSplineSurface->IsVPeriodic(), myBSplineSurface->VKnotSequence(),
-          myBSplineSurface->Poles(), myBSplineSurface->Weights(), myMaxSpansCached);
-    else
-      mySurfaceCache = new BSplSLib_MultiSpanCache(
-          myBSplineSurface->UDegree(), myBSplineSurface->IsUPeriodic(), myBSplineSurface->UKnotSequence(),
-          myBSplineSurface->VDegree(), myBSplineSurface->IsVPeriodic(), myBSplineSurface->VKnotSequence(),
-          myBSplineSurface->Poles(), myBSplineSurface->Weights());
+    mySurfaceCache = new BSplSLib_MultiSpanCache(
+        myBSplineSurface->UDegree(), myBSplineSurface->IsUPeriodic(), &myBSplineSurface->UKnotSequence(),
+        myBSplineSurface->VDegree(), myBSplineSurface->IsVPeriodic(), &myBSplineSurface->VKnotSequence(),
+        myBSplineSurface->Poles(), myBSplineSurface->Weights(), myMaxSpansCached);
     break;
   default: // avoid gcc compilation warnings
     break;
@@ -730,7 +709,7 @@ void GeomAdaptor_Surface::D0(const Standard_Real U,
   {
   case GeomAbs_BezierSurface:
   case GeomAbs_BSplineSurface:
-    if (myCacheIsUsed)
+    if (myMaxSpansCached > 0)
     {
       if (mySurfaceCache.IsNull())
         CreateCache();
@@ -784,7 +763,7 @@ void GeomAdaptor_Surface::D1(const Standard_Real U,
       myBSplineSurface->LocalD1(u, v, Ideb, Ifin, IVdeb, IVfin, P, D1U, D1V);
     else
     {
-      if (myCacheIsUsed)
+      if (myMaxSpansCached > 0)
       {
         if (mySurfaceCache.IsNull())
           CreateCache();
@@ -842,7 +821,7 @@ void GeomAdaptor_Surface::D2(const Standard_Real U,
       myBSplineSurface->LocalD2(u, v, Ideb, Ifin, IVdeb, IVfin, P, D1U, D1V, D2U, D2V, D2UV);
     else
     {
-      if (myCacheIsUsed)
+      if (myMaxSpansCached > 0)
       {
         if (mySurfaceCache.IsNull())
           CreateCache();
@@ -1487,14 +1466,12 @@ void GeomAdaptor_Surface::Span(const Standard_Integer Side,
 //=======================================================================
 void GeomAdaptor_Surface::SetMaxSpansCached(const Standard_Integer theMaxSpans)
 {
-  myCacheIsUsed = theMaxSpans > 0;
-  if (!myCacheIsUsed)
-  {
-    mySurfaceCache.Nullify();
-    return;
-  }
-
   myMaxSpansCached = theMaxSpans;
   if (!mySurfaceCache.IsNull())
-    mySurfaceCache->SetMaxSpansCached(myMaxSpansCached);
+  {
+    if (myMaxSpansCached > 0)
+      mySurfaceCache->SetMaxSpansCached(myMaxSpansCached);
+    else
+      mySurfaceCache.Nullify();
+  }
 }

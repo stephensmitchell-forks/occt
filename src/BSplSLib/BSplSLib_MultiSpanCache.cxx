@@ -19,10 +19,10 @@
 
 BSplSLib_MultiSpanCache::BSplSLib_MultiSpanCache(const Standard_Integer      theDegreeU,
                                                  const Standard_Boolean      thePeriodicU,
-                                                 const TColStd_Array1OfReal& theFlatKnotsU,
+                                                 const TColStd_Array1OfReal* theFlatKnotsU,
                                                  const Standard_Integer      theDegreeV,
                                                  const Standard_Boolean      thePeriodicV,
-                                                 const TColStd_Array1OfReal& theFlatKnotsV,
+                                                 const TColStd_Array1OfReal* theFlatKnotsV,
                                                  const TColgp_Array2OfPnt&   thePoles,
                                                  const TColStd_Array2OfReal* theWeights,
                                                  const Standard_Integer      theMaxSpans)
@@ -39,31 +39,52 @@ BSplSLib_MultiSpanCache::BSplSLib_MultiSpanCache(const Standard_Integer      the
 {
   Clear();
 
-  Standard_Integer aMaxSpansCount = theMaxSpans;
+  Standard_Boolean isSingleSpanU = Standard_False;
+  Standard_Boolean isSingleSpanV = Standard_False;
 
-  myFirstKnotU = myFlatKnotsU.Value(myFlatKnotsU.Lower() + myDegreeU);
-  myLastKnotU  = myFlatKnotsU.Value(myFlatKnotsU.Upper() - myDegreeU);
-  myFirstKnotV = myFlatKnotsV.Value(myFlatKnotsV.Lower() + myDegreeV);
-  myLastKnotV  = myFlatKnotsV.Value(myFlatKnotsV.Upper() - myDegreeV);
+  if (myFlatKnotsU)
+  { // B-spline surface
+    myFirstKnotU = myFlatKnotsU->Value(myFlatKnotsU->Lower() + myDegreeU);
+    myLastKnotU = myFlatKnotsU->Value(myFlatKnotsU->Upper() - myDegreeU);
+    isSingleSpanU = myFlatKnotsU->Length() == (myDegreeU + 1) * 2;
+  }
+  else
+  { // Bezier surface
+    myFirstKnotU = 0.0;
+    myLastKnotU = 1.0;
+    isSingleSpanU = Standard_True;
+  }
+  if (myFlatKnotsV)
+  {
+    myFirstKnotV = myFlatKnotsV->Value(myFlatKnotsV->Lower() + myDegreeV);
+    myLastKnotV = myFlatKnotsV->Value(myFlatKnotsV->Upper() - myDegreeV);
+    isSingleSpanV = myFlatKnotsV->Length() == (myDegreeV + 1) * 2;
+  }
+  else
+  { // Bezier surface
+    myFirstKnotV = 0.0;
+    myLastKnotV = 1.0;
+    isSingleSpanV = Standard_True;
+  }
 
   // Check the surface has one span at all
-  Standard_Boolean isSingleSpanU = !myPeriodicU && myFlatKnotsU.Length() == (myDegreeU + 1) * 2;
-  Standard_Boolean isSingleSpanV = !myPeriodicV && myFlatKnotsV.Length() == (myDegreeV + 1) * 2;
   if (isSingleSpanU || isSingleSpanV)
   {
-    Standard_Integer aTemp;
-    SpanIndex(myFirstKnotU, myFirstKnotV, 
-              isSingleSpanU ? mySingleSpanU : aTemp,
-              isSingleSpanV ? mySingleSpanV : aTemp);
+    Standard_Integer aSpanIndex; // works as temporary index if surface has more than one span
+    aSpanIndex = SpanIndex(myFirstKnotU, myFirstKnotV,
+                           isSingleSpanU ? mySingleSpanU : aSpanIndex,
+                           isSingleSpanV ? mySingleSpanV : aSpanIndex);
 
     if (isSingleSpanU && isSingleSpanV)
     {
       SetSingleSpan(Standard_True);
-      aMaxSpansCount = 1;
+      SetMaxSpansCached(1);
+      NewCache(mySingleSpanU, mySingleSpanV, aSpanIndex);
+      return;
     }
   }
 
-  SetMaxSpansCached(aMaxSpansCount);
+  SetMaxSpansCached(theMaxSpans);
 }
 
 void BSplSLib_MultiSpanCache::Clear()
@@ -138,20 +159,24 @@ Standard_Integer BSplSLib_MultiSpanCache::SpanIndex(Standard_Real&    theU,
   {
     if (theU == myLastU.myParameter) // the parameters should be equal to a bit
       theSpanIndexU = myLastU.mySpan;
-    else
-      BSplCLib::LocateParameter(myDegreeU, myFlatKnotsU, BSplCLib::NoMults(), theU,
+    else if (myFlatKnotsU)
+      BSplCLib::LocateParameter(myDegreeU, *myFlatKnotsU, BSplCLib::NoMults(), theU,
                                 myPeriodicU, theSpanIndexU, theU);
+    else
+      theSpanIndexU = myDegreeU + 1;
   }
   if (theSpanIndexV == 0)
   {
     if (theV == myLastV.myParameter) // the parameters should be equal to a bit
       theSpanIndexV = myLastV.mySpan;
-    else
-      BSplCLib::LocateParameter(myDegreeV, myFlatKnotsV, BSplCLib::NoMults(), theV,
+    else if (myFlatKnotsV)
+      BSplCLib::LocateParameter(myDegreeV, *myFlatKnotsV, BSplCLib::NoMults(), theV,
                                 myPeriodicV, theSpanIndexV, theV);
+    else
+      theSpanIndexV = myDegreeV + 1;
   }
 
-  return myFlatKnotsV.Length() * theSpanIndexU + theSpanIndexV;
+  return (myFlatKnotsV ? myFlatKnotsV->Length() : 1) * theSpanIndexU + theSpanIndexV;
 }
 
 const Handle(BSplSLib_Cache)& BSplSLib_MultiSpanCache::FindCache(Standard_Real& theU,
@@ -180,8 +205,19 @@ BSplSLib_MultiSpanCache::NewCache(const Standard_Integer theSpanIndexU,
 {
   Handle(BSplSLib_Cache) aNewCache;
   if (CreateNewCache(theSpanIndexFull, aNewCache))
-    aNewCache->BuildCache(myDegreeU, myPeriodicU, myFlatKnotsU, theSpanIndexU,
-                          myDegreeV, myPeriodicV, myFlatKnotsV, theSpanIndexV,
-                          myPoles, myWeights);
+  {
+    if (myFlatKnotsU && myFlatKnotsV) // B-spline cache
+      aNewCache->BuildCache(myDegreeU, myPeriodicU, *myFlatKnotsU, theSpanIndexU,
+                            myDegreeV, myPeriodicV, *myFlatKnotsV, theSpanIndexV,
+                            myPoles, myWeights);
+    else // Bezier cache
+    {
+      TColStd_Array1OfReal aFlatKnotsU(BSplCLib::FlatBezierKnots(myDegreeU), 1, (myDegreeU + 1) * 2);
+      TColStd_Array1OfReal aFlatKnotsV(BSplCLib::FlatBezierKnots(myDegreeV), 1, (myDegreeV + 1) * 2);
+      aNewCache->BuildCache(myDegreeU, myPeriodicU, aFlatKnotsU, theSpanIndexU,
+                            myDegreeV, myPeriodicV, aFlatKnotsV, theSpanIndexV,
+                            myPoles, myWeights);
+    }
+  }
   return LastCache();
 }

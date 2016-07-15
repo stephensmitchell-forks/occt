@@ -18,7 +18,7 @@ template<class POINT_TYPE, class VEC_TYPE>
 BSplCLib_MultiSpanCacheBase<POINT_TYPE, VEC_TYPE>::BSplCLib_MultiSpanCacheBase(
   const Standard_Integer      theDegree,
   const Standard_Boolean      thePeriodic,
-  const TColStd_Array1OfReal& theFlatKnots,
+  const TColStd_Array1OfReal* theFlatKnots,
   const Array1OfPOINT&        thePoles,
   const TColStd_Array1OfReal* theWeights,
   const Standard_Integer      theMaxSpans)
@@ -28,19 +28,29 @@ BSplCLib_MultiSpanCacheBase<POINT_TYPE, VEC_TYPE>::BSplCLib_MultiSpanCacheBase(
     myPoles(thePoles),
     myWeights(theWeights)
 {
-  Standard_Integer aMaxSpansCount = theMaxSpans;
-
-  myFirstKnot = myFlatKnots.Value(myFlatKnots.Lower() + myDegree);
-  myLastKnot = myFlatKnots.Value(myFlatKnots.Upper() - myDegree);
-
-  // Verify the curve has just one span
-  if (!myPeriodic && myFlatKnots.Length() == (myDegree + 1) * 2)
-  {
-    SetSingleSpan(Standard_True);
-    aMaxSpansCount = 1;
+  Standard_Boolean isSingleSpan = Standard_False;
+  if (myFlatKnots)
+  { // B-spline curve
+    myFirstKnot = myFlatKnots->Value(myFlatKnots->Lower() + myDegree);
+    myLastKnot = myFlatKnots->Value(myFlatKnots->Upper() - myDegree);
+    isSingleSpan = myFlatKnots->Length() == (myDegree + 1) * 2;
+  }
+  else
+  { // Bezier curve
+    myFirstKnot = 0.0;
+    myLastKnot = 1.0;
+    isSingleSpan = Standard_True;
   }
 
-  SetMaxSpansCached(aMaxSpansCount);
+  // Verify the curve has just one span
+  if (isSingleSpan)
+  {
+    SetSingleSpan(Standard_True);
+    SetMaxSpansCached(1);
+    NewCache(myDegree + 1);
+  }
+  else
+    SetMaxSpansCached(theMaxSpans);
 }
 
 template<class POINT_TYPE, class VEC_TYPE>
@@ -99,7 +109,7 @@ Standard_Integer BSplCLib_MultiSpanCacheBase<POINT_TYPE, VEC_TYPE>::SpanIndex(St
 
   // Get index of a span
   Standard_Integer aSpanIndex = 0;
-  BSplCLib::LocateParameter(myDegree, myFlatKnots, BSplCLib::NoMults(), theParameter,
+  BSplCLib::LocateParameter(myDegree, *myFlatKnots, BSplCLib::NoMults(), theParameter,
                             myPeriodic, aSpanIndex, theParameter);
   return aSpanIndex;
 }
@@ -123,6 +133,14 @@ BSplCLib_MultiSpanCacheBase<POINT_TYPE, VEC_TYPE>::NewCache(const Standard_Integ
 {
   Handle(BSplCLib_Cache) aNewCache;
   if (CreateNewCache(theSpanIndex, aNewCache))
-    aNewCache->BuildCache(myDegree, myPeriodic, myFlatKnots, theSpanIndex, myPoles, myWeights);
+  {
+    if (myFlatKnots) // B-spline curve
+      aNewCache->BuildCache(myDegree, myPeriodic, *myFlatKnots, theSpanIndex, myPoles, myWeights);
+    else
+    { // Bezier curve
+      TColStd_Array1OfReal aFlatKnots(BSplCLib::FlatBezierKnots(myDegree), 1, (myDegree + 1) * 2);
+      aNewCache->BuildCache(myDegree, myPeriodic, aFlatKnots, theSpanIndex, myPoles, myWeights);
+    }
+  }
   return LastCache();
 }

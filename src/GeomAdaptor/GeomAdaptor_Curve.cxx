@@ -143,7 +143,6 @@ void GeomAdaptor_Curve::load(const Handle(Geom_Curve)& C,
   {
     myCurve = C;
     myCurveCache.Nullify();
-    myCacheIsUsed = Standard_False;
     myNestedEvaluator.Nullify();
     myBSplineCurve.Nullify();
 
@@ -167,12 +166,10 @@ void GeomAdaptor_Curve::load(const Handle(Geom_Curve)& C,
     }
     else if ( TheType == STANDARD_TYPE(Geom_BezierCurve)) {
       myTypeCurve = GeomAbs_BezierCurve;
-      myCacheIsUsed = Standard_True;
     }
     else if ( TheType == STANDARD_TYPE(Geom_BSplineCurve)) {
       myTypeCurve = GeomAbs_BSplineCurve;
       myBSplineCurve = Handle(Geom_BSplineCurve)::DownCast(myCurve);
-      myCacheIsUsed = Standard_True;
     }
     else if ( TheType == STANDARD_TYPE(Geom_OffsetCurve)) {
       myTypeCurve = GeomAbs_OffsetCurve;
@@ -572,27 +569,16 @@ void GeomAdaptor_Curve::CreateCache() const
   case GeomAbs_BezierCurve: {
     // Create cache for Bezier
     Handle(Geom_BezierCurve) aBezier = Handle(Geom_BezierCurve)::DownCast(myCurve);
-    Standard_Integer aDeg = aBezier->Degree();
-    TColStd_Array1OfReal aFlatKnots(BSplCLib::FlatBezierKnots(aDeg), 1, 2 * (aDeg + 1));
-    if (myMaxSpansCached > 0)
-      myCurveCache = new BSplCLib_MultiSpanCache3D(aDeg, aBezier->IsPeriodic(),
-          aFlatKnots, aBezier->Poles(), aBezier->Weights(), myMaxSpansCached);
-    else
-      myCurveCache = new BSplCLib_MultiSpanCache3D(aDeg, aBezier->IsPeriodic(),
-          aFlatKnots, aBezier->Poles(), aBezier->Weights());
+    myCurveCache = new BSplCLib_MultiSpanCache3D(aBezier->Degree(), aBezier->IsPeriodic(), NULL,
+        aBezier->Poles(), aBezier->Weights(), myMaxSpansCached);
     break;
   }
   case GeomAbs_BSplineCurve:
     // Create cache for B-spline
-    if (myMaxSpansCached > 0)
-      myCurveCache = new BSplCLib_MultiSpanCache3D(
-          myBSplineCurve->Degree(), myBSplineCurve->IsPeriodic(),
-          myBSplineCurve->KnotSequence(), myBSplineCurve->Poles(), myBSplineCurve->Weights(),
-          myMaxSpansCached);
-    else
-      myCurveCache = new BSplCLib_MultiSpanCache3D(
-          myBSplineCurve->Degree(), myBSplineCurve->IsPeriodic(),
-          myBSplineCurve->KnotSequence(), myBSplineCurve->Poles(), myBSplineCurve->Weights());
+    myCurveCache = new BSplCLib_MultiSpanCache3D(
+        myBSplineCurve->Degree(), myBSplineCurve->IsPeriodic(),
+        &myBSplineCurve->KnotSequence(), myBSplineCurve->Poles(), myBSplineCurve->Weights(),
+        myMaxSpansCached);
     break;
   default: // avoid gcc compilation warnings
     break;
@@ -628,7 +614,7 @@ void GeomAdaptor_Curve::D0(const Standard_Real U, gp_Pnt& P) const
       myBSplineCurve->LocalD0(U, aStart, aFinish, P);
     else
     {
-      if (myCacheIsUsed)
+      if (myMaxSpansCached > 0)
       {
         if (myCurveCache.IsNull())
           CreateCache();
@@ -666,7 +652,7 @@ void GeomAdaptor_Curve::D1(const Standard_Real U, gp_Pnt& P, gp_Vec& V) const
       myBSplineCurve->LocalD1(U, aStart, aFinish, P, V);
     else
     {
-      if (myCacheIsUsed)
+      if (myMaxSpansCached > 0)
       {
         if (myCurveCache.IsNull())
           CreateCache();
@@ -705,7 +691,7 @@ void GeomAdaptor_Curve::D2(const Standard_Real U,
       myBSplineCurve->LocalD2(U, aStart, aFinish, P, V1, V2);
     else
     {
-      if (myCacheIsUsed)
+      if (myMaxSpansCached > 0)
       {
         if (myCurveCache.IsNull())
           CreateCache();
@@ -745,7 +731,7 @@ void GeomAdaptor_Curve::D3(const Standard_Real U,
       myBSplineCurve->LocalD3(U, aStart, aFinish, P, V1, V2, V3);
     else
     {
-      if (myCacheIsUsed)
+      if (myMaxSpansCached > 0)
       {
         if (myCurveCache.IsNull())
           CreateCache();
@@ -988,14 +974,12 @@ Handle(Geom_BSplineCurve) GeomAdaptor_Curve::BSpline() const
 //=======================================================================
 void GeomAdaptor_Curve::SetMaxSpansCached(const Standard_Integer theMaxSpans)
 {
-  myCacheIsUsed = theMaxSpans > 0;
-  if (!myCacheIsUsed)
-  {
-    myCurveCache.Nullify();
-    return;
-  }
-
   myMaxSpansCached = theMaxSpans;
   if (!myCurveCache.IsNull())
-    myCurveCache->SetMaxSpansCached(myMaxSpansCached);
+  {
+    if (myMaxSpansCached > 0)
+      myCurveCache->SetMaxSpansCached(myMaxSpansCached);
+    else
+      myCurveCache.Nullify();
+  }
 }

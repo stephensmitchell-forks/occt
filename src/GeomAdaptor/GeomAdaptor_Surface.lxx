@@ -31,8 +31,7 @@ inline GeomAdaptor_Surface::GeomAdaptor_Surface()
    myTolU(0.), 
    myTolV(0.),
    mySurfaceType(GeomAbs_OtherSurface),
-   myCacheIsUsed(Standard_False),
-   myMaxSpansCached(0)
+   myMaxSpansCached(BSplSLib_MultiSpanCache::MAX_SPANS_COUNT)
 {
 } 
 
@@ -43,7 +42,7 @@ inline GeomAdaptor_Surface::GeomAdaptor_Surface()
 
 inline GeomAdaptor_Surface::GeomAdaptor_Surface(const Handle(Geom_Surface)& S)
  : myTolU(0.), myTolV(0.),
-  myMaxSpansCached(0)
+   myMaxSpansCached(BSplSLib_MultiSpanCache::MAX_SPANS_COUNT)
 {
   Load(S);
 }
@@ -60,7 +59,7 @@ inline GeomAdaptor_Surface::GeomAdaptor_Surface(const Handle(Geom_Surface)& S,
                                                 const Standard_Real VLast,
                                                 const Standard_Real TolU,
                                                 const Standard_Real TolV)
-  : myMaxSpansCached(0)
+  : myMaxSpansCached(BSplSLib_MultiSpanCache::MAX_SPANS_COUNT)
 {
   Load(S,UFirst,ULast,VFirst,VLast,TolU,TolV);
 }

@@ -31,24 +31,9 @@
 template<class CACHE_TYPE>
 class BSplCLib_MultiSpanCacheStorage
 {
-protected:
+public:
   static const Standard_Integer MAX_SPANS_COUNT = 10;
 
-private:
-  struct IndexedSpan
-  {
-    Standard_Integer mySpan;
-    Standard_Integer myIndex;
-
-    IndexedSpan(const Standard_Integer theSpan = 0, const Standard_Integer theIndex = 0)
-      : mySpan(theSpan), myIndex(theIndex)
-    {}
-  };
-
-  typedef NCollection_LocalArray<Handle(CACHE_TYPE), MAX_SPANS_COUNT> CacheArray;
-  typedef NCollection_LocalArray<IndexedSpan, MAX_SPANS_COUNT>        SpanArray;
-
-public:
   //! Construct multi-span cache with given parameters
   //! \param theMaxSpans  [in] maximal spans to be cached
   BSplCLib_MultiSpanCacheStorage(const Standard_Integer theMaxSpans = MAX_SPANS_COUNT);
@@ -95,6 +80,20 @@ private:
   const BSplCLib_MultiSpanCacheStorage& operator=(const BSplCLib_MultiSpanCacheStorage&);
 
 private:
+  struct IndexedSpan
+  {
+    Standard_Integer mySpan;
+    Standard_Integer myIndex;
+
+    IndexedSpan(const Standard_Integer theSpan = 0, const Standard_Integer theIndex = 0)
+      : mySpan(theSpan), myIndex(theIndex)
+    {}
+  };
+
+  typedef NCollection_LocalArray<Handle(CACHE_TYPE), MAX_SPANS_COUNT> CacheArray;
+  typedef NCollection_LocalArray<IndexedSpan, MAX_SPANS_COUNT>        SpanArray;
+
+
   Standard_Integer            myMaxSpansCount; ///< maximal number of spans to be cached
   CacheArray                  myCaches;        ///< list of caches
   SpanArray                   myCachedSpans;   ///< indices of used spans, which are sorted from last used till oldest

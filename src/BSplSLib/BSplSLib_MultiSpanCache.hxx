@@ -33,10 +33,10 @@ public:
   //! \param theMaxSpans   [in] maximal spans to be cached
   Standard_EXPORT BSplSLib_MultiSpanCache(const Standard_Integer      theDegreeU,
                                           const Standard_Boolean      thePeriodicU,
-                                          const TColStd_Array1OfReal& theFlatKnotsU,
+                                          const TColStd_Array1OfReal* theFlatKnotsU,
                                           const Standard_Integer      theDegreeV,
                                           const Standard_Boolean      thePeriodicV,
-                                          const TColStd_Array1OfReal& theFlatKnotsV,
+                                          const TColStd_Array1OfReal* theFlatKnotsV,
                                           const TColgp_Array2OfPnt&   thePoles,
                                           const TColStd_Array2OfReal* theWeights  = NULL,
                                           const Standard_Integer      theMaxSpans = MAX_SPANS_COUNT);
@@ -115,8 +115,8 @@ private:
   Standard_Integer            myDegreeV;       ///< degree along V
   Standard_Boolean            myPeriodicU;     ///< periodicity along U
   Standard_Boolean            myPeriodicV;     ///< periodicity along V
-  TColStd_Array1OfReal        myFlatKnotsU;    ///< knots along U (duplicated according to multiplicity)
-  TColStd_Array1OfReal        myFlatKnotsV;    ///< knots along V (duplicated according to multiplicity)
+  const TColStd_Array1OfReal* myFlatKnotsU;    ///< knots along U (duplicated according to multiplicity)
+  const TColStd_Array1OfReal* myFlatKnotsV;    ///< knots along V (duplicated according to multiplicity)
   Standard_Real               myFirstKnotU;    ///< first knot along U (used for periodic normalization)
   Standard_Real               myLastKnotU;     ///< last knot along U (used for periodic normalization)
   Standard_Real               myFirstKnotV;    ///< first knot along V (used for periodic normalization)

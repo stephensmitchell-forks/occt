@@ -38,7 +38,7 @@ public:
   //! \param theMaxSpans  [in] maximal spans to be cached
   BSplCLib_MultiSpanCacheBase(const Standard_Integer      theDegree,
                               const Standard_Boolean      thePeriodic,
-                              const TColStd_Array1OfReal& theFlatKnots,
+                              const TColStd_Array1OfReal* theFlatKnots,
                               const Array1OfPOINT&        thePoles,
                               const TColStd_Array1OfReal* theWeights = NULL,
                               const Standard_Integer      theMaxSpans = MAX_SPANS_COUNT);
@@ -99,7 +99,7 @@ private:
   Standard_Boolean            myPeriodic;      ///< periodicity of the curve
   Standard_Real               myFirstKnot;     ///< value of the first knot (used for periodic normalization)
   Standard_Real               myLastKnot;      ///< value of the lsst knot (used for periodic normalization)
-  TColStd_Array1OfReal        myFlatKnots;     ///< knots duplicated according to multiplicity
+  const TColStd_Array1OfReal* myFlatKnots;     ///< knots duplicated according to multiplicity
   const Array1OfPOINT&        myPoles;         ///< array of poles
   const TColStd_Array1OfReal* myWeights;       ///< array of weights
 };
@@ -111,7 +111,7 @@ class BSplCLib_MultiSpanCache2D : public BSplCLib_MultiSpanCacheBase<gp_Pnt2d, g
 public:
   Standard_EXPORT BSplCLib_MultiSpanCache2D(const Standard_Integer      theDegree,
                                             const Standard_Boolean      thePeriodic,
-                                            const TColStd_Array1OfReal& theFlatKnots,
+                                            const TColStd_Array1OfReal* theFlatKnots,
                                             const TColgp_Array1OfPnt2d& thePoles,
                                             const TColStd_Array1OfReal* theWeights  = NULL,
                                             const Standard_Integer      theMaxSpans = MAX_SPANS_COUNT)
@@ -129,7 +129,7 @@ class BSplCLib_MultiSpanCache3D : public BSplCLib_MultiSpanCacheBase<gp_Pnt, gp_
 public:
   Standard_EXPORT BSplCLib_MultiSpanCache3D(const Standard_Integer      theDegree,
                                             const Standard_Boolean      thePeriodic,
-                                            const TColStd_Array1OfReal& theFlatKnots,
+                                            const TColStd_Array1OfReal* theFlatKnots,
                                             const TColgp_Array1OfPnt&   thePoles,
                                             const TColStd_Array1OfReal* theWeights  = NULL,
                                             const Standard_Integer      theMaxSpans = MAX_SPANS_COUNT)

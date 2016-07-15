@@ -115,6 +115,5 @@ BSplCLib_MultiSpanCacheStorage<CACHE_TYPE>::SetLatestCache(const Standard_Intege
 template<class CACHE_TYPE>
 void BSplCLib_MultiSpanCacheStorage<CACHE_TYPE>::ShiftCachedSpans(Standard_Integer theNbElems)
 {
-  for (Standard_Integer i = theNbElems; i > 0; --i)
-    myCachedSpans[i] = myCachedSpans[i - 1];
+  memmove(myCachedSpans + 1, myCachedSpans, theNbElems * sizeof(IndexedSpan));
 }
