@@ -420,7 +420,11 @@ static Standard_Integer extrema(Draw_Interpretor& di, Standard_Integer n, const 
         {
         gp_Pnt P1,P2;
         Ex.Points(i,P1,P2);
-        if (P1.Distance(P2) < 1.e-16) continue;
+        if (P1.Distance(P2) < 1.e-16)
+        {
+          di << "Extrema " << i << " is point : " << P1.X() << " " << P1.Y() << " " << P1.Z() << "\n";
+          continue;
+        }
         Handle(Geom_Line) L = new Geom_Line(P1,gp_Vec(P1,P2));
         Handle(Geom_TrimmedCurve) CT = 
           new Geom_TrimmedCurve(L, 0., P1.Distance(P2));
@@ -446,7 +450,11 @@ static Standard_Integer extrema(Draw_Interpretor& di, Standard_Integer n, const 
         {
         gp_Pnt P1,P2;
         Ex.Points(i,P1,P2);
-        if (P1.Distance(P2) < 1.e-16) continue;
+        if (P1.Distance(P2) < 1.e-16)
+        {
+          di << "Extrema " << i << " is point : " << P1.X() << " " << P1.Y() << " " << P1.Z() << "\n";
+          continue;
+        }
         Handle(Geom_Line) L = new Geom_Line(P1,gp_Vec(P1,P2));
         Handle(Geom_TrimmedCurve) CT = 
           new Geom_TrimmedCurve(L, 0., P1.Distance(P2));
@@ -473,7 +481,10 @@ static Standard_Integer extrema(Draw_Interpretor& di, Standard_Integer n, const 
         gp_Pnt P1,P2;
         Ex.Points(i,P1,P2);
         if (P1.Distance(P2) < 1.e-16)
+        {
+          di << "Extrema " << i << " is point : " << P1.X() << " " << P1.Y() << " " << P1.Z() << "\n";
           continue;
+        }
 
         Handle(Geom_Line) L = new Geom_Line(P1,gp_Vec(P1,P2));
         Handle(Geom_TrimmedCurve) CT = 

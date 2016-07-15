@@ -56,10 +56,39 @@ void Extrema_ExtElCS::Perform(const gp_Lin& C,
     mySqDist->SetValue(1, S.SquareDistance(C));
     myIsPar = Standard_True;
   }
-  else {
+  else
+  {
     myNbExt = 0;
-  }
-  
+
+    IntAna_IntConicQuad anInter(C, S,
+                                Precision::Angular(),
+                                Precision::Confusion());
+    if(anInter.IsDone())
+    {
+      myNbExt = anInter.NbPoints();
+    }
+
+    if(myNbExt == 0)
+      return;
+
+    myPoint1 = new Extrema_HArray1OfPOnCurv(1, myNbExt);
+    mySqDist = new TColStd_HArray1OfReal(1, myNbExt);
+    myPoint2 = new Extrema_HArray1OfPOnSurf(1, myNbExt);
+
+    Standard_Real aUSurf = 0.0, aVSurf = 0.0;
+    Extrema_POnCurv aPOnC;
+    Extrema_POnSurf aPOnS;
+
+    const gp_Pnt& aPC = anInter.Point(1);
+    aPOnC.SetValues(anInter.ParamOnConic(1), aPC);
+    myPoint1->SetValue(1, aPOnC);
+
+    ElSLib::PlaneParameters(S.Position(), aPC, aUSurf, aVSurf);
+    const gp_Pnt aPS(ElSLib::PlaneValue(aUSurf, aVSurf, S.Position()));
+    aPOnS.SetParameters(aUSurf, aVSurf, aPS);
+    myPoint2->SetValue(1, aPOnS);
+    mySqDist->SetValue(1, 0.0);
+  } 
 }
 
 

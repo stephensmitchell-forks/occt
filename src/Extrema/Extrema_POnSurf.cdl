@@ -40,12 +40,12 @@ is
     	---C++: inline
     	is static;          
     
-    Parameter (me : mutable; theU, theV: Real from Standard; theP : Pnt from gp) 
-    	---Purpose: Sets the params of current POnSurf instance.
-       --         (e.g. to the point to be projected).
-    	---C++: inline
-    	is static;          
-    
+    SetParameters(me: in out;
+                  theU, theV: Real from Standard;
+                  thePnt: Pnt from gp);
+      ---Purpose: Sets the params of current POnSurf instance.
+      --          (e.g. to the point to be projected).
+      ---C++: inline    
     
 fields
     myU: Real;

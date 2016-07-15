@@ -123,7 +123,7 @@ void Extrema_ExtCS::Perform(const Adaptor3d_Curve& C,
         break;
       case GeomAbs_Plane:
         myExtElCS.Perform(C.Line(), myS->Plane());
-        if (myExtElCS.IsParallel())   break;
+        if (myExtElCS.IsParallel() || myExtElCS.NbExt() > 0)   break;
 
       case GeomAbs_Torus:
       case GeomAbs_Cone:
