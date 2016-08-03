@@ -306,6 +306,17 @@ void BOPAlgo_PaveFiller::PerformFF()
       //
       // Curves, Points 
       aFF.Init(aNbCurves, aNbPoints);
+
+      // Fix bounding box expanding coefficient.
+      Standard_Real aBoxExpandValue = aTolR3D;
+      if (aNbCurves > 0)
+      {
+        // Modify geometric expanding coefficient by topology value,
+        // since this bounging box used in sharing (vertex or edge).
+        Standard_Real aMaxVertexTol = Max (BRep_Tool::MaxTolerance(aFaceFace.Face1(), TopAbs_VERTEX),
+                                           BRep_Tool::MaxTolerance(aFaceFace.Face2(), TopAbs_VERTEX));
+        aBoxExpandValue += aMaxVertexTol;
+      }
       //
       // Curves
       BOPDS_VectorOfCurve& aVNC=aFF.ChangeCurves();
@@ -314,7 +325,7 @@ void BOPAlgo_PaveFiller::PerformFF()
         //
         const IntTools_Curve& aIC=aCvsX(i);
         const Handle(Geom_Curve)& aC3D= aIC.Curve();
-        bValid=IntTools_Tools::CheckCurve(aC3D, aTolR3D, aBox);
+        bValid=IntTools_Tools::CheckCurve(aC3D, aBoxExpandValue, aBox);
         if (bValid) {
           BOPDS_Curve& aNC=aVNC.Append1();
           aNC.SetCurve(aIC);

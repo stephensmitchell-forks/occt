@@ -32,6 +32,7 @@ uses
     Curve    from Geom,
     Surface  from Geom,
     Shape    from GeomAbs,
+    ShapeEnum from TopAbs,
     
     Triangulation          from Poly,
     Polygon3D              from Poly,
@@ -604,6 +605,15 @@ is
 	---Purpose: Returns the parameters of the vertex on the face.
     raises
     	NullObject from Standard;
+
+    MaxTolerance(myclass;
+                 theShape    : Shape from TopoDS;
+                 theSubShape : ShapeEnum from TopAbs)
+    returns Real from Standard;
+    ---Purpose:
+    -- Returns the maximum tolerance of input shape subshapes.
+    -- @param theShape    - Shape to search tolerance.
+    -- @param theSubShape - Search subshape, only Face, Edge or Vertex are supported.
 
 end Tool;
 
