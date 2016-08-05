@@ -3,7 +3,7 @@ puts "CR27074"
 puts "========"
 puts ""
 #######################################################################
-# Compare performance of calculation value of NURBS surface with different number of cached spans
+# Compare performance of calculation value of NURBS surface with multi-span cache
 #######################################################################
 
 pload QAcommands

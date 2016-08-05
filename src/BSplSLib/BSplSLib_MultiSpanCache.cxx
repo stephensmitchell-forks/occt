@@ -41,9 +41,17 @@ BSplSLib_MultiSpanCache::BSplSLib_MultiSpanCache(const Standard_Integer         
     myWeights(theWeights),
     mySingleSpanU(1),
     mySingleSpanV(1),
-    myIsBezier(Standard_True)
+    myCaches(1)
 {
   Clear();
+
+  // Build cache for single span
+  TColStd_Array1OfReal aFlatKnotsU(BSplCLib::FlatBezierKnots(myDegreeU), 1, (myDegreeU + 1) * 2);
+  TColStd_Array1OfReal aFlatKnotsV(BSplCLib::FlatBezierKnots(myDegreeV), 1, (myDegreeV + 1) * 2);
+  myCaches[myLastCacheInd] = new BSplSLib_Cache;
+  myCaches[myLastCacheInd]->BuildCache(myDegreeU, myPeriodicU, aFlatKnotsU, myDegreeU + 1,
+                                       myDegreeV, myPeriodicV, aFlatKnotsV, myDegreeV + 1,
+                                       myPoles, myWeights);
 }
 
 BSplSLib_MultiSpanCache::BSplSLib_MultiSpanCache(const Standard_Integer         theDegreeU,
@@ -76,7 +84,7 @@ BSplSLib_MultiSpanCache::BSplSLib_MultiSpanCache(const Standard_Integer         
     myWeights(theWeights),
     mySingleSpanU(0),
     mySingleSpanV(0),
-    myIsBezier(Standard_False)
+    myCaches((theKnotsU->Upper() - theKnotsU->Lower()) * (theKnotsV->Upper() - theKnotsV->Lower()))
 {
   Clear();
 
@@ -93,14 +101,11 @@ BSplSLib_MultiSpanCache::BSplSLib_MultiSpanCache(const Standard_Integer         
               isSingleSpanU ? mySingleSpanU : aSpanIndex,
               isSingleSpanV ? mySingleSpanV : aSpanIndex);
   }
-
-  if (!IsSingleSpan())
-    myCaches = new CacheArray(theKnotsU->Lower(), theKnotsU->Upper(),
-                              theKnotsV->Lower(), theKnotsV->Upper());
 }
 
 void BSplSLib_MultiSpanCache::Clear()
 {
+  myLastCacheInd = 0;
   myLastU.myParameter = Precision::Infinite();
   myLastU.mySpan = -1;
   myLastV.myParameter = Precision::Infinite();
@@ -113,8 +118,8 @@ void BSplSLib_MultiSpanCache::D0(const Standard_Real theU,
 {
   Standard_Real aU = theU;
   Standard_Real aV = theV;
-  FindCache(aU, aV);
-  myLastCache->D0(aU, aV, thePoint);
+  const Handle(BSplSLib_Cache)& aCache = FindCache(aU, aV);
+  aCache->D0(aU, aV, thePoint);
 }
 
 void BSplSLib_MultiSpanCache::D1(const Standard_Real theU,
@@ -125,8 +130,8 @@ void BSplSLib_MultiSpanCache::D1(const Standard_Real theU,
 {
   Standard_Real aU = theU;
   Standard_Real aV = theV;
-  FindCache(aU, aV);
-  myLastCache->D1(aU, aV, thePoint, theTangentU, theTangentV);
+  const Handle(BSplSLib_Cache)& aCache = FindCache(aU, aV);
+  aCache->D1(aU, aV, thePoint, theTangentU, theTangentV);
 }
 
 void BSplSLib_MultiSpanCache::D2(const Standard_Real theU,
@@ -140,19 +145,22 @@ void BSplSLib_MultiSpanCache::D2(const Standard_Real theU,
 {
   Standard_Real aU = theU;
   Standard_Real aV = theV;
-  FindCache(aU, aV);
-  myLastCache->D2(aU, aV, thePoint, theTangentU, theTangentV,
-                  theCurvatureU, theCurvatureV, theCurvatureUV);
+  const Handle(BSplSLib_Cache)& aCache = FindCache(aU, aV);
+  aCache->D2(aU, aV, thePoint, theTangentU, theTangentV,
+             theCurvatureU, theCurvatureV, theCurvatureUV);
 }
 
-void BSplSLib_MultiSpanCache::SpanIndex(const Standard_Real theU,
-                                        const Standard_Real theV,
-                                        Standard_Integer&   theSpanIndexU,
-                                        Standard_Integer&   theSpanIndexV) const
+Standard_Integer BSplSLib_MultiSpanCache::SpanIndex(const Standard_Real theU,
+                                                    const Standard_Real theV,
+                                                    Standard_Integer&   theSpanIndexU,
+                                                    Standard_Integer&   theSpanIndexV) const
 {
   // Get indices along each parameter (U, V)
   theSpanIndexU = mySingleSpanU;
   theSpanIndexV = mySingleSpanV;
+  if (IsSingleSpan())
+    return 0;
+
   if (theSpanIndexU == 0)
   {
     if (theU == myLastU.myParameter) // the parameters should be equal to a bit
@@ -175,9 +183,11 @@ void BSplSLib_MultiSpanCache::SpanIndex(const Standard_Real theU,
                                 theSpanIndexV, aNewV);
     }
   }
+  return (theSpanIndexU - myKnotsU->Lower()) * (myKnotsV->Upper() - myKnotsV->Lower()) +
+          theSpanIndexV - myKnotsV->Lower();
 }
 
-void BSplSLib_MultiSpanCache::FindCache(Standard_Real& theU, Standard_Real& theV)
+const Handle(BSplSLib_Cache)& BSplSLib_MultiSpanCache::FindCache(Standard_Real& theU, Standard_Real& theV)
 {
   // Normalize the parameters for periodical B-splines
   if (myPeriodicU && (theU > myLastKnotU || theU < myFirstKnotU))
@@ -187,12 +197,13 @@ void BSplSLib_MultiSpanCache::FindCache(Standard_Real& theU, Standard_Real& theV
 
   // Do not want to search in due to lack of performance.
   // Just check the last used cache is valid for the given parameters.
-  if (!myLastCache.IsNull() && (IsSingleSpan() || myLastCache->IsCacheValid(theU, theV)))
-    return ;
+  if (!myCaches[myLastCacheInd].IsNull() &&
+      (IsSingleSpan() || myCaches[myLastCacheInd]->IsCacheValid(theU, theV)))
+    return myCaches[myLastCacheInd];
 
   Standard_Integer aSpanIndexU = 0;
   Standard_Integer aSpanIndexV = 0;
-  SpanIndex(theU, theV, aSpanIndexU, aSpanIndexV);
+  myLastCacheInd = SpanIndex(theU, theV, aSpanIndexU, aSpanIndexV);
   // store last found indices
   myLastU.myParameter = theU;
   myLastU.mySpan = aSpanIndexU;
@@ -200,31 +211,18 @@ void BSplSLib_MultiSpanCache::FindCache(Standard_Real& theU, Standard_Real& theV
   myLastV.mySpan = aSpanIndexV;
 
   // check the cache is already built
-  Handle(BSplSLib_Cache)& aCache =
-      myCaches.IsNull() ? myLastCache : myCaches->ChangeValue(aSpanIndexU, aSpanIndexV);
+  Handle(BSplSLib_Cache)& aCache = myCaches[myLastCacheInd];
   if (aCache.IsNull())
   {
+    // calculate index of cache for the flat knots
+    aSpanIndexU = BSplCLib::FlatIndex(myDegreeU, aSpanIndexU, *myMultsU, myPeriodicU);
+    aSpanIndexV = BSplCLib::FlatIndex(myDegreeV, aSpanIndexV, *myMultsV, myPeriodicV);
     // build new cache
     aCache = new BSplSLib_Cache;
-    if (myIsBezier)
-    {
-      TColStd_Array1OfReal aFlatKnotsU(BSplCLib::FlatBezierKnots(myDegreeU), 1, (myDegreeU + 1) * 2);
-      TColStd_Array1OfReal aFlatKnotsV(BSplCLib::FlatBezierKnots(myDegreeV), 1, (myDegreeV + 1) * 2);
-      aCache->BuildCache(myDegreeU, myPeriodicU, aFlatKnotsU, myDegreeU + 1,
-                         myDegreeV, myPeriodicV, aFlatKnotsV, myDegreeV + 1,
-                         myPoles, myWeights);
-    }
-    else
-    {
-      // calculate index of cache for the flat knots
-      aSpanIndexU = BSplCLib::FlatIndex(myDegreeU, aSpanIndexU, *myMultsU, myPeriodicU);
-      aSpanIndexV = BSplCLib::FlatIndex(myDegreeV, aSpanIndexV, *myMultsV, myPeriodicV);
-      aCache->BuildCache(myDegreeU, myPeriodicU, *myFlatKnotsU, aSpanIndexU,
-                         myDegreeV, myPeriodicV, *myFlatKnotsV, aSpanIndexV,
-                         myPoles, myWeights);
-    }
+    aCache->BuildCache(myDegreeU, myPeriodicU, *myFlatKnotsU, aSpanIndexU,
+                       myDegreeV, myPeriodicV, *myFlatKnotsV, aSpanIndexV,
+                       myPoles, myWeights);
   }
 
-  if (!myCaches.IsNull())
-    myLastCache = aCache;
+  return aCache;
 }

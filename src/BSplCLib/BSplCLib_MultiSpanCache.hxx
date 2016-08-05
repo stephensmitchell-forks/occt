@@ -15,7 +15,7 @@
 #define _BSplCLib_MultiSpanCache_Headerfile
 
 #include <BSplCLib_Cache.hxx>
-#include <NCollection_HArray1.hxx>
+#include <NCollection_LocalArray.hxx>
 #include <TColStd_Array1OfInteger.hxx>
 
 //! \brief Base container for list of caches for Bezier and B-spline curves.
@@ -101,29 +101,28 @@ private:
   //! Find cached span containing given parameter.
   //! Parameter is adjusted to period for periodic curves.
   //! If such span is not cached yet, prepares new cache object.
-  void FindCache(Standard_Real& theParameter);
+  const Handle(BSplCLib_Cache)& FindCache(Standard_Real& theParameter);
 
   BSplCLib_MultiSpanCacheBase(const BSplCLib_MultiSpanCacheBase&);
   const BSplCLib_MultiSpanCacheBase& operator=(const BSplCLib_MultiSpanCacheBase&);
 
 private:
-  NCOLLECTION_HARRAY1(CacheArray, Handle(BSplCLib_Cache));
+  typedef NCollection_LocalArray<Handle(BSplCLib_Cache), 1> CacheArray;
 
-  Standard_Integer               myDegree;     ///< degree of the curve
-  Standard_Boolean               myPeriodic;   ///< periodicity of the curve
-  Standard_Real                  myFirstKnot;  ///< value of the first knot (used for periodic normalization)
-  Standard_Real                  myLastKnot;   ///< value of the lsst knot (used for periodic normalization)
-  const TColStd_Array1OfReal*    myKnots;      ///< knots
-  const TColStd_Array1OfInteger* myMults;      ///< multiplicities
-  const TColStd_Array1OfReal*    myFlatKnots;  ///< knots duplicated according to multiplicity
-  const Array1OfPOINT&           myPoles;      ///< array of poles
-  const TColStd_Array1OfReal*    myWeights;    ///< array of weights
+  Standard_Integer               myDegree;       ///< degree of the curve
+  Standard_Boolean               myPeriodic;     ///< periodicity of the curve
+  Standard_Real                  myFirstKnot;    ///< value of the first knot (used for periodic normalization)
+  Standard_Real                  myLastKnot;     ///< value of the lsst knot (used for periodic normalization)
+  const TColStd_Array1OfReal*    myKnots;        ///< knots
+  const TColStd_Array1OfInteger* myMults;        ///< multiplicities
+  const TColStd_Array1OfReal*    myFlatKnots;    ///< knots duplicated according to multiplicity
+  const Array1OfPOINT&           myPoles;        ///< array of poles
+  const TColStd_Array1OfReal*    myWeights;      ///< array of weights
 
-  Handle(CacheArray)             myCaches;     ///< array of caches
-  Handle(BSplCLib_Cache)         myLastCache;  ///< last used cache
+  CacheArray                     myCaches;       ///< array of caches
+  Standard_Integer               myLastCacheInd; ///< index of last used cache
 
-  Standard_Boolean               mySingleSpan; ///< the curve consists of just one span
-  Standard_Boolean               myIsBezier;   ///< flag that the cached curve is Bezier
+  Standard_Boolean               mySingleSpan;   ///< the curve consists of just one span
 };
 
 

@@ -30,8 +30,13 @@ BSplCLib_MultiSpanCacheBase<POINT_TYPE, VEC_TYPE>::BSplCLib_MultiSpanCacheBase(
     myPoles(thePoles),
     myWeights(theWeights),
     mySingleSpan(Standard_True),
-    myIsBezier(Standard_True)
+    myCaches(1),
+    myLastCacheInd(0)
 {
+  // Build cache for single span
+  TColStd_Array1OfReal aFlatKnots(BSplCLib::FlatBezierKnots(myDegree), 1, (myDegree + 1) * 2);
+  myCaches[myLastCacheInd] = new BSplCLib_Cache;
+  myCaches[myLastCacheInd]->BuildCache(myDegree, myPeriodic, aFlatKnots, myDegree + 1, myPoles, myWeights);
 }
 
 template<class POINT_TYPE, class VEC_TYPE>
@@ -53,10 +58,9 @@ BSplCLib_MultiSpanCacheBase<POINT_TYPE, VEC_TYPE>::BSplCLib_MultiSpanCacheBase(
     myPoles(thePoles),
     myWeights(theWeights),
     mySingleSpan(theKnots->Length() == 2),
-    myIsBezier(Standard_False)
+    myCaches(theKnots->Upper() - theKnots->Lower()),
+    myLastCacheInd(0)
 {
-  if (!mySingleSpan)
-    myCaches = new CacheArray(theKnots->Lower(), theKnots->Upper());
 }
 
 template<class POINT_TYPE, class VEC_TYPE>
@@ -64,8 +68,8 @@ void BSplCLib_MultiSpanCacheBase<POINT_TYPE, VEC_TYPE>::D0(const Standard_Real t
                                                                  POINT_TYPE&   thePoint)
 {
   Standard_Real aPar = theParameter;
-  FindCache(aPar);
-  myLastCache->D0(aPar, thePoint);
+  const Handle(BSplCLib_Cache)& aCache = FindCache(aPar);
+  aCache->D0(aPar, thePoint);
 }
 
 template<class POINT_TYPE, class VEC_TYPE>
@@ -74,8 +78,8 @@ void BSplCLib_MultiSpanCacheBase<POINT_TYPE, VEC_TYPE>::D1(const Standard_Real t
                                                                  VEC_TYPE&     theTangent)
 {
   Standard_Real aPar = theParameter;
-  FindCache(aPar);
-  myLastCache->D1(aPar, thePoint, theTangent);
+  const Handle(BSplCLib_Cache)& aCache = FindCache(aPar);
+  aCache->D1(aPar, thePoint, theTangent);
 }
 
 template<class POINT_TYPE, class VEC_TYPE>
@@ -85,8 +89,8 @@ void BSplCLib_MultiSpanCacheBase<POINT_TYPE, VEC_TYPE>::D2(const Standard_Real t
                                                                  VEC_TYPE&     theCurvature)
 {
   Standard_Real aPar = theParameter;
-  FindCache(aPar);
-  myLastCache->D2(aPar, thePoint, theTangent, theCurvature);
+  const Handle(BSplCLib_Cache)& aCache = FindCache(aPar);
+  aCache->D2(aPar, thePoint, theTangent, theCurvature);
 }
 
 template<class POINT_TYPE, class VEC_TYPE>
@@ -97,8 +101,8 @@ void BSplCLib_MultiSpanCacheBase<POINT_TYPE, VEC_TYPE>::D3(const Standard_Real t
                                                                  VEC_TYPE&     theTorsion)
 {
   Standard_Real aPar = theParameter;
-  FindCache(aPar);
-  myLastCache->D3(aPar, thePoint, theTangent, theCurvature, theTorsion);
+  const Handle(BSplCLib_Cache)& aCache = FindCache(aPar);
+  aCache->D3(aPar, thePoint, theTangent, theCurvature, theTorsion);
 }
 
 template<class POINT_TYPE, class VEC_TYPE>
@@ -116,7 +120,8 @@ Standard_Integer BSplCLib_MultiSpanCacheBase<POINT_TYPE, VEC_TYPE>::SpanIndex(co
 }
 
 template<class POINT_TYPE, class VEC_TYPE>
-void BSplCLib_MultiSpanCacheBase<POINT_TYPE, VEC_TYPE>::FindCache(Standard_Real& theParameter)
+const Handle(BSplCLib_Cache)&
+BSplCLib_MultiSpanCacheBase<POINT_TYPE, VEC_TYPE>::FindCache(Standard_Real& theParameter)
 {
   // Normalize the parameters for periodical B-splines
   if (myPeriodic && (theParameter > myLastKnot || theParameter < myFirstKnot))
@@ -124,30 +129,22 @@ void BSplCLib_MultiSpanCacheBase<POINT_TYPE, VEC_TYPE>::FindCache(Standard_Real&
 
   // Do not want to use LocateParameter due to lack of performance.
   // Just check the last used cache is valid for the given parameter.
-  if (!myLastCache.IsNull() && (mySingleSpan || myLastCache->IsCacheValid(theParameter)))
-    return ;
+  if (!myCaches[myLastCacheInd].IsNull() &&
+      (mySingleSpan || myCaches[myLastCacheInd]->IsCacheValid(theParameter)))
+      return myCaches[myLastCacheInd];
 
   Standard_Integer aSpanIndex = SpanIndex(theParameter);
+  myLastCacheInd = aSpanIndex - (myKnots ? myKnots->Lower() : 1);
   // check the cache is already built
-  Handle(BSplCLib_Cache)& aCache =
-      myCaches.IsNull() ? myLastCache : myCaches->ChangeValue(aSpanIndex);
+  Handle(BSplCLib_Cache)& aCache = myCaches[myLastCacheInd];
   if (aCache.IsNull())
   {
+    // calculate index of cache for the flat knots
+    aSpanIndex = BSplCLib::FlatIndex(myDegree, aSpanIndex, *myMults, myPeriodic);
     // build new cache
     aCache = new BSplCLib_Cache;
-    if (myIsBezier)
-    {
-      TColStd_Array1OfReal aFlatKnots(BSplCLib::FlatBezierKnots(myDegree), 1, (myDegree + 1) * 2);
-      aCache->BuildCache(myDegree, myPeriodic, aFlatKnots, myDegree + 1, myPoles, myWeights);
-    }
-    else
-    {
-      // calculate index of cache for the flat knots
-      aSpanIndex = BSplCLib::FlatIndex(myDegree, aSpanIndex, *myMults, myPeriodic);
-      aCache->BuildCache(myDegree, myPeriodic, *myFlatKnots, aSpanIndex, myPoles, myWeights);
-    }
+    aCache->BuildCache(myDegree, myPeriodic, *myFlatKnots, aSpanIndex, myPoles, myWeights);
   }
 
-  if (!myCaches.IsNull())
-    myLastCache = aCache;
+  return aCache;
 }

@@ -15,7 +15,7 @@
 #define _BSplSLib_MultiSpanCache_Headerfile
 
 #include <BSplSLib_Cache.hxx>
-#include <NCollection_HArray2.hxx>
+#include <NCollection_LocalArray.hxx>
 
 //! \brief A container for list of caches for Bezier and B-spline surfaces.
 //!        Stores a 2D array of caches. Each cache is initialized in first time called.
@@ -113,15 +113,16 @@ private:
   //! \param theV          [in]  parameter V
   //! \param theSpanIndexU [out] index of span containing theU parameter
   //! \param theSpanIndexV [out] index of span containing theV parameter
-  void SpanIndex(const Standard_Real theU,
-                 const Standard_Real theV,
-                 Standard_Integer&   theSpanIndexU,
-                 Standard_Integer&   theSpanIndexV) const;
+  //! \return Index of the cache in the array
+  Standard_Integer SpanIndex(const Standard_Real theU,
+                             const Standard_Real theV,
+                             Standard_Integer&   theSpanIndexU,
+                             Standard_Integer&   theSpanIndexV) const;
 
   //! Find cached span containing parametric point (theU, theV).
   //! Parameters are adjusted to period for periodic surface.
   //! If such span is not cached yet, prepares new cache object.
-  void FindCache(Standard_Real& theU, Standard_Real& theV);
+  const Handle(BSplSLib_Cache)& FindCache(Standard_Real& theU, Standard_Real& theV);
 
   //! Return Standard_True if the surface has just one span
   Standard_Boolean IsSingleSpan() const
@@ -131,7 +132,7 @@ private:
   const BSplSLib_MultiSpanCache& operator=(const BSplSLib_MultiSpanCache&);
 
 private:
-  NCOLLECTION_HARRAY2(CacheArray, Handle(BSplSLib_Cache));
+  typedef NCollection_LocalArray<Handle(BSplSLib_Cache), 1> CacheArray;
 
   Standard_Integer               myDegreeU;       ///< degree along U
   Standard_Integer               myDegreeV;       ///< degree along V
@@ -150,8 +151,8 @@ private:
   const TColgp_Array2OfPnt&      myPoles;         ///< array of poles
   const TColStd_Array2OfReal*    myWeights;       ///< array of weights
 
-  Handle(CacheArray)             myCaches;        ///< array of caches
-  Handle(BSplSLib_Cache)         myLastCache;     ///< last used cache
+  CacheArray                     myCaches;        ///< array of caches
+  Standard_Integer               myLastCacheInd;  ///< index of last used cache
 
   struct {
     Standard_Real    myParameter;
@@ -161,8 +162,6 @@ private:
 
   Standard_Integer               mySingleSpanU;   ///< index of the span along U, if the surface has just one span on this parameter, otherwise is 0
   Standard_Integer               mySingleSpanV;   ///< index of the span along V, if the surface has just one span on this parameter, otherwise is 0
-
-  Standard_Boolean               myIsBezier;      ///< flag that the cached surface is Bezier
 };
 
 DEFINE_STANDARD_HANDLE(BSplSLib_MultiSpanCache, Standard_Transient)
