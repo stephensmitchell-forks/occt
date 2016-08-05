@@ -1222,3 +1222,11 @@ Method Graphic3d_CView::Update() does not redraw the view and does not re-comput
 * The classes *BOPDS_PassKey* and *BOPDS_PassKeyBoolean* are too excessive and not used any more in Boolean Operations. To replace them the new *BOPDS_Pair* class has been implemented. Thus:
   - The method *BOPDS_DS::Interferences()* now returns the *BOPDS_MapOfPair*;
   - The method *BOPDS_Iterator::Value()* takes now only two parameters - the indices of interfering sub-shapes.
+Methods *TObj_Model::SaveAs* and *TObj_Model::Load* receive *TCollection_ExtendedString* filename arguments instead of char*. This shows that the filename may be not-ASCII explicitly. Also it makes OCAF API related to this functionality more conform.
+
+@subsection upgrade_occt710_multispan Multi-span cache support in *Geom2dAdaptor_Curve, GeomAdaptor_Curve* and *GeomAdaptor_Surface*
+
+Multi-span cache has been implemented in *Geom2dAdaptor_Curve, GeomAdaptor_Curve* and *GeomAdaptor_Surface*. Cache for each span is collected first time to evaluate this span.
+
+The benefit of this change is decreased time of calculations (up to 5 times) on some cases.
+

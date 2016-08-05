@@ -33,88 +33,32 @@ static Standard_Real* ConvertArray(const Handle(TColStd_HArray2OfReal)& theHArra
 
 
 BSplCLib_Cache::BSplCLib_Cache()
+  : myIsRational(Standard_False),
+    mySpanStart(0.0),
+    mySpanLength(0.0),
+    mySpanIndex(0),
+    mySpanIndexMin(0),
+    mySpanIndexMax(0),
+    myDegree(0)
 {
-  myPolesWeights.Nullify();
-  myIsRational = Standard_False;
-  mySpanStart = 0.0;
-  mySpanLength = 0.0;
-  mySpanIndex = 0;
-  myDegree = 0;
-  myFlatKnots.Nullify();
-}
-
-BSplCLib_Cache::BSplCLib_Cache(const Standard_Integer&        theDegree,
-                               const Standard_Boolean&        thePeriodic,
-                               const TColStd_Array1OfReal&    theFlatKnots,
-                               const TColgp_Array1OfPnt2d&    thePoles2d,
-                               const TColStd_Array1OfReal*    theWeights)
-{
-  Standard_Real aCacheParam = theFlatKnots.Value(theFlatKnots.Lower() + theDegree);
-  BuildCache(aCacheParam, theDegree, thePeriodic, 
-             theFlatKnots, thePoles2d, theWeights);
-}
-
-BSplCLib_Cache::BSplCLib_Cache(const Standard_Integer&        theDegree,
-                               const Standard_Boolean&        thePeriodic,
-                               const TColStd_Array1OfReal&    theFlatKnots,
-                               const TColgp_Array1OfPnt&      thePoles,
-                               const TColStd_Array1OfReal*    theWeights)
-{
-  Standard_Real aCacheParam = theFlatKnots.Value(theFlatKnots.Lower() + theDegree);
-  BuildCache(aCacheParam, theDegree, thePeriodic, 
-             theFlatKnots, thePoles, theWeights);
 }
 
 
 Standard_Boolean BSplCLib_Cache::IsCacheValid(Standard_Real theParameter) const
 {
-  Standard_Real aNewParam = theParameter;
-  if (!myFlatKnots.IsNull())
-    PeriodicNormalization(myFlatKnots->Array1(), aNewParam);
-
-  Standard_Real aDelta = aNewParam - mySpanStart;
+  Standard_Real aDelta = theParameter - mySpanStart;
   return ((aDelta >= 0.0 || mySpanIndex == mySpanIndexMin) &&
           (aDelta < mySpanLength || mySpanIndex == mySpanIndexMax));
 }
 
-void BSplCLib_Cache::PeriodicNormalization(const TColStd_Array1OfReal& theFlatKnots, 
-                                           Standard_Real& theParameter) const
+
+void BSplCLib_Cache::BuildCache(const Standard_Integer      theDegree,
+                                const Standard_Boolean      thePeriodic,
+                                const TColStd_Array1OfReal& theFlatKnots,
+                                const Standard_Integer      theCachedSpan,
+                                const TColgp_Array1OfPnt2d& thePoles2d,
+                                const TColStd_Array1OfReal* theWeights)
 {
-  Standard_Real aPeriod = theFlatKnots.Value(theFlatKnots.Upper() - myDegree) - 
-                          theFlatKnots.Value(myDegree + 1) ;
-  if (theParameter < theFlatKnots.Value(myDegree + 1))
-  {
-    Standard_Real aScale = IntegerPart(
-        (theFlatKnots.Value(myDegree + 1) - theParameter) / aPeriod);
-    theParameter += aPeriod * (aScale + 1.0);
-  }
-  if (theParameter > theFlatKnots.Value(theFlatKnots.Upper() - myDegree))
-  {
-    Standard_Real aScale = IntegerPart(
-        (theParameter - theFlatKnots.Value(theFlatKnots.Upper() - myDegree)) / aPeriod);
-    theParameter -= aPeriod * (aScale + 1.0);
-  }
-}
-
-
-void BSplCLib_Cache::BuildCache(const Standard_Real&           theParameter,
-                                const Standard_Integer&        theDegree,
-                                const Standard_Boolean&        thePeriodic,
-                                const TColStd_Array1OfReal&    theFlatKnots,
-                                const TColgp_Array1OfPnt2d&    thePoles2d,
-                                const TColStd_Array1OfReal*    theWeights)
-{
-  // Normalize theParameter for periodical B-splines
-  Standard_Real aNewParam = theParameter;
-  if (thePeriodic)
-  {
-    PeriodicNormalization(theFlatKnots, aNewParam);
-    myFlatKnots = new TColStd_HArray1OfReal(1, theFlatKnots.Length());
-    myFlatKnots->ChangeArray1() = theFlatKnots;
-  }
-  else if (!myFlatKnots.IsNull()) // Periodical curve became non-periodical
-    myFlatKnots.Nullify();
-
   // Change the size of cached data if needed
   myIsRational = (theWeights != NULL);
   Standard_Integer aPWColNumber = myIsRational ? 3 : 2;
@@ -122,9 +66,7 @@ void BSplCLib_Cache::BuildCache(const Standard_Real&           theParameter,
     myPolesWeights = new TColStd_HArray2OfReal(1, theDegree + 1, 1, aPWColNumber);
 
   myDegree = theDegree;
-  mySpanIndex = 0;
-  BSplCLib::LocateParameter(theDegree, theFlatKnots, BSplCLib::NoMults(), 
-                            aNewParam, thePeriodic, mySpanIndex, aNewParam);
+  mySpanIndex = theCachedSpan;
   mySpanStart  = theFlatKnots.Value(mySpanIndex);
   mySpanLength = theFlatKnots.Value(mySpanIndex + 1) - mySpanStart;
   mySpanIndexMin = thePeriodic ? 0 : myDegree + 1;
@@ -136,24 +78,13 @@ void BSplCLib_Cache::BuildCache(const Standard_Real&           theParameter,
                        myPolesWeights->ChangeArray2());
 }
 
-void BSplCLib_Cache::BuildCache(const Standard_Real&           theParameter,
-                                const Standard_Integer&        theDegree,
-                                const Standard_Boolean&        thePeriodic,
-                                const TColStd_Array1OfReal&    theFlatKnots,
-                                const TColgp_Array1OfPnt&      thePoles,
-                                const TColStd_Array1OfReal*    theWeights)
+void BSplCLib_Cache::BuildCache(const Standard_Integer      theDegree,
+                                const Standard_Boolean      thePeriodic,
+                                const TColStd_Array1OfReal& theFlatKnots,
+                                const Standard_Integer      theCachedSpan,
+                                const TColgp_Array1OfPnt&   thePoles,
+                                const TColStd_Array1OfReal* theWeights)
 {
-  // Create list of knots with repetitions and normalize theParameter for periodical B-splines
-  Standard_Real aNewParam = theParameter;
-  if (thePeriodic)
-  {
-    PeriodicNormalization(theFlatKnots, aNewParam);
-    myFlatKnots = new TColStd_HArray1OfReal(1, theFlatKnots.Length());
-    myFlatKnots->ChangeArray1() = theFlatKnots;
-  }
-  else if (!myFlatKnots.IsNull()) // Periodical curve became non-periodical
-    myFlatKnots.Nullify();
-
   // Change the size of cached data if needed
   myIsRational = (theWeights != NULL);
   Standard_Integer aPWColNumber = myIsRational ? 4 : 3;
@@ -161,9 +92,7 @@ void BSplCLib_Cache::BuildCache(const Standard_Real&           theParameter,
     myPolesWeights = new TColStd_HArray2OfReal(1, theDegree + 1, 1, aPWColNumber);
 
   myDegree = theDegree;
-  mySpanIndex = 0;
-  BSplCLib::LocateParameter(theDegree, theFlatKnots, BSplCLib::NoMults(), 
-                            aNewParam, thePeriodic, mySpanIndex, aNewParam);
+  mySpanIndex = theCachedSpan;
   mySpanStart  = theFlatKnots.Value(mySpanIndex);
   mySpanLength = theFlatKnots.Value(mySpanIndex + 1) - mySpanStart;
   mySpanIndexMin = thePeriodic ? 0 : myDegree + 1;
@@ -176,15 +105,11 @@ void BSplCLib_Cache::BuildCache(const Standard_Real&           theParameter,
 }
 
 
-void BSplCLib_Cache::CalculateDerivative(const Standard_Real&    theParameter, 
-                                         const Standard_Integer& theDerivative, 
-                                               Standard_Real&    theDerivArray) const
+void BSplCLib_Cache::CalculateDerivative(const Standard_Real    theParameter, 
+                                         const Standard_Integer theDerivative, 
+                                               Standard_Real&   theDerivArray) const
 {
-  Standard_Real aNewParameter = theParameter;
-  if (!myFlatKnots.IsNull()) // B-spline is periodical
-    PeriodicNormalization(myFlatKnots->Array1(), aNewParameter);
-  aNewParameter = (aNewParameter - mySpanStart) / mySpanLength;
-
+  Standard_Real aNewParameter = (theParameter - mySpanStart) / mySpanLength;
   Standard_Real* aPolesArray = ConvertArray(myPolesWeights);
   Standard_Integer aDimension = myPolesWeights->RowLength(); // number of columns
 
@@ -225,13 +150,9 @@ void BSplCLib_Cache::CalculateDerivative(const Standard_Real&    theParameter,
 }
 
 
-void BSplCLib_Cache::D0(const Standard_Real& theParameter, gp_Pnt2d& thePoint) const
+void BSplCLib_Cache::D0(const Standard_Real theParameter, gp_Pnt2d& thePoint) const
 {
-  Standard_Real aNewParameter = theParameter;
-  if (!myFlatKnots.IsNull()) // B-spline is periodical
-    PeriodicNormalization(myFlatKnots->Array1(), aNewParameter);
-  aNewParameter = (aNewParameter - mySpanStart) / mySpanLength;
-
+  Standard_Real aNewParameter = (theParameter - mySpanStart) / mySpanLength;
   Standard_Real* aPolesArray = ConvertArray(myPolesWeights);
   Standard_Real aPoint[4];
   Standard_Integer aDimension = myPolesWeights->RowLength(); // number of columns
@@ -245,13 +166,9 @@ void BSplCLib_Cache::D0(const Standard_Real& theParameter, gp_Pnt2d& thePoint) c
     thePoint.ChangeCoord().Divide(aPoint[2]);
 }
 
-void BSplCLib_Cache::D0(const Standard_Real& theParameter, gp_Pnt& thePoint) const
+void BSplCLib_Cache::D0(const Standard_Real theParameter, gp_Pnt& thePoint) const
 {
-  Standard_Real aNewParameter = theParameter;
-  if (!myFlatKnots.IsNull()) // B-spline is periodical
-    PeriodicNormalization(myFlatKnots->Array1(), aNewParameter);
-  aNewParameter = (aNewParameter - mySpanStart) / mySpanLength;
-
+  Standard_Real aNewParameter = (theParameter - mySpanStart) / mySpanLength;
   Standard_Real* aPolesArray = ConvertArray(myPolesWeights);
   Standard_Real aPoint[4];
   Standard_Integer aDimension = myPolesWeights->RowLength(); // number of columns
@@ -266,12 +183,12 @@ void BSplCLib_Cache::D0(const Standard_Real& theParameter, gp_Pnt& thePoint) con
 }
 
 
-void BSplCLib_Cache::D1(const Standard_Real& theParameter, gp_Pnt2d& thePoint, gp_Vec2d& theTangent) const
+void BSplCLib_Cache::D1(const Standard_Real theParameter, gp_Pnt2d& thePoint, gp_Vec2d& theTangent) const
 {
   Standard_Integer aDimension = myPolesWeights->RowLength(); // number of columns
   Standard_Real aPntDeriv[8]; // result storage (point and derivative coordinates)
 
-  this->CalculateDerivative(theParameter, 1, aPntDeriv[0]);
+  CalculateDerivative(theParameter, 1, aPntDeriv[0]);
   if (myIsRational) // the size of aPntDeriv was changed by PLib::RationalDerivative
     aDimension -= 1;
 
@@ -279,12 +196,12 @@ void BSplCLib_Cache::D1(const Standard_Real& theParameter, gp_Pnt2d& thePoint, g
   theTangent.SetCoord(aPntDeriv[aDimension], aPntDeriv[aDimension + 1]);
 }
 
-void BSplCLib_Cache::D1(const Standard_Real& theParameter, gp_Pnt& thePoint, gp_Vec& theTangent) const
+void BSplCLib_Cache::D1(const Standard_Real theParameter, gp_Pnt& thePoint, gp_Vec& theTangent) const
 {
   Standard_Integer aDimension = myPolesWeights->RowLength(); // number of columns
   Standard_Real aPntDeriv[8]; // result storage (point and derivative coordinates)
 
-  this->CalculateDerivative(theParameter, 1, aPntDeriv[0]);
+  CalculateDerivative(theParameter, 1, aPntDeriv[0]);
   if (myIsRational) // the size of aPntDeriv was changed by PLib::RationalDerivative
     aDimension -= 1;
 
@@ -292,12 +209,12 @@ void BSplCLib_Cache::D1(const Standard_Real& theParameter, gp_Pnt& thePoint, gp_
   theTangent.SetCoord(aPntDeriv[aDimension], aPntDeriv[aDimension + 1], aPntDeriv[aDimension + 2]);
 }
 
-void BSplCLib_Cache::D2(const Standard_Real& theParameter, gp_Pnt2d& thePoint, gp_Vec2d& theTangent, gp_Vec2d& theCurvature) const
+void BSplCLib_Cache::D2(const Standard_Real theParameter, gp_Pnt2d& thePoint, gp_Vec2d& theTangent, gp_Vec2d& theCurvature) const
 {
   Standard_Integer aDimension = myPolesWeights->RowLength(); // number of columns
   Standard_Real aPntDeriv[12]; // result storage (point and derivatives coordinates)
 
-  this->CalculateDerivative(theParameter, 2, aPntDeriv[0]);
+  CalculateDerivative(theParameter, 2, aPntDeriv[0]);
   if (myIsRational) // the size of aPntDeriv was changed by PLib::RationalDerivative
     aDimension -= 1;
 
@@ -306,12 +223,12 @@ void BSplCLib_Cache::D2(const Standard_Real& theParameter, gp_Pnt2d& thePoint, g
   theCurvature.SetCoord(aPntDeriv[aDimension<<1], aPntDeriv[(aDimension<<1) + 1]);
 }
 
-void BSplCLib_Cache::D2(const Standard_Real& theParameter, gp_Pnt& thePoint, gp_Vec& theTangent, gp_Vec& theCurvature) const
+void BSplCLib_Cache::D2(const Standard_Real theParameter, gp_Pnt& thePoint, gp_Vec& theTangent, gp_Vec& theCurvature) const
 {
   Standard_Integer aDimension = myPolesWeights->RowLength(); // number of columns
   Standard_Real aPntDeriv[12]; // result storage (point and derivatives coordinates)
 
-  this->CalculateDerivative(theParameter, 2, aPntDeriv[0]);
+  CalculateDerivative(theParameter, 2, aPntDeriv[0]);
   if (myIsRational) // the size of aPntDeriv was changed by PLib::RationalDerivative
     aDimension -= 1;
 
@@ -321,16 +238,16 @@ void BSplCLib_Cache::D2(const Standard_Real& theParameter, gp_Pnt& thePoint, gp_
 }
 
 
-void BSplCLib_Cache::D3(const Standard_Real& theParameter, 
-                              gp_Pnt2d&      thePoint, 
-                              gp_Vec2d&      theTangent, 
-                              gp_Vec2d&      theCurvature,
-                              gp_Vec2d&      theTorsion) const
+void BSplCLib_Cache::D3(const Standard_Real theParameter, 
+                              gp_Pnt2d&     thePoint, 
+                              gp_Vec2d&     theTangent, 
+                              gp_Vec2d&     theCurvature,
+                              gp_Vec2d&     theTorsion) const
 {
   Standard_Integer aDimension = myPolesWeights->RowLength(); // number of columns
   Standard_Real aPntDeriv[16]; // result storage (point and derivatives coordinates)
 
-  this->CalculateDerivative(theParameter, 3, aPntDeriv[0]);
+  CalculateDerivative(theParameter, 3, aPntDeriv[0]);
   if (myIsRational) // the size of aPntDeriv was changed by PLib::RationalDerivative
     aDimension -= 1;
 
@@ -342,16 +259,16 @@ void BSplCLib_Cache::D3(const Standard_Real& theParameter,
   theTorsion.SetCoord(aPntDeriv[aShift], aPntDeriv[aShift + 1]);
 }
 
-void BSplCLib_Cache::D3(const Standard_Real& theParameter, 
-                              gp_Pnt&        thePoint, 
-                              gp_Vec&        theTangent, 
-                              gp_Vec&        theCurvature,
-                              gp_Vec&        theTorsion) const
+void BSplCLib_Cache::D3(const Standard_Real theParameter, 
+                              gp_Pnt&       thePoint, 
+                              gp_Vec&       theTangent, 
+                              gp_Vec&       theCurvature,
+                              gp_Vec&       theTorsion) const
 {
   Standard_Integer aDimension = myPolesWeights->RowLength(); // number of columns
   Standard_Real aPntDeriv[16]; // result storage (point and derivatives coordinates)
 
-  this->CalculateDerivative(theParameter, 3, aPntDeriv[0]);
+  CalculateDerivative(theParameter, 3, aPntDeriv[0]);
   if (myIsRational) // the size of aPntDeriv was changed by PLib::RationalDerivative
     aDimension -= 1;
 

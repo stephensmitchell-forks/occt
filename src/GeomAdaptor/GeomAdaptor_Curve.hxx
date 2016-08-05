@@ -23,7 +23,7 @@
 
 #include <GeomAbs_CurveType.hxx>
 #include <Standard_Real.hxx>
-#include <BSplCLib_Cache.hxx>
+#include <BSplCLib_MultiSpanCache.hxx>
 #include <Adaptor3d_Curve.hxx>
 #include <GeomAbs_Shape.hxx>
 #include <Standard_Integer.hxx>
@@ -228,9 +228,8 @@ private:
   //! Check theU relates to start or finish point of B-spline curve and return indices of span the point is located
   Standard_Boolean IsBoundary(const Standard_Real theU, Standard_Integer& theSpanStart, Standard_Integer& theSpanFinish) const;
 
-  //! Rebuilds B-spline cache
-  //! \param theParameter the value on the knot axis which identifies the caching span
-  void RebuildCache (const Standard_Real theParameter) const;
+  //! Allocates memory for a cache object
+  void CreateCache() const;
 
 
   Handle(Geom_Curve) myCurve;
@@ -239,7 +238,7 @@ private:
   Standard_Real myLast;
   
   Handle(Geom_BSplineCurve) myBSplineCurve; ///< B-spline representation to prevent castings
-  mutable Handle(BSplCLib_Cache) myCurveCache; ///< Cached data for B-spline or Bezier curve
+  mutable Handle(BSplCLib_MultiSpanCache3D) myCurveCache; ///< Cached data for B-spline or Bezier curve
   Handle(GeomEvaluator_Curve) myNestedEvaluator; ///< Calculates value of offset curve
 
 
