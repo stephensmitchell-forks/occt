@@ -23,7 +23,7 @@
 
 #include <GeomAbs_SurfaceType.hxx>
 #include <Standard_Real.hxx>
-#include <BSplSLib_Cache.hxx>
+#include <BSplSLib_MultiSpanCache.hxx>
 #include <Adaptor3d_Surface.hxx>
 #include <GeomAbs_Shape.hxx>
 #include <Standard_Integer.hxx>
@@ -256,11 +256,9 @@ private:
   Standard_EXPORT Standard_Boolean IfUVBound (const Standard_Real U, const Standard_Real V, Standard_Integer& Ideb, Standard_Integer& Ifin, Standard_Integer& IVdeb, Standard_Integer& IVfin, const Standard_Integer USide, const Standard_Integer VSide) const;
   
   Standard_EXPORT void load (const Handle(Geom_Surface)& S, const Standard_Real UFirst, const Standard_Real ULast, const Standard_Real VFirst, const Standard_Real VLast, const Standard_Real TolU = 0.0, const Standard_Real TolV = 0.0);
-  
-  //! Rebuilds B-spline cache
-  //! \param theU first parameter to identify the span for caching
-  //! \param theV second parameter to identify the span for caching
-  Standard_EXPORT void RebuildCache (const Standard_Real theU, const Standard_Real theV) const;
+
+  //! Allocates memory for a cache object
+  void CreateCache() const;
 
 
   Handle(Geom_Surface) mySurface;
@@ -272,7 +270,7 @@ private:
   Standard_Real myTolV;
   
   Handle(Geom_BSplineSurface) myBSplineSurface; ///< B-spline representation to prevent downcasts
-  mutable Handle(BSplSLib_Cache) mySurfaceCache; ///< Cached data for B-spline or Bezier surface
+  mutable Handle(BSplSLib_MultiSpanCache) mySurfaceCache; ///< Cached data for B-spline or Bezier surface
 
 protected:
   GeomAbs_SurfaceType mySurfaceType;

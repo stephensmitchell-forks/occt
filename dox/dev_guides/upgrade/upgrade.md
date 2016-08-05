@@ -1054,3 +1054,10 @@ The following obsolete features have been removed:
 @subsection upgrade_occt710_correction_of_TObj_Model Correction in TObj_Model class
 
 Methods *TObj_Model::SaveAs* and *TObj_Model::Load* receive *TCollection_ExtendedString* filename arguments instead of char*. This shows that the filename may be not-ASCII explicitly. Also it makes OCAF API related to this functionality more conform.
+
+@subsection upgrade_occt710_multispan Multi-span cache support in *Geom2dAdaptor_Curve, GeomAdaptor_Curve* and *GeomAdaptor_Surface*
+
+Multi-span cache has been implemented in *Geom2dAdaptor_Curve, GeomAdaptor_Curve* and *GeomAdaptor_Surface*. Cache for each span is collected first time to evaluate this span.
+
+The benefit of this change is decreased time of calculations (up to 5 times) on some cases.
+
