@@ -38,23 +38,6 @@ class BSplSLib_Cache : public Standard_Transient
 public:
   //! Default constructor
   Standard_EXPORT BSplSLib_Cache();
-  //! Constructor for caching of the span for the surface
-  //! \param theDegreeU    degree along the first parameter (U) of the surface
-  //! \param thePeriodicU  identify the surface is periodical along U axis
-  //! \param theFlatKnotsU knots of the surface (with repetition) along U axis
-  //! \param theDegreeV    degree alogn the second parameter (V) of the surface
-  //! \param thePeriodicV  identify the surface is periodical along V axis
-  //! \param theFlatKnotsV knots of the surface (with repetition) along V axis
-  //! \param thePoles      array of poles of the surface
-  //! \param theWeights    array of weights of corresponding poles
-  Standard_EXPORT BSplSLib_Cache(const Standard_Integer&        theDegreeU,
-                                 const Standard_Boolean&        thePeriodicU,
-                                 const TColStd_Array1OfReal&    theFlatKnotsU,
-                                 const Standard_Integer&        theDegreeV,
-                                 const Standard_Boolean&        thePeriodicV,
-                                 const TColStd_Array1OfReal&    theFlatKnotsV,
-                                 const TColgp_Array2OfPnt&      thePoles,
-                                 const TColStd_Array2OfReal*    theWeights = NULL);
 
   //! Verifies validity of the cache using parameters of the point
   //! \param theParameterU  first parameter of the point placed in the span
@@ -63,32 +46,32 @@ public:
                                                 Standard_Real theParameterV) const;
 
   //! Recomputes the cache data. Does not verify validity of the cache
-  //! \param theParameterU  the parametric value on the U axis to identify the span
-  //! \param theParameterV  the parametric value on the V axis to identify the span
   //! \param theDegreeU     degree along U axis
   //! \param thePeriodicU   identify whether the surface is periodic along U axis
   //! \param theFlatKnotsU  flat knots of the surface along U axis
+  //! \param theCachedSpanU index along U axis of span to be cached
   //! \param theDegreeV     degree along V axis
   //! \param thePeriodicV   identify whether the surface is periodic along V axis
   //! \param theFlatKnotsV  flat knots of the surface along V axis
+  //! \param theCachedSpanV index along V axis of span to be cached
   //! \param thePoles       array of poles of the surface
   //! \param theWeights     array of weights of corresponding poles
-  Standard_EXPORT void BuildCache(const Standard_Real&           theParameterU, 
-                                  const Standard_Real&           theParameterV, 
-                                  const Standard_Integer&        theDegreeU, 
-                                  const Standard_Boolean&        thePeriodicU, 
-                                  const TColStd_Array1OfReal&    theFlatKnotsU, 
-                                  const Standard_Integer&        theDegreeV, 
-                                  const Standard_Boolean&        thePeriodicV, 
-                                  const TColStd_Array1OfReal&    theFlatKnotsV, 
-                                  const TColgp_Array2OfPnt&      thePoles, 
-                                  const TColStd_Array2OfReal*    theWeights = NULL);
+  Standard_EXPORT void BuildCache(const Standard_Integer      theDegreeU, 
+                                  const Standard_Boolean      thePeriodicU, 
+                                  const TColStd_Array1OfReal& theFlatKnotsU, 
+                                  const Standard_Integer      theCachedSpanU,
+                                  const Standard_Integer      theDegreeV,
+                                  const Standard_Boolean      thePeriodicV, 
+                                  const TColStd_Array1OfReal& theFlatKnotsV, 
+                                  const Standard_Integer      theCachedSpanV,
+                                  const TColgp_Array2OfPnt&   thePoles,
+                                  const TColStd_Array2OfReal* theWeights = NULL);
 
   //! Calculates the point on the surface for specified parameters
   //! \param[in]  theU      first parameter for calculation of the value
   //! \param[in]  theV      second parameter for calculation of the value
   //! \param[out] thePoint  the result of calculation (the point on the surface)
-  Standard_EXPORT void D0(const Standard_Real& theU, const Standard_Real& theV, gp_Pnt& thePoint) const;
+  Standard_EXPORT void D0(const Standard_Real theU, const Standard_Real theV, gp_Pnt& thePoint) const;
 
   //! Calculates the point on the surface and its first derivative
   //! \param[in]  theU         first parameter of calculation of the value
@@ -96,11 +79,11 @@ public:
   //! \param[out] thePoint     the result of calculation (the point on the surface)
   //! \param[out] theTangentU  tangent vector along U axis in the calculated point
   //! \param[out] theTangentV  tangent vector along V axis in the calculated point
-  Standard_EXPORT void D1(const Standard_Real& theU, 
-                          const Standard_Real& theV, 
-                                gp_Pnt&        thePoint, 
-                                gp_Vec&        theTangentU, 
-                                gp_Vec&        theTangentV) const;
+  Standard_EXPORT void D1(const Standard_Real theU, 
+                          const Standard_Real theV, 
+                                gp_Pnt&       thePoint, 
+                                gp_Vec&       theTangentU, 
+                                gp_Vec&       theTangentV) const;
 
   //! Calculates the point on the surface and derivatives till second order
   //! \param[in]  theU            first parameter of calculation of the value
@@ -111,26 +94,17 @@ public:
   //! \param[out] theCurvatureU   curvature vector (2nd derivative on U) along U axis
   //! \param[out] theCurvatureV   curvature vector (2nd derivative on V) along V axis
   //! \param[out] theCurvatureUV  2nd mixed derivative on U anv V
-  Standard_EXPORT void D2(const Standard_Real& theU, 
-                          const Standard_Real& theV, 
-                                gp_Pnt&        thePoint, 
-                                gp_Vec&        theTangentU, 
-                                gp_Vec&        theTangentV, 
-                                gp_Vec&        theCurvatureU, 
-                                gp_Vec&        theCurvatureV, 
-                                gp_Vec&        theCurvatureUV) const;
+  Standard_EXPORT void D2(const Standard_Real theU, 
+                          const Standard_Real theV, 
+                                gp_Pnt&       thePoint, 
+                                gp_Vec&       theTangentU, 
+                                gp_Vec&       theTangentV, 
+                                gp_Vec&       theCurvatureU, 
+                                gp_Vec&       theCurvatureV, 
+                                gp_Vec&       theCurvatureUV) const;
 
 
   DEFINE_STANDARD_RTTIEXT(BSplSLib_Cache,Standard_Transient)
-
-protected:
-  //! Normalizes the parameter for periodical surfaces
-  //! \param[in]     theDegree     degree along selected direction
-  //! \param[in]     theFlatKnots  knots with repetitions along selected direction
-  //! \param[in,out] theParameter  the value to be normalized into the knots array
-  void PeriodicNormalization(const Standard_Integer& theDegree, 
-                             const TColStd_Array1OfReal& theFlatKnots, 
-                                   Standard_Real& theParameter) const;
 
 private:
   Handle(TColStd_HArray2OfReal) myPolesWeights; ///< array of poles and weights of calculated cache
@@ -140,15 +114,14 @@ private:
                                                 // for non-rational surfaces there is no weight;
                                                 // size of array: (max(myDegree)+1) * A*(min(myDegree)+1), where A = 4 or 3
 
-  Standard_Boolean              myIsRational;    ///< identifies the rationality of Bezier/B-spline surface
-  Standard_Real                 mySpanStart[2];  ///< parameters (u, v) for the frst point of the span
-  Standard_Real                 mySpanLength[2]; ///< lengths of the span along corresponding parameter
-  Standard_Integer              mySpanIndex[2];  ///< indexes of the span on Bezier/B-spline surface
-  Standard_Integer              mySpanIndexMin[2]; ///< minimal indexes of span
-  Standard_Integer              mySpanIndexMax[2]; ///< maximal indexes of span
-  Standard_Integer              myDegree[2];     ///< degrees of Bezier/B-spline for each parameter
-  Handle(TColStd_HArray1OfReal) myFlatKnots[2];  ///< arrays of knots of Bezier/B-spline 
-                                                 // (used for periodic normalization of parameters, Null for non-periodical splines)
+  Standard_Boolean              myIsRational;       ///< identifies the rationality of Bezier/B-spline surface
+  Standard_Real                 mySpanStart[2];     ///< parameters (u, v) for the frst point of the span
+  Standard_Real                 mySpanLength[2];    ///< lengths of the span along corresponding parameter
+  Standard_Real                 mySpanLengthRec[2]; ///< reciprocal values for the span lengths (mySpanLengthRec[i] = 1/mySpanLength[i])
+  Standard_Integer              mySpanIndex[2];     ///< indexes of the span on Bezier/B-spline surface
+  Standard_Integer              mySpanIndexMin[2];  ///< minimal indexes of span
+  Standard_Integer              mySpanIndexMax[2];  ///< maximal indexes of span
+  Standard_Integer              myDegree[2];        ///< degrees of Bezier/B-spline for each parameter
 };
 
 DEFINE_STANDARD_HANDLE(BSplSLib_Cache, Standard_Transient)
