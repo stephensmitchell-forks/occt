@@ -74,7 +74,8 @@ void  BRepTools::UVBounds(const TopoDS_Face& F,
 {
   Bnd_Box2d B;
   AddUVBounds(F,B);
-  B.Get(UMin,VMin,UMax,VMax);
+  if (!B.IsVoid())
+    B.Get(UMin,VMin,UMax,VMax);
 }
 
 //=======================================================================
@@ -130,7 +131,11 @@ void  BRepTools::AddUVBounds(const TopoDS_Face& FF, Bnd_Box2d& B)
   if (aBox.IsVoid()) {
     Standard_Real UMin,UMax,VMin,VMax;
     TopLoc_Location L;
-    BRep_Tool::Surface(F,L)->Bounds(UMin,UMax,VMin,VMax);
+    const Handle(Geom_Surface)& aSurf = BRep_Tool::Surface(F, L);
+    if (aSurf.IsNull())
+      return;
+
+    aSurf->Bounds(UMin,UMax,VMin,VMax);
     aBox.Update(UMin,VMin,UMax,VMax);
   }
   

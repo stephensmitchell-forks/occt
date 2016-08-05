@@ -74,8 +74,8 @@ static Standard_OStream& operator <<(Standard_OStream& OS, const gp_Pnt P)
 //purpose  : 
 //=======================================================================
 
-BinTools_ShapeSet::BinTools_ShapeSet(const Standard_Boolean isWithTriangles)
-     :myFormatNb(3), myWithTriangles(isWithTriangles)
+BinTools_ShapeSet::BinTools_ShapeSet(const Standard_Boolean /*isWithTriangles*/)
+     :myFormatNb(3), myWithTriangles(Standard_True/*isWithTriangles*/)
 {}
 
 //=======================================================================
@@ -90,9 +90,9 @@ BinTools_ShapeSet::~BinTools_ShapeSet()
 //function : SetWithTriangles
 //purpose  : 
 //=======================================================================
-void BinTools_ShapeSet::SetWithTriangles(const Standard_Boolean isWithTriangles)
+void BinTools_ShapeSet::SetWithTriangles(const Standard_Boolean /*isWithTriangles*/)
 {
-  myWithTriangles = isWithTriangles;
+  myWithTriangles = Standard_True;//isWithTriangles;
 }
 
 //=======================================================================
@@ -524,6 +524,12 @@ void  BinTools_ShapeSet::Read(TopoDS_Shape& S, Standard_IStream& IS,
     anOrient = (TopAbs_Orientation)aChar;
     Standard_Integer anIndx;
     BinTools::GetInteger(IS, anIndx);
+    Standard_Integer anInd = nbshapes - anIndx + 1;
+    if (anInd < 1 || anInd > myShapes.Extent())
+    {
+      S = TopoDS_Shape();
+      return;
+    }
     S = myShapes(nbshapes - anIndx + 1);
     S.Orientation(anOrient);
 
@@ -732,6 +738,7 @@ void  BinTools_ShapeSet::WriteGeometry(const TopoDS_Shape& S,
       const TopoDS_Face& F = TopoDS::Face(S);
       
       if (!(TF->Surface()).IsNull()) {
+        //OS << (Standard_Byte) 1;
 	Standard_Boolean aNatRes = (BRep_Tool::NaturalRestriction(F)) ? Standard_True : Standard_False;
 	BinTools::PutBool(OS, aNatRes);
 
@@ -740,6 +747,8 @@ void  BinTools_ShapeSet::WriteGeometry(const TopoDS_Shape& S,
 	BinTools::PutInteger(OS, mySurfaces.Index(TF->Surface()));
 	BinTools::PutInteger(OS, Locations().Index(TF->Location()));
       }
+      //else
+       // OS << (Standard_Byte) 0;
       if (myWithTriangles) {
 	if (!(TF->Triangulation()).IsNull()) {
 	  OS << (Standard_Byte) 2;
@@ -1099,17 +1108,26 @@ void  BinTools_ShapeSet::ReadGeometry(const TopAbs_ShapeEnum T,
     // create a face :
 	TopoDS_Face& F = TopoDS::Face(S);
 	myBuilder.MakeFace(F);
-	BinTools::GetBool(IS, bval); //NaturalRestriction flag
-	BinTools::GetReal(IS, tol);
-	BinTools::GetInteger(IS, s); //surface indx
-	BinTools::GetInteger(IS, l); //location indx
-	if (!mySurfaces.Surface(s).IsNull()) {
-	  myBuilder.UpdateFace(TopoDS::Face(S),
-			       mySurfaces.Surface(s),
-			       Locations().Location(l),tol);
-	  myBuilder.NaturalRestriction(TopoDS::Face(S),bval );
-	}
-    
+  //Standard_Byte aByte = (Standard_Byte)IS.get();
+  //if (aByte == 1)
+  //{
+    BinTools::GetBool(IS, bval); //NaturalRestriction flag
+    BinTools::GetReal(IS, tol);
+    BinTools::GetInteger(IS, s); //surface indx
+    BinTools::GetInteger(IS, l); //location indx
+    if (!mySurfaces.Surface(s).IsNull()) {
+      myBuilder.UpdateFace(TopoDS::Face(S),
+                           mySurfaces.Surface(s),
+                           Locations().Location(l), tol);
+      myBuilder.NaturalRestriction(TopoDS::Face(S), bval);
+    }
+    else
+    {
+      // Compute offset and return back to position before reading surface parameters
+      size_t offset = sizeof(Standard_Integer) * 2 + sizeof(Standard_Real) + sizeof(Standard_Byte);
+      IS.seekg(-offset, IS.cur);
+    }
+  //}
 	Standard_Byte aByte = (Standard_Byte)IS.get();
       // cas triangulation
 	if(aByte == 2) {

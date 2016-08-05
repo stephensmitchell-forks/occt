@@ -611,7 +611,10 @@ void StdPrs_Isolines::UVIsoParameters (const TopoDS_Face&      theFace,
   aVmax = Min (aVmax,  theUVLimit);
 
   TopLoc_Location aLocation;
-  Handle(Geom_Surface) aSurface = BRep_Tool::Surface (theFace, aLocation);
+  const Handle(Geom_Surface)& aSurface = BRep_Tool::Surface (theFace, aLocation);
+
+  if (aSurface.IsNull())
+    return;
 
   const Standard_Boolean isUClosed = aSurface->IsUClosed();
   const Standard_Boolean isVClosed = aSurface->IsVClosed();
