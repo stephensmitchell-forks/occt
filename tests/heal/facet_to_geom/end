@@ -1,0 +1,4 @@
+puts [combinetocylinder result a -a $Angle -t $Tolerance]
+checkshape result
+checknbshapes result -face $NbFace -edge $NbEdge
+don result

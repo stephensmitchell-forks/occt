@@ -1,0 +1,11 @@
+restore [locate_data_file comb2cyl_a_316.brep] a
+set Angle 20
+set Tolerance 4
+set NbEdge 30
+set NbFace 12
+subshape a f 22
+subshape a f 23
+smallview
+don a_22 a_23
+fit
+set ViewIsReady 1

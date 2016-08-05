@@ -10,3 +10,5 @@ if { [info exists imagedir] == 0 } {
 if { [info exists test_image ] == 0 } {
    set test_image photo
 }
+
+set ViewIsReady 0

@@ -1,5 +1,9 @@
  if { [isdraw result] } {
-  checkview -display result -2d -path ${imagedir}/${test_image}.png
+  if $ViewIsReady {
+    checkview -display result -screenshot -2d -path ${imagedir}/${test_image}.png
+  } else {
+    checkview -display result -2d -path ${imagedir}/${test_image}.png
+  }
 } elseif { [isdraw r] } {
   pload VISUALIZATION
   checkview -display r -3d -vdispmode 0 -path ${imagedir}/${test_image}.png

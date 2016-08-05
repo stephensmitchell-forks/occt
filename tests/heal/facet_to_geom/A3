@@ -1,0 +1,11 @@
+puts "TODO OCC27767 ALL: Faulty shapes in variables"
+restore [locate_data_file comb2cyl_a_793.brep] a
+set Angle 10
+set Tolerance 4
+set NbEdge 40
+set NbFace 15
+explode a f
+smallview
+don a_13 a_64 a_29 a_79
+fit
+set ViewIsReady 1

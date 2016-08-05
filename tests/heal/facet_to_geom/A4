@@ -1,0 +1,5 @@
+restore [locate_data_file comb2cyl_tube.brep] a
+set Angle 25
+set Tolerance 0.5
+set NbEdge 369
+set NbFace 209

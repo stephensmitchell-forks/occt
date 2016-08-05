@@ -1,0 +1,5 @@
+restore [locate_data_file comb2cyl_hole.brep] a
+set Angle 10
+set Tolerance 2
+set NbFace 8
+set NbEdge 24
