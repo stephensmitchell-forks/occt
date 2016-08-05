@@ -1,0 +1,39 @@
+puts "========"
+puts "CR27074"
+puts "========"
+puts ""
+#######################################################################
+# Compare allocated memory for evaluation of huge NURBS surface
+#######################################################################
+
+pload QAcommands
+
+cpulimit 1000
+
+# create simple B-spline
+bsplinesurf s \
+1 2  0 2  1 2 \
+1 2  0 2  1 2 \
+0 0 0 1  1 0 1 1 \
+0 1 0 1  1 1 1 1
+
+# increase number of spans
+set nbspans 1000
+for {set i 1} {$i < $nbspans} {incr i} {
+  set knot [expr double($i) / $nbspans]
+  insertuknot s $knot 1
+  insertvknot s $knot 1
+}
+
+# increase degree
+set deg 5
+incudeg s $deg
+incvdeg s $deg
+
+# calculate values of B-spline
+set nbiter 1000000
+dchrono t reset
+dchrono t start
+OCC27074 s $nbiter -a
+dchrono t stop
+dchrono t show

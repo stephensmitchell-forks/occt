@@ -1,0 +1,64 @@
+puts "========"
+puts "CR27074"
+puts "========"
+puts ""
+#######################################################################
+# Compare performance of calculation value of NURBS surface with multi-span cache
+#######################################################################
+
+pload QAcommands
+
+cpulimit 1000
+
+bsplinesurf nsurf \
+5 5 0 6 1 1 4 1 5 1 8 6 \
+5 5 0 6 2 1 3 1 6 1 7 6 \
+0  0  0  1   2  0  0  1   5  0 -1  1   10  0  5  1   12  0  1  1   15  0 -3  1   16  0 -3  1   19  0 -4 1   24  0  0  1 \
+0 10  2  1   3 10  0  1   8 10  5  1   10 10  3  1   12 10  2  1   15 10  0  1   20 10  5  1   21 10  3 1   24 10  0  1 \
+0 20 10  1   4 20  4  1   7 20  4  1   10 20 20  1   12 20 10  1   16 20  4  1   19 20  4  1   20 20 10 1   24 20  0  1 \
+0 30  0  1   2 30  0  1   8 30  0  1   10 30  0  1   12 30  0  1   14 30  0  1   20 30  0  1   22 30  0 1   24 30  0  1 \
+0 40 -1  1   4 40  5  1   9 40  1  1   10 40  5  1   12 40 -1  1   16 40  5  1   21 40  1  1   22 40  5 1   24 40  0  1 \
+0 50  5  1   4 50 10  1   6 50 10  1   10 50  5  1   12 50  5  1   16 50 10  1   18 50 10  1   20 50  5 1   24 50  0  1 \
+0 60  4  1   3 60 -3  1   7 60 -4  1   10 60  4  1   12 60  4  1   15 60 -3  1   19 60 -4  1   20 60  4 1   24 60  0  1 \
+0 70 -5  1   3 70  0  1   5 70  0  1   10 70 -3  1   12 70 -5  1   15 70  0  1   17 70  0  1   20 70 -3 1   24 70  0  1 \
+0 80  7  1   3 80  1  1   7 80  3  1   10 80  0  1   12 80  7  1   15 80  1  1   19 80  3  1   21 80  0 1   24 80  0  1
+
+bsplinesurf rsurf \
+5 5 0 6 1 1 4 1 5 1 8 6 \
+5 5 0 6 2 1 3 1 6 1 7 6 \
+0  0  0  1   2  0  0  1   5  0 -1  1   10  0  5  2   12  0  1  1   15  0 -3  2   16  0 -3  1   19  0 -4 1   24  0  0  1 \
+0 10  2  3   3 10  0  1   8 10  5  3   10 10  3  1   12 10  2  3   15 10  0  1   20 10  5  3   21 10  3 1   24 10  0  2 \
+0 20 10  1   4 20  4  3   7 20  4  2   10 20 20  4   12 20 10  1   16 20  4  3   19 20  4  2   20 20 10 4   24 20  0  1 \
+0 30  0  2   2 30  0  1   8 30  0  1   10 30  0  2   12 30  0  2   14 30  0  1   20 30  0  1   22 30  0 2   24 30  0  3 \
+0 40 -1  1   4 40  5  2   9 40  1  3   10 40  5  2   12 40 -1  1   16 40  5  2   21 40  1  3   22 40  5 2   24 40  0  1 \
+0 50  5  1   4 50 10  5   6 50 10  5   10 50  5  1   12 50  5  1   16 50 10  5   18 50 10  5   20 50  5 1   24 50  0  2 \
+0 60  4  3   3 60 -3  1   7 60 -4  1   10 60  4  1   12 60  4  3   15 60 -3  1   19 60 -4  1   20 60  4 1   24 60  0  1 \
+0 70 -5  5   3 70  0  1   5 70  0  1   10 70 -3  2   12 70 -5  5   15 70  0  1   17 70  0  1   20 70 -3 2   24 70  0  3 \
+0 80  7  1   3 80  1  2   7 80  3  1   10 80  0  1   12 80  7  1   15 80  1  2   19 80  3  1   21 80  0 1   24 80  0  1
+
+
+set surfaces [list nsurf rsurf]
+# number of values to be calculated
+set nbiter 4000000
+
+foreach s $surfaces {
+  # calculate values without adaptor
+  dchrono t reset
+  dchrono t start
+  OCC27074 $s $nbiter
+  dchrono t stop
+  set elapsed [dchrono t show]
+  regexp {CPU user time: ([-0-9.+eE]+) seconds} ${elapsed} full cpu_noadaptor
+
+  # calculate values using adaptor
+  dchrono t reset
+  dchrono t start
+  OCC27074 $s $nbiter -a
+  dchrono t stop
+  set elapsed [dchrono t show]
+  regexp {CPU user time: ([-0-9.+eE]+) seconds} ${elapsed} full cpu_adaptor
+
+  if {$cpu_adaptor >= $cpu_noadaptor} {
+    puts "ERROR: Multi-span cached adaptor is slower than surface"
+  }
+}

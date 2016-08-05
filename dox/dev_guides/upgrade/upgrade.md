@@ -1018,3 +1018,10 @@ The following obsolete features have been removed:
 * Obsolete Antialiasing API V3d_View::SetAntialiasingOn(). This method was intended to activate deprecated OpenGL functionality (GL_POLYGON_SMOOTH, GL_LINE_SMOOTH, GL_POINT_SMOOTH).
   Instead of old API, application should request MSAA buffers for antialiasing by assigning Graphic3d_RenderingParams::NbMsaaSamples property of structure returned by V3d_View::ChangeRenderingParams().
 * Prs3d_Drawer::ShadingAspectGlobal() flag has been removed as not used. Corresponding calls can be removed safely from the application code.
+
+
+@subsection upgrade_occt710_multispan Multi-span cache support in *Geom2dAdaptor_Curve, GeomAdaptor_Curve* and *GeomAdaptor_Surface*
+
+Multi-span cache has been implemented in *Geom2dAdaptor_Curve, GeomAdaptor_Curve* and *GeomAdaptor_Surface*. Cache for each span is collected first time to evaluate this span.
+
+The benefit of this change is decreased time of calculations (up to 5 times) on some cases.
