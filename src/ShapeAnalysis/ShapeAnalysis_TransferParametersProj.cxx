@@ -296,7 +296,21 @@ void ShapeAnalysis_TransferParametersProj::TransferRange(TopoDS_Edge& newEdge,
   }
   if(Is2d) {
     p1 = myAC3d.Value(firstPar).Transformed(myLocation);
+    if(Precision::IsInfinite(p1.X()) || Precision::IsInfinite(p1.Y()) ||
+       Precision::IsInfinite(p1.Z()))
+    {
+      samerange = Standard_False;
+      B.SameRange(newEdge, samerange);
+      return;
+    }
     p2 = myAC3d.Value(lastPar).Transformed(myLocation);
+    if(Precision::IsInfinite(p2.X()) || Precision::IsInfinite(p2.Y()) ||
+       Precision::IsInfinite(p2.Z()))
+    {
+      samerange = Standard_False;
+      B.SameRange(newEdge, samerange);
+      return;
+    }
     Standard_Real fact = myAC3d.LastParameter() - myAC3d.FirstParameter();
     if( fact > Epsilon(myAC3d.LastParameter()) ) {
       alpha = ( firstPar - myAC3d.FirstParameter() ) / fact;
@@ -305,7 +319,21 @@ void ShapeAnalysis_TransferParametersProj::TransferRange(TopoDS_Edge& newEdge,
   }
   else {
     p1 = myCurve->Value(firstPar);
+    if(Precision::IsInfinite(p1.X()) || Precision::IsInfinite(p1.Y()) ||
+       Precision::IsInfinite(p1.Z()))
+    {
+      samerange = Standard_False;
+      B.SameRange(newEdge, samerange);
+      return;
+    }
     p2 = myCurve->Value(lastPar);
+    if(Precision::IsInfinite(p2.X()) || Precision::IsInfinite(p2.Y()) ||
+       Precision::IsInfinite(p2.Z()))
+    {
+      samerange = Standard_False;
+      B.SameRange(newEdge, samerange);
+      return;
+    }
     Standard_Real fact = myLast - myFirst;
     if( fact > Epsilon(myLast) ) {
       alpha = ( firstPar - myFirst ) / fact;

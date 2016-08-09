@@ -134,6 +134,9 @@ public:
   
     Handle(Geom_BSplineCurve) BSpline() const;
 
+    Handle(Adaptor3d_HCurve) BasisCurve() const;
+  
+    Standard_Real OffsetValue() const;
 
 
 

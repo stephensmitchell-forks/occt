@@ -2110,7 +2110,12 @@ static DWORD WINAPI tkLoop(VOID)
 #endif //#ifdef _TK
 
   // set signal handler in the new thread
+#if defined(__INTEL_COMPILER) || defined(__clang__)
+  // FPE signals are disabled for Intel compiler (see #24589) and CLang (see #23802)
   OSD::SetSignal(Standard_False);
+#else 
+  OSD::SetSignal();
+#endif
 
   // inform the others that we have started
   isTkLoopStarted = true;

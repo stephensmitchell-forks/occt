@@ -439,6 +439,7 @@ Standard_Boolean ApproxInt_KnotTools::InsKnotBefI(const Standard_Integer theI,
                                                   NCollection_Sequence<Standard_Integer>& theInds,
                                                   const Standard_Boolean ChkCurv)
 {
+  const Standard_Real eps = Epsilon(1.);
   Standard_Integer anInd1 = theInds(theI);
   Standard_Integer anInd = theInds(theI - 1);
   //
@@ -519,7 +520,15 @@ Standard_Boolean ApproxInt_KnotTools::InsKnotBefI(const Standard_Integer theI,
         }
         //mp *= 2.; //P(j,i) = -P(i,j);
         //
-        sina = mp/(m1*m2);
+        Standard_Real m1m2 = m1*m2;
+        if(m1m2 > eps)
+        {
+          sina = mp/m1m2;
+        }
+        else
+        {
+          sina = 0.;
+        }
         sina = Sqrt(sina);
 
         if(sina > aSinCoeff)

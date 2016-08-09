@@ -328,7 +328,7 @@ Standard_Boolean ShapeConstruct_ProjectCurveOnSurface::Perform (Handle(Geom_Curv
         aMinParSpeed = Min(aMinParSpeed, aDist / aStep);
       }
       const Standard_Real aCoeff = aLength3d / (aLastParam - aFirstParam);
-      if (Abs(aCoeff) > gp::Resolution())
+      if (aCoeff > gp::Resolution())
         aKnotCoeffs.Append(aCoeff);
       aFirstParam = aLastParam;
     }

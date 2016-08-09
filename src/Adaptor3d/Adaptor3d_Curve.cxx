@@ -376,3 +376,26 @@ Handle(Geom_BSplineCurve) Adaptor3d_Curve::BSpline() const
   Standard_NotImplemented::Raise("Adaptor3d_Curve::BSpline");
   return Handle(Geom_BSplineCurve)();
 }
+
+//=======================================================================
+//function : BasisCurve
+//purpose  : 
+//=======================================================================
+
+Handle(Adaptor3d_HCurve) Adaptor3d_Curve::BasisCurve() const 
+{
+  Standard_NotImplemented::Raise("Adaptor3d_Curve::BasisCurve");
+  return Handle(Adaptor3d_HCurve)();
+}
+
+
+//=======================================================================
+//function : OffsetValue
+//purpose  : 
+//=======================================================================
+
+Standard_Real Adaptor3d_Curve::OffsetValue() const 
+{
+  Standard_NotImplemented::Raise("Adaptor3d_Curve::OffsetValue");
+  return 0.;
+}

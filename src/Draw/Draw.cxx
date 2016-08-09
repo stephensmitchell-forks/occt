@@ -243,7 +243,12 @@ void Draw_Appli(Standard_Integer argc, char** argv,const FDraw_InitAppli Draw_In
   // *****************************************************************
   // set signals
   // *****************************************************************
+#if defined(__INTEL_COMPILER) || defined(__clang__)
+  // FPE signals are disabled for Intel compiler (see #24589) and CLang (see #23802)
   OSD::SetSignal(Standard_False);
+#else 
+  OSD::SetSignal();
+#endif
 
 #ifdef _WIN32
   // in interactive mode, force Windows to report dll loading problems interactively

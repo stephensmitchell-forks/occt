@@ -293,3 +293,23 @@ inline Standard_Integer  Adaptor3d_HCurve::NbKnots() const
   return Curve().BSpline();
 }
 
+//=======================================================================
+//function : BasisCurve
+//purpose  : 
+//=======================================================================
+
+ inline Handle(Adaptor3d_HCurve) Adaptor3d_HCurve::BasisCurve() const 
+{
+  return Curve().BasisCurve();
+}
+
+
+//=======================================================================
+//function : OffsetValue
+//purpose  : 
+//=======================================================================
+
+ inline Standard_Real Adaptor3d_HCurve::OffsetValue() const 
+{
+  return Curve().OffsetValue();
+}

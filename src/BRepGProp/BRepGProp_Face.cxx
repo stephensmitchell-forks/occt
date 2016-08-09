@@ -382,6 +382,7 @@ void BRepGProp_Face::VKnots(TColStd_Array1OfReal& Knots) const
 Standard_Integer BRepGProp_Face::LIntOrder(const Standard_Real Eps) const
 {
   Bnd_Box2d aBox;
+  const Standard_Real eps = Epsilon(1.);
 
   BndLib_Add2dCurve::Add(myCurve, 1.e-7, aBox);
   Standard_Real aXmin, aXmax, aYmin, aYmax;
@@ -389,7 +390,13 @@ Standard_Integer BRepGProp_Face::LIntOrder(const Standard_Real Eps) const
   Standard_Real aVmin = mySurface.FirstVParameter();
   Standard_Real aVmax = mySurface.LastVParameter();
 
-  Standard_Real anR = Min((aYmax-aYmin)/(aVmax-aVmin), 1.);
+  Standard_Real dv = (aVmax-aVmin);
+  Standard_Real anR = 1.;
+  if(dv > eps)
+  {
+    anR = (aYmax-aYmin) / dv;
+    anR = Min(anR, 1.);
+  }
 
 //  Standard_Integer anRInt = Max(RealToInt(Ceiling(SVIntSubs()*anR)), 2);
   Standard_Integer anRInt = RealToInt(Ceiling(SVIntSubs()*anR));

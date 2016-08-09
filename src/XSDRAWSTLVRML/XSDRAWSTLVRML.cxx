@@ -963,14 +963,28 @@ static Standard_Integer meshvectors( Draw_Interpretor& di,
     for ( ; anIter.More(); anIter.Next() )
     {
       TColStd_Array1OfReal aCoords(1, 3);
+      aCoords(1) = 0.;
+      aCoords(2) = 0.;
+      aCoords(3) = 0.;
+      Standard_Boolean IsValidData = Standard_False; 
       if (anIsElement)
-        aMesh->GetDataSource()->GetNormal(anIter.Key(), 3, aCoords.ChangeValue(1), aCoords.ChangeValue(2), aCoords.ChangeValue(3));
+        IsValidData = aMesh->GetDataSource()->GetNormal(anIter.Key(), 3, aCoords.ChangeValue(1), aCoords.ChangeValue(2), aCoords.ChangeValue(3));
       else
-        aMesh->GetDataSource()->GetGeom(anIter.Key(), Standard_False, aCoords, aNbNodes, aEntType);
+        IsValidData = aMesh->GetDataSource()->GetGeom(anIter.Key(), Standard_False, aCoords, aNbNodes, aEntType);
 
-      gp_Vec aNorm = gp_Vec(aCoords.Value(1), aCoords.Value(2), aCoords.Value(3));
-      if( !aNorm.Magnitude() )
+      gp_Vec aNorm;
+      if(IsValidData)
+      { 
+        aNorm = gp_Vec(aCoords.Value(1), aCoords.Value(2), aCoords.Value(3));
+        if(aNorm.Magnitude() < gp::Resolution())
+        {
+          aNorm = gp_Vec(0,0,1); //method GetGeom(...) returns coordinates of nodes
+        }
+      }
+      else
+      {
         aNorm = gp_Vec(0,0,1);
+      }
       aBuilder->SetVector(anIsElement, anIter.Key(), aNorm.Normalized());
     }
 

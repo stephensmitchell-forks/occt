@@ -254,6 +254,10 @@ static Standard_Boolean MinimizeDirection(const math_Vector&   P,
                                           //----------------------------------------------------------------------
 
 {
+  if(Precision::IsInfinite(PValue) || Precision::IsInfinite(PDirValue))
+  {
+    return Standard_False;
+  }
   // (0) Evaluation d'un tolerance parametrique 1D
   Standard_Boolean good = Standard_False;
   Standard_Real Eps = 1.e-20;
@@ -718,7 +722,25 @@ void math_FunctionSetRoot::Perform(math_FunctionSetWithDerivatives& F,
   for (i = 1; i <= Ninc ; i++) {
     // modified by NIZHNY-MKK  Mon Oct  3 18:03:50 2005
     //      InvLengthMax(i) = 1. / Max(Abs(SupBound(i) - InfBound(i))/4, 1.e-9);
-    InvLengthMax(i) = 1. / Max((theSupBound(i) - theInfBound(i))/4, 1.e-9);
+    Standard_Real SupBound = theSupBound(i), InfBound = theInfBound(i);
+    if(Precision::IsNegativeInfinite(SupBound))
+    {
+      SupBound = -Precision::Infinite();
+    }
+    else if(Precision::IsPositiveInfinite(SupBound))
+    {
+      SupBound = Precision::Infinite();
+    }
+    if(Precision::IsNegativeInfinite(InfBound))
+    {
+      InfBound = -Precision::Infinite();
+    }
+    else if(Precision::IsPositiveInfinite(InfBound))
+    {
+      InfBound = Precision::Infinite();
+    }
+
+    InvLengthMax(i) = 1. / Max((SupBound - InfBound)/4, 1.e-9);
   }
 
   MyDirFunction F_Dir(Temp1, Temp2, Temp3, Temp4, F);
