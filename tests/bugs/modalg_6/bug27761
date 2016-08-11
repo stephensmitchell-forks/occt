@@ -1,0 +1,16 @@
+puts "========"
+puts "OCC27761"
+puts "========"
+puts ""
+#################################################
+# Intersection loops infinitely
+#################################################
+
+restore [locate_data_file bug27761_c1.brep] c1
+restore [locate_data_file bug27761_c2.brep] c2
+
+bsection result c1 c2
+
+checkshape result
+# approximate theoretical length of the result
+set length 0.00192547

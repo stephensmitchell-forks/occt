@@ -6,7 +6,7 @@ puts ""
 # Wrong result of two trimmed cylinders intersection
 ######################################################
 
-set Tolerance 1.1e-7
+set Tolerance 2.0e-6
 set D_good 0.
 set Limit_Tol 1.0e-7
 

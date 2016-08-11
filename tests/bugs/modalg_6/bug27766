@@ -6,7 +6,7 @@ puts ""
 # Incorrect section curves between attached cylinders
 #################################################
 
-set ExpTol 1.0e-7
+set ExpTol 2.3528376469664739e-011
 set GoodNbCurv 3
 
 restore [locate_data_file bug27761_c1.brep] c1
@@ -27,4 +27,4 @@ don c_*
 fit
 disp c1 c2
 
-checkview -screenshot -2d -path ${imagedir}/${test_image}.png
+set only_screen_axo 1

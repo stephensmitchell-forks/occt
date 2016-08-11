@@ -7,9 +7,9 @@ puts ""
 #################################################
 
 if { [regexp {Debug mode} [dversion]] } {
-    set max_time 1.0
+    set max_time 3.0
 } else {
-    set max_time 0.5
+    set max_time 1.0
 }
 
 set ExpTol1 1.3823335207427231e-006
