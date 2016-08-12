@@ -25,6 +25,7 @@
 #include <Geom2dAdaptor_HCurve.hxx>
 #include <Geom_BezierCurve.hxx>
 #include <Geom_BSplineCurve.hxx>
+#include <Geom_OffsetCurve.hxx>
 #include <Geom_Surface.hxx>
 #include <GeomAdaptor_Curve.hxx>
 #include <GeomAdaptor_HSurface.hxx>
@@ -657,30 +658,12 @@ Handle(Geom_BSplineCurve) BRepAdaptor_Curve::BSpline() const
 //purpose  : 
 //=======================================================================
 
-Handle(Adaptor3d_HCurve) BRepAdaptor_Curve::BasisCurve() const 
+Handle(Geom_OffsetCurve) BRepAdaptor_Curve::OffsetCurve() const
 {
   if ( !Is3DCurve() || myCurve.GetType() != GeomAbs_OffsetCurve)
-    Standard_NoSuchObject::Raise("BRepAdaptor_Curve::BasisCurve");
+    Standard_NoSuchObject::Raise("BRepAdaptor_Curve::OffsetCurve");
 
-  const Handle(Geom_Curve)& aGC = myCurve.Curve();
-  Handle(Geom_OffsetCurve) anOffC = Handle(Geom_OffsetCurve)::DownCast(aGC);
-  Handle(Geom_Curve) aBC = anOffC->BasisCurve();
-  aBC = Handle(Geom_Curve)::DownCast(aBC->Transformed(myTrsf));
- 
-  Handle(GeomAdaptor_HCurve) aGABC = new GeomAdaptor_HCurve(aBC);
- 
-  return aGABC;
+  Handle(Geom_OffsetCurve) anOffC = myCurve.OffsetCurve();
+  return myTrsf.Form() == gp_Identity
+    ? anOffC : Handle(Geom_OffsetCurve)::DownCast(anOffC->Transformed(myTrsf));
 }
-
-//=======================================================================
-//function : OffsetValue
-//purpose  : 
-//=======================================================================
-
-Standard_Real BRepAdaptor_Curve::OffsetValue() const 
-{
-  if ( !Is3DCurve() || myCurve.GetType() != GeomAbs_OffsetCurve)
-    Standard_NoSuchObject::Raise("BRepAdaptor_Curve::OffsetValue");
- 
-  return myCurve.OffsetValue();
-} 

@@ -965,28 +965,9 @@ Handle(Geom_BSplineCurve) GeomAdaptor_Curve::BSpline() const
 //purpose  : 
 //=======================================================================
 
-Handle(Adaptor3d_HCurve) GeomAdaptor_Curve::BasisCurve() const 
+Handle(Geom_OffsetCurve) GeomAdaptor_Curve::OffsetCurve() const
 {
   if ( myTypeCurve != GeomAbs_OffsetCurve)
-    Standard_NoSuchObject::Raise("GeomAdaptor_Curve::BasisCurve");
-
-  Handle(Geom_OffsetCurve) anOffC = Handle(Geom_OffsetCurve)::DownCast(myCurve);
-  Handle(Geom_Curve) aBC = anOffC->BasisCurve();
- 
-  Handle(GeomAdaptor_HCurve) aGABC = new GeomAdaptor_HCurve(aBC);
-  return aGABC;
+    Standard_NoSuchObject::Raise("GeomAdaptor_Curve::OffsetCurve");
+  return Handle(Geom_OffsetCurve)::DownCast(myCurve);
 }
-
-//=======================================================================
-//function : OffsetValue
-//purpose  : 
-//=======================================================================
-
-Standard_Real GeomAdaptor_Curve::OffsetValue() const 
-{
-  if ( myTypeCurve != GeomAbs_OffsetCurve)
-    Standard_NoSuchObject::Raise("GeomAdaptor_Curve::OffsetValue");
- 
-  return Handle(Geom_OffsetCurve)::DownCast(myCurve)->Offset();
-} 
-

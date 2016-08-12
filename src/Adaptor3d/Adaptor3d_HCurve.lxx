@@ -298,18 +298,7 @@ inline Standard_Integer  Adaptor3d_HCurve::NbKnots() const
 //purpose  : 
 //=======================================================================
 
- inline Handle(Adaptor3d_HCurve) Adaptor3d_HCurve::BasisCurve() const 
+ inline Handle(Geom_OffsetCurve) Adaptor3d_HCurve::OffsetCurve() const
 {
-  return Curve().BasisCurve();
-}
-
-
-//=======================================================================
-//function : OffsetValue
-//purpose  : 
-//=======================================================================
-
- inline Standard_Real Adaptor3d_HCurve::OffsetValue() const 
-{
-  return Curve().OffsetValue();
+  return Curve().OffsetCurve();
 }

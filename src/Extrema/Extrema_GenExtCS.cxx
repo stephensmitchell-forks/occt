@@ -24,7 +24,9 @@
 #include <Extrema_GlobOptFuncCS.hxx>
 #include <Extrema_POnCurv.hxx>
 #include <Extrema_POnSurf.hxx>
+#include <Geom_Hyperbola.hxx>
 #include <Geom_Line.hxx>
+#include <Geom_OffsetCurve.hxx>
 #include <GeomAdaptor_Curve.hxx>
 #include <math_FunctionSetRoot.hxx>
 #include <math_PSO.hxx>
@@ -46,6 +48,8 @@ const Standard_Real HyperbolaLimit = 23.; //ln(UMaxParamVal)
 static void GetSurfMaxParamVals(const Adaptor3d_SurfacePtr theS,
                     Standard_Real& theUmax, Standard_Real& theVmax)
 {
+  // determine if the surface is extrusion or revolution 
+  // and its basis curve is hyperbola
   theUmax = UMaxParamVal;
   theVmax = VMaxParamVal;
   Handle(Adaptor3d_HCurve) aBC;
@@ -75,12 +79,13 @@ static void GetSurfMaxParamVals(const Adaptor3d_SurfacePtr theS,
     return;
   }
   //
-  if(aBC->GetType() == GeomAbs_OffsetCurve)
+  Standard_Boolean isHypebola = (aBC->GetType() == GeomAbs_Hyperbola);
+  if(!isHypebola && aBC->GetType() == GeomAbs_OffsetCurve)
   {
-    aBC = aBC->BasisCurve();
+    isHypebola = aBC->OffsetCurve()->BasisCurve()->IsKind(STANDARD_TYPE(Geom_Hyperbola));
   }
     
-  if(aBC->GetType() == GeomAbs_Hyperbola)
+  if (isHypebola)
   {
     if(aST == GeomAbs_SurfaceOfExtrusion)
     {
@@ -98,8 +103,9 @@ static Standard_Real GetCurvMaxParamVal(const Adaptor3d_Curve& theC)
 {
   if(theC.GetType() == GeomAbs_OffsetCurve)
   {
-    Handle(Adaptor3d_HCurve) aBC = theC.BasisCurve();
-    if(aBC->GetType() == GeomAbs_Hyperbola)
+    Standard_Boolean isHypebola = 
+      theC.OffsetCurve()->BasisCurve()->IsKind(STANDARD_TYPE(Geom_Hyperbola));
+    if (isHypebola)
     {
       return HyperbolaLimit;
     }

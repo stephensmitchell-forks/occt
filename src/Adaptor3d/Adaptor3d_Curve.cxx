@@ -19,6 +19,7 @@
 #include <Adaptor3d_HCurve.hxx>
 #include <Geom_BezierCurve.hxx>
 #include <Geom_BSplineCurve.hxx>
+#include <Geom_OffsetCurve.hxx>
 #include <gp_Circ.hxx>
 #include <gp_Elips.hxx>
 #include <gp_Hypr.hxx>
@@ -382,20 +383,8 @@ Handle(Geom_BSplineCurve) Adaptor3d_Curve::BSpline() const
 //purpose  : 
 //=======================================================================
 
-Handle(Adaptor3d_HCurve) Adaptor3d_Curve::BasisCurve() const 
+Handle(Geom_OffsetCurve) Adaptor3d_Curve::OffsetCurve() const
 {
-  Standard_NotImplemented::Raise("Adaptor3d_Curve::BasisCurve");
-  return Handle(Adaptor3d_HCurve)();
-}
-
-
-//=======================================================================
-//function : OffsetValue
-//purpose  : 
-//=======================================================================
-
-Standard_Real Adaptor3d_Curve::OffsetValue() const 
-{
-  Standard_NotImplemented::Raise("Adaptor3d_Curve::OffsetValue");
-  return 0.;
+  Standard_NotImplemented::Raise("Adaptor3d_Curve::OffsetCurve");
+  return Handle(Geom_OffsetCurve)();
 }

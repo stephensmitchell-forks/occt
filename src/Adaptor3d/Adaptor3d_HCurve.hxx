@@ -42,6 +42,7 @@ class gp_Pnt;
 class gp_Vec;
 class Geom_BezierCurve;
 class Geom_BSplineCurve;
+class Geom_OffsetCurve;
 
 
 class Adaptor3d_HCurve;
@@ -134,10 +135,7 @@ public:
   
     Handle(Geom_BSplineCurve) BSpline() const;
 
-    Handle(Adaptor3d_HCurve) BasisCurve() const;
-  
-    Standard_Real OffsetValue() const;
-
+    Handle(Geom_OffsetCurve) OffsetCurve() const;
 
 
   DEFINE_STANDARD_RTTIEXT(Adaptor3d_HCurve,MMgt_TShared)
