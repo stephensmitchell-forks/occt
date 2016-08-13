@@ -1508,14 +1508,7 @@ Handle(Geom2d_BSplineCurve)
   Standard_Real DistTol3d = 1.0*Tol3d;
   Standard_Real TolU = Surf->UResolution(Tol3d), TolV = Surf->VResolution(Tol3d);
   Standard_Real Tol2d = Max(Sqrt(TolU*TolU + TolV*TolV), Precision::PConfusion());
-  //
-  Standard_Real BigTol3d = 10.;
 
-  if(Tol3d > BigTol3d)
-  {
-    Tol2d = Max(Tol2d, 0.01 * Tol3d);//0.01 = PConfusion/Confusion
-  }
-  //
   Standard_Integer i;
   GeomAbs_SurfaceType TheTypeS = Surf->GetType();
   GeomAbs_CurveType TheTypeC = Curve->GetType();
