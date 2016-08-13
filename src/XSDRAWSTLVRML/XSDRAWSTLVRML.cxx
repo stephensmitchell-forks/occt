@@ -959,13 +959,11 @@ static Standard_Integer meshvectors( Draw_Interpretor& di,
     Standard_Integer aNbNodes;
     MeshVS_EntityType aEntType;
 
+    TColStd_Array1OfReal aCoords(1, 3);
+    aCoords.Init (0.);
     TColStd_MapIteratorOfPackedMapOfInteger anIter( anAllIDs );
     for ( ; anIter.More(); anIter.Next() )
     {
-      TColStd_Array1OfReal aCoords(1, 3);
-      aCoords(1) = 0.;
-      aCoords(2) = 0.;
-      aCoords(3) = 0.;
       Standard_Boolean IsValidData = Standard_False; 
       if (anIsElement)
         IsValidData = aMesh->GetDataSource()->GetNormal(anIter.Key(), 3, aCoords.ChangeValue(1), aCoords.ChangeValue(2), aCoords.ChangeValue(3));

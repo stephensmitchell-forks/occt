@@ -30,7 +30,7 @@
 // (Sqrt(5.0) - 1.0) / 4.0
 static const Standard_Real aSinCoeff = 0.30901699437494742410229341718282;
 static const Standard_Integer aMaxPntCoeff = 15;
-
+static const Standard_Real Epsilon1 = Epsilon(1.);
 
 //=======================================================================
 //function : EvalCurv
@@ -439,7 +439,6 @@ Standard_Boolean ApproxInt_KnotTools::InsKnotBefI(const Standard_Integer theI,
                                                   NCollection_Sequence<Standard_Integer>& theInds,
                                                   const Standard_Boolean ChkCurv)
 {
-  const Standard_Real eps = Epsilon(1.);
   Standard_Integer anInd1 = theInds(theI);
   Standard_Integer anInd = theInds(theI - 1);
   //
@@ -521,16 +520,7 @@ Standard_Boolean ApproxInt_KnotTools::InsKnotBefI(const Standard_Integer theI,
         //mp *= 2.; //P(j,i) = -P(i,j);
         //
         Standard_Real m1m2 = m1*m2;
-        if(m1m2 > eps)
-        {
-          sina = mp/m1m2;
-        }
-        else
-        {
-          sina = 0.;
-        }
-        sina = Sqrt(sina);
-
+        sina = (m1m2 > Epsilon1 ? Sqrt (mp / m1m2) : 0.);
         if(sina > aSinCoeff)
         {
           theInds.InsertBefore(theI, mid);

@@ -1275,20 +1275,14 @@ Standard_Boolean BOPAlgo_PaveFiller::IsExistingPaveBlock
       //
       if (iFlag1 == 1) {
         iFlag1 = !myContext->ComputePE(aP1, aRealTol, aSp, aTx, aDist);
-        if(iFlag1)
-        {
-          if (theTolNew < aDist)
-            theTolNew = aDist;
-        }
+        if (iFlag1 && theTolNew < aDist)
+          theTolNew = aDist;
       }
       //
       if (iFlag2 == 1) {
         iFlag2 = !myContext->ComputePE(aP2, aRealTol, aSp, aTx, aDist);
-        if(iFlag2)
-        {
-          if (theTolNew < aDist)
-            theTolNew = aDist;
-        }
+        if (iFlag2 && theTolNew < aDist)
+          theTolNew = aDist;
       }
       //
       if (iFlag1 && iFlag2) {

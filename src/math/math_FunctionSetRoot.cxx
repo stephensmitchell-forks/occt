@@ -720,26 +720,8 @@ void math_FunctionSetRoot::Perform(math_FunctionSetWithDerivatives& F,
   math_Vector InvLengthMax(1, Ninc); // Pour bloquer les pas a 1/4 du domaine
   math_IntegerVector aConstraints(1, Ninc); // Pour savoir sur quels bord on se trouve
   for (i = 1; i <= Ninc ; i++) {
-    // modified by NIZHNY-MKK  Mon Oct  3 18:03:50 2005
-    //      InvLengthMax(i) = 1. / Max(Abs(SupBound(i) - InfBound(i))/4, 1.e-9);
-    Standard_Real SupBound = theSupBound(i), InfBound = theInfBound(i);
-    if(Precision::IsNegativeInfinite(SupBound))
-    {
-      SupBound = -Precision::Infinite();
-    }
-    else if(Precision::IsPositiveInfinite(SupBound))
-    {
-      SupBound = Precision::Infinite();
-    }
-    if(Precision::IsNegativeInfinite(InfBound))
-    {
-      InfBound = -Precision::Infinite();
-    }
-    else if(Precision::IsPositiveInfinite(InfBound))
-    {
-      InfBound = Precision::Infinite();
-    }
-
+    Standard_Real SupBound = Min (theSupBound(i),  Precision::Infinite());
+    Standard_Real InfBound = Max (theInfBound(i), -Precision::Infinite());
     InvLengthMax(i) = 1. / Max((SupBound - InfBound)/4, 1.e-9);
   }
 
