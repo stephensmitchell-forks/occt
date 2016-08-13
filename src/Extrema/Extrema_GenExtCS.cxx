@@ -38,92 +38,53 @@
 #include <StdFail_NotDone.hxx>
 #include <TColgp_HArray1OfPnt.hxx>
 #include <Adaptor3d_HSurface.hxx>
+#include <Geom_TrimmedCurve.hxx>
 
-const Standard_Real UMaxParamVal = 1.0e+10;
-const Standard_Real VMaxParamVal = 1.0e+10;
-const Standard_Real CMaxParamVal = 1.0e+10;
+const Standard_Real MaxParamVal = 1.0e+10;
 const Standard_Real aBorderDivisor = 1.0e+4;
-const Standard_Real HyperbolaLimit = 23.; //ln(UMaxParamVal)
+const Standard_Real HyperbolaLimit = 23.; //ln(MaxParamVal)
 
-static void GetSurfMaxParamVals(const Adaptor3d_SurfacePtr theS,
-                    Standard_Real& theUmax, Standard_Real& theVmax)
+// restrict maximal parameter on hyperbola to avoid FPE
+static Standard_Real GetCurvMaxParamVal (const Adaptor3d_Curve& theC)
 {
-  // determine if the surface is extrusion or revolution 
-  // and its basis curve is hyperbola
-  theUmax = UMaxParamVal;
-  theVmax = VMaxParamVal;
-  Handle(Adaptor3d_HCurve) aBC;
-  GeomAbs_SurfaceType aST = GeomAbs_OtherSurface;
-  if(theS->GetType() == GeomAbs_OffsetSurface)
-  {
-    Handle(Adaptor3d_HSurface) aBS = theS->BasisSurface();
-    if(aBS->GetType() == GeomAbs_SurfaceOfExtrusion ||
-       aBS->GetType() == GeomAbs_SurfaceOfRevolution)
-    {
-      aST = aBS->GetType();
-      aBC = aBS->BasisCurve();
-    }
-    else
-    {
-      return;
-    }
-  }
-  else if(theS->GetType() == GeomAbs_SurfaceOfExtrusion ||
-          theS->GetType() == GeomAbs_SurfaceOfRevolution)
-  {
-    aST = theS->GetType();
-    aBC = theS->BasisCurve();
-  }
-  else
-  {
-    return;
-  }
-  //
-  Standard_Boolean isHypebola = (aBC->GetType() == GeomAbs_Hyperbola);
-  if(!isHypebola && aBC->GetType() == GeomAbs_OffsetCurve)
-  {
-    isHypebola = aBC->OffsetCurve()->BasisCurve()->IsKind(STANDARD_TYPE(Geom_Hyperbola));
-  }
-    
-  if (isHypebola)
-  {
-    if(aST == GeomAbs_SurfaceOfExtrusion)
-    {
-      theUmax = HyperbolaLimit;
-    }
-    else
-    {
-      theVmax = HyperbolaLimit;
-    }
-  }
-  return;
-}
-//
-static Standard_Real GetCurvMaxParamVal(const Adaptor3d_Curve& theC)
-{
-  if(theC.GetType() == GeomAbs_OffsetCurve)
-  {
-    Standard_Boolean isHypebola = 
-      theC.OffsetCurve()->BasisCurve()->IsKind(STANDARD_TYPE(Geom_Hyperbola));
-    if (isHypebola)
-    {
-      return HyperbolaLimit;
-    }
-    else
-    {
-      return CMaxParamVal;
-    }
-  }
-  else if(theC.GetType() == GeomAbs_Hyperbola)
+  if (theC.GetType() == GeomAbs_Hyperbola)
   {
     return HyperbolaLimit;
   }
-  else
+  if (theC.GetType() == GeomAbs_OffsetCurve)
   {
-    return CMaxParamVal;
+    Handle(Geom_Curve) aBC (theC.OffsetCurve()->BasisCurve());
+    Handle(Geom_TrimmedCurve) aTC = Handle(Geom_TrimmedCurve)::DownCast (aBC);
+    if (! aTC.IsNull())
+    {
+      aBC = aTC->BasisCurve();
+    }
+    if (aBC->IsKind (STANDARD_TYPE(Geom_Hyperbola)))
+      return HyperbolaLimit;
   }
-  //
+  return MaxParamVal;
 }
+
+// restrict maximal parameter on surfaces based on hyperbola to avoid FPE
+static void GetSurfMaxParamVals (const Adaptor3d_Surface& theS,
+                                 Standard_Real& theUmax, Standard_Real& theVmax)
+{
+  theUmax = theVmax = MaxParamVal;
+
+  if (theS.GetType() == GeomAbs_SurfaceOfExtrusion)
+  {
+    theUmax = GetCurvMaxParamVal (theS.BasisCurve()->Curve());
+  }
+  else if (theS.GetType() == GeomAbs_SurfaceOfRevolution)
+  {
+    theVmax = GetCurvMaxParamVal (theS.BasisCurve()->Curve());
+  }
+  else if (theS.GetType() == GeomAbs_OffsetSurface)
+  {
+    GetSurfMaxParamVals (theS.BasisSurface()->Surface(), theUmax, theVmax);
+  }
+}
+
 //=======================================================================
 //function : Extrema_GenExtCS
 //purpose  : 
@@ -212,7 +173,7 @@ void Extrema_GenExtCS::Initialize (const Adaptor3d_Surface& S,
   mytol2 = Tol2;
 
   Standard_Real umaxpar, vmaxpar;
-  GetSurfMaxParamVals(myS, umaxpar, vmaxpar);
+  GetSurfMaxParamVals(*myS, umaxpar, vmaxpar);
 
   if(Precision::IsInfinite (myusup))
   {
@@ -286,7 +247,7 @@ void Extrema_GenExtCS::Perform (const Adaptor3d_Curve& C,
   // Modif de lvt pour trimer la surface non pas aux infinis mais  a +/- 10000
 
   Standard_Real trimusup = myusup, trimumin = myumin,trimvsup = myvsup,trimvmin = myvmin;
-  Standard_Real aCMaxVal = GetCurvMaxParamVal(C);
+  Standard_Real aCMaxVal = GetCurvMaxParamVal (C);
   if (Precision::IsInfinite(mytsup)){
     mytsup = aCMaxVal;
   }
