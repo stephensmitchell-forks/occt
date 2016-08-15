@@ -299,7 +299,6 @@ void AIS_ColoredShape::Compute (const Handle(PrsMgr_PresentationManager3d)& ,
                                 const Handle(Prs3d_Presentation)&           thePrs,
                                 const Standard_Integer                      theMode)
 {
-  thePrs->Clear();
   if (IsInfinite())
   {
     thePrs->SetInfiniteState (Standard_True);
