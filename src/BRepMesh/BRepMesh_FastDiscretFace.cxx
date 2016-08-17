@@ -984,7 +984,6 @@ void BRepMesh_FastDiscretFace::insertInternalVerticesOther(
       gp_Pnt aPrevPnt2;
       gp_Vec aPrevVec2;
       aIso.D1 (aPrevParam2, aPrevPnt2, aPrevVec2);
-      Standard_Real aMod2PrevVec2 = aPrevVec2.SquareMagnitude();
       for (Standard_Integer j = 2; j <= aParams2.Length();)
       {
         Standard_Real aParam2 = aParams2(j);
@@ -1011,7 +1010,9 @@ void BRepMesh_FastDiscretFace::insertInternalVerticesOther(
           if (aDist < aDefFace)
           {
             // Lets check parameters for angular deflection.
-            if (aMod2PrevVec2 > gp::Resolution() && (aPrevVec2.Angle(aNextVec) < myAngle))
+            if (aPrevVec2.SquareMagnitude() > gp::Resolution() &&
+                aNextVec.SquareMagnitude() > gp::Resolution() &&
+                aPrevVec2.Angle(aNextVec) < myAngle)
             {
               // For current Iso line we can remove this parameter.
 #ifdef DEBUG_InsertInternal
@@ -1026,7 +1027,6 @@ void BRepMesh_FastDiscretFace::insertInternalVerticesOther(
               aPrevParam2 = aNextParam;
               aPrevPnt2 = aNextPnt;
               aPrevVec2 = aNextVec;
-              aMod2PrevVec2 = aPrevVec2.SquareMagnitude();
               j += 2;
               continue;
             }
@@ -1049,7 +1049,6 @@ void BRepMesh_FastDiscretFace::insertInternalVerticesOther(
         aPrevParam2 = aParam2;
         aPrevPnt2 = aPnt2;
         aPrevVec2 = aVec2;
-        aMod2PrevVec2 = aPrevVec2.SquareMagnitude();
         ++j;
       }
     }
