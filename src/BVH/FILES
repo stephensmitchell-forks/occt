@@ -46,3 +46,10 @@ BVH_QuadTree.lxx
 BVH_Triangulation.hxx
 BVH_Triangulation.lxx
 BVH_Types.hxx
+BVH_ImplicitFunction.hxx
+BVH_ImplicitFunction.lxx
+BVH_Tessellator.hxx
+BVH_Tessellator.lxx
+BVH_MarchingCubes.hxx
+BVH_MarchingCubes.lxx
+BVH_MarchingCubes.cxx

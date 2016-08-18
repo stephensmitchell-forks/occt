@@ -1,0 +1,40 @@
+// Created on: 2016-04-07
+// Created by: Denis BOGOLEPOV
+// Copyright (c) 2013-2016 OPEN CASCADE SAS
+//
+// This file is part of Open CASCADE Technology software library.
+//
+// This library is free software; you can redistribute it and/or modify it under
+// the terms of the GNU Lesser General Public License version 2.1 as published
+// by the Free Software Foundation, with special exception defined in the file
+// OCCT_LGPL_EXCEPTION.txt. Consult the file LICENSE_LGPL_21.txt included in OCCT
+// distribution for complete text of the license and disclaimer of any warranty.
+//
+// Alternatively, this file may be used under the terms of Open CASCADE
+// commercial license or contractual agreement.
+
+// =======================================================================
+// function : BVH_Tessellator
+// purpose  : Creates base tessellator with the given resolution
+// =======================================================================
+template<class T, int N>
+BVH_Tessellator<T, N>::BVH_Tessellator (const BVH_Box<T, N>& theBox, const Standard_Integer theMaxSlices)
+: myCornerMin (theBox.CornerMin()),
+  myCornerMax (theBox.CornerMax())
+{
+  Standard_STATIC_ASSERT (N == 3 || N == 4);
+
+  const BVH_VecNt aBoxSize = myCornerMax - myCornerMin;
+
+  mySlicesX = static_cast<Standard_Integer> (theMaxSlices * aBoxSize.x() / aBoxSize.maxComp());
+  mySlicesY = static_cast<Standard_Integer> (theMaxSlices * aBoxSize.y() / aBoxSize.maxComp());
+  mySlicesZ = static_cast<Standard_Integer> (theMaxSlices * aBoxSize.z() / aBoxSize.maxComp());
+
+  mySlicesX = Min (theMaxSlices, Max (mySlicesX, 8));
+  mySlicesY = Min (theMaxSlices, Max (mySlicesY, 8));
+  mySlicesZ = Min (theMaxSlices, Max (mySlicesZ, 8));
+
+  myVoxelSize.x() = aBoxSize.x() / mySlicesX;
+  myVoxelSize.y() = aBoxSize.y() / mySlicesY;
+  myVoxelSize.z() = aBoxSize.z() / mySlicesZ;
+}

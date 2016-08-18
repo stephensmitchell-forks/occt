@@ -266,6 +266,23 @@ namespace BVH
 
     return aRes - static_cast<Standard_Integer> (aRes > theValue);
   }
+
+  //! Defines precision for numeric type.
+  template<class T> struct Precision { };
+
+  //! Defines precision for 64-bit FP type.
+  template<> struct Precision<Standard_Real>
+  {
+    //! Returns precision constant.
+    static Standard_Real Confusion() { return 1.0e-7; }
+  };
+
+  //! Defines precision for 32-bit FP type.
+  template<> struct Precision<Standard_ShortReal>
+  {
+    //! Returns precision constant.
+    static Standard_ShortReal Confusion() { return 1.0e-5f; }
+  };
 }
 
 #endif // _BVH_Types_Header

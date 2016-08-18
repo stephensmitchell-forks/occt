@@ -1,0 +1,254 @@
+// Created on: 2016-04-07
+// Created by: Denis BOGOLEPOV
+// Copyright (c) 2013-2016 OPEN CASCADE SAS
+//
+// This file is part of Open CASCADE Technology software library.
+//
+// This library is free software; you can redistribute it and/or modify it under
+// the terms of the GNU Lesser General Public License version 2.1 as published
+// by the Free Software Foundation, with special exception defined in the file
+// OCCT_LGPL_EXCEPTION.txt. Consult the file LICENSE_LGPL_21.txt included in OCCT
+// distribution for complete text of the license and disclaimer of any warranty.
+//
+// Alternatively, this file may be used under the terms of Open CASCADE
+// commercial license or contractual agreement.
+
+// =======================================================================
+// function : BVH_MarchingCubes
+// purpose  : Creates marching cubes (MC) tessellator
+// =======================================================================
+template<class T, int N>
+BVH_MarchingCubes<T, N>::BVH_MarchingCubes (const BVH_Box<T, N>& theBox, const Standard_Integer theMaxSlices)
+: BVH_Tessellator<T, N> (theBox, theMaxSlices)
+{
+  //
+}
+
+// =======================================================================
+// function : VoxelCorner
+// purpose  :
+// =======================================================================
+template<class T, int N>
+typename BVH_MarchingCubes<T, N>::BVH_VecNt BVH_MarchingCubes<T, N>::VoxelCorner (const int theX,
+                                                                                  const int theY,
+                                                                                  const int theZ) const
+{
+  BVH_VecNt aCorner = myCornerMin;
+
+  aCorner.x() += myVoxelSize.x() * theX;
+  aCorner.y() += myVoxelSize.y() * theY;
+  aCorner.z() += myVoxelSize.z() * theZ;
+
+  return aCorner;
+}
+
+// =======================================================================
+// function : VertexInter
+// purpose  :
+// =======================================================================
+template<class T, int N>
+typename BVH_MarchingCubes<T, N>::BVH_VecNt BVH_MarchingCubes<T, N>::VertexInter (const BVH_VecNt& thePnt1,
+                                                                                  const BVH_VecNt& thePnt2,
+                                                                                  const T          theVal1,
+                                                                                  const T          theVal2) const
+{
+  return thePnt1 - (thePnt2 - thePnt1) * (theVal1 / (theVal2 - theVal1));
+}
+
+// =======================================================================
+// function : Perform
+// purpose  : Generates tessellation for the given value
+// =======================================================================
+template<class T, int N>
+Standard_Boolean BVH_MarchingCubes<T, N>::Perform (BVH_ImplicitFunction<T, N>& theFunction, const T theValue)
+{
+  T* aGridValues = new T[(mySlicesX + 1) *
+                         (mySlicesY + 1) *
+                         (mySlicesZ + 1)];
+
+  const int aSX = mySlicesX + 1;
+  const int aSY = mySlicesY + 1;
+
+  for (Standard_Integer aZ = 0; aZ <= mySlicesZ; ++aZ)
+  {
+    for (Standard_Integer aY = 0; aY <= mySlicesY; ++aY)
+    {
+      for (Standard_Integer aX = 0; aX <= mySlicesX; ++aX)
+      {
+        aGridValues[aX + (aY + aZ * aSY) * aSX] = theFunction.Calculate (VoxelCorner (aX, aY, aZ)) - theValue;
+      }
+    }
+  }
+
+  myTessellation = new BVH_Triangulation<T, N>;
+
+  IndexMap aVertexMap; // used to merge vertices
+
+  for (Standard_Integer aZ = 0; aZ < mySlicesZ; ++aZ)
+  {
+    for (Standard_Integer aY = 0; aY < mySlicesY; ++aY)
+    {
+      for (Standard_Integer aX = 0; aX < mySlicesX; ++aX)
+      {
+        // determine the index into the edge table
+
+        int aCubeIndex = 0;
+
+        if (aGridValues[(aX + 0) + ((aY + 0) + (aZ + 0) * aSY) * aSX] < T(0.0))
+          aCubeIndex |= 1;
+
+        if (aGridValues[(aX + 1) + ((aY + 0) + (aZ + 0) * aSY) * aSX] < T(0.0))
+          aCubeIndex |= 2;
+
+        if (aGridValues[(aX + 1) + ((aY + 1) + (aZ + 0) * aSY) * aSX] < T(0.0))
+          aCubeIndex |= 4;
+
+        if (aGridValues[(aX + 0) + ((aY + 1) + (aZ + 0) * aSY) * aSX] < T(0.0))
+          aCubeIndex |= 8;
+
+        if (aGridValues[(aX + 0) + ((aY + 0) + (aZ + 1) * aSY) * aSX] < T(0.0))
+          aCubeIndex |= 16;
+
+        if (aGridValues[(aX + 1) + ((aY + 0) + (aZ + 1) * aSY) * aSX] < T(0.0))
+          aCubeIndex |= 32;
+
+        if (aGridValues[(aX + 1) + ((aY + 1) + (aZ + 1) * aSY) * aSX] < T(0.0))
+          aCubeIndex |= 64;
+
+        if (aGridValues[(aX + 0) + ((aY + 1) + (aZ + 1) * aSY) * aSX] < T(0.0))
+          aCubeIndex |= 128;
+
+        // cube is entirely in/out of the surface
+        if (BVH::MarchingCubeTables::EdgeTable()[aCubeIndex] != 0)
+        {
+          // find the vertices where the surface intersects the cube
+          BVH_VecNt aVertexList[12];
+          
+          if (BVH::MarchingCubeTables::EdgeTable()[aCubeIndex] & 1)
+          {
+            aVertexList[0] = VertexInter (VoxelCorner (aX + 0, aY + 0, aZ + 0),
+                                          VoxelCorner (aX + 1, aY + 0, aZ + 0),
+                                          aGridValues[(aX + 0) + ((aY + 0) + (aZ + 0) * aSY) * aSX],
+                                          aGridValues[(aX + 1) + ((aY + 0) + (aZ + 0) * aSY) * aSX]);
+          }
+
+          if (BVH::MarchingCubeTables::EdgeTable()[aCubeIndex] & 2)
+          {
+            aVertexList[1] = VertexInter (VoxelCorner (aX + 1, aY + 0, aZ + 0),
+                                          VoxelCorner (aX + 1, aY + 1, aZ + 0),
+                                          aGridValues[(aX + 1) + ((aY + 0) + (aZ + 0) * aSY) * aSX],
+                                          aGridValues[(aX + 1) + ((aY + 1) + (aZ + 0) * aSY) * aSX]);
+          }
+
+          if (BVH::MarchingCubeTables::EdgeTable()[aCubeIndex] & 4)
+          {
+            aVertexList[2] = VertexInter (VoxelCorner (aX + 1, aY + 1, aZ + 0),
+                                          VoxelCorner (aX + 0, aY + 1, aZ + 0),
+                                          aGridValues[(aX + 1) + ((aY + 1) + (aZ + 0) * aSY) * aSX],
+                                          aGridValues[(aX + 0) + ((aY + 1) + (aZ + 0) * aSY) * aSX]);
+          }
+
+          if (BVH::MarchingCubeTables::EdgeTable()[aCubeIndex] & 8)
+          {
+            aVertexList[3] = VertexInter (VoxelCorner (aX + 0, aY + 1, aZ + 0),
+                                          VoxelCorner (aX + 0, aY + 0, aZ + 0),
+                                          aGridValues[(aX + 0) + ((aY + 1) + (aZ + 0) * aSY) * aSX],
+                                          aGridValues[(aX + 0) + ((aY + 0) + (aZ + 0) * aSY) * aSX]);
+          }
+
+          if (BVH::MarchingCubeTables::EdgeTable()[aCubeIndex] & 16)
+          {
+            aVertexList[4] = VertexInter (VoxelCorner (aX + 0, aY + 0, aZ + 1),
+                                          VoxelCorner (aX + 1, aY + 0, aZ + 1),
+                                          aGridValues[(aX + 0) + ((aY + 0) + (aZ + 1) * aSY) * aSX],
+                                          aGridValues[(aX + 1) + ((aY + 0) + (aZ + 1) * aSY) * aSX]);
+          }
+
+          if (BVH::MarchingCubeTables::EdgeTable()[aCubeIndex] & 32)
+          {
+            aVertexList[5] = VertexInter (VoxelCorner (aX + 1, aY + 0, aZ + 1),
+                                          VoxelCorner (aX + 1, aY + 1, aZ + 1),
+                                          aGridValues[(aX + 1) + ((aY + 0) + (aZ + 1) * aSY) * aSX],
+                                          aGridValues[(aX + 1) + ((aY + 1) + (aZ + 1) * aSY) * aSX]);
+          }
+
+          if (BVH::MarchingCubeTables::EdgeTable()[aCubeIndex] & 64)
+          {
+            aVertexList[6] = VertexInter (VoxelCorner (aX + 1, aY + 1, aZ + 1),
+                                          VoxelCorner (aX + 0, aY + 1, aZ + 1),
+                                          aGridValues[(aX + 1) + ((aY + 1) + (aZ + 1) * aSY) * aSX],
+                                          aGridValues[(aX + 0) + ((aY + 1) + (aZ + 1) * aSY) * aSX]);
+          }
+
+          if (BVH::MarchingCubeTables::EdgeTable()[aCubeIndex] & 128)
+          {
+            aVertexList[7] = VertexInter (VoxelCorner (aX + 0, aY + 1, aZ + 1),
+                                          VoxelCorner (aX + 0, aY + 0, aZ + 1),
+                                          aGridValues[(aX + 0) + ((aY + 1) + (aZ + 1) * aSY) * aSX],
+                                          aGridValues[(aX + 0) + ((aY + 0) + (aZ + 1) * aSY) * aSX]);
+          }
+
+          if (BVH::MarchingCubeTables::EdgeTable()[aCubeIndex] & 256)
+          {
+            aVertexList[8] = VertexInter (VoxelCorner (aX + 0, aY + 0, aZ + 0),
+                                          VoxelCorner (aX + 0, aY + 0, aZ + 1),
+                                          aGridValues[(aX + 0) + ((aY + 0) + (aZ + 0) * aSY) * aSX],
+                                          aGridValues[(aX + 0) + ((aY + 0) + (aZ + 1) * aSY) * aSX]);
+          }
+
+          if (BVH::MarchingCubeTables::EdgeTable()[aCubeIndex] & 512)
+          {
+            aVertexList[9] = VertexInter (VoxelCorner (aX + 1, aY + 0, aZ + 0),
+                                          VoxelCorner (aX + 1, aY + 0, aZ + 1),
+                                          aGridValues[(aX + 1) + ((aY + 0) + (aZ + 0) * aSY) * aSX],
+                                          aGridValues[(aX + 1) + ((aY + 0) + (aZ + 1) * aSY) * aSX]);
+          }
+
+          if (BVH::MarchingCubeTables::EdgeTable()[aCubeIndex] & 1024)
+          {
+            aVertexList[10] = VertexInter (VoxelCorner (aX + 1, aY + 1, aZ + 0),
+                                           VoxelCorner (aX + 1, aY + 1, aZ + 1),
+                                           aGridValues[(aX + 1) + ((aY + 1) + (aZ + 0) * aSY) * aSX],
+                                           aGridValues[(aX + 1) + ((aY + 1) + (aZ + 1) * aSY) * aSX]);
+          }
+
+          if (BVH::MarchingCubeTables::EdgeTable()[aCubeIndex] & 2048)
+          {
+            aVertexList[11] = VertexInter (VoxelCorner (aX + 0, aY + 1, aZ + 0),
+                                           VoxelCorner (aX + 0, aY + 1, aZ + 1),
+                                           aGridValues[(aX + 0) + ((aY + 1) + (aZ + 0) * aSY) * aSX],
+                                           aGridValues[(aX + 0) + ((aY + 1) + (aZ + 1) * aSY) * aSX]);
+          }
+
+          const char* aTrgIdxs = BVH::MarchingCubeTables::TriTable()[aCubeIndex];
+
+          for (Standard_Integer i = 0; aTrgIdxs[i] != -1; i += 3)
+          {
+            BVH_Vec4i aTrg (0, 0, 0, 0);
+
+            for (Standard_Integer k = 0; k < 3; ++k)
+            {
+              IndexMap::iterator aVrtIter = aVertexMap.find (aVertexList [aTrgIdxs[i + 2 - k]]);
+
+              if (aVrtIter != aVertexMap.end())
+              {
+                aTrg[k] = aVrtIter->second;
+              }
+              else
+              {
+                aVertexMap[aVertexList [aTrgIdxs[i + 2 - k]]] = aTrg[k] =
+                  static_cast<Standard_Integer> (myTessellation->Vertices.size());
+
+                myTessellation->Vertices.push_back (aVertexList [aTrgIdxs[i + 2 - k]]);
+              }
+            }
+
+            myTessellation->Elements.push_back (aTrg);
+          }
+        }
+      }
+    }
+  }
+
+  return Standard_True;
+}

@@ -63,6 +63,11 @@ public:
   virtual void Swap (const Standard_Integer theIndex1,
                      const Standard_Integer theIndex2);
 
+public:
+
+  //! Saves triangulation to OBJ file (for debug).
+  void SaveToOBJ (const char* theFileName);
+
 };
 
 #include <BVH_Triangulation.lxx>

@@ -22,6 +22,7 @@
 #include <BVH_BinnedBuilder.hxx>
 #include <BVH_SweepPlaneBuilder.hxx>
 #include <BVH_SpatialMedianBuilder.hxx>
+#include <BVH_MarchingCubes.hxx>
 
 #include <Standard_Real.hxx>
 
@@ -150,6 +151,12 @@ template class BVH_DistanceField<Standard_Real, 4>;
 
 template class BVH_DistanceField<Standard_ShortReal, 3>;
 template class BVH_DistanceField<Standard_ShortReal, 4>;
+
+template class BVH_Tessellator<Standard_ShortReal, 3>;
+template class BVH_Tessellator<Standard_ShortReal, 4>;
+
+template class BVH_MarchingCubes<Standard_ShortReal, 3>;
+template class BVH_MarchingCubes<Standard_ShortReal, 4>;
 
 template class BVH_Transform<Standard_Real, 4>;
 template class BVH_Transform<Standard_ShortReal, 4>;
