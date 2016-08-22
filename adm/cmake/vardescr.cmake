@@ -92,7 +92,8 @@ BUILD_MODULE_MESSAGE (BUILD_MODULE_FoundationClasses    "FoundationClasses")
 BUILD_MODULE_MESSAGE (BUILD_MODULE_ModelingAlgorithms   "ModelingAlgorithms")
 BUILD_MODULE_MESSAGE (BUILD_MODULE_ModelingData         "ModelingData")
 BUILD_MODULE_MESSAGE (BUILD_MODULE_Visualization        "Visualization")
-
+BUILD_MODULE_MESSAGE (BUILD_MODULE_Helix "Helix")
+BUILD_MODULE_MESSAGE (BUILD_MODULE_Unfolding "Unfolding")
 
 set (BUILD_ADDITIONAL_TOOLKITS_DESCR
 "Semicolon-separated individual toolkits to include into build process. If you

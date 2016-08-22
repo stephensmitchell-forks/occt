@@ -6,3 +6,5 @@ srcinc:::ModelingAlgorithms.tcl
 srcinc:::ModelingData.tcl
 srcinc:::Modules.tcl
 srcinc:::Visualization.tcl
+srcinc:::Unfolding.tcl
+srcinc:::Helix.tcl

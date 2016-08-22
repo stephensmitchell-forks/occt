@@ -440,3 +440,11 @@ n IVtkDraw
 t TKIVtkDraw
 n Geom2dEvaluator
 t TKVCAF
+p HelixBRep
+p HelixGeom
+p HelixTest
+t TKHelix
+p Unfolding
+p UnfoldingTest
+t TKUnfolding
+t TKUnfoldingTest

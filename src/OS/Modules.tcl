@@ -22,6 +22,8 @@ proc OS:Modules { {plat ""} } {
 	   ApplicationFramework \
 	   DataExchange \
 	   Draw \
+	   Helix \
+	   Unfolding \
 	   ]
     return $ret
 }

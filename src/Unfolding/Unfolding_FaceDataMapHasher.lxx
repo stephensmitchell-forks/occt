@@ -1,0 +1,30 @@
+// File:	Unfolding_FaceDataMapHasher.lxx
+// Created:	Mon Sep 22 08:54:51 2008
+// Author:	Sergey KHROMOV
+//		<skv@kurox>
+
+
+//=======================================================================
+//function : HashCode
+//purpose  : 
+//=======================================================================
+
+inline Standard_Integer Unfolding_FaceDataMapHasher::HashCode
+                (const Handle(Unfolding_FaceDataContainer) &theKey,
+		 const Standard_Integer                     theUpper)
+{
+  return (theKey.IsNull()) ? 0 : theKey->GetFace().HashCode(theUpper);
+}
+
+//=======================================================================
+//function : IsEqual
+//purpose  : 
+//=======================================================================
+
+inline Standard_Boolean Unfolding_FaceDataMapHasher::IsEqual
+                          (const Handle(Unfolding_FaceDataContainer) &theKey1,
+			   const Handle(Unfolding_FaceDataContainer) &theKey2)
+{
+  return !theKey1.IsNull() && !theKey2.IsNull() &&
+          theKey1->GetFace().IsSame(theKey2->GetFace());
+}

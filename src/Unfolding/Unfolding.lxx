@@ -1,0 +1,12 @@
+// File:	Unfolding.lxx
+// Created:	Tue Jul 22 13:12:24 2008
+// Author:	Sergey KHROMOV
+//		<skv@dimox>
+
+
+inline Standard_Integer Unfolding::GetMaxNbSamples()
+{
+  static Standard_Integer aMaxNbSamples = 1000;
+
+  return aMaxNbSamples;
+}

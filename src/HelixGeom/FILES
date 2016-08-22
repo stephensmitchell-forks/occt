@@ -1,0 +1,16 @@
+HelixGeom_BuilderApproxCurve.cxx
+HelixGeom_BuilderApproxCurve.hxx
+HelixGeom_BuilderHelix.cxx
+HelixGeom_BuilderHelix.hxx
+HelixGeom_BuilderHelixCoil.cxx
+HelixGeom_BuilderHelixCoil.hxx
+HelixGeom_BuilderHelixGen.cxx
+HelixGeom_BuilderHelixGen.hxx
+HelixGeom_GHHelixCurve.hxx
+HelixGeom_GHHelixCurve_0.cxx
+HelixGeom_HelixCurve.cxx
+HelixGeom_HelixCurve.hxx
+HelixGeom_HHelixCurve.cxx
+HelixGeom_HHelixCurve.hxx
+HelixGeom_Tools.cxx
+HelixGeom_Tools.hxx
