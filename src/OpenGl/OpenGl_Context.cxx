@@ -116,6 +116,7 @@ OpenGl_Context::OpenGl_Context (const Handle(OpenGl_Caps)& theCaps)
   arbDbg (NULL),
   arbFBO (NULL),
   arbFBOBlit (NULL),
+  extFragDepth (Standard_False),
   extGS  (NULL),
   extBgra(Standard_False),
   extAnis(Standard_False),
@@ -1164,6 +1165,8 @@ void OpenGl_Context::init (const Standard_Boolean theIsCoreProfile)
   {
     arbFBOBlit = (OpenGl_ArbFBOBlit* )(&(*myFuncs));
   }
+  extFragDepth = !IsGlGreaterEqual(3, 0)
+               && CheckExtension ("GL_EXT_frag_depth");
   if (IsGlGreaterEqual (3, 1)
    && FindProc ("glTexStorage2DMultisample", myFuncs->glTexStorage2DMultisample))
   {

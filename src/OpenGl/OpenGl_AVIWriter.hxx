@@ -16,7 +16,9 @@
 #ifndef __OPENGL_AVIWRITER_H
 #define __OPENGL_AVIWRITER_H
 
-#ifdef _MSC_VER
+#include <Standard_Macro.hxx>
+
+#if defined(_MSC_VER) && !defined(OCCT_UWP)
 
 #define THIS void
 #include <windows.h>
