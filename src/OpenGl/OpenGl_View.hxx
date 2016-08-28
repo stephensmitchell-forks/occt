@@ -342,6 +342,22 @@ public:
     return myZLayers.NbImmediateStructures() != 0;
   }
 
+  //! Set filter for restricting rendering of particular elements.
+  //! Filter can be applied for rendering passes used by recursive
+  //! rendering algorithms for rendering elements of groups.
+  //! @param theFilter [in] the filter instance.
+  inline void SetRenderFilter(const Handle(OpenGl_RenderFilter)& theFilter)
+  {
+    myWorkspace->SetRenderFilter(theFilter);
+  }
+
+  //! Get rendering filter.
+  //! @return filter instance.
+  inline const Handle(OpenGl_RenderFilter)& GetRenderFilter() const
+  {
+    return myWorkspace->GetRenderFilter();
+  }
+
 protected: //! @name Internal methods for managing GL resources
 
   //! Initializes OpenGl resource for environment texture.
