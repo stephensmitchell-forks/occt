@@ -65,6 +65,8 @@ OpenGl_Font.cxx
 OpenGl_tgl_funcs.hxx
 OpenGl_BackgroundArray.cxx
 OpenGl_BackgroundArray.hxx
+OpenGl_BindlessTextureWrapper.cxx
+OpenGl_BindlessTextureWrapper.hxx
 OpenGl_BVHClipPrimitiveSet.cxx
 OpenGl_BVHClipPrimitiveSet.hxx
 OpenGl_BVHClipPrimitiveTrsfPersSet.cxx
