@@ -98,7 +98,7 @@ public:
   Standard_EXPORT void UnbindTexture (const Handle(OpenGl_Context)& theGlCtx,
                                       const GLenum theTextureUnit = GL_TEXTURE0) const;
 
-protected:
+public:
 
   GLuint myTextureId; //!< texture id
   GLenum myTexFormat; //!< internal texture format
