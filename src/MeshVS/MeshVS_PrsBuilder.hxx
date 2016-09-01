@@ -106,6 +106,16 @@ public:
 
 
 
+  void SetIsCreateGroup(const Standard_Boolean theIsCreate)
+  {
+    myIsCreateGroup = theIsCreate;
+  }
+
+  const Handle(Graphic3d_ArrayOfPrimitives)& ArrayOfPrimitives() const
+  {
+    return myArrayOfPrimitives;
+  }
+
 
   DEFINE_STANDARD_RTTIEXT(MeshVS_PrsBuilder,MMgt_TShared)
 
@@ -142,6 +152,9 @@ private:
   Standard_Integer myPriority;
   Handle(PrsMgr_PresentationManager3d) myPrsMgr;
 
+protected:
+  mutable Handle(Graphic3d_ArrayOfPrimitives) myArrayOfPrimitives;
+  Standard_Boolean                            myIsCreateGroup;
 
 };
 

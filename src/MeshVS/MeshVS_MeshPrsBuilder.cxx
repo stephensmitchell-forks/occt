@@ -158,10 +158,17 @@ void MeshVS_MeshPrsBuilder::BuildNodes ( const Handle(Prs3d_Presentation)& Prs,
 
   if ( k>0 )
   {
-    Prs3d_Root::NewGroup ( Prs );
-    Handle (Graphic3d_Group) aNodeGroup = Prs3d_Root::CurrentGroup ( Prs );
-    aNodeGroup->SetPrimitivesAspect ( aNodeMark );
-    aNodeGroup->AddPrimitiveArray (aNodePoints);
+    if (myIsCreateGroup)
+    {
+      Prs3d_Root::NewGroup(Prs);
+      Handle(Graphic3d_Group) aNodeGroup = Prs3d_Root::CurrentGroup(Prs);
+      aNodeGroup->SetPrimitivesAspect(aNodeMark);
+      aNodeGroup->AddPrimitiveArray(aNodePoints);
+    }
+    else
+    {
+      myArrayOfPrimitives = aNodePoints;
+    }
   }
 }
 
@@ -506,8 +513,22 @@ void MeshVS_MeshPrsBuilder::BuildElements( const Handle(Prs3d_Presentation)& Prs
   //  << "Face segs: " << aEdgeSegments->ItemNumber()  << " from " << aNbEdgePrimitives << std::endl
   //  << "Link segs: " << aLinkSegments->ItemNumber()  << " from " << aNbLinkPrimitives << std::endl;
 
-  DrawArrays ( Prs, aFaceTriangles, aEdgeSegments, aLinkSegments, aVolmTriangles,
-    !showEdges, HasSelectFlag, aFill, aBeam );
+  if (myIsCreateGroup)
+  {
+    DrawArrays ( Prs, aFaceTriangles, aEdgeSegments, aLinkSegments, aVolmTriangles,
+      !showEdges, HasSelectFlag, aFill, aBeam );
+  }
+  else
+  {
+    if (!aFaceTriangles.IsNull())
+    {
+      myArrayOfPrimitives = aFaceTriangles;
+    }
+    else if (!aEdgeSegments.IsNull())
+    {
+      myArrayOfPrimitives = aEdgeSegments;
+    }
+  }
 
   if ( !aCustomElements.IsEmpty() )
     CustomBuild ( Prs, aCustomElements, IDsToExclude, DisplayMode );
