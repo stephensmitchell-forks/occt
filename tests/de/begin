@@ -10,3 +10,5 @@ UndoLimit D 100
 
 # Open a transaction
 NewCommand D
+
+set MaxFloatingTol 0.0001

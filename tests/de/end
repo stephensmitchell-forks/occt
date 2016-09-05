@@ -655,7 +655,7 @@ if { $dump_file == 1 } {
                 set cur_number [lindex $data_cur $k_cur]
                 incr k_ref
                 incr k_cur
-                if { [expr 1. * ($cur_number-$ref_number)] > 0.0001 &&
+                if { [expr 1. * ($cur_number-$ref_number)] > $MaxFloatingTol &&
                      [expr 1. * ($cur_number-$ref_number)] > [expr 0.01 * $ref_number]} {
                      set isOK 0
                    }
