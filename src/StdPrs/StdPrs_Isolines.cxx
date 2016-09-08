@@ -236,25 +236,21 @@ void StdPrs_Isolines::addOnTriangulation (const Handle(Poly_Triangulation)& theT
 
   SeqOfVecOfSegments aUPolylines, aVPolylines;
 
-  const Poly_Array1OfTriangle& aTriangles = theTriangulation->Triangles();
-  const TColgp_Array1OfPnt&    aNodes     = theTriangulation->Nodes();
-  const TColgp_Array1OfPnt2d&  aUVNodes   = theTriangulation->UVNodes();
-
   TColStd_Array1OfInteger aUIsoIndexes (1, aNbIsoU);
   TColStd_Array1OfInteger aVIsoIndexes (1, aNbIsoV);
   aUIsoIndexes.Init (-1);
   aVIsoIndexes.Init (-1);
 
-  for (Standard_Integer anI = aTriangles.Lower(); anI <= aTriangles.Upper(); ++anI)
+  for (Standard_Integer anI = 1; anI <= theTriangulation->NbTriangles(); ++anI)
   {
     Standard_Integer aNodeIdxs[3];
-    aTriangles.Value (anI).Get (aNodeIdxs[0], aNodeIdxs[1],aNodeIdxs[2]);
-    const gp_Pnt aNodesXYZ[3] = { aNodes.Value (aNodeIdxs[0]),
-                                  aNodes.Value (aNodeIdxs[1]),
-                                  aNodes.Value (aNodeIdxs[2]) };
-    const gp_Pnt2d aNodesUV[3] = { aUVNodes.Value (aNodeIdxs[0]),
-                                   aUVNodes.Value (aNodeIdxs[1]),
-                                   aUVNodes.Value (aNodeIdxs[2]) };
+    theTriangulation->Triangle(anI).Get (aNodeIdxs[0], aNodeIdxs[1],aNodeIdxs[2]);
+    const gp_Pnt aNodesXYZ[3] = { theTriangulation->Node(aNodeIdxs[0]),
+                                  theTriangulation->Node(aNodeIdxs[1]),
+                                  theTriangulation->Node(aNodeIdxs[2]) };
+    const gp_Pnt2d aNodesUV[3] = { theTriangulation->UVNode(aNodeIdxs[0]),
+                                   theTriangulation->UVNode(aNodeIdxs[1]),
+                                   theTriangulation->UVNode(aNodeIdxs[2]) };
 
     // Evaluate polyline points for u isolines.
     for (Standard_Integer anIsoIdx = 1; anIsoIdx <= aNbIsoU; ++anIsoIdx)

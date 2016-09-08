@@ -32,6 +32,7 @@
 #include <TDF_AttributeList.hxx>
 #include <TDF_ListIteratorOfAttributeList.hxx>
 
+#include <BRep_Tool.hxx>
 #include <DBRep.hxx>
 #include <TopAbs.hxx>
 #include <TopoDS.hxx>
@@ -52,6 +53,7 @@
 
 // LES ATTRIBUTES
 #include <TDataStd.hxx>
+#include <TDataStd_Mesh.hxx>
 #include <TDataStd_Comment.hxx>
 #include <TDataStd_Name.hxx>
 #include <TDataStd_Integer.hxx>
@@ -3734,6 +3736,98 @@ static Standard_Integer DDataStd_GetRefArrayValue (Draw_Interpretor& di,
 } 
 
 //=======================================================================
+//function : DDataStd_SetMesh
+//purpose  : SetMesh (DF, entry, face)
+//=======================================================================
+
+static Standard_Integer DDataStd_SetMesh (Draw_Interpretor& di,
+                                          Standard_Integer nb, 
+                                          const char** arg) 
+{     
+  if (nb == 4)
+  {    
+    Handle(TDF_Data) DF;
+    if (!DDF::GetDF(arg[1],DF))
+      return 1;
+
+    TDF_Label L;
+    if (!DDF::AddLabel(DF, arg[2], L))
+      return 1;
+
+    // Get face.
+    TopoDS_Shape face = DBRep::Get(arg[3]);
+    if (face.IsNull() ||
+        face.ShapeType() != TopAbs_FACE)
+    {
+      di << "The face is null or not a face.\n";
+      return 1;
+    }
+
+    // Get triangulation of the face.
+    TopLoc_Location loc;
+    Handle(Poly_Triangulation) tris = BRep_Tool::Triangulation(TopoDS::Face(face), loc);
+    if (tris.IsNull())
+    {
+      di << "No triangulation in the face.\n";
+      return 1;
+    }
+
+    // Make a mesh.
+    Handle(Poly_Mesh) mesh = new Poly_Mesh(tris);
+
+    // Set the attribute.
+    TDataStd_Mesh::Set(L, mesh);
+    return 0;
+  }
+  di << "DDataStd_SetMesh : Error\n";
+  return 1;
+}
+
+//=======================================================================
+//function : DDataStd_DumpMesh
+//purpose  : DumpMesh (DF, entry)
+//=======================================================================
+
+static Standard_Integer DDataStd_DumpMesh (Draw_Interpretor& di,
+                                           Standard_Integer nb, 
+                                           const char** arg) 
+{     
+  if (nb == 3)
+  {
+    Handle(TDF_Data) DF;
+    if (!DDF::GetDF(arg[1],DF))
+      return 1;
+
+    Handle(TDataStd_Mesh) M;
+    if (!DDF::Find(DF,arg[2],TDataStd_Mesh::GetID(),M))
+    {
+      di << "The attribute mesh doesn't exist at the label.\n";
+      return 1;
+    }
+
+    // Dump of the mesh.
+    if (M->Get().IsNull())
+    {
+      di << "No mesh in the attribute.\n";
+      return 1;
+    }
+
+    di << "Deflection            " << M->Deflection() <<"\n";
+    di << "Number of nodes       " << M->NbNodes() << "\n";
+    di << "Number of triangles   " << M->NbTriangles() << "\n";
+    di << "Number of quadrangles " << M->NbQuads() << "\n";
+    if (M->HasUVNodes())
+        di << "It has 2d-nodes\n";
+    if (M->HasNormals())
+        di << "It has normals\n";
+
+    return 0;
+  }
+  di << "DDataStd_DumpMesh : Error\n";
+  return 1;
+}
+
+//=======================================================================
 //function : BasicCommands
 //purpose  : 
 //=======================================================================
@@ -3849,6 +3943,13 @@ void DDataStd::BasicCommands (Draw_Interpretor& theCommands)
    theCommands.Add ("SetReferenceList", 
                    "SetReferenceList (DF, entry, elmt1, elmt2, ...  )",
                    __FILE__, DDataStd_SetReferenceList, g);
+
+  theCommands.Add ("SetMesh", 
+                   "SetMesh (DF, entry, face) - adds label with passed entry to \
+                    DF and put an attribute with the triangulation from passed face",
+                   __FILE__, DDataStd_SetMesh, g);
+
+   // Insert before and after (for lists)
 
    theCommands.Add ("InsertBeforeExtStringList", 
                    "InsertBeforeExtStringList (DF, entry, index, value )",
@@ -4156,6 +4257,10 @@ void DDataStd::BasicCommands (Draw_Interpretor& theCommands)
 
 //=========================================================
 
+   theCommands.Add ("DumpMesh", 
+                   "DumpMesh (DF, entry) - dumps info about mesh that stored \
+                    in DF in mesh attribute of a label with the passed entry",
+                    __FILE__, DDataStd_DumpMesh, g);
 
 //======================================================================
 //======= for internal use

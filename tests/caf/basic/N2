@@ -1,0 +1,42 @@
+#INTERFACE CAF
+# Basic attributes
+#
+# Testing attribute: TDataStd_Mesh
+#
+# Testing command:   SetMesh
+# Testing command:   DumpMesh
+# Test           :   Binary file format
+#
+
+puts "caf001-N2"
+
+# Make a sphere and produce triangulation
+psphere s 100
+vdisplay s
+explode s f
+
+# Create a binary document
+NewDocument D BinXCAF
+
+# Set mesh from the spherical face
+SetMesh D 0:1 s_1
+
+# Print the mesh data
+set dump1 [DumpMesh D 0:1]
+
+# Save document on disk.
+SaveAs D "test.xbf"
+
+# Close and open the document again.
+Close D
+Open test.xbf DD
+
+# Print mesh data
+set dump2 [DumpMesh DD 0:1]
+
+# Check data
+if { ${dump1}!=${dump2} } {
+	puts "TDataStd_Mesh(BIN) attribute: Error"
+	return
+}
+puts "TDataStd_Mesh(BIN) attribute: OK"

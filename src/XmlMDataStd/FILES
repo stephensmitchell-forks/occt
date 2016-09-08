@@ -26,6 +26,8 @@ XmlMDataStd_IntegerListDriver.cxx
 XmlMDataStd_IntegerListDriver.hxx
 XmlMDataStd_IntPackedMapDriver.cxx
 XmlMDataStd_IntPackedMapDriver.hxx
+XmlMDataStd_MeshDriver.cxx
+XmlMDataStd_MeshDriver.hxx
 XmlMDataStd_NamedDataDriver.cxx
 XmlMDataStd_NamedDataDriver.hxx
 XmlMDataStd_NameDriver.cxx

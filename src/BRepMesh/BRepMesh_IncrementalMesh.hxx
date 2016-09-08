@@ -21,11 +21,11 @@
 #include <TopTools_MapOfShape.hxx>
 #include <TopTools_DataMapOfShapeReal.hxx>
 #include <BRepMesh_DiscretRoot.hxx>
+#include <Poly_Triangulation.hxx>
 #include <BRepMesh.hxx>
 
 #include <vector>
 
-class Poly_Triangulation;
 class TopoDS_Shape;
 class TopoDS_Edge;
 class TopoDS_Face;

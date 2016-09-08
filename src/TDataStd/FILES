@@ -79,6 +79,8 @@ TDataStd_ListIteratorOfListOfByte.hxx
 TDataStd_ListIteratorOfListOfExtendedString.hxx
 TDataStd_ListOfByte.hxx
 TDataStd_ListOfExtendedString.hxx
+TDataStd_Mesh.cxx
+TDataStd_Mesh.hxx
 TDataStd_Name.cxx
 TDataStd_Name.hxx
 TDataStd_NamedData.cxx

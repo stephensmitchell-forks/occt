@@ -812,10 +812,8 @@ void HLRBRep_PolyAlgo::StoreShell (const TopoDS_Shape& Shape,
 	  TTMa[2][0] = ttma.Value(3,1);
 	  TTMa[2][1] = ttma.Value(3,2);
 	  TTMa[2][2] = ttma.Value(3,3);
-	  Poly_Array1OfTriangle & Tri = Tr->ChangeTriangles();
-	  TColgp_Array1OfPnt    & Nod = Tr->ChangeNodes();
-	  Standard_Integer nbN = Nod.Upper();
-	  Standard_Integer nbT = Tri.Upper();
+	  Standard_Integer nbN = Tr->NbNodes();
+	  Standard_Integer nbT = Tr->NbTriangles();
 	  PD (f) = new HLRAlgo_PolyData();
 	  psd->PolyData().ChangeValue(iFace) = PD(f);
 	  PID(f) = new HLRAlgo_PolyInternalData(nbN,nbT);
@@ -829,24 +827,21 @@ void HLRBRep_PolyAlgo::StoreShell (const TopoDS_Shape& Shape,
 	  Standard_Address TData = &pid->TData();
 	  Standard_Address PISeg = &pid->PISeg();
 	  Standard_Address PINod = &pid->PINod();
-	  Poly_Triangle       * OT = &(Tri.ChangeValue(1));
 	  HLRAlgo_TriangleData* NT =
 	    &(((HLRAlgo_Array1OfTData*)TData)->ChangeValue(1));
 
 	  for (i = 1; i <= nbT; i++) {
 	    Standard_Address Tri2Indices = NT->Indices();
-	    OT->Get(Tri2Node1,Tri2Node2,Tri2Node3);
+	    Tr->Triangle (i).Get(Tri2Node1, Tri2Node2, Tri2Node3);
 	    Tri2Flags = 0;
 	    if (reversed) {
 	      j         = Tri2Node1;
 	      Tri2Node1 = Tri2Node3;
 	      Tri2Node3 = j;
 	    }
-	    OT++;
 	    NT++;
 	  }
 
-	  gp_Pnt                          * ON = &(Nod.ChangeValue(1));
 	  Handle(HLRAlgo_PolyInternalNode)* NN = 
 	    &(((HLRAlgo_Array1OfPINod*)PINod)->ChangeValue(1));
 
@@ -855,26 +850,23 @@ void HLRBRep_PolyAlgo::StoreShell (const TopoDS_Shape& Shape,
 	    const Standard_Address Nod1Indices = (*NN)->Indices();
 	    Nod1NdSg = 0;
 	    Nod1Flag = 0;
-	    Nod1PntX = ON->X();
-	    Nod1PntY = ON->Y();
-	    Nod1PntZ = ON->Z();
+	    Nod1PntX = Tr->Node (i).X();
+	    Nod1PntY = Tr->Node(i).Y();
+	    Nod1PntZ = Tr->Node(i).Z();
 	    TTMultiply(Nod1PntX,Nod1PntY,Nod1PntZ);
-	    ON++;
 	    NN++;
 	  }
 	  pid->UpdateLinks(TData,PISeg,PINod);
 	  if (Tr->HasUVNodes()) {
 	    myBSurf.Initialize(F,Standard_False);
-	    TColgp_Array1OfPnt2d & UVN = Tr->ChangeUVNodes();
-	    gp_Pnt2d* OUVN = &(UVN.ChangeValue(1));
 	    NN             = &(((HLRAlgo_Array1OfPINod*)PINod)->
 			       ChangeValue(1));
 	    
 	    for (i = 1; i <= nbN; i++) {
 	      const Standard_Address Nod1Indices = (*NN)->Indices();
 	      const Standard_Address Nod1RValues = (*NN)->RValues();
-	      Nod1PntU = OUVN->X();
-	      Nod1PntV = OUVN->Y();
+	      Nod1PntU = Tr->UVNode (i).X();
+	      Nod1PntV = Tr->UVNode (i).Y();
 	      if (Normal(i,Nod1Indices,Nod1RValues,
 			 TData,PISeg,PINod,Standard_False))
 		Nod1Flag |=  NMskNorm;
@@ -882,7 +874,6 @@ void HLRBRep_PolyAlgo::StoreShell (const TopoDS_Shape& Shape,
 		Nod1Flag &= ~NMskNorm;
 		Nod1Scal = 0;
 	      }
-	      OUVN++;
 	      NN++;
 	    }
 	  }

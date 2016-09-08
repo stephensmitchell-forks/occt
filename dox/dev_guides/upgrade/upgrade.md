@@ -1054,3 +1054,12 @@ The following obsolete features have been removed:
 @subsection upgrade_occt710_correction_of_TObj_Model Correction in TObj_Model class
 
 Methods *TObj_Model::SaveAs* and *TObj_Model::Load* receive *TCollection_ExtendedString* filename arguments instead of char*. This shows that the filename may be not-ASCII explicitly. Also it makes OCAF API related to this functionality more conform.
+
+@subsection upgrade_occt710_poly Changes in *Poly* package and *Poly_Triangulation* class:
+
+* Poly_Triangulation: Replaced all arrays with NCollection_Vector.
+* Poly_Triangulation: Old fashion of data access via getting collection reference is not more allowed for safety reasons.
+  Instead of old API, data access is organized via getters of single element by index.
+* New class Poly_Element that allows to store triangles or quads (quad consists of two triangles).
+* New class Poly_Mesh is extension of Poly_Triangulation that allows to store mesh with quad polygons as table of Poly_Element.
+* New OCAF attribute TDataStd_Mesh that allows to store Poly_Mesh in OCAF documents.

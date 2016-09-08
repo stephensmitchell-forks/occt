@@ -202,21 +202,20 @@ void StdPrs_WFShape::addEdges (const TopTools_ListOfShape&  theEdges,
     {
       // Presentation based on triangulation of a face.
       const TColStd_Array1OfInteger& anIndices = anEdgeIndicies->Nodes();
-      const TColgp_Array1OfPnt&      aNodes    = aTriangulation->Nodes();
 
       Standard_Integer anIndex = anIndices.Lower();
       if (aLocation.IsIdentity())
       {
         for (; anIndex <= anIndices.Upper(); ++anIndex)
         {
-          aPoints->Append (aNodes (anIndices (anIndex)));
+          aPoints->Append (aTriangulation->Node(anIndices (anIndex)));
         }
       }
       else
       {
         for (; anIndex <= anIndices.Upper(); ++anIndex)
         {
-          aPoints->Append (aNodes (anIndices (anIndex)).Transformed (aLocation));
+          aPoints->Append (aTriangulation->Node(anIndices (anIndex)).Transformed (aLocation));
         }
       }
     }
@@ -281,8 +280,6 @@ void StdPrs_WFShape::addEdgesOnTriangulation (const Handle(Prs3d_Presentation)& 
       continue;
     }
 
-    const TColgp_Array1OfPnt& aNodes = T->Nodes();
-
     // Build the connect tool.
     Poly_Connect aPolyConnect (T);
 
@@ -315,11 +312,10 @@ void StdPrs_WFShape::addEdgesOnTriangulation (const Handle(Prs3d_Presentation)& 
     TColStd_Array1OfInteger anInternal (0, 2 * aNbInternal);
 
     Standard_Integer aFreeIndex = 1, anIntIndex = 1;
-    const Poly_Array1OfTriangle& aTriangles = T->Triangles();
     for (Standard_Integer anI = 1; anI <= aNbTriangles; ++anI)
     {
       aPolyConnect.Triangles (anI, aT[0], aT[1], aT[2]);
-      aTriangles (anI).Get (aN[0], aN[1], aN[2]);
+      T->Triangle (anI).Get (aN[0], aN[1], aN[2]);
       for (Standard_Integer aJ = 0; aJ < 3; aJ++)
       {
         Standard_Integer k = (aJ + 1) % 3;
@@ -343,8 +339,8 @@ void StdPrs_WFShape::addEdgesOnTriangulation (const Handle(Prs3d_Presentation)& 
     Standard_Integer aFreeHalfNb = aFree.Length() / 2;
     for (Standard_Integer anI = 1; anI <= aFreeHalfNb; ++anI)
     {
-      gp_Pnt aPoint1 = aNodes (aFree (2 * anI - 1)).Transformed (aLocation);
-      gp_Pnt aPoint2 = aNodes (aFree (2 * anI    )).Transformed (aLocation);
+      gp_Pnt aPoint1 = T->Node(aFree (2 * anI - 1)).Transformed (aLocation);
+      gp_Pnt aPoint2 = T->Node(aFree (2 * anI    )).Transformed (aLocation);
       aSurfPoints.Append (aPoint1);
       aSurfPoints.Append (aPoint2);
     }

@@ -803,15 +803,14 @@ void BRepMesh_FastDiscret::update(
     if (aPolygon->Deflection() > 1.1 * theDefEdge)
       continue;
 
-    const TColgp_Array1OfPnt&      aNodes   = aTriangulation->Nodes();
     const TColStd_Array1OfInteger& aIndices = aPolygon->Nodes();
     Handle(TColStd_HArray1OfReal)  aParams  = aPolygon->Parameters();
 
     aEAttr.FirstVExtractor = new PolyVExplorer(aEAttr.FirstVertex, 
-      aEAttr.IsSameUV, aEAttr.LastVertex, aIndices(1), aNodes, aLoc);
+      aEAttr.IsSameUV, aEAttr.LastVertex, aIndices(1), aTriangulation, aLoc);
 
     aEAttr.LastVExtractor = new PolyVExplorer(aEAttr.LastVertex, 
-      aEAttr.IsSameUV, aEAttr.FirstVertex, aIndices(aIndices.Length()), aNodes, aLoc);
+      aEAttr.IsSameUV, aEAttr.FirstVertex, aIndices(aIndices.Length()), aTriangulation, aLoc);
 
     aEdgeTool = new BRepMesh_EdgeTessellationExtractor(theEdge, theC2d, 
       aFace, aTriangulation, aPolygon, aLoc);

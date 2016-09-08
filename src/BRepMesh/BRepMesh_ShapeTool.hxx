@@ -21,6 +21,7 @@
 #include <BRepAdaptor_HSurface.hxx>
 #include <BRepMesh_FaceAttribute.hxx>
 #include <BRepMesh.hxx>
+#include <Poly_Triangulation.hxx>
 
 class Poly_Triangulation;
 class TopoDS_Face;

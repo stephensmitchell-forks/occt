@@ -95,6 +95,29 @@ const TColStd_Array1OfInteger& Poly_PolygonOnTriangulation::Nodes() const
   return myNodes;
 }
 
+//=======================================================================
+//function : Node
+//purpose  : 
+//=======================================================================
+
+Standard_Integer Poly_PolygonOnTriangulation::Node (const Standard_Integer theIndex) const
+{
+  Standard_OutOfRange_Raise_if ((theIndex < 1 || theIndex > myNodes.Length()),
+                                "Poly_PolygonOnTriangulation::Node : index out of range");
+  return myNodes.Value (theIndex);
+}
+
+//=======================================================================
+//function : SetNode
+//purpose  : 
+//=======================================================================
+
+void Poly_PolygonOnTriangulation::SetNode (const Standard_Integer theIndex, const Standard_Integer theNode)
+{
+  Standard_OutOfRange_Raise_if ((theIndex < 1 || theIndex > myNodes.Length()),
+                                "Poly_PolygonOnTriangulation::SetNode : index out of range");
+  myNodes.SetValue (theIndex, theNode);
+}
 
 //=======================================================================
 //function : HasParameters
@@ -116,3 +139,30 @@ Handle(TColStd_HArray1OfReal) Poly_PolygonOnTriangulation::Parameters() const
   return myParameters;
 }
 
+//=======================================================================
+//function : Parameter
+//purpose  : 
+//=======================================================================
+
+Standard_Real Poly_PolygonOnTriangulation::Parameter (const Standard_Integer theIndex) const 
+{
+  Standard_NullObject_Raise_if (myParameters.IsNull(),
+                                "Poly_PolygonOnTriangulation::Parameter : parameters is NULL");
+  Standard_OutOfRange_Raise_if ((theIndex < 1 || theIndex > myParameters->Length()),
+                                "Poly_PolygonOnTriangulation::Parameter : index out of range");
+  return myParameters->Value (theIndex);
+}
+
+//=======================================================================
+//function : SetParameter
+//purpose  : 
+//=======================================================================
+
+void Poly_PolygonOnTriangulation::SetParameter (const Standard_Integer theIndex, const Standard_Real theValue)
+{
+  Standard_NullObject_Raise_if (myParameters.IsNull(),
+                                "Poly_PolygonOnTriangulation::Parameter : parameters is NULL");
+  Standard_OutOfRange_Raise_if ((theIndex < 1 || theIndex > myParameters->Length()),
+                                "Poly_PolygonOnTriangulation::Parameter : index out of range");
+  myParameters->SetValue (theIndex, theValue);
+}

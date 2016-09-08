@@ -50,7 +50,7 @@ namespace
       TopLoc_Location aLoc;
       myPoly = BRep_Tool::Triangulation (aFace, aLoc);
       myTrsf = aLoc.Transformation();
-      myNbTriangles = (myPoly.IsNull() ? 0 : myPoly->Triangles().Length());
+      myNbTriangles = (myPoly.IsNull() ? 0 : myPoly->NbTriangles());
       myInvert = (aFace.Orientation() == TopAbs_REVERSED);
       if (myTrsf.IsNegative())
         myInvert = ! myInvert;
@@ -63,10 +63,10 @@ namespace
     {
       // get positions of nodes
       int iNode1, iNode2, iNode3;
-      myPoly->Triangles()(iTri).Get (iNode1, iNode2, iNode3);
-      thePnt1 = myPoly->Nodes()(iNode1);
-      thePnt2 = myPoly->Nodes()(myInvert ? iNode3 : iNode2);
-      thePnt3 = myPoly->Nodes()(myInvert ? iNode2 : iNode3);
+      myPoly->Triangle(iTri).Get (iNode1, iNode2, iNode3);
+      thePnt1 = myPoly->Node(iNode1);
+      thePnt2 = myPoly->Node(myInvert ? iNode3 : iNode2);
+      thePnt3 = myPoly->Node(myInvert ? iNode2 : iNode3);
 
       // apply transormation if not identity
       if (myTrsf.Form() != gp_Identity)

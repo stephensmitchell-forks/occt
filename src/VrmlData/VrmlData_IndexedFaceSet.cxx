@@ -133,18 +133,16 @@ const Handle(TopoDS_TShape)& VrmlData_IndexedFaceSet::TShape ()
     myTShape = aFace;
 
     // Copy the triangulation vertices
-    TColgp_Array1OfPnt& aNodes = aTriangulation->ChangeNodes();
     NCollection_DataMap <int, int>::Iterator anIterN(mapNodeId);
     for (i = 1; anIterN.More(); anIterN.Next()) {
       const int aKey = anIterN.Key();
       const gp_XYZ& aNodePnt = arrNodes[aKey];
-      aNodes(i) = gp_Pnt (aNodePnt);
+      aTriangulation->ChangeNode (i) = gp_Pnt (aNodePnt);
       anIterN.ChangeValue() = i++;
     }
 
     // Copy the triangles. Only the triangle-type polygons are supported.
     // In this loop we also get rid of any possible degenerated triangles.
-    Poly_Array1OfTriangle& aTriangles = aTriangulation->ChangeTriangles();
     nTri = 0;
     for (i = 0; i < (int)myNbPolygons; i++) {
       const Standard_Integer * arrIndice;
@@ -153,9 +151,9 @@ const Handle(TopoDS_TShape)& VrmlData_IndexedFaceSet::TShape ()
             arrIndice[0] < nNodes &&
             arrIndice[1] < nNodes &&
             arrIndice[2] < nNodes)  // check to avoid previously skipped faces
-          aTriangles(++nTri).Set (mapNodeId(arrIndice[0]),
-                                  mapNodeId(arrIndice[1]),
-                                  mapNodeId(arrIndice[2]));
+            aTriangulation->ChangeTriangle (++nTri).Set (mapNodeId(arrIndice[0]),
+                                                         mapNodeId(arrIndice[1]),
+                                                         mapNodeId(arrIndice[2]));
     }
 
     // Normals should be defined; if they are not, compute them

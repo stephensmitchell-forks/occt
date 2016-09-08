@@ -415,11 +415,10 @@ Standard_Boolean BRepMesh_IncrementalMesh::toBeMeshed(
         // #25080: check that indices of links forming triangles are in range.
         Standard_Boolean isTriangulationConsistent = Standard_True;
         const Standard_Integer aNodesNb = aTriangulation->NbNodes();
-        const Poly_Array1OfTriangle& aTriangles = aTriangulation->Triangles();
-        Standard_Integer i = aTriangles.Lower();
-        for (; i <= aTriangles.Upper() && isTriangulationConsistent; ++i)
+        Standard_Integer i = 1;
+        for (; i <= aTriangulation->NbTriangles() && isTriangulationConsistent; ++i)
         {
-          const Poly_Triangle& aTriangle = aTriangles(i);
+          const Poly_Triangle& aTriangle = aTriangulation->Triangle (i);
           Standard_Integer n[3];
           aTriangle.Get(n[0], n[1], n[2]);
           for (Standard_Integer j = 0; j < 3 && isTriangulationConsistent; ++j)

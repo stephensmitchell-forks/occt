@@ -127,7 +127,16 @@ public:
   //! on the stream <OS>.
   Standard_EXPORT void DumpPolygonOnTriangulation (Standard_OStream& OS) const;
 
+  //! Writes meshes (Poly_Mesh).
+  //! TODO: Call this method when BRep_TFace refers to a list of meshes of type Poly_Mesh.
+  Standard_EXPORT static void WriteMeshes(Standard_OStream& OS,
+                                          const TColStd_IndexedMapOfTransient& Meshes,
+                                          const Standard_Boolean Compact = Standard_True);
 
+  //! Reads meshes (Poly_Mesh).
+  //! TODO: Call this method when BRep_TFace refers to a list of meshes of type Poly_Mesh.
+  Standard_EXPORT static void ReadMeshes(Standard_IStream& IS,
+                                         TColStd_IndexedMapOfTransient& Meshes);
 
 
 protected:

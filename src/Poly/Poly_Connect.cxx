@@ -58,12 +58,11 @@ Poly_Connect::Poly_Connect(const Handle(Poly_Triangulation)& T) :
 
   // loop on the triangles
   Standard_Integer j,k,n[3],n1,n2;
-  const Poly_Array1OfTriangle& triangles = myTriangulation->Triangles();
 
   for (i = 1; i <= nbTriangles; i++) {
 
     // get the nodes
-    triangles(i).Get(n[0],n[1],n[2]);
+    myTriangulation->Triangle (i).Get(n[0],n[1],n[2]);
 
     // Update the myTriangles array
     myTriangles(n[0]) = i;
@@ -120,7 +119,7 @@ Poly_Connect::Poly_Connect(const Handle(Poly_Triangulation)& T) :
   for (i = 1; i <= nbTriangles; i++) {
     
     // get the nodes
-    triangles(i).Get(n[0],n[1],n[2]);
+    myTriangulation->Triangle (i).Get(n[0],n[1],n[2]);
 
     // fore each edge
     for (j = 0; j < 3; j++) {
@@ -212,8 +211,7 @@ void Poly_Connect::Initialize(const Standard_Integer N)
   if (mymore)
   {
     Standard_Integer i, no[3];
-    const Poly_Array1OfTriangle& triangles = myTriangulation->Triangles();
-    triangles(myfirst).Get(no[0], no[1], no[2]);
+    myTriangulation->Triangle (myfirst).Get(no[0], no[1], no[2]);
     for (i = 0; i < 3; i++)
       if (no[i] == mynode) break;
     myothernode = no[(i+2)%3];
@@ -230,12 +228,11 @@ void Poly_Connect::Next()
   Standard_Integer i, j;
   Standard_Integer n[3];
   Standard_Integer t[3];
-  const Poly_Array1OfTriangle& triangles = myTriangulation->Triangles();
   Triangles(mytr, t[0], t[1], t[2]);
   if (mysense) {
     for (i = 0; i < 3; i++) {
       if (t[i] != 0) {
-	triangles(t[i]).Get(n[0], n[1], n[2]);
+	myTriangulation->Triangle (t[i]).Get(n[0], n[1], n[2]);
 	for (j = 0; j < 3; j++) {
 	  if ((n[j] == mynode) && (n[(j+1)%3] == myothernode)) {
 	    mytr = t[i];
@@ -247,7 +244,7 @@ void Poly_Connect::Next()
       }
     }
     // sinon, depart vers la gauche.
-    triangles(myfirst).Get(n[0], n[1], n[2]);
+    myTriangulation->Triangle (myfirst).Get(n[0], n[1], n[2]);
     for (i = 0; i < 3; i++)
       if (n[i] == mynode) break;
     myothernode = n[(i+1)%3];
@@ -258,7 +255,7 @@ void Poly_Connect::Next()
   if (!mysense) {
     for (i = 0; i < 3; i++) {
       if (t[i] != 0) {
-	triangles(t[i]).Get(n[0], n[1], n[2]);
+	myTriangulation->Triangle (t[i]).Get(n[0], n[1], n[2]);
 	for (j = 0; j < 3; j++) {
 	  if ((n[j] == mynode) && (n[(j+2)%3] == myothernode)) {
 	    mytr = t[i];

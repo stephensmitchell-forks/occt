@@ -22,7 +22,8 @@
 #include <BRepMesh_FaceAttribute.hxx>
 #include <Standard_Transient.hxx>
 #include <TopTools_MutexForShapeProvider.hxx>
-#include <TopTools_DataMapOfShapeReal.hxx>
+#include <BRepAdaptor_HSurface.hxx>
+#include <Poly_Triangulation.hxx>
 #include <BRepMesh_Delaun.hxx>
 #include <BRepMesh_Triangle.hxx>
 #include <BRepMesh_Classifier.hxx>
@@ -32,9 +33,7 @@ class BRepMesh_DataStructureOfDelaun;
 class BRepMesh_FaceAttribute;
 class TopoDS_Face;
 class TopoDS_Vertex;
-class BRepAdaptor_HSurface;
 class TopoDS_Edge;
-class Poly_Triangulation;
 class TopLoc_Location;
 class gp_XY;
 class gp_Pnt2d;

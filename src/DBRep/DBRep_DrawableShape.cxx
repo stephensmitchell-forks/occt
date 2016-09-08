@@ -778,10 +778,9 @@ void  DBRep_DrawableShape::DrawOn(Draw_Display& dis) const
 	BRep_Tool::PolygonOnTriangulation(E->Edge(), Poly, PolyTr, loc);
 	if (!Poly.IsNull()) {
 	  const TColStd_Array1OfInteger& Indices = Poly->Nodes();
-	  const TColgp_Array1OfPnt& Nodes = PolyTr->Nodes();
 	  for (i=Indices.Lower()+1; i<=Indices.Upper(); i++) {
-	    dis.Draw(Nodes(Indices(i-1)).Transformed(loc),
-		     Nodes(Indices(i)).Transformed(loc));
+	    dis.Draw(Tr->Node (Indices(i-1)).Transformed(loc),
+		     Tr->Node (Indices(i)).Transformed(loc));
 	    if (dis.HasPicked()) {
 	      pickshape = E->Edge();
 	      upick = 0;
@@ -1124,11 +1123,10 @@ void  DBRep_DrawableShape::Display(const Handle(Poly_Triangulation)& T,
   TColStd_DataMapOfIntegerInteger Internal;
   
   Standard_Integer fr = 1, in = 1;
-  const Poly_Array1OfTriangle& triangles = T->Triangles();
   Standard_Integer n[3];
   for (i = 1; i <= nbTriangles; i++) {
     pc.Triangles(i,t[0],t[1],t[2]);
-    triangles(i).Get(n[0],n[1],n[2]);
+    T->Triangle (i).Get(n[0],n[1],n[2]);
     for (j = 0; j < 3; j++) {
       Standard_Integer k = (j+1) % 3;
       if (t[j] == 0) {
@@ -1146,16 +1144,13 @@ void  DBRep_DrawableShape::Display(const Handle(Poly_Triangulation)& T,
   }
 
   // Display the edges
-  const TColgp_Array1OfPnt& Nodes = T->Nodes();
-//  cout<<"nb nodes = "<<Nodes.Length()<<endl;
-  
   // free edges
   Standard_Integer nn;
   dis.SetColor(Draw_rouge);
   nn = Free.Length() / 2;
   for (i = 1; i <= nn; i++) {
-    dis.Draw(Nodes(Free(2*i-1)).Transformed(tr),
-	     Nodes(Free(2*i)).Transformed(tr));
+    dis.Draw(T->Node (Free(2*i-1)).Transformed(tr),
+	     T->Node (Free(2*i)).Transformed(tr));
   }
   
   // internal edges
@@ -1167,8 +1162,8 @@ void  DBRep_DrawableShape::Display(const Handle(Poly_Triangulation)& T,
     //alvays pair is put
     aIt.Next();
     Standard_Integer n2 = aIt.Value();
-    dis.Draw(Nodes(n1).Transformed(tr),
-	     Nodes(n2).Transformed(tr));
+    dis.Draw(T->Node (n1).Transformed(tr),
+	     T->Node (n2).Transformed(tr));
 
   }
 }

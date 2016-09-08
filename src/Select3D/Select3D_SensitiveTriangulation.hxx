@@ -25,6 +25,7 @@
 #include <Standard_Type.hxx>
 #include <Standard_Type.hxx>
 
+#include <Poly_Triangulation.hxx>
 #include <TopLoc_Location.hxx>
 #include <gp_Trsf.hxx>
 #include <gp_Pnt.hxx>

@@ -190,9 +190,7 @@ namespace
 
       Poly_Connect aPolyConnect (aT);
       // Extracts vertices & normals from nodes
-      const TColgp_Array1OfPnt&   aNodes   = aT->Nodes();
-      const TColgp_Array1OfPnt2d& aUVNodes = aT->UVNodes();
-      TColgp_Array1OfDir aNormals (aNodes.Lower(), aNodes.Upper());
+      TColgp_Array1OfDir aNormals (1, aT->NbNodes());
       StdPrs_ToolTriangulatedShape::Normal (aFace, aPolyConnect, aNormals);
 
       if (theHasTexels)
@@ -203,9 +201,9 @@ namespace
       }
 
       const Standard_Integer aDecal = anArray->VertexNumber();
-      for (Standard_Integer aNodeIter = aNodes.Lower(); aNodeIter <= aNodes.Upper(); ++aNodeIter)
+      for (Standard_Integer aNodeIter = 1; aNodeIter <= aT->NbNodes(); ++aNodeIter)
       {
-        aPoint = aNodes (aNodeIter);
+        aPoint = aT->Node (aNodeIter);
         if (!aLoc.IsIdentity())
         {
           aPoint.Transform (aTrsf);
@@ -213,10 +211,10 @@ namespace
           aNormals (aNodeIter) = aNormals (aNodeIter).Transformed (aTrsf);
         }
 
-        if (theHasTexels && aUVNodes.Upper() == aNodes.Upper())
+        if (theHasTexels && aT->HasUVNodes())
         {
-          const gp_Pnt2d aTexel = gp_Pnt2d ((-theUVOrigin.X() + (theUVRepeat.X() * (aUVNodes (aNodeIter).X() - aUmin)) / dUmax) / theUVScale.X(),
-                                            (-theUVOrigin.Y() + (theUVRepeat.Y() * (aUVNodes (aNodeIter).Y() - aVmin)) / dVmax) / theUVScale.Y());
+          const gp_Pnt2d aTexel = gp_Pnt2d ((-theUVOrigin.X() + (theUVRepeat.X() * (aT->UVNode (aNodeIter).X() - aUmin)) / dUmax) / theUVScale.X(),
+                                            (-theUVOrigin.Y() + (theUVRepeat.Y() * (aT->UVNode (aNodeIter).Y() - aVmin)) / dVmax) / theUVScale.Y());
           anArray->AddVertex (aPoint, aNormals (aNodeIter), aTexel);
         }
         else
@@ -226,22 +224,21 @@ namespace
       }
 
       // Fill array with vertex and edge visibility info
-      const Poly_Array1OfTriangle& aTriangles = aT->Triangles();
       Standard_Integer anIndex[3];
       for (Standard_Integer aTriIter = 1; aTriIter <= aT->NbTriangles(); ++aTriIter)
       {
         if ((aFace.Orientation() == TopAbs_REVERSED) ^ isMirrored)
         {
-          aTriangles (aTriIter).Get (anIndex[0], anIndex[2], anIndex[1]);
+          aT->Triangle (aTriIter).Get (anIndex[0], anIndex[2], anIndex[1]);
         }
         else
         {
-          aTriangles (aTriIter).Get (anIndex[0], anIndex[1], anIndex[2]);
+          aT->Triangle (aTriIter).Get (anIndex[0], anIndex[1], anIndex[2]);
         }
 
-        gp_Pnt aP1 = aNodes (anIndex[0]);
-        gp_Pnt aP2 = aNodes (anIndex[1]);
-        gp_Pnt aP3 = aNodes (anIndex[2]);
+        gp_Pnt aP1 = aT->Node (anIndex[0]);
+        gp_Pnt aP2 = aT->Node (anIndex[1]);
+        gp_Pnt aP3 = aT->Node (anIndex[2]);
 
         gp_Vec aV1 (aP1, aP2);
         if (aV1.SquareMagnitude() <= aPreci)
@@ -367,8 +364,10 @@ namespace
       }
 
       // get edge nodes indexes from face triangulation
-      const TColgp_Array1OfPnt&      aTriNodes   = aTriangulation->Nodes();
-      const TColStd_Array1OfInteger& anEdgeNodes = anEdgePoly->Nodes();
+      const TColStd_Array1OfInteger& anEdgeNodes = anEdgePoly->Nodes ();
+
+      if (anEdgeNodes.Length () < 2)
+        continue;
 
       // collect the edge nodes
       Standard_Integer aSegmentEdge = aSegments->VertexNumber() + 1;
@@ -377,8 +376,8 @@ namespace
         // node index in face triangulation
         // get node and apply location transformation to the node
         const Standard_Integer aTriIndex = anEdgeNodes.Value (aNodeIdx);
-        gp_Pnt aTriNode = aTriNodes.Value (aTriIndex);
-        if (!aTrsf.IsIdentity())
+        gp_Pnt aTriNode = aTriangulation->Node (aTriIndex);
+        if (!aTrsf.IsIdentity ())
         {
           aTriNode.Transform (aTrsf);
         }

@@ -62,11 +62,10 @@ static void Normal(const TopoDS_Face&  aFace,
     CSLib_DerivativeStatus Status;
     CSLib_NormalStatus NStat;
     S.Initialize(aFace, Standard_False);
-    const TColgp_Array1OfPnt2d& UVNodes = T->UVNodes();
     if (S.GetType() != GeomAbs_Plane) {
-      for (i = UVNodes.Lower(); i <= UVNodes.Upper(); i++) {
-	U = UVNodes(i).X();
-	V = UVNodes(i).Y();
+      for (i = 1; i <= T->NbNodes(); i++) {
+	U = T->UVNode (i).X();
+	V = T->UVNode (i).Y();
 	S.D1(U,V,P,D1U,D1V);
 	CSLib::Normal(D1U,D1V,Precision::Angular(),Status,Nor(i));
 	if (Status != CSLib_Done) {
@@ -78,8 +77,8 @@ static void Normal(const TopoDS_Face&  aFace,
     }
     else {
       gp_Dir NPlane;
-      U = UVNodes(UVNodes.Lower()).X();
-      V = UVNodes(UVNodes.Lower()).Y();
+      U = T->UVNode (1).X();
+      V = T->UVNode (1).Y();
       S.D1(U,V,P,D1U,D1V);
       CSLib::Normal(D1U,D1V,Precision::Angular(),Status,NPlane);
       if (Status != CSLib_Done) {
@@ -92,16 +91,14 @@ static void Normal(const TopoDS_Face&  aFace,
     }
   }
   else {
-    const TColgp_Array1OfPnt& Nodes = T->Nodes();
     Standard_Integer n[3];
-    const Poly_Array1OfTriangle& triangles = T->Triangles();
-    
-    for (i = Nodes.Lower(); i <= Nodes.Upper(); i++) {
+
+    for (i = 1; i <= T->NbNodes(); i++) {
       gp_XYZ eqPlan(0, 0, 0);
       for (pc.Initialize(i);  pc.More(); pc.Next()) {
-	triangles(pc.Value()).Get(n[0], n[1], n[2]);
-	gp_XYZ v1(Nodes(n[1]).Coord()-Nodes(n[0]).Coord());
-	gp_XYZ v2(Nodes(n[2]).Coord()-Nodes(n[1]).Coord());
+	T->Triangle (pc.Value()).Get(n[0], n[1], n[2]);
+	gp_XYZ v1(T->Node (n[1]).Coord() - T->Node (n[0]).Coord());
+	gp_XYZ v2(T->Node (n[2]).Coord() - T->Node (n[1]).Coord());
 	eqPlan += (v1^v2).Normalized();
       }
       Nor(i) = gp_Dir(eqPlan);
@@ -118,30 +115,25 @@ void StlTransfer::RetrieveMesh (const TopoDS_Shape&  Shape,
     TopLoc_Location Loc, loc;
     Handle(Poly_Triangulation) theTriangulation = BRep_Tool::Triangulation(face, Loc);
     if (theTriangulation.IsNull()) continue; //Meshing was not done for this face!
-    Poly_Array1OfTriangle theTriangles(1,theTriangulation->NbTriangles());
-    theTriangles.Assign(theTriangulation->Triangles());
     Mesh->AddDomain (theTriangulation->Deflection());
-    
-    TColgp_Array1OfPnt thePoints(1, theTriangulation->NbNodes());
-    thePoints.Assign(theTriangulation->Nodes());
+
     //compute normal of face
-    const TColgp_Array1OfPnt& Nodes = theTriangulation->Nodes();
-    TColgp_Array1OfDir NORMAL(Nodes.Lower(), Nodes.Upper());
+    TColgp_Array1OfDir NORMAL(1, theTriangulation->NbNodes());
     Poly_Connect pc(theTriangulation);
     Normal(face, pc, NORMAL);
     Standard_Integer i;
-    for(i=1;i<=thePoints.Length();i++) {
+    for(i=1;i<=theTriangulation->NbNodes();i++) {
       Standard_Real X1, Y1, Z1;
-      gp_Pnt p = thePoints.Value(i);
+      gp_Pnt p = theTriangulation->Node (i);
       p.Transform(Loc.Transformation());
       p.Coord (X1, Y1, Z1);
       Mesh->AddVertex (X1, Y1, Z1);
     }
     try {
       OCC_CATCH_SIGNALS
-      for (i=1;i<=theTriangles.Length();i++) {
+      for (i=1;i<=theTriangulation->NbTriangles();i++) {
 	Standard_Integer V1, V2, V3;
-	Poly_Triangle triangle = theTriangles.Value(i);
+	Poly_Triangle triangle = theTriangulation->Triangle (i);
 	triangle.Get(V1, V2, V3);
 	gp_Pnt P1, P2, P3;
 	P1 = Mesh->Vertices(Mesh->NbDomains()).Value(V1);

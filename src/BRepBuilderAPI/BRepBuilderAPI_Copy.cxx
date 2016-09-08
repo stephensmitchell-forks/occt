@@ -22,18 +22,14 @@
 #include <Geom_Curve.hxx>
 #include <Geom_Surface.hxx>
 #include <gp_Pnt.hxx>
-#include <TopoDS_Shape.hxx>
-#include <TopoDS_Vertex.hxx>
 #include <Poly_Triangulation.hxx>
-
-namespace {
 
 //! Tool class implementing necessary functionality for copying geometry
 class BRepBuilderAPI_Copy_Modification : public BRepTools_Modification 
 {
 public:
   BRepBuilderAPI_Copy_Modification (const Standard_Boolean copyGeom,
-                                    const Standard_Boolean copyMesh)
+                                    const Standard_Boolean copyMesh = Standard_False)
     : myCopyGeom(copyGeom),
       myCopyMesh(copyMesh)
   {
@@ -59,19 +55,16 @@ public:
   //! copies it if required
   Standard_Boolean NewTriangulation(const TopoDS_Face& F, Handle(Poly_Triangulation)& T) Standard_OVERRIDE
   {
-    if (!myCopyMesh)
-      return Standard_False;
-
     TopLoc_Location L;
     T = BRep_Tool::Triangulation(F, L);
 
-    if (T.IsNull())
-      return Standard_False;
-
-    // mesh is copied if and only if the geometry need to be copied too
-    if (myCopyGeom)
+    if (!T.IsNull() && myCopyMesh)
+    {
       T = T->Copy();
-    return Standard_True;
+      return Standard_True;
+    }
+
+    return Standard_False;
   }
 
   //! Returns true to indicate the need to copy edge;
@@ -186,8 +179,6 @@ private:
 };
 
 DEFINE_STANDARD_HANDLE(BRepBuilderAPI_Copy_Modification, BRepTools_Modification)
-
-} // anonymous namespace
 
 //=======================================================================
 //function : BRepBuilderAPI_Copy

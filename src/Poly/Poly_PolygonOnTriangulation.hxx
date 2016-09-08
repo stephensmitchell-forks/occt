@@ -90,7 +90,14 @@ public:
   //! is an index in the table of nodes specific to an existing
   //! triangulation of a shape.
   Standard_EXPORT const TColStd_Array1OfInteger& Nodes() const;
-  
+
+  //! Return node at the given index.
+  //! Raises exception if theIndex is less than NodesLowerIndex or bigger than NodesUpperIndex.
+  Standard_EXPORT Standard_Integer Node(const Standard_Integer theIndex) const;
+
+  //! Sets node at the given index.
+  //! Raises exception if theIndex is less than NodesLowerIndex or bigger than NodesUpperIndex.
+  Standard_EXPORT void SetNode(const Standard_Integer theIndex, const Standard_Integer theNode);
 
   //! Returns true if parameters are associated with the nodes in this polygon.
   Standard_EXPORT Standard_Boolean HasParameters() const;
@@ -101,7 +108,15 @@ public:
   //! are associated with the nodes in this polygon.
   Standard_EXPORT Handle(TColStd_HArray1OfReal) Parameters() const;
 
+  //! Return parameter at the given index.
+  //! Raises Standard_NullObject exception if parameters has not been initialized.
+  //! Raises Standard_OutOfRange exception if theIndex is less than ParametersLowerIndex or bigger than ParametersUpperIndex.
+  Standard_EXPORT Standard_Real Parameter(const Standard_Integer theIndex) const;
 
+  //! Sets parameter at the given index.
+  //! Raises Standard_NullObject exception if parameters has not been initialized.
+  //! Raises Standard_OutOfRange exception if theIndex is less than ParametersLowerIndex or bigger than ParametersUpperIndex. 
+  Standard_EXPORT void SetParameter(const Standard_Integer theIndex, const Standard_Real theValue);
 
 
   DEFINE_STANDARD_RTTIEXT(Poly_PolygonOnTriangulation,MMgt_TShared)
