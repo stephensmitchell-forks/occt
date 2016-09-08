@@ -1813,6 +1813,7 @@ Standard_Boolean IntWalk_PWalking::
 {
   const Standard_Integer aNbIterMAX = 60;
   const Standard_Real aTol = 1.0e-14;
+  const Standard_Real aTolNul = 1.0 / Precision::Infinite();
   Handle(Geom_Surface) aS1, aS2;
 
   switch(theASurf1->GetType())
@@ -1839,6 +1840,14 @@ Standard_Boolean IntWalk_PWalking::
     return Standard_True;
   }
 
+  // I.e. if theU1 = 0.0 then Epsilon(theU1) = DBL_MIN (~1.0e-308).
+  // Work with this number is impossible: there is a dangerous to 
+  // obtain Floating-point-overflow. Therefore, we limit this value.
+  const Standard_Real aMinAddValU1 = Max(Epsilon(theU1), aTolNul);
+  const Standard_Real aMinAddValV1 = Max(Epsilon(theV1), aTolNul);
+  const Standard_Real aMinAddValU2 = Max(Epsilon(theU2), aTolNul);
+  const Standard_Real aMinAddValV2 = Max(Epsilon(theV2), aTolNul);
+
   Standard_Boolean aStatus = Standard_False;
 
   gp_Pnt aP1, aP2;
@@ -1864,21 +1873,16 @@ Standard_Boolean IntWalk_PWalking::
   while(flRepeat)
   {
     Standard_Real anAdd = aGradFu*aSTEPuv;
-    Standard_Real aPARu = (anAdd >= 0.0)?
-            (theU1 - Max(anAdd, Epsilon(theU1))) :
-            (theU1 + Max(-anAdd, Epsilon(theU1)));
+    const Standard_Real aPARu = theU1 - Sign(Max(Abs(anAdd), aMinAddValU1), anAdd);
+    
     anAdd = aGradFv*aSTEPuv;
-    Standard_Real aPARv = (anAdd >= 0.0)?
-            (theV1 - Max(anAdd, Epsilon(theV1))) :
-            (theV1 + Max(-anAdd, Epsilon(theV1)));
+    const Standard_Real aPARv = theV1 - Sign(Max(Abs(anAdd), aMinAddValV1), anAdd);
+
     anAdd = aGradFU*aStepUV;
-    Standard_Real aParU = (anAdd >= 0.0)?
-            (theU2 - Max(anAdd, Epsilon(theU2))) :
-            (theU2 + Max(-anAdd, Epsilon(theU2)));
+    const Standard_Real aParU = theU2 - Sign(Max(Abs(anAdd), aMinAddValU2), anAdd);
+
     anAdd = aGradFV*aStepUV;
-    Standard_Real aParV = (anAdd >= 0.0)?
-            (theV2 - Max(anAdd, Epsilon(theV2))) :
-            (theV2 + Max(-anAdd, Epsilon(theV2)));
+    const Standard_Real aParV = theV2 - Sign(Max(Abs(anAdd), aMinAddValV2), anAdd);
 
     gp_Pnt aPt1, aPt2;
 
