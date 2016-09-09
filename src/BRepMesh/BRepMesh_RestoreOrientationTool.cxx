@@ -57,12 +57,6 @@ const BVH_Vec3d THE_MIN_VEC (1e-100, 1e-100, 1e-100);
 // Relative weight of coherency component for optimization.
 const Standard_Real COHERENCY_WEIGHT = 50.0;
 
-// Minimum number of traced rays per face.
-const Standard_Integer MIN_FACE_RAYS = 50;
-
-// Maximum number of traced rays per face.
-const Standard_Integer MAX_FACE_RAYS = 2000;
-
 // Indicates that ray does not hit any geometry.
 const Standard_Integer INVALID_HIT = -1;
 
@@ -232,8 +226,12 @@ bool overlapBoxes (const BVH_Vec3d& theBoxMin1,
 // function : BRepMesh_RestoreOrientationTool
 // purpose  :
 // =======================================================================
-BRepMesh_RestoreOrientationTool::BRepMesh_RestoreOrientationTool (const bool theVisibilityOnly /* false */)
-  : myIsDone (false),
+BRepMesh_RestoreOrientationTool::BRepMesh_RestoreOrientationTool (const bool theVisibilityOnly /* false */,
+                                                                  const Standard_Integer theMinFaceRays /* 50 */,
+                                                                  const Standard_Integer theMaxFaceRays /* 2000 */)
+  : MinFaceRays (theMinFaceRays),
+    MaxFaceRays (theMaxFaceRays),
+    myIsDone (false),
     myVisibilityOnly (theVisibilityOnly)
 {
   //
@@ -244,8 +242,12 @@ BRepMesh_RestoreOrientationTool::BRepMesh_RestoreOrientationTool (const bool the
 // purpose  :
 // =======================================================================
 BRepMesh_RestoreOrientationTool::BRepMesh_RestoreOrientationTool (const TopoDS_Shape& theShape,
-                                                                  const bool theVisibilityOnly /* false */)
-  : myIsDone (false),
+                                                                  const bool theVisibilityOnly /* false */,
+                                                                  const Standard_Integer theMinFaceRays /* 50 */,
+                                                                  const Standard_Integer theMaxFaceRays /* 2000 */)
+  : MinFaceRays (theMinFaceRays),
+    MaxFaceRays (theMaxFaceRays),
+    myIsDone (false),
     myVisibilityOnly (theVisibilityOnly)
 {
   Init (theShape);
@@ -257,6 +259,7 @@ BRepMesh_RestoreOrientationTool::BRepMesh_RestoreOrientationTool (const TopoDS_S
 // =======================================================================
 void BRepMesh_RestoreOrientationTool::Init (const TopoDS_Shape& theShape)
 {
+  myShape = TopoDS_Shape();
   if (theShape.IsNull())
   {
     Standard_NullObject::Raise();
@@ -653,7 +656,7 @@ void BRepMesh_RestoreOrientationTool::Perform (const Handle(Message_ProgressIndi
 #endif
 
   // Flipped flags for all patches.
-  std::vector<char> aFlipped (myPatches.size(), 0);
+  myFlipped.resize (myPatches.size(), 0);
   std::vector<char> aFlippedC (myPatches.size(), 0);
 
   Standard_Real aMaxCoherence = -std::numeric_limits<Standard_Real>::max();
@@ -744,7 +747,7 @@ void BRepMesh_RestoreOrientationTool::Perform (const Handle(Message_ProgressIndi
             aFlippedC[aPatchId] = aFlippedC[aPatchId] == 0 ? 1 : 0;
           }
 
-          aFlipped[aPatchId] = aFlipped[aPatchId] == 0 ? 1 : 0;
+          myFlipped[aPatchId] = myFlipped[aPatchId] == 0 ? 1 : 0;
         }
 
         for (Standard_Size i = 0; i < aTable->Size(); ++i)
@@ -837,10 +840,10 @@ void BRepMesh_RestoreOrientationTool::Perform (const Handle(Message_ProgressIndi
   for (Standard_Integer i = 0; i < aPatchesNb; ++i)
   {
     Handle (BRepMesh_TriangulatedPatch)& aTriPatch = myPatches[i];
-    Standard_Integer aRaysNb = Max (MIN_FACE_RAYS, static_cast<Standard_Integer> (aTriPatch->TotalArea() * anInvMaxArea * MAX_FACE_RAYS));
+    Standard_Integer aRaysNb = Max (MinFaceRays, static_cast<Standard_Integer> (aTriPatch->TotalArea() * anInvMaxArea * MaxFaceRays));
     computeVisibility (myTriangulation, aTriPatch, aRaysNb);
 
-    if (!myVisibilityOnly && aFlipped[i])
+    if (!myVisibilityOnly && myFlipped[i])
     {
       aTriPatch->FlipVisibility();
     }
@@ -896,7 +899,7 @@ void BRepMesh_RestoreOrientationTool::Perform (const Handle(Message_ProgressIndi
           continue;
         }
 
-        bool isCoherenceFlipped = (aFlipped[i] ^ aFlipped[j] ^ aFlippedC[i] ^ aFlippedC[j]) != 0;
+        bool isCoherenceFlipped = (myFlipped[i] ^ myFlipped[j] ^ aFlippedC[i] ^ aFlippedC[j]) != 0;
         Standard_Real aCoherence = aTable->getCoherence (i, j) * aInvMaxCoherence  * (isCoherenceFlipped ? -1.0 : 1.0);
 
         if (aCoherence > 0.0)
@@ -923,7 +926,7 @@ void BRepMesh_RestoreOrientationTool::Perform (const Handle(Message_ProgressIndi
   {
     if (aGraph->Label (aVariables[i]) == 1)
     {
-      aFlipped[i] = aFlipped[i] == 0 ? 1 : 0;
+      myFlipped[i] = myFlipped[i] == 0 ? 1 : 0;
     }
   }
 
@@ -932,19 +935,71 @@ void BRepMesh_RestoreOrientationTool::Perform (const Handle(Message_ProgressIndi
   std::cout << "Optimization time:  " << aTimer.ElapsedTime() << std::endl;
 #endif
 
-  BRep_Builder aBuilder;
-  TopoDS_Compound aCompound;
-  aBuilder.MakeCompound (aCompound);
+  aTable.reset();
+
+  myIsDone = true;
+}
+
+// =======================================================================
+// function : IsFlipped
+// purpose  :
+// =======================================================================
+bool BRepMesh_RestoreOrientationTool::IsFlipped (const TopoDS_Face theFace) const
+{
+  if (!myIsDone)
+  {
+    return false;
+  }
+
   for (Standard_Size i = 0; i < myPatches.size(); ++i)
   {
     TopoDS_Face aFace = myPatches[i]->Face();
-    if (aFlipped[i])
+    if (theFace == aFace)
     {
-      aFace.Reverse();
+      return myFlipped[i] != 0;
     }
-    aBuilder.Add (aCompound, aFace);
   }
 
-  myShape = aCompound;
-  myIsDone = true;
+  return false;
+}
+
+// =======================================================================
+// function : IsFlipped
+// purpose  :
+// =======================================================================
+bool BRepMesh_RestoreOrientationTool::IsFlipped (const Standard_Integer theFaceIndex) const
+{
+  if (!myIsDone || theFaceIndex < 0 || theFaceIndex >= (Standard_Integer) myFlipped.size())
+  {
+    return false;
+  }
+
+  return myFlipped[theFaceIndex] != 0;
+}
+
+// =======================================================================
+// function : Shape
+// purpose  :
+// =======================================================================
+TopoDS_Shape BRepMesh_RestoreOrientationTool::Shape() const
+{
+  if (myIsDone && myShape.IsNull())
+  {
+    BRep_Builder aBuilder;
+    TopoDS_Compound aCompound;
+    aBuilder.MakeCompound (aCompound);
+    for (Standard_Size i = 0; i < myPatches.size(); ++i)
+    {
+      TopoDS_Face aFace = myPatches[i]->Face();
+      if (myFlipped[i] != 0)
+      {
+        aFace.Reverse();
+      }
+      aBuilder.Add (aCompound, aFace);
+    }
+
+    myShape = aCompound;
+  }
+
+  return myShape;
 }

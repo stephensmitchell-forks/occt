@@ -86,16 +86,21 @@ typedef std::vector<TopoDS_Face> BRepMesh_FaceList;
 //! It takes as input OCCT shape and outputs a set of re-oriented faces.
 class BRepMesh_RestoreOrientationTool : public Standard_Transient
 {
+
 public:
 
   DEFINE_STANDARD_ALLOC
 
   //! Creates uninitialized orientation tool.
-  Standard_EXPORT BRepMesh_RestoreOrientationTool (const bool theVisibilityOnly = false);
+  Standard_EXPORT BRepMesh_RestoreOrientationTool (const bool theVisibilityOnly = false,
+                                                   const Standard_Integer theMinFaceRays = 50,
+                                                   const Standard_Integer theMaxFaceRays = 2000);
 
   //! Creates orientation tool from the given shape.
   Standard_EXPORT BRepMesh_RestoreOrientationTool (const TopoDS_Shape& theShape,
-                                                   const bool theVisibilityOnly = false);
+                                                   const bool theVisibilityOnly = false,
+                                                   const Standard_Integer theMinFaceRays = 50,
+                                                   const Standard_Integer theMaxFaceRays = 2000);
 
 public:
 
@@ -124,10 +129,18 @@ public:
   }
 
   //! Returns shape with restored normal orientation.
-  TopoDS_Shape Shape() const
-  {
-    return myShape;
-  }
+  Standard_EXPORT TopoDS_Shape Shape() const;
+
+  //! Returns true if the given face should be reversed according to the algorithm.
+  //! Valid only if IsDone() returns true.
+  //! O(N)
+  Standard_EXPORT bool IsFlipped (const TopoDS_Face theFace) const;
+
+  //! Returns true if the given face should be reversed according to the algorithm.
+  //! Valid only if IsDone() returns true.
+  //! Uses indices in order provided by TopExp_Explorer starting from zero.
+  //! O(1)
+  Standard_EXPORT bool IsFlipped (const Standard_Integer theFaceIndex) const;
 
 protected:
 
@@ -156,13 +169,21 @@ protected:
                                       const BRepMesh_OrientedEdge& theEdge2,
                                       const BRepMesh_TriangulatedPatch&  thePatch2);
 
+public:
+
+  // Minimum number of traced rays per face.
+  Standard_Integer MinFaceRays;
+
+  // Maximum number of traced rays per face.
+  Standard_Integer MaxFaceRays;
+
 protected:
 
   //! Is output ready?
   bool myIsDone;
 
   //! Resulted shape.
-  TopoDS_Shape myShape;
+  mutable TopoDS_Shape myShape;
 
   //! List of triangulated faces of the shape.
   BRepMesh_FaceList myFaceList;
@@ -177,6 +198,9 @@ protected:
 
   //! Maps Id intervals to topological faces.
   std::vector<Standard_Integer> myFaceIdIntervals;
+
+  // Flipped flags for all faces.
+  std::vector<char> myFlipped;
 
   //! Use only visibility metric?
   bool myVisibilityOnly;

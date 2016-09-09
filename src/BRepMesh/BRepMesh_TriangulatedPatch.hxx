@@ -152,7 +152,7 @@ public:
   }
 
   //! Returns original topological face.
-  TopoDS_Face Face()
+  TopoDS_Face Face() const
   {
     return myFace;
   }
