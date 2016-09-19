@@ -10,28 +10,33 @@
 puts "caf001-N1"
 
 # Make a sphere and produce triangulation
-psphere s 100
-vdisplay s
+box s 100 200 300
 explode s f
-
-# Create a XML document
-NewDocument D XmlXCAF
+incmesh s_1 0.1
 
 # Set mesh from the spherical face
+NewCommand D
 SetMesh D 0:1 s_1
+NewCommand D
+
+# Test Undo/Redo.
+Undo D
+Redo D
 
 # Print the mesh data
 set dump1 [DumpMesh D 0:1]
 
 # Save document on disk.
-SaveAs D "test.xml"
+SaveAs D test.cbf
 
 # Close and open the document again.
-Close D
-Open test.xml DD
+#Close D
+Open test.cbf DD
 
 # Print mesh data
 set dump2 [DumpMesh DD 0:1]
+
+Close DD
 
 # Check data
 if { ${dump1}!=${dump2} } {
