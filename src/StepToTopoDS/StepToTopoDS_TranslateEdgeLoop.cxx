@@ -298,20 +298,8 @@ void StepToTopoDS_TranslateEdgeLoop::Init(const Handle(StepShape_FaceBound)& Fac
       if (C->IsKind(STANDARD_TYPE(StepGeom_SurfaceCurve))) {
         Handle(StepGeom_SurfaceCurve) Sc = Handle(StepGeom_SurfaceCurve)::DownCast(C);
         C = Sc->Curve3d();
-//      if (modepcurve != 3) {
-//	lastpcurve = StepToTopoDS_GeometricTool::PCurve (Sc,StepSurf,StepPCurve1);
-//	if (StepPCurve1 == StepPCurve) modepcurve = -1;
-//	StepPCurve = StepPCurve1;
-//      }
       }
     }
-////    else if (C->IsKind(STANDARD_TYPE(StepGeom_Polyline))) {  }
-//    else if (C->IsKind(STANDARD_TYPE(StepGeom_Pcurve))) {
-//      if (modepcurve != 3) {
-//	if (C == StepPCurve) modepcurve = -1;
-//	StepPCurve = Handle(StepGeom_Pcurve)::DownCast(C);
-//      }
-//    }
     Handle(Geom_Curve) C1;
     if (!C.IsNull()) {
       try

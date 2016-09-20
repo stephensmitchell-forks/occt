@@ -20,77 +20,47 @@
 #include <Standard.hxx>
 #include <Standard_Type.hxx>
 
-#include <TransferBRep_BinderOfShape.hxx>
-#include <TopAbs_ShapeEnum.hxx>
-class Standard_TypeMismatch;
-class TopoDS_Shape;
-class TopoDS_Vertex;
-class TopoDS_Edge;
-class TopoDS_Wire;
-class TopoDS_Face;
-class TopoDS_Shell;
-class TopoDS_Solid;
-class TopoDS_CompSolid;
-class TopoDS_Compound;
+#include <TopoDS_Shape.hxx>
+#include <Transfer_Binder.hxx>
 
-
-class TransferBRep_ShapeBinder;
-DEFINE_STANDARD_HANDLE(TransferBRep_ShapeBinder, TransferBRep_BinderOfShape)
-
-//! A ShapeBinder is a BinderOfShape with some additional services
-//! to cast the Result under various kinds of Shapes
-class TransferBRep_ShapeBinder : public TransferBRep_BinderOfShape
+//! Allows direct binding between a starting Object and the Result of its transfer when it is Unique.
+//! The Result itself is defined as a formal parameter <Shape from TopoDS>
+//! Warning : While it is possible to instantiate ShapeBinder with any Type for the Result,
+//! it is not advisable to instantiate it with Transient Classes,
+//! because such Results are directly known and managed by TransferProcess & Co,
+//! through SimpleBinderOfTransient : this class looks like instantiation of ShapeBinder,
+//! but its method ResultType is adapted (reads DynamicType of the Result)
+class TransferBRep_ShapeBinder : public Transfer_Binder
 {
-
-public:
-
+ public:
   
   //! Creates an empty ShapeBinder
-  Standard_EXPORT TransferBRep_ShapeBinder();
+  TransferBRep_ShapeBinder() {}
+
+  //! Constructor which in the same time defines the result
+  //! Returns True if a starting object is bound with SEVERAL
+  //! results : Here, returns allways False
+  //! But it can have next results
+  TransferBRep_ShapeBinder(const TopoDS_Shape& theResult) : myResult (theResult) { SetResultPresent(); }
   
-  //! Creates a ShapeBinder with a result
-  Standard_EXPORT TransferBRep_ShapeBinder(const TopoDS_Shape& res);
+  //! Returns the Type permitted for the Result, i.e. the Type
+  //! of the Parameter Class <Shape from TopoDS> (statically defined)
+  Standard_EXPORT Handle(Standard_Type) ResultType() const Standard_OVERRIDE;
   
-  //! Returns the Type of the Shape Result (under TopAbs form)
-  Standard_EXPORT TopAbs_ShapeEnum ShapeType() const;
+  //! Returns the Type Name computed for the Result (dynamic)
+  Standard_EXPORT Standard_CString ResultTypeName() const Standard_OVERRIDE;
   
-  Standard_EXPORT TopoDS_Vertex Vertex() const;
+  //! Defines the Result
+  void SetResult (const TopoDS_Shape &theResult) { SetResultPresent(); myResult = theResult; }
   
-  Standard_EXPORT TopoDS_Edge Edge() const;
-  
-  Standard_EXPORT TopoDS_Wire Wire() const;
-  
-  Standard_EXPORT TopoDS_Face Face() const;
-  
-  Standard_EXPORT TopoDS_Shell Shell() const;
-  
-  Standard_EXPORT TopoDS_Solid Solid() const;
-  
-  Standard_EXPORT TopoDS_CompSolid CompSolid() const;
-  
-  Standard_EXPORT TopoDS_Compound Compound() const;
+  //! Returns the defined Result, if there is one
+  const TopoDS_Shape & Result() const { return myResult; }
 
+  DEFINE_STANDARD_RTTIEXT(TransferBRep_ShapeBinder,Transfer_Binder)
 
+ private:
 
-
-  DEFINE_STANDARD_RTTIEXT(TransferBRep_ShapeBinder,TransferBRep_BinderOfShape)
-
-protected:
-
-
-
-
-private:
-
-
-
-
+  TopoDS_Shape myResult;
 };
-
-
-
-
-
-
 
 #endif // _TransferBRep_ShapeBinder_HeaderFile

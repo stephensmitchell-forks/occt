@@ -55,7 +55,6 @@
 #include <TopoDS_Shape.hxx>
 #include <Transfer_FinderProcess.hxx>
 #include <Transfer_IteratorOfProcessForTransient.hxx>
-#include <Transfer_TransferOutput.hxx>
 #include <Transfer_TransientProcess.hxx>
 #include <XSControl.hxx>
 #include <XSControl_WorkSession.hxx>
@@ -518,7 +517,6 @@ static Standard_Integer XSDRAWIGES_tplosttrim (Draw_Interpretor& di, Standard_In
 {
   Handle(IFSelect_SessionPilot) pilot = XSDRAW::Pilot();
 
-//  Standard_Integer narg = pilot->NbWords();
   Standard_Integer narg = n;
 
   const Handle(Transfer_TransientProcess) &TP = XSControl::Session(pilot)->TransferReader()->TransientProcess();
@@ -536,7 +534,6 @@ static Standard_Integer XSDRAWIGES_tplosttrim (Draw_Interpretor& di, Standard_In
   Transfer_IteratorOfProcessForTransient itrp = TP->AbnormalResult(); 
   Standard_Integer k=0;
   if(narg > 1) {
-//    TCollection_AsciiString Arg = pilot->Word(1);
     TCollection_AsciiString Arg(a[1]);
     for(k=1 ; k<=3;k++ ) {
       if(typarg.Value(k).Location(Arg,1,typarg.Value(k).Length()) != 0) break;
@@ -553,7 +550,7 @@ static Standard_Integer XSDRAWIGES_tplosttrim (Draw_Interpretor& di, Standard_In
       return 0;
     }
     for (itrp.Start(); itrp.More(); itrp.Next()) {
-      Handle(Standard_Transient) ent = itrp.Starting();
+      const Handle(Standard_Transient) &ent = itrp.SourceObject();
       Handle(TColStd_HSequenceOfTransient) super = WS->Sharings (ent);
       if (!super.IsNull()) {
 	Standard_Integer nb = super->Length();

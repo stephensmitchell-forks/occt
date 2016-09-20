@@ -56,7 +56,6 @@
 #include <Transfer_Binder.hxx>
 #include <Transfer_FinderProcess.hxx>
 #include <Transfer_SimpleBinderOfTransient.hxx>
-#include <Transfer_TransientMapper.hxx>
 #include <TransferBRep_ShapeMapper.hxx>
 #include <XSControl_ConnectedShapes.hxx>
 #include <XSControl_Controller.hxx>
@@ -249,90 +248,9 @@ Standard_CString  XSControl_Controller::ModeWriteHelp
   return str->ToCString();
 }
 
-
 // ###########################
 //  Transfer : on fait ce qu il faut par defaut (avec ActorWrite)
 //    peut etre redefini ...
-
-//=======================================================================
-//function : RecognizeWriteTransient
-//purpose  : 
-//=======================================================================
-
-Standard_Boolean  XSControl_Controller::RecognizeWriteTransient
-  (const Handle(Standard_Transient)& obj,
-   const Standard_Integer modetrans) const
-{
-  if (myAdaptorWrite.IsNull()) return Standard_False;
-  myAdaptorWrite->ModeTrans() = modetrans;
-  return myAdaptorWrite->Recognize (new Transfer_TransientMapper(obj));
-}
-
-//=======================================================================
-//function : TransferFinder
-//purpose  : internal function
-//=======================================================================
-
-static IFSelect_ReturnStatus TransferFinder
-  (const Handle(Transfer_ActorOfFinderProcess)& theActor,
-   const Handle(Transfer_Finder)& theMapper,
-   const Handle(Transfer_FinderProcess)& theFP,
-   const Handle(Interface_InterfaceModel)& theModel,
-   const Standard_Integer theModeTrans)
-{
-  if (theActor.IsNull()) return IFSelect_RetError;
-  if (theModel.IsNull()) return IFSelect_RetError;
-  theActor->ModeTrans() = theModeTrans;
-  theFP->SetModel (theModel);
-  theFP->SetActor (theActor);
-  theFP->Transfer (theMapper);
-
-  IFSelect_ReturnStatus stat = IFSelect_RetFail;
-  Handle(Transfer_Binder) binder = theFP->Find (theMapper);
-  Handle(Transfer_SimpleBinderOfTransient) bindtr;
-  while (!binder.IsNull()) {
-    bindtr = Handle(Transfer_SimpleBinderOfTransient)::DownCast (binder);
-    if (!bindtr.IsNull()) {
-      Handle(Standard_Transient) ent = bindtr->Result();
-      if (!ent.IsNull()) {
-        stat = IFSelect_RetDone;
-        theModel->AddWithRefs (ent);
-      }
-    }
-    binder = binder->NextResult();
-  }
-  return stat;
-}
-
-//=======================================================================
-//function : TransferWriteTransient
-//purpose  : 
-//=======================================================================
-
-IFSelect_ReturnStatus XSControl_Controller::TransferWriteTransient
-  (const Handle(Standard_Transient)& theObj,
-   const Handle(Transfer_FinderProcess)& theFP,
-   const Handle(Interface_InterfaceModel)& theModel,
-   const Standard_Integer theModeTrans) const
-{
-  if (theObj.IsNull()) return IFSelect_RetVoid;
-  return TransferFinder
-    (myAdaptorWrite,new Transfer_TransientMapper(theObj),theFP,theModel,theModeTrans);
-}
-
-//=======================================================================
-//function : RecognizeWriteShape
-//purpose  : 
-//=======================================================================
-
-Standard_Boolean XSControl_Controller::RecognizeWriteShape
-  (const TopoDS_Shape& shape,
-   const Standard_Integer modetrans) const
-{
-  if (myAdaptorWrite.IsNull()) return Standard_False;
-  myAdaptorWrite->ModeTrans() = modetrans;
-  return myAdaptorWrite->Recognize (new TransferBRep_ShapeMapper(shape));
-}
 
 //=======================================================================
 //function : TransferWriteShape
@@ -346,10 +264,30 @@ IFSelect_ReturnStatus XSControl_Controller::TransferWriteShape
    const Standard_Integer modetrans) const
 {
   if (shape.IsNull()) return IFSelect_RetVoid;
+  if (myAdaptorWrite.IsNull()) return IFSelect_RetError;
+  if (model.IsNull()) return IFSelect_RetError;
 
-  IFSelect_ReturnStatus theReturnStat = TransferFinder
-    (myAdaptorWrite,new TransferBRep_ShapeMapper(shape),FP,model,modetrans);
-  return theReturnStat;
+  Handle(Transfer_Finder) aMapper = new TransferBRep_ShapeMapper(shape);
+  myAdaptorWrite->SetTransferMode(modetrans);
+  FP->SetModel (model);
+  FP->SetActor (myAdaptorWrite);
+  FP->Transfer (aMapper);
+
+  IFSelect_ReturnStatus stat = IFSelect_RetFail;
+  Handle(Transfer_Binder) binder = FP->Find (aMapper);
+  Handle(Transfer_SimpleBinderOfTransient) bindtr;
+  while (!binder.IsNull()) {
+    bindtr = Handle(Transfer_SimpleBinderOfTransient)::DownCast (binder);
+    if (!bindtr.IsNull()) {
+      Handle(Standard_Transient) ent = bindtr->Result();
+      if (!ent.IsNull()) {
+        stat = IFSelect_RetDone;
+        model->AddWithRefs (ent);
+      }
+    }
+    binder = binder->NextResult();
+  }
+  return stat;
 }
 
 // ###########################

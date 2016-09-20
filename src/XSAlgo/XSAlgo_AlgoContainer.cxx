@@ -527,17 +527,15 @@ void XSAlgo_AlgoContainer::MergeTransferInfo(const Handle(Transfer_FinderProcess
 	  TransientListBinder->AddResult(tr);
 	  sub = it.Value();
 	}
-	if ( TransientListBinder->NbTransients() == 1 ) resBinder = new TransferBRep_ShapeBinder(sub);
-	else if ( TransientListBinder->NbTransients() > 1 ) {
+    if ( TransientListBinder->Result().Length() == 1 ) resBinder = new TransferBRep_ShapeBinder(sub);
+	else if ( TransientListBinder->Result().Length() > 1 ) {
           resBinder->AddResult(TransientListBinder);
-//	  resBinder->SetNext(TransientListBinder, Standard_True);
 #ifdef OCCT_DEBUG
 	  cout<<"Info: TransientListBinder created for splitted shape"<<endl;
 	} 
 	else {
 	  cout<<"Warning: XSAlgo_AlgoContainer::MergeTransferInfo() "
 	    <<"No results were found for splitted shape. "<<endl;
-	  //<<"Transfer_FinderProcess->NbMapped() = "<<FP->NbMapped()<<endl;
 #endif	  
 	}
       }

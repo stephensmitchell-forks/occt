@@ -63,8 +63,6 @@
 #include <Transfer_SimpleBinderOfTransient.hxx>
 #include <TransferBRep.hxx>
 #include <TransferBRep_ShapeMapper.hxx>
-#include <XSControl_TransferReader.hxx>
-#include <XSControl_TransferWriter.hxx>
 #include <XSControl_WorkSession.hxx>
 
 //=======================================================================
@@ -93,20 +91,6 @@ STEPConstruct_ValidationProps::STEPConstruct_ValidationProps (const Handle(XSCon
 Standard_Boolean STEPConstruct_ValidationProps::Init (const Handle(XSControl_WorkSession) &WS)
 {
   return SetWS ( WS );
-}
-
-//=======================================================================
-//function : TransientResult   CORRECTED
-//purpose  : 
-//=======================================================================
-
-static Handle(Transfer_SimpleBinderOfTransient) TransientResult (const Handle(Standard_Transient)& res)
-{
-  Handle(Transfer_SimpleBinderOfTransient) binder;
-  if (res.IsNull()) return binder;
-  binder = new Transfer_SimpleBinderOfTransient;
-  binder->SetResult (res);
-  return binder;
 }
 
 //=======================================================================
@@ -291,7 +275,7 @@ Standard_Boolean STEPConstruct_ValidationProps::FindTarget (const TopoDS_Shape &
           SDR->Init ( RD, SR );
 	  
 	  // record SHAPE_ASPECT in the map
-          binder->AddResult ( TransientResult ( aspect ) );
+          binder->AddResult ( Transfer_SimpleBinderOfTransient::TransientResult ( aspect ) );
 
 	  // add SDR and all the data into model
           Model()->AddWithRefs ( SDR );

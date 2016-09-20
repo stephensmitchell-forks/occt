@@ -14,40 +14,10 @@
 // commercial license or contractual agreement.
 
 
-#include <Standard_Type.hxx>
 #include <STEPCAFControl_ActorWrite.hxx>
 #include <TopoDS_Shape.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(STEPCAFControl_ActorWrite,STEPControl_ActorWrite)
-
-//=======================================================================
-//function : STEPCAFControl_ActorWrite
-//purpose  : 
-//=======================================================================
-STEPCAFControl_ActorWrite::STEPCAFControl_ActorWrite () : myStdMode(Standard_True)
-{
-}
-
-//=======================================================================
-//function : ClearMap
-//purpose  : 
-//=======================================================================
-
-void STEPCAFControl_ActorWrite::SetStdMode (const Standard_Boolean stdmode)
-{
-  myStdMode = stdmode;
-  if ( myStdMode ) ClearMap();
-}
-
-//=======================================================================
-//function : ClearMap
-//purpose  : 
-//=======================================================================
-
-void STEPCAFControl_ActorWrite::ClearMap ()
-{
-  myMap.Clear();
-}
 
 //=======================================================================
 //function : RegisterAssembly
@@ -69,4 +39,3 @@ Standard_Boolean STEPCAFControl_ActorWrite::IsAssembly (TopoDS_Shape &S) const
   if ( myStdMode ) return STEPControl_ActorWrite::IsAssembly ( S );
   return myMap.Contains ( S );
 }
-

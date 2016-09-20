@@ -20,16 +20,11 @@
 #include <Standard.hxx>
 #include <Standard_Type.hxx>
 
-#include <StepToTopoDS_NMTool.hxx>
-#include <Standard_Real.hxx>
 #include <Transfer_ActorOfTransientProcess.hxx>
-#include <Standard_Boolean.hxx>
-#include <Standard_Integer.hxx>
 #include <TopTools_ListOfShape.hxx>
 #include <TopTools_IndexedDataMapOfShapeListOfShape.hxx>
+#include <StepToTopoDS_NMTool.hxx>
 class StepRepr_Representation;
-class Standard_Transient;
-class Transfer_Binder;
 class Transfer_TransientProcess;
 class StepGeom_Axis2Placement3d;
 class gp_Trsf;
@@ -57,15 +52,13 @@ DEFINE_STANDARD_HANDLE(STEPControl_ActorRead, Transfer_ActorOfTransientProcess)
 //! then returns the Binder which contains the Result
 class STEPControl_ActorRead : public Transfer_ActorOfTransientProcess
 {
-
-public:
-
+ public:
   
-  Standard_EXPORT STEPControl_ActorRead();
+  Standard_EXPORT STEPControl_ActorRead() {}
   
   Standard_EXPORT virtual Standard_Boolean Recognize (const Handle(Standard_Transient)& start) Standard_OVERRIDE;
   
-  Standard_EXPORT virtual Handle(Transfer_Binder) Transfer (const Handle(Standard_Transient)& start, const Handle(Transfer_TransientProcess)& TP) Standard_OVERRIDE;
+  Standard_EXPORT virtual Handle(Transfer_Binder) Transferring (const Handle(Standard_Transient)& start, const Handle(Transfer_ProcessForTransient)& TP) Standard_OVERRIDE;
   
   Standard_EXPORT Handle(Transfer_Binder) TransferShape (const Handle(Standard_Transient)& start, const Handle(Transfer_TransientProcess)& TP, const Standard_Boolean isManifold = Standard_True);
   
@@ -86,13 +79,9 @@ public:
   //! REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION
   Standard_EXPORT Standard_Boolean ComputeSRRWT (const Handle(StepRepr_RepresentationRelationship)& SRR, const Handle(Transfer_TransientProcess)& TP, gp_Trsf& Trsf);
 
-
-
-
   DEFINE_STANDARD_RTTIEXT(STEPControl_ActorRead,Transfer_ActorOfTransientProcess)
 
-protected:
-
+ protected:
   
   //! Transfers product definition entity
   Standard_EXPORT Handle(TransferBRep_ShapeBinder) TransferEntity (const Handle(StepBasic_ProductDefinition)& PD, const Handle(Transfer_TransientProcess)& TP);
@@ -121,10 +110,7 @@ protected:
   //! Tranlates file by old way when CDSR are roots . Acts only if "read.step.product_mode" is equal Off.
   Standard_EXPORT Handle(TransferBRep_ShapeBinder) OldWay (const Handle(Standard_Transient)& start, const Handle(Transfer_TransientProcess)& TP);
 
-
-
-private:
-
+ private:
   
   Standard_EXPORT TopoDS_Shell closeIDEASShell (const TopoDS_Shell& shell, const TopTools_ListOfShape& closingShells);
   
@@ -134,14 +120,6 @@ private:
   Standard_Real myPrecision;
   Standard_Real myMaxTol;
   Handle(StepRepr_Representation) mySRContext;
-
-
 };
-
-
-
-
-
-
 
 #endif // _STEPControl_ActorRead_HeaderFile

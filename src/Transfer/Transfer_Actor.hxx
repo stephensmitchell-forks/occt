@@ -1,6 +1,3 @@
-// Created on: 1994-10-03
-// Created by: Christian CAILLET
-// Copyright (c) 1994-1999 Matra Datavision
 // Copyright (c) 1999-2014 OPEN CASCADE SAS
 //
 // This file is part of Open CASCADE Technology software library.
@@ -14,14 +11,27 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef TransferBRep_HSequenceOfTransferResultInfo_HeaderFile
-#define TransferBRep_HSequenceOfTransferResultInfo_HeaderFile
+#ifndef _Transfer_Actor_HeaderFile
+#define _Transfer_Actor_HeaderFile
 
-#include <TransferBRep_TransferResultInfo.hxx>
-#include <TransferBRep_SequenceOfTransferResultInfo.hxx>
-#include <NCollection_DefineHSequence.hxx>
+#include <Standard.hxx>
+#include <Standard_Type.hxx>
+#include <MMgt_TShared.hxx>
 
-DEFINE_HSEQUENCE(TransferBRep_HSequenceOfTransferResultInfo, TransferBRep_SequenceOfTransferResultInfo)
+class Transfer_Actor : public MMgt_TShared
+{
+ public:
+  
+  Transfer_Actor() : themodetrans(0) {}
 
+  //! Set a specific transfer mode
+  void SetTransferMode (const Standard_Integer theMode) { themodetrans = theMode; }
 
-#endif
+  DEFINE_STANDARD_RTTI_INLINE(Transfer_Actor,MMgt_TShared)
+
+ protected:
+
+  Standard_Integer themodetrans;
+};
+
+#endif // _Transfer_Actor_HeaderFile

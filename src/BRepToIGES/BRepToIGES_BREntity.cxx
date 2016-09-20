@@ -42,11 +42,9 @@
 #include <TopoDS_Wire.hxx>
 #include <Transfer_FinderProcess.hxx>
 #include <Transfer_SimpleBinderOfTransient.hxx>
-#include <Transfer_TransientMapper.hxx>
-#include <TransferBRep_OrientedShapeMapper.hxx>
+//szv_c1:#include <Transfer_TransientMapper.hxx>
 #include <TransferBRep_ShapeMapper.hxx>
 
-//#include <ShapeCustom.hxx>
 char Name[100];
 
 //=======================================================================
@@ -236,8 +234,9 @@ void BRepToIGES_BREntity::AddFail
   (const Handle(Standard_Transient)& start,
    const Standard_CString amess)
 {
-  Handle(Transfer_TransientMapper) Mapper = new Transfer_TransientMapper(start);
-  TheMap->AddFail(Mapper, amess);
+  /*szv_c1:Handle(Transfer_TransientMapper) Mapper = new Transfer_TransientMapper(start);
+  TheMap->AddFail(Mapper, amess);*/
+  TheMap->AddFail(start, amess);
 }
 
 
@@ -250,8 +249,9 @@ void BRepToIGES_BREntity::AddWarning
   (const Handle(Standard_Transient)& start,
    const Standard_CString amess)
 {
-  Handle(Transfer_TransientMapper) Mapper = new Transfer_TransientMapper(start);
-  TheMap->AddWarning(Mapper, amess);
+  /*szv_c1:Handle(Transfer_TransientMapper) Mapper = new Transfer_TransientMapper(start);
+  TheMap->AddWarning(Mapper, amess);*/
+  TheMap->AddWarning(start, amess);
 }
 
 
@@ -312,8 +312,9 @@ void BRepToIGES_BREntity::SetShapeResult
 Standard_Boolean BRepToIGES_BREntity::HasShapeResult 
   (const Handle(Standard_Transient)& start) const
 {
-  Handle(Transfer_TransientMapper) Mapper = new Transfer_TransientMapper(start);
-  DeclareAndCast(Transfer_SimpleBinderOfTransient, binder, TheMap->Find(Mapper));
+  /*szv_c1:Handle(Transfer_TransientMapper) Mapper = new Transfer_TransientMapper(start);
+  DeclareAndCast(Transfer_SimpleBinderOfTransient, binder, TheMap->Find(Mapper));*/
+  DeclareAndCast(Transfer_SimpleBinderOfTransient, binder, TheMap->Find(start));
   if (binder.IsNull()) return Standard_False;
   return binder->HasResult();
 }
@@ -329,8 +330,9 @@ Handle(Standard_Transient) BRepToIGES_BREntity::GetShapeResult
 {
   Handle(Standard_Transient) res;
 
-  Handle(Transfer_TransientMapper) Mapper = new Transfer_TransientMapper(start);
-  DeclareAndCast(Transfer_SimpleBinderOfTransient, binder, TheMap->Find(Mapper));
+  /*szv_c1:Handle(Transfer_TransientMapper) Mapper = new Transfer_TransientMapper(start);
+  DeclareAndCast(Transfer_SimpleBinderOfTransient, binder, TheMap->Find(Mapper));*/
+  DeclareAndCast(Transfer_SimpleBinderOfTransient, binder, TheMap->Find(start));
   if (binder.IsNull()) return res;
   if (binder->HasResult())
     res = binder->Result();
@@ -347,9 +349,10 @@ void BRepToIGES_BREntity::SetShapeResult
   ( const Handle(Standard_Transient)& start,
     const Handle(Standard_Transient)& result)
 {
-  Handle(Transfer_TransientMapper) Mapper = new Transfer_TransientMapper(start);
   Handle(Transfer_SimpleBinderOfTransient) binder = new Transfer_SimpleBinderOfTransient;
-  TheMap->Bind(Mapper,binder);
+  /*szv_c1:Handle(Transfer_TransientMapper) Mapper = new Transfer_TransientMapper(start);
+  TheMap->Bind(Mapper,binder);*/
+  TheMap->Bind(start,binder);
   binder->SetResult(result);
 }
 

@@ -45,9 +45,6 @@ class IGESData_IGESModel;
 //! To check a loading file use method Check:
 //! reader.Check(failsonly); where failsonly is equal to Standard_True or
 //! Standard_False;
-//! To print the results of load:
-//! reader.PrintCheckLoad(failsonly,mode) where mode is equal to the value of
-//! enumeration IFSelect_PrintCount
 //! To transfer entities from a model the following methods can be used:
 //! for the whole model
 //! reader.TransferRoots(onlyvisible); where onlyvisible is equal to

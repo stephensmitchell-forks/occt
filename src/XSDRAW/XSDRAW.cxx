@@ -33,7 +33,6 @@
 #include <XSControl_FuncShape.hxx>
 #include <XSControl_Functions.hxx>
 #include <XSControl_TransferReader.hxx>
-#include <XSControl_TransferWriter.hxx>
 #include <XSControl_WorkSession.hxx>
 #include <XSDRAW.hxx>
 #include <XSDRAW_Vars.hxx>

@@ -17,64 +17,8 @@
 #ifndef _Transfer_ActorOfFinderProcess_HeaderFile
 #define _Transfer_ActorOfFinderProcess_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
+#include <Transfer_ProcessForFinder.hxx>
 
-#include <Standard_Integer.hxx>
-#include <Transfer_ActorOfProcessForFinder.hxx>
-class Transfer_Binder;
-class Transfer_Finder;
-class Transfer_ProcessForFinder;
-class Transfer_FinderProcess;
-class Standard_Transient;
-
-
-class Transfer_ActorOfFinderProcess;
-DEFINE_STANDARD_HANDLE(Transfer_ActorOfFinderProcess, Transfer_ActorOfProcessForFinder)
-
-//! The original class was renamed. Compatibility only
-//!
-//! ModeTrans : a simple way of transmitting a transfer mode from
-//! a user. To be interpreted for each norm
-class Transfer_ActorOfFinderProcess : public Transfer_ActorOfProcessForFinder
-{
-
-public:
-
-  
-  Standard_EXPORT Transfer_ActorOfFinderProcess();
-  
-  //! Returns the Transfer Mode, modifiable
-  Standard_EXPORT Standard_Integer& ModeTrans();
-  
-  Standard_EXPORT virtual Handle(Transfer_Binder) Transferring (const Handle(Transfer_Finder)& start, const Handle(Transfer_ProcessForFinder)& TP) Standard_OVERRIDE;
-  
-  Standard_EXPORT virtual Handle(Transfer_Binder) Transfer (const Handle(Transfer_Finder)& start, const Handle(Transfer_FinderProcess)& TP);
-  
-  Standard_EXPORT virtual Handle(Standard_Transient) TransferTransient (const Handle(Standard_Transient)& start, const Handle(Transfer_FinderProcess)& TP);
-
-
-
-
-  DEFINE_STANDARD_RTTIEXT(Transfer_ActorOfFinderProcess,Transfer_ActorOfProcessForFinder)
-
-protected:
-
-
-  Standard_Integer themodetrans;
-
-
-private:
-
-
-
-
-};
-
-
-
-
-
-
+#define Transfer_ActorOfFinderProcess Transfer_ProcessForFinder::Actor
 
 #endif // _Transfer_ActorOfFinderProcess_HeaderFile

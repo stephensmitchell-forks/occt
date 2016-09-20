@@ -19,50 +19,28 @@
 #include <Standard.hxx>
 #include <Standard_Type.hxx>
 
-#include <TColStd_DataMapOfTransientTransient.hxx>
 #include <MMgt_TShared.hxx>
+#include <NCollection_DataMap.hxx>
 
-
-class Transfer_MapContainer;
-DEFINE_STANDARD_HANDLE(Transfer_MapContainer, MMgt_TShared)
-
+typedef NCollection_DataMap<Handle(Standard_Transient),Handle(Standard_Transient)> Transfer_DataMapOfTransient;
 
 class Transfer_MapContainer : public MMgt_TShared
 {
+ public:
 
-public:
-
+  Transfer_MapContainer() {}
   
-  Standard_EXPORT Transfer_MapContainer();
-  
-  //! Set map already translated geometry objects.
-  Standard_EXPORT void SetMapObjects (TColStd_DataMapOfTransientTransient& theMapObjects);
-  
-  //! Get map already translated geometry objects.
-  Standard_EXPORT TColStd_DataMapOfTransientTransient& GetMapObjects();
+  Standard_Boolean Find(const Handle(Standard_Transient) &theKey, Handle(Standard_Transient) &theValue)
+  { return myMapObj.Find(theKey,theValue); }
 
-
-
+  Standard_Boolean Bind(const Handle(Standard_Transient) &theKey, const Handle(Standard_Transient) &theValue)
+  { return myMapObj.Bind(theKey,theValue); }
 
   DEFINE_STANDARD_RTTIEXT(Transfer_MapContainer,MMgt_TShared)
 
-protected:
+ private:
 
-
-
-
-private:
-
-
-  TColStd_DataMapOfTransientTransient myMapObj;
-
-
+  Transfer_DataMapOfTransient myMapObj;
 };
-
-
-
-
-
-
 
 #endif // _Transfer_MapContainer_HeaderFile

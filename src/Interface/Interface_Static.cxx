@@ -31,27 +31,12 @@ static char defmess[31];
 
 //  Fonctions Satisfies offertes en standard ...
 
-//svv #2
-//static Standard_Boolean StaticPath(const Handle(TCollection_HAsciiString)& val)
-//{
-//  OSD_Path apath;
-//  return apath.IsValid (TCollection_AsciiString(val->ToCString()));
-//}
-
-
-    Interface_Static::Interface_Static
-  (const Standard_CString family,  const Standard_CString name,
-   const Interface_ParamType type, const Standard_CString init)
-    : Interface_TypedValue (name,type,init) ,
-      thefamily (family) ,
-      theupdate (Standard_True)    {  }
-
-    Interface_Static::Interface_Static
+Interface_Static::Interface_Static
   (const Standard_CString family,  const Standard_CString name,
    const Handle(Interface_Static)& other)
-    : Interface_TypedValue (name, other->Type(), "") ,
-      thefamily (family) ,
-      theupdate (Standard_True)
+: Interface_TypedValue (name, other->Type(), ""),
+  thefamily (family) ,
+  theupdate (Standard_True)
 {
   switch (Type()) {
     case Interface_ParamInteger : {
@@ -71,9 +56,8 @@ static char defmess[31];
       Standard_Boolean match;  Standard_Integer e0,e1,i;
       other->EnumDef (e0,e1,match);
       StartEnum (e0,match);
-//      if (e1 >= e0) theenums = new TColStd_HArray1OfAsciiString(e0,e1);
       for (i = e0; i <= e1; i ++)
-	AddEnum (other->EnumVal(i));
+        AddEnum (other->EnumVal(i));
     }
       break;
     case Interface_ParamIdent :
@@ -95,45 +79,7 @@ void  Interface_Static::PrintStatic (const Handle(Message_Messenger)& S) const
   if (!thewild.IsNull())
     S<<" -- Attached to wild-card : "<<thewild->Name()<<endl;
   S<<"--- Actual status : "<<(theupdate ? "" : "original")<<"  Value : ";
-
-  if (thesatisf) S<<" -- Specific Function for Satisfies : "<<thesatisn.ToCString()<<endl;
 }
-
-
-//  #########    COMPLEMENTS    ##########
-
-Standard_CString  Interface_Static::Family () const
-{
-  return thefamily.ToCString();
-}
-
-
-Handle(Interface_Static)  Interface_Static::Wild () const
-{
-  return thewild;
-}
-
-
-void  Interface_Static::SetWild (const Handle(Interface_Static)& wild)
-{
-  thewild = wild;
-}
-
-
-//  #########   UPDATE    ##########
-
-void  Interface_Static::SetUptodate ()
-{
-  theupdate = Standard_True;
-}
-
-
-Standard_Boolean  Interface_Static::UpdatedStatus () const
-{
-  return theupdate;
-}
-
-
 
 //  #######################################################################
 //  #########    DICTIONNAIRE DES STATICS (static sur Static)    ##########

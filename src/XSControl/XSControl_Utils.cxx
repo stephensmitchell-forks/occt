@@ -36,7 +36,6 @@
 #include <TopoDS_Shape.hxx>
 #include <TopoDS_Shell.hxx>
 #include <TopoDS_Wire.hxx>
-#include <Transfer_SimpleBinderOfTransient.hxx>
 #include <TransferBRep.hxx>
 #include <TransferBRep_ShapeBinder.hxx>
 #include <TransferBRep_ShapeMapper.hxx>
@@ -506,7 +505,7 @@ static const Standard_ExtString   voidext = { 0 };
   DeclareAndCast(Transfer_Binder,sb,tr);
   if (!sb.IsNull()) return TransferBRep::ShapeResult(sb);
   DeclareAndCast(TransferBRep_ShapeMapper,sm,tr);
-  if (!sm.IsNull()) return sm->Value();
+  if (!sm.IsNull()) return sm->Shape();
   DeclareAndCast(TopoDS_HShape,hs,tr);
   if (!hs.IsNull()) return hs->Shape();
   return sh;

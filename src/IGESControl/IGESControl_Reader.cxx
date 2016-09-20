@@ -43,7 +43,6 @@
 #include <Transfer_ActorOfTransientProcess.hxx>
 #include <Transfer_Binder.hxx>
 #include <Transfer_IteratorOfProcessForTransient.hxx>
-#include <Transfer_TransferOutput.hxx>
 #include <Transfer_TransientProcess.hxx>
 #include <TransferBRep.hxx>
 #include <XSControl_Controller.hxx>
@@ -52,7 +51,6 @@
 
 #include <stdio.h>
 // S3767 dce 18/01/1999
-//Transfer_Iterator.hxx>
 // add of stdio.h for NT compilation
 //=======================================================================
 //function : IGESControl_Reader
@@ -149,7 +147,6 @@ void  IGESControl_Reader::PrintTransferInfo
   if (! model.IsNull()) {
     nbEntities = model->NbEntities();
     nbRoots = TP->NbRoots();
-    //nbResults = TP->NbMapped();
     Transfer_IteratorOfProcessForTransient iterTrans = TP->RootResult(Standard_True);
     Handle(Dico_DictionaryOfInteger) dicoCountResult = new Dico_DictionaryOfInteger;
     Handle(Dico_DictionaryOfInteger) dicoCountMapping = new Dico_DictionaryOfInteger;
@@ -169,7 +166,7 @@ void  IGESControl_Reader::PrintTransferInfo
       else if ( mode == IFSelect_Mapping ) {
 	char mess[300];
 	const Handle(Transfer_Binder) aBinder = iterTrans.Value();
-	DeclareAndCast(IGESData_IGESEntity,igesEnt,iterTrans.Starting());
+	DeclareAndCast(IGESData_IGESEntity,igesEnt,iterTrans.SourceObject());
 	
 	sprintf(mess,"%d\t%d\t%s\t%s", igesEnt->TypeNumber(), igesEnt->FormNumber(),
 		"%d", aBinder->ResultTypeName());

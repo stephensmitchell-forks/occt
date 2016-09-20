@@ -17,73 +17,28 @@
 #ifndef _TransferBRep_ShapeMapper_HeaderFile
 #define _TransferBRep_ShapeMapper_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
-#include <TopoDS_Shape.hxx>
 #include <Transfer_Finder.hxx>
-#include <Standard_Boolean.hxx>
-#include <Standard_Type.hxx>
-#include <Standard_CString.hxx>
-class TopoDS_Shape;
-class TopTools_ShapeMapHasher;
-class TransferBRep_ShapeInfo;
-class Transfer_Finder;
-
-
-class TransferBRep_ShapeMapper;
-DEFINE_STANDARD_HANDLE(TransferBRep_ShapeMapper, Transfer_Finder)
-
+#include <TopoDS_Shape.hxx>
 
 class TransferBRep_ShapeMapper : public Transfer_Finder
 {
+ public:
 
-public:
+  TransferBRep_ShapeMapper (const TopoDS_Shape &theShape) : myShape(theShape) {}
 
-  
-  //! Creates a Mapper with a Value. This Value can then not be
-  //! changed. It is used by the Hasher to compute the HashCode,
-  //! which will then be stored for an immediate reading.
-  Standard_EXPORT TransferBRep_ShapeMapper(const TopoDS_Shape& akey);
-  
-  //! Returns the contained value
-  Standard_EXPORT const TopoDS_Shape& Value() const;
-  
-  //! Specific testof equallity : defined as False if <other> has
-  //! not the same true Type, else contents are compared (by
-  //! C++ operator ==)
-  Standard_EXPORT Standard_Boolean Equates (const Handle(Transfer_Finder)& other) const Standard_OVERRIDE;
-  
-  //! Returns the Type of the Value. By default, returns the
-  //! DynamicType of <me>, but can be redefined
-  Standard_EXPORT virtual Handle(Standard_Type) ValueType() const Standard_OVERRIDE;
-  
-  //! Returns the name of the Type of the Value. Default is name
-  //! of ValueType, unless it is for a non-handled object
-  Standard_EXPORT virtual Standard_CString ValueTypeName() const Standard_OVERRIDE;
+  const TopoDS_Shape & Shape () const { return myShape; }
 
+  Standard_EXPORT Standard_Integer GetHashCode (const Standard_Integer theUpper) const Standard_OVERRIDE;
 
+  Standard_EXPORT Standard_Boolean Equates (const Handle(Transfer_Finder)& theOther) const Standard_OVERRIDE;
 
+  Standard_EXPORT Standard_CString ValueTypeName () const Standard_OVERRIDE;
 
-  DEFINE_STANDARD_RTTI_INLINE(TransferBRep_ShapeMapper,Transfer_Finder)
+  DEFINE_STANDARD_RTTIEXT(TransferBRep_ShapeMapper,Transfer_Finder)
 
-protected:
+ protected:
 
-
-
-
-private:
-
-
-  TopoDS_Shape theval;
-
-
+  TopoDS_Shape myShape;
 };
-
-
-
-
-
-
 
 #endif // _TransferBRep_ShapeMapper_HeaderFile

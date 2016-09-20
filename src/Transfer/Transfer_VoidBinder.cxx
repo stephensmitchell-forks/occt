@@ -14,21 +14,12 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-//		<design>
-
-#include <Standard_Type.hxx>
 #include <Transfer_VoidBinder.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(Transfer_VoidBinder,Transfer_Binder)
 
-Transfer_VoidBinder::Transfer_VoidBinder ()    {  }
+Handle(Standard_Type) Transfer_VoidBinder::ResultType () const
+{ return DynamicType(); }
 
-//    Standard_Boolean  Transfer_VoidBinder::IsMultiple () const
-//      { return Standard_False;  }
-
-
-    Handle(Standard_Type)  Transfer_VoidBinder::ResultType () const
-      {  return DynamicType();  }
-
-    Standard_CString  Transfer_VoidBinder::ResultTypeName () const
-      {  return "(void)";  }
+Standard_CString  Transfer_VoidBinder::ResultTypeName () const
+{ return "(void)"; }

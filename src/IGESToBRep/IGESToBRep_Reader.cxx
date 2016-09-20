@@ -52,7 +52,6 @@
 #include <TopoDS_Compound.hxx>
 #include <TopoDS_Shape.hxx>
 #include <Transfer_IteratorOfProcessForTransient.hxx>
-#include <Transfer_TransferOutput.hxx>
 #include <Transfer_TransientProcess.hxx>
 #include <TransferBRep.hxx>
 #include <TransferBRep_ShapeBinder.hxx>
@@ -377,15 +376,12 @@ void  IGESToBRep_Reader::TransferRoots (const Standard_Boolean onlyvisible)
   theShapes.Clear();
   
   Standard_Integer level = theProc->TraceLevel();
-  theProc->SetErrorHandle(Standard_True);
   theProc->SetRootManagement(Standard_True);
-//  PrepareTransfer();  -> protocol, actor
   theActor->SetModel(theModel);
   Standard_Integer continuity = Interface_Static::IVal("read.iges.bspline.continuity");
   theActor->SetContinuity (continuity);
   theProc->SetModel (theModel);
   theProc->SetActor (theActor);
-  Transfer_TransferOutput TP (theProc,theModel);
 
   const Handle(Interface_Protocol) aProtocol = protocol; // to avoid ambiguity
   Interface_ShareFlags SH (theModel, aProtocol);
@@ -428,7 +424,10 @@ void  IGESToBRep_Reader::TransferRoots (const Standard_Boolean onlyvisible)
       theDone = Standard_True;
       try {
         OCC_CATCH_SIGNALS
-        TP.Transfer(ent);
+        // Check if the entity belongs to the model
+        if (theModel->Number(ent) == 0)
+          continue;
+        theProc->Transfer (ent);
         shape = TransferBRep::ShapeResult (theProc,ent);
       } 
       catch(Standard_Failure) {

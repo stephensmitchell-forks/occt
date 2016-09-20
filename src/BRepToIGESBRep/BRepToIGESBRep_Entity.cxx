@@ -102,15 +102,8 @@
 #include <TopoDS_Vertex.hxx>
 #include <TopoDS_Wire.hxx>
 #include <Transfer_FinderProcess.hxx>
-#include <Transfer_SimpleBinderOfTransient.hxx>
-#include <Transfer_TransientMapper.hxx>
-#include <TransferBRep_OrientedShapeMapper.hxx>
 #include <TransferBRep_ShapeMapper.hxx>
 
-//#include <GeomConvert.hxx>
-//#include <Geom2dConvert.hxx>
-//#include <ShapeAnalysis.hxx>
-//#include <ShapeCustom.hxx>
 //=======================================================================
 //function : BRepToIGESBRep_Entity
 //purpose  : 

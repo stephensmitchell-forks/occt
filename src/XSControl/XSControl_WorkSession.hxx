@@ -176,12 +176,6 @@ class XSControl_WorkSession : public IFSelect_WorkSession
   //! Error if transfer badly initialised
   Standard_EXPORT IFSelect_ReturnStatus TransferWriteShape (const TopoDS_Shape& theShape, const Standard_Boolean theCompGraph = Standard_True);
   
-  //! Returns the check-list of last transfer (write)
-  //! It is recorded in the FinderProcess, but it must be bound with
-  //! resulting entities (in the resulting file model) rather than
-  //! with original objects (in fact, their mappers)
-  Standard_EXPORT Interface_CheckIterator TransferWriteCheckList() const;
-  
   const Handle(XSControl_Vars) & Vars() const
   { return myVars; }
   

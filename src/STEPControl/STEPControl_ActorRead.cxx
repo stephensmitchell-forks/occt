@@ -25,6 +25,7 @@
 #include <HeaderSection_FileName.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Graph.hxx>
+#include <Interface_HGraph.hxx>
 #include <Interface_InterfaceModel.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_Static.hxx>
@@ -195,19 +196,11 @@ namespace {
 }
 
 // ============================================================================
-// Method  : STEPControl_ActorRead::STEPControl_ActorRead  ()    
-// Purpose : Empty constructor
-// ============================================================================
-
-STEPControl_ActorRead::STEPControl_ActorRead() {}
-
-// ============================================================================
 // Method  : STEPControl_ActorRead::Recognize
 // Purpose : tells if an entity is valid for transfer by this Actor
 // ============================================================================
 
-Standard_Boolean  STEPControl_ActorRead::Recognize
-  (const Handle(Standard_Transient)& start)
+Standard_Boolean STEPControl_ActorRead::Recognize (const Handle(Standard_Transient)& start)
 {
   if (start.IsNull()) return Standard_False;
 
@@ -264,16 +257,13 @@ Standard_Boolean  STEPControl_ActorRead::Recognize
   return Standard_False;
 }
 
-
 // ============================================================================
-// Method  : STEPControl_ActorRead::Transfer
+// Method  : Transferring
 // Purpose : recursive method that acces to the root entities and start the 
 //           mapping
 // ============================================================================
 
-Handle(Transfer_Binder)  STEPControl_ActorRead::Transfer
-(const Handle(Standard_Transient)& start,
- const Handle(Transfer_TransientProcess)& TP)
+Handle(Transfer_Binder) STEPControl_ActorRead::Transferring (const Handle(Standard_Transient)& start, const Handle(Transfer_ProcessForTransient)& TP)
 {  
   // [BEGIN] Get version of preprocessor (to detect I-Deas case) (ssv; 23.11.2010)
   Handle(StepData_StepModel) aStepModel = Handle(StepData_StepModel)::DownCast ( TP->Model() );
@@ -297,7 +287,7 @@ Handle(Transfer_Binder)  STEPControl_ActorRead::Transfer
     }
   }
   // [END] Get version of preprocessor (to detect I-Deas case) (ssv; 23.11.2010)
-  return TransferShape (start,TP);  
+  return TransferShape (start,Handle(Transfer_TransientProcess)::DownCast(TP));
 }
 
 
@@ -320,7 +310,7 @@ static Handle(StepRepr_Representation) FindContext (const Handle(Standard_Transi
 						    const Standard_Integer level=10 )
 {
   Handle(StepRepr_Representation) rep;
-  const Interface_Graph& graph = TP->Graph();
+  const Interface_Graph& graph = TP->HGraph()->Graph();
   Interface_EntityIterator subs = graph.Sharings(start);
   for (subs.Start(); subs.More() && rep.IsNull(); subs.Next()) {
     rep = Handle(StepRepr_Representation)::DownCast(subs.Value());
@@ -362,7 +352,7 @@ static void getListSDR(const Handle(StepRepr_ShapeAspect)& sa,
                        Handle(TColStd_HSequenceOfTransient)& listSDR,
                        const Handle(Transfer_TransientProcess)& TP)
 {
-  const Interface_Graph& graph = TP->Graph();
+  const Interface_Graph& graph = TP->HGraph()->Graph();
   
   // check whether this ShapeAspect is used in G&DT, and if yes, ignore it
   if(sa->IsKind(STANDARD_TYPE(StepDimTol_DatumFeature))) return;
@@ -407,7 +397,7 @@ static void getSDR(const Handle(StepRepr_ProductDefinitionShape)& PDS,
   Standard_Integer nbSDR0 = listSDR->Length();
   
   // Iterate by entities referring PDS
-  const Interface_Graph& graph = TP->Graph();
+  const Interface_Graph& graph = TP->HGraph()->Graph();
   Handle(StepShape_ShapeDefinitionRepresentation) NeedSDR;
   Interface_EntityIterator subs4 = graph.Sharings(PDS);
   for (subs4.Start(); subs4.More(); subs4.Next()) {
@@ -480,7 +470,7 @@ static void getSDR(const Handle(StepRepr_ProductDefinitionShape)& PDS,
   Handle(TColStd_HSequenceOfTransient) listSDR = new TColStd_HSequenceOfTransient;
   Handle(TColStd_HSequenceOfTransient) listNAUO = new TColStd_HSequenceOfTransient;
   Handle(TColStd_HSequenceOfTransient) listSDRAspect = new TColStd_HSequenceOfTransient;
-  const Interface_Graph& graph = TP->Graph();
+  const Interface_Graph& graph = TP->HGraph()->Graph();
   Interface_EntityIterator subs3 = graph.Sharings(PD);
   for (subs3.Start(); subs3.More() ; subs3.Next()) {
     // PDS is used to find shape definitions attached to this product
@@ -661,7 +651,7 @@ Handle(TransferBRep_ShapeBinder) STEPControl_ActorRead::TransferEntity(const Han
 {
  Handle(TransferBRep_ShapeBinder) shbinder;
   Handle(StepBasic_ProductDefinition) PD;
-  const Interface_Graph& graph = TP->Graph();
+  const Interface_Graph& graph = TP->HGraph()->Graph();
   gp_Trsf Trsf;
   Standard_Boolean iatrsf=Standard_False, SRRReversed=Standard_False, IsDepend=Standard_False;
   Handle(StepRepr_ShapeRepresentationRelationship) SRR;
@@ -683,7 +673,7 @@ Handle(TransferBRep_ShapeBinder) STEPControl_ActorRead::TransferEntity(const Han
       Handle(StepRepr_Representation) rep = ( SRRReversed ? RR->Rep2() : RR->Rep1() );
       iatrsf = ComputeSRRWT ( RR, TP, Trsf );
       // find real ProductDefinition used rep
-      Interface_EntityIterator subs3 = TP->Graph().Sharings(rep);
+      Interface_EntityIterator subs3 = TP->HGraph()->Graph().Sharings(rep);
       for (subs3.Start(); subs3.More(); subs3.Next()) {
         if ( subs3.Value()->IsKind(STANDARD_TYPE(StepShape_ShapeDefinitionRepresentation))) {
           DeclareAndCast(StepShape_ShapeDefinitionRepresentation,SDR,subs3.Value());
@@ -1017,7 +1007,7 @@ Handle(TransferBRep_ShapeBinder) STEPControl_ActorRead::TransferEntity(const Han
     Handle(StepShape_ShapeRepresentation) anitem = Handle(StepShape_ShapeRepresentation)::DownCast(anitemt);
     Handle(Transfer_Binder) binder;
     Standard_Boolean isBound = Standard_False;
-    if (!TP->IsBound(anitem)) binder = TransferEntity(anitem,TP,isBound);//TP->Transferring(anitem);
+    if (!TP->IsBound(anitem)) binder = TransferEntity(anitem,TP,isBound);
     else	                binder = TP->Find(anitem);
     TopoDS_Shape theResult = TransferBRep::ShapeResult (binder);
     if (!theResult.IsNull()) {
@@ -1058,7 +1048,7 @@ static Standard_Boolean IsNeedRepresentation(const Handle(StepRepr_ShapeAspect)&
 {
   Standard_Boolean IsSDRaspect=Standard_True;
   Handle(StepRepr_ProductDefinitionShape) PDSA = sa->OfShape();
-  const Interface_Graph& graph = TP->Graph();
+  const Interface_Graph& graph = TP->HGraph()->Graph();
   Interface_EntityIterator subs7 = graph.Sharings(PDSA);
   for (subs7.Start(); ! PDSA.IsNull() && subs7.More(); subs7.Next()) {
     Handle(StepShape_ShapeDefinitionRepresentation) sdrA = 
@@ -1096,7 +1086,7 @@ Handle(TransferBRep_ShapeBinder) STEPControl_ActorRead::OldWay(const Handle(Stan
                                                                const Handle(Transfer_TransientProcess)& TP)
 {
   Handle(Message_Messenger) sout = TP->Messenger();
-  const Interface_Graph& graph = TP->Graph();
+  const Interface_Graph& graph = TP->HGraph()->Graph();
   Handle(TransferBRep_ShapeBinder) shbinder;
   DeclareAndCast(StepShape_ShapeDefinitionRepresentation,sdr,start);
   Handle(StepRepr_Representation) rep = sdr->UsedRepresentation();
@@ -1119,7 +1109,6 @@ Handle(TransferBRep_ShapeBinder) STEPControl_ActorRead::OldWay(const Handle(Stan
 #endif
   Handle(Transfer_Binder) binder = TP->Find(rep);
   if (binder.IsNull()) binder = TP->Transferring(rep);
-//:j2    if (!binder.IsNull()) return binder;
 
 //    SDR designant des CDSR (lien implicite, via la UsedRepr)
 
@@ -1429,7 +1418,7 @@ Handle(Transfer_Binder) STEPControl_ActorRead::TransferShape(const Handle(Standa
                                                              const Handle(Transfer_TransientProcess)& TP,
                                                              const Standard_Boolean isManifold)
 {
-  if (start.IsNull()) return NullResult();
+  if (start.IsNull()) return NULL;
   XSAlgo::AlgoContainer()->PrepareForTransfer();
 
 //  myContext.SetModel ( Handle(StepData_StepModel)::DownCast ( TP->Model() ) ); // for asking IsAP203?

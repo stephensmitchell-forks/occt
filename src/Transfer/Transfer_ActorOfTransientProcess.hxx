@@ -17,55 +17,8 @@
 #ifndef _Transfer_ActorOfTransientProcess_HeaderFile
 #define _Transfer_ActorOfTransientProcess_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
+#include <Transfer_ProcessForTransient.hxx>
 
-#include <Transfer_ActorOfProcessForTransient.hxx>
-class Transfer_Binder;
-class Standard_Transient;
-class Transfer_ProcessForTransient;
-class Transfer_TransientProcess;
-
-
-class Transfer_ActorOfTransientProcess;
-DEFINE_STANDARD_HANDLE(Transfer_ActorOfTransientProcess, Transfer_ActorOfProcessForTransient)
-
-//! The original class was renamed. Compatibility only
-class Transfer_ActorOfTransientProcess : public Transfer_ActorOfProcessForTransient
-{
-
-public:
-
-  
-  Standard_EXPORT Transfer_ActorOfTransientProcess();
-  
-  Standard_EXPORT virtual Handle(Transfer_Binder) Transferring (const Handle(Standard_Transient)& start, const Handle(Transfer_ProcessForTransient)& TP) Standard_OVERRIDE;
-  
-  Standard_EXPORT virtual Handle(Transfer_Binder) Transfer (const Handle(Standard_Transient)& start, const Handle(Transfer_TransientProcess)& TP);
-  
-  Standard_EXPORT virtual Handle(Standard_Transient) TransferTransient (const Handle(Standard_Transient)& start, const Handle(Transfer_TransientProcess)& TP);
-
-
-
-
-  DEFINE_STANDARD_RTTIEXT(Transfer_ActorOfTransientProcess,Transfer_ActorOfProcessForTransient)
-
-protected:
-
-
-
-
-private:
-
-
-
-
-};
-
-
-
-
-
-
+#define Transfer_ActorOfTransientProcess Transfer_ProcessForTransient::Actor
 
 #endif // _Transfer_ActorOfTransientProcess_HeaderFile

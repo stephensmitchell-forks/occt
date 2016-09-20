@@ -42,8 +42,6 @@ class StepRepr_RepresentationContext;
 //! translation  (see STEP Parameters and General Parameters)
 //! Creation of reader - STEPControl_Reader reader;
 //! To load s file in a model use method reader.ReadFile("filename.stp")
-//! To print load results reader.PrintCheckLoad(failsonly,mode)
-//! where mode is equal to the value of enumeration IFSelect_PrintCount
 //! For definition number of candidates :
 //! Standard_Integer nbroots = reader. NbRootsForTransfer();
 //! To transfer entities from a model the following methods can be used:
@@ -57,10 +55,6 @@ class StepRepr_RepresentationContext;
 //! reader.TransferRoot(num)
 //! To obtain the result the following method can be used:
 //! reader.NbShapes() and reader.Shape(num); or reader.OneShape();
-//! To print the results of transfer use method:
-//! reader.PrintCheckTransfer(failwarn,mode);
-//! where printfail is equal to the value of enumeration
-//! IFSelect_PrintFail, mode see above; or reader.PrintStatsTransfer();
 //! Gets correspondence between a STEP entity and a result
 //! shape obtained from it.
 //! Handle(XSControl_WorkSession)

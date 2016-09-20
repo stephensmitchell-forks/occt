@@ -24,8 +24,6 @@
 #include <XSControl_Controller.hxx>
 #include <IFSelect_ReturnStatus.hxx>
 #include <Standard_Integer.hxx>
-class Interface_InterfaceModel;
-class Transfer_ActorOfTransientProcess;
 class TopoDS_Shape;
 class Transfer_FinderProcess;
 class XSControl_WorkSession;
@@ -37,9 +35,7 @@ DEFINE_STANDARD_HANDLE(IGESControl_Controller, XSControl_Controller)
 //! Controller for IGES-5.1
 class IGESControl_Controller : public XSControl_Controller
 {
-
-public:
-
+ public:
   
   //! Initializes the use of IGES Norm (the first time) and returns
   //! a Controller for IGES-5.1
@@ -55,15 +51,6 @@ public:
   //! Unit, tolerances
   Standard_EXPORT Handle(Transfer_ActorOfTransientProcess) ActorRead (const Handle(Interface_InterfaceModel)& model) const Standard_OVERRIDE;
   
-  //! Takes one Shape and transfers it to the InterfaceModel
-  //! (already created by NewModel for instance)
-  //! <modetrans> is to be interpreted by each kind of XstepAdaptor
-  //! Returns a status : 0 OK  1 No result  2 Fail  -1 bad modeshape
-  //! -2 bad model (requires an IGESModel)
-  //! modeshape : 0  groupe of face (version < 5.1)
-  //! 1  BREP-version 5.1 of IGES
-  Standard_EXPORT virtual IFSelect_ReturnStatus TransferWriteShape (const TopoDS_Shape& shape, const Handle(Transfer_FinderProcess)& FP, const Handle(Interface_InterfaceModel)& model, const Standard_Integer modetrans = 0) const Standard_OVERRIDE;
-  
   //! Standard Initialisation. It creates a Controller for IGES and
   //! records it to various names, available to select it later
   //! Returns True when done, False if could not be done
@@ -72,28 +59,11 @@ public:
   
   Standard_EXPORT virtual void Customise (Handle(XSControl_WorkSession)& WS) Standard_OVERRIDE;
 
-
-
-
   DEFINE_STANDARD_RTTIEXT(IGESControl_Controller,XSControl_Controller)
 
-protected:
-
-
-
-
-private:
-
+ private:
 
   Standard_Boolean themode;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESControl_Controller_HeaderFile

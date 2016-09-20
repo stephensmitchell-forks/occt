@@ -39,7 +39,6 @@
 #include <Transfer_Binder.hxx>
 #include <Transfer_Finder.hxx>
 #include <Transfer_FinderProcess.hxx>
-#include <Transfer_ResultFromModel.hxx>
 #include <Transfer_SimpleBinderOfTransient.hxx>
 #include <Transfer_TransientListBinder.hxx>
 #include <Transfer_TransientProcess.hxx>
@@ -57,12 +56,24 @@
 #include <XSControl_WorkSession.hxx>
 
 #include <stdio.h>
-//#include <TransferBRep_Analyzer.hxx>
+
+//=======================================================================
+//function : XSControl_tpdraw
+//purpose  : 
+//=======================================================================
+static Handle(XSControl_Vars) GetXSControlVars (const Handle(IFSelect_SessionPilot)& pilot)
+{
+  static const Handle(XSControl_Vars) avars;
+  Handle(XSControl_WorkSession) WS = XSControl::Session(pilot);
+  return (WS.IsNull()? avars : WS->Vars());
+}
+
 //  ######################################################################
 //  ####                                                              ####
 //  ####                           COMMANDS                           ####
 //  ####                                                              ####
 //  ######################################################################
+
 //=======================================================================
 //function : XSControl_tpdraw
 //purpose  : 
@@ -174,25 +185,25 @@ static IFSelect_ReturnStatus XSControl_tpdraw
 	else                            sprintf (nomvar,"tp_%d",i);
       }
       sout<<" -> 1 DRAW Shape: "<<nomvar<<endl;
-      XSControl::Vars(pilot)->SetShape(nomvar,sh);
+      GetXSControlVars(pilot)->SetShape(nomvar,sh);
       continue;
     }
     DeclareAndCast(TransferBRep_ShapeListBinder,slb,binder);
     if (!slb.IsNull()) {
-      Standard_Integer nbs = slb->NbShapes();
+      const Standard_Integer nbs = slb->Result().Length();
       if (tout) sout<<"[ "<<i<<" ]:";
       if (num == 0) sout<<" pas dans le modele";
       else sout<<" ent.n0 "<<num;
       sout<<", item transfert n0 "<<index;
       sout<<" -> "<<nbs<<" DRAW Shapes :";
       for (Standard_Integer j = 1; j <= nbs; j ++)  {
-	sh = slb->Shape(j);  if (nbvar < 0) nbvar = 0;  nbvar ++;
-	if (sh.IsNull()) { sout<<" (no Shape recorded)"<<endl; continue; }
-	if      (argc > 3 && mode  > 0) sprintf (nomvar,"%s_%d",arg3,nbvar);
-	else if (argc > 2 && mode == 0) sprintf (nomvar,"%s_%d",arg2,nbvar);
-	else                        sprintf (nomvar,"tp_%d_%d",i,nbvar);
-	sout<<" "<<nomvar;
-	XSControl::Vars(pilot)->SetShape(nomvar,sh);
+        sh = slb->Result().Value(j);  if (nbvar < 0) nbvar = 0;  nbvar ++;
+        if (sh.IsNull()) { sout<<" (no Shape recorded)"<<endl; continue; }
+        if      (argc > 3 && mode  > 0) sprintf (nomvar,"%s_%d",arg3,nbvar);
+        else if (argc > 2 && mode == 0) sprintf (nomvar,"%s_%d",arg2,nbvar);
+        else                        sprintf (nomvar,"tp_%d_%d",i,nbvar);
+        sout<<" "<<nomvar;
+        GetXSControlVars(pilot)->SetShape(nomvar,sh);
       }
       sout<<endl;
       continue;
@@ -218,7 +229,7 @@ static IFSelect_ReturnStatus XSControl_tpdraw
 	else                            sprintf (nomvar,"tp_%d",i);
       }
       char* nomv = nomvar;
-      XSControl::Vars(pilot)->Set (nomv,geom);
+      GetXSControlVars(pilot)->Set (nomv,geom);
       sout<<" -> DRAW Geom : "<<nomvar<<endl;
       continue;
     }
@@ -260,7 +271,7 @@ static IFSelect_ReturnStatus XSControl_tpcompound
   BRep_Builder B;
   B.MakeCompound(C);
   for (Standard_Integer i = 1; i <= nb; i ++)  B.Add (C,list->Value(i));
-  XSControl::Vars(pilot)->SetShape (arg1,C);
+  GetXSControlVars(pilot)->SetShape (arg1,C);
   return IFSelect_RetDone;
 }
 
@@ -309,12 +320,12 @@ static IFSelect_ReturnStatus XSControl_traccess
       else if ( (i%10)   == 0) sout<<"0";
       else                     sout<<".";
       if (list->Value(i).IsNull()) continue;
-      if      (!cascomp && !cassave) XSControl::Vars(pilot)->SetShape(noms,list->Value(i));
+      if      (!cascomp && !cassave) GetXSControlVars(pilot)->SetShape(noms,list->Value(i));
       else if (!cascomp &&  cassave) BRepTools::Write (list->Value(i),noms);
       else if (cascomp) B.Add (C,list->Value(i));
     }
     sout<<endl;
-    if      (cascomp && !cassave) XSControl::Vars(pilot)->SetShape(nomsh,C);
+    if      (cascomp && !cassave) GetXSControlVars(pilot)->SetShape(nomsh,C);
     else if (cascomp &&  cassave) BRepTools::Write (C,nomsh);
   } else {
     if (num < 1 || num > mdl->NbEntities()) { sout<<" incorrect:"<<arg1<<endl; return IFSelect_RetError; }
@@ -322,7 +333,7 @@ static IFSelect_ReturnStatus XSControl_traccess
     if (sh.IsNull()) { sout<<" Pas de resultat pour "<<arg1<<endl; return IFSelect_RetError; }
     if (argc > 2) sprintf (nomsh,"%s",arg2);
     else sprintf (nomsh,"TREAD_%d",num);
-    if      (!cascomp && !cassave) XSControl::Vars(pilot)->SetShape(nomsh,sh);
+    if      (!cascomp && !cassave) GetXSControlVars(pilot)->SetShape(nomsh,sh);
     else if (!cascomp &&  cassave) BRepTools::Write (sh,nomsh);
     else sout<<"Option non comprise"<<endl;
   }
@@ -366,7 +377,7 @@ static IFSelect_ReturnStatus XSControl_fromshape
     return IFSelect_RetError;
   }
   const char* a1 = (char *)arg1;
-  TopoDS_Shape Shape = XSControl::Vars(pilot)->GetShape(a1);
+  TopoDS_Shape Shape = GetXSControlVars(pilot)->GetShape(a1);
   if (Shape.IsNull()) {
     sout<<"Not a DRAW Shape:"<<arg1<<endl;
     return IFSelect_RetError;
@@ -478,13 +489,12 @@ static IFSelect_ReturnStatus XSControl_fromshape
       Handle(Transfer_Binder) bnd = FP->Find ( fnd );
       if ( ! bnd.IsNull() ) {
 	Handle(Transfer_TransientListBinder) TransientListBinder =
-	  //Handle(Transfer_TransientListBinder)::DownCast( bnd->Next(Standard_True) ); //skl
 	  Handle(Transfer_TransientListBinder)::DownCast( bnd ); //skl
 	if (! TransientListBinder.IsNull() ) {
-	  Standard_Integer i = 1, nb = TransientListBinder->NbTransients();
+      Standard_Integer i = 1, nb = TransientListBinder->Result().Length();
 	  if (nb > 0) sout<<"Shape "<<arg1<<": exported to entities ";
 	  for (; i<=nb; i++) {
-	    XSControl::Session(pilot)->Model()->Print( TransientListBinder->Transient(i), sout );
+        XSControl::Session(pilot)->Model()->Print( TransientListBinder->Result().Value(i), sout );
 	    if (i < nb) sout<<", ";
 	  }
 	  if (nb > 0) {
@@ -492,24 +502,6 @@ static IFSelect_ReturnStatus XSControl_fromshape
 	    sout<<endl;
 	  }
 	}
-/*	else {
-	  TopoDS_Shape comp = TransferBRep::ShapeResult(bnd);
-	  if ( ! comp.IsNull() && comp.ShapeType() < Shape.ShapeType() ) {
-	    Standard_Boolean start = Standard_True;
-	    for ( TopoDS_Iterator it(comp); it.More(); it.Next() ) {
-	      Handle(Transfer_Finder) cfnd = TransferBRep::ShapeMapper (FP,it.Value());
-	      if ( cfnd.IsNull() ) continue;
-	      Handle(Standard_Transient) cent = FP->FindTransient (cfnd);
-	      if ( cent.IsNull() ) continue;
-	      if ( start ) 
-		sout<<"Shape "<<arg1<<" : exported to entities ";
-	      else sout << ", ";
-	      start = Standard_False;
-	      XSControl::Session(pilot)->Model()->Print(cent,sout);
-	    }
-	    if ( ! start ) sout<<endl;
-	  }
-	}  */
       }
     }
   }
@@ -538,7 +530,7 @@ static IFSelect_ReturnStatus XSControl_trconnexentities
     return IFSelect_RetError; 
   }
   const char* a1 = (const char *)arg1;
-  TopoDS_Shape Shape = XSControl::Vars(pilot)->GetShape(a1);
+  TopoDS_Shape Shape = GetXSControlVars(pilot)->GetShape(a1);
   if (Shape.IsNull()) { sout<<"Not a DRAW Shape:"<<arg1<<endl; return IFSelect_RetError; }
   sout<<"Shape "<<arg1<<" : ";
 
@@ -645,16 +637,16 @@ static IFSelect_ReturnStatus XSControl_trimport
     else {
       char nomsh[50];
       sprintf (nomsh,"%s_%d",rnom.ToCString(),nbs);
-      XSControl::Vars(pilot)->SetShape(nomsh,sh);
+      GetXSControlVars(pilot)->SetShape(nomsh,sh);
     }
   }
   if (nbs == 0) sout<<"No Shape produced"<<endl;
   else if (nbs == 1) {
     sout<<"One Shape produced, named "<<rnom.ToCString()<<endl;
-    XSControl::Vars(pilot)->SetShape(rnom.ToCString(),sh);
+    GetXSControlVars(pilot)->SetShape(rnom.ToCString(),sh);
   } else if (iscomp) {
     sout<<"One compound made of "<<nbs<<" Shapes, named "<<rnom.ToCString()<<endl;
-    XSControl::Vars(pilot)->SetShape(rnom.ToCString(),C);
+    GetXSControlVars(pilot)->SetShape(rnom.ToCString(),C);
   } else {  // several individual shapes
     sout<<nbs<<" Shapes, named "<<rnom.ToCString()<<"_1 to "<<rnom.ToCString()<<"_"<<nbs<<endl;
   }
@@ -680,7 +672,7 @@ static IFSelect_ReturnStatus XSControl_twrite
   // Shape
   for (Standard_Integer i = 1; i < argc; i ++) {
     const char* ai = (const char *)pilot->Arg(i);
-    TopoDS_Shape Shape = XSControl::Vars(pilot)->GetShape(ai);
+    TopoDS_Shape Shape = GetXSControlVars(pilot)->GetShape(ai);
     if (Shape.IsNull()) { sout<<"pas un nom de shape draw:"<<arg1<<endl; continue; }
     sout<<"Pour Shape : "<<ai;
     Standard_Integer stat = TW->TransferWriteShape (XSControl::Session(pilot)->Model(),Shape);

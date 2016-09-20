@@ -15,31 +15,24 @@
 // commercial license or contractual agreement.
 
 #include <TransferBRep_ShapeMapper.hxx>
-
-#include <Standard_Type.hxx>
-
-#include <TopoDS_Shape.hxx>
+#include <TransferBRep.hxx>
 #include <TopTools_ShapeMapHasher.hxx>
-#include <TransferBRep_ShapeInfo.hxx>
-#include <Transfer_Finder.hxx>
 
- 
+IMPLEMENT_STANDARD_RTTIEXT(TransferBRep_ShapeMapper,Transfer_Finder)
 
+Standard_Integer TransferBRep_ShapeMapper::GetHashCode(const Standard_Integer theUpper) const
+{
+  return TopTools_ShapeMapHasher::HashCode(myShape,theUpper);
+}
 
+Standard_Boolean TransferBRep_ShapeMapper::Equates (const Handle(Transfer_Finder)& theOther) const
+{
+  Handle(TransferBRep_ShapeMapper) anOther = Handle(TransferBRep_ShapeMapper)::DownCast(theOther);
+  if (anOther.IsNull()) return Standard_False;
+  return TopTools_ShapeMapHasher::IsEqual (myShape,anOther->Shape());
+}
 
-
-
-
-
-
-#define TheKey TopoDS_Shape
-#define TheKey_hxx <TopoDS_Shape.hxx>
-#define TheHasher TopTools_ShapeMapHasher
-#define TheHasher_hxx <TopTools_ShapeMapHasher.hxx>
-#define TheInfo TransferBRep_ShapeInfo
-#define TheInfo_hxx <TransferBRep_ShapeInfo.hxx>
-#define Transfer_Mapper TransferBRep_ShapeMapper
-#define Transfer_Mapper_hxx <TransferBRep_ShapeMapper.hxx>
-#define Handle_Transfer_Mapper Handle(TransferBRep_ShapeMapper)
-#include <Transfer_Mapper.gxx>
-
+Standard_CString TransferBRep_ShapeMapper::ValueTypeName () const
+{
+  return TransferBRep::TypeName(myShape);
+}

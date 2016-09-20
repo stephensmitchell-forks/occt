@@ -20,15 +20,10 @@
 #include <Standard.hxx>
 #include <Standard_Type.hxx>
 
-#include <Standard_Integer.hxx>
-#include <Standard_Real.hxx>
-#include <STEPConstruct_ContextTool.hxx>
 #include <Transfer_ActorOfFinderProcess.hxx>
-#include <Standard_Boolean.hxx>
 #include <TopTools_HSequenceOfShape.hxx>
 #include <STEPControl_StepModelType.hxx>
-class Transfer_Finder;
-class Transfer_Binder;
+#include <STEPConstruct_ContextTool.hxx>
 class Transfer_FinderProcess;
 class StepShape_ShapeDefinitionRepresentation;
 class StepGeom_Axis2Placement3d;
@@ -43,15 +38,16 @@ DEFINE_STANDARD_HANDLE(STEPControl_ActorWrite, Transfer_ActorOfFinderProcess)
 //! to AP203 or AP214 (CD2 or DIS)
 class STEPControl_ActorWrite : public Transfer_ActorOfFinderProcess
 {
-
-public:
-
+ public:
   
-  Standard_EXPORT STEPControl_ActorWrite();
+  STEPControl_ActorWrite() : mygroup (0) , mytoler (-1.)
+  {  
+    SetMode(STEPControl_ShellBasedSurfaceModel);  
+  }
   
-  Standard_EXPORT virtual Standard_Boolean Recognize (const Handle(Transfer_Finder)& start) Standard_OVERRIDE;
+  Standard_EXPORT virtual Standard_Boolean Recognize (const Handle(Standard_Transient)& start) Standard_OVERRIDE;
   
-  Standard_EXPORT virtual Handle(Transfer_Binder) Transfer (const Handle(Transfer_Finder)& start, const Handle(Transfer_FinderProcess)& FP) Standard_OVERRIDE;
+  Standard_EXPORT virtual Handle(Transfer_Binder) Transferring (const Handle(Standard_Transient)& start, const Handle(Transfer_ProcessForFinder)& FP) Standard_OVERRIDE;
   
   Standard_EXPORT Handle(Transfer_Binder) TransferSubShape (const Handle(Transfer_Finder)& start, const Handle(StepShape_ShapeDefinitionRepresentation)& SDR, Handle(StepGeom_Axis2Placement3d)& AX1, const Handle(Transfer_FinderProcess)& FP, const Handle(TopTools_HSequenceOfShape)& shapeGroup = NULL, const Standard_Boolean isManifold = Standard_True);
   
@@ -63,11 +59,11 @@ public:
   
   Standard_EXPORT STEPControl_StepModelType Mode() const;
   
-  Standard_EXPORT void SetGroupMode (const Standard_Integer mode);
+  void SetGroupMode (const Standard_Integer mode) { if (mode >= 0) mygroup = mode; }
   
-  Standard_EXPORT Standard_Integer GroupMode() const;
+  Standard_Integer GroupMode() const { return mygroup; }
   
-  Standard_EXPORT void SetTolerance (const Standard_Real Tol);
+  void SetTolerance (const Standard_Real Tol) { mytoler = Tol; }
   
   //! Customizable method to check whether shape S should
   //! be written as assembly or not
@@ -76,18 +72,9 @@ public:
   //! NOTE: this method can modify shape
   Standard_EXPORT virtual Standard_Boolean IsAssembly (TopoDS_Shape& S) const;
 
-
-
-
   DEFINE_STANDARD_RTTIEXT(STEPControl_ActorWrite,Transfer_ActorOfFinderProcess)
 
-protected:
-
-
-
-
-private:
-
+ private:
   
   //! Non-manifold shapes are stored in NMSSR group
   //! (NON_MANIFOLD_SURFACE_SHAPE_REPRESENTATION).
@@ -102,14 +89,6 @@ private:
   Standard_Integer mygroup;
   Standard_Real mytoler;
   STEPConstruct_ContextTool myContext;
-
-
 };
-
-
-
-
-
-
 
 #endif // _STEPControl_ActorWrite_HeaderFile

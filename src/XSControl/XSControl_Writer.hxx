@@ -21,10 +21,7 @@
 #include <Standard_DefineAlloc.hxx>
 #include <Standard_Handle.hxx>
 
-#include <Standard_CString.hxx>
-#include <Standard_Boolean.hxx>
 #include <IFSelect_ReturnStatus.hxx>
-#include <Standard_Integer.hxx>
 class XSControl_WorkSession;
 class Interface_InterfaceModel;
 class TopoDS_Shape;
@@ -35,21 +32,20 @@ class TopoDS_Shape;
 //! The model can then be edited by tools by other appropriate tools
 class XSControl_Writer 
 {
-public:
+ public:
 
   DEFINE_STANDARD_ALLOC
 
-  
   //! Creates a Writer from scratch
   Standard_EXPORT XSControl_Writer();
   
   //! Creates a Writer from scratch, with a norm name which
   //! identifie a Controller
-  Standard_EXPORT XSControl_Writer(const Standard_CString norm);
+  XSControl_Writer(const Standard_CString norm) { SetNorm (norm); }
   
   //! Creates a Writer from an already existing Session
   //! If <scratch> is True (D), clears already recorded data
-  Standard_EXPORT XSControl_Writer(const Handle(XSControl_WorkSession)& WS, const Standard_Boolean scratch = Standard_True);
+  XSControl_Writer(const Handle(XSControl_WorkSession)& WS, const Standard_Boolean scratch = Standard_True) { SetWS (WS,scratch); }
   
   //! Sets a specific norm to <me>
   //! Returns True if done, False if <norm> is not available
@@ -59,7 +55,7 @@ public:
   Standard_EXPORT void SetWS (const Handle(XSControl_WorkSession)& WS, const Standard_Boolean scratch = Standard_True);
   
   //! Returns the session used in <me>
-  Standard_EXPORT Handle(XSControl_WorkSession) WS() const;
+  const Handle(XSControl_WorkSession) & WS() const { return thesession; }
   
   //! Returns the produced model. Produces a new one if not yet done
   //! or if <newone> is True
@@ -72,32 +68,10 @@ public:
   
   //! Writes the produced model
   Standard_EXPORT IFSelect_ReturnStatus WriteFile (const Standard_CString filename);
-  
-  //! Prints Statistics about Transfer
-  Standard_EXPORT void PrintStatsTransfer (const Standard_Integer what, const Standard_Integer mode = 0) const;
 
-
-
-
-protected:
-
-
-
-
-
-private:
-
-
+ private:
 
   Handle(XSControl_WorkSession) thesession;
-
-
 };
-
-
-
-
-
-
 
 #endif // _XSControl_Writer_HeaderFile

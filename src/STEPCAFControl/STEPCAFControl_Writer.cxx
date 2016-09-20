@@ -879,7 +879,6 @@ static Standard_Integer FindEntities (const Handle(Transfer_FinderProcess) &FP,
   if ( bnd.IsNull() ) return 0;
   
   Handle(Transfer_TransientListBinder) TransientListBinder =
-    //Handle(Transfer_TransientListBinder)::DownCast( bnd->Next(Standard_True) );
     Handle(Transfer_TransientListBinder)::DownCast( bnd );
   Standard_Integer nres=0;
   if ( TransientListBinder.IsNull() && S.ShapeType() == TopAbs_COMPOUND) 
@@ -893,9 +892,9 @@ static Standard_Integer FindEntities (const Handle(Transfer_FinderProcess) &FP,
   }
   else
   {
-    const Standard_Integer nb = TransientListBinder->NbTransients();
+    const Standard_Integer nb = TransientListBinder->Result().Length();
     for (Standard_Integer i=1; i<=nb; i++) {
-      Handle(Standard_Transient) t = TransientListBinder->Transient(i);
+      const Handle(Standard_Transient) &t = TransientListBinder->Result().Value(i);
       item = Handle(StepRepr_RepresentationItem)::DownCast(t);
       if ( item.IsNull() ) continue;
       nres++;

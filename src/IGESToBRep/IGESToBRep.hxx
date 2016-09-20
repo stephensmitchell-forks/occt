@@ -18,7 +18,6 @@
 #define _IGESToBRep_HeaderFile
 
 #include <Standard.hxx>
-#include <Standard_DefineAlloc.hxx>
 #include <Standard_Handle.hxx>
 
 #include <Standard_Boolean.hxx>
@@ -29,28 +28,16 @@ class IGESData_IGESEntity;
 class TopoDS_Shape;
 class TopoDS_Edge;
 class TopoDS_Face;
-class IGESToBRep_CurveAndSurface;
-class IGESToBRep_BasicSurface;
-class IGESToBRep_BasicCurve;
-class IGESToBRep_TopoSurface;
-class IGESToBRep_TopoCurve;
 class IGESToBRep_BRepEntity;
-class IGESToBRep_IGESBoundary;
-class IGESToBRep_Reader;
-class IGESToBRep_Actor;
 class IGESToBRep_AlgoContainer;
-class IGESToBRep_ToolContainer;
 
 
 //! Provides tools in order to transfer IGES entities
 //! to CAS.CADE.
 class IGESToBRep 
 {
-public:
+ public:
 
-  DEFINE_STANDARD_ALLOC
-
-  
   //! Creates and initializes default AlgoContainer.
   Standard_EXPORT static void Init();
   
@@ -104,39 +91,6 @@ public:
   Standard_EXPORT static Standard_Integer IGESCurveToSequenceOfIGESCurve (const Handle(IGESData_IGESEntity)& curve, Handle(TColStd_HSequenceOfTransient)& sequence);
   
   Standard_EXPORT static Standard_Boolean TransferPCurve (const TopoDS_Edge& fromedge, const TopoDS_Edge& toedge, const TopoDS_Face& face);
-
-
-
-
-protected:
-
-
-
-
-
-private:
-
-
-
-
-friend class IGESToBRep_CurveAndSurface;
-friend class IGESToBRep_BasicSurface;
-friend class IGESToBRep_BasicCurve;
-friend class IGESToBRep_TopoSurface;
-friend class IGESToBRep_TopoCurve;
-friend class IGESToBRep_BRepEntity;
-friend class IGESToBRep_IGESBoundary;
-friend class IGESToBRep_Reader;
-friend class IGESToBRep_Actor;
-friend class IGESToBRep_AlgoContainer;
-friend class IGESToBRep_ToolContainer;
-
 };
-
-
-
-
-
-
 
 #endif // _IGESToBRep_HeaderFile

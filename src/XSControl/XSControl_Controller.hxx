@@ -28,11 +28,11 @@
 #include <MMgt_TShared.hxx>
 #include <NCollection_Vector.hxx>
 #include <IFSelect_ReturnStatus.hxx>
+#include <Transfer_ActorOfTransientProcess.hxx>
+#include <Transfer_ActorOfFinderProcess.hxx>
 class IFSelect_WorkLibrary;
 class Interface_Protocol;
 class IFSelect_Signature;
-class Transfer_ActorOfTransientProcess;
-class Transfer_ActorOfFinderProcess;
 class Dico_DictionaryOfTransient;
 class Standard_DomainError;
 class XSControl_WorkSession;
@@ -140,28 +140,6 @@ class XSControl_Controller : public MMgt_TShared
   //! empty if help not defined or not within bounds or if values are free
   Standard_EXPORT Standard_CString ModeWriteHelp (const Standard_Integer modetrans, const Standard_Boolean shape = Standard_True) const;
   
-  //! Tells if <obj> (an application object) is a valid candidate
-  //! for a transfer to a Model.
-  //! By default, asks the ActorWrite if known (through a
-  //! TransientMapper). Can be redefined
-  Standard_EXPORT virtual Standard_Boolean RecognizeWriteTransient (const Handle(Standard_Transient)& obj, const Standard_Integer modetrans = 0) const;
-  
-  //! Takes one Transient Object and transfers it to an
-  //! InterfaceModel (already created, e.g. by NewModel)
-  //! (result is recorded in the model by AddWithRefs)
-  //! FP records produced results and checks
-  //!
-  //! Default uses ActorWrite; can be redefined as necessary
-  //! Returned value is a status, as follows :
-  //! 0  OK ,  1 No Result ,  2 Fail (e.g. exception raised)
-  //! -1 bad conditions ,  -2 bad model or null model
-  //! For type of object not recognized : should return 1
-  Standard_EXPORT virtual IFSelect_ReturnStatus TransferWriteTransient (const Handle(Standard_Transient)& obj, const Handle(Transfer_FinderProcess)& FP, const Handle(Interface_InterfaceModel)& model, const Standard_Integer modetrans = 0) const;
-  
-  //! Tells if a shape is valid for a transfer to a model
-  //! Asks the ActorWrite (through a ShapeMapper)
-  Standard_EXPORT virtual Standard_Boolean RecognizeWriteShape (const TopoDS_Shape& shape, const Standard_Integer modetrans = 0) const;
-  
   //! Takes one Shape and transfers it to an
   //! InterfaceModel (already created, e.g. by NewModel)
   //! Default uses ActorWrite; can be redefined as necessary
@@ -206,7 +184,6 @@ class XSControl_Controller : public MMgt_TShared
   TCollection_AsciiString myLongName;
   Handle(IFSelect_WorkLibrary) myAdaptorLibrary;
   Handle(Interface_Protocol) myAdaptorProtocol;
-  //szv:Handle(IFSelect_Signature) mySignType;
   Handle(Transfer_ActorOfTransientProcess) myAdaptorRead;
   Handle(Transfer_ActorOfFinderProcess) myAdaptorWrite;
   Handle(Dico_DictionaryOfTransient) myAdaptorSession;

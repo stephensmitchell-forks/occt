@@ -19,15 +19,11 @@
 
 #include <Standard.hxx>
 #include <Standard_Type.hxx>
+#include <MMgt_TShared.hxx>
 
 #include <Transfer_StatusResult.hxx>
 #include <Transfer_StatusExec.hxx>
-#include <MMgt_TShared.hxx>
-#include <Standard_Boolean.hxx>
-#include <Standard_Type.hxx>
-#include <Standard_CString.hxx>
 class Interface_Check;
-class Transfer_TransferFailure;
 
 
 class Transfer_Binder;
@@ -57,9 +53,7 @@ DEFINE_STANDARD_HANDLE(Transfer_Binder, MMgt_TShared)
 //! Attributes, which are additional data, each of them has a name
 class Transfer_Binder : public MMgt_TShared
 {
-
-public:
-
+ public:
   
   //! Merges basic data (Check, ExecStatus) from another Binder but
   //! keeps its result. Used when a binder is replaced by another
@@ -83,30 +77,30 @@ public:
   Standard_EXPORT void AddResult (const Handle(Transfer_Binder)& next);
   
   //! Returns the next result, Null if none
-  Standard_EXPORT Handle(Transfer_Binder) NextResult() const;
+  const Handle(Transfer_Binder) & NextResult() const { return thenextr; }
   
   //! Returns True if a Result is available (StatusResult = Defined)
   //! A Unique Result will be gotten by Result (which must be
   //! defined in each sub-class according to result type)
   //! For a Multiple Result, see class MultipleBinder
   //! For other case, specific access has to be forecast
-  Standard_EXPORT Standard_Boolean HasResult() const;
+  Standard_Boolean HasResult() const { return (thestatus != Transfer_StatusVoid); }
   
   //! Declares that result is now used by another one, it means that
   //! it cannot be modified (by Rebind)
-  Standard_EXPORT void SetAlreadyUsed();
+  void SetAlreadyUsed() { if (thestatus != Transfer_StatusVoid) thestatus = Transfer_StatusUsed; }
   
   //! Returns status, which can be Initial (not yet done), Made (a
   //! result is recorded, not yet shared), Used (it is shared and
   //! cannot be modified)
-  Standard_EXPORT Transfer_StatusResult Status() const;
+  Transfer_StatusResult Status() const { return thestatus; }
   
   //! Returns execution status
-  Standard_EXPORT Transfer_StatusExec StatusExec() const;
+  Transfer_StatusExec StatusExec() const { return theexecst; }
   
   //! Modifies execution status; called by TransferProcess only
   //! (for StatusError, rather use SetError, below)
-  Standard_EXPORT void SetStatusExec (const Transfer_StatusExec stat);
+  void SetStatusExec (const Transfer_StatusExec stat) { theexecst = stat; }
   
   //! Used to declare an individual transfer as beeing erroneous
   //! (Status is set to Void, StatusExec is set to Error, <errmess>
@@ -124,19 +118,15 @@ public:
   
   //! Returns Check which stores Fail messages
   //! Note that no Entity is associated in this Check
-  Standard_EXPORT const Handle(Interface_Check) Check() const;
+  const Handle(Interface_Check) & Check() const { return thecheck; }
   
   //! Returns Check which stores Fail messages, in order to modify
   //! it (adding messages, or replacing it)
-  Standard_EXPORT Handle(Interface_Check) CCheck();
-
-
-
+  Handle(Interface_Check) CCheck() { return thecheck; }
 
   DEFINE_STANDARD_RTTIEXT(Transfer_Binder,MMgt_TShared)
 
-protected:
-
+ protected:
   
   //! Sets fields at initial values
   Standard_EXPORT Transfer_Binder();
@@ -149,10 +139,7 @@ protected:
   //! senseless if called isolately
   Standard_EXPORT void SetResultPresent();
 
-
-
-private:
-
+ private:
   
   //! Called by AddResult, to keep unicity of each item in the list
   Standard_EXPORT void CutResult (const Handle(Transfer_Binder)& next);
@@ -161,14 +148,6 @@ private:
   Transfer_StatusExec theexecst;
   Handle(Interface_Check) thecheck;
   Handle(Transfer_Binder) thenextr;
-
-
 };
-
-
-
-
-
-
 
 #endif // _Transfer_Binder_HeaderFile

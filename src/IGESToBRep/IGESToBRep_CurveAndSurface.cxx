@@ -605,11 +605,8 @@ void IGESToBRep_CurveAndSurface::SetShapeResult
 Standard_Integer IGESToBRep_CurveAndSurface::NbShapeResult 
   (const Handle(IGESData_IGESEntity)& start) const
 {
-  Standard_Integer nbres = 0;
   DeclareAndCast(TransferBRep_ShapeListBinder,binder,myTP->Find(start));
-  if (binder.IsNull()) return nbres;
-  nbres = binder->NbShapes();
-  return nbres;
+  return (binder.IsNull()? 0 : binder->Result().Length());
 }
 
 
@@ -621,14 +618,9 @@ Standard_Integer IGESToBRep_CurveAndSurface::NbShapeResult
 TopoDS_Shape IGESToBRep_CurveAndSurface::GetShapeResult 
   (const Handle(IGESData_IGESEntity)& start, const Standard_Integer num) const
 {
-  TopoDS_Shape res;
-
   DeclareAndCast(TransferBRep_ShapeListBinder,binder,myTP->Find(start));
-  if (binder.IsNull()) return res;
-  
-  if (num <= binder->NbShapes()) 
-    res = binder->Shape(num);
-  return res;
+  if (binder.IsNull()) return TopoDS_Shape();
+  return (num >= 1 && num <= binder->Result().Length())? binder->Result().Value(num) : TopoDS_Shape();
 }
 
 

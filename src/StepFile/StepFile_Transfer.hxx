@@ -17,9 +17,6 @@
 
 #include <StepFile_Read.hxx>
 #include <StepData_StepModel.hxx>
-#include <Transfer_TransferOutput.hxx>
-//#include <Transfer_PersistentProcess.hxx>
-//#include <Transfer_IteratorOfPersistentProcess.hxx>
 #include <Transfer_Binder.hxx>
 
 //  and, to allow easy DownCasting :

@@ -21,16 +21,12 @@
 #include <Standard_DefineAlloc.hxx>
 #include <Standard_Handle.hxx>
 
-#include <Standard_Boolean.hxx>
-#include <Standard_Real.hxx>
 #include <IFSelect_ReturnStatus.hxx>
 #include <STEPControl_StepModelType.hxx>
 #include <Standard_CString.hxx>
-#include <Standard_Integer.hxx>
 class XSControl_WorkSession;
 class StepData_StepModel;
 class TopoDS_Shape;
-
 
 //! This class creates and writes
 //! STEP files from Open CASCADE models. A STEP file can be
@@ -39,10 +35,9 @@ class TopoDS_Shape;
 //! translation operation outputs a distinct root entity in the STEP file.
 class STEPControl_Writer 
 {
-public:
+ public:
 
   DEFINE_STANDARD_ALLOC
-
   
   //! Creates a Writer from scratch
   Standard_EXPORT STEPControl_Writer();
@@ -57,13 +52,13 @@ public:
   Standard_EXPORT void SetTolerance (const Standard_Real Tol);
   
   //! Unsets the tolerance formerly forced by SetTolerance
-  Standard_EXPORT void UnsetTolerance();
+  void UnsetTolerance() { SetTolerance (-1.); }
   
   //! Sets a specific session to <me>
   Standard_EXPORT void SetWS (const Handle(XSControl_WorkSession)& WS, const Standard_Boolean scratch = Standard_True);
   
   //! Returns the session used in <me>
-  Standard_EXPORT Handle(XSControl_WorkSession) WS() const;
+  const Handle(XSControl_WorkSession) & WS() const { return thesession; }
   
   //! Returns the produced model. Produces a new one if not yet done
   //! or if <newone> is True
@@ -87,51 +82,10 @@ public:
   
   //! Writes a STEP model in the file identified by filename.
   Standard_EXPORT IFSelect_ReturnStatus Write (const Standard_CString filename);
-  
-  //! Displays the statistics for the
-  //! last translation. what defines the kind of statistics that are displayed:
-  //! - 0 gives general statistics   (number of translated roots,
-  //! number of warnings, number of   fail messages),
-  //! - 1 gives root results,
-  //! - 2 gives statistics for all checked entities,
-  //! - 3 gives the list of translated entities,
-  //! - 4 gives warning and fail messages,
-  //! - 5 gives fail messages only.
-  //! mode is used according to the use of what. If what is 0, mode is
-  //! ignored. If what is 1, 2 or 3, mode defines the following:
-  //! - 0 lists the numbers of STEP entities in a STEP model,
-  //! - 1 gives the number, identifier, type and result type for each
-  //! STEP entity and/or its status (fail, warning, etc.),
-  //! - 2 gives maximum information for each STEP entity (i.e. checks),
-  //! - 3 gives the number of entities by the type of a STEP entity,
-  //! - 4 gives the number of of STEP entities per result type and/or status,
-  //! - 5 gives the number of pairs (STEP or result type and status),
-  //! - 6 gives the number of pairs (STEP or result type and status)
-  //! AND the list of entity numbers in the STEP model.
-  Standard_EXPORT void PrintStatsTransfer (const Standard_Integer what, const Standard_Integer mode = 0) const;
 
-
-
-
-protected:
-
-
-
-
-
-private:
-
-
+ private:
 
   Handle(XSControl_WorkSession) thesession;
-
-
 };
-
-
-
-
-
-
 
 #endif // _STEPControl_Writer_HeaderFile

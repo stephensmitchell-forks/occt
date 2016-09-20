@@ -330,13 +330,12 @@ void IGESCAFControl_Writer::MakeColors (const TopoDS_Shape &S,
       Handle(Transfer_Binder) bnd = FP->Find ( mapper );
       if ( ! bnd.IsNull() ) {
 	Handle(Transfer_TransientListBinder) TransientListBinder =
-	  //Handle(Transfer_TransientListBinder)::DownCast( bnd->Next(Standard_True) );
           Handle(Transfer_TransientListBinder)::DownCast( bnd );
 	Standard_Integer i=0, nb=0;
 	if (! TransientListBinder.IsNull() ) {
-	  nb = TransientListBinder->NbTransients();
+      nb = TransientListBinder->Result().Length();
 	  for (i=1; i<=nb; i++) {
-	    Handle(Standard_Transient) t = TransientListBinder->Transient(i);
+        const Handle(Standard_Transient) &t = TransientListBinder->Result().Value(i);
 	    ent = Handle(IGESData_IGESEntity)::DownCast(t);
 	    if (!ent.IsNull())
       {
@@ -350,15 +349,6 @@ void IGESCAFControl_Writer::MakeColors (const TopoDS_Shape &S,
       }
 	  }
 	}
-	/* // alternative: consider recursive mapping S -> compound -> entities
-	else {
-	  TopoDS_Shape comp = TransferBRep::ShapeResult(bnd);
-	  if ( ! comp.IsNull() && comp.ShapeType() < S.ShapeType() ) 
-	    for ( TopoDS_Iterator it(comp); it.More(); it.Next() ) {
-	      MakeColors ( it.Value(), settings, colors, Map, style );
-	    }
-	}
-	*/
       }
     }
   }

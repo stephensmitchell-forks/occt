@@ -281,10 +281,6 @@ class XSControl_TransferReader : public MMgt_TShared
   //! or -1 if no actor is defined
   Standard_EXPORT Standard_Integer TransferRoots (const Interface_Graph &theGraph);
   
-  //! Clears the results attached to an entity
-  //! if <ents> equates the starting model, clears all results
-  Standard_EXPORT void TransferClear (const Handle(Standard_Transient)& theEnt, const Standard_Integer theLevel = 0);
-  
   //! Prints statistics on current Trace File, according <what> and
   //! <mode>.  See PrintStatsProcess for details
   Standard_EXPORT void PrintStats (const Standard_Integer theWhat, const Standard_Integer theMode = 0) const;

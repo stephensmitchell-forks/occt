@@ -20,8 +20,8 @@
 #include <NCollection_IndexedDataMap.hxx>
 #include <Transfer_Binder.hxx>
 #include <Transfer_Finder.hxx>
-#include <Transfer_FindHasher.hxx>
+#include <Transfer_Hasher.hxx>
 
-typedef NCollection_IndexedDataMap<Handle(Transfer_Finder),Handle(Transfer_Binder),Transfer_FindHasher> Transfer_TransferMapOfProcessForFinder;
+typedef NCollection_IndexedDataMap<Handle(Transfer_Finder),Handle(Transfer_Binder),Transfer_Hasher> Transfer_TransferMapOfProcessForFinder;
 
 #endif // _Transfer_TransferMapOfProcessForFinder_HeaderFile

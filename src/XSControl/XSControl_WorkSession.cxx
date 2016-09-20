@@ -181,15 +181,13 @@ Standard_Boolean  XSControl_WorkSession::PrintTransferStatus(const Standard_Inte
                                                              const Standard_Boolean wri,
                                                              const Handle(Message_Messenger)& S) const
 {
-  const Handle(Transfer_FinderProcess)    &FP = myTransferWriter->FinderProcess();
-  Handle(Transfer_TransientProcess) TP = myTransferReader->TransientProcess();
-
   Handle(Transfer_Binder) binder;
-  Handle(Transfer_Finder) finder;
+  Handle(Standard_Transient) finder;
   Handle(Standard_Transient) ent;
 
   //   ***   WRITE  ***
   if (wri) {
+    const Handle(Transfer_FinderProcess)    &FP = myTransferWriter->FinderProcess();
     if (FP.IsNull()) return Standard_False;
     if (num == 0 ) return Standard_False;
 
@@ -215,13 +213,14 @@ Standard_Boolean  XSControl_WorkSession::PrintTransferStatus(const Standard_Inte
       S<<" ** Resultat Transient, type "<<ent->DynamicType()->Name();
       const Handle(Interface_InterfaceModel) &model = Model();
       if (!model.IsNull())
-	{  S<<" In output Model, Entity ";  model->Print(ent,S);  }
+      {  S<<" In output Model, Entity ";  model->Print(ent,S);  }
       S<<endl;
     }
   }
 
   //    ***   READ   ***
   else {
+    const Handle(Transfer_TransientProcess) &TP = myTransferReader->TransientProcess();
     if (TP.IsNull()) return Standard_False;
     Handle(Interface_InterfaceModel) model = TP->Model();
     if (model.IsNull()) cout<<"No Model"<<endl;
@@ -247,13 +246,12 @@ Standard_Boolean  XSControl_WorkSession::PrintTransferStatus(const Standard_Inte
     binder = TP->MapItem (ne);
     S<<endl;
     TP->StartTrace (binder,ent,0,0);
-
   }
 
 //   ***   CHECK (commun READ+WRITE)   ***
   if (!binder.IsNull()) {
     const Handle(Interface_Check) ch = binder->Check();
-    Standard_Integer i,nbw = ch->NbWarnings(), nbf = ch->NbFails();
+    Standard_Integer i, nbw = ch->NbWarnings(), nbf = ch->NbFails();
     if (nbw > 0) {
       S<<" - Warnings : "<<nbw<<" :\n";
       for (i = 1; i <= nbw; i ++) S<<ch->CWarning(i)<<endl;
@@ -320,7 +318,6 @@ void XSControl_WorkSession::SetTransferReader(const Handle(XSControl_TransferRea
   Handle(Transfer_TransientProcess) TP = new Transfer_TransientProcess
     (Model().IsNull() ? 100 : Model()->NbEntities() + 100);
   TP->SetGraph (HGraph());
-  TP->SetErrorHandle(Standard_True);
   TR->SetTransientProcess(TP);
 }
 
@@ -461,17 +458,6 @@ IFSelect_ReturnStatus XSControl_WorkSession::TransferWriteShape (const TopoDS_Sh
   if(compgraph) ComputeGraph(Standard_True);
 
   return status;
-}
-
-
-//=======================================================================
-//function : TransferWriteCheckList
-//purpose  : 
-//=======================================================================
-
-Interface_CheckIterator XSControl_WorkSession::TransferWriteCheckList () const
-{
-  return myTransferWriter->ResultCheckList (Model());
 }
 
 

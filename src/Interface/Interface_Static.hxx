@@ -21,23 +21,14 @@
 #include <Standard_Type.hxx>
 
 #include <TCollection_AsciiString.hxx>
-#include <Interface_ParamType.hxx>
-#include <Standard_Type.hxx>
-#include <Standard_Integer.hxx>
-#include <Standard_Real.hxx>
 #include <TColStd_HArray1OfAsciiString.hxx>
-#include <Interface_StaticSatisfies.hxx>
-#include <Standard_Boolean.hxx>
-#include <Interface_TypedValue.hxx>
-#include <Standard_CString.hxx>
-#include <Standard_Character.hxx>
 #include <TColStd_HSequenceOfHAsciiString.hxx>
+#include <Interface_ParamType.hxx>
+#include <Interface_TypedValue.hxx>
 class Dico_DictionaryOfInteger;
 class TCollection_HAsciiString;
-class Standard_Transient;
 class Interface_InterfaceError;
 class Message_Messenger;
-
 
 class Interface_Static;
 DEFINE_STANDARD_HANDLE(Interface_Static, Interface_TypedValue)
@@ -67,9 +58,7 @@ DEFINE_STANDARD_HANDLE(Interface_Static, Interface_TypedValue)
 //! dictionary
 class Interface_Static : public Interface_TypedValue
 {
-
-public:
-
+ public:
   
   //! Creates and records a Static, with a family and a name
   //! family can report to a name of ressource or to a system or
@@ -82,7 +71,11 @@ public:
   //!
   //! init gives an initial value. If it is not given, the Static
   //! begin as "not set", its value is empty
-  Standard_EXPORT Interface_Static(const Standard_CString family, const Standard_CString name, const Interface_ParamType type = Interface_ParamText, const Standard_CString init = "");
+  Interface_Static(const Standard_CString family, const Standard_CString name, const Interface_ParamType type = Interface_ParamText, const Standard_CString init = "")
+  : Interface_TypedValue (name,type,init),
+    thefamily (family) ,
+    theupdate (Standard_True)
+  {}
   
   //! Creates a new Static with same definition as another one
   //! (value is copied, except for Entity : it remains null)
@@ -101,22 +94,22 @@ public:
   //! Returns the family. It can be : a resource name for applis,
   //! an internal name between : $e (environment variables),
   //! $l (other, purely local)
-  Standard_EXPORT Standard_CString Family() const;
-  
+  Standard_CString Family() const { return thefamily.ToCString(); }
+
   //! Sets a "wild-card" static : its value will be considered
   //! if <me> is not properly set. (reset by set a null one)
-  Standard_EXPORT void SetWild (const Handle(Interface_Static)& wildcard);
-  
+  void SetWild (const Handle(Interface_Static)& wildcard) { thewild = wildcard; }
+
   //! Returns the wildcard static, which can be (is most often) null
-  Standard_EXPORT Handle(Interface_Static) Wild() const;
-  
+  const Handle(Interface_Static) & Wild() const { return thewild; }
+
   //! Records a Static has "uptodate", i.e. its value has been taken
   //! into account by a reinitialisation procedure
   //! This flag is reset at each successful SetValue
-  Standard_EXPORT void SetUptodate();
-  
+  void SetUptodate() { theupdate = Standard_True; }
+
   //! Returns the status "uptodate"
-  Standard_EXPORT Standard_Boolean UpdatedStatus() const;
+  Standard_Boolean UpdatedStatus() const { return theupdate; }
   
   //! Declares a new Static (by calling its constructor)
   //! If this name is already taken, does nothing and returns False
@@ -258,18 +251,9 @@ public:
   //! must be defined around it
   Standard_EXPORT static void Standards();
 
-
-
-
   DEFINE_STANDARD_RTTIEXT(Interface_Static,Interface_TypedValue)
 
-protected:
-
-
-
-
-private:
-
+ private:
 
   TCollection_AsciiString thefamily;
   TCollection_AsciiString thename;
@@ -285,20 +269,10 @@ private:
   TCollection_AsciiString theunidef;
   Handle(TColStd_HArray1OfAsciiString) theenums;
   Handle(Dico_DictionaryOfInteger) theeadds;
-  Interface_StaticSatisfies thesatisf;
-  TCollection_AsciiString thesatisn;
   Standard_Boolean theupdate;
   Standard_Integer theival;
   Handle(TCollection_HAsciiString) thehval;
   Handle(Standard_Transient) theoval;
-
-
 };
-
-
-
-
-
-
 
 #endif // _Interface_Static_HeaderFile

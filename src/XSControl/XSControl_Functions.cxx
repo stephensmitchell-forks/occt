@@ -29,7 +29,6 @@
 #include <Transfer_FinderProcess.hxx>
 #include <Transfer_IteratorOfProcessForTransient.hxx>
 #include <Transfer_ResultFromModel.hxx>
-#include <Transfer_TransferIterator.hxx>
 #include <Transfer_TransientProcess.hxx>
 #include <XSControl.hxx>
 #include <XSControl_Controller.hxx>
@@ -196,7 +195,6 @@ static IFSelect_ReturnStatus XSControl_tpstat(const Handle(IFSelect_SessionPilot
     Handle(TColStd_HSequenceOfTransient) list =
       IFSelect_Functions::GiveList(pilot->Session(),pilot->CommandPart(2));
     XSControl_TransferReader::PrintStatsOnList (TP,list,mod1,mod2);
-//    TP->PrintStats (1,sout);
   }
   else sout<<"TransferRead : not defined"<<endl;
   return IFSelect_RetVoid;
@@ -435,17 +433,13 @@ static IFSelect_ReturnStatus XSControl_twmode(const Handle(IFSelect_SessionPilot
 //=======================================================================
 static IFSelect_ReturnStatus XSControl_twstat(const Handle(IFSelect_SessionPilot)& pilot)
 {
-  //Standard_Integer argc = pilot->NbWords();
-  //const Standard_CString arg1 = pilot->Arg(1);
-  //const Standard_CString arg2 = pilot->Arg(2);
   const Handle(Transfer_FinderProcess) &FP = XSControl::Session(pilot)->TransferWriter()->FinderProcess();
   //        ****    twstat        ****
   //  Pour Write
   Handle(Message_Messenger) sout = Message::DefaultMessenger();
   if (!FP.IsNull()) {
     sout<<"TransferWrite:";
-    //    XSControl_TransferWriter::PrintStatsProcess (FP,mod1,mod2);
-    FP->PrintStats (1,sout);
+    FP->PrintStats (sout);
   }
   else sout<<"TransferWrite: not defined"<<endl;
   return IFSelect_RetVoid;

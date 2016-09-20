@@ -27,88 +27,82 @@
 #include <Transfer_Binder.hxx>
 #include <Transfer_Finder.hxx>
 #include <Transfer_FinderProcess.hxx>
-#include <Transfer_SimpleBinderOfTransient.hxx>
-#include <Transfer_TransientMapper.hxx>
+//szv_c1:#include <Transfer_TransientMapper.hxx>
 #include <TransferBRep_ShapeMapper.hxx>
 #include <XSAlgo.hxx>
 #include <XSAlgo_AlgoContainer.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESControl_ActorWrite,Transfer_ActorOfFinderProcess)
 
-IGESControl_ActorWrite::IGESControl_ActorWrite ()  {  ModeTrans() = 0;  }
-
-Standard_Boolean  IGESControl_ActorWrite::Recognize
-  (const Handle(Transfer_Finder)& start)
+Standard_Boolean IGESControl_ActorWrite::Recognize (const Handle(Standard_Transient)& start)
 {
   DeclareAndCast(TransferBRep_ShapeMapper,shmap,start);
   if (!shmap.IsNull()) return Standard_True;
-  DeclareAndCast(Transfer_TransientMapper,gemap,start);
+  /*szv_c1:DeclareAndCast(Transfer_TransientMapper,gemap,start);
   if (!gemap.IsNull()) {
     Handle(Standard_Transient) geom = gemap->Value();
     DeclareAndCast(Geom_Curve,Curve,geom);
-    DeclareAndCast(Geom_Surface,Surf,geom);
+    DeclareAndCast(Geom_Surface,Surf,geom);*/
+    DeclareAndCast(Geom_Curve,Curve,start);
+    DeclareAndCast(Geom_Surface,Surf,start);
     if (!Curve.IsNull() || !Surf.IsNull()) return Standard_True;
-  }
+  //szv_c1:}
   return Standard_False;
 }
 
-Handle(Transfer_Binder)  IGESControl_ActorWrite::Transfer
-  (const Handle(Transfer_Finder)& start,
-   const Handle(Transfer_FinderProcess)& FP)
+Handle(Transfer_Binder) IGESControl_ActorWrite::Transferring (const Handle(Standard_Transient)& start, const Handle(Transfer_ProcessForFinder)& TP)
 {
   XSAlgo::AlgoContainer()->PrepareForTransfer();
     
-  DeclareAndCast(IGESData_IGESModel,modl,FP->Model());
-  if (modl.IsNull()) return NullResult();
-  if (themodetrans < 0 || themodetrans > 1) return NullResult();
+  DeclareAndCast(IGESData_IGESModel,modl,TP->Model());
+  if (modl.IsNull()) return NULL;
+  if (themodetrans < 0 || themodetrans > 1) return NULL;
   Handle(Standard_Transient) ent;
 
   DeclareAndCast(TransferBRep_ShapeMapper,shmap,start);
   if (!shmap.IsNull()) {
-    TopoDS_Shape shape = shmap->Value();
-    if (shape.IsNull()) return NullResult();
-//  modified by NIZHNY-EAP Tue Aug 29 11:16:54 2000 ___BEGIN___
+    TopoDS_Shape shape = shmap->Shape();
+    if (shape.IsNull()) return NULL;
     Handle(Standard_Transient) info;
     Standard_Real Tol = Interface_Static::RVal("write.precision.val");
     Standard_Real maxTol = Interface_Static::RVal("read.maxprecision.val");
     shape = XSAlgo::AlgoContainer()->ProcessShape( shape, Tol, maxTol, 
                                                    "write.iges.resource.name", 
                                                    "write.iges.sequence", info,
-                                                   FP->GetProgress() );
-//  modified by NIZHNY-EAP Tue Aug 29 11:17:01 2000 ___END___
+                                                   TP->GetProgress() );
+
+	Handle(Transfer_FinderProcess) FP = Handle(Transfer_FinderProcess)::DownCast(TP);
 
     BRepToIGES_BREntity   BR0; BR0.SetModel(modl);  BR0.SetTransferProcess(FP);
     BRepToIGESBRep_Entity BR1; BR1.SetModel(modl);  BR1.SetTransferProcess(FP);
 
     if (themodetrans == 0) ent = BR0.TransferShape(shape);
     if (themodetrans == 1) ent = BR1.TransferShape(shape);
-//  modified by NIZHNY-EAP Tue Aug 29 11:37:18 2000 ___BEGIN___
     XSAlgo::AlgoContainer()->MergeTransferInfo(FP, info);
-//  modified by NIZHNY-EAP Tue Aug 29 11:37:25 2000 ___END___
-    if (!ent.IsNull()) return TransientResult(ent);
+    if (!ent.IsNull()) return new Transfer_SimpleBinderOfTransient(ent);
   }
-  DeclareAndCast(Transfer_TransientMapper,gemap,start);
+  /*szv_c1:DeclareAndCast(Transfer_TransientMapper,gemap,start);
   if (!gemap.IsNull()) {
     Handle(Standard_Transient) geom = gemap->Value();
     DeclareAndCast(Geom_Curve,Curve,geom);
-    DeclareAndCast(Geom_Surface,Surf,geom);
+    DeclareAndCast(Geom_Surface,Surf,geom);*/
+    DeclareAndCast(Geom_Curve,Curve,start);
+    DeclareAndCast(Geom_Surface,Surf,start);
  
 //  On reconnait : Curve et Surface de Geom
 //   quid de Point; Geom2d ?
  
-//  GeomToIGES_GeomPoint GP;
     GeomToIGES_GeomCurve GC;    GC.SetModel(modl);
     GeomToIGES_GeomSurface GS;  GS.SetModel(modl);
     if (!Curve.IsNull())
-      ent = GC.TransferCurve(Curve,Curve->FirstParameter(),Curve->LastParameter())
-;
+      ent = GC.TransferCurve(Curve,Curve->FirstParameter(),Curve->LastParameter());
     else if (!Surf.IsNull()) {
       Standard_Real U1,U2,V1,V2;
       Surf->Bounds(U1,U2,V1,V2);
       ent = GS.TransferSurface(Surf,U1,U2,V1,V2);
     }
-    if (!ent.IsNull()) return TransientResult(ent);
-  }
+    if (!ent.IsNull()) return new Transfer_SimpleBinderOfTransient(ent);
+  //szv_c1:}
 
-  return NullResult();
+  return NULL;
 }

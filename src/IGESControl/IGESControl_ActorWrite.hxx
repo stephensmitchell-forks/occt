@@ -17,15 +17,7 @@
 #ifndef _IGESControl_ActorWrite_HeaderFile
 #define _IGESControl_ActorWrite_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
 #include <Transfer_ActorOfFinderProcess.hxx>
-#include <Standard_Boolean.hxx>
-class Transfer_Finder;
-class Transfer_Binder;
-class Transfer_FinderProcess;
-
 
 class IGESControl_ActorWrite;
 DEFINE_STANDARD_HANDLE(IGESControl_ActorWrite, Transfer_ActorOfFinderProcess)
@@ -33,42 +25,20 @@ DEFINE_STANDARD_HANDLE(IGESControl_ActorWrite, Transfer_ActorOfFinderProcess)
 //! Actor to write Shape to IGES
 class IGESControl_ActorWrite : public Transfer_ActorOfFinderProcess
 {
-
-public:
-
+ public:
   
-  Standard_EXPORT IGESControl_ActorWrite();
+  IGESControl_ActorWrite() {}
   
   //! Recognizes a ShapeMapper
-  Standard_EXPORT virtual Standard_Boolean Recognize (const Handle(Transfer_Finder)& start) Standard_OVERRIDE;
+  Standard_EXPORT virtual Standard_Boolean Recognize (const Handle(Standard_Transient)& start) Standard_OVERRIDE;
   
   //! Transfers Shape to IGES Entities
   //!
   //! ModeTrans may be : 0 -> groups of Faces
   //! or 1 -> BRep
-  Standard_EXPORT virtual Handle(Transfer_Binder) Transfer (const Handle(Transfer_Finder)& start, const Handle(Transfer_FinderProcess)& FP) Standard_OVERRIDE;
-
-
-
+  Standard_EXPORT virtual Handle(Transfer_Binder) Transferring (const Handle(Standard_Transient)& start, const Handle(Transfer_ProcessForFinder)& FP) Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESControl_ActorWrite,Transfer_ActorOfFinderProcess)
-
-protected:
-
-
-
-
-private:
-
-
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESControl_ActorWrite_HeaderFile

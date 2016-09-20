@@ -22,13 +22,13 @@
 #include <TopExp_Explorer.hxx>
 #include <TopoDS_Shape.hxx>
 #include <Transfer_FinderProcess.hxx>
-#include <XSControl_TransferWriter.hxx>
 #include <XSControl_WorkSession.hxx>
 
 //=======================================================================
 //function : STEPControl_Writer
 //purpose  : 
 //=======================================================================
+
 STEPControl_Writer::STEPControl_Writer ()
 {
   STEPControl_Controller::Init();
@@ -42,8 +42,7 @@ STEPControl_Writer::STEPControl_Writer ()
 //purpose  : 
 //=======================================================================
 
-STEPControl_Writer::STEPControl_Writer
-  (const Handle(XSControl_WorkSession)& WS, const Standard_Boolean scratch)
+STEPControl_Writer::STEPControl_Writer (const Handle(XSControl_WorkSession)& WS, const Standard_Boolean scratch)
 {
   STEPControl_Controller::Init();
   SetWS (WS,scratch);
@@ -56,8 +55,7 @@ STEPControl_Writer::STEPControl_Writer
 //purpose  : 
 //=======================================================================
 
-void STEPControl_Writer::SetWS(const Handle(XSControl_WorkSession)& WS,
-                               const Standard_Boolean scratch)
+void STEPControl_Writer::SetWS(const Handle(XSControl_WorkSession)& WS, const Standard_Boolean scratch)
 {
   thesession = WS;
   thesession->SelectNorm("STEP");
@@ -67,23 +65,11 @@ void STEPControl_Writer::SetWS(const Handle(XSControl_WorkSession)& WS,
 
 
 //=======================================================================
-//function : WS
-//purpose  : 
-//=======================================================================
-
-Handle(XSControl_WorkSession) STEPControl_Writer::WS () const
-{
-  return thesession;
-}
-
-
-//=======================================================================
 //function : Model
 //purpose  : 
 //=======================================================================
 
-Handle(StepData_StepModel) STEPControl_Writer::Model
-       (const Standard_Boolean newone)
+Handle(StepData_StepModel) STEPControl_Writer::Model (const Standard_Boolean newone)
 {
   DeclareAndCast(StepData_StepModel,model,thesession->Model());
   if (newone || model.IsNull())
@@ -101,17 +87,6 @@ void STEPControl_Writer::SetTolerance (const Standard_Real Tol)
 {
   DeclareAndCast(STEPControl_ActorWrite,act,WS()->NormAdaptor()->ActorWrite());
   if (!act.IsNull()) act->SetTolerance (Tol);
-}
-
-
-//=======================================================================
-//function : UnsetTolerance
-//purpose  : 
-//=======================================================================
-
-void STEPControl_Writer::UnsetTolerance ()
-{
-  SetTolerance (-1.);
 }
 
 
@@ -157,16 +132,4 @@ IFSelect_ReturnStatus STEPControl_Writer::Transfer
 IFSelect_ReturnStatus STEPControl_Writer::Write (const Standard_CString filename)
 {
   return thesession->SendAll(filename);
-}
-
-
-//=======================================================================
-//function : PrintStatsTransfer
-//purpose  : 
-//=======================================================================
-
-void STEPControl_Writer::PrintStatsTransfer
-  (const Standard_Integer what, const Standard_Integer mode) const
-{
-  thesession->TransferWriter()->PrintStats (what,mode);
 }
