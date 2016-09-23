@@ -1022,7 +1022,7 @@ void OSD_Path :: SystemName (
 
  Standard_Integer        i, j;
  TCollection_AsciiString fullPath;
- static Standard_Character trek [ _MAX_PATH ];
+ Standard_Character trek [ _MAX_PATH ];
  Standard_Character      chr;
 
  memset(trek,0,_MAX_PATH);
@@ -1048,8 +1048,8 @@ void OSD_Path :: SystemName (
  }  //end for
 
  fullPath = myDisk + TCollection_AsciiString(trek);
- 
- if ( trek[0] ) fullPath += "/";
+
+ if ( j >= 2 && trek[j-2] != '/' ) fullPath += "/";
  
  fullPath += ( myName + myExtension );
 
