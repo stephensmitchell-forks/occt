@@ -90,13 +90,112 @@ class Geom_BSplineSurface;
 class AdvApp2Var_ApproxAFunc2Var 
 {
 public:
-
   DEFINE_STANDARD_ALLOC
 
+  struct Parameters
+  {
+    Standard_Integer NumberSubSpaces[3];
+
+    Handle(TColStd_HArray1OfReal) Tolerances1D;
+    Handle(TColStd_HArray1OfReal) Tolerances2D;
+    Handle(TColStd_HArray1OfReal) Tolerances3D;
+    Handle(TColStd_HArray2OfReal) TolerancesOnFrontier1D;
+    Handle(TColStd_HArray2OfReal) TolerancesOnFrontier2D;
+    Handle(TColStd_HArray2OfReal) TolerancesOnFrontier3D;
+
+    Standard_Real FirstParamU;
+    Standard_Real FirstParamV;
+
+    Standard_Real LastParamU;
+    Standard_Real LastParamV;
+
+    GeomAbs_IsoType FavouriteIso;
+
+    GeomAbs_Shape ContinuityU;
+    GeomAbs_Shape ContinuityV;
+
+    Standard_Integer PrecisionCode;
+
+    Standard_Integer DegreeU;
+    Standard_Integer DegreeV;
+
+    Standard_Integer MaxPatchesU;
+    Standard_Integer MaxPatchesV;
+
+    Standard_Integer TotalPatches;
+  };
+
+  Standard_EXPORT AdvApp2Var_ApproxAFunc2Var
+    (
+      const Parameters & parameters,
+      const AdvApp2Var_EvaluatorFunc2Var& Func,
+      AdvApprox_Cutting& UChoice,
+      AdvApprox_Cutting& VChoice
+    );
+
+  Standard_EXPORT AdvApp2Var_ApproxAFunc2Var
+    (
+      const Parameters & parameters,
+      const AdvApp2Var_EvaluatorFunc2Var& Func,
+      const AdvApp2Var_Criterion& Crit,
+      AdvApprox_Cutting& UChoice,
+      AdvApprox_Cutting& VChoice
+    );
   
-  Standard_EXPORT AdvApp2Var_ApproxAFunc2Var(const Standard_Integer Num1DSS, const Standard_Integer Num2DSS, const Standard_Integer Num3DSS, const Handle(TColStd_HArray1OfReal)& OneDTol, const Handle(TColStd_HArray1OfReal)& TwoDTol, const Handle(TColStd_HArray1OfReal)& ThreeDTol, const Handle(TColStd_HArray2OfReal)& OneDTolFr, const Handle(TColStd_HArray2OfReal)& TwoDTolFr, const Handle(TColStd_HArray2OfReal)& ThreeDTolFr, const Standard_Real FirstInU, const Standard_Real LastInU, const Standard_Real FirstInV, const Standard_Real LastInV, const GeomAbs_IsoType FavorIso, const GeomAbs_Shape ContInU, const GeomAbs_Shape ContInV, const Standard_Integer PrecisCode, const Standard_Integer MaxDegInU, const Standard_Integer MaxDegInV, const Standard_Integer MaxPatch, const AdvApp2Var_EvaluatorFunc2Var& Func, AdvApprox_Cutting& UChoice, AdvApprox_Cutting& VChoice);
+  Standard_EXPORT AdvApp2Var_ApproxAFunc2Var
+    (
+      const Standard_Integer Num1DSS,
+      const Standard_Integer Num2DSS,
+      const Standard_Integer Num3DSS,
+      const Handle(TColStd_HArray1OfReal)& OneDTol,
+      const Handle(TColStd_HArray1OfReal)& TwoDTol,
+      const Handle(TColStd_HArray1OfReal)& ThreeDTol,
+      const Handle(TColStd_HArray2OfReal)& OneDTolFr,
+      const Handle(TColStd_HArray2OfReal)& TwoDTolFr,
+      const Handle(TColStd_HArray2OfReal)& ThreeDTolFr,
+      const Standard_Real FirstInU,
+      const Standard_Real LastInU,
+      const Standard_Real FirstInV,
+      const Standard_Real LastInV,
+      const GeomAbs_IsoType FavorIso,
+      const GeomAbs_Shape ContInU,
+      const GeomAbs_Shape ContInV,
+      const Standard_Integer PrecisCode,
+      const Standard_Integer MaxDegInU,
+      const Standard_Integer MaxDegInV,
+      const Standard_Integer MaxPatch,
+      const AdvApp2Var_EvaluatorFunc2Var& Func,
+      AdvApprox_Cutting& UChoice,
+      AdvApprox_Cutting& VChoice
+    );
   
-  Standard_EXPORT AdvApp2Var_ApproxAFunc2Var(const Standard_Integer Num1DSS, const Standard_Integer Num2DSS, const Standard_Integer Num3DSS, const Handle(TColStd_HArray1OfReal)& OneDTol, const Handle(TColStd_HArray1OfReal)& TwoDTol, const Handle(TColStd_HArray1OfReal)& ThreeDTol, const Handle(TColStd_HArray2OfReal)& OneDTolFr, const Handle(TColStd_HArray2OfReal)& TwoDTolFr, const Handle(TColStd_HArray2OfReal)& ThreeDTolFr, const Standard_Real FirstInU, const Standard_Real LastInU, const Standard_Real FirstInV, const Standard_Real LastInV, const GeomAbs_IsoType FavorIso, const GeomAbs_Shape ContInU, const GeomAbs_Shape ContInV, const Standard_Integer PrecisCode, const Standard_Integer MaxDegInU, const Standard_Integer MaxDegInV, const Standard_Integer MaxPatch, const AdvApp2Var_EvaluatorFunc2Var& Func, const AdvApp2Var_Criterion& Crit, AdvApprox_Cutting& UChoice, AdvApprox_Cutting& VChoice);
+  Standard_EXPORT AdvApp2Var_ApproxAFunc2Var
+    (
+      const Standard_Integer Num1DSS,
+      const Standard_Integer Num2DSS,
+      const Standard_Integer Num3DSS,
+      const Handle(TColStd_HArray1OfReal)& OneDTol,
+      const Handle(TColStd_HArray1OfReal)& TwoDTol,
+      const Handle(TColStd_HArray1OfReal)& ThreeDTol,
+      const Handle(TColStd_HArray2OfReal)& OneDTolFr,
+      const Handle(TColStd_HArray2OfReal)& TwoDTolFr,
+      const Handle(TColStd_HArray2OfReal)& ThreeDTolFr,
+      const Standard_Real FirstInU,
+      const Standard_Real LastInU,
+      const Standard_Real FirstInV,
+      const Standard_Real LastInV,
+      const GeomAbs_IsoType FavorIso,
+      const GeomAbs_Shape ContInU,
+      const GeomAbs_Shape ContInV,
+      const Standard_Integer PrecisCode,
+      const Standard_Integer MaxDegInU,
+      const Standard_Integer MaxDegInV,
+      const Standard_Integer MaxPatch,
+      const AdvApp2Var_EvaluatorFunc2Var& Func,
+      const AdvApp2Var_Criterion& Crit,
+      AdvApprox_Cutting& UChoice,
+      AdvApprox_Cutting& VChoice
+    );
   
   //! True if the approximation succeeded within the imposed
   //! tolerances and the wished continuities
@@ -150,24 +249,14 @@ public:
   //! of the object.
   Standard_EXPORT void Dump (Standard_OStream& o) const;
 
-
-
-
-protected:
-
-
-
-
-
 private:
-
   
   //! Initialisation of the approximation ; used by Create
   Standard_EXPORT void Init();
   
   //! Initialisation of the approximation with a grid of regular cuttings ;
   //! used by Init and Perform
-  Standard_EXPORT void InitGrid (const Standard_Integer NbInt);
+  Standard_EXPORT void InitGrid (const Standard_Integer sizeU, const Standard_Integer sizeV);
   
   //! Computation of the approximation result ; used by Create
   Standard_EXPORT void Perform (const AdvApprox_Cutting& UChoice, const AdvApprox_Cutting& VChoice, const AdvApp2Var_EvaluatorFunc2Var& Func);
@@ -197,28 +286,12 @@ private:
   //! Conversion of the approximation result in BSpline; used by Create
   Standard_EXPORT void ConvertBS();
 
+  Parameters myParameters;
 
-  Standard_Integer myNumSubSpaces[3];
-  Handle(TColStd_HArray1OfReal) my1DTolerances;
-  Handle(TColStd_HArray1OfReal) my2DTolerances;
-  Handle(TColStd_HArray1OfReal) my3DTolerances;
-  Handle(TColStd_HArray2OfReal) my1DTolOnFront;
-  Handle(TColStd_HArray2OfReal) my2DTolOnFront;
-  Handle(TColStd_HArray2OfReal) my3DTolOnFront;
-  Standard_Real myFirstParInU;
-  Standard_Real myLastParInU;
-  Standard_Real myFirstParInV;
-  Standard_Real myLastParInV;
-  GeomAbs_IsoType myFavoriteIso;
-  GeomAbs_Shape myContInU;
-  GeomAbs_Shape myContInV;
-  Standard_Integer myPrecisionCode;
-  Standard_Integer myMaxDegInU;
-  Standard_Integer myMaxDegInV;
-  Standard_Integer myMaxPatches;
   AdvApp2Var_Context myConditions;
   AdvApp2Var_Network myResult;
   AdvApp2Var_Framework myConstraints;
+
   Standard_Boolean myDone;
   Standard_Boolean myHasResult;
   Handle(TColGeom_HArray1OfSurface) mySurfaces;
@@ -237,15 +310,8 @@ private:
   Handle(TColStd_HArray1OfReal) my3DUFrontError;
   Handle(TColStd_HArray1OfReal) my3DVFrontError;
   Standard_Real myCriterionError;
-
-
 };
 
-
 #include <AdvApp2Var_ApproxAFunc2Var.lxx>
-
-
-
-
 
 #endif // _AdvApp2Var_ApproxAFunc2Var_HeaderFile

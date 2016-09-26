@@ -26,7 +26,7 @@ inline Standard_Boolean AdvApp2Var_ApproxAFunc2Var::IsDone() const
   return myHasResult;
 }
 
- inline Handle(Geom_BSplineSurface) 
+inline Handle(Geom_BSplineSurface) 
 AdvApp2Var_ApproxAFunc2Var::Surface( const Standard_Integer SSPIndex) const
 {
  return Handle(Geom_BSplineSurface)::DownCast( mySurfaces->Value(SSPIndex) );
@@ -40,10 +40,5 @@ AdvApp2Var_ApproxAFunc2Var::Surface( const Standard_Integer SSPIndex) const
  inline Standard_Integer AdvApp2Var_ApproxAFunc2Var::VDegree() const 
 {
   return myDegreeInV;
-}
-
- inline Standard_Integer AdvApp2Var_ApproxAFunc2Var::NumSubSpaces(const Standard_Integer Dimension) const 
-{
-  return myNumSubSpaces[Dimension-1];
 }
 
