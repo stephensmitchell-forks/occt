@@ -494,14 +494,14 @@ static Standard_Integer gbounding(Draw_Interpretor& di,Standard_Integer n,const 
   if (n != 2 && n != 3) 
   {
     di << "Usage: gbounding surf/curve/curve2d [-o] \n";
-    di << "[-o] turn off Optimal mode ('on' by default) \n";
+    di << "[-o] turn on Optimal mode ('off' by default) \n";
     return 1;
   }
   else
   {
-    Standard_Boolean IsOptimal = Standard_True;
+    Standard_Boolean IsOptimal = Standard_False;
     if (n == 3 && !strcmp(a[2], "-o"))
-      IsOptimal = Standard_False;
+      IsOptimal = Standard_True;
     
     Standard_Real axmin,aymin,azmin,axmax,aymax,azmax;
     Bnd_Box B;
