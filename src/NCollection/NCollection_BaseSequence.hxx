@@ -58,7 +58,7 @@ public:
   {
   public:
     //! Empty constructor
-    Iterator (void) : myCurrent (NULL), myPrevious(NULL) {}
+    Iterator (void) : myCurrent (NULL), myPrevious(NULL), isReversed(Standard_False) {}
 
     //! Constructor with initialisation
     Iterator (const NCollection_BaseSequence& theSeq,
@@ -71,8 +71,9 @@ public:
     void Init (const NCollection_BaseSequence& theSeq,
                const Standard_Boolean isStart = Standard_True)
     {
-      myCurrent  = (isStart ? theSeq.myFirstItem : NULL);
-      myPrevious = (isStart ? NULL : theSeq.myLastItem);
+      myCurrent = (isStart ? theSeq.myFirstItem : theSeq.myLastItem);
+      myPrevious = NULL;
+      isReversed = !isStart;
     }
 
     //! Assignment
@@ -86,13 +87,18 @@ public:
     void Previous()
     {
       myCurrent = myPrevious;
-      if (myCurrent)
-        myPrevious = myCurrent->Previous();
+      if (myCurrent) {
+        if (!isReversed)
+          myPrevious = myCurrent->Previous();
+        else
+          myPrevious = myCurrent->Next();
+      }
     }
       
   protected:
     NCollection_SeqNode* myCurrent;  //!< Pointer to the current node
     NCollection_SeqNode* myPrevious; //!< Pointer to the previous node
+    Standard_Boolean isReversed;
     friend class NCollection_BaseSequence;
   };
 
