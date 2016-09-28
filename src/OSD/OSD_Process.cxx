@@ -133,7 +133,6 @@ TCollection_AsciiString Name;
      result.SetValues("","","",Disk,Directory,"","");
    }
 #else
-   Name += TCollection_AsciiString("/");
    result = OSD_Path(Name);
    //      result.SetValues("","","","",Name,"","");
 #endif
