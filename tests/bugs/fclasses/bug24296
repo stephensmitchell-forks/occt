@@ -1,0 +1,236 @@
+puts "============"
+puts "OCC24296"
+puts "============"
+puts ""
+######################################################
+# Checking OSD_Path class's methods
+######################################################
+
+pload QAcommands
+
+set BugNumber OCC24296
+if { [checkplatform -windows] } {
+    if { [OCC24296 D:/occt/1/2/filename.ext -UpTrek] != "D:/occt/1/filename.ext\n" } {
+        puts "Error: command OSD_Path::UpTrek works wrong"
+    }
+    if { [OCC24296 D:/occt/1/2/filename.ext -DownTrek bin] != "D:/occt/1/2/bin/filename.ext\n" } {
+        puts "Error: command OSD_Path::DownTrek works wrong"
+    }
+    if { [OCC24296 D:/occt/1/2/filename.ext -SystemName] != "D:/occt/1/2/filename.ext\n" } {
+        puts "Error: command OSD_Path::SystemName works wrong"
+    }
+    if { [OCC24296 D:/occt/1/2/filename.ext -RemoveATrekByIndex 3] != "D:/occt/1/filename.ext\n" } {
+        puts "Error: command OSD_Path::RemoveATrekByIndex works wrong"
+    }
+    if { [OCC24296 D:/occt/1/2/filename.ext -RemoveATrekByName occt] != "D:/1/2/filename.ext\n" } {
+        puts "Error: command OSD_Path::RemoveATrekByName works wrong"
+    }
+    if { [OCC24296 D:/occt/1/2/filename.ext -GetTrekLength] != "3" } {
+        puts "Error: command OSD_Path::GetTrekLength works wrong"
+    }
+    if { [OCC24296 aFileName.ext -isValid] != "1" } {
+        puts "Error: command OSD_Path::isValid works wrong"
+    }
+    if { [OCC24296 D:/occt/1/2/filename.ext -TrekValue 1] != "occt\n" } {
+        puts "Error: command OSD_Path::TrekValue works wrong"
+    }
+    if { [OCC24296 D:/occt/1/2/filename.ext -InsertATrek bin 1] != "D:/bin/occt/1/2/filename.ext\n" } {
+        puts "Error: command OSD_Path::TrekValue works wrong"
+    }
+    if { [OCC24296 D:/occt/1/2/filename.ext -RelativePath D:/1/2/3] != "../../../../1/2/3\n" } {
+        puts "Error: command OSD_Path::RelativePath works wrong"
+    }
+    if { [OCC24296 D:/occt/1/2/filename.ext -AbsolutePath ../3] != "D:/occt/1/2/3\n" } {
+        puts "Error: command OSD_Path::AbsolutePath works wrong"
+    }
+    set AllValues [OCC24296 D:/occt/1/2/filename.ext -GetAllValues]
+    if {![regexp {Node = \n} ${AllValues}]} {
+        puts "Error: command OSD_Path::AllValues(Node) works wrong"
+    }
+    if {![regexp {UserName = \n} ${AllValues}]} {
+        puts "Error: command OSD_Path::AllValues(aUserName) works wrong"
+    }
+    if {![regexp {Password = \n} ${AllValues}]} {
+        puts "Error: command OSD_Path::AllValues(Password) works wrong"
+    }
+    if {![regexp {Disk = D:\n} ${AllValues}]} {
+        puts "Error: command OSD_Path::AllValues(Disk) works wrong"
+    }
+    if {![regexp {Trek = |occt|1|2|\n} ${AllValues}]} {
+        puts "Error: command OSD_Path::AllValues(Trek) works wrong"
+    }
+    if {![regexp {Name = filename\n} ${AllValues}]} {
+        puts "Error: command OSD_Path::AllValues(Name) works wrong"
+    }
+    if {![regexp {Extension = .ext\n} ${AllValues}]} {
+        puts "Error: command OSD_Path::AllValues(Extension) works wrong"
+    }
+    if { [OCC24296 D:/occt/1/2/filename.ext -SetAllValues Node User Password D: |1|2|3 NewFile NewExt] != "D:/1/2/3/NewFile.NewExt\n" } {
+        puts "Error: command OSD_Path::SetAllValues works wrong"
+    }
+    if { [OCC24296 D:/occt/1/2/filename.ext -GetNode] != "\n" } {
+        puts "Error: command OSD_Path::GetNode works wrong"
+    }
+    if { [OCC24296 D:/occt/1/2/filename.ext -GetUserName] != "\n" } {
+        puts "Error: command OSD_Path::GetUserName works wrong"
+    }
+    if { [OCC24296 D:/occt/1/2/filename.ext -GetPassword] != "\n" } {
+        puts "Error: command OSD_Path::GetPassword works wrong"
+    }
+    if { [OCC24296 D:/occt/1/2/filename.ext -GetDisk] != "D:\n" } {
+        puts "Error: command OSD_Path::GetDisk works wrong"
+    }
+    if { [OCC24296 D:/occt/1/2/filename.ext -GetTrek] != "|occt|1|2|\n" } {
+        puts "Error: command OSD_Path::GetTrek works wrong"
+    }
+    if { [OCC24296 D:/occt/1/2/filename.ext -GetName] != "filename\n" } {
+        puts "Error: command OSD_Path::GetName works wrong"
+    }
+    if { [OCC24296 D:/occt/1/2/filename.ext -GetExtension] != ".ext\n" } {
+        puts "Error: command OSD_Path::GetExtension works wrong"
+    }
+    if { [OCC24296 D:/occt/1/2/filename.ext -SetNode Node] != "D:/occt/1/2/filename.ext\n" } {
+        puts "Error: command OSD_Path::SetNode works wrong"
+    }
+    if { [OCC24296 D:/occt/1/2/filename.ext -SetUserName USER] != "D:/occt/1/2/filename.ext\n" } {
+        puts "Error: command OSD_Path::SetUserName works wrong"
+    }
+    if { [OCC24296 D:/occt/1/2/filename.ext -SetPassword PASSWORD] != "D:/occt/1/2/filename.ext\n" } {
+        puts "Error: command OSD_Path::SetPassword works wrong"
+    }
+    if { [OCC24296 D:/occt/1/2/filename.ext -SetDisk C:] != "C:/occt/1/2/filename.ext\n" } {
+        puts "Error: command OSD_Path::SetDisk works wrong"
+    }
+    if { [OCC24296 D:/occt/1/2/filename.ext -SetTrek |1|2|3] != "D:/1/2/3/filename.ext\n" } {
+        puts "Error: command OSD_Path::SetTrek works wrong"
+    }
+    if { [OCC24296 D:/occt/1/2/filename.ext -SetName NewFile] != "D:/occt/1/2/NewFile.ext\n" } {
+        puts "Error: command OSD_Path::SetName works wrong"
+    }
+    if { [OCC24296 D:/occt/1/2/filename.ext -SetExtension .NewExt] != "D:/occt/1/2/filename.NewExt\n" } {
+        puts "Error: command OSD_Path::SetExtension works wrong"
+    }
+
+    # check specific cases
+    if { [OCC24296 D:/ -UpTrek] != "D:/\n" } {
+        puts "Error: command OSD_Path::UpTrek (1) works wrong"
+    }
+    if { [OCC24296 D:/1/ -UpTrek] != "D:/\n" } {
+        puts "Error: command OSD_Path::UpTrek (2) works wrong"
+    }
+    if { [OCC24296 D:/1 -UpTrek] != "D:/1\n" } {
+        puts "Error: command OSD_Path::UpTrek (3) works wrong"
+    }
+} else {
+    if { [OCC24296 /users/examples/1/2/filename.ext -UpTrek] != "/users/examples/1/filename.ext\n" } {
+        puts "Error: command OSD_Path::UpTrek works wrong"
+    }
+    if { [OCC24296 /users/examples/1/2/filename.ext -DownTrek bin] != "/users/examples/1/2/bin/filename.ext\n" } {
+        puts "Error: command OSD_Path::DownTrek works wrong"
+    }
+    if { [OCC24296 /users/examples/1/2/filename.ext -SystemName] != "/users/examples/1/2/filename.ext\n" } {
+        puts "Error: command OSD_Path::SystemName works wrong"
+    }
+    if { [OCC24296 /users/examples/1/2/filename.ext -RemoveATrekByIndex 3] != "/users/examples/2/filename.ext\n" } {
+        puts "Error: command OSD_Path::RemoveATrekByIndex works wrong"
+    }
+    if { [OCC24296 /users/examples/1/2/filename.ext -RemoveATrekByName examples] != "/users/1/2/filename.ext\n" } {
+        puts "Error: command OSD_Path::RemoveATrekByName works wrong"
+    }
+    if { [OCC24296 /users/examples/1/2/filename.ext -GetTrekLength] != "4" } {
+        puts "Error: command OSD_Path::GetTrekLength works wrong"
+    }
+    if { [OCC24296 aFileName.ext -isValid] != "1" } {
+        puts "Error: command OSD_Path::isValid works wrong"
+    }
+    if { [OCC24296 /users/examples/1/2/filename.ext -TrekValue 1] != "users\n" } {
+        puts "Error: command OSD_Path::TrekValue works wrong"
+    }
+    if { [OCC24296 /users/examples/1/2/filename.ext -InsertATrek bin 1] != "/bin/users/examples/1/2/filename.ext\n" } {
+        puts "Error: command OSD_Path::TrekValue works wrong"
+    }
+    if { [OCC24296 /users/examples/1/2/filename.ext -RelativePath /1/2/3] != "../../../../../1/2/3\n" } {
+        puts "Error: command OSD_Path::RelativePath works wrong"
+    }
+    if { [OCC24296 /users/examples/1/2/filename.ext -AbsolutePath ../3] != "/users/examples/1/2/3\n" } {
+        puts "Error: command OSD_Path::AbsolutePath works wrong"
+    }
+    set AllValues [OCC24296 User\"Password\"@Node:/users/examples/1/2/filename.ext -GetAllValues]
+    if {![regexp {Node = User\"Password\"@Node\n} ${AllValues}]} {
+        puts "Error: command OSD_Path::AllValues(Node) works wrong"
+    }
+    if {![regexp {UserName = \n} ${AllValues}]} {
+        puts "Error: command OSD_Path::AllValues(aUserName) works wrong"
+    }
+    if {![regexp {Password = \n} ${AllValues}]} {
+        puts "Error: command OSD_Path::AllValues(Password) works wrong"
+    }
+    if {![regexp {Disk = \n} ${AllValues}]} {
+        puts "Error: command OSD_Path::AllValues(Disk) works wrong"
+    }
+    if {![regexp {Trek = |users|examples|1|2|\n} ${AllValues}]} {
+        puts "Error: command OSD_Path::AllValues(Trek) works wrong"
+    }
+    if {![regexp {Name = filename\n} ${AllValues}]} {
+        puts "Error: command OSD_Path::AllValues(Name) works wrong"
+    }
+    if {![regexp {Extension = .ext\n} ${AllValues}]} {
+        puts "Error: command OSD_Path::AllValues(Extension) works wrong"
+    }
+    if { [OCC24296 /users/examples/1/2/filename.ext -SetAllValues Node User Password Disk |1|2|3 NewFile NewExt] != "User\"Password\"@Node:/Disk/1/2/3/NewFileNewExt\n" } {
+        puts "Error: command OSD_Path::SetAllValues works wrong"
+    }
+    if { [OCC24296 /users/examples/1/2/filename.ext -GetNode] != "\n" } {
+        puts "Error: command OSD_Path::GetNode works wrong"
+    }
+    if { [OCC24296 /users/examples/1/2/filename.ext -GetUserName] != "\n" } {
+        puts "Error: command OSD_Path::GetUserName works wrong"
+    }
+    if { [OCC24296 /users/examples/1/2/filename.ext -GetPassword] != "\n" } {
+        puts "Error: command OSD_Path::GetPassword works wrong"
+    }
+    if { [OCC24296 /users/examples/1/2/filename.ext -GetDisk] != "\n" } {
+        puts "Error: command OSD_Path::GetDisk works wrong"
+    }
+    if { [OCC24296 /users/examples/1/2/filename.ext -GetTrek] != "|users|examples|1|2|\n" } {
+        puts "Error: command OSD_Path::GetTrek works wrong"
+    }
+    if { [OCC24296 /users/examples/1/2/filename.ext -GetName] != "filename\n" } {
+        puts "Error: command OSD_Path::GetName works wrong"
+    }
+    if { [OCC24296 /users/examples/1/2/filename.ext -GetExtension] != ".ext\n" } {
+        puts "Error: command OSD_Path::GetExtension works wrong"
+    }
+    if { [OCC24296 /users/examples/1/2/filename.ext -SetNode Node] != "Node:/users/examples/1/2/filename.ext\n" } {
+        puts "Error: command OSD_Path::SetNode works wrong"
+    }
+    if { [OCC24296 /users/examples/1/2/filename.ext -SetUserName USER] != "/users/examples/1/2/filename.ext\n" } {
+        puts "Error: command OSD_Path::SetUserName works wrong"
+    }
+    if { [OCC24296 /users/examples/1/2/filename.ext -SetPassword PASSWORD] != "/users/examples/1/2/filename.ext\n" } {
+        puts "Error: command OSD_Path::SetPassword works wrong"
+    }
+    if { [OCC24296 /users/examples/1/2/filename.ext -SetDisk Disk] != "/Disk/users/examples/1/2/filename.ext\n" } {
+        puts "Error: command OSD_Path::SetDisk works wrong"
+    }
+    if { [OCC24296 /users/examples/1/2/filename.ext -SetTrek |1|2|3] != "/1/2/3/filename.ext\n" } {
+        puts "Error: command OSD_Path::SetTrek works wrong"
+    }
+    if { [OCC24296 /users/examples/1/2/filename.ext -SetName NewFile] != "/users/examples/1/2/NewFile.ext\n" } {
+        puts "Error: command OSD_Path::SetName works wrong"
+    }
+    if { [OCC24296 /users/examples/1/2/filename.ext -SetExtension .NewExt] != "/users/examples/1/2/filename.NewExt\n" } {
+        puts "Error: command OSD_Path::SetExtension works wrong"
+    }
+
+    # check specific cases
+    if { [OCC24296 / -UpTrek] != "/\n" } {
+        puts "Error: command OSD_Path::UpTrek (1) works wrong"
+    }
+    if { [OCC24296 /1/ -UpTrek] != "/\n" } {
+        puts "Error: command OSD_Path::UpTrek (2) works wrong"
+    }
+    if { [OCC24296 /1 -UpTrek] != "/1\n" } {
+        puts "Error: command OSD_Path::UpTrek (3) works wrong"
+    }
+}

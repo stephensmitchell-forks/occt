@@ -2140,6 +2140,283 @@ static Standard_Integer OCC27875(Draw_Interpretor& theDI,
   return 0;
 }
 
+#include <OSD_Process.hxx>
+#include <OSD_Path.hxx>
+#include <NCollection_DataMap.hxx>
+enum OCC24296_Options {
+  OCC24296_UpTrek,
+  OCC24296_DownTrek,
+  OCC24296_SystemName,
+  OCC24296_RemoveATrekByIndex,
+  OCC24296_RemoveATrekByName,
+  OCC24296_GetTrekLength,
+  OCC24296_isValid,
+  OCC24296_TrekValue,
+  OCC24296_InsertATrek,
+  OCC24296_RelativePath,
+  OCC24296_AbsolutePath,
+  OCC24296_GetAllValues,
+  OCC24296_SetAllValues,
+  OCC24296_GetNode,
+  OCC24296_GetUserName,
+  OCC24296_GetPassword,
+  OCC24296_GetDisk,
+  OCC24296_GetTrek,
+  OCC24296_GetName,
+  OCC24296_GetExtension,
+  OCC24296_SetNode,
+  OCC24296_SetUserName,
+  OCC24296_SetPassword,
+  OCC24296_SetDisk,
+  OCC24296_SetTrek,
+  OCC24296_SetName,
+  OCC24296_SetExtension
+};
+static Standard_Integer OCC24296(Draw_Interpretor& theDI,
+  Standard_Integer theNArg,
+  const char ** theArgVal)
+{
+  if (theNArg < 3) {
+    theDI << "Usage (OCC24296): "<< theArgVal[0] << " path option, see help\n";
+    return 1;
+  }
+  TCollection_AsciiString aPathStr(theArgVal[1]);
+  TCollection_AsciiString anOption(theArgVal[2]);
+  TCollection_AsciiString anOptionArgument[7];
+
+  NCollection_DataMap<TCollection_AsciiString, Standard_Integer> aMapOptions;
+  aMapOptions.Bind("-uptrek",             OCC24296_UpTrek);
+  aMapOptions.Bind("-downtrek",           OCC24296_DownTrek);
+  aMapOptions.Bind("-systemname",         OCC24296_SystemName);
+  aMapOptions.Bind("-removeatrekbyindex", OCC24296_RemoveATrekByIndex);
+  aMapOptions.Bind("-removeatrekbyname",  OCC24296_RemoveATrekByName);
+  aMapOptions.Bind("-gettreklength",      OCC24296_GetTrekLength);
+  aMapOptions.Bind("-isvalid",            OCC24296_isValid);
+  aMapOptions.Bind("-trekvalue",          OCC24296_TrekValue);
+  aMapOptions.Bind("-insertatrek",        OCC24296_InsertATrek);
+  aMapOptions.Bind("-relativepath",       OCC24296_RelativePath);
+  aMapOptions.Bind("-absolutepath",       OCC24296_AbsolutePath);
+  aMapOptions.Bind("-getallvalues",       OCC24296_GetAllValues);
+  aMapOptions.Bind("-setallvalues",       OCC24296_SetAllValues);
+  aMapOptions.Bind("-getnode",            OCC24296_GetNode);
+  aMapOptions.Bind("-getusername",        OCC24296_GetUserName);
+  aMapOptions.Bind("-getpassword",        OCC24296_GetPassword);
+  aMapOptions.Bind("-getdisk",            OCC24296_GetDisk);
+  aMapOptions.Bind("-gettrek",            OCC24296_GetTrek);
+  aMapOptions.Bind("-getname",            OCC24296_GetName);
+  aMapOptions.Bind("-getextension",       OCC24296_GetExtension);
+  aMapOptions.Bind("-setnode",            OCC24296_SetNode);
+  aMapOptions.Bind("-setusername",        OCC24296_SetUserName);
+  aMapOptions.Bind("-setpassword",        OCC24296_SetPassword);
+  aMapOptions.Bind("-setdisk",            OCC24296_SetDisk);
+  aMapOptions.Bind("-settrek",            OCC24296_SetTrek);
+  aMapOptions.Bind("-setname",            OCC24296_SetName);
+  aMapOptions.Bind("-setextension",       OCC24296_SetExtension);
+  anOption.LowerCase();
+
+  switch (aMapOptions.Find(anOption)) {
+    // Commands without any arguments
+    case OCC24296_UpTrek:
+    case OCC24296_GetTrekLength:
+    case OCC24296_GetNode:
+    case OCC24296_GetUserName:
+    case OCC24296_GetPassword:
+    case OCC24296_GetDisk:
+    case OCC24296_GetTrek:
+    case OCC24296_GetName:
+    case OCC24296_GetExtension:
+    case OCC24296_GetAllValues:
+    case OCC24296_SystemName:
+    case OCC24296_isValid:
+      if (theNArg != 3) {
+        theDI << "Error (OCC24296): option " << theArgVal[2] << " should be used without any arguments, see help\n";
+        return 1;
+      }
+      break;
+    // Commands with 1 argument
+    case OCC24296_DownTrek:
+    case OCC24296_RemoveATrekByIndex:
+    case OCC24296_RemoveATrekByName:
+    case OCC24296_TrekValue:
+    case OCC24296_SetNode:
+    case OCC24296_SetUserName:
+    case OCC24296_SetPassword:
+    case OCC24296_SetDisk:
+    case OCC24296_SetTrek:
+    case OCC24296_SetName:
+    case OCC24296_SetExtension:
+    case OCC24296_RelativePath:
+    case OCC24296_AbsolutePath:
+      if (theNArg != 4) {
+        theDI << "Error (OCC24296): option " << theArgVal[2] << " should be used with 1 argument, see help\n";
+        return 1;
+      }
+      else
+        anOptionArgument[0] = theArgVal[3];
+      break;
+    // Commands with 2 arguments
+    case OCC24296_InsertATrek:
+      if (theNArg != 5) {
+        theDI << "Error (OCC24296): option " << theArgVal[2] << " should be used with 2 arguments, see help\n";
+        return 1;
+      }
+      else {
+        anOptionArgument[0] = theArgVal[3];
+        anOptionArgument[1] = theArgVal[4];
+      }
+      break;
+    // Commands with 7 arguments
+    case OCC24296_SetAllValues:
+      if (theNArg != 10) {
+        theDI << "Error (OCC24296): option " << theArgVal[2] << " should be used with 7 arguments, see help\n";
+        return 1;
+      }
+      else {
+        anOptionArgument[0] = theArgVal[3];
+        anOptionArgument[1] = theArgVal[4];
+        anOptionArgument[2] = theArgVal[5];
+        anOptionArgument[3] = theArgVal[6];
+        anOptionArgument[4] = theArgVal[7];
+        anOptionArgument[5] = theArgVal[8];
+        anOptionArgument[6] = theArgVal[9];
+      }
+      break;
+    default:
+      theDI << "Error (OCC24296): wrong option \"" << theArgVal[2] << "\"\n";
+      return 1;
+      break;
+  }
+
+  OSD_Path aPath(aPathStr);
+  TCollection_AsciiString aSystemPath;
+  switch (aMapOptions.Find(anOption)) {
+    case OCC24296_UpTrek:
+      aPath.UpTrek();
+      aPath.SystemName(aSystemPath);
+      theDI << aSystemPath << "\n";
+      break;
+    case OCC24296_DownTrek:
+      aPath.DownTrek(anOptionArgument[0]);
+      aPath.SystemName(aSystemPath);
+      theDI << aSystemPath << "\n";
+      break;
+    case OCC24296_SystemName:
+      aPath.SystemName(aSystemPath);
+      theDI << aSystemPath << "\n";
+      break;
+    case OCC24296_RemoveATrekByIndex:
+      aPath.RemoveATrek(anOptionArgument[0].IntegerValue());
+      aPath.SystemName(aSystemPath);
+      theDI << aSystemPath << "\n";
+      break;
+    case OCC24296_RemoveATrekByName:
+      aPath.RemoveATrek(anOptionArgument[0]);
+      aPath.SystemName(aSystemPath);
+      theDI << aSystemPath << "\n";
+      break;
+    case OCC24296_GetTrekLength:
+      theDI << aPath.TrekLength() << "\n";
+      break;
+    case OCC24296_isValid:
+      aPath.SystemName(aSystemPath);
+      theDI << aPath.IsValid(aSystemPath) << "\n";
+      break;
+    case OCC24296_TrekValue:
+      theDI << aPath.TrekValue(anOptionArgument[0].IntegerValue()) << "\n";
+      break;
+    case OCC24296_InsertATrek:
+      aPath.InsertATrek(anOptionArgument[0], anOptionArgument[1].IntegerValue());
+      aPath.SystemName(aSystemPath);
+      theDI << aSystemPath << "\n";
+      break;
+    case OCC24296_RelativePath:
+      aPath.SystemName(aSystemPath);
+      theDI << aPath.RelativePath(aSystemPath, anOptionArgument[0]) << "\n";
+      break;
+    case OCC24296_AbsolutePath:
+      aPath.SystemName(aSystemPath);
+      theDI << aPath.AbsolutePath(aSystemPath, anOptionArgument[0]) << "\n";
+      break;
+    case OCC24296_GetAllValues:
+      aPath.Values(anOptionArgument[0], anOptionArgument[1], anOptionArgument[2],
+                   anOptionArgument[3], anOptionArgument[4], anOptionArgument[5],
+                   anOptionArgument[6]);
+      theDI << "Node = " << anOptionArgument[0] << "\n";
+      theDI << "UserName = " << anOptionArgument[1] << "\n";
+      theDI << "Password = " << anOptionArgument[2] << "\n";
+      theDI << "Disk = " << anOptionArgument[3] << "\n";
+      theDI << "Trek = " << anOptionArgument[4] << "\n";
+      theDI << "Name = " << anOptionArgument[5] << "\n";
+      theDI << "Extension = " << anOptionArgument[6] << "\n";
+      break;
+    case OCC24296_SetAllValues:
+      aPath.SetValues(anOptionArgument[0], anOptionArgument[1], anOptionArgument[2],
+                      anOptionArgument[3], anOptionArgument[4], anOptionArgument[5],
+                      anOptionArgument[6]);
+      aPath.SystemName(aSystemPath);
+      theDI << aSystemPath << "\n";
+      break;
+    case OCC24296_GetNode:
+      theDI << aPath.Node() << "\n";
+      break;
+    case OCC24296_GetUserName:
+      theDI << aPath.UserName() << "\n";
+      break;
+    case OCC24296_GetPassword:
+      theDI << aPath.Password() << "\n";
+      break;
+    case OCC24296_GetDisk:
+      theDI << aPath.Disk() << "\n";
+      break;
+    case OCC24296_GetTrek:
+      theDI << aPath.Trek() << "\n";
+      break;
+    case OCC24296_GetName:
+      theDI << aPath.Name() << "\n";
+      break;
+    case OCC24296_GetExtension:
+      theDI << aPath.Extension() << "\n";
+      break;
+    case OCC24296_SetNode:
+      aPath.SetNode(anOptionArgument[0]);
+      aPath.SystemName(aSystemPath);
+      theDI << aSystemPath << "\n";
+      break;
+    case OCC24296_SetUserName:
+      aPath.SetUserName(anOptionArgument[0]);
+      aPath.SystemName(aSystemPath);
+      theDI << aSystemPath << "\n";
+      break;
+    case OCC24296_SetPassword:
+      aPath.SetPassword(anOptionArgument[0]);
+      aPath.SystemName(aSystemPath);
+      theDI << aSystemPath << "\n";
+      break;
+    case OCC24296_SetDisk:
+      aPath.SetDisk(anOptionArgument[0]);
+      aPath.SystemName(aSystemPath);
+      theDI << aSystemPath << "\n";
+      break;
+    case OCC24296_SetTrek:
+      aPath.SetTrek(anOptionArgument[0]);
+      aPath.SystemName(aSystemPath);
+      theDI << aSystemPath << "\n";
+      break;
+    case OCC24296_SetName:
+      aPath.SetName(anOptionArgument[0]);
+      aPath.SystemName(aSystemPath);
+      theDI << aSystemPath << "\n";
+      break;
+    case OCC24296_SetExtension:
+      aPath.SetExtension(anOptionArgument[0]);
+      aPath.SystemName(aSystemPath);
+      theDI << aSystemPath << "\n";
+      break;
+    default:
+      break;
+  }
+  return 0;
+}
 
 void QABugs::Commands_20(Draw_Interpretor& theCommands) {
   const char *group = "QABugs";
@@ -2160,6 +2437,35 @@ void QABugs::Commands_20(Draw_Interpretor& theCommands) {
   theCommands.Add("OCC26270", "OCC26270 shape result", __FILE__, OCC26270, group);
   theCommands.Add ("OCC27552", "OCC27552", __FILE__, OCC27552, group); 
   theCommands.Add("OCC27875", "OCC27875 curve", __FILE__, OCC27875, group);
-
+  theCommands.Add("OCC24296", "OCC24296 path option [arguments]\n"
+    "Available options with examples:\n"
+    "  -UpTrek:             \"OCC24296 D:/occt/1/2/filename.ext -UpTrek\"\n"
+    "  -DownTrek:           \"OCC24296 D:/occt/1/2/filename.ext -DownTrek bin\"\n"
+    "  -SystemName:         \"OCC24296 D:/occt/1/2/filename.ext -SystemName\"\n"
+    "  -RemoveATrekByIndex: \"OCC24296 D:/occt/1/2/filename.ext -RemoveATrekByIndex 3\"\n"
+    "  -RemoveATrekByName:  \"OCC24296 D:/occt/1/2/filename.ext -RemoveATrekByName occt\"\n"
+    "  -GetTrekLength:      \"OCC24296 D:/occt/1/2/filename.ext -GetTrekLength\"\n"
+    "  -isValid:            \"OCC24296 aFileName.ext -isValid\"\n"
+    "  -TrekValue:          \"OCC24296 D:/occt/1/2/filename.ext -TrekValue 1\"\n"
+    "  -InsertATrek:        \"OCC24296 D:/occt/1/2/filename.ext -InsertATrek bin 1\"\n"
+    "  -RelativePath:       \"OCC24296 D:/occt/1/2/filename.ext -RelativePath D:/1/2/3\"\n"
+    "  -AbsolutePath:       \"OCC24296 D:/occt/1/2/filename.ext -AbsolutePath ../3\"\n"
+    "  -GetAllValues:       \"OCC24296 D:/occt/1/2/filename.ext -GetAllValues\"\n"
+    "  -SetAllValues:       \"OCC24296 D:/occt/1/2/filename.ext -SetAllValues Node User Password D: |1|2|3 NewFile NewExt\"\n"
+    "  -GetNode:            \"OCC24296 D:/occt/1/2/filename.ext -GetNode\"\n"
+    "  -GetUserName:        \"OCC24296 D:/occt/1/2/filename.ext -GetUserName\"\n"
+    "  -GetPassword:        \"OCC24296 D:/occt/1/2/filename.ext -GetPassword\"\n"
+    "  -GetDisk:            \"OCC24296 D:/occt/1/2/filename.ext -GetDisk\"\n"
+    "  -GetTrek:            \"OCC24296 D:/occt/1/2/filename.ext -GetTrek\"\n"
+    "  -GetName:            \"OCC24296 D:/occt/1/2/filename.ext -GetName\"\n"
+    "  -GetExtension:       \"OCC24296 D:/occt/1/2/filename.ext -GetExtension\"\n"
+    "  -SetNode:            \"OCC24296 D:/occt/1/2/filename.ext -SetNode\"\n"
+    "  -SetUserName:        \"OCC24296 D:/occt/1/2/filename.ext -SetUserName\"\n"
+    "  -SetPassword:        \"OCC24296 D:/occt/1/2/filename.ext -SetPassword\"\n"
+    "  -SetDisk:            \"OCC24296 D:/occt/1/2/filename.ext -SetDisk C:\"\n"
+    "  -SetTrek:            \"OCC24296 D:/occt/1/2/filename.ext -SetTrek |1|2|3\"\n"
+    "  -SetName:            \"OCC24296 D:/occt/1/2/filename.ext -SetName NewFile\"\n"
+    "  -SetExtension:       \"OCC24296 D:/occt/1/2/filename.ext -SetExtension .NewExt\"\n"
+    , __FILE__, OCC24296, group);
   return;
 }
