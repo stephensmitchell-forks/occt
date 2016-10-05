@@ -13,7 +13,6 @@ IGESToBRep_BRepEntity.cxx
 IGESToBRep_BRepEntity.hxx
 IGESToBRep_CurveAndSurface.cxx
 IGESToBRep_CurveAndSurface.hxx
-IGESToBRep_CurveAndSurface.lxx
 IGESToBRep_IGESBoundary.cxx
 IGESToBRep_IGESBoundary.hxx
 IGESToBRep_IGESBoundary.lxx

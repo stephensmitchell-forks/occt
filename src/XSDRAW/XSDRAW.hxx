@@ -23,7 +23,7 @@
 #include <Draw_Interpretor.hxx>
 #include <TColStd_HSequenceOfTransient.hxx>
 #include <TopTools_HSequenceOfShape.hxx>
-class IFSelect_SessionPilot;
+#include <IFSelect_SessionPilot.hxx>
 class XSControl_WorkSession;
 class XSControl_Controller;
 class Interface_Protocol;
@@ -97,11 +97,11 @@ class XSDRAW
   Standard_EXPORT static Standard_Integer Execute (const Standard_CString command, const Standard_CString var = "");
   
   //! Returns the SessionPilot (can be used for direct call)
-  Standard_EXPORT static Handle(IFSelect_SessionPilot) Pilot();
+  Standard_EXPORT static const Handle(IFSelect_SessionPilot) & Pilot();
   
   //! Returns the WorkSession defined in AddDraw (through Pilot)
   //! It is from XSControl, it brings functionnalities for Transfers
-  Standard_EXPORT static Handle(XSControl_WorkSession) Session();
+  Standard_EXPORT static Handle(XSControl_WorkSession) Session(const Handle(IFSelect_SessionPilot) &thePilot = NULL);
   
   //! Defines a Controller for the command "xinit" and applies it
   //! (i.e. calls its method Customise)

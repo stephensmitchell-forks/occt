@@ -91,9 +91,8 @@ void StepData_StepModel::AddHeaderEntity
 void StepData_StepModel::VerifyCheck(Handle(Interface_Check)& ach) const
 {
   Interface_GeneralLib lib(StepData::HeaderProtocol());
-  Handle(StepData_StepModel) me (this);
-  Handle(Interface_Protocol) aHP = StepData::HeaderProtocol();
-  Interface_ShareTool sh(me,aHP);
+  Handle(Interface_InterfaceModel) me (this);
+  Interface_ShareTool sh(me);
   Handle(Interface_GeneralModule) module;  Standard_Integer CN;
   for (Interface_EntityIterator iter = Header(); iter.More(); iter.Next()) {
     Handle(Standard_Transient) head = iter.Value();
@@ -108,7 +107,7 @@ void StepData_StepModel::DumpHeader
 {
   //  NB : level n est pas utilise
 
-  Handle(StepData_Protocol) stepro = StepData::HeaderProtocol();
+  const Handle(StepData_Protocol) &stepro = StepData::HeaderProtocol();
   Standard_Boolean iapro = !stepro.IsNull();
   if (!iapro) S<<" -- WARNING : StepModel DumpHeader, Protocol not defined\n";
 

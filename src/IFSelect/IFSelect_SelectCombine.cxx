@@ -12,7 +12,6 @@
 // commercial license or contractual agreement.
 
 
-#include <IFGraph_Cumulate.hxx>
 #include <IFSelect_SelectCombine.hxx>
 #include <IFSelect_Selection.hxx>
 #include <IFSelect_SelectionIterator.hxx>
@@ -21,7 +20,6 @@
 IMPLEMENT_STANDARD_RTTIEXT(IFSelect_SelectCombine,IFSelect_Selection)
 
 IFSelect_SelectCombine::IFSelect_SelectCombine ()    {  }
-//      {  thelist = new IFSelect_SequenceOfSelection();  }
 
     Standard_Integer  IFSelect_SelectCombine::NbInputs () const 
       {  return thelist.Length();  }

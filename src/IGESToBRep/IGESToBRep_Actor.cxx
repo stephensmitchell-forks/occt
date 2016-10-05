@@ -111,7 +111,7 @@ static void TrimTolerances (const TopoDS_Shape& shape, const Standard_Real tol)
 //purpose  : 
 //=======================================================================
 
-Handle(Transfer_Binder) IGESToBRep_Actor::Transferring (const Handle(Standard_Transient)& start, const Handle(Transfer_ProcessForTransient)& PT)
+Handle(Transfer_Binder) IGESToBRep_Actor::Transferring (const Handle(Standard_Transient)& start, const Handle(Transfer_Process)& PT)
 {
   DeclareAndCast(IGESData_IGESModel,mymodel,themodel);
   DeclareAndCast(IGESData_IGESEntity,ent,start);

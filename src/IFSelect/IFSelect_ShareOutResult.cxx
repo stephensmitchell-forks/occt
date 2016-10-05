@@ -202,7 +202,6 @@ IFSelect_ShareOutResult::IFSelect_ShareOutResult
 
     Interface_EntityIterator  IFSelect_ShareOutResult::PacketContent ()
 {
-//  IFGraph_Cumulate G(thegraph);
   Interface_EntityIterator iter = thedispres.Entities();
   Interface_Graph G(thegraph);
 //  G.GetFromIter(thedispres.Entities(),0);

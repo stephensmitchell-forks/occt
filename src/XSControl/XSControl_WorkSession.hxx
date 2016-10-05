@@ -25,7 +25,6 @@
 #include <XSControl_TransferWriter.hxx>
 class XSControl_Controller;
 class XSControl_TransferReader;
-class Dico_DictionaryOfTransient;
 class XSControl_Vars;
 class Message_Messenger;
 class Transfer_TransientProcess;
@@ -80,20 +79,7 @@ class XSControl_WorkSession : public IFSelect_WorkSession
   Standard_EXPORT Standard_CString SelectedNorm (const Standard_Boolean theRsc = Standard_False) const;
   
   //! Returns the norm controller itself
-  const Handle(XSControl_Controller) & NormAdaptor() const
-  { return myController; }
-  
-  //! Returns the current Context List, Null if not defined
-  //! The Context is given to the TransientProcess for TransferRead
-  const Handle(Dico_DictionaryOfTransient) & Context() const
-  { return myContext; }
-  
-  //! Sets the current Context List, as a whole
-  //! Sets it to the TransferReader
-  Standard_EXPORT void SetAllContext (const Handle(Dico_DictionaryOfTransient)& theContext);
-  
-  //! Clears the whole current Context (nullifies it)
-  Standard_EXPORT void ClearContext();
+  const Handle(XSControl_Controller) & NormAdaptor() const { return myController; }
   
   //! Prints the transfer status of a transferred item, as beeing
   //! the Mapped n0 <num>, from MapWriter if <wri> is True, or
@@ -109,15 +95,8 @@ class XSControl_WorkSession : public IFSelect_WorkSession
   //! 5 recreates TransferReader then begins a new transfer
   Standard_EXPORT void InitTransferReader (const Standard_Integer theMode);
   
-  //! Sets a Transfer Reader, which manages transfers on reading
-  Standard_EXPORT void SetTransferReader (const Handle(XSControl_TransferReader)& theTR);
-  
   //! Returns the Transfer Reader, Null if not set
-  const Handle(XSControl_TransferReader) & TransferReader () const
-  { return myTransferReader; }
-
-  //! Returns the TransientProcess(internal data for TransferReader)
-  Standard_EXPORT Handle(Transfer_TransientProcess) MapReader() const;
+  const Handle(XSControl_TransferReader) & TransferReader () const { return myTransferReader; }
 
   //! Changes the Map Reader, i.e. considers that the new one
   //! defines the relevant read results (forgets the former ones)
@@ -157,8 +136,7 @@ class XSControl_WorkSession : public IFSelect_WorkSession
   Standard_EXPORT Handle(Interface_InterfaceModel) NewModel();
   
   //! Returns the Transfer Reader, Null if not set
-  const Handle(XSControl_TransferWriter) & TransferWriter() const
-  { return myTransferWriter; }
+  const Handle(XSControl_TransferWriter) & TransferWriter() const { return myTransferWriter; }
   
   //! Changes the Map Reader, i.e. considers that the new one
   //! defines the relevant read results (forgets the former ones)
@@ -176,15 +154,16 @@ class XSControl_WorkSession : public IFSelect_WorkSession
   //! Error if transfer badly initialised
   Standard_EXPORT IFSelect_ReturnStatus TransferWriteShape (const TopoDS_Shape& theShape, const Standard_Boolean theCompGraph = Standard_True);
   
-  const Handle(XSControl_Vars) & Vars() const
-  { return myVars; }
+  const Handle(XSControl_Vars) & Vars() const { return myVars; }
   
-  void SetVars (const Handle(XSControl_Vars)& theVars)
-  { myVars = theVars; }
+  void SetVars (const Handle(XSControl_Vars)& theVars) { myVars = theVars; }
   
   DEFINE_STANDARD_RTTIEXT(XSControl_WorkSession,IFSelect_WorkSession)
 
  private:
+  
+  //! Sets a Transfer Reader, which manages transfers on reading
+  Standard_EXPORT void SetTransferReader (const Handle(XSControl_TransferReader)& theTR);
   
   //! Clears binders
   Standard_EXPORT void ClearBinders();
@@ -192,7 +171,6 @@ class XSControl_WorkSession : public IFSelect_WorkSession
   Handle(XSControl_Controller) myController;
   Handle(XSControl_TransferReader) myTransferReader;
   Handle(XSControl_TransferWriter) myTransferWriter;
-  Handle(Dico_DictionaryOfTransient) myContext;
   Handle(XSControl_Vars) myVars;
 };
 

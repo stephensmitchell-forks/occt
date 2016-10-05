@@ -34,14 +34,12 @@
 #include <IGESData_IGESModel.hxx>
 #include <IGESData_IGESWriter.hxx>
 #include <IGESData_Protocol.hxx>
-#include <IGESSelect_WorkLibrary.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_Static.hxx>
 #include <Message_ProgressIndicator.hxx>
 #include <OSD_OpenFile.hxx>
 #include <ShapeAnalysis_ShapeTolerance.hxx>
 #include <Standard_Stream.hxx>
-#include <Standard_Transient.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopoDS_Shape.hxx>
 #include <Transfer_FinderProcess.hxx>
@@ -55,7 +53,7 @@ IGESControl_Writer::IGESControl_Writer ()
 {
 //  faudrait aussi (?) prendre les parametres par defaut ... ?
   IGESControl_Controller::Init();
-  myEditor.Init(IGESSelect_WorkLibrary::DefineProtocol());
+  myEditor.Init(IGESControl_Controller::DefineProtocol());
   myEditor.SetUnitName(Interface_Static::CVal ("write.iges.unit"));
   myEditor.ApplyUnit(); 
   myWriteMode = Interface_Static::IVal ("write.iges.brep.mode");
@@ -69,7 +67,7 @@ IGESControl_Writer::IGESControl_Writer
 {
 //  faudrait aussi (?) prendre les parametres par defaut ... ?
   IGESControl_Controller::Init();
-  myEditor.Init(IGESSelect_WorkLibrary::DefineProtocol());
+  myEditor.Init(IGESControl_Controller::DefineProtocol());
   myEditor.SetUnitName(unit);
   myEditor.ApplyUnit();
   myModel = myEditor.Model();
@@ -79,7 +77,7 @@ IGESControl_Writer::IGESControl_Writer
   (const Handle(IGESData_IGESModel)& model, const Standard_Integer modecr)
     :  myTP (new Transfer_FinderProcess(10000)) ,
        myModel (model) , 
-       myEditor (model,IGESSelect_WorkLibrary::DefineProtocol()) ,
+       myEditor (model,IGESControl_Controller::DefineProtocol()) ,
        myWriteMode (modecr) , myIsComputed (Standard_False)     {  }
 
 Standard_Boolean IGESControl_Writer::AddShape (const TopoDS_Shape& theShape)
@@ -212,7 +210,7 @@ Standard_Boolean IGESControl_Writer::AddGeom (const Handle(Standard_Transient)& 
 Standard_Boolean IGESControl_Writer::AddEntity (const Handle(IGESData_IGESEntity)& ent)
 {
   if (ent.IsNull()) return Standard_False;
-  myModel->AddWithRefs(ent,IGESSelect_WorkLibrary::DefineProtocol());
+  myModel->AddWithRefs(ent,IGESControl_Controller::DefineProtocol());
   myIsComputed = Standard_False;
   return Standard_True;
 }
@@ -239,7 +237,7 @@ Standard_Boolean IGESControl_Writer::Write
     return Standard_False;
   IGESData_IGESWriter IW (myModel);
 //  ne pas oublier le mode fnes ... a transmettre a IW
-  IW.SendModel (IGESSelect_WorkLibrary::DefineProtocol());
+  IW.SendModel (IGESControl_Controller::DefineProtocol());
 #ifdef OCCT_DEBUG
   cout<<" ...  ecriture  ..."<<flush;
 #endif

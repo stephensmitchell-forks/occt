@@ -404,7 +404,7 @@ Standard_Boolean STEPControl_ActorWrite::Recognize (const Handle(Standard_Transi
 //purpose  : 
 //=======================================================================
 
-Handle(Transfer_Binder) STEPControl_ActorWrite::Transferring (const Handle(Standard_Transient)& start, const Handle(Transfer_ProcessForFinder)& FP)
+Handle(Transfer_Binder) STEPControl_ActorWrite::Transferring (const Handle(Standard_Transient)& start, const Handle(Transfer_Process)& FP)
 {
   XSAlgo::AlgoContainer()->PrepareForTransfer();
     

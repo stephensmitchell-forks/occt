@@ -23,7 +23,6 @@
 #include <Transfer_SimpleBinderOfTransient.hxx>
 #include <XSControl_Controller.hxx>
 #include <XSControl_TransferWriter.hxx>
-#include <XSControl_Utils.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(XSControl_TransferWriter,MMgt_TShared)
 

@@ -20,7 +20,6 @@
 #include <Standard_Type.hxx>
 
 #include <STEPControl_Controller.hxx>
-#include <Standard_Boolean.hxx>
 
 
 class STEPCAFControl_Controller;
@@ -32,39 +31,19 @@ DEFINE_STANDARD_HANDLE(STEPCAFControl_Controller, STEPControl_Controller)
 //! (inherited automatically)
 class STEPCAFControl_Controller : public STEPControl_Controller
 {
+ public:
 
-public:
-
-  
-  //! Initializes the use of STEP Norm (the first time)
-  Standard_EXPORT STEPCAFControl_Controller();
-  
   //! Standard Initialisation. It creates a Controller for STEP-XCAF
   //! and records it to various names, available to select it later
   //! Returns True when done, False if could not be done
-  Standard_EXPORT static Standard_Boolean Init();
-
-
-
+  Standard_EXPORT static void Init();
 
   DEFINE_STANDARD_RTTIEXT(STEPCAFControl_Controller,STEPControl_Controller)
 
-protected:
+ protected:
 
-
-
-
-private:
-
-
-
-
+  //! Initializes the use of STEP Norm (the first time)
+  Standard_EXPORT STEPCAFControl_Controller();
 };
-
-
-
-
-
-
 
 #endif // _STEPCAFControl_Controller_HeaderFile

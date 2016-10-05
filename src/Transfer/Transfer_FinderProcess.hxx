@@ -17,18 +17,18 @@
 #ifndef _Transfer_FinderProcess_HeaderFile
 #define _Transfer_FinderProcess_HeaderFile
 
-#include <Transfer_ProcessForFinder.hxx>
+#include <Transfer_Process.hxx>
 
-class Transfer_FinderProcess : public Transfer_ProcessForFinder
+class Transfer_FinderProcess : public Transfer_Process
 {
  public:
 
   //! Sets FinderProcess at initial state, with an initial size
   Transfer_FinderProcess(const Standard_Integer nb = 10000)
-  : Transfer_ProcessForFinder (nb)
+  : Transfer_Process (nb)
   {}
 
-  DEFINE_STANDARD_RTTIEXT(Transfer_FinderProcess,Transfer_ProcessForFinder)
+  DEFINE_STANDARD_RTTIEXT(Transfer_FinderProcess,Transfer_Process)
 };
 
 #endif // _Transfer_FinderProcess_HeaderFile

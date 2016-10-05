@@ -11,17 +11,15 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-
-#include <Interface_Statics.hxx>
 #include <StepAP214.hxx>
 #include <StepAP214_Protocol.hxx>
 
-StaticHandle(StepAP214_Protocol, proto);
+//szv_c1:StaticHandle(StepAP214_Protocol, proto);
+static Handle(StepAP214_Protocol) proto;
 
-Handle(StepAP214_Protocol) StepAP214::Protocol()
-
-	{
-		InitHandleVoid(StepAP214_Protocol, proto);
-		return proto;
-	}
-
+const Handle(StepAP214_Protocol) & StepAP214::Protocol()
+{
+  //szv_c1:InitHandleVoid(StepAP214_Protocol, proto);
+  if (proto.IsNull()) proto = new StepAP214_Protocol;
+  return proto;
+}

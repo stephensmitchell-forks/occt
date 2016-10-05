@@ -16,8 +16,7 @@
 #include <Interface_Macros.hxx>
 #include <TopoDS_HShape.hxx>
 #include <TopoDS_Shape.hxx>
-#include <Transfer_ProcessForFinder.hxx>
-#include <Transfer_IteratorOfProcessForTransient.hxx>
+#include <Transfer_Process.hxx>
 #include <Transfer_SimpleBinderOfTransient.hxx>
 #include <Transfer_TransientProcess.hxx>
 
@@ -90,7 +89,7 @@ Handle(TopTools_HSequenceOfShape) TransferBRep::Shapes (const Handle(Transfer_Tr
   if (TP.IsNull()) return shapes;
   shapes = new TopTools_HSequenceOfShape();
 
-  Transfer_IteratorOfProcessForTransient list = (roots ? TP->RootResult() : TP->CompleteResult());
+  Transfer_TransientProcess::Iterator list = (roots ? TP->RootResult() : TP->CompleteResult());
   for (list.Start(); list.More(); list.Next()) {
     const Handle(Transfer_Binder) &binder = list.Value();
     ShapeAppend (binder,shapes);
@@ -112,7 +111,7 @@ Handle(TopTools_HSequenceOfShape) TransferBRep::Shapes (const Handle(Transfer_Tr
   return shapes;
 }
 
-Handle(TransferBRep_ShapeMapper) TransferBRep::ShapeMapper (const Handle(Transfer_ProcessForFinder)& FP, const TopoDS_Shape& theShape)
+Handle(TransferBRep_ShapeMapper) TransferBRep::ShapeMapper (const Handle(Transfer_Process)& FP, const TopoDS_Shape& theShape)
 {
   Handle(TransferBRep_ShapeMapper) mapper = new TransferBRep_ShapeMapper(theShape);
   const Standard_Integer index = FP->MapIndex (mapper);

@@ -104,7 +104,7 @@ void RWStepShape_RWFaceBound::Check
     for(Standard_Integer i=1; i<=nbEdg; i++) {
       Handle(StepShape_OrientedEdge) theOE1 = theEL1->EdgeListValue(i);
       Handle(StepShape_Edge) theEdg1 = theOE1->EdgeElement();
-      Interface_EntityIterator myShRef = aShto.Sharings(theEdg1);
+      Interface_EntityIterator myShRef = aShto.Graph().Sharings(theEdg1);
       myShRef.SelectType (STANDARD_TYPE(StepShape_OrientedEdge),Standard_True);
       Standard_Integer nbRef = myShRef.NbEntities();
       if(nbRef == 1) {
@@ -129,7 +129,7 @@ void RWStepShape_RWFaceBound::Check
 #endif
 	}
 	else {
-	  myShRef = aShto.Sharings(theOE2);
+      myShRef = aShto.Graph().Sharings(theOE2);
 	  myShRef.SelectType (STANDARD_TYPE(StepShape_EdgeLoop),Standard_True);
 	  myShRef.Start();
 	  Handle(StepShape_EdgeLoop) theEL2 =
@@ -141,7 +141,7 @@ void RWStepShape_RWFaceBound::Check
 #endif
 	  }
 	  else {
-	    myShRef = aShto.Sharings(theEL2);
+        myShRef = aShto.Graph().Sharings(theEL2);
 	    myShRef.SelectType (STANDARD_TYPE(StepShape_FaceBound),Standard_True);
 	    myShRef.Start();
 	    Handle(StepShape_FaceBound) theFB2 =

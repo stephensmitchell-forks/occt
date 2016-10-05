@@ -24,7 +24,7 @@
 #include <Transfer_Binder.hxx>
 #include <Transfer_TransientProcess.hxx>
 
-IMPLEMENT_STANDARD_RTTIEXT(Transfer_TransientProcess,Transfer_ProcessForTransient)
+IMPLEMENT_STANDARD_RTTIEXT(Transfer_TransientProcess,Transfer_Process)
 
 //=======================================================================
 //function : SetGraph

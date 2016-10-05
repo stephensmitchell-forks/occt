@@ -4670,7 +4670,7 @@ static Standard_Integer OCC18612igesbrep (Draw_Interpretor& di, Standard_Integer
       di<<"spline_continuity (read) : "<<Interface_Static::IVal("read.iges.bspline.continuity")<<" (0 : no modif, 1 : C1, 2 : C2)\n";
       di<<"  To modify : command  param read.iges.bspline.continuity\n";
       Handle(XSControl_WorkSession) thesession = Reader.WS();
-      thesession->ClearContext();
+      thesession->TransferReader()->Context().Nullify();
       XSDRAW::SetTransferProcess (thesession->TransferReader()->TransientProcess());
       progress->NewScope ( 80, "Translation" );
       progress->Show();
@@ -4771,7 +4771,7 @@ static Standard_Integer OCC18612igesbrep (Draw_Interpretor& di, Standard_Integer
         di<<"spline_continuity (read) : "<<Interface_Static::IVal("read.iges.bspline.continuity")<<" (0 : no modif, 1 : C1, 2 : C2)\n";
         di<<"  To modify : command  param read.iges.bspline.continuity\n";
         Handle(XSControl_WorkSession) thesession = Reader.WS();
-        thesession->ClearContext();
+        thesession->TransferReader()->Context().Nullify();
         XSDRAW::SetTransferProcess (thesession->TransferReader()->TransientProcess());
         progress->NewScope ( 80, "Translation" );
         progress->Show();

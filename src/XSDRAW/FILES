@@ -1,7 +1,15 @@
 XSDRAW.cxx
 XSDRAW.hxx
+XSDRAW_Activator.cxx
+XSDRAW_Activator.hxx
 XSDRAW_Commands.hxx
+XSDRAW_ControlFunctions.cxx
+XSDRAW_ControlFunctions.hxx
 XSDRAW_Functions.cxx
 XSDRAW_Functions.hxx
+XSDRAW_SelectFunctions.cxx
+XSDRAW_SelectFunctions.hxx
+XSDRAW_ShapeFunctions.cxx
+XSDRAW_ShapeFunctions.hxx
 XSDRAW_Vars.cxx
 XSDRAW_Vars.hxx

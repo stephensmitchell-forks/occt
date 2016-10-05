@@ -27,7 +27,7 @@
 #include <Transfer_Binder.hxx>
 #include <Transfer_Finder.hxx>
 #include <Transfer_FinderProcess.hxx>
-//szv_c1:#include <Transfer_TransientMapper.hxx>
+#include <Transfer_SimpleBinderOfTransient.hxx>
 #include <TransferBRep_ShapeMapper.hxx>
 #include <XSAlgo.hxx>
 #include <XSAlgo_AlgoContainer.hxx>
@@ -38,19 +38,13 @@ Standard_Boolean IGESControl_ActorWrite::Recognize (const Handle(Standard_Transi
 {
   DeclareAndCast(TransferBRep_ShapeMapper,shmap,start);
   if (!shmap.IsNull()) return Standard_True;
-  /*szv_c1:DeclareAndCast(Transfer_TransientMapper,gemap,start);
-  if (!gemap.IsNull()) {
-    Handle(Standard_Transient) geom = gemap->Value();
-    DeclareAndCast(Geom_Curve,Curve,geom);
-    DeclareAndCast(Geom_Surface,Surf,geom);*/
-    DeclareAndCast(Geom_Curve,Curve,start);
-    DeclareAndCast(Geom_Surface,Surf,start);
-    if (!Curve.IsNull() || !Surf.IsNull()) return Standard_True;
-  //szv_c1:}
+  DeclareAndCast(Geom_Curve,Curve,start);
+  DeclareAndCast(Geom_Surface,Surf,start);
+  if (!Curve.IsNull() || !Surf.IsNull()) return Standard_True;
   return Standard_False;
 }
 
-Handle(Transfer_Binder) IGESControl_ActorWrite::Transferring (const Handle(Standard_Transient)& start, const Handle(Transfer_ProcessForFinder)& TP)
+Handle(Transfer_Binder) IGESControl_ActorWrite::Transferring (const Handle(Standard_Transient)& start, const Handle(Transfer_Process)& TP)
 {
   XSAlgo::AlgoContainer()->PrepareForTransfer();
     
@@ -81,28 +75,23 @@ Handle(Transfer_Binder) IGESControl_ActorWrite::Transferring (const Handle(Stand
     XSAlgo::AlgoContainer()->MergeTransferInfo(FP, info);
     if (!ent.IsNull()) return new Transfer_SimpleBinderOfTransient(ent);
   }
-  /*szv_c1:DeclareAndCast(Transfer_TransientMapper,gemap,start);
-  if (!gemap.IsNull()) {
-    Handle(Standard_Transient) geom = gemap->Value();
-    DeclareAndCast(Geom_Curve,Curve,geom);
-    DeclareAndCast(Geom_Surface,Surf,geom);*/
-    DeclareAndCast(Geom_Curve,Curve,start);
-    DeclareAndCast(Geom_Surface,Surf,start);
+
+  DeclareAndCast(Geom_Curve,Curve,start);
+  DeclareAndCast(Geom_Surface,Surf,start);
  
 //  On reconnait : Curve et Surface de Geom
 //   quid de Point; Geom2d ?
  
-    GeomToIGES_GeomCurve GC;    GC.SetModel(modl);
-    GeomToIGES_GeomSurface GS;  GS.SetModel(modl);
-    if (!Curve.IsNull())
-      ent = GC.TransferCurve(Curve,Curve->FirstParameter(),Curve->LastParameter());
-    else if (!Surf.IsNull()) {
-      Standard_Real U1,U2,V1,V2;
-      Surf->Bounds(U1,U2,V1,V2);
-      ent = GS.TransferSurface(Surf,U1,U2,V1,V2);
-    }
-    if (!ent.IsNull()) return new Transfer_SimpleBinderOfTransient(ent);
-  //szv_c1:}
+  GeomToIGES_GeomCurve GC;    GC.SetModel(modl);
+  GeomToIGES_GeomSurface GS;  GS.SetModel(modl);
+  if (!Curve.IsNull())
+    ent = GC.TransferCurve(Curve,Curve->FirstParameter(),Curve->LastParameter());
+  else if (!Surf.IsNull()) {
+    Standard_Real U1,U2,V1,V2;
+    Surf->Bounds(U1,U2,V1,V2);
+    ent = GS.TransferSurface(Surf,U1,U2,V1,V2);
+  }
+  if (!ent.IsNull()) return new Transfer_SimpleBinderOfTransient(ent);
 
   return NULL;
 }

@@ -23,8 +23,6 @@
 
 #include <Interface_Graph.hxx>
 #include <Interface_GraphContent.hxx>
-class Interface_Graph;
-class Standard_Transient;
 class Interface_EntityIterator;
 
 
@@ -33,13 +31,14 @@ class Interface_EntityIterator;
 //! for instance)
 class IFGraph_AllShared  : public Interface_GraphContent
 {
-public:
+ public:
 
   DEFINE_STANDARD_ALLOC
-
   
   //! creates an AllShared from a graph, empty ready to be filled
-  Standard_EXPORT IFGraph_AllShared(const Interface_Graph& agraph);
+  IFGraph_AllShared(const Interface_Graph& agraph)
+  : thegraph (agraph)
+  {}
   
   //! creates an AllShared which memrizes Entities shared by a given
   //! one, at any level, including itself
@@ -47,40 +46,21 @@ public:
   
   //! adds an entity and its shared ones to the list (allows to
   //! cumulate all Entities shared by some ones)
-  Standard_EXPORT void GetFromEntity (const Handle(Standard_Transient)& ent);
+  void GetFromEntity (const Handle(Standard_Transient)& ent) { thegraph.GetFromEntity(ent,Standard_True); }
   
   //! Adds Entities from an EntityIterator and all their shared
   //! ones at any level
   Standard_EXPORT void GetFromIter (const Interface_EntityIterator& iter);
   
   //! Allows to restart on a new data set
-  Standard_EXPORT void ResetData();
-  
+  void ResetData() { Reset(); thegraph.Reset(); }
+
   //! does the specific evaluation (shared entities atall levels)
   Standard_EXPORT virtual void Evaluate() Standard_OVERRIDE;
 
-
-
-
-protected:
-
-
-
-
-
-private:
-
-
+ private:
 
   Interface_Graph thegraph;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IFGraph_AllShared_HeaderFile

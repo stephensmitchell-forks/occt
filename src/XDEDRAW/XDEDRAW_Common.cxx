@@ -53,16 +53,11 @@
 #include <TopoDS_Shape.hxx>
 
 #include <stdio.h>
+
 //============================================================
 // Support for several models in DRAW
 //============================================================
 static Handle(Dico_DictionaryOfTransient) thedictws = new Dico_DictionaryOfTransient;
-
-static Standard_Boolean ClearDicWS()
-{
-  thedictws->Clear();
-  return Standard_True;
-}
 
 static void AddWS(TCollection_AsciiString filename,
 		  const Handle(XSControl_WorkSession)& WS)
@@ -74,7 +69,7 @@ static void AddWS(TCollection_AsciiString filename,
 
 static Standard_Boolean FillDicWS(Handle(STEPCAFControl_DictionaryOfExternFile)& dicFile)
 {
-  ClearDicWS();
+  thedictws->Clear();
   if ( dicFile->IsEmpty() ) {
     return Standard_False;
   }
@@ -86,16 +81,6 @@ static Standard_Boolean FillDicWS(Handle(STEPCAFControl_DictionaryOfExternFile)&
     AddWS ( filename, EF->GetWS() );
   }
   return Standard_True;  
-}
-
-static Standard_Boolean SetCurrentWS (TCollection_AsciiString filename)
-{
-  if ( !thedictws->HasItem(filename) ) return Standard_False;
-  Handle(XSControl_WorkSession) CurrentWS = 
-    Handle(XSControl_WorkSession)::DownCast( thedictws->Item(filename) );
-  XSDRAW::Pilot()->SetSession( CurrentWS );
-  
-  return Standard_True;
 }
 
 
@@ -111,7 +96,11 @@ static Standard_Integer SetCurWS (Draw_Interpretor& di , Standard_Integer argc, 
     return 1;
   }
   TCollection_AsciiString filename (argv[1]);
-  SetCurrentWS( filename );
+  if ( thedictws->HasItem(filename) ) {
+    Handle(XSControl_WorkSession) CurrentWS = 
+      Handle(XSControl_WorkSession)::DownCast( thedictws->Item(filename) );
+    XSDRAW::Pilot()->SetSession( CurrentWS );
+  }
   return 0;
 }
 

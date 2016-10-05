@@ -36,8 +36,6 @@ void RWStepShape_RWEdgeCurve::ReadStep
 	 Handle(Interface_Check)& ach,
 	 const Handle(StepShape_EdgeCurve)& ent) const
 {
-
-
 	// --- Number of Parameter Control ---
 
 	if (!data->CheckNbParams(num,5,ach,"edge_curve")) return;
@@ -120,18 +118,13 @@ void RWStepShape_RWEdgeCurve::Check
    const Interface_ShareTool& aShto,
    Handle(Interface_Check)& ach) const
 {
-//  cout << "------ calling CheckEdgeCurve ------" << endl;
-  
   Handle(StepShape_OrientedEdge) theOE1, theOE2;
   Handle(StepShape_FaceBound)    theFOB1, theFOB2;
-  //Handle(StepShape_FaceSurface)  theFS1, theFS2;
 
   Standard_Boolean theOEOri1 = Standard_True;
   Standard_Boolean theOEOri2 = Standard_True;
   Standard_Boolean theFBOri1 = Standard_True;
   Standard_Boolean theFBOri2 = Standard_True;
-  //Standard_Boolean theFSOri1 = Standard_True;
-  //Standard_Boolean theFSOri2 = Standard_True;
   Standard_Boolean Cumulated1, Cumulated2;
 
   // 1- First Vertex != LastVertex but First VertexPoint == Last VertexPoint
@@ -155,15 +148,14 @@ void RWStepShape_RWEdgeCurve::Check
 
     if (!StartPoint.IsNull() && !EndPoint.IsNull()) {
       Standard_Real Dist = Sqrt
-	((StartPoint->CoordinatesValue(1) - EndPoint->CoordinatesValue(1)) *
-	 (StartPoint->CoordinatesValue(1) - EndPoint->CoordinatesValue(1)) +
-	 (StartPoint->CoordinatesValue(2) - EndPoint->CoordinatesValue(2)) *
-	 (StartPoint->CoordinatesValue(2) - EndPoint->CoordinatesValue(2)) +
-	 (StartPoint->CoordinatesValue(3) - EndPoint->CoordinatesValue(3)) *
-	 (StartPoint->CoordinatesValue(3) - EndPoint->CoordinatesValue(3)));
-      if (Dist < Precision::Confusion() ) {
-	ach->AddWarning("Two instances of Vertex have equal (within uncertainty) coordinates");
-      }
+      ((StartPoint->CoordinatesValue(1) - EndPoint->CoordinatesValue(1)) *
+	   (StartPoint->CoordinatesValue(1) - EndPoint->CoordinatesValue(1)) +
+	   (StartPoint->CoordinatesValue(2) - EndPoint->CoordinatesValue(2)) *
+	   (StartPoint->CoordinatesValue(2) - EndPoint->CoordinatesValue(2)) +
+	   (StartPoint->CoordinatesValue(3) - EndPoint->CoordinatesValue(3)) *
+	   (StartPoint->CoordinatesValue(3) - EndPoint->CoordinatesValue(3)));
+      if (Dist < Precision::Confusion() )
+        ach->AddWarning("Two instances of Vertex have equal (within uncertainty) coordinates");
     }
   }
   
@@ -175,10 +167,10 @@ void RWStepShape_RWEdgeCurve::Check
     ach->AddFail("ERROR: EdgeCurve not referenced");
   }
   else {
-    Interface_EntityIterator myShRef = aShto.Sharings(ent);
+    Interface_EntityIterator myShRef = aShto.Graph().Sharings(ent);
     myShRef.SelectType (STANDARD_TYPE(StepShape_OrientedEdge),Standard_True);
     nbRef = myShRef.NbEntities();
-    if (nbRef ==2) {
+    if (nbRef == 2) {
       theOE1 = Handle(StepShape_OrientedEdge)::DownCast(myShRef.Value());
       theOEOri1 = theOE1->Orientation();
       myShRef.Next();
@@ -188,110 +180,84 @@ void RWStepShape_RWEdgeCurve::Check
       // get the FaceBound orientation for theOE1
       
       Standard_Boolean sharOE1 = aShto.IsShared(theOE1);
-      if(!sharOE1){
+      if(sharOE1) {
+        myShRef = aShto.Graph().Sharings(theOE1);
+        myShRef.SelectType (STANDARD_TYPE(StepShape_EdgeLoop),Standard_True);
+        nbRef = myShRef.NbEntities();
+        if (nbRef == 1) {
+          myShRef.Start();
+          Handle(StepShape_EdgeLoop) theEL1 = Handle(StepShape_EdgeLoop)::DownCast(myShRef.Value());
+
+          Standard_Boolean sharEL1 = aShto.IsShared(theEL1);
+          if(sharEL1) {
+            myShRef = aShto.Graph().Sharings(theEL1);
+            myShRef.SelectType (STANDARD_TYPE(StepShape_FaceBound),Standard_True);
 #ifdef OCCT_DEBUG
-	cout << "OrientedEdge1 not shared" <<endl;
+            nbRef = 
 #endif
-      }
-      else {
-	myShRef = aShto.Sharings(theOE1);
-	myShRef.SelectType (STANDARD_TYPE(StepShape_EdgeLoop),Standard_True);
-	nbRef = myShRef.NbEntities();
-	if (nbRef == 1) {
-	  myShRef.Start();
-	  Handle(StepShape_EdgeLoop) theEL1 =
-	    Handle(StepShape_EdgeLoop)::DownCast(myShRef.Value());
-	  Standard_Boolean sharEL1 = aShto.IsShared(theEL1);
-	  if(!sharEL1) {
-#ifdef OCCT_DEBUG
-	    cout << "EdgeLoop1 not shared" <<endl;
-#endif
-	  }
-	  else {
-	    myShRef = aShto.Sharings(theEL1);
-	    myShRef.SelectType (STANDARD_TYPE(StepShape_FaceBound),Standard_True);
-#ifdef OCCT_DEBUG
-	    nbRef = 
-#endif
-	      myShRef.NbEntities();
-	    myShRef.Start();
-	    theFOB1 = Handle(StepShape_FaceBound)::DownCast(myShRef.Value());
-	    if (!theFOB1.IsNull()) {
-	      theFBOri1 = theFOB1->Orientation();
-	    }
-	    else {
-#ifdef OCCT_DEBUG
-	      cout << "EdgeLoop not referenced by FaceBound" << endl;
-#endif
-	    }
-	  }
-	}
-	else {
-	  if (nbRef == 0) {
-#ifdef OCCT_DEBUG
-	    cout << "OrientedEdge not referenced" << endl;
-#endif
-          }
-	  else {
-	    if (aShto.NbTypedSharings(theOE1,
-				      STANDARD_TYPE(StepShape_EdgeLoop)) > 1) {
-#ifdef OCCT_DEBUG
-	      cout << "OrientedEdge referenced more than once" << endl;
-#endif
+            myShRef.NbEntities();
+            myShRef.Start();
+            theFOB1 = Handle(StepShape_FaceBound)::DownCast(myShRef.Value());
+            if (!theFOB1.IsNull()) {
+              theFBOri1 = theFOB1->Orientation();
             }
+#ifdef OCCT_DEBUG
+            else cout << "EdgeLoop not referenced by FaceBound" << endl;
+#endif
           }
-	}
+#ifdef OCCT_DEBUG
+          else cout << "EdgeLoop1 not shared" <<endl;
+#endif
+        }
+#ifdef OCCT_DEBUG
+        else {
+          if (nbRef == 0)
+            cout << "OrientedEdge not referenced" << endl;
+          /*szv_c1:else if (aShto.NbTypedSharings(theOE1,STANDARD_TYPE(StepShape_EdgeLoop)) > 1)
+            cout << "OrientedEdge referenced more than once" << endl;*/
+        }
+#endif
       }
+#ifdef OCCT_DEBUG
+      else cout << "OrientedEdge1 not shared" <<endl;
+#endif
 
       // get the FaceBound orientation for theOE2
 
       Standard_Boolean sharOE2 = aShto.IsShared(theOE2);
-      if(!sharOE2){
+      if (sharOE2) {
+        myShRef = aShto.Graph().Sharings(theOE2);
+        myShRef.Start();
+        Handle(StepShape_EdgeLoop) theEL2 =
+        Handle(StepShape_EdgeLoop)::DownCast(myShRef.Value());
+        Standard_Boolean sharEL2 = aShto.IsShared(theEL2);
+        if (sharEL2) {
+          myShRef = aShto.Graph().Sharings(theEL2);
+          myShRef.Start();
+          theFOB2 = Handle(StepShape_FaceBound)::DownCast(myShRef.Value());
+          if (!theFOB2.IsNull())
+            theFBOri2 = theFOB2->Orientation();
 #ifdef OCCT_DEBUG
-	cout << "OrientedEdge2 not shared" <<endl;
+          else cout << "EdgeLoop not referenced by FaceBound" << endl;
+#endif
+        }
+#ifdef OCCT_DEBUG
+        else cout << "EdgeLoop2 not shared" <<endl;
 #endif
       }
-      else {
-	myShRef = aShto.Sharings(theOE2);
 #ifdef OCCT_DEBUG
-// 	Standard_Integer nbRef = 
+      else cout << "OrientedEdge2 not shared" <<endl;
 #endif
-// unused	  myShRef.NbEntities();	
-	myShRef.Start();
-	Handle(StepShape_EdgeLoop) theEL2 =
-	  Handle(StepShape_EdgeLoop)::DownCast(myShRef.Value());
-	Standard_Boolean sharEL2 = aShto.IsShared(theEL2);
-	if(!sharEL2){
-#ifdef OCCT_DEBUG
-	  cout << "EdgeLoop2 not shared" <<endl;
-#endif
-	}
-	else {
-	  myShRef = aShto.Sharings(theEL2);
-          // unused Standard_Integer nbRef = myShRef.NbEntities();	
-	  myShRef.Start();
-	  theFOB2 = Handle(StepShape_FaceBound)::DownCast(myShRef.Value());
-	  if (!theFOB2.IsNull()) {
-	    theFBOri2 = theFOB2->Orientation();
-	  }
-	  else {
-#ifdef OCCT_DEBUG
-	    cout << "EdgeLoop not referenced by FaceBound" << endl;
-#endif
-	  }
-	}
-      }
         
-        // "cumulate" the FaceBound and the OrientedEdge orientation
+      // "cumulate" the FaceBound and the OrientedEdge orientation
         
-        Cumulated1 = theFBOri1 ^ theOEOri1;
+      Cumulated1 = theFBOri1 ^ theOEOri1;
       Cumulated2 = theFBOri2 ^ theOEOri2;
       
       // the orientation of the OrientedEdges must be opposite
       
-      if (Cumulated1 == Cumulated2) {
-	ach->AddFail("ERROR: non 2-manifold topology");
-      }
+      if (Cumulated1 == Cumulated2)
+        ach->AddFail("ERROR: non 2-manifold topology");
     }
   }
 }

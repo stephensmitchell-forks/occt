@@ -14,14 +14,13 @@
 
 #include <HeaderSection.hxx>
 #include <HeaderSection_Protocol.hxx>
-#include <Interface_Statics.hxx>
 
-StaticHandle(HeaderSection_Protocol, proto);
+//szv_c1:StaticHandle(HeaderSection_Protocol, proto);
+static Handle(HeaderSection_Protocol) proto;
 
-Handle(HeaderSection_Protocol) HeaderSection::Protocol()
-
-	{
-		InitHandleVoid(HeaderSection_Protocol, proto);
-		return proto;
-	}
-
+const Handle(HeaderSection_Protocol) & HeaderSection::Protocol()
+{
+  //szv_c1:InitHandleVoid(HeaderSection_Protocol, proto)
+  if (proto.IsNull()) proto = new HeaderSection_Protocol;
+  return proto;
+}

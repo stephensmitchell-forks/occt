@@ -20,7 +20,6 @@
 #include <Dico_IteratorOfDictionaryOfInteger.hxx>
 #include <Dico_IteratorOfDictionaryOfTransient.hxx>
 #include <IFSelect_CheckCounter.hxx>
-#include <IFSelect_Functions.hxx>
 #include <IGESControl_Controller.hxx>
 #include <IGESControl_Reader.hxx>
 #include <IGESData_FileProtocol.hxx>
@@ -42,7 +41,6 @@
 #include <TopoDS_Shape.hxx>
 #include <Transfer_ActorOfTransientProcess.hxx>
 #include <Transfer_Binder.hxx>
-#include <Transfer_IteratorOfProcessForTransient.hxx>
 #include <Transfer_TransientProcess.hxx>
 #include <TransferBRep.hxx>
 #include <XSControl_Controller.hxx>
@@ -56,6 +54,7 @@
 //function : IGESControl_Reader
 //purpose  : 
 //=======================================================================
+
 IGESControl_Reader::IGESControl_Reader ()
 {
   IGESControl_Controller::Init();
@@ -147,7 +146,7 @@ void  IGESControl_Reader::PrintTransferInfo
   if (! model.IsNull()) {
     nbEntities = model->NbEntities();
     nbRoots = TP->NbRoots();
-    Transfer_IteratorOfProcessForTransient iterTrans = TP->RootResult(Standard_True);
+    Transfer_TransientProcess::Iterator iterTrans = TP->RootResult(Standard_True);
     Handle(Dico_DictionaryOfInteger) dicoCountResult = new Dico_DictionaryOfInteger;
     Handle(Dico_DictionaryOfInteger) dicoCountMapping = new Dico_DictionaryOfInteger;
     for (iterTrans.Start(); iterTrans.More() ; iterTrans.Next() ) {

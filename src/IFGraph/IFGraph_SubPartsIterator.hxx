@@ -23,14 +23,8 @@
 
 #include <Interface_Graph.hxx>
 #include <TColStd_HSequenceOfInteger.hxx>
-#include <Standard_Integer.hxx>
-#include <Standard_Boolean.hxx>
-class Standard_OutOfRange;
-class Standard_NoSuchObject;
-class Interface_InterfaceError;
-class Interface_Graph;
+class TColStd_HSequenceOfTransient;
 class Interface_InterfaceModel;
-class Standard_Transient;
 class Interface_EntityIterator;
 class Interface_GraphContent;
 
@@ -82,8 +76,8 @@ public:
   //! (0 at load time)
   Standard_EXPORT Standard_Integer PartNum() const;
   
-  //! Sets SubPartIterator to get Entities (by GetFromEntity &
-  //! GetFromIter) into load status, to be analysed later
+  //! Sets SubPartIterator to get Entities (by GetFromEntity & GetFromIter)
+  //! into load status, to be analysed later
   Standard_EXPORT void SetLoad();
   
   //! Sets numero of receiving part to a new value
@@ -150,35 +144,18 @@ public:
   //! Error : same as above (end of iteration)
   Standard_EXPORT Interface_EntityIterator Entities() const;
   
-  Standard_EXPORT virtual ~IFGraph_SubPartsIterator();
+  Standard_EXPORT virtual ~IFGraph_SubPartsIterator() {}
 
-protected:
-
-
+ protected:
 
   Interface_Graph thegraph;
 
-
-private:
-
-  
-  //! Returns the Graph used by <me>. Used to create another
-  //! SubPartsIterator from <me>
-  Standard_EXPORT const Interface_Graph& Graph() const;
-
+ private:
 
   Handle(TColStd_HSequenceOfInteger) theparts;
   Handle(TColStd_HSequenceOfInteger) thefirsts;
   Standard_Integer thepart;
   Standard_Integer thecurr;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IFGraph_SubPartsIterator_HeaderFile

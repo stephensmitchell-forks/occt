@@ -29,8 +29,6 @@
 #include <TColStd_HArray1OfListOfInteger.hxx>
 #include <TColStd_HSequenceOfTransient.hxx>
 
-class Interface_InterfaceModel;
-class Standard_DomainError;
 class Interface_GeneralLib;
 class Interface_Protocol;
 class Interface_GTool;
@@ -69,18 +67,13 @@ public:
   //! Creates an empty graph, ready to receive Entities from amodel
   //! Note that this way of Creation allows <me> to verify that
   //! Entities to work with are contained in <amodel>
-  //! Basic Shared and Sharing lists are obtained from a General
-  //! Services Library, given directly as an argument
-  Standard_EXPORT Interface_Graph(const Handle(Interface_InterfaceModel)& amodel, const Interface_GeneralLib& lib, const Standard_Boolean theModeStats = Standard_True);
-  
-  //! Same as above, but the Library is defined through a Protocol
-  Standard_EXPORT Interface_Graph(const Handle(Interface_InterfaceModel)& amodel, const Handle(Interface_Protocol)& protocol, const Standard_Boolean theModeStats = Standard_True);
-  
-  //! Same as above, but the Library is defined through a Protocol
-  Standard_EXPORT Interface_Graph(const Handle(Interface_InterfaceModel)& amodel, const Handle(Interface_GTool)& gtool, const Standard_Boolean theModeStats = Standard_True);
-  
-  //! Same a above but works with the Protocol recorded in the Model
-  Standard_EXPORT Interface_Graph(const Handle(Interface_InterfaceModel)& amodel, const Standard_Boolean theModeStats = Standard_True);
+  Interface_Graph(const Handle(Interface_InterfaceModel)& amodel, const Standard_Boolean theModeStats = Standard_True)
+  : themodel (amodel), thepresents ("")
+  {
+    if(theModeStats)
+      InitStats();
+    Evaluate();
+  }
   
   //! Creates a Graph from another one, getting all its data
   //! Remark that status are copied from <agraph>, but the other
@@ -136,14 +129,14 @@ public:
   Standard_EXPORT void RemoveStatus (const Standard_Integer stat);
   
   //! Returns the Bit Map in order to read or edit flag values
-  Standard_EXPORT const Interface_BitMap& BitMap() const;
-  
+  const Interface_BitMap& BitMap() const { return theflags; }
+
   //! Returns the Bit Map in order to edit it (add new flags)
-  Standard_EXPORT Interface_BitMap& CBitMap();
-  
+  Interface_BitMap& CBitMap() { return theflags; }
+
   //! Returns the Model with which this Graph was created
-  Standard_EXPORT const Handle(Interface_InterfaceModel)& Model() const;
-  
+  const Handle(Interface_InterfaceModel)& Model() const { return themodel; }
+
   //! Loads Graph with all Entities contained in the Model
   Standard_EXPORT void GetFromModel();
   
@@ -229,24 +222,17 @@ public:
   //! Returns mode resposible for computation of statuses;
   Standard_EXPORT Standard_Boolean ModeStat() const;
 
-
-
-
-protected:
-
+ protected:
   
   //! Initialize statuses and flags
   Standard_EXPORT void InitStats();
-
 
   Handle(Interface_InterfaceModel) themodel;
   TCollection_AsciiString thepresents;
   Handle(TColStd_HArray1OfInteger) thestats;
   Handle(TColStd_HArray1OfListOfInteger) thesharings;
 
-
-private:
-
+ private:
   
   //! Performs the Evaluation of the Graph, from an initial Library,
   //! either defined through a Protocol, or given dierctly
@@ -257,16 +243,7 @@ private:
   //! If <gtool> is defined, it has priority
   Standard_EXPORT void Evaluate();
 
-
   Interface_BitMap theflags;
-
-
 };
-
-
-
-
-
-
 
 #endif // _Interface_Graph_HeaderFile

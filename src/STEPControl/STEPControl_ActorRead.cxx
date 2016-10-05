@@ -263,7 +263,7 @@ Standard_Boolean STEPControl_ActorRead::Recognize (const Handle(Standard_Transie
 //           mapping
 // ============================================================================
 
-Handle(Transfer_Binder) STEPControl_ActorRead::Transferring (const Handle(Standard_Transient)& start, const Handle(Transfer_ProcessForTransient)& TP)
+Handle(Transfer_Binder) STEPControl_ActorRead::Transferring (const Handle(Standard_Transient)& start, const Handle(Transfer_Process)& TP)
 {  
   // [BEGIN] Get version of preprocessor (to detect I-Deas case) (ssv; 23.11.2010)
   Handle(StepData_StepModel) aStepModel = Handle(StepData_StepModel)::DownCast ( TP->Model() );
@@ -1426,7 +1426,6 @@ Handle(Transfer_Binder) STEPControl_ActorRead::TransferShape(const Handle(Standa
   Handle(Message_Messenger) sout = TP->Messenger();
 #ifdef TRANSLOG
 //  POUR MISE AU POINT, a supprimer ensuite
-//  sout<<"STEP->Shape, ent n0 "<<TP->Model()->Number(start)<<" Level="<<TP->NestingLevel()<<endl;
   if (TP->TraceLevel() > 1) 
     sout<<" -- Actor : Transfer Ent.n0 "<<TP->Model()->Number(start)<<"  Type "<<start->DynamicType()->Name()<<endl;
 #endif

@@ -31,7 +31,6 @@
 #include <STEPControl_Writer.hxx>
 #include <StepData_StepModel.hxx>
 #include <StepGeom_Axis2Placement3d.hxx>
-#include <StepSelect_Activator.hxx>
 #include <STEPSelections_AssemblyExplorer.hxx>
 #include <STEPSelections_Counter.hxx>
 #include <StepShape_ShapeRepresentation.hxx>
@@ -48,6 +47,7 @@
 #include <XSControl_WorkSession.hxx>
 #include <XSDRAW.hxx>
 #include <XSDRAWSTEP.hxx>
+#include <XSDRAWSTEP_Activator.hxx>
 
 #include <stdio.h>
 //  Pour le transfert (write)
@@ -66,12 +66,212 @@ static void cleanpilot ()
 //purpose  : 
 //=======================================================================
 
+#include <IFSelect_Selection.hxx>
+#include <IFSelect_SignCounter.hxx>
+#include <IFSelect_SignAncestor.hxx>
+#include <IFSelect_SelectSignature.hxx>
+#include <IFSelect_SelectModelEntities.hxx>
+#include <IFSelect_SelectModelRoots.hxx>
+#include <IFSelect_EditForm.hxx>
+#include <StepAP214.hxx>
+#include <StepAP214_Protocol.hxx>
+#include <STEPSelections_SelectDerived.hxx>
+#include <STEPSelections_SelectFaces.hxx>
+#include <STEPSelections_SelectInstances.hxx>
+#include <STEPSelections_SelectGSCurves.hxx>
+#include <STEPSelections_SelectAssembly.hxx>
+#include <STEPSelections_SelectForTransfer.hxx>
+#include <APIHeaderSection_EditHeader.hxx>
+#include <STEPEdit_EditContext.hxx>
+#include <STEPEdit_EditSDR.hxx>
+  
+//! Returns a SignType fit for STEP (creates the first time)
+static Handle(IFSelect_Signature) SignType()
+{
+  static Handle(StepSelect_StepType) sty;
+  if (!sty.IsNull()) return sty;
+  sty = new StepSelect_StepType;
+  sty->SetProtocol (StepAP214::Protocol());
+  return sty;
+}
+
+//! Creates a Selection for ShapeDefinitionRepresentation
+//! By default searches among root entities
+static Handle(IFSelect_SelectSignature) NewSelectSDR()
+{
+  Handle(IFSelect_SelectSignature) sel = new IFSelect_SelectSignature
+    (SignType(),"SHAPE_DEFINITION_REPRESENTATION");
+  sel->SetInput (new IFSelect_SelectModelRoots);
+  return sel;
+}
+
+//! Creates a Selection for Placed Items, i.e. MappedItem or
+//! ContextDependentShapeRepresentation, which itself refers to a
+//! RepresentationRelationship with possible subtypes (Shape...
+//! and/or ...WithTransformation)
+//! By default in the whole StepModel
+static Handle(IFSelect_SelectSignature) NewSelectPlacedItem()
+{
+  Handle(IFSelect_SelectSignature) sel = new IFSelect_SelectSignature
+    (SignType(),"MAPPED_ITEM|CONTEXT_DEPENDENT_SHAPE_REPRESENTATION",Standard_False);
+  sel->SetInput (new IFSelect_SelectModelEntities);
+  return sel;
+}
+
+//! Creates a Selection for ShapeRepresentation and its sub-types,
+//! plus ContextDependentShapeRepresentation (which is not a
+//! sub-type of ShapeRepresentation)
+//! By default in the whole StepModel
+static Handle(IFSelect_SelectSignature) NewSelectShapeRepr()
+{
+  Handle(IFSelect_SelectSignature) sel = new IFSelect_SelectSignature
+    (SignType(),"SHAPE_REPRESENTATION",Standard_False);
+  // REPRESENTATION_RELATIONSHIP passe par CONTEXT_DEPENDENT_SHAPE_REPRESENTATION
+  sel->SetInput (new IFSelect_SelectModelEntities);
+  return sel;
+}
+
 void XSDRAWSTEP::Init ()
 {
-  Handle(StepSelect_Activator)   stepact = new StepSelect_Activator;
-  if (STEPControl_Controller::Init()) // XSDRAW::SetNorm("STEP AP-214"); trop tot
-    XSDRAW::SetController(XSControl_Controller::Recorded("STEP"));
+  Handle(XSDRAWSTEP_Activator) stepact = new XSDRAWSTEP_Activator;
+
+  STEPControl_Controller::Init();
+  Handle(XSControl_Controller) aCntl = XSControl_Controller::Recorded("STEP");
+
+  static int gInit = 0;
+  if (!gInit) {
+    gInit = 1;
+
+    //   ---  SELECTIONS, SIGNATURES, COMPTEURS, EDITEURS
+    DeclareAndCast(IFSelect_Selection,xmr,aCntl->SessionItem("xst-model-roots"));
+    if (!xmr.IsNull()) {
+      Handle(IFSelect_Signature) sty = SignType();
+      aCntl->AddSessionItem (sty,"step-type");
+      Handle(IFSelect_SignCounter) tys = new IFSelect_SignCounter(sty,Standard_False,Standard_True);
+      aCntl->AddSessionItem (tys,"step-types");
+
+      //pdn S4133 18.02.99
+      aCntl->AddSessionItem (new IFSelect_SignAncestor(),"xst-derived");
+
+      Handle(STEPSelections_SelectDerived) stdvar = new STEPSelections_SelectDerived();
+      stdvar->SetProtocol(StepAP214::Protocol());
+      aCntl->AddSessionItem (stdvar,"step-derived");
+    
+      Handle(IFSelect_SelectSignature) selsdr = NewSelectSDR();
+      selsdr->SetInput (xmr);
+      aCntl->AddSessionItem (selsdr,"step-shape-def-repr");
+
+      aCntl->AddSessionItem (NewSelectPlacedItem(),"step-placed-items");
+      // input deja pret avec ModelAll
+      aCntl->AddSessionItem (NewSelectShapeRepr(),"step-shape-repr");
+    }
   
+    //pdn
+    Handle(STEPSelections_SelectFaces) stfaces = new STEPSelections_SelectFaces;
+    stfaces->SetInput (xmr);
+    aCntl->AddSessionItem (stfaces,"step-faces");
+  
+    Handle(STEPSelections_SelectInstances) stinst = new STEPSelections_SelectInstances;
+    aCntl->AddSessionItem (stinst,"step-instances");
+  
+    Handle(STEPSelections_SelectGSCurves) stcurves = new STEPSelections_SelectGSCurves;
+    stcurves->SetInput (xmr);
+    aCntl->AddSessionItem (stcurves,"step-GS-curves");
+  
+    Handle(STEPSelections_SelectAssembly) assembly = new STEPSelections_SelectAssembly;
+    assembly->SetInput (xmr);
+    aCntl->AddSessionItem (assembly,"step-assembly");
+  
+    Handle(APIHeaderSection_EditHeader) edhead = new APIHeaderSection_EditHeader;
+    Handle(IFSelect_EditForm) edheadf = new IFSelect_EditForm (edhead,Standard_False,Standard_True,"Step Header");
+    aCntl->AddSessionItem (edhead,"step-header-edit");
+    aCntl->AddSessionItem (edheadf,"step-header");
+
+    Handle(STEPEdit_EditContext) edctx = new STEPEdit_EditContext;
+    Handle(IFSelect_EditForm) edctxf = new IFSelect_EditForm (edctx,Standard_False,Standard_True,"STEP Product Definition Context");
+    aCntl->AddSessionItem (edctx,"step-context-edit");
+    aCntl->AddSessionItem (edctxf,"step-context");
+
+    Handle(STEPEdit_EditSDR) edsdr = new STEPEdit_EditSDR;
+    Handle(IFSelect_EditForm) edsdrf = new IFSelect_EditForm (edsdr,Standard_False,Standard_True,"STEP Product Data (SDR)");
+    aCntl->AddSessionItem (edsdr,"step-SDR-edit");
+    aCntl->AddSessionItem (edsdrf,"step-SDR-data");
+  }
+
+  XSDRAW::SetController(aCntl);
+
+  Handle(XSControl_WorkSession) WS = XSDRAW::Session();
+
+  Handle(IFSelect_SelectModelRoots) slr;
+  Handle(Standard_Transient) slr1 = WS->NamedItem("xst-model-roots");
+  if(!slr1.IsNull())
+    slr = Handle(IFSelect_SelectModelRoots)::DownCast(slr1);
+  else  {
+    slr = new IFSelect_SelectModelRoots;
+    WS->AddNamedItem ("xst-model-roots",slr);
+  }
+
+  Handle(STEPSelections_SelectForTransfer) st1= new STEPSelections_SelectForTransfer;
+  st1->SetReader (WS->TransferReader());
+  WS->AddNamedItem ("xst-transferrable-roots",st1);
+
+  if (!slr.IsNull()) {
+    Handle(IFSelect_Signature) sty = SignType();
+    WS->AddNamedItem ("step-type",sty);
+    
+    Handle(IFSelect_SignCounter) tys = new IFSelect_SignCounter(sty,Standard_False,Standard_True);
+    WS->AddNamedItem ("step-types",tys);
+
+	//szv:mySignType = sty;
+    WS->SetSignType( sty );
+    
+    //pdn S4133 18.02.99
+    WS->AddNamedItem ("xst-derived",new IFSelect_SignAncestor());
+    Handle(STEPSelections_SelectDerived) stdvar = new STEPSelections_SelectDerived();
+    stdvar->SetProtocol(StepAP214::Protocol());
+    WS->AddNamedItem ("step-derived",stdvar);
+    
+    Handle(IFSelect_SelectSignature) selsdr = NewSelectSDR();
+    selsdr->SetInput (slr);
+    WS->AddNamedItem ("step-shape-def-repr",selsdr);
+    Handle(IFSelect_SelectSignature) selrrs = NewSelectPlacedItem();
+    WS->AddNamedItem ("step-placed-items",selrrs);
+    Handle(IFSelect_SelectSignature) selsr = NewSelectShapeRepr();
+    // input deja pret avec ModelAll
+    WS->AddNamedItem ("step-shape-repr",selsr);
+  }
+  
+  //pdn
+  Handle(STEPSelections_SelectFaces) stfaces = new STEPSelections_SelectFaces;
+  stfaces->SetInput (slr);
+  WS->AddNamedItem ("step-faces",stfaces);
+  
+  Handle(STEPSelections_SelectInstances) stinst = new STEPSelections_SelectInstances;
+  WS->AddNamedItem ("step-instances",stinst);
+  
+  Handle(STEPSelections_SelectGSCurves) stcurves = new STEPSelections_SelectGSCurves;
+  stcurves->SetInput (slr);
+  WS->AddNamedItem ("step-GS-curves",stcurves);
+  
+  Handle(STEPSelections_SelectAssembly) assembly = new STEPSelections_SelectAssembly;
+  assembly->SetInput (slr);
+  WS->AddNamedItem ("step-assembly",assembly);
+  
+  Handle(APIHeaderSection_EditHeader) edhead = new APIHeaderSection_EditHeader;
+  Handle(IFSelect_EditForm) edheadf = new IFSelect_EditForm (edhead,Standard_False,Standard_True,"Step Header");
+  WS->AddNamedItem ("step-header-edit",edhead);
+  WS->AddNamedItem ("step-header",edheadf);
+
+  Handle(STEPEdit_EditContext) edctx = new STEPEdit_EditContext;
+  Handle(IFSelect_EditForm) edctxf = new IFSelect_EditForm (edctx,Standard_False,Standard_True,"STEP Product Definition Context");
+  WS->AddNamedItem ("step-context-edit",edctx);
+  WS->AddNamedItem ("step-context",edctxf);
+
+  Handle(STEPEdit_EditSDR) edsdr = new STEPEdit_EditSDR;
+  Handle(IFSelect_EditForm) edsdrf = new IFSelect_EditForm (edsdr,Standard_False,Standard_True,"STEP Product Data (SDR)");
+  WS->AddNamedItem ("step-SDR-edit",edsdr);
+  WS->AddNamedItem ("step-SDR-data",edsdrf);
+
   atexit (cleanpilot);
 }
 

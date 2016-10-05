@@ -13,6 +13,7 @@
 
 //#73 rln 10.03.99 S4135: "read.scale.unit" does not affect GlobalSection
 
+#include <IGESData.hxx>
 #include <IGESData_BasicEditor.hxx>
 #include <IGESData_ColorEntity.hxx>
 #include <IGESData_DirChecker.hxx>
@@ -53,7 +54,7 @@ void IGESData_BasicEditor::Init (const Handle(IGESData_Protocol)& protocol)
 {
   theunit = Standard_False;
   theproto = protocol;
-  themodel = GetCasted(IGESData_IGESModel,Interface_InterfaceModel::Template("iges"));
+  themodel = IGESData::NewModel();
   theglib = Interface_GeneralLib (protocol);
   theslib = protocol;
 }
@@ -154,7 +155,7 @@ Standard_Boolean IGESData_BasicEditor::SetUnitName (const Standard_CString name)
   Standard_Integer nb = themodel->NbEntities();
   if (nb == 0) return;
   TColStd_Array1OfInteger subs (0,nb); subs.Init(0); // gere Subordinate Status
-  Interface_Graph G (themodel,theglib);    // gere & memorise UseFlag
+  Interface_Graph G (themodel);    // gere & memorise UseFlag
   G.ResetStatus();
 
 //  2 phases : d abord on fait un calcul d ensemble. Ensuite on applique

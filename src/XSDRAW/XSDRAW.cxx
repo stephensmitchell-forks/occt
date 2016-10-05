@@ -15,12 +15,12 @@
 #include <DBRep.hxx>
 #include <Dico_DictionaryOfInteger.hxx>
 #include <Draw_Appli.hxx>
-#include <IFSelect_Functions.hxx>
 #include <IFSelect_SessionPilot.hxx>
 #include <Interface_InterfaceModel.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_Protocol.hxx>
 #include <Message.hxx>
+#include <Message_Messenger.hxx>
 #include <Standard_Transient.hxx>
 #include <TCollection_AsciiString.hxx>
 #include <TColStd_HSequenceOfAsciiString.hxx>
@@ -28,20 +28,17 @@
 #include <Transfer_FinderProcess.hxx>
 #include <Transfer_TransientProcess.hxx>
 #include <TransferBRep.hxx>
-#include <XSControl.hxx>
 #include <XSControl_Controller.hxx>
-#include <XSControl_FuncShape.hxx>
-#include <XSControl_Functions.hxx>
 #include <XSControl_TransferReader.hxx>
 #include <XSControl_WorkSession.hxx>
 #include <XSDRAW.hxx>
 #include <XSDRAW_Vars.hxx>
+#include <XSDRAW_Functions.hxx>
+#include <XSDRAW_SelectFunctions.hxx>
+#include <XSDRAW_ShapeFunctions.hxx>
 
 #include <stdio.h>
-//#include <XSDRAW_Shape.hxx>
 static int deja = 0, dejald = 0;
-//unused variable 
-//static int okxset = 0;
 
 static Handle(Dico_DictionaryOfInteger)       theolds;
 static Handle(TColStd_HSequenceOfAsciiString) thenews;
@@ -74,13 +71,12 @@ static Standard_Integer XSTEPDRAWRUN (Draw_Interpretor& , Standard_Integer argc,
   theolds->SetItem (oldname,num);
 }
 
-    void  XSDRAW::RemoveCommand
-  (const Standard_CString oldname)
+void  XSDRAW::RemoveCommand (const Standard_CString oldname)
 {
   ChangeCommand (oldname,"");
 }
 
-    Standard_Boolean  XSDRAW::LoadSession ()
+Standard_Boolean XSDRAW::LoadSession ()
 {
   if (deja) return Standard_False;
   deja = 1;
@@ -89,10 +85,7 @@ static Standard_Integer XSTEPDRAWRUN (Draw_Interpretor& , Standard_Integer argc,
   WS->SetVars (new XSDRAW_Vars);
   thepilot->SetSession (WS);
 
-  IFSelect_Functions::Init();
-  XSControl_Functions::Init();
-  XSControl_FuncShape::Init();
-//  XSDRAW_Shape::Init();   passe a present par theCommands
+  XSDRAW_Functions::Init();
   return Standard_True;
 }
 
@@ -102,14 +95,12 @@ void XSDRAW::LoadDraw (Draw_Interpretor& theCommands)
 //  Pour tout faire d un coup : BRepTest & cie:
   LoadSession();
 
-  //skl: we make remove commands "x" and "exit" in order to this commands are
+  //skl: we remove commands "x" and "exit" in order to this commands are
   //     performed not in IFSelect_SessionPilot but in standard Tcl interpretor
   XSDRAW::RemoveCommand("x");
   XSDRAW::RemoveCommand("exit");
 
-//  if (!getenv("WBHOSTTOP")) XSDRAW::RemoveCommand("xsnew");
-  Handle(TColStd_HSequenceOfAsciiString) list =
-    IFSelect_Activator::Commands(0);
+  Handle(TColStd_HSequenceOfAsciiString) list = IFSelect_Activator::Commands(0);
   TCollection_AsciiString com;
   Standard_Integer i, nb = list->Length();
   for (i = 1; i <= nb; i ++) {
@@ -128,8 +119,7 @@ void XSDRAW::LoadDraw (Draw_Interpretor& theCommands)
   }
 }
 
-    Standard_Integer  XSDRAW::Execute
-    (const Standard_CString command, const Standard_CString varname)
+Standard_Integer XSDRAW::Execute (const Standard_CString command, const Standard_CString varname)
 {
   char mess[100];
   Sprintf (mess,command,varname);
@@ -137,13 +127,13 @@ void XSDRAW::LoadDraw (Draw_Interpretor& theCommands)
   return 1;  // stat ?
 }
 
-    Handle(IFSelect_SessionPilot)  XSDRAW::Pilot ()
-      {  return thepilot;  }
+const Handle(IFSelect_SessionPilot) & XSDRAW::Pilot ()
+{  return thepilot;  }
 
-    Handle(XSControl_WorkSession)  XSDRAW::Session ()
-      {  return XSControl::Session(thepilot);  }
+Handle(XSControl_WorkSession) XSDRAW::Session (const Handle(IFSelect_SessionPilot) &thePilot)
+{  return Handle(XSControl_WorkSession)::DownCast((thePilot.IsNull()? thepilot : thePilot)->Session());  }
 
-    void  XSDRAW::SetController (const Handle(XSControl_Controller)& control)
+void  XSDRAW::SetController (const Handle(XSControl_Controller)& control)
 {
   if (thepilot.IsNull()) XSDRAW::LoadSession();
   if (control.IsNull()) cout<<"XSTEP Controller not defined"<<endl;
@@ -221,10 +211,10 @@ void XSDRAW::LoadDraw (Draw_Interpretor& theCommands)
 //  ############  AUXILIAIRES  #############
 
     Handle(Standard_Transient)  XSDRAW::GetEntity (const Standard_CString name)
-      {  return  IFSelect_Functions::GiveEntity (Session(),name);  }
+      {  return  XSDRAW_SelectFunctions::GiveEntity (Session(),name);  }
 
     Standard_Integer  XSDRAW::GetEntityNumber  (const Standard_CString name)
-      {  return  IFSelect_Functions::GiveEntityNumber (Session(),name);  }
+      {  return  XSDRAW_SelectFunctions::GiveEntityNumber (Session(),name);  }
 
 
     Handle(TColStd_HSequenceOfTransient)  XSDRAW::GetList
@@ -233,28 +223,27 @@ void XSDRAW::LoadDraw (Draw_Interpretor& theCommands)
   Handle(TColStd_HSequenceOfTransient) list;
   if (!first || first[0] == '\0') {
     char ligne[80];  ligne[0] = '\0'; char truc;
-//    cin.clear();  cin.get (ligne,79,'\n');
     cin >> ligne;  Standard_Size ln = strlen(ligne);
     char *ff = &ligne[0], *ss = NULL;
     cin.get(truc);  if (truc != '\n') { cin>>&ligne[ln+1]; ss = &ligne[ln+1]; }
     return  XSDRAW::GetList (ff,ss);
   }
-//  return IFSelect_Functions::GiveList (Session(),first,second);
-  return IFSelect_Functions::GiveList (Session(),first,second);
+  return XSDRAW_SelectFunctions::GiveList (Session(),first,second);
 }
 
 
-    Standard_Boolean  XSDRAW::FileAndVar
+Standard_Boolean XSDRAW::FileAndVar
   (const Standard_CString file, const Standard_CString var,
    const Standard_CString def,
    TCollection_AsciiString& resfile,   TCollection_AsciiString& resvar)
-{  return XSControl_FuncShape::FileAndVar
-     (XSDRAW::Session(),file,var,def,resfile,resvar); }
+{
+  return XSDRAW_ShapeFunctions::FileAndVar(Session(),file,var,def,resfile,resvar);
+}
 
-    Standard_Integer  XSDRAW::MoreShapes
-  (Handle(TopTools_HSequenceOfShape)& list, const Standard_CString name)
-{  return XSControl_FuncShape::MoreShapes  (XSDRAW::Session(),list,name);  }
-
+Standard_Integer XSDRAW::MoreShapes (Handle(TopTools_HSequenceOfShape)& list, const Standard_CString name)
+{
+  return XSDRAW_ShapeFunctions::MoreShapes(Session(),list,name);
+}
 
 //  FONCTION POUR LE DEBUG
 

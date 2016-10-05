@@ -7,8 +7,6 @@ StepData_DescrGeneral.cxx
 StepData_DescrGeneral.hxx
 StepData_Described.cxx
 StepData_Described.hxx
-StepData_DescrProtocol.cxx
-StepData_DescrProtocol.hxx
 StepData_DescrReadWrite.cxx
 StepData_DescrReadWrite.hxx
 StepData_ECDescr.cxx
@@ -29,8 +27,6 @@ StepData_FieldListD.cxx
 StepData_FieldListD.hxx
 StepData_FieldListN.cxx
 StepData_FieldListN.hxx
-StepData_FileProtocol.cxx
-StepData_FileProtocol.hxx
 StepData_FileRecognizer.hxx
 StepData_FileRecognizer_0.cxx
 StepData_FreeFormEntity.cxx
@@ -40,8 +36,6 @@ StepData_GeneralModule.hxx
 StepData_GlobalNodeOfWriterLib.hxx
 StepData_GlobalNodeOfWriterLib_0.cxx
 StepData_HArray1OfField.hxx
-StepData_HeaderTool.cxx
-StepData_HeaderTool.hxx
 StepData_Logical.hxx
 StepData_NodeOfWriterLib.hxx
 StepData_NodeOfWriterLib_0.cxx

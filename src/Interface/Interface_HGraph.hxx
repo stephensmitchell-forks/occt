@@ -19,17 +19,10 @@
 
 #include <Standard.hxx>
 #include <Standard_Type.hxx>
+#include <MMgt_TShared.hxx>
 
 #include <Interface_Graph.hxx>
-#include <MMgt_TShared.hxx>
-#include <Standard_Boolean.hxx>
-class Standard_DomainError;
-class Interface_Graph;
 class Interface_InterfaceModel;
-class Interface_GeneralLib;
-class Interface_Protocol;
-class Interface_GTool;
-
 
 class Interface_HGraph;
 DEFINE_STANDARD_HANDLE(Interface_HGraph, MMgt_TShared)
@@ -39,60 +32,34 @@ DEFINE_STANDARD_HANDLE(Interface_HGraph, MMgt_TShared)
 //! Models, with the same general conditions)
 class Interface_HGraph : public MMgt_TShared
 {
-
-public:
-
+ public:
   
   //! Creates an HGraph directly from a Graph.
   //! Remark that the starting Graph is duplicated
-  Standard_EXPORT Interface_HGraph(const Interface_Graph& agraph);
+  Interface_HGraph(const Interface_Graph& agraph)
+  : thegraph (agraph)
+  {}
   
-  //! Creates an HGraph with a Graph created from <amodel> and <lib>
-  Standard_EXPORT Interface_HGraph(const Handle(Interface_InterfaceModel)& amodel, const Interface_GeneralLib& lib, const Standard_Boolean theModeStats = Standard_True);
-  
-  //! Creates an HGraph with a graph itself created from <amodel>
-  //! and <protocol>
-  Standard_EXPORT Interface_HGraph(const Handle(Interface_InterfaceModel)& amodel, const Handle(Interface_Protocol)& protocol, const Standard_Boolean theModeStats = Standard_True);
-  
-  //! Creates an HGraph with a graph itself created from <amodel>
-  //! and <protocol>
-  Standard_EXPORT Interface_HGraph(const Handle(Interface_InterfaceModel)& amodel, const Handle(Interface_GTool)& gtool, const Standard_Boolean theModeStats = Standard_True);
-  
-  //! Same a above, but works with the GTool in the model
-  Standard_EXPORT Interface_HGraph(const Handle(Interface_InterfaceModel)& amodel, const Standard_Boolean theModeStats = Standard_True);
+  //! Creates an HGraph with a Graph created from <amodel>, works with the GTool in the model
+  Interface_HGraph(const Handle(Interface_InterfaceModel)& amodel, const Standard_Boolean theModeStats = Standard_True)
+  : thegraph (amodel,theModeStats)
+  {}
   
   //! Returns the Graph contained in <me>, for Read Only Operations
   //! Remark that it is returns as "const &"
   //! Getting it in a new variable instead of a reference would be
   //! a pitty, because all the graph's content would be duplicated
-  Standard_EXPORT const Interface_Graph& Graph() const;
+  const Interface_Graph& Graph() const { return thegraph; }
   
   //! Same as above, but for Read-Write Operations
   //! Then, The Graph will be modified in the HGraph itself
-  Standard_EXPORT Interface_Graph& CGraph();
-
-
-
+  Interface_Graph& CGraph() { return thegraph; }
 
   DEFINE_STANDARD_RTTIEXT(Interface_HGraph,MMgt_TShared)
 
-protected:
-
-
-
-
-private:
-
+ private:
 
   Interface_Graph thegraph;
-
-
 };
-
-
-
-
-
-
 
 #endif // _Interface_HGraph_HeaderFile

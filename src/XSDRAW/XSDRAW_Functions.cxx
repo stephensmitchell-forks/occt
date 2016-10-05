@@ -12,10 +12,14 @@
 // commercial license or contractual agreement.
 
 
-#include <XSControl_FuncShape.hxx>
 #include <XSDRAW_Functions.hxx>
+#include <XSDRAW_ShapeFunctions.hxx>
+#include <XSDRAW_ControlFunctions.hxx>
+#include <XSDRAW_SelectFunctions.hxx>
 
 void  XSDRAW_Functions::Init ()
 {
-  XSControl_FuncShape::Init ();
+  XSDRAW_SelectFunctions::Init();
+  XSDRAW_ControlFunctions::Init();
+  XSDRAW_ShapeFunctions::Init ();
 }

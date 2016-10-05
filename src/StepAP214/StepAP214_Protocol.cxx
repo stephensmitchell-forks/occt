@@ -744,7 +744,6 @@ static Standard_CString schemaAP242DIS = "AP242_MANAGED_MODEL_BASED_3D_ENGINEERI
 #include <StepRepr_ConstructiveGeometryRepresentationRelationship.hxx>
 #include <StepVisual_CharacterizedObjectAndCharacterizedRepresentationAndDraughtingModelAndRepresentation.hxx>
 
-static int init = 0;
 static Interface_DataMapOfTransientInteger types(800);
 
 
@@ -755,6 +754,7 @@ static Interface_DataMapOfTransientInteger types(800);
 
 StepAP214_Protocol::StepAP214_Protocol ()
 {
+  static int init = 0;
   if (init) return;  init = 1;
 
   types.Bind (STANDARD_TYPE(StepBasic_Address), 1);
@@ -1455,11 +1455,10 @@ StepAP214_Protocol::StepAP214_Protocol ()
 //purpose  : 
 //=======================================================================
 
-Standard_Integer StepAP214_Protocol::TypeNumber(const 
-Handle(Standard_Type)& atype) const
+Standard_Integer StepAP214_Protocol::TypeNumber(const Handle(Standard_Type)& atype) const
 {
-  if (types.IsBound (atype)) return types.Find(atype);
-  else return 0;
+  const Standard_Integer *num = types.Seek(atype);
+  return (num? *num : 0);
 }
 
 
@@ -1497,9 +1496,7 @@ Standard_Integer StepAP214_Protocol::NbResources () const
 //purpose  : 
 //=======================================================================
 
-Handle(Interface_Protocol) StepAP214_Protocol::Resource
-  (const Standard_Integer /*num*/) const
+Handle(Interface_Protocol) StepAP214_Protocol::Resource (const Standard_Integer /*num*/) const
 {
   return HeaderSection::Protocol();
 }
-

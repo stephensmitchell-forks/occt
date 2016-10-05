@@ -17,22 +17,14 @@
 #define _XSAlgo_HeaderFile
 
 #include <Standard.hxx>
-#include <Standard_DefineAlloc.hxx>
 #include <Standard_Handle.hxx>
 
 class XSAlgo_AlgoContainer;
-class XSAlgo_ToolContainer;
-class XSAlgo_AlgoContainer;
-
-
 
 class XSAlgo 
 {
-public:
+ public:
 
-  DEFINE_STANDARD_ALLOC
-
-  
   //! Provides initerface to the algorithms from Shape Healing
   //! and others for XSTEP processors.
   //! Creates and initializes default AlgoContainer.
@@ -42,31 +34,7 @@ public:
   Standard_EXPORT static void SetAlgoContainer (const Handle(XSAlgo_AlgoContainer)& aContainer);
   
   //! Returns default AlgoContainer
-  Standard_EXPORT static Handle(XSAlgo_AlgoContainer) AlgoContainer();
-
-
-
-
-protected:
-
-
-
-
-
-private:
-
-
-
-
-friend class XSAlgo_ToolContainer;
-friend class XSAlgo_AlgoContainer;
-
+  Standard_EXPORT static const Handle(XSAlgo_AlgoContainer) & AlgoContainer();
 };
-
-
-
-
-
-
 
 #endif // _XSAlgo_HeaderFile

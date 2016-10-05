@@ -21,19 +21,13 @@
 #include <Standard_Type.hxx>
 
 #include <TCollection_AsciiString.hxx>
-#include <Standard_Integer.hxx>
 #include <TColStd_Array1OfAsciiString.hxx>
 #include <TColStd_Array1OfInteger.hxx>
-#include <Standard_Boolean.hxx>
 #include <TColStd_SequenceOfAsciiString.hxx>
 #include <IFSelect_Activator.hxx>
-#include <Standard_CString.hxx>
 #include <IFSelect_ReturnStatus.hxx>
 #include <IFSelect_PrintCount.hxx>
 class IFSelect_WorkSession;
-class Standard_Transient;
-class IFSelect_WorkLibrary;
-class TCollection_AsciiString;
 class IFSelect_SignCounter;
 
 
@@ -75,9 +69,7 @@ DEFINE_STANDARD_HANDLE(IFSelect_SessionPilot, IFSelect_Activator)
 //! are skipped (comment lines are display if read from file)
 class IFSelect_SessionPilot : public IFSelect_Activator
 {
-
-public:
-
+ public:
   
   //! Creates an empty SessionPilot, with a prompt which will be
   //! displayed on querying commands. If not precised (""), this
@@ -85,30 +77,23 @@ public:
   Standard_EXPORT IFSelect_SessionPilot(const Standard_CString prompt = "");
   
   //! Returns the WorkSession which is worked on
-  Standard_EXPORT Handle(IFSelect_WorkSession) Session() const;
-  
-  //! Returns the WorKlibrary (Null if not set). WorkLibrary is used
-  //! to Read and Write Files, according to the Norm
-  Standard_EXPORT Handle(IFSelect_WorkLibrary) Library() const;
+  const Handle(IFSelect_WorkSession) & Session() const { return thesession; }
   
   //! Returns the Record Mode for Commands. Default is False.
-  Standard_EXPORT Standard_Boolean RecordMode() const;
+  Standard_Boolean RecordMode() const { return therecord; }
   
   //! Sets a WorkSession to be worked on
-  Standard_EXPORT void SetSession (const Handle(IFSelect_WorkSession)& WS);
-  
-  //! Sets a WorkLibrary
-  Standard_EXPORT void SetLibrary (const Handle(IFSelect_WorkLibrary)& WL);
+  void SetSession (const Handle(IFSelect_WorkSession)& WS) { thesession = WS; }
   
   //! Changes the RecordMode.
-  Standard_EXPORT void SetRecordMode (const Standard_Boolean mode);
+  void SetRecordMode (const Standard_Boolean mode) { therecord = mode; }
   
   //! Sets the value of the Command Line to be interpreted
   //! Also prepares the interpretation (splitting by blanks)
   Standard_EXPORT void SetCommandLine (const TCollection_AsciiString& command);
   
   //! Returns the Command Line to be interpreted
-  Standard_EXPORT const TCollection_AsciiString& CommandLine() const;
+  const TCollection_AsciiString& CommandLine() const { return thecommand; }
   
   //! Returns the part of the command line which begins at argument
   //! <numarg> between 0 and NbWords-1 (by default, all the line)
@@ -119,7 +104,7 @@ public:
   //! blanks : 0 if empty, one if a command without args, else it
   //! gives the count of args minus one.
   //! Warning : limited to 10 (command title + 9 args)
-  Standard_EXPORT Standard_Integer NbWords() const;
+  Standard_Integer NbWords() const { return thenbwords; }
   
   //! Returns a word given its rank in the Command Line. Begins at 0
   //! which is the Command Title, 1 is the 1st arg., etc...
@@ -134,10 +119,10 @@ public:
   Standard_EXPORT Standard_Boolean RemoveWord (const Standard_Integer num);
   
   //! Returns the count of recorded Commands
-  Standard_EXPORT Standard_Integer NbCommands() const;
-  
+  Standard_Integer NbCommands() const { return thecomlist.Length(); }
+
   //! Returns a recorded Command, given its rank (from 1)
-  Standard_EXPORT const TCollection_AsciiString& Command (const Standard_Integer num) const;
+  const TCollection_AsciiString& Command (const Standard_Integer num) const { return thecomlist(num); }
   
   //! Allows to associate a Transient Value with the last execution
   //! as a partial result
@@ -147,10 +132,10 @@ public:
   
   //! Returns the Transient Object which was recorded with the
   //! current Line Command. If none was, returns a Null Handle
-  Standard_EXPORT Handle(Standard_Transient) RecordedItem() const;
-  
+  const Handle(Standard_Transient) & RecordedItem() const { return theobjrec; }
+
   //! Clears the recorded informations (commands, objects)
-  Standard_EXPORT void Clear();
+  void Clear() { thecomlist.Clear(); }
   
   //! Reads commands from a Script File, named <file>. By default
   //! (file = ""), reads from standard input with a prompt
@@ -233,14 +218,6 @@ private:
   Standard_Integer thenumrec;
   Handle(Standard_Transient) theobjrec;
   TColStd_SequenceOfAsciiString thecomlist;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IFSelect_SessionPilot_HeaderFile

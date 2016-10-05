@@ -703,14 +703,6 @@ public:
   //! root name is already defined for it
   Standard_EXPORT Standard_Boolean SetFileRoot (const Handle(IFSelect_Dispatch)& disp, const Standard_CString name);
   
-  //! Extracts File Root Name from a given complete file name
-  //! (uses OSD_Path)
-  Standard_EXPORT Standard_CString GiveFileRoot (const Standard_CString file) const;
-  
-  //! Completes a file name as required, with Prefix and Extension
-  //! (if defined; for a non-defined item, completes nothing)
-  Standard_EXPORT Standard_CString GiveFileComplete (const Standard_CString file) const;
-  
   //! Erases all stored data from the File Evaluation
   //! (i.e. ALL former naming informations are lost)
   Standard_EXPORT void ClearFile();
@@ -885,17 +877,6 @@ public:
   //! Intersection). Returns True if done, False if <selcomb> is not
   //! kind of SelectCombine or <selrem> is not source of <selcomb>
   Standard_EXPORT Standard_Boolean CombineRemove (const Handle(IFSelect_Selection)& selcomb, const Handle(IFSelect_Selection)& selrem);
-  
-  //! Creates a new Selection, of type SelectPointed, its content
-  //! starts with <list>. A name must be given (can be empty)
-  Standard_EXPORT Handle(IFSelect_Selection) NewSelectPointed (const Handle(TColStd_HSequenceOfTransient)& list, const Standard_CString name);
-  
-  //! Changes the content of a Selection of type SelectPointed
-  //! According <mode> : 0  set <list> as new content (clear former)
-  //! 1  : adds <list> to actual content
-  //! -1  : removes <list> from actual content
-  //! Returns True if done, False if <sel> is not a SelectPointed
-  Standard_EXPORT Standard_Boolean SetSelectPointed (const Handle(IFSelect_Selection)& sel, const Handle(TColStd_HSequenceOfTransient)& list, const Standard_Integer mode) const;
   
   //! Returns a Selection from a Name :
   //! - the name of a Selection : this Selection

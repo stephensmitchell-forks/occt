@@ -15,7 +15,6 @@
 //:   gka 14.04.99: S4136: apply scaling
 
 #include <BRep_Builder.hxx>
-#include <IFSelect_Functions.hxx>
 #include <Interface_Check.hxx>
 #include <Interface_InterfaceModel.hxx>
 #include <Interface_ShareFlags.hxx>
@@ -26,7 +25,6 @@
 #include <TopoDS_Compound.hxx>
 #include <TopoDS_Shape.hxx>
 #include <Transfer_Binder.hxx>
-#include <Transfer_IteratorOfProcessForTransient.hxx>
 #include <Transfer_TransientProcess.hxx>
 #include <XSControl_Controller.hxx>
 #include <XSControl_Reader.hxx>

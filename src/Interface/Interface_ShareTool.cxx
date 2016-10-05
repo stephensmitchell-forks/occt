@@ -25,150 +25,41 @@
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-#include <Standard_Transient.hxx>
 #include <TColStd_HArray1OfInteger.hxx>
 #include <TColStd_HSequenceOfTransient.hxx>
 
-Interface_ShareTool::Interface_ShareTool (const Handle(Interface_InterfaceModel)& amodel,
-                                          const Interface_GeneralLib& lib)
+Standard_Boolean  Interface_ShareTool::IsShared (const Handle(Standard_Transient)& ent) const
 {
-  theHGraph = new Interface_HGraph(amodel,lib);
-}
-
-Interface_ShareTool::Interface_ShareTool (const Handle(Interface_InterfaceModel)& amodel,
-                                          const Handle(Interface_GTool)& gtool)
-{
-  theHGraph = new Interface_HGraph(amodel,gtool);
-}
-
-Interface_ShareTool::Interface_ShareTool (const Handle(Interface_InterfaceModel)& amodel,
-                                          const Handle(Interface_Protocol)& protocol)
-{
-  theHGraph = new Interface_HGraph(amodel,protocol);
-}
-
-Interface_ShareTool::Interface_ShareTool (const Handle(Interface_InterfaceModel)& amodel)
-{
-  theHGraph = new Interface_HGraph(amodel);
-}
-
-Interface_ShareTool::Interface_ShareTool (const Interface_Graph& agraph)
-{
-  theHGraph = new Interface_HGraph(agraph.Model());
-}
-
-Interface_ShareTool::Interface_ShareTool (const Handle(Interface_HGraph)& ahgraph)
-{
-  theHGraph = ahgraph;
-}
-
-//    Ajout des "Implied" sur toutes les Entites du Graphe
-/*void Interface_ShareTool::AddImplied (const Handle(Interface_GTool)& gtool)
-{
-  Interface_Graph& thegraph = theHGraph->CGraph();
-  Standard_Integer nb = thegraph.Size();
-  Standard_Boolean yena = Standard_False;
-  for (Standard_Integer i = 1; i <= nb; i ++) {
-    Handle(Standard_Transient) ent = thegraph.Entity(i);
-    if (ent.IsNull()) continue;
-    Handle(Interface_GeneralModule) module;  Standard_Integer CN;
-    if (gtool->Select(ent,module,CN)) {
-      Interface_EntityIterator iter;
-      module->ListImpliedCase(CN,ent,iter);
-      if (iter.NbEntities() == 0) continue;
-      yena = Standard_True;
-      thegraph.SetShare(ent);
-      for (iter.Start(); iter.More(); iter.Next())
-	thegraph.AddShared(ent,iter.Value());
-    }
-  }
-  if (yena) thegraph.EvalSharings();
-}*/
-
-
-    Handle(Interface_InterfaceModel) Interface_ShareTool::Model () const
-      {  return theHGraph->Graph().Model();  }
-
-    const Interface_Graph& Interface_ShareTool::Graph () const
-      {  return theHGraph->Graph();  }
-
-    Interface_EntityIterator  Interface_ShareTool::RootEntities () const
-      {  return theHGraph->Graph().RootEntities();  }
-
-    Standard_Boolean  Interface_ShareTool::IsShared
-  (const Handle(Standard_Transient)& ent) const
-{
-  const Interface_Graph& thegraph = theHGraph->Graph();
-  Handle(TColStd_HSequenceOfTransient) list =
-    thegraph.GetShareds (ent);
+  Handle(TColStd_HSequenceOfTransient) list = Graph().GetShareds (ent);
   return (!list.IsNull() && list->Length() > 0);
 }
 
-    Interface_EntityIterator  Interface_ShareTool::Shareds
-  (const Handle(Standard_Transient)& ent) const
-      {  return theHGraph->Graph().Shareds(ent);  }
-
-    Interface_EntityIterator  Interface_ShareTool::Sharings
-  (const Handle(Standard_Transient)& ent) const
-      {  return theHGraph->Graph().Sharings(ent);  }
-
-
-    Standard_Integer Interface_ShareTool::NbTypedSharings
-  (const Handle(Standard_Transient)& ent,
-   const Handle(Standard_Type)& atype) const
+/*szv_c1:Standard_Integer Interface_ShareTool::NbTypedSharings (const Handle(Standard_Transient)& ent, const Handle(Standard_Type)& atype) const
 {
-  Interface_Graph& thegraph = theHGraph->CGraph();
-  Handle(TColStd_HSequenceOfTransient) list = thegraph.GetSharings (ent);
+  Handle(TColStd_HSequenceOfTransient) list = Graph().GetSharings (ent);
   if(list.IsNull())
     return 0;
 
   Standard_Integer result = 0;
-  Standard_Integer n = list->Length();
+  const Standard_Integer n = list->Length();
   for (Standard_Integer i = 1; i <= n; i ++) {
-    Handle(Standard_Transient) entsh = list->Value(i);
+    const Handle(Standard_Transient) &entsh = list->Value(i);
     if (entsh.IsNull()) continue;
-    if (entsh->IsKind(atype)) result ++;
+    if (entsh->IsKind(atype)) result++;
   }
   return result;
-}
+}*/
 
-    Handle(Standard_Transient) Interface_ShareTool::TypedSharing
-  (const Handle(Standard_Transient)& ent,
-   const Handle(Standard_Type)& atype) const
+Interface_EntityIterator Interface_ShareTool::All (const Handle(Standard_Transient)& ent, const Standard_Boolean rootlast) const
 {
-  Interface_Graph& thegraph = theHGraph->CGraph();
-  Handle(TColStd_HSequenceOfTransient) list = thegraph.GetSharings(ent);
-  if(list.IsNull())
-    return 0;
-  Handle(Standard_Transient) entresult;
-  Standard_Integer result = 0;
-  Standard_Integer n = list->Length();
-  for (Standard_Integer i = 1; i <= n; i ++) {
-    Handle(Standard_Transient) entsh = list->Value(i);
-    if (entsh.IsNull()) continue;
-    if (entsh->IsKind(atype)) {
-      entresult = entsh;
-      result ++;
-      if (result > 1)  Interface_InterfaceError::Raise
-	("Interface ShareTool : TypedSharing, more than one found");
-    }
-  }
-  if (result == 0) Interface_InterfaceError::Raise
-    ("Interface ShareTool : TypedSharing, not found");
-  return entresult;
-}
-
-    Interface_EntityIterator  Interface_ShareTool::All
-(const Handle(Standard_Transient)& ent, const Standard_Boolean rootlast) const
-{
-  Handle(Interface_InterfaceModel) model = Model();
+  const Handle(Interface_InterfaceModel) &model = Graph().Model();
   Interface_EntityIterator list;
   Standard_Integer i, n0 = 0, nb = model->NbEntities();
   Handle(TColStd_HArray1OfInteger) fl = new TColStd_HArray1OfInteger (0,nb);
   fl->Init(0);
   if (ent == model) {
 //    On passe les racines en revue (l ordre de base est conserve)
-    Interface_EntityIterator roots = RootEntities();
+    Interface_EntityIterator roots = Graph().RootEntities();
     for (roots.Start(); roots.More(); roots.Next()) {
       Interface_EntityIterator subl = All(roots.Value(),rootlast);
       for (subl.Start(); subl.More(); subl.Next()) {
@@ -189,7 +80,7 @@ Interface_ShareTool::Interface_ShareTool (const Handle(Interface_HGraph)& ahgrap
       Standard_Integer num = model->Number(en);
       if (fl->Value(num) != 0) continue;  // deja vu
       n0 ++;  fl->SetValue (num,n0);
-      Interface_EntityIterator sh = Shareds(en);
+      Interface_EntityIterator sh = Graph().Shareds(en);
       sq->Append (sh.Content());
     }
   }
@@ -203,15 +94,4 @@ Interface_ShareTool::Interface_ShareTool (const Handle(Interface_HGraph)& ahgrap
       {  if (ord->Value(i) != 0) list.AddItem (model->Value(ord->Value(i)));  }
 
   return list;
-}
-
-    void  Interface_ShareTool::Print
-  (const Interface_EntityIterator& iter, const Handle(Message_Messenger)& S) const
-{
-  S << " Nb.Entities : " << iter.NbEntities() << " : ";
-  for (iter.Start(); iter.More(); iter.Next()) {
-    Handle(Standard_Transient) ent = iter.Value();
-    S << " n0/id:"; Model()->Print(ent,S);
-  }
-  S<<endl;
 }

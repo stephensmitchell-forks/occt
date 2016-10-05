@@ -13,4 +13,4 @@
 
 #include <Transfer_FinderProcess.hxx>
 
-IMPLEMENT_STANDARD_RTTIEXT(Transfer_FinderProcess,Transfer_ProcessForFinder)
+IMPLEMENT_STANDARD_RTTIEXT(Transfer_FinderProcess,Transfer_Process)

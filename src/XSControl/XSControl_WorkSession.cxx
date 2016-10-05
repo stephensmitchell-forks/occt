@@ -13,9 +13,6 @@
 
 //:i1 pdn 03.04.99  BUC60301  
 
-#include <Dico_DictionaryOfTransient.hxx>
-#include <Dico_IteratorOfDictionaryOfTransient.hxx>
-#include <Geom2d_Point.hxx>
 #include <Interface_Check.hxx>
 #include <Interface_CheckIterator.hxx>
 #include <Interface_Graph.hxx>
@@ -135,35 +132,6 @@ Standard_CString XSControl_WorkSession::SelectedNorm(const Standard_Boolean rsc)
   //JR/Hp :
   Standard_CString astr = (Standard_CString ) (myController.IsNull() ? "" : myController->Name(rsc));
   return astr ;
-}
-
-
-//              ##########################################
-//              ############  Contexte de Transfert ######
-//              ##########################################
-
-
-//=======================================================================
-//function : SetAllContext
-//purpose  : 
-//=======================================================================
-
-void XSControl_WorkSession::SetAllContext(const Handle(Dico_DictionaryOfTransient)& context)
-{
-  myContext = context;
-  myTransferReader->Context() = context;
-}
-
-
-//=======================================================================
-//function : ClearContext
-//purpose  : 
-//=======================================================================
-
-void XSControl_WorkSession::ClearContext ()
-{
-  myContext.Nullify();
-  myTransferReader->Context().Nullify();
 }
 
 
@@ -322,16 +290,6 @@ void XSControl_WorkSession::SetTransferReader(const Handle(XSControl_TransferRea
 }
 
 //=======================================================================
-//function : MapReader
-//purpose  :
-//=======================================================================
-
-Handle(Transfer_TransientProcess) XSControl_WorkSession::MapReader() const
-{
-  return myTransferReader->TransientProcess();
-}
-
-//=======================================================================
 //function : SetMapReader
 //purpose  : 
 //=======================================================================
@@ -342,12 +300,8 @@ Standard_Boolean XSControl_WorkSession::SetMapReader (const Handle(Transfer_Tran
   if (TP->Model().IsNull()) TP->SetModel (Model());
   TP->SetGraph (HGraph());
   if (TP->Model() != Model()) return Standard_False;
-//  TR ne doit pas bouger, c est un "crochet" pour signatures, selections ...
-//  En revanche, mieux vaut le RAZ
-//  Handle(XSControl_TransferReader) TR = new XSControl_TransferReader;
   Handle(XSControl_TransferReader) TR = myTransferReader;
   TR->Clear(-1);
-
   SetTransferReader (TR);        // avec le meme mais le reinitialise
   TR->SetTransientProcess (TP);  // et prend le nouveau TP
   return Standard_True;

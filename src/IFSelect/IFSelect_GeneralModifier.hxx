@@ -63,10 +63,8 @@ DEFINE_STANDARD_HANDLE(IFSelect_GeneralModifier, MMgt_TShared)
 //! package IFAdapt, EntityModifier and EntityCopier
 class IFSelect_GeneralModifier : public MMgt_TShared
 {
+ public:
 
-public:
-
-  
   //! Returns True if this modifier may change the graph of
   //! dependences (aknowledged at creation time)
   Standard_EXPORT Standard_Boolean MayChangeGraph() const;
@@ -99,14 +97,10 @@ public:
   //! Returns a short text which defines the operation performed
   Standard_EXPORT virtual TCollection_AsciiString Label() const = 0;
 
-
-
-
   DEFINE_STANDARD_RTTIEXT(IFSelect_GeneralModifier,MMgt_TShared)
 
-protected:
+ protected:
 
-  
   //! Sets the Modifier criteria to default Values
   //! (i.e. "always applies")
   //! <maychangegraph> must be provided at creation time, to :
@@ -117,22 +111,11 @@ protected:
   //! dependencies when this modifier is applied
   Standard_EXPORT IFSelect_GeneralModifier(const Standard_Boolean maychangegraph);
 
-
-
-private:
-
+ private:
 
   Handle(IFSelect_Selection) thesel;
   Handle(IFSelect_Dispatch) thedisp;
   Standard_Boolean thechgr;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IFSelect_GeneralModifier_HeaderFile

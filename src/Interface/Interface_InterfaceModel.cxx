@@ -41,27 +41,6 @@
 
 IMPLEMENT_STANDARD_RTTIEXT(Interface_InterfaceModel,MMgt_TShared)
 
-// Un Modele d`Interface est un ensemble ferme d`Entites d`interface : chacune
-// est dans un seul modele a la fois; elle y a un numero (Number) qui permet de
-// verifier qu`une entite est bien dans un seul modele, de definir des Map tres
-// performantes, de fournir un identifieur numerique
-// Il est a meme d`etre utilise dans des traitements de Graphe
-// STATICS : les TEMPLATES
-static const Handle(Dico_DictionaryOfTransient)& templates()
-{
-  static  Handle(Dico_DictionaryOfTransient) atemp;
-  if (atemp.IsNull()) atemp = new Dico_DictionaryOfTransient;
-  return atemp;
-}
-
-
-static const Handle(Standard_Type)& typerep()
-{
-  static  Handle(Standard_Type) tr = STANDARD_TYPE(Interface_ReportEntity);
-  return tr;
-}
-
-
 static const Handle(Interface_Check)& nulch()
 {
   static Handle(Interface_Check) anulch = new Interface_Check;
@@ -87,7 +66,7 @@ Interface_InterfaceModel::Interface_InterfaceModel ()
 //purpose  : 
 //=======================================================================
 
-void Interface_InterfaceModel::Destroy ()  // on fait un mimumum
+Interface_InterfaceModel::~Interface_InterfaceModel ()  // on fait un mimumum
 {
 //   Moins que Clear que, lui, est adapte a chaque norme
   ClearEntities();
@@ -122,28 +101,6 @@ Handle(Interface_Protocol) Interface_InterfaceModel::Protocol () const
 
 
 //=======================================================================
-//function : SetGTool
-//purpose  : 
-//=======================================================================
-
-void Interface_InterfaceModel::SetGTool(const Handle(Interface_GTool)& gtool)
-{
-  thegtool = gtool;
-}
-
-
-//=======================================================================
-//function : GTool
-//purpose  : 
-//=======================================================================
-
-Handle(Interface_GTool) Interface_InterfaceModel::GTool () const
-{
-  return thegtool;
-}
-
-
-//=======================================================================
 //function : Clear
 //purpose  : 
 //=======================================================================
@@ -160,17 +117,6 @@ void Interface_InterfaceModel::Clear ()
 
 
 //=======================================================================
-//function : DispatchStatus
-//purpose  : 
-//=======================================================================
-
-Standard_Boolean& Interface_InterfaceModel::DispatchStatus ()
-{
-  return isdispatch;
-}
-
-
-//=======================================================================
 //function : ClearEntities
 //purpose  : 
 //=======================================================================
@@ -182,14 +128,6 @@ void Interface_InterfaceModel::ClearEntities ()
   haschecksem = Standard_False;
 
   if (!thegtool.IsNull()) {
-// WhenDeleteCase is not applicable    
-/*    Handle(Interface_GeneralModule) module;  Standard_Integer CN;
-    Standard_Integer nb = NbEntities();
-    for (Standard_Integer i = 1; i <= nb ; i ++) {
-      Handle(Standard_Transient) anent = Value(i);
-      if (thegtool->Select (anent,module,CN))
-	module->WhenDeleteCase (CN,anent,isdispatch);
-    }*/
     thegtool->ClearEntities(); //smh#14 FRA62479
   }
   isdispatch = Standard_False;
@@ -201,23 +139,11 @@ void Interface_InterfaceModel::ClearEntities ()
 
 
 //=======================================================================
-//function : NbEntities
-//purpose  : 
-//=======================================================================
-
-Standard_Integer Interface_InterfaceModel::NbEntities () const
-{
-  return theentities.Extent();
-}
-
-
-//=======================================================================
 //function : Contains
 //purpose  : 
 //=======================================================================
 
-Standard_Boolean Interface_InterfaceModel::Contains
-  (const Handle(Standard_Transient)& anentity) const
+Standard_Boolean Interface_InterfaceModel::Contains (const Handle(Standard_Transient)& anentity) const
 {
   if (theentities.Contains(anentity)) return Standard_True;
   Handle(Interface_ReportEntity) rep =
@@ -232,13 +158,12 @@ Standard_Boolean Interface_InterfaceModel::Contains
 //purpose  : 
 //=======================================================================
 
-Standard_Integer Interface_InterfaceModel::Number
-  (const Handle(Standard_Transient)& anentity) const
+Standard_Integer Interface_InterfaceModel::Number (const Handle(Standard_Transient)& anentity) const
 {
   if (anentity.IsNull()) return 0;
   Standard_Integer num = theentities.FindIndex(anentity);
   if (num > 0) return num;
-  if (anentity->IsKind(typerep())) {
+  if (anentity->IsKind(STANDARD_TYPE(Interface_ReportEntity))) {
     Handle(Interface_ReportEntity) rep =
       Handle(Interface_ReportEntity)::DownCast(anentity);
     if (!rep.IsNull()) return Number(rep->Concerned());
@@ -246,35 +171,7 @@ Standard_Integer Interface_InterfaceModel::Number
   return 0;
 }
 
-/*
-Standard_Integer Interface_InterfaceModel::DENumber
-                 (const Handle(Standard_Transient)& anentity) const
-{
-  if (anentity.IsNull()) return 0;
-  Standard_Integer num = theentities.FindIndex(anentity);
-  if (num > 0) return (2*num-1);
-  if (anentity->IsKind(typerep())) {
-    Handle(Interface_ReportEntity) rep =
-      Handle(Interface_ReportEntity)::DownCast(anentity);
-    if (!rep.IsNull()) return (Number(rep->Concerned())*2-1);
-  }
-  return 0;
-}
-*/
-
 //  ..                Acces Speciaux (Report, etc...)                ..
-
-
-//=======================================================================
-//function : Value
-//purpose  : 
-//=======================================================================
-
-const Handle(Standard_Transient)& Interface_InterfaceModel::Value
-       (const Standard_Integer num) const
-{
-  return theentities.FindKey(num);
-}
 
 
 //=======================================================================
@@ -282,8 +179,7 @@ const Handle(Standard_Transient)& Interface_InterfaceModel::Value
 //purpose  : 
 //=======================================================================
 
-Standard_Integer Interface_InterfaceModel::NbTypes
-  (const Handle(Standard_Transient)& ent) const
+Standard_Integer Interface_InterfaceModel::NbTypes (const Handle(Standard_Transient)& ent) const
 {
   if (Protocol().IsNull()) return 1;
   return  Protocol()->NbTypes(ent);
@@ -334,8 +230,7 @@ Standard_CString Interface_InterfaceModel::ClassName(const Standard_CString typn
 //purpose  : 
 //=======================================================================
 
-Interface_DataState Interface_InterfaceModel::EntityState
-  (const Standard_Integer num) const
+Interface_DataState Interface_InterfaceModel::EntityState (const Standard_Integer num) const
 {
   Handle(Interface_ReportEntity) rep;
   if (!thereports.IsBound(num)) {
@@ -529,17 +424,6 @@ void Interface_InterfaceModel::FillSemanticChecks
 
 
 //=======================================================================
-//function : HasSemanticChecks
-//purpose  : 
-//=======================================================================
-
-Standard_Boolean Interface_InterfaceModel::HasSemanticChecks () const
-{
-  return haschecksem;
-}
-
-
-//=======================================================================
 //function : Check
 //purpose  : 
 //=======================================================================
@@ -584,8 +468,7 @@ void Interface_InterfaceModel::Reservate (const Standard_Integer nbent)
 
 void Interface_InterfaceModel::AddEntity(const Handle(Standard_Transient)& anentity)
 {
-  //Standard_Integer newnum; svv #2
-  if (!anentity->IsKind(typerep())) theentities.Add(anentity);
+  if (!anentity->IsKind(STANDARD_TYPE(Interface_ReportEntity))) theentities.Add(anentity);
 //  Report : Ajouter Concerned, mais noter presence Report et sa valeur
   else {
     Handle(Interface_ReportEntity) rep =
@@ -668,17 +551,6 @@ void Interface_InterfaceModel::AddWithRefs(const Handle(Standard_Transient)& ane
     AddWithRefs(iter.Value(),lib,lev1,listall);
 }
 
-
-//=======================================================================
-//function : ReplaceEntity
-//purpose  : 
-//=======================================================================
-
-void Interface_InterfaceModel::ReplaceEntity(const Standard_Integer nument,
-                                             const Handle(Standard_Transient)& anent)
-{
-  theentities.Substitute(nument,anent);
-}
 
 //  ReverseOrders permet de mieux controler la numeration des Entites :
 //  Souvent, les fichiers mettent les racines en fin, tandis que AddWithRefs
@@ -769,8 +641,7 @@ void Interface_InterfaceModel::ChangeOrder(const Standard_Integer oldnum,
 //purpose  : 
 //=======================================================================
 
-void Interface_InterfaceModel::GetFromTransfer
-  (const Interface_EntityIterator& aniter)
+void Interface_InterfaceModel::GetFromTransfer (const Interface_EntityIterator& aniter)
 {
   theentities.Clear();  theentities.ReSize (aniter.NbEntities());
   for (aniter.Start(); aniter.More(); aniter.Next()) {
@@ -787,8 +658,7 @@ void Interface_InterfaceModel::GetFromTransfer
 //purpose  : 
 //=======================================================================
 
-Standard_Boolean Interface_InterfaceModel::SetCategoryNumber
-  (const Standard_Integer num, const Standard_Integer val)
+Standard_Boolean Interface_InterfaceModel::SetCategoryNumber (const Standard_Integer num, const Standard_Integer val)
 {
   Standard_Integer i,nb = NbEntities();
   if (num < 1 || num > nb) return Standard_False;
@@ -810,8 +680,7 @@ Standard_Boolean Interface_InterfaceModel::SetCategoryNumber
 //purpose  : 
 //=======================================================================
 
-Standard_Integer Interface_InterfaceModel::CategoryNumber
-  (const Standard_Integer num) const
+Standard_Integer Interface_InterfaceModel::CategoryNumber (const Standard_Integer num) const
 {
   if (thecategory.IsNull()) return 0;
   if (num < 1 || num > thecategory->Length()) return 0;
@@ -825,7 +694,7 @@ Standard_Integer Interface_InterfaceModel::CategoryNumber
 //purpose  : 
 //=======================================================================
 
-void Interface_InterfaceModel::FillIterator(Interface_EntityIterator& iter) const
+void Interface_InterfaceModel::FillIterator (Interface_EntityIterator& iter) const
 {
   Standard_Integer nb = NbEntities();
   for (Standard_Integer i = 1; i <= nb; i ++)
@@ -884,44 +753,6 @@ Interface_EntityIterator Interface_InterfaceModel::Redefineds () const
   }
   return iter;
 }
-
-//#include <limits.h>
-//#include <TColStd_MapTransientHasher.hxx>
-
-
-//=======================================================================
-//function : GlobalCheck
-//purpose  : 
-//=======================================================================
-
-const Handle(Interface_Check)& Interface_InterfaceModel::GlobalCheck
-  (const Standard_Boolean syntactic) const
-{
-  if (syntactic) return thecheckstx;
-  else return thechecksem;
-}
-
-
-//=======================================================================
-//function : SetGlobalCheck
-//purpose  : 
-//=======================================================================
-
-void Interface_InterfaceModel::SetGlobalCheck(const Handle(Interface_Check)& ach)
-{
-  thecheckstx = ach;
-}
-
-
-//=======================================================================
-//function : VerifyCheck
-//purpose  : 
-//=======================================================================
-
-void Interface_InterfaceModel::VerifyCheck (Handle(Interface_Check)& /*ach*/) const
-{
-}
-
 
 //=======================================================================
 //function : Print
@@ -993,66 +824,4 @@ Standard_Integer Interface_InterfaceModel::NextNumberForLabel
   if (labs->IsIntegerValue()) i = atoi (labs->ToCString());
   if (i <= 0 || i > n) i = 0;
   return i;
-}
-
-
-//=======================================================================
-//function : HasTemplate
-//purpose  : 
-//=======================================================================
-
-Standard_Boolean Interface_InterfaceModel::HasTemplate
-  (const Standard_CString name)
-{
-  return templates()->HasItem(name);
-}
-
-
-//=======================================================================
-//function : Template
-//purpose  : 
-//=======================================================================
-
-Handle(Interface_InterfaceModel) Interface_InterfaceModel::Template
-       (const Standard_CString name)
-{
-  Handle(Interface_InterfaceModel) model,newmod;
-  if (!HasTemplate(name)) return model;
-  model = Handle(Interface_InterfaceModel)::DownCast(templates()->Item(name));
-  newmod = model->NewEmptyModel();
-  newmod->GetFromAnother (model);
-  return newmod;
-}
-
-
-//=======================================================================
-//function : SetTemplate
-//purpose  : 
-//=======================================================================
-
-Standard_Boolean Interface_InterfaceModel::SetTemplate
-  (const Standard_CString name, const Handle(Interface_InterfaceModel)& model)
-{
-  Standard_Boolean deja;
-  Handle(Standard_Transient)& newmod = templates()->NewItem(name,deja);
-  newmod = model;
-  return deja;
-}
-
-
-//=======================================================================
-//function : ListTemplates
-//purpose  : 
-//=======================================================================
-
-Handle(TColStd_HSequenceOfHAsciiString) Interface_InterfaceModel::ListTemplates ()
-{
-  Handle(TColStd_HSequenceOfHAsciiString) list = new
-    TColStd_HSequenceOfHAsciiString();
-  if (templates().IsNull()) return list;
-  for (Dico_IteratorOfDictionaryOfTransient iter(templates());
-       iter.More(); iter.Next()) {
-    list->Append (new TCollection_HAsciiString (iter.Name()) );
-  }
-  return list;
 }

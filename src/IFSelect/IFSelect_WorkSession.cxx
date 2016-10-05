@@ -20,9 +20,6 @@
 #include <IFGraph_SubPartsIterator.hxx>
 #include <IFSelect_CheckCounter.hxx>
 #include <IFSelect_Dispatch.hxx>
-#include <IFSelect_DispGlobal.hxx>
-#include <IFSelect_DispPerCount.hxx>
-#include <IFSelect_DispPerOne.hxx>
 #include <IFSelect_EditForm.hxx>
 #include <IFSelect_Editor.hxx>
 #include <IFSelect_GeneralModifier.hxx>
@@ -1958,50 +1955,6 @@ Standard_Boolean IFSelect_WorkSession::SetFileRoot
 //purpose  : 
 //=======================================================================
 
-Standard_CString IFSelect_WorkSession::GiveFileRoot
-  (const Standard_CString file) const
-{
-  OSD_Path path (file);
-  if (!path.IsValid(TCollection_AsciiString(file))) return file; // tant pis ..
-  bufstr = path.Name();
-  return bufstr.ToCString();
-}
-
-
-//=======================================================================
-//function : 
-//purpose  : 
-//=======================================================================
-
-Standard_CString IFSelect_WorkSession::GiveFileComplete
-  (const Standard_CString file) const
-{
-//  ajouter si besoin : Prefix; Extension
-  bufstr.Clear(); bufstr.AssignCat (file);
-  Standard_Integer i,j = 0,nb = bufstr.Length();
-  Handle(TCollection_HAsciiString) ext = FileExtension ();
-  if (!ext.IsNull()) {
-    char val0 = '\0';  if (ext->Length() > 0) val0 = ext->Value(1);
-    for (i = nb; i > 0; i --)  if (bufstr.Value(i) == val0) { j = 1; break; }
-    if (j == 0) bufstr.AssignCat (ext->ToCString());
-  }
-  Handle(TCollection_HAsciiString) pre = FilePrefix ();
-  if (!pre.IsNull()) {
-    char val1 = '\0';  if (pre->Length() > 0) val1 = pre->Value(pre->Length());
-    j = 0;
-    for (i = nb; i > 0; i --)  if (bufstr.Value(i) == val1) { j = 1; break; }
-    if (j == 0) bufstr.Insert (1,pre->ToCString());
-  }
-
-  return bufstr.ToCString();
-}
-
-
-//=======================================================================
-//function : 
-//purpose  : 
-//=======================================================================
-
 void IFSelect_WorkSession::ClearFile ()
 {
   thecopier->ClearResult();
@@ -2156,11 +2109,6 @@ Standard_Boolean IFSelect_WorkSession::SendSplit ()
 
   if (NbFiles() > 0) checks = thecopier->SendCopied (thelibrary,theprotocol);
   else {
-    /*
-    IFSelect_ShareOutResult eval (ShareOut(), thegraph->Graph());
-    checks = thecopier->Send (eval, thelibrary, theprotocol);
-    thecopier->SetRemaining (thegraph->CGraph());
-    */
 //  Decomposer
     if (theshareout.IsNull()) return Standard_False;
     Standard_Integer i, nbd = theshareout->NbDispatches();
@@ -2606,41 +2554,6 @@ Standard_Boolean IFSelect_WorkSession::CombineRemove
       return Standard_True;
     }
   }
-  return Standard_True;
-}
-
-
-//=======================================================================
-//function : 
-//purpose  : 
-//=======================================================================
-
-Handle(IFSelect_Selection) IFSelect_WorkSession::NewSelectPointed
-  (const Handle(TColStd_HSequenceOfTransient)& list,
-   const Standard_CString name)
-{
-  Handle(IFSelect_SelectPointed) sel = new IFSelect_SelectPointed;
-  if (!list.IsNull()) sel->AddList (list);
-  if (AddNamedItem (name,sel) == 0) sel.Nullify();
-  return sel;
-}
-
-
-//=======================================================================
-//function : 
-//purpose  : 
-//=======================================================================
-
-Standard_Boolean IFSelect_WorkSession::SetSelectPointed
-  (const Handle(IFSelect_Selection)& sel,
-   const Handle(TColStd_HSequenceOfTransient)& list,
-   const Standard_Integer mode) const
-{
-  DeclareAndCast(IFSelect_SelectPointed,sp,sel);
-  if (sp.IsNull() || list.IsNull()) return Standard_False;
-  if (mode == 0) sp->Clear();
-  if (mode >= 0) sp->AddList(list);
-  else sp->RemoveList(list);
   return Standard_True;
 }
 

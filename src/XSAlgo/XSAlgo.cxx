@@ -70,7 +70,7 @@ static Handle(XSAlgo_AlgoContainer) theContainer;
 //purpose  : 
 //=======================================================================
 
- void XSAlgo::SetAlgoContainer(const Handle(XSAlgo_AlgoContainer)& aContainer) 
+void XSAlgo::SetAlgoContainer(const Handle(XSAlgo_AlgoContainer)& aContainer)
 {
   theContainer = aContainer;
 }
@@ -80,7 +80,7 @@ static Handle(XSAlgo_AlgoContainer) theContainer;
 //purpose  : 
 //=======================================================================
 
- Handle(XSAlgo_AlgoContainer) XSAlgo::AlgoContainer() 
+const Handle(XSAlgo_AlgoContainer) & XSAlgo::AlgoContainer()
 {
   return theContainer;
 }

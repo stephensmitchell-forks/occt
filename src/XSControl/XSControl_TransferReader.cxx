@@ -38,19 +38,36 @@
 #include <TopoDS_Shape.hxx>
 #include <TopTools_MapOfShape.hxx>
 #include <Transfer_ActorOfTransientProcess.hxx>
-#include <Transfer_IteratorOfProcessForTransient.hxx>
 #include <Transfer_ResultFromModel.hxx>
 #include <Transfer_ResultFromTransient.hxx>
 #include <Transfer_SimpleBinderOfTransient.hxx>
 #include <Transfer_TransientProcess.hxx>
 #include <TransferBRep.hxx>
 #include <TransferBRep_ShapeBinder.hxx>
+#include <TransferBRep_ShapeMapper.hxx>
 #include <XSControl_Controller.hxx>
 #include <XSControl_TransferReader.hxx>
-#include <XSControl_Utils.hxx>
 
 #include <stdio.h>
+
 IMPLEMENT_STANDARD_RTTIEXT(XSControl_TransferReader,MMgt_TShared)
+
+//=======================================================================
+//function : BinderShape
+//purpose  : 
+//=======================================================================
+
+static TopoDS_Shape BinderShape (const Handle(Standard_Transient)& tr)
+{
+  TopoDS_Shape sh;
+  DeclareAndCast(Transfer_Binder,sb,tr);
+  if (!sb.IsNull()) return TransferBRep::ShapeResult(sb);
+  DeclareAndCast(TransferBRep_ShapeMapper,sm,tr);
+  if (!sm.IsNull()) return sm->Shape();
+  DeclareAndCast(TopoDS_HShape,hs,tr);
+  if (!hs.IsNull()) return hs->Shape();
+  return sh;
+}
 
 //=======================================================================
 //function : SetController
@@ -396,8 +413,7 @@ TopoDS_Shape XSControl_TransferReader::ShapeResult
   if (res.IsNull()) return tres;
   Handle(Transfer_ResultFromTransient) mres = res->MainResult();
   if (mres.IsNull()) return tres;
-  XSControl_Utils xu;
-  TopoDS_Shape sh = xu.BinderShape (mres->Binder());
+  TopoDS_Shape sh = BinderShape (mres->Binder());
 
 //   Ouh la vilaine verrue
   Standard_Real tolang = Interface_Static::RVal("read.encoderegularity.angle");
@@ -445,8 +461,7 @@ Handle(Standard_Transient) XSControl_TransferReader::EntityFromResult
 {
   Handle(Standard_Transient) nulh;
   //  cas de la shape
-  XSControl_Utils xu;
-  TopoDS_Shape sh = xu.BinderShape (res);
+  TopoDS_Shape sh = BinderShape (res);
   if (!sh.IsNull()) return EntityFromShapeResult (sh,mode);
 
   Handle(Transfer_Binder) abinder;
@@ -512,7 +527,6 @@ Handle(Standard_Transient) XSControl_TransferReader::EntityFromShapeResult
   if (res.IsNull()) return nulh;
   Standard_Integer i,j,nb;
 
-  XSControl_Utils xu;
   if (mode == 0 || mode == 1 || mode == -1) {
     //  on regarde dans le TransientProcess
     if (!myTP.IsNull()) {
@@ -549,7 +563,7 @@ Handle(Standard_Transient) XSControl_TransferReader::EntityFromShapeResult
       for (ir = 1; ir <= nr; ir ++) {
         DeclareAndCast(Transfer_ResultFromTransient,rft,list->Value(ir));
         if (rft.IsNull()) continue;
-        TopoDS_Shape sh = xu.BinderShape (rft->Binder());
+        TopoDS_Shape sh = BinderShape (rft->Binder());
         if (!sh.IsNull() && sh == res) return rft->Start();
       }
       
@@ -580,7 +594,6 @@ Handle(TColStd_HSequenceOfTransient) XSControl_TransferReader::EntitiesFromShape
 
   //  A present, recherche et enregistrement
 
-  XSControl_Utils xu;
   if (mode == 0 || mode == 1) {
     //  on regarde dans le TransientProcess
     if (!myTP.IsNull()) {
@@ -588,7 +601,7 @@ Handle(TColStd_HSequenceOfTransient) XSControl_TransferReader::EntitiesFromShape
       for (j = 1; j <= nb; j ++) {
 	i = (mode == 0 ? myModel->Number (myTP->Root(j)) : j);
 	if (i == 0) continue;
-	TopoDS_Shape sh = xu.BinderShape (myTP->MapItem(i));
+	TopoDS_Shape sh = BinderShape (myTP->MapItem(i));
 	if (!sh.IsNull() && shapes.Contains(sh)) {
 	  lt->Append (myTP->Mapped(i));
           j=nb; //skl (for looking for entities in checkbrep)
@@ -610,7 +623,7 @@ Handle(TColStd_HSequenceOfTransient) XSControl_TransferReader::EntitiesFromShape
       for (ir = 1; ir <= nr; ir ++) {
         DeclareAndCast(Transfer_ResultFromTransient,rft,list->Value(i));
         if (rft.IsNull()) continue;
-        TopoDS_Shape sh = xu.BinderShape (rft->Binder());
+        TopoDS_Shape sh = BinderShape (rft->Binder());
         if (!sh.IsNull() && shapes.Contains(sh)) lt->Append (rft->Start());
       }
       
@@ -1156,7 +1169,7 @@ void XSControl_TransferReader::PrintStatsOnList(const Handle(Transfer_TransientP
 
     Standard_Integer stat;
     Standard_Integer nbv = 0, nbw = 0, nbf = 0, nbr = 0, nbrw = 0, nbrf = 0, nbnr = 0, nbi = 0;
-    Transfer_IteratorOfProcessForTransient itrp(Standard_True);
+    Transfer_TransientProcess::Iterator itrp(Standard_True);
     if (what == 1) itrp = TP->RootResult(Standard_True);
     if (what == 2) itrp = TP->CompleteResult(Standard_True);
     if (what == 3) itrp = TP->AbnormalResult();

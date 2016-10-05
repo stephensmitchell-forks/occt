@@ -143,7 +143,7 @@ Interface_EntityIterator STEPSelections_SelectInstances::RootResult(const Interf
       
       Interface_EntityIterator roots = G.RootEntities();
       myGraph = new Interface_HGraph(G);
-      myEntities.Destroy();
+      myEntities.Start();
       for (roots.Start(); roots.More(); roots.Next())
 	AddInstances(roots.Value(), G, myEntities);
     }

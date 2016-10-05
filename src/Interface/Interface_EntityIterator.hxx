@@ -23,25 +23,18 @@
 
 #include <TColStd_HSequenceOfTransient.hxx>
 #include <Standard_Type.hxx>
-#include <Standard_Boolean.hxx>
-#include <Standard_Integer.hxx>
-class Interface_IntVal;
-class Standard_NoMoreObject;
-class Standard_NoSuchObject;
-class Standard_Transient;
 
 
 //! Defines an Iterator on Entities.
 //! Allows considering of various criteria
 class Interface_EntityIterator 
 {
-public:
+ public:
 
   DEFINE_STANDARD_ALLOC
 
-  
   //! Defines an empty iterator (see AddList & AddItem)
-  Standard_EXPORT Interface_EntityIterator();
+  Interface_EntityIterator() {}
   
   //! Defines an iterator on a list, directly i.e. without copying it
   Standard_EXPORT Interface_EntityIterator(const Handle(TColStd_HSequenceOfTransient)& list);
@@ -53,7 +46,7 @@ public:
   Standard_EXPORT void AddItem (const Handle(Standard_Transient)& anentity);
   
   //! same as AddItem (kept for compatibility)
-  Standard_EXPORT void GetOneItem (const Handle(Standard_Transient)& anentity);
+  void GetOneItem (const Handle(Standard_Transient)& anentity) { AddItem(anentity); }
   
   //! Selects entities with are Kind of a given type,  keep only
   //! them (is keep is True) or reject only them (if keep is False)
@@ -77,7 +70,7 @@ public:
   Standard_EXPORT Standard_Boolean More() const;
   
   //! Sets iteration to the next entity (vertex) to give
-  Standard_EXPORT void Next() const;
+  void Next() const { thecurr++; }    // Next ne verifie rien : soin laisse a Value
   
   //! Returns the current Entity iterated, to be used by Interface
   //! tools
@@ -88,36 +81,19 @@ public:
   //! Returns an empty Sequence if the Iterator is empty
   //! Calls Start if not yet done
   Standard_EXPORT Handle(TColStd_HSequenceOfTransient) Content() const;
-  
-  //! Clears data of iteration
-  Standard_EXPORT void Destroy();
 
   //! Destructor
-  Standard_EXPORT virtual ~Interface_EntityIterator();
+  Standard_EXPORT virtual ~Interface_EntityIterator() {}
 
-protected:
-
+ protected:
   
   //! Allows subclasses of EntityIterator to reevaluate an iteration
   Standard_EXPORT void Reset();
 
+ private:
 
-
-
-private:
-
-
-
-  Handle(Interface_IntVal) thecurr;
+  mutable Standard_Integer thecurr;
   Handle(TColStd_HSequenceOfTransient) thelist;
-
-
 };
-
-
-
-
-
-
 
 #endif // _Interface_EntityIterator_HeaderFile

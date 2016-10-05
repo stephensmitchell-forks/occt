@@ -1,9 +1,3 @@
-IGESSelect.cxx
-IGESSelect.hxx
-IGESSelect_Activator.cxx
-IGESSelect_Activator.hxx
-IGESSelect_AddFileComment.cxx
-IGESSelect_AddFileComment.hxx
 IGESSelect_AddGroup.cxx
 IGESSelect_AddGroup.hxx
 IGESSelect_AutoCorrect.cxx
@@ -26,10 +20,6 @@ IGESSelect_EditDirPart.cxx
 IGESSelect_EditDirPart.hxx
 IGESSelect_EditHeader.cxx
 IGESSelect_EditHeader.hxx
-IGESSelect_FileModifier.hxx
-IGESSelect_FileModifier_0.cxx
-IGESSelect_FloatFormat.cxx
-IGESSelect_FloatFormat.hxx
 IGESSelect_IGESName.cxx
 IGESSelect_IGESName.hxx
 IGESSelect_IGESTypeForm.cxx
@@ -90,5 +80,3 @@ IGESSelect_UpdateLastChange.cxx
 IGESSelect_UpdateLastChange.hxx
 IGESSelect_ViewSorter.cxx
 IGESSelect_ViewSorter.hxx
-IGESSelect_WorkLibrary.cxx
-IGESSelect_WorkLibrary.hxx

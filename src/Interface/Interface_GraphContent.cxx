@@ -19,18 +19,7 @@
 #include <Interface_IntList.hxx>
 #include <Standard_Transient.hxx>
 
-Interface_GraphContent::Interface_GraphContent ()    {  }
-
-    Interface_GraphContent::Interface_GraphContent
-  (const Interface_Graph& agraph)
-      {  GetFromGraph(agraph);  }
-
-    Interface_GraphContent::Interface_GraphContent
-  (const Interface_Graph& agraph, const Standard_Integer stat)
-      {  GetFromGraph(agraph,stat);  }
-
-    Interface_GraphContent::Interface_GraphContent
-  (const Interface_Graph& agraph, const Handle(Standard_Transient)& ent)
+Interface_GraphContent::Interface_GraphContent (const Interface_Graph& agraph, const Handle(Standard_Transient)& ent)
 {
   Interface_EntityIterator list =  agraph.Shareds(ent);
   Standard_Integer nb = list.NbEntities();
@@ -42,8 +31,7 @@ Interface_GraphContent::Interface_GraphContent ()    {  }
   }
 }
 
-
-    void  Interface_GraphContent::GetFromGraph (const Interface_Graph& agraph)
+void Interface_GraphContent::GetFromGraph (const Interface_Graph& agraph)
 {
   Standard_Integer nb = agraph.Size();
   for (Standard_Integer i = 1; i <= nb; i ++) {
@@ -51,8 +39,7 @@ Interface_GraphContent::Interface_GraphContent ()    {  }
   }
 }
 
-    void  Interface_GraphContent::GetFromGraph
-  (const Interface_Graph& agraph, const Standard_Integer stat)
+void Interface_GraphContent::GetFromGraph (const Interface_Graph& agraph, const Standard_Integer stat)
 {
   Standard_Integer nb = agraph.Size();
   for (Standard_Integer i = 1; i <= nb; i ++) {
@@ -61,19 +48,18 @@ Interface_GraphContent::Interface_GraphContent ()    {  }
   }
 }
 
-    Interface_EntityIterator Interface_GraphContent::Result ()
+Interface_EntityIterator Interface_GraphContent::Result ()
 {
   Interface_EntityIterator iter;    // On transvase ...
   for (Begin(); More(); Next()) iter.GetOneItem(Value());
   return iter;
 }
 
-
-    void Interface_GraphContent::Begin ()
+void Interface_GraphContent::Begin ()
 {
   Evaluate();
   Interface_EntityIterator::Start();
 }
 
-    void Interface_GraphContent::Evaluate ()
-{  }    // par defaut, Evaluate ne fait rien
+void Interface_GraphContent::Evaluate ()
+{}

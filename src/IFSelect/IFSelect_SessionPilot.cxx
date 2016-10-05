@@ -16,7 +16,6 @@
 #include <IFSelect_Selection.hxx>
 #include <IFSelect_SessionPilot.hxx>
 #include <IFSelect_SignCounter.hxx>
-#include <IFSelect_WorkLibrary.hxx>
 #include <IFSelect_WorkSession.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_InterfaceModel.hxx>
@@ -60,27 +59,6 @@ static TCollection_AsciiString nulword;
 }
 
 
-    Handle(IFSelect_WorkSession)  IFSelect_SessionPilot::Session () const 
-      {  return thesession;  }
-
-    Handle(IFSelect_WorkLibrary)  IFSelect_SessionPilot::Library () const 
-      {  return thesession->WorkLibrary();  }
-
-    Standard_Boolean  IFSelect_SessionPilot::RecordMode () const 
-      {  return therecord;  }
-
-    void  IFSelect_SessionPilot::SetSession
-  (const Handle(IFSelect_WorkSession)& WS)
-      {  thesession = WS;  }
-
-    void  IFSelect_SessionPilot::SetLibrary
-  (const Handle(IFSelect_WorkLibrary)& WL)
-      {  if (!thesession.IsNull()) thesession->SetLibrary(WL);  }
-
-    void  IFSelect_SessionPilot::SetRecordMode (const Standard_Boolean mode)
-      {  therecord = mode;  }
-
-
     void  IFSelect_SessionPilot::SetCommandLine
   (const TCollection_AsciiString& command)
 {
@@ -117,47 +95,9 @@ static TCollection_AsciiString nulword;
 #endif
     thenbwords ++;
   }
-/*
-    aligner sur MAXWORDS
-  char l0[80],l1[80],l2[80],l3[80],l4[80],l5[80],l6[80],l7[80],l8[80],l9[80];
-  char m0[80],m1[80],m2[80],m3[80],m4[80],m5[80],m6[80],m7[80],m8[80],m9[80];
-  thenbwords = sscanf
-    (thecommand.ToCString(),"%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
-     l0,l1,l2,l3,l4,l5,l6,l7,l8,l9,m0,m1,m2,m3,m4,m5,m6,m7,m8,m9);
-  if (thenbwords <  0) thenbwords = 0;
-  if (thenbwords > MAXWORDS) thenbwords = MAXWORDS;
-  Standard_Integer nb = thewords.Upper();
-  for (i = 0; i <= nb; i ++) thewords(i).Clear();
-  switch (thenbwords) {
-    case 20 : thewords(19).AssignCat(m9);
-    case 19 : thewords(18).AssignCat(m8);
-    case 18 : thewords(17).AssignCat(m7);
-    case 17 : thewords(16).AssignCat(m6);
-    case 16 : thewords(15).AssignCat(m5);
-    case 15 : thewords(14).AssignCat(m4);
-    case 14 : thewords(13).AssignCat(m3);
-    case 13 : thewords(12).AssignCat(m2);
-    case 12 : thewords(11).AssignCat(m1);
-    case 11 : thewords(10).AssignCat(m0);
-    case 10 : thewords(9).AssignCat(l9);
-    case  9 : thewords(8).AssignCat(l8);
-    case  8 : thewords(7).AssignCat(l7);
-    case  7 : thewords(6).AssignCat(l6);
-    case  6 : thewords(5).AssignCat(l5);
-    case  5 : thewords(4).AssignCat(l4);
-    case  4 : thewords(3).AssignCat(l3);
-    case  3 : thewords(2).AssignCat(l2);
-    case  2 : thewords(1).AssignCat(l1);
-    case  1 : thewords(0).AssignCat(l0);
-    default : break;
-  }
-*/
   thenumrec = 0;
   theobjrec.Nullify();
 }
-
-    const TCollection_AsciiString&  IFSelect_SessionPilot::CommandLine () const
-      {  return thecommand;  }
 
     Standard_CString  IFSelect_SessionPilot::CommandPart
   (const Standard_Integer numarg) const
@@ -166,9 +106,6 @@ static TCollection_AsciiString nulword;
   if (numarg >= thenbwords) return "";
   return &(thecommand.ToCString())[thewordeb(numarg)-1];
 }
-
-    Standard_Integer  IFSelect_SessionPilot::NbWords () const 
-      {  return thenbwords;  }
 
     const TCollection_AsciiString&  IFSelect_SessionPilot::Word
   (const Standard_Integer num) const 
@@ -204,27 +141,12 @@ static TCollection_AsciiString nulword;
   return Standard_True;
 }
 
-    Standard_Integer  IFSelect_SessionPilot::NbCommands () const 
-      {  return thecomlist.Length();  }
-
-    const TCollection_AsciiString&  IFSelect_SessionPilot::Command
-  (const Standard_Integer num) const 
-      {  return thecomlist(num);  }
-
-
     IFSelect_ReturnStatus  IFSelect_SessionPilot::RecordItem
   (const Handle(Standard_Transient)& item)
 {
   theobjrec = item;
   return (item.IsNull() ? IFSelect_RetFail : IFSelect_RetDone);
 }
-
-    Handle(Standard_Transient)  IFSelect_SessionPilot::RecordedItem () const
-      {  return theobjrec;  }
-
-    void  IFSelect_SessionPilot::Clear ()
-      { thecomlist.Clear(); }
-
 
 //  #######################################################################
 //  ########        CONTROLE D EXECUTION

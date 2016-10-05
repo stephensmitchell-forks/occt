@@ -23,9 +23,6 @@
 
 #include <Interface_Graph.hxx>
 #include <Interface_GraphContent.hxx>
-#include <Standard_Boolean.hxx>
-class Interface_Graph;
-class Standard_Transient;
 class Interface_EntityIterator;
 
 
@@ -33,23 +30,26 @@ class Interface_EntityIterator;
 //! a sub-part, but are not contained by this sub-part
 class IFGraph_ExternalSources  : public Interface_GraphContent
 {
-public:
+ public:
 
   DEFINE_STANDARD_ALLOC
 
-  
   //! creates empty ExternalSources, ready to work
-  Standard_EXPORT IFGraph_ExternalSources(const Interface_Graph& agraph);
+  IFGraph_ExternalSources(const Interface_Graph& agraph)
+  : thegraph (agraph)
+  {}
   
   //! adds an entity and its shared ones to the list
-  Standard_EXPORT void GetFromEntity (const Handle(Standard_Transient)& ent);
-  
+  void GetFromEntity (const Handle(Standard_Transient)& ent)
+  { thegraph.GetFromEntity(ent,Standard_True); }
+
   //! adds a list of entities (as an iterator) with shared ones
-  Standard_EXPORT void GetFromIter (const Interface_EntityIterator& iter);
-  
+  void GetFromIter (const Interface_EntityIterator& iter)
+  { thegraph.GetFromIter(iter,0); }
+
   //! Allows to restart on a new data set
-  Standard_EXPORT void ResetData();
-  
+  void ResetData() { Reset(); thegraph.Reset(); }
+
   //! Evaluates external sources of a set of entities
   Standard_EXPORT virtual void Evaluate() Standard_OVERRIDE;
   
@@ -58,28 +58,9 @@ public:
   //! (performs an Evaluation as necessary)
   Standard_EXPORT Standard_Boolean IsEmpty();
 
-
-
-
-protected:
-
-
-
-
-
-private:
-
-
+ private:
 
   Interface_Graph thegraph;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IFGraph_ExternalSources_HeaderFile

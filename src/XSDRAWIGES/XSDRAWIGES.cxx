@@ -20,8 +20,6 @@
 #include <DrawTrSurf.hxx>
 #include <Geom_Curve.hxx>
 #include <Geom_Surface.hxx>
-#include <IFSelect_Functions.hxx>
-#include <IFSelect_SessionPilot.hxx>
 #include <IGESControl_Controller.hxx>
 #include <IGESControl_Reader.hxx>
 #include <IGESControl_Writer.hxx>
@@ -30,13 +28,11 @@
 #include <IGESData_IGESEntity.hxx>
 #include <IGESData_IGESModel.hxx>
 #include <IGESData_Protocol.hxx>
-#include <IGESSelect_Activator.hxx>
 #include <IGESToBRep.hxx>
 #include <IGESToBRep_Actor.hxx>
 #include <IGESToBRep_Reader.hxx>
 #include <Interface_Check.hxx>
 #include <Interface_CheckIterator.hxx>
-#include <Interface_CheckTool.hxx>
 #include <Interface_InterfaceModel.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_Static.hxx>
@@ -54,14 +50,14 @@
 #include <TopoDS.hxx>
 #include <TopoDS_Shape.hxx>
 #include <Transfer_FinderProcess.hxx>
-#include <Transfer_IteratorOfProcessForTransient.hxx>
 #include <Transfer_TransientProcess.hxx>
-#include <XSControl.hxx>
 #include <XSControl_WorkSession.hxx>
 #include <XSControl_TransferReader.hxx>
 #include <XSDRAW.hxx>
 #include <XSDRAW_Commands.hxx>
+#include <XSDRAW_SelectFunctions.hxx>
 #include <XSDRAWIGES.hxx>
+#include <XSDRAWIGES_Activator.hxx>
 
 #include <stdio.h>
 // #include <IGESData_IGESWriter.hxx>
@@ -149,7 +145,7 @@ static Standard_Integer igesbrep (Draw_Interpretor& di, Standard_Integer argc, c
       di<<"spline_continuity (read) : "<<Interface_Static::IVal("read.iges.bspline.continuity")<<" (0 : no modif, 1 : C1, 2 : C2)\n";
       di<<"  To modify : command  param read.iges.bspline.continuity\n";
       Handle(XSControl_WorkSession) thesession = Reader.WS();
-      thesession->ClearContext();
+      thesession->TransferReader()->Context().Nullify();
       XSDRAW::SetTransferProcess (thesession->TransferReader()->TransientProcess());
       progress->NewScope ( 80, "Translation" );
       progress->Show();
@@ -250,7 +246,7 @@ static Standard_Integer igesbrep (Draw_Interpretor& di, Standard_Integer argc, c
         di<<"spline_continuity (read) : "<<Interface_Static::IVal("read.iges.bspline.continuity")<<" (0 : no modif, 1 : C1, 2 : C2)\n";
         di<<"  To modify : command  param read.iges.bspline.continuity\n";
         Handle(XSControl_WorkSession) thesession = Reader.WS();
-        thesession->ClearContext();
+        thesession->TransferReader()->Context().Nullify();
         XSDRAW::SetTransferProcess (thesession->TransferReader()->TransientProcess());
         progress->NewScope ( 80, "Translation" );
         progress->Show();
@@ -515,11 +511,11 @@ static Standard_Integer igesparam (Draw_Interpretor& di, Standard_Integer , cons
 
 static Standard_Integer XSDRAWIGES_tplosttrim (Draw_Interpretor& di, Standard_Integer n, const char** a) 
 {
-  Handle(IFSelect_SessionPilot) pilot = XSDRAW::Pilot();
-
   Standard_Integer narg = n;
 
-  const Handle(Transfer_TransientProcess) &TP = XSControl::Session(pilot)->TransferReader()->TransientProcess();
+  Handle(XSControl_WorkSession) WS = XSDRAW::Session();
+  const Handle(Transfer_TransientProcess) &TP = WS->TransferReader()->TransientProcess();
+
   TColStd_Array1OfAsciiString strarg(1, 3);
   TColStd_Array1OfAsciiString typarg(1, 3);
   strarg.SetValue(1,"xst-type(CurveOnSurface)");
@@ -530,8 +526,7 @@ static Standard_Integer XSDRAWIGES_tplosttrim (Draw_Interpretor& di, Standard_In
   typarg.SetValue(3,"IGESSolid_Face");
   if (TP.IsNull()) { di<<"No Transfer Read\n"; return 1; }
   Standard_Integer nbFaces = 0, totFaces = 0 ;
-  Handle(IFSelect_WorkSession) WS = pilot->Session(); 
-  Transfer_IteratorOfProcessForTransient itrp = TP->AbnormalResult(); 
+  Transfer_TransientProcess::Iterator itrp = TP->AbnormalResult();
   Standard_Integer k=0;
   if(narg > 1) {
     TCollection_AsciiString Arg(a[1]);
@@ -543,7 +538,7 @@ static Standard_Integer XSDRAWIGES_tplosttrim (Draw_Interpretor& di, Standard_In
   for(Standard_Integer j = 1 ; j <= 3; j++) {
     TColStd_MapOfTransient aMap;
     if(narg == 1) k=j;
-    Handle(TColStd_HSequenceOfTransient) list = IFSelect_Functions::GiveList(pilot->Session(),strarg.Value(k).ToCString());
+    Handle(TColStd_HSequenceOfTransient) list = XSDRAW_SelectFunctions::GiveList(WS,strarg.Value(k).ToCString());
     if (!list.IsNull()) itrp.Filter (list);
     else {
       di << "No untrimmed faces\n";
@@ -597,11 +592,11 @@ static Standard_Integer XSDRAWIGES_tplosttrim (Draw_Interpretor& di, Standard_In
 //--------------------------------------------------------------
 static Standard_Integer XSDRAWIGES_TPSTAT(Draw_Interpretor& di,Standard_Integer n, const char** a)
 {
-  Handle(IFSelect_SessionPilot) pilot = XSDRAW::Pilot();
-  Standard_Integer argc = n;//= pilot->NbWords();
-  const Standard_CString arg1 = a[1];//pilot->Arg(1);
-  const Handle(Transfer_TransientProcess) &TP = XSControl::Session(pilot)->TransferReader()->TransientProcess();
-  IGESControl_Reader read; //(XSControl::Session(pilot),Standard_False);
+  Standard_Integer argc = n;
+  const Standard_CString arg1 = a[1];
+  const Handle(Transfer_TransientProcess) &TP = XSDRAW::Session()->TransferReader()->TransientProcess();
+
+  IGESControl_Reader read;
 //        ****    tpent        ****
   Handle(Interface_InterfaceModel) model = TP->Model();
   if (model.IsNull()) {di<<"No Transfer Read\n"; return -1;}
@@ -660,13 +655,236 @@ static void cleanpilot ()
 //
 //--------------------------------------------------------------
 
-void  XSDRAWIGES::InitSelect ()
+#include <IGESSelect_AutoCorrect.hxx>
+#include <IGESSelect_ComputeStatus.hxx>
+#include <IGESControl_FloatFormat.hxx>
+#include <IGESSelect_RemoveCurves.hxx>
+#include <IGESSelect_SetGlobalParameter.hxx>
+#include <IGESSelect_SetLabel.hxx>
+#include <IGESSelect_UpdateFileName.hxx>
+#include <IFSelect_SelectModelEntities.hxx>
+#include <IFSelect_SelectModelRoots.hxx>
+#include <XSControl_SelectForTransfer.hxx>
+#include <IGESSelect_SelectVisibleStatus.hxx>
+#include <IGESSelect_SelectSubordinate.hxx>
+#include <IGESSelect_SelectBypassGroup.hxx>
+#include <IGESSelect_SelectBypassSubfigure.hxx>
+#include <IGESSelect_SelectBasicGeom.hxx>
+#include <IGESSelect_SelectFaces.hxx>
+#include <IGESSelect_SelectPCurves.hxx>
+#include <IFSelect_SelectType.hxx>
+#include <IGESSelect_IGESTypeForm.hxx>
+#include <IGESSelect_SignStatus.hxx>
+#include <IFSelect_SignMultiple.hxx>
+#include <IFSelect_SignCounter.hxx>
+#include <IGESSelect_CounterOfLevelNumber.hxx>
+#include <IGESSelect_SignLevelNumber.hxx>
+#include <IGESSelect_IGESName.hxx>
+#include <IGESSelect_SignColor.hxx>
+#include <IGESBasic_SubfigureDef.hxx>
+#include <IFSelect_SignType.hxx>
+#include <IGESSelect_EditHeader.hxx>
+#include <IFSelect_EditForm.hxx>
+#include <IGESSelect_EditDirPart.hxx>
+#include <IGESSelect_Dumper.hxx>
+
+void XSDRAWIGES::InitSelect ()
 {
-  Handle(IGESSelect_Activator)    igesact = new IGESSelect_Activator;
+  Handle(XSDRAWIGES_Activator) igesact = new XSDRAWIGES_Activator;
+
   IGESControl_Controller::Init();
-//  XSDRAW::SetNorm ("IGES");  trop tot
-  XSDRAW::SetController (XSControl_Controller::Recorded("iges"));
+  Handle(XSControl_Controller) aCntl = XSControl_Controller::Recorded("iges");
+
+  static int gInit = 0;
+  if (!gInit) {
+    gInit = 1;
+    Handle(IGESSelect_Dumper) sesdump = new IGESSelect_Dumper;  // ainsi,cestfait
+
+    aCntl->AddSessionItem (new IGESSelect_RemoveCurves(Standard_True) ,"iges-remove-pcurves");
+    aCntl->AddSessionItem (new IGESSelect_RemoveCurves(Standard_False),"iges-remove-curves-3d");
+    aCntl->AddSessionItem (new IGESSelect_SetLabel (0,Standard_True) ,"iges-clear-label");
+    aCntl->AddSessionItem (new IGESSelect_SetLabel (1,Standard_False),"iges-set-label-dnum");
+
+    aCntl->AddSessionItem (new IGESSelect_AutoCorrect,"iges-auto-correct",Standard_True);
+    aCntl->AddSessionItem (new IGESSelect_ComputeStatus,"iges-compute-status",Standard_True);
+
+    Handle(IGESControl_FloatFormat) flf = new IGESControl_FloatFormat;
+    flf->SetDefault (12);
+    aCntl->AddSessionItem (flf,"iges-float-digits-12",Standard_True);
+
+    //  --   Sender Product Identification   --  (pas un statique ...)
+    Handle(IGESSelect_SetGlobalParameter) set3 = new IGESSelect_SetGlobalParameter(3);
+    Handle(TCollection_HAsciiString) pa3 = Interface_Static::Static("write.iges.header.product")->HStringValue();
+    set3->SetValue(pa3);
+    aCntl->AddSessionItem (pa3, "iges-header-val-sender");
+    aCntl->AddSessionItem (set3,"iges-header-set-sender",Standard_True);
+
+    aCntl->AddSessionItem (new IGESSelect_UpdateFileName,"iges-update-file-name",Standard_True);
+
+    //  --   Receiver   --   Acces par Static, ajustable
+    Handle(IGESSelect_SetGlobalParameter) set12 = new IGESSelect_SetGlobalParameter(12);
+    Handle(TCollection_HAsciiString) pa12 = Interface_Static::Static("write.iges.header.receiver")->HStringValue();
+    set12->SetValue(pa12);
+    aCntl->AddSessionItem (pa12, "iges-header-val-receiver");
+    aCntl->AddSessionItem (set12,"iges-header-set-receiver",Standard_True);
+
+    //  --   Auteur   --   acces par Static (demarre par whoami), ajustable
+    Handle(IGESSelect_SetGlobalParameter) set21 = new IGESSelect_SetGlobalParameter(21);
+    Handle(TCollection_HAsciiString) pa21 = Interface_Static::Static("write.iges.header.author")->HStringValue();
+    set21->SetValue(pa21);
+    aCntl->AddSessionItem (pa21, "iges-header-val-author");
+    aCntl->AddSessionItem (set21,"iges-header-set-author",Standard_True);
+
+    //  --   Compagnie (de l auteur)   --   acces par Static, ajustable
+    Handle(IGESSelect_SetGlobalParameter) set22 = new IGESSelect_SetGlobalParameter(22);
+    Handle(TCollection_HAsciiString) pa22 = Interface_Static::Static("write.iges.header.company")->HStringValue();
+    set22->SetValue(pa22);
+    aCntl->AddSessionItem (pa22, "iges-header-val-company");
+    aCntl->AddSessionItem (set22,"iges-header-set-company",Standard_True);
+  }
+
+  XSDRAW::SetController (aCntl);
+
+  Handle(XSControl_WorkSession) WS = XSDRAW::Session();
+
+  //   ---  SELECTIONS, SIGNATURES, COMPTEURS, EDITEURS
+  //   --   BypassGroup / xst-model-roots
+
+  // Should be already set by the above call to Customise
+  Handle(IFSelect_SelectModelEntities) xma;
+  Handle(Standard_Transient) xma1 = WS->NamedItem("xst-model-all");
+  if (xma1.IsNull()) xma = new IFSelect_SelectModelEntities;
+  else {
+    xma = Handle(IFSelect_SelectModelEntities)::DownCast(xma1);
+    WS->AddNamedItem ("xst-model-all",xma);
+  }
   
+  Handle(IFSelect_SelectModelRoots) xmr;
+  Handle(Standard_Transient) xmr1 = WS->NamedItem("xst-model-roots");
+  if (!xmr1.IsNull())
+     xmr = Handle(IFSelect_SelectModelRoots)::DownCast(xmr1);
+  else  {
+    xmr = new IFSelect_SelectModelRoots;
+    WS->AddNamedItem ("xst-model-roots",xmr);
+  }
+
+  Handle(XSControl_SelectForTransfer) xtr;
+  Handle(Standard_Transient) xtr1 = WS->NamedItem("xst-transferrable-roots");
+  if (!xtr1.IsNull())
+    xtr = Handle(XSControl_SelectForTransfer)::DownCast(xtr1);
+  else {
+    xtr = new XSControl_SelectForTransfer;
+    xtr->SetReader (WS->TransferReader());
+    WS->AddNamedItem ("xst-transferrable-roots",xtr);
+  }
+
+  if (!xmr.IsNull()) {
+    Handle(IGESSelect_SelectVisibleStatus) visa = new IGESSelect_SelectVisibleStatus;
+    visa->SetInput(xmr);
+    WS->AddNamedItem ("iges-visible-roots",visa);
+    Handle(IGESSelect_SelectVisibleStatus) vist = new IGESSelect_SelectVisibleStatus;
+    vist->SetInput(xtr);
+    WS->AddNamedItem ("iges-visible-transf-roots",vist);
+    Handle(IGESSelect_SelectVisibleStatus) blka = new IGESSelect_SelectVisibleStatus;
+    blka->SetDirect (Standard_False);
+    blka->SetInput(xmr);
+    WS->AddNamedItem ("iges-blanked-roots",blka);
+    Handle(IGESSelect_SelectVisibleStatus) blkt = new IGESSelect_SelectVisibleStatus;
+    blkt->SetDirect (Standard_False);
+    blkt->SetInput(xtr);
+    WS->AddNamedItem ("iges-blanked-transf-roots",blkt);
+    Handle(IGESSelect_SelectSubordinate) indp = new IGESSelect_SelectSubordinate (0);
+    indp->SetInput (xma);
+    WS->AddNamedItem ("iges-status-independant",indp);
+
+    Handle(IGESSelect_SelectBypassGroup) sb = new IGESSelect_SelectBypassGroup;
+    sb->SetInput(xmr);
+    WS->AddNamedItem ("iges-bypass-group",sb);
+    Handle(IGESSelect_SelectBypassSubfigure) sfi = new IGESSelect_SelectBypassSubfigure;
+    sfi->SetInput(xmr);
+    WS->AddNamedItem ("iges-bypass-subfigure",sfi);
+    Handle(IGESSelect_SelectBypassGroup) sfb = new IGESSelect_SelectBypassGroup;
+    sfb->SetInput(sfi);
+    WS->AddNamedItem ("iges-bypass-group-subfigure",sfb);
+    Handle(IGESSelect_SelectBasicGeom) sc3d = new IGESSelect_SelectBasicGeom(1);
+    sc3d->SetInput(sfi);
+    WS->AddNamedItem ("iges-curves-3d",sc3d);
+    Handle(IGESSelect_SelectBasicGeom) sb3d = new IGESSelect_SelectBasicGeom(2);
+    sb3d->SetInput(sfi);
+    WS->AddNamedItem ("iges-basic-curves-3d",sb3d);
+    Handle(IGESSelect_SelectBasicGeom) sbg = new IGESSelect_SelectBasicGeom(0);
+    sbg->SetInput(sfi);
+    WS->AddNamedItem ("iges-basic-geom",sbg);
+    Handle(IGESSelect_SelectBasicGeom) srf = new IGESSelect_SelectBasicGeom(-1);
+    srf->SetInput(sfi);
+    WS->AddNamedItem ("iges-surfaces",srf);
+    Handle(IGESSelect_SelectFaces) sfa = new IGESSelect_SelectFaces;
+    sfa->SetInput(sfi);
+    WS->AddNamedItem ("iges-faces",sfa );
+    Handle(IGESSelect_SelectPCurves) spc = new IGESSelect_SelectPCurves(Standard_True);
+    spc->SetInput(sfa);
+    WS->AddNamedItem ("iges-pcurves",spc);
+
+    Handle(IFSelect_SelectType) snosub = new IFSelect_SelectType
+      (STANDARD_TYPE(IGESBasic_SubfigureDef));
+    snosub->SetDirect(Standard_False);
+    snosub->SetInput(xmr);
+    WS->AddNamedItem ("iges-no-indep-subfigure-def",snosub);
+
+    Handle(IGESSelect_IGESTypeForm) itf = new IGESSelect_IGESTypeForm(Standard_True);
+    WS->AddNamedItem ("iges-type",itf);
+
+    Handle(IGESSelect_SignStatus) sigst = new IGESSelect_SignStatus;
+    Handle(IFSelect_SignMultiple) typsta = new IFSelect_SignMultiple
+      ("IGES Type Form    Status");
+    typsta->Add (itf,15);
+    typsta->Add (sigst);
+    WS->AddNamedItem ("iges-type-status",typsta);
+
+    Handle(IFSelect_SignMultiple) typnam = new IFSelect_SignMultiple
+      ("IGES Type Form  TypeName");
+    typnam->Add (itf,4);
+    typnam->Add (new IFSelect_SignType(Standard_True));
+    WS->AddNamedItem ("iges-type-name",typnam);
+
+    Handle(IFSelect_SignCounter) itfs = new IFSelect_SignCounter
+      (itf,Standard_False,Standard_True);
+    WS->AddNamedItem ("iges-types",itfs);
+    Handle(IGESSelect_CounterOfLevelNumber) levs =
+      new IGESSelect_CounterOfLevelNumber;
+    WS->AddNamedItem ("iges-levels",levs);
+
+    Handle(IGESSelect_SignLevelNumber) slev = new IGESSelect_SignLevelNumber(Standard_False);
+    WS->AddNamedItem ("iges-level-number",slev);
+    Handle(IGESSelect_IGESName) igna = new IGESSelect_IGESName;
+    WS->AddNamedItem ("iges-name",igna);
+
+    Handle(IGESSelect_SignColor) scol1 = new IGESSelect_SignColor (1);
+    WS->AddNamedItem ("iges-color-number",scol1);
+    Handle(IGESSelect_SignColor) scol2 = new IGESSelect_SignColor (2);
+    WS->AddNamedItem ("iges-color-name",scol2);
+    Handle(IGESSelect_SignColor) scol3 = new IGESSelect_SignColor (3);
+    WS->AddNamedItem ("iges-color-rgb",scol3);
+    Handle(IGESSelect_SignColor) scol4 = new IGESSelect_SignColor (4);
+    WS->AddNamedItem ("iges-color-red",scol4);
+    Handle(IGESSelect_SignColor) scol5 = new IGESSelect_SignColor (5);
+    WS->AddNamedItem ("iges-color-green",scol5);
+    Handle(IGESSelect_SignColor) scol6 = new IGESSelect_SignColor (6);
+    WS->AddNamedItem ("iges-color-blue",scol6);
+
+    Handle(IGESSelect_EditHeader) edhead = new IGESSelect_EditHeader;
+    WS->AddNamedItem ("iges-header-edit",edhead);
+    Handle(IFSelect_EditForm) edheadf = edhead->Form(Standard_False);
+    WS->AddNamedItem ("iges-header",edheadf);
+
+    Handle(IGESSelect_EditDirPart) eddirp = new IGESSelect_EditDirPart;
+    WS->AddNamedItem ("iges-dir-part-edit",eddirp);
+    Handle(IFSelect_EditForm) eddirpf = eddirp->Form(Standard_False);
+    WS->AddNamedItem ("iges-dir-part",eddirpf);
+
+    WS->SetSignType( typnam );
+  }
+
   atexit (cleanpilot);
 }
 

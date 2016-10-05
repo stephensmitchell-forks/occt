@@ -34,9 +34,7 @@ DEFINE_STANDARD_HANDLE(StepAP214_Protocol, StepData_Protocol)
 //! It requires StepAP214 as a Resource
 class StepAP214_Protocol : public StepData_Protocol
 {
-
-public:
-
+ public:
   
   Standard_EXPORT StepAP214_Protocol();
   
@@ -51,27 +49,7 @@ public:
   //! Returns a Resource, given its rank (between 1 and NbResources)
   Standard_EXPORT virtual Handle(Interface_Protocol) Resource (const Standard_Integer num) const Standard_OVERRIDE;
 
-
-
-
   DEFINE_STANDARD_RTTIEXT(StepAP214_Protocol,StepData_Protocol)
-
-protected:
-
-
-
-
-private:
-
-
-
-
 };
-
-
-
-
-
-
 
 #endif // _StepAP214_Protocol_HeaderFile

@@ -17,8 +17,8 @@
 #ifndef _Transfer_ActorOfTransientProcess_HeaderFile
 #define _Transfer_ActorOfTransientProcess_HeaderFile
 
-#include <Transfer_ProcessForTransient.hxx>
+#include <Transfer_Process.hxx>
 
-#define Transfer_ActorOfTransientProcess Transfer_ProcessForTransient::Actor
+#define Transfer_ActorOfTransientProcess Transfer_Process::Actor
 
 #endif // _Transfer_ActorOfTransientProcess_HeaderFile

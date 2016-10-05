@@ -15,7 +15,6 @@
 
 
 #include <Interface_Static.hxx>
-#include <Standard_Type.hxx>
 #include <STEPCAFControl_ActorWrite.hxx>
 #include <STEPCAFControl_Controller.hxx>
 #include <XSAlgo.hxx>
@@ -26,10 +25,10 @@ IMPLEMENT_STANDARD_RTTIEXT(STEPCAFControl_Controller,STEPControl_Controller)
 //function : STEPCAFControl_Controller
 //purpose  : 
 //=======================================================================
+
 STEPCAFControl_Controller::STEPCAFControl_Controller ()
 {
-  Handle(STEPCAFControl_ActorWrite) ActWrite = new STEPCAFControl_ActorWrite;
-  myAdaptorWrite = ActWrite;
+  myAdaptorWrite = new STEPCAFControl_ActorWrite;
 }
 
 //=======================================================================
@@ -37,10 +36,10 @@ STEPCAFControl_Controller::STEPCAFControl_Controller ()
 //purpose  : 
 //=======================================================================
 
-Standard_Boolean STEPCAFControl_Controller::Init ()
+void STEPCAFControl_Controller::Init ()
 {
   static Standard_Boolean inic = Standard_False;
-  if (inic) return Standard_True;
+  if (inic) return;
   inic = Standard_True;
   // self-registering
   Handle(STEPCAFControl_Controller) STEPCTL = new STEPCAFControl_Controller;
@@ -68,6 +67,4 @@ Standard_Boolean STEPCAFControl_Controller::Init ()
   Interface_Static::Init   ("stepcaf", "read.stepcaf.subshapes.name", '&', "eval Off"); // 0
   Interface_Static::Init   ("stepcaf", "read.stepcaf.subshapes.name", '&', "eval On");  // 1
   Interface_Static::SetIVal("read.stepcaf.subshapes.name", 0); // Disabled by default
-
-  return Standard_True;
 }

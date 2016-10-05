@@ -23,9 +23,9 @@
 #include <TColStd_HSequenceOfTransient.hxx>
 #include <TopAbs_Orientation.hxx>
 #include <TopTools_HSequenceOfShape.hxx>
-#include <Transfer_ProcessForFinder.hxx>
 class TopoDS_Shape;
 class Transfer_Binder;
+class Transfer_Process;
 class Transfer_TransientProcess;
 class TransferBRep_ShapeMapper;
 
@@ -64,7 +64,7 @@ class TransferBRep
   //! Either <shape> is already mapped, then its Mapper is returned
   //! Or it is not, then a new one is created then returned, BUT
   //! it is not mapped here (use Bind to do this)
-  Standard_EXPORT static Handle(TransferBRep_ShapeMapper) ShapeMapper (const Handle(Transfer_ProcessForFinder)& FP, const TopoDS_Shape& theShape);
+  Standard_EXPORT static Handle(TransferBRep_ShapeMapper) ShapeMapper (const Handle(Transfer_Process)& FP, const TopoDS_Shape& theShape);
 
   //! Returns Type Name (string)
   //! Here, the true name of the Type of a Shape

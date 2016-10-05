@@ -37,19 +37,11 @@ DEFINE_STANDARD_HANDLE(STEPControl_Controller, XSControl_Controller)
 //! defines basic controller for STEP processor
 class STEPControl_Controller : public XSControl_Controller
 {
-
-public:
-
-  
-  //! Initializes the use of STEP Norm (the first time) and
-  //! returns a Controller
-  Standard_EXPORT STEPControl_Controller();
+ public:
   
   //! Creates a new empty Model ready to receive data of the Norm.
   //! It is taken from STEP Template Model
-  Standard_EXPORT Handle(Interface_InterfaceModel) NewModel() const Standard_OVERRIDE;
-  
-  Standard_EXPORT virtual void Customise (Handle(XSControl_WorkSession)& WS) Standard_OVERRIDE;
+  Standard_EXPORT virtual Handle(Interface_InterfaceModel) NewModel() const Standard_OVERRIDE;
   
   //! Takes one Shape and transfers it to the InterfaceModel
   //! (already created by NewModel for instance)
@@ -62,29 +54,15 @@ public:
   //! Standard Initialisation. It creates a Controller for STEP
   //! and records it to various names, available to select it later
   //! Returns True when done, False if could not be done
-  Standard_EXPORT static Standard_Boolean Init();
-
-
-
+  Standard_EXPORT static void Init();
 
   DEFINE_STANDARD_RTTIEXT(STEPControl_Controller,XSControl_Controller)
 
-protected:
+ protected:
 
-
-
-
-private:
-
-
-
-
+  //! Initializes the use of STEP Norm (the first time) and
+  //! returns a Controller
+  Standard_EXPORT STEPControl_Controller();
 };
-
-
-
-
-
-
 
 #endif // _STEPControl_Controller_HeaderFile

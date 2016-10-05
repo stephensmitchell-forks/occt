@@ -21,7 +21,7 @@
 #include <IGESSelect_DispPerDrawing.hxx>
 #include <IGESSelect_DispPerSingleView.hxx>
 #include <IGESSelect_Dumper.hxx>
-#include <IGESSelect_FloatFormat.hxx>
+#include <IGESControl_FloatFormat.hxx>
 #include <IGESSelect_RebuildDrawings.hxx>
 #include <IGESSelect_RebuildGroups.hxx>
 #include <IGESSelect_SelectBypassGroup.hxx>
@@ -45,10 +45,6 @@
 
 #include <stdio.h>
 IMPLEMENT_STANDARD_RTTIEXT(IGESSelect_Dumper,IFSelect_SessionDumper)
-
-//#include <IGESSelect_SelectIGESTypeForm.hxx>
-IGESSelect_Dumper::IGESSelect_Dumper ()    {  }
-
 
    Standard_Boolean  IGESSelect_Dumper::WriteOwn
   (IFSelect_SessionFile& file, const Handle(Standard_Transient)& item) const
@@ -85,8 +81,8 @@ IGESSelect_Dumper::IGESSelect_Dumper ()    {  }
   if (type == STANDARD_TYPE(IGESSelect_SelectDrawingFrom))    return Standard_True;
   if (type == STANDARD_TYPE(IGESSelect_SelectBypassGroup))    return Standard_True;
 
-  if (type == STANDARD_TYPE(IGESSelect_FloatFormat)) {
-    DeclareAndCast(IGESSelect_FloatFormat,ff,item);
+  if (type == STANDARD_TYPE(IGESControl_FloatFormat)) {
+    DeclareAndCast(IGESControl_FloatFormat,ff,item);
     Standard_Boolean zerosup,  hasrange;
     Standard_Real    rangemin, rangemax;
     TCollection_AsciiString mainform,forminrange;
@@ -197,9 +193,9 @@ IGESSelect_Dumper::IGESSelect_Dumper ()    {  }
   if (type.IsEqual("IGESSelect_SelectBypassGroup"))
     {  item = new IGESSelect_SelectBypassGroup;      return Standard_True;  }
 
-  if (type.IsEqual("IGESSelect_FloatFormat")) {
+  if (type.IsEqual("IGESControl_FloatFormat")) {
     if (file.NbParams() < 2) return Standard_False;
-    Handle(IGESSelect_FloatFormat) ff = new IGESSelect_FloatFormat;
+    Handle(IGESControl_FloatFormat) ff = new IGESControl_FloatFormat;
     Standard_Boolean zerosup;
     const TCollection_AsciiString zsup = file.ParamValue(1);
     if (zsup.Length() < 1) return Standard_False;

@@ -74,13 +74,9 @@ class XSControl_Controller : public MMgt_TShared
   //! Names (see method Name)
   void AutoRecord() const
   {
-    Record (Name(Standard_True));
-    Record (Name(Standard_False));
+    Record (myShortName.ToCString());
+    Record (myLongName.ToCString());
   }
-  
-  //! Records <me> in a general dictionary under a name
-  //! Error if <name> already used for another one
-  Standard_EXPORT void Record (const Standard_CString name) const;
   
   //! Returns the Controller attached to a given name
   //! Returns a Null Handle if <name> is unknown
@@ -93,12 +89,7 @@ class XSControl_Controller : public MMgt_TShared
   { return (rsc ? myShortName.ToCString() : myLongName.ToCString()); }
   
   //! Returns the Protocol attached to the Norm (from field)
-  const Handle(Interface_Protocol) & Protocol () const
-  { return myAdaptorProtocol; }
-  
-  //! Returns the SignType attached to the norm (from field)
-  //szv:const Handle(IFSelect_Signature) & SignType1() const
-  //szv:{ return mySignType; }
+  const Handle(Interface_Protocol) & Protocol () const { return myAdaptorProtocol; }
   
   //! Returns the WorkLibrary attached to the Norm. Remark that it
   //! has to be in phase with the Protocol  (read from field)
@@ -165,8 +156,7 @@ class XSControl_Controller : public MMgt_TShared
   //! Customises a WorkSession, by adding to it the recorded items (by AddSessionItem)
   Standard_EXPORT virtual void Customise (Handle(XSControl_WorkSession)& WS);
   
-  const Handle(Dico_DictionaryOfTransient) & AdaptorSession() const
-  { return myAdaptorSession; }
+  const Handle(Dico_DictionaryOfTransient) & AdaptorSession() const { return myAdaptorSession; }
 
   DEFINE_STANDARD_RTTIEXT(XSControl_Controller,MMgt_TShared)
 
@@ -176,6 +166,10 @@ class XSControl_Controller : public MMgt_TShared
   //! <theLongName>  is for the complete, official, long  name
   //! <theShortName> is for the short name used for resources
   Standard_EXPORT XSControl_Controller(const Standard_CString theLongName, const Standard_CString theShortName);
+  
+  //! Records <me> in a general dictionary under a name
+  //! Error if <name> already used for another one
+  Standard_EXPORT void Record (const Standard_CString name) const;
 
   //! Records the name of a Static to be traced for a given use
   Standard_EXPORT void TraceStatic (const Standard_CString theName, const Standard_Integer theUse);

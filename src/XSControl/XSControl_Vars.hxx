@@ -49,15 +49,11 @@ DEFINE_STANDARD_HANDLE(XSControl_Vars, MMgt_TShared)
 //! dictionary), but which is aimed to be redefined
 class XSControl_Vars : public MMgt_TShared
 {
-
-public:
-
+ public:
   
   Standard_EXPORT XSControl_Vars();
   
   Standard_EXPORT virtual void Set (const Standard_CString name, const Handle(Standard_Transient)& val);
-  
-  Standard_EXPORT virtual Handle(Standard_Transient) Get (Standard_CString& name) const;
   
   Standard_EXPORT virtual Handle(Geom_Geometry) GetGeom (Standard_CString& name) const;
   
@@ -79,28 +75,13 @@ public:
   
   Standard_EXPORT virtual TopoDS_Shape GetShape (Standard_CString& name) const;
 
-
-
-
   DEFINE_STANDARD_RTTIEXT(XSControl_Vars,MMgt_TShared)
 
-protected:
-
-
-
-
-private:
-
+ protected:
+  
+  Standard_EXPORT virtual Handle(Standard_Transient) Get (Standard_CString& name) const;
 
   Handle(Dico_DictionaryOfTransient) thevars;
-
-
 };
-
-
-
-
-
-
 
 #endif // _XSControl_Vars_HeaderFile

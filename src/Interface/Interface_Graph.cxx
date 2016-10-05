@@ -38,53 +38,6 @@
 
 //  ....                           CONSTRUCTEURS                           ....
 
-//  ....       Construction a partir de la connaissance des Entites        ....
-
-
-Interface_Graph::Interface_Graph
-(const Handle(Interface_InterfaceModel)& amodel,
- const Interface_GeneralLib& /*lib*/,
- Standard_Boolean theModeStat)
- : themodel   (amodel), thepresents ("") 
-{
-  if(theModeStat)
-    InitStats();
-  Evaluate();
-}
-
-Interface_Graph::Interface_Graph
-(const Handle(Interface_InterfaceModel)& amodel,
- const Handle(Interface_Protocol)& /*protocol*/,
- Standard_Boolean theModeStat)
- : themodel   (amodel) , thepresents ("")    
-
-{
- if(theModeStat)
-    InitStats();  
-  Evaluate();
-}
-
-Interface_Graph::Interface_Graph
-(const Handle(Interface_InterfaceModel)& amodel,
- const Handle(Interface_GTool)& /*gtool*/,
- Standard_Boolean theModeStat)
- : themodel   (amodel) , thepresents ("") 
-{
-  if(theModeStat)
-    InitStats();
-  Evaluate();
-}
-
-Interface_Graph::Interface_Graph
-(const Handle(Interface_InterfaceModel)& amodel,
- Standard_Boolean theModeStat)
-: themodel   (amodel) , thepresents ("")  
-{
-  if(theModeStat)
-    InitStats();
-  Evaluate ();
-}
-
 //  ....                Construction depuis un autre Graph                ....
 
 Interface_Graph::Interface_Graph
@@ -253,18 +206,9 @@ void  Interface_Graph::RemoveStatus(const Standard_Integer stat)
   }
 }
 
-const Interface_BitMap&  Interface_Graph::BitMap () const
-{  return theflags;  }
-
-Interface_BitMap&  Interface_Graph::CBitMap ()
-{  return theflags;  }
-
 //  ###########################################################################
 
 //  ....      Chargements Elementaires avec Propagation de "Share"      .... //
-
-const Handle(Interface_InterfaceModel)&  Interface_Graph::Model() const 
-{  return themodel;  }
 
 void  Interface_Graph::GetFromModel ()
 {

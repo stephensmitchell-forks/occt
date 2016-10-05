@@ -587,8 +587,6 @@ static Standard_Integer OCC395 (Draw_Interpretor& di, Standard_Integer argc, con
     di << "Usage : " << argv[0] << " edge_result edge1 edge2\n";
     return 1;
   }
-  //TCollection_AsciiString fnom(a[1]);
-  //Standard_Boolean modfic = XSDRAW::FileAndVar(a[1],a[2],a[3],"IGES",fnom,rnom,resnom);
   TopoDS_Shape Sh1 = DBRep::Get(argv[2]);
   TopoDS_Shape Sh2 = DBRep::Get(argv[3]);
   if(Sh1.IsNull() || Sh2.IsNull()) return 1;
@@ -600,15 +598,9 @@ static Standard_Integer OCC395 (Draw_Interpretor& di, Standard_Integer argc, con
   Handle(Geom_Curve) ac1 = BRep_Tool::Curve(e1,f1,l1);
   Handle(Geom_Curve) ac2 = BRep_Tool::Curve(e2,f2,l2);
   if(e1.Orientation() == TopAbs_REVERSED) {
-      //Standard_Real cf = cf1;
-      //cf1 = ac1->ReversedParameter ( cl1 );
-      //cl1 = ac1->ReversedParameter ( cf );
       ac1 = ac1->Reversed();
     }
     if(e2.Orientation() == TopAbs_REVERSED) {
-      //Standard_Real cf = cf2;
-      //ac2 = ac2->ReversedParameter ( cl2 );
-      //ac2 = ac2->ReversedParameter ( cf );
       ac2 = ac2->Reversed();
     }
   Handle(Geom_BSplineCurve) bsplc1 = Handle(Geom_BSplineCurve)::DownCast(ac1);

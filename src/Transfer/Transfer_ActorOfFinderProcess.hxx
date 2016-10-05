@@ -17,8 +17,8 @@
 #ifndef _Transfer_ActorOfFinderProcess_HeaderFile
 #define _Transfer_ActorOfFinderProcess_HeaderFile
 
-#include <Transfer_ProcessForFinder.hxx>
+#include <Transfer_Process.hxx>
 
-#define Transfer_ActorOfFinderProcess Transfer_ProcessForFinder::Actor
+#define Transfer_ActorOfFinderProcess Transfer_Process::Actor
 
 #endif // _Transfer_ActorOfFinderProcess_HeaderFile

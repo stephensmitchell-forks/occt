@@ -51,7 +51,6 @@
 #include <TopAbs.hxx>
 #include <TopoDS_Compound.hxx>
 #include <TopoDS_Shape.hxx>
-#include <Transfer_IteratorOfProcessForTransient.hxx>
 #include <Transfer_TransientProcess.hxx>
 #include <TransferBRep.hxx>
 #include <TransferBRep_ShapeBinder.hxx>
@@ -60,7 +59,6 @@
 #include <XSAlgo_AlgoContainer.hxx>
 
 #include <stdio.h>
-//#include <ShapeCustom.hxx>
 #ifdef _MSC_VER
 #include <stdlib.h>
 #else
@@ -75,7 +73,8 @@ static Handle(IGESData_FileProtocol) protocol;
 //function : IGESToBRep_Reader
 //purpose  : 
 //=======================================================================
-    IGESToBRep_Reader::IGESToBRep_Reader ()
+
+IGESToBRep_Reader::IGESToBRep_Reader ()
 {
   theDone = Standard_False;
   if (protocol.IsNull()) {
@@ -88,7 +87,6 @@ static Handle(IGESData_FileProtocol) protocol;
   theProc = new Transfer_TransientProcess;
 }
 
-
 //=======================================================================
 //function : LoadFile
 //purpose  : loads a Model from a file
@@ -98,13 +96,13 @@ Standard_Integer IGESToBRep_Reader::LoadFile (const Standard_CString filename)
 { 
   if ( theProc.IsNull() )
     theProc = new Transfer_TransientProcess;
-  Handle(Message_Messenger) TF = theProc->Messenger();
+
+  const Handle(Message_Messenger) &TF = theProc->Messenger();
   
   // Message for Diagnostic file.
   Message_Msg msg2000("IGES_2000");   
   msg2000.Arg(filename);
   TF->Send (msg2000, Message_Info);
-  //Message_Msg msg2001("IGES_2001");   // Date
   Message_Msg msg2005("IGES_2005");
   msg2005.Arg(theProc->TraceLevel());
   TF->Send (msg2005, Message_Info);
@@ -118,11 +116,6 @@ Standard_Integer IGESToBRep_Reader::LoadFile (const Standard_CString filename)
     // Sending of message : IGES file opening error 
     Message_Msg Msg2("XSTEP_2");
     TF->Send (Msg2, Message_Info);
-    //Message_Msg Msg3("XSTEP_3");
-    //Message_Msg Msg4("XSTEP_4");
-    //Message_Msg Msg5("XSTEP_5");
-    //Message_Msg Msg6("XSTEP_6");
-    //Message_Msg Msg7("XSTEP_7");
     // Reasons of the file opening error
     switch(errno)
       {
@@ -173,7 +166,6 @@ Standard_Integer IGESToBRep_Reader::LoadFile (const Standard_CString filename)
     nbWarn += ach->NbWarnings();
     nbFail += ach->NbFails();
   }
-// Messages nbWarn and nbFail;
   Msg25.Arg(nbFail);
   Msg26.Arg(nbWarn);
   TF->Send (Msg25, Message_Info);
@@ -199,12 +191,12 @@ Standard_Integer IGESToBRep_Reader::LoadFile (const Standard_CString filename)
   return StatusFile;
 }
 
-
 //=======================================================================
 //function : SetModel
 //purpose  : Specifies a Model to work on
 //=======================================================================
-    void  IGESToBRep_Reader::SetModel (const Handle(IGESData_IGESModel)& model)
+
+void IGESToBRep_Reader::SetModel (const Handle(IGESData_IGESModel)& model)
 {
   theModel = model;
   theDone  = Standard_False;
@@ -215,71 +207,19 @@ Standard_Integer IGESToBRep_Reader::LoadFile (const Standard_CString filename)
     theProc->Clear();
 }
 
-
-//=======================================================================
-//function : Model
-//purpose  : returns the Model to be worked on
-//=======================================================================
-    Handle(IGESData_IGESModel)  IGESToBRep_Reader::Model () const
-      {  return theModel;  }
-
-
-//=======================================================================
-//function : SetTransientProcess
-//purpose  : Specifies a TransferProcess
-//=======================================================================
-    void  IGESToBRep_Reader::SetTransientProcess
-  (const Handle(Transfer_TransientProcess)& TP)
-     {  theProc = TP;  }
-
-//=======================================================================
-//function : TransientProcess
-//purpose  : Returns the TransferProcess
-//=======================================================================
-    Handle(Transfer_TransientProcess)  IGESToBRep_Reader::TransientProcess () const
-     {  return theProc;  }
-
-//=======================================================================
-//function : Actor
-//purpose  : returns theActor
-//=======================================================================
-    Handle(IGESToBRep_Actor)  IGESToBRep_Reader::Actor () const
-      {  return theActor;  }
-
-
-//=======================================================================
-//function : Clear
-//purpose  : Clears the result and Done status
-//=======================================================================
-    void  IGESToBRep_Reader::Clear ()
-{
-  theDone  = Standard_False;
-  theShapes.Clear();
-}
-
-
 //=======================================================================
 //function : Check
 //purpose  : Checks the Model
 //=======================================================================
-    Standard_Boolean  IGESToBRep_Reader::Check
-  (const Standard_Boolean withprint) const
+
+Standard_Boolean  IGESToBRep_Reader::Check (const Standard_Boolean withprint) const
 {
   Interface_CheckTool cht (theModel,protocol);
   Interface_CheckIterator chl = cht.CompleteCheckList();
   if (withprint && !theProc.IsNull()) 
-    cht.Print(chl, theProc->Messenger());
+    chl.Print(theProc->Messenger(),theModel,Standard_False);
   return chl.IsEmpty(Standard_True);
 }
-
-
-//=======================================================================
-//function : IsDone
-//purpose  : returns True if the last transfert was a success
-//=======================================================================
-    Standard_Boolean  IGESToBRep_Reader::IsDone () const
-      {  return theDone;  }
-
 
 //=======================================================================
 //function : EncodeRegul
@@ -302,55 +242,12 @@ static Standard_Boolean  EncodeRegul (const TopoDS_Shape& sh)
 }
 
 //=======================================================================
-//function : UpdateMap
-//purpose  : Updates the correspondence map (Transfer_TransientProcess),
-//           setting as translation results, the shapes received after
-//           modification by modifier (BRepTools_Modifier)
-//warning  : BRepTools_Modifier raises exception when it cannot find input
-//           shape in its internal list
-//=======================================================================
-
-// coment as unused PTV 18.09.2000
-// static void UpdateMap (const Handle(Transfer_TransientProcess)& map,
-// 		       const BRepTools_Modifier& modifier)
-// {
-//   Transfer_IteratorOfProcessForTransient iterator = map->CompleteResult(Standard_True);
-//   for (iterator.Start(); iterator.More(); iterator.Next()) {
-//     const Handle(Transfer_Binder) binder = iterator.Value();
-//     try { //to avoid exception in BRepTools_Modifier
-//       OCC_CATCH_SIGNALS
-//       if (binder->IsKind (STANDARD_TYPE (TransferBRep_ShapeBinder))) {
-// 	DeclareAndCast(TransferBRep_ShapeBinder, shapebinder, binder);
-// 	if (shapebinder->HasResult()) {
-// 	  TopoDS_Shape result = shapebinder->Result();
-// 	  TopoDS_Shape modified = modifier.ModifiedShape (result);
-// 	  if (shapebinder->Status() != Transfer_StatusUsed) //to avoid exception
-// 	    shapebinder->SetResult (modified);
-// 	}
-//       }
-//       else if (binder->IsKind (STANDARD_TYPE (TransferBRep_ShapeListBinder))) {
-// 	DeclareAndCast(TransferBRep_ShapeListBinder, shapelistbinder, binder);
-// 	for (Standard_Integer i = 1; i <= shapelistbinder->NbShapes(); i++) {
-// 	  TopoDS_Shape result = shapelistbinder->Shape (i);
-// 	  TopoDS_Shape modified = modifier.ModifiedShape (result);
-// 	  shapelistbinder->SetResult (i, modified);
-// 	}
-//       }
-//     }
-//     catch(Standard_Failure) {
-//       continue;
-//     }
-//   }
-// }
-
-//=======================================================================
 //function : TrimTolerances
 //purpose  : Trims tolerances of the shape according to static parameters
 //          
 //=======================================================================
 
-static void TrimTolerances (const TopoDS_Shape& shape,
-			    const Standard_Real tol)
+static void TrimTolerances (const TopoDS_Shape& shape, const Standard_Real tol)
 {
   if( Interface_Static::IVal("read.maxprecision.mode")==1) {
     ShapeFix_ShapeTolerance SFST;
@@ -362,6 +259,7 @@ static void TrimTolerances (const TopoDS_Shape& shape,
 //function : TransferRoots
 //purpose  : Transfers all Roots Entities
 //=======================================================================
+
 void  IGESToBRep_Reader::TransferRoots (const Standard_Boolean onlyvisible)
 {
   if (theModel.IsNull() || theProc.IsNull()) return;
@@ -467,11 +365,11 @@ void  IGESToBRep_Reader::TransferRoots (const Standard_Boolean onlyvisible)
   TF->Send (msg2065, Message_Info);
 }
 
-
 //=======================================================================
 //function : Transfer
 //purpose  : Transfers an Entity given
 //=======================================================================
+
 Standard_Boolean  IGESToBRep_Reader::Transfer(const Standard_Integer num)
 { 
   Handle(Message_Messenger) TF = theProc->Messenger();
@@ -589,39 +487,32 @@ Standard_Boolean  IGESToBRep_Reader::Transfer(const Standard_Integer num)
   return Standard_True;
 }
 
-
 //=======================================================================
 //function : UsedTolerance
 //purpose  : Returns the used tolerance (input)
 //=======================================================================
-    Standard_Real  IGESToBRep_Reader::UsedTolerance () const
-      {  return theActor->UsedTolerance();  }
 
-//=======================================================================
-//function : NbShapes
-//purpose  : Returns the count of produced Shapes
-//=======================================================================
-    Standard_Integer  IGESToBRep_Reader::NbShapes () const
-      {  return theShapes.Length();  }
-
+Standard_Real  IGESToBRep_Reader::UsedTolerance () const
+{  return theActor->UsedTolerance();  }
 
 //=======================================================================
 //function : Shape
 //purpose  : Returns a Shape given its rank
 //=======================================================================
-    TopoDS_Shape  IGESToBRep_Reader::Shape (const Standard_Integer num) const
+
+TopoDS_Shape  IGESToBRep_Reader::Shape (const Standard_Integer num) const
 {
   TopoDS_Shape res;
   if (num > 0 && num <= theShapes.Length()) res = theShapes.Value(num);
   return res;
 }
 
-
 //=======================================================================
 //function : OneShape
 //purpose  : Returns a unique Shape
 //=======================================================================
-    TopoDS_Shape  IGESToBRep_Reader::OneShape () const
+
+TopoDS_Shape  IGESToBRep_Reader::OneShape () const
 {
   TopoDS_Shape res;
   Standard_Integer nb = theShapes.Length();

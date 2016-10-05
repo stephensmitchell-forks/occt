@@ -54,21 +54,21 @@ public:
   Standard_EXPORT void SetModel (const Handle(IGESData_IGESModel)& model);
   
   //! Returns the Model to be worked on.
-  Standard_EXPORT Handle(IGESData_IGESModel) Model() const;
+  const Handle(IGESData_IGESModel) & Model() const { return theModel; }
   
   //! Allows to set an already defined TransientProcess
   //! (to be called after LoadFile or SetModel)
-  Standard_EXPORT void SetTransientProcess (const Handle(Transfer_TransientProcess)& TP);
+  void SetTransientProcess (const Handle(Transfer_TransientProcess)& TP) { theProc = TP; }
   
   //! Returns the TransientProcess
-  Standard_EXPORT Handle(Transfer_TransientProcess) TransientProcess() const;
-  
+  const Handle(Transfer_TransientProcess) & TransientProcess() const { return theProc; }
+
   //! Returns "theActor"
-  Standard_EXPORT Handle(IGESToBRep_Actor) Actor() const;
+  const Handle(IGESToBRep_Actor) & Actor() const { return theActor; }
   
   //! Clears the results between two translation operations.
-  Standard_EXPORT void Clear();
-  
+  void Clear() { theDone  = Standard_False; theShapes.Clear(); }
+
   //! Checks the IGES file that was
   //! loaded into memory. Displays error messages in the default
   //! message file if withprint is true. Returns True if no fail
@@ -87,15 +87,15 @@ public:
   Standard_EXPORT Standard_Boolean Transfer (const Standard_Integer num);
   
   //! Returns True if the LAST Transfer/TransferRoots was a success
-  Standard_EXPORT Standard_Boolean IsDone() const;
-  
+  Standard_Boolean IsDone() const { return theDone; }
+
   //! Returns the Tolerance which has been actually used, converted
   //! in millimeters
   //! (either that from File or that from Session, according the mode)
   Standard_EXPORT Standard_Real UsedTolerance() const;
   
   //! Returns the number of shapes produced by the translation.
-  Standard_EXPORT Standard_Integer NbShapes() const;
+  Standard_Integer NbShapes() const { return theShapes.Length(); }
   
   //! Returns the num the resulting shape in a translation operation.
   Standard_EXPORT TopoDS_Shape Shape (const Standard_Integer num = 1) const;
@@ -107,32 +107,13 @@ public:
   //! - a compound containing the resulting shapes if there are several.
   Standard_EXPORT TopoDS_Shape OneShape() const;
 
-
-
-
-protected:
-
-
-
-
-
-private:
-
-
+ private:
 
   Handle(IGESData_IGESModel) theModel;
   Standard_Boolean theDone;
   TopTools_SequenceOfShape theShapes;
   Handle(IGESToBRep_Actor) theActor;
   Handle(Transfer_TransientProcess) theProc;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESToBRep_Reader_HeaderFile

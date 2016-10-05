@@ -26,9 +26,8 @@
 // SubPartsIterator permet de regrouper les entites en plusieurs sous-parties
 // A chaque sous-partie est attache un Status : la 1re a 1, la 2e a 2, etc...
 // (consequence, les sous-parties sont necessairement disjointes)
-IFGraph_SubPartsIterator::IFGraph_SubPartsIterator
-  (const Interface_Graph& agraph, const Standard_Boolean whole)
-      : thegraph (agraph)
+IFGraph_SubPartsIterator::IFGraph_SubPartsIterator (const Interface_Graph& agraph, const Standard_Boolean whole)
+: thegraph (agraph)
 {
   if (whole) thegraph.GetFromModel();
   theparts  = new TColStd_HSequenceOfInteger();
@@ -37,9 +36,8 @@ IFGraph_SubPartsIterator::IFGraph_SubPartsIterator
   thecurr   = 0;
 }
 
-    IFGraph_SubPartsIterator::IFGraph_SubPartsIterator
-  (IFGraph_SubPartsIterator& other)
-      : thegraph (other.Graph())
+IFGraph_SubPartsIterator::IFGraph_SubPartsIterator (IFGraph_SubPartsIterator& other)
+: thegraph (other.thegraph)
 {
   Standard_Integer nb = thegraph.Size();
   theparts = new TColStd_HSequenceOfInteger();
@@ -57,8 +55,7 @@ IFGraph_SubPartsIterator::IFGraph_SubPartsIterator
   thecurr = 1;
 }
 
-    void  IFGraph_SubPartsIterator::GetParts
-  (IFGraph_SubPartsIterator& other)
+void  IFGraph_SubPartsIterator::GetParts (IFGraph_SubPartsIterator& other)
 {
   if (Model() != other.Model()) Interface_InterfaceError::Raise
     ("SubPartsIterator : GetParts");
@@ -77,48 +74,44 @@ IFGraph_SubPartsIterator::IFGraph_SubPartsIterator
   }
 }
 
-    const Interface_Graph&  IFGraph_SubPartsIterator::Graph () const
-      {  return thegraph;  }
-
 //  ....            Gestion Interne (remplissage, etc...)            .... //
 
-    Handle(Interface_InterfaceModel)  IFGraph_SubPartsIterator::Model() const 
-      {  return thegraph.Model();  }
+Handle(Interface_InterfaceModel)  IFGraph_SubPartsIterator::Model() const 
+{  return thegraph.Model();  }
 
-    void  IFGraph_SubPartsIterator::AddPart ()
+void IFGraph_SubPartsIterator::AddPart ()
 {
   theparts->Append( Standard_Integer(0) );
   thepart = theparts->Length();
 }
 
-    Standard_Integer  IFGraph_SubPartsIterator::NbParts () const 
-      {  return theparts->Length();  }
+Standard_Integer  IFGraph_SubPartsIterator::NbParts () const 
+{  return theparts->Length();  }
 
-    Standard_Integer  IFGraph_SubPartsIterator::PartNum () const 
-      {  return thepart;  }
+Standard_Integer  IFGraph_SubPartsIterator::PartNum () const 
+{  return thepart;  }
 
-    void  IFGraph_SubPartsIterator::SetLoad ()
-      {  thepart = 0;  }
+void  IFGraph_SubPartsIterator::SetLoad ()
+{  thepart = 0;  }
 
-    void  IFGraph_SubPartsIterator::SetPartNum (const Standard_Integer num)
+void  IFGraph_SubPartsIterator::SetPartNum (const Standard_Integer num)
 {
   if (num <= 0 || num > theparts->Length()) Standard_OutOfRange::Raise
     ("IFGraph_SubPartsIterator : SetPartNum");
   thepart = num;
 }
 
-    void  IFGraph_SubPartsIterator::GetFromEntity
-  (const Handle(Standard_Transient)& ent, const Standard_Boolean shared)
+void  IFGraph_SubPartsIterator::GetFromEntity (const Handle(Standard_Transient)& ent, const Standard_Boolean shared)
 {
   thegraph.GetFromEntity(ent,shared, thepart,thepart,Standard_False);
 }
 
-    void IFGraph_SubPartsIterator::GetFromIter (const Interface_EntityIterator& iter)
+void IFGraph_SubPartsIterator::GetFromIter (const Interface_EntityIterator& iter)
 {
   thegraph.GetFromIter(iter, thepart,thepart, Standard_False);
 }
 
-    void  IFGraph_SubPartsIterator::Reset ()
+void IFGraph_SubPartsIterator::Reset ()
 {
   thegraph.Reset();
   theparts->Clear();
@@ -251,11 +244,3 @@ IFGraph_SubPartsIterator::IFGraph_SubPartsIterator
   }
   return iter;
 }
-
-//=======================================================================
-//function : ~IFGraph_SubPartsIterator
-//purpose  : 
-//=======================================================================
-
-IFGraph_SubPartsIterator::~IFGraph_SubPartsIterator() 
-{} 

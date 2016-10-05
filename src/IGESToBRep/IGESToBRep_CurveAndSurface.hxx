@@ -21,12 +21,9 @@
 #include <Standard_DefineAlloc.hxx>
 #include <Standard_Handle.hxx>
 
-#include <Standard_Real.hxx>
-#include <Standard_Boolean.hxx>
-#include <Standard_Integer.hxx>
+#include <Transfer_TransientProcess.hxx>
 class Geom_Surface;
 class IGESData_IGESModel;
-class Transfer_TransientProcess;
 class TopoDS_Shape;
 class IGESData_IGESEntity;
 class Message_Msg;
@@ -35,11 +32,10 @@ class Message_Msg;
 //! Provides methods to transfer CurveAndSurface from IGES to CASCADE.
 class IGESToBRep_CurveAndSurface 
 {
-public:
+ public:
 
   DEFINE_STANDARD_ALLOC
 
-  
   //! Creates  a tool CurveAndSurface  ready  to  run, with
   //! epsilons  set  to  1.E-04,  myModeTopo  to  True,  the
   //! optimization of  the continuity to False.
@@ -57,28 +53,28 @@ public:
   Standard_EXPORT void Init();
   
   //! Changes the value of "myEps"
-    void SetEpsilon (const Standard_Real eps);
+  void SetEpsilon (const Standard_Real eps) { myEps = eps; }
   
   //! Returns the value of "myEps"
-    Standard_Real GetEpsilon() const;
+  Standard_Real GetEpsilon() const { return myEps; }
   
   //! Changes the value of "myEpsCoeff"
-    void SetEpsCoeff (const Standard_Real eps);
+  void SetEpsCoeff (const Standard_Real eps) { myEpsCoeff = eps; }
   
   //! Returns the value of "myEpsCoeff"
-    Standard_Real GetEpsCoeff() const;
+  Standard_Real GetEpsCoeff() const { return myEpsCoeff; }
   
   //! Changes the value of "myEpsGeom"
   Standard_EXPORT void SetEpsGeom (const Standard_Real eps);
   
   //! Returns the value of "myEpsGeom"
-    Standard_Real GetEpsGeom() const;
+  Standard_Real GetEpsGeom() const { return myEpsGeom; }
   
   //! Changes the value of "myMinTol"
-    void SetMinTol (const Standard_Real mintol);
+  void SetMinTol (const Standard_Real mintol) { myMinTol = mintol; }
   
   //! Changes the value of "myMaxTol"
-    void SetMaxTol (const Standard_Real maxtol);
+  void SetMaxTol (const Standard_Real maxtol) { myMaxTol = maxtol; }
   
   //! Sets values of "myMinTol" and "myMaxTol" as follows
   //! myMaxTol = Max ("read.maxprecision.val", myEpsGeom * myUnitFactor)
@@ -88,60 +84,60 @@ public:
   Standard_EXPORT void UpdateMinMaxTol();
   
   //! Returns the value of "myMinTol"
-    Standard_Real GetMinTol() const;
+  Standard_Real GetMinTol() const { return myMinTol; }
   
   //! Returns the value of "myMaxTol"
-    Standard_Real GetMaxTol() const;
+  Standard_Real GetMaxTol() const { return myMaxTol; }
   
   //! Changes the value of "myModeApprox"
-    void SetModeApprox (const Standard_Boolean mode);
+  void SetModeApprox (const Standard_Boolean mode) { myModeApprox = mode; }
   
   //! Returns the value of "myModeApprox"
-    Standard_Boolean GetModeApprox() const;
+  Standard_Boolean GetModeApprox() const { return myModeApprox; }
   
   //! Changes the value of "myModeIsTopo"
-    void SetModeTransfer (const Standard_Boolean mode);
+  void SetModeTransfer (const Standard_Boolean mode) { myModeIsTopo = mode; }
   
   //! Returns the value of "myModeIsTopo"
-    Standard_Boolean GetModeTransfer() const;
+  Standard_Boolean GetModeTransfer() const { return myModeIsTopo; }
   
   //! Changes the value of "myContIsOpti"
-    void SetOptimized (const Standard_Boolean optimized);
+  void SetOptimized (const Standard_Boolean optimized) { myContIsOpti = optimized; }
   
   //! Returns the value of "myContIsOpti"
-    Standard_Boolean GetOptimized() const;
+  Standard_Boolean GetOptimized() const { return myContIsOpti; }
   
   //! Returns the value of " myUnitFactor"
-    Standard_Real GetUnitFactor() const;
+  Standard_Real GetUnitFactor() const { return myUnitFactor; }
   
   //! Changes the value of "mySurfaceCurve"
-    void SetSurfaceCurve (const Standard_Integer ival);
+  void SetSurfaceCurve (const Standard_Integer ival) { mySurfaceCurve = ival; }
   
   //! Returns the value of  " mySurfaceCurve" 0 = value in
   //! file , 2  = kepp 2d   and compute 3d   3 = keep 3d and
   //! compute 2d
-    Standard_Integer GetSurfaceCurve() const;
+  Standard_Integer GetSurfaceCurve() const { return mySurfaceCurve; }
   
   //! Set the value of "myModel"
   Standard_EXPORT void SetModel (const Handle(IGESData_IGESModel)& model);
   
   //! Returns the value of "myModel"
-    Handle(IGESData_IGESModel) GetModel() const;
+  const Handle(IGESData_IGESModel) & GetModel() const { return myModel; }
   
   //! Changes the value of "myContinuity"
   //! if continuity = 0 do nothing else
   //! if continuity = 1 try C1
   //! if continuity = 2 try C2
-    void SetContinuity (const Standard_Integer continuity);
+  void SetContinuity (const Standard_Integer continuity) { myContinuity = continuity; }
   
   //! Returns the value of "myContinuity"
-    Standard_Integer GetContinuity() const;
+  Standard_Integer GetContinuity() const { return myContinuity; }
   
   //! Set the value of "myMsgReg"
-    void SetTransferProcess (const Handle(Transfer_TransientProcess)& TP);
+  void SetTransferProcess (const Handle(Transfer_TransientProcess)& TP) { myTP = TP; }
   
   //! Returns the value of "myMsgReg"
-    Handle(Transfer_TransientProcess) GetTransferProcess() const;
+  const Handle(Transfer_TransientProcess) & GetTransferProcess() const { return myTP; }
   
   //! Returns the result of the transfert of any IGES Curve
   //! or Surface Entity.  If  the transfer has  failed,  this
@@ -154,15 +150,13 @@ public:
   Standard_EXPORT TopoDS_Shape TransferGeometry (const Handle(IGESData_IGESEntity)& start);
   
   //! Records a new Fail message
-    void SendFail (const Handle(IGESData_IGESEntity)& start, const Message_Msg& amsg);
+  void SendFail (const Handle(IGESData_IGESEntity)& start, const Message_Msg& amsg)
+  { myTP->SendFail(start,amsg); }
   
   //! Records a new Warning message
-    void SendWarning (const Handle(IGESData_IGESEntity)& start, const Message_Msg& amsg);
-  
-  //! Records a new Information message from the definition
-  //! of a Msg (Original+Value)
-    void SendMsg (const Handle(IGESData_IGESEntity)& start, const Message_Msg& amsg);
-  
+  void SendWarning (const Handle(IGESData_IGESEntity)& start, const Message_Msg& amsg)
+  { myTP->SendWarning(start,amsg); }
+
   //! Returns True if start was already treated and has a result in "myMap"
   //! else returns False.
   Standard_EXPORT Standard_Boolean HasShapeResult (const Handle(IGESData_IGESEntity)& start) const;
@@ -192,18 +186,7 @@ public:
   
   Standard_EXPORT Standard_Real GetUVResolution();
 
-
-
-
-protected:
-
-
-
-
-
-private:
-
-
+ private:
 
   Standard_Real myEps;
   Standard_Real myEpsCoeff;
@@ -221,15 +204,6 @@ private:
   Standard_Boolean myIsResolCom;
   Handle(IGESData_IGESModel) myModel;
   Handle(Transfer_TransientProcess) myTP;
-
-
 };
-
-
-#include <IGESToBRep_CurveAndSurface.lxx>
-
-
-
-
 
 #endif // _IGESToBRep_CurveAndSurface_HeaderFile

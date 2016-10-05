@@ -18,24 +18,16 @@
 
 #include <Standard.hxx>
 #include <Standard_Type.hxx>
+#include <MMgt_TShared.hxx>
 
 #include <TColStd_IndexedMapOfTransient.hxx>
 #include <TColStd_DataMapOfIntegerTransient.hxx>
-#include <Standard_Boolean.hxx>
-#include <MMgt_TShared.hxx>
-#include <Standard_Integer.hxx>
-#include <Standard_Type.hxx>
-#include <Standard_CString.hxx>
 #include <Interface_DataState.hxx>
 #include <TColStd_HSequenceOfHAsciiString.hxx>
 class Interface_Check;
 class TCollection_HAsciiString;
 class Interface_GTool;
-class Standard_OutOfRange;
-class Standard_NoSuchObject;
-class Interface_InterfaceMismatch;
 class Interface_Protocol;
-class Standard_Transient;
 class Interface_ReportEntity;
 class Interface_CheckIterator;
 class Interface_GeneralLib;
@@ -74,16 +66,10 @@ DEFINE_STANDARD_HANDLE(Interface_InterfaceModel, MMgt_TShared)
 //! See also Graph, ShareTool, CheckTool for more
 class Interface_InterfaceModel : public MMgt_TShared
 {
-
-public:
-
+ public:
   
   //! Clears the list of entities (service WhenDelete)
-  Standard_EXPORT void Destroy();
-~Interface_InterfaceModel()
-{
-  Destroy();
-}
+  Standard_EXPORT ~Interface_InterfaceModel();
   
   //! Sets a Protocol for this Model
   //! It is also set by a call to AddWithRefs with Protocol
@@ -95,16 +81,16 @@ public:
   Standard_EXPORT virtual Handle(Interface_Protocol) Protocol() const;
   
   //! Sets a GTool for this model, which already defines a Protocol
-  Standard_EXPORT void SetGTool (const Handle(Interface_GTool)& gtool);
+  void SetGTool (const Handle(Interface_GTool)& gtool) { thegtool = gtool; }
   
   //! Returns the GTool, set by SetProtocol or by SetGTool
-  Standard_EXPORT Handle(Interface_GTool) GTool() const;
+  const Handle(Interface_GTool) & GTool() const { return thegtool; }
   
   //! Returns the Dispatch Status, either for get or set
   //! A Model which is produced from Dispatch may share entities
   //! with the original (according to the Protocol), hence these
   //! non-copied entities should not be deleted
-  Standard_EXPORT Standard_Boolean& DispatchStatus();
+  Standard_Boolean& DispatchStatus() { return isdispatch; }
   
   //! Erases contained data; used when a Model is copied to others :
   //! the new copied ones begin from clear
@@ -123,7 +109,7 @@ public:
   Standard_EXPORT virtual void ClearHeader() = 0;
   
   //! Returns count of contained Entities
-  Standard_EXPORT Standard_Integer NbEntities() const;
+  Standard_Integer NbEntities() const { return theentities.Extent(); }
   
   //! Returns True if a Model contains an Entity (for a ReportEntity,
   //! looks for the ReportEntity itself AND its Concerned Entity)
@@ -143,7 +129,7 @@ public:
   //! Remark : For a Reported Entity, (Erroneous, Corrected, Unknown), this
   //! method returns this Reported Entity.
   //! See ReportEntity for other questions.
-  Standard_EXPORT const Handle(Standard_Transient)& Value (const Standard_Integer num) const;
+  const Handle(Standard_Transient)& Value (const Standard_Integer num) const { return theentities.FindKey(num); }
   
   //! Returns the count of DISTINCT types under which an entity may
   //! be processed. Defined by the Protocol, which gives default as
@@ -226,7 +212,7 @@ public:
   Standard_EXPORT void FillSemanticChecks (const Interface_CheckIterator& checks, const Standard_Boolean clear = Standard_True);
   
   //! Returns True if semantic checks have been filled
-  Standard_EXPORT Standard_Boolean HasSemanticChecks() const;
+  Standard_Boolean HasSemanticChecks() const { return haschecksem; }
   
   //! Returns the check attached to an entity, designated by its
   //! Number. 0 for global check
@@ -270,7 +256,7 @@ public:
   Standard_EXPORT void AddWithRefs (const Handle(Standard_Transient)& anent, const Interface_GeneralLib& lib, const Standard_Integer level = 0, const Standard_Boolean listall = Standard_False);
   
   //! Replace Entity with Number=nument on other entity - "anent"
-  Standard_EXPORT void ReplaceEntity (const Standard_Integer nument, const Handle(Standard_Transient)& anent);
+  void ReplaceEntity (const Standard_Integer nument, const Handle(Standard_Transient)& anent) { theentities.Substitute(nument,anent); }
   
   //! Reverses the Numbers of the Entities, between <after> and the
   //! total count of Entities. Thus, the entities :
@@ -330,17 +316,17 @@ public:
   
   //! Returns the GlobalCheck, which memorizes messages global to
   //! the file (not specific to an Entity), especially Header
-  Standard_EXPORT const Handle(Interface_Check)& GlobalCheck (const Standard_Boolean syntactic = Standard_True) const;
+  const Handle(Interface_Check)& GlobalCheck (const Standard_Boolean syntactic = Standard_True) const { return (syntactic? thecheckstx : thechecksem); }
   
   //! Allows to modify GlobalCheck, after getting then completing it
   //! Remark : it is SYNTACTIC check. Semantics, see FillChecks
-  Standard_EXPORT void SetGlobalCheck (const Handle(Interface_Check)& ach);
+  void SetGlobalCheck (const Handle(Interface_Check)& ach) { thecheckstx = ach; }
   
   //! Minimum Semantic Global Check on data in model (header)
   //! Can only check basic Data. See also GlobalCheck from Protocol
   //! for a check which takes the Graph into account
   //! Default does nothing, can be redefined
-  Standard_EXPORT virtual void VerifyCheck (Handle(Interface_Check)& ach) const;
+  Standard_EXPORT virtual void VerifyCheck (Handle(Interface_Check)&) const {}
   
   //! Dumps Header in a short, easy to read, form, onto a Stream
   //! <level> allows to print more or less parts of the header,
@@ -382,36 +368,15 @@ public:
   //! This method is virtual, hence it can be redefined for a more
   //! efficient search (if exact is true).
   Standard_EXPORT virtual Standard_Integer NextNumberForLabel (const Standard_CString label, const Standard_Integer lastnum = 0, const Standard_Boolean exact = Standard_True) const;
-  
-  //! Returns true if a template is attached to a given name
-  Standard_EXPORT static Standard_Boolean HasTemplate (const Standard_CString name);
-  
-  //! Returns the template model attached to a name, or a Null Handle
-  Standard_EXPORT static Handle(Interface_InterfaceModel) Template (const Standard_CString name);
-  
-  //! Records a new template model with a name. If the name was
-  //! already recorded, the corresponding template is replaced by
-  //! the new one. Then, WARNING : test HasTemplate to avoid
-  //! surprises
-  Standard_EXPORT static Standard_Boolean SetTemplate (const Standard_CString name, const Handle(Interface_InterfaceModel)& model);
-  
-  //! Returns the complete list of names attached to template models
-  Standard_EXPORT static Handle(TColStd_HSequenceOfHAsciiString) ListTemplates();
-
-
 
   DEFINE_STANDARD_RTTIEXT(Interface_InterfaceModel,MMgt_TShared)
 
-protected:
-
+ protected:
   
   //! Defines empty InterfaceModel, ready to be filled
   Standard_EXPORT Interface_InterfaceModel();
 
-
-
-private:
-
+ private:
 
   TColStd_IndexedMapOfTransient theentities;
   TColStd_DataMapOfIntegerTransient thereports;
@@ -422,14 +387,6 @@ private:
   Standard_Boolean isdispatch;
   Handle(TCollection_HAsciiString) thecategory;
   Handle(Interface_GTool) thegtool;
-
-
 };
-
-
-
-
-
-
 
 #endif // _Interface_InterfaceModel_HeaderFile

@@ -50,9 +50,7 @@ DEFINE_STANDARD_HANDLE(IFSelect_WorkLibrary, Standard_Transient)
 //! kind of informations relevant for the norm,
 class IFSelect_WorkLibrary : public Standard_Transient
 {
-
-public:
-
+ public:
   
   //! Gives the way to Read a File and transfer it to a Model
   //! <mod> is the resulting Model, which has to be created by this
@@ -118,32 +116,17 @@ public:
   //! Returns the help line recorded for <level>, or an empty string
   Standard_EXPORT Standard_CString DumpHelp (const Standard_Integer level) const;
 
-
-
-
   DEFINE_STANDARD_RTTIEXT(IFSelect_WorkLibrary,Standard_Transient)
 
-protected:
-
+ protected:
   
   //! Required to initialise fields
-  Standard_EXPORT IFSelect_WorkLibrary();
+  IFSelect_WorkLibrary() : thelevdef(0) {}
 
-
-
-private:
-
+ private:
 
   Standard_Integer thelevdef;
   Handle(Interface_HArray1OfHAsciiString) thelevhlp;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IFSelect_WorkLibrary_HeaderFile

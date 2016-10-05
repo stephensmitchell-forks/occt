@@ -23,9 +23,6 @@
 
 #include <Interface_Graph.hxx>
 #include <Interface_GraphContent.hxx>
-#include <Standard_Integer.hxx>
-class Interface_Graph;
-class Standard_Transient;
 class Interface_EntityIterator;
 
 
@@ -35,14 +32,15 @@ class Interface_EntityIterator;
 //! Basic Iteration gives entities which are part of Cumulation
 class IFGraph_Cumulate  : public Interface_GraphContent
 {
-public:
+ public:
 
   DEFINE_STANDARD_ALLOC
 
-  
   //! creates empty Cumulate, ready to work
-  Standard_EXPORT IFGraph_Cumulate(const Interface_Graph& agraph);
-  
+  IFGraph_Cumulate(const Interface_Graph& agraph)
+  : thegraph (agraph)
+  {}
+
   //! adds an entity and its shared ones to the list
   Standard_EXPORT void GetFromEntity (const Handle(Standard_Transient)& ent);
   
@@ -51,8 +49,8 @@ public:
   Standard_EXPORT void GetFromIter (const Interface_EntityIterator& iter);
   
   //! Allows to restart on a new data set
-  Standard_EXPORT void ResetData();
-  
+  void ResetData() { Reset(); thegraph.Reset(); }
+
   //! Evaluates the result of cumulation
   Standard_EXPORT virtual void Evaluate() Standard_OVERRIDE;
   
@@ -74,28 +72,9 @@ public:
   //! (0 means empty, 1 means no overlap)
   Standard_EXPORT Standard_Integer HighestNbTimes() const;
 
-
-
-
-protected:
-
-
-
-
-
-private:
-
-
+ private:
 
   Interface_Graph thegraph;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IFGraph_Cumulate_HeaderFile

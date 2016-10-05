@@ -22,7 +22,6 @@
 #include <Standard_Handle.hxx>
 
 #include <IFGraph_SubPartsIterator.hxx>
-#include <Standard_Boolean.hxx>
 class Interface_Graph;
 
 
@@ -30,40 +29,19 @@ class Interface_Graph;
 //! isolated entities (single componants) or loops
 class IFGraph_StrongComponants  : public IFGraph_SubPartsIterator
 {
-public:
+ public:
 
   DEFINE_STANDARD_ALLOC
-
   
   //! creates with a Graph, and will analyse :
   //! whole True  : all the contents of the Model
   //! whole False : sub-parts which will be given later
-  Standard_EXPORT IFGraph_StrongComponants(const Interface_Graph& agraph, const Standard_Boolean whole);
-  
+  IFGraph_StrongComponants(const Interface_Graph& agraph, const Standard_Boolean whole)
+  : IFGraph_SubPartsIterator (agraph, whole)
+  {}
+
   //! does the computation
   Standard_EXPORT virtual void Evaluate() Standard_OVERRIDE;
-
-
-
-
-protected:
-
-
-
-
-
-private:
-
-
-
-
-
 };
-
-
-
-
-
-
 
 #endif // _IFGraph_StrongComponants_HeaderFile

@@ -18,54 +18,15 @@
 #define _HeaderSection_HeaderFile
 
 #include <Standard.hxx>
-#include <Standard_DefineAlloc.hxx>
 #include <Standard_Handle.hxx>
-
 class HeaderSection_Protocol;
-class HeaderSection_Protocol;
-class HeaderSection_FileName;
-class HeaderSection_FileDescription;
-class HeaderSection_FileSchema;
-class HeaderSection_HeaderRecognizer;
-
-
 
 class HeaderSection 
 {
-public:
+ public:
 
-  DEFINE_STANDARD_ALLOC
-
-  
   //! creates a Protocol
-  Standard_EXPORT static Handle(HeaderSection_Protocol) Protocol();
-
-
-
-
-protected:
-
-
-
-
-
-private:
-
-
-
-
-friend class HeaderSection_Protocol;
-friend class HeaderSection_FileName;
-friend class HeaderSection_FileDescription;
-friend class HeaderSection_FileSchema;
-friend class HeaderSection_HeaderRecognizer;
-
+  Standard_EXPORT static const Handle(HeaderSection_Protocol) & Protocol();
 };
-
-
-
-
-
-
 
 #endif // _HeaderSection_HeaderFile

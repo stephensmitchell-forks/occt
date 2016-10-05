@@ -21,14 +21,14 @@
 #include <Standard_Type.hxx>
 
 #include <TColStd_SequenceOfTransient.hxx>
-#include <Transfer_ProcessForTransient.hxx>
+#include <Transfer_Process.hxx>
 class Dico_DictionaryOfTransient;
 class Message_Messenger;
 class Interface_HGraph;
 class Interface_EntityIterator;
 
 class Transfer_TransientProcess;
-DEFINE_STANDARD_HANDLE(Transfer_TransientProcess, Transfer_ProcessForTransient)
+DEFINE_STANDARD_HANDLE(Transfer_TransientProcess, Transfer_Process)
 
 //! Adds specific features to the generic definition :
 //! TransientProcess is intended to work from an InterfaceModel
@@ -36,13 +36,13 @@ DEFINE_STANDARD_HANDLE(Transfer_TransientProcess, Transfer_ProcessForTransient)
 //!
 //! Hence, some informations about starting entities can be gotten
 //! from the model : for Trace, CheckList, Integrity Status
-class Transfer_TransientProcess : public Transfer_ProcessForTransient
+class Transfer_TransientProcess : public Transfer_Process
 {
  public:
   
   //! Sets TransientProcess at initial state, with an initial size
   Transfer_TransientProcess(const Standard_Integer nb = 10000)
-  : Transfer_ProcessForTransient (nb)
+  : Transfer_Process (nb)
   {}
 
   //! Sets a Graph : superseedes SetModel if already done
@@ -65,18 +65,18 @@ class Transfer_TransientProcess : public Transfer_ProcessForTransient
   //! Rather for internal use (ex.: preparing and setting in once)
   Handle(Dico_DictionaryOfTransient)& Context() { return thectx; }
   
-  //! Specific printing to trace an entity : prints label and type
-  //! (if model is set)
-  Standard_EXPORT virtual void PrintTrace (const Handle(Standard_Transient)& start, const Handle(Message_Messenger)& S) const Standard_OVERRIDE;
-  
   TColStd_SequenceOfTransient & RootsForTransfer() { return thetrroots; }
 
-  DEFINE_STANDARD_RTTIEXT(Transfer_TransientProcess,Transfer_ProcessForTransient)
+  DEFINE_STANDARD_RTTIEXT(Transfer_TransientProcess,Transfer_Process)
 
  protected:
   
   //! Specific number of a source object for check-list : Number in model
-  Standard_EXPORT virtual Standard_Integer CheckNum (const Handle(Standard_Transient)& ent) const Standard_OVERRIDE;
+  Standard_EXPORT Standard_Integer CheckNum (const Handle(Standard_Transient)& ent) const Standard_OVERRIDE;
+  
+  //! Specific printing to trace an entity : prints label and type
+  //! (if model is set)
+  Standard_EXPORT void PrintTrace (const Handle(Standard_Transient)& start, const Handle(Message_Messenger)& S) const Standard_OVERRIDE;
 
  private:
 

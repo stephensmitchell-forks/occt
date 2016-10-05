@@ -16,15 +16,9 @@
 #include <Interface_Graph.hxx>
 #include <Interface_GraphContent.hxx>
 
-//#include <IFGraph_SortedStrongs.hxx>
-IFGraph_StrongComponants::IFGraph_StrongComponants
-  (const Interface_Graph& agraph, const Standard_Boolean whole)
-      : IFGraph_SubPartsIterator (agraph, whole)    {  }
-
-    void  IFGraph_StrongComponants::Evaluate ()
+void IFGraph_StrongComponants::Evaluate ()
 {
-  Interface_GraphContent iter = Loaded();
-  Interface_Graph G(thegraph); G.GetFromIter(iter,0);
+  Interface_Graph G(thegraph); G.GetFromIter(Loaded(),0);
   Standard_Integer nb = G.Size();
   for (Standard_Integer i = 1; i <= nb; i ++) {
     if (!G.IsPresent(i)) continue;

@@ -34,19 +34,21 @@
 #include <TCollection_HAsciiString.hxx>
 
 #include <stdio.h>
-static Handle(IGESData_Protocol) proto;
+
+static Handle(IGESData_Protocol)  gIGESProto;
+static Handle(IGESData_IGESModel) gIGESModel;
 
 static Handle(IGESData_DefaultGeneral)    stmod;
 static Handle(IGESData_DefaultSpecific)   speci;
 
-
-    void  IGESData::Init ()
+void IGESData::Init ()
 {
-  if (proto.IsNull()) proto = new IGESData_Protocol;
+  if (gIGESProto.IsNull()) gIGESProto = new IGESData_Protocol;
   if (stmod.IsNull()) stmod = new IGESData_DefaultGeneral;
   if (speci.IsNull()) speci = new IGESData_DefaultSpecific;
-//  et modele template "iges"
-  if (Interface_InterfaceModel::HasTemplate("iges")) return;
+
+  //  et modele template "iges"
+  if (!gIGESModel.IsNull()) return;
 
   OSD_Process process;
 
@@ -140,52 +142,17 @@ static Handle(IGESData_DefaultSpecific)   speci;
   //----------------------------
 
   IGESData_GlobalSection GS;
+
   //#58 rln 28.12.98 changing default values for Global Section
   char procver[80];
   sprintf (procver, XSTEP_PROCESSOR_VERSION, "IGES");
   Handle(TCollection_HAsciiString) gsys = new TCollection_HAsciiString (procver);
   Interface_Static::Init ("XSTEP","write.iges.header.product" ,'t',procver);
   
-/*  Handle(TCollection_HAsciiString) gsys = new TCollection_HAsciiString
-    (XSTEP_VERSION);
-  gsys->AssignCat(" on ");
-  gsys->AssignCat
-#ifdef HPUX
-    ("HP-UX");
-  cout<<"--  OSD_Path::SystemVersion, does not work well on HP-UX"<<endl;
-#endif
-#ifndef HPUX
-    (host.SystemVersion().ToCString());
-#endif
-
-//  SendName : nom significatif de la piece transmise par exemple
-//  SystemId : c est MDTV etc
-//  InterfaceVersion : la version en cours de XSTEP; incluant la plateforme
-
-  char nomsys[100]; int istat; long lstat;
-  struct utsname infosy;
-  istat = uname (&infosy);
-  lstat = sysinfo (SI_HW_PROVIDER,nomsys,99);
-  Handle(TCollection_HAsciiString) gsys = new TCollection_HAsciiString(nomsys);
-  gsys->AssignCat(" ");
-  lstat = sysinfo (SI_ARCHITECTURE,nomsys,99);
-  gsys->AssignCat(nomsys);
-  gsys->AssignCat("/");
-  gsys->AssignCat(infosy.sysname);
-  gsys->AssignCat(" ");
-  gsys->AssignCat(infosy.release);
-*/
-  Standard_Integer year;                                //gka 19.01.99
   OSD_Process system;
   Quantity_Date ladate = system.SystemDate(); 
-  year = ladate.Year();
-  Handle(TCollection_HAsciiString) datestr;
-  if( year < 2000 )
-    //#65 rln 12.02.99 S4151 (explicitly force YYMMDD.HHMMSS before Y2000)
-    datestr = GS.NewDateString(0,0,0,0,0,0,0);
-  else 
-    //#65 rln 12.02.99 S4151 (explicitly force YYYYMMDD.HHMMSS after Y2000)
-    datestr = GS.NewDateString(0,0,0,0,0,0,-1);
+  const Standard_Integer year = ladate.Year();
+  Handle(TCollection_HAsciiString) datestr = GS.NewDateString(0,0,0,0,0,0,( year < 2000 ? 0 : -1 )); //#65 rln 12.02.99 S4151 (explicitly force YYYYMMDD.HHMMSS after Y2000)
   GS.SetSeparator (',');
   GS.SetEndMark   (';');
   GS.SetSendName (new TCollection_HAsciiString(Interface_Static::CVal("write.iges.header.product")));
@@ -198,7 +165,6 @@ static Handle(IGESData_DefaultSpecific)   speci;
   GS.SetMaxPower10Double ( RealLast10Exp() );
   GS.SetMaxDigitsDouble  ( RealDigits() );
   GS.SetReceiveName (Interface_Static::Static("write.iges.header.receiver")->HStringValue());
-// new TCollection_HAsciiString("Unknown");
   GS.SetScale       (1.0);
   GS.SetUnitFlag    (Interface_Static::IVal("write.iges.unit"));
   GS.SetUnitName    (new TCollection_HAsciiString(Interface_Static::CVal("write.iges.unit")));
@@ -208,26 +174,28 @@ static Handle(IGESData_DefaultSpecific)   speci;
   GS.SetResolution  (0.0001);
   GS.SetMaxCoord    (0.0 /*1000.0*/);//22.10.98 rln BUC60081
   GS.SetAuthorName  (Interface_Static::Static("write.iges.header.author")->HStringValue());
-//  new TCollection_HAsciiString (process.UserName());
   GS.SetCompanyName (Interface_Static::Static("write.iges.header.company")->HStringValue());
-//  new TCollection_HAsciiString("Matra Datavision");
   GS.SetIGESVersion (11);         // pour IGES-5.3 //gka 19.01.99
   GS.SetDraftingStandard (0);
   GS.SetLastChangeDate  (datestr);
   GS.SetApplicationProtocol(new TCollection_HAsciiString("")); //gka 19.01.99
 
-//  Interface_Check check;
-//  GS.Init(params, check);
-
   // Creating the Model
   //-------------------
 
-  Handle(IGESData_IGESModel) model = new IGESData_IGESModel;
-  model->SetGlobalSection(GS);
-  Interface_InterfaceModel::SetTemplate ("iges", model);
+  gIGESModel = new IGESData_IGESModel;
+  gIGESModel->SetGlobalSection(GS);
 }
 
-    Handle(IGESData_Protocol) IGESData::Protocol ()
+const Handle(IGESData_Protocol) & IGESData::Protocol ()
 {
-  return proto;
+  return gIGESProto;
+}
+
+Handle(IGESData_IGESModel) IGESData::NewModel ()
+{
+  if (gIGESModel.IsNull()) return NULL;
+  Handle(Interface_InterfaceModel) newmod = gIGESModel->NewEmptyModel();
+  newmod->GetFromAnother (gIGESModel);
+  return Handle(IGESData_IGESModel)::DownCast(newmod);
 }

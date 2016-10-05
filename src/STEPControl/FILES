@@ -4,8 +4,12 @@ STEPControl_ActorWrite.cxx
 STEPControl_ActorWrite.hxx
 STEPControl_Controller.cxx
 STEPControl_Controller.hxx
+STEPControl_FloatFormat.cxx
+STEPControl_FloatFormat.hxx
 STEPControl_Reader.cxx
 STEPControl_Reader.hxx
 STEPControl_StepModelType.hxx
+STEPControl_WorkLibrary.cxx
+STEPControl_WorkLibrary.hxx
 STEPControl_Writer.cxx
 STEPControl_Writer.hxx

@@ -21,9 +21,6 @@
 #include <Standard_Type.hxx>
 
 #include <XSControl_Vars.hxx>
-#include <Standard_CString.hxx>
-#include <Standard_Boolean.hxx>
-class Standard_Transient;
 class Geom_Geometry;
 class Geom2d_Curve;
 class Geom_Curve;
@@ -39,12 +36,10 @@ DEFINE_STANDARD_HANDLE(XSDRAW_Vars, XSControl_Vars)
 //! Vars for DRAW session (i.e. DBRep and DrawTrSurf)
 class XSDRAW_Vars : public XSControl_Vars
 {
-
-public:
-
+ public:
   
-  Standard_EXPORT XSDRAW_Vars();
-  
+  XSDRAW_Vars() {}
+
   Standard_EXPORT virtual void Set (const Standard_CString name, const Handle(Standard_Transient)& val) Standard_OVERRIDE;
   
   Standard_EXPORT virtual Handle(Geom_Geometry) GetGeom (Standard_CString& name) const Standard_OVERRIDE;
@@ -67,27 +62,7 @@ public:
   
   Standard_EXPORT virtual TopoDS_Shape GetShape (Standard_CString& name) const Standard_OVERRIDE;
 
-
-
-
   DEFINE_STANDARD_RTTIEXT(XSDRAW_Vars,XSControl_Vars)
-
-protected:
-
-
-
-
-private:
-
-
-
-
 };
-
-
-
-
-
-
 
 #endif // _XSDRAW_Vars_HeaderFile

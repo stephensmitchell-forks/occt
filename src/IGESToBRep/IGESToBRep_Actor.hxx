@@ -35,7 +35,7 @@ class IGESToBRep_Actor : public Transfer_ActorOfTransientProcess
   
   Standard_EXPORT virtual Standard_Boolean Recognize (const Handle(Standard_Transient)& start) Standard_OVERRIDE;
   
-  Standard_EXPORT virtual Handle(Transfer_Binder) Transferring (const Handle(Standard_Transient)& start, const Handle(Transfer_ProcessForTransient)& TP) Standard_OVERRIDE;
+  Standard_EXPORT virtual Handle(Transfer_Binder) Transferring (const Handle(Standard_Transient)& start, const Handle(Transfer_Process)& TP) Standard_OVERRIDE;
   
   Standard_EXPORT void SetModel (const Handle(Interface_InterfaceModel)& model);
   

@@ -12,25 +12,17 @@
 // commercial license or contractual agreement.
 
 
-#include <HeaderSection.hxx>
-#include <HeaderSection_Protocol.hxx>
 #include <RWHeaderSection.hxx>
 #include <RWHeaderSection_GeneralModule.hxx>
 #include <RWHeaderSection_ReadWriteModule.hxx>
 #include <StepData.hxx>
 
-/// #include <EuclidStandard.hxx>
 static Handle(RWHeaderSection_ReadWriteModule) rwm;
 static Handle(RWHeaderSection_GeneralModule) rwg;
 
-
 void RWHeaderSection::Init()
 {
-///   EuclidStandard::Init();
-  Handle(HeaderSection_Protocol) proto = HeaderSection::Protocol();
-  StepData::AddHeaderProtocol(proto);
+  const Handle(StepData_Protocol) &hp = StepData::HeaderProtocol();
   if (rwm.IsNull()) rwm = new RWHeaderSection_ReadWriteModule;
   if (rwg.IsNull()) rwg = new RWHeaderSection_GeneralModule;
 }
-
-

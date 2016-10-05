@@ -275,9 +275,8 @@ IFSelect_ReturnStatus XSControl_Controller::TransferWriteShape
 
   IFSelect_ReturnStatus stat = IFSelect_RetFail;
   Handle(Transfer_Binder) binder = FP->Find (aMapper);
-  Handle(Transfer_SimpleBinderOfTransient) bindtr;
   while (!binder.IsNull()) {
-    bindtr = Handle(Transfer_SimpleBinderOfTransient)::DownCast (binder);
+    Handle(Transfer_SimpleBinderOfTransient) bindtr = Handle(Transfer_SimpleBinderOfTransient)::DownCast (binder);
     if (!bindtr.IsNull()) {
       Handle(Standard_Transient) ent = bindtr->Result();
       if (!ent.IsNull()) {
@@ -408,7 +407,6 @@ void XSControl_Controller::Customise (Handle(XSControl_WorkSession)& WS)
     WS->AddNamedItem ("xst-shared",new IFSelect_SelectShared);
     WS->AddNamedItem ("xst-nb-selected",new IFSelect_GraphCounter);
 
-    //szv:mySignType = stp;
     WS->SetSignType( stp );
   }
 

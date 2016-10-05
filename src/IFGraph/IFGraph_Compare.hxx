@@ -23,9 +23,6 @@
 
 #include <Interface_Graph.hxx>
 #include <Interface_GraphContent.hxx>
-#include <Standard_Boolean.hxx>
-class Interface_Graph;
-class Standard_Transient;
 class Interface_EntityIterator;
 
 
@@ -36,13 +33,14 @@ class Interface_EntityIterator;
 //! Basic Iteration gives Cumulation (union)
 class IFGraph_Compare  : public Interface_GraphContent
 {
-public:
+ public:
 
   DEFINE_STANDARD_ALLOC
 
-  
   //! creates empty Compare, ready to work
-  Standard_EXPORT IFGraph_Compare(const Interface_Graph& agraph);
+  IFGraph_Compare(const Interface_Graph& agraph)
+  : thegraph (agraph)
+  {}
   
   //! adds an entity and its shared ones to the list :
   //! first True means adds to the first sub-list, else to the 2nd
@@ -66,42 +64,23 @@ public:
   Standard_EXPORT void KeepCommon();
   
   //! Allows to restart on a new data set
-  Standard_EXPORT void ResetData();
+  void ResetData() { Reset(); thegraph.Reset(); }
   
   //! Recomputes result of comparing to sub-parts
   Standard_EXPORT virtual void Evaluate() Standard_OVERRIDE;
   
   //! returns entities common to the both parts
-  Standard_EXPORT Interface_EntityIterator Common() const;
-  
+  Interface_EntityIterator Common() const { return Interface_GraphContent(thegraph,3); }
+
   //! returns entities which are exclusively in the first list
-  Standard_EXPORT Interface_EntityIterator FirstOnly() const;
-  
+  Interface_EntityIterator FirstOnly() const { return Interface_GraphContent(thegraph,1); }
+
   //! returns entities which are exclusively in the second part
-  Standard_EXPORT Interface_EntityIterator SecondOnly() const;
+  Interface_EntityIterator SecondOnly() const { return Interface_GraphContent(thegraph,2); }
 
-
-
-
-protected:
-
-
-
-
-
-private:
-
-
+ private:
 
   Interface_Graph thegraph;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IFGraph_Compare_HeaderFile

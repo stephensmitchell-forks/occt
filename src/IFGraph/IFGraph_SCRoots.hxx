@@ -22,9 +22,7 @@
 #include <Standard_Handle.hxx>
 
 #include <IFGraph_StrongComponants.hxx>
-#include <Standard_Boolean.hxx>
 class Interface_Graph;
-class IFGraph_StrongComponants;
 
 
 //! determines strong componants in a graph which are Roots
@@ -38,35 +36,17 @@ public:
   //! creates with a Graph, and will analyse :
   //! whole True  : all the contents of the Model
   //! whole False : sub-parts which will be given later
-  Standard_EXPORT IFGraph_SCRoots(const Interface_Graph& agraph, const Standard_Boolean whole);
-  
+  IFGraph_SCRoots(const Interface_Graph& agraph, const Standard_Boolean whole)
+  : IFGraph_StrongComponants (agraph,whole)
+  {}
+
   //! creates from a StrongComponants which was already computed
-  Standard_EXPORT IFGraph_SCRoots(IFGraph_StrongComponants& subparts);
-  
+  IFGraph_SCRoots(IFGraph_StrongComponants& subparts)
+  : IFGraph_StrongComponants (subparts)
+  {}
+
   //! does the computation
   Standard_EXPORT virtual void Evaluate() Standard_OVERRIDE;
-
-
-
-
-protected:
-
-
-
-
-
-private:
-
-
-
-
-
 };
-
-
-
-
-
-
 
 #endif // _IFGraph_SCRoots_HeaderFile

@@ -14,7 +14,6 @@
 // dce 21/01/99 S3767 : Suppression of general messages
 
 #include <Interface_Check.hxx>
-#include <Interface_CheckFailure.hxx>
 #include <Interface_FileReaderData.hxx>
 #include <Interface_FileReaderTool.hxx>
 #include <Interface_GeneralLib.hxx>

@@ -27,6 +27,7 @@
 class TopoDS_Shape;
 class Transfer_FinderProcess;
 class XSControl_WorkSession;
+class IGESData_Protocol;
 
 
 class IGESControl_Controller;
@@ -36,11 +37,6 @@ DEFINE_STANDARD_HANDLE(IGESControl_Controller, XSControl_Controller)
 class IGESControl_Controller : public XSControl_Controller
 {
  public:
-  
-  //! Initializes the use of IGES Norm (the first time) and returns
-  //! a Controller for IGES-5.1
-  //! If <modefnes> is True, sets it to internal FNES format
-  Standard_EXPORT IGESControl_Controller(const Standard_Boolean modefnes = Standard_False);
   
   //! Creates a new empty Model ready to receive data of the Norm.
   //! It is taken from IGES Template Model
@@ -55,13 +51,20 @@ class IGESControl_Controller : public XSControl_Controller
   //! records it to various names, available to select it later
   //! Returns True when done, False if could not be done
   //! Also, it creates and records an Adaptor for FNES
-  Standard_EXPORT static Standard_Boolean Init();
+  Standard_EXPORT static void Init();
   
-  Standard_EXPORT virtual void Customise (Handle(XSControl_WorkSession)& WS) Standard_OVERRIDE;
+  //! Defines a protocol to be adequate for IGES
+  //! (encompasses ALL the IGES norm including IGESSolid, IGESAppli)
+  Standard_EXPORT static const Handle(IGESData_Protocol) & DefineProtocol();
 
   DEFINE_STANDARD_RTTIEXT(IGESControl_Controller,XSControl_Controller)
 
- private:
+ protected:
+
+  //! Initializes the use of IGES Norm (the first time) and returns
+  //! a Controller for IGES-5.1
+  //! If <modefnes> is True, sets it to internal FNES format
+  Standard_EXPORT IGESControl_Controller(const Standard_Boolean modefnes = Standard_False);
 
   Standard_Boolean themode;
 };

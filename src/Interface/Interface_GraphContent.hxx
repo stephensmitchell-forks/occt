@@ -35,19 +35,20 @@ class Interface_EntityIterator;
 //! all being given under one unique form
 class Interface_GraphContent  : public Interface_EntityIterator
 {
-public:
+ public:
 
   DEFINE_STANDARD_ALLOC
 
-  
   //! Creates an empty GraphContent, ready to be filled
-  Standard_EXPORT Interface_GraphContent();
+  Interface_GraphContent() {}
   
   //! Creates with all entities designated by a Graph
-  Standard_EXPORT Interface_GraphContent(const Interface_Graph& agraph);
+  Interface_GraphContent(const Interface_Graph& agraph)
+  { GetFromGraph(agraph); }
   
   //! Creates with entities having specific Status value in a Graph
-  Standard_EXPORT Interface_GraphContent(const Interface_Graph& agraph, const Standard_Integer stat);
+  Interface_GraphContent(const Interface_Graph& agraph, const Standard_Integer stat)
+  { GetFromGraph(agraph,stat); }
   
   //! Creates an Iterator with Shared entities of an entity
   //! (equivalente to EntityIterator but with a Graph)
@@ -74,28 +75,6 @@ public:
   //! Default is set to doing nothing : intended to be redefined
   //! by each sub-class
   Standard_EXPORT virtual void Evaluate();
-
-
-
-
-protected:
-
-
-
-
-
-private:
-
-
-
-
-
 };
-
-
-
-
-
-
 
 #endif // _Interface_GraphContent_HeaderFile
