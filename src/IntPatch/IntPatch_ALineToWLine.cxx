@@ -580,7 +580,6 @@ void IntPatch_ALineToWLine::MakeWLine(const Handle(IntPatch_ALine)& theALine,
 
     aWLine->ComputeVertexParameters(myTol3D);
 
-    aWLine->EnablePurging(Standard_False);
     theLines.Append(aWLine);
   }//while(aParameter < theLPar)
 }

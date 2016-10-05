@@ -57,16 +57,16 @@ public:
     GeomInt_IntSS(const Handle(Geom_Surface)& S1, const Handle(Geom_Surface)& S2, const Standard_Real Tol, const Standard_Boolean Approx = Standard_True, const Standard_Boolean ApproxS1 = Standard_False, const Standard_Boolean ApproxS2 = Standard_False);
   
   //! general intersection of two surfaces
-  Standard_EXPORT void Perform (const Handle(Geom_Surface)& S1, const Handle(Geom_Surface)& S2, const Standard_Real Tol, const Standard_Boolean Approx = Standard_True, const Standard_Boolean ApproxS1 = Standard_False, const Standard_Boolean ApproxS2 = Standard_False, const Standard_Boolean theIsReqToPostWLProc = Standard_True);
+  Standard_EXPORT void Perform (const Handle(Geom_Surface)& S1, const Handle(Geom_Surface)& S2, const Standard_Real Tol, const Standard_Boolean Approx = Standard_True, const Standard_Boolean ApproxS1 = Standard_False, const Standard_Boolean ApproxS2 = Standard_False);
   
   //! intersection of adapted surfaces
-    void Perform (const Handle(GeomAdaptor_HSurface)& HS1, const Handle(GeomAdaptor_HSurface)& HS2, const Standard_Real Tol, const Standard_Boolean Approx = Standard_True, const Standard_Boolean ApproxS1 = Standard_False, const Standard_Boolean ApproxS2 = Standard_False, const Standard_Boolean theIsReqToPostWLProc = Standard_True);
+    void Perform (const Handle(GeomAdaptor_HSurface)& HS1, const Handle(GeomAdaptor_HSurface)& HS2, const Standard_Real Tol, const Standard_Boolean Approx = Standard_True, const Standard_Boolean ApproxS1 = Standard_False, const Standard_Boolean ApproxS2 = Standard_False);
   
   //! general intersection using a starting point
-  Standard_EXPORT void Perform (const Handle(Geom_Surface)& S1, const Handle(Geom_Surface)& S2, const Standard_Real Tol, const Standard_Real U1, const Standard_Real V1, const Standard_Real U2, const Standard_Real V2, const Standard_Boolean Approx = Standard_True, const Standard_Boolean ApproxS1 = Standard_False, const Standard_Boolean ApproxS2 = Standard_False, const Standard_Boolean theIsReqToPostWLProc = Standard_True);
+  Standard_EXPORT void Perform (const Handle(Geom_Surface)& S1, const Handle(Geom_Surface)& S2, const Standard_Real Tol, const Standard_Real U1, const Standard_Real V1, const Standard_Real U2, const Standard_Real V2, const Standard_Boolean Approx = Standard_True, const Standard_Boolean ApproxS1 = Standard_False, const Standard_Boolean ApproxS2 = Standard_False);
   
   //! intersection of adapted surfaces using a starting point
-    void Perform (const Handle(GeomAdaptor_HSurface)& HS1, const Handle(GeomAdaptor_HSurface)& HS2, const Standard_Real Tol, const Standard_Real U1, const Standard_Real V1, const Standard_Real U2, const Standard_Real V2, const Standard_Boolean Approx = Standard_True, const Standard_Boolean ApproxS1 = Standard_False, const Standard_Boolean ApproxS2 = Standard_False, const Standard_Boolean theIsReqToPostWLProc = Standard_True);
+    void Perform (const Handle(GeomAdaptor_HSurface)& HS1, const Handle(GeomAdaptor_HSurface)& HS2, const Standard_Real Tol, const Standard_Real U1, const Standard_Real V1, const Standard_Real U2, const Standard_Real V2, const Standard_Boolean Approx = Standard_True, const Standard_Boolean ApproxS1 = Standard_False, const Standard_Boolean ApproxS2 = Standard_False);
   
     Standard_Boolean IsDone() const;
   
@@ -119,7 +119,7 @@ public:
 protected:
 
   
-  Standard_EXPORT void InternalPerform (const Standard_Real Tol, const Standard_Boolean Approx, const Standard_Boolean ApproxS1, const Standard_Boolean ApproxS2, const Standard_Boolean useStart, const Standard_Real U1, const Standard_Real V1, const Standard_Real U2, const Standard_Real V2, const Standard_Boolean theIsReqToPostWLProc);
+  Standard_EXPORT void InternalPerform (const Standard_Real Tol, const Standard_Boolean Approx, const Standard_Boolean ApproxS1, const Standard_Boolean ApproxS2, const Standard_Boolean useStart, const Standard_Real U1, const Standard_Real V1, const Standard_Real U2, const Standard_Real V2);
   
   Standard_EXPORT void MakeCurve (const Standard_Integer Ind, const Handle(Adaptor3d_TopolTool)& D1, const Handle(Adaptor3d_TopolTool)& D2, const Standard_Real Tol, const Standard_Boolean Approx, const Standard_Boolean Approx1, const Standard_Boolean Approx2);
 

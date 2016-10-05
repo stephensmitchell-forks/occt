@@ -27,29 +27,6 @@ public:
 
   DEFINE_STANDARD_ALLOC
 
-  //! I
-  //! Removes equal points (leave one of equal points) from theWLine
-  //! and recompute vertex parameters.
-  //!
-  //! II
-  //! Removes point out of borders in case of non periodic surfaces.
-  //! This step is done only if theRestrictLine is true.
-  //!
-  //! III
-  //! Removes exceed points using tube criteria:
-  //! delete 7D point if it lies near to expected lines in 2d and 3d.
-  //! Each task (2d, 2d, 3d) have its own tolerance and checked separately.
-  //!
-  //! Returns new WLine or null WLine if the number
-  //! of the points is less than 2.
-  Standard_EXPORT static
-    Handle(IntPatch_WLine) ComputePurgedWLine(const Handle(IntPatch_WLine)       &theWLine,
-                                              const Handle(Adaptor3d_HSurface) &theS1,
-                                              const Handle(Adaptor3d_HSurface) &theS2,
-                                              const Handle(Adaptor3d_TopolTool)  &theDom1,
-                                              const Handle(Adaptor3d_TopolTool)  &theDom2,
-                                              const Standard_Boolean      theRestrictLine);
-
 //! Joins all WLines from theSlin to one if it is possible and records 
 //! the result into theSlin again. Lines will be kept to be splitted if:
 //! a) they are separated (has no common points);

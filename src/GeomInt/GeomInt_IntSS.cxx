@@ -28,15 +28,14 @@ void GeomInt_IntSS::Perform(const Handle(Geom_Surface)& S1,
                               const Standard_Real Tol,
                               const Standard_Boolean Approx,
                               const Standard_Boolean ApproxS1,
-                              const Standard_Boolean ApproxS2,
-                              const Standard_Boolean theIsReqToPostWLProc)
+                              const Standard_Boolean ApproxS2)
 {
   myHS1 = new GeomAdaptor_HSurface(S1);
   if (S1==S2)
     myHS2 = myHS1;
   else
     myHS2 = new GeomAdaptor_HSurface(S2);
-  InternalPerform(Tol,Approx,ApproxS1,ApproxS2,Standard_False,0.,0.,0.,0.,theIsReqToPostWLProc);
+  InternalPerform(Tol,Approx,ApproxS1,ApproxS2,Standard_False,0.,0.,0.,0.);
 }
 
 //=======================================================================
@@ -50,15 +49,14 @@ void GeomInt_IntSS::Perform(const Handle(Geom_Surface)& S1,
                               const Standard_Real U2, const Standard_Real V2,
                               const Standard_Boolean Approx,
                               const Standard_Boolean ApproxS1,
-                              const Standard_Boolean ApproxS2,
-                              const Standard_Boolean theIsReqToPostWLProc)
+                              const Standard_Boolean ApproxS2)
 {
   myHS1 = new GeomAdaptor_HSurface(S1);
   if (S1==S2)
     myHS2 = myHS1;
   else
     myHS2 = new GeomAdaptor_HSurface(S2);
-  InternalPerform(Tol,Approx,ApproxS1,ApproxS2,Standard_True,U1,V1,U2,V2,theIsReqToPostWLProc);
+  InternalPerform(Tol,Approx,ApproxS1,ApproxS2,Standard_True,U1,V1,U2,V2);
 }
 
 //=======================================================================
@@ -73,8 +71,7 @@ void GeomInt_IntSS::Perform(const Handle(Geom_Surface)& S1,
                                       const Standard_Real U1,
                                       const Standard_Real V1,
                                       const Standard_Real U2,
-                                      const Standard_Real V2,
-                                      const Standard_Boolean theIsReqToPostWLProc)
+                                      const Standard_Real V2)
 {
   myTolReached2d = myTolReached3d = 0.0;
   myNbrestr = 0;
@@ -93,7 +90,8 @@ void GeomInt_IntSS::Perform(const Handle(Geom_Surface)& S1,
     myIntersector.Perform(myHS1,dom1,TolArc,TolTang);
   }
   else if (!useStart) {
-    myIntersector.Perform(myHS1,dom1,myHS2,dom2,TolArc,TolTang,Standard_True, Standard_False, theIsReqToPostWLProc);
+    myIntersector.Perform(myHS1, dom1, myHS2, dom2,
+                          TolArc,TolTang,Standard_True, Standard_False);
   }
   else {
     myIntersector.Perform(myHS1,dom1,myHS2,dom2,U1,V1,U2,V2,TolArc,TolTang);

@@ -1499,7 +1499,7 @@ static Standard_Integer intersection (Draw_Interpretor& di,
   Handle(GeomAdaptor_HSurface) AS1,AS2;
   Standard_Real tol = Precision::Confusion();
   Standard_Real UVsta[4];
-  Standard_Boolean useStart = Standard_False, useBnd = Standard_False, isPostProcessingReq = Standard_True;
+  Standard_Boolean useStart = Standard_False, useBnd = Standard_False;
 
   for(Standard_Integer i = 4; i < n; i++)
   {
@@ -1529,11 +1529,6 @@ static Standard_Integer intersection (Draw_Interpretor& di,
     {
       tol = Draw::Atof(a[++i]);
     }
-
-    if(!strcmp(a[i], "-npp"))
-    {
-      isPostProcessingReq = Standard_False;
-    }
   }
   //
   Handle(Geom_Curve) Result;
@@ -1547,19 +1542,19 @@ static Standard_Integer intersection (Draw_Interpretor& di,
     if(!useStart && !useBnd)
     {
       // General case
-      Inters.Perform(GS1,GS2,tol,Standard_True, Standard_False, Standard_False, isPostProcessingReq);
+      Inters.Perform(GS1,GS2,tol,Standard_True, Standard_False, Standard_False);
     }
     else if (useStart && !useBnd)
     {
-      Inters.Perform(GS1,GS2,tol,UVsta[0],UVsta[1],UVsta[2],UVsta[3], Standard_True, Standard_False, Standard_False, Standard_True);
+      Inters.Perform(GS1,GS2,tol,UVsta[0],UVsta[1],UVsta[2],UVsta[3], Standard_True, Standard_False, Standard_False);
     }
     else if (!useStart && useBnd)
     {
-      Inters.Perform(AS1,AS2,tol,Standard_True, Standard_False, Standard_False, Standard_True);
+      Inters.Perform(AS1,AS2,tol,Standard_True, Standard_False, Standard_False);
     }
     else
     {
-      Inters.Perform(AS1,AS2,tol,UVsta[0],UVsta[1],UVsta[2],UVsta[3], Standard_True, Standard_False, Standard_False, Standard_True);
+      Inters.Perform(AS1,AS2,tol,UVsta[0],UVsta[1],UVsta[2],UVsta[3], Standard_True, Standard_False, Standard_False);
     }
     //
     if (!Inters.IsDone())
@@ -1782,7 +1777,7 @@ void  GeometryTest::CurveCommands(Draw_Interpretor& theCommands)
   theCommands.Add("intersect",
                   "intersect result surf1 surf2 [-sp u1 v1 u2 v2] [-b U1F U1L V1F V1L U2F U2L V2F V2L] [-t tolerance] [-npp] : "
                   "Use:\n -sp option for setting start point;\n -b option for setting bounds;\n "
-                  "-t option for setting tolerance;\n -npp option for switching off post-processing intersection line (e.g. avoid purger)",
+                  "-t option for setting tolerance;\n",
 		  __FILE__,
 		  intersection,g);
 

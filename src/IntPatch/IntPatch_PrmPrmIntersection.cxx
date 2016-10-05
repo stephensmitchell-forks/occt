@@ -2331,7 +2331,6 @@ void IntPatch_PrmPrmIntersection::Perform (const Handle(Adaptor3d_HSurface)& Sur
 
                 if(bPWIsDone)
                 {
-                  Standard_Boolean hasBeenAdded = Standard_False;
                   if(PW.NbPoints() > 2 )
                   {
                     //Try to extend the intersection line to the boundary,
@@ -2341,7 +2340,7 @@ void IntPatch_PrmPrmIntersection::Perform (const Handle(Adaptor3d_HSurface)& Sur
                     const Standard_Integer aMinNbPoints = 40;
                     //if(PW.NbPoints() < aMinNbPoints)
                     //{
-                    //  hasBeenAdded = PW.SeekAdditionalPoints(Surf1, Surf2, aMinNbPoints);
+                    //  PW.SeekAdditionalPoints(Surf1, Surf2, aMinNbPoints);
                     //}
                     
                     Standard_Integer iPWNbPoints = PW.NbPoints(), aNbPointsVer = 0;
@@ -2443,7 +2442,6 @@ void IntPatch_PrmPrmIntersection::Perform (const Handle(Adaptor3d_HSurface)& Sur
 
                       Standard_Real TolTang = TolTangency;
                       Handle(IntPatch_WLine) wline = new IntPatch_WLine(PW.Line(),Standard_False,trans1,trans2);
-                      wline->EnablePurging(!hasBeenAdded);
                       IntPatch_RstInt::PutVertexOnLine(wline,Surf1,D1,Surf2,Standard_True,TolTang);
                       IntPatch_RstInt::PutVertexOnLine(wline,Surf2,D2,Surf1,Standard_False,TolTang);
                       if(wline->NbVertex() == 0)
@@ -2577,7 +2575,6 @@ void IntPatch_PrmPrmIntersection::Perform (const Handle(Adaptor3d_HSurface)& Sur
 
           if(PW.IsDone())
           {
-            Standard_Boolean hasBeenAdded = Standard_False;
             if(PW.NbPoints()>2)
             { 
               //const Standard_Integer aMinNbPoints = 40;
@@ -2652,7 +2649,6 @@ void IntPatch_PrmPrmIntersection::Perform (const Handle(Adaptor3d_HSurface)& Sur
 
                 Standard_Real TolTang = TolTangency;
                 Handle(IntPatch_WLine) wline = new IntPatch_WLine(PW.Line(),Standard_False,trans1,trans2);
-                wline->EnablePurging(!hasBeenAdded);
                 IntPatch_RstInt::PutVertexOnLine(wline,Surf1,D1,Surf2,Standard_True,TolTang);
                 IntPatch_RstInt::PutVertexOnLine(wline,Surf2,D2,Surf1,Standard_False,TolTang);
 

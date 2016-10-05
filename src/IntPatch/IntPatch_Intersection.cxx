@@ -734,8 +734,7 @@ void IntPatch_Intersection::Perform(const Handle(Adaptor3d_HSurface)&  theS1,
                                     const Standard_Real TolArc,
                                     const Standard_Real TolTang,
                                     const Standard_Boolean isGeomInt,
-                                    const Standard_Boolean theIsReqToKeepRLine,
-                                    const Standard_Boolean theIsReqToPostWLProc)
+                                    const Standard_Boolean theIsReqToKeepRLine)
 {
   myTolArc = TolArc;
   myTolTang = TolTang;
@@ -956,29 +955,6 @@ void IntPatch_Intersection::Perform(const Handle(Adaptor3d_HSurface)&  theS1,
     ParamParamPerfom(theS1, theD1, theS2, theD2, TolArc,
                         TolTang, ListOfPnts, RestrictLine, typs1, typs2);
   }
-
-  if(!theIsReqToPostWLProc)
-    return;
-
-  for(Standard_Integer i = slin.Lower(); i <= slin.Upper(); i++)
-  {
-    Handle(IntPatch_WLine) aWL = Handle(IntPatch_WLine)::DownCast(slin.Value(i));
-
-    if(aWL.IsNull())
-      continue;
-
-    if (!aWL->IsPurgingAllowed())
-      continue;
-
-    Handle(IntPatch_WLine) aRW =
-      IntPatch_WLineTool::ComputePurgedWLine(aWL, theS1, theS2, theD1, theD2, RestrictLine);
-
-    if(aRW.IsNull())
-      continue;
-
-    slin.InsertAfter(i, aRW);
-    slin.Remove(i);
-  }
 }
 
 //=======================================================================
@@ -994,8 +970,7 @@ void IntPatch_Intersection::Perform(const Handle(Adaptor3d_HSurface)&  theS1,
                                     IntSurf_ListOfPntOn2S& ListOfPnts,
                                     const Standard_Boolean RestrictLine,
                                     const Standard_Boolean isGeomInt,
-                                    const Standard_Boolean theIsReqToKeepRLine,
-                                    const Standard_Boolean theIsReqToPostWLProc)
+                                    const Standard_Boolean theIsReqToKeepRLine)
 {
   myTolArc = TolArc;
   myTolTang = TolTang;
@@ -1190,29 +1165,6 @@ void IntPatch_Intersection::Perform(const Handle(Adaptor3d_HSurface)&  theS1,
     GeomGeomPerfom(theS1, theD1, theS2, theD2, TolArc, 
                     TolTang, ListOfPnts, RestrictLine, typs1, typs2, theIsReqToKeepRLine);
   }
-
-  if(!theIsReqToPostWLProc)
-    return;
-
-  for(Standard_Integer i = slin.Lower(); i <= slin.Upper(); i++)
-  {
-    Handle(IntPatch_WLine) aWL = Handle(IntPatch_WLine)::DownCast(slin.Value(i));
-
-    if(aWL.IsNull())
-      continue;
-
-    if(!aWL->IsPurgingAllowed())
-      continue;
-
-    Handle(IntPatch_WLine) aRW = 
-      IntPatch_WLineTool::ComputePurgedWLine(aWL, theS1, theS2, theD1, theD2, RestrictLine);
-
-    if(aRW.IsNull())
-      continue;
-
-    slin.InsertAfter(i, aRW);
-    slin.Remove(i);
-  }
 }
 
 //=======================================================================
@@ -1379,11 +1331,6 @@ void IntPatch_Intersection::GeomGeomPerfom(const Handle(Adaptor3d_HSurface)& the
     }
     else
     {
-      if (line->ArcType() == IntPatch_Walking)
-      {
-        Handle(IntPatch_WLine)::DownCast(line)->EnablePurging(Standard_False);
-      }
-
       if((line->ArcType() != IntPatch_Restriction) || theIsReqToKeepRLine)
         slin.Append(line);
     }
@@ -1587,26 +1534,6 @@ void IntPatch_Intersection::Perform(const Handle(Adaptor3d_HSurface)&  S1,
       Standard_Integer i = 1;
       for (; i<=nblm; i++) slin.Append(interpp.Line(i));
     }
-  }
-
-  for(Standard_Integer i = slin.Lower(); i <= slin.Upper(); i++)
-  {
-    Handle(IntPatch_WLine) aWL = Handle(IntPatch_WLine)::DownCast(slin.Value(i));
-
-    if(aWL.IsNull())
-      continue;
-
-    if (!aWL->IsPurgingAllowed())
-      continue;
-
-    Handle(IntPatch_WLine) aRW =
-      IntPatch_WLineTool::ComputePurgedWLine(aWL, S1, S2, D1, D2, Standard_True);
-
-    if(aRW.IsNull())
-      continue;
-
-    slin.InsertAfter(i, aRW);
-    slin.Remove(i);
   }
 }
 

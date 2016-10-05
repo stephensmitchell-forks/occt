@@ -84,7 +84,7 @@ public:
   //! after deleting TopOpeBRep.
   //! If theIsReqToPostWLProc == FALSE, then we will work with Walking-line
   //! obtained after intersection algorithm directly (wothout any post-processing). 
-  Standard_EXPORT void Perform (const Handle(Adaptor3d_HSurface)& S1, const Handle(Adaptor3d_TopolTool)& D1, const Handle(Adaptor3d_HSurface)& S2, const Handle(Adaptor3d_TopolTool)& D2, const Standard_Real TolArc, const Standard_Real TolTang, const Standard_Boolean isGeomInt = Standard_True, const Standard_Boolean theIsReqToKeepRLine = Standard_False, const Standard_Boolean theIsReqToPostWLProc = Standard_True);
+  Standard_EXPORT void Perform (const Handle(Adaptor3d_HSurface)& S1, const Handle(Adaptor3d_TopolTool)& D1, const Handle(Adaptor3d_HSurface)& S2, const Handle(Adaptor3d_TopolTool)& D2, const Standard_Real TolArc, const Standard_Real TolTang, const Standard_Boolean isGeomInt = Standard_True, const Standard_Boolean theIsReqToKeepRLine = Standard_False);
   
   //! If isGeomInt == Standard_False, then method
   //! Param-Param intersection will be used.
@@ -99,7 +99,7 @@ public:
   //! after deleting TopOpeBRep.
   //! If theIsReqToPostWLProc == FALSE, then we will work with Walking-line
   //! obtained after intersection algorithm directly (wothout any post-processing). 
-  Standard_EXPORT void Perform (const Handle(Adaptor3d_HSurface)& S1, const Handle(Adaptor3d_TopolTool)& D1, const Handle(Adaptor3d_HSurface)& S2, const Handle(Adaptor3d_TopolTool)& D2, const Standard_Real TolArc, const Standard_Real TolTang, IntSurf_ListOfPntOn2S& LOfPnts, const Standard_Boolean RestrictLine = Standard_True, const Standard_Boolean isGeomInt = Standard_True, const Standard_Boolean theIsReqToKeepRLine = Standard_False, const Standard_Boolean theIsReqToPostWLProc = Standard_True);
+  Standard_EXPORT void Perform (const Handle(Adaptor3d_HSurface)& S1, const Handle(Adaptor3d_TopolTool)& D1, const Handle(Adaptor3d_HSurface)& S2, const Handle(Adaptor3d_TopolTool)& D2, const Standard_Real TolArc, const Standard_Real TolTang, IntSurf_ListOfPntOn2S& LOfPnts, const Standard_Boolean RestrictLine = Standard_True, const Standard_Boolean isGeomInt = Standard_True, const Standard_Boolean theIsReqToKeepRLine = Standard_False);
   
   //! Perform with start point
   Standard_EXPORT void Perform (const Handle(Adaptor3d_HSurface)& S1, const Handle(Adaptor3d_TopolTool)& D1, const Handle(Adaptor3d_HSurface)& S2, const Handle(Adaptor3d_TopolTool)& D2, const Standard_Real U1, const Standard_Real V1, const Standard_Real U2, const Standard_Real V2, const Standard_Real TolArc, const Standard_Real TolTang);

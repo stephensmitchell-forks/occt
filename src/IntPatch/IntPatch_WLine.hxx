@@ -171,19 +171,6 @@ public:
   //! Otherwise,             prints list of 2d-points on the 2nd surface
   Standard_EXPORT void Dump(const Standard_Integer theMode) const;
 
-  //! Allows or forbides purging of existing WLine
-  void EnablePurging(const Standard_Boolean theIsEnabled)
-  {
-    myIsPurgerAllowed = theIsEnabled;
-  }
-
-  //! Returns TRUE if purging is allowed or forbiden for existing WLine
-  Standard_Boolean IsPurgingAllowed()
-  {
-    return myIsPurgerAllowed;
-  }
-
-
   DEFINE_STANDARD_RTTIEXT(IntPatch_WLine,IntPatch_PointLine)
 
 protected:
@@ -192,8 +179,6 @@ protected:
 
 
 private:
-
-
   Handle(IntSurf_LineOn2S) curv;
   Standard_Boolean fipt;
   Standard_Boolean lapt;
@@ -211,9 +196,6 @@ private:
   Handle(Adaptor2d_HCurve2d) theArcOnS1;
   Standard_Boolean hasArcOnS2;
   Handle(Adaptor2d_HCurve2d) theArcOnS2;
-  Standard_Boolean myIsPurgerAllowed;
-
-
 };
 
 
