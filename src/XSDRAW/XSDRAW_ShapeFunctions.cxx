@@ -51,7 +51,6 @@
 #include <XSControl_Vars.hxx>
 #include <XSControl_WorkSession.hxx>
 #include <XSDRAW.hxx>
-#include <XSDRAW_Activator.hxx>
 #include <XSDRAW_SelectFunctions.hxx>
 #include <XSDRAW_ShapeFunctions.hxx>
 
@@ -699,24 +698,24 @@ void XSDRAW_ShapeFunctions::Init ()
   static int initactor = 0;
   if (initactor) return;  initactor = 1;
 
-  XSDRAW_Activator::SetGroup("DE: General");
+  XSDRAW::SetGroup("DE: General");
 
-  XSDRAW_Activator::AddFunc ("tpdraw","[mode:item or root]  num|*  [nomvar] Passes an ITEM to Shape Draw (Start or Result)",XSControl_tpdraw);
+  XSDRAW::AddFunc ("tpdraw","[mode:item or root]  num|*  [nomvar] Passes an ITEM to Shape Draw (Start or Result)",XSControl_tpdraw);
 
-  XSDRAW_Activator::AddFunc ("tpcompound","name:cstring [givelist] : -> compound with Shapes Root or from givelist",XSControl_tpcompound);
+  XSDRAW::AddFunc ("tpcompound","name:cstring [givelist] : -> compound with Shapes Root or from givelist",XSControl_tpcompound);
 
-  XSDRAW_Activator::AddFunc ("trdraw","results ->DRAW : all;  or num [name] : from ent.num -> DRAW [name/tread_num]",XSControl_traccess);
-  XSDRAW_Activator::AddFunc ("trsave","results ->files : all;  or num [name] : from ent.num -> DRAW [name/tread_num]",XSControl_traccess);
-  XSDRAW_Activator::AddFunc ("trcomp","results -> 1 compound -> DRAW + name optional",XSControl_traccess);
-  XSDRAW_Activator::AddFunc ("trscomp","results -> 1 compound -> file + name optional",XSControl_traccess);
+  XSDRAW::AddFunc ("trdraw","results ->DRAW : all;  or num [name] : from ent.num -> DRAW [name/tread_num]",XSControl_traccess);
+  XSDRAW::AddFunc ("trsave","results ->files : all;  or num [name] : from ent.num -> DRAW [name/tread_num]",XSControl_traccess);
+  XSDRAW::AddFunc ("trcomp","results -> 1 compound -> DRAW + name optional",XSControl_traccess);
+  XSDRAW::AddFunc ("trscomp","results -> 1 compound -> file + name optional",XSControl_traccess);
 
-  XSDRAW_Activator::AddFunc ("fromshape","shape [level=1]: imported/exported entity (when known)",XSControl_fromshape);
-  XSDRAW_Activator::AddFunc ("trconnexent","name of draw shape : entities -> connected shapes (when known)",XSControl_trconnexentities);
+  XSDRAW::AddFunc ("fromshape","shape [level=1]: imported/exported entity (when known)",XSControl_fromshape);
+  XSDRAW::AddFunc ("trconnexent","name of draw shape : entities -> connected shapes (when known)",XSControl_trconnexentities);
 
-  XSDRAW_Activator::AddFunc ("trimport","filename or .  varname  givelist  -> 1 shape per entity",XSControl_trimport);
-  XSDRAW_Activator::AddFunc ("trimpcomp","filename or .  varname  givelist -> one xcompound",XSControl_trimport);
+  XSDRAW::AddFunc ("trimport","filename or .  varname  givelist  -> 1 shape per entity",XSControl_trimport);
+  XSDRAW::AddFunc ("trimpcomp","filename or .  varname  givelist -> one xcompound",XSControl_trimport);
 
-  XSDRAW_Activator::AddFunc ("twrite","shape : transfer write for this shape, AFTER newmodel !",XSControl_twrite);
+  XSDRAW::AddFunc ("twrite","shape : transfer write for this shape, AFTER newmodel !",XSControl_twrite);
 }
 
 //  ######################################################################

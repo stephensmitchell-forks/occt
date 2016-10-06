@@ -73,7 +73,7 @@
 #include <TColStd_HSequenceOfHAsciiString.hxx>
 #include <TColStd_HSequenceOfTransient.hxx>
 #include <TColStd_MapOfInteger.hxx>
-#include <XSDRAW_Activator.hxx>
+#include <XSDRAW.hxx>
 #include <XSDRAW_SelectFunctions.hxx>
 
 
@@ -2444,127 +2444,127 @@ void  XSDRAW_SelectFunctions::Init ()
   static int initactor = 0;
   if (initactor) return;  initactor = 1;
 
-  XSDRAW_Activator::SetGroup("DE: General");
-  XSDRAW_Activator::AddFunc("xstatus","Lists XSTEP Status : Version, System Name ...",funstatus);
-  XSDRAW_Activator::AddFunc("handler","Toggle status catch Handler Error of the session",fun1);
-  XSDRAW_Activator::AddFunc("xload","file:string  : Read File -> Load Model",fun3);
-  XSDRAW_Activator::AddFunc("xread","file:string  : Read File -> Load Model",fun3);
-  XSDRAW_Activator::AddFunc("writeall","file:string  : Write all model (no split)",fun4);
-  XSDRAW_Activator::AddFunc("writesel","file:string sel:Selection : Write Selected (no split)",fun5);
-  XSDRAW_Activator::AddFunc("writeent","file:string  n1ent n2ent...:integer : Write Entite(s) (no split)",fun6);
-  XSDRAW_Activator::AddFunc("writent", "file:string  n1ent n2ent...:integer : Write Entite(s) (no split)",fun6);
-  XSDRAW_Activator::AddFunc("elabel","nument:integer   : Displays Label Model of an entity",fun7);
-  XSDRAW_Activator::AddFunc("enum","label:string  : Displays entities n0.s of which Label Model ends by..",fun8);
+  XSDRAW::SetGroup("DE: General");
+  XSDRAW::AddFunc("xstatus","Lists XSTEP Status : Version, System Name ...",funstatus);
+  XSDRAW::AddFunc("handler","Toggle status catch Handler Error of the session",fun1);
+  XSDRAW::AddFunc("xload","file:string  : Read File -> Load Model",fun3);
+  XSDRAW::AddFunc("xread","file:string  : Read File -> Load Model",fun3);
+  XSDRAW::AddFunc("writeall","file:string  : Write all model (no split)",fun4);
+  XSDRAW::AddFunc("writesel","file:string sel:Selection : Write Selected (no split)",fun5);
+  XSDRAW::AddFunc("writeent","file:string  n1ent n2ent...:integer : Write Entite(s) (no split)",fun6);
+  XSDRAW::AddFunc("writent", "file:string  n1ent n2ent...:integer : Write Entite(s) (no split)",fun6);
+  XSDRAW::AddFunc("elabel","nument:integer   : Displays Label Model of an entity",fun7);
+  XSDRAW::AddFunc("enum","label:string  : Displays entities n0.s of which Label Model ends by..",fun8);
 
-  XSDRAW_Activator::AddFunc("listtypes","List nb entities per type. Optional selection name  else all model",fun9);
-  XSDRAW_Activator::AddFunc("count","Count : counter [selection]",funcount);
-  XSDRAW_Activator::AddFunc("listcount","List Counted : counter [selection [nument]]",funcount);
-  XSDRAW_Activator::AddFunc("sumcount","Summary Counted : counter [selection [nument]]",funcount);
-  XSDRAW_Activator::AddFunc("signtype","Sign Type [newone]",funsigntype);
-  XSDRAW_Activator::AddFunc("signcase","signature : displays possible cases",funsigncase);
+  XSDRAW::AddFunc("listtypes","List nb entities per type. Optional selection name  else all model",fun9);
+  XSDRAW::AddFunc("count","Count : counter [selection]",funcount);
+  XSDRAW::AddFunc("listcount","List Counted : counter [selection [nument]]",funcount);
+  XSDRAW::AddFunc("sumcount","Summary Counted : counter [selection [nument]]",funcount);
+  XSDRAW::AddFunc("signtype","Sign Type [newone]",funsigntype);
+  XSDRAW::AddFunc("signcase","signature : displays possible cases",funsigncase);
 
-  XSDRAW_Activator::AddFunc("estatus","ent/nument : displays status of an entity",fun10);
-  XSDRAW_Activator::AddFunc("data","Data (DumpModel); whole help : data tout court",fun11);
-  XSDRAW_Activator::AddFunc("entity","give n0 ou id of entity [+ level]",fundumpent);
-  XSDRAW_Activator::AddFunc("signature","signature name + n0/ident entity",funsign);
-  XSDRAW_Activator::AddFunc("queryparent"," give 2 n0s/labels of entities : dad son",funqp);
+  XSDRAW::AddFunc("estatus","ent/nument : displays status of an entity",fun10);
+  XSDRAW::AddFunc("data","Data (DumpModel); whole help : data tout court",fun11);
+  XSDRAW::AddFunc("entity","give n0 ou id of entity [+ level]",fundumpent);
+  XSDRAW::AddFunc("signature","signature name + n0/ident entity",funsign);
+  XSDRAW::AddFunc("queryparent"," give 2 n0s/labels of entities : dad son",funqp);
 
-  XSDRAW_Activator::AddFunc("dumpshare","Dump Share (dispatches, IntParams)",fun12);
-  XSDRAW_Activator::AddFunc("listitems","List Items [label else all]  ->Type,Label[,Name]",fun13);
-  XSDRAW_Activator::AddFSet("integer","value:integer : cree un IntParam",fun14);
-  XSDRAW_Activator::AddFunc("setint","name:IntParam   newValue:integer  : Change valeur IntParam",fun15);
-  XSDRAW_Activator::AddFSet("text","value:string  : cree un TextParam",fun16);
-  XSDRAW_Activator::AddFunc("settext","Name:TextParam  newValue:string   : Change valeur TextParam",fun17);
-  XSDRAW_Activator::AddFunc("dumpsel","Dump Selection suivi du Nom de la Selection a dumper",fun19);
-  XSDRAW_Activator::AddFunc("evalsel","name:Selection [num/sel]  : Evalue une Selection",fun20);
-  XSDRAW_Activator::AddFunc("givelist","num/sel [num/sel ...]  : Evaluates GiveList",fun20);
-  XSDRAW_Activator::AddFunc("giveshort","num/sel [num/sel ...]  : GiveList in short form",fun20);
-  XSDRAW_Activator::AddFunc("givepointed","num/sel [num/sel ...]  : GiveList to fill a SelectPointed",fun20);
-  XSDRAW_Activator::AddFunc("makelist","listname [givelist] : Makes a List(SelectPointed) from GiveList",fun20);
-  XSDRAW_Activator::AddFunc("givecount","num/sel [num/sel ...]  : Counts GiveList",fun20c);
-  XSDRAW_Activator::AddFSet("selsuite","sel sel ...  : Creates a SelectSuite",funselsuite);
-  XSDRAW_Activator::AddFunc("clearitems","Clears all items (selections, dispatches, etc)",fun21);
-  XSDRAW_Activator::AddFunc("cleardata","mode:a-g-c-p  : Clears all or some data (model, check...)",fun22);
+  XSDRAW::AddFunc("dumpshare","Dump Share (dispatches, IntParams)",fun12);
+  XSDRAW::AddFunc("listitems","List Items [label else all]  ->Type,Label[,Name]",fun13);
+  XSDRAW::AddFSet("integer","value:integer : cree un IntParam",fun14);
+  XSDRAW::AddFunc("setint","name:IntParam   newValue:integer  : Change valeur IntParam",fun15);
+  XSDRAW::AddFSet("text","value:string  : cree un TextParam",fun16);
+  XSDRAW::AddFunc("settext","Name:TextParam  newValue:string   : Change valeur TextParam",fun17);
+  XSDRAW::AddFunc("dumpsel","Dump Selection suivi du Nom de la Selection a dumper",fun19);
+  XSDRAW::AddFunc("evalsel","name:Selection [num/sel]  : Evalue une Selection",fun20);
+  XSDRAW::AddFunc("givelist","num/sel [num/sel ...]  : Evaluates GiveList",fun20);
+  XSDRAW::AddFunc("giveshort","num/sel [num/sel ...]  : GiveList in short form",fun20);
+  XSDRAW::AddFunc("givepointed","num/sel [num/sel ...]  : GiveList to fill a SelectPointed",fun20);
+  XSDRAW::AddFunc("makelist","listname [givelist] : Makes a List(SelectPointed) from GiveList",fun20);
+  XSDRAW::AddFunc("givecount","num/sel [num/sel ...]  : Counts GiveList",fun20c);
+  XSDRAW::AddFSet("selsuite","sel sel ...  : Creates a SelectSuite",funselsuite);
+  XSDRAW::AddFunc("clearitems","Clears all items (selections, dispatches, etc)",fun21);
+  XSDRAW::AddFunc("cleardata","mode:a-g-c-p  : Clears all or some data (model, check...)",fun22);
 
-  XSDRAW_Activator::AddFunc("itemlabel","xxx xxx : liste items having this label",fun24);
-  XSDRAW_Activator::AddFunc("xsave","filename:string  : sauve items-session",fun25);
-  XSDRAW_Activator::AddFunc("xrestore","filename:string  : restaure items-session",fun26);
-  XSDRAW_Activator::AddFunc("param","nompar:string : displays parameter value; + nompar val : changes it",fun27);
-  XSDRAW_Activator::AddFunc("defparam","nompar:string : display def. param; also : nompar edit, nompar init",fun28);
+  XSDRAW::AddFunc("itemlabel","xxx xxx : liste items having this label",fun24);
+  XSDRAW::AddFunc("xsave","filename:string  : sauve items-session",fun25);
+  XSDRAW::AddFunc("xrestore","filename:string  : restaure items-session",fun26);
+  XSDRAW::AddFunc("param","nompar:string : displays parameter value; + nompar val : changes it",fun27);
+  XSDRAW::AddFunc("defparam","nompar:string : display def. param; also : nompar edit, nompar init",fun28);
 
-  XSDRAW_Activator::AddFunc("sentfiles","Lists files sent from last Load",fun29);
-  XSDRAW_Activator::AddFunc("fileprefix","prefix:string    : definit File Prefix",fun30);
-  XSDRAW_Activator::AddFunc("fileext","extent:string    : definit File Extension",fun31);
-  XSDRAW_Activator::AddFunc("fileroot","disp:Dispatch  root:string  : definit File Root sur un Dispatch",fun32);
-  XSDRAW_Activator::AddFunc("filedef","defroot:string   : definit File DefaultRoot",fun33);
-  XSDRAW_Activator::AddFunc("evalfile","Evaluation du FileNaming et memorisation",fun34);
-  XSDRAW_Activator::AddFunc("clearfile","Efface la liste d'EvalFile",fun35);
-  XSDRAW_Activator::AddFunc("xsplit","[disp:Dispatch  sinon tout]  : Split, la grande affaire !",fun36);
-  XSDRAW_Activator::AddFunc("remaining","options... : Remaining Entities, help complet par  remaining ?",fun37);
-  XSDRAW_Activator::AddFunc("setcontent","sel:Selection mode:k ou r  : Restreint contenu du modele",fun38);
+  XSDRAW::AddFunc("sentfiles","Lists files sent from last Load",fun29);
+  XSDRAW::AddFunc("fileprefix","prefix:string    : definit File Prefix",fun30);
+  XSDRAW::AddFunc("fileext","extent:string    : definit File Extension",fun31);
+  XSDRAW::AddFunc("fileroot","disp:Dispatch  root:string  : definit File Root sur un Dispatch",fun32);
+  XSDRAW::AddFunc("filedef","defroot:string   : definit File DefaultRoot",fun33);
+  XSDRAW::AddFunc("evalfile","Evaluation du FileNaming et memorisation",fun34);
+  XSDRAW::AddFunc("clearfile","Efface la liste d'EvalFile",fun35);
+  XSDRAW::AddFunc("xsplit","[disp:Dispatch  sinon tout]  : Split, la grande affaire !",fun36);
+  XSDRAW::AddFunc("remaining","options... : Remaining Entities, help complet par  remaining ?",fun37);
+  XSDRAW::AddFunc("setcontent","sel:Selection mode:k ou r  : Restreint contenu du modele",fun38);
 
-  XSDRAW_Activator::AddFunc("listmodif","List Final Modifiers",fun40);
-  XSDRAW_Activator::AddFunc("dumpmodif","modif:Modifier  : Affiche le Statut d'un Modifier",fun41);
-  XSDRAW_Activator::AddFunc("modifsel","modif:Modifier [sel:Selection]  : Change/Annule Selection de Modifier",fun42);
-  XSDRAW_Activator::AddFunc("setapplied","modif:Modifier [name:un item sinon sortie fichier]  : Applique un Modifier",fun43);
-  XSDRAW_Activator::AddFunc("resetapplied","modif:Modifier  : Enleve un Modifier de la sortie fichier",fun44);
-  XSDRAW_Activator::AddFunc("modifmove","modif:Modifier M(model)/F(file) avant,apres:integer  : Deplace un Modifier (sortie fichier)",fun45);
+  XSDRAW::AddFunc("listmodif","List Final Modifiers",fun40);
+  XSDRAW::AddFunc("dumpmodif","modif:Modifier  : Affiche le Statut d'un Modifier",fun41);
+  XSDRAW::AddFunc("modifsel","modif:Modifier [sel:Selection]  : Change/Annule Selection de Modifier",fun42);
+  XSDRAW::AddFunc("setapplied","modif:Modifier [name:un item sinon sortie fichier]  : Applique un Modifier",fun43);
+  XSDRAW::AddFunc("resetapplied","modif:Modifier  : Enleve un Modifier de la sortie fichier",fun44);
+  XSDRAW::AddFunc("modifmove","modif:Modifier M(model)/F(file) avant,apres:integer  : Deplace un Modifier (sortie fichier)",fun45);
 
-  XSDRAW_Activator::AddFunc("dispsel","disp:Dispatch sel:Selection  -> Selection Finale de Dispatch",fun51);
-  XSDRAW_Activator::AddFSet("dispone","cree DispPerOne",fun_dispone);
-  XSDRAW_Activator::AddFSet("dispglob","cree DispGlobal",fun_dispglob);
-  XSDRAW_Activator::AddFSet("dispcount","count:IntParam  : cree DispPerCount",fun_dispcount);
-  XSDRAW_Activator::AddFSet("dispfile","files:IntParam  : cree DispPerFiles",fun_dispfiles);
-  XSDRAW_Activator::AddFSet("dispsign","sign:Signature  : cree DispPerSignature",fun_dispsign);
-  XSDRAW_Activator::AddFunc("dumpdisp","disp:Dispatch   : Affiche le Statut d'un Dispatch",fun56);
+  XSDRAW::AddFunc("dispsel","disp:Dispatch sel:Selection  -> Selection Finale de Dispatch",fun51);
+  XSDRAW::AddFSet("dispone","cree DispPerOne",fun_dispone);
+  XSDRAW::AddFSet("dispglob","cree DispGlobal",fun_dispglob);
+  XSDRAW::AddFSet("dispcount","count:IntParam  : cree DispPerCount",fun_dispcount);
+  XSDRAW::AddFSet("dispfile","files:IntParam  : cree DispPerFiles",fun_dispfiles);
+  XSDRAW::AddFSet("dispsign","sign:Signature  : cree DispPerSignature",fun_dispsign);
+  XSDRAW::AddFunc("dumpdisp","disp:Dispatch   : Affiche le Statut d'un Dispatch",fun56);
 
-  XSDRAW_Activator::AddFunc("xremove","nom  : Remove a Control Item de la Session",fun57);
-  XSDRAW_Activator::AddFunc("evaldisp","mode=[0-3]  disp:Dispatch  : Evaluates one or more Dispatch(es)",fun58);
-  XSDRAW_Activator::AddFunc("evaladisp","mode=[0-3]  disp:Dispatch [givelist]  : Evaluates a Dispatch (on a GiveList)",fun_evaladisp);
-  XSDRAW_Activator::AddFunc("writedisp","filepattern  disp:Dispatch [givelist]  : Writes Entities by Splitting by a Dispatch",fun_writedisp);
-  XSDRAW_Activator::AddFunc("evalcomplete","Evaluation Complete de la Repartition",fun59);
+  XSDRAW::AddFunc("xremove","nom  : Remove a Control Item de la Session",fun57);
+  XSDRAW::AddFunc("evaldisp","mode=[0-3]  disp:Dispatch  : Evaluates one or more Dispatch(es)",fun58);
+  XSDRAW::AddFunc("evaladisp","mode=[0-3]  disp:Dispatch [givelist]  : Evaluates a Dispatch (on a GiveList)",fun_evaladisp);
+  XSDRAW::AddFunc("writedisp","filepattern  disp:Dispatch [givelist]  : Writes Entities by Splitting by a Dispatch",fun_writedisp);
+  XSDRAW::AddFunc("evalcomplete","Evaluation Complete de la Repartition",fun59);
 
-  XSDRAW_Activator::AddFunc("runcheck","affiche LastRunCheckList (write,modif)",fun60);
-  XSDRAW_Activator::AddFunc("runtranformer","transf:Transformer  : Applique un Transformer",fun61);
-  XSDRAW_Activator::AddFSet("copy","cree TransformStandard, option Copy, vide",fun62);
-  XSDRAW_Activator::AddFSet("onthespot","cree TransformStandard, option OntheSpot, vide",fun63);
-  XSDRAW_Activator::AddFunc("runcopy","modif:ModelModifier [givelist] : Run <modif> via TransformStandard option Copy",fun6465);
-  XSDRAW_Activator::AddFunc("runonthespot","modif:ModelModifier [givelist] : Run <modif> via TransformStandard option OnTheSpot",fun6465);
-  XSDRAW_Activator::AddFSet("reorder","[f ou t] reordonne le modele",fun66);
+  XSDRAW::AddFunc("runcheck","affiche LastRunCheckList (write,modif)",fun60);
+  XSDRAW::AddFunc("runtranformer","transf:Transformer  : Applique un Transformer",fun61);
+  XSDRAW::AddFSet("copy","cree TransformStandard, option Copy, vide",fun62);
+  XSDRAW::AddFSet("onthespot","cree TransformStandard, option OntheSpot, vide",fun63);
+  XSDRAW::AddFunc("runcopy","modif:ModelModifier [givelist] : Run <modif> via TransformStandard option Copy",fun6465);
+  XSDRAW::AddFunc("runonthespot","modif:ModelModifier [givelist] : Run <modif> via TransformStandard option OnTheSpot",fun6465);
+  XSDRAW::AddFSet("reorder","[f ou t] reordonne le modele",fun66);
 
-  XSDRAW_Activator::AddFunc("toggle","sel:Selection genre Extract  : Toggle Direct/Reverse",fun70);
-  XSDRAW_Activator::AddFunc("input","sel:Selection genre Deduct ou Extract  input:Selection  : Set Input",fun71);
-  XSDRAW_Activator::AddFSet("modelroots","cree SelectModelRoots",fun72);
-  XSDRAW_Activator::AddFSet("range","options... : cree SelectRange ...; tout court pour help",fun73);
-  XSDRAW_Activator::AddFSet("roots","cree SelectRoots (local roots)",fun74);
-  XSDRAW_Activator::AddFSet("shared","cree SelectShared",fun75);
-  XSDRAW_Activator::AddFSet("diff","[main:Selection diff:Selection]  : cree SelectDiff",fun76);
-  XSDRAW_Activator::AddFunc("selmain","sel:Selection genre Control  main:Selection  : Set Main Input",fun77);
-  XSDRAW_Activator::AddFunc("selsecond","sel:Selection genre Control  sec:Selection   : Set Second Input",fun78);
-  XSDRAW_Activator::AddFSet("modelall","cree SelectModelAll",fun79);
-  XSDRAW_Activator::AddFunc("seladd","sel:Selection genre Combine  input:Selection  : Add Selection",fun80);
-  XSDRAW_Activator::AddFunc("selrem","sel:Selection genre Combine  input:Selection  : Remove Selection",fun81);
-  XSDRAW_Activator::AddFSet("number","num:IntParam  : Cree SelectEntityNumber",fun82);
+  XSDRAW::AddFunc("toggle","sel:Selection genre Extract  : Toggle Direct/Reverse",fun70);
+  XSDRAW::AddFunc("input","sel:Selection genre Deduct ou Extract  input:Selection  : Set Input",fun71);
+  XSDRAW::AddFSet("modelroots","cree SelectModelRoots",fun72);
+  XSDRAW::AddFSet("range","options... : cree SelectRange ...; tout court pour help",fun73);
+  XSDRAW::AddFSet("roots","cree SelectRoots (local roots)",fun74);
+  XSDRAW::AddFSet("shared","cree SelectShared",fun75);
+  XSDRAW::AddFSet("diff","[main:Selection diff:Selection]  : cree SelectDiff",fun76);
+  XSDRAW::AddFunc("selmain","sel:Selection genre Control  main:Selection  : Set Main Input",fun77);
+  XSDRAW::AddFunc("selsecond","sel:Selection genre Control  sec:Selection   : Set Second Input",fun78);
+  XSDRAW::AddFSet("modelall","cree SelectModelAll",fun79);
+  XSDRAW::AddFunc("seladd","sel:Selection genre Combine  input:Selection  : Add Selection",fun80);
+  XSDRAW::AddFunc("selrem","sel:Selection genre Combine  input:Selection  : Remove Selection",fun81);
+  XSDRAW::AddFSet("number","num:IntParam  : Cree SelectEntityNumber",fun82);
 
-  XSDRAW_Activator::AddFSet("union","cree SelectUnion (vide), cf aussi combadd, combrem",fun83);
-  XSDRAW_Activator::AddFSet("intersect","cree SelectIntersection (vide), cf aussi combadd, combrem",fun84);
-  XSDRAW_Activator::AddFSet("typexact","type:string  : cree SelectTextType Exact",fun85);
-  XSDRAW_Activator::AddFSet("errors","cree SelectErrorEntities (from file)",fun86);
-  XSDRAW_Activator::AddFSet("unknown","cree SelectUnknownEntities",fun87);
-  XSDRAW_Activator::AddFSet("sharing","cree SelectSharing",fun88);
-  XSDRAW_Activator::AddFSet("typecontain","type:string  : cree SelectTextType Contains",fun89);
-  XSDRAW_Activator::AddFSet("pointed","cree SelectPointed [num/sel num/sel]",fun90);
-  XSDRAW_Activator::AddFunc("setpointed","sel:SelectPointed  : edition SelectPointed. tout court pour help",fun91);
-  XSDRAW_Activator::AddFunc("setlist","sel:SelectPointed  : edition SelectPointed. tout court pour help",fun91);
-  XSDRAW_Activator::AddFSet("incorrect","cree SelectIncorrectEntities (computed)",fun92);
+  XSDRAW::AddFSet("union","cree SelectUnion (vide), cf aussi combadd, combrem",fun83);
+  XSDRAW::AddFSet("intersect","cree SelectIntersection (vide), cf aussi combadd, combrem",fun84);
+  XSDRAW::AddFSet("typexact","type:string  : cree SelectTextType Exact",fun85);
+  XSDRAW::AddFSet("errors","cree SelectErrorEntities (from file)",fun86);
+  XSDRAW::AddFSet("unknown","cree SelectUnknownEntities",fun87);
+  XSDRAW::AddFSet("sharing","cree SelectSharing",fun88);
+  XSDRAW::AddFSet("typecontain","type:string  : cree SelectTextType Contains",fun89);
+  XSDRAW::AddFSet("pointed","cree SelectPointed [num/sel num/sel]",fun90);
+  XSDRAW::AddFunc("setpointed","sel:SelectPointed  : edition SelectPointed. tout court pour help",fun91);
+  XSDRAW::AddFunc("setlist","sel:SelectPointed  : edition SelectPointed. tout court pour help",fun91);
+  XSDRAW::AddFSet("incorrect","cree SelectIncorrectEntities (computed)",fun92);
 
-  XSDRAW_Activator::AddFSet("signsel","sign:Signature|cnt:Counter text:string [e(D)|c] : cree SelectSignature",fun93);
-  XSDRAW_Activator::AddFSet("signcounter","sign:Signature : cree SignCounter",fun94);
-  XSDRAW_Activator::AddFSet("nbselected","applied:Selection : cree GraphCounter(=NbSelected)",funbselected);
+  XSDRAW::AddFSet("signsel","sign:Signature|cnt:Counter text:string [e(D)|c] : cree SelectSignature",fun93);
+  XSDRAW::AddFSet("signcounter","sign:Signature : cree SignCounter",fun94);
+  XSDRAW::AddFSet("nbselected","applied:Selection : cree GraphCounter(=NbSelected)",funbselected);
 
-  XSDRAW_Activator::AddFunc("editlist","editor or editform : lists defs + values",fun_editlist);
-  XSDRAW_Activator::AddFunc("editvalue","editform paramname [newval or .] : lists-changes a value",fun_editvalue);
-  XSDRAW_Activator::AddFunc("editclear","editform [paramname] : clears edition on all or one param",fun_editclear);
-  XSDRAW_Activator::AddFunc("editload","editform [entity-id] : loads from model or an entity",fun_editload);
-  XSDRAW_Activator::AddFunc("editapply","editform [keep] : applies on loaded data",fun_editapply);
+  XSDRAW::AddFunc("editlist","editor or editform : lists defs + values",fun_editlist);
+  XSDRAW::AddFunc("editvalue","editform paramname [newval or .] : lists-changes a value",fun_editvalue);
+  XSDRAW::AddFunc("editclear","editform [paramname] : clears edition on all or one param",fun_editclear);
+  XSDRAW::AddFunc("editload","editform [entity-id] : loads from model or an entity",fun_editload);
+  XSDRAW::AddFunc("editapply","editform [keep] : applies on loaded data",fun_editapply);
 }

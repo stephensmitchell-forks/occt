@@ -59,10 +59,8 @@ DEFINE_STANDARD_HANDLE(IFSelect_Activator, MMgt_TShared)
 //! recorded or not : see method Do
 class IFSelect_Activator : public MMgt_TShared
 {
+ public:
 
-public:
-
-  
   //! Records, in a Dictionary available for all the Activators,
   //! the command title an Activator can process, attached with
   //! its number, proper for this Activator
@@ -116,32 +114,17 @@ public:
   //! Also a file may be attached
   Standard_EXPORT void SetForGroup (const Standard_CString group, const Standard_CString file = "");
 
-
-
-
   DEFINE_STANDARD_RTTIEXT(IFSelect_Activator,MMgt_TShared)
 
 protected:
 
-  
   //! Sets the default values
   Standard_EXPORT IFSelect_Activator();
 
-
-
-private:
-
+ private:
 
   TCollection_AsciiString thegroup;
   TCollection_AsciiString thefile;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IFSelect_Activator_HeaderFile

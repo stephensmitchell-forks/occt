@@ -225,13 +225,6 @@ static TCollection_AsciiString nulword;
   return IFSelect_RetError;    // pas reconnu donc incorrect
 }
 
-    IFSelect_ReturnStatus  IFSelect_SessionPilot::ExecuteAlias
-  (const TCollection_AsciiString& alias)
-{
-  if (alias.Length() > 0) thewords(0) = alias;
-  return Perform();
-}
-
     IFSelect_ReturnStatus  IFSelect_SessionPilot::Execute
   (const TCollection_AsciiString& command)
 {

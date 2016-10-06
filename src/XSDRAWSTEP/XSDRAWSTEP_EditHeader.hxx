@@ -14,8 +14,8 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef _APIHeaderSection_EditHeader_HeaderFile
-#define _APIHeaderSection_EditHeader_HeaderFile
+#ifndef _XSDRAWSTEP_EditHeader_HeaderFile
+#define _XSDRAWSTEP_EditHeader_HeaderFile
 
 #include <Standard.hxx>
 #include <Standard_Type.hxx>
@@ -30,17 +30,15 @@ class Standard_Transient;
 class Interface_InterfaceModel;
 
 
-class APIHeaderSection_EditHeader;
-DEFINE_STANDARD_HANDLE(APIHeaderSection_EditHeader, IFSelect_Editor)
+class XSDRAWSTEP_EditHeader;
+DEFINE_STANDARD_HANDLE(XSDRAWSTEP_EditHeader, IFSelect_Editor)
 
 
-class APIHeaderSection_EditHeader : public IFSelect_Editor
+class XSDRAWSTEP_EditHeader : public IFSelect_Editor
 {
+ public:
 
-public:
-
-  
-  Standard_EXPORT APIHeaderSection_EditHeader();
+  Standard_EXPORT XSDRAWSTEP_EditHeader();
   
   Standard_EXPORT TCollection_AsciiString Label() const Standard_OVERRIDE;
   
@@ -52,27 +50,7 @@ public:
   
   Standard_EXPORT Standard_Boolean Load (const Handle(IFSelect_EditForm)& form, const Handle(Standard_Transient)& ent, const Handle(Interface_InterfaceModel)& model) const Standard_OVERRIDE;
 
-
-
-
-  DEFINE_STANDARD_RTTIEXT(APIHeaderSection_EditHeader,IFSelect_Editor)
-
-protected:
-
-
-
-
-private:
-
-
-
-
+  DEFINE_STANDARD_RTTIEXT(XSDRAWSTEP_EditHeader,IFSelect_Editor)
 };
 
-
-
-
-
-
-
-#endif // _APIHeaderSection_EditHeader_HeaderFile
+#endif // _XSDRAWSTEP_EditHeader_HeaderFile

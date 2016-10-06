@@ -81,7 +81,7 @@ static void cleanpilot ()
 #include <STEPSelections_SelectGSCurves.hxx>
 #include <STEPSelections_SelectAssembly.hxx>
 #include <STEPSelections_SelectForTransfer.hxx>
-#include <APIHeaderSection_EditHeader.hxx>
+#include <XSDRAWSTEP_EditHeader.hxx>
 #include <STEPEdit_EditContext.hxx>
 #include <STEPEdit_EditSDR.hxx>
   
@@ -182,7 +182,7 @@ void XSDRAWSTEP::Init ()
     assembly->SetInput (xmr);
     aCntl->AddSessionItem (assembly,"step-assembly");
   
-    Handle(APIHeaderSection_EditHeader) edhead = new APIHeaderSection_EditHeader;
+    Handle(XSDRAWSTEP_EditHeader) edhead = new XSDRAWSTEP_EditHeader;
     Handle(IFSelect_EditForm) edheadf = new IFSelect_EditForm (edhead,Standard_False,Standard_True,"Step Header");
     aCntl->AddSessionItem (edhead,"step-header-edit");
     aCntl->AddSessionItem (edheadf,"step-header");
@@ -257,7 +257,7 @@ void XSDRAWSTEP::Init ()
   assembly->SetInput (slr);
   WS->AddNamedItem ("step-assembly",assembly);
   
-  Handle(APIHeaderSection_EditHeader) edhead = new APIHeaderSection_EditHeader;
+  Handle(XSDRAWSTEP_EditHeader) edhead = new XSDRAWSTEP_EditHeader;
   Handle(IFSelect_EditForm) edheadf = new IFSelect_EditForm (edhead,Standard_False,Standard_True,"Step Header");
   WS->AddNamedItem ("step-header-edit",edhead);
   WS->AddNamedItem ("step-header",edheadf);

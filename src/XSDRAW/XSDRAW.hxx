@@ -24,18 +24,16 @@
 #include <TColStd_HSequenceOfTransient.hxx>
 #include <TopTools_HSequenceOfShape.hxx>
 #include <IFSelect_SessionPilot.hxx>
-class XSControl_WorkSession;
-class XSControl_Controller;
 class Interface_Protocol;
 class Interface_InterfaceModel;
-class Standard_Transient;
 class Transfer_TransientProcess;
 class Transfer_FinderProcess;
+class XSControl_WorkSession;
+class XSControl_Controller;
 class XSControl_TransferReader;
 class TCollection_AsciiString;
-class XSDRAW_Functions;
-class XSDRAW_Vars;
 
+typedef IFSelect_ReturnStatus (*XSDRAW_ActFunc) (const Handle(IFSelect_SessionPilot)&);
 
 //! Basic package to work functions of X-STEP (IFSelect & Co)
 //! under control of DRAW
@@ -64,7 +62,7 @@ class XSDRAW
   //! (call to SetController)
   //! LoadSession is called by LoadDraw
   //! Returns True the first time, False if already called
-  Standard_EXPORT static Standard_Boolean LoadSession();
+  Standard_EXPORT static void LoadSession();
   
   //! Defines the context for using a X-STEP Session under DRAW
   //! Once the various INITs have been done, a call to LoadDraw
@@ -204,6 +202,19 @@ class XSDRAW
   //! completed (Append without Clear) by the Shapes found
   //! Returns 0 if no Shape could be found
   Standard_EXPORT static Standard_Integer MoreShapes (Handle(TopTools_HSequenceOfShape)& list, const Standard_CString name);
+
+  //! Changes the default group name for the following Acts
+  //! group empty means to come back to default from Activator
+  //! Also a file name can be precised (to query by getsource)
+  Standard_EXPORT static void SetGroup (const Standard_CString group, const Standard_CString file = "");
+  
+  //! Adds a function with its name and help : creates an Act then
+  //! records it as normal function
+  Standard_EXPORT static void AddFunc (const Standard_CString name, const Standard_CString help, const XSDRAW_ActFunc func);
+  
+  //! Adds a function with its name and help : creates an Act then
+  //! records it as function for XSET (i.e. to create control item)
+  Standard_EXPORT static void AddFSet (const Standard_CString name, const Standard_CString help, const XSDRAW_ActFunc func);
 };
 
 #endif // _XSDRAW_HeaderFile

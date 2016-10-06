@@ -13,31 +13,29 @@
 
 
 #include <Dico_DictionaryOfTransient.hxx>
-#include <Dico_IteratorOfDictionaryOfInteger.hxx>
+//#include <Dico_IteratorOfDictionaryOfInteger.hxx>
 #include <Dico_IteratorOfDictionaryOfTransient.hxx>
-#include <IFSelect_DispPerCount.hxx>
-#include <IFSelect_DispPerFiles.hxx>
-#include <IFSelect_DispPerOne.hxx>
-#include <IFSelect_DispPerSignature.hxx>
-#include <IFSelect_EditForm.hxx>
+//s#include <IFSelect_DispPerCount.hxx>
+//s#include <IFSelect_DispPerFiles.hxx>
+//s#include <IFSelect_DispPerOne.hxx>
+//s#include <IFSelect_DispPerSignature.hxx>
+//s#include <IFSelect_EditForm.hxx>
 #include <IFSelect_GeneralModifier.hxx>
-#include <IFSelect_GraphCounter.hxx>
-#include <IFSelect_IntParam.hxx>
-#include <IFSelect_ParamEditor.hxx>
-#include <IFSelect_SelectModelEntities.hxx>
-#include <IFSelect_SelectModelRoots.hxx>
-#include <IFSelect_SelectPointed.hxx>
-#include <IFSelect_SelectShared.hxx>
-#include <IFSelect_SelectSharing.hxx>
+//s#include <IFSelect_GraphCounter.hxx>
+//s#include <IFSelect_IntParam.hxx>
+//s#include <IFSelect_ParamEditor.hxx>
+//s#include <IFSelect_SelectModelEntities.hxx>
+//s#include <IFSelect_SelectModelRoots.hxx>
+//s#include <IFSelect_SelectPointed.hxx>
+//s#include <IFSelect_SelectShared.hxx>
+//s#include <IFSelect_SelectSharing.hxx>
 #include <IFSelect_ShareOut.hxx>
-#include <IFSelect_SignAncestor.hxx>
-#include <IFSelect_Signature.hxx>
-#include <IFSelect_SignCategory.hxx>
-#include <IFSelect_SignCounter.hxx>
-#include <IFSelect_SignType.hxx>
-#include <IFSelect_SignValidity.hxx>
-#include <IFSelect_WorkLibrary.hxx>
-#include <Interface_CheckIterator.hxx>
+//s#include <IFSelect_SignAncestor.hxx>
+//s#include <IFSelect_Signature.hxx>
+//s#include <IFSelect_SignCategory.hxx>
+//s#include <IFSelect_SignCounter.hxx>
+//s#include <IFSelect_SignType.hxx>
+//s#include <IFSelect_SignValidity.hxx>
 #include <Interface_InterfaceModel.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_Protocol.hxx>
@@ -45,23 +43,17 @@
 #include <Message.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-#include <Standard_Transient.hxx>
-#include <Standard_Type.hxx>
 #include <TCollection_HAsciiString.hxx>
 #include <TColStd_HSequenceOfHAsciiString.hxx>
 #include <TColStd_IndexedMapOfTransient.hxx>
 #include <TopoDS_Shape.hxx>
-#include <Transfer_ActorOfFinderProcess.hxx>
-#include <Transfer_ActorOfTransientProcess.hxx>
-#include <Transfer_Binder.hxx>
 #include <Transfer_FinderProcess.hxx>
 #include <Transfer_SimpleBinderOfTransient.hxx>
 #include <TransferBRep_ShapeMapper.hxx>
-#include <XSControl_ConnectedShapes.hxx>
+//s#include <XSControl_ConnectedShapes.hxx>
 #include <XSControl_Controller.hxx>
-#include <XSControl_SelectForTransfer.hxx>
-#include <XSControl_SignTransferStatus.hxx>
-#include <XSControl_TransferReader.hxx>
+//s#include <XSControl_SelectForTransfer.hxx>
+//s#include <XSControl_SignTransferStatus.hxx>
 #include <XSControl_WorkSession.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(XSControl_Controller,MMgt_TShared)
@@ -339,6 +331,7 @@ void XSControl_Controller::Customise (Handle(XSControl_WorkSession)& WS)
       WS->AddNamedItem (iter.Name().ToCString(), iter.Value());
   }
 
+  /*szv_c1:
   if (WS->NamedItem("xst-model-all").IsNull()) {
 
     Handle(IFSelect_SelectModelEntities) sle = new IFSelect_SelectModelEntities;
@@ -409,6 +402,7 @@ void XSControl_Controller::Customise (Handle(XSControl_WorkSession)& WS)
 
     WS->SetSignType( stp );
   }
+  */
 
   // Applied Modifiers
   Standard_Integer i, nb = myAdaptorApplied.Length();
@@ -422,9 +416,11 @@ void XSControl_Controller::Customise (Handle(XSControl_WorkSession)& WS)
   // Here for the specific manufacturers of controllers could create the
   // Parameters: So wait here
 
+  /*szv_c1:
   Handle(TColStd_HSequenceOfHAsciiString) listat = Interface_Static::Items();
   Handle(IFSelect_ParamEditor) paramed = IFSelect_ParamEditor::StaticEditor (listat,"All Static Parameters");
   WS->AddNamedItem ("xst-static-params-edit",paramed);
   Handle(IFSelect_EditForm) paramform = paramed->Form(Standard_False);
   WS->AddNamedItem ("xst-static-params",paramform);
+  */
 }

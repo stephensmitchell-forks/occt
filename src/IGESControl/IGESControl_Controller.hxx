@@ -20,10 +20,7 @@
 #include <Standard.hxx>
 #include <Standard_Type.hxx>
 
-#include <Standard_Boolean.hxx>
 #include <XSControl_Controller.hxx>
-#include <IFSelect_ReturnStatus.hxx>
-#include <Standard_Integer.hxx>
 class TopoDS_Shape;
 class Transfer_FinderProcess;
 class XSControl_WorkSession;

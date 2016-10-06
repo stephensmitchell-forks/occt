@@ -155,13 +155,6 @@ class IFSelect_SessionPilot : public IFSelect_Activator
   //! recorded to the list (see below).
   Standard_EXPORT IFSelect_ReturnStatus Perform();
   
-  //! Executes the Commands, except that the command name (word 0)
-  //! is aliased. The rest of the command line is unchanged
-  //! If <alias> is empty, Executes with no change
-  //!
-  //! Error status is returned if the alias is unknown as command
-  Standard_EXPORT IFSelect_ReturnStatus ExecuteAlias (const TCollection_AsciiString& aliasname);
-  
   //! Sets the Command then tries to execute it. Return value :
   //! same as for Perform
   Standard_EXPORT IFSelect_ReturnStatus Execute (const TCollection_AsciiString& command);

@@ -32,7 +32,6 @@
 #include <XSControl_TransferWriter.hxx>
 #include <XSControl_WorkSession.hxx>
 #include <XSDRAW.hxx>
-#include <XSDRAW_Activator.hxx>
 #include <XSDRAW_ControlFunctions.hxx>
 #include <XSDRAW_SelectFunctions.hxx>
 
@@ -463,35 +462,35 @@ void XSDRAW_ControlFunctions::Init ()
   static int initactor = 0;
   if (initactor) return;  initactor = 1;
 
-  XSDRAW_Activator::SetGroup("DE: General");
+  XSDRAW::SetGroup("DE: General");
 
-  XSDRAW_Activator::AddFunc ("xinit","[norm:string to change norme] reinitialises according to the norm",XSControl_xinit);
-  XSDRAW_Activator::AddFunc ("xnorm","displays current norm   +norm : changes it",XSControl_xnorm);
+  XSDRAW::AddFunc ("xinit","[norm:string to change norme] reinitialises according to the norm",XSControl_xinit);
+  XSDRAW::AddFunc ("xnorm","displays current norm   +norm : changes it",XSControl_xnorm);
 
-  XSDRAW_Activator::AddFunc ("newmodel","produces a new empty model, for the session",XSControl_newmodel);
+  XSDRAW::AddFunc ("newmodel","produces a new empty model, for the session",XSControl_newmodel);
 
-  XSDRAW_Activator::AddFunc ("tpclear","Clears  TransferProcess (READ)",XSControl_tpclear);
-  XSDRAW_Activator::AddFunc ("twclear","Clears  TransferProcess (WRITE)",XSControl_tpclear);
+  XSDRAW::AddFunc ("tpclear","Clears  TransferProcess (READ)",XSControl_tpclear);
+  XSDRAW::AddFunc ("twclear","Clears  TransferProcess (WRITE)",XSControl_tpclear);
 
-  XSDRAW_Activator::AddFunc ("tpstat","Statistics on TransferProcess (READ)",XSControl_tpstat);
+  XSDRAW::AddFunc ("tpstat","Statistics on TransferProcess (READ)",XSControl_tpstat);
 
-  XSDRAW_Activator::AddFunc ("tpent","[num:integer] Statistics on an entity of the model (READ)",XSControl_tpent);
+  XSDRAW::AddFunc ("tpent","[num:integer] Statistics on an entity of the model (READ)",XSControl_tpent);
 
-  XSDRAW_Activator::AddFunc ("tpitem","[num:integer] Statistics on ITEM of transfer (READ)"    ,XSControl_tpitem);
-  XSDRAW_Activator::AddFunc ("tproot","[num:integer] Statistics on a ROOT of transfert (READ)" ,XSControl_tpitem);
-  XSDRAW_Activator::AddFunc ("twitem","[num:integer] Statistics on an ITEM of transfer (WRITE)"   ,XSControl_tpitem);
-  XSDRAW_Activator::AddFunc ("twroot","[num:integer] Statistics on a ROOT of transfer (WRITE)",XSControl_tpitem);
+  XSDRAW::AddFunc ("tpitem","[num:integer] Statistics on ITEM of transfer (READ)"    ,XSControl_tpitem);
+  XSDRAW::AddFunc ("tproot","[num:integer] Statistics on a ROOT of transfert (READ)" ,XSControl_tpitem);
+  XSDRAW::AddFunc ("twitem","[num:integer] Statistics on an ITEM of transfer (WRITE)"   ,XSControl_tpitem);
+  XSDRAW::AddFunc ("twroot","[num:integer] Statistics on a ROOT of transfer (WRITE)",XSControl_tpitem);
 
-  XSDRAW_Activator::AddFunc ("trecord","record : all root results; or num : for entity n0.num",XSControl_trecord);
-  XSDRAW_Activator::AddFunc ("trstat","general statistics;  or num : stats on entity n0 num",XSControl_trstat);
-  XSDRAW_Activator::AddFunc ("trbegin","begin-transfer-reader [init]",XSControl_trbegin);
-  XSDRAW_Activator::AddFunc ("tread","transfers all roots, or num|sel|sel num : entity list, by transfer-reader",XSControl_tread);
+  XSDRAW::AddFunc ("trecord","record : all root results; or num : for entity n0.num",XSControl_trecord);
+  XSDRAW::AddFunc ("trstat","general statistics;  or num : stats on entity n0 num",XSControl_trstat);
+  XSDRAW::AddFunc ("trbegin","begin-transfer-reader [init]",XSControl_trbegin);
+  XSDRAW::AddFunc ("tread","transfers all roots, or num|sel|sel num : entity list, by transfer-reader",XSControl_tread);
 
-  XSDRAW_Activator::AddFunc ("trtp","feeds commands tp... with results from tr...",XSControl_trtp);
-  XSDRAW_Activator::AddFunc ("tptr","feeds tr... from tp... (may be incomplete)",XSControl_tptr);
+  XSDRAW::AddFunc ("trtp","feeds commands tp... with results from tr...",XSControl_trtp);
+  XSDRAW::AddFunc ("tptr","feeds tr... from tp... (may be incomplete)",XSControl_tptr);
 
-  XSDRAW_Activator::AddFunc ("twmode","displays mode transfer write, + num  changes it",XSControl_twmode);
-  XSDRAW_Activator::AddFunc ("twstat","Statistics on TransferProcess (WRITE)",XSControl_twstat);
+  XSDRAW::AddFunc ("twmode","displays mode transfer write, + num  changes it",XSControl_twmode);
+  XSDRAW::AddFunc ("twstat","Statistics on TransferProcess (WRITE)",XSControl_twstat);
 
-  XSDRAW_Activator::AddFSet ("selecttransfer","selection (recognize from transfer actor)",XSControl_settransfert);
+  XSDRAW::AddFSet ("selecttransfer","selection (recognize from transfer actor)",XSControl_settransfert);
 }

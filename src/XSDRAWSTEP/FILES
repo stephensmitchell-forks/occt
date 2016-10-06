@@ -2,3 +2,5 @@ XSDRAWSTEP.cxx
 XSDRAWSTEP.hxx
 XSDRAWSTEP_Activator.cxx
 XSDRAWSTEP_Activator.hxx
+XSDRAWSTEP_EditHeader.cxx
+XSDRAWSTEP_EditHeader.hxx

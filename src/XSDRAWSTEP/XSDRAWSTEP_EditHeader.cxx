@@ -12,7 +12,7 @@
 // commercial license or contractual agreement.
 
 
-#include <APIHeaderSection_EditHeader.hxx>
+#include <XSDRAWSTEP_EditHeader.hxx>
 #include <APIHeaderSection_MakeHeader.hxx>
 #include <IFSelect_EditForm.hxx>
 #include <Interface_InterfaceModel.hxx>
@@ -23,7 +23,7 @@
 #include <TCollection_AsciiString.hxx>
 #include <TCollection_HAsciiString.hxx>
 
-IMPLEMENT_STANDARD_RTTIEXT(APIHeaderSection_EditHeader,IFSelect_Editor)
+IMPLEMENT_STANDARD_RTTIEXT(XSDRAWSTEP_EditHeader,IFSelect_Editor)
 
 static Standard_Boolean IsTimeStamp
   (const Handle(TCollection_HAsciiString)& val)
@@ -66,7 +66,7 @@ static Standard_Boolean IsTimeStamp
 }
 
 
-    APIHeaderSection_EditHeader::APIHeaderSection_EditHeader  ()
+    XSDRAWSTEP_EditHeader::XSDRAWSTEP_EditHeader  ()
     : IFSelect_Editor (10)
 {
 //  Definition
@@ -97,21 +97,21 @@ static Standard_Boolean IsTimeStamp
 
 }
 
-    TCollection_AsciiString  APIHeaderSection_EditHeader::Label () const
+    TCollection_AsciiString  XSDRAWSTEP_EditHeader::Label () const
       {  return TCollection_AsciiString ("Step Header");  }
 
-    Standard_Boolean  APIHeaderSection_EditHeader::Recognize
+    Standard_Boolean  XSDRAWSTEP_EditHeader::Recognize
   (const Handle(IFSelect_EditForm)& /*form*/) const
 {  return Standard_True;  }  // ??
 
-    Handle(TCollection_HAsciiString)  APIHeaderSection_EditHeader::StringValue
+    Handle(TCollection_HAsciiString)  XSDRAWSTEP_EditHeader::StringValue
   (const Handle(IFSelect_EditForm)& /*form*/, const Standard_Integer num) const
 {
 //  Default Values
   return TypedValue(num)->HStringValue();
 }
 
-    Standard_Boolean  APIHeaderSection_EditHeader::Load
+    Standard_Boolean  XSDRAWSTEP_EditHeader::Load
   (const Handle(IFSelect_EditForm)& form,
    const Handle(Standard_Transient)& /*ent*/,
    const Handle(Interface_InterfaceModel)& model) const
@@ -138,7 +138,7 @@ static Standard_Boolean IsTimeStamp
   return Standard_True;
 }
 
-    Standard_Boolean  APIHeaderSection_EditHeader::Apply
+    Standard_Boolean  XSDRAWSTEP_EditHeader::Apply
   (const Handle(IFSelect_EditForm)& form,
    const Handle(Standard_Transient)& /*ent*/,
    const Handle(Interface_InterfaceModel)& model) const
