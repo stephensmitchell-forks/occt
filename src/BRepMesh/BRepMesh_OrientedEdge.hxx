@@ -57,7 +57,7 @@ public:
   //! Returns hash code for this edge.
   //! @param theUpper upper index in the container.
   //! @return hash code.
-  Standard_Integer HashCode(const Standard_Integer theUpper) const
+  inline Standard_Integer HashCode(const Standard_Integer theUpper) const
   {
     return ::HashCode(myFirstNode + myLastNode, theUpper);
   }

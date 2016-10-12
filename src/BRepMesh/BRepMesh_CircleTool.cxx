@@ -190,7 +190,7 @@ void BRepMesh_CircleTool::Delete(const Standard_Integer theIndex)
 //function : Select
 //purpose  : 
 //=======================================================================
-BRepMesh::ListOfInteger& BRepMesh_CircleTool::Select(const gp_XY& thePoint)
+IMeshData::ListOfInteger& BRepMesh_CircleTool::Select(const gp_XY& thePoint)
 {
   mySelector.SetPoint(thePoint);
   myCellFilter.Inspect(thePoint, mySelector);
