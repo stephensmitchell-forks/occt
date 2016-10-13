@@ -127,8 +127,13 @@ Standard_Boolean ShapeAnalysis_BoxBndTreeSelector::
     myArrIndices(minInd) = theObj;
     if((min3d - myMin3d) > RealSmall())
       myArrIndices(maxInd) = 0;
-      
-    myMin3d = min3d;
+
+    if ( (myArrIndices(Last) && minInd == Last) ||
+        (!myArrIndices(Last) && minInd == First))
+    {
+      myMin3d = min3d;
+    }
+
     if (min3d > myTol)
     {
        myStatus = ShapeExtend::EncodeStatus (ShapeExtend_FAIL2);
