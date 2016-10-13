@@ -72,18 +72,19 @@ void BRepAdaptor_Surface::Initialize(const TopoDS_Face& F,
 {
   myFace = F;
   TopLoc_Location L;
-  const Handle(Geom_Surface)& aSurface = BRep_Tool::Surface(F, L);
-  if (aSurface.IsNull())
+  const Handle (Geom_Surface)& aSurface = BRep_Tool::Surface (F, L);
+  if (aSurface.IsNull ())
     return;
 
-  if (Restriction) {
-    Standard_Real umin,umax,vmin,vmax;
-    BRepTools::UVBounds(F,umin,umax,vmin,vmax);
-    mySurf.Load(aSurface,umin,umax,vmin,vmax);
+  if (Restriction)
+  {
+    Standard_Real umin, umax, vmin, vmax;
+    BRepTools::UVBounds (F, umin, umax, vmin, vmax);
+    mySurf.Load (aSurface, umin, umax, vmin, vmax);
   }
-  else 
-    mySurf.Load(aSurface);
-  myTrsf = L.Transformation();
+  else
+    mySurf.Load (aSurface);
+  myTrsf = L.Transformation ();
 }
 
 
@@ -425,6 +426,10 @@ Handle(Adaptor3d_HCurve) BRepAdaptor_Surface::BasisCurve() const
 
 Handle(Adaptor3d_HSurface) BRepAdaptor_Surface::BasisSurface() const 
 {  
+  if(mySurf.Surface().IsNull())
+  {
+    return Handle(Adaptor3d_HSurface)();
+  }
   Handle(GeomAdaptor_HSurface) HS = new GeomAdaptor_HSurface();
   HS->ChangeSurface().Load
     (Handle(Geom_Surface)::DownCast(mySurf.Surface()->Transformed(myTrsf)));
