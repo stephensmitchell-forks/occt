@@ -102,10 +102,10 @@ private:
 
 private:
   Handle(BRepMesh_DataStructureOfDelaun) myMesh;
-  IMeshData::MapOfInteger                     myNodes;
-  IMeshData::MapOfInteger                     myLinks;
-  IMeshData::MapOfInteger                     myElements;
-  IMeshData::MapOfInteger                     myFrontier;
+  IMeshData::MapOfInteger                myNodes;
+  IMeshData::MapOfInteger                myLinks;
+  IMeshData::MapOfInteger                myElements;
+  IMeshData::MapOfInteger                myFrontier;
 };
 
 #endif

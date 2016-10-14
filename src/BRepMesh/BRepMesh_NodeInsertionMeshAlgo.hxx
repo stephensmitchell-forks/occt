@@ -224,7 +224,7 @@ private:
 
 private:
 
-  RangeSplitter                    myRangeSplitter;
+  RangeSplitter               myRangeSplitter;
   Handle(BRepMesh_Classifier) myClassifier;
 };
 

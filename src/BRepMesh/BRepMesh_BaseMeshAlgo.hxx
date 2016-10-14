@@ -132,12 +132,12 @@ private:
 private:
   typedef NCollection_Shared<NCollection_DataMap<Standard_Integer, Standard_Integer> > DMapOfIntegerInteger;
 
-  IMeshData::IFaceHandle                      myDFace;
-  IMeshTools_Parameters                       myParameters;
-  Handle(NCollection_IncAllocator)            myAllocator;
+  IMeshData::IFaceHandle                 myDFace;
+  IMeshTools_Parameters                  myParameters;
+  Handle(NCollection_IncAllocator)       myAllocator;
   Handle(BRepMesh_DataStructureOfDelaun) myStructure;
-  Handle(VectorOfPnt)                         myNodesMap;
-  Handle(DMapOfIntegerInteger)                myUsedNodes;
+  Handle(VectorOfPnt)                    myNodesMap;
+  Handle(DMapOfIntegerInteger)           myUsedNodes;
 };
 
 #endif

@@ -35,7 +35,7 @@ public:
   struct NodeClassifier
   {
     NodeClassifier(
-      const BRepMesh_Edge&                               theConstraint,
+      const BRepMesh_Edge&                          theConstraint,
       const Handle(BRepMesh_DataStructureOfDelaun)& theStructure)
       : myStructure(theStructure)
     {
@@ -66,8 +66,8 @@ public:
     }
 
     const Handle(BRepMesh_DataStructureOfDelaun)& myStructure;
-    gp_Lin2d                                           myConstraint;
-    Standard_Boolean                                   mySign;
+    gp_Lin2d                                      myConstraint;
+    Standard_Boolean                              mySign;
   };
 
   //! Constructor.

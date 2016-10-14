@@ -49,7 +49,7 @@ private:
 
   //! Computes parameters of filter and applies it to the source parameters.
   Handle(IMeshData::SequenceOfReal) computeGrainAndFilterParameters(
-    const IMeshData::IMapOfReal&             theSourceParams,
+    const IMeshData::IMapOfReal&            theSourceParams,
     const Standard_Real                     theTol2d,
     const Standard_Real                     theRangeDiff,
     const Standard_Real                     theDelta,
@@ -58,7 +58,7 @@ private:
 
   //! Filters parameters in order to avoid too dence distribution.
   Handle(IMeshData::SequenceOfReal) filterParameters(
-    const IMeshData::IMapOfReal&             theParams,
+    const IMeshData::IMapOfReal&            theParams,
     const Standard_Real                     theMinDist,
     const Standard_Real                     theFilterDist,
     const Handle(NCollection_IncAllocator)& theAllocator) const;

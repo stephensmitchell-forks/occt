@@ -29,7 +29,7 @@ public:
 
   //! Constructor.
   Standard_EXPORT BRepMeshData_Face (
-    const TopoDS_Face& theFace,
+    const TopoDS_Face&                       theFace,
     const Handle (NCollection_IncAllocator)& theAllocator);
 
   //! Destructor.

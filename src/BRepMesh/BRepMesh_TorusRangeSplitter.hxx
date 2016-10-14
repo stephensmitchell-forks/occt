@@ -135,7 +135,7 @@ public:
 private:
 
   Handle(IMeshData::SequenceOfReal) fillParams(
-    const IMeshData::IMapOfReal&                    theParams,
+    const IMeshData::IMapOfReal&                   theParams,
     const std::pair<Standard_Real, Standard_Real>& theRange,
     const Standard_Integer                         theStepsNb,
     const Standard_Real                            theScale,

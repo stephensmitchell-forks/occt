@@ -55,9 +55,9 @@ public:
 private:
 
   BRepMesh_EdgeParameterProvider<Handle(TColStd_HArray1OfReal)>  myProvider;
-  const TColgp_Array1OfPnt*                                           myNodes;
-  const TColStd_Array1OfInteger*                                      myIndices;
-  TopLoc_Location                                                     myLoc;
+  const TColgp_Array1OfPnt*                                      myNodes;
+  const TColStd_Array1OfInteger*                                 myIndices;
+  TopLoc_Location                                                myLoc;
 };
 
 #endif

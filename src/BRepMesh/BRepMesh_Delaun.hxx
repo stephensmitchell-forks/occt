@@ -239,16 +239,16 @@ private:
 
   //! Processes loop within the given polygon formed by range of its
   //! links specified by start and end link indices.
-  void processLoop (const Standard_Integer             theLinkFrom,
-                    const Standard_Integer             theLinkTo,
+  void processLoop (const Standard_Integer              theLinkFrom,
+                    const Standard_Integer              theLinkTo,
                     const IMeshData::SequenceOfInteger& thePolygon,
                     const IMeshData::SequenceOfBndB2d&  thePolyBoxes);
 
   //! Creates new link based on the given nodes and updates the given polygon.
-  Standard_Integer createAndReplacePolygonLink (const Standard_Integer       theNodes[],
-                                                const gp_Pnt2d               thePnts [],
-                                                const Standard_Integer       theRootIndex,
-                                                const ReplaceFlag            theReplaceFlag,
+  Standard_Integer createAndReplacePolygonLink (const Standard_Integer        theNodes[],
+                                                const gp_Pnt2d                thePnts [],
+                                                const Standard_Integer        theRootIndex,
+                                                const ReplaceFlag             theReplaceFlag,
                                                 IMeshData::SequenceOfInteger& thePolygon,
                                                 IMeshData::SequenceOfBndB2d&  thePolyBoxes);
   
@@ -273,11 +273,11 @@ private:
                        const IMeshData::SequenceOfBndB2d&  thePolyBoxes);
 
   //! Checks is the given vertex lies inside the polygon.
-  Standard_Boolean isVertexInsidePolygon (const Standard_Integer&          theVertexId,
+  Standard_Boolean isVertexInsidePolygon (const Standard_Integer&           theVertexId,
                                           const IMeshData::VectorOfInteger& thePolygonVertices) const;
 
   //! Remove all triangles and edges that are placed inside the polygon or crossed it.
-  void killTrianglesAroundVertex (const Standard_Integer             theZombieNodeId,
+  void killTrianglesAroundVertex (const Standard_Integer              theZombieNodeId,
                                   const IMeshData::VectorOfInteger&   thePolyVertices,
                                   const IMeshData::MapOfInteger&      thePolyVerticesFindMap,
                                   const IMeshData::SequenceOfInteger& thePolygon,
@@ -287,16 +287,16 @@ private:
 
   //! Checks is the given link crosses the polygon boundary.
   //! If yes, kills its triangles and checks neighbor links on boundary intersection. Does nothing elsewhere.
-  void killTrianglesOnIntersectingLinks (const Standard_Integer&             theLinkToCheckId,
-                                         const BRepMesh_Edge&                theLinkToCheck,
-                                         const Standard_Integer&             theEndPoint,
+  void killTrianglesOnIntersectingLinks (const Standard_Integer&              theLinkToCheckId,
+                                         const BRepMesh_Edge&                 theLinkToCheck,
+                                         const Standard_Integer&              theEndPoint,
                                          const IMeshData::SequenceOfInteger&  thePolygon,
                                          const IMeshData::SequenceOfBndB2d&   thePolyBoxes,
                                          IMeshData::MapOfInteger&             theSurvivedLinks,
                                          IMeshData::MapOfIntegerInteger&      theLoopEdges);
 
   //! Kill triangles bound to the given link.
-  void killLinkTriangles (const Standard_Integer&        theLinkId,
+  void killLinkTriangles (const Standard_Integer&         theLinkId,
                           IMeshData::MapOfIntegerInteger& theLoopEdges);
 
   //! Calculates distances between the given point and edges of triangle.
@@ -317,8 +317,8 @@ private:
 
   //! Returns area of the loop of the given polygon defined by indices of its start and end links.
   Standard_Real polyArea (const IMeshData::SequenceOfInteger& thePolygon,
-                          const Standard_Integer             theStartIndex,
-                          const Standard_Integer             theEndIndex) const;
+                          const Standard_Integer              theStartIndex,
+                          const Standard_Integer              theEndIndex) const;
 
 private:
 

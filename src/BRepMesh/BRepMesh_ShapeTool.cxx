@@ -327,7 +327,7 @@ Standard_Boolean BRepMesh_ShapeTool::UVPoints (
   }
 
   aCurve2d->D0 (aFirstParam, theFirstPoint2d);
-  aCurve2d->D0 (aLastParam, theLastPoint2d);
+  aCurve2d->D0 (aLastParam,  theLastPoint2d);
   return Standard_True;
 }
 

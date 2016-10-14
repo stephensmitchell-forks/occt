@@ -187,7 +187,7 @@ void BRepMesh_MeshTool::CleanFrontierLinks()
 //purpose  : 
 //=======================================================================
 void BRepMesh_MeshTool::EraseTriangles(
-  const IMeshData::MapOfInteger& theTriangles,
+  const IMeshData::MapOfInteger&  theTriangles,
   IMeshData::MapOfIntegerInteger& theLoopEdges)
 {
   IMeshData::IteratorOfMapOfInteger aFreeTriangles(theTriangles);
@@ -202,7 +202,7 @@ void BRepMesh_MeshTool::EraseTriangles(
 //purpose  : 
 //=======================================================================
 void BRepMesh_MeshTool::EraseTriangle(
-  const Standard_Integer         theTriangleIndex,
+  const Standard_Integer          theTriangleIndex,
   IMeshData::MapOfIntegerInteger& theLoopEdges)
 {
   Standard_Integer e[3];
@@ -333,8 +333,8 @@ Handle(IMeshData::MapOfInteger) BRepMesh_MeshTool::GetEdgesByType(
 //function : DumpStruct
 //purpose  : 
 //=======================================================================
-void BRepMesh_MeshTool::DumpTriangles(const Standard_CString theFileName,
-                                           IMeshData::MapOfInteger* theTriangles)
+void BRepMesh_MeshTool::DumpTriangles(const Standard_CString   theFileName,
+                                      IMeshData::MapOfInteger* theTriangles)
 {
   BRep_Builder aBuilder;
   TopoDS_Compound aResult;
