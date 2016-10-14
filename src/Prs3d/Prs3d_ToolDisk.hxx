@@ -13,14 +13,14 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef _StdPrs_ToolDisk_HeaderFile
-#define _StdPrs_ToolDisk_HeaderFile
+#ifndef _Prs3d_ToolDisk_HeaderFile
+#define _Prs3d_ToolDisk_HeaderFile
 
 #include <Standard.hxx>
-#include <StdPrs_ToolQuadric.hxx>
+#include <Prs3d_ToolQuadric.hxx>
 
 //! Standard presentation algorithm that outputs graphical primitives for disk surface.
-class StdPrs_ToolDisk : public StdPrs_ToolQuadric
+class Prs3d_ToolDisk : public Prs3d_ToolQuadric
 {
 public:
 
@@ -35,10 +35,10 @@ public:
   DEFINE_STANDARD_ALLOC
 
   //! Initializes the algorithm.
-  Standard_EXPORT StdPrs_ToolDisk (const Standard_Real    theInnerRadius,
-                                   const Standard_Real    theOuterRadius,
-                                   const Standard_Integer theNbSlices,
-                                   const Standard_Integer theNbStacks);
+  Standard_EXPORT Prs3d_ToolDisk (const Standard_Real    theInnerRadius,
+                                  const Standard_Real    theOuterRadius,
+                                  const Standard_Integer theNbSlices,
+                                  const Standard_Integer theNbStacks);
 protected:
 
   //! Computes vertex at given parameter location of the surface.
