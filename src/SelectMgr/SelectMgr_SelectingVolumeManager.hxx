@@ -173,6 +173,16 @@ public:
 
   Standard_EXPORT gp_Pnt GetFarPnt() const;
 
+  //! Returns active selecting volume that was built during last
+  //! run of OCCT selection mechanism
+  NCollection_Handle<SelectMgr_BaseFrustum> ActiveVolume() const
+  {
+    if (myActiveSelectionType == Unknown)
+      return NCollection_Handle<SelectMgr_BaseFrustum>();
+
+    return mySelectingVolumes[myActiveSelectionType];
+  }
+
 private:
   enum { Frustum, FrustumSet, VolumeTypesNb };       //!< Defines the amount of available selecting volumes
 
