@@ -20,8 +20,8 @@
 #include <GCPnts_TangentialDeflection.hxx>
 #include <IMeshTools_Parameters.hxx>
 
-//! Default tool to define range of discrete face model and 
-//! obtain grid points disturbed within this range.
+//! Auxiliary class extending default range splitter in
+//! order to generate internal nodes for cylindrical surface.
 class BRepMesh_CylinderRangeSplitter : public BRepMesh_DefaultRangeSplitter
 {
 public:

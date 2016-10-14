@@ -25,8 +25,8 @@
 class BRepMesh_DataStructureOfDelaun;
 class BRepMesh_Delaun;
 
-//! Class provides base fuctionality to build face triangulation.
-//! Performs initialization of data structure.
+//! Class provides base fuctionality for algorithms building face triangulation.
+//! Performs initialization of BRepMesh_DataStructureOfDelaun and nodes map structures.
 class BRepMesh_BaseMeshAlgo : public IMeshTools_MeshAlgo
 {
 public:

@@ -30,6 +30,8 @@ class TopoDS_Face;
 class TopoDS_Edge;
 class Bnd_Box;
 
+//! Auxiliary class providing functionality to compute,
+//! retrieve and store data to TopoDS and model shape.
 class BRepMesh_ShapeTool : public Standard_Transient
 {
 public:

@@ -20,8 +20,8 @@
 #include <GCPnts_TangentialDeflection.hxx>
 #include <IMeshTools_Parameters.hxx>
 
-//! Default tool to define range of discrete face model and 
-//! obtain grid points disturbed within this range.
+//! Auxiliary class extending UV range splitter in order to generate
+//! internal nodes for NURBS surface.
 class BRepMesh_TorusRangeSplitter : public BRepMesh_UVParamRangeSplitter
 {
 public:

@@ -20,7 +20,7 @@
 #include <Standard_Type.hxx>
 #include <NCollection_IncAllocator.hxx>
 
-//! Class implements pcurve interface.
+//! Default implementation of pcurve data model entity.
 class BRepMeshData_PCurve : public IMeshData_PCurve
 {
 public:

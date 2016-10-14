@@ -27,8 +27,7 @@ class Geom_Surface;
 class Geom2d_Curve;
 struct IMeshTools_Parameters;
 
-//! Auxiliary class implements functionality retrieving tessellated
-//! representation of an edge stored in polygon.
+//! Auxiliary class performing tessellation of passed edge according to specified parameters.
 class BRepMesh_CurveTessellator : public IMeshTools_CurveTessellator
 {
 public:

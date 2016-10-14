@@ -20,7 +20,7 @@
 #include <IMeshData_Face.hxx>
 #include <IMeshData_Wire.hxx>
 
-//! Class implements discrete face interface.
+//! Default implementation of face data model entity.
 class BRepMeshData_Face : public IMeshData_Face
 {
 public:

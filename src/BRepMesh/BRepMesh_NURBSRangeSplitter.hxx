@@ -20,7 +20,8 @@
 #include <IMeshData_Types.hxx>
 #include <IMeshTools_Parameters.hxx>
 
-//! Intended to generate internal mesh nodes using UV parameters of bounday discrete points.
+//! Auxiliary class extending UV range splitter in order to generate
+//! internal nodes for NURBS surface.
 class BRepMesh_NURBSRangeSplitter : public BRepMesh_UVParamRangeSplitter
 {
 public:

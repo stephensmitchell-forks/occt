@@ -20,7 +20,11 @@
 #include <Standard_Mutex.hxx>
 
 //! Extension for NCollection_IncAllocator implementing simple thread safety
-//! by introduction of Mutex.
+//! by introduction of Mutex. Intended for use in couple with BRepMeshData
+//! entities in order to prevent data races while building data model in
+//! parallel mode. Note that this allocator is supposed for use by collections
+//! which allocate memory by huge blocks at arbitrary moment, thus it should
+//! not introduce significant performance slow down.
 class BRepMesh_IncAllocator : public NCollection_IncAllocator
 {
 public:

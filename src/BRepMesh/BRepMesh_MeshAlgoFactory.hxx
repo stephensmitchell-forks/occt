@@ -21,7 +21,8 @@
 #include <GeomAbs_SurfaceType.hxx>
 #include <IMeshTools_MeshAlgoFactory.hxx>
 
-//! Interface class providing API for algorithms intended to create mesh for discrete face.
+//! Default implementation of IMeshTools_MeshAlgoFactory providing algorithms 
+//! of different compexity depending on type of target surface.
 class BRepMesh_MeshAlgoFactory : public IMeshTools_MeshAlgoFactory
 {
 public:
