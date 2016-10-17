@@ -20,11 +20,10 @@
 #include <Standard_DefineAlloc.hxx>
 #include <Standard_Handle.hxx>
 
-#include <Standard_Boolean.hxx>
-class XSControl_WorkSession;
-class Transfer_FinderProcess;
+#include <Interface_HGraph.hxx>
+#include <XSControl_WorkSession.hxx>
+#include <Transfer_FinderProcess.hxx>
 class Transfer_TransientProcess;
-class Interface_HGraph;
 class Interface_InterfaceModel;
 class Interface_Graph;
 
@@ -41,63 +40,49 @@ class Interface_Graph;
 //! this (and derived) tool multiple times
 class STEPConstruct_Tool 
 {
-public:
+ public:
 
   DEFINE_STANDARD_ALLOC
 
-  
   //! Creates an empty tool
-  Standard_EXPORT STEPConstruct_Tool();
+  STEPConstruct_Tool() {}
   
   //! Creates a tool and loads it with worksession
-  Standard_EXPORT STEPConstruct_Tool(const Handle(XSControl_WorkSession)& WS);
+  STEPConstruct_Tool(const Handle(XSControl_WorkSession)& WS) { SetWS ( WS ); }
   
   //! Returns currently loaded WorkSession
-    const Handle(XSControl_WorkSession)& WS() const;
-  
+  //const Handle(XSControl_WorkSession)& WS() const { return myWS; }
+
   //! Returns current model (Null if not loaded)
-    Handle(Interface_InterfaceModel) Model() const;
-  
+  const Handle(Interface_InterfaceModel)& Model() const { return myWS->Model(); }
+
   //! Returns current graph (recomputing if necessary)
-    const Interface_Graph& Graph (const Standard_Boolean recompute = Standard_False) const;
-  
+  const Interface_Graph& Graph (const Standard_Boolean recompute = Standard_False) const
+  {
+    // Note: myWS->Graph() recomputes graph each time!
+    return recompute ? myWS->Graph() : myHGraph->Graph();
+  }
+
   //! Returns TransientProcess (reading; Null if not loaded)
-    const Handle(Transfer_TransientProcess)& TransientProcess() const;
-  
+  const Handle(Transfer_TransientProcess)& TransientProcess() const { return myTransientProcess; }
+
   //! Returns FinderProcess (writing; Null if not loaded)
-    const Handle(Transfer_FinderProcess)& FinderProcess() const;
+  const Handle(Transfer_FinderProcess)& FinderProcess() const { return myFinderProcess; }
 
+ protected:
 
-
-
-protected:
-
-  
   //! Load worksession; returns True if succeeded
   //! Returns False if either FinderProcess of TransientProcess
   //! cannot be obtained or are Null
   Standard_EXPORT Standard_Boolean SetWS (const Handle(XSControl_WorkSession)& WS);
 
-
-
-
-private:
-
-
-
   Handle(XSControl_WorkSession) myWS;
+
+ private:
+
   Handle(Transfer_FinderProcess) myFinderProcess;
   Handle(Transfer_TransientProcess) myTransientProcess;
   Handle(Interface_HGraph) myHGraph;
-
-
 };
-
-
-#include <STEPConstruct_Tool.lxx>
-
-
-
-
 
 #endif // _STEPConstruct_Tool_HeaderFile

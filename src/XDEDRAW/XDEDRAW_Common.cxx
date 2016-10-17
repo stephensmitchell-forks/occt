@@ -20,7 +20,6 @@
 #include <Dico_IteratorOfDictionaryOfTransient.hxx>
 #include <Draw.hxx>
 #include <Draw_Interpretor.hxx>
-#include <IFSelect_SessionPilot.hxx>
 #include <IGESCAFControl_Reader.hxx>
 #include <IGESCAFControl_Writer.hxx>
 #include <IGESControl_Controller.hxx>
@@ -36,9 +35,9 @@
 #include <TDF_Data.hxx>
 #include <TDocStd_Application.hxx>
 #include <TDocStd_Document.hxx>
+#include <IFSelect_WorkSession.hxx>
 #include <XDEDRAW.hxx>
 #include <XDEDRAW_Common.hxx>
-#include <XSControl_WorkSession.hxx>
 #include <XSDRAW.hxx>
 #include <XSDRAW_Vars.hxx>
 #include <XSDRAWIGES.hxx>
@@ -57,32 +56,67 @@
 //============================================================
 // Support for several models in DRAW
 //============================================================
-static Handle(Dico_DictionaryOfTransient) thedictws = new Dico_DictionaryOfTransient;
-
-static void AddWS(TCollection_AsciiString filename,
-		  const Handle(XSControl_WorkSession)& WS)
+static class DictionaryOfSession
 {
-  WS->SetVars ( new XSDRAW_Vars ); // support of DRAW variables
-  thedictws->SetItem( filename, WS );
-}
-
-
-static Standard_Boolean FillDicWS(Handle(STEPCAFControl_DictionaryOfExternFile)& dicFile)
-{
-  thedictws->Clear();
-  if ( dicFile->IsEmpty() ) {
-    return Standard_False;
+  Handle(Dico_DictionaryOfTransient) myDict;
+public:
+  DictionaryOfSession() : myDict(new Dico_DictionaryOfTransient) {}
+  void AddWS(TCollection_AsciiString filename, const Handle(IFSelect_WorkSession)& WS)
+  {
+    WS->SetVars ( new XSDRAW_Vars ); // support of DRAW variables
+    myDict->SetItem( filename, WS );
   }
-  Handle(STEPCAFControl_ExternFile) EF;
-  STEPCAFControl_IteratorOfDictionaryOfExternFile DicEFIt ( dicFile );
-  for (; DicEFIt.More(); DicEFIt.Next() ) {
-    TCollection_AsciiString filename = DicEFIt.Name();
-    EF = DicEFIt.Value();
-    AddWS ( filename, EF->GetWS() );
+  void AddWS(Handle(STEPCAFControl_DictionaryOfExternFile)& dicFile)
+  {
+    myDict->Clear();
+    if ( !dicFile->IsEmpty() ) {
+      Handle(STEPCAFControl_ExternFile) EF;
+      STEPCAFControl_IteratorOfDictionaryOfExternFile DicEFIt ( dicFile );
+      for (; DicEFIt.More(); DicEFIt.Next() ) {
+        TCollection_AsciiString filename = DicEFIt.Name();
+        EF = DicEFIt.Value();
+        Handle(IFSelect_WorkSession) WS = Handle(IFSelect_WorkSession)::DownCast(EF->GetWS());
+        AddWS ( filename, WS ); //szv_c1: Need to provide IFSelect_WorkSession
+      }
+    }
   }
-  return Standard_True;  
+  // Set current file if many files are read
+  void SetCurWS (const TCollection_AsciiString &filename)
+  {
+    if ( myDict->HasItem(filename) ) {
+      Handle(IFSelect_WorkSession) CurrentWS = Handle(IFSelect_WorkSession)::DownCast( myDict->Item(filename) );
+      XSDRAW::Pilot()->SetSession( CurrentWS );
+    }
+  }
+  Standard_Integer GetDicWSList (Draw_Interpretor& di)
+  {
+    if ( myDict->IsEmpty() ) return 1;
+    Dico_IteratorOfDictionaryOfTransient DicIt ( myDict );
+    di << " The list of last translated files:\n";
+    Standard_Integer num = 0;
+    for (; DicIt.More() ; DicIt.Next(), num++ ) {
+      TCollection_AsciiString strng ( DicIt.Name() );
+      if ( num ) di << "\n";
+      di << "\"" << strng.ToCString() << "\"";
+    }
+    return 0;
+  }
+  Standard_Integer FromShape (Draw_Interpretor& di, const char *command)
+  {
+    if ( myDict->IsEmpty() ) return di.Eval ( command );
+    const Handle(IFSelect_WorkSession) &WS = XSDRAW::Session();
+    Dico_IteratorOfDictionaryOfTransient DicIt ( myDict );
+    Standard_Integer num = 0;
+    for (; DicIt.More() ; DicIt.Next(), num++ ) {
+      Handle(IFSelect_WorkSession) CurrentWS =  Handle(IFSelect_WorkSession)::DownCast( DicIt.Value() );
+      XSDRAW::Pilot()->SetSession( CurrentWS );
+      di.Eval ( command );
+    }
+    XSDRAW::Pilot()->SetSession( WS );
+    return 0;
+  }
 }
-
+gSessions;
 
 //=======================================================================
 //function : SetCurWS
@@ -95,15 +129,10 @@ static Standard_Integer SetCurWS (Draw_Interpretor& di , Standard_Integer argc, 
     di<<"Use: "<<argv[0]<<" filename \n";
     return 1;
   }
-  TCollection_AsciiString filename (argv[1]);
-  if ( thedictws->HasItem(filename) ) {
-    Handle(XSControl_WorkSession) CurrentWS = 
-      Handle(XSControl_WorkSession)::DownCast( thedictws->Item(filename) );
-    XSDRAW::Pilot()->SetSession( CurrentWS );
-  }
+  TCollection_AsciiString filename(argv[1]);
+  gSessions.SetCurWS(filename);
   return 0;
 }
-
 
 //=======================================================================
 //function : GetDicWSList
@@ -112,17 +141,7 @@ static Standard_Integer SetCurWS (Draw_Interpretor& di , Standard_Integer argc, 
 
 static Standard_Integer GetDicWSList (Draw_Interpretor& di, Standard_Integer /*argc*/, const char** /*argv*/)
 {
-  Handle(Dico_DictionaryOfTransient) DictWS = thedictws;
-  if ( DictWS->IsEmpty() ) return 1;
-  Dico_IteratorOfDictionaryOfTransient DicIt ( DictWS );
-  di << " The list of last translated files:\n";
-  Standard_Integer num = 0;
-  for (; DicIt.More() ; DicIt.Next(), num++ ) {
-    TCollection_AsciiString strng ( DicIt.Name() );
-    if ( num ) di << "\n";
-    di << "\"" << strng.ToCString() << "\"";
-  }
-  return 0;
+  return gSessions.GetDicWSList(di);
 }
 
 //=======================================================================
@@ -132,8 +151,7 @@ static Standard_Integer GetDicWSList (Draw_Interpretor& di, Standard_Integer /*a
 
 static Standard_Integer GetCurWS (Draw_Interpretor& di, Standard_Integer /*argc*/, const char** /*argv*/)
 {
-  Handle(XSControl_WorkSession) WS = XSDRAW::Session();
-  di << "\"" << WS->LoadedFile() << "\"";
+  di << "\"" << XSDRAW::Session()->LoadedFile() << "\"";
   return 0;
 }
 
@@ -148,26 +166,11 @@ static Standard_Integer FromShape (Draw_Interpretor& di, Standard_Integer argc, 
     di << argv[0] << " shape: search for shape origin among all last tranalated files\n";
     return 0;
   }
-  
+
   char command[256];
   Sprintf ( command, "fromshape %.200s -1", argv[1] );
-  Handle(Dico_DictionaryOfTransient) DictWS = thedictws;
-  if ( DictWS->IsEmpty() ) return di.Eval ( command );
-  
-  Handle(XSControl_WorkSession) WS = XSDRAW::Session();
 
-  Dico_IteratorOfDictionaryOfTransient DicIt ( DictWS );
-//  di << "Searching for shape among all the loaded files:\n";
-  Standard_Integer num = 0;
-  for (; DicIt.More() ; DicIt.Next(), num++ ) {
-    Handle(XSControl_WorkSession) CurrentWS = 
-      Handle(XSControl_WorkSession)::DownCast( DicIt.Value() );
-    XSDRAW::Pilot()->SetSession( CurrentWS );
-    di.Eval ( command );
-  }
-
-  XSDRAW::Pilot()->SetSession( WS );
-  return 0;
+  return gSessions.FromShape(di,command);
 }
 
 //=======================================================================
@@ -185,7 +188,7 @@ static Standard_Integer ReadIges (Draw_Interpretor& di, Standard_Integer argc, c
   DeclareAndCast(IGESControl_Controller,ctl,XSDRAW::Controller());
   if (ctl.IsNull()) XSDRAW::SetNorm("IGES");
 
-  IGESCAFControl_Reader reader ( XSDRAW::Session(),Standard_True);
+  IGESCAFControl_Reader reader ( XSDRAW::Session(), Standard_True );
   
   if (argc == 4) {
     Standard_Boolean mode = Standard_True;
@@ -202,11 +205,10 @@ static Standard_Integer ReadIges (Draw_Interpretor& di, Standard_Integer argc, c
   Standard_Boolean modfic = XSDRAW::FileAndVar (argv[2],argv[1],"IGES",fnom,rnom);
   if (modfic) di<<" File IGES to read : "<<fnom.ToCString()<<"\n";
   else        di<<" Model taken from the session : "<<fnom.ToCString()<<"\n";
-//  di<<" -- Names of variables BREP-DRAW prefixed by : "<<rnom<<"\n";
-  IFSelect_ReturnStatus readstat = IFSelect_RetVoid;
+  Interface_ReturnStatus readstat = Interface_RetVoid;
   if (modfic) readstat = reader.ReadFile (fnom.ToCString());
-  else  if (XSDRAW::Session()->NbStartingEntities() > 0) readstat = IFSelect_RetDone;
-  if (readstat != IFSelect_RetDone) {
+  else  if (XSDRAW::Session()->NbStartingEntities() > 0) readstat = Interface_RetDone;
+  if (readstat != Interface_RetDone) {
     if (modfic) di<<"Could not read file "<<fnom.ToCString()<<" , abandon\n";
     else di<<"No model loaded\n";
     return 1;
@@ -219,15 +221,12 @@ static Standard_Integer ReadIges (Draw_Interpretor& di, Standard_Integer argc, c
     TDataStd_Name::Set(doc->GetData()->Root(),argv[1]);  
     Handle(DDocStd_DrawDocument) DD = new DDocStd_DrawDocument(doc);  
     Draw::Set(argv[1],DD);       
-//     di << "Document saved with name " << argv[1];
   }
   if ( ! reader.Transfer ( doc ) ) {
     di << "Cannot read any relevant data from the IGES file\n";
     return 1;
   }
   
-//  Handle(DDocStd_DrawDocument) DD = new DDocStd_DrawDocument(doc);  
-//  Draw::Set(argv[1],DD);       
   di << "Document saved with name " << argv[1];
   
   return 0;
@@ -252,12 +251,9 @@ static Standard_Integer WriteIges (Draw_Interpretor& di, Standard_Integer argc, 
     return 1;
   }
   
-  XSDRAW::SetNorm ("IGES");
+  XSDRAW::SetNorm("IGES");
   
-//  IGESControl_Writer ICW (Interface_Static::CVal("write.iges.unit"),
-//			  Interface_Static::IVal("write.iges.brep.mode"));
-    
-  IGESCAFControl_Writer writer ( XSDRAW::Session(), Standard_True );
+  IGESCAFControl_Writer writer ( XSDRAW::Session() );
   if (argc == 4) {
     Standard_Boolean mode = Standard_True;
     for ( Standard_Integer i = 0; argv[3][i] ; i++ ) 
@@ -293,7 +289,7 @@ static Standard_Integer ReadStep (Draw_Interpretor& di, Standard_Integer argc, c
   DeclareAndCast(STEPControl_Controller,ctl,XSDRAW::Controller());
   if (ctl.IsNull()) XSDRAW::SetNorm("STEP");
 
-  STEPCAFControl_Reader reader ( XSDRAW::Session(),Standard_True);
+  STEPCAFControl_Reader reader ( XSDRAW::Session(), Standard_True );
   
   if (argc == 4) {
     Standard_Boolean mode = Standard_True;
@@ -312,11 +308,10 @@ static Standard_Integer ReadStep (Draw_Interpretor& di, Standard_Integer argc, c
   Standard_Boolean modfic = XSDRAW::FileAndVar (argv[2],argv[1],"STEP",fnom,rnom);
   if (modfic) di<<" File STEP to read : "<<fnom.ToCString()<<"\n";
   else        di<<" Model taken from the session : "<<fnom.ToCString()<<"\n";
-//  di<<" -- Names of variables BREP-DRAW prefixed by : "<<rnom<<"\n";
-  IFSelect_ReturnStatus readstat = IFSelect_RetVoid;
+  Interface_ReturnStatus readstat = Interface_RetVoid;
   if (modfic) readstat = reader.ReadFile (fnom.ToCString());
-  else  if (XSDRAW::Session()->NbStartingEntities() > 0) readstat = IFSelect_RetDone;
-  if (readstat != IFSelect_RetDone) {
+  else  if (XSDRAW::Session()->NbStartingEntities() > 0) readstat = Interface_RetDone;
+  if (readstat != Interface_RetDone) {
     if (modfic) di<<"Could not read file "<<fnom.ToCString()<<" , abandon\n";
     else di<<"No model loaded\n";
     return 1;
@@ -329,7 +324,6 @@ static Standard_Integer ReadStep (Draw_Interpretor& di, Standard_Integer argc, c
     TDataStd_Name::Set(doc->GetData()->Root(),argv[1]);  
     Handle(DDocStd_DrawDocument) DD = new DDocStd_DrawDocument(doc);  
     Draw::Set(argv[1],DD);       
-//     di << "Document saved with name " << argv[1];
   }
   if ( ! reader.Transfer ( doc ) ) {
     di << "Cannot read any relevant data from the STEP file\n";
@@ -341,8 +335,8 @@ static Standard_Integer ReadStep (Draw_Interpretor& di, Standard_Integer argc, c
   di << "Document saved with name " << argv[1];
 
   Handle(STEPCAFControl_DictionaryOfExternFile) DicFile = reader.ExternFiles();
-  FillDicWS( DicFile );
-  AddWS ( fnom , XSDRAW::Session() );
+  gSessions.AddWS( DicFile );
+  gSessions.AddWS( fnom, XSDRAW::Session() );
   
   return 0;
 }
@@ -443,15 +437,15 @@ static Standard_Integer WriteStep (Draw_Interpretor& di, Standard_Integer argc, 
   
 
   di << "Writing STEP file " << argv[2] << "\n";
-  IFSelect_ReturnStatus stat = writer.Write(argv[2]);
+  Interface_ReturnStatus stat = writer.Write(argv[2]);
   switch (stat) {
-    case IFSelect_RetVoid : di<<"No file written\n"; break;
-    case IFSelect_RetDone : {
+    case Interface_RetVoid : di<<"No file written\n"; break;
+    case Interface_RetDone : {
       di<<"File "<<argv[2]<<" written\n";
 
       Handle(STEPCAFControl_DictionaryOfExternFile) DicFile = writer.ExternFiles();
-      FillDicWS( DicFile );
-      AddWS( argv[2], XSDRAW::Session() );
+      gSessions.AddWS( DicFile );
+      gSessions.AddWS( argv[2], XSDRAW::Session() );
       break;
     }
     default : di<<"Error on writing file\n"; break;
@@ -525,5 +519,4 @@ void XDEDRAW_Common::InitCommands(Draw_Interpretor& di) {
 
   di.Add("XExpand", "XExpand Doc recursively(0/1) or XExpand Doc recursively(0/1) label1 abel2 ..."  
           "or XExpand Doc recursively(0/1) shape1 shape2 ...",__FILE__, Expand, g);
-
 }

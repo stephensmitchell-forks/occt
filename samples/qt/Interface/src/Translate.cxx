@@ -407,7 +407,7 @@ Handle(TopTools_HSequenceOfShape) Translate::importIGES( const QString& file )
     IGESControl_Reader Reader;
     int status = Reader.ReadFile(aFilePath.ToCString() );
 
-    if ( status == IFSelect_RetDone )
+    if ( status == Interface_RetDone )
     {
         aSequence = new TopTools_HSequenceOfShape();
         Reader.TransferRoots();
@@ -422,8 +422,8 @@ Handle(TopTools_HSequenceOfShape) Translate::importSTEP( const QString& file )
 	Handle(TopTools_HSequenceOfShape) aSequence;
   TCollection_AsciiString  aFilePath = file.toUtf8().data();
 	STEPControl_Reader aReader;
-	IFSelect_ReturnStatus status = aReader.ReadFile( aFilePath.ToCString() );
-	if ( status == IFSelect_RetDone )
+	Interface_ReturnStatus status = aReader.ReadFile( aFilePath.ToCString() );
+	if ( status == Interface_RetDone )
     {
 	    //Interface_TraceFile::SetDefault();
 	    bool failsonly = false;
@@ -485,7 +485,7 @@ bool Translate::exportSTEP( const QString& file, const Handle(TopTools_HSequence
     if ( type < 0 )
         return false;
     
-    IFSelect_ReturnStatus status;
+    Interface_ReturnStatus status;
 
     if ( type == STEPControl_FacetedBrep && !checkFacetedBrep( shapes ) )
     {
@@ -497,7 +497,7 @@ bool Translate::exportSTEP( const QString& file, const Handle(TopTools_HSequence
 	for ( int i = 1; i <= shapes->Length(); i++ )
     {
 		status = writer.Transfer( shapes->Value( i ), type );
-        if ( status != IFSelect_RetDone )
+        if ( status != Interface_RetDone )
             return false;
     }
 
@@ -505,17 +505,17 @@ bool Translate::exportSTEP( const QString& file, const Handle(TopTools_HSequence
 
     switch ( status )
     {
-    case IFSelect_RetError:
+    case Interface_RetError:
         myInfo = QObject::tr( "INF_DATA_ERROR" );
         break;
-    case IFSelect_RetFail:
+    case Interface_RetFail:
         myInfo = QObject::tr( "INF_WRITING_ERROR" );
         break;
-    case IFSelect_RetVoid:
+    case Interface_RetVoid:
         myInfo = QObject::tr( "INF_NOTHING_ERROR" );
         break;
     }
-    return status == IFSelect_RetDone;
+    return status == Interface_RetDone;
 }
 
 bool Translate::exportSTL( const QString& file, const Handle(TopTools_HSequenceOfShape)& shapes )

@@ -10,7 +10,7 @@
 #endif // _MSC_VER >= 1000
 
 #include <Storage_Error.hxx>
-#include <IFSelect_ReturnStatus.hxx>
+#include <Interface_ReturnStatus.hxx>
 #include <STEPControl_StepModelType.hxx>
 #include <Quantity_HArray1OfColor.hxx>
 #include <TColStd_HArray1OfReal.hxx>
@@ -61,20 +61,19 @@ public :
 
     static void ReadSTEP(const Handle(AIS_InteractiveContext)& anInteractiveContext);
 	static Handle(TopTools_HSequenceOfShape) ReadSTEP(); // not by reference --> the sequence is created here !!
-    static IFSelect_ReturnStatus ReadSTEP(const Standard_CString& aFileName,
-                                          Handle(TopTools_HSequenceOfShape)& aHSequenceOfShape);
+    static Interface_ReturnStatus ReadSTEP(const Standard_CString& aFileName,
+                                           Handle(TopTools_HSequenceOfShape)& aHSequenceOfShape);
     //----------------------------------------------------------------------
     static void SaveSTEP(const Handle(AIS_InteractiveContext)& anInteractiveContext);
-    static IFSelect_ReturnStatus SaveSTEP(const Handle(TopTools_HSequenceOfShape)& aHSequenceOfShape);
-    static IFSelect_ReturnStatus SaveSTEP(const Standard_CString& aFileName,
-                                          const Handle(TopTools_HSequenceOfShape)& aHSequenceOfShape,
-
-                                          const STEPControl_StepModelType aValue = STEPControl_AsIs);
+    static Interface_ReturnStatus SaveSTEP(const Handle(TopTools_HSequenceOfShape)& aHSequenceOfShape);
+    static Interface_ReturnStatus SaveSTEP(const Standard_CString& aFileName,
+                                           const Handle(TopTools_HSequenceOfShape)& aHSequenceOfShape,
+                                           const STEPControl_StepModelType aValue = STEPControl_AsIs);
 
     static void ReadSAT(const Handle(AIS_InteractiveContext)& anInteractiveContext);
 	static Handle(TopTools_HSequenceOfShape) ReadSAT(); // not by reference --> the sequence is created here !!
-	static IFSelect_ReturnStatus ReadSAT(const Standard_CString& aFileName,
-                                         Handle(TopTools_HSequenceOfShape)& aHSequenceOfShape);	
+	static Interface_ReturnStatus ReadSAT(const Standard_CString& aFileName,
+                                          Handle(TopTools_HSequenceOfShape)& aHSequenceOfShape);
     //----------------------------------------------------------------------
 	static Standard_Boolean SaveSTL(const Standard_CString& aFileName,
                                           const Handle(TopTools_HSequenceOfShape)& aHSequenceOfShape,

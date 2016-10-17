@@ -17,7 +17,7 @@
 #include <Draw_Appli.hxx>
 #include <Draw_Interpretor.hxx>
 #include <Draw_ProgressIndicator.hxx>
-#include <IFSelect_SessionPilot.hxx>
+#include <XSDRAW_SessionPilot.hxx>
 #include <Interface_InterfaceModel.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_Static.hxx>
@@ -43,8 +43,7 @@
 #include <Transfer_TransientProcess.hxx>
 #include <TransferBRep_ShapeMapper.hxx>
 #include <XSControl_Controller.hxx>
-#include <XSControl_TransferReader.hxx>
-#include <XSControl_WorkSession.hxx>
+#include <IFSelect_WorkSession.hxx>
 #include <XSDRAW.hxx>
 #include <XSDRAWSTEP.hxx>
 #include <XSDRAWSTEP_Activator.hxx>
@@ -72,7 +71,6 @@ static void cleanpilot ()
 #include <IFSelect_SelectSignature.hxx>
 #include <IFSelect_SelectModelEntities.hxx>
 #include <IFSelect_SelectModelRoots.hxx>
-#include <IFSelect_EditForm.hxx>
 #include <StepAP214.hxx>
 #include <StepAP214_Protocol.hxx>
 #include <STEPSelections_SelectDerived.hxx>
@@ -81,9 +79,6 @@ static void cleanpilot ()
 #include <STEPSelections_SelectGSCurves.hxx>
 #include <STEPSelections_SelectAssembly.hxx>
 #include <STEPSelections_SelectForTransfer.hxx>
-#include <XSDRAWSTEP_EditHeader.hxx>
-#include <STEPEdit_EditContext.hxx>
-#include <STEPEdit_EditSDR.hxx>
   
 //! Returns a SignType fit for STEP (creates the first time)
 static Handle(IFSelect_Signature) SignType()
@@ -131,6 +126,10 @@ static Handle(IFSelect_SelectSignature) NewSelectShapeRepr()
   return sel;
 }
 
+#include <XSDRAW_SessionItems.hxx>
+
+static XSDRAW_SessionItems gSessionItems;
+
 void XSDRAWSTEP::Init ()
 {
   Handle(XSDRAWSTEP_Activator) stepact = new XSDRAWSTEP_Activator;
@@ -143,64 +142,51 @@ void XSDRAWSTEP::Init ()
     gInit = 1;
 
     //   ---  SELECTIONS, SIGNATURES, COMPTEURS, EDITEURS
-    DeclareAndCast(IFSelect_Selection,xmr,aCntl->SessionItem("xst-model-roots"));
+    DeclareAndCast(IFSelect_Selection,xmr,gSessionItems.GetItem("xst-model-roots"));
     if (!xmr.IsNull()) {
       Handle(IFSelect_Signature) sty = SignType();
-      aCntl->AddSessionItem (sty,"step-type");
+      gSessionItems.AddItem (sty,"step-type");
       Handle(IFSelect_SignCounter) tys = new IFSelect_SignCounter(sty,Standard_False,Standard_True);
-      aCntl->AddSessionItem (tys,"step-types");
+      gSessionItems.AddItem (tys,"step-types");
 
       //pdn S4133 18.02.99
-      aCntl->AddSessionItem (new IFSelect_SignAncestor(),"xst-derived");
+      gSessionItems.AddItem (new IFSelect_SignAncestor(),"xst-derived");
 
       Handle(STEPSelections_SelectDerived) stdvar = new STEPSelections_SelectDerived();
       stdvar->SetProtocol(StepAP214::Protocol());
-      aCntl->AddSessionItem (stdvar,"step-derived");
+      gSessionItems.AddItem (stdvar,"step-derived");
     
       Handle(IFSelect_SelectSignature) selsdr = NewSelectSDR();
       selsdr->SetInput (xmr);
-      aCntl->AddSessionItem (selsdr,"step-shape-def-repr");
+      gSessionItems.AddItem (selsdr,"step-shape-def-repr");
 
-      aCntl->AddSessionItem (NewSelectPlacedItem(),"step-placed-items");
+      gSessionItems.AddItem (NewSelectPlacedItem(),"step-placed-items");
       // input deja pret avec ModelAll
-      aCntl->AddSessionItem (NewSelectShapeRepr(),"step-shape-repr");
+      gSessionItems.AddItem (NewSelectShapeRepr(),"step-shape-repr");
     }
   
     //pdn
     Handle(STEPSelections_SelectFaces) stfaces = new STEPSelections_SelectFaces;
     stfaces->SetInput (xmr);
-    aCntl->AddSessionItem (stfaces,"step-faces");
+    gSessionItems.AddItem (stfaces,"step-faces");
   
     Handle(STEPSelections_SelectInstances) stinst = new STEPSelections_SelectInstances;
-    aCntl->AddSessionItem (stinst,"step-instances");
+    gSessionItems.AddItem (stinst,"step-instances");
   
     Handle(STEPSelections_SelectGSCurves) stcurves = new STEPSelections_SelectGSCurves;
     stcurves->SetInput (xmr);
-    aCntl->AddSessionItem (stcurves,"step-GS-curves");
+    gSessionItems.AddItem (stcurves,"step-GS-curves");
   
     Handle(STEPSelections_SelectAssembly) assembly = new STEPSelections_SelectAssembly;
     assembly->SetInput (xmr);
-    aCntl->AddSessionItem (assembly,"step-assembly");
-  
-    Handle(XSDRAWSTEP_EditHeader) edhead = new XSDRAWSTEP_EditHeader;
-    Handle(IFSelect_EditForm) edheadf = new IFSelect_EditForm (edhead,Standard_False,Standard_True,"Step Header");
-    aCntl->AddSessionItem (edhead,"step-header-edit");
-    aCntl->AddSessionItem (edheadf,"step-header");
-
-    Handle(STEPEdit_EditContext) edctx = new STEPEdit_EditContext;
-    Handle(IFSelect_EditForm) edctxf = new IFSelect_EditForm (edctx,Standard_False,Standard_True,"STEP Product Definition Context");
-    aCntl->AddSessionItem (edctx,"step-context-edit");
-    aCntl->AddSessionItem (edctxf,"step-context");
-
-    Handle(STEPEdit_EditSDR) edsdr = new STEPEdit_EditSDR;
-    Handle(IFSelect_EditForm) edsdrf = new IFSelect_EditForm (edsdr,Standard_False,Standard_True,"STEP Product Data (SDR)");
-    aCntl->AddSessionItem (edsdr,"step-SDR-edit");
-    aCntl->AddSessionItem (edsdrf,"step-SDR-data");
+    gSessionItems.AddItem (assembly,"step-assembly");
   }
 
   XSDRAW::SetController(aCntl);
 
-  Handle(XSControl_WorkSession) WS = XSDRAW::Session();
+  const Handle(IFSelect_WorkSession) &WS = XSDRAW::Session();
+
+  gSessionItems.Apply (WS);
 
   Handle(IFSelect_SelectModelRoots) slr;
   Handle(Standard_Transient) slr1 = WS->NamedItem("xst-model-roots");
@@ -211,8 +197,7 @@ void XSDRAWSTEP::Init ()
     WS->AddNamedItem ("xst-model-roots",slr);
   }
 
-  Handle(STEPSelections_SelectForTransfer) st1= new STEPSelections_SelectForTransfer;
-  st1->SetReader (WS->TransferReader());
+  Handle(STEPSelections_SelectForTransfer) st1 = new STEPSelections_SelectForTransfer(WS->ReaderProcess());
   WS->AddNamedItem ("xst-transferrable-roots",st1);
 
   if (!slr.IsNull()) {
@@ -256,21 +241,6 @@ void XSDRAWSTEP::Init ()
   Handle(STEPSelections_SelectAssembly) assembly = new STEPSelections_SelectAssembly;
   assembly->SetInput (slr);
   WS->AddNamedItem ("step-assembly",assembly);
-  
-  Handle(XSDRAWSTEP_EditHeader) edhead = new XSDRAWSTEP_EditHeader;
-  Handle(IFSelect_EditForm) edheadf = new IFSelect_EditForm (edhead,Standard_False,Standard_True,"Step Header");
-  WS->AddNamedItem ("step-header-edit",edhead);
-  WS->AddNamedItem ("step-header",edheadf);
-
-  Handle(STEPEdit_EditContext) edctx = new STEPEdit_EditContext;
-  Handle(IFSelect_EditForm) edctxf = new IFSelect_EditForm (edctx,Standard_False,Standard_True,"STEP Product Definition Context");
-  WS->AddNamedItem ("step-context-edit",edctx);
-  WS->AddNamedItem ("step-context",edctxf);
-
-  Handle(STEPEdit_EditSDR) edsdr = new STEPEdit_EditSDR;
-  Handle(IFSelect_EditForm) edsdrf = new IFSelect_EditForm (edsdr,Standard_False,Standard_True,"STEP Product Data (SDR)");
-  WS->AddNamedItem ("step-SDR-edit",edsdr);
-  WS->AddNamedItem ("step-SDR-data",edsdrf);
 
   atexit (cleanpilot);
 }
@@ -298,14 +268,16 @@ static Standard_Integer stepread (Draw_Interpretor& di/*theCommands*/, Standard_
   progress->SetScale ( 0, 100, 1 );
   progress->Show();
 
-  STEPControl_Reader sr (XSDRAW::Session(),Standard_False);
+  const Handle(IFSelect_WorkSession) &WS = XSDRAW::Session();
+
+  STEPControl_Reader sr (WS,Standard_False);
   TCollection_AsciiString fnom,rnom;
   Standard_Boolean modfic = XSDRAW::FileAndVar
     (argv[1],argv[2],"STEP",fnom,rnom);
   if (modfic) di<<" File STEP to read : "<<fnom.ToCString()<<"\n";
   else        di<<" Model taken from the session : "<<fnom.ToCString()<<"\n";
   di<<" -- Names of variables BREP-DRAW prefixed by : "<<rnom.ToCString()<<"\n";
-  IFSelect_ReturnStatus readstat = IFSelect_RetVoid;
+  Interface_ReturnStatus readstat = Interface_RetVoid;
 
   progress->NewScope ( 20, "Loading" ); // On average loading takes 20% 
   progress->Show();
@@ -336,16 +308,16 @@ static Standard_Integer stepread (Draw_Interpretor& di/*theCommands*/, Standard_
   else
     cout<<"Reduced model for translation without additional info will be used \n"<<flush;
   
-  sr.WS()->SetModeStat(aFullMode);
+  WS->SetModeStat(aFullMode);
 
 
   if (modfic) readstat = sr.ReadFile (fnom.ToCString());
-  else  if (XSDRAW::Session()->NbStartingEntities() > 0) readstat = IFSelect_RetDone;
+  else  if (XSDRAW::Session()->NbStartingEntities() > 0) readstat = Interface_RetDone;
 
   progress->EndScope();
   progress->Show();
 
-  if (readstat != IFSelect_RetDone) {
+  if (readstat != Interface_RetDone) {
     if (modfic) di<<"Could not read file "<<fnom.ToCString()<<" , abandon\n";
     else di<<"No model loaded\n";
     return 1;
@@ -378,7 +350,7 @@ static Standard_Integer stepread (Draw_Interpretor& di/*theCommands*/, Standard_
 
       progress->NewScope ( 80, "Translation" );
       progress->Show();
-      sr.WS()->TransferReader()->TransientProcess()->SetProgress ( progress );
+      WS->ReaderProcess()->SetProgress ( progress );
 
       if (!sr.TransferRoot (num)) di<<"Transfer root n0 "<<num<<" : no result\n";
       else {
@@ -390,13 +362,13 @@ static Standard_Integer stepread (Draw_Interpretor& di/*theCommands*/, Standard_
         DBRep::Set (shname,sh);
       }
 
-      sr.WS()->TransferReader()->TransientProcess()->SetProgress ( 0 );
+      WS->ReaderProcess()->SetProgress ( 0 );
       progress->EndScope();
       progress->Show();
     }
     else if (modepri == 3) {
       cout<<"Entity : "<<flush;  num = XSDRAW::GetEntityNumber();
-      if (!sr.TransferOne (num)) di<<"Transfer entity n0 "<<num<<" : no result\n";
+      if (!sr.TransferEntity (WS->StartingEntity(num))) di<<"Transfer entity n0 "<<num<<" : no result\n";
       else {
         nbs = sr.NbShapes();
         char shname[30];  Sprintf (shname,"%s_%d",rnom.ToCString(),num);
@@ -440,13 +412,13 @@ static Standard_Integer stepread (Draw_Interpretor& di/*theCommands*/, Standard_
 
       progress->NewScope ( 80, "Translation" );
       progress->Show();
-      sr.WS()->TransferReader()->TransientProcess()->SetProgress ( progress );
+      WS->ReaderProcess()->SetProgress ( progress );
 
       Message_ProgressSentry PSentry ( progress, "Root", 0, nbl, 1 );
       for (ill = 1; ill <= nbl && PSentry.More(); ill ++, PSentry.Next()) {
         num = sr.Model()->Number(list->Value(ill));
         if (num == 0) continue;
-        if (!sr.TransferOne(num)) di<<"Transfer entity n0 "<<num<<" : no result\n";
+        if (!sr.TransferEntity (WS->StartingEntity(num))) di<<"Transfer entity n0 "<<num<<" : no result\n";
         else {
           nbs = sr.NbShapes();
           char shname[30];  Sprintf (shname,"%s_%d",rnom.ToCString(),nbs);
@@ -456,7 +428,7 @@ static Standard_Integer stepread (Draw_Interpretor& di/*theCommands*/, Standard_
           DBRep::Set (shname,sh);
         }
       }
-      sr.WS()->TransferReader()->TransientProcess()->SetProgress ( 0 );
+      WS->ReaderProcess()->SetProgress ( 0 );
       progress->EndScope();
       progress->Show();
     }
@@ -479,13 +451,13 @@ static Standard_Integer testread (Draw_Interpretor& di, Standard_Integer argc, c
     }
   STEPControl_Reader Reader;
   Standard_CString filename = argv[1];
-  IFSelect_ReturnStatus readstat = Reader.ReadFile(filename);
+  Interface_ReturnStatus readstat = Reader.ReadFile(filename);
   di<<"Status from reading STEP file "<<filename<<" : ";  
   switch(readstat) {                                                              
-    case IFSelect_RetVoid  : { di<<"empty file\n"; return 1; }            
-    case IFSelect_RetDone  : { di<<"file read\n";    break; }             
-    case IFSelect_RetError : { di<<"file not found\n";   return 1; }      
-    case IFSelect_RetFail  : { di<<"error during read\n";  return 1; }    
+    case Interface_RetVoid  : { di<<"empty file\n"; return 1; }            
+    case Interface_RetDone  : { di<<"file read\n";    break; }             
+    case Interface_RetError : { di<<"file not found\n";   return 1; }      
+    case Interface_RetFail  : { di<<"error during read\n";  return 1; }    
     default  :  { di<<"failure\n";   return 1; }                          
   }  
   Reader.TransferRoots();
@@ -565,24 +537,18 @@ static Standard_Integer stepwrite (Draw_Interpretor& di, Standard_Integer argc, 
     default :  di<<"1st arg = mode, incorrect [give fsmw]\n"; return 1;
   }
 
-  //:k8 abv 6 Jan 98: using parameter for writing mode (assemblies/shapes)
-  Handle(STEPControl_ActorWrite) ActWrite = 
-    Handle(STEPControl_ActorWrite)::DownCast ( ctl->ActorWrite() );
-  if ( ! ActWrite.IsNull() ) 
-    ActWrite->SetGroupMode (Interface_Static::IVal("write.step.assembly"));
-
   TopoDS_Shape shape = DBRep::Get(argv[2]);
   STEPControl_Writer sw (XSDRAW::Session(),Standard_False);
-  Handle(Interface_InterfaceModel) stepmodel = sw.Model();
+  Handle(StepData_StepModel) stepmodel = sw.Model();
   Standard_Integer nbavant = (stepmodel.IsNull() ? 0 : stepmodel->NbEntities());
 
   Handle(Draw_ProgressIndicator) progress = new Draw_ProgressIndicator ( di, 1 );
   progress->NewScope(90,"Translating");
   progress->Show();
-  sw.WS()->TransferWriter()->FinderProcess()->SetProgress(progress);
+  sw.WS()->WriterProcess()->SetProgress(progress);
 
   Standard_Integer stat = sw.Transfer (shape,mode);
-  if (stat == IFSelect_RetDone)
+  if (stat == Interface_RetDone)
   {
     di << "Translation: OK\n";
   } 
@@ -591,7 +557,7 @@ static Standard_Integer stepwrite (Draw_Interpretor& di, Standard_Integer argc, 
     di << "Error: translation failed, status = " << stat << "\n";
   }
 
-  sw.WS()->TransferWriter()->FinderProcess()->SetProgress(0);
+  sw.WS()->WriterProcess()->SetProgress(0);
   progress->EndScope();
   progress->Show();
   progress->NewScope(10,"Writing");
@@ -605,16 +571,16 @@ static Standard_Integer stepwrite (Draw_Interpretor& di, Standard_Integer argc, 
   if (nbapres == 0) { di<<"No data to write\n"; return 0; }
 
   if (argc <= 3) {
-    di<<" Now, to write a file, command : writeall filename\n";
+    di<<" Now, the model is ready\n";
     return 0;
   }
 
   const char *nomfic = argv[3];
   stat = sw.Write(nomfic);
   switch (stat) {
-  case IFSelect_RetVoid : di<<"Error: No file written\n"; break;
-    case IFSelect_RetDone : di<<"File "<<nomfic<<" written\n"; break;
-    case IFSelect_RetStop : di<<"Error on writing file: no space on disk or destination is write protected\n"; break;
+  case Interface_RetVoid : di<<"Error: No file written\n"; break;
+    case Interface_RetDone : di<<"File "<<nomfic<<" written\n"; break;
+    case Interface_RetStop : di<<"Error on writing file: no space on disk or destination is write protected\n"; break;
     default : di<<"Error: File "<<nomfic<<" written with fail messages\n"; break;
   }
 
@@ -638,9 +604,9 @@ static Standard_Integer testwrite (Draw_Interpretor& di, Standard_Integer argc, 
   STEPControl_Writer Writer;
   Standard_CString filename = argv[1];
   TopoDS_Shape shape = DBRep::Get(argv[2]); 
-  IFSelect_ReturnStatus stat = Writer.Transfer(shape,STEPControl_AsIs);
+  Interface_ReturnStatus stat = Writer.Transfer(shape,STEPControl_AsIs);
   stat = Writer.Write(filename);
-  if(stat != IFSelect_RetDone){
+  if(stat != Interface_RetDone){
     di<<"Error on writing file\n";                                                               
     return 1; 
   }
@@ -656,9 +622,8 @@ static Standard_Integer testwrite (Draw_Interpretor& di, Standard_Integer argc, 
 static Standard_Integer countexpected
   (Draw_Interpretor& di, Standard_Integer /*argc*/, const char** /*argv*/)
 {
-  Handle(IFSelect_SessionPilot) pilot = XSDRAW::Pilot();
-  Handle(IFSelect_WorkSession) WS = pilot->Session();
-   const Interface_Graph& graph = WS->Graph();
+  const Handle(IFSelect_WorkSession) &WS = XSDRAW::Session();
+  const Interface_Graph& graph = WS->Graph();
   
   Handle(TColStd_HSequenceOfTransient) roots = WS->GiveList("xst-transferrable-roots", "");
   STEPSelections_Counter cnt;
@@ -685,9 +650,7 @@ static Standard_Integer countexpected
 static Standard_Integer dumpassembly
   (Draw_Interpretor& /*di*/, Standard_Integer /*argc*/, const char** /*argv*/)
 {
-  Handle(IFSelect_SessionPilot) pilot = XSDRAW::Pilot();
-  Handle(IFSelect_WorkSession) WS = pilot->Session();
-  const Interface_Graph& graph = WS->Graph();
+  const Interface_Graph& graph = XSDRAW::Session()->Graph();
   
   STEPSelections_AssemblyExplorer exp(graph);
   exp.Dump(cout);
@@ -704,10 +667,10 @@ static Standard_Integer stepfileunits (Draw_Interpretor& di, Standard_Integer ar
   }
   STEPControl_Reader aStepReader;
   
-  IFSelect_ReturnStatus readstat = IFSelect_RetVoid;
+  Interface_ReturnStatus readstat = Interface_RetVoid;
   readstat = aStepReader.ReadFile (argv[1]);
  
-  if (readstat != IFSelect_RetDone) {
+  if (readstat != Interface_RetDone) {
     
     di<<"No model loaded\n";
     return 1;

@@ -17,34 +17,16 @@
 #ifndef _XSControl_Controller_HeaderFile
 #define _XSControl_Controller_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
-#include <TCollection_AsciiString.hxx>
-#include <TColStd_SequenceOfTransient.hxx>
-#include <TColStd_HSequenceOfHAsciiString.hxx>
-#include <TColStd_SequenceOfInteger.hxx>
-#include <Interface_HArray1OfHAsciiString.hxx>
 #include <MMgt_TShared.hxx>
+
 #include <NCollection_Vector.hxx>
-#include <IFSelect_ReturnStatus.hxx>
+#include <TCollection_AsciiString.hxx>
 #include <Transfer_ActorOfTransientProcess.hxx>
 #include <Transfer_ActorOfFinderProcess.hxx>
-class IFSelect_WorkLibrary;
 class Interface_Protocol;
-class IFSelect_Signature;
-class Dico_DictionaryOfTransient;
-class Standard_DomainError;
-class XSControl_WorkSession;
 class Interface_InterfaceModel;
-class Standard_Transient;
-class Transfer_FinderProcess;
-class TopoDS_Shape;
-class Interface_CheckIterator;
-
-
-class XSControl_Controller;
-DEFINE_STANDARD_HANDLE(XSControl_Controller, MMgt_TShared)
+class Interface_HArray1OfHAsciiString;
+class XSControl_WorkSession;
 
 //! This class allows a general X-STEP engine to run generic
 //! functions on any interface norm, in the same way. It includes
@@ -53,11 +35,10 @@ DEFINE_STANDARD_HANDLE(XSControl_Controller, MMgt_TShared)
 //!
 //! The important point is that a given X-STEP Controller is
 //! attached to a given couple made of an Interface Norm (such as
-//! IGES-5.1) and an application data model (CasCade Shapes for
-//! instance).
+//! IGES-5.1) and an application data model (OCCT shapes, for instance).
 //!
-//! Finally, Controller can be gathered in a general dictionary then
-//! retreived later by a general call (method Recorded)
+//! Finally, a controller can be strored in a general dictionary
+//! then retreived later by a static method Recorded.
 //!
 //! It does not manage the produced data, but the Actors make the
 //! link between the norm and the application
@@ -65,36 +46,35 @@ class XSControl_Controller : public MMgt_TShared
 {
  public:
   
-  //! Changes names
-  //! if a name is empty, the formerly set one remains
-  //! Remark : Does not call Record or AutoRecord
-  Standard_EXPORT void SetNames (const Standard_CString theLongName, const Standard_CString theShortName);
-  
-  //! Records <me> is a general dictionary under Short and Long
-  //! Names (see method Name)
-  void AutoRecord() const
-  {
-    Record (myShortName.ToCString());
-    Record (myLongName.ToCString());
-  }
+  //! Records a controller attached to its name
+  Standard_EXPORT void AutoRecord () const;
   
   //! Returns the Controller attached to a given name
   //! Returns a Null Handle if <name> is unknown
-  Standard_EXPORT static Handle(XSControl_Controller) Recorded (const Standard_CString name);
+  Standard_EXPORT static Handle(XSControl_Controller) Recorded (const Standard_CString theName);
   
-  //! Returns a name, as given when initializing :
-  //! rsc = False (D) : True Name attached to the Norm (long name)
-  //! rsc = True : Name of the ressource set (i.e. short name)
-  Standard_CString Name (const Standard_Boolean rsc = Standard_False) const
-  { return (rsc ? myShortName.ToCString() : myLongName.ToCString()); }
+  //! Returns a name, as given when initializing
+  Standard_CString Name () const { return myName.ToCString(); }
   
   //! Returns the Protocol attached to the Norm (from field)
   const Handle(Interface_Protocol) & Protocol () const { return myAdaptorProtocol; }
   
-  //! Returns the WorkLibrary attached to the Norm. Remark that it
-  //! has to be in phase with the Protocol  (read from field)
-  const Handle(IFSelect_WorkLibrary) & WorkLibrary() const
-  { return myAdaptorLibrary; }
+  //! Gives the way to Read a File and transfer it to a Model
+  //! <mod> is the resulting Model, which has to be created by this
+  //! method. In case of error, <mod> must be returned Null
+  //! Return value is a status with free values.
+  //! Simply, 0 is for "Execution OK"
+  //! The Protocol can be used to work (e.g. create the Model, read
+  //! and recognize the Entities)
+  Standard_EXPORT virtual Standard_Integer ReadFile (const Standard_CString theFileName, Handle(Interface_InterfaceModel)& theModel) const = 0;
+  
+  //! Gives the way to Write a File from a Model.
+  //! <ctx> contains all necessary informations : the model, the
+  //! protocol, the file name, and the list of File Modifiers to be
+  //! applied, also with restricted list of selected entities for
+  //! each one, if required.
+  //! In return, it brings the produced check-list
+  Standard_EXPORT virtual Standard_Boolean WriteFile (const Standard_CString theFileName, const Handle(Interface_InterfaceModel)& theModel, Interface_CheckIterator& theChecks) const = 0;
   
   //! Creates a new empty Model ready to receive data of the Norm
   //! Used to write data from Imagine to an interface file
@@ -107,87 +87,56 @@ class XSControl_Controller : public MMgt_TShared
   
   //! Returns the Actor for Write attached to the pair (norm,appli)
   //! Read from field. Can be redefined
-  Standard_EXPORT virtual Handle(Transfer_ActorOfFinderProcess) ActorWrite() const;
-  
-  //! Sets mininum and maximum values for modetrans (write)
-  //! Erases formerly recorded bounds and values
-  //! Actually only for shape
-  //! Then, for each value a little help can be attached
-  Standard_EXPORT void SetModeWrite (const Standard_Integer modemin, const Standard_Integer modemax, const Standard_Boolean shape = Standard_True);
-  
-  //! Attaches a short line of help to a value of modetrans (write)
-  Standard_EXPORT void SetModeWriteHelp (const Standard_Integer modetrans, const Standard_CString help, const Standard_Boolean shape = Standard_True);
-  
-  //! Returns recorded min and max values for modetrans (write)
-  //! Actually only for shapes
-  //! Returns True if bounds are set, False else (then, free value)
-  Standard_EXPORT Standard_Boolean ModeWriteBounds (Standard_Integer& modemin, Standard_Integer& modemax, const Standard_Boolean shape = Standard_True) const;
-  
-  //! Tells if a value of <modetrans> is a good value(within bounds)
-  //! Actually only for shapes
-  Standard_EXPORT Standard_Boolean IsModeWrite (const Standard_Integer modetrans, const Standard_Boolean shape = Standard_True) const;
-  
-  //! Returns the help line recorded for a value of modetrans
-  //! empty if help not defined or not within bounds or if values are free
-  Standard_EXPORT Standard_CString ModeWriteHelp (const Standard_Integer modetrans, const Standard_Boolean shape = Standard_True) const;
-  
-  //! Takes one Shape and transfers it to an
-  //! InterfaceModel (already created, e.g. by NewModel)
-  //! Default uses ActorWrite; can be redefined as necessary
-  //! Returned value is a status, as follows :
-  //! Done  OK ,  Void : No Result ,  Fail : Fail (e.g. exception)
-  //! Error : bad conditions , bad model or null model
-  Standard_EXPORT virtual IFSelect_ReturnStatus TransferWriteShape (const TopoDS_Shape& shape, const Handle(Transfer_FinderProcess)& FP, const Handle(Interface_InterfaceModel)& model, const Standard_Integer modetrans = 0) const;
-  
-  //! Records a Session Item, to be added for customisation of the Work Session.
-  //! It must have a specific name.
-  //! <setapplied> is used if <item> is a GeneralModifier, to decide
-  //! If set to true, <item> will be applied to the hook list "send".
-  //! Else, it is not applied to any hook list.
-  //! Remark : this method is to be called at Create time,
-  //! the recorded items will be used by Customise
-  //! Warning : if <name> conflicts, the last recorded item is kept
-  Standard_EXPORT void AddSessionItem (const Handle(Standard_Transient)& theItem, const Standard_CString theName, const Standard_Boolean toApply = Standard_False);
-  
-  //! Returns an item given its name to record in a Session
-  //! If <name> is unknown, returns a Null Handle
-  Standard_EXPORT Handle(Standard_Transient) SessionItem (const Standard_CString theName) const;
+  //const Handle(Transfer_ActorOfFinderProcess) & ActorWrite() const { return myAdaptorWrite; }
+  Standard_EXPORT virtual Handle(Transfer_ActorOfFinderProcess) NewActorWrite() const = 0;
   
   //! Customises a WorkSession, by adding to it the recorded items (by AddSessionItem)
   Standard_EXPORT virtual void Customise (Handle(XSControl_WorkSession)& WS);
   
-  const Handle(Dico_DictionaryOfTransient) & AdaptorSession() const { return myAdaptorSession; }
+  //! Gives the way of dumping an entity under a form comprehensive
+  //! for each norm. <model> helps to identify, number ... entities.
+  //! <level> is to be interpreted for each norm (because of the
+  //! formats which can be very different)
+  Standard_EXPORT virtual void DumpEntity (const Handle(Interface_InterfaceModel)& model, const Handle(Interface_Protocol)& protocol, const Handle(Standard_Transient)& entity, const Handle(Message_Messenger)& S, const Standard_Integer level) const = 0;
+  
+  //! Calls deferred DumpEntity with the recorded default level
+  Standard_EXPORT void DumpEntity (const Handle(Interface_InterfaceModel)& model, const Handle(Interface_Protocol)& protocol, const Handle(Standard_Transient)& entity, const Handle(Message_Messenger)& S) const;
+  
+  //! Records a default level and a maximum value for level
+  //! level for DumpEntity can go between 0 and <max>
+  //! default value will be <def>
+  Standard_EXPORT void SetDumpLevels (const Standard_Integer def, const Standard_Integer max);
+  
+  //! Returns the recorded default and maximum dump levels
+  //! If none was recorded, max is returned negative, def as zero
+  Standard_EXPORT void DumpLevels (Standard_Integer& def, Standard_Integer& max) const;
+  
+  //! Records a short line of help for a level (0 - max)
+  Standard_EXPORT void SetDumpHelp (const Standard_Integer level, const Standard_CString help);
+  
+  //! Returns the help line recorded for <level>, or an empty string
+  Standard_EXPORT Standard_CString DumpHelp (const Standard_Integer level) const;
 
   DEFINE_STANDARD_RTTIEXT(XSControl_Controller,MMgt_TShared)
 
  protected:
   
-  //! Initializing with names
-  //! <theLongName>  is for the complete, official, long  name
-  //! <theShortName> is for the short name used for resources
-  Standard_EXPORT XSControl_Controller(const Standard_CString theLongName, const Standard_CString theShortName);
-  
-  //! Records <me> in a general dictionary under a name
-  //! Error if <name> already used for another one
-  Standard_EXPORT void Record (const Standard_CString name) const;
+  //! Initializing with a name
+  Standard_EXPORT XSControl_Controller(const Standard_CString theName);
 
   //! Records the name of a Static to be traced for a given use
   Standard_EXPORT void TraceStatic (const Standard_CString theName, const Standard_Integer theUse);
 
-  TCollection_AsciiString myShortName;
-  TCollection_AsciiString myLongName;
-  Handle(IFSelect_WorkLibrary) myAdaptorLibrary;
   Handle(Interface_Protocol) myAdaptorProtocol;
   Handle(Transfer_ActorOfTransientProcess) myAdaptorRead;
-  Handle(Transfer_ActorOfFinderProcess) myAdaptorWrite;
-  Handle(Dico_DictionaryOfTransient) myAdaptorSession;
 
  private:
 
-  TColStd_SequenceOfTransient myAdaptorApplied;
+  TCollection_AsciiString myName;
   NCollection_Vector<Handle(Standard_Transient)> myParams;
   NCollection_Vector<Standard_Integer> myParamUses;
-  Handle(Interface_HArray1OfHAsciiString) myModeWriteShapeN;
+  Standard_Integer thelevdef;
+  Handle(Interface_HArray1OfHAsciiString) thelevhlp;
 };
 
 #endif // _XSControl_Controller_HeaderFile

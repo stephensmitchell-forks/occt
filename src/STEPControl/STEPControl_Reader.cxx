@@ -65,7 +65,6 @@
 #include <TColStd_SequenceOfAsciiString.hxx>
 #include <Transfer_TransientProcess.hxx>
 #include <XSControl_Controller.hxx>
-#include <XSControl_TransferReader.hxx>
 #include <XSControl_WorkSession.hxx>
 
 //=======================================================================
@@ -75,7 +74,7 @@
 STEPControl_Reader::STEPControl_Reader ()
 {
   STEPControl_Controller::Init();
-  SetNorm ("STEP");
+  SetNorm("STEP");
 }
 
 //=======================================================================
@@ -83,12 +82,11 @@ STEPControl_Reader::STEPControl_Reader ()
 //purpose  : 
 //=======================================================================
 
-STEPControl_Reader::STEPControl_Reader
-  (const Handle(XSControl_WorkSession)& WS, const Standard_Boolean scratch)
+STEPControl_Reader::STEPControl_Reader (const Handle(XSControl_WorkSession)& WS, const Standard_Boolean scratch)
 {
   STEPControl_Controller::Init();
-  SetWS (WS,scratch);
-  SetNorm ("STEP");
+  SetWS(WS,scratch);
+  SetNorm("STEP");
 }
 
 //=======================================================================
@@ -131,14 +129,14 @@ Standard_Integer STEPControl_Reader::NbRootsForTransfer()
         Interface_EntityIterator aShareds = WS()->Graph().Sharings(ent);
         if (!aShareds.More()) {
           theroots.Append(ent);
-          WS()->TransferReader()->TransientProcess()->RootsForTransfer().Append(ent);
+          WS()->ReaderProcess()->RootsForTransfer().Append(ent);
         }
       }
       if (ent->IsKind(STANDARD_TYPE(StepShape_ShellBasedSurfaceModel))) {
         Interface_EntityIterator aShareds = WS()->Graph().Sharings(ent);
         if (!aShareds.More()) {
           theroots.Append(ent);
-          WS()->TransferReader()->TransientProcess()->RootsForTransfer().Append(ent);
+          WS()->ReaderProcess()->RootsForTransfer().Append(ent);
         }
       }
     }
@@ -216,7 +214,7 @@ Standard_Integer STEPControl_Reader::NbRootsForTransfer()
       //}
       if (IsRoot) {
         theroots.Append(ent);
-        WS()->TransferReader()->TransientProcess()->RootsForTransfer().Append(ent);
+        WS()->ReaderProcess()->RootsForTransfer().Append(ent);
       }
     }
     TCollection_AsciiString aProdMode = Interface_Static::CVal("read.step.product.mode");
@@ -250,7 +248,7 @@ Standard_Integer STEPControl_Reader::NbRootsForTransfer()
         }
         if(IsRoot) {
           theroots.Append(ent);
-          WS()->TransferReader()->TransientProcess()->RootsForTransfer().Append(ent);
+          WS()->ReaderProcess()->RootsForTransfer().Append(ent);
         }
       }
       if(ent->IsKind(STANDARD_TYPE(StepShape_ShapeRepresentation))) {
@@ -303,13 +301,12 @@ Standard_Integer STEPControl_Reader::NbRootsForTransfer()
         }
         if(IsRoot) {
           theroots.Append(ent);
-          WS()->TransferReader()->TransientProcess()->RootsForTransfer().Append(ent);
+          WS()->ReaderProcess()->RootsForTransfer().Append(ent);
         }
       }
     }
 
   }
-
 
   return theroots.Length();
 }

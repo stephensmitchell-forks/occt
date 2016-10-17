@@ -444,6 +444,35 @@ Handle(Transfer_Binder) STEPControl_ActorWrite::Transferring (const Handle(Stand
   myContext.NextIndex();
   return resprod;
 }
+  
+//=======================================================================
+//function : TransferModeBounds
+//purpose  : 
+//=======================================================================
+
+Standard_Boolean STEPControl_ActorWrite::TransferModeBounds (Standard_Integer& theMin, Standard_Integer& theMax) const
+{
+  theMin = 0, theMax = 4;
+  return Standard_True;
+}
+  
+//=======================================================================
+//function : TransferModeBounds
+//purpose  : 
+//=======================================================================
+
+Standard_CString STEPControl_ActorWrite::TransferModeHelp (const Standard_Integer theMode) const
+{
+  switch (theMode) {
+    case 0: return "As Is";
+    case 1: return "Faceted Brep";
+    case 2: return "Shell Based";
+    case 3: return "Manifold Solid";
+    case 4: return "Wireframe";
+	default: break;
+  }
+  return "";
+}
 
 //==========================================
 

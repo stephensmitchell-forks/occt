@@ -380,6 +380,7 @@ t TKXCAF
 t TKXDEIGES
 t TKXDESTEP
 t TKXSBase
+t TKXSSelect
 t TKXmlXCAF
 n BOPTest
 n BRepTest

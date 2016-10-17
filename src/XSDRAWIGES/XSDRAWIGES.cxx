@@ -18,6 +18,10 @@
 #include <Draw_Appli.hxx>
 #include <Draw_ProgressIndicator.hxx>
 #include <DrawTrSurf.hxx>
+#include <Dico_DictionaryOfInteger.hxx>
+#include <Dico_DictionaryOfTransient.hxx>
+#include <Dico_IteratorOfDictionaryOfInteger.hxx>
+#include <Dico_IteratorOfDictionaryOfTransient.hxx>
 #include <Geom_Curve.hxx>
 #include <Geom_Surface.hxx>
 #include <IGESControl_Controller.hxx>
@@ -29,7 +33,6 @@
 #include <IGESData_IGESModel.hxx>
 #include <IGESData_Protocol.hxx>
 #include <IGESToBRep.hxx>
-#include <IGESToBRep_Actor.hxx>
 #include <IGESToBRep_Reader.hxx>
 #include <Interface_Check.hxx>
 #include <Interface_CheckIterator.hxx>
@@ -37,6 +40,7 @@
 #include <Interface_Macros.hxx>
 #include <Interface_Static.hxx>
 #include <Message.hxx>
+#include <Message_Msg.hxx>
 #include <Message_Messenger.hxx>
 #include <Message_ProgressSentry.hxx>
 #include <Standard_ErrorHandler.hxx>
@@ -51,22 +55,14 @@
 #include <TopoDS_Shape.hxx>
 #include <Transfer_FinderProcess.hxx>
 #include <Transfer_TransientProcess.hxx>
-#include <XSControl_WorkSession.hxx>
-#include <XSControl_TransferReader.hxx>
+#include <IFSelect_WorkSession.hxx>
 #include <XSDRAW.hxx>
 #include <XSDRAW_Commands.hxx>
 #include <XSDRAW_SelectFunctions.hxx>
 #include <XSDRAWIGES.hxx>
-#include <XSDRAWIGES_Activator.hxx>
 
 #include <stdio.h>
-// #include <IGESData_IGESWriter.hxx>
-// pour igeslist
-//#include <GeometryTest.hxx>  essai CKY 4-AUT-1998
-//#include <BRepTest.hxx>      essai CKY 4-AUT-1998
-//#include <MeshTest.hxx>      essai CKY 4-AUT-1998
-// Init functions
-// + tplosttrim
+
 //--------------------------------------------------------------
 // Function : igesbrep
 //--------------------------------------------------------------
@@ -79,10 +75,11 @@ static Standard_Integer igesbrep (Draw_Interpretor& di, Standard_Integer argc, c
   Handle(Draw_ProgressIndicator) progress = new Draw_ProgressIndicator ( di, 1 );
   progress->SetScale ( 0, 100, 1 );
   progress->Show();
- 
-  IGESControl_Reader Reader (XSDRAW::Session(),Standard_False);
-  Standard_Boolean aFullMode = Standard_True;
-  Reader.WS()->SetModeStat(aFullMode);
+
+  const Handle(IFSelect_WorkSession) &WS = XSDRAW::Session();
+
+  IGESControl_Reader Reader (WS,Standard_False);
+  WS->SetModeStat(Standard_True);
   if (ctl.IsNull())
     ctl=Handle(IGESControl_Controller)::DownCast(XSDRAW::Controller());
 
@@ -93,7 +90,7 @@ static Standard_Integer igesbrep (Draw_Interpretor& di, Standard_Integer argc, c
   if (modfic) di<<" File IGES to read : "<<fnom.ToCString()<<"\n";
   else        di<<" Model taken from the session : "<<fnom.ToCString()<<"\n";
   di<<" -- Names of variables BREP-DRAW prefixed by : "<<rnom.ToCString()<<"\n";
-  IFSelect_ReturnStatus readstat = IFSelect_RetVoid;
+  Interface_ReturnStatus readstat = Interface_RetVoid;
 
 #ifdef CHRONOMESURE
   OSD_Timer Chr; Chr.Reset();
@@ -106,12 +103,12 @@ static Standard_Integer igesbrep (Draw_Interpretor& di, Standard_Integer argc, c
   progress->Show();
 
   if (modfic) readstat = Reader.ReadFile (fnom.ToCString());
-  else  if (XSDRAW::Session()->NbStartingEntities() > 0) readstat = IFSelect_RetDone;
+  else  if (XSDRAW::Session()->NbStartingEntities() > 0) readstat = Interface_RetDone;
 
   progress->EndScope();
   progress->Show();
 
-  if (readstat != IFSelect_RetDone) {
+  if (readstat != Interface_RetDone) {
     if (modfic) di<<"Could not read file "<<fnom.ToCString()<<" , abandon\n";
     else di<<"No model loaded\n";
     return 1;
@@ -144,17 +141,15 @@ static Standard_Integer igesbrep (Draw_Interpretor& di, Standard_Integer argc, c
       di << "All Geometry Transfer\n";
       di<<"spline_continuity (read) : "<<Interface_Static::IVal("read.iges.bspline.continuity")<<" (0 : no modif, 1 : C1, 2 : C2)\n";
       di<<"  To modify : command  param read.iges.bspline.continuity\n";
-      Handle(XSControl_WorkSession) thesession = Reader.WS();
-      thesession->TransferReader()->Context().Nullify();
-      XSDRAW::SetTransferProcess (thesession->TransferReader()->TransientProcess());
+      XSDRAW::SetTransferProcess (WS->ReaderProcess());
       progress->NewScope ( 80, "Translation" );
       progress->Show();
-      thesession->TransferReader()->TransientProcess()->SetProgress ( progress );
+      WS->ReaderProcess()->SetProgress ( progress );
       
       if (modepri == 1) Reader.SetReadVisible (Standard_True);
       Reader.TransferRoots();
       
-      thesession->TransferReader()->TransientProcess()->SetProgress ( 0 );
+      WS->ReaderProcess()->SetProgress ( 0 );
       progress->EndScope();
       progress->Show();
       // result in only one shape for all the roots
@@ -222,7 +217,7 @@ static Standard_Integer igesbrep (Draw_Interpretor& di, Standard_Integer argc, c
       cout << " give the number of the Entity : " << flush;
       nent = XSDRAW::GetEntityNumber();
 
-      if (!Reader.TransferOne (nent)) di<<"Transfer entity n0 "<<nent<<" : no result\n";
+      if (!Reader.TransferEntity (WS->StartingEntity(nent))) di<<"Transfer entity n0 "<<nent<<" : no result\n";
       else {
 	nbs = Reader.NbShapes();
 	char shname[30];  Sprintf (shname,"%s_%d",rnom.ToCString(),nent);
@@ -245,17 +240,15 @@ static Standard_Integer igesbrep (Draw_Interpretor& di, Standard_Integer argc, c
         di << "All Geometry Transfer\n";
         di<<"spline_continuity (read) : "<<Interface_Static::IVal("read.iges.bspline.continuity")<<" (0 : no modif, 1 : C1, 2 : C2)\n";
         di<<"  To modify : command  param read.iges.bspline.continuity\n";
-        Handle(XSControl_WorkSession) thesession = Reader.WS();
-        thesession->TransferReader()->Context().Nullify();
-        XSDRAW::SetTransferProcess (thesession->TransferReader()->TransientProcess());
+        XSDRAW::SetTransferProcess (WS->ReaderProcess());
         progress->NewScope ( 80, "Translation" );
         progress->Show();
-        thesession->TransferReader()->TransientProcess()->SetProgress ( progress );
+        WS->ReaderProcess()->SetProgress ( progress );
       
         Reader.SetReadVisible (Standard_True);
         Reader.TransferRoots();
       
-        thesession->TransferReader()->TransientProcess()->SetProgress ( 0 );
+        WS->ReaderProcess()->SetProgress ( 0 );
         progress->EndScope();
         progress->Show();
         
@@ -323,19 +316,18 @@ static Standard_Integer igesbrep (Draw_Interpretor& di, Standard_Integer argc, c
 	}
 	if (answer == 1 || answer == 2) {
 	  Standard_Integer nbt = 0;
-	  Handle(XSControl_WorkSession) thesession = Reader.WS();
 	
-	  XSDRAW::SetTransferProcess (thesession->TransferReader()->TransientProcess());
+	  XSDRAW::SetTransferProcess (WS->ReaderProcess());
           progress->NewScope ( 80, "Translation" );
           progress->Show();
-          thesession->TransferReader()->TransientProcess()->SetProgress ( progress );
+          WS->ReaderProcess()->SetProgress ( progress );
 
           Message_ProgressSentry PSentry ( progress, "Root", 0, nbl, 1 );
 	  for (Standard_Integer ill = 1; ill <= nbl && PSentry.More(); ill ++, PSentry.Next()) {
 	  
 	    nent = Reader.Model()->Number(list->Value(ill));
 	    if (nent == 0) continue;
-	    if (!Reader.TransferOne(nent)) di<<"Transfer entity n0 "<<nent<<" : no result\n";
+	    if (!Reader.TransferEntity (WS->StartingEntity(nent))) di<<"Transfer entity n0 "<<nent<<" : no result\n";
 	    else {
 	      nbs = Reader.NbShapes();
 	      char shname[30];  Sprintf (shname,"%s_%d",rnom.ToCString(),nbs);
@@ -346,7 +338,7 @@ static Standard_Integer igesbrep (Draw_Interpretor& di, Standard_Integer argc, c
               nbt++;
 	    }
 	  }
-	  thesession->TransferReader()->TransientProcess()->SetProgress ( 0 );
+	  WS->ReaderProcess()->SetProgress ( 0 );
           progress->EndScope();
           progress->Show();
 	  di<<"Nb Shapes successfully produced : "<<nbt<<"\n";
@@ -373,13 +365,13 @@ static Standard_Integer testread (Draw_Interpretor& di, Standard_Integer argc, c
     }  
   IGESControl_Reader Reader;
   Standard_CString filename = argv[1];
-  IFSelect_ReturnStatus readstat =  Reader.ReadFile(filename);
+  Interface_ReturnStatus readstat =  Reader.ReadFile(filename);
   di<<"Status from reading IGES file "<<filename<<" : ";  
   switch(readstat) {                                                              
-    case IFSelect_RetVoid  : { di<<"empty file\n"; return 1; }            
-    case IFSelect_RetDone  : { di<<"file read\n";    break; }             
-    case IFSelect_RetError : { di<<"file not found\n";   return 1; }      
-    case IFSelect_RetFail  : { di<<"error during read\n";  return 1; }    
+    case Interface_RetVoid  : { di<<"empty file\n"; return 1; }            
+    case Interface_RetDone  : { di<<"file read\n";    break; }             
+    case Interface_RetError : { di<<"file not found\n";   return 1; }      
+    case Interface_RetFail  : { di<<"error during read\n";  return 1; }    
     default  :  { di<<"failure\n";   return 1; }                          
   }       
   Reader.TransferRoots();
@@ -396,7 +388,7 @@ static Standard_Integer testread (Draw_Interpretor& di, Standard_Integer argc, c
 
 static Standard_Integer brepiges (Draw_Interpretor& di, Standard_Integer n, const char** a) 
 {
-  XSDRAW::SetNorm ("IGES");
+  XSDRAW::SetNorm("IGES");
   // ecriture dans le model d'une entite :
   //    -  model_AddEntity(ent)             : ecriture de l`entite seule
   //    -  model->AddWithRefs(ent, protocol): ecriture de l`entite et eventuellement 
@@ -438,11 +430,11 @@ static Standard_Integer brepiges (Draw_Interpretor& di, Standard_Integer n, cons
   progress->NewScope(10,"Writing");
   progress->Show();
 
-  di<<npris<<" Shapes written, giving "<<XSDRAW::Model()->NbEntities()<<" Entities\n";
+  di<<npris<<" Shapes translated, giving "<<XSDRAW::Model()->NbEntities()<<" Entities\n";
 
   if ( ! nomfic ) // delayed write
   {
-    di<<" Now, to write a file, command : writeall filename\n";
+    di<<" Now, the model is ready\n";
     return 0;
   }
 
@@ -513,8 +505,8 @@ static Standard_Integer XSDRAWIGES_tplosttrim (Draw_Interpretor& di, Standard_In
 {
   Standard_Integer narg = n;
 
-  Handle(XSControl_WorkSession) WS = XSDRAW::Session();
-  const Handle(Transfer_TransientProcess) &TP = WS->TransferReader()->TransientProcess();
+  const Handle(IFSelect_WorkSession) &WS = XSDRAW::Session();
+  const Handle(Transfer_TransientProcess) &TP = WS->ReaderProcess();
 
   TColStd_Array1OfAsciiString strarg(1, 3);
   TColStd_Array1OfAsciiString typarg(1, 3);
@@ -586,6 +578,184 @@ static Standard_Integer XSDRAWIGES_tplosttrim (Draw_Interpretor& di, Standard_In
   return 0;
 }
 //-------------------------------------------------------------------
+//  ####    Reliquat de methodes a reprendre    ####
+
+//=======================================================================
+// Function : PrintTransferInfo
+// Purpose  : Print statistics information on transfer using MoniTool message management
+// Created  : 18/01/98 DCE for S3767
+// Modified : 
+//=======================================================================
+static void PrintTransferInfo (IGESControl_Reader &reader, const IFSelect_PrintCount mode)
+{
+  Standard_Integer nbWarn = 0, nbFail= 0, nbEntities =0, nbRoots = 0, nbResults = 0;  
+  const Handle(Transfer_TransientProcess) &TP = reader.WS()->ReaderProcess();
+  Handle(Message_Messenger) TF = TP->Messenger();
+  const Handle(Interface_InterfaceModel) &model = TP->Model();
+  if (! model.IsNull()) {
+    nbEntities = model->NbEntities();
+    nbRoots = TP->NbRoots();
+    Transfer_TransientProcess::Iterator iterTrans = TP->RootResult(Standard_True);
+    Handle(Dico_DictionaryOfInteger) dicoCountResult = new Dico_DictionaryOfInteger;
+    Handle(Dico_DictionaryOfInteger) dicoCountMapping = new Dico_DictionaryOfInteger;
+    for (iterTrans.Start(); iterTrans.More() ; iterTrans.Next() ) {
+      nbResults++;
+      // Init for dicoCountResult for IFSelect_ResultCount
+      if ( mode == IFSelect_ResultCount ) {
+	char mess[300];
+	const Handle(Transfer_Binder) aBinder = iterTrans.Value();
+	sprintf(mess,"\t%s",aBinder->ResultTypeName());
+	Standard_Boolean deja;
+	Standard_Integer& nb = dicoCountResult->NewItem(mess,deja);
+	if (!deja) nb = 0;
+	nb ++;	
+      }
+      // Init for dicoCountMapping for IFSelect_Mapping
+      else if ( mode == IFSelect_Mapping ) {
+	char mess[300];
+	const Handle(Transfer_Binder) aBinder = iterTrans.Value();
+	DeclareAndCast(IGESData_IGESEntity,igesEnt,iterTrans.SourceObject());
+	
+	sprintf(mess,"%d\t%d\t%s\t%s", igesEnt->TypeNumber(), igesEnt->FormNumber(),
+		"%d", aBinder->ResultTypeName());
+	//cout << mess << endl;
+	Standard_Boolean deja;
+	Standard_Integer& nb = dicoCountMapping->NewItem(mess,deja);
+	if (!deja) nb = 0;
+	nb ++;
+      } 
+    }
+
+    Interface_CheckIterator checkIterator = TP->CheckList(Standard_False);
+    Handle(Dico_DictionaryOfInteger) dicoCount = new Dico_DictionaryOfInteger;
+    Handle(Dico_DictionaryOfTransient) dicoList = new Dico_DictionaryOfTransient;
+    // Init the dicoCount dicoList and nbWarn ,nb Fail.
+    for(checkIterator.Start(); checkIterator.More(); checkIterator.Next() ) {
+      char mess[300];
+      const Handle(Interface_Check) aCheck = checkIterator.Value(); 
+      Handle(Standard_Transient) ent = model->Value(checkIterator.Number());
+      DeclareAndCast(IGESData_IGESEntity,igesEnt,ent);
+      Standard_Integer type = igesEnt->TypeNumber(), form = igesEnt->FormNumber();
+      Standard_Integer nw = aCheck->NbWarnings(), nf = aCheck->NbFails(), i;
+      for(i = 1; i <= nw; i++) {
+	sprintf(mess,"\t W\t%d\t%d\t%s",type,form,aCheck->CWarning(i));
+	Standard_Boolean deja;
+	Standard_Integer& nb = dicoCount->NewItem(mess,deja);
+	if (!deja) nb = 0;
+	nb ++;
+	Handle(Standard_Transient)& anitem = dicoList->NewItem(mess,deja);
+	DeclareAndCast(TColStd_HSequenceOfInteger,alist,anitem);
+	if (!deja) { alist = new TColStd_HSequenceOfInteger(); anitem = alist;  }
+	alist->Append(model->Number(igesEnt)*2-1);
+      }
+      for(i = 1; i<= nf; i++) {
+	sprintf(mess,"\t F\t%d\t%d\t%s",type,form,aCheck->CFail(i));
+	// TF << mess << endl;
+	Standard_Boolean deja;
+	Standard_Integer& nb = dicoCount->NewItem(mess,deja);
+	if (!deja) nb = 0;
+	nb ++;
+	Handle(Standard_Transient)& anitem = dicoList->NewItem(mess,deja);
+	DeclareAndCast(TColStd_HSequenceOfInteger,alist,anitem);
+	if (!deja) { alist = new TColStd_HSequenceOfInteger(); anitem = alist;  }
+	alist->Append(model->Number(igesEnt)*2-1);
+      }
+      nbWarn += nw;
+      nbFail += nf;
+    }
+    Message_Msg msg3000("IGES_3000");  // *************************
+    TF->Send (msg3000, Message_Info); //smh#14
+    
+    switch (mode) {
+    case IFSelect_GeneralInfo : {
+      Message_Msg msg3005("IGES_3005");TF->Send(msg3005, Message_Info);
+      Message_Msg msg3010("IGES_3010");msg3010.Arg(nbEntities);TF->Send(msg3010, Message_Info);
+      Message_Msg msg3011("IGES_3011");msg3011.Arg(nbRoots);TF->Send(msg3011, Message_Info);      
+      Message_Msg msg3015("IGES_3015");msg3015.Arg(nbResults);TF->Send(msg3015, Message_Info);
+      Message_Msg msg3020("IGES_3020");msg3020.Arg(nbWarn);TF->Send(msg3020, Message_Info);
+      Message_Msg msg3025("IGES_3025");msg3025.Arg(nbFail);TF->Send(msg3025, Message_Info);
+      break;
+    }
+    case IFSelect_CountByItem : 
+    case IFSelect_ListByItem : {
+      Message_Msg msg3030("IGES_3030");
+      TF->Send(msg3030, Message_Info);
+      Dico_IteratorOfDictionaryOfInteger dicoCountIter(dicoCount);
+      Dico_IteratorOfDictionaryOfTransient dicoListIter(dicoList);
+      for(dicoCountIter.Start(),dicoListIter.Start(); 
+	  dicoCountIter.More() && dicoListIter.More();
+	  dicoCountIter.Next(),dicoListIter.Next()) {
+	TF << dicoCountIter.Value() << dicoCountIter.Name() << endl;
+	if (mode == IFSelect_ListByItem) {
+	  DeclareAndCast(TColStd_HSequenceOfInteger, entityList, dicoListIter.Value());
+	  Standard_Integer length = entityList->Length();
+	  Message_Msg msg3035("IGES_3035");
+	  TF->Send(msg3035, Message_Info);
+	  char line[80];
+	  sprintf(line,"\t\t\t");
+	  TF << line ;
+	  Standard_Integer nbInLine =0;
+	  for(Standard_Integer i = 1; i <= length ; i++ ) {
+	    // IDT_Out << (entityList->Value(i)) << " ";
+	    sprintf(line,"\t %d", entityList->Value(i));
+	    TF << line ;
+	    if (++nbInLine == 6) {
+	      nbInLine = 0;
+	      sprintf(line,"\n\t\t\t");
+	      TF << line ;
+	    }
+	  }
+	  TF << endl ;
+	}
+      }
+      break;
+    }
+    case IFSelect_ResultCount : { 
+      Message_Msg msg3040("IGES_3040");TF->Send(msg3040, Message_Info);
+      Message_Msg msg3011("IGES_3011");msg3011.Arg(nbRoots);TF->Send(msg3011, Message_Info);      
+      Message_Msg msg3015("IGES_3015");msg3015.Arg(nbResults);TF->Send(msg3015, Message_Info);
+      Message_Msg msg3045("IGES_3045");TF->Send(msg3045, Message_Info);
+      Dico_IteratorOfDictionaryOfInteger dicoCountIter(dicoCountResult);
+      for(dicoCountIter.Start(); dicoCountIter.More(); dicoCountIter.Next()) {
+	TF << dicoCountIter.Value() << dicoCountIter.Name() << endl;
+      }
+      break;
+    }
+    case IFSelect_Mapping : { 
+      Message_Msg msg3040("IGES_3050");TF->Send(msg3040, Message_Info);
+      Message_Msg msg3011("IGES_3011");msg3011.Arg(nbRoots);TF->Send(msg3011, Message_Info);      
+      Message_Msg msg3015("IGES_3015");msg3015.Arg(nbResults);TF->Send(msg3015, Message_Info);
+      Message_Msg msg3045("IGES_3055");TF->Send(msg3045, Message_Info);
+      // Add failed entities in dicoCountMapping
+      if (nbRoots!=nbResults) {
+	for( Standard_Integer i = 1; i <= nbRoots ; i++) {
+	  DeclareAndCast(IGESData_IGESEntity, root, TP->Root(i));
+	  if (!TP->IsBound(root)) {
+	    char mess[300];
+    
+	    sprintf(mess,"%d\t%d \t%s\t%s", root->TypeNumber(), root->FormNumber(),
+		    "%d", "Failed");
+	    //cout << mess << endl;
+	    Standard_Boolean deja;
+	    Standard_Integer& nb = dicoCountMapping->NewItem(mess,deja);
+	if (!deja) nb = 0;
+	    nb ++;	    
+	  }
+	}
+      }
+      Dico_IteratorOfDictionaryOfInteger dicoCountIter(dicoCountMapping);
+      for(dicoCountIter.Start(); dicoCountIter.More(); dicoCountIter.Next()) {
+	char mess[80];
+	sprintf(mess, dicoCountIter.Name().ToCString() , dicoCountIter.Value());
+	TF << mess << endl; //dicoCountIter.Value() << dicoCountIter.Name() << endl;
+      }
+      break;
+    }
+    default: break;
+    }
+  }
+}
+
 //--------------------------------------------------------------
 // Function : TPSTAT
 //
@@ -594,23 +764,23 @@ static Standard_Integer XSDRAWIGES_TPSTAT(Draw_Interpretor& di,Standard_Integer 
 {
   Standard_Integer argc = n;
   const Standard_CString arg1 = a[1];
-  const Handle(Transfer_TransientProcess) &TP = XSDRAW::Session()->TransferReader()->TransientProcess();
+  const Handle(Transfer_TransientProcess) &TP = XSDRAW::Session()->ReaderProcess();
 
   IGESControl_Reader read;
 //        ****    tpent        ****
   Handle(Interface_InterfaceModel) model = TP->Model();
   if (model.IsNull()) {di<<"No Transfer Read\n"; return -1;}
   Handle(XSControl_WorkSession) thesession = read.WS();
-  thesession->SetMapReader(TP);
+  thesession->SetReaderProcess(TP);
   Standard_Integer mod1 = 0;
   if (argc > 1) {
     char a2 = arg1[1]; if (a2 == '\0') a2 = '!';
     switch (arg1[0]) {
-    case 'g' : read.PrintTransferInfo(IFSelect_FailAndWarn,IFSelect_GeneralInfo);break;
-    case 'c' : read.PrintTransferInfo(IFSelect_FailAndWarn,IFSelect_CountByItem); break;
-    case 'C' : read.PrintTransferInfo(IFSelect_FailAndWarn,IFSelect_ListByItem); break;
-    case 'r' : read.PrintTransferInfo(IFSelect_FailAndWarn,IFSelect_ResultCount);break;
-    case 's' : read.PrintTransferInfo(IFSelect_FailAndWarn,IFSelect_Mapping);break;
+    case 'g' : PrintTransferInfo(read,IFSelect_GeneralInfo);break;
+    case 'c' : PrintTransferInfo(read,IFSelect_CountByItem); break;
+    case 'C' : PrintTransferInfo(read,IFSelect_ListByItem); break;
+    case 'r' : PrintTransferInfo(read,IFSelect_ResultCount);break;
+    case 's' : PrintTransferInfo(read,IFSelect_Mapping);break;
     case '?' : mod1 = -1; break;
     default  : mod1 = -2; break;
     }
@@ -655,16 +825,9 @@ static void cleanpilot ()
 //
 //--------------------------------------------------------------
 
-#include <IGESSelect_AutoCorrect.hxx>
-#include <IGESSelect_ComputeStatus.hxx>
-#include <IGESControl_FloatFormat.hxx>
-#include <IGESSelect_RemoveCurves.hxx>
-#include <IGESSelect_SetGlobalParameter.hxx>
-#include <IGESSelect_SetLabel.hxx>
-#include <IGESSelect_UpdateFileName.hxx>
 #include <IFSelect_SelectModelEntities.hxx>
 #include <IFSelect_SelectModelRoots.hxx>
-#include <XSControl_SelectForTransfer.hxx>
+#include <XSSelect_SelectForTransfer.hxx>
 #include <IGESSelect_SelectVisibleStatus.hxx>
 #include <IGESSelect_SelectSubordinate.hxx>
 #include <IGESSelect_SelectBypassGroup.hxx>
@@ -683,69 +846,15 @@ static void cleanpilot ()
 #include <IGESSelect_SignColor.hxx>
 #include <IGESBasic_SubfigureDef.hxx>
 #include <IFSelect_SignType.hxx>
-#include <IGESSelect_EditHeader.hxx>
-#include <IFSelect_EditForm.hxx>
-#include <IGESSelect_EditDirPart.hxx>
-#include <IGESSelect_Dumper.hxx>
 
 void XSDRAWIGES::InitSelect ()
 {
-  Handle(XSDRAWIGES_Activator) igesact = new XSDRAWIGES_Activator;
-
   IGESControl_Controller::Init();
-  Handle(XSControl_Controller) aCntl = XSControl_Controller::Recorded("iges");
-
-  static int gInit = 0;
-  if (!gInit) {
-    gInit = 1;
-    Handle(IGESSelect_Dumper) sesdump = new IGESSelect_Dumper;  // ainsi,cestfait
-
-    aCntl->AddSessionItem (new IGESSelect_RemoveCurves(Standard_True) ,"iges-remove-pcurves");
-    aCntl->AddSessionItem (new IGESSelect_RemoveCurves(Standard_False),"iges-remove-curves-3d");
-    aCntl->AddSessionItem (new IGESSelect_SetLabel (0,Standard_True) ,"iges-clear-label");
-    aCntl->AddSessionItem (new IGESSelect_SetLabel (1,Standard_False),"iges-set-label-dnum");
-
-    aCntl->AddSessionItem (new IGESSelect_AutoCorrect,"iges-auto-correct",Standard_True);
-    aCntl->AddSessionItem (new IGESSelect_ComputeStatus,"iges-compute-status",Standard_True);
-
-    Handle(IGESControl_FloatFormat) flf = new IGESControl_FloatFormat;
-    flf->SetDefault (12);
-    aCntl->AddSessionItem (flf,"iges-float-digits-12",Standard_True);
-
-    //  --   Sender Product Identification   --  (pas un statique ...)
-    Handle(IGESSelect_SetGlobalParameter) set3 = new IGESSelect_SetGlobalParameter(3);
-    Handle(TCollection_HAsciiString) pa3 = Interface_Static::Static("write.iges.header.product")->HStringValue();
-    set3->SetValue(pa3);
-    aCntl->AddSessionItem (pa3, "iges-header-val-sender");
-    aCntl->AddSessionItem (set3,"iges-header-set-sender",Standard_True);
-
-    aCntl->AddSessionItem (new IGESSelect_UpdateFileName,"iges-update-file-name",Standard_True);
-
-    //  --   Receiver   --   Acces par Static, ajustable
-    Handle(IGESSelect_SetGlobalParameter) set12 = new IGESSelect_SetGlobalParameter(12);
-    Handle(TCollection_HAsciiString) pa12 = Interface_Static::Static("write.iges.header.receiver")->HStringValue();
-    set12->SetValue(pa12);
-    aCntl->AddSessionItem (pa12, "iges-header-val-receiver");
-    aCntl->AddSessionItem (set12,"iges-header-set-receiver",Standard_True);
-
-    //  --   Auteur   --   acces par Static (demarre par whoami), ajustable
-    Handle(IGESSelect_SetGlobalParameter) set21 = new IGESSelect_SetGlobalParameter(21);
-    Handle(TCollection_HAsciiString) pa21 = Interface_Static::Static("write.iges.header.author")->HStringValue();
-    set21->SetValue(pa21);
-    aCntl->AddSessionItem (pa21, "iges-header-val-author");
-    aCntl->AddSessionItem (set21,"iges-header-set-author",Standard_True);
-
-    //  --   Compagnie (de l auteur)   --   acces par Static, ajustable
-    Handle(IGESSelect_SetGlobalParameter) set22 = new IGESSelect_SetGlobalParameter(22);
-    Handle(TCollection_HAsciiString) pa22 = Interface_Static::Static("write.iges.header.company")->HStringValue();
-    set22->SetValue(pa22);
-    aCntl->AddSessionItem (pa22, "iges-header-val-company");
-    aCntl->AddSessionItem (set22,"iges-header-set-company",Standard_True);
-  }
+  Handle(XSControl_Controller) aCntl = XSControl_Controller::Recorded("IGES");
 
   XSDRAW::SetController (aCntl);
 
-  Handle(XSControl_WorkSession) WS = XSDRAW::Session();
+  const Handle(IFSelect_WorkSession) &WS = XSDRAW::Session();
 
   //   ---  SELECTIONS, SIGNATURES, COMPTEURS, EDITEURS
   //   --   BypassGroup / xst-model-roots
@@ -768,13 +877,12 @@ void XSDRAWIGES::InitSelect ()
     WS->AddNamedItem ("xst-model-roots",xmr);
   }
 
-  Handle(XSControl_SelectForTransfer) xtr;
+  Handle(XSSelect_SelectForTransfer) xtr;
   Handle(Standard_Transient) xtr1 = WS->NamedItem("xst-transferrable-roots");
   if (!xtr1.IsNull())
-    xtr = Handle(XSControl_SelectForTransfer)::DownCast(xtr1);
+    xtr = Handle(XSSelect_SelectForTransfer)::DownCast(xtr1);
   else {
-    xtr = new XSControl_SelectForTransfer;
-    xtr->SetReader (WS->TransferReader());
+    xtr = new XSSelect_SelectForTransfer(WS->ReaderProcess());
     WS->AddNamedItem ("xst-transferrable-roots",xtr);
   }
 
@@ -871,16 +979,6 @@ void XSDRAWIGES::InitSelect ()
     WS->AddNamedItem ("iges-color-green",scol5);
     Handle(IGESSelect_SignColor) scol6 = new IGESSelect_SignColor (6);
     WS->AddNamedItem ("iges-color-blue",scol6);
-
-    Handle(IGESSelect_EditHeader) edhead = new IGESSelect_EditHeader;
-    WS->AddNamedItem ("iges-header-edit",edhead);
-    Handle(IFSelect_EditForm) edheadf = edhead->Form(Standard_False);
-    WS->AddNamedItem ("iges-header",edheadf);
-
-    Handle(IGESSelect_EditDirPart) eddirp = new IGESSelect_EditDirPart;
-    WS->AddNamedItem ("iges-dir-part-edit",eddirp);
-    Handle(IFSelect_EditForm) eddirpf = eddirp->Form(Standard_False);
-    WS->AddNamedItem ("iges-dir-part",eddirpf);
 
     WS->SetSignType( typnam );
   }

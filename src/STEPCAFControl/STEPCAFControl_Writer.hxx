@@ -23,9 +23,8 @@
 #include <STEPControl_Writer.hxx>
 #include <STEPCAFControl_DataMapOfLabelShape.hxx>
 #include <STEPCAFControl_DataMapOfLabelExternFile.hxx>
-#include <Standard_Boolean.hxx>
 #include <MoniTool_DataMapOfShapeTransient.hxx>
-#include <IFSelect_ReturnStatus.hxx>
+#include <Interface_ReturnStatus.hxx>
 #include <Standard_CString.hxx>
 #include <STEPControl_StepModelType.hxx>
 #include <TDF_LabelSequence.hxx>
@@ -35,7 +34,6 @@ class TDocStd_Document;
 class TDF_Label;
 class TCollection_AsciiString;
 class STEPCAFControl_ExternFile;
-class STEPControl_Writer;
 class TopoDS_Shape;
 
 //! Provides a tool to write DECAF document to the
@@ -46,10 +44,9 @@ class TopoDS_Shape;
 //! Also supports multifile writing
 class STEPCAFControl_Writer 
 {
-public:
+ public:
 
   DEFINE_STANDARD_ALLOC
-  
   
   //! Creates a writer with an empty
   //! STEP model and sets ColorMode, LayerMode, NameMode and
@@ -70,7 +67,7 @@ public:
   //! filename will be a name of root file, all other files
   //! have names of corresponding parts
   //! Provided for use like single-file writer
-  Standard_EXPORT IFSelect_ReturnStatus Write (const Standard_CString filename);
+  Standard_EXPORT Interface_ReturnStatus Write (const Standard_CString filename);
   
   //! Transfers a document (or single label) to a STEP model
   //! The mode of translation of shape is AsIs
@@ -87,11 +84,12 @@ public:
   
   //! Transfers a document and writes it to a STEP file
   //! Returns True if translation is OK
-  Standard_EXPORT Standard_Boolean Perform (const Handle(TDocStd_Document)& doc, const Standard_CString filename);
+  Standard_Boolean Perform (const Handle(TDocStd_Document)& doc, const Standard_CString filename)
+  { return ( Transfer( doc ) ? ( Write( filename ) == Interface_RetDone ) : Standard_False ); }
   
   //! Returns data on external files
   //! Returns Null handle if no external files are read
-  Standard_EXPORT const Handle(STEPCAFControl_DictionaryOfExternFile)& ExternFiles() const;
+  const Handle(STEPCAFControl_DictionaryOfExternFile)& ExternFiles() const { return myFiles; }
   
   //! Returns data on external file by its original label
   //! Returns False if no external file with given name is read
@@ -102,52 +100,51 @@ public:
   Standard_EXPORT Standard_Boolean ExternFile (const Standard_CString name, Handle(STEPCAFControl_ExternFile)& ef) const;
   
   //! Returns basic reader for root file
-  Standard_EXPORT STEPControl_Writer& ChangeWriter();
+  STEPControl_Writer& ChangeWriter() { return myWriter; }
   
   //! Returns basic reader as const
-  Standard_EXPORT const STEPControl_Writer& Writer() const;
+  const STEPControl_Writer& Writer() const { return myWriter; }
   
   //! Set ColorMode for indicate write Colors or not.
-  Standard_EXPORT void SetColorMode (const Standard_Boolean colormode);
+  void SetColorMode (const Standard_Boolean colormode) { myColorMode = colormode; }
   
-  Standard_EXPORT Standard_Boolean GetColorMode() const;
+  Standard_Boolean GetColorMode() const { return myColorMode; }
   
   //! Set NameMode for indicate write Name or not.
-  Standard_EXPORT void SetNameMode (const Standard_Boolean namemode);
+  void SetNameMode (const Standard_Boolean namemode) { myNameMode = namemode; }
   
-  Standard_EXPORT Standard_Boolean GetNameMode() const;
+  Standard_Boolean GetNameMode() const { return myNameMode; }
   
   //! Set LayerMode for indicate write Layers or not.
-  Standard_EXPORT void SetLayerMode (const Standard_Boolean layermode);
+  void SetLayerMode (const Standard_Boolean layermode) { myLayerMode = layermode; }
   
-  Standard_EXPORT Standard_Boolean GetLayerMode() const;
+  Standard_Boolean GetLayerMode() const { return myLayerMode; }
   
   //! PropsMode for indicate write Validation properties or not.
-  Standard_EXPORT void SetPropsMode (const Standard_Boolean propsmode);
+  void SetPropsMode (const Standard_Boolean propsmode) { myPropsMode = propsmode; }
   
-  Standard_EXPORT Standard_Boolean GetPropsMode() const;
+  Standard_Boolean GetPropsMode() const { return myPropsMode; }
   
   //! Set SHUO mode for indicate write SHUO or not.
-  Standard_EXPORT void SetSHUOMode (const Standard_Boolean shuomode);
+  void SetSHUOMode (const Standard_Boolean shuomode) { mySHUOMode = shuomode; }
   
-  Standard_EXPORT Standard_Boolean GetSHUOMode() const;
-  
-  //! Set dimtolmode for indicate write D&GTs or not.
-  Standard_EXPORT void SetDimTolMode (const Standard_Boolean dimtolmode);
-  
-  Standard_EXPORT Standard_Boolean GetDimTolMode() const;
+  Standard_Boolean GetSHUOMode() const { return mySHUOMode; }
   
   //! Set dimtolmode for indicate write D&GTs or not.
-  Standard_EXPORT void SetMaterialMode (const Standard_Boolean matmode);
+  void SetDimTolMode (const Standard_Boolean dimtolmode) { myDGTMode = dimtolmode; }
   
-  Standard_EXPORT Standard_Boolean GetMaterialMode() const;
+  Standard_Boolean GetDimTolMode() const { return myDGTMode; }
+  
+  //! Set dimtolmode for indicate write D&GTs or not.
+  void SetMaterialMode (const Standard_Boolean matmode) { myMatMode = matmode; }
+  
+  Standard_Boolean GetMaterialMode() const { return myMatMode; }
 
+ protected:
 
-
-
-protected:
   //! Mehod to writing sequence of root assemblies or part of the file specified by use by one label 
-  Standard_EXPORT Standard_Boolean Transfer (const TDF_LabelSequence& L, const STEPControl_StepModelType mode = STEPControl_AsIs, const Standard_CString multi = 0);
+  Standard_Boolean Transfer (const TDF_LabelSequence& L, const STEPControl_StepModelType mode = STEPControl_AsIs, const Standard_CString multi = 0)
+  { return Transfer( myWriter, L, mode, multi ); }
   
   //! Transfers labels to a STEP model
   //! Returns True if translation is OK
@@ -190,11 +187,7 @@ protected:
   //! Write SHUO assigned to specified component, to STEP model
   Standard_EXPORT Standard_Boolean WriteSHUOs (const Handle(XSControl_WorkSession)& WS, const TDF_LabelSequence& labels);
 
-  
-
-private:
-
-
+ private:
 
   STEPControl_Writer myWriter;
   Handle(STEPCAFControl_DictionaryOfExternFile) myFiles;
@@ -208,11 +201,6 @@ private:
   MoniTool_DataMapOfShapeTransient myMapCompMDGPR;
   Standard_Boolean myDGTMode;
   Standard_Boolean myMatMode;
-
-
 };
-
-
-
 
 #endif // _STEPCAFControl_Writer_HeaderFile

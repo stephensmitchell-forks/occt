@@ -20,7 +20,7 @@
 #include <Standard.hxx>
 #include <Standard_Type.hxx>
 
-#include <XSControl_Vars.hxx>
+#include <IFSelect_Vars.hxx>
 class Geom_Geometry;
 class Geom2d_Curve;
 class Geom_Curve;
@@ -31,10 +31,10 @@ class TopoDS_Shape;
 
 
 class XSDRAW_Vars;
-DEFINE_STANDARD_HANDLE(XSDRAW_Vars, XSControl_Vars)
+DEFINE_STANDARD_HANDLE(XSDRAW_Vars, IFSelect_Vars)
 
 //! Vars for DRAW session (i.e. DBRep and DrawTrSurf)
-class XSDRAW_Vars : public XSControl_Vars
+class XSDRAW_Vars : public IFSelect_Vars
 {
  public:
   
@@ -62,7 +62,7 @@ class XSDRAW_Vars : public XSControl_Vars
   
   Standard_EXPORT virtual TopoDS_Shape GetShape (Standard_CString& name) const Standard_OVERRIDE;
 
-  DEFINE_STANDARD_RTTIEXT(XSDRAW_Vars,XSControl_Vars)
+  DEFINE_STANDARD_RTTIEXT(XSDRAW_Vars,IFSelect_Vars)
 };
 
 #endif // _XSDRAW_Vars_HeaderFile

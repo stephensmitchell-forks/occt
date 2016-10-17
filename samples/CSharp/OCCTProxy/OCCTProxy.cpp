@@ -20,7 +20,7 @@
 #include <IGESControl_Reader.hxx>
 #include <IGESControl_Controller.hxx>
 #include <IGESControl_Writer.hxx>
-#include <IFSelect_ReturnStatus.hxx>
+#include <Interface_ReturnStatus.hxx>
 #include <Interface_Static.hxx>
 //step I/E
 #include <STEPControl_Reader.hxx>
@@ -774,8 +774,8 @@ public:
   {
     Standard_CString aFileName = (Standard_CString) theFileName;
     STEPControl_Reader aReader;
-    IFSelect_ReturnStatus aStatus = aReader.ReadFile(aFileName);
-    if ( aStatus == IFSelect_RetDone )
+    Interface_ReturnStatus aStatus = aReader.ReadFile(aFileName);
+    if ( aStatus == Interface_RetDone )
     {
       bool isFailsonly = false;
       aReader.PrintCheckLoad( isFailsonly, IFSelect_ItemsByEntity );
@@ -814,7 +814,7 @@ public:
     IGESControl_Reader aReader;
     int aStatus = aReader.ReadFile( aFileName );
 
-    if ( aStatus == IFSelect_RetDone )
+    if ( aStatus == Interface_RetDone )
     {
       aReader.TransferRoots();
       TopoDS_Shape aShape = aReader.OneShape();
@@ -853,7 +853,7 @@ public:
   bool ExportStep(char* theFileName)
   {
     STEPControl_StepModelType aType = STEPControl_AsIs;
-    IFSelect_ReturnStatus aStatus;
+    Interface_ReturnStatus aStatus;
     STEPControl_Writer aWriter;
     for ( myAISContext()->InitCurrent(); myAISContext()->MoreCurrent(); myAISContext()->NextCurrent() )
     {
@@ -861,14 +861,14 @@ public:
       Handle(AIS_Shape) anIS=Handle(AIS_Shape)::DownCast(anIO);
       TopoDS_Shape aShape = anIS->Shape();
       aStatus = aWriter.Transfer( aShape , aType );
-      if ( aStatus != IFSelect_RetDone )
+      if ( aStatus != Interface_RetDone )
       {
         return false;
       }
     }
 
     aStatus = aWriter.Write( (Standard_CString)theFileName );
-    if ( aStatus != IFSelect_RetDone )
+    if ( aStatus != Interface_RetDone )
     {
       return false;
     }

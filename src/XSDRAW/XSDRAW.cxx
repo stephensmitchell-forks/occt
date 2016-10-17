@@ -15,13 +15,11 @@
 #include <DBRep.hxx>
 #include <Dico_DictionaryOfInteger.hxx>
 #include <Draw_Appli.hxx>
-#include <IFSelect_SessionPilot.hxx>
 #include <Interface_InterfaceModel.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_Protocol.hxx>
 #include <Message.hxx>
 #include <Message_Messenger.hxx>
-#include <Standard_Transient.hxx>
 #include <TCollection_AsciiString.hxx>
 #include <TColStd_HSequenceOfAsciiString.hxx>
 #include <TopoDS_Shape.hxx>
@@ -29,13 +27,12 @@
 #include <Transfer_TransientProcess.hxx>
 #include <TransferBRep.hxx>
 #include <XSControl_Controller.hxx>
-#include <XSControl_TransferReader.hxx>
-#include <XSControl_WorkSession.hxx>
+#include <IFSelect_WorkSession.hxx>
 #include <XSDRAW.hxx>
-#include <XSDRAW_Vars.hxx>
 #include <XSDRAW_SelectFunctions.hxx>
 #include <XSDRAW_ControlFunctions.hxx>
 #include <XSDRAW_ShapeFunctions.hxx>
+#include <XSDRAW_SessionPilot.hxx>
 
 #include <stdio.h>
 static int deja = 0, dejald = 0;
@@ -43,7 +40,7 @@ static int deja = 0, dejald = 0;
 static Handle(Dico_DictionaryOfInteger)       theolds;
 static Handle(TColStd_HSequenceOfAsciiString) thenews;
 
-static Handle(IFSelect_SessionPilot)    thepilot;  // detient Session, Model
+static Handle(XSDRAW_SessionPilot) thepilot;  // detient Session, Model
 
 static Standard_Integer XSTEPDRAWRUN (Draw_Interpretor& , Standard_Integer argc, const char** argv)
 {
@@ -52,8 +49,8 @@ static Standard_Integer XSTEPDRAWRUN (Draw_Interpretor& , Standard_Integer argc,
     mess.AssignCat(argv[i]);  mess.AssignCat(" ");
   }
 
-  IFSelect_ReturnStatus stat = thepilot->Execute (mess.ToCString());
-  if (stat == IFSelect_RetError || stat == IFSelect_RetFail) return 1;
+  Interface_ReturnStatus stat = thepilot->Execute (mess.ToCString());
+  if (stat == Interface_RetError || stat == Interface_RetFail) return 1;
   else return 0;
 }
 
@@ -78,13 +75,8 @@ void  XSDRAW::RemoveCommand (const Standard_CString oldname)
 
 void XSDRAW::LoadSession ()
 {
-  static int gInit= 0;
-  if (!gInit) {
-    gInit = 1;
-    thepilot   = new IFSelect_SessionPilot("XSTEP-DRAW>");
-    Handle(XSControl_WorkSession) WS = new XSControl_WorkSession;
-    WS->SetVars (new XSDRAW_Vars);
-    thepilot->SetSession (WS);
+  if (thepilot.IsNull()) {
+    thepilot = XSDRAW_SessionPilot::Pilot();
 
     XSDRAW_SelectFunctions::Init();
     XSDRAW_ControlFunctions::Init();
@@ -99,22 +91,22 @@ void XSDRAW::LoadDraw (Draw_Interpretor& theCommands)
   LoadSession();
 
   //skl: we remove commands "x" and "exit" in order to this commands are
-  //     performed not in IFSelect_SessionPilot but in standard Tcl interpretor
+  //     performed not in XSDRAW_SessionPilot but in standard Tcl interpretor
   XSDRAW::RemoveCommand("x");
   XSDRAW::RemoveCommand("exit");
 
-  Handle(TColStd_HSequenceOfAsciiString) list = IFSelect_Activator::Commands(0);
+  Handle(TColStd_HSequenceOfAsciiString) list = XSDRAW_Activator::Commands(0);
   TCollection_AsciiString com;
   Standard_Integer i, nb = list->Length();
   for (i = 1; i <= nb; i ++) {
-    Handle(IFSelect_Activator) act;
+    Handle(XSDRAW_Activator) act;
     Standard_Integer nact, num = -1;
     char help[200];
     com = list->Value(i);
     if (!theolds.IsNull())
       if (theolds->HasItem(com.ToCString())) num = theolds->Item(com.ToCString());
     if (num == 0) continue;
-    if (!IFSelect_Activator::Select(com.ToCString(),nact,act))
+    if (!XSDRAW_Activator::Select(com.ToCString(),nact,act))
       Sprintf (help,"type :  xhelp %s for help",com.ToCString());
     else if (!act.IsNull()) strcpy(help,act->Help(nact));
     if (num < 0) theCommands.Add (com.ToCString(),help,XSTEPDRAWRUN,act->Group());
@@ -130,34 +122,28 @@ Standard_Integer XSDRAW::Execute (const Standard_CString command, const Standard
   return 1;  // stat ?
 }
 
-const Handle(IFSelect_SessionPilot) & XSDRAW::Pilot ()
+const Handle(XSDRAW_SessionPilot) & XSDRAW::Pilot ()
 {  return thepilot;  }
 
-Handle(XSControl_WorkSession) XSDRAW::Session (const Handle(IFSelect_SessionPilot) &thePilot)
-{  return Handle(XSControl_WorkSession)::DownCast((thePilot.IsNull()? thepilot : thePilot)->Session());  }
+const Handle(IFSelect_WorkSession) & XSDRAW::Session (const Handle(XSDRAW_SessionPilot) &thePilot)
+{ return (thePilot.IsNull()? thepilot : thePilot)->Session(); }
 
 #include <IFSelect_SelectModelEntities.hxx>
 #include <IFSelect_SelectModelRoots.hxx>
-#include <XSControl_SelectForTransfer.hxx>
-#include <XSControl_SignTransferStatus.hxx>
-#include <XSControl_ConnectedShapes.hxx>
 #include <IFSelect_SignType.hxx>
 #include <IFSelect_SignAncestor.hxx>
 #include <IFSelect_SignCounter.hxx>
 #include <IFSelect_SignCategory.hxx>
 #include <IFSelect_SignValidity.hxx>
-#include <IFSelect_DispPerOne.hxx>
-#include <IFSelect_DispPerCount.hxx>
 #include <IFSelect_IntParam.hxx>
-#include <IFSelect_DispPerFiles.hxx>
-#include <IFSelect_DispPerSignature.hxx>
 #include <IFSelect_SelectPointed.hxx>
 #include <IFSelect_SelectSharing.hxx>
 #include <IFSelect_SelectShared.hxx>
 #include <IFSelect_GraphCounter.hxx>
 #include <Interface_Static.hxx>
-#include <IFSelect_ParamEditor.hxx>
-#include <IFSelect_EditForm.hxx>
+#include <XSSelect_SelectForTransfer.hxx>
+#include <XSSelect_SignTransferStatus.hxx>
+#include <XSSelect_ConnectedShapes.hxx>
 
 void XSDRAW::SetController (const Handle(XSControl_Controller)& control)
 {
@@ -165,7 +151,7 @@ void XSDRAW::SetController (const Handle(XSControl_Controller)& control)
   if (control.IsNull()) cout<<"XSTEP Controller not defined"<<endl;
   else if (Session().IsNull()) cout<<"XSTEP Session badly or not defined"<<endl;
   else {
-    Handle(XSControl_WorkSession) WS = Session();
+    const Handle(IFSelect_WorkSession) &WS = Session();
 
     if (WS->NamedItem("xst-model-all").IsNull()) {
 
@@ -175,24 +161,21 @@ void XSDRAW::SetController (const Handle(XSControl_Controller)& control)
       Handle(IFSelect_SelectModelRoots)    slr = new IFSelect_SelectModelRoots;
       WS->AddNamedItem ("xst-model-roots",slr);
 
-      if(strcasecmp(WS->SelectedNorm(),"STEP")) {
-        Handle(XSControl_SelectForTransfer) st1 = new XSControl_SelectForTransfer;
+      const Handle(XSControl_Controller) &aCtl = WS->NormAdaptor();
+      if(strcasecmp((aCtl.IsNull()? "" : aCtl->Name()),"STEP")) {
+        Handle(XSSelect_SelectForTransfer) st1 = new XSSelect_SelectForTransfer(WS->ReaderProcess());
         st1->SetInput (slr);
-        st1->SetReader (WS->TransferReader());
         WS->AddNamedItem ("xst-transferrable-roots",st1);
       }
 
-      Handle(XSControl_SelectForTransfer) st2 = new XSControl_SelectForTransfer;
+      Handle(XSSelect_SelectForTransfer) st2 = new XSSelect_SelectForTransfer(WS->ReaderProcess());
       st2->SetInput (sle);
-      st2->SetReader (WS->TransferReader());
       WS->AddNamedItem ("xst-transferrable-all",st2);
    
-      Handle(XSControl_SignTransferStatus) strs = new XSControl_SignTransferStatus;
-      strs->SetReader (WS->TransferReader());
+      Handle(XSSelect_SignTransferStatus) strs = new XSSelect_SignTransferStatus(WS->ReaderProcess());
       WS->AddNamedItem ("xst-transfer-status",strs);
   
-      Handle(XSControl_ConnectedShapes) scs = new XSControl_ConnectedShapes;
-      scs->SetReader (WS->TransferReader());
+      Handle(XSSelect_ConnectedShapes) scs = new XSSelect_ConnectedShapes(WS->ReaderProcess());
       WS->AddNamedItem ("xst-connected-faces",scs);
 
       Handle(IFSelect_SignType) stp = new IFSelect_SignType (Standard_False);
@@ -206,29 +189,6 @@ void XSDRAW::SetController (const Handle(XSControl_Controller)& control)
       WS->AddNamedItem ("xst-category",new IFSelect_SignCategory);
       WS->AddNamedItem ("xst-validity",new IFSelect_SignValidity);
 
-      Handle(IFSelect_DispPerOne) dispone = new IFSelect_DispPerOne;
-      dispone->SetFinalSelection(slr);
-      WS->AddNamedItem ("xst-disp-one",dispone);
-
-      Handle(IFSelect_DispPerCount) dispcount = new IFSelect_DispPerCount;
-      Handle(IFSelect_IntParam) intcount = new IFSelect_IntParam;
-      intcount->SetValue(5);
-      dispcount->SetCount(intcount);
-      dispcount->SetFinalSelection(slr);
-      WS->AddNamedItem ("xst-disp-count",dispcount);
-
-      Handle(IFSelect_DispPerFiles) dispfiles = new IFSelect_DispPerFiles;
-      Handle(IFSelect_IntParam) intfiles = new IFSelect_IntParam;
-      intfiles->SetValue(10);
-      dispfiles->SetCount(intfiles);
-      dispfiles->SetFinalSelection(slr);
-      WS->AddNamedItem ("xst-disp-files",dispfiles);
-
-      Handle(IFSelect_DispPerSignature) dispsign = new IFSelect_DispPerSignature;
-      dispsign->SetSignCounter(new IFSelect_SignCounter(Handle(IFSelect_Signature)(stc)));
-      dispsign->SetFinalSelection(slr);
-      WS->AddNamedItem ("xst-disp-sign",dispsign);
-
       // Not used directly but useful anyway
       WS->AddNamedItem ("xst-pointed",new IFSelect_SelectPointed);
       WS->AddNamedItem ("xst-sharing",new IFSelect_SelectSharing);
@@ -237,12 +197,6 @@ void XSDRAW::SetController (const Handle(XSControl_Controller)& control)
 
       WS->SetSignType( stp );
     }
-
-    Handle(TColStd_HSequenceOfHAsciiString) listat = Interface_Static::Items();
-    Handle(IFSelect_ParamEditor) paramed = IFSelect_ParamEditor::StaticEditor (listat,"All Static Parameters");
-    WS->AddNamedItem ("xst-static-params-edit",paramed);
-    Handle(IFSelect_EditForm) paramform = paramed->Form(Standard_False);
-    WS->AddNamedItem ("xst-static-params",paramform);
 
     WS->SetController (control);
   }
@@ -255,11 +209,11 @@ void XSDRAW::SetController (const Handle(XSControl_Controller)& control)
     Standard_Boolean  XSDRAW::SetNorm
   (const Standard_CString norm)
 {
-  return Session()->SelectNorm (norm);
+  return Session()->SelectNorm(norm);
 }
 
     Handle(Interface_Protocol)   XSDRAW::Protocol ()
-      {  return thepilot->Session()->Protocol();  }
+{  return thepilot->Session()->NormAdaptor()->Protocol();  }
 
     Handle(Interface_InterfaceModel)  XSDRAW::Model ()
       {  return thepilot->Session()->Model();  }
@@ -285,34 +239,16 @@ void XSDRAW::SetController (const Handle(XSControl_Controller)& control)
   DeclareAndCast(Transfer_FinderProcess,FP,ATP);
   DeclareAndCast(Transfer_TransientProcess,TP,ATP);
 
-//   Cas FinderProcess    ==> TransferWriter
-  if (!FP.IsNull())  Session()->SetMapWriter(FP);
+//   Cas FinderProcess    ==> WriterProcess
+  if (!FP.IsNull())  Session()->SetWriterProcess(FP);
 
-//   Cas TransientProcess ==> TransferReader
+//   Cas TransientProcess ==> ReaderProcess
   if (!TP.IsNull()) {
     if (!TP->Model().IsNull() && TP->Model() != Session()->Model())
       Session()->SetModel (TP->Model());
-    Session()->SetMapReader(TP);
+    Session()->SetReaderProcess(TP);
   }
 }
-
-    Handle(Transfer_TransientProcess)  XSDRAW::TransientProcess  ()
-      {  return Session()->TransferReader()->TransientProcess();  }
-
-    Handle(Transfer_FinderProcess)  XSDRAW::FinderProcess  ()
-      {  return Session()->TransferWriter()->FinderProcess();  }
-
-
-    void XSDRAW::InitTransferReader (const Standard_Integer mode)
-{
-//   0 nullify  1 clear
-//   2 init TR avec contenu TP (roots)  3 init TP avec contenu TR
-//   4 init avec model (debut scratch)
-  Session()->InitTransferReader(mode);
-}
-
-    Handle(XSControl_TransferReader)  XSDRAW::TransferReader ()
-      {  return Session()->TransferReader();  }
 
 
 //  ############  AUXILIAIRES  #############
@@ -347,11 +283,6 @@ Standard_Boolean XSDRAW::FileAndVar
   return XSDRAW_ShapeFunctions::FileAndVar(Session(),file,var,def,resfile,resvar);
 }
 
-Standard_Integer XSDRAW::MoreShapes (Handle(TopTools_HSequenceOfShape)& list, const Standard_CString name)
-{
-  return XSDRAW_ShapeFunctions::MoreShapes(Session(),list,name);
-}
-
 //  FONCTION POUR LE DEBUG
 
 Standard_Integer XSDRAW_WHAT (const Handle(Standard_Transient)& ent)
@@ -369,9 +300,9 @@ Standard_Integer XSDRAW_WHAT (const Handle(Standard_Transient)& ent)
 //! from a SessionPilot, as follows :
 //!
 //! Define a function as
-//! static IFSelect_RetStatus myfunc
+//! static Interface_ReturnStatus myfunc
 //! (const Standard_CString name,
-//! const Handle(IFSelect_SessionPilot)& pilot)
+//! const Handle(XSDRAW_SessionPilot)& pilot)
 //! { ... }
 //! When ran, it receives the exact name (string) of the called
 //! function, and the SessionPilot which brings other infos
@@ -384,7 +315,7 @@ Standard_Integer XSDRAW_WHAT (const Handle(Standard_Transient)& ent)
 //! name and help are given as CString
 //!
 //! Then, it is available for run
-class XSDRAW_Act : public IFSelect_Activator
+class XSDRAW_Act : public XSDRAW_Activator
 {
  public:
   
@@ -396,14 +327,14 @@ class XSDRAW_Act : public IFSelect_Activator
   
   //! Execution of Command Line. remark that <number> is senseless
   //! because each Act brings one and only one function
-  Standard_EXPORT virtual IFSelect_ReturnStatus Do (const Standard_Integer, const Handle(IFSelect_SessionPilot)& pilot) Standard_OVERRIDE
-  { return (thefunc? thefunc(pilot) : IFSelect_RetVoid); }
+  Standard_EXPORT virtual Interface_ReturnStatus Do (const Standard_Integer, const Handle(XSDRAW_SessionPilot)& pilot) Standard_OVERRIDE
+  { return (thefunc? thefunc(pilot) : Interface_RetVoid); }
   
   //! Short Help for commands : returns the help given to create
   Standard_EXPORT virtual Standard_CString Help (const Standard_Integer) const Standard_OVERRIDE
   { return thehelp.ToCString(); }
 
-  DEFINE_STANDARD_RTTI_INLINE(XSDRAW_Act,IFSelect_Activator)
+  DEFINE_STANDARD_RTTI_INLINE(XSDRAW_Act,XSDRAW_Activator)
 
  private:
 

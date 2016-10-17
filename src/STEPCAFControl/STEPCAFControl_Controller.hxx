@@ -16,14 +16,7 @@
 #ifndef _STEPCAFControl_Controller_HeaderFile
 #define _STEPCAFControl_Controller_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
 #include <STEPControl_Controller.hxx>
-
-
-class STEPCAFControl_Controller;
-DEFINE_STANDARD_HANDLE(STEPCAFControl_Controller, STEPControl_Controller)
 
 //! Extends Controller from STEPControl in order to provide
 //! ActorWrite adapted for writing assemblies from DECAF
@@ -32,6 +25,9 @@ DEFINE_STANDARD_HANDLE(STEPCAFControl_Controller, STEPControl_Controller)
 class STEPCAFControl_Controller : public STEPControl_Controller
 {
  public:
+  
+  //! Returns the Actor for Write attached to the pair (norm,appli)
+  Standard_EXPORT virtual Handle(Transfer_ActorOfFinderProcess) NewActorWrite() const Standard_OVERRIDE;
 
   //! Standard Initialisation. It creates a Controller for STEP-XCAF
   //! and records it to various names, available to select it later
@@ -43,7 +39,7 @@ class STEPCAFControl_Controller : public STEPControl_Controller
  protected:
 
   //! Initializes the use of STEP Norm (the first time)
-  Standard_EXPORT STEPCAFControl_Controller();
+  STEPCAFControl_Controller() {}
 };
 
 #endif // _STEPCAFControl_Controller_HeaderFile

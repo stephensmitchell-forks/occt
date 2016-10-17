@@ -66,21 +66,14 @@ class Transfer_Process : public MMgt_TShared
     //! "mutable" allows the Actor to record intermediate
     //! information, in addition to those of TransferProcess
     Standard_EXPORT virtual Handle(Transfer_Binder) Transferring (const Handle(Standard_Transient)& /*start*/, const Handle(Transfer_Process)& /*TP*/) { return NULL; }
-
-    //! Defines a Next Actor : it can then be asked to work if
-    //! <me> produces no result for a given type of Object.
-    //! If Next is already set and is not "Last", calls
-    //! SetNext on it. If Next defined and "Last", the new
-    //! actor is added before it in the list
-    Standard_EXPORT void SetNext (const Handle(Actor)& next)
-    {
-      if (thenext == next) return;
-      if (thenext.IsNull()) thenext = next;
-      else                  thenext->SetNext(next);
-    }
   
-    //! Returns the Actor defined as Next, or a Null Handle
-    const Handle(Actor) & Next() const { return thenext; }
+    //! Returns min and max values for transfer mode
+    //! Returns True if bounds are set, False else (i.e., always the same mode)
+    Standard_EXPORT virtual Standard_Boolean TransferModeBounds (Standard_Integer& /*theMin*/, Standard_Integer& /*theMax*/) const { return Standard_False; }
+  
+    //! Returns the help string recorded for a given transfer mode
+    //! Empty string if help not defined or not within bounds or if values are free
+    Standard_EXPORT virtual Standard_CString TransferModeHelp (const Standard_Integer /*theMode*/) const { return ""; }
 
     //! Set a specific transfer mode
     void SetTransferMode (const Standard_Integer theMode) { themodetrans = theMode; }
@@ -89,7 +82,6 @@ class Transfer_Process : public MMgt_TShared
 
    protected:
 
-    Handle(Actor) thenext;
     Standard_Integer themodetrans;
   };
 
@@ -162,7 +154,7 @@ class Transfer_Process : public MMgt_TShared
     thelevel(0), therootl(0),
     therootm(Standard_False),
     theindex(0),
-    themap(nb)
+    myMap(nb)
   {}
   
   //! Sets TransferProcess at initial state. Gives an Initial size
@@ -174,15 +166,15 @@ class Transfer_Process : public MMgt_TShared
     thelevel(0), therootl(0),
     therootm(Standard_False),
     theindex(0),
-    themap(nb)
+    myMap(nb)
   {}
   
   //! Sets an InterfaceModel, which can be used during transfer
   //! for instance if a context must be managed, it is in the Model
-  void SetModel (const Handle(Interface_InterfaceModel)& model) { themodel = model; }
+  void SetModel (const Handle(Interface_InterfaceModel)& theModel) { myModel = theModel; }
   
   //! Returns the Model which can be used for context
-  const Handle(Interface_InterfaceModel)& Model() const { return themodel; }
+  const Handle(Interface_InterfaceModel)& Model() const { return myModel; }
   
   //! Resets a TransferProcess as ready for a completely new work.
   //! Clears general data (roots) and the Map
@@ -190,7 +182,7 @@ class Transfer_Process : public MMgt_TShared
   {
     thelevel = 0; therootl  = 0;
     theroots.Clear();
-    themap.Clear();
+    myMap.Clear();
     theindex = 0; thelastobj.Nullify(); thelastbnd.Nullify();
   }
   
@@ -202,18 +194,13 @@ class Transfer_Process : public MMgt_TShared
   
   //! Resizes the Map as required (if a new reliable value has been
   //! determined). Acts only if <nb> is greater than actual NbMapped
-  void Resize (const Standard_Integer nb) { if (nb > themap.NbBuckets()) themap.ReSize(nb); }
-  
+  void Resize (const Standard_Integer nb) { if (nb > myMap.NbBuckets()) myMap.ReSize(nb); }
+
   //! Defines an Actor, which is used for automatic Transfer
-  //! If already defined, the new Actor is cumulated
-  //! (see SetNext from Actor)
-  void SetActor (const Handle(Actor)& actor)
-  {
-    if (theactor == actor)         return;
-    if (theactor.IsNull())         theactor = actor;
-    else if (actor.IsNull())       theactor = actor;
-    else                           theactor->SetNext(actor);
-  }
+  void SetActor (const Handle(Actor)& theActor) { myActor = theActor; }
+
+  //! Returns an Actor, which is used for automatic Transfer
+  const Handle(Actor)& GetActor () const { return myActor; }
 
   //! Returns the Binder which is linked with a starting Object
   //! It can either bring a Result (Transfer done) or none (for a
@@ -369,17 +356,17 @@ class Transfer_Process : public MMgt_TShared
 
   //! Returns the maximum possible value for Map Index
   //! (no result can be bound with a value greater than it)
-  Standard_Integer NbMapped() const { return themap.Extent(); }
+  Standard_Integer NbMapped() const { return myMap.Extent(); }
   
   //! Returns the Starting Object bound to an Index,
-  const Handle(Standard_Transient) & Mapped (const Standard_Integer num) const { return themap.FindKey(num); }
+  const Handle(Standard_Transient) & Mapped (const Standard_Integer num) const { return myMap.FindKey(num); }
   
   //! Returns the Index value bound to a Starting Object, 0 if none
-  Standard_Integer MapIndex (const Handle(Standard_Transient) &start) const { return themap.FindIndex(start); }
+  Standard_Integer MapIndex (const Handle(Standard_Transient) &start) const { return myMap.FindIndex(start); }
   
   //! Returns the Binder bound to an Index
   //! Considers a category number, by default 0
-  Handle(Transfer_Binder) MapItem (const Standard_Integer num) const { return themap.FindFromIndex(num); }
+  Handle(Transfer_Binder) MapItem (const Standard_Integer num) const { return myMap.FindFromIndex(num); }
   
   //! Declares <obj> (and its Result) as Root. This status will be
   //! later exploited by RootResult, see below (Result can be
@@ -410,7 +397,7 @@ class Transfer_Process : public MMgt_TShared
   {
     Standard_Integer ind = 0;
     if (num > 0 && num <= theroots.Extent()) ind = theroots.FindKey(num);
-    return themap.FindKey (ind);
+    return myMap.FindKey (ind);
   }
   
   //! Returns the index in the list of roots for a starting item,
@@ -436,12 +423,11 @@ class Transfer_Process : public MMgt_TShared
   }
   
   //! Method called when trace is asked
-  //! Calls PrintTrace to display information relevant for starting
-  //! objects (which can be redefined)
-  //! <level> is Nesting Level of Transfer (0 = root)
-  //! <mode> controls the way the trace is done :
+  //! Calls PrintTrace to display information relevant for source objects (which can be redefined)
+  //! <theLevel> is Nesting Level of Transfer (0 = root)
+  //! <theMode> controls the way the trace is done :
   //! 0 neutral, 1 for Error, 2 for Warning message, 3 for new Root
-  Standard_EXPORT void StartTrace (const Handle(Transfer_Binder)& binder, const Handle(Standard_Transient) &start, const Standard_Integer level, const Standard_Integer mode) const;
+  Standard_EXPORT void StartTrace (const Handle(Transfer_Binder)& theBinder, const Handle(Standard_Transient) &theSource, const Standard_Integer theLevel, const Standard_Integer theMode) const;
   
   //! Prints statistics on transfer
   Standard_EXPORT void PrintStats(const Handle(Message_Messenger)& S) const;
@@ -468,6 +454,10 @@ class Transfer_Process : public MMgt_TShared
   //! If <erronly> is True, checks with Warnings only are ignored
   Standard_EXPORT Interface_CheckIterator CheckList (const Standard_Boolean erronly) const;
   
+  //! Prints the transfer status of a transferred item, as beeing the Mapped n0 <num>
+  //! Returns True when done, False else (i.e. num out of range)
+  Standard_EXPORT virtual Standard_Boolean PrintTransferStatus (const Standard_Integer theNum, const Handle(Message_Messenger)& theMessenger) const = 0;
+  
   //! Sets Progress indicator
   void SetProgress (const Handle(Message_ProgressIndicator)& theProgress) { myProgress = theProgress; }
   
@@ -490,7 +480,8 @@ class Transfer_Process : public MMgt_TShared
   //! Prints a short information on a source object.
   Standard_EXPORT virtual void PrintTrace (const Handle(Standard_Transient) &theSource, const Handle(Message_Messenger)& S) const;
 
-  Handle(Interface_InterfaceModel) themodel;
+  Handle(Interface_InterfaceModel) myModel;
+  Handle(Actor) myActor;
 
  private:
   
@@ -502,13 +493,14 @@ class Transfer_Process : public MMgt_TShared
       if (theindex > 0) return thelastbnd;
     }
     thelastobj = start;
-    theindex   = themap.FindIndex (start);
-    if (theindex > 0) thelastbnd = themap.FindFromIndex(theindex);
+    theindex   = myMap.FindIndex (start);
+    if (theindex > 0) thelastbnd = myMap.FindFromIndex(theindex);
     else thelastbnd.Nullify();
     return thelastbnd;
   }
   
-  Handle(Message_Messenger) themessenger;
+  Transfer_MapOfProcess myMap;
+
   Standard_Integer thetrace;
   Standard_Integer thelevel;
   Standard_Integer therootl;
@@ -517,8 +509,8 @@ class Transfer_Process : public MMgt_TShared
   Handle(Standard_Transient) thelastobj;
   Handle(Transfer_Binder) thelastbnd;
   Standard_Integer theindex;
-  Handle(Actor) theactor;
-  Transfer_MapOfProcess themap;
+
+  Handle(Message_Messenger) themessenger;
   Handle(Message_ProgressIndicator) myProgress;
 };
 

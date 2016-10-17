@@ -26,7 +26,7 @@
 #include <IGESControl_Reader.hxx>
 #include <IGESControl_Controller.hxx>
 #include <IGESControl_Writer.hxx>
-#include <IFSelect_ReturnStatus.hxx>
+#include <Interface_ReturnStatus.hxx>
 #include <Interface_Static.hxx>
 //step I/E
 #include <STEPControl_Reader.hxx>
@@ -752,7 +752,7 @@ public:
   bool ImportStep (char* theFileName)
   {
     STEPControl_Reader aReader;
-    if (aReader.ReadFile (theFileName) != IFSelect_RetDone)
+    if (aReader.ReadFile (theFileName) != Interface_RetDone)
     {
       return false;
     }
@@ -784,7 +784,7 @@ public:
   bool ImportIges (char* theFileName)
   {
     IGESControl_Reader aReader;
-    if (aReader.ReadFile (theFileName) != IFSelect_RetDone)
+    if (aReader.ReadFile (theFileName) != Interface_RetDone)
     {
       return false;
     }
@@ -830,12 +830,12 @@ public:
       }
 
       TopoDS_Shape aShape = anIS->Shape();
-      if (aWriter.Transfer (aShape, aType) != IFSelect_RetDone)
+      if (aWriter.Transfer (aShape, aType) != Interface_RetDone)
       {
         return false;
       }
     }
-    return aWriter.Write (theFileName) == IFSelect_RetDone;
+    return aWriter.Write (theFileName) == Interface_RetDone;
   }
 
   /// <summary>

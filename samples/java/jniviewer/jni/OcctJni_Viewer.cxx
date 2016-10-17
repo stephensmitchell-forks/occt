@@ -280,9 +280,9 @@ void OcctJni_Viewer::initContent()
 //! Load shape from IGES file
 static TopoDS_Shape loadIGES (const TCollection_AsciiString& thePath)
 {
-  TopoDS_Shape          aShape;
-  IGESControl_Reader    aReader;
-  IFSelect_ReturnStatus aReadStatus = IFSelect_RetFail;
+  TopoDS_Shape           aShape;
+  IGESControl_Reader     aReader;
+  Interface_ReturnStatus aReadStatus = Interface_RetFail;
   try
   {
     aReadStatus = aReader.ReadFile (thePath.ToCString());
@@ -293,7 +293,7 @@ static TopoDS_Shape loadIGES (const TCollection_AsciiString& thePath)
     return aShape;
   }
 
-  if (aReadStatus != IFSelect_RetDone)
+  if (aReadStatus != Interface_RetDone)
   {
     Message::DefaultMessenger()->Send ("Error: IGES reader, bad file format", Message_Fail);
     return aShape;
@@ -352,8 +352,8 @@ static TopoDS_Shape loadIGES (const TCollection_AsciiString& thePath)
 //! Load shape from STEP file
 static TopoDS_Shape loadSTEP (const TCollection_AsciiString& thePath)
 {
-  STEPControl_Reader    aReader;
-  IFSelect_ReturnStatus aReadStatus = IFSelect_RetFail;
+  STEPControl_Reader     aReader;
+  Interface_ReturnStatus aReadStatus = Interface_RetFail;
   try
   {
     aReadStatus = aReader.ReadFile (thePath.ToCString());
@@ -364,7 +364,7 @@ static TopoDS_Shape loadSTEP (const TCollection_AsciiString& thePath)
     return TopoDS_Shape();
   }
 
-  if (aReadStatus != IFSelect_RetDone)
+  if (aReadStatus != Interface_RetDone)
   {
     Message::DefaultMessenger()->Send ("Error: STEP reader, bad file format", Message_Fail);
     return TopoDS_Shape();

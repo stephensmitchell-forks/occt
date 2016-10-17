@@ -17,39 +17,36 @@
 #ifndef _STEPControl_Controller_HeaderFile
 #define _STEPControl_Controller_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
 #include <XSControl_Controller.hxx>
-#include <IFSelect_ReturnStatus.hxx>
-#include <Standard_Integer.hxx>
-#include <Standard_Boolean.hxx>
-class Interface_InterfaceModel;
-class Transfer_ActorOfTransientProcess;
-class XSControl_WorkSession;
-class TopoDS_Shape;
-class Transfer_FinderProcess;
-
-
-class STEPControl_Controller;
-DEFINE_STANDARD_HANDLE(STEPControl_Controller, XSControl_Controller)
 
 //! defines basic controller for STEP processor
 class STEPControl_Controller : public XSControl_Controller
 {
  public:
   
+  //! Reads a STEP File and returns a STEP Model (into <mod>),
+  //! or lets <mod> "Null" in case of Error
+  //! Returns 0 if OK, 1 if Read Error, -1 if File not opened
+  Standard_EXPORT virtual Standard_Integer ReadFile (const Standard_CString theFileName, Handle(Interface_InterfaceModel)& theModel) const Standard_OVERRIDE;
+  
+  //! Writes a File from a STEP Model
+  //! Returns False (and writes no file) if <ctx> does not bring a
+  //! STEP Model
+  Standard_EXPORT virtual Standard_Boolean WriteFile (const Standard_CString theFileName, const Handle(Interface_InterfaceModel)& theModel, Interface_CheckIterator& theChecks) const Standard_OVERRIDE;
+  
+  //! Dumps an entity under STEP form, i.e. as a part of a Step file
+  //! Works with a StepDumper.
+  //! Level 0 just displays type; level 1 displays the entity itself
+  //! and level 2 displays the entity plus its shared ones (one
+  //! sub-level : immediately shared entities)
+  Standard_EXPORT virtual void DumpEntity (const Handle(Interface_InterfaceModel)& model, const Handle(Interface_Protocol)& protocol, const Handle(Standard_Transient)& entity, const Handle(Message_Messenger)& S, const Standard_Integer level) const Standard_OVERRIDE;
+  
   //! Creates a new empty Model ready to receive data of the Norm.
   //! It is taken from STEP Template Model
   Standard_EXPORT virtual Handle(Interface_InterfaceModel) NewModel() const Standard_OVERRIDE;
   
-  //! Takes one Shape and transfers it to the InterfaceModel
-  //! (already created by NewModel for instance)
-  //! <modeshape> is to be interpreted by each kind of XstepAdaptor
-  //! Returns a status : 0 OK  1 No result  2 Fail  -1 bad modeshape
-  //! -2 bad model (requires a StepModel)
-  //! modeshape : 1 Facetted BRep, 2 Shell, 3 Manifold Solid
-  Standard_EXPORT virtual IFSelect_ReturnStatus TransferWriteShape (const TopoDS_Shape& shape, const Handle(Transfer_FinderProcess)& FP, const Handle(Interface_InterfaceModel)& model, const Standard_Integer modetrans = 0) const Standard_OVERRIDE;
+  //! Returns the Actor for Write attached to the pair (norm,appli)
+  Standard_EXPORT virtual Handle(Transfer_ActorOfFinderProcess) NewActorWrite() const Standard_OVERRIDE;
   
   //! Standard Initialisation. It creates a Controller for STEP
   //! and records it to various names, available to select it later
@@ -60,8 +57,7 @@ class STEPControl_Controller : public XSControl_Controller
 
  protected:
 
-  //! Initializes the use of STEP Norm (the first time) and
-  //! returns a Controller
+  //! Initializes the use of STEP Norm (the first time)
   Standard_EXPORT STEPControl_Controller();
 };
 

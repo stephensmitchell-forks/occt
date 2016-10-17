@@ -46,9 +46,17 @@ class STEPControl_ActorWrite : public Transfer_ActorOfFinderProcess
     SetMode(STEPControl_ShellBasedSurfaceModel);  
   }
   
-  Standard_EXPORT Standard_Boolean Recognize (const Handle(Standard_Transient)& start) Standard_OVERRIDE;
+  //! Recognizes a source entity
+  Standard_EXPORT virtual Standard_Boolean Recognize (const Handle(Standard_Transient)& start) Standard_OVERRIDE;
   
-  Standard_EXPORT Handle(Transfer_Binder) Transferring (const Handle(Standard_Transient)& start, const Handle(Transfer_Process)& FP) Standard_OVERRIDE;
+  //! Transfers a source entity to IGES Entities
+  Standard_EXPORT virtual Handle(Transfer_Binder) Transferring (const Handle(Standard_Transient)& start, const Handle(Transfer_Process)& FP) Standard_OVERRIDE;
+  
+  //! Transfer mode bounds
+  Standard_EXPORT virtual Standard_Boolean TransferModeBounds (Standard_Integer& theMin, Standard_Integer& theMax) const Standard_OVERRIDE;
+  
+  //! Returns the help string recorded for a given transfer mode
+  Standard_EXPORT virtual Standard_CString TransferModeHelp (const Standard_Integer theMode) const Standard_OVERRIDE;
   
   Standard_EXPORT Handle(Transfer_Binder) TransferSubShape (const Handle(Transfer_Finder)& start, const Handle(StepShape_ShapeDefinitionRepresentation)& SDR, Handle(StepGeom_Axis2Placement3d)& AX1, const Handle(Transfer_FinderProcess)& FP, const Handle(TopTools_HSequenceOfShape)& shapeGroup = NULL, const Standard_Boolean isManifold = Standard_True);
   

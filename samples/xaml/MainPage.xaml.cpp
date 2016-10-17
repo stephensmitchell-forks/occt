@@ -326,7 +326,7 @@ Standard_Boolean MainPage::SaveSTEP(const wchar_t* theFilePath, const TopoDS_Sha
 
   STEPControl_Writer aWriter;
 
-  if (aWriter.Transfer(theShape, theValue) != IFSelect_RetDone) {
+  if (aWriter.Transfer(theShape, theValue) != Interface_RetDone) {
     Output_TextBlock->Text += L"Error: cannot translate shape to STEP\n";
     return Standard_False;
   }
@@ -336,13 +336,13 @@ Standard_Boolean MainPage::SaveSTEP(const wchar_t* theFilePath, const TopoDS_Sha
 
   switch (aWriter.Write(theFilePathA))
   {
-  case IFSelect_RetError:
+  case Interface_RetError:
     Output_TextBlock->Text += L"Error: Incorrect Data\n";
     break;
-  case IFSelect_RetFail:
+  case Interface_RetFail:
     Output_TextBlock->Text += L"Error: Writing has failed\n";
     break;
-  case IFSelect_RetVoid:
+  case Interface_RetVoid:
     Output_TextBlock->Text += L"Error: Nothing to transfer\n";
     break;
   default:
@@ -413,7 +413,7 @@ Standard_Boolean MainPage::ReadIGES(const wchar_t* theFilePath, TopoDS_Shape& th
   char theFilePathA[MAX_PATH];
   WideCharToMultiByte(CP_UTF8, 0, theFilePath, -1, theFilePathA, sizeof(theFilePathA), NULL, NULL);
 
-  if (Reader.ReadFile(theFilePathA) != IFSelect_RetDone)
+  if (Reader.ReadFile(theFilePathA) != Interface_RetDone)
     return Standard_False;
 
   Reader.TransferRoots();
@@ -437,13 +437,13 @@ Standard_Boolean MainPage::ReadSTEP(const wchar_t* theFilePath, TopoDS_Shape& th
 
   switch (aReader.ReadFile(theFilePathA))
   {
-  case IFSelect_RetError:
+  case Interface_RetError:
     Output_TextBlock->Text += L"Error: Not a valid Step file\n";
     break;
-  case IFSelect_RetFail:
+  case Interface_RetFail:
     Output_TextBlock->Text += L"Error: Reading has failed\n";
     break;
-  case IFSelect_RetVoid:
+  case Interface_RetVoid:
     Output_TextBlock->Text += L"Error: Nothing to transfer\n";
     break;
   default:

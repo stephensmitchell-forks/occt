@@ -23,24 +23,22 @@
 #include <Draw_Interpretor.hxx>
 #include <TColStd_HSequenceOfTransient.hxx>
 #include <TopTools_HSequenceOfShape.hxx>
-#include <IFSelect_SessionPilot.hxx>
+#include <XSDRAW_SessionPilot.hxx>
+class TCollection_AsciiString;
 class Interface_Protocol;
 class Interface_InterfaceModel;
 class Transfer_TransientProcess;
 class Transfer_FinderProcess;
-class XSControl_WorkSession;
 class XSControl_Controller;
-class XSControl_TransferReader;
-class TCollection_AsciiString;
+class XSselect_WorkSession;
 
-typedef IFSelect_ReturnStatus (*XSDRAW_ActFunc) (const Handle(IFSelect_SessionPilot)&);
+typedef Interface_ReturnStatus (*XSDRAW_ActFunc) (const Handle(XSDRAW_SessionPilot)&);
 
 //! Basic package to work functions of X-STEP (IFSelect & Co)
 //! under control of DRAW
 //!
 //! Works with some "static" data : a SessionPilot (used to run)
-//! with its WorkSession and Model and TransferReader, a
-//! FinderProcess
+//! with its WorkSession and Model, and ReaderProcess and WriterProcess
 class XSDRAW 
 {
  public:
@@ -95,11 +93,11 @@ class XSDRAW
   Standard_EXPORT static Standard_Integer Execute (const Standard_CString command, const Standard_CString var = "");
   
   //! Returns the SessionPilot (can be used for direct call)
-  Standard_EXPORT static const Handle(IFSelect_SessionPilot) & Pilot();
+  Standard_EXPORT static const Handle(XSDRAW_SessionPilot) & Pilot();
   
   //! Returns the WorkSession defined in AddDraw (through Pilot)
   //! It is from XSControl, it brings functionnalities for Transfers
-  Standard_EXPORT static Handle(XSControl_WorkSession) Session(const Handle(IFSelect_SessionPilot) &thePilot = NULL);
+  Standard_EXPORT static const Handle(IFSelect_WorkSession) & Session(const Handle(XSDRAW_SessionPilot) &thePilot = NULL);
   
   //! Defines a Controller for the command "xinit" and applies it
   //! (i.e. calls its method Customise)
@@ -136,27 +134,8 @@ class XSDRAW
   Standard_EXPORT static Standard_Integer Number (const Handle(Standard_Transient)& ent);
   
   //! Sets a TransferProcess in order to analyse it (see Activator)
-  //! It can be either a FinderProcess or a TransientProcess, in
-  //! that case a new TransferReader is created on it
+  //! It can be either a FinderProcess or a TransientProcess
   Standard_EXPORT static void SetTransferProcess (const Handle(Standard_Transient)& TP);
-  
-  //! Returns the TransferProcess : TransientProcess detained by
-  //! the TransferReader
-  Standard_EXPORT static Handle(Transfer_TransientProcess) TransientProcess();
-  
-  //! Returns the FinderProcess, detained by the TransferWriter
-  Standard_EXPORT static Handle(Transfer_FinderProcess) FinderProcess();
-  
-  //! Initialises a TransferReader, according to mode :
-  //! 0 nullifies it,  1 clears it (not nullify)
-  //! 2 sets it with TransientProcess & Model
-  //! 3 idem plus roots of TransientProcess
-  //! Remark : called with 0 at least at each SetModel/NewModel
-  Standard_EXPORT static void InitTransferReader (const Standard_Integer mode);
-  
-  //! Returns the current TransferReader, can be null
-  //! It detains the TransientProcess
-  Standard_EXPORT static Handle(XSControl_TransferReader) TransferReader();
   
   //! Takes the name of an entity, either as argument, or (if <name>
   //! is empty) on keybord, and returns the entity
@@ -190,18 +169,6 @@ class XSDRAW
   //! Else, the root part of <resfile> is considered, if defined
   //! Else, <def> is taken
   Standard_EXPORT static Standard_Boolean FileAndVar (const Standard_CString file, const Standard_CString var, const Standard_CString def, TCollection_AsciiString& resfile, TCollection_AsciiString& resvar);
-  
-  //! Analyses a name as designating Shapes from DRAW variables or
-  //! XSTEP transfer (last Transfer on Reading). <name> can be :
-  //! "*" : all the root shapes produced by last Transfer (Read)
-  //! i.e. considers roots of the TransientProcess
-  //! a name : a name of a variable DRAW
-  //!
-  //! Returns the count of designated Shapes. Their list is put in
-  //! <list>. If <list> is null, it is firstly created. Then it is
-  //! completed (Append without Clear) by the Shapes found
-  //! Returns 0 if no Shape could be found
-  Standard_EXPORT static Standard_Integer MoreShapes (Handle(TopTools_HSequenceOfShape)& list, const Standard_CString name);
 
   //! Changes the default group name for the following Acts
   //! group empty means to come back to default from Activator

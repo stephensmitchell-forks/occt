@@ -276,7 +276,7 @@ dlg.m_ofn.lpstrInitialDir = initdir;
     TCollection_ExtendedString aFileNameW ((Standard_ExtString )(const wchar_t* )dlg.GetPathName());
     TCollection_AsciiString    aFileName  (aFileNameW, '?');
     Standard_Integer status = ReadIGES (aFileName.ToCString(), aSequence);
-    if (status != IFSelect_RetDone)
+    if (status != Interface_RetDone)
     {
       MessageBoxW (AfxGetApp()->m_pMainWnd->m_hWnd, L"Error : The file is not read", L"CasCade Error", MB_ICONERROR);
     }
@@ -295,7 +295,7 @@ Standard_Integer CImportExport::ReadIGES(const Standard_CString& aFileName,
 
     Standard_Integer status = Reader.ReadFile(aFileName);
 
-    if (status != IFSelect_RetDone) return status;
+    if (status != Interface_RetDone) return status;
     Reader.TransferRoots();
     TopoDS_Shape aShape = Reader.OneShape();     
 	aHSequenceOfShape->Append(aShape);
@@ -402,16 +402,16 @@ dlg.m_ofn.lpstrInitialDir = initdir;
     SetCursor(AfxGetApp()->LoadStandardCursor(IDC_WAIT));
     TCollection_ExtendedString aFileNameW ((Standard_ExtString )(const wchar_t* )dlg.GetPathName());
     TCollection_AsciiString    aFileName  (aFileNameW, '?');
-	IFSelect_ReturnStatus ReturnStatus = ReadSTEP (aFileName.ToCString(), aSequence);
+	Interface_ReturnStatus ReturnStatus = ReadSTEP (aFileName.ToCString(), aSequence);
     switch (ReturnStatus) 
     {
-       case IFSelect_RetError :
+       case Interface_RetError :
            MessageBoxW (AfxGetApp()->m_pMainWnd->m_hWnd, L"Not a valid Step file", L"ERROR", MB_ICONWARNING);
        break;
-       case IFSelect_RetFail :
+       case Interface_RetFail :
            MessageBoxW (AfxGetApp()->m_pMainWnd->m_hWnd, L"Reading has failed", L"ERROR", MB_ICONWARNING);
        break;
-       case IFSelect_RetVoid :
+       case Interface_RetVoid :
             MessageBoxW (AfxGetApp()->m_pMainWnd->m_hWnd, L"Nothing to transfer", L"ERROR", MB_ICONWARNING);
        break;
     }
@@ -420,15 +420,15 @@ dlg.m_ofn.lpstrInitialDir = initdir;
   return aSequence;
 }
 
-IFSelect_ReturnStatus CImportExport::ReadSTEP(const Standard_CString& aFileName,
-                                              Handle(TopTools_HSequenceOfShape)& aHSequenceOfShape)
+Interface_ReturnStatus CImportExport::ReadSTEP(const Standard_CString& aFileName,
+                                               Handle(TopTools_HSequenceOfShape)& aHSequenceOfShape)
 {
   aHSequenceOfShape->Clear();
 
   // create additional log file
   STEPControl_Reader aReader;
-  IFSelect_ReturnStatus status = aReader.ReadFile(aFileName);
-  if (status != IFSelect_RetDone)
+  Interface_ReturnStatus status = aReader.ReadFile(aFileName);
+  if (status != Interface_RetDone)
     return status;
 
   aReader.WS()->TransferReader()->TransientProcess()->SetTraceLevel(2); // increase default trace level
@@ -446,7 +446,7 @@ IFSelect_ReturnStatus CImportExport::ReadSTEP(const Standard_CString& aFileName,
   // Collecting resulting entities
   Standard_Integer nbs = aReader.NbShapes();
   if (nbs == 0) {
-    return IFSelect_RetVoid;
+    return Interface_RetVoid;
   }
   for (Standard_Integer i=1; i<=nbs; i++) {
     aHSequenceOfShape->Append(aReader.Shape(i));
@@ -502,15 +502,15 @@ Standard_Boolean TestFacetedBrep(const Handle(TopTools_HSequenceOfShape)& aHSequ
 	return !OneErrorFound;
 }
 
-IFSelect_ReturnStatus CImportExport::SaveSTEP(const Handle(TopTools_HSequenceOfShape)& aHSequenceOfShape)
+Interface_ReturnStatus CImportExport::SaveSTEP(const Handle(TopTools_HSequenceOfShape)& aHSequenceOfShape)
 {
     if (aHSequenceOfShape->Length() == 0)
       {
         MessageBox (AfxGetApp()->m_pMainWnd->m_hWnd, L"No Shape in the HSequence!!", L"CasCade Warning", MB_ICONWARNING);
-        return IFSelect_RetError;
+        return Interface_RetError;
       }
 
-    IFSelect_ReturnStatus status = IFSelect_RetVoid;
+    Interface_ReturnStatus status = Interface_RetVoid;
 
 	CFileSaveSTEPDialog aDlg(NULL);
 
@@ -528,20 +528,20 @@ IFSelect_ReturnStatus CImportExport::SaveSTEP(const Handle(TopTools_HSequenceOfS
     	if (!TestFacetedBrep(aHSequenceOfShape))
 	    {
           MessageBoxW (AfxGetApp()->m_pMainWnd->m_hWnd, L"At least one shape doesn't contain facetes", L"CasCade Warning", MB_ICONWARNING);
-            return IFSelect_RetError;
+            return Interface_RetError;
 	    }
 
 
         status =  SaveSTEP (aFileName.ToCString(), aHSequenceOfShape, selection);
         switch (status)
           {
-            case IFSelect_RetError:
+            case Interface_RetError:
                 MessageBoxW (AfxGetApp()->m_pMainWnd->m_hWnd, L"Incorrect Data", L"ERROR", MB_ICONWARNING); 
             break;
-            case IFSelect_RetFail:
+            case Interface_RetFail:
                 MessageBoxW (AfxGetApp()->m_pMainWnd->m_hWnd, L"Writing has failed", L"ERROR", MB_ICONWARNING); 
             break;
-            case IFSelect_RetVoid:
+            case Interface_RetVoid:
                 MessageBoxW (AfxGetApp()->m_pMainWnd->m_hWnd, L"Nothing to transfer", L"ERROR", MB_ICONWARNING); 
             break;
           }
@@ -550,8 +550,8 @@ IFSelect_ReturnStatus CImportExport::SaveSTEP(const Handle(TopTools_HSequenceOfS
   return status;
 }
 //----------------------------------------------------------------------------------------
-IFSelect_ReturnStatus CImportExport::SaveSTEP(const Standard_CString& aFileName,
-                                              const Handle(TopTools_HSequenceOfShape)& aHSequenceOfShape,
+Interface_ReturnStatus CImportExport::SaveSTEP(const Standard_CString& aFileName,
+                                               const Handle(TopTools_HSequenceOfShape)& aHSequenceOfShape,
 
 const STEPControl_StepModelType aValue /* =TopoDSToCc1Act_ManifoldSolidBrep */ )
 
@@ -560,11 +560,11 @@ const STEPControl_StepModelType aValue /* =TopoDSToCc1Act_ManifoldSolidBrep */ )
 
     STEPControl_Writer aWriter;
 
-	IFSelect_ReturnStatus status;
+	Interface_ReturnStatus status;
 	for (Standard_Integer i=1;i<=aHSequenceOfShape->Length();i++)  
         {
 			status =  aWriter.Transfer(aHSequenceOfShape->Value(i), aValue);
-            if ( status != IFSelect_RetDone ) return status;
+            if ( status != Interface_RetDone ) return status;
         }     
     status = aWriter.Write(aFileName);
     return status;

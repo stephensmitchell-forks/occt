@@ -14,44 +14,113 @@
 //#58 rln 28.12.98 changing default values for Global Section
 //sln 14.01.2002 OCC51 : verifying whether entry model of method ActorRead is IGESDatat_IGESModel 
 
+#include <Standard_Mutex.hxx>
+#include <OSD_OpenFile.hxx>
+#include <TCollection_HAsciiString.hxx>
+#include <TopoDS_Shape.hxx>
+#include <XSAlgo.hxx>
+#include <Message_Messenger.hxx>
+#include <Interface_Macros.hxx>
+#include <Interface_Static.hxx>
+#include <Interface_CheckIterator.hxx>
+#include <Interface_ReportEntity.hxx>
+#include <IGESAppli.hxx>
+#include <IGESAppli_Protocol.hxx>
 #include <IGESControl_AlgoContainer.hxx>
 #include <IGESControl_Controller.hxx>
 #include <IGESData.hxx>
+#include <IGESData_IGESEntity.hxx>
 #include <IGESData_IGESModel.hxx>
+#include <IGESData_IGESDumper.hxx>
+#include <IGESData_IGESWriter.hxx>
 #include <IGESData_Protocol.hxx>
 #include <IGESData_FileProtocol.hxx>
-#include <IGESControl_WorkLibrary.hxx>
-#include <IGESAppli.hxx>
-#include <IGESAppli_Protocol.hxx>
+#include <IGESDefs.hxx>
+#include <IGESFile_Read.hxx>
 #include <IGESSolid.hxx>
 #include <IGESSolid_Protocol.hxx>
 #include <IGESToBRep.hxx>
 #include <IGESToBRep_Actor.hxx>
 #include <IGESControl_ActorWrite.hxx>
-#include <Interface_Macros.hxx>
-#include <Interface_Static.hxx>
-#include <TCollection_HAsciiString.hxx>
-#include <TopoDS_Shape.hxx>
-#include <XSAlgo.hxx>
-#include <XSControl_WorkSession.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESControl_Controller,XSControl_Controller)
 
+class IGESControl_FloatFormat
+{
+  Standard_Boolean thezerosup;
+  TCollection_AsciiString themainform;
+  TCollection_AsciiString theformrange;
+  Standard_Real therangemin;
+  Standard_Real therangemax;
+ public:
+  IGESControl_FloatFormat ()
+  : thezerosup (Standard_True), therangemin (0.1), therangemax (1000.)
+  {
+    const Standard_Integer digits = 12;
+    char format[20];
+    const char pourcent = '%';
+    const char point = '.';
+    Sprintf(format,  "%c%d%c%dE",pourcent,digits+2,point,digits);
+    themainform.AssignCat  (format);
+    Sprintf(format,  "%c%d%c%df",pourcent,digits+2,point,digits);
+    theformrange.AssignCat (format);
+  }
+  //! Sets the Floatting Formats of IGESWriter to the recorded parameters
+  void Perform (IGESData_IGESWriter& writer) const
+  {
+    writer.FloatWriter().SetFormat (themainform.ToCString());
+    writer.FloatWriter().SetZeroSuppress (thezerosup);
+    if (theformrange.Length() > 0) writer.FloatWriter().SetFormatForRange
+      (theformrange.ToCString(), therangemin, therangemax);
+  }
+  //! Returns specific Label : for instance,
+  //! "Float Format [ZeroSuppress] %E [, in range R1-R2 %f]"
+  TCollection_AsciiString Label () const
+  {
+    TCollection_AsciiString lab("Float Format ");
+    if (thezerosup) lab.AssignCat(" ZeroSup ");
+    lab.AssignCat (themainform);
+    if (theformrange.Length() > 0) {
+      char mess[30];
+      lab.AssignCat (", in range ");
+      Standard_Integer convlen = Interface_FloatWriter::Convert
+        (therangemin,mess,Standard_True,therangemin/2.,therangemax*2.,"%f","%f");
+      mess[convlen] = ' ';  mess[convlen+1] = '\0';
+      lab.AssignCat(mess);
+      convlen = Interface_FloatWriter::Convert
+        (therangemax,mess,Standard_True,therangemin/2.,therangemax*2.,"%f","%f");
+      mess[convlen] = ':';  mess[convlen+1] = '\0';
+      lab.AssignCat(mess);
+      lab.AssignCat(theformrange.ToCString());
+    }
+    return lab;
+  }
+};
+static const IGESControl_FloatFormat gFloatFormat;
+
 //=======================================================================
-//function : IGESControl_Controller
+//function : Constructor
 //purpose  : 
 //=======================================================================
 
 IGESControl_Controller::IGESControl_Controller (const Standard_Boolean mod)
-: XSControl_Controller ((Standard_CString ) (mod ? "FNES" : "IGES") , (Standard_CString ) (mod ? "fnes" : "iges") ),
-  themode (mod)
+: XSControl_Controller ((Standard_CString ) (mod ? "FNES" : "IGES")),
+  themodefnes (mod)
 {
-  static Standard_Boolean init = Standard_False;
-  if (!init) {
-    init = Standard_True;
-    IGESSolid::Init();
-    IGESAppli::Init();
-  }
+  SetDumpLevels (4,6);
+  SetDumpHelp (0,"Only DNum");
+  SetDumpHelp (1,"DNum, IGES Type & Form");
+  SetDumpHelp (2,"Main Directory Informations");
+  SetDumpHelp (3,"Complete Directory Part");
+  SetDumpHelp (4,"Directory + Fields (except list contents)");
+  SetDumpHelp (5,"Complete (with list contents)");
+  SetDumpHelp (6,"Complete + Transformed data");
+
+  myAdaptorProtocol = DefineProtocol();
+
+  Handle(IGESToBRep_Actor) anactiges = new IGESToBRep_Actor;
+  anactiges->SetContinuity(0);
+  myAdaptorRead     = anactiges;
 
   //  -- STATICS
 
@@ -63,21 +132,125 @@ IGESControl_Controller::IGESControl_Controller (const Standard_Boolean mod)
   TraceStatic ("write.iges.header.company",2);
   TraceStatic ("write.iges.unit",6);
   TraceStatic ("write.iges.brep.mode",6);
-
-  myAdaptorLibrary  = new IGESControl_WorkLibrary(themode);
-  myAdaptorProtocol = DefineProtocol();
-
-  Handle(IGESToBRep_Actor) anactiges = new IGESToBRep_Actor;
-  anactiges->SetContinuity(0);
-  myAdaptorRead     = anactiges;
-
-  myAdaptorWrite    = new IGESControl_ActorWrite;
-
-  SetModeWrite (0,1);
-  SetModeWriteHelp (0,"Faces");
-  SetModeWriteHelp (1,"BRep");
 }
 
+//=======================================================================
+//function : ReadFile
+//purpose  : 
+//=======================================================================
+
+Standard_Integer IGESControl_Controller::ReadFile (const Standard_CString theFileName, Handle(Interface_InterfaceModel)& theModel) const
+{
+  DeclareAndCast(IGESData_Protocol,prot,myAdaptorProtocol);
+
+  Handle(IGESData_IGESModel) igesmod = new IGESData_IGESModel;
+  char* pname=(char*) theFileName;
+  Standard_Integer status = IGESFile_Read (pname,igesmod,prot);
+
+  Handle(Message_Messenger) sout = Message::DefaultMessenger();
+  if (status < 0) sout<<"File not found : "<<theFileName<<endl;
+  if (status > 0) sout<<"Error when reading file : "<<theFileName<<endl;
+  if (status == 0) theModel = igesmod;
+  else             theModel.Nullify();
+  return status;
+}
+
+//=======================================================================
+//function : WriteFile
+//purpose  : 
+//=======================================================================
+
+Standard_Boolean IGESControl_Controller::WriteFile (const Standard_CString theFileName, const Handle(Interface_InterfaceModel)& theModel, Interface_CheckIterator& theChecks) const
+{
+//  Preparation
+  DeclareAndCast(IGESData_IGESModel,igesmod,theModel);
+  DeclareAndCast(IGESData_Protocol,prot,myAdaptorProtocol);
+  if (igesmod.IsNull() || prot.IsNull()) return Standard_False;
+
+  ofstream fout;
+  OSD_OpenStream(fout,theFileName,ios::out );
+
+  Handle(Message_Messenger) sout = Message::DefaultMessenger();
+  if (!fout) {
+    theChecks.CCheck(0)->AddFail("IGES File could not be created");
+    sout<<" - IGES File could not be created : " << theFileName << endl;
+    return 0;
+  }
+  sout<<" IGES File Name : "<<theFileName;
+
+  IGESData_IGESWriter VW(igesmod);  
+  sout<<"("<<igesmod->NbEntities()<<" ents) ";
+
+//  File Modifiers
+  gFloatFormat.Perform(VW);
+//   (impressions de mise au point)
+  sout << " .. FileMod.1 "<< gFloatFormat.Label();
+  sout << " (all model)";
+
+//  Envoi
+  VW.SendModel(prot);            
+  sout<<" Write ";
+  if (themodefnes) VW.WriteMode() = 10;
+  Standard_Boolean status = VW.Print(fout);
+  sout<<" Done"<<endl;
+
+  errno = 0;
+  fout.close();
+  status = fout.good() && status && !errno;
+  if(errno)
+    sout << strerror(errno) << endl;
+
+  return status;
+}
+
+//=======================================================================
+//function : DumpEntity
+//purpose  : 
+//=======================================================================
+
+void IGESControl_Controller::DumpEntity
+  (const Handle(Interface_InterfaceModel)& model, 
+   const Handle(Interface_Protocol)& protocol,
+   const Handle(Standard_Transient)& entity,
+   const Handle(Message_Messenger)& S, const Standard_Integer level) const
+{
+  DeclareAndCast(IGESData_IGESModel,igesmod,model);
+  DeclareAndCast(IGESData_Protocol,igespro,protocol);
+  DeclareAndCast(IGESData_IGESEntity,igesent,entity);
+  if (igesmod.IsNull() || igespro.IsNull() || igesent.IsNull()) return;
+  Standard_Integer num = igesmod->Number(igesent);
+  if (num == 0) return;
+
+  S<<" --- Entity "<<num;
+  Standard_Boolean iserr = model->IsRedefinedContent(num);
+  Handle(Standard_Transient) con;
+  if (iserr) con = model->ReportEntity(num)->Content();
+  if (entity.IsNull()) { S<<" Null"<<endl; return ;  }
+
+//  On attaque le dump : d abord cas de l Erreur
+  if (iserr) {
+    S << " ERRONEOUS, Content, Type cdl : ";
+    if (!con.IsNull()) S << con->DynamicType()->Name();
+    else S << "(undefined)" << endl;
+    igesent = GetCasted(IGESData_IGESEntity,con);
+    con.Nullify();
+    Handle(Interface_Check) check = model->ReportEntity(num)->Check();
+    Interface_CheckIterator chlist;
+    chlist.Add (check,num);
+    chlist.Print (S,igesmod,Standard_False);
+    if (igesent.IsNull()) return;
+  }
+  else S << " Type cdl : " << igesent->DynamicType()->Name();
+
+  IGESData_IGESDumper dump(igesmod,igespro);
+  try {
+    OCC_CATCH_SIGNALS
+    dump.Dump(igesent,S,level,(level-1)/3);
+  }
+  catch (Standard_Failure) {
+    S << " **  Dump Interrupt **" << endl;
+  }
+}
 
 //=======================================================================
 //function : NewModel
@@ -110,11 +283,23 @@ Handle(Transfer_ActorOfTransientProcess) IGESControl_Controller::ActorRead (cons
   if (!anactiges.IsNull()) {
     // sln 14.01.2002 OCC51 : verifying whether entry model is IGESDatat_IGESModel,
     // if this condition is false new model is created
-    Handle(Interface_InterfaceModel) aModel = (model->IsKind(STANDARD_TYPE(IGESData_IGESModel))? model : NewModel());
+    Handle(Interface_InterfaceModel) aModel = model;
+    if (model.IsNull() || !model->IsKind(STANDARD_TYPE(IGESData_IGESModel)))
+      aModel = NewModel();
     anactiges->SetModel(GetCasted(IGESData_IGESModel,aModel));
     anactiges->SetContinuity(Interface_Static::IVal("read.iges.bspline.continuity"));
   }
   return myAdaptorRead;
+}
+  
+//=======================================================================
+//function : NewActorWrite
+//purpose  : 
+//=======================================================================
+
+Handle(Transfer_ActorOfFinderProcess) IGESControl_Controller::NewActorWrite () const
+{
+  return new IGESControl_ActorWrite;
 }
 
 //=======================================================================
@@ -124,14 +309,27 @@ Handle(Transfer_ActorOfTransientProcess) IGESControl_Controller::ActorRead (cons
 
 void IGESControl_Controller::Init ()
 {
-  static Standard_Boolean inic = Standard_False;
-  if (!inic) {
-    inic = Standard_True;
-    Handle(IGESControl_Controller) ADIGES = new IGESControl_Controller(Standard_False);
-    ADIGES->AutoRecord();
-    XSAlgo::Init();
-    IGESToBRep::Init();
-    IGESToBRep::SetAlgoContainer (new IGESControl_AlgoContainer());
+  static Standard_Mutex gInitMutex;
+  static volatile bool gInitDone = false;
+  if (!gInitDone)
+  {
+    gInitMutex.Lock();
+    if (!gInitDone)
+    {
+      IGESSolid::Init();
+      IGESAppli::Init();
+      IGESDefs::Init();
+
+      Handle(IGESControl_Controller) aController = new IGESControl_Controller(Standard_False);
+      aController->AutoRecord();
+
+      XSAlgo::Init();
+      IGESToBRep::Init();
+      IGESToBRep::SetAlgoContainer (new IGESControl_AlgoContainer());
+
+      gInitDone = true;
+	}
+    gInitMutex.Unlock();
   }
 }
 

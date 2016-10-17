@@ -19,7 +19,7 @@
 #include <Standard.hxx>
 #include <Standard_Type.hxx>
 
-#include <IFSelect_ReturnStatus.hxx>
+#include <Interface_ReturnStatus.hxx>
 #include <Standard_Boolean.hxx>
 #include <TDF_Label.hxx>
 #include <MMgt_TShared.hxx>
@@ -46,17 +46,17 @@ public:
   
     Handle(XSControl_WorkSession) GetWS() const;
   
-    void SetLoadStatus (const IFSelect_ReturnStatus stat);
+    void SetLoadStatus (const Interface_ReturnStatus stat);
   
-    IFSelect_ReturnStatus GetLoadStatus() const;
+    Interface_ReturnStatus GetLoadStatus() const;
   
     void SetTransferStatus (const Standard_Boolean isok);
   
     Standard_Boolean GetTransferStatus() const;
   
-    void SetWriteStatus (const IFSelect_ReturnStatus stat);
+    void SetWriteStatus (const Interface_ReturnStatus stat);
   
-    IFSelect_ReturnStatus GetWriteStatus() const;
+    Interface_ReturnStatus GetWriteStatus() const;
   
     void SetName (const Handle(TCollection_HAsciiString)& name);
   
@@ -80,9 +80,9 @@ private:
 
 
   Handle(XSControl_WorkSession) myWS;
-  IFSelect_ReturnStatus myLoadStatus;
+  Interface_ReturnStatus myLoadStatus;
   Standard_Boolean myTransferStatus;
-  IFSelect_ReturnStatus myWriteStatus;
+  Interface_ReturnStatus myWriteStatus;
   Handle(TCollection_HAsciiString) myName;
   TDF_Label myLabel;
 

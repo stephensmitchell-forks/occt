@@ -41,7 +41,6 @@
 #include <XCAFDoc_LayerTool.hxx>
 #include <XCAFDoc_ShapeMapTool.hxx>
 #include <XCAFDoc_ShapeTool.hxx>
-#include <XSControl_TransferReader.hxx>
 #include <XSControl_WorkSession.hxx>
 
 //=======================================================================
@@ -172,8 +171,7 @@ Standard_Boolean IGESCAFControl_Reader::Transfer (Handle(TDocStd_Document) &doc)
   
   // added by skl 13.10.2003
   const Handle(Interface_InterfaceModel) &Model = WS()->Model();
-  const Handle(XSControl_TransferReader) &TR = WS()->TransferReader();
-  const Handle(Transfer_TransientProcess) &TP = TR->TransientProcess();
+  const Handle(Transfer_TransientProcess) &TP = WS()->ReaderProcess();
   Standard_Boolean IsCTool = Standard_True;
   Handle(XCAFDoc_ColorTool) CTool = XCAFDoc_DocumentTool::ColorTool(doc->Main());
   if(CTool.IsNull()) IsCTool = Standard_False;
@@ -331,6 +329,6 @@ Standard_Boolean IGESCAFControl_Reader::Transfer (Handle(TDocStd_Document) &doc)
 Standard_Boolean IGESCAFControl_Reader::Perform (const Standard_CString filename,
 						 Handle(TDocStd_Document) &doc)
 {
-  if ( ReadFile ( filename ) != IFSelect_RetDone ) return Standard_False;
+  if ( ReadFile ( filename ) != Interface_RetDone ) return Standard_False;
   return Transfer ( doc );
 }

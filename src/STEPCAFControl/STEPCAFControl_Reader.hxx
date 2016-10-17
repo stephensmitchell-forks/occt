@@ -22,7 +22,7 @@
 
 #include <STEPControl_Reader.hxx>
 #include <Standard_Boolean.hxx>
-#include <IFSelect_ReturnStatus.hxx>
+#include <Interface_ReturnStatus.hxx>
 #include <Standard_CString.hxx>
 #include <Standard_Integer.hxx>
 #include <TDF_LabelSequence.hxx>
@@ -80,7 +80,7 @@ public:
   
   //! Loads a file and returns the read status
   //! Provided for use like single-file reader
-  Standard_EXPORT IFSelect_ReturnStatus ReadFile (const Standard_CString filename);
+  Standard_EXPORT Interface_ReturnStatus ReadFile (const Standard_CString filename);
   
   //! Returns number of roots recognized for transfer
   //! Shortcut for Reader().NbRootsForTransfer()

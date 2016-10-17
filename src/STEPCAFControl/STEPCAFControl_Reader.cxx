@@ -233,7 +233,6 @@
 #include <XCAFDimTolObjects_DimensionObject.hxx>
 #include <XCAFDimTolObjects_GeomToleranceObject.hxx>
 #include <XCAFDimTolObjects_DatumObject.hxx>
-#include <XSControl_TransferReader.hxx>
 #include <XSControl_WorkSession.hxx>
 #include <StepAP242_DraughtingModelItemAssociation.hxx>
 #include <StepAP242_GeometricItemSpecificUsage.hxx>
@@ -365,7 +364,7 @@ void STEPCAFControl_Reader::Init (const Handle(XSControl_WorkSession)& WS,
 //purpose  : 
 //=======================================================================
 
-IFSelect_ReturnStatus STEPCAFControl_Reader::ReadFile (const Standard_CString filename)
+Interface_ReturnStatus STEPCAFControl_Reader::ReadFile (const Standard_CString filename)
 {
   return myReader.ReadFile ( filename );
 }
@@ -415,7 +414,7 @@ Standard_Boolean STEPCAFControl_Reader::Transfer (Handle(TDocStd_Document) &doc)
 Standard_Boolean STEPCAFControl_Reader::Perform (const Standard_CString filename,
 						 Handle(TDocStd_Document) &doc)
 {
-  if ( ReadFile ( filename ) != IFSelect_RetDone ) return Standard_False;
+  if ( ReadFile ( filename ) != Interface_RetDone ) return Standard_False;
   return Transfer ( doc );
 }
   
@@ -428,7 +427,7 @@ Standard_Boolean STEPCAFControl_Reader::Perform (const Standard_CString filename
 Standard_Boolean STEPCAFControl_Reader::Perform (const TCollection_AsciiString &filename,
 						 Handle(TDocStd_Document) &doc)
 {
-  if ( ReadFile ( filename.ToCString() ) != IFSelect_RetDone ) return Standard_False;
+  if ( ReadFile ( filename.ToCString() ) != Interface_RetDone ) return Standard_False;
   return Transfer ( doc );
 }
   
@@ -537,7 +536,7 @@ Standard_Boolean STEPCAFControl_Reader::Transfer (STEPControl_Reader &reader,
   STEPCAFControl_DataMapOfShapePD ShapePDMap;
   STEPCAFControl_DataMapOfPDExternFile PDFileMap;
   Handle(Interface_InterfaceModel) Model = reader.Model();
-  const Handle(Transfer_TransientProcess) &TP = reader.WS()->TransferReader()->TransientProcess();
+  const Handle(Transfer_TransientProcess) &TP = reader.WS()->ReaderProcess();
   Standard_Integer nb = Model->NbEntities();
 
   Handle(TColStd_HSequenceOfTransient) SeqPDS = new TColStd_HSequenceOfTransient;
@@ -810,7 +809,7 @@ Handle(STEPCAFControl_ExternFile) STEPCAFControl_Reader::ReadExternFile (const S
  
   // create new WorkSession and Reader
   Handle(XSControl_WorkSession) newWS = new XSControl_WorkSession;
-  newWS->SelectNorm ( "STEP" );
+  newWS->SelectNorm("STEP");
   STEPControl_Reader sr ( newWS, Standard_False );
   
   // start to fill the resulting ExternFile structure
@@ -822,7 +821,7 @@ Handle(STEPCAFControl_ExternFile) STEPCAFControl_Reader::ReadExternFile (const S
   EF->SetLoadStatus ( sr.ReadFile ( fullname ) );
   
   // transfer in single-result mode
-  if ( EF->GetLoadStatus() == IFSelect_RetDone ) {
+  if ( EF->GetLoadStatus() == Interface_RetDone ) {
     TDF_LabelSequence labels;
     EF->SetTransferStatus ( Transfer ( sr, 0, doc, labels, Standard_True ) );
     if ( labels.Length() >0 ) EF->SetLabel ( labels.Value(1) );
@@ -1139,8 +1138,7 @@ Standard_Boolean STEPCAFControl_Reader::ReadNames (const Handle(XSControl_WorkSe
 {
   // get starting data
   const Handle(Interface_InterfaceModel) &Model = WS->Model();
-  const Handle(XSControl_TransferReader) &TR = WS->TransferReader();
-  const Handle(Transfer_TransientProcess) &TP = TR->TransientProcess();
+  const Handle(Transfer_TransientProcess) &TP = WS->ReaderProcess();
   Handle(XCAFDoc_ShapeTool) STool = XCAFDoc_DocumentTool::ShapeTool( Doc->Main() );
   if ( STool.IsNull() ) return Standard_False;
   STEPConstruct_Tool Tool ( WS );
@@ -1247,8 +1245,7 @@ Standard_Boolean STEPCAFControl_Reader::ReadValProps (const Handle(XSControl_Wor
 						      const XCAFDoc_DataMapOfShapeLabel &ShapeLabelMap) const
 {
   // get starting data
-  const Handle(XSControl_TransferReader) &TR = WS->TransferReader();
-  const Handle(Transfer_TransientProcess) &TP = TR->TransientProcess();
+  const Handle(Transfer_TransientProcess) &TP = WS->ReaderProcess();
   Handle(XCAFDoc_ShapeTool) STool = XCAFDoc_DocumentTool::ShapeTool( Doc->Main() );
   if ( STool.IsNull() ) return Standard_False;
 
@@ -1378,8 +1375,7 @@ Standard_Boolean STEPCAFControl_Reader::ReadLayers (const Handle(XSControl_WorkS
 						    Handle(TDocStd_Document)& Doc) const
 {
   const Handle(Interface_InterfaceModel) &Model = WS->Model();
-  const Handle(XSControl_TransferReader) &TR = WS->TransferReader();
-  const Handle(Transfer_TransientProcess) &TP = TR->TransientProcess();
+  const Handle(Transfer_TransientProcess) &TP = WS->ReaderProcess();
   Handle(XCAFDoc_ShapeTool) STool = XCAFDoc_DocumentTool::ShapeTool( Doc->Main() );
   if ( STool.IsNull() ) return Standard_False;
   Handle(XCAFDoc_LayerTool) LTool = XCAFDoc_DocumentTool::LayerTool( Doc->Main() );
@@ -1455,13 +1451,6 @@ static Standard_Boolean findNextSHUOlevel (const Handle(XSControl_WorkSession) &
   Handle(StepRepr_NextAssemblyUsageOccurrence) NUNAUO = subSHUO->NextUsage();
   if (NUNAUO.IsNull())
     return Standard_False;
-//   Handle(Interface_InterfaceModel) Model = WS->Model();
-//   Handle(XSControl_TransferReader) TR = WS->TransferReader();
-//   Handle(Transfer_TransientProcess) TP = TR->TransientProcess();
-//   Handle(Transfer_Binder) binder = TP->Find(NUNAUO);
-//   if ( binder.IsNull() || ! binder->HasResult() )
-//     return Standard_False;
-//   TopoDS_Shape NUSh = TransferBRep::ShapeResult ( TP, binder );
   // get label of NAUO next level
   TDF_Label NULab;
   STEPConstruct_Tool Tool( WS );
@@ -1497,18 +1486,6 @@ static TDF_Label setSHUOintoDoc (const Handle(XSControl_WorkSession) &WS,
 #endif
     return aMainLabel;
   }
-//   Handle(Interface_InterfaceModel) Model = WS->Model();
-//   Handle(XSControl_TransferReader) TR = WS->TransferReader();
-//   Handle(Transfer_TransientProcess) TP = TR->TransientProcess();
-//   TopoDS_Shape UUSh, NUSh;
-//   Handle(Transfer_Binder) binder = TP->Find(UUNAUO);
-//   if ( binder.IsNull() || ! binder->HasResult() )
-//     return aMainLabel;
-//   UUSh = TransferBRep::ShapeResult ( TP, binder );
-//   binder = TP->Find(NUNAUO);
-//   if ( binder.IsNull() || ! binder->HasResult() )
-//     return aMainLabel;
-//   NUSh = TransferBRep::ShapeResult ( TP, binder );
 
   // get first labels for first SHUO attribute
   TDF_Label UULab, NULab;
@@ -1771,14 +1748,13 @@ static Standard_Boolean GetMassConversionFactor(Handle(StepBasic_NamedUnit)& NU,
 //purpose  : read annotation plane and position for given GDT
 // (Dimension, Geometric_Tolerance, Datum_Feature or Placed_Datum_Target_Feature)
 //=======================================================================
-void readAnnotation(const Handle(XSControl_TransferReader)& theTR, 
+void readAnnotation(const Handle(Transfer_TransientProcess)& theTP,
   const Handle(Standard_Transient) theGDT,
   const Handle(Standard_Transient)& theDimObject)
 {
   Handle(TCollection_HAsciiString) aPresentName;
   TopoDS_Compound aResAnnotation;
-  Handle(Transfer_TransientProcess) aTP = theTR->TransientProcess();
-  const Interface_Graph& aGraph = aTP->HGraph()->Graph();
+  const Interface_Graph& aGraph = theTP->HGraph()->Graph();
   // find the proper DraughtingModelItemAssociation
   Interface_EntityIterator subs = aGraph.Sharings(theGDT);
   Handle(StepAP242_DraughtingModelItemAssociation) aDMIA;
@@ -1918,12 +1894,12 @@ void readAnnotation(const Handle(XSControl_TransferReader)& theTR,
     if(!anACO.IsNull())
     {
       Handle(StepRepr_RepresentationItem) aCurveItem = anACO->Item();
-      anAnnotationShape = STEPConstruct::FindShape (aTP,aCurveItem);
+      anAnnotationShape = STEPConstruct::FindShape (theTP,aCurveItem);
       if( anAnnotationShape.IsNull())
       {
-        Handle(Transfer_Binder) binder = theTR->Actor()->Transferring(aCurveItem, aTP);
+        Handle(Transfer_Binder) binder = theTP->GetActor()->Transferring(aCurveItem, theTP);
         if ( ! binder.IsNull() && binder->HasResult() ) {
-          anAnnotationShape = TransferBRep::ShapeResult ( aTP, binder );
+          anAnnotationShape = TransferBRep::ShapeResult ( theTP, binder );
         }
       }
     }
@@ -2038,12 +2014,11 @@ void readAnnotation(const Handle(XSControl_TransferReader)& theTR,
 //function : readConnectionPoints
 //purpose  : read connection points for given dimension
 //=======================================================================
-void readConnectionPoints(const Handle(XSControl_TransferReader)& theTR, 
+void readConnectionPoints(const Handle(Transfer_TransientProcess)& theTP, 
   const Handle(Standard_Transient) theGDT,
   const Handle(XCAFDimTolObjects_DimensionObject)& theDimObject)
 {
-  Handle(Transfer_TransientProcess) aTP = theTR->TransientProcess();
-  const Interface_Graph& aGraph = aTP->HGraph()->Graph();
+  const Interface_Graph& aGraph = theTP->HGraph()->Graph();
 
   //calculate units
   Standard_Real aFact = 1;
@@ -2211,8 +2186,7 @@ static Standard_Boolean setDatumToXCAF(const Handle(StepDimTol_Datum)& theDat,
 {
   Handle(XCAFDoc_ShapeTool) aSTool = XCAFDoc_DocumentTool::ShapeTool( theDoc->Main() );
   Handle(XCAFDoc_DimTolTool) aDGTTool = XCAFDoc_DocumentTool::DimTolTool( theDoc->Main() );
-  const Handle(XSControl_TransferReader) &aTR = theWS->TransferReader();
-  const Handle(Transfer_TransientProcess) &aTP = aTR->TransientProcess();
+  const Handle(Transfer_TransientProcess) &aTP = theWS->ReaderProcess();
   const Interface_Graph& aGraph = aTP->HGraph()->Graph();
   Handle(XCAFDoc_Datum) aDat;
   TDF_Label aShL;
@@ -2425,7 +2399,7 @@ static Standard_Boolean setDatumToXCAF(const Handle(StepDimTol_Datum)& theDat,
       aDGTTool->SetDatumToGeomTol(aDatL, theGDTL);
     }
     if(!aDatObj.IsNull()) {
-      readAnnotation(aTR, aSAR->RelatingShapeAspect(), aDatObj);
+      readAnnotation(aTP, aSAR->RelatingShapeAspect(), aDatObj);
       aDat->SetObject(aDatObj);
     }
   }
@@ -2444,8 +2418,7 @@ static Standard_Boolean readDatumsAP242(const Handle(Standard_Transient)& theEnt
 {
   Handle(XCAFDoc_ShapeTool) aSTool = XCAFDoc_DocumentTool::ShapeTool( theDoc->Main() );
   Handle(XCAFDoc_DimTolTool) aDGTTool = XCAFDoc_DocumentTool::DimTolTool( theDoc->Main() );
-  const Handle(XSControl_TransferReader) &aTR = theWS->TransferReader();
-  const Handle(Transfer_TransientProcess) &aTP = aTR->TransientProcess();
+  const Handle(Transfer_TransientProcess) &aTP = theWS->ReaderProcess();
   const Interface_Graph& aGraph = aTP->HGraph()->Graph();
 
   Interface_EntityIterator anIter = aGraph.Shareds(theEnt);
@@ -2591,8 +2564,7 @@ static void collectShapeAspect(const Handle(StepRepr_ShapeAspect)& theSA,
                                const Handle(XSControl_WorkSession)& theWS,
                                NCollection_Sequence<Handle(StepRepr_ShapeAspect)>& theSAs)
 {
-  Handle(XSControl_TransferReader) aTR = theWS->TransferReader();
-  Handle(Transfer_TransientProcess) aTP = aTR->TransientProcess();
+  const Handle(Transfer_TransientProcess) &aTP = theWS->ReaderProcess();
   const Interface_Graph& aGraph = aTP->HGraph()->Graph();
   // Retrieve Shape_Aspect, connected to Representation_Item from Derived_Shape_Aspect
   if (theSA->IsKind(STANDARD_TYPE(StepRepr_DerivedShapeAspect))) {
@@ -2663,8 +2635,7 @@ static TDF_Label createGDTObjectInXCAF(const Handle(Standard_Transient)& theEnt,
 
   Handle(XCAFDoc_ShapeTool) aSTool = XCAFDoc_DocumentTool::ShapeTool( theDoc->Main() );
   Handle(XCAFDoc_DimTolTool) aDGTTool = XCAFDoc_DocumentTool::DimTolTool( theDoc->Main() );
-  const Handle(XSControl_TransferReader) &aTR = theWS->TransferReader();
-  const Handle(Transfer_TransientProcess) &aTP = aTR->TransientProcess();
+  const Handle(Transfer_TransientProcess) &aTP = theWS->ReaderProcess();
   const Interface_Graph& aGraph = aTP->HGraph()->Graph();
   Standard_Boolean isAllAround = Standard_False;
   Standard_Boolean isAllOver = Standard_False;
@@ -3053,8 +3024,7 @@ static void setDimObjectToXCAF(const Handle(Standard_Transient)& theEnt,
 {
   Handle(XCAFDoc_ShapeTool) aSTool = XCAFDoc_DocumentTool::ShapeTool( theDoc->Main() );
   Handle(XCAFDoc_DimTolTool) aDGTTool = XCAFDoc_DocumentTool::DimTolTool( theDoc->Main() );
-  const Handle(XSControl_TransferReader) &aTR = theWS->TransferReader();
-  const Handle(Transfer_TransientProcess) &aTP = aTR->TransientProcess();
+  const Handle(Transfer_TransientProcess) &aTP = theWS->ReaderProcess();
   const Interface_Graph& aGraph = aTP->HGraph()->Graph();
   Handle(XCAFDimTolObjects_DimensionObject) aDimObj;
   if(!theEnt->IsKind(STANDARD_TYPE(StepShape_DimensionalSize)) &&
@@ -3423,8 +3393,8 @@ static void setDimObjectToXCAF(const Handle(Standard_Transient)& theEnt,
 
     if(aDimL.FindAttribute(XCAFDoc_Dimension::GetID(),aDim))
     {
-      readAnnotation(aTR, theEnt, aDimObj);
-      readConnectionPoints(aTR, theEnt, aDimObj);
+      readAnnotation(aTP, theEnt, aDimObj);
+      readConnectionPoints(aTP, theEnt, aDimObj);
       aDim->SetObject(aDimObj);
     }
   }
@@ -3549,8 +3519,7 @@ static void setGeomTolObjectToXCAF(const Handle(Standard_Transient)& theEnt,
 {
   Handle(XCAFDoc_ShapeTool) aSTool = XCAFDoc_DocumentTool::ShapeTool( theDoc->Main() );
   Handle(XCAFDoc_DimTolTool) aDGTTool = XCAFDoc_DocumentTool::DimTolTool( theDoc->Main() );
-  const Handle(XSControl_TransferReader) &aTR = theWS->TransferReader();
-  const Handle(Transfer_TransientProcess) &aTP = aTR->TransientProcess();
+  const Handle(Transfer_TransientProcess) &aTP = theWS->ReaderProcess();
   const Interface_Graph& aGraph = aTP->HGraph()->Graph();
   Handle(XCAFDoc_GeomTolerance) aGTol;
   if(!theTolL.FindAttribute(XCAFDoc_GeomTolerance::GetID(), aGTol))
@@ -3690,7 +3659,7 @@ static void setGeomTolObjectToXCAF(const Handle(Standard_Transient)& theEnt,
     aTolObj->SetMaxValueModifier(aVal);
   }
   
-  readAnnotation(aTR, theEnt, aTolObj);
+  readAnnotation(aTP, theEnt, aTolObj);
   aGTol->SetObject(aTolObj);
 }
 
@@ -3782,8 +3751,7 @@ Standard_Boolean STEPCAFControl_Reader::ReadMaterials(const Handle(XSControl_Wor
                                                       Handle(TDocStd_Document)& Doc,
                                                       const Handle(TColStd_HSequenceOfTransient) &SeqPDS) const
 {
-  const Handle(XSControl_TransferReader) &TR = WS->TransferReader();
-  const Handle(Transfer_TransientProcess) &TP = TR->TransientProcess();
+  const Handle(Transfer_TransientProcess) &TP = WS->ReaderProcess();
   Handle(XCAFDoc_ShapeTool) STool = XCAFDoc_DocumentTool::ShapeTool( Doc->Main() );
   Handle(XCAFDoc_MaterialTool) MatTool = XCAFDoc_DocumentTool::MaterialTool( Doc->Main() );
   if(MatTool.IsNull()) return Standard_False;
@@ -3924,7 +3892,7 @@ void STEPCAFControl_Reader::ExpandSubShapes(const Handle(XCAFDoc_ShapeTool)& Sha
                                             const XCAFDoc_DataMapOfShapeLabel& ShapeLabelMap,
                                             const STEPCAFControl_DataMapOfShapePD& ShapePDMap) const
 {
-  const Handle(Transfer_TransientProcess)& TP = Reader().WS()->TransferReader()->TransientProcess();
+  const Handle(Transfer_TransientProcess)& TP = Reader().WS()->ReaderProcess();
   NCollection_DataMap<TopoDS_Shape, Handle(TCollection_HAsciiString)> ShapeNameMap;
   TColStd_MapOfTransient aRepItems;
 

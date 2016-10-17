@@ -627,14 +627,6 @@ Standard_Integer STEPConstruct_ExternRefs::AddExternRef (const Standard_CString 
       ProdDefSh->SetDefinition(CDf);
     }
 
-//      Interface_EntityIterator subs1 = Graph().Shareds(ProdDefSh);
-//      for (subs1.Start(); subs1.More(); subs1.Next()) {
-
-//        Handle(Standard_Transient) sub1 = subs1.Value();
-//        if (!sub1->IsKind(STANDARD_TYPE(StepBasic_ProductDefinition))) continue;
-//        Handle(StepBasic_ProductDefinition) ProdDef = 
-//          Handle(StepBasic_ProductDefinition)::DownCast ( sub1 );
-//        numProdDef = Model()->Number(ProdDef);
     Standard_Integer numProdDef = Model()->Number(PD);
 
 //        Interface_EntityIterator subs2 = Graph().Sharings(ProdDef);

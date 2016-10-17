@@ -18,27 +18,8 @@
 #include <STEPSelections_SelectForTransfer.hxx>
 #include <TColStd_HSequenceOfTransient.hxx>
 #include <Transfer_TransientProcess.hxx>
-#include <XSControl_TransferReader.hxx>
 
-IMPLEMENT_STANDARD_RTTIEXT(STEPSelections_SelectForTransfer,XSControl_SelectForTransfer)
-
-//=======================================================================
-//function : STEPSelections_SelectForTransfer
-//purpose  : 
-//=======================================================================
-STEPSelections_SelectForTransfer::STEPSelections_SelectForTransfer()
-{
-  
-}
-//=======================================================================
-//function : STEPSelections_SelectForTransfer
-//purpose  : 
-//=======================================================================
-
-STEPSelections_SelectForTransfer::STEPSelections_SelectForTransfer(const Handle(XSControl_TransferReader)& TR)
-{
-  SetReader(TR);
-}
+IMPLEMENT_STANDARD_RTTIEXT(STEPSelections_SelectForTransfer,XSSelect_SelectForTransfer)
 
 //=======================================================================
 //function : RootResult
@@ -48,7 +29,7 @@ STEPSelections_SelectForTransfer::STEPSelections_SelectForTransfer(const Handle(
  Interface_EntityIterator STEPSelections_SelectForTransfer::RootResult(const Interface_Graph& /*G*/) const
 {
   Interface_EntityIterator iter;
-  TColStd_SequenceOfTransient &roots = Reader()->TransientProcess()->RootsForTransfer();
+  TColStd_SequenceOfTransient &roots = theTP->RootsForTransfer();
   const Standard_Integer nb = roots.Length();
   for(Standard_Integer i = 1; i <= nb ; i++)
     iter.GetOneItem(roots.Value(i));

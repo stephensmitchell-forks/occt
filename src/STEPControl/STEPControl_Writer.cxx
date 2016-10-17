@@ -14,6 +14,7 @@
 
 #include <Interface_InterfaceModel.hxx>
 #include <Interface_Macros.hxx>
+#include <Interface_Static.hxx>
 #include <Message_ProgressIndicator.hxx>
 #include <STEPControl_ActorWrite.hxx>
 #include <STEPControl_Controller.hxx>
@@ -30,9 +31,11 @@
 //=======================================================================
 
 STEPControl_Writer::STEPControl_Writer ()
+: XSControl_Writer(new XSControl_WorkSession)
 {
   STEPControl_Controller::Init();
-  SetWS (new XSControl_WorkSession);
+  myWS->SelectNorm("STEP");
+  myWS->NewModel();
 }
 
 
@@ -42,10 +45,13 @@ STEPControl_Writer::STEPControl_Writer ()
 //purpose  : 
 //=======================================================================
 
-STEPControl_Writer::STEPControl_Writer (const Handle(XSControl_WorkSession)& WS, const Standard_Boolean scratch)
+STEPControl_Writer::STEPControl_Writer (const Handle(XSControl_WorkSession)& theWS, const Standard_Boolean FromScratch)
+: XSControl_Writer(theWS)
 {
   STEPControl_Controller::Init();
-  SetWS (WS,scratch);
+  myWS->InitTransferReader(0);
+  myWS->SelectNorm("STEP");
+  Handle(StepData_StepModel) model = Model(FromScratch);
 }
 
 
@@ -57,10 +63,10 @@ STEPControl_Writer::STEPControl_Writer (const Handle(XSControl_WorkSession)& WS,
 
 void STEPControl_Writer::SetWS(const Handle(XSControl_WorkSession)& WS, const Standard_Boolean scratch)
 {
-  thesession = WS;
-  thesession->SelectNorm("STEP");
-  thesession->InitTransferReader(0);
-  Handle(StepData_StepModel) model = Model (scratch);
+  myWS = WS;
+  myWS->InitTransferReader(0);
+  myWS->SelectNorm("STEP");
+  Handle(StepData_StepModel) model = Model(scratch);
 }
 
 
@@ -69,24 +75,12 @@ void STEPControl_Writer::SetWS(const Handle(XSControl_WorkSession)& WS, const St
 //purpose  : 
 //=======================================================================
 
-Handle(StepData_StepModel) STEPControl_Writer::Model (const Standard_Boolean newone)
+Handle(StepData_StepModel) STEPControl_Writer::Model (const Standard_Boolean newone) const
 {
-  DeclareAndCast(StepData_StepModel,model,thesession->Model());
+  DeclareAndCast(StepData_StepModel,model,myWS->Model());
   if (newone || model.IsNull())
-    model = GetCasted(StepData_StepModel,thesession->NewModel());
+    model = GetCasted(StepData_StepModel,myWS->NewModel());
   return model;
-}
-
-
-//=======================================================================
-//function : SetTolerance
-//purpose  : 
-//=======================================================================
-
-void STEPControl_Writer::SetTolerance (const Standard_Real Tol)
-{
-  DeclareAndCast(STEPControl_ActorWrite,act,WS()->NormAdaptor()->ActorWrite());
-  if (!act.IsNull()) act->SetTolerance (Tol);
 }
 
 
@@ -95,41 +89,46 @@ void STEPControl_Writer::SetTolerance (const Standard_Real Tol)
 //purpose  : 
 //=======================================================================
 
-IFSelect_ReturnStatus STEPControl_Writer::Transfer
-  (const TopoDS_Shape& sh, const STEPControl_StepModelType mode,
-   const Standard_Boolean compgraph) 
+Interface_ReturnStatus STEPControl_Writer::Transfer (const TopoDS_Shape& theShape, const STEPControl_StepModelType theMode, const Standard_Boolean theCompGraph)
 {
   Standard_Integer mws = -1;
-  switch (mode) {
+  switch (theMode)
+  {
     case STEPControl_AsIs :                   mws = 0;  break;
     case STEPControl_FacetedBrep :            mws = 1;  break;
     case STEPControl_ShellBasedSurfaceModel : mws = 2;  break;
     case STEPControl_ManifoldSolidBrep :      mws = 3;  break;
     case STEPControl_GeometricCurveSet :      mws = 4;  break;
-    default : break;
+    default : return Interface_RetError;
   }
-  if (mws < 0) return IFSelect_RetError;    // cas non reconnu
-  thesession->TransferWriter()->SetTransferMode (mws);
+
+  const Handle(Transfer_FinderProcess) &aWP = myWS->WriterProcess();
 
   // for progress indicator.
-  Handle(Message_ProgressIndicator) progress = WS()->TransferWriter()->FinderProcess()->GetProgress();
-  if ( ! progress.IsNull() ) {
+  const Handle(Message_ProgressIndicator) &progress = aWP->GetProgress();
+  if ( !progress.IsNull() )
+  {
     Standard_Integer nbfaces=0;
-    for( TopExp_Explorer exp(sh, TopAbs_FACE); exp.More(); exp.Next())  nbfaces++;
+    for( TopExp_Explorer exp(theShape, TopAbs_FACE); exp.More(); exp.Next()) nbfaces++;
     progress->SetScale ( "Face", 0, nbfaces, 1 );
     progress->Show();
   }
 
-  return thesession->TransferWriteShape(sh,compgraph);
-}
+  Handle(STEPControl_ActorWrite) anActor = Handle(STEPControl_ActorWrite)::DownCast(aWP->GetActor());
+  if (anActor.IsNull())
+  {
+    const Handle(XSControl_Controller) &aController = myWS->NormAdaptor();
+    if (aController.IsNull()) return Interface_RetError;
 
+    anActor = Handle(STEPControl_ActorWrite)::DownCast(aController->NewActorWrite());
+    aWP->SetActor(anActor);
+  }
 
-//=======================================================================
-//function : Write
-//purpose  : 
-//=======================================================================
+  anActor->SetTolerance(myTolerance);
 
-IFSelect_ReturnStatus STEPControl_Writer::Write (const Standard_CString filename)
-{
-  return thesession->SendAll(filename);
+  anActor->SetTransferMode(mws);
+
+  anActor->SetGroupMode(Interface_Static::IVal("write.step.assembly"));
+
+  return XSControl_Writer::TransferShape(theShape,theCompGraph);
 }

@@ -89,6 +89,7 @@ Interface_ReaderModule.hxx
 Interface_Recognizer.gxx
 Interface_ReportEntity.cxx
 Interface_ReportEntity.hxx
+Interface_ReturnStatus.hxx
 Interface_SequenceOfCheck.hxx
 Interface_ShareFlags.cxx
 Interface_ShareFlags.hxx

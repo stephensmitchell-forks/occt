@@ -23,7 +23,6 @@
 
 #include <TColStd_HSequenceOfTransient.hxx>
 class IFSelect_WorkSession;
-class IFSelect_Dispatch;
 
 
 //! Functions gives access to all the actions which can be
@@ -56,15 +55,6 @@ class XSDRAW_SelectFunctions
   //! with <second> (an entity or a selection)
   //! If <second> is erroneous, it is ignored
   Standard_EXPORT static Handle(TColStd_HSequenceOfTransient) GiveList (const Handle(IFSelect_WorkSession)& WS, const Standard_CString first = "", const Standard_CString second = "");
-  
-  //! Evaluates and returns a Dispatch, from data of a WorkSession
-  //! if <mode> is False, searches for exact name of Dispatch in WS
-  //! Else (D), allows a parameter between brackets :
-  //! ex.: dispatch_name(parameter)
-  //! The parameter can be: an integer for DispPerCount or DispPerFiles
-  //! or the name of a Signature for DispPerSignature
-  //! Returns Null Handle if not found not well evaluated
-  Standard_EXPORT static Handle(IFSelect_Dispatch) GiveDispatch (const Handle(IFSelect_WorkSession)& WS, const Standard_CString name, const Standard_Boolean mode = Standard_True);
   
   //! Defines and loads all basic functions (as ActFunc)
   Standard_EXPORT static void Init();

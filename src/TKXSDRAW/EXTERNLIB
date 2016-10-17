@@ -4,6 +4,7 @@ TKMath
 TKernel
 TKService
 TKXSBase
+TKXSSelect
 TKMeshVS
 TKG3d
 TKViewerTest

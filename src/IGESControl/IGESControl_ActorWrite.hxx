@@ -29,14 +29,17 @@ class IGESControl_ActorWrite : public Transfer_ActorOfFinderProcess
   
   IGESControl_ActorWrite() {}
   
-  //! Recognizes a ShapeMapper
-  Standard_EXPORT Standard_Boolean Recognize (const Handle(Standard_Transient)& start) Standard_OVERRIDE;
+  //! Recognizes a source entity
+  Standard_EXPORT virtual Standard_Boolean Recognize (const Handle(Standard_Transient)& theSource) Standard_OVERRIDE;
   
-  //! Transfers Shape to IGES Entities
-  //!
-  //! ModeTrans may be : 0 -> groups of Faces
-  //! or 1 -> BRep
-  Standard_EXPORT Handle(Transfer_Binder) Transferring (const Handle(Standard_Transient)& start, const Handle(Transfer_Process)& FP) Standard_OVERRIDE;
+  //! Transfers a source entity to IGES Entities
+  Standard_EXPORT virtual Handle(Transfer_Binder) Transferring (const Handle(Standard_Transient)& theSource, const Handle(Transfer_Process)& FP) Standard_OVERRIDE;
+  
+  //! Provides transfer mode bounds
+  Standard_EXPORT virtual Standard_Boolean TransferModeBounds (Standard_Integer& theMin, Standard_Integer& theMax) const Standard_OVERRIDE;
+  
+  //! Returns the help string recorded for a given transfer mode
+  Standard_EXPORT virtual Standard_CString TransferModeHelp (const Standard_Integer theMode) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESControl_ActorWrite,Transfer_ActorOfFinderProcess)
 };

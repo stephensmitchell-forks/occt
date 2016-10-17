@@ -24,7 +24,7 @@
 #include <TColStd_SequenceOfTransient.hxx>
 #include <TColStd_HSequenceOfTransient.hxx>
 #include <TopTools_SequenceOfShape.hxx>
-#include <IFSelect_ReturnStatus.hxx>
+#include <Interface_ReturnStatus.hxx>
 class XSControl_WorkSession;
 class Interface_InterfaceModel;
 
@@ -51,7 +51,7 @@ class Interface_InterfaceModel;
 //! initialize the transfer norm first, as shown in the example below.
 //! Example:
 //! Control_Reader reader;
-//! IFSelect_ReturnStatus status = reader.ReadFile (filename.);
+//! Interface_ReturnStatus status = reader.ReadFile (filename.);
 //! When using IGESControl_Reader or STEPControl_Reader - as the
 //! above example shows - the reader initializes the norm directly.
 //! Note that loading the file only stores the data. It does
@@ -80,56 +80,22 @@ public:
 
   Standard_EXPORT virtual ~XSControl_Reader() {}
   
-  //! Sets a specific norm to <me>
+  //! Sets a specific norm to <this>
   //! Returns True if done, False if <norm> is not available
   Standard_EXPORT Standard_Boolean SetNorm (const Standard_CString norm);
   
-  //! Sets a specific session to <me>
-  Standard_EXPORT void SetWS (const Handle(XSControl_WorkSession)& WS, const Standard_Boolean scratch = Standard_True);
+  //! Sets a specific session to <this>
+  Standard_EXPORT void SetWS (const Handle(XSControl_WorkSession)& WS, const Standard_Boolean WithNewModel = Standard_True);
   
-  //! Returns the session used in <me>
+  //! Returns the session used in <this>
   const Handle(XSControl_WorkSession) & WS() const { return thesession; }
   
   //! Loads a file and returns the read status
   //! Zero for a Model which compies with the Controller
-  Standard_EXPORT IFSelect_ReturnStatus ReadFile (const Standard_CString filename);
+  Standard_EXPORT Interface_ReturnStatus ReadFile (const Standard_CString filename);
   
   //! Returns the model. It can then be consulted (header, product)
   Standard_EXPORT Handle(Interface_InterfaceModel) Model() const;
-  
-  //! Returns a list of entities from the IGES or STEP file
-  //! according to the following rules:
-  //! - if first and second are empty strings, the whole file is selected.
-  //! - if first is an entity number or label, the entity referred to is selected.
-  //! - if first is a list of entity numbers/labels separated by commas, the entities referred to are selected,
-  //! - if first is the name of a selection in the worksession and second is not defined,
-  //! the list contains the standard output for that selection.
-  //! - if first is the name of a selection and second is defined, the criterion defined
-  //! by second is applied to the result of the first selection.
-  //! A selection is an operator which computes a list of entities from a list given in
-  //! input according to its type. If no list is specified, the selection computes its
-  //! list of entities from the whole model.
-  //! A selection can be:
-  //! - A predefined selection (xst-transferrable-mode)
-  //! - A filter based on a signature
-  //! A Signature is an operator which returns a string from an entity according to its type. For example:
-  //! - "xst-type" (CDL)
-  //! - "iges-level"
-  //! - "step-type".
-  //! For example, if you wanted to select only the advanced_faces in a STEP file you
-  //! would use the following code:
-  //! Example
-  //! Reader.GiveList("xst-transferrable-roots","step-type(ADVANCED_FACE)");
-  //! Warning
-  //! If the value given to second is incorrect, it will simply be ignored.
-  Standard_EXPORT Handle(TColStd_HSequenceOfTransient) GiveList (const Standard_CString first = "", const Standard_CString second = "");
-  
-  //! Computes a List of entities from the model as follows
-  //! <first> beeing a Selection, <ent> beeing an entity or a list
-  //! of entities (as a HSequenceOfTransient) :
-  //! the standard result of this selection applied to this list
-  //! if <first> is erroneous, a null handle is returned
-  Standard_EXPORT Handle(TColStd_HSequenceOfTransient) GiveList (const Standard_CString first, const Handle(Standard_Transient)& ent);
   
   //! Determines the list of root entities which are candidate for
   //! a transfer to a Shape, and returns the number
@@ -144,11 +110,6 @@ public:
   //! Translates a root identified by the rank num in the model.
   //! false is returned if no shape is produced.
   Standard_EXPORT Standard_Boolean TransferOneRoot (const Standard_Integer num = 1);
-  
-  //! Translates an IGES or STEP
-  //! entity identified by the rank num in the model.
-  //! false is returned if no shape is produced.
-  Standard_EXPORT Standard_Boolean TransferOne (const Standard_Integer num);
   
   //! Translates an IGES or STEP
   //! entity in the model. true is returned if a shape is
@@ -188,16 +149,10 @@ public:
 
  protected:
   
-  //! Returns a sequence of produced shapes
-  //szv:TopTools_SequenceOfShape& Shapes() { return theshapes; }
-  TopTools_SequenceOfShape theshapes;
-
-  Standard_Boolean therootsta;
-  TColStd_SequenceOfTransient theroots;
-
- private:
-
   Handle(XSControl_WorkSession) thesession;
+  Standard_Boolean therootsta;
+  TopTools_SequenceOfShape theshapes;
+  TColStd_SequenceOfTransient theroots;
 };
 
 #endif // _XSControl_Reader_HeaderFile

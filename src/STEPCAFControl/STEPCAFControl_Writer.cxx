@@ -202,7 +202,6 @@
 #include <TopoDS_Shape.hxx>
 #include <TopTools_MapOfShape.hxx>
 #include <TopTools_SequenceOfShape.hxx>
-#include <Transfer_ActorOfFinderProcess.hxx>
 #include <Transfer_Binder.hxx>
 #include <Transfer_FinderProcess.hxx>
 #include <Transfer_TransientListBinder.hxx>
@@ -237,7 +236,6 @@
 #include <XCAFPrs_DataMapOfShapeStyle.hxx>
 #include <XCAFPrs_DataMapOfStyleShape.hxx>
 #include <XCAFPrs_Style.hxx>
-#include <XSControl_TransferWriter.hxx>
 #include <XSControl_WorkSession.hxx>
 
 static NCollection_Vector<Handle(StepVisual_AnnotationPlane)> gdtAnnotationPlanes;
@@ -274,18 +272,19 @@ static Standard_Boolean GetLabelName (const TDF_Label &L, Handle(TCollection_HAs
 //purpose  :
 //=======================================================================
 
-STEPCAFControl_Writer::STEPCAFControl_Writer () :
-       myColorMode( Standard_True ),
-       myNameMode ( Standard_True ),
-       myLayerMode( Standard_True ),
-       myPropsMode( Standard_True ),
-       mySHUOMode ( Standard_True ),
-       myDGTMode  ( Standard_True ),
-       myMatMode  ( Standard_True )
+STEPCAFControl_Writer::STEPCAFControl_Writer ()
+: myFiles (new STEPCAFControl_DictionaryOfExternFile),
+  myColorMode( Standard_True ),
+  myNameMode ( Standard_True ),
+  myLayerMode( Standard_True ),
+  myPropsMode( Standard_True ),
+  mySHUOMode ( Standard_True ),
+  myDGTMode  ( Standard_True ),
+  myMatMode  ( Standard_True )
 {
   STEPCAFControl_Controller::Init();
-  Handle(XSControl_WorkSession) WS = new XSControl_WorkSession;
-  Init ( WS );
+  //szv_c1: re-select norm to apply the new controller
+  myWriter.WS()->SelectNorm("STEP");
 }
 
 
@@ -294,16 +293,20 @@ STEPCAFControl_Writer::STEPCAFControl_Writer () :
 //purpose  :
 //=======================================================================
 
-STEPCAFControl_Writer::STEPCAFControl_Writer (const Handle(XSControl_WorkSession)& WS,
-					      const Standard_Boolean scratch)
+STEPCAFControl_Writer::STEPCAFControl_Writer (const Handle(XSControl_WorkSession)& WS, const Standard_Boolean scratch)
+: myWriter (WS, scratch),
+  myFiles (new STEPCAFControl_DictionaryOfExternFile),
+  myColorMode( Standard_True ),
+  myNameMode ( Standard_True ),
+  myLayerMode( Standard_True ),
+  myPropsMode( Standard_True ),
+  mySHUOMode ( Standard_True ),
+  myDGTMode  ( Standard_True ),
+  myMatMode  ( Standard_True )
 {
   STEPCAFControl_Controller::Init();
-  Init ( WS, scratch );
-  myColorMode = Standard_True;
-  myNameMode = Standard_True;
-  myLayerMode = Standard_True;
-  myPropsMode = Standard_True;
-  mySHUOMode = Standard_True;
+  //szv_c1: re-select norm to apply the new controller
+  myWriter.WS()->SelectNorm("STEP");
 }
 
 
@@ -312,10 +315,8 @@ STEPCAFControl_Writer::STEPCAFControl_Writer (const Handle(XSControl_WorkSession
 //purpose  :
 //=======================================================================
 
-void STEPCAFControl_Writer::Init (const Handle(XSControl_WorkSession)& WS,
-				  const Standard_Boolean scratch)
+void STEPCAFControl_Writer::Init (const Handle(XSControl_WorkSession)& WS, const Standard_Boolean scratch)
 {
-  WS->SelectNorm ( "STEP" );
   myWriter.SetWS (WS,scratch);
   myFiles = new STEPCAFControl_DictionaryOfExternFile;
   myLabEF.Clear();
@@ -328,9 +329,9 @@ void STEPCAFControl_Writer::Init (const Handle(XSControl_WorkSession)& WS,
 //purpose  :
 //=======================================================================
 
-IFSelect_ReturnStatus STEPCAFControl_Writer::Write (const Standard_CString filename)
+Interface_ReturnStatus STEPCAFControl_Writer::Write (const Standard_CString filename)
 {
-  IFSelect_ReturnStatus status = myWriter.Write ( filename );
+  Interface_ReturnStatus status = myWriter.Write ( filename );
 
   // get directory name of the main file
   OSD_Path mainfile ( filename );
@@ -342,7 +343,7 @@ IFSelect_ReturnStatus STEPCAFControl_Writer::Write (const Standard_CString filen
   STEPCAFControl_IteratorOfDictionaryOfExternFile it ( myFiles );
   for ( ; it.More(); it.Next() ) {
     Handle(STEPCAFControl_ExternFile) EF = it.Value();
-    if ( EF->GetWriteStatus() != IFSelect_RetVoid ) continue;
+    if ( EF->GetWriteStatus() != Interface_RetVoid ) continue;
 
     // construct extern file name
     TCollection_AsciiString fname = OSD_Path::AbsolutePath ( dpath, EF->GetName()->String() );
@@ -350,8 +351,9 @@ IFSelect_ReturnStatus STEPCAFControl_Writer::Write (const Standard_CString filen
 #ifdef OCCT_DEBUG
     cout << "Writing external file: " << fname.ToCString() << endl;
 #endif
-    
-    EF->SetWriteStatus ( EF->GetWS()->SendAll ( fname.ToCString() ) );
+
+	XSControl_Writer aWriter( EF->GetWS() );
+    EF->SetWriteStatus ( aWriter.WriteFile( fname.ToCString() ) );
   }
 
   return status;
@@ -390,52 +392,15 @@ Standard_Boolean STEPCAFControl_Writer::Transfer( const TDF_Label& L,
   return Transfer ( myWriter, labels, mode, multi );
 }
 
-//=======================================================================
-//function : Transfer
-//purpose  :
-//=======================================================================
-
-Standard_Boolean STEPCAFControl_Writer::Transfer( const TDF_LabelSequence& labels,
-						  const STEPControl_StepModelType mode,
-						  const Standard_CString multi )
-{
-  return Transfer( myWriter, labels, mode, multi );
-}
 
 //=======================================================================
 //function : Perform
 //purpose  :
 //=======================================================================
 
-Standard_Boolean STEPCAFControl_Writer::Perform (const Handle(TDocStd_Document) &doc,
-						 const Standard_CString filename)
+Standard_Boolean STEPCAFControl_Writer::Perform (const Handle(TDocStd_Document) &doc, const TCollection_AsciiString &filename)
 {
-  if ( ! Transfer ( doc ) ) return Standard_False;
-  return Write ( filename ) == IFSelect_RetDone;
-}
-
-
-//=======================================================================
-//function : Perform
-//purpose  :
-//=======================================================================
-
-Standard_Boolean STEPCAFControl_Writer::Perform (const Handle(TDocStd_Document) &doc,
-						 const TCollection_AsciiString &filename)
-{
-  if ( ! Transfer ( doc ) ) return Standard_False;
-  return Write ( filename.ToCString() ) == IFSelect_RetDone;
-}
-
-
-//=======================================================================
-//function : ExternFiles
-//purpose  :
-//=======================================================================
-
-const Handle(STEPCAFControl_DictionaryOfExternFile) &STEPCAFControl_Writer::ExternFiles () const
-{
-  return myFiles;
+  return Perform( doc, filename.ToCString() );
 }
 
 
@@ -444,8 +409,7 @@ const Handle(STEPCAFControl_DictionaryOfExternFile) &STEPCAFControl_Writer::Exte
 //purpose  :
 //=======================================================================
 
-Standard_Boolean STEPCAFControl_Writer::ExternFile (const TDF_Label &L,
-						    Handle(STEPCAFControl_ExternFile) &ef) const
+Standard_Boolean STEPCAFControl_Writer::ExternFile (const TDF_Label &L, Handle(STEPCAFControl_ExternFile) &ef) const
 {
   ef.Nullify();
   if ( ! myLabEF.IsBound ( L ) ) return Standard_False;
@@ -459,8 +423,7 @@ Standard_Boolean STEPCAFControl_Writer::ExternFile (const TDF_Label &L,
 //purpose  :
 //=======================================================================
 
-Standard_Boolean STEPCAFControl_Writer::ExternFile (const Standard_CString name,
-						    Handle(STEPCAFControl_ExternFile) &ef) const
+Standard_Boolean STEPCAFControl_Writer::ExternFile (const Standard_CString name, Handle(STEPCAFControl_ExternFile) &ef) const
 {
   ef.Nullify();
   if ( ! myFiles.IsNull() || ! myFiles->HasItem ( name ) )
@@ -471,42 +434,20 @@ Standard_Boolean STEPCAFControl_Writer::ExternFile (const Standard_CString name,
 
 
 //=======================================================================
-//function : Writer
-//purpose  :
-//=======================================================================
-
-STEPControl_Writer &STEPCAFControl_Writer::ChangeWriter ()
-{
-  return myWriter;
-}
-
-
-//=======================================================================
-//function : Writer
-//purpose  :
-//=======================================================================
-
-const STEPControl_Writer &STEPCAFControl_Writer::Writer () const
-{
-  return myWriter;
-}
-
-
-//=======================================================================
 //function : Transfer
 //purpose  :
 //=======================================================================
 
 Standard_Boolean STEPCAFControl_Writer::Transfer (STEPControl_Writer &writer,
-						  const TDF_LabelSequence &labels,
-						  const STEPControl_StepModelType mode,
-						  const Standard_CString multi,
+                                                  const TDF_LabelSequence &labels,
+                                                  const STEPControl_StepModelType mode,
+                                                  const Standard_CString multi,
                                                   const Standard_Boolean isExternFile)
 {
   if ( labels.Length() <=0 ) return Standard_False;
 
-  Handle(STEPCAFControl_ActorWrite) Actor =
-    Handle(STEPCAFControl_ActorWrite)::DownCast ( writer.WS()->NormAdaptor()->ActorWrite() );
+  Handle(STEPCAFControl_ActorWrite) anActor =
+    Handle(STEPCAFControl_ActorWrite)::DownCast( writer.WS()->WriterProcess()->GetActor() ); //szv_c1:
 
   // translate free top-level shapes of the DECAF document
   Standard_Integer ap = Interface_Static::IVal ("write.step.schema");
@@ -521,7 +462,7 @@ Standard_Boolean STEPCAFControl_Writer::Transfer (STEPControl_Writer &writer,
     
     // write shape either as a whole, or as multifile (with extern refs)
     if ( ! multi  ) {
-      Actor->SetStdMode ( Standard_False );
+      anActor->SetStdMode ( Standard_False );
 
       TDF_LabelSequence comp;
 
@@ -564,39 +505,22 @@ Standard_Boolean STEPCAFControl_Writer::Transfer (STEPControl_Writer &writer,
           myLabels.Bind ( ref, refS );
           sublabels.Append ( ref );
           if ( XCAFDoc_ShapeTool::IsAssembly ( ref ) )
-            Actor->RegisterAssembly ( refS );
+            anActor->RegisterAssembly ( refS );
         }
       }
       myLabels.Bind ( L, shape );
       sublabels.Append ( L );
       if ( XCAFDoc_ShapeTool::IsAssembly ( L ) )
-        Actor->RegisterAssembly ( shape );
+        anActor->RegisterAssembly ( shape );
 
       writer.Transfer(shape,mode,Standard_False);
-      Actor->SetStdMode ( Standard_True ); // restore default behaviour
+      anActor->SetStdMode ( Standard_True ); // restore default behaviour
     }
     else {
       // translate final solids
       TopoDS_Shape Sass = TransferExternFiles ( L, mode, sublabels, multi );
 
       // translate main assembly structure
-/*
-      if ( ap == 3 ) { // if AP203, switch to AP214
-	Interface_Static::SetCVal ("write.step.schema", "AP214DIS");
-	Handle(StepData_StepModel) model = 
-	  Handle(StepData_StepModel)::DownCast ( writer.WS()->Model() );
-	if ( model->HasHeaderEntity(STANDARD_TYPE(HeaderSection_FileSchema)) ) {
-	  Handle(HeaderSection_FileSchema) fs = 
-	    Handle(HeaderSection_FileSchema)::DownCast ( model->HeaderEntity(STANDARD_TYPE(HeaderSection_FileSchema)) );
-	  Handle(TCollection_HAsciiString) str = fs->SchemaIdentifiersValue ( 1 );
-	  Handle(TCollection_HAsciiString) ap214 = new TCollection_HAsciiString ( "AUTOMOTIVE_DESIGN" );
-	  if ( str->Search ( ap214 ) <0 ) {
-	    str->Clear();
-	    str->AssignCat ( ap214 );
-	  }
-	}
-      }
-*/      
       Standard_Integer assemblymode = Interface_Static::IVal ("write.step.assembly");
       Interface_Static::SetCVal ("write.step.assembly", "On");
       writer.Transfer ( Sass, STEPControl_AsIs );
@@ -605,7 +529,7 @@ Standard_Boolean STEPCAFControl_Writer::Transfer (STEPControl_Writer &writer,
     }
   }
 
-  writer.WS()->ComputeGraph(Standard_True );// added by skl 03.11.2003 since we use
+  writer.WS()->ComputeGraph(Standard_True); // added by skl 03.11.2003 since we use
                                             // writer.Transfer() wihtout compute graph
 
   // write names
@@ -652,9 +576,6 @@ Standard_Boolean STEPCAFControl_Writer::Transfer (STEPControl_Writer &writer,
   }
 
   // write validation props
-//  if ( multi && ap ==3 ) {
-//      Interface_Static::SetCVal ("write.step.schema", "AP214DIS");
-//  }
   if ( GetPropsMode() ) 
     WriteValProps ( writer.WS(), sublabels, multi );
 
@@ -669,8 +590,7 @@ Standard_Boolean STEPCAFControl_Writer::Transfer (STEPControl_Writer &writer,
 
   if (Interface_Static::IVal("write.stepcaf.subshapes.name") != 0)
   {
-    const Handle(XSControl_TransferWriter) &TW = this->ChangeWriter().WS()->TransferWriter();
-    const Handle(Transfer_FinderProcess) &FP = TW->FinderProcess();
+    const Handle(Transfer_FinderProcess) &FP = myWriter.WS()->WriterProcess();
 
     for ( int i = 1; i <= labels.Length(); i++ )
     {
@@ -730,7 +650,7 @@ TopoDS_Shape STEPCAFControl_Writer::TransferExternFiles (const TDF_Label &L,
     labels.Append ( L );
     // prepare for transfer
     Handle(XSControl_WorkSession) newWS = new XSControl_WorkSession;
-    newWS->SelectNorm ( "STEP" );
+    newWS->SelectNorm("STEP");
     STEPControl_Writer sw ( newWS, Standard_True );
     TDF_LabelSequence Lseq;
     Lseq.Append ( L );
@@ -806,8 +726,7 @@ Standard_Boolean STEPCAFControl_Writer::WriteExternRefs (const Handle(XSControl_
 {
   if ( labels.Length() <=0 ) return Standard_False;
 
-  const Handle(XSControl_TransferWriter) &TW = WS->TransferWriter();
-  const Handle(Transfer_FinderProcess) &FP = TW->FinderProcess();
+  const Handle(Transfer_FinderProcess) &FP = WS->WriterProcess();
   STEPConstruct_ExternRefs EFTool ( WS );
   Standard_Integer schema = Interface_Static::IVal("write.step.schema");
   for ( Standard_Integer k=1; k <= labels.Length(); k++ ) {
@@ -1257,8 +1176,7 @@ Standard_Boolean STEPCAFControl_Writer::WriteColors (const Handle(XSControl_Work
     }
     else {
       // create SDR and add to model.
-      const Handle(XSControl_TransferWriter) &TW = WS->TransferWriter();
-      const Handle(Transfer_FinderProcess) &FP = TW->FinderProcess();
+      const Handle(Transfer_FinderProcess) &FP = WS->WriterProcess();
       Handle(TransferBRep_ShapeMapper) mapper = TransferBRep::ShapeMapper ( FP, S );
       Handle(StepShape_ContextDependentShapeRepresentation) CDSR;
       if ( FP->FindTypedTransient(mapper, 
@@ -1332,8 +1250,7 @@ Standard_Boolean STEPCAFControl_Writer::WriteNames (const Handle(XSControl_WorkS
   if ( labels.Length() <=0 ) return Standard_False;
 
   // get working data
-  const Handle(XSControl_TransferWriter) &TW = WS->TransferWriter();
-  const Handle(Transfer_FinderProcess) &FP = TW->FinderProcess();
+  const Handle(Transfer_FinderProcess) &FP = WS->WriterProcess();
 
   // Iterate on requested shapes
   for ( Standard_Integer i=1; i <= labels.Length(); i++ ) {
@@ -1547,8 +1464,7 @@ Standard_Boolean STEPCAFControl_Writer::WriteLayers (const Handle(XSControl_Work
 
   // get working data
   const Handle(Interface_InterfaceModel) &Model = WS->Model();
-  const Handle(XSControl_TransferWriter) &TW = WS->TransferWriter();
-  const Handle(Transfer_FinderProcess) &FP = TW->FinderProcess();
+  const Handle(Transfer_FinderProcess) &FP = WS->WriterProcess();
   Handle(XCAFDoc_LayerTool) LTool = XCAFDoc_DocumentTool::LayerTool( labels(1) );
   if (LTool.IsNull() ) return Standard_False;
 
@@ -1681,8 +1597,7 @@ static Standard_Boolean getProDefinitionOfNAUO(const Handle(XSControl_WorkSessio
   if ( theShape.IsNull() )
     return Standard_False;
   // get CDSR
-  const Handle(XSControl_TransferWriter) &TW = WS->TransferWriter();
-  const Handle(Transfer_FinderProcess) &FP = TW->FinderProcess();
+  const Handle(Transfer_FinderProcess) &FP = WS->WriterProcess();
   Handle(StepShape_ContextDependentShapeRepresentation) CDSR;
   Handle(TransferBRep_ShapeMapper) mapper = TransferBRep::ShapeMapper ( FP, theShape );
   if (!FP->FindTypedTransient(mapper, 
@@ -1851,8 +1766,7 @@ static Standard_Boolean createSHUOStyledItem (const XCAFPrs_Style& style,
   Handle(StepVisual_StyledItem) override; //null styled item
   
   // find the repr item of the shape
-  const Handle(XSControl_TransferWriter) &TW = WS->TransferWriter();
-  const Handle(Transfer_FinderProcess) &FP = TW->FinderProcess();
+  const Handle(Transfer_FinderProcess) &FP = WS->WriterProcess();
   Handle(TransferBRep_ShapeMapper) mapper = TransferBRep::ShapeMapper ( FP, Sh );
   Handle(StepShape_ContextDependentShapeRepresentation) CDSR;
   FP->FindTypedTransient(mapper, 
@@ -2245,8 +2159,7 @@ static Handle(StepRepr_ShapeAspect) WriteShapeAspect (const Handle(XSControl_Wor
 {
   // Get working data
   const Handle(Interface_InterfaceModel) &Model = WS->Model();
-  const Handle(XSControl_TransferWriter) &TW = WS->TransferWriter();
-  const Handle(Transfer_FinderProcess) &FP = TW->FinderProcess();
+  const Handle(Transfer_FinderProcess) &FP = WS->WriterProcess();
   const Handle(Interface_HGraph) aHGraph = WS->HGraph();
   if (aHGraph.IsNull())
     return NULL;
@@ -2394,8 +2307,7 @@ static Handle(StepDimTol_Datum) WriteDatumAP242(const Handle(XSControl_WorkSessi
 {
   // Get working data
   const Handle(Interface_InterfaceModel) &Model = WS->Model();
-  const Handle(XSControl_TransferWriter) &TW = WS->TransferWriter();
-  const Handle(Transfer_FinderProcess) &FP = TW->FinderProcess();
+  const Handle(Transfer_FinderProcess) &FP = WS->WriterProcess();
   const Handle(Interface_HGraph) aHGraph = WS->HGraph();
   if (aHGraph.IsNull())
     return NULL;
@@ -3259,8 +3171,7 @@ Standard_Boolean STEPCAFControl_Writer::WriteDGTs (const Handle(XSControl_WorkSe
   
   // get working data
   const Handle(Interface_InterfaceModel) &Model = WS->Model();
-  const Handle(XSControl_TransferWriter) &TW = WS->TransferWriter();
-  const Handle(Transfer_FinderProcess) &FP = TW->FinderProcess();
+  const Handle(Transfer_FinderProcess) &FP = WS->WriterProcess();
 
   const Handle(Interface_HGraph) aHGraph = WS->HGraph();
   if(aHGraph.IsNull())
@@ -3899,8 +3810,7 @@ Standard_Boolean STEPCAFControl_Writer::WriteMaterials (const Handle(XSControl_W
 
   // get working data
   const Handle(Interface_InterfaceModel) &Model = WS->Model();
-  const Handle(XSControl_TransferWriter) &TW = WS->TransferWriter();
-  const Handle(Transfer_FinderProcess) &FP = TW->FinderProcess();
+  const Handle(Transfer_FinderProcess) &FP = WS->WriterProcess();
 
   const Handle(Interface_HGraph) aHGraph = WS->HGraph();
   if(aHGraph.IsNull())
@@ -4034,158 +3944,4 @@ Standard_Boolean STEPCAFControl_Writer::WriteMaterials (const Handle(XSControl_W
   }
 
   return Standard_True;
-}
-
-
-//=======================================================================
-//function : SetColorMode
-//purpose  : 
-//=======================================================================
-
-void STEPCAFControl_Writer::SetColorMode (const Standard_Boolean colormode)
-{
-  myColorMode = colormode;
-}
-
-
-//=======================================================================
-//function : GetColorMode
-//purpose  : 
-//=======================================================================
-
-Standard_Boolean STEPCAFControl_Writer::GetColorMode () const
-{
-  return myColorMode;
-}
-
-
-//=======================================================================
-//function : SetNameMode
-//purpose  : 
-//=======================================================================
-
-void STEPCAFControl_Writer::SetNameMode (const Standard_Boolean namemode)
-{
-  myNameMode = namemode;
-}
-
-
-//=======================================================================
-//function : GetNameMode
-//purpose  : 
-//=======================================================================
-
-Standard_Boolean STEPCAFControl_Writer::GetNameMode () const
-{
-  return myNameMode;
-}
-
-
-//=======================================================================
-//function : SetLayerMode
-//purpose  : 
-//=======================================================================
-
-void STEPCAFControl_Writer::SetLayerMode (const Standard_Boolean layermode)
-{
-  myLayerMode = layermode;
-}
-
-
-//=======================================================================
-//function : GetLayerMode
-//purpose  : 
-//=======================================================================
-
-Standard_Boolean STEPCAFControl_Writer::GetLayerMode () const
-{
-  return myLayerMode;
-}
-
-
-//=======================================================================
-//function : SetPropsMode
-//purpose  : 
-//=======================================================================
-
-void STEPCAFControl_Writer::SetPropsMode (const Standard_Boolean propsmode)
-{
-  myPropsMode = propsmode;
-}
-
-
-//=======================================================================
-//function : GetPropsMode
-//purpose  : 
-//=======================================================================
-
-Standard_Boolean STEPCAFControl_Writer::GetPropsMode () const
-{
-  return myPropsMode;
-}
-
-
-//=======================================================================
-//function : SetSHUOMode
-//purpose  : 
-//=======================================================================
-
-void STEPCAFControl_Writer::SetSHUOMode (const Standard_Boolean mode)
-{
-  mySHUOMode = mode;
-}
-
-
-//=======================================================================
-//function : GetSHUOMode
-//purpose  : 
-//=======================================================================
-
-Standard_Boolean STEPCAFControl_Writer::GetSHUOMode () const
-{
-  return mySHUOMode;
-}
-
-
-//=======================================================================
-//function : SetDimTolMode
-//purpose  : 
-//=======================================================================
-
-void STEPCAFControl_Writer::SetDimTolMode(const Standard_Boolean dimtolmode)
-{
-  myDGTMode = dimtolmode;
-}
-
-
-//=======================================================================
-//function : GetDimTolMode
-//purpose  : 
-//=======================================================================
-
-Standard_Boolean STEPCAFControl_Writer::GetDimTolMode() const
-{
-  return myDGTMode;
-}
-
-
-//=======================================================================
-//function : SetMaterialMode
-//purpose  : 
-//=======================================================================
-
-void STEPCAFControl_Writer::SetMaterialMode(const Standard_Boolean matmode)
-{
-  myMatMode = matmode;
-}
-
-
-//=======================================================================
-//function : GetMaterialMode
-//purpose  : 
-//=======================================================================
-
-Standard_Boolean STEPCAFControl_Writer::GetMaterialMode() const
-{
-  return myMatMode;
 }

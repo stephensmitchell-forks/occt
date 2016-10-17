@@ -28,7 +28,6 @@
 class Interface_InterfaceError;
 class Standard_Transient;
 class Interface_CopyControl;
-class IFSelect_Transformer;
 class Interface_EntityIterator;
 class Interface_Graph;
 class TCollection_AsciiString;
@@ -110,10 +109,6 @@ public:
   //! Rebuilds the selected list. Any selected entity which has a
   //! bound result is replaced by this result, else it is removed.
   Standard_EXPORT void Update (const Handle(Interface_CopyControl)& control);
-  
-  //! Rebuilds the selected list, by querying a Transformer
-  //! (same principle as from a CopyControl)
-  Standard_EXPORT void Update (const Handle(IFSelect_Transformer)& trf);
   
   //! Returns the list of selected items. Only the selected entities
   //! which are present in the graph are given (this result assures

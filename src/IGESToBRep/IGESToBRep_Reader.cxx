@@ -488,14 +488,6 @@ Standard_Boolean  IGESToBRep_Reader::Transfer(const Standard_Integer num)
 }
 
 //=======================================================================
-//function : UsedTolerance
-//purpose  : Returns the used tolerance (input)
-//=======================================================================
-
-Standard_Real  IGESToBRep_Reader::UsedTolerance () const
-{  return theActor->UsedTolerance();  }
-
-//=======================================================================
 //function : Shape
 //purpose  : Returns a Shape given its rank
 //=======================================================================

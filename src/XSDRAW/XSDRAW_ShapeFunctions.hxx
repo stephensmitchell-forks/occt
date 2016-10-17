@@ -42,18 +42,6 @@ class XSDRAW_ShapeFunctions
   //! Defines and loads all functions which work on shapes for XSDRAW (as ActFunc)
   Standard_EXPORT static void Init();
   
-  //! Analyses a name as designating Shapes from a Vars or from
-  //! XSTEP transfer (last Transfer on Reading). <name> can be :
-  //! "*" : all the root shapes produced by last Transfer (Read)
-  //! i.e. considers roots of the TransientProcess
-  //! a name : a name of a variable DRAW
-  //!
-  //! Returns the count of designated Shapes. Their list is put in
-  //! <list>. If <list> is null, it is firstly created. Then it is
-  //! completed (Append without Clear) by the Shapes found
-  //! Returns 0 if no Shape could be found
-  Standard_EXPORT static Standard_Integer MoreShapes (const Handle(XSControl_WorkSession)& session, Handle(TopTools_HSequenceOfShape)& list, const Standard_CString name);
-  
   //! Analyses given file name and variable name, with a default
   //! name for variables. Returns resulting file name and variable
   //! name plus status "file to read"(True) or "already read"(False)

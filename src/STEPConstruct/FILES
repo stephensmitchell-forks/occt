@@ -21,7 +21,6 @@ STEPConstruct_Styles.cxx
 STEPConstruct_Styles.hxx
 STEPConstruct_Tool.cxx
 STEPConstruct_Tool.hxx
-STEPConstruct_Tool.lxx
 STEPConstruct_UnitContext.cxx
 STEPConstruct_UnitContext.hxx
 STEPConstruct_ValidationProps.cxx

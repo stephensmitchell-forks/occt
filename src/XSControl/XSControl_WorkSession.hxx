@@ -17,50 +17,106 @@
 #ifndef _XSControl_WorkSession_HeaderFile
 #define _XSControl_WorkSession_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
+#include <MMgt_TShared.hxx>
 
-#include <IFSelect_WorkSession.hxx>
-#include <IFSelect_ReturnStatus.hxx>
-#include <XSControl_TransferWriter.hxx>
-class XSControl_Controller;
-class XSControl_TransferReader;
-class XSControl_Vars;
-class Message_Messenger;
-class Transfer_TransientProcess;
-class Standard_Transient;
+#include <TCollection_AsciiString.hxx>
+#include <Interface_ReturnStatus.hxx>
+#include <Transfer_FinderProcess.hxx>
+#include <Transfer_TransientProcess.hxx>
 class Interface_InterfaceModel;
-class Transfer_FinderProcess;
-class TopoDS_Shape;
+class Interface_Graph;
+class Interface_HGraph;
+class Interface_GTool;
 class Interface_CheckIterator;
+class XSControl_Controller;
+class Message_Messenger;
+class TopoDS_Shape;
 
 
 class XSControl_WorkSession;
-DEFINE_STANDARD_HANDLE(XSControl_WorkSession, IFSelect_WorkSession)
+DEFINE_STANDARD_HANDLE(XSControl_WorkSession, MMgt_TShared)
 
 //! This WorkSession completes the basic one, by adding :
 //! - use of Controller, with norm selection...
 //! - management of transfers (both ways) with auxiliary classes
-//! TransferReader and TransferWriter
+//! ReaderProcess and WriterProcess
 //! -> these transfers may work with a Context List : its items
 //! are given by the user, according to the transfer to be
 //! i.e. it is interpreted by the Actors
 //! Each item is accessed by a Name
-class XSControl_WorkSession : public IFSelect_WorkSession
+class XSControl_WorkSession : public MMgt_TShared
 {
  public:
-  
-  Standard_EXPORT XSControl_WorkSession();
-  
-  ~XSControl_WorkSession()
-  { ClearBinders(); }
 
-  //! In addition to basic ClearData, clears Transfer and Management
+  Standard_EXPORT XSControl_WorkSession ();
+  
+  //! Sets a Model as input : this will be the Model from which the
+  //! ShareOut will work
+  //! All SelectPointed items are cleared
+  //! Remark : SetModel clears the Graph, recomputes it if a
+  //! Protocol is set and if the Model is not empty, of course
+  Standard_EXPORT void SetModel (const Handle(Interface_InterfaceModel)& model);
+  
+  //! Returns the Model of the Work Session (Null Handle if none)
+  //! should be C++ : return const &
+  const Handle(Interface_InterfaceModel) & Model () const { return myModel; }
+  
+  //! Stores the filename used for read for setting the model
+  //! It is cleared by SetModel and ClearData(1)
+  void SetLoadedFile (const Standard_CString theFileName) { theloaded = theFileName; }
+  
+  //! Returns the filename used to load current model, empty if unknown
+  Standard_CString LoadedFile() const { return theloaded.ToCString(); }
+  
+  //! Set value of mode responsible for precence of selections after loading
+  //! If mode set to true that different selections will be accessible after loading
+  //! else selections will be not accessible after loading( for economy memory in applicatios)
+  void SetModeStat (const Standard_Boolean theMode) { themodelstat = theMode; }
+  
+  //! Return value of mode defining of filling selection during loading
+  Standard_Boolean GetModeStat() const { return themodelstat; }
+  
+  //! Computes the Graph used for Selections, Displays ...
+  //! If a HGraph is already set, with same model as given by method
+  //! Model, does nothing. Else, computes a new Graph.
+  //! If <enforce> is given True, computes a new Graph anyway.
+  //! Remark that a call to ClearGraph will cause ComputeGraph to
+  //! really compute a new Graph
+  //! Returns True if Graph is OK, False else (i.e. if no Protocol
+  //! is set, or if Model is absent or empty).
+  Standard_EXPORT Standard_Boolean ComputeGraph (const Standard_Boolean enforce = Standard_False);
+  
+  //! Returns the Computed Graph as HGraph (Null Handle if not set)
+  Standard_EXPORT Handle(Interface_HGraph) HGraph();
+  
+  //! Returns the Computed Graph, for Read only
+  Standard_EXPORT const Interface_Graph& Graph();
+  
+  //! Returns True if a Model is defined and really loaded (not
+  //! empty), a Protocol is set and a Graph has been computed.
+  //! In this case, the WorkSession can start to work
+  Standard_EXPORT Standard_Boolean IsLoaded() const;
+  
+  //! Computes the CheckList for the Model currently loaded
+  //! It can then be used for displays, querries ...
+  //! Returns True if OK, False else (i.e. no Protocol set, or Model absent).
+  //! Works only if not already done or if a new Model has been loaded from last call.
+  //! Remark : computation is enforced by every call to SetModel
+  Standard_EXPORT Standard_Boolean ComputeCheck ();
+
+  //! Clears recorded data (not the items) according mode :
+  //! 1 : all Data : Model, Graph, CheckList, + ClearData 4
+  //! 2 : Graph and CheckList (they will then be recomputed later)
+  //! 3 : CheckList (it will be recomputed by ComputeCheck)
+  //! 4 : just content of SelectPointed and Counters
+  //! Plus 0 : does nothing but called by SetModel
+  //! ClearData is virtual, hence it can be redefined to clear
+  //! other data of a specialised Work Session
+  //! Clears Transfer and Management
   //! for interactive use, for mode = 0,1,2 and over 4
   //! Plus : mode = 5 to clear Transfers (both ways) only
   //! mode = 6 to clear enforced results
-  //! mode = 7 to clear transfers, results
-  Standard_EXPORT virtual void ClearData (const Standard_Integer theMode) Standard_OVERRIDE;
+  Standard_EXPORT virtual void ClearData (const Standard_Integer theMode);
   
   //! Selects a Norm defined by its name.
   //! A Norm is described and handled by a Controller
@@ -70,108 +126,74 @@ class XSControl_WorkSession : public IFSelect_WorkSession
   Standard_EXPORT Standard_Boolean SelectNorm (const Standard_CString theNormName);
   
   //! Selects a Norm defined by its Controller itself
-  Standard_EXPORT void SetController (const Handle(XSControl_Controller)& theCtl);
-  
-  //! Returns the name of the last Selected Norm. If none is
-  //! defined, returns an empty string
-  //! By default, returns the complete name of the norm
-  //! If <rsc> is True, returns the short name used for resource
-  Standard_EXPORT Standard_CString SelectedNorm (const Standard_Boolean theRsc = Standard_False) const;
+  Standard_EXPORT virtual void SetController (const Handle(XSControl_Controller)& theCtl); //szv_c1: made virtual
   
   //! Returns the norm controller itself
-  const Handle(XSControl_Controller) & NormAdaptor() const { return myController; }
+  const Handle(XSControl_Controller) & NormAdaptor () const { return myController; }
   
-  //! Prints the transfer status of a transferred item, as beeing
-  //! the Mapped n0 <num>, from MapWriter if <wri> is True, or
-  //! from MapReader if <wri> is False
-  //! Returns True when done, False else (i.e. num out of range)
-  Standard_EXPORT Standard_Boolean PrintTransferStatus (const Standard_Integer theNum, const Standard_Boolean theWri, const Handle(Message_Messenger)& theS) const;
+  //! Reads a file with the Controller (sets Model and LoadedFile)
+  //! Returns a integer status which can be :
+  //! RetDone if OK,  RetVoid if no Protocol not defined,
+  //! RetError for file not found, RetFail if fail during read
+  Standard_EXPORT Interface_ReturnStatus ReadFile (const Standard_CString theFileName);
+
+  //! Writes the current Interface Model globally to a File, and
+  //! The Model and File Modifiers recorded to be applied on sending files.
+  //! Returns a status of execution :
+  //! Done if OK,
+  //! Void if no data available,
+  //! Error if errors occured (controller is not defined, errors during translation)
+  //! Fail if exception during translation is raised
+  //! Stop if no disk space or disk, file is write protected
+  //! Fills LastRunCheckList
+  Standard_EXPORT Interface_ReturnStatus WriteFile (const Standard_CString theFileName);
   
   //! Sets a Transfer Reader, by internal ways, according mode :
-  //! 0 recreates it clear,  1 clears it (does not recreate)
-  //! 2 aligns Roots of TransientProcess from final Results
+  //! 0 recreates it clear
   //! 3 aligns final Results from Roots of TransientProcess
   //! 4 begins a new transfer (by BeginTransfer)
-  //! 5 recreates TransferReader then begins a new transfer
   Standard_EXPORT void InitTransferReader (const Standard_Integer theMode);
-  
-  //! Returns the Transfer Reader, Null if not set
-  const Handle(XSControl_TransferReader) & TransferReader () const { return myTransferReader; }
 
-  //! Changes the Map Reader, i.e. considers that the new one
+  //! Changes the ReaderProcess, i.e. considers that the new one
   //! defines the relevant read results (forgets the former ones)
   //! Returns True when done, False in case of bad definition, i.e.
   //! if Model from TP differs from that of Session
-  Standard_EXPORT Standard_Boolean SetMapReader (const Handle(Transfer_TransientProcess)& theTP);
+  Standard_EXPORT Standard_Boolean SetReaderProcess (const Handle(Transfer_TransientProcess)& theTP);
   
-  //! Returns the result attached to a starting entity
-  //! If <mode> = 0, returns Final Result
-  //! If <mode> = 1, considers Last Result
-  //! If <mode> = 2, considers Final, else if absent, Last
-  //! returns it as Transient, if result is not transient returns
-  //! the Binder
-  //! <mode> = 10,11,12 idem but returns the Binder itself
-  //! (if it is not, e.g. Shape, returns the Binder)
-  //! <mode> = 20, returns the ResultFromModel
-  Standard_EXPORT Handle(Standard_Transient) Result (const Handle(Standard_Transient)& theEnt, const Standard_Integer theMode) const;
+  //! Returns the Reader Process, Null if not set
+  const Handle(Transfer_TransientProcess) & ReaderProcess () const { return myReaderProcess; }
   
-  //! Commands the transfer of, either one entity, or a list
-  //! I.E. calls the TransferReader after having analysed <ents>
-  //! It is cumulated from the last BeginTransfer
-  //! <ents> is processed by GiveList, hence :
-  //! - <ents> a Selection : its SelectionResult
-  //! - <ents> a HSequenceOfTransient : this list
-  //! - <ents> the Model : in this specific case, all the roots,
-  //! with no cumulation of former transfers (TransferReadRoots)
-  Standard_EXPORT Standard_Integer TransferReadOne (const Handle(Standard_Transient)& theEnts);
-  
-  //! Commands the transfer of all the root entities of the model
-  //! i.e. calls TransferRoot from the TransferReader with the Graph
-  //! No cumulation with former calls to TransferReadOne
-  Standard_EXPORT Standard_Integer TransferReadRoots();
+  //! Returns the Writer Process, Null if not set
+  const Handle(Transfer_FinderProcess) & WriterProcess () const { return myWriterProcess; }
+
+  //! Changes the Map Writer, i.e. considers that the new one
+  //! defines the relevant write results (forgets the former ones)
+  void SetWriterProcess (const Handle(Transfer_FinderProcess)& theFP) { if (!theFP.IsNull()) myWriterProcess = theFP; }
   
   //! produces and returns a new Model well conditionned
   //! It is produced by the Norm Controller
   //! It can be Null (if this function is not implemented)
-  Standard_EXPORT Handle(Interface_InterfaceModel) NewModel();
+  Standard_EXPORT Handle(Interface_InterfaceModel) NewModel ();
   
-  //! Returns the Transfer Reader, Null if not set
-  const Handle(XSControl_TransferWriter) & TransferWriter() const { return myTransferWriter; }
-  
-  //! Changes the Map Reader, i.e. considers that the new one
-  //! defines the relevant read results (forgets the former ones)
-  //! Returns True when done, False if <FP> is Null
-  Standard_Boolean SetMapWriter (const Handle(Transfer_FinderProcess)& theFP)
-  {
-    if (theFP.IsNull()) return Standard_False;
-    myTransferWriter->SetFinderProcess(theFP);
-    return Standard_True;
-  }
-  
-  //! Transfers a Shape from CasCade to a model of current norm,
-  //! according to the last call to SetModeWriteShape
-  //! Returns status :Done if OK, Fail if error during transfer,
-  //! Error if transfer badly initialised
-  Standard_EXPORT IFSelect_ReturnStatus TransferWriteShape (const TopoDS_Shape& theShape, const Standard_Boolean theCompGraph = Standard_True);
-  
-  const Handle(XSControl_Vars) & Vars() const { return myVars; }
-  
-  void SetVars (const Handle(XSControl_Vars)& theVars) { myVars = theVars; }
-  
-  DEFINE_STANDARD_RTTIEXT(XSControl_WorkSession,IFSelect_WorkSession)
+  DEFINE_STANDARD_RTTIEXT(XSControl_WorkSession,MMgt_TShared)
 
- private:
-  
-  //! Sets a Transfer Reader, which manages transfers on reading
-  Standard_EXPORT void SetTransferReader (const Handle(XSControl_TransferReader)& theTR);
-  
-  //! Clears binders
-  Standard_EXPORT void ClearBinders();
+ protected:
 
-  Handle(XSControl_Controller) myController;
-  Handle(XSControl_TransferReader) myTransferReader;
-  Handle(XSControl_TransferWriter) myTransferWriter;
-  Handle(XSControl_Vars) myVars;
+  Standard_EXPORT void CopySendAll (const Standard_CString filename, Interface_CheckIterator &checks);
+
+  Handle(XSControl_Controller) myController; // thelibrary;
+
+  Handle(Interface_InterfaceModel) myModel;
+
+  Handle(Interface_HGraph) thegraph;
+
+  Handle(Interface_GTool) thegtool;
+  Standard_Boolean thecheckdone;
+  Standard_Boolean themodelstat;
+  TCollection_AsciiString theloaded;
+
+  Handle(Transfer_TransientProcess) myReaderProcess;
+  Handle(Transfer_FinderProcess) myWriterProcess;
 };
 
 #endif // _XSControl_WorkSession_HeaderFile

@@ -61,6 +61,7 @@
 #include <TopoDS_Shape.hxx>
 #include <Transfer_Binder.hxx>
 #include <Transfer_SimpleBinderOfTransient.hxx>
+#include <Transfer_TransientProcess.hxx>
 #include <TransferBRep.hxx>
 #include <TransferBRep_ShapeMapper.hxx>
 #include <XSControl_WorkSession.hxx>
@@ -109,37 +110,6 @@ Standard_Boolean STEPConstruct_ValidationProps::FindTarget (const TopoDS_Shape &
   
   // if requested, try to find instance of assembly
   if ( instance ) {
-/*
-    Handle(StepRepr_NextAssemblyUsageOccurrence) NAUO;
-    Standard_Boolean found = myAssemblyPD.IsNull()?
-      FinderProcess()->FindTypedTransient (mapper,STANDARD_TYPE(StepRepr_NextAssemblyUsageOccurrence), NAUO) :
-	 STEPConstruct::FindNAUO (binder,myAssemblyPD,NAUO);
-    if ( found ) {
-      //skl find CDSR using NAUO:
-      Handle(StepShape_ContextDependentShapeRepresentation) CDSR
-      Interface_EntityIterator subs1 = graph.Sharings(NAUO);
-      for (subs1.Start(); subs1.More(); subs1.Next()) {
-        Handle(StepRepr_ProductDefinitionShape) PDS = 
-          Handle(StepRepr_ProductDefinitionShape)::DownCast(subs1.Value());
-        if(PDS.IsNull()) continue;
-        //IsPDS=Standard_True;
-        Interface_EntityIterator subs2 = graph.Sharings(PDS);
-        for (subs2.Start(); CDSR.IsNull() && subs2.More(); subs2.Next()) {
-          CDSR = Handle(StepShape_ContextDependentShapeRepresentation)::DownCast(subs2.Value());
-        }
-      }
-      if(!CDSR.IsNull()) {
-        target.SetValue ( CDSR->RepresentedProductRelation() );
-        Context = CDSR->RepresentationRelation()->Rep2()->ContextOfItems();
-      }
-#ifdef OCCT_DEBUG
-      else cout << "INSTANCE: CDRS from NAUO NOT found" << endl;
-#endif
-    }
-#ifdef OCCT_DEBUG
-    else cout << "INSTANCE: NAUO NOT found" << endl;
-#endif
-*/
   }
 
   // for Compounds, search for SDR

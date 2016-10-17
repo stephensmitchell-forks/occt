@@ -123,7 +123,7 @@ For further information see 2.4 Mapping STEP entities to Open CASCADE Technology
 Before performing any other operation you have to load the file with: 
 ~~~~~
 STEPControl_Reader reader; 
-IFSelect_ReturnStatus stat = reader.ReadFile(;filename.stp;); 
+Interface_ReturnStatus stat = reader.ReadFile(;filename.stp;); 
 ~~~~~
 Loading the file only memorizes the data, it does not translate it. 
 
@@ -958,13 +958,13 @@ If *TopoDS_Compound* contains any other types besides the ones mentioned in the 
 In case if an OCCT shape cannot be translated according to its mode the result of translation is void. 
 ~~~~~
 STEP214Control_StepModelTope mode = STEP214Control_ManifoldSolidBrep; 
-IFSelect_ReturnStatus stat = writer.Transfer(shape,mode); 
+Interface_ReturnStatus stat = writer.Transfer(shape,mode); 
 ~~~~~
 
 @subsubsection occt_step_3_3_4 Writing the STEP file
 Write the STEP file with: 
 ~~~~~
-IFSelect_ReturnStatus stat = writer.Write("filename.stp"); 
+Interface_ReturnStatus stat = writer.Write("filename.stp"); 
 ~~~~~
 to give the file name. 
 
@@ -1402,7 +1402,7 @@ In addition to the translation of shapes implemented in basic translator, it pro
 Before performing any other operation, you must load a STEP file with: 
 ~~~~~
 STEPCAFControl_Reader reader(XSDRAW::Session(), Standard_False); 
-IFSelect_ReturnStatus stat = reader.ReadFile("filename.stp"); 
+Interface_ReturnStatus stat = reader.ReadFile("filename.stp"); 
 ~~~~~
 Loading the file only memorizes the data, it does not translate it. 
 
@@ -1458,7 +1458,7 @@ aWriter.SetNameMode(mode);
 
 You can perform the translation of document by calling the function: 
 ~~~~~
-IFSelect_ReturnStatus aRetSt = aWriter.Transfer(doc); 
+Interface_ReturnStatus aRetSt = aWriter.Transfer(doc); 
 ~~~~~
 where *doc*  is a variable, which contains a handle to the input document for transferring and should have a type *Handle(TDocStd_Document)*. 
 
@@ -1466,11 +1466,11 @@ where *doc*  is a variable, which contains a handle to the input document for tr
 
 Write a STEP file with: 
 ~~~~~
-IFSelect_ReturnStatus statw = aWriter.WriteFile("filename.stp"); 
+Interface_ReturnStatus statw = aWriter.WriteFile("filename.stp"); 
 ~~~~~
 or 
 ~~~~~
-IFSelect_ReturnStatus statw = writer.WriteFile (S); 
+Interface_ReturnStatus statw = writer.WriteFile (S); 
 ~~~~~
 where *S* is *OStream*. 
 

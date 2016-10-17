@@ -63,7 +63,9 @@ void Interface_EntityIterator::SelectType (const Handle(Standard_Type)& atype, c
 
 Standard_Integer Interface_EntityIterator::NbEntities () const
 {
-  return thelist.IsNull()? 0 : thelist->Length();
+  if (thelist.IsNull()) return 0;
+  if (thecurr == 0) Start();
+  return thelist->Length();
 }
 
 Standard_Integer Interface_EntityIterator::NbTyped (const Handle(Standard_Type)& atype) const

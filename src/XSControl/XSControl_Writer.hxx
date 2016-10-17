@@ -21,10 +21,9 @@
 #include <Standard_DefineAlloc.hxx>
 #include <Standard_Handle.hxx>
 
-#include <IFSelect_ReturnStatus.hxx>
-class XSControl_WorkSession;
-class Interface_InterfaceModel;
+#include <Interface_ReturnStatus.hxx>
 class TopoDS_Shape;
+class XSControl_WorkSession;
 
 
 //! This class gives a simple way to create then write a
@@ -36,42 +35,21 @@ class XSControl_Writer
 
   DEFINE_STANDARD_ALLOC
 
-  //! Creates a Writer from scratch
-  Standard_EXPORT XSControl_Writer();
-  
-  //! Creates a Writer from scratch, with a norm name which
-  //! identifie a Controller
-  XSControl_Writer(const Standard_CString norm) { SetNorm (norm); }
-  
-  //! Creates a Writer from an already existing Session
-  //! If <scratch> is True (D), clears already recorded data
-  XSControl_Writer(const Handle(XSControl_WorkSession)& WS, const Standard_Boolean scratch = Standard_True) { SetWS (WS,scratch); }
-  
-  //! Sets a specific norm to <me>
-  //! Returns True if done, False if <norm> is not available
-  Standard_EXPORT Standard_Boolean SetNorm (const Standard_CString norm);
-  
-  //! Sets a specific session to <me>
-  Standard_EXPORT void SetWS (const Handle(XSControl_WorkSession)& WS, const Standard_Boolean scratch = Standard_True);
+  //! Creates a Writer from session
+  XSControl_Writer(const Handle(XSControl_WorkSession) &WS) : myWS(WS) {}
   
   //! Returns the session used in <me>
-  const Handle(XSControl_WorkSession) & WS() const { return thesession; }
+  const Handle(XSControl_WorkSession) & WS() const { return myWS; }
   
-  //! Returns the produced model. Produces a new one if not yet done
-  //! or if <newone> is True
-  //! This method allows for instance to edit product or header
-  //! data before writing
-  Standard_EXPORT Handle(Interface_InterfaceModel) Model (const Standard_Boolean newone = Standard_False);
-  
-  //! Transfers a Shape according to the mode
-  Standard_EXPORT IFSelect_ReturnStatus TransferShape (const TopoDS_Shape& sh, const Standard_Integer mode = 0);
+  //! Transfers a shape using the owned worksession
+  Standard_EXPORT Interface_ReturnStatus TransferShape (const TopoDS_Shape& theShape, const Standard_Boolean theCompGraph = Standard_True);
   
   //! Writes the produced model
-  Standard_EXPORT IFSelect_ReturnStatus WriteFile (const Standard_CString filename);
+  Standard_EXPORT Interface_ReturnStatus WriteFile (const Standard_CString filename);
 
- private:
+ protected:
 
-  Handle(XSControl_WorkSession) thesession;
+  Handle(XSControl_WorkSession) myWS;
 };
 
 #endif // _XSControl_Writer_HeaderFile

@@ -88,11 +88,6 @@ public:
   
   //! Returns True if the LAST Transfer/TransferRoots was a success
   Standard_Boolean IsDone() const { return theDone; }
-
-  //! Returns the Tolerance which has been actually used, converted
-  //! in millimeters
-  //! (either that from File or that from Session, according the mode)
-  Standard_EXPORT Standard_Real UsedTolerance() const;
   
   //! Returns the number of shapes produced by the translation.
   Standard_Integer NbShapes() const { return theShapes.Length(); }

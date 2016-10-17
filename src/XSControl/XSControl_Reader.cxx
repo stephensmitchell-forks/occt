@@ -21,14 +21,12 @@
 #include <Interface_Static.hxx>
 #include <Message_ProgressSentry.hxx>
 #include <ShapeExtend_Explorer.hxx>
-#include <Standard_Transient.hxx>
 #include <TopoDS_Compound.hxx>
 #include <TopoDS_Shape.hxx>
 #include <Transfer_Binder.hxx>
 #include <Transfer_TransientProcess.hxx>
 #include <XSControl_Controller.hxx>
 #include <XSControl_Reader.hxx>
-#include <XSControl_TransferReader.hxx>
 #include <XSControl_WorkSession.hxx>
 
 //=======================================================================
@@ -37,6 +35,7 @@
 //=======================================================================
 
 XSControl_Reader::XSControl_Reader ()
+: therootsta(Standard_False)
 {
   SetWS (new XSControl_WorkSession);
 }
@@ -47,10 +46,10 @@ XSControl_Reader::XSControl_Reader ()
 //purpose  : 
 //=======================================================================
 
-Standard_Boolean  XSControl_Reader::SetNorm (const Standard_CString norm)
+Standard_Boolean XSControl_Reader::SetNorm (const Standard_CString norm)
 {
-  if (thesession.IsNull()) SetWS (new XSControl_WorkSession);
-  Standard_Boolean stat = thesession->SelectNorm (norm);
+  if (thesession.IsNull()) SetWS(new XSControl_WorkSession);
+  Standard_Boolean stat = thesession->SelectNorm(norm);
   if (stat) {
     thesession->InitTransferReader(0);
     thesession->InitTransferReader(4);
@@ -64,7 +63,7 @@ Standard_Boolean  XSControl_Reader::SetNorm (const Standard_CString norm)
 //purpose  : 
 //=======================================================================
 
-void XSControl_Reader::SetWS(const Handle(XSControl_WorkSession)& WS, const Standard_Boolean scratch)
+void XSControl_Reader::SetWS(const Handle(XSControl_WorkSession)& WS, const Standard_Boolean WithNewModel)
 {
   therootsta = Standard_False;
   theroots.Clear();
@@ -72,7 +71,7 @@ void XSControl_Reader::SetWS(const Handle(XSControl_WorkSession)& WS, const Stan
   //  Il doit y avoir un Controller ...  Sinon onverra plus tard (apres SetNorm)
   if (thesession->NormAdaptor().IsNull()) return;
   Handle(Interface_InterfaceModel) model = thesession->Model ();
-  if (scratch || model.IsNull())   model = thesession->NewModel ();
+  if (WithNewModel || model.IsNull())   model = thesession->NewModel ();
   thesession->InitTransferReader(0);
   thesession->InitTransferReader(4);
 }
@@ -83,9 +82,9 @@ void XSControl_Reader::SetWS(const Handle(XSControl_WorkSession)& WS, const Stan
 //purpose  : 
 //=======================================================================
 
-IFSelect_ReturnStatus  XSControl_Reader::ReadFile (const Standard_CString filename)
+Interface_ReturnStatus XSControl_Reader::ReadFile (const Standard_CString filename)
 {
-  IFSelect_ReturnStatus stat = thesession->ReadFile(filename);
+  Interface_ReturnStatus stat = thesession->ReadFile(filename);
   thesession->InitTransferReader(4);
   return stat;
 }
@@ -103,51 +102,21 @@ Handle(Interface_InterfaceModel) XSControl_Reader::Model () const
 
 
 //=======================================================================
-//function : GiveList
-//purpose  : 
-//=======================================================================
-
-Handle(TColStd_HSequenceOfTransient)  XSControl_Reader::GiveList
-       (const Standard_CString first, const Standard_CString second)
-{
-  if (first && first[0] != '\0') {
-    return thesession->GiveList (first,second);
-  }
-
-  Handle(TColStd_HSequenceOfTransient) list = new TColStd_HSequenceOfTransient();
-  Standard_Integer i,nbr = NbRootsForTransfer();
-  for (i = 1; i <= nbr; i ++) list->Append (RootForTransfer(i));
-  return list;
-}
-
-
-//=======================================================================
-//function : GiveList
-//purpose  : 
-//=======================================================================
-
-Handle(TColStd_HSequenceOfTransient)  XSControl_Reader::GiveList
-       (const Standard_CString first, const Handle(Standard_Transient)& list)
-{
-  return thesession->GiveListFromList (first,list);
-}
-
-
-//=======================================================================
 //function : NbRootsForTransfer
 //purpose  : 
 //=======================================================================
 
-Standard_Integer  XSControl_Reader::NbRootsForTransfer ()
+Standard_Integer XSControl_Reader::NbRootsForTransfer ()
 {
-  if (therootsta) return theroots.Length();
-  therootsta = Standard_True;
-  Interface_ShareFlags sf (thesession->Graph());
-  Standard_Integer i, nbr = sf.NbRoots();
-  for (i = 1; i <= nbr; i ++) {
-    //    on filtre les racines qu on sait transferer
-    Handle(Standard_Transient) start = sf.Root(i);
-    if (thesession->TransferReader()->Recognize(start)) theroots.Append(start);
+  if (!therootsta) {
+    therootsta = Standard_True;
+    Interface_ShareFlags sf (thesession->Graph());
+    Standard_Integer i, nbr = sf.NbRoots();
+    for (i = 1; i <= nbr; i ++) {
+      //    on filtre les racines qu on sait transferer
+      Handle(Standard_Transient) start = sf.Root(i);
+      if (thesession->ReaderProcess()->GetActor()->Recognize(start)) theroots.Append(start);
+    }
   }
   return theroots.Length();
 }
@@ -158,8 +127,7 @@ Standard_Integer  XSControl_Reader::NbRootsForTransfer ()
 //purpose  : 
 //=======================================================================
 
-Handle(Standard_Transient)  XSControl_Reader::RootForTransfer
-  (const Standard_Integer num)
+Handle(Standard_Transient) XSControl_Reader::RootForTransfer (const Standard_Integer num)
 {
   Handle(Standard_Transient) voidroot;
   Standard_Integer nbr = NbRootsForTransfer();
@@ -176,20 +144,9 @@ Handle(Standard_Transient)  XSControl_Reader::RootForTransfer
 //purpose  : 
 //=======================================================================
 
-Standard_Boolean  XSControl_Reader::TransferOneRoot(const Standard_Integer num)
+Standard_Boolean XSControl_Reader::TransferOneRoot(const Standard_Integer num)
 {
   return TransferEntity (RootForTransfer (num));
-}
-
-
-//=======================================================================
-//function : TransferOne
-//purpose  : 
-//=======================================================================
-
-Standard_Boolean  XSControl_Reader::TransferOne(const Standard_Integer num)
-{
-  return TransferEntity (thesession->StartingEntity (num));
 }
 
 
@@ -198,16 +155,13 @@ Standard_Boolean  XSControl_Reader::TransferOne(const Standard_Integer num)
 //purpose  : 
 //=======================================================================
 
-Standard_Boolean  XSControl_Reader::TransferEntity (const Handle(Standard_Transient)& start)
+Standard_Boolean XSControl_Reader::TransferEntity (const Handle(Standard_Transient)& start)
 {
   if (start.IsNull()) return Standard_False;
-  const Handle(XSControl_TransferReader) &TR = thesession->TransferReader();
-  TR->BeginTransfer();
-  if (TR->TransferOne (start) == 0) return Standard_False;
-  TopoDS_Shape sh = TR->ShapeResult(start);
-  //ShapeExtend_Explorer STU;
-  //SMH May 00: allow empty shapes (STEP CAX-IF, external references)
-  //if (STU.ShapeType(sh,Standard_True) == TopAbs_SHAPE) return Standard_False;  // nulle-vide 
+  const Handle(Transfer_TransientProcess) &TP = thesession->ReaderProcess();
+  TP->BeginTransfer();
+  if (TP->TransferOne (start) == 0) return Standard_False;
+  TopoDS_Shape sh = TP->ShapeResult(start);
   theshapes.Append(sh);
   return Standard_True;
 }
@@ -218,19 +172,19 @@ Standard_Boolean  XSControl_Reader::TransferEntity (const Handle(Standard_Transi
 //purpose  : 
 //=======================================================================
 
-Standard_Integer  XSControl_Reader::TransferList (const Handle(TColStd_HSequenceOfTransient)& list)
+Standard_Integer XSControl_Reader::TransferList (const Handle(TColStd_HSequenceOfTransient)& list)
 {
   if (list.IsNull()) return 0;
   Standard_Integer nbt = 0;
   Standard_Integer i, nb = list->Length();
-  const Handle(XSControl_TransferReader) &TR = thesession->TransferReader();
-  TR->BeginTransfer();
+  const Handle(Transfer_TransientProcess) &TP = thesession->ReaderProcess();
+  TP->BeginTransfer();
   ClearShapes();
   ShapeExtend_Explorer STU;
   for (i = 1; i <= nb; i ++) {
     Handle(Standard_Transient) start = list->Value(i);
-    if (TR->TransferOne (start) == 0) continue;
-    TopoDS_Shape sh = TR->ShapeResult(start);
+    if (TP->TransferOne (start) == 0) continue;
+    TopoDS_Shape sh = TP->ShapeResult(start);
     if (STU.ShapeType(sh,Standard_True) == TopAbs_SHAPE) continue;  // nulle-vide
     theshapes.Append(sh);
     nbt ++;
@@ -244,22 +198,21 @@ Standard_Integer  XSControl_Reader::TransferList (const Handle(TColStd_HSequence
 //purpose  : 
 //=======================================================================
 
-Standard_Integer  XSControl_Reader::TransferRoots ()
+Standard_Integer XSControl_Reader::TransferRoots ()
 {
   NbRootsForTransfer();
   Standard_Integer nbt = 0;
   Standard_Integer i, nb = theroots.Length();
-  const Handle(XSControl_TransferReader) &TR = thesession->TransferReader();
+  const Handle(Transfer_TransientProcess) &TP = thesession->ReaderProcess();
    
-  TR->BeginTransfer();
+  TP->BeginTransfer();
   ClearShapes();
   ShapeExtend_Explorer STU;
-  const Handle(Transfer_TransientProcess) &proc = thesession->TransferReader()->TransientProcess();
-  Message_ProgressSentry PS ( proc->GetProgress(), "Root", 0, nb, 1 );
+  Message_ProgressSentry PS ( TP->GetProgress(), "Root", 0, nb, 1 );
   for (i = 1; i <= nb && PS.More(); i ++,PS.Next()) {
     Handle(Standard_Transient) start = theroots.Value(i);
-    if (TR->TransferOne (start) == 0) continue;
-    TopoDS_Shape sh = TR->ShapeResult(start);
+    if (TP->TransferOne (start) == 0) continue;
+    TopoDS_Shape sh = TP->ShapeResult(start);
     if (STU.ShapeType(sh,Standard_True) == TopAbs_SHAPE) continue;  // nulle-vide
     theshapes.Append(sh);
     nbt ++;
@@ -267,13 +220,12 @@ Standard_Integer  XSControl_Reader::TransferRoots ()
   return nbt;
 }
 
-
 //=======================================================================
 //function : OneShape
 //purpose  : 
 //=======================================================================
 
-TopoDS_Shape  XSControl_Reader::OneShape () const
+TopoDS_Shape XSControl_Reader::OneShape () const
 {
   TopoDS_Shape sh;
   Standard_Integer i,nb = theshapes.Length();

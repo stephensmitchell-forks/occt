@@ -91,12 +91,6 @@ public:
   
   Standard_EXPORT Handle(StepShape_ShapeRepresentation) GetShReprForElem (const Handle(StepFEA_ElementRepresentation)& ElemRepr) const;
   
-  //! Create empty structure for idealized_analysis_shape
-  Standard_EXPORT Standard_Boolean CreateAnalysStructure (const Handle(StepBasic_Product)& Prod) const;
-  
-  //! Create fea structure
-  Standard_EXPORT Standard_Boolean CreateFeaStructure (const Handle(StepBasic_Product)& Prod) const;
-  
   //! Put into model entities Applied... for AP209 instead of
   //! entities CcDesing... from AP203.
   Standard_EXPORT Standard_Boolean ReplaceCcDesingToApplied() const;

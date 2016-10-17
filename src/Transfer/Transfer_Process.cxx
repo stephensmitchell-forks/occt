@@ -134,7 +134,7 @@ void Transfer_Process::Clean ()
   Standard_Integer i, nb = NbMapped();
   Standard_Integer j,unb = 0;
   for (i = 1; i <= nb; i ++) {
-    if (themap(i).IsNull()) unb ++;
+    if (myMap(i).IsNull()) unb ++;
   }
   if (unb == 0) return;
 
@@ -148,7 +148,7 @@ void Transfer_Process::Clean ()
     j = newmap.Add (ent,bnd);
     unbs.SetValue (i,j);
   }
-  themap.Assign (newmap);
+  myMap.Assign (newmap);
 
   // Update the map of roots
   TColStd_IndexedMapOfInteger aNewRoots;
@@ -169,8 +169,8 @@ void Transfer_Process::Clean ()
 Handle(Transfer_Binder) Transfer_Process::Find (const Handle(Standard_Transient) &start) const
 {
   if (thelastobj == start && theindex > 0) return thelastbnd;
-  const Standard_Integer index = themap.FindIndex (start);
-  return (index > 0)? themap.FindFromIndex(index) : NULL;
+  const Standard_Integer index = myMap.FindIndex (start);
+  return (index > 0)? myMap.FindFromIndex(index) : NULL;
 }
   
 Standard_Boolean Transfer_Process::IsBound (const Handle(Standard_Transient) &start) const
@@ -187,7 +187,7 @@ void Transfer_Process::Bind (const Handle(Standard_Transient) &start, const Hand
     // On admet VoidBinder : alors on reprend son Check
     if (former->DynamicType() == STANDARD_TYPE(Transfer_VoidBinder)) {
       binder->Merge(former);
-      themap(theindex) = binder;                          // Substitution
+      myMap(theindex) = binder;                          // Substitution
     }
     else if (former->Status() == Transfer_StatusUsed) {
       StartTrace (former,start,thelevel,4);
@@ -199,13 +199,13 @@ void Transfer_Process::Bind (const Handle(Standard_Transient) &start, const Hand
     }
   }
   if (theindex == 0 || thelastbnd.IsNull()) {
-    if (theindex == 0) theindex = themap.Add(start,binder);  // Nouveau
-    else themap(theindex) = binder;                          // idem en fait
+    if (theindex == 0) theindex = myMap.Add(start,binder);  // Nouveau
+    else myMap(theindex) = binder;                          // idem en fait
     thelastbnd = binder;
   }
   else {
     thelastbnd  = binder;
-    themap(theindex) = binder;
+    myMap(theindex) = binder;
   }
 }
   
@@ -215,7 +215,7 @@ Standard_Boolean Transfer_Process::Unbind (const Handle(Standard_Transient) &sta
   if (theindex == 0) return Standard_False;
   if (former.IsNull()) return Standard_False;
   if (former->DynamicType() == STANDARD_TYPE(Transfer_VoidBinder)) return Standard_True;
-  themap(theindex) = thelastbnd;
+  myMap(theindex) = thelastbnd;
   if(theroots.Contains(theindex)) {
     TColStd_IndexedMapOfInteger aNewRoots;
     for(Standard_Integer i = 1; i <= theroots.Extent(); i++)
@@ -384,14 +384,8 @@ Handle(Transfer_Binder) Transfer_Process::Transferring (const Handle(Standard_Tr
     //! if a Starting Entity has not been recognized at all.
     thelevel++;             // si decremente et == 0, transfert racine
 
-    Handle(Actor) actor = theactor;
-    // On balaie les Next jusqu a avoir un Resultat
-    while (!actor.IsNull()) {
-      if (actor->Recognize (theSource)) binder = actor->Transferring(theSource,this);
-      else binder.Nullify();
-      if (!binder.IsNull()) break;
-      actor = actor->Next();
-    }
+    if (!myActor.IsNull() && myActor->Recognize(theSource))
+      binder = myActor->Transferring(theSource,this);
 
     if (!binder.IsNull()) {
       // Gestion du niveau racine (.. a regarder de pres ..)
@@ -461,40 +455,37 @@ Handle(Transfer_Binder) Transfer_Process::Transferring (const Handle(Standard_Tr
   return thelastbnd;
 }
   
-void Transfer_Process::StartTrace (const Handle(Transfer_Binder)& binder, const Handle(Standard_Transient) &start, const Standard_Integer level, const Standard_Integer mode) const
+void Transfer_Process::StartTrace (const Handle(Transfer_Binder)& theBinder, const Handle(Standard_Transient) &theSource, const Standard_Integer theLevel, const Standard_Integer theMode) const
 {
-  // ###  Fail (Roots:50)  --  Start start->DynamicType()
-  // ###  Fail (Roots:50)  --  Start id:#label.. Type:start->DynamicType()
+  // ###  Fail (Roots:50)  --  Start theSource->DynamicType()
+  // ###  Fail (Roots:50)  --  Start id:#label.. Type:theSource->DynamicType()
   if (thetrace > 3) {  // Internal to be switch when searching bug (trace >= 4)
-    if (mode == 1) themessenger << "  ###  Fail";
-    if (mode == 2) themessenger << "  ###  Warning";
-    if (mode == 3) themessenger << "  ###  New Root n0 " << theroots.Extent();
-    if (mode == 4) themessenger << "  ###  Exception";
-    if (mode == 5) themessenger << "  ###  Substitution";
-    if (mode == 6) themessenger << "  ###  Information";
-    if (level > 1)
+    if (theMode == 1) themessenger << "  ###  Fail";
+    if (theMode == 2) themessenger << "  ###  Warning";
+    if (theMode == 3) themessenger << "  ###  New Root n0 " << theroots.Extent();
+    if (theMode == 4) themessenger << "  ###  Exception";
+    if (theMode == 5) themessenger << "  ###  Substitution";
+    if (theMode == 6) themessenger << "  ###  Information";
+    if (theLevel > 1)
       themessenger << " (nested)";  // " at nesting Level:"<<level;
-    if (mode >= 0 && mode != 3)
+    if (theMode >= 0 && theMode != 3)
       themessenger << " at " << theroots.Extent() << " Roots";
   }
-  if (!start.IsNull()) PrintTrace (start,themessenger);
 
-  if (!binder.IsNull()) {
-    Handle(Transfer_Binder) bnd = binder;
+  PrintTrace (theSource,themessenger);
+
+  if (!theBinder.IsNull()) {
+    Handle(Transfer_Binder) bnd = theBinder;
     Standard_Boolean hasres = Standard_False;
     while (!bnd.IsNull()) {
       if (bnd->Status() != Transfer_StatusVoid) {
-        // ---  Result Type: binder->ResultType()  ---  Binder : binder->DynamicType();
-        if (!hasres)
-          themessenger << "\n  ---  Result Type : ";
-        else 
-          themessenger << " , ";
+        themessenger << (hasres? " , " : "\n  ---  Result Type : ");
         themessenger << bnd->ResultTypeName();
         hasres = Standard_True;
       }
       bnd = bnd->NextResult();
     }
-    if (!hasres && mode > 2) {
+    if (!hasres && theMode > 2) {
       themessenger << "\n  ---  No Result recorded";
     }
   }
@@ -514,10 +505,10 @@ void Transfer_Process::PrintStats(const Handle(Message_Messenger)& S) const
   S<<"\n*******************************************************************\n";
   S << "********                 Basic Statistics                  ********"<<endl;
 
-  if (themodel.IsNull())
+  if (myModel.IsNull())
     S<<"****        Model unknown"<<endl;
   else
-    S<<"****        Nb Entities         : "<<themodel->NbEntities()<<endl;
+    S<<"****        Nb Entities         : "<<myModel->NbEntities()<<endl;
 
   Standard_Integer nbr = 0, nbe = 0, nbw = 0;
   Standard_Integer i, max = NbMapped(), nbroots = NbRoots();

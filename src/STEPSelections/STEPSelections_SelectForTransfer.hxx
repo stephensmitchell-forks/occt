@@ -19,49 +19,24 @@
 #include <Standard.hxx>
 #include <Standard_Type.hxx>
 
-#include <XSControl_SelectForTransfer.hxx>
-class XSControl_TransferReader;
+#include <XSSelect_SelectForTransfer.hxx>
 class Interface_EntityIterator;
 class Interface_Graph;
 
 
 class STEPSelections_SelectForTransfer;
-DEFINE_STANDARD_HANDLE(STEPSelections_SelectForTransfer, XSControl_SelectForTransfer)
+DEFINE_STANDARD_HANDLE(STEPSelections_SelectForTransfer, XSSelect_SelectForTransfer)
 
 
-class STEPSelections_SelectForTransfer : public XSControl_SelectForTransfer
+class STEPSelections_SelectForTransfer : public XSSelect_SelectForTransfer
 {
+ public:
 
-public:
-
-  
-  Standard_EXPORT STEPSelections_SelectForTransfer();
-  
-  Standard_EXPORT STEPSelections_SelectForTransfer(const Handle(XSControl_TransferReader)& TR);
+  STEPSelections_SelectForTransfer(const Handle(Transfer_TransientProcess)& TP) : XSSelect_SelectForTransfer(TP) {}
   
   Standard_EXPORT virtual Interface_EntityIterator RootResult (const Interface_Graph& G) const Standard_OVERRIDE;
 
-
-
-
-  DEFINE_STANDARD_RTTIEXT(STEPSelections_SelectForTransfer,XSControl_SelectForTransfer)
-
-protected:
-
-
-
-
-private:
-
-
-
-
+  DEFINE_STANDARD_RTTIEXT(STEPSelections_SelectForTransfer,XSSelect_SelectForTransfer)
 };
-
-
-
-
-
-
 
 #endif // _STEPSelections_SelectForTransfer_HeaderFile

@@ -66,7 +66,6 @@ void IGESData::Init ()
   Interface_Static::Init ("XSTEP","read.iges.bspline.continuity",'&',"imin 0");
   Interface_Static::Init ("XSTEP","read.iges.bspline.continuity",'&',"imax 2");
 
-  //#58 rln Interface_Static::Init ("XSTEP","write.iges.header.product" ,'t',"");
   Interface_Static::Init ("XSTEP","write.iges.header.receiver",'t',"");//58 rln Unknown
   Interface_Static::Init ("XSTEP","write.iges.header.author"  ,'t',process.UserName().ToCString());
   Interface_Static::Init ("XSTEP","write.iges.header.company" ,'t',"");//58 rln Matra Datavision

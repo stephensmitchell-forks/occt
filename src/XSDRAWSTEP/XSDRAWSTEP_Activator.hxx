@@ -17,23 +17,23 @@
 #ifndef _XSDRAWSTEP_Activator_HeaderFile
 #define _XSDRAWSTEP_Activator_HeaderFile
 
-#include <IFSelect_Activator.hxx>
+#include <XSDRAW_Activator.hxx>
 
 //! Performs Actions specific to StepSelect, i.e. creation of
 //! Step Selections and Counters, plus dumping specific to Step
-class XSDRAWSTEP_Activator : public IFSelect_Activator
+class XSDRAWSTEP_Activator : public XSDRAW_Activator
 {
  public:
 
   Standard_EXPORT XSDRAWSTEP_Activator();
   
   //! Executes a Command Line for StepSelect
-  Standard_EXPORT IFSelect_ReturnStatus Do (const Standard_Integer number, const Handle(IFSelect_SessionPilot)& pilot) Standard_OVERRIDE;
+  Standard_EXPORT Interface_ReturnStatus Do (const Standard_Integer number, const Handle(XSDRAW_SessionPilot)& pilot) Standard_OVERRIDE;
   
   //! Sends a short help message for StepSelect commands
   Standard_EXPORT Standard_CString Help (const Standard_Integer number) const Standard_OVERRIDE;
 
-  DEFINE_STANDARD_RTTIEXT(XSDRAWSTEP_Activator,IFSelect_Activator)
+  DEFINE_STANDARD_RTTIEXT(XSDRAWSTEP_Activator,XSDRAW_Activator)
 };
 
 #endif // _XSDRAWSTEP_Activator_HeaderFile

@@ -625,7 +625,7 @@ To read a STEP file by itself, use:
 
 ~~~~~
 STEPCAFControl_Reader reader; 
-IFSelect_ReturnStatus readstat = reader.ReadFile(filename); 
+Interface_ReturnStatus readstat = reader.ReadFile(filename); 
 // The various ways of reading a file are available here too : 
 // to read it by the reader, to take it from a WorkSession ... 
 Handle(TDocStd_Document) doc... 
@@ -659,7 +659,7 @@ if ( ! writer.Transfer ( Doc, mode ) ) {
   // abandon .. 
 } 
 // Writing the File 
-IFSelect_ReturnStatus stat = writer.Write(file-name); 
+Interface_ReturnStatus stat = writer.Write(file-name); 
 ~~~~~
 
 @subsubsection occt_xde_2_8_3 Reading an IGES File

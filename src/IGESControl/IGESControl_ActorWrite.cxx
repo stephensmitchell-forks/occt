@@ -65,7 +65,7 @@ Handle(Transfer_Binder) IGESControl_ActorWrite::Transferring (const Handle(Stand
                                                    "write.iges.sequence", info,
                                                    TP->GetProgress() );
 
-	Handle(Transfer_FinderProcess) FP = Handle(Transfer_FinderProcess)::DownCast(TP);
+    Handle(Transfer_FinderProcess) FP = Handle(Transfer_FinderProcess)::DownCast(TP);
 
     BRepToIGES_BREntity   BR0; BR0.SetModel(modl);  BR0.SetTransferProcess(FP);
     BRepToIGESBRep_Entity BR1; BR1.SetModel(modl);  BR1.SetTransferProcess(FP);
@@ -94,4 +94,20 @@ Handle(Transfer_Binder) IGESControl_ActorWrite::Transferring (const Handle(Stand
   if (!ent.IsNull()) return new Transfer_SimpleBinderOfTransient(ent);
 
   return NULL;
+}
+  
+Standard_Boolean IGESControl_ActorWrite::TransferModeBounds (Standard_Integer& theMin, Standard_Integer& theMax) const
+{
+  theMin = 0, theMax = 1;
+  return Standard_True;
+}
+  
+Standard_CString IGESControl_ActorWrite::TransferModeHelp (const Standard_Integer theMode) const
+{
+  switch (theMode) {
+    case 0: return "Faces";
+    case 1: return "BRep";
+	default: break;
+  }
+  return "";
 }

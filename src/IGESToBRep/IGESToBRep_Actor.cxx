@@ -55,13 +55,12 @@ void IGESToBRep_Actor::SetModel (const Handle(Interface_InterfaceModel)& model)
 
 Standard_Boolean IGESToBRep_Actor::Recognize (const Handle(Standard_Transient)& start)
 {
-  DeclareAndCast(IGESData_IGESModel,mymodel,themodel);
   DeclareAndCast(IGESData_IGESEntity,ent,start);
   if (ent.IsNull()) return Standard_False;
 
 //   Cas reconnus
-  Standard_Integer typnum = ent->TypeNumber();
-  Standard_Integer fornum = ent->FormNumber();
+  const Standard_Integer typnum = ent->TypeNumber();
+  const Standard_Integer fornum = ent->FormNumber();
   if (IGESToBRep::IsCurveAndSurface(ent) ||
       ((typnum == 402 && (fornum == 1 || fornum == 7 || 
                          fornum == 14 || fornum == 15))  ||
@@ -70,40 +69,6 @@ Standard_Boolean IGESToBRep_Actor::Recognize (const Handle(Standard_Transient)& 
 
 //  Cas restants : non reconnus
   return Standard_False;
-}
-
-//=======================================================================
-//function : EncodeRegul
-//purpose  : INTERNAL to encode regularity on edges
-//=======================================================================
-
-static Standard_Boolean EncodeRegul (const TopoDS_Shape& sh)
-{
-  Standard_Real tolang = Interface_Static::RVal("read.encoderegularity.angle");
-  if (sh.IsNull()) return Standard_True;
-  if (tolang <= 0) return Standard_True;
-  try {
-    OCC_CATCH_SIGNALS
-    BRepLib::EncodeRegularity (sh,tolang);
-  }
-  catch(Standard_Failure) {
-    return Standard_False;
-  }
-  return Standard_True;
-}
-
-//=======================================================================
-//function : TrimTolerances
-//purpose  : Trims tolerances of the shape according to static parameters
-//          
-//=======================================================================
-
-static void TrimTolerances (const TopoDS_Shape& shape, const Standard_Real tol)
-{
-  if( Interface_Static::IVal("read.maxprecision.mode")==1) {
-    ShapeFix_ShapeTolerance SFST;
-    SFST.LimitTolerance (shape, 0, Max(tol,Interface_Static::RVal ("read.maxprecision.val")));
-  }
 }
 
 //=======================================================================
@@ -181,8 +146,21 @@ Handle(Transfer_Binder) IGESToBRep_Actor::Transferring (const Handle(Standard_Tr
   ShapeExtend_Explorer SBE;
   if (SBE.ShapeType(shape,Standard_True) != TopAbs_SHAPE) {
     if (!shape.IsNull()) {
-      EncodeRegul (shape);
-      TrimTolerances (shape, UsedTolerance());
+      // Encode regularity on edges
+      const Standard_Real tolang = Interface_Static::RVal("read.encoderegularity.angle");
+      if (tolang > 0.)
+      {
+        try {
+          OCC_CATCH_SIGNALS
+          BRepLib::EncodeRegularity (shape,tolang);
+        }
+        catch(Standard_Failure) {}
+      }
+      // Trim tolerances of the shape according to static parameters
+      if( Interface_Static::IVal("read.maxprecision.mode")==1) {
+        ShapeFix_ShapeTolerance SFST;
+        SFST.LimitTolerance (shape, 0, Max(theeps,Interface_Static::RVal ("read.maxprecision.val")));
+      }
     }
   }
 

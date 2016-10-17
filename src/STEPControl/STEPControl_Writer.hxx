@@ -21,19 +21,16 @@
 #include <Standard_DefineAlloc.hxx>
 #include <Standard_Handle.hxx>
 
-#include <IFSelect_ReturnStatus.hxx>
+#include <XSControl_Writer.hxx>
 #include <STEPControl_StepModelType.hxx>
-#include <Standard_CString.hxx>
-class XSControl_WorkSession;
 class StepData_StepModel;
-class TopoDS_Shape;
 
 //! This class creates and writes
 //! STEP files from Open CASCADE models. A STEP file can be
 //! written to an existing STEP file or to a new one.
 //! Translation can be performed in one or several operations. Each
 //! translation operation outputs a distinct root entity in the STEP file.
-class STEPControl_Writer 
+class STEPControl_Writer : protected XSControl_Writer
 {
  public:
 
@@ -42,29 +39,27 @@ class STEPControl_Writer
   //! Creates a Writer from scratch
   Standard_EXPORT STEPControl_Writer();
   
-  //! Creates a Writer from an already existing Session
-  //! If <scratch> is True (D), clears already recorded data
-  Standard_EXPORT STEPControl_Writer(const Handle(XSControl_WorkSession)& WS, const Standard_Boolean scratch = Standard_True);
+  //! Creates a Writer from an already existing Process
+  //! If <FromScratch> is True, clears already recorded data
+  Standard_EXPORT STEPControl_Writer(const Handle(XSControl_WorkSession)& theWS, const Standard_Boolean FromScratch = Standard_True);
   
-  //! Sets a length-measure value that
-  //! will be written to uncertainty-measure-with-unit
-  //! when the next shape is translated.
-  Standard_EXPORT void SetTolerance (const Standard_Real Tol);
-  
+  //! Sets a length-measure value that will be written
+  //! to uncertainty-measure-with-unit when the next shape is translated.
+  void SetTolerance (const Standard_Real theTolerance) { myTolerance = theTolerance; }
+
   //! Unsets the tolerance formerly forced by SetTolerance
-  void UnsetTolerance() { SetTolerance (-1.); }
+  void UnsetTolerance() { myTolerance = -1.; }
   
   //! Sets a specific session to <me>
   Standard_EXPORT void SetWS (const Handle(XSControl_WorkSession)& WS, const Standard_Boolean scratch = Standard_True);
   
   //! Returns the session used in <me>
-  const Handle(XSControl_WorkSession) & WS() const { return thesession; }
+  const Handle(XSControl_WorkSession) & WS() const { return XSControl_Writer::WS(); }
   
-  //! Returns the produced model. Produces a new one if not yet done
-  //! or if <newone> is True
-  //! This method allows for instance to edit product or header
-  //! data before writing.
-  Standard_EXPORT Handle(StepData_StepModel) Model (const Standard_Boolean newone = Standard_False);
+  //! Returns the source model.
+  //! Produces a new one if not yet done or if <newone> is True.
+  //! This method allows for instance to edit product or header data before writing.
+  Standard_EXPORT Handle(StepData_StepModel) Model (const Standard_Boolean newone = Standard_False) const;
   
   //! Translates shape sh to a STEP
   //! entity. mode defines the STEP entity type to be output:
@@ -78,14 +73,14 @@ class STEPControl_Writer
   //! shell_based_surface_model entity.
   //! - STEPControlStd_GeometricCurveSet translates a shape into a STEP
   //! geometric_curve_set entity.
-  Standard_EXPORT IFSelect_ReturnStatus Transfer (const TopoDS_Shape& sh, const STEPControl_StepModelType mode, const Standard_Boolean compgraph = Standard_True);
+  Standard_EXPORT Interface_ReturnStatus Transfer (const TopoDS_Shape& theShape, const STEPControl_StepModelType theMode, const Standard_Boolean theCompGraph = Standard_True);
   
   //! Writes a STEP model in the file identified by filename.
-  Standard_EXPORT IFSelect_ReturnStatus Write (const Standard_CString filename);
+  Interface_ReturnStatus Write (const Standard_CString filename) { return XSControl_Writer::WriteFile(filename); }
 
- private:
+ protected:
 
-  Handle(XSControl_WorkSession) thesession;
+  Standard_Real myTolerance;
 };
 
 #endif // _STEPControl_Writer_HeaderFile

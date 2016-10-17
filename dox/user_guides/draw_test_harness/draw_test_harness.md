@@ -8050,7 +8050,6 @@ brepiges aa /disk1/tmp/aaa.igs
 == mode  write  : Faces 
 ==   To modifiy : command  param 
 == 1 Shapes written, giving 345 Entities 
-==  Now, to write a file, command : writeall filename 
 ==  Output on file : /disk1/tmp/aaa.igs 
 ==  Write OK 
 ~~~~~

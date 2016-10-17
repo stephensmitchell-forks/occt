@@ -112,29 +112,14 @@ namespace
 //purpose  : 
 //=======================================================================
 
-IGESCAFControl_Writer::IGESCAFControl_Writer () :
-       myColorMode( Standard_True ),
-       myNameMode ( Standard_True ),
-       myLayerMode( Standard_True )
-{
-}
-
-//=======================================================================
-//function : IGESCAFControl_Writer
-//purpose  : 
-//=======================================================================
-
-IGESCAFControl_Writer::IGESCAFControl_Writer (const Handle(XSControl_WorkSession)& WS,
-					      const Standard_Boolean /*scratch*/ )
+IGESCAFControl_Writer::IGESCAFControl_Writer (const Handle(XSControl_WorkSession)& WS)
+: myColorMode( Standard_True ),
+  myNameMode ( Standard_True ),
+  myLayerMode( Standard_True )
 {
   // this code does things in a wrong way, it should be vice-versa
   WS->SetModel ( Model() );
-  WS->SetMapWriter ( TransferProcess() );
-  myColorMode = Standard_True;
-  myNameMode = Standard_True;
-  myLayerMode = Standard_True;
-  
-//  SetWS (WS,scratch); // this should be the only required command here
+  WS->SetWriterProcess ( TransferProcess() );
 }
 
 //=======================================================================
@@ -193,34 +178,19 @@ Standard_Boolean IGESCAFControl_Writer::Transfer (const TDF_LabelSequence& label
     WriteNames( labels );
   
   // refresh graph
-//  WS()->ComputeGraph ( Standard_True );
   ComputeModel();
   
   return Standard_True;
 }
-
+ 
 //=======================================================================
 //function : Perform
 //purpose  : 
 //=======================================================================
 
-Standard_Boolean IGESCAFControl_Writer::Perform (const Handle(TDocStd_Document) &doc,
-						 const Standard_CString filename)
+Standard_Boolean IGESCAFControl_Writer::Perform (const Handle(TDocStd_Document) &doc, const TCollection_AsciiString &filename)
 {
-  if ( ! Transfer ( doc ) ) return Standard_False;
-  return Write ( filename ) == IFSelect_RetDone;
-}
-  
-//=======================================================================
-//function : Perform
-//purpose  : 
-//=======================================================================
-
-Standard_Boolean IGESCAFControl_Writer::Perform (const Handle(TDocStd_Document) &doc,
-						 const TCollection_AsciiString &filename)
-{
-  if ( ! Transfer ( doc ) ) return Standard_False;
-  return Write ( filename.ToCString() ) == IFSelect_RetDone;
+  return Perform ( doc, filename.ToCString() );
 }
   
 //=======================================================================
@@ -530,64 +500,4 @@ Standard_Boolean IGESCAFControl_Writer::WriteNames (const TDF_LabelSequence& the
   }
 
   return Standard_True;
-}
-
-//=======================================================================
-//function : SetColorMode
-//purpose  : 
-//=======================================================================
-
-void IGESCAFControl_Writer::SetColorMode (const Standard_Boolean colormode)
-{
-  myColorMode = colormode;
-}
-
-//=======================================================================
-//function : GetColorMode
-//purpose  : 
-//=======================================================================
-
-Standard_Boolean IGESCAFControl_Writer::GetColorMode () const
-{
-  return myColorMode;
-}
-
-//=======================================================================
-//function : SetNameMode
-//purpose  : 
-//=======================================================================
-
-void IGESCAFControl_Writer::SetNameMode (const Standard_Boolean namemode)
-{
-  myNameMode = namemode;
-}
-
-//=======================================================================
-//function : GetNameMode
-//purpose  : 
-//=======================================================================
-
-Standard_Boolean IGESCAFControl_Writer::GetNameMode () const
-{
-  return myNameMode;
-}
-
-//=======================================================================
-//function : SetLayerMode
-//purpose  : 
-//=======================================================================
-
-void IGESCAFControl_Writer::SetLayerMode (const Standard_Boolean layermode)
-{
-  myLayerMode = layermode;
-}
-
-//=======================================================================
-//function : GetLayerMode
-//purpose  : 
-//=======================================================================
-
-Standard_Boolean IGESCAFControl_Writer::GetLayerMode () const
-{
-  return myLayerMode;
 }

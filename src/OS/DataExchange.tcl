@@ -15,7 +15,7 @@
 ;# Liste des toolkits WOK sous forme de full path
 ;# 
 proc DataExchange:toolkits { } {
-    return [list TKXSBase TKSTEPBase TKSTEPAttr TKSTEP209 TKSTEP TKIGES \
+    return [list TKXSBase TKXSSelect TKSTEPBase TKSTEPAttr TKSTEP209 TKSTEP TKIGES \
 		TKXCAF TKXDEIGES TKXDESTEP \
 		TKSTL TKVRML TKXmlXCAF TKBinXCAF]
 }

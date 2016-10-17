@@ -72,16 +72,13 @@ public:
   Standard_EXPORT IGESControl_Writer(const Handle(IGESData_IGESModel)& model, const Standard_Integer modecr = 0);
   
   //! Returns the IGES model to be written in output.
-  const Handle(IGESData_IGESModel) & Model() const
-  { return myModel; }
+  const Handle(IGESData_IGESModel) & Model() const { return myModel; }
 
-  const Handle(Transfer_FinderProcess) & TransferProcess() const
-  { return myTP; }
+  const Handle(Transfer_FinderProcess) & TransferProcess() const { return myTP; }
 
   //! Returns/Sets the TransferProcess : it contains final results
   //! and if some, check messages
-  void SetTransferProcess (const Handle(Transfer_FinderProcess)& TP)
-  { myTP = TP; }
+  void SetTransferProcess (const Handle(Transfer_FinderProcess)& TP) { myTP = TP; }
   
   //! Translates a Shape to IGES Entities and adds them to the model
   //! Returns True if done, False if Shape not suitable for IGES or null

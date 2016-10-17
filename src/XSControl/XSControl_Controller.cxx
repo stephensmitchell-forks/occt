@@ -13,30 +13,9 @@
 
 
 #include <Dico_DictionaryOfTransient.hxx>
-//#include <Dico_IteratorOfDictionaryOfInteger.hxx>
 #include <Dico_IteratorOfDictionaryOfTransient.hxx>
-//s#include <IFSelect_DispPerCount.hxx>
-//s#include <IFSelect_DispPerFiles.hxx>
-//s#include <IFSelect_DispPerOne.hxx>
-//s#include <IFSelect_DispPerSignature.hxx>
-//s#include <IFSelect_EditForm.hxx>
-#include <IFSelect_GeneralModifier.hxx>
-//s#include <IFSelect_GraphCounter.hxx>
-//s#include <IFSelect_IntParam.hxx>
-//s#include <IFSelect_ParamEditor.hxx>
-//s#include <IFSelect_SelectModelEntities.hxx>
-//s#include <IFSelect_SelectModelRoots.hxx>
-//s#include <IFSelect_SelectPointed.hxx>
-//s#include <IFSelect_SelectShared.hxx>
-//s#include <IFSelect_SelectSharing.hxx>
-#include <IFSelect_ShareOut.hxx>
-//s#include <IFSelect_SignAncestor.hxx>
-//s#include <IFSelect_Signature.hxx>
-//s#include <IFSelect_SignCategory.hxx>
-//s#include <IFSelect_SignCounter.hxx>
-//s#include <IFSelect_SignType.hxx>
-//s#include <IFSelect_SignValidity.hxx>
 #include <Interface_InterfaceModel.hxx>
+#include <Interface_HArray1OfHAsciiString.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_Protocol.hxx>
 #include <Interface_Static.hxx>
@@ -46,25 +25,48 @@
 #include <TCollection_HAsciiString.hxx>
 #include <TColStd_HSequenceOfHAsciiString.hxx>
 #include <TColStd_IndexedMapOfTransient.hxx>
-#include <TopoDS_Shape.hxx>
 #include <Transfer_FinderProcess.hxx>
-#include <Transfer_SimpleBinderOfTransient.hxx>
-#include <TransferBRep_ShapeMapper.hxx>
-//s#include <XSControl_ConnectedShapes.hxx>
 #include <XSControl_Controller.hxx>
-//s#include <XSControl_SelectForTransfer.hxx>
-//s#include <XSControl_SignTransferStatus.hxx>
 #include <XSControl_WorkSession.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(XSControl_Controller,MMgt_TShared)
 
-//  ParamEditor
-//  Transferts
-static const Handle(Dico_DictionaryOfTransient)& listadapt()
+namespace {
+static class RecordedAdaptors
 {
-  static Handle(Dico_DictionaryOfTransient) listad;
-  if (listad.IsNull()) listad = new Dico_DictionaryOfTransient;
-  return listad;
+  Handle(Dico_DictionaryOfTransient) myDictionary;
+ public:
+  RecordedAdaptors() : myDictionary(new Dico_DictionaryOfTransient) {}
+  void Record (const TCollection_AsciiString &theName, const Handle(XSControl_Controller) &theCtl) const
+  {
+    Standard_Boolean isAlreadyRegistered = Standard_False;
+    Handle(Standard_Transient)& newadapt = myDictionary->NewItem(theName,isAlreadyRegistered);
+    if (isAlreadyRegistered) {
+      if (newadapt->IsKind(theCtl->DynamicType()))
+        return;
+      if (!(theCtl->IsKind(newadapt->DynamicType())) && theCtl != newadapt)
+        Standard_DomainError::Raise("XSControl_Controller : Attempt to overwrite a more specific controller");
+    }
+    newadapt = theCtl;
+  }
+  Handle(XSControl_Controller) Recorded (const Standard_CString theName) const
+  {
+    Handle(Standard_Transient) recorded;
+    return (myDictionary->GetItem(theName,recorded)?
+      Handle(XSControl_Controller)::DownCast(recorded) :
+      Handle(XSControl_Controller)());
+  }
+} gAdaptors;
+}
+
+//=======================================================================
+//function : AutoRecord
+//purpose  : 
+//=======================================================================
+
+void XSControl_Controller::AutoRecord () const
+{
+  gAdaptors.Record (myName,this);
 }
 
 //=======================================================================
@@ -72,8 +74,9 @@ static const Handle(Dico_DictionaryOfTransient)& listadapt()
 //purpose  : Constructor
 //=======================================================================
 
-XSControl_Controller::XSControl_Controller (const Standard_CString theLongName, const Standard_CString theShortName)
-: myShortName(theShortName), myLongName(theLongName)
+XSControl_Controller::XSControl_Controller (const Standard_CString theName)
+: myName(theName),
+  thelevdef(0)
 {
   // Standard parameters
   Interface_Static::Standards();
@@ -84,63 +87,13 @@ XSControl_Controller::XSControl_Controller (const Standard_CString theLongName, 
 }
 
 //=======================================================================
-//function : TraceStatic
-//purpose  : 
-//=======================================================================
-
-void XSControl_Controller::TraceStatic (const Standard_CString theName, const Standard_Integer theUse)
-{
-  Handle(Interface_Static) val = Interface_Static::Static(theName);
-  if (val.IsNull()) return;
-  myParams.Append (val);
-  myParamUses.Append(theUse);
-}
-
-//=======================================================================
-//function : SetNames
-//purpose  : 
-//=======================================================================
-
-void XSControl_Controller::SetNames (const Standard_CString theLongName, const Standard_CString theShortName)
-{
-  if (theLongName && theLongName[0] != '\0') {
-    myLongName.Clear();  myLongName.AssignCat (theLongName);
-  }
-  if (theShortName && theShortName[0] != '\0') {
-    myShortName.Clear(); myShortName.AssignCat(theShortName);
-  }
-}
-
-//=======================================================================
-//function : Record
-//purpose  : 
-//=======================================================================
-
-void XSControl_Controller::Record (const Standard_CString theName) const
-{
-  Standard_Boolean isAlreadyRegistered = Standard_False;
-  Handle(Standard_Transient)& newadapt = listadapt()->NewItem(theName,isAlreadyRegistered);
-  if (isAlreadyRegistered) {
-    Handle(Standard_Transient) thisadapt (this);
-    if (newadapt->IsKind(thisadapt->DynamicType()))
-      return;
-    if (!(thisadapt->IsKind(newadapt->DynamicType())) && thisadapt != newadapt)
-      Standard_DomainError::Raise("XSControl_Controller : Record");
-  }
-  newadapt = this;
-}
-
-//=======================================================================
 //function : Recorded
 //purpose  : 
 //=======================================================================
 
 Handle(XSControl_Controller) XSControl_Controller::Recorded (const Standard_CString theName)
 {
-  Handle(Standard_Transient) recorded;
-  return (listadapt()->GetItem(theName,recorded)?
-    Handle(XSControl_Controller)::DownCast(recorded) :
-    Handle(XSControl_Controller)());
+  return gAdaptors.Recorded(theName);
 }
 
 //    ####    DEFINITION    ####
@@ -155,272 +108,96 @@ Handle(Transfer_ActorOfTransientProcess) XSControl_Controller::ActorRead (const 
   return myAdaptorRead;
 }
 
-//=======================================================================
-//function : ActorWrite
-//purpose  : 
-//=======================================================================
-
-Handle(Transfer_ActorOfFinderProcess) XSControl_Controller::ActorWrite () const
-{
-  return myAdaptorWrite;
-}
-
-// ###########################
-//  Help du Transfer : controle de valeur + help
-
-//=======================================================================
-//function : SetModeWrite
-//purpose  : 
-//=======================================================================
-
-void XSControl_Controller::SetModeWrite
-  (const Standard_Integer modemin, const Standard_Integer modemax, const Standard_Boolean )
-{
-  if (modemin > modemax)  {  myModeWriteShapeN.Nullify(); return;  }
-  myModeWriteShapeN = new Interface_HArray1OfHAsciiString (modemin,modemax);
-}
-
-//=======================================================================
-//function : SetModeWriteHelp
-//purpose  : 
-//=======================================================================
-
-void XSControl_Controller::SetModeWriteHelp
-  (const Standard_Integer modetrans, const Standard_CString help, const Standard_Boolean )
-{
-  if (myModeWriteShapeN.IsNull()) return;
-  if (modetrans < myModeWriteShapeN->Lower() ||
-      modetrans > myModeWriteShapeN->Upper()) return;
-  Handle(TCollection_HAsciiString) hl = new TCollection_HAsciiString (help);
-  myModeWriteShapeN->SetValue (modetrans,hl);
-}
-
-//=======================================================================
-//function : ModeWriteBounds
-//purpose  : 
-//=======================================================================
-
-Standard_Boolean  XSControl_Controller::ModeWriteBounds
-  (Standard_Integer& modemin, Standard_Integer& modemax, const Standard_Boolean ) const
-{
-  modemin = modemax = 0;
-  if (myModeWriteShapeN.IsNull()) return Standard_False;
-  modemin = myModeWriteShapeN->Lower();
-  modemax = myModeWriteShapeN->Upper();
-  return Standard_True;
-}
-
-//=======================================================================
-//function : IsModeWrite
-//purpose  : 
-//=======================================================================
-
-Standard_Boolean  XSControl_Controller::IsModeWrite
-  (const Standard_Integer modetrans, const Standard_Boolean ) const
-{
-  if (myModeWriteShapeN.IsNull()) return Standard_True;
-  if (modetrans < myModeWriteShapeN->Lower()) return Standard_False;
-  if (modetrans > myModeWriteShapeN->Upper()) return Standard_False;
-  return Standard_True;
-}
-
-//=======================================================================
-//function : ModeWriteHelp
-//purpose  : 
-//=======================================================================
-
-Standard_CString  XSControl_Controller::ModeWriteHelp
-  (const Standard_Integer modetrans, const Standard_Boolean ) const
-{
-  if (myModeWriteShapeN.IsNull()) return "";
-  if (modetrans < myModeWriteShapeN->Lower()) return "";
-  if (modetrans > myModeWriteShapeN->Upper()) return "";
-  Handle(TCollection_HAsciiString) str = myModeWriteShapeN->Value(modetrans);
-  if (str.IsNull()) return "";
-  return str->ToCString();
-}
-
-// ###########################
-//  Transfer : on fait ce qu il faut par defaut (avec ActorWrite)
-//    peut etre redefini ...
-
-//=======================================================================
-//function : TransferWriteShape
-//purpose  : 
-//=======================================================================
-
-IFSelect_ReturnStatus XSControl_Controller::TransferWriteShape
-  (const TopoDS_Shape& shape,
-   const Handle(Transfer_FinderProcess)& FP,
-   const Handle(Interface_InterfaceModel)& model,
-   const Standard_Integer modetrans) const
-{
-  if (shape.IsNull()) return IFSelect_RetVoid;
-  if (myAdaptorWrite.IsNull()) return IFSelect_RetError;
-  if (model.IsNull()) return IFSelect_RetError;
-
-  Handle(Transfer_Finder) aMapper = new TransferBRep_ShapeMapper(shape);
-  myAdaptorWrite->SetTransferMode(modetrans);
-  FP->SetModel (model);
-  FP->SetActor (myAdaptorWrite);
-  FP->Transfer (aMapper);
-
-  IFSelect_ReturnStatus stat = IFSelect_RetFail;
-  Handle(Transfer_Binder) binder = FP->Find (aMapper);
-  while (!binder.IsNull()) {
-    Handle(Transfer_SimpleBinderOfTransient) bindtr = Handle(Transfer_SimpleBinderOfTransient)::DownCast (binder);
-    if (!bindtr.IsNull()) {
-      Handle(Standard_Transient) ent = bindtr->Result();
-      if (!ent.IsNull()) {
-        stat = IFSelect_RetDone;
-        model->AddWithRefs (ent);
-      }
-    }
-    binder = binder->NextResult();
-  }
-  return stat;
-}
-
 // ###########################
 //  Cutomisation ! On enregistre des Items pour une WorkSession
 //     (annule et remplace)
 //     Ensuite, on les remet en place a la demande
 
 //=======================================================================
-//function : AddSessionItem
-//purpose  : 
-//=======================================================================
-
-void XSControl_Controller::AddSessionItem
-  (const Handle(Standard_Transient)& theItem, const Standard_CString theName, const Standard_Boolean toApply)
-{
-  if (theItem.IsNull() || theName[0] == '\0') return;
-  if (myAdaptorSession.IsNull())
-    myAdaptorSession = new Dico_DictionaryOfTransient;
-  myAdaptorSession->SetItem (theName,theItem);
-  if (toApply && theItem->IsKind(STANDARD_TYPE(IFSelect_GeneralModifier)))
-    myAdaptorApplied.Append(theItem);
-}
-
-//=======================================================================
-//function : SessionItem
-//purpose  : 
-//=======================================================================
-
-Handle(Standard_Transient)  XSControl_Controller::SessionItem (const Standard_CString theName) const
-{
-  Handle(Standard_Transient) item;
-  if (!myAdaptorSession.IsNull())
-    myAdaptorSession->GetItem (theName,item);
-  return item;
-}
-
-//=======================================================================
 //function : Customise
 //purpose  : 
 //=======================================================================
 
-void XSControl_Controller::Customise (Handle(XSControl_WorkSession)& WS)
+void XSControl_Controller::Customise (Handle(XSControl_WorkSession)&)
 {
-  WS->SetParams (myParams,myParamUses);
+}
 
-  // General
-  if (!myAdaptorSession.IsNull()) {
-    Dico_IteratorOfDictionaryOfTransient iter(myAdaptorSession);
-    for (iter.Start(); iter.More(); iter.Next())
-      WS->AddNamedItem (iter.Name().ToCString(), iter.Value());
-  }
+//=======================================================================
+//function : DumpEntity
+//purpose  : 
+//=======================================================================
 
-  /*szv_c1:
-  if (WS->NamedItem("xst-model-all").IsNull()) {
+void XSControl_Controller::DumpEntity
+  (const Handle(Interface_InterfaceModel)& model,
+   const Handle(Interface_Protocol)& protocol,
+   const Handle(Standard_Transient)& entity,
+   const Handle(Message_Messenger)& S) const
+{
+  DumpEntity (model,protocol,entity,S,(thelevhlp.IsNull()? 0 : thelevdef));
+}
 
-    Handle(IFSelect_SelectModelEntities) sle = new IFSelect_SelectModelEntities;
-    WS->AddNamedItem ("xst-model-all",sle);
+//=======================================================================
+//function : SetDumpLevels
+//purpose  : 
+//=======================================================================
 
-    Handle(IFSelect_SelectModelRoots)    slr = new IFSelect_SelectModelRoots;
-    WS->AddNamedItem ("xst-model-roots",slr);
+void XSControl_Controller::SetDumpLevels
+  (const Standard_Integer def, const Standard_Integer max)
+{
+  thelevdef = def;
+  if (max >= 0) thelevhlp = new Interface_HArray1OfHAsciiString (0,max);
+  else thelevhlp.Nullify();
+}
 
-    if(strcasecmp(WS->SelectedNorm(),"STEP")) {
-      Handle(XSControl_SelectForTransfer) st1 = new XSControl_SelectForTransfer;
-      st1->SetInput (slr);
-      st1->SetReader (WS->TransferReader());
-      WS->AddNamedItem ("xst-transferrable-roots",st1);
-    }
+//=======================================================================
+//function : DumpLevels
+//purpose  : 
+//=======================================================================
 
-    Handle(XSControl_SelectForTransfer) st2 = new XSControl_SelectForTransfer;
-    st2->SetInput (sle);
-    st2->SetReader (WS->TransferReader());
-    WS->AddNamedItem ("xst-transferrable-all",st2);
-   
-    Handle(XSControl_SignTransferStatus) strs = new XSControl_SignTransferStatus;
-    strs->SetReader (WS->TransferReader());
-    WS->AddNamedItem ("xst-transfer-status",strs);
-  
-    Handle(XSControl_ConnectedShapes) scs = new XSControl_ConnectedShapes;
-    scs->SetReader (WS->TransferReader());
-    WS->AddNamedItem ("xst-connected-faces",scs);
+void XSControl_Controller::DumpLevels
+  (Standard_Integer& def, Standard_Integer& max) const
+{
+  def = thelevdef;
+  if (thelevhlp.IsNull()) {  def = 0;  max = -1;  }
+  else max = thelevhlp->Upper();
+}
 
-    Handle(IFSelect_SignType) stp = new IFSelect_SignType (Standard_False);
-    WS->AddNamedItem ("xst-long-type",stp);
+//=======================================================================
+//function : SetDumpHelp
+//purpose  : 
+//=======================================================================
 
-    Handle(IFSelect_SignType) stc = new IFSelect_SignType (Standard_True);
-    WS->AddNamedItem ("xst-type",stc);
+void XSControl_Controller::SetDumpHelp (const Standard_Integer level, const Standard_CString help)
+{
+  if (thelevhlp.IsNull()) return;
+  if (level < 0 || level > thelevhlp->Upper()) return;
+  Handle(TCollection_HAsciiString) str = new TCollection_HAsciiString (help);
+  thelevhlp->SetValue (level,str);
+}
 
-    WS->AddNamedItem ("xst-ancestor-type",new IFSelect_SignAncestor);
-    WS->AddNamedItem ("xst-types",new IFSelect_SignCounter(stp,Standard_False,Standard_True));
-    WS->AddNamedItem ("xst-category",new IFSelect_SignCategory);
-    WS->AddNamedItem ("xst-validity",new IFSelect_SignValidity);
+//=======================================================================
+//function : DumpHelp
+//purpose  : 
+//=======================================================================
 
-    Handle(IFSelect_DispPerOne) dispone = new IFSelect_DispPerOne;
-    dispone->SetFinalSelection(slr);
-    WS->AddNamedItem ("xst-disp-one",dispone);
+Standard_CString XSControl_Controller::DumpHelp (const Standard_Integer level) const
+{
+  if (thelevhlp.IsNull()) return "";
+  if (level < 0 || level > thelevhlp->Upper()) return "";
+  Handle(TCollection_HAsciiString) str = thelevhlp->Value (level);
+  if (str.IsNull()) return "";
+  return str->ToCString();
+}
 
-    Handle(IFSelect_DispPerCount) dispcount = new IFSelect_DispPerCount;
-    Handle(IFSelect_IntParam) intcount = new IFSelect_IntParam;
-    intcount->SetValue(5);
-    dispcount->SetCount(intcount);
-    dispcount->SetFinalSelection(slr);
-    WS->AddNamedItem ("xst-disp-count",dispcount);
+//=======================================================================
+//function : TraceStatic
+//purpose  : 
+//=======================================================================
 
-    Handle(IFSelect_DispPerFiles) dispfiles = new IFSelect_DispPerFiles;
-    Handle(IFSelect_IntParam) intfiles = new IFSelect_IntParam;
-    intfiles->SetValue(10);
-    dispfiles->SetCount(intfiles);
-    dispfiles->SetFinalSelection(slr);
-    WS->AddNamedItem ("xst-disp-files",dispfiles);
-
-    Handle(IFSelect_DispPerSignature) dispsign = new IFSelect_DispPerSignature;
-    dispsign->SetSignCounter(new IFSelect_SignCounter(Handle(IFSelect_Signature)(stc)));
-    dispsign->SetFinalSelection(slr);
-    WS->AddNamedItem ("xst-disp-sign",dispsign);
-
-    // Not used directly but useful anyway
-    WS->AddNamedItem ("xst-pointed",new IFSelect_SelectPointed);
-    WS->AddNamedItem ("xst-sharing",new IFSelect_SelectSharing);
-    WS->AddNamedItem ("xst-shared",new IFSelect_SelectShared);
-    WS->AddNamedItem ("xst-nb-selected",new IFSelect_GraphCounter);
-
-    WS->SetSignType( stp );
-  }
-  */
-
-  // Applied Modifiers
-  Standard_Integer i, nb = myAdaptorApplied.Length();
-  for (i = 1; i <= nb; i ++) {
-    const Handle(Standard_Transient) &anitem = myAdaptorApplied.Value(i);
-    Handle(TCollection_HAsciiString) name = WS->Name(anitem);
-    WS->SetAppliedModifier(GetCasted(IFSelect_GeneralModifier,anitem),WS->ShareOut());
-  }
-
-  // Editors of Parameters
-  // Here for the specific manufacturers of controllers could create the
-  // Parameters: So wait here
-
-  /*szv_c1:
-  Handle(TColStd_HSequenceOfHAsciiString) listat = Interface_Static::Items();
-  Handle(IFSelect_ParamEditor) paramed = IFSelect_ParamEditor::StaticEditor (listat,"All Static Parameters");
-  WS->AddNamedItem ("xst-static-params-edit",paramed);
-  Handle(IFSelect_EditForm) paramform = paramed->Form(Standard_False);
-  WS->AddNamedItem ("xst-static-params",paramform);
-  */
+void XSControl_Controller::TraceStatic (const Standard_CString theName, const Standard_Integer theUse)
+{
+  Handle(Interface_Static) val = Interface_Static::Static(theName);
+  if (val.IsNull()) return;
+  myParams.Append (val);
+  myParamUses.Append(theUse);
 }

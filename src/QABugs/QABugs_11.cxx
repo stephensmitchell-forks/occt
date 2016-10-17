@@ -58,7 +58,7 @@
 #include <STEPCAFControl_Writer.hxx>
 #include <STEPControl_StepModelType.hxx>
 #include <Interface_Static.hxx>
-#include <IFSelect_ReturnStatus.hxx>
+#include <Interface_ReturnStatus.hxx>
 #include <Standard_Failure.hxx>
 #include <TColgp_HArray1OfPnt2d.hxx>
 #include <Geom2dAPI_Interpolate.hxx>
@@ -4581,16 +4581,15 @@ static Standard_Integer OCC12584 (Draw_Interpretor& di, Standard_Integer argc, c
   return 0;
 }
 
-#include <Interface_Macros.hxx>
-#include <IGESControl_Controller.hxx>
-#include <XSDRAW.hxx>
-#include <Draw_ProgressIndicator.hxx>
-#include <XSControl_WorkSession.hxx>
-#include <Transfer_TransientProcess.hxx>
-#include <XSDRAW_Commands.hxx>
 #include <TColStd_HSequenceOfTransient.hxx>
 #include <Message_ProgressSentry.hxx>
-#include <XSControl_TransferReader.hxx>
+#include <Interface_Macros.hxx>
+#include <Draw_ProgressIndicator.hxx>
+#include <Transfer_TransientProcess.hxx>
+#include <IFSelect_WorkSession.hxx>
+#include <XSDRAW.hxx>
+#include <XSDRAW_Commands.hxx>
+#include <IGESControl_Controller.hxx>
 
 static Standard_Integer OCC18612igesbrep (Draw_Interpretor& di, Standard_Integer argc, const char ** argv) 
 {
@@ -4601,8 +4600,10 @@ static Standard_Integer OCC18612igesbrep (Draw_Interpretor& di, Standard_Integer
   Handle(Draw_ProgressIndicator) progress = new Draw_ProgressIndicator ( di, 1 );
   progress->SetScale ( 0, 100, 1 );
   progress->Show();
- 
-  IGESControl_Reader Reader (XSDRAW::Session(),Standard_False);
+
+  const Handle(IFSelect_WorkSession) &WS = XSDRAW::Session();
+
+  IGESControl_Reader Reader (WS,Standard_False);
   if (ctl.IsNull())
     ctl=Handle(IGESControl_Controller)::DownCast(XSDRAW::Controller());
 
@@ -4613,7 +4614,7 @@ static Standard_Integer OCC18612igesbrep (Draw_Interpretor& di, Standard_Integer
   if (modfic) di<<" File IGES to read : "<<fnom.ToCString()<<"\n";
   else        di<<" Model taken from the session : "<<fnom.ToCString()<<"\n";
   di<<" -- Names of variables BREP-DRAW prefixed by : "<<rnom.ToCString()<<"\n";
-  IFSelect_ReturnStatus readstat = IFSelect_RetVoid;
+  Interface_ReturnStatus readstat = Interface_RetVoid;
 
 #ifdef CHRONOMESURE
   OSD_Timer Chr; Chr.Reset();
@@ -4631,12 +4632,12 @@ static Standard_Integer OCC18612igesbrep (Draw_Interpretor& di, Standard_Integer
   // *New* 
 
   if (modfic) readstat = Reader.ReadFile (fnom.ToCString());
-  else  if (XSDRAW::Session()->NbStartingEntities() > 0) readstat = IFSelect_RetDone;
+  else  if (XSDRAW::Session()->NbStartingEntities() > 0) readstat = Interface_RetDone;
 
   progress->EndScope();
   progress->Show();
 
-  if (readstat != IFSelect_RetDone) {
+  if (readstat != Interface_RetDone) {
     if (modfic) di<<"Could not read file "<<fnom.ToCString()<<" , abandon\n";
     else di<<"No model loaded\n";
     return 1;
@@ -4669,17 +4670,15 @@ static Standard_Integer OCC18612igesbrep (Draw_Interpretor& di, Standard_Integer
       di << "All Geometry Transfer\n";
       di<<"spline_continuity (read) : "<<Interface_Static::IVal("read.iges.bspline.continuity")<<" (0 : no modif, 1 : C1, 2 : C2)\n";
       di<<"  To modify : command  param read.iges.bspline.continuity\n";
-      Handle(XSControl_WorkSession) thesession = Reader.WS();
-      thesession->TransferReader()->Context().Nullify();
-      XSDRAW::SetTransferProcess (thesession->TransferReader()->TransientProcess());
+      XSDRAW::SetTransferProcess (WS->ReaderProcess());
       progress->NewScope ( 80, "Translation" );
       progress->Show();
-      thesession->TransferReader()->TransientProcess()->SetProgress ( progress );
+      WS->ReaderProcess()->SetProgress ( progress );
       
       if (modepri == 1) Reader.SetReadVisible (Standard_True);
       Reader.TransferRoots();
       
-      thesession->TransferReader()->TransientProcess()->SetProgress ( 0 );
+      WS->ReaderProcess()->SetProgress ( 0 );
       progress->EndScope();
       progress->Show();
       // result in only one shape for all the roots
@@ -4747,7 +4746,7 @@ static Standard_Integer OCC18612igesbrep (Draw_Interpretor& di, Standard_Integer
       cout << " give the number of the Entity : " << flush;
       nent = XSDRAW::GetEntityNumber();
 
-      if (!Reader.TransferOne (nent)) di<<"Transfer entity n0 "<<nent<<" : no result\n";
+      if (!Reader.TransferEntity (WS->StartingEntity(nent))) di<<"Transfer entity n0 "<<nent<<" : no result\n";
       else {
 	nbs = Reader.NbShapes();
 	char shname[30];  Sprintf (shname,"%s_%d",rnom.ToCString(),nent);
@@ -4770,17 +4769,15 @@ static Standard_Integer OCC18612igesbrep (Draw_Interpretor& di, Standard_Integer
         di << "All Geometry Transfer\n";
         di<<"spline_continuity (read) : "<<Interface_Static::IVal("read.iges.bspline.continuity")<<" (0 : no modif, 1 : C1, 2 : C2)\n";
         di<<"  To modify : command  param read.iges.bspline.continuity\n";
-        Handle(XSControl_WorkSession) thesession = Reader.WS();
-        thesession->TransferReader()->Context().Nullify();
-        XSDRAW::SetTransferProcess (thesession->TransferReader()->TransientProcess());
+        XSDRAW::SetTransferProcess (WS->ReaderProcess());
         progress->NewScope ( 80, "Translation" );
         progress->Show();
-        thesession->TransferReader()->TransientProcess()->SetProgress ( progress );
+        WS->ReaderProcess()->SetProgress ( progress );
       
         Reader.SetReadVisible (Standard_True);
         Reader.TransferRoots();
       
-        thesession->TransferReader()->TransientProcess()->SetProgress ( 0 );
+        WS->ReaderProcess()->SetProgress ( 0 );
         progress->EndScope();
         progress->Show();
         
@@ -4848,19 +4845,18 @@ static Standard_Integer OCC18612igesbrep (Draw_Interpretor& di, Standard_Integer
 	}
 	if (answer == 1 || answer == 2) {
 	  Standard_Integer nbt = 0;
-	  Handle(XSControl_WorkSession) thesession = Reader.WS();
 	
-	  XSDRAW::SetTransferProcess (thesession->TransferReader()->TransientProcess());
+	  XSDRAW::SetTransferProcess (WS->ReaderProcess());
           progress->NewScope ( 80, "Translation" );
           progress->Show();
-          thesession->TransferReader()->TransientProcess()->SetProgress ( progress );
+          WS->ReaderProcess()->SetProgress ( progress );
 
           Message_ProgressSentry PSentry ( progress, "Root", 0, nbl, 1 );
 	  for (Standard_Integer ill = 1; ill <= nbl && PSentry.More(); ill ++, PSentry.Next()) {
 	  
 	    nent = Reader.Model()->Number(list->Value(ill));
 	    if (nent == 0) continue;
-	    if (!Reader.TransferOne(nent)) di<<"Transfer entity n0 "<<nent<<" : no result\n";
+	    if (!Reader.TransferEntity (WS->StartingEntity(nent))) di<<"Transfer entity n0 "<<nent<<" : no result\n";
 	    else {
 	      nbs = Reader.NbShapes();
 	      char shname[30];  Sprintf (shname,"%s_%d",rnom.ToCString(),nbs);
@@ -4871,7 +4867,7 @@ static Standard_Integer OCC18612igesbrep (Draw_Interpretor& di, Standard_Integer
               nbt++;
 	    }
 	  }
-	  thesession->TransferReader()->TransientProcess()->SetProgress ( 0 );
+	  WS->ReaderProcess()->SetProgress ( 0 );
           progress->EndScope();
           progress->Show();
 	  di<<"Nb Shapes successfully produced : "<<nbt<<"\n";
@@ -4884,14 +4880,11 @@ static Standard_Integer OCC18612igesbrep (Draw_Interpretor& di, Standard_Integer
 
   // *New* 
   //In order to clear memory after IGES reading you could add the following code
-  const Handle(XSControl_TransferReader) &TR = Reader.WS()->TransferReader();
-  const Handle(Transfer_TransientProcess) &TP = TR->TransientProcess();
-  TP->Clear();
-  TR->Clear(2);
-  Reader.WS()->Model()->Clear();
+  WS->ReaderProcess()->Clear();
+  WS->Model()->Clear();
   Standard_Integer i =1;
-  for( ; i <= 7; i++)
-    Reader.WS()->ClearData(i);
+  for( ; i <= 6; i++)
+    WS->ClearData(i);
   // *New* 
 
   return 0;

@@ -54,18 +54,20 @@ class XCAFPrs_Style;
 //! Standard_Boolean namemode = writer.GetNameMode();
 class IGESCAFControl_Writer  : public IGESControl_Writer
 {
-public:
+ public:
 
   DEFINE_STANDARD_ALLOC
 
-  
   //! Creates a writer with an empty
   //! IGES model and sets ColorMode, LayerMode and NameMode to Standard_True.
-  Standard_EXPORT IGESCAFControl_Writer();
+  IGESCAFControl_Writer()
+  : myColorMode( Standard_True ),
+    myNameMode ( Standard_True ),
+    myLayerMode( Standard_True )
+  {}
   
   //! Creates a reader tool and attaches it to an already existing Session
-  //! Clears the session if it was not yet set for IGES
-  Standard_EXPORT IGESCAFControl_Writer(const Handle(XSControl_WorkSession)& WS, const Standard_Boolean scratch = Standard_True);
+  Standard_EXPORT IGESCAFControl_Writer(const Handle(XSControl_WorkSession)& WS);
   
   //! Transfers a document to a IGES model
   //! Returns True if translation is OK
@@ -83,27 +85,25 @@ public:
   
   //! Transfers a document and writes it to a IGES file
   //! Returns True if translation is OK
-  Standard_EXPORT Standard_Boolean Perform (const Handle(TDocStd_Document)& doc, const Standard_CString filename);
-  
+  Standard_Boolean Perform (const Handle(TDocStd_Document)& doc, const Standard_CString filename)
+  { return ( Transfer( doc )? Write( filename ) : Standard_False ); }
+
   //! Set ColorMode for indicate write Colors or not.
-  Standard_EXPORT void SetColorMode (const Standard_Boolean colormode);
-  
-  Standard_EXPORT Standard_Boolean GetColorMode() const;
-  
+  void SetColorMode (const Standard_Boolean colormode) { myColorMode = colormode; }
+
+  Standard_Boolean GetColorMode() const { return myColorMode; }
+
   //! Set NameMode for indicate write Name or not.
-  Standard_EXPORT void SetNameMode (const Standard_Boolean namemode);
-  
-  Standard_EXPORT Standard_Boolean GetNameMode() const;
-  
+  void SetNameMode (const Standard_Boolean namemode) { myNameMode = namemode; }
+
+  Standard_Boolean GetNameMode() const { return myNameMode; }
+
   //! Set LayerMode for indicate write Layers or not.
-  Standard_EXPORT void SetLayerMode (const Standard_Boolean layermode);
-  
-  Standard_EXPORT Standard_Boolean GetLayerMode() const;
+  void SetLayerMode (const Standard_Boolean layermode) { myLayerMode = layermode; }
 
+  Standard_Boolean GetLayerMode() const { return myLayerMode; }
 
-
-
-protected:
+ protected:
  
   //! Reads colors from DECAF document and assigns them
   //! to corresponding IGES entities
@@ -117,28 +117,15 @@ protected:
   //! to IGES entity
   Standard_EXPORT Standard_Boolean WriteNames (const TDF_LabelSequence& labels);
 
-
-
-
-private:
-
+ private:
   
   //! Recursively iterates on subshapes and assigns colors
   //! to faces and edges (if set)
   Standard_EXPORT void MakeColors (const TopoDS_Shape& S, const XCAFPrs_DataMapOfShapeStyle& settings, XCAFPrs_DataMapOfStyleTransient& colors, TopTools_MapOfShape& Map, const XCAFPrs_Style& inherit);
 
-
   Standard_Boolean myColorMode;
   Standard_Boolean myNameMode;
   Standard_Boolean myLayerMode;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESCAFControl_Writer_HeaderFile

@@ -13,13 +13,18 @@
 
 //:i1 pdn 03.04.99  BUC60301  
 
+#include <Interface_Category.hxx>
 #include <Interface_Check.hxx>
 #include <Interface_CheckIterator.hxx>
+#include <Interface_CheckTool.hxx>
 #include <Interface_Graph.hxx>
+#include <Interface_GTool.hxx>
 #include <Interface_HGraph.hxx>
 #include <Interface_InterfaceModel.hxx>
 #include <Interface_IntVal.hxx>
 #include <Interface_Macros.hxx>
+#include <Interface_Protocol.hxx>
+#include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_ErrorHandler.hxx>
 #include <Standard_Failure.hxx>
@@ -32,13 +37,19 @@
 #include <Transfer_ResultFromTransient.hxx>
 #include <Transfer_SimpleBinderOfTransient.hxx>
 #include <Transfer_TransientProcess.hxx>
+#include <Transfer_ActorOfFinderProcess.hxx>
 #include <TransferBRep.hxx>
 #include <XSControl_Controller.hxx>
-#include <XSControl_TransferReader.hxx>
-#include <XSControl_Vars.hxx>
 #include <XSControl_WorkSession.hxx>
 
-IMPLEMENT_STANDARD_RTTIEXT(XSControl_WorkSession,IFSelect_WorkSession)
+IMPLEMENT_STANDARD_RTTIEXT(XSControl_WorkSession,MMgt_TShared)
+
+#define Flag_Incorrect 2
+//  (Bit Map n0 2)
+
+static Standard_Boolean errhand;  // pb : un seul a la fois, mais ca va si vite
+
+//  #################################################################
 
 //=======================================================================
 //function : XSControl_WorkSession
@@ -46,10 +57,160 @@ IMPLEMENT_STANDARD_RTTIEXT(XSControl_WorkSession,IFSelect_WorkSession)
 //=======================================================================
 
 XSControl_WorkSession::XSControl_WorkSession ()
-: myTransferReader(new XSControl_TransferReader),
-  myTransferWriter(new XSControl_TransferWriter),
-  myVars(new XSControl_Vars)
+: thegtool(new Interface_GTool),
+  thecheckdone(Standard_False),
+  themodelstat(Standard_False),
+  myReaderProcess(new Transfer_TransientProcess),
+  myWriterProcess(new Transfer_FinderProcess)
 {
+  errhand = Standard_True;
+}
+
+
+//=======================================================================
+//function : 
+//purpose  : 
+//=======================================================================
+
+void XSControl_WorkSession::SetModel (const Handle(Interface_InterfaceModel)& model)
+{
+  if (myModel != model)
+    theloaded.Clear();
+  else
+    myModel = model;
+
+  if (!thegtool.IsNull()) thegtool->ClearEntities(); //smh#14 FRA62479
+  myModel->SetGTool (thegtool);
+  
+  thegraph.Nullify();
+  ComputeGraph();    // fait qqchose si Protocol present. Sinon, ne fait rien
+
+  thecheckdone = Standard_False; // RAZ CheckList, a refaire
+  
+//  MISE A JOUR des SelectPointed  C-A-D  on efface leur contenu
+  ClearData(4);
+  ClearData(0);
+}
+
+
+//=======================================================================
+//function : 
+//purpose  : 
+//=======================================================================
+
+Standard_Boolean XSControl_WorkSession::ComputeGraph (const Standard_Boolean enforce)
+{
+  if (myModel.IsNull()) return Standard_False;
+  const Standard_Integer nb = myModel->NbEntities();
+
+  if (!enforce && !thegraph.IsNull() && (thegraph->Graph().Size() == nb))
+    return Standard_True;
+
+  thegraph.Nullify();
+
+  if (nb == 0)
+    return Standard_False;
+
+  //  Il faut calculer le graphe pour de bon
+  thegraph = new Interface_HGraph (myModel,themodelstat);
+  if (themodelstat)
+  {
+    Standard_Integer i; // svv #1
+    for (i = 1; i <= nb; i ++) thegraph->CGraph().SetStatus(i,0);
+    Interface_BitMap& bm = thegraph->CGraph().CBitMap();
+    bm.AddFlag();
+    bm.SetFlagName (Flag_Incorrect,"Incorrect");
+  }
+  ComputeCheck();
+  if (themodelstat)
+  {
+    //  Calcul des categories, a present memorisees dans le modele
+    Interface_Category categ(thegtool);
+    Interface_ShareTool sht(thegraph);
+    Standard_Integer i =1;
+    for ( ; i <= nb; i ++)
+      myModel->SetCategoryNumber(i,categ.CatNum(myModel->Value(i),sht));
+  }
+
+  return Standard_True;
+}
+
+
+//=======================================================================
+//function : 
+//purpose  : 
+//=======================================================================
+
+Handle(Interface_HGraph) XSControl_WorkSession::HGraph ()
+{
+  ComputeGraph();
+  return thegraph;
+}
+
+
+//=======================================================================
+//function : 
+//purpose  : 
+//=======================================================================
+
+const Interface_Graph& XSControl_WorkSession::Graph ()
+{
+  ComputeGraph();
+  if (thegraph.IsNull()) Standard_DomainError::Raise
+    ("XSControl_WorkSession : Graph not available");
+  return thegraph->Graph();
+}
+
+
+//=======================================================================
+//function : 
+//purpose  : 
+//=======================================================================
+
+Standard_Boolean XSControl_WorkSession::IsLoaded () const
+{
+  if (myModel.IsNull()) return Standard_False;
+  if (myModel->NbEntities() == 0) return Standard_False;
+  if (thegraph.IsNull()) return Standard_False;
+  return (myModel->NbEntities() == thegraph->Graph().Size());
+}
+
+
+//=======================================================================
+//function : 
+//purpose  : 
+//=======================================================================
+
+Standard_Boolean XSControl_WorkSession::ComputeCheck ()
+{
+  if (thecheckdone) return Standard_True;
+
+  if (!IsLoaded()) return Standard_False;
+
+  Interface_Graph& CG = thegraph->CGraph();
+  Interface_CheckTool cht(thegraph);
+  Interface_CheckIterator checklist = cht.VerifyCheckList();
+  myModel->FillSemanticChecks(checklist,Standard_False);
+
+  if(themodelstat)
+  {
+    //  Et on met a jour le Graphe (BitMap) !  Flag Incorrect (STX + SEM)
+    Interface_BitMap& BM = CG.CBitMap();
+    BM.Init (Standard_False,Flag_Incorrect);
+    Standard_Integer num, nb = CG.Size();
+    for (checklist.Start(); checklist.More(); checklist.Next()) {
+      const Handle(Interface_Check) chk = checklist.Value();
+      if (!chk->HasFailed()) continue;
+      num = checklist.Number();
+      if (num > 0 && num <= nb) BM.SetTrue (num,Flag_Incorrect);
+    }
+    for (num = 1; num <= nb; num ++)
+      if (myModel->IsErrorEntity (num)) BM.SetTrue (num,Flag_Incorrect);
+  }
+
+  thecheckdone = Standard_True;
+
+  return Standard_True;
 }
 
 
@@ -58,21 +219,37 @@ XSControl_WorkSession::XSControl_WorkSession ()
 //purpose  : 
 //=======================================================================
 
-void  XSControl_WorkSession::ClearData (const Standard_Integer mode)
+void XSControl_WorkSession::ClearData (const Standard_Integer mode)
 {
-  // 1-2-3-4 : standard IFSelect
-  if (mode >= 1 && mode <= 4) IFSelect_WorkSession::ClearData (mode);
+  switch (mode) {
+    case 1 : {
+      theloaded.Clear();
+      if (!myModel.IsNull()) {
+        myModel->Clear();
+        myModel.Nullify();
+      }
+      ClearData(2);  ClearData(4);
+      break;
+    }
+    case 2 : {  thegraph.Nullify();  thecheckdone = Standard_False;  break;  }
+    case 3 : {  thecheckdone = Standard_False;  break;  }
+    // 5 : Transferts seuls
+    // 6 : Resultats forces seuls
+    case 5: {
+      myReaderProcess = new Transfer_TransientProcess;
+      myWriterProcess = new Transfer_FinderProcess;
 
-  // 5 : Transferts seuls
-  // 6 : Resultats forces seuls
-  // 7 : Management, y compris tous transferts (forces/calcules), views
-
-  if (mode == 5 || mode == 7) {
-    myTransferReader->Clear(-1);
-    myTransferWriter->Clear(-1);
+      if (!myController.IsNull()) {
+        myReaderProcess->SetActor(myController->ActorRead(Model())); //szv_c1:
+        myWriterProcess->SetActor(myController->NewActorWrite()); //szv_c1:
+      }
+      break;
+    }
+    case 6: { myReaderProcess->ClearResults(); }
+    default : break;
   }
-  if (mode == 6 && !myTransferReader.IsNull()) myTransferReader->Clear(1);
-  myTransferReader->SetGraph (HGraph());
+
+  myReaderProcess->SetGraph (HGraph());
 }
 
 
@@ -81,14 +258,14 @@ void  XSControl_WorkSession::ClearData (const Standard_Integer mode)
 //purpose  : 
 //=======================================================================
 
-Standard_Boolean  XSControl_WorkSession::SelectNorm(const Standard_CString normname)
+Standard_Boolean XSControl_WorkSession::SelectNorm(const Standard_CString normname)
 {
   // Old norm and results
-  myTransferReader->Clear(-1);
+  //xxx1:myTransferReader->Clear();
   //  ????  En toute rigueur, menage a faire dans XWS : virer les items
   //        ( a la limite, pourquoi pas, refaire XWS en entier)
 
-  Handle(XSControl_Controller) newadapt = XSControl_Controller::Recorded (normname);
+  Handle(XSControl_Controller) newadapt = XSControl_Controller::Recorded(normname);
   if (newadapt.IsNull()) return Standard_False;
   if (newadapt == myController) return Standard_True;
   SetController (newadapt);
@@ -105,33 +282,100 @@ void XSControl_WorkSession::SetController(const Handle(XSControl_Controller)& ct
 {
   myController = ctl;
 
-  SetLibrary   ( myController->WorkLibrary() );
-  SetProtocol  ( myController->Protocol() );
+  const Handle(Interface_Protocol) &aProtocol = myController->Protocol();
+  Interface_Protocol::SetActive(aProtocol);
+  thegtool->SetProtocol(aProtocol);
 
-  ClearItems();
-  ClearFinalModifiers();
-  ClearShareOut(Standard_False);
-  ClearFile();
+  /*szv_c1:ClearItems();
+  ClearShareOut();*/
 
-  // Set worksession parameters from teh controller
+  // Set worksession parameters from the controller
   Handle(XSControl_WorkSession) aWorkSession(this);
   myController->Customise (aWorkSession);
 
-  myTransferReader->SetController (myController);
-  myTransferWriter->SetController (myController);
+  myReaderProcess = new Transfer_TransientProcess;
+  myReaderProcess->SetActor(myController->ActorRead(Model())); //szv_c1:
+
+  myWriterProcess = new Transfer_FinderProcess;
+  myWriterProcess->SetActor(myController->NewActorWrite()); //szv_c1:
 }
 
 
 //=======================================================================
-//function : SelectedNorm
+//function : ReadFile
 //purpose  : 
 //=======================================================================
 
-Standard_CString XSControl_WorkSession::SelectedNorm(const Standard_Boolean rsc) const
+Interface_ReturnStatus XSControl_WorkSession::ReadFile (const Standard_CString theFileName)
 {
-  //JR/Hp :
-  Standard_CString astr = (Standard_CString ) (myController.IsNull() ? "" : myController->Name(rsc));
-  return astr ;
+  if (myController.IsNull()) return Interface_RetVoid;
+  if (myController->Protocol().IsNull()) return Interface_RetVoid;
+
+  Handle(Interface_InterfaceModel) model;
+  Interface_ReturnStatus status = Interface_RetVoid;
+  try {
+    OCC_CATCH_SIGNALS
+    const Standard_Integer stat = myController->ReadFile (theFileName,model);
+    if (stat == 0) status = Interface_RetDone;
+    else if (stat < 0) status = Interface_RetError;
+    else status = Interface_RetFail;
+  }
+  catch(Standard_Failure) {
+    const Handle(Message_Messenger) &sout = Message::DefaultMessenger();
+    sout<<"    ****    Interruption ReadFile par Exception :   ****\n";
+    sout << Standard_Failure::Caught()->GetMessageString();
+    sout<<"\n    Abandon"<<endl;
+    status = Interface_RetFail;
+  }
+  if (status != Interface_RetDone) return status;
+  if (model.IsNull()) return Interface_RetVoid;
+  SetModel (model);
+  SetLoadedFile (theFileName);
+  return status;
+}
+
+
+//=======================================================================
+//function : 
+//purpose  : 
+//=======================================================================
+
+Interface_ReturnStatus XSControl_WorkSession::WriteFile (const Standard_CString theFileName)
+{
+  if (myController.IsNull())
+    return Interface_RetVoid;
+
+  ComputeGraph(Standard_True);
+  if (!IsLoaded())
+    return Interface_RetVoid;
+
+  Interface_CheckIterator checks;
+  if (errhand) {
+    errhand = Standard_False;
+    try {
+      OCC_CATCH_SIGNALS
+      CopySendAll(theFileName,checks);
+    }
+    catch (Standard_Failure) {
+      const Handle(Message_Messenger) &sout = Message::DefaultMessenger();
+      sout<<"    ****    Exception in XSControl_WorkSession::WriteFile :   ****\n";
+      sout<<Standard_Failure::Caught()->GetMessageString();
+      sout<<"\n    Abandon"<<endl;
+      errhand = Standard_True;
+      return Interface_RetFail;
+    }
+  }
+  else CopySendAll(theFileName,checks);
+
+  Handle(Interface_Check) aMainFail = checks.CCheck(0);
+  if (!aMainFail.IsNull() && aMainFail->HasFailed ())
+  {
+    return Interface_RetStop;
+  }
+
+  theloaded = theFileName;
+
+  return (checks.IsEmpty(Standard_True)? Interface_RetDone : Interface_RetError);
 }
 
 
@@ -141,231 +385,55 @@ Standard_CString XSControl_WorkSession::SelectedNorm(const Standard_Boolean rsc)
 
 
 //=======================================================================
-//function : PrintTransferStatus
-//purpose  : 
-//=======================================================================
-
-Standard_Boolean  XSControl_WorkSession::PrintTransferStatus(const Standard_Integer num,
-                                                             const Standard_Boolean wri,
-                                                             const Handle(Message_Messenger)& S) const
-{
-  Handle(Transfer_Binder) binder;
-  Handle(Standard_Transient) finder;
-  Handle(Standard_Transient) ent;
-
-  //   ***   WRITE  ***
-  if (wri) {
-    const Handle(Transfer_FinderProcess)    &FP = myTransferWriter->FinderProcess();
-    if (FP.IsNull()) return Standard_False;
-    if (num == 0 ) return Standard_False;
-
-    Standard_Integer ne=0, nr=0, max = FP->NbMapped() ,maxr = FP->NbRoots();
-    if (num > 0) {
-      if (num > max) return Standard_False;
-      ne = num;
-      finder = FP->Mapped(ne);
-      nr = FP->RootIndex(finder);
-    } else if (num < 0) {
-      nr = -num;
-      if (nr > maxr) return Standard_False;
-      finder = FP->Root(nr);
-      ne  = FP->MapIndex(finder);
-    }
-
-    S<<"Transfer Write item n0."<<ne<<" of "<<max;
-    if (nr > 0) S<<"  ** Transfer Root n0."<<ne;  S<<endl;
-    ent = FP->FindTransient(finder);
-    S<<" -> Type "<<finder->DynamicType()->Name()<<endl;
-    FP->StartTrace (binder,finder,0,0);  // pb sout/S
-    if (!ent.IsNull()) {
-      S<<" ** Resultat Transient, type "<<ent->DynamicType()->Name();
-      const Handle(Interface_InterfaceModel) &model = Model();
-      if (!model.IsNull())
-      {  S<<" In output Model, Entity ";  model->Print(ent,S);  }
-      S<<endl;
-    }
-  }
-
-  //    ***   READ   ***
-  else {
-    const Handle(Transfer_TransientProcess) &TP = myTransferReader->TransientProcess();
-    if (TP.IsNull()) return Standard_False;
-    Handle(Interface_InterfaceModel) model = TP->Model();
-    if (model.IsNull()) cout<<"No Model"<<endl;
-    else if (model != Model()) cout<<"Model different from the session"<<endl;
-    if (num == 0) return Standard_False;
-
-    Standard_Integer  ne=0, nr=0, max = TP->NbMapped() ,maxr = TP->NbRoots();
-    if (num > 0) {
-      if (num > max) return Standard_False;
-      ne = num;
-      ent = TP->Mapped(ne);
-      nr = TP->RootIndex(finder);
-    } else if (num < 0) {
-      nr = -num;
-      if (nr > maxr) return Standard_False;
-      ent = TP->Root(nr);
-      ne  = TP->MapIndex(ent);
-    }
-
-    S<<"Transfer Read item n0."<<ne<<" of "<<max;
-    if (nr > 0) S<<"  ** Transfer Root n0."<<ne;  S<<endl;
-    if (!model.IsNull())  {  S<<" In Model, Entity ";  model->Print(ent,S); }
-    binder = TP->MapItem (ne);
-    S<<endl;
-    TP->StartTrace (binder,ent,0,0);
-  }
-
-//   ***   CHECK (commun READ+WRITE)   ***
-  if (!binder.IsNull()) {
-    const Handle(Interface_Check) ch = binder->Check();
-    Standard_Integer i, nbw = ch->NbWarnings(), nbf = ch->NbFails();
-    if (nbw > 0) {
-      S<<" - Warnings : "<<nbw<<" :\n";
-      for (i = 1; i <= nbw; i ++) S<<ch->CWarning(i)<<endl;
-    }
-    if (nbf > 0) {
-      S<<" - Fails : "<<nbf<<" :\n";
-      for (i = 1; i <= nbf; i ++) S<<ch->CFail(i)<<endl;
-    }
-  }
-  return Standard_True;
-}
-
-
-//=======================================================================
 //function : InitTransferReader
 //purpose  : 
 //=======================================================================
 
 void  XSControl_WorkSession::InitTransferReader(const Standard_Integer mode)
 {
-  if (mode == 0 || mode == 5)  myTransferReader->Clear(-1);  // full clear
-  if (myTransferReader.IsNull()) SetTransferReader (new XSControl_TransferReader);
-  else SetTransferReader (myTransferReader);
+  //if (mode == 0)  myTransferReader->Clear();  // full clear
+
+  //if (myTransferReader.IsNull())
+    //myTransferReader = new XSControl_TransferReader;
+  //SetTransferReader (myTransferReader.IsNull()? new XSControl_TransferReader : myTransferReader);
+  //{
+  //if (myTransferReader != TR) //i1 pdn 03.04.99 BUC60301
+    //myTransferReader = TR;
+
+  //xxx1:myTransferReader->SetController (myController);
+
+  //xxx1:TR->TransientProcess()->SetGraph (HGraph());
+  //xxx1:if (!TR->TransientProcess().IsNull()) return;
+  const Standard_Integer nbe = Model().IsNull() ? 0 : Model()->NbEntities();
+  Handle(Transfer_TransientProcess) TP = new Transfer_TransientProcess(nbe+100);
+  TP->SetActor(myController->ActorRead(Model())); //szv_c1:
+  TP->SetGraph (HGraph());
+
+  myReaderProcess = TP;
 
   // mode = 0 fait par SetTransferReader suite a Nullify
-  if (mode == 1) {
-    if (!myTransferReader.IsNull()) myTransferReader->Clear(-1);
-    else SetTransferReader (new XSControl_TransferReader);
-  }
-  if (mode == 2) {
-    Handle(Transfer_TransientProcess) TP = myTransferReader->TransientProcess();
-    if (TP.IsNull()) {
-      TP = new Transfer_TransientProcess;
-      myTransferReader->SetTransientProcess(TP);
-      TP->SetGraph (HGraph());
-    }
-    Handle(TColStd_HSequenceOfTransient) lis = myTransferReader->RecordedList();
-    Standard_Integer i, nb = lis->Length();
-    for (i = 1; i <= nb; i ++) TP->SetRoot(lis->Value(i));
-  }
-  if (mode == 3) {
-    Handle(Transfer_TransientProcess) TP = myTransferReader->TransientProcess();
-    if (TP.IsNull()) return;
-    Standard_Integer i, nb = TP->NbRoots();
-    for (i = 1; i <= nb; i ++) myTransferReader->RecordResult(TP->Root(i));
-  }
-  if (mode == 4 || mode == 5) myTransferReader->BeginTransfer();
-}
+  //szv_c1: mode = 1 not used
+  //szv_c1: mode = 2 not used
+  //szv_c1: mode = 3 not used
 
-
-//=======================================================================
-//function : SetTransferReader
-//purpose  : 
-//=======================================================================
-
-void XSControl_WorkSession::SetTransferReader(const Handle(XSControl_TransferReader)& TR)
-{
-  if (myTransferReader != TR) //i1 pdn 03.04.99 BUC60301
-    myTransferReader = TR;
-  if (TR.IsNull()) return;
-  TR->SetController (myController);
-  TR->SetGraph (HGraph());
-  if (!TR->TransientProcess().IsNull()) return;
-  Handle(Transfer_TransientProcess) TP = new Transfer_TransientProcess
-    (Model().IsNull() ? 100 : Model()->NbEntities() + 100);
-  TP->SetGraph (HGraph());
-  TR->SetTransientProcess(TP);
+  if (mode == 4) myReaderProcess->BeginTransfer(); //myTransferReader->BeginTransfer();
 }
 
 //=======================================================================
-//function : SetMapReader
+//function : SetReaderProcess
 //purpose  : 
 //=======================================================================
 
-Standard_Boolean XSControl_WorkSession::SetMapReader (const Handle(Transfer_TransientProcess)& TP)
+Standard_Boolean XSControl_WorkSession::SetReaderProcess (const Handle(Transfer_TransientProcess)& TP)
 {
   if (TP.IsNull()) return Standard_False;
   if (TP->Model().IsNull()) TP->SetModel (Model());
   TP->SetGraph (HGraph());
   if (TP->Model() != Model()) return Standard_False;
-  Handle(XSControl_TransferReader) TR = myTransferReader;
-  TR->Clear(-1);
-  SetTransferReader (TR);        // avec le meme mais le reinitialise
-  TR->SetTransientProcess (TP);  // et prend le nouveau TP
+
+  TP->SetActor(myController->ActorRead(Model())); //szv_c1:
   return Standard_True;
 }
-
-
-//=======================================================================
-//function : Result
-//purpose  : 
-//=======================================================================
-
-Handle(Standard_Transient)  XSControl_WorkSession::Result
-  (const Handle(Standard_Transient)& ent, const Standard_Integer mode) const
-{
-  Standard_Integer ouca = (mode % 10);
-  Standard_Integer kica = (mode / 10);
-
-  Handle(Transfer_Binder) binder;
-  Handle(Transfer_ResultFromModel) resu;
-
-  if (ouca !=  1) resu = myTransferReader->FinalResult(ent);
-  if (mode == 20) return resu;
-
-  if (!resu.IsNull()) binder = resu->MainResult()->Binder();
-  if (binder.IsNull() && ouca > 0)
-    binder = myTransferReader->TransientProcess()->Find(ent);
-
-  if (kica == 1) return binder;
-  DeclareAndCast(Transfer_SimpleBinderOfTransient,trb,binder);
-  if (!trb.IsNull()) return trb->Result();
-  return binder;
-}
-
-//              ##########################################
-//              ############    TRANSFERT    #############
-//              ##########################################
-
-
-//=======================================================================
-//function : TransferReadOne
-//purpose  : 
-//=======================================================================
-
-Standard_Integer XSControl_WorkSession::TransferReadOne (const Handle(Standard_Transient)& ent)
-{
-  Handle(Interface_InterfaceModel) model = Model();
-  if (ent == model) return TransferReadRoots();
-
-  Handle(TColStd_HSequenceOfTransient) list = GiveList(ent);
-  if (list->Length() == 1) return myTransferReader->TransferOne(list->Value(1));
-  else return myTransferReader->TransferList (list);
-}
-
-
-//=======================================================================
-//function : TransferReadRoots
-//purpose  : 
-//=======================================================================
-
-Standard_Integer XSControl_WorkSession::TransferReadRoots ()
-{
-  return myTransferReader->TransferRoots(Graph());
-}
-
 
 //              ##########################################
 //              ############    TRANSFERT  WRITE
@@ -378,81 +446,42 @@ Standard_Integer XSControl_WorkSession::TransferReadRoots ()
 
 Handle(Interface_InterfaceModel) XSControl_WorkSession::NewModel ()
 {
-  Handle(Interface_InterfaceModel) newmod;
-  if (myController.IsNull()) return newmod;
-  newmod = myController->NewModel();
+  if (myController.IsNull())
+    return NULL;
+
+  Handle(Interface_InterfaceModel) newmod = myController->NewModel();
   
   SetModel(newmod);
-  if(!myTransferReader->TransientProcess().IsNull())
-    myTransferReader->TransientProcess()->Clear();
+  /*xxx1:if(!myReaderProcess.IsNull())
+    myReaderProcess->Clear();
   //clear all contains of WS
-  myTransferReader->Clear(3);
-  myTransferWriter->Clear(-1);
+  myTransferReader->Clear();*/
+
+  myReaderProcess = new Transfer_TransientProcess;
+  myReaderProcess->SetActor(myController->ActorRead(Model())); //szv_c1:
+
+  myWriterProcess = new Transfer_FinderProcess;
+  myWriterProcess->SetActor(myController->NewActorWrite()); //szv_c1:
 
   return newmod;
 }
 
-
 //=======================================================================
-//function : TransferWriteShape
+//function : CopySendAll
 //purpose  : 
 //=======================================================================
 
-IFSelect_ReturnStatus XSControl_WorkSession::TransferWriteShape (const TopoDS_Shape& shape, const Standard_Boolean compgraph)
+void XSControl_WorkSession::CopySendAll (const Standard_CString theFileName, Interface_CheckIterator &theChecks)
 {
-  IFSelect_ReturnStatus  status;
-  if (myController.IsNull()) return IFSelect_RetError;
-  const Handle(Interface_InterfaceModel) &model = Model();
-  if (model.IsNull()) return IFSelect_RetVoid;
+  theChecks.SetName ("X-STEP WorkSession : Send All");
+  Message::DefaultMessenger() << "** WorkSession : Sending all data"<<endl;
 
-  status = myTransferWriter->TransferWriteShape (model,shape);
-  //  qui s occupe de tout, try/catch inclus
+  const Handle(Interface_Protocol)& aProtocol = myController->Protocol();
+  const Handle(Interface_InterfaceModel) &aModel = thegraph->Graph().Model();
+  if (aModel.IsNull() || aProtocol.IsNull()) return;
 
-  //skl insert param compgraph for XDE writing 10.12.2003
-  if(compgraph) ComputeGraph(Standard_True);
-
-  return status;
-}
-
-
-//=======================================================================
-//function : ClearBinders
-//purpose  : 
-//=======================================================================
-
-void XSControl_WorkSession::ClearBinders()
-{
-  const Handle(Transfer_FinderProcess) &FP = myTransferWriter->FinderProcess();
-  //Due to big number of chains of binders it is necessary to 
-  //collect head binders of each chain in the sequence
-  TColStd_SequenceOfTransient aSeqBnd;
-  TColStd_SequenceOfTransient aSeqShapes;
-  Standard_Integer i =1;
-  for( ; i <= FP->NbMapped();i++) {
-    Handle(Transfer_Binder) bnd = FP->MapItem ( i );
-    if(!bnd.IsNull())
-      aSeqBnd.Append(bnd);
-    Handle(Standard_Transient) ash (FP->Mapped(i));
-    aSeqShapes.Append(ash);
-  }
-  //removing finder process containing result of translation.
-  FP->Clear();
-  ClearData(1);
-  ClearData(5);
-  
-  //removing each chain of binders
-  while(aSeqBnd.Length() >0) {
-    Handle(Transfer_Binder) aBnd = Handle(Transfer_Binder)::DownCast(aSeqBnd.Value(1));
-    Handle(Standard_Transient) ash =aSeqShapes.Value(1);
-    aSeqBnd.Remove(1);
-    aSeqShapes.Remove(1);
-    ash.Nullify();
-    while(!aBnd.IsNull()) {
-      Handle(Transfer_Binder) aBndNext = aBnd->NextResult();
-      aBnd.Nullify();
-      aBnd = aBndNext;
-    }
-    
-  }
-
+  Interface_CheckIterator checklst;
+  const Standard_Boolean res = myController->WriteFile(theFileName,aModel,checklst);
+  theChecks.Merge(checklst);
+  if (!res) theChecks.CCheck(0)->AddFail ("SendAll (WriteFile) has failed");
 }

@@ -69,38 +69,22 @@ public:
   //! and corrects it if necessary.
   Standard_EXPORT virtual Standard_Boolean CheckPCurve (const TopoDS_Edge& edge, const TopoDS_Face& face, const Standard_Real preci, const Standard_Boolean isSeam) const;
   
-  Standard_EXPORT virtual void MergeTransferInfo (const Handle(Transfer_TransientProcess)& TP, const Handle(Standard_Transient)& info, const Standard_Integer startTPitem = 1) const;
+  Standard_EXPORT void MergeTransferInfo (const Handle(Transfer_TransientProcess)& TP, const Handle(Standard_Transient)& info, const Standard_Integer startTPitem = 1) const;
   
   //! Updates translation map (TP or FP) with information
   //! resulting from ShapeProcessing
   //! Parameter startTPitem can be used for optimisation, to
   //! restrict modifications to entities stored in TP starting
   //! from item startTPitem
-  Standard_EXPORT virtual void MergeTransferInfo (const Handle(Transfer_FinderProcess)& FP, const Handle(Standard_Transient)& info) const;
-
-
-
+  Standard_EXPORT void MergeTransferInfo (const Handle(Transfer_FinderProcess)& FP, const Handle(Standard_Transient)& info) const;
 
   DEFINE_STANDARD_RTTIEXT(XSAlgo_AlgoContainer,MMgt_TShared)
 
-protected:
-
-
-
-
-private:
-
+ private:
 
   Handle(XSAlgo_ToolContainer) myTC;
-
-
 };
 
-
 #include <XSAlgo_AlgoContainer.lxx>
-
-
-
-
 
 #endif // _XSAlgo_AlgoContainer_HeaderFile

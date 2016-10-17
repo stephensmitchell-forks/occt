@@ -59,8 +59,8 @@ class StepRepr_RepresentationContext;
 //! shape obtained from it.
 //! Handle(XSControl_WorkSession)
 //! WS = reader.WS();
-//! if ( WS->TransferReader()->HasResult(ent) )
-//! TopoDS_Shape shape = WS->TransferReader()->ShapeResult(ent);
+//! if ( WS->ReaderProcess()->HasResult(ent) )
+//! TopoDS_Shape shape = WS->ReaderProcess()->ShapeResult(ent);
 class STEPControl_Reader  : public XSControl_Reader
 {
 public:

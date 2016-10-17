@@ -13,7 +13,6 @@
 
 
 #include <IFSelect_SelectPointed.hxx>
-#include <IFSelect_Transformer.hxx>
 #include <Interface_CopyControl.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Graph.hxx>
@@ -155,18 +154,6 @@ IFSelect_SelectPointed::IFSelect_SelectPointed ()
     Handle(Standard_Transient) enfr, ento;
     enfr = theitems.Value(i);
     if (!control->Search(enfr,ento)) theitems.Remove(i);
-    else  theitems.SetValue(i,ento);
-  }
-}
-
-    void  IFSelect_SelectPointed::Update
-  (const Handle(IFSelect_Transformer)& trf)
-{
-  Standard_Integer nb = theitems.Length();
-  for (Standard_Integer i = nb; i > 0; i --) {
-    Handle(Standard_Transient) enfr, ento;
-    enfr = theitems.Value(i);
-    if (!trf->Updated(enfr,ento)) theitems.Remove(i);
     else  theitems.SetValue(i,ento);
   }
 }

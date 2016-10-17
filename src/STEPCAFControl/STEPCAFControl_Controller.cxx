@@ -14,21 +14,21 @@
 // commercial license or contractual agreement.
 
 
+#include <Standard_Mutex.hxx>
 #include <Interface_Static.hxx>
 #include <STEPCAFControl_ActorWrite.hxx>
 #include <STEPCAFControl_Controller.hxx>
-#include <XSAlgo.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(STEPCAFControl_Controller,STEPControl_Controller)
 
 //=======================================================================
-//function : STEPCAFControl_Controller
+//function : NewActorWrite
 //purpose  : 
 //=======================================================================
 
-STEPCAFControl_Controller::STEPCAFControl_Controller ()
+Handle(Transfer_ActorOfFinderProcess) STEPCAFControl_Controller::NewActorWrite() const
 {
-  myAdaptorWrite = new STEPCAFControl_ActorWrite;
+  return new STEPCAFControl_ActorWrite;
 }
 
 //=======================================================================
@@ -38,33 +38,40 @@ STEPCAFControl_Controller::STEPCAFControl_Controller ()
 
 void STEPCAFControl_Controller::Init ()
 {
-  static Standard_Boolean inic = Standard_False;
-  if (inic) return;
-  inic = Standard_True;
-  // self-registering
-  Handle(STEPCAFControl_Controller) STEPCTL = new STEPCAFControl_Controller;
-  // do XSAlgo::Init, cause it does not called before.
-  XSAlgo::Init();
-  // do something to avoid warnings...
-  STEPCTL->AutoRecord();
+  static Standard_Mutex gInitMutex;
+  static volatile bool gInitDone = false;
+  if (!gInitDone)
+  {
+    gInitMutex.Lock();
+    if (!gInitDone)
+    {
+      STEPControl_Controller::Init();
 
-  //-----------------------------------------------------------
-  // Few variables for advanced control of translation process
-  //-----------------------------------------------------------
+      //-----------------------------------------------------------
+      // Few variables for advanced control of translation process
+      //-----------------------------------------------------------
 
-  // Indicates whether to write sub-shape names to 'Name' attributes of
-  // STEP Representation Items
-  Interface_Static::Init   ("stepcaf", "write.stepcaf.subshapes.name", 'e', "");
-  Interface_Static::Init   ("stepcaf", "write.stepcaf.subshapes.name", '&', "enum 0");
-  Interface_Static::Init   ("stepcaf", "write.stepcaf.subshapes.name", '&', "eval Off"); // 0
-  Interface_Static::Init   ("stepcaf", "write.stepcaf.subshapes.name", '&', "eval On");  // 1
-  Interface_Static::SetIVal("write.stepcaf.subshapes.name", 0); // Disabled by default
+      // Indicates whether to write sub-shape names to 'Name' attributes of
+      // STEP Representation Items
+      Interface_Static::Init   ("stepcaf", "write.stepcaf.subshapes.name", 'e', "");
+      Interface_Static::Init   ("stepcaf", "write.stepcaf.subshapes.name", '&', "enum 0");
+      Interface_Static::Init   ("stepcaf", "write.stepcaf.subshapes.name", '&', "eval Off"); // 0
+      Interface_Static::Init   ("stepcaf", "write.stepcaf.subshapes.name", '&', "eval On");  // 1
+      Interface_Static::SetIVal("write.stepcaf.subshapes.name", 0); // Disabled by default
 
-  // Indicates whether to read sub-shape names from 'Name' attributes of
-  // STEP Representation Items
-  Interface_Static::Init   ("stepcaf", "read.stepcaf.subshapes.name", 'e', "");
-  Interface_Static::Init   ("stepcaf", "read.stepcaf.subshapes.name", '&', "enum 0");
-  Interface_Static::Init   ("stepcaf", "read.stepcaf.subshapes.name", '&', "eval Off"); // 0
-  Interface_Static::Init   ("stepcaf", "read.stepcaf.subshapes.name", '&', "eval On");  // 1
-  Interface_Static::SetIVal("read.stepcaf.subshapes.name", 0); // Disabled by default
+      // Indicates whether to read sub-shape names from 'Name' attributes of
+      // STEP Representation Items
+      Interface_Static::Init   ("stepcaf", "read.stepcaf.subshapes.name", 'e', "");
+      Interface_Static::Init   ("stepcaf", "read.stepcaf.subshapes.name", '&', "enum 0");
+      Interface_Static::Init   ("stepcaf", "read.stepcaf.subshapes.name", '&', "eval Off"); // 0
+      Interface_Static::Init   ("stepcaf", "read.stepcaf.subshapes.name", '&', "eval On");  // 1
+      Interface_Static::SetIVal("read.stepcaf.subshapes.name", 0); // Disabled by default
+
+      Handle(STEPCAFControl_Controller) aController = new STEPCAFControl_Controller;
+      aController->AutoRecord();
+
+      gInitDone = true;
+	}
+    gInitMutex.Unlock();
+  }
 }

@@ -20,27 +20,6 @@
 #include <STEPConstruct_Tool.hxx>
 #include <Transfer_FinderProcess.hxx>
 #include <Transfer_TransientProcess.hxx>
-#include <XSControl_TransferReader.hxx>
-#include <XSControl_TransferWriter.hxx>
-#include <XSControl_WorkSession.hxx>
-
-//=======================================================================
-//function : STEPConstruct_Tool
-//purpose  : 
-//=======================================================================
-STEPConstruct_Tool::STEPConstruct_Tool () 
-{
-}
-
-//=======================================================================
-//function : STEPConstruct_Tool
-//purpose  : 
-//=======================================================================
-
-STEPConstruct_Tool::STEPConstruct_Tool (const Handle(XSControl_WorkSession) &WS) 
-{
-  SetWS ( WS );
-}
 
 //=======================================================================
 //function : Init
@@ -58,12 +37,10 @@ Standard_Boolean STEPConstruct_Tool::SetWS (const Handle(XSControl_WorkSession) 
   myHGraph = myWS->HGraph();
   
   // collect data on reading process
-  const Handle(XSControl_TransferReader) &TR = WS->TransferReader();
-  if ( ! TR.IsNull() ) myTransientProcess = TR->TransientProcess();
+  myTransientProcess = myWS->ReaderProcess();
 
   // collect data on writing process
-  const Handle(XSControl_TransferWriter) &TW = myWS->TransferWriter();
-  if ( ! TW.IsNull() ) myFinderProcess = TW->FinderProcess();
+  myFinderProcess = myWS->WriterProcess();
 
   return ! myTransientProcess.IsNull() && ! myFinderProcess.IsNull();
 }
