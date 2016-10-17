@@ -96,6 +96,9 @@ public:
 
   virtual Standard_Boolean IsOverlapAllowed() const = 0;
 
+  //! Stores plane equations to the given vector
+  virtual void GetPlanes (NCollection_Vector<NCollection_Vec4<Standard_Real> >& thePlaneEquations) const = 0;
+
 protected:
   SelectionType myActiveSelectionType;      //!< Active selection type: point, box or polyline
 };

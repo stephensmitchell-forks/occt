@@ -162,6 +162,9 @@ public:
   //! Computes depth range for global (defined for the whole view) clipping planes.
   Standard_EXPORT virtual void SetViewClipping (const Graphic3d_SequenceOfHClipPlane& /*thePlanes*/) {};
 
+  //! Stores plane equations to the given vector
+  Standard_EXPORT virtual void GetPlanes (NCollection_Vector<SelectMgr_Vec4>& thePlaneEquations) const = 0;
+
   DEFINE_STANDARD_RTTIEXT(SelectMgr_BaseFrustum,Standard_Transient)
 
 protected:

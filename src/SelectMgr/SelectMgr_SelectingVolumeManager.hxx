@@ -183,6 +183,18 @@ public:
     return mySelectingVolumes[myActiveSelectionType];
   }
 
+  //! Stores plane equations to the given vector
+  virtual void GetPlanes (NCollection_Vector<SelectMgr_Vec4>& thePlaneEquations) const Standard_OVERRIDE
+  {
+    if (myActiveSelectionType == Unknown)
+    {
+      thePlaneEquations.Clear();
+      return;
+    }
+
+    return mySelectingVolumes[myActiveSelectionType]->GetPlanes (thePlaneEquations);
+  }
+
 private:
   enum { Frustum, FrustumSet, VolumeTypesNb };       //!< Defines the amount of available selecting volumes
 

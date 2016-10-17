@@ -117,6 +117,10 @@ public:
   inline gp_Pnt GetNearPnt() const { return myNearPickedPnt; }
 
   inline gp_Pnt GetFarPnt() const { return myFarPickedPnt; }
+
+  //! Stores plane equations to the given vector
+  Standard_EXPORT virtual void GetPlanes (NCollection_Vector<SelectMgr_Vec4>& thePlaneEquations) const Standard_OVERRIDE;
+
 protected:
 
   Standard_EXPORT void segmentSegmentDistance (const gp_Pnt& theSegPnt1,
