@@ -803,11 +803,6 @@ void Extrema_GenExtPS::Perform(const gp_Pnt& P)
   myDone = Standard_False;
   myF.SetPoint(P);
   
-  if (myS->BasisSurface ().IsNull ())
-  {
-    return;
-  }
-
   if(myAlgo == Extrema_ExtAlgo_Grad)
   {
     BuildGrid(P);
