@@ -28,6 +28,7 @@ public:
 
   //! Constructor.
   Standard_EXPORT BRepMesh_CylinderRangeSplitter()
+    : myDu(1.)
   {
   }
 
@@ -36,9 +37,20 @@ public:
   {
   }
 
+  //! Resets this splitter. Must be called before first use.
+  Standard_EXPORT virtual void Reset(const IMeshData::IFaceHandle& theDFace,
+                                     const IMeshTools_Parameters&  theParameters)
+  {
+    BRepMesh_DefaultRangeSplitter::Reset(theDFace, theParameters);
+
+    const Standard_Real aRadius = GetDFace()->GetSurface()->Cylinder().Radius();
+    myDu = GCPnts_TangentialDeflection::ArcAngularStep(
+      aRadius, GetDFace()->GetDeflection(), theParameters.Angle, theParameters.MinSize);
+  }
+
   //! Returns list of nodes generated using surface data and specified parameters.
   Standard_EXPORT virtual Handle(IMeshData::ListOfPnt2d) GenerateSurfaceNodes(
-    const IMeshTools_Parameters& theParameters) const Standard_OVERRIDE
+    const IMeshTools_Parameters& /*theParameters*/) const Standard_OVERRIDE
   {
     const std::pair<Standard_Real, Standard_Real>& aRangeU = GetRangeU();
     const std::pair<Standard_Real, Standard_Real>& aRangeV = GetRangeV();
@@ -53,10 +65,9 @@ public:
     if (aArcLen > GetDFace()->GetDeflection())
     {
       // Calculate parameters for iteration in U direction
-      const Standard_Real Du = GCPnts_TangentialDeflection::ArcAngularStep(
-        aRadius, GetDFace()->GetDeflection(), theParameters.Angle, theParameters.MinSize);
-      nbU = (Standard_Integer) (su / Du);
+      nbU = (Standard_Integer) (su / myDu);
 
+      /*
       // Calculate parameters for iteration in V direction
       const Standard_Real aDv = nbU*sv / aArcLen;
       // Protection against overflow during casting to int in case 
@@ -64,6 +75,7 @@ public:
       nbV = aDv > static_cast<Standard_Real> (IntegerLast()) ?
         0 : (Standard_Integer) (aDv);
       nbV = Min(nbV, 100 * nbU);
+      */
     }
 
     const Standard_Real Du = su / (nbU + 1);
@@ -85,6 +97,21 @@ public:
   
     return aNodes;
   }
+
+protected:
+
+  //! Computes parametric delta taking length along U and V into account.
+  virtual void computeDelta(
+    const Standard_Real /*theLengthU*/,
+    const Standard_Real theLengthV)
+  {
+    myDelta.first  = myDu / theLengthV;
+    myDelta.second = 1.;
+  }
+
+private:
+
+  Standard_Real myDu;
 };
 
 #endif

@@ -38,9 +38,10 @@ public:
   }
 
   //! Resets this splitter.
-  Standard_EXPORT virtual void Reset(const IMeshData::IFaceHandle& theDFace)
+  Standard_EXPORT virtual void Reset(const IMeshData::IFaceHandle& theDFace,
+                                     const IMeshTools_Parameters&  theParameters)
   {
-    BRepMesh_DefaultRangeSplitter::Reset(theDFace);
+    BRepMesh_DefaultRangeSplitter::Reset(theDFace, theParameters);
     myUParams.Clear();
     myVParams.Clear();
     myAllocator->Reset(Standard_False);

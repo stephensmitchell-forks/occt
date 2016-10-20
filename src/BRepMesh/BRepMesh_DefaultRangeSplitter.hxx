@@ -45,7 +45,8 @@ public:
   }
 
   //! Resets this splitter. Must be called before first use.
-  Standard_EXPORT virtual void Reset(const IMeshData::IFaceHandle& theDFace)
+  Standard_EXPORT virtual void Reset(const IMeshData::IFaceHandle& theDFace,
+                                     const IMeshTools_Parameters& /*theParameters*/)
   {
     myDFace = theDFace;
     myRangeU.first  = myRangeV.first  =  1.e100;
@@ -79,15 +80,8 @@ public:
 
     if (myIsValid)
     {
-      const Standard_Real aDiffU = myRangeU.second - myRangeU.first;
-      const Standard_Real aDiffV = myRangeV.second - myRangeV.first;
-
-      const Standard_Real aDeflectionUV = 1.e-05;
-      myTolerance.first  = Max(Precision::PConfusion(), aDeflectionUV * aDiffU);
-      myTolerance.second = Max(Precision::PConfusion(), aDeflectionUV * aDiffV);
-
-      myDelta.first  = aDiffU / (aLengthU < myTolerance.first  ? 1. : aLengthU);
-      myDelta.second = aDiffV / (aLengthV < myTolerance.second ? 1. : aLengthV);
+      computeTolerance(aLengthU, aLengthV);
+      computeDelta    (aLengthU, aLengthV);
     }
   }
 
@@ -126,6 +120,33 @@ public:
   inline gp_Pnt Point(const gp_Pnt2d& thePoint2d) const
   {
     return GetSurface()->Value(thePoint2d.X(), thePoint2d.Y());
+  }
+
+protected:
+
+  //! Computes parametric tolerance taking length along U and V into account.
+  virtual void computeTolerance(
+    const Standard_Real /*theLenU*/,
+    const Standard_Real /*theLenV*/)
+  {
+    const Standard_Real aDiffU = myRangeU.second - myRangeU.first;
+    const Standard_Real aDiffV = myRangeV.second - myRangeV.first;
+
+    const Standard_Real aDeflectionUV = 1.e-05;
+    myTolerance.first  = Max(Precision::PConfusion(), aDeflectionUV * aDiffU);
+    myTolerance.second = Max(Precision::PConfusion(), aDeflectionUV * aDiffV);
+  }
+
+  //! Computes parametric delta taking length along U and V and value of tolerance into account.
+  virtual void computeDelta(
+    const Standard_Real theLengthU,
+    const Standard_Real theLengthV)
+  {
+    const Standard_Real aDiffU = myRangeU.second - myRangeU.first;
+    const Standard_Real aDiffV = myRangeV.second - myRangeV.first;
+
+    myDelta.first  = aDiffU / (theLengthU < myTolerance.first  ? 1. : theLengthU);
+    myDelta.second = aDiffV / (theLengthV < myTolerance.second ? 1. : theLengthV);
   }
 
 public:

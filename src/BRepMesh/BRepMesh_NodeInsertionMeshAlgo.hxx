@@ -49,7 +49,7 @@ public:
     const IMeshData::IFaceHandle& theDFace,
     const IMeshTools_Parameters&  theParameters) Standard_OVERRIDE
   {
-    myRangeSplitter.Reset(theDFace);
+    myRangeSplitter.Reset(theDFace, theParameters);
     myClassifier = new BRepMesh_Classifier;
     BaseAlgo::Perform(theDFace, theParameters);
     myClassifier.Nullify();
