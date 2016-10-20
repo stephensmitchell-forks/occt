@@ -126,10 +126,7 @@ void BRepMesh_SelectorOfDataStructureOfDelaun::NeighboursOfElement(
 void BRepMesh_SelectorOfDataStructureOfDelaun::NeighboursByEdgeOf(
   const BRepMesh_Triangle& theElement)
 {
-  Standard_Integer e[3];
-  Standard_Boolean o[3];
-  theElement.Edges(e, o);
-
+  const Standard_Integer(&e)[3] = theElement.myEdges;
   for (Standard_Integer i = 0; i < 3; ++i)
     elementsOfLink(e[i]);
 }

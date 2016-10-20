@@ -111,7 +111,6 @@ namespace IMeshData
   typedef NCollection_Vector<TopAbs_Orientation> VectorOfOrientation;
   typedef NCollection_Vector<Handle(BndBox2dTree)>  VectorOfHBndBox2dTree;
   typedef NCollection_Vector<BRepMesh_Triangle>     VectorOfElements;
-  typedef NCollection_Vector<Standard_Integer>      VectorOfInteger;
   typedef NCollection_Vector<BRepMesh_Circle>       VectorOfCircle;
 
   typedef NCollection_Array1<BRepMesh_Vertex>                       Array1OfVertexOfDelaun;

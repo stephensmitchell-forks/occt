@@ -39,7 +39,7 @@ public:
     const Handle(NCollection_IncAllocator)& theAllocator)
   : myTolerance(theTolerance*theTolerance),
     myResIndices(theAllocator),
-    myCircles(theReservedSize)
+    myCircles(theReservedSize, theAllocator)
   {
   }
 
@@ -83,8 +83,23 @@ public:
   //! Performs inspection of a circle with the given index.
   //! @param theTargetIndex index of a circle to be checked.
   //! @return status of the check.
-  Standard_EXPORT NCollection_CellFilter_Action Inspect(
-    const Standard_Integer theTargetIndex);
+  inline NCollection_CellFilter_Action Inspect(
+    const Standard_Integer theTargetIndex)
+  {
+    BRepMesh_Circle& aCircle = myCircles(theTargetIndex);
+    const Standard_Real& aRadius = aCircle.Radius();
+    if (aRadius < 0.)
+      return CellFilter_Purge;
+
+    gp_XY& aLoc = const_cast<gp_XY&>(aCircle.Location());
+
+    const Standard_Real aDX = myPoint.ChangeCoord(1) - aLoc.ChangeCoord(1);
+    const Standard_Real aDY = myPoint.ChangeCoord(2) - aLoc.ChangeCoord(2);
+    if ((aDX * aDX + aDY * aDY) - (aRadius * aRadius) <= myTolerance)
+      myResIndices.Append(theTargetIndex);
+
+    return CellFilter_Keep;
+  }
 
   //! Checks indices for equlity.
   static Standard_Boolean IsEqual(

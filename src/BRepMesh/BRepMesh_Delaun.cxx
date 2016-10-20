@@ -231,10 +231,10 @@ void BRepMesh_Delaun::deleteTriangle(const Standard_Integer          theIndex,
 {
   myCircles.Delete( theIndex );
 
-  Standard_Integer e[3];
-  Standard_Boolean o[3];
-  GetTriangle( theIndex ).Edges( e, o );
-  
+  const BRepMesh_Triangle& aElement = GetTriangle(theIndex);
+  const Standard_Integer(&e)[3] = aElement.myEdges;
+  const Standard_Boolean(&o)[3] = aElement.myOrientations;
+
   myMeshData->RemoveElement( theIndex );
 
   for ( Standard_Integer i = 0; i < 3; ++i )
@@ -256,9 +256,7 @@ void BRepMesh_Delaun::compute(IMeshData::VectorOfInteger& theVertexIndexes)
 {
   // Insertion of edges of super triangles in the list of free edges: 
   IMeshData::MapOfIntegerInteger aLoopEdges(10, myMeshData->Allocator());
-  Standard_Integer e[3];
-  Standard_Boolean o[3];
-  mySupTrian.Edges( e, o );
+  const Standard_Integer(&e)[3] = mySupTrian.myEdges;
                     
   aLoopEdges.Bind( e[0], Standard_True );
   aLoopEdges.Bind( e[1], Standard_True );
@@ -487,9 +485,8 @@ void BRepMesh_Delaun::createTrianglesOnNewVertices(
         IMeshData::ListOfInteger::Iterator aCircleIt1( aCirclesList );
         for ( ; aCircleIt1.More(); aCircleIt1.Next() )
         {
-          Standard_Integer e[3];
-          Standard_Boolean o[3];
-          GetTriangle( aCircleIt1.Value() ).Edges( e, o );
+          const BRepMesh_Triangle& aElement = GetTriangle(aCircleIt1.Value());
+          const Standard_Integer(&e)[3] = aElement.myEdges;
                                                    
           if ( aLoopEdges.IsBound( e[0] ) || 
                aLoopEdges.IsBound( e[1] ) || 
@@ -525,8 +522,6 @@ void BRepMesh_Delaun::insertInternalEdges()
 
   // Destruction of triancles intersecting internal edges 
   // and their replacement by makeshift triangles
-  Standard_Integer e[3];
-  Standard_Boolean o[3];
   IMeshData::IteratorOfMapOfInteger anInernalEdgesIt( *anInternalEdges );
   for ( ; anInernalEdgesIt.More(); anInernalEdgesIt.Next() )
   {
@@ -537,7 +532,10 @@ void BRepMesh_Delaun::insertInternalEdges()
     Standard_Boolean isGo[2] = { Standard_True, Standard_True };
     for (Standard_Integer aTriangleIt = 1; aTriangleIt <= aPair.Extent(); ++aTriangleIt)
     {
-      GetTriangle(aPair.Index(aTriangleIt)).Edges(e, o);
+      const BRepMesh_Triangle& aElement = GetTriangle(aPair.Index(aTriangleIt));
+      const Standard_Integer(&e)[3] = aElement.myEdges;
+      const Standard_Boolean(&o)[3] = aElement.myOrientations;
+
       for (Standard_Integer i = 0; i < 3; ++i)
       {
         if (e[i] == aLinkIndex)
@@ -586,9 +584,8 @@ Standard_Boolean BRepMesh_Delaun::isBoundToFrontier(
     if ( aTriId < 0 || aTriId == thePrevElementId )
       continue;
 
-    Standard_Integer anEdges[3];
-    Standard_Boolean anEdgesOri[3];
-    GetTriangle( aTriId ).Edges( anEdges, anEdgesOri );
+    const BRepMesh_Triangle& aElement = GetTriangle(aTriId);
+    const Standard_Integer(&anEdges)[3] = aElement.myEdges;
 
     for ( Standard_Integer anEdgeIt = 0; anEdgeIt < 3; ++anEdgeIt )
     {
@@ -651,9 +648,8 @@ void BRepMesh_Delaun::cleanupMesh()
       Standard_Integer aTriId = aPair.FirstIndex();
 
       // Check that the connected triangle is not surrounded by another triangles
-      Standard_Integer anEdges[3];
-      Standard_Boolean anEdgesOri[3];
-      GetTriangle( aTriId ).Edges( anEdges, anEdgesOri );
+      const BRepMesh_Triangle& aElement = GetTriangle(aTriId);
+      const Standard_Integer(&anEdges)[3] = aElement.myEdges;
 
       Standard_Boolean isCanNotBeRemoved = Standard_True;
       for ( Standard_Integer aCurEdgeIdx = 0; aCurEdgeIdx < 3; ++aCurEdgeIdx )
@@ -747,9 +743,9 @@ void BRepMesh_Delaun::frontierAdjust()
         if( aPriorElemId < 0 )
           continue;
             
-        Standard_Integer e[3];
-        Standard_Boolean o[3];
-        GetTriangle( aPriorElemId ).Edges( e, o );
+        const BRepMesh_Triangle& aElement = GetTriangle(aPriorElemId);
+        const Standard_Integer(&e)[3] = aElement.myEdges;
+        const Standard_Boolean(&o)[3] = aElement.myOrientations;
 
         Standard_Boolean isTriangleFound = Standard_False;
         for ( Standard_Integer n = 0; n < 3; ++n )
@@ -1170,9 +1166,9 @@ void BRepMesh_Delaun::cleanupPolygon(const IMeshData::SequenceOfInteger& thePoly
       if ( anElemId < 0 )
         continue;
 
-      Standard_Integer anEdges[3];
-      Standard_Boolean anEdgesOri[3];
-      GetTriangle( anElemId ).Edges(anEdges, anEdgesOri);
+      const BRepMesh_Triangle& aElement = GetTriangle(anElemId);
+      const Standard_Integer(&anEdges)[3] = aElement.myEdges;
+      const Standard_Boolean(&anEdgesOri)[3] = aElement.myOrientations;
 
       Standard_Integer isTriangleFound = Standard_False;
       for ( Standard_Integer anEdgeIt = 0; anEdgeIt < 3; ++anEdgeIt )
@@ -2260,12 +2256,10 @@ Standard_Boolean BRepMesh_Delaun::Contains( const Standard_Integer theTriangleId
 {
   theEdgeOn = 0;
   
-  Standard_Integer e[3];
-  Standard_Boolean o[3];
   Standard_Integer p[3];
 
   const BRepMesh_Triangle& aElement = GetTriangle( theTriangleId );
-  aElement.Edges(e, o);
+  const Standard_Integer(&e)[3] = aElement.myEdges;
 
   const BRepMesh_Edge* anEdges[3] = { &GetEdge( e[0] ),
                                       &GetEdge( e[1] ),

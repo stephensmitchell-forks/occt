@@ -160,10 +160,7 @@ private:
     const Standard_Integer (&theNodesIndices)[3],
     TriangleNodeInfo       (&theInfo)[3]) const
   {
-    Standard_Integer e[3];
-    Standard_Boolean o[3];
-    theTriangle.Edges(e, o);
-
+    const Standard_Integer(&e)[3] = theTriangle.myEdges;
     for (Standard_Integer i = 0; i < 3; ++i)
     {
       const BRepMesh_Vertex& aVertex = getStructure()->GetNode(theNodesIndices[i]);
