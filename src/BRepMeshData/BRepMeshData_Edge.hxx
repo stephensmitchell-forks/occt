@@ -21,7 +21,7 @@
 #include <NCollection_IncAllocator.hxx>
 #include <IMeshData_Types.hxx>
 
-//! Class implements discrete edge interface.
+//! Default implementation of edge data model entity.
 class BRepMeshData_Edge : public IMeshData_Edge
 {
 public:

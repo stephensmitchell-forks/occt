@@ -35,8 +35,8 @@ public:
 
   //! Constructs a link between two vertices.
   BRepMesh_OrientedEdge(
-    const Standard_Integer         theFirstNode,
-    const Standard_Integer         theLastNode)
+    const Standard_Integer theFirstNode,
+    const Standard_Integer theLastNode)
     : myFirstNode(theFirstNode),
       myLastNode(theLastNode)
   {
@@ -71,7 +71,7 @@ public:
   }
 
   //! Alias for IsEqual.
-  Standard_Boolean operator ==(const BRepMesh_OrientedEdge& Other) const
+  inline Standard_Boolean operator ==(const BRepMesh_OrientedEdge& Other) const
   {
     return IsEqual(Other);
   }

@@ -40,7 +40,7 @@ BRepMesh_DelaunayBaseMeshAlgo::~BRepMesh_DelaunayBaseMeshAlgo()
 void BRepMesh_DelaunayBaseMeshAlgo::generateMesh()
 {
   const Handle(BRepMesh_DataStructureOfDelaun)& aStructure = getStructure();
-  const Handle(VectorOfPnt)&                         aNodesMap  = getNodesMap();
+  const Handle(VectorOfPnt)&                    aNodesMap  = getNodesMap();
 
   IMeshData::VectorOfInteger aVerticesOrder(aNodesMap->Size(), getAllocator());
   for (Standard_Integer i = 1; i <= aNodesMap->Size(); ++i)

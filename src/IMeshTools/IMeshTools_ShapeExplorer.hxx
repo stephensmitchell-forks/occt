@@ -21,7 +21,7 @@
 #include <IMeshTools_ShapeVisitor.hxx>
 #include <TopoDS_Shape.hxx>
 
-//! Interface class for explores of TopoDS_Shape.
+//! Interface class for tools exploring TopoDS_Shape.
 class IMeshTools_ShapeExplorer : public IMeshData_Shape
 {
 public:

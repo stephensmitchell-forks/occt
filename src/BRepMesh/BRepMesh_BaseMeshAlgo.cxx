@@ -288,7 +288,7 @@ void BRepMesh_BaseMeshAlgo::collectNodes(
   const Handle(Poly_Triangulation)& theTriangulation)
 {
   // Store mesh nodes
-  TColgp_Array1OfPnt&   aNodes = theTriangulation->ChangeNodes();
+  TColgp_Array1OfPnt&   aNodes   = theTriangulation->ChangeNodes();
   TColgp_Array1OfPnt2d& aNodes2d = theTriangulation->ChangeUVNodes();
 
   for (Standard_Integer i = 1; i <= myNodesMap->Size(); ++i)

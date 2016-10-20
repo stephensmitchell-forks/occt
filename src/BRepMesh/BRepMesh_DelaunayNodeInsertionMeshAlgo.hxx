@@ -18,8 +18,8 @@
 
 #include <BRepMesh_NodeInsertionMeshAlgo.hxx>
 
-//! Extends base Delaunay meshing algo in order to enable 
-//! possibility of addition of free vertices into the mesh.
+//! Extends base Delaunay meshing algo in order to enable possibility 
+//! of addition of free vertices and internal nodes into the mesh.
 template<class RangeSplitter>
 class BRepMesh_DelaunayNodeInsertionMeshAlgo : public BRepMesh_NodeInsertionMeshAlgo<RangeSplitter, BRepMesh_DelaunayBaseMeshAlgo>
 {

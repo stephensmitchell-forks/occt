@@ -22,7 +22,7 @@
 #include <IMeshData_Face.hxx>
 #include <IMeshData_Edge.hxx>
 
-//! Class implements discrete model interface of a shape.
+//! Default implementation of model entity.
 class BRepMeshData_Model : public IMeshData_Model
 {
 public:

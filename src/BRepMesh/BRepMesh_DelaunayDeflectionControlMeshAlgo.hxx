@@ -19,8 +19,8 @@
 #include <BRepMesh_DelaunayNodeInsertionMeshAlgo.hxx>
 #include <BRepMesh_GeomTool.hxx>
 
-//! Extends base Delaunay meshing algo in order to enable 
-//! possibility of addition of free vertices into the mesh.
+//! Extends node insertion Delaunay meshing algo in order to control 
+//! deflection of generated trianges. Splits triangles failing the check.
 template<class RangeSplitter>
 class BRepMesh_DelaunayDeflectionControlMeshAlgo : public BRepMesh_DelaunayNodeInsertionMeshAlgo<RangeSplitter>
 {

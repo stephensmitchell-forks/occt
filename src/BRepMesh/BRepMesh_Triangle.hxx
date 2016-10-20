@@ -103,7 +103,7 @@ public:
   //! Returns hash code for this triangle.
   //! @param theUpper upper index in the container.
   //! @return hash code.
-  Standard_Integer HashCode(const Standard_Integer theUpper) const
+  inline Standard_Integer HashCode(const Standard_Integer theUpper) const
   {
     return ::HashCode(myEdge1 + myEdge2 + myEdge3, theUpper);
   }
@@ -111,7 +111,7 @@ public:
   //! Checks for equality with another triangle.
   //! @param theOther triangle to be checked against this one.
   //! @return TRUE if equal, FALSE if not.
-  Standard_Boolean IsEqual(const BRepMesh_Triangle& theOther) const
+  inline Standard_Boolean IsEqual(const BRepMesh_Triangle& theOther) const
   {
     if (myMovability == BRepMesh_Deleted || theOther.myMovability == BRepMesh_Deleted)
       return Standard_False;
@@ -141,7 +141,7 @@ public:
   }
   
   //! Alias for IsEqual.
-  Standard_Boolean operator ==(const BRepMesh_Triangle& theOther) const
+  inline Standard_Boolean operator ==(const BRepMesh_Triangle& theOther) const
   {
     return IsEqual(theOther);
   }

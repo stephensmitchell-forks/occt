@@ -20,7 +20,7 @@
 #include <IMeshData_Face.hxx>
 #include <IMeshData_Wire.hxx>
 
-//! Class implements discrete face interface.
+//! Default implementation of face data model entity.
 class BRepMeshData_Face : public IMeshData_Face
 {
 public:
@@ -29,7 +29,7 @@ public:
 
   //! Constructor.
   Standard_EXPORT BRepMeshData_Face (
-    const TopoDS_Face& theFace,
+    const TopoDS_Face&                       theFace,
     const Handle (NCollection_IncAllocator)& theAllocator);
 
   //! Destructor.

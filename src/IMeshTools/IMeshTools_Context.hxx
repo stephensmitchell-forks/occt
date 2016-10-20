@@ -24,6 +24,8 @@
 #include <IMeshTools_ModelAlgo.hxx>
 
 //! Interface class representing context of BRepMesh algorithm.
+//! Intended to cache discrete model and instances of tools for 
+//! its processing.
 class IMeshTools_Context : public IMeshData_Shape
 {
 public:

@@ -19,7 +19,9 @@
 #include <Standard_Type.hxx>
 #include <TopoDS_Shape.hxx>
 
-//! Interface class representing shaped model.
+//! Interface class representing model with associated TopoDS_Shape.
+//! Intended for inheritance by structures and algorithms keeping 
+//! reference TopoDS_Shape.
 class IMeshData_Shape : public Standard_Transient
 {
 public:

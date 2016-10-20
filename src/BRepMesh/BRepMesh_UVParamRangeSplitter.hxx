@@ -81,8 +81,8 @@ public:
 
 protected:
   Handle(NCollection_IncAllocator) myAllocator;
-  IMeshData::IMapOfReal             myUParams;
-  IMeshData::IMapOfReal             myVParams;
+  IMeshData::IMapOfReal            myUParams;
+  IMeshData::IMapOfReal            myVParams;
 };
 
 #endif

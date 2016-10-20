@@ -19,6 +19,7 @@
 #include <IMeshTools_Context.hxx>
 
 //! Class implemeting default context of BRepMesh algorithm.
+//! Initializes context by default algorithms.
 class BRepMesh_Context : public IMeshTools_Context
 {
 public:

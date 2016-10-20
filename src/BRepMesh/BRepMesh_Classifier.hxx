@@ -26,8 +26,8 @@
 class gp_Pnt2d;
 class CSLib_Class2d;
 
-//! Auxilary class contains information about correctness of discretized 
-//! face and used for classification of points regarding face internals.
+//! Auxilary class intended for classification of points
+//! regarding internals of discrete face.
 class BRepMesh_Classifier : public Standard_Transient
 {
 public:
@@ -40,7 +40,7 @@ public:
   
   //! Performs classification of the given point regarding to face internals.
   //! @param thePoint Point in parametric space to be classified.
-  //! @return 
+  //! @return TopAbs_IN if point lies within face boundaries and TopAbs_OUT elsewhere.
   Standard_EXPORT TopAbs_State Perform(const gp_Pnt2d& thePoint) const;
 
   //! Registers wire specified by sequence of points for 

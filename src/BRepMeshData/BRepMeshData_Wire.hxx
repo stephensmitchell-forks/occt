@@ -19,7 +19,7 @@
 #include <IMeshData_Wire.hxx>
 #include <IMeshData_Types.hxx>
 
-//! Class implements discrete wire interface.
+//! Default implementation of wire data model entity.
 class BRepMeshData_Wire : public IMeshData_Wire
 {
 public:

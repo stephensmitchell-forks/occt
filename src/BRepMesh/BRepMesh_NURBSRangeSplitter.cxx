@@ -218,17 +218,17 @@ namespace
 
   private:
 
-    IMeshData::IFaceHandle             myDFace;
-    Handle(Geom_Surface)               mySurface;
-    Standard_Boolean                   myIsoU;
-    Handle(IMeshData::SequenceOfReal)  myParams;
-    Handle(IMeshData::SequenceOfReal)  myControlParams;
+    IMeshData::IFaceHandle                myDFace;
+    Handle(Geom_Surface)                  mySurface;
+    Standard_Boolean                      myIsoU;
+    Handle(IMeshData::SequenceOfReal)     myParams;
+    Handle(IMeshData::SequenceOfReal)     myControlParams;
 
-    Handle(IMeshData::MapOfReal)       myParamsForbiddenToRemove;
-    Handle(IMeshData::MapOfReal)       myControlParamsForbiddenToRemove;
+    Handle(IMeshData::MapOfReal)          myParamsForbiddenToRemove;
+    Handle(IMeshData::MapOfReal)          myControlParamsForbiddenToRemove;
 
-    Handle(NCollection_IncAllocator)   myAllocator;
-    Handle(IMeshData::MapOfReal)       myControlParamsToRemove;
+    Handle(NCollection_IncAllocator)      myAllocator;
+    Handle(IMeshData::MapOfReal)          myControlParamsToRemove;
 
 
     IMeshTools_Parameters                 myParameters;
@@ -403,7 +403,7 @@ Handle(IMeshData::ListOfPnt2d) BRepMesh_NURBSRangeSplitter::GenerateSurfaceNodes
 //purpose  : 
 //=======================================================================
 Handle(IMeshData::SequenceOfReal) BRepMesh_NURBSRangeSplitter::computeGrainAndFilterParameters(
-  const IMeshData::IMapOfReal&             theSourceParams,
+  const IMeshData::IMapOfReal&            theSourceParams,
   const Standard_Real                     theTol2d,
   const Standard_Real                     theRangeDiff,
   const Standard_Real                     theDelta,
@@ -430,7 +430,7 @@ Handle(IMeshData::SequenceOfReal) BRepMesh_NURBSRangeSplitter::computeGrainAndFi
 //purpose  : 
 //=======================================================================
 Handle(IMeshData::SequenceOfReal) BRepMesh_NURBSRangeSplitter::filterParameters(
-  const IMeshData::IMapOfReal&             theParams,
+  const IMeshData::IMapOfReal&            theParams,
   const Standard_Real                     theMinDist,
   const Standard_Real                     theFilterDist,
   const Handle(NCollection_IncAllocator)& theAllocator) const

@@ -31,19 +31,6 @@ class BRepMesh_Deflection : public Standard_Transient
 {
 public:
 
-  //! Returns maximum tolerance of the given face.
-  //! Considers tolerances of edges and vertices contained in the given face.
-  Standard_EXPORT static Standard_Real MaxFaceTolerance (
-    const TopoDS_Face& theFace);
-
-  //! Gets the maximum dimension of the given bounding box.
-  //! If the given bounding box is void leaves the resulting value unchanged.
-  //! @param theBox bounding box to be processed.
-  //! @param theMaxDimension maximum dimension of the given box.
-  Standard_EXPORT static void BoxMaxDimension (
-    const Bnd_Box& theBox,
-    Standard_Real& theMaxDimension);
-
   //! Returns relative deflection for edge with respect to shape size.
   //! @param theEdge edge for which relative deflection should be computed.
   //! @param theDeflection absolute deflection.

@@ -26,78 +26,6 @@
 #include <TopoDS_Vertex.hxx>
 #include <TopExp.hxx>
 
-namespace {
-  //! Auxilary struct to take a tolerance of edge.
-  struct EdgeTolerance
-  {
-    static Standard_Real Get (const TopoDS_Shape& theEdge)
-    {
-      return BRep_Tool::Tolerance (TopoDS::Edge (theEdge));
-    }
-  };
-
-  //! Auxilary struct to take a tolerance of vertex.
-  struct VertexTolerance
-  {
-    static Standard_Real Get (const TopoDS_Shape& theVertex)
-    {
-      return BRep_Tool::Tolerance (TopoDS::Vertex (theVertex));
-    }
-  };
-
-  //! Returns maximum tolerance of face element of the specified type.
-  template<TopAbs_ShapeEnum ShapeType, class ToleranceExtractor>
-  Standard_Real MaxTolerance (const TopoDS_Face& theFace)
-  {
-    Standard_Real aMaxTolerance = RealFirst ();
-    TopExp_Explorer aExplorer (theFace, ShapeType);
-    for (; aExplorer.More (); aExplorer.Next ())
-    {
-      Standard_Real aTolerance = ToleranceExtractor::Get (aExplorer.Current ());
-      if (aTolerance > aMaxTolerance)
-      {
-        aMaxTolerance = aTolerance;
-      }
-    }
-
-    return aMaxTolerance;
-  }
-}
-
-//=======================================================================
-//function : BoxMaxDimension
-//purpose  : 
-//=======================================================================
-Standard_Real BRepMesh_Deflection::MaxFaceTolerance (const TopoDS_Face& theFace)
-{
-  Standard_Real aMaxTolerance = BRep_Tool::Tolerance (theFace);
-
-  Standard_Real aTolerance = Max (
-    MaxTolerance<TopAbs_EDGE,   EdgeTolerance  > (theFace),
-    MaxTolerance<TopAbs_VERTEX, VertexTolerance> (theFace));
-
-  return Max (aMaxTolerance, aTolerance);
-}
-
-//=======================================================================
-//function : BoxMaxDimension
-//purpose  : 
-//=======================================================================
-void BRepMesh_Deflection::BoxMaxDimension (
-  const Bnd_Box& theBox,
-  Standard_Real& theMaxDimension)
-{
-  if (theBox.IsVoid())
-  {
-    return;
-  }
-
-  Standard_Real aMinX, aMinY, aMinZ, aMaxX, aMaxY, aMaxZ;
-  theBox.Get (aMinX, aMinY, aMinZ, aMaxX, aMaxY, aMaxZ);
-
-  theMaxDimension = Max (aMaxX - aMinX, Max (aMaxY - aMinY, aMaxZ - aMinZ));
-}
-
 //=======================================================================
 //function : RelativeEdgeDeflection
 //purpose  : 
@@ -117,7 +45,7 @@ Standard_Real BRepMesh_Deflection::RelativeEdgeDeflection(
 
   Bnd_Box aBox;
   BRepBndLib::Add (theEdge, aBox, Standard_False);
-  BoxMaxDimension (aBox, aEdgeDeflection);
+  BRepMesh_ShapeTool::BoxMaxDimension (aBox, aEdgeDeflection);
 
   // Adjust resulting value in relation to the total size
   theAdjustmentCoefficient = theMaxShapeSize / (2 * aEdgeDeflection);
@@ -224,6 +152,6 @@ void BRepMesh_Deflection::ComputeDeflection (
     aFaceDeflection = theParameters.Deflection;
   }
 
-  theDFace->SetDeflection (Max(2.* MaxFaceTolerance(
+  theDFace->SetDeflection (Max(2.* BRepMesh_ShapeTool::MaxFaceTolerance(
     theDFace->GetFace()), aFaceDeflection));
 }

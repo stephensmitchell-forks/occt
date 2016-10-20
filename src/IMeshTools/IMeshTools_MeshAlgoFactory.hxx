@@ -23,7 +23,8 @@
 
 struct IMeshTools_Parameters;
 
-//! Interface class providing API for algorithms intended to create mesh for discrete face.
+//! Base interface for factories producing instances of triangulation
+//! algorithms taking into account type of surface of target face.
 class IMeshTools_MeshAlgoFactory : public Standard_Transient
 {
 public:

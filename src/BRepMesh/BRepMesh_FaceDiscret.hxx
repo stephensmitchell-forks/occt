@@ -21,10 +21,10 @@
 #include <IMeshData_Types.hxx>
 #include <IMeshTools_MeshAlgoFactory.hxx>
 
-//! Class implements functionality of discret tool.
-//! Performs check of the faces for existing Poly_Triangulation.
-//! In case if it fits specified deflection, restores data structure using
-//! it, else clears faces from outdated data.
+//! Class implements functionality starting triangulation of model's faces.
+//! Each face is processed separately and can be executed in parallel mode.
+//! Uses mesh algo factory passed as initializer to create instace of triangulation 
+//! algorithm according to type of surface of target face.
 class BRepMesh_FaceDiscret : public IMeshTools_ModelAlgo
 {
 public:

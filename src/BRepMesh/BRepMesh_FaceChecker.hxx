@@ -22,7 +22,10 @@
 #include <Standard_Type.hxx>
 #include <NCollection_Shared.hxx>
 
-//! Checks pairs.
+//! Auxiliary class checking wires of target face for self-intersections.
+//! Explodes wires of discrete face on sets of segments using tessellation 
+//! data stored in model. Each segment is then checked for intersection with
+//! other ones. All collisions are registerd and returned as result of check.
 class BRepMesh_FaceChecker : public Standard_Transient
 {
 public: //! @name mesher API

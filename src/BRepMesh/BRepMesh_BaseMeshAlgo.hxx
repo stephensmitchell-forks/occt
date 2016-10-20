@@ -25,8 +25,8 @@
 class BRepMesh_DataStructureOfDelaun;
 class BRepMesh_Delaun;
 
-//! Class provides base fuctionality to build face triangulation.
-//! Performs initialization of data structure.
+//! Class provides base fuctionality for algorithms building face triangulation.
+//! Performs initialization of BRepMesh_DataStructureOfDelaun and nodes map structures.
 class BRepMesh_BaseMeshAlgo : public IMeshTools_MeshAlgo
 {
 public:
@@ -132,12 +132,12 @@ private:
 private:
   typedef NCollection_Shared<NCollection_DataMap<Standard_Integer, Standard_Integer> > DMapOfIntegerInteger;
 
-  IMeshData::IFaceHandle                      myDFace;
-  IMeshTools_Parameters                       myParameters;
-  Handle(NCollection_IncAllocator)            myAllocator;
+  IMeshData::IFaceHandle                 myDFace;
+  IMeshTools_Parameters                  myParameters;
+  Handle(NCollection_IncAllocator)       myAllocator;
   Handle(BRepMesh_DataStructureOfDelaun) myStructure;
-  Handle(VectorOfPnt)                         myNodesMap;
-  Handle(DMapOfIntegerInteger)                myUsedNodes;
+  Handle(VectorOfPnt)                    myNodesMap;
+  Handle(DMapOfIntegerInteger)           myUsedNodes;
 };
 
 #endif

@@ -25,7 +25,7 @@ class BRepMesh_Vertex;
 
 //! Describes data structure intended to keep mesh nodes 
 //! defined in UV space and implements functionality 
-//! providing their uniqueness regarding thir position.
+//! providing their uniqueness regarding their position.
 class BRepMesh_VertexTool : public Standard_Transient
 {
 public:
