@@ -176,13 +176,14 @@ BRepMesh_ModelPostProcessor::~BRepMesh_ModelPostProcessor()
 //=======================================================================
 Standard_Boolean BRepMesh_ModelPostProcessor::Perform(
   const Handle(IMeshData_Model)& theModel,
-  const IMeshTools_Parameters&   theParameters)
+  const IMeshTools_Parameters&   /*theParameters*/)
 {
   if (theModel.IsNull())
   {
     return Standard_False;
   }
 
-  OSD_Parallel::For(0, theModel->EdgesNb(), PolygonCommitter(theModel), !theParameters.InParallel);
+  // TODO: Force single threaded solution due to data races on edges sharing the same TShape
+  OSD_Parallel::For(0, theModel->EdgesNb(), PolygonCommitter(theModel), Standard_True/*!theParameters.InParallel*/);
   return Standard_True;
 }

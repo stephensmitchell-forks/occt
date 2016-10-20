@@ -140,53 +140,56 @@ void BRepMesh_ShapeTool::CheckAndUpdateFlags (
     }
   }
 
-  if (!theEdge->GetDegenerated () || theEdge->GetSameParam ())
+  if (!theEdge->GetDegenerated ()/* || theEdge->GetSameParam ()*/)
   {
     TopoDS_Vertex aStartVertex, aEndVertex;
     TopExp::Vertices (aEdge, aStartVertex, aEndVertex);
     if (aStartVertex.IsNull() || aEndVertex.IsNull())
     {
+      theEdge->SetDegenerated(Standard_True);
       return;
     }
 
-    const Standard_Integer aPointsNb          = 20;
-    const Standard_Real    aVertexTolerance   = BRep_Tool::Tolerance (aStartVertex);
-    const Standard_Real    aEdgeTolerance     = BRep_Tool::Tolerance (aEdge);
-    const Standard_Real    aSqEdgeTolerance   = aEdgeTolerance * aEdgeTolerance;
-    const Standard_Real    aDu                = (aLastParam - aFirstParam) / aPointsNb;
-    const Standard_Boolean isCheckDegenerated = aStartVertex.IsSame (aEndVertex);
-
-    gp_Pnt aPrevPnt;
-    aCurve->D0 (aFirstParam, aPrevPnt);
-
-    Standard_Real aLength = 0.0;
-    for (Standard_Integer i = 1; i <= aPointsNb; ++i)
+    if (aStartVertex.IsSame(aEndVertex))
     {
-      const Standard_Real aParameter = aFirstParam + i * aDu;
-      // Calculation of the length of the edge in 3D
-      // in order to check degenerativity
-      gp_Pnt aPnt;
-      aCurve->D0 (aParameter, aPnt);
-      aLength += aPrevPnt.Distance (aPnt);
+      const Standard_Integer aPointsNb          = 20;
+      const Standard_Real    aVertexTolerance   = BRep_Tool::Tolerance (aStartVertex);
+      const Standard_Real    aDu                = (aLastParam - aFirstParam) / aPointsNb;
+      //const Standard_Real    aEdgeTolerance     = BRep_Tool::Tolerance (aEdge);
+      //const Standard_Real    aSqEdgeTolerance   = aEdgeTolerance * aEdgeTolerance;
 
-      if (theEdge->GetSameParam ())
+      gp_Pnt aPrevPnt;
+      aCurve->D0 (aFirstParam, aPrevPnt);
+
+      Standard_Real aLength = 0.0;
+      for (Standard_Integer i = 1; i <= aPointsNb; ++i)
       {
-        // Check that points taken at the 3d and pcurve using 
-        // same parameter are within tolerance of an edge.
-        gp_Pnt aPntOnSurf;
-        aCurveOnSurf.D0 (aParameter, aPntOnSurf);
-        theEdge->SetSameParam (aPnt.SquareDistance (aPntOnSurf) < aSqEdgeTolerance);
+        const Standard_Real aParameter = aFirstParam + i * aDu;
+        // Calculation of the length of the edge in 3D
+        // in order to check degenerativity
+        gp_Pnt aPnt;
+        aCurve->D0 (aParameter, aPnt);
+        aLength += aPrevPnt.Distance (aPnt);
+
+        //if (theEdge->GetSameParam ())
+        //{
+        //  // Check that points taken at the 3d and pcurve using 
+        //  // same parameter are within tolerance of an edge.
+        //  gp_Pnt aPntOnSurf;
+        //  aCurveOnSurf.D0 (aParameter, aPntOnSurf);
+        //  theEdge->SetSameParam (aPnt.SquareDistance (aPntOnSurf) < aSqEdgeTolerance);
+        //}
+
+        if (aLength > aVertexTolerance /*&& !theEdge->GetSameParam()*/)
+        {
+          break;
+        }
+
+        aPrevPnt = aPnt;
       }
 
-      if (aLength > aVertexTolerance && !theEdge->GetSameParam())
-      {
-        break;
-      }
-
-      aPrevPnt = aPnt;
+      theEdge->SetDegenerated (aLength < aVertexTolerance);
     }
-
-    theEdge->SetDegenerated (aLength < aVertexTolerance);
   }
 }
 

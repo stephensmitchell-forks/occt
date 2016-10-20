@@ -104,6 +104,11 @@ Standard_Boolean BRepMesh_ShapeVisitor::addWire (
   const TopoDS_Wire&            theWire,
   const IMeshData::IFaceHandle& theDFace)
 {
+  if (theWire.IsNull())
+  {
+    return Standard_False;
+  }
+
   Handle(ShapeExtend_WireData) aWireData = new ShapeExtend_WireData(theWire, Standard_True, Standard_False);
   ShapeAnalysis_Wire aWireTool (aWireData, theDFace->GetFace (), Precision::Confusion ());
 
