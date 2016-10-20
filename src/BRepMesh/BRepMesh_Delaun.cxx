@@ -521,13 +521,13 @@ void BRepMesh_Delaun::createTrianglesOnNewVertices(
 //=======================================================================
 void BRepMesh_Delaun::insertInternalEdges()
 {
-  BRepMesh::HMapOfInteger anInternalEdges = InternalEdges();
+  Handle(IMeshData::MapOfInteger) anInternalEdges = InternalEdges();;
 
   // Destruction of triancles intersecting internal edges 
   // and their replacement by makeshift triangles
   Standard_Integer e[3];
   Standard_Boolean o[3];
-  BRepMesh::MapOfInteger::Iterator anInernalEdgesIt( *anInternalEdges );
+  IMeshData::IteratorOfMapOfInteger anInernalEdgesIt( *anInternalEdges );
   for ( ; anInernalEdgesIt.More(); anInernalEdgesIt.Next() )
   {
     const Standard_Integer aLinkIndex = anInernalEdgesIt.Key();

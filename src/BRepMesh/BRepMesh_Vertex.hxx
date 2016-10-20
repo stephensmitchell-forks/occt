@@ -20,6 +20,7 @@
 #include <Standard_Macro.hxx>
 #include <gp_XY.hxx>
 #include <BRepMesh_DegreeOfFreedom.hxx>
+#include <Precision.hxx>
 
 //! Light weighted structure representing vertex 
 //! of the mesh in parametric space. Vertex could be 

@@ -16,7 +16,7 @@
 #ifndef BRepMesh_CircleInspector_Header
 #define BRepMesh_CircleInspector_Header
 
-#include <BRepMesh.hxx>
+#include <IMeshData_Types.hxx>
 #include <BRepMesh_Circle.hxx>
 #include <Precision.hxx>
 #include <gp_XY.hxx>
@@ -53,7 +53,7 @@ public:
   }
 
   //! Resutns vector of registered circles.
-  inline const BRepMesh::VectorOfCircle& Circles() const
+  inline const IMeshData::VectorOfCircle& Circles() const
   {
     return myCircles; 
   }
@@ -75,7 +75,7 @@ public:
   }
 
   //! Returns list of circles shot by the reference point.
-  inline BRepMesh::ListOfInteger& GetShotCircles()
+  inline IMeshData::ListOfInteger& GetShotCircles()
   {
     return myResIndices;
   }
@@ -95,10 +95,10 @@ public:
   }
 
 private:
-  Standard_Real            myTolerance;
-  BRepMesh::ListOfInteger  myResIndices;
-  BRepMesh::VectorOfCircle myCircles;
-  gp_XY                    myPoint;
+  Standard_Real             myTolerance;
+  IMeshData::ListOfInteger  myResIndices;
+  IMeshData::VectorOfCircle myCircles;
+  gp_XY                     myPoint;
 };
 
 #endif
