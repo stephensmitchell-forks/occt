@@ -55,7 +55,7 @@ public:
     myTolerance.first = myTolerance.second = Precision::Confusion();
   }
 
-  //! Creates instance of meshing algorithm for the given type of surface.
+  //! Registers border point.
   Standard_EXPORT virtual void AddPoint(const gp_Pnt2d& thePoint)
   {
     myRangeU.first  = Min(thePoint.X(), myRangeU.first);

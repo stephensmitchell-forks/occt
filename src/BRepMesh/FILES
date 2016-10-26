@@ -1,5 +1,6 @@
 BRepMesh_BaseMeshAlgo.cxx
 BRepMesh_BaseMeshAlgo.hxx
+BRepMesh_BoundaryParamsRangeSplitter.hxx
 BRepMesh_Circle.hxx
 BRepMesh_CircleInspector.hxx
 BRepMesh_CircleTool.cxx
