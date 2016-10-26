@@ -254,11 +254,8 @@ void BRepMesh_ModelHealer::fixFaceBoundaries(const IMeshData::IFaceHandle& theDF
       const IMeshData::IEdgeHandle& aCurrEdge = aDWire->GetEdge(aEdgeIt).lock();
       const IMeshData::IEdgeHandle& aNextEdge = aDWire->GetEdge(aNextEdgeIt).lock();
 
-      Standard_Boolean isConnected = !getCommonVertex(aCurrEdge, aNextEdge).IsNull();
-      if (isConnected && aEdgeIt == 0)
-      {
-        isConnected &= !getCommonVertex(aPrevEdge, aCurrEdge).IsNull();
-      }
+      Standard_Boolean isConnected = !getCommonVertex(aCurrEdge, aNextEdge).IsNull() &&
+                                     !getCommonVertex(aPrevEdge, aCurrEdge).IsNull();
 
       if (isConnected)
       {

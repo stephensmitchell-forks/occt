@@ -72,7 +72,8 @@ protected:
     for (Standard_Integer aWireIt = 0; aWireIt < aDFace->WiresNb(); ++aWireIt)
     {
       const IMeshData::IWireHandle& aDWire = aDFace->GetWire(aWireIt);
-      if (aDWire->IsSet(IMeshData_SelfIntersectingWire))
+      if (aDWire->IsSet(IMeshData_SelfIntersectingWire) ||
+         (aDWire->IsSet(IMeshData_OpenWire) && aWireIt != 0))
       {
         continue;
       }
@@ -98,7 +99,7 @@ protected:
     for (Standard_Integer aWireIt = 0; aWireIt < aDFace->WiresNb(); ++aWireIt)
     {
       const Handle(SequenceOfPnt2d)& aWire = aWires(aWireIt);
-      if (!aWire->IsEmpty())
+      if (!aWire.IsNull() && !aWire->IsEmpty())
       {
         myClassifier->RegisterWire(*aWire, aTolUV,
                                    myRangeSplitter.GetRangeU(),

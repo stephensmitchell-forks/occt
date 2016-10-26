@@ -14,7 +14,7 @@
 // commercial license or contractual agreement.
 
 #ifndef _BRepMesh_TorusRangeSplitter_HeaderFile
-#define _BRepMesh_ConeRangeSplitter_HeaderFile
+#define _BRepMesh_TorusRangeSplitter_HeaderFile
 
 #include <BRepMesh_UVParamRangeSplitter.hxx>
 #include <GCPnts_TangentialDeflection.hxx>
