@@ -1,5 +1,5 @@
-OCCT AndroidQt sample for Android {#samples_qml_android_occt}
-================== 
+Qt-based Sample for Android {#samples_qml_android_occt}
+=============== 
 
 This sample demonstrates a simple way of using OCCT libraries in Android application written using Qt/Qml.
 

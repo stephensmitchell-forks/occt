@@ -1,5 +1,5 @@
-OCCT CSharp sample {#samples_csharp_occt}
-================== 
+WinForms/WPF with OpenGl Sample {#samples_winforms_wpf_opengl}
+=============================== 
 	
 This sample demonstrates how to use OCCT libraries in <b>.Net</b> application
 written using **CSharp** and **Windows Forms** or **Windows Presentation Foundation** (WPF).

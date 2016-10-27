@@ -1,4 +1,4 @@
-MFC samples {#samples_mfc_standard}
+MFC Samples {#samples_mfc_standard}
 ==========
 
 1. Contents 

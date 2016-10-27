@@ -342,8 +342,11 @@ proc OCCDoc_Main {docType {docfiles {}} {modules {}} generatorMode verboseMode s
   set INDIR      [OCCDoc_GetDoxDir]
   set OUTDIR     $ROOTDIR/doc
   set PDFDIR     $OUTDIR/pdf
+  set BUDIR      $PDFDIR/build_upgrade
   set UGDIR      $PDFDIR/user_guides
-  set DGDIR      $PDFDIR/dev_guides
+  set DBDIR      $PDFDIR/debug
+  set CBDIR      $PDFDIR/contribution
+  set SMDIR      $PDFDIR/samples
   set TAGFILEDIR $OUTDIR/refman
   set HTMLDIR    $OUTDIR/overview/html
   set LATEXDIR   $OUTDIR/overview/latex
@@ -360,11 +363,20 @@ proc OCCDoc_Main {docType {docfiles {}} {modules {}} generatorMode verboseMode s
     if { ![file exists $PDFDIR] } {
       file mkdir $PDFDIR
     }
+    if { ![file exists $BUDIR] } {
+      file mkdir $BUDIR
+    }
     if { ![file exists $UGDIR] } {
       file mkdir $UGDIR
     }
-    if { ![file exists $DGDIR] } {
-      file mkdir $DGDIR
+    if { ![file exists $DBDIR] } {
+      file mkdir $DBDIR
+    }
+    if { ![file exists $CBDIR] } {
+      file mkdir $CBDIR
+    }
+    if { ![file exists $SMDIR] } {
+      file mkdir $SMDIR
     }
     if { [file exists $LATEXDIR] } {
       file delete -force $LATEXDIR
@@ -564,15 +576,21 @@ proc OCCDoc_Main {docType {docfiles {}} {modules {}} generatorMode verboseMode s
 
         set destFolder $PDFDIR
         set parsed_string [split $TEX "_"]
-        if { [lsearch $parsed_string "tutorial"] != -1 } {
-          set TEX [string map [list occt__ occt_] $TEX]
-          set destFolder $PDFDIR
+        if { [lsearch $parsed_string "build"] != -1 } {
+          set TEX [string map [list build_upgrade__ ""] $TEX]
+          set destFolder $BUDIR
         } elseif { [lsearch $parsed_string "user"] != -1 } {
           set TEX [string map [list user_guides__ ""] $TEX]
           set destFolder $UGDIR
-        } elseif { [lsearch $parsed_string "dev"]  != -1 } {
-          set TEX [string map [list dev_guides__ ""] $TEX]
-          set destFolder $DGDIR
+        } elseif { [lsearch $parsed_string "debug"]  != -1 } {
+          set TEX [string map [list debug__ ""] $TEX]
+          set destFolder $DBDIR
+        } elseif { [lsearch $parsed_string "contribution"] != -1 } {
+          set TEX [string map [list contribution__ ""] $TEX]
+          set destFolder $CBDIR
+        } elseif { [lsearch $parsed_string "samples"] != -1 } {
+          set TEX [string map [list samples__ ""] $TEX]
+          set destFolder $SMDIR
         }
         file rename -force $LATEXDIR/refman.pdf "$destFolder/$TEX.pdf"
 
@@ -731,7 +749,7 @@ proc OCCDoc_MakeDoxyfile {docType outDir tagFileDir {doxyFileName} {generatorMod
 
     puts $doxyFile "DOTFILE_DIRS             = $outDir/html"
     puts $doxyFile "DOT_PATH                 = $graphvizPath"
-    puts $doxyFile "INCLUDE_PATH             = [OCCDoc_GetSourceDir $productsPath]"
+    puts $doxyFile "INCLUDE_PATH             = [OCCDoc_GetIncDir $productsPath]"
     
     # list of files to generate
     set mainpage [OCCDoc_MakeMainPage $outDir $outDir/$name.dox $modules $productsPath]
@@ -750,6 +768,9 @@ proc OCCDoc_MakeDoxyfile {docType outDir tagFileDir {doxyFileName} {generatorMod
 
     # Add common options for generation of Overview and User Guides
     puts $doxyFile "PROJECT_NUMBER         = $occt_version"
+	puts $doxyFile "HTML_FOOTER         = $inputDir/resources/footer.html"
+	puts $doxyFile "HTML_EXTRA_FILES         = $inputDir/resources/scrollspy_module.js"
+	
     puts $doxyFile "OUTPUT_DIRECTORY       = $outDir/."
     puts $doxyFile "PROJECT_LOGO           = $inputDir/resources/occ_logo.png"
 

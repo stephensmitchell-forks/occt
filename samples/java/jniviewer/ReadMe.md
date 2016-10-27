@@ -1,5 +1,5 @@
-OCCT JniViewer sample for Android {#samples_java_android_occt}
-================== 
+Java-based Sample for Android {#samples_java_android_occt}
+============================= 
 
 This sample demonstrates simple way of using OCCT libraries in Android application written using Java.
 

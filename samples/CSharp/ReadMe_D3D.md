@@ -1,5 +1,5 @@
-Direct3D CSharp sample {#samples_csharp_direct3d}
-================== 
+WPF with DirectX Sample {#samples_wpf_directx}
+======================= 
 	
 This sample demonstrates how to use OCCT and DirectX libraries in <b>.Net</b> application
 written using **CSharp** and **Windows Presentation Foundation** (WPF).
