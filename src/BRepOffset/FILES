@@ -1,0 +1,4 @@
+BRepOffset_MakeSimpleOffset.cxx
+BRepOffset_MakeSimpleOffset.hxx
+BRepOffset_SimpleOffset.cxx
+BRepOffset_SimpleOffset.hxx
