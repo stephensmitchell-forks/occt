@@ -105,7 +105,8 @@ protected:
     const Standard_Real /*theLengthU*/,
     const Standard_Real theLengthV)
   {
-    myDelta.first  = myDu / theLengthV;
+    const std::pair<double, double>& aRangeV = GetRangeV();
+    myDelta.first  = myDu / Max(theLengthV, aRangeV.second - aRangeV.first);
     myDelta.second = 1.;
   }
 
