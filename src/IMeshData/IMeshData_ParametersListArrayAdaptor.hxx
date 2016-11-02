@@ -61,6 +61,11 @@ public:
 
 private:
 
+  IMeshData_ParametersListArrayAdaptor (
+    const IMeshData_ParametersListArrayAdaptor<ParametersListPtrType>& theOther);
+
+  void operator=(const IMeshData_ParametersListArrayAdaptor<ParametersListPtrType>& theOther);
+
   const ParametersListPtrType myParameters;
 };
 

@@ -63,6 +63,12 @@ namespace
     }
 
   private:
+
+    EdgeAmplifier (const EdgeAmplifier& theOther);
+
+    void operator=(const EdgeAmplifier& theOther);
+
+  private:
     const IMeshTools_Parameters& myParameters;
   };
 

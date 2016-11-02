@@ -87,6 +87,12 @@ private:
 
 private:
 
+  BRepMesh_CurveTessellator (const BRepMesh_CurveTessellator& theOther);
+
+  void operator=(const BRepMesh_CurveTessellator& theOther);
+
+private:
+
   const IMeshData::IEdgeHandle& myDEdge;
   const IMeshTools_Parameters&  myParameters;
   TopoDS_Edge                   myEdge;

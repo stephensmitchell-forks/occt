@@ -114,8 +114,9 @@ private:
   };
 
   //! Functor computing deflection of a point from surface.
-  struct NormalDeviation
+  class NormalDeviation
   {
+  public:
     NormalDeviation(
       const gp_Pnt& theRefPnt,
       const gp_Vec& theNormal)
@@ -130,13 +131,23 @@ private:
       return aDeflection * aDeflection;
     }
 
+  private:
+
+    NormalDeviation (const NormalDeviation& theOther);
+
+    void operator= (const NormalDeviation& theOther);
+
+  private:
+
     const gp_Pnt& myRefPnt;
     const gp_Vec& myNormal;
   };
 
   //! Functor computing deflection of a point on triangle link from surface.
-  struct LineDeviation
+  class LineDeviation
   {
+  public:
+
     LineDeviation(
       const gp_Pnt& thePnt1,
       const gp_Pnt& thePnt2)
@@ -150,6 +161,13 @@ private:
       return BRepMesh_GeomTool::SquareDeflectionOfSegment(myPnt1, myPnt2, thePoint);
     }
 
+  private:
+
+    LineDeviation (const LineDeviation& theOther);
+
+    void operator= (const LineDeviation& theOther);
+
+  private:
     const gp_Pnt& myPnt1;
     const gp_Pnt& myPnt2;
   };

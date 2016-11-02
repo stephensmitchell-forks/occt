@@ -88,6 +88,12 @@ private:
 
 private:
 
+  BRepMesh_FaceChecker (const BRepMesh_FaceChecker& theOther);
+
+  void operator=(const BRepMesh_FaceChecker& theOther);
+
+private:
+
   IMeshData::IFaceHandle            myDFace;
   const IMeshTools_Parameters&      myParameters;
 

@@ -86,6 +86,12 @@ namespace
 
   private:
 
+    SegmentsFiller (const SegmentsFiller& theOther);
+
+    void operator=(const SegmentsFiller& theOther);
+
+  private:
+
     const IMeshData::IFaceHandle&                    myDFace;
     Handle(BRepMesh_FaceChecker::ArrayOfSegments)&   myWiresSegments;
     Handle(BRepMesh_FaceChecker::ArrayOfBndBoxTree)& myWiresBndBoxTree;

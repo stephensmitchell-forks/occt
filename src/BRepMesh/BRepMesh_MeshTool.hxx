@@ -32,8 +32,10 @@ class BRepMesh_MeshTool : public Standard_Transient
 public:
 
   //! Helper functor intended to separate points to left and right from the constraint.
-  struct NodeClassifier
+  class NodeClassifier
   {
+  public:
+
     NodeClassifier(
       const BRepMesh_Edge&                          theConstraint,
       const Handle(BRepMesh_DataStructureOfDelaun)& theStructure)
@@ -64,6 +66,14 @@ public:
 
       return Standard_False;
     }
+
+  private:
+
+    NodeClassifier (const NodeClassifier& theOther);
+
+    void operator=(const NodeClassifier& theOther);
+
+  private:
 
     const Handle(BRepMesh_DataStructureOfDelaun)& myStructure;
     gp_Lin2d                                      myConstraint;
