@@ -1129,10 +1129,11 @@ void AIS_InteractiveContext::SetSelected (const Handle(SelectMgr_EntityOwner)& t
   if (!HighlightStyle (theOwner, aCustomStyle) ||
     (!aCustomStyle.IsNull() && aCustomStyle != anObjSelStyle))
   {
+    theOwner->SetSelected (Standard_True);
     highlightSelected (theOwner);
   }
 
-  theOwner->State (1);
+  theOwner->SetSelected (Standard_True);
   if (theOwner == anObject->GlobalSelOwner())
   {
     Handle(AIS_GlobalStatus)& aState = myObjects.ChangeFind (anObject);

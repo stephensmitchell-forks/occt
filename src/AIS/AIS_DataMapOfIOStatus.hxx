@@ -19,11 +19,25 @@
 
 #include <AIS_InteractiveObject.hxx>
 #include <AIS_GlobalStatus.hxx>
-#include <TColStd_MapTransientHasher.hxx>
 #include <NCollection_DataMap.hxx>
 
-typedef NCollection_DataMap<Handle(AIS_InteractiveObject),Handle(AIS_GlobalStatus),TColStd_MapTransientHasher> AIS_DataMapOfIOStatus;
-typedef NCollection_DataMap<Handle(AIS_InteractiveObject),Handle(AIS_GlobalStatus),TColStd_MapTransientHasher>::Iterator AIS_DataMapIteratorOfDataMapOfIOStatus;
+//! Hasher for AIS_DataMapOfIOStatus map - redirects to AIS_InteractiveObject virtual methods.
+struct AIS_DataMapOfIOStatusHasher
+{
+  static Standard_Integer HashCode (const Handle(AIS_InteractiveObject)& theKey,
+                                    const Standard_Integer theUpper)
+  {
+    return theKey.IsNull() ? 0 : theKey->HashCode (theUpper);
+  }
 
+  static Standard_Boolean IsEqual (const Handle(AIS_InteractiveObject)& theKey1,
+                                   const Handle(AIS_InteractiveObject)& theKey2)
+  {
+    return theKey1.IsNull() ? Standard_False : theKey1->IsEqual (theKey2);
+  }
+};
+
+typedef NCollection_DataMap<Handle(AIS_InteractiveObject),Handle(AIS_GlobalStatus),AIS_DataMapOfIOStatusHasher> AIS_DataMapOfIOStatus;
+typedef NCollection_DataMap<Handle(AIS_InteractiveObject),Handle(AIS_GlobalStatus),AIS_DataMapOfIOStatusHasher>::Iterator AIS_DataMapIteratorOfDataMapOfIOStatus;
 
 #endif

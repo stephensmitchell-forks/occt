@@ -71,6 +71,18 @@ public:
         } while (!myNode);
     }
 
+    //! Constructor to specified position.
+    Iterator (const NCollection_BaseMap& theMap,
+              Standard_Integer theBucket,
+              NCollection_ListNode* theNode)
+    : myNbBuckets (theMap.myNbBuckets),
+      myBuckets   (theMap.myData1),
+      myBucket    (theBucket),
+      myNode      (theNode)
+    {
+      //
+    }
+
   public:
     //! Initialize
     void Initialize (const NCollection_BaseMap& theMap)

@@ -53,7 +53,8 @@ DEFINE_STANDARD_HANDLE(SelectMgr_SelectableObject, PrsMgr_PresentableObject)
 //! in AIS. This is particularly true in the creation of new interactive objects.
 class SelectMgr_SelectableObject : public PrsMgr_PresentableObject
 {
-
+  friend class SelectMgr_SelectionManager;
+  DEFINE_STANDARD_RTTIEXT(SelectMgr_SelectableObject, PrsMgr_PresentableObject)
 public:
 
   //! Clears all selections of the object
@@ -223,11 +224,29 @@ public:
   //! Returns the owner of mode for selection of object as a whole
   Standard_EXPORT virtual Handle(SelectMgr_EntityOwner) GlobalSelOwner() const;
 
+public: //! @name hasher interface
 
-friend class SelectMgr_SelectionManager;
+  //! Hash value, for Map interface.
+  //! Can be overridden for advanced use cases.
+  virtual Standard_Integer HashCode (const Standard_Integer theUpper) const
+  {
+    const Standard_Transient* aSelf = this;
+    return ::HashCode (aSelf, theUpper);
+  }
 
+  //! Matching two instances, for Map interface.
+  //! Can be overridden for advanced use cases.
+  virtual Standard_Boolean IsEqual (const Handle(SelectMgr_SelectableObject)& theOther) const
+  {
+    return this == theOther.get();
+  }
 
-  DEFINE_STANDARD_RTTIEXT(SelectMgr_SelectableObject,PrsMgr_PresentableObject)
+  //! Copy the relevant information from another instance of Drawer.
+  //! raises exception if theOther has incompatible type (test IsKind).
+  virtual void AssignProperties (const Handle(SelectMgr_SelectableObject)& theOther) { (void )theOther; }
+
+  virtual void addEntity    (const Handle(SelectMgr_EntityOwner)& theEntity) { (void )theEntity; }
+  virtual void removeEntity (const Handle(SelectMgr_EntityOwner)& theEntity) { (void )theEntity; }
 
 protected:
 
