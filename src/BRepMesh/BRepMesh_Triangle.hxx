@@ -34,10 +34,14 @@ public:
 
   //! Default constructor.
   BRepMesh_Triangle()
-    : myEdges{0, 0, 0},
-      myOrientations{ Standard_False, Standard_False, Standard_False },
-      myMovability  (BRepMesh_Free)
+    : myMovability  (BRepMesh_Free)
   {
+    myEdges[0] = 0;
+    myEdges[1] = 0;
+    myEdges[2] = 0;
+    myOrientations[0] = Standard_False;
+    myOrientations[1] = Standard_False;
+    myOrientations[2] = Standard_False;
   }
 
   //! Constructor.
