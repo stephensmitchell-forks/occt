@@ -29,14 +29,8 @@
 #include <Graphic3d_HighlightStyle.hxx>
 #include <Graphic3d_ZLayerId.hxx>
 #include <SelectMgr_SelectableObject.hxx>
-class Standard_NoSuchObject;
-class PrsMgr_PresentationManager;
-class TopLoc_Location;
+
 class V3d_Viewer;
-
-
-class SelectMgr_EntityOwner;
-DEFINE_STANDARD_HANDLE(SelectMgr_EntityOwner, SelectBasics_EntityOwner)
 
 //! A framework to define classes of owners of sensitive primitives.
 //! The owner is the link between application and
@@ -45,31 +39,33 @@ DEFINE_STANDARD_HANDLE(SelectMgr_EntityOwner, SelectBasics_EntityOwner)
 //! it must define owner classes inheriting this framework.
 class SelectMgr_EntityOwner : public SelectBasics_EntityOwner
 {
-
+  DEFINE_STANDARD_RTTIEXT(SelectMgr_EntityOwner, SelectBasics_EntityOwner)
 public:
 
-  
   //! Initializes the selection priority aPriority.
   Standard_EXPORT SelectMgr_EntityOwner(const Standard_Integer aPriority = 0);
-  
+
   //! Constructs a framework with the selectable object
   //! anSO being attributed the selection priority aPriority.
   Standard_EXPORT SelectMgr_EntityOwner(const Handle(SelectMgr_SelectableObject)& aSO, const Standard_Integer aPriority = 0);
-  
+
   //! Constructs a framework from existing one
   //! anSO being attributed the selection priority aPriority.
   Standard_EXPORT SelectMgr_EntityOwner(const Handle(SelectMgr_EntityOwner)& theOwner, const Standard_Integer aPriority = 0);
   
   //! Returns true if there is a selectable object to serve as an owner.
-  Standard_EXPORT Standard_Boolean HasSelectable() const;
-  
+  Standard_Boolean HasSelectable() const { return mySelectable != NULL; }
+
+  //! Create the selectable (presentable) object for this entity owner.
+  //! Default implementation returns NULL - e.g. selectable should be explicitly provided within constructor or method ::SetSelectable().
+  virtual SelectMgr_SelectableObject* DefaultSelectable (SelectMgr_SelectableObject* theSelObj) const { (void )theSelObj; return NULL; }
+
   //! Returns a selectable object detected in the working context.
   Standard_EXPORT virtual Handle(SelectMgr_SelectableObject) Selectable() const;
-  
-  //! Sets the selectable object anSO to be used by the
-  //! second constructor above.
-  Standard_EXPORT void Set (const Handle(SelectMgr_SelectableObject)& aSO);
-  
+
+  //! Sets the selectable object.
+  Standard_EXPORT virtual void SetSelectable (const Handle(SelectMgr_SelectableObject)& theSelObj);
+
   //! Returns true if the presentation manager aPM
   //! highlights selections corresponding to the selection mode aMode.
   Standard_EXPORT virtual Standard_Boolean IsHilighted (const Handle(PrsMgr_PresentationManager)& aPM, const Standard_Integer aMode = 0) const;
@@ -137,28 +133,20 @@ public:
     return mySelectable == theOther.get();
   }
 
+public:
 
-  DEFINE_STANDARD_RTTIEXT(SelectMgr_EntityOwner,SelectBasics_EntityOwner)
+  //! Sets the selectable object.
+  void Set (const Handle(SelectMgr_SelectableObject)& theSelObj) { SetSelectable (theSelObj); }
 
 protected:
-
-
-
-
-private:
-
 
   SelectMgr_SOPtr mySelectable;
   Standard_Boolean myIsSelected;
 
-
 };
 
+DEFINE_STANDARD_HANDLE(SelectMgr_EntityOwner, SelectBasics_EntityOwner)
 
 #include <SelectMgr_EntityOwner.lxx>
-
-
-
-
 
 #endif // _SelectMgr_EntityOwner_HeaderFile

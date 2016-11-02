@@ -80,6 +80,7 @@ class NCollection_DataMap : public NCollection_BaseMap
   // **************** Implementation of the Iterator interface.
   class Iterator : public NCollection_BaseMap::Iterator
   {
+    friend class NCollection_DataMap;
   public:
     //! Empty constructor
     Iterator (void) :
@@ -87,6 +88,7 @@ class NCollection_DataMap : public NCollection_BaseMap
     //! Constructor
     Iterator (const NCollection_DataMap& theMap) :
       NCollection_BaseMap::Iterator(theMap) {}
+
     //! Query if the end of collection is reached by iterator
     Standard_Boolean More(void) const
     { return PMore(); }
@@ -111,6 +113,12 @@ class NCollection_DataMap : public NCollection_BaseMap
       Standard_NoSuchObject_Raise_if(!More(), "NCollection_DataMap::Iterator::Key");  
       return ((DataMapNode *) myNode)->Key();
     }
+  protected:
+    //! Constructor to specified position.
+    Iterator (const NCollection_DataMap& theMap,
+              Standard_Integer theBucket,
+              DataMapNode* theNode)
+    : NCollection_BaseMap::Iterator (theMap, theBucket, theNode) {}
   };
   
   //! Shorthand for a regular iterator type.
@@ -318,6 +326,24 @@ class NCollection_DataMap : public NCollection_BaseMap
     return Standard_True;
   }
 
+  //! Find the Key and set iterator to found position.
+  //! @param theKey  key to find
+  //! @param theIter iterator to set (left as is if key is not found)
+  //! @return true if key has been found
+  Standard_Boolean Find (const TheKeyType& theKey,
+                         Iterator& theIter) const
+  {
+    Standard_Integer aBucket = 0;
+    DataMapNode* aNode = NULL;
+    if (!lookup (theKey, aNode, aBucket))
+    {
+      return Standard_False;
+    }
+
+    theIter = Iterator (*this, aBucket, aNode);
+    return Standard_True;
+  }
+
   //! operator ()
   const TheItemType& operator() (const TheKeyType& theKey) const
   { return Find(theKey); }
@@ -368,18 +394,31 @@ class NCollection_DataMap : public NCollection_BaseMap
 
   
  protected:
-  // ---------- PROTECTED METHODS ----------
+
+  //! Lookup for particular key in map.
+  Standard_Boolean lookup (const TheKeyType& theKey,
+                           DataMapNode*& thepNode) const
+  {
+    Standard_Integer aDummy;
+    return lookup (theKey, thepNode, aDummy);
+  }
+
   //! Lookup for particular key in map. Returns true if key is found and
   //! thepNode points to binded node. Returns false if key is not found,
-  //! thehNode value is this case is not usable.
-  Standard_Boolean lookup(const TheKeyType& theKey,DataMapNode*& thepNode) const
+  //! thepNode value is this case is not usable.
+  Standard_Boolean lookup (const TheKeyType& theKey,
+                           DataMapNode*&     thepNode,
+                           Standard_Integer& theBucket) const
   {
     if (IsEmpty())
-      return Standard_False; // Not found
-    for (thepNode = (DataMapNode*)myData1[Hasher::HashCode(theKey, NbBuckets())];
-         thepNode; thepNode = (DataMapNode*)thepNode->Next())
     {
-      if (Hasher::IsEqual(thepNode->Key(), theKey)) 
+      return Standard_False;
+    }
+
+    theBucket = Hasher::HashCode (theKey, NbBuckets());
+    for (thepNode = (DataMapNode*)myData1[theBucket]; thepNode != NULL; thepNode = (DataMapNode*)thepNode->Next())
+    {
+      if (Hasher::IsEqual(thepNode->Key(), theKey))
         return Standard_True;
     }
     return Standard_False; // Not found

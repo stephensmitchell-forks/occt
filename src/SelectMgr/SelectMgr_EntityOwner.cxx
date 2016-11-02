@@ -50,21 +50,19 @@ SelectMgr_EntityOwner::SelectMgr_EntityOwner (const Handle(SelectMgr_EntityOwner
 {
 }
 
-
 //=======================================================================
-//function : About Selectable...
-//purpose  : 
+//function : SetSelectable
+//purpose  :
 //=======================================================================
-void SelectMgr_EntityOwner::Set(const Handle(SelectMgr_SelectableObject)& aSO)
+void SelectMgr_EntityOwner::SetSelectable (const Handle(SelectMgr_SelectableObject)& theSelObj)
 {
-  mySelectable = aSO.operator->();
+  mySelectable = theSelObj.operator->();
 }
 
-Standard_Boolean SelectMgr_EntityOwner::HasSelectable() const
-{
-  return mySelectable != NULL;
-}
-
+//=======================================================================
+//function : Selectable
+//purpose  :
+//=======================================================================
 Handle(SelectMgr_SelectableObject) SelectMgr_EntityOwner::Selectable() const
 {  
   return mySelectable;
