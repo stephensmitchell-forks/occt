@@ -64,7 +64,7 @@ The official repository contains:
   Integration of contributions that have passed certification testing is made exclusively by the Bugmaster. 
   Normally this is made by rebasing the contribution branch on the current master 
   and squashing it into a single commit. This is made to have the master branch history plain and clean, 
-  following the general rule “one issue -- one commit”. 
+  following the general rule "one issue -- one commit". 
   The description of the commit integrated to the master branch is taken from the Mantis issue 
   (ID, 'Summary', followed by the information from 'Documentation' field if present).
   
@@ -176,7 +176,7 @@ Contributor License Agreement</a>.
 **Generating key with Putty**
 
   Use this option if you have installed TortoiseGit (or other GUI Git client on Windows) 
-  and have chosen “TortoisePLink” (or other Putty client) as SSH client during installation.
+  and have chosen "TortoisePLink" (or other Putty client) as SSH client during installation.
   
   To generate the key with this client, run **Puttygen** (e.g. from Start menu -> TortoiseGit -> Puttygen), 
   then click **Generate** and move mouse cursor over the blank area until the key is generated. 
@@ -194,7 +194,7 @@ Contributor License Agreement</a>.
 
 **Generating key with command-line tools**
 
-  Use this option if you work on Linux or if you have chosen “OpenSSH” as SSH client 
+  Use this option if you work on Linux or if you have chosen "OpenSSH" as SSH client 
   during installation of TortoiseGit (or other Windows tool).
   
   Make sure that you have *ssh* and *ssh-keygen* commands in the path. 
@@ -474,8 +474,8 @@ We recommend rebasing before the first submission of the branch for review or wh
 Rebasing is a good occasion to clean-up the history of commits in the branch. Consider collapsing (squashing, in terms of Git) the history of your branch into a single commit unless you deem that having separate commits is important for your future work with the branch or its code reviewing. Git also allows changing the order of commits, edit commit contents and messages, etc. 
   
 To rebase your branch into a single commit, you need to do the following:
-  * Switch to your branch (e.g. “CR12345”)
-  * In TortoiseGit history log, select a branch to rebase on <i>(remotes/origin/master)</i> and in the context menu choose **Rebase “CR12345” onto this**.
+  * Switch to your branch (e.g. "CR12345")
+  * In TortoiseGit history log, select a branch to rebase on <i>(remotes/origin/master)</i> and in the context menu choose **Rebase "CR12345" onto this**.
   * In the **Rebase** dialog, check **Squash All**.  You can also change the order of commits and define for each commit whether it should be kept (**Pick**), edited, or just skipped.
   
 @image html OCCT_GitGuide_V2_image023.png

@@ -33,7 +33,7 @@ Basically, it is enough to use the first three packages in the end user’s appl
 
 @subsection occt_vis_2_2 IVtk package
 **IVtk** package contains the following classes:
-* *IVtk_Interface* -- Base class for all interfaces of the component. Provides inheritance for *Handle* (OCCT “smart pointer”) functionality.
+* *IVtk_Interface* -- Base class for all interfaces of the component. Provides inheritance for *Handle* (OCCT "smart pointer") functionality.
 * *IVtk_IShape* -- Represents a 3D shape of arbitrary nature. Provides its ID property. Implementation of this interface should maintain unique IDs for all visualized shapes. These IDs can be easily converted into original shape objects at the application level.
 * *IVtk_IShapeData* -- Represents faceted data. Provides methods for adding coordinates and cells (vertices, lines, triangles).
 * *IVtk_IShapeMesher* -- Interface for faceting, i.e. constructing *IVtk_IShapeData* from *IVtk_IShape* input shape.
@@ -119,7 +119,7 @@ IVtkTools::InitShapeMapper(Mapper);
 It is possible to get an instance of *vtkLookupTable class* with a default OCCT color scheme by means of the following method:
 
 ~~~~
-vtkLookupTable* Table = IVtkTools::InitLookupTable();
+vtkSmartPointer<vtkLookupTable> Table = IVtkTools::InitLookupTable();
 ~~~~
 
 @subsubsection occt_vis_3_2_2	Custom color scheme
@@ -219,7 +219,7 @@ or as a collection of picked shape IDs:
 ~~~~
 IVtk_ShapeIdList ids = aPicker->GetPickedShapesIds();
 ~~~~
-These methods return a single top picked actor or a shape by default. To get all the picked actors or shapes it is necessary to send “true” value in the optional Boolean parameter:
+These methods return a single top picked actor or a shape by default. To get all the picked actors or shapes it is necessary to send "true" value in the optional Boolean parameter:
 ~~~~
 anActorCollection = aPicker->GetPickedActors(true);
 ids = aPicker->GetPickedShapesIds(true);

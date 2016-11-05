@@ -142,7 +142,7 @@ givecount <selection_name> [<selection_name>]
 
 
 Prints a number of loaded entities defined by the selection argument.
-Possible values of \<selection_name\> you can find in the “IGES FORMAT Users’s Guide”.
+Possible values of \<selection_name\> you can find in the "IGES FORMAT Users’s Guide".
 
 **Example:**
 ~~~~~

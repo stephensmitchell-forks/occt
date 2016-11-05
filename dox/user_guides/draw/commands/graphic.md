@@ -611,14 +611,6 @@ vnbselected
 ~~~~~
 Returns the number of selected objects in the interactive context.
 
-@subsection occt_draw_4_2_17  vantialiasing
-
-     
-~~~~~
-vantialiasing 1|0
-~~~~~
-Sets antialiasing if the command is called with 1 or unsets otherwise.
-
 @subsection occt_draw_4_2_18  vpurgedisplay
 
      
@@ -1461,7 +1453,7 @@ Creates *AIS_ConnectedInteractive* object from the input object and location and
 
 
 ~~~~~
-Vinitvinit 
+vinit 
 vpoint p1 0 0 0 
 vpoint p2 50 0 0 
 vsegment segment p1 p2 
@@ -1580,17 +1572,18 @@ vdimension name {-angle|-length|-radius|-diameter} -shapes shape1 [shape2 [shape
                 [-label left|right|hcenter|hfit top|bottom|vcenter|vfit]
                 [-arrow external|internal|fit] [{-arrowlength|-arlen} RealArrowLength]
                 [{-arrowangle|-arangle} ArrowAngle(degrees)] [-plane xoy|yoz|zox]
-                [-flyout FloatValue -extension FloatValue] [-value CustomNumberValue]
-                [-dispunits DisplayUnitsString] [-modelunits ModelUnitsString]
-                [-showunits | -hideunits]
+                [-flyout FloatValue -extension FloatValue]
+                [-autovalue] [-value CustomRealValue] [-textvalue CustomTextValue]
+                [-dispunits DisplayUnitsString]
+                [-modelunits ModelUnitsString] [-showunits | -hideunits]
 ~~~~~
 
 Builds angle, length, radius or diameter dimension interactive object **name**.
 
 **Attension:** length dimension can't be built without working plane.
 
-
 ~~~~~
+vinit
 vpoint p1 0 0 0
 vpoint p2 50 50 0
 vdimension dim1 -length -plane xoy -shapes p1 p2
@@ -1614,7 +1607,9 @@ vdimparam name [-text 3d|2d wf|sh|wireframe|shading IntegerSize]
                [{-arrowangle|-arangle} ArrowAngle(degrees)]
                [-plane xoy|yoz|zox]
                [-flyout FloatValue -extension FloatValue]
-               [-value CustomNumberValue]
+               [-autovalue]
+               [-value CustomRealValue]
+               [-textvalue CustomTextValue]
                [-dispunits DisplayUnitsString]
                [-modelunits ModelUnitsString]
                [-showunits | -hideunits]
@@ -1624,14 +1619,36 @@ Sets parameters for angle, length, radius and diameter dimension **name**.
 
 
 ~~~~~
+vinit
 vpoint p1 0 0 0
 vpoint p2 50 50 0
 vdimension dim1 -length -plane xoy -shapes p1 p2
 vdimparam dim1 -flyout -15 -arrowlength 4 -showunits -value 10
+vfit
+vdimparam dim1 -textvalue "w_1"
+vdimparam dim1 -autovalue
 ~~~~~
 
-@subsection occt_draw_4_4_22 vmovedim
+@subsection occt_draw_4_4_22 vdimangleparam
 
+~~~~~
+vangleparam name [-type interior|exterior]
+               [-showarrow first|second|both|none]
+~~~~~
+
+Sets parameters for angle dimension **name**.
+
+~~~~~
+vinit
+vpoint p1 0 0 0
+vpoint p2 10 0 0
+vpoint p3 10 5 0
+vdimension dim1 -angle -plane xoy -shapes p1 p2 p3
+vfit
+vangleparam dim1 -type exterior -showarrow first
+~~~~~
+
+@subsubsection occt_draw_4_4_23 vmovedim
 
 ~~~~~
 vmovedim [name] [x y z]
@@ -1642,8 +1659,8 @@ to picked mouse position or input point with coordinates **x**,**y**,**z**.
 Text label of dimension **name** is moved to position, another parts of dimension
 are adjusted.
 
-
 ~~~~~
+vinit
 vpoint p1 0 0 0
 vpoint p2 50 50 0
 vdimension dim1 -length -plane xoy -shapes p1 p2

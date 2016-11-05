@@ -61,7 +61,7 @@ Administrative data, in the Global Section of the IGES  file (such as the file n
 Before performing any  other operation, you have to load the file using the syntax below. 
 ~~~~~
 IGESControl_Reader reader; 
-IFSelect_ReturnStatus stat  = reader.ReadFile(“filename.igs”); 
+IFSelect_ReturnStatus stat  = reader.ReadFile("filename.igs"); 
 ~~~~~
 The loading operation  only loads the IGES file into computer memory; it does not translate it. 
 
@@ -70,7 +70,7 @@ This step is not obligatory.  Check the loaded file with:
 ~~~~~
 Standard_Boolean ok =  reader.Check(Standard_True); 
 ~~~~~
-The variable “ok is  True” is returned if no fail message was found; “ok is False” is returned if  there was at least one fail message.  
+The variable "ok is  True" is returned if no fail message was found; "ok is False" is returned if  there was at least one fail message.  
 ~~~~~
 reader.PrintCheckLoad  (failsonly, mode); 
 ~~~~~
@@ -300,21 +300,21 @@ visfac =  Reader.GiveList(iges-visible-roots,faces);
 ~~~~~
 Using a signature, you  can define a selection dynamically, filtering the string by means of a  criterion. When you request a selection using the method GiveList, you can give  either a predefined selection or a selection by signature. You make your selection  by signature using the predefined signature followed by your criterion in  parentheses as shown in the example below. The syntaxes given are equivalent to  each other. 
 ~~~~~
-faces =  Reader.GiveList(“xst-type(SurfaceOfRevolution)”); 
-faces =  Reader.GiveList(“iges-type(120)”); 
+faces =  Reader.GiveList("xst-type(SurfaceOfRevolution)"); 
+faces =  Reader.GiveList("iges-type(120)"); 
 ~~~~~
 You can also look for: 
   * values returned by your  signature which match your criterion exactly
 ~~~~~  
-faces =  Reader.GiveList(“xst-type(=SurfaceOfRevolution)”); 
+faces =  Reader.GiveList("xst-type(=SurfaceOfRevolution)"); 
 ~~~~~
   * values returned by your  signature which do not contain your criterion
 ~~~~~  
-faces = Reader.GiveList(“xst-type(!SurfaceOfRevolution)”); 
+faces = Reader.GiveList("xst-type(!SurfaceOfRevolution)"); 
 ~~~~~
   * values returned by your  signature which do not exactly match your criterion.
 ~~~~~  
-faces =  Reader.GiveList(“xst-type(!=SurfaceOfRevolution)”); 
+faces =  Reader.GiveList("xst-type(!=SurfaceOfRevolution)"); 
 ~~~~~
 
 <h4>List of predefined operators that can be used:</h4>
@@ -399,7 +399,7 @@ reader.PrintTransferInfo  (failsonly, mode);
 ~~~~~
 displays the messages  that appeared during the last invocation of *Transfer* or *TransferRoots*.  
 
-If *failsonly* is  *IFSelect_FailOnly*, only fail messages will be output, if it is  *IFSelect_FailAndWarn*, all messages will be output. Parameter “mode” can have  *IFSelect_xxx* values where *xxx* can be:  
+If *failsonly* is  *IFSelect_FailOnly*, only fail messages will be output, if it is  *IFSelect_FailAndWarn*, all messages will be output. Parameter "mode" can have  *IFSelect_xxx* values where *xxx* can be:  
 * *GeneralCount* -- gives general statistics  on the transfer (number of translated IGES entities, number of fails and  warnings, etc)  
 * *CountByItem* -- gives the number of IGES  entities with their types per message. 
 * *ListByItem* -- gives the number of IGES  entities with their type and DE numbers per message.  
@@ -502,7 +502,7 @@ level modifies the level of messages:
   * 1: raise and fail messages are displayed, as are messages  concerning file access,
   * 2: warnings are also displayed.
 ~~~~~  
-IDT_SetFile (“tracefile.log”); 
+IDT_SetFile ("tracefile.log"); 
 ~~~~~
 prints the messages in a file, 
 ~~~~~
@@ -606,17 +606,17 @@ The highlighted classes produce OCCT geometry.
 @subsection occt_iges_2_8 Example
 
 ~~~~~
-#include “IGESControl_Reader.hxx” 
-#include “TColStd_HSequenceOfTransient.hxx” 
-#include “TopoDS_Shape.hxx” 
+#include "IGESControl_Reader.hxx" 
+#include "TColStd_HSequenceOfTransient.hxx" 
+#include "TopoDS_Shape.hxx" 
 { 
 IGESControl_Reader myIgesReader; 
 Standard_Integer nIgesFaces,nTransFaces; 
 
-myIgesReader.ReadFile (“MyFile.igs”); 
+myIgesReader.ReadFile ("MyFile.igs"); 
 //loads file MyFile.igs 
 
-Handle(TColStd_HSequenceOfTransient) myList =  myIgesReader.GiveList(“iges-faces”); 
+Handle(TColStd_HSequenceOfTransient) myList =  myIgesReader.GiveList("iges-faces"); 
 //selects all IGES faces in the file and puts them into a list  called //MyList, 
 
 nIgesFaces = myList-Length();  
@@ -909,7 +909,7 @@ After the selected set of entities is loaded the user will  be asked how loaded 
 
 The second parameter of the *igesbrep* command defines  the name of the loaded shape. If several shapes are created, they will get  indexed names. For instance, if the last parameter is ‘s’, they will be <i>s_1,  ... s_N.</i> 
 
-<i>\<selection\></i> specifies the scope of selected entities  in the model, it is *xst-transferrable-roots* by default. An asterisk “*” can be  specified instead of *iges-visible-transf-roots*. For possible values of  *selection* refer to @ref occt_iges_2_3_4 "Selecting entities" section. 
+<i>\<selection\></i> specifies the scope of selected entities  in the model, it is *xst-transferrable-roots* by default. An asterisk "*" can be  specified instead of *iges-visible-transf-roots*. For possible values of  *selection* refer to @ref occt_iges_2_3_4 "Selecting entities" section. 
 
 
 Instead of *igesbrep* it is possible to use commands:
@@ -922,7 +922,7 @@ Draw> trimpcomp <file_name> <result_shape_name> <selection>
 ~~~~~
 which outputs the result of translation of all selected  entities into one shape (*TopoDS_Compound* for several entities). 
 
-An asterisk “*” can be specified instead of  *selection*, it means *xst-transferrable-roots*.
+An asterisk "*" can be specified instead of  *selection*, it means *xst-transferrable-roots*.
  
 During the IGES translation, a map of correspondence between  IGES entities and OCCT shapes is created. 
 The following commands are available:  
@@ -1124,7 +1124,7 @@ Allows writing the prepared model to a file with name *filename.igs*.
 Before performing any other operation, you must load an IGES  file with: 
 ~~~~~
 IGESCAFControl_Reader reader(XSDRAW::Session(),  Standard_False); 
-IFSelect_ReturnStatus stat = reader.ReadFile(“filename.igs”); 
+IFSelect_ReturnStatus stat = reader.ReadFile("filename.igs"); 
 ~~~~~
 Loading the file only memorizes, but does not translate the  data. 
 

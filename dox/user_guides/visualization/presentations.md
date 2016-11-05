@@ -5,17 +5,27 @@
 
 @section occt_visu_4_1 Glossary of 3D terms 
 
-* **Anti-aliasing**	This mode attempts to improve the screen resolution by drawing lines and curves in a mixture of colors so that to the human eye the line or curve is smooth. The quality of the result is linked to the quality of the algorithm used by the workstation hardware.
-* **Depth-cueing**	Reduces the color intensity for the portion of an object further away from the eye to give the impression of depth. This is used for wireframe objects. Shaded objects do not require this.
-* **Group**	-- a set of primitives and attributes on those primitives. Primitives and attributes may be added to a group but cannot be removed from it, unless erased globally. A group can have a pick identity.
-* **Light** There are five kinds of light source -- ambient, headlight, directional, positional and spot. The light is only activated in a shading context in a view.
-* **Primitive**  -- a drawable element. It has a definition in 3D space. Primitives can either be lines, faces, text, or markers. Once displayed markers and text remain the same size. Lines and faces can be modified e.g. zoomed. Primitives must be stored in a group.
-* **Structure** -- manages a set of groups. The groups are mutually exclusive. A structure can be edited, adding or removing groups. A structure can reference other structures to form a hierarchy. It has a default (identity) transformation and other transformations may be applied to it (rotation, translation, scale, etc). It has no default attributes for the primitive lines, faces, markers, and text. Attributes may be set in a structure but they are overridden by the attributes in each group. Each structure has a display priority associated with it, which rules the order in which it is redrawn in a 3D viewer. If the visualization mode is incompatible with the view it is not displayed in that view, e.g. a shading-only object is not visualized in a wireframe view. 
-* **View**	-- is defined by a view orientation, a view mapping, and a context view.
-* **Viewer** -- manages a set of views.
-* **View orientation** -- defines the manner in which the observer looks at the scene in terms of View Reference Coordinates.
-* **View mapping** -- defines the transformation from View Reference Coordinates to the Normalized Projection Coordinates. This follows the Phigs scheme.
-* **Z-Buffering** -- a form of hidden surface removal in shading mode only. This is always active for a view in the shading mode. It cannot be suppressed.
+* **Anti-aliasing**	This mode attempts to improve the screen resolution by drawing lines and curves in a mixture of colors so that to the human eye the line or curve is smooth. The quality of the result is linked to the quality of the algorithm used by the workstation hardware.<br/><br/>
+
+* **Group**	-- a set of primitives and attributes on those primitives. Primitives and attributes may be added to a group but cannot be removed from it, unless erased globally. A group can have a pick identity.<br/><br/>
+
+* **Light** There are five kinds of light source -- ambient, headlight, directional, positional and spot. The light is only activated in a shading context in a view.<br/><br/>
+
+* **Primitive**  -- a drawable element. It has a definition in 3D space. Primitives can either be lines, faces, text, or markers. Once displayed markers and text remain the same size. Lines and faces can be modified e.g. zoomed. Primitives must be stored in a group.<br/><br/>
+
+* **Structure** -- manages a set of groups. The groups are mutually exclusive. A structure can be edited, adding or removing groups. A structure can reference other structures to form a hierarchy. It has a default (identity) transformation and other transformations may be applied to it (rotation, translation, scale, etc). It has no default attributes for the primitive lines, faces, markers, and text. Attributes may be set in a structure but they are overridden by the attributes in each group. Each structure has a display priority associated with it, which rules the order in which it is redrawn in a 3D viewer. If the visualization mode is incompatible with the view it is not displayed in that view, e.g. a shading-only object is not visualized in a wireframe view. <br/><br/>
+
+* **View**	-- is defined by a view orientation, a view mapping, and a context view.<br/><br/>
+
+* **Viewer** -- manages a set of views.<br/><br/>
+
+* **View orientation** -- defines the manner in which the observer looks at the scene in terms of View Reference Coordinates.<br/><br/>
+
+* **View mapping** -- defines the transformation from View Reference Coordinates to the Normalized Projection 
+Coordinates. This follows the Phigs scheme.<br/><br/>
+
+* **Z-Buffering** -- a form of hidden surface removal in shading mode only. This is always active for a view in the
+ shading mode. It cannot be suppressed.
 
 @section occt_visu_4_2 Graphic primitives
 
@@ -38,31 +48,37 @@ There are classes for:
 The root is the top of a structure hierarchy or structure network. The attributes of a parent structure are passed to its descendants. The attributes of the descendant structures do not affect the parent. Recursive structure networks are not supported.
 
 @subsection occt_visu_4_2_3 Graphic primitives
+
 * **Markers** 
   * Have one or more vertices, 
   * Have a type, a scale factor, and a color, 
-  * Have a size, shape, and orientation independent of  transformations. 
+  * Have a size, shape, and orientation independent of  transformations.
+<br/><br/>
+
 * **Polygons** 
   * Have one closed boundary, 
   * Have at least three vertices, 
   * Are planar and have a normal, 
   * Have interior attributes -- style, color, front and back material,  texture and reflection ratio, 
   * Have a boundary with the following attributes -- type, width scale  factor, color. The boundary is only drawn when the interior style is hollow. 
+<br/><br/>
 
 * **Polygons with holes** 
   * Have multiple closed boundaries, each one with at least three  vertices, 
   * Are planar and have a normal, 
   * Have interior attributes -- style, color, front and back material,  
-  * Have a boundary with the following attributes -- type, width scale  factor, color. The boundary is only drawn when the interior style is hollow. 
+  * Have a boundary with the following attributes -- type, width scale  factor, color. The boundary is only drawn when the interior style is hollow.
+<br/><br/>
 
 * **Polylines** 
   * Have two or more vertices, 
-  * Have the following attributes -- type, width scale factor, color. 
+  * Have the following attributes -- type, width scale factor, color.
+<br/><br/>
 
 * **Text** 
   * Has geometric and non-geometric attributes, 
   * Geometric attributes -- character height, character up vector,  text path, horizontal and vertical alignment, orientation, three-dimensional  position, zoomable flag
-  * Non-geometric attributes -- text font, character spacing,  character expansion factor, color. 
+  * Non-geometric attributes -- text font, character spacing, character expansion factor, color. 
 
 @subsection occt_visu_4_2_4 Primitive  arrays
 
@@ -74,7 +90,7 @@ The Vertex Buffer Objects can be disabled at the application  level. You can use
   
 The following example shows how to disable the VBO support:  
 
-~~~~~
+~~~~~{.cpp}
 // get the graphic  driver
 Handle (Graphic3d_GraphicDriver) aDriver =  
   myAISContext->CurrentViewer()->Driver(); 
@@ -83,7 +99,7 @@ Handle (Graphic3d_GraphicDriver) aDriver =
 aDriver->EnableVBO (Standard_False); 
 ~~~~~
 
-**Note** that the use of Vertex Buffer Objects  requires the application level primitive data provided by the  *Graphic3d_ArrayOfPrimitives* to be transferred to the video memory. *TKOpenGl* transfers the data and releases the *Graphic3d_ArrayOfPrimitives* internal  pointers to the primitive data. Thus it might be necessary to pay attention to  such kind of behaviour, as the pointers could be modified (nullified) by the *TKOpenGl*. 
+@note The use of Vertex Buffer Objects  requires the application level primitive data provided by the  *Graphic3d_ArrayOfPrimitives* to be transferred to the video memory. *TKOpenGl* transfers the data and releases the *Graphic3d_ArrayOfPrimitives* internal  pointers to the primitive data. Thus it might be necessary to pay attention to  such kind of behaviour, as the pointers could be modified (nullified) by the *TKOpenGl*. 
 
 The different types of primitives could be presented with  the following primitive arrays: 
   * *Graphic3d_ArrayOfPoints,*
@@ -118,7 +134,7 @@ You can also modify the values assigned to the vertex or  query these values by 
 
 The following example shows how to define an array of  points: 
 
-~~~~~
+~~~~~{.cpp}
 // create an array
 Handle (Graphic3d_ArrayOfPoints) anArray = new Graphic3d_ArrayOfPoints (aVerticiesMaxCount); 
 
@@ -141,7 +157,7 @@ It is also possible to query the vertex defined by an edge using method *Graphic
 
 The following example shows how to define an array of  triangles: 
 
-~~~~~
+~~~~~{.cpp}
 // create an array
 Standard_Boolean  IsNormals     = Standard_False;  
 Standard_Boolean  IsColors      = Standard_False; 
@@ -176,7 +192,7 @@ aGroup->EndPrimitives  ();
 If the primitive array presents primitives built from  sequential sets of vertices, for example polygons, then you can specify the  bounds, or the number of vertices for each primitive. You can use the method *Graphic3d_ArrayOfPrimitives::AddBound* to define the bounds and the color for each bound. This method returns the actual number of bounds. 
 
 It is also possible to set the color and query the number of  edges in the bound and bound color. 
-~~~~~
+~~~~~{.cpp}
   Standard_Integer  Graphic3d_ArrayOfPrimitives::Bound
   Quantity_Color  Graphic3d_ArrayOfPrimitives::BoundColor
   void  Graphic3d_ArrayOfPrimitives::BoundColor
@@ -184,7 +200,7 @@ It is also possible to set the color and query the number of  edges in the bound
 
 The following example shows how to define an array of  polygons: 
 
-~~~~~
+~~~~~{.cpp}
 // create an array
 Standard_Boolean  IsNormals      = Standard_False;  
 Standard_Boolean  IsVertexColors = Standard_False; 
@@ -233,7 +249,9 @@ and check if the primitive array provides normals, vertex colors and vertex texe
   Standard_Boolean Graphic3d_ArrayOfPrimitives::HasVertexColors
   Standard_Boolean Graphic3d_ArrayOfPrimitives::HasVertexTexels
 ~~~~~
+
 or get the number of vertices, edges and bounds: 
+
 ~~~~~
   Standard_Integer Graphic3d_ArrayOfPrimitives::VertexNumber
   Standard_Integer Graphic3d_ArrayOfPrimitives::EdgeNumber
@@ -250,7 +268,8 @@ The OpenGl graphics driver uses advanced text rendering  powered by FTGL library
 
 The text attributes for the group could be defined with the *Graphic3d_AspectText3d* attributes group. 
 To add any text to the graphic structure you can use the  following methods: 
-~~~~~
+
+~~~~~{.cpp}
  void Graphic3d_Group::Text
 			(const Standard_CString AText, 
 			 const Graphic3d_Vertex& APoint, 
@@ -259,7 +278,7 @@ To add any text to the graphic structure you can use the  following methods:
 			 const Graphic3d_TextPath ATp, 
 			 const Graphic3d_HorizontalTextAlignment  AHta, 
 			 const Graphic3d_VerticalTextAlignment  AVta, 
-			 const Standard_Boolean EvalMinMax), 
+			 const Standard_Boolean EvalMinMax)
 ~~~~~			
 *AText*  parameter is the text string, *APoint* is the three-dimensional position of the  text, *AHeight* is the text height, *AAngle* is the orientation of the text (at the  moment, this parameter has no effect, but you can specify the text orientation through  the *Graphic3d_AspectText3d* attributes). 
 
@@ -267,8 +286,9 @@ To add any text to the graphic structure you can use the  following methods:
 
 You can  pass *Standard_False* as *EvalMinMax* if you do not want the graphic3d structure  boundaries to be affected by the text position.  
 
-**Note** that the text orientation angle can be defined by *Graphic3d_AspectText3d* attributes. 
-~~~~~
+@note Text orientation angle can be defined by *Graphic3d_AspectText3d* attributes. 
+
+~~~~~{.cpp}
   void  Graphic3d_Group::Text
 			(const Standard_CString AText, 
 			 const Graphic3d_Vertex& APoint, 
@@ -291,7 +311,8 @@ You can  pass *Standard_False* as *EvalMinMax* if you do not want the graphic3d 
 ~~~~~
 
 See the example:
-~~~~~
+
+~~~~~{.cpp}
 // get the group
 Handle (Graphic3d_Group) aGroup =  Prs3d_Root::CurrentGroup  (aPrs);  
 
@@ -333,7 +354,7 @@ Three types of texture are available:
 
 OCCT visualization core supports GLSL shaders. Currently OCCT supports only vertex and fragment GLSL shader. Shaders can be assigned to a generic presentation by its drawer attributes (Graphic3d aspects). To enable custom shader for a specific AISShape in your application, the following API functions are used:
 
-~~~~~
+~~~~~{.cpp}
 // Create shader program
 Handle(Graphic3d_ShaderProgram) aProgram = new Graphic3d_ShaderProgram();
 
@@ -369,13 +390,13 @@ The *Aspect* package provides classes for the graphic elements in the viewer:
 
 The *V3d* package provides the resources to define a 3D  viewer and the views attached to this viewer (orthographic, perspective). This  package provides the commands to manipulate the graphic scene of any 3D object  visualized in a view on screen.  
 
-A set of high-level commands allows the separate  manipulation of parameters and the result of a projection (Rotations, Zoom,  Panning, etc.) as well as the visualization attributes (Mode, Lighting,  Clipping, Depth-cueing, etc.) in any particular view.  
+A set of high-level commands allows the separate  manipulation of parameters and the result of a projection (Rotations, Zoom,  Panning, etc.) as well as the visualization attributes (Mode, Lighting,  Clipping, etc.) in any particular view.  
 
 The *V3d* package is basically a set of tools directed by  commands from the viewer front-end. This tool set contains methods for creating  and editing classes of the viewer such as:  
   * Default parameters of the viewer, 
   * Views (orthographic, perspective), 
   * Lighting (positional, directional, ambient, spot, headlight), 
-  * Clipping planes (note that only Z-clipping planes can work with  the Phigs interface), 
+  * Clipping planes, 
   * Instantiated sequences of views, planes, light sources, graphic  structures, and picks, 
   * Various package methods. 
 
@@ -383,7 +404,7 @@ The *V3d* package is basically a set of tools directed by  commands from the vie
 
 This sample TEST program for the *V3d* Package uses primary  packages *Xw* and *Graphic3d* and secondary packages *Visual3d, Aspect, Quantity,  Phigs* and *math*.  
 
-~~~~~
+~~~~~{.cpp}
 //Create a default display  connection
 Handle(Aspect_DisplayConnection)  aDisplayConnection = new  Aspect_DisplayConnection(); 
 
@@ -391,18 +412,15 @@ Handle(Aspect_DisplayConnection)  aDisplayConnection = new  Aspect_DisplayConnec
 Handle(OpenGl_GraphicDriver)  GD = new OpenGl_GraphicDriver (aDisplayConnection);
 
 //Create a Viewer to this Driver 
-Handle(V3d_Viewer)  VM = new V3d_Viewer(GD, 400.,  
-	// Space size  
-	V3d_Xpos,
-	// Default projection  
-	Quantity_NOC_DARKVIOLET, 
-	// Default  background  
-	V3d_ZBUFFER, 
-	// Type of  visualization  
-	V3d_GOURAUD, 
-	// Shading  model  
-	V3d_WAIT); 
-	// Update mode   
+Handle(V3d_Viewer)  VM = new V3d_Viewer(GD, 
+    400.,  	                    // Space size  
+	V3d_Xpos,	                // Default projection  
+	Quantity_NOC_DARKVIOLET, 	// Default  background  
+	V3d_ZBUFFER,                // Type of  visualization  
+	V3d_GOURAUD,                // Shading  model  
+	V3d_WAIT	                // Update mode  
+); 
+ 
 // Create a structure in this  Viewer 
 Handle(Graphic3d_Structure) S =  new  Graphic3d_Structure(VM->Viewer()) ;  
 
@@ -436,17 +454,20 @@ W->Map() ;
 // Create a Perspective  View in this Viewer
 Handle(V3d_View) aView = new V3d_View(VM);
 aView->Camera()->SetProjectionType (Graphic3d_Camera::Projection_Perspective);
+
 // Associate this View with the Window
 aView ->SetWindow(W);
+
 // Display ALL structures in this View
 VM->Viewer()->Display();
+
 // Finally update the Visualization in this View
 aView->Update();
 ~~~~~
 
 As an alternative to manual setting of perspective parameters the *V3d_View::ZfitAll()* and *V3d_View::FitAll()* functions can be used:
 
-~~~~~
+~~~~~{.cpp}
 // Display shape in Viewer VM
 Handle(AIS_InteractiveContext) aContext = new AIS_InteractiveContext (VM);
 aContext->Display(shape);
@@ -481,8 +502,7 @@ View projection and orientation in OCCT *v3d* view are driven by camera. The cam
 
 Most common view manipulations (panning, zooming, rotation) are implemented as convenience methods of *V3d_View* class, however *Graphic3d_Camera* class can also be used directly by application developers:
 
-Example:
-~~~~~
+~~~~~{.cpp}
 // rotate camera by X axis on 30.0 degrees
 gp_Trsf aTrsf;
 aTrsf.SetRotation (gp_Ax1 (gp_Pnt (0.0, 0.0, 0.0), gp_Dir (1.0, 0.0, 0.0)), 30.0);
@@ -495,10 +515,11 @@ aView->Camera()->Transform (aTrsf);
 
 The following code configures the camera for orthographic rendering:
 
-~~~~~
+~~~~~{.cpp}
 // Create an orthographic View in this Viewer
 Handle(V3d_View) aView = new V3d_View (VM);
 aView->Camera()->SetProjectionType (Graphic3d_Camera::Projection_Orthographic);
+
 // update the Visualization in this View
 aView->Update();
 ~~~~~
@@ -511,13 +532,12 @@ aView->Update();
 
 The following code configures the camera for perspective rendering:
 
-~~~~~
+~~~~~{.cpp}
 // Create a perspective View in this Viewer
 Handle(V3d_View) aView = new V3d_View(VM);
 aView->Camera()->SetProjectionType (Graphic3d_Camera::Projection_Perspective);
 aView->Update();
 ~~~~~
-
 
 @subsection occt_visu_4_4_6 Stereographic Projection
 
@@ -543,7 +563,7 @@ In stereographic projection mode the camera prepares two projection matrices to 
 
 To enable quad buffering support you should provide the following settings to the graphic driver *opengl_caps*:
 
-~~~~~
+~~~~~{.cpp}
 Handle(OpenGl_GraphicDriver) aDriver = new OpenGl_GraphicDriver();
 OpenGl_Caps& aCaps = aDriver->ChangeOptions();
 aCaps.contextStereo = Standard_True;
@@ -551,12 +571,14 @@ aCaps.contextStereo = Standard_True;
 
 The following code configures the camera for stereographic rendering:
 
-~~~~~
+~~~~~{.cpp}
 // Create a Stereographic View in this Viewer
 Handle(V3d_View) aView = new V3d_View(VM);
 aView->Camera()->SetProjectionType (Graphic3d_Camera::Projection_Stereo);
+
 // Change stereo parameters
 aView->Camera()->SetIOD (IODType_Absolute, 5.0);
+
 // Finally update the Visualization in this View
 aView->Update();
 ~~~~~
@@ -579,7 +601,7 @@ The method *V3d_View::SetLayerMgr(const Handle (V3d_LayerMgr)& aMgr)* allows ass
 
 There are three virtual methods to prepare graphics in the  manager for further drawing: setting up layer dimensions and drawing static graphics. These methods can be redefined:
 
-~~~~~
+~~~~~{.cpp}
    void  V3d_LayerMgr::Begin ()
    void  V3d_LayerMgr::Redraw ()
    void V3d_LayerMgr::End  ()
@@ -588,7 +610,8 @@ There are three virtual methods to prepare graphics in the  manager for further 
 The layer manager controls layers (*Visual3d_Layer*)  and layer items (*Visual3d_LayerItem*). Both the overlay and  underlay layers can be created by the layer manager.  
 
 The layer entity is presented by the *Visual3d_Layer* class. This entity provides drawing services in the layer, for example:
-~~~~~ 
+
+~~~~~ {.cpp}
    void  Visual3d_Layer::DrawText
    void Visual3d_Layer::DrawRectangle
    void  Visual3d_Layer::SetColor
@@ -597,7 +620,7 @@ The layer entity is presented by the *Visual3d_Layer* class. This entity provide
 
 The following example demonstrates how to draw overlay graphics by the *V3d_LayerMgr*:
 
-~~~~~
+~~~~~{.cpp}
 // redefined method of  V3d_LayerMgr
 void  MyLayerMgr::Redraw () 
 { 
@@ -609,7 +632,7 @@ void  MyLayerMgr::Redraw ()
 
 The layer contains layer items that will be displayed on  view redraw. Such items are *Visual3d_LayerItem* entities. To manipulate *Visual3d_LayerItem* entities assigned to the layer's internal list you can use the following methods: 
 
-~~~~~
+~~~~~{.cpp}
    void  Visual3d_Layer::AddLayerItem (const Handle (Visual3d_LayerItem)&  Item)  
    void  Visual3d_Layer::RemoveLayerItem (const Handle (Visual3d_LayerItem)&  Item)   
    void  Visual3d_Layer::RemoveAllLayerItems ()
@@ -618,13 +641,15 @@ The layer contains layer items that will be displayed on  view redraw. Such item
 The layer's items are rendered when the method *void  Visual3d_Layer::RenderLayerItems()* is  called by the graphical driver.
 
 The *Visual3d_LayerItem* has virtual methods that are  used to render the item: 
-~~~~~
+
+~~~~~{.cpp}
    void  Visual3d_LayerItem::RedrawLayerPrs () 
    void  Visual3d_LayerItem::ComputeLayerPrs () 
 ~~~~~
 
 The item presentation can be computed before drawing by the *ComputeLayerPrs* method to save time on redraw. It also has an additional  flag that is used to tell that the presentation should be recomputed: 
-~~~~~
+
+~~~~~{.cpp}
    void  Visual3d_LayerItem::SetNeedToRecompute (const Standard_Boolean NeedToRecompute)  
    Standard_Boolean  Visual3d_LayerItem::IsNeedToRecompute 
 ~~~~~
@@ -632,9 +657,7 @@ The item presentation can be computed before drawing by the *ComputeLayerPrs* me
 An example of *Visual3d_LayerItem* is *V3d_ColorScaleLayerItem*  that represents the color scale entity as the layer's item.  
 The *V3d_ColorScaleLayerItem* sends render requests to  the color scale entity represented by it. As this entity (*V3d_ColorScale*)  is assigned to the *V3d_LayerMgr* it uses its overlay layer's services for  drawing: 
 
-<h4>Example </h4>
-
-~~~~~
+~~~~~{.cpp}
 // tell V3d_ColorScale to draw itself
 void  V3d_ColorScaleLayerItem::RedrawLayerPrs () 
 { 
@@ -668,7 +691,8 @@ void V3d_ColorScale::PaintRect
 There are three types of  background styles available for *V3d_view*: solid color, gradient color and  image.  
 
 To set solid color for  the background you can use the following methods: 
-~~~~~
+
+~~~~~{.cpp}
    void  V3d_View::SetBackgroundColor
 		(const Quantity_TypeOfColor Type,  
 		 const Quantity_Parameter V1, 
@@ -678,15 +702,16 @@ To set solid color for  the background you can use the following methods:
 
 This method allows you to specify the background color in RGB (red,  green, blue) or HLS (hue, lightness, saturation) color spaces, so the  appropriate values of the Type parameter are *Quantity_TOC_RGB* and  *Quantity_TOC_HLS*. 
 
-**Note** that the color  value parameters *V1,V2,V3* should be in the range between *0.0-1.0.* 
+@note The color value parameters *V1,V2,V3* should be in the range between *0.0-1.0.* 
 
-~~~~~
+~~~~~{.cpp}
   void  V3d_View::SetBackgroundColor(const Quantity_Color &Color)  
   void  V3d_View::SetBackgroundColor(const Quantity_NameOfColor Name)  
 ~~~~~
 
 The gradient background  style could be set up with the following methods: 
-~~~~~
+
+~~~~~{.cpp}
   void  V3d_View::SetBgGradientColors
 		(const Quantity_Color& Color1,  
 		 const Quantity_Color& Color2, 
@@ -705,7 +730,8 @@ The *Color1* and *Color2* parameters define the boundary colors of  interpolatio
 The fill style can be also set with the method *void  V3d_View::SetBgGradientStyle(const Aspect_GradientFillMethod AMethod, const Standard_Boolean update)*. 
 
 To get the current  background color you can use the following methods: 
-~~~~~
+
+~~~~~{.cpp}
    void  V3d_View::BackgroundColor
 		(const Quantity_TypeOfColor Type,  
 		 Quantity_Parameter &V1, 
@@ -717,11 +743,13 @@ To get the current  background color you can use the following methods:
 ~~~~~
    
 To set the image as a  background and change the background image style you can use the following  methods: 
-~~~~~  
+
+~~~~~{.cpp}
   void V3d_View::SetBackgroundImage
 		(const Standard_CString FileName,  
 		 const Aspect_FillMethod FillStyle, 
 		 const Standard_Boolean update) 
+
   void  V3d_View::SetBgImageStyle
 		(const Aspect_FillMethod FillStyle,  
 		 const Standard_Boolean update) 
@@ -738,21 +766,24 @@ The *FileName* parameter defines the image file name and the path to it,  the *F
 
 The 3D scene displayed in the view can be dumped in high resolution into an image file. The high resolution (8192x8192 on some implementations) is achieved using the Frame Buffer Objects (FBO) provided by the graphic driver. Frame Buffer Objects enable off-screen rendering into a virtual view to produce images in the background mode (without displaying any graphics on the screen).
 
-The *V3d_View* has the following methods for  dumping the 3D scene: 
-~~~~
+The *V3d_View* has the following methods for dumping the 3D scene: 
+
+~~~~{.cpp} 
+## Dumps the scene into an image file with the view  dimensions.
+
 Standard_Boolean  V3d_View::Dump 
 	(const Standard_CString theFile, 
 	 const Image_TypeOfImage theBufferType)
 ~~~~
-Dumps the scene into an image file with the view  dimensions.
 
-~~~~
+~~~~{.cpp}
+## Makes the dimensions of the output image compatible to a certain format of printing paper passed by *theFormat* argument.  
+
 Standard_Boolean  V3d_View::Dump 
 	(const Standard_CString theFile, 
 	 const Aspect_FormatOfSheetPaper  theFormat, 
 	 const Image_TypeOfImage theBufferType)
 ~~~~
-Makes the dimensions of the output image compatible to a certain format of printing paper passed by *theFormat* argument.  
   
 These methods dump the 3D scene into an image file passed by its name  and path as theFile.  
 
@@ -762,16 +793,17 @@ The value passed as *theBufferType* argument defines the type of the  buffer for
 
 There is also class *Image_AlienPixMap* providing import / export from / to external image files in formats supported by **FreeImage** library.
 
-**Note** that dumping the image for a paper format with  large dimensions is a memory consuming operation, it might be necessary to take  care of preparing enough free memory to perform this operation. 
+@note Dumping the image for a paper format with  large dimensions is a memory consuming operation, it might be necessary to take  care of preparing enough free memory to perform this operation. 
 
-~~~~
+~~~~{.cpp}
+## Dumps the displayed 3d scene into a pixmap  with a width and height passed as *theWidth* and theHeight arguments. 
+
 Handle_Image_PixMap  V3d_View::ToPixMap 
 	(const Standard_Integer theWidth, 
 	const Standard_Integer theHeight, 
 	const Image_TypeOfImage theBufferType, 
 	const Standard_Boolean theForceCentered) 
 ~~~~
-Dumps the displayed 3d scene into a pixmap  with a width and height passed as *theWidth* and theHeight arguments.  
 
 The value passed as *theBufferType* argument defines the type of the  buffer for a pixmap <i>(RGB, RGBA, floating-point, RGBF, RGBAF)</i>.  The last parameter allows centering the 3D scene on dumping. 
 
@@ -787,7 +819,7 @@ All these methods assume that you have  created a view and displayed a 3d scene 
 
 The following example demonstrates this  procedure for *WNT_Window* : 
 
-~~~~~
+~~~~~{.cpp}
 // create a dummy display  connection
 Handle(Aspect_DisplayConnection)  aDisplayConnection;
 
@@ -883,21 +915,27 @@ There are several ray-tracing options that user can switch on/off:
 * Adaptive anti aliasing
 * Transparency shadow effects
 
-Example:
-~~~~~
+~~~~~{.cpp}
 Graphic3d_RenderingParams& aParams = aView->ChangeRenderingParams();
+
 // specifies rendering mode
 aParams.Method = Graphic3d_RM_RAYTRACING;
+
 // maximum ray-tracing depth
 aParams.RaytracingDepth = 3;
+
 // enable shadows rendering
 aParams.IsShadowEnabled = Standard_True;
+
 // enable specular reflections.
 aParams.IsReflectionEnabled = Standard_True;
+
 // enable adaptive anti-aliasing
 aParams.IsAntialiasingEnabled = Standard_True;
+
 // enable light propagation through transparent media.
 aParams.IsTransparentShadowEnabled = Standard_True;
+
 // update the view
 aView->Update();
 ~~~~~
@@ -910,9 +948,7 @@ Structure display priorities control the order, in which structures are drawn. W
 
 OCCT features depth-arranging functionality called z-layer. A graphical presentation can be put into a z-layer. In general, this function can be used for implementing "bring to front" functionality in a graphical application.
 
-Example:
-
-~~~~~
+~~~~~{.cpp}
 // set z-layer to an interactive object
 Handle(AIS_InteractiveContext) aContext = ...
 Handle(AIS_InteractiveObject) anInterObj = ...
@@ -927,19 +963,55 @@ For each z-layer, it is allowed to:
 * Enable / disable depth buffer clearing.
 * Enable / disable polygon offset.
 
-The corresponding method *SetZLayerOption (...)* is available in *Graphic3d_GraphicDriver* interface. You can get the options using getter from *Visual3d_ViewManager* and *V3d_Viewer*. It returns *Graphic3d_ZLayerSettings* cached in *Visual3d_ViewManager* for a given *LayerId*.
+You can get the options using getter from *Visual3d_ViewManager* and *V3d_Viewer*. It returns *Graphic3d_ZLayerSettings* for a given *LayerId*.
 
-Example:
-~~~~~
+~~~~~{.cpp}
 // change z-layer settings
 Graphic3d_ZLayerSettings aSettings = aViewer->ZLayerSettings (anId);
-aSettings.EnableSetting (Graphic3d_ZLayerDepthTest);
-aSettings.EnableSetting (Graphic3d_ZLayerDepthWrite);
-aSettings.EnableSetting (Graphic3d_ZLayerDepthClear);
-aSettings.EnableSetting (Graphic3d_ZLayerDepthOffset);
+aSettings.SetEnableDepthTest (Standard_True);
+aSettings.SetEnableDepthWrite(Standard_True);
+aSettings.SetClearDepth      (Standard_True);
+aSettings.SetPolygonOffset   (Graphic3d_PolygonOffset());
 aViewer->SetZLayerSettings (anId, aSettings);
 ~~~~~
 
+Another application for Z-Layer feature is treating visual precision issues when displaying objects far from the World Center.
+The key problem with such objects is that visualization data is stored and manipulated with single precision floating-point numbers (32-bit).
+Single precision 32-bit floating-point number gives only 6-9 significant decimal digits precision,
+while double precision 64-bit number gives 15–17 significant decimal digits precision - sufficient enough for most applications.
+
+When moving Object far from the World Center, float number steadily eats precision.
+The camera Eye position adds leading decimal digits to overall Object transformation which discards smaller digits due to floating point number nature.
+For example, the object of size 0.0000123 moved to position 1000 has result transformation 1000.0000123,
+which overflows single precision floating point - considering the most optimistic scenario of 9 significant digits (but it is really not this case), the result number will be 1000.00001.
+
+The result of this imprecision are visual artifacts in 3D Viewer of two kinds:
+
+* Overall per-vertex Object distortion.
+  This happens when each vertex position have been defined within World Coordinate system. <br/><br/>
+
+* Object is not distorted itself, but its position in the World is unstable and imprecise - object jumps during camera manipulations.
+  This happens when vertices have been defined within Local Coordinate system at the distance small enough to keep precision within single precision float,
+  however Local Transformation applied to the Object is corrupted due to single precision float.
+
+The first issue can not be handled without switching entire presentation into double precision (for each vertex position).
+However, visualization hardware is much faster using single precision float number rather than double precision - so this is not an option in most cases.
+The second issue, however, can be negated by applying special rendering tricks.
+
+So, to apply this feature in OCCT, application needs:
+
+* Define Local Transformation for each object so that presentation data will fit into single precision float without distortion.<br/><br/>
+* Spatially split the world into smaller areas/cells where single precision float will be sufficient.
+  The size of such cell might vary and depends on the precision required by application (e.g. how much user is able to zoom in camera within application).<br/><br/>
+* Define more Z-Layer for each spatial cell containing any object.
+  Define the *Local Origin* property of the Z-Layer according to the center of the cell.
+    Graphic3d_ZLayerSettings aSettings = aViewer->ZLayerSettings (anId);
+    aSettings.SetLocalOrigin (400.0, 0.0, 0.0);<br/><br/>
+* Assign presentable object to the nearest Z-Layer.
+
+@note *Local Origin* of the Layer is a rendering-only thing - everything outside will be still defined in the World Coordinate System,
+including Local Transformation of the Object and Detection results.
+E.g., while moving presentation between Z-layers with different Local Origin, the Object will be still left at the same place - only visualization quality will vary.
 
 @subsection occt_visu_4_4_16 Clipping planes
 
@@ -947,7 +1019,7 @@ The ability to define custom clipping planes could be very useful for some tasks
 
 The *Graphic3d_ClipPlane* class provides the services for clipping planes: it holds the plane equation coefficients and provides its graphical representation. To set and get plane equation coefficients you can use the following methods:
 
-~~~~~
+~~~~~{.cpp}
 Graphic3d_ClipPlane::Graphic3d_ClipPlane(const gp_Pln& thePlane)
 void Graphic3d_ClipPlane::SetEquation (const gp_Pln& thePlane)
 Graphic3d_ClipPlane::Graphic3d_ClipPlane(const Equation& theEquation)
@@ -968,35 +1040,43 @@ Standard_Integer aMaxClipPlanes = aView->Viewer()->Driver()->InquirePlaneLimit()
 ~~~~~
 
 Let us see for example how to create a new clipping plane with custom parameters and add it to a view or to an object:
-~~~~~
+~~~~~{.cpp}
 // create a new clipping plane
 const Handle(Graphic3d_ClipPlane)& aClipPlane = new Graphic3d_ClipPlane();
+
 // change equation of the clipping plane
 Standard_Real aCoeffA = ...
 Standard_Real aCoeffB = ...
 Standard_Real aCoeffC = ...
 Standard_Real aCoeffD = ...
 aClipPlane->SetEquation (gp_Pln (aCoeffA, aCoeffB, aCoeffC, aCoeffD));
+
 // set capping
 aClipPlane->SetCapping (aCappingArg == "on");
+
 // set the material with red color of clipping plane
 Graphic3d_MaterialAspect aMat = aClipPlane->CappingMaterial();
 Quantity_Color aColor (1.0, 0.0, 0.0, Quantity_TOC_RGB);
 aMat.SetAmbientColor (aColor);
 aMat.SetDiffuseColor (aColor);
 aClipPlane->SetCappingMaterial (aMat);
+
 // set the texture of clipping plane
 Handle(Graphic3d_Texture2Dmanual) aTexture = ...
 aTexture->EnableModulate();
 aTexture->EnableRepeat();
 aClipPlane->SetCappingTexture (aTexture);
+
 // add the clipping plane to an interactive object
 Handle(AIS_InteractiveObject) aIObj = ...
 aIObj->AddClipPlane (aClipPlane);
+
 // or to the whole view
 aView->AddClipPlane (aClipPlane);
+
 // activate the clipping plane
 aClipPlane->SetOn(Standard_True);
+
 // update the view
 aView->Update();
 ~~~~~
@@ -1029,9 +1109,8 @@ To create 3D graphic objects and display them in the screen,  follow the procedu
 
 @subsection occt_visu_4_5_1 Create attributes
 
-Create colors.
-
-~~~~~
+~~~~~{.cpp}
+## Create colors
 Quantity_Color aBlack (Quantity_NOC_BLACK);
 Quantity_Color aBlue (Quantity_NOC_MATRABLUE);
 Quantity_Color aBrown (Quantity_NOC_BROWN4);
@@ -1043,9 +1122,8 @@ Quantity_Color aBeet (Quantity_NOC_BEET);
 Quantity_Color aWhite (Quantity_NOC_WHITE);
 ~~~~~
 
-Create line attributes.
-
-~~~~~
+~~~~~{.cpp}
+## Create line attributes
 Handle(Graphic3d_AspectLine3d) anAspectBrown = new Graphic3d_AspectLine3d();
 Handle(Graphic3d_AspectLine3d) anAspectBlue = new Graphic3d_AspectLine3d();
 Handle(Graphic3d_AspectLine3d) anAspectWhite = new Graphic3d_AspectLine3d();
@@ -1054,20 +1132,22 @@ anAspectBlue ->SetColor (aBlue);
 anAspectWhite->SetColor (aWhite);
 ~~~~~
 
-Create marker attributes.
-~~~~~
+~~~~~{.cpp}
+## Create marker attributes
 Handle(Graphic3d_AspectMarker3d aFirebrickMarker = new Graphic3d_AspectMarker3d();
+
 // marker attributes
 aFirebrickMarker->SetColor (Firebrick);
 aFirebrickMarker->SetScale (1.0);
 aFirebrickMarker->SetType (Aspect_TOM_BALL);
+
 // or this
 // it is a preferred way (supports full-color images on modern hardware).
 aFirebrickMarker->SetMarkerImage (theImage)
 ~~~~~
 
-Create facet attributes.
-~~~~~
+~~~~~{.cpp}
+## Create facet attributes
 Handle(Graphic3d_AspectFillArea3d) aFaceAspect =  new Graphic3d_AspectFillArea3d();
 Graphic3d_MaterialAspect aBrassMaterial (Graphic3d_NOM_BRASS);
 Graphic3d_MaterialAspect aGoldMaterial  (Graphic3d_NOM_GOLD);
@@ -1079,21 +1159,24 @@ aFaceAspect->SetBackMaterial  (aBrassMaterial);
 aFaceAspect->SetEdgeOn();
 ~~~~~
 
-Create text attributes.
-~~~~~
+~~~~~{.cpp}
+## Create text attributes
 Handle(Graphic3d_AspectText3d) aTextAspect = new Graphic3d_AspectText3d (aForest, Graphic3d_NOF_ASCII_MONO, 1.0, 0.0);
 ~~~~~
 
 @subsection occt_visu_4_5_2 Create a 3D Viewer (a Windows example)
 
-~~~~~
+~~~~~{.cpp}
 // create a default connection
 Handle(Aspect_DisplayConnection) aDisplayConnection;
+
 // create a graphic driver from default connection
 Handle(OpenGl_GraphicDriver) aGraphicDriver = new OpenGl_GraphicDriver (GetDisplayConnection());
+
 // create a viewer
 TCollection_ExtendedString aName ("3DV");
 myViewer = new V3d_Viewer (aGraphicDriver,aName.ToExtString(), "");
+
 // set parameters for V3d_Viewer
 // defines default lights -
 //   positional-light 0.3 0.0 0.0
@@ -1101,17 +1184,19 @@ myViewer = new V3d_Viewer (aGraphicDriver,aName.ToExtString(), "");
 //   directional-light V3d_XnegYneg
 //   ambient-light
 a3DViewer->SetDefaultLights();
+
 // activates all the lights defined in this viewer
 a3DViewer->SetLightOn();
+
 // set background color to black
 a3DViewer->SetDefaultBackgroundColor (Quantity_NOC_BLACK);
 ~~~~~
 
-
 @subsection occt_visu_4_5_3 Create a 3D view (a Windows example)
 
 It is assumed that a valid Windows window may already be  accessed via the method *GetSafeHwnd()*.
-~~~~~
+
+~~~~~{.cpp}
 Handle (WNT_Window) aWNTWindow = new WNT_Window (GetSafeHwnd());
 myView = myViewer->CreateView();
 myView->SetWindow (aWNTWindow);
@@ -1119,13 +1204,13 @@ myView->SetWindow (aWNTWindow);
 
 @subsection occt_visu_4_5_4 Create an interactive context
 
-~~~~~
+~~~~~{.cpp}
 myAISContext = new AIS_InteractiveContext (myViewer);
 ~~~~~
 
 You are now able to display interactive objects such as an *AIS_Shape*.
 
-~~~~~
+~~~~~{.cpp}
 TopoDS_Shape aShape = BRepAPI_MakeBox (10, 20, 30).Solid();
 Handle(AIS_Shape) anAISShape = new AIS_Shape(aShape);
 myAISContext->Display (anAISShape);
@@ -1143,8 +1228,8 @@ Follow the procedure below to compute the presentable object:
 
 Let us look at the example of compute methods
 
-~~~~~
-Void
+~~~~~{.cpp}
+void 
 myPresentableObject::Compute
   (const Handle(PrsMgr_PresentationManager3d)& thePrsManager,
    const Handle(Prs3d_Presentation)& thePrs,
@@ -1165,19 +1250,19 @@ myPresentableObject::Compute (const Handle(Prs3d_Projector)& ,
 
 Get the group used in *Prs3d_Presentation*.
 
-~~~~~
+~~~~~{.cpp}
 Handle(Graphic3d_Group) aGroup = Prs3d_Root::CurrentGroup (thePrs);
 ~~~~~
 
 Update the group attributes.
 
-~~~~~
+~~~~~{.cpp}
 aGroup->SetPrimitivesAspect (anAspectBlue);
 ~~~~~
 
 Create two triangles in *aGroup*.
 
-~~~~~
+~~~~~{.cpp}
 Standard_Integer aNbTria = 2;
 Handle(Graphic3d_ArrayOfTriangles) aTriangles = new Graphic3d_ArrayOfTriangles (3 * aNbTria, 0, Standard_True);
 Standard_Integer anIndex;
@@ -1195,7 +1280,7 @@ aGroup->EndPrimitives();
 The methods *BeginPrimitives()* and *EndPrimitives()* are used  when creating a set of various primitives in the same group.
 Use the polyline function to create a boundary box for the *thePrs* structure in group *aGroup*.
 
-~~~~~
+~~~~~{.cpp}
 Standard_Real Xm, Ym, Zm, XM, YM, ZM;
 thePrs->MinMaxValues (Xm, Ym, Zm, XM, YM, ZM);
 
@@ -1228,7 +1313,7 @@ aGroup->EndPrimitives();
 
 Create text and markers in group *aGroup*.
 
-~~~~~
+~~~~~{.cpp}
 static char* texte[3] =
 {
   "Application title",

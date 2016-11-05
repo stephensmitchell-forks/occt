@@ -1,5 +1,6 @@
 Commands {#draw__commands}
 ========
+Draw commands are groupped into the following categories:
 
 * @subpage user_guides__draw_commands_basic
 * @subpage user_guides__draw_commands_geometry. A set of geometric commands to create and modify curves and surfaces and to use OCCT geometry algorithms.

@@ -58,7 +58,7 @@ Classes fall into three categories:
 ##Inheritance
 The purpose of inheritance is to reduce the development  workload. The inheritance mechanism allows a new class to be 
 declared already  containing the characteristics of an existing class. This new class can then be  rapidly specialized
- for the task in hand. This avoids the necessity of  developing each component “from scratch”. 
+ for the task in hand. This avoids the necessity of  developing each component "from scratch". 
 For example, having already developed a class *BankAccount* you  could quickly specialize new classes: *SavingsAccount,
  LongTermDepositAccount,  MoneyMarketAccount, RevolvingCreditAccount*, etc.... 
 
@@ -128,11 +128,13 @@ object: by value or by handle. The following ideas can help you to make up your 
 * If your object may have a long lifetime within the application and you want to make multiple 
 references to it, it would be preferable to manipulate this object with a handle. The memory for the 
 object will be allocated on the heap. The handle which points to that memory is a light object which 
-can be rapidly passed in argument. This avoids the penalty of copying a large object. 
+can be rapidly passed in argument. This avoids the penalty of copying a large object. <br/><br/>
+
 * If your object will have a limited lifetime, for example, used within a single algorithm, it would 
 be preferable to manipulate this object by value, non-regarding its size, because this object is 
 allocated on the stack and the allocation and de-allocation of memory is extremely rapid, which 
-avoids the implicit calls to *new* and *delete* occasioned by allocation on the heap.
+avoids the implicit calls to *new* and *delete* occasioned by allocation on the heap.<br/><br/>
+
 * Finally, if an object will be created only once during, but will exist throughout the lifetime of 
 the application, the best choice may be a class manipulated by handle or a value declared as a 
 global variable. 
@@ -225,12 +227,11 @@ These macros define method *DynamicType()* that returns a type descriptor - hand
 *Standard_Type* describing the class.
 The type descriptor stores the name of the class and the descriptor of its parent class.
 
-Note that while inline version is easier to use, for widely used classes this method may lead to bloating of binary code
+@note While inline version is easier to use, for widely used classes this method may lead to bloating of binary code
  of dependent libraries, due to multiple instantiations of inline method.
 
 To get the type descriptor for a given class type, use macro *STANDARD_TYPE()* with the name of the class as argument.
 
-Example of usage:
 ~~~~~{.cpp}
 if (aCurve->IsKind(STANDARD_TYPE(Geom_Line))) // equivalent to "if (dynamic_cast<Geom_Line>(aCurve.get()) != 0)"
 {
@@ -247,13 +248,12 @@ through which it is  manipulated.
 
 Consider the class *CartesianPoint*, a  sub-class of *Point*; the rule of type conformity can be illustrated as  follows: 
 
-~~~~~
+~~~~~{.cpp}
 Handle (Geom_Point) p1;
 Handle (Geom_CartesianPoint) p2;
 p2 = new Geom_CartesianPoint;
 p1 = p2;  // OK,  the types are compatible
 ~~~~~
-
 
 The compiler sees p1 as a handle to *Point* though the  actual object referenced by *p1* is of the *CartesianPoint* type. 
 
@@ -265,9 +265,9 @@ an explicit type conversion of handles is required.
 
 A handle can be converted explicitly into one of its  sub-types if the actual type of the referenced object is a 
 descendant of the  object used to cast the handle. If this is not the case, the handle is  nullified (explicit type 
-conversion is sometimes called a “safe cast”).  Consider the example below. 
+conversion is sometimes called a "safe cast").  Consider the example below. 
 
-~~~~~~
+~~~~~~{.cpp}
 Handle (Geom_Point) p1;
 Handle (Geom_CartesianPoint) p2, p3;
 p2 = new Geom_CartesianPoint;
@@ -276,16 +276,16 @@ p3 = Handle (Geom_CartesianPoint)::DownCast (p1);
 // OK, the actual type of p1 is CartesianPoint, although the static type of the handle is Point
 ~~~~~~
 
-If conversion is not compatible with the actual type of the  referenced object, the handle which was “cast” becomes
+<br/>If conversion is not compatible with the actual type of the  referenced object, the handle which was "cast" becomes
  null (and no exception  is raised). So, if you require reliable services defined in a sub-class of the  type seen by
  the handle (static type), write as follows: 
 
-~~~~~~
+~~~~~~{.cpp}
 void MyFunction (const Handle(A) & a)
 {
   Handle(B) b =  Handle(B)::DownCast(a);
   if (! b.IsNull()) {
-    // we can use “b” if class B inherits from A
+    // we can use "b" if class B inherits from A
   }
   else {
     // the types are incompatible
@@ -298,7 +298,7 @@ Downcasting is used particularly with collections of objects  of different types
 For example, with a sequence of transient objects *SequenceOfTransient* and two classes  A and B that both inherit from 
 *Standard_Transient*, you get the  following syntax: 
 
-~~~~~
+~~~~~{.cpp}
 Handle (A) a;
 Handle (B) b;
 Handle (Standard_Transient) t;
@@ -326,7 +326,7 @@ To create an object which is manipulated by handle, declare  the handle and init
 operator,  immediately followed by a call to the constructor. The constructor can be any  of those specified in the
  source of the class from which the object is  instanced. 
 
-~~~~~
+~~~~~{.cpp}
 Handle (Geom_CartesianPoint) p;
 p = new Geom_CartesianPoint (0, 0, 0);
 ~~~~~
@@ -335,14 +335,14 @@ Unlike for a pointer, the **delete** operator does not  work on a handle; the re
 destroyed when no  longer in use. 
 
 @subsubsection handles_invoking Invoking Methods
-Once you have a handle to an object,  you can use it like a pointer in C++. To invoke a method which acts on the 
+Once you have a handle to an object, you can use it like a pointer in C++. To invoke a method which acts on the 
 referenced object, you translate this method by the standard *arrow* operator, or  alternatively, by function call 
 syntax when this is available. 
 
-To test or to modify the state of the handle, the method is  translated by the *dot* operator. 
-The example below illustrates how to access the coordinates  of an (optionally initialized) point object: 
+To test or to modify the state of the handle, the method is translated by the *dot* operator. 
+The example below illustrates how to access the coordinates of an (optionally initialized) point object: 
 
-~~~~~
+~~~~~{.cpp}
 Handle (Geom_CartesianPoint) centre;
 Standard_Real x, y, z;
 if (centre.IsNull()) {
@@ -353,7 +353,7 @@ centre->Coord(x, y, z);
 
 The example below illustrates how to access the type object  of a Cartesian point: 
 
-~~~~~
+~~~~~{.cpp}
 Handle(Standard_Transient)  p = new Geom_CartesianPoint(0.,0.,0.);
 if ( p->DynamicType() ==  STANDARD_TYPE(Geom_CartesianPoint) )
   cout  << ;Type check OK;  << endl; 
@@ -366,11 +366,11 @@ else
 #### Invoking Class Methods
 
 A class method is called like a static C++ function, i.e. it  is called by the name of the class of which it is a 
-member, followed by the “::” operator and the name of the  method. 
+member, followed by the "::" operator and the name of the  method. 
 
 For example, we can find the maximum degree of a Bezier curve:
 
-~~~~~
+~~~~~{.cpp}
 Standard_Integer  n; 
 n = Geom_BezierCurve::MaxDegree();
 ~~~~~
@@ -388,7 +388,7 @@ handle when reference counter becomes 0.
 
 The principle of allocation can be seen in the example  below. 
 
-~~~~~
+~~~~~{.cpp}
 ...
 {
 Handle (TColStd_HSequenceOfInteger) H1 = new TColStd_HSequenceOfInteger;
@@ -478,16 +478,22 @@ operator *delete* to this pointer. This will ensure that appropriate *delete()* 
 The OCCT memory manager may be configured to apply different  optimization techniques to different memory blocks 
 (depending on their size),  or even to avoid any optimization and use C functions *malloc()* and *free()*  directly. 
 The configuration is defined by numeric values of the  following environment variables: 
+
   * *MMGT_OPT*: if set to 0 (default) every memory block is allocated  in C memory heap directly (via *malloc()* and 
 *free()* functions). In this case,  all other options except for *MMGT_CLEAR* are ignored; if set to 1 the memory manager
- performs optimizations as described below; if set to 2, Intel ® TBB optimized  memory manager is used.
+ performs optimizations as described below; if set to 2, Intel ® TBB optimized  memory manager is used.<br/><br/>
+
   * *MMGT_CLEAR*: if set to 1 (default), every allocated memory block  is cleared by zeros; if set to 0, memory block
- is returned as it is.
-  * *MMGT_CELLSIZE*: defines the maximal size of blocks allocated in  large pools of memory. Default is 200.
+ is returned as it is.<br/><br/>
+
+  * *MMGT_CELLSIZE*: defines the maximal size of blocks allocated in  large pools of memory. Default is 200.<br/><br/>
+
   * *MMGT_NBPAGES*: defines the size of memory chunks allocated for  small blocks in pages (operating-system dependent).
- Default is 1000.
+ Default is 1000.<br/><br/>
+
   * *MMGT_THRESHOLD*: defines the maximal size of blocks that are  recycled internally instead of being returned to 
-the heap. Default is 40000.
+the heap. Default is 40000.<br/><br/>
+
   * *MMGT_MMAP*: when set to 1 (default), large memory blocks are  allocated using memory mapping functions of the 
 operating system; if set to 0,  they will be allocated in the C heap by *malloc()*.
 
@@ -500,7 +506,7 @@ When *MMGT_OPT* is set to 1, the following optimization  techniques are used:
   
 In the current version memory  pools are never returned to the system (until the process finishes). However,  memory 
 blocks that are released by the method *Standard::Free()* are remembered  in the free lists and later reused when the 
-next block of the same size is  allocated (recycling). 
+next block of the same size is allocated (recycling). 
 
   * Medium-sized blocks, with a size greater than *MMGT_CELLSIZE* but  less than *MMGT_THRESHOLD*, are allocated 
 directly in the C heap (using *malloc()*  and *free()*). When such blocks are released by the method *Standard::Free()*
@@ -517,27 +523,29 @@ allocated using operating-system specific functions managing memory mapped  file
 @subsection mem_benefits_drawbacks Benefits and drawbacks
 
 The major benefit of the OCCT memory manager is explained  by its recycling of small and medium blocks that makes an
- application work much  faster when it constantly allocates and frees multiple memory blocks of similar sizes. In 
-practical situations, the real gain on the application performance  may be up to 50%. 
+ application work much faster when it constantly allocates and frees multiple memory blocks of similar sizes. In 
+practical situations, the real gain on the application performance may be up to 50%. 
 
-The associated drawback is that recycled memory is not  returned to the operating system during program execution. 
+The associated drawback is that recycled memory is not returned to the operating system during program execution. 
 This may lead to  considerable memory consumption and even be misinterpreted as a memory leak. To  minimize this effect
- it is necessary to call the method *Standard::Purge* after the completion  of memory-intensive operations. 
+ it is necessary to call the method *Standard::Purge* after the completion of memory-intensive operations. 
 
 The overhead expenses induced by the OCCT memory manager  are: 
   * size of every allocated memory block is rounded up to 8 bytes  (when *MMGT_OPT* is 0 (default), the rounding is 
-defined by the CRT; the typical  value for 32-bit platforms is 4 bytes)
+defined by the CRT; the typical  value for 32-bit platforms is 4 bytes)<br/><br/>
+
   * additional 4 bytes (or 8 on 64-bit platforms) are allocated in  the beginning of every memory block to hold its 
 size (or address of the next  free memory block when recycled in free list) only when *MMGT_OPT* is 1.
   
-Note that these overheads may be greater or less than  overheads induced by the C heap memory manager, so overall memory
- consumption  may be greater in either optimized or standard modes, depending on  circumstances. 
+@note These overheads may be greater or less than overheads induced by the C heap memory manager, so overall memory
+ consumption  may be greater in either optimized or standard modes, depending on circumstances. 
 
-As a general rule, it is advisable to allocate memory  through significant blocks. In this way, you can work with blocks
+As a general rule, it is advisable to allocate memory through significant blocks. In this way, you can work with blocks
  of contiguous  data, and processing is facilitated for the memory page manager. 
 
 OCCT memory manager uses mutex to lock access to free lists, therefore it may have less  performance than non-optimized
- mode in situations when different threads often  make simultaneous calls to the memory manager.
+ mode in situations when different threads often make simultaneous calls to the memory manager.
+
 The reason is that modern  implementations of *malloc()* and *free()* employ several allocation arenas and  thus avoid 
 delays waiting mutex release, which are possible in such situations. 
 
@@ -546,39 +554,41 @@ delays waiting mutex release, which are possible in such situations.
 The behavior of any object is implemented by the methods,  which were defined in its class declaration. The definition 
 of these methods  includes not only their signature (their programming interface) but also their domain of validity.  
 
-This domain is expressed by **exceptions**. Exceptions  are raised under various error conditions to protect software 
+This domain is expressed by **exceptions**. Exceptions are raised under various error conditions to protect software 
 quality. 
 
-Exception handling provides a means of transferring control  from a given point in a program being executed to an
- **exception handler** associated  with another point previously executed. 
+Exception handling provides a means of transferring control from a given point in a program being executed to an
+ **exception handler** associated with another point previously executed. 
 
-A method may raise an exception which interrupts its normal  execution and transfers control to the handler catching
+A method may raise an exception which interrupts its normal execution and transfers control to the handler catching
  this exception. 
 
 A hierarchy of commonly used exception classes is provided. The root class is *Standard_Failure* from the *Standard*
- package.  So each exception inherits from *Standard_Failure* either directly or by inheriting from another exception.
- Exception classes list all  exceptions, which can be raised by any OCCT function. 
+ package. So each exception inherits from *Standard_Failure* either directly or by inheriting from another exception.
+ Exception classes list all exceptions, which can be raised by any OCCT function. 
 
 Open CASCADE Technology also provides  support for converting system signals (such as access violation or division by 
 zero) to exceptions, so that such situations can be safely handled with the  same uniform approach. 
  
 However, in order to support this functionality on various  platforms, some special methods and workarounds are used. 
 Though the  implementation details are hidden and handling of OCCT exceptions is done  basically in the same way as with
- C++, some peculiarities of this approach  shall be taken into account and some rules must be respected. 
+ C++, some peculiarities of this approach shall be taken into account and some rules must be respected. 
 
-The following paragraphs describe recommended approaches for  using exceptions when working with Open CASCADE Technology.  
+The following paragraphs describe recommended approaches for using exceptions when working with Open CASCADE Technology.  
 
 @subsection ex_raising Raising Exception
 
-## “C++ like” Syntax
+## "C++ like" Syntax
 
-To raise an exception of a definite type method Raise() of  the appropriate exception class shall be used. 
+To raise an exception of a definite type method Raise() of the appropriate exception class shall be used. 
+
 ~~~~~
-DomainError::Raise(“Cannot cope with this condition”);
+DomainError::Raise("Cannot cope with this condition");
 ~~~~~
-raises an exception of *DomainError* type with the associated  message “Cannot cope with this condition”, the message 
-being optional. This  exception may be caught by a handler of a *DomainError* type as follows: 
-~~~~~
+raises an exception of *DomainError* type with the associated message "Cannot cope with this condition", the message 
+being optional. This exception may be caught by a handler of a *DomainError* type as follows: 
+
+~~~~~{.cpp}
 try {
   OCC_CATCH_SIGNALS
   // try block
@@ -590,42 +600,44 @@ catch(DomainError) {
 
 ## Regular usage
 
-Exceptions should not be used as a programming technique, to  replace a “goto” statement for example, but as a way to
- protect methods against  misuse. The caller must make sure its condition is such that the method can  cope with it. 
+Exceptions should not be used as a programming technique, to replace a "goto" statement for example, but as a way to
+ protect methods against  misuse. The caller must make sure its condition is such that the method can cope with it. 
 
 Thus, 
-  * No exception should be raised during normal execution of an  application.
-  * A method which may raise an exception should be protected by  other methods allowing the caller to check on the 
+  * No exception should be raised during normal execution of an application.
+  * A method which may raise an exception should be protected by other methods allowing the caller to check on the 
 validity of the call.
   
 For example, if you consider the *TCollection_Array1* class  used with: 
-  * *Value*  function to extract an element
-  * *Lower*  function to extract the lower bound of the array
-  * *Upper*  function  to extract the upper bound of the array. 
+  * *Value* function to extract an element
+  * *Lower* function to extract the lower bound of the array
+  * *Upper* function to extract the upper bound of the array. 
   
 then, the *Value*  function may be implemented as follows: 
 
-~~~~~
+~~~~~{.cpp}
 Item  TCollection_Array1::Value (const Standard_Integer&index) const
 {
   // where r1 and r2 are  the lower and upper bounds of the array
   if(index < r1 || index > r2) {
-    OutOfRange::Raise(“Index  out of range in Array1::Value”);
+    OutOfRange::Raise("Index  out of range in Array1::Value");
   }
   return contents[index];
 }
 ~~~~~
 
 Here validity of the index is first verified using the Lower and Upper functions in order to protect the call. 
-Normally the caller ensures the index being in the valid  range before calling <i>Value()</i>. In this case the above 
-implementation of *Value* is not optimal since the  test done in *Value* is  time-consuming and redundant. 
+Normally the caller ensures the index being in the valid range before calling <i>Value()</i>. In this case the above 
+implementation of *Value* is not optimal since the  test done in *Value* is time-consuming and redundant. 
  
 It is a widely used practice to include that kind of  protections in a debug build of the program and exclude in release
  (optimized)  build. To support this practice, the macros <i>Raise_if()</i> are provided for every OCCT  exception class: 
+
 ~~~~~
-<ErrorTypeName>_Raise_if(condition,  “Error message”); 
+<ErrorTypeName>_Raise_if(condition,  "Error message"); 
 ~~~~~
-where *ErrorTypeName* is the exception type, *condition*  is the logical expression leading to the raise of the exception,
+
+where *ErrorTypeName* is the exception type, *condition* is the logical expression leading to the raise of the exception,
  and *Error message* is the associated  message. 
   
 The entire call may be removed by defining one of the preprocessor symbols *No_Exception* or <i>No_<ErrorTypeName></i> 
@@ -637,11 +649,11 @@ at compile-time:
 
 Using this syntax, the *Value* function becomes: 
 
-~~~~~
+~~~~~{.cpp}
 Item  TCollection_Array1::Value (const Standard_Integer&index) const
      { 
   OutOfRange_Raise_if(index < r1 || index > r2,
-                      “index out of range in  Array1::Value”);
+                      "index out of range in  Array1::Value");
   return contents[index];
 }
 ~~~~~
@@ -662,7 +674,7 @@ beginning of the relevant  code. The recommended location for it is first statem
 As an example, consider the exceptions of type *NumericError, Overflow, Underflow* and *ZeroDivide*, where *NumericError* 
 is the parent type of the three others. 
 
-~~~~~
+~~~~~{.cpp}
 void f(1)
  {
   try {
@@ -683,10 +695,10 @@ and all exceptions derived from it, including *Underflow* and *ZeroDivide*.
 
 The handlers are checked in order of appearance, from the nearest to the try block to the most distant from it, until one 
 matches the raise expression.  For a try block, it would be a mistake to place a handler for a base exception type ahead 
-of a handler for its derived type since that would ensure that the  handler for the derived exception would never 
+of a handler for its derived type since that would ensure that the handler for the derived exception would never 
 be invoked.  
 
-~~~~~
+~~~~~{.cpp}
 void f(1)
 {
   int i = 0;
@@ -706,12 +718,12 @@ void f(1)
 ~~~~~
 
 The exceptions form a hierarchy tree completely separated  from other user defined classes. One exception of type 
-*Failure* is the root of the entire exception  hierarchy. Thus, using a handler with *Failure* type catches any OCCT
+*Failure* is the root of the entire exception hierarchy. Thus, using a handler with *Failure* type catches any OCCT
  exception. It is recommended to set up such a handler in  the main routine.  
 
 The main routine of a program would look like this: 
 
-~~~~~
+~~~~~{.cpp}
 #include <Standard_ErrorHandler.hxx>
 #include <Standard_Failure.hxx>
 #include <iostream.h>
@@ -732,9 +744,9 @@ int main (int argc, char* argv[])
 
 In this example function *Caught* is a static member of *Failure* that  returns an exception object containing the error
  message built in the raise  expression. Note that this method of accessing a raised object is used in Open CASCADE
- Technology instead of usual C++ syntax (receiving the exception in  catch argument). 
+ Technology instead of usual C++ syntax (receiving the exception in catch argument). 
 
-Though standard C++ scoping  rules and syntax apply to try block and handlers, note that on some platforms Open  CASCADE 
+Though standard C++ scoping rules and syntax apply to try block and handlers, note that on some platforms Open  CASCADE 
 Technology may be compiled in compatibility mode when exceptions are  emulated by long jumps (see below). In this mode 
 it is required that no  statement precedes or follows any handler. Thus it is highly recommended to  always include a 
 try block into additional {} braces. Also this mode requires  that header file *Standard_ErrorHandler.hxx* be included 
@@ -747,35 +759,36 @@ In order for the application to be able to catch system  signals (access violati
 way as other  exceptions, the appropriate signal handler shall be installed in the runtime by  the method *OSD::SetSignal()*.
  
 Normally this method is called in the beginning of the  main() function. It installs a handler that will convert system 
-signals into OCCT  exceptions. 
+signals into OCCT exceptions. 
 
 In order to actually convert signals to exceptions, macro *OCC_CATCH_SIGNALS* needs to be inserted in the source code.
- The typical place where  this macro is put is beginning of the *try{}* block which catches such exceptions.   
+ The typical place where this macro is put is beginning of the *try{}* block which catches such exceptions.   
 
-@subsection ex_implementation Implementation on Various Platforms. 
+@subsection ex_implementation Implementation on Various Platforms
 
 The exception handling mechanism in Open CASCADE Technology  is implemented in different ways depending on the 
 preprocessor macros *NO_CXX_EXCEPTIONS*  and *OCC_CONVERT_SIGNALS*, which shall be consistently defined by compilation
  procedures for both Open CASCADE Technology and user applications: 
 
-1. On  Windows, these macros are not defined by default, and normal C++  exceptions are used in all cases, including 
-throwing from signal handler. Thus the  behavior is as expected in C++. 
+1. On Windows, these macros are not defined by default, and normal C++  exceptions are used in all cases, including 
+throwing from signal handler. Thus the behavior is as expected in C++.<br/><br/>
 
-2. On  Linux, macro *OCC_CONVERT_SIGNALS* is defined by default. The C++  exception mechanism is used for catching
- exceptions and for throwing them from  normal code. Since it is not possible to throw C++ exception from system signal
+2. On Linux, macro *OCC_CONVERT_SIGNALS* is defined by default. The C++  exception mechanism is used for catching
+ exceptions and for throwing them from normal code. Since it is not possible to throw C++ exception from system signal
  handler function, that function makes a long jump to the nearest (in the  execution stack) invocation of macro
- *OCC_CATCH_SIGNALS*, and only there the C++  exception gets actually thrown. The macro *OCC_CATCH_SIGNALS* is defined 
-in the  file *Standard_ErrorHandler.hxx*. Therefore, including this file is necessary for  successful compilation of a
+ *OCC_CATCH_SIGNALS*, and only there the C++ exception gets actually thrown. The macro *OCC_CATCH_SIGNALS* is defined 
+in the file *Standard_ErrorHandler.hxx*. Therefore, including this file is necessary for successful compilation of a
  code containing this macro. 
 
-   This mode differs from standard  C++ exception handling only for signals:
- 
-   * macro *OCC_CATCH_SIGNALS* is necessary (besides call to  *OSD::SetSignal()* described above) for conversion of 
-signals into exceptions;
-   * the destructors for automatic C++ objects created in the code  after that macro and till the place where signal is
- raised will not be called in  case of signal, since no C++ stack unwinding is performed by long jump.
+    This mode differs from standard C++ exception handling only for signals:
 
-3. On  Linux Open CASCADE Technology can also be compiled in compatibility  mode. In that case macro *NO_CXX_EXCEPTIONS*
+       * macro *OCC_CATCH_SIGNALS* is necessary (besides call to *OSD::SetSignal()* described above) for conversion of 
+    signals into exceptions;<br/><br/>
+
+       * the destructors for automatic C++ objects created in the code  after that macro and till the place where signal is
+     raised will not be called in  case of signal, since no C++ stack unwinding is performed by long jump.<br/><br/>
+
+3. On Linux Open CASCADE Technology can also be compiled in compatibility  mode. In that case macro *NO_CXX_EXCEPTIONS*
  is defined and the C++ exceptions are simulated with C long  jumps. As a consequence, the behavior is slightly different
  from that expected  in the C++ standard.  
 
@@ -783,17 +796,22 @@ While exception handling with *NO_CXX_EXCEPTIONS* is very similar to C++ by synt
 that should be taken into account: 
 
 * try and catch are actually macros defined in the file *Standard_ErrorHandler.hxx*. Therefore, including this file is 
-necessary for  handling OCCT exceptions;
+necessary for  handling OCCT exceptions; <br/><br/>
+
 * due to being a macro, catch cannot contain a declaration of the  exception object after its type; only type is allowed
- in the catch statement.  Use method *Standard_Failure::Caught()* to access an exception object;
-* catch macro may conflict with some STL classes that might use  catch(...) statements in their header files. So STL
- headers should not be  included after *Standard_ErrorHandler.hxx*;
-* Open CASCADE Technology try/catch block will not handle normal  C++ exceptions; however this can be achieved using
- special workarounds;
+ in the catch statement. Use method *Standard_Failure::Caught()* to access an exception object;<br/><br/>
+
+* catch macro may conflict with some STL classes that might use catch(...) statements in their header files. So STL
+ headers should not be included after *Standard_ErrorHandler.hxx*;<br/><br/>
+
+* Open CASCADE Technology try/catch block will not handle normal C++ exceptions; however this can be achieved using
+ special workarounds;<br/><br/>
+
 * the try macro defines a C++ object that holds an entry point in the  exception handler. Therefore if exception is
  raised by code located immediately  after the try/catch block but on the same nesting level as *try*, it may be
  handled by that *catch*. This may lead to unexpected behavior,  including infinite loop. To avoid that, always surround 
-the try/catch block with curved brackets;
+the try/catch block with curved brackets;<br/><br/>
+
 * the destructors of C++ objects allocated on the stack after  handler initialization are not called by exception raising.
 
 In general, for writing platform-independent code it is recommended  to insert macros *OCC_CATCH_SIGNALS* in try {} 
@@ -806,34 +824,38 @@ A plug-in is a component that can be loaded dynamically into  a client applicati
  to it. The plug-in is  not bound to its client, i.e. the plug-in knows only how its connection  mechanism is defined 
 and how to call the corresponding services. 
 
-A plug-in can be used to: 
+A plug-in can be used to:
+  
   * implement the mechanism of a *driver*, i.e dynamically  changing a driver implementation according to the current 
-transactions (for  example, retrieving a document stored in another version of an application),
+transactions (for  example, retrieving a document stored in another version of an application),<br/><br/>
+
   * restrict processing resources to the minimum required (for  example, it does not load any application services at 
-run-time as long as the  user does not need them),
+run-time as long as the  user does not need them),<br/><br/>
+
   * facilitate modular development  (an application can be  delivered with base functions while some advanced 
 capabilities will be added as  plug-ins when they are available).
   
-The plug-in is identified with the help of the global  universal identifier (GUID). The GUID includes lower case 
+The plug-in is identified with the help of the global universal identifier (GUID). The GUID includes lower case 
 characters and cannot  end with a blank space. 
 
 Once it has been loaded, the call to the services provided  by the plug-in is direct (the client is implemented in the 
 same language as the  plug-in). 
 
-## C++ Plug-In  Implementation
+## C++ Plug-In Implementation
 
 The C++ plug-in implements a service as an object with  functions defined in an abstract class (this abstract class and 
-its parent  classes with the GUID are the only information about the plug-in implemented in  the client application). 
-The plug-in consists of a sharable library including a  method named Factory which  creates the C++ object (the client 
+its parent  classes with the GUID are the only information about the plug-in implemented in the client application). 
+The plug-in consists of a sharable library including a  method named Factory which creates the C++ object (the client 
 cannot instantiate this object because the  plug-in implementation is not visible). 
-Foundation classes provide in the package *Plugin* a  method named *Load()*, which enables the client to access the 
+
+Foundation classes provide in the package *Plugin* a method named *Load()*, which enables the client to access the 
 required service  through a library.  
 
 That method reads the information regarding available  plug-ins and their locations from the resource file *Plugin* 
-found by environment  variable *CSF_PluginDefaults*:
+found by environment variable *CSF_PluginDefaults*:
 
 ~~~~~ 
-$CSF_PluginDefaults/.Plugin 
+$CSF_PluginDefaults/Plugin 
 ~~~~~
 
 The *Load* method looks for the library name in the resource file or registry  through its GUID, for example, on UNIX:
@@ -841,131 +863,86 @@ The *Load* method looks for the library name in the resource file or registry  t
 ! METADATADRIVER whose value must be OS or DM.
 
 ! FW
-a148e300-5740-11d1-a904-080036aaa103.Location:
- 
-libFWOSPlugin.so
-a148e300-5740-11d1-a904-080036aaa103.CCL:
-/adv_44/CAS/BAG/FW-K4C/inc/FWOS.ccl
-
-! FWDM
-a148e301-5740-11d1-a904-080036aaa103.Location:
-libFWDMPlugin.so
-a148e301-5740-11d1-a904-080036aaa103.CCL:
-/adv_44/CAS/BAG/DESIGNMANAGER-K4C/inc/DMAccess.ccl|/
-adv_44/CAS/BAG/DATABASE-K4C/inc/FWDMCommands.ccl
-a148e301-5740-11d1-a904-080036aaa103.Message:  /adv_44/CAS/
-BAG/DESIGNMANAGER-K4C/etc/locale/DMAccess
-
-! Copy-Paste
-5ff7dc00-8840-11d1-b5c2-00a0c9064368.Location:
-libCDMShapeDriversPlugin.so
-5ff7dc01-8840-11d1-b5c2-00a0c9064368.Location:
-libCDMShapeDriversPlugin.so
-5ff7dc02-8840-11d1-b5c2-00a0c9064368.Location:
-libCDMShapeDriversPlugin.so
-5ff7dc03-8840-11d1-b5c2-00a0c9064368.Location:
-libCDMShapeDriversPlugin.so
-5ff7dc04-8840-11d1-b5c2-00a0c9064368.Location:
-libCDMShapeDriversPlugin.so
-
-! Plugs 2d plotters:
-d0d722a2-b4c9-11d1-b561-0000f87a4710.location: FWOSPlugin
-d0d722a2-b4c9-11d1-b561-0000f87a4710.CCL: /adv_44/CAS/BAG/
-VIEWERS-K4C/inc/CCLPlotters.ccl
-d0d722a2-b4c9-11d1-b561-0000f87a4710.Message: /adv_44/CAS/
-BAG/VIEWERS-K4C/etc/locale/CCLPlotters
-
-!SHAPES
-e3708f72-b1a8-11d0-91c2-080036424703.Location:
-libBRepExchangerPlugin.so
-e3708f72-b1a8-11d0-91c2-080036424703.CCL: /adv_44/CAS/BAG/
-FW-K4C/inc/BRep.ccl
+a148e300-5740-11d1-a904-080036aaa103.Location: libFWOSPlugin.so
 ~~~~~
 
-Then the *Load* method loads the library according to the rules of the operating system  of the host machine (for 
-example, by using environment variables such as  *LD_LIBRARY_PATH* with Unix and *PATH* with Windows). After that it 
-invokes the *Factory*  method to return the object which supports the required service.
-The client may then call the functions supported by this  object. 
+Then the *Load* method loads the library according to the rules of the operating system of the host machine (for 
+example, by using environment variables such as *LD_LIBRARY_PATH* with Unix and *PATH* with Windows). After that it 
+invokes the *Factory* method to return the object which supports the required service.
+
+The client may then call the functions supported by this object. 
 
 ## C++ Client Plug-In Implementation
 
-To invoke one of the services provided by the plug-in, you  may call the *Plugin::ServiceFactory* global function with
+To invoke one of the services provided by the plug-in, you  may call the *Plugin::Load()* global function with
  the *Standard_GUID* of the requested service as follows: 
 
-~~~~~
-Handle(FADriver_PartStorer)::DownCast 
-(PlugIn::ServiceFactory 
-(PlugIn_ServiceId(yourStandardGUID))) 
+~~~~~{.cpp}
+Handle(FADriver_PartStorer)::DownCast( PlugIn::Load( yourStandardGUID ) );
 ~~~~~
 
-Let us take *FAFactory.cxx* as an example:
+Let us take *FAFactory.hxx* and *FAFactory.cxx* as an example:
 
+~~~~~{.cpp}
+#include <Standard_Macro.hxx>
+#include <Standard_GUID.hxx>
+#include <Standard_Transient.hxx>
+
+class FAFactory
+{
+public:
+  Standard_EXPORT static Handle(Standard_Transient) Factory (const Standard_GUID& theGUID);
+};
 ~~~~~
-#include <FAFactory.ixx>
+
+~~~~~{.cpp}
+#include <FAFactory.hxx>
 
 #include <FADriver_PartRetriever.hxx>
 #include <FADriver_PartStorer.hxx>
 #include <FirstAppSchema.hxx>
-#include <Standard_GUID.hxx>
 #include <Standard_Failure.hxx>
 #include <FACDM_Application.hxx>
 #include <Plugin_Macro.hxx>
 
-PLUGIN(FAFactory)
-
-static Standard_GUID 
-       StorageDriver(“45b3c690-22f3-11d2-b09e-0000f8791463”);
-static Standard_GUID 
-       RetrievalDriver(“45b3c69c-22f3-11d2-b09e-0000f8791463”);
-static Standard_GUID 
-       Schema(“45b3c6a2-22f3-11d2-b09e-0000f8791463”);
+static Standard_GUID StorageDriver  ("45b3c690-22f3-11d2-b09e-0000f8791463");
+static Standard_GUID RetrievalDriver("45b3c69c-22f3-11d2-b09e-0000f8791463");
+static Standard_GUID Schema         ("45b3c6a2-22f3-11d2-b09e-0000f8791463");
 
 //======================================================
 // function : Factory
 // purpose :
 //======================================================
  
-Handle(Standard_Transient)  FAFactory::Factory(const Standard_GUID& aGUID) 
+Handle(Standard_Transient) FAFactory::Factory (const Standard_GUID& theGUID)
 {
-  if(aGUID == StorageDriver) {
-    cout  “FAFactory : Create store driver”   endl;
-    static  Handle(FADriver_PartStorer) sd = new FADriver_PartStorer();
+  if (theGUID == StorageDriver)
+  {
+    std::cout << "FAFactory : Create store driver\n";
+    static Handle(FADriver_PartStorer) sd = new FADriver_PartStorer();
     return sd;
   }
 
-  if(aGUID == RetrievalDriver) {
-    cout  “FAFactory : Create retrieve driver”   endl;
-    static Handle(FADriver_PartRetriever)
-    rd = new FADriver_PartRetriever();
+  if (theGUID == RetrievalDriver)
+  {
+    std::cout << "FAFactory : Create retrieve driver\n";
+    static Handle(FADriver_PartRetriever) rd = new FADriver_PartRetriever();
     return rd;
   }
 
-  if(aGUID == Schema) {
-    cout  “FAFactory : Create schema”   endl;
-    static Handle(FirstAppSchema) s = new  FirstAppSchema();
+  if (theGUID == Schema)
+  {
+    std::cout << "FAFactory : Create schema\n";
+    static Handle(FirstAppSchema) s = new FirstAppSchema();
     return s;
   }
 
-  Standard_Failure::Raise(“FAFactory: unknown GUID”);
-  Handle(Standard_Transient) t;
-  return t;
+  Standard_Failure::Raise ("FAFactory: unknown GUID");
+  return Handle(Standard_Transient)();
 }
+
+// export plugin function "PLUGINFACTORY"
+PLUGIN(FAFactory)
 ~~~~~
 
-## Without using the Software Factory
-
-To create a factory without using the Software Factory,  define a *dll* project under Windows or a library under UNIX by
- using a  source file as specified above. The *FAFactory* class is implemented as follows: 
-
-~~~~~
-#include <Handle_Standard_Transient.hxx>
-#include <Standard_Macro.hxx>
-class Standard_Transient;
-class Standard_GUID;
-class FAFactory {
-public:
-  Standard_EXPORT  static Handle_Standard_Transient
-                  Factory(const Standard_GUID& aGUID)  ;
-  . . .
-};
-~~~~~
+Application might also instantiate a factory by linking to the library and calling FAFactory::Factory() directly.

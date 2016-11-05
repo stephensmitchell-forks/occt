@@ -313,7 +313,7 @@ TopoDS_Shape res = aform.Shape();
 
 The class *BRepFeat_Gluer* allows gluing two solids along faces. The contact faces of the glued  shape must not have parts outside the contact faces of the basic shape. Upon completion the algorithm gives the glued shape with cut out parts of faces inside the shape.
 
-The class is created or  initialized from two shapes: the “glued” shape and the basic shape (on which  the other shape is glued). 
+The class is created or  initialized from two shapes: the "glued" shape and the basic shape (on which  the other shape is glued). 
 Two *Bind* methods are  used to bind a face of the glued shape to a face of the basic shape and an edge  of the glued shape to an edge of the basic shape. 
 
 **Note** that every face and edge has to be  bounded, if two edges of two glued faces are  coincident they must be explicitly bounded.

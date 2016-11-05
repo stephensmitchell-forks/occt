@@ -456,28 +456,28 @@ Standard_Real precision = 1e-04;
 ShapeAnalysis_Wire saw (wire, face, precision);
 ShapeFix_Wire sfw (wire, face, precision);
 if (saw.CheckOrder()) {
-  cout<<“Some edges in the wire need to be reordered”<<endl;
+  cout<<"Some edges in the wire need to be reordered"<<endl;
   // Two edges are incorrectly oriented
   sfw.FixReorder();
-  cout<<“Reordering is done”<<endl;
+  cout<<"Reordering is done"<<endl;
 }
 // their orientation is corrected
 if (saw.CheckSmall (precision)) {
-  cout<<“Wire contains edge(s) shorter than “<<precision<<endl;
+  cout<<"Wire contains edge(s) shorter than "<<precision<<endl;
   // An edge that is shorter than the given tolerance is found.
   Standard_Boolean LockVertex = Standard_True;
   if (sfw.FixSmall (LockVertex, precision)) {
-    cout<<“Edges shorter than “<<precision<<“ have been removed”
+    cout<<"Edges shorter than "<<precision<<" have been removed"
 <<endl;
     //The edge is removed
   }
 }
 if (saw.CheckSelfIntersection()) {
-  cout<<“Wire has self-intersecting or intersecting
-adjacent edges”<<endl;
+  cout<<"Wire has self-intersecting or intersecting
+adjacent edges"<<endl;
   // Two intersecting adjacent edges are found.
   if (sfw.FixSelfIntersection()) {
-    cout<<“Wire was slightly self-intersecting. Repaired”<<endl;
+    cout<<"Wire was slightly self-intersecting. Repaired"<<endl;
     // The edges are cut at the intersection point so that they no longer intersect.
   }
 }
@@ -512,11 +512,11 @@ Standard_Real precision = 1e-04;
 ShapeFix_Edge sfe;
 Standard_Real maxdev;
 if (sae.CheckSameParameter (edge, maxdev)) {
-  cout<<“Incorrect SameParameter flag”<<endl;
-  cout<<“Maximum deviation “<<maxdev<< “, tolerance “
+  cout<<"Incorrect SameParameter flag"<<endl;
+  cout<<"Maximum deviation "<<maxdev<< ", tolerance "
 <<BRep_Tool::Tolerance(edge)<<endl;
   sfe.FixSameParameter();
-  cout<<“New tolerance “<<BRep_Tool::Tolerance(edge)<<endl;
+  cout<<"New tolerance "<<BRep_Tool::Tolerance(edge)<<endl;
 }
 ~~~~~
 

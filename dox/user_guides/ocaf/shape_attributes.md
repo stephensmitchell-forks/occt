@@ -140,7 +140,7 @@ iter.Next();
 
 @subsection top_naming_intro Introduction
 **Topological naming** is a mechanism of OCCT aimed to keep reference to the selected shape. If, for example, we select 
-a vertex of a solid shape and “ask” the topological naming to keep reference to this vertex, it will refer to the vertex
+a vertex of a solid shape and "ask" the topological naming to keep reference to this vertex, it will refer to the vertex
  whatever happens with the shape (translations, scaling, fusion with another shape, etc.).
 
 Let us consider an example: imagine a wooden plate. The job is to drive several nails in it:
@@ -153,44 +153,44 @@ point of the top surface. For this the user does the following:
 *	Chooses (selects) the upper surface of each Nail for the Hammer.
 
 The job is done. The application should do the rest -- the Hammer calculates a center point for each selected surface of
- the Nail and “strikes” each Nail driving it into the wooden plate.
+ the Nail and "strikes" each Nail driving it into the wooden plate.
 
 What happens if the user changes the position of some Nails? How will the Hammer know about it? It keeps reference to 
 the surface of each Nail. However, if a Nail is relocated, the Hammer should know the new position of the selected 
-surface. Otherwise, it will “strike” at the old position (keep the fingers away!)…
+surface. Otherwise, it will "strike" at the old position (keep the fingers away!)…
 
-Topological naming mechanism should help the Hammer to obtain the relocated surfaces. The Hammer “asks” the mechanism 
-to “resolve” the selected shapes by calling method *TNaming_Selection::Solve()* and the mechanism “returns” the modified
+Topological naming mechanism should help the Hammer to obtain the relocated surfaces. The Hammer "asks" the mechanism 
+to "resolve" the selected shapes by calling method *TNaming_Selection::Solve()* and the mechanism "returns" the modified
  surfaces located at the new position by calling  *TNaming_Selector::NamedShape()*.
 
-The topological naming is represented as a “black box” in the example above. Now it is time to make the box a little
- more “transparent”.
+The topological naming is represented as a "black box" in the example above. Now it is time to make the box a little
+ more "transparent".
 
 The application contains 3 functions:
 * **Nail** -- produces a shape representing a nail,
 * **Translator** -- translates a shape along the wooden plate,
 * **Hammer** -- drives the nail in the wooden plate.
 
-Each function gives the topological naming some hints how to “re-solve” the selected sub-shapes:
+Each function gives the topological naming some hints how to "re-solve" the selected sub-shapes:
 * The Nail constructs a solid shape and puts each face of the shape into sub-labels: 
 
 @figure{/user_guides/ocaf/images/ocaf_image021.png, "Distribution of faces through sub-labels of the Nail"}
 
-* The **Translator** moves a shape and registers modification for each face: it puts a pair: “old” shape -- “new” shape at a sub-label of each moving Nail. The “old” shape represents a face of the Nail at the initial position. The “new” shape -- is the same face, but at a new position:
+* The **Translator** moves a shape and registers modification for each face: it puts a pair: "old" shape -- "new" shape at a sub-label of each moving Nail. The "old" shape represents a face of the Nail at the initial position. The "new" shape -- is the same face, but at a new position:
 
 @figure{/user_guides/ocaf/images/ocaf_image022.png, "Registration of relocation of faces of a Nail"}
 
 How does it work?
 * The Hammer selects a face of a Nail calling *TNaming_Selector::Select()*. This call makes a unique name for the selected shape. In our example, it will be a direct reference to the label of the top face of the Nail (Face 1).
-* When the user moves a Nail along the wooden plate, the Translator registers this modification by putting the pairs: “old” face of the Nail -- new face of the Nail into its sub-labels. 
-* When the Hammer calls *TNaming::Solve()*, the topological naming “looks” at the unique name of the selected shape and tries to re-solve it:
+* When the user moves a Nail along the wooden plate, the Translator registers this modification by putting the pairs: "old" face of the Nail -- new face of the Nail into its sub-labels. 
+* When the Hammer calls *TNaming::Solve()*, the topological naming "looks" at the unique name of the selected shape and tries to re-solve it:
 	* It finds the 1st appearance of the selected shape in the data tree -- it is a label under the Nail function *Face 1*.
 	* It follows the evolution of this face. In our case, there is only one evolution -- the translation: *Face 1* (top face) -- <i>Face 1’</i> (relocated top face). So, the last evolution is the relocated top face.
 * Calling the method *TNaming_Selector::NamedShape()* the Hammer obtains the last evolution of the selected face -- the relocated top face.
 
 The job is done.
 
-P.S. Let us say a few words about a little more complicated case -- selection of a wire of the top face. Its topological name is an “intersection” of two faces. We remember that the **Nail** puts only faces under its label. So, the selected wire will represent an “intersection” of the top face and the conic face keeping the “head” of the nail. Another example is a selected vertex. Its unique name may be represented as an “intersection” of three or even more faces (depends on the shape).
+P.S. Let us say a few words about a little more complicated case -- selection of a wire of the top face. Its topological name is an "intersection" of two faces. We remember that the **Nail** puts only faces under its label. So, the selected wire will represent an "intersection" of the top face and the conic face keeping the "head" of the nail. Another example is a selected vertex. Its unique name may be represented as an "intersection" of three or even more faces (depends on the shape).
 
 The Topological Naming mechanism is based on 3 components:
 * History of the used modeling operation algorithm;

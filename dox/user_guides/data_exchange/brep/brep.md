@@ -540,7 +540,7 @@ The example record is interpreted as an offset curve with a distance *d*=2, dire
 @verbatim
 	<surfaces> = <surface header> <_\n> <surface records>;
 
-	<surface header> = “Surfaces” <_> <surface count>;
+	<surface header> = "Surfaces" <_> <surface count>;
 
 	<surface records> = <surface record> ^ <surface count>;
 
@@ -1196,7 +1196,7 @@ The example record is interpreted as a hyperbola with  coordinate system which h
 
 	<2D Bezier degree> = <int>;
 
-	<2D Bezier weight poles> = (<_> <2D Bezier weight pole>) ^ (<2D Bezier degree> <+> “1”);
+	<2D Bezier weight poles> = (<_> <2D Bezier weight pole>) ^ (<2D Bezier degree> <+> "1");
 
 	<2D Bezier weight pole> = <2D point> [<_> <real>];
 @endverbatim

@@ -465,7 +465,7 @@ Other essential properties coming from List and Array1 type collections:
 
 ### UBTree
 
-The name of this type stands for “Unbalanced Binary Tree”. It stores the members in a binary tree of overlapped bounding objects (boxes or else).
+The name of this type stands for "Unbalanced Binary Tree". It stores the members in a binary tree of overlapped bounding objects (boxes or else).
 Once the tree of boxes of geometric objects is constructed, the algorithm is capable of fast geometric selection of objects. The tree can be easily updated by adding to it a new object with bounding box. 
 The time of adding to the tree of one object is O(log(N)), where N is the total number of objects, so the time of building a tree of N objects is O(N(log(N)). The search time of one object is O(log(N)). 
 

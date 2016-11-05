@@ -18,7 +18,8 @@ Geometry Utilities provide the following services:
 
 @subsection occt_modat_1_1 Interpolations and Approximations
 
-In modeling, it is often required to approximate or interpolate points into curves and surfaces. In interpolation, the process is complete when the curve or surface passes through all the points; in approximation, when it is as close to these points as possible.
+In modeling, it is often required to approximate or interpolate points into curves and surfaces. In interpolation, 
+the process is complete when the curve or surface passes through all the points; in approximation, when it is as close to these points as possible.
 
 Approximation of Curves and Surfaces groups together a variety of functions used in 2D and 3D geometry for:
   * the interpolation of a set of 2D points using a 2D BSpline or Bezier curve;
@@ -33,7 +34,9 @@ You can program approximations in two ways:
 
 @subsubsection occt_modat_1_1_1 Analysis of a set of points
 
-The class *PEquation* from  *GProp* package allows analyzing a collection or cloud of points and verifying if they are coincident, collinear or coplanar within a given precision. If they are, the algorithm computes the mean point, the mean line or the mean plane of the points. If they are not, the algorithm computes the minimal box, which includes all the points. 
+The class *PEquation* from  *GProp* package allows analyzing a collection or cloud of points and verifying if they are 
+coincident, collinear or coplanar within a given precision. If they are, the algorithm computes the mean point, the mean 
+line or the mean plane of the points. If they are not, the algorithm computes the minimal box, which includes all the points. 
 
 @subsubsection occt_modat_1_1_2 Basic Interpolation and Approximation
 
@@ -41,14 +44,18 @@ Packages *Geom2dAPI* and *GeomAPI* provide simple methods for approximation and 
 
 #### 2D Interpolation
 
-The class *Interpolate* from *Geom2dAPI* package allows building a constrained 2D BSpline curve, defined by a table of points through which the curve passes. If required, the parameter values and vectors of the tangents can be given for each point in the table. 
+The class *Interpolate* from *Geom2dAPI* package allows building a constrained 2D BSpline curve, defined by a table of 
+points through which the curve passes. If required, the parameter values and vectors of the tangents can be given for 
+each point in the table. 
 
 #### 3D Interpolation
 
-The class *Interpolate* from *GeomAPI* package allows building a constrained 3D BSpline curve, defined by a table of points through which the curve passes. If required, the parameter values and vectors of the tangents can be given for each point in the table. 
+The class *Interpolate* from *GeomAPI* package allows building a constrained 3D BSpline curve, defined by a table of
+ points through which the curve passes. If required, the parameter values and vectors of the tangents can be given for 
+each point in the table. 
 
-@image html /03_user_guides/modeling_data/images/modeling_data_image003.png "Approximation of a BSpline from scattered points"
-@image latex /03_user_guides/modeling_data/images/modeling_data_image003.png "Approximation of a BSpline from scattered points"
+@image html /user_guides/modeling_data/images/modeling_data_image003.png "Approximation of a BSpline from scattered points"
+@image latex /user_guides/modeling_data/images/modeling_data_image003.png "Approximation of a BSpline from scattered points"
 
 This class may be instantiated as follows:
 ~~~~~ 
@@ -62,13 +69,20 @@ Handle(Geom_BSplineCurve) C = Interp.Curve();
 
 #### 2D Approximation
 
-The class *PointsToBSpline* from *Geom2dAPI* package allows building a 2DBSpline curve, which approximates a set of points. You have to define the lowest and highest degree of the curve, its continuity and a tolerance value for it.The tolerance value is used to check that points are not too close to each other, or tangential vectors not too small. The resulting BSpline curve will beC2 or second degree continuous, except where a tangency constraint is defined on a point through which the curve passes. In this case, it will be only C1continuous. 
+The class *PointsToBSpline* from *Geom2dAPI* package allows building a 2DBSpline curve, which approximates a set of 
+points. You have to define the lowest and highest degree of the curve, its continuity and a tolerance value for it. 
+The tolerance value is used to check that points are not too close to each other, or tangential vectors not too small. 
+The resulting BSpline curve will beC2 or second degree continuous, except where a tangency constraint is defined on a 
+point through which the curve passes. In this case, it will be only C1continuous. 
 
 #### 3D Approximation
 
-The class *PointsToBSpline* from GeomAPI package allows building a 3D BSplinecurve, which approximates a set of points. It is necessary to define the lowest and highest degree of the curve, its continuity and tolerance. The tolerance value is used to check that points are not too close to each other,or that tangential vectors are not too small. 
+The class *PointsToBSpline* from GeomAPI package allows building a 3D BSplinecurve, which approximates a set of points. 
+It is necessary to define the lowest and highest degree of the curve, its continuity and tolerance. The tolerance value 
+is used to check that points are not too close to each other,or that tangential vectors are not too small. 
 
-The resulting BSpline curve will be C2 or second degree continuous, except where a tangency constraint is defined on a point, through which the curve passes. In this case, it will be only C1 continuous. This class is instantiated as follows: 
+The resulting BSpline curve will be C2 or second degree continuous, except where a tangency constraint is defined on a 
+point, through which the curve passes. In this case, it will be only C1 continuous. This class is instantiated as follows: 
 
 ~~~~~
 GeomAPI_PointsToBSpline 
@@ -108,8 +122,8 @@ The following low level services are provided:
 
   The class *MultiLine* allows defining a given number of multi-point constraints in order to build the multi-line, multiple lines passing through ordered multiple point constraints. 
 
-  @image html /03_user_guides/modeling_data/images/modeling_data_image004.png "Definition of a MultiLine using Multiple Point Constraints"
-  @image latex /03_user_guides/modeling_data/images/modeling_data_image004.png "Definition of a MultiLine using Multiple Point Constraints"
+  @image html /user_guides/modeling_data/images/modeling_data_image004.png "Definition of a MultiLine using Multiple Point Constraints"
+  @image latex /user_guides/modeling_data/images/modeling_data_image004.png "Definition of a MultiLine using Multiple Point Constraints"
 
   In this image:
   * *Pi*, *Qi*, *Ri* ... *Si* can be 2D or 3D points. 
@@ -130,12 +144,15 @@ The following low level services are provided:
 
 * Definition of Variational Criteria:
 
-The class *TheVariational* allows fairing the approximation curve to a given number of points using a least squares method in conjunction with a variational criterion, usually the weights at each constraint point. 
+The class *TheVariational* allows fairing the approximation curve to a given number of points using a least squares 
+method in conjunction with a variational criterion, usually the weights at each constraint point. 
 
 #### Approximation by parametric or geometric constraints
 
 
-*AppParCurves* package provides low-level tools to allow parallel approximation of groups of points into Bezier or B-Spline curve with parametric or geometric constraints, such as a requirement for the curve to pass through given points, or to have a given tangency or curvature at a particular point. 
+*AppParCurves* package provides low-level tools to allow parallel approximation of groups of points into Bezier or 
+B-Spline curve with parametric or geometric constraints, such as a requirement for the curve to pass through given 
+points, or to have a given tangency or curvature at a particular point. 
 
 The algorithms used include: 
 - the least squares method 
@@ -732,8 +749,8 @@ A local coordinate system can be viewed as either of the following:
 - *TopLoc_Datum3D* class provides the elementary reference coordinate, represented by a right-handed orthonormal system of axes or by a right-handed unitary transformation. 
 - *TopLoc_Location* class provides the composite reference coordinate made from elementary ones. It is a marker composed of a chain of references to elementary markers. The resulting cumulative transformation is stored in order to avoid recalculating the sum of the transformations for the whole list. 
 
-@image html /03_user_guides/modeling_data/images/modeling_data_image005.png "Structure of TopLoc_Location"
-@image latex /03_user_guides/modeling_data/images/modeling_data_image005.png "Structure of TopLoc_Location"
+@image html /user_guides/modeling_data/images/modeling_data_image005.png "Structure of TopLoc_Location"
+@image latex /user_guides/modeling_data/images/modeling_data_image005.png "Structure of TopLoc_Location"
 
 Two reference coordinates are equal if they are made up of the same elementary coordinates in the same order. There is no numerical comparison. Two coordinates can thus correspond to the same transformation without being equal if they were not built from the same elementary coordinates. 
 
@@ -777,8 +794,8 @@ TopAbs contains the *TopAbs_ShapeEnum* enumeration,which lists the different top
 A topological model can be considered as a graph of objects with adjacency relationships. When modeling a part in 2D or 3D space it must belong to one of the categories listed in the ShapeEnum enumeration. The TopAbspackage lists all the objects, which can be found in any model. It cannot be extended but a subset can be used. For example, the notion of solid is useless in 2D. 
 
 The terms of the enumeration appear in order from the most complex to the most simple, because objects can contain simpler objects in their description. For example, a face references its wires, edges, and vertices. 
-@image html /03_user_guides/modeling_data/images/modeling_data_image006.png "ShapeEnum"
-@image latex /03_user_guides/modeling_data/images/modeling_data_image006.png "ShapeEnum"
+@image html /user_guides/modeling_data/images/modeling_data_image006.png "ShapeEnum"
+@image latex /user_guides/modeling_data/images/modeling_data_image006.png "ShapeEnum"
 
 @subsubsection occt_modat_5_2_2 Orientation
 
@@ -804,8 +821,8 @@ Based on this default region the orientation allows definition of the region to 
 | INTERNAL	| The interior includes both regions. The boundary lies inside the material. For example a surface inside a solid. |
 | EXTERNAL	| The interior includes neither region. The boundary lies outside the material. For  example an edge in a wire-frame model. |
 
-@image html /03_user_guides/modeling_data/images/modeling_data_image007.png "Four Orientations"
-@image latex /03_user_guides/modeling_data/images/modeling_data_image007.png "Four Orientations"
+@image html /user_guides/modeling_data/images/modeling_data_image007.png "Four Orientations"
+@image latex /user_guides/modeling_data/images/modeling_data_image007.png "Four Orientations"
 
 The notion of orientation is a very general one, and it can be used in any context where regions or boundaries appear. Thus, for example, when describing the intersection of an edge and a contour it is possible to describe not only the vertex of intersection but also how the edge crosses the contour considering it as a boundary. The edge would therefore be divided into two regions: exterior and interior and the intersection vertex would be the boundary. Thus an orientation can be associated with an intersection vertex as in the following figure: 
 
@@ -816,8 +833,8 @@ The notion of orientation is a very general one, and it can be used in any conte
 | INTERNAL 	| Touching from inside |
 | EXTERNAL 	| Touching from outside |
 
-@image html /03_user_guides/modeling_data/images/modeling_data_image008.png "Four orientations of intersection vertices"
-@image latex /03_user_guides/modeling_data/images/modeling_data_image008.png "Four orientations of intersection vertices"
+@image html /user_guides/modeling_data/images/modeling_data_image008.png "Four orientations of intersection vertices"
+@image latex /user_guides/modeling_data/images/modeling_data_image008.png "Four orientations of intersection vertices"
 
 
 Along with the Orientation enumeration the *TopAbs* package defines four methods: 
@@ -835,13 +852,13 @@ The **TopAbs_State** enumeration described the position of a vertex or a set of 
 
 The UNKNOWN term has been introduced because this enumeration is often used to express the result of a calculation, which can fail. This term can be used when it is impossible to know if a point is inside or outside, which is the case with an open wire or face. 
 
-@image html /03_user_guides/modeling_data/images/modeling_data_image009.png "The four states"
-@image latex /03_user_guides/modeling_data/images/modeling_data_image009.png "The four states"
+@image html /user_guides/modeling_data/images/modeling_data_image009.png "The four states"
+@image latex /user_guides/modeling_data/images/modeling_data_image009.png "The four states"
 
 The State enumeration can also be used to specify various parts of an object. The following figure shows the parts of an edge intersecting a face. 
 
-@image html /03_user_guides/modeling_data/images/modeling_data_image010.png  "State specifies the parts of an edge intersecting a face"
-@image latex /03_user_guides/modeling_data/images/modeling_data_image010.png  "State specifies the parts of an edge intersecting a face"
+@image html /user_guides/modeling_data/images/modeling_data_image010.png  "State specifies the parts of an edge intersecting a face"
+@image latex /user_guides/modeling_data/images/modeling_data_image010.png  "State specifies the parts of an edge intersecting a face"
 
 @subsection occt_modat_5_3 Manipulating shapes and sub-shapes
 
@@ -867,11 +884,11 @@ The class representing the underlying abstract shape is never referenced directl
 
 The information specific to each shape (the geometric support) is always added by inheritance to classes deriving from **TopoDS_TShape**. The following figures show the example of a shell formed from two faces connected by an edge. 
 
-@image html /03_user_guides/modeling_data/images/modeling_data_image011.png "Structure of a shell formed from two faces"
-@image latex /03_user_guides/modeling_data/images/modeling_data_image011.png "Structure of a shell formed from two faces"
+@image html /user_guides/modeling_data/images/modeling_data_image011.png "Structure of a shell formed from two faces"
+@image latex /user_guides/modeling_data/images/modeling_data_image011.png "Structure of a shell formed from two faces"
 
-@image html /03_user_guides/modeling_data/images/modeling_data_image012.png "Data structure of the above shell"
-@image latex /03_user_guides/modeling_data/images/modeling_data_image012.png "Data structure of the above shell"
+@image html /user_guides/modeling_data/images/modeling_data_image012.png "Data structure of the above shell"
+@image latex /user_guides/modeling_data/images/modeling_data_image012.png "Data structure of the above shell"
 
 In the previous diagram, the shell is described by the underlying shape TS, and the faces by TF1 and TF2. There are seven edges from TE1 to TE7 and six vertices from TV1 to TV6. 
 
@@ -888,8 +905,8 @@ The compact data structure avoids the loss of information associated with copy o
 The following figure shows a data structure containing two versions of a solid. The second version presents a series of identical holes bored at different positions. The data structure is compact and yet keeps all information on the sub-elements. 
 
 The three references from *TSh2* to the underlying face *TFcyl* have associated local coordinate systems, which correspond to the successive positions of the hole. 
-@image html /03_user_guides/modeling_data/images/modeling_data_image013.png "Data structure containing two versions of a solid"
-@image latex /03_user_guides/modeling_data/images/modeling_data_image013.png "Data structure containing two versions of a solid"
+@image html /user_guides/modeling_data/images/modeling_data_image013.png "Data structure containing two versions of a solid"
+@image latex /user_guides/modeling_data/images/modeling_data_image013.png "Data structure containing two versions of a solid"
 
 Classes inheriting TopoDS_Shape
 ------------------------------
@@ -1230,8 +1247,8 @@ Below is the auxiliary function, which copies the element of rank *i* from the m
 
 For example, in the wire in the image we want to recuperate the edges in the order {e1, e2, e3,e4, e5} :
 
-@image html /03_user_guides/modeling_data/images/modeling_data_image014.png "A wire composed of 6 edges."
-@image latex /03_user_guides/modeling_data/images/modeling_data_image014.png "A wire composed of 6 edges.
+@image html /user_guides/modeling_data/images/modeling_data_image014.png "A wire composed of 6 edges."
+@image latex /user_guides/modeling_data/images/modeling_data_image014.png "A wire composed of 6 edges.
 
 *TopExp_Explorer*, however, recuperates the lines in any order.
  

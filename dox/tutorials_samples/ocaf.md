@@ -20,7 +20,7 @@
   Once you have implemented the commands which create and modify the data structure 
   according to your specification, OCAF provides you, without any additional programming:  
    
-  * Persistent  reference to any data, including geometric elements â€” several documents can be  linked with such reference;
+  * Persistent  reference to any data, including geometric elements â€" several documents can be  linked with such reference;
   * Document-View  association;
   * Ready-to-use  functions such as :
     * Undo-redo;  

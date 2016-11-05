@@ -39,7 +39,7 @@ if (!ME.IsDone())
 // doing ME.Edge() or E = ME here 
 // would raise StdFail_NotDone 
 Standard_DomainError::Raise 
-(“ProcessPoints::Failed to createan edge”); 
+("ProcessPoints::Failed to createan edge"); 
 } 
 TopoDS_Edge E = ME; 
 } 
@@ -59,7 +59,7 @@ TopoDS_Vertex& V2)
 BRepBuilderAPI_MakeEdge ME(P1,P2); 
 if (!ME.IsDone()) { 
 Standard_DomainError::Raise 
-(“MakeEdgeAndVerices::Failed  to create an edge”); 
+("MakeEdgeAndVerices::Failed  to create an edge"); 
 } 
 E = ME; 
 V1 = ME.Vextex1(); 
@@ -114,7 +114,7 @@ if (!ME.IsDone()) {
 // doing ME.Edge() or E = ME here 
 // would raise StdFail_NotDone 
 Standard_DomainError::Raise 
-(“ProcessPoints::Failed to create an edge”); 
+("ProcessPoints::Failed to create an edge"); 
 } 
 TopoDS_Edge E = ME; 
 ~~~~~

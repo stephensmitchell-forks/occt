@@ -1,4 +1,4 @@
-Application Interactive Services {#user_guides__visu_ais}
+Application Interactive Services (AIS) {#user_guides__visu_ais}
 ================================
 @tableofcontents 
 
