@@ -235,6 +235,7 @@ void BRepOffset_SimpleOffset::FillFaceData(const TopoDS_Face& theFace)
 {
   NewFaceData aNFD;
   aNFD.myRevWires = Standard_False;
+  aNFD.myRevFace = Standard_False;
   aNFD.myTol = BRep_Tool::Tolerance(theFace);
 
   // Create offset surface.
@@ -245,12 +246,9 @@ void BRepOffset_SimpleOffset::FillFaceData(const TopoDS_Face& theFace)
 
   // Take into account face orientation.
   Standard_Real aMult = 1.0;
-  aNFD.myRevFace = Standard_False;
   if (theFace.Orientation() == TopAbs_REVERSED)
-  {
-    aNFD.myRevFace = Standard_True;
     aMult = -1.0;
-  }
+
   aNFD.myOffsetS = new Geom_OffsetSurface(aS, aMult * myOffsetValue, Standard_True);
   aNFD.myL = TopLoc_Location(); // Null transformation.
 
