@@ -23,8 +23,10 @@
 #include <Standard_Boolean.hxx>
 #include <TDataStd_Name.hxx>
 #include <TDF_Label.hxx>
+#include <TDF_LabelMap.hxx>
 #include <TDF_LabelSequence.hxx>
 
+class TDocStd_Document;
 
 
 //! Tool for edit structure of document.
@@ -41,8 +43,11 @@ public:
   //! Convert all compounds in Doc to assembly
   Standard_EXPORT static   Standard_Boolean Expand (const TDF_Label& Doc, const Standard_Boolean recursively = Standard_True) ;
 
+  //! Extracts attributes (including colors, materials and layers) of theOld label and copy to theNew
+  Standard_EXPORT static   void ExtractAttributes (const TDF_Label theOld, TDF_Label& theNew);
 
-
+  //! Extracts passed labels and put them as a component of theDstLabel
+  Standard_EXPORT static   void ExtractSubAssembly (const TDF_LabelSequence& theSrcLabels, const TDF_Label theDstLabel);
 
 protected:
 
@@ -59,7 +64,8 @@ private:
   //! Set colors, layers and name from Label
   Standard_EXPORT static   Standard_Boolean setParams (const TDF_Label& Doc, const TDF_Label& Label, const TDF_LabelSequence& Colors, const TDF_LabelSequence& Layers, const Handle(TDataStd_Name)& Name) ;
 
-
+  //! 
+  Standard_EXPORT static   void copyLabel (const TDF_Label& theOld, TDF_Label& theNew, TDF_LabelMap& theMap);
 
 
 };

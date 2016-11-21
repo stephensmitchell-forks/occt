@@ -70,6 +70,7 @@
 #include <XCAFDoc_DimTol.hxx>
 #include <XCAFDoc_Dimension.hxx>
 #include <XCAFDoc_Datum.hxx>
+#include <XCAFDoc_Editor.hxx>
 #include <XCAFDoc_GeomTolerance.hxx>
 #include <XCAFDoc_DocumentTool.hxx>
 #include <XCAFDoc_GraphNode.hxx>
@@ -1050,6 +1051,56 @@ static Standard_Integer testDoc (Draw_Interpretor&,
   return 0;
 }
 
+//=======================================================================
+//function : extructSubAssembly
+//purpose  :
+//=======================================================================
+static Standard_Integer extractSubAssembly (Draw_Interpretor& di,
+                                            Standard_Integer argc,
+                                            const char** argv)
+{
+  if (argc != 5)
+  {
+    di.PrintHelp("XExtract");
+    return 1;
+  }
+
+  Handle(TDocStd_Document) aSrcDoc, aDstDoc;
+  DDocStd::GetDocument (argv[1], aSrcDoc);
+  if (aSrcDoc.IsNull())
+  {
+    di << argv[1] << " is not a document\n";
+    return 1;
+  }
+
+  DDocStd::GetDocument (argv[3], aDstDoc);
+  if (aDstDoc.IsNull())
+  {
+    di << argv[3] << " is not a document\n";
+    return 1;
+  }
+
+  Handle(XCAFDoc_ShapeTool) aShapeTool = XCAFDoc_DocumentTool::ShapeTool (aSrcDoc->Main());
+
+  TDF_Label aSrcLabel, aDstLabel;
+  TDF_Tool::Label(aSrcDoc->GetData(), argv[2], aSrcLabel);
+  if (aSrcLabel.IsNull() || !aShapeTool->IsShape ( aSrcLabel ))
+  {
+    di << argv[2] << "[" << argv[1] << "] is not a valid label\n";
+    return 1;
+  }
+
+  TDF_Tool::Label(aDstDoc->GetData(), argv[4], aDstLabel);
+  if (aDstLabel.IsNull() || !aShapeTool->IsShape ( aSrcLabel ))
+  {
+    di << argv[4] << "[" << argv[3] << "] is not a valid label\n";
+    return 1;
+  }
+
+  TDF_LabelSequence aSeq; aSeq.Append(aSrcLabel);
+  XCAFDoc_Editor::ExtractSubAssembly(aSeq, aDstLabel);
+  return 0;
+}
 
 //=======================================================================
 //function : Init
@@ -1121,6 +1172,11 @@ void XDEDRAW::Init(Draw_Interpretor& di)
           "- turns on/off drawing of face boundaries and defines boundary line style",
           __FILE__, XShowFaceBoundary, g);
    di.Add ("XTestDoc", "XTestDoc shape", __FILE__, testDoc, g);
+
+  di.Add ("XExtract",
+          "XExtract SrcDoc SrcLabel DstDoc DstLabel\t: "
+          "Extracts given SrcLabel from SrcDoc into given DstLabel of DstDoc",
+          __FILE__, extractSubAssembly, g);
 
   // Specialized commands
   XDEDRAW_Shapes::InitCommands ( di );
