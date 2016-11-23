@@ -149,7 +149,6 @@ options:\n\
   Standard_Boolean isInParallel    = Standard_False;
   Standard_Boolean isIntVertices   = Standard_True;
   Standard_Boolean isControlSurDef = Standard_True;
-  Standard_Boolean isAdaptiveMin   = Standard_False;
 
   if (nbarg > 3)
   {
@@ -169,8 +168,6 @@ options:\n\
         isIntVertices = Standard_False;
       else if (aOpt == "-surf_def_off")
         isControlSurDef = Standard_False;
-      else if (aOpt == "-adaptive")
-        isAdaptiveMin   = Standard_True;
       else if (i < nbarg)
       {
         Standard_Real aVal = Draw::Atof(argv[i++]);

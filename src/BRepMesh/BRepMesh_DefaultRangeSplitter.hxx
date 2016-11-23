@@ -133,8 +133,8 @@ protected:
     const Standard_Real aDiffV = myRangeV.second - myRangeV.first;
 
     const Standard_Real aDeflectionUV = 1.e-05;
-    myTolerance.first  = Max(Precision::PConfusion(), aDeflectionUV * aDiffU);
-    myTolerance.second = Max(Precision::PConfusion(), aDeflectionUV * aDiffV);
+    myTolerance.first  = Max(aDeflectionUV, Precision::Confusion() * aDiffU);
+    myTolerance.second = Max(aDeflectionUV, Precision::Confusion() * aDiffV);
   }
 
   //! Computes parametric delta taking length along U and V and value of tolerance into account.
