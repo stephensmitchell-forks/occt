@@ -25,7 +25,6 @@
 #include <Standard_Integer.hxx>
 class Interface_NodeOfReaderLib;
 class Standard_NoSuchObject;
-class Standard_Transient;
 class Interface_ReaderModule;
 class Interface_Protocol;
 class Interface_GlobalNodeOfReaderLib;
@@ -56,16 +55,12 @@ public:
   //! Adds a couple (Module-Protocol) to the Library, given the
   //! class of a Protocol. Takes Resources into account.
   //! (if <aprotocol> is not of type TheProtocol, it is not added)
-  Standard_EXPORT void AddProtocol (const Handle(Standard_Transient)& aprotocol);
+  Standard_EXPORT void AddProtocol (const Handle(Interface_Protocol)& aprotocol);
   
   //! Clears the list of Modules of a library (can be used to
   //! redefine the order of Modules before action : Clear then
   //! refill the Library by calls to AddProtocol)
   Standard_EXPORT void Clear();
-  
-  //! Sets a library to be defined with the complete Global list
-  //! (all the couples Protocol/Modules recorded in it)
-  Standard_EXPORT void SetComplete();
   
   //! Selects a Module from the Library, given an Object.
   //! Returns True if Select has succeeded, False else.

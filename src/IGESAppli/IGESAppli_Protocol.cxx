@@ -76,10 +76,9 @@ static Handle(Standard_Type) atype01,atype02,atype03,atype04,atype05,atype06,
     Handle(Interface_Protocol) IGESAppli_Protocol::Resource
   (const Standard_Integer num) const
 {
-  Handle(Interface_Protocol) res;
-  if (num == 1) res = IGESDefs::Protocol();
-  if (num == 2) res = IGESDraw::Protocol();
-  return res;
+  if (num == 1) return IGESDefs::Protocol();
+  if (num == 2) return IGESDraw::Protocol();
+  return NULL;
 }
 
     Standard_Integer IGESAppli_Protocol::TypeNumber

@@ -41,25 +41,6 @@ Handle(Standard_Transient) StepData_StepModel::Entity
 (const Standard_Integer num) const
 {  return Value(num);  }      // nom plus joli
 
-void StepData_StepModel::GetFromAnother
-(const Handle(Interface_InterfaceModel)& other)
-{
-  theheader.Clear();
-  DeclareAndCast(StepData_StepModel,another,other);
-  if (another.IsNull()) return;
-  Interface_EntityIterator iter = another->Header();
-  //  recopier le header. Attention, header distinct du contenu ...
-  Interface_CopyTool TC (this,StepData::HeaderProtocol());
-  for (; iter.More(); iter.Next()) {
-    Handle(Standard_Transient) newhead;
-    if (!TC.Copy(iter.Value(),newhead,Standard_False,Standard_False)) continue;
-    if (!newhead.IsNull()) theheader.Append(newhead);
-  }
-}
-
-Handle(Interface_InterfaceModel) StepData_StepModel::NewEmptyModel () const
-{  return new StepData_StepModel;  }
-
 
 Interface_EntityIterator StepData_StepModel::Header () const
 {

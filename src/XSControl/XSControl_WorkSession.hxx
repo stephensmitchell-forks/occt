@@ -179,8 +179,6 @@ class XSControl_WorkSession : public MMgt_TShared
 
  protected:
 
-  Standard_EXPORT void CopySendAll (const Standard_CString filename, Interface_CheckIterator &checks);
-
   Handle(XSControl_Controller) myController; // thelibrary;
 
   Handle(Interface_InterfaceModel) myModel;

@@ -18,7 +18,7 @@
 //#73 rln 10.03.99 S4135: "read.scale.unit" is applied after translation
 
 #include <gp_XYZ.hxx>
-#include <IGESData_BasicEditor.hxx>
+#include <IGESData.hxx>
 #include <IGESData_GlobalSection.hxx>
 #include <Interface_Check.hxx>
 #include <Interface_FileParameter.hxx>
@@ -249,7 +249,7 @@ void IGESData_GlobalSection::Init(const Handle(Interface_ParamSet)& params,
       //default (inches) value taken
       corrected = 1;
     else
-      corrected = IGESData_BasicEditor::UnitNameFlag (theUnitName->ToCString());
+      corrected = IGESData::UnitNameFlag (theUnitName->ToCString());
     if (corrected > 0) theUnitFlag = corrected;
     else if (theUnitFlag == 3) {
       Message_Msg Msg49 ("XSTEP_49");

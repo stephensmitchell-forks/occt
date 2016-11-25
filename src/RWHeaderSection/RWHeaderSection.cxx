@@ -15,14 +15,13 @@
 #include <RWHeaderSection.hxx>
 #include <RWHeaderSection_GeneralModule.hxx>
 #include <RWHeaderSection_ReadWriteModule.hxx>
-#include <StepData.hxx>
+#include <HeaderSection.hxx>
 
 static Handle(RWHeaderSection_ReadWriteModule) rwm;
 static Handle(RWHeaderSection_GeneralModule) rwg;
 
 void RWHeaderSection::Init()
 {
-  const Handle(StepData_Protocol) &hp = StepData::HeaderProtocol();
   if (rwm.IsNull()) rwm = new RWHeaderSection_ReadWriteModule;
   if (rwg.IsNull()) rwg = new RWHeaderSection_GeneralModule;
 }

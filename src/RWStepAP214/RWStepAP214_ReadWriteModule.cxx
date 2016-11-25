@@ -26,7 +26,6 @@
 #include <StepAP214_Protocol.hxx>
 #include <StepData_StepReaderData.hxx>
 #include <StepData_StepWriter.hxx>
-#include <StepData_WriterLib.hxx>
 #include <TCollection_AsciiString.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(RWStepAP214_ReadWriteModule,StepData_ReadWriteModule)
@@ -2041,9 +2040,6 @@ static Handle(Dico_DictionaryOfInteger) typeshor;
 
 RWStepAP214_ReadWriteModule::RWStepAP214_ReadWriteModule ()
 {
-//  Handle(StepAP214_Protocol) protocol = new StepAP214_Protocol;
-//  StepData_WriterLib::SetGlobal(Handle(RWStepAP214_ReadWriteModule)::DownCast(This()),protocol);
-//  Interface_ReaderLib::SetGlobal(Handle(RWStepAP214_ReadWriteModule)::DownCast(This()),protocol);
   if (!typenums.IsNull()) return;
   typenums = new Dico_DictionaryOfInteger;
   typenums->SetItem (Reco_CartesianPoint, 59);

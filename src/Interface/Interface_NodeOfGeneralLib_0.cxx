@@ -22,26 +22,13 @@
 #include <Interface_NodeOfGeneralLib.hxx>
 #include <Standard_Transient.hxx>
 #include <Interface_GeneralModule.hxx>
-#include <Interface_Protocol.hxx>
 #include <Interface_GeneralLib.hxx>
-
- 
-
-
-
-
-
-
-
 
 #define TheObject Handle(Standard_Transient)
 #define TheObject_hxx <Standard_Transient.hxx>
 #define Handle_TheModule Handle(Interface_GeneralModule)
 #define TheModule Interface_GeneralModule
 #define TheModule_hxx <Interface_GeneralModule.hxx>
-#define Handle_TheProtocol Handle(Interface_Protocol)
-#define TheProtocol Interface_Protocol
-#define TheProtocol_hxx <Interface_Protocol.hxx>
 #define LibCtl_GlobalNode Interface_GlobalNodeOfGeneralLib
 #define LibCtl_GlobalNode_hxx <Interface_GlobalNodeOfGeneralLib.hxx>
 #define LibCtl_Node Interface_NodeOfGeneralLib

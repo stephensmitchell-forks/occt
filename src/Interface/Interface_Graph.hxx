@@ -31,7 +31,6 @@
 
 class Interface_GeneralLib;
 class Interface_Protocol;
-class Interface_GTool;
 class Standard_Transient;
 class Interface_BitMap;
 class Interface_EntityIterator;

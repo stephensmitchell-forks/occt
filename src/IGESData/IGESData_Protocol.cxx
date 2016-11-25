@@ -24,16 +24,6 @@
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESData_Protocol,Interface_Protocol)
 
-IGESData_Protocol::IGESData_Protocol ()    {  }
-
-
-    Standard_Integer IGESData_Protocol::NbResources () const  { return 0; }
-
-    Handle(Interface_Protocol) IGESData_Protocol::Resource
-  (const Standard_Integer /*num*/) const
-      {  Handle(Interface_Protocol) nulpro;  return nulpro;  }
-
-
 //  TypeNumber : Ici, on reconnait UndefinedEntity (faut bien quelqu un)
 
     Standard_Integer IGESData_Protocol::TypeNumber

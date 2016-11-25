@@ -21,8 +21,8 @@
 #include <Standard_Type.hxx>
 
 #include <Standard_Transient.hxx>
+class Interface_Protocol;
 class IGESData_ReadWriteModule;
-class IGESData_Protocol;
 class IGESData_IGESEntity;
 class IGESData_WriterLib;
 class IGESData_NodeOfWriterLib;
@@ -45,13 +45,13 @@ public:
   //! nothing if already in the list, THAT IS, Same Type (exact
   //! match) and Same State (that is, IsEqual is not required)
   //! Once added, stores its attached Protocol in correspondance
-  Standard_EXPORT void Add (const Handle(IGESData_ReadWriteModule)& amodule, const Handle(IGESData_Protocol)& aprotocol);
+  Standard_EXPORT void Add (const Handle(IGESData_ReadWriteModule)& amodule, const Handle(Interface_Protocol)& aprotocol);
   
   //! Returns the Module stored in a given GlobalNode
   Standard_EXPORT const Handle(IGESData_ReadWriteModule)& Module() const;
   
   //! Returns the attached Protocol stored in a given GlobalNode
-  Standard_EXPORT const Handle(IGESData_Protocol)& Protocol() const;
+  Standard_EXPORT const Handle(Interface_Protocol)& Protocol() const;
   
   //! Returns the Next GlobalNode. If none is defined, returned
   //! value is a Null Handle
@@ -71,7 +71,7 @@ private:
 
 
   Handle(IGESData_ReadWriteModule) themod;
-  Handle(IGESData_Protocol) theprot;
+  Handle(Interface_Protocol) theprot;
   Handle(IGESData_GlobalNodeOfWriterLib) thenext;
 
 

@@ -78,13 +78,13 @@ class Interface_InterfaceModel : public MMgt_TShared
   
   //! Returns the Protocol which has been set by SetProtocol, or
   //! AddWithRefs with Protocol
-  Standard_EXPORT virtual Handle(Interface_Protocol) Protocol() const;
+  Standard_EXPORT const Handle(Interface_Protocol) & Protocol() const;
   
   //! Sets a GTool for this model, which already defines a Protocol
-  void SetGTool (const Handle(Interface_GTool)& gtool) { thegtool = gtool; }
+  void SetGTool (const Handle(Interface_GTool)& gtool) { myGTool = gtool; }
   
   //! Returns the GTool, set by SetProtocol or by SetGTool
-  const Handle(Interface_GTool) & GTool() const { return thegtool; }
+  const Handle(Interface_GTool) & GTool() const { return myGTool; }
   
   //! Returns the Dispatch Status, either for get or set
   //! A Model which is produced from Dispatch may share entities
@@ -276,16 +276,6 @@ class Interface_InterfaceModel : public MMgt_TShared
   //! Transfer tool (e.g TransferCopy). Starts from clear
   Standard_EXPORT void GetFromTransfer (const Interface_EntityIterator& aniter);
   
-  //! Gets header (data specific of a defined Interface) from
-  //! another InterfaceModel; called from TransferCopy
-  Standard_EXPORT virtual void GetFromAnother (const Handle(Interface_InterfaceModel)& other) = 0;
-  
-  //! Returns a New Empty Model, same type as <me> (whatever its
-  //! Type); called to Copy parts a Model into other ones, then
-  //! followed by a call to GetFromAnother (Header) then filling
-  //! with specified Entities, themselves copied
-  Standard_EXPORT virtual Handle(Interface_InterfaceModel) NewEmptyModel() const = 0;
-  
   //! Records a category number for an entity number
   //! Returns True when done, False if <num> is out of range
   Standard_EXPORT Standard_Boolean SetCategoryNumber (const Standard_Integer num, const Standard_Integer val);
@@ -386,7 +376,7 @@ class Interface_InterfaceModel : public MMgt_TShared
   Standard_Boolean haschecksem;
   Standard_Boolean isdispatch;
   Handle(TCollection_HAsciiString) thecategory;
-  Handle(Interface_GTool) thegtool;
+  Handle(Interface_GTool) myGTool;
 };
 
 #endif // _Interface_InterfaceModel_HeaderFile

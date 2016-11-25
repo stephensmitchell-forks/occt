@@ -12,12 +12,6 @@
 // commercial license or contractual agreement.
 
 
-#include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
-#include <Interface_EntityIterator.hxx>
-#include <Interface_ShareTool.hxx>
-#include <Standard_Transient.hxx>
-#include <Standard_Type.hxx>
 #include <StepData_GeneralModule.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(StepData_GeneralModule,Interface_GeneralModule)

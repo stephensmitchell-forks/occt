@@ -12,6 +12,7 @@
 // commercial license or contractual agreement.
 
 
+#include <HeaderSection.hxx>
 #include <HeaderSection_FileDescription.hxx>
 #include <HeaderSection_FileName.hxx>
 #include <HeaderSection_FileSchema.hxx>
@@ -44,9 +45,9 @@ static TCollection_AsciiString Reco_FileSchema ("FILE_SCHEMA");
 
 RWHeaderSection_ReadWriteModule::RWHeaderSection_ReadWriteModule ()
 {
-	Handle(HeaderSection_Protocol) protocol = new HeaderSection_Protocol;
-	StepData_WriterLib::SetGlobal(this,protocol);
-	Interface_ReaderLib::SetGlobal(this,protocol);
+  const Handle(HeaderSection_Protocol) &protocol = HeaderSection::Protocol();
+  StepData_WriterLib::SetGlobal(this,protocol);
+  Interface_ReaderLib::SetGlobal(this,protocol);
 }
 
 	// --- Case Recognition ---

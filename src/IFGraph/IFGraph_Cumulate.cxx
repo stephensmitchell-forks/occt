@@ -16,8 +16,6 @@
 #include <IFGraph_Cumulate.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Graph.hxx>
-#include <Interface_InterfaceModel.hxx>
-#include <Standard_Transient.hxx>
 
 // Calcul de cumul
 // Tres simple, on note les entites demandees, et a la fin

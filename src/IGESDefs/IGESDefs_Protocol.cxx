@@ -48,8 +48,7 @@ static Handle(Standard_Type) atype1,atype2,atype3,atype4,atype5,atype6,atype7;
     Handle(Interface_Protocol) IGESDefs_Protocol::Resource
   (const Standard_Integer /*num*/) const
 {
-  Handle(Interface_Protocol) res = IGESGraph::Protocol();
-  return res;
+  return IGESGraph::Protocol();
 }
 
     Standard_Integer IGESDefs_Protocol::TypeNumber

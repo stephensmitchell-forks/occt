@@ -23,31 +23,28 @@
 
 #include <Standard_Boolean.hxx>
 #include <Standard_Integer.hxx>
+class Interface_Protocol;
 class StepData_NodeOfWriterLib;
-class Standard_NoSuchObject;
-class Standard_Transient;
 class StepData_ReadWriteModule;
-class StepData_Protocol;
 class StepData_GlobalNodeOfWriterLib;
 
 
 
 class StepData_WriterLib 
 {
-public:
+ public:
 
   DEFINE_STANDARD_ALLOC
 
-  
   //! Adds a couple (Module-Protocol) into the global definition set
   //! for this class of Library.
-  Standard_EXPORT static void SetGlobal (const Handle(StepData_ReadWriteModule)& amodule, const Handle(StepData_Protocol)& aprotocol);
+  Standard_EXPORT static void SetGlobal (const Handle(StepData_ReadWriteModule)& amodule, const Handle(Interface_Protocol)& aprotocol);
   
   //! Creates a Library which complies with a Protocol, that is :
   //! Same class (criterium IsInstance)
   //! This creation gets the Modules from the global set, those
   //! which are bound to the given Protocol and its Resources
-  Standard_EXPORT StepData_WriterLib(const Handle(StepData_Protocol)& aprotocol);
+  Standard_EXPORT StepData_WriterLib(const Handle(Interface_Protocol)& aprotocol);
   
   //! Creates an empty Library : it will later by filled by method
   //! AddProtocol
@@ -56,16 +53,12 @@ public:
   //! Adds a couple (Module-Protocol) to the Library, given the
   //! class of a Protocol. Takes Resources into account.
   //! (if <aprotocol> is not of type TheProtocol, it is not added)
-  Standard_EXPORT void AddProtocol (const Handle(Standard_Transient)& aprotocol);
+  Standard_EXPORT void AddProtocol (const Handle(Interface_Protocol)& aprotocol);
   
   //! Clears the list of Modules of a library (can be used to
   //! redefine the order of Modules before action : Clear then
   //! refill the Library by calls to AddProtocol)
   Standard_EXPORT void Clear();
-  
-  //! Sets a library to be defined with the complete Global list
-  //! (all the couples Protocol/Modules recorded in it)
-  Standard_EXPORT void SetComplete();
   
   //! Selects a Module from the Library, given an Object.
   //! Returns True if Select has succeeded, False else.
@@ -89,31 +82,12 @@ public:
   Standard_EXPORT const Handle(StepData_ReadWriteModule)& Module() const;
   
   //! Returns the current Protocol in the Iteration
-  Standard_EXPORT const Handle(StepData_Protocol)& Protocol() const;
+  Standard_EXPORT const Handle(Interface_Protocol)& Protocol() const;
 
-
-
-
-protected:
-
-
-
-
-
-private:
-
-
+ private:
 
   Handle(StepData_NodeOfWriterLib) thelist;
   Handle(StepData_NodeOfWriterLib) thecurr;
-
-
 };
-
-
-
-
-
-
 
 #endif // _StepData_WriterLib_HeaderFile

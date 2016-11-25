@@ -99,11 +99,11 @@ public:
   Standard_EXPORT void AddStartLine (const Standard_CString line, const Standard_Integer atnum = 0);
   
   //! Returns the Global section of the IGES file.
-  Standard_EXPORT const IGESData_GlobalSection& GlobalSection() const;
-  
+  const IGESData_GlobalSection& GlobalSection() const { return theheader; }
+
   //! Sets the Global section of the IGES file.
-  Standard_EXPORT void SetGlobalSection (const IGESData_GlobalSection& header);
-  
+  void SetGlobalSection (const IGESData_GlobalSection& header) { theheader = header; }
+
   //! Sets some of the Global section
   //! parameters with the values defined by the translation
   //! parameters. param may be:
@@ -113,7 +113,7 @@ public:
   //! The default value for param is an empty string.
   //! Returns True when done and if param is given, False if param is
   //! unknown or empty. Note: Set the unit in the IGES
-  //! file Global section via IGESData_BasicEditor class.
+  //! file Global section via IGESData class.
   Standard_EXPORT Standard_Boolean ApplyStatic (const Standard_CString param = "");
   
   //! Returns an IGES entity given by its rank number.
@@ -125,10 +125,7 @@ public:
   Standard_EXPORT Standard_Integer DNum (const Handle(IGESData_IGESEntity)& ent) const;
   
   //! gets Header (GlobalSection) from another Model
-  Standard_EXPORT void GetFromAnother (const Handle(Interface_InterfaceModel)& other) Standard_OVERRIDE;
-  
-  //! Returns a New Empty Model, same type as <me> i.e. IGESModel
-  Standard_EXPORT Handle(Interface_InterfaceModel) NewEmptyModel() const Standard_OVERRIDE;
+  Standard_EXPORT void GetFromAnother (const Handle(IGESData_IGESModel)& other);
   
   //! Checks that the IGES file Global
   //! section contains valid data that conforms to the IGES specifications.

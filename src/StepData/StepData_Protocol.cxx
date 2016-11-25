@@ -34,24 +34,6 @@ IMPLEMENT_STANDARD_RTTIEXT(StepData_Protocol,Interface_Protocol)
 //static TCollection_AsciiString  thename("(DEFAULT)");
 static Standard_CString thename = "(DEFAULT)";
 
-StepData_Protocol::StepData_Protocol ()
-{
-}
-
-Standard_Integer  StepData_Protocol::NbResources () const
-{
-  return 0;
-}
-
-
-Handle(Interface_Protocol) StepData_Protocol::Resource
-  (const Standard_Integer /*num*/) const
-{
-  Handle(Interface_Protocol) nulproto;  
-  return nulproto;
-}
-
-
 Standard_Integer  StepData_Protocol::CaseNumber
   (const Handle(Standard_Transient)& obj) const
 {

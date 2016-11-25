@@ -71,8 +71,6 @@ static void cleanpilot ()
 #include <IFSelect_SelectSignature.hxx>
 #include <IFSelect_SelectModelEntities.hxx>
 #include <IFSelect_SelectModelRoots.hxx>
-#include <StepAP214.hxx>
-#include <StepAP214_Protocol.hxx>
 #include <STEPSelections_SelectDerived.hxx>
 #include <STEPSelections_SelectFaces.hxx>
 #include <STEPSelections_SelectInstances.hxx>
@@ -86,7 +84,6 @@ static Handle(IFSelect_Signature) SignType()
   static Handle(StepSelect_StepType) sty;
   if (!sty.IsNull()) return sty;
   sty = new StepSelect_StepType;
-  sty->SetProtocol (StepAP214::Protocol());
   return sty;
 }
 
@@ -153,7 +150,6 @@ void XSDRAWSTEP::Init ()
       gSessionItems.AddItem (new IFSelect_SignAncestor(),"xst-derived");
 
       Handle(STEPSelections_SelectDerived) stdvar = new STEPSelections_SelectDerived();
-      stdvar->SetProtocol(StepAP214::Protocol());
       gSessionItems.AddItem (stdvar,"step-derived");
     
       Handle(IFSelect_SelectSignature) selsdr = NewSelectSDR();
@@ -213,7 +209,6 @@ void XSDRAWSTEP::Init ()
     //pdn S4133 18.02.99
     WS->AddNamedItem ("xst-derived",new IFSelect_SignAncestor());
     Handle(STEPSelections_SelectDerived) stdvar = new STEPSelections_SelectDerived();
-    stdvar->SetProtocol(StepAP214::Protocol());
     WS->AddNamedItem ("step-derived",stdvar);
     
     Handle(IFSelect_SelectSignature) selsdr = NewSelectSDR();

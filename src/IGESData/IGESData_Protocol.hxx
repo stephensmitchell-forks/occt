@@ -37,17 +37,9 @@ DEFINE_STANDARD_HANDLE(IGESData_Protocol, Interface_Protocol)
 //! Undefined-FreeFormat-Entity
 class IGESData_Protocol : public Interface_Protocol
 {
+ public:
 
-public:
-
-  
-  Standard_EXPORT IGESData_Protocol();
-  
-  //! Gives the count of Resource Protocol. Here, none
-  Standard_EXPORT Standard_Integer NbResources() const Standard_OVERRIDE;
-  
-  //! Returns a Resource, given a rank. Here, none
-  Standard_EXPORT Handle(Interface_Protocol) Resource (const Standard_Integer num) const Standard_OVERRIDE;
+  IGESData_Protocol() {}
   
   //! Returns a Case Number, specific of each recognized Type
   //! Here, Undefined and Free Format Entities have the Number 1.

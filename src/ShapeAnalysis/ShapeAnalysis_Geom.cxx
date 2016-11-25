@@ -131,60 +131,47 @@ Standard_Boolean ShapeAnalysis_Geom::NearestPlane(const TColgp_Array1OfPnt& Pnts
     for (Standard_Integer j = 1; j <= 4; j ++)
       gtrsf.SetValue (i,j, coefs->Value(i,j));
 
-  //try { //szv#4:S4163:12Mar99 waste try
-    ////    trsf = gtrsf.Trsf();
-    // ---  Prec et Unit ont ete lues suite aux StepFile_Read
-    //      Valables pour tous les composants d un assemblage transmis
-    //trsf = gp_Trsf();  // Identite forcee au depart //szv#4:S4163:12Mar99 not needed
-    //  On prend le contenu de <gtrsf>. Attention a l adressage
-    gp_XYZ v1 ( gtrsf.Value(1,1), gtrsf.Value(2,1), gtrsf.Value(3,1) );
-    gp_XYZ v2 ( gtrsf.Value(1,2), gtrsf.Value(2,2), gtrsf.Value(3,2) );
-    gp_XYZ v3 ( gtrsf.Value(1,3), gtrsf.Value(2,3), gtrsf.Value(3,3) );
-    //  A-t-on affaire a une similitude ?
-    Standard_Real m1 = v1.Modulus();
-    Standard_Real m2 = v2.Modulus();
-    Standard_Real m3 = v3.Modulus();
+  //  On prend le contenu de <gtrsf>. Attention a l adressage
+  gp_XYZ v1 ( gtrsf.Value(1,1), gtrsf.Value(2,1), gtrsf.Value(3,1) );
+  gp_XYZ v2 ( gtrsf.Value(1,2), gtrsf.Value(2,2), gtrsf.Value(3,2) );
+  gp_XYZ v3 ( gtrsf.Value(1,3), gtrsf.Value(2,3), gtrsf.Value(3,3) );
+  //  A-t-on affaire a une similitude ?
+  Standard_Real m1 = v1.Modulus();
+  Standard_Real m2 = v2.Modulus();
+  Standard_Real m3 = v3.Modulus();
 
-    //    D abord est-elle singuliere cette matrice ?
-    if (m1 < prec || m2 < prec || m3 < prec) return Standard_False;
-    Standard_Real mm = (m1+m2+m3)/3.;  // voici la Norme moyenne, cf Scale
-    //szv#4:S4163:12Mar99 optimized
-    Standard_Real pmm = prec*mm;
-    if ( Abs(m1 - mm) > pmm || Abs(m2 - mm) > pmm || Abs(m3 - mm) > pmm )
-      return Standard_False;
-    //szv#4:S4163:12Mar99 warning
-    v1.Divide(m1);
-    v2.Divide(m2);
-    v3.Divide(m3);
-    //szv#4:S4163:12Mar99 optimized
-    if ( Abs(v1.Dot(v2)) > prec || Abs(v2.Dot(v3)) > prec || Abs(v3.Dot(v1)) > prec )
-      return Standard_False;
+  //    D abord est-elle singuliere cette matrice ?
+  if (m1 < prec || m2 < prec || m3 < prec) return Standard_False;
+  Standard_Real mm = (m1+m2+m3)/3.;  // voici la Norme moyenne, cf Scale
+  Standard_Real pmm = prec*mm;
+  if ( Abs(m1 - mm) > pmm || Abs(m2 - mm) > pmm || Abs(m3 - mm) > pmm )
+    return Standard_False;
+  v1.Divide(m1);
+  v2.Divide(m2);
+  v3.Divide(m3);
+  if ( Abs(v1.Dot(v2)) > prec || Abs(v2.Dot(v3)) > prec || Abs(v3.Dot(v1)) > prec )
+    return Standard_False;
 
-    //  Ici, Orthogonale et memes normes. En plus on l a Normee
-    //  On isole le cas de l Identite (tellement facile et avantageux)
-    if (v1.X() != 1 || v1.Y() != 0 || v1.Z() != 0 ||
-	v2.X() != 0 || v2.Y() != 1 || v2.Z() != 0 ||
-	v3.X() != 0 || v3.Y() != 0 || v3.Z() != 1 ) {
+  //  Ici, Orthogonale et memes normes. En plus on l a Normee
+  //  On isole le cas de l Identite (tellement facile et avantageux)
+  if (v1.X() != 1 || v1.Y() != 0 || v1.Z() != 0 ||
+      v2.X() != 0 || v2.Y() != 1 || v2.Z() != 0 ||
+      v3.X() != 0 || v3.Y() != 0 || v3.Z() != 1 ) {
       //  Pas Identite : vraie construction depuis un Ax3
-      gp_Dir d1(v1);
-      gp_Dir d2(v2);
-      gp_Dir d3(v3);
-      gp_Ax3 axes (gp_Pnt(0,0,0),d3,d1);
-      d3.Cross(d1);
-      if (d3.Dot(d2) < 0) axes.YReverse();
-      trsf.SetTransformation(axes);
-    }
+    gp_Dir d1(v1);
+    gp_Dir d2(v2);
+    gp_Dir d3(v3);
+    gp_Ax3 axes (gp_Pnt(0,0,0),d3,d1);
+    d3.Cross(d1);
+    if (d3.Dot(d2) < 0) axes.YReverse();
+    trsf.SetTransformation(axes);
+  }
 
-    //  Restent les autres caracteristiques :
-    if ( Abs(mm - 1.) > prec ) trsf.SetScale(gp_Pnt(0,0,0), mm); //szv#4:S4163:12Mar99 optimized
-    gp_Vec tp (gtrsf.TranslationPart());
-    if (unit != 1.) tp.Multiply(unit);
-    if (tp.X() != 0 || tp.Y() != 0 || tp.Z() != 0) trsf.SetTranslationPart(tp);
-  /* }
-  catch(Standard_Failure) {
-    trsf = gp_Trsf();
-    result = Standard_False;
-  } */
+  //  Restent les autres caracteristiques :
+  if ( Abs(mm - 1.) > prec ) trsf.SetScale(gp_Pnt(0,0,0), mm); //szv#4:S4163:12Mar99 optimized
+  gp_Vec tp (gtrsf.TranslationPart());
+  if (unit != 1.) tp.Multiply(unit);
+  if (tp.X() != 0 || tp.Y() != 0 || tp.Z() != 0) trsf.SetTranslationPart(tp);
 
   return result;
 }

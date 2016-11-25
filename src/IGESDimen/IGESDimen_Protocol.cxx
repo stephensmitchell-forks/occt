@@ -84,10 +84,9 @@ static Handle(Standard_Type) atype01,atype02,atype03,atype04,atype05,atype06,
     Handle(Interface_Protocol) IGESDimen_Protocol::Resource
   (const Standard_Integer num) const
 {
-  Handle(Interface_Protocol) res;
-  if (num == 1) res = IGESGraph::Protocol();
-  if (num == 2) res = IGESGeom::Protocol();
-  return res;
+  if (num == 1) return IGESGraph::Protocol();
+  if (num == 2) return IGESGeom::Protocol();
+  return NULL;
 }
 
     Standard_Integer IGESDimen_Protocol::TypeNumber

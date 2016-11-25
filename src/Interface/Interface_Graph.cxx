@@ -440,7 +440,7 @@ Handle(TCollection_HAsciiString)  Interface_Graph::Name(const Handle(Standard_Tr
   if (themodel.IsNull()) return str;
   if (themodel->Number(ent)) return str;
 
-  Handle(Interface_GTool) gtool = themodel->GTool();
+  const Handle(Interface_GTool) &gtool = themodel->GTool();
   if (gtool.IsNull()) return str;
 
   Handle(Interface_GeneralModule) module;

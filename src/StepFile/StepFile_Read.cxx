@@ -65,46 +65,6 @@ void StepFile_ReadTrace (const Standard_Integer mode)
   modepr = mode;   // recfile_modeprint est rappele a chaque lecture de fichier
 }
 
-
-static Standard_Integer StepFile_Read
- (char* nomfic,
-  const Handle(StepData_StepModel)& stepmodel,
-  const Handle(StepData_Protocol)& protocol,
-  const Handle(StepData_FileRecognizer)& recoheader,
-  const Handle(StepData_FileRecognizer)& recodata);
-
-
-Standard_Integer StepFile_Read
- (char* nomfic,
-  const Handle(StepData_StepModel)& stepmodel,
-  const Handle(StepData_FileRecognizer)& recoheader,
-  const Handle(StepData_FileRecognizer)& recodata)
-{
-  return StepFile_Read
-    (nomfic,stepmodel,
-     Handle(StepData_Protocol)::DownCast(Interface_Protocol::Active()),
-     recoheader,recodata);
-}
-
-Standard_Integer StepFile_Read
- (char* nomfic,
-  const Handle(StepData_StepModel)& stepmodel,
-  const Handle(StepData_FileRecognizer)& recoheader,
-  const Handle(StepData_Protocol)& protocol)
-{
-  Handle(StepData_FileRecognizer) nulreco;
-  return StepFile_Read (nomfic,stepmodel,protocol,recoheader,nulreco);
-}
-
-Standard_Integer StepFile_Read
- (char* nomfic,
-  const Handle(StepData_StepModel)& stepmodel,
-  const Handle(StepData_Protocol)& protocol)
-{
-  Handle(StepData_FileRecognizer) nulreco;
-  return StepFile_Read (nomfic,stepmodel,protocol,nulreco,nulreco);
-}
-
 //  ##  ##  ##  ##  ##  ##    Corps de la Routine    ##  ##  ##  ##  ##  ##
 
 static Interface_ParamType LesTypes[10];   // passage types (recstep/Interface)
@@ -112,9 +72,7 @@ static Interface_ParamType LesTypes[10];   // passage types (recstep/Interface)
 Standard_Integer StepFile_Read
  (char* nomfic,
   const Handle(StepData_StepModel)& stepmodel,
-  const Handle(StepData_Protocol)& protocol,
-  const Handle(StepData_FileRecognizer)& recoheader,
-  const Handle(StepData_FileRecognizer)& recodata)
+  const Handle(StepData_Protocol)& protocol)
 
 {
   Handle(Message_Messenger) sout = Message::DefaultMessenger();
@@ -147,7 +105,6 @@ Standard_Integer StepFile_Read
     return 1;
   }
   // Continue reading of file despite of possible fails
-  //if (checkread->HasFailed()) {  lir_file_fin(3);  stepread_endinput (newin,ficnom);  return 1;  }
 #ifdef CHRONOMESURE
   sout << "      ...    STEP File   Read    ... " << endl;  
   c.Show(); 
@@ -201,10 +158,9 @@ Standard_Integer StepFile_Read
 //   Analyse : par StepReaderTool
 
   StepData_StepReaderTool readtool (undirec,protocol);
-  readtool.SetErrorHandle (Standard_True);
 
-  readtool.PrepareHeader(recoheader);  // Header. reco nul -> pour Protocol
-  readtool.Prepare(recodata);          // Data.   reco nul -> pour Protocol
+  readtool.PrepareHeader();
+  readtool.Prepare();
 
 #ifdef CHRONOMESURE
   sout << "      ... Parameters prepared ... "; 
@@ -215,7 +171,6 @@ Standard_Integer StepFile_Read
   if (stepmodel->Protocol().IsNull()) stepmodel->SetProtocol (protocol);
   lir_file_fin(2);
   
-  readtool.Clear();
   undirec.Nullify();
 #ifdef CHRONOMESURE
   sout << "      ...   Objets analysed  ... " << endl; 

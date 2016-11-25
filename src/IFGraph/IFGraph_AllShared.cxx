@@ -14,7 +14,6 @@
 
 #include <IFGraph_AllShared.hxx>
 #include <Interface_EntityIterator.hxx>
-#include <Interface_InterfaceModel.hxx>
 
 
 IFGraph_AllShared::IFGraph_AllShared (const Interface_Graph& agraph, const Handle(Standard_Transient)& ent)

@@ -27,9 +27,6 @@ class StepData_Protocol;
 class StepData 
 {
  public:
-  
-  //! Returns a Protocol from StepData
-  Standard_EXPORT static const Handle(StepData_Protocol) & Protocol();
 
   //! Returns the recorded HeaderProtocol, which can be :
   //! - a Null Handle if no Header Protocol was yet defined

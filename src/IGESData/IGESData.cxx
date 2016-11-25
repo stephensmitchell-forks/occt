@@ -193,8 +193,103 @@ const Handle(IGESData_Protocol) & IGESData::Protocol ()
 
 Handle(IGESData_IGESModel) IGESData::NewModel ()
 {
-  if (gIGESModel.IsNull()) return NULL;
-  Handle(Interface_InterfaceModel) newmod = gIGESModel->NewEmptyModel();
-  newmod->GetFromAnother (gIGESModel);
-  return Handle(IGESData_IGESModel)::DownCast(newmod);
+  Handle(IGESData_IGESModel) newmod;
+  if (!gIGESModel.IsNull()) {
+    newmod = new IGESData_IGESModel;
+    newmod->GetFromAnother (gIGESModel);
+  }
+  return newmod;
+}
+
+Standard_Integer IGESData::UnitNameFlag  (const Standard_CString name)
+{
+  char* nam = (char *)&name[0];
+  if (name[1] == 'H') {
+    nam = (char *)&name[2];
+  }
+  if (!strcmp (nam,"INCH")) return 1;
+  if (!strcmp (nam,"IN"))   return 1;
+  if (!strcmp (nam,"MM"))   return 2;
+  if (!strcmp (nam,"FT"))   return 4;
+  if (!strcmp (nam,"MI"))   return 5;
+  if (!strcmp (nam,"M"))    return 6;
+  if (!strcmp (nam,"KM"))   return 7;
+  if (!strcmp (nam,"MIL"))  return 8;
+  if (!strcmp (nam,"UM"))   return 9;
+  if (!strcmp (nam,"CM"))   return 10;
+  if (!strcmp (nam,"UIN"))  return 11;
+  return 0;
+}
+
+Standard_Real IGESData::UnitFlagValue (const Standard_Integer flag)
+{
+  switch (flag) {
+    case  1 : return 0.0254;
+    case  2 : return 0.001;
+    case  3 : return 1.;
+    case  4 : return 0.3048;
+    case  5 : return 1609.27;
+    case  6 : return 1.;
+    case  7 : return 1000.;
+    case  8 : return 0.0000254;
+    case  9 : return 0.000001;
+    case 10 : return 0.01;
+    case 11 : return 0.0000000254;
+    default : break;
+  }
+  return 0.;
+}
+
+Standard_CString IGESData::UnitFlagName (const Standard_Integer flag)
+{
+  Standard_CString name = "";
+  switch (flag) {
+    case  1 : name = "INCH";  break;
+    case  2 : name = "MM";    break;
+    case  4 : name = "FT";    break;
+    case  5 : name = "MI";    break;
+    case  6 : name = "M";     break;
+    case  7 : name = "KM";    break;
+    case  8 : name = "MIL";   break;
+    case  9 : name = "UM";    break;
+    case 10 : name = "CM";    break;
+    case 11 : name = "UIN";   break;
+    default : break;
+  }
+  return name;
+}
+
+Standard_CString IGESData::IGESVersionName (const Standard_Integer flag)
+{
+  switch (flag) {
+    case 1 : return "1.0";
+    case 2 : return "ANSI Y14.26M-1981";
+    case 3 : return "2.0";
+    case 4 : return "3.0";
+    case 5 : return "ANSI Y14.26M-1987";
+    case 6 : return "4.0";
+    case 7 : return "ANSI Y14.26M-1989";
+    case 8 : return "5.0";
+    case 9 : return "5.1";
+    case 10: return "5.2";
+    case 11: return "5.3";
+    default : break;
+  }
+  return "";
+}
+
+Standard_CString IGESData::DraftingName (const Standard_Integer flag)
+{
+  switch (flag) {
+    case 0 : return "(None)";
+    case 1 : return "ISO";
+    case 2 : return "AFNOR";
+    case 3 : return "ANSI";
+    case 4 : return "BSI";
+    case 5 : return "CSA";
+    case 6 : return "DIN";
+    case 7 : return "JIS";
+    default : break;
+  }
+  return "";
 }

@@ -46,22 +46,20 @@ DEFINE_STANDARD_HANDLE(Interface_GTool, MMgt_TShared)
 //! Shareable between several users : as a Handle
 class Interface_GTool : public MMgt_TShared
 {
+ public:
 
-public:
-
-  
   //! Creates an empty, not set, GTool
-  Standard_EXPORT Interface_GTool();
+  Interface_GTool() {}
   
   //! Creates a GTool from a Protocol
   //! Optional starting count of entities
   Standard_EXPORT Interface_GTool(const Handle(Interface_Protocol)& proto, const Standard_Integer nbent = 0);
   
   //! Sets a new SignType
-  Standard_EXPORT void SetSignType (const Handle(Interface_SignType)& sign);
+  void SetSignType (const Handle(Interface_SignType)& sign) { thesign = sign; }
   
   //! Returns the SignType. Can be null
-  Standard_EXPORT Handle(Interface_SignType) SignType() const;
+  const Handle(Interface_SignType) & SignType() const { return thesign; }
   
   //! Returns the Signature for a Transient Object in a Model
   //! It calls SignType to do that
@@ -77,11 +75,11 @@ public:
   Standard_EXPORT void SetProtocol (const Handle(Interface_Protocol)& proto, const Standard_Boolean enforce = Standard_False);
   
   //! Returns the Protocol.  Warning : it can be Null
-  Standard_EXPORT Handle(Interface_Protocol) Protocol() const;
-  
+  const Handle(Interface_Protocol) & Protocol() const { return theproto; }
+
   //! Returns the GeneralLib itself
-  Standard_EXPORT Interface_GeneralLib& Lib();
-  
+  Interface_GeneralLib& Lib() { return thelib; }
+
   //! Reservates maps for a count of entities
   //! <enforce> False : minimum count
   //! <enforce> True  : clears former reservations

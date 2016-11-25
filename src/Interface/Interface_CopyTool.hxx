@@ -67,16 +67,12 @@ public:
 
   DEFINE_STANDARD_ALLOC
 
-  
   //! Creates a CopyTool adapted to work from a Model. Works
   //! with a General Service Library, given as an argument
   Standard_EXPORT Interface_CopyTool(const Handle(Interface_InterfaceModel)& amodel, const Interface_GeneralLib& lib);
   
   //! Same as above, but Library is defined through a Protocol
   Standard_EXPORT Interface_CopyTool(const Handle(Interface_InterfaceModel)& amodel, const Handle(Interface_Protocol)& protocol);
-  
-  //! Same as above, but works with the Active Protocol
-  Standard_EXPORT Interface_CopyTool(const Handle(Interface_InterfaceModel)& amodel);
   
   //! Returns the Model on which the CopyTool works
   Standard_EXPORT Handle(Interface_InterfaceModel) Model() const;
@@ -160,10 +156,6 @@ public:
   //! Remark : this concerns only some specific references, such as
   //! "back pointers".
   Standard_EXPORT void RenewImpliedRefs();
-  
-  //! Fills a Model with the result of the transfer (TransferList)
-  //! Commands copy of Header too, and calls RenewImpliedRefs
-  Standard_EXPORT void FillModel (const Handle(Interface_InterfaceModel)& bmodel);
   
   //! Returns the complete list of copied Entities
   //! If <withreports> is given True, the entities which were

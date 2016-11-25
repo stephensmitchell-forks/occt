@@ -20,7 +20,6 @@
 #include <Standard_NoSuchObject.hxx>
 #include <Standard_Transient.hxx>
 #include <StepData_ReadWriteModule.hxx>
-#include <StepData_Protocol.hxx>
 #include <StepData_GlobalNodeOfWriterLib.hxx>
  
 
@@ -29,9 +28,6 @@
 #define Handle_TheModule Handle(StepData_ReadWriteModule)
 #define TheModule StepData_ReadWriteModule
 #define TheModule_hxx <StepData_ReadWriteModule.hxx>
-#define Handle_TheProtocol Handle(StepData_Protocol)
-#define TheProtocol StepData_Protocol
-#define TheProtocol_hxx <StepData_Protocol.hxx>
 #define LibCtl_GlobalNode StepData_GlobalNodeOfWriterLib
 #define LibCtl_GlobalNode_hxx <StepData_GlobalNodeOfWriterLib.hxx>
 #define LibCtl_Node StepData_NodeOfWriterLib

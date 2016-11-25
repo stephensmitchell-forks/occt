@@ -42,10 +42,7 @@
 #endif
 #include <stdio.h>
 
-// MGE 16/06/98
-// To use Msg class
 #include <Message_Msg.hxx>
-// To use TCollectionHAsciiString
 #include <TCollection_HAsciiString.hxx>
 
 // Failure pour recuperer erreur en lecture fichier,
@@ -62,68 +59,11 @@
 //=======================================================================
 
 Interface_FileReaderTool::Interface_FileReaderTool ()
+: themessenger(Message::DefaultMessenger()),
+  thetrace(1),
+  thenbrep0(0),
+  thenbreps(0)
 {
-  themessenger = Message::DefaultMessenger();
-  theerrhand = Standard_True;
-  thetrace = 1;
-  thenbrep0 = thenbreps = 0;
-}
-
-//=======================================================================
-//function : SetData
-//purpose  : 
-//=======================================================================
-
-void Interface_FileReaderTool::SetData(const Handle(Interface_FileReaderData)& reader,
-                                       const Handle(Interface_Protocol)& protocol)
-{
-  thereader = reader;
-  theproto = protocol;
-}
-
-
-//=======================================================================
-//function : Protocol
-//purpose  : 
-//=======================================================================
-
-Handle(Interface_Protocol) Interface_FileReaderTool::Protocol () const
-{
-  return theproto;
-}
-
-
-//=======================================================================
-//function : Data
-//purpose  : 
-//=======================================================================
-
-Handle(Interface_FileReaderData) Interface_FileReaderTool::Data () const
-{
-  return thereader;
-}
-
-
-//=======================================================================
-//function : SetModel
-//purpose  : 
-//=======================================================================
-
-void Interface_FileReaderTool::SetModel
-  (const Handle(Interface_InterfaceModel)& amodel)
-{
-  themodel = amodel;
-}
-
-
-//=======================================================================
-//function : Model
-//purpose  : 
-//=======================================================================
-
-Handle(Interface_InterfaceModel) Interface_FileReaderTool::Model () const
-{
-  return themodel;
 }
 
 //=======================================================================
@@ -133,61 +73,7 @@ Handle(Interface_InterfaceModel) Interface_FileReaderTool::Model () const
 
 void Interface_FileReaderTool::SetMessenger (const Handle(Message_Messenger)& messenger)
 {
-  if ( messenger.IsNull() )
-    themessenger = Message::DefaultMessenger();
-  else   
-    themessenger = messenger;
-}
-
-//=======================================================================
-//function : Messenger
-//purpose  : 
-//=======================================================================
-
-Handle(Message_Messenger) Interface_FileReaderTool::Messenger () const
-{
-  return themessenger;
-}
-
-//=======================================================================
-//function : SetTraceLevel
-//purpose  : 
-//=======================================================================
-
-void Interface_FileReaderTool::SetTraceLevel (const Standard_Integer tracelev)
-{
-  thetrace = tracelev;
-}
-
-//=======================================================================
-//function : TraceLevel
-//purpose  : 
-//=======================================================================
-
-Standard_Integer Interface_FileReaderTool::TraceLevel () const
-{
-  return thetrace;
-}
-
-//=======================================================================
-//function : SetErrorHandle
-//purpose  : 
-//=======================================================================
-
-void Interface_FileReaderTool::SetErrorHandle(const Standard_Boolean err)
-{
-  theerrhand = err;
-}
-
-
-//=======================================================================
-//function : ErrorHandle
-//purpose  : 
-//=======================================================================
-
-Standard_Boolean  Interface_FileReaderTool::ErrorHandle() const
-{
-  return theerrhand;
+  themessenger = ( messenger.IsNull()? Message::DefaultMessenger() : messenger );
 }
 
 //  ....            Actions Connexes au CHARGEMENT DU MODELE            ....
@@ -213,81 +99,16 @@ void Interface_FileReaderTool::SetEntities ()
        num = thereader->FindNextRecord(num)) {
     Handle(Standard_Transient) newent;
     Handle(Interface_Check) ach = new Interface_Check;
-    if (!Recognize (num,ach,newent)) {
-      newent = UnknownEntity();
-      if (thereports.IsNull()) thereports =
-	new TColStd_HArray1OfTransient (1,thereader->NbRecords());
-      thenbreps ++;  thenbrep0 ++;
-      thereports->SetValue (num,new Interface_ReportEntity(ach,newent));
-    }
-    else if ((ach->NbFails() + ach->NbWarnings() > 0) && !newent.IsNull()) {
-      if (thereports.IsNull()) thereports =
-	new TColStd_HArray1OfTransient (1,thereader->NbRecords());
+    Standard_Boolean res = Recognize (num,ach,newent);
+    if (!res) newent = theproto->UnknownEntity();
+	else res = ((ach->NbFails() + ach->NbWarnings()) == 0) || newent.IsNull();
+    if (!res) {
+      if (thereports.IsNull()) thereports = new TColStd_HArray1OfTransient (1,thereader->NbRecords());
       thenbreps ++;  thenbrep0 ++;
       thereports->SetValue (num,new Interface_ReportEntity(ach,newent));
     }
     thereader->BindEntity (num,newent);
   }
-}
-
-
-//=======================================================================
-//function : RecognizeByLib
-//purpose  : 
-//=======================================================================
-
-Standard_Boolean Interface_FileReaderTool::RecognizeByLib(const Standard_Integer num,
-                                                          Interface_GeneralLib& glib,
-                                                          Interface_ReaderLib& rlib,
-                                                          Handle(Interface_Check)& ach,
-                                                          Handle(Standard_Transient)& ent) const
-{
-  Handle(Interface_GeneralModule) gmod;
-  Handle(Interface_ReaderModule)  rmod;
-  Handle(Interface_Protocol) proto;
-  Standard_Integer CN = 0;
-//   Chercher dans ReaderLib : Reconnaissance de cas -> CN , proto
-  for (rlib.Start(); rlib.More(); rlib.Next()) {
-    rmod = rlib.Module();
-    if (rmod.IsNull()) continue;
-    CN = rmod->CaseNum(thereader,num);
-    if (CN > 0)  {  proto = rlib.Protocol();  break;  }
-  }
-  if (CN <= 0 || proto.IsNull()) return Standard_False;
-//   Se recaler dans GeneralLib : Creation de l entite vide
-  Handle(Standard_Type) typrot = proto->DynamicType();
-  for (glib.Start(); glib.More(); glib.Next()) {
-    proto = glib.Protocol();
-    if (proto.IsNull()) continue;
-    if (proto->DynamicType() != typrot) continue;
-    Standard_Boolean res = glib.Module()->NewVoid(CN,ent);
-    if (res) return res;
-    if (!rmod.IsNull()) return rmod->NewRead (CN,thereader,num,ach,ent);
-//    return res;
-  }
-  return Standard_False;
-}
-
-
-//=======================================================================
-//function : UnknownEntity
-//purpose  : 
-//=======================================================================
-
-Handle(Standard_Transient) Interface_FileReaderTool::UnknownEntity() const
-{
-  return theproto->UnknownEntity();
-}
-
-
-//=======================================================================
-//function : NewModel
-//purpose  : 
-//=======================================================================
-
-Handle(Interface_InterfaceModel) Interface_FileReaderTool::NewModel() const
-{
-  return theproto->NewModel();
 }
 
 
@@ -309,8 +130,7 @@ void Interface_FileReaderTool::EndRead(const Handle(Interface_InterfaceModel)& )
 //purpose  : 
 //=======================================================================
 
-void Interface_FileReaderTool::LoadModel
-  (const Handle(Interface_InterfaceModel)& amodel)
+void Interface_FileReaderTool::LoadModel (const Handle(Interface_InterfaceModel)& amodel)
 //
 //   Methode generale de lecture d un fichier : il est lu via un FileReaderData
 //   qui doit y donner acces de la facon la plus performante possible
@@ -326,19 +146,15 @@ void Interface_FileReaderTool::LoadModel
   SetModel(amodel);
 
 //  ..            Demarrage : Lecture du Header            ..
-  if (theerrhand) {
-    try {
-      OCC_CATCH_SIGNALS
-      BeginRead(amodel);  // selon la norme
-    }
-    catch (Standard_Failure) {
-      // Sendinf of message : Internal error during the header reading
-      Message_Msg Msg11("XSTEP_11");
-      TF->Send (Msg11, Message_Info); 
-    }
-  }
-  else
+  try {
+    OCC_CATCH_SIGNALS
     BeginRead(amodel);  // selon la norme
+  }
+  catch (Standard_Failure) {
+    // Sendinf of message : Internal error during the header reading
+    Message_Msg Msg11("XSTEP_11");
+    TF->Send (Msg11, Message_Info); 
+  }
 
   //  ..            Lecture des Entites            ..
 
@@ -430,7 +246,7 @@ void Interface_FileReaderTool::LoadModel
 	thenbreps ++;
 	Handle(Interface_ReportEntity) rep =
 	  new Interface_ReportEntity(ach,anent);
-	Handle(Standard_Transient) undef = UnknownEntity();
+	Handle(Standard_Transient) undef = theproto->UnknownEntity();
 	AnalyseRecord(num,undef,ach);
 	rep->SetContent(undef);
 
@@ -476,19 +292,15 @@ void Interface_FileReaderTool::LoadModel
   }
 
 //   Conclusion : peut ne rien faire : selon necessite
-  if (theerrhand) {
-    try {
-      OCC_CATCH_SIGNALS
-      EndRead(amodel);  // selon la norme
-    }
-    catch (Standard_Failure) {
-      // Sendinf of message : Internal error during the header reading
-      Message_Msg Msg11("XSTEP_11");
-      TF->Send (Msg11, Message_Info); 
-    }
-  }
-  else
+  try {
+    OCC_CATCH_SIGNALS
     EndRead(amodel);  // selon la norme
+  }
+  catch (Standard_Failure) {
+    // Sendinf of message : Internal error during the header reading
+    Message_Msg Msg11("XSTEP_11");
+    TF->Send (Msg11, Message_Info); 
+  }
 }
 
 
@@ -497,8 +309,7 @@ void Interface_FileReaderTool::LoadModel
 //purpose  : 
 //=======================================================================
 
-Handle(Standard_Transient) Interface_FileReaderTool::LoadedEntity
-       (const Standard_Integer num)
+Handle(Standard_Transient) Interface_FileReaderTool::LoadedEntity (const Standard_Integer num)
 {
   Handle(Standard_Transient) anent = thereader->BoundEntity(num);
   Handle(Interface_Check) ach = new Interface_Check(anent);
@@ -552,30 +363,47 @@ Handle(Standard_Transient) Interface_FileReaderTool::LoadedEntity
 //    Rechargement ? si oui, dans une UnknownEntity fournie par le protocole
   if (thereader->IsErrorLoad())  nbf = (thereader->ResetErrorLoad() ? 1 : 0);
   if (nbf > 0)  {
-    Handle(Standard_Transient) undef = UnknownEntity();
+    Handle(Standard_Transient) undef = theproto->UnknownEntity();
     AnalyseRecord(num,undef,ach);
     rep->SetContent(undef);
   }
-
-//    Conclusion  (Unknown : traite en externe because traitement Raise)
-////  if (irep > 0) themodel->SetReportEntity (nbe,rep);  en bloc a la fin
 
   return anent;
 }
 
 
 //=======================================================================
-//function : ~Interface_FileReaderTool
+//function : RecognizeByLib
 //purpose  : 
 //=======================================================================
 
-Interface_FileReaderTool::~Interface_FileReaderTool()
-{}
-     
-void Interface_FileReaderTool::Clear()
+Standard_Boolean Interface_FileReaderTool::RecognizeByLib(const Standard_Integer num,
+                                                          Interface_GeneralLib& glib,
+                                                          Interface_ReaderLib& rlib,
+                                                          Handle(Interface_Check)& ach,
+                                                          Handle(Standard_Transient)& ent) const
 {
-  theproto.Nullify();
-  thereader.Nullify();
-  themodel.Nullify();
-  thereports.Nullify();
+  Handle(Interface_GeneralModule) gmod;
+  Handle(Interface_ReaderModule)  rmod;
+  Handle(Interface_Protocol) proto;
+  Standard_Integer CN = 0;
+//   Chercher dans ReaderLib : Reconnaissance de cas -> CN , proto
+  for (rlib.Start(); rlib.More(); rlib.Next()) {
+    rmod = rlib.Module();
+    if (rmod.IsNull()) continue;
+    CN = rmod->CaseNum(thereader,num);
+    if (CN > 0)  {  proto = rlib.Protocol();  break;  }
+  }
+  if (CN <= 0 || proto.IsNull()) return Standard_False;
+//   Se recaler dans GeneralLib : Creation de l entite vide
+  Handle(Standard_Type) typrot = proto->DynamicType();
+  for (glib.Start(); glib.More(); glib.Next()) {
+    proto = glib.Protocol();
+    if (proto.IsNull()) continue;
+    if (proto->DynamicType() != typrot) continue;
+    Standard_Boolean res = glib.Module()->NewVoid(CN,ent);
+    if (res) return res;
+    if (!rmod.IsNull()) return rmod->NewRead (CN,thereader,num,ach,ent);
+  }
+  return Standard_False;
 }

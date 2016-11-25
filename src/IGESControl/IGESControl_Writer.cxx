@@ -30,12 +30,18 @@
 #include <gp_XYZ.hxx>
 #include <IGESControl_Controller.hxx>
 #include <IGESControl_Writer.hxx>
+#include <IGESData.hxx>
+#include <IGESData_DirChecker.hxx>
 #include <IGESData_IGESEntity.hxx>
 #include <IGESData_IGESModel.hxx>
 #include <IGESData_IGESWriter.hxx>
 #include <IGESData_Protocol.hxx>
+#include <IGESData_GeneralModule.hxx>
+#include <IGESData_SpecificModule.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_Static.hxx>
+#include <Interface_Graph.hxx>
+#include <Interface_EntityIterator.hxx>
 #include <Message_ProgressIndicator.hxx>
 #include <OSD_OpenFile.hxx>
 #include <ShapeAnalysis_ShapeTolerance.hxx>
@@ -48,37 +54,31 @@
 
 #include <errno.h>
 IGESControl_Writer::IGESControl_Writer ()
-    :  myTP (new Transfer_FinderProcess(10000)) ,
-       myIsComputed (Standard_False)
+: myTP (new Transfer_FinderProcess(10000)),
+  myIsComputed (Standard_False)
 {
-//  faudrait aussi (?) prendre les parametres par defaut ... ?
-  IGESControl_Controller::Init();
-  myEditor.Init(IGESControl_Controller::DefineProtocol());
-  myEditor.SetUnitName(Interface_Static::CVal ("write.iges.unit"));
-  myEditor.ApplyUnit(); 
+  InitProtocol();
   myWriteMode = Interface_Static::IVal ("write.iges.brep.mode");
-  myModel = myEditor.Model();
+  myModel = IGESData::NewModel();
+  SetUnitName(Interface_Static::CVal ("write.iges.unit"));
 }
 
-IGESControl_Writer::IGESControl_Writer
-  (const Standard_CString unit, const Standard_Integer modecr)
-    :  myTP (new Transfer_FinderProcess(10000)) ,
-       myWriteMode (modecr) , myIsComputed (Standard_False)
+IGESControl_Writer::IGESControl_Writer (const Standard_CString unit, const Standard_Integer modecr)
+: myTP (new Transfer_FinderProcess(10000)),
+  myWriteMode (modecr), myIsComputed (Standard_False)
 {
-//  faudrait aussi (?) prendre les parametres par defaut ... ?
-  IGESControl_Controller::Init();
-  myEditor.Init(IGESControl_Controller::DefineProtocol());
-  myEditor.SetUnitName(unit);
-  myEditor.ApplyUnit();
-  myModel = myEditor.Model();
+  InitProtocol();
+  myModel = IGESData::NewModel();
+  SetUnitName(unit);
 }
 
-IGESControl_Writer::IGESControl_Writer
-  (const Handle(IGESData_IGESModel)& model, const Standard_Integer modecr)
-    :  myTP (new Transfer_FinderProcess(10000)) ,
-       myModel (model) , 
-       myEditor (model,IGESControl_Controller::DefineProtocol()) ,
-       myWriteMode (modecr) , myIsComputed (Standard_False)     {  }
+IGESControl_Writer::IGESControl_Writer (const Handle(IGESData_IGESModel)& model, const Standard_Integer modecr)
+: myTP (new Transfer_FinderProcess(10000)),
+  myModel (model), 
+  myWriteMode (modecr), myIsComputed (Standard_False)
+{
+  InitProtocol();
+}
 
 Standard_Boolean IGESControl_Writer::AddShape (const TopoDS_Shape& theShape)
 {
@@ -218,8 +218,8 @@ Standard_Boolean IGESControl_Writer::AddEntity (const Handle(IGESData_IGESEntity
 void IGESControl_Writer::ComputeModel ()
 {
   if (!myIsComputed) {
-    myEditor.ComputeStatus();
-    myEditor.AutoCorrectModel();
+    ComputeStatus();
+    AutoCorrectModel();
     myIsComputed = Standard_True;
   }
 }
@@ -264,5 +264,168 @@ Standard_Boolean IGESControl_Writer::Write
   fout.close();
   res = fout.good() && res && !errno;
 
+  return res;
+}
+
+void IGESControl_Writer::InitProtocol ()
+{
+  IGESControl_Controller::Init();
+  const Handle(IGESData_Protocol) &aProtocol = IGESControl_Controller::DefineProtocol();
+  myGLib = Interface_GeneralLib (aProtocol);
+  mySLib = IGESData_SpecificLib (aProtocol);
+}
+
+void IGESControl_Writer::SetUnitName (const Standard_CString name)
+{
+  if (myModel.IsNull()) return;
+
+  const Standard_Integer flag = IGESData::UnitNameFlag (name);
+  IGESData_GlobalSection GS = myModel->GlobalSection();
+  if (GS.UnitFlag() == 3) {
+    char* nam = (char *)name;
+    if (name[1] == 'H') nam = (char *)&name[2];
+    GS.SetUnitName (new TCollection_HAsciiString(nam));
+    myModel->SetGlobalSection (GS);
+  }
+  else if (flag >= 1 && flag <= 11) {
+    //! Set a new unit from its flag (param 14 of Global Section)
+    //! Returns True if done, False if <flag> is incorrect
+    Handle(TCollection_HAsciiString) name = GS.UnitName();
+    Standard_CString nam = IGESData::UnitFlagName (flag);
+    if (nam[0] != '\0') name = new TCollection_HAsciiString (nam);
+    GS.SetUnitFlag (flag);
+    GS.SetUnitName (name);
+    myModel->SetGlobalSection (GS);
+
+    Standard_Real unit = GS.UnitValue();
+    if (unit <= 0.) return;
+    if (unit != 1.) {
+      GS.SetMaxLineWeight (GS.MaxLineWeight () / unit);
+      GS.SetResolution    (GS.Resolution    () / unit);
+      GS.SetMaxCoord      (GS.MaxCoord      () / unit);
+      myModel->SetGlobalSection (GS);
+    }
+  }
+}
+
+void IGESControl_Writer::ComputeStatus ()
+{
+  if (myModel.IsNull()) return;
+  Standard_Integer nb = myModel->NbEntities();
+  if (nb == 0) return;
+  TColStd_Array1OfInteger subs (0,nb); subs.Init(0); // gere Subordinate Status
+  Interface_Graph G (myModel);    // gere & memorise UseFlag
+  G.ResetStatus();
+
+//  2 phases : d abord on fait un calcul d ensemble. Ensuite on applique
+//             Tout le modele est traite, pas de jaloux
+
+//  Chaque entite va donner une contribution sur ses descendents propres :
+//  pour Subordinate (1 ou 2 cumulables), pour UseFlag (1 a 6 exclusifs)
+//    (6 depuis IGES-5.2)
+
+//  Pour Subordinate : Drawing et 402 (sauf p-e dimensioned geometry ?) donnent
+//   Logical, le reste implique Physical (sur descendants directs propres)
+
+//  Pour UseFlag, un peu plus complique :
+//  D une part, les UseFlag se propagent aux descendants directs ou non
+//  D autre part les cas sont plus compliques (et pas aussi clairs)
+
+//  ATTENTION, on ne peut traiter que ce qui se deduit du graphe en s appuyant
+//  sur les "IGES Type Number", on n a pas le droit ici d acceder a la
+//  description specifique des differents types : traites par AutoCorrect.
+//  Exemple : une courbe est 3D ou parametrique 2D(UV), non seulement selon son
+//  ascendant, mais selon le role qu elle y joue (ex. pour CurveOnSurface :
+//  CurveUV/Curve3D)
+//  Traites actuellement (necessaires) :
+//  1(Annotation), aussi 4(pour maillage). 5(ParamUV) traite par AutoCorrect
+
+  Standard_Integer CN;
+  Standard_Integer i; // svv Jan11 2000 : porting on DEC
+  for (i = 1; i <= nb; i ++) {
+//  Subordinate (sur directs en propre seulement)
+    Handle(IGESData_IGESEntity) ent = myModel->Entity(i);
+    Standard_Integer igt = ent->TypeNumber();
+    Handle(Interface_GeneralModule) gmodule;
+    if (myGLib.Select (ent,gmodule,CN)) {
+      Handle(IGESData_GeneralModule) gmod =
+        Handle(IGESData_GeneralModule)::DownCast (gmodule);
+      Interface_EntityIterator sh;
+      gmod->OwnSharedCase (CN,ent,sh);
+      for (sh.Start(); sh.More(); sh.Next()) {
+	Standard_Integer nums = myModel->Number(sh.Value());
+	if (igt == 402 || igt == 404) subs.SetValue (nums,subs.Value(nums) | 2);
+	else subs.SetValue (nums,subs.Value(nums) | 1);
+////	cout<<"ComputeStatus : nums = "<<nums<<" ->"<<subs.Value(nums)<<endl;
+      }
+    }
+//  UseFlag (a propager)
+    if (igt / 100 == 2) {
+      G.GetFromEntity(ent,Standard_True,1);               // Annotation
+      G.GetFromEntity(ent,Standard_False,ent->UseFlag());
+    } else if (igt == 134 || igt == 116 || igt == 132) {
+      Interface_EntityIterator sh = G.Sharings(ent);      // Maillage ...
+      if (sh.NbEntities() > 0) G.GetFromEntity(ent,Standard_True,4);
+    }
+  }
+
+//  A present, on va appliquer tout cela "de force"
+//  Seule exception : des UseFlags non nuls deja en place sont laisses
+
+  for (i = 1; i <= nb; i ++) {
+    Handle(IGESData_IGESEntity) ent = myModel->Entity(i);
+    Standard_Integer bl = ent->BlankStatus();
+    Standard_Integer uf = ent->UseFlag();
+    if (uf == 0) uf = G.Status(i);
+    Standard_Integer hy = ent->HierarchyStatus();
+    ent->InitStatus(bl,subs.Value(i),uf,hy);
+  }
+}
+
+Standard_Boolean IGESControl_Writer::AutoCorrect (const Handle(IGESData_IGESEntity)& ent)
+{
+  if (myModel.IsNull()) return Standard_False;
+  Handle(IGESData_IGESEntity) bof, subent;
+  Handle(IGESData_LineFontEntity) linefont;
+  Handle(IGESData_LevelListEntity) levelist;
+  Handle(IGESData_ViewKindEntity) view;
+  Handle(IGESData_TransfEntity) transf;
+  Handle(IGESData_LabelDisplayEntity) labdisp;
+  Handle(IGESData_ColorEntity) color;
+
+  Standard_Boolean done = Standard_False;
+  if (ent.IsNull()) return done;
+
+//    Corrections dans les Assocs (les Props restent attachees a l Entite)
+  Interface_EntityIterator iter = ent->Associativities();
+  for (iter.Start(); iter.More(); iter.Next()) {
+    subent = GetCasted(IGESData_IGESEntity,iter.Value());
+    if (!subent.IsNull() && myModel->Number(subent) == 0)
+      {  subent->Dissociate(ent);      done = Standard_True;  }
+  }
+
+//    Corrections specifiques
+  Standard_Integer CN;
+  Handle(Interface_GeneralModule) gmodule;
+  if (myGLib.Select (ent,gmodule,CN)) {
+    Handle(IGESData_GeneralModule) gmod =
+      Handle(IGESData_GeneralModule)::DownCast (gmodule);
+    IGESData_DirChecker DC = gmod->DirChecker(CN,ent);
+    done |= DC.Correct(ent);
+  }
+
+  Handle(IGESData_SpecificModule) smod;
+  if (mySLib.Select (ent,smod,CN)) done |= smod->OwnCorrect (CN,ent);
+
+  return done;
+}
+
+Standard_Integer IGESControl_Writer::AutoCorrectModel ()
+{
+  Standard_Integer res = 0;
+  Standard_Integer nb = myModel->NbEntities();
+  for (Standard_Integer i = 1; i <= nb; i ++) {
+    if (AutoCorrect (myModel->Entity(i))) res ++;
+  }
   return res;
 }

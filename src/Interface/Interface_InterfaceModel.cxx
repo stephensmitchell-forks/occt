@@ -83,7 +83,7 @@ Interface_InterfaceModel::~Interface_InterfaceModel ()  // on fait un mimumum
 
 void Interface_InterfaceModel::SetProtocol(const Handle(Interface_Protocol)& proto)
 {
-  thegtool = new Interface_GTool(proto);
+  myGTool = new Interface_GTool(proto);
 }
 
 
@@ -92,10 +92,10 @@ void Interface_InterfaceModel::SetProtocol(const Handle(Interface_Protocol)& pro
 //purpose  : 
 //=======================================================================
 
-Handle(Interface_Protocol) Interface_InterfaceModel::Protocol () const
+const Handle(Interface_Protocol) & Interface_InterfaceModel::Protocol () const
 {
-  Handle(Interface_Protocol) proto;
-  if (!thegtool.IsNull()) return thegtool->Protocol();
+  static const Handle(Interface_Protocol) proto;
+  if (!myGTool.IsNull()) return myGTool->Protocol();
   return proto;
 }
 
@@ -127,8 +127,8 @@ void Interface_InterfaceModel::ClearEntities ()
   therepch.Clear();
   haschecksem = Standard_False;
 
-  if (!thegtool.IsNull()) {
-    thegtool->ClearEntities(); //smh#14 FRA62479
+  if (!myGTool.IsNull()) {
+    myGTool->ClearEntities(); //smh#14 FRA62479
   }
   isdispatch = Standard_False;
   theentities.Clear();
@@ -181,8 +181,8 @@ Standard_Integer Interface_InterfaceModel::Number (const Handle(Standard_Transie
 
 Standard_Integer Interface_InterfaceModel::NbTypes (const Handle(Standard_Transient)& ent) const
 {
-  if (Protocol().IsNull()) return 1;
-  return  Protocol()->NbTypes(ent);
+  if (myGTool.IsNull() || myGTool->Protocol().IsNull()) return 1;
+  return myGTool->Protocol()->NbTypes(ent);
 }
 
 
@@ -194,8 +194,8 @@ Standard_Integer Interface_InterfaceModel::NbTypes (const Handle(Standard_Transi
 Handle(Standard_Type) Interface_InterfaceModel::Type
   (const Handle(Standard_Transient)& ent, const Standard_Integer nt) const
 {
-  if (Protocol().IsNull()) return ent->DynamicType();
-  return  Protocol()->Type(ent,nt);
+  if (myGTool.IsNull() || myGTool->Protocol().IsNull()) return ent->DynamicType();
+  return myGTool->Protocol()->Type(ent,nt);
 }
 
 
@@ -207,7 +207,7 @@ Handle(Standard_Type) Interface_InterfaceModel::Type
 Standard_CString Interface_InterfaceModel::TypeName
   (const Handle(Standard_Transient)& ent, const Standard_Boolean complet) const
 {
-  if (!thegtool.IsNull()) return thegtool->SignValue (ent,this);
+  if (!myGTool.IsNull()) return myGTool->SignValue (ent,this);
   Standard_CString tn = ent->DynamicType()->Name();
   if (complet) return tn;
   return Interface_InterfaceModel::ClassName(tn);
@@ -501,7 +501,8 @@ void Interface_InterfaceModel::AddWithRefs(const Handle(Standard_Transient)& ane
   }
   Interface_GeneralLib lib(proto);
   AddWithRefs (anent,lib,level,listall);
-  if (Protocol().IsNull() && !proto.IsNull()) SetProtocol(proto);
+  if ((myGTool.IsNull() || myGTool->Protocol().IsNull()) && !proto.IsNull())
+    SetProtocol(proto);
 }
 
 
@@ -514,10 +515,9 @@ void Interface_InterfaceModel::AddWithRefs(const Handle(Standard_Transient)& ane
                                            const Standard_Integer level,
                                            const Standard_Boolean listall)
 {
-  Handle(Interface_Protocol) proto = Protocol();
-  if (proto.IsNull()) Interface_InterfaceMismatch::Raise
-    ("InterfaceModel : AddWithRefs");
-  AddWithRefs (anent,proto,level,listall);
+  if (myGTool.IsNull() || myGTool->Protocol().IsNull())
+    Interface_InterfaceMismatch::Raise ("InterfaceModel : AddWithRefs");
+  AddWithRefs (anent,myGTool->Protocol(),level,listall);
 }
 
 

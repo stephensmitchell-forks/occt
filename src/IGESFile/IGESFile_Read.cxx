@@ -164,7 +164,6 @@ Standard_Integer IGESFile_Read
   iges_finfile(1);
   IGESData_IGESReaderTool IT (IR,protocol);
   IT.Prepare(reco); 
-  IT.SetErrorHandle(Standard_True);
 
   // Sending of message : Loading of Model : Beginning 
   IT.LoadModel(amodel);

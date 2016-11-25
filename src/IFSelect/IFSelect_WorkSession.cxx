@@ -20,7 +20,6 @@
 #include <Dico_DictionaryOfTransient.hxx>
 #include <Message_Messenger.hxx>
 #include <Interface_Macros.hxx>
-#include <Interface_GTool.hxx>
 #include <Interface_HGraph.hxx>
 #include <Interface_MSG.hxx>
 #include <Interface_Category.hxx>
@@ -60,6 +59,7 @@ IFSelect_WorkSession::IFSelect_WorkSession ()
 : myNames(new Dico_DictionaryOfTransient),
   myVars(new IFSelect_Vars)
 {
+  errhand = Standard_True;
 }
 
 
@@ -704,7 +704,7 @@ Interface_EntityIterator IFSelect_WorkSession::EvalSelection (const Handle(IFSel
       iter = EvalSelection(sel);    // appel normal (donc, code pas duplique)
     }
     catch (Standard_Failure) {
-      Handle(Message_Messenger) sout = Message::DefaultMessenger();
+      const Handle(Message_Messenger) &sout = Message::DefaultMessenger();
       sout<<"    ****    Interruption EvalSelection par Exception :   ****\n";
       sout<<Standard_Failure::Caught()->GetMessageString();
       sout<<"\n    Abandon"<<endl;
@@ -734,7 +734,7 @@ Handle(TColStd_HSequenceOfTransient) IFSelect_WorkSession::SelectionResult (cons
       res = SelectionResult(sel);    // appel normal (->code unique)
     }
     catch (Standard_Failure) {
-      Handle(Message_Messenger) sout = Message::DefaultMessenger();
+      const Handle(Message_Messenger) &sout = Message::DefaultMessenger();
       sout<<"    ****    Interruption SelectionResult par Exception :   ****\n";
       sout<<Standard_Failure::Caught()->GetMessageString();
       sout<<"\n    Abandon"<<endl;

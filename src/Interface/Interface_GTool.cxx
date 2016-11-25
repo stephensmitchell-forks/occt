@@ -23,19 +23,10 @@
 
 IMPLEMENT_STANDARD_RTTIEXT(Interface_GTool,MMgt_TShared)
 
-Interface_GTool::Interface_GTool  ()    {  }
-
     Interface_GTool::Interface_GTool
   (const Handle(Interface_Protocol)& proto, const Standard_Integer nb)
     : theproto (proto) , thelib (proto)
       {  if (nb > 0)  {  thentnum.ReSize(nb);  thentmod.ReSize(nb);  }  }
-
-
-    void  Interface_GTool::SetSignType (const Handle(Interface_SignType)& sign)
-      {  thesign = sign;  }
-
-    Handle(Interface_SignType)  Interface_GTool::SignType () const
-      {  return thesign;  }
 
     Standard_CString  Interface_GTool::SignValue
   (const Handle(Standard_Transient)& ent,
@@ -52,7 +43,6 @@ Interface_GTool::Interface_GTool  ()    {  }
   return thesign->Name();
 }
 
-
     void  Interface_GTool::SetProtocol
   (const Handle(Interface_Protocol)& proto, const Standard_Boolean enforce)
 {
@@ -61,12 +51,6 @@ Interface_GTool::Interface_GTool  ()    {  }
   thelib.Clear();
   thelib.AddProtocol (proto);
 }
-
-    Handle(Interface_Protocol)  Interface_GTool::Protocol () const
-      {  return theproto;  }
-
-    Interface_GeneralLib&  Interface_GTool::Lib ()
-      {  return thelib;  }
 
     void  Interface_GTool::Reservate
   (const Standard_Integer nb, const Standard_Boolean enforce)

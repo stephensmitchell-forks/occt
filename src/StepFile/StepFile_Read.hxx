@@ -29,24 +29,10 @@
 
 //# include <stepread.h>  : sauf recfile_modeprint, declare ici
 # include <StepData_StepModel.hxx>
-# include <StepData_FileRecognizer.hxx>
 # include <StepData_Protocol.hxx>
-
 
 Standard_EXPORT void StepFile_ReadTrace (const Standard_Integer mode);
 // Modal : 0 pas de trace, 1 trace LoadModel, 2 & 3 + trace interne lex-yac
-
-Standard_EXPORT Standard_Integer StepFile_Read
- (char* nomfic,
-  const Handle(StepData_StepModel)& stepmodel,
-  const Handle(StepData_FileRecognizer)& recoheader,   // Reconnait le Header
-  const Handle(StepData_FileRecognizer)& recodata);    // Entites du Data
-
-Standard_EXPORT Standard_Integer StepFile_Read
- (char* nomfic,
-  const Handle(StepData_StepModel)& stepmodel,
-  const Handle(StepData_FileRecognizer)& recoheader,   // Reconnait le Header
-  const Handle(StepData_Protocol)& protocol);          // Entites du Data
 
 Standard_EXPORT Standard_Integer StepFile_Read
  (char* nomfic,

@@ -54,12 +54,6 @@ public:
   //! Same as InterfaceEntity, but with a shorter name
   Standard_EXPORT Handle(Standard_Transient) Entity (const Standard_Integer num) const;
   
-  //! gets header from another Model (uses Header Protocol)
-  Standard_EXPORT void GetFromAnother (const Handle(Interface_InterfaceModel)& other) Standard_OVERRIDE;
-  
-  //! Returns a New Empty Model, same type as <me>, i.e. StepModel
-  Standard_EXPORT Handle(Interface_InterfaceModel) NewEmptyModel() const Standard_OVERRIDE;
-  
   //! returns Header entities under the form of an iterator
   Standard_EXPORT Interface_EntityIterator Header() const;
   

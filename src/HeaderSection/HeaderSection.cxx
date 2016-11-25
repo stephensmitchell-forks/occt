@@ -15,12 +15,10 @@
 #include <HeaderSection.hxx>
 #include <HeaderSection_Protocol.hxx>
 
-//szv_c1:StaticHandle(HeaderSection_Protocol, proto);
-static Handle(HeaderSection_Protocol) proto;
-
 const Handle(HeaderSection_Protocol) & HeaderSection::Protocol()
 {
-  //szv_c1:InitHandleVoid(HeaderSection_Protocol, proto)
-  if (proto.IsNull()) proto = new HeaderSection_Protocol;
+  static Handle(HeaderSection_Protocol) proto;
+  if (proto.IsNull())
+    proto = new HeaderSection_Protocol;
   return proto;
 }

@@ -47,18 +47,9 @@ DEFINE_STANDARD_HANDLE(StepData_Protocol, Interface_Protocol)
 //! NbResources and Resources.
 class StepData_Protocol : public Interface_Protocol
 {
+ public:
 
-public:
-
-  
-  Standard_EXPORT StepData_Protocol();
-  
-  //! Gives the count of Protocols used as Resource (can be zero)
-  //! Here, No resource
-  Standard_EXPORT Standard_Integer NbResources() const Standard_OVERRIDE;
-  
-  //! Returns a Resource, given a rank. Here, none
-  Standard_EXPORT Handle(Interface_Protocol) Resource (const Standard_Integer num) const Standard_OVERRIDE;
+  StepData_Protocol() {}
   
   //! Returns a unique positive number for any recognized entity
   //! Redefined to work by calling both TypeNumber and, for a

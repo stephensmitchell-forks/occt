@@ -44,26 +44,13 @@ DEFINE_STANDARD_HANDLE(Interface_Protocol, MMgt_TShared)
 //! like multi-typing, may involve another way
 class Interface_Protocol : public MMgt_TShared
 {
-
-public:
-
-  
-  //! Returns the Active Protocol, if defined (else, returns a
-  //! Null Handle, which means "no defined active protocol")
-  Standard_EXPORT static Handle(Interface_Protocol) Active();
-  
-  //! Sets a given Protocol to be the Active one (for the users of
-  //! Active, see just above). Applies to every sub-type of Protocol
-  Standard_EXPORT static void SetActive (const Handle(Interface_Protocol)& aprotocol);
-  
-  //! Erases the Active Protocol (hence it becomes undefined)
-  Standard_EXPORT static void ClearActive();
+ public:
   
   //! Returns count of Protocol used as Resources (level one)
-  Standard_EXPORT virtual Standard_Integer NbResources() const = 0;
+  Standard_EXPORT virtual Standard_Integer NbResources() const;
   
   //! Returns a Resource, given its rank (between 1 and NbResources)
-  Standard_EXPORT virtual Handle(Interface_Protocol) Resource (const Standard_Integer num) const = 0;
+  Standard_EXPORT virtual Handle(Interface_Protocol) Resource (const Standard_Integer num) const;
   
   //! Returns a unique positive CaseNumber for each Recognized
   //! Object. By default, recognition is based on Type(1)
@@ -114,27 +101,7 @@ public:
   //! (for an Entity out of the Norm, answer can be unpredicable)
   Standard_EXPORT virtual Standard_Boolean IsUnknownEntity (const Handle(Standard_Transient)& ent) const = 0;
 
-
-
-
   DEFINE_STANDARD_RTTIEXT(Interface_Protocol,MMgt_TShared)
-
-protected:
-
-
-
-
-private:
-
-
-
-
 };
-
-
-
-
-
-
 
 #endif // _Interface_Protocol_HeaderFile

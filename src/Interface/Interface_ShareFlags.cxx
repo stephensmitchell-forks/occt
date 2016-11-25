@@ -59,7 +59,7 @@ Interface_ShareFlags::Interface_ShareFlags
   (const Handle(Interface_InterfaceModel)& amodel)
    : theflags (amodel->NbEntities())
 {
-  Handle(Interface_GTool) gtool = themodel->GTool();
+  const Handle(Interface_GTool) &gtool = themodel->GTool();
   gtool->Reservate(amodel->NbEntities());
   themodel = amodel;
   Evaluate (gtool->Lib(),gtool);

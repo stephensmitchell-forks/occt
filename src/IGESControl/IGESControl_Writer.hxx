@@ -21,15 +21,12 @@
 #include <Standard_DefineAlloc.hxx>
 #include <Standard_Handle.hxx>
 
-#include <IGESData_BasicEditor.hxx>
-#include <Standard_Integer.hxx>
-#include <Standard_Boolean.hxx>
-#include <Standard_CString.hxx>
 #include <Standard_OStream.hxx>
+#include <Interface_GeneralLib.hxx>
+#include <IGESData_SpecificLib.hxx>
+class TopoDS_Shape;
 class Transfer_FinderProcess;
 class IGESData_IGESModel;
-class TopoDS_Shape;
-class Standard_Transient;
 class IGESData_IGESEntity;
 
 
@@ -110,12 +107,40 @@ public:
   Standard_EXPORT Standard_Boolean Write (const Standard_CString file, const Standard_Boolean fnes = Standard_False);
 
  private:
+  
+  //! Initialize a Protocol and Libraries
+  Standard_EXPORT void InitProtocol ();
+  
+  //! Sets a new unit from its name (param 15 of Global Section)
+  //! Remark : if <flag> has been set to 3 (user defined), <name> is then free
+  Standard_EXPORT void SetUnitName (const Standard_CString name);
+  
+  //! Performs the re-computation of status on the whole model
+  //! (Subordinate Status and Use Flag of each IGES Entity), which
+  //! can have required values according the way they are referenced
+  //! (see definitions of Logical use, Physical use, etc...)
+  Standard_EXPORT void ComputeStatus();
+  
+  //! Performs auto-correction on an IGESEntity
+  //! Returns True if something has changed, False if nothing done.
+  //!
+  //! Works with the specific IGES Services : DirChecker which
+  //! allows to correct data in "Directory Part" of Entities (such
+  //! as required values for status, or references to be null), and
+  //! the specific IGES service OwnCorrect, which is specialised for
+  //! each type of entity.
+  Standard_EXPORT Standard_Boolean AutoCorrect (const Handle(IGESData_IGESEntity)& ent);
+  
+  //! Performs auto-correction on the whole Model
+  //! Returns the count of modified entities
+  Standard_EXPORT Standard_Integer AutoCorrectModel();
 
   Handle(Transfer_FinderProcess) myTP;
   Handle(IGESData_IGESModel) myModel;
-  IGESData_BasicEditor myEditor;
   Standard_Integer myWriteMode;
   Standard_Boolean myIsComputed;
+  Interface_GeneralLib myGLib;
+  IGESData_SpecificLib mySLib;
 };
 
 #endif // _IGESControl_Writer_HeaderFile

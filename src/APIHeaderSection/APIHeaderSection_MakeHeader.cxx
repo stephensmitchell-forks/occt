@@ -182,7 +182,7 @@ Handle(StepData_StepModel)  APIHeaderSection_MakeHeader::NewModel
   (const Handle(Interface_Protocol)& protocol) const
 {
   Handle(StepData_StepModel) stepmodel = new StepData_StepModel;
-  stepmodel->SetProtocol (protocol);
+  stepmodel->SetProtocol(protocol);
 
       // - Make Header information
 

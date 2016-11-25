@@ -12,19 +12,18 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-//#include <LibCtl_GlobalNode.ixx>
-
 //  Classe generique imbriquee dans Library : utilisee pour construire les
 //  listes globales de Modules attaches a une classe instanciee de Library
 //  (cf Library pour plus de details)
 
+#include <Interface_Protocol.hxx>
 
 LibCtl_GlobalNode::LibCtl_GlobalNode ()    {  }
 
 // ATTENTION, Add agit en substitution : pour un Protocol donne, c est le
 //   dernier appel qui l emporte
     void LibCtl_GlobalNode::Add
-  (const Handle(TheModule)& amodule, const Handle(TheProtocol)& aprotocol)
+  (const Handle(TheModule)& amodule, const Handle(Interface_Protocol)& aprotocol)
 {
   if (themod == amodule) return;
   if (theprot == aprotocol) themod = amodule;
@@ -41,7 +40,7 @@ LibCtl_GlobalNode::LibCtl_GlobalNode ()    {  }
     const Handle(TheModule)& LibCtl_GlobalNode::Module () const
       {  return themod;  }
 
-    const Handle(TheProtocol)& LibCtl_GlobalNode::Protocol () const
+    const Handle(Interface_Protocol)& LibCtl_GlobalNode::Protocol () const
       {  return theprot;  }
 
     const Handle(LibCtl_GlobalNode)& LibCtl_GlobalNode::Next () const

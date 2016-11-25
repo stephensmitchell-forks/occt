@@ -21,10 +21,10 @@
 #include <Standard_Type.hxx>
 
 #include <MMgt_TShared.hxx>
+class Interface_Protocol;
 class IGESData_GlobalNodeOfWriterLib;
 class IGESData_IGESEntity;
 class IGESData_ReadWriteModule;
-class IGESData_Protocol;
 class IGESData_WriterLib;
 
 
@@ -49,7 +49,7 @@ public:
   Standard_EXPORT const Handle(IGESData_ReadWriteModule)& Module() const;
   
   //! Returns the Protocol designated by a precise Node
-  Standard_EXPORT const Handle(IGESData_Protocol)& Protocol() const;
+  Standard_EXPORT const Handle(Interface_Protocol)& Protocol() const;
   
   //! Returns the Next Node. If none was defined, returned value
   //! is a Null Handle

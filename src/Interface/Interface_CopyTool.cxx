@@ -60,21 +60,6 @@ Interface_CopyTool::Interface_CopyTool
   thelev = 0;  theimp = Standard_False;
 }
 
-
-    Interface_CopyTool::Interface_CopyTool
-  (const Handle(Interface_InterfaceModel)& amodel)
-    : thelib (Interface_Protocol::Active()) , thelst (amodel->NbEntities())
-{
-  if (Interface_Protocol::Active().IsNull()) Interface_InterfaceError::Raise
-    ("Interface CopyTool : Create with Active Protocol undefined");
-
-  thelst.Init(Standard_False);
-  themod = amodel;
-  themap = new Interface_CopyMap (amodel);
-  therep = new Interface_CopyMap (amodel);
-  thelev = 0;  theimp = Standard_False;
-}
-
     Handle(Interface_InterfaceModel)  Interface_CopyTool::Model () const
       {  return themod;  }
 
@@ -110,7 +95,6 @@ Interface_CopyTool::Interface_CopyTool
   Standard_Boolean res = thelib.Select (entfrom,themdu,theCN);
   if (res)   res   = themdu->NewVoid (theCN,entto);
   if (!res)  res   = themdu->NewCopiedCase (theCN,entfrom,entto,*this);
-//  if (!res) entto = entfrom->ShallowCopy();   sorry, nothing more possible
   return res;
 }
 
@@ -280,23 +264,6 @@ Interface_CopyTool::Interface_CopyTool
         Implied (ent,res);
     }
   }
-}
-
-
-    void Interface_CopyTool::FillModel
-  (const Handle(Interface_InterfaceModel)& bmodel)
-{
-//  Travaux preparatoires concernant les modeles
-//  On commence : cela implique le Header
-  bmodel->Clear();
-  bmodel->GetFromAnother(themod);
-
-//  Transfert Passe 1 : On prend les Entites prealablement copiees
-  Interface_EntityIterator list = CompleteResult(Standard_True);
-  bmodel->GetFromTransfer(list);
-
-//  Transfert Passe 2 : recuperation des relations non "Share" (mais "Imply")
-  RenewImpliedRefs();
 }
 
 

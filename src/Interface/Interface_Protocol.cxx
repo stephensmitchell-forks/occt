@@ -12,58 +12,31 @@
 // commercial license or contractual agreement.
 
 
-#include <Interface_Check.hxx>
-#include <Interface_Graph.hxx>
-#include <Interface_InterfaceError.hxx>
-#include <Interface_InterfaceModel.hxx>
 #include <Interface_Protocol.hxx>
-#include <Standard_Transient.hxx>
-#include <Standard_Type.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(Interface_Protocol,MMgt_TShared)
 
-//  Gestion du Protocol actif : tres simple, une variable statique
-static Handle(Interface_Protocol)& theactive()
-{
-  static Handle(Interface_Protocol) theact;
-  return theact;
-}
-
-
+  
 //=======================================================================
-//function : Active
+//function : NbResources
 //purpose  : 
 //=======================================================================
 
-Handle(Interface_Protocol) Interface_Protocol::Active ()
+Standard_Integer Interface_Protocol::NbResources() const
 {
-  return theactive();
+  return 0;
 }
 
 
 //=======================================================================
-//function : SetActive
+//function : Resource
 //purpose  : 
 //=======================================================================
 
-void Interface_Protocol::SetActive(const Handle(Interface_Protocol)& aprotocol)
+Handle(Interface_Protocol) Interface_Protocol::Resource (const Standard_Integer) const
 {
-  theactive() = aprotocol;
+  return NULL;
 }
-
-
-//=======================================================================
-//function : ClearActive
-//purpose  : 
-//=======================================================================
-
-void Interface_Protocol::ClearActive ()
-{
-  theactive().Nullify();
-}
-
-
-//  ===   Typage (formules fournies par defaut)
 
 
 //=======================================================================

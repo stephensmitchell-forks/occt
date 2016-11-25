@@ -24,7 +24,7 @@
 class StepData_GlobalNodeOfWriterLib;
 class Standard_Transient;
 class StepData_ReadWriteModule;
-class StepData_Protocol;
+class Interface_Protocol;
 class StepData_WriterLib;
 
 
@@ -49,7 +49,7 @@ public:
   Standard_EXPORT const Handle(StepData_ReadWriteModule)& Module() const;
   
   //! Returns the Protocol designated by a precise Node
-  Standard_EXPORT const Handle(StepData_Protocol)& Protocol() const;
+  Standard_EXPORT const Handle(Interface_Protocol)& Protocol() const;
   
   //! Returns the Next Node. If none was defined, returned value
   //! is a Null Handle

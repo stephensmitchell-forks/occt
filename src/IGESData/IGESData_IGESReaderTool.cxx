@@ -169,7 +169,6 @@ IGESData_IGESReaderTool::IGESData_IGESReaderTool
     return (!ach->HasFailed());
   }
   ReadProps (ent,igesdat,PR);
-//  thestep = IGESData_ReadEnd;
   if   (!PR.IsCheckEmpty()) ach = PR.Check();
   return (!ach->HasFailed());
 }
@@ -177,11 +176,6 @@ IGESData_IGESReaderTool::IGESData_IGESReaderTool
     void IGESData_IGESReaderTool::EndRead
   (const Handle(Interface_InterfaceModel)& /* amodel */)
 {
-/*
-  DeclareAndCast(IGESData_IGESModel,amod,amodel);
-  DeclareAndCast(IGESData_IGESReaderData,igesdat,Data());
-  amod->SetLineWeights(igesdat->DefaultLineWeight());
-*/
 }
 
 
@@ -356,7 +350,6 @@ IGESData_IGESReaderTool::IGESData_IGESReaderTool
     undent->ReadOwnParams(IR,PR);
 //    IGESEntity creee puis non reconnue ... (bizarre, non ?)
   } else {
-//    IGESData_IGESType DT = ent->IGESType();
     // Sending of message : Unknown Entity
     Message_Msg Msg36 ("XSTEP_36");
     Msg36.Arg(thecnum);

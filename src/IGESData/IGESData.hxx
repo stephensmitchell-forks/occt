@@ -36,6 +36,28 @@ class IGESData
   
   //! Returns a Protocol from IGESData (avoids to create it)
   Standard_EXPORT static Handle(IGESData_IGESModel) NewModel ();
+  
+  //! From the name of unit, computes flag number, 0 if incorrect
+  //! (in this case, user defined entity remains possible)
+  Standard_EXPORT static Standard_Integer UnitNameFlag (const Standard_CString name);
+  
+  //! From the flag of unit, determines value in MM, 0 if incorrect
+  Standard_EXPORT static Standard_Real UnitFlagValue (const Standard_Integer flag);
+  
+  //! From the flag of unit, determines its name, "" if incorrect
+  Standard_EXPORT static Standard_CString UnitFlagName (const Standard_Integer flag);
+  
+  //! From the flag of IGES version, returns name, "" if incorrect
+  Standard_EXPORT static Standard_CString IGESVersionName (const Standard_Integer flag);
+  
+  //! Returns the maximum allowed value for IGESVersion Flag
+  static Standard_Integer IGESVersionMax () { return 11; }
+  
+  //! From the flag of drafting standard, returns name, "" if incorrect
+  Standard_EXPORT static Standard_CString DraftingName (const Standard_Integer flag);
+  
+  //! Returns the maximum allowed value for Drafting Flag
+  static Standard_Integer DraftingMax () { return 7; }
 };
 
 #endif // _IGESData_HeaderFile

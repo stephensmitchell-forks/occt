@@ -20,9 +20,7 @@
 #include <Standard_NoSuchObject.hxx>
 #include <IGESData_IGESEntity.hxx>
 #include <IGESData_SpecificModule.hxx>
-#include <IGESData_Protocol.hxx>
 #include <IGESData_GlobalNodeOfSpecificLib.hxx>
-#include <Standard_Transient.hxx>
  
 
 #define TheObject Handle(IGESData_IGESEntity)
@@ -30,9 +28,6 @@
 #define Handle_TheModule Handle(IGESData_SpecificModule)
 #define TheModule IGESData_SpecificModule
 #define TheModule_hxx <IGESData_SpecificModule.hxx>
-#define Handle_TheProtocol Handle(IGESData_Protocol)
-#define TheProtocol IGESData_Protocol
-#define TheProtocol_hxx <IGESData_Protocol.hxx>
 #define LibCtl_GlobalNode IGESData_GlobalNodeOfSpecificLib
 #define LibCtl_GlobalNode_hxx <IGESData_GlobalNodeOfSpecificLib.hxx>
 #define LibCtl_Node IGESData_NodeOfSpecificLib
@@ -42,4 +37,3 @@
 #define LibCtl_Library IGESData_SpecificLib
 #define LibCtl_Library_hxx <IGESData_SpecificLib.hxx>
 #include <LibCtl_Library.gxx>
-

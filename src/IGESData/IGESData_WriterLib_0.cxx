@@ -20,9 +20,7 @@
 #include <Standard_NoSuchObject.hxx>
 #include <IGESData_IGESEntity.hxx>
 #include <IGESData_ReadWriteModule.hxx>
-#include <IGESData_Protocol.hxx>
 #include <IGESData_GlobalNodeOfWriterLib.hxx>
-#include <Standard_Transient.hxx>
  
 
 #define TheObject Handle(IGESData_IGESEntity)
@@ -30,9 +28,6 @@
 #define Handle_TheModule Handle(IGESData_ReadWriteModule)
 #define TheModule IGESData_ReadWriteModule
 #define TheModule_hxx <IGESData_ReadWriteModule.hxx>
-#define Handle_TheProtocol Handle(IGESData_Protocol)
-#define TheProtocol IGESData_Protocol
-#define TheProtocol_hxx <IGESData_Protocol.hxx>
 #define LibCtl_GlobalNode IGESData_GlobalNodeOfWriterLib
 #define LibCtl_GlobalNode_hxx <IGESData_GlobalNodeOfWriterLib.hxx>
 #define LibCtl_Node IGESData_NodeOfWriterLib
@@ -42,4 +37,3 @@
 #define LibCtl_Library IGESData_WriterLib
 #define LibCtl_Library_hxx <IGESData_WriterLib.hxx>
 #include <LibCtl_Library.gxx>
-

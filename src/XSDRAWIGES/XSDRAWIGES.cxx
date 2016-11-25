@@ -28,7 +28,6 @@
 #include <IGESControl_Reader.hxx>
 #include <IGESControl_Writer.hxx>
 #include <IGESData.hxx>
-#include <IGESData_BasicEditor.hxx>
 #include <IGESData_IGESEntity.hxx>
 #include <IGESData_IGESModel.hxx>
 #include <IGESData_Protocol.hxx>

@@ -2,8 +2,6 @@ IGESData.cxx
 IGESData.hxx
 IGESData_Array1OfDirPart.hxx
 IGESData_Array1OfIGESEntity.hxx
-IGESData_BasicEditor.cxx
-IGESData_BasicEditor.hxx
 IGESData_ColorEntity.cxx
 IGESData_ColorEntity.hxx
 IGESData_DefaultGeneral.cxx

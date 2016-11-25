@@ -47,8 +47,6 @@ IMPLEMENT_STANDARD_RTTIEXT(XSControl_WorkSession,MMgt_TShared)
 #define Flag_Incorrect 2
 //  (Bit Map n0 2)
 
-static Standard_Boolean errhand;  // pb : un seul a la fois, mais ca va si vite
-
 //  #################################################################
 
 //=======================================================================
@@ -63,7 +61,6 @@ XSControl_WorkSession::XSControl_WorkSession ()
   myReaderProcess(new Transfer_TransientProcess),
   myWriterProcess(new Transfer_FinderProcess)
 {
-  errhand = Standard_True;
 }
 
 
@@ -74,16 +71,15 @@ XSControl_WorkSession::XSControl_WorkSession ()
 
 void XSControl_WorkSession::SetModel (const Handle(Interface_InterfaceModel)& model)
 {
-  if (myModel != model)
+  if (myModel != model) {
     theloaded.Clear();
-  else
     myModel = model;
+  }
 
   if (!thegtool.IsNull()) thegtool->ClearEntities(); //smh#14 FRA62479
   myModel->SetGTool (thegtool);
   
-  thegraph.Nullify();
-  ComputeGraph();    // fait qqchose si Protocol present. Sinon, ne fait rien
+  ComputeGraph(Standard_True);
 
   thecheckdone = Standard_False; // RAZ CheckList, a refaire
   
@@ -283,11 +279,7 @@ void XSControl_WorkSession::SetController(const Handle(XSControl_Controller)& ct
   myController = ctl;
 
   const Handle(Interface_Protocol) &aProtocol = myController->Protocol();
-  Interface_Protocol::SetActive(aProtocol);
   thegtool->SetProtocol(aProtocol);
-
-  /*szv_c1:ClearItems();
-  ClearShareOut();*/
 
   // Set worksession parameters from the controller
   Handle(XSControl_WorkSession) aWorkSession(this);
@@ -308,8 +300,8 @@ void XSControl_WorkSession::SetController(const Handle(XSControl_Controller)& ct
 
 Interface_ReturnStatus XSControl_WorkSession::ReadFile (const Standard_CString theFileName)
 {
-  if (myController.IsNull()) return Interface_RetVoid;
-  if (myController->Protocol().IsNull()) return Interface_RetVoid;
+  if (myController.IsNull() || myController->Protocol().IsNull())
+    return Interface_RetVoid;
 
   Handle(Interface_InterfaceModel) model;
   Interface_ReturnStatus status = Interface_RetVoid;
@@ -322,15 +314,18 @@ Interface_ReturnStatus XSControl_WorkSession::ReadFile (const Standard_CString t
   }
   catch(Standard_Failure) {
     const Handle(Message_Messenger) &sout = Message::DefaultMessenger();
-    sout<<"    ****    Interruption ReadFile par Exception :   ****\n";
+    sout<<"    ****    Exception in XSControl_WorkSession::ReadFile :   ****\n";
     sout << Standard_Failure::Caught()->GetMessageString();
     sout<<"\n    Abandon"<<endl;
     status = Interface_RetFail;
   }
   if (status != Interface_RetDone) return status;
   if (model.IsNull()) return Interface_RetVoid;
+
   SetModel (model);
-  SetLoadedFile (theFileName);
+
+  theloaded = theFileName;
+
   return status;
 }
 
@@ -342,30 +337,31 @@ Interface_ReturnStatus XSControl_WorkSession::ReadFile (const Standard_CString t
 
 Interface_ReturnStatus XSControl_WorkSession::WriteFile (const Standard_CString theFileName)
 {
-  if (myController.IsNull())
+  if (myController.IsNull() || myController->Protocol().IsNull())
     return Interface_RetVoid;
 
-  ComputeGraph(Standard_True);
-  if (!IsLoaded())
-    return Interface_RetVoid;
+  const Handle(Message_Messenger) &sout = Message::DefaultMessenger();
 
   Interface_CheckIterator checks;
-  if (errhand) {
-    errhand = Standard_False;
-    try {
-      OCC_CATCH_SIGNALS
-      CopySendAll(theFileName,checks);
-    }
-    catch (Standard_Failure) {
-      const Handle(Message_Messenger) &sout = Message::DefaultMessenger();
-      sout<<"    ****    Exception in XSControl_WorkSession::WriteFile :   ****\n";
-      sout<<Standard_Failure::Caught()->GetMessageString();
-      sout<<"\n    Abandon"<<endl;
-      errhand = Standard_True;
-      return Interface_RetFail;
-    }
+  try {
+    OCC_CATCH_SIGNALS
+    sout << "** WorkSession : Writing all data" << endl;
+    ComputeGraph(Standard_True);
+    if (!IsLoaded())
+      return Interface_RetVoid;
+
+    checks.SetName ("X-STEP WorkSession : WriteFile");
+    Interface_CheckIterator checklst;
+    const Standard_Boolean res = myController->WriteFile(theFileName,myModel,checklst);
+    checks.Merge(checklst);
+    if (!res) checks.CCheck(0)->AddFail ("WriteFile has failed");
   }
-  else CopySendAll(theFileName,checks);
+  catch (Standard_Failure) {
+    sout<<"    ****    Exception in XSControl_WorkSession::WriteFile :   ****\n";
+    sout<<Standard_Failure::Caught()->GetMessageString();
+    sout<<"\n    Abandon"<<endl;
+    return Interface_RetFail;
+  }
 
   Handle(Interface_Check) aMainFail = checks.CCheck(0);
   if (!aMainFail.IsNull() && aMainFail->HasFailed ())
@@ -464,24 +460,4 @@ Handle(Interface_InterfaceModel) XSControl_WorkSession::NewModel ()
   myWriterProcess->SetActor(myController->NewActorWrite()); //szv_c1:
 
   return newmod;
-}
-
-//=======================================================================
-//function : CopySendAll
-//purpose  : 
-//=======================================================================
-
-void XSControl_WorkSession::CopySendAll (const Standard_CString theFileName, Interface_CheckIterator &theChecks)
-{
-  theChecks.SetName ("X-STEP WorkSession : Send All");
-  Message::DefaultMessenger() << "** WorkSession : Sending all data"<<endl;
-
-  const Handle(Interface_Protocol)& aProtocol = myController->Protocol();
-  const Handle(Interface_InterfaceModel) &aModel = thegraph->Graph().Model();
-  if (aModel.IsNull() || aProtocol.IsNull()) return;
-
-  Interface_CheckIterator checklst;
-  const Standard_Boolean res = myController->WriteFile(theFileName,aModel,checklst);
-  theChecks.Merge(checklst);
-  if (!res) theChecks.CCheck(0)->AddFail ("SendAll (WriteFile) has failed");
 }

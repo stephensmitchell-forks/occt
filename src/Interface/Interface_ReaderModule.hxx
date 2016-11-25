@@ -21,12 +21,8 @@
 #include <Standard_Type.hxx>
 
 #include <MMgt_TShared.hxx>
-#include <Standard_Integer.hxx>
-#include <Standard_Boolean.hxx>
-class Standard_DomainError;
 class Interface_FileReaderData;
 class Interface_Check;
-class Standard_Transient;
 
 
 class Interface_ReaderModule;
@@ -43,10 +39,8 @@ DEFINE_STANDARD_HANDLE(Interface_ReaderModule, MMgt_TShared)
 //! ReaderModule reads it according to this Case Number
 class Interface_ReaderModule : public MMgt_TShared
 {
+ public:
 
-public:
-
-  
   //! Translates the type of record <num> in <data> to a positive
   //! Case Number. If Recognition fails, must return 0
   Standard_EXPORT virtual Standard_Integer CaseNum (const Handle(Interface_FileReaderData)& data, const Standard_Integer num) const = 0;
@@ -69,27 +63,7 @@ public:
   //! treated as "Unrecognized case" by reader tool.
   Standard_EXPORT virtual Standard_Boolean NewRead (const Standard_Integer casenum, const Handle(Interface_FileReaderData)& data, const Standard_Integer num, Handle(Interface_Check)& ach, Handle(Standard_Transient)& ent) const;
 
-
-
-
   DEFINE_STANDARD_RTTIEXT(Interface_ReaderModule,MMgt_TShared)
-
-protected:
-
-
-
-
-private:
-
-
-
-
 };
-
-
-
-
-
-
 
 #endif // _Interface_ReaderModule_HeaderFile

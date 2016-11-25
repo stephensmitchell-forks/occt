@@ -15,7 +15,7 @@
 //#73 rln 10.03.99 S4135: "read.scale.unit" does not affect GlobalSection
 //#13 smh 13.01.2000 : Parsing long year date
 
-#include <IGESData_BasicEditor.hxx>
+#include <IGESData.hxx>
 #include <IGESData_GlobalSection.hxx>
 #include <IGESData_IGESEntity.hxx>
 #include <IGESData_IGESModel.hxx>
@@ -138,11 +138,11 @@ void IGESData_IGESModel::DumpHeader
   if (!str.IsNull()) S<<"[22]  Company               : "<<str->ToCString()<<"\n";
   Standard_Integer num = theheader.IGESVersion();
   S << "[23]  IGES Version Number   : " << num << "   -> Name : " 
-    << IGESData_BasicEditor::IGESVersionName(num);
+    << IGESData::IGESVersionName(num);
 
   num = theheader.DraftingStandard();
   S << "\n[24]  Drafting Standard     : " << num;
-  if (num > 0) S<< "   -> Name : " << IGESData_BasicEditor::DraftingName(num);
+  if (num > 0) S<< "   -> Name : " << IGESData::DraftingName(num);
   S<<endl;
 
   if (theheader.HasLastChangeDate()) {
@@ -232,26 +232,6 @@ void   IGESData_IGESModel::AddStartLine
 }
 
 
-
-//=======================================================================
-//function : GlobalSection
-//purpose  : 
-//=======================================================================
-
-const IGESData_GlobalSection& IGESData_IGESModel::GlobalSection () const
-      {  return theheader;  }
-
-
-//=======================================================================
-//function : SetGlobalSection
-//purpose  : 
-//=======================================================================
-
-void IGESData_IGESModel::SetGlobalSection
-  (const IGESData_GlobalSection& header)
-      {  theheader = header;  }
-
-
 //=======================================================================
 //function : ApplyStatic
 //purpose  : 
@@ -317,23 +297,12 @@ Standard_Integer  IGESData_IGESModel::DNum
 //purpose  : 
 //=======================================================================
 
-void IGESData_IGESModel::GetFromAnother
-  (const Handle(Interface_InterfaceModel)& other)
+void IGESData_IGESModel::GetFromAnother (const Handle(IGESData_IGESModel)& other)
 {
-  DeclareAndCast(IGESData_IGESModel,another,other);
-  theheader = another->GlobalSection();
+  theheader = other->GlobalSection();
   theheader.CopyRefs();
-  SetStartSection (another->StartSection(),Standard_True);
+  SetStartSection (other->StartSection(),Standard_True);
 }
-
-
-//=======================================================================
-//function : NewEmptyModel
-//purpose  : 
-//=======================================================================
-
-Handle(Interface_InterfaceModel) IGESData_IGESModel::NewEmptyModel () const
-      {  return new IGESData_IGESModel;  }
 
 
 //=======================================================================
@@ -467,14 +436,14 @@ void  IGESData_IGESModel::VerifyCheck (Handle(Interface_Check)& ach) const
 
   // Sending of message : Version Flag parameter is incorrect.
   if (theheader.IGESVersion() < 1 ||
-      theheader.IGESVersion() > IGESData_BasicEditor::IGESVersionMax()) {
+      theheader.IGESVersion() > IGESData::IGESVersionMax()) {
     Message_Msg Msg53 ("XSTEP_53");
     ach->SendWarning(Msg53);
   }
 
   // Sending of message : Drafting Standard Flag parameter is incorrect.
   if (theheader.DraftingStandard() < 0 ||
-      theheader.DraftingStandard() > IGESData_BasicEditor::DraftingMax()) {
+      theheader.DraftingStandard() > IGESData::DraftingMax()) {
     Message_Msg Msg54 ("XSTEP_54");
     ach->SendWarning(Msg54);
   }

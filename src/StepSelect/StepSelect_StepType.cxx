@@ -15,12 +15,10 @@
 #include <Interface_InterfaceError.hxx>
 #include <Interface_InterfaceModel.hxx>
 #include <Interface_Macros.hxx>
-#include <Interface_Protocol.hxx>
-#include <Standard_Transient.hxx>
-#include <Standard_Type.hxx>
-#include <StepData_Protocol.hxx>
 #include <StepData_ReadWriteModule.hxx>
 #include <StepData_UndefinedEntity.hxx>
+#include <StepAP214.hxx>
+#include <StepAP214_Protocol.hxx>
 #include <StepSelect_StepType.hxx>
 #include <TColStd_SequenceOfAsciiString.hxx>
 
@@ -29,15 +27,12 @@ IMPLEMENT_STANDARD_RTTIEXT(StepSelect_StepType,IFSelect_Signature)
 static TCollection_AsciiString lastvalue;
 
 
-    StepSelect_StepType::StepSelect_StepType ()
-    : IFSelect_Signature ("Step Type")      {  }
-
-    void  StepSelect_StepType::SetProtocol
-  (const Handle(Interface_Protocol)& proto)
+StepSelect_StepType::StepSelect_StepType ()
+: IFSelect_Signature ("Step Type")
 {
-  DeclareAndCast(StepData_Protocol,newproto,proto);
-  if (newproto.IsNull()) Interface_InterfaceError::Raise("StepSelect_StepType");
-  theproto = newproto;
+  const Handle(StepAP214_Protocol) &proto = StepAP214::Protocol();
+  if (proto.IsNull()) Interface_InterfaceError::Raise("StepSelect_StepType");
+  theproto = proto;
   thelib.Clear();
   thelib.AddProtocol (theproto);
   thename.Clear();
@@ -46,7 +41,7 @@ static TCollection_AsciiString lastvalue;
   thename.AssignCat (")");
 }
 
-    Standard_CString  StepSelect_StepType::Value
+Standard_CString  StepSelect_StepType::Value
   (const Handle(Standard_Transient)& ent,
    const Handle(Interface_InterfaceModel)& /*model*/) const
 {

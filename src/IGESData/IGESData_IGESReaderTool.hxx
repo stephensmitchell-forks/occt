@@ -45,11 +45,10 @@ class IGESData_ParamReader;
 //! Parameters are accessed through specific objects, ParamReaders
 class IGESData_IGESReaderTool  : public Interface_FileReaderTool
 {
-public:
+ public:
 
   DEFINE_STANDARD_ALLOC
 
-  
   //! creates IGESReaderTool to work with an IGESReaderData and an
   //! IGES Protocol.
   //! Actually, no Lib is used
@@ -60,18 +59,20 @@ public:
   //! RQ : Actually, sets DNum into IGES Entities
   //! Also loads the list of parameters for ParamReader
   Standard_EXPORT void Prepare (const Handle(IGESData_FileRecognizer)& reco);
+
+ private:
   
   //! recognizes records by asking Protocol (on data of DirType)
-  Standard_EXPORT Standard_Boolean Recognize (const Standard_Integer num, Handle(Interface_Check)& ach, Handle(Standard_Transient)& ent) Standard_OVERRIDE;
+  Standard_EXPORT virtual Standard_Boolean Recognize (const Standard_Integer num, Handle(Interface_Check)& ach, Handle(Standard_Transient)& ent) Standard_OVERRIDE;
   
   //! fills model's header, that is, its GlobalSection
-  Standard_EXPORT void BeginRead (const Handle(Interface_InterfaceModel)& amodel) Standard_OVERRIDE;
+  Standard_EXPORT virtual void BeginRead (const Handle(Interface_InterfaceModel)& amodel) Standard_OVERRIDE;
   
   //! fills an entity, given record no; works by calling ReadDirPart
   //! then ReadParams (with help of a ParamReader), then if required
   //! ReadProps and ReadAssocs, from IGESEntity
   //! Returns True if no fail has been recorded
-  Standard_EXPORT Standard_Boolean AnalyseRecord (const Standard_Integer num, const Handle(Standard_Transient)& anent, Handle(Interface_Check)& acheck) Standard_OVERRIDE;
+  Standard_EXPORT virtual Standard_Boolean AnalyseRecord (const Standard_Integer num, const Handle(Standard_Transient)& anent, Handle(Interface_Check)& acheck) Standard_OVERRIDE;
   
   //! after reading entities, true line weights can be computed
   Standard_EXPORT virtual void EndRead (const Handle(Interface_InterfaceModel)& amodel) Standard_OVERRIDE;
@@ -101,19 +102,6 @@ public:
   //! Note that "Associated" entities are not declared "Shared"
   Standard_EXPORT void ReadAssocs (const Handle(IGESData_IGESEntity)& ent, const Handle(IGESData_IGESReaderData)& IR, IGESData_ParamReader& PR) const;
 
-
-
-
-protected:
-
-
-
-
-
-private:
-
-
-
   Handle(Interface_ParamList) thelist;
   Handle(IGESData_FileRecognizer) thereco;
   Interface_GeneralLib theglib;
@@ -125,14 +113,6 @@ private:
   Standard_Integer thegradweight;
   Standard_Real themaxweight;
   Standard_Real thedefweight;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESData_IGESReaderTool_HeaderFile
