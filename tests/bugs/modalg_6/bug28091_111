@@ -1,0 +1,86 @@
+puts "============"
+puts "OCC28091"
+puts "============"
+puts ""
+######################################################
+# Crash in Boolean operation in OCCT 6.7.0 version
+######################################################
+
+proc FindFaces { boolres } {
+  upvar ${boolres} ${boolres}
+  
+  global result
+  global ListCanEdges
+  
+  foreach ff [explode $boolres f] {
+    set HasSame 0
+    foreach ee [explode $ff e] {
+      foreach fc $ListCanEdges {
+        upvar ${fc} ${fc}
+        if { [regexp "shapes are not same" [ compare $ee $fc ] full ] == 0 } {
+          set HasSame 1
+          break
+        }
+      }
+      
+      if { $HasSame != 0 } {
+        break;
+      }    
+    }
+
+    if { $HasSame == 0 } {
+      add $ff result
+    }  
+  }  
+}
+
+# The main idea of the test is: obtain set of faces
+# (which will be stored in "result" compound).
+# Set of faces must be closed in U-direction.
+
+compound result
+
+cylinder cylf2 10.08401639903191300000 20.59607727749106900000 11.89638949519049800000 0.00000000000000000000 0.00000000000000000000 -1.00000000000000000000 0.51367713933409975000 0.85798356425139977000 0.00000000000000000000 1.47068324618069560000
+mkface fcan2 cylf2 0.0 6.28318530717958620000 -6.57208607325704720000 13.14417214651409400000
+
+cylinder cylf10 10.08401639903186400000 20.59607727749110900000 19.00000000000000000000 0.00000000000000000000 0.00000000000000000000 -1.00000000000000000000 -0.58123819371909413000 0.81373347120673667000 0.00000000000000000000 3.32307707578835960000
+mkface fcan10 cylf10 0.0 6.28318530717958620000 -7.10361050480950060000 14.20722100961900100000
+
+binrestore [locate_data_file bug28091_stufenbohrung.brep] sh
+explode sh
+
+nexplode sh_2 e
+nexplode sh_3 e
+nexplode sh_4 e
+nexplode sh_5 e
+
+compound sh_2_2 sh_2_3 sh_3_2 sh_3_3 cmpde2
+compound sh_4_3 sh_4_4 sh_5_1 sh_5_2 cmpde10
+
+set FacesList {2 10}
+
+###################
+
+foreach x $FacesList {
+  set ListCanEdges [ explode fcan${x} e ]
+
+  bclearobjects
+  bcleartools
+  baddobjects fcan${x}
+  baddctools cmpde${x}
+  bfillds
+  bbuild res${x}
+
+  checknbshapes res${x} -wire 3 -face 3
+  FindFaces res${x}
+}
+
+checknbshapes result -face [ expr [ llength $FacesList ] ]
+checkprops result -s 209.05
+
+smallview
+donly result
+fit
+erase axes
+
+checkview -screenshot -2d -path ${imagedir}/${test_image}.png 

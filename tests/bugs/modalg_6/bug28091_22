@@ -1,0 +1,70 @@
+puts "============"
+puts "OCC28091"
+puts "============"
+puts ""
+######################################################
+# Crash in Boolean operation in OCCT 6.7.0 version
+######################################################
+
+plane pl11 50.46515887431606000000 24.99999999999996800000 -292.97523641183398000000 -0.00000000000000698296 0.00000000000000011102 1.00000000000000000000 -1.00000000000000000000 -0.00000000000000000000 -0.00000000000000698296
+pcylinder cyl11 pl11 2.99999849990000160000 292.97523641183449000000
+
+plane pl12 50.46515887431397800000 25.00000000000000000000 5.00000000000047250000 -0.00000000000000698296 0.00000000000000011102 1.00000000000000000000 -1.00000000000000000000 -0.00000000000000000000 -0.00000000000000698296
+pcylinder cyl12 pl12 2.99999849990000160000 292.97523641183449000000
+
+plane pl21 50.46515887431606000000 94.99999999999997200000 -292.97523641183398000000 -0.00000000000000698296 0.00000000000000011102 1.00000000000000000000 -1.00000000000000000000 -0.00000000000000000000 -0.00000000000000698296
+pcylinder cyl21 pl21 2.99999849990000160000 292.97523641183449000000
+
+plane pl22 50.46515887431397800000 95.00000000000000000000 5.00000000000046450000 -0.00000000000000698296 0.00000000000000011102 1.00000000000000000000 -1.00000000000000000000 -0.00000000000000000000 -0.00000000000000698296
+pcylinder cyl22 pl22 2.99999849990000160000 292.97523641183449000000
+
+binrestore [locate_data_file bug28091_ad1945.brep] sh
+
+compound CmpdSrcFList
+
+foreach ff [ explode sh f ] {
+  settolerance $ff 1.0e-7
+  fixshape rf $ff
+  add rf CmpdSrcFList
+}
+
+puts ""
+puts ""
+
+set i 0
+foreach x {1 2} {
+  incr i
+  
+  copy CmpdSrcFList sshape
+  foreach cyf [explode cyl${x}1 f] {
+    mksurface sf $cyf;
+    if { [ string first "Cylindr" [ dump sf ] ]  >= 0 } {
+      bsection r${i}1 sshape $cyf -n2d -na
+      break
+    }
+  }
+  
+  copy CmpdSrcFList sshape
+  foreach cyf [explode cyl${x}2 f] {
+    mksurface sf $cyf;
+    if { [ string first "Cylindr" [ dump sf ] ]  >= 0 } {
+      bsection r${i}2 sshape $cyf -n2d -na
+      break
+    }
+  }
+}
+
+# The true number of entities is not important.
+# The main idea is to check if:
+#   1. The result (r*) is empty or not.
+#   2. new interfered entities are found or
+#       if some interferences are not detected but was
+#       detected earlier.
+#
+# Changes in behavior at least in one item must be considered (most likely)
+# as regression.
+
+checknbshapes r11 -vertex 0
+checknbshapes r12 -vertex 0
+checknbshapes r21 -vertex 0
+checknbshapes r22 -vertex 0

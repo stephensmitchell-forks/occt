@@ -1,0 +1,111 @@
+puts "============"
+puts "OCC28091"
+puts "============"
+puts ""
+######################################################
+# Crash in Boolean operation in OCCT 6.7.0 version
+######################################################
+
+proc FindFaces { boolres } {
+  upvar ${boolres} ${boolres}
+  
+  global result
+  global ListCanEdges
+  
+  foreach ff [explode $boolres f] {
+    set HasSame 0
+    foreach ee [explode $ff e] {
+      foreach fc $ListCanEdges {
+        upvar ${fc} ${fc}
+        if { [regexp "shapes are not same" [ compare $ee $fc ] full ] == 0 } {
+          set HasSame 1
+          break
+        }
+      }
+      
+      if { $HasSame != 0 } {
+        break;
+      }    
+    }
+
+    if { $HasSame == 0 } {
+      add $ff result
+    }  
+  }  
+}
+
+# The main idea of the test is: obtain set of faces
+# (which will be stored in "result" compound).
+# Set of faces must be closed in U-direction.
+
+compound result
+
+cylinder cylf1 178.77237918818810000000 263.62977252858195000000 121.34522213150757000000 0.00000000000000000000 -0.84799830400508847000 -0.52999894000317915000 0.91257304423360708000 -0.21672384368325631000 0.34675814989321085000 4.00000000000000000000
+mkface fcan1 cylf1 0.0 6.28318530717958620000 -37.49999999999999300000 37.50000000000005000000
+
+cylinder cylf5 92.07793998599527200000 284.21853767849120000000 88.40319789165270900000 0.00000000000000000000 -0.84799830400508847000 -0.52999894000317915000 0.91257304423360708000 -0.21672384368325631000 0.34675814989321085000 4.00000000000000000000
+mkface fcan5 cylf5 0.0 6.28318530717958620000 -37.50000000000003600000 37.49999999999998600000
+
+cylinder cylf8 265.46681839038092000000 243.04100737867273000000 154.28724637136244000000 0.00000000000000000000 -0.84799830400508847000 -0.52999894000317915000 0.91257304423360708000 -0.21672384368325631000 0.34675814989321085000 4.00000000000000000000
+mkface fcan8 cylf8 0.0 6.28318530717958620000 -37.50000000000004300000 37.50000000000008500000
+
+cylinder cylf12 12.50000000000000000000 125.38333636146797000000 21.37167791462789200000 1.00000000000000000000 0.00000000000000000000 0.00000000000000000000 0.00000000000000000000 -0.99916288838046008000 -0.04090870913652000500 4.00000000000000000000
+mkface fcan12 cylf12 0.0 6.28318530717958620000 -37.50000000000000000000 37.50000000000000000000
+
+cylinder cylf16 12.50000000000000000000 220.30381075761164000000 25.25800528259771500000 1.00000000000000000000 0.00000000000000000000 0.00000000000000000000 0.00000000000000000000 -0.99916288838046008000 -0.04090870913652000500 4.00000000000000000000
+mkface fcan16 cylf16 0.0 6.28318530717958620000 -37.50000000000000000000 37.50000000000000000000
+
+cylinder cylf19 12.50000000000000000000 30.46286196532426500000 17.48535054665808300000 1.00000000000000000000 0.00000000000000000000 0.00000000000000000000 0.00000000000000000000 -0.99916288838046008000 -0.04090870913652000500 4.00000000000000000000
+mkface fcan19 cylf19 0.0 6.28318530717958620000 -37.50000000000000000000 37.50000000000000000000
+
+
+binrestore [locate_data_file bug28091_handlauf_kruemmer.brep] sh
+explode sh
+
+nexplode sh_1 e
+nexplode sh_2 e
+nexplode sh_3 e
+nexplode sh_4 e
+nexplode sh_5 e
+nexplode sh_6 e
+nexplode sh_8 e
+nexplode sh_10 e
+nexplode sh_12 e
+nexplode sh_15 e
+nexplode sh_17 e
+nexplode sh_19 e
+
+compound sh_8_3 sh_8_2 sh_6_2 sh_6_3 cmpde1
+compound sh_10_2 sh_5_2 sh_10_3 sh_5_3 cmpde5
+compound sh_12_2 sh_4_2 sh_12_3 sh_4_3 cmpde8
+compound sh_3_1 sh_15_1 sh_15_4 sh_3_4 cmpde12
+compound sh_17_1 sh_2_1 sh_17_4 sh_2_4 cmpde16
+compound sh_19_1 sh_1_1 sh_19_4 sh_1_4 cmpde19
+
+set FacesList {1 5 8 12 16 19}
+
+###################
+
+foreach x $FacesList {
+  set ListCanEdges [ explode fcan${x} e ]
+
+  bclearobjects
+  bcleartools
+  baddobjects fcan${x}
+  baddctools cmpde${x}
+  bfillds
+  bbuild res${x}
+
+  checknbshapes res${x} -wire 3 -face 3
+  FindFaces res${x}
+}
+
+checknbshapes result -face [ llength $FacesList ]
+checkprops result -s 3769.91
+
+smallview
+donly result
+fit
+erase axes
+
+checkview -screenshot -2d -path ${imagedir}/${test_image}.png 

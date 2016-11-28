@@ -1,0 +1,105 @@
+puts "============"
+puts "OCC28091"
+puts "============"
+puts ""
+######################################################
+# Crash in Boolean operation in OCCT 6.7.0 version
+######################################################
+
+proc FindFaces { boolres } {
+  upvar ${boolres} ${boolres}
+  
+  global result
+  global ListCanEdges
+  
+  foreach ff [explode $boolres f] {
+    set HasSame 0
+    foreach ee [explode $ff e] {
+      foreach fc $ListCanEdges {
+        upvar ${fc} ${fc}
+        if { [regexp "shapes are not same" [ compare $ee $fc ] full ] == 0 } {
+          set HasSame 1
+          break
+        }
+      }
+      
+      if { $HasSame != 0 } {
+        break;
+      }    
+    }
+
+    if { $HasSame == 0 } {
+      add $ff result
+    }  
+  }  
+}
+
+# The main idea of the test is: obtain set of faces
+# (which will be stored in "result" compound).
+# Set of faces must be closed in U-direction.
+
+compound result
+
+cylinder cylf19 32.00000000016706300000 218.81370849900000000000 38.81370849900000100000 1.00000000000000000000 0.00000000000000000000 0.00000000000000000000 0.00000000000000000000 0.00000000000000000000 -1.00000000000000000000 5.00000000000000000000
+mkface fcan19 cylf19 0.0 6.28318530717958620000 -23.00000000000000000000 46.00000000000000000000
+
+cylinder cylf21 32.00000000016706300000 196.18629150100000000000 16.18629150099999900000 1.00000000000000000000 0.00000000000000000000 0.00000000000000000000 0.00000000000000000000 0.00000000000000000000 -1.00000000000000000000 5.00000000000000000000
+mkface fcan21 cylf21 0.0 6.28318530717958620000 -23.00000000000000000000 46.00000000000000000000
+
+cylinder cylf23 38.81370849916703500000 218.81370849900000000000 23.00000000000000000000 0.00000000000000000000 0.00000000000000000000 -1.00000000000000000000 -1.00000000000000000000 0.00000000000000568434 0.00000000000000000000 5.00000000000000000000
+mkface fcan23 cylf23 0.0 6.28318530717958620000 -23.00000000000000000000 46.00000000000000000000
+
+cylinder cylf25 16.18629150116709100000 196.18629150100000000000 23.00000000000000000000 0.00000000000000000000 0.00000000000000000000 -1.00000000000000000000 -1.00000000000000000000 0.00000000000000000000 0.00000000000000000000 5.00000000000000000000
+mkface fcan25 cylf25 0.0 6.28318530717958620000 -23.00000000000000000000 46.00000000000000000000
+
+cylinder cylf47 9.35849466038116520000 100.00000000000000000000 35.91936957356483600000 0.90707526697824048000 0.00000000000000000000 -0.42096847867311143000 -0.42096847867311143000 0.00000000000001136868 -0.90707526697824048000 4.99999999964020250000
+mkface fcan47 cylf47 0.0 6.28318530717958620000 -20.00000000062111700000 40.00000000124223500000
+
+
+binrestore [locate_data_file bug28091_BenchLeg.brep] sh
+explode sh
+
+nexplode sh_1 e
+nexplode sh_2 e
+nexplode sh_37 e
+nexplode sh_39 e
+nexplode sh_4 e
+nexplode sh_41 e
+nexplode sh_43 e
+nexplode sh_6 e
+nexplode sh_65 e
+nexplode sh_8 e
+
+compound sh_6_1 sh_6_4 sh_39_1 sh_39_4 cmpde19
+compound sh_8_1 sh_8_4 sh_37_1 sh_37_4 cmpde21
+compound sh_2_2 sh_2_3 sh_43_2 sh_43_3 cmpde23
+compound sh_4_2 sh_4_3 sh_41_2 sh_41_3 cmpde25
+compound sh_1_1 sh_1_4 sh_65_1 sh_65_4 cmpde47
+
+set FacesList {19 21 23 25 47}
+
+###################
+
+foreach x $FacesList {
+  set ListCanEdges [ explode fcan${x} e ]
+
+  bclearobjects
+  bcleartools
+  baddobjects fcan${x}
+  baddctools cmpde${x}
+  bfillds
+  bbuild res${x}
+
+  checknbshapes res${x} -wire 3 -face 3
+  FindFaces res${x}
+}
+
+checknbshapes result -face [ llength $FacesList ]
+checkprops result -s 3518.58
+
+smallview
+donly result
+fit
+erase axes
+
+checkview -screenshot -2d -path ${imagedir}/${test_image}.png 

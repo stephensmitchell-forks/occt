@@ -1,0 +1,41 @@
+puts "============"
+puts "OCC28091"
+puts "============"
+puts ""
+######################################################
+# Creation of test cases in order to provide simple porting Hole detection algorithm to new OCCT-version
+######################################################
+
+# IsCorrectCoincindence method
+
+restore [locate_data_file bug28091_Loch_auf_Kante.brep] srcshape
+
+# Test
+
+foreach a [ directory fcan* ] { unset $a }
+
+cylinder cylf10 62.13887064297946200000 17.24482604878895500000 19.00000000000000000000 -0.00000000000001047116 -0.00000000000000841432 -1.00000000000000000000 0.00000000000032840511 -1.00000000000000000000 0.00000000000000841432 4.67341180101795570000
+mkface fcan10 cylf10 0.0 6.28318530717958620000 -19.00000000000000000000 38.00000000000000000000
+
+sewing sh srcshape
+eval compound [ explode sh w ] cmpwir
+
+compound result
+foreach ff [ directory fcan* ] {
+  copy cmpwir cco
+  bclearobjects 
+  bcleartools
+  eval baddobjects [explode cco]
+  baddtools $ff
+  bfillds
+  bbuild fc
+  foreach fr [explode fc f] {
+    add $fr result
+  }  
+}
+
+checknbshapes result -face 3
+checkshape result
+checkprops result -s 1673.74
+
+checkview -display result -2d -path ${imagedir}/${test_image}.png 

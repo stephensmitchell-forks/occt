@@ -1,0 +1,70 @@
+puts "============"
+puts "OCC28091"
+puts "============"
+puts ""
+######################################################
+# Crash in Boolean operation in OCCT 6.7.0 version
+######################################################
+
+plane pl11 -11.07441143076466100000 58.47517948339487500000 82.87946629393842100000 0.28665012516263805000 -0.43666337015615425000 -0.85273489837587468000 0.81818652273596726000 0.57463162728365791000 -0.01921736034324384200
+pcylinder cyl11 pl11 1.47068174613069400000 87.34886697038473400000
+
+plane pl12 15.84804151458950500000 17.46333959908033900000 2.78979194490324820000 0.28665012516263805000 -0.43666337015615425000 -0.85273489837587468000 0.81818652273596726000 0.57463162728365791000 -0.01921736034324384200
+pcylinder cyl12 pl12 1.47068174613069400000 87.34886697038473400000
+
+plane pl21 -13.11066227107500400000 61.57706598670168300000 88.93696287585892400000 0.28665012516263849000 -0.43666337015615414000 -0.85273489837587468000 -0.12992951695923394000 0.86414424595674832000 -0.48618210868211037000
+pcylinder cyl21 pl21 3.32307248324712520000 87.34886697038473400000
+
+plane pl22 13.96415221911071600000 20.33312885278513300000 8.39403909469956490000 0.28665012516263849000 -0.43666337015615414000 -0.85273489837587468000 -0.12992951695923394000 0.86414424595674832000 -0.48618210868211037000
+pcylinder cyl22 pl22 3.32307248324712520000 87.34886697038473400000
+
+binrestore [locate_data_file bug28091_stufenbohrung_raum.brep] sh
+
+compound CmpdSrcFList
+
+foreach ff [ explode sh f ] {
+  settolerance $ff 1.0e-7
+  fixshape rf $ff
+  add rf CmpdSrcFList
+}
+
+puts ""
+puts ""
+
+set i 0
+foreach x {1 2 3 4 5 6 7 8} {
+  incr i
+  
+  copy CmpdSrcFList sshape
+  foreach cyf [explode cyl${x}1 f] {
+    mksurface sf $cyf;
+    if { [ string first "Cylindr" [ dump sf ] ]  >= 0 } {
+      bsection r${i}1 sshape $cyf -n2d -na
+      break
+    }
+  }
+  
+  copy CmpdSrcFList sshape
+  foreach cyf [explode cyl${x}2 f] {
+    mksurface sf $cyf;
+    if { [ string first "Cylindr" [ dump sf ] ]  >= 0 } {
+      bsection r${i}2 sshape $cyf -n2d -na
+      break
+    }
+  }
+}
+
+# The true number of entities is not important.
+# The main idea is to check if:
+#   1. The result (r*) is empty or not.
+#   2. new interfered entities are found or
+#       if some interferences are not detected but was
+#       detected earlier.
+#
+# Changes in behavior at least in one item must be considered (most likely)
+# as regression.
+
+checknbshapes r11 -vertex 0
+checknbshapes r12 -vertex 2
+checknbshapes r21 -vertex 0
+checknbshapes r22 -vertex 1

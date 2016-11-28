@@ -1,0 +1,93 @@
+puts "============"
+puts "OCC28091"
+puts "============"
+puts ""
+######################################################
+# Crash in Boolean operation in OCCT 6.7.0 version
+######################################################
+
+proc FindFaces { boolres } {
+  upvar ${boolres} ${boolres}
+  
+  global result
+  global ListCanEdges
+  
+  foreach ff [explode $boolres f] {
+    set HasSame 0
+    foreach ee [explode $ff e] {
+      foreach fc $ListCanEdges {
+        upvar ${fc} ${fc}
+        if { [regexp "shapes are not same" [ compare $ee $fc ] full ] == 0 } {
+          set HasSame 1
+          break
+        }
+      }
+      
+      if { $HasSame != 0 } {
+        break;
+      }    
+    }
+
+    if { $HasSame == 0 } {
+      add $ff result
+    }  
+  }  
+}
+
+# The main idea of the test is: obtain set of faces
+# (which will be stored in "result" compound).
+# Set of faces must be closed in U-direction.
+
+compound result
+
+cylinder cylf75 0.00000000000003552714 187.50000000000000000000 28.25000000000000000000 1.00000000000000000000 0.00000000000000000000 0.00000000000000000000 0.00000000000000000000 0.00000000000000000000 -1.00000000000000000000 3.25000000000000000000
+mkface fcan75 cylf75 0.0 6.28318530717958620000 -56.50000000000000000000 113.00000000000000000000
+
+cylinder cylf77 22.00000000000003600000 220.00000000000000000000 0.00000000000000000000 0.00000000000000000000 0.00000000000000000000 1.00000000000000000000 1.00000000000000000000 0.00000000000000000000 -0.00000000000000000000 3.25000000000000000000
+mkface fcan77 cylf77 0.0 6.28318530717958620000 -56.50000000000000000000 113.00000000000000000000
+
+cylinder cylf78 34.50000000000003600000 155.00000000000000000000 0.00000000000000000000 0.00000000000000000000 0.00000000000000000000 1.00000000000000000000 1.00000000000000000000 0.00000000000000000000 -0.00000000000000000000 3.25000000000000000000
+mkface fcan78 cylf78 0.0 6.28318530717958620000 -56.50000000000000000000 113.00000000000000000000
+
+
+binrestore [locate_data_file bug28091_LG3.brep] sh
+explode sh
+
+nexplode sh_1 e
+nexplode sh_2 e
+nexplode sh_3 e
+nexplode sh_82 e
+nexplode sh_83 e
+nexplode sh_84 e
+
+compound sh_1_1 sh_84_1 sh_1_4 sh_84_4 cmpde75
+compound sh_2_3 sh_83_3 sh_2_2 sh_83_2 cmpde77
+compound sh_3_3 sh_82_3 sh_3_2 sh_82_2 cmpde78
+
+set FacesList {75 77 78}
+
+###################
+
+foreach x $FacesList {
+  set ListCanEdges [ explode fcan${x} e ]
+
+  bclearobjects
+  bcleartools
+  baddobjects fcan${x}
+  baddctools cmpde${x}
+  bfillds
+  bbuild res${x}
+
+  checknbshapes res${x} -wire 3 -face 3
+  FindFaces res${x}
+}
+
+checknbshapes result -face [ llength $FacesList ]
+checkprops result -s 3461.25
+
+smallview
+donly result
+fit
+erase axes
+
+checkview -screenshot -2d -path ${imagedir}/${test_image}.png 
