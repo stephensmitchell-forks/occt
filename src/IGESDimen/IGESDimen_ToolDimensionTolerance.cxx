@@ -25,13 +25,10 @@
 #include <IGESDimen_DimensionTolerance.hxx>
 #include <IGESDimen_ToolDimensionTolerance.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-
-IGESDimen_ToolDimensionTolerance::IGESDimen_ToolDimensionTolerance ()    {  }
 
 
 void  IGESDimen_ToolDimensionTolerance::ReadOwnParams
@@ -88,23 +85,6 @@ void  IGESDimen_ToolDimensionTolerance::WriteOwnParams
   IW.SendBoolean(ent->SignSuppressionFlag());
   IW.Send(ent->FractionFlag());
   IW.Send(ent->Precision());
-}
-
-void  IGESDimen_ToolDimensionTolerance::OwnShared
-  (const Handle(IGESDimen_DimensionTolerance)& /*ent*/, Interface_EntityIterator& /*iter*/) const
-{
-}
-
-void  IGESDimen_ToolDimensionTolerance::OwnCopy
-  (const Handle(IGESDimen_DimensionTolerance)& another,
-   const Handle(IGESDimen_DimensionTolerance)& ent, Interface_CopyTool& /*TC*/) const
-{
-  ent->Init
-    (8,another->SecondaryToleranceFlag(),another->ToleranceType(),
-     another->TolerancePlacementFlag(),
-     another->UpperTolerance(),another->LowerTolerance(),
-     (another->SignSuppressionFlag() ? 1 : 0),
-     another->FractionFlag(),another->Precision());
 }
 
 Standard_Boolean  IGESDimen_ToolDimensionTolerance::OwnCorrect

@@ -26,15 +26,12 @@
 #include <IGESData_ParamCursor.hxx>
 #include <IGESData_ParamReader.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
 #include <TCollection_HAsciiString.hxx>
-
-IGESBasic_ToolName::IGESBasic_ToolName ()    {  }
 
 
 void  IGESBasic_ToolName::ReadOwnParams
@@ -57,22 +54,6 @@ void  IGESBasic_ToolName::WriteOwnParams
 {
   IW.Send(ent->NbPropertyValues());
   IW.Send(ent->Value());
-}
-
-void  IGESBasic_ToolName::OwnShared
-  (const Handle(IGESBasic_Name)& /* ent */, Interface_EntityIterator& /* iter */) const
-{
-}
-
-void  IGESBasic_ToolName::OwnCopy
-  (const Handle(IGESBasic_Name)& another,
-   const Handle(IGESBasic_Name)& ent, Interface_CopyTool& /* TC */) const
-{
-  Standard_Integer aNbPropertyValues;
-  Handle(TCollection_HAsciiString) aName;
-  aName = new TCollection_HAsciiString(another->Value());
-  aNbPropertyValues = another->NbPropertyValues();
-  ent->Init(aNbPropertyValues,aName);
 }
 
 Standard_Boolean  IGESBasic_ToolName::OwnCorrect

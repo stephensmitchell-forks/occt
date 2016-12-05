@@ -25,14 +25,10 @@
 #include <IGESGraph_IntercharacterSpacing.hxx>
 #include <IGESGraph_ToolIntercharacterSpacing.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-
-IGESGraph_ToolIntercharacterSpacing::IGESGraph_ToolIntercharacterSpacing ()
-      {  }
 
 
 void IGESGraph_ToolIntercharacterSpacing::ReadOwnParams
@@ -61,18 +57,6 @@ void IGESGraph_ToolIntercharacterSpacing::WriteOwnParams
 { 
   IW.Send( ent->NbPropertyValues() );
   IW.Send( ent->ISpace() );
-}
-
-void  IGESGraph_ToolIntercharacterSpacing::OwnShared
-  (const Handle(IGESGraph_IntercharacterSpacing)& /*ent*/, Interface_EntityIterator& /*iter*/) const
-{
-}
-
-void IGESGraph_ToolIntercharacterSpacing::OwnCopy
-  (const Handle(IGESGraph_IntercharacterSpacing)& another,
-   const Handle(IGESGraph_IntercharacterSpacing)& ent, Interface_CopyTool& /*TC*/) const
-{
-  ent->Init(1,another->ISpace());
 }
 
 Standard_Boolean  IGESGraph_ToolIntercharacterSpacing::OwnCorrect

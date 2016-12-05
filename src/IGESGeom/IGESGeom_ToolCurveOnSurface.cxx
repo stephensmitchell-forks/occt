@@ -27,22 +27,12 @@
 #include <IGESGeom_CurveOnSurface.hxx>
 #include <IGESGeom_ToolCurveOnSurface.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Message_Msg.hxx>
 #include <Standard_DomainError.hxx>
-
-// MGE 30/07/98
-//=======================================================================
-//function : IGESGeom_ToolCurveOnSurface
-//purpose  : 
-//=======================================================================
-IGESGeom_ToolCurveOnSurface::IGESGeom_ToolCurveOnSurface ()
-{
-}
 
 
 //=======================================================================
@@ -165,26 +155,6 @@ void IGESGeom_ToolCurveOnSurface::OwnShared(const Handle(IGESGeom_CurveOnSurface
   iter.GetOneItem(ent->Surface());
   iter.GetOneItem(ent->CurveUV());
   iter.GetOneItem(ent->Curve3D());
-}
-
-
-//=======================================================================
-//function : OwnCopy
-//purpose  : 
-//=======================================================================
-
-void IGESGeom_ToolCurveOnSurface::OwnCopy(const Handle(IGESGeom_CurveOnSurface)& another,
-                                          const Handle(IGESGeom_CurveOnSurface)& ent,
-                                          Interface_CopyTool& TC) const
-{
-  DeclareAndCast(IGESData_IGESEntity, aSurface, TC.Transferred(another->Surface()));
-  DeclareAndCast(IGESData_IGESEntity, aCurveUV, TC.Transferred(another->CurveUV()));
-  DeclareAndCast(IGESData_IGESEntity, aCurve3D, TC.Transferred(another->Curve3D()));
-
-  Standard_Integer aMode = another->CreationMode();
-  Standard_Integer aPreference = another->PreferenceMode();
-
-  ent->Init(aMode, aSurface, aCurveUV, aCurve3D, aPreference);
 }
 
 

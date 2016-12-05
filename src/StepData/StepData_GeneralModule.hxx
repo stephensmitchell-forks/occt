@@ -26,7 +26,6 @@ class Standard_Transient;
 class Interface_EntityIterator;
 class Interface_ShareTool;
 class Interface_Check;
-class Interface_CopyTool;
 
 
 class StepData_GeneralModule;

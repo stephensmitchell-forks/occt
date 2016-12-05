@@ -17,18 +17,11 @@
 #ifndef _IGESAppli_NodalResults_HeaderFile
 #define _IGESAppli_NodalResults_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
-#include <Standard_Integer.hxx>
-#include <Standard_Real.hxx>
 #include <TColStd_HArray1OfInteger.hxx>
 #include <IGESAppli_HArray1OfNode.hxx>
 #include <TColStd_HArray2OfReal.hxx>
 #include <IGESData_IGESEntity.hxx>
 class IGESDimen_GeneralNote;
-class Standard_DimensionMismatch;
-class Standard_OutOfRange;
 class IGESAppli_Node;
 
 
@@ -40,11 +33,9 @@ DEFINE_STANDARD_HANDLE(IGESAppli_NodalResults, IGESData_IGESEntity)
 //! Used to store the Analysis Data results per FEM Node
 class IGESAppli_NodalResults : public IGESData_IGESEntity
 {
+ public:
 
-public:
-
-  
-  Standard_EXPORT IGESAppli_NodalResults();
+  IGESAppli_NodalResults() {}
   
   //! This method is used to set the fields of the class
   //! NodalResults
@@ -65,16 +56,16 @@ public:
   Standard_EXPORT void SetFormNumber (const Standard_Integer form);
   
   //! returns the General Note Entity that describes the analysis case
-  Standard_EXPORT Handle(IGESDimen_GeneralNote) Note() const;
-  
+  const Handle(IGESDimen_GeneralNote) & Note() const { return theNote; }
+
   //! returns zero if there is no subcase
-  Standard_EXPORT Standard_Integer SubCaseNumber() const;
-  
+  Standard_Integer SubCaseNumber() const { return theSubCaseNum; }
+
   //! returns the Analysis time value for this subcase. It is the time
   //! at which transient analysis results occur in the mathematical
   //! FEM model.
-  Standard_EXPORT Standard_Real Time() const;
-  
+  Standard_Real Time() const { return theTime; }
+
   //! returns number of real values in array V for a FEM node
   Standard_EXPORT Standard_Integer NbData() const;
   
@@ -87,25 +78,20 @@ public:
   
   //! returns the node as specified by the Index
   //! raises exception if Index <= 0 or Index > NbNodes
-  Standard_EXPORT Handle(IGESAppli_Node) Node (const Standard_Integer Index) const;
+  Standard_EXPORT const Handle(IGESAppli_Node) & Node (const Standard_Integer Index) const;
   
   //! returns the finite element analysis result value
   //! raises exception if (NodeNum <= 0 or NodeNum > NbNodes()) or
   //! if (DataNum <=0 or DataNum > NbData())
   Standard_EXPORT Standard_Real Data (const Standard_Integer NodeNum, const Standard_Integer DataNum) const;
 
+  Standard_EXPORT virtual void OwnShared(Interface_EntityIterator &theIter) const Standard_OVERRIDE;
 
-
+  Standard_EXPORT virtual void OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESAppli_NodalResults,IGESData_IGESEntity)
 
-protected:
-
-
-
-
-private:
-
+ private:
 
   Handle(IGESDimen_GeneralNote) theNote;
   Standard_Integer theSubCaseNum;
@@ -113,14 +99,6 @@ private:
   Handle(TColStd_HArray1OfInteger) theNodeIdentifiers;
   Handle(IGESAppli_HArray1OfNode) theNodes;
   Handle(TColStd_HArray2OfReal) theData;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESAppli_NodalResults_HeaderFile

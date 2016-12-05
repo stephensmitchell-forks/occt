@@ -31,19 +31,11 @@
 #include <IGESDefs_UnitsData.hxx>
 #include <Interface_Category.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
-#include <Standard_Transient.hxx>
-#include <Standard_Type.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESDefs_GeneralModule,IGESData_GeneralModule)
-
-//  Each Module is attached to a Protocol : it must interprete Case Numbers
-//  (arguments <CN> of various methods) in accordance to values returned by
-//  the method TypeNumber from this Protocol
-IGESDefs_GeneralModule::IGESDefs_GeneralModule ()    {  }
 
 
     void  IGESDefs_GeneralModule::OwnSharedCase
@@ -51,13 +43,6 @@ IGESDefs_GeneralModule::IGESDefs_GeneralModule ()    {  }
    Interface_EntityIterator& iter) const 
 {
   switch (CN) {
-    case  1 : {
-      DeclareAndCast(IGESDefs_AssociativityDef,anent,ent);
-      if (anent.IsNull()) return;
-      IGESDefs_ToolAssociativityDef tool;
-      tool.OwnShared(anent,iter);
-    }
-      break;
     case  2 : {
       DeclareAndCast(IGESDefs_AttributeDef,anent,ent);
       if (anent.IsNull()) return;
@@ -76,27 +61,6 @@ IGESDefs_GeneralModule::IGESDefs_GeneralModule ()    {  }
       DeclareAndCast(IGESDefs_GenericData,anent,ent);
       if (anent.IsNull()) return;
       IGESDefs_ToolGenericData tool;
-      tool.OwnShared(anent,iter);
-    }
-      break;
-    case  5 : {
-      DeclareAndCast(IGESDefs_MacroDef,anent,ent);
-      if (anent.IsNull()) return;
-      IGESDefs_ToolMacroDef tool;
-      tool.OwnShared(anent,iter);
-    }
-      break;
-    case  6 : {
-      DeclareAndCast(IGESDefs_TabularData,anent,ent);
-      if (anent.IsNull()) return;
-      IGESDefs_ToolTabularData tool;
-      tool.OwnShared(anent,iter);
-    }
-      break;
-    case  7 : {
-      DeclareAndCast(IGESDefs_UnitsData,anent,ent);
-      if (anent.IsNull()) return;
-      IGESDefs_ToolUnitsData tool;
       tool.OwnShared(anent,iter);
     }
       break;
@@ -162,13 +126,6 @@ IGESDefs_GeneralModule::IGESDefs_GeneralModule ()    {  }
    const Interface_ShareTool& shares, Handle(Interface_Check)& ach) const 
 {
   switch (CN) {
-    case  1 : {
-      DeclareAndCast(IGESDefs_AssociativityDef,anent,ent);
-      if (anent.IsNull()) return;
-      IGESDefs_ToolAssociativityDef tool;
-      tool.OwnCheck(anent,shares,ach);
-    }
-      break;
     case  2 : {
       DeclareAndCast(IGESDefs_AttributeDef,anent,ent);
       if (anent.IsNull()) return;
@@ -187,27 +144,6 @@ IGESDefs_GeneralModule::IGESDefs_GeneralModule ()    {  }
       DeclareAndCast(IGESDefs_GenericData,anent,ent);
       if (anent.IsNull()) return;
       IGESDefs_ToolGenericData tool;
-      tool.OwnCheck(anent,shares,ach);
-    }
-      break;
-    case  5 : {
-      DeclareAndCast(IGESDefs_MacroDef,anent,ent);
-      if (anent.IsNull()) return;
-      IGESDefs_ToolMacroDef tool;
-      tool.OwnCheck(anent,shares,ach);
-    }
-      break;
-    case  6 : {
-      DeclareAndCast(IGESDefs_TabularData,anent,ent);
-      if (anent.IsNull()) return;
-      IGESDefs_ToolTabularData tool;
-      tool.OwnCheck(anent,shares,ach);
-    }
-      break;
-    case  7 : {
-      DeclareAndCast(IGESDefs_UnitsData,anent,ent);
-      if (anent.IsNull()) return;
-      IGESDefs_ToolUnitsData tool;
       tool.OwnCheck(anent,shares,ach);
     }
       break;
@@ -230,67 +166,6 @@ IGESDefs_GeneralModule::IGESDefs_GeneralModule ()    {  }
     default : return Standard_False;    // by default, Failure on Recognize
   }
   return Standard_True;
-}
-
-
-    void  IGESDefs_GeneralModule::OwnCopyCase
-  (const Standard_Integer CN,
-   const Handle(IGESData_IGESEntity)& entfrom,
-   const Handle(IGESData_IGESEntity)& entto,
-   Interface_CopyTool& TC) const 
-{
-  switch (CN) {
-    case  1 : {
-      DeclareAndCast(IGESDefs_AssociativityDef,enfr,entfrom);
-      DeclareAndCast(IGESDefs_AssociativityDef,ento,entto);
-      IGESDefs_ToolAssociativityDef tool;
-      tool.OwnCopy(enfr,ento,TC);
-    }
-      break;
-    case  2 : {
-      DeclareAndCast(IGESDefs_AttributeDef,enfr,entfrom);
-      DeclareAndCast(IGESDefs_AttributeDef,ento,entto);
-      IGESDefs_ToolAttributeDef tool;
-      tool.OwnCopy(enfr,ento,TC);
-    }
-      break;
-    case  3 : {
-      DeclareAndCast(IGESDefs_AttributeTable,enfr,entfrom);
-      DeclareAndCast(IGESDefs_AttributeTable,ento,entto);
-      IGESDefs_ToolAttributeTable tool;
-      tool.OwnCopy(enfr,ento,TC);
-    }
-      break;
-    case  4 : {
-      DeclareAndCast(IGESDefs_GenericData,enfr,entfrom);
-      DeclareAndCast(IGESDefs_GenericData,ento,entto);
-      IGESDefs_ToolGenericData tool;
-      tool.OwnCopy(enfr,ento,TC);
-    }
-      break;
-    case  5 : {
-      DeclareAndCast(IGESDefs_MacroDef,enfr,entfrom);
-      DeclareAndCast(IGESDefs_MacroDef,ento,entto);
-      IGESDefs_ToolMacroDef tool;
-      tool.OwnCopy(enfr,ento,TC);
-    }
-      break;
-    case  6 : {
-      DeclareAndCast(IGESDefs_TabularData,enfr,entfrom);
-      DeclareAndCast(IGESDefs_TabularData,ento,entto);
-      IGESDefs_ToolTabularData tool;
-      tool.OwnCopy(enfr,ento,TC);
-    }
-      break;
-    case  7 : {
-      DeclareAndCast(IGESDefs_UnitsData,enfr,entfrom);
-      DeclareAndCast(IGESDefs_UnitsData,ento,entto);
-      IGESDefs_ToolUnitsData tool;
-      tool.OwnCopy(enfr,ento,TC);
-    }
-      break;
-    default : break;
-  }
 }
 
 

@@ -30,22 +30,17 @@
 #include <IGESDimen_LeaderArrow.hxx>
 #include <IGESDimen_ToolDiameterDimension.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
 
-IGESDimen_ToolDiameterDimension::IGESDimen_ToolDiameterDimension ()    {  }
-
 
 void  IGESDimen_ToolDiameterDimension::ReadOwnParams
   (const Handle(IGESDimen_DiameterDimension)& ent,
    const Handle(IGESData_IGESReaderData)& IR, IGESData_ParamReader& PR) const
 { 
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
-
   Handle(IGESDimen_GeneralNote) note; 
   Handle(IGESDimen_LeaderArrow) firstLeader; 
   Handle(IGESDimen_LeaderArrow) secondLeader; 
@@ -84,21 +79,6 @@ void  IGESDimen_ToolDiameterDimension::OwnShared
   iter.GetOneItem(ent->SecondLeader());
 }
 
-void  IGESDimen_ToolDiameterDimension::OwnCopy
-  (const Handle(IGESDimen_DiameterDimension)& another,
-   const Handle(IGESDimen_DiameterDimension)& ent, Interface_CopyTool& TC) const
-{
-  DeclareAndCast(IGESDimen_GeneralNote, note, 
-		 TC.Transferred(another->Note()));
-  DeclareAndCast(IGESDimen_LeaderArrow, firstLeader, 
-		 TC.Transferred(another->FirstLeader()));
-  DeclareAndCast(IGESDimen_LeaderArrow, secondLeader, 
-		 TC.Transferred(another->SecondLeader()));
-  gp_XY center = (another->Center()).XY();
-
-  ent->Init(note, firstLeader, secondLeader, center);
-}
-
 IGESData_DirChecker  IGESDimen_ToolDiameterDimension::DirChecker
   (const Handle(IGESDimen_DiameterDimension)& /* ent */) const 
 { 
@@ -109,12 +89,6 @@ IGESData_DirChecker  IGESDimen_ToolDiameterDimension::DirChecker
   DC.Color(IGESData_DefAny);
   DC.UseFlagRequired(1);
   return DC;
-}
-
-void  IGESDimen_ToolDiameterDimension::OwnCheck
-  (const Handle(IGESDimen_DiameterDimension)& /* ent */,
-   const Interface_ShareTool& , Handle(Interface_Check)& /* ach */) const 
-{
 }
 
 void  IGESDimen_ToolDiameterDimension::OwnDump

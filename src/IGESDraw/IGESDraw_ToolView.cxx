@@ -27,14 +27,11 @@
 #include <IGESDraw_View.hxx>
 #include <IGESGeom_Plane.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-
-IGESDraw_ToolView::IGESDraw_ToolView ()    {  }
 
 
 void IGESDraw_ToolView::ReadOwnParams
@@ -101,29 +98,6 @@ void  IGESDraw_ToolView::OwnShared
   iter.GetOneItem(ent->BottomPlane());
   iter.GetOneItem(ent->BackPlane());
   iter.GetOneItem(ent->FrontPlane());
-}
-
-void IGESDraw_ToolView::OwnCopy
-  (const Handle(IGESDraw_View)& another,
-   const Handle(IGESDraw_View)& ent, Interface_CopyTool& TC) const
-{
-  Standard_Integer tempViewNumber = another->ViewNumber();
-  Standard_Real tempScaleFactor = another->ScaleFactor();
-  DeclareAndCast(IGESGeom_Plane, tempLeftPlane,
-                 TC.Transferred(another->LeftPlane()));
-  DeclareAndCast(IGESGeom_Plane, tempTopPlane,
-                 TC.Transferred(another->TopPlane()));
-  DeclareAndCast(IGESGeom_Plane, tempRightPlane,
-                 TC.Transferred(another->RightPlane()));
-  DeclareAndCast(IGESGeom_Plane, tempBottomPlane,
-                 TC.Transferred(another->BottomPlane()));
-  DeclareAndCast(IGESGeom_Plane, tempBackPlane,
-                 TC.Transferred(another->BackPlane()));
-  DeclareAndCast(IGESGeom_Plane, tempFrontPlane,
-                 TC.Transferred(another->FrontPlane()));
-
-  ent->Init(tempViewNumber, tempScaleFactor, tempLeftPlane, tempTopPlane,
-	    tempRightPlane, tempBottomPlane, tempBackPlane, tempFrontPlane);
 }
 
 IGESData_DirChecker IGESDraw_ToolView::DirChecker

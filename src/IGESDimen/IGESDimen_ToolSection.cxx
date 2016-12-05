@@ -29,15 +29,12 @@
 #include <IGESDimen_Section.hxx>
 #include <IGESDimen_ToolSection.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
 #include <TColgp_HArray1OfXY.hxx>
-
-IGESDimen_ToolSection::IGESDimen_ToolSection ()    {  }
 
 
 void  IGESDimen_ToolSection::ReadOwnParams
@@ -84,31 +81,6 @@ void  IGESDimen_ToolSection::WriteOwnParams
       IW.Send((ent->Point(i)).X());
       IW.Send((ent->Point(i)).Y());
     }
-}
-
-void  IGESDimen_ToolSection::OwnShared
-  (const Handle(IGESDimen_Section)& /* ent */, Interface_EntityIterator& /* iter */) const
-{
-}
-
-void  IGESDimen_ToolSection::OwnCopy
-  (const Handle(IGESDimen_Section)& another,
-   const Handle(IGESDimen_Section)& ent, Interface_CopyTool& /* TC */) const
-{
-  Standard_Integer datatype = another->Datatype();
-  Standard_Integer nbval = another->NbPoints();
-  Standard_Real zDisplacement = another->ZDisplacement();
-
-  Handle(TColgp_HArray1OfXY) dataPoints = new TColgp_HArray1OfXY(1, nbval);
-
-  for (Standard_Integer i = 1; i <= nbval; i++)
-    {
-      gp_Pnt tempPnt = (another->Point(i));
-      gp_XY tempPnt2d(tempPnt.X(), tempPnt.Y());
-      dataPoints->SetValue(i, tempPnt2d);
-    }
-  ent->Init(datatype, zDisplacement, dataPoints);
-  ent->SetFormNumber (another->FormNumber());
 }
 
 Standard_Boolean  IGESDimen_ToolSection::OwnCorrect

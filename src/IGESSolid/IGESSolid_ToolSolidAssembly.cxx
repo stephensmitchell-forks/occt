@@ -30,14 +30,11 @@
 #include <IGESSolid_SolidAssembly.hxx>
 #include <IGESSolid_ToolSolidAssembly.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-
-IGESSolid_ToolSolidAssembly::IGESSolid_ToolSolidAssembly ()    {  }
 
 
 void  IGESSolid_ToolSolidAssembly::ReadOwnParams
@@ -96,44 +93,6 @@ void  IGESSolid_ToolSolidAssembly::WriteOwnParams
     IW.Send(ent->TransfMatrix(i));
 }
 
-void  IGESSolid_ToolSolidAssembly::OwnShared
-  (const Handle(IGESSolid_SolidAssembly)& ent, Interface_EntityIterator& iter) const
-{
-  Standard_Integer nbitems = ent->NbItems();
-  Standard_Integer i;
-  for (i = 1; i <= nbitems; i ++)    iter.GetOneItem(ent->Item(i));
-  for (i = 1; i <= nbitems; i ++)    iter.GetOneItem(ent->TransfMatrix(i));
-}
-
-void  IGESSolid_ToolSolidAssembly::OwnCopy
-  (const Handle(IGESSolid_SolidAssembly)& another,
-   const Handle(IGESSolid_SolidAssembly)& ent, Interface_CopyTool& TC) const
-{
-  Standard_Integer nbitems, i;
-  Handle(IGESData_IGESEntity) anent;
-
-  nbitems = another->NbItems();
-  Handle(IGESData_HArray1OfIGESEntity) tempItems = new
-    IGESData_HArray1OfIGESEntity(1, nbitems);
-  Handle(IGESGeom_HArray1OfTransformationMatrix) tempMatrices = new
-    IGESGeom_HArray1OfTransformationMatrix(1, nbitems);
-
-  for (i=1; i<=nbitems; i++)
-    {
-      DeclareAndCast(IGESData_IGESEntity, localent,
-		     TC.Transferred(another->Item(i)));
-      tempItems->SetValue(i, localent);
-    }
-  for (i=1; i<=nbitems; i++)
-    {
-      DeclareAndCast(IGESGeom_TransformationMatrix, newlocalent,
-		     TC.Transferred(another->TransfMatrix(i)));
-      tempMatrices->SetValue(i, newlocalent);
-    }
-
-  ent->Init(tempItems, tempMatrices);
-}
-
 IGESData_DirChecker  IGESSolid_ToolSolidAssembly::DirChecker
   (const Handle(IGESSolid_SolidAssembly)& /* ent */ ) const
 {
@@ -146,12 +105,6 @@ IGESData_DirChecker  IGESSolid_ToolSolidAssembly::DirChecker
   DC.UseFlagRequired (2);
   DC.GraphicsIgnored (1);
   return DC;
-}
-
-void  IGESSolid_ToolSolidAssembly::OwnCheck
-  (const Handle(IGESSolid_SolidAssembly)& /* ent */,
-   const Interface_ShareTool& , Handle(Interface_Check)& /* ach */) const
-{
 }
 
 void  IGESSolid_ToolSolidAssembly::OwnDump

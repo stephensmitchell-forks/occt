@@ -50,18 +50,6 @@ class Interface_ReaderModule : public MMgt_TShared
   //! In case of Error or Warning, fills <ach> with messages
   //! Remark that the Case Number comes from translating a record
   Standard_EXPORT virtual void Read (const Standard_Integer casenum, const Handle(Interface_FileReaderData)& data, const Standard_Integer num, Handle(Interface_Check)& ach, const Handle(Standard_Transient)& ent) const = 0;
-  
-  //! Specific operator (create+read) defaulted to do nothing.
-  //! It can be redefined when it is not possible to work in two
-  //! steps (NewVoid then Read). This occurs when no default
-  //! constructor is defined : hence the result <ent> must be
-  //! created with an effective definition from the reader.
-  //! Remark : if NewRead is defined, Copy has nothing to do.
-  //!
-  //! Returns True if it has produced something, false else.
-  //! If nothing was produced, <ach> should be filled : it will be
-  //! treated as "Unrecognized case" by reader tool.
-  Standard_EXPORT virtual Standard_Boolean NewRead (const Standard_Integer casenum, const Handle(Interface_FileReaderData)& data, const Standard_Integer num, Handle(Interface_Check)& ach, Handle(Standard_Transient)& ent) const;
 
   DEFINE_STANDARD_RTTIEXT(Interface_ReaderModule,MMgt_TShared)
 };

@@ -19,15 +19,11 @@
 #include <IGESAppli_PWBArtworkStackup.hxx>
 #include <Standard_DimensionMismatch.hxx>
 #include <Standard_OutOfRange.hxx>
-#include <Standard_Type.hxx>
 #include <TCollection_HAsciiString.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESAppli_PWBArtworkStackup,IGESData_IGESEntity)
 
-IGESAppli_PWBArtworkStackup::IGESAppli_PWBArtworkStackup ()    {  }
-
-
-    void  IGESAppli_PWBArtworkStackup::Init
+void IGESAppli_PWBArtworkStackup::Init
   (const Standard_Integer nbPropVal,
    const Handle(TCollection_HAsciiString)& anArtIdent,
    const Handle(TColStd_HArray1OfInteger)& allLevelNums)
@@ -40,23 +36,12 @@ IGESAppli_PWBArtworkStackup::IGESAppli_PWBArtworkStackup ()    {  }
   InitTypeAndForm(406,25);
 }
 
-    Standard_Integer  IGESAppli_PWBArtworkStackup::NbPropertyValues () const
-{
-  return theNbPropertyValues;
-}
-
-    Handle(TCollection_HAsciiString)  IGESAppli_PWBArtworkStackup::Identification () const
-{
-  return theArtworkStackupIdent;
-}
-
-    Standard_Integer  IGESAppli_PWBArtworkStackup::NbLevelNumbers () const
+Standard_Integer IGESAppli_PWBArtworkStackup::NbLevelNumbers () const
 {
   return theLevelNumbers->Length();
 }
 
-    Standard_Integer  IGESAppli_PWBArtworkStackup::LevelNumber
-  (const Standard_Integer Index) const
+Standard_Integer IGESAppli_PWBArtworkStackup::LevelNumber (const Standard_Integer Index) const
 {
   return theLevelNumbers->Value(Index);
 }

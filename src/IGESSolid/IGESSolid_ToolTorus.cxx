@@ -29,13 +29,10 @@
 #include <IGESSolid_ToolTorus.hxx>
 #include <IGESSolid_Torus.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-
-IGESSolid_ToolTorus::IGESSolid_ToolTorus ()    {  }
 
 
 void  IGESSolid_ToolTorus::ReadOwnParams
@@ -118,19 +115,6 @@ void  IGESSolid_ToolTorus::WriteOwnParams
   IW.Send(ent->Axis().Z());
 }
 
-void  IGESSolid_ToolTorus::OwnShared
-  (const Handle(IGESSolid_Torus)& /* ent */, Interface_EntityIterator& /* iter */) const
-{
-}
-
-void  IGESSolid_ToolTorus::OwnCopy
-  (const Handle(IGESSolid_Torus)& another,
-   const Handle(IGESSolid_Torus)& ent, Interface_CopyTool& /* TC */) const
-{
-  ent->Init (another->MajorRadius(), another->DiscRadius(),
-	     another->AxisPoint().XYZ(), another->Axis().XYZ());
-}
-
 IGESData_DirChecker  IGESSolid_ToolTorus::DirChecker
   (const Handle(IGESSolid_Torus)& /* ent */ ) const
 {
@@ -143,18 +127,6 @@ IGESData_DirChecker  IGESSolid_ToolTorus::DirChecker
   DC.UseFlagRequired (0);
   DC.HierarchyStatusIgnored ();
   return DC;
-}
-
-void  IGESSolid_ToolTorus::OwnCheck
-  (const Handle(IGESSolid_Torus)& ent,
-   const Interface_ShareTool& , Handle(Interface_Check)& ach) const
-{
-  if (ent->MajorRadius() <= 0.0)
-    ach->AddFail("Radius of revolution : Not Positive");
-  if (ent->DiscRadius() <= 0.0)
-    ach->AddFail("Radius of disc : Not Positive");
-  if (ent->DiscRadius() >= ent->MajorRadius())
-    ach->AddFail("Radius of disc : is not Less than Radius of revolution");
 }
 
 void  IGESSolid_ToolTorus::OwnDump

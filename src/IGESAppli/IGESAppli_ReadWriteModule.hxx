@@ -37,12 +37,10 @@ DEFINE_STANDARD_HANDLE(IGESAppli_ReadWriteModule, IGESData_ReadWriteModule)
 //! an IGESEntity.
 class IGESAppli_ReadWriteModule : public IGESData_ReadWriteModule
 {
+ public:
 
-public:
-
-  
   //! Creates a ReadWriteModule & puts it into ReaderLib & WriterLib
-  Standard_EXPORT IGESAppli_ReadWriteModule();
+  IGESAppli_ReadWriteModule() {}
   
   //! Defines Case Numbers for Entities of IGESAppli
   Standard_EXPORT Standard_Integer CaseIGES (const Standard_Integer typenum, const Standard_Integer formnum) const Standard_OVERRIDE;
@@ -53,27 +51,7 @@ public:
   //! Writes own parameters to IGESWriter
   Standard_EXPORT void WriteOwnParams (const Standard_Integer CN, const Handle(IGESData_IGESEntity)& ent, IGESData_IGESWriter& IW) const Standard_OVERRIDE;
 
-
-
-
   DEFINE_STANDARD_RTTIEXT(IGESAppli_ReadWriteModule,IGESData_ReadWriteModule)
-
-protected:
-
-
-
-
-private:
-
-
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESAppli_ReadWriteModule_HeaderFile

@@ -30,7 +30,6 @@
 #include <IGESSolid_Shell.hxx>
 #include <IGESSolid_ToolShell.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
@@ -38,15 +37,6 @@
 #include <Message_Msg.hxx>
 #include <Standard_DomainError.hxx>
 #include <TColStd_HArray1OfInteger.hxx>
-
-// MGE 03/08/98
-//=======================================================================
-//function : IGESSolid_ToolShell
-//purpose  : 
-//=======================================================================
-IGESSolid_ToolShell::IGESSolid_ToolShell ()
-{
-}
 
 
 //=======================================================================
@@ -141,46 +131,6 @@ void IGESSolid_ToolShell::WriteOwnParams(const Handle(IGESSolid_Shell)& ent,
 
 
 //=======================================================================
-//function : OwnShared
-//purpose  : 
-//=======================================================================
-
-void IGESSolid_ToolShell::OwnShared(const Handle(IGESSolid_Shell)& ent,
-                                    Interface_EntityIterator& iter) const
-{
-  Standard_Integer nbfaces = ent->NbFaces();
-  for (Standard_Integer i = 1; i <= nbfaces; i ++)
-    iter.GetOneItem(ent->Face(i));
-}
-
-
-//=======================================================================
-//function : OwnCopy
-//purpose  : 
-//=======================================================================
-
-void IGESSolid_ToolShell::OwnCopy(const Handle(IGESSolid_Shell)& another,
-                                  const Handle(IGESSolid_Shell)& ent,
-                                  Interface_CopyTool& TC) const
-{
-  Standard_Integer nbfaces = another->NbFaces();
-
-  Handle(IGESSolid_HArray1OfFace) tempFaces = new
-    IGESSolid_HArray1OfFace(1, nbfaces);
-  Handle(TColStd_HArray1OfInteger) tempOrientation = new
-    TColStd_HArray1OfInteger(1, nbfaces);
-  for (Standard_Integer i=1; i<=nbfaces; i++)
-    {
-      DeclareAndCast(IGESSolid_Face, face,
-		     TC.Transferred(another->Face(i)));
-      tempFaces->SetValue(i, face);
-      tempOrientation->SetValue(i, (another->Orientation(i) ? 1 : 0) );
-    }
-  ent->Init (tempFaces, tempOrientation);
-}
-
-
-//=======================================================================
 //function : DirChecker
 //purpose  : 
 //=======================================================================
@@ -197,28 +147,6 @@ IGESData_DirChecker IGESSolid_ToolShell::DirChecker
 
   DC.SubordinateStatusRequired(1);
   return DC;
-}
-
-
-//=======================================================================
-//function : OwnCheck
-//purpose  : 
-//=======================================================================
-
-void IGESSolid_ToolShell::OwnCheck(const Handle(IGESSolid_Shell)& ent,
-                                   const Interface_ShareTool&,
-                                   Handle(Interface_Check)& ach) const
-{
-  // MGE 03/08/98
-  // Building of messages
-  //========================================
-  //Message_Msg Msg200("XSTEP_200");
-  //========================================
-
-  if (ent->NbFaces() <= 0) {
-    Message_Msg Msg200("XSTEP_200");
-    ach->SendFail(Msg200);
-  }
 }
 
 

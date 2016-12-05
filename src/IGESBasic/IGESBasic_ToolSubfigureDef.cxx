@@ -28,7 +28,6 @@
 #include <IGESData_ParamCursor.hxx>
 #include <IGESData_ParamReader.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
@@ -36,9 +35,6 @@
 #include <Message_Msg.hxx>
 #include <Standard_DomainError.hxx>
 #include <TCollection_HAsciiString.hxx>
-
-// MGE 03/08/98
-IGESBasic_ToolSubfigureDef::IGESBasic_ToolSubfigureDef ()    {  }
 
 
 void  IGESBasic_ToolSubfigureDef::ReadOwnParams
@@ -95,28 +91,6 @@ void  IGESBasic_ToolSubfigureDef::OwnShared
   Standard_Integer nb = ent->NbEntities();
   for (Standard_Integer i = 1; i <= nb; i ++)
     iter.GetOneItem(ent->AssociatedEntity(i));
-}
-
-void  IGESBasic_ToolSubfigureDef::OwnCopy
-  (const Handle(IGESBasic_SubfigureDef)& another,
-   const Handle(IGESBasic_SubfigureDef)& ent, Interface_CopyTool& TC) const
-{
-  Standard_Integer lower,upper;
-  Standard_Integer aDepth = another->Depth();
-  Handle(TCollection_HAsciiString) aName =
-    new TCollection_HAsciiString(another->Name());
-
-  lower = 1;
-  upper = another->NbEntities();
-  Handle(IGESData_HArray1OfIGESEntity)  EntArray = new
-    IGESData_HArray1OfIGESEntity(lower,upper);
-  for (Standard_Integer i = lower;i <= upper;i++)
-    {
-      DeclareAndCast(IGESData_IGESEntity,myentity,
-                     TC.Transferred(another->AssociatedEntity(i)));
-      EntArray->SetValue(i,myentity);
-    }
-  ent->Init(aDepth,aName,EntArray);
 }
 
 IGESData_DirChecker  IGESBasic_ToolSubfigureDef::DirChecker

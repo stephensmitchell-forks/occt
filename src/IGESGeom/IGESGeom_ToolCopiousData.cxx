@@ -27,7 +27,6 @@
 #include <IGESGeom_CopiousData.hxx>
 #include <IGESGeom_ToolCopiousData.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
@@ -35,15 +34,6 @@
 #include <Message_Msg.hxx>
 #include <Standard_DomainError.hxx>
 #include <TColStd_HArray1OfReal.hxx>
-
-// MGE 28/07/98
-//=======================================================================
-//function : IGESGeom_ToolCopiousData
-//purpose  : 
-//=======================================================================
-IGESGeom_ToolCopiousData::IGESGeom_ToolCopiousData ()
-{
-}
 
 
 //=======================================================================
@@ -129,69 +119,6 @@ void IGESGeom_ToolCopiousData::WriteOwnParams(const Handle(IGESGeom_CopiousData)
     IW.Send( ent->Data(I,5) );
     IW.Send( ent->Data(I,6) );
   }
-}
-
-
-//=======================================================================
-//function : OwnShared
-//purpose  : 
-//=======================================================================
-
-void IGESGeom_ToolCopiousData::OwnShared(const Handle(IGESGeom_CopiousData)& /* ent */,
-                                         Interface_EntityIterator& /* iter */) const
-{
-}
-
-
-//=======================================================================
-//function : OwnCopy
-//purpose  : 
-//=======================================================================
-
-void IGESGeom_ToolCopiousData::OwnCopy(const Handle(IGESGeom_CopiousData)& another,
-                                       const Handle(IGESGeom_CopiousData)& ent,
-                                       Interface_CopyTool& /* TC */) const
-{
-  Standard_Integer upper;
-  Standard_Real    aZPlane   = 0;
-  Standard_Integer nbTuples  = another->NbPoints();
-  Standard_Integer aDataType = another->DataType();
-  Handle(TColStd_HArray1OfReal) allData;
-
-  if      (aDataType == 1)    upper = 2*nbTuples;
-  else if (aDataType == 2)    upper = 3*nbTuples;
-  else                        upper = 6*nbTuples;
-
-  allData = new TColStd_HArray1OfReal(1, upper);
-
-  if (aDataType == 1)    aZPlane = another->ZPlane();
-
-  for (Standard_Integer I = 1; I <= nbTuples; I++)  {
-
-    switch (aDataType) {
-    case 1:
-      allData->SetValue(2*I-1, another->Data(I,1));
-      allData->SetValue(2*I  , another->Data(I,2));
-      break;
-    case 2:
-      allData->SetValue(3*I-2, another->Data(I,1));
-      allData->SetValue(3*I-1, another->Data(I,2));
-      allData->SetValue(3*I  , another->Data(I,3));
-      break;
-    case 3:
-      allData->SetValue(6*I-5, another->Data(I,1));
-      allData->SetValue(6*I-4, another->Data(I,2));
-      allData->SetValue(6*I-3, another->Data(I,3));
-      allData->SetValue(6*I-2, another->Data(I,4));
-      allData->SetValue(6*I-1, another->Data(I,5));
-      allData->SetValue(6*I  , another->Data(I,6));
-      break;
-    }
-  }
-
-  ent->Init(aDataType, aZPlane, allData);
-  if (another->IsClosedPath2D()) ent->SetClosedPath2D();
-  else  ent->SetPolyline (another->IsPolyline());
 }
 
 

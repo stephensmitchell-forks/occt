@@ -26,13 +26,10 @@
 #include <IGESData_ParamCursor.hxx>
 #include <IGESData_ParamReader.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-
-IGESAppli_ToolLineWidening::IGESAppli_ToolLineWidening ()    {  }
 
 
 void  IGESAppli_ToolLineWidening::ReadOwnParams
@@ -74,21 +71,6 @@ void  IGESAppli_ToolLineWidening::WriteOwnParams
   IW.Send(ent->ExtensionValue());
 }
 
-void  IGESAppli_ToolLineWidening::OwnShared
-  (const Handle(IGESAppli_LineWidening)& /*ent*/, Interface_EntityIterator& /*iter*/) const
-{
-}
-
-void  IGESAppli_ToolLineWidening::OwnCopy
-  (const Handle(IGESAppli_LineWidening)& another,
-   const Handle(IGESAppli_LineWidening)& ent, Interface_CopyTool& /*TC*/) const
-{
-  ent->Init
-    (5,another->WidthOfMetalization(),another->CorneringCode(),
-     another->ExtensionFlag(),another->JustificationFlag(),
-     another->ExtensionValue());
-}
-
 Standard_Boolean  IGESAppli_ToolLineWidening::OwnCorrect
   (const Handle(IGESAppli_LineWidening)& ent) const
 {
@@ -114,24 +96,6 @@ IGESData_DirChecker  IGESAppli_ToolLineWidening::DirChecker
   DC.UseFlagIgnored();
   DC.HierarchyStatusIgnored();
   return DC;
-}
-
-void  IGESAppli_ToolLineWidening::OwnCheck
-  (const Handle(IGESAppli_LineWidening)& ent,
-   const Interface_ShareTool& , Handle(Interface_Check)& ach) const
-{
-  if (ent->SubordinateStatus() != 0)
-    if (ent->DefLevel() == IGESData_DefOne ||
-	ent->DefLevel() == IGESData_DefSeveral)
-      ach->AddWarning("Level type: defined while ignored");
-  if (ent->NbPropertyValues() != 5)
-    ach->AddFail("Number of Property Values != 5");
-  if (ent->CorneringCode() != 0 && ent->CorneringCode() != 1)
-    ach->AddFail("Cornering Code incorrect");
-  if (ent->ExtensionFlag() < 0 || ent->ExtensionFlag() > 2)
-    ach->AddFail("Extension Flag value incorrect");
-  if (ent->JustificationFlag() < 0 || ent->JustificationFlag() > 2)
-    ach->AddFail("Justification Flag value incorrect");
 }
 
 void  IGESAppli_ToolLineWidening::OwnDump

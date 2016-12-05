@@ -158,8 +158,6 @@ Standard_Integer StepFile_Read
 //   Analyse : par StepReaderTool
 
   StepData_StepReaderTool readtool (undirec,protocol);
-
-  readtool.PrepareHeader();
   readtool.Prepare();
 
 #ifdef CHRONOMESURE

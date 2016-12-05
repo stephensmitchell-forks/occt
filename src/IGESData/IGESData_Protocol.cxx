@@ -36,10 +36,6 @@ IMPLEMENT_STANDARD_RTTIEXT(IGESData_Protocol,Interface_Protocol)
     Handle(Interface_InterfaceModel) IGESData_Protocol::NewModel () const
       {  return new IGESData_IGESModel;  }
 
-    Standard_Boolean IGESData_Protocol::IsSuitableModel
-  (const Handle(Interface_InterfaceModel)& model) const
-      {  return model->IsKind(STANDARD_TYPE(IGESData_IGESModel));  }
-
     Handle(Standard_Transient) IGESData_Protocol::UnknownEntity () const
       {  return new IGESData_UndefinedEntity;  }
 

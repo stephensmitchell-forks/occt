@@ -17,11 +17,7 @@
 #ifndef _IGESSolid_PlaneSurface_HeaderFile
 #define _IGESSolid_PlaneSurface_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
 #include <IGESData_IGESEntity.hxx>
-#include <Standard_Boolean.hxx>
 class IGESGeom_Point;
 class IGESGeom_Direction;
 
@@ -35,11 +31,9 @@ DEFINE_STANDARD_HANDLE(IGESSolid_PlaneSurface, IGESData_IGESEntity)
 //! surface and a normal to it.
 class IGESSolid_PlaneSurface : public IGESData_IGESEntity
 {
+ public:
 
-public:
-
-  
-  Standard_EXPORT IGESSolid_PlaneSurface();
+  IGESSolid_PlaneSurface() {}
   
   //! This method is used to set the fields of the class
   //! PlaneSurface
@@ -50,42 +44,29 @@ public:
   Standard_EXPORT void Init (const Handle(IGESGeom_Point)& aLocation, const Handle(IGESGeom_Direction)& aNormal, const Handle(IGESGeom_Direction)& refdir);
   
   //! returns the point on the surface
-  Standard_EXPORT Handle(IGESGeom_Point) LocationPoint() const;
-  
+  const Handle(IGESGeom_Point) & LocationPoint() const { return theLocationPoint; }
+
   //! returns the normal to the surface
-  Standard_EXPORT Handle(IGESGeom_Direction) Normal() const;
-  
+  const Handle(IGESGeom_Direction) & Normal() const { return theNormal; }
+
   //! returns the reference direction (for parameterised curve)
   //! returns NULL for unparameterised curve
-  Standard_EXPORT Handle(IGESGeom_Direction) ReferenceDir() const;
-  
+  const Handle(IGESGeom_Direction) & ReferenceDir() const { return theRefDir; }
+
   //! returns True if parameterised, else False
-  Standard_EXPORT Standard_Boolean IsParametrised() const;
+  Standard_Boolean IsParametrised() const { return (!theRefDir.IsNull()); }
 
+  Standard_EXPORT virtual void OwnShared(Interface_EntityIterator &theIter) const Standard_OVERRIDE;
 
-
+  Standard_EXPORT virtual void OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESSolid_PlaneSurface,IGESData_IGESEntity)
 
-protected:
-
-
-
-
-private:
-
+ private:
 
   Handle(IGESGeom_Point) theLocationPoint;
   Handle(IGESGeom_Direction) theNormal;
   Handle(IGESGeom_Direction) theRefDir;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESSolid_PlaneSurface_HeaderFile

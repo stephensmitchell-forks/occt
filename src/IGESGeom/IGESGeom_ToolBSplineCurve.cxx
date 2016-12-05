@@ -28,7 +28,6 @@
 #include <IGESGeom_BSplineCurve.hxx>
 #include <IGESGeom_ToolBSplineCurve.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
@@ -37,15 +36,6 @@
 #include <Standard_DomainError.hxx>
 #include <TColgp_HArray1OfXYZ.hxx>
 #include <TColStd_HArray1OfReal.hxx>
-
-// MGE 29/07/98
-//=======================================================================
-//function : IGESGeom_ToolBSplineCurve
-//purpose  : 
-//=======================================================================
-IGESGeom_ToolBSplineCurve::IGESGeom_ToolBSplineCurve ()
-{
-}
 
 
 //=======================================================================
@@ -238,70 +228,6 @@ void IGESGeom_ToolBSplineCurve::WriteOwnParams
   IW.Send(ent->Normal().X());
   IW.Send(ent->Normal().Y());
   IW.Send(ent->Normal().Z());
-}
-
-
-//=======================================================================
-//function : OwnShared
-//purpose  : 
-//=======================================================================
-
-void IGESGeom_ToolBSplineCurve::OwnShared(const Handle(IGESGeom_BSplineCurve)& /* ent */,
-                                          Interface_EntityIterator& /* iter */) const
-{
-}
-
-
-//=======================================================================
-//function : OwnCopy
-//purpose  : 
-//=======================================================================
-
-void IGESGeom_ToolBSplineCurve::OwnCopy 
-  (const Handle(IGESGeom_BSplineCurve)& another,
-   const Handle(IGESGeom_BSplineCurve)& ent, Interface_CopyTool& /* TC */) const
-{
-  Standard_Integer I;
-  Standard_Integer low, up;
-  Standard_Integer anIndex, aDegree;
-  Standard_Boolean aPlanar, aClosed, aPolynomial, aPeriodic;
-  Handle(TColStd_HArray1OfReal) allKnots, allWeights;
-  Handle(TColgp_HArray1OfXYZ) allPoles;
-  Standard_Real aUmin, aUmax;
-  gp_XYZ aNorm;
-
-  anIndex = another->UpperIndex();
-  aDegree = another->Degree();
-  aPlanar = another->IsPlanar();
-  aClosed = another->IsClosed();
-  aPolynomial = another->IsPolynomial();
-  aPeriodic = another->IsPeriodic();
-
-  allKnots = new TColStd_HArray1OfReal(-aDegree, anIndex+1);
-
-  low = -aDegree;
-  up  = anIndex + 1;
-  for (I = low; I <= up; I++)
-    allKnots->SetValue(I, another->Knot(I));
-
-  allWeights = new TColStd_HArray1OfReal(0, anIndex);
-
-  low = 0;
-  up  = anIndex;
-  for (I = low; I <= up; I++)
-    allWeights->SetValue(I, another->Weight(I));
-
-  allPoles = new TColgp_HArray1OfXYZ(0, anIndex);
-
-  for (I = low; I <= up; I++) 
-    allPoles->SetValue(I, (another->Pole(I)).XYZ());
-
-  aUmin = another->UMin();
-  aUmax = another->UMax();
-  aNorm = another->Normal();
-
-  ent->Init (anIndex,aDegree, aPlanar, aClosed, aPolynomial, aPeriodic,
-	     allKnots, allWeights, allPoles, aUmin, aUmax, aNorm);
 }
 
 

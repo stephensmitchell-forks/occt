@@ -29,7 +29,6 @@ class Interface_UndefinedContent;
 class StepData_StepReaderData;
 class Interface_Check;
 class StepData_StepWriter;
-class Interface_CopyTool;
 class Interface_EntityIterator;
 
 
@@ -43,10 +42,8 @@ DEFINE_STANDARD_HANDLE(StepData_UndefinedEntity, MMgt_TShared)
 //! ANDOR clause in Express).
 class StepData_UndefinedEntity : public MMgt_TShared
 {
+ public:
 
-public:
-
-  
   //! creates an Unknown entity
   Standard_EXPORT StepData_UndefinedEntity();
   
@@ -84,37 +81,17 @@ public:
   //! write data to StepWriter, taken from UndefinedContent
   Standard_EXPORT void WriteParams (StepData_StepWriter& SW) const;
   
-  //! reads another UndefinedEntity from StepData
-  Standard_EXPORT void GetFromAnother (const Handle(StepData_UndefinedEntity)& other, Interface_CopyTool& TC);
-  
   //! Fills the list of shared entities
   Standard_EXPORT void FillShared (Interface_EntityIterator& list) const;
 
-
-
-
   DEFINE_STANDARD_RTTIEXT(StepData_UndefinedEntity,MMgt_TShared)
 
-protected:
-
-
-
-
-private:
-
+ private:
 
   Handle(TCollection_HAsciiString) thetype;
   Handle(Interface_UndefinedContent) thecont;
   Standard_Boolean thesub;
   Handle(StepData_UndefinedEntity) thenext;
-
-
 };
-
-
-
-
-
-
 
 #endif // _StepData_UndefinedEntity_HeaderFile

@@ -19,7 +19,7 @@
 
 #include <Standard.hxx>
 #include <Standard_Handle.hxx>
-class IGESSolid_Protocol;
+/*class IGESSolid_Protocol;
 
 
 //! This package consists of B-Rep and CSG Solid entities
@@ -28,10 +28,10 @@ class IGESSolid
  public:
 
   //! Prepares dynamic data (Protocol, Modules) for this package
-  Standard_EXPORT static void Init();
+  //Standard_EXPORT static void Init();
   
   //! Returns the Protocol for this Package
-  Standard_EXPORT static const Handle(IGESSolid_Protocol) & Protocol();
+  //Standard_EXPORT static const Handle(IGESSolid_Protocol) & Protocol();
 };
-
+*/
 #endif // _IGESSolid_HeaderFile

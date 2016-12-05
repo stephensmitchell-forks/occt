@@ -30,14 +30,11 @@
 #include <IGESGeom_Flash.hxx>
 #include <IGESGeom_ToolFlash.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-
-IGESGeom_ToolFlash::IGESGeom_ToolFlash ()    {  }
 
 
 void IGESGeom_ToolFlash::ReadOwnParams
@@ -98,21 +95,6 @@ void  IGESGeom_ToolFlash::OwnShared
   (const Handle(IGESGeom_Flash)& ent, Interface_EntityIterator& iter) const
 {
   iter.GetOneItem( ent->ReferenceEntity() );
-}
-
-void IGESGeom_ToolFlash::OwnCopy
-  (const Handle(IGESGeom_Flash)& another,
-   const Handle(IGESGeom_Flash)& ent, Interface_CopyTool& TC) const
-{
-  gp_XY aPoint = (another->ReferencePoint()).XY();
-  Standard_Real aDim1 = another->Dimension1();
-  Standard_Real aDim2 = another->Dimension2();
-  Standard_Real aRotation = another->Rotation();
-
-  DeclareAndCast(IGESData_IGESEntity, aReference,
-		 TC.Transferred(another->ReferenceEntity()));
-
-  ent->Init(aPoint, aDim1, aDim2, aRotation, aReference);
 }
 
 Standard_Boolean  IGESGeom_ToolFlash::OwnCorrect

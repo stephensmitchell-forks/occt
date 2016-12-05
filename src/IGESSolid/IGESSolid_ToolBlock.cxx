@@ -29,14 +29,10 @@
 #include <IGESSolid_Block.hxx>
 #include <IGESSolid_ToolBlock.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-
-IGESSolid_ToolBlock::IGESSolid_ToolBlock ()    {  }
-
 
 void IGESSolid_ToolBlock::ReadOwnParams
   (const Handle(IGESSolid_Block)& ent,
@@ -146,19 +142,6 @@ void  IGESSolid_ToolBlock::WriteOwnParams
   IW.Send(ent->ZAxis().Z());
 }
 
-void  IGESSolid_ToolBlock::OwnShared
-  (const Handle(IGESSolid_Block)& /* ent */, Interface_EntityIterator& /* iter */) const
-{
-}
-
-void IGESSolid_ToolBlock::OwnCopy
-  (const Handle(IGESSolid_Block)& another,
-   const Handle(IGESSolid_Block)& ent, Interface_CopyTool& /* TC */) const
-{
-  ent->Init(another->Size(), another->Corner().XYZ(),
-	    another->XAxis().XYZ(), another->ZAxis().XYZ());
-}
-
 IGESData_DirChecker  IGESSolid_ToolBlock::DirChecker
   (const Handle(IGESSolid_Block)& /* ent */ ) const
 {
@@ -169,18 +152,6 @@ IGESData_DirChecker  IGESSolid_ToolBlock::DirChecker
 
   DC.UseFlagRequired (0);
   return DC;
-}
-
-void  IGESSolid_ToolBlock::OwnCheck
-  (const Handle(IGESSolid_Block)& ent,
-   const Interface_ShareTool& , Handle(Interface_Check)& ach) const
-{
-  Standard_Real eps = 1.E-04;
-  Standard_Real prosca = ent->XAxis() * ent->ZAxis();
-  if (prosca < -eps || prosca > eps)
-    ach->AddFail("Local Z axis : Not orthogonal to X axis");
-  if (ent->Size().X() <= 0. || ent->Size().Y() <= 0. || ent->Size().Z() <= 0.)
-    ach->AddFail("Size : Not positive lengths");
 }
 
 void IGESSolid_ToolBlock::OwnDump

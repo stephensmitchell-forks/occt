@@ -17,13 +17,7 @@
 #ifndef _IGESAppli_PWBDrilledHole_HeaderFile
 #define _IGESAppli_PWBDrilledHole_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
-#include <Standard_Integer.hxx>
-#include <Standard_Real.hxx>
 #include <IGESData_IGESEntity.hxx>
-
 
 class IGESAppli_PWBDrilledHole;
 DEFINE_STANDARD_HANDLE(IGESAppli_PWBDrilledHole, IGESData_IGESEntity)
@@ -34,11 +28,9 @@ DEFINE_STANDARD_HANDLE(IGESAppli_PWBDrilledHole, IGESData_IGESEntity)
 //! and to specify the characteristics of the drilled hole
 class IGESAppli_PWBDrilledHole : public IGESData_IGESEntity
 {
+ public:
 
-public:
-
-  
-  Standard_EXPORT IGESAppli_PWBDrilledHole();
+  IGESAppli_PWBDrilledHole() {}
   
   //! This method is used to set the fields of the class
   //! PWBDrilledHole
@@ -49,43 +41,28 @@ public:
   Standard_EXPORT void Init (const Standard_Integer nbPropVal, const Standard_Real aDrillDia, const Standard_Real aFinishDia, const Standard_Integer aCode);
   
   //! returns number of property values, always = 3
-  Standard_EXPORT Standard_Integer NbPropertyValues() const;
-  
+  Standard_Integer NbPropertyValues() const { return theNbPropertyValues; }
+
   //! returns Drill diameter size
-  Standard_EXPORT Standard_Real DrillDiameterSize() const;
-  
+  Standard_Real DrillDiameterSize() const { return theDrillDiameter; }
+
   //! returns Finish diameter size
-  Standard_EXPORT Standard_Real FinishDiameterSize() const;
-  
+  Standard_Real FinishDiameterSize() const { return theFinishDiameter; }
+
   //! returns Function code for drilled hole
   //! is 0, 1, 2, 3, 4, 5 or 5001-9999
-  Standard_EXPORT Standard_Integer FunctionCode() const;
+  Standard_Integer FunctionCode() const { return theFunctionCode; }
 
-
-
+  Standard_EXPORT virtual void OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESAppli_PWBDrilledHole,IGESData_IGESEntity)
 
-protected:
-
-
-
-
-private:
-
+ private:
 
   Standard_Integer theNbPropertyValues;
   Standard_Real theDrillDiameter;
   Standard_Real theFinishDiameter;
   Standard_Integer theFunctionCode;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESAppli_PWBDrilledHole_HeaderFile

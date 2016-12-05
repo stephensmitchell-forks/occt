@@ -22,10 +22,7 @@
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESAppli_PinNumber,IGESData_IGESEntity)
 
-IGESAppli_PinNumber::IGESAppli_PinNumber ()    {  }
-
-
-    void  IGESAppli_PinNumber::Init
+void IGESAppli_PinNumber::Init
   (const Standard_Integer nbPropVal,
    const Handle(TCollection_HAsciiString)& aValue)
 {
@@ -34,13 +31,14 @@ IGESAppli_PinNumber::IGESAppli_PinNumber ()    {  }
   InitTypeAndForm(406,8);
 }
 
-
-    Standard_Integer  IGESAppli_PinNumber::NbPropertyValues () const
+void IGESAppli_PinNumber::OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &theCheck) const
 {
-  return theNbPropertyValues;
-}
-
-    Handle(TCollection_HAsciiString)  IGESAppli_PinNumber::PinNumberVal () const
-{
-  return thePinNumber;
+  if (SubordinateStatus() != 0)
+    if (DefLevel() != IGESData_DefOne &&
+	    DefLevel() != IGESData_DefSeveral)
+      theCheck->AddFail("Level type: Incorrect");
+  if (NbPropertyValues() != 1)
+    theCheck->AddFail("Number of Property Values != 1");
+  //UNFINISHED
+  //Level to be ignored if the property is subordinate -- queried
 }

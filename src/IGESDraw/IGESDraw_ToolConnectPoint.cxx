@@ -30,15 +30,12 @@
 #include <IGESDraw_ToolConnectPoint.hxx>
 #include <IGESGraph_TextDisplayTemplate.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
 #include <TCollection_HAsciiString.hxx>
-
-IGESDraw_ToolConnectPoint::IGESDraw_ToolConnectPoint ()    {  }
 
 
 void IGESDraw_ToolConnectPoint::ReadOwnParams
@@ -125,35 +122,6 @@ void  IGESDraw_ToolConnectPoint::OwnShared
   iter.GetOneItem(ent->IdentifierTemplate());
   iter.GetOneItem(ent->FunctionTemplate());
   iter.GetOneItem(ent->OwnerSubfigure());
-}
-
-void IGESDraw_ToolConnectPoint::OwnCopy
-  (const Handle(IGESDraw_ConnectPoint)& another,
-   const Handle(IGESDraw_ConnectPoint)& ent, Interface_CopyTool& TC) const
-{
-  gp_XYZ tempPoint = (another->Point()).XYZ();
-  DeclareAndCast(IGESData_IGESEntity, tempDisplaySymbol,
-                 TC.Transferred(another->DisplaySymbol()));
-  Standard_Integer tempTypeFlag     = another->TypeFlag();
-  Standard_Integer tempFunctionFlag = another->FunctionFlag();
-  Handle(TCollection_HAsciiString) tempFunctionIdentifier =
-    new TCollection_HAsciiString(another->FunctionIdentifier());
-  DeclareAndCast(IGESGraph_TextDisplayTemplate, tempIdentifierTemplate,
-                 TC.Transferred(another->FunctionTemplate()));
-  Handle(TCollection_HAsciiString) tempFunctionName =
-    new TCollection_HAsciiString(another->FunctionName());
-  DeclareAndCast(IGESGraph_TextDisplayTemplate, tempFunctionTemplate,
-                 TC.Transferred(another->FunctionTemplate()));
-  Standard_Integer tempPointIdentifier = another->PointIdentifier();
-  Standard_Integer tempFunctionCode    = another->FunctionCode();
-  Standard_Integer tempSwapFlag        = (another->SwapFlag() ? 1 : 0);
-  DeclareAndCast(IGESData_IGESEntity, tempOwnerSubfigure,
-                 TC.Transferred(another->OwnerSubfigure()));
-
-  ent->Init(tempPoint, tempDisplaySymbol, tempTypeFlag, tempFunctionFlag,
-	    tempFunctionIdentifier, tempIdentifierTemplate, tempFunctionName,
-	    tempFunctionTemplate, tempPointIdentifier, tempFunctionCode,
-	    tempSwapFlag, tempOwnerSubfigure);
 }
 
 IGESData_DirChecker IGESDraw_ToolConnectPoint::DirChecker

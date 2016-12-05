@@ -34,7 +34,6 @@
 #include <IGESGraph_Color.hxx>
 #include <IGESGraph_HArray1OfColor.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
@@ -43,8 +42,6 @@
 #include <TColStd_HArray1OfInteger.hxx>
 
 #include <stdio.h>
-IGESDraw_ToolViewsVisibleWithAttr::IGESDraw_ToolViewsVisibleWithAttr ()    {  }
-
 
 void IGESDraw_ToolViewsVisibleWithAttr::ReadOwnParams
   (const Handle(IGESDraw_ViewsVisibleWithAttr)& ent,
@@ -214,80 +211,6 @@ void  IGESDraw_ToolViewsVisibleWithAttr::OwnImplied
 }
 
 
-void IGESDraw_ToolViewsVisibleWithAttr::OwnCopy
-  (const Handle(IGESDraw_ViewsVisibleWithAttr)& another,
-   const Handle(IGESDraw_ViewsVisibleWithAttr)& ent, Interface_CopyTool& TC) const
-{
-  Standard_Integer I;
-  Standard_Integer up  = another->NbViews();
-  Handle(IGESDraw_HArray1OfViewKindEntity) tempViewEntities =
-    new IGESDraw_HArray1OfViewKindEntity(1, up);
-  Handle(TColStd_HArray1OfInteger) tempLineFonts =
-    new TColStd_HArray1OfInteger(1, up);
-  Handle(IGESBasic_HArray1OfLineFontEntity) tempLineDefinitions =
-    new IGESBasic_HArray1OfLineFontEntity(1, up);
-  Handle(TColStd_HArray1OfInteger) tempColorValues =
-    new TColStd_HArray1OfInteger(1, up);
-  Handle(IGESGraph_HArray1OfColor) tempColorDefinitions =
-    new IGESGraph_HArray1OfColor(1, up);
-  Handle(TColStd_HArray1OfInteger) tempLineWeights =
-    new TColStd_HArray1OfInteger(1, up);
-
-  for (I = 1; I <= up; I ++) {
-    DeclareAndCast(IGESData_ViewKindEntity, tempView,
-		   TC.Transferred(another->ViewItem(I)));
-    tempViewEntities->SetValue(I,tempView);
-    Standard_Integer tempLineFont = another->LineFontValue(I);
-    tempLineFonts->SetValue(I,tempLineFont);
-    if (another->IsFontDefinition(I)) {
-      DeclareAndCast(IGESData_LineFontEntity, tempEntity1,
-		     TC.Transferred(another->FontDefinition(I)));
-      tempLineDefinitions->SetValue(I,tempEntity1);
-    }
-    if (another->IsColorDefinition(I)) {
-      DeclareAndCast(IGESGraph_Color, tempEntity2,
-		     TC.Transferred(another->ColorDefinition(I)));
-      tempColorDefinitions->SetValue(I,tempEntity2);
-    }
-    else {
-      Standard_Integer tempColorValue = another->ColorValue(I);
-      tempColorValues->SetValue(I,tempColorValue);
-    }
-    Standard_Integer tempLineWeight = another->LineWeightItem(I);
-    tempLineWeights->SetValue(I, tempLineWeight);
-  }
-//  Displayed -> Implied : mettre une liste vide par defaut
-  Handle(IGESData_HArray1OfIGESEntity) tempDisplayEntities;
-  ent->Init(tempViewEntities, tempLineFonts, tempLineDefinitions,
-	    tempColorValues, tempColorDefinitions, tempLineWeights,
-	    tempDisplayEntities);
-}
-
-void IGESDraw_ToolViewsVisibleWithAttr::OwnRenew
-  (const Handle(IGESDraw_ViewsVisibleWithAttr)& another,
-   const Handle(IGESDraw_ViewsVisibleWithAttr)& ent, const Interface_CopyTool& TC) const
-{
-  Interface_EntityIterator newdisp;
-  Standard_Integer I, up;
-  up  = another->NbDisplayedEntities();
-  if (up == 0) return;
-  Handle(IGESData_HArray1OfIGESEntity) tempDisplayEntities;
-  Handle(Standard_Transient) anew;
-  for (I = 1; I <= up; I++) {
-    if (TC.Search (another->DisplayedEntity(I),anew)) newdisp.GetOneItem(anew);
-  }
-
-  up = newdisp.NbEntities();  I = 0;
-  if (up > 0) tempDisplayEntities = new IGESData_HArray1OfIGESEntity(1,up);
-  for (newdisp.Start(); newdisp.More(); newdisp.Next()) {
-    I ++;
-    DeclareAndCast(IGESData_IGESEntity, tempEntity,newdisp.Value());
-    tempDisplayEntities->SetValue(I, tempEntity);
-  }
-  ent->InitImplied (tempDisplayEntities);
-}
-
-
 IGESData_DirChecker IGESDraw_ToolViewsVisibleWithAttr::DirChecker
   (const Handle(IGESDraw_ViewsVisibleWithAttr)& /*ent*/)  const
 {
@@ -325,13 +248,6 @@ void IGESDraw_ToolViewsVisibleWithAttr::OwnCheck
   char mess[80];
   sprintf(mess,"Mismatch for %d Entities displayed",res);
   ach->AddFail(mess,"Mismatch for %d Entities displayed");
-}
-
-void IGESDraw_ToolViewsVisibleWithAttr::OwnWhenDelete
-  (const Handle(IGESDraw_ViewsVisibleWithAttr)& ent) const
-{
-  Handle(IGESData_HArray1OfIGESEntity) tempDisplayEntities;
-  ent->InitImplied (tempDisplayEntities);
 }
 
 

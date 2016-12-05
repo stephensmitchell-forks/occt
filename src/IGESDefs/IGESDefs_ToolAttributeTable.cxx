@@ -28,7 +28,6 @@
 #include <IGESDefs_AttributeTable.hxx>
 #include <IGESDefs_ToolAttributeTable.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_HArray1OfHAsciiString.hxx>
 #include <Interface_Macros.hxx>
@@ -39,8 +38,6 @@
 #include <TColStd_HArray1OfInteger.hxx>
 #include <TColStd_HArray1OfReal.hxx>
 #include <TColStd_HArray2OfTransient.hxx>
-
-IGESDefs_ToolAttributeTable::IGESDefs_ToolAttributeTable ()    {  }
 
 
 void  IGESDefs_ToolAttributeTable::ReadOwnParams
@@ -190,87 +187,6 @@ void  IGESDefs_ToolAttributeTable::OwnShared
 	    iter.GetOneItem(ent->AttributeAsEntity(i,k,j));
 	}
     }
-}
-
-void  IGESDefs_ToolAttributeTable::OwnCopy
-  (const Handle(IGESDefs_AttributeTable)& another,
-   const Handle(IGESDefs_AttributeTable)& ent, Interface_CopyTool& TC) const
-{ 
-  Standard_Integer j = 1;
-  Handle(IGESDefs_AttributeDef) ab = another->Definition();
-  Standard_Integer na = another->NbAttributes();
-  Standard_Integer nr = another->NbRows();
-  Handle(TColStd_HArray2OfTransient) list2 =
-    new TColStd_HArray2OfTransient(1,na,1,nr);
-  for (Standard_Integer k = 1; k <= nr; k ++)
-    {
-      for (Standard_Integer i = 1; i <= na; i ++)
-	{
-	  Standard_Integer avc   = ab->AttributeValueCount(i);
-	  Standard_Integer atype = ab->AttributeValueDataType(i);
-	  switch (atype)
-	    {
-            case 0 : ////    list2->SetValue(i,k,NULL);    par defaut
-	      break;
-            case 1 : {
-	      DeclareAndCast(TColStd_HArray1OfInteger,otherInt,
-			     another->AttributeList(i,k));
-	      Handle(TColStd_HArray1OfInteger) attrInt  =
-		new TColStd_HArray1OfInteger (1,avc);
-	      list2->SetValue(i,k,attrInt);
-	      for (j = 1; j <= avc; j++)
-		attrInt->SetValue(j,otherInt->Value(j));
-	    }
-	      break;
-            case 2 : {
-	      DeclareAndCast(TColStd_HArray1OfReal,otherReal,
-			     another->AttributeList(i,k));
-	      Handle(TColStd_HArray1OfReal) attrReal  =
-		new TColStd_HArray1OfReal (1,avc);
-	      list2->SetValue(i,k,attrReal);
-	      for (j = 1; j <= avc; j++)
-		attrReal->SetValue(j,otherReal->Value(j));
-	    }
-	      break;
-	    case 3 : {
-	      DeclareAndCast(Interface_HArray1OfHAsciiString,otherStr,
-			     another->AttributeList(i,k));
-	      Handle(Interface_HArray1OfHAsciiString) attrStr  =
-		new Interface_HArray1OfHAsciiString (1,avc);
-	      list2->SetValue(i,k,attrStr);
-	      for (j = 1; j <= avc; j++)
-		attrStr->SetValue
-		  (j,new TCollection_HAsciiString(otherStr->Value(j)));
-	    }
-	      break;
-	    case 4 : {
-	      DeclareAndCast(IGESData_HArray1OfIGESEntity,otherEnt,
-			     another->AttributeList(i,k));
-	      Handle(IGESData_HArray1OfIGESEntity) attrEnt  =
-		new IGESData_HArray1OfIGESEntity (1,avc);
-	      list2->SetValue(i,k,attrEnt);
-	      for (j = 1; j <= avc; j++)
-		attrEnt->SetValue(j,GetCasted(IGESData_IGESEntity,
-					      TC.Transferred(otherEnt->Value(j))));
-	    }
-	      break;
-	    case 5 : /////	      list2->SetValue(i,k,NULL);    par defaut
-	      break;
-	    case 6 :{    // Here item takes value 0 or 1
-	      DeclareAndCast(TColStd_HArray1OfInteger,otherInt,
-			     another->AttributeList(i,k));
-	      Handle(TColStd_HArray1OfInteger) attrInt  =
-		new TColStd_HArray1OfInteger (1,avc);
-	      list2->SetValue(i,k,attrInt);
-	      for (j = 1; j <= avc; j++)
-		attrInt->SetValue(j,otherInt->Value(j));
-	    }
-	      break;
-              default : break;
-	    }
-	}
-    }
-  ent->Init(list2);
 }
 
 IGESData_DirChecker  IGESDefs_ToolAttributeTable::DirChecker

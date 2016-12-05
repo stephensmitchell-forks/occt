@@ -17,25 +17,16 @@
 #ifndef _IGESSolid_Protocol_HeaderFile
 #define _IGESSolid_Protocol_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
 #include <IGESData_Protocol.hxx>
-#include <Standard_Integer.hxx>
-#include <Standard_Type.hxx>
-class Interface_Protocol;
-
-
+/*
 class IGESSolid_Protocol;
 DEFINE_STANDARD_HANDLE(IGESSolid_Protocol, IGESData_Protocol)
 
 //! Description of Protocol for IGESSolid
 class IGESSolid_Protocol : public IGESData_Protocol
 {
+ public:
 
-public:
-
-  
   Standard_EXPORT IGESSolid_Protocol();
   
   //! Gives the count of Resource Protocol. Here, one
@@ -52,27 +43,7 @@ public:
   //! consider the same Type as the Protocol defines)
   Standard_EXPORT virtual Standard_Integer TypeNumber (const Handle(Standard_Type)& atype) const Standard_OVERRIDE;
 
-
-
-
   DEFINE_STANDARD_RTTIEXT(IGESSolid_Protocol,IGESData_Protocol)
-
-protected:
-
-
-
-
-private:
-
-
-
-
 };
-
-
-
-
-
-
-
+*/
 #endif // _IGESSolid_Protocol_HeaderFile

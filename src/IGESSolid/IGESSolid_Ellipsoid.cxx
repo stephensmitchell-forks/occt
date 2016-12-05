@@ -25,10 +25,7 @@
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESSolid_Ellipsoid,IGESData_IGESEntity)
 
-IGESSolid_Ellipsoid::IGESSolid_Ellipsoid ()    {  }
-
-
-    void  IGESSolid_Ellipsoid::Init
+void IGESSolid_Ellipsoid::Init
   (const gp_XYZ& aSize,   const gp_XYZ& aCenter,
    const gp_XYZ& anXAxis, const gp_XYZ& anZAxis)
 {
@@ -39,92 +36,80 @@ IGESSolid_Ellipsoid::IGESSolid_Ellipsoid ()    {  }
   InitTypeAndForm(168,0);
 }
 
-    gp_XYZ  IGESSolid_Ellipsoid::Size () const
-{
-  return theSize;
-}
-
-    Standard_Real  IGESSolid_Ellipsoid::XLength () const
-{
-  return theSize.X();
-}
-
-    Standard_Real  IGESSolid_Ellipsoid::YLength () const
-{
-  return theSize.Y();
-}
-
-    Standard_Real  IGESSolid_Ellipsoid::ZLength () const
-{
-  return theSize.Z();
-}
-
-    gp_Pnt  IGESSolid_Ellipsoid::Center () const
+gp_Pnt IGESSolid_Ellipsoid::Center () const
 {
   return gp_Pnt(theCenter);
 }
 
-    gp_Pnt  IGESSolid_Ellipsoid::TransformedCenter () const
+gp_Pnt IGESSolid_Ellipsoid::TransformedCenter () const
 {
-  if (!HasTransf()) return gp_Pnt(theCenter);
-  else
-    {
-      gp_XYZ tmp = theCenter;
-      Location().Transforms(tmp);
-      return gp_Pnt(tmp);
-    }
+  if (!HasTransf())
+    return gp_Pnt(theCenter);
+
+  gp_XYZ tmp = theCenter;
+  Location().Transforms(tmp);
+  return gp_Pnt(tmp);
 }
 
-    gp_Dir  IGESSolid_Ellipsoid::XAxis () const
+gp_Dir IGESSolid_Ellipsoid::XAxis () const
 {
   return gp_Dir(theXAxis);
 }
 
-    gp_Dir  IGESSolid_Ellipsoid::TransformedXAxis () const
+gp_Dir IGESSolid_Ellipsoid::TransformedXAxis () const
 {
-  if (!HasTransf()) return gp_Dir(theXAxis);
-  else
-    {
-      gp_XYZ tmp = theXAxis;
-      gp_GTrsf loc = Location();
-      loc.SetTranslationPart(gp_XYZ(0.,0.,0.));
-      loc.Transforms(tmp);
-      return gp_Dir(tmp);
-    }
+  if (!HasTransf())
+    return gp_Dir(theXAxis);
+
+  gp_XYZ tmp = theXAxis;
+  gp_GTrsf loc = Location();
+  loc.SetTranslationPart(gp_XYZ(0.,0.,0.));
+  loc.Transforms(tmp);
+  return gp_Dir(tmp);
 }
 
-    gp_Dir  IGESSolid_Ellipsoid::YAxis () const
+gp_Dir IGESSolid_Ellipsoid::YAxis () const
 {
   return gp_Dir(theXAxis ^ theZAxis);     // ^ overloaded
 }
 
-    gp_Dir  IGESSolid_Ellipsoid::TransformedYAxis () const
+gp_Dir IGESSolid_Ellipsoid::TransformedYAxis () const
 {
-  if (!HasTransf()) return gp_Dir(theXAxis ^ theZAxis);
-  else
-    {
-      gp_XYZ tmp = theXAxis ^ theZAxis;
-      gp_GTrsf loc = Location();
-      loc.SetTranslationPart(gp_XYZ(0.,0.,0.));
-      loc.Transforms(tmp);
-      return gp_Dir(tmp);
-    }
+  if (!HasTransf())
+    return gp_Dir(theXAxis ^ theZAxis);
+
+  gp_XYZ tmp = theXAxis ^ theZAxis;
+  gp_GTrsf loc = Location();
+  loc.SetTranslationPart(gp_XYZ(0.,0.,0.));
+  loc.Transforms(tmp);
+  return gp_Dir(tmp);
 }
 
-    gp_Dir  IGESSolid_Ellipsoid::ZAxis () const
+gp_Dir IGESSolid_Ellipsoid::ZAxis () const
 {
   return gp_Dir(theZAxis);
 }
 
-    gp_Dir  IGESSolid_Ellipsoid::TransformedZAxis () const
+gp_Dir IGESSolid_Ellipsoid::TransformedZAxis () const
 {
-  if (!HasTransf()) return gp_Dir(theZAxis);
-  else
-    {
-      gp_XYZ tmp = theZAxis;
-      gp_GTrsf loc = Location();
-      loc.SetTranslationPart(gp_XYZ(0.,0.,0.));
-      loc.Transforms(tmp);
-      return gp_Dir(tmp);
-    }
+  if (!HasTransf())
+    return gp_Dir(theZAxis);
+
+  gp_XYZ tmp = theZAxis;
+  gp_GTrsf loc = Location();
+  loc.SetTranslationPart(gp_XYZ(0.,0.,0.));
+  loc.Transforms(tmp);
+  return gp_Dir(tmp);
+}
+
+void IGESSolid_Ellipsoid::OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &theCheck) const
+{
+  const Standard_Real eps = 1.E-04;
+  const Standard_Real prosca = XAxis().Dot(ZAxis());
+  if (prosca < -eps || prosca > eps)
+    theCheck->AddFail("Local Z axis : Not orthogonal to X axis");
+  if (! (Size().X() >= Size().Y()
+	  && Size().Y() >= Size().Z()
+	  && Size().Z() > 0.))
+    theCheck->AddFail("Size : The values does not satisfy LX >= LY >= LZ > 0");
 }

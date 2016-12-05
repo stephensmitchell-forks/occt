@@ -29,15 +29,12 @@
 #include <IGESDimen_CenterLine.hxx>
 #include <IGESDimen_ToolCenterLine.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
 #include <TColgp_HArray1OfXY.hxx>
-
-IGESDimen_ToolCenterLine::IGESDimen_ToolCenterLine ()    {  }
 
 
 void  IGESDimen_ToolCenterLine::ReadOwnParams
@@ -84,31 +81,6 @@ void  IGESDimen_ToolCenterLine::WriteOwnParams
       IW.Send((ent->Point(i)).X());
       IW.Send((ent->Point(i)).Y());
     }
-}
-
-void  IGESDimen_ToolCenterLine::OwnShared
-  (const Handle(IGESDimen_CenterLine)& /* ent */, Interface_EntityIterator& /* iter */) const
-{
-}
-
-void  IGESDimen_ToolCenterLine::OwnCopy
-  (const Handle(IGESDimen_CenterLine)& another,
-   const Handle(IGESDimen_CenterLine)& ent, Interface_CopyTool& /* TC */) const
-{
-  Standard_Integer datatype = another->Datatype();
-  Standard_Integer nbval = another->NbPoints();
-  Standard_Real zDisplacement = another->ZDisplacement();
-
-  Handle(TColgp_HArray1OfXY) dataPoints = new TColgp_HArray1OfXY(1, nbval);
-
-  for (Standard_Integer i = 1; i <= nbval; i++)
-    {
-      gp_Pnt tempPnt = (another->Point(i));
-      gp_XY tempPnt2d(tempPnt.X(), tempPnt.Y());
-      dataPoints->SetValue(i, tempPnt2d);
-    }
-  ent->Init(datatype, zDisplacement, dataPoints);
-  ent->SetCrossHair (another->IsCrossHair());
 }
 
 Standard_Boolean  IGESDimen_ToolCenterLine::OwnCorrect

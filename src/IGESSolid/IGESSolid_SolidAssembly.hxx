@@ -17,17 +17,9 @@
 #ifndef _IGESSolid_SolidAssembly_HeaderFile
 #define _IGESSolid_SolidAssembly_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
 #include <IGESData_HArray1OfIGESEntity.hxx>
 #include <IGESGeom_HArray1OfTransformationMatrix.hxx>
 #include <IGESData_IGESEntity.hxx>
-#include <Standard_Boolean.hxx>
-#include <Standard_Integer.hxx>
-class Standard_DimensionMismatch;
-class Standard_OutOfRange;
-class IGESData_IGESEntity;
 class IGESGeom_TransformationMatrix;
 
 
@@ -44,11 +36,9 @@ DEFINE_STANDARD_HANDLE(IGESSolid_SolidAssembly, IGESData_IGESEntity)
 //! other Assemblies
 class IGESSolid_SolidAssembly : public IGESData_IGESEntity
 {
+ public:
 
-public:
-
-  
-  Standard_EXPORT IGESSolid_SolidAssembly();
+  IGESSolid_SolidAssembly() {}
   
   //! This method is used to set the fields of the class
   //! SolidAssembly
@@ -71,35 +61,20 @@ public:
   
   //! returns the Index'th item
   //! raises exception if Index <= 0 or Index > NbItems()
-  Standard_EXPORT Handle(IGESData_IGESEntity) Item (const Standard_Integer Index) const;
+  Standard_EXPORT const Handle(IGESData_IGESEntity) & Item (const Standard_Integer Index) const;
   
   //! returns the transformation matrix of the Index'th item
   //! raises exception if Index <= 0 or Index > NbItems()
-  Standard_EXPORT Handle(IGESGeom_TransformationMatrix) TransfMatrix (const Standard_Integer Index) const;
+  Standard_EXPORT const Handle(IGESGeom_TransformationMatrix) & TransfMatrix (const Standard_Integer Index) const;
 
-
-
+  Standard_EXPORT virtual void OwnShared(Interface_EntityIterator &theIter) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESSolid_SolidAssembly,IGESData_IGESEntity)
 
-protected:
-
-
-
-
-private:
-
+ private:
 
   Handle(IGESData_HArray1OfIGESEntity) theItems;
   Handle(IGESGeom_HArray1OfTransformationMatrix) theMatrices;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESSolid_SolidAssembly_HeaderFile

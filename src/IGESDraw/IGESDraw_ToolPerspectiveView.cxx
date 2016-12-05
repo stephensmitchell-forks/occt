@@ -31,14 +31,11 @@
 #include <IGESDraw_PerspectiveView.hxx>
 #include <IGESDraw_ToolPerspectiveView.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-
-IGESDraw_ToolPerspectiveView::IGESDraw_ToolPerspectiveView ()    {  }
 
 
 void IGESDraw_ToolPerspectiveView::ReadOwnParams
@@ -118,24 +115,6 @@ void IGESDraw_ToolPerspectiveView::WriteOwnParams
   IW.Send(ent->DepthClip());
   IW.Send(ent->BackPlaneDistance());
   IW.Send(ent->FrontPlaneDistance());
-}
-
-void  IGESDraw_ToolPerspectiveView::OwnShared
-  (const Handle(IGESDraw_PerspectiveView)& /*ent*/, Interface_EntityIterator& /*iter*/) const
-{
-}
-
-void IGESDraw_ToolPerspectiveView::OwnCopy
-  (const Handle(IGESDraw_PerspectiveView)& another,
-   const Handle(IGESDraw_PerspectiveView)& ent, Interface_CopyTool& /*TC*/) const
-{
-  ent->Init
-    (another->ViewNumber(), another->ScaleFactor(),
-     another->ViewNormalVector().XYZ(),   another->ViewReferencePoint().XYZ(),
-     another->CenterOfProjection().XYZ(), another->ViewUpVector().XYZ(),
-     another->ViewPlaneDistance(),
-     another->TopLeft().XY(),another->BottomRight().XY(), another->DepthClip(),
-     another->BackPlaneDistance(), another->FrontPlaneDistance());
 }
 
 

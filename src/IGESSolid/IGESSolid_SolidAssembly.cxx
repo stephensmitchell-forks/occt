@@ -16,19 +16,15 @@
 //--------------------------------------------------------------------
 //--------------------------------------------------------------------
 
-#include <IGESData_IGESEntity.hxx>
 #include <IGESGeom_TransformationMatrix.hxx>
 #include <IGESSolid_SolidAssembly.hxx>
 #include <Standard_DimensionMismatch.hxx>
 #include <Standard_OutOfRange.hxx>
-#include <Standard_Type.hxx>
+#include <Interface_EntityIterator.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESSolid_SolidAssembly,IGESData_IGESEntity)
 
-IGESSolid_SolidAssembly::IGESSolid_SolidAssembly ()    {  }
-
-
-    void  IGESSolid_SolidAssembly::Init
+void IGESSolid_SolidAssembly::Init
   (const Handle(IGESData_HArray1OfIGESEntity)& Items,
    const Handle(IGESGeom_HArray1OfTransformationMatrix)& Matrices)
 {
@@ -41,26 +37,31 @@ IGESSolid_SolidAssembly::IGESSolid_SolidAssembly ()    {  }
   InitTypeAndForm(184,0);
 }
 
-    Standard_Boolean  IGESSolid_SolidAssembly::HasBrep () const
-      {  return (FormNumber() == 1);  }
+Standard_Boolean IGESSolid_SolidAssembly::HasBrep () const
+{  return (FormNumber() == 1);  }
 
-    void  IGESSolid_SolidAssembly::SetBrep (const Standard_Boolean hasbrep)
-      {  InitTypeAndForm(184, (hasbrep ? 1 : 0));  }
+void IGESSolid_SolidAssembly::SetBrep (const Standard_Boolean hasbrep)
+{  InitTypeAndForm(184, (hasbrep ? 1 : 0));  }
 
-
-    Standard_Integer  IGESSolid_SolidAssembly::NbItems () const
+Standard_Integer IGESSolid_SolidAssembly::NbItems () const
 {
   return theItems->Length();
 }
 
-    Handle(IGESData_IGESEntity)  IGESSolid_SolidAssembly::Item
-  (const Standard_Integer Index) const
+const Handle(IGESData_IGESEntity) & IGESSolid_SolidAssembly::Item (const Standard_Integer Index) const
 {
   return theItems->Value(Index);
 }
 
-    Handle(IGESGeom_TransformationMatrix) IGESSolid_SolidAssembly::TransfMatrix
-  (const Standard_Integer Index) const
+const Handle(IGESGeom_TransformationMatrix) & IGESSolid_SolidAssembly::TransfMatrix (const Standard_Integer Index) const
 {
   return theMatrices->Value(Index);
+}
+
+void IGESSolid_SolidAssembly::OwnShared(Interface_EntityIterator &theIter) const
+{
+  const Standard_Integer nbitems = theItems->Length();
+  Standard_Integer i;
+  for (i = 1; i <= nbitems; i ++) theIter.GetOneItem(theItems->Value(i));
+  for (i = 1; i <= nbitems; i ++) theIter.GetOneItem(theMatrices->Value(i));
 }

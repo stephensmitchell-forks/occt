@@ -17,13 +17,7 @@
 #ifndef _IGESAppli_LineWidening_HeaderFile
 #define _IGESAppli_LineWidening_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
-#include <Standard_Integer.hxx>
-#include <Standard_Real.hxx>
 #include <IGESData_IGESEntity.hxx>
-
 
 class IGESAppli_LineWidening;
 DEFINE_STANDARD_HANDLE(IGESAppli_LineWidening, IGESData_IGESEntity)
@@ -34,11 +28,9 @@ DEFINE_STANDARD_HANDLE(IGESAppli_LineWidening, IGESData_IGESEntity)
 //! used to define locations of items.
 class IGESAppli_LineWidening : public IGESData_IGESEntity
 {
+ public:
 
-public:
-
-  
-  Standard_EXPORT IGESAppli_LineWidening();
+  IGESAppli_LineWidening() {}
   
   //! This method is used to set the fields of the class
   //! LineWidening
@@ -60,43 +52,36 @@ public:
   
   //! returns the number of property values
   //! is always 5
-  Standard_EXPORT Standard_Integer NbPropertyValues() const;
-  
+  Standard_Integer NbPropertyValues() const { return theNbPropertyValues; }
+
   //! returns the width of metallization
-  Standard_EXPORT Standard_Real WidthOfMetalization() const;
-  
+  Standard_Real WidthOfMetalization() const { return theWidth; }
+
   //! returns the cornering code
   //! 0 = Rounded  /   1 = Squared
-  Standard_EXPORT Standard_Integer CorneringCode() const;
-  
+  Standard_Integer CorneringCode() const { return theCorneringCode; }
+
   //! returns the extension flag
   //! 0 = No extension
   //! 1 = One-half width extension
   //! 2 = Extension set by theExtnVal
-  Standard_EXPORT Standard_Integer ExtensionFlag() const;
-  
+  Standard_Integer ExtensionFlag() const { return theExtensionFlag; }
+
   //! returns the justification flag
   //! 0 = Centre justified
   //! 1 = Left justified
   //! 2 = Right justified
-  Standard_EXPORT Standard_Integer JustificationFlag() const;
-  
+  Standard_Integer JustificationFlag() const { return theJustificationFlag; }
+
   //! returns the Extension Value
   //! Present only if theExtnFlag = 2
-  Standard_EXPORT Standard_Real ExtensionValue() const;
+  Standard_Real ExtensionValue() const { return theExtensionValue; }
 
-
-
+  Standard_EXPORT virtual void OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESAppli_LineWidening,IGESData_IGESEntity)
 
-protected:
-
-
-
-
-private:
-
+ private:
 
   Standard_Integer theNbPropertyValues;
   Standard_Real theWidth;
@@ -104,14 +89,6 @@ private:
   Standard_Integer theExtensionFlag;
   Standard_Integer theJustificationFlag;
   Standard_Real theExtensionValue;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESAppli_LineWidening_HeaderFile

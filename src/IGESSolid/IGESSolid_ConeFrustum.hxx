@@ -17,13 +17,8 @@
 #ifndef _IGESSolid_ConeFrustum_HeaderFile
 #define _IGESSolid_ConeFrustum_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
-#include <Standard_Real.hxx>
 #include <gp_XYZ.hxx>
 #include <IGESData_IGESEntity.hxx>
-class gp_XYZ;
 class gp_Pnt;
 class gp_Dir;
 
@@ -40,11 +35,9 @@ DEFINE_STANDARD_HANDLE(IGESSolid_ConeFrustum, IGESData_IGESEntity)
 //! than the first face.
 class IGESSolid_ConeFrustum : public IGESData_IGESEntity
 {
+ public:
 
-public:
-
-  
-  Standard_EXPORT IGESSolid_ConeFrustum();
+  IGESSolid_ConeFrustum() {}
   
   //! This method is used to set the fields of the class
   //! ConeFrustum
@@ -56,14 +49,14 @@ public:
   Standard_EXPORT void Init (const Standard_Real Ht, const Standard_Real R1, const Standard_Real R2, const gp_XYZ& Center, const gp_XYZ& anAxis);
   
   //! returns the height of the cone frustum
-  Standard_EXPORT Standard_Real Height() const;
-  
+  Standard_Real Height() const { return theHeight; }
+
   //! returns the radius of the larger face of the cone frustum
-  Standard_EXPORT Standard_Real LargerRadius() const;
-  
+  Standard_Real LargerRadius() const { return theR1; }
+
   //! returns the radius of the second face of the cone frustum
-  Standard_EXPORT Standard_Real SmallerRadius() const;
-  
+  Standard_Real SmallerRadius() const { return theR2; }
+
   //! returns the center of the larger face of the cone frustum
   Standard_EXPORT gp_Pnt FaceCenter() const;
   
@@ -78,32 +71,17 @@ public:
   //! after applying TransformationMatrix
   Standard_EXPORT gp_Dir TransformedAxis() const;
 
-
-
+  Standard_EXPORT virtual void OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESSolid_ConeFrustum,IGESData_IGESEntity)
 
-protected:
-
-
-
-
-private:
-
+ private:
 
   Standard_Real theHeight;
   Standard_Real theR1;
   Standard_Real theR2;
   gp_XYZ theFaceCenter;
   gp_XYZ theAxis;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESSolid_ConeFrustum_HeaderFile

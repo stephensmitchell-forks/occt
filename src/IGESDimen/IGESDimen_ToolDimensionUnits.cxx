@@ -26,15 +26,12 @@
 #include <IGESDimen_DimensionUnits.hxx>
 #include <IGESDimen_ToolDimensionUnits.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
 #include <TCollection_HAsciiString.hxx>
-
-IGESDimen_ToolDimensionUnits::IGESDimen_ToolDimensionUnits ()    {  }
 
 
 void  IGESDimen_ToolDimensionUnits::ReadOwnParams
@@ -83,27 +80,6 @@ void  IGESDimen_ToolDimensionUnits::WriteOwnParams
   IW.Send(ent->FormatString());
   IW.Send(ent->FractionFlag());
   IW.Send(ent->PrecisionOrDenominator());
-}
-
-void  IGESDimen_ToolDimensionUnits::OwnShared
-  (const Handle(IGESDimen_DimensionUnits)& /* ent */, Interface_EntityIterator& /* iter */) const
-{
-}
-
-void  IGESDimen_ToolDimensionUnits::OwnCopy
-  (const Handle(IGESDimen_DimensionUnits)& another,
-   const Handle(IGESDimen_DimensionUnits)& ent, Interface_CopyTool& /* TC */) const
-{
-  Standard_Integer tempNbProps        = another->NbPropertyValues();
-  Standard_Integer tempSecondDimenPos = another->SecondaryDimenPosition();
-  Standard_Integer tempUnitsIndic     = another->UnitsIndicator();
-  Standard_Integer tempCharSet        = another->CharacterSet();
-  Handle(TCollection_HAsciiString) tempFormatString =
-    new TCollection_HAsciiString(another->FormatString());
-  Standard_Integer tempFracFlag       = another->FractionFlag();
-  Standard_Integer tempPrecision      = another->PrecisionOrDenominator();
-  ent->Init (tempNbProps, tempSecondDimenPos, tempUnitsIndic, tempCharSet,
-	     tempFormatString, tempFracFlag, tempPrecision);
 }
 
 Standard_Boolean  IGESDimen_ToolDimensionUnits::OwnCorrect

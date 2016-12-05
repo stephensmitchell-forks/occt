@@ -27,15 +27,12 @@
 #include <IGESData_ParamCursor.hxx>
 #include <IGESData_ParamReader.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
 #include <TCollection_HAsciiString.hxx>
-
-IGESAppli_ToolPinNumber::IGESAppli_ToolPinNumber ()    {  }
 
 
 void  IGESAppli_ToolPinNumber::ReadOwnParams
@@ -61,22 +58,6 @@ void  IGESAppli_ToolPinNumber::WriteOwnParams
   IW.Send(ent->PinNumberVal());
 }
 
-void  IGESAppli_ToolPinNumber::OwnShared
-  (const Handle(IGESAppli_PinNumber)& /* ent */, Interface_EntityIterator& /* iter */) const
-{
-}
-
-void  IGESAppli_ToolPinNumber::OwnCopy
-  (const Handle(IGESAppli_PinNumber)& another,
-   const Handle(IGESAppli_PinNumber)& ent, Interface_CopyTool& /* TC */) const
-{
-  Standard_Integer aNbPropertyValues;
-  Handle(TCollection_HAsciiString) aPinNumber =
-    new TCollection_HAsciiString(another->PinNumberVal());
-  aNbPropertyValues = another->NbPropertyValues();
-  ent->Init(aNbPropertyValues,aPinNumber);
-}
-
 Standard_Boolean  IGESAppli_ToolPinNumber::OwnCorrect
   (const Handle(IGESAppli_PinNumber)& ent) const
 {
@@ -98,20 +79,6 @@ IGESData_DirChecker  IGESAppli_ToolPinNumber::DirChecker
   DC.UseFlagIgnored();
   DC.HierarchyStatusIgnored();
   return DC;
-}
-
-void  IGESAppli_ToolPinNumber::OwnCheck
-  (const Handle(IGESAppli_PinNumber)& ent,
-   const Interface_ShareTool& , Handle(Interface_Check)& ach) const
-{
-  if (ent->SubordinateStatus() != 0)
-    if (ent->DefLevel() != IGESData_DefOne &&
-	ent->DefLevel() != IGESData_DefSeveral)
-      ach->AddFail("Level type: Incorrect");
-  if (ent->NbPropertyValues() != 1)
-    ach->AddFail("Number of Property Values != 1");
-  //UNFINISHED
-  //Level to be ignored if the property is subordinate -- queried
 }
 
 void  IGESAppli_ToolPinNumber::OwnDump

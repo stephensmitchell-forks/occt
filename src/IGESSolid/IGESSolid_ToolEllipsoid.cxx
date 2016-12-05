@@ -29,13 +29,10 @@
 #include <IGESSolid_Ellipsoid.hxx>
 #include <IGESSolid_ToolEllipsoid.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-
-IGESSolid_ToolEllipsoid::IGESSolid_ToolEllipsoid ()    {  }
 
 
 void  IGESSolid_ToolEllipsoid::ReadOwnParams
@@ -146,19 +143,6 @@ void  IGESSolid_ToolEllipsoid::WriteOwnParams
   IW.Send(ent->ZAxis().Z());
 }
 
-void  IGESSolid_ToolEllipsoid::OwnShared
-  (const Handle(IGESSolid_Ellipsoid)& /* ent */, Interface_EntityIterator& /* iter */) const
-{
-}
-
-void  IGESSolid_ToolEllipsoid::OwnCopy
-  (const Handle(IGESSolid_Ellipsoid)& another,
-   const Handle(IGESSolid_Ellipsoid)& ent, Interface_CopyTool& /* TC */) const
-{
-  ent->Init(another->Size(), another->Center().XYZ(),
-	    another->XAxis().XYZ(), another->ZAxis().XYZ());
-}
-
 IGESData_DirChecker  IGESSolid_ToolEllipsoid::DirChecker
   (const Handle(IGESSolid_Ellipsoid)& /* ent */ ) const
 {
@@ -170,20 +154,6 @@ IGESData_DirChecker  IGESSolid_ToolEllipsoid::DirChecker
   DC.UseFlagRequired (0);
   DC.HierarchyStatusIgnored ();
   return DC;
-}
-
-void  IGESSolid_ToolEllipsoid::OwnCheck
-  (const Handle(IGESSolid_Ellipsoid)& ent,
-   const Interface_ShareTool& , Handle(Interface_Check)& ach) const
-{
-  Standard_Real eps = 1.E-04;
-  Standard_Real prosca = ent->XAxis().Dot(ent->ZAxis());
-  if (prosca < -eps || prosca > eps)
-    ach->AddFail("Local Z axis : Not orthogonal to X axis");
-  if (! (ent->Size().X() >= ent->Size().Y()
-	 && ent->Size().Y() >= ent->Size().Z()
-	 && ent->Size().Z() > 0))
-    ach->AddFail("Size : The values does not satisfy LX >= LY >= LZ > 0");
 }
 
 void  IGESSolid_ToolEllipsoid::OwnDump

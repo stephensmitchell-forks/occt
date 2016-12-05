@@ -29,15 +29,12 @@
 #include <IGESDimen_ToolWitnessLine.hxx>
 #include <IGESDimen_WitnessLine.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
 #include <TColgp_HArray1OfXY.hxx>
-
-IGESDimen_ToolWitnessLine::IGESDimen_ToolWitnessLine ()    {  }
 
 
 void  IGESDimen_ToolWitnessLine::ReadOwnParams
@@ -84,30 +81,6 @@ void  IGESDimen_ToolWitnessLine::WriteOwnParams
       IW.Send((ent->Point(i)).X());
       IW.Send((ent->Point(i)).Y());
     }
-}
-
-void  IGESDimen_ToolWitnessLine::OwnShared
-  (const Handle(IGESDimen_WitnessLine)& /* ent */, Interface_EntityIterator& /* iter */) const
-{
-}
-
-void  IGESDimen_ToolWitnessLine::OwnCopy
-  (const Handle(IGESDimen_WitnessLine)& another,
-   const Handle(IGESDimen_WitnessLine)& ent, Interface_CopyTool& /* TC */) const
-{
-  Standard_Integer datatype = another->Datatype();
-  Standard_Integer nbval = another->NbPoints();
-  Standard_Real zDisplacement = another->ZDisplacement();
-
-  Handle(TColgp_HArray1OfXY) dataPoints = new TColgp_HArray1OfXY(1, nbval);
-
-  for (Standard_Integer i = 1; i <= nbval; i++)
-    {
-      gp_Pnt tempPnt = (another->Point(i));
-      gp_XY tempPnt2d(tempPnt.X(), tempPnt.Y());
-      dataPoints->SetValue(i, tempPnt2d);
-    }
-  ent->Init(datatype, zDisplacement, dataPoints);
 }
 
 Standard_Boolean  IGESDimen_ToolWitnessLine::OwnCorrect

@@ -29,14 +29,11 @@
 #include <IGESDefs_HArray1OfTabularData.hxx>
 #include <IGESDefs_TabularData.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-
-IGESAppli_ToolNodalConstraint::IGESAppli_ToolNodalConstraint ()    {  }
 
 
 void  IGESAppli_ToolNodalConstraint::ReadOwnParams
@@ -79,34 +76,6 @@ void  IGESAppli_ToolNodalConstraint::WriteOwnParams
     IW.Send(ent->TabularData(i));
 }
 
-void  IGESAppli_ToolNodalConstraint::OwnShared
-  (const Handle(IGESAppli_NodalConstraint)& ent, Interface_EntityIterator& iter) const
-{
-  Standard_Integer i, num;
-  iter.GetOneItem(ent->NodeEntity());
-  for ( num = ent->NbCases(), i = 1; i <= num; i++ )
-    iter.GetOneItem(ent->TabularData(i));
-}
-
-void  IGESAppli_ToolNodalConstraint::OwnCopy
-  (const Handle(IGESAppli_NodalConstraint)& another,
-   const Handle(IGESAppli_NodalConstraint)& ent, Interface_CopyTool& TC) const
-{
-  Standard_Integer num = another->NbCases();
-  Standard_Integer tempType = another->Type();
-  DeclareAndCast(IGESAppli_Node, tempNode,
-		 TC.Transferred(another->NodeEntity()));
-  Handle(IGESDefs_HArray1OfTabularData) tempTabularDataProps =
-    new IGESDefs_HArray1OfTabularData(1, num);
-  for ( Standard_Integer i = 1; i <= num; i++ )
-    {
-      DeclareAndCast(IGESDefs_TabularData, new_item,
-		     TC.Transferred(another->TabularData(i)));
-      tempTabularDataProps->SetValue(i, new_item);
-    }
-  ent->Init(tempType, tempNode, tempTabularDataProps);
-}
-
 IGESData_DirChecker  IGESAppli_ToolNodalConstraint::DirChecker
   (const Handle(IGESAppli_NodalConstraint)& /* ent */ ) const
 {
@@ -118,14 +87,6 @@ IGESData_DirChecker  IGESAppli_ToolNodalConstraint::DirChecker
   DC.Color(IGESData_DefVoid);
   DC.HierarchyStatusIgnored();
   return DC;
-}
-
-void  IGESAppli_ToolNodalConstraint::OwnCheck
-  (const Handle(IGESAppli_NodalConstraint)& ent,
-   const Interface_ShareTool& , Handle(Interface_Check)& ach) const
-{
-  if ((ent->Type() != 1) && (ent->Type() != 2))
-    ach->AddFail("Type of Constraint != 1,2");
 }
 
 void  IGESAppli_ToolNodalConstraint::OwnDump

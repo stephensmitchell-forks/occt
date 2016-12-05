@@ -32,7 +32,6 @@
 #include <IGESDimen_GeneralNote.hxx>
 #include <IGESDimen_HArray1OfGeneralNote.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
@@ -40,8 +39,6 @@
 #include <Standard_DomainError.hxx>
 #include <TColgp_HArray1OfXYZ.hxx>
 #include <TColStd_HArray1OfInteger.hxx>
-
-IGESAppli_ToolNodalDisplAndRot::IGESAppli_ToolNodalDisplAndRot ()    {  }
 
 
 void  IGESAppli_ToolNodalDisplAndRot::ReadOwnParams
@@ -130,65 +127,6 @@ void  IGESAppli_ToolNodalDisplAndRot::WriteOwnParams
     }
 }
 
-void  IGESAppli_ToolNodalDisplAndRot::OwnShared
-  (const Handle(IGESAppli_NodalDisplAndRot)& ent, Interface_EntityIterator& iter) const
-{
-  Standard_Integer nbcases = ent->NbCases();
-  Standard_Integer nbnodes = ent->NbNodes();
-
-  for (Standard_Integer i = 1; i <= nbcases; i ++)
-    iter.GetOneItem(ent->Note(i));
-  for (Standard_Integer j = 1; j <= nbnodes; j ++)
-    iter.GetOneItem(ent->Node(j));
-}
-
-void  IGESAppli_ToolNodalDisplAndRot::OwnCopy
-  (const Handle(IGESAppli_NodalDisplAndRot)& another,
-   const Handle(IGESAppli_NodalDisplAndRot)& ent, Interface_CopyTool& TC) const
-{
-  Standard_Integer nbcases = another->NbCases();
-  Standard_Integer nbnodes = another->NbNodes();
-  Handle(IGESDimen_HArray1OfGeneralNote) aNotes =
-    new IGESDimen_HArray1OfGeneralNote(1,nbcases);
-  Handle(TColStd_HArray1OfInteger) aNodeIdentifiers =
-    new TColStd_HArray1OfInteger(1,nbnodes);
-  Handle(IGESAppli_HArray1OfNode) aNodes =
-    new IGESAppli_HArray1OfNode(1,nbnodes);
-  Handle(IGESBasic_HArray1OfHArray1OfXYZ) aTransParam =
-    new IGESBasic_HArray1OfHArray1OfXYZ(1, nbnodes);
-  Handle(IGESBasic_HArray1OfHArray1OfXYZ) aRotParam =
-    new IGESBasic_HArray1OfHArray1OfXYZ(1, nbnodes);
-
-  for (Standard_Integer i=1 ;i <=nbnodes; i++)
-    {
-      aNodeIdentifiers->SetValue(i,(another->NodeIdentifier(i)));
-      DeclareAndCast(IGESAppli_Node,anitem,TC.Transferred(another->Node(i)));
-      aNodes->SetValue(i,anitem);
-    }
-  for (Standard_Integer j=1 ;j <=nbcases; j++)
-    {
-      DeclareAndCast
-	(IGESDimen_GeneralNote,anitem,TC.Transferred(another->Note(j)));
-      aNotes->SetValue(j,anitem);
-    }
-  for (Standard_Integer n=1 ;n <=nbnodes; n++)
-    {
-      Handle(TColgp_HArray1OfXYZ) tempArray1 = new
-	TColgp_HArray1OfXYZ(1,nbcases);
-      Handle(TColgp_HArray1OfXYZ) tempArray2 = new
-	TColgp_HArray1OfXYZ(1,nbcases);
-      for (Standard_Integer k=1;k<= nbcases;k++)
-	{
-          tempArray1->SetValue(k,another->TranslationParameter(n,k));
-          tempArray2->SetValue(k,another->RotationalParameter(n,k));
-	}
-      aTransParam->SetValue(n,tempArray1);
-      aRotParam->SetValue(n,tempArray2);
-    }
-
-  ent->Init(aNotes,aNodeIdentifiers,aNodes,aRotParam,aTransParam);
-}
-
 IGESData_DirChecker  IGESAppli_ToolNodalDisplAndRot::DirChecker
   (const Handle(IGESAppli_NodalDisplAndRot)& /* ent */ ) const
 {
@@ -197,12 +135,6 @@ IGESData_DirChecker  IGESAppli_ToolNodalDisplAndRot::DirChecker
   DC.GraphicsIgnored();
   DC.HierarchyStatusIgnored();
   return DC;
-}
-
-void  IGESAppli_ToolNodalDisplAndRot::OwnCheck
-  (const Handle(IGESAppli_NodalDisplAndRot)& /* ent */,
-   const Interface_ShareTool& , Handle(Interface_Check)& /* ach */) const
-{
 }
 
 void  IGESAppli_ToolNodalDisplAndRot::OwnDump

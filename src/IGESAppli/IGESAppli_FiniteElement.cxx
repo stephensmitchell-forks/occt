@@ -21,15 +21,12 @@
 #include <IGESAppli_Node.hxx>
 #include <Standard_DimensionMismatch.hxx>
 #include <Standard_OutOfRange.hxx>
-#include <Standard_Type.hxx>
+#include <Interface_EntityIterator.hxx>
 #include <TCollection_HAsciiString.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESAppli_FiniteElement,IGESData_IGESEntity)
 
-IGESAppli_FiniteElement::IGESAppli_FiniteElement ()    {  }
-
-
-    void  IGESAppli_FiniteElement::Init
+void IGESAppli_FiniteElement::Init
   (const Standard_Integer aType,
    const Handle(IGESAppli_HArray1OfNode)&  allNodes,
    const Handle(TCollection_HAsciiString)& aName)
@@ -42,23 +39,19 @@ IGESAppli_FiniteElement::IGESAppli_FiniteElement ()    {  }
   InitTypeAndForm(136,0);
 }
 
-    Standard_Integer  IGESAppli_FiniteElement::Topology () const
+Standard_Integer IGESAppli_FiniteElement::NbNodes () const
 {
-  return theTopology;
+  return theNodes->Length();
 }
 
-    Handle(IGESAppli_Node)  IGESAppli_FiniteElement::Node
-  (const Standard_Integer Index) const
+const Handle(IGESAppli_Node) & IGESAppli_FiniteElement::Node (const Standard_Integer Index) const
 {
   return theNodes->Value(Index);
 }
 
-    Handle(TCollection_HAsciiString)  IGESAppli_FiniteElement::Name () const
+void IGESAppli_FiniteElement::OwnShared(Interface_EntityIterator &theIter) const
 {
-  return theName;
-}
-
-    Standard_Integer  IGESAppli_FiniteElement::NbNodes () const
-{
-  return theNodes->Length();
+  const Standard_Integer upper = theNodes->Length();
+  for (Standard_Integer i= 1; i <= upper ; i ++)
+    theIter.GetOneItem(theNodes->Value(i));
 }

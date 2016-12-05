@@ -27,7 +27,6 @@
 #include <Standard_Integer.hxx>
 class Interface_InterfaceError;
 class Standard_Transient;
-class Interface_CopyControl;
 class Interface_EntityIterator;
 class Interface_Graph;
 class TCollection_AsciiString;
@@ -106,10 +105,6 @@ public:
   //! Returns an item given its rank, or a Null Handle
   Standard_EXPORT Handle(Standard_Transient) Item (const Standard_Integer num) const;
   
-  //! Rebuilds the selected list. Any selected entity which has a
-  //! bound result is replaced by this result, else it is removed.
-  Standard_EXPORT void Update (const Handle(Interface_CopyControl)& control);
-  
   //! Returns the list of selected items. Only the selected entities
   //! which are present in the graph are given (this result assures
   //! uniqueness).
@@ -119,29 +114,12 @@ public:
   //! It is "Pointed Entities"
   Standard_EXPORT TCollection_AsciiString Label() const Standard_OVERRIDE;
 
-
-
-
   DEFINE_STANDARD_RTTIEXT(IFSelect_SelectPointed,IFSelect_SelectBase)
 
-protected:
-
-
-
-
-private:
-
+ private:
 
   Standard_Boolean theset;
   TColStd_SequenceOfTransient theitems;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IFSelect_SelectPointed_HeaderFile

@@ -27,14 +27,11 @@
 #include <IGESSolid_SphericalSurface.hxx>
 #include <IGESSolid_ToolSphericalSurface.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-
-IGESSolid_ToolSphericalSurface::IGESSolid_ToolSphericalSurface ()    {  }
 
 
 void  IGESSolid_ToolSphericalSurface::ReadOwnParams
@@ -78,38 +75,6 @@ void  IGESSolid_ToolSphericalSurface::WriteOwnParams
     }
 }
 
-void  IGESSolid_ToolSphericalSurface::OwnShared
-  (const Handle(IGESSolid_SphericalSurface)& ent, Interface_EntityIterator& iter) const
-{
-  iter.GetOneItem(ent->Center());
-  iter.GetOneItem(ent->Axis());
-  iter.GetOneItem(ent->ReferenceDir());
-}
-
-void  IGESSolid_ToolSphericalSurface::OwnCopy
-  (const Handle(IGESSolid_SphericalSurface)& another,
-   const Handle(IGESSolid_SphericalSurface)& ent, Interface_CopyTool& TC) const
-{
-  DeclareAndCast(IGESGeom_Point, tempCenter,
-		 TC.Transferred(another->Center()));
-  Standard_Real tempRadius = another->Radius();
-  if (another->IsParametrised())
-    {
-      DeclareAndCast(IGESGeom_Direction, tempAxis,
-		     TC.Transferred(another->Axis()));
-      DeclareAndCast(IGESGeom_Direction, tempRefdir,
-		     TC.Transferred(another->ReferenceDir()));
-      ent->Init (tempCenter, tempRadius, tempAxis, tempRefdir);
-    }
-  else
-    {
-      Handle(IGESGeom_Direction) tempAxis;
-      Handle(IGESGeom_Direction) tempRefdir;
-      ent->Init (tempCenter, tempRadius, tempAxis, tempRefdir);
-    }
-
-}
-
 IGESData_DirChecker  IGESSolid_ToolSphericalSurface::DirChecker
   (const Handle(IGESSolid_SphericalSurface)& /*ent*/) const
 {
@@ -123,20 +88,6 @@ IGESData_DirChecker  IGESSolid_ToolSphericalSurface::DirChecker
   DC.SubordinateStatusRequired (1);
   DC.HierarchyStatusIgnored ();
   return DC;
-}
-
-void  IGESSolid_ToolSphericalSurface::OwnCheck
-  (const Handle(IGESSolid_SphericalSurface)& ent,
-   const Interface_ShareTool& , Handle(Interface_Check)& ach) const
-{
-  if (ent->Radius() <= 0.0)
-    ach->AddFail("Radius : Not Positive");
-  Standard_Integer fn = 0;
-  if (ent->IsParametrised()) fn = 1;
-  if (fn != ent->FormNumber()) ach->AddFail
-    ("Parametrised Status Mismatches with Form Number");
-  if (ent->Axis().IsNull())  if (ent->IsParametrised()) ach->AddFail
-    ("Parametrised Spherical Surface : no Axis is defined");
 }
 
 void  IGESSolid_ToolSphericalSurface::OwnDump

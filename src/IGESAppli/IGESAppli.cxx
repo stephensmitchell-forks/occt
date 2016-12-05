@@ -24,26 +24,56 @@
 #include <Interface_GeneralLib.hxx>
 #include <Interface_ReaderLib.hxx>
 
-//  Ancillary data to work on a Package of IGES Entities with a Protocol
-//  (Modules are created and loaded in appropriate libraries, once by Init)
-static Handle(IGESAppli_Protocol) protocol;
+#include <IGESData.hxx>
+#include <IGESBasic.hxx>
+#include <IGESGeom.hxx>
+#include <IGESGraph.hxx>
+#include <IGESDimen.hxx>
+//#include <IGESSolid.hxx>
 
-
-
-    void  IGESAppli::Init ()
+void IGESAppli::Init ()
 {
-  IGESDefs::Init();
-  IGESDraw::Init();
+  //Instead of IGESSolid::Init(); {
+  //Instead of IGESGeom::Init(); {
+  //Instead of IGESBasic::Init(); {
+  IGESData::Init();      // usefull for Undefined Type or Erroneous Entities
+  IGESBasic::Protocol();
+  //}
+  IGESGeom::Protocol();
+  //}
+  //IGESSolid::Protocol();
+  //}
+  //Instead of IGESDefs::Init(); {
+  //Instead of IGESGraph::Init(); {
+  //IGESBasic::Init();
+  IGESGraph::Protocol();
+  //}
+  IGESDefs::Protocol();
+  //}
+  //Instead of IGESDraw::Init(); {
+  //Instead of IGESDimen::Init(); {
+  //IGESGeom::Init();
+  //IGESGraph::Init();
+  IGESDimen::Protocol();
+  //}
+  IGESDraw::Protocol();
+  //}
+  IGESAppli::Protocol();
+}
+
+const Handle(IGESAppli_Protocol) & IGESAppli::Protocol ()
+{
+  static Handle(IGESAppli_Protocol) protocol;
   if (protocol.IsNull()) {
     protocol = new IGESAppli_Protocol;
+    /*Interface_GeneralLib::SetGlobal (new IGESSolid_GeneralModule,  protocol);
+    Interface_ReaderLib::SetGlobal  (new IGESSolid_ReadWriteModule,protocol);
+    IGESData_WriterLib::SetGlobal   (new IGESSolid_ReadWriteModule,protocol);
+    IGESData_SpecificLib::SetGlobal (new IGESSolid_SpecificModule, protocol);*/
     Interface_GeneralLib::SetGlobal (new IGESAppli_GeneralModule,  protocol);
     Interface_ReaderLib::SetGlobal  (new IGESAppli_ReadWriteModule,protocol);
     IGESData_WriterLib::SetGlobal   (new IGESAppli_ReadWriteModule,protocol);
     IGESData_SpecificLib::SetGlobal (new IGESAppli_SpecificModule, protocol);
   }
-}
-
-    Handle(IGESAppli_Protocol)  IGESAppli::Protocol ()
-{
   return protocol;
 }

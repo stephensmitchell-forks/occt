@@ -30,16 +30,12 @@
 #include <IGESGeom_OffsetSurface.hxx>
 #include <IGESGeom_ToolOffsetSurface.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Message_Msg.hxx>
 #include <Standard_DomainError.hxx>
-
-// MGE 31/07/98
-IGESGeom_ToolOffsetSurface::IGESGeom_ToolOffsetSurface ()    {  }
 
 
 void IGESGeom_ToolOffsetSurface::ReadOwnParams
@@ -114,18 +110,6 @@ void  IGESGeom_ToolOffsetSurface::OwnShared
   iter.GetOneItem( ent->Surface() );
 }
 
-void IGESGeom_ToolOffsetSurface::OwnCopy
-  (const Handle(IGESGeom_OffsetSurface)& another,
-   const Handle(IGESGeom_OffsetSurface)& ent, Interface_CopyTool& TC) const
-{
-  DeclareAndCast(IGESData_IGESEntity, aSurface, TC.Transferred(another->Surface()) );
-
-  gp_XYZ anIndicator = (another->OffsetIndicator()).XYZ();
-  Standard_Real aDistance = another->Distance();
-
-  ent->Init(anIndicator, aDistance, aSurface);
-}
-
 
 IGESData_DirChecker IGESGeom_ToolOffsetSurface::DirChecker
   (const Handle(IGESGeom_OffsetSurface)& /* ent */ )   const
@@ -137,12 +121,6 @@ IGESData_DirChecker IGESGeom_ToolOffsetSurface::DirChecker
   DC.Color(IGESData_DefAny);
   DC.HierarchyStatusIgnored();
   return DC;
-}
-
-void IGESGeom_ToolOffsetSurface::OwnCheck
-  (const Handle(IGESGeom_OffsetSurface)& /* ent */,
-   const Interface_ShareTool& , Handle(Interface_Check)& /* ach */)  const
-{
 }
 
 void IGESGeom_ToolOffsetSurface::OwnDump

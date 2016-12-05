@@ -23,14 +23,16 @@
 #include <Interface_GeneralLib.hxx>
 #include <Interface_ReaderLib.hxx>
 
-//  Ancillary data to work on a Package of IGES Entities with a Protocol
-//  (Modules are created and loaded in appropriate libraries, once by Init)
-static Handle(IGESGraph_Protocol) protocol;
 
-
-    void  IGESGraph::Init ()
+/*void IGESGraph::Init ()
 {
   IGESBasic::Init();
+  IGESGraph::Protocol();
+}*/
+
+const Handle(IGESGraph_Protocol) & IGESGraph::Protocol ()
+{
+  static Handle(IGESGraph_Protocol) protocol;
   if (protocol.IsNull()) {
     protocol = new IGESGraph_Protocol;
     Interface_GeneralLib::SetGlobal (new IGESGraph_GeneralModule,  protocol);
@@ -38,9 +40,5 @@ static Handle(IGESGraph_Protocol) protocol;
     IGESData_WriterLib::SetGlobal   (new IGESGraph_ReadWriteModule,protocol);
     IGESData_SpecificLib::SetGlobal (new IGESGraph_SpecificModule, protocol);
   }
-}
-
-    Handle(IGESGraph_Protocol)  IGESGraph::Protocol ()
-{
   return protocol;
 }

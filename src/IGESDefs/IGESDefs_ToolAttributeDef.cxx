@@ -31,7 +31,6 @@
 #include <IGESGraph_HArray1OfTextDisplayTemplate.hxx>
 #include <IGESGraph_TextDisplayTemplate.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_HArray1OfHAsciiString.hxx>
 #include <Interface_Macros.hxx>
@@ -44,8 +43,6 @@
 #include <TColStd_HArray1OfTransient.hxx>
 
 #include <stdio.h>
-IGESDefs_ToolAttributeDef::IGESDefs_ToolAttributeDef ()    {  }
-
 
 void IGESDefs_ToolAttributeDef::ReadOwnParams
   (const Handle(IGESDefs_AttributeDef)& ent,
@@ -256,105 +253,6 @@ void  IGESDefs_ToolAttributeDef::OwnShared
 	    }
 	}
     }
-}
-
-
-void IGESDefs_ToolAttributeDef::OwnCopy
-  (const Handle(IGESDefs_AttributeDef)& another,
-   const Handle(IGESDefs_AttributeDef)& ent, Interface_CopyTool& TC) const
-{
-  Handle(TCollection_HAsciiString) aName;
-  if (!another->TableName().IsNull()) aName =
-    new TCollection_HAsciiString(another->TableName());
-  Standard_Integer aListType = another->ListType();
-
-  Handle(TColStd_HArray1OfInteger) attrTypes;
-  Handle(TColStd_HArray1OfInteger) attrValueDataTypes;
-  Handle(TColStd_HArray1OfInteger) attrValueCounts;
-  Handle(TColStd_HArray1OfTransient) attrValues;
-  Handle(IGESDefs_HArray1OfHArray1OfTextDisplayTemplate)  attrValuePointers;
-  Standard_Integer nbval = another->NbAttributes();
-
-  attrTypes = new TColStd_HArray1OfInteger(1, nbval);
-  attrValueDataTypes = new TColStd_HArray1OfInteger(1, nbval);
-  attrValueCounts = new TColStd_HArray1OfInteger(1, nbval);
-  if (another->HasValues()) attrValues =
-    new TColStd_HArray1OfTransient(1, nbval);
-  if (another->HasTextDisplay()) attrValuePointers =
-    new IGESDefs_HArray1OfHArray1OfTextDisplayTemplate(1, nbval);
-
-  for (Standard_Integer i = 1; i <= nbval; i++)
-    {
-      Standard_Integer attrType = another->AttributeType(i);
-      attrTypes->SetValue(i, attrType);
-      Standard_Integer attrValueDataType = another->AttributeValueDataType(i);
-      attrValueDataTypes->SetValue(i, attrValueDataType);
-      Standard_Integer avc               = another->AttributeValueCount(i);
-      attrValueCounts->SetValue(i, avc);
-      Handle(IGESGraph_HArray1OfTextDisplayTemplate) attrValuePointer;
-
-      if (another->HasTextDisplay()) attrValuePointer =
-	new IGESGraph_HArray1OfTextDisplayTemplate(1, avc);
-
-      if (another->HasValues())
-	{
-	  Handle(TColStd_HArray1OfInteger)        attrInt;
-	  Handle(TColStd_HArray1OfReal)           attrReal;
-	  Handle(Interface_HArray1OfHAsciiString) attrStr;
-	  Handle(IGESData_HArray1OfIGESEntity)    attrEnt;
-	  switch (attrValueDataType) {
-	    case 1 : attrInt  = new TColStd_HArray1OfInteger       (1,avc);
-	      attrValues->SetValue(i,attrInt);  break;
-	    case 2 : attrReal = new TColStd_HArray1OfReal          (1,avc);
-	      attrValues->SetValue(i,attrReal); break;
-	    case 3 : attrStr  = new Interface_HArray1OfHAsciiString(1,avc);
-	      attrValues->SetValue(i,attrStr);  break;
-	    case 4 : attrEnt  = new IGESData_HArray1OfIGESEntity   (1,avc);
-	      attrValues->SetValue(i,attrEnt);  break;
-	    case 6 : attrInt  = new TColStd_HArray1OfInteger       (1,avc);
-	      attrValues->SetValue(i,attrInt);  break;
-	    default : break;
-	  }
-          for (Standard_Integer j = 1; j <= avc; j ++)
-	    {
-              switch(attrValueDataType)
-		{
-		case 0:
-		  break;
-		case 1: attrInt->SetValue(j,another->AttributeAsInteger(i,j));
-		  break;
-		case 2: attrReal->SetValue(j,another->AttributeAsReal(i,j));
-		  break;
-		case 3: attrStr->SetValue(j,new TCollection_HAsciiString
-					   (another->AttributeAsString(i,j)));
-		  break;
-		case 4: {
-		  DeclareAndCast(IGESData_IGESEntity,Ent,TC.Transferred
-				 (another->AttributeAsEntity(i,j)));
-		  attrEnt->SetValue(j,Ent);
-		}
-		  break;
-		case 5:
-		  break;
-		case 6: attrInt->SetValue
-		  (j,(another->AttributeAsLogical(i,j) ? 1 : 0));
-		  break;
-		default : break;
-		}
-              if (another->HasTextDisplay())
-		{
-                  DeclareAndCast(IGESGraph_TextDisplayTemplate, temptext,
-				 TC.Transferred(another->AttributeTextDisplay(i,j)));
-                  attrValuePointer->SetValue (j, temptext);
-		}
-	    }
-          if (another->HasTextDisplay())
-	    attrValuePointers->SetValue(i, attrValuePointer);
-	}
-    }
-  ent->Init
-    (aName, aListType, attrTypes, attrValueDataTypes, attrValueCounts,
-     attrValues, attrValuePointers);
 }
 
 IGESData_DirChecker  IGESDefs_ToolAttributeDef::DirChecker

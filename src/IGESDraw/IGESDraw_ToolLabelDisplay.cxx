@@ -35,7 +35,6 @@
 #include <IGESDraw_ToolLabelDisplay.hxx>
 #include <IGESDraw_View.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
@@ -43,8 +42,6 @@
 #include <Standard_DomainError.hxx>
 #include <TColgp_HArray1OfXYZ.hxx>
 #include <TColStd_HArray1OfInteger.hxx>
-
-IGESDraw_ToolLabelDisplay::IGESDraw_ToolLabelDisplay ()    {  }
 
 
 void IGESDraw_ToolLabelDisplay::ReadOwnParams
@@ -145,47 +142,6 @@ void  IGESDraw_ToolLabelDisplay::OwnShared
     }
 }
 
-void IGESDraw_ToolLabelDisplay::OwnCopy
-  (const Handle(IGESDraw_LabelDisplay)& another,
-   const Handle(IGESDraw_LabelDisplay)& ent, Interface_CopyTool& TC) const
-{
-  Standard_Integer                              nbval;
-  Handle(IGESDraw_HArray1OfViewKindEntity) views;
-  Handle(TColgp_HArray1OfXYZ)                   textLocations;
-  Handle(IGESDimen_HArray1OfLeaderArrow)    leaderEntities;
-  Handle(TColStd_HArray1OfInteger)       labelLevels;
-  Handle(IGESData_HArray1OfIGESEntity)     displayedEntities;
- 
-  nbval             = another->NbLabels();
-  views             = new IGESDraw_HArray1OfViewKindEntity(1, nbval);
-  textLocations     = new TColgp_HArray1OfXYZ(1, nbval);
-  leaderEntities    = new IGESDimen_HArray1OfLeaderArrow(1, nbval);
-  labelLevels       = new TColStd_HArray1OfInteger(1, nbval);
-  displayedEntities = new IGESData_HArray1OfIGESEntity(1, nbval);
- 
-  for (Standard_Integer i = 1; i <= nbval; i++)
-    {
-      DeclareAndCast(IGESData_ViewKindEntity, tempView,
-                     TC.Transferred(another->ViewItem(i)));
-      views->SetValue( i, tempView );
- 
-      textLocations->SetValue( i, (another->TextLocation(i)).XYZ() );
- 
-      DeclareAndCast(IGESDimen_LeaderArrow, tempArrow, 
-                     TC.Transferred(another->LeaderEntity(i)));
-      leaderEntities->SetValue( i, tempArrow );
- 
-      labelLevels->SetValue( i, another->LabelLevel(i) );
- 
-      DeclareAndCast(IGESData_IGESEntity, tempEntity, 
-                     TC.Transferred(another->DisplayedEntity(i)));
-      displayedEntities->SetValue( i, tempEntity );
-    }
-
-  ent->Init(views, textLocations, leaderEntities, 
-	    labelLevels, displayedEntities);
-}
-
 IGESData_DirChecker IGESDraw_ToolLabelDisplay::DirChecker
   (const Handle(IGESDraw_LabelDisplay)& /*ent*/)  const
 { 
@@ -194,12 +150,6 @@ IGESData_DirChecker IGESDraw_ToolLabelDisplay::DirChecker
   DC.HierarchyStatusIgnored();
   DC.BlankStatusIgnored();
   return DC;
-}
-
-void IGESDraw_ToolLabelDisplay::OwnCheck
-  (const Handle(IGESDraw_LabelDisplay)& /*ent*/,
-   const Interface_ShareTool& , Handle(Interface_Check)& /*ach*/)  const
-{
 }
 
 void IGESDraw_ToolLabelDisplay::OwnDump

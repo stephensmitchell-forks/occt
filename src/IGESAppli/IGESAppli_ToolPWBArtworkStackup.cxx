@@ -26,7 +26,6 @@
 #include <IGESData_ParamCursor.hxx>
 #include <IGESData_ParamReader.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
@@ -34,8 +33,6 @@
 #include <Standard_DomainError.hxx>
 #include <TCollection_HAsciiString.hxx>
 #include <TColStd_HArray1OfInteger.hxx>
-
-IGESAppli_ToolPWBArtworkStackup::IGESAppli_ToolPWBArtworkStackup ()    {  }
 
 
 void  IGESAppli_ToolPWBArtworkStackup::ReadOwnParams
@@ -71,26 +68,6 @@ void  IGESAppli_ToolPWBArtworkStackup::WriteOwnParams
     IW.Send(ent->LevelNumber(i));
 }
 
-void  IGESAppli_ToolPWBArtworkStackup::OwnShared
-  (const Handle(IGESAppli_PWBArtworkStackup)& /* ent */, Interface_EntityIterator& /* iter */) const
-{
-}
-
-void  IGESAppli_ToolPWBArtworkStackup::OwnCopy
-  (const Handle(IGESAppli_PWBArtworkStackup)& another,
-   const Handle(IGESAppli_PWBArtworkStackup)& ent, Interface_CopyTool& /* TC */) const
-{
-  Standard_Integer num = another->NbLevelNumbers();
-  Standard_Integer tempNbPropertyValues = another->NbPropertyValues();
-  Handle(TCollection_HAsciiString) tempArtworkStackupIdent =
-    new TCollection_HAsciiString(another->Identification());
-  Handle(TColStd_HArray1OfInteger) tempLevelNumbers =
-    new TColStd_HArray1OfInteger(1, num);
-  for ( Standard_Integer i = 1; i <= num; i++ )
-    tempLevelNumbers->SetValue(i, another->LevelNumber(i));
-  ent->Init(tempNbPropertyValues, tempArtworkStackupIdent, tempLevelNumbers);
-}
-
 IGESData_DirChecker  IGESAppli_ToolPWBArtworkStackup::DirChecker
   (const Handle(IGESAppli_PWBArtworkStackup)& /* ent */ ) const
 {
@@ -104,12 +81,6 @@ IGESData_DirChecker  IGESAppli_ToolPWBArtworkStackup::DirChecker
   DC.UseFlagIgnored();
   DC.HierarchyStatusIgnored();
   return DC;
-}
-
-void  IGESAppli_ToolPWBArtworkStackup::OwnCheck
-  (const Handle(IGESAppli_PWBArtworkStackup)& /* ent */,
-   const Interface_ShareTool& , Handle(Interface_Check)& /* ach */) const
-{
 }
 
 void  IGESAppli_ToolPWBArtworkStackup::OwnDump

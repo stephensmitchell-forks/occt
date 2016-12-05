@@ -34,7 +34,7 @@
 StepData_StepReaderTool::StepData_StepReaderTool
   (const Handle(StepData_StepReaderData)& reader,
    const Handle(StepData_Protocol)& protocol)
-:  theglib(protocol) , therlib(protocol)
+: Interface_FileReaderTool(protocol)
 {
   SetData(reader,protocol);
 }
@@ -50,8 +50,23 @@ StepData_StepReaderTool::StepData_StepReaderTool
 
 void StepData_StepReaderTool::Prepare ()
 {
-//   SetEntityNumbers a ete mis du cote de ReaderData, because beaucoup acces
+// ....            Gestion du Header : Preparation, lecture            .... //
+  Standard_Integer i = 0;
+
+// Reconnaissance des types
   DeclareAndCast(StepData_StepReaderData,stepdat,Data());
+  while ( (i = stepdat->FindNextHeaderRecord(i)) != 0) {
+    Handle(Standard_Transient) ent;
+    RecognizeByLib (i,ent);
+    if (ent.IsNull()) ent = Protocol()->UnknownEntity();
+    stepdat->BindEntity(i,ent);
+  }
+
+//  Reste la Resolution des references : ne concerne que les sous-listes
+//  Assuree par ReaderData
+  stepdat->PrepareHeader();
+
+//   SetEntityNumbers a ete mis du cote de ReaderData, because beaucoup acces
   try {
     OCC_CATCH_SIGNALS
     stepdat->SetEntityNumbers(Standard_True);
@@ -66,46 +81,14 @@ void StepData_StepReaderTool::Prepare ()
 }
 
 
-// ....            Gestion du Header : Preparation, lecture            .... //
-
-
-//=======================================================================
-//function : PrepareHeader
-//purpose  : 
-//=======================================================================
-
-void StepData_StepReaderTool::PrepareHeader ()
-{
-  Standard_Integer i = 0;
-
-// Reconnaissance des types
-  DeclareAndCast(StepData_StepReaderData,stepdat,Data());
-  while ( (i = stepdat->FindNextHeaderRecord(i)) != 0) {
-    Handle(Standard_Transient) ent;
-//  Reconnaissance par la librairie
-    Handle(Interface_Check) ach = new Interface_Check;    // faudrait le lister ... ?
-    RecognizeByLib (i,theglib,therlib,ach,ent);
-    if (ent.IsNull()) ent = Protocol()->UnknownEntity();
-    stepdat->BindEntity(i,ent);
-  }
-
-//  Reste la Resolution des references : ne concerne que les sous-listes
-//  Assuree par ReaderData
-  stepdat->PrepareHeader();
-}
-
-
 //=======================================================================
 //function : Recognize
 //purpose  : 
 //=======================================================================
 
-Standard_Boolean StepData_StepReaderTool::Recognize(const Standard_Integer num,
-                                                    Handle(Interface_Check)& ach,
-                                                    Handle(Standard_Transient)& ent)
+Standard_Boolean StepData_StepReaderTool::Recognize (const Standard_Integer num, Handle(Standard_Transient)& ent)
 {
-//  Reconnaissance par la librairie
-  return RecognizeByLib (num,theglib,therlib,ach,ent);
+  return RecognizeByLib (num,ent);
 }
 
 

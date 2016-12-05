@@ -17,14 +17,7 @@
 #ifndef _IGESAppli_Protocol_HeaderFile
 #define _IGESAppli_Protocol_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
 #include <IGESData_Protocol.hxx>
-#include <Standard_Integer.hxx>
-#include <Standard_Type.hxx>
-class Interface_Protocol;
-
 
 class IGESAppli_Protocol;
 DEFINE_STANDARD_HANDLE(IGESAppli_Protocol, IGESData_Protocol)
@@ -32,10 +25,8 @@ DEFINE_STANDARD_HANDLE(IGESAppli_Protocol, IGESData_Protocol)
 //! Description of Protocol for IGESAppli
 class IGESAppli_Protocol : public IGESData_Protocol
 {
+ public:
 
-public:
-
-  
   Standard_EXPORT IGESAppli_Protocol();
   
   //! Gives the count of direct Resource Protocol. Here, two
@@ -52,27 +43,7 @@ public:
   //! consider the same Type as the Protocol defines)
   Standard_EXPORT virtual Standard_Integer TypeNumber (const Handle(Standard_Type)& atype) const Standard_OVERRIDE;
 
-
-
-
   DEFINE_STANDARD_RTTIEXT(IGESAppli_Protocol,IGESData_Protocol)
-
-protected:
-
-
-
-
-private:
-
-
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESAppli_Protocol_HeaderFile

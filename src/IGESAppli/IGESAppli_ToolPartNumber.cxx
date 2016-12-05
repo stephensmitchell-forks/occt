@@ -26,15 +26,12 @@
 #include <IGESData_ParamCursor.hxx>
 #include <IGESData_ParamReader.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
 #include <TCollection_HAsciiString.hxx>
-
-IGESAppli_ToolPartNumber::IGESAppli_ToolPartNumber ()    {  }
 
 
 void  IGESAppli_ToolPartNumber::ReadOwnParams
@@ -73,28 +70,6 @@ void  IGESAppli_ToolPartNumber::WriteOwnParams
   IW.Send(ent->InternalNumber());
 }
 
-void  IGESAppli_ToolPartNumber::OwnShared
-  (const Handle(IGESAppli_PartNumber)& /* ent */, Interface_EntityIterator& /* iter */) const
-{
-}
-
-void  IGESAppli_ToolPartNumber::OwnCopy
-  (const Handle(IGESAppli_PartNumber)& another,
-   const Handle(IGESAppli_PartNumber)& ent, Interface_CopyTool& /* TC */) const
-{
-  Standard_Integer tempNbPropertyValues = another->NbPropertyValues();
-  Handle(TCollection_HAsciiString) tempGenericNumber  =
-    new TCollection_HAsciiString(another->GenericNumber());
-  Handle(TCollection_HAsciiString) tempMilitaryNumber =
-    new TCollection_HAsciiString(another->MilitaryNumber());
-  Handle(TCollection_HAsciiString) tempVendorNumber   =
-    new TCollection_HAsciiString(another->VendorNumber());
-  Handle(TCollection_HAsciiString) tempInternalNumber =
-    new TCollection_HAsciiString(another->InternalNumber());
-  ent->Init(tempNbPropertyValues, tempGenericNumber, tempMilitaryNumber,
-	    tempVendorNumber,     tempInternalNumber);
-}
-
 Standard_Boolean  IGESAppli_ToolPartNumber::OwnCorrect
   (const Handle(IGESAppli_PartNumber)& ent) const
 {
@@ -118,14 +93,6 @@ IGESData_DirChecker  IGESAppli_ToolPartNumber::DirChecker
   DC.UseFlagIgnored();
   DC.HierarchyStatusIgnored();
   return DC;
-}
-
-void  IGESAppli_ToolPartNumber::OwnCheck
-  (const Handle(IGESAppli_PartNumber)& ent,
-   const Interface_ShareTool& , Handle(Interface_Check)& ach) const
-{
-  if (ent->NbPropertyValues() != 4)
-    ach->AddFail("Number of property values != 4");
 }
 
 void  IGESAppli_ToolPartNumber::OwnDump

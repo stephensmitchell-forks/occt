@@ -26,15 +26,12 @@
 #include <IGESGraph_Color.hxx>
 #include <IGESGraph_ToolColor.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
 #include <TCollection_HAsciiString.hxx>
-
-IGESGraph_ToolColor::IGESGraph_ToolColor ()    {  }
 
 
 void IGESGraph_ToolColor::ReadOwnParams
@@ -72,24 +69,6 @@ void IGESGraph_ToolColor::WriteOwnParams
   else IW.SendVoid();    // placekeeper to be reserved for additional pointers
 }
 
-void  IGESGraph_ToolColor::OwnShared
-  (const Handle(IGESGraph_Color)& /*ent*/, Interface_EntityIterator& /*iter*/) const
-{
-}
-
-void IGESGraph_ToolColor::OwnCopy
-  (const Handle(IGESGraph_Color)& another,
-   const Handle(IGESGraph_Color)& ent, Interface_CopyTool& /*TC*/) const
-{
-  Standard_Real tempRed, tempGreen, tempBlue;
-  Handle(TCollection_HAsciiString) tempColorName;
-  another->RGBIntensity(tempRed, tempGreen, tempBlue);
-  if (another->HasColorName())
-    tempColorName = new TCollection_HAsciiString(another->ColorName());
-
-  ent->Init(tempRed, tempGreen, tempBlue, tempColorName);
-}
-
 IGESData_DirChecker  IGESGraph_ToolColor::DirChecker
   (const Handle(IGESGraph_Color)& /*ent*/ )  const
 {
@@ -104,16 +83,6 @@ IGESData_DirChecker  IGESGraph_ToolColor::DirChecker
   DC.HierarchyStatusIgnored();
 
   return DC;
-}
-
-void IGESGraph_ToolColor::OwnCheck
-  (const Handle(IGESGraph_Color)& /*ent*/,
-   const Interface_ShareTool& , Handle(Interface_Check)& /*ach*/)  const
-{
-//  if (ent->RankColor() == 0)
-//    ach.AddFail("Color Rank is zero");
-//  else if (ent->RankColor() < 1 || ent->RankColor() > 8)
-//    ach.AddFail("Color Rank not between 1 to 8");
 }
 
 void IGESGraph_ToolColor::OwnDump

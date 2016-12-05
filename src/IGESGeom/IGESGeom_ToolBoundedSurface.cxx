@@ -30,22 +30,12 @@
 #include <IGESGeom_HArray1OfBoundary.hxx>
 #include <IGESGeom_ToolBoundedSurface.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Message_Msg.hxx>
 #include <Standard_DomainError.hxx>
-
-// MGE 31/07/98
-//=======================================================================
-//function : IGESGeom_ToolBoundedSurface
-//purpose  : 
-//=======================================================================
-IGESGeom_ToolBoundedSurface::IGESGeom_ToolBoundedSurface ()
-{
-}
 
 
 //=======================================================================
@@ -171,33 +161,6 @@ void IGESGeom_ToolBoundedSurface::OwnShared(const Handle(IGESGeom_BoundedSurface
   iter.GetOneItem(ent->Surface());
   for ( num = ent->NbBoundaries(), i = 1; i <= num; i++ )
     iter.GetOneItem(ent->Boundary(i));
-}
-
-
-//=======================================================================
-//function : OwnCopy
-//purpose  : 
-//=======================================================================
-
-void IGESGeom_ToolBoundedSurface::OwnCopy(const Handle(IGESGeom_BoundedSurface)& another,
-                                          const Handle(IGESGeom_BoundedSurface)& ent,
-                                          Interface_CopyTool& TC) const
-{
-  Standard_Integer i, num;
-
-  Standard_Integer tempType = another->RepresentationType();
-  DeclareAndCast(IGESData_IGESEntity, tempSurface,
-		 TC.Transferred(another->Surface()));
-  num = another->NbBoundaries();
-  Handle(IGESGeom_HArray1OfBoundary) tempBounds;
-  if (num > 0) tempBounds = new IGESGeom_HArray1OfBoundary(1, num);
-  for (i = 1; i <= num; i++)
-    {
-      DeclareAndCast(IGESGeom_Boundary, tempBoundary,
-		     TC.Transferred(another->Boundary(i)));
-      tempBounds->SetValue(i, tempBoundary);
-    }
-  ent->Init(tempType, tempSurface, tempBounds);
 }
 
 

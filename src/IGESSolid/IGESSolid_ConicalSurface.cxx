@@ -19,14 +19,11 @@
 #include <IGESGeom_Direction.hxx>
 #include <IGESGeom_Point.hxx>
 #include <IGESSolid_ConicalSurface.hxx>
-#include <Standard_Type.hxx>
+#include <Interface_EntityIterator.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESSolid_ConicalSurface,IGESData_IGESEntity)
 
-IGESSolid_ConicalSurface::IGESSolid_ConicalSurface ()    {  }
-
-
-    void  IGESSolid_ConicalSurface::Init
+void IGESSolid_ConicalSurface::Init
   (const Handle(IGESGeom_Point)&     aLocation,
    const Handle(IGESGeom_Direction)& anAxis,
    const Standard_Real aRadius,  const Standard_Real anAngle,
@@ -40,32 +37,19 @@ IGESSolid_ConicalSurface::IGESSolid_ConicalSurface ()    {  }
   InitTypeAndForm(194, (theRefDir.IsNull() ? 0 : 1));
 }
 
-    Handle(IGESGeom_Point) IGESSolid_ConicalSurface::LocationPoint () const
+void IGESSolid_ConicalSurface::OwnShared(Interface_EntityIterator &theIter) const
 {
-  return theLocationPoint;
+  theIter.GetOneItem(LocationPoint());
+  theIter.GetOneItem(Axis());
+  theIter.GetOneItem(ReferenceDir());
 }
 
-    Handle(IGESGeom_Direction) IGESSolid_ConicalSurface::Axis () const
+void IGESSolid_ConicalSurface::OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &theCheck) const
 {
-  return theAxis;
-}
-
-    Standard_Real IGESSolid_ConicalSurface::Radius () const
-{
-  return theRadius;
-}
-
-    Standard_Real IGESSolid_ConicalSurface::SemiAngle () const
-{
-  return theAngle;
-}
-
-    Handle(IGESGeom_Direction) IGESSolid_ConicalSurface::ReferenceDir () const
-{
-  return theRefDir;
-}
-
-    Standard_Boolean IGESSolid_ConicalSurface::IsParametrised () const
-{
-  return (!theRefDir.IsNull());
+  if (Radius() < 0.0)
+    theCheck->AddFail("Radius : Value Negative");
+  if (SemiAngle() < 0.0 || SemiAngle() > 90.0)
+    theCheck->AddFail("Semi-angle : Value not in the range [0 - 90]");
+  const Standard_Integer fn = (IsParametrised()? 1 : 0);
+  if (fn != FormNumber()) theCheck->AddFail("Parametrised Status Mismatches with Form Number");
 }

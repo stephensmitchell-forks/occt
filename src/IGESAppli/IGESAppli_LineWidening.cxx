@@ -18,14 +18,10 @@
 
 #include <IGESAppli_LineWidening.hxx>
 #include <IGESData_LevelListEntity.hxx>
-#include <Standard_Type.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESAppli_LineWidening,IGESData_IGESEntity)
 
-IGESAppli_LineWidening::IGESAppli_LineWidening ()    {  }
-
-
-    void  IGESAppli_LineWidening::Init
+void IGESAppli_LineWidening::Init
   (const Standard_Integer nbPropVal,
    const Standard_Real    aWidth,    const Standard_Integer aCornering,
    const Standard_Integer aExtnFlag, const Standard_Integer aJustifFlag,
@@ -40,33 +36,18 @@ IGESAppli_LineWidening::IGESAppli_LineWidening ()    {  }
   InitTypeAndForm(406,5);
 }
 
-
-    Standard_Integer  IGESAppli_LineWidening::NbPropertyValues () const
+void IGESAppli_LineWidening::OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &theCheck) const
 {
-  return theNbPropertyValues;
-}
-
-    Standard_Real  IGESAppli_LineWidening::WidthOfMetalization () const
-{
-  return theWidth;
-}
-
-    Standard_Integer  IGESAppli_LineWidening::CorneringCode () const
-{
-  return theCorneringCode;
-}
-
-    Standard_Integer  IGESAppli_LineWidening::ExtensionFlag () const
-{
-  return theExtensionFlag;
-}
-
-    Standard_Integer  IGESAppli_LineWidening::JustificationFlag () const
-{
-  return theJustificationFlag;
-}
-
-    Standard_Real  IGESAppli_LineWidening::ExtensionValue () const
-{
-  return theExtensionValue;
+  if (SubordinateStatus() != 0)
+    if (DefLevel() == IGESData_DefOne ||
+	    DefLevel() == IGESData_DefSeveral)
+      theCheck->AddWarning("Level type: defined while ignored");
+  if (NbPropertyValues() != 5)
+    theCheck->AddFail("Number of Property Values != 5");
+  if (CorneringCode() != 0 && CorneringCode() != 1)
+    theCheck->AddFail("Cornering Code incorrect");
+  if (ExtensionFlag() < 0 || ExtensionFlag() > 2)
+    theCheck->AddFail("Extension Flag value incorrect");
+  if (JustificationFlag() < 0 || JustificationFlag() > 2)
+    theCheck->AddFail("Justification Flag value incorrect");
 }

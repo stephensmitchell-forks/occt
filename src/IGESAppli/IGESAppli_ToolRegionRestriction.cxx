@@ -26,13 +26,10 @@
 #include <IGESData_ParamCursor.hxx>
 #include <IGESData_ParamReader.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-
-IGESAppli_ToolRegionRestriction::IGESAppli_ToolRegionRestriction ()    {  }
 
 
 void  IGESAppli_ToolRegionRestriction::ReadOwnParams
@@ -62,21 +59,6 @@ void  IGESAppli_ToolRegionRestriction::WriteOwnParams
   IW.Send(ent->ElectricalCktRestriction());
 }
 
-void  IGESAppli_ToolRegionRestriction::OwnShared
-  (const Handle(IGESAppli_RegionRestriction)& /*ent*/, Interface_EntityIterator& /*iter*/) const
-{
-}
-
-void  IGESAppli_ToolRegionRestriction::OwnCopy
-  (const Handle(IGESAppli_RegionRestriction)& another,
-   const Handle(IGESAppli_RegionRestriction)& ent, Interface_CopyTool& /*TC*/) const
-{
-  ent->Init
-    (3,another->ElectricalViasRestriction(),
-     another->ElectricalComponentRestriction(),
-     another->ElectricalCktRestriction());    // nbprops = 3
-}
-
 Standard_Boolean  IGESAppli_ToolRegionRestriction::OwnCorrect
   (const Handle(IGESAppli_RegionRestriction)& ent) const
 {
@@ -102,26 +84,6 @@ IGESData_DirChecker  IGESAppli_ToolRegionRestriction::DirChecker
   DC.UseFlagIgnored();
   DC.HierarchyStatusIgnored();
   return DC;
-}
-
-void  IGESAppli_ToolRegionRestriction::OwnCheck
-  (const Handle(IGESAppli_RegionRestriction)& ent,
-   const Interface_ShareTool& , Handle(Interface_Check)& ach) const
-{
-  if (ent->SubordinateStatus() != 0)
-    if (ent->DefLevel() != IGESData_DefOne &&
-	ent->DefLevel() != IGESData_DefSeveral)
-      ach->AddFail("Level type: Not value/reference");
-  if (ent->NbPropertyValues() != 3)
-    ach->AddFail("Number of Property Values != 3");
-  if (ent->ElectricalViasRestriction() < 0 || ent->ElectricalViasRestriction() > 2)
-    ach->AddFail("Incorrect value for Electrical Vias Restriction");
-  if (ent->ElectricalComponentRestriction() < 0 || ent->ElectricalComponentRestriction() > 2)
-    ach->AddFail("Incorrect value for Electrical Component Restriction");
-  if (ent->ElectricalCktRestriction() < 0 || ent->ElectricalCktRestriction() > 2)
-    ach->AddFail("Incorrect value for Electrical Circuit Restriction");
-  //UNFINISHED
-  //level ignored if this property is subordinate -- queried
 }
 
 void  IGESAppli_ToolRegionRestriction::OwnDump

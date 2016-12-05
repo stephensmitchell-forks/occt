@@ -28,15 +28,12 @@
 #include <IGESData_ParamCursor.hxx>
 #include <IGESData_ParamReader.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
 #include <TCollection_HAsciiString.hxx>
-
-IGESAppli_ToolFiniteElement::IGESAppli_ToolFiniteElement ()    {  }
 
 
 void  IGESAppli_ToolFiniteElement::ReadOwnParams
@@ -77,32 +74,6 @@ void  IGESAppli_ToolFiniteElement::WriteOwnParams
   IW.Send(ent->Name());
 }
 
-void  IGESAppli_ToolFiniteElement::OwnShared
-  (const Handle(IGESAppli_FiniteElement)& ent, Interface_EntityIterator& iter) const
-{
-  Standard_Integer upper = ent->NbNodes();
-  for (Standard_Integer i= 1; i <= upper ; i ++)
-    iter.GetOneItem(ent->Node(i));
-}
-
-void  IGESAppli_ToolFiniteElement::OwnCopy
-  (const Handle(IGESAppli_FiniteElement)& another,
-   const Handle(IGESAppli_FiniteElement)& ent, Interface_CopyTool& TC) const
-{
-  Standard_Integer aTopology = another->Topology();
-  Handle(TCollection_HAsciiString) aName =
-    new TCollection_HAsciiString(another->Name());
-  Standard_Integer nbval = another->NbNodes();
-  Handle(IGESAppli_HArray1OfNode) aList = new
-    IGESAppli_HArray1OfNode(1,nbval);
-  for (Standard_Integer i=1;i <=nbval;i++)
-    {
-      DeclareAndCast(IGESAppli_Node,aEntity,TC.Transferred(another->Node(i)));
-      aList->SetValue(i,aEntity);
-    }
-  ent->Init(aTopology,aList,aName);
-}
-
 IGESData_DirChecker  IGESAppli_ToolFiniteElement::DirChecker
   (const Handle(IGESAppli_FiniteElement)& /* ent */ ) const
 {
@@ -116,12 +87,6 @@ IGESData_DirChecker  IGESAppli_ToolFiniteElement::DirChecker
   DC.UseFlagIgnored();
   DC.HierarchyStatusIgnored();
   return DC;
-}
-
-void  IGESAppli_ToolFiniteElement::OwnCheck
-  (const Handle(IGESAppli_FiniteElement)& /* ent */,
-   const Interface_ShareTool& , Handle(Interface_Check)& /* ach */) const
-{
 }
 
 void  IGESAppli_ToolFiniteElement::OwnDump

@@ -17,12 +17,7 @@
 #ifndef _IGESAppli_RegionRestriction_HeaderFile
 #define _IGESAppli_RegionRestriction_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
-#include <Standard_Integer.hxx>
 #include <IGESData_IGESEntity.hxx>
-
 
 class IGESAppli_RegionRestriction;
 DEFINE_STANDARD_HANDLE(IGESAppli_RegionRestriction, IGESData_IGESEntity)
@@ -33,11 +28,9 @@ DEFINE_STANDARD_HANDLE(IGESAppli_RegionRestriction, IGESData_IGESEntity)
 //! over a region.
 class IGESAppli_RegionRestriction : public IGESData_IGESEntity
 {
+ public:
 
-public:
-
-  
-  Standard_EXPORT IGESAppli_RegionRestriction();
+  IGESAppli_RegionRestriction() {}
   
   //! This method is used to set the fields of the class
   //! RegionRestriction
@@ -48,45 +41,30 @@ public:
   Standard_EXPORT void Init (const Standard_Integer nbPropVal, const Standard_Integer aViasRest, const Standard_Integer aCompoRest, const Standard_Integer aCktRest);
   
   //! is always 3
-  Standard_EXPORT Standard_Integer NbPropertyValues() const;
-  
+  Standard_Integer NbPropertyValues() const { return theNbPropertyValues; }
+
   //! returns the Electrical vias restriction
   //! is 0, 1 or 2
-  Standard_EXPORT Standard_Integer ElectricalViasRestriction() const;
-  
+  Standard_Integer ElectricalViasRestriction() const { return theElectViasRestrict; }
+
   //! returns the Electrical components restriction
   //! is 0, 1 or 2
-  Standard_EXPORT Standard_Integer ElectricalComponentRestriction() const;
-  
+  Standard_Integer ElectricalComponentRestriction() const { return theElectCompRestrict; }
+
   //! returns the Electrical circuitry restriction
   //! is 0, 1 or 2
-  Standard_EXPORT Standard_Integer ElectricalCktRestriction() const;
+  Standard_Integer ElectricalCktRestriction() const { return theElectCktRestrict; }
 
-
-
+  Standard_EXPORT virtual void OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESAppli_RegionRestriction,IGESData_IGESEntity)
 
-protected:
-
-
-
-
-private:
-
+ private:
 
   Standard_Integer theNbPropertyValues;
   Standard_Integer theElectViasRestrict;
   Standard_Integer theElectCompRestrict;
   Standard_Integer theElectCktRestrict;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESAppli_RegionRestriction_HeaderFile

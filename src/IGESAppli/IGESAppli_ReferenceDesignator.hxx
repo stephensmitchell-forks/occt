@@ -17,10 +17,6 @@
 #ifndef _IGESAppli_ReferenceDesignator_HeaderFile
 #define _IGESAppli_ReferenceDesignator_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
-#include <Standard_Integer.hxx>
 #include <IGESData_IGESEntity.hxx>
 class TCollection_HAsciiString;
 
@@ -35,11 +31,9 @@ DEFINE_STANDARD_HANDLE(IGESAppli_ReferenceDesignator, IGESData_IGESEntity)
 //! used to represent a component.
 class IGESAppli_ReferenceDesignator : public IGESData_IGESEntity
 {
+ public:
 
-public:
-
-  
-  Standard_EXPORT IGESAppli_ReferenceDesignator();
+  IGESAppli_ReferenceDesignator() {}
   
   //! This method is used to set the fields of the class
   //! ReferenceDesignator
@@ -49,34 +43,19 @@ public:
   
   //! returns the number of property values
   //! is always 1
-  Standard_EXPORT Standard_Integer NbPropertyValues() const;
-  
+  Standard_Integer NbPropertyValues() const { return theNbPropertyValues; }
+
   //! returns the Reference designator text
-  Standard_EXPORT Handle(TCollection_HAsciiString) RefDesignatorText() const;
+  const Handle(TCollection_HAsciiString) & RefDesignatorText() const { return theRefDesigText; }
 
-
-
+  Standard_EXPORT virtual void OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESAppli_ReferenceDesignator,IGESData_IGESEntity)
 
-protected:
-
-
-
-
-private:
-
+ private:
 
   Standard_Integer theNbPropertyValues;
   Handle(TCollection_HAsciiString) theRefDesigText;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESAppli_ReferenceDesignator_HeaderFile

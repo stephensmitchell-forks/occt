@@ -19,8 +19,6 @@ IGESData_DirPart.hxx
 IGESData_Dump.hxx
 IGESData_FileProtocol.cxx
 IGESData_FileProtocol.hxx
-IGESData_FileRecognizer.hxx
-IGESData_FileRecognizer_0.cxx
 IGESData_FreeFormatEntity.cxx
 IGESData_FreeFormatEntity.hxx
 IGESData_GeneralModule.cxx

@@ -31,7 +31,6 @@
 #include <IGESDimen_NewDimensionedGeometry.hxx>
 #include <IGESDimen_ToolNewDimensionedGeometry.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
@@ -39,9 +38,6 @@
 #include <Standard_DomainError.hxx>
 #include <TColgp_HArray1OfXYZ.hxx>
 #include <TColStd_HArray1OfInteger.hxx>
-
-IGESDimen_ToolNewDimensionedGeometry::IGESDimen_ToolNewDimensionedGeometry ()
-      {  }
 
 
 void  IGESDimen_ToolNewDimensionedGeometry::ReadOwnParams
@@ -126,35 +122,6 @@ void  IGESDimen_ToolNewDimensionedGeometry::OwnShared
   iter.GetOneItem(ent->DimensionEntity());
   for ( num = ent->NbGeometries(), i = 1; i <= num; i++ )
     iter.GetOneItem(ent->GeometryEntity(i));
-}
-
-void  IGESDimen_ToolNewDimensionedGeometry::OwnCopy
-  (const Handle(IGESDimen_NewDimensionedGeometry)& another,
-   const Handle(IGESDimen_NewDimensionedGeometry)& ent, Interface_CopyTool& TC) const
-{
-  Standard_Integer num = another->NbGeometries();
-  Standard_Integer tempNbDimens = another->NbDimensions();
-  Standard_Integer tempDimOrientFlag = another->DimensionOrientationFlag();
-  Standard_Real tempAngle = another->AngleValue();
-  DeclareAndCast(IGESData_IGESEntity, tempDimen,
-		 TC.Transferred(another->DimensionEntity()));
-
-  Handle(IGESData_HArray1OfIGESEntity) tempGeomEnts =
-    new IGESData_HArray1OfIGESEntity(1, num);
-  Handle(TColStd_HArray1OfInteger) tempDimLocFlags =
-    new TColStd_HArray1OfInteger(1, num);
-  Handle(TColgp_HArray1OfXYZ) tempPoints = new TColgp_HArray1OfXYZ(1, num);
-
-  for (Standard_Integer i = 1; i <= num; i++)
-    {
-      DeclareAndCast(IGESData_IGESEntity, tempEnt,
-		     TC.Transferred(another->GeometryEntity(i)));
-      tempGeomEnts->SetValue(i, tempEnt);
-      tempDimLocFlags->SetValue(i, another->DimensionLocationFlag(i));
-      tempPoints->SetValue(i, another->Point(i).XYZ());
-    }
-  ent->Init (tempNbDimens, tempDimen, tempDimOrientFlag, tempAngle,
-	     tempGeomEnts, tempDimLocFlags, tempPoints);
 }
 
 Standard_Boolean  IGESDimen_ToolNewDimensionedGeometry::OwnCorrect

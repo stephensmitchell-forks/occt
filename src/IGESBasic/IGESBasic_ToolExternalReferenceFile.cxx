@@ -26,7 +26,6 @@
 #include <IGESData_ParamCursor.hxx>
 #include <IGESData_ParamReader.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_HArray1OfHAsciiString.hxx>
 #include <Interface_Macros.hxx>
@@ -34,8 +33,6 @@
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
 #include <TCollection_HAsciiString.hxx>
-
-IGESBasic_ToolExternalReferenceFile::IGESBasic_ToolExternalReferenceFile () { }
 
 
 void  IGESBasic_ToolExternalReferenceFile::ReadOwnParams
@@ -62,24 +59,6 @@ void  IGESBasic_ToolExternalReferenceFile::WriteOwnParams
   IW.Send(ent->NbListEntries());
   for ( num = ent->NbListEntries(), i = 1; i <= num; i++ )
     IW.Send(ent->Name(i));
-}
-
-void  IGESBasic_ToolExternalReferenceFile::OwnShared
-  (const Handle(IGESBasic_ExternalReferenceFile)& /* ent */, Interface_EntityIterator& /* iter */) const
-{
-}
-
-void  IGESBasic_ToolExternalReferenceFile::OwnCopy
-  (const Handle(IGESBasic_ExternalReferenceFile)& another,
-   const Handle(IGESBasic_ExternalReferenceFile)& ent, Interface_CopyTool& /* TC */) const
-{
-  Standard_Integer num = another->NbListEntries();
-  Handle(Interface_HArray1OfHAsciiString) tempNames =
-    new Interface_HArray1OfHAsciiString(1, num);
-  for ( Standard_Integer i = 1; i <= num; i++ )
-    tempNames->SetValue(i, new TCollection_HAsciiString
-			(another->Name(i)));
-  ent->Init(tempNames);
 }
 
 IGESData_DirChecker  IGESBasic_ToolExternalReferenceFile::DirChecker

@@ -35,7 +35,6 @@
 #include <IGESData_IGESWriter.hxx>
 #include <IGESData_Protocol.hxx>
 #include <IGESData_FileProtocol.hxx>
-#include <IGESDefs.hxx>
 #include <IGESFile_Read.hxx>
 #include <IGESSolid.hxx>
 #include <IGESSolid_Protocol.hxx>
@@ -316,9 +315,8 @@ void IGESControl_Controller::Init ()
     gInitMutex.Lock();
     if (!gInitDone)
     {
-      IGESSolid::Init();
+      //szv_c1:IGESSolid::Init();
       IGESAppli::Init();
-      IGESDefs::Init();
 
       Handle(IGESControl_Controller) aController = new IGESControl_Controller(Standard_False);
       aController->AutoRecord();
@@ -334,7 +332,7 @@ void IGESControl_Controller::Init ()
 }
 
 //=======================================================================
-//function : Init
+//function : DefineProtocol
 //purpose  : 
 //=======================================================================
 
@@ -342,10 +340,10 @@ const Handle(IGESData_Protocol) & IGESControl_Controller::DefineProtocol ()
 {
   static Handle(IGESData_FileProtocol) gIGESProto;
   if (gIGESProto.IsNull()) {
-    Handle(IGESData_Protocol) aIGESProto1 = IGESSolid::Protocol();
-    Handle(IGESData_Protocol) aIGESProto2 = IGESAppli::Protocol();
-    gIGESProto  = new IGESData_FileProtocol;
-    gIGESProto->Add(aIGESProto1);
+    //const Handle(IGESData_Protocol) &aIGESProto1 = IGESSolid::Protocol();
+    const Handle(IGESData_Protocol) &aIGESProto2 = IGESAppli::Protocol();
+    gIGESProto = new IGESData_FileProtocol;
+    //gIGESProto->Add(aIGESProto1);
     gIGESProto->Add(aIGESProto2);
   }
   return gIGESProto;

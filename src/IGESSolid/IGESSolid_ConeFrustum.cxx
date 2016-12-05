@@ -25,10 +25,7 @@
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESSolid_ConeFrustum,IGESData_IGESEntity)
 
-IGESSolid_ConeFrustum::IGESSolid_ConeFrustum ()    {  }
-
-
-    void IGESSolid_ConeFrustum::Init
+void IGESSolid_ConeFrustum::Init
   (const Standard_Real Ht, const Standard_Real R1,     const Standard_Real R2,
    const gp_XYZ& Center,   const gp_XYZ&       anAxis)
 {
@@ -40,51 +37,46 @@ IGESSolid_ConeFrustum::IGESSolid_ConeFrustum ()    {  }
   InitTypeAndForm(156,0);
 }
 
-    Standard_Real IGESSolid_ConeFrustum::Height () const
-{
-  return theHeight;
-}
-
-    Standard_Real IGESSolid_ConeFrustum::LargerRadius () const
-{
-  return theR1;
-}
-
-    Standard_Real IGESSolid_ConeFrustum::SmallerRadius () const
-{
-  return theR2;
-}
-
-    gp_Pnt IGESSolid_ConeFrustum::FaceCenter () const
+gp_Pnt IGESSolid_ConeFrustum::FaceCenter () const
 {
   return gp_Pnt(theFaceCenter);
 }
 
-    gp_Pnt IGESSolid_ConeFrustum::TransformedFaceCenter () const
+gp_Pnt IGESSolid_ConeFrustum::TransformedFaceCenter () const
 {
-  if (!HasTransf()) return gp_Pnt(theFaceCenter);
-  else
-    {
-      gp_XYZ tmp = theFaceCenter;
-      Location().Transforms(tmp);
-      return gp_Pnt(tmp);
-    }
+  if (!HasTransf())
+    return gp_Pnt(theFaceCenter);
+
+  gp_XYZ tmp = theFaceCenter;
+  Location().Transforms(tmp);
+  return gp_Pnt(tmp);
 }
 
-    gp_Dir IGESSolid_ConeFrustum::Axis () const
+gp_Dir IGESSolid_ConeFrustum::Axis () const
 {
   return gp_Dir(theAxis);
 }
 
-    gp_Dir IGESSolid_ConeFrustum::TransformedAxis () const
+gp_Dir IGESSolid_ConeFrustum::TransformedAxis () const
 {
-  if (!HasTransf()) return gp_Dir(theAxis);
-  else
-    {
-      gp_XYZ xyz = theAxis;
-      gp_GTrsf loc = Location();
-      loc.SetTranslationPart(gp_XYZ(0.,0.,0.));
-      loc.Transforms(xyz);
-      return gp_Dir(xyz);
-    }
+  if (!HasTransf())
+    return gp_Dir(theAxis);
+
+  gp_XYZ xyz = theAxis;
+  gp_GTrsf loc = Location();
+  loc.SetTranslationPart(gp_XYZ(0.,0.,0.));
+  loc.Transforms(xyz);
+  return gp_Dir(xyz);
+}
+
+void IGESSolid_ConeFrustum::OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &theCheck) const
+{
+  if (Height() <= 0.0)
+    theCheck->AddFail("Height : Value Not Positive");
+  if (LargerRadius() <= 0.0)
+    theCheck->AddFail("Larger face radius : Value Not Positive");
+  if (SmallerRadius() < 0.0)
+    theCheck->AddFail("Smaller face radius : Value Not Positive");
+  if (SmallerRadius() > LargerRadius())
+    theCheck->AddFail("Smaller face radius : is greater than Larger face radius");
 }

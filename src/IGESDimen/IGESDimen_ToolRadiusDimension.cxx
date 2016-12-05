@@ -30,14 +30,11 @@
 #include <IGESDimen_RadiusDimension.hxx>
 #include <IGESDimen_ToolRadiusDimension.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-
-IGESDimen_ToolRadiusDimension::IGESDimen_ToolRadiusDimension ()    {  }
 
 
 void IGESDimen_ToolRadiusDimension::ReadOwnParams
@@ -83,22 +80,6 @@ void  IGESDimen_ToolRadiusDimension::OwnShared
   iter.GetOneItem(ent->Note());
   iter.GetOneItem(ent->Leader());
   iter.GetOneItem(ent->Leader2());
-}
-
-void IGESDimen_ToolRadiusDimension::OwnCopy
-  (const Handle(IGESDimen_RadiusDimension)& another,
-   const Handle(IGESDimen_RadiusDimension)& ent, Interface_CopyTool& TC) const
-{
-  DeclareAndCast(IGESDimen_GeneralNote, tempNote,
-		 TC.Transferred(another->Note()));
-  DeclareAndCast(IGESDimen_LeaderArrow, leadArr,
-		 TC.Transferred(another->Leader()));
-  gp_XY arcCenter = another->Center().XY();
-  Handle(IGESDimen_LeaderArrow) leadArr2;
-  if (another->HasLeader2()) leadArr2 =
-    GetCasted(IGESDimen_LeaderArrow,TC.Transferred(another->Leader2()));
-  ent->Init(tempNote, leadArr, arcCenter, leadArr2);
-  ent->InitForm (another->FormNumber());
 }
 
 IGESData_DirChecker IGESDimen_ToolRadiusDimension::DirChecker

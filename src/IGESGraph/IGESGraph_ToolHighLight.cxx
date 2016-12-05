@@ -25,13 +25,10 @@
 #include <IGESGraph_HighLight.hxx>
 #include <IGESGraph_ToolHighLight.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-
-IGESGraph_ToolHighLight::IGESGraph_ToolHighLight ()    {  }
 
 
 void IGESGraph_ToolHighLight::ReadOwnParams
@@ -61,18 +58,6 @@ void IGESGraph_ToolHighLight::WriteOwnParams
 { 
   IW.Send( ent->NbPropertyValues() );
   IW.Send( ent->HighLightStatus() );
-}
-
-void  IGESGraph_ToolHighLight::OwnShared
-  (const Handle(IGESGraph_HighLight)& /*ent*/, Interface_EntityIterator& /*iter*/) const
-{
-}
-
-void IGESGraph_ToolHighLight::OwnCopy
-  (const Handle(IGESGraph_HighLight)& another,
-   const Handle(IGESGraph_HighLight)& ent, Interface_CopyTool& /*TC*/) const
-{
-  ent->Init(1,another->HighLightStatus());
 }
 
 Standard_Boolean  IGESGraph_ToolHighLight::OwnCorrect

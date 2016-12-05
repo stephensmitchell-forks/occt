@@ -16,18 +16,14 @@
 //--------------------------------------------------------------------
 //--------------------------------------------------------------------
 
-#include <IGESData_IGESEntity.hxx>
 #include <IGESSolid_BooleanTree.hxx>
 #include <Standard_DimensionError.hxx>
 #include <Standard_OutOfRange.hxx>
-#include <Standard_Type.hxx>
+#include <Interface_EntityIterator.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESSolid_BooleanTree,IGESData_IGESEntity)
 
-IGESSolid_BooleanTree::IGESSolid_BooleanTree ()    {  }
-
-
-    void  IGESSolid_BooleanTree::Init
+void IGESSolid_BooleanTree::Init
   (const Handle(IGESData_HArray1OfIGESEntity)& operands,
    const Handle(TColStd_HArray1OfInteger)& operations)
 {
@@ -40,28 +36,55 @@ IGESSolid_BooleanTree::IGESSolid_BooleanTree ()    {  }
   InitTypeAndForm(180,0);
 }
 
-    Standard_Integer IGESSolid_BooleanTree::Length () const
+Standard_Integer IGESSolid_BooleanTree::Length () const
 {
   return theOperands->Length();
 }
 
-    Standard_Boolean IGESSolid_BooleanTree::IsOperand
-  (const Standard_Integer Index) const
+Standard_Boolean IGESSolid_BooleanTree::IsOperand (const Standard_Integer Index) const
 {
   return (!theOperands->Value(Index).IsNull());
 }
 
-    Handle(IGESData_IGESEntity) IGESSolid_BooleanTree::Operand
-  (const Standard_Integer Index) const
+Handle(IGESData_IGESEntity) IGESSolid_BooleanTree::Operand (const Standard_Integer Index) const
 {
   return theOperands->Value(Index);
 }
 
-    Standard_Integer IGESSolid_BooleanTree::Operation
-  (const Standard_Integer Index) const
+Standard_Integer IGESSolid_BooleanTree::Operation (const Standard_Integer Index) const
 {
   if (theOperands->Value(Index).IsNull())
     return theOperations->Value(Index);
   else
     return 0;      // It is not an operation. (operations can be : 1-2-3)
+}
+
+void IGESSolid_BooleanTree::OwnShared(Interface_EntityIterator &theIter) const
+{
+  const Standard_Integer length = theOperands->Length();
+  for (Standard_Integer i = 1; i <= length; i++)
+  {
+    if (!theOperands->Value(i).IsNull())
+      theIter.GetOneItem(theOperands->Value(i));
+  }
+}
+
+void IGESSolid_BooleanTree::OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &theCheck) const
+{
+  const Standard_Integer length = Length();
+  if (length <= 2)
+    theCheck->AddFail("Length of post-order notation : Less than three");
+  else {
+    if (!IsOperand(1)) theCheck->AddFail("First Item is not an Operand");
+    if (!IsOperand(2)) theCheck->AddFail("Second Item is not an Operand");
+    if ( IsOperand(length)) theCheck->AddFail("Last Item is not an Operation");
+  }
+  for (Standard_Integer i = 1; i <= length; i ++) {
+    if (!Operand(i).IsNull()) continue;
+    if (Operation(i) < 1 || Operation(i) > 3) {
+      char mess[80];
+      sprintf(mess,"Item no. %d Incorrect",i);
+      theCheck->AddFail(mess);
+    }
+  }
 }

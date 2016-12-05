@@ -30,7 +30,6 @@
 #include <IGESGraph_HArray1OfTextFontDef.hxx>
 #include <IGESGraph_TextFontDef.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_HArray1OfHAsciiString.hxx>
 #include <Interface_Macros.hxx>
@@ -43,8 +42,6 @@
 #include <TColStd_HArray1OfReal.hxx>
 
 #include <stdio.h>
-IGESDimen_ToolGeneralNote::IGESDimen_ToolGeneralNote ()    {  }
-
 
 void  IGESDimen_ToolGeneralNote::ReadOwnParams
   (const Handle(IGESDimen_GeneralNote)& ent,
@@ -206,80 +203,6 @@ void  IGESDimen_ToolGeneralNote::OwnShared
     if (ent->IsFontEntity(i))
       iter.GetOneItem(ent->FontEntity(i));
   }
-}
-
-void  IGESDimen_ToolGeneralNote::OwnCopy
-  (const Handle(IGESDimen_GeneralNote)& another,
-   const Handle(IGESDimen_GeneralNote)& ent, Interface_CopyTool& TC) const
-{
-  Standard_Integer nbval = another->NbStrings();
-
-  Handle(TColStd_HArray1OfInteger) nbChars;
-  Handle(TColStd_HArray1OfReal) boxWidths; 
-  Handle(TColStd_HArray1OfReal) boxHeights;
-  Handle(TColStd_HArray1OfInteger) fontCodes; 
-  Handle(IGESGraph_HArray1OfTextFontDef) fontEntities;
-  Handle(TColStd_HArray1OfReal) slantAngles; 
-  Handle(TColStd_HArray1OfReal) rotationAngles;
-  Handle(TColStd_HArray1OfInteger) mirrorFlags; 
-  Handle(TColStd_HArray1OfInteger) rotateFlags;
-  Handle(TColgp_HArray1OfXYZ) startPoints; 
-  Handle(Interface_HArray1OfHAsciiString) texts; 
-
-  nbChars        = new TColStd_HArray1OfInteger(1, nbval);
-  boxWidths      = new TColStd_HArray1OfReal   (1, nbval);
-  boxHeights     = new TColStd_HArray1OfReal   (1, nbval);
-  fontCodes      = new TColStd_HArray1OfInteger(1, nbval);
-  fontEntities   = new IGESGraph_HArray1OfTextFontDef(1, nbval);
-  slantAngles    = new TColStd_HArray1OfReal   (1, nbval);
-  rotationAngles = new TColStd_HArray1OfReal   (1, nbval);
-  mirrorFlags    = new TColStd_HArray1OfInteger(1, nbval);
-  rotateFlags    = new TColStd_HArray1OfInteger(1, nbval);
-  startPoints    = new TColgp_HArray1OfXYZ     (1, nbval);
-  texts          = new Interface_HArray1OfHAsciiString(1, nbval);
-
-  for (Standard_Integer i = 1; i <= nbval; i++)
-    {
-      Standard_Integer nbChar = another->NbCharacters(i);
-      nbChars->SetValue(i, nbChar);
-      Standard_Real boxWidth = another->BoxWidth(i);
-      boxWidths->SetValue(i, boxWidth);
-      Standard_Real boxHeight = another->BoxHeight(i);
-      boxHeights->SetValue(i, boxHeight);
-
-      if (another->IsFontEntity(i))
-	{
-          DeclareAndCast(IGESGraph_TextFontDef, fontEntity, 
-			 TC.Transferred(another->FontEntity(i)));
-          fontEntities->SetValue(i, fontEntity);
-          fontCodes->SetValue(i, -1);
-	}
-      else
-	{
-          Standard_Integer fontCode = another->FontCode(i);
-          fontCodes->SetValue(i, fontCode);
-////          fontEntities->SetValue(i, NULL);    par defaut
-	}
-
-      Standard_Real slantAngle = another->SlantAngle(i);
-      slantAngles->SetValue(i, slantAngle);
-      Standard_Real rotationAngle = another->RotationAngle(i);
-      rotationAngles->SetValue(i, rotationAngle);
-      Standard_Integer mirrorFlag = another->MirrorFlag(i);
-      mirrorFlags->SetValue(i, mirrorFlag);
-      Standard_Integer rotateFlag = another->RotateFlag(i);
-      rotateFlags->SetValue(i, rotateFlag);
-      gp_XYZ startPoint = (another->StartPoint(i)).XYZ();
-      startPoints->SetValue(i, startPoint);
-      Handle(TCollection_HAsciiString) text =
-	new TCollection_HAsciiString(another->Text(i));
-      texts->SetValue(i, text);
-    }
-
-  ent->Init(nbChars, boxWidths, boxHeights, fontCodes, fontEntities,
-	    slantAngles, rotationAngles, mirrorFlags, rotateFlags,
-	    startPoints, texts);
-  ent->SetFormNumber(another->FormNumber());
 }
 
 IGESData_DirChecker  IGESDimen_ToolGeneralNote::DirChecker

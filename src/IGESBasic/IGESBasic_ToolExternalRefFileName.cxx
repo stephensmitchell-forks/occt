@@ -26,15 +26,12 @@
 #include <IGESData_ParamCursor.hxx>
 #include <IGESData_ParamReader.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
 #include <TCollection_HAsciiString.hxx>
-
-IGESBasic_ToolExternalRefFileName::IGESBasic_ToolExternalRefFileName ()    {  }
 
 
 void  IGESBasic_ToolExternalRefFileName::ReadOwnParams
@@ -58,22 +55,6 @@ void  IGESBasic_ToolExternalRefFileName::WriteOwnParams
 {
   IW.Send(ent->FileId());
   IW.Send(ent->ReferenceName());
-}
-
-void  IGESBasic_ToolExternalRefFileName::OwnShared
-  (const Handle(IGESBasic_ExternalRefFileName)& /* ent */, Interface_EntityIterator& /* iter */) const
-{
-}
-
-void  IGESBasic_ToolExternalRefFileName::OwnCopy
-  (const Handle(IGESBasic_ExternalRefFileName)& another,
-   const Handle(IGESBasic_ExternalRefFileName)& ent, Interface_CopyTool& /* TC */) const
-{
-  Handle(TCollection_HAsciiString) tempFileId  =
-    new TCollection_HAsciiString(another->FileId());
-  Handle(TCollection_HAsciiString) tempRefName =
-    new TCollection_HAsciiString(another->ReferenceName());
-  ent->Init(tempFileId, tempRefName);
 }
 
 IGESData_DirChecker  IGESBasic_ToolExternalRefFileName::DirChecker

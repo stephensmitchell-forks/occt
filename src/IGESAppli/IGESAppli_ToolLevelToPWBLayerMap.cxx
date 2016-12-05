@@ -26,7 +26,6 @@
 #include <IGESData_ParamCursor.hxx>
 #include <IGESData_ParamReader.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_HArray1OfHAsciiString.hxx>
 #include <Interface_Macros.hxx>
@@ -35,8 +34,6 @@
 #include <Standard_DomainError.hxx>
 #include <TCollection_HAsciiString.hxx>
 #include <TColStd_HArray1OfInteger.hxx>
-
-IGESAppli_ToolLevelToPWBLayerMap::IGESAppli_ToolLevelToPWBLayerMap ()    {  }
 
 
 void  IGESAppli_ToolLevelToPWBLayerMap::ReadOwnParams
@@ -102,39 +99,6 @@ void  IGESAppli_ToolLevelToPWBLayerMap::WriteOwnParams
     }
 }
 
-void  IGESAppli_ToolLevelToPWBLayerMap::OwnShared
-  (const Handle(IGESAppli_LevelToPWBLayerMap)& /* ent */, Interface_EntityIterator& /* iter */) const
-{
-}
-
-void  IGESAppli_ToolLevelToPWBLayerMap::OwnCopy
-  (const Handle(IGESAppli_LevelToPWBLayerMap)& another,
-   const Handle(IGESAppli_LevelToPWBLayerMap)& ent, Interface_CopyTool& /* TC */) const
-{
-  Standard_Integer tempNbPropertyValues = another->NbPropertyValues();
-  Standard_Integer num = another->NbLevelToLayerDefs();
-  Handle(TColStd_HArray1OfInteger) tempExchangeFileLevelNumber =
-    new TColStd_HArray1OfInteger(1, num);
-  Handle(Interface_HArray1OfHAsciiString) tempNativeLevel =
-    new Interface_HArray1OfHAsciiString(1, num);
-  Handle(TColStd_HArray1OfInteger) tempPhysicalLayerNumber =
-    new TColStd_HArray1OfInteger(1, num);
-  Handle(Interface_HArray1OfHAsciiString) tempExchangeFileLevelIdent =
-    new Interface_HArray1OfHAsciiString(1, num);
-  for ( Standard_Integer i = 1; i <= num; i++ )
-    {
-      tempExchangeFileLevelNumber->SetValue(i,another->ExchangeFileLevelNumber(i));
-      tempNativeLevel->SetValue
-	(i, new TCollection_HAsciiString(another->NativeLevel(i)));
-      tempPhysicalLayerNumber->SetValue(i, another->PhysicalLayerNumber(i));
-      tempExchangeFileLevelIdent->SetValue
-	(i,new TCollection_HAsciiString
-	 (another->ExchangeFileLevelIdent(i)));
-    }
-  ent->Init (tempNbPropertyValues, tempExchangeFileLevelNumber, tempNativeLevel,
-	     tempPhysicalLayerNumber, tempExchangeFileLevelIdent);
-}
-
 IGESData_DirChecker  IGESAppli_ToolLevelToPWBLayerMap::DirChecker
   (const Handle(IGESAppli_LevelToPWBLayerMap)& /* ent */ ) const
 {
@@ -148,12 +112,6 @@ IGESData_DirChecker  IGESAppli_ToolLevelToPWBLayerMap::DirChecker
   DC.UseFlagIgnored();
   DC.HierarchyStatusIgnored();
   return DC;
-}
-
-void  IGESAppli_ToolLevelToPWBLayerMap::OwnCheck
-  (const Handle(IGESAppli_LevelToPWBLayerMap)& /* ent */,
-   const Interface_ShareTool& , Handle(Interface_Check)& /* ach */) const
-{
 }
 
 void  IGESAppli_ToolLevelToPWBLayerMap::OwnDump

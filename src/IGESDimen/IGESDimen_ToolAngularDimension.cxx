@@ -31,14 +31,11 @@
 #include <IGESDimen_ToolAngularDimension.hxx>
 #include <IGESDimen_WitnessLine.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-
-IGESDimen_ToolAngularDimension::IGESDimen_ToolAngularDimension ()    {  }
 
 
 void  IGESDimen_ToolAngularDimension::ReadOwnParams
@@ -103,27 +100,6 @@ void  IGESDimen_ToolAngularDimension::OwnShared
   iter.GetOneItem(ent->SecondLeader());
 }
 
-void  IGESDimen_ToolAngularDimension::OwnCopy
-  (const Handle(IGESDimen_AngularDimension)& another,
-   const Handle(IGESDimen_AngularDimension)& ent, Interface_CopyTool& TC) const
-{
-  DeclareAndCast(IGESDimen_GeneralNote, note, 
-                 TC.Transferred(another->Note()));
-  DeclareAndCast(IGESDimen_WitnessLine, firstWitness, 
-		 TC.Transferred(another->FirstWitnessLine()));
-  DeclareAndCast(IGESDimen_WitnessLine, secondWitness, 
-		 TC.Transferred(another->SecondWitnessLine()));
-  gp_XY vertex = (another->Vertex()).XY();
-  Standard_Real radius = another->Radius();
-  DeclareAndCast(IGESDimen_LeaderArrow, firstLeader, 
-		 TC.Transferred(another->FirstLeader()));
-  DeclareAndCast(IGESDimen_LeaderArrow, secondLeader, 
-		 TC.Transferred(another->SecondLeader()));
-
-  ent->Init(note, firstWitness, secondWitness, vertex, radius,
-	    firstLeader, secondLeader);
-}
-
 IGESData_DirChecker  IGESDimen_ToolAngularDimension::DirChecker
   (const Handle(IGESDimen_AngularDimension)& /* ent */ ) const 
 { 
@@ -135,11 +111,6 @@ IGESData_DirChecker  IGESDimen_ToolAngularDimension::DirChecker
   DC.UseFlagRequired(1);
   return DC;
 }
-
-void  IGESDimen_ToolAngularDimension::OwnCheck
-  (const Handle(IGESDimen_AngularDimension)& /* ent */,
-   const Interface_ShareTool& , Handle(Interface_Check)& /* ach */) const 
-{  }
 
 void  IGESDimen_ToolAngularDimension::OwnDump
   (const Handle(IGESDimen_AngularDimension)& ent, const IGESData_IGESDumper& dumper,

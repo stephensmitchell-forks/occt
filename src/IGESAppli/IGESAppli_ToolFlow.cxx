@@ -32,7 +32,6 @@
 #include <IGESGraph_HArray1OfTextDisplayTemplate.hxx>
 #include <IGESGraph_TextDisplayTemplate.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_HArray1OfHAsciiString.hxx>
 #include <Interface_Macros.hxx>
@@ -40,8 +39,6 @@
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
 #include <TCollection_HAsciiString.hxx>
-
-IGESAppli_ToolFlow::IGESAppli_ToolFlow ()    {  }
 
 
 void  IGESAppli_ToolFlow::ReadOwnParams
@@ -172,94 +169,6 @@ void  IGESAppli_ToolFlow::WriteOwnParams
     IW.Send(ent->ContFlowAssociativity(i));
 }
 
-void  IGESAppli_ToolFlow::OwnShared
-  (const Handle(IGESAppli_Flow)& ent, Interface_EntityIterator& iter) const
-{
-  Standard_Integer i, num;
-  for ( num = ent->NbFlowAssociativities(), i = 1; i <= num; i++ )
-    iter.GetOneItem(ent->FlowAssociativity(i));
-  for ( num = ent->NbConnectPoints(), i = 1; i <= num; i++ )
-    iter.GetOneItem(ent->ConnectPoint(i));
-  for ( num = ent->NbJoins(), i = 1; i <= num; i++ )
-    iter.GetOneItem(ent->Join(i));
-  for ( num = ent->NbTextDisplayTemplates(), i = 1; i <= num; i++ )
-    iter.GetOneItem(ent->TextDisplayTemplate(i));
-  for ( num = ent->NbContFlowAssociativities(), i = 1; i <= num; i++ )
-    iter.GetOneItem(ent->ContFlowAssociativity(i));
-}
-
-void  IGESAppli_ToolFlow::OwnCopy
-  (const Handle(IGESAppli_Flow)& another,
-   const Handle(IGESAppli_Flow)& ent, Interface_CopyTool& TC) const
-{
-  Standard_Integer tempNbContextFlags = another->NbContextFlags();
-  Standard_Integer tempTypeOfFlow = another->TypeOfFlow();
-  Standard_Integer tempFunctionFlag = another->FunctionFlag();
-  Standard_Integer i, num;
-
-  num = another->NbFlowAssociativities();
-  Handle(IGESData_HArray1OfIGESEntity) tempFlowAssocs;
-  if (num > 0) tempFlowAssocs    = new IGESData_HArray1OfIGESEntity(1, num);
-  for ( i = 1; i <= num; i++ )
-    {
-      DeclareAndCast(IGESData_IGESEntity, new_item,
-		     TC.Transferred(another->FlowAssociativity(i)));
-      tempFlowAssocs->SetValue(i, new_item);
-    }
-
-  num = another->NbConnectPoints();
-  Handle(IGESDraw_HArray1OfConnectPoint) tempConnectPoints;
-  if (num > 0) tempConnectPoints = new IGESDraw_HArray1OfConnectPoint(1, num);
-  for ( i = 1; i <= num; i++ )
-    {
-      DeclareAndCast(IGESDraw_ConnectPoint, new_item,
-		     TC.Transferred(another->ConnectPoint(i)));
-      tempConnectPoints->SetValue(i, new_item);
-    }
-
-  num = another->NbJoins();
-  Handle(IGESData_HArray1OfIGESEntity) tempJoins;
-  if (num > 0) tempJoins         = new IGESData_HArray1OfIGESEntity(1, num);
-  for ( i = 1; i <= num; i++ )
-    {
-      DeclareAndCast(IGESData_IGESEntity, new_item,
-		     TC.Transferred(another->Join(i)));
-      tempJoins->SetValue(i, new_item);
-    }
-
-  num = another->NbFlowNames();
-  Handle(Interface_HArray1OfHAsciiString) tempFlowNames;
-  if (num > 0) tempFlowNames     = new Interface_HArray1OfHAsciiString(1, num);
-  for ( i = 1; i <= num; i++ )
-    tempFlowNames->SetValue
-      (i, new TCollection_HAsciiString(another->FlowName(i)));
-
-  num = another->NbTextDisplayTemplates();
-  Handle(IGESGraph_HArray1OfTextDisplayTemplate) tempTextDisplayTemplates;
-  if (num > 0) tempTextDisplayTemplates =
-    new IGESGraph_HArray1OfTextDisplayTemplate(1, num);
-  for ( i = 1; i <= num; i++ )
-    {
-      DeclareAndCast(IGESGraph_TextDisplayTemplate, new_item,
-		     TC.Transferred(another->TextDisplayTemplate(i)));
-      tempTextDisplayTemplates->SetValue(i, new_item);
-    }
-
-  num = another->NbContFlowAssociativities();
-  Handle(IGESData_HArray1OfIGESEntity) tempContFlowAssocs;
-  if (num > 0) tempContFlowAssocs = new IGESData_HArray1OfIGESEntity(1, num);
-  for ( i = 1; i <= num; i++ )
-    {
-      DeclareAndCast(IGESData_IGESEntity, new_item,
-		     TC.Transferred(another->ContFlowAssociativity(i)));
-      tempContFlowAssocs->SetValue(i, new_item);
-    }
-
-  ent->Init (tempNbContextFlags, tempTypeOfFlow, tempFunctionFlag,
-	     tempFlowAssocs, tempConnectPoints, tempJoins, tempFlowNames,
-	     tempTextDisplayTemplates, tempContFlowAssocs);
-}
-
 Standard_Boolean  IGESAppli_ToolFlow::OwnCorrect
   (const Handle(IGESAppli_Flow)& ent) const
 {
@@ -279,18 +188,6 @@ IGESData_DirChecker  IGESAppli_ToolFlow::DirChecker
   DC.UseFlagRequired(3);
   DC.HierarchyStatusIgnored();
   return DC;
-}
-
-void  IGESAppli_ToolFlow::OwnCheck
-  (const Handle(IGESAppli_Flow)& ent,
-   const Interface_ShareTool& , Handle(Interface_Check)& ach) const
-{
-  if (ent->NbContextFlags() != 2)
-    ach->AddFail("Number of Context Flags != 2");
-  if ((ent->TypeOfFlow() < 0) || (ent->TypeOfFlow() > 2))
-    ach->AddFail("Type of Flow != 0,1,2");
-  if ((ent->FunctionFlag() < 0) || (ent->FunctionFlag() > 2))
-    ach->AddFail("Function Flag != 0,1,2");
 }
 
 void  IGESAppli_ToolFlow::OwnDump

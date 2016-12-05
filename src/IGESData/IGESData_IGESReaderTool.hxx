@@ -21,16 +21,10 @@
 #include <Standard_DefineAlloc.hxx>
 #include <Standard_Handle.hxx>
 
-#include <Interface_GeneralLib.hxx>
-#include <Interface_ReaderLib.hxx>
-#include <Standard_Integer.hxx>
 #include <IGESData_IGESType.hxx>
 #include <IGESData_ReadStage.hxx>
-#include <Standard_Real.hxx>
 #include <Interface_FileReaderTool.hxx>
-#include <Standard_Boolean.hxx>
 class Interface_ParamList;
-class IGESData_FileRecognizer;
 class Interface_Check;
 class IGESData_IGESReaderData;
 class IGESData_Protocol;
@@ -58,12 +52,12 @@ class IGESData_IGESReaderTool  : public Interface_FileReaderTool
   //! (from IGESData) stored and later used
   //! RQ : Actually, sets DNum into IGES Entities
   //! Also loads the list of parameters for ParamReader
-  Standard_EXPORT void Prepare (const Handle(IGESData_FileRecognizer)& reco);
+  Standard_EXPORT void Prepare ();
 
  private:
   
   //! recognizes records by asking Protocol (on data of DirType)
-  Standard_EXPORT virtual Standard_Boolean Recognize (const Standard_Integer num, Handle(Interface_Check)& ach, Handle(Standard_Transient)& ent) Standard_OVERRIDE;
+  Standard_EXPORT virtual Standard_Boolean Recognize (const Standard_Integer num, Handle(Standard_Transient)& ent) Standard_OVERRIDE;
   
   //! fills model's header, that is, its GlobalSection
   Standard_EXPORT virtual void BeginRead (const Handle(Interface_InterfaceModel)& amodel) Standard_OVERRIDE;
@@ -73,9 +67,6 @@ class IGESData_IGESReaderTool  : public Interface_FileReaderTool
   //! ReadProps and ReadAssocs, from IGESEntity
   //! Returns True if no fail has been recorded
   Standard_EXPORT virtual Standard_Boolean AnalyseRecord (const Standard_Integer num, const Handle(Standard_Transient)& anent, Handle(Interface_Check)& acheck) Standard_OVERRIDE;
-  
-  //! after reading entities, true line weights can be computed
-  Standard_EXPORT virtual void EndRead (const Handle(Interface_InterfaceModel)& amodel) Standard_OVERRIDE;
   
   //! Reads directory part componants from file; DP is the litteral
   //! directory part, IR detains entities referenced by DP
@@ -103,9 +94,6 @@ class IGESData_IGESReaderTool  : public Interface_FileReaderTool
   Standard_EXPORT void ReadAssocs (const Handle(IGESData_IGESEntity)& ent, const Handle(IGESData_IGESReaderData)& IR, IGESData_ParamReader& PR) const;
 
   Handle(Interface_ParamList) thelist;
-  Handle(IGESData_FileRecognizer) thereco;
-  Interface_GeneralLib theglib;
-  Interface_ReaderLib therlib;
   Standard_Integer thecnum;
   IGESData_IGESType thectyp;
   IGESData_ReadStage thestep;

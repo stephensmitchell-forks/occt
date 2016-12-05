@@ -28,7 +28,6 @@
 #include <IGESGeom_CircularArc.hxx>
 #include <IGESGeom_ToolCircularArc.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_MSG.hxx>
@@ -38,9 +37,6 @@
 #include <Standard_DomainError.hxx>
 
 #include <stdio.h>
-// MGE 28/07/98
-IGESGeom_ToolCircularArc::IGESGeom_ToolCircularArc ()    {  }
-
 
 void IGESGeom_ToolCircularArc::ReadOwnParams
   (const Handle(IGESGeom_CircularArc)& ent,
@@ -91,19 +87,6 @@ void IGESGeom_ToolCircularArc::WriteOwnParams
   IW.Send(ent->EndPoint().Y());
 }
 
-void  IGESGeom_ToolCircularArc::OwnShared
-  (const Handle(IGESGeom_CircularArc)& /* ent */, Interface_EntityIterator& /* iter */) const
-{
-}
-
-void IGESGeom_ToolCircularArc::OwnCopy 
-  (const Handle(IGESGeom_CircularArc)& another,
-   const Handle(IGESGeom_CircularArc)& ent, Interface_CopyTool& /* TC */) const
-{
-  ent->Init(another->ZPlane(), another->Center().XY(),
-	    another->StartPoint().XY(), another->EndPoint().XY());
-}
-
 
 IGESData_DirChecker IGESGeom_ToolCircularArc::DirChecker
   (const Handle(IGESGeom_CircularArc)& /* ent */ )  const
@@ -115,28 +98,6 @@ IGESData_DirChecker IGESGeom_ToolCircularArc::DirChecker
   DC.Color(IGESData_DefAny);
   DC.HierarchyStatusIgnored();
   return DC;
-}
-
-void IGESGeom_ToolCircularArc::OwnCheck
-  (const Handle(IGESGeom_CircularArc)& /*ent*/,
-   const Interface_ShareTool& , Handle(Interface_Check)& /*ach*/)  const
-{
-/*
-  //Standard_Real eps  = 1.E-04;    // Tolerance des tests ?? //szv#4:S4163:12Mar99 not needed
-
-  Standard_Real Rad1 = Sqrt(Square(ent->StartPoint().X() - ent->Center().X()) +
-			    Square(ent->StartPoint().Y() - ent->Center().Y()));
-  Standard_Real Rad2 = Sqrt(Square(ent->EndPoint().X()   - ent->Center().X()) +
-			    Square(ent->EndPoint().Y()   - ent->Center().Y()));
-
-  Standard_Real ratio = Abs(Rad1 - Rad2) / (Rad1+Rad2);
-  if (ratio > eps) {
-    char mess[80];
-    Sprintf(mess,"Radius at Start & End Points, relative gap over %f",
-	    Interface_MSG::Intervalled (ratio));
-    ach.AddFail(mess,"Radius at Start & End Points, relative gap over %f");
-  }
-*/
 }
 
 void IGESGeom_ToolCircularArc::OwnDump

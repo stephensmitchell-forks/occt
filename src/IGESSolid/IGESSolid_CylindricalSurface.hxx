@@ -17,12 +17,7 @@
 #ifndef _IGESSolid_CylindricalSurface_HeaderFile
 #define _IGESSolid_CylindricalSurface_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
-#include <Standard_Real.hxx>
 #include <IGESData_IGESEntity.hxx>
-#include <Standard_Boolean.hxx>
 class IGESGeom_Point;
 class IGESGeom_Direction;
 
@@ -34,11 +29,9 @@ DEFINE_STANDARD_HANDLE(IGESSolid_CylindricalSurface, IGESData_IGESEntity)
 //! in package IGESSolid
 class IGESSolid_CylindricalSurface : public IGESData_IGESEntity
 {
+ public:
 
-public:
-
-  
-  Standard_EXPORT IGESSolid_CylindricalSurface();
+  IGESSolid_CylindricalSurface() {}
   
   //! This method is used to set the fields of the class
   //! CylindricalSurface
@@ -50,46 +43,32 @@ public:
   Standard_EXPORT void Init (const Handle(IGESGeom_Point)& aLocation, const Handle(IGESGeom_Direction)& anAxis, const Standard_Real aRadius, const Handle(IGESGeom_Direction)& aRefdir);
   
   //! returns the point on the axis
-  Standard_EXPORT Handle(IGESGeom_Point) LocationPoint() const;
-  
+  const Handle(IGESGeom_Point) & LocationPoint() const { return theLocationPoint; }
+
   //! returns the direction on the axis
-  Standard_EXPORT Handle(IGESGeom_Direction) Axis() const;
-  
+  const Handle(IGESGeom_Direction) & Axis() const { return theAxis; }
+
   //! returns the radius at the axis point
-  Standard_EXPORT Standard_Real Radius() const;
-  
+  Standard_Real Radius() const { return theRadius; }
+
   //! returns whether the surface is parametrised or not
-  Standard_EXPORT Standard_Boolean IsParametrised() const;
-  
-  //! returns the reference direction only for parametrised surface
-  //! else returns NULL
-  Standard_EXPORT Handle(IGESGeom_Direction) ReferenceDir() const;
+  Standard_Boolean IsParametrised() const { return (!theRefDir.IsNull()); }
 
+  //! returns the reference direction only for parametrised surface else returns NULL
+  const Handle(IGESGeom_Direction) & ReferenceDir() const { return theRefDir; }
 
+  Standard_EXPORT virtual void OwnShared(Interface_EntityIterator &theIter) const Standard_OVERRIDE;
 
+  Standard_EXPORT virtual void OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESSolid_CylindricalSurface,IGESData_IGESEntity)
 
-protected:
-
-
-
-
-private:
-
+ private:
 
   Handle(IGESGeom_Point) theLocationPoint;
   Handle(IGESGeom_Direction) theAxis;
   Standard_Real theRadius;
   Handle(IGESGeom_Direction) theRefDir;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESSolid_CylindricalSurface_HeaderFile

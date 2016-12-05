@@ -23,15 +23,12 @@
 #include <IGESDimen_GeneralNote.hxx>
 #include <Standard_DimensionMismatch.hxx>
 #include <Standard_OutOfRange.hxx>
-#include <Standard_Type.hxx>
+#include <Interface_EntityIterator.hxx>
 #include <TColgp_HArray1OfXYZ.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESAppli_NodalDisplAndRot,IGESData_IGESEntity)
 
-IGESAppli_NodalDisplAndRot::IGESAppli_NodalDisplAndRot ()    {  }
-
-
-    void  IGESAppli_NodalDisplAndRot::Init
+void IGESAppli_NodalDisplAndRot::Init
   (const Handle(IGESDimen_HArray1OfGeneralNote)& allNotes,
    const Handle(TColStd_HArray1OfInteger)& allIdentifiers,
    const Handle(IGESAppli_HArray1OfNode)&  allNodes,
@@ -66,43 +63,48 @@ IGESAppli_NodalDisplAndRot::IGESAppli_NodalDisplAndRot ()    {  }
   InitTypeAndForm(138,0);
 }
 
-    Standard_Integer  IGESAppli_NodalDisplAndRot::NbCases () const
+Standard_Integer IGESAppli_NodalDisplAndRot::NbCases () const
 {
   return theNotes->Length();
 }
 
-    Standard_Integer  IGESAppli_NodalDisplAndRot::NbNodes () const
+Standard_Integer IGESAppli_NodalDisplAndRot::NbNodes () const
 {
   return theNodes->Length();
 }
 
-    Handle(IGESDimen_GeneralNote)  IGESAppli_NodalDisplAndRot::Note
-  (const Standard_Integer Index) const
+const Handle(IGESDimen_GeneralNote) & IGESAppli_NodalDisplAndRot::Note (const Standard_Integer Index) const
 {
   return theNotes->Value(Index);
 }
 
-    Standard_Integer  IGESAppli_NodalDisplAndRot::NodeIdentifier
-  (const Standard_Integer Index) const
+Standard_Integer IGESAppli_NodalDisplAndRot::NodeIdentifier (const Standard_Integer Index) const
 {
   return theNodeIdentifiers->Value(Index);
 }
 
-    Handle(IGESAppli_Node)  IGESAppli_NodalDisplAndRot::Node
-  (const Standard_Integer Index) const
+const Handle(IGESAppli_Node) & IGESAppli_NodalDisplAndRot::Node (const Standard_Integer Index) const
 {
   return theNodes->Value(Index);
 }
 
-    gp_XYZ  IGESAppli_NodalDisplAndRot::TranslationParameter
-  (const Standard_Integer NodeNum, const Standard_Integer CaseNum) const
+const gp_XYZ & IGESAppli_NodalDisplAndRot::TranslationParameter (const Standard_Integer NodeNum, const Standard_Integer CaseNum) const
 {
   return theTransParam->Value(NodeNum)->Value(CaseNum);
 }
 
-    gp_XYZ  IGESAppli_NodalDisplAndRot::RotationalParameter
-  (const Standard_Integer NodeNum, const Standard_Integer CaseNum) const
+const gp_XYZ & IGESAppli_NodalDisplAndRot::RotationalParameter (const Standard_Integer NodeNum, const Standard_Integer CaseNum) const
 {
   return theRotParam->Value(NodeNum)->Value(CaseNum);
 }
 
+void IGESAppli_NodalDisplAndRot::OwnShared(Interface_EntityIterator &theIter) const
+{
+  const Standard_Integer nbcases = theNotes->Length();
+  const Standard_Integer nbnodes = theNodes->Length();
+
+  for (Standard_Integer i = 1; i <= nbcases; i ++)
+    theIter.GetOneItem(theNotes->Value(i));
+  for (Standard_Integer j = 1; j <= nbnodes; j ++)
+    theIter.GetOneItem(theNodes->Value(j));
+}

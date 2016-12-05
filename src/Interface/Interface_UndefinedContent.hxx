@@ -34,7 +34,6 @@ class Interface_InterfaceError;
 class Standard_Transient;
 class TCollection_HAsciiString;
 class Interface_EntityList;
-class Interface_CopyTool;
 
 
 class Interface_UndefinedContent;
@@ -64,10 +63,8 @@ DEFINE_STANDARD_HANDLE(Interface_UndefinedContent, MMgt_TShared)
 //! Recognize Unknown Entities of this norm
 class Interface_UndefinedContent : public MMgt_TShared
 {
+ public:
 
-public:
-
-  
   //! Defines an empty UndefinedContent
   Standard_EXPORT Interface_UndefinedContent();
   
@@ -124,38 +121,16 @@ public:
   //! Returns globally the list of param entities. Note that it can
   //! be used as shared entity list for the UndefinedEntity
   Standard_EXPORT Interface_EntityList EntityList() const;
-  
-  //! Copies contents of undefined entities; deigned to be called by
-  //! GetFromAnother method from Undefined entity of each Interface
-  //! (the basic operation is the same regardless the norm)
-  Standard_EXPORT void GetFromAnother (const Handle(Interface_UndefinedContent)& other, Interface_CopyTool& TC);
-
-
-
 
   DEFINE_STANDARD_RTTIEXT(Interface_UndefinedContent,MMgt_TShared)
 
-protected:
-
-
-
-
-private:
-
+ private:
 
   Standard_Integer thenbparams;
   Standard_Integer thenbstr;
   Handle(TColStd_HArray1OfInteger) theparams;
   Handle(Interface_HArray1OfHAsciiString) thevalues;
   Interface_EntityList theentities;
-
-
 };
-
-
-
-
-
-
 
 #endif // _Interface_UndefinedContent_HeaderFile

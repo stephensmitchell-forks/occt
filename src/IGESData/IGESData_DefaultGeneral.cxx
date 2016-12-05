@@ -20,14 +20,11 @@
 #include <IGESData_Protocol.hxx>
 #include <IGESData_UndefinedEntity.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_GeneralLib.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Interface_UndefinedContent.hxx>
-#include <Standard_Transient.hxx>
-#include <Standard_Type.hxx>
 #include <TColStd_HSequenceOfInteger.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESData_DefaultGeneral,IGESData_GeneralModule)
@@ -69,27 +66,4 @@ IGESData_DefaultGeneral::IGESData_DefaultGeneral ()
   if (CN == 1) entto = new IGESData_UndefinedEntity;
   if (CN == 2) entto = new IGESData_FreeFormatEntity;
   return (!entto.IsNull());
-}
-
-    void  IGESData_DefaultGeneral::OwnCopyCase
-  (const Standard_Integer CN,
-   const Handle(IGESData_IGESEntity)& entfrom,
-   const Handle(IGESData_IGESEntity)& entto,
-   Interface_CopyTool& TC) const 
-{
-  if (CN == 0) return;
-  DeclareAndCast(IGESData_UndefinedEntity,enfr,entfrom);
-  DeclareAndCast(IGESData_UndefinedEntity,ento,entto);
-//  ShallowCopy aura passe DirStatus
-//  transmettre les contenus des UndefinedContents
-  Handle(Interface_UndefinedContent) cont = new Interface_UndefinedContent;
-  cont->GetFromAnother(enfr->UndefinedContent(),TC);
-  ento->SetNewContent (cont);
-//  FreeFormat, encore des choses
-  if (enfr->IsKind(STANDARD_TYPE(IGESData_FreeFormatEntity))) {
-    DeclareAndCast(IGESData_FreeFormatEntity,enf,entfrom);
-    DeclareAndCast(IGESData_FreeFormatEntity,ent,entto);
-    ent->ClearNegativePointers();
-    ent->AddNegativePointers(enf->NegativePointers());
-  }
 }

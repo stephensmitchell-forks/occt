@@ -17,16 +17,9 @@
 #ifndef _IGESSolid_BooleanTree_HeaderFile
 #define _IGESSolid_BooleanTree_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
 #include <IGESData_HArray1OfIGESEntity.hxx>
 #include <TColStd_HArray1OfInteger.hxx>
 #include <IGESData_IGESEntity.hxx>
-#include <Standard_Integer.hxx>
-#include <Standard_Boolean.hxx>
-class Standard_OutOfRange;
-class IGESData_IGESEntity;
 
 
 class IGESSolid_BooleanTree;
@@ -39,11 +32,9 @@ DEFINE_STANDARD_HANDLE(IGESSolid_BooleanTree, IGESData_IGESEntity)
 //! in post-order notation.
 class IGESSolid_BooleanTree : public IGESData_IGESEntity
 {
+ public:
 
-public:
-
-  
-  Standard_EXPORT IGESSolid_BooleanTree();
+  IGESSolid_BooleanTree() {}
   
   //! This method is used to set the fields of the class
   //! BooleanTree
@@ -69,29 +60,16 @@ public:
   //! raises exception if Index < 1 or Index > Length()
   Standard_EXPORT Standard_Integer Operation (const Standard_Integer Index) const;
 
+  Standard_EXPORT virtual void OwnShared(Interface_EntityIterator &theIter) const Standard_OVERRIDE;
 
-
+  Standard_EXPORT virtual void OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESSolid_BooleanTree,IGESData_IGESEntity)
 
-protected:
-
-
-
-
-private:
-
+ private:
 
   Handle(IGESData_HArray1OfIGESEntity) theOperands;
   Handle(TColStd_HArray1OfInteger) theOperations;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESSolid_BooleanTree_HeaderFile

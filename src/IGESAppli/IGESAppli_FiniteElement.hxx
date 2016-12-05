@@ -17,14 +17,9 @@
 #ifndef _IGESAppli_FiniteElement_HeaderFile
 #define _IGESAppli_FiniteElement_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
-#include <Standard_Integer.hxx>
 #include <IGESAppli_HArray1OfNode.hxx>
 #include <IGESData_IGESEntity.hxx>
 class TCollection_HAsciiString;
-class Standard_OutOfRange;
 class IGESAppli_Node;
 
 
@@ -37,11 +32,9 @@ DEFINE_STANDARD_HANDLE(IGESAppli_FiniteElement, IGESData_IGESEntity)
 //! element topology.
 class IGESAppli_FiniteElement : public IGESData_IGESEntity
 {
+ public:
 
-public:
-
-  
-  Standard_EXPORT IGESAppli_FiniteElement();
+  IGESAppli_FiniteElement() {}
   
   //! This method is used to set the fields of the class
   //! FiniteElement
@@ -51,42 +44,27 @@ public:
   Standard_EXPORT void Init (const Standard_Integer aType, const Handle(IGESAppli_HArray1OfNode)& allNodes, const Handle(TCollection_HAsciiString)& aName);
   
   //! returns Topology type
-  Standard_EXPORT Standard_Integer Topology() const;
-  
+  Standard_Integer Topology() const { return theTopology; }
+
   //! returns the number of nodes defining the element
   Standard_EXPORT Standard_Integer NbNodes() const;
   
   //! returns Node defining element entity
   //! raises exception if Index <= 0 or Index > NbNodes()
-  Standard_EXPORT Handle(IGESAppli_Node) Node (const Standard_Integer Index) const;
+  Standard_EXPORT const Handle(IGESAppli_Node) & Node (const Standard_Integer Index) const;
   
   //! returns Element Type Name
-  Standard_EXPORT Handle(TCollection_HAsciiString) Name() const;
+  const Handle(TCollection_HAsciiString) & Name() const { return theName; }
 
-
-
+  Standard_EXPORT virtual void OwnShared(Interface_EntityIterator &theIter) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESAppli_FiniteElement,IGESData_IGESEntity)
 
-protected:
-
-
-
-
-private:
-
+ private:
 
   Standard_Integer theTopology;
   Handle(IGESAppli_HArray1OfNode) theNodes;
   Handle(TCollection_HAsciiString) theName;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESAppli_FiniteElement_HeaderFile

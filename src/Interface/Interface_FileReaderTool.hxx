@@ -21,19 +21,14 @@
 #include <Standard_DefineAlloc.hxx>
 #include <Standard_Handle.hxx>
 
-#include <Standard_Integer.hxx>
-#include <Standard_Boolean.hxx>
+#include <Interface_GeneralLib.hxx>
+#include <Interface_ReaderLib.hxx>
 #include <TColStd_HArray1OfTransient.hxx>
 class Interface_Protocol;
 class Interface_FileReaderData;
 class Interface_InterfaceModel;
 class Message_Messenger;
-class Standard_DomainError;
-class Standard_NoSuchObject;
 class Interface_Check;
-class Standard_Transient;
-class Interface_GeneralLib;
-class Interface_ReaderLib;
 
 
 //! Defines services which are required to load an InterfaceModel
@@ -119,18 +114,13 @@ public:
  protected:
 
   //! Constructor; sets default fields
-  Standard_EXPORT Interface_FileReaderTool();
+  Standard_EXPORT Interface_FileReaderTool(const Handle(Interface_Protocol)& protocol);
   
   //! Recognizes a record with the help of Libraries. Can be used
   //! to implement the method Recognize.
-  //! <rlib> is used to find Protocol and CaseNumber to apply
-  //! <glib> performs the creation (by service NewVoid, or NewRead
-  //! if NewVoid gave no result)
-  //! <ach> is a check, which is transmitted to NewRead if it is
-  //! called, gives a result but which is false
   //! <ent> is the result
   //! Returns False if recognition has failed, True else
-  Standard_EXPORT Standard_Boolean RecognizeByLib (const Standard_Integer num, Interface_GeneralLib& glib, Interface_ReaderLib& rlib, Handle(Interface_Check)& ach, Handle(Standard_Transient)& ent) const;
+  Standard_EXPORT Standard_Boolean RecognizeByLib (const Standard_Integer num, Handle(Standard_Transient)& ent) const;
   
   //! Recognizes a record, given its number. Specific to each
   //! Interface; called by SetEntities. It can call the basic method
@@ -142,7 +132,7 @@ public:
   //!
   //! Note that it works thru a Recognizer (method Evaluate) which
   //! has to be memorized before starting
-  Standard_EXPORT virtual Standard_Boolean Recognize (const Standard_Integer num, Handle(Interface_Check)& ach, Handle(Standard_Transient)& ent) = 0;
+  Standard_EXPORT virtual Standard_Boolean Recognize (const Standard_Integer num, Handle(Standard_Transient)& ent) = 0;
   
   //! Fills model's header; each Interface defines for its Model its
   //! own file header; this method fills it from FileReaderTool.+
@@ -165,9 +155,12 @@ public:
   
   //! Ends file reading after reading all the entities
   //! default is doing nothing; redefinable as necessary
-  Standard_EXPORT virtual void EndRead (const Handle(Interface_InterfaceModel)& amodel) = 0;
+  Standard_EXPORT virtual void EndRead (const Handle(Interface_InterfaceModel)& amodel);
 
- private:
+ protected:
+
+  mutable Interface_GeneralLib theglib;
+  mutable Interface_ReaderLib therlib;
 
   Handle(Interface_Protocol) theproto;
   Handle(Interface_FileReaderData) thereader;

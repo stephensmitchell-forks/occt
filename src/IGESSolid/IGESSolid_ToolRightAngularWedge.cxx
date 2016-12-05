@@ -29,13 +29,10 @@
 #include <IGESSolid_RightAngularWedge.hxx>
 #include <IGESSolid_ToolRightAngularWedge.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-
-IGESSolid_ToolRightAngularWedge::IGESSolid_ToolRightAngularWedge ()    {  }
 
 
 void  IGESSolid_ToolRightAngularWedge::ReadOwnParams
@@ -150,19 +147,6 @@ void  IGESSolid_ToolRightAngularWedge::WriteOwnParams
   IW.Send(ent->ZAxis().Z());
 }
 
-void  IGESSolid_ToolRightAngularWedge::OwnShared
-  (const Handle(IGESSolid_RightAngularWedge)& /* ent */, Interface_EntityIterator& /* iter */) const
-{
-}
-
-void  IGESSolid_ToolRightAngularWedge::OwnCopy
-  (const Handle(IGESSolid_RightAngularWedge)& another,
-   const Handle(IGESSolid_RightAngularWedge)& ent, Interface_CopyTool& /* TC */) const
-{
-  ent->Init(another->Size(), another->XSmallLength(), another->Corner().XYZ(),
-	    another->XAxis().XYZ(), another->ZAxis().XYZ());
-}
-
 IGESData_DirChecker  IGESSolid_ToolRightAngularWedge::DirChecker
   (const Handle(IGESSolid_RightAngularWedge)& /* ent */ ) const
 {
@@ -174,22 +158,6 @@ IGESData_DirChecker  IGESSolid_ToolRightAngularWedge::DirChecker
   DC.UseFlagRequired (0);
   DC.HierarchyStatusIgnored ();
   return DC;
-}
-
-void  IGESSolid_ToolRightAngularWedge::OwnCheck
-  (const Handle(IGESSolid_RightAngularWedge)& ent,
-   const Interface_ShareTool& , Handle(Interface_Check)& ach) const
-{
-  Standard_Real eps = 1.E-04;
-  Standard_Real prosca = ent->XAxis() * ent->ZAxis();
-  if (prosca < -eps || prosca > eps)
-    ach->AddFail("Local Z axis : Not orthogonal to X axis");
-  if (ent->Size().X() <= 0. || ent->Size().Y() <= 0. || ent->Size().Z() <= 0.)
-    ach->AddFail("Size : Values are not positive");
-  if (ent->XSmallLength() <= 0.0)
-    ach->AddFail("Small X Length : Not Positive");
-  if (ent->XSmallLength() >= ent->Size().X())
-    ach->AddFail("Small X Length : Value not < LX");
 }
 
 void  IGESSolid_ToolRightAngularWedge::OwnDump

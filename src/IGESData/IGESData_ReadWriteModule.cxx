@@ -22,8 +22,6 @@
 #include <Interface_FileReaderData.hxx>
 #include <Interface_Macros.hxx>
 #include <Standard_DomainError.hxx>
-#include <Standard_Transient.hxx>
-#include <Standard_Type.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESData_ReadWriteModule,Interface_ReaderModule)
 
@@ -36,13 +34,10 @@ Standard_Integer  IGESData_ReadWriteModule::CaseNum
 }
 
 
-void  IGESData_ReadWriteModule::Read
+void IGESData_ReadWriteModule::Read
   (const Standard_Integer ,
    const Handle(Interface_FileReaderData)& , const Standard_Integer ,
    Handle(Interface_Check)& , const Handle(Standard_Transient)& ) const 
 {
-#ifdef OCCT_DEBUG
-  cout<<"IGESData_ReadWriteModule, Read called"<<endl;
-#endif
-}
   // IGESReaderTool fait tout
+}

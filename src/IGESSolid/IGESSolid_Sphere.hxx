@@ -17,13 +17,8 @@
 #ifndef _IGESSolid_Sphere_HeaderFile
 #define _IGESSolid_Sphere_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
-#include <Standard_Real.hxx>
 #include <gp_XYZ.hxx>
 #include <IGESData_IGESEntity.hxx>
-class gp_XYZ;
 class gp_Pnt;
 
 
@@ -35,11 +30,9 @@ DEFINE_STANDARD_HANDLE(IGESSolid_Sphere, IGESData_IGESEntity)
 //! This defines a sphere with a center and radius
 class IGESSolid_Sphere : public IGESData_IGESEntity
 {
+ public:
 
-public:
-
-  
-  Standard_EXPORT IGESSolid_Sphere();
+  IGESSolid_Sphere() {}
   
   //! This method is used to set the fields of the class Sphere
   //! - aRadius : the radius of the sphere
@@ -47,8 +40,8 @@ public:
   Standard_EXPORT void Init (const Standard_Real aRadius, const gp_XYZ& aCenter);
   
   //! returns the radius of the sphere
-  Standard_EXPORT Standard_Real Radius() const;
-  
+  Standard_Real Radius() const { return theRadius; }
+
   //! returns the center of the sphere
   Standard_EXPORT gp_Pnt Center() const;
   
@@ -56,29 +49,14 @@ public:
   //! TransformationMatrix
   Standard_EXPORT gp_Pnt TransformedCenter() const;
 
-
-
+  Standard_EXPORT virtual void OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESSolid_Sphere,IGESData_IGESEntity)
 
-protected:
-
-
-
-
-private:
-
+ private:
 
   Standard_Real theRadius;
   gp_XYZ theCenter;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESSolid_Sphere_HeaderFile

@@ -35,12 +35,10 @@ DEFINE_STANDARD_HANDLE(IGESGeom_SpecificModule, IGESData_SpecificModule)
 //! Dump & OwnCorrect, for IGESGeom
 class IGESGeom_SpecificModule : public IGESData_SpecificModule
 {
+ public:
 
-public:
-
-  
   //! Creates a SpecificModule from IGESGeom & puts it into SpecificLib
-  Standard_EXPORT IGESGeom_SpecificModule();
+  IGESGeom_SpecificModule() {}
   
   //! Specific Dump (own parameters) for IGESGeom
   Standard_EXPORT void OwnDump (const Standard_Integer CN, const Handle(IGESData_IGESEntity)& ent, const IGESData_IGESDumper& dumper, const Handle(Message_Messenger)& S, const Standard_Integer own) const Standard_OVERRIDE;
@@ -49,27 +47,7 @@ public:
   //! them (Boundary,ConicArc,Flash,OffsetCurve,TransformationMatrix)
   Standard_EXPORT virtual Standard_Boolean OwnCorrect (const Standard_Integer CN, const Handle(IGESData_IGESEntity)& ent) const Standard_OVERRIDE;
 
-
-
-
   DEFINE_STANDARD_RTTIEXT(IGESGeom_SpecificModule,IGESData_SpecificModule)
-
-protected:
-
-
-
-
-private:
-
-
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESGeom_SpecificModule_HeaderFile

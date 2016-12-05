@@ -26,15 +26,12 @@
 #include <IGESGraph_NominalSize.hxx>
 #include <IGESGraph_ToolNominalSize.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
 #include <TCollection_HAsciiString.hxx>
-
-IGESGraph_ToolNominalSize::IGESGraph_ToolNominalSize ()    {  }
 
 
 void IGESGraph_ToolNominalSize::ReadOwnParams
@@ -82,29 +79,6 @@ void IGESGraph_ToolNominalSize::WriteOwnParams
 
   if (ent->HasStandardName() )
     IW.Send( ent->StandardName() );  // optionnal
-}
-
-void  IGESGraph_ToolNominalSize::OwnShared
-  (const Handle(IGESGraph_NominalSize)& /*ent*/, Interface_EntityIterator& /*iter*/) const
-{
-}
-
-void IGESGraph_ToolNominalSize::OwnCopy
-  (const Handle(IGESGraph_NominalSize)& another,
-   const Handle(IGESGraph_NominalSize)& ent, Interface_CopyTool& /*TC*/) const
-{ 
-  Standard_Integer          nbPropertyValues; 
-  Standard_Real             nominalSizeValue; 
-  Handle(TCollection_HAsciiString) nominalSizeName; 
-  Handle(TCollection_HAsciiString) standardName;
-
-  nbPropertyValues = another->NbPropertyValues();
-  nominalSizeValue = another->NominalSizeValue();
-  nominalSizeName  = new TCollection_HAsciiString(another->NominalSizeName());
-  if (another->HasStandardName()) standardName     =
-    new TCollection_HAsciiString(another->StandardName());
-
-  ent->Init(nbPropertyValues, nominalSizeValue, nominalSizeName, standardName);
 }
 
 Standard_Boolean  IGESGraph_ToolNominalSize::OwnCorrect

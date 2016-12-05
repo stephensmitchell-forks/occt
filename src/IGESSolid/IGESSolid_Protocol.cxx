@@ -11,7 +11,7 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-
+/*
 #include <IGESGeom.hxx>
 #include <IGESGeom_Protocol.hxx>
 #include <IGESSolid_Block.hxx>
@@ -82,7 +82,7 @@ static Handle(Standard_Type) atype01,atype02,atype03,atype04,atype05,atype06,
       {  return 1;  }
 
     Handle(Interface_Protocol) IGESSolid_Protocol::Resource
-  (const Standard_Integer /*num*/) const
+  (const Standard_Integer) const
 {
   return IGESGeom::Protocol();
 }
@@ -116,3 +116,4 @@ static Handle(Standard_Type) atype01,atype02,atype03,atype04,atype05,atype06,
   else if (atype == atype24) return 24;
   return 0;
 }
+*/

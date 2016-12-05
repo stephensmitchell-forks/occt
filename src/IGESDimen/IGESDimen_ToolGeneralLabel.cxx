@@ -29,14 +29,11 @@
 #include <IGESDimen_LeaderArrow.hxx>
 #include <IGESDimen_ToolGeneralLabel.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-
-IGESDimen_ToolGeneralLabel::IGESDimen_ToolGeneralLabel ()    {  }
 
 
 void  IGESDimen_ToolGeneralLabel::ReadOwnParams
@@ -88,25 +85,6 @@ void  IGESDimen_ToolGeneralLabel::OwnShared
   iter.GetOneItem(ent->Note());
   for (Standard_Integer i = 1; i <= upper; i++)
     iter.GetOneItem(ent->Leader(i));
-}
-
-void  IGESDimen_ToolGeneralLabel::OwnCopy
-  (const Handle(IGESDimen_GeneralLabel)& another,
-   const Handle(IGESDimen_GeneralLabel)& ent, Interface_CopyTool& TC) const
-{
-  DeclareAndCast(IGESDimen_GeneralNote, note,
-		 TC.Transferred(another->Note()));
-  Standard_Integer nbval = another->NbLeaders();
-
-  Handle(IGESDimen_HArray1OfLeaderArrow) leaders = 
-    new IGESDimen_HArray1OfLeaderArrow(1, nbval);
-  for (Standard_Integer i = 1; i <= nbval; i++)
-    {
-      DeclareAndCast(IGESDimen_LeaderArrow, new_ent, 
-		     TC.Transferred(another->Leader(i)));
-      leaders->SetValue(i, new_ent);
-    }
-  ent->Init(note, leaders);
 }
 
 IGESData_DirChecker  IGESDimen_ToolGeneralLabel::DirChecker

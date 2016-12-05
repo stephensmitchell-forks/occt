@@ -31,7 +31,6 @@
 #include <IGESGraph_Color.hxx>
 #include <IGESGraph_HArray1OfColor.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
@@ -39,8 +38,6 @@
 #include <Standard_DomainError.hxx>
 #include <TColStd_HArray1OfInteger.hxx>
 #include <TColStd_HArray1OfReal.hxx>
-
-IGESDraw_ToolSegmentedViewsVisible::IGESDraw_ToolSegmentedViewsVisible ()  {  }
 
 
 void IGESDraw_ToolSegmentedViewsVisible::ReadOwnParams
@@ -181,79 +178,6 @@ void  IGESDraw_ToolSegmentedViewsVisible::OwnShared
     }
 }
 
-void IGESDraw_ToolSegmentedViewsVisible::OwnCopy
-  (const Handle(IGESDraw_SegmentedViewsVisible)& another,
-   const Handle(IGESDraw_SegmentedViewsVisible)& ent, Interface_CopyTool& TC) const
-{
-  Standard_Integer                              nbval;
-  Handle(IGESDraw_HArray1OfViewKindEntity) views;
-  Handle(TColStd_HArray1OfReal)          breakpointParameters;
-  Handle(TColStd_HArray1OfInteger)       displayFlags;
-  Handle(TColStd_HArray1OfInteger)       colorValues;
-  Handle(IGESGraph_HArray1OfColor)          colorDefinitions;
-  Handle(TColStd_HArray1OfInteger)       lineFontValues;
-  Handle(IGESBasic_HArray1OfLineFontEntity) lineFontDefinitions;
-  Handle(TColStd_HArray1OfInteger)       lineWeights;
- 
-  Handle(IGESData_ViewKindEntity)               retView; 
-  Handle(IGESGraph_Color)                       retColorDef; 
-  Handle(IGESData_LineFontEntity)               retLineFontDef; 
- 
-  nbval                = another->NbSegmentBlocks();
-  views                = new IGESDraw_HArray1OfViewKindEntity(1, nbval);
-  breakpointParameters = new TColStd_HArray1OfReal(1, nbval);
-  displayFlags         = new TColStd_HArray1OfInteger(1, nbval);
-  colorValues          = new TColStd_HArray1OfInteger(1, nbval);
-  lineFontValues       = new TColStd_HArray1OfInteger(1, nbval);
-  colorDefinitions     = new IGESGraph_HArray1OfColor(1, nbval);
-  lineFontDefinitions  = new IGESBasic_HArray1OfLineFontEntity(1, nbval);
-  lineWeights          = new TColStd_HArray1OfInteger(1, nbval);
- 
-  for (Standard_Integer i = 1; i <= nbval; i++)
-    {
-      retView = another->ViewItem(i);
-      DeclareAndCast(IGESData_ViewKindEntity,
-                     tempView, TC.Transferred(retView));
-      views->SetValue( i, tempView );
- 
-      breakpointParameters->SetValue( i, another->BreakpointParameter(i) );
- 
-      displayFlags->SetValue( i, another->DisplayFlag(i) );
- 
-      if ( another->IsColorDefinition(i) )
-	{
-          retColorDef = another->ColorDefinition(i);
-          DeclareAndCast(IGESGraph_Color, tempColorDef, 
-			 TC.Transferred(retColorDef));
-          colorDefinitions->SetValue( i, tempColorDef );
-	}
-      else
-	{
-          colorValues->SetValue( i, another->ColorValue(i) );
-////          colorDefinitions->SetValue( i, NULL );    par defaut
-	}
- 
-      if ( another->IsFontDefinition(i) )
-	{
-          retLineFontDef = another->LineFontDefinition(i);
-          DeclareAndCast(IGESData_LineFontEntity, tempLineFontDef, 
-			 TC.Transferred(retLineFontDef));
-          lineFontDefinitions->SetValue( i, tempLineFontDef );
-	}
-      else
-	{
-          lineFontValues->SetValue( i, another->LineFontValue(i) );
-////          lineFontDefinitions->SetValue( i, NULL );  par defaut
-	}
- 
-      lineWeights->SetValue( i, another->LineWeightItem(i) );
-    }
-
-  ent->Init(views, breakpointParameters, displayFlags,
-	    colorValues, colorDefinitions,
-	    lineFontValues, lineFontDefinitions, lineWeights);
-}
-
 IGESData_DirChecker IGESDraw_ToolSegmentedViewsVisible::DirChecker
   (const Handle(IGESDraw_SegmentedViewsVisible)& /*ent*/)  const
 { 
@@ -267,12 +191,6 @@ IGESData_DirChecker IGESDraw_ToolSegmentedViewsVisible::DirChecker
   DC.UseFlagRequired(1);
   DC.HierarchyStatusIgnored();
   return DC;
-}
-
-void IGESDraw_ToolSegmentedViewsVisible::OwnCheck
-  (const Handle(IGESDraw_SegmentedViewsVisible)& /*ent*/,
-   const Interface_ShareTool& , Handle(Interface_Check)& /*ach*/)  const
-{
 }
 
 void IGESDraw_ToolSegmentedViewsVisible::OwnDump

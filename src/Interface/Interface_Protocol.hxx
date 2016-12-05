@@ -45,7 +45,7 @@ DEFINE_STANDARD_HANDLE(Interface_Protocol, MMgt_TShared)
 class Interface_Protocol : public MMgt_TShared
 {
  public:
-  
+
   //! Returns count of Protocol used as Resources (level one)
   Standard_EXPORT virtual Standard_Integer NbResources() const;
   
@@ -89,9 +89,6 @@ class Interface_Protocol : public MMgt_TShared
   
   //! Creates an empty Model of the considered Norm
   Standard_EXPORT virtual Handle(Interface_InterfaceModel) NewModel() const = 0;
-  
-  //! Returns True if <model> is a Model of the considered Norm
-  Standard_EXPORT virtual Standard_Boolean IsSuitableModel (const Handle(Interface_InterfaceModel)& model) const = 0;
   
   //! Creates a new Unknown Entity for the considered Norm
   Standard_EXPORT virtual Handle(Standard_Transient) UnknownEntity() const = 0;

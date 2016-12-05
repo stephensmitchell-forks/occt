@@ -29,14 +29,11 @@
 #include <IGESGeom_Direction.hxx>
 #include <IGESGeom_ToolDirection.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-
-IGESGeom_ToolDirection::IGESGeom_ToolDirection ()    {  }
 
 
 void IGESGeom_ToolDirection::ReadOwnParams
@@ -75,18 +72,6 @@ void IGESGeom_ToolDirection::WriteOwnParams
   IW.Send(ent->Value().X());
   IW.Send(ent->Value().Y());
   IW.Send(ent->Value().Z());
-}
-
-void  IGESGeom_ToolDirection::OwnShared
-  (const Handle(IGESGeom_Direction)& /* ent */, Interface_EntityIterator& /* iter */) const
-{
-}
-
-void IGESGeom_ToolDirection::OwnCopy
-  (const Handle(IGESGeom_Direction)& another,
-   const Handle(IGESGeom_Direction)& ent, Interface_CopyTool& /* TC */) const
-{
-  ent->Init(another->Value().XYZ());
 }
 
 IGESData_DirChecker IGESGeom_ToolDirection::DirChecker

@@ -30,22 +30,17 @@
 #include <IGESDimen_LeaderArrow.hxx>
 #include <IGESDimen_ToolFlagNote.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
 
-IGESDimen_ToolFlagNote::IGESDimen_ToolFlagNote ()    {  }
-
 
 void  IGESDimen_ToolFlagNote::ReadOwnParams
   (const Handle(IGESDimen_FlagNote)& ent,
    const Handle(IGESData_IGESReaderData)& IR, IGESData_ParamReader& PR) const
 { 
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 moved down
-
   gp_XYZ lowerLeft; 
   Standard_Real angle; 
   Handle(IGESDimen_GeneralNote) note;
@@ -103,31 +98,6 @@ void  IGESDimen_ToolFlagNote::OwnShared
     iter.GetOneItem(ent->Leader(i));
 }
 
-void  IGESDimen_ToolFlagNote::OwnCopy
-  (const Handle(IGESDimen_FlagNote)& another,
-   const Handle(IGESDimen_FlagNote)& ent, Interface_CopyTool& TC) const
-{
-  gp_XYZ lowerLeft = (another->LowerLeftCorner()).XYZ();
-  Standard_Real angle = another->Angle();
-  DeclareAndCast(IGESDimen_GeneralNote, note,
-		 TC.Transferred(another->Note()));
-  Standard_Integer nbval = another->NbLeaders();
-
-  Handle(IGESDimen_HArray1OfLeaderArrow) leaders;
-
-  if ( nbval > 0 )
-    {
-      leaders = new IGESDimen_HArray1OfLeaderArrow(1, nbval);
-      for (Standard_Integer i = 1; i <= nbval; i++)
-	{
-          DeclareAndCast(IGESDimen_LeaderArrow, new_ent, 
-			 TC.Transferred(another->Leader(i)));
-          leaders->SetValue(i, new_ent);
-	}
-    }
-  ent->Init(lowerLeft, angle, note, leaders);
-}
-
 IGESData_DirChecker  IGESDimen_ToolFlagNote::DirChecker
   (const Handle(IGESDimen_FlagNote)& /* ent */ ) const 
 { 
@@ -138,12 +108,6 @@ IGESData_DirChecker  IGESDimen_ToolFlagNote::DirChecker
   DC.Color(IGESData_DefAny);
   DC.UseFlagRequired(1);
   return DC;
-}
-
-void  IGESDimen_ToolFlagNote::OwnCheck
-  (const Handle(IGESDimen_FlagNote)& /* ent */,
-   const Interface_ShareTool& , Handle(Interface_Check)& /* ach */) const 
-{
 }
 
 void  IGESDimen_ToolFlagNote::OwnDump

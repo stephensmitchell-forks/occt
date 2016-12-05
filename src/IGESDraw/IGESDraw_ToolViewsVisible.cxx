@@ -30,7 +30,6 @@
 #include <IGESDraw_ToolViewsVisible.hxx>
 #include <IGESDraw_ViewsVisible.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
@@ -38,8 +37,6 @@
 #include <Standard_DomainError.hxx>
 
 #include <stdio.h>
-IGESDraw_ToolViewsVisible::IGESDraw_ToolViewsVisible ()    {  }
-
 
 void IGESDraw_ToolViewsVisible::ReadOwnParams
   (const Handle(IGESDraw_ViewsVisible)& ent,
@@ -142,49 +139,6 @@ void  IGESDraw_ToolViewsVisible::OwnImplied
 }
 
 
-void IGESDraw_ToolViewsVisible::OwnCopy
-  (const Handle(IGESDraw_ViewsVisible)& another,
-   const Handle(IGESDraw_ViewsVisible)& ent, Interface_CopyTool& TC) const
-{
-  Handle(IGESDraw_HArray1OfViewKindEntity) tempViewEntities =
-    new IGESDraw_HArray1OfViewKindEntity(1, another->NbViews());
-  Standard_Integer I, up;
-  up  = another->NbViews();
-  for (I = 1; I <= up; I++) {
-    DeclareAndCast(IGESData_ViewKindEntity, tempView,
-		   TC.Transferred(another->ViewItem(I)));
-    tempViewEntities->SetValue(I, tempView);
-  }
-//  Displayed -> Implied : mettre une liste vide par defaut
-  Handle(IGESData_HArray1OfIGESEntity) tempDisplayEntities;
-  ent->Init(tempViewEntities, tempDisplayEntities);
-}
-
-void IGESDraw_ToolViewsVisible::OwnRenew
-  (const Handle(IGESDraw_ViewsVisible)& another,
-   const Handle(IGESDraw_ViewsVisible)& ent, const Interface_CopyTool& TC) const
-{
-  Interface_EntityIterator newdisp;
-  Standard_Integer I, up;
-  up  = another->NbDisplayedEntities();
-  if (up == 0) return;
-  Handle(IGESData_HArray1OfIGESEntity) tempDisplayEntities;
-  Handle(Standard_Transient) anew;
-  for (I = 1; I <= up; I++) {
-    if (TC.Search (another->DisplayedEntity(I),anew)) newdisp.GetOneItem(anew);
-  }
-
-  up = newdisp.NbEntities();  I = 0;
-  if (up > 0) tempDisplayEntities = new IGESData_HArray1OfIGESEntity(1,up);
-  for (newdisp.Start(); newdisp.More(); newdisp.Next()) {
-    I ++;
-    DeclareAndCast(IGESData_IGESEntity, tempEntity,newdisp.Value());
-    tempDisplayEntities->SetValue(I, tempEntity);
-  }
-  ent->InitImplied (tempDisplayEntities);
-}
-
-
 IGESData_DirChecker IGESDraw_ToolViewsVisible::DirChecker
   (const Handle(IGESDraw_ViewsVisible)& /*ent*/)  const
 {
@@ -216,13 +170,6 @@ void IGESDraw_ToolViewsVisible::OwnCheck
   char mess[80];
   sprintf(mess,"Mismatch for %d Entities displayed",res);
   ach->AddFail(mess,"Mismatch for %d Entities displayed");
-}
-
-void  IGESDraw_ToolViewsVisible::OwnWhenDelete
-  (const Handle(IGESDraw_ViewsVisible)& ent) const
-{
-  Handle(IGESData_HArray1OfIGESEntity) tempDisplayEntities;
-  ent->InitImplied (tempDisplayEntities);
 }
 
 void IGESDraw_ToolViewsVisible::OwnDump

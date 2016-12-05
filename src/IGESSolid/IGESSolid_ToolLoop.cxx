@@ -34,7 +34,6 @@
 #include <IGESSolid_ToolLoop.hxx>
 #include <IGESSolid_VertexList.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
@@ -44,15 +43,6 @@
 #include <TColStd_HArray1OfInteger.hxx>
 
 #include <stdio.h>
-// MGE 03/08/98
-//=======================================================================
-//function : IGESSolid_ToolLoop
-//purpose  : 
-//=======================================================================
-IGESSolid_ToolLoop::IGESSolid_ToolLoop ()
-{
-}
-
 
 //=======================================================================
 //function : ReadOwnParams
@@ -235,89 +225,6 @@ void IGESSolid_ToolLoop::WriteOwnParams(const Handle(IGESSolid_Loop)& ent,
 
 
 //=======================================================================
-//function : OwnShared
-//purpose  : 
-//=======================================================================
-
-void IGESSolid_ToolLoop::OwnShared(const Handle(IGESSolid_Loop)& ent,
-                                   Interface_EntityIterator& iter) const
-{
-  Standard_Integer i, j;
-  Standard_Integer length = ent->NbEdges();
-
-  for (i = 1; i <= length; i ++)
-    {
-      iter.GetOneItem(ent->Edge(i));
-      for (j = 1; j <= ent->NbParameterCurves(i); j ++)
-	iter.GetOneItem(ent->ParametricCurve(i,j));
-    }
-}
-
-
-//=======================================================================
-//function : OwnCopy
-//purpose  : 
-//=======================================================================
-
-void IGESSolid_ToolLoop::OwnCopy(const Handle(IGESSolid_Loop)& another,
-                                 const Handle(IGESSolid_Loop)& ent,
-                                 Interface_CopyTool& TC) const
-{
-  Standard_Integer nbedges = another->NbEdges();
-  Standard_Integer i, j;
-  Standard_Integer anint;
-
-  Handle(TColStd_HArray1OfInteger) tempTypes =
-    new TColStd_HArray1OfInteger(1, nbedges);
-  Handle(IGESData_HArray1OfIGESEntity) tempEdges =
-    new IGESData_HArray1OfIGESEntity(1, nbedges);
-  Handle(TColStd_HArray1OfInteger) tempIndex =
-    new TColStd_HArray1OfInteger(1, nbedges);
-  Handle(TColStd_HArray1OfInteger) tempOrientation =
-    new TColStd_HArray1OfInteger(1, nbedges);
-  Handle(TColStd_HArray1OfInteger) nbParameterCurves =
-    new TColStd_HArray1OfInteger(1, nbedges);
-  Handle(IGESBasic_HArray1OfHArray1OfInteger) isoparametricFlags =
-    new IGESBasic_HArray1OfHArray1OfInteger(1, nbedges);
-  Handle(IGESBasic_HArray1OfHArray1OfIGESEntity) tempCurves =
-    new IGESBasic_HArray1OfHArray1OfIGESEntity(1, nbedges);
-
-  for (i = 1; i <= nbedges; i ++)
-    {
-      tempTypes->SetValue(i, another->EdgeType(i));
-
-      DeclareAndCast(IGESData_IGESEntity, anent,
-		     TC.Transferred(another->Edge(i)));
-      tempEdges->SetValue(i, anent);
-
-      tempIndex->SetValue(i, another->ListIndex(i));
-
-      tempOrientation->SetValue(i, (another->Orientation(i) ? 1 : 0) );
-
-      anint = another->NbParameterCurves(i);
-      nbParameterCurves->SetValue(i, anint);
-
-      Handle(IGESData_HArray1OfIGESEntity) tmpents;
-      if (anint > 0) tmpents = new IGESData_HArray1OfIGESEntity(1, anint);
-      Handle(TColStd_HArray1OfInteger) tmpints;
-      if (anint > 0) tmpints = new TColStd_HArray1OfInteger(1, anint);
-      for (j = 1; j <= anint; j ++)
-	{
-          tmpints->SetValue(j, (another->IsIsoparametric(i, j) ? 1 : 0) );
-
-          DeclareAndCast(IGESData_IGESEntity, localent,
-			 TC.Transferred(another->ParametricCurve(i, j)));
-          tmpents->SetValue(j, localent);
-	}
-      isoparametricFlags->SetValue(i, tmpints);
-      tempCurves->SetValue(i, tmpents);
-    }
-  ent->Init(tempTypes, tempEdges, tempIndex, tempOrientation,
-	    nbParameterCurves, isoparametricFlags, tempCurves);
-}
-
-
-//=======================================================================
 //function : DirChecker
 //purpose  : 
 //=======================================================================
@@ -334,30 +241,6 @@ IGESData_DirChecker IGESSolid_ToolLoop::DirChecker
 
   DC.SubordinateStatusRequired(1);
   return DC;
-}
-
-
-//=======================================================================
-//function : OwnCheck
-//purpose  : 
-//=======================================================================
-
-void IGESSolid_ToolLoop::OwnCheck(const Handle(IGESSolid_Loop)& ent,
-                                  const Interface_ShareTool&,
-                                  Handle(Interface_Check)& ach) const
-{
-  // MGE 03/08/98
-  // Building of messages
-  //========================================
-  //Message_Msg Msg190("XSTEP_190");
-  //========================================
-
-  Standard_Integer upper = ent->NbEdges();
-  for (Standard_Integer i = 1; i <= upper; i ++)
-    if (ent->EdgeType(i) != 0 && ent->EdgeType(i) != 1) {
-      Message_Msg Msg190("XSTEP_190");
-      ach->SendFail(Msg190);
-    }
 }
 
 

@@ -30,14 +30,11 @@
 #include <IGESDimen_WitnessLine.hxx>
 #include <IGESGeom_Line.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-
-IGESDimen_ToolCurveDimension::IGESDimen_ToolCurveDimension ()    {  }
 
 
 void  IGESDimen_ToolCurveDimension::ReadOwnParams
@@ -102,29 +99,6 @@ void  IGESDimen_ToolCurveDimension::OwnShared
   iter.GetOneItem(ent->SecondLeader());
   iter.GetOneItem(ent->FirstWitnessLine());
   iter.GetOneItem(ent->SecondWitnessLine());
-}
-
-void  IGESDimen_ToolCurveDimension::OwnCopy
-  (const Handle(IGESDimen_CurveDimension)& another,
-   const Handle(IGESDimen_CurveDimension)& ent, Interface_CopyTool& TC) const
-{
-  DeclareAndCast(IGESDimen_GeneralNote, note, 
-		 TC.Transferred(another->Note()));
-  DeclareAndCast(IGESData_IGESEntity, firstCurve, 
-		 TC.Transferred(another->FirstCurve()));
-  DeclareAndCast(IGESData_IGESEntity, secondCurve, 
-		 TC.Transferred(another->SecondCurve()));
-  DeclareAndCast(IGESDimen_LeaderArrow, firstLeader, 
-		 TC.Transferred(another->FirstLeader()));
-  DeclareAndCast(IGESDimen_LeaderArrow, secondLeader, 
-		 TC.Transferred(another->SecondLeader()));
-  DeclareAndCast(IGESDimen_WitnessLine, firstWitness, 
-		 TC.Transferred(another->FirstWitnessLine()));
-  DeclareAndCast(IGESDimen_WitnessLine, secondWitness, 
-		 TC.Transferred(another->SecondWitnessLine()));
-
-  ent->Init(note, firstCurve, secondCurve, firstLeader, secondLeader, 
-	    firstWitness, secondWitness);
 }
 
 IGESData_DirChecker  IGESDimen_ToolCurveDimension::DirChecker

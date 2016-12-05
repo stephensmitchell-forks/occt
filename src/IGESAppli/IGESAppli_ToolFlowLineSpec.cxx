@@ -26,7 +26,6 @@
 #include <IGESData_ParamCursor.hxx>
 #include <IGESData_ParamReader.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_HArray1OfHAsciiString.hxx>
 #include <Interface_Macros.hxx>
@@ -34,8 +33,6 @@
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
 #include <TCollection_HAsciiString.hxx>
-
-IGESAppli_ToolFlowLineSpec::IGESAppli_ToolFlowLineSpec ()    {  }
 
 
 void  IGESAppli_ToolFlowLineSpec::ReadOwnParams
@@ -65,24 +62,6 @@ void  IGESAppli_ToolFlowLineSpec::WriteOwnParams
     IW.Send(ent->Modifier(i));
 }
 
-void  IGESAppli_ToolFlowLineSpec::OwnShared
-  (const Handle(IGESAppli_FlowLineSpec)& /* ent */, Interface_EntityIterator& /* iter */) const
-{
-}
-
-void  IGESAppli_ToolFlowLineSpec::OwnCopy
-  (const Handle(IGESAppli_FlowLineSpec)& another,
-   const Handle(IGESAppli_FlowLineSpec)& ent, Interface_CopyTool& /* TC */) const
-{
-  Standard_Integer num = another->NbPropertyValues();
-  Handle(Interface_HArray1OfHAsciiString) tempNameAndModifiers =
-    new Interface_HArray1OfHAsciiString(1, num);
-  for ( Standard_Integer i = 1; i <= num; i++ )
-    tempNameAndModifiers->SetValue
-      (i, new TCollection_HAsciiString(another->Modifier(i)));
-  ent->Init(tempNameAndModifiers);
-}
-
 IGESData_DirChecker  IGESAppli_ToolFlowLineSpec::DirChecker
   (const Handle(IGESAppli_FlowLineSpec)& /* ent */ ) const
 {
@@ -96,12 +75,6 @@ IGESData_DirChecker  IGESAppli_ToolFlowLineSpec::DirChecker
   DC.UseFlagIgnored();
   DC.HierarchyStatusIgnored();
   return DC;
-}
-
-void  IGESAppli_ToolFlowLineSpec::OwnCheck
-  (const Handle(IGESAppli_FlowLineSpec)& /* ent */,
-   const Interface_ShareTool& , Handle(Interface_Check)& /* ach */) const
-{
 }
 
 void  IGESAppli_ToolFlowLineSpec::OwnDump

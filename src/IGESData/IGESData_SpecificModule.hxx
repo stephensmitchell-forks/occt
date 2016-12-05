@@ -21,8 +21,6 @@
 #include <Standard_Type.hxx>
 
 #include <Standard_Transient.hxx>
-#include <Standard_Integer.hxx>
-#include <Standard_Boolean.hxx>
 class IGESData_IGESEntity;
 class IGESData_IGESDumper;
 class Message_Messenger;
@@ -35,10 +33,8 @@ DEFINE_STANDARD_HANDLE(IGESData_SpecificModule, Standard_Transient)
 //! attached to IGES Entities : Dump
 class IGESData_SpecificModule : public Standard_Transient
 {
+ public:
 
-public:
-
-  
   //! Specific Dump for each type of IGES Entity : it concerns only
   //! own parameters, the general data (Directory Part, Lists) are
   //! taken into account by the IGESDumper
@@ -65,27 +61,7 @@ public:
   //! procedure attached, this method can be redefined
   Standard_EXPORT virtual Standard_Boolean OwnCorrect (const Standard_Integer CN, const Handle(IGESData_IGESEntity)& ent) const;
 
-
-
-
   DEFINE_STANDARD_RTTIEXT(IGESData_SpecificModule,Standard_Transient)
-
-protected:
-
-
-
-
-private:
-
-
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESData_SpecificModule_HeaderFile

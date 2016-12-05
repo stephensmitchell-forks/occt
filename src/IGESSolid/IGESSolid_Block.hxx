@@ -17,13 +17,8 @@
 #ifndef _IGESSolid_Block_HeaderFile
 #define _IGESSolid_Block_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
 #include <gp_XYZ.hxx>
 #include <IGESData_IGESEntity.hxx>
-#include <Standard_Real.hxx>
-class gp_XYZ;
 class gp_Pnt;
 class gp_Dir;
 
@@ -38,11 +33,9 @@ DEFINE_STANDARD_HANDLE(IGESSolid_Block, IGESData_IGESEntity)
 //! the local +X, +Y, +Z axes.
 class IGESSolid_Block : public IGESData_IGESEntity
 {
+ public:
 
-public:
-
-  
-  Standard_EXPORT IGESSolid_Block();
+  IGESSolid_Block() {}
   
   //! This method is used to set the fields of the class Block
   //! - aSize   : Length in each local directions
@@ -54,17 +47,17 @@ public:
   Standard_EXPORT void Init (const gp_XYZ& aSize, const gp_XYZ& aCorner, const gp_XYZ& aXAxis, const gp_XYZ& aZAxis);
   
   //! returns the size of the block
-  Standard_EXPORT gp_XYZ Size() const;
+  const gp_XYZ & Size() const { return theSize; }
   
   //! returns the length of the Block along the local X-direction
-  Standard_EXPORT Standard_Real XLength() const;
-  
+  Standard_Real XLength() const { return theSize.X(); }
+
   //! returns the length of the Block along the local Y-direction
-  Standard_EXPORT Standard_Real YLength() const;
-  
+  Standard_Real YLength() const { return theSize.Y(); }
+
   //! returns the length of the Block along the local Z-direction
-  Standard_EXPORT Standard_Real ZLength() const;
-  
+  Standard_Real ZLength() const { return theSize.Z(); }
+
   //! returns the corner point coordinates of the Block
   Standard_EXPORT gp_Pnt Corner() const;
   
@@ -94,31 +87,16 @@ public:
   //! TransformationMatrix
   Standard_EXPORT gp_Dir TransformedZAxis() const;
 
-
-
+  Standard_EXPORT virtual void OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESSolid_Block,IGESData_IGESEntity)
 
-protected:
-
-
-
-
-private:
-
+ private:
 
   gp_XYZ theSize;
   gp_XYZ theCorner;
   gp_XYZ theXAxis;
   gp_XYZ theZAxis;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESSolid_Block_HeaderFile

@@ -28,14 +28,11 @@
 #include <IGESDimen_DimensionedGeometry.hxx>
 #include <IGESDimen_ToolDimensionedGeometry.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-
-IGESDimen_ToolDimensionedGeometry::IGESDimen_ToolDimensionedGeometry ()    {  }
 
 
 void  IGESDimen_ToolDimensionedGeometry::ReadOwnParams
@@ -91,25 +88,6 @@ void  IGESDimen_ToolDimensionedGeometry::OwnShared
   for (Standard_Integer upper = ent->NbGeometryEntities(), i = 1;
        i <= upper; i++)
     iter.GetOneItem(ent->GeometryEntity(i));
-}
-
-void  IGESDimen_ToolDimensionedGeometry::OwnCopy
-  (const Handle(IGESDimen_DimensionedGeometry)& another,
-   const Handle(IGESDimen_DimensionedGeometry)& ent, Interface_CopyTool& TC) const
-{ 
-  Standard_Integer nbDim = another->NbDimensions();
-  DeclareAndCast(IGESData_IGESEntity,anentity,
-		 TC.Transferred(another->DimensionEntity()));
-  Standard_Integer upper = another->NbGeometryEntities();
-  Handle(IGESData_HArray1OfIGESEntity)  EntArray =
-    new IGESData_HArray1OfIGESEntity(1,upper);
-  for (Standard_Integer i = 1;i <= upper; i ++) 
-    {
-      DeclareAndCast(IGESData_IGESEntity,myentity,
-                     TC.Transferred(another->GeometryEntity(i)));
-      EntArray->SetValue(i,myentity);
-    }
-  ent->Init(nbDim,anentity,EntArray);
 }
 
 Standard_Boolean  IGESDimen_ToolDimensionedGeometry::OwnCorrect

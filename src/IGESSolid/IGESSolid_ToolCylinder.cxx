@@ -28,13 +28,10 @@
 #include <IGESSolid_Cylinder.hxx>
 #include <IGESSolid_ToolCylinder.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-
-IGESSolid_ToolCylinder::IGESSolid_ToolCylinder ()    {  }
 
 
 void  IGESSolid_ToolCylinder::ReadOwnParams
@@ -118,20 +115,6 @@ void  IGESSolid_ToolCylinder::WriteOwnParams
   IW.Send(ent->Axis().Z());
 }
 
-void  IGESSolid_ToolCylinder::OwnShared
-  (const Handle(IGESSolid_Cylinder)& /* ent */, Interface_EntityIterator& /* iter */) const
-{
-}
-
-void  IGESSolid_ToolCylinder::OwnCopy
-  (const Handle(IGESSolid_Cylinder)& another,
-   const Handle(IGESSolid_Cylinder)& ent, Interface_CopyTool& /* TC */) const
-{
-  ent->Init
-    (another->Height(), another->Radius(), another->FaceCenter().XYZ(),
-     another->Axis().XYZ());
-}
-
 IGESData_DirChecker  IGESSolid_ToolCylinder::DirChecker
   (const Handle(IGESSolid_Cylinder)& /* ent */ ) const
 {
@@ -144,16 +127,6 @@ IGESData_DirChecker  IGESSolid_ToolCylinder::DirChecker
   DC.UseFlagRequired (0);
   DC.HierarchyStatusIgnored ();
   return DC;
-}
-
-void  IGESSolid_ToolCylinder::OwnCheck
-  (const Handle(IGESSolid_Cylinder)& ent,
-   const Interface_ShareTool& , Handle(Interface_Check)& ach) const
-{
-  if (ent->Height() <= 0.0)
-    ach->AddFail("Height : Value < 0");
-  if (ent->Radius() <= 0.0)
-    ach->AddFail("Radius : Value < 0");
 }
 
 void  IGESSolid_ToolCylinder::OwnDump

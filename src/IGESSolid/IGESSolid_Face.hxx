@@ -17,15 +17,8 @@
 #ifndef _IGESSolid_Face_HeaderFile
 #define _IGESSolid_Face_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
-#include <Standard_Boolean.hxx>
 #include <IGESSolid_HArray1OfLoop.hxx>
 #include <IGESData_IGESEntity.hxx>
-#include <Standard_Integer.hxx>
-class IGESData_IGESEntity;
-class Standard_OutOfRange;
 class IGESSolid_Loop;
 
 
@@ -37,11 +30,9 @@ DEFINE_STANDARD_HANDLE(IGESSolid_Face, IGESData_IGESEntity)
 //! Face entity is a bound (partial) which has finite area
 class IGESSolid_Face : public IGESData_IGESEntity
 {
+ public:
 
-public:
-
-  
-  Standard_EXPORT IGESSolid_Face();
+  IGESSolid_Face() {}
   
   //! This method is used to set the fields of the class Face
   //! - aSurface      : Pointer to the underlying surface
@@ -50,42 +41,29 @@ public:
   Standard_EXPORT void Init (const Handle(IGESData_IGESEntity)& aSurface, const Standard_Boolean outerLoopFlag, const Handle(IGESSolid_HArray1OfLoop)& loops);
   
   //! returns the underlying surface of the face
-  Standard_EXPORT Handle(IGESData_IGESEntity) Surface() const;
+  const Handle(IGESData_IGESEntity) & Surface() const { return theSurface; }
   
   //! returns the number of the loops bounding the face
   Standard_EXPORT Standard_Integer NbLoops() const;
   
   //! checks whether there is an outer loop or not
-  Standard_EXPORT Standard_Boolean HasOuterLoop() const;
+  Standard_Boolean HasOuterLoop() const { return hasOuterLoop; }
   
   //! returns the Index'th loop that bounds the face
   //! raises exception if Index < 0 or Index >= NbLoops
-  Standard_EXPORT Handle(IGESSolid_Loop) Loop (const Standard_Integer Index) const;
+  Standard_EXPORT const Handle(IGESSolid_Loop) & Loop (const Standard_Integer Index) const;
 
+  Standard_EXPORT virtual void OwnShared(Interface_EntityIterator &theIter) const Standard_OVERRIDE;
 
-
+  Standard_EXPORT virtual void OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESSolid_Face,IGESData_IGESEntity)
 
-protected:
-
-
-
-
-private:
-
+ private:
 
   Handle(IGESData_IGESEntity) theSurface;
   Standard_Boolean hasOuterLoop;
   Handle(IGESSolid_HArray1OfLoop) theLoops;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESSolid_Face_HeaderFile

@@ -27,7 +27,6 @@
 #include <IGESGeom_BSplineSurface.hxx>
 #include <IGESGeom_ToolBSplineSurface.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
@@ -37,15 +36,6 @@
 #include <TColgp_HArray2OfXYZ.hxx>
 #include <TColStd_HArray1OfReal.hxx>
 #include <TColStd_HArray2OfReal.hxx>
-
-// MGE 31/07/98
-//=======================================================================
-//function : IGESGeom_ToolBSplineSurface
-//purpose  : 
-//=======================================================================
-IGESGeom_ToolBSplineSurface::IGESGeom_ToolBSplineSurface ()
-{
-}
 
 
 //=======================================================================
@@ -273,78 +263,6 @@ void IGESGeom_ToolBSplineSurface::WriteOwnParams
   IW.Send(ent->UMax());
   IW.Send(ent->VMin());
   IW.Send(ent->VMax());
-}
-
-
-//=======================================================================
-//function : OwnShared
-//purpose  : 
-//=======================================================================
-
-void IGESGeom_ToolBSplineSurface::OwnShared(const Handle(IGESGeom_BSplineSurface)& /* ent */,
-                                            Interface_EntityIterator& /* iter */) const
-{
-}
-
-
-//=======================================================================
-//function : OwnCopy
-//purpose  : 
-//=======================================================================
-
-void IGESGeom_ToolBSplineSurface::OwnCopy(const Handle(IGESGeom_BSplineSurface)& another,
-                                          const Handle(IGESGeom_BSplineSurface)& ent,
-                                          Interface_CopyTool& /* TC */) const
-{
-  Standard_Integer I, J;
-  Standard_Integer anIndexU, anIndexV, aDegU, aDegV;
-  Standard_Boolean aCloseU, aCloseV, aPolynom;
-  Standard_Boolean aPeriodU, aPeriodV;
-  Standard_Real aUmin, aUmax, aVmin, aVmax;
-
-  anIndexU = another->UpperIndexU();
-  anIndexV = another->UpperIndexV();
-  aDegU    = another->DegreeU();
-  aDegV    = another->DegreeV();
-  aCloseU  = another->IsClosedU();
-  aCloseV  = another->IsClosedV();
-  aPolynom = another->IsPolynomial();
-  aPeriodU = another->IsPeriodicU();
-  aPeriodV = another->IsPeriodicV();
-
-  Handle(TColStd_HArray1OfReal) allKnotsU  =
-    new TColStd_HArray1OfReal(-aDegU, anIndexU+1);
-  Handle(TColStd_HArray1OfReal) allKnotsV  =
-    new TColStd_HArray1OfReal(-aDegV, anIndexV+1);
-
-  for (I = -aDegU; I <= anIndexU + 1; I ++)
-    allKnotsU->SetValue(I, another->KnotU(I));
-
-  for (I = -aDegV; I <= anIndexV + 1; I ++)
-    allKnotsV->SetValue(I, another->KnotV(I));
-
-  Handle(TColStd_HArray2OfReal) allWeights  =
-    new TColStd_HArray2OfReal (0, anIndexU, 0, anIndexV);
-  Handle(TColgp_HArray2OfXYZ)   allPoles    =
-    new TColgp_HArray2OfXYZ   (0, anIndexU, 0, anIndexV);
-
-  for (J = 0; J <= anIndexV; J ++)
-    for (I = 0; I <= anIndexU; I ++) 
-      allWeights->SetValue(I, J, another->Weight(I,J));
-
-  for (J = 0; J <= anIndexV; J ++)
-    for (I = 0; I <= anIndexU; I ++) 
-      allPoles->SetValue(I, J, another->Pole(I, J).XYZ());
-
-  aUmin = another->UMin();
-  aUmax = another->UMax();
-  aVmin = another->VMin();
-  aVmax = another->VMax();
-
-  ent->Init (anIndexU, anIndexV, aDegU, aDegV, aCloseU, aCloseV,
-	     aPolynom, aPeriodU, aPeriodV, allKnotsU, allKnotsV,
-	     allWeights, allPoles, aUmin, aUmax, aVmin, aVmax);
-  ent->SetFormNumber(another->FormNumber());
 }
 
 

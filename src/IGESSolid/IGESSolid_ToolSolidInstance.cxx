@@ -26,14 +26,11 @@
 #include <IGESSolid_SolidInstance.hxx>
 #include <IGESSolid_ToolSolidInstance.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-
-IGESSolid_ToolSolidInstance::IGESSolid_ToolSolidInstance ()    {  }
 
 
 void  IGESSolid_ToolSolidInstance::ReadOwnParams
@@ -55,21 +52,6 @@ void  IGESSolid_ToolSolidInstance::WriteOwnParams
   IW.Send(ent->Entity());
 }
 
-void  IGESSolid_ToolSolidInstance::OwnShared
-  (const Handle(IGESSolid_SolidInstance)& ent, Interface_EntityIterator& iter) const
-{
-  iter.GetOneItem(ent->Entity());
-}
-
-void  IGESSolid_ToolSolidInstance::OwnCopy
-  (const Handle(IGESSolid_SolidInstance)& another,
-   const Handle(IGESSolid_SolidInstance)& ent, Interface_CopyTool& TC) const
-{
-  DeclareAndCast(IGESData_IGESEntity, tempEntity,
-		 TC.Transferred(another->Entity()));
-  ent->Init (tempEntity);
-}
-
 IGESData_DirChecker  IGESSolid_ToolSolidInstance::DirChecker
   (const Handle(IGESSolid_SolidInstance)& /*ent*/) const
 {
@@ -81,12 +63,6 @@ IGESData_DirChecker  IGESSolid_ToolSolidInstance::DirChecker
 
   DC.GraphicsIgnored (1);
   return DC;
-}
-
-void  IGESSolid_ToolSolidInstance::OwnCheck
-  (const Handle(IGESSolid_SolidInstance)& /*ent*/,
-   const Interface_ShareTool& , Handle(Interface_Check)& /*ach*/) const
-{
 }
 
 void  IGESSolid_ToolSolidInstance::OwnDump

@@ -22,15 +22,12 @@
 #include <IGESGraph_TextDisplayTemplate.hxx>
 #include <Standard_DimensionMismatch.hxx>
 #include <Standard_OutOfRange.hxx>
-#include <Standard_Type.hxx>
+#include <Interface_EntityIterator.hxx>
 #include <TCollection_HAsciiString.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESAppli_PipingFlow,IGESData_IGESEntity)
 
-IGESAppli_PipingFlow::IGESAppli_PipingFlow ()    {  }
-
-
-    void  IGESAppli_PipingFlow::Init
+void IGESAppli_PipingFlow::Init
   (const Standard_Integer nbContextFlags,
    const Standard_Integer aFlowType,
    const Handle(IGESData_HArray1OfIGESEntity)& allFlowAssocs,
@@ -58,86 +55,92 @@ IGESAppli_PipingFlow::IGESAppli_PipingFlow ()    {  }
   InitTypeAndForm(402,20);
 }
 
-    Standard_Boolean  IGESAppli_PipingFlow::OwnCorrect ()
+Standard_Boolean IGESAppli_PipingFlow::OwnCorrect ()
 {
   if (theNbContextFlags == 1) return Standard_False;
   theNbContextFlags = 1;
   return Standard_True;
 }
 
-
-    Standard_Integer  IGESAppli_PipingFlow::NbContextFlags () const
-{
-  return theNbContextFlags;
-}
-
-    Standard_Integer  IGESAppli_PipingFlow::NbFlowAssociativities () const
+Standard_Integer IGESAppli_PipingFlow::NbFlowAssociativities () const
 {
   return theFlowAssociativities->Length();
 }
 
-    Standard_Integer  IGESAppli_PipingFlow::NbConnectPoints () const
+Standard_Integer IGESAppli_PipingFlow::NbConnectPoints () const
 {
   return theConnectPoints->Length();
 }
 
-    Standard_Integer  IGESAppli_PipingFlow::NbJoins () const
+Standard_Integer IGESAppli_PipingFlow::NbJoins () const
 {
   return theJoins->Length();
 }
 
-    Standard_Integer  IGESAppli_PipingFlow::NbFlowNames () const
+Standard_Integer IGESAppli_PipingFlow::NbFlowNames () const
 {
   return theFlowNames->Length();
 }
 
-    Standard_Integer  IGESAppli_PipingFlow::NbTextDisplayTemplates () const
+Standard_Integer IGESAppli_PipingFlow::NbTextDisplayTemplates () const
 {
   return theTextDisplayTemplates->Length();
 }
 
-    Standard_Integer  IGESAppli_PipingFlow::NbContFlowAssociativities () const
+Standard_Integer IGESAppli_PipingFlow::NbContFlowAssociativities () const
 {
   return theContFlowAssociativities->Length();
 }
 
-    Standard_Integer  IGESAppli_PipingFlow::TypeOfFlow () const
-{
-  return theTypeOfFlow;
-}
-
-    Handle(IGESData_IGESEntity)  IGESAppli_PipingFlow::FlowAssociativity
-  (const Standard_Integer Index) const
+const Handle(IGESData_IGESEntity) & IGESAppli_PipingFlow::FlowAssociativity (const Standard_Integer Index) const
 {
   return theFlowAssociativities->Value(Index);
 }
 
-    Handle(IGESDraw_ConnectPoint)  IGESAppli_PipingFlow::ConnectPoint
-  (const Standard_Integer Index) const
+const Handle(IGESDraw_ConnectPoint) & IGESAppli_PipingFlow::ConnectPoint (const Standard_Integer Index) const
 {
   return theConnectPoints->Value(Index);
 }
 
-    Handle(IGESData_IGESEntity)  IGESAppli_PipingFlow::Join
-  (const Standard_Integer Index) const
+const Handle(IGESData_IGESEntity) & IGESAppli_PipingFlow::Join (const Standard_Integer Index) const
 {
   return theJoins->Value(Index);
 }
 
-    Handle(TCollection_HAsciiString)  IGESAppli_PipingFlow::FlowName
-  (const Standard_Integer Index) const
+const Handle(TCollection_HAsciiString) & IGESAppli_PipingFlow::FlowName (const Standard_Integer Index) const
 {
   return theFlowNames->Value(Index);
 }
 
-    Handle(IGESGraph_TextDisplayTemplate)  IGESAppli_PipingFlow::TextDisplayTemplate
-  (const Standard_Integer Index) const
+const Handle(IGESGraph_TextDisplayTemplate) & IGESAppli_PipingFlow::TextDisplayTemplate (const Standard_Integer Index) const
 {
   return theTextDisplayTemplates->Value(Index);
 }
 
-    Handle(IGESData_IGESEntity)  IGESAppli_PipingFlow::ContFlowAssociativity
-  (const Standard_Integer Index) const
+const Handle(IGESData_IGESEntity) & IGESAppli_PipingFlow::ContFlowAssociativity (const Standard_Integer Index) const
 {
   return theContFlowAssociativities->Value(Index);
+}
+
+void IGESAppli_PipingFlow::OwnShared(Interface_EntityIterator &theIter) const
+{
+  Standard_Integer i, num;
+  for ( num = NbFlowAssociativities(), i = 1; i <= num; i++ )
+    theIter.GetOneItem(FlowAssociativity(i));
+  for ( num = NbConnectPoints(), i = 1; i <= num; i++ )
+    theIter.GetOneItem(ConnectPoint(i));
+  for ( num = NbJoins(), i = 1; i <= num; i++ )
+    theIter.GetOneItem(Join(i));
+  for ( num = NbTextDisplayTemplates(), i = 1; i <= num; i++ )
+    theIter.GetOneItem(TextDisplayTemplate(i));
+  for ( num = NbContFlowAssociativities(), i = 1; i <= num; i++ )
+    theIter.GetOneItem(ContFlowAssociativity(i));
+}
+
+void IGESAppli_PipingFlow::OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &theCheck) const
+{
+  if (NbContextFlags() != 1)
+    theCheck->AddFail("Number of Context Flags != 1");
+  if ((TypeOfFlow() < 0) || (TypeOfFlow() > 2))
+    theCheck->AddFail("Type of Flow != 0,1,2");
 }

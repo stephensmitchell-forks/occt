@@ -26,14 +26,11 @@
 #include <IGESGraph_LineFontDefTemplate.hxx>
 #include <IGESGraph_ToolLineFontDefTemplate.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-
-IGESGraph_ToolLineFontDefTemplate::IGESGraph_ToolLineFontDefTemplate ()    {  }
 
 
 void IGESGraph_ToolLineFontDefTemplate::ReadOwnParams
@@ -74,19 +71,6 @@ void  IGESGraph_ToolLineFontDefTemplate::OwnShared
   (const Handle(IGESGraph_LineFontDefTemplate)& ent, Interface_EntityIterator& iter) const
 {
   iter.GetOneItem(ent->TemplateEntity());
-}
-
-void IGESGraph_ToolLineFontDefTemplate::OwnCopy
-  (const Handle(IGESGraph_LineFontDefTemplate)& another,
-   const Handle(IGESGraph_LineFontDefTemplate)& ent, Interface_CopyTool& TC) const
-{
-  Standard_Integer tempOrientation = another->Orientation();
-  DeclareAndCast(IGESBasic_SubfigureDef, tempTemplateSubfigure,
-                 TC.Transferred(another->TemplateEntity()));
-  Standard_Real tempDistance = another->Distance();
-  Standard_Real tempScale = another->Scale();
-
-  ent->Init(tempOrientation, tempTemplateSubfigure, tempDistance, tempScale);
 }
 
 IGESData_DirChecker IGESGraph_ToolLineFontDefTemplate::DirChecker

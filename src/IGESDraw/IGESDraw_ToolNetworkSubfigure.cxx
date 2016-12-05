@@ -31,15 +31,12 @@
 #include <IGESDraw_ToolNetworkSubfigure.hxx>
 #include <IGESGraph_TextDisplayTemplate.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
 #include <TCollection_HAsciiString.hxx>
-
-IGESDraw_ToolNetworkSubfigure::IGESDraw_ToolNetworkSubfigure ()    {  }
 
 
 void IGESDraw_ToolNetworkSubfigure::ReadOwnParams
@@ -159,44 +156,6 @@ void  IGESDraw_ToolNetworkSubfigure::OwnShared
   Standard_Integer Up  = ent->NbConnectPoints();
   for ( Standard_Integer i = 1; i <= Up; i++)
     iter.GetOneItem( ent->ConnectPoint(i) );
-}
-
-void IGESDraw_ToolNetworkSubfigure::OwnCopy
-  (const Handle(IGESDraw_NetworkSubfigure)& another,
-   const Handle(IGESDraw_NetworkSubfigure)& ent, Interface_CopyTool& TC) const
-{
-  Standard_Integer                       nbval;
-  gp_XYZ                                 translation;
-  gp_XYZ                                 scale;
-  Standard_Integer                       typeflag; 
-  Handle(TCollection_HAsciiString)       designator; 
-  Handle(IGESDraw_HArray1OfConnectPoint) connectPoints;
- 
-  nbval         = another->NbConnectPoints();
-
-  DeclareAndCast(IGESDraw_NetworkSubfigureDef, definition, 
-                 TC.Transferred(another->SubfigureDefinition()));
-
-  translation   = another->Translation();
-  scale         = another->ScaleFactors();
-  typeflag      = another->TypeFlag();
-  if (!another->ReferenceDesignator().IsNull())
-    designator  = new TCollection_HAsciiString
-      (another->ReferenceDesignator());
-
-  DeclareAndCast(IGESGraph_TextDisplayTemplate, textTemplate, 
-                 TC.Transferred(another->DesignatorTemplate()));
-
-  if (nbval > 0) connectPoints = new IGESDraw_HArray1OfConnectPoint(1, nbval);
-  for (Standard_Integer i = 1; i <= nbval; i++)
-    {
-      DeclareAndCast(IGESDraw_ConnectPoint, tempconnectPoint, 
-                     TC.Transferred(another->ConnectPoint(i)) );
-      connectPoints->SetValue( i, tempconnectPoint );
-    }
-
-  ent->Init(definition, translation, scale, typeflag,
-	    designator, textTemplate, connectPoints);
 }
 
 IGESData_DirChecker IGESDraw_ToolNetworkSubfigure::DirChecker

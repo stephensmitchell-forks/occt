@@ -30,16 +30,12 @@
 #include <IGESData_ParamReader.hxx>
 #include <IGESData_Status.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Message_Msg.hxx>
 #include <Standard_DomainError.hxx>
-
-// MGE 03/08/98
-IGESBasic_ToolSingularSubfigure::IGESBasic_ToolSingularSubfigure ()    {  }
 
 
 void  IGESBasic_ToolSingularSubfigure::ReadOwnParams
@@ -124,23 +120,6 @@ void  IGESBasic_ToolSingularSubfigure::OwnShared
   iter.GetOneItem(ent->Subfigure());
 }
 
-void  IGESBasic_ToolSingularSubfigure::OwnCopy
-  (const Handle(IGESBasic_SingularSubfigure)& another,
-   const Handle(IGESBasic_SingularSubfigure)& ent, Interface_CopyTool& TC) const
-{
-  gp_XYZ aTranslation;
-  Standard_Boolean ahasScale;
-  Standard_Real aScale;
-
-  DeclareAndCast
-    (IGESBasic_SubfigureDef,aSubfigureDef,TC.Transferred(another->Subfigure()));
-  aTranslation  = another->Translation();
-  ahasScale     = another->HasScaleFactor();
-  aScale        = another->ScaleFactor();
-
-  ent->Init(aSubfigureDef,aTranslation,ahasScale,aScale);
-}
-
 IGESData_DirChecker  IGESBasic_ToolSingularSubfigure::DirChecker
   (const Handle(IGESBasic_SingularSubfigure)& ent ) const
 {
@@ -149,12 +128,6 @@ IGESData_DirChecker  IGESBasic_ToolSingularSubfigure::DirChecker
   if (ent->HierarchyStatus() == 1)
     DC.GraphicsIgnored(01);   // GraphicsIgnored if Hierarchy = 01
   return DC;
-}
-
-void  IGESBasic_ToolSingularSubfigure::OwnCheck
-  (const Handle(IGESBasic_SingularSubfigure)& /* ent */,
-   const Interface_ShareTool& , Handle(Interface_Check)& /* ach */) const
-{
 }
 
 void  IGESBasic_ToolSingularSubfigure::OwnDump

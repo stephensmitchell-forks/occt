@@ -55,11 +55,6 @@
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESBasic_ReadWriteModule,IGESData_ReadWriteModule)
 
-//  Each Module is attached to a Protocol : it must interprete Case Numbers
-//  (arguments <CN> of various methods) in accordance to values returned by
-//  the method TypeNumber from this Protocol
-IGESBasic_ReadWriteModule::IGESBasic_ReadWriteModule ()    {  }
-
 
     Standard_Integer  IGESBasic_ReadWriteModule::CaseIGES
   (const Standard_Integer typenum, const Standard_Integer formnum) const 

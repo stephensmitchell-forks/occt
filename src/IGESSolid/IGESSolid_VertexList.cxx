@@ -20,14 +20,11 @@
 #include <IGESSolid_VertexList.hxx>
 #include <Standard_DimensionMismatch.hxx>
 #include <Standard_OutOfRange.hxx>
-#include <Standard_Type.hxx>
+#include <Message_Msg.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESSolid_VertexList,IGESData_IGESEntity)
 
-IGESSolid_VertexList::IGESSolid_VertexList ()    {  }
-
-
-    void  IGESSolid_VertexList::Init
+void IGESSolid_VertexList::Init
   (const Handle(TColgp_HArray1OfXYZ)& Vertices)
 {
   if (Vertices.IsNull() || Vertices->Lower() != 1)
@@ -36,12 +33,20 @@ IGESSolid_VertexList::IGESSolid_VertexList ()    {  }
   InitTypeAndForm(502,1);
 }
 
-    Standard_Integer  IGESSolid_VertexList::NbVertices () const
+Standard_Integer IGESSolid_VertexList::NbVertices () const
 {
   return (theVertices.IsNull() ? 0 : theVertices->Length());
 }
 
-    gp_Pnt  IGESSolid_VertexList::Vertex (const Standard_Integer Index) const
+gp_Pnt IGESSolid_VertexList::Vertex (const Standard_Integer Index) const
 {
   return gp_Pnt(theVertices->Value(Index));
+}
+
+void IGESSolid_VertexList::OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &theCheck) const
+{
+  if (NbVertices() <= 0) {
+    Message_Msg Msg182("XSTEP_182");
+    theCheck->SendFail(Msg182);
+  }
 }

@@ -17,17 +17,10 @@
 #ifndef _IGESSolid_EdgeList_HeaderFile
 #define _IGESSolid_EdgeList_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
 #include <IGESData_HArray1OfIGESEntity.hxx>
 #include <IGESSolid_HArray1OfVertexList.hxx>
 #include <TColStd_HArray1OfInteger.hxx>
 #include <IGESData_IGESEntity.hxx>
-#include <Standard_Integer.hxx>
-class Standard_DimensionMismatch;
-class Standard_OutOfRange;
-class IGESData_IGESEntity;
 class IGESSolid_VertexList;
 
 
@@ -40,11 +33,9 @@ DEFINE_STANDARD_HANDLE(IGESSolid_EdgeList, IGESData_IGESEntity)
 //! It contains one or more edge tuples.
 class IGESSolid_EdgeList : public IGESData_IGESEntity
 {
+ public:
 
-public:
-
-  
-  Standard_EXPORT IGESSolid_EdgeList();
+  IGESSolid_EdgeList() {}
   
   //! This method is used to set the fields of the class
   //! EdgeList
@@ -66,11 +57,11 @@ public:
   
   //! returns the num'th model space curve
   //! raises Exception if num <= 0 or num > NbEdges()
-  Standard_EXPORT Handle(IGESData_IGESEntity) Curve (const Standard_Integer num) const;
+  Standard_EXPORT const Handle(IGESData_IGESEntity) & Curve (const Standard_Integer num) const;
   
   //! returns the num'th start vertex list
   //! raises Exception if num <= 0 or num > NbEdges()
-  Standard_EXPORT Handle(IGESSolid_VertexList) StartVertexList (const Standard_Integer num) const;
+  Standard_EXPORT const Handle(IGESSolid_VertexList) & StartVertexList (const Standard_Integer num) const;
   
   //! returns the index of num'th start vertex in
   //! the corresponding start vertex list
@@ -79,39 +70,26 @@ public:
   
   //! returns the num'th end vertex list
   //! raises Exception if num <= 0 or num > NbEdges()
-  Standard_EXPORT Handle(IGESSolid_VertexList) EndVertexList (const Standard_Integer num) const;
+  Standard_EXPORT const Handle(IGESSolid_VertexList) & EndVertexList (const Standard_Integer num) const;
   
   //! returns the index of num'th end vertex in
   //! the corresponding end vertex list
   //! raises Exception if num <= 0 or num > NbEdges()
   Standard_EXPORT Standard_Integer EndVertexIndex (const Standard_Integer num) const;
 
+  Standard_EXPORT virtual void OwnShared(Interface_EntityIterator &theIter) const Standard_OVERRIDE;
 
-
+  Standard_EXPORT virtual void OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESSolid_EdgeList,IGESData_IGESEntity)
 
-protected:
-
-
-
-
-private:
-
+ private:
 
   Handle(IGESData_HArray1OfIGESEntity) theCurves;
   Handle(IGESSolid_HArray1OfVertexList) theStartVertexList;
   Handle(TColStd_HArray1OfInteger) theStartVertexIndex;
   Handle(IGESSolid_HArray1OfVertexList) theEndVertexList;
   Handle(TColStd_HArray1OfInteger) theEndVertexIndex;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESSolid_EdgeList_HeaderFile

@@ -11,7 +11,7 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-
+/*
 #include <IGESData_DirChecker.hxx>
 #include <IGESData_IGESEntity.hxx>
 #include <IGESSolid_Block.hxx>
@@ -65,19 +65,11 @@
 #include <IGESSolid_VertexList.hxx>
 #include <Interface_Category.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
-#include <Standard_Transient.hxx>
-#include <Standard_Type.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESSolid_GeneralModule,IGESData_GeneralModule)
-
-//  Each Module is attached to a Protocol : it must interprete Case Numbers
-//  (arguments <CN> of various methods) in accordance to values returned by
-//  the method TypeNumber from this Protocol
-IGESSolid_GeneralModule::IGESSolid_GeneralModule ()    {  }
 
 
     void  IGESSolid_GeneralModule::OwnSharedCase
@@ -85,13 +77,6 @@ IGESSolid_GeneralModule::IGESSolid_GeneralModule ()    {  }
    Interface_EntityIterator& iter) const 
 {
   switch (CN) {
-    case  1 : {
-      DeclareAndCast(IGESSolid_Block,anent,ent);
-      if (anent.IsNull()) return;
-      IGESSolid_ToolBlock tool;
-      tool.OwnShared(anent,iter);
-    }
-      break;
     case  2 : {
       DeclareAndCast(IGESSolid_BooleanTree,anent,ent);
       if (anent.IsNull()) return;
@@ -99,24 +84,10 @@ IGESSolid_GeneralModule::IGESSolid_GeneralModule ()    {  }
       tool.OwnShared(anent,iter);
     }
       break;
-    case  3 : {
-      DeclareAndCast(IGESSolid_ConeFrustum,anent,ent);
-      if (anent.IsNull()) return;
-      IGESSolid_ToolConeFrustum tool;
-      tool.OwnShared(anent,iter);
-    }
-      break;
     case  4 : {
       DeclareAndCast(IGESSolid_ConicalSurface,anent,ent);
       if (anent.IsNull()) return;
       IGESSolid_ToolConicalSurface tool;
-      tool.OwnShared(anent,iter);
-    }
-      break;
-    case  5 : {
-      DeclareAndCast(IGESSolid_Cylinder,anent,ent);
-      if (anent.IsNull()) return;
-      IGESSolid_ToolCylinder tool;
       tool.OwnShared(anent,iter);
     }
       break;
@@ -131,13 +102,6 @@ IGESSolid_GeneralModule::IGESSolid_GeneralModule ()    {  }
       DeclareAndCast(IGESSolid_EdgeList,anent,ent);
       if (anent.IsNull()) return;
       IGESSolid_ToolEdgeList tool;
-      tool.OwnShared(anent,iter);
-    }
-      break;
-    case  8 : {
-      DeclareAndCast(IGESSolid_Ellipsoid,anent,ent);
-      if (anent.IsNull()) return;
-      IGESSolid_ToolEllipsoid tool;
       tool.OwnShared(anent,iter);
     }
       break;
@@ -166,13 +130,6 @@ IGESSolid_GeneralModule::IGESSolid_GeneralModule ()    {  }
       DeclareAndCast(IGESSolid_PlaneSurface,anent,ent);
       if (anent.IsNull()) return;
       IGESSolid_ToolPlaneSurface tool;
-      tool.OwnShared(anent,iter);
-    }
-      break;
-    case 13 : {
-      DeclareAndCast(IGESSolid_RightAngularWedge,anent,ent);
-      if (anent.IsNull()) return;
-      IGESSolid_ToolRightAngularWedge tool;
       tool.OwnShared(anent,iter);
     }
       break;
@@ -218,13 +175,6 @@ IGESSolid_GeneralModule::IGESSolid_GeneralModule ()    {  }
       tool.OwnShared(anent,iter);
     }
       break;
-    case 20 : {
-      DeclareAndCast(IGESSolid_Sphere,anent,ent);
-      if (anent.IsNull()) return;
-      IGESSolid_ToolSphere tool;
-      tool.OwnShared(anent,iter);
-    }
-      break;
     case 21 : {
       DeclareAndCast(IGESSolid_SphericalSurface,anent,ent);
       if (anent.IsNull()) return;
@@ -236,20 +186,6 @@ IGESSolid_GeneralModule::IGESSolid_GeneralModule ()    {  }
       DeclareAndCast(IGESSolid_ToroidalSurface,anent,ent);
       if (anent.IsNull()) return;
       IGESSolid_ToolToroidalSurface tool;
-      tool.OwnShared(anent,iter);
-    }
-      break;
-    case 23 : {
-      DeclareAndCast(IGESSolid_Torus,anent,ent);
-      if (anent.IsNull()) return;
-      IGESSolid_ToolTorus tool;
-      tool.OwnShared(anent,iter);
-    }
-      break;
-    case 24 : {
-      DeclareAndCast(IGESSolid_VertexList,anent,ent);
-      if (anent.IsNull()) return;
-      IGESSolid_ToolVertexList tool;
       tool.OwnShared(anent,iter);
     }
       break;
@@ -508,31 +444,10 @@ IGESSolid_GeneralModule::IGESSolid_GeneralModule ()    {  }
       tool.OwnCheck(anent,shares,ach);
     }
       break;
-    case 14 : {
-      DeclareAndCast(IGESSolid_SelectedComponent,anent,ent);
-      if (anent.IsNull()) return;
-      IGESSolid_ToolSelectedComponent tool;
-      tool.OwnCheck(anent,shares,ach);
-    }
-      break;
     case 15 : {
       DeclareAndCast(IGESSolid_Shell,anent,ent);
       if (anent.IsNull()) return;
       IGESSolid_ToolShell tool;
-      tool.OwnCheck(anent,shares,ach);
-    }
-      break;
-    case 16 : {
-      DeclareAndCast(IGESSolid_SolidAssembly,anent,ent);
-      if (anent.IsNull()) return;
-      IGESSolid_ToolSolidAssembly tool;
-      tool.OwnCheck(anent,shares,ach);
-    }
-      break;
-    case 17 : {
-      DeclareAndCast(IGESSolid_SolidInstance,anent,ent);
-      if (anent.IsNull()) return;
-      IGESSolid_ToolSolidInstance tool;
       tool.OwnCheck(anent,shares,ach);
     }
       break;
@@ -624,189 +539,10 @@ IGESSolid_GeneralModule::IGESSolid_GeneralModule ()    {  }
 }
 
 
-    void  IGESSolid_GeneralModule::OwnCopyCase
-  (const Standard_Integer CN,
-   const Handle(IGESData_IGESEntity)& entfrom,
-   const Handle(IGESData_IGESEntity)& entto,
-   Interface_CopyTool& TC) const 
-{
-  switch (CN) {
-    case  1 : {
-      DeclareAndCast(IGESSolid_Block,enfr,entfrom);
-      DeclareAndCast(IGESSolid_Block,ento,entto);
-      IGESSolid_ToolBlock tool;
-      tool.OwnCopy(enfr,ento,TC);
-    }
-      break;
-    case  2 : {
-      DeclareAndCast(IGESSolid_BooleanTree,enfr,entfrom);
-      DeclareAndCast(IGESSolid_BooleanTree,ento,entto);
-      IGESSolid_ToolBooleanTree tool;
-      tool.OwnCopy(enfr,ento,TC);
-    }
-      break;
-    case  3 : {
-      DeclareAndCast(IGESSolid_ConeFrustum,enfr,entfrom);
-      DeclareAndCast(IGESSolid_ConeFrustum,ento,entto);
-      IGESSolid_ToolConeFrustum tool;
-      tool.OwnCopy(enfr,ento,TC);
-    }
-      break;
-    case  4 : {
-      DeclareAndCast(IGESSolid_ConicalSurface,enfr,entfrom);
-      DeclareAndCast(IGESSolid_ConicalSurface,ento,entto);
-      IGESSolid_ToolConicalSurface tool;
-      tool.OwnCopy(enfr,ento,TC);
-    }
-      break;
-    case  5 : {
-      DeclareAndCast(IGESSolid_Cylinder,enfr,entfrom);
-      DeclareAndCast(IGESSolid_Cylinder,ento,entto);
-      IGESSolid_ToolCylinder tool;
-      tool.OwnCopy(enfr,ento,TC);
-    }
-      break;
-    case  6 : {
-      DeclareAndCast(IGESSolid_CylindricalSurface,enfr,entfrom);
-      DeclareAndCast(IGESSolid_CylindricalSurface,ento,entto);
-      IGESSolid_ToolCylindricalSurface tool;
-      tool.OwnCopy(enfr,ento,TC);
-    }
-      break;
-    case  7 : {
-      DeclareAndCast(IGESSolid_EdgeList,enfr,entfrom);
-      DeclareAndCast(IGESSolid_EdgeList,ento,entto);
-      IGESSolid_ToolEdgeList tool;
-      tool.OwnCopy(enfr,ento,TC);
-    }
-      break;
-    case  8 : {
-      DeclareAndCast(IGESSolid_Ellipsoid,enfr,entfrom);
-      DeclareAndCast(IGESSolid_Ellipsoid,ento,entto);
-      IGESSolid_ToolEllipsoid tool;
-      tool.OwnCopy(enfr,ento,TC);
-    }
-      break;
-    case  9 : {
-      DeclareAndCast(IGESSolid_Face,enfr,entfrom);
-      DeclareAndCast(IGESSolid_Face,ento,entto);
-      IGESSolid_ToolFace tool;
-      tool.OwnCopy(enfr,ento,TC);
-    }
-      break;
-    case 10 : {
-      DeclareAndCast(IGESSolid_Loop,enfr,entfrom);
-      DeclareAndCast(IGESSolid_Loop,ento,entto);
-      IGESSolid_ToolLoop tool;
-      tool.OwnCopy(enfr,ento,TC);
-    }
-      break;
-    case 11 : {
-      DeclareAndCast(IGESSolid_ManifoldSolid,enfr,entfrom);
-      DeclareAndCast(IGESSolid_ManifoldSolid,ento,entto);
-      IGESSolid_ToolManifoldSolid tool;
-      tool.OwnCopy(enfr,ento,TC);
-    }
-      break;
-    case 12 : {
-      DeclareAndCast(IGESSolid_PlaneSurface,enfr,entfrom);
-      DeclareAndCast(IGESSolid_PlaneSurface,ento,entto);
-      IGESSolid_ToolPlaneSurface tool;
-      tool.OwnCopy(enfr,ento,TC);
-    }
-      break;
-    case 13 : {
-      DeclareAndCast(IGESSolid_RightAngularWedge,enfr,entfrom);
-      DeclareAndCast(IGESSolid_RightAngularWedge,ento,entto);
-      IGESSolid_ToolRightAngularWedge tool;
-      tool.OwnCopy(enfr,ento,TC);
-    }
-      break;
-    case 14 : {
-      DeclareAndCast(IGESSolid_SelectedComponent,enfr,entfrom);
-      DeclareAndCast(IGESSolid_SelectedComponent,ento,entto);
-      IGESSolid_ToolSelectedComponent tool;
-      tool.OwnCopy(enfr,ento,TC);
-    }
-      break;
-    case 15 : {
-      DeclareAndCast(IGESSolid_Shell,enfr,entfrom);
-      DeclareAndCast(IGESSolid_Shell,ento,entto);
-      IGESSolid_ToolShell tool;
-      tool.OwnCopy(enfr,ento,TC);
-    }
-      break;
-    case 16 : {
-      DeclareAndCast(IGESSolid_SolidAssembly,enfr,entfrom);
-      DeclareAndCast(IGESSolid_SolidAssembly,ento,entto);
-      IGESSolid_ToolSolidAssembly tool;
-      tool.OwnCopy(enfr,ento,TC);
-    }
-      break;
-    case 17 : {
-      DeclareAndCast(IGESSolid_SolidInstance,enfr,entfrom);
-      DeclareAndCast(IGESSolid_SolidInstance,ento,entto);
-      IGESSolid_ToolSolidInstance tool;
-      tool.OwnCopy(enfr,ento,TC);
-    }
-      break;
-    case 18 : {
-      DeclareAndCast(IGESSolid_SolidOfLinearExtrusion,enfr,entfrom);
-      DeclareAndCast(IGESSolid_SolidOfLinearExtrusion,ento,entto);
-      IGESSolid_ToolSolidOfLinearExtrusion tool;
-      tool.OwnCopy(enfr,ento,TC);
-    }
-      break;
-    case 19 : {
-      DeclareAndCast(IGESSolid_SolidOfRevolution,enfr,entfrom);
-      DeclareAndCast(IGESSolid_SolidOfRevolution,ento,entto);
-      IGESSolid_ToolSolidOfRevolution tool;
-      tool.OwnCopy(enfr,ento,TC);
-    }
-      break;
-    case 20 : {
-      DeclareAndCast(IGESSolid_Sphere,enfr,entfrom);
-      DeclareAndCast(IGESSolid_Sphere,ento,entto);
-      IGESSolid_ToolSphere tool;
-      tool.OwnCopy(enfr,ento,TC);
-    }
-      break;
-    case 21 : {
-      DeclareAndCast(IGESSolid_SphericalSurface,enfr,entfrom);
-      DeclareAndCast(IGESSolid_SphericalSurface,ento,entto);
-      IGESSolid_ToolSphericalSurface tool;
-      tool.OwnCopy(enfr,ento,TC);
-    }
-      break;
-    case 22 : {
-      DeclareAndCast(IGESSolid_ToroidalSurface,enfr,entfrom);
-      DeclareAndCast(IGESSolid_ToroidalSurface,ento,entto);
-      IGESSolid_ToolToroidalSurface tool;
-      tool.OwnCopy(enfr,ento,TC);
-    }
-      break;
-    case 23 : {
-      DeclareAndCast(IGESSolid_Torus,enfr,entfrom);
-      DeclareAndCast(IGESSolid_Torus,ento,entto);
-      IGESSolid_ToolTorus tool;
-      tool.OwnCopy(enfr,ento,TC);
-    }
-      break;
-    case 24 : {
-      DeclareAndCast(IGESSolid_VertexList,enfr,entfrom);
-      DeclareAndCast(IGESSolid_VertexList,ento,entto);
-      IGESSolid_ToolVertexList tool;
-      tool.OwnCopy(enfr,ento,TC);
-    }
-      break;
-    default : break;
-  }
-}
-
-
     Standard_Integer  IGESSolid_GeneralModule::CategoryNumber
-  (const Standard_Integer /*CN*/, const Handle(Standard_Transient)& ,
+  (const Standard_Integer , const Handle(Standard_Transient)& ,
    const Interface_ShareTool& ) const
 {
   return Interface_Category::Number("Shape");
 }
+*/

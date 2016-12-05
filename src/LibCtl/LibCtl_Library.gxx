@@ -67,19 +67,17 @@ static Handle(LibCtl_Node) thelast;
 //  D abord, ajouter celui-ci a la liste : chercher le Node
   Handle(LibCtl_GlobalNode) curr;
   for (curr = theglobal; !curr.IsNull(); ) {        // curr->Next : plus loin
-    const Handle(Interface_Protocol)& protocol = curr->Protocol();
-    if (!protocol.IsNull()) {
 //  Match Protocol ?
-      if (protocol->DynamicType() == aprotocol->DynamicType()) {
-	if (thelist.IsNull()) thelist = new LibCtl_Node;
-	thelist->AddNode(curr);
-	break;  // UN SEUL MODULE PAR PROTOCOLE
-      }
+    const Handle(Interface_Protocol)& protocol = curr->Protocol();
+    if (!protocol.IsNull() && (protocol->DynamicType() == aprotocol->DynamicType())) {
+      if (thelist.IsNull()) thelist = new LibCtl_Node;
+      thelist->AddNode(curr);
+      break;  // UN SEUL MODULE PAR PROTOCOLE
     }
     curr = curr->Next();  // cette formule est refusee dans "for"
   }
 //  Ensuite, Traiter les ressources
-  Standard_Integer nb = aprotocol->NbResources();
+  const Standard_Integer nb = aprotocol->NbResources();
   for (Standard_Integer i = 1; i <= nb; i ++) {
     AddProtocol (aprotocol->Resource(i));
   }

@@ -17,12 +17,7 @@
 #ifndef _IGESSolid_ConicalSurface_HeaderFile
 #define _IGESSolid_ConicalSurface_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
-#include <Standard_Real.hxx>
 #include <IGESData_IGESEntity.hxx>
-#include <Standard_Boolean.hxx>
 class IGESGeom_Point;
 class IGESGeom_Direction;
 
@@ -38,11 +33,9 @@ DEFINE_STANDARD_HANDLE(IGESSolid_ConicalSurface, IGESData_IGESEntity)
 //! the cone semi-angle.
 class IGESSolid_ConicalSurface : public IGESData_IGESEntity
 {
+ public:
 
-public:
-
-  
-  Standard_EXPORT IGESSolid_ConicalSurface();
+  IGESSolid_ConicalSurface() {}
   
   //! This method is used to set the fields of the class
   //! ConicalSurface
@@ -55,51 +48,37 @@ public:
   Standard_EXPORT void Init (const Handle(IGESGeom_Point)& aLocation, const Handle(IGESGeom_Direction)& anAxis, const Standard_Real aRadius, const Standard_Real anAngle, const Handle(IGESGeom_Direction)& aRefdir);
   
   //! returns the location of the point on the axis
-  Standard_EXPORT Handle(IGESGeom_Point) LocationPoint() const;
+  const Handle(IGESGeom_Point) & LocationPoint() const { return theLocationPoint; }
   
   //! returns the direction of the axis
-  Standard_EXPORT Handle(IGESGeom_Direction) Axis() const;
+  const Handle(IGESGeom_Direction) & Axis() const { return theAxis; }
   
   //! returns the radius at the axis point
-  Standard_EXPORT Standard_Real Radius() const;
+  Standard_Real Radius() const { return theRadius; }
   
   //! returns the semi-angle value
-  Standard_EXPORT Standard_Real SemiAngle() const;
+  Standard_Real SemiAngle() const { return theAngle; }
   
   //! returns the reference direction of the conical surface in case
-  //! of parametrised surface. For unparametrised surface it returns
-  //! NULL.
-  Standard_EXPORT Handle(IGESGeom_Direction) ReferenceDir() const;
+  //! of parametrised surface. For unparametrised surface it returns NULL.
+  const Handle(IGESGeom_Direction) & ReferenceDir() const { return theRefDir; }
   
   //! returns True if Form no is 1 else false
-  Standard_EXPORT Standard_Boolean IsParametrised() const;
+  Standard_Boolean IsParametrised() const { return (!theRefDir.IsNull()); }
 
+  Standard_EXPORT virtual void OwnShared(Interface_EntityIterator &theIter) const Standard_OVERRIDE;
 
-
+  Standard_EXPORT virtual void OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESSolid_ConicalSurface,IGESData_IGESEntity)
 
-protected:
-
-
-
-
-private:
-
+ private:
 
   Handle(IGESGeom_Point) theLocationPoint;
   Handle(IGESGeom_Direction) theAxis;
   Standard_Real theRadius;
   Standard_Real theAngle;
   Handle(IGESGeom_Direction) theRefDir;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESSolid_ConicalSurface_HeaderFile

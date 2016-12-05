@@ -30,7 +30,6 @@
 #include <IGESGeom_Plane.hxx>
 #include <IGESGeom_ToolPlane.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_MSG.hxx>
@@ -40,15 +39,6 @@
 #include <Standard_DomainError.hxx>
 
 #include <stdio.h>
-// MGE 30/07/98
-//=======================================================================
-//function : IGESGeom_ToolPlane
-//purpose  : 
-//=======================================================================
-IGESGeom_ToolPlane::IGESGeom_ToolPlane ()
-{
-}
-
 
 //=======================================================================
 //function : ReadOwnParams
@@ -160,26 +150,6 @@ void IGESGeom_ToolPlane::OwnShared(const Handle(IGESGeom_Plane)& ent,
                                    Interface_EntityIterator& iter) const
 {
   iter.GetOneItem(ent->BoundingCurve());
-}
-
-
-//=======================================================================
-//function : OwnCopy
-//purpose  : 
-//=======================================================================
-
-void IGESGeom_ToolPlane::OwnCopy(const Handle(IGESGeom_Plane)& another,
-                                 const Handle(IGESGeom_Plane)& ent,
-                                 Interface_CopyTool& TC) const
-{
-  Standard_Real A, B, C, D;
-  another->Equation(A, B, C, D);
-  gp_XYZ attach = (another->SymbolAttach()).XYZ();
-  Standard_Real aSize = another->SymbolSize();
-  DeclareAndCast(IGESData_IGESEntity,aCurve,
-		 TC.Transferred(another->BoundingCurve()));
-  ent->Init(A, B, C, D, aCurve, attach, aSize);
-  ent->SetFormNumber(another->FormNumber());
 }
 
 

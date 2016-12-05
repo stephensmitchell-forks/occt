@@ -28,13 +28,11 @@ static TCollection_AsciiString lastvalue;
 
 
 StepSelect_StepType::StepSelect_StepType ()
-: IFSelect_Signature ("Step Type")
+: IFSelect_Signature ("Step Type"),
+  thelib(StepAP214::Protocol()),
+  theproto(StepAP214::Protocol())
 {
-  const Handle(StepAP214_Protocol) &proto = StepAP214::Protocol();
-  if (proto.IsNull()) Interface_InterfaceError::Raise("StepSelect_StepType");
-  theproto = proto;
-  thelib.Clear();
-  thelib.AddProtocol (theproto);
+  if (theproto.IsNull()) Interface_InterfaceError::Raise("StepSelect_StepType");
   thename.Clear();
   thename.AssignCat ("Step Type (Schema ");
   thename.AssignCat (theproto->SchemaName());

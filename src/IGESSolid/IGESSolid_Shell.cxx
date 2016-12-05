@@ -20,14 +20,12 @@
 #include <IGESSolid_Shell.hxx>
 #include <Standard_DimensionMismatch.hxx>
 #include <Standard_OutOfRange.hxx>
-#include <Standard_Type.hxx>
+#include <Interface_EntityIterator.hxx>
+#include <Message_Msg.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESSolid_Shell,IGESData_IGESEntity)
 
-IGESSolid_Shell::IGESSolid_Shell ()    {  }
-
-
-    void  IGESSolid_Shell::Init
+void IGESSolid_Shell::Init
   (const Handle(IGESSolid_HArray1OfFace)& Faces,
    const Handle(TColStd_HArray1OfInteger)& Orient)
 {
@@ -40,25 +38,38 @@ IGESSolid_Shell::IGESSolid_Shell ()    {  }
   InitTypeAndForm(514,1);
 }
 
-    Standard_Boolean  IGESSolid_Shell::IsClosed () const
-      {  return (FormNumber() == 1);  }
+Standard_Boolean IGESSolid_Shell::IsClosed () const
+{  return (FormNumber() == 1);  }
 
-    void  IGESSolid_Shell::SetClosed (const Standard_Boolean closed)
-      {  InitTypeAndForm(514, (closed ? 1 : 2));  }
+void IGESSolid_Shell::SetClosed (const Standard_Boolean closed)
+{  InitTypeAndForm(514, (closed ? 1 : 2));  }
 
-
-    Standard_Integer  IGESSolid_Shell::NbFaces () const
+Standard_Integer IGESSolid_Shell::NbFaces () const
 {
   return theFaces->Length();
 }
 
-    Handle(IGESSolid_Face) IGESSolid_Shell::Face (const Standard_Integer Index) const
+const Handle(IGESSolid_Face) & IGESSolid_Shell::Face (const Standard_Integer Index) const
 {
   return theFaces->Value(Index);
 }
 
-    Standard_Boolean IGESSolid_Shell::Orientation
-  (const Standard_Integer Index) const
+Standard_Boolean IGESSolid_Shell::Orientation (const Standard_Integer Index) const
 {
   return (theOrientation->Value(Index) != 0);
+}
+
+void IGESSolid_Shell::OwnShared(Interface_EntityIterator &theIter) const
+{
+  const Standard_Integer nbfaces = theFaces->Length();
+  for (Standard_Integer i = 1; i <= nbfaces; i ++)
+    theIter.GetOneItem(theFaces->Value(i));
+}
+
+void IGESSolid_Shell::OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &theCheck) const
+{
+  if (NbFaces() <= 0) {
+    Message_Msg Msg200("XSTEP_200");
+    theCheck->SendFail(Msg200);
+  }
 }

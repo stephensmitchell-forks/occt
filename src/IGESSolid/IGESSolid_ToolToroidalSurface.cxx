@@ -27,14 +27,11 @@
 #include <IGESSolid_ToolToroidalSurface.hxx>
 #include <IGESSolid_ToroidalSurface.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-
-IGESSolid_ToolToroidalSurface::IGESSolid_ToolToroidalSurface ()    {  }
 
 
 void  IGESSolid_ToolToroidalSurface::ReadOwnParams
@@ -74,37 +71,6 @@ void  IGESSolid_ToolToroidalSurface::WriteOwnParams
   if (ent->IsParametrised())    IW.Send(ent->ReferenceDir());
 }
 
-void  IGESSolid_ToolToroidalSurface::OwnShared
-  (const Handle(IGESSolid_ToroidalSurface)& ent, Interface_EntityIterator& iter) const
-{
-  iter.GetOneItem(ent->Center());
-  iter.GetOneItem(ent->Axis());
-  iter.GetOneItem(ent->ReferenceDir());
-}
-
-void  IGESSolid_ToolToroidalSurface::OwnCopy
-  (const Handle(IGESSolid_ToroidalSurface)& another,
-   const Handle(IGESSolid_ToroidalSurface)& ent, Interface_CopyTool& TC) const
-{
-  DeclareAndCast(IGESGeom_Point, tempCenter,
-		 TC.Transferred(another->Center()));
-  DeclareAndCast(IGESGeom_Direction, tempAxis,
-		 TC.Transferred(another->Axis()));
-  Standard_Real majRad = another->MajorRadius();
-  Standard_Real minRad = another->MinorRadius();
-  if (another->IsParametrised())
-    {
-      DeclareAndCast(IGESGeom_Direction, tempRefdir,
-		     TC.Transferred(another->ReferenceDir()));
-      ent->Init (tempCenter, tempAxis, majRad, minRad, tempRefdir);
-    }
-  else
-    {
-      Handle(IGESGeom_Direction) tempRefdir;
-      ent->Init (tempCenter, tempAxis, majRad, minRad, tempRefdir);
-    }
-}
-
 IGESData_DirChecker  IGESSolid_ToolToroidalSurface::DirChecker
   (const Handle(IGESSolid_ToroidalSurface)& /*ent*/) const
 {
@@ -118,22 +84,6 @@ IGESData_DirChecker  IGESSolid_ToolToroidalSurface::DirChecker
   DC.SubordinateStatusRequired (1);
   DC.HierarchyStatusIgnored ();
   return DC;
-}
-
-void  IGESSolid_ToolToroidalSurface::OwnCheck
-  (const Handle(IGESSolid_ToroidalSurface)& ent,
-   const Interface_ShareTool& , Handle(Interface_Check)& ach) const
-{
-  if (ent->MajorRadius() <= 0.0)
-    ach->AddFail("Major Radius : Not Positive");
-  if (ent->MinorRadius() <= 0.0)
-    ach->AddFail("Minor Radius : Not Positive");
-  if (ent->MinorRadius() >= ent->MajorRadius())
-    ach->AddFail("Minor Radius : Value not < Major radius");
-  Standard_Integer fn = 0;
-  if (ent->IsParametrised()) fn = 1;
-  if (fn != ent->FormNumber()) ach->AddFail
-    ("Parametrised Status Mismatches with Form Number");
 }
 
 void  IGESSolid_ToolToroidalSurface::OwnDump

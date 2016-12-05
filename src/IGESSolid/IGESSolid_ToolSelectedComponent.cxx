@@ -29,14 +29,11 @@
 #include <IGESSolid_SelectedComponent.hxx>
 #include <IGESSolid_ToolSelectedComponent.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-
-IGESSolid_ToolSelectedComponent::IGESSolid_ToolSelectedComponent ()    {  }
 
 
 void  IGESSolid_ToolSelectedComponent::ReadOwnParams
@@ -65,22 +62,6 @@ void  IGESSolid_ToolSelectedComponent::WriteOwnParams
   IW.Send(ent->SelectPoint().Z());
 }
 
-void  IGESSolid_ToolSelectedComponent::OwnShared
-  (const Handle(IGESSolid_SelectedComponent)& ent, Interface_EntityIterator& iter) const
-{
-  iter.GetOneItem(ent->Component());
-}
-
-void  IGESSolid_ToolSelectedComponent::OwnCopy
-  (const Handle(IGESSolid_SelectedComponent)& another,
-   const Handle(IGESSolid_SelectedComponent)& ent, Interface_CopyTool& TC) const
-{
-  DeclareAndCast(IGESSolid_BooleanTree, tempEntity,
-		 TC.Transferred(another->Component()));
-  gp_XYZ tempSelectPoint = another->SelectPoint().XYZ();
-  ent->Init (tempEntity, tempSelectPoint);
-}
-
 IGESData_DirChecker  IGESSolid_ToolSelectedComponent::DirChecker
   (const Handle(IGESSolid_SelectedComponent)& /* ent */ ) const
 {
@@ -95,12 +76,6 @@ IGESData_DirChecker  IGESSolid_ToolSelectedComponent::DirChecker
   DC.UseFlagRequired (3);
   DC.HierarchyStatusIgnored ();
   return DC;
-}
-
-void  IGESSolid_ToolSelectedComponent::OwnCheck
-  (const Handle(IGESSolid_SelectedComponent)& /* ent */,
-   const Interface_ShareTool& , Handle(Interface_Check)& /* ach */) const
-{
 }
 
 void  IGESSolid_ToolSelectedComponent::OwnDump

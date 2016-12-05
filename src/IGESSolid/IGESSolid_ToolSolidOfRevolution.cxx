@@ -30,14 +30,11 @@
 #include <IGESSolid_SolidOfRevolution.hxx>
 #include <IGESSolid_ToolSolidOfRevolution.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-
-IGESSolid_ToolSolidOfRevolution::IGESSolid_ToolSolidOfRevolution ()    {  }
 
 
 void  IGESSolid_ToolSolidOfRevolution::ReadOwnParams
@@ -125,24 +122,6 @@ void IGESSolid_ToolSolidOfRevolution::WriteOwnParams
   IW.Send(ent->Axis().Z());
 }
 
-void  IGESSolid_ToolSolidOfRevolution::OwnShared
-  (const Handle(IGESSolid_SolidOfRevolution)& ent, Interface_EntityIterator& iter) const
-{
-  iter.GetOneItem(ent->Curve());
-}
-
-void  IGESSolid_ToolSolidOfRevolution::OwnCopy
-  (const Handle(IGESSolid_SolidOfRevolution)& another,
-   const Handle(IGESSolid_SolidOfRevolution)& ent, Interface_CopyTool& TC) const
-{
-  DeclareAndCast(IGESData_IGESEntity, tempEntity,
-		 TC.Transferred(another->Curve()));
-  Standard_Real tempFraction = another->Fraction();
-  gp_XYZ tempAxisPoint = another->AxisPoint().XYZ();
-  gp_XYZ tempAxis= another->Axis().XYZ();
-  ent->Init(tempEntity, tempFraction, tempAxisPoint, tempAxis);
-}
-
 IGESData_DirChecker  IGESSolid_ToolSolidOfRevolution::DirChecker
   (const Handle(IGESSolid_SolidOfRevolution)& /* ent */ ) const
 {
@@ -155,14 +134,6 @@ IGESData_DirChecker  IGESSolid_ToolSolidOfRevolution::DirChecker
   DC.UseFlagRequired (0);
   DC.HierarchyStatusIgnored ();
   return DC;
-}
-
-void  IGESSolid_ToolSolidOfRevolution::OwnCheck
-  (const Handle(IGESSolid_SolidOfRevolution)& ent,
-   const Interface_ShareTool& , Handle(Interface_Check)& ach) const
-{
-  if (ent->Fraction() <= 0 || ent->Fraction() > 1.0)
-    ach->AddFail("Fraction of rotation : Incorrect value");
 }
 
 void  IGESSolid_ToolSolidOfRevolution::OwnDump

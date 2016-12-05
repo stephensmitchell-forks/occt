@@ -17,14 +17,9 @@
 #ifndef _IGESAppli_NodalConstraint_HeaderFile
 #define _IGESAppli_NodalConstraint_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
-#include <Standard_Integer.hxx>
 #include <IGESDefs_HArray1OfTabularData.hxx>
 #include <IGESData_IGESEntity.hxx>
 class IGESAppli_Node;
-class Standard_OutOfRange;
 class IGESDefs_TabularData;
 
 
@@ -39,11 +34,9 @@ DEFINE_STANDARD_HANDLE(IGESAppli_NodalConstraint, IGESData_IGESEntity)
 //! the load or constraint data
 class IGESAppli_NodalConstraint : public IGESData_IGESEntity
 {
+ public:
 
-public:
-
-  
-  Standard_EXPORT IGESAppli_NodalConstraint();
+  IGESAppli_NodalConstraint() {}
   
   //! This method is used to set the fields of the class
   //! NodalConstraint
@@ -57,39 +50,26 @@ public:
   Standard_EXPORT Standard_Integer NbCases() const;
   
   //! returns whether Loads (1) or Constraints (2)
-  Standard_EXPORT Standard_Integer Type() const;
-  
+  Standard_Integer Type() const { return theType; }
+
   //! returns the Node
-  Standard_EXPORT Handle(IGESAppli_Node) NodeEntity() const;
-  
+  const Handle(IGESAppli_Node) & NodeEntity() const { return theNode; }
+
   //! returns Tabular Data Property carrying load or constraint vector
   //! raises exception if Index <= 0 or Index > NbCases
-  Standard_EXPORT Handle(IGESDefs_TabularData) TabularData (const Standard_Integer Index) const;
+  Standard_EXPORT const Handle(IGESDefs_TabularData) & TabularData (const Standard_Integer Index) const;
 
+  Standard_EXPORT virtual void OwnShared(Interface_EntityIterator &theIter) const Standard_OVERRIDE;
 
-
+  Standard_EXPORT virtual void OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESAppli_NodalConstraint,IGESData_IGESEntity)
 
-protected:
-
-
-
-
-private:
-
+ private:
 
   Standard_Integer theType;
   Handle(IGESAppli_Node) theNode;
   Handle(IGESDefs_HArray1OfTabularData) theTabularDataProps;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESAppli_NodalConstraint_HeaderFile

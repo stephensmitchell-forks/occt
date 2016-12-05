@@ -21,17 +21,14 @@
 #include <IGESDimen_GeneralNote.hxx>
 #include <Standard_DimensionMismatch.hxx>
 #include <Standard_OutOfRange.hxx>
-#include <Standard_Type.hxx>
+#include <Interface_EntityIterator.hxx>
 #include <TColStd_HArray1OfReal.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESAppli_NodalResults,IGESData_IGESEntity)
 
-IGESAppli_NodalResults::IGESAppli_NodalResults ()    {  }
-
-
 // Data : Col -> // Nodes.  Row : Data per Node
 
-    void  IGESAppli_NodalResults::Init
+void IGESAppli_NodalResults::Init
   (const Handle(IGESDimen_GeneralNote)&    aNote,
    const Standard_Integer aNumber, const Standard_Real aTime,
    const Handle(TColStd_HArray1OfInteger)& allNodeIdentifiers,
@@ -53,53 +50,88 @@ IGESAppli_NodalResults::IGESAppli_NodalResults ()    {  }
 // FormNumber -> Type of the Results
 }
 
-    void  IGESAppli_NodalResults::SetFormNumber (const Standard_Integer form)
+void IGESAppli_NodalResults::SetFormNumber (const Standard_Integer form)
 {
   if (form < 0 || form > 34) Standard_OutOfRange::Raise
     ("IGESAppli_NodalResults : SetFormNumber");
   InitTypeAndForm(146,form);
 }
 
-
-    Handle(IGESDimen_GeneralNote)  IGESAppli_NodalResults::Note () const
-{
-  return theNote;
-}
-
-    Handle(IGESAppli_Node)  IGESAppli_NodalResults::Node
-  (const Standard_Integer Index) const
+const Handle(IGESAppli_Node) & IGESAppli_NodalResults::Node (const Standard_Integer Index) const
 {
   return theNodes->Value(Index);
 }
 
-    Standard_Integer  IGESAppli_NodalResults::NbNodes () const
+Standard_Integer IGESAppli_NodalResults::NbNodes () const
 {
   return theNodes->Length();
 }
 
-    Standard_Integer  IGESAppli_NodalResults::SubCaseNumber () const
-{
-  return theSubCaseNum;
-}
-
-    Standard_Real  IGESAppli_NodalResults::Time () const
-{
-  return theTime;
-}
-
-    Standard_Integer  IGESAppli_NodalResults::NbData () const
+Standard_Integer IGESAppli_NodalResults::NbData () const
 {
   return theData->RowLength();
 }
 
-    Standard_Integer  IGESAppli_NodalResults::NodeIdentifier
-  (const Standard_Integer Index) const
+Standard_Integer IGESAppli_NodalResults::NodeIdentifier (const Standard_Integer Index) const
 {
   return theNodeIdentifiers->Value(Index);
 }
 
-    Standard_Real  IGESAppli_NodalResults::Data
-  (const Standard_Integer NodeNum, const Standard_Integer DataNum) const
+Standard_Real IGESAppli_NodalResults::Data (const Standard_Integer NodeNum, const Standard_Integer DataNum) const
 {
   return theData->Value(NodeNum,DataNum);
+}
+
+void IGESAppli_NodalResults::OwnShared(Interface_EntityIterator &theIter) const
+{
+  theIter.GetOneItem(Note());
+  const Standard_Integer nbnodes = NbNodes();
+  for (Standard_Integer i = 1; i <= nbnodes; i++)
+    theIter.GetOneItem(Node(i));
+}
+
+void IGESAppli_NodalResults::OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &theCheck) const
+{
+  const Standard_Integer FormNum = FormNumber();
+  const Standard_Integer nv = NbData();
+  Standard_Boolean OK = Standard_True;
+  switch (FormNum) {
+    case  0 : if (nv <  0) OK = Standard_False;  break;
+    case  1 : if (nv != 1) OK = Standard_False;  break;
+    case  2 : if (nv != 1) OK = Standard_False;  break;
+    case  3 : if (nv != 3) OK = Standard_False;  break;
+    case  4 : if (nv != 6) OK = Standard_False;  break;
+    case  5 : if (nv != 3) OK = Standard_False;  break;
+    case  6 : if (nv != 3) OK = Standard_False;  break;
+    case  7 : if (nv != 3) OK = Standard_False;  break;
+    case  8 : if (nv != 3) OK = Standard_False;  break;
+    case  9 : if (nv != 3) OK = Standard_False;  break;
+    case 10 : if (nv != 1) OK = Standard_False;  break;
+    case 11 : if (nv != 1) OK = Standard_False;  break;
+    case 12 : if (nv != 3) OK = Standard_False;  break;
+    case 13 : if (nv != 1) OK = Standard_False;  break;
+    case 14 : if (nv != 1) OK = Standard_False;  break;
+    case 15 : if (nv != 3) OK = Standard_False;  break;
+    case 16 : if (nv != 1) OK = Standard_False;  break;
+    case 17 : if (nv != 3) OK = Standard_False;  break;
+    case 18 : if (nv != 3) OK = Standard_False;  break;
+    case 19 : if (nv != 3) OK = Standard_False;  break;
+    case 20 : if (nv != 3) OK = Standard_False;  break;
+    case 21 : if (nv != 3) OK = Standard_False;  break;
+    case 22 : if (nv != 3) OK = Standard_False;  break;
+    case 23 : if (nv != 6) OK = Standard_False;  break;
+    case 24 : if (nv != 6) OK = Standard_False;  break;
+    case 25 : if (nv != 6) OK = Standard_False;  break;
+    case 26 : if (nv != 6) OK = Standard_False;  break;
+    case 27 : if (nv != 6) OK = Standard_False;  break;
+    case 28 : if (nv != 6) OK = Standard_False;  break;
+    case 29 : if (nv != 9) OK = Standard_False;  break;
+    case 30 : if (nv != 9) OK = Standard_False;  break;
+    case 31 : if (nv != 9) OK = Standard_False;  break;
+    case 32 : if (nv != 9) OK = Standard_False;  break;
+    case 33 : if (nv != 9) OK = Standard_False;  break;
+    case 34 : if (nv != 9) OK = Standard_False;  break;
+    default : theCheck->AddFail("Incorrect Form Number");    break;
+  }
+  if (!OK) theCheck->AddFail("Incorrect count of real values in array V for FEM node");
 }

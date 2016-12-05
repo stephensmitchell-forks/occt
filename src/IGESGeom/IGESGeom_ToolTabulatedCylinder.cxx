@@ -30,16 +30,12 @@
 #include <IGESGeom_TabulatedCylinder.hxx>
 #include <IGESGeom_ToolTabulatedCylinder.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Message_Msg.hxx>
 #include <Standard_DomainError.hxx>
-
-// MGE 31/07/98
-IGESGeom_ToolTabulatedCylinder::IGESGeom_ToolTabulatedCylinder ()    {  }
 
 
 void IGESGeom_ToolTabulatedCylinder::ReadOwnParams
@@ -101,18 +97,6 @@ void  IGESGeom_ToolTabulatedCylinder::OwnShared
   iter.GetOneItem( ent->Directrix() );
 }
 
-void IGESGeom_ToolTabulatedCylinder::OwnCopy
-  (const Handle(IGESGeom_TabulatedCylinder)& another,
-   const Handle(IGESGeom_TabulatedCylinder)& ent, Interface_CopyTool& TC) const
-{
-  DeclareAndCast(IGESData_IGESEntity, aDirectrix,
-		 TC.Transferred(another->Directrix()));
-
-  gp_XYZ anEnd = another->EndPoint().XYZ();
-
-  ent->Init(aDirectrix, anEnd);
-}
-
 
 IGESData_DirChecker IGESGeom_ToolTabulatedCylinder::DirChecker
   (const Handle(IGESGeom_TabulatedCylinder)& /* ent */ )  const
@@ -125,11 +109,6 @@ IGESData_DirChecker IGESGeom_ToolTabulatedCylinder::DirChecker
   DC.HierarchyStatusIgnored();
   return DC;
 }
-
-void IGESGeom_ToolTabulatedCylinder::OwnCheck
-  (const Handle(IGESGeom_TabulatedCylinder)& /* ent */,
-   const Interface_ShareTool& , Handle(Interface_Check)& /* ach */)  const
-{  }
 
 void IGESGeom_ToolTabulatedCylinder::OwnDump
   (const Handle(IGESGeom_TabulatedCylinder)& ent, const IGESData_IGESDumper& dumper,

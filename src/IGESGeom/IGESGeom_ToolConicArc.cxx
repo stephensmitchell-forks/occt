@@ -29,7 +29,6 @@
 #include <IGESGeom_ConicArc.hxx>
 #include <IGESGeom_ToolConicArc.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_MSG.hxx>
@@ -39,15 +38,6 @@
 #include <Standard_DomainError.hxx>
 
 #include <stdio.h>
-// MGE 28/07/98
-//=======================================================================
-//function : IGESGeom_ToolConicArc
-//purpose  : 
-//=======================================================================
-IGESGeom_ToolConicArc::IGESGeom_ToolConicArc ()
-{
-}
-
 
 //=======================================================================
 //function : ReadOwnParams
@@ -127,33 +117,6 @@ void IGESGeom_ToolConicArc::WriteOwnParams(const Handle(IGESGeom_ConicArc)& ent,
   IW.Send(ent->StartPoint().Y());
   IW.Send(ent->EndPoint().X());
   IW.Send(ent->EndPoint().Y());
-}
-
-
-//=======================================================================
-//function : OwnShared
-//purpose  : 
-//=======================================================================
-
-void IGESGeom_ToolConicArc::OwnShared(const Handle(IGESGeom_ConicArc)& /* ent */,
-                                      Interface_EntityIterator& /* iter */) const
-{
-}
-
-
-//=======================================================================
-//function : OwnCopy
-//purpose  : 
-//=======================================================================
-
-void IGESGeom_ToolConicArc::OwnCopy(const Handle(IGESGeom_ConicArc)& another,
-                                    const Handle(IGESGeom_ConicArc)& ent,
-                                    Interface_CopyTool& /* TC */) const
-{
-  Standard_Real A,B,C,D,E,F;
-  another->Equation(A,B,C,D,E,F);
-  ent->Init(A, B, C, D, E, F, another->ZPlane(),
-	    another->StartPoint().XY(), another->EndPoint().XY());
 }
 
 

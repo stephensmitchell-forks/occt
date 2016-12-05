@@ -29,16 +29,12 @@
 #include <IGESData_ParamReader.hxx>
 #include <IGESData_Status.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Message_Msg.hxx>
 #include <Standard_DomainError.hxx>
-
-// MGE 03/08/98
-IGESBasic_ToolSingleParent::IGESBasic_ToolSingleParent ()    {  }
 
 
 void  IGESBasic_ToolSingleParent::ReadOwnParams
@@ -114,25 +110,6 @@ void  IGESBasic_ToolSingleParent::OwnShared
   Standard_Integer upper = ent->NbChildren();
   for (Standard_Integer i = 1; i <= upper; i ++)
     iter.GetOneItem(ent->Child(i));
-}
-
-void  IGESBasic_ToolSingleParent::OwnCopy
-  (const Handle(IGESBasic_SingleParent)& another,
-   const Handle(IGESBasic_SingleParent)& ent, Interface_CopyTool& TC) const
-{
-  Standard_Integer aNbParentEntities = another->NbParentEntities();
-  DeclareAndCast(IGESData_IGESEntity,aparent,
-		 TC.Transferred(another->SingleParent()));
-  Standard_Integer upper = another->NbChildren();
-  Handle(IGESData_HArray1OfIGESEntity)  EntArray = new
-    IGESData_HArray1OfIGESEntity(1,upper);
-  for (Standard_Integer i = 1; i <= upper; i ++)
-    {
-      DeclareAndCast
-	(IGESData_IGESEntity,myentity,TC.Transferred(another->Child(i)));
-      EntArray->SetValue(i,myentity);
-    }
-  ent->Init(aNbParentEntities,aparent,EntArray);
 }
 
 Standard_Boolean  IGESBasic_ToolSingleParent::OwnCorrect

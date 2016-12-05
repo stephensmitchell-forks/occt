@@ -26,13 +26,10 @@
 #include <IGESData_ParamCursor.hxx>
 #include <IGESData_ParamReader.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-
-IGESAppli_ToolDrilledHole::IGESAppli_ToolDrilledHole ()    {  }
 
 
 void  IGESAppli_ToolDrilledHole::ReadOwnParams
@@ -71,21 +68,6 @@ void  IGESAppli_ToolDrilledHole::WriteOwnParams
   IW.Send(ent->NbHigherLayer());
 }
 
-void  IGESAppli_ToolDrilledHole::OwnShared
-  (const Handle(IGESAppli_DrilledHole)& /*ent*/, Interface_EntityIterator& /*iter*/) const
-{
-}
-
-void  IGESAppli_ToolDrilledHole::OwnCopy
-  (const Handle(IGESAppli_DrilledHole)& another,
-   const Handle(IGESAppli_DrilledHole)& ent, Interface_CopyTool& /*TC*/) const
-{
-  ent->Init
-    (5,another->DrillDiaSize(),another->FinishDiaSize(),
-     (another->IsPlating() ? 1 : 0),
-     another->NbLowerLayer(),another->NbHigherLayer());
-}
-
 
 Standard_Boolean  IGESAppli_ToolDrilledHole::OwnCorrect
   (const Handle(IGESAppli_DrilledHole)& ent) const
@@ -112,18 +94,6 @@ IGESData_DirChecker  IGESAppli_ToolDrilledHole::DirChecker
   DC.UseFlagIgnored();
   DC.HierarchyStatusIgnored();
   return DC;
-}
-
-void  IGESAppli_ToolDrilledHole::OwnCheck
-  (const Handle(IGESAppli_DrilledHole)& ent,
-   const Interface_ShareTool& , Handle(Interface_Check)& ach) const
-{
-  if (ent->SubordinateStatus() != 0)
-    if (ent->DefLevel() != IGESData_DefOne &&
-	ent->DefLevel() != IGESData_DefSeveral)
-      ach->AddFail("Level type : Not value/reference");
-  if (ent->NbPropertyValues() != 5)
-    ach->AddFail("Number of Property Values != 5");
 }
 
 void  IGESAppli_ToolDrilledHole::OwnDump

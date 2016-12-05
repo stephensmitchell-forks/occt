@@ -26,15 +26,12 @@
 #include <IGESGraph_DrawingUnits.hxx>
 #include <IGESGraph_ToolDrawingUnits.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
 #include <TCollection_HAsciiString.hxx>
-
-IGESGraph_ToolDrawingUnits::IGESGraph_ToolDrawingUnits ()    {  }
 
 
 void IGESGraph_ToolDrawingUnits::ReadOwnParams
@@ -68,26 +65,6 @@ void IGESGraph_ToolDrawingUnits::WriteOwnParams
   IW.Send( ent->NbPropertyValues() );
   IW.Send( ent->Flag() );
   IW.Send( ent->Unit() );
-}
-
-void  IGESGraph_ToolDrawingUnits::OwnShared
-  (const Handle(IGESGraph_DrawingUnits)& /*ent*/, Interface_EntityIterator& /*iter*/) const
-{
-}
-
-void IGESGraph_ToolDrawingUnits::OwnCopy
-  (const Handle(IGESGraph_DrawingUnits)& another,
-   const Handle(IGESGraph_DrawingUnits)& ent, Interface_CopyTool& /*TC*/) const
-{ 
-  Standard_Integer          NbPropertyValues; 
-  Standard_Integer          Flag; 
-  Handle(TCollection_HAsciiString) Unit; 
- 
-  NbPropertyValues = another->NbPropertyValues();
-  Flag = another->Flag();
-  Unit = new TCollection_HAsciiString(another->Unit());
-
-  ent->Init(NbPropertyValues, Flag, Unit);
 }
 
 Standard_Boolean  IGESGraph_ToolDrawingUnits::OwnCorrect

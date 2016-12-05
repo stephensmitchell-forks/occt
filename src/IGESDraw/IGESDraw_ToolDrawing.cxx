@@ -34,15 +34,12 @@
 #include <IGESDraw_ToolDrawing.hxx>
 #include <IGESDraw_View.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
 #include <TColgp_HArray1OfXY.hxx>
-
-IGESDraw_ToolDrawing::IGESDraw_ToolDrawing ()    {  }
 
 
 void IGESDraw_ToolDrawing::ReadOwnParams
@@ -139,45 +136,6 @@ void  IGESDraw_ToolDrawing::OwnShared
   Up  = ent->NbAnnotations();
   for ( i = 1; i <= Up; i++)
     iter.GetOneItem( ent->Annotation(i) );
-}
-
-void IGESDraw_ToolDrawing::OwnCopy
-  (const Handle(IGESDraw_Drawing)& another,
-   const Handle(IGESDraw_Drawing)& ent, Interface_CopyTool& TC) const
-{
-  Standard_Integer                          nbanot;
-  Standard_Integer                          nbval;
-  Handle(IGESDraw_HArray1OfViewKindEntity)  views; 
-  Handle(TColgp_HArray1OfXY)                viewOrigins; 
-  Handle(IGESData_HArray1OfIGESEntity)      annotations; 
- 
-  nbanot      = another->NbAnnotations();
-  nbval       = another->NbViews();
-  if (nbval > 0) {
-    views       = new IGESDraw_HArray1OfViewKindEntity(1, nbval);
-    viewOrigins = new TColgp_HArray1OfXY(1, nbval);
-  }
-  if ( nbanot > 0 )
-    {
-      annotations = new IGESData_HArray1OfIGESEntity(1, nbanot);
-      for (Standard_Integer i = 1; i <= nbanot; i++)
-	{
-          DeclareAndCast(IGESData_IGESEntity, tempAnnotation, 
-                         TC.Transferred(another->Annotation(i)));
-          annotations->SetValue( i, tempAnnotation );
-	}
-    }
- 
-  for (Standard_Integer i = 1; i <= nbval; i++)
-    {
-      DeclareAndCast(IGESData_ViewKindEntity, tempView,
-                     TC.Transferred(another->ViewItem(i)) );
-      views->SetValue( i, tempView );
- 
-      viewOrigins->SetValue( i, (another->ViewOrigin(i)).XY() );
-    }
-
-  ent->Init(views, viewOrigins, annotations);
 }
 
 Standard_Boolean IGESDraw_ToolDrawing::OwnCorrect

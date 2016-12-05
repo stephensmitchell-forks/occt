@@ -17,19 +17,7 @@
 #ifndef _IGESData_DefaultGeneral_HeaderFile
 #define _IGESData_DefaultGeneral_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
 #include <IGESData_GeneralModule.hxx>
-#include <Standard_Integer.hxx>
-#include <Standard_Boolean.hxx>
-class IGESData_IGESEntity;
-class Interface_EntityIterator;
-class IGESData_DirChecker;
-class Interface_ShareTool;
-class Interface_Check;
-class Standard_Transient;
-class Interface_CopyTool;
 
 
 class IGESData_DefaultGeneral;
@@ -39,10 +27,8 @@ DEFINE_STANDARD_HANDLE(IGESData_DefaultGeneral, IGESData_GeneralModule)
 //! (Case Number 1)
 class IGESData_DefaultGeneral : public IGESData_GeneralModule
 {
+ public:
 
-public:
-
-  
   //! Creates a DefaultGeneral and puts it into GeneralLib,
   //! bound with a Protocol from IGESData
   Standard_EXPORT IGESData_DefaultGeneral();
@@ -61,31 +47,8 @@ public:
   
   //! Specific creation of a new void entity (UndefinedEntity only)
   Standard_EXPORT Standard_Boolean NewVoid (const Standard_Integer CN, Handle(Standard_Transient)& entto) const Standard_OVERRIDE;
-  
-  //! Copies parameters which are specific of each Type of Entity
-  Standard_EXPORT void OwnCopyCase (const Standard_Integer CN, const Handle(IGESData_IGESEntity)& entfrom, const Handle(IGESData_IGESEntity)& entto, Interface_CopyTool& TC) const Standard_OVERRIDE;
-
-
-
 
   DEFINE_STANDARD_RTTIEXT(IGESData_DefaultGeneral,IGESData_GeneralModule)
-
-protected:
-
-
-
-
-private:
-
-
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESData_DefaultGeneral_HeaderFile

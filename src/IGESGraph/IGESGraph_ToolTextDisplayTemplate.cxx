@@ -30,14 +30,11 @@
 #include <IGESGraph_TextFontDef.hxx>
 #include <IGESGraph_ToolTextDisplayTemplate.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-
-IGESGraph_ToolTextDisplayTemplate::IGESGraph_ToolTextDisplayTemplate ()    {  }
 
 
 void IGESGraph_ToolTextDisplayTemplate::ReadOwnParams
@@ -127,39 +124,6 @@ void  IGESGraph_ToolTextDisplayTemplate::OwnShared
     iter.GetOneItem( ent->FontEntity() );
 }
 
-void IGESGraph_ToolTextDisplayTemplate::OwnCopy
-  (const Handle(IGESGraph_TextDisplayTemplate)& another,
-   const Handle(IGESGraph_TextDisplayTemplate)& ent, Interface_CopyTool& TC) const
-{ 
-  Standard_Real                 boxWidth; 
-  Standard_Real                 boxHeight; 
-  Standard_Integer              fontCode=0; 
-  Handle(IGESGraph_TextFontDef) fontEntity;
-  Standard_Real                 slantAngle; 
-  Standard_Real                 rotationAngle; 
-  Standard_Integer              mirrorFlag; 
-  Standard_Integer              rotateFlag; 
-  gp_XYZ                        corner;
-
-  boxWidth  = another->BoxWidth(); 
-  boxHeight = another->BoxHeight(); 
-
-  if ( another->IsFontEntity() )
-    fontEntity = 
-      Handle(IGESGraph_TextFontDef)::DownCast (TC.Transferred(another->FontEntity()));
-  else
-    fontCode = another->FontCode();
-
-  slantAngle    = another->SlantAngle(); 
-  rotationAngle = another->RotationAngle(); 
-  mirrorFlag    = another->MirrorFlag(); 
-  rotateFlag    = another->RotateFlag(); 
-  corner        = another->StartingCorner().XYZ();
-
-  ent->Init(boxWidth, boxHeight, fontCode, fontEntity,
-	    slantAngle, rotationAngle, mirrorFlag, rotateFlag, corner);
-}
-
 IGESData_DirChecker IGESGraph_ToolTextDisplayTemplate::DirChecker
   (const Handle(IGESGraph_TextDisplayTemplate)& /*ent*/)  const
 { 
@@ -172,12 +136,6 @@ IGESData_DirChecker IGESGraph_ToolTextDisplayTemplate::DirChecker
   DC.UseFlagRequired(2);
   DC.HierarchyStatusRequired(0);
   return DC;
-}
-
-void IGESGraph_ToolTextDisplayTemplate::OwnCheck
-  (const Handle(IGESGraph_TextDisplayTemplate)& /*ent*/,
-   const Interface_ShareTool& , Handle(Interface_Check)& /*ach*/)  const
-{
 }
 
 void IGESGraph_ToolTextDisplayTemplate::OwnDump

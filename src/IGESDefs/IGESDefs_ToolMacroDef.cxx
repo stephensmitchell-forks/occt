@@ -26,7 +26,6 @@
 #include <IGESDefs_MacroDef.hxx>
 #include <IGESDefs_ToolMacroDef.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_HArray1OfHAsciiString.hxx>
 #include <Interface_Macros.hxx>
@@ -34,8 +33,6 @@
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
 #include <TCollection_HAsciiString.hxx>
-
-IGESDefs_ToolMacroDef::IGESDefs_ToolMacroDef ()    {  }
 
 
 void  IGESDefs_ToolMacroDef::ReadOwnParams
@@ -92,34 +89,6 @@ void  IGESDefs_ToolMacroDef::WriteOwnParams
   IW.Send(ent->ENDMACRO());
 }
 
-void  IGESDefs_ToolMacroDef::OwnShared
-  (const Handle(IGESDefs_MacroDef)& /* ent */, Interface_EntityIterator& /* iter */) const
-{
-}
-
-void  IGESDefs_ToolMacroDef::OwnCopy
-  (const Handle(IGESDefs_MacroDef)& another,
-   const Handle(IGESDefs_MacroDef)& ent, Interface_CopyTool& /* TC */) const
-{ 
-
-  Handle(TCollection_HAsciiString) macro =
-    new TCollection_HAsciiString(another->MACRO());
-  Standard_Integer entityTypeID = another->EntityTypeID();
-  Handle(TCollection_HAsciiString) endMacro =
-    new TCollection_HAsciiString(another->ENDMACRO());
-  Handle(Interface_HArray1OfHAsciiString) langStatements;
-  Standard_Integer nbval = another->NbStatements();
-  langStatements = new Interface_HArray1OfHAsciiString(1, nbval);
-
-  for (Standard_Integer i = 1; i <= nbval; i++)
-    {
-      Handle(TCollection_HAsciiString) langStat =
-	new TCollection_HAsciiString(another->LanguageStatement(i));
-      langStatements->SetValue(i, langStat);
-    }
-  ent->Init(macro, entityTypeID, langStatements, endMacro);
-}
-
 IGESData_DirChecker  IGESDefs_ToolMacroDef::DirChecker
   (const Handle(IGESDefs_MacroDef)& /* ent */ ) const 
 { 
@@ -133,12 +102,6 @@ IGESData_DirChecker  IGESDefs_ToolMacroDef::DirChecker
   DC.UseFlagRequired(2);
   DC.HierarchyStatusIgnored();
   return DC;
-}
-
-void  IGESDefs_ToolMacroDef::OwnCheck
-  (const Handle(IGESDefs_MacroDef)& /* ent */,
-   const Interface_ShareTool& , Handle(Interface_Check)& /* ach */) const 
-{
 }
 
 void  IGESDefs_ToolMacroDef::OwnDump

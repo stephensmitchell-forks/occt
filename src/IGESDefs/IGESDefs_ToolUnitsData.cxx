@@ -26,7 +26,6 @@
 #include <IGESDefs_ToolUnitsData.hxx>
 #include <IGESDefs_UnitsData.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_HArray1OfHAsciiString.hxx>
 #include <Interface_Macros.hxx>
@@ -35,8 +34,6 @@
 #include <Standard_DomainError.hxx>
 #include <TCollection_HAsciiString.hxx>
 #include <TColStd_HArray1OfReal.hxx>
-
-IGESDefs_ToolUnitsData::IGESDefs_ToolUnitsData ()    {  }
 
 
 void  IGESDefs_ToolUnitsData::ReadOwnParams
@@ -97,39 +94,6 @@ void  IGESDefs_ToolUnitsData::WriteOwnParams
     }
 }
 
-void  IGESDefs_ToolUnitsData::OwnShared
-  (const Handle(IGESDefs_UnitsData)& /* ent */, Interface_EntityIterator& /* iter */) const
-{
-}
-
-void  IGESDefs_ToolUnitsData::OwnCopy
-  (const Handle(IGESDefs_UnitsData)& another,
-   const Handle(IGESDefs_UnitsData)& ent, Interface_CopyTool& /* TC */) const
-{
-  Handle(Interface_HArray1OfHAsciiString) unitTypes;
-  Handle(Interface_HArray1OfHAsciiString) unitValues;
-  Handle(TColStd_HArray1OfReal) unitScales;
-
-  Standard_Integer nbval = another->NbUnits();
-
-  unitTypes  = new Interface_HArray1OfHAsciiString(1, nbval); 
-  unitValues = new Interface_HArray1OfHAsciiString(1, nbval); 
-  unitScales = new TColStd_HArray1OfReal(1, nbval); 
-
-  for (Standard_Integer i = 1; i <= nbval; i++)
-    {
-      Handle(TCollection_HAsciiString) unitType =
-	new TCollection_HAsciiString(another->UnitType(i));
-      unitTypes->SetValue(i, unitType);
-      Handle(TCollection_HAsciiString) unitValue =
-	new TCollection_HAsciiString(another->UnitValue(i));
-      unitValues->SetValue(i, unitValue);
-      Standard_Real unitScale = another->ScaleFactor(i);
-      unitScales->SetValue(i, unitScale);
-    }
-  ent->Init(unitTypes, unitValues, unitScales);
-}
-
 IGESData_DirChecker  IGESDefs_ToolUnitsData::DirChecker
   (const Handle(IGESDefs_UnitsData)& /* ent */ ) const 
 { 
@@ -143,12 +107,6 @@ IGESData_DirChecker  IGESDefs_ToolUnitsData::DirChecker
   DC.UseFlagRequired(2);
   DC.HierarchyStatusIgnored();
   return DC;
-}
-
-void  IGESDefs_ToolUnitsData::OwnCheck
-  (const Handle(IGESDefs_UnitsData)& /* ent */,
-   const Interface_ShareTool& , Handle(Interface_Check)& /* ach */) const 
-{
 }
 
 void  IGESDefs_ToolUnitsData::OwnDump

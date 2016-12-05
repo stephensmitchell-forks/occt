@@ -26,15 +26,12 @@
 #include <IGESData_ParamCursor.hxx>
 #include <IGESData_ParamReader.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
 #include <TCollection_HAsciiString.hxx>
-
-IGESAppli_ToolLevelFunction::IGESAppli_ToolLevelFunction ()    {  }
 
 
 void  IGESAppli_ToolLevelFunction::ReadOwnParams
@@ -70,25 +67,6 @@ void  IGESAppli_ToolLevelFunction::WriteOwnParams
   else IW.Send(ent->FuncDescription());
 }
 
-void  IGESAppli_ToolLevelFunction::OwnShared
-  (const Handle(IGESAppli_LevelFunction)& /* ent */, Interface_EntityIterator& /* iter */) const
-{
-}
-
-void  IGESAppli_ToolLevelFunction::OwnCopy
-  (const Handle(IGESAppli_LevelFunction)& another,
-   const Handle(IGESAppli_LevelFunction)& ent, Interface_CopyTool& /* TC */) const
-{
-  Standard_Integer aNbPropertyValues, code;
-  Handle(TCollection_HAsciiString) descrip;
-  if (!another->FuncDescription().IsNull()) descrip =
-    new TCollection_HAsciiString(another->FuncDescription());
-  code = another->FuncDescriptionCode();
-  aNbPropertyValues = another->NbPropertyValues();
-
-  ent->Init(aNbPropertyValues,code,descrip);
-}
-
 Standard_Boolean  IGESAppli_ToolLevelFunction::OwnCorrect
   (const Handle(IGESAppli_LevelFunction)& ent) const
 {
@@ -108,14 +86,6 @@ IGESData_DirChecker  IGESAppli_ToolLevelFunction::DirChecker
   DC.HierarchyStatusIgnored();
   DC.SubordinateStatusRequired(00);
   return DC;
-}
-
-void  IGESAppli_ToolLevelFunction::OwnCheck
-  (const Handle(IGESAppli_LevelFunction)& ent,
-   const Interface_ShareTool& , Handle(Interface_Check)& ach) const
-{
-  if (ent->NbPropertyValues() != 2)
-    ach->AddFail("Number of Property Values != 2");
 }
 
 void  IGESAppli_ToolLevelFunction::OwnDump

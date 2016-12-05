@@ -20,17 +20,13 @@
 #include <Standard.hxx>
 #include <Standard_Type.hxx>
 
-#include <Standard_Integer.hxx>
-#include <IGESData_DefSwitch.hxx>
-#include <Standard_Real.hxx>
-#include <Standard_Character.hxx>
-#include <Interface_EntityList.hxx>
 #include <MMgt_TShared.hxx>
-#include <Standard_Boolean.hxx>
+#include <Interface_Check.hxx>
+#include <Interface_EntityList.hxx>
+#include <Interface_ShareTool.hxx>
 #include <IGESData_DefType.hxx>
 #include <IGESData_DefList.hxx>
-#include <Standard_CString.hxx>
-#include <Standard_Type.hxx>
+#include <IGESData_DefSwitch.hxx>
 class TCollection_HAsciiString;
 class Interface_InterfaceError;
 class IGESData_ReadWriteModule;
@@ -56,9 +52,7 @@ DEFINE_STANDARD_HANDLE(IGESData_IGESEntity, MMgt_TShared)
 //! Part, lists of (optionnal) Properties and Associativities
 class IGESData_IGESEntity : public MMgt_TShared
 {
-
-public:
-
+ public:
   
   //! gives IGES typing info (includes "Type" and "Form" data)
   Standard_EXPORT IGESData_IGESType IGESType() const;
@@ -323,18 +317,21 @@ public:
   //! or sets it to defw (Default) if LineWeightNumber is null
   Standard_EXPORT void SetLineWeight (const Standard_Real defw, const Standard_Real maxw, const Standard_Integer gradw);
 
-
 friend class IGESData_ReadWriteModule;
 friend class IGESData_GeneralModule;
 friend class IGESData_IGESReaderTool;
 friend class IGESData_DirChecker;
 
+  //! Lists the Entities shared by <this>, from its specific (own) parameters
+  Standard_EXPORT virtual void OwnShared(Interface_EntityIterator &) const {}
+  
+  //! Performs Specific Semantic Check
+  Standard_EXPORT virtual void OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &) const {}
 
   DEFINE_STANDARD_RTTIEXT(IGESData_IGESEntity,MMgt_TShared)
 
-protected:
+ protected:
 
-  
   //! prepares lists of optionnal data, set values to defaults
   Standard_EXPORT IGESData_IGESEntity();
   
@@ -353,11 +350,8 @@ protected:
   //! Removes all properties in once
   Standard_EXPORT void ClearProperties();
 
+ private:
 
-
-private:
-
-  
   //! Clears specific IGES data
   Standard_EXPORT void Clear();
   
@@ -391,14 +385,6 @@ private:
   Standard_Integer theSubScriptN;
   Interface_EntityList theAssocs;
   Interface_EntityList theProps;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESData_IGESEntity_HeaderFile

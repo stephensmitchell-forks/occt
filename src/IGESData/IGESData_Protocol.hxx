@@ -21,12 +21,7 @@
 #include <Standard_Type.hxx>
 
 #include <Interface_Protocol.hxx>
-#include <Standard_Integer.hxx>
-#include <Standard_Type.hxx>
-#include <Standard_Boolean.hxx>
-class Interface_Protocol;
 class Interface_InterfaceModel;
-class Standard_Transient;
 
 
 class IGESData_Protocol;
@@ -48,9 +43,6 @@ class IGESData_Protocol : public Interface_Protocol
   //! Creates an empty Model for IGES Norm
   Standard_EXPORT Handle(Interface_InterfaceModel) NewModel() const Standard_OVERRIDE;
   
-  //! Returns True if <model> is a Model of IGES Norm
-  Standard_EXPORT Standard_Boolean IsSuitableModel (const Handle(Interface_InterfaceModel)& model) const Standard_OVERRIDE;
-  
   //! Creates a new Unknown Entity for IGES (UndefinedEntity)
   Standard_EXPORT Handle(Standard_Transient) UnknownEntity() const Standard_OVERRIDE;
   
@@ -58,27 +50,7 @@ class IGESData_Protocol : public Interface_Protocol
   //! Type UndefinedEntity, status Unknown
   Standard_EXPORT Standard_Boolean IsUnknownEntity (const Handle(Standard_Transient)& ent) const Standard_OVERRIDE;
 
-
-
-
   DEFINE_STANDARD_RTTIEXT(IGESData_Protocol,Interface_Protocol)
-
-protected:
-
-
-
-
-private:
-
-
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESData_Protocol_HeaderFile

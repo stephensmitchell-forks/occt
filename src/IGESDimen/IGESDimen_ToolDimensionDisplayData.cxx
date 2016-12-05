@@ -26,7 +26,6 @@
 #include <IGESDimen_DimensionDisplayData.hxx>
 #include <IGESDimen_ToolDimensionDisplayData.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
@@ -34,8 +33,6 @@
 #include <Standard_DomainError.hxx>
 #include <TCollection_HAsciiString.hxx>
 #include <TColStd_HArray1OfInteger.hxx>
-
-IGESDimen_ToolDimensionDisplayData::IGESDimen_ToolDimensionDisplayData ()  {  }
 
 
 void  IGESDimen_ToolDimensionDisplayData::ReadOwnParams
@@ -145,51 +142,6 @@ const
       IW.Send(ent->StartIndex(i));
       IW.Send(ent->EndIndex(i));
     }
-}
-
-void  IGESDimen_ToolDimensionDisplayData::OwnShared
-  (const Handle(IGESDimen_DimensionDisplayData)& /* ent */, Interface_EntityIterator& /* iter */) const
-{
-}
-
-void  IGESDimen_ToolDimensionDisplayData::OwnCopy
-  (const Handle(IGESDimen_DimensionDisplayData)& another,
-   const Handle(IGESDimen_DimensionDisplayData)& ent, Interface_CopyTool& /* TC */) const
-{
-  Handle(TColStd_HArray1OfInteger) EndList;
-  Handle(TColStd_HArray1OfInteger) StartList;
-  Handle(TColStd_HArray1OfInteger) NotesList;
-
-  Standard_Integer upper = another->NbSupplementaryNotes();
-  if (upper > 0)
-    {
-      EndList = new TColStd_HArray1OfInteger(1,upper);
-      StartList = new TColStd_HArray1OfInteger(1,upper);
-      NotesList = new TColStd_HArray1OfInteger(1,upper);
-      for (Standard_Integer i = 1;i <= upper;i++)
-	{
-          EndList->SetValue(i,another->EndIndex(i));
-          StartList->SetValue(i,another->StartIndex(i));
-          NotesList->SetValue(i,another->SupplementaryNote(i));
-	}
-    }
-  Standard_Integer tempNbPropertyValues = another->NbPropertyValues();
-  Standard_Integer tempDimensionType    = another->DimensionType();
-  Standard_Integer tempLabelPos         = another->LabelPosition();
-  Standard_Integer tempCharSet          = another->CharacterSet();
-  Handle(TCollection_HAsciiString) tempLS =
-    new TCollection_HAsciiString(another->LString());
-  Standard_Integer tempSymbol           = another->DecimalSymbol();
-  Standard_Real    tempAngle            = another->WitnessLineAngle();
-  Standard_Integer tempAlign            = another->TextAlignment();
-  Standard_Integer tempLevel            = another->TextLevel();
-  Standard_Integer tempPlacement        = another->TextPlacement();
-  Standard_Integer tempArrowHead        = another->ArrowHeadOrientation();
-  Standard_Real    tempInitial          = another->InitialValue();
-
-  ent->Init(tempNbPropertyValues, tempDimensionType,tempLabelPos,tempCharSet,
-	    tempLS,tempSymbol,tempAngle,tempAlign,tempLevel,tempPlacement,
-	    tempArrowHead,tempInitial,NotesList,StartList,EndList);
 }
 
 Standard_Boolean  IGESDimen_ToolDimensionDisplayData::OwnCorrect

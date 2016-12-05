@@ -28,16 +28,12 @@
 #include <IGESGeom_Line.hxx>
 #include <IGESGeom_ToolLine.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Message_Msg.hxx>
 #include <Standard_DomainError.hxx>
-
-// MGE 29/07/98
-IGESGeom_ToolLine::IGESGeom_ToolLine ()    {  }
 
 
 void IGESGeom_ToolLine::ReadOwnParams
@@ -76,18 +72,6 @@ void IGESGeom_ToolLine::WriteOwnParams
   IW.Send(ent->EndPoint().Z());
 }
 
-void  IGESGeom_ToolLine::OwnShared
-  (const Handle(IGESGeom_Line)& /* ent */, Interface_EntityIterator& /* iter */) const
-{
-}
-
-void IGESGeom_ToolLine::OwnCopy 
-  (const Handle(IGESGeom_Line)& another,
-   const Handle(IGESGeom_Line)& ent, Interface_CopyTool& /* TC */) const
-{
-  ent->Init(another->StartPoint().XYZ(), another->EndPoint().XYZ());
-}
-
 IGESData_DirChecker IGESGeom_ToolLine::DirChecker
   (const Handle(IGESGeom_Line)& /* ent */ )  const
 {
@@ -98,12 +82,6 @@ IGESData_DirChecker IGESGeom_ToolLine::DirChecker
   DC.Color(IGESData_DefAny);
   DC.HierarchyStatusIgnored();
   return DC;
-}
-
-void IGESGeom_ToolLine::OwnCheck
-  (const Handle(IGESGeom_Line)& /* ent */,
-   const Interface_ShareTool& , Handle(Interface_Check)& /* ach */)  const
-{ 
 }
 
 void IGESGeom_ToolLine::OwnDump

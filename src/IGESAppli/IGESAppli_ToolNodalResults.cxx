@@ -29,7 +29,6 @@
 #include <IGESData_ParamReader.hxx>
 #include <IGESDimen_GeneralNote.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
@@ -38,8 +37,6 @@
 #include <TColStd_HArray1OfInteger.hxx>
 #include <TColStd_HArray1OfReal.hxx>
 #include <TColStd_HArray2OfReal.hxx>
-
-IGESAppli_ToolNodalResults::IGESAppli_ToolNodalResults ()    {  }
 
 
 void  IGESAppli_ToolNodalResults::ReadOwnParams
@@ -108,45 +105,6 @@ void  IGESAppli_ToolNodalResults::WriteOwnParams
     }
 }
 
-void  IGESAppli_ToolNodalResults::OwnShared
-  (const Handle(IGESAppli_NodalResults)& ent, Interface_EntityIterator& iter) const
-{
-  Standard_Integer nbnodes = ent->NbNodes();
-  iter.GetOneItem(ent->Note());
-  for (Standard_Integer i = 1; i <= nbnodes; i++)
-    iter.GetOneItem(ent->Node(i));
-}
-
-void  IGESAppli_ToolNodalResults::OwnCopy
-  (const Handle(IGESAppli_NodalResults)& another,
-   const Handle(IGESAppli_NodalResults)& ent, Interface_CopyTool& TC) const
-{
-  DeclareAndCast(IGESDimen_GeneralNote,aNote,TC.Transferred(another->Note()));
-  Standard_Integer aSubCaseNum = another->SubCaseNumber();
-  Standard_Real aTime = another->Time();
-  Standard_Integer nbnodes = another->NbNodes();
-  Standard_Integer nbval = another->NbData();
-  Handle(TColStd_HArray1OfInteger) aNodeIdentifiers =
-    new TColStd_HArray1OfInteger(1,nbnodes);
-  Handle(IGESAppli_HArray1OfNode) aNodes =
-    new IGESAppli_HArray1OfNode(1,nbnodes);
-  Handle(TColStd_HArray2OfReal) aData =
-    new TColStd_HArray2OfReal(1,nbnodes,1,nbval);
-
-  for (Standard_Integer i=1; i <= nbnodes; i++)
-    {
-      Standard_Integer aItem = another->NodeIdentifier(i);
-      aNodeIdentifiers->SetValue(i,aItem);
-      DeclareAndCast(IGESAppli_Node,anentity,TC.Transferred(another->Node(i)));
-      aNodes->SetValue(i,anentity);
-      for (Standard_Integer j=1; j <= nbval; j++)
-	aData->SetValue(i,j, another->Data(i,j));
-    }
-
-  ent->Init(aNote,aSubCaseNum,aTime,aNodeIdentifiers,aNodes,aData);
-  ent->SetFormNumber(another->FormNumber());
-}
-
 IGESData_DirChecker  IGESAppli_ToolNodalResults::DirChecker
   (const Handle(IGESAppli_NodalResults)& /* ent */ ) const
 {
@@ -159,55 +117,6 @@ IGESData_DirChecker  IGESAppli_ToolNodalResults::DirChecker
   DC.UseFlagRequired(03);
   DC.HierarchyStatusIgnored();
   return DC;
-}
-
-void  IGESAppli_ToolNodalResults::OwnCheck
-  (const Handle(IGESAppli_NodalResults)& ent,
-   const Interface_ShareTool& , Handle(Interface_Check)& ach) const
-{
-  Standard_Integer FormNum = ent->FormNumber();
-  Standard_Integer nv = ent->NbData();
-  Standard_Boolean OK = Standard_True;
-  switch (FormNum) {
-    case  0 : if (nv <  0) OK = Standard_False;  break;
-    case  1 : if (nv != 1) OK = Standard_False;  break;
-    case  2 : if (nv != 1) OK = Standard_False;  break;
-    case  3 : if (nv != 3) OK = Standard_False;  break;
-    case  4 : if (nv != 6) OK = Standard_False;  break;
-    case  5 : if (nv != 3) OK = Standard_False;  break;
-    case  6 : if (nv != 3) OK = Standard_False;  break;
-    case  7 : if (nv != 3) OK = Standard_False;  break;
-    case  8 : if (nv != 3) OK = Standard_False;  break;
-    case  9 : if (nv != 3) OK = Standard_False;  break;
-    case 10 : if (nv != 1) OK = Standard_False;  break;
-    case 11 : if (nv != 1) OK = Standard_False;  break;
-    case 12 : if (nv != 3) OK = Standard_False;  break;
-    case 13 : if (nv != 1) OK = Standard_False;  break;
-    case 14 : if (nv != 1) OK = Standard_False;  break;
-    case 15 : if (nv != 3) OK = Standard_False;  break;
-    case 16 : if (nv != 1) OK = Standard_False;  break;
-    case 17 : if (nv != 3) OK = Standard_False;  break;
-    case 18 : if (nv != 3) OK = Standard_False;  break;
-    case 19 : if (nv != 3) OK = Standard_False;  break;
-    case 20 : if (nv != 3) OK = Standard_False;  break;
-    case 21 : if (nv != 3) OK = Standard_False;  break;
-    case 22 : if (nv != 3) OK = Standard_False;  break;
-    case 23 : if (nv != 6) OK = Standard_False;  break;
-    case 24 : if (nv != 6) OK = Standard_False;  break;
-    case 25 : if (nv != 6) OK = Standard_False;  break;
-    case 26 : if (nv != 6) OK = Standard_False;  break;
-    case 27 : if (nv != 6) OK = Standard_False;  break;
-    case 28 : if (nv != 6) OK = Standard_False;  break;
-    case 29 : if (nv != 9) OK = Standard_False;  break;
-    case 30 : if (nv != 9) OK = Standard_False;  break;
-    case 31 : if (nv != 9) OK = Standard_False;  break;
-    case 32 : if (nv != 9) OK = Standard_False;  break;
-    case 33 : if (nv != 9) OK = Standard_False;  break;
-    case 34 : if (nv != 9) OK = Standard_False;  break;
-    default : ach->AddFail("Incorrect Form Number");    break;
-  }
-  if (!OK) ach->AddFail
-    ("Incorrect count of real values in array V for FEM node");
 }
 
 void  IGESAppli_ToolNodalResults::OwnDump

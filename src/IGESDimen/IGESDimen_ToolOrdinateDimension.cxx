@@ -28,14 +28,11 @@
 #include <IGESDimen_ToolOrdinateDimension.hxx>
 #include <IGESDimen_WitnessLine.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-
-IGESDimen_ToolOrdinateDimension::IGESDimen_ToolOrdinateDimension ()    {  }
 
 
 void IGESDimen_ToolOrdinateDimension::ReadOwnParams
@@ -102,19 +99,6 @@ void  IGESDimen_ToolOrdinateDimension::OwnShared
   iter.GetOneItem(ent->Note());
   iter.GetOneItem(ent->WitnessLine());
   iter.GetOneItem(ent->Leader());
-}
-
-void IGESDimen_ToolOrdinateDimension::OwnCopy
-  (const Handle(IGESDimen_OrdinateDimension)& another,
-   const Handle(IGESDimen_OrdinateDimension)& ent, Interface_CopyTool& TC) const
-{
-  DeclareAndCast(IGESDimen_GeneralNote, tempNote,
-		 TC.Transferred(another->Note()));
-  DeclareAndCast(IGESDimen_WitnessLine, witLine,
-		 TC.Transferred(another->WitnessLine()));
-  DeclareAndCast(IGESDimen_LeaderArrow, leadArr,
-		 TC.Transferred(another->Leader()));
-  ent->Init(tempNote, another->IsLine(), witLine, leadArr);
 }
 
 IGESData_DirChecker IGESDimen_ToolOrdinateDimension::DirChecker

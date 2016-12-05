@@ -28,16 +28,12 @@
 #include <IGESData_ParamCursor.hxx>
 #include <IGESData_ParamReader.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Message_Msg.hxx>
 #include <Standard_DomainError.hxx>
-
-// MGE 03/08/98
-IGESBasic_ToolGroup::IGESBasic_ToolGroup ()    {  }
 
 
 void IGESBasic_ToolGroup::ReadOwnParams
@@ -89,24 +85,6 @@ void  IGESBasic_ToolGroup::OwnShared
   Standard_Integer upper = ent->NbEntities();
   for (Standard_Integer i = 1; i <= upper;i++)
     iter.GetOneItem(ent->Entity(i));
-}
-
-void  IGESBasic_ToolGroup::OwnCopy
-  (const Handle(IGESBasic_Group)& another,
-   const Handle(IGESBasic_Group)& ent, Interface_CopyTool& TC) const
-{
-  Standard_Integer lower,upper;
-  lower = 1;
-  upper = another->NbEntities();
-  Handle(IGESData_HArray1OfIGESEntity)  EntArray = new
-    IGESData_HArray1OfIGESEntity(lower,upper);
-  for (Standard_Integer i = lower;i <= upper;i++)
-    {
-      DeclareAndCast
-	(IGESData_IGESEntity,myentity,TC.Transferred(another->Entity(i)));
-      EntArray->SetValue(i,myentity);
-    }
-  ent->Init(EntArray);
 }
 
 Standard_Boolean IGESBasic_ToolGroup::OwnCorrect

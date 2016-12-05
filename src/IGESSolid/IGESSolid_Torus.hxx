@@ -17,13 +17,8 @@
 #ifndef _IGESSolid_Torus_HeaderFile
 #define _IGESSolid_Torus_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
-#include <Standard_Real.hxx>
 #include <gp_XYZ.hxx>
 #include <IGESData_IGESEntity.hxx>
-class gp_XYZ;
 class gp_Pnt;
 class gp_Dir;
 
@@ -37,11 +32,9 @@ DEFINE_STANDARD_HANDLE(IGESSolid_Torus, IGESData_IGESEntity)
 //! about a specified coplanar axis.
 class IGESSolid_Torus : public IGESData_IGESEntity
 {
+ public:
 
-public:
-
-  
-  Standard_EXPORT IGESSolid_Torus();
+  IGESSolid_Torus() {}
   
   //! This method is used to set the fields of the class Torus
   //! - R1     : distance from center of torus to center
@@ -53,11 +46,11 @@ public:
   
   //! returns the distance from the center of torus to the center of
   //! the disc to be revolved
-  Standard_EXPORT Standard_Real MajorRadius() const;
-  
+  Standard_Real MajorRadius() const { return theR1; }
+
   //! returns the radius of the disc to be revolved
-  Standard_EXPORT Standard_Real DiscRadius() const;
-  
+  Standard_Real DiscRadius() const { return theR2; }
+
   //! returns the center of torus
   Standard_EXPORT gp_Pnt AxisPoint() const;
   
@@ -70,31 +63,16 @@ public:
   //! returns direction of the axis after applying TransformationMatrix
   Standard_EXPORT gp_Dir TransformedAxis() const;
 
-
-
+  Standard_EXPORT virtual void OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESSolid_Torus,IGESData_IGESEntity)
 
-protected:
-
-
-
-
-private:
-
+ private:
 
   Standard_Real theR1;
   Standard_Real theR2;
   gp_XYZ thePoint;
   gp_XYZ theAxis;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESSolid_Torus_HeaderFile

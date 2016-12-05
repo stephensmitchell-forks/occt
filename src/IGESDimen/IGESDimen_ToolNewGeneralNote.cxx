@@ -29,7 +29,6 @@
 #include <IGESDimen_NewGeneralNote.hxx>
 #include <IGESDimen_ToolNewGeneralNote.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_HArray1OfHAsciiString.hxx>
 #include <Interface_Macros.hxx>
@@ -42,8 +41,6 @@
 #include <TColStd_HArray1OfReal.hxx>
 
 #include <stdio.h>
-IGESDimen_ToolNewGeneralNote::IGESDimen_ToolNewGeneralNote ()    {  }
-
 
 void  IGESDimen_ToolNewGeneralNote::ReadOwnParams
   (const Handle(IGESDimen_NewGeneralNote)& ent,
@@ -295,99 +292,6 @@ void  IGESDimen_ToolNewGeneralNote::OwnShared
       if (ent->IsCharSetEntity(i))
 	iter.GetOneItem(ent->CharSetEntity(i));
     }
-}
-
-void  IGESDimen_ToolNewGeneralNote::OwnCopy
-  (const Handle(IGESDimen_NewGeneralNote)& another,
-   const Handle(IGESDimen_NewGeneralNote)& ent, Interface_CopyTool& TC) const
-{
-  Standard_Real    width                = another->TextWidth();
-  Standard_Real    height               = another->TextHeight();
-  Standard_Integer justifyCode          = another->JustifyCode();
-  gp_XYZ           areaLoc              = (another->AreaLocation()).XYZ();
-  Standard_Real    areaRotationAngle    = another->AreaRotationAngle();
-  gp_XYZ           baseLinePos          = (another->BaseLinePosition()).XYZ();
-  Standard_Real    normalInterlineSpace = another->NormalInterlineSpace();
-  Standard_Integer nbval                = another->NbStrings();
-
-  Handle(TColStd_HArray1OfInteger) charDisplays;
-  Handle(TColStd_HArray1OfReal) charWidths; 
-  Handle(TColStd_HArray1OfReal) charHeights; 
-  Handle(TColStd_HArray1OfReal) interCharSpaces;
-  Handle(TColStd_HArray1OfReal) interlineSpaces; 
-  Handle(TColStd_HArray1OfInteger) fontStyles;
-  Handle(TColStd_HArray1OfReal) charAngles; 
-  Handle(Interface_HArray1OfHAsciiString) controlCodeStrings;
-  Handle(TColStd_HArray1OfInteger) nbChars;
-  Handle(TColStd_HArray1OfReal) boxWidths; 
-  Handle(TColStd_HArray1OfReal) boxHeights;
-  Handle(TColStd_HArray1OfInteger) charSetCodes; 
-  Handle(IGESData_HArray1OfIGESEntity) charSetEntities;
-  Handle(TColStd_HArray1OfReal) slantAngles; 
-  Handle(TColStd_HArray1OfReal) rotationAngles;
-  Handle(TColStd_HArray1OfInteger) mirrorFlags; 
-  Handle(TColStd_HArray1OfInteger) rotateFlags;
-  Handle(TColgp_HArray1OfXYZ) startPoints; 
-  Handle(Interface_HArray1OfHAsciiString) texts; 
-
-  charDisplays         = new TColStd_HArray1OfInteger(1, nbval);
-  charWidths           = new TColStd_HArray1OfReal   (1, nbval);
-  charHeights          = new TColStd_HArray1OfReal   (1, nbval);
-  interCharSpaces      = new TColStd_HArray1OfReal   (1, nbval);
-  interlineSpaces      = new TColStd_HArray1OfReal   (1, nbval);
-  fontStyles           = new TColStd_HArray1OfInteger(1, nbval);
-  charAngles           = new TColStd_HArray1OfReal   (1, nbval);
-  controlCodeStrings   = new Interface_HArray1OfHAsciiString(1, nbval);
-  nbChars              = new TColStd_HArray1OfInteger(1, nbval);
-  boxWidths            = new TColStd_HArray1OfReal   (1, nbval);
-  boxHeights           = new TColStd_HArray1OfReal   (1, nbval);
-  charSetCodes         = new TColStd_HArray1OfInteger(1, nbval);
-  charSetEntities      = new IGESData_HArray1OfIGESEntity(1, nbval);
-  slantAngles          = new TColStd_HArray1OfReal   (1, nbval);
-  rotationAngles       = new TColStd_HArray1OfReal   (1, nbval);
-  mirrorFlags          = new TColStd_HArray1OfInteger(1, nbval);
-  rotateFlags          = new TColStd_HArray1OfInteger(1, nbval);
-  startPoints          = new TColgp_HArray1OfXYZ     (1, nbval);
-  texts                = new Interface_HArray1OfHAsciiString(1, nbval);
-
-  for (Standard_Integer i = 1; i <= nbval; i++)
-    {
-      charDisplays->SetValue    (i, another->CharacterDisplay(i));
-      charWidths->SetValue      (i, another->CharacterWidth(i));
-      charHeights->SetValue     (i, another->CharacterHeight(i));
-      interCharSpaces->SetValue (i, another->InterCharacterSpace(i));
-      interlineSpaces->SetValue (i, another->InterlineSpace(i));
-      fontStyles->SetValue      (i, another->FontStyle(i));
-      charAngles->SetValue      (i, another->CharacterAngle(i));
-      controlCodeStrings->SetValue
-	(i, new TCollection_HAsciiString(another->ControlCodeString(i)));
-      nbChars->SetValue         (i, another->NbCharacters(i));
-      boxWidths->SetValue       (i, another->BoxWidth(i));
-      boxHeights->SetValue      (i, another->BoxHeight(i));
-
-      if (another->IsCharSetEntity(i)) {
-	DeclareAndCast(IGESData_IGESEntity, charSetEntity,
-		       TC.Transferred(another->CharSetEntity(i)));
-	charSetEntities->SetValue(i, charSetEntity);
-      }
-      else  charSetCodes->SetValue(i, another->CharSetCode(i));
-
-      slantAngles->SetValue     (i, another->SlantAngle(i));
-      rotationAngles->SetValue  (i, another->RotationAngle(i));
-      mirrorFlags->SetValue     (i, another->MirrorFlag(i));
-      rotateFlags->SetValue     (i, another->RotateFlag(i));
-      startPoints->SetValue     (i, another->StartPoint(i).XYZ());
-      texts->SetValue
-	 (i, new TCollection_HAsciiString(another->Text(i)));
-    }
-
-  ent->Init (width, height, justifyCode, areaLoc, areaRotationAngle, baseLinePos,
-	     normalInterlineSpace, charDisplays, charWidths, charHeights, 
-	     interCharSpaces, interlineSpaces, fontStyles, charAngles, 
-	     controlCodeStrings,nbChars, boxWidths, boxHeights, charSetCodes,
-	     charSetEntities, slantAngles, rotationAngles, mirrorFlags,
-	     rotateFlags, startPoints, texts);
-  
 }
 
 IGESData_DirChecker  IGESDimen_ToolNewGeneralNote::DirChecker

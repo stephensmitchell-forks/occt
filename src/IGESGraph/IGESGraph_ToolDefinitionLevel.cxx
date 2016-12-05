@@ -26,15 +26,12 @@
 #include <IGESGraph_DefinitionLevel.hxx>
 #include <IGESGraph_ToolDefinitionLevel.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
 #include <TColStd_HArray1OfInteger.hxx>
-
-IGESGraph_ToolDefinitionLevel::IGESGraph_ToolDefinitionLevel ()    {  }
 
 
 void IGESGraph_ToolDefinitionLevel::ReadOwnParams
@@ -69,27 +66,6 @@ void IGESGraph_ToolDefinitionLevel::WriteOwnParams
     IW.Send( ent->LevelNumber(i) );
 }
 
-void  IGESGraph_ToolDefinitionLevel::OwnShared
-  (const Handle(IGESGraph_DefinitionLevel)& /*ent*/, Interface_EntityIterator& /*iter*/) const
-{
-}
-
-void IGESGraph_ToolDefinitionLevel::OwnCopy
-  (const Handle(IGESGraph_DefinitionLevel)& another,
-   const Handle(IGESGraph_DefinitionLevel)& ent, Interface_CopyTool& /*TC*/) const
-{ 
-  Standard_Integer nbval;
-  Handle(TColStd_HArray1OfInteger) levelNumbers; 
- 
-  nbval = another->NbPropertyValues();
- 
-  levelNumbers = new TColStd_HArray1OfInteger(1, nbval);
-  for (Standard_Integer i = 1; i <= nbval; i++)
-    levelNumbers->SetValue( i, another->LevelNumber(i) );
-
-  ent->Init(levelNumbers);
-}
-
 IGESData_DirChecker IGESGraph_ToolDefinitionLevel::DirChecker
   (const Handle(IGESGraph_DefinitionLevel)& /*ent*/)  const
 { 
@@ -102,12 +78,6 @@ IGESData_DirChecker IGESGraph_ToolDefinitionLevel::DirChecker
   DC.UseFlagIgnored();
   DC.HierarchyStatusIgnored();
   return DC;
-}
-
-void IGESGraph_ToolDefinitionLevel::OwnCheck
-  (const Handle(IGESGraph_DefinitionLevel)& /*ent*/,
-   const Interface_ShareTool& , Handle(Interface_Check)& /*ach*/)  const
-{
 }
 
 void IGESGraph_ToolDefinitionLevel::OwnDump

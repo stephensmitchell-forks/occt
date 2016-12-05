@@ -20,14 +20,11 @@
 #include <IGESSolid_Shell.hxx>
 #include <Standard_DimensionMismatch.hxx>
 #include <Standard_OutOfRange.hxx>
-#include <Standard_Type.hxx>
+#include <Interface_EntityIterator.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESSolid_ManifoldSolid,IGESData_IGESEntity)
 
-IGESSolid_ManifoldSolid::IGESSolid_ManifoldSolid ()    {  }
-
-
-    void  IGESSolid_ManifoldSolid::Init
+void IGESSolid_ManifoldSolid::Init
   (const Handle(IGESSolid_Shell)& aShell,
    const Standard_Boolean Shellflag,
    const Handle(IGESSolid_HArray1OfShell)& VoidShells,
@@ -45,32 +42,28 @@ IGESSolid_ManifoldSolid::IGESSolid_ManifoldSolid ()    {  }
   InitTypeAndForm(186,0);
 }
 
-    Handle(IGESSolid_Shell)  IGESSolid_ManifoldSolid::Shell () const
-{
-  return theShell;
-}
-
-    Standard_Boolean  IGESSolid_ManifoldSolid::OrientationFlag () const
-{
-  return theOrientationFlag;
-}
-
-    Standard_Integer  IGESSolid_ManifoldSolid::NbVoidShells () const
+Standard_Integer IGESSolid_ManifoldSolid::NbVoidShells () const
 {
   return (theVoidShells.IsNull() ? 0 : theVoidShells->Length());
 }
 
-    Handle(IGESSolid_Shell)  IGESSolid_ManifoldSolid::VoidShell
-  (const Standard_Integer index) const
+Handle(IGESSolid_Shell) IGESSolid_ManifoldSolid::VoidShell (const Standard_Integer index) const
 {
   Handle(IGESSolid_Shell) ashell;    // par defaut sera Null
   if (!theVoidShells.IsNull()) ashell = theVoidShells->Value(index);
   return ashell;
 }
 
-    Standard_Boolean  IGESSolid_ManifoldSolid::VoidOrientationFlag
-  (const Standard_Integer index) const
+Standard_Boolean IGESSolid_ManifoldSolid::VoidOrientationFlag (const Standard_Integer index) const
 {
   if (!theOrientFlags.IsNull())    return (theOrientFlags->Value(index) != 0);
   else return Standard_False;  // pour retourner qqchose ...
+}
+
+void IGESSolid_ManifoldSolid::OwnShared(Interface_EntityIterator &theIter) const
+{
+  theIter.GetOneItem(Shell());
+  const Standard_Integer nbshells = NbVoidShells();
+  for (Standard_Integer i = 1; i <= nbshells; i ++)
+    theIter.GetOneItem(VoidShell(i));
 }

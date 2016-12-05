@@ -25,14 +25,12 @@
 #include <IGESSolid_VertexList.hxx>
 #include <Standard_DimensionMismatch.hxx>
 #include <Standard_OutOfRange.hxx>
-#include <Standard_Type.hxx>
+#include <Interface_EntityIterator.hxx>
+#include <Message_Msg.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESSolid_Loop,IGESData_IGESEntity)
 
-IGESSolid_Loop::IGESSolid_Loop ()    {  }
-
-
-    void  IGESSolid_Loop::Init
+void IGESSolid_Loop::Init
   (const Handle(TColStd_HArray1OfInteger)& Types,
    const Handle(IGESData_HArray1OfIGESEntity)& Edges,
    const Handle(TColStd_HArray1OfInteger)& Index,
@@ -63,43 +61,40 @@ IGESSolid_Loop::IGESSolid_Loop ()    {  }
   InitTypeAndForm(508,1);
 }
 
-    Standard_Boolean  IGESSolid_Loop::IsBound () const
-      {  return (FormNumber() == 1);  }
+Standard_Boolean IGESSolid_Loop::IsBound () const
+{  return (FormNumber() == 1);  }
 
-    void  IGESSolid_Loop::SetBound (const Standard_Boolean bound)
-      {  InitTypeAndForm(508, (bound ? 1 : 0));  }
+void IGESSolid_Loop::SetBound (const Standard_Boolean bound)
+{  InitTypeAndForm(508, (bound ? 1 : 0));  }
 
-
-    Standard_Integer  IGESSolid_Loop::NbEdges () const
+Standard_Integer IGESSolid_Loop::NbEdges () const
 {
   //pdn 20.04.99 CTS22655 to avoid exceptions on empty loops
   if(theEdges.IsNull()) return 0;
   return theEdges->Length();
 }
 
-    Standard_Integer  IGESSolid_Loop::EdgeType (const Standard_Integer Index) const
+Standard_Integer IGESSolid_Loop::EdgeType (const Standard_Integer Index) const
 {
   return theTypes->Value(Index);
 }
 
-    Handle(IGESData_IGESEntity)  IGESSolid_Loop::Edge
-  (const Standard_Integer Index) const
+const Handle(IGESData_IGESEntity) & IGESSolid_Loop::Edge (const Standard_Integer Index) const
 {
   return theEdges->Value(Index);
 }
 
-    Standard_Boolean IGESSolid_Loop::Orientation (const Standard_Integer Index) const
+Standard_Boolean IGESSolid_Loop::Orientation (const Standard_Integer Index) const
 {
   return (theOrientationFlags->Value(Index) != 0);
 }
 
-    Standard_Integer  IGESSolid_Loop::NbParameterCurves
-  (const Standard_Integer Index) const
+Standard_Integer IGESSolid_Loop::NbParameterCurves (const Standard_Integer Index) const
 {
   return theNbParameterCurves->Value(Index);
 }
 
-    Standard_Boolean  IGESSolid_Loop::IsIsoparametric
+Standard_Boolean IGESSolid_Loop::IsIsoparametric
   (const Standard_Integer EdgeIndex, const Standard_Integer CurveIndex) const
 {
   if (!theIsoparametricFlags->Value(EdgeIndex).IsNull()) return
@@ -107,7 +102,7 @@ IGESSolid_Loop::IGESSolid_Loop ()    {  }
   else return Standard_False;  // faut bien dire qq chose
 }
 
-    Handle(IGESData_IGESEntity)  IGESSolid_Loop::ParametricCurve
+Handle(IGESData_IGESEntity) IGESSolid_Loop::ParametricCurve
   (const Standard_Integer EdgeIndex, const Standard_Integer CurveIndex) const
 {
   Handle(IGESData_IGESEntity) acurve;    // par defaut sera nulle
@@ -116,7 +111,30 @@ IGESSolid_Loop::IGESSolid_Loop ()    {  }
   return acurve;
 }
 
-    Standard_Integer  IGESSolid_Loop::ListIndex (const Standard_Integer num) const
+Standard_Integer IGESSolid_Loop::ListIndex (const Standard_Integer num) const
 {
   return theIndex->Value(num);
+}
+
+void IGESSolid_Loop::OwnShared(Interface_EntityIterator &theIter) const
+{
+  Standard_Integer i, j;
+  const Standard_Integer length = NbEdges();
+  for (i = 1; i <= length; i ++)
+  {
+    theIter.GetOneItem(Edge(i));
+    const Standard_Integer nbc = NbParameterCurves(i);
+    for (j = 1; j <= nbc; j ++)
+      theIter.GetOneItem(ParametricCurve(i,j));
+  }
+}
+
+void IGESSolid_Loop::OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &theCheck) const
+{
+  const Standard_Integer upper = NbEdges();
+  for (Standard_Integer i = 1; i <= upper; i ++)
+    if (EdgeType(i) != 0 && EdgeType(i) != 1) {
+      Message_Msg Msg190("XSTEP_190");
+      theCheck->SendFail(Msg190);
+    }
 }

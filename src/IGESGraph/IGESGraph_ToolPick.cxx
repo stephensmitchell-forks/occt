@@ -25,13 +25,10 @@
 #include <IGESGraph_Pick.hxx>
 #include <IGESGraph_ToolPick.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-
-IGESGraph_ToolPick::IGESGraph_ToolPick ()    {  }
 
 
 void IGESGraph_ToolPick::ReadOwnParams
@@ -61,18 +58,6 @@ void IGESGraph_ToolPick::WriteOwnParams
 { 
   IW.Send( ent->NbPropertyValues() );
   IW.Send( ent->PickFlag() );
-}
-
-void  IGESGraph_ToolPick::OwnShared
-  (const Handle(IGESGraph_Pick)& /*ent*/, Interface_EntityIterator& /*iter*/) const
-{
-}
-
-void IGESGraph_ToolPick::OwnCopy
-  (const Handle(IGESGraph_Pick)& another,
-   const Handle(IGESGraph_Pick)& ent, Interface_CopyTool& /*TC*/) const
-{
-  ent->Init(1,another->PickFlag());
 }
 
 Standard_Boolean  IGESGraph_ToolPick::OwnCorrect

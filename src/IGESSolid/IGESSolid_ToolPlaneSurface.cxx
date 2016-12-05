@@ -28,22 +28,12 @@
 #include <IGESSolid_PlaneSurface.hxx>
 #include <IGESSolid_ToolPlaneSurface.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Message_Msg.hxx>
 #include <Standard_DomainError.hxx>
-
-// MGE 31/07/98
-//=======================================================================
-//function : IGESSolid_ToolPlaneSurface
-//purpose  : 
-//=======================================================================
-IGESSolid_ToolPlaneSurface::IGESSolid_ToolPlaneSurface ()
-{
-}
 
 
 //=======================================================================
@@ -162,47 +152,6 @@ void IGESSolid_ToolPlaneSurface::WriteOwnParams
 
 
 //=======================================================================
-//function : OwnShared
-//purpose  : 
-//=======================================================================
-
-void IGESSolid_ToolPlaneSurface::OwnShared(const Handle(IGESSolid_PlaneSurface)& ent,
-                                           Interface_EntityIterator& iter) const
-{
-  iter.GetOneItem(ent->LocationPoint());
-  iter.GetOneItem(ent->Normal());
-  iter.GetOneItem(ent->ReferenceDir());
-}
-
-
-//=======================================================================
-//function : OwnCopy
-//purpose  : 
-//=======================================================================
-
-void IGESSolid_ToolPlaneSurface::OwnCopy
-  (const Handle(IGESSolid_PlaneSurface)& another,
-   const Handle(IGESSolid_PlaneSurface)& ent, Interface_CopyTool& TC) const
-{
-  DeclareAndCast(IGESGeom_Point, tempLocation,
-		 TC.Transferred(another->LocationPoint()));
-  DeclareAndCast(IGESGeom_Direction, tempNormal,
-		 TC.Transferred(another->Normal()));
-  if (another->IsParametrised())
-    {
-      DeclareAndCast(IGESGeom_Direction, tempRefdir,
-		     TC.Transferred(another->ReferenceDir()));
-      ent->Init (tempLocation, tempNormal, tempRefdir);
-    }
-  else
-    {
-      Handle(IGESGeom_Direction) tempRefdir;
-      ent->Init (tempLocation, tempNormal, tempRefdir);
-    }
-}
-
-
-//=======================================================================
 //function : DirChecker
 //purpose  : 
 //=======================================================================
@@ -219,31 +168,6 @@ IGESData_DirChecker IGESSolid_ToolPlaneSurface::DirChecker
   DC.BlankStatusIgnored ();
   DC.HierarchyStatusIgnored ();
   return DC;
-}
-
-
-//=======================================================================
-//function : OwnCheck
-//purpose  : 
-//=======================================================================
-
-void IGESSolid_ToolPlaneSurface::OwnCheck(const Handle(IGESSolid_PlaneSurface)& ent,
-                                          const Interface_ShareTool&,
-                                          Handle(Interface_Check)& ach) const
-{
-
-  // MGE 31/07/98
-  // Building of messages
-  //========================================
-  //Message_Msg Msg177("XSTEP_177");
-  //========================================
-
-  Standard_Integer fn = 0;
-  if (ent->IsParametrised()) fn = 1;
-  if (fn != ent->FormNumber()) {
-    Message_Msg Msg177("XSTEP_177");
-    ach->SendFail (Msg177);
-  }
 }
 
 

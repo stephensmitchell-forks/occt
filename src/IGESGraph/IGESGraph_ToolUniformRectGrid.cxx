@@ -29,13 +29,10 @@
 #include <IGESGraph_ToolUniformRectGrid.hxx>
 #include <IGESGraph_UniformRectGrid.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-
-IGESGraph_ToolUniformRectGrid::IGESGraph_ToolUniformRectGrid ()    {  }
 
 
 void IGESGraph_ToolUniformRectGrid::ReadOwnParams
@@ -100,22 +97,6 @@ void IGESGraph_ToolUniformRectGrid::WriteOwnParams
   IW.Send( ent->GridSpacing().Y() );
   IW.Send( ent->NbPointsX() );  // ?? even if not IsFinite ??
   IW.Send( ent->NbPointsY() );
-}
-
-void  IGESGraph_ToolUniformRectGrid::OwnShared
-  (const Handle(IGESGraph_UniformRectGrid)& /*ent*/, Interface_EntityIterator& /*iter*/) const
-{
-}
-
-void IGESGraph_ToolUniformRectGrid::OwnCopy
-  (const Handle(IGESGraph_UniformRectGrid)& another,
-   const Handle(IGESGraph_UniformRectGrid)& ent, Interface_CopyTool& /*TC*/) const
-{
-  ent->Init
-    (9, (another->IsFinite() ? 1 : 0), (another->IsLine() ? 1 : 0),
-     (another->IsWeighted() ? 0 : 1),
-     another->GridPoint().XY(),another->GridSpacing().XY(),
-     another->NbPointsX(), another->NbPointsY());
 }
 
 Standard_Boolean  IGESGraph_ToolUniformRectGrid::OwnCorrect

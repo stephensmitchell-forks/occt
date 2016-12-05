@@ -31,7 +31,6 @@ class Interface_EntityIterator;
 class IGESData_DirChecker;
 class Interface_ShareTool;
 class Interface_Check;
-class Interface_CopyTool;
 class IGESData_IGESDumper;
 class Message_Messenger;
 
@@ -40,13 +39,12 @@ class Message_Messenger;
 //! (ReadWriteModule, GeneralModule, SpecificModule)
 class IGESDraw_ToolCircArraySubfigure 
 {
-public:
+ public:
 
   DEFINE_STANDARD_ALLOC
 
-  
   //! Returns a ToolCircArraySubfigure, ready to work
-  Standard_EXPORT IGESDraw_ToolCircArraySubfigure();
+  IGESDraw_ToolCircArraySubfigure() {}
   
   //! Reads own parameters from file. <PR> gives access to them,
   //! <IR> detains parameter types and values
@@ -55,43 +53,11 @@ public:
   //! Writes own parameters to IGESWriter
   Standard_EXPORT void WriteOwnParams (const Handle(IGESDraw_CircArraySubfigure)& ent, IGESData_IGESWriter& IW) const;
   
-  //! Lists the Entities shared by a CircArraySubfigure <ent>, from
-  //! its specific (own) parameters
-  Standard_EXPORT void OwnShared (const Handle(IGESDraw_CircArraySubfigure)& ent, Interface_EntityIterator& iter) const;
-  
   //! Returns specific DirChecker
   Standard_EXPORT IGESData_DirChecker DirChecker (const Handle(IGESDraw_CircArraySubfigure)& ent) const;
   
-  //! Performs Specific Semantic Check
-  Standard_EXPORT void OwnCheck (const Handle(IGESDraw_CircArraySubfigure)& ent, const Interface_ShareTool& shares, Handle(Interface_Check)& ach) const;
-  
-  //! Copies Specific Parameters
-  Standard_EXPORT void OwnCopy (const Handle(IGESDraw_CircArraySubfigure)& entfrom, const Handle(IGESDraw_CircArraySubfigure)& entto, Interface_CopyTool& TC) const;
-  
   //! Dump of Specific Parameters
   Standard_EXPORT void OwnDump (const Handle(IGESDraw_CircArraySubfigure)& ent, const IGESData_IGESDumper& dumper, const Handle(Message_Messenger)& S, const Standard_Integer own) const;
-
-
-
-
-protected:
-
-
-
-
-
-private:
-
-
-
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESDraw_ToolCircArraySubfigure_HeaderFile

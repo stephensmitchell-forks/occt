@@ -32,7 +32,6 @@
 #include <IGESGraph_HArray1OfTextDisplayTemplate.hxx>
 #include <IGESGraph_TextDisplayTemplate.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_HArray1OfHAsciiString.hxx>
 #include <Interface_Macros.hxx>
@@ -40,8 +39,6 @@
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
 #include <TCollection_HAsciiString.hxx>
-
-IGESAppli_ToolPipingFlow::IGESAppli_ToolPipingFlow ()    {  }
 
 
 void  IGESAppli_ToolPipingFlow::ReadOwnParams
@@ -170,85 +167,6 @@ void  IGESAppli_ToolPipingFlow::WriteOwnParams
     IW.Send(ent->ContFlowAssociativity(i));
 }
 
-void  IGESAppli_ToolPipingFlow::OwnShared
-  (const Handle(IGESAppli_PipingFlow)& ent, Interface_EntityIterator& iter) const
-{
-  Standard_Integer i, num;
-  for ( num = ent->NbFlowAssociativities(), i = 1; i <= num; i++ )
-    iter.GetOneItem(ent->FlowAssociativity(i));
-  for ( num = ent->NbConnectPoints(), i = 1; i <= num; i++ )
-    iter.GetOneItem(ent->ConnectPoint(i));
-  for ( num = ent->NbJoins(), i = 1; i <= num; i++ )
-    iter.GetOneItem(ent->Join(i));
-  for ( num = ent->NbTextDisplayTemplates(), i = 1; i <= num; i++ )
-    iter.GetOneItem(ent->TextDisplayTemplate(i));
-  for ( num = ent->NbContFlowAssociativities(), i = 1; i <= num; i++ )
-    iter.GetOneItem(ent->ContFlowAssociativity(i));
-}
-
-void  IGESAppli_ToolPipingFlow::OwnCopy
-  (const Handle(IGESAppli_PipingFlow)& another,
-   const Handle(IGESAppli_PipingFlow)& ent, Interface_CopyTool& TC) const
-{
-  Standard_Integer tempNbContextFlags = another->NbContextFlags();
-  Standard_Integer tempTypeOfFlow = another->TypeOfFlow();
-  Standard_Integer i, num;
-  num = another->NbFlowAssociativities();
-  Handle(IGESData_HArray1OfIGESEntity) tempFlowAssocs =
-    new IGESData_HArray1OfIGESEntity(1, num);
-  for ( i = 1; i <= num; i++ )
-    {
-      DeclareAndCast(IGESData_IGESEntity, new_item,
-		     TC.Transferred(another->FlowAssociativity(i)));
-      tempFlowAssocs->SetValue(i, new_item);
-    }
-  num = another->NbConnectPoints();
-  Handle(IGESDraw_HArray1OfConnectPoint) tempConnectPoints =
-    new IGESDraw_HArray1OfConnectPoint(1, num);
-  for ( i = 1; i <= num; i++ )
-    {
-      DeclareAndCast(IGESDraw_ConnectPoint, new_item,
-		     TC.Transferred(another->ConnectPoint(i)));
-      tempConnectPoints->SetValue(i, new_item);
-    }
-  num = another->NbJoins();
-  Handle(IGESData_HArray1OfIGESEntity) tempJoins =
-    new IGESData_HArray1OfIGESEntity(1, num);
-  for ( i = 1; i <= num; i++ )
-    {
-      DeclareAndCast(IGESData_IGESEntity, new_item,
-		     TC.Transferred(another->Join(i)));
-      tempJoins->SetValue(i, new_item);
-    }
-  num = another->NbFlowNames();
-  Handle(Interface_HArray1OfHAsciiString) tempFlowNames =
-    new Interface_HArray1OfHAsciiString(1, num);
-  for ( i = 1; i <= num; i++ )
-    tempFlowNames->SetValue
-      (i, new TCollection_HAsciiString(another->FlowName(i)));
-  num = another->NbTextDisplayTemplates();
-  Handle(IGESGraph_HArray1OfTextDisplayTemplate) tempTextDisplayTemplates =
-    new IGESGraph_HArray1OfTextDisplayTemplate(1, num);
-  for ( i = 1; i <= num; i++ )
-    {
-      DeclareAndCast(IGESGraph_TextDisplayTemplate, new_item,
-		     TC.Transferred(another->TextDisplayTemplate(i)));
-      tempTextDisplayTemplates->SetValue(i, new_item);
-    }
-  num = another->NbContFlowAssociativities();
-  Handle(IGESData_HArray1OfIGESEntity) tempContFlowAssocs =
-    new IGESData_HArray1OfIGESEntity(1, num);
-  for ( i = 1; i <= num; i++ )
-    {
-      DeclareAndCast(IGESData_IGESEntity, new_item,
-		     TC.Transferred(another->ContFlowAssociativity(i)));
-      tempContFlowAssocs->SetValue(i, new_item);
-    }
-  ent->Init (tempNbContextFlags, tempTypeOfFlow, tempFlowAssocs,
-	     tempConnectPoints,  tempJoins, tempFlowNames,
-	     tempTextDisplayTemplates, tempContFlowAssocs);
-}
-
 Standard_Boolean  IGESAppli_ToolPipingFlow::OwnCorrect
   (const Handle(IGESAppli_PipingFlow)& ent) const
 {
@@ -268,16 +186,6 @@ IGESData_DirChecker  IGESAppli_ToolPipingFlow::DirChecker
   DC.UseFlagRequired(3);
   DC.HierarchyStatusIgnored();
   return DC;
-}
-
-void  IGESAppli_ToolPipingFlow::OwnCheck
-  (const Handle(IGESAppli_PipingFlow)& ent,
-   const Interface_ShareTool& , Handle(Interface_Check)& ach) const
-{
-  if (ent->NbContextFlags() != 1)
-    ach->AddFail("Number of Context Flags != 1");
-  if ((ent->TypeOfFlow() < 0) || (ent->TypeOfFlow() > 2))
-    ach->AddFail("Type of Flow != 0,1,2");
 }
 
 void  IGESAppli_ToolPipingFlow::OwnDump

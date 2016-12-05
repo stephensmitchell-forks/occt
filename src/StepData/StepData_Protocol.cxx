@@ -66,13 +66,6 @@ Handle(Interface_InterfaceModel)  StepData_Protocol::NewModel () const
 }
 
 
-Standard_Boolean  StepData_Protocol::IsSuitableModel
-  (const Handle(Interface_InterfaceModel)& model) const 
-{
-  return model->IsKind(STANDARD_TYPE(StepData_StepModel));
-}
-
-
 Handle(Standard_Transient)  StepData_Protocol::UnknownEntity () const
 {
   return new StepData_UndefinedEntity;

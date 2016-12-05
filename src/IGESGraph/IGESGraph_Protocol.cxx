@@ -38,7 +38,7 @@ static int deja = 0;
 static Handle(Standard_Type) atype01,atype02,atype03,atype04,atype05,atype06,
   atype07,atype08,atype09,atype10,atype11,atype12,atype13,atype14;
 
-    IGESGraph_Protocol::IGESGraph_Protocol ()
+IGESGraph_Protocol::IGESGraph_Protocol ()
 {
   if (deja) return;  deja = 1;
   atype01 = STANDARD_TYPE(IGESGraph_Color);
@@ -57,17 +57,15 @@ static Handle(Standard_Type) atype01,atype02,atype03,atype04,atype05,atype06,
   atype14 = STANDARD_TYPE(IGESGraph_UniformRectGrid);
 }
 
-    Standard_Integer IGESGraph_Protocol::NbResources () const
-      {  return 1;  }
+Standard_Integer IGESGraph_Protocol::NbResources () const
+{  return 1;  }
 
-    Handle(Interface_Protocol) IGESGraph_Protocol::Resource
-  (const Standard_Integer /*num*/) const
+Handle(Interface_Protocol) IGESGraph_Protocol::Resource (const Standard_Integer /*num*/) const
 {
   return IGESBasic::Protocol();
 }
 
-    Standard_Integer IGESGraph_Protocol::TypeNumber
-  (const Handle(Standard_Type)& atype) const
+Standard_Integer IGESGraph_Protocol::TypeNumber (const Handle(Standard_Type)& atype) const
 {
   if      (atype == atype01) return  1;
   else if (atype == atype02) return  2;

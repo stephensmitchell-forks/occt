@@ -15,9 +15,7 @@
 #include <gp_GTrsf.hxx>
 #include <IGESData_ColorEntity.hxx>
 #include <IGESData_DirChecker.hxx>
-#include <IGESData_GeneralModule.hxx>
 #include <IGESData_IGESEntity.hxx>
-#include <IGESData_IGESReaderTool.hxx>
 #include <IGESData_IGESType.hxx>
 #include <IGESData_LabelDisplayEntity.hxx>
 #include <IGESData_LevelListEntity.hxx>

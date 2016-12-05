@@ -25,13 +25,10 @@
 #include <IGESGraph_DrawingSize.hxx>
 #include <IGESGraph_ToolDrawingSize.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-
-IGESGraph_ToolDrawingSize::IGESGraph_ToolDrawingSize ()    {  }
 
 
 void IGESGraph_ToolDrawingSize::ReadOwnParams
@@ -65,18 +62,6 @@ void IGESGraph_ToolDrawingSize::WriteOwnParams
   IW.Send( ent->NbPropertyValues() );
   IW.Send( ent->XSize() );
   IW.Send( ent->YSize() );
-}
-
-void  IGESGraph_ToolDrawingSize::OwnShared
-  (const Handle(IGESGraph_DrawingSize)& /*ent*/, Interface_EntityIterator& /*iter*/) const
-{
-}
-
-void IGESGraph_ToolDrawingSize::OwnCopy
-  (const Handle(IGESGraph_DrawingSize)& another,
-   const Handle(IGESGraph_DrawingSize)& ent, Interface_CopyTool& /*TC*/) const
-{
-  ent->Init(2,another->XSize(),another->YSize());
 }
 
 Standard_Boolean  IGESGraph_ToolDrawingSize::OwnCorrect

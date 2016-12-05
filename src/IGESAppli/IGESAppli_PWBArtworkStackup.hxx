@@ -17,14 +17,9 @@
 #ifndef _IGESAppli_PWBArtworkStackup_HeaderFile
 #define _IGESAppli_PWBArtworkStackup_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
-#include <Standard_Integer.hxx>
 #include <TColStd_HArray1OfInteger.hxx>
 #include <IGESData_IGESEntity.hxx>
 class TCollection_HAsciiString;
-class Standard_OutOfRange;
 
 
 class IGESAppli_PWBArtworkStackup;
@@ -40,11 +35,9 @@ DEFINE_STANDARD_HANDLE(IGESAppli_PWBArtworkStackup, IGESData_IGESEntity)
 //! property should stand alone in the file.
 class IGESAppli_PWBArtworkStackup : public IGESData_IGESEntity
 {
+ public:
 
-public:
-
-  
-  Standard_EXPORT IGESAppli_PWBArtworkStackup();
+  IGESAppli_PWBArtworkStackup() {}
   
   //! This method is used to set the fields of the class
   //! PWBArtworkStackup
@@ -54,11 +47,11 @@ public:
   Standard_EXPORT void Init (const Standard_Integer nbPropVal, const Handle(TCollection_HAsciiString)& anArtIdent, const Handle(TColStd_HArray1OfInteger)& allLevelNums);
   
   //! returns number of property values
-  Standard_EXPORT Standard_Integer NbPropertyValues() const;
-  
+  Standard_Integer NbPropertyValues() const { return theNbPropertyValues; }
+
   //! returns Artwork Stackup Identification
-  Standard_EXPORT Handle(TCollection_HAsciiString) Identification() const;
-  
+  const Handle(TCollection_HAsciiString) & Identification() const { return theArtworkStackupIdent; }
+
   //! returns total number of Level Numbers
   Standard_EXPORT Standard_Integer NbLevelNumbers() const;
   
@@ -66,30 +59,13 @@ public:
   //! raises exception if Index <= 0 or Index > NbLevelNumbers
   Standard_EXPORT Standard_Integer LevelNumber (const Standard_Integer Index) const;
 
-
-
-
   DEFINE_STANDARD_RTTIEXT(IGESAppli_PWBArtworkStackup,IGESData_IGESEntity)
 
-protected:
-
-
-
-
-private:
-
+ private:
 
   Standard_Integer theNbPropertyValues;
   Handle(TCollection_HAsciiString) theArtworkStackupIdent;
   Handle(TColStd_HArray1OfInteger) theLevelNumbers;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESAppli_PWBArtworkStackup_HeaderFile

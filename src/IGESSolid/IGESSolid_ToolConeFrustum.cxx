@@ -29,13 +29,10 @@
 #include <IGESSolid_ConeFrustum.hxx>
 #include <IGESSolid_ToolConeFrustum.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-
-IGESSolid_ToolConeFrustum::IGESSolid_ToolConeFrustum ()    {  }
 
 
 void  IGESSolid_ToolConeFrustum::ReadOwnParams
@@ -125,20 +122,6 @@ void  IGESSolid_ToolConeFrustum::WriteOwnParams
   IW.Send(ent->Axis().Z());
 }
 
-void  IGESSolid_ToolConeFrustum::OwnShared
-  (const Handle(IGESSolid_ConeFrustum)& /* ent */, Interface_EntityIterator& /* iter */) const
-{
-}
-
-void  IGESSolid_ToolConeFrustum::OwnCopy
-  (const Handle(IGESSolid_ConeFrustum)& another,
-   const Handle(IGESSolid_ConeFrustum)& ent, Interface_CopyTool& /* TC */) const
-{
-  ent->Init
-    (another->Height(), another->LargerRadius(), another->SmallerRadius(),
-     another->FaceCenter().XYZ(), another->Axis().XYZ());
-}
-
 IGESData_DirChecker  IGESSolid_ToolConeFrustum::DirChecker
   (const Handle(IGESSolid_ConeFrustum)& /* ent */ ) const
 {
@@ -151,20 +134,6 @@ IGESData_DirChecker  IGESSolid_ToolConeFrustum::DirChecker
   DC.UseFlagRequired (0);
   DC.HierarchyStatusIgnored ();
   return DC;
-}
-
-void  IGESSolid_ToolConeFrustum::OwnCheck
-  (const Handle(IGESSolid_ConeFrustum)& ent,
-   const Interface_ShareTool& , Handle(Interface_Check)& ach) const
-{
-  if (ent->Height() <= 0.0)
-    ach->AddFail("Height : Value Not Positive");
-  if (ent->LargerRadius() <= 0.0)
-    ach->AddFail("Larger face radius : Value Not Positive");
-  if (ent->SmallerRadius() < 0.0)
-    ach->AddFail("Smaller face radius : Value Not Positive");
-  if (ent->SmallerRadius() > ent->LargerRadius())
-    ach->AddFail("Smaller face radius : is greater than Larger face radius");
 }
 
 void  IGESSolid_ToolConeFrustum::OwnDump

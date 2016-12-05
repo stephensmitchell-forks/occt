@@ -28,15 +28,12 @@
 #include <IGESDimen_LeaderArrow.hxx>
 #include <IGESDimen_ToolLeaderArrow.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
 #include <TColgp_HArray1OfXY.hxx>
-
-IGESDimen_ToolLeaderArrow::IGESDimen_ToolLeaderArrow ()    {  }
 
 
 void  IGESDimen_ToolLeaderArrow::ReadOwnParams
@@ -95,32 +92,6 @@ void  IGESDimen_ToolLeaderArrow::WriteOwnParams
     }
 }
 
-void  IGESDimen_ToolLeaderArrow::OwnShared
-  (const Handle(IGESDimen_LeaderArrow)& /* ent */, Interface_EntityIterator& /* iter */) const
-{
-}
-
-void  IGESDimen_ToolLeaderArrow::OwnCopy
-  (const Handle(IGESDimen_LeaderArrow)& another,
-   const Handle(IGESDimen_LeaderArrow)& ent, Interface_CopyTool& /* TC */) const
-{ 
-  Standard_Integer nbval = another->NbSegments();
-  Standard_Real arrowHeadHeight = another->ArrowHeadHeight();
-  Standard_Real arrowHeadWidth = another->ArrowHeadWidth();
-  Standard_Real zDepth = another->ZDepth();
-  gp_XY arrowHead = another->ArrowHead().XY();
-
-  Handle(TColgp_HArray1OfXY) segmentTails = new TColgp_HArray1OfXY(1, nbval);
-
-  for (Standard_Integer i = 1; i <= nbval; i++)
-    {
-      segmentTails->SetValue(i, (another->SegmentTail(i)).XY());
-    }
-
-  ent->Init(arrowHeadHeight, arrowHeadWidth, zDepth, arrowHead, segmentTails);
-  ent->SetFormNumber (another->FormNumber());
-}
-
 IGESData_DirChecker  IGESDimen_ToolLeaderArrow::DirChecker
   (const Handle(IGESDimen_LeaderArrow)& /* ent */ ) const 
 { 
@@ -132,12 +103,6 @@ IGESData_DirChecker  IGESDimen_ToolLeaderArrow::DirChecker
   DC.UseFlagRequired(1);
   DC.HierarchyStatusIgnored();
   return DC;
-}
-
-void  IGESDimen_ToolLeaderArrow::OwnCheck
-  (const Handle(IGESDimen_LeaderArrow)& /* ent */,
-   const Interface_ShareTool& , Handle(Interface_Check)& /* ach */) const 
-{
 }
 
 void  IGESDimen_ToolLeaderArrow::OwnDump

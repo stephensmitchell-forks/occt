@@ -25,13 +25,10 @@
 #include <IGESData_ParamCursor.hxx>
 #include <IGESData_ParamReader.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-
-IGESAppli_ToolPWBDrilledHole::IGESAppli_ToolPWBDrilledHole ()    {  }
 
 
 void  IGESAppli_ToolPWBDrilledHole::ReadOwnParams
@@ -66,19 +63,6 @@ void  IGESAppli_ToolPWBDrilledHole::WriteOwnParams
   IW.Send(ent->FunctionCode());
 }
 
-void  IGESAppli_ToolPWBDrilledHole::OwnShared
-  (const Handle(IGESAppli_PWBDrilledHole)& /*ent*/, Interface_EntityIterator& /*iter*/) const
-{
-}
-
-void  IGESAppli_ToolPWBDrilledHole::OwnCopy
-  (const Handle(IGESAppli_PWBDrilledHole)& another,
-   const Handle(IGESAppli_PWBDrilledHole)& ent, Interface_CopyTool& /*TC*/) const
-{
-  ent->Init (3,another->DrillDiameterSize(),another->FinishDiameterSize(),
-	     another->FunctionCode());
-}
-
 Standard_Boolean  IGESAppli_ToolPWBDrilledHole::OwnCorrect
   (const Handle(IGESAppli_PWBDrilledHole)& ent) const
 {
@@ -102,18 +86,6 @@ IGESData_DirChecker  IGESAppli_ToolPWBDrilledHole::DirChecker
   DC.UseFlagIgnored();
   DC.HierarchyStatusIgnored();
   return DC;
-}
-
-void  IGESAppli_ToolPWBDrilledHole::OwnCheck
-  (const Handle(IGESAppli_PWBDrilledHole)& ent,
-   const Interface_ShareTool& , Handle(Interface_Check)& ach) const
-{
-  if (ent->NbPropertyValues() != 3)
-    ach->AddFail("Number of property values != 3");
-  if ( (ent->FunctionCode() < 1) ||
-      ((ent->FunctionCode() > 5) && (ent->FunctionCode() < 5001)) ||
-      (ent->FunctionCode() > 9999))
-    ach->AddFail("Drilled Hole Function Code != 1-5,5001-9999");
 }
 
 void  IGESAppli_ToolPWBDrilledHole::OwnDump

@@ -26,15 +26,12 @@
 #include <IGESData_ParamCursor.hxx>
 #include <IGESData_ParamReader.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
 #include <TCollection_HAsciiString.hxx>
-
-IGESBasic_ToolAssocGroupType::IGESBasic_ToolAssocGroupType ()    {  }
 
 
 void  IGESBasic_ToolAssocGroupType::ReadOwnParams
@@ -61,22 +58,6 @@ void  IGESBasic_ToolAssocGroupType::WriteOwnParams
   IW.Send(ent->NbData());
   IW.Send(ent->AssocType());
   IW.Send(ent->Name());
-}
-
-void  IGESBasic_ToolAssocGroupType::OwnShared
-  (const Handle(IGESBasic_AssocGroupType)& /* ent */, Interface_EntityIterator& /* iter */) const
-{
-}
-
-void  IGESBasic_ToolAssocGroupType::OwnCopy
-  (const Handle(IGESBasic_AssocGroupType)& another,
-   const Handle(IGESBasic_AssocGroupType)& ent, Interface_CopyTool& /* TC */) const
-{
-  Standard_Integer tempNbData = another->NbData();
-  Standard_Integer tempType = another->AssocType();
-  Handle(TCollection_HAsciiString) tempName =
-    new TCollection_HAsciiString(another->Name());
-  ent->Init(tempNbData, tempType, tempName);
 }
 
 Standard_Boolean  IGESBasic_ToolAssocGroupType::OwnCorrect

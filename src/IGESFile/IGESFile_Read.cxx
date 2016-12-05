@@ -49,41 +49,14 @@ static Handle(Interface_Check)& checkread()
 static void IGESFile_ReadHeader  (const Handle(IGESData_IGESReaderData)& IR);
 static void IGESFile_ReadContent (const Handle(IGESData_IGESReaderData)& IR);
 void IGESFile_Check (int mode,Message_Msg& amsg);
-// void IGESFile_Check2 (int mode,char * code, int num, char * str);
-// void IGESFile_Check3 (int mode,char * code);
 
 //  Correspondance entre types igesread et types Interface_ParamFile ...
 static Interface_ParamType LesTypes[10];
-
-
-//  Nouvelle maniere : Protocol suffit
-
-Standard_Integer IGESFile_Read
-  (char* nomfic,
-   const Handle(IGESData_IGESModel)& amodel,
-   const Handle(IGESData_Protocol)& protocol)
-{
-  Handle(IGESData_FileRecognizer) nulreco;
-  return IGESFile_Read(nomfic,amodel,protocol,nulreco,Standard_False);
-}
-
-Standard_Integer IGESFile_ReadFNES
-  (char* nomfic,
-   const Handle(IGESData_IGESModel)& amodel,
-   const Handle(IGESData_Protocol)& protocol)
-{
-  Handle(IGESData_FileRecognizer) nulreco;
-  return IGESFile_Read(nomfic,amodel,protocol,nulreco,Standard_True);
-}
-
-
-//  Ancienne maniere : avec Recognizer
 
 Standard_Integer IGESFile_Read
   (char* nomfic,
    const Handle(IGESData_IGESModel)& amodel,
    const Handle(IGESData_Protocol)& protocol,
-   const Handle(IGESData_FileRecognizer)& reco,
    const Standard_Boolean modefnes)
 {
   //====================================
@@ -163,7 +136,7 @@ Standard_Integer IGESFile_Read
   IGESFile_Check(2, Msg15);
   iges_finfile(1);
   IGESData_IGESReaderTool IT (IR,protocol);
-  IT.Prepare(reco); 
+  IT.Prepare(); 
 
   // Sending of message : Loading of Model : Beginning 
   IT.LoadModel(amodel);

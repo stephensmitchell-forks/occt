@@ -28,14 +28,11 @@
 #include <IGESDimen_PointDimension.hxx>
 #include <IGESDimen_ToolPointDimension.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-
-IGESDimen_ToolPointDimension::IGESDimen_ToolPointDimension ()    {  }
 
 
 void IGESDimen_ToolPointDimension::ReadOwnParams
@@ -76,19 +73,6 @@ void  IGESDimen_ToolPointDimension::OwnShared
   iter.GetOneItem(ent->Geom());
 }
 
-void IGESDimen_ToolPointDimension::OwnCopy
-  (const Handle(IGESDimen_PointDimension)& another,
-   const Handle(IGESDimen_PointDimension)& ent, Interface_CopyTool& TC) const
-{
-  DeclareAndCast(IGESDimen_GeneralNote, tempNote,
-		 TC.Transferred(another->Note()));
-  DeclareAndCast(IGESDimen_LeaderArrow, tempArrow,
-		 TC.Transferred(another->LeaderArrow()));
-  DeclareAndCast(IGESData_IGESEntity, tempGeom,
-		 TC.Transferred(another->Geom()));
-  ent->Init(tempNote, tempArrow, tempGeom);
-}
-
 IGESData_DirChecker IGESDimen_ToolPointDimension::DirChecker
   (const Handle(IGESDimen_PointDimension)& /*ent*/) const
 {
@@ -101,12 +85,6 @@ IGESData_DirChecker IGESDimen_ToolPointDimension::DirChecker
   DC.UseFlagRequired (1);
 
   return DC;
-}
-
-void IGESDimen_ToolPointDimension::OwnCheck
-  (const Handle(IGESDimen_PointDimension)& /*ent*/,
-   const Interface_ShareTool& , Handle(Interface_Check)& /*ach*/) const
-{
 }
 
 void IGESDimen_ToolPointDimension::OwnDump

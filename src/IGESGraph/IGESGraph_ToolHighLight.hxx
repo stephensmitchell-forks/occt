@@ -32,7 +32,6 @@ class Interface_EntityIterator;
 class IGESData_DirChecker;
 class Interface_ShareTool;
 class Interface_Check;
-class Interface_CopyTool;
 class IGESData_IGESDumper;
 class Message_Messenger;
 
@@ -41,13 +40,12 @@ class Message_Messenger;
 //! (ReadWriteModule, GeneralModule, SpecificModule)
 class IGESGraph_ToolHighLight 
 {
-public:
+ public:
 
   DEFINE_STANDARD_ALLOC
 
-  
   //! Returns a ToolHighLight, ready to work
-  Standard_EXPORT IGESGraph_ToolHighLight();
+  IGESGraph_ToolHighLight() {}
   
   //! Reads own parameters from file. <PR> gives access to them,
   //! <IR> detains parameter types and values
@@ -55,10 +53,6 @@ public:
   
   //! Writes own parameters to IGESWriter
   Standard_EXPORT void WriteOwnParams (const Handle(IGESGraph_HighLight)& ent, IGESData_IGESWriter& IW) const;
-  
-  //! Lists the Entities shared by a HighLight <ent>, from
-  //! its specific (own) parameters
-  Standard_EXPORT void OwnShared (const Handle(IGESGraph_HighLight)& ent, Interface_EntityIterator& iter) const;
   
   //! Sets automatic unambiguous Correction on a HighLight
   //! (NbPropertyValues forced to 1)
@@ -70,33 +64,8 @@ public:
   //! Performs Specific Semantic Check
   Standard_EXPORT void OwnCheck (const Handle(IGESGraph_HighLight)& ent, const Interface_ShareTool& shares, Handle(Interface_Check)& ach) const;
   
-  //! Copies Specific Parameters
-  Standard_EXPORT void OwnCopy (const Handle(IGESGraph_HighLight)& entfrom, const Handle(IGESGraph_HighLight)& entto, Interface_CopyTool& TC) const;
-  
   //! Dump of Specific Parameters
   Standard_EXPORT void OwnDump (const Handle(IGESGraph_HighLight)& ent, const IGESData_IGESDumper& dumper, const Handle(Message_Messenger)& S, const Standard_Integer own) const;
-
-
-
-
-protected:
-
-
-
-
-
-private:
-
-
-
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESGraph_ToolHighLight_HeaderFile

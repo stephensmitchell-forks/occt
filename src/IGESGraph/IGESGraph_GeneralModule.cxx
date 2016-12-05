@@ -45,19 +45,11 @@
 #include <IGESGraph_UniformRectGrid.hxx>
 #include <Interface_Category.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
-#include <Standard_Transient.hxx>
-#include <Standard_Type.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESGraph_GeneralModule,IGESData_GeneralModule)
-
-//  Each Module is attached to a Protocol : it must interprete Case Numbers
-//  (arguments <CN> of various methods) in accordance to values returned by
-//  the method TypeNumber from this Protocol
-IGESGraph_GeneralModule::IGESGraph_GeneralModule ()    {  }
 
 
     void  IGESGraph_GeneralModule::OwnSharedCase
@@ -65,80 +57,10 @@ IGESGraph_GeneralModule::IGESGraph_GeneralModule ()    {  }
    Interface_EntityIterator& iter) const 
 {
   switch (CN) {
-    case  1 : {
-      DeclareAndCast(IGESGraph_Color,anent,ent);
-      if (anent.IsNull()) return;
-      IGESGraph_ToolColor tool;
-      tool.OwnShared(anent,iter);
-    }
-      break;
-    case  2 : {
-      DeclareAndCast(IGESGraph_DefinitionLevel,anent,ent);
-      if (anent.IsNull()) return;
-      IGESGraph_ToolDefinitionLevel tool;
-      tool.OwnShared(anent,iter);
-    }
-      break;
-    case  3 : {
-      DeclareAndCast(IGESGraph_DrawingSize,anent,ent);
-      if (anent.IsNull()) return;
-      IGESGraph_ToolDrawingSize tool;
-      tool.OwnShared(anent,iter);
-    }
-      break;
-    case  4 : {
-      DeclareAndCast(IGESGraph_DrawingUnits,anent,ent);
-      if (anent.IsNull()) return;
-      IGESGraph_ToolDrawingUnits tool;
-      tool.OwnShared(anent,iter);
-    }
-      break;
-    case  5 : {
-      DeclareAndCast(IGESGraph_HighLight,anent,ent);
-      if (anent.IsNull()) return;
-      IGESGraph_ToolHighLight tool;
-      tool.OwnShared(anent,iter);
-    }
-      break;
-    case  6 : {
-      DeclareAndCast(IGESGraph_IntercharacterSpacing,anent,ent);
-      if (anent.IsNull()) return;
-      IGESGraph_ToolIntercharacterSpacing tool;
-      tool.OwnShared(anent,iter);
-    }
-      break;
-    case  7 : {
-      DeclareAndCast(IGESGraph_LineFontDefPattern,anent,ent);
-      if (anent.IsNull()) return;
-      IGESGraph_ToolLineFontDefPattern tool;
-      tool.OwnShared(anent,iter);
-    }
-      break;
-    case  8 : {
-      DeclareAndCast(IGESGraph_LineFontPredefined,anent,ent);
-      if (anent.IsNull()) return;
-      IGESGraph_ToolLineFontPredefined tool;
-      tool.OwnShared(anent,iter);
-    }
-      break;
     case  9 : {
       DeclareAndCast(IGESGraph_LineFontDefTemplate,anent,ent);
       if (anent.IsNull()) return;
       IGESGraph_ToolLineFontDefTemplate tool;
-      tool.OwnShared(anent,iter);
-    }
-      break;
-    case 10 : {
-      DeclareAndCast(IGESGraph_NominalSize,anent,ent);
-      if (anent.IsNull()) return;
-      IGESGraph_ToolNominalSize tool;
-      tool.OwnShared(anent,iter);
-    }
-      break;
-    case 11 : {
-      DeclareAndCast(IGESGraph_Pick,anent,ent);
-      if (anent.IsNull()) return;
-      IGESGraph_ToolPick tool;
       tool.OwnShared(anent,iter);
     }
       break;
@@ -153,13 +75,6 @@ IGESGraph_GeneralModule::IGESGraph_GeneralModule ()    {  }
       DeclareAndCast(IGESGraph_TextFontDef,anent,ent);
       if (anent.IsNull()) return;
       IGESGraph_ToolTextFontDef tool;
-      tool.OwnShared(anent,iter);
-    }
-      break;
-    case 14 : {
-      DeclareAndCast(IGESGraph_UniformRectGrid,anent,ent);
-      if (anent.IsNull()) return;
-      IGESGraph_ToolUniformRectGrid tool;
       tool.OwnShared(anent,iter);
     }
       break;
@@ -267,20 +182,6 @@ IGESGraph_GeneralModule::IGESGraph_GeneralModule ()    {  }
    const Interface_ShareTool& shares, Handle(Interface_Check)& ach) const 
 {
   switch (CN) {
-    case  1 : {
-      DeclareAndCast(IGESGraph_Color,anent,ent);
-      if (anent.IsNull()) return;
-      IGESGraph_ToolColor tool;
-      tool.OwnCheck(anent,shares,ach);
-    }
-      break;
-    case  2 : {
-      DeclareAndCast(IGESGraph_DefinitionLevel,anent,ent);
-      if (anent.IsNull()) return;
-      IGESGraph_ToolDefinitionLevel tool;
-      tool.OwnCheck(anent,shares,ach);
-    }
-      break;
     case  3 : {
       DeclareAndCast(IGESGraph_DrawingSize,anent,ent);
       if (anent.IsNull()) return;
@@ -344,20 +245,6 @@ IGESGraph_GeneralModule::IGESGraph_GeneralModule ()    {  }
       tool.OwnCheck(anent,shares,ach);
     }
       break;
-    case 12 : {
-      DeclareAndCast(IGESGraph_TextDisplayTemplate,anent,ent);
-      if (anent.IsNull()) return;
-      IGESGraph_ToolTextDisplayTemplate tool;
-      tool.OwnCheck(anent,shares,ach);
-    }
-      break;
-    case 13 : {
-      DeclareAndCast(IGESGraph_TextFontDef,anent,ent);
-      if (anent.IsNull()) return;
-      IGESGraph_ToolTextFontDef tool;
-      tool.OwnCheck(anent,shares,ach);
-    }
-      break;
     case 14 : {
       DeclareAndCast(IGESGraph_UniformRectGrid,anent,ent);
       if (anent.IsNull()) return;
@@ -391,116 +278,6 @@ IGESGraph_GeneralModule::IGESGraph_GeneralModule ()    {  }
     default : return Standard_False;    // by default, Failure on Recognize
   }
   return Standard_True;
-}
-
-
-    void  IGESGraph_GeneralModule::OwnCopyCase
-  (const Standard_Integer CN,
-   const Handle(IGESData_IGESEntity)& entfrom,
-   const Handle(IGESData_IGESEntity)& entto,
-   Interface_CopyTool& TC) const 
-{
-  switch (CN) {
-    case  1 : {
-      DeclareAndCast(IGESGraph_Color,enfr,entfrom);
-      DeclareAndCast(IGESGraph_Color,ento,entto);
-      IGESGraph_ToolColor tool;
-      tool.OwnCopy(enfr,ento,TC);
-    }
-      break;
-    case  2 : {
-      DeclareAndCast(IGESGraph_DefinitionLevel,enfr,entfrom);
-      DeclareAndCast(IGESGraph_DefinitionLevel,ento,entto);
-      IGESGraph_ToolDefinitionLevel tool;
-      tool.OwnCopy(enfr,ento,TC);
-    }
-      break;
-    case  3 : {
-      DeclareAndCast(IGESGraph_DrawingSize,enfr,entfrom);
-      DeclareAndCast(IGESGraph_DrawingSize,ento,entto);
-      IGESGraph_ToolDrawingSize tool;
-      tool.OwnCopy(enfr,ento,TC);
-    }
-      break;
-    case  4 : {
-      DeclareAndCast(IGESGraph_DrawingUnits,enfr,entfrom);
-      DeclareAndCast(IGESGraph_DrawingUnits,ento,entto);
-      IGESGraph_ToolDrawingUnits tool;
-      tool.OwnCopy(enfr,ento,TC);
-    }
-      break;
-    case  5 : {
-      DeclareAndCast(IGESGraph_HighLight,enfr,entfrom);
-      DeclareAndCast(IGESGraph_HighLight,ento,entto);
-      IGESGraph_ToolHighLight tool;
-      tool.OwnCopy(enfr,ento,TC);
-    }
-      break;
-    case  6 : {
-      DeclareAndCast(IGESGraph_IntercharacterSpacing,enfr,entfrom);
-      DeclareAndCast(IGESGraph_IntercharacterSpacing,ento,entto);
-      IGESGraph_ToolIntercharacterSpacing tool;
-      tool.OwnCopy(enfr,ento,TC);
-    }
-      break;
-    case  7 : {
-      DeclareAndCast(IGESGraph_LineFontDefPattern,enfr,entfrom);
-      DeclareAndCast(IGESGraph_LineFontDefPattern,ento,entto);
-      IGESGraph_ToolLineFontDefPattern tool;
-      tool.OwnCopy(enfr,ento,TC);
-    }
-      break;
-    case  8 : {
-      DeclareAndCast(IGESGraph_LineFontPredefined,enfr,entfrom);
-      DeclareAndCast(IGESGraph_LineFontPredefined,ento,entto);
-      IGESGraph_ToolLineFontPredefined tool;
-      tool.OwnCopy(enfr,ento,TC);
-    }
-      break;
-    case  9 : {
-      DeclareAndCast(IGESGraph_LineFontDefTemplate,enfr,entfrom);
-      DeclareAndCast(IGESGraph_LineFontDefTemplate,ento,entto);
-      IGESGraph_ToolLineFontDefTemplate tool;
-      tool.OwnCopy(enfr,ento,TC);
-    }
-      break;
-    case 10 : {
-      DeclareAndCast(IGESGraph_NominalSize,enfr,entfrom);
-      DeclareAndCast(IGESGraph_NominalSize,ento,entto);
-      IGESGraph_ToolNominalSize tool;
-      tool.OwnCopy(enfr,ento,TC);
-    }
-      break;
-    case 11 : {
-      DeclareAndCast(IGESGraph_Pick,enfr,entfrom);
-      DeclareAndCast(IGESGraph_Pick,ento,entto);
-      IGESGraph_ToolPick tool;
-      tool.OwnCopy(enfr,ento,TC);
-    }
-      break;
-    case 12 : {
-      DeclareAndCast(IGESGraph_TextDisplayTemplate,enfr,entfrom);
-      DeclareAndCast(IGESGraph_TextDisplayTemplate,ento,entto);
-      IGESGraph_ToolTextDisplayTemplate tool;
-      tool.OwnCopy(enfr,ento,TC);
-    }
-      break;
-    case 13 : {
-      DeclareAndCast(IGESGraph_TextFontDef,enfr,entfrom);
-      DeclareAndCast(IGESGraph_TextFontDef,ento,entto);
-      IGESGraph_ToolTextFontDef tool;
-      tool.OwnCopy(enfr,ento,TC);
-    }
-      break;
-    case 14 : {
-      DeclareAndCast(IGESGraph_UniformRectGrid,enfr,entfrom);
-      DeclareAndCast(IGESGraph_UniformRectGrid,ento,entto);
-      IGESGraph_ToolUniformRectGrid tool;
-      tool.OwnCopy(enfr,ento,TC);
-    }
-      break;
-    default : break;
-  }
 }
 
 

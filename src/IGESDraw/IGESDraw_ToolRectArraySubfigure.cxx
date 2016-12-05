@@ -29,15 +29,12 @@
 #include <IGESDraw_RectArraySubfigure.hxx>
 #include <IGESDraw_ToolRectArraySubfigure.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
 #include <TColStd_HArray1OfInteger.hxx>
-
-IGESDraw_ToolRectArraySubfigure::IGESDraw_ToolRectArraySubfigure ()    {  }
 
 
 void IGESDraw_ToolRectArraySubfigure::ReadOwnParams
@@ -125,34 +122,6 @@ void  IGESDraw_ToolRectArraySubfigure::OwnShared
   iter.GetOneItem(ent->BaseEntity());
 }
 
-void IGESDraw_ToolRectArraySubfigure::OwnCopy
-  (const Handle(IGESDraw_RectArraySubfigure)& another,
-   const Handle(IGESDraw_RectArraySubfigure)& ent, Interface_CopyTool& TC) const
-{
-  DeclareAndCast(IGESData_IGESEntity, tempBaseEntity,
-                 TC.Transferred(another->BaseEntity()));
-  Standard_Real tempScaleFactor = another->ScaleFactor();
-  gp_XYZ tempLowerLeftCorner = (another->LowerLeftCorner()).XYZ();
-  Standard_Integer tempNbColumns = another->NbColumns();
-  Standard_Integer tempNbRows = another->NbRows();
-  Standard_Real tempColumnSeparation = another->ColumnSeparation();
-  Standard_Real tempRowSeparation = another->RowSeparation();
-  Standard_Real tempRotationAngle = another->RotationAngle();
-  Standard_Integer tempListCount = another->ListCount();
-  Standard_Integer tempDoDontFlag = (another->DoDontFlag() ? 1 : 0);
-  Handle(TColStd_HArray1OfInteger) tempPositions;
-  if (tempListCount != 0) {
-    tempPositions = new TColStd_HArray1OfInteger (1,tempListCount);
-    Standard_Integer I;
-    for (I = 1; I <= tempListCount; I++)
-      tempPositions->SetValue(I, another->ListPosition(I));
-  }
-
-  ent->Init(tempBaseEntity, tempScaleFactor, tempLowerLeftCorner,
-	    tempNbColumns, tempNbRows, tempColumnSeparation, tempRowSeparation,
-	    tempRotationAngle, tempDoDontFlag, tempPositions);
-}
-
 IGESData_DirChecker IGESDraw_ToolRectArraySubfigure::DirChecker
   (const Handle(IGESDraw_RectArraySubfigure)& /*ent*/)  const
 {
@@ -164,12 +133,6 @@ IGESData_DirChecker IGESDraw_ToolRectArraySubfigure::DirChecker
   DC.GraphicsIgnored(1);
 
   return DC;
-}
-
-void IGESDraw_ToolRectArraySubfigure::OwnCheck
-  (const Handle(IGESDraw_RectArraySubfigure)& /*ent*/,
-   const Interface_ShareTool& , Handle(Interface_Check)& /*ach*/)  const
-{
 }
 
 void IGESDraw_ToolRectArraySubfigure::OwnDump

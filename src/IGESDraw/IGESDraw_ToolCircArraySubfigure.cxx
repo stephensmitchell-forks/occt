@@ -28,15 +28,12 @@
 #include <IGESDraw_CircArraySubfigure.hxx>
 #include <IGESDraw_ToolCircArraySubfigure.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
 #include <TColStd_HArray1OfInteger.hxx>
-
-IGESDraw_ToolCircArraySubfigure::IGESDraw_ToolCircArraySubfigure ()    {  }
 
 
 void IGESDraw_ToolCircArraySubfigure::ReadOwnParams
@@ -108,38 +105,6 @@ void IGESDraw_ToolCircArraySubfigure::WriteOwnParams
     IW.Send(ent->ListPosition(I));
 }
 
-void  IGESDraw_ToolCircArraySubfigure::OwnShared
-  (const Handle(IGESDraw_CircArraySubfigure)& /*ent*/, Interface_EntityIterator& /*iter*/) const
-{
-}
-
-void IGESDraw_ToolCircArraySubfigure::OwnCopy
-  (const Handle(IGESDraw_CircArraySubfigure)& another,
-   const Handle(IGESDraw_CircArraySubfigure)& ent, Interface_CopyTool& TC) const
-{
-  DeclareAndCast(IGESData_IGESEntity, tempBase,
-                 TC.Transferred(another->BaseEntity()));
-  Standard_Integer tempNumLocs = another->NbLocations();
-  gp_XYZ tempCenter = (another->CenterPoint()).XYZ();
-  Standard_Real tempRadius = another->CircleRadius();
-  Standard_Real tempStAngle = another->StartAngle();
-  Standard_Real tempDelAngle = another->DeltaAngle();
-  Standard_Integer tempListCount = another->ListCount();
-  Standard_Integer tempFlag = another->DoDontFlag();
-  Handle(TColStd_HArray1OfInteger) tempNumPos;
-  if (! another->DisplayFlag()) {
-    tempNumPos = new TColStd_HArray1OfInteger(1, tempListCount);
-    Standard_Integer I;
-    for (I = 1; I <= tempListCount; I++) {
-      Standard_Integer tempPosition = another->ListPosition(I);
-      tempNumPos->SetValue(I, tempPosition);
-    }
-  }
-
-  ent->Init(tempBase, tempNumLocs, tempCenter, tempRadius,
-	    tempStAngle, tempDelAngle, tempFlag, tempNumPos);
-}
-
 IGESData_DirChecker IGESDraw_ToolCircArraySubfigure::DirChecker
   (const Handle(IGESDraw_CircArraySubfigure)& /*ent*/)  const
 {
@@ -151,12 +116,6 @@ IGESData_DirChecker IGESDraw_ToolCircArraySubfigure::DirChecker
   DC.GraphicsIgnored(1);
 
   return DC;
-}
-
-void IGESDraw_ToolCircArraySubfigure::OwnCheck
-  (const Handle(IGESDraw_CircArraySubfigure)& /*ent*/,
-   const Interface_ShareTool& , Handle(Interface_Check)& /*ach*/)  const
-{
 }
 
 void IGESDraw_ToolCircArraySubfigure::OwnDump

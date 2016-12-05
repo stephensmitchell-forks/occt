@@ -28,7 +28,6 @@
 #include <IGESSolid_ToolVertexList.hxx>
 #include <IGESSolid_VertexList.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
@@ -36,15 +35,6 @@
 #include <Message_Msg.hxx>
 #include <Standard_DomainError.hxx>
 #include <TColgp_HArray1OfXYZ.hxx>
-
-// MGE 03/08/98
-//=======================================================================
-//function : IGESSolid_ToolVertexList
-//purpose  : 
-//=======================================================================
-IGESSolid_ToolVertexList::IGESSolid_ToolVertexList ()
-{
-}
 
 
 //=======================================================================
@@ -118,40 +108,6 @@ void IGESSolid_ToolVertexList::WriteOwnParams(const Handle(IGESSolid_VertexList)
 
 
 //=======================================================================
-//function : OwnShared
-//purpose  : 
-//=======================================================================
-
-void IGESSolid_ToolVertexList::OwnShared(const Handle(IGESSolid_VertexList)& /* ent */,
-                                         Interface_EntityIterator& /* iter */) const
-{
-}
-
-
-//=======================================================================
-//function : OwnCopy
-//purpose  : 
-//=======================================================================
-
-void IGESSolid_ToolVertexList::OwnCopy(const Handle(IGESSolid_VertexList)& another,
-                                       const Handle(IGESSolid_VertexList)& ent,
-                                       Interface_CopyTool& /* TC */) const
-{
-  Standard_Integer nbitems, i;
-
-  nbitems = another->NbVertices();
-  Handle(TColgp_HArray1OfXYZ) tempVertices = new
-    TColgp_HArray1OfXYZ(1, nbitems);
-
-  for (i=1; i<=nbitems; i++)
-    {
-      tempVertices->SetValue(i, another->Vertex(i).XYZ());
-    }
-  ent->Init(tempVertices);
-}
-
-
-//=======================================================================
 //function : DirChecker
 //purpose  : 
 //=======================================================================
@@ -169,28 +125,6 @@ IGESData_DirChecker IGESSolid_ToolVertexList::DirChecker
   DC.SubordinateStatusRequired (1);
   DC.HierarchyStatusIgnored ();
   return DC;
-}
-
-
-//=======================================================================
-//function : OwnCheck
-//purpose  : 
-//=======================================================================
-
-void IGESSolid_ToolVertexList::OwnCheck(const Handle(IGESSolid_VertexList)& ent,
-                                        const Interface_ShareTool&,
-                                        Handle(Interface_Check)& ach) const
-{
-  // MGE 03/08/98
-  // Building of messages
-  //========================================
-  //Message_Msg Msg182("XSTEP_182");
-  //========================================
-
-  if (ent->NbVertices() <= 0) {
-    Message_Msg Msg182("XSTEP_182");
-    ach->SendFail(Msg182);
-  }
 }
 
 

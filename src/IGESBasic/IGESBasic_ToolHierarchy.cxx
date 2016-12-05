@@ -25,13 +25,10 @@
 #include <IGESData_ParamCursor.hxx>
 #include <IGESData_ParamReader.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-
-IGESBasic_ToolHierarchy::IGESBasic_ToolHierarchy ()    {  }
 
 
 void  IGESBasic_ToolHierarchy::ReadOwnParams
@@ -71,20 +68,6 @@ void  IGESBasic_ToolHierarchy::WriteOwnParams
   IW.Send(ent->NewBlankStatus());
   IW.Send(ent->NewLineWeight());
   IW.Send(ent->NewColorNum());
-}
-
-void  IGESBasic_ToolHierarchy::OwnShared
-  (const Handle(IGESBasic_Hierarchy)& /*ent*/, Interface_EntityIterator& /*iter*/) const
-{
-}
-
-void  IGESBasic_ToolHierarchy::OwnCopy
-  (const Handle(IGESBasic_Hierarchy)& another,
-   const Handle(IGESBasic_Hierarchy)& ent, Interface_CopyTool& /*TC*/) const
-{
-  ent->Init(6,another->NewLineFont(), another->NewView(),
-	    another->NewEntityLevel(),another->NewBlankStatus(),
-	    another->NewLineWeight(), another->NewColorNum());
 }
 
 Standard_Boolean  IGESBasic_ToolHierarchy::OwnCorrect

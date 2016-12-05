@@ -17,14 +17,10 @@
 //--------------------------------------------------------------------
 
 #include <IGESAppli_PWBDrilledHole.hxx>
-#include <Standard_Type.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESAppli_PWBDrilledHole,IGESData_IGESEntity)
 
-IGESAppli_PWBDrilledHole::IGESAppli_PWBDrilledHole ()    {  }
-
-
-    void  IGESAppli_PWBDrilledHole::Init
+void IGESAppli_PWBDrilledHole::Init
   (const Standard_Integer nbPropVal,
    const Standard_Real aDrillDia, const Standard_Real aFinishDia,
    const Standard_Integer aCode)
@@ -36,23 +32,12 @@ IGESAppli_PWBDrilledHole::IGESAppli_PWBDrilledHole ()    {  }
   InitTypeAndForm(406,26);
 }
 
-
-    Standard_Integer  IGESAppli_PWBDrilledHole::NbPropertyValues () const
+void IGESAppli_PWBDrilledHole::OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &theCheck) const
 {
-  return theNbPropertyValues;
-}
-
-    Standard_Real  IGESAppli_PWBDrilledHole::DrillDiameterSize () const
-{
-  return theDrillDiameter;
-}
-
-    Standard_Real  IGESAppli_PWBDrilledHole::FinishDiameterSize () const
-{
-  return theFinishDiameter;
-}
-
-    Standard_Integer  IGESAppli_PWBDrilledHole::FunctionCode () const
-{
-  return theFunctionCode;
+  if (NbPropertyValues() != 3)
+    theCheck->AddFail("Number of property values != 3");
+  if ( (FunctionCode() < 1) ||
+      ((FunctionCode() > 5) && (FunctionCode() < 5001)) ||
+      (FunctionCode() > 9999))
+    theCheck->AddFail("Drilled Hole Function Code != 1-5,5001-9999");
 }

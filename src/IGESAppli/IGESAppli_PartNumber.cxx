@@ -17,15 +17,11 @@
 //--------------------------------------------------------------------
 
 #include <IGESAppli_PartNumber.hxx>
-#include <Standard_Type.hxx>
 #include <TCollection_HAsciiString.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESAppli_PartNumber,IGESData_IGESEntity)
 
-IGESAppli_PartNumber::IGESAppli_PartNumber ()    {  }
-
-
-    void  IGESAppli_PartNumber::Init
+void IGESAppli_PartNumber::Init
   (const Standard_Integer nbPropVal,
    const Handle(TCollection_HAsciiString)& aGenName,
    const Handle(TCollection_HAsciiString)& aMilName,
@@ -40,28 +36,8 @@ IGESAppli_PartNumber::IGESAppli_PartNumber ()    {  }
   InitTypeAndForm(406,9);
 }
 
-
-    Standard_Integer  IGESAppli_PartNumber::NbPropertyValues () const
+void IGESAppli_PartNumber::OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &theCheck) const
 {
-  return theNbPropertyValues;
-}
-
-    Handle(TCollection_HAsciiString)  IGESAppli_PartNumber::GenericNumber () const
-{
-  return theGenericNumber;
-}
-
-    Handle(TCollection_HAsciiString)  IGESAppli_PartNumber::MilitaryNumber () const
-{
-  return theMilitaryNumber;
-}
-
-    Handle(TCollection_HAsciiString)  IGESAppli_PartNumber::VendorNumber () const
-{
-  return theVendorNumber;
-}
-
-    Handle(TCollection_HAsciiString)  IGESAppli_PartNumber::InternalNumber () const
-{
-  return theInternalNumber;
+  if (NbPropertyValues() != 4)
+    theCheck->AddFail("Number of property values != 4");
 }

@@ -21,14 +21,11 @@
 #include <IGESDefs_TabularData.hxx>
 #include <Standard_DimensionMismatch.hxx>
 #include <Standard_OutOfRange.hxx>
-#include <Standard_Type.hxx>
+#include <Interface_EntityIterator.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESAppli_NodalConstraint,IGESData_IGESEntity)
 
-IGESAppli_NodalConstraint::IGESAppli_NodalConstraint ()    {  }
-
-
-    void  IGESAppli_NodalConstraint::Init
+void IGESAppli_NodalConstraint::Init
   (const Standard_Integer aType,
    const Handle(IGESAppli_Node)& aNode,
    const Handle(IGESDefs_HArray1OfTabularData)& allTabData)
@@ -41,23 +38,26 @@ IGESAppli_NodalConstraint::IGESAppli_NodalConstraint ()    {  }
   InitTypeAndForm(418,0);
 }
 
-    Standard_Integer  IGESAppli_NodalConstraint::NbCases () const
+Standard_Integer IGESAppli_NodalConstraint::NbCases () const
 {
   return theTabularDataProps->Length();
 }
 
-    Standard_Integer  IGESAppli_NodalConstraint::Type () const
-{
-  return theType;
-}
-
-    Handle(IGESAppli_Node)  IGESAppli_NodalConstraint::NodeEntity () const
-{
-  return theNode;
-}
-
-    Handle(IGESDefs_TabularData)  IGESAppli_NodalConstraint::TabularData
-  (const Standard_Integer Index) const
+const Handle(IGESDefs_TabularData) & IGESAppli_NodalConstraint::TabularData (const Standard_Integer Index) const
 {
   return theTabularDataProps->Value(Index);
+}
+
+void IGESAppli_NodalConstraint::OwnShared(Interface_EntityIterator &theIter) const
+{
+  theIter.GetOneItem(NodeEntity());
+  const Standard_Integer num = NbCases();
+  for ( Standard_Integer i = 1; i <= num; i++ )
+    theIter.GetOneItem(TabularData(i));
+}
+
+void IGESAppli_NodalConstraint::OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &theCheck) const
+{
+  if ((Type() != 1) && (Type() != 2))
+    theCheck->AddFail("Type of Constraint != 1,2");
 }

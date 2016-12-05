@@ -27,7 +27,6 @@
 #include <IGESGeom_SplineSurface.hxx>
 #include <IGESGeom_ToolSplineSurface.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
@@ -35,9 +34,6 @@
 #include <Message_Msg.hxx>
 #include <Standard_DomainError.hxx>
 #include <TColStd_HArray1OfReal.hxx>
-
-// MGE 30/07/98
-IGESGeom_ToolSplineSurface::IGESGeom_ToolSplineSurface ()    {  }
 
 
 void IGESGeom_ToolSplineSurface::ReadOwnParams
@@ -218,63 +214,6 @@ void IGESGeom_ToolSplineSurface::WriteOwnParams
   for (J = 1; J <= (nbVSegs+1)*48; J++)
     IW.Send( 0.0);  //Send Arbitrary Values
 }
-
-void  IGESGeom_ToolSplineSurface::OwnShared
-  (const Handle(IGESGeom_SplineSurface)& /* ent */, Interface_EntityIterator& /* iter */) const
-{
-}
-
-void IGESGeom_ToolSplineSurface::OwnCopy
-  (const Handle(IGESGeom_SplineSurface)& another,
-   const Handle(IGESGeom_SplineSurface)& ent, Interface_CopyTool& /* TC */) const
-{
-
-  Standard_Integer aBoundaryType, aPatchType, allNbUSegments, allNbVSegments;
-  Standard_Integer I, J;
-
-  aBoundaryType = another->BoundaryType();
-  aPatchType = another->PatchType();
-  allNbUSegments = another->NbUSegments();
-  allNbVSegments = another->NbVSegments();
-
-  Handle(TColStd_HArray1OfReal) allUBreakPoints =
-    new TColStd_HArray1OfReal(1, allNbUSegments+1);
-
-  Handle(TColStd_HArray1OfReal) allVBreakPoints =
-    new TColStd_HArray1OfReal(1, allNbVSegments+1);
-
-  for ( I =1; I <= allNbUSegments+1; I++)
-    allUBreakPoints->SetValue(I, another->UBreakPoint(I));
-
-  for ( I =1; I <= allNbVSegments+1; I++)
-    allVBreakPoints->SetValue(I, another->VBreakPoint(I));
-
-  Handle(IGESBasic_HArray2OfHArray1OfReal) allXCoeffs = new 
-    IGESBasic_HArray2OfHArray1OfReal(1,allNbUSegments,1,allNbVSegments);
-
-  Handle(IGESBasic_HArray2OfHArray1OfReal) allYCoeffs = new 
-    IGESBasic_HArray2OfHArray1OfReal(1,allNbUSegments,1,allNbVSegments);
-
-  Handle(IGESBasic_HArray2OfHArray1OfReal) allZCoeffs = new 
-    IGESBasic_HArray2OfHArray1OfReal(1,allNbUSegments,1,allNbVSegments);
-
-  Handle(TColStd_HArray1OfReal) temp =
-    new TColStd_HArray1OfReal(1, 16);
-
-  for (I =1; I <= allNbUSegments; I++) 
-    for (J = 1; J <= allNbVSegments; J++)
-      {
-	temp = another->XPolynomial(I, J);
-	allXCoeffs->SetValue(I,J,temp);
-	temp = another->YPolynomial(I,J);
-	allYCoeffs->SetValue(I,J,temp);
-	temp = another->ZPolynomial(I,J);
-	allZCoeffs->SetValue(I,J,temp);
-      }
-
-  ent->Init(aBoundaryType , aPatchType, allUBreakPoints, allVBreakPoints, 
-	    allXCoeffs, allYCoeffs, allZCoeffs);
-}   
 
 
 IGESData_DirChecker IGESGeom_ToolSplineSurface::DirChecker

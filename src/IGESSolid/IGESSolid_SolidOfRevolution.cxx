@@ -19,17 +19,12 @@
 #include <gp_Dir.hxx>
 #include <gp_GTrsf.hxx>
 #include <gp_Pnt.hxx>
-#include <gp_XYZ.hxx>
-#include <IGESData_IGESEntity.hxx>
 #include <IGESSolid_SolidOfRevolution.hxx>
-#include <Standard_Type.hxx>
+#include <Interface_EntityIterator.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESSolid_SolidOfRevolution,IGESData_IGESEntity)
 
-IGESSolid_SolidOfRevolution::IGESSolid_SolidOfRevolution ()    {  }
-
-
-    void  IGESSolid_SolidOfRevolution::Init
+void IGESSolid_SolidOfRevolution::Init
   (const Handle(IGESData_IGESEntity)& aCurve, const Standard_Real Fract,
    const gp_XYZ& AxisPnt, const gp_XYZ& Direction)
 {
@@ -41,57 +36,55 @@ IGESSolid_SolidOfRevolution::IGESSolid_SolidOfRevolution ()    {  }
 // Form 0 : Curve closed to Axis;   Form 1 : Curve closed to itself
 }
 
-    void  IGESSolid_SolidOfRevolution::SetClosedToAxis (const Standard_Boolean F)
+void IGESSolid_SolidOfRevolution::SetClosedToAxis (const Standard_Boolean F)
 {
   InitTypeAndForm(162, (F ? 0 : 1));
 }
 
-    Standard_Boolean IGESSolid_SolidOfRevolution::IsClosedToAxis () const
+Standard_Boolean IGESSolid_SolidOfRevolution::IsClosedToAxis () const
 {
   return (FormNumber() == 0);
 }
 
-
-    Handle(IGESData_IGESEntity)  IGESSolid_SolidOfRevolution::Curve () const
-{
-  return theCurve;
-}
-
-    Standard_Real  IGESSolid_SolidOfRevolution::Fraction () const
-{
-  return theFraction;
-}
-
-    gp_Pnt  IGESSolid_SolidOfRevolution::AxisPoint () const
+gp_Pnt IGESSolid_SolidOfRevolution::AxisPoint () const
 {
   return gp_Pnt(theAxisPoint);
 }
 
-    gp_Pnt  IGESSolid_SolidOfRevolution::TransformedAxisPoint () const
+gp_Pnt IGESSolid_SolidOfRevolution::TransformedAxisPoint () const
 {
-  if (!HasTransf()) return gp_Pnt(theAxisPoint);
-  else
-    {
-      gp_XYZ tmp = theAxisPoint;
-      Location().Transforms(tmp);
-      return gp_Pnt(tmp);
-    }
+  if (!HasTransf())
+    return gp_Pnt(theAxisPoint);
+
+  gp_XYZ tmp = theAxisPoint;
+  Location().Transforms(tmp);
+  return gp_Pnt(tmp);
 }
 
-    gp_Dir  IGESSolid_SolidOfRevolution::Axis () const
+gp_Dir IGESSolid_SolidOfRevolution::Axis () const
 {
   return gp_Dir(theAxis);
 }
 
-    gp_Dir  IGESSolid_SolidOfRevolution::TransformedAxis () const
+gp_Dir IGESSolid_SolidOfRevolution::TransformedAxis () const
 {
-  if (!HasTransf()) return gp_Dir(theAxis);
-  else
-    {
-      gp_XYZ tmp = theAxis;
-      gp_GTrsf loc = Location();
-      loc.SetTranslationPart(gp_XYZ(0.,0.,0.));
-      loc.Transforms(tmp);
-      return gp_Dir(tmp);
-    }
+  if (!HasTransf())
+    return gp_Dir(theAxis);
+
+  gp_XYZ tmp = theAxis;
+  gp_GTrsf loc = Location();
+  loc.SetTranslationPart(gp_XYZ(0.,0.,0.));
+  loc.Transforms(tmp);
+  return gp_Dir(tmp);
+}
+
+void IGESSolid_SolidOfRevolution::OwnShared(Interface_EntityIterator &theIter) const
+{
+  theIter.GetOneItem(Curve());
+}
+
+void IGESSolid_SolidOfRevolution::OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &theCheck) const
+{
+  if (Fraction() <= 0. || Fraction() > 1.)
+    theCheck->AddFail("Fraction of rotation : Incorrect value");
 }

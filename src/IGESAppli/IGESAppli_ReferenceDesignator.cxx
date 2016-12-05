@@ -23,10 +23,7 @@
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESAppli_ReferenceDesignator,IGESData_IGESEntity)
 
-IGESAppli_ReferenceDesignator::IGESAppli_ReferenceDesignator ()    {  }
-
-
-    void  IGESAppli_ReferenceDesignator::Init
+void IGESAppli_ReferenceDesignator::Init
   (const Standard_Integer nbPropVal,
    const Handle(TCollection_HAsciiString)& aText)
 {
@@ -35,14 +32,15 @@ IGESAppli_ReferenceDesignator::IGESAppli_ReferenceDesignator ()    {  }
   InitTypeAndForm(406,7);
 }
 
-
-    Standard_Integer  IGESAppli_ReferenceDesignator::NbPropertyValues () const
+void IGESAppli_ReferenceDesignator::OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &theCheck) const
 {
-  return theNbPropertyValues;
-}
-
-    Handle(TCollection_HAsciiString)
-    IGESAppli_ReferenceDesignator::RefDesignatorText () const
-{
-  return theRefDesigText;
+  if (SubordinateStatus() != 0)
+    //the level is ignored if this property is subordinate
+    if (DefLevel() != IGESData_DefOne &&
+	    DefLevel() != IGESData_DefSeveral)
+      theCheck->AddFail("Level type: Not value/reference");
+  if (NbPropertyValues() != 1)
+    theCheck->AddFail("Number of Property Values != 1");
+  //UNFINISHED
+  //the level is ignored if this property is subordinate -- queried
 }

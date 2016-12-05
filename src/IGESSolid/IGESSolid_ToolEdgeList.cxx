@@ -31,7 +31,6 @@
 #include <IGESSolid_ToolEdgeList.hxx>
 #include <IGESSolid_VertexList.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
@@ -39,15 +38,6 @@
 #include <Message_Msg.hxx>
 #include <Standard_DomainError.hxx>
 #include <TColStd_HArray1OfInteger.hxx>
-
-// MGE 03/08/98
-//=======================================================================
-//function : IGESSolid_ToolEdgeList
-//purpose  : 
-//=======================================================================
-IGESSolid_ToolEdgeList::IGESSolid_ToolEdgeList ()
-{
-}
 
 
 //=======================================================================
@@ -227,76 +217,6 @@ void IGESSolid_ToolEdgeList::WriteOwnParams(const Handle(IGESSolid_EdgeList)& en
 
 
 //=======================================================================
-//function : OwnShared
-//purpose  : 
-//=======================================================================
-
-void IGESSolid_ToolEdgeList::OwnShared(const Handle(IGESSolid_EdgeList)& ent,
-                                       Interface_EntityIterator& iter) const
-{
-  Standard_Integer length = ent->NbEdges();
-  for (Standard_Integer i = 1; i <= length; i ++)
-    {
-      iter.GetOneItem(ent->Curve(i));
-      iter.GetOneItem(ent->StartVertexList(i));
-      iter.GetOneItem(ent->EndVertexList(i));
-    }
-}
-
-
-//=======================================================================
-//function : OwnCopy
-//purpose  : 
-//=======================================================================
-
-void IGESSolid_ToolEdgeList::OwnCopy(const Handle(IGESSolid_EdgeList)& another,
-                                     const Handle(IGESSolid_EdgeList)& ent,
-                                     Interface_CopyTool& TC) const
-{
-  Standard_Integer length;
-
-  length = another->NbEdges();
-  Handle(IGESData_HArray1OfIGESEntity) tempCurves =
-    new IGESData_HArray1OfIGESEntity(1, length);
-  Handle(IGESSolid_HArray1OfVertexList) tempStartVertexList =
-    new IGESSolid_HArray1OfVertexList(1, length);
-  Handle(TColStd_HArray1OfInteger)   tempStartVertexIndex =
-    new TColStd_HArray1OfInteger(1, length);
-  Handle(IGESSolid_HArray1OfVertexList) tempEndVertexList =
-    new IGESSolid_HArray1OfVertexList(1, length);
-  Handle(TColStd_HArray1OfInteger)   tempEndVertexIndex =
-    new TColStd_HArray1OfInteger(1, length);
-
-  for (Standard_Integer i=1 ; i<=length ; i++)
-    {
-      // Curves
-      DeclareAndCast(IGESData_IGESEntity, curve,
-		     TC.Transferred(another->Curve(i)));
-      tempCurves->SetValue(i, curve);
-
-      // Start vertex list
-      DeclareAndCast(IGESSolid_VertexList, start,
-		     TC.Transferred(another->StartVertexList(i)));
-      tempStartVertexList->SetValue(i, start);
-
-      // Start vertex index
-      tempStartVertexIndex->SetValue(i, another->StartVertexIndex(i));
-
-      // End vertex list
-      DeclareAndCast(IGESSolid_VertexList, end,
-		     TC.Transferred(another->EndVertexList(i)));
-      tempEndVertexList->SetValue(i, end);
-
-      // End vertex index
-      tempEndVertexIndex->SetValue(i, another->EndVertexIndex(i));
-    }
-
-  ent->Init (tempCurves, tempStartVertexList, tempStartVertexIndex,
-	     tempEndVertexList, tempEndVertexIndex);
-}
-
-
-//=======================================================================
 //function : DirChecker
 //purpose  : 
 //=======================================================================
@@ -314,28 +234,6 @@ IGESData_DirChecker IGESSolid_ToolEdgeList::DirChecker
   DC.SubordinateStatusRequired (1);
   DC.HierarchyStatusRequired (1);
   return DC;
-}
-
-
-//=======================================================================
-//function : OwnCheck
-//purpose  : 
-//=======================================================================
-
-void IGESSolid_ToolEdgeList::OwnCheck(const Handle(IGESSolid_EdgeList)& ent,
-                                      const Interface_ShareTool&,
-                                      Handle(Interface_Check)& ach) const
-{
-  // MGE 03/08/98
-  // Building of messages
-  //========================================
-  //Message_Msg Msg184("XSTEP_184");
-  //========================================
-
-  if (ent->NbEdges() <= 0) {
-    Message_Msg Msg184("XSTEP_184");
-    ach->SendFail(Msg184);
-  }
 }
 
 

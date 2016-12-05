@@ -13,7 +13,6 @@
 
 
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_GeneralModule.hxx>
 #include <Interface_InterfaceModel.hxx>
@@ -51,35 +50,6 @@ void  Interface_GeneralModule::FillShared
    const Handle(Standard_Transient)& /*ent*/,
    Interface_EntityIterator& /*iter*/) const
 {  }  // Par defaut, pas d Imply
-
-
-    Standard_Boolean  Interface_GeneralModule::CanCopy
-  (const Standard_Integer /*CN*/, const Handle(Standard_Transient)& /*ent*/) const
-      {  return Standard_False;  }
-
-    Standard_Boolean  Interface_GeneralModule::Dispatch
-  (const Standard_Integer, const Handle(Standard_Transient)& entfrom,
-   Handle(Standard_Transient)& entto, Interface_CopyTool& ) const
-      {  entto = entfrom;  return Standard_False;  }
-
-    Standard_Boolean  Interface_GeneralModule::NewCopiedCase
-  (const Standard_Integer, const Handle(Standard_Transient)&,
-   Handle(Standard_Transient)&, Interface_CopyTool& ) const
-      {  return Standard_False;  }
-
-
-    void  Interface_GeneralModule::RenewImpliedCase
-  (const Standard_Integer /*casenum*/,
-   const Handle(Standard_Transient)& /*entfrom*/,
-   const Handle(Standard_Transient)& /*entto*/,
-   const Interface_CopyTool& /*TC*/) const 
-{  }    // Par defaut, ne fait rien
-
-    void  Interface_GeneralModule::WhenDeleteCase
-  (const Standard_Integer /*casenum*/,
-   const Handle(Standard_Transient)& /*ent*/,
-   const Standard_Boolean /*dispatched*/) const
-{  }    // par defaut, ne fait rien
 
     Standard_Integer  Interface_GeneralModule::CategoryNumber
   (const Standard_Integer , const Handle(Standard_Transient)& ,

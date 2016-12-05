@@ -14,7 +14,6 @@
 
 #include <IGESData_ColorEntity.hxx>
 #include <IGESData_DirPart.hxx>
-#include <IGESData_FileRecognizer.hxx>
 #include <IGESData_IGESEntity.hxx>
 #include <IGESData_IGESModel.hxx>
 #include <IGESData_IGESReaderData.hxx>
@@ -45,39 +44,27 @@
 IGESData_IGESReaderTool::IGESData_IGESReaderTool
   (const Handle(IGESData_IGESReaderData)& reader,
    const Handle(IGESData_Protocol)& protocol)
-      : theglib(protocol) , therlib(protocol)
-      {  SetData (reader,protocol);  }
+: Interface_FileReaderTool(protocol)
+{  SetData (reader,protocol);  }
 
 
 //  ###########################################################################
 //  ########                        PREPARATION                        ########
 
-    void IGESData_IGESReaderTool::Prepare
-  (const Handle(IGESData_FileRecognizer)& reco)
+void IGESData_IGESReaderTool::Prepare ()
 {
   DeclareAndCast(IGESData_IGESReaderData,igesdat,Data());
   igesdat->SetEntityNumbers();
-  thereco = reco;
   SetEntities();
   thelist = igesdat->Params(0);
 }
 
 
-    Standard_Boolean IGESData_IGESReaderTool::Recognize
-  (const Standard_Integer num, Handle(Interface_Check)& ach,
-   Handle(Standard_Transient)& ent)
+Standard_Boolean IGESData_IGESReaderTool::Recognize (const Standard_Integer num, Handle(Standard_Transient)& ent)
 {
   DeclareAndCast(IGESData_IGESReaderData,igesdat,Data());
   thecnum = num;  thectyp = igesdat->DirType(num);
-  Handle(IGESData_IGESEntity) anent;
-  Standard_Boolean res = Standard_False;
-
-//  Recognizer -> Liste limitative
-  if (!thereco.IsNull()) res = thereco->Evaluate(thectyp,anent);
-  if (res) ent = anent;
-//  Sinon, Library
-  else res = RecognizeByLib (num,theglib,therlib,ach,ent);
-  return res;
+  return RecognizeByLib (num,ent);
 }
 
 
@@ -86,8 +73,7 @@ IGESData_IGESReaderTool::IGESData_IGESReaderTool
 
 //    (Elements enchaines par la classe de base Interface_FileReaderTool)
 
-    void IGESData_IGESReaderTool::BeginRead
-  (const Handle(Interface_InterfaceModel)& amodel)
+void IGESData_IGESReaderTool::BeginRead (const Handle(Interface_InterfaceModel)& amodel)
 {
   DeclareAndCast(IGESData_IGESModel,amod,amodel);
   DeclareAndCast(IGESData_IGESReaderData,igesdat,Data());
@@ -106,11 +92,8 @@ IGESData_IGESReaderTool::IGESData_IGESReaderTool
 
 
 // Manquent les procedures de reprise sur erreur en cours de route ...
-    Standard_Boolean  IGESData_IGESReaderTool::AnalyseRecord
-  (const Standard_Integer num, const Handle(Standard_Transient)& anent,
-   Handle(Interface_Check)& ach)
+Standard_Boolean IGESData_IGESReaderTool::AnalyseRecord (const Standard_Integer num, const Handle(Standard_Transient)& anent, Handle(Interface_Check)& ach)
 {
-
   Handle(TCollection_HAsciiString) lab;
 
   DeclareAndCast(IGESData_IGESEntity,ent,anent);
@@ -171,11 +154,6 @@ IGESData_IGESReaderTool::IGESData_IGESReaderTool
   ReadProps (ent,igesdat,PR);
   if   (!PR.IsCheckEmpty()) ach = PR.Check();
   return (!ach->HasFailed());
-}
-
-    void IGESData_IGESReaderTool::EndRead
-  (const Handle(Interface_InterfaceModel)& /* amodel */)
-{
 }
 
 

@@ -30,22 +30,12 @@
 #include <IGESGeom_ToolTrimmedSurface.hxx>
 #include <IGESGeom_TrimmedSurface.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Message_Msg.hxx>
 #include <Standard_DomainError.hxx>
-
-// MGE 31/07/98
-//=======================================================================
-//function : IGESGeom_ToolTrimmedSurface
-//purpose  : 
-//=======================================================================
-IGESGeom_ToolTrimmedSurface::IGESGeom_ToolTrimmedSurface ()
-{
-}
 
 
 //=======================================================================
@@ -215,38 +205,6 @@ void IGESGeom_ToolTrimmedSurface::OwnShared(const Handle(IGESGeom_TrimmedSurface
   iter.GetOneItem(ent->OuterContour());
   Standard_Integer I;
   for (I = 1; I <= up; I ++)  iter.GetOneItem(ent->InnerContour(I));
-}
-
-
-//=======================================================================
-//function : OwnCopy
-//purpose  : 
-//=======================================================================
-
-void IGESGeom_ToolTrimmedSurface::OwnCopy(const Handle(IGESGeom_TrimmedSurface)& another,
-                                          const Handle(IGESGeom_TrimmedSurface)& ent,
-                                          Interface_CopyTool& TC) const
-{
-  Handle(IGESGeom_HArray1OfCurveOnSurface) anInner;
-
-  DeclareAndCast(IGESData_IGESEntity, aSurface,
-                 TC.Transferred(another->Surface()));
-  Standard_Integer aFlag = another->OuterBoundaryType();
-  DeclareAndCast(IGESGeom_CurveOnSurface, anOuter,
-                 TC.Transferred(another->OuterContour()));
-  Standard_Integer count = another->NbInnerContours();
-
-  if (count > 0) {
-    anInner = new IGESGeom_HArray1OfCurveOnSurface(1, count);
-    Standard_Integer I;
-    for (I = 1; I <= count; I++) {
-      DeclareAndCast(IGESGeom_CurveOnSurface, temp,
-		     TC.Transferred(another->InnerContour(I)));
-      anInner->SetValue(I, temp);
-    }
-  }
-
-  ent->Init(aSurface, aFlag, anOuter, anInner);
 }
 
 

@@ -30,14 +30,11 @@
 #include <IGESDimen_SectionedArea.hxx>
 #include <IGESDimen_ToolSectionedArea.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-
-IGESDimen_ToolSectionedArea::IGESDimen_ToolSectionedArea ()    {  }
 
 
 void IGESDimen_ToolSectionedArea::ReadOwnParams
@@ -107,33 +104,6 @@ void  IGESDimen_ToolSectionedArea::OwnShared
     iter.GetOneItem(ent->IslandCurve(i));
 }
 
-void IGESDimen_ToolSectionedArea::OwnCopy
-  (const Handle(IGESDimen_SectionedArea)& another,
-   const Handle(IGESDimen_SectionedArea)& ent, Interface_CopyTool& TC) const
-{
-  DeclareAndCast(IGESData_IGESEntity, extCurve,
-		 TC.Transferred(another->ExteriorCurve()));
-  Standard_Integer tempPattern = another->Pattern();
-  gp_XYZ passPnt = (another->PassingPoint()).XYZ();
-  Standard_Real tempDistance = another->Distance();
-  Standard_Real tempAngle = another->Angle();
-  Handle(IGESData_HArray1OfIGESEntity) tempIslands;
-  Standard_Integer nbislands = another->NbIslands();
-  if (nbislands > 0)
-    {
-      tempIslands = new IGESData_HArray1OfIGESEntity(1, nbislands);
-      for (Standard_Integer i=1; i<=nbislands; i++)
-	{
-          DeclareAndCast(IGESData_IGESEntity, anent,
-			 TC.Transferred(another->IslandCurve(i)));
-          tempIslands->SetValue(i, anent);
-	}
-    }
-  ent->Init(extCurve, tempPattern, passPnt,
-	    tempDistance, tempAngle, tempIslands);
-  ent->SetInverted (another->IsInverted());
-}
-
 IGESData_DirChecker IGESDimen_ToolSectionedArea::DirChecker
   (const Handle(IGESDimen_SectionedArea)& /* ent */ ) const
 {
@@ -146,12 +116,6 @@ IGESData_DirChecker IGESDimen_ToolSectionedArea::DirChecker
   DC.UseFlagRequired (1);
 
   return DC;
-}
-
-void IGESDimen_ToolSectionedArea::OwnCheck
-  (const Handle(IGESDimen_SectionedArea)& /* ent */,
-   const Interface_ShareTool& , Handle(Interface_Check)& /* ach */) const
-{
 }
 
 void IGESDimen_ToolSectionedArea::OwnDump

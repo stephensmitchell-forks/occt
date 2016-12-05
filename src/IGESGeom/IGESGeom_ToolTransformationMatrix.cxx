@@ -26,7 +26,6 @@
 #include <IGESGeom_ToolTransformationMatrix.hxx>
 #include <IGESGeom_TransformationMatrix.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
@@ -34,15 +33,6 @@
 #include <Message_Msg.hxx>
 #include <Standard_DomainError.hxx>
 #include <TColStd_HArray2OfReal.hxx>
-
-// MGE 03/08/98
-//=======================================================================
-//function : IGESGeom_ToolTransformationMatrix
-//purpose  : 
-//=======================================================================
-IGESGeom_ToolTransformationMatrix::IGESGeom_ToolTransformationMatrix ()
-{
-}
 
 
 //=======================================================================
@@ -91,38 +81,6 @@ void IGESGeom_ToolTransformationMatrix::WriteOwnParams
       IW.Send(ent->Data(I, J));
     }
   }
-}
-
-
-//=======================================================================
-//function : OwnShared
-//purpose  : 
-//=======================================================================
-
-void  IGESGeom_ToolTransformationMatrix::OwnShared
-  (const Handle(IGESGeom_TransformationMatrix)& /*ent*/, Interface_EntityIterator& /*iter*/) const
-{
-}
-
-
-//=======================================================================
-//function : OwnCopy
-//purpose  : 
-//=======================================================================
-
-void IGESGeom_ToolTransformationMatrix::OwnCopy
-  (const Handle(IGESGeom_TransformationMatrix)& another,
-   const Handle(IGESGeom_TransformationMatrix)& ent, Interface_CopyTool& /*TC*/) const
-{
-  Handle(TColStd_HArray2OfReal) data = new TColStd_HArray2OfReal(1, 3, 1, 4);
-  for (Standard_Integer I = 1; I <= 3;I++) {
-    for (Standard_Integer J = 1; J <= 4; J++) {
-      data->SetValue(I, J, another->Data(I, J));
-    }
-  }
-
-  ent->Init(data);
-  ent->SetFormNumber(another->FormNumber());
 }
 
 

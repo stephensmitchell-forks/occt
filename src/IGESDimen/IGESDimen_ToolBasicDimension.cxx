@@ -28,13 +28,10 @@
 #include <IGESDimen_BasicDimension.hxx>
 #include <IGESDimen_ToolBasicDimension.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-
-IGESDimen_ToolBasicDimension::IGESDimen_ToolBasicDimension ()    {  }
 
 
 void  IGESDimen_ToolBasicDimension::ReadOwnParams
@@ -70,20 +67,6 @@ void  IGESDimen_ToolBasicDimension::WriteOwnParams
   IW.Send(ent->UpperRight().Y());
   IW.Send(ent->UpperLeft().X());
   IW.Send(ent->UpperLeft().Y());
-}
-
-void  IGESDimen_ToolBasicDimension::OwnShared
-  (const Handle(IGESDimen_BasicDimension)& /* ent */, Interface_EntityIterator& /* iter */) const
-{
-}
-
-void  IGESDimen_ToolBasicDimension::OwnCopy
-  (const Handle(IGESDimen_BasicDimension)& another,
-   const Handle(IGESDimen_BasicDimension)& ent, Interface_CopyTool& /* TC */) const
-{
-  ent->Init
-    (8,another->LowerLeft().XY(),another->LowerRight().XY(),
-     another->UpperRight().XY(),another->UpperLeft().XY());
 }
 
 Standard_Boolean  IGESDimen_ToolBasicDimension::OwnCorrect

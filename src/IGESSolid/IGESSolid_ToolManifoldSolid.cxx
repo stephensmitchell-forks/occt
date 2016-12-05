@@ -29,7 +29,6 @@
 #include <IGESSolid_Shell.hxx>
 #include <IGESSolid_ToolManifoldSolid.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
@@ -37,9 +36,6 @@
 #include <Message_Msg.hxx>
 #include <Standard_DomainError.hxx>
 #include <TColStd_HArray1OfInteger.hxx>
-
-// MGE 31/07/98
-IGESSolid_ToolManifoldSolid::IGESSolid_ToolManifoldSolid ()    {  }
 
 
 void  IGESSolid_ToolManifoldSolid::ReadOwnParams
@@ -151,41 +147,6 @@ void  IGESSolid_ToolManifoldSolid::WriteOwnParams
     }
 }
 
-void  IGESSolid_ToolManifoldSolid::OwnShared
-  (const Handle(IGESSolid_ManifoldSolid)& ent, Interface_EntityIterator& iter) const
-{
-  Standard_Integer i;
-  Standard_Integer nbshells = ent->NbVoidShells();
-
-  iter.GetOneItem(ent->Shell());
-  for (i = 1; i <= nbshells; i ++)    iter.GetOneItem(ent->VoidShell(i));
-}
-
-void  IGESSolid_ToolManifoldSolid::OwnCopy
-  (const Handle(IGESSolid_ManifoldSolid)& another,
-   const Handle(IGESSolid_ManifoldSolid)& ent, Interface_CopyTool& TC) const
-{
-  DeclareAndCast(IGESSolid_Shell, shell, TC.Transferred(another->Shell()));
-  Standard_Boolean shellFlag = another->OrientationFlag();
-
-  Standard_Integer nbshells = another->NbVoidShells();
-  Handle(IGESSolid_HArray1OfShell) voidShells;
-  Handle(TColStd_HArray1OfInteger) voidFlags;
-  if (nbshells > 0)
-    {
-      voidShells = new IGESSolid_HArray1OfShell(1, nbshells);
-      voidFlags  = new TColStd_HArray1OfInteger(1, nbshells);
-      for (Standard_Integer i = 1; i <= nbshells; i ++)
-	{
-          DeclareAndCast(IGESSolid_Shell, voidshell,
-			 TC.Transferred(another->VoidShell(i)));
-          voidShells->SetValue(i, voidshell);
-          voidFlags->SetValue(i, (another->VoidOrientationFlag(i) ? 1 : 0));
-	}
-    }
-  ent->Init (shell, shellFlag, voidShells, voidFlags);
-}
-
 IGESData_DirChecker  IGESSolid_ToolManifoldSolid::DirChecker
   (const Handle(IGESSolid_ManifoldSolid)& /* ent */ ) const
 {
@@ -197,12 +158,6 @@ IGESData_DirChecker  IGESSolid_ToolManifoldSolid::DirChecker
   DC.Color      (IGESData_DefAny);
 
   return DC;
-}
-
-void  IGESSolid_ToolManifoldSolid::OwnCheck
-  (const Handle(IGESSolid_ManifoldSolid)& /* ent */,
-   const Interface_ShareTool& , Handle(Interface_Check)& /* ach */) const
-{
 }
 
 void  IGESSolid_ToolManifoldSolid::OwnDump

@@ -21,14 +21,11 @@
 #include <IGESGeom_Direction.hxx>
 #include <IGESGeom_Point.hxx>
 #include <IGESSolid_SphericalSurface.hxx>
-#include <Standard_Type.hxx>
+#include <Interface_EntityIterator.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESSolid_SphericalSurface,IGESData_IGESEntity)
 
-IGESSolid_SphericalSurface::IGESSolid_SphericalSurface ()    {  }
-
-
-    void  IGESSolid_SphericalSurface::Init
+void IGESSolid_SphericalSurface::Init
   (const Handle(IGESGeom_Point)& aCenter,
    const Standard_Real aRadius,
    const Handle(IGESGeom_Direction)& anAxis,
@@ -41,38 +38,28 @@ IGESSolid_SphericalSurface::IGESSolid_SphericalSurface ()    {  }
   InitTypeAndForm(196, (theRefDir.IsNull() ? 0 : 1) );
 }
 
-    Handle(IGESGeom_Point)  IGESSolid_SphericalSurface::Center () const
+gp_Pnt IGESSolid_SphericalSurface::TransformedCenter () const
 {
-  return theCenter;
+  if (!HasTransf())
+    return theCenter->Value();
+
+  gp_XYZ tmp = (theCenter->Value()).XYZ();
+  Location().Transforms(tmp);
+  return gp_Pnt(tmp);
 }
 
-    gp_Pnt  IGESSolid_SphericalSurface::TransformedCenter () const
+void IGESSolid_SphericalSurface::OwnShared(Interface_EntityIterator &theIter) const
 {
-  if (!HasTransf()) return theCenter->Value();
-  else
-    {
-      gp_XYZ tmp = (theCenter->Value()).XYZ();
-      Location().Transforms(tmp);
-      return gp_Pnt(tmp);
-    }
+  theIter.GetOneItem(Center());
+  theIter.GetOneItem(Axis());
+  theIter.GetOneItem(ReferenceDir());
 }
 
-    Standard_Real  IGESSolid_SphericalSurface::Radius () const
+void IGESSolid_SphericalSurface::OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &theCheck) const
 {
-  return theRadius;
-}
-
-    Handle(IGESGeom_Direction)  IGESSolid_SphericalSurface::Axis () const
-{
-  return theAxis;
-}
-
-    Handle(IGESGeom_Direction)  IGESSolid_SphericalSurface::ReferenceDir () const
-{
-  return theRefDir;
-}
-
-    Standard_Boolean  IGESSolid_SphericalSurface::IsParametrised () const
-{
-  return !(theRefDir.IsNull());
+  if (Radius() <= 0.0)
+    theCheck->AddFail("Radius : Not Positive");
+  const Standard_Integer fn = (IsParametrised()? 1 : 0);
+  if (fn != FormNumber()) theCheck->AddFail("Parametrised Status Mismatches with Form Number");
+  if (Axis().IsNull() && IsParametrised()) theCheck->AddFail("Parametrised Spherical Surface : no Axis is defined");
 }

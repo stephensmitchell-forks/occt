@@ -17,15 +17,9 @@
 #ifndef _IGESData_ReadWriteModule_HeaderFile
 #define _IGESData_ReadWriteModule_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
 #include <Interface_ReaderModule.hxx>
-#include <Standard_Integer.hxx>
-class Standard_DomainError;
 class Interface_FileReaderData;
 class Interface_Check;
-class Standard_Transient;
 class IGESData_IGESEntity;
 class IGESData_IGESReaderData;
 class IGESData_ParamReader;
@@ -55,10 +49,8 @@ DEFINE_STANDARD_HANDLE(IGESData_ReadWriteModule, Interface_ReaderModule)
 //! Warning : Works with an IGESReaderData which stores "DE parts" of Items
 class IGESData_ReadWriteModule : public Interface_ReaderModule
 {
+ public:
 
-public:
-
-  
   //! Translates the Type of record <num> in <data> to a positive
   //! Case Number, or 0 if failed.
   //! Works with IGESReaderData which provides Type & Form Numbers,
@@ -90,27 +82,7 @@ public:
   //! WriteIGES, must not be sent by this method
   Standard_EXPORT virtual void WriteOwnParams (const Standard_Integer CN, const Handle(IGESData_IGESEntity)& ent, IGESData_IGESWriter& IW) const = 0;
 
-
-
-
   DEFINE_STANDARD_RTTIEXT(IGESData_ReadWriteModule,Interface_ReaderModule)
-
-protected:
-
-
-
-
-private:
-
-
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESData_ReadWriteModule_HeaderFile

@@ -17,14 +17,8 @@
 #ifndef _IGESData_FileProtocol_HeaderFile
 #define _IGESData_FileProtocol_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
 #include <IGESData_Protocol.hxx>
-#include <Standard_Integer.hxx>
-class IGESData_Protocol;
-class Interface_Protocol;
-
+#include <NCollection_Vector.hxx>
 
 class IGESData_FileProtocol;
 DEFINE_STANDARD_HANDLE(IGESData_FileProtocol, IGESData_Protocol)
@@ -36,45 +30,25 @@ DEFINE_STANDARD_HANDLE(IGESData_FileProtocol, IGESData_Protocol)
 //! UndefinedEntity too
 class IGESData_FileProtocol : public IGESData_Protocol
 {
+ public:
 
-public:
-
-  
   //! Returns an empty FileProtocol
-  Standard_EXPORT IGESData_FileProtocol();
+  IGESData_FileProtocol() {}
   
   //! Adds a resource
-  Standard_EXPORT void Add (const Handle(IGESData_Protocol)& protocol);
+  Standard_EXPORT void Add (const Handle(IGESData_Protocol)& theProtocol);
   
   //! Gives the count of Resources : the count of Added Protocols
   Standard_EXPORT virtual Standard_Integer NbResources() const Standard_OVERRIDE;
   
   //! Returns a Resource, given a rank (rank of call to Add)
-  Standard_EXPORT virtual Handle(Interface_Protocol) Resource (const Standard_Integer num) const Standard_OVERRIDE;
-
-
-
+  Standard_EXPORT virtual Handle(Interface_Protocol) Resource (const Standard_Integer theIndex) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESData_FileProtocol,IGESData_Protocol)
 
-protected:
+ private:
 
-
-
-
-private:
-
-
-  Handle(IGESData_Protocol) theresource;
-  Handle(IGESData_FileProtocol) thenext;
-
-
+  NCollection_Vector<Handle(IGESData_Protocol)> myResources;
 };
-
-
-
-
-
-
 
 #endif // _IGESData_FileProtocol_HeaderFile

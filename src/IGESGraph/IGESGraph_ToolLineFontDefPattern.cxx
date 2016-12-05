@@ -26,7 +26,6 @@
 #include <IGESGraph_LineFontDefPattern.hxx>
 #include <IGESGraph_ToolLineFontDefPattern.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
@@ -34,8 +33,6 @@
 #include <Standard_DomainError.hxx>
 #include <TCollection_HAsciiString.hxx>
 #include <TColStd_HArray1OfReal.hxx>
-
-IGESGraph_ToolLineFontDefPattern::IGESGraph_ToolLineFontDefPattern ()    {  }
 
 
 void IGESGraph_ToolLineFontDefPattern::ReadOwnParams
@@ -79,27 +76,6 @@ void IGESGraph_ToolLineFontDefPattern::WriteOwnParams
   for (I = 1; I <= up; I++)
     IW.Send(ent->Length(I));
   IW.Send(ent->DisplayPattern());
-}
-
-void  IGESGraph_ToolLineFontDefPattern::OwnShared
-  (const Handle(IGESGraph_LineFontDefPattern)& /*ent*/, Interface_EntityIterator& /*iter*/) const
-{
-}
-
-void IGESGraph_ToolLineFontDefPattern::OwnCopy
-  (const Handle(IGESGraph_LineFontDefPattern)& another,
-   const Handle(IGESGraph_LineFontDefPattern)& ent, Interface_CopyTool& /*TC*/) const
-{
-  Handle(TColStd_HArray1OfReal) tempSegmentLengths =
-    new TColStd_HArray1OfReal(1, another->NbSegments());
-  Standard_Integer I;
-  Standard_Integer up  = another->NbSegments();
-  for (I = 1; I <= up; I++)
-    tempSegmentLengths->SetValue(I, another->Length(I));
-  Handle(TCollection_HAsciiString) tempDisplayPattern =
-    new TCollection_HAsciiString(another->DisplayPattern());
-
-  ent->Init(tempSegmentLengths, tempDisplayPattern);
 }
 
 IGESData_DirChecker IGESGraph_ToolLineFontDefPattern::DirChecker

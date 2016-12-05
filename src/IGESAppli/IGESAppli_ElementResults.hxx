@@ -17,11 +17,6 @@
 #ifndef _IGESAppli_ElementResults_HeaderFile
 #define _IGESAppli_ElementResults_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
-#include <Standard_Integer.hxx>
-#include <Standard_Real.hxx>
 #include <TColStd_HArray1OfInteger.hxx>
 #include <IGESAppli_HArray1OfFiniteElement.hxx>
 #include <IGESData_IGESEntity.hxx>
@@ -29,8 +24,6 @@
 class IGESDimen_GeneralNote;
 class IGESBasic_HArray1OfHArray1OfInteger;
 class IGESBasic_HArray1OfHArray1OfReal;
-class Standard_DimensionMismatch;
-class Standard_OutOfRange;
 class IGESAppli_FiniteElement;
 
 
@@ -42,11 +35,9 @@ DEFINE_STANDARD_HANDLE(IGESAppli_ElementResults, IGESData_IGESEntity)
 //! Used to find the results of FEM analysis
 class IGESAppli_ElementResults : public IGESData_IGESEntity
 {
+ public:
 
-public:
-
-  
-  Standard_EXPORT IGESAppli_ElementResults();
+  IGESAppli_ElementResults() {}
   
   //! This method is used to set the fields of the class
   //! ElementResults
@@ -70,28 +61,28 @@ public:
   Standard_EXPORT void SetFormNumber (const Standard_Integer form);
   
   //! returns General Note Entity describing analysis case
-  Standard_EXPORT Handle(IGESDimen_GeneralNote) Note() const;
-  
+  const Handle(IGESDimen_GeneralNote) & Note() const { return theNote; }
+
   //! returns analysis Subcase number
-  Standard_EXPORT Standard_Integer SubCaseNumber() const;
-  
+  Standard_Integer SubCaseNumber() const { return theSubcaseNumber; }
+
   //! returns analysis time value
-  Standard_EXPORT Standard_Real Time() const;
-  
+  Standard_Real Time() const { return theTime; }
+
   //! returns number of result values per FEM
-  Standard_EXPORT Standard_Integer NbResultValues() const;
-  
+  Standard_Integer NbResultValues() const { return theNbResultValues; }
+
   //! returns Results Reporting Flag
-  Standard_EXPORT Standard_Integer ResultReportFlag() const;
-  
+  Standard_Integer ResultReportFlag() const { return theResultReportFlag; }
+
   //! returns number of FEM elements
   Standard_EXPORT Standard_Integer NbElements() const;
-  
+
   //! returns FEM element number for elements
   Standard_EXPORT Standard_Integer ElementIdentifier (const Standard_Integer Index) const;
   
   //! returns FEM element
-  Standard_EXPORT Handle(IGESAppli_FiniteElement) Element (const Standard_Integer Index) const;
+  Standard_EXPORT const Handle(IGESAppli_FiniteElement) & Element (const Standard_Integer Index) const;
   
   //! returns element Topology Types
   Standard_EXPORT Standard_Integer ElementTopologyType (const Standard_Integer Index) const;
@@ -136,18 +127,13 @@ public:
   //! addressed as by ResultRank (See above)
   Standard_EXPORT Handle(TColStd_HArray1OfReal) ResultList (const Standard_Integer NElem) const;
 
+  Standard_EXPORT virtual void OwnShared(Interface_EntityIterator &theIter) const Standard_OVERRIDE;
 
-
+  Standard_EXPORT virtual void OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESAppli_ElementResults,IGESData_IGESEntity)
 
-protected:
-
-
-
-
-private:
-
+ private:
 
   Handle(IGESDimen_GeneralNote) theNote;
   Standard_Integer theSubcaseNumber;
@@ -162,14 +148,6 @@ private:
   Handle(TColStd_HArray1OfInteger) theNbResultDataLocs;
   Handle(IGESBasic_HArray1OfHArray1OfInteger) theResultDataLocs;
   Handle(IGESBasic_HArray1OfHArray1OfReal) theResultData;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESAppli_ElementResults_HeaderFile

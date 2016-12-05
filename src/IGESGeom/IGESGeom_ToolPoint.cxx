@@ -30,16 +30,12 @@
 #include <IGESGeom_Point.hxx>
 #include <IGESGeom_ToolPoint.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Message_Msg.hxx>
 #include <Standard_DomainError.hxx>
-
-// MGE 28/07/98
-IGESGeom_ToolPoint::IGESGeom_ToolPoint ()    {  }
 
 
 void IGESGeom_ToolPoint::ReadOwnParams
@@ -108,17 +104,6 @@ void  IGESGeom_ToolPoint::OwnShared
   iter.GetOneItem(ent->DisplaySymbol());
 }
 
-void IGESGeom_ToolPoint::OwnCopy
-  (const Handle(IGESGeom_Point)& another,
-   const Handle(IGESGeom_Point)& ent, Interface_CopyTool& TC) const
-{
-  gp_XYZ aPoint = (another->Value()).XYZ();
-
-  DeclareAndCast(IGESBasic_SubfigureDef, aSymbol, 
-                 TC.Transferred(another->DisplaySymbol()));
-  ent->Init(aPoint, aSymbol);
-}
-
 
 IGESData_DirChecker IGESGeom_ToolPoint::DirChecker
   (const Handle(IGESGeom_Point)& ent )   const
@@ -132,12 +117,6 @@ IGESData_DirChecker IGESGeom_ToolPoint::DirChecker
     }
   DC.Color(IGESData_DefAny);
   return DC;
-}
-
-void IGESGeom_ToolPoint::OwnCheck
-  (const Handle(IGESGeom_Point)& /* ent */,
-   const Interface_ShareTool& , Handle(Interface_Check)& /* ach */)  const
-{
 }
 
 void IGESGeom_ToolPoint::OwnDump

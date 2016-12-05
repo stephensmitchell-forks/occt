@@ -17,12 +17,7 @@
 #ifndef _IGESBasic_ReadWriteModule_HeaderFile
 #define _IGESBasic_ReadWriteModule_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
 #include <IGESData_ReadWriteModule.hxx>
-#include <Standard_Integer.hxx>
-class Standard_DomainError;
 class IGESData_IGESEntity;
 class IGESData_IGESReaderData;
 class IGESData_ParamReader;
@@ -37,12 +32,10 @@ DEFINE_STANDARD_HANDLE(IGESBasic_ReadWriteModule, IGESData_ReadWriteModule)
 //! an IGESEntity.
 class IGESBasic_ReadWriteModule : public IGESData_ReadWriteModule
 {
+ public:
 
-public:
-
-  
   //! Creates a ReadWriteModule & puts it into ReaderLib & WriterLib
-  Standard_EXPORT IGESBasic_ReadWriteModule();
+  IGESBasic_ReadWriteModule() {}
   
   //! Defines Case Numbers for Entities of IGESBasic
   Standard_EXPORT Standard_Integer CaseIGES (const Standard_Integer typenum, const Standard_Integer formnum) const Standard_OVERRIDE;
@@ -53,27 +46,7 @@ public:
   //! Writes own parameters to IGESWriter
   Standard_EXPORT void WriteOwnParams (const Standard_Integer CN, const Handle(IGESData_IGESEntity)& ent, IGESData_IGESWriter& IW) const Standard_OVERRIDE;
 
-
-
-
   DEFINE_STANDARD_RTTIEXT(IGESBasic_ReadWriteModule,IGESData_ReadWriteModule)
-
-protected:
-
-
-
-
-private:
-
-
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESBasic_ReadWriteModule_HeaderFile

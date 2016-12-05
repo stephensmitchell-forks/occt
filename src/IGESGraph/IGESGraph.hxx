@@ -18,42 +18,9 @@
 #define _IGESGraph_HeaderFile
 
 #include <Standard.hxx>
-#include <Standard_DefineAlloc.hxx>
 #include <Standard_Handle.hxx>
 
 class IGESGraph_Protocol;
-class IGESGraph_LineFontDefTemplate;
-class IGESGraph_LineFontDefPattern;
-class IGESGraph_TextFontDef;
-class IGESGraph_TextDisplayTemplate;
-class IGESGraph_Color;
-class IGESGraph_DefinitionLevel;
-class IGESGraph_NominalSize;
-class IGESGraph_DrawingSize;
-class IGESGraph_DrawingUnits;
-class IGESGraph_IntercharacterSpacing;
-class IGESGraph_LineFontPredefined;
-class IGESGraph_HighLight;
-class IGESGraph_Pick;
-class IGESGraph_UniformRectGrid;
-class IGESGraph_ToolLineFontDefTemplate;
-class IGESGraph_ToolLineFontDefPattern;
-class IGESGraph_ToolTextFontDef;
-class IGESGraph_ToolTextDisplayTemplate;
-class IGESGraph_ToolColor;
-class IGESGraph_ToolDefinitionLevel;
-class IGESGraph_ToolNominalSize;
-class IGESGraph_ToolDrawingSize;
-class IGESGraph_ToolDrawingUnits;
-class IGESGraph_ToolIntercharacterSpacing;
-class IGESGraph_ToolLineFontPredefined;
-class IGESGraph_ToolHighLight;
-class IGESGraph_ToolPick;
-class IGESGraph_ToolUniformRectGrid;
-class IGESGraph_Protocol;
-class IGESGraph_ReadWriteModule;
-class IGESGraph_GeneralModule;
-class IGESGraph_SpecificModule;
 
 
 //! This package contains the group of classes necessary
@@ -61,70 +28,13 @@ class IGESGraph_SpecificModule;
 //! (e.g., Fonts, Colors, Screen management ...)
 class IGESGraph 
 {
-public:
+ public:
 
-  DEFINE_STANDARD_ALLOC
-
-  
   //! Prepares dynamic data (Protocol, Modules) for this package
-  Standard_EXPORT static void Init();
+  //Standard_EXPORT static void Init();
   
   //! Returns the Protocol for this Package
-  Standard_EXPORT static Handle(IGESGraph_Protocol) Protocol();
-
-
-
-
-protected:
-
-
-
-
-
-private:
-
-
-
-
-friend class IGESGraph_LineFontDefTemplate;
-friend class IGESGraph_LineFontDefPattern;
-friend class IGESGraph_TextFontDef;
-friend class IGESGraph_TextDisplayTemplate;
-friend class IGESGraph_Color;
-friend class IGESGraph_DefinitionLevel;
-friend class IGESGraph_NominalSize;
-friend class IGESGraph_DrawingSize;
-friend class IGESGraph_DrawingUnits;
-friend class IGESGraph_IntercharacterSpacing;
-friend class IGESGraph_LineFontPredefined;
-friend class IGESGraph_HighLight;
-friend class IGESGraph_Pick;
-friend class IGESGraph_UniformRectGrid;
-friend class IGESGraph_ToolLineFontDefTemplate;
-friend class IGESGraph_ToolLineFontDefPattern;
-friend class IGESGraph_ToolTextFontDef;
-friend class IGESGraph_ToolTextDisplayTemplate;
-friend class IGESGraph_ToolColor;
-friend class IGESGraph_ToolDefinitionLevel;
-friend class IGESGraph_ToolNominalSize;
-friend class IGESGraph_ToolDrawingSize;
-friend class IGESGraph_ToolDrawingUnits;
-friend class IGESGraph_ToolIntercharacterSpacing;
-friend class IGESGraph_ToolLineFontPredefined;
-friend class IGESGraph_ToolHighLight;
-friend class IGESGraph_ToolPick;
-friend class IGESGraph_ToolUniformRectGrid;
-friend class IGESGraph_Protocol;
-friend class IGESGraph_ReadWriteModule;
-friend class IGESGraph_GeneralModule;
-friend class IGESGraph_SpecificModule;
-
+  Standard_EXPORT static const Handle(IGESGraph_Protocol) & Protocol();
 };
-
-
-
-
-
-
 
 #endif // _IGESGraph_HeaderFile

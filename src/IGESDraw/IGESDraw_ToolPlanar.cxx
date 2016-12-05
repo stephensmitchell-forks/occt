@@ -29,14 +29,11 @@
 #include <IGESDraw_ToolPlanar.hxx>
 #include <IGESGeom_TransformationMatrix.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-
-IGESDraw_ToolPlanar::IGESDraw_ToolPlanar ()    {  }
 
 
 void IGESDraw_ToolPlanar::ReadOwnParams
@@ -104,30 +101,6 @@ void  IGESDraw_ToolPlanar::OwnShared
   iter.GetOneItem( ent->TransformMatrix() );
   for ( Standard_Integer i = 1; i <= Up; i++)
     iter.GetOneItem( ent->Entity(i) );
-}
-
-void IGESDraw_ToolPlanar::OwnCopy
-  (const Handle(IGESDraw_Planar)& another,
-   const Handle(IGESDraw_Planar)& ent, Interface_CopyTool& TC) const
-{
-  Standard_Integer                          nbval;
-  Standard_Integer                          nbMatrices; 
-  Handle(IGESData_HArray1OfIGESEntity) entities; 
- 
-  nbval                = another->NbEntities();
-  nbMatrices           = another->NbMatrices();
-  DeclareAndCast(IGESGeom_TransformationMatrix, transformationMatrix, 
-                 TC.Transferred(another->TransformMatrix()));
-
-  entities = new IGESData_HArray1OfIGESEntity(1, nbval);
-  for (Standard_Integer i = 1; i <= nbval; i++)
-    {
-      DeclareAndCast(IGESData_IGESEntity, tempEntity, 
-                     TC.Transferred(another->Entity(i)));
-      entities->SetValue( i, tempEntity );
-    }
-
-  ent->Init(nbMatrices, transformationMatrix, entities);
 }
 
 Standard_Boolean  IGESDraw_ToolPlanar::OwnCorrect

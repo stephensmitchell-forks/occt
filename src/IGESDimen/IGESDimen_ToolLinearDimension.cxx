@@ -28,14 +28,11 @@
 #include <IGESDimen_ToolLinearDimension.hxx>
 #include <IGESDimen_WitnessLine.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-
-IGESDimen_ToolLinearDimension::IGESDimen_ToolLinearDimension ()    {  }
 
 
 void  IGESDimen_ToolLinearDimension::ReadOwnParams
@@ -91,25 +88,6 @@ void  IGESDimen_ToolLinearDimension::OwnShared
   iter.GetOneItem(ent->SecondWitness());
 }
 
-void  IGESDimen_ToolLinearDimension::OwnCopy
-  (const Handle(IGESDimen_LinearDimension)& another,
-   const Handle(IGESDimen_LinearDimension)& ent, Interface_CopyTool& TC) const
-{
-  DeclareAndCast(IGESDimen_GeneralNote, note, 
-		 TC.Transferred(another->Note()));
-  DeclareAndCast(IGESDimen_LeaderArrow, firstLeader, 
-		 TC.Transferred(another->FirstLeader()));
-  DeclareAndCast(IGESDimen_LeaderArrow, secondLeader, 
-		 TC.Transferred(another->SecondLeader()));
-  DeclareAndCast(IGESDimen_WitnessLine, firstWitness, 
-		 TC.Transferred(another->FirstWitness()));
-  DeclareAndCast(IGESDimen_WitnessLine, secondWitness, 
-		 TC.Transferred(another->SecondWitness()));
-
-  ent->Init(note, firstLeader, secondLeader, firstWitness, secondWitness);
-  ent->SetFormNumber (another->FormNumber());
-}
-
 IGESData_DirChecker  IGESDimen_ToolLinearDimension::DirChecker
   (const Handle(IGESDimen_LinearDimension)& /*ent*/) const 
 { 
@@ -120,12 +98,6 @@ IGESData_DirChecker  IGESDimen_ToolLinearDimension::DirChecker
   DC.Color(IGESData_DefAny);
   DC.UseFlagRequired(1);
   return DC;
-}
-
-void  IGESDimen_ToolLinearDimension::OwnCheck
-  (const Handle(IGESDimen_LinearDimension)& /*ent*/,
-   const Interface_ShareTool& , Handle(Interface_Check)& /*ach*/) const 
-{
 }
 
 void  IGESDimen_ToolLinearDimension::OwnDump

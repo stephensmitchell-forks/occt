@@ -27,16 +27,12 @@
 #include <IGESGeom_RuledSurface.hxx>
 #include <IGESGeom_ToolRuledSurface.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Message_Msg.hxx>
 #include <Standard_DomainError.hxx>
-
-// MGE 31/07/98
-IGESGeom_ToolRuledSurface::IGESGeom_ToolRuledSurface ()    {  }
 
 
 void IGESGeom_ToolRuledSurface::ReadOwnParams
@@ -118,20 +114,6 @@ void  IGESGeom_ToolRuledSurface::OwnShared
   iter.GetOneItem(ent->SecondCurve());
 }
 
-void IGESGeom_ToolRuledSurface::OwnCopy
-  (const Handle(IGESGeom_RuledSurface)& another,
-   const Handle(IGESGeom_RuledSurface)& ent, Interface_CopyTool& TC) const
-{
-  DeclareAndCast(IGESData_IGESEntity, aCurve,
-		 TC.Transferred(another->FirstCurve()));
-  DeclareAndCast(IGESData_IGESEntity, anotherCurve,
-		 TC.Transferred(another->SecondCurve()));
-  Standard_Integer aDirFlag = another->DirectionFlag();
-  Standard_Integer aDevFlag = (another->IsDevelopable() ? 1 : 0);
-
-  ent->Init(aCurve, anotherCurve, aDirFlag, aDevFlag);
-}
-
 IGESData_DirChecker IGESGeom_ToolRuledSurface::DirChecker
   (const Handle(IGESGeom_RuledSurface)& /*ent*/ )   const
 {
@@ -143,12 +125,6 @@ IGESData_DirChecker IGESGeom_ToolRuledSurface::DirChecker
   DC.HierarchyStatusIgnored();
 
   return DC;
-}
-
-void IGESGeom_ToolRuledSurface::OwnCheck
-  (const Handle(IGESGeom_RuledSurface)& /*ent*/,
-   const Interface_ShareTool& , Handle(Interface_Check)& /*ach*/)  const
-{
 }
 
 void IGESGeom_ToolRuledSurface::OwnDump

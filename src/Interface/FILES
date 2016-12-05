@@ -12,12 +12,6 @@ Interface_CheckIterator.hxx
 Interface_CheckStatus.hxx
 Interface_CheckTool.cxx
 Interface_CheckTool.hxx
-Interface_CopyControl.cxx
-Interface_CopyControl.hxx
-Interface_CopyMap.cxx
-Interface_CopyMap.hxx
-Interface_CopyTool.cxx
-Interface_CopyTool.hxx
 Interface_DataMapIteratorOfDataMapOfTransientInteger.hxx
 Interface_DataMapOfTransientInteger.hxx
 Interface_DataState.hxx

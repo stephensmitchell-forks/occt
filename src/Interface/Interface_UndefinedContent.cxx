@@ -12,7 +12,6 @@
 // commercial license or contractual agreement.
 
 
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityList.hxx>
 #include <Interface_InterfaceError.hxx>
 #include <Interface_InterfaceMismatch.hxx>
@@ -291,27 +290,3 @@ Interface_UndefinedContent::ParamValue
 
     Interface_EntityList Interface_UndefinedContent::EntityList () const
       {  return theentities;  }
-
-
-
-//    toutes les recopies de UndefinedEntity se ressemblent ... Partie commune
-    void Interface_UndefinedContent::GetFromAnother
-  (const Handle(Interface_UndefinedContent)& other,  Interface_CopyTool& TC)
-{
-  Standard_Integer nb = other->NbParams();
-  theentities.Clear();
-  thevalues.Nullify();
-  theparams.Nullify();
-  Reservate (nb,other->NbLiterals());
-
-  Handle(Standard_Transient) ent;
-  for (Standard_Integer i = 1; i <= nb; i ++) {
-    Interface_ParamType ptype;
-    Handle(TCollection_HAsciiString) val;
-    if (other->ParamData (i, ptype,ent,val)) {
-      ent = TC.Transferred(ent);
-      AddEntity  (ptype,ent);
-    }
-    else AddLiteral (ptype,val);
-  }
-}

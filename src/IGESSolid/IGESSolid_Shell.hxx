@@ -17,16 +17,9 @@
 #ifndef _IGESSolid_Shell_HeaderFile
 #define _IGESSolid_Shell_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
 #include <IGESSolid_HArray1OfFace.hxx>
 #include <TColStd_HArray1OfInteger.hxx>
 #include <IGESData_IGESEntity.hxx>
-#include <Standard_Boolean.hxx>
-#include <Standard_Integer.hxx>
-class Standard_DimensionMismatch;
-class Standard_OutOfRange;
 class IGESSolid_Face;
 
 
@@ -42,11 +35,9 @@ DEFINE_STANDARD_HANDLE(IGESSolid_Shell, IGESData_IGESEntity)
 //! From IGES-5.3, Form can be <1> for Closed or <2> for Open
 class IGESSolid_Shell : public IGESData_IGESEntity
 {
+ public:
 
-public:
-
-  
-  Standard_EXPORT IGESSolid_Shell();
+  IGESSolid_Shell() {}
   
   //! This method is used to set the fields of the class Shell
   //! - allFaces  : the faces comprising the shell
@@ -66,36 +57,23 @@ public:
   
   //! returns the Index'th face entity of the shell
   //! raises exception if Index <= 0 or Index > NbFaces()
-  Standard_EXPORT Handle(IGESSolid_Face) Face (const Standard_Integer Index) const;
+  Standard_EXPORT const Handle(IGESSolid_Face) & Face (const Standard_Integer Index) const;
   
   //! returns the orientation of Index'th face w.r.t the direction of
   //! the underlying surface
   //! raises exception if Index <= 0 or Index > NbFaces()
   Standard_EXPORT Standard_Boolean Orientation (const Standard_Integer Index) const;
 
+  Standard_EXPORT virtual void OwnShared(Interface_EntityIterator &theIter) const Standard_OVERRIDE;
 
-
+  Standard_EXPORT virtual void OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESSolid_Shell,IGESData_IGESEntity)
 
-protected:
-
-
-
-
-private:
-
+ private:
 
   Handle(IGESSolid_HArray1OfFace) theFaces;
   Handle(TColStd_HArray1OfInteger) theOrientation;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESSolid_Shell_HeaderFile

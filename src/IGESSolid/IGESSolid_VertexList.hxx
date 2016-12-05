@@ -17,13 +17,8 @@
 #ifndef _IGESSolid_VertexList_HeaderFile
 #define _IGESSolid_VertexList_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
 #include <TColgp_HArray1OfXYZ.hxx>
 #include <IGESData_IGESEntity.hxx>
-#include <Standard_Integer.hxx>
-class Standard_OutOfRange;
 class gp_Pnt;
 
 
@@ -37,11 +32,9 @@ DEFINE_STANDARD_HANDLE(IGESSolid_VertexList, IGESData_IGESEntity)
 //! It contains one or more vertices.
 class IGESSolid_VertexList : public IGESData_IGESEntity
 {
+ public:
 
-public:
-
-  
-  Standard_EXPORT IGESSolid_VertexList();
+  IGESSolid_VertexList() {}
   
   //! This method is used to set the fields of the class
   //! VertexList
@@ -55,28 +48,13 @@ public:
   //! raises exception if num  <= 0 or num > NbVertices()
   Standard_EXPORT gp_Pnt Vertex (const Standard_Integer num) const;
 
-
-
+  Standard_EXPORT virtual void OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESSolid_VertexList,IGESData_IGESEntity)
 
-protected:
-
-
-
-
-private:
-
+ private:
 
   Handle(TColgp_HArray1OfXYZ) theVertices;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESSolid_VertexList_HeaderFile

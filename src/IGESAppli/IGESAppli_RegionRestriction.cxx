@@ -17,14 +17,10 @@
 //--------------------------------------------------------------------
 
 #include <IGESAppli_RegionRestriction.hxx>
-#include <Standard_Type.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESAppli_RegionRestriction,IGESData_IGESEntity)
 
-IGESAppli_RegionRestriction::IGESAppli_RegionRestriction ()    {  }
-
-
-    void  IGESAppli_RegionRestriction::Init
+void IGESAppli_RegionRestriction::Init
   (const Standard_Integer nbPropVal,  const Standard_Integer aViasRest,
    const Standard_Integer aCompoRest, const Standard_Integer aCktRest)
 {
@@ -35,24 +31,20 @@ IGESAppli_RegionRestriction::IGESAppli_RegionRestriction ()    {  }
   InitTypeAndForm(406,2);
 }
 
-
-    Standard_Integer  IGESAppli_RegionRestriction::NbPropertyValues () const
+void IGESAppli_RegionRestriction::OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &theCheck) const
 {
-  return theNbPropertyValues;
-}
-
-    Standard_Integer IGESAppli_RegionRestriction::ElectricalViasRestriction () const
-{
-  return theElectViasRestrict;
-}
-
-    Standard_Integer IGESAppli_RegionRestriction::ElectricalComponentRestriction
-  () const
-{
-  return theElectCompRestrict;
-}
-
-    Standard_Integer IGESAppli_RegionRestriction::ElectricalCktRestriction () const
-{
-  return theElectCktRestrict;
+  if (SubordinateStatus() != 0)
+    if (DefLevel() != IGESData_DefOne &&
+	    DefLevel() != IGESData_DefSeveral)
+      theCheck->AddFail("Level type: Not value/reference");
+  if (NbPropertyValues() != 3)
+    theCheck->AddFail("Number of Property Values != 3");
+  if (ElectricalViasRestriction() < 0 || ElectricalViasRestriction() > 2)
+    theCheck->AddFail("Incorrect value for Electrical Vias Restriction");
+  if (ElectricalComponentRestriction() < 0 || ElectricalComponentRestriction() > 2)
+    theCheck->AddFail("Incorrect value for Electrical Component Restriction");
+  if (ElectricalCktRestriction() < 0 || ElectricalCktRestriction() > 2)
+    theCheck->AddFail("Incorrect value for Electrical Circuit Restriction");
+  //UNFINISHED
+  //level ignored if this property is subordinate -- queried
 }

@@ -27,14 +27,11 @@
 #include <IGESSolid_ConicalSurface.hxx>
 #include <IGESSolid_ToolConicalSurface.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-
-IGESSolid_ToolConicalSurface::IGESSolid_ToolConicalSurface ()    {  }
 
 
 void  IGESSolid_ToolConicalSurface::ReadOwnParams
@@ -76,40 +73,6 @@ void  IGESSolid_ToolConicalSurface::WriteOwnParams
   if (ent->IsParametrised())    IW.Send(ent->ReferenceDir());  // cf FormNumber
 }
 
-void  IGESSolid_ToolConicalSurface::OwnShared
-  (const Handle(IGESSolid_ConicalSurface)& ent, Interface_EntityIterator& iter) const
-{
-  iter.GetOneItem(ent->LocationPoint());
-  iter.GetOneItem(ent->Axis());
-  iter.GetOneItem(ent->ReferenceDir());
-}
-
-void  IGESSolid_ToolConicalSurface::OwnCopy
-  (const Handle(IGESSolid_ConicalSurface)& another,
-   const Handle(IGESSolid_ConicalSurface)& ent, Interface_CopyTool& TC) const
-{
-  Standard_Real tempRadius, tempAngle;
-  //Standard_Boolean IsItParametrised = Standard_False; //szv#4:S4163:12Mar99 unused
-
-  DeclareAndCast(IGESGeom_Point, tempLocation,
-		 TC.Transferred(another->LocationPoint()));
-  DeclareAndCast(IGESGeom_Direction, tempAxis,
-		 TC.Transferred(another->Axis()));
-  tempRadius = another->Radius();
-  tempAngle  = another->SemiAngle();
-  if (another->IsParametrised())
-    {
-      DeclareAndCast(IGESGeom_Direction, tempRefdir,
-		     TC.Transferred(another->ReferenceDir()));
-      ent->Init (tempLocation, tempAxis, tempRadius, tempAngle, tempRefdir);
-    }
-  else
-    {
-      Handle(IGESGeom_Direction) tempRefdir;
-      ent->Init (tempLocation, tempAxis, tempRadius, tempAngle, tempRefdir);
-    }
-}
-
 IGESData_DirChecker  IGESSolid_ToolConicalSurface::DirChecker
   (const Handle(IGESSolid_ConicalSurface)& /*ent*/) const
 {
@@ -123,20 +86,6 @@ IGESData_DirChecker  IGESSolid_ToolConicalSurface::DirChecker
   DC.SubordinateStatusRequired (1);
   DC.HierarchyStatusIgnored ();
   return DC;
-}
-
-void  IGESSolid_ToolConicalSurface::OwnCheck
-  (const Handle(IGESSolid_ConicalSurface)& ent,
-   const Interface_ShareTool& , Handle(Interface_Check)& ach) const
-{
-  if (ent->Radius() < 0.0)
-    ach->AddFail("Radius : Value Negative");
-  if (ent->SemiAngle() < 0.0 || ent->SemiAngle() > 90.0)
-    ach->AddFail("Semi-angle : Value not in the range [0 - 90]");
-  Standard_Integer fn = 0;
-  if (ent->IsParametrised()) fn = 1;
-  if (fn != ent->FormNumber()) ach->AddFail
-    ("Parametrised Status Mismatches with Form Number");
 }
 
 void  IGESSolid_ToolConicalSurface::OwnDump

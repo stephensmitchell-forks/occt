@@ -17,15 +17,8 @@
 #ifndef _IGESSolid_SolidOfRevolution_HeaderFile
 #define _IGESSolid_SolidOfRevolution_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
-#include <Standard_Real.hxx>
 #include <gp_XYZ.hxx>
 #include <IGESData_IGESEntity.hxx>
-#include <Standard_Boolean.hxx>
-class IGESData_IGESEntity;
-class gp_XYZ;
 class gp_Pnt;
 class gp_Dir;
 
@@ -40,11 +33,9 @@ DEFINE_STANDARD_HANDLE(IGESSolid_SolidOfRevolution, IGESData_IGESEntity)
 //! fraction of full rotation.
 class IGESSolid_SolidOfRevolution : public IGESData_IGESEntity
 {
+ public:
 
-public:
-
-  
-  Standard_EXPORT IGESSolid_SolidOfRevolution();
+  IGESSolid_SolidOfRevolution() {}
   
   //! This method is used to set the fields of the class
   //! SolidOfRevolution
@@ -64,12 +55,12 @@ public:
   Standard_EXPORT Standard_Boolean IsClosedToAxis() const;
   
   //! returns the curve entity that is to be revolved
-  Standard_EXPORT Handle(IGESData_IGESEntity) Curve() const;
-  
+  const Handle(IGESData_IGESEntity) & Curve() const { return theCurve; }
+
   //! returns the fraction of full rotation that the curve is to
   //! be rotated
-  Standard_EXPORT Standard_Real Fraction() const;
-  
+  Standard_Real Fraction() const { return theFraction; }
+
   //! returns the point on the axis
   Standard_EXPORT gp_Pnt AxisPoint() const;
   
@@ -83,31 +74,18 @@ public:
   //! TransformationMatrix
   Standard_EXPORT gp_Dir TransformedAxis() const;
 
+  Standard_EXPORT virtual void OwnShared(Interface_EntityIterator &theIter) const Standard_OVERRIDE;
 
-
+  Standard_EXPORT virtual void OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESSolid_SolidOfRevolution,IGESData_IGESEntity)
 
-protected:
-
-
-
-
-private:
-
+ private:
 
   Handle(IGESData_IGESEntity) theCurve;
   Standard_Real theFraction;
   gp_XYZ theAxisPoint;
   gp_XYZ theAxis;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESSolid_SolidOfRevolution_HeaderFile

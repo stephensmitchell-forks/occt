@@ -17,13 +17,9 @@
 #ifndef _IGESSolid_SelectedComponent_HeaderFile
 #define _IGESSolid_SelectedComponent_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
 #include <gp_XYZ.hxx>
 #include <IGESData_IGESEntity.hxx>
 class IGESSolid_BooleanTree;
-class gp_XYZ;
 class gp_Pnt;
 
 
@@ -36,11 +32,9 @@ DEFINE_STANDARD_HANDLE(IGESSolid_SelectedComponent, IGESData_IGESEntity)
 //! selecting one component of a disjoint CSG solid
 class IGESSolid_SelectedComponent : public IGESData_IGESEntity
 {
+ public:
 
-public:
-
-  
-  Standard_EXPORT IGESSolid_SelectedComponent();
+  IGESSolid_SelectedComponent() {}
   
   //! This method is used to set the fields of the class
   //! SelectedComponent
@@ -49,7 +43,7 @@ public:
   Standard_EXPORT void Init (const Handle(IGESSolid_BooleanTree)& anEntity, const gp_XYZ& selectPnt);
   
   //! returns the Boolean tree entity
-  Standard_EXPORT Handle(IGESSolid_BooleanTree) Component() const;
+  const Handle(IGESSolid_BooleanTree) & Component() const { return theEntity; }
   
   //! returns the point on/in the selected component
   Standard_EXPORT gp_Pnt SelectPoint() const;
@@ -58,29 +52,14 @@ public:
   //! after applying TransformationMatrix
   Standard_EXPORT gp_Pnt TransformedSelectPoint() const;
 
-
-
+  Standard_EXPORT virtual void OwnShared(Interface_EntityIterator &theIter) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESSolid_SelectedComponent,IGESData_IGESEntity)
 
-protected:
-
-
-
-
-private:
-
+ private:
 
   Handle(IGESSolid_BooleanTree) theEntity;
   gp_XYZ theSelectPoint;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESSolid_SelectedComponent_HeaderFile

@@ -27,15 +27,12 @@
 #include <IGESDefs_AssociativityDef.hxx>
 #include <IGESDefs_ToolAssociativityDef.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
 #include <TColStd_HArray1OfInteger.hxx>
-
-IGESDefs_ToolAssociativityDef::IGESDefs_ToolAssociativityDef ()    {  }
 
 
 void  IGESDefs_ToolAssociativityDef::ReadOwnParams
@@ -110,50 +107,6 @@ void  IGESDefs_ToolAssociativityDef::WriteOwnParams
   }
 }
 
-void  IGESDefs_ToolAssociativityDef::OwnShared
-  (const Handle(IGESDefs_AssociativityDef)& /* ent */, Interface_EntityIterator& /* iter */) const
-{
-}
-
-void  IGESDefs_ToolAssociativityDef::OwnCopy
-  (const Handle(IGESDefs_AssociativityDef)& another,
-   const Handle(IGESDefs_AssociativityDef)& ent, Interface_CopyTool& /* TC */) const
-{ 
-
-  Handle(TColStd_HArray1OfInteger) requirements;
-  Handle(TColStd_HArray1OfInteger) orders;
-  Handle(TColStd_HArray1OfInteger) numItems;
-  Handle(IGESBasic_HArray1OfHArray1OfInteger) items;
-
-  Standard_Integer nbval = another->NbClassDefs();
-
-  requirements = new TColStd_HArray1OfInteger(1, nbval);
-  orders = new TColStd_HArray1OfInteger(1, nbval);
-  numItems = new TColStd_HArray1OfInteger(1, nbval);
-  items = new IGESBasic_HArray1OfHArray1OfInteger(1, nbval);
-
-  for (Standard_Integer i = 1; i <= nbval; i++)
-    {
-      Standard_Integer requirement = another->BackPointerReq(i);
-      requirements->SetValue(i, requirement);
-      Standard_Integer order = another->ClassOrder(i);
-      orders->SetValue(i, order);
-      Standard_Integer numItem = another->NbItemsPerClass(i);
-      numItems->SetValue(i, numItem);
-      Handle(TColStd_HArray1OfInteger) item;
-      item = new TColStd_HArray1OfInteger(1, numItem);
-
-      for (Standard_Integer j = 1; j <= numItem; j++)
-	{
-          Standard_Integer temp = another->Item(i, j);
-          item->SetValue(j, temp);
-	}
-      items->SetValue(i, item);
-    }
-  ent->Init(requirements, orders, numItems, items);
-  ent->SetFormNumber (another->FormNumber());
-}
-
 IGESData_DirChecker  IGESDefs_ToolAssociativityDef::DirChecker
   (const Handle(IGESDefs_AssociativityDef)& /* ent */ ) const 
 { 
@@ -167,12 +120,6 @@ IGESData_DirChecker  IGESDefs_ToolAssociativityDef::DirChecker
   DC.UseFlagRequired(2);
   DC.HierarchyStatusIgnored();
   return DC;
-}
-
-void  IGESDefs_ToolAssociativityDef::OwnCheck
-  (const Handle(IGESDefs_AssociativityDef)& /* ent */,
-   const Interface_ShareTool& , Handle(Interface_Check)& /* ach */) const 
-{
 }
 
 void  IGESDefs_ToolAssociativityDef::OwnDump

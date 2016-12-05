@@ -17,17 +17,10 @@
 #ifndef _IGESSolid_ManifoldSolid_HeaderFile
 #define _IGESSolid_ManifoldSolid_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
-#include <Standard_Boolean.hxx>
 #include <IGESSolid_HArray1OfShell.hxx>
 #include <TColStd_HArray1OfInteger.hxx>
 #include <IGESData_IGESEntity.hxx>
-#include <Standard_Integer.hxx>
 class IGESSolid_Shell;
-class Standard_DimensionMismatch;
-class Standard_OutOfRange;
 
 
 class IGESSolid_ManifoldSolid;
@@ -39,11 +32,9 @@ DEFINE_STANDARD_HANDLE(IGESSolid_ManifoldSolid, IGESData_IGESEntity)
 //! in three dimensional Euclidean space
 class IGESSolid_ManifoldSolid : public IGESData_IGESEntity
 {
+ public:
 
-public:
-
-  
-  Standard_EXPORT IGESSolid_ManifoldSolid();
+  IGESSolid_ManifoldSolid() {}
   
   //! This method is used to set the fields of the class
   //! ManifoldSolid
@@ -56,11 +47,11 @@ public:
   Standard_EXPORT void Init (const Handle(IGESSolid_Shell)& aShell, const Standard_Boolean shellflag, const Handle(IGESSolid_HArray1OfShell)& voidShells, const Handle(TColStd_HArray1OfInteger)& voidShellFlags);
   
   //! returns the Shell entity which is being referred
-  Standard_EXPORT Handle(IGESSolid_Shell) Shell() const;
-  
+  const Handle(IGESSolid_Shell) & Shell() const { return theShell; }
+
   //! returns the orientation flag of the shell
-  Standard_EXPORT Standard_Boolean OrientationFlag() const;
-  
+  Standard_Boolean OrientationFlag() const { return theOrientationFlag; }
+
   //! returns the number of void shells
   Standard_EXPORT Standard_Integer NbVoidShells() const;
   
@@ -72,31 +63,16 @@ public:
   //! raises exception if Index  <= 0 or Index > NbVoidShells()
   Standard_EXPORT Standard_Boolean VoidOrientationFlag (const Standard_Integer Index) const;
 
-
-
+  Standard_EXPORT virtual void OwnShared(Interface_EntityIterator &theIter) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESSolid_ManifoldSolid,IGESData_IGESEntity)
 
-protected:
-
-
-
-
-private:
-
+ private:
 
   Handle(IGESSolid_Shell) theShell;
   Standard_Boolean theOrientationFlag;
   Handle(IGESSolid_HArray1OfShell) theVoidShells;
   Handle(TColStd_HArray1OfInteger) theOrientFlags;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESSolid_ManifoldSolid_HeaderFile

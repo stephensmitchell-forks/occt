@@ -29,7 +29,6 @@
 #include <IGESDefs_TabularData.hxx>
 #include <IGESDefs_ToolTabularData.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
@@ -37,8 +36,6 @@
 #include <Standard_DomainError.hxx>
 #include <TColStd_HArray1OfInteger.hxx>
 #include <TColStd_HArray1OfReal.hxx>
-
-IGESDefs_ToolTabularData::IGESDefs_ToolTabularData ()    {  }
 
 
 void IGESDefs_ToolTabularData::ReadOwnParams
@@ -156,50 +153,6 @@ void IGESDefs_ToolTabularData::WriteOwnParams
     */
 }
 
-void  IGESDefs_ToolTabularData::OwnShared
-  (const Handle(IGESDefs_TabularData)& /* ent */, Interface_EntityIterator& /* iter */) const
-{
-}
-
-void IGESDefs_ToolTabularData::OwnCopy
-  (const Handle(IGESDefs_TabularData)& another,
-   const Handle(IGESDefs_TabularData)& ent, Interface_CopyTool& /* TC */) const
-{
-  Standard_Integer nbProps = another->NbPropertyValues();
-  Standard_Integer propType = another->PropertyType();
-  Standard_Integer nbDeps = another->NbDependents();
-  Standard_Integer nbIndeps = another->NbIndependents();
-  Handle(TColStd_HArray1OfInteger) typesInd = new
-    TColStd_HArray1OfInteger(1, nbIndeps);
-  Handle(TColStd_HArray1OfInteger) nbValuesInd = new
-    TColStd_HArray1OfInteger(1, nbIndeps);
-  Handle(IGESBasic_HArray1OfHArray1OfReal) valuesInd = new
-    IGESBasic_HArray1OfHArray1OfReal(1, nbIndeps);
-  Handle(IGESBasic_HArray1OfHArray1OfReal) valuesDep = new
-    IGESBasic_HArray1OfHArray1OfReal(1, nbDeps);
-  Standard_Integer i;
-  for (i=1; i<=nbIndeps; i++)
-    {
-      Standard_Integer j, nval;
-      typesInd->SetValue(i, another->TypeOfIndependents(i));
-      nval = another->NbValues(i);
-      nbValuesInd->SetValue(i, nval);
-      Handle(TColStd_HArray1OfReal) tmparr = new
-	TColStd_HArray1OfReal(1, nval);
-      for (j=1; j<=nval; j++)
-	tmparr->SetValue(j, another->IndependentValue(i, j));
-      valuesInd->SetValue(i, tmparr);
-    }
-  // UNFINISHED
-  /*
-    for (i=1; i<=nbDeps; i++)
-    {
-    }
-    */
-  ent->Init(nbProps, propType, typesInd, nbValuesInd,
-	    valuesInd, valuesDep);
-}
-
 IGESData_DirChecker IGESDefs_ToolTabularData::DirChecker
   (const Handle(IGESDefs_TabularData)& /* ent */ ) const
 {
@@ -213,12 +166,6 @@ IGESData_DirChecker IGESDefs_ToolTabularData::DirChecker
   DC.UseFlagIgnored ();
   DC.HierarchyStatusIgnored ();
   return DC;
-}
-
-void IGESDefs_ToolTabularData::OwnCheck
-  (const Handle(IGESDefs_TabularData)& /* ent */,
-   const Interface_ShareTool& , Handle(Interface_Check)& /* ach */) const
-{
 }
 
 void IGESDefs_ToolTabularData::OwnDump

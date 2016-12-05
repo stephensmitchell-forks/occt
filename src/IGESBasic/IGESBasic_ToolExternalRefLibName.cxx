@@ -26,15 +26,12 @@
 #include <IGESData_ParamCursor.hxx>
 #include <IGESData_ParamReader.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
 #include <TCollection_HAsciiString.hxx>
-
-IGESBasic_ToolExternalRefLibName::IGESBasic_ToolExternalRefLibName ()    {  }
 
 
 void  IGESBasic_ToolExternalRefLibName::ReadOwnParams
@@ -59,22 +56,6 @@ void  IGESBasic_ToolExternalRefLibName::WriteOwnParams
   IW.Send(ent->ReferenceName());
 }
 
-void  IGESBasic_ToolExternalRefLibName::OwnShared
-  (const Handle(IGESBasic_ExternalRefLibName)& /* ent */, Interface_EntityIterator& /* iter */) const
-{
-}
-
-void  IGESBasic_ToolExternalRefLibName::OwnCopy
-  (const Handle(IGESBasic_ExternalRefLibName)& another,
-   const Handle(IGESBasic_ExternalRefLibName)& ent, Interface_CopyTool& /* TC */) const
-{
-  Handle(TCollection_HAsciiString) tempLibName =
-    new TCollection_HAsciiString(another->LibraryName());
-  Handle(TCollection_HAsciiString) tempRefName =
-    new TCollection_HAsciiString(another->ReferenceName());
-  ent->Init(tempLibName, tempRefName);
-}
-
 IGESData_DirChecker  IGESBasic_ToolExternalRefLibName::DirChecker
   (const Handle(IGESBasic_ExternalRefLibName)& /* ent */ ) const
 {
@@ -87,12 +68,6 @@ IGESData_DirChecker  IGESBasic_ToolExternalRefLibName::DirChecker
   DC.BlankStatusRequired(0);
   DC.HierarchyStatusRequired(0);
   return DC;
-}
-
-void  IGESBasic_ToolExternalRefLibName::OwnCheck
-  (const Handle(IGESBasic_ExternalRefLibName)& /* ent */,
-   const Interface_ShareTool& , Handle(Interface_Check)& /* ach */) const
-{
 }
 
 void  IGESBasic_ToolExternalRefLibName::OwnDump

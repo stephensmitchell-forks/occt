@@ -17,14 +17,9 @@
 #ifndef _IGESAppli_Node_HeaderFile
 #define _IGESAppli_Node_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
 #include <gp_XYZ.hxx>
 #include <IGESData_IGESEntity.hxx>
-#include <Standard_Integer.hxx>
 class IGESGeom_TransformationMatrix;
-class gp_XYZ;
 class gp_Pnt;
 class IGESData_TransfEntity;
 
@@ -37,11 +32,9 @@ DEFINE_STANDARD_HANDLE(IGESAppli_Node, IGESData_IGESEntity)
 //! Geometric point used in the definition of a finite element.
 class IGESAppli_Node : public IGESData_IGESEntity
 {
+ public:
 
-public:
-
-  
-  Standard_EXPORT IGESAppli_Node();
+  IGESAppli_Node() {}
   
   //! This method is used to set the fields of the class Node
   //! - aCoord       : Nodal Coordinates
@@ -65,29 +58,16 @@ public:
   //! returns the Nodal coordinates after transformation
   Standard_EXPORT gp_Pnt TransformedNodalCoord() const;
 
+  Standard_EXPORT virtual void OwnShared(Interface_EntityIterator &theIter) const Standard_OVERRIDE;
 
-
+  Standard_EXPORT virtual void OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESAppli_Node,IGESData_IGESEntity)
 
-protected:
-
-
-
-
-private:
-
+ private:
 
   gp_XYZ theCoord;
   Handle(IGESGeom_TransformationMatrix) theSystem;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESAppli_Node_HeaderFile

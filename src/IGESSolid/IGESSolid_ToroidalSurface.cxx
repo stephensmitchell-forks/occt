@@ -21,14 +21,11 @@
 #include <IGESGeom_Direction.hxx>
 #include <IGESGeom_Point.hxx>
 #include <IGESSolid_ToroidalSurface.hxx>
-#include <Standard_Type.hxx>
+#include <Interface_EntityIterator.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESSolid_ToroidalSurface,IGESData_IGESEntity)
 
-IGESSolid_ToroidalSurface::IGESSolid_ToroidalSurface ()    {  }
-
-
-    void  IGESSolid_ToroidalSurface::Init
+void IGESSolid_ToroidalSurface::Init
   (const Handle(IGESGeom_Point)& aCenter,
    const Handle(IGESGeom_Direction)& anAxis,
    const Standard_Real majRadius, const Standard_Real minRadius,
@@ -42,43 +39,31 @@ IGESSolid_ToroidalSurface::IGESSolid_ToroidalSurface ()    {  }
   InitTypeAndForm(198, (theRefDir.IsNull() ? 0 : 1) );
 }
 
-    Handle(IGESGeom_Point)  IGESSolid_ToroidalSurface::Center () const
+gp_Pnt IGESSolid_ToroidalSurface::TransformedCenter () const
 {
-  return theCenter;
+  if (!HasTransf())
+    return theCenter->Value();
+
+  gp_XYZ tmp = theCenter->Value().XYZ();
+  Location().Transforms(tmp);
+  return gp_Pnt(tmp);
 }
 
-    gp_Pnt  IGESSolid_ToroidalSurface::TransformedCenter () const
+void IGESSolid_ToroidalSurface::OwnShared(Interface_EntityIterator &theIter) const
 {
-  if (!HasTransf()) return theCenter->Value();
-  else
-    {
-      gp_XYZ tmp = theCenter->Value().XYZ();
-      Location().Transforms(tmp);
-      return gp_Pnt(tmp);
-    }
+  theIter.GetOneItem(Center());
+  theIter.GetOneItem(Axis());
+  theIter.GetOneItem(ReferenceDir());
 }
 
-    Handle(IGESGeom_Direction)  IGESSolid_ToroidalSurface::Axis () const
+void IGESSolid_ToroidalSurface::OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &theCheck) const
 {
-  return theAxis;
-}
-
-    Standard_Real  IGESSolid_ToroidalSurface::MajorRadius () const
-{
-  return theMajorRadius;
-}
-
-    Standard_Real  IGESSolid_ToroidalSurface::MinorRadius () const
-{
-  return theMinorRadius;
-}
-
-    Handle(IGESGeom_Direction)  IGESSolid_ToroidalSurface::ReferenceDir () const
-{
-  return theRefDir;
-}
-
-    Standard_Boolean  IGESSolid_ToroidalSurface::IsParametrised () const
-{
-  return !(theRefDir.IsNull());
+  if (MajorRadius() <= 0.0)
+    theCheck->AddFail("Major Radius : Not Positive");
+  if (MinorRadius() <= 0.0)
+    theCheck->AddFail("Minor Radius : Not Positive");
+  if (MinorRadius() >= MajorRadius())
+    theCheck->AddFail("Minor Radius : Value not < Major radius");
+  const Standard_Integer fn = (IsParametrised()? 1 : 0);
+  if (fn != FormNumber()) theCheck->AddFail("Parametrised Status Mismatches with Form Number");
 }

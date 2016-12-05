@@ -19,12 +19,10 @@
 #include <IGESGeom_Direction.hxx>
 #include <IGESGeom_Point.hxx>
 #include <IGESSolid_PlaneSurface.hxx>
-#include <Standard_Type.hxx>
+#include <Interface_EntityIterator.hxx>
+#include <Message_Msg.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESSolid_PlaneSurface,IGESData_IGESEntity)
-
-IGESSolid_PlaneSurface::IGESSolid_PlaneSurface ()    {  }
-
 
     void  IGESSolid_PlaneSurface::Init
   (const Handle(IGESGeom_Point)& aLocation,
@@ -37,22 +35,18 @@ IGESSolid_PlaneSurface::IGESSolid_PlaneSurface ()    {  }
   InitTypeAndForm(190, (theRefDir.IsNull() ? 0 : 1));
 }
 
-    Handle(IGESGeom_Point)  IGESSolid_PlaneSurface::LocationPoint () const
+void IGESSolid_PlaneSurface::OwnShared(Interface_EntityIterator &theIter) const
 {
-  return theLocationPoint;
+  theIter.GetOneItem(LocationPoint());
+  theIter.GetOneItem(Normal());
+  theIter.GetOneItem(ReferenceDir());
 }
 
-    Handle(IGESGeom_Direction)  IGESSolid_PlaneSurface::Normal () const
+void IGESSolid_PlaneSurface::OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &theCheck) const
 {
-  return theNormal;
-}
-
-    Handle(IGESGeom_Direction)  IGESSolid_PlaneSurface::ReferenceDir () const
-{
-  return theRefDir;
-}
-
-    Standard_Boolean  IGESSolid_PlaneSurface::IsParametrised () const
-{
-  return (!theRefDir.IsNull());
+  const Standard_Integer fn =  (IsParametrised()? 1 : 0);
+  if (fn != FormNumber()) {
+    Message_Msg Msg177("XSTEP_177");
+    theCheck->SendFail (Msg177);
+  }
 }

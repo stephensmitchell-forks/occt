@@ -28,16 +28,12 @@
 #include <IGESGeom_SurfaceOfRevolution.hxx>
 #include <IGESGeom_ToolSurfaceOfRevolution.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Message_Msg.hxx>
 #include <Standard_DomainError.hxx>
-
-// MGE 31/07/98
-IGESGeom_ToolSurfaceOfRevolution::IGESGeom_ToolSurfaceOfRevolution ()    {  }
 
 
 void IGESGeom_ToolSurfaceOfRevolution::ReadOwnParams
@@ -125,20 +121,6 @@ void  IGESGeom_ToolSurfaceOfRevolution::OwnShared
   iter.GetOneItem(ent->Generatrix());
 }
 
-void IGESGeom_ToolSurfaceOfRevolution::OwnCopy
-  (const Handle(IGESGeom_SurfaceOfRevolution)& another,
-   const Handle(IGESGeom_SurfaceOfRevolution)& ent, Interface_CopyTool& TC) const
-{
-  DeclareAndCast(IGESGeom_Line, anAxis,
-		 TC.Transferred(another->AxisOfRevolution()));
-  DeclareAndCast(IGESData_IGESEntity, aGeneratrix,
-		 TC.Transferred(another->Generatrix()));
-  Standard_Real aStartAngle = another->StartAngle();
-  Standard_Real anEndAngle = another->EndAngle();
-
-  ent->Init(anAxis, aGeneratrix, aStartAngle, anEndAngle);
-}
-
 
 IGESData_DirChecker IGESGeom_ToolSurfaceOfRevolution::DirChecker
   (const Handle(IGESGeom_SurfaceOfRevolution)& /*ent*/ )   const
@@ -151,15 +133,6 @@ IGESData_DirChecker IGESGeom_ToolSurfaceOfRevolution::DirChecker
 
   DC.HierarchyStatusIgnored ();
   return DC;
-}
-
-void IGESGeom_ToolSurfaceOfRevolution::OwnCheck
-  (const Handle(IGESGeom_SurfaceOfRevolution)& /*ent*/,
-   const Interface_ShareTool& , Handle(Interface_Check)& /*ach*/)  const
-{
-//  Standard_Real diffang = ent->EndAngle() - ent->StartAngle();
-//  if (diffang <= 0.0 || diffang > 2.0 * M_PI)
-//    ach.AddFail("0 < TA - SA <=  2Pi is not satisfied");
 }
 
 void IGESGeom_ToolSurfaceOfRevolution::OwnDump

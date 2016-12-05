@@ -17,14 +17,8 @@
 #ifndef _IGESSolid_SolidOfLinearExtrusion_HeaderFile
 #define _IGESSolid_SolidOfLinearExtrusion_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
-#include <Standard_Real.hxx>
 #include <gp_XYZ.hxx>
 #include <IGESData_IGESEntity.hxx>
-class IGESData_IGESEntity;
-class gp_XYZ;
 class gp_Dir;
 
 
@@ -37,11 +31,9 @@ DEFINE_STANDARD_HANDLE(IGESSolid_SolidOfLinearExtrusion, IGESData_IGESEntity)
 //! area determined by a planar curve
 class IGESSolid_SolidOfLinearExtrusion : public IGESData_IGESEntity
 {
+ public:
 
-public:
-
-  
-  Standard_EXPORT IGESSolid_SolidOfLinearExtrusion();
+  IGESSolid_SolidOfLinearExtrusion() {}
   
   //! This method is used to set the fields of the class
   //! SolidOfLinearExtrusion
@@ -52,41 +44,28 @@ public:
   Standard_EXPORT void Init (const Handle(IGESData_IGESEntity)& aCurve, const Standard_Real aLength, const gp_XYZ& aDirection);
   
   //! returns the planar curve that is to be translated
-  Standard_EXPORT Handle(IGESData_IGESEntity) Curve() const;
-  
+  const Handle(IGESData_IGESEntity) & Curve() const { return theCurve; }
+
   //! returns the Extrusion Length
-  Standard_EXPORT Standard_Real ExtrusionLength() const;
-  
+  Standard_Real ExtrusionLength() const { return theLength; }
+
   //! returns the Extrusion direction
   Standard_EXPORT gp_Dir ExtrusionDirection() const;
   
   //! returns ExtrusionDirection after applying TransformationMatrix
   Standard_EXPORT gp_Dir TransformedExtrusionDirection() const;
 
+  Standard_EXPORT virtual void OwnShared(Interface_EntityIterator &theIter) const Standard_OVERRIDE;
 
-
+  Standard_EXPORT virtual void OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESSolid_SolidOfLinearExtrusion,IGESData_IGESEntity)
 
-protected:
-
-
-
-
-private:
-
+ private:
 
   Handle(IGESData_IGESEntity) theCurve;
   Standard_Real theLength;
   gp_XYZ theDirection;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESSolid_SolidOfLinearExtrusion_HeaderFile

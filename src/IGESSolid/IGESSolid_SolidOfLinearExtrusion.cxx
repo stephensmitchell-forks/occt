@@ -18,17 +18,12 @@
 
 #include <gp_Dir.hxx>
 #include <gp_GTrsf.hxx>
-#include <gp_XYZ.hxx>
-#include <IGESData_IGESEntity.hxx>
 #include <IGESSolid_SolidOfLinearExtrusion.hxx>
-#include <Standard_Type.hxx>
+#include <Interface_EntityIterator.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESSolid_SolidOfLinearExtrusion,IGESData_IGESEntity)
 
-IGESSolid_SolidOfLinearExtrusion::IGESSolid_SolidOfLinearExtrusion ()   { }
-
-
-    void  IGESSolid_SolidOfLinearExtrusion::Init
+void IGESSolid_SolidOfLinearExtrusion::Init
   (const Handle(IGESData_IGESEntity)& aCurve,
    const Standard_Real Length, const gp_XYZ& Direction)
 {
@@ -38,22 +33,12 @@ IGESSolid_SolidOfLinearExtrusion::IGESSolid_SolidOfLinearExtrusion ()   { }
   InitTypeAndForm(164,0);
 }
 
-    Handle(IGESData_IGESEntity)  IGESSolid_SolidOfLinearExtrusion::Curve () const
-{
-  return theCurve;
-}
-
-    Standard_Real  IGESSolid_SolidOfLinearExtrusion::ExtrusionLength () const
-{
-  return theLength;
-}
-
-    gp_Dir  IGESSolid_SolidOfLinearExtrusion::ExtrusionDirection () const
+gp_Dir IGESSolid_SolidOfLinearExtrusion::ExtrusionDirection () const
 {
   return gp_Dir(theDirection);
 }
 
-    gp_Dir  IGESSolid_SolidOfLinearExtrusion::TransformedExtrusionDirection () const
+gp_Dir IGESSolid_SolidOfLinearExtrusion::TransformedExtrusionDirection () const
 {
   if (!HasTransf()) return gp_Dir(theDirection);
   else
@@ -64,4 +49,15 @@ IGESSolid_SolidOfLinearExtrusion::IGESSolid_SolidOfLinearExtrusion ()   { }
       loc.Transforms(tmp);
       return gp_Dir(tmp);
     }
+}
+
+void IGESSolid_SolidOfLinearExtrusion::OwnShared(Interface_EntityIterator &theIter) const
+{
+  theIter.GetOneItem(Curve());
+}
+
+void IGESSolid_SolidOfLinearExtrusion::OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &theCheck) const
+{
+  if (ExtrusionLength() <= 0.0)
+    theCheck->AddFail("Length of extrusion : Not Positive");
 }

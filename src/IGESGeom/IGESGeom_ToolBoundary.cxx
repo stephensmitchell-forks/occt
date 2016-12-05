@@ -30,7 +30,6 @@
 #include <IGESGeom_Boundary.hxx>
 #include <IGESGeom_ToolBoundary.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
@@ -40,15 +39,6 @@
 #include <TColStd_HArray1OfInteger.hxx>
 
 #include <stdio.h>
-// MGE 30/07/98
-//=======================================================================
-//function : IGESGeom_ToolBoundary
-//purpose  : 
-//=======================================================================
-IGESGeom_ToolBoundary::IGESGeom_ToolBoundary ()
-{
-}
-
 
 //=======================================================================
 //function : ReadOwnParams
@@ -246,54 +236,6 @@ void IGESGeom_ToolBoundary::OwnShared(const Handle(IGESGeom_Boundary)& ent,
 	    iter.GetOneItem(curves->Value(j));
 	}
     }
-}
-
-
-//=======================================================================
-//function : OwnCopy
-//purpose  : 
-//=======================================================================
-
-void IGESGeom_ToolBoundary::OwnCopy(const Handle(IGESGeom_Boundary)& another,
-                                    const Handle(IGESGeom_Boundary)& ent,
-                                    Interface_CopyTool& TC) const
-{
-  Standard_Integer i, j;
-  Standard_Integer tempType = another->BoundaryType();
-  Standard_Integer tempPreference = another->PreferenceType();
-  Standard_Integer num1 = another->NbModelSpaceCurves();
-
-  DeclareAndCast(IGESData_IGESEntity, tempSurface,
-		 TC.Transferred(another->Surface()) );
-
-  Handle(TColStd_HArray1OfInteger) tempSenses =
-    new TColStd_HArray1OfInteger(1, num1);
-  Handle(IGESData_HArray1OfIGESEntity) tempModelCurves =
-    new IGESData_HArray1OfIGESEntity(1, num1);
-  Handle(IGESBasic_HArray1OfHArray1OfIGESEntity) tempParameterCurves =
-    new IGESBasic_HArray1OfHArray1OfIGESEntity(1, num1);
-
-  for ( i = 1; i <= num1; i++ )
-    {
-      DeclareAndCast(IGESData_IGESEntity, tempEnt,
-		     TC.Transferred(another->ModelSpaceCurve(i)) );
-      tempModelCurves->SetValue(i, tempEnt);
-      tempSenses->SetValue(i, another->Sense(i));
-      Standard_Integer num2 = another->NbParameterCurves(i);
-      Handle(IGESData_HArray1OfIGESEntity) ParCurves =
-	another->ParameterCurves(i);
-      Handle(IGESData_HArray1OfIGESEntity) tempParCurves;
-      if (num2 > 0) tempParCurves = new IGESData_HArray1OfIGESEntity(1, num2);
-      for ( j = 1; j <= num2; j++ )
-	{
-          DeclareAndCast(IGESData_IGESEntity, tempEnt1,
-			 TC.Transferred(ParCurves->Value(j)) );
-          tempParCurves->SetValue(j, tempEnt1);
-	}
-      tempParameterCurves->SetValue(i, tempParCurves);
-    }
-  ent->Init(tempType, tempPreference, tempSurface, tempModelCurves,
-	    tempSenses, tempParameterCurves);
 }
 
 

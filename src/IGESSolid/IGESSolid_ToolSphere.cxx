@@ -28,13 +28,10 @@
 #include <IGESSolid_Sphere.hxx>
 #include <IGESSolid_ToolSphere.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-
-IGESSolid_ToolSphere::IGESSolid_ToolSphere ()    {  }
 
 
 void  IGESSolid_ToolSphere::ReadOwnParams
@@ -84,18 +81,6 @@ void  IGESSolid_ToolSphere::WriteOwnParams
   IW.Send(ent->Center().Z());
 }
 
-void  IGESSolid_ToolSphere::OwnShared
-  (const Handle(IGESSolid_Sphere)& /* ent */, Interface_EntityIterator& /* iter */) const
-{
-}
-
-void  IGESSolid_ToolSphere::OwnCopy
-  (const Handle(IGESSolid_Sphere)& another,
-   const Handle(IGESSolid_Sphere)& ent, Interface_CopyTool& /* TC */) const
-{
-  ent->Init (another->Radius(), another->Center().XYZ());
-}
-
 IGESData_DirChecker  IGESSolid_ToolSphere::DirChecker
   (const Handle(IGESSolid_Sphere)& /* ent */ ) const
 {
@@ -108,14 +93,6 @@ IGESData_DirChecker  IGESSolid_ToolSphere::DirChecker
   DC.UseFlagRequired (0);
   DC.HierarchyStatusIgnored ();
   return DC;
-}
-
-void  IGESSolid_ToolSphere::OwnCheck
-  (const Handle(IGESSolid_Sphere)& ent,
-   const Interface_ShareTool& , Handle(Interface_Check)& ach) const
-{
-  if (ent->Radius() <= 0.0)
-    ach->AddFail("Radius : Not Positive");
 }
 
 void  IGESSolid_ToolSphere::OwnDump

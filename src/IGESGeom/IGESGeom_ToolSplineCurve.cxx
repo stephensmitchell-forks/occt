@@ -26,7 +26,6 @@
 #include <IGESGeom_SplineCurve.hxx>
 #include <IGESGeom_ToolSplineCurve.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
@@ -37,9 +36,6 @@
 #include <TColStd_HArray2OfReal.hxx>
 
 #include <stdio.h>
-// MGE 29/07/98
-IGESGeom_ToolSplineCurve::IGESGeom_ToolSplineCurve ()    {  }
-
 
 void IGESGeom_ToolSplineCurve::ReadOwnParams
   (const Handle(IGESGeom_SplineCurve)& ent,
@@ -197,85 +193,6 @@ void IGESGeom_ToolSplineCurve::WriteOwnParams
   IW.Send(AY);  IW.Send(BY);  IW.Send(CY);  IW.Send(DY);
   IW.Send(AZ);  IW.Send(BZ);  IW.Send(CZ);  IW.Send(DZ);
 }
-
-void  IGESGeom_ToolSplineCurve::OwnShared
-  (const Handle(IGESGeom_SplineCurve)& /* ent */, Interface_EntityIterator& /* iter */) const
-{
-}
-
-void IGESGeom_ToolSplineCurve::OwnCopy
-  (const Handle(IGESGeom_SplineCurve)& another,
-   const Handle(IGESGeom_SplineCurve)& ent, Interface_CopyTool& /* TC */) const
-{
-  Standard_Integer I;
-  Standard_Real A, B, C, D;
-  Standard_Integer aType   = another->SplineType();
-  Standard_Integer aDegree = another->Degree();
-  Standard_Integer nbDimensions = another->NbDimensions();
-  Standard_Integer nbSegments   = another->NbSegments();
-
-  Handle(TColStd_HArray1OfReal) allBreakPoints =
-    new TColStd_HArray1OfReal(1, nbSegments+1);
-  for (I = 1; I <= (nbSegments + 1); I++)
-    allBreakPoints->SetValue(I, another->BreakPoint(I));
-
-  Handle(TColStd_HArray2OfReal) allXPolynomials =
-    new TColStd_HArray2OfReal(1, nbSegments, 1, 4);
-  Handle(TColStd_HArray2OfReal) allYPolynomials =
-    new TColStd_HArray2OfReal(1, nbSegments, 1, 4);
-  Handle(TColStd_HArray2OfReal) allZPolynomials =
-    new TColStd_HArray2OfReal(1, nbSegments, 1, 4);
-
-  for (I = 1; I <= nbSegments; I++) {
-    another->XCoordPolynomial(I, A, B, C, D);
-    allXPolynomials->SetValue(I, 1, A);
-    allXPolynomials->SetValue(I, 2, B);
-    allXPolynomials->SetValue(I, 3, C);
-    allXPolynomials->SetValue(I, 4, D);
-
-    another->YCoordPolynomial(I, A, B, C, D);
-    allYPolynomials->SetValue(I, 1, A);
-    allYPolynomials->SetValue(I, 2, B);
-    allYPolynomials->SetValue(I, 3, C);
-    allYPolynomials->SetValue(I, 4, D);
-
-    another->ZCoordPolynomial(I, A, B, C, D);
-    allZPolynomials->SetValue(I, 1, A);
-    allZPolynomials->SetValue(I, 2, B);
-    allZPolynomials->SetValue(I, 3, C);
-    allZPolynomials->SetValue(I, 4, D);
-  }
-
-  Handle(TColStd_HArray1OfReal) allXvalues =
-    new TColStd_HArray1OfReal(1, 4);
-  Handle(TColStd_HArray1OfReal) allYvalues =
-    new TColStd_HArray1OfReal(1, 4);
-  Handle(TColStd_HArray1OfReal) allZvalues =
-    new TColStd_HArray1OfReal(1, 4);
-
-  another->XValues(A, B, C, D);
-  allXvalues->SetValue(1, A);
-  allXvalues->SetValue(2, B);
-  allXvalues->SetValue(3, C);
-  allXvalues->SetValue(4, D);
-
-  another->YValues(A, B, C, D);
-  allYvalues->SetValue(1, A);
-  allYvalues->SetValue(2, B);
-  allYvalues->SetValue(3, C);
-  allYvalues->SetValue(4, D);
-
-  another->ZValues(A, B, C, D);
-  allZvalues->SetValue(1, A);
-  allZvalues->SetValue(2, B);
-  allZvalues->SetValue(3, C);
-  allZvalues->SetValue(4, D);
-
-  ent->Init(aType, aDegree, nbDimensions, allBreakPoints,
-	    allXPolynomials, allYPolynomials, allZPolynomials,
-	    allXvalues, allYvalues, allZvalues);
-}
-
 
 IGESData_DirChecker IGESGeom_ToolSplineCurve::DirChecker
   (const Handle(IGESGeom_SplineCurve)& /* ent */ )   const

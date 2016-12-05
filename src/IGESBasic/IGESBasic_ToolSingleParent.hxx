@@ -32,7 +32,6 @@ class Interface_EntityIterator;
 class IGESData_DirChecker;
 class Interface_ShareTool;
 class Interface_Check;
-class Interface_CopyTool;
 class IGESData_IGESDumper;
 class Message_Messenger;
 
@@ -41,13 +40,12 @@ class Message_Messenger;
 //! (ReadWriteModule, GeneralModule, SpecificModule)
 class IGESBasic_ToolSingleParent 
 {
-public:
+ public:
 
   DEFINE_STANDARD_ALLOC
 
-  
   //! Returns a ToolSingleParent, ready to work
-  Standard_EXPORT IGESBasic_ToolSingleParent();
+  IGESBasic_ToolSingleParent() {}
   
   //! Reads own parameters from file. <PR> gives access to them,
   //! <IR> detains parameter types and values
@@ -70,33 +68,8 @@ public:
   //! Performs Specific Semantic Check
   Standard_EXPORT void OwnCheck (const Handle(IGESBasic_SingleParent)& ent, const Interface_ShareTool& shares, Handle(Interface_Check)& ach) const;
   
-  //! Copies Specific Parameters
-  Standard_EXPORT void OwnCopy (const Handle(IGESBasic_SingleParent)& entfrom, const Handle(IGESBasic_SingleParent)& entto, Interface_CopyTool& TC) const;
-  
   //! Dump of Specific Parameters
   Standard_EXPORT void OwnDump (const Handle(IGESBasic_SingleParent)& ent, const IGESData_IGESDumper& dumper, const Handle(Message_Messenger)& S, const Standard_Integer own) const;
-
-
-
-
-protected:
-
-
-
-
-
-private:
-
-
-
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESBasic_ToolSingleParent_HeaderFile

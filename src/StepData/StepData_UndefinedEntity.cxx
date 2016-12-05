@@ -13,7 +13,6 @@
 
 
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ParamType.hxx>
@@ -128,21 +127,6 @@ void StepData_UndefinedEntity::WriteParams (StepData_StepWriter& SW) const
 //  SW.NewLine(Standard_True);
   if (thenext.IsNull()) return;
   thenext->WriteParams(SW);
-}
-
-    void  StepData_UndefinedEntity::GetFromAnother
-  (const Handle(StepData_UndefinedEntity)& another,
-   Interface_CopyTool& TC)
-{
-//  DeclareAndCast(StepData_UndefinedEntity,another,other);
-  thetype = new TCollection_HAsciiString (another->StepType());
-  thecont = new Interface_UndefinedContent;
-  thecont->GetFromAnother(another->UndefinedContent(),TC);
-
-  thesub = another->IsSub();
-  if (another->IsComplex()) thenext =
-    GetCasted(StepData_UndefinedEntity,TC.Transferred(another->Next()));
-  else thenext.Nullify();
 }
 
 

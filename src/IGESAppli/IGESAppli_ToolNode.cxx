@@ -28,14 +28,11 @@
 #include <IGESData_ParamReader.hxx>
 #include <IGESGeom_TransformationMatrix.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-
-IGESAppli_ToolNode::IGESAppli_ToolNode ()    {  }
 
 
 void  IGESAppli_ToolNode::ReadOwnParams
@@ -66,23 +63,6 @@ void  IGESAppli_ToolNode::WriteOwnParams
   IW.Send(ent->System());
 }
 
-void  IGESAppli_ToolNode::OwnShared
-  (const Handle(IGESAppli_Node)& ent, Interface_EntityIterator& iter) const
-{
-  iter.GetOneItem(ent->System());
-}
-
-void  IGESAppli_ToolNode::OwnCopy
-  (const Handle(IGESAppli_Node)& another,
-   const Handle(IGESAppli_Node)& ent, Interface_CopyTool& TC) const
-{
-  gp_XYZ aCoord = (another->Coord()).XYZ();
-  DeclareAndCast(IGESGeom_TransformationMatrix,aSystem,
-		 TC.Transferred(another->System()));
-
-  ent->Init(aCoord,aSystem);
-}
-
 IGESData_DirChecker  IGESAppli_ToolNode::DirChecker
   (const Handle(IGESAppli_Node)& /*ent*/ ) const
 {
@@ -93,19 +73,6 @@ IGESData_DirChecker  IGESAppli_ToolNode::DirChecker
   DC.Color(IGESData_DefAny);
   DC.UseFlagRequired(04);
   return DC;
-}
-
-void  IGESAppli_ToolNode::OwnCheck
-  (const Handle(IGESAppli_Node)& ent,
-   const Interface_ShareTool& , Handle(Interface_Check)& ach) const
-{
-  if (!ent->HasSubScriptNumber())
-    ach->AddFail("SubScript Number expected (for Node Number) not present");
-  if (!ent->HasTransf())
-    ach->AddFail("Transformation Matrix expected, not present");
-  if (!ent->System().IsNull())
-    if (ent->System()->FormNumber() < 10)
-      ach->AddFail("System : Incorrect FormNumber (not 10-11-12)");
 }
 
 void  IGESAppli_ToolNode::OwnDump

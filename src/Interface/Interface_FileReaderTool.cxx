@@ -21,7 +21,6 @@
 #include <Interface_InterfaceMismatch.hxx>
 #include <Interface_InterfaceModel.hxx>
 #include <Interface_Protocol.hxx>
-#include <Interface_ReaderLib.hxx>
 #include <Interface_ReaderModule.hxx>
 #include <Interface_ReportEntity.hxx>
 #include <Message.hxx>
@@ -58,8 +57,10 @@
 //purpose  : 
 //=======================================================================
 
-Interface_FileReaderTool::Interface_FileReaderTool ()
-: themessenger(Message::DefaultMessenger()),
+Interface_FileReaderTool::Interface_FileReaderTool (const Handle(Interface_Protocol)& protocol)
+: theglib(protocol),
+  therlib(protocol),
+  themessenger(Message::DefaultMessenger()),
   thetrace(1),
   thenbrep0(0),
   thenbreps(0)
@@ -98,14 +99,13 @@ void Interface_FileReaderTool::SetEntities ()
   for (num = thereader->FindNextRecord(0);  num > 0;
        num = thereader->FindNextRecord(num)) {
     Handle(Standard_Transient) newent;
-    Handle(Interface_Check) ach = new Interface_Check;
-    Standard_Boolean res = Recognize (num,ach,newent);
-    if (!res) newent = theproto->UnknownEntity();
-	else res = ((ach->NbFails() + ach->NbWarnings()) == 0) || newent.IsNull();
+    const Standard_Boolean res = Recognize (num,newent);
     if (!res) {
-      if (thereports.IsNull()) thereports = new TColStd_HArray1OfTransient (1,thereader->NbRecords());
+      newent = theproto->UnknownEntity();
+      if (thereports.IsNull())
+        thereports = new TColStd_HArray1OfTransient (1,thereader->NbRecords());
       thenbreps ++;  thenbrep0 ++;
-      thereports->SetValue (num,new Interface_ReportEntity(ach,newent));
+      thereports->SetValue (num,new Interface_ReportEntity(newent));
     }
     thereader->BindEntity (num,newent);
   }
@@ -119,7 +119,7 @@ void Interface_FileReaderTool::SetEntities ()
 
 void Interface_FileReaderTool::EndRead(const Handle(Interface_InterfaceModel)& )
 {
-}    // par defaut, ne fait rien; redefinissable selon besoin
+}
 
 
 //  ....               (Sa Majeste le) CHARGEMENT DU MODELE               ....
@@ -378,9 +378,6 @@ Handle(Standard_Transient) Interface_FileReaderTool::LoadedEntity (const Standar
 //=======================================================================
 
 Standard_Boolean Interface_FileReaderTool::RecognizeByLib(const Standard_Integer num,
-                                                          Interface_GeneralLib& glib,
-                                                          Interface_ReaderLib& rlib,
-                                                          Handle(Interface_Check)& ach,
                                                           Handle(Standard_Transient)& ent) const
 {
   Handle(Interface_GeneralModule) gmod;
@@ -388,22 +385,21 @@ Standard_Boolean Interface_FileReaderTool::RecognizeByLib(const Standard_Integer
   Handle(Interface_Protocol) proto;
   Standard_Integer CN = 0;
 //   Chercher dans ReaderLib : Reconnaissance de cas -> CN , proto
-  for (rlib.Start(); rlib.More(); rlib.Next()) {
-    rmod = rlib.Module();
+  for (therlib.Start(); therlib.More(); therlib.Next()) {
+    rmod = therlib.Module();
     if (rmod.IsNull()) continue;
     CN = rmod->CaseNum(thereader,num);
-    if (CN > 0)  {  proto = rlib.Protocol();  break;  }
+    if (CN > 0)  {  proto = therlib.Protocol();  break;  }
   }
   if (CN <= 0 || proto.IsNull()) return Standard_False;
 //   Se recaler dans GeneralLib : Creation de l entite vide
   Handle(Standard_Type) typrot = proto->DynamicType();
-  for (glib.Start(); glib.More(); glib.Next()) {
-    proto = glib.Protocol();
+  for (theglib.Start(); theglib.More(); theglib.Next()) {
+    proto = theglib.Protocol();
     if (proto.IsNull()) continue;
     if (proto->DynamicType() != typrot) continue;
-    Standard_Boolean res = glib.Module()->NewVoid(CN,ent);
+    Standard_Boolean res = theglib.Module()->NewVoid(CN,ent);
     if (res) return res;
-    if (!rmod.IsNull()) return rmod->NewRead (CN,thereader,num,ach,ent);
   }
   return Standard_False;
 }

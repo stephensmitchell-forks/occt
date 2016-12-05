@@ -28,7 +28,6 @@
 #include <IGESData_ParamCursor.hxx>
 #include <IGESData_ParamReader.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_HArray1OfHAsciiString.hxx>
 #include <Interface_Macros.hxx>
@@ -36,8 +35,6 @@
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
 #include <TCollection_HAsciiString.hxx>
-
-IGESBasic_ToolExternalRefFileIndex::IGESBasic_ToolExternalRefFileIndex ()  {  }
 
 
 void  IGESBasic_ToolExternalRefFileIndex::ReadOwnParams
@@ -89,26 +86,6 @@ void  IGESBasic_ToolExternalRefFileIndex::OwnShared
     iter.GetOneItem(ent->Entity(i));
 }
 
-void  IGESBasic_ToolExternalRefFileIndex::OwnCopy
-  (const Handle(IGESBasic_ExternalRefFileIndex)& another,
-   const Handle(IGESBasic_ExternalRefFileIndex)& ent, Interface_CopyTool& TC) const
-{
-  Standard_Integer num = another->NbEntries();
-  Handle(Interface_HArray1OfHAsciiString) tempNames =
-    new Interface_HArray1OfHAsciiString(1, num);
-  Handle(IGESData_HArray1OfIGESEntity) tempEntities =
-    new IGESData_HArray1OfIGESEntity(1, num);
-  for ( Standard_Integer i = 1; i <= num; i++ )
-    {
-      tempNames->SetValue(i, new TCollection_HAsciiString
-			  (another->Name(i)));
-      DeclareAndCast(IGESData_IGESEntity, new_item,
-		     TC.Transferred(another->Entity(i)));
-      tempEntities->SetValue(i, new_item);
-    }
-  ent->Init(tempNames, tempEntities);
-}
-
 IGESData_DirChecker  IGESBasic_ToolExternalRefFileIndex::DirChecker
   (const Handle(IGESBasic_ExternalRefFileIndex)& /* ent */ ) const
 {
@@ -122,12 +99,6 @@ IGESData_DirChecker  IGESBasic_ToolExternalRefFileIndex::DirChecker
   DC.UseFlagIgnored();
   DC.HierarchyStatusIgnored();
   return DC;
-}
-
-void  IGESBasic_ToolExternalRefFileIndex::OwnCheck
-  (const Handle(IGESBasic_ExternalRefFileIndex)& /* ent */,
-   const Interface_ShareTool& , Handle(Interface_Check)& /* ach */) const
-{
 }
 
 void  IGESBasic_ToolExternalRefFileIndex::OwnDump

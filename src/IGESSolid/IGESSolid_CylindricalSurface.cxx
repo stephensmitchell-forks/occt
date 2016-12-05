@@ -19,14 +19,11 @@
 #include <IGESGeom_Direction.hxx>
 #include <IGESGeom_Point.hxx>
 #include <IGESSolid_CylindricalSurface.hxx>
-#include <Standard_Type.hxx>
+#include <Interface_EntityIterator.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESSolid_CylindricalSurface,IGESData_IGESEntity)
 
-IGESSolid_CylindricalSurface::IGESSolid_CylindricalSurface ()    {  }
-
-
-    void  IGESSolid_CylindricalSurface::Init
+void IGESSolid_CylindricalSurface::Init
   (const Handle(IGESGeom_Point)&     aLocation,
    const Handle(IGESGeom_Direction)& anAxis,
    const Standard_Real    aRadius,
@@ -39,28 +36,17 @@ IGESSolid_CylindricalSurface::IGESSolid_CylindricalSurface ()    {  }
   InitTypeAndForm(192, (theRefDir.IsNull() ? 0 : 1));
 }
 
-    Handle(IGESGeom_Point) IGESSolid_CylindricalSurface::LocationPoint () const
+void IGESSolid_CylindricalSurface::OwnShared(Interface_EntityIterator &theIter) const
 {
-  return theLocationPoint;
+  theIter.GetOneItem(LocationPoint());
+  theIter.GetOneItem(Axis());
+  theIter.GetOneItem(ReferenceDir());
 }
 
-    Handle(IGESGeom_Direction) IGESSolid_CylindricalSurface::Axis () const
+void IGESSolid_CylindricalSurface::OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &theCheck) const
 {
-  return theAxis;
+  if (Radius() <= 0.0)
+    theCheck->AddFail("Radius : Value <= 0.0");
+  const Standard_Integer fn = (IsParametrised()? 1 : 0);
+  if (fn != FormNumber()) theCheck->AddFail("Parametrised Status Mismatches with Form Number");
 }
-
-    Standard_Real IGESSolid_CylindricalSurface::Radius () const
-{
-  return theRadius;
-}
-
-    Handle(IGESGeom_Direction)  IGESSolid_CylindricalSurface::ReferenceDir () const
-{
-  return theRefDir;
-}
-
-    Standard_Boolean  IGESSolid_CylindricalSurface::IsParametrised () const
-{
-  return (!theRefDir.IsNull());
-}
-

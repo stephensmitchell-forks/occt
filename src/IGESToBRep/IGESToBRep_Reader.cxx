@@ -19,15 +19,11 @@
 #include <BRepLib.hxx>
 #include <BRepTools_Modifier.hxx>
 #include <gp_Trsf.hxx>
-#include <IGESAppli.hxx>
-#include <IGESAppli_Protocol.hxx>
-#include <IGESData_FileProtocol.hxx>
 #include <IGESData_GlobalSection.hxx>
 #include <IGESData_IGESEntity.hxx>
 #include <IGESData_IGESModel.hxx>
 #include <IGESFile_Read.hxx>
-#include <IGESSolid.hxx>
-#include <IGESSolid_Protocol.hxx>
+#include <IGESControl_Controller.hxx>
 #include <IGESToBRep.hxx>
 #include <IGESToBRep_Actor.hxx>
 #include <IGESToBRep_CurveAndSurface.hxx>
@@ -64,9 +60,6 @@
 #else
 #include <errno.h>
 #endif
-//extern int errno;
-
-static Handle(IGESData_FileProtocol) protocol;
 
 
 //=======================================================================
@@ -76,13 +69,10 @@ static Handle(IGESData_FileProtocol) protocol;
 
 IGESToBRep_Reader::IGESToBRep_Reader ()
 {
+  IGESControl_Controller::Init();
+  IGESControl_Controller::DefineProtocol();
+
   theDone = Standard_False;
-  if (protocol.IsNull()) {
-    IGESAppli::Init();  IGESSolid::Init();
-    protocol = new IGESData_FileProtocol;
-    protocol->Add(IGESAppli::Protocol());
-    protocol->Add(IGESSolid::Protocol());
-  }
   theActor = new IGESToBRep_Actor;
   theProc = new Transfer_TransientProcess;
 }
@@ -111,6 +101,7 @@ Standard_Integer IGESToBRep_Reader::LoadFile (const Standard_CString filename)
 
   OSD_Timer c; c.Reset(); c.Start();    
   char *pfilename=(char *)filename;
+  const Handle(IGESData_Protocol) &protocol = IGESControl_Controller::DefineProtocol();
   Standard_Integer StatusFile = IGESFile_Read(pfilename,model,protocol);
   if (StatusFile != 0) {
     // Sending of message : IGES file opening error 
@@ -214,6 +205,7 @@ void IGESToBRep_Reader::SetModel (const Handle(IGESData_IGESModel)& model)
 
 Standard_Boolean  IGESToBRep_Reader::Check (const Standard_Boolean withprint) const
 {
+  const Handle(IGESData_Protocol) &protocol = IGESControl_Controller::DefineProtocol();
   Interface_CheckTool cht (theModel,protocol);
   Interface_CheckIterator chl = cht.CompleteCheckList();
   if (withprint && !theProc.IsNull()) 
@@ -281,7 +273,7 @@ void  IGESToBRep_Reader::TransferRoots (const Standard_Boolean onlyvisible)
   theProc->SetModel (theModel);
   theProc->SetActor (theActor);
 
-  const Handle(Interface_Protocol) aProtocol = protocol; // to avoid ambiguity
+  const Handle(Interface_Protocol) aProtocol = IGESControl_Controller::DefineProtocol();
   Interface_ShareFlags SH (theModel, aProtocol);
   Standard_Integer nb = theModel->NbEntities();
   ShapeExtend_Explorer SBE;

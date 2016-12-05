@@ -17,10 +17,6 @@
 #ifndef _IGESAppli_LevelFunction_HeaderFile
 #define _IGESAppli_LevelFunction_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
-#include <Standard_Integer.hxx>
 #include <IGESData_IGESEntity.hxx>
 class TCollection_HAsciiString;
 
@@ -34,11 +30,9 @@ DEFINE_STANDARD_HANDLE(IGESAppli_LevelFunction, IGESData_IGESEntity)
 //! in the sending system
 class IGESAppli_LevelFunction : public IGESData_IGESEntity
 {
+ public:
 
-public:
-
-  
-  Standard_EXPORT IGESAppli_LevelFunction();
+  IGESAppli_LevelFunction() {}
   
   //! This method is used to set the fields of the class
   //! LevelFunction
@@ -50,39 +44,24 @@ public:
   Standard_EXPORT void Init (const Standard_Integer nbPropVal, const Standard_Integer aCode, const Handle(TCollection_HAsciiString)& aFuncDescrip);
   
   //! is always 2
-  Standard_EXPORT Standard_Integer NbPropertyValues() const;
-  
+  Standard_Integer NbPropertyValues() const { return theNbPropertyValues; }
+
   //! returns the function description code . Default = 0
-  Standard_EXPORT Standard_Integer FuncDescriptionCode() const;
-  
+  Standard_Integer FuncDescriptionCode() const { return theFuncDescripCode; }
+
   //! returns the function description
   //! Default = null string
-  Standard_EXPORT Handle(TCollection_HAsciiString) FuncDescription() const;
+  const Handle(TCollection_HAsciiString) & FuncDescription() const { return theFuncDescrip; }
 
-
-
+  Standard_EXPORT virtual void OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESAppli_LevelFunction,IGESData_IGESEntity)
 
-protected:
-
-
-
-
-private:
-
+ private:
 
   Standard_Integer theNbPropertyValues;
   Standard_Integer theFuncDescripCode;
   Handle(TCollection_HAsciiString) theFuncDescrip;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESAppli_LevelFunction_HeaderFile

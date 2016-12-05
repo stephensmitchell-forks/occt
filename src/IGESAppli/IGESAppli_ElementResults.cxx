@@ -24,13 +24,11 @@
 #include <IGESDimen_GeneralNote.hxx>
 #include <Standard_DimensionMismatch.hxx>
 #include <Standard_OutOfRange.hxx>
-#include <Standard_Type.hxx>
+#include <Interface_EntityIterator.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESAppli_ElementResults,IGESData_IGESEntity)
 
-IGESAppli_ElementResults::IGESAppli_ElementResults ()    {  }
-
-    void  IGESAppli_ElementResults::Init
+void IGESAppli_ElementResults::Init
   (const Handle(IGESDimen_GeneralNote)& aNote,
    const Standard_Integer aSubCase, const Standard_Real aTime,
    const Standard_Integer nbResults, const Standard_Integer aResRepFlag,
@@ -83,101 +81,66 @@ IGESAppli_ElementResults::IGESAppli_ElementResults ()    {  }
 // FormNumber -> Type of the Results
 }
 
-    void  IGESAppli_ElementResults::SetFormNumber (const Standard_Integer form)
+void IGESAppli_ElementResults::SetFormNumber (const Standard_Integer form)
 {
   if (form < 0 || form > 34) Standard_OutOfRange::Raise
     ("IGESAppli_ElementResults : SetFormNumber");
   InitTypeAndForm(148,form);
 }
 
-
-    Handle(IGESDimen_GeneralNote)  IGESAppli_ElementResults::Note () const
-{
-  return theNote;
-}
-
-    Standard_Integer  IGESAppli_ElementResults::SubCaseNumber () const
-{
-  return theSubcaseNumber;
-}
-
-    Standard_Real  IGESAppli_ElementResults::Time () const
-{
-  return theTime;
-}
-
-    Standard_Integer  IGESAppli_ElementResults::NbResultValues () const
-{
-  return theNbResultValues;
-}
-
-    Standard_Integer  IGESAppli_ElementResults::ResultReportFlag () const
-{
-  return theResultReportFlag;
-}
-
-    Standard_Integer  IGESAppli_ElementResults::NbElements () const
+Standard_Integer IGESAppli_ElementResults::NbElements () const
 {
   return theElements->Length();
 }
 
-    Standard_Integer  IGESAppli_ElementResults::ElementIdentifier
-  (const Standard_Integer Index) const
+Standard_Integer IGESAppli_ElementResults::ElementIdentifier (const Standard_Integer Index) const
 {
   return theElementIdentifiers->Value(Index);
 }
 
-    Handle(IGESAppli_FiniteElement)  IGESAppli_ElementResults::Element
-  (const Standard_Integer Index) const
+const Handle(IGESAppli_FiniteElement) & IGESAppli_ElementResults::Element (const Standard_Integer Index) const
 {
   return theElements->Value(Index);
 }
 
-    Standard_Integer  IGESAppli_ElementResults::ElementTopologyType
-  (const Standard_Integer Index) const
+Standard_Integer IGESAppli_ElementResults::ElementTopologyType (const Standard_Integer Index) const
 {
   return theElementTopologyTypes->Value(Index);
 }
 
-    Standard_Integer  IGESAppli_ElementResults::NbLayers
-  (const Standard_Integer Index) const
+Standard_Integer IGESAppli_ElementResults::NbLayers (const Standard_Integer Index) const
 {
   return theNbLayers->Value(Index);
 }
 
-    Standard_Integer  IGESAppli_ElementResults::DataLayerFlag
-  (const Standard_Integer Index) const
+Standard_Integer IGESAppli_ElementResults::DataLayerFlag (const Standard_Integer Index) const
 {
   return theDataLayerFlags->Value(Index);
 }
 
-    Standard_Integer  IGESAppli_ElementResults::NbResultDataLocs
-  (const Standard_Integer Index) const
+Standard_Integer IGESAppli_ElementResults::NbResultDataLocs (const Standard_Integer Index) const
 {
   return theNbResultDataLocs->Value(Index);
 }
 
 //  ?? VERIFIER
 
-    Standard_Integer  IGESAppli_ElementResults::ResultDataLoc
-  (const Standard_Integer NElem, const Standard_Integer NLoc) const
+Standard_Integer IGESAppli_ElementResults::ResultDataLoc (const Standard_Integer NElem, const Standard_Integer NLoc) const
 {
   return theResultDataLocs->Value(NElem)->Value(NLoc);
 }
 
-    Standard_Integer  IGESAppli_ElementResults::NbResults
-  (const Standard_Integer Index) const
+Standard_Integer IGESAppli_ElementResults::NbResults (const Standard_Integer Index) const
 {
   return theResultData->Value(Index)->Length();
 }
 
-    Standard_Real  IGESAppli_ElementResults::ResultData
-  (const Standard_Integer NElem, const Standard_Integer num) const
+Standard_Real IGESAppli_ElementResults::ResultData (const Standard_Integer NElem, const Standard_Integer num) const
 {
   return theResultData->Value(NElem)->Value(num);
 }
 
-    Standard_Integer  IGESAppli_ElementResults::ResultRank
+Standard_Integer IGESAppli_ElementResults::ResultRank
   (const Standard_Integer NElem, const Standard_Integer NVal,
    const Standard_Integer NLay, const Standard_Integer NLoc) const
 {
@@ -186,15 +149,91 @@ IGESAppli_ElementResults::IGESAppli_ElementResults ()    {  }
   return num;
 }
 
-    Standard_Real  IGESAppli_ElementResults::ResultData
+Standard_Real IGESAppli_ElementResults::ResultData
   (const Standard_Integer NElem, const Standard_Integer NVal,
    const Standard_Integer NLay, const Standard_Integer NLoc) const
 {
   return theResultData->Value(NElem)->Value(ResultRank(NElem,NVal,NLay,NLoc));
 }
 
-    Handle(TColStd_HArray1OfReal)  IGESAppli_ElementResults::ResultList
-  (const Standard_Integer NElem) const
+Handle(TColStd_HArray1OfReal) IGESAppli_ElementResults::ResultList (const Standard_Integer NElem) const
 {
   return theResultData->Value(NElem);
+}
+
+void IGESAppli_ElementResults::OwnShared(Interface_EntityIterator &theIter) const
+{
+  theIter.GetOneItem(Note());
+  const Standard_Integer num = NbElements();
+  for ( Standard_Integer i = 1; i <= num; i++ )
+    theIter.GetOneItem(Element(i));
+}
+
+void IGESAppli_ElementResults::OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &theCheck) const
+{
+  Standard_Integer rrf = ResultReportFlag();
+  if (rrf < 0 || rrf > 3) theCheck->AddFail("Result Report Flag not in [0-3]");
+  Standard_Integer nv = NbResultValues();
+  Standard_Boolean OK = Standard_True;
+  switch (FormNumber()) {
+    case  0 : if (nv <  0) OK = Standard_False;  break;
+    case  1 : if (nv != 1) OK = Standard_False;  break;
+    case  2 : if (nv != 1) OK = Standard_False;  break;
+    case  3 : if (nv != 3) OK = Standard_False;  break;
+    case  4 : if (nv != 6) OK = Standard_False;  break;
+    case  5 : if (nv != 3) OK = Standard_False;  break;
+    case  6 : if (nv != 3) OK = Standard_False;  break;
+    case  7 : if (nv != 3) OK = Standard_False;  break;
+    case  8 : if (nv != 3) OK = Standard_False;  break;
+    case  9 : if (nv != 3) OK = Standard_False;  break;
+    case 10 : if (nv != 1) OK = Standard_False;  break;
+    case 11 : if (nv != 1) OK = Standard_False;  break;
+    case 12 : if (nv != 3) OK = Standard_False;  break;
+    case 13 : if (nv != 1) OK = Standard_False;  break;
+    case 14 : if (nv != 1) OK = Standard_False;  break;
+    case 15 : if (nv != 3) OK = Standard_False;  break;
+    case 16 : if (nv != 1) OK = Standard_False;  break;
+    case 17 : if (nv != 3) OK = Standard_False;  break;
+    case 18 : if (nv != 3) OK = Standard_False;  break;
+    case 19 : if (nv != 3) OK = Standard_False;  break;
+    case 20 : if (nv != 3) OK = Standard_False;  break;
+    case 21 : if (nv != 3) OK = Standard_False;  break;
+    case 22 : if (nv != 3) OK = Standard_False;  break;
+    case 23 : if (nv != 6) OK = Standard_False;  break;
+    case 24 : if (nv != 6) OK = Standard_False;  break;
+    case 25 : if (nv != 6) OK = Standard_False;  break;
+    case 26 : if (nv != 6) OK = Standard_False;  break;
+    case 27 : if (nv != 6) OK = Standard_False;  break;
+    case 28 : if (nv != 6) OK = Standard_False;  break;
+    case 29 : if (nv != 9) OK = Standard_False;  break;
+    case 30 : if (nv != 9) OK = Standard_False;  break;
+    case 31 : if (nv != 9) OK = Standard_False;  break;
+    case 32 : if (nv != 9) OK = Standard_False;  break;
+    case 33 : if (nv != 9) OK = Standard_False;  break;
+    case 34 : if (nv != 9) OK = Standard_False;  break;
+    default : theCheck->AddFail("Incorrect Form Number");    break;
+  }
+  if (!OK) theCheck->AddFail("Incorrect count of real values in array V for FEM node");
+  const Standard_Integer ne = NbElements();
+  for (Standard_Integer i = 1; i <= ne; i ++) {
+    char mess[100];
+    Standard_Integer dlf = DataLayerFlag(i);
+    Standard_Integer nl  = NbLayers(i);
+    Standard_Integer nrl = NbResultDataLocs(i);
+    if (dlf < 0 || dlf > 4)
+      theCheck->AddFail("One of the Data Layer Flags not in [0-4]");
+    if (dlf < 4 && NbLayers(i) != 1) {
+      sprintf(mess,"Nb. of Layers n0.%d not ONE while Data Layer Flag is in [0-3]",i);
+      theCheck->AddFail(mess);
+    }
+    if (rrf == 1 || rrf == 2)
+      if (nrl != 1 || ResultDataLoc(i,1) != 0) {
+        sprintf(mess,"Result Data Locs n0.%d incorrect for Result Report = 1 or 2",i);
+        theCheck->AddFail(mess);
+      }
+    if (NbResults(i) != (nv*nl*nrl)) {
+      sprintf(mess,"Nb. of results for Element n0.%d incorrect, should be %d",i,nv*nl*nrl);
+      theCheck->AddFail(mess);
+    }
+  }
 }

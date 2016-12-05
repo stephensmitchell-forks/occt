@@ -17,13 +17,7 @@
 #ifndef _IGESSolid_SolidInstance_HeaderFile
 #define _IGESSolid_SolidInstance_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
 #include <IGESData_IGESEntity.hxx>
-#include <Standard_Boolean.hxx>
-class IGESData_IGESEntity;
-
 
 class IGESSolid_SolidInstance;
 DEFINE_STANDARD_HANDLE(IGESSolid_SolidInstance, IGESData_IGESEntity)
@@ -37,11 +31,9 @@ DEFINE_STANDARD_HANDLE(IGESSolid_SolidInstance, IGESData_IGESEntity)
 //! Else it is for a Boolean Tree, Primitive, other Solid Inst.
 class IGESSolid_SolidInstance : public IGESData_IGESEntity
 {
+ public:
 
-public:
-
-  
-  Standard_EXPORT IGESSolid_SolidInstance();
+  IGESSolid_SolidInstance() {}
   
   //! This method is used to set the fields of the class
   //! SolidInstance
@@ -56,30 +48,15 @@ public:
   Standard_EXPORT void SetBrep (const Standard_Boolean brep);
   
   //! returns the solid entity
-  Standard_EXPORT Handle(IGESData_IGESEntity) Entity() const;
+  const Handle(IGESData_IGESEntity) & Entity() const { return theEntity; }
 
-
-
+  Standard_EXPORT virtual void OwnShared(Interface_EntityIterator &theIter) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESSolid_SolidInstance,IGESData_IGESEntity)
 
-protected:
-
-
-
-
-private:
-
+ private:
 
   Handle(IGESData_IGESEntity) theEntity;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESSolid_SolidInstance_HeaderFile

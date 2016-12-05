@@ -28,15 +28,11 @@
 #include <IGESSolid_SolidOfLinearExtrusion.hxx>
 #include <IGESSolid_ToolSolidOfLinearExtrusion.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-
-IGESSolid_ToolSolidOfLinearExtrusion::IGESSolid_ToolSolidOfLinearExtrusion ()
-      {  }
 
 
 void  IGESSolid_ToolSolidOfLinearExtrusion::ReadOwnParams
@@ -94,23 +90,6 @@ void  IGESSolid_ToolSolidOfLinearExtrusion::WriteOwnParams
   IW.Send(ent->ExtrusionDirection().Z());
 }
 
-void  IGESSolid_ToolSolidOfLinearExtrusion::OwnShared
-  (const Handle(IGESSolid_SolidOfLinearExtrusion)& ent, Interface_EntityIterator& iter) const
-{
-  iter.GetOneItem(ent->Curve());
-}
-
-void  IGESSolid_ToolSolidOfLinearExtrusion::OwnCopy
-  (const Handle(IGESSolid_SolidOfLinearExtrusion)& another,
-   const Handle(IGESSolid_SolidOfLinearExtrusion)& ent, Interface_CopyTool& TC) const
-{
-  DeclareAndCast(IGESData_IGESEntity, tempEntity,
-		 TC.Transferred(another->Curve()));
-  Standard_Real tempLength = another->ExtrusionLength();
-  gp_XYZ tempDirection = another->ExtrusionDirection().XYZ();
-  ent->Init(tempEntity, tempLength, tempDirection);
-}
-
 IGESData_DirChecker  IGESSolid_ToolSolidOfLinearExtrusion::DirChecker
   (const Handle(IGESSolid_SolidOfLinearExtrusion)& /* ent */ ) const
 {
@@ -123,14 +102,6 @@ IGESData_DirChecker  IGESSolid_ToolSolidOfLinearExtrusion::DirChecker
   DC.UseFlagRequired (0);
   DC.HierarchyStatusIgnored ();
   return DC;
-}
-
-void  IGESSolid_ToolSolidOfLinearExtrusion::OwnCheck
-  (const Handle(IGESSolid_SolidOfLinearExtrusion)& ent,
-   const Interface_ShareTool& , Handle(Interface_Check)& ach) const
-{
-  if (ent->ExtrusionLength() <= 0.0)
-    ach->AddFail("Length of extrusion : Not Positive");
 }
 
 void  IGESSolid_ToolSolidOfLinearExtrusion::OwnDump

@@ -27,15 +27,12 @@
 #include <IGESData_ParamCursor.hxx>
 #include <IGESData_ParamReader.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
 #include <TCollection_HAsciiString.hxx>
-
-IGESAppli_ToolReferenceDesignator::IGESAppli_ToolReferenceDesignator ()    {  }
 
 
 void  IGESAppli_ToolReferenceDesignator::ReadOwnParams
@@ -59,22 +56,6 @@ void  IGESAppli_ToolReferenceDesignator::WriteOwnParams
 {
   IW.Send(ent->NbPropertyValues());
   IW.Send(ent->RefDesignatorText());
-}
-
-void  IGESAppli_ToolReferenceDesignator::OwnShared
-  (const Handle(IGESAppli_ReferenceDesignator)& /* ent */, Interface_EntityIterator& /* iter */) const
-{
-}
-
-void  IGESAppli_ToolReferenceDesignator::OwnCopy
-  (const Handle(IGESAppli_ReferenceDesignator)& another,
-   const Handle(IGESAppli_ReferenceDesignator)& ent, Interface_CopyTool& /* TC */) const
-{
-  Standard_Integer aNbPropertyValues;
-  Handle(TCollection_HAsciiString) aReferenceDesignator =
-    new TCollection_HAsciiString(another->RefDesignatorText());
-  aNbPropertyValues = another->NbPropertyValues();
-  ent->Init(aNbPropertyValues,aReferenceDesignator);
 }
 
 Standard_Boolean  IGESAppli_ToolReferenceDesignator::OwnCorrect
@@ -102,21 +83,6 @@ IGESData_DirChecker  IGESAppli_ToolReferenceDesignator::DirChecker
   DC.UseFlagIgnored();
   DC.HierarchyStatusIgnored();
   return DC;
-}
-
-void  IGESAppli_ToolReferenceDesignator::OwnCheck
-  (const Handle(IGESAppli_ReferenceDesignator)& ent,
-   const Interface_ShareTool& , Handle(Interface_Check)& ach) const
-{
-  if (ent->SubordinateStatus() != 0)
-    //the level is ignored if this property is subordinate
-    if (ent->DefLevel() != IGESData_DefOne &&
-	ent->DefLevel() != IGESData_DefSeveral)
-      ach->AddFail("Level type: Not value/reference");
-  if (ent->NbPropertyValues() != 1)
-    ach->AddFail("Number of Property Values != 1");
-  //UNFINISHED
-  //the level is ignored if this property is subordinate -- queried
 }
 
 void  IGESAppli_ToolReferenceDesignator::OwnDump

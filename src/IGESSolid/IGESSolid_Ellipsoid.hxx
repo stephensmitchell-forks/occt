@@ -17,13 +17,8 @@
 #ifndef _IGESSolid_Ellipsoid_HeaderFile
 #define _IGESSolid_Ellipsoid_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
 #include <gp_XYZ.hxx>
 #include <IGESData_IGESEntity.hxx>
-#include <Standard_Real.hxx>
-class gp_XYZ;
 class gp_Pnt;
 class gp_Dir;
 
@@ -40,11 +35,9 @@ DEFINE_STANDARD_HANDLE(IGESSolid_Ellipsoid, IGESData_IGESEntity)
 //! LX^2      LY^2      LZ^2
 class IGESSolid_Ellipsoid : public IGESData_IGESEntity
 {
+ public:
 
-public:
-
-  
-  Standard_EXPORT IGESSolid_Ellipsoid();
+  IGESSolid_Ellipsoid() {}
   
   //! This method is used to set the fields of the class
   //! Ellipsoid
@@ -57,17 +50,17 @@ public:
   Standard_EXPORT void Init (const gp_XYZ& aSize, const gp_XYZ& aCenter, const gp_XYZ& anXAxis, const gp_XYZ& anZAxis);
   
   //! returns the size
-  Standard_EXPORT gp_XYZ Size() const;
-  
+  const gp_XYZ & Size() const { return theSize; }
+
   //! returns the length in the local X-direction
-  Standard_EXPORT Standard_Real XLength() const;
-  
+  Standard_Real XLength() const { return theSize.X(); }
+
   //! returns the length in the local Y-direction
-  Standard_EXPORT Standard_Real YLength() const;
-  
+  Standard_Real YLength() const { return theSize.Y(); }
+
   //! returns the length in the local Z-direction
-  Standard_EXPORT Standard_Real ZLength() const;
-  
+  Standard_Real ZLength() const { return theSize.Z(); }
+
   //! returns the center of the ellipsoid
   Standard_EXPORT gp_Pnt Center() const;
   
@@ -98,31 +91,16 @@ public:
   //! after applying TransformationMatrix
   Standard_EXPORT gp_Dir TransformedZAxis() const;
 
-
-
+  Standard_EXPORT virtual void OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESSolid_Ellipsoid,IGESData_IGESEntity)
 
-protected:
-
-
-
-
-private:
-
+ private:
 
   gp_XYZ theSize;
   gp_XYZ theCenter;
   gp_XYZ theXAxis;
   gp_XYZ theZAxis;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESSolid_Ellipsoid_HeaderFile

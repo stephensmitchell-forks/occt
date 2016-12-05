@@ -32,22 +32,12 @@
 #include <IGESGeom_OffsetCurve.hxx>
 #include <IGESGeom_ToolOffsetCurve.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Message_Msg.hxx>
 #include <Standard_DomainError.hxx>
-
-// MGE 30/07/98
-//=======================================================================
-//function : IGESGeom_ToolOffsetCurve
-//purpose  : 
-//=======================================================================
-IGESGeom_ToolOffsetCurve::IGESGeom_ToolOffsetCurve ()
-{
-}
 
 
 //=======================================================================
@@ -232,40 +222,6 @@ void IGESGeom_ToolOffsetCurve::OwnShared(const Handle(IGESGeom_OffsetCurve)& ent
 {
   iter.GetOneItem(ent->BaseCurve());
   iter.GetOneItem(ent->Function());
-}
-
-
-//=======================================================================
-//function : OwnCopy
-//purpose  : 
-//=======================================================================
-
-void IGESGeom_ToolOffsetCurve::OwnCopy(const Handle(IGESGeom_OffsetCurve)& another,
-                                       const Handle(IGESGeom_OffsetCurve)& ent,
-                                       Interface_CopyTool& TC) const
-{
-  Standard_Integer anOffsetType, aFunctionCoord, aTaperedOffsetType; 
-  Standard_Real offDistance1, offDistance2;
-  Standard_Real arcLength1, arcLength2, anOffsetParam1, anOffsetParam2;
-
-  DeclareAndCast(IGESData_IGESEntity, aBaseCurve,
-		 TC.Transferred(another->BaseCurve()));
-  anOffsetType   = another->OffsetType();
-  DeclareAndCast(IGESData_IGESEntity, aFunction,
-		 TC.Transferred(another->Function()));
-  aFunctionCoord = another->FunctionParameter();
-  aTaperedOffsetType = another->TaperedOffsetType();
-  offDistance1   = another->FirstOffsetDistance();
-  arcLength1     = another->ArcLength1();
-  offDistance2   = another->SecondOffsetDistance();
-  arcLength2     = another->ArcLength2();
-  gp_XYZ aNormalVec = (another->NormalVector()).XYZ();
-  anOffsetParam1 = another->StartParameter();
-  anOffsetParam2 = another->EndParameter();
-
-  ent->Init(aBaseCurve, anOffsetType, aFunction, aFunctionCoord,
-	    aTaperedOffsetType, offDistance1, arcLength1, offDistance2,
-	    arcLength2, aNormalVec, anOffsetParam1, anOffsetParam2);
 }
 
 

@@ -32,7 +32,6 @@ class Interface_EntityIterator;
 class IGESData_DirChecker;
 class Interface_ShareTool;
 class Interface_Check;
-class Interface_CopyTool;
 class IGESData_IGESDumper;
 class Message_Messenger;
 
@@ -41,13 +40,12 @@ class Message_Messenger;
 //! (ReadWriteModule, GeneralModule, SpecificModule)
 class IGESDraw_ToolViewsVisibleWithAttr 
 {
-public:
+ public:
 
   DEFINE_STANDARD_ALLOC
 
-  
   //! Returns a ToolViewsVisibleWithAttr, ready to work
-  Standard_EXPORT IGESDraw_ToolViewsVisibleWithAttr();
+  IGESDraw_ToolViewsVisibleWithAttr() {}
   
   //! Reads own parameters from file. <PR> gives access to them,
   //! <IR> detains parameter types and values
@@ -71,18 +69,6 @@ public:
   //! Performs Specific Semantic Check
   Standard_EXPORT void OwnCheck (const Handle(IGESDraw_ViewsVisibleWithAttr)& ent, const Interface_ShareTool& shares, Handle(Interface_Check)& ach) const;
   
-  //! Copies Specific Parameters shared not implied, i.e. all but
-  //! the Displayed Entities
-  Standard_EXPORT void OwnCopy (const Handle(IGESDraw_ViewsVisibleWithAttr)& entfrom, const Handle(IGESDraw_ViewsVisibleWithAttr)& entto, Interface_CopyTool& TC) const;
-  
-  //! Copies Specific implied Parameters : the Displayed Entities
-  //! which have already been copied
-  Standard_EXPORT void OwnRenew (const Handle(IGESDraw_ViewsVisibleWithAttr)& entfrom, const Handle(IGESDraw_ViewsVisibleWithAttr)& entto, const Interface_CopyTool& TC) const;
-  
-  //! Clears specific implied parameters, which cause looping
-  //! structures; required for deletion
-  Standard_EXPORT void OwnWhenDelete (const Handle(IGESDraw_ViewsVisibleWithAttr)& ent) const;
-  
   //! Dump of Specific Parameters
   Standard_EXPORT void OwnDump (const Handle(IGESDraw_ViewsVisibleWithAttr)& ent, const IGESData_IGESDumper& dumper, const Handle(Message_Messenger)& S, const Standard_Integer own) const;
   
@@ -90,28 +76,6 @@ public:
   //! (all displayed entities must refer to <ent> in directory part,
   //! else the list is cleared)
   Standard_EXPORT Standard_Boolean OwnCorrect (const Handle(IGESDraw_ViewsVisibleWithAttr)& ent) const;
-
-
-
-
-protected:
-
-
-
-
-
-private:
-
-
-
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESDraw_ToolViewsVisibleWithAttr_HeaderFile

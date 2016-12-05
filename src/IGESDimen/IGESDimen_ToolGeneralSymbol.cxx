@@ -31,14 +31,11 @@
 #include <IGESDimen_LeaderArrow.hxx>
 #include <IGESDimen_ToolGeneralSymbol.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-
-IGESDimen_ToolGeneralSymbol::IGESDimen_ToolGeneralSymbol ()    {  }
 
 
 void  IGESDimen_ToolGeneralSymbol::ReadOwnParams
@@ -113,38 +110,6 @@ void  IGESDimen_ToolGeneralSymbol::OwnShared
     iter.GetOneItem(ent->GeomEntity(i));
   for (num = ent->NbLeaders(), i = 1; i <= num; i++)
     iter.GetOneItem(ent->LeaderArrow(i));
-}
-
-void  IGESDimen_ToolGeneralSymbol::OwnCopy
-  (const Handle(IGESDimen_GeneralSymbol)& another,
-   const Handle(IGESDimen_GeneralSymbol)& ent, Interface_CopyTool& TC) const
-{
-  DeclareAndCast(IGESDimen_GeneralNote, tempNote,
-		 TC.Transferred(another->Note()));
-  Standard_Integer num = another->NbGeomEntities();
-  Handle(IGESData_HArray1OfIGESEntity) tempGeoms =
-    new IGESData_HArray1OfIGESEntity(1, num);
-  Standard_Integer i;
-  for (i = 1; i <= num; i++)
-    {
-      DeclareAndCast(IGESData_IGESEntity, new_item,
-		     TC.Transferred(another->GeomEntity(i)));
-      tempGeoms->SetValue(i, new_item);
-    }
-  Handle(IGESDimen_HArray1OfLeaderArrow) tempLeaders;
-  num = another->NbLeaders();
-  if (num > 0)
-    {
-      tempLeaders = new IGESDimen_HArray1OfLeaderArrow(1, num);
-      for (i = 1; i <= num; i++)
-	{
-          DeclareAndCast(IGESDimen_LeaderArrow, new_item,
-			 TC.Transferred(another->LeaderArrow(i)));
-          tempLeaders->SetValue(i, new_item);
-	}
-    }
-  ent->Init (tempNote, tempGeoms, tempLeaders);
-  ent->SetFormNumber (another->FormNumber());
 }
 
 IGESData_DirChecker  IGESDimen_ToolGeneralSymbol::DirChecker

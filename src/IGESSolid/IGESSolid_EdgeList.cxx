@@ -21,14 +21,12 @@
 #include <IGESSolid_VertexList.hxx>
 #include <Standard_DimensionMismatch.hxx>
 #include <Standard_OutOfRange.hxx>
-#include <Standard_Type.hxx>
+#include <Interface_EntityIterator.hxx>
+#include <Message_Msg.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESSolid_EdgeList,IGESData_IGESEntity)
 
-IGESSolid_EdgeList::IGESSolid_EdgeList ()    {  }
-
-
-    void  IGESSolid_EdgeList::Init
+void IGESSolid_EdgeList::Init
   (const Handle(IGESData_HArray1OfIGESEntity)& Curves,
    const Handle(IGESSolid_HArray1OfVertexList)& startVertexList,
    const Handle(TColStd_HArray1OfInteger)& startVertexIndex,
@@ -53,37 +51,51 @@ IGESSolid_EdgeList::IGESSolid_EdgeList ()    {  }
   InitTypeAndForm(504,1);
 }
 
-    Standard_Integer  IGESSolid_EdgeList::NbEdges () const
+Standard_Integer IGESSolid_EdgeList::NbEdges () const
 {
   return (theCurves.IsNull() ? 0 : theCurves->Length());
 }
 
-    Handle(IGESData_IGESEntity)  IGESSolid_EdgeList::Curve
-  (const Standard_Integer num) const
+const Handle(IGESData_IGESEntity) & IGESSolid_EdgeList::Curve (const Standard_Integer num) const
 {
   return theCurves->Value(num);
 }
 
-    Handle(IGESSolid_VertexList)  IGESSolid_EdgeList::StartVertexList
-  (const Standard_Integer num) const
+const Handle(IGESSolid_VertexList) & IGESSolid_EdgeList::StartVertexList (const Standard_Integer num) const
 {
   return theStartVertexList->Value(num);
 }
 
-    Standard_Integer  IGESSolid_EdgeList::StartVertexIndex
-  (const Standard_Integer num) const
+Standard_Integer IGESSolid_EdgeList::StartVertexIndex (const Standard_Integer num) const
 {
   return theStartVertexIndex->Value(num);
 }
 
-    Handle(IGESSolid_VertexList)  IGESSolid_EdgeList::EndVertexList
-  (const Standard_Integer num) const
+const Handle(IGESSolid_VertexList) & IGESSolid_EdgeList::EndVertexList (const Standard_Integer num) const
 {
   return theEndVertexList->Value(num);
 }
 
-    Standard_Integer  IGESSolid_EdgeList::EndVertexIndex
-  (const Standard_Integer num) const
+Standard_Integer IGESSolid_EdgeList::EndVertexIndex (const Standard_Integer num) const
 {
   return theEndVertexIndex->Value(num);
+}
+
+void IGESSolid_EdgeList::OwnShared(Interface_EntityIterator &theIter) const
+{
+  const Standard_Integer length = NbEdges();
+  for (Standard_Integer i = 1; i <= length; i ++)
+  {
+    theIter.GetOneItem(Curve(i));
+    theIter.GetOneItem(StartVertexList(i));
+    theIter.GetOneItem(EndVertexList(i));
+  }
+}
+
+void IGESSolid_EdgeList::OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &theCheck) const
+{
+  if (NbEdges() <= 0) {
+    Message_Msg Msg184("XSTEP_184");
+    theCheck->SendFail(Msg184);
+  }
 }

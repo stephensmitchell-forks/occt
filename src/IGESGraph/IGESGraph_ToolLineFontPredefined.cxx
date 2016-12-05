@@ -25,13 +25,10 @@
 #include <IGESGraph_LineFontPredefined.hxx>
 #include <IGESGraph_ToolLineFontPredefined.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
-
-IGESGraph_ToolLineFontPredefined::IGESGraph_ToolLineFontPredefined ()    {  }
 
 
 void IGESGraph_ToolLineFontPredefined::ReadOwnParams
@@ -60,18 +57,6 @@ void IGESGraph_ToolLineFontPredefined::WriteOwnParams
 { 
   IW.Send( ent->NbPropertyValues() );
   IW.Send( ent->LineFontPatternCode() );
-}
-
-void  IGESGraph_ToolLineFontPredefined::OwnShared
-  (const Handle(IGESGraph_LineFontPredefined)& /*ent*/, Interface_EntityIterator& /*iter*/) const
-{
-}
-
-void IGESGraph_ToolLineFontPredefined::OwnCopy
-  (const Handle(IGESGraph_LineFontPredefined)& another,
-   const Handle(IGESGraph_LineFontPredefined)& ent, Interface_CopyTool& /*TC*/) const
-{
-  ent->Init(1,another->LineFontPatternCode());
 }
 
 Standard_Boolean  IGESGraph_ToolLineFontPredefined::OwnCorrect

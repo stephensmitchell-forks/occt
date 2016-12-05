@@ -16,19 +16,16 @@
 //--------------------------------------------------------------------
 //--------------------------------------------------------------------
 
-#include <IGESData_IGESEntity.hxx>
 #include <IGESSolid_Face.hxx>
 #include <IGESSolid_Loop.hxx>
 #include <Standard_DimensionMismatch.hxx>
 #include <Standard_OutOfRange.hxx>
-#include <Standard_Type.hxx>
+#include <Interface_EntityIterator.hxx>
+#include <Message_Msg.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESSolid_Face,IGESData_IGESEntity)
 
-IGESSolid_Face::IGESSolid_Face ()    {  }
-
-
-    void  IGESSolid_Face::Init
+void IGESSolid_Face::Init
   (const Handle(IGESData_IGESEntity)&     aSurface,
    const Standard_Boolean                 OuterLoopFlag,
    const Handle(IGESSolid_HArray1OfLoop)& Loops)
@@ -41,23 +38,28 @@ IGESSolid_Face::IGESSolid_Face ()    {  }
   InitTypeAndForm(510,1);
 }
 
-    Handle(IGESData_IGESEntity)  IGESSolid_Face::Surface () const
-{
-  return theSurface;
-}
-
-    Standard_Integer  IGESSolid_Face::NbLoops () const
+Standard_Integer IGESSolid_Face::NbLoops () const
 {
   return theLoops->Length();
 }
 
-    Standard_Boolean  IGESSolid_Face::HasOuterLoop () const
-{
-  return hasOuterLoop;
-}
-
-    Handle(IGESSolid_Loop)  IGESSolid_Face::Loop (const Standard_Integer Index) const
+const Handle(IGESSolid_Loop) & IGESSolid_Face::Loop (const Standard_Integer Index) const
 {
   return theLoops->Value(Index);
 }
 
+void IGESSolid_Face::OwnShared(Interface_EntityIterator &theIter) const
+{
+  const Standard_Integer upper = NbLoops();
+  theIter.GetOneItem(Surface());
+  for (Standard_Integer i = 1; i <= upper; i ++)
+    theIter.GetOneItem(Loop(i));
+}
+
+void IGESSolid_Face::OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &theCheck) const
+{
+  if (NbLoops() <= 0) {
+    Message_Msg Msg197("XSTEP_197");
+    theCheck->SendFail(Msg197);
+  }
+}

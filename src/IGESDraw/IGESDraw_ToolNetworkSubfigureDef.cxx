@@ -31,15 +31,12 @@
 #include <IGESDraw_ToolNetworkSubfigureDef.hxx>
 #include <IGESGraph_TextDisplayTemplate.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_DomainError.hxx>
 #include <TCollection_HAsciiString.hxx>
-
-IGESDraw_ToolNetworkSubfigureDef::IGESDraw_ToolNetworkSubfigureDef ()    {  }
 
 
 void IGESDraw_ToolNetworkSubfigureDef::ReadOwnParams
@@ -150,51 +147,6 @@ void  IGESDraw_ToolNetworkSubfigureDef::OwnShared
   up  = ent->NbPointEntities();
   for (I = 1; I <= up; I++)
     iter.GetOneItem(ent->PointEntity(I));
-}
-
-void IGESDraw_ToolNetworkSubfigureDef::OwnCopy
-  (const Handle(IGESDraw_NetworkSubfigureDef)& another,
-   const Handle(IGESDraw_NetworkSubfigureDef)& ent, Interface_CopyTool& TC) const
-{
-  Standard_Integer tempDepth = another->Depth();
-  Handle(TCollection_HAsciiString) tempName =
-    new TCollection_HAsciiString(another->Name());
-  Handle(IGESData_HArray1OfIGESEntity) tempEntities;
-  Standard_Integer up  = another->NbEntities();
-  if (up > 0) tempEntities =  new IGESData_HArray1OfIGESEntity (1,up);
-  Standard_Integer I;
-  for (I = 1; I <= up; I++) {
-    DeclareAndCast(IGESData_IGESEntity, tempEntity,
-		   TC.Transferred(another->Entity(I)));
-    tempEntities->SetValue(I, tempEntity);
-  }
-  Standard_Integer tempTypeFlag = another->TypeFlag();
-  Handle(TCollection_HAsciiString) tempDesignator;
-  if (!another->Designator().IsNull()) tempDesignator =
-    new TCollection_HAsciiString(another->Designator());
-  up  = another->NbPointEntities();
-  Handle(IGESDraw_HArray1OfConnectPoint) tempPointEntities;
-  if (up > 0) tempPointEntities = new IGESDraw_HArray1OfConnectPoint (1,up);
-  for (I = 1; I <= up; I++) {
-    if (another->HasPointEntity(I)) {
-      DeclareAndCast(IGESDraw_ConnectPoint, tempPointEntity,
-		     TC.Transferred(another->PointEntity(I)));
-      tempPointEntities->SetValue(I, tempPointEntity);
-    }
-  }
-  if (another->HasDesignatorTemplate()) {
-    DeclareAndCast(IGESGraph_TextDisplayTemplate, tempDesignatorTemplate,
-		   TC.Transferred(another->DesignatorTemplate()));
-
-    ent->Init(tempDepth, tempName, tempEntities, tempTypeFlag,
-	      tempDesignator, tempDesignatorTemplate, tempPointEntities);
-  }
-  else {
-    Handle(IGESGraph_TextDisplayTemplate) tempDesignatorTemplate;
-
-    ent->Init(tempDepth, tempName, tempEntities, tempTypeFlag,
-	      tempDesignator, tempDesignatorTemplate, tempPointEntities);
-  }
 }
 
 IGESData_DirChecker IGESDraw_ToolNetworkSubfigureDef::DirChecker

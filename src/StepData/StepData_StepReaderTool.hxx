@@ -21,8 +21,6 @@
 #include <Standard_DefineAlloc.hxx>
 #include <Standard_Handle.hxx>
 
-#include <Interface_GeneralLib.hxx>
-#include <Interface_ReaderLib.hxx>
 #include <Interface_FileReaderTool.hxx>
 class StepData_StepReaderData;
 class StepData_Protocol;
@@ -34,7 +32,7 @@ class Interface_InterfaceModel;
 //! provides references evaluation, plus access to litteral data
 //! and specific methods defined by FileReaderTool
 //! Remarks : works with a ReaderLib to load Entities
-class StepData_StepReaderTool  : public Interface_FileReaderTool
+class StepData_StepReaderTool : public Interface_FileReaderTool
 {
  public:
 
@@ -44,21 +42,17 @@ class StepData_StepReaderTool  : public Interface_FileReaderTool
   //! to a Step Protocol. Defines the ReaderLib at this time
   Standard_EXPORT StepData_StepReaderTool(const Handle(StepData_StepReaderData)& reader, const Handle(StepData_Protocol)& protocol);
   
-  //! Bounds empty entities to records
-  //! Works only on data entities (skips header)
-  Standard_EXPORT void Prepare ();
-  
   //! Bounds empty entities and sub-lists to header records
+  //! Bounds empty entities to records
   //! works like Prepare + SetEntityNumbers, but for header
   //! (N.B.: in Header, no Ident and no reference)
-  Standard_EXPORT void PrepareHeader ();
+  //! Then works only on data entities
+  Standard_EXPORT void Prepare ();
 
  private:
   
-  //! recognizes records, by asking either ReaderLib (default) or
-  //! FileRecognizer (if defined) to do so. <ach> is to call
-  //! RecognizeByLib
-  Standard_EXPORT virtual Standard_Boolean Recognize (const Standard_Integer num, Handle(Interface_Check)& ach, Handle(Standard_Transient)& ent) Standard_OVERRIDE;
+  //! recognizes records, by asking ReaderLib.
+  Standard_EXPORT virtual Standard_Boolean Recognize (const Standard_Integer num, Handle(Standard_Transient)& ent) Standard_OVERRIDE;
   
   //! fills model's header; that is, gives to it Header entities
   //! and commands their loading. Also fills StepModel's Global
@@ -73,9 +67,6 @@ class StepData_StepReaderTool  : public Interface_FileReaderTool
   //! Ends file reading after reading all the entities
   //! Here, it binds in the model, Idents to Entities (for checks)
   Standard_EXPORT virtual void EndRead (const Handle(Interface_InterfaceModel)& amodel) Standard_OVERRIDE;
-
-  Interface_GeneralLib theglib;
-  Interface_ReaderLib therlib;
 };
 
 #endif // _StepData_StepReaderTool_HeaderFile

@@ -69,9 +69,6 @@ class StepData_Protocol : public Interface_Protocol
   //! Creates an empty Model for Step Norm
   Standard_EXPORT Handle(Interface_InterfaceModel) NewModel() const Standard_OVERRIDE;
   
-  //! Returns True if <model> is a Model of Step Norm
-  Standard_EXPORT Standard_Boolean IsSuitableModel (const Handle(Interface_InterfaceModel)& model) const Standard_OVERRIDE;
-  
   //! Creates a new Unknown Entity for Step (UndefinedEntity)
   Standard_EXPORT Handle(Standard_Transient) UnknownEntity() const Standard_OVERRIDE;
   

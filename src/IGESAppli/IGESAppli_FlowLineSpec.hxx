@@ -17,13 +17,8 @@
 #ifndef _IGESAppli_FlowLineSpec_HeaderFile
 #define _IGESAppli_FlowLineSpec_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
 #include <Interface_HArray1OfHAsciiString.hxx>
 #include <IGESData_IGESEntity.hxx>
-#include <Standard_Integer.hxx>
-class Standard_OutOfRange;
 class TCollection_HAsciiString;
 
 
@@ -36,11 +31,9 @@ DEFINE_STANDARD_HANDLE(IGESAppli_FlowLineSpec, IGESData_IGESEntity)
 //! used to represent a flow line
 class IGESAppli_FlowLineSpec : public IGESData_IGESEntity
 {
+ public:
 
-public:
-
-  
-  Standard_EXPORT IGESAppli_FlowLineSpec();
+  IGESAppli_FlowLineSpec() {}
   
   //! This method is used to set the fields of the class
   //! FlowLineSpec
@@ -51,34 +44,17 @@ public:
   Standard_EXPORT Standard_Integer NbPropertyValues() const;
   
   //! returns primary flow line specification name
-  Standard_EXPORT Handle(TCollection_HAsciiString) FlowLineName() const;
+  Standard_EXPORT const Handle(TCollection_HAsciiString) & FlowLineName() const;
   
   //! returns specified modifier element
   //! raises exception if Index <= 1 or Index > NbPropertyValues
-  Standard_EXPORT Handle(TCollection_HAsciiString) Modifier (const Standard_Integer Index) const;
-
-
-
+  Standard_EXPORT const Handle(TCollection_HAsciiString) & Modifier (const Standard_Integer Index) const;
 
   DEFINE_STANDARD_RTTIEXT(IGESAppli_FlowLineSpec,IGESData_IGESEntity)
 
-protected:
-
-
-
-
-private:
-
+ private:
 
   Handle(Interface_HArray1OfHAsciiString) theNameAndModifiers;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESAppli_FlowLineSpec_HeaderFile

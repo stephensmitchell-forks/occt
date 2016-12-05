@@ -30,22 +30,12 @@
 #include <IGESSolid_Loop.hxx>
 #include <IGESSolid_ToolFace.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Message_Msg.hxx>
 #include <Standard_DomainError.hxx>
-
-// MGE 03/08/98
-//=======================================================================
-//function : IGESSolid_ToolFace
-//purpose  : 
-//=======================================================================
-IGESSolid_ToolFace::IGESSolid_ToolFace ()
-{
-}
 
 
 //=======================================================================
@@ -156,48 +146,6 @@ void IGESSolid_ToolFace::WriteOwnParams(const Handle(IGESSolid_Face)& ent,
 
 
 //=======================================================================
-//function : OwnShared
-//purpose  : 
-//=======================================================================
-
-void IGESSolid_ToolFace::OwnShared(const Handle(IGESSolid_Face)& ent,
-                                   Interface_EntityIterator& iter) const
-{
-  Standard_Integer  upper = ent->NbLoops();
-  iter.GetOneItem(ent->Surface());
-  for (Standard_Integer i = 1; i <= upper; i ++)
-    iter.GetOneItem(ent->Loop(i));
-}
-
-
-//=======================================================================
-//function : OwnCopy
-//purpose  : 
-//=======================================================================
-
-void IGESSolid_ToolFace::OwnCopy(const Handle(IGESSolid_Face)& another,
-                                 const Handle(IGESSolid_Face)& ent,
-                                 Interface_CopyTool& TC) const
-{
-  DeclareAndCast(IGESData_IGESEntity, tempSurface,
-		 TC.Transferred(another->Surface()));
-  Standard_Integer nbloops = another->NbLoops();
-  Standard_Boolean outerLoopFlag = another->HasOuterLoop();
-
-  Handle(IGESSolid_HArray1OfLoop) tempLoops =
-    new IGESSolid_HArray1OfLoop(1, nbloops);
-  for (Standard_Integer i=1; i<=nbloops; i++)
-    {
-      DeclareAndCast(IGESSolid_Loop, anent,
-		     TC.Transferred(another->Loop(i)));
-      tempLoops->SetValue(i, anent);
-    }
-
-  ent->Init (tempSurface, outerLoopFlag, tempLoops);
-}
-
-
-//=======================================================================
 //function : DirChecker
 //purpose  : 
 //=======================================================================
@@ -214,28 +162,6 @@ IGESData_DirChecker IGESSolid_ToolFace::DirChecker
 
   DC.SubordinateStatusRequired(1);
   return DC;
-}
-
-
-//=======================================================================
-//function : OwnCheck
-//purpose  : 
-//=======================================================================
-
-void IGESSolid_ToolFace::OwnCheck(const Handle(IGESSolid_Face)& ent,
-                                  const Interface_ShareTool&,
-                                  Handle(Interface_Check)& ach) const
-{
-  // MGE 03/08/98
-  // Building of messages
-  //========================================
-  //Message_Msg Msg197("XSTEP_197");
-  //========================================
-
-  if (ent->NbLoops() <= 0) {
-    Message_Msg Msg197("XSTEP_197");
-    ach->SendFail(Msg197);
-  }
 }
 
 

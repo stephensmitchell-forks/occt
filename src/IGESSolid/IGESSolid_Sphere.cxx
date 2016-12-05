@@ -18,16 +18,11 @@
 
 #include <gp_GTrsf.hxx>
 #include <gp_Pnt.hxx>
-#include <gp_XYZ.hxx>
 #include <IGESSolid_Sphere.hxx>
-#include <Standard_Type.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESSolid_Sphere,IGESData_IGESEntity)
 
-IGESSolid_Sphere::IGESSolid_Sphere ()    {  }
-
-
-    void  IGESSolid_Sphere::Init
+void IGESSolid_Sphere::Init
   (const Standard_Real aRadius, const gp_XYZ& aCenter)
 {
   theRadius = aRadius;
@@ -35,23 +30,23 @@ IGESSolid_Sphere::IGESSolid_Sphere ()    {  }
   InitTypeAndForm(158,0);
 }
 
-    Standard_Real  IGESSolid_Sphere::Radius () const
-{
-  return theRadius;
-}
-
-    gp_Pnt  IGESSolid_Sphere::Center () const
+gp_Pnt IGESSolid_Sphere::Center () const
 {
   return gp_Pnt(theCenter);
 }
 
-    gp_Pnt  IGESSolid_Sphere::TransformedCenter () const
+gp_Pnt IGESSolid_Sphere::TransformedCenter () const
 {
-  if (!HasTransf()) return gp_Pnt(theCenter);
-  else
-    {
-      gp_XYZ tmp = theCenter;
-      Location().Transforms(tmp);
-      return gp_Pnt(tmp);
-    }
+  if (!HasTransf())
+    return gp_Pnt(theCenter);
+
+  gp_XYZ tmp = theCenter;
+  Location().Transforms(tmp);
+  return gp_Pnt(tmp);
+}
+
+void IGESSolid_Sphere::OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &theCheck) const
+{
+  if (Radius() <= 0.0)
+    theCheck->AddFail("Radius : Not Positive");
 }

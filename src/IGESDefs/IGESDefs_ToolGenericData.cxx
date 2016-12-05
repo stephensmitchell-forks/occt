@@ -28,7 +28,6 @@
 #include <IGESDefs_GenericData.hxx>
 #include <IGESDefs_ToolGenericData.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_HArray1OfHAsciiString.hxx>
 #include <Interface_Macros.hxx>
@@ -39,8 +38,6 @@
 #include <TColStd_HArray1OfInteger.hxx>
 #include <TColStd_HArray1OfReal.hxx>
 #include <TColStd_HArray1OfTransient.hxx>
-
-IGESDefs_ToolGenericData::IGESDefs_ToolGenericData ()    {  }
 
 
 void  IGESDefs_ToolGenericData::ReadOwnParams
@@ -163,70 +160,6 @@ void  IGESDefs_ToolGenericData::OwnShared
       if (ent->Type(i) == 4)
 	iter.GetOneItem(ent->ValueAsEntity(i));
     }
-}
-
-void  IGESDefs_ToolGenericData::OwnCopy
-  (const Handle(IGESDefs_GenericData)& another,
-   const Handle(IGESDefs_GenericData)& ent, Interface_CopyTool& TC) const
-{
-  Standard_Integer num = another->NbTypeValuePairs();
-  Standard_Integer tempNbPropVal = another->NbPropertyValues();
-  Handle(TCollection_HAsciiString) tempName =
-    new TCollection_HAsciiString(another->Name());
-  Handle(TColStd_HArray1OfInteger) tempTypes =
-    new TColStd_HArray1OfInteger(1, num);
-  Handle(TColStd_HArray1OfTransient) tempValues =
-    new TColStd_HArray1OfTransient(1, num);
-
-  for (Standard_Integer i = 1; i <= num; i++)
-    {
-      tempTypes->SetValue(i, another->Type(i));
-      switch (another->Type(i))
-	{
-	case 0: // No value
-          break;
-	case 1: // Integer
-          {
-	    Handle(TColStd_HArray1OfInteger) tempObj =
-	      new TColStd_HArray1OfInteger(1,1);
-	    tempObj->SetValue(1,another->ValueAsInteger(i));
-	    tempValues->SetValue(i, tempObj);
-          }
-          break;
-	case 2: // Real
-          {
-	    Handle(TColStd_HArray1OfReal) tempObj =
-	      new TColStd_HArray1OfReal(1,1);
-	    tempObj->SetValue(1,another->ValueAsReal(i));
-	    tempValues->SetValue(i, tempObj);
-          }
-          break;
-	case 3: // Character string
-          {
-	    tempValues->SetValue
-	      (i, new TCollection_HAsciiString(another->ValueAsString(i)));
-          }
-          break;
-	case 4: // Pointer
-          {
-	    DeclareAndCast(IGESData_IGESEntity, tempObj,
-			   TC.Transferred(another->ValueAsEntity(i)));
-	    tempValues->SetValue(i, tempObj);
-          }
-          break;
-	case 5: // Not used
-	  break;
-	case 6: // Logical
-          {
-	    Handle(TColStd_HArray1OfInteger) tempObj =
-	      new TColStd_HArray1OfInteger(1,1);
-	    tempObj->SetValue(1, (another->ValueAsLogical(i) ? 1 : 0) );
-	    tempValues->SetValue(i, tempObj);
-          }
-          break;
-	}
-    }
-  ent->Init (tempNbPropVal, tempName, tempTypes, tempValues);
 }
 
 IGESData_DirChecker  IGESDefs_ToolGenericData::DirChecker

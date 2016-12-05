@@ -17,19 +17,11 @@
 #ifndef _IGESSolid_Loop_HeaderFile
 #define _IGESSolid_Loop_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
 #include <TColStd_HArray1OfInteger.hxx>
 #include <IGESData_HArray1OfIGESEntity.hxx>
 #include <IGESData_IGESEntity.hxx>
-#include <Standard_Boolean.hxx>
-#include <Standard_Integer.hxx>
 class IGESBasic_HArray1OfHArray1OfInteger;
 class IGESBasic_HArray1OfHArray1OfIGESEntity;
-class Standard_DimensionMismatch;
-class Standard_OutOfRange;
-class IGESData_IGESEntity;
 
 
 class IGESSolid_Loop;
@@ -45,11 +37,9 @@ DEFINE_STANDARD_HANDLE(IGESSolid_Loop, IGESData_IGESEntity)
 //! else it is a bound of a face (it is the default)
 class IGESSolid_Loop : public IGESData_IGESEntity
 {
+ public:
 
-public:
-
-  
-  Standard_EXPORT IGESSolid_Loop();
+  IGESSolid_Loop() {}
   
   //! This method is used to set the fields of the class Loop
   //! - types              : 0 = Edge; 1 = Vertex
@@ -83,7 +73,7 @@ public:
   
   //! return the EdgeList or VertexList corresponding to the Index
   //! raises exception if Index <= 0 or Index > NbEdges()
-  Standard_EXPORT Handle(IGESData_IGESEntity) Edge (const Standard_Integer Index) const;
+  Standard_EXPORT const Handle(IGESData_IGESEntity) & Edge (const Standard_Integer Index) const;
   
   //! returns the orientation flag corresponding to Index'th edge
   //! raises exception if Index <= 0 or Index > NbEdges()
@@ -105,18 +95,13 @@ public:
   //! raises exception If num <= 0 or num > NbEdges()
   Standard_EXPORT Standard_Integer ListIndex (const Standard_Integer num) const;
 
+  Standard_EXPORT virtual void OwnShared(Interface_EntityIterator &theIter) const Standard_OVERRIDE;
 
-
+  Standard_EXPORT virtual void OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESSolid_Loop,IGESData_IGESEntity)
 
-protected:
-
-
-
-
-private:
-
+ private:
 
   Handle(TColStd_HArray1OfInteger) theTypes;
   Handle(IGESData_HArray1OfIGESEntity) theEdges;
@@ -125,14 +110,6 @@ private:
   Handle(TColStd_HArray1OfInteger) theNbParameterCurves;
   Handle(IGESBasic_HArray1OfHArray1OfInteger) theIsoparametricFlags;
   Handle(IGESBasic_HArray1OfHArray1OfIGESEntity) theCurves;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESSolid_Loop_HeaderFile

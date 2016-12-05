@@ -28,16 +28,12 @@
 #include <IGESGeom_CompositeCurve.hxx>
 #include <IGESGeom_ToolCompositeCurve.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
 #include <Message_Msg.hxx>
 #include <Standard_DomainError.hxx>
-
-// MGE 28/07/98
-IGESGeom_ToolCompositeCurve::IGESGeom_ToolCompositeCurve ()    {  }
 
 
 void  IGESGeom_ToolCompositeCurve::ReadOwnParams
@@ -85,22 +81,6 @@ void  IGESGeom_ToolCompositeCurve::OwnShared
     iter.GetOneItem(ent->Curve(i));
 }
 
-void  IGESGeom_ToolCompositeCurve::OwnCopy
-  (const Handle(IGESGeom_CompositeCurve)& another,
-   const Handle(IGESGeom_CompositeCurve)& ent, Interface_CopyTool& TC) const
-{
-  Standard_Integer i, num = another->NbCurves();
-  Handle(IGESData_HArray1OfIGESEntity) tempEntities =
-    new IGESData_HArray1OfIGESEntity(1, num);
-  for ( i = 1; i <= num; i++ )
-    {
-      DeclareAndCast(IGESData_IGESEntity, new_ent,
-		     TC.Transferred(another->Curve(i)));
-      tempEntities->SetValue(i, new_ent);
-    }
-  ent->Init(tempEntities);
-}
-
 IGESData_DirChecker  IGESGeom_ToolCompositeCurve::DirChecker
   (const Handle(IGESGeom_CompositeCurve)& /* ent */ )  const
 {
@@ -111,12 +91,6 @@ IGESData_DirChecker  IGESGeom_ToolCompositeCurve::DirChecker
 //  DC.LineWeight(IGESData_DefValue);
   DC.Color(IGESData_DefAny);
   return DC;
-}
-
-void  IGESGeom_ToolCompositeCurve::OwnCheck
-  (const Handle(IGESGeom_CompositeCurve)& /* ent */,
-   const Interface_ShareTool& , Handle(Interface_Check)& /* ach */)  const
-{
 }
 
 void  IGESGeom_ToolCompositeCurve::OwnDump

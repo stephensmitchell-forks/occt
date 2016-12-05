@@ -17,7 +17,6 @@
 
 #include <Interface_Category.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_GeneralLib.hxx>
 #include <Interface_Macros.hxx>
@@ -5235,19 +5234,6 @@ void RWStepAP214_GeneralModule::CheckCase(const Standard_Integer CN,
       }
       default : break;
     }
-}
-
-
-//=======================================================================
-//function : CopyCase
-//purpose  : 
-//=======================================================================
-
-void RWStepAP214_GeneralModule::CopyCase(const Standard_Integer /*CN*/, 
-					 const Handle(Standard_Transient)& /*entfrom*/, 
-					 const Handle(Standard_Transient)& /*entto*/, 
-					 Interface_CopyTool& /*TC*/) const
-{  
 }
 
 // --- Construction of empty classe ---

@@ -21,13 +21,10 @@
 #include <Standard_DefineAlloc.hxx>
 #include <Standard_Handle.hxx>
 
-#include <Standard_Boolean.hxx>
-#include <Standard_Integer.hxx>
 class Interface_Protocol;
 class StepData_NodeOfWriterLib;
 class StepData_ReadWriteModule;
 class StepData_GlobalNodeOfWriterLib;
-
 
 
 class StepData_WriterLib 
@@ -45,10 +42,6 @@ class StepData_WriterLib
   //! This creation gets the Modules from the global set, those
   //! which are bound to the given Protocol and its Resources
   Standard_EXPORT StepData_WriterLib(const Handle(Interface_Protocol)& aprotocol);
-  
-  //! Creates an empty Library : it will later by filled by method
-  //! AddProtocol
-  Standard_EXPORT StepData_WriterLib();
   
   //! Adds a couple (Module-Protocol) to the Library, given the
   //! class of a Protocol. Takes Resources into account.
@@ -85,6 +78,9 @@ class StepData_WriterLib
   Standard_EXPORT const Handle(Interface_Protocol)& Protocol() const;
 
  private:
+  
+  //! Creates an empty Library : it will later by filled by method AddProtocol
+  Standard_EXPORT StepData_WriterLib();
 
   Handle(StepData_NodeOfWriterLib) thelist;
   Handle(StepData_NodeOfWriterLib) thecurr;

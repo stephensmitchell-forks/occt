@@ -17,14 +17,7 @@
 #ifndef _IGESAppli_DrilledHole_HeaderFile
 #define _IGESAppli_DrilledHole_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
-#include <Standard_Integer.hxx>
-#include <Standard_Real.hxx>
 #include <IGESData_IGESEntity.hxx>
-#include <Standard_Boolean.hxx>
-
 
 class IGESAppli_DrilledHole;
 DEFINE_STANDARD_HANDLE(IGESAppli_DrilledHole, IGESData_IGESEntity)
@@ -35,11 +28,9 @@ DEFINE_STANDARD_HANDLE(IGESAppli_DrilledHole, IGESData_IGESEntity)
 //! through a printed circuit board.
 class IGESAppli_DrilledHole : public IGESData_IGESEntity
 {
+ public:
 
-public:
-
-  
-  Standard_EXPORT IGESAppli_DrilledHole();
+  IGESAppli_DrilledHole() {}
   
   //! This method is used to set the fields of the class
   //! DrilledHole
@@ -54,36 +45,29 @@ public:
   Standard_EXPORT void Init (const Standard_Integer nbPropVal, const Standard_Real aSize, const Standard_Real anotherSize, const Standard_Integer aPlating, const Standard_Integer aLayer, const Standard_Integer anotherLayer);
   
   //! is always 5
-  Standard_EXPORT Standard_Integer NbPropertyValues() const;
-  
+  Standard_Integer NbPropertyValues() const { return theNbPropertyValues; }
+
   //! returns the drill diameter size
-  Standard_EXPORT Standard_Real DrillDiaSize() const;
-  
+  Standard_Real DrillDiaSize() const { return theDrillDiaSize; }
+
   //! returns the finish diameter size
-  Standard_EXPORT Standard_Real FinishDiaSize() const;
-  
+  Standard_Real FinishDiaSize() const { return theFinishDiaSize; }
+
   //! Returns Plating Status :
   //! False = not plating  /  True  = is plating
-  Standard_EXPORT Standard_Boolean IsPlating() const;
-  
+  Standard_Boolean IsPlating() const { return (thePlatingFlag != 0); }
+
   //! returns the lower numbered layer
-  Standard_EXPORT Standard_Integer NbLowerLayer() const;
-  
+  Standard_Integer NbLowerLayer() const { return theNbLowerLayer; }
+
   //! returns the higher numbered layer
-  Standard_EXPORT Standard_Integer NbHigherLayer() const;
+  Standard_Integer NbHigherLayer() const { return theNbHigherLayer; }
 
-
-
+  Standard_EXPORT virtual void OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESAppli_DrilledHole,IGESData_IGESEntity)
 
-protected:
-
-
-
-
-private:
-
+ private:
 
   Standard_Integer theNbPropertyValues;
   Standard_Real theDrillDiaSize;
@@ -91,14 +75,6 @@ private:
   Standard_Integer thePlatingFlag;
   Standard_Integer theNbLowerLayer;
   Standard_Integer theNbHigherLayer;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESAppli_DrilledHole_HeaderFile

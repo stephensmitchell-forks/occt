@@ -21,14 +21,10 @@
 #include <Standard_Type.hxx>
 
 #include <Interface_ReaderModule.hxx>
-#include <Standard_Integer.hxx>
 #include <TColStd_SequenceOfAsciiString.hxx>
-#include <Standard_Boolean.hxx>
-class Standard_DomainError;
 class Interface_FileReaderData;
 class TCollection_AsciiString;
 class Interface_Check;
-class Standard_Transient;
 class StepData_StepReaderData;
 class StepData_StepWriter;
 
@@ -45,10 +41,8 @@ DEFINE_STANDARD_HANDLE(StepData_ReadWriteModule, Interface_ReaderModule)
 //! as the Protocol does for the corresponding Entity)
 class StepData_ReadWriteModule : public Interface_ReaderModule
 {
+ public:
 
-public:
-
-  
   //! Translate the Type of record <num> in <data> to a positive
   //! Case Number, or 0 if failed.
   //! Works with a StepReaderData, in which the Type of an Entity
@@ -107,27 +101,7 @@ public:
   //! Write Function, switched by CaseNum
   Standard_EXPORT virtual void WriteStep (const Standard_Integer CN, StepData_StepWriter& SW, const Handle(Standard_Transient)& ent) const = 0;
 
-
-
-
   DEFINE_STANDARD_RTTIEXT(StepData_ReadWriteModule,Interface_ReaderModule)
-
-protected:
-
-
-
-
-private:
-
-
-
-
 };
-
-
-
-
-
-
 
 #endif // _StepData_ReadWriteModule_HeaderFile
