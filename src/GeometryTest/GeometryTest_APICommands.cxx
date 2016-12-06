@@ -23,6 +23,7 @@
 #include <GeometryTest.hxx>
 #include <GeomAPI_ProjectPointOnCurve.hxx>
 #include <GeomAPI_ProjectPointOnSurf.hxx>
+#include <Extrema_GenLocateExtPS.hxx>
 #include <GeomAPI_ExtremaCurveCurve.hxx>
 #include <GeomAPI_ExtremaCurveSurface.hxx>
 #include <GeomAPI_ExtremaSurfaceSurface.hxx>
@@ -39,6 +40,7 @@
 #include <TColStd_Array2OfReal.hxx>
 #include <Precision.hxx>
 #include <stdio.h>
+
 #ifdef _WIN32
 Standard_IMPORT Draw_Viewer dout;
 #endif
@@ -52,7 +54,7 @@ static Standard_Integer proj (Draw_Interpretor& di, Standard_Integer n, const ch
 {
   if ( n < 5)
   {
-    cout << " Use proj curve/surf x y z [extrema algo: g(grad)/t(tree)]" << endl;
+    cout << " Use proj curve/surf x y z [extrema algo: g(grad)/t(tree)] [u v]" << endl;
     return 1;
   }
 
@@ -74,36 +76,58 @@ static Standard_Integer proj (Draw_Interpretor& di, Standard_Integer n, const ch
     if (GS.IsNull())
       return 1;
 
-    Standard_Real U1, U2, V1, V2;
-    GS->Bounds(U1,U2,V1,V2);
-
-    GeomAPI_ProjectPointOnSurf proj(P,GS,U1,U2,V1,V2,aProjAlgo);
-
-    Standard_Real UU,VV;
-    for ( Standard_Integer i = 1; i <= proj.NbPoints(); i++)
+    if (n <= 6)
     {
-      gp_Pnt P1 = proj.Point(i);
-      if ( P.Distance(P1) > Precision::Confusion())
+      Standard_Real U1, U2, V1, V2;
+      GS->Bounds(U1,U2,V1,V2);
+
+      GeomAPI_ProjectPointOnSurf proj(P,GS,U1,U2,V1,V2,aProjAlgo);
+
+      Standard_Real UU,VV;
+      for ( Standard_Integer i = 1; i <= proj.NbPoints(); i++)
       {
-        Handle(Geom_Line) L = new Geom_Line(P,gp_Vec(P,P1));
-        Handle(Geom_TrimmedCurve) CT = 
-          new Geom_TrimmedCurve(L, 0., P.Distance(P1));
-        Sprintf(name,"%s%d","ext_",i);
-        char* temp = name; // portage WNT
-        DrawTrSurf::Set(temp, CT);
-        di << name << " ";
-      }
-      else
-      {
-        Sprintf(name,"%s%d","ext_",i);
-        di << name << " ";
-        char* temp = name; // portage WNT
-        DrawTrSurf::Set(temp, P1);
+        gp_Pnt P1 = proj.Point(i);
+        if ( P.Distance(P1) > Precision::Confusion())
+        {
+          Handle(Geom_Line) L = new Geom_Line(P,gp_Vec(P,P1));
+          Handle(Geom_TrimmedCurve) CT = 
+            new Geom_TrimmedCurve(L, 0., P.Distance(P1));
+          Sprintf(name,"%s%d","ext_",i);
+          char* temp = name; // portage WNT
+          DrawTrSurf::Set(temp, CT);
+          di << name << " ";
+        }
+        else
+        {
+          Sprintf(name,"%s%d","ext_",i);
+          di << name << " ";
+          char* temp = name; // portage WNT
+          DrawTrSurf::Set(temp, P1);
+        }
         proj.Parameters(i,UU,VV);
         di << " Le point est sur la surface.\n";
         di << " Ses parametres sont:  UU = " << UU << "\n";
         di << "                       VV = " << VV << "\n";
       }
+    }
+    else if (n == 7)
+    {
+      const gp_XY aP2d(Draw::Atof(a[5]), Draw::Atof(a[6]));
+      GeomAdaptor_Surface aGAS(GS);
+      Extrema_GenLocateExtPS aProjector(aGAS, Precision::PConfusion(), Precision::PConfusion());
+      aProjector.Perform(P, aP2d.X(), aP2d.Y());
+      if (!aProjector.IsDone())
+      {
+        di << "Error: projection failed.";
+        return 0;
+      }
+
+      const Extrema_POnSurf& aP = aProjector.Point();
+      gp_XY aUV;
+      aP.Parameter(aUV.ChangeCoord(1), aUV.ChangeCoord(2));
+      di << "UV: " << aUV.X() << " " << aUV.Y() << "\n";
+      const gp_XYZ aXYZ = GS->Value(aUV.X(), aUV.Y()).XYZ();
+      di << "XYZ: " << aXYZ.X() << " " << aXYZ.Y() << " " << aXYZ.Z() << "\n";
     }
   }
   else
@@ -579,7 +603,7 @@ void GeometryTest::APICommands(Draw_Interpretor& theCommands)
 
   done = Standard_True;
 
-  theCommands.Add("proj", "proj curve/surf x y z [extrema algo: g(grad)/t(tree)]",__FILE__, proj);
+  theCommands.Add("proj", "proj curve/surf x y z [extrema algo: g(grad)/t(tree)] [u v]",__FILE__, proj);
 
   theCommands.Add("appro", "appro result nbpoint [curve]",__FILE__, appro);
   theCommands.Add("surfapp","surfapp result nbupoint nbvpoint x y z ....",
