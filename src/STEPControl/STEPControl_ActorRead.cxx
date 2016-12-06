@@ -1637,11 +1637,11 @@ Standard_Boolean STEPControl_ActorRead::ComputeTransformation (const Handle(Step
   Handle(StepGeom_Axis2Placement3d) org = Origin;
   Handle(StepGeom_Axis2Placement3d) trg = Target;
   Standard_Integer code1=0, code2=0, i;
-  for ( i=1; code1 != 1 && i <= OrigContext->NbItems(); i++ ) {
+  for ( i=1; code1 != -1 && i <= OrigContext->NbItems(); i++ ) {
     if ( OrigContext->ItemsValue(i) == org ) code1 = 1;
     else if ( OrigContext->ItemsValue(i) == trg ) code1 = -1;
   }
-  for ( i=1; code2 != 1 && i <= TargContext->NbItems(); i++ ) {
+  for ( i=1; code2 != -1 && i <= TargContext->NbItems(); i++ ) {
     if ( TargContext->ItemsValue(i) == org ) code2 = -1;
     else if ( TargContext->ItemsValue(i) == trg ) code2 = 1;
   }
