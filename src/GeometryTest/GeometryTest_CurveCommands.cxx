@@ -131,6 +131,7 @@
 #include <GCPnts_UniformAbscissa.hxx>
 #include <DBRep.hxx>
 
+
 #ifdef _WIN32
 Standard_IMPORT Draw_Viewer dout;
 #endif
@@ -1735,6 +1736,186 @@ static Standard_Integer GetCurveContinuity( Draw_Interpretor& theDI,
 
   return 0;
 }
+//=======================================================================
+//function : repar
+//purpose  : 
+//=======================================================================
+//repar
+#include <GeomAPI_CurveChartParameter.hxx>
+#include <GeomAPI_Interpolate.hxx>
+#include <BSplCLib.hxx>
+static Standard_Integer repar( Draw_Interpretor& theDI,
+                                            Standard_Integer theNArg,
+                                            const char** theArgv)
+{
+  Handle(Geom_BSplineCurve) C3d = DrawTrSurf::GetBSplineCurve(theArgv[1]);
+  Standard_Real defl = .01;
+  if(theNArg > 2)
+  {
+    defl = atof(theArgv[2]);
+  }
+  Standard_Real angdefl = M_PI/6;
+  if(theNArg > 3)
+  {
+    angdefl = atof(theArgv[3]);
+  }
+  Standard_Integer ToPrint = 0;
+  if(theNArg > 4)
+  {
+    ToPrint = atoi(theArgv[4]);
+  }
+  //
+  //Prepare Curve chart
+  GeomAPI_CurveChartParameter::CurveChart aCrvChart;
+  //
+  GeomAdaptor_Curve aGAC(C3d);
+  GCPnts_TangentialDeflection aSampler(aGAC, angdefl, defl, 3);
+  Standard_Integer nbp = aSampler.NbPoints();
+  aCrvChart.myNbPnts = nbp;
+  aCrvChart.myParams = new TColStd_HArray1OfReal(1, nbp);
+  aCrvChart.myScales = new TColStd_HArray1OfReal(1, nbp);
+  aCrvChart.myPoints = new TColgp_HArray1OfXYZ(1, nbp);
+  aCrvChart.myTangents = new TColgp_HArray1OfXYZ(1, nbp);
+  aCrvChart.myMaxDefl = defl;
+  aCrvChart.myMaxAngDefl = angdefl;
+  //
+  TColStd_Array1OfReal aPars(1, nbp);
+  Standard_Integer i;
+  gp_Pnt aP;
+  gp_Vec aV;
+  for(i = 1; i <= nbp; ++i)
+  {
+    Standard_Real par = aSampler.Parameter(i);
+    C3d->D1(par, aP, aV);
+    aV.Normalize();
+    aCrvChart.myPoints->SetValue(i, aP.XYZ());
+    aCrvChart.myTangents->SetValue(i, aV.XYZ());
+    aPars(i) = par;
+  }
+  //
+  aCrvChart.myScales->SetValue(1, 1.);
+  aCrvChart.myParams->SetValue(1, 0.);
+  for(i = 2; i < nbp; ++i)
+  {
+    gp_Vec Cim1(aCrvChart.myPoints->Value(i) - aCrvChart.myPoints->Value(i-1));
+    Standard_Real Lim1 = Cim1.Magnitude();
+    Cim1.Normalize();
+    gp_Vec Ci(aCrvChart.myPoints->Value(i+1) - aCrvChart.myPoints->Value(i));
+    Ci.Normalize();
+    gp_Vec Ti(aCrvChart.myTangents->Value(i));
+    Standard_Real a = Ci.Dot(Ti);
+    Standard_Real b = Cim1.Dot(Ti);
+    Standard_Real s = b / a;
+    Standard_Real sim1 = aCrvChart.myScales->Value(i-1);
+    aCrvChart.myScales->SetValue(i, s * sim1);
+    Standard_Real t = aCrvChart.myParams->Value(i-1) + Lim1 * sim1;
+    aCrvChart.myParams->SetValue(i, t);
+  }
+  gp_Vec Cim1(aCrvChart.myPoints->Value(nbp) - aCrvChart.myPoints->Value(nbp-1));
+  Standard_Real Lim1 = Cim1.Magnitude();
+  Standard_Real sim1 = aCrvChart.myScales->Value(nbp-1);
+  Standard_Real t = aCrvChart.myParams->Value(nbp-1) + Lim1 * sim1;
+  aCrvChart.myParams->SetValue(nbp, t);
+  //
+  //
+  BSplCLib::Reparametrize(aCrvChart.myParams->Value(1), aCrvChart.myParams->Value(nbp), aPars);
+  if(ToPrint != 0)
+  {
+    Standard_Real dmax = -RealLast(), imax = 0;
+    for(i = 1; i <= nbp; ++i)
+    {
+      Standard_Real d = aPars(i) - aCrvChart.myParams->Value(i);
+      if(Abs(d) > dmax)
+      {
+          dmax = Abs(d);
+          imax = i;
+      }
+      cout << i << " " << aPars(i) << " " << aCrvChart.myParams->Value(i) << " " << d << endl;
+    }
+    cout << "max deviation : " << dmax << " for i = " << imax << endl;
+    //
+    Handle(TColgp_HArray1OfPnt) aPnts = new TColgp_HArray1OfPnt(1, nbp);
+    TColgp_Array1OfVec aTans(1, nbp);
+    Handle(TColStd_HArray1OfBoolean) aTFlg = new TColStd_HArray1OfBoolean(1, nbp);
+    for(i = 1; i <= nbp; ++i)
+    {
+      gp_Pnt aP(aCrvChart.myPoints->Value(i));
+      gp_Vec aT(aCrvChart.myTangents->Value(i));
+      aPnts->SetValue(i, aP);
+      aTans(i) =  aT;
+      aTFlg->SetValue(i, Standard_True);
+    }
+    //
+    GeomAPI_Interpolate Interpol(aPnts, aCrvChart.myParams, Standard_False, Precision::Confusion());
+    Standard_Boolean ToScale = Standard_False;
+    Interpol.Load(aTans, aTFlg, ToScale);
+    Interpol.Perform();
+    if(Interpol.IsDone())
+    {
+      const Handle(Geom_BSplineCurve)& IntCrv = Interpol.Curve();
+      TCollection_AsciiString name(theArgv[1]);
+      name.AssignCat("_int");
+      DrawTrSurf::Set(name.ToCString(), IntCrv);
+    }
+    else
+    {
+      cout << "Interpolation fails" << endl;
+    }
+    //
+
+  }
+
+  Standard_Real tol = Precision::Confusion();
+  GeomAPI_CurveChartParameter Repar(C3d, aCrvChart, tol);
+  //
+  Standard_Boolean samepar = Repar.IsCurveChartParameter();
+  const Handle(Geom_BSplineCurve)& ReparCrv = Repar.ReparCurve();
+  const Handle(Law_BSpline)& ReparLaw = Repar.ReparLaw();
+  Standard_Real tolreached = Repar.TolReached();
+  cout << "samepar, tolreached : " << samepar << " " << tolreached << endl;
+  TCollection_AsciiString name(theArgv[1]);
+  name.AssignCat("_rep");
+  DrawTrSurf::Set(name.ToCString(), ReparCrv);
+  //
+  tolreached = 0.;
+  Handle(Geom_BSplineCurve) ReparCrv1;
+  Standard_Boolean isdone = 
+    GeomAPI_CurveChartParameter::ReparWithLaw(C3d, ReparLaw, tol, ReparCrv1, tolreached);
+  if(isdone)
+  {
+      name.AssignCat("_1");
+      DrawTrSurf::Set(name.ToCString(), ReparCrv1);
+      cout << "Test ReparWithLaw: tol = " << tolreached << endl;
+  }
+
+  //
+  //Display ReparLaw
+  Standard_Integer np = ReparLaw->NbPoles();
+  TColStd_Array1OfReal lawpoles(1, np);
+  ReparLaw->Poles(lawpoles);
+  TColgp_Array1OfPnt2d poles  (1, np);
+  TColStd_Array1OfReal schoenberg_points(1,np) ;
+  Standard_Integer deg = ReparLaw->Degree();
+  TColStd_Array1OfInteger mults(1, ReparLaw->NbKnots());
+  TColStd_Array1OfReal knots(1, ReparLaw->NbKnots());
+  ReparLaw->Multiplicities(mults);
+  ReparLaw->Knots(knots);
+  Standard_Integer nbfk = BSplCLib::KnotSequenceLength(mults, deg, Standard_False);
+  TColStd_Array1OfReal flat_knots(1, nbfk);
+  BSplCLib::KnotSequence (knots, mults, deg, Standard_False, flat_knots);
+  BSplCLib::BuildSchoenbergPoints(deg, flat_knots, schoenberg_points) ;
+  for (i = 1; i <= np; i++) {
+    poles(i).SetCoord(schoenberg_points(i), lawpoles(i));
+  }
+  //  
+  Handle(Geom2d_BSplineCurve) replaw =
+    new Geom2d_BSplineCurve(poles, knots, mults, deg, Standard_False);
+  TCollection_AsciiString name1(theArgv[1]);
+  name1.AssignCat("_law");
+  DrawTrSurf::Set(name1.ToCString(),replaw);
+
+  return 0;
+}
 
 //=======================================================================
 //function : CurveCommands
@@ -1843,6 +2024,10 @@ void  GeometryTest::CurveCommands(Draw_Interpretor& theCommands)
 		  __FILE__,
 		  GetCurveContinuity,g);
 
+  theCommands.Add("repar",
+		  "repar curve",
+		  __FILE__,
+		  repar,g);
 
 }
 
