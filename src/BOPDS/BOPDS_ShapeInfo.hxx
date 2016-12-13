@@ -101,6 +101,8 @@ virtual ~BOPDS_ShapeInfo();
   //! index theI
     Standard_Boolean HasSubShape (const Standard_Integer theI) const;
   
+  //! Query
+  //! Returns true if the shape has reference information
     Standard_Boolean HasReference() const;
   
 

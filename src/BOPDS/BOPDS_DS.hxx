@@ -433,14 +433,26 @@ Standard_EXPORT virtual ~BOPDS_DS();
   //! debug
     const BOPDS_MapOfPassKey& Interferences() const;
   
+  //! Prints the information about the shape
   Standard_EXPORT void Dump() const;
   
+
+  //! Sort pave blocks in common block according their tolerance
   Standard_EXPORT void SortPaveBlocks (const Handle(BOPDS_CommonBlock)& theCB);
   
+
+  //! Query
+  //! Returns true if pave block with index theI
+  //! in common block should be sorted
   Standard_EXPORT Standard_Boolean IsToSort (const Handle(BOPDS_CommonBlock)& theCB, Standard_Integer& theI);
   
+
+  //! Query
+  //! Returns true if the shape with indice theI1
+  //! is a sub-shape of the shape with indice theI2
   Standard_EXPORT Standard_Boolean IsSubShape (const Standard_Integer theI1, const Standard_Integer theI2);
   
+
   //! Fills theLP with sorted paves
   //! of the shape with index theIndex
   Standard_EXPORT void Paves (const Standard_Integer theIndex, BOPDS_ListOfPave& theLP);
@@ -457,6 +469,8 @@ Standard_EXPORT virtual ~BOPDS_DS();
   //! Update the pave block of the common block for all shapes in data structure
   Standard_EXPORT void UpdateCommonBlockWithSDVertices(const Handle(BOPDS_CommonBlock)& theCB);
 
+  //! Initializes the pave block for vertices,which was
+  //! used during computing V/V interferences
   Standard_EXPORT void InitPaveBlocksForVertex(const Standard_Integer theNV);
 
 protected:
@@ -472,8 +486,10 @@ protected:
   //! Initializes the state of face with index theIndex
   Standard_EXPORT void InitFaceInfo (const Standard_Integer theIndex);
   
+  //! 
   Standard_EXPORT void InitShape (const Standard_Integer theIndex, const TopoDS_Shape& theS, const BOPCol_BaseAllocator& theAllocator, BOPCol_DataMapOfShapeInteger& theMSI);
   
+  //! 
   Standard_EXPORT Standard_Boolean CheckCoincidence (const Handle(BOPDS_PaveBlock)& thePB1,
                                                      const Handle(BOPDS_PaveBlock)& thePB2,
                                                      const Standard_Real theFuzz);

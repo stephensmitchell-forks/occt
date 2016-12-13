@@ -52,13 +52,18 @@ public:
   DEFINE_STANDARD_ALLOC
 
   
-  Standard_EXPORT static Standard_Integer ComputeVV (const TopoDS_Vertex& aV1, const gp_Pnt& aP2, const Standard_Real aTolP2);
-  
+  Standard_EXPORT static Standard_Integer ComputeVV (const TopoDS_Vertex& aV1,
+                                                     const gp_Pnt& aP2,
+                                                     const Standard_Real aTolP2);
+
+  //! 
   Standard_EXPORT static Standard_Integer ComputeVV (const TopoDS_Vertex& aV1, 
                                                      const TopoDS_Vertex& aV2, 
                                                      const Standard_Real theFuzz = Precision::Confusion());
-  
-  Standard_EXPORT static void MakeVertex (const BOPCol_ListOfShape& aLV, TopoDS_Vertex& aV);
+
+  //! Make one new vertex(aV) from the input list of vertices
+  Standard_EXPORT static void MakeVertex (const BOPCol_ListOfShape& aLV,
+                                          TopoDS_Vertex& aV);
   
   Standard_EXPORT static void MakeEdge (const IntTools_Curve& theCurve, const TopoDS_Vertex& theV1, const Standard_Real theT1, const TopoDS_Vertex& theV2, const Standard_Real theT2, const Standard_Real theTolR3D, TopoDS_Edge& theE);
   

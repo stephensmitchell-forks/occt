@@ -41,25 +41,31 @@ class TopoDS_Shape;
 class BOPAlgo_PaveFiller;
 
 
-
+//! 
 class BOPAlgo_Builder  : public BOPAlgo_BuilderShape
 {
 public:
 
   DEFINE_STANDARD_ALLOC
 
-  
+  //! Empty constructor
   Standard_EXPORT BOPAlgo_Builder();
-Standard_EXPORT virtual ~BOPAlgo_Builder();
-  
+
+  //! Destructor
+  Standard_EXPORT virtual ~BOPAlgo_Builder();
+
+  //! Contructor
+  //! theAllocator - the allocator to manage the memory
   Standard_EXPORT BOPAlgo_Builder(const BOPCol_BaseAllocator& theAllocator);
-  
+
+  //! Clears the content
   Standard_EXPORT virtual void Clear();
   
   Standard_EXPORT BOPAlgo_PPaveFiller PPaveFiller();
   
   Standard_EXPORT BOPDS_PDS PDS();
-  
+
+  //! 
   Standard_EXPORT virtual void AddArgument (const TopoDS_Shape& theShape);
   
   Standard_EXPORT virtual void SetArguments (const BOPCol_ListOfShape& theLS);

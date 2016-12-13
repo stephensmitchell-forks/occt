@@ -32,27 +32,60 @@ class BOPDS_PaveBlock;
 class BOPDS_CommonBlock;
 class IntTools_Context;
 
+//! Provides static methods to perform interferenses between VV, VE, EE etc.
 class BOPAlgo_Tools 
 {
 public:
 
   DEFINE_STANDARD_ALLOC
 
-  
-  Standard_EXPORT static void MakeBlocksCnx (const BOPCol_IndexedDataMapOfIntegerListOfInteger& theMILI, BOPCol_DataMapOfIntegerListOfInteger& theMBlocks, const BOPCol_BaseAllocator& theAllocator);
-  
-  Standard_EXPORT static void MakeBlocks (const BOPDS_IndexedDataMapOfPaveBlockListOfPaveBlock& theMILI, BOPDS_DataMapOfIntegerListOfPaveBlock& theMBlocks, const BOPCol_BaseAllocator& theAllocator);
-  
-  Standard_EXPORT static void PerformCommonBlocks (BOPDS_IndexedDataMapOfPaveBlockListOfPaveBlock& theMBlocks, const BOPCol_BaseAllocator& theAllocator, BOPDS_PDS& pDS);
-  
-  Standard_EXPORT static void FillMap (const Standard_Integer tneN1, const Standard_Integer tneN2, BOPCol_IndexedDataMapOfIntegerListOfInteger& theMILI, const BOPCol_BaseAllocator& theAllocator);
-  
-  Standard_EXPORT static void FillMap (const Handle(BOPDS_PaveBlock)& tnePB1, const Handle(BOPDS_PaveBlock)& tnePB2, BOPDS_IndexedDataMapOfPaveBlockListOfPaveBlock& theMILI, const BOPCol_BaseAllocator& theAllocator);
-  
-  Standard_EXPORT static void FillMap (const Handle(BOPDS_PaveBlock)& tnePB1, const Standard_Integer tneF, BOPDS_IndexedDataMapOfPaveBlockListOfInteger& theMILI, const BOPCol_BaseAllocator& theAllocator);
-  
-  Standard_EXPORT static void PerformCommonBlocks (const BOPDS_IndexedDataMapOfPaveBlockListOfInteger& theMBlocks, const BOPCol_BaseAllocator& theAllocator, BOPDS_PDS& pDS);
+  //! Compute the connexity chains of interfered vertices
+  //! 
+  Standard_EXPORT static void MakeBlocksCnx (const BOPCol_IndexedDataMapOfIntegerListOfInteger& theMILI,
+                                             BOPCol_DataMapOfIntegerListOfInteger& theMBlocks,
+                                             const BOPCol_BaseAllocator& theAllocator);
 
+  //! Compute common blocks from map of interfered pave blocks <theMILI>.
+  //! The result list of common blocks will be stored in <theMBlocks>.
+  Standard_EXPORT static void MakeBlocks (const BOPDS_IndexedDataMapOfPaveBlockListOfPaveBlock& theMILI,
+                                          BOPDS_DataMapOfIntegerListOfPaveBlock& theMBlocks,
+                                          const BOPCol_BaseAllocator& theAllocator);
+
+  //! For each common part of intersected edges <theMBLocks>:
+  //! Compute connexity chains of pave blocks; compute common blocks on them;
+  //! attach the common blocks to the pave blocks;
+  //! store information about new commmon blocks in DS
+  Standard_EXPORT static void PerformCommonBlocks (BOPDS_IndexedDataMapOfPaveBlockListOfPaveBlock& theMBlocks,
+                                                   const BOPCol_BaseAllocator& theAllocator,
+                                                   BOPDS_PDS& pDS);
+
+  //! 
+  Standard_EXPORT static void FillMap (const Standard_Integer tneN1, const Standard_Integer tneN2, BOPCol_IndexedDataMapOfIntegerListOfInteger& theMILI, const BOPCol_BaseAllocator& theAllocator);
+
+  //! Add interfered pave blocks (<thePB1>, <thePB2>) to the map <theMLI>.
+  //! The key of this map is a pave block, and the value
+  //! is a list of pave blocks intersected with the key
+  Standard_EXPORT static void FillMap (const Handle(BOPDS_PaveBlock)& tnePB1,
+                                       const Handle(BOPDS_PaveBlock)& tnePB2,
+                                       BOPDS_IndexedDataMapOfPaveBlockListOfPaveBlock& theMILI,
+                                       const BOPCol_BaseAllocator& theAllocator);
+
+  //! Fil the map <theMILI>.
+  //! The key is - pave plock <tnePB1>,
+  //! the value - list of faces <tneF> which intersects with the pave block 
+  Standard_EXPORT static void FillMap (const Handle(BOPDS_PaveBlock)& tnePB1,
+                                       const Standard_Integer tneF,
+                                       BOPDS_IndexedDataMapOfPaveBlockListOfInteger& theMILI,
+                                       const BOPCol_BaseAllocator& theAllocator);
+
+  //! For each common part of edge: create common blocks
+  //! from pave blocks that lie on the faces <theMBlocks>
+  //! and attach them to the pave blocks in DS
+  Standard_EXPORT static void PerformCommonBlocks (const BOPDS_IndexedDataMapOfPaveBlockListOfInteger& theMBlocks,
+                                                   const BOPCol_BaseAllocator& theAllocator,
+                                                   BOPDS_PDS& pDS);
+
+  //! Returns tolerance of common block
   Standard_EXPORT static Standard_Real ComputeToleranceOfCB
                                         (const Handle(BOPDS_CommonBlock)& theCB,
                                          const BOPDS_PDS theDS,

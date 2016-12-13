@@ -43,8 +43,12 @@ public:
   
   //! Empty constructor
   Standard_EXPORT BOPAlgo_BOP();
-Standard_EXPORT virtual ~BOPAlgo_BOP();
-  
+
+  //! Destructor
+  Standard_EXPORT virtual ~BOPAlgo_BOP();
+
+  //! Contructor
+  //! theAllocator - the allocator to manage the memory
   Standard_EXPORT BOPAlgo_BOP(const BOPCol_BaseAllocator& theAllocator);
   
   //! Clears internal fields and arguments

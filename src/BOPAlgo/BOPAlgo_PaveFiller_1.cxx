@@ -108,7 +108,7 @@ void BOPAlgo_PaveFiller::PerformVV()
 }
 
 //=======================================================================
-// function: PerformVV
+// function: MakeSDVertices
 // purpose: 
 //=======================================================================
 Standard_Integer BOPAlgo_PaveFiller::MakeSDVertices
