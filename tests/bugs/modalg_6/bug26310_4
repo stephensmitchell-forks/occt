@@ -14,10 +14,21 @@ puts ""
 restore [locate_data_file OCC26310-b1.brep] b1 
 restore [locate_data_file OCC26310-b2.brep] b2 
 
-bop b2 b1
+bclearobjects
+bcleartools
+baddobjects b2
+baddtools b1
+bfillds
 
-bopcut res1
-boptuc res2
+
+# SECTION
+bbop rr 4
+
+# CUT 1-2
+bbop res1 2
+
+# CUT 2-1
+bbop res2 3
 
 checkshape res1
 checkshape res2
@@ -41,10 +52,14 @@ if { [string first "Shapes with Continuity C0       : YES  Cases(2)  Total shape
   puts "ERROR. res2 with continuity C0."
 }
 
+checknbshapes res1 -wire 6 -face 6 -shell 1 -solid 1 -t
+checknbshapes res2 -wire 6 -face 6 -shell 1 -solid 1 -t
+
 smallview
 donly res1
 fit
 xwd ${imagedir}/${casename}_1.png
-donly res2
+donly rr
 fit
+donly res2
 xwd ${imagedir}/${casename}_2.png

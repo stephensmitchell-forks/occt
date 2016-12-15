@@ -7,7 +7,7 @@ puts ""
 #######################################################################
 
 set NbCurvGood 1
-set ExpToler 9.0002189481237598e-008
+set ExpToler 6.4823254544358038e-008
 
 restore [locate_data_file bug28009_shape.brep] a
 
@@ -28,4 +28,4 @@ don c_*
 fit
 display a_1_6 a_2_1
 
-checkview -screenshot -2d -path ${imagedir}/${test_image}.png
+set only_screen_axo 1

@@ -37,8 +37,7 @@ set che [whatis res]
 set ind [string first "3d curve" $che]
 if {${ind} >= 0} {
   #Only variable "res" exists
-  
-  copy res res_1
+  renamevar res res_1
 }
 
 set ic 1
@@ -49,43 +48,24 @@ while { $AllowRepeate != 0 } {
   if {${ind} < 0} {
     set AllowRepeate 0
   } else {
-    set le [length res_$ic]
-    regexp "The length res_$ic is +(\[-0-9.+eE\]+)" ${le} full ll
-    
-    if { $ll < 1.0e-7 } {
-      puts "Error: Curve is too small!"
-    }
+    display res_$ic
     
     bounds res_$ic U1 U2
     
-    if {[dval U2-U1] < 1.0e-9} {
+    dval U1
+    dval U2
+    
+    if {[dval U2-U1] < 1.0e-20} {
       puts "Error: Wrong curve's range!"
     }
     
-    dlog reset
-    dlog on
-    xdistcs res_$ic s1 U1 U2 10
-    set Log1 [dlog get]
-    set List1 [split ${Log1} {TD= \t\n}]
-    set Tolerance 1.0e-7
-    set Limit_Tol 1.0e-7
-    set D_good 0.
-    checkList ${List1} ${Tolerance} ${D_good} ${Limit_Tol}
-    
-    dlog reset
-    dlog on
-    xdistcs res_$ic s2 U1 U2 10
-    set Log1 [dlog get]
-    set List1 [split ${Log1} {TD= \t\n}]
-    set Tolerance 1.0e-7
-    set Limit_Tol 1.0e-7
-    set D_good 0.
-    checkList ${List1} ${Tolerance} ${D_good} ${Limit_Tol}
+    xdistcs res_$ic s1 U1 U2 10 1.0e-7
+    xdistcs res_$ic s2 U1 U2 10 1.0e-7
     
     incr ic
   }
 }
-  
+
 if {[expr {$ic - 1}] == $GoodNbCurv} {
   puts "OK: Curve Number is good!"
 } else {

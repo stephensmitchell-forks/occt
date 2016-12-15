@@ -27,7 +27,8 @@ inherits Line from IntPatch
 
 uses TypeTrans          from IntSurf,
      Situation          from IntSurf,
-     PntOn2S            from IntSurf     
+     PntOn2S            from IntSurf,
+     HSurface           from Adaptor3d
 
 
 raises DomainError from Standard,
@@ -69,6 +70,12 @@ is
     --- The exception OutOfRange is raised if Index <= 0 or Index > NbPnts.
     
     is deferred;
+    
+    CurvatureRadiusOfIntersLine(myclass; theS1, theS2 : HSurface from Adaptor3d; theUVPoint : PntOn2S from IntSurf)
+    ---Purpose:  Returns the radius of curvature of the intersection line in given point. 
+    --           Returns negative value if computation is not possible.
+    
+      returns Real from Standard;
     
 -- fields
 

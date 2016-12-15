@@ -36,6 +36,8 @@ if { $nb_result != 2 } {
     }
 }
 
-set 2dviewer 0
+smallview
+don result*
+fit
 
-
+set only_screen_axo 1

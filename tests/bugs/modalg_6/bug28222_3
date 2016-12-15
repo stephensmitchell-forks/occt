@@ -1,19 +1,19 @@
 puts "================"
-puts "OCC23178"
+puts "OCC28222"
 puts "================"
 puts ""
 #######################################################################
-#  Intersection of cylinders fails to produce results
+#  Intersection of two cylinders fails
 #######################################################################
 
-set GoodNbCurv 6
+set GoodNbCurv 2
 
 foreach c [directory result*] {
   unset $c
 }
 
-cylinder s1 4.999999999813, 1.35836143386791, 0.20975890778078 -1, 0, 0 0, 0, 1 10
-cylinder s2 9.999999999813, 9.1401960568287, 0.11837300583107 0, -0.75870713028692, 0.651431877061437 0, -0.651431877061437, -0.75870713028692 5 
+cylinder s1 -9 -5 -2.2058 0 -1 0 0.001
+cylinder s2 0 0 -2.2058 0 0 -1 9
 
 intersect result s1 s2
 
@@ -39,5 +39,6 @@ if { $NbCurv == $GoodNbCurv } {
 smallview
 don result*
 fit
-disp s1 s2
+don  s1 s2
+disp result*
 set only_screen_axo 1

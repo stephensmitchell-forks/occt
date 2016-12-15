@@ -17,11 +17,9 @@ checkshape result
 # Check number of topological entities in the result.
 checknbshapes result -solid 1 -shell 1 -face 12 -wire 12 -edge 28 -vertex 17
 
-# Check result area.
-checkprops result -s 4347.99
+set square 4347.99
 
 smallview
 don result
 fit
-
-checkview -screenshot -2d -path ${imagedir}/${test_image}.png
+set only_screen_axo 1
