@@ -46,34 +46,33 @@ void IGESGeom_ToolFlash::ReadOwnParams
   Handle(IGESData_IGESEntity) aReference;
   Standard_Integer fn = ent->FormNumber();    // for default cases
 
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
   aDim1 = aDim2 = aRotation = 0.;    // default values
 
   // Reading reference of flash
-  PR.ReadXY(PR.CurrentList(1, 2), "Reference of Flash", aPoint); //szv#4:S4163:12Mar99 `st=` not needed
+  PR.ReadXY(aPoint,"Reference of Flash");
 
   // Reading first flash sizing parameter
   if (PR.DefinedElseSkip())
-    PR.ReadReal(PR.Current(), "First Flash sizing parameter", aDim1); //szv#4:S4163:12Mar99 `st=` not needed
+    PR.ReadReal(aDim1,"First Flash sizing parameter");
   else if (fn > 0) PR.AddFail("Fist Flash sizing parameter : undefined");
 
   // Reading second flash sizing parameter
   if (PR.DefinedElseSkip())
-    PR.ReadReal(PR.Current(), "Second Flash sizing parameter", aDim2); //szv#4:S4163:12Mar99 `st=` not needed
+    PR.ReadReal(aDim2,"Second Flash sizing parameter");
   else {
     if (fn > 1) PR.AddFail("Second Flash sizing parameter : not defined");
   }
 
   // Reading rotation of flash about reference point
   if (PR.DefinedElseSkip())
-    PR.ReadReal(PR.Current(), "Rotation about ref. point", aRotation); //szv#4:S4163:12Mar99 `st=` not needed
+    PR.ReadReal(aRotation,"Rotation about ref. point");
   else {
     if (fn == 2 || fn == 4) PR.AddFail("Rotation about ref. point : not defined");
   }
 
   if ( PR.IsParamEntity(PR.CurrentNumber()) )
     // Reading the referenced entity
-    PR.ReadEntity(IR, PR.Current(), "Referenced entity", aReference); //szv#4:S4163:12Mar99 `st=` not needed
+    PR.ReadEntity(IR, "Referenced entity", aReference);
   // "else" not necessary as this is the last field
 
   DirChecker(ent).CheckTypeAndForm(PR.CCheck(),ent);

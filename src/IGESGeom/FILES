@@ -42,12 +42,8 @@ IGESGeom_Point.cxx
 IGESGeom_Point.hxx
 IGESGeom_Protocol.cxx
 IGESGeom_Protocol.hxx
-IGESGeom_ReadWriteModule.cxx
-IGESGeom_ReadWriteModule.hxx
 IGESGeom_RuledSurface.cxx
 IGESGeom_RuledSurface.hxx
-IGESGeom_SpecificModule.cxx
-IGESGeom_SpecificModule.hxx
 IGESGeom_SplineCurve.cxx
 IGESGeom_SplineCurve.hxx
 IGESGeom_SplineSurface.cxx

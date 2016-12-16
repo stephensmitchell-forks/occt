@@ -17,10 +17,10 @@
 #ifndef IGESDefs_Array1OfTabularData_HeaderFile
 #define IGESDefs_Array1OfTabularData_HeaderFile
 
+#include <Interface_Pointer.hxx>
 #include <IGESDefs_TabularData.hxx>
 #include <NCollection_Array1.hxx>
 
-typedef NCollection_Array1<Handle(IGESDefs_TabularData)> IGESDefs_Array1OfTabularData;
-
+typedef NCollection_Array1<Interface_Pointer<IGESDefs_TabularData>> IGESDefs_Array1OfTabularData;
 
 #endif

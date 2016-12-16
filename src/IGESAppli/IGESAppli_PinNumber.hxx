@@ -33,29 +33,32 @@ class IGESAppli_PinNumber : public IGESData_IGESEntity
 {
  public:
 
+  Standard_EXPORT virtual Standard_Integer TypeNumber() const Standard_OVERRIDE { return 406; }
+
+  Standard_EXPORT virtual Standard_Integer FormNumber() const Standard_OVERRIDE { return 8; }
+
   IGESAppli_PinNumber() {}
   
-  //! This method is used to set the fields of the class
-  //! PinNumber
-  //! - nbPropVal : Number of property values (always = 1)
-  //! - aValue    : Pin Number value
-  Standard_EXPORT void Init (const Standard_Integer nbPropVal, const Handle(TCollection_HAsciiString)& aValue);
-  
-  //! returns the number of property values
-  //! is always 1
-  Standard_Integer NbPropertyValues() const { return theNbPropertyValues; }
-
   //! returns the pin number value
-  const Handle(TCollection_HAsciiString) & PinNumberVal() const { return thePinNumber; }
+  const Handle(TCollection_HAsciiString) & PinNumberVal() const { return myPinNumber; }
+
+  Standard_EXPORT virtual void OwnRead (IGESFile_Reader &) Standard_OVERRIDE;
+  
+  Standard_EXPORT virtual void OwnWrite (IGESData_IGESWriter &) const Standard_OVERRIDE;
+
+  Standard_EXPORT virtual IGESData_DirChecker DirChecker () const Standard_OVERRIDE;
 
   Standard_EXPORT virtual void OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &) const Standard_OVERRIDE;
+
+  Standard_EXPORT Standard_Boolean OwnCorrect () Standard_OVERRIDE;
+
+  Standard_EXPORT virtual void OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &, const Standard_Integer) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESAppli_PinNumber,IGESData_IGESEntity)
 
  private:
 
-  Standard_Integer theNbPropertyValues;
-  Handle(TCollection_HAsciiString) thePinNumber;
+  Handle(TCollection_HAsciiString) myPinNumber;
 };
 
 #endif // _IGESAppli_PinNumber_HeaderFile

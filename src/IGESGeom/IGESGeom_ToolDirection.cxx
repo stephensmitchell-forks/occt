@@ -42,19 +42,16 @@ void IGESGeom_ToolDirection::ReadOwnParams
 {
   gp_XYZ aDirection;
   gp_XY  tmpXY;
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
   Standard_Real tmpReal;
 
-  //st = PR.ReadXY(PR.CurrentList(1, 2), "Direction", tmpXY); //szv#4:S4163:12Mar99 moved in if
-  if (PR.ReadXY(PR.CurrentList(1, 2), "Direction", tmpXY)) {
+  if (PR.ReadXY(tmpXY,"Direction")) {
     aDirection.SetX(tmpXY.X());
     aDirection.SetY(tmpXY.Y());
   }
 
   if (PR.DefinedElseSkip())
     {
-      //st = PR.ReadReal(PR.Current(), "Direction", tmpReal); //szv#4:S4163:12Mar99 moved in if
-      if (PR.ReadReal(PR.Current(), "Direction", tmpReal))
+      if (PR.ReadReal(tmpReal,"Direction"))
 	aDirection.SetZ(tmpReal);
     }
   else

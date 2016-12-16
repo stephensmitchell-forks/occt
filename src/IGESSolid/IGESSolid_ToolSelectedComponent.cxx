@@ -42,12 +42,9 @@ void  IGESSolid_ToolSelectedComponent::ReadOwnParams
 {
   Handle(IGESSolid_BooleanTree) tempEntity;
   gp_XYZ tempSelectPoint;
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
 
-  PR.ReadEntity(IR, PR.Current(), "Boolean Tree Entity",
-		STANDARD_TYPE(IGESSolid_BooleanTree), tempEntity); //szv#4:S4163:12Mar99 `st=` not needed
-
-  PR.ReadXYZ(PR.CurrentList(1, 3), "Select Point", tempSelectPoint); //szv#4:S4163:12Mar99 `st=` not needed
+  PR.ReadEntity(IR, "Boolean Tree Entity", STANDARD_TYPE(IGESSolid_BooleanTree), tempEntity);
+  PR.ReadXYZ(tempSelectPoint,"Select Point");
 
   DirChecker(ent).CheckTypeAndForm(PR.CCheck(),ent);
   ent->Init(tempEntity, tempSelectPoint);

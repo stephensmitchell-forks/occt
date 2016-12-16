@@ -17,10 +17,10 @@
 #ifndef _IGESAppli_ElementResults_HeaderFile
 #define _IGESAppli_ElementResults_HeaderFile
 
-#include <TColStd_HArray1OfInteger.hxx>
 #include <IGESAppli_HArray1OfFiniteElement.hxx>
 #include <IGESData_IGESEntity.hxx>
-#include <TColStd_HArray1OfReal.hxx>
+class TColStd_HArray1OfInteger;
+class TColStd_HArray1OfReal;
 class IGESDimen_GeneralNote;
 class IGESBasic_HArray1OfHArray1OfInteger;
 class IGESBasic_HArray1OfHArray1OfReal;
@@ -37,43 +37,32 @@ class IGESAppli_ElementResults : public IGESData_IGESEntity
 {
  public:
 
-  IGESAppli_ElementResults() {}
-  
-  //! This method is used to set the fields of the class
-  //! ElementResults
-  //! - aNote             : GeneralNote Entity describing analysis
-  //! - aSubCase          : Analysis Subcase number
-  //! - aTime             : Analysis time value
-  //! - nbResults         : Number of result values per FEM
-  //! - aResRepFlag       : Results Reporting Flag
-  //! - allElementIdents  : FEM element number for elements
-  //! - allFiniteElems    : FEM element
-  //! - allTopTypes       : Element Topology Types
-  //! - nbLayers          : Number of layers per result data location
-  //! - allDataLayerFlags : Data Layer Flags
-  //! - allnbResDataLocs  : Number of result data report locations
-  //! - allResDataLocs    : Result Data Report Locations
-  //! - allResults        : List of Result data values of FEM analysis
-  Standard_EXPORT void Init (const Handle(IGESDimen_GeneralNote)& aNote, const Standard_Integer aSubCase, const Standard_Real aTime, const Standard_Integer nbResults, const Standard_Integer aResRepFlag, const Handle(TColStd_HArray1OfInteger)& allElementIdents, const Handle(IGESAppli_HArray1OfFiniteElement)& allFiniteElems, const Handle(TColStd_HArray1OfInteger)& allTopTypes, const Handle(TColStd_HArray1OfInteger)& nbLayers, const Handle(TColStd_HArray1OfInteger)& allDataLayerFlags, const Handle(TColStd_HArray1OfInteger)& allnbResDataLocs, const Handle(IGESBasic_HArray1OfHArray1OfInteger)& allResDataLocs, const Handle(IGESBasic_HArray1OfHArray1OfReal)& allResults);
-  
-  //! Changes the FormNumber (which indicates Type of Result)
-  //! Error if not in range [0-34]
-  Standard_EXPORT void SetFormNumber (const Standard_Integer form);
+  Standard_EXPORT virtual Standard_Integer TypeNumber() const Standard_OVERRIDE { return 148; }
+
+  Standard_EXPORT virtual Standard_Integer FormNumber() const Standard_OVERRIDE { return myForm; }
+
+  IGESAppli_ElementResults(const Standard_Integer theForm)
+  : myForm(theForm),
+    mySubcaseNumber(0),
+    myTime(0.),
+    myNbResultValues(0),
+    myResultReportFlag(0)
+  {}
   
   //! returns General Note Entity describing analysis case
-  const Handle(IGESDimen_GeneralNote) & Note() const { return theNote; }
+  const Handle(IGESDimen_GeneralNote) & Note() const { return myNote; }
 
   //! returns analysis Subcase number
-  Standard_Integer SubCaseNumber() const { return theSubcaseNumber; }
+  Standard_Integer SubCaseNumber() const { return mySubcaseNumber; }
 
   //! returns analysis time value
-  Standard_Real Time() const { return theTime; }
+  Standard_Real Time() const { return myTime; }
 
   //! returns number of result values per FEM
-  Standard_Integer NbResultValues() const { return theNbResultValues; }
+  Standard_Integer NbResultValues() const { return myNbResultValues; }
 
   //! returns Results Reporting Flag
-  Standard_Integer ResultReportFlag() const { return theResultReportFlag; }
+  Standard_Integer ResultReportFlag() const { return myResultReportFlag; }
 
   //! returns number of FEM elements
   Standard_EXPORT Standard_Integer NbElements() const;
@@ -127,27 +116,37 @@ class IGESAppli_ElementResults : public IGESData_IGESEntity
   //! addressed as by ResultRank (See above)
   Standard_EXPORT Handle(TColStd_HArray1OfReal) ResultList (const Standard_Integer NElem) const;
 
+  Standard_EXPORT virtual void OwnRead (IGESFile_Reader &) Standard_OVERRIDE;
+  
+  Standard_EXPORT virtual void OwnWrite (IGESData_IGESWriter &) const Standard_OVERRIDE;
+
   Standard_EXPORT virtual void OwnShared(Interface_EntityIterator &theIter) const Standard_OVERRIDE;
 
+  Standard_EXPORT virtual IGESData_DirChecker DirChecker () const Standard_OVERRIDE;
+
   Standard_EXPORT virtual void OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &) const Standard_OVERRIDE;
+  
+  Standard_EXPORT virtual void OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &, const Standard_Integer) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESAppli_ElementResults,IGESData_IGESEntity)
 
  private:
 
-  Handle(IGESDimen_GeneralNote) theNote;
-  Standard_Integer theSubcaseNumber;
-  Standard_Real theTime;
-  Standard_Integer theNbResultValues;
-  Standard_Integer theResultReportFlag;
-  Handle(TColStd_HArray1OfInteger) theElementIdentifiers;
-  Handle(IGESAppli_HArray1OfFiniteElement) theElements;
-  Handle(TColStd_HArray1OfInteger) theElementTopologyTypes;
-  Handle(TColStd_HArray1OfInteger) theNbLayers;
-  Handle(TColStd_HArray1OfInteger) theDataLayerFlags;
-  Handle(TColStd_HArray1OfInteger) theNbResultDataLocs;
-  Handle(IGESBasic_HArray1OfHArray1OfInteger) theResultDataLocs;
-  Handle(IGESBasic_HArray1OfHArray1OfReal) theResultData;
+  Standard_Integer myForm;
+  //Handle(IGESDimen_GeneralNote) myNote;
+  Interface_Pointer<IGESDimen_GeneralNote> myNote;
+  Standard_Integer mySubcaseNumber;
+  Standard_Real myTime;
+  Standard_Integer myNbResultValues;
+  Standard_Integer myResultReportFlag;
+  Handle(TColStd_HArray1OfInteger) myElementIdentifiers;
+  Handle(IGESAppli_HArray1OfFiniteElement) myElements;
+  Handle(TColStd_HArray1OfInteger) myElementTopologyTypes;
+  Handle(TColStd_HArray1OfInteger) myNbLayers;
+  Handle(TColStd_HArray1OfInteger) myDataLayerFlags;
+  Handle(TColStd_HArray1OfInteger) myNbResultDataLocs;
+  Handle(IGESBasic_HArray1OfHArray1OfInteger) myResultDataLocs;
+  Handle(IGESBasic_HArray1OfHArray1OfReal) myResultData;
 };
 
 #endif // _IGESAppli_ElementResults_HeaderFile

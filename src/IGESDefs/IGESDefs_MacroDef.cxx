@@ -19,50 +19,86 @@
 #include <IGESDefs_MacroDef.hxx>
 #include <Standard_DimensionMismatch.hxx>
 #include <Standard_OutOfRange.hxx>
-#include <Standard_Type.hxx>
 #include <TCollection_HAsciiString.hxx>
+#include <Interface_HArray1OfHAsciiString.hxx>
+#include <IGESFile_Reader.hxx>
+#include <IGESData_IGESWriter.hxx>
+#include <IGESData_DirChecker.hxx>
+#include <Message_Messenger.hxx>
+#include <IGESData_IGESDumper.hxx>
+#include <IGESData_Dump.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESDefs_MacroDef,IGESData_IGESEntity)
 
-IGESDefs_MacroDef::IGESDefs_MacroDef ()    {  }
-
-    void  IGESDefs_MacroDef::Init
-  (const Handle(TCollection_HAsciiString)& macro,
-   const Standard_Integer entityTypeID,
-   const Handle(Interface_HArray1OfHAsciiString)& langStatements,
-   const Handle(TCollection_HAsciiString)& endMacro)
+Standard_Integer IGESDefs_MacroDef::NbStatements () const
 {
-  if (langStatements->Lower() != 1)
-    Standard_DimensionMismatch::Raise("IGESDefs_MacroDef : Init");
-  theMACRO          = macro;
-  theEntityTypeID   = entityTypeID;
-  theLangStatements = langStatements;
-  theENDMACRO       = endMacro;
-  InitTypeAndForm(306,0);
+  return myLangStatements->Length();
 }
 
-    Standard_Integer  IGESDefs_MacroDef::NbStatements () const
+const Handle(TCollection_HAsciiString) & IGESDefs_MacroDef::LanguageStatement (const Standard_Integer StatNum) const
 {
-  return theLangStatements->Length();
+  return myLangStatements->Value(StatNum);
 }
 
-    Handle(TCollection_HAsciiString)  IGESDefs_MacroDef::MACRO () const 
-{
-  return theMACRO;
+void IGESDefs_MacroDef::OwnRead (IGESFile_Reader &theReader)
+{ 
+  theReader.ReadText(myMACRO,"MACRO");
+  theReader.ReadInteger(myEntityTypeID,"Entity Type ID");
+
+  NCollection_Sequence<Handle(TCollection_HAsciiString)> seq;
+  Handle(TCollection_HAsciiString) langStat;
+
+  while (theReader.HasData())
+    if (theReader.ReadText(langStat,"Language Statement") == IGESFile_Reader::ParamOK)
+      seq.Append(langStat);
+
+  const Standard_Integer nbval = seq.Length();
+  if (nbval > 1)
+  {
+    myLangStatements = new Interface_HArray1OfHAsciiString(1, nbval-1);
+    for (Standard_Integer i = 1; i < nbval; i++)
+      myLangStatements->SetValue(i,seq.Value(i));
+  }
+  else  theReader.AddFail("Number of Lang. Stats. : Not Positive");
+
+  if (nbval > 0)
+    myENDMACRO = seq.Last();
 }
 
-    Standard_Integer  IGESDefs_MacroDef::EntityTypeID () const 
-{
-  return theEntityTypeID;
+void IGESDefs_MacroDef::OwnWrite (IGESData_IGESWriter& IW) const
+{ 
+  IW.Send(myMACRO);
+  IW.Send(myEntityTypeID);
+  const Standard_Integer upper = NbStatements();
+  for (Standard_Integer i = 1; i <= upper; i++)
+    IW.Send(LanguageStatement(i));
+  IW.Send(myENDMACRO);
 }
 
-    Handle(TCollection_HAsciiString)  IGESDefs_MacroDef::LanguageStatement
-  (const Standard_Integer StatNum) const 
-{
-  return theLangStatements->Value(StatNum);
+IGESData_DirChecker IGESDefs_MacroDef::DirChecker () const
+{ 
+  IGESData_DirChecker DC (306, 0);
+  DC.Structure(IGESData_DefVoid);
+  DC.LineFont(IGESData_DefVoid);
+  DC.LineWeight(IGESData_DefVoid);
+  DC.Color(IGESData_DefVoid);
+  DC.BlankStatusIgnored();
+  DC.SubordinateStatusRequired(0);
+  DC.UseFlagRequired(2);
+  DC.HierarchyStatusIgnored();
+  return DC;
 }
 
-    Handle(TCollection_HAsciiString)  IGESDefs_MacroDef::ENDMACRO () const 
-{
-  return theENDMACRO;
+void IGESDefs_MacroDef::OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &S, const Standard_Integer level) const
+{ 
+  S << "IGESDefs_MacroDef" << endl;
+  S << "MACRO : ";
+  IGESData_DumpString(S,myMACRO);
+  S << endl;
+  S << "Entity Type ID : " << myEntityTypeID << endl;
+  S << "Language Statement : ";
+  IGESData_DumpStrings(S,level,1,NbStatements(),LanguageStatement);
+  S << "END MACRO : ";
+  IGESData_DumpString(S,myENDMACRO);
+  S << endl;
 }

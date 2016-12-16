@@ -12,16 +12,11 @@
 // commercial license or contractual agreement.
 
 
-#include <IGESData_SpecificLib.hxx>
-#include <IGESData_WriterLib.hxx>
 #include <IGESDimen.hxx>
 #include <IGESDraw.hxx>
 #include <IGESDraw_GeneralModule.hxx>
 #include <IGESDraw_Protocol.hxx>
-#include <IGESDraw_ReadWriteModule.hxx>
-#include <IGESDraw_SpecificModule.hxx>
 #include <Interface_GeneralLib.hxx>
-#include <Interface_ReaderLib.hxx>
 
 
 /*void IGESDraw::Init ()
@@ -36,9 +31,6 @@ const Handle(IGESDraw_Protocol) & IGESDraw::Protocol ()
   if (protocol.IsNull()) {
     protocol = new IGESDraw_Protocol;
     Interface_GeneralLib::SetGlobal (new IGESDraw_GeneralModule,  protocol);
-    Interface_ReaderLib::SetGlobal  (new IGESDraw_ReadWriteModule,protocol);
-    IGESData_WriterLib::SetGlobal   (new IGESDraw_ReadWriteModule,protocol);
-    IGESData_SpecificLib::SetGlobal (new IGESDraw_SpecificModule, protocol);
   }
   return protocol;
 }

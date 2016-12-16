@@ -19,10 +19,11 @@
 #include <BRepLib.hxx>
 #include <BRepTools_Modifier.hxx>
 #include <gp_Trsf.hxx>
+#include <IGESData_Protocol.hxx>
 #include <IGESData_GlobalSection.hxx>
 #include <IGESData_IGESEntity.hxx>
 #include <IGESData_IGESModel.hxx>
-#include <IGESFile_Read.hxx>
+#include <IGESFile_Reader.hxx>
 #include <IGESControl_Controller.hxx>
 #include <IGESToBRep.hxx>
 #include <IGESToBRep_Actor.hxx>
@@ -97,12 +98,17 @@ Standard_Integer IGESToBRep_Reader::LoadFile (const Standard_CString filename)
   msg2005.Arg(theProc->TraceLevel());
   TF->Send (msg2005, Message_Info);
   /////////////////////////////////////////////////////////
-  Handle(IGESData_IGESModel) model = new IGESData_IGESModel;
 
   OSD_Timer c; c.Reset(); c.Start();    
-  char *pfilename=(char *)filename;
+
   const Handle(IGESData_Protocol) &protocol = IGESControl_Controller::DefineProtocol();
-  Standard_Integer StatusFile = IGESFile_Read(pfilename,model,protocol);
+
+  IGESFile_Reader aReader(protocol);
+
+  const Standard_Integer StatusFile = aReader.Read(filename);
+
+  const Handle(IGESData_IGESModel) &model = aReader.Model();
+
   if (StatusFile != 0) {
     // Sending of message : IGES file opening error 
     Message_Msg Msg2("XSTEP_2");

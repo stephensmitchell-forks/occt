@@ -17,81 +17,53 @@
 //--------------------------------------------------------------------
 
 #include <gp_Pnt.hxx>
-#include <IGESData_IGESEntity.hxx>
 #include <IGESData_ViewKindEntity.hxx>
 #include <IGESDimen_LeaderArrow.hxx>
 #include <IGESDraw_LabelDisplay.hxx>
 #include <IGESDraw_PerspectiveView.hxx>
 #include <IGESDraw_View.hxx>
 #include <Interface_Macros.hxx>
-#include <Standard_DimensionMismatch.hxx>
-#include <Standard_OutOfRange.hxx>
-#include <Standard_Type.hxx>
+#include <IGESFile_Reader.hxx>
+#include <IGESData_IGESWriter.hxx>
+#include <Interface_EntityIterator.hxx>
+#include <IGESData_DirChecker.hxx>
+#include <Message_Messenger.hxx>
+#include <IGESData_IGESDumper.hxx>
+#include <IGESData_Dump.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESDraw_LabelDisplay,IGESData_LabelDisplayEntity)
 
-IGESDraw_LabelDisplay::IGESDraw_LabelDisplay ()    {  }
-
-    void IGESDraw_LabelDisplay::Init
-  (const Handle(IGESDraw_HArray1OfViewKindEntity)& allViews,
-   const Handle(TColgp_HArray1OfXYZ)&              allTextLocations,
-   const Handle(IGESDimen_HArray1OfLeaderArrow)&   allLeaderEntities,
-   const Handle(TColStd_HArray1OfInteger)&         allLabelLevels,
-   const Handle(IGESData_HArray1OfIGESEntity)&     allDisplayedEntities)
-{
-  Standard_Integer Ln  = allViews->Length();
-  if ( allViews->Lower()          != 1 ||
-      (allTextLocations->Lower()  != 1 || allTextLocations->Length()  != Ln) ||
-      (allLeaderEntities->Lower() != 1 || allLeaderEntities->Length() != Ln) ||
-      (allLabelLevels->Lower()    != 1 || allLabelLevels->Length()    != Ln) ||
-      (allDisplayedEntities->Lower() != 1 || allDisplayedEntities->Length() != Ln))
-    Standard_DimensionMismatch::Raise("IGESDraw_LabelDisplay : Init");
-
-  theViews             = allViews; 
-  theTextLocations     = allTextLocations; 
-  theLeaderEntities    = allLeaderEntities; 
-  theLabelLevels       = allLabelLevels; 
-  theDisplayedEntities = allDisplayedEntities; 
-  InitTypeAndForm(402,5);
-}
-
-    Standard_Integer IGESDraw_LabelDisplay::NbLabels () const
+Standard_Integer IGESDraw_LabelDisplay::NbLabels () const
 {
   return (theViews->Length());
 }
 
-    Handle(IGESData_ViewKindEntity) IGESDraw_LabelDisplay::ViewItem
-  (const Standard_Integer ViewIndex) const
+const Handle(IGESData_ViewKindEntity) & IGESDraw_LabelDisplay::ViewItem (const Standard_Integer ViewIndex) const
 {
-  return (theViews->Value(ViewIndex));
+  return theViews->Value(ViewIndex);
 }
 
-    gp_Pnt IGESDraw_LabelDisplay::TextLocation
-  (const Standard_Integer ViewIndex) const
+gp_Pnt IGESDraw_LabelDisplay::TextLocation (const Standard_Integer ViewIndex) const
 {
   return ( gp_Pnt (theTextLocations->Value(ViewIndex)) );
 }
 
-    Handle(IGESDimen_LeaderArrow) IGESDraw_LabelDisplay::LeaderEntity
-  (const Standard_Integer ViewIndex) const
+const Handle(IGESDimen_LeaderArrow) & IGESDraw_LabelDisplay::LeaderEntity (const Standard_Integer ViewIndex) const
 {
-  return (theLeaderEntities->Value(ViewIndex));
+  return theLeaderEntities->Value(ViewIndex);
 }
 
-    Standard_Integer IGESDraw_LabelDisplay::LabelLevel
-  (const Standard_Integer ViewIndex) const
+Standard_Integer IGESDraw_LabelDisplay::LabelLevel (const Standard_Integer ViewIndex) const
 {
-  return (theLabelLevels->Value(ViewIndex));
+  return theLabelLevels->Value(ViewIndex);
 }
 
-    Handle(IGESData_IGESEntity) IGESDraw_LabelDisplay::DisplayedEntity
-  (const Standard_Integer EntityIndex) const
+const Handle(IGESData_IGESEntity) & IGESDraw_LabelDisplay::DisplayedEntity (const Standard_Integer EntityIndex) const
 {
-  return (theDisplayedEntities->Value(EntityIndex));
+  return theDisplayedEntities->Value(EntityIndex);
 }
 
-    gp_Pnt IGESDraw_LabelDisplay::TransformedTextLocation
-  (const Standard_Integer ViewIndex) const
+gp_Pnt IGESDraw_LabelDisplay::TransformedTextLocation (const Standard_Integer ViewIndex) const
 {
   gp_XYZ retXYZ;
   gp_XYZ tempXYZ = theTextLocations->Value(ViewIndex);
@@ -108,4 +80,102 @@ IGESDraw_LabelDisplay::IGESDraw_LabelDisplay ()    {  }
       retXYZ = thisView->ModelToView( tempXYZ );
     }
   return ( gp_Pnt(retXYZ) );
+}
+
+void IGESDraw_LabelDisplay::OwnRead (IGESFile_Reader &PR)
+{ 
+  Standard_Integer nbval = 0;
+  PR.ReadInteger(nbval,"No. of Label placements");
+  if (nbval > 0)
+  {
+    theViews             = new IGESDraw_HArray1OfViewKindEntity(1, nbval);
+    theTextLocations     = new TColgp_HArray1OfXYZ(1, nbval);
+    theLeaderEntities    = new IGESDimen_HArray1OfLeaderArrow(1, nbval);
+    theLabelLevels       = new TColStd_HArray1OfInteger(1, nbval);
+    theDisplayedEntities = new IGESData_HArray1OfIGESEntity(1, nbval);
+      
+    Handle(IGESData_ViewKindEntity) tempView;
+    Handle(IGESDimen_LeaderArrow)   tempLeaderArrow;
+    Handle(IGESData_IGESEntity)     tempDisplayedEntity;
+      
+    for (Standard_Integer i = 1; i <= nbval; i++)
+	{
+	  PR.ReadPointer(theViews->ChangeValue(i),"Instance of views");
+	  PR.ReadXYZ(theTextLocations->ChangeValue(i),"array textLocations");
+	  PR.ReadPointer(theLeaderEntities->ChangeValue(i),"Instance of LeaderArrow");
+	  PR.ReadInteger(theLabelLevels->ChangeValue(i),"array labelLevels");
+	  PR.ReadPointer(theDisplayedEntities->ChangeValue(i),"displayedEntities entity");
+	}
+  }
+  else  PR.AddFail("No. of Label placements : Not Positive");
+}
+
+void IGESDraw_LabelDisplay::OwnWrite (IGESData_IGESWriter &IW) const
+{
+  Standard_Integer Up = NbLabels();
+  IW.Send( Up );
+  for ( Standard_Integer i = 1; i <= Up; i++)
+  {
+    IW.Send( ViewItem(i) );
+    IW.Send( TextLocation(i).X() );
+    IW.Send( TextLocation(i).Y() );
+    IW.Send( TextLocation(i).Z() );
+    IW.Send( LeaderEntity(i) );
+    IW.Send( LabelLevel(i) );
+    IW.Send( DisplayedEntity(i) );
+  }
+}
+
+void IGESDraw_LabelDisplay::OwnShared (Interface_EntityIterator &iter) const
+{
+  Standard_Integer Up = NbLabels();
+  for ( Standard_Integer i = 1; i <= Up; i++)
+  {
+    iter.GetOneItem( ViewItem(i) );
+    iter.GetOneItem( LeaderEntity(i) );
+    iter.GetOneItem( DisplayedEntity(i) );
+  }
+}
+
+IGESData_DirChecker IGESDraw_LabelDisplay::DirChecker () const
+{ 
+  IGESData_DirChecker DC (402, 5);
+  DC.Structure(IGESData_DefVoid);
+  DC.HierarchyStatusIgnored();
+  DC.BlankStatusIgnored();
+  return DC;
+}
+
+void IGESDraw_LabelDisplay::OwnDump (const IGESData_IGESDumper &dumper, const Handle(Message_Messenger) &S, const Standard_Integer level) const
+{
+  const Standard_Integer sublevel = (level <= 4) ? 0 : 1;
+  S << "IGESDraw_LabelDisplay" << endl;
+  S << "View Entities       : " << endl
+    << "Text Locations      : " << endl
+    << "Leader Entities     : " << endl
+    << "Label Level Numbers : " << endl
+    << "Displayed Entities  : ";
+  S << "Count = "      << NbLabels() << endl;
+  if (level > 4)  // Level = 4 : no Dump. Level = 5 & 6 : same Dump
+  {
+    const Standard_Integer up = NbLabels();
+    for (Standard_Integer I = 1; I <= up; I ++)
+    {
+      S << "[" << I << "]:" << endl;
+      S << "View Entity : ";
+      dumper.Dump (ViewItem(I),S,sublevel);
+      S << endl;
+      S << "Text Location in View : ";
+      IGESData_DumpXYZL(S,level,TextLocation(I),Location());
+      S << "  Leader Entity in View : ";
+      dumper.Dump(LeaderEntity(I),S,sublevel);
+      S << endl;
+      S << "Entity Label Level Number : ";
+      S << LabelLevel(I) << "  ";
+      S << "Displayed Entity : ";
+      dumper.Dump(DisplayedEntity(I),S,sublevel);
+      S << endl;
+    }
+  }
+  S << endl;
 }

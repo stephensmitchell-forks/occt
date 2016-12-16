@@ -54,7 +54,7 @@ void IGESSolid_ToolFace::ReadOwnParams(const Handle(IGESSolid_Face)& ent,
   Message_Msg Msg198("XSTEP_198");
   //========================================
 
-  Standard_Boolean outerLoopFlag; //szv#4:S4163:12Mar99 `st` moved down
+  Standard_Boolean outerLoopFlag;
   Handle(IGESData_IGESEntity) anent;
   Handle(IGESSolid_Loop) aloop;
   Handle(IGESData_IGESEntity) tempSurface;
@@ -62,7 +62,7 @@ void IGESSolid_ToolFace::ReadOwnParams(const Handle(IGESSolid_Face)& ent,
   Handle(IGESSolid_HArray1OfLoop) tempLoops;
   IGESData_Status aStatus;
 
-  if (!PR.ReadEntity(IR, PR.Current(), aStatus, tempSurface)){ //szv#4:S4163:12Mar99 `st=` not needed
+  if (!PR.ReadEntity(IR, aStatus, tempSurface)) {
     Message_Msg Msg196("XSTEP_196");
     switch(aStatus) {
     case IGESData_ReferenceError: {  
@@ -79,25 +79,18 @@ void IGESSolid_ToolFace::ReadOwnParams(const Handle(IGESSolid_Face)& ent,
     }
     }
   }
-  Standard_Boolean st = PR.ReadInteger(PR.Current(), nbloops);
+  Standard_Boolean st = PR.ReadInteger(nbloops);
   if(!st){
     PR.SendFail(Msg197);
   }
-/*
-  st = PR.ReadEntity(IR, PR.Current(), "Surface", tempSurface);
-  st = PR.ReadInteger(PR.Current(), "Number of loops", nbloops);
-*/
   if (st && nbloops > 0) tempLoops = new IGESSolid_HArray1OfLoop(1, nbloops);
   else  PR.SendFail(Msg197);
 
-  PR.ReadBoolean(PR.Current(), Msg198, outerLoopFlag); //szv#4:S4163:12Mar99 `st=` not needed
-  //st = PR.ReadBoolean(PR.Current(), "Outer loop flag", outerLoopFlag);
+  PR.ReadBoolean(Msg198, outerLoopFlag);
 
   if (!tempLoops.IsNull()) {
     for (Standard_Integer i=1; i<=nbloops; i++) {
-      //st = PR.ReadEntity(IR, PR.Current(), Msg199, STANDARD_TYPE(IGESSolid_Loop), aloop); //szv#4:S4163:12Mar99 moved in if
-      //st = PR.ReadEntity(IR, PR.Current(), "Loops", STANDARD_TYPE(IGESSolid_Loop), aloop);
-      if (PR.ReadEntity(IR, PR.Current(), aStatus, STANDARD_TYPE(IGESSolid_Loop), aloop))
+      if (PR.ReadEntity(IR, aStatus, STANDARD_TYPE(IGESSolid_Loop), aloop))
 	tempLoops->SetValue(i, aloop);
       else{
 	Message_Msg Msg199("XSTEP_199");

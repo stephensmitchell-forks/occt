@@ -40,15 +40,12 @@ void IGESGeom_ToolSurfaceOfRevolution::ReadOwnParams
   (const Handle(IGESGeom_SurfaceOfRevolution)& ent,
    const Handle(IGESData_IGESReaderData)& IR, IGESData_ParamReader& PR) const
 {
-  // MGE 31/07/98
-
   Handle(IGESGeom_Line) anAxis;
   Handle(IGESData_IGESEntity) aGeneratrix;
   Standard_Real aStartAngle, anEndAngle;
   IGESData_Status aStatus;
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
 
-  if (!PR.ReadEntity(IR, PR.Current(), aStatus, STANDARD_TYPE(IGESGeom_Line), anAxis)){ //szv#4:S4163:12Mar99 `st=` not needed
+  if (!PR.ReadEntity(IR, aStatus, STANDARD_TYPE(IGESGeom_Line), anAxis)) {
     Message_Msg Msg152("XSTEP_152");
     switch(aStatus) {
     case IGESData_ReferenceError: {  
@@ -70,7 +67,7 @@ void IGESGeom_ToolSurfaceOfRevolution::ReadOwnParams
     }
     }
   }
-  if (!PR.ReadEntity(IR, PR.Current(), aStatus, aGeneratrix)){ //szv#4:S4163:12Mar99 `st=` not needed
+  if (!PR.ReadEntity(IR, aStatus, aGeneratrix)) {
     Message_Msg Msg153("XSTEP_153");
     switch(aStatus) {
     case IGESData_ReferenceError: {  
@@ -87,20 +84,14 @@ void IGESGeom_ToolSurfaceOfRevolution::ReadOwnParams
     }
     }
   }
-  if (!PR.ReadReal(PR.Current(),  aStartAngle)){ //szv#4:S4163:12Mar99 `st=` not needed
+  if (!PR.ReadReal(aStartAngle)) {
     Message_Msg Msg154("XSTEP_154");
     PR.SendFail(Msg154);
   }
-  if (!PR.ReadReal(PR.Current(), anEndAngle)){ //szv#4:S4163:12Mar99 `st=` not needed
+  if (!PR.ReadReal(anEndAngle)) {
     Message_Msg Msg155("XSTEP_155");
     PR.SendFail(Msg155);
   }
-/*
-  st = PR.ReadEntity(IR, PR.Current(), "Axis", STANDARD_TYPE(IGESGeom_Line), anAxis);
-  st = PR.ReadEntity(IR, PR.Current(), "Generatrix", aGeneratrix);
-  st = PR.ReadReal(PR.Current(), "StartAngle", aStartAngle);
-  st = PR.ReadReal(PR.Current(), "EndAngle", anEndAngle);
-*/
   DirChecker(ent).CheckTypeAndForm(PR.CCheck(),ent);
   ent->Init(anAxis, aGeneratrix, aStartAngle, anEndAngle);
 }

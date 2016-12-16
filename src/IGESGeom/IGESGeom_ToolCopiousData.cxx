@@ -45,25 +45,19 @@ void IGESGeom_ToolCopiousData::ReadOwnParams(const Handle(IGESGeom_CopiousData)&
                                              const Handle(IGESData_IGESReaderData)& /* IR */,
                                              IGESData_ParamReader& PR) const
 {
-  // MGE 28/07/98
-  // Building of messages
-
   Standard_Integer aDataType, nbData;
   Standard_Real aZPlane = 0;
   Handle(TColStd_HArray1OfReal) allData;
 
   Standard_Integer upper;
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 moved down
   Standard_Boolean data = Standard_False;
 
-  if (!PR.ReadInteger(PR.Current(), aDataType)){ //szv#4:S4163:12Mar99 `st=` not needed
-    //st = PR.ReadInteger(PR.Current(), "Data Type", aDataType);
+  if (!PR.ReadInteger(aDataType)) {
     Message_Msg Msg85("XSTEP_85");
     PR.SendFail(Msg85);
   }
 
-  Standard_Boolean st = PR.ReadInteger(PR.Current(), nbData);
-  //st = PR.ReadInteger(PR.Current(), "Number of n-tuples", nbData);
+  Standard_Boolean st = PR.ReadInteger(nbData);
   if (st && (nbData > 0)) data = Standard_True;
   else {
     Message_Msg Msg86("XSTEP_86");
@@ -71,11 +65,10 @@ void IGESGeom_ToolCopiousData::ReadOwnParams(const Handle(IGESGeom_CopiousData)&
   }
 
   if (aDataType == 1){
-    if (!PR.ReadReal(PR.Current(), aZPlane)){ //szv#4:S4163:12Mar99 `st=` not needed
+    if (!PR.ReadReal(aZPlane)) {
       Message_Msg Msg87("XSTEP_87");
       PR.SendFail(Msg87);
     }
-  //if (aDataType == 1)  st = PR.ReadReal(PR.Current(), "Z Plane", aZPlane);
   }
 
   if ( data )
@@ -85,9 +78,7 @@ void IGESGeom_ToolCopiousData::ReadOwnParams(const Handle(IGESGeom_CopiousData)&
       else                           upper = 6*nbData;
 
       Message_Msg Msg88("XSTEP_88");
-      //allData = new TColStd_HArray1OfReal(1, upper) then fill it :
-      PR.ReadReals(PR.CurrentList(upper),Msg88, allData); //szv#4:S4163:12Mar99 `st=` not needed
-      //st = PR.ReadReals(PR.CurrentList(upper), "Tuples", allData);
+      PR.ReadReals(PR.CurrentList(upper),Msg88, allData);
     }
 
   DirChecker(ent).CheckTypeAndForm(PR.CCheck(),ent);

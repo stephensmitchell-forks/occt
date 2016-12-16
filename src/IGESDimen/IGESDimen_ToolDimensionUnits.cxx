@@ -38,7 +38,6 @@ void  IGESDimen_ToolDimensionUnits::ReadOwnParams
   (const Handle(IGESDimen_DimensionUnits)& ent,
    const Handle(IGESData_IGESReaderData)& /* IR */, IGESData_ParamReader& PR) const
 {
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
   Standard_Integer tempNbProps;
   Standard_Integer tempSecondDimenPos;
   Standard_Integer tempUnitsIndic;
@@ -48,21 +47,20 @@ void  IGESDimen_ToolDimensionUnits::ReadOwnParams
   Handle(TCollection_HAsciiString) tempFormatString;
 
   if (PR.DefinedElseSkip())
-    PR.ReadInteger(PR.Current(), "Number of Properties", tempNbProps); //szv#4:S4163:12Mar99 `st=` not needed
+    PR.ReadInteger(tempNbProps,"Number of Properties");
   else
     tempNbProps = 6;
 
-  PR.ReadInteger(PR.Current(), "Secondary Dimension Position",
-		 tempSecondDimenPos); //szv#4:S4163:12Mar99 `st=` not needed
-  PR.ReadInteger(PR.Current(), "Units Indicator", tempUnitsIndic); //szv#4:S4163:12Mar99 `st=` not needed
+  PR.ReadInteger(tempSecondDimenPos,"Secondary Dimension Position");
+  PR.ReadInteger(tempUnitsIndic,"Units Indicator");
   if (PR.DefinedElseSkip())
-    PR.ReadInteger(PR.Current(), "Character Set", tempCharSet); //szv#4:S4163:12Mar99 `st=` not needed
+    PR.ReadInteger(tempCharSet,"Character Set");
   else
     tempCharSet = 1;
 
-  PR.ReadText(PR.Current(), "Format String", tempFormatString); //szv#4:S4163:12Mar99 `st=` not needed
-  PR.ReadInteger(PR.Current(), "Fraction Flag", tempFracFlag); //szv#4:S4163:12Mar99 `st=` not needed
-  PR.ReadInteger(PR.Current(), "Precision", tempPrecision); //szv#4:S4163:12Mar99 `st=` not needed
+  PR.ReadText("Format String", tempFormatString);
+  PR.ReadInteger(tempFracFlag,"Fraction Flag");
+  PR.ReadInteger(tempPrecision,"Precision");
 
   DirChecker(ent).CheckTypeAndForm(PR.CCheck(),ent);
   ent->Init

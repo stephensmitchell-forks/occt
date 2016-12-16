@@ -76,16 +76,15 @@ void  IGESDimen_ToolNewGeneralNote::ReadOwnParams
   Handle(TColgp_HArray1OfXYZ) startPoints; 
   Handle(Interface_HArray1OfHAsciiString) texts;
 
-  //szv#4:S4163:12Mar99 `st=` not needed
-  PR.ReadReal(PR.Current(), "Text Width", width);
-  PR.ReadReal(PR.Current(), "Text Height", height);
-  PR.ReadInteger(PR.Current(), "Justification Code", justifyCode);
-  PR.ReadXYZ(PR.CurrentList(1, 3), "Area Location Point", areaLoc);
-  PR.ReadReal(PR.Current(), "Area Rotation Angle", areaRotationAngle);
-  PR.ReadXYZ(PR.CurrentList(1, 3), "Base Line Position", baseLinePos);
-  PR.ReadReal(PR.Current(),"NormalInterline Spacing",normalInterlineSpace);
+  PR.ReadReal(width,"Text Width");
+  PR.ReadReal(height,"Text Height");
+  PR.ReadInteger(justifyCode,"Justification Code");
+  PR.ReadXYZ(areaLoc,"Area Location Point");
+  PR.ReadReal(areaRotationAngle,"Area Rotation Angle");
+  PR.ReadXYZ(baseLinePos,"Base Line Position");
+  PR.ReadReal(normalInterlineSpace,"NormalInterline Spacing");
 
-  Standard_Boolean st = PR.ReadInteger(PR.Current(), "Number of Text Strings", nbval);
+  Standard_Boolean st = PR.ReadInteger(nbval,"Number of Text Strings");
   if (st && nbval > 0)
     {
       charDisplays         = new TColStd_HArray1OfInteger(1, nbval);
@@ -133,55 +132,44 @@ void  IGESDimen_ToolNewGeneralNote::ReadOwnParams
 	gp_XYZ startPoint;
 	Handle(TCollection_HAsciiString) text;
 
-	//st = PR.ReadInteger(PR.Current(), "Character Display",charDisplay); //szv#4:S4163:12Mar99 moved in if
-	if (PR.ReadInteger(PR.Current(), "Character Display",charDisplay))
+	if (PR.ReadInteger(charDisplay,"Character Display"))
 	  charDisplays->SetValue(i, charDisplay);
 
-	//st = PR.ReadReal(PR.Current(), "Character Width", charWidth); //szv#4:S4163:12Mar99 moved in if
-	if (PR.ReadReal(PR.Current(), "Character Width", charWidth))
+	if (PR.ReadReal(charWidth,"Character Width"))
 	  charWidths->SetValue(i, charWidth);
 
-	//st = PR.ReadReal(PR.Current(), "Character Height", charHeight); //szv#4:S4163:12Mar99 moved in if
-	if (PR.ReadReal(PR.Current(), "Character Height", charHeight))
+	if (PR.ReadReal(charHeight,"Character Height"))
 	  charHeights->SetValue(i, charHeight);
 
-	//st = PR.ReadReal(PR.Current(), "Inter-character space", interCharSpace); //szv#4:S4163:12Mar99 moved in if
-	if (PR.ReadReal(PR.Current(), "Inter-character space", interCharSpace))
+	if (PR.ReadReal(interCharSpace,"Inter-character space"))
 	  interCharSpaces->SetValue(i, interCharSpace);
 
-	//st = PR.ReadReal(PR.Current(), "Interline space", interlineSpace); //szv#4:S4163:12Mar99 moved in if
-	if (PR.ReadReal(PR.Current(), "Interline space", interlineSpace))
+	if (PR.ReadReal(interlineSpace,"Interline space"))
 	  interlineSpaces->SetValue(i, interlineSpace);
 
-	//st = PR.ReadInteger(PR.Current(), "Font Style", fontStyle); //szv#4:S4163:12Mar99 moved in if
-	if (PR.ReadInteger(PR.Current(), "Font Style", fontStyle))
+	if (PR.ReadInteger(fontStyle,"Font Style"))
 	  fontStyles->SetValue(i, fontStyle);
 
-	//st = PR.ReadReal(PR.Current(), "Character Angle", charAngle); //szv#4:S4163:12Mar99 moved in if
-	if (PR.ReadReal(PR.Current(), "Character Angle", charAngle))
+	if (PR.ReadReal(charAngle,"Character Angle"))
 	  charAngles->SetValue(i, charAngle);
 
-	//st = PR.ReadText(PR.Current(),"Control Code String", controlCodeString); //szv#4:S4163:12Mar99 moved in if
-	if (PR.ReadText(PR.Current(),"Control Code String", controlCodeString))
+	if (PR.ReadText("Control Code String", controlCodeString))
 	  controlCodeStrings->SetValue(i, controlCodeString);
 
-	//st = PR.ReadInteger(PR.Current(), "Number of Characters", nbChar); //szv#4:S4163:12Mar99 moved in if
-	if (PR.ReadInteger(PR.Current(), "Number of Characters", nbChar))
+	if (PR.ReadInteger(nbChar,"Number of Characters"))
 	  nbChars->SetValue(i, nbChar);
 
-	//st = PR.ReadReal(PR.Current(), "Box Width", boxWidth); //szv#4:S4163:12Mar99 moved in if
-	if (PR.ReadReal(PR.Current(), "Box Width", boxWidth))
+	if (PR.ReadReal(boxWidth,"Box Width"))
 	  boxWidths->SetValue(i, boxWidth);
 
-	//st = PR.ReadReal(PR.Current(), "Box Height", boxHeight); //szv#4:S4163:12Mar99 moved in if
-	if (PR.ReadReal(PR.Current(), "Box Height", boxHeight))
+	if (PR.ReadReal(boxHeight,"Box Height"))
 	  boxHeights->SetValue(i, boxHeight);
 
 	Standard_Integer curnum = PR.CurrentNumber();
 	if (PR.DefinedElseSkip())
 	  {
 	    // Reading fontCode(Integer, must be positive)
-	    PR.ReadInteger(PR.Current(), "Character Set Interpretation Code",charSetCode); //szv#4:S4163:12Mar99 `st=` not needed
+	    PR.ReadInteger(charSetCode,"Character Set Interpretation Code");
 	    // Reading charSetEnt
 	    if (charSetCode < 0) {
 	      charSetEntity = PR.ParamEntity (IR,curnum);
@@ -199,31 +187,25 @@ void  IGESDimen_ToolNewGeneralNote::ReadOwnParams
 
 	if (PR.DefinedElseSkip())
           {
-	    //st = PR.ReadReal(PR.Current(), "Slant Angle", slantAngle); //szv#4:S4163:12Mar99 moved in if
-	    if (PR.ReadReal(PR.Current(), "Slant Angle", slantAngle))
+	    if (PR.ReadReal(slantAngle,"Slant Angle"))
 	      slantAngles->SetValue(i, slantAngle);
           }
 	else
 	  slantAngles->SetValue(i, M_PI/2);
 
-	//st = PR.ReadReal(PR.Current(), "Rotation Angle", rotationAngle); //szv#4:S4163:12Mar99 moved in if
-	if (PR.ReadReal(PR.Current(), "Rotation Angle", rotationAngle))
+	if (PR.ReadReal(rotationAngle,"Rotation Angle"))
 	  rotationAngles->SetValue(i, rotationAngle);
 
-	//st = PR.ReadInteger(PR.Current(), "Mirror Flag", mirrorFlag); //szv#4:S4163:12Mar99 moved in if
-	if (PR.ReadInteger(PR.Current(), "Mirror Flag", mirrorFlag))
+	if (PR.ReadInteger(mirrorFlag,"Mirror Flag"))
 	  mirrorFlags->SetValue(i, mirrorFlag);
 
-	//st = PR.ReadInteger(PR.Current(), "Rotate Flag", rotateFlag); //szv#4:S4163:12Mar99 moved in if
-	if (PR.ReadInteger(PR.Current(), "Rotate Flag", rotateFlag))
+	if (PR.ReadInteger(rotateFlag,"Rotate Flag"))
 	  rotateFlags->SetValue(i, rotateFlag);
 
-	//st = PR.ReadXYZ(PR.CurrentList(1, 3), "Start Point", startPoint); //szv#4:S4163:12Mar99 moved in if
-	if (PR.ReadXYZ(PR.CurrentList(1, 3), "Start Point", startPoint))
+	if (PR.ReadXYZ(startPoint,"Start Point"))
 	  startPoints->SetValue(i, startPoint);
 
-	//st = PR.ReadText(PR.Current(), "Text String", text); //szv#4:S4163:12Mar99 moved in if
-	if (PR.ReadText(PR.Current(), "Text String", text))
+	if (PR.ReadText("Text String", text))
 	  texts->SetValue(i, text);
       }
 

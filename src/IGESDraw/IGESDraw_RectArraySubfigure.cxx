@@ -19,62 +19,24 @@
 #include <gp_GTrsf.hxx>
 #include <gp_Pnt.hxx>
 #include <gp_XYZ.hxx>
-#include <IGESData_IGESEntity.hxx>
 #include <IGESDraw_RectArraySubfigure.hxx>
-#include <Standard_DimensionMismatch.hxx>
-#include <Standard_OutOfRange.hxx>
-#include <Standard_Type.hxx>
+#include <IGESFile_Reader.hxx>
+#include <IGESData_IGESWriter.hxx>
+#include <Interface_EntityIterator.hxx>
+#include <IGESData_DirChecker.hxx>
+#include <Message_Messenger.hxx>
+#include <IGESData_IGESDumper.hxx>
+#include <IGESData_Dump.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESDraw_RectArraySubfigure,IGESData_IGESEntity)
 
-IGESDraw_RectArraySubfigure::IGESDraw_RectArraySubfigure ()    {  }
-
-
-    void IGESDraw_RectArraySubfigure::Init
-  (const Handle(IGESData_IGESEntity)&      aBase,
-   const Standard_Real                     aScale,
-   const gp_XYZ&                           aCorner,
-   const Standard_Integer                  nbCols,
-   const Standard_Integer                  nbRows,
-   const Standard_Real                     hDisp,
-   const Standard_Real                     vtDisp,
-   const Standard_Real                     rotationAngle,
-   const Standard_Integer                  doDont,
-   const Handle(TColStd_HArray1OfInteger)& allNumPos)
-{
-  if (!allNumPos.IsNull())
-    if (allNumPos->Lower() != 1)
-      Standard_DimensionMismatch::Raise("IGESDraw_RectArraySubfigure : Init");
-  theBaseEntity       = aBase;
-  theScaleFactor      = aScale;
-  theLowerLeftCorner  = aCorner;
-  theNbColumns        = nbCols;
-  theNbRows           = nbRows;
-  theColumnSeparation = hDisp;
-  theRowSeparation    = vtDisp;
-  theRotationAngle    = rotationAngle;
-  theDoDontFlag       = doDont != 0;
-  thePositions        = allNumPos;
-  InitTypeAndForm(412,0);
-}
-
-    Handle(IGESData_IGESEntity) IGESDraw_RectArraySubfigure::BaseEntity () const
-{
-  return theBaseEntity;
-}
-
-    Standard_Real IGESDraw_RectArraySubfigure::ScaleFactor () const
-{
-  return theScaleFactor;
-}
-
-    gp_Pnt IGESDraw_RectArraySubfigure::LowerLeftCorner () const
+gp_Pnt IGESDraw_RectArraySubfigure::LowerLeftCorner () const
 {
   gp_Pnt tempLowerLeftCorner(theLowerLeftCorner);
   return tempLowerLeftCorner;
 }
 
-    gp_Pnt IGESDraw_RectArraySubfigure::TransformedLowerLeftCorner () const
+gp_Pnt IGESDraw_RectArraySubfigure::TransformedLowerLeftCorner () const
 {
   gp_XYZ tempLowerLeftCorner = theLowerLeftCorner;
   if (HasTransf()) Location().Transforms(tempLowerLeftCorner);
@@ -83,49 +45,13 @@ IGESDraw_RectArraySubfigure::IGESDraw_RectArraySubfigure ()    {  }
   return (tempRes);
 }
 
-    Standard_Integer IGESDraw_RectArraySubfigure::NbColumns () const
-{
-  return theNbColumns;
-}
-
-    Standard_Integer IGESDraw_RectArraySubfigure::NbRows () const
-{
-  return theNbRows;
-}
-
-    Standard_Real IGESDraw_RectArraySubfigure::ColumnSeparation () const
-{
-  return theColumnSeparation;
-}
-
-    Standard_Real IGESDraw_RectArraySubfigure::RowSeparation () const
-{
-  return theRowSeparation;
-}
-
-    Standard_Real IGESDraw_RectArraySubfigure::RotationAngle () const
-{
-  return theRotationAngle;
-}
-
-    Standard_Boolean IGESDraw_RectArraySubfigure::DisplayFlag () const
-{
-  return (thePositions.IsNull());
-}
-
-    Standard_Integer IGESDraw_RectArraySubfigure::ListCount () const
+Standard_Integer IGESDraw_RectArraySubfigure::ListCount () const
 {
   return ( thePositions.IsNull() ? 0 : thePositions->Length() );
   // Return 0 if HArray1 thePositions is NULL Handle
 }
 
-    Standard_Boolean IGESDraw_RectArraySubfigure::DoDontFlag () const
-{
-  return (theDoDontFlag);
-}
-
-    Standard_Boolean IGESDraw_RectArraySubfigure::PositionNum
-  (const Standard_Integer Index) const
+Standard_Boolean IGESDraw_RectArraySubfigure::PositionNum (const Standard_Integer Index) const
 {
   // Method : If thePositions array length is Zero return theDoDontFlag;
   //          else Search Index in to the Array. If 'Index' found in the
@@ -141,10 +67,96 @@ IGESDraw_RectArraySubfigure::IGESDraw_RectArraySubfigure ()    {  }
   return (! theDoDontFlag);
 }
 
-    Standard_Integer IGESDraw_RectArraySubfigure::ListPosition
-  (const Standard_Integer Index) const
+Standard_Integer IGESDraw_RectArraySubfigure::ListPosition (const Standard_Integer Index) const
 {
   return thePositions->Value(Index);
   // raise OutOfRange from Standard if Index is out-of-bound
   // Exception NoSuchObject will be raised if thePositions == Null Handle
+}
+
+void IGESDraw_RectArraySubfigure::OwnRead (IGESFile_Reader &PR)
+{
+  PR.ReadPointer(theBaseEntity,"Base Entity");
+
+  theScaleFactor = 1.0;      // Setting to default value of 1.0
+  PR.ReadReal(theScaleFactor,"Scale Factor");
+
+  PR.ReadXYZ(theLowerLeftCorner,"Lower Left Coordinate Of Array");
+  PR.ReadInteger(theNbColumns,"Number Of Columns");
+  PR.ReadInteger(theNbRows,"Number Of Rows");
+  PR.ReadReal(theColumnSeparation,"Horizontal Distance Between Columns");
+  PR.ReadReal(theRowSeparation,"Vertical Distance Between Rows");
+  PR.ReadReal(theRotationAngle,"Rotation Angle");
+
+  Standard_Integer tempListCount = 0;
+  PR.ReadInteger(tempListCount,"DO-DONT List Count");
+  if (tempListCount > 0)
+    thePositions = new TColStd_HArray1OfInteger (1, tempListCount);
+  else if (tempListCount < 0)
+    PR.AddFail("DO-DONT List Count : Less than Zero");
+
+  Standard_Integer tempDoDontFlag = 0;
+  PR.ReadInteger(tempDoDontFlag,"DO-DONT Flag");
+  theDoDontFlag = (tempDoDontFlag != 0);
+
+  if (tempListCount > 0) {
+    for (Standard_Integer i = 1; i <= tempListCount; i++)
+      PR.ReadInteger(thePositions->ChangeValue(i),"Number Of Position To Process");
+  }
+}
+
+void IGESDraw_RectArraySubfigure::OwnWrite (IGESData_IGESWriter &IW) const
+{
+  IW.Send(theBaseEntity);
+  IW.Send(theScaleFactor);
+  IW.Send(theLowerLeftCorner.X());
+  IW.Send(theLowerLeftCorner.Y());
+  IW.Send(theLowerLeftCorner.Z());
+  IW.Send(theNbColumns);
+  IW.Send(theNbRows);
+  IW.Send(theColumnSeparation);
+  IW.Send(theRowSeparation);
+  IW.Send(theRotationAngle);
+  const Standard_Integer up = ListCount();
+  IW.Send(up);
+  IW.SendBoolean(DoDontFlag());
+  for (Standard_Integer i = 1; i <= up; i++)
+    IW.Send(ListPosition(i));
+}
+
+void IGESDraw_RectArraySubfigure::OwnShared (Interface_EntityIterator &iter) const
+{
+  iter.GetOneItem(theBaseEntity);
+}
+
+IGESData_DirChecker IGESDraw_RectArraySubfigure::DirChecker () const
+{
+  IGESData_DirChecker DC(412, 0);
+  DC.Structure(IGESData_DefVoid);
+  DC.LineFont(IGESData_DefAny);
+  DC.LineWeight(IGESData_DefValue);
+  DC.Color(IGESData_DefAny);
+  DC.GraphicsIgnored(1);
+  return DC;
+}
+
+void IGESDraw_RectArraySubfigure::OwnDump (const IGESData_IGESDumper &dumper, const Handle(Message_Messenger) &S, const Standard_Integer level) const
+{
+  const Standard_Integer tempSubLevel = (level <= 4) ? 0 : 1;
+  S << "IGESDraw_RectArraySubfigure" << endl;
+  S << "Base Entity : ";
+  dumper.Dump(theBaseEntity,S,tempSubLevel);
+  S << endl;
+  S << "Scale Factor : " << theScaleFactor << "  ";
+  S << "Lower Left Corner Of Array : ";
+  IGESData_DumpXYZL(S,level,theLowerLeftCorner,gp_GTrsf()); // no location
+  S << "Number Of Columns : " << theNbColumns   << "  ";
+  S << "Number Of Rows    : " << theNbRows      << endl;
+  S << "Horizontal Distance Between Columns : " << theColumnSeparation << endl;
+  S << "Vertical Distance Between Rows      : " << theRowSeparation << endl;
+  S << "Rotation Angle (in radians)         : " << theRotationAngle << endl;
+  S << "Do-Dont Flag : " << (theDoDontFlag? "(1)Dont  " : "(0)Do  ");
+  S << "Do-Dont List : ";
+  IGESData_DumpVals(S,level,1,ListCount(),ListPosition);
+  S << endl;
 }

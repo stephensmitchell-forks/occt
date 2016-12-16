@@ -53,9 +53,7 @@ void IGESSolid_ToolLoop::ReadOwnParams (const Handle(IGESSolid_Loop)& ent,
                                         const Handle(IGESData_IGESReaderData)& IR,
                                         IGESData_ParamReader& PR) const
 {
-  // MGE 03/08/98
-
-  Standard_Boolean abool; //szv#4:S4163:12Mar99 `st` moved down
+  Standard_Boolean abool;
   Standard_Integer nbedges = 0;
   Standard_Integer i, j;
   Standard_Integer anint;
@@ -69,9 +67,7 @@ void IGESSolid_ToolLoop::ReadOwnParams (const Handle(IGESSolid_Loop)& ent,
   Handle(IGESBasic_HArray1OfHArray1OfIGESEntity) tempCurves;
   IGESData_Status aStatus;
 
-  //st = PR.ReadInteger(PR.Current(),Msg184, nbedges); //szv#4:S4163:12Mar99 moved in if
-  //st = PR.ReadInteger(PR.Current(), "Number of edges", nbedges);
-  Standard_Boolean sb = PR.ReadInteger(PR.Current(), nbedges);
+  Standard_Boolean sb = PR.ReadInteger(nbedges);
   if (sb && (nbedges > 0)) {
    
     Message_Msg Msg180("XSTEP_180");
@@ -89,13 +85,11 @@ void IGESSolid_ToolLoop::ReadOwnParams (const Handle(IGESSolid_Loop)& ent,
     
     for (i=1; i<= nbedges; i++)
       {
-	//st = PR.ReadInteger(PR.Current(), Msg190, anint); //szv#4:S4163:12Mar99 moved in if
-	//st = PR.ReadInteger(PR.Current(), "Edge types", anint);
-	if (PR.ReadInteger(PR.Current(), anint))
+	if (PR.ReadInteger(anint))
 	  tempTypes->SetValue(i, anint);
 	else  PR.SendFail(Msg190);
 	
-	if (!PR.ReadEntity(IR, PR.Current(), aStatus, anent)){ //szv#4:S4163:12Mar99 `st=` not needed
+	if (!PR.ReadEntity(IR, aStatus, anent)) {
 	    Message_Msg Msg193("XSTEP_193");
 	    switch(aStatus) {
 	    case IGESData_ReferenceError: {  
@@ -112,33 +106,26 @@ void IGESSolid_ToolLoop::ReadOwnParams (const Handle(IGESSolid_Loop)& ent,
 	    }
 	    }
 	  }
-	//st = PR.ReadEntity(IR, PR.Current(), "Edges", anent);
-	//if (!st) {  }    // WARNING : Two possible Types : //szv#4:S4163:12Mar99 not needed
 	if (!anent->IsKind(STANDARD_TYPE(IGESSolid_VertexList))
 	    && !anent->IsKind(STANDARD_TYPE(IGESSolid_EdgeList)) )
 	  PR.SendFail(Msg190);
 	else  tempEdges->SetValue(i, anent);
 	
-	//st = PR.ReadInteger(PR.Current(), Msg191, anint); //szv#4:S4163:12Mar99 moved in if
-	//st = PR.ReadInteger(PR.Current(), "List index", anint);
-	if (PR.ReadInteger(PR.Current(), anint))
+	if (PR.ReadInteger(anint))
 	  tempIndex->SetValue(i, anint);
 	else{
 	  Message_Msg Msg191("XSTEP_191");
 	  PR.SendFail(Msg191);
 	}
 	
-	//st = PR.ReadBoolean(PR.Current(), Msg180, abool); //szv#4:S4163:12Mar99 moved in if
-	//st = PR.ReadBoolean(PR.Current(), "Orientation flags", abool);
-	if (PR.ReadBoolean(PR.Current(), Msg180, abool))
+	if (PR.ReadBoolean(Msg180, abool))
 	  tempOrientation->SetValue(i, (abool ? 1 : 0));    // bool;
 	
-	Standard_Boolean st = PR.ReadInteger(PR.Current(),anint);
+	Standard_Boolean st = PR.ReadInteger(anint);
 	if(!st){
 	  Message_Msg Msg192("XSTEP_192");
 	  PR.SendFail(Msg192);
 	}
-	//st = PR.ReadInteger(PR.Current(), "Number of parameter curves", anint);
 	if (st && anint > 0)
 	  {
 	    Message_Msg Msg195("XSTEP_195");
@@ -149,14 +136,10 @@ void IGESSolid_ToolLoop::ReadOwnParams (const Handle(IGESSolid_Loop)& ent,
 	      new TColStd_HArray1OfInteger(1, anint);
 	    for (j = 1; j <= anint; j ++)
 	      {
-		//st = PR.ReadBoolean(PR.Current(), Msg195, abool); //szv#4:S4163:12Mar99 moved in if
-		//st = PR.ReadBoolean(PR.Current(), "Isoparametric flags", abool);
-		if (PR.ReadBoolean(PR.Current(), Msg195, abool))
+		if (PR.ReadBoolean(Msg195, abool))
 		  tmpints->SetValue(j, (abool ? 1 : 0));    // bool;
 		
-		//st = PR.ReadEntity(IR, PR.Current(), Msg194, anent); //szv#4:S4163:12Mar99 moved in if
-		//st = PR.ReadEntity(IR, PR.Current(), "Curves", anent);
-		if (PR.ReadEntity(IR, PR.Current(), aStatus, anent))
+		if (PR.ReadEntity(IR, aStatus, anent))
 		  tmpents->SetValue(j, anent);
 		else {
 		  Message_Msg Msg194("XSTEP_194");

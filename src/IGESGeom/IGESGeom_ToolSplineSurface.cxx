@@ -40,9 +40,6 @@ void IGESGeom_ToolSplineSurface::ReadOwnParams
   (const Handle(IGESGeom_SplineSurface)& ent,
    const Handle(IGESData_IGESReaderData)& /* IR */, IGESData_ParamReader& PR) const
 {
-
-  // MGE 30/07/98
-
   Standard_Integer aBoundaryType, aPatchType, allNbUSegments, allNbVSegments;
   Standard_Integer i, j, k;
   Standard_Boolean ubreak=Standard_False, vbreak=Standard_False;
@@ -52,19 +49,15 @@ void IGESGeom_ToolSplineSurface::ReadOwnParams
   Handle(IGESBasic_HArray2OfHArray1OfReal) allYCoeffs;
   Handle(IGESBasic_HArray2OfHArray1OfReal) allZCoeffs;
 
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 moved down
-
-  //szv#4:S4163:12Mar99 `st=` not needed
-  if (!PR.ReadInteger(PR.Current(), aBoundaryType)){
+  if (!PR.ReadInteger(aBoundaryType)){
     Message_Msg Msg140("XSTEP_140");
     PR.SendFail(Msg140);
   }
-  if (!PR.ReadInteger(PR.Current(), aPatchType)){
+  if (!PR.ReadInteger(aPatchType)){
     Message_Msg Msg278("XSTEP_278");
     PR.SendFail(Msg278);
   }
-  //st = PR.ReadInteger(PR.Current(), Msg141, allNbUSegments); //szv#4:S4163:12Mar99 moved in if
-  if (PR.ReadInteger(PR.Current(),allNbUSegments)) {
+  if (PR.ReadInteger(allNbUSegments)) {
     ubreak = Standard_True;
     allUBreakPoints = new TColStd_HArray1OfReal(1, allNbUSegments+1);
   }
@@ -73,9 +66,7 @@ void IGESGeom_ToolSplineSurface::ReadOwnParams
     PR.SendFail(Msg141);
   }
 
-  //st = PR.ReadInteger(PR.Current(), Msg142, allNbVSegments); //szv#4:S4163:12Mar99 moved in if
-  //st = PR.ReadInteger(PR.Current(), "Number Of V Segments", allNbVSegments);
-  if (PR.ReadInteger(PR.Current(),allNbVSegments)) {
+  if (PR.ReadInteger(allNbVSegments)) {
     vbreak = Standard_True;
     allVBreakPoints = new TColStd_HArray1OfReal(1, allNbVSegments+1);
   }
@@ -87,14 +78,12 @@ void IGESGeom_ToolSplineSurface::ReadOwnParams
 
   if (!allUBreakPoints.IsNull()){
     Message_Msg Msg143("XSTEP_143");
-    PR.ReadReals(PR.CurrentList(allNbUSegments+1), Msg143, allUBreakPoints); //szv#4:S4163:12Mar99 `st=` not needed
-    //st = PR.ReadReals(PR.CurrentList(allNbUSegments+1), "U Break Points", allUBreakPoints);
+    PR.ReadReals(PR.CurrentList(allNbUSegments+1), Msg143, allUBreakPoints);
   }
 
   if (!allVBreakPoints.IsNull()){
     Message_Msg Msg144("XSTEP_144");
-    PR.ReadReals(PR.CurrentList(allNbVSegments+1), Msg144, allVBreakPoints); //szv#4:S4163:12Mar99 `st=` not needed
-    //st = PR.ReadReals(PR.CurrentList(allNbVSegments+1), "V Break Points", allVBreakPoints);
+    PR.ReadReals(PR.CurrentList(allNbVSegments+1), Msg144, allVBreakPoints);
   }
 
   if (ubreak && vbreak)
@@ -104,7 +93,7 @@ void IGESGeom_ToolSplineSurface::ReadOwnParams
       allZCoeffs = new IGESBasic_HArray2OfHArray1OfReal(1, allNbUSegments, 1, allNbVSegments);
     }
 
-  Handle(TColStd_HArray1OfReal) Temp; // = new TColStd_HArray1OfReal(1, 16);
+  Handle(TColStd_HArray1OfReal) Temp;
 
   if (! allXCoeffs.IsNull()) {
     Standard_Boolean st;
@@ -121,7 +110,6 @@ void IGESGeom_ToolSplineSurface::ReadOwnParams
     for (i = 1; i <= allNbUSegments; i++)  {
       for (j = 1; j <= allNbVSegments; j++)  {
 	st = PR.ReadReals (PR.CurrentList(16),Msg145_X,Temp);
-	//st = PR.ReadReals (PR.CurrentList(16),"X Coefficient Of Patch",Temp);
 	if (st && Temp->Length() == 16) allXCoeffs->SetValue(i,j,Temp);
 	else {
 	  Message_Msg Msg147_X("XSTEP_147");
@@ -129,7 +117,6 @@ void IGESGeom_ToolSplineSurface::ReadOwnParams
 	  PR.SendFail (Msg147_X);
 	}
 	st = PR.ReadReals (PR.CurrentList(16),Msg145_Y,Temp);
-	//st = PR.ReadReals (PR.CurrentList(16),"Y Coefficient Of Patch",Temp);
 	if (st && Temp->Length() == 16) allYCoeffs->SetValue(i, j, Temp);
 	else {
 	  Message_Msg Msg147_Y("XSTEP_147");
@@ -137,7 +124,6 @@ void IGESGeom_ToolSplineSurface::ReadOwnParams
 	  PR.SendFail (Msg147_Y);
 	}
 	st = PR.ReadReals (PR.CurrentList(16),Msg145_Z,Temp);
-	//st = PR.ReadReals (PR.CurrentList(16),"Z Coefficient Of Patch",Temp);
 	if (st && Temp->Length() == 16) allZCoeffs->SetValue(i, j, Temp);
 	else if (i < allNbUSegments || j < allNbVSegments) {
 	  Message_Msg Msg147_Z("XSTEP_147");
@@ -150,12 +136,11 @@ void IGESGeom_ToolSplineSurface::ReadOwnParams
 	  Temp = new TColStd_HArray1OfReal (1,16);  Temp->Init(0.);
 	  for (k = 1; k <= 16; k ++) {
 	    Standard_Real vl;
-	    if (!PR.ReadReal (PR.Current(),vl)) {
+	    if (!PR.ReadReal(vl)) {
 	      Message_Msg Msg146("XSTEP_146");
 	      PR.SendFail(Msg146);
 	      break;
 	    }
-	    //if (!PR.ReadReal (PR.Current(),"Z of very last patch",vl)) break;
 	    Temp->SetValue(k,vl);
 	  }
 	  allZCoeffs->SetValue(i, j, Temp);

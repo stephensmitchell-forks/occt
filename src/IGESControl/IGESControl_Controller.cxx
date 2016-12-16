@@ -35,7 +35,7 @@
 #include <IGESData_IGESWriter.hxx>
 #include <IGESData_Protocol.hxx>
 #include <IGESData_FileProtocol.hxx>
-#include <IGESFile_Read.hxx>
+#include <IGESFile_Reader.hxx>
 #include <IGESSolid.hxx>
 #include <IGESSolid_Protocol.hxx>
 #include <IGESToBRep.hxx>
@@ -142,11 +142,13 @@ Standard_Integer IGESControl_Controller::ReadFile (const Standard_CString theFil
 {
   DeclareAndCast(IGESData_Protocol,prot,myAdaptorProtocol);
 
-  Handle(IGESData_IGESModel) igesmod = new IGESData_IGESModel;
-  char* pname=(char*) theFileName;
-  Standard_Integer status = IGESFile_Read (pname,igesmod,prot);
+  IGESFile_Reader aReader(prot);
 
-  Handle(Message_Messenger) sout = Message::DefaultMessenger();
+  const Standard_Integer status = aReader.Read(theFileName);
+
+  const Handle(IGESData_IGESModel) &igesmod = aReader.Model();
+
+  const Handle(Message_Messenger) &sout = Message::DefaultMessenger();
   if (status < 0) sout<<"File not found : "<<theFileName<<endl;
   if (status > 0) sout<<"Error when reading file : "<<theFileName<<endl;
   if (status == 0) theModel = igesmod;
@@ -163,13 +165,12 @@ Standard_Boolean IGESControl_Controller::WriteFile (const Standard_CString theFi
 {
 //  Preparation
   DeclareAndCast(IGESData_IGESModel,igesmod,theModel);
-  DeclareAndCast(IGESData_Protocol,prot,myAdaptorProtocol);
-  if (igesmod.IsNull() || prot.IsNull()) return Standard_False;
+  if (igesmod.IsNull()) return Standard_False;
 
   ofstream fout;
   OSD_OpenStream(fout,theFileName,ios::out );
 
-  Handle(Message_Messenger) sout = Message::DefaultMessenger();
+  const Handle(Message_Messenger) &sout = Message::DefaultMessenger();
   if (!fout) {
     theChecks.CCheck(0)->AddFail("IGES File could not be created");
     sout<<" - IGES File could not be created : " << theFileName << endl;
@@ -187,7 +188,7 @@ Standard_Boolean IGESControl_Controller::WriteFile (const Standard_CString theFi
   sout << " (all model)";
 
 //  Envoi
-  VW.SendModel(prot);            
+  VW.SendModel();
   sout<<" Write ";
   if (themodefnes) VW.WriteMode() = 10;
   Standard_Boolean status = VW.Print(fout);
@@ -209,14 +210,13 @@ Standard_Boolean IGESControl_Controller::WriteFile (const Standard_CString theFi
 
 void IGESControl_Controller::DumpEntity
   (const Handle(Interface_InterfaceModel)& model, 
-   const Handle(Interface_Protocol)& protocol,
+   const Handle(Interface_Protocol)& ,
    const Handle(Standard_Transient)& entity,
    const Handle(Message_Messenger)& S, const Standard_Integer level) const
 {
   DeclareAndCast(IGESData_IGESModel,igesmod,model);
-  DeclareAndCast(IGESData_Protocol,igespro,protocol);
   DeclareAndCast(IGESData_IGESEntity,igesent,entity);
-  if (igesmod.IsNull() || igespro.IsNull() || igesent.IsNull()) return;
+  if (igesmod.IsNull() || igesent.IsNull()) return;
   Standard_Integer num = igesmod->Number(igesent);
   if (num == 0) return;
 
@@ -241,7 +241,7 @@ void IGESControl_Controller::DumpEntity
   }
   else S << " Type cdl : " << igesent->DynamicType()->Name();
 
-  IGESData_IGESDumper dump(igesmod,igespro);
+  IGESData_IGESDumper dump(igesmod);
   try {
     OCC_CATCH_SIGNALS
     dump.Dump(igesent,S,level,(level-1)/3);

@@ -17,10 +17,10 @@
 #ifndef IGESAppli_Array1OfNode_HeaderFile
 #define IGESAppli_Array1OfNode_HeaderFile
 
+#include <Interface_Pointer.hxx>
 #include <IGESAppli_Node.hxx>
 #include <NCollection_Array1.hxx>
 
-typedef NCollection_Array1<Handle(IGESAppli_Node)> IGESAppli_Array1OfNode;
-
+typedef NCollection_Array1<Interface_Pointer<IGESAppli_Node>> IGESAppli_Array1OfNode;
 
 #endif

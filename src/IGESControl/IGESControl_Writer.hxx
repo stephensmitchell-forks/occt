@@ -23,7 +23,6 @@
 
 #include <Standard_OStream.hxx>
 #include <Interface_GeneralLib.hxx>
-#include <IGESData_SpecificLib.hxx>
 class TopoDS_Shape;
 class Transfer_FinderProcess;
 class IGESData_IGESModel;
@@ -140,7 +139,6 @@ public:
   Standard_Integer myWriteMode;
   Standard_Boolean myIsComputed;
   Interface_GeneralLib myGLib;
-  IGESData_SpecificLib mySLib;
 };
 
 #endif // _IGESControl_Writer_HeaderFile

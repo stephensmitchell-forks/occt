@@ -44,13 +44,12 @@ void IGESDimen_ToolOrdinateDimension::ReadOwnParams
   Handle(IGESDimen_LeaderArrow) leadArr;
   Standard_Boolean isLine=Standard_False;
 
-  PR.ReadEntity(IR,PR.Current(),"General Note",
-		STANDARD_TYPE(IGESDimen_GeneralNote),tempNote);
+  PR.ReadEntity(IR,"General Note",STANDARD_TYPE(IGESDimen_GeneralNote),tempNote);
 
   if (theEnt->FormNumber() == 0)
     {
       Handle(IGESData_IGESEntity) ent;
-      if (!PR.ReadEntity(IR,PR.Current(),"Line or Leader", ent)) { }    // WARNING : Two possible Types allowed :
+      if (!PR.ReadEntity(IR,"Line or Leader", ent)) { }    // WARNING : Two possible Types allowed :
       else if (ent->IsKind(STANDARD_TYPE(IGESDimen_WitnessLine)))
 	{
 	  witLine = GetCasted(IGESDimen_WitnessLine,ent);
@@ -65,10 +64,8 @@ void IGESDimen_ToolOrdinateDimension::ReadOwnParams
     }
   else
     {
-      PR.ReadEntity(IR, PR.Current(), "Line",
-		    STANDARD_TYPE(IGESDimen_WitnessLine), witLine);
-      PR.ReadEntity(IR, PR.Current(), "Leader",
-		    STANDARD_TYPE(IGESDimen_LeaderArrow), leadArr);
+      PR.ReadEntity(IR, "Line", STANDARD_TYPE(IGESDimen_WitnessLine), witLine);
+      PR.ReadEntity(IR, "Leader", STANDARD_TYPE(IGESDimen_LeaderArrow), leadArr);
     }
 
   DirChecker(theEnt).CheckTypeAndForm(PR.CCheck(), theEnt);

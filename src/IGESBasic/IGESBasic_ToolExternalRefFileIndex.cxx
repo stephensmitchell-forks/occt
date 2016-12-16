@@ -45,7 +45,7 @@ void  IGESBasic_ToolExternalRefFileIndex::ReadOwnParams
   Standard_Integer num, i;
   Handle(Interface_HArray1OfHAsciiString) tempNames;
   Handle(IGESData_HArray1OfIGESEntity) tempEntities;
-  Standard_Boolean st = PR.ReadInteger(PR.Current(), "Number of index entries", num);
+  Standard_Boolean st = PR.ReadInteger(num,"Number of index entries");
   if (st && num > 0)
     {
       tempNames = new Interface_HArray1OfHAsciiString(1, num);
@@ -56,10 +56,10 @@ void  IGESBasic_ToolExternalRefFileIndex::ReadOwnParams
     for ( i = 1; i <= num; i++ )
       {
 	Handle(TCollection_HAsciiString) tempNam;
-	if (PR.ReadText(PR.Current(), "External Reference Entity", tempNam)) //szv#4:S4163:12Mar99 `st=` not needed
+	if (PR.ReadText("External Reference Entity", tempNam))
 	  tempNames->SetValue(i, tempNam);
 	Handle(IGESData_IGESEntity) tempEnt;
-	if (PR.ReadEntity(IR, PR.Current(), "Internal Entity", tempEnt)) //szv#4:S4163:12Mar99 `st=` not needed
+	if (PR.ReadEntity(IR, "Internal Entity", tempEnt))
 	  tempEntities->SetValue(i, tempEnt);
       }
   DirChecker(ent).CheckTypeAndForm(PR.CCheck(),ent);

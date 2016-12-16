@@ -42,23 +42,15 @@ void IGESGeom_ToolPoint::ReadOwnParams
   (const Handle(IGESGeom_Point)& ent,
    const Handle(IGESData_IGESReaderData)& IR, IGESData_ParamReader& PR) const
 {
-  // MGE 28/07/98
-  // Building of messages
-  //==================================
-  Message_Msg Msg73("XSTEP_73");
-  //==================================
-
   gp_XYZ aPoint;
   Handle(IGESBasic_SubfigureDef) aSymbol;
   IGESData_Status aStatus;
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
 
-  PR.ReadXYZ(PR.CurrentList(1, 3), Msg73, aPoint); //szv#4:S4163:12Mar99 `st=` not needed
-  //st = PR.ReadXYZ(PR.CurrentList(1, 3), "Point", aPoint);
+  PR.ReadXYZ(aPoint);
 
   if (PR.DefinedElseSkip()){
-    if (!PR.ReadEntity(IR, PR.Current(), aStatus,
-		  STANDARD_TYPE(IGESBasic_SubfigureDef), aSymbol, Standard_True)){
+    if (!PR.ReadEntity(IR, aStatus,
+		  STANDARD_TYPE(IGESBasic_SubfigureDef), aSymbol, Standard_True)) {
       Message_Msg Msg74("XSTEP_74");
       switch(aStatus) {
       case IGESData_ReferenceError: {  
@@ -80,10 +72,7 @@ void IGESGeom_ToolPoint::ReadOwnParams
       }
       }
     }
- //szv#4:S4163:12Mar99 `st=` not needed
   }
-   // st = PR.ReadEntity(IR, PR.Current(), "Display Symbol",
-//		       STANDARD_TYPE(IGESBasic_SubfigureDef), aSymbol, Standard_True);
 
   DirChecker(ent).CheckTypeAndForm(PR.CCheck(),ent);
   ent->Init(aPoint, aSymbol);

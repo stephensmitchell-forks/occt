@@ -17,17 +17,9 @@
 #ifndef _IGESGraph_LineFontDefTemplate_HeaderFile
 #define _IGESGraph_LineFontDefTemplate_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
-#include <Standard_Integer.hxx>
-#include <Standard_Real.hxx>
 #include <IGESData_LineFontEntity.hxx>
 class IGESBasic_SubfigureDef;
 
-
-class IGESGraph_LineFontDefTemplate;
-DEFINE_STANDARD_HANDLE(IGESGraph_LineFontDefTemplate, IGESData_LineFontEntity)
 
 //! defines IGESLineFontDefTemplate, Type <304> Form <1>
 //! in package IGESGraph
@@ -38,21 +30,17 @@ DEFINE_STANDARD_HANDLE(IGESGraph_LineFontDefTemplate, IGESData_LineFontEntity)
 //! no visual purpose.
 class IGESGraph_LineFontDefTemplate : public IGESData_LineFontEntity
 {
+ public:
 
-public:
+  Standard_EXPORT virtual Standard_Integer TypeNumber() const Standard_OVERRIDE { return 304; }
 
-  
-  Standard_EXPORT IGESGraph_LineFontDefTemplate();
-  
-  //! This method is used to set the fields of the class
-  //! LineFontDefTemplate
-  //! - anOrientation : Orientation of Template figure on
-  //! anchoring curve
-  //! - aTemplate     : SubfigureDef entity used as Template figure
-  //! - aDistance     : Distance between the neighbouring Template
-  //! figures
-  //! - aScale        : Scale factor applied to the Template figure
-  Standard_EXPORT void Init (const Standard_Integer anOrientation, const Handle(IGESBasic_SubfigureDef)& aTemplate, const Standard_Real aDistance, const Standard_Real aScale);
+  Standard_EXPORT virtual Standard_Integer FormNumber() const Standard_OVERRIDE { return 1; }
+
+  IGESGraph_LineFontDefTemplate()
+  : myOrientation(0),
+    myDistance(0.),
+    myScale(1.)
+  {}
   
   //! if return value = 0, Each Template display is oriented by aligning
   //! the axis of the SubfigureDef with the axis of
@@ -63,44 +51,39 @@ public:
   //! incidence of the curve and the origin of
   //! subfigure.
   //! Similarly Z-axis is aligned.
-  Standard_EXPORT Standard_Integer Orientation() const;
-  
+  Standard_Integer Orientation() const { return myOrientation; }
+
   //! returns SubfigureDef as the Entity used as Template figure.
-  Standard_EXPORT Handle(IGESBasic_SubfigureDef) TemplateEntity() const;
-  
+  const Handle(IGESBasic_SubfigureDef) & TemplateEntity() const { return myTemplateEntity; }
+
   //! returns the Distance between any two Template figures on the
   //! anchoring curve.
-  Standard_EXPORT Standard_Real Distance() const;
-  
+  Standard_Real Distance() const { return myDistance; }
+
   //! returns the Scaling factor applied to SubfigureDef to form
   //! Template figure.
-  Standard_EXPORT Standard_Real Scale() const;
+  Standard_Real Scale() const { return myScale; }
 
+  Standard_EXPORT virtual void OwnRead (IGESFile_Reader &) Standard_OVERRIDE;
+  
+  Standard_EXPORT virtual void OwnWrite (IGESData_IGESWriter &) const Standard_OVERRIDE;
 
+  Standard_EXPORT virtual void OwnShared (Interface_EntityIterator &) const Standard_OVERRIDE;
 
+  Standard_EXPORT virtual IGESData_DirChecker DirChecker () const Standard_OVERRIDE;
+
+  Standard_EXPORT virtual void OwnCheck (const Interface_ShareTool &, Handle(Interface_Check) &) const Standard_OVERRIDE;
+
+  Standard_EXPORT virtual void OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &, const Standard_Integer) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESGraph_LineFontDefTemplate,IGESData_LineFontEntity)
 
-protected:
+ private:
 
-
-
-
-private:
-
-
-  Standard_Integer theOrientation;
-  Handle(IGESBasic_SubfigureDef) theTemplateEntity;
-  Standard_Real theDistance;
-  Standard_Real theScale;
-
-
+  Standard_Integer myOrientation;
+  Interface_Pointer<IGESBasic_SubfigureDef> myTemplateEntity;
+  Standard_Real myDistance;
+  Standard_Real myScale;
 };
-
-
-
-
-
-
 
 #endif // _IGESGraph_LineFontDefTemplate_HeaderFile

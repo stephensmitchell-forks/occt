@@ -56,39 +56,36 @@ void  IGESDimen_ToolDimensionDisplayData::ReadOwnParams
   Handle(TColStd_HArray1OfInteger) tempStartInd;
   Handle(TColStd_HArray1OfInteger) tempEndInd;
 
-  //szv#4:S4163:12Mar99 `st=` not needed
-  PR.ReadInteger(PR.Current(),"Number of Properties",tempNbProps);
-  PR.ReadInteger(PR.Current(),"Dimension Type", tempDimType);
-  PR.ReadInteger(PR.Current(),"Label Position", tempLabelPos);
+  PR.ReadInteger(tempNbProps,"Number of Properties");
+  PR.ReadInteger(tempDimType,"Dimension Type");
+  PR.ReadInteger(tempLabelPos,"Label Position");
   if (PR.DefinedElseSkip())
-    PR.ReadInteger(PR.Current(),"Character Set", tempCharSet); //szv#4:S4163:12Mar99 `st=` not needed
+    PR.ReadInteger(tempCharSet,"Character Set");
   else
     tempCharSet = 1;
 
-  //szv#4:S4163:12Mar99 `st=` not needed
-  PR.ReadText(PR.Current(),"L String", tempLString);
-  PR.ReadInteger(PR.Current(),"Decimal Symbol",tempDeciSymb);
+  PR.ReadText("L String", tempLString);
+  PR.ReadInteger(tempDeciSymb,"Decimal Symbol");
   if (PR.DefinedElseSkip())
-    PR.ReadReal(PR.Current(),"Witness Line Angle",tempWitLineAng); //szv#4:S4163:12Mar99 `st=` not needed
+    PR.ReadReal(tempWitLineAng,"Witness Line Angle");
   else
     tempWitLineAng = M_PI / 2;
 
-  PR.ReadInteger(PR.Current(),"Text Alignment",tempTextAlign); //szv#4:S4163:12Mar99 `st=` not needed
+  PR.ReadInteger(tempTextAlign,"Text Alignment");
   if (PR.DefinedElseSkip())
-    PR.ReadInteger(PR.Current(),"Text Level",tempTextLevel); //szv#4:S4163:12Mar99 `st=` not needed
+    PR.ReadInteger(tempTextLevel,"Text Level");
   else
     tempTextLevel = 0;
 
   if (PR.DefinedElseSkip())
-    PR.ReadInteger(PR.Current(),"Text Place",tempTextPlace); //szv#4:S4163:12Mar99 `st=` not needed
+    PR.ReadInteger(tempTextPlace,"Text Place");
   else
     tempTextPlace = 0;
 
-  //szv#4:S4163:12Mar99 `st=` not needed
-  PR.ReadInteger(PR.Current(),"ArrowHeadOrientation",tempArrHeadOrient);
-  PR.ReadReal(PR.Current(),"Initial Value",tempInitVal);
+  PR.ReadInteger(tempArrHeadOrient,"ArrowHeadOrientation");
+  PR.ReadReal(tempInitVal,"Initial Value");
   Standard_Integer tempnbval;
-  Standard_Boolean st = PR.ReadInteger( PR.Current(), "No. of supplementary notes", tempnbval);
+  Standard_Boolean st = PR.ReadInteger(tempnbval,"No. of supplementary notes");
   if (st && tempnbval > 0)
     {
       tempSuppleNotes = new TColStd_HArray1OfInteger(1,tempnbval);
@@ -97,14 +94,11 @@ void  IGESDimen_ToolDimensionDisplayData::ReadOwnParams
       for (Standard_Integer i = 1; i <= tempnbval; i++)
 	{
           Standard_Integer anote,astart,anend;
-          //st = PR.ReadInteger(PR.Current(), "Supplementary Notes", anote); //szv#4:S4163:12Mar99 moved in if
-	  if (PR.ReadInteger(PR.Current(), "Supplementary Notes", anote))
+	  if (PR.ReadInteger(anote,"Supplementary Notes"))
 	    tempSuppleNotes->SetValue(i,anote);
-          //st = PR.ReadInteger(PR.Current(),"Start Index", astart); //szv#4:S4163:12Mar99 moved in if
-	  if (PR.ReadInteger(PR.Current(),"Start Index", astart))
+	  if (PR.ReadInteger(astart,"Start Index"))
 	    tempStartInd->SetValue(i,astart);
-          //st = PR.ReadInteger(PR.Current(),"End Index",anend); //szv#4:S4163:12Mar99 moved in if
-	  if (PR.ReadInteger(PR.Current(),"End Index",anend))
+	  if (PR.ReadInteger(anend,"End Index"))
 	    tempEndInd->SetValue(i,anend);
 	}
     }

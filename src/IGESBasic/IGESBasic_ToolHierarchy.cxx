@@ -42,16 +42,14 @@ void  IGESBasic_ToolHierarchy::ReadOwnParams
   Standard_Integer tempBlankStatus;
   Standard_Integer tempLineWeight;
   Standard_Integer tempColorNum;
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
 
-  //szv#4:S4163:12Mar99 `st=` not needed
-  PR.ReadInteger(PR.Current(),"No. of Property values",tempNbPropertyValues);
-  PR.ReadInteger(PR.Current(),"LineFont",tempLineFont);
-  PR.ReadInteger(PR.Current(),"View",tempView);
-  PR.ReadInteger(PR.Current(),"Entity level",tempEntityLevel);
-  PR.ReadInteger(PR.Current(),"Blank status",tempBlankStatus);
-  PR.ReadInteger(PR.Current(),"Line weight",tempLineWeight);
-  PR.ReadInteger(PR.Current(),"Color number",tempColorNum);
+  PR.ReadInteger(tempNbPropertyValues,"No. of Property values");
+  PR.ReadInteger(tempLineFont,"LineFont");
+  PR.ReadInteger(tempView,"View");
+  PR.ReadInteger(tempEntityLevel,"Entity level");
+  PR.ReadInteger(tempBlankStatus,"Blank status");
+  PR.ReadInteger(tempLineWeight,"Line weight");
+  PR.ReadInteger(tempColorNum,"Color number");
 
   DirChecker(ent).CheckTypeAndForm(PR.CCheck(),ent);
   ent->Init(tempNbPropertyValues,tempLineFont,tempView,tempEntityLevel,

@@ -41,15 +41,15 @@ class StepData_StepReaderTool : public Interface_FileReaderTool
   //! creates StepReaderTool to work with a StepReaderData according
   //! to a Step Protocol. Defines the ReaderLib at this time
   Standard_EXPORT StepData_StepReaderTool(const Handle(StepData_StepReaderData)& reader, const Handle(StepData_Protocol)& protocol);
+
+ private:
   
   //! Bounds empty entities and sub-lists to header records
   //! Bounds empty entities to records
   //! works like Prepare + SetEntityNumbers, but for header
   //! (N.B.: in Header, no Ident and no reference)
   //! Then works only on data entities
-  Standard_EXPORT void Prepare ();
-
- private:
+  Standard_EXPORT virtual void Prepare () Standard_OVERRIDE;
   
   //! recognizes records, by asking ReaderLib.
   Standard_EXPORT virtual Standard_Boolean Recognize (const Standard_Integer num, Handle(Standard_Transient)& ent) Standard_OVERRIDE;

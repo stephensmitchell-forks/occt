@@ -48,14 +48,10 @@ IGESDimen_Protocol.cxx
 IGESDimen_Protocol.hxx
 IGESDimen_RadiusDimension.cxx
 IGESDimen_RadiusDimension.hxx
-IGESDimen_ReadWriteModule.cxx
-IGESDimen_ReadWriteModule.hxx
 IGESDimen_Section.cxx
 IGESDimen_Section.hxx
 IGESDimen_SectionedArea.cxx
 IGESDimen_SectionedArea.hxx
-IGESDimen_SpecificModule.cxx
-IGESDimen_SpecificModule.hxx
 IGESDimen_ToolAngularDimension.cxx
 IGESDimen_ToolAngularDimension.hxx
 IGESDimen_ToolBasicDimension.cxx

@@ -49,12 +49,6 @@ void IGESGeom_ToolOffsetCurve::ReadOwnParams(const Handle(IGESGeom_OffsetCurve)&
                                              const Handle(IGESData_IGESReaderData)& IR,
                                              IGESData_ParamReader& PR) const
 {
-  // MGE 30/07/98
-  // Building of messages
-  //========================================
-  Message_Msg Msg121("XSTEP_121");
-  //========================================
-
   Standard_Integer anOffsetType, aFunctionCoord, aTaperedOffsetType; 
   Standard_Real offDistance1, offDistance2;
   Standard_Real arcLength1, arcLength2, anOffsetParam, anotherOffsetParam;
@@ -62,10 +56,9 @@ void IGESGeom_ToolOffsetCurve::ReadOwnParams(const Handle(IGESGeom_OffsetCurve)&
   Handle(IGESData_IGESEntity) aBaseCurve;
   Handle(IGESData_IGESEntity) aFunction;
   IGESData_Status aStatus;
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
 
   // Reading the curve entity to be offset
-  if (!PR.ReadEntity(IR, PR.Current(), aStatus, aBaseCurve)){
+  if (!PR.ReadEntity(IR, aStatus, aBaseCurve)) {
     Message_Msg Msg110("XSTEP_110");
     switch(aStatus) {
     case IGESData_ReferenceError: {  
@@ -81,18 +74,16 @@ void IGESGeom_ToolOffsetCurve::ReadOwnParams(const Handle(IGESGeom_OffsetCurve)&
     default:{
     }
     }
-  } //szv#4:S4163:12Mar99 `st=` not needed
-  //st = PR.ReadEntity(IR, PR.Current(), "Curve to be offset", aBaseCurve);
+  }
 
   // Reading the offset distance flag
-  if (!PR.ReadInteger(PR.Current(), anOffsetType)){ //szv#4:S4163:12Mar99 `st=` not needed
+  if (!PR.ReadInteger(anOffsetType)) {
     Message_Msg Msg111("XSTEP_111");
     PR.SendFail(Msg111);
   }
-  //st = PR.ReadInteger(PR.Current(), "Offset Distance Flag", anOffsetType);
 
   // Reading the curve entity describing the offset as a function, can be Null
-  if (!PR.ReadEntity(IR, PR.Current(), aStatus, aFunction, Standard_True)){
+  if (!PR.ReadEntity(IR, aStatus, aFunction, Standard_True)) {
     Message_Msg Msg112("XSTEP_112");
     switch(aStatus) {
     case IGESData_ReferenceError: {  
@@ -108,74 +99,61 @@ void IGESGeom_ToolOffsetCurve::ReadOwnParams(const Handle(IGESGeom_OffsetCurve)&
     default:{
     }
     }
-  } //szv#4:S4163:12Mar99 `st=` not needed
-/*
-  st = PR.ReadEntity(IR, PR.Current(), "Curve whose coordinate describes the offset", aFunction, Standard_True);
-*/
+  }
 
   // Reading the coordinate describing the offset as a function
-  if (!PR.ReadInteger(PR.Current(), aFunctionCoord)){ //szv#4:S4163:12Mar99 `st=` not needed
+  if (!PR.ReadInteger(aFunctionCoord)) {
     Message_Msg Msg113("XSTEP_113");
     PR.SendFail(Msg113);
   }
-  //st = PR.ReadInteger(PR.Current(), "Coordinate of the curve", aFunctionCoord);
 
   // Reading the tapered offset type flag
-  if (!PR.ReadInteger(PR.Current(), aTaperedOffsetType)){ //szv#4:S4163:12Mar99 `st=` not needed
+  if (!PR.ReadInteger(aTaperedOffsetType)) {
     Message_Msg Msg114("XSTEP_114");
     PR.SendFail(Msg114);
   }
-  //st = PR.ReadInteger(PR.Current(), "Tapered offset type flag", aTaperedOffsetType);
 
   // Reading the first offset distance
-  if (!PR.ReadReal(PR.Current(), offDistance1)){
+  if (!PR.ReadReal(offDistance1)){
     Message_Msg Msg115("XSTEP_115");
     PR.SendFail(Msg115);
-  } //szv#4:S4163:12Mar99 `st=` not needed
-  //st = PR.ReadReal(PR.Current(), "First Offset distance", offDistance1);
+  }
 
   // Reading the arc length or parameter value of the first offset distance
-  if (!PR.ReadReal(PR.Current(), arcLength1)){
+  if (!PR.ReadReal(arcLength1)){
     Message_Msg Msg116("XSTEP_116");
     PR.SendFail(Msg116);
-  } //szv#4:S4163:12Mar99 `st=` not needed
-  //st = PR.ReadReal(PR.Current(), "Arc length of first offset distance", arcLength1);
+  }
 
   // Reading the second offset distance
-  if (!PR.ReadReal(PR.Current(),offDistance2)){
+  if (!PR.ReadReal(offDistance2)){
     Message_Msg Msg117("XSTEP_117");
     PR.SendFail(Msg117);
-  } //szv#4:S4163:12Mar99 `st=` not needed
-  //st = PR.ReadReal(PR.Current(), "Second Offset distance", offDistance2);
+  }
 
   // Reading the arc length or parameter value of the second offset distance
-  if (!PR.ReadReal(PR.Current(), arcLength2)){
+  if (!PR.ReadReal(arcLength2)){
     Message_Msg Msg118("XSTEP_118");
     PR.SendFail(Msg118);
-  } //szv#4:S4163:12Mar99 `st=` not needed
-  //st = PR.ReadReal(PR.Current(), "Arc length of Second offset distance", arcLength2);
+  }
 
   // Reading the Unit vector normal to plane
-  PR.ReadXYZ (PR.CurrentList(1, 3), Msg121, aNormalVec); //szv#4:S4163:12Mar99 `st=` not needed
-  //st = PR.ReadXYZ (PR.CurrentList(1, 3), "Unit vector normal to plane", aNormalVec);
+  PR.ReadXYZ(aNormalVec);
 
   // Reading the offset curve starting parameter value
-  if (!PR.ReadReal(PR.Current(), anOffsetParam)){
+  if (!PR.ReadReal(anOffsetParam)){
     Message_Msg Msg119("XSTEP_119");
     PR.SendFail(Msg119);
-  } //szv#4:S4163:12Mar99 `st=` not needed
-  //st = PR.ReadReal(PR.Current(), "Starting parameter value of Offset curve", anOffsetParam);
+  }
 
   // Reading the offset curve ending parameter value
-  if (!PR.ReadReal(PR.Current(), anotherOffsetParam)){
+  if (!PR.ReadReal(anotherOffsetParam)){
     Message_Msg Msg120("XSTEP_120");
     PR.SendFail(Msg120);
-  } //szv#4:S4163:12Mar99 `st=` not needed
-  //st = PR.ReadReal(PR.Current(), "Ending parameter value of Offset curve", anotherOffsetParam);
+  }
 
   // Reading the Unit vector normal to plane
-  PR.ReadXYZ (PR.CurrentList(1, 3), Msg121, aNormalVec); //szv#4:S4163:12Mar99 `st=` not needed
-  //st = PR.ReadXYZ (PR.CurrentList(1, 3), "Unit vector normal to plane", aNormalVec);
+  PR.ReadXYZ(aNormalVec);
 
   DirChecker(ent).CheckTypeAndForm(PR.CCheck(),ent);
   ent->Init

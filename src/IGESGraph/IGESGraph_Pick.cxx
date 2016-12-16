@@ -17,32 +17,52 @@
 //--------------------------------------------------------------------
 
 #include <IGESGraph_Pick.hxx>
-#include <Standard_Type.hxx>
+#include <IGESFile_Reader.hxx>
+#include <IGESData_IGESWriter.hxx>
+#include <IGESData_DirChecker.hxx>
+#include <Message_Messenger.hxx>
+#include <IGESData_IGESDumper.hxx>
+#include <IGESData_Dump.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESGraph_Pick,IGESData_IGESEntity)
 
-IGESGraph_Pick::IGESGraph_Pick ()    {  }
+void IGESGraph_Pick::OwnRead (IGESFile_Reader &PR)
+{ 
+  Standard_Integer aNbPropertyValues = 0;
+  PR.ReadInteger(aNbPropertyValues,"No. of property values");
+  if (aNbPropertyValues != 1)
+    PR.AddFail("No. of Property values : Value is not 1");
 
-
-    void IGESGraph_Pick::Init
-  (const Standard_Integer nbProps, const Standard_Integer aPickStatus)
-{
-  theNbPropertyValues = nbProps;
-  thePick             = aPickStatus;
-  InitTypeAndForm(406,21);
+  myPick = 0;
+  PR.ReadInteger(myPick,"Pick Flag");
+  if ( (myPick != 0) && (myPick != 1) )
+    PR.AddFail("Pick Flag : Value != 0/1");
 }
 
-    Standard_Integer IGESGraph_Pick::NbPropertyValues () const
-{
-  return theNbPropertyValues;
+void IGESGraph_Pick::OwnWrite (IGESData_IGESWriter &IW) const
+{ 
+  IW.Send(1);
+  IW.Send(myPick);
 }
 
-    Standard_Integer IGESGraph_Pick::PickFlag () const
-{
-  return thePick;
+IGESData_DirChecker IGESGraph_Pick::DirChecker () const
+{ 
+  IGESData_DirChecker DC (406, 21);
+  DC.Structure(IGESData_DefVoid);
+  DC.LineFont(IGESData_DefVoid);
+  DC.LineWeight(IGESData_DefVoid);
+  DC.Color(IGESData_DefVoid);
+  DC.BlankStatusIgnored();
+  DC.UseFlagIgnored();
+  DC.HierarchyStatusIgnored();
+  return DC;
 }
 
-    Standard_Boolean IGESGraph_Pick::IsPickable () const
+void IGESGraph_Pick::OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &S, const Standard_Integer) const
 {
-  return (thePick == 0);
+  S << "IGESGraph_Pick" << endl;
+  S << "No. of property values : 1" << endl;
+  S << "Pick flag : " << myPick;
+  S << (myPick == 0 ? " NO" : " YES" );
+  S << endl;
 }

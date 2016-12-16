@@ -41,10 +41,6 @@ void IGESGeom_ToolSplineCurve::ReadOwnParams
   (const Handle(IGESGeom_SplineCurve)& ent,
    const Handle(IGESData_IGESReaderData)& /* IR */, IGESData_ParamReader& PR) const
 {
-  // MGE 29/07/98
-  // Building of messages
-
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
   Standard_Integer nbSegments;
   Standard_Integer aType, aDegree, nbDimensions;;
   Handle(TColStd_HArray1OfReal) allBreakPoints;
@@ -55,28 +51,20 @@ void IGESGeom_ToolSplineCurve::ReadOwnParams
   Handle(TColStd_HArray1OfReal) allYvalues = new TColStd_HArray1OfReal(1, 4);
   Handle(TColStd_HArray1OfReal) allZvalues = new TColStd_HArray1OfReal(1, 4);
 
-  //szv#4:S4163:12Mar99 `st=` not needed
-  if (!PR.ReadInteger(PR.Current(), aType)){
+  if (!PR.ReadInteger(aType)){
     Message_Msg Msg91("XSTEP_91");
     PR.SendFail(Msg91);
   }
-  if (!PR.ReadInteger(PR.Current(), aDegree)){
+  if (!PR.ReadInteger(aDegree)){
     Message_Msg Msg92("XSTEP_92");
     PR.SendFail(Msg92);
   }
-  if (!PR.ReadInteger(PR.Current(), nbDimensions)){
+  if (!PR.ReadInteger(nbDimensions)){
     Message_Msg Msg93("XSTEP_93");
     PR.SendFail(Msg93);
   }
-  //st = PR.ReadInteger(PR.Current(), Msg94, nbSegments); //szv#4:S4163:12Mar99 moved in if
 
-/*
-  st = PR.ReadInteger(PR.Current(), "Spline Type", aType);
-  st = PR.ReadInteger(PR.Current(), "Degree Continuity", aDegree);
-  st = PR.ReadInteger(PR.Current(), "Number Of Dimensions", nbDimensions);
-  st = PR.ReadInteger(PR.Current(), "Number Of Segments", nbSegments);
-*/ 
-  if (PR.ReadInteger(PR.Current(), nbSegments)) {
+  if (PR.ReadInteger(nbSegments)) {
     if (nbSegments <= 0){
       Message_Msg Msg94("XSTEP_94");
       PR.SendFail(Msg94);
@@ -89,10 +77,6 @@ void IGESGeom_ToolSplineCurve::ReadOwnParams
     }
     Message_Msg Msg95("XSTEP_95");
     PR.ReadReals(PR.CurrentList(nbSegments + 1), Msg95, allBreakPoints); //szv#4:S4163:12Mar99 `st=` not needed
-/*
-    st = PR.ReadReals(PR.CurrentList(nbSegments + 1), "Break Points",
-		      allBreakPoints);
-*/
   }
   else{
     Message_Msg Msg94("XSTEP_94");
@@ -106,21 +90,18 @@ void IGESGeom_ToolSplineCurve::ReadOwnParams
     Standard_Integer I;
     for (I = 1; I <= nbSegments; I++)
       {
-	//st = PR.ReadReals(PR.CurrentList(4),"X-Coordinate Polynomial",temp); //szv#4:S4163:12Mar99 moved in if
 	if (PR.ReadReals(PR.CurrentList(4),"X-Coordinate Polynomial",temp)) {
 	  Standard_Integer J;
 	  for (J = 1; J <= 4; J++)
 	    allXPolynomials->SetValue(I, J, temp->Value(J));
 	}
 
-	//st = PR.ReadReals(PR.CurrentList(4),"Y-Coordinate Polynomial",temp); //szv#4:S4163:12Mar99 moved in if
 	if (PR.ReadReals(PR.CurrentList(4),"Y-Coordinate Polynomial",temp)) {
 	  Standard_Integer J;
 	  for (J = 1; J <= 4; J++)
 	    allYPolynomials->SetValue(I, J, temp->Value(J));
 	}
 
-	//st = PR.ReadReals(PR.CurrentList(4),"Z-Coordinate Polynomial",temp); //szv#4:S4163:12Mar99 moved in if
 	if (PR.ReadReals(PR.CurrentList(4),"Z-Coordinate Polynomial",temp)) {
 	  Standard_Integer J;
 	  for (J = 1; J <= 4; J++)
@@ -129,21 +110,18 @@ void IGESGeom_ToolSplineCurve::ReadOwnParams
       }
   }
 
-  //st = PR.ReadReals(PR.CurrentList(4), "TerminatePoint X-Values", temp); //szv#4:S4163:12Mar99 moved in if
   if (PR.ReadReals(PR.CurrentList(4), "TerminatePoint X-Values", temp)) {
     Standard_Integer J;
     for (J = 1; J <= 4; J++)
       allXvalues->SetValue(J, temp->Value(J));
   }
 
-  //st = PR.ReadReals(PR.CurrentList(4), "TerminatePoint Y-Values", temp); //szv#4:S4163:12Mar99 moved in if
   if (PR.ReadReals(PR.CurrentList(4), "TerminatePoint Y-Values", temp)) {
     Standard_Integer J;
     for (J = 1; J <= 4; J++)
       allYvalues->SetValue(J, temp->Value(J));
   }
 
-  //st = PR.ReadReals(PR.CurrentList(4), "TerminatePoint Z-Values", temp); //szv#4:S4163:12Mar99 moved in if
   if (PR.ReadReals(PR.CurrentList(4), "TerminatePoint Z-Values", temp)) {
     Standard_Integer J;
     for (J = 1; J <= 4; J++)

@@ -19,34 +19,67 @@
 #include <IGESGraph_DefinitionLevel.hxx>
 #include <Standard_DimensionMismatch.hxx>
 #include <Standard_OutOfRange.hxx>
-#include <Standard_Type.hxx>
+#include <IGESFile_Reader.hxx>
+#include <IGESData_IGESWriter.hxx>
+#include <IGESData_DirChecker.hxx>
+#include <Message_Messenger.hxx>
+#include <IGESData_IGESDumper.hxx>
+#include <IGESData_Dump.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESGraph_DefinitionLevel,IGESData_LevelListEntity)
 
-IGESGraph_DefinitionLevel::IGESGraph_DefinitionLevel ()    {  }
-
-
-    void IGESGraph_DefinitionLevel::Init
-  (const Handle(TColStd_HArray1OfInteger)& allLevelNumbers)
+Standard_Integer IGESGraph_DefinitionLevel::NbPropertyValues () const
 {
-  if (allLevelNumbers->Lower() != 1)
-    Standard_DimensionMismatch::Raise("IGESGraph_DefinitionLevel : Init");
-  theLevelNumbers = allLevelNumbers;
-  InitTypeAndForm(406,1);
+  return myLevelNumbers->Length();
 }
 
-    Standard_Integer IGESGraph_DefinitionLevel::NbPropertyValues () const
+Standard_Integer IGESGraph_DefinitionLevel::NbLevelNumbers () const
 {
-  return ( theLevelNumbers->Length() );
+  return myLevelNumbers->Length();
 }
 
-    Standard_Integer IGESGraph_DefinitionLevel::NbLevelNumbers () const
+Standard_Integer IGESGraph_DefinitionLevel::LevelNumber (const Standard_Integer LevelIndex) const
 {
-  return ( theLevelNumbers->Length() );
+  return myLevelNumbers->Value(LevelIndex);
 }
 
-    Standard_Integer IGESGraph_DefinitionLevel::LevelNumber
-  (const Standard_Integer LevelIndex) const
+void IGESGraph_DefinitionLevel::OwnRead (IGESFile_Reader &PR)
+{ 
+  Standard_Integer nbval = 0;
+  PR.ReadInteger(nbval,"No. of Property Values");
+  if (nbval > 0)
+  {
+    myLevelNumbers = new TColStd_HArray1OfInteger(1, nbval);
+    PR.ReadInteger(myLevelNumbers->ChangeFirst(),nbval,"array levelNumbers");
+  }
+  else PR.AddFail("No. of Property Values : Not Positive");
+}
+
+void IGESGraph_DefinitionLevel::OwnWrite (IGESData_IGESWriter& IW) const
+{ 
+  const Standard_Integer Up = NbPropertyValues();
+  IW.Send( Up );
+  for ( Standard_Integer i = 1; i <= Up; i++)
+    IW.Send(LevelNumber(i) );
+}
+
+IGESData_DirChecker IGESGraph_DefinitionLevel::DirChecker () const
+{ 
+  IGESData_DirChecker DC (406, 1);
+  DC.Structure(IGESData_DefVoid);
+  DC.LineFont(IGESData_DefVoid);
+  DC.LineWeight(IGESData_DefVoid);
+  DC.Color(IGESData_DefVoid);
+  DC.BlankStatusIgnored();
+  DC.UseFlagIgnored();
+  DC.HierarchyStatusIgnored();
+  return DC;
+}
+
+void IGESGraph_DefinitionLevel::OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &S, const Standard_Integer level)  const
 {
-  return ( theLevelNumbers->Value(LevelIndex) );
+  S << "IGESGraph_DefinitionLevel" << endl;
+  S << "Level Numbers : ";
+  IGESData_DumpVals(S,level,1,NbPropertyValues(),LevelNumber);
+  S << endl;
 }

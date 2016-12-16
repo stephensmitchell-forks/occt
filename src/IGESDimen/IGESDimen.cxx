@@ -12,17 +12,12 @@
 // commercial license or contractual agreement.
 
 
-#include <IGESData_SpecificLib.hxx>
-#include <IGESData_WriterLib.hxx>
 #include <IGESDimen.hxx>
 #include <IGESDimen_GeneralModule.hxx>
 #include <IGESDimen_Protocol.hxx>
-#include <IGESDimen_ReadWriteModule.hxx>
-#include <IGESDimen_SpecificModule.hxx>
 #include <IGESGeom.hxx>
 #include <IGESGraph.hxx>
 #include <Interface_GeneralLib.hxx>
-#include <Interface_ReaderLib.hxx>
 
 
 /*void IGESDimen::Init ()
@@ -38,9 +33,6 @@ const Handle(IGESDimen_Protocol) & IGESDimen::Protocol ()
   if (protocol.IsNull()) {
     protocol = new IGESDimen_Protocol;
     Interface_GeneralLib::SetGlobal (new IGESDimen_GeneralModule,  protocol);
-    Interface_ReaderLib::SetGlobal  (new IGESDimen_ReadWriteModule,protocol);
-    IGESData_WriterLib::SetGlobal   (new IGESDimen_ReadWriteModule,protocol);
-    IGESData_SpecificLib::SetGlobal (new IGESDimen_SpecificModule, protocol);
   }
   return protocol;
 }

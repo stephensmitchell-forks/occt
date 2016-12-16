@@ -24,7 +24,6 @@
 #include <IGESData_ParamCursor.hxx>
 #include <IGESData_ParamReader.hxx>
 #include <IGESData_Protocol.hxx>
-#include <IGESData_ReadWriteModule.hxx>
 #include <IGESData_TransfEntity.hxx>
 #include <IGESData_UndefinedEntity.hxx>
 #include <IGESData_ViewKindEntity.hxx>
@@ -34,377 +33,278 @@
 #include <Interface_Macros.hxx>
 #include <Interface_ParamList.hxx>
 #include <Interface_ReaderModule.hxx>
+#include <Message.hxx>
 #include <Message_Msg.hxx>
-#include <Standard_Transient.hxx>
+#include <Message_Messenger.hxx>
 #include <TCollection_HAsciiString.hxx>
+#include <TColStd_HArray1OfTransient.hxx>
+#include <Interface_ReportEntity.hxx>
+#include <Standard_ErrorHandler.hxx>
+#include <Standard_Failure.hxx>
+#include <OSD_Exception.hxx>
 
 #include <stdio.h>
-// MGE 17/06/98
-// To use Msg class
-IGESData_IGESReaderTool::IGESData_IGESReaderTool
-  (const Handle(IGESData_IGESReaderData)& reader,
-   const Handle(IGESData_Protocol)& protocol)
-: Interface_FileReaderTool(protocol)
-{  SetData (reader,protocol);  }
 
+//=======================================================================
+//function : LoadModel
+//purpose  : 
+//=======================================================================
 
-//  ###########################################################################
-//  ########                        PREPARATION                        ########
-
-void IGESData_IGESReaderTool::Prepare ()
+Standard_Integer IGESData_IGESReaderTool::Read (const Standard_CString theFileName, const Handle(IGESData_IGESModel)& amodel, const Standard_Boolean modefnes)
 {
-  DeclareAndCast(IGESData_IGESReaderData,igesdat,Data());
-  igesdat->SetEntityNumbers();
-  SetEntities();
-  thelist = igesdat->Params(0);
+  myData = new IGESData_IGESReaderData; //((lesect[3]+1)/2, gNbParams);
+
+  int result = myData->Read(theFileName, modefnes);
+
+  if (result != 0) return result;
+
+  LoadModel(amodel);
+
+  if (amodel->Protocol().IsNull()) amodel->SetProtocol (myProtocol);
+
+  /*
+  //  A present, le check
+  // Nb warning in global section.
+  Standard_Integer nbWarn = checkread()->NbWarnings(), nbFail = checkread()->NbFails();
+  if (nbWarn + nbFail > 0) {
+    const Handle(Interface_Check)& oldglob = amodel->GlobalCheck();
+    checkread()->GetMessages (oldglob);
+    amodel->SetGlobalCheck (checkread());
+  }
+
+  checkread()->Trace(0,1);
+
+  iges_finfile(2);*/
+ 
+  return 0;
 }
 
+//=======================================================================
+//function : LoadModel
+//purpose  : 
+//=======================================================================
 
-Standard_Boolean IGESData_IGESReaderTool::Recognize (const Standard_Integer num, Handle(Standard_Transient)& ent)
+void IGESData_IGESReaderTool::LoadModel (const Handle(Interface_InterfaceModel)& amodel)
 {
-  DeclareAndCast(IGESData_IGESReaderData,igesdat,Data());
-  thecnum = num;  thectyp = igesdat->DirType(num);
-  return RecognizeByLib (num,ent);
-}
+  //s1:thelist = thereader->Params(0);
 
+  Standard_Integer numr;
+  Standard_Integer thenbreps = 0, thenbrep0 = 0;
+  Handle(TColStd_HArray1OfTransient) thereports;
 
-//  ###########################################################################
-//  ########                LECTURE  (Controle General)                ########
-
-//    (Elements enchaines par la classe de base Interface_FileReaderTool)
-
-void IGESData_IGESReaderTool::BeginRead (const Handle(Interface_InterfaceModel)& amodel)
-{
-  DeclareAndCast(IGESData_IGESModel,amod,amodel);
-  DeclareAndCast(IGESData_IGESReaderData,igesdat,Data());
-  const IGESData_GlobalSection& gs = igesdat->GlobalSection();
-  amod->SetStartSection  (igesdat->StartSection(),Standard_False);
-  amod->SetGlobalSection (gs);
-  Handle(Interface_Check) glob = amod->GlobalCheck();
-  glob->GetMessages (igesdat->GlobalCheck());
-  amod->SetGlobalCheck   (glob);
-  themaxweight  = gs.MaxLineWeight();
-  thegradweight = gs.LineWeightGrad();
-  if (thegradweight > 0)
-    { themaxweight = themaxweight/thegradweight; thegradweight = 1; }
-  thedefweight = igesdat->DefaultLineWeight();
-}
-
-
-// Manquent les procedures de reprise sur erreur en cours de route ...
-Standard_Boolean IGESData_IGESReaderTool::AnalyseRecord (const Standard_Integer num, const Handle(Standard_Transient)& anent, Handle(Interface_Check)& ach)
-{
-  Handle(TCollection_HAsciiString) lab;
-
-  DeclareAndCast(IGESData_IGESEntity,ent,anent);
-  DeclareAndCast(IGESData_IGESReaderData,igesdat,Data());
-
-//  Demarrage de la lecture : Faire Clear
-  ent->Clear();
-
-//  UndefinedEntity : une pre-analyse est faite
-  DeclareAndCast(IGESData_UndefinedEntity,undent,ent);
-  if (!undent.IsNull()) {
-    IGESData_DirPart DP = igesdat->DirPart(num);    // qui le copie ...
-    undent->ReadDir (igesdat,DP,ach);               // DP a pu etre modifie
-    ReadDir (ent,igesdat,DP,ach);                   // Lecture avec ce DP
-  }
-  else ReadDir (ent,igesdat,igesdat->DirPart(num),ach);
-
-  thestep = IGESData_ReadDir;
-
-//   Liste de Parametres : controle de son entete
-//  Handle(Interface_ParamList) list = Data()->Params(num);
-  Standard_Integer nbpar = Data()->NbParams(num);
-  Standard_Integer n0par = (num == 1 ? 1 : (Data()->ParamFirstRank(num-1) +1));
-  if (nbpar < 1) {
-//   Liste vide non admise, sauf si Undefined (par exemple type nul)
-    if (!undent.IsNull()) return Standard_True;
-    // Sending of message : DE : no parameter
-    Message_Msg Msg27 ("XSTEP_27");
-    Msg27.Arg(thecnum);
-    ach->SendFail(Msg27);
-    return Standard_False;
-  }
-  const Interface_FileParameter& FP = thelist->Value(n0par);
-  if ((FP.ParamType() != Interface_ParamInteger) || (atoi(FP.CValue()) != ent->TypeNumber()))
-    { 
-     // Sending of message : DE : Incorrect type 
-      Message_Msg Msg28 ("XSTEP_28");
-      Msg28.Arg(thecnum);
-      ach->SendFail(Msg28);  
-      return Standard_False; 
-    }
-
-  IGESData_ParamReader PR (thelist,ach,n0par,nbpar,num);
-  thestep = IGESData_ReadOwn;
-  ReadOwnParams (ent,igesdat,PR);
-  if ((thestep = PR.Stage()) == IGESData_ReadOwn) PR.NextStage();
-  if (thestep == IGESData_ReadEnd) {
-    if (!PR.IsCheckEmpty()) ach = PR.Check();
-    return (!ach->HasFailed());
-  }
-
-  ReadAssocs (ent,igesdat,PR);
-  if ((thestep = PR.Stage()) == IGESData_ReadAssocs) PR.NextStage();
-  if (thestep == IGESData_ReadEnd) {
-    if (!PR.IsCheckEmpty()) ach = PR.Check();
-    return (!ach->HasFailed());
-  }
-  ReadProps (ent,igesdat,PR);
-  if   (!PR.IsCheckEmpty()) ach = PR.Check();
-  return (!ach->HasFailed());
-}
-
-
-
-//  ###########################################################################
-//  ########                        UNE  ENTITE                        ########
-
-//  ########                      Directory  Part                      ########
-
-    void  IGESData_IGESReaderTool::ReadDir
-  (const Handle(IGESData_IGESEntity)& ent,
-   const Handle(IGESData_IGESReaderData)& IR,
-   const IGESData_DirPart& DP, Handle(Interface_Check)& ach) const 
-{ 
-    
-  Standard_Integer v[17];
-  Standard_Character nom[9]; Standard_Character snum[9], theRes1[9],theRes2[9];
-  //char mess[50]; //szv#4:S4163:12Mar99 unused
-
-  DP.Values(v[0],v[1],v[2],v[3],v[4],v[5],v[6],v[7],v[8],v[9],v[10],v[11],
-	    v[12],v[13],v[14],v[15],v[16],theRes1,theRes2,nom,snum);
-
-  ent->InitTypeAndForm (v[0] , v[16]);
-  Handle(IGESData_IGESEntity) fieldent, Structure, fieldlab;
-  if (v[2] <  0) Structure  = GetCasted
-    (IGESData_IGESEntity,          IR->BoundEntity( (1-v[2])/2 ));
-
-  Handle(IGESData_LineFontEntity) Lnf;
-  if (v[3] <  0) {
-    fieldent = GetCasted(IGESData_IGESEntity, IR->BoundEntity( (1-v[3])/2 ));
-    Lnf = GetCasted(IGESData_LineFontEntity, fieldent);
-    if (Lnf.IsNull()) {
-      // Sending of message : Incorrect Line Font Pattern
-      Message_Msg Msg29 ("XSTEP_29");
-      Msg29.Arg(thecnum);
-      Msg29.Arg(thectyp.Type());
-      ach->SendWarning(Msg29);
-      ent->InitDirFieldEntity(4,fieldent);
-    }
-    else ent->InitLineFont (Lnf);
-  }
-  else ent->InitLineFont(Lnf,v[3]);    // ici Lnf Null
-
-  Handle(IGESData_LevelListEntity) Lvs;
-  if (v[4] <  0) {
-    fieldent = GetCasted(IGESData_IGESEntity, IR->BoundEntity( (1-v[4])/2 ));
-    Lvs = GetCasted(IGESData_LevelListEntity, fieldent);
-    if (Lvs.IsNull()) {
-      // Sending of message : Incorrect Line Font Pattern
-      Message_Msg Msg30 ("XSTEP_30");
-      Msg30.Arg(thecnum);
-      Msg30.Arg(thectyp.Type());
-      ach->SendWarning(Msg30);
-      ent->InitDirFieldEntity(5,fieldent);
-    }
-    else ent->InitLevel(Lvs,-1);
-  }
-  else ent->InitLevel(Lvs,v[4]);       // ici Lvs Null
-
-  if (v[5] != 0) {
-    fieldent = GetCasted(IGESData_IGESEntity,IR->BoundEntity( (1+v[5])/2 ));
-    DeclareAndCast(IGESData_ViewKindEntity,View,fieldent);
-    if (View.IsNull()) {
-      // Sending of message : Incorrect View 
-      Message_Msg Msg31 ("XSTEP_31");
-      Msg31.Arg(thecnum);
-      Msg31.Arg(thectyp.Type());
-      ach->SendWarning(Msg31);
-      ent->InitDirFieldEntity(6,fieldent);
-    }
-    else ent->InitView(View);
-  }
-
-  if (v[6] != 0) {
-    fieldent = GetCasted(IGESData_IGESEntity,IR->BoundEntity( (1+v[6])/2 ));
-    DeclareAndCast(IGESData_TransfEntity,Transf,fieldent);
-    if (Transf.IsNull()) {
-      // Sending of message : Incorrect Transformation Matrix 
-      Message_Msg Msg32 ("XSTEP_32");
-      Msg32.Arg(thecnum);
-      Msg32.Arg(thectyp.Type());
-      ach->SendWarning(Msg32);
-      ent->InitDirFieldEntity(7,fieldent);
-    }
-    else ent->InitTransf(Transf);
-  }
-
-  Handle(IGESData_LabelDisplayEntity) Lbd;
-  if (v[7] != 0) {
-    fieldlab = GetCasted(IGESData_IGESEntity,IR->BoundEntity( (1+v[7])/2 ));
-    Lbd = GetCasted(IGESData_LabelDisplayEntity,fieldent);
-    if (Lbd.IsNull()) {
-      // Sending of message : Incorrect Label Display 
-      Message_Msg Msg33 ("XSTEP_33");
-      Msg33.Arg(thecnum);
-      Msg33.Arg(thectyp.Type());
-      ach->SendWarning(Msg33);
-    }
-  }
-
-  ent->InitStatus (v[8] , v[9] , v[10] , v[11]);
-
-  Standard_Integer LWeightNum  = v[13];
-
-  Handle(IGESData_ColorEntity) Color;
-  if (v[14] <  0) {
-    fieldent = GetCasted(IGESData_IGESEntity,IR->BoundEntity( (1-v[14])/2 ));
-    Color = GetCasted(IGESData_ColorEntity, fieldent);
-    if (Color.IsNull()) {
-      // Sending of message : Incorrect Color Number 
-      Message_Msg Msg34 ("XSTEP_34");
-      Msg34.Arg(thecnum);
-      Msg34.Arg(thectyp.Type());
-      ach->SendWarning(Msg34);
-      ent->InitDirFieldEntity(13,fieldent);
-    }
-    else ent->InitColor(Color);
-  }
-  else ent->InitColor(Color,v[14]);
-
-  ent->InitMisc (Structure,Lbd,LWeightNum);
-  ent->InitDirFieldEntity(8,fieldlab);
-
-// ignores : 1(type),2(ptrPsect),13(type),16(lignesPsect),17(form)
-// type et forme sont lus directement du DirPart; autres infos recalculees
-
-//    Restent a analyser nom (short label) et snum (subscript number)
-  Handle(TCollection_HAsciiString) ShortLabel;
-  Standard_Integer SubScriptN = -1;
-  Standard_Integer iacar = 0;
-  Standard_Integer i; // svv Jan11 2000 : porting on DEC
-  for (i = 0; i < 8; i ++) { if (nom[i] > ' ') iacar = 1;  }
-  if (iacar > 0) ShortLabel = new TCollection_HAsciiString(nom);
-  iacar = 0;
-  for (i = 0; i < 8; i ++)
-    {  if (snum[i] > ' ') iacar = 1; if(snum[i] == 0) break;  }
-  if (iacar > 0) SubScriptN = atoi(snum);
-  ent->SetLabel(ShortLabel,SubScriptN);
-
-//    Enfin, SetLineWeight, tenant compte du defaut
-  ent->SetLineWeight (IR->DefaultLineWeight(),themaxweight,thegradweight);
-}
-
-
-//  ########                     Partie Specifique                     ########
-
-    void  IGESData_IGESReaderTool::ReadOwnParams
-  (const Handle(IGESData_IGESEntity)& ent,
-   const Handle(IGESData_IGESReaderData)& IR,
-   IGESData_ParamReader& PR) const 
-{
-  Handle(Interface_Check) ach = new Interface_Check;;
-  Handle(Interface_ReaderModule) imodule;
-  Standard_Integer CN;
-  
-//  Les Modules font tout
-  if (therlib.Select(ent,imodule,CN))
+  for (numr = myData->FindNextRecord(0);  numr > 0;
+       numr = myData->FindNextRecord(numr))
   {
-    Handle(IGESData_ReadWriteModule) module =
-      Handle(IGESData_ReadWriteModule)::DownCast (imodule);
-    module->ReadOwnParams(CN,ent,IR,PR);
+    Handle(Standard_Transient) newent = myProtocol->NewEntity(myData->DirPart(numr).Type());
+
+    if (newent.IsNull()) {
+      newent = myProtocol->UnknownEntity();
+      if (thereports.IsNull())
+        thereports = new TColStd_HArray1OfTransient (1,myData->NbRecords());
+      thenbreps ++;  thenbrep0 ++;
+      thereports->SetValue (numr,new Interface_ReportEntity(newent));
+    }
+    myData->BindEntity (numr,newent);
   }
-  else if (ent.IsNull()) {
-//  Pas trouve dutout
-    // Sending of message : Null Entity
-    Message_Msg Msg35 ("XSTEP_35");
-    Msg35.Arg(thecnum);
-    ach->SendFail(Msg35);
-//  Cas de UndefinedEntity
-  } else if (ent->IsKind(STANDARD_TYPE(IGESData_UndefinedEntity))) {
-    DeclareAndCast(IGESData_UndefinedEntity,undent,ent);
-    undent->ReadOwnParams(IR,PR);
-//    IGESEntity creee puis non reconnue ... (bizarre, non ?)
-  } else {
-    // Sending of message : Unknown Entity
-    Message_Msg Msg36 ("XSTEP_36");
-    Msg36.Arg(thecnum);
-    ach->SendFail(Msg36);
-  }
-}
 
+  //====================================
+  const Handle(Message_Messenger) &TF = Message::DefaultMessenger(); //this->Messenger();
+  //====================================
 
-//  ########                        Proprietes                         ########
-
-    void  IGESData_IGESReaderTool::ReadProps
-  (const Handle(IGESData_IGESEntity)& ent,
-   const Handle(IGESData_IGESReaderData)& IR,
-   IGESData_ParamReader& PR) const 
-{
- // MGE 17/06/98
- // Building of Messages
- //=====================================
- Message_Msg Msg38 ("XSTEP_38");
- //Message_Msg Msg221 ("XSTEP_221");
- //=====================================
- Handle(Interface_Check) ach = new Interface_Check;
-  Msg38.Arg(thecnum);
-  Msg38.Arg(thectyp.Type());
- if (PR.Stage() != IGESData_ReadProps) ach->SendFail(Msg38);
-  Standard_Integer ncur = PR.CurrentNumber();
-  Standard_Integer nbp  = PR.NbParams();
-  if (ncur == nbp + 1) {  PR.EndAll();  return;  }
-  else if (ncur > nbp || ncur == 0) ach->SendWarning(Msg38);
-
-  Standard_Integer nbprops = 0;
-  if (!PR.DefinedElseSkip()) return;
-  if (!PR.ReadInteger(ncur,nbprops)) {
-    Message_Msg Msg221 ("XSTEP_221");
-    PR.SendFail(Msg221);
-    return;
-  }
-  if (nbprops == 0) return;  ncur ++;
-  Interface_EntityList props;
-  if (PR.ReadEntList
-      (IR,PR.CurrentList(nbprops),Msg38, props,Standard_False) )
-    ent->LoadProperties(props);
-}
-
-
-//  ########                      Associativites                       ########
-
-    void  IGESData_IGESReaderTool::ReadAssocs
-  (const Handle(IGESData_IGESEntity)& ent,
-   const Handle(IGESData_IGESReaderData)& IR,
-   IGESData_ParamReader& PR) const 
-{
-  // MGE 17/06/98
-  // Building of Messages
-  //=====================================
-  Message_Msg Msg37 ("XSTEP_37");
-//  Message_Msg Msg220 ("XSTEP_220");
-  //=====================================
-  Msg37.Arg(thecnum);
-  Msg37.Arg(thectyp.Type());
   Handle(Interface_Check) ach = new Interface_Check;
-  if (PR.Stage() != IGESData_ReadAssocs) ach->SendFail(Msg37);
-  Standard_Integer ncur = PR.CurrentNumber(); 
-  Standard_Integer nbp  = PR.NbParams();
-  if (ncur == nbp + 1) {  PR.EndAll();  return;  }
-  else if (ncur > nbp || ncur == 0) ach->SendWarning(Msg37);
 
-  Standard_Integer nbassocs = 0;
-  if (!PR.DefinedElseSkip()) return;
-  if (!PR.ReadInteger(PR.Current(),nbassocs)){
-  Message_Msg Msg220 ("XSTEP_220");
-  PR.SendFail(Msg220);
-  return;
-}
-  if (nbassocs == 0) return;
-  Interface_EntityList assocs;
-  if (PR.ReadEntList
-      (IR,PR.CurrentList(nbassocs),Msg37, assocs,Standard_False) )
-    ent->LoadAssociativities(assocs);
+  //themodel = amodel;
+
+//  ..            Demarrage : Lecture du Header            ..
+  try {
+    OCC_CATCH_SIGNALS
+
+    DeclareAndCast(IGESData_IGESModel,amod,amodel);
+    const IGESData_GlobalSection& gs = myData->GlobalSection();
+    amod->SetStartSection  (myData->StartSection());
+    amod->SetGlobalSection (gs);
+    const Handle(Interface_Check) &glob = amod->GlobalCheck();
+    glob->GetMessages (myData->GlobalCheck());
+    //not needed:amod->SetGlobalCheck   (glob);
+
+    themaxweight  = gs.MaxLineWeight();
+    thegradweight = gs.LineWeightGrad();
+    if (thegradweight > 0)
+    { themaxweight = themaxweight/thegradweight; thegradweight = 1; }
+    thedefweight = myData->DefaultLineWeight();
+  }
+  catch (Standard_Failure) {
+    // Sendinf of message : Internal error during the header reading
+    Message_Msg Msg11("XSTEP_11");
+    TF->Send (Msg11, Message_Info); 
+  }
+
+  //  ..            Lecture des Entites            ..
+
+  amodel->Reservate (myData->NbEntities());
+
+  numr = myData->FindNextRecord(0);
+
+  Standard_Integer num = numr;
+  while (num > 0)
+  {
+    Standard_Integer ierr = 0;  // erreur sur analyse d une entite
+    Handle(Standard_Transient) anent;
+    try
+    {
+      OCC_CATCH_SIGNALS
+      for (num = numr;  num > 0; num = myData->FindNextRecord(num))
+      {
+        numr = num;
+
+        //    Lecture sous protection contre crash
+        //    (fait aussi AddEntity mais pas SetReportEntity)
+        Handle(Standard_Transient) anent = myData->BoundEntity(num);
+        Handle(Interface_Check) ach = new Interface_Check(anent);
+        Handle(Interface_ReportEntity) rep;    // entite Report, s il y a lieu
+        Standard_Integer irep = 0;
+        if (thenbrep0 > 0) {
+          rep = Handle(Interface_ReportEntity)::DownCast(thereports->Value(num));
+          if (!rep.IsNull()) { irep = num;  ach = rep->Check(); }
+        }
+
+        //  ..        Chargement proprement dit : Specifique de la Norme        ..
+        thechk = ach;
+        thecnum = num;
+
+        DeclareAndCast(IGESData_IGESEntity,ent,anent);
+        ent->Clear();
+        ent->OwnRead(*this);
+
+        //  ..        Ajout dans le modele de l entite telle quelle        ..
+        //            ATTENTION, ReportEntity traitee en bloc apres les Load
+        amodel->AddEntity(anent);
+
+        //   Erreur ou Correction : On cree une ReportEntity qui memorise le Check,
+        //   l Entite, et en cas d Erreur une UndefinedEntity pour les Parametres
+
+        //   On exploite ici le flag IsLoadError : s il a ete defini (a vrai ou faux)
+        //   il a priorite sur les fails du check. Sinon, ce sont les fails qui parlent
+
+        Standard_Integer nbf = ach->NbFails();
+        Standard_Integer nbw = ach->NbWarnings();
+        if (nbf + nbw > 0)
+        {
+          amodel->NbEntities();
+          rep = new Interface_ReportEntity(ach,anent);
+          if (irep == 0)
+          {
+            if (thereports.IsNull())
+              thereports = new TColStd_HArray1OfTransient (1,myData->NbRecords());
+            irep = num;
+            thenbreps ++;
+          }
+          thereports->SetValue(irep,rep);
+        }
+  
+        //    Rechargement ? si oui, dans une UnknownEntity fournie par le protocole
+        if (nbf > 0)  {
+          Handle(Standard_Transient) undef = myProtocol->UnknownEntity();
+          GetCasted(IGESData_IGESEntity,undef)->OwnRead(*this);
+          rep->SetContent(undef);
+        }
+
+        //   ..        Fin Lecture        ..
+        if (anent.IsNull())  {
+          // Sending of message : Number of ignored Null Entities  
+          Message_Msg Msg21("XSTEP_21");
+          Msg21.Arg(amodel->NbEntities());
+          TF->Send (Msg21, Message_Info);
+          continue;
+        }
+        //      LoadedEntity fait AddEntity MAIS PAS SetReport (en bloc a la fin)
+
+      }    // ---- fin boucle sur entites
+      numr = 0;    // plus rien
+    }      // ---- fin du try, le catch suit
+
+    //   En cas d erreur NON PREVUE par l analyse, recuperation par defaut
+    //   Attention : la recuperation peut elle-meme planter ... (cf ierr)
+    catch (Standard_Failure) {
+      //      Au passage suivant, on attaquera le record suivant
+      numr = myData->FindNextRecord(num); //:g9 abv 28 May 98: tr8_as2_ug.stp - infinite cycle: (0);
+
+      Handle(Standard_Failure) afail = Standard_Failure::Caught();
+#ifdef _WIN32
+      if (afail.IsNull() || afail->IsKind(STANDARD_TYPE(OSD_Exception))) ierr = 2;
+#else
+      if (afail.IsNull() || afail->IsKind(STANDARD_TYPE(OSD_Signal))) ierr = 2;
+#endif
+      anent = myData->BoundEntity(num);
+      if (anent.IsNull()) {
+        // Sending of message : Number of ignored Null Entities  
+        Message_Msg Msg21("XSTEP_21");
+        Msg21.Arg(amodel->NbEntities()+1);
+        TF->Send (Msg21, Message_Info);
+        continue;
+      }
+      ach = new Interface_Check(anent);
+      //: abv 03 Apr 00: trj3_s1-tc-214.stp: generate a message on exception
+      Message_Msg Msg278("XSTEP_278");
+      Msg278.Arg(amodel->StringLabel(anent));
+      ach->SendFail (Msg278); 
+      
+      if (ierr == 2) {
+        // Sending of message : reading of entity failed  
+        Message_Msg Msg22("XSTEP_22");
+        Msg22.Arg(amodel->StringLabel(anent));
+        TF->Send (Msg22, Message_Info); 
+        return;
+      }
+
+      if (!ierr) {
+        ierr = 1;
+        // ce qui serait bien ici serait de recuperer le texte de l erreur pour ach ...
+        // Sending of message : recovered entity  
+        Message_Msg Msg23("XSTEP_23");
+        Msg23.Arg(num);
+        TF->Send (Msg23, Message_Info); 
+
+        //  Finalement, on charge une Entite Inconnue
+        thenbreps ++;
+        Handle(Interface_ReportEntity) rep = new Interface_ReportEntity(ach,anent);
+        Handle(Standard_Transient) undef = myProtocol->UnknownEntity();
+        GetCasted(IGESData_IGESEntity,undef)->OwnRead(*this);
+        rep->SetContent(undef);
+
+        if (thereports.IsNull())
+          thereports = new TColStd_HArray1OfTransient (1,myData->NbRecords());
+
+        thenbreps ++;
+        thereports->SetValue (num,rep);
+        amodel->AddEntity (anent);    // pas fait par LoadedEntity ...
+      }
+      else {
+        // Sending of message : reading of entity failed  
+        Message_Msg Msg22("XSTEP_22");
+        Msg22.Arg(amodel->StringLabel(anent));
+        TF->Send (Msg22, Message_Info);
+        //  On garde <rep> telle quelle : pas d analyse fichier supplementaire,
+        //  Mais la phase preliminaire eventuelle est conservee
+        //  (en particulier, on garde trace du Type lu du fichier, etc...)
+      }
+    }    // -----  fin complete du try/catch
+  }      // -----  fin du while
+
+//  ..        Ajout des Reports, silya
+  if (!thereports.IsNull()) {
+    // Sending of message : report   
+    Message_Msg Msg24("XSTEP_24");
+    Msg24.Arg(thenbreps);
+    TF->Send (Msg24, Message_Info); 
+    amodel->Reservate (-thenbreps-10);
+    thenbreps = thereports->Upper();
+    for (Standard_Integer nr = 1; nr <= thenbreps; nr ++) {
+      if (thereports->Value(nr).IsNull()) continue;
+      Handle(Standard_Transient) anent = myData->BoundEntity (nr);
+      Handle(Interface_ReportEntity) rep =
+        Handle(Interface_ReportEntity)::DownCast(thereports->Value(nr));
+      amodel->SetReportEntity (-amodel->Number(anent),rep);
+    }
+  }
 }

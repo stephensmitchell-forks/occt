@@ -17,10 +17,10 @@
 #ifndef IGESAppli_Array1OfFiniteElement_HeaderFile
 #define IGESAppli_Array1OfFiniteElement_HeaderFile
 
+#include <Interface_Pointer.hxx>
 #include <IGESAppli_FiniteElement.hxx>
 #include <NCollection_Array1.hxx>
 
-typedef NCollection_Array1<Handle(IGESAppli_FiniteElement)> IGESAppli_Array1OfFiniteElement;
-
+typedef NCollection_Array1<Interface_Pointer<IGESAppli_FiniteElement>> IGESAppli_Array1OfFiniteElement;
 
 #endif

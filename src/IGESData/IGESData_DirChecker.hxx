@@ -21,8 +21,6 @@
 #include <Standard_DefineAlloc.hxx>
 #include <Standard_Handle.hxx>
 
-#include <Standard_Boolean.hxx>
-#include <Standard_Integer.hxx>
 #include <IGESData_DefType.hxx>
 class Interface_Check;
 class IGESData_IGESEntity;
@@ -49,96 +47,119 @@ public:
 
   
   //! Returns a DirChecker, with no criterium at all to be checked
-  Standard_EXPORT IGESData_DirChecker();
+  IGESData_DirChecker()
+  : thetype(0), theform1(0), theform2(0),
+    thestructure(IGESData_ErrorRef),
+    thelinefont(IGESData_ErrorRef),
+    thelineweig(IGESData_ErrorRef),
+    thecolor(IGESData_ErrorRef),
+    thegraphier(-100), // ne pas tester GraphicsIgnored
+    theblankst(-100), thesubordst(-100), theuseflag(-100), thehierst(-100) // ne pas tester
+  {}
   
   //! Returns a DirChecker, with no criterium except Required Type
-  Standard_EXPORT IGESData_DirChecker(const Standard_Integer atype);
-  
+  IGESData_DirChecker(const Standard_Integer atype)
+  : thetype(atype), theform1(0), theform2(-1), // test de forme inhibe
+    thestructure(IGESData_ErrorRef),
+    thelinefont(IGESData_ErrorRef),
+    thelineweig(IGESData_ErrorRef),
+    thecolor(IGESData_ErrorRef),
+    thegraphier(-100), // ne pas tester GraphicsIgnored
+    theblankst(-100), thesubordst(-100), theuseflag(-100), thehierst(-100) // ne pas tester
+  {}
+
   //! Returns a DirChecker, with no criterium except Required values
   //! for Type and Form numbers
-  Standard_EXPORT IGESData_DirChecker(const Standard_Integer atype, const Standard_Integer aform);
-  
+  IGESData_DirChecker(const Standard_Integer atype, const Standard_Integer aform)
+  : thetype(atype), theform1(aform), theform2(aform), // forme : valeur requise
+    thestructure(IGESData_ErrorRef),
+    thelinefont(IGESData_ErrorRef),
+    thelineweig(IGESData_ErrorRef),
+    thecolor(IGESData_ErrorRef),
+    thegraphier(-100), // ne pas tester GraphicsIgnored
+    theblankst(-100), thesubordst(-100), theuseflag(-100), thehierst(-100) // ne pas tester
+  {}
+
   //! Returns a DirChecker, with no criterium except Required values
   //! for Type number (atype), and Required Range for Form number
   //! (which must be between aform1 and aform2 included)
-  Standard_EXPORT IGESData_DirChecker(const Standard_Integer atype, const Standard_Integer aform1, const Standard_Integer aform2);
-  
-  //! Returns True if at least one criterium has already been set
-  //! Allows user to store a DirChecker (static variable) then ask
-  //! if it has been set before setting it
-  Standard_EXPORT Standard_Boolean IsSet() const;
-  
-  //! Sets a DirChecker with most current criteria, that is :
-  //! Structure Ignored ( worths call Structure(crit = DefVoid) )
-  Standard_EXPORT void SetDefault();
-  
+  IGESData_DirChecker(const Standard_Integer atype, const Standard_Integer aform1, const Standard_Integer aform2)
+  : thetype(atype), theform1(aform1), theform2(aform2), // forme : [...]
+    thestructure(IGESData_ErrorRef),
+    thelinefont(IGESData_ErrorRef),
+    thelineweig(IGESData_ErrorRef),
+    thecolor(IGESData_ErrorRef),
+    thegraphier(-100), // ne pas tester GraphicsIgnored
+    theblankst(-100), thesubordst(-100), theuseflag(-100), thehierst(-100) // ne pas tester
+  {}
+
   //! Sets Structure criterium.
   //! If crit is DefVoid, Ignored : should not be defined
   //! If crit is DefReference, Required : must be defined
   //! Other values are not taken in account
-  Standard_EXPORT void Structure (const IGESData_DefType crit);
-  
+  void Structure (const IGESData_DefType crit) { thestructure = crit; }
+
   //! Sets LineFont criterium
   //! If crit is DefVoid, Ignored : should not be defined
   //! If crit is DefAny, Required : must be defined (value or ref)
   //! If crit is DefValue, Required as a Value (error if Reference)
   //! Other values are not taken in account
-  Standard_EXPORT void LineFont (const IGESData_DefType crit);
-  
+  void LineFont (const IGESData_DefType crit) { thelinefont = crit; }
+
   //! Sets LineWeight criterium
   //! If crit is DefVoid, Ignored : should not be defined
   //! If crit is DefValue, Required
   //! Other values are not taken in account
-  Standard_EXPORT void LineWeight (const IGESData_DefType crit);
-  
+  void LineWeight (const IGESData_DefType crit) { thelineweig = crit; }
+
   //! Sets Color criterium
   //! If crit is DefVoid, Ignored : should not be defined
   //! If crit is DefAny, Required : must be defined (value or ref)
   //! Other values are not taken in account
-  Standard_EXPORT void Color (const IGESData_DefType crit);
-  
+  void Color (const IGESData_DefType crit) { thecolor = crit; }
+
   //! Sets Graphics data (LineFont, LineWeight, Color, Level, View)
   //! to be ignored according value of Hierarchy status :
   //! If hierarchy is not given, they are Ignored any way
   //! (that is, they should not be defined)
   //! If hierarchy is given, Graphics are Ignored if the Hierarchy
   //! status has the value given in argument "hierarchy"
-  Standard_EXPORT void GraphicsIgnored (const Standard_Integer hierarchy = -1);
-  
+  void GraphicsIgnored (const Standard_Integer hierarchy = -1) { thegraphier = hierarchy; }
+
   //! Sets Blank Status to be ignored
   //! (should not be defined, or its value should be 0)
-  Standard_EXPORT void BlankStatusIgnored();
+  void BlankStatusIgnored() { theblankst = -10; }
   
   //! Sets Blank Status to be required at a given value
-  Standard_EXPORT void BlankStatusRequired (const Standard_Integer val);
-  
+  void BlankStatusRequired (const Standard_Integer val) { theblankst = val; }
+
   //! Sets Subordinate Status to be ignored
   //! (should not be defined, or its value should be 0)
-  Standard_EXPORT void SubordinateStatusIgnored();
-  
+  void SubordinateStatusIgnored() { thesubordst = -10; }
+
   //! Sets Subordinate Status to be required at a given value
-  Standard_EXPORT void SubordinateStatusRequired (const Standard_Integer val);
-  
+  void SubordinateStatusRequired (const Standard_Integer val) { thesubordst = val; }
+
   //! Sets Blank Status to be ignored
   //! (should not be defined, or its value should be 0)
-  Standard_EXPORT void UseFlagIgnored();
-  
+  void UseFlagIgnored() { theuseflag = -10; }
+
   //! Sets Blank Status to be required at a given value
   //! Give -1 to demand UseFlag not zero (but no precise value req.)
-  Standard_EXPORT void UseFlagRequired (const Standard_Integer val);
-  
+  void UseFlagRequired (const Standard_Integer val) { theuseflag = val; }
+
   //! Sets Hierarchy Status to be ignored
   //! (should not be defined, or its value should be 0)
-  Standard_EXPORT void HierarchyStatusIgnored();
-  
+  void HierarchyStatusIgnored() { thehierst = -10; }
+
   //! Sets Hierarchy Status to be required at a given value
-  Standard_EXPORT void HierarchyStatusRequired (const Standard_Integer val);
-  
+  void HierarchyStatusRequired (const Standard_Integer val) { thehierst = val; }
+
   //! Performs the Checks on an IGESEntity, according to the
   //! recorded criteria
   //! In addition, does minimal Checks, such as admitted range for
   //! Status, or presence of Error status in some data (Color, ...)
-  Standard_EXPORT void Check (Handle(Interface_Check)& ach, const Handle(IGESData_IGESEntity)& ent) const;
+  //szv_c1:Standard_EXPORT void Check (Handle(Interface_Check)& ach, const Handle(IGESData_IGESEntity)& ent) const;
   
   //! Performs a Check only on Values of Type Number and Form Number
   //! This allows to do a check on an Entity not yet completely
@@ -154,22 +175,10 @@ public:
   //! - Type Number is enforced
   //! - finally Form Number is enforced only if one and only Value
   //! is admitted (no range, see Constructors of DirChecker)
-  Standard_EXPORT Standard_Boolean Correct (const Handle(IGESData_IGESEntity)& ent) const;
+  //szv_c1:Standard_EXPORT Standard_Boolean Correct (const Handle(IGESData_IGESEntity)& ent) const;
 
+ //private:
 
-
-
-protected:
-
-
-
-
-
-private:
-
-
-
-  Standard_Boolean isitset;
   Standard_Integer thetype;
   Standard_Integer theform1;
   Standard_Integer theform2;
@@ -182,14 +191,6 @@ private:
   Standard_Integer thesubordst;
   Standard_Integer theuseflag;
   Standard_Integer thehierst;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESData_DirChecker_HeaderFile

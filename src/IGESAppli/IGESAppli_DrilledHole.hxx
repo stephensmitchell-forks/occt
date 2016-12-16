@@ -19,9 +19,6 @@
 
 #include <IGESData_IGESEntity.hxx>
 
-class IGESAppli_DrilledHole;
-DEFINE_STANDARD_HANDLE(IGESAppli_DrilledHole, IGESData_IGESEntity)
-
 //! defines DrilledHole, Type <406> Form <6>
 //! in package IGESAppli
 //! Identifies an entity representing a drilled hole
@@ -30,51 +27,55 @@ class IGESAppli_DrilledHole : public IGESData_IGESEntity
 {
  public:
 
-  IGESAppli_DrilledHole() {}
-  
-  //! This method is used to set the fields of the class
-  //! DrilledHole
-  //! - nbPropVal    : Number of property values = 5
-  //! - aSize        : Drill diameter size
-  //! - anotherSize  : Finish diameter size
-  //! - aPlating     : Plating indication flag
-  //! False = not plating
-  //! True  = is plating
-  //! - aLayer       : Lower numbered layer
-  //! - anotherLayer : Higher numbered layer
-  Standard_EXPORT void Init (const Standard_Integer nbPropVal, const Standard_Real aSize, const Standard_Real anotherSize, const Standard_Integer aPlating, const Standard_Integer aLayer, const Standard_Integer anotherLayer);
-  
-  //! is always 5
-  Standard_Integer NbPropertyValues() const { return theNbPropertyValues; }
+  Standard_EXPORT virtual Standard_Integer TypeNumber() const Standard_OVERRIDE { return 406; }
+
+  Standard_EXPORT virtual Standard_Integer FormNumber() const Standard_OVERRIDE { return 6; }
+
+  IGESAppli_DrilledHole()
+  : myDrillDiaSize(0.),
+    myFinishDiaSize(0.),
+    myPlatingFlag(0),
+    myNbLowerLayer(0),
+    myNbHigherLayer(0)
+  {}
 
   //! returns the drill diameter size
-  Standard_Real DrillDiaSize() const { return theDrillDiaSize; }
+  Standard_Real DrillDiaSize() const { return myDrillDiaSize; }
 
   //! returns the finish diameter size
-  Standard_Real FinishDiaSize() const { return theFinishDiaSize; }
+  Standard_Real FinishDiaSize() const { return myFinishDiaSize; }
 
   //! Returns Plating Status :
   //! False = not plating  /  True  = is plating
-  Standard_Boolean IsPlating() const { return (thePlatingFlag != 0); }
+  Standard_Boolean IsPlating() const { return (myPlatingFlag != 0); }
 
   //! returns the lower numbered layer
-  Standard_Integer NbLowerLayer() const { return theNbLowerLayer; }
+  Standard_Integer NbLowerLayer() const { return myNbLowerLayer; }
 
   //! returns the higher numbered layer
-  Standard_Integer NbHigherLayer() const { return theNbHigherLayer; }
+  Standard_Integer NbHigherLayer() const { return myNbHigherLayer; }
+
+  Standard_EXPORT virtual void OwnRead (IGESFile_Reader &) Standard_OVERRIDE;
+  
+  Standard_EXPORT virtual void OwnWrite (IGESData_IGESWriter &) const Standard_OVERRIDE;
+  
+  Standard_EXPORT virtual IGESData_DirChecker DirChecker () const Standard_OVERRIDE;
 
   Standard_EXPORT virtual void OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &) const Standard_OVERRIDE;
+
+  Standard_EXPORT Standard_Boolean OwnCorrect () Standard_OVERRIDE;
+
+  Standard_EXPORT virtual void OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &, const Standard_Integer) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESAppli_DrilledHole,IGESData_IGESEntity)
 
  private:
 
-  Standard_Integer theNbPropertyValues;
-  Standard_Real theDrillDiaSize;
-  Standard_Real theFinishDiaSize;
-  Standard_Integer thePlatingFlag;
-  Standard_Integer theNbLowerLayer;
-  Standard_Integer theNbHigherLayer;
+  Standard_Real myDrillDiaSize;
+  Standard_Real myFinishDiaSize;
+  Standard_Integer myPlatingFlag;
+  Standard_Integer myNbLowerLayer;
+  Standard_Integer myNbHigherLayer;
 };
 
 #endif // _IGESAppli_DrilledHole_HeaderFile

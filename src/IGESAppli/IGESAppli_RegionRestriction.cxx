@@ -17,18 +17,42 @@
 //--------------------------------------------------------------------
 
 #include <IGESAppli_RegionRestriction.hxx>
+#include <IGESFile_Reader.hxx>
+#include <IGESData_IGESWriter.hxx>
+#include <Message_Messenger.hxx>
+#include <IGESData_DirChecker.hxx>
+#include <IGESData_IGESDumper.hxx>
+#include <IGESData_Dump.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESAppli_RegionRestriction,IGESData_IGESEntity)
 
-void IGESAppli_RegionRestriction::Init
-  (const Standard_Integer nbPropVal,  const Standard_Integer aViasRest,
-   const Standard_Integer aCompoRest, const Standard_Integer aCktRest)
+void IGESAppli_RegionRestriction::OwnRead (IGESFile_Reader &theReader)
 {
-  theNbPropertyValues  = nbPropVal;
-  theElectViasRestrict = aViasRest;
-  theElectCompRestrict = aCompoRest;
-  theElectCktRestrict  = aCktRest;
-  InitTypeAndForm(406,2);
+  Standard_Integer aNbPropertyValues = 3;
+  if (theReader.ReadInteger(aNbPropertyValues,"No. of Property values") == IGESFile_Reader::ParamError || aNbPropertyValues != 3)
+    theReader.AddFail("Number of Property Values != 3");
+  theReader.ReadInteger(myElectViasRestrict,"Electrical vias restriction");
+  theReader.ReadInteger(myElectCompRestrict,"Electrical components restriction");
+  theReader.ReadInteger(myElectCktRestrict," Electrical circuitary restriction");
+}
+
+void IGESAppli_RegionRestriction::OwnWrite (IGESData_IGESWriter &IW) const
+{
+  IW.Send(3);
+  IW.Send(myElectViasRestrict);
+  IW.Send(myElectCompRestrict);
+  IW.Send(myElectCktRestrict);
+}
+
+IGESData_DirChecker IGESAppli_RegionRestriction::DirChecker () const
+{
+  IGESData_DirChecker DC(406,2);  //Form no = 2 & Type = 406
+  DC.Structure(IGESData_DefVoid);
+  DC.GraphicsIgnored();
+  DC.BlankStatusIgnored();
+  DC.UseFlagIgnored();
+  DC.HierarchyStatusIgnored();
+  return DC;
 }
 
 void IGESAppli_RegionRestriction::OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &theCheck) const
@@ -37,14 +61,32 @@ void IGESAppli_RegionRestriction::OwnCheck (const Interface_ShareTool &, const H
     if (DefLevel() != IGESData_DefOne &&
 	    DefLevel() != IGESData_DefSeveral)
       theCheck->AddFail("Level type: Not value/reference");
-  if (NbPropertyValues() != 3)
-    theCheck->AddFail("Number of Property Values != 3");
-  if (ElectricalViasRestriction() < 0 || ElectricalViasRestriction() > 2)
+
+  if (myElectViasRestrict < 0 || myElectViasRestrict > 2)
     theCheck->AddFail("Incorrect value for Electrical Vias Restriction");
-  if (ElectricalComponentRestriction() < 0 || ElectricalComponentRestriction() > 2)
+  if (myElectCompRestrict < 0 || myElectCompRestrict > 2)
     theCheck->AddFail("Incorrect value for Electrical Component Restriction");
-  if (ElectricalCktRestriction() < 0 || ElectricalCktRestriction() > 2)
+  if (myElectCktRestrict < 0 || myElectCktRestrict > 2)
     theCheck->AddFail("Incorrect value for Electrical Circuit Restriction");
   //UNFINISHED
   //level ignored if this property is subordinate -- queried
+}
+
+Standard_Boolean IGESAppli_RegionRestriction::OwnCorrect ()
+{
+  if (SubordinateStatus() != 0) {
+    Handle(IGESData_LevelListEntity) nulevel;
+    InitLevel(nulevel,0);
+    return Standard_True;
+  }
+  return Standard_False;
+}
+
+void IGESAppli_RegionRestriction::OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &S, const Standard_Integer) const
+{
+  S << "IGESAppli_RegionRestriction" << endl;
+  S << "Number of property values : 3" << endl;
+  S << "Electrical vias restriction       : " << myElectViasRestrict << endl;
+  S << "Electrical components restriction : " << myElectCompRestrict << endl;
+  S << "Electrical circuitary restriction : " << myElectCktRestrict  << endl;
 }

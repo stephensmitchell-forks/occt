@@ -42,19 +42,13 @@ void  IGESSolid_ToolCylindricalSurface::ReadOwnParams
   Handle(IGESGeom_Direction) tempAxis;
   Handle(IGESGeom_Direction) tempRefdir;          // default Unparametrised
   Standard_Real tempRadius;
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
 
-  PR.ReadEntity(IR, PR.Current(), "Point on axis",
-		STANDARD_TYPE(IGESGeom_Point), tempLocation); //szv#4:S4163:12Mar99 `st=` not needed
-
-  PR.ReadEntity(IR, PR.Current(), "Axis direction",
-		STANDARD_TYPE(IGESGeom_Direction), tempAxis); //szv#4:S4163:12Mar99 `st=` not needed
-
-  PR.ReadReal(PR.Current(), "Radius", tempRadius); //szv#4:S4163:12Mar99 `st=` not needed
+  PR.ReadEntity(IR, "Point on axis", STANDARD_TYPE(IGESGeom_Point), tempLocation);
+  PR.ReadEntity(IR, "Axis direction", STANDARD_TYPE(IGESGeom_Direction), tempAxis);
+  PR.ReadReal(tempRadius,"Radius");
 
   if (ent->FormNumber() == 1)      // Parametrised surface
-    PR.ReadEntity(IR, PR.Current(), "Reference direction",
-		  STANDARD_TYPE(IGESGeom_Direction), tempRefdir); //szv#4:S4163:12Mar99 `st=` not needed
+    PR.ReadEntity(IR, "Reference direction", STANDARD_TYPE(IGESGeom_Direction), tempRefdir);
 
   DirChecker(ent).CheckTypeAndForm(PR.CCheck(),ent);
   ent->Init (tempLocation, tempAxis, tempRadius, tempRefdir);

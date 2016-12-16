@@ -17,27 +17,15 @@
 #ifndef _IGESDraw_Drawing_HeaderFile
 #define _IGESDraw_Drawing_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
 #include <IGESDraw_HArray1OfViewKindEntity.hxx>
 #include <TColgp_HArray1OfXY.hxx>
 #include <IGESData_HArray1OfIGESEntity.hxx>
 #include <IGESData_IGESEntity.hxx>
-#include <Standard_Integer.hxx>
-#include <Standard_Boolean.hxx>
-#include <Standard_Real.hxx>
-class Standard_DimensionMismatch;
-class Standard_OutOfRange;
 class IGESData_ViewKindEntity;
 class gp_Pnt2d;
-class IGESData_IGESEntity;
 class gp_XY;
 class gp_XYZ;
 
-
-class IGESDraw_Drawing;
-DEFINE_STANDARD_HANDLE(IGESDraw_Drawing, IGESData_IGESEntity)
 
 //! defines IGESDrawing, Type <404> Form <0>
 //! in package IGESDraw
@@ -47,27 +35,20 @@ DEFINE_STANDARD_HANDLE(IGESDraw_Drawing, IGESData_IGESEntity)
 //! constitute a single representation of a part
 class IGESDraw_Drawing : public IGESData_IGESEntity
 {
+ public:
 
-public:
+  Standard_EXPORT virtual Standard_Integer TypeNumber() const Standard_OVERRIDE { return 404; }
 
-  
-  Standard_EXPORT IGESDraw_Drawing();
-  
-  //! This method is used to set the fields of the class
-  //! Drawing
-  //! - allViews       : Pointers to DEs of View entities
-  //! - allViewOrigins : Origin coordinates of transformed Views
-  //! - allAnnotations : Pointers to DEs of Annotation entities
-  //! raises exception if Lengths of allViews and allViewOrigins are
-  //! not same.
-  Standard_EXPORT void Init (const Handle(IGESDraw_HArray1OfViewKindEntity)& allViews, const Handle(TColgp_HArray1OfXY)& allViewOrigins, const Handle(IGESData_HArray1OfIGESEntity)& allAnnotations);
-  
+  Standard_EXPORT virtual Standard_Integer FormNumber() const Standard_OVERRIDE { return 0; }
+
+  IGESDraw_Drawing() {}
+
   //! returns the number of view pointers in <me>
   Standard_EXPORT Standard_Integer NbViews() const;
   
   //! returns the ViewKindEntity indicated by ViewIndex
   //! raises an exception if ViewIndex <= 0 or ViewIndex > NbViews().
-  Standard_EXPORT Handle(IGESData_ViewKindEntity) ViewItem (const Standard_Integer ViewIndex) const;
+  Standard_EXPORT const Handle(IGESData_ViewKindEntity) & ViewItem (const Standard_Integer ViewIndex) const;
   
   //! returns the Drawing space coordinates of the origin of the
   //! Transformed view indicated by TViewIndex
@@ -81,7 +62,7 @@ public:
   //! AnnotationIndex
   //! raises an exception if AnnotationIndex <= 0 or
   //! AnnotationIndex > NbAnnotations().
-  Standard_EXPORT Handle(IGESData_IGESEntity) Annotation (const Standard_Integer AnnotationIndex) const;
+  Standard_EXPORT const Handle(IGESData_IGESEntity) & Annotation (const Standard_Integer AnnotationIndex) const;
   
   Standard_EXPORT gp_XY ViewToDrawing (const Standard_Integer NumView, const gp_XYZ& ViewCoords) const;
   
@@ -97,30 +78,25 @@ public:
   //! unit to consider is then the model unit in GlobalSection
   Standard_EXPORT Standard_Boolean DrawingSize (Standard_Real& X, Standard_Real& Y) const;
 
+  Standard_EXPORT virtual void OwnRead (IGESFile_Reader &) Standard_OVERRIDE;
+  
+  Standard_EXPORT virtual void OwnWrite (IGESData_IGESWriter &) const Standard_OVERRIDE;
 
+  Standard_EXPORT virtual void OwnShared (Interface_EntityIterator &) const Standard_OVERRIDE;
 
+  Standard_EXPORT virtual IGESData_DirChecker DirChecker () const Standard_OVERRIDE;
+
+  Standard_EXPORT virtual void OwnCheck (const Interface_ShareTool &, Handle(Interface_Check) &) const Standard_OVERRIDE;
+
+  Standard_EXPORT virtual void OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &, const Standard_Integer) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESDraw_Drawing,IGESData_IGESEntity)
 
-protected:
-
-
-
-
-private:
-
+ private:
 
   Handle(IGESDraw_HArray1OfViewKindEntity) theViews;
   Handle(TColgp_HArray1OfXY) theViewOrigins;
   Handle(IGESData_HArray1OfIGESEntity) theAnnotations;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESDraw_Drawing_HeaderFile

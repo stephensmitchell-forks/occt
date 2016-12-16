@@ -17,24 +17,11 @@
 #ifndef _IGESDefs_AttributeTable_HeaderFile
 #define _IGESDefs_AttributeTable_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
-#include <TColStd_HArray2OfTransient.hxx>
 #include <IGESData_IGESEntity.hxx>
-#include <Standard_Integer.hxx>
-#include <Standard_Real.hxx>
-#include <Standard_Boolean.hxx>
-class Standard_OutOfRange;
-class Standard_NullObject;
-class IGESDefs_AttributeDef;
-class Standard_Transient;
 class TCollection_HAsciiString;
-class IGESData_IGESEntity;
+class TColStd_HArray2OfTransient;
+class IGESDefs_AttributeDef;
 
-
-class IGESDefs_AttributeTable;
-DEFINE_STANDARD_HANDLE(IGESDefs_AttributeTable, IGESData_IGESEntity)
 
 //! defines IGES Attribute Table, Type <422> Form <0, 1>
 //! in package IGESDefs
@@ -43,11 +30,15 @@ DEFINE_STANDARD_HANDLE(IGESDefs_AttributeTable, IGESData_IGESEntity)
 //! or dependent or pointed at by other Entities.
 class IGESDefs_AttributeTable : public IGESData_IGESEntity
 {
+ public:
 
-public:
+  Standard_EXPORT virtual Standard_Integer TypeNumber() const Standard_OVERRIDE { return 422; }
 
-  
-  Standard_EXPORT IGESDefs_AttributeTable();
+  Standard_EXPORT virtual Standard_Integer FormNumber() const Standard_OVERRIDE { return myForm; }
+
+  IGESDefs_AttributeTable(const Standard_Integer theForm)
+  : myForm(theForm)
+  {}
   
   //! This method is used to set the fields of the class
   //! AttributeTable
@@ -102,28 +93,24 @@ public:
   //! Error if Indices out of Range, or no Value defined, or not a Logical
   Standard_EXPORT Standard_Boolean AttributeAsLogical (const Standard_Integer AtNum, const Standard_Integer Rownum, const Standard_Integer ValNum) const;
 
+  Standard_EXPORT virtual void OwnRead (IGESFile_Reader &) Standard_OVERRIDE;
+  
+  Standard_EXPORT virtual void OwnWrite (IGESData_IGESWriter &) const Standard_OVERRIDE;
 
+  Standard_EXPORT virtual void OwnShared (Interface_EntityIterator& iter) const Standard_OVERRIDE;
 
+  Standard_EXPORT virtual IGESData_DirChecker DirChecker () const Standard_OVERRIDE;
+
+  Standard_EXPORT virtual void OwnCheck (const Interface_ShareTool &, Handle(Interface_Check) &) const Standard_OVERRIDE;
+
+  Standard_EXPORT virtual void OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &, const Standard_Integer) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESDefs_AttributeTable,IGESData_IGESEntity)
 
-protected:
+ private:
 
-
-
-
-private:
-
-
-  Handle(TColStd_HArray2OfTransient) theAttributes;
-
-
+  Standard_Integer myForm;
+  Handle(TColStd_HArray2OfTransient) myAttributes;
 };
-
-
-
-
-
-
 
 #endif // _IGESDefs_AttributeTable_HeaderFile

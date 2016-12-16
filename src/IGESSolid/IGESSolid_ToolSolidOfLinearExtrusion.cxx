@@ -43,32 +43,27 @@ void  IGESSolid_ToolSolidOfLinearExtrusion::ReadOwnParams
   gp_XYZ tempDirection;
   Standard_Real tempLength;
   Standard_Real tempreal;
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
 
-  PR.ReadEntity(IR, PR.Current(), "Curve Entity", tempEntity); //szv#4:S4163:12Mar99 `st=` not needed
-
-  PR.ReadReal(PR.Current(), "Length of extrusion", tempLength); //szv#4:S4163:12Mar99 `st=` not needed
+  PR.ReadEntity(IR, "Curve Entity", tempEntity);
+  PR.ReadReal(tempLength,"Length of extrusion");
 
   if (PR.DefinedElseSkip())
     {
-      //st = PR.ReadReal(PR.Current(), "Extrusion direction (I)", tempreal); //szv#4:S4163:12Mar99 moved in if
-      if (PR.ReadReal(PR.Current(), "Extrusion direction (I)", tempreal))
+      if (PR.ReadReal(tempreal,"Extrusion direction (I)"))
 	tempDirection.SetX(tempreal);
     }
   else  tempDirection.SetX(0.0);
 
   if (PR.DefinedElseSkip())
     {
-      //st = PR.ReadReal(PR.Current(), "Extrusion direction (J)", tempreal); //szv#4:S4163:12Mar99 moved in if
-      if (PR.ReadReal(PR.Current(), "Extrusion direction (J)", tempreal))
+      if (PR.ReadReal(tempreal,"Extrusion direction (J)"))
 	tempDirection.SetY(tempreal);
     }
   else  tempDirection.SetY(0.0);
 
   if (PR.DefinedElseSkip())
     {
-      //st = PR.ReadReal(PR.Current(), "Extrusion direction (K)", tempreal); //szv#4:S4163:12Mar99 moved in if
-      if (PR.ReadReal(PR.Current(), "Extrusion direction (K)", tempreal))
+      if (PR.ReadReal(tempreal,"Extrusion direction (K)"))
 	tempDirection.SetZ(tempreal);
     }
   else  tempDirection.SetZ(1.0);

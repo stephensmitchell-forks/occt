@@ -12,16 +12,11 @@
 // commercial license or contractual agreement.
 
 
-#include <IGESData_SpecificLib.hxx>
-#include <IGESData_WriterLib.hxx>
 #include <IGESDefs.hxx>
 #include <IGESDefs_GeneralModule.hxx>
 #include <IGESDefs_Protocol.hxx>
-#include <IGESDefs_ReadWriteModule.hxx>
-#include <IGESDefs_SpecificModule.hxx>
 #include <IGESGraph.hxx>
 #include <Interface_GeneralLib.hxx>
-#include <Interface_ReaderLib.hxx>
 
 
 /*void IGESDefs::Init ()
@@ -36,9 +31,6 @@ const Handle(IGESDefs_Protocol) & IGESDefs::Protocol ()
   if (protocol.IsNull()) {
     protocol = new IGESDefs_Protocol;
     Interface_GeneralLib::SetGlobal (new IGESDefs_GeneralModule,  protocol);
-    Interface_ReaderLib::SetGlobal  (new IGESDefs_ReadWriteModule,protocol);
-    IGESData_WriterLib::SetGlobal   (new IGESDefs_ReadWriteModule,protocol);
-    IGESData_SpecificLib::SetGlobal (new IGESDefs_SpecificModule, protocol);
   }
   return protocol;
 }

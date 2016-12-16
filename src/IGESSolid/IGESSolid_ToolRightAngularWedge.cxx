@@ -42,80 +42,69 @@ void  IGESSolid_ToolRightAngularWedge::ReadOwnParams
   gp_XYZ tempSize, tempCorner, tempXAxis, tempZAxis;
   Standard_Real lowX;
   Standard_Real tempreal;
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
 
-  PR.ReadXYZ(PR.CurrentList(1, 3), "Size of RightAngularWedge", tempSize); //szv#4:S4163:12Mar99 `st=` not needed
-
-  PR.ReadReal(PR.Current(), "Small X length", lowX); //szv#4:S4163:12Mar99 `st=` not needed
+  PR.ReadXYZ(tempSize,"Size of RightAngularWedge");
+  PR.ReadReal(lowX,"Small X length");
 
   if (PR.DefinedElseSkip())
     {
-      //st = PR.ReadReal(PR.Current(), "Corner Point (X)", tempreal); //szv#4:S4163:12Mar99 moved in if
-      if (PR.ReadReal(PR.Current(), "Corner Point (X)", tempreal))
+      if (PR.ReadReal(tempreal,"Corner Point (X)"))
 	tempCorner.SetX(tempreal);
     }
   else  tempCorner.SetX(0.0);
 
   if (PR.DefinedElseSkip())
     {
-      //st = PR.ReadReal(PR.Current(), "Corner Point (Y)", tempreal); //szv#4:S4163:12Mar99 moved in if
-      if (PR.ReadReal(PR.Current(), "Corner Point (Y)", tempreal))
+      if (PR.ReadReal(tempreal,"Corner Point (Y)"))
 	tempCorner.SetY(tempreal);
     }
   else  tempCorner.SetY(0.0);
 
   if (PR.DefinedElseSkip())
     {
-      //st = PR.ReadReal(PR.Current(), "Corner Point (Z)", tempreal); //szv#4:S4163:12Mar99 moved in if
-      if (PR.ReadReal(PR.Current(), "Corner Point (Z)", tempreal))
+      if (PR.ReadReal(tempreal,"Corner Point (Z)"))
 	tempCorner.SetZ(tempreal);
     }
   else  tempCorner.SetZ(0.0);
 
   if (PR.DefinedElseSkip())
     {
-      //st = PR.ReadReal(PR.Current(), "Local X axis (I)", tempreal); //szv#4:S4163:12Mar99 moved in if
-      if (PR.ReadReal(PR.Current(), "Local X axis (I)", tempreal))
+      if (PR.ReadReal(tempreal,"Local X axis (I)"))
 	tempXAxis.SetX(tempreal);
     }
   else  tempXAxis.SetX(1.0);
 
   if (PR.DefinedElseSkip())
     {
-      //st = PR.ReadReal(PR.Current(), "Local X axis (J)", tempreal); //szv#4:S4163:12Mar99 moved in if
-      if (PR.ReadReal(PR.Current(), "Local X axis (J)", tempreal))
+      if (PR.ReadReal(tempreal,"Local X axis (J)"))
 	tempXAxis.SetY(tempreal);
     }
   else  tempXAxis.SetY(0.0);
 
   if (PR.DefinedElseSkip())
     {
-      //st = PR.ReadReal(PR.Current(), "Local X axis (K)", tempreal); //szv#4:S4163:12Mar99 moved in if
-      if (PR.ReadReal(PR.Current(), "Local X axis (K)", tempreal))
+      if (PR.ReadReal(tempreal,"Local X axis (K)"))
 	tempXAxis.SetZ(tempreal);
     }
   else  tempXAxis.SetZ(0.0);
 
   if (PR.DefinedElseSkip())
     {
-      //st = PR.ReadReal(PR.Current(), "Local Z axis (I)", tempreal); //szv#4:S4163:12Mar99 moved in if
-      if (PR.ReadReal(PR.Current(), "Local Z axis (I)", tempreal))
+      if (PR.ReadReal(tempreal,"Local Z axis (I)"))
 	tempZAxis.SetX(tempreal);
     }
   else  tempZAxis.SetX(0.0);
 
   if (PR.DefinedElseSkip())
     {
-      //st = PR.ReadReal(PR.Current(), "Local Z axis (J)", tempreal); //szv#4:S4163:12Mar99 moved in if
-      if (PR.ReadReal(PR.Current(), "Local Z axis (J)", tempreal))
+      if (PR.ReadReal(tempreal,"Local Z axis (J)"))
 	tempZAxis.SetY(tempreal);
     }
   else  tempZAxis.SetY(0.0);
 
   if (PR.DefinedElseSkip())
     {
-      //st = PR.ReadReal(PR.Current(), "Local Z axis (K)", tempreal); //szv#4:S4163:12Mar99 moved in if
-      if (PR.ReadReal(PR.Current(), "Local Z axis (K)", tempreal))
+      if (PR.ReadReal(tempreal,"Local Z axis (K)"))
 	tempZAxis.SetZ(tempreal);
     }
   else  tempZAxis.SetZ(1.0);

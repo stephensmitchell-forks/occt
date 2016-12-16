@@ -42,15 +42,11 @@ void IGESDraw_ToolViewsVisible::ReadOwnParams
   (const Handle(IGESDraw_ViewsVisible)& ent,
    const Handle(IGESData_IGESReaderData)& IR, IGESData_ParamReader& PR) const
 {
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
-
   Standard_Integer tempNbViewsVisible, tempNbDisplayedEntities;
   Handle(IGESDraw_HArray1OfViewKindEntity) tempViewEntities;
   Handle(IGESData_HArray1OfIGESEntity) tempDisplayEntity;
 
-  //st = PR.ReadInteger(PR.Current(), "Number Of Views Visible",
-			//tempNbViewsVisible); //szv#4:S4163:12Mar99 moved in if
-  if (PR.ReadInteger(PR.Current(), "Number Of Views Visible", tempNbViewsVisible)) {
+  if (PR.ReadInteger(tempNbViewsVisible,"Number Of Views Visible")) {
     // Initialise HArray1 only if there is no error reading its Length
     if (tempNbViewsVisible <= 0)
       PR.AddFail("Number Of Views Visible : Not Positive");
@@ -58,8 +54,7 @@ void IGESDraw_ToolViewsVisible::ReadOwnParams
   }
 
   if (PR.DefinedElseSkip())
-    PR.ReadInteger(PR.Current(), "Number of Entities Displayed",
-		   tempNbDisplayedEntities); //szv#4:S4163:12Mar99 `st=` not needed
+    PR.ReadInteger(tempNbDisplayedEntities,"Number of Entities Displayed");
   else {
     tempNbDisplayedEntities = 0;
     PR.AddWarning("Number of Entities Displayed : undefined, set to Zero");
@@ -74,10 +69,7 @@ void IGESDraw_ToolViewsVisible::ReadOwnParams
     Standard_Integer I;
     for (I = 1; I <= tempNbViewsVisible; I++) {
       Handle(IGESData_ViewKindEntity) tempViewEntity1;
-      //st = PR.ReadEntity(IR, PR.Current(), "View Entity",
-			   //STANDARD_TYPE(IGESData_ViewKindEntity), tempViewEntity1); //szv#4:S4163:12Mar99 moved in if
-      if (PR.ReadEntity(IR, PR.Current(), "View Entity",
-			STANDARD_TYPE(IGESData_ViewKindEntity), tempViewEntity1))
+      if (PR.ReadEntity(IR, "View Entity", STANDARD_TYPE(IGESData_ViewKindEntity), tempViewEntity1))
 	tempViewEntities->SetValue(I, tempViewEntity1);
     }
   }
@@ -86,18 +78,6 @@ void IGESDraw_ToolViewsVisible::ReadOwnParams
   if      (tempNbDisplayedEntities > 0) {
     PR.ReadEnts (IR,PR.CurrentList(tempNbDisplayedEntities),
 		 "Displayed Entities",tempDisplayEntity); //szv#4:S4163:12Mar99 `st=` not needed
-/*
-    tempDisplayEntity =
-      new IGESData_HArray1OfIGESEntity (1, tempNbDisplayedEntities);
-
-    Handle(IGESData_IGESEntity) tempEntity2;
-    Standard_Integer I;
-    for (I = 1; I <= tempNbDisplayedEntities; I++) {
-      st = PR.ReadEntity(IR, PR.Current(), "Displayed Entity",
-			 tempEntity2);
-      if (st) tempDisplayEntity->SetValue(I, tempEntity2);
-    }
-*/
   }
 
   DirChecker(ent).CheckTypeAndForm(PR.CCheck(),ent);
@@ -127,15 +107,6 @@ void  IGESDraw_ToolViewsVisible::OwnShared
   for (I = 1; I <= up; I++)
     iter.GetOneItem(ent->ViewItem(I));
 //  Displayed -> Implied
-}
-
-void  IGESDraw_ToolViewsVisible::OwnImplied
-  (const Handle(IGESDraw_ViewsVisible)& ent, Interface_EntityIterator& iter) const
-{
-  Standard_Integer I,up;
-  up  = ent->NbDisplayedEntities();
-  for (I = 1; I <= up; I++)
-    iter.GetOneItem(ent->DisplayedEntity(I));
 }
 
 

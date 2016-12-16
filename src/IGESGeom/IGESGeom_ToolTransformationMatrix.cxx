@@ -44,21 +44,13 @@ void IGESGeom_ToolTransformationMatrix::ReadOwnParams
   (const Handle(IGESGeom_TransformationMatrix)& ent,
    const Handle(IGESData_IGESReaderData)& /*IR*/, IGESData_ParamReader& PR) const
 {
-  // MGE 03/08/98
-
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
-  Standard_Real    temp;
   Handle(TColStd_HArray2OfReal) aMatrix = new TColStd_HArray2OfReal(1,3,1,4);
 
   for (Standard_Integer I = 1; I <= 3; I++) {
     for (Standard_Integer J = 1; J <= 4; J++) {
-      //st = PR.ReadReal(PR.Current(), Msg215, temp); //szv#4:S4163:12Mar99 moved in if
-      //st = PR.ReadReal(PR.Current(), "Matrix Elements", temp);
-      if (PR.ReadReal(PR.Current(), temp))
-	aMatrix->SetValue(I, J, temp);
-      else{
-	Message_Msg Msg215("XSTEP_215");
-	PR.SendFail(Msg215);
+      if (!PR.ReadReal(aMatrix->ChangeValue(I, J))) {
+        Message_Msg Msg215("XSTEP_215");
+        PR.SendFail(Msg215);
       }
     }
   }

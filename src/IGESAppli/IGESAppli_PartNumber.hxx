@@ -33,43 +33,40 @@ class IGESAppli_PartNumber : public IGESData_IGESEntity
 {
  public:
 
+  Standard_EXPORT virtual Standard_Integer TypeNumber() const Standard_OVERRIDE { return 406; }
+
+  Standard_EXPORT virtual Standard_Integer FormNumber() const Standard_OVERRIDE { return 9; }
+
   IGESAppli_PartNumber() {}
-  
-  //! This method is used to set the fields of the class
-  //! PartNumber
-  //! - nbPropVal : number of property values, always = 4
-  //! - aGenName  : Generic part number or name
-  //! - aMilName  : Military Standard (MIL-STD) part number
-  //! - aVendName : Vendor part number or name
-  //! - anIntName : Internal part number
-  Standard_EXPORT void Init (const Standard_Integer nbPropVal, const Handle(TCollection_HAsciiString)& aGenName, const Handle(TCollection_HAsciiString)& aMilName, const Handle(TCollection_HAsciiString)& aVendName, const Handle(TCollection_HAsciiString)& anIntName);
-  
-  //! returns number of property values, always = 4
-  Standard_Integer NbPropertyValues() const { return theNbPropertyValues; }
 
   //! returns Generic part number or name
-  const Handle(TCollection_HAsciiString) & GenericNumber() const { return theGenericNumber; }
+  const Handle(TCollection_HAsciiString) & GenericNumber() const { return myGenericNumber; }
 
   //! returns Military Standard (MIL-STD) part number
-  const Handle(TCollection_HAsciiString) & MilitaryNumber() const { return theMilitaryNumber; }
+  const Handle(TCollection_HAsciiString) & MilitaryNumber() const { return myMilitaryNumber; }
 
   //! returns Vendor part number or name
-  const Handle(TCollection_HAsciiString) & VendorNumber() const { return theVendorNumber; }
+  const Handle(TCollection_HAsciiString) & VendorNumber() const { return myVendorNumber; }
 
   //! returns Internal part number
-  const Handle(TCollection_HAsciiString) & InternalNumber() const { return theInternalNumber; }
+  const Handle(TCollection_HAsciiString) & InternalNumber() const { return myInternalNumber; }
 
-  Standard_EXPORT virtual void OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &) const Standard_OVERRIDE;
+  Standard_EXPORT virtual void OwnRead (IGESFile_Reader &) Standard_OVERRIDE;
+  
+  Standard_EXPORT virtual void OwnWrite (IGESData_IGESWriter &) const Standard_OVERRIDE;
+
+  Standard_EXPORT virtual IGESData_DirChecker DirChecker () const Standard_OVERRIDE;
+
+  Standard_EXPORT virtual void OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &, const Standard_Integer) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESAppli_PartNumber,IGESData_IGESEntity)
 
  private:
 
-  Standard_Integer theNbPropertyValues;
-  Handle(TCollection_HAsciiString) theGenericNumber;
-  Handle(TCollection_HAsciiString) theMilitaryNumber;
-  Handle(TCollection_HAsciiString) theVendorNumber;
-  Handle(TCollection_HAsciiString) theInternalNumber;
+  Handle(TCollection_HAsciiString) myGenericNumber;
+  Handle(TCollection_HAsciiString) myMilitaryNumber;
+  Handle(TCollection_HAsciiString) myVendorNumber;
+  Handle(TCollection_HAsciiString) myInternalNumber;
 };
 
 #endif // _IGESAppli_PartNumber_HeaderFile

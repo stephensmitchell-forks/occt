@@ -42,20 +42,14 @@ void  IGESSolid_ToolToroidalSurface::ReadOwnParams
   Standard_Real majRad, minRad;
   Handle(IGESGeom_Direction) tempAxis;            // default Unparametrised
   Handle(IGESData_IGESEntity) tempRefdir;          // default Unparametrised
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
 
-  PR.ReadEntity(IR, PR.Current(), "Center point",
-		STANDARD_TYPE(IGESGeom_Point), tempCenter); //szv#4:S4163:12Mar99 `st=` not needed
-
-  PR.ReadEntity(IR, PR.Current(), "Axis direction",
-		STANDARD_TYPE(IGESGeom_Direction), tempAxis); //szv#4:S4163:12Mar99 `st=` not needed
-
-  PR.ReadReal(PR.Current(), "Major Radius", majRad); //szv#4:S4163:12Mar99 `st=` not needed
-
-  PR.ReadReal(PR.Current(), "Minor Radius", minRad); //szv#4:S4163:12Mar99 `st=` not needed
+  PR.ReadEntity(IR, "Center point", STANDARD_TYPE(IGESGeom_Point), tempCenter);
+  PR.ReadEntity(IR, "Axis direction", STANDARD_TYPE(IGESGeom_Direction), tempAxis);
+  PR.ReadReal(majRad,"Major Radius");
+  PR.ReadReal(minRad,"Minor Radius");
 
   if (ent->FormNumber() == 1)      // Parametrised surface
-    PR.ReadEntity(IR, PR.Current(), "Reference direction", tempRefdir); //szv#4:S4163:12Mar99 `st=` not needed
+    PR.ReadEntity(IR, "Reference direction", tempRefdir);
 
   DirChecker(ent).CheckTypeAndForm(PR.CCheck(),ent);
   ent->Init (tempCenter, tempAxis, majRad, minRad, Handle(IGESGeom_Direction)::DownCast (tempRefdir));

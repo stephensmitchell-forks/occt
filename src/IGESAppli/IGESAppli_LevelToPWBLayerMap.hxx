@@ -36,21 +36,11 @@ class IGESAppli_LevelToPWBLayerMap : public IGESData_IGESEntity
 {
  public:
 
-  IGESAppli_LevelToPWBLayerMap() {}
-  
-  //! This method is used to set the fields of the class
-  //! LevelToPWBLayerMap
-  //! - nbPropVal       : Number of property values
-  //! - allExchLevels   : Exchange File Level Numbers
-  //! - allNativeLevels : Native Level Identifications
-  //! - allPhysLevels   : Physical Layer Numbers
-  //! - allExchIdents   : Exchange File Level Identifications
-  //! raises exception if allExchLevels, allNativeLevels, allPhysLevels
-  //! and all ExchIdents are not of same dimensions
-  Standard_EXPORT void Init (const Standard_Integer nbPropVal, const Handle(TColStd_HArray1OfInteger)& allExchLevels, const Handle(Interface_HArray1OfHAsciiString)& allNativeLevels, const Handle(TColStd_HArray1OfInteger)& allPhysLevels, const Handle(Interface_HArray1OfHAsciiString)& allExchIdents);
-  
-  //! returns number of property values
-  Standard_Integer NbPropertyValues() const { return theNbPropertyValues; }
+  Standard_EXPORT virtual Standard_Integer TypeNumber() const Standard_OVERRIDE { return 406; }
+
+  Standard_EXPORT virtual Standard_Integer FormNumber() const Standard_OVERRIDE { return 24; }
+
+  IGESAppli_LevelToPWBLayerMap() : myNbPropertyValues(0) {}
 
   //! returns number of level to layer definitions
   Standard_EXPORT Standard_Integer NbLevelToLayerDefs() const;
@@ -69,15 +59,23 @@ class IGESAppli_LevelToPWBLayerMap : public IGESData_IGESEntity
   
   Standard_EXPORT const Handle(TCollection_HAsciiString) & ExchangeFileLevelIdent (const Standard_Integer Index) const;
 
+  Standard_EXPORT virtual void OwnRead (IGESFile_Reader &) Standard_OVERRIDE;
+  
+  Standard_EXPORT virtual void OwnWrite (IGESData_IGESWriter &) const Standard_OVERRIDE;
+
+  Standard_EXPORT virtual IGESData_DirChecker DirChecker () const Standard_OVERRIDE;
+
+  Standard_EXPORT virtual void OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &, const Standard_Integer) const Standard_OVERRIDE;
+
   DEFINE_STANDARD_RTTIEXT(IGESAppli_LevelToPWBLayerMap,IGESData_IGESEntity)
 
  private:
 
-  Standard_Integer theNbPropertyValues;
-  Handle(TColStd_HArray1OfInteger) theExchangeFileLevelNumber;
-  Handle(Interface_HArray1OfHAsciiString) theNativeLevel;
-  Handle(TColStd_HArray1OfInteger) thePhysicalLayerNumber;
-  Handle(Interface_HArray1OfHAsciiString) theExchangeFileLevelIdent;
+  Standard_Integer myNbPropertyValues;
+  Handle(TColStd_HArray1OfInteger) myExchangeFileLevelNumber;
+  Handle(Interface_HArray1OfHAsciiString) myNativeLevel;
+  Handle(TColStd_HArray1OfInteger) myPhysicalLayerNumber;
+  Handle(Interface_HArray1OfHAsciiString) myExchangeFileLevelIdent;
 };
 
 #endif // _IGESAppli_LevelToPWBLayerMap_HeaderFile

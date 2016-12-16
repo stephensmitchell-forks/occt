@@ -17,27 +17,12 @@
 #ifndef _IGESDefs_AttributeDef_HeaderFile
 #define _IGESDefs_AttributeDef_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
-#include <Standard_Integer.hxx>
-#include <TColStd_HArray1OfInteger.hxx>
-#include <TColStd_HArray1OfTransient.hxx>
 #include <IGESData_IGESEntity.hxx>
-#include <Standard_Boolean.hxx>
-#include <Standard_Real.hxx>
 class TCollection_HAsciiString;
+class TColStd_HArray1OfInteger;
+class TColStd_HArray1OfTransient;
 class IGESDefs_HArray1OfHArray1OfTextDisplayTemplate;
-class Standard_DimensionMismatch;
-class Standard_OutOfRange;
-class Standard_NullObject;
 class IGESGraph_TextDisplayTemplate;
-class Standard_Transient;
-class IGESData_IGESEntity;
-
-
-class IGESDefs_AttributeDef;
-DEFINE_STANDARD_HANDLE(IGESDefs_AttributeDef, IGESData_IGESEntity)
 
 //! defines IGES Attribute Table Definition Entity,
 //! Type <322> Form [0, 1, 2] in package IGESDefs.
@@ -46,24 +31,27 @@ DEFINE_STANDARD_HANDLE(IGESDefs_AttributeDef, IGESData_IGESEntity)
 //! or a single row of attributes.
 class IGESDefs_AttributeDef : public IGESData_IGESEntity
 {
+ public:
 
-public:
+  Standard_EXPORT virtual Standard_Integer TypeNumber() const Standard_OVERRIDE { return 322; }
 
-  
-  Standard_EXPORT IGESDefs_AttributeDef();
-  
-  Standard_EXPORT void Init (const Handle(TCollection_HAsciiString)& aName, const Standard_Integer aListType, const Handle(TColStd_HArray1OfInteger)& attrTypes, const Handle(TColStd_HArray1OfInteger)& attrValueDataTypes, const Handle(TColStd_HArray1OfInteger)& attrValueCounts, const Handle(TColStd_HArray1OfTransient)& attrValues, const Handle(IGESDefs_HArray1OfHArray1OfTextDisplayTemplate)& attrValuePointers);
+  Standard_EXPORT virtual Standard_Integer FormNumber() const Standard_OVERRIDE { return myForm; }
+
+  IGESDefs_AttributeDef(const Standard_Integer theForm)
+  : myForm(theForm),
+    theListType(0)
+  {}
   
   //! Returns True if a Table Name is defined
-  Standard_EXPORT Standard_Boolean HasTableName() const;
-  
+  Standard_Boolean HasTableName() const { return (!theName.IsNull()); }
+
   //! returns the Attribute Table name, or comment
   //! (default = null, no name : seeHasTableName)
-  Standard_EXPORT Handle(TCollection_HAsciiString) TableName() const;
-  
+  const Handle(TCollection_HAsciiString) & TableName() const { return theName; }
+
   //! returns the Attribute List Type
-  Standard_EXPORT Standard_Integer ListType() const;
-  
+  Standard_Integer ListType() const { return theListType; }
+
   //! returns the Number of Attributes
   Standard_EXPORT Standard_Integer NbAttributes() const;
   
@@ -80,11 +68,11 @@ public:
   Standard_EXPORT Standard_Integer AttributeValueCount (const Standard_Integer num) const;
   
   //! returns false if Values are defined (i.e. for Form = 1 or 2)
-  Standard_EXPORT Standard_Boolean HasValues() const;
-  
+  Standard_Boolean HasValues() const { return (!theAttrValues.IsNull()); }
+
   //! returns false if TextDisplays are defined (i.e. for Form = 2)
-  Standard_EXPORT Standard_Boolean HasTextDisplay() const;
-  
+  Standard_Boolean HasTextDisplay() const { return (!theAttrValuePointers.IsNull()); }
+
   Standard_EXPORT Handle(IGESGraph_TextDisplayTemplate) AttributeTextDisplay (const Standard_Integer AttrNum, const Standard_Integer PointerNum) const;
   
   //! Returns the List of Attributes <AttrNum>, as a Transient.
@@ -114,19 +102,23 @@ public:
   //! Error if Indices out of Range, or no Value defined, or not a Logical
   Standard_EXPORT Standard_Boolean AttributeAsLogical (const Standard_Integer AttrNum, const Standard_Integer ValueNum) const;
 
+  Standard_EXPORT virtual void OwnRead (IGESFile_Reader &) Standard_OVERRIDE;
+  
+  Standard_EXPORT virtual void OwnWrite (IGESData_IGESWriter &) const Standard_OVERRIDE;
 
+  Standard_EXPORT virtual void OwnShared (Interface_EntityIterator& iter) const Standard_OVERRIDE;
 
+  Standard_EXPORT virtual IGESData_DirChecker DirChecker () const Standard_OVERRIDE;
+
+  Standard_EXPORT virtual void OwnCheck (const Interface_ShareTool &, Handle(Interface_Check) &) const Standard_OVERRIDE;
+
+  Standard_EXPORT virtual void OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &, const Standard_Integer) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESDefs_AttributeDef,IGESData_IGESEntity)
 
-protected:
+ private:
 
-
-
-
-private:
-
-
+  Standard_Integer myForm;
   Handle(TCollection_HAsciiString) theName;
   Standard_Integer theListType;
   Handle(TColStd_HArray1OfInteger) theAttrTypes;
@@ -134,14 +126,6 @@ private:
   Handle(TColStd_HArray1OfInteger) theAttrValueCounts;
   Handle(TColStd_HArray1OfTransient) theAttrValues;
   Handle(IGESDefs_HArray1OfHArray1OfTextDisplayTemplate) theAttrValuePointers;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESDefs_AttributeDef_HeaderFile

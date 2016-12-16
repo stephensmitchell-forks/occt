@@ -43,7 +43,7 @@ static Standard_Integer thenp0 = -1;
 
 Interface_FileReaderData::Interface_FileReaderData (const Standard_Integer nbr, 
 						    const Standard_Integer npar)
-     : therrload (0), thenumpar (0,nbr), theents (0,nbr) 
+     : thenumpar (0,nbr), theents (0,nbr) 
 {
   theparams = new Interface_ParamSet (npar);
   thenumpar.Init(0);
@@ -174,21 +174,11 @@ Interface_FileReaderData::Interface_FileReaderData (const Standard_Integer nbr,
   (const Standard_Integer num) const
       {  return thenumpar(num);  }
 
-    void  Interface_FileReaderData::SetErrorLoad (const Standard_Boolean val)
-      {  therrload = (val ? 1 : -1);  }
-
-    Standard_Boolean  Interface_FileReaderData::IsErrorLoad () const
-      {  return (therrload != 0);  }
-
-    Standard_Boolean  Interface_FileReaderData::ResetErrorLoad ()
-      {  Standard_Boolean res = (therrload > 0); therrload = 0;  return res;  }
-
 //  ....        Gestion des Entites Associees aux Donnees du Fichier       ....
 
 
 const Handle(Standard_Transient)& Interface_FileReaderData::BoundEntity
        (const Standard_Integer num) const
-       //      {  return theents(num);  }
 { 
   if (num >= theents.Lower() && num <= theents.Upper()) {
     return theents(num);
@@ -198,47 +188,11 @@ const Handle(Standard_Transient)& Interface_FileReaderData::BoundEntity
     return dummy;
   }
 }
-/*  //static Handle(Standard_Transient) dummy;
-  {
-  //smh#10 Protection. If iges entity does not exist, return null pointer.
-    try {
-      OCC_CATCH_SIGNALS
-      Handle(Standard_Transient) temp = theents.Value(num);
-    }
-  ////sln 21.01.2002 OCC133: Exception handling 
- // catch (Standard_OutOfRange) {
- //   cout<<" Catch of sln"<<endl;
-    
- //   return dummy;
- // }
-    catch (Standard_Failure) {
-      
-    // some work-around, the best would be to modify CDL to
-    // return "Handle(Standard_Transient)" not "const Handle(Standard_Transient)&"
-      static Handle(Standard_Transient) dummy;
-     // cout<<" Catch of smh"<<endl;
-    return dummy;
-    }
-  }
-   //cout<<" Normal"<<endl;
-  if (theents.Value(num).IsImmutable()) cout << "IMMUTABLE:"<<num<<endl;
-  return theents(num); 
-}
-*/
 
 void Interface_FileReaderData::BindEntity
    (const Standard_Integer num, const Handle(Standard_Transient)& ent)
-//      {  theents.SetValue(num,ent);  }
 {
-//  #ifdef OCCT_DEBUG
-//    if (ent.IsImmutable())
-//      cout << "Bind IMMUTABLE:"<<num<<endl;
-//  #endif
   theents.SetValue(num,ent);
-}
-
-void Interface_FileReaderData::Destroy ()
-{
 }
 
 

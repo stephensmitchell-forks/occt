@@ -40,8 +40,6 @@ void  IGESDimen_ToolLeaderArrow::ReadOwnParams
   (const Handle(IGESDimen_LeaderArrow)& ent,
    const Handle(IGESData_IGESReaderData)& /* IR */, IGESData_ParamReader& PR) const
 { 
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 moved down
-
   Standard_Real arrowHeadHeight; 
   Standard_Real arrowHeadWidth; 
   Standard_Real zDepth; 
@@ -49,25 +47,21 @@ void  IGESDimen_ToolLeaderArrow::ReadOwnParams
   Handle(TColgp_HArray1OfXY) segmentTails;
   Standard_Integer nbval;
 
-  Standard_Boolean st = PR.ReadInteger( PR.Current(), "Count of Segments", nbval);
+  Standard_Boolean st = PR.ReadInteger(nbval,"Count of Segments");
   if (st && nbval > 0)
     segmentTails = new TColgp_HArray1OfXY(1,nbval);
   else  PR.AddFail("Count of Segments: Not Positive");
 
-  //szv#4:S4163:12Mar99 `st=` not needed
-  PR.ReadReal(PR.Current(), "Arrow Head Height", arrowHeadHeight);
-  PR.ReadReal(PR.Current(), "Arrow Head Width", arrowHeadWidth);
-  PR.ReadReal(PR.Current(), "Z Depth", zDepth);
-  PR.ReadXY(PR.CurrentList(1, 2), "Arrow Head Position", arrowHead);
+  PR.ReadReal(arrowHeadHeight,"Arrow Head Height");
+  PR.ReadReal(arrowHeadWidth,"Arrow Head Width");
+  PR.ReadReal(zDepth,"Z Depth");
+  PR.ReadXY(arrowHead,"Arrow Head Position");
 
   if (! segmentTails.IsNull())
     {
       for (Standard_Integer i = 1; i <= nbval; i++)
 	{
-          gp_XY tempXY;
-          //st = PR.ReadXY(PR.CurrentList(1, 2), "Segment Co-ords.", tempXY); //szv#4:S4163:12Mar99 moved in if
-	  if (PR.ReadXY(PR.CurrentList(1, 2), "Segment Co-ords.", tempXY))
-	    segmentTails->SetValue(i, tempXY);
+	  PR.ReadXY(segmentTails->ChangeValue(i),"Segment Co-ords.");
 	}
       DirChecker(ent).CheckTypeAndForm(PR.CCheck(),ent);
       ent->Init (arrowHeadHeight, arrowHeadWidth, zDepth, arrowHead, segmentTails);

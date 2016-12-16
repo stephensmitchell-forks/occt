@@ -55,26 +55,14 @@ void IGESGeom_ToolPlane::ReadOwnParams(const Handle(IGESGeom_Plane)& ent,
   Handle(IGESData_IGESEntity) aCurve;
   gp_XYZ attach (0.,0.,0.);
   IGESData_Status aStatus;
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
 
-/*  PR.ReadReal(PR.Current(), Msg135, A); //szv#4:S4163:12Mar99 `st=` not needed
-  PR.ReadReal(PR.Current(), Msg135, B); //szv#4:S4163:12Mar99 `st=` not needed
-  PR.ReadReal(PR.Current(), Msg135, C); //szv#4:S4163:12Mar99 `st=` not needed
-  PR.ReadReal(PR.Current(), Msg135, D); //szv#4:S4163:12Mar99 `st=` not needed
-*/
-  if ((!PR.ReadReal(PR.Current(),A)) || (!PR.ReadReal(PR.Current(),B)) ||
-      (!PR.ReadReal(PR.Current(),C)) || (!PR.ReadReal(PR.Current(),D))){
+  if ((!PR.ReadReal(A)) || (!PR.ReadReal(B)) ||
+      (!PR.ReadReal(C)) || (!PR.ReadReal(D))){
     Message_Msg Msg135("XSTEP_135");
     PR.SendFail(Msg135);
   }
-/*
-  st = PR.ReadReal(PR.Current(), "Coefficient Of Plane", A);
-  st = PR.ReadReal(PR.Current(), "Coefficient Of Plane", B);
-  st = PR.ReadReal(PR.Current(), "Coefficient Of Plane", C);
-  st = PR.ReadReal(PR.Current(), "Coefficient Of Plane", D);
-*/
   if (PR.IsParamDefined(PR.CurrentNumber())) {
-    if (!PR.ReadEntity(IR, PR.Current(), aStatus, aCurve,Standard_True)){
+    if (!PR.ReadEntity(IR, aStatus, aCurve,Standard_True)) {
       Message_Msg Msg136("XSTEP_136");
       switch(aStatus) {
       case IGESData_ReferenceError: {  
@@ -91,26 +79,17 @@ void IGESGeom_ToolPlane::ReadOwnParams(const Handle(IGESGeom_Plane)& ent,
       }
       }
     }
-  } //szv#4:S4163:12Mar99 `st=` not needed
-    //st = PR.ReadEntity(IR, PR.Current(), "Bounding Curve", aCurve,Standard_True);
+  }
 //  en principe exige si FormNumber != 0 ... cf OwnCheck (Load accepte)
 
   if (PR.IsParamDefined(PR.CurrentNumber())) {
-    Message_Msg Msg139("XSTEP_139");
-   
-    PR.ReadXYZ(PR.CurrentList(1, 3), Msg139, attach); //szv#4:S4163:12Mar99 `st=` not needed
-    //st = PR.ReadXYZ(PR.CurrentList(1, 3), "Coord of DisplaySymbol", attach);
+    PR.ReadXYZ(attach);
 
-    if (!PR.ReadReal(PR.Current(), aSize)){
+    if (!PR.ReadReal(aSize)){
       Message_Msg Msg138("XSTEP_138");
       PR.SendFail(Msg138);
-    } //szv#4:S4163:12Mar99 `st=` not needed
-    //st = PR.ReadReal(PR.Current(), "DisplaySymbol Size", aSize);
-  }// else {
-   /* for (int i = 1; i <= 4; i ++) st = PR.DefinedElseSkip();
-    PR.AddWarning("Display Symbol not defined at all");
-   */ 
- // }
+    }
+  }
 
   DirChecker(ent).CheckTypeAndForm(PR.CCheck(),ent);
   ent->Init(A, B, C, D, aCurve, attach, aSize);

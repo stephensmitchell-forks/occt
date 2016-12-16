@@ -17,26 +17,54 @@
 //--------------------------------------------------------------------
 
 #include <IGESGraph_IntercharacterSpacing.hxx>
-#include <Standard_Type.hxx>
+#include <IGESFile_Reader.hxx>
+#include <IGESData_IGESWriter.hxx>
+#include <IGESData_DirChecker.hxx>
+#include <Message_Messenger.hxx>
+#include <IGESData_IGESDumper.hxx>
+#include <IGESData_Dump.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESGraph_IntercharacterSpacing,IGESData_IGESEntity)
 
-IGESGraph_IntercharacterSpacing::IGESGraph_IntercharacterSpacing ()    {  }
+void IGESGraph_IntercharacterSpacing::OwnRead (IGESFile_Reader &PR)
+{ 
+  Standard_Integer aNbPropertyValues = 0;
+  PR.ReadInteger(aNbPropertyValues,"No. of property values");
+  if (aNbPropertyValues != 1)
+    PR.AddFail("No. of Property values : Value is not 1");
 
-    void IGESGraph_IntercharacterSpacing::Init
-  (const Standard_Integer nbProps, const Standard_Real anISpace)
-{
-  theNbPropertyValues = nbProps;
-  theISpace           = anISpace;
-  InitTypeAndForm(406,18);
+  PR.ReadReal(myISpace,"Intercharacter space in % of text height");
 }
 
-    Standard_Integer IGESGraph_IntercharacterSpacing::NbPropertyValues () const
-{
-  return theNbPropertyValues;
+void IGESGraph_IntercharacterSpacing::OwnWrite (IGESData_IGESWriter& IW) const
+{ 
+  IW.Send(1);
+  IW.Send(myISpace);
 }
 
-    Standard_Real IGESGraph_IntercharacterSpacing::ISpace () const
+IGESData_DirChecker IGESGraph_IntercharacterSpacing::DirChecker () const
+{ 
+  IGESData_DirChecker DC (406, 18);
+  DC.Structure(IGESData_DefVoid);
+  DC.LineFont(IGESData_DefVoid);
+  DC.LineWeight(IGESData_DefVoid);
+  DC.Color(IGESData_DefVoid);
+  DC.BlankStatusIgnored();
+  DC.UseFlagIgnored();
+  DC.HierarchyStatusIgnored();
+  return DC;
+}
+
+void IGESGraph_IntercharacterSpacing::OwnCheck (const Interface_ShareTool &, Handle(Interface_Check) &ach) const
 {
-  return theISpace;
+  if ((myISpace < 0.0) || (myISpace > 100.0))
+    ach->AddFail("Intercharacter Space : Value not in the range [0-100]");
+}
+
+void IGESGraph_IntercharacterSpacing::OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &S, const Standard_Integer) const
+{
+  S << "IGESGraph_IntercharacterSpacing" << endl;
+  S << "No. of property values : 1" << endl;
+  S << "Intercharacter space in % of text height : " << myISpace << endl;
+  S << endl;
 }

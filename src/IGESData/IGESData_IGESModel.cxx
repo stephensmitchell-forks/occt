@@ -44,19 +44,6 @@ void IGESData_VerifyDate
 
 
 //=======================================================================
-//function : IGESData_IGESModel
-//purpose  : 
-//=======================================================================
-
-IGESData_IGESModel::IGESData_IGESModel ()
-{
-  thestart = new TColStd_HSequenceOfHAsciiString();
-//  thecheckstx = new Interface_Check;
-//  thechecksem = new Interface_Check;
-}
-
-
-//=======================================================================
 //function : ClearHeader
 //purpose  : 
 //=======================================================================
@@ -77,7 +64,7 @@ void IGESData_IGESModel::ClearHeader ()
 void IGESData_IGESModel::DumpHeader
   (const Handle(Message_Messenger)& S, const Standard_Integer ) const
 {
-  Standard_Integer ns = thestart->Length();
+  const Standard_Integer ns = thestart->Length();
   S<<"****    Dump of IGES Model , Start and Global Sections   ****"<<endl;
   if (ns > 0) {
     S << "****    Start Section : "<<ns<<" Line(s)   ****\n";
@@ -112,10 +99,6 @@ void IGESData_IGESModel::DumpHeader
   if (!str.IsNull()) S<<"[12]  Receiver              : "<<str->ToCString()<<"\n";
   S << "[13]  Scale                 : " << theheader.Scale()<<"\n";
   S << "[14]  Unit  Flag            : " << theheader.UnitFlag();
-//  if (Interface_Static::IVal("read.scale.unit") == 1)
-    //#73 rln 10.03.99 S4135: "read.scale.unit" does not affect GlobalSection
-//    S    << "    -> Value (in Meter) = " << theheader.UnitValue() / 1000 <<"\n";
-//  else S << "    -> Value (in Millimeter) = " << theheader.UnitValue()<<"\n";
   //abv 02 Mar 00: no unit parameter in OCC
   S << "    -> Value (in CASCADE units) = " << theheader.UnitValue() <<"\n";
   
@@ -162,119 +145,11 @@ void IGESData_IGESModel::DumpHeader
 
 
 //=======================================================================
-//function : StartSection
-//purpose  : 
-//=======================================================================
-
-Handle(TColStd_HSequenceOfHAsciiString) IGESData_IGESModel::StartSection
-       () const
-{  return thestart;  }
-
-
-//=======================================================================
-//function : NbStartLines
-//purpose  : 
-//=======================================================================
-
-Standard_Integer IGESData_IGESModel::NbStartLines () const
-{  return thestart->Length();  }
-
-
-//=======================================================================
-//function : StartLine
-//purpose  : 
-//=======================================================================
-
-Standard_CString IGESData_IGESModel::StartLine
-  (const Standard_Integer num) const
-{
-  if (num > 0 && num <= thestart->Length()) return
-    thestart->Value(num)->ToCString();
-  return voidline;
-}
-
-
-//=======================================================================
-//function : ClearStartSection
-//purpose  : 
-//=======================================================================
-
-void   IGESData_IGESModel::ClearStartSection ()
-      {  thestart->Clear();  }
-
-    void   IGESData_IGESModel::SetStartSection
-  (const Handle(TColStd_HSequenceOfHAsciiString)& list,
-   const Standard_Boolean copy)
-{
-  if (copy) {
-    thestart = new TColStd_HSequenceOfHAsciiString();
-    if (list.IsNull()) return;
-    Standard_Integer i, nb = list->Length();
-    for (i = 1; i <= nb; i ++) thestart->Append
-      (new TCollection_HAsciiString(list->Value(i)->ToCString()));
-  }
-  else if (list.IsNull()) thestart = new TColStd_HSequenceOfHAsciiString();
-  else thestart = list;
-}
-
-
-//=======================================================================
-//function : AddStartLine
-//purpose  : 
-//=======================================================================
-
-void   IGESData_IGESModel::AddStartLine
-  (const Standard_CString line, const Standard_Integer atnum)
-{
-  if (atnum <= 0 || atnum > thestart->Length())
-    thestart->Append (new TCollection_HAsciiString(line));
-  else thestart->InsertBefore (atnum,new TCollection_HAsciiString(line));
-}
-
-
-//=======================================================================
-//function : ApplyStatic
-//purpose  : 
-//=======================================================================
-
-Standard_Boolean  IGESData_IGESModel::ApplyStatic
-  (const Standard_CString param)
-{
-  if (param[0] == '\0') {
-    //Standard_Boolean ret = Standard_True; //szv#4:S4163:12Mar99 not needed
-    ApplyStatic("receiver"); //szv#4:S4163:12Mar99 'ret =' not needed
-    ApplyStatic("author"); //szv#4:S4163:12Mar99 'ret =' not needed
-    ApplyStatic("company"); //szv#4:S4163:12Mar99 'ret =' not needed
-    return Standard_True;
-  }
-
-  Standard_CString val;
-  if (param[0] == 'r') {
-    val = Interface_Static::CVal("write.iges.header.receiver");
-    if (!val || val[0] == '\0') return Standard_False;
-    theheader.SetReceiveName (new TCollection_HAsciiString(val));
-  }
-  if (param[0] == 'a') {
-    val = Interface_Static::CVal("write.iges.header.author");
-    if (!val || val[0] == '\0') return Standard_False;
-    theheader.SetAuthorName (new TCollection_HAsciiString(val));
-  }
-  if (param[0] == 'c') {
-    val = Interface_Static::CVal("write.iges.header.company");
-    if (!val || val[0] == '\0') return Standard_False;
-    theheader.SetCompanyName (new TCollection_HAsciiString(val));
-  }
-  return Standard_True;
-}
-
-
-//=======================================================================
 //function : Entity
 //purpose  : 
 //=======================================================================
 
-Handle(IGESData_IGESEntity) IGESData_IGESModel::Entity
-  (const Standard_Integer num) const
+Handle(IGESData_IGESEntity) IGESData_IGESModel::Entity (const Standard_Integer num) const
 {  return GetCasted(IGESData_IGESEntity,Value(num));  }
 
 
@@ -283,8 +158,7 @@ Handle(IGESData_IGESEntity) IGESData_IGESModel::Entity
 //purpose  : 
 //=======================================================================
 
-Standard_Integer  IGESData_IGESModel::DNum
-  (const Handle(IGESData_IGESEntity)& ent) const
+Standard_Integer  IGESData_IGESModel::DNum (const Handle(IGESData_IGESEntity)& ent) const
 {
   Standard_Integer num = Number(ent);
   if (num == 0) return 0;
@@ -301,7 +175,13 @@ void IGESData_IGESModel::GetFromAnother (const Handle(IGESData_IGESModel)& other
 {
   theheader = other->GlobalSection();
   theheader.CopyRefs();
-  SetStartSection (other->StartSection(),Standard_True);
+
+  thestart = new TColStd_HSequenceOfHAsciiString();
+  const Handle(TColStd_HSequenceOfHAsciiString)& list = other->thestart;
+  if (list.IsNull()) return;
+  Standard_Integer i, nb = list->Length();
+  for (i = 1; i <= nb; i ++) thestart->Append
+    (new TCollection_HAsciiString(list->Value(i)->ToCString()));
 }
 
 
@@ -503,22 +383,6 @@ void IGESData_VerifyDate(const Handle(TCollection_HAsciiString)& str,
 
 
 //=======================================================================
-//function : SetLineWeights
-//purpose  : 
-//=======================================================================
-
-void IGESData_IGESModel::SetLineWeights (const Standard_Real defw)
-{
-  Standard_Integer nb  = NbEntities();
-  Standard_Integer lwg = theheader.LineWeightGrad();
-  Standard_Real maxw   = theheader.MaxLineWeight();
-  if (lwg > 0) {  maxw = maxw/lwg; lwg = 1;  }
-   for (Standard_Integer i = 1; i <= nb; i ++)
-     Entity(i)->SetLineWeight(defw,maxw,lwg);
-}
-
-
-//=======================================================================
 //function : ClearLabels
 //purpose  : 
 //=======================================================================
@@ -560,27 +424,6 @@ void  IGESData_IGESModel::PrintToLog
     if (num == 0) S<<"??";
     else {
       S<<" DE : "<<(2*num-1) << " type : " << igesent->TypeNumber();
-//      Standard_Integer num2 = igesent->TypeNumber();
-    }
-  }
-}
-
-
-//=======================================================================
-//function : PrintInfo
-//purpose  : 
-//=======================================================================
-
-void  IGESData_IGESModel::PrintInfo
-  (const Handle(Standard_Transient)& ent, const Handle(Message_Messenger)& S) const
-{
-  DeclareAndCast(IGESData_IGESEntity,igesent,ent);
-  if (igesent.IsNull()) S<<"(NOT IGES)";
-  else {
-    Standard_Integer num = Number(ent);
-    if (num == 0) S<<"??";
-    else  {
-      S<<(2*num-1) << "type " << Type(ent)->Name();
     }
   }
 }

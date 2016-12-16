@@ -15,13 +15,8 @@
 #include <IGESBasic.hxx>
 #include <IGESBasic_GeneralModule.hxx>
 #include <IGESBasic_Protocol.hxx>
-#include <IGESBasic_ReadWriteModule.hxx>
-#include <IGESBasic_SpecificModule.hxx>
 #include <IGESData.hxx>
-#include <IGESData_SpecificLib.hxx>
-#include <IGESData_WriterLib.hxx>
 #include <Interface_GeneralLib.hxx>
-#include <Interface_ReaderLib.hxx>
 
 
 /*void IGESBasic::Init ()
@@ -36,9 +31,6 @@ const Handle(IGESBasic_Protocol) & IGESBasic::Protocol ()
   if (protocol.IsNull()) {
     protocol = new IGESBasic_Protocol;
     Interface_GeneralLib::SetGlobal (new IGESBasic_GeneralModule,  protocol);
-    Interface_ReaderLib::SetGlobal  (new IGESBasic_ReadWriteModule,protocol);
-    IGESData_WriterLib::SetGlobal   (new IGESBasic_ReadWriteModule,protocol);
-    IGESData_SpecificLib::SetGlobal (new IGESBasic_SpecificModule, protocol);
   }
   return protocol;
 }

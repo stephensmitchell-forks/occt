@@ -65,23 +65,7 @@ void IGESGeom_ToolBSplineCurve::ReadOwnParams(const Handle(IGESGeom_BSplineCurve
   Handle(TColStd_HArray1OfReal) allWeights;
   Handle(TColgp_HArray1OfXYZ)   allPoles;
 
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 moved down
-
-  //st = PR.ReadInteger(PR.Current(), Msg97, anIndex); //szv#4:S4163:12Mar99 moved in if
-  //st = PR.ReadInteger(PR.Current(), "Upper Index Of Sum", anIndex);
-
-  //szv#4:S4163:12Mar99 optimized
-  /*if (st && anIndex >= 0) {
-    allPoles   = new TColgp_HArray1OfXYZ(0, anIndex);
-    // allWeights = new TColStd_HArray1OfReal(1, anIndex+1);  done by ReadReals
-  }
-  
-  if (st && anIndex < 0)
-  { 
-    PR.SendFail(Msg97);
-    anIndex = 0;
-  }*/
-  if (PR.ReadInteger(PR.Current(), anIndex)) {
+  if (PR.ReadInteger(anIndex)) {
     if (anIndex < 0) {
       Message_Msg Msg97("XSTEP_97");
       PR.SendFail(Msg97);
@@ -89,7 +73,6 @@ void IGESGeom_ToolBSplineCurve::ReadOwnParams(const Handle(IGESGeom_BSplineCurve
     }
     else {
       allPoles   = new TColgp_HArray1OfXYZ(0, anIndex);
-      // allWeights = new TColStd_HArray1OfReal(1, anIndex+1);  done by ReadReals
     }
   }
   else{
@@ -97,88 +80,62 @@ void IGESGeom_ToolBSplineCurve::ReadOwnParams(const Handle(IGESGeom_BSplineCurve
     PR.SendFail(Msg97);
   }
 
-  //st = PR.ReadInteger(PR.Current(), Msg98, aDegree); //szv#4:S4163:12Mar99 moved in if
-//  if (st && ! allWeights.IsNull() )   done by ReadReals
-//    allKnots = new TColStd_HArray1OfReal(-aDegree, anIndex+1);
-  if (!PR.ReadInteger(PR.Current(), aDegree)){
-    aDegree = 0; //szv#4:S4163:12Mar99 `st=` not needed
+  if (!PR.ReadInteger(aDegree)){
+    aDegree = 0;
     Message_Msg Msg98("XSTEP_98");
     PR.SendFail(Msg98);
   }
-  //szv#4:S4163:12Mar99 `st=` not needed
-  PR.ReadBoolean(PR.Current(), Msg99, aPlanar);
-  PR.ReadBoolean(PR.Current(), Msg100, aClosed);
-  PR.ReadBoolean(PR.Current(), Msg101, aPolynomial);
-  PR.ReadBoolean(PR.Current(), Msg102, aPeriodic);
-
-//st = PR.ReadBoolean(PR.Current(), "Planar/Non Planar Flag", aPlanar);
-//st = PR.ReadBoolean(PR.Current(), "Open/Closed Flag", aClosed);
-//st = PR.ReadBoolean(PR.Current(), "Rational/Polynomial Flag", aPolynomial);
-//st = PR.ReadBoolean(PR.Current(), "NonPeriodic/Periodic Flag", aPeriodic);
+  PR.ReadBoolean(Msg99, aPlanar);
+  PR.ReadBoolean(Msg100, aClosed);
+  PR.ReadBoolean(Msg101, aPolynomial);
+  PR.ReadBoolean(Msg102, aPeriodic);
 
   Standard_Integer nbKnots = anIndex + aDegree + 2;
   // Reading all the knot sequences 
 
-  PR.ReadReals(PR.CurrentList(nbKnots), Msg103 , allKnots, -aDegree); //szv#4:S4163:12Mar99 `st=` not needed
-
-//st = PR.ReadReals
-//  (PR.CurrentList(nbKnots), "Knot sequence values", allKnots, -aDegree);
+  PR.ReadReals(PR.CurrentList(nbKnots), Msg103 , allKnots, -aDegree);
 
   if (! allPoles.IsNull() )
-    {
-      Message_Msg Msg104("XSTEP_104");
-      Message_Msg Msg105("XSTEP_105");
-      PR.ReadReals(PR.CurrentList(anIndex+1), Msg104, allWeights,0); //szv#4:S4163:12Mar99 `st=` not needed
-      //st = PR.ReadReals(PR.CurrentList(anIndex+1), "Weights", allWeights,0);
+  {
+    Message_Msg Msg104("XSTEP_104");
+    PR.ReadReals(PR.CurrentList(anIndex+1), Msg104, allWeights,0);
 
-      for (Standard_Integer I = 0; I <= anIndex; I ++) 
-	{
-          gp_XYZ tempPole;
-          //st = PR.ReadXYZ(PR.CurrentList(1, 3), Msg105, tempPole); //szv#4:S4163:12Mar99 moved down
-          //st = PR.ReadXYZ(PR.CurrentList(1, 3), "Control Points", tempPole);
-          if (PR.ReadXYZ(PR.CurrentList(1, 3), Msg105, tempPole)) allPoles->SetValue(I, tempPole);
-	}
-    }
+    for (Standard_Integer I = 0; I <= anIndex; I ++) 
+      PR.ReadXYZ(allPoles->ChangeValue(I));
+  }
 
-  if (!PR.ReadReal(PR.Current(), aUmin)){
+  if (!PR.ReadReal(aUmin)){
     Message_Msg Msg106("XSTEP_106");
     PR.SendFail(Msg106);
-  } //szv#4:S4163:12Mar99 `st=` not needed
-  if (!PR.ReadReal(PR.Current(), aUmax)){
+  }
+  if (!PR.ReadReal(aUmax)){
     Message_Msg Msg107("XSTEP_107");
     PR.SendFail(Msg107);
-  } //szv#4:S4163:12Mar99 `st=` not needed
-/*
-  st = PR.ReadReal(PR.Current(), "Starting Parameter Value", aUmin);
-  st = PR.ReadReal(PR.Current(), "Ending Parameter Value", aUmax);
-*/
+  }
   Standard_Boolean st = Standard_False;
   if (PR.DefinedElseSkip()){
-    st = PR.ReadReal(PR.Current(),  normX);
+    st = PR.ReadReal(normX);
     if(!st){
       Message_Msg Msg108("XSTEP_108");
       PR.SendFail(Msg108);
     }
   }
-    //st = PR.ReadReal(PR.Current(), "Unit Normal X", normX);
   else normX = 0.;
   if (PR.DefinedElseSkip()){
-    st = PR.ReadReal(PR.Current(),  normY);
+    st = PR.ReadReal(normY);
     if(!st){
       Message_Msg Msg108("XSTEP_108");
       PR.SendFail(Msg108);
     }
   }
-    //st = PR.ReadReal(PR.Current(), "Unit Normal Y", normY);
   else normY = 0.;
   if (PR.DefinedElseSkip()){
-    st = PR.ReadReal(PR.Current(), normZ);
+    st = PR.ReadReal(normZ);
     if(!st){
       Message_Msg Msg108("XSTEP_108");
       PR.SendFail(Msg108);
     }
   }
-    //st = PR.ReadReal(PR.Current(), "Unit Normal Z", normZ);
   else normZ = 0.;
   if (st) aNorm.SetCoord(normX,normY,normZ);
 

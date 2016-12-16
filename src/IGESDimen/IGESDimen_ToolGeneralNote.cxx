@@ -47,8 +47,6 @@ void  IGESDimen_ToolGeneralNote::ReadOwnParams
   (const Handle(IGESDimen_GeneralNote)& ent,
    const Handle(IGESData_IGESReaderData)& IR, IGESData_ParamReader& PR) const
 { 
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 moved down
-
   Standard_Integer nbval;
   Handle(TColStd_HArray1OfInteger) nbChars;
   Handle(TColStd_HArray1OfReal) boxWidths; 
@@ -62,7 +60,7 @@ void  IGESDimen_ToolGeneralNote::ReadOwnParams
   Handle(TColgp_HArray1OfXYZ) startPoints; 
   Handle(Interface_HArray1OfHAsciiString) texts; 
 
-  Standard_Boolean st = PR.ReadInteger(PR.Current(), "Number of Text Strings", nbval);
+  Standard_Boolean st = PR.ReadInteger(nbval,"Number of Text Strings");
   if (st && nbval > 0) {
     nbChars        = new TColStd_HArray1OfInteger(1, nbval);
     boxWidths      = new TColStd_HArray1OfReal(1, nbval);
@@ -95,23 +93,20 @@ void  IGESDimen_ToolGeneralNote::ReadOwnParams
           gp_XYZ startPoint;
           Handle(TCollection_HAsciiString) text;
 
-          //st = PR.ReadInteger(PR.Current(), "Number of Characters", nbChar); //szv#4:S4163:12Mar99 moved in if
-	  if (PR.ReadInteger(PR.Current(), "Number of Characters", nbChar))
+	  if (PR.ReadInteger(nbChar,"Number of Characters"))
 	    nbChars->SetValue(i, nbChar);
 
-          //st = PR.ReadReal(PR.Current(), "Box Width", boxWidth); //szv#4:S4163:12Mar99 moved in if
-	  if (PR.ReadReal(PR.Current(), "Box Width", boxWidth))
+	  if (PR.ReadReal(boxWidth,"Box Width"))
 	    boxWidths->SetValue(i, boxWidth);
 
-          //st = PR.ReadReal(PR.Current(), "Box Height", boxHeight); //szv#4:S4163:12Mar99 moved in if
-	  if (PR.ReadReal(PR.Current(), "Box Height", boxHeight))
+	  if (PR.ReadReal(boxHeight,"Box Height"))
 	    boxHeights->SetValue(i, boxHeight);
 
 	  Standard_Integer curnum = PR.CurrentNumber();
 	  if (PR.DefinedElseSkip())
 	    {
 	      // Reading fontCode(Integer, must be positive)
-	      PR.ReadInteger (PR.Current(), "Font Code", fontCode); //szv#4:S4163:12Mar99 `st=` not needed
+	      PR.ReadInteger(fontCode,"Font Code");
 	      // Reading fontEnt(TextFontDef) ?
 	      if (fontCode < 0) {
 		fontEntity = GetCasted(IGESGraph_TextFontDef,PR.ParamEntity (IR,curnum));
@@ -128,31 +123,25 @@ void  IGESDimen_ToolGeneralNote::ReadOwnParams
 
           if (PR.DefinedElseSkip())
 	    {
-              //st = PR.ReadReal(PR.Current(), "Slant Angle", slantAngle); //szv#4:S4163:12Mar99 moved in if
-	      if (PR.ReadReal(PR.Current(), "Slant Angle", slantAngle))
+	      if (PR.ReadReal(slantAngle,"Slant Angle"))
 		slantAngles->SetValue(i, slantAngle);
 	    }
           else
               slantAngles->SetValue(i, M_PI/2);
 
-          //st = PR.ReadReal(PR.Current(), "Rotation Angle", rotationAngle); //szv#4:S4163:12Mar99 moved in if
-	  if (PR.ReadReal(PR.Current(), "Rotation Angle", rotationAngle))
+	  if (PR.ReadReal(rotationAngle,"Rotation Angle"))
 	    rotationAngles->SetValue(i, rotationAngle);
 
-          //st = PR.ReadInteger(PR.Current(), "Mirror Flag", mirrorFlag); //szv#4:S4163:12Mar99 moved in if
-	  if (PR.ReadInteger(PR.Current(), "Mirror Flag", mirrorFlag))
+	  if (PR.ReadInteger(mirrorFlag,"Mirror Flag"))
 	    mirrorFlags->SetValue(i, mirrorFlag);
 
-          //st = PR.ReadInteger(PR.Current(), "Rotate Flag", rotateFlag); //szv#4:S4163:12Mar99 moved in if
-	  if (PR.ReadInteger(PR.Current(), "Rotate Flag", rotateFlag))
+	  if (PR.ReadInteger(rotateFlag,"Rotate Flag"))
 	    rotateFlags->SetValue(i, rotateFlag);
 
-          //st = PR.ReadXYZ(PR.CurrentList(1, 3), "Start Point", startPoint); //szv#4:S4163:12Mar99 moved in if
-	  if (PR.ReadXYZ(PR.CurrentList(1, 3), "Start Point", startPoint))
+	  if (PR.ReadXYZ(startPoint,"Start Point"))
 	    startPoints->SetValue(i, startPoint);
 
-          //st = PR.ReadText(PR.Current(), "Text String", text); //szv#4:S4163:12Mar99 moved in if
-	  if (PR.ReadText(PR.Current(), "Text String", text))
+	  if (PR.ReadText("Text String", text))
 	    texts->SetValue(i, text);
 	}
     }

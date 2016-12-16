@@ -17,10 +17,10 @@
 #ifndef IGESDimen_Array1OfLeaderArrow_HeaderFile
 #define IGESDimen_Array1OfLeaderArrow_HeaderFile
 
-#include <IGESDimen_LeaderArrow.hxx>
+#include <Interface_Pointer.hxx>
 #include <NCollection_Array1.hxx>
+#include <IGESDimen_LeaderArrow.hxx>
 
-typedef NCollection_Array1<Handle(IGESDimen_LeaderArrow)> IGESDimen_Array1OfLeaderArrow;
-
+typedef NCollection_Array1<Interface_Pointer<IGESDimen_LeaderArrow>> IGESDimen_Array1OfLeaderArrow;
 
 #endif

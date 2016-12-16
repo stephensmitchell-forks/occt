@@ -42,20 +42,13 @@ void  IGESBasic_ToolSingularSubfigure::ReadOwnParams
   (const Handle(IGESBasic_SingularSubfigure)& ent,
    const Handle(IGESData_IGESReaderData)& IR, IGESData_ParamReader& PR) const
 {
-  // MGE 03/08/98
-  // Building of messages
-  //========================================
-  Message_Msg Msg213("XSTEP_213");
-  //========================================
-
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
   Standard_Boolean temphasscale;
   Standard_Real tempScaleFactor;
   Handle(IGESBasic_SubfigureDef) tempSubfigureDef;
   gp_XYZ tempTranslation;
   IGESData_Status aStatus;
 
-  if(!PR.ReadEntity(IR,PR.Current(),aStatus,STANDARD_TYPE(IGESBasic_SubfigureDef),tempSubfigureDef)){ //szv#4:S4163:12Mar99 `st=` not needed;
+  if(!PR.ReadEntity(IR,aStatus,STANDARD_TYPE(IGESBasic_SubfigureDef),tempSubfigureDef)) {
     Message_Msg Msg212("XSTEP_212");
     switch(aStatus) {
     case IGESData_ReferenceError: {  
@@ -77,16 +70,10 @@ void  IGESBasic_ToolSingularSubfigure::ReadOwnParams
     }
     }
   }
-  PR.ReadXYZ (PR.CurrentList(1, 3),Msg213,tempTranslation); //szv#4:S4163:12Mar99 `st=` not needed
-//st = PR.ReadEntity(IR,PR.Current(),"Subfigure definition entity",
-//                   STANDARD_TYPE(IGESBasic_SubfigureDef), tempSubfigureDef);
-//st = PR.ReadXYZ
-//  (PR.CurrentList(1, 3),"Translation data",tempTranslation);
+  PR.ReadXYZ(tempTranslation);
   if (PR.DefinedElseSkip())
     {
-      //st = PR.ReadReal(PR.Current(),Msg214,tempScaleFactor); //szv#4:S4163:12Mar99 moved down
-      //st = PR.ReadReal(PR.Current(),"Scale Factor",tempScaleFactor); 
-      temphasscale = PR.ReadReal(PR.Current(),tempScaleFactor);
+      temphasscale = PR.ReadReal(tempScaleFactor);
       if (!temphasscale){
 	Message_Msg Msg214("XSTEP_214");
 	PR.SendFail(Msg214);

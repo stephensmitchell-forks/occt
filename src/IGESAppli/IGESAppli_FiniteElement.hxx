@@ -34,17 +34,16 @@ class IGESAppli_FiniteElement : public IGESData_IGESEntity
 {
  public:
 
-  IGESAppli_FiniteElement() {}
-  
-  //! This method is used to set the fields of the class
-  //! FiniteElement
-  //! - aType    : Indicates the topology type
-  //! - allNodes : List of Nodes defining the element
-  //! - aName    : Element type name
-  Standard_EXPORT void Init (const Standard_Integer aType, const Handle(IGESAppli_HArray1OfNode)& allNodes, const Handle(TCollection_HAsciiString)& aName);
+  Standard_EXPORT virtual Standard_Integer TypeNumber() const Standard_OVERRIDE { return 136; }
+
+  Standard_EXPORT virtual Standard_Integer FormNumber() const Standard_OVERRIDE { return 0; }
+
+  IGESAppli_FiniteElement()
+  : myTopology(0)
+  {}
   
   //! returns Topology type
-  Standard_Integer Topology() const { return theTopology; }
+  Standard_Integer Topology() const { return myTopology; }
 
   //! returns the number of nodes defining the element
   Standard_EXPORT Standard_Integer NbNodes() const;
@@ -54,17 +53,25 @@ class IGESAppli_FiniteElement : public IGESData_IGESEntity
   Standard_EXPORT const Handle(IGESAppli_Node) & Node (const Standard_Integer Index) const;
   
   //! returns Element Type Name
-  const Handle(TCollection_HAsciiString) & Name() const { return theName; }
+  const Handle(TCollection_HAsciiString) & Name() const { return myName; }
+
+  Standard_EXPORT virtual void OwnRead (IGESFile_Reader &) Standard_OVERRIDE;
+  
+  Standard_EXPORT virtual void OwnWrite (IGESData_IGESWriter &) const Standard_OVERRIDE;
 
   Standard_EXPORT virtual void OwnShared(Interface_EntityIterator &theIter) const Standard_OVERRIDE;
+
+  Standard_EXPORT virtual IGESData_DirChecker DirChecker () const Standard_OVERRIDE;
+  
+  Standard_EXPORT virtual void OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &, const Standard_Integer) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESAppli_FiniteElement,IGESData_IGESEntity)
 
  private:
 
-  Standard_Integer theTopology;
-  Handle(IGESAppli_HArray1OfNode) theNodes;
-  Handle(TCollection_HAsciiString) theName;
+  Standard_Integer myTopology;
+  Handle(IGESAppli_HArray1OfNode) myNodes;
+  Handle(TCollection_HAsciiString) myName;
 };
 
 #endif // _IGESAppli_FiniteElement_HeaderFile

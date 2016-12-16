@@ -17,17 +17,9 @@
 #ifndef _IGESGraph_Color_HeaderFile
 #define _IGESGraph_Color_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
-#include <Standard_Real.hxx>
 #include <IGESData_ColorEntity.hxx>
-#include <Standard_Boolean.hxx>
 class TCollection_HAsciiString;
 
-
-class IGESGraph_Color;
-DEFINE_STANDARD_HANDLE(IGESGraph_Color, IGESData_ColorEntity)
 
 //! defines IGESColor, Type <314> Form <0>
 //! in package IGESGraph
@@ -38,58 +30,71 @@ DEFINE_STANDARD_HANDLE(IGESGraph_Color, IGESData_ColorEntity)
 //! intensity range.
 class IGESGraph_Color : public IGESData_ColorEntity
 {
+ public:
 
-public:
+  Standard_EXPORT virtual Standard_Integer TypeNumber() const Standard_OVERRIDE { return 314; }
 
+  Standard_EXPORT virtual Standard_Integer FormNumber() const Standard_OVERRIDE { return 0; }
+
+  //! Default constructor
+  IGESGraph_Color()
+  : myRed(0.),
+    myGreen(0.),
+    myBlue(0.)
+  {}
   
-  Standard_EXPORT IGESGraph_Color();
-  
-  //! This method is used to set the fields of the class Color
+  //! Constructor with parameters
   //! - red        : Red   color intensity (range 0.0 to 100.0)
   //! - green      : Green color intensity (range 0.0 to 100.0)
   //! - blue       : Blue  color intensity (range 0.0 to 100.0)
   //! - aColorName : Name of the color (optional)
-  Standard_EXPORT void Init (const Standard_Real red, const Standard_Real green, const Standard_Real blue, const Handle(TCollection_HAsciiString)& aColorName);
+  IGESGraph_Color(const Standard_Real R, const Standard_Real G, const Standard_Real B, const Handle(TCollection_HAsciiString) &theColorName)
+  : myRed(R),
+    myGreen(G),
+    myBlue(B),
+    myColorName(theColorName)
+  {}
   
-  Standard_EXPORT void RGBIntensity (Standard_Real& Red, Standard_Real& Green, Standard_Real& Blue) const;
-  
-  Standard_EXPORT void CMYIntensity (Standard_Real& Cyan, Standard_Real& Magenta, Standard_Real& Yellow) const;
+  void RGBIntensity (Standard_Real& Red, Standard_Real& Green, Standard_Real& Blue) const
+  {
+    Red   = myRed;
+    Green = myGreen;
+    Blue  = myBlue;
+  }
+
+  void CMYIntensity (Standard_Real& Cyan, Standard_Real& Magenta, Standard_Real& Yellow) const
+  {
+    Cyan    = 100.0 - myRed;
+    Magenta = 100.0 - myGreen;
+    Yellow  = 100.0 - myBlue;
+  }
   
   Standard_EXPORT void HLSPercentage (Standard_Real& Hue, Standard_Real& Lightness, Standard_Real& Saturation) const;
   
   //! returns True if optional character string is assigned,
   //! False otherwise.
-  Standard_EXPORT Standard_Boolean HasColorName() const;
-  
+  Standard_Boolean HasColorName() const { return (!myColorName.IsNull()); }
+
   //! if HasColorName() is True  returns the Verbal description of
   //! the Color.
-  Standard_EXPORT Handle(TCollection_HAsciiString) ColorName() const;
+  const Handle(TCollection_HAsciiString) & ColorName() const { return myColorName; }
 
+  Standard_EXPORT virtual void OwnRead (IGESFile_Reader &) Standard_OVERRIDE;
+  
+  Standard_EXPORT virtual void OwnWrite (IGESData_IGESWriter &) const Standard_OVERRIDE;
 
+  Standard_EXPORT virtual IGESData_DirChecker DirChecker () const Standard_OVERRIDE;
 
+  Standard_EXPORT virtual void OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &, const Standard_Integer) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESGraph_Color,IGESData_ColorEntity)
 
-protected:
+ private:
 
-
-
-
-private:
-
-
-  Standard_Real theRed;
-  Standard_Real theGreen;
-  Standard_Real theBlue;
-  Handle(TCollection_HAsciiString) theColorName;
-
-
+  Standard_Real myRed;
+  Standard_Real myGreen;
+  Standard_Real myBlue;
+  Handle(TCollection_HAsciiString) myColorName;
 };
-
-
-
-
-
-
 
 #endif // _IGESGraph_Color_HeaderFile

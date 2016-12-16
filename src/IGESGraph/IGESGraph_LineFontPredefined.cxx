@@ -17,27 +17,48 @@
 //--------------------------------------------------------------------
 
 #include <IGESGraph_LineFontPredefined.hxx>
-#include <Standard_Type.hxx>
+#include <IGESFile_Reader.hxx>
+#include <IGESData_IGESWriter.hxx>
+#include <IGESData_DirChecker.hxx>
+#include <Message_Messenger.hxx>
+#include <IGESData_IGESDumper.hxx>
+#include <IGESData_Dump.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESGraph_LineFontPredefined,IGESData_IGESEntity)
 
-IGESGraph_LineFontPredefined::IGESGraph_LineFontPredefined ()    {  }
+void IGESGraph_LineFontPredefined::OwnRead (IGESFile_Reader &PR)
+{ 
+  Standard_Integer aNbPropertyValues = 0;
+  PR.ReadInteger(aNbPropertyValues,"No. of property values");
+  if (aNbPropertyValues != 1)
+    PR.AddFail("No. of Property values : Value is not 1");
 
-
-    void IGESGraph_LineFontPredefined::Init
-  (const Standard_Integer nbProps, const Standard_Integer aLineFontPatternCode)
-{
-  theNbPropertyValues    = nbProps;
-  theLineFontPatternCode = aLineFontPatternCode;
-  InitTypeAndForm(406,19);
+  PR.ReadInteger(myLineFontPatternCode,"Line Font Pattern Code");
 }
 
-    Standard_Integer IGESGraph_LineFontPredefined::NbPropertyValues () const
-{
-  return theNbPropertyValues;
+void IGESGraph_LineFontPredefined::OwnWrite (IGESData_IGESWriter &IW) const
+{ 
+  IW.Send(1);
+  IW.Send(myLineFontPatternCode);
 }
 
-    Standard_Integer IGESGraph_LineFontPredefined::LineFontPatternCode () const
+IGESData_DirChecker IGESGraph_LineFontPredefined::DirChecker () const
+{ 
+  IGESData_DirChecker DC (406, 19);
+  DC.Structure(IGESData_DefVoid);
+  DC.LineFont(IGESData_DefVoid);
+  DC.LineWeight(IGESData_DefVoid);
+  DC.Color(IGESData_DefVoid);
+  DC.BlankStatusIgnored();
+  DC.UseFlagIgnored();
+  DC.HierarchyStatusIgnored();
+  return DC;
+}
+
+void IGESGraph_LineFontPredefined::OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &S, const Standard_Integer) const
 {
-  return theLineFontPatternCode;
+  S << "IGESGraph_LineFontPredefined" << endl;
+  S << "No. of property values : 1" << endl;
+  S << "Line font pattern code : " << myLineFontPatternCode << endl;
+  S << endl;
 }

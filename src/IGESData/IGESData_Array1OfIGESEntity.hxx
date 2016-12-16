@@ -17,10 +17,10 @@
 #ifndef IGESData_Array1OfIGESEntity_HeaderFile
 #define IGESData_Array1OfIGESEntity_HeaderFile
 
+#include <Interface_Pointer.hxx>
 #include <IGESData_IGESEntity.hxx>
 #include <NCollection_Array1.hxx>
 
-typedef NCollection_Array1<Handle(IGESData_IGESEntity)> IGESData_Array1OfIGESEntity;
-
+typedef NCollection_Array1<Interface_Pointer<IGESData_IGESEntity>> IGESData_Array1OfIGESEntity;
 
 #endif

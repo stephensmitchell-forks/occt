@@ -48,49 +48,23 @@ void IGESGeom_ToolConicArc::ReadOwnParams(const Handle(IGESGeom_ConicArc)& ent,
                                           const Handle(IGESData_IGESReaderData)& /* IR */,
                                           IGESData_ParamReader& PR) const
 {
-  // MGE 28/07/98
-  // Building of messages
-  //======================================
-  Message_Msg Msg83("XSTEP_83");
-  Message_Msg Msg84("XSTEP_84");
-  //======================================
-
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
   Standard_Real A, B = 0., C = 0., D = 0., E = 0., F = 0., ZT;
   gp_XY tempStart, tempEnd;
 
- /* PR.ReadReal(PR.Current(), Msg81, A); //szv#4:S4163:12Mar99 `st=` not needed
-  PR.ReadReal(PR.Current(), Msg81, B); //szv#4:S4163:12Mar99 `st=` not needed
-  PR.ReadReal(PR.Current(), Msg81, C); //szv#4:S4163:12Mar99 `st=` not needed
-  PR.ReadReal(PR.Current(), Msg81, D); //szv#4:S4163:12Mar99 `st=` not needed
-  PR.ReadReal(PR.Current(), Msg81, E); //szv#4:S4163:12Mar99 `st=` not needed
-  PR.ReadReal(PR.Current(), Msg81, F); //szv#4:S4163:12Mar99 `st=` not needed
-  */
-  if ((!PR.ReadReal(PR.Current(),A)) || (!PR.ReadReal(PR.Current(),B)) ||
-      (!PR.ReadReal(PR.Current(),C)) || (!PR.ReadReal(PR.Current(),D)) ||
-      (!PR.ReadReal(PR.Current(),E)) || (!PR.ReadReal(PR.Current(),F))){
+  if ((!PR.ReadReal(A)) || (!PR.ReadReal(B)) ||
+      (!PR.ReadReal(C)) || (!PR.ReadReal(D)) ||
+      (!PR.ReadReal(E)) || (!PR.ReadReal(F))){
     Message_Msg Msg81("XSTEP_81");
     PR.SendFail(Msg81);
   }
 
-  if (!PR.ReadReal(PR.Current(), ZT)){ //szv#4:S4163:12Mar99 `st=` not needed
+  if (!PR.ReadReal(ZT)) {
     Message_Msg Msg82("XSTEP_82");
     PR.SendFail(Msg82);
   }
-  PR.ReadXY(PR.CurrentList(1, 2),Msg83, tempStart); //szv#4:S4163:12Mar99 `st=` not needed
-  PR.ReadXY(PR.CurrentList(1, 2), Msg84, tempEnd); //szv#4:S4163:12Mar99 `st=` not needed
+  PR.ReadXY(tempStart);
+  PR.ReadXY(tempEnd);
 
-/*
-  st = PR.ReadReal(PR.Current(), "Conic Coefficient A", A);
-  st = PR.ReadReal(PR.Current(), "Conic Coefficient B", B);
-  st = PR.ReadReal(PR.Current(), "Conic Coefficient C", C);
-  st = PR.ReadReal(PR.Current(), "Conic Coefficient D", D);
-  st = PR.ReadReal(PR.Current(), "Conic Coefficient E", E);
-  st = PR.ReadReal(PR.Current(), "Conic Coefficient F", F);
-  st = PR.ReadReal(PR.Current(), "Z-plane shift", ZT);
-  st = PR.ReadXY(PR.CurrentList(1, 2), "Starting Point Of Arc", tempStart);
-  st = PR.ReadXY(PR.CurrentList(1, 2), "End Point Of Arc", tempEnd);
-*/
   DirChecker(ent).CheckTypeAndForm(PR.CCheck(),ent);
   ent->Init(A, B, C, D, E, F, ZT, tempStart, tempEnd);
 }

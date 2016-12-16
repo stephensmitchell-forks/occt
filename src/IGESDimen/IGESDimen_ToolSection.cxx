@@ -41,28 +41,24 @@ void  IGESDimen_ToolSection::ReadOwnParams
   (const Handle(IGESDimen_Section)& ent,
    const Handle(IGESData_IGESReaderData)& /* IR */, IGESData_ParamReader& PR) const
 { 
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 moved down
-
   Standard_Integer datatype;
   Standard_Real zDisplacement; 
   Standard_Integer nbval;
   Handle(TColgp_HArray1OfXY) dataPoints;
 
-  PR.ReadInteger(PR.Current(), "Interpretation Flag", datatype); //szv#4:S4163:12Mar99 `st=` not needed
+  PR.ReadInteger(datatype,"Interpretation Flag");
 
-  Standard_Boolean st = PR.ReadInteger(PR.Current(), "Number of data points", nbval);
+  Standard_Boolean st = PR.ReadInteger(nbval,"Number of data points");
   if (st && nbval > 0)
     dataPoints = new TColgp_HArray1OfXY(1, nbval);
   else  PR.AddFail("Number of data points: Not Positive");
 
-  PR.ReadReal(PR.Current(), "Common Z Displacement", zDisplacement); //szv#4:S4163:12Mar99 `st=` not needed
+  PR.ReadReal(zDisplacement,"Common Z Displacement");
 
   if (! dataPoints.IsNull())
     for (Standard_Integer i = 1; i <= nbval; i++)
       {
-	gp_XY tempXY;
-	PR.ReadXY(PR.CurrentList(1, 2), "Data Points", tempXY); //szv#4:S4163:12Mar99 `st=` not needed
-	dataPoints->SetValue(i, tempXY);
+	PR.ReadXY(dataPoints->ChangeValue(i),"Data Points");
       }
 
   DirChecker(ent).CheckTypeAndForm(PR.CCheck(),ent);

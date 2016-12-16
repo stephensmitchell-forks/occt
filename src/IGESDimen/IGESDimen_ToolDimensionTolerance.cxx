@@ -35,7 +35,6 @@ void  IGESDimen_ToolDimensionTolerance::ReadOwnParams
   (const Handle(IGESDimen_DimensionTolerance)& ent,
    const Handle(IGESData_IGESReaderData)& /*IR*/, IGESData_ParamReader& PR) const
 {
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
   Standard_Integer tempNbProps;
   Standard_Integer tempSecondTolFlag;
   Standard_Integer tempTolTyp;
@@ -47,25 +46,22 @@ void  IGESDimen_ToolDimensionTolerance::ReadOwnParams
   Standard_Integer tempPrecision;
 
   if (PR.DefinedElseSkip())
-    PR.ReadInteger(PR.Current(), "Number of properties", tempNbProps); //szv#4:S4163:12Mar99 `st=` not needed
+    PR.ReadInteger(tempNbProps,"Number of properties");
   else
     tempNbProps = 8;
 
-  PR.ReadInteger(PR.Current(), "Secondary Tolerance Flag",
-		 tempSecondTolFlag); //szv#4:S4163:12Mar99 `st=` not needed
-  PR.ReadInteger(PR.Current(), "Tolerance Type", tempTolTyp); //szv#4:S4163:12Mar99 `st=` not needed
+  PR.ReadInteger(tempSecondTolFlag,"Secondary Tolerance Flag");
+  PR.ReadInteger(tempTolTyp,"Tolerance Type");
   if (PR.DefinedElseSkip())
-    PR.ReadInteger(PR.Current(), "Tolerance Placement Flag",
-		   tempTolPlaceFlag); //szv#4:S4163:12Mar99 `st=` not needed
+    PR.ReadInteger(tempTolPlaceFlag,"Tolerance Placement Flag");
   else
     tempTolPlaceFlag = 2;
 
-  PR.ReadReal(PR.Current(), "Upper Tolerance", tempUpperTol); //szv#4:S4163:12Mar99 `st=` not needed
-  PR.ReadReal(PR.Current(), "Lower Tolerance", tempLowerTol); //szv#4:S4163:12Mar99 `st=` not needed
-  PR.ReadBoolean(PR.Current(), "Sign Suppression Flag",
-		 tempSignSupFlag); //szv#4:S4163:12Mar99 `st=` not needed
-  PR.ReadInteger(PR.Current(), "Fraction Flag", tempFracFlag); //szv#4:S4163:12Mar99 `st=` not needed
-  PR.ReadInteger(PR.Current(), "Precision", tempPrecision); //szv#4:S4163:12Mar99 `st=` not needed
+  PR.ReadReal(tempUpperTol,"Upper Tolerance");
+  PR.ReadReal(tempLowerTol,"Lower Tolerance");
+  PR.ReadBoolean("Sign Suppression Flag", tempSignSupFlag);
+  PR.ReadInteger(tempFracFlag,"Fraction Flag");
+  PR.ReadInteger(tempPrecision,"Precision");
 
   DirChecker(ent).CheckTypeAndForm(PR.CCheck(),ent);
   ent->Init

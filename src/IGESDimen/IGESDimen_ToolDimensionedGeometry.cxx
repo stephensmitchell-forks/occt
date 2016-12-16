@@ -39,32 +39,18 @@ void  IGESDimen_ToolDimensionedGeometry::ReadOwnParams
   (const Handle(IGESDimen_DimensionedGeometry)& ent,
    const Handle(IGESData_IGESReaderData)& IR, IGESData_ParamReader& PR) const
 { 
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
   Standard_Integer tempNbDimen; 
   Handle(IGESData_IGESEntity) aDimEntity;
   Standard_Integer nbgeom = 0;
   Handle(IGESData_HArray1OfIGESEntity) GeomEntities;
 
-  PR.ReadInteger(PR.Current(),"Number of Dimensions",tempNbDimen); //szv#4:S4163:12Mar99 `st=` not needed
-
-  PR.ReadInteger(PR.Current(),"number of entities",nbgeom); //szv#4:S4163:12Mar99 `st=` not needed
-
-  PR.ReadEntity(IR,PR.Current(),"Dimension Entity",aDimEntity); //szv#4:S4163:12Mar99 `st=` not needed
+  PR.ReadInteger(tempNbDimen,"Number of Dimensions");
+  PR.ReadInteger(nbgeom,"number of entities");
+  PR.ReadEntity(IR,"Dimension Entity",aDimEntity);
 
   if (nbgeom > 0)
-    PR.ReadEnts (IR,PR.CurrentList(nbgeom),
-		 "Geometry Entities",GeomEntities); //szv#4:S4163:12Mar99 `st=` not needed
-/*
-    {
-      GeomEntities = new IGESData_HArray1OfIGESEntity(1,nbgeom);
-      for (Standard_Integer i = 1; i <= nbgeom; i++)
-	{
-          Handle(IGESData_IGESEntity) anentity;
-          st = PR.ReadEntity(IR,PR.Current(),"Geometry Entity",anentity);
-	  if (st) GeomEntities->SetValue(i,anentity);
-	}
-    }
-*/
+    PR.ReadEnts (IR,PR.CurrentList(nbgeom), "Geometry Entities",GeomEntities);
+
   DirChecker(ent).CheckTypeAndForm(PR.CCheck(),ent);
   ent->Init ( tempNbDimen, aDimEntity, GeomEntities);
 }

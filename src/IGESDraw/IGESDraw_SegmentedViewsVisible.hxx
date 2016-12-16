@@ -17,27 +17,15 @@
 #ifndef _IGESDraw_SegmentedViewsVisible_HeaderFile
 #define _IGESDraw_SegmentedViewsVisible_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
 #include <IGESDraw_HArray1OfViewKindEntity.hxx>
 #include <TColStd_HArray1OfReal.hxx>
 #include <TColStd_HArray1OfInteger.hxx>
 #include <IGESGraph_HArray1OfColor.hxx>
 #include <IGESBasic_HArray1OfLineFontEntity.hxx>
 #include <IGESData_ViewKindEntity.hxx>
-#include <Standard_Boolean.hxx>
-#include <Standard_Integer.hxx>
-#include <Standard_Real.hxx>
-class Standard_DimensionMismatch;
-class Standard_OutOfRange;
-class IGESData_ViewKindEntity;
 class IGESGraph_Color;
 class IGESData_LineFontEntity;
 
-
-class IGESDraw_SegmentedViewsVisible;
-DEFINE_STANDARD_HANDLE(IGESDraw_SegmentedViewsVisible, IGESData_ViewKindEntity)
 
 //! defines IGESSegmentedViewsVisible, Type <402> Form <19>
 //! in package IGESDraw
@@ -46,27 +34,13 @@ DEFINE_STANDARD_HANDLE(IGESDraw_SegmentedViewsVisible, IGESData_ViewKindEntity)
 //! segments of curves in a given view
 class IGESDraw_SegmentedViewsVisible : public IGESData_ViewKindEntity
 {
+ public:
 
-public:
+  Standard_EXPORT virtual Standard_Integer TypeNumber() const Standard_OVERRIDE { return 402; }
 
-  
-  Standard_EXPORT IGESDraw_SegmentedViewsVisible();
-  
-  //! This method is used to set the fields of the class
-  //! SegmentedViewsVisible
-  //! - allViews                : Pointers to View Entities
-  //! - allBreakpointParameters : Parameters of breakpoints
-  //! - allDisplayFlags         : Display flags
-  //! - allColorValues          : Color Values
-  //! - allColorDefinitions     : Color Definitions
-  //! - allLineFontValues       : LineFont values
-  //! - allLineFontDefinitions  : LineFont Definitions
-  //! - allLineWeights          : Line weights
-  //! raises exception if Lengths of allViews, allBreakpointParameters,
-  //! allDisplayFlags, allColorValues, allColorDefinitions,
-  //! allLineFontValues, allLineFontDefinitions and allLineWeights
-  //! are not same.
-  Standard_EXPORT void Init (const Handle(IGESDraw_HArray1OfViewKindEntity)& allViews, const Handle(TColStd_HArray1OfReal)& allBreakpointParameters, const Handle(TColStd_HArray1OfInteger)& allDisplayFlags, const Handle(TColStd_HArray1OfInteger)& allColorValues, const Handle(IGESGraph_HArray1OfColor)& allColorDefinitions, const Handle(TColStd_HArray1OfInteger)& allLineFontValues, const Handle(IGESBasic_HArray1OfLineFontEntity)& allLineFontDefinitions, const Handle(TColStd_HArray1OfInteger)& allLineWeights);
+  Standard_EXPORT virtual Standard_Integer FormNumber() const Standard_OVERRIDE { return 19; }
+
+  IGESDraw_SegmentedViewsVisible() {}
   
   //! Returns False (for a complex view)
   Standard_EXPORT Standard_Boolean IsSingle() const Standard_OVERRIDE;
@@ -131,18 +105,19 @@ public:
   //! WeightIndex > NbSegmentBlocks().
   Standard_EXPORT Standard_Integer LineWeightItem (const Standard_Integer WeightIndex) const;
 
+  Standard_EXPORT virtual void OwnRead (IGESFile_Reader &) Standard_OVERRIDE;
+  
+  Standard_EXPORT virtual void OwnWrite (IGESData_IGESWriter &) const Standard_OVERRIDE;
 
+  Standard_EXPORT virtual void OwnShared (Interface_EntityIterator &) const Standard_OVERRIDE;
 
+  Standard_EXPORT virtual IGESData_DirChecker DirChecker () const Standard_OVERRIDE;
+
+  Standard_EXPORT virtual void OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &, const Standard_Integer) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESDraw_SegmentedViewsVisible,IGESData_ViewKindEntity)
 
-protected:
-
-
-
-
-private:
-
+ private:
 
   Handle(IGESDraw_HArray1OfViewKindEntity) theViews;
   Handle(TColStd_HArray1OfReal) theBreakpointParameters;
@@ -152,14 +127,6 @@ private:
   Handle(TColStd_HArray1OfInteger) theLineFontValues;
   Handle(IGESBasic_HArray1OfLineFontEntity) theLineFontDefinitions;
   Handle(TColStd_HArray1OfInteger) theLineWeights;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESDraw_SegmentedViewsVisible_HeaderFile

@@ -17,10 +17,10 @@
 #ifndef IGESGraph_Array1OfColor_HeaderFile
 #define IGESGraph_Array1OfColor_HeaderFile
 
-#include <IGESGraph_Color.hxx>
+#include <Interface_Pointer.hxx>
 #include <NCollection_Array1.hxx>
+#include <IGESGraph_Color.hxx>
 
-typedef NCollection_Array1<Handle(IGESGraph_Color)> IGESGraph_Array1OfColor;
-
+typedef NCollection_Array1<Interface_Pointer<IGESGraph_Color>> IGESGraph_Array1OfColor;
 
 #endif

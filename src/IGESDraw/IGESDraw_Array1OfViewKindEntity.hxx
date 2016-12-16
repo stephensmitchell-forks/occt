@@ -17,10 +17,10 @@
 #ifndef IGESDraw_Array1OfViewKindEntity_HeaderFile
 #define IGESDraw_Array1OfViewKindEntity_HeaderFile
 
-#include <IGESData_ViewKindEntity.hxx>
+#include <Interface_Pointer.hxx>
 #include <NCollection_Array1.hxx>
+#include <IGESData_ViewKindEntity.hxx>
 
-typedef NCollection_Array1<Handle(IGESData_ViewKindEntity)> IGESDraw_Array1OfViewKindEntity;
-
+typedef NCollection_Array1<Interface_Pointer<IGESData_ViewKindEntity>> IGESDraw_Array1OfViewKindEntity;
 
 #endif

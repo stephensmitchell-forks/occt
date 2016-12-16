@@ -33,10 +33,10 @@ static struct parlist *header;   /*  Entete du fichier IGES  */
 /*                Declaration d'une portion de Directory IGES              */
 static struct dirpart *curp;
 
-struct dirpart *iges_get_curp (void)
+/*struct dirpart *iges_get_curp (void)
 {
   return curp;
-}
+}*/
 
 /*                   Declaration d'un parametre IGES (Psect)              */
 static struct oneparam {
@@ -137,7 +137,7 @@ void iges_setglobal()
 
 /*   Definition et Selection d'un nouveau dirpart   */
 
-void iges_newpart(int numsec)
+/*unused:void iges_newpart(int numsec)
 {
   if (curpage->used >= Maxparts) {
     struct dirpage* newpage;
@@ -151,7 +151,7 @@ void iges_newpart(int numsec)
   curp->numpart = numsec; curlist->nbparam = 0;
   curlist->first = curlist->last = NULL;
   curpage->used ++;  nbparts ++;
-}
+}*/
 
 
 /*   Selection du dirpart dnum, correspond a numsec en Psect   */
@@ -195,7 +195,6 @@ void iges_newparam (int typarg, int longval, char *parval)
   char *newval;
   if (curlist == NULL) return;      /*  non defini : abandon  */
   newval = iges_newchar(parval,longval);
-/*  curparam = (struct oneparam*) malloc ( sizeof(struct oneparam) );  */
   if (oneparpage->used > Maxpar) {
     struct parpage* newparpage;
     newparpage = (struct parpage*) malloc ( sizeof(struct parpage) );

@@ -53,13 +53,11 @@ void IGESGeom_ToolCurveOnSurface::ReadOwnParams
   Handle(IGESData_IGESEntity) aCurve3D;
   IGESData_Status aStatus;
 
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
-
-  if (!PR.ReadInteger(PR.Current(), aMode)){ //szv#4:S4163:12Mar99 `st=` not needed
+  if (!PR.ReadInteger(aMode)) {
     Message_Msg Msg276("XSTEP_276");
     PR.SendFail(Msg276);
   }
-  if (!PR.ReadEntity(IR, PR.Current(),aStatus, aSurface)){
+  if (!PR.ReadEntity(IR, aStatus, aSurface)) {
     Message_Msg Msg131("XSTEP_131");
     switch(aStatus) {
     case IGESData_ReferenceError: {  
@@ -75,9 +73,9 @@ void IGESGeom_ToolCurveOnSurface::ReadOwnParams
     default:{
     }
     }
-  } //szv#4:S4163:12Mar99 `st=` not needed
+  }
 
-  if (!PR.ReadEntity(IR, PR.Current(), aStatus, aCurveUV, Standard_True)){
+  if (!PR.ReadEntity(IR, aStatus, aCurveUV, Standard_True)) {
     Message_Msg Msg132("XSTEP_132");
     switch(aStatus) {
     case IGESData_ReferenceError: {  
@@ -93,8 +91,8 @@ void IGESGeom_ToolCurveOnSurface::ReadOwnParams
     default:{
     }
     }
-  } //szv#4:S4163:12Mar99 `st=` not needed
-  if (!PR.ReadEntity(IR, PR.Current(), aStatus, aCurve3D, Standard_True)){; //szv#4:S4163:12Mar99 `st=` not needed
+  }
+  if (!PR.ReadEntity(IR, aStatus, aCurve3D, Standard_True)) {;
       Message_Msg Msg133("XSTEP_133");
       switch(aStatus) {
       case IGESData_ReferenceError: {  
@@ -111,17 +109,10 @@ void IGESGeom_ToolCurveOnSurface::ReadOwnParams
       }
       }
   }
-  if (!PR.ReadInteger(PR.Current(), aPreference)){ //szv#4:S4163:12Mar99 `st=` not needed
+  if (!PR.ReadInteger(aPreference)) {
     Message_Msg Msg277("XSTEP_277");  
     PR.SendFail(Msg277);
   }
-/*
-  st = PR.ReadInteger(PR.Current(), "Creation mode of curve", aMode);
-  st = PR.ReadEntity(IR, PR.Current(), "Surface (on which curve lies)", aSurface);
-  st = PR.ReadEntity(IR, PR.Current(), "Curve UV", aCurveUV, Standard_True);
-  st = PR.ReadEntity(IR, PR.Current(), "Curve 3D", aCurve3D, Standard_True);
-  st = PR.ReadInteger(PR.Current(), "Preferred representation", aPreference);
-*/
   DirChecker(ent).CheckTypeAndForm(PR.CCheck(),ent);
   ent->Init
     (aMode, aSurface, aCurveUV, aCurve3D, aPreference);

@@ -12,16 +12,11 @@
 // commercial license or contractual agreement.
 
 /*
-#include <IGESData_SpecificLib.hxx>
-#include <IGESData_WriterLib.hxx>
 #include <IGESGeom.hxx>
 #include <IGESSolid.hxx>
 #include <IGESSolid_GeneralModule.hxx>
 #include <IGESSolid_Protocol.hxx>
-#include <IGESSolid_ReadWriteModule.hxx>
-#include <IGESSolid_SpecificModule.hxx>
 #include <Interface_GeneralLib.hxx>
-#include <Interface_ReaderLib.hxx>
 
 void IGESSolid::Init ()
 {
@@ -35,9 +30,6 @@ const Handle(IGESSolid_Protocol) & IGESSolid::Protocol ()
   if (protocol.IsNull()) {
     protocol = new IGESSolid_Protocol;
     Interface_GeneralLib::SetGlobal (new IGESSolid_GeneralModule,  protocol);
-    Interface_ReaderLib::SetGlobal  (new IGESSolid_ReadWriteModule,protocol);
-    IGESData_WriterLib::SetGlobal   (new IGESSolid_ReadWriteModule,protocol);
-    IGESData_SpecificLib::SetGlobal (new IGESSolid_SpecificModule, protocol);
   }
   return protocol;
 }

@@ -17,10 +17,10 @@
 #ifndef IGESDraw_Array1OfConnectPoint_HeaderFile
 #define IGESDraw_Array1OfConnectPoint_HeaderFile
 
+#include <Interface_Pointer.hxx>
 #include <IGESDraw_ConnectPoint.hxx>
 #include <NCollection_Array1.hxx>
 
-typedef NCollection_Array1<Handle(IGESDraw_ConnectPoint)> IGESDraw_Array1OfConnectPoint;
-
+typedef NCollection_Array1<Interface_Pointer<IGESDraw_ConnectPoint>> IGESDraw_Array1OfConnectPoint;
 
 #endif

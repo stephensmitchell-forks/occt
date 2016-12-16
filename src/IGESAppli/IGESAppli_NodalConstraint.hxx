@@ -36,40 +36,46 @@ class IGESAppli_NodalConstraint : public IGESData_IGESEntity
 {
  public:
 
-  IGESAppli_NodalConstraint() {}
-  
-  //! This method is used to set the fields of the class
-  //! NodalConstraint
-  //! - aType      : Loads / Constraints
-  //! - aNode      : the Node
-  //! - allTabData : Tabular Data Property carrying the load
-  //! or constraint vector
-  Standard_EXPORT void Init (const Standard_Integer aType, const Handle(IGESAppli_Node)& aNode, const Handle(IGESDefs_HArray1OfTabularData)& allTabData);
+  Standard_EXPORT virtual Standard_Integer TypeNumber() const Standard_OVERRIDE { return 418; }
+
+  Standard_EXPORT virtual Standard_Integer FormNumber() const Standard_OVERRIDE { return 0; }
+
+  IGESAppli_NodalConstraint()
+  : myType(0)
+  {}
   
   //! returns total number of cases
   Standard_EXPORT Standard_Integer NbCases() const;
   
   //! returns whether Loads (1) or Constraints (2)
-  Standard_Integer Type() const { return theType; }
+  Standard_Integer Type() const { return myType; }
 
   //! returns the Node
-  const Handle(IGESAppli_Node) & NodeEntity() const { return theNode; }
+  const Handle(IGESAppli_Node) & NodeEntity() const { return myNode; }
 
   //! returns Tabular Data Property carrying load or constraint vector
   //! raises exception if Index <= 0 or Index > NbCases
   Standard_EXPORT const Handle(IGESDefs_TabularData) & TabularData (const Standard_Integer Index) const;
 
+  Standard_EXPORT virtual void OwnRead (IGESFile_Reader &) Standard_OVERRIDE;
+  
+  Standard_EXPORT virtual void OwnWrite (IGESData_IGESWriter &) const Standard_OVERRIDE;
+
   Standard_EXPORT virtual void OwnShared(Interface_EntityIterator &theIter) const Standard_OVERRIDE;
 
+  Standard_EXPORT virtual IGESData_DirChecker DirChecker () const Standard_OVERRIDE;
+
   Standard_EXPORT virtual void OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &) const Standard_OVERRIDE;
+
+  Standard_EXPORT virtual void OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &, const Standard_Integer) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESAppli_NodalConstraint,IGESData_IGESEntity)
 
  private:
 
-  Standard_Integer theType;
-  Handle(IGESAppli_Node) theNode;
-  Handle(IGESDefs_HArray1OfTabularData) theTabularDataProps;
+  Standard_Integer myType;
+  Interface_Pointer<IGESAppli_Node> myNode;
+  Handle(IGESDefs_HArray1OfTabularData) myTabularDataProps;
 };
 
 #endif // _IGESAppli_NodalConstraint_HeaderFile

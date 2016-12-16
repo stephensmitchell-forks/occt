@@ -46,16 +46,10 @@ void  IGESDimen_ToolDiameterDimension::ReadOwnParams
   Handle(IGESDimen_LeaderArrow) secondLeader; 
   gp_XY center;
 
-  PR.ReadEntity(IR, PR.Current(), "General Note Entity",
-		STANDARD_TYPE(IGESDimen_GeneralNote), note); //szv#4:S4163:12Mar99 `st=` not needed
-
-  PR.ReadEntity(IR, PR.Current(), "First Leader Entity",
-		STANDARD_TYPE(IGESDimen_LeaderArrow), firstLeader); //szv#4:S4163:12Mar99 `st=` not needed
-
-  PR.ReadEntity (IR,PR.Current(),"Second Leader Entity",
-		 STANDARD_TYPE(IGESDimen_LeaderArrow), secondLeader, Standard_True); //szv#4:S4163:12Mar99 `st=` not needed
-
-  PR.ReadXY(PR.CurrentList(1, 2), "Arc Center Co-ords", center); //szv#4:S4163:12Mar99 `st=` not needed
+  PR.ReadEntity(IR, "General Note Entity", STANDARD_TYPE(IGESDimen_GeneralNote), note);
+  PR.ReadEntity(IR, "First Leader Entity", STANDARD_TYPE(IGESDimen_LeaderArrow), firstLeader);
+  PR.ReadEntity(IR, "Second Leader Entity", STANDARD_TYPE(IGESDimen_LeaderArrow), secondLeader, Standard_True);
+  PR.ReadXY(center,"Arc Center Co-ords");
 
   DirChecker(ent).CheckTypeAndForm(PR.CCheck(),ent);
   ent->Init(note, firstLeader, secondLeader, center);

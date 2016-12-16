@@ -17,18 +17,10 @@
 #ifndef _IGESDefs_MacroDef_HeaderFile
 #define _IGESDefs_MacroDef_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
-#include <Standard_Integer.hxx>
-#include <Interface_HArray1OfHAsciiString.hxx>
 #include <IGESData_IGESEntity.hxx>
 class TCollection_HAsciiString;
-class Standard_OutOfRange;
+class Interface_HArray1OfHAsciiString;
 
-
-class IGESDefs_MacroDef;
-DEFINE_STANDARD_HANDLE(IGESDefs_MacroDef, IGESData_IGESEntity)
 
 //! defines IGES Macro Definition Entity, Type <306> Form <0>
 //! in package IGESDefs
@@ -37,11 +29,15 @@ DEFINE_STANDARD_HANDLE(IGESDefs_MacroDef, IGESData_IGESEntity)
 //! by means of MACRO class instance entity.
 class IGESDefs_MacroDef : public IGESData_IGESEntity
 {
+ public:
 
-public:
+  Standard_EXPORT virtual Standard_Integer TypeNumber() const Standard_OVERRIDE { return 306; }
 
-  
-  Standard_EXPORT IGESDefs_MacroDef();
+  Standard_EXPORT virtual Standard_Integer FormNumber() const Standard_OVERRIDE { return 0; }
+
+  IGESDefs_MacroDef()
+  : myEntityTypeID(0)
+  {}
   
   //! This method is used to set the fields of the class
   //! MacroDef
@@ -55,41 +51,32 @@ public:
   Standard_EXPORT Standard_Integer NbStatements() const;
   
   //! returns the MACRO(Literal)
-  Standard_EXPORT Handle(TCollection_HAsciiString) MACRO() const;
-  
+  const Handle(TCollection_HAsciiString) & MACRO() const { return myMACRO; }
+
   //! returns the Entity Type ID
-  Standard_EXPORT Standard_Integer EntityTypeID() const;
-  
-  Standard_EXPORT Handle(TCollection_HAsciiString) LanguageStatement (const Standard_Integer StatNum) const;
+  Standard_Integer EntityTypeID() const { return myEntityTypeID; }
+
+  Standard_EXPORT const Handle(TCollection_HAsciiString) & LanguageStatement (const Standard_Integer StatNum) const;
   
   //! returns the ENDM(Literal)
-  Standard_EXPORT Handle(TCollection_HAsciiString) ENDMACRO() const;
+  const Handle(TCollection_HAsciiString) & ENDMACRO() const { return myENDMACRO; }
 
+  Standard_EXPORT virtual void OwnRead (IGESFile_Reader &) Standard_OVERRIDE;
+  
+  Standard_EXPORT virtual void OwnWrite (IGESData_IGESWriter &) const Standard_OVERRIDE;
 
+  Standard_EXPORT virtual IGESData_DirChecker DirChecker () const Standard_OVERRIDE;
 
+  Standard_EXPORT virtual void OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &, const Standard_Integer) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESDefs_MacroDef,IGESData_IGESEntity)
 
-protected:
+ private:
 
-
-
-
-private:
-
-
-  Handle(TCollection_HAsciiString) theMACRO;
-  Standard_Integer theEntityTypeID;
-  Handle(Interface_HArray1OfHAsciiString) theLangStatements;
-  Handle(TCollection_HAsciiString) theENDMACRO;
-
-
+  Handle(TCollection_HAsciiString) myMACRO;
+  Standard_Integer myEntityTypeID;
+  Handle(Interface_HArray1OfHAsciiString) myLangStatements;
+  Handle(TCollection_HAsciiString) myENDMACRO;
 };
-
-
-
-
-
-
 
 #endif // _IGESDefs_MacroDef_HeaderFile

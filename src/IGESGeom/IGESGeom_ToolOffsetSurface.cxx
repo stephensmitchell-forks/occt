@@ -42,27 +42,20 @@ void IGESGeom_ToolOffsetSurface::ReadOwnParams
   (const Handle(IGESGeom_OffsetSurface)& ent,
    const Handle(IGESData_IGESReaderData)& IR, IGESData_ParamReader& PR) const
 {
-  // MGE 31/07/98
-  // Building of messages
-  //========================================
-  Message_Msg Msg162("XSTEP_162");
-  //========================================
-
   gp_XYZ anIndicator;
   Standard_Real aDistance;
   Handle(IGESData_IGESEntity) aSurface;
   IGESData_Status aStatus;
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
 
   // Reading the offset indicator
-  PR.ReadXYZ(PR.CurrentList(1, 3), Msg162, anIndicator); //szv#4:S4163:12Mar99 `st=` not needed
+  PR.ReadXYZ(anIndicator);
   // Reading the offset distance
-  if (!PR.ReadReal(PR.Current(), aDistance)){
+  if (!PR.ReadReal(aDistance)){
     Message_Msg Msg163("XSTEP_163");
     PR.SendFail(Msg163);
-  } //szv#4:S4163:12Mar99 `st=` not needed
+  }
   // Reading the surface entity to be offset
-  if (!PR.ReadEntity(IR, PR.Current(), aStatus, aSurface)){
+  if (!PR.ReadEntity(IR, aStatus, aSurface)) {
     Message_Msg Msg164("XSTEP_164");
     switch(aStatus) {
     case IGESData_ReferenceError: {  
@@ -78,17 +71,7 @@ void IGESGeom_ToolOffsetSurface::ReadOwnParams
     default:{
     }
     }
-  }//szv#4:S4163:12Mar99 `st=` not needed
-
-
-/*
-  // Reading the offset indicator
-  st = PR.ReadXYZ(PR.CurrentList(1, 3), "Offset Indicator", anIndicator);
-  // Reading the offset distance
-  st = PR.ReadReal(PR.Current(), "The Offset Distance ", aDistance);
-  // Reading the surface entity to be offset
-  st = PR.ReadEntity(IR, PR.Current(), "Surface entity to be offset", aSurface);
-*/
+  }
 
   DirChecker(ent).CheckTypeAndForm(PR.CCheck(),ent);
   ent->Init(anIndicator, aDistance, aSurface);

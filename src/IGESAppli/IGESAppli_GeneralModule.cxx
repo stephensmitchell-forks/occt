@@ -81,25 +81,6 @@
 #include <IGESAppli_PWBDrilledHole.hxx>
 #include <IGESAppli_ReferenceDesignator.hxx>
 #include <IGESAppli_RegionRestriction.hxx>
-#include <IGESAppli_ToolDrilledHole.hxx>
-#include <IGESAppli_ToolElementResults.hxx>
-#include <IGESAppli_ToolFiniteElement.hxx>
-#include <IGESAppli_ToolFlow.hxx>
-#include <IGESAppli_ToolFlowLineSpec.hxx>
-#include <IGESAppli_ToolLevelFunction.hxx>
-#include <IGESAppli_ToolLevelToPWBLayerMap.hxx>
-#include <IGESAppli_ToolLineWidening.hxx>
-#include <IGESAppli_ToolNodalConstraint.hxx>
-#include <IGESAppli_ToolNodalDisplAndRot.hxx>
-#include <IGESAppli_ToolNodalResults.hxx>
-#include <IGESAppli_ToolNode.hxx>
-#include <IGESAppli_ToolPartNumber.hxx>
-#include <IGESAppli_ToolPinNumber.hxx>
-#include <IGESAppli_ToolPipingFlow.hxx>
-#include <IGESAppli_ToolPWBArtworkStackup.hxx>
-#include <IGESAppli_ToolPWBDrilledHole.hxx>
-#include <IGESAppli_ToolReferenceDesignator.hxx>
-#include <IGESAppli_ToolRegionRestriction.hxx>
 
 #include <IGESData_DirChecker.hxx>
 #include <IGESData_IGESEntity.hxx>
@@ -110,12 +91,6 @@
 #include <Interface_ShareTool.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESAppli_GeneralModule,IGESData_GeneralModule)
-
-void IGESAppli_GeneralModule::OwnSharedCase (const Standard_Integer, const Handle(IGESData_IGESEntity)& ent, Interface_EntityIterator& iter) const
-{
-  ent->OwnShared(iter);
-}
-
 
 IGESData_DirChecker IGESAppli_GeneralModule::DirChecker (const Standard_Integer CN, const Handle(IGESData_IGESEntity)& ent) const
 {
@@ -266,183 +241,9 @@ IGESData_DirChecker IGESAppli_GeneralModule::DirChecker (const Standard_Integer 
       return tool.DirChecker(anent);
     }
   // }
-    case 25 : {
-      DeclareAndCast(IGESAppli_DrilledHole,anent,ent);
-      if (anent.IsNull()) break;
-      IGESAppli_ToolDrilledHole tool;
-      return tool.DirChecker(anent);
-    }
-    case 26 : {
-      DeclareAndCast(IGESAppli_ElementResults,anent,ent);
-      if (anent.IsNull()) break;
-      IGESAppli_ToolElementResults tool;
-      return tool.DirChecker(anent);
-    }
-    case 27 : {
-      DeclareAndCast(IGESAppli_FiniteElement,anent,ent);
-      if (anent.IsNull()) break;
-      IGESAppli_ToolFiniteElement tool;
-      return tool.DirChecker(anent);
-    }
-    case 28 : {
-      DeclareAndCast(IGESAppli_Flow,anent,ent);
-      if (anent.IsNull()) break;
-      IGESAppli_ToolFlow tool;
-      return tool.DirChecker(anent);
-    }
-    case 29 : {
-      DeclareAndCast(IGESAppli_FlowLineSpec,anent,ent);
-      if (anent.IsNull()) break;
-      IGESAppli_ToolFlowLineSpec tool;
-      return tool.DirChecker(anent);
-    }
-    case 30 : {
-      DeclareAndCast(IGESAppli_LevelFunction,anent,ent);
-      if (anent.IsNull()) break;
-      IGESAppli_ToolLevelFunction tool;
-      return tool.DirChecker(anent);
-    }
-    case 31 : {
-      DeclareAndCast(IGESAppli_LevelToPWBLayerMap,anent,ent);
-      if (anent.IsNull()) break;
-      IGESAppli_ToolLevelToPWBLayerMap tool;
-      return tool.DirChecker(anent);
-    }
-    case 32 : {
-      DeclareAndCast(IGESAppli_LineWidening,anent,ent);
-      if (anent.IsNull()) break;
-      IGESAppli_ToolLineWidening tool;
-      return tool.DirChecker(anent);
-    }
-    case 33 : {
-      DeclareAndCast(IGESAppli_NodalConstraint,anent,ent);
-      if (anent.IsNull()) break;
-      IGESAppli_ToolNodalConstraint tool;
-      return tool.DirChecker(anent);
-    }
-    case 34 : {
-      DeclareAndCast(IGESAppli_NodalDisplAndRot,anent,ent);
-      if (anent.IsNull()) break;
-      IGESAppli_ToolNodalDisplAndRot tool;
-      return tool.DirChecker(anent);
-    }
-    case 35 : {
-      DeclareAndCast(IGESAppli_NodalResults,anent,ent);
-      if (anent.IsNull()) break;
-      IGESAppli_ToolNodalResults tool;
-      return tool.DirChecker(anent);
-    }
-    case 36 : {
-      DeclareAndCast(IGESAppli_Node,anent,ent);
-      if (anent.IsNull()) break;
-      IGESAppli_ToolNode tool;
-      return tool.DirChecker(anent);
-    }
-    case 37 : {
-      DeclareAndCast(IGESAppli_PWBArtworkStackup,anent,ent);
-      if (anent.IsNull()) break;
-      IGESAppli_ToolPWBArtworkStackup tool;
-      return tool.DirChecker(anent);
-    }
-    case 38 : {
-      DeclareAndCast(IGESAppli_PWBDrilledHole,anent,ent);
-      if (anent.IsNull()) break;
-      IGESAppli_ToolPWBDrilledHole tool;
-      return tool.DirChecker(anent);
-    }
-    case 39 : {
-      DeclareAndCast(IGESAppli_PartNumber,anent,ent);
-      if (anent.IsNull()) break;
-      IGESAppli_ToolPartNumber tool;
-      return tool.DirChecker(anent);
-    }
-    case 40 : {
-      DeclareAndCast(IGESAppli_PinNumber,anent,ent);
-      if (anent.IsNull()) break;
-      IGESAppli_ToolPinNumber tool;
-      return tool.DirChecker(anent);
-    }
-    case 41 : {
-      DeclareAndCast(IGESAppli_PipingFlow,anent,ent);
-      if (anent.IsNull()) break;
-      IGESAppli_ToolPipingFlow tool;
-      return tool.DirChecker(anent);
-    }
-    case 42 : {
-      DeclareAndCast(IGESAppli_ReferenceDesignator,anent,ent);
-      if (anent.IsNull()) break;
-      IGESAppli_ToolReferenceDesignator tool;
-      return tool.DirChecker(anent);
-    }
-    case 43 : {
-      DeclareAndCast(IGESAppli_RegionRestriction,anent,ent);
-      if (anent.IsNull()) break;
-      IGESAppli_ToolRegionRestriction tool;
-      return tool.DirChecker(anent);
-    }
     default : break;
   }
   return IGESData_DirChecker();    // by default, no specific criterium
-}
-
-
-void IGESAppli_GeneralModule::OwnCheckCase (const Standard_Integer, const Handle(IGESData_IGESEntity)& ent, const Interface_ShareTool& shares, Handle(Interface_Check)& ach) const
-{
-  ent->OwnCheck(shares,ach);
-}
-
-
-Standard_Boolean IGESAppli_GeneralModule::NewVoid (const Standard_Integer CN, Handle(Standard_Transient)& ent) const
-{
-  // For IGESSolid {
-  switch (CN) {
-    case  1 : ent = new IGESSolid_Block;	break;
-    case  2 : ent = new IGESSolid_BooleanTree;	break;
-    case  3 : ent = new IGESSolid_ConeFrustum;	break;
-    case  4 : ent = new IGESSolid_ConicalSurface;	break;
-    case  5 : ent = new IGESSolid_Cylinder;	break;
-    case  6 : ent = new IGESSolid_CylindricalSurface;	break;
-    case  7 : ent = new IGESSolid_EdgeList;	break;
-    case  8 : ent = new IGESSolid_Ellipsoid;	break;
-    case  9 : ent = new IGESSolid_Face;		break;
-    case 10 : ent = new IGESSolid_Loop;		break;
-    case 11 : ent = new IGESSolid_ManifoldSolid;	break;
-    case 12 : ent = new IGESSolid_PlaneSurface;	break;
-    case 13 : ent = new IGESSolid_RightAngularWedge;	break;
-    case 14 : ent = new IGESSolid_SelectedComponent;	break;
-    case 15 : ent = new IGESSolid_Shell;	break;
-    case 16 : ent = new IGESSolid_SolidAssembly;	break;
-    case 17 : ent = new IGESSolid_SolidInstance;	break;
-    case 18 : ent = new IGESSolid_SolidOfLinearExtrusion;	break;
-    case 19 : ent = new IGESSolid_SolidOfRevolution;	break;
-    case 20 : ent = new IGESSolid_Sphere;	break;
-    case 21 : ent = new IGESSolid_SphericalSurface;	break;
-    case 22 : ent = new IGESSolid_ToroidalSurface;	break;
-    case 23 : ent = new IGESSolid_Torus;	break;
-    case 24 : ent = new IGESSolid_VertexList;	break;
-  // }
-    case 25 : ent = new IGESAppli_DrilledHole;	break;
-    case 26 : ent = new IGESAppli_ElementResults;	break;
-    case 27 : ent = new IGESAppli_FiniteElement;	break;
-    case 28 : ent = new IGESAppli_Flow;	break;
-    case 29 : ent = new IGESAppli_FlowLineSpec;	break;
-    case 30 : ent = new IGESAppli_LevelFunction;	break;
-    case 31 : ent = new IGESAppli_LevelToPWBLayerMap;	break;
-    case 32 : ent = new IGESAppli_LineWidening;	break;
-    case 33 : ent = new IGESAppli_NodalConstraint;	break;
-    case 34 : ent = new IGESAppli_NodalDisplAndRot;	break;
-    case 35 : ent = new IGESAppli_NodalResults;	break;
-    case 36 : ent = new IGESAppli_Node;	break;
-    case 37 : ent = new IGESAppli_PWBArtworkStackup;	break;
-    case 38 : ent = new IGESAppli_PWBDrilledHole;	break;
-    case 39 : ent = new IGESAppli_PartNumber;	break;
-    case 40 : ent = new IGESAppli_PinNumber;	break;
-    case 41 : ent = new IGESAppli_PipingFlow;	break;
-    case 42 : ent = new IGESAppli_ReferenceDesignator;	break;
-    case 43 : ent = new IGESAppli_RegionRestriction;	break;
-    default : return Standard_False;    // by default, Failure on Recognize
-  }
-  return Standard_True;
 }
 
 Standard_Integer IGESAppli_GeneralModule::CategoryNumber (const Standard_Integer CN, const Handle(Standard_Transient)& /*ent*/, const Interface_ShareTool& ) const

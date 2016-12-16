@@ -23,7 +23,6 @@
 
 #include <Interface_GeneralLib.hxx>
 #include <Interface_ReaderLib.hxx>
-#include <TColStd_HArray1OfTransient.hxx>
 class Interface_Protocol;
 class Interface_FileReaderData;
 class Interface_InterfaceModel;
@@ -57,42 +56,10 @@ public:
     theproto = protocol;
   }
   
-  //! Returns the Protocol given at creation time
-  const Handle(Interface_Protocol) & Protocol() const { return theproto; }
-  
-  //! Returns the FileReaderData which is used to work
-  const Handle(Interface_FileReaderData) & Data() const { return thereader; }
-  
-  //! Stores a Model. Used when the Model has been loaded
-  void SetModel (const Handle(Interface_InterfaceModel)& amodel) { themodel = amodel; }
-  
-  //! Returns the stored Model
-  const Handle(Interface_InterfaceModel) & Model() const { return themodel; }
-  
-  //! Sets Messenger used for outputting messages
-  Standard_EXPORT void SetMessenger (const Handle(Message_Messenger)& messenger);
-  
   //! Returns Messenger used for outputting messages.
   //! The returned object is guaranteed to be non-null;
   //! default is Message::Messenger().
   const Handle(Message_Messenger) & Messenger() const { return themessenger; }
-  
-  //! Sets trace level used for outputting messages
-  //! - 0: no trace at all
-  //! - 1: errors
-  //! - 2: errors and warnings
-  //! - 3: all messages
-  //! Default is 1 : Errors traced
-  void SetTraceLevel (const Standard_Integer tracelev) { thetrace = tracelev; }
-  
-  //! Returns trace level used for outputting messages.
-  Standard_Integer TraceLevel() const { return thetrace; }
-  
-  //! Fills records with empty entities; once done, each entity can
-  //! ask the FileReaderTool for any entity referenced through an
-  //! identifier. Calls Recognize which is specific to each specific
-  //! type of FileReaderTool
-  Standard_EXPORT void SetEntities();
   
   //! Reads and fills Entities from the FileReaderData set by
   //! SetData to an InterfaceModel.
@@ -103,24 +70,30 @@ public:
   //! It Can raise any error which can occur during a load
   //! operation, unless Error Handling is set.
   //! This method can also be redefined if judged necessary.
-  Standard_EXPORT void LoadModel (const Handle(Interface_InterfaceModel)& amodel);
-  
-  //! Reads, Fills and Returns one Entity read from a Record of the
-  //! FileReaderData. This Method manages also case of Fail or
-  //! Warning, by producing a ReportEntyty plus , for a Fail, a
-  //! literal Content (as an UnknownEntity). Performs also Trace
-  Standard_EXPORT Handle(Standard_Transient) LoadedEntity (const Standard_Integer num);
+  Standard_EXPORT virtual void LoadModel (const Handle(Interface_InterfaceModel)& amodel);
 
  protected:
 
   //! Constructor; sets default fields
   Standard_EXPORT Interface_FileReaderTool(const Handle(Interface_Protocol)& protocol);
   
+  //! Fills records with empty entities; once done, each entity can
+  //! ask the FileReaderTool for any entity referenced through an
+  //! identifier. Calls Recognize which is specific to each specific
+  //! type of FileReaderTool
+  //Standard_EXPORT void SetEntities();
+  
   //! Recognizes a record with the help of Libraries. Can be used
   //! to implement the method Recognize.
   //! <ent> is the result
   //! Returns False if recognition has failed, True else
   Standard_EXPORT Standard_Boolean RecognizeByLib (const Standard_Integer num, Handle(Standard_Transient)& ent) const;
+
+  //! binds empty entities to records, works with the Protocol
+  //! (from IGESData) stored and later used
+  //! RQ : Actually, sets DNum into IGES Entities
+  //! Also loads the list of parameters for ParamReader
+  Standard_EXPORT virtual void Prepare () = 0;
   
   //! Recognizes a record, given its number. Specific to each
   //! Interface; called by SetEntities. It can call the basic method
@@ -166,10 +139,6 @@ public:
   Handle(Interface_FileReaderData) thereader;
   Handle(Interface_InterfaceModel) themodel;
   Handle(Message_Messenger) themessenger;
-  Standard_Integer thetrace;
-  Standard_Integer thenbrep0;
-  Standard_Integer thenbreps;
-  Handle(TColStd_HArray1OfTransient) thereports;
 };
 
 #endif // _Interface_FileReaderTool_HeaderFile

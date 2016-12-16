@@ -62,70 +62,42 @@ void IGESGeom_ToolBSplineSurface::ReadOwnParams
   Standard_Boolean aCloseU, aCloseV, aPolynom, aPeriodU, aPeriodV;
   Standard_Real aUmin, aUmax, aVmin = 0., aVmax = 0.;
   Standard_Real tempVal;
-  gp_XYZ tempXYZ;
   Handle(TColStd_HArray1OfReal) allKnotsU;
   Handle(TColStd_HArray1OfReal) allKnotsV;
   Handle(TColStd_HArray2OfReal) allWeights;
   Handle(TColgp_HArray2OfXYZ)   allPoles;
 
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
-  Standard_Boolean FlagindexU = PR.ReadInteger(PR.Current(), anIndexU);
-
-  Standard_Boolean FlagindexV = PR.ReadInteger(PR.Current(), anIndexV);
+  Standard_Boolean FlagindexU = PR.ReadInteger(anIndexU);
+  Standard_Boolean FlagindexV = PR.ReadInteger(anIndexV);
 
   if (!FlagindexU || !FlagindexV){ 
     Message_Msg Msg97("XSTEP_97");
     PR.SendFail(Msg97);
   }
 
-  Standard_Boolean FlagdegU  =  PR.ReadInteger(PR.Current(), aDegU);
-
-  Standard_Boolean FlagdegV  =  PR.ReadInteger(PR.Current(), aDegV);
+  Standard_Boolean FlagdegU  =  PR.ReadInteger(aDegU);
+  Standard_Boolean FlagdegV  =  PR.ReadInteger(aDegV);
 
   if (!FlagdegU || !FlagdegV){ 
     Message_Msg Msg98("XSTEP_98");
     PR.SendFail(Msg98);
   }
-  //szv#4:S4163:12Mar99 `st=` not needed
-  PR.ReadBoolean(PR.Current(), Msg100,aCloseU);
-  PR.ReadBoolean(PR.Current(), Msg100,aCloseV);
-  PR.ReadBoolean(PR.Current(), Msg101, aPolynom);
-  PR.ReadBoolean(PR.Current(), Msg102, aPeriodU);
-  PR.ReadBoolean(PR.Current(), Msg102, aPeriodV);
+  PR.ReadBoolean(Msg100,aCloseU);
+  PR.ReadBoolean(Msg100,aCloseV);
+  PR.ReadBoolean(Msg101, aPolynom);
+  PR.ReadBoolean(Msg102, aPeriodU);
+  PR.ReadBoolean(Msg102, aPeriodV);
 
-/*
-  Standard_Boolean FlagindexU =
-    PR.ReadInteger(PR.Current(), "Upper Index in U", anIndexU);
-
-  Standard_Boolean FlagindexV =
-    PR.ReadInteger(PR.Current(), "Upper Index in V", anIndexV);
-
-  Standard_Boolean FlagdegU  =
-    PR.ReadInteger(PR.Current(), "Degree Of First Basis Functions", aDegU);
-
-  Standard_Boolean FlagdegV  =
-    PR.ReadInteger(PR.Current(), "Degree Of Second Basis Functions",aDegV);
-
-  st = PR.ReadBoolean(PR.Current(), "Closed/Open flag in U Direction",aCloseU);
-  st = PR.ReadBoolean(PR.Current(), "Closed/Open flag in V Direction",aCloseV);
-  st = PR.ReadBoolean(PR.Current(), "Polynomial / Rational", aPolynom);
-  st = PR.ReadBoolean(PR.Current(), "Periodic flag in U direction", aPeriodU);
-  st = PR.ReadBoolean(PR.Current(), "Periodic flag in V direction", aPeriodV);
-*/
   if ( FlagdegU && FlagindexU )
     {
-//      allKnotsU = new TColStd_HArray1OfReal(-aDegU, anIndexU+1);  done by :
       Standard_Integer tempind = anIndexU+aDegU+2;
       PR.ReadReals(PR.CurrentList(tempind), Msg103, allKnotsU, -aDegU); //szv#4:S4163:12Mar99 `st=` not needed
-      //st = PR.ReadReals(PR.CurrentList(tempind), "First knot sequence values", allKnotsU, -aDegU);
     }
 
   if ( FlagdegV && FlagindexV )
     {
-//      allKnotsV = new TColStd_HArray1OfReal(-aDegV, anIndexV+1);  done by :
       Standard_Integer tempind = anIndexV+aDegV+2;
       PR.ReadReals(PR.CurrentList(tempind), Msg103, allKnotsV, -aDegV); //szv#4:S4163:12Mar99 `st=` not needed
-      //st = PR.ReadReals(PR.CurrentList(tempind), "Second knot sequence values", allKnotsV, -aDegV);
     }
 
   if ( FlagindexU && FlagindexV )
@@ -134,13 +106,10 @@ void IGESGeom_ToolBSplineSurface::ReadOwnParams
       allPoles   = new TColgp_HArray2OfXYZ   (0, anIndexU, 0, anIndexV);
 
       Standard_Boolean BadWeigth = Standard_False;
-      Message_Msg Msg105("XSTEP_105");
 
       for (J = 0; J <= anIndexV; J ++) {
 	for (I = 0; I <= anIndexU; I ++) {
-          //st = PR.ReadReal(PR.Current(), Msg104, tempVal); //szv#4:S4163:12Mar99 moved down
-          //st = PR.ReadReal(PR.Current(), "Weights", tempVal);
-          if (PR.ReadReal(PR.Current(), tempVal)) {
+          if (PR.ReadReal(tempVal)) {
             if(tempVal<Precision::PConfusion()) { // skl for OCC2821 11.06.2003
               BadWeigth = Standard_True;
             }
@@ -162,44 +131,28 @@ void IGESGeom_ToolBSplineSurface::ReadOwnParams
 
       for (J = 0; J <= anIndexV; J ++)
 	for (I = 0; I <= anIndexU; I ++) {
-	  //st = PR.ReadXYZ (PR.CurrentList(1, 3), Msg105, tempXYZ); //szv#4:S4163:12Mar99 moved down
-	  //st = PR.ReadXYZ (PR.CurrentList(1, 3), "Control Points", tempXYZ);
-	  if (PR.ReadXYZ (PR.CurrentList(1, 3), Msg105, tempXYZ))
-	    allPoles->SetValue(I, J, tempXYZ);
+	  PR.ReadXYZ(allPoles->ChangeValue(I, J));
 	}
     }
 
-  //szv#4:S4163:12Mar99 `st=` not needed
- /* PR.ReadReal(PR.Current(), Msg106, aUmin);
-  PR.ReadReal(PR.Current(), Msg107, aUmax);
-  PR.ReadReal(PR.Current(), Msg106, aVmin);
-  PR.ReadReal(PR.Current(), Msg107, aVmax);
-*/
-  if (!PR.ReadReal(PR.Current(), aUmin) || !PR.ReadReal(PR.Current(), aVmin)){
+  if (!PR.ReadReal(aUmin) || !PR.ReadReal(aVmin)){
     Message_Msg Msg106("XSTEP_106");
     PR.SendFail(Msg106);
   }
 
-  if (!PR.ReadReal(PR.Current(), aUmax) || !PR.ReadReal(PR.Current(), aVmax)){
+  if (!PR.ReadReal(aUmax) || !PR.ReadReal(aVmax)){
     Message_Msg Msg107("XSTEP_107");
     PR.SendFail(Msg107);
   }
-/*
-  st = PR.ReadReal(PR.Current(), "Starting Value For U Direction", aUmin);
-  st = PR.ReadReal(PR.Current(), "Ending Value For U Direction", aUmax);
-  st = PR.ReadReal(PR.Current(), "Starting Value For V Direction", aVmin);
-  st = PR.ReadReal(PR.Current(), "Ending Value For U Direction", aVmax);
-*/
 //  PROTECTION contre ANSYS 5.3 qui ecrit 3 flottants en plus ...
   Standard_Integer icur = PR.CurrentNumber(), imax = PR.NbParams();
   Standard_Real bid; Standard_Integer pbfin = 0;
-  //st = Standard_True; //szv#4:S4163:12Mar99 not needed
   while (imax >= icur) {
     Interface_ParamType pt = PR.ParamType(icur);
     if (pt == Interface_ParamReal) {
-      if (!PR.ReadReal (PR.Current(),bid)){
-	PR.SendFail(Msg159);
-      } //szv#4:S4163:12Mar99 `st=` not needed
+      if (!PR.ReadReal(bid)) {
+        PR.SendFail(Msg159);
+      }
       if (pbfin == 0) pbfin = 1;
     }
     else if (pt == Interface_ParamInteger || pt == Interface_ParamVoid) break;

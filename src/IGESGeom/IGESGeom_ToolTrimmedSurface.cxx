@@ -60,8 +60,7 @@ void IGESGeom_ToolTrimmedSurface::ReadOwnParams
   Handle(IGESGeom_HArray1OfCurveOnSurface) anInner;
   IGESData_Status aStatus;
 
-  //szv#4:S4163:12Mar99 `st=` not needed
-  if (!PR.ReadEntity(IR, PR.Current(), aStatus, aSurface)){
+  if (!PR.ReadEntity(IR, aStatus, aSurface)) {
     Message_Msg Msg169("XSTEP_169");
     switch(aStatus) {
     case IGESData_ReferenceError: {  
@@ -78,18 +77,12 @@ void IGESGeom_ToolTrimmedSurface::ReadOwnParams
     }
     }
   }
-  if (!PR.ReadInteger(PR.Current(), aFlag)){
+  if (!PR.ReadInteger(aFlag)){
     Message_Msg Msg170("XSTEP_170");
     PR.SendFail(Msg170);
   }
-  //st = PR.ReadInteger(PR.Current(), Msg171, count); //szv#4:S4163:12Mar99 moved in if
 
-/*
-  st = PR.ReadEntity(IR, PR.Current(), "Surface to be trimmed", aSurface);
-  st = PR.ReadInteger(PR.Current(), "Outer boundary type", aFlag);
-  st = PR.ReadInteger(PR.Current(), "Number of inner boundary closed curves", count);
-*/
-  if (PR.ReadInteger(PR.Current(), count)) {
+  if (PR.ReadInteger(count)) {
     if (count < 0){
       Message_Msg Msg171("XSTEP_171");
       PR.SendFail (Msg171);
@@ -102,8 +95,8 @@ void IGESGeom_ToolTrimmedSurface::ReadOwnParams
     PR.SendFail(Msg171);
   }
 
-  if (!PR.ReadEntity(IR, PR.Current(), aStatus,
-		STANDARD_TYPE(IGESGeom_CurveOnSurface), anOuter,Standard_True)){
+  if (!PR.ReadEntity(IR, aStatus,
+		STANDARD_TYPE(IGESGeom_CurveOnSurface), anOuter,Standard_True)) {
     Message_Msg Msg172("XSTEP_172");
     switch(aStatus) {
     case IGESData_ReferenceError: {  
@@ -132,12 +125,7 @@ void IGESGeom_ToolTrimmedSurface::ReadOwnParams
     Standard_Integer I;
     for (I = 1; I <= count; I++ ) {
       Handle(IGESGeom_CurveOnSurface) tempEnt;
-      //st = PR.ReadEntity(IR, PR.Current(), Msg173,
-			   //STANDARD_TYPE(IGESGeom_CurveOnSurface), tempEnt); //szv#4:S4163:12Mar99 moved in if
-/*      st = PR.ReadEntity(IR, PR.Current(), "Inner boundary curves",
-			 STANDARD_TYPE(IGESGeom_CurveOnSurface), tempEnt);
-*/
-      if (PR.ReadEntity(IR, PR.Current(), aStatus, STANDARD_TYPE(IGESGeom_CurveOnSurface), tempEnt))
+      if (PR.ReadEntity(IR, aStatus, STANDARD_TYPE(IGESGeom_CurveOnSurface), tempEnt))
 	anInner->SetValue(I, tempEnt);
       else{
 	Message_Msg Msg173("XSTEP_173");

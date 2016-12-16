@@ -17,22 +17,12 @@
 #ifndef _IGESDraw_View_HeaderFile
 #define _IGESDraw_View_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
-#include <Standard_Integer.hxx>
-#include <Standard_Real.hxx>
 #include <IGESData_ViewKindEntity.hxx>
-#include <Standard_Boolean.hxx>
 class IGESGeom_Plane;
-class Standard_OutOfRange;
 class IGESData_ViewKindEntity;
 class IGESData_TransfEntity;
 class gp_XYZ;
 
-
-class IGESDraw_View;
-DEFINE_STANDARD_HANDLE(IGESDraw_View, IGESData_ViewKindEntity)
 
 //! defines IGES View Entity, Type <410> Form <0>
 //! in package IGESDraw
@@ -44,110 +34,94 @@ DEFINE_STANDARD_HANDLE(IGESDraw_View, IGESData_ViewKindEntity)
 //! view volume.
 class IGESDraw_View : public IGESData_ViewKindEntity
 {
+ public:
 
-public:
+  Standard_EXPORT virtual Standard_Integer TypeNumber() const Standard_OVERRIDE { return 410; }
 
-  
-  Standard_EXPORT IGESDraw_View();
-  
-  //! This method is used to set fields of the class View
-  //! - aViewNum     : View number
-  //! - aScale       : Scale factor
-  //! - aLeftPlane   : Left   plane of view volume
-  //! - aTopPlane    : Top    plane of view volume
-  //! - aRightPlane  : Right  plane of view volume
-  //! - aBottomPlane : Bottom plane of view volume
-  //! - aBackPlane   : Back   plane of view volume
-  //! - aFrontPlane  : Front  plane of view volume
-  Standard_EXPORT void Init (const Standard_Integer aViewNum, const Standard_Real aScale, const Handle(IGESGeom_Plane)& aLeftPlane, const Handle(IGESGeom_Plane)& aTopPlane, const Handle(IGESGeom_Plane)& aRightPlane, const Handle(IGESGeom_Plane)& aBottomPlane, const Handle(IGESGeom_Plane)& aBackPlane, const Handle(IGESGeom_Plane)& aFrontPlane);
+  Standard_EXPORT virtual Standard_Integer FormNumber() const Standard_OVERRIDE { return 0; }
+
+  IGESDraw_View() {}
   
   //! Returns True (for a single view)
-  Standard_EXPORT Standard_Boolean IsSingle() const Standard_OVERRIDE;
+  Standard_EXPORT virtual Standard_Boolean IsSingle() const Standard_OVERRIDE;
   
   //! Returns 1 (single view)
-  Standard_EXPORT Standard_Integer NbViews() const Standard_OVERRIDE;
+  Standard_EXPORT virtual Standard_Integer NbViews() const Standard_OVERRIDE;
   
   //! For a single view, returns <me> whatever <num>
-  Standard_EXPORT Handle(IGESData_ViewKindEntity) ViewItem (const Standard_Integer num) const Standard_OVERRIDE;
+  Standard_EXPORT virtual Handle(IGESData_ViewKindEntity) ViewItem (const Standard_Integer num) const Standard_OVERRIDE;
   
   //! returns integer number identifying view orientation
-  Standard_EXPORT Standard_Integer ViewNumber() const;
-  
+  Standard_Integer ViewNumber() const { return theViewNumber; }
+
   //! returns the scale factor(Default = 1.0)
-  Standard_EXPORT Standard_Real ScaleFactor() const;
-  
+  Standard_Real ScaleFactor() const { return theScaleFactor; }
+
   //! returns False if left side of view volume is not present
-  Standard_EXPORT Standard_Boolean HasLeftPlane() const;
-  
+  Standard_Boolean HasLeftPlane() const { return  (! theLeftPlane.IsNull()); }
+
   //! returns the left side of view volume, or null handle
-  Standard_EXPORT Handle(IGESGeom_Plane) LeftPlane() const;
-  
+  const Handle(IGESGeom_Plane) & LeftPlane() const { return theLeftPlane; }
+
   //! returns False if top of view volume is not present
-  Standard_EXPORT Standard_Boolean HasTopPlane() const;
-  
+  Standard_Boolean HasTopPlane() const { return  (! theTopPlane.IsNull()); }
+
   //! returns the top of view volume, or null handle
-  Standard_EXPORT Handle(IGESGeom_Plane) TopPlane() const;
-  
+  const Handle(IGESGeom_Plane) & TopPlane() const { return theTopPlane; }
+
   //! returns False if right side of view volume is not present
-  Standard_EXPORT Standard_Boolean HasRightPlane() const;
-  
+  Standard_Boolean HasRightPlane() const { return  (! theRightPlane.IsNull()); }
+
   //! returns the right side of view volume, or null handle
-  Standard_EXPORT Handle(IGESGeom_Plane) RightPlane() const;
-  
+  const Handle(IGESGeom_Plane) & RightPlane() const { return theRightPlane; }
+
   //! returns False if bottom of view volume is not present
-  Standard_EXPORT Standard_Boolean HasBottomPlane() const;
-  
+  Standard_Boolean HasBottomPlane() const { return  (! theBottomPlane.IsNull()); }
+
   //! returns the bottom of view volume, or null handle
-  Standard_EXPORT Handle(IGESGeom_Plane) BottomPlane() const;
-  
+  const Handle(IGESGeom_Plane) & BottomPlane() const { return  theBottomPlane; }
+
   //! returns False if back of view volume is not present
-  Standard_EXPORT Standard_Boolean HasBackPlane() const;
-  
+  Standard_Boolean HasBackPlane() const { return  (! theBackPlane.IsNull()); }
+
   //! returns the back of view volume, or null handle
-  Standard_EXPORT Handle(IGESGeom_Plane) BackPlane() const;
-  
+  const Handle(IGESGeom_Plane) & BackPlane() const { return  theBackPlane; }
+
   //! returns False if front of view volume is not present
-  Standard_EXPORT Standard_Boolean HasFrontPlane() const;
-  
+  Standard_Boolean HasFrontPlane() const { return  (! theFrontPlane.IsNull()); }
+
   //! returns the front of view volume, or null handle
-  Standard_EXPORT Handle(IGESGeom_Plane) FrontPlane() const;
-  
+  const Handle(IGESGeom_Plane) & FrontPlane() const { return theFrontPlane; }
+
   //! returns the Transformation Matrix
-  Standard_EXPORT Handle(IGESData_TransfEntity) ViewMatrix() const;
+  Handle(IGESData_TransfEntity) ViewMatrix() const { return (Transf()); }
   
   //! returns XYZ from the Model space to the View space by
   //! applying the View Matrix
   Standard_EXPORT gp_XYZ ModelToView (const gp_XYZ& coords) const;
 
+  Standard_EXPORT virtual void OwnRead (IGESFile_Reader &) Standard_OVERRIDE;
+  
+  Standard_EXPORT virtual void OwnWrite (IGESData_IGESWriter &) const Standard_OVERRIDE;
 
+  Standard_EXPORT virtual void OwnShared (Interface_EntityIterator &) const Standard_OVERRIDE;
 
+  Standard_EXPORT virtual IGESData_DirChecker DirChecker () const Standard_OVERRIDE;
+
+  Standard_EXPORT virtual void OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &, const Standard_Integer) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESDraw_View,IGESData_ViewKindEntity)
 
-protected:
-
-
-
-
-private:
-
+ private:
 
   Standard_Integer theViewNumber;
   Standard_Real theScaleFactor;
-  Handle(IGESGeom_Plane) theLeftPlane;
-  Handle(IGESGeom_Plane) theTopPlane;
-  Handle(IGESGeom_Plane) theRightPlane;
-  Handle(IGESGeom_Plane) theBottomPlane;
-  Handle(IGESGeom_Plane) theBackPlane;
-  Handle(IGESGeom_Plane) theFrontPlane;
-
-
+  Interface_Pointer<IGESGeom_Plane> theLeftPlane;
+  Interface_Pointer<IGESGeom_Plane> theTopPlane;
+  Interface_Pointer<IGESGeom_Plane> theRightPlane;
+  Interface_Pointer<IGESGeom_Plane> theBottomPlane;
+  Interface_Pointer<IGESGeom_Plane> theBackPlane;
+  Interface_Pointer<IGESGeom_Plane> theFrontPlane;
 };
-
-
-
-
-
-
 
 #endif // _IGESDraw_View_HeaderFile

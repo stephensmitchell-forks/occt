@@ -18,26 +18,63 @@
 
 #include <IGESAppli_PartNumber.hxx>
 #include <TCollection_HAsciiString.hxx>
+#include <IGESFile_Reader.hxx>
+#include <IGESData_IGESWriter.hxx>
+#include <Message_Messenger.hxx>
+#include <IGESData_DirChecker.hxx>
+#include <IGESData_IGESDumper.hxx>
+#include <IGESData_Dump.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESAppli_PartNumber,IGESData_IGESEntity)
 
-void IGESAppli_PartNumber::Init
-  (const Standard_Integer nbPropVal,
-   const Handle(TCollection_HAsciiString)& aGenName,
-   const Handle(TCollection_HAsciiString)& aMilName,
-   const Handle(TCollection_HAsciiString)& aVendName,
-   const Handle(TCollection_HAsciiString)& anIntName)
+void IGESAppli_PartNumber::OwnRead (IGESFile_Reader &theReader)
 {
-  theNbPropertyValues = nbPropVal;
-  theGenericNumber    = aGenName;
-  theMilitaryNumber   = aMilName;
-  theVendorNumber     = aVendName;
-  theInternalNumber   = anIntName;
-  InitTypeAndForm(406,9);
+  Standard_Integer aNbPropertyValues = 4;
+  if (theReader.ReadInteger(aNbPropertyValues,"Number of property values") == IGESFile_Reader::ParamError || aNbPropertyValues != 4)
+    theReader.AddFail("Number of property values != 4");
+  theReader.ReadText(myGenericNumber,"Generic Number or Name");
+  theReader.ReadText(myMilitaryNumber,"Military Number or Name");
+  theReader.ReadText(myVendorNumber,"Vendor Number or Name");
+  theReader.ReadText(myInternalNumber,"Internal Number or Name");
 }
 
-void IGESAppli_PartNumber::OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &theCheck) const
+void IGESAppli_PartNumber::OwnWrite (IGESData_IGESWriter &IW) const
 {
-  if (NbPropertyValues() != 4)
-    theCheck->AddFail("Number of property values != 4");
+  IW.Send(4);
+  IW.Send(myGenericNumber);
+  IW.Send(myMilitaryNumber);
+  IW.Send(myVendorNumber);
+  IW.Send(myInternalNumber);
+}
+
+IGESData_DirChecker IGESAppli_PartNumber::DirChecker () const
+{
+  IGESData_DirChecker DC(406, 9);
+  DC.Structure(IGESData_DefVoid);
+  DC.GraphicsIgnored();
+  DC.LineFont(IGESData_DefVoid);
+  DC.LineWeight(IGESData_DefVoid);
+  DC.Color(IGESData_DefVoid);
+  DC.BlankStatusIgnored();
+  DC.UseFlagIgnored();
+  DC.HierarchyStatusIgnored();
+  return DC;
+}
+
+void IGESAppli_PartNumber::OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &S, const Standard_Integer) const
+{
+  S << "IGESAppli_PartNumber" << endl;
+  S << "Number of property values : 4" << endl;
+  S << "Generic  Number or Name : ";
+  IGESData_DumpString(S,myGenericNumber);
+  S << endl;
+  S << "Military Number or Name : ";
+  IGESData_DumpString(S,myMilitaryNumber);
+  S << endl;
+  S << "Vendor   Number or Name : ";
+  IGESData_DumpString(S,myVendorNumber);
+  S << endl;
+  S << "Internal Number or Name : ";
+  IGESData_DumpString(S,myInternalNumber);
+  S << endl;
 }

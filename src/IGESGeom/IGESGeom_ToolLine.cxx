@@ -40,23 +40,11 @@ void IGESGeom_ToolLine::ReadOwnParams
   (const Handle(IGESGeom_Line)& ent,
    const Handle(IGESData_IGESReaderData)& /* IR */, IGESData_ParamReader& PR) const
 {
-  // MGE 29/07/98
-  // Building of messages
-  //====================================
-  Message_Msg Msg89("XSTEP_89");
-  Message_Msg Msg90("XSTEP_90");
-  //====================================
-
   gp_XYZ aStart, anEnd;
 
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
+  PR.ReadXYZ(aStart);
+  PR.ReadXYZ(anEnd);
 
-  PR.ReadXYZ(PR.CurrentList(1, 3),Msg89, aStart); //szv#4:S4163:12Mar99 `st=` not needed
-  PR.ReadXYZ(PR.CurrentList(1, 3), Msg90, anEnd); //szv#4:S4163:12Mar99 `st=` not needed
-
- /* st = PR.ReadXYZ(PR.CurrentList(1, 3), "Starting Point", aStart);
-    st = PR.ReadXYZ(PR.CurrentList(1, 3), "End Point", anEnd);
- */
   DirChecker(ent).CheckTypeAndForm(PR.CCheck(),ent);
   ent->Init(aStart, anEnd);
 }

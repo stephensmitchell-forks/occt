@@ -58,10 +58,6 @@ class IGESDraw_ToolViewsVisible
   //! its specific (own) parameters shared not implied (the Views)
   Standard_EXPORT void OwnShared (const Handle(IGESDraw_ViewsVisible)& ent, Interface_EntityIterator& iter) const;
   
-  //! Lists the Entities shared by a ViewsVisible <ent>, from
-  //! its specific (own) implied parameters : the Displayed Entities
-  Standard_EXPORT void OwnImplied (const Handle(IGESDraw_ViewsVisible)& ent, Interface_EntityIterator& iter) const;
-  
   //! Returns specific DirChecker
   Standard_EXPORT IGESData_DirChecker DirChecker (const Handle(IGESDraw_ViewsVisible)& ent) const;
   

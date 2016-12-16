@@ -27,19 +27,20 @@
 #include <Interface_EntityIterator.hxx>
 #include <Interface_GeneralLib.hxx>
 #include <Interface_Macros.hxx>
-#include <Interface_ShareTool.hxx>
-#include <Standard_Transient.hxx>
+//#include <Interface_ShareTool.hxx>
 #include <Standard_Type.hxx>
 #include <TCollection_HAsciiString.hxx>
 
+#include <IGESDraw_ViewsVisible.hxx>
+#include <IGESDraw_ViewsVisibleWithAttr.hxx>
+
 IMPLEMENT_STANDARD_RTTIEXT(IGESData_GeneralModule,Interface_GeneralModule)
 
-void  IGESData_GeneralModule::FillSharedCase
-  (const Standard_Integer CN, const Handle(Standard_Transient)& ent,
-   Interface_EntityIterator& iter) const 
+void IGESData_GeneralModule::FillSharedCase (const Standard_Integer, const Handle(Standard_Transient)& ent, Interface_EntityIterator& iter) const
 {
   DeclareAndCast(IGESData_IGESEntity,anent,ent);
   if (anent.IsNull()) return;
+
 //  .... Directory Part
   iter.AddItem (anent->DirFieldEntity (3));
   iter.AddItem (anent->DirFieldEntity (4));
@@ -50,41 +51,52 @@ void  IGESData_GeneralModule::FillSharedCase
   iter.AddItem (anent->DirFieldEntity (13));
 
 //  .... Own Parameters
-  OwnSharedCase (CN,anent,iter);
+  anent->OwnShared (iter);
 
 //  .... Properties
   Interface_EntityIterator assocs = anent->Properties();
   for (; assocs.More(); assocs.Next())  iter.AddItem (assocs.Value());
 }
 
-    void  IGESData_GeneralModule::ListImpliedCase
+void  IGESData_GeneralModule::ListImpliedCase
   (const Standard_Integer CN, const Handle(Standard_Transient)& ent,
    Interface_EntityIterator& iter) const
 {
-  DeclareAndCast(IGESData_IGESEntity,anent,ent);
-  if (anent.IsNull()) return;
-  OwnImpliedCase (CN,anent,iter);
-  Interface_EntityIterator assocs = anent->Associativities();
+  DeclareAndCast(IGESData_IGESEntity,aent,ent);
+  if (aent.IsNull()) return;
+  switch (CN ) {
+    case 13 : {
+      DeclareAndCast(IGESDraw_ViewsVisible,anent,aent);
+      if (anent.IsNull()) break;
+      const Standard_Integer nb  = anent->NbDisplayedEntities();
+      for (Standard_Integer i = 1; i <= nb; i++)
+        iter.GetOneItem(anent->DisplayedEntity(i));
+      break;
+    }
+    case 14 : {
+      DeclareAndCast(IGESDraw_ViewsVisibleWithAttr,anent,aent);
+      if (anent.IsNull()) break;
+      const Standard_Integer nb  = anent->NbDisplayedEntities();
+      for (Standard_Integer i = 1; i <= nb; i++)
+        iter.GetOneItem(anent->DisplayedEntity(i));
+      break;
+    }
+    default : break;
+  }
+  Interface_EntityIterator assocs = aent->Associativities();
   for (; assocs.More(); assocs.Next())  iter.AddItem (assocs.Value());
 }
 
 
-    void  IGESData_GeneralModule::OwnImpliedCase
-  (const Standard_Integer , const Handle(IGESData_IGESEntity)& ,
-   Interface_EntityIterator& ) const 
-      {  }  // par defaut, rien  (redefinissable)
-
-
-
-    void  IGESData_GeneralModule::CheckCase
-  (const Standard_Integer CN, const Handle(Standard_Transient)& ent,
+void IGESData_GeneralModule::CheckCase
+  (const Standard_Integer, const Handle(Standard_Transient)& ent,
    const Interface_ShareTool& shares, Handle(Interface_Check)& ach) const
 {
   DeclareAndCast(IGESData_IGESEntity,anent,ent);
 
-  IGESData_DirChecker dc = DirChecker(CN,anent);
-  dc.Check(ach,anent);
-  OwnCheckCase (CN,anent,shares,ach);
+  //szv_c1:anent->DirChecker().Check(ach,anent); should be called from OwnCheck
+
+  anent->OwnCheck (shares,ach);
 }
 
 

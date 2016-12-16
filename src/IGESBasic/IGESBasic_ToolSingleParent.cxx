@@ -49,26 +49,21 @@ void  IGESBasic_ToolSingleParent::ReadOwnParams
 
   Standard_Integer tempNbParentEntities;
   Handle(IGESData_IGESEntity) tempParent;
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
   Standard_Integer nbval = 0;
   Handle(IGESData_HArray1OfIGESEntity)  tempChildren;
   IGESData_Status aStatus;
 
-  if(!PR.ReadInteger (PR.Current(),tempNbParentEntities)){ //szv#4:S4163:12Mar99 `st=` not needed
+  if(!PR.ReadInteger(tempNbParentEntities)) {
     Message_Msg Msg204("XSTEP_204");
     PR.SendFail(Msg204);
   }
-  //st = PR.ReadInteger(PR.Current(), Msg205, nbval); //szv#4:S4163:12Mar99 moved down
 
-//  st = PR.ReadInteger (PR.Current(),"Number of Parent entities",tempNbParentEntities);
-//  st = PR.ReadInteger(PR.Current(), "Count of Children", nbval);
-  if (!PR.ReadInteger(PR.Current(), nbval)){
+  if (!PR.ReadInteger(nbval)) {
     Message_Msg Msg205("XSTEP_205");
     PR.SendFail(Msg205);
     nbval = -1;
   }
-  if (!PR.ReadEntity(IR,PR.Current(),aStatus,tempParent)){ //szv#4:S4163:12Mar99 `st=` not needed
-  //st = PR.ReadEntity(IR,PR.Current(),"ParentEntity",tempParent);
+  if (!PR.ReadEntity(IR,aStatus,tempParent)) {
     Message_Msg Msg206("XSTEP_206");
     switch(aStatus) {
     case IGESData_ReferenceError: {  
@@ -86,8 +81,7 @@ void  IGESBasic_ToolSingleParent::ReadOwnParams
     }
   }
 
-  if (nbval > 0) PR.ReadEnts (IR,PR.CurrentList(nbval),Msg207,tempChildren); //szv#4:S4163:12Mar99 `st=` not needed
-  //st = PR.ReadEnts (IR,PR.CurrentList(nbval),"Child Entities",tempChildren);
+  if (nbval > 0) PR.ReadEnts (IR,PR.CurrentList(nbval),Msg207,tempChildren);
   DirChecker(ent).CheckTypeAndForm(PR.CCheck(),ent);
   ent->Init(tempNbParentEntities,tempParent,tempChildren);
 }

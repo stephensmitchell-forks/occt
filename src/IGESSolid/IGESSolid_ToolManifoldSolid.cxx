@@ -49,7 +49,7 @@ void  IGESSolid_ToolManifoldSolid::ReadOwnParams
   Message_Msg Msg180("XSTEP_180");
   //========================================
 
-  Standard_Boolean abool, shellFlag; //szv#4:S4163:12Mar99 `st` moved down
+  Standard_Boolean abool, shellFlag;
   Standard_Integer nbshells, i;
   Handle(TColStd_HArray1OfInteger) voidShellFlags;
   Handle(IGESData_IGESEntity) shell;
@@ -57,7 +57,7 @@ void  IGESSolid_ToolManifoldSolid::ReadOwnParams
   Handle(IGESSolid_HArray1OfShell) voidShells;
   IGESData_Status aStatus;
 
-  if (!PR.ReadEntity(IR, PR.Current(), aStatus, shell)){ //szv#4:S4163:12Mar99 `st=` not needed
+  if (!PR.ReadEntity(IR, aStatus, shell)) {
     Message_Msg Msg178("XSTEP_178");
     switch(aStatus) {
     case IGESData_ReferenceError: {  
@@ -75,30 +75,19 @@ void  IGESSolid_ToolManifoldSolid::ReadOwnParams
     }
   }
 
-  PR.ReadBoolean(PR.Current(), Msg180, shellFlag); //szv#4:S4163:12Mar99 `st=` not needed
-  Standard_Boolean st = PR.ReadInteger(PR.Current(), nbshells);
+  PR.ReadBoolean(Msg180, shellFlag);
+  Standard_Boolean st = PR.ReadInteger(nbshells);
   if(!st){
     Message_Msg Msg181("XSTEP_181");
     PR.SendFail(Msg181);
   }
-/*
-  st = PR.ReadEntity(IR, PR.Current(), "Shell", shell);
-  st = PR.ReadBoolean(PR.Current(), "Shell orientation", shellFlag);
-  st = PR.ReadInteger(PR.Current(), "Number of shells", nbshells);
-*/  
   if (st && nbshells > 0)
     {
       voidShells = new IGESSolid_HArray1OfShell(1, nbshells);
       voidShellFlags = new TColStd_HArray1OfInteger(1, nbshells); voidShellFlags->Init(0);
       for (i=1; i<=nbshells; i++)
 	{
-          //st = PR.ReadEntity(IR, PR.Current(), Msg179,
-			     //STANDARD_TYPE(IGESSolid_Shell), ashell); //szv#4:S4163:12Mar99 moved in if
-          /*
-          st = PR.ReadEntity(IR, PR.Current(), "Void shells",
-			     STANDARD_TYPE(IGESSolid_Shell), ashell);
-          */
-          if (PR.ReadEntity(IR, PR.Current(), aStatus, STANDARD_TYPE(IGESSolid_Shell), ashell))
+          if (PR.ReadEntity(IR, aStatus, STANDARD_TYPE(IGESSolid_Shell), ashell))
 	    voidShells->SetValue(i, ashell);
 	  else {
 	    Message_Msg Msg179("XSTEP_179");
@@ -123,7 +112,7 @@ void  IGESSolid_ToolManifoldSolid::ReadOwnParams
 	    }
 	  }
 
-          PR.ReadBoolean(PR.Current(), Msg180, abool); //szv#4:S4163:12Mar99 `st=` not needed
+          PR.ReadBoolean(Msg180, abool);
 	  if (abool) voidShellFlags->SetValue(i, 1);
 	}
     }

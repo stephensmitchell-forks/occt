@@ -17,16 +17,8 @@
 #ifndef _IGESGraph_DrawingSize_HeaderFile
 #define _IGESGraph_DrawingSize_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
-#include <Standard_Integer.hxx>
-#include <Standard_Real.hxx>
 #include <IGESData_IGESEntity.hxx>
 
-
-class IGESGraph_DrawingSize;
-DEFINE_STANDARD_HANDLE(IGESGraph_DrawingSize, IGESData_IGESEntity)
 
 //! defines IGESDrawingSize, Type <406> Form <16>
 //! in package IGESGraph
@@ -36,52 +28,37 @@ DEFINE_STANDARD_HANDLE(IGESGraph_DrawingSize, IGESData_IGESEntity)
 //! drawing space
 class IGESGraph_DrawingSize : public IGESData_IGESEntity
 {
+ public:
 
-public:
+  Standard_EXPORT virtual Standard_Integer TypeNumber() const Standard_OVERRIDE { return 406; }
 
-  
-  Standard_EXPORT IGESGraph_DrawingSize();
-  
-  //! This method is used to set the fields of the class
-  //! DrawingSize
-  //! - nbProps : Number of property values (NP = 2)
-  //! - aXSize  : Extent of Drawing along positive XD axis
-  //! - aYSize  : Extent of Drawing along positive YD axis
-  Standard_EXPORT void Init (const Standard_Integer nbProps, const Standard_Real aXSize, const Standard_Real aYSize);
-  
-  //! returns the number of property values in <me> (NP = 2)
-  Standard_EXPORT Standard_Integer NbPropertyValues() const;
-  
+  Standard_EXPORT virtual Standard_Integer FormNumber() const Standard_OVERRIDE { return 16; }
+
+  IGESGraph_DrawingSize()
+  : myXSize(0.),
+    myYSize(0.)
+  {}
+
   //! returns the extent of Drawing along positive XD axis
-  Standard_EXPORT Standard_Real XSize() const;
-  
+  Standard_Real XSize() const { return myXSize; }
+
   //! returns the extent of Drawing along positive YD axis
-  Standard_EXPORT Standard_Real YSize() const;
+  Standard_Real YSize() const { return myYSize; }
+  
+  Standard_EXPORT virtual void OwnRead (IGESFile_Reader &) Standard_OVERRIDE;
+  
+  Standard_EXPORT virtual void OwnWrite (IGESData_IGESWriter &) const Standard_OVERRIDE;
 
+  Standard_EXPORT virtual IGESData_DirChecker DirChecker () const Standard_OVERRIDE;
 
-
+  Standard_EXPORT virtual void OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &, const Standard_Integer) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESGraph_DrawingSize,IGESData_IGESEntity)
 
-protected:
+ private:
 
-
-
-
-private:
-
-
-  Standard_Integer theNbPropertyValues;
-  Standard_Real theXSize;
-  Standard_Real theYSize;
-
-
+  Standard_Real myXSize;
+  Standard_Real myYSize;
 };
-
-
-
-
-
-
 
 #endif // _IGESGraph_DrawingSize_HeaderFile

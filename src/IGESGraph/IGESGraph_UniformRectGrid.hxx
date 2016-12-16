@@ -17,20 +17,11 @@
 #ifndef _IGESGraph_UniformRectGrid_HeaderFile
 #define _IGESGraph_UniformRectGrid_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
-#include <Standard_Integer.hxx>
 #include <gp_XY.hxx>
 #include <IGESData_IGESEntity.hxx>
-#include <Standard_Boolean.hxx>
-class gp_XY;
 class gp_Pnt2d;
 class gp_Vec2d;
 
-
-class IGESGraph_UniformRectGrid;
-DEFINE_STANDARD_HANDLE(IGESGraph_UniformRectGrid, IGESData_IGESEntity)
 
 //! defines IGESUniformRectGrid, Type <406> Form <22>
 //! in package IGESGraph
@@ -39,39 +30,32 @@ DEFINE_STANDARD_HANDLE(IGESGraph_UniformRectGrid, IGESData_IGESEntity)
 //! a uniform rectangular grid within a drawing
 class IGESGraph_UniformRectGrid : public IGESData_IGESEntity
 {
+ public:
 
-public:
+  Standard_EXPORT virtual Standard_Integer TypeNumber() const Standard_OVERRIDE { return 406; }
 
-  
-  Standard_EXPORT IGESGraph_UniformRectGrid();
-  
-  //! This method is used to set the fields of the class
-  //! UniformRectGrid
-  //! - nbProps      : Number of property values (NP = 9)
-  //! - finite       : Finite/Infinite grid flag
-  //! - line         : Line/Point grid flag
-  //! - weighted     : Weighted/Unweighted grid flag
-  //! - aGridPoint   : Point on the grid
-  //! - aGridSpacing : Grid spacing
-  //! - pointsX      : No. of points/lines in X Direction
-  //! - pointsY      : No. of points/lines in Y Direction
-  Standard_EXPORT void Init (const Standard_Integer nbProps, const Standard_Integer finite, const Standard_Integer line, const Standard_Integer weighted, const gp_XY& aGridPoint, const gp_XY& aGridSpacing, const Standard_Integer pointsX, const Standard_Integer pointsY);
-  
-  //! returns the number of property values in <me>.
-  Standard_EXPORT Standard_Integer NbPropertyValues() const;
-  
+  Standard_EXPORT virtual Standard_Integer FormNumber() const Standard_OVERRIDE { return 22; }
+
+  IGESGraph_UniformRectGrid()
+  : isItFinite(0),
+    isItLine(0),
+    isItWeighted(0),
+    theNbPointsX(0),
+    theNbPointsY(0)
+  {}
+
   //! returns False if <me> is an infinite grid,
   //! True  if <me> is a finite grid.
-  Standard_EXPORT Standard_Boolean IsFinite() const;
-  
+  Standard_Boolean IsFinite() const { return (isItFinite == 1); }
+
   //! returns False if <me> is a Point grid,
   //! True  if <me> is a Line grid.
-  Standard_EXPORT Standard_Boolean IsLine() const;
-  
+  Standard_Boolean IsLine() const { return (isItLine == 1); }
+
   //! returns False if <me> is a Weighted grid,
   //! True  if <me> is not a Weighted grid.
-  Standard_EXPORT Standard_Boolean IsWeighted() const;
-  
+  Standard_Boolean IsWeighted() const { return (isItWeighted == 0); }
+
   //! returns coordinates of lower left corner,
   //! if <me> is a finite grid,
   //! coordinates of an arbitrary point,
@@ -83,26 +67,24 @@ public:
   
   //! returns the no. of points/lines in X direction
   //! (only applicable if IsFinite() = 1, i.e: a finite grid).
-  Standard_EXPORT Standard_Integer NbPointsX() const;
-  
+  Standard_Integer NbPointsX() const { return theNbPointsX; }
+
   //! returns the no. of points/lines in Y direction
   //! (only applicable if IsFinite() = 1, i.e: a finite grid).
-  Standard_EXPORT Standard_Integer NbPointsY() const;
+  Standard_Integer NbPointsY() const { return theNbPointsY; }
 
+  Standard_EXPORT virtual void OwnRead (IGESFile_Reader &) Standard_OVERRIDE;
+  
+  Standard_EXPORT virtual void OwnWrite (IGESData_IGESWriter &) const Standard_OVERRIDE;
 
+  Standard_EXPORT virtual IGESData_DirChecker DirChecker () const Standard_OVERRIDE;
 
+  Standard_EXPORT virtual void OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &, const Standard_Integer) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESGraph_UniformRectGrid,IGESData_IGESEntity)
 
-protected:
+ private:
 
-
-
-
-private:
-
-
-  Standard_Integer theNbPropertyValues;
   Standard_Integer isItFinite;
   Standard_Integer isItLine;
   Standard_Integer isItWeighted;
@@ -110,14 +92,6 @@ private:
   gp_XY theGridSpacing;
   Standard_Integer theNbPointsX;
   Standard_Integer theNbPointsY;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESGraph_UniformRectGrid_HeaderFile

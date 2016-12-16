@@ -17,9 +17,9 @@
 #include <IGESCAFControl_Writer.hxx>
 #include <IGESData_IGESEntity.hxx>
 #include <IGESData_IGESModel.hxx>
+#include <IGESData_LevelListEntity.hxx>
 #include <IGESData_NameEntity.hxx>
 #include <IGESGraph_Color.hxx>
-#include <IGESGraph_DefinitionLevel.hxx>
 #include <IGESSolid_Face.hxx>
 #include <IGESBasic_Name.hxx>
 #include <NCollection_DataMap.hxx>
@@ -272,15 +272,14 @@ void IGESCAFControl_Writer::MakeColors (const TopoDS_Shape &S,
       XCAFPrs_Style c; // style used as key in the map
       c.SetColorSurf ( col );
       if ( colors.IsBound ( c ) ) {
-	colent = Handle(IGESGraph_Color)::DownCast ( colors.Find(c) );
+        colent = Handle(IGESGraph_Color)::DownCast ( colors.Find(c) );
       }
       else {
-	Handle(TCollection_HAsciiString) str = 
-	  new TCollection_HAsciiString ( col.StringName ( col.Name() ) );
-	colent = new IGESGraph_Color;
-	colent->Init ( col.Red() * 100., col.Green() * 100., col.Blue() * 100., str );
-	AddEntity ( colent );
-	colors.Bind ( c, colent );
+        Handle(TCollection_HAsciiString) str = 
+          new TCollection_HAsciiString ( col.StringName ( col.Name() ) );
+        colent = new IGESGraph_Color( col.Red() * 100., col.Green() * 100., col.Blue() * 100., str );
+        AddEntity ( colent );
+        colors.Bind ( c, colent );
       }
     }
     Handle(Transfer_FinderProcess) FP = TransferProcess();

@@ -23,79 +23,109 @@
 #include <Standard_OutOfRange.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <TColStd_HArray1OfReal.hxx>
+#include <IGESFile_Reader.hxx>
+#include <IGESData_IGESWriter.hxx>
+#include <Message_Messenger.hxx>
+#include <IGESData_DirChecker.hxx>
+#include <IGESData_IGESDumper.hxx>
+#include <IGESData_Dump.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESAppli_NodalResults,IGESData_IGESEntity)
 
-// Data : Col -> // Nodes.  Row : Data per Node
-
-void IGESAppli_NodalResults::Init
-  (const Handle(IGESDimen_GeneralNote)&    aNote,
-   const Standard_Integer aNumber, const Standard_Real aTime,
-   const Handle(TColStd_HArray1OfInteger)& allNodeIdentifiers,
-   const Handle(IGESAppli_HArray1OfNode)&  allNodes,
-   const Handle(TColStd_HArray2OfReal)&    allData)
-{
-  if (allNodes->Lower()   != 1 || allNodeIdentifiers->Lower() != 1 ||
-      allNodes->Length()  != allNodeIdentifiers->Length() ||
-      allData->LowerCol() != 1 || allData->LowerRow() != 1 ||
-      allNodes->Length()  != allData->UpperRow() )
-    Standard_DimensionMismatch::Raise("IGESAppli_NodalResults : Init");
-  theNote            = aNote;
-  theSubCaseNum      = aNumber;
-  theTime            = aTime;
-  theNodeIdentifiers = allNodeIdentifiers;
-  theNodes           = allNodes;
-  theData            = allData;
-  InitTypeAndForm(146,FormNumber());
-// FormNumber -> Type of the Results
-}
-
-void IGESAppli_NodalResults::SetFormNumber (const Standard_Integer form)
-{
-  if (form < 0 || form > 34) Standard_OutOfRange::Raise
-    ("IGESAppli_NodalResults : SetFormNumber");
-  InitTypeAndForm(146,form);
-}
-
 const Handle(IGESAppli_Node) & IGESAppli_NodalResults::Node (const Standard_Integer Index) const
 {
-  return theNodes->Value(Index);
+  return myNodes->Value(Index);
 }
 
 Standard_Integer IGESAppli_NodalResults::NbNodes () const
 {
-  return theNodes->Length();
+  return myNodes->Length();
 }
 
 Standard_Integer IGESAppli_NodalResults::NbData () const
 {
-  return theData->RowLength();
+  return myData->RowLength();
 }
 
 Standard_Integer IGESAppli_NodalResults::NodeIdentifier (const Standard_Integer Index) const
 {
-  return theNodeIdentifiers->Value(Index);
+  return myNodeIdentifiers->Value(Index);
 }
 
 Standard_Real IGESAppli_NodalResults::Data (const Standard_Integer NodeNum, const Standard_Integer DataNum) const
 {
-  return theData->Value(NodeNum,DataNum);
+  return myData->Value(NodeNum,DataNum);
+}
+
+void IGESAppli_NodalResults::OwnRead (IGESFile_Reader &theReader)
+{
+  theReader.ReadPointer(myNote,"General Note describing the analysis case");
+  theReader.ReadInteger(mySubCaseNum,"Subcase number");
+  theReader.ReadReal(myTime,"Analysis time used");
+  Standard_Integer nbval = 0;
+  theReader.ReadInteger(nbval,"No. of values");
+  Standard_Integer nbnodes = 0;
+  theReader.ReadInteger(nbnodes,"No. of nodes");
+  if (nbnodes > 0 && nbval > 0)
+  {
+    myData  = new TColStd_HArray2OfReal(1,nbnodes,1,nbval);
+    myNodes = new IGESAppli_HArray1OfNode(1,nbnodes);
+    myNodeIdentifiers = new TColStd_HArray1OfInteger(1,nbnodes);
+
+    for (Standard_Integer i = 1; i <= nbnodes; i ++)
+    {
+      theReader.ReadInteger(myNodeIdentifiers->ChangeValue(i),"Node no. identifier");
+      theReader.ReadPointer(myNodes->ChangeValue(i),"FEM Node");
+      for (Standard_Integer j = 1; j <= nbval; j ++)
+        theReader.ReadReal(myData->ChangeValue(i,j),"Value");
+    }
+  }
+}
+
+void IGESAppli_NodalResults::OwnWrite (IGESData_IGESWriter &IW) const
+{
+  const Standard_Integer nbnodes = myNodes->Length();
+  Standard_Integer nbdata = myData->RowLength();
+  IW.Send(myNote);
+  IW.Send(mySubCaseNum);
+  IW.Send(myTime);
+  IW.Send(nbdata);
+  IW.Send(nbnodes);
+  for (Standard_Integer i = 1; i <= nbnodes; i++)
+  {
+    IW.Send(myNodeIdentifiers->Value(i));
+    IW.Send(myNodes->Value(i));
+    for (Standard_Integer j = 1; j <= nbdata; j++)
+      IW.Send(myData->Value(i,j));
+  }
 }
 
 void IGESAppli_NodalResults::OwnShared(Interface_EntityIterator &theIter) const
 {
-  theIter.GetOneItem(Note());
-  const Standard_Integer nbnodes = NbNodes();
+  theIter.GetOneItem(myNote);
+  const Standard_Integer nbnodes = myNodes->Length();
   for (Standard_Integer i = 1; i <= nbnodes; i++)
-    theIter.GetOneItem(Node(i));
+    theIter.GetOneItem(myNodes->Value(i));
+}
+
+IGESData_DirChecker IGESAppli_NodalResults::DirChecker () const
+{
+  IGESData_DirChecker DC(146,0,34);  // Type = 146 Form No. = 0 to 34
+  DC.Structure(IGESData_DefVoid);
+  DC.LineFont(IGESData_DefVoid);
+  DC.LineWeight(IGESData_DefVoid);
+  DC.Color(IGESData_DefAny);
+  DC.BlankStatusIgnored();
+  DC.UseFlagRequired(03);
+  DC.HierarchyStatusIgnored();
+  return DC;
 }
 
 void IGESAppli_NodalResults::OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &theCheck) const
 {
-  const Standard_Integer FormNum = FormNumber();
   const Standard_Integer nv = NbData();
   Standard_Boolean OK = Standard_True;
-  switch (FormNum) {
+  switch (myForm) {
     case  0 : if (nv <  0) OK = Standard_False;  break;
     case  1 : if (nv != 1) OK = Standard_False;  break;
     case  2 : if (nv != 1) OK = Standard_False;  break;
@@ -134,4 +164,37 @@ void IGESAppli_NodalResults::OwnCheck (const Interface_ShareTool &, const Handle
     default : theCheck->AddFail("Incorrect Form Number");    break;
   }
   if (!OK) theCheck->AddFail("Incorrect count of real values in array V for FEM node");
+}
+
+void IGESAppli_NodalResults::OwnDump (const IGESData_IGESDumper &dumper, const Handle(Message_Messenger) &S, const Standard_Integer level) const
+{
+  S << "IGESAppli_NodalResults" << endl;
+
+  S << "General Note : ";
+  dumper.Dump(myNote,S,(level <= 4) ? 0 : 1);
+  S << endl;
+  S << "Analysis subcase number : " << mySubCaseNum << "  ";
+  S << "Time used : " << myTime << endl;
+  S << "No. of nodes : " << myNodes->Length() << "  ";
+  S << "No. of values for a node : " << myData->RowLength() << endl;
+  S << "Node Identifiers : " << endl;
+  S << "Nodes : " << endl;
+  S << "Data : ";  if (level < 6) S << " [ask level > 5]";
+  S << endl;
+  if (level > 4)
+  {
+    for (Standard_Integer i=1; i <= myNodes->Length(); i++)
+    {
+      S << "[" << i << "]: ";
+      S << "NodeIdentifier : " << myNodeIdentifiers->Value(i) << "  ";
+      S << "Node : ";
+      dumper.Dump (myNodes->Value(i),S,1);
+      S << endl;
+      if (level < 6) continue;
+      S << "Data : [ ";
+      for (Standard_Integer j = 1; j <= myData->RowLength(); j ++)
+        S << "  " << myData->Value(i,j);
+      S << " ]" << endl;
+    }
+  }
 }

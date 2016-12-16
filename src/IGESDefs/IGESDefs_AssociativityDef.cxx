@@ -20,78 +20,137 @@
 #include <IGESDefs_AssociativityDef.hxx>
 #include <Standard_DimensionMismatch.hxx>
 #include <Standard_OutOfRange.hxx>
-#include <Standard_Type.hxx>
+#include <IGESFile_Reader.hxx>
+#include <IGESData_IGESWriter.hxx>
+#include <IGESData_DirChecker.hxx>
+#include <Message_Messenger.hxx>
+#include <IGESData_Dump.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESDefs_AssociativityDef,IGESData_IGESEntity)
 
-IGESDefs_AssociativityDef::IGESDefs_AssociativityDef ()    {  }
-
-
-    void  IGESDefs_AssociativityDef::Init
-  (const Handle(TColStd_HArray1OfInteger)& requirements,
-   const Handle(TColStd_HArray1OfInteger)& orders,
-   const Handle(TColStd_HArray1OfInteger)& numItems,
-   const Handle(IGESBasic_HArray1OfHArray1OfInteger)& items)
+Standard_Integer IGESDefs_AssociativityDef::NbClassDefs () const 
 {
-  Standard_Integer len = requirements->Length();
-  if ( requirements->Lower() != 1 ||
-      (orders->Lower()       != 1 || orders->Length()   != len) ||
-      (numItems->Lower()     != 1 || numItems->Length() != len) ||
-      (items->Lower()        != 1 || items->Length()    != len) )
-    Standard_DimensionMismatch::Raise("IGESDefs_AssociativityDef : Init");
-
-  theBackPointerReqs = requirements;
-  theClassOrders     = orders;
-  theNbItemsPerClass = numItems;
-  theItems           = items;
-  InitTypeAndForm(302,FormNumber());
-//  FormNumber is free over 5000
+  return myBackPointerReqs->Length();
 }
 
-    void IGESDefs_AssociativityDef::SetFormNumber (const Standard_Integer form)
+Standard_Boolean IGESDefs_AssociativityDef::IsBackPointerReq (const Standard_Integer ClassNum) const
 {
-  InitTypeAndForm(302,form);
-}
-
-    Standard_Integer  IGESDefs_AssociativityDef::NbClassDefs () const 
-{
-  return theBackPointerReqs->Length();
-}
-
-    Standard_Boolean  IGESDefs_AssociativityDef::IsBackPointerReq
-  (const Standard_Integer ClassNum) const 
-{
-  return (theBackPointerReqs->Value(ClassNum) == 1);
+  return (myBackPointerReqs->Value(ClassNum) == 1);
 //  1 True  2 False
 }
 
-    Standard_Integer  IGESDefs_AssociativityDef::BackPointerReq
-  (const Standard_Integer ClassNum) const 
+Standard_Integer IGESDefs_AssociativityDef::BackPointerReq (const Standard_Integer ClassNum) const
 {
-  return theBackPointerReqs->Value(ClassNum);
+  return myBackPointerReqs->Value(ClassNum);
 }
 
-    Standard_Boolean  IGESDefs_AssociativityDef::IsOrdered
-  (const Standard_Integer ClassNum) const 
+Standard_Boolean IGESDefs_AssociativityDef::IsOrdered (const Standard_Integer ClassNum) const
 {
-  return (theClassOrders->Value(ClassNum) == 1);
+  return (myClassOrders->Value(ClassNum) == 1);
 //  1 True  2 False
 }
 
-    Standard_Integer  IGESDefs_AssociativityDef::ClassOrder
-  (const Standard_Integer ClassNum) const 
+Standard_Integer IGESDefs_AssociativityDef::ClassOrder (const Standard_Integer ClassNum) const
 {
-  return theClassOrders->Value(ClassNum);
+  return myClassOrders->Value(ClassNum);
 }
 
-    Standard_Integer  IGESDefs_AssociativityDef::NbItemsPerClass
-  (const Standard_Integer ClassNum) const 
+Standard_Integer IGESDefs_AssociativityDef::NbItemsPerClass (const Standard_Integer ClassNum) const
 {
-  return theNbItemsPerClass->Value(ClassNum);
+  return myNbItemsPerClass->Value(ClassNum);
 }
 
-    Standard_Integer  IGESDefs_AssociativityDef::Item
-  (const Standard_Integer ClassNum, const Standard_Integer ItemNum) const 
+Standard_Integer IGESDefs_AssociativityDef::Item (const Standard_Integer ClassNum, const Standard_Integer ItemNum) const
 {
-  return theItems->Value(ClassNum)->Value(ItemNum);
+  return myItems->Value(ClassNum)->Value(ItemNum);
+}
+
+void IGESDefs_AssociativityDef::OwnRead (IGESFile_Reader& theReader)
+{ 
+  Standard_Integer nbval = 0;
+  theReader.ReadInteger(nbval,"No. of Class definitions");
+  if (nbval > 0)
+  {
+    myBackPointerReqs = new TColStd_HArray1OfInteger(1, nbval);
+    myClassOrders = new TColStd_HArray1OfInteger(1, nbval);
+    myNbItemsPerClass = new TColStd_HArray1OfInteger(1, nbval);
+    myItems = new IGESBasic_HArray1OfHArray1OfInteger(1, nbval);
+
+    for (Standard_Integer i = 1; i <= nbval; i++)
+    {
+      theReader.ReadInteger(myBackPointerReqs->ChangeValue(i),"Back Pointer Requirement");
+      theReader.ReadInteger(myClassOrders->ChangeValue(i),"Ordered/Unordered Class");
+	
+      Standard_Integer numItem = 0;
+      theReader.ReadInteger(numItem,"No. of items per entry");
+      if (numItem > 0)
+      {
+        myNbItemsPerClass->SetValue(i, numItem);
+        Handle(TColStd_HArray1OfInteger) item = new TColStd_HArray1OfInteger(1, numItem);
+        for (Standard_Integer j = 1; j <= numItem; j++)
+          theReader.ReadInteger(item->ChangeValue(j),"Item");
+        myItems->SetValue(i, item);
+      }
+    }
+  }
+  else theReader.AddFail("No. of Class definitions: Not Positive");
+}
+
+void IGESDefs_AssociativityDef::OwnWrite (IGESData_IGESWriter& IW) const
+{ 
+  const Standard_Integer upper = NbClassDefs();
+  IW.Send(upper); 
+  for (Standard_Integer i = 1; i <= upper; i++) {
+    IW.Send(BackPointerReq(i));
+    IW.Send(ClassOrder(i));
+    IW.Send(NbItemsPerClass(i));
+    const Standard_Integer items = NbItemsPerClass(i);
+    for (Standard_Integer j = 1; j <= items; j++)
+      IW.Send(Item(i,j));
+  }
+}
+
+IGESData_DirChecker IGESDefs_AssociativityDef::DirChecker () const
+{ 
+  IGESData_DirChecker DC (302, 5001, 9999);
+  DC.Structure(IGESData_DefVoid);
+  DC.LineFont(IGESData_DefVoid);
+  DC.LineWeight(IGESData_DefVoid);
+  DC.Color(IGESData_DefVoid);
+  DC.BlankStatusIgnored();
+  DC.SubordinateStatusRequired(0);
+  DC.UseFlagRequired(2);
+  DC.HierarchyStatusIgnored();
+  return DC;
+}
+
+void IGESDefs_AssociativityDef::OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &S, const Standard_Integer level) const
+{ 
+  S << "IGESDefs_AssociativityDef" << endl;
+  S << "Number of Class Definitions : " << NbClassDefs() << endl;
+  S << "Back Pointer Requirement  : " << endl; 
+  S << "Ordered / Unordered Class : " << endl;
+  S << "Number Of Items per Entry : " << endl;
+  S << "Items : " << endl; 
+  IGESData_DumpVals(S,-level,1,NbClassDefs(),BackPointerReq);
+  S << endl;
+  if (level > 4) {
+    // Warning : Item is a JAGGED Array
+    const Standard_Integer upper = NbClassDefs();
+    for (Standard_Integer i = 1; i <= upper; i ++) {
+      S << "[" << i << "]: " << endl;
+      S << "Back Pointer Requirement : "  << BackPointerReq(i) << (IsBackPointerReq(i)? "  (Yes)  " : "  (No)   ");
+      S << " Ordered/Unordered Class : "  << ClassOrder(i) << (IsOrdered(i)? " (Yes)" : " (No)")  << endl;
+      S << "Number Of Items per Entry : " << NbItemsPerClass(i);
+      if (level < 6) {
+        S << " [ask level > 5 for more]" << endl;
+        continue;
+      }
+      S << endl << " [";
+      for (Standard_Integer j = 1; j <= NbItemsPerClass(i); j ++)
+        S << "  " << Item(i,j);
+      S << "]" << endl;
+    }
+  }
+  S << endl;
 }

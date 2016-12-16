@@ -42,37 +42,20 @@ void IGESGeom_ToolCircularArc::ReadOwnParams
   (const Handle(IGESGeom_CircularArc)& ent,
    const Handle(IGESData_IGESReaderData)& /* IR */, IGESData_ParamReader& PR) const
 {
-  // MGE 28/07/98
-  // Building of messages
-  //=====================================
-  Message_Msg Msg76("XSTEP_76");
-  Message_Msg Msg77("XSTEP_77");
-  Message_Msg Msg78("XSTEP_78");
-  //=====================================
-  
   Standard_Real aZT;
   gp_XY aCenter, aStart, anEnd;
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
 
   // MGE 28/07/98
-  if (!PR.ReadReal(PR.Current(), aZT)){ //szv#4:S4163:12Mar99 `st=` not needed
+  if (!PR.ReadReal(aZT)) {
     Message_Msg Msg75("XSTEP_75");
     PR.SendFail(Msg75);
   }
-  PR.ReadXY(PR.CurrentList(1, 2), Msg76, aCenter); //szv#4:S4163:12Mar99 `st=` not needed
-  PR.ReadXY(PR.CurrentList(1, 2), Msg77, aStart); //szv#4:S4163:12Mar99 `st=` not needed
-  PR.ReadXY(PR.CurrentList(1, 2), Msg78, anEnd); //szv#4:S4163:12Mar99 `st=` not needed
+  PR.ReadXY(aCenter);
+  PR.ReadXY(aStart);
+  PR.ReadXY(anEnd);
   
-/*
-  st = PR.ReadReal(PR.Current(), "Shift above z-plane", aZT);
-  st = PR.ReadXY(PR.CurrentList(1, 2), "Center Of Arc", aCenter);
-  st = PR.ReadXY(PR.CurrentList(1, 2), "Start Point Of Arc", aStart);
-  st = PR.ReadXY(PR.CurrentList(1, 2), "End Point Of Arc", anEnd);
-*/
-
   DirChecker(ent).CheckTypeAndForm(PR.CCheck(),ent);
   ent->Init(aZT, aCenter, aStart, anEnd);
-
 }
 
 void IGESGeom_ToolCircularArc::WriteOwnParams

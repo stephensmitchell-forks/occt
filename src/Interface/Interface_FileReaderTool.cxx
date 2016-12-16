@@ -33,6 +33,7 @@
 #include <Standard_OutOfRange.hxx>
 #include <Standard_Transient.hxx>
 #include <Standard_TypeMismatch.hxx>
+#include <TColStd_HArray1OfTransient.hxx>
 
 #ifdef _WIN32
 #include <OSD_Exception.hxx>
@@ -60,57 +61,9 @@
 Interface_FileReaderTool::Interface_FileReaderTool (const Handle(Interface_Protocol)& protocol)
 : theglib(protocol),
   therlib(protocol),
-  themessenger(Message::DefaultMessenger()),
-  thetrace(1),
-  thenbrep0(0),
-  thenbreps(0)
+  themessenger(Message::DefaultMessenger())
 {
 }
-
-//=======================================================================
-//function : SetMessenger
-//purpose  : 
-//=======================================================================
-
-void Interface_FileReaderTool::SetMessenger (const Handle(Message_Messenger)& messenger)
-{
-  themessenger = ( messenger.IsNull()? Message::DefaultMessenger() : messenger );
-}
-
-//  ....            Actions Connexes au CHARGEMENT DU MODELE            ....
-
-// SetEntities fait appel a des methodes a fournir :
-// s appuyant sur un Recognizer adapte a l interface :
-// - Recognize fait reco->Evaluate(... : selon record no num)
-//   et recupere le resultat
-// ainsi que la definition de l entite inconnue de l interface
-
-
-//=======================================================================
-//function : SetEntities
-//purpose  : 
-//=======================================================================
-
-void Interface_FileReaderTool::SetEntities ()
-{
-  Standard_Integer num;
-  thenbreps = 0;  thenbrep0 = 0;
-
-  for (num = thereader->FindNextRecord(0);  num > 0;
-       num = thereader->FindNextRecord(num)) {
-    Handle(Standard_Transient) newent;
-    const Standard_Boolean res = Recognize (num,newent);
-    if (!res) {
-      newent = theproto->UnknownEntity();
-      if (thereports.IsNull())
-        thereports = new TColStd_HArray1OfTransient (1,thereader->NbRecords());
-      thenbreps ++;  thenbrep0 ++;
-      thereports->SetValue (num,new Interface_ReportEntity(newent));
-    }
-    thereader->BindEntity (num,newent);
-  }
-}
-
 
 //=======================================================================
 //function : EndRead
@@ -136,19 +89,38 @@ void Interface_FileReaderTool::LoadModel (const Handle(Interface_InterfaceModel)
 //   qui doit y donner acces de la facon la plus performante possible
 //   chaque interface definit son FileHeader avec ses methodes, appelees ici
 {
-  // MGE 16/06/98
-  // Building of Messages
+  Prepare ();
+
+  Standard_Integer numr;
+  Standard_Integer thenbreps = 0, thenbrep0 = 0;
+  Handle(TColStd_HArray1OfTransient) thereports;
+
+  for (numr = thereader->FindNextRecord(0);  numr > 0;
+       numr = thereader->FindNextRecord(numr))
+  {
+    Handle(Standard_Transient) newent;
+    const Standard_Boolean res = Recognize (numr,newent);
+    if (!res) {
+      newent = theproto->UnknownEntity();
+      if (thereports.IsNull())
+        thereports = new TColStd_HArray1OfTransient (1,thereader->NbRecords());
+      thenbreps ++;  thenbrep0 ++;
+      thereports->SetValue (numr,new Interface_ReportEntity(newent));
+    }
+    thereader->BindEntity (numr,newent);
+  }
+
   //====================================
-  Handle(Message_Messenger) TF = Messenger();
+  const Handle(Message_Messenger) &TF = Messenger();
   //====================================
   Handle(Interface_Check) ach = new Interface_Check;
 
-  SetModel(amodel);
+  themodel = amodel;
 
 //  ..            Demarrage : Lecture du Header            ..
   try {
     OCC_CATCH_SIGNALS
-    BeginRead(amodel);  // selon la norme
+    BeginRead(themodel);  // selon la norme
   }
   catch (Standard_Failure) {
     // Sendinf of message : Internal error during the header reading
@@ -158,46 +130,88 @@ void Interface_FileReaderTool::LoadModel (const Handle(Interface_InterfaceModel)
 
   //  ..            Lecture des Entites            ..
 
-  amodel->Reservate (thereader->NbEntities());
+  themodel->Reservate (thereader->NbEntities());
 
-  Standard_Integer num, num0 = thereader->FindNextRecord(0);
-  num = num0;
+  numr = thereader->FindNextRecord(0);
 
-  while (num > 0) {
+  Standard_Integer num = numr;
+  while (num > 0)
+  {
     Standard_Integer ierr = 0;  // erreur sur analyse d une entite
     Handle(Standard_Transient) anent;
-    try {
+    try
+    {
       OCC_CATCH_SIGNALS
-      for (num = num0;  num > 0; num = thereader->FindNextRecord(num)) {
-	num0 = num;
+      for (num = numr;  num > 0; num = thereader->FindNextRecord(num))
+      {
+        numr = num;
 
-	//    Lecture sous protection contre crash
-	//    (fait aussi AddEntity mais pas SetReportEntity)
-	anent = LoadedEntity(num);
+        //    Lecture sous protection contre crash
+        //    (fait aussi AddEntity mais pas SetReportEntity)
+        Handle(Standard_Transient) anent = thereader->BoundEntity(num);
+        Handle(Interface_Check) ach = new Interface_Check(anent);
+        Handle(Interface_ReportEntity) rep;    // entite Report, s il y a lieu
+        Standard_Integer irep = 0;
+        if (thenbrep0 > 0) {
+          rep = Handle(Interface_ReportEntity)::DownCast(thereports->Value(num));
+          if (!rep.IsNull()) { irep = num;  ach = rep->Check(); }
+        }
 
-	//     Lecture non protegee : utile pour travailler avec dbx
-////    else
-////      anent = LoadedEntity(num);
+        //  ..        Chargement proprement dit : Specifique de la Norme        ..
+        AnalyseRecord(num,anent,ach);
 
-	//   ..        Fin Lecture        ..
-	if (anent.IsNull())  {
+        //  ..        Ajout dans le modele de l entite telle quelle        ..
+        //            ATTENTION, ReportEntity traitee en bloc apres les Load
+        themodel->AddEntity(anent);
+
+        //   Erreur ou Correction : On cree une ReportEntity qui memorise le Check,
+        //   l Entite, et en cas d Erreur une UndefinedEntity pour les Parametres
+
+        //   On exploite ici le flag IsLoadError : s il a ete defini (a vrai ou faux)
+        //   il a priorite sur les fails du check. Sinon, ce sont les fails qui parlent
+
+        Standard_Integer nbf = ach->NbFails();
+        Standard_Integer nbw = ach->NbWarnings();
+        if (nbf + nbw > 0)
+        {
+          themodel->NbEntities();
+          rep = new Interface_ReportEntity(ach,anent);
+          if (irep == 0)
+          {
+            if (thereports.IsNull())
+              thereports = new TColStd_HArray1OfTransient (1,thereader->NbRecords());
+            irep = num;
+            thenbreps ++;
+          }
+          thereports->SetValue(irep,rep);
+        }
+  
+        //    Rechargement ? si oui, dans une UnknownEntity fournie par le protocole
+        if (nbf > 0)  {
+          Handle(Standard_Transient) undef = theproto->UnknownEntity();
+          AnalyseRecord(num,undef,ach);
+          rep->SetContent(undef);
+        }
+
+        //   ..        Fin Lecture        ..
+        if (anent.IsNull())  {
           // Sending of message : Number of ignored Null Entities  
-	  Message_Msg Msg21("XSTEP_21");
+          Message_Msg Msg21("XSTEP_21");
           Msg21.Arg(amodel->NbEntities());
           TF->Send (Msg21, Message_Info);
-	  continue;
-	}
-	//      LoadedEntity fait AddEntity MAIS PAS SetReport (en bloc a la fin)
+          continue;
+        }
+        //      LoadedEntity fait AddEntity MAIS PAS SetReport (en bloc a la fin)
 
       }    // ---- fin boucle sur entites
-      num0 = 0;    // plus rien
+      numr = 0;    // plus rien
     }      // ---- fin du try, le catch suit
 
     //   En cas d erreur NON PREVUE par l analyse, recuperation par defaut
     //   Attention : la recuperation peut elle-meme planter ... (cf ierr)
     catch (Standard_Failure) {
       //      Au passage suivant, on attaquera le record suivant
-      num0 = thereader->FindNextRecord(num); //:g9 abv 28 May 98: tr8_as2_ug.stp - infinite cycle: (0);
+      numr = thereader->FindNextRecord(num); //:g9 abv 28 May 98: tr8_as2_ug.stp - infinite cycle: (0);
 
       Handle(Standard_Failure) afail = Standard_Failure::Caught();
 #ifdef _WIN32
@@ -208,85 +222,73 @@ void Interface_FileReaderTool::LoadModel (const Handle(Interface_InterfaceModel)
 //:abv 03Apr00: anent is actually a previous one:      if (anent.IsNull()) 
       anent = thereader->BoundEntity(num);
       if (anent.IsNull()) {
-	if (thetrace > 0) 
-	{
-	  // Sending of message : Number of ignored Null Entities  
-	  Message_Msg Msg21("XSTEP_21");
-	  Msg21.Arg(amodel->NbEntities()+1);
-	  TF->Send (Msg21, Message_Info);
-	  continue;
-	}
+        // Sending of message : Number of ignored Null Entities  
+        Message_Msg Msg21("XSTEP_21");
+        Msg21.Arg(amodel->NbEntities()+1);
+        TF->Send (Msg21, Message_Info);
+        continue;
       }
-      /*Handle(Interface_Check)*/ ach = new Interface_Check(anent);
+      ach = new Interface_Check(anent);
       //: abv 03 Apr 00: trj3_s1-tc-214.stp: generate a message on exception
       Message_Msg Msg278("XSTEP_278");
       Msg278.Arg(amodel->StringLabel(anent));
       ach->SendFail (Msg278); 
       
       if (ierr == 2) {
-       // Sending of message : reading of entity failed  
-	Message_Msg Msg22("XSTEP_22");
+        // Sending of message : reading of entity failed  
+        Message_Msg Msg22("XSTEP_22");
         Msg22.Arg(amodel->StringLabel(anent));
         TF->Send (Msg22, Message_Info); 
-	return;
+        return;
       }
 
       if (!ierr) {
-	//char mess[100]; svv #2
-	ierr = 1;
-// ce qui serait bien ici serait de recuperer le texte de l erreur pour ach ...
-	if (thetrace > 0) {
-	  // Sending of message : recovered entity  
-	  Message_Msg Msg23("XSTEP_23");
-	  Msg23.Arg(num);
-	  TF->Send (Msg23, Message_Info); 
-	}
+        ierr = 1;
+        // ce qui serait bien ici serait de recuperer le texte de l erreur pour ach ...
+        // Sending of message : recovered entity  
+        Message_Msg Msg23("XSTEP_23");
+        Msg23.Arg(num);
+        TF->Send (Msg23, Message_Info); 
 
-//  Finalement, on charge une Entite Inconnue
-	thenbreps ++;
-	Handle(Interface_ReportEntity) rep =
-	  new Interface_ReportEntity(ach,anent);
-	Handle(Standard_Transient) undef = theproto->UnknownEntity();
-	AnalyseRecord(num,undef,ach);
-	rep->SetContent(undef);
+        //  Finalement, on charge une Entite Inconnue
+        thenbreps ++;
+        Handle(Interface_ReportEntity) rep =
+          new Interface_ReportEntity(ach,anent);
+        Handle(Standard_Transient) undef = theproto->UnknownEntity();
+        AnalyseRecord(num,undef,ach);
+        rep->SetContent(undef);
 
-	if (thereports.IsNull()) thereports =
-	  new TColStd_HArray1OfTransient (1,thereader->NbRecords());
-	thenbreps ++;
-	thereports->SetValue (num,rep);
-        //if(isValid)
-          amodel->AddEntity (anent);    // pas fait par LoadedEntity ...
+        if (thereports.IsNull())
+          thereports = new TColStd_HArray1OfTransient (1,thereader->NbRecords());
+        thenbreps ++;
+        thereports->SetValue (num,rep);
+        amodel->AddEntity (anent);    // pas fait par LoadedEntity ...
       }
       else {
-	if (thetrace > 0) {
-	  // Sending of message : reading of entity failed  
-	  Message_Msg Msg22("XSTEP_22");
-	  Msg22.Arg(amodel->StringLabel(anent));
-	  TF->Send (Msg22, Message_Info);
-	}
-//  On garde <rep> telle quelle : pas d analyse fichier supplementaire,
-//  Mais la phase preliminaire eventuelle est conservee
-//  (en particulier, on garde trace du Type lu du fichier, etc...)
+        // Sending of message : reading of entity failed  
+        Message_Msg Msg22("XSTEP_22");
+        Msg22.Arg(amodel->StringLabel(anent));
+        TF->Send (Msg22, Message_Info);
+        //  On garde <rep> telle quelle : pas d analyse fichier supplementaire,
+        //  Mais la phase preliminaire eventuelle est conservee
+        //  (en particulier, on garde trace du Type lu du fichier, etc...)
       }
     }    // -----  fin complete du try/catch
   }      // -----  fin du while
 
 //  ..        Ajout des Reports, silya
   if (!thereports.IsNull()) {
-    if (thetrace > 0) 
-    {
-      // Sending of message : report   
-      Message_Msg Msg24("XSTEP_24");
-      Msg24.Arg(thenbreps);
-      TF->Send (Msg24, Message_Info); 
-    }
+    // Sending of message : report   
+    Message_Msg Msg24("XSTEP_24");
+    Msg24.Arg(thenbreps);
+    TF->Send (Msg24, Message_Info); 
     amodel->Reservate (-thenbreps-10);
     thenbreps = thereports->Upper();
     for (Standard_Integer nr = 1; nr <= thenbreps; nr ++) {
       if (thereports->Value(nr).IsNull()) continue;
       Handle(Standard_Transient) anent = thereader->BoundEntity (nr);
       Handle(Interface_ReportEntity) rep =
-	Handle(Interface_ReportEntity)::DownCast(thereports->Value(nr));
+        Handle(Interface_ReportEntity)::DownCast(thereports->Value(nr));
       amodel->SetReportEntity (-amodel->Number(anent),rep);
     }
   }
@@ -301,74 +303,6 @@ void Interface_FileReaderTool::LoadModel (const Handle(Interface_InterfaceModel)
     Message_Msg Msg11("XSTEP_11");
     TF->Send (Msg11, Message_Info); 
   }
-}
-
-
-//=======================================================================
-//function : LoadedEntity
-//purpose  : 
-//=======================================================================
-
-Handle(Standard_Transient) Interface_FileReaderTool::LoadedEntity (const Standard_Integer num)
-{
-  Handle(Standard_Transient) anent = thereader->BoundEntity(num);
-  Handle(Interface_Check) ach = new Interface_Check(anent);
-  Handle(Interface_ReportEntity) rep;    // entite Report, s il y a lieu
-  Standard_Integer irep = 0;
-  //Standard_Integer nbe  = 0; svv #2
-  if (thenbrep0 > 0) {
-    rep = Handle(Interface_ReportEntity)::DownCast(thereports->Value(num));
-    if (!rep.IsNull()) { irep = num;  ach = rep->Check(); }
-  }
-
-//    Trace Entite Inconnue
-  if (thetrace >= 2 && theproto->IsUnknownEntity(anent)) {
-    Handle(Message_Messenger) TF = Messenger();
-    Message_Msg Msg22("XSTEP_22");
-    // Sending of message : reading of entity failed
-    Msg22.Arg(themodel->StringLabel(anent)->String());
-    TF->Send (Msg22, Message_Info); 
-  }
-//  ..        Chargement proprement dit : Specifique de la Norme        ..
-  AnalyseRecord(num,anent,ach);
-
-//  ..        Ajout dans le modele de l entite telle quelle        ..
-//            ATTENTION, ReportEntity traitee en bloc apres les Load
-    themodel->AddEntity(anent);
-
-//   Erreur ou Correction : On cree une ReportEntity qui memorise le Check,
-//   l Entite, et en cas d Erreur une UndefinedEntity pour les Parametres
-
-//   On exploite ici le flag IsLoadError : s il a ete defini (a vrai ou faux)
-//   il a priorite sur les fails du check. Sinon, ce sont les fails qui parlent
-
-  Standard_Integer nbf = ach->NbFails();
-  Standard_Integer nbw = ach->NbWarnings();
-  if (nbf + nbw > 0) {
-    //Standard_Integer n0; svv #2
-    themodel->NbEntities();
-    rep = new Interface_ReportEntity(ach,anent);
-    if (irep == 0) {
-      if (thereports.IsNull()) thereports =
-	new TColStd_HArray1OfTransient (1,thereader->NbRecords());
-      irep = num;
-      thenbreps ++;
-    }
-    thereports->SetValue(irep,rep);
-
-    if ( thetrace >= 2)
-      ach->Print (Messenger(),2);
-  }
-  
-//    Rechargement ? si oui, dans une UnknownEntity fournie par le protocole
-  if (thereader->IsErrorLoad())  nbf = (thereader->ResetErrorLoad() ? 1 : 0);
-  if (nbf > 0)  {
-    Handle(Standard_Transient) undef = theproto->UnknownEntity();
-    AnalyseRecord(num,undef,ach);
-    rep->SetContent(undef);
-  }
-
-  return anent;
 }
 
 

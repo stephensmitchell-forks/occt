@@ -56,10 +56,8 @@ DEFINE_STANDARD_HANDLE(Interface_FileReaderData, MMgt_TShared)
 //! methods, and improves memory management.
 class Interface_FileReaderData : public MMgt_TShared
 {
+ public:
 
-public:
-
-  
   //! Returns the count of registered records
   //! That is, value given for Initialization (can be redefined)
   Standard_EXPORT virtual Standard_Integer NbRecords() const;
@@ -149,42 +147,13 @@ public:
   //! Binds an entity to a record
   Standard_EXPORT void BindEntity (const Standard_Integer num, const Handle(Standard_Transient)& ent);
   
-  //! Sets the status "Error Load" on, to overside check fails
-  //! <val> True  : declares unloaded
-  //! <val> False : declares loaded
-  //! If not called before loading (see FileReaderTool), check fails
-  //! give the status
-  //! IsErrorLoad says if SetErrorLoad has been called by user
-  //! ResetErrorLoad resets it (called by FileReaderTool)
-  //! This allows to specify that the currently loaded entity
-  //! remains unloaded (because of syntactic fail)
-  Standard_EXPORT void SetErrorLoad (const Standard_Boolean val);
-  
-  //! Returns True if the status "Error Load" has been set (to True
-  //! or False)
-  Standard_EXPORT Standard_Boolean IsErrorLoad() const;
-  
-  //! Returns the former value of status "Error Load" then resets it
-  //! Used to read the status then ensure it is reset
-  Standard_EXPORT Standard_Boolean ResetErrorLoad();
-  
-  //! Destructor (waiting for memory management)
-  Standard_EXPORT void Destroy();
-~Interface_FileReaderData()
-{
-  Destroy();
-}
-  
   //! Same spec.s as standard <atof> but 5 times faster
   Standard_EXPORT static Standard_Real Fastof (const Standard_CString str);
 
-
-
   DEFINE_STANDARD_RTTIEXT(Interface_FileReaderData,MMgt_TShared)
 
-protected:
+ protected:
 
-  
   //! Initializes arrays of Entities and of ParamLists attached
   //! to registered records
   //! <nbr> must be the maximum number of records to get (no way to
@@ -206,24 +175,12 @@ protected:
   //! record to which its belongs, and the parameter number for it
   Standard_EXPORT void ParamPosition (const Standard_Integer numpar, Standard_Integer& num, Standard_Integer& nump) const;
 
-
-
-private:
-
+ private:
 
   Standard_Integer thenum0;
-  Standard_Integer therrload;
   Handle(Interface_ParamSet) theparams;
   TColStd_Array1OfInteger thenumpar;
   TColStd_Array1OfTransient theents;
-
-
 };
-
-
-
-
-
-
 
 #endif // _Interface_FileReaderData_HeaderFile

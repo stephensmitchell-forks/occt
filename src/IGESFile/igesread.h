@@ -44,13 +44,11 @@ extern "C" {
   void iges_nextpart ();
   int  iges_lirparam (int* typarg,char* *parval);
   void iges_finfile  (int mode);
-  struct dirpart *iges_get_curp (void);
 
   void iges_initfile();
   int  iges_lire (FILE* lefic, int *numsec, char ligne[100], int modefnes);
   void iges_newparam(int typarg,int longval, char *parval);
   void iges_param(int *Pstat,char *ligne,char c_separ,char c_fin,int lonlin);
-  void iges_Dsect (int *Dstat,int numsec,char* ligne);
   void iges_Psect(int numsec,char ligne[80]);
 
   /* MGE 20/07/98 */

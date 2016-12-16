@@ -47,32 +47,20 @@ void IGESDimen_ToolSectionedArea::ReadOwnParams
   Standard_Real tempDistance, tempAngle;
   Handle(IGESData_HArray1OfIGESEntity) tempIslands;
   Handle(IGESData_IGESEntity) anent;
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 moved down
 
-  //szv#4:S4163:12Mar99 `st=` not needed
-  PR.ReadEntity(IR, PR.Current(), "Exterior curve", extCurve, (ent->FormNumber() == 1));
-  PR.ReadInteger(PR.Current(), "Fill pattern", tempPattern);
-  PR.ReadXYZ(PR.CurrentList(1, 3), "Passing point", passPnt);
-  PR.ReadReal(PR.Current(), "Distance between lines", tempDistance);
+  PR.ReadEntity(IR, "Exterior curve", extCurve, (ent->FormNumber() == 1));
+  PR.ReadInteger(tempPattern,"Fill pattern");
+  PR.ReadXYZ(passPnt,"Passing point");
+  PR.ReadReal(tempDistance,"Distance between lines");
 
   if (PR.DefinedElseSkip())
-    PR.ReadReal(PR.Current(), "Angle between line and X axis", tempAngle); //szv#4:S4163:12Mar99 `st=` not needed
+    PR.ReadReal(tempAngle,"Angle between line and X axis");
   else
     tempAngle = M_PI / 4.0;
 
-  Standard_Boolean st = PR.ReadInteger(PR.Current(), "Number of island curves", nbislands);
+  Standard_Boolean st = PR.ReadInteger(nbislands,"Number of island curves");
   if (st && nbislands > 0)
-    PR.ReadEnts (IR,PR.CurrentList(nbislands),"Island curves",tempIslands); //szv#4:S4163:12Mar99 `st=` not needed
-/*
-    {
-      tempIslands = new IGESData_HArray1OfIGESEntity(1, nbislands);
-      for (Standard_Integer i=1; i<=nbislands; i++)
-	{
-          st = PR.ReadEntity(IR, PR.Current(), "Island curves", anent);
-	  if (st) tempIslands->SetValue(i, anent);
-	}
-    }
-*/
+    PR.ReadEnts (IR,PR.CurrentList(nbislands),"Island curves",tempIslands);
 
   DirChecker(ent).CheckTypeAndForm(PR.CCheck(),ent);
   ent->Init

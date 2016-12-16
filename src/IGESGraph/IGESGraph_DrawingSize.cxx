@@ -17,35 +17,51 @@
 //--------------------------------------------------------------------
 
 #include <IGESGraph_DrawingSize.hxx>
-#include <Standard_Type.hxx>
+#include <IGESFile_Reader.hxx>
+#include <IGESData_IGESWriter.hxx>
+#include <IGESData_DirChecker.hxx>
+#include <Message_Messenger.hxx>
+#include <IGESData_IGESDumper.hxx>
+#include <IGESData_Dump.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESGraph_DrawingSize,IGESData_IGESEntity)
 
-IGESGraph_DrawingSize::IGESGraph_DrawingSize ()    {  }
+void IGESGraph_DrawingSize::OwnRead (IGESFile_Reader &PR)
+{ 
+  Standard_Integer aNbPropertyValues = 0;
+  PR.ReadInteger(aNbPropertyValues,"No. of property values");
+  if (aNbPropertyValues != 2)
+    PR.AddFail("No. of Property values : Value is not 2");
 
-
-    void IGESGraph_DrawingSize::Init
-  (const Standard_Integer nbProps, const Standard_Real aXSize, 
-   const Standard_Real    aYSize)
-{
-  theNbPropertyValues = nbProps;
-  theXSize            = aXSize;
-  theYSize            = aYSize;
-  InitTypeAndForm(406,16);
+  PR.ReadReal(myXSize,"Drawing extent along +ve XD axis");
+  PR.ReadReal(myYSize,"Drawing extent along +ve YD axis");
 }
 
-
-    Standard_Integer IGESGraph_DrawingSize::NbPropertyValues () const
-{
-  return theNbPropertyValues;
+void IGESGraph_DrawingSize::OwnWrite (IGESData_IGESWriter& IW)  const
+{ 
+  IW.Send(2);
+  IW.Send(myXSize);
+  IW.Send(myYSize);
 }
 
-    Standard_Real IGESGraph_DrawingSize::XSize () const
-{
-  return theXSize;
+IGESData_DirChecker IGESGraph_DrawingSize::DirChecker () const
+{ 
+  IGESData_DirChecker DC (406, 16);
+  DC.Structure(IGESData_DefVoid);
+  DC.LineFont(IGESData_DefVoid);
+  DC.LineWeight(IGESData_DefVoid);
+  DC.Color(IGESData_DefVoid);
+  DC.BlankStatusIgnored();
+  DC.UseFlagIgnored();
+  DC.HierarchyStatusIgnored();
+  return DC;
 }
 
-    Standard_Real IGESGraph_DrawingSize::YSize () const
+void IGESGraph_DrawingSize::OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &S, const Standard_Integer) const
 {
-  return theYSize;
+  S << "IGESGraph_DrawingSize" << endl;
+  S << "No. of property values : 2" << endl;
+  S << "Drawing extent along positive X-axis : " << myXSize << endl;
+  S << "Drawing extent along positive Y-axis : " << myYSize << endl;
+  S << endl;
 }

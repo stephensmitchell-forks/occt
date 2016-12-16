@@ -17,15 +17,8 @@
 #ifndef _IGESGraph_LineFontPredefined_HeaderFile
 #define _IGESGraph_LineFontPredefined_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
-#include <Standard_Integer.hxx>
 #include <IGESData_IGESEntity.hxx>
 
-
-class IGESGraph_LineFontPredefined;
-DEFINE_STANDARD_HANDLE(IGESGraph_LineFontPredefined, IGESData_IGESEntity)
 
 //! defines IGESLineFontPredefined, Type <406> Form <19>
 //! in package IGESGraph
@@ -35,47 +28,32 @@ DEFINE_STANDARD_HANDLE(IGESGraph_LineFontPredefined, IGESData_IGESEntity)
 //! Directory Entry Field 4
 class IGESGraph_LineFontPredefined : public IGESData_IGESEntity
 {
+ public:
 
-public:
+  Standard_EXPORT virtual Standard_Integer TypeNumber() const Standard_OVERRIDE { return 406; }
 
-  
-  Standard_EXPORT IGESGraph_LineFontPredefined();
-  
-  //! This method is used to set the fields of the class
-  //! LineFontPredefined
-  //! - nbProps              : Number of property values (NP = 1)
-  //! - aLineFontPatternCode : Line Font Pattern Code
-  Standard_EXPORT void Init (const Standard_Integer nbProps, const Standard_Integer aLineFontPatternCode);
-  
-  //! returns the number of property values in <me>
-  Standard_EXPORT Standard_Integer NbPropertyValues() const;
-  
+  Standard_EXPORT virtual Standard_Integer FormNumber() const Standard_OVERRIDE { return 19; }
+
+  IGESGraph_LineFontPredefined()
+  : myLineFontPatternCode(0)
+  {}
+
   //! returns the Line Font Pattern Code of <me>
-  Standard_EXPORT Standard_Integer LineFontPatternCode() const;
+  Standard_Integer LineFontPatternCode() const { return myLineFontPatternCode; }
 
+  Standard_EXPORT virtual void OwnRead (IGESFile_Reader &) Standard_OVERRIDE;
+  
+  Standard_EXPORT virtual void OwnWrite (IGESData_IGESWriter &) const Standard_OVERRIDE;
 
+  Standard_EXPORT virtual IGESData_DirChecker DirChecker () const Standard_OVERRIDE;
 
+  Standard_EXPORT virtual void OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &, const Standard_Integer) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESGraph_LineFontPredefined,IGESData_IGESEntity)
 
-protected:
+ private:
 
-
-
-
-private:
-
-
-  Standard_Integer theNbPropertyValues;
-  Standard_Integer theLineFontPatternCode;
-
-
+  Standard_Integer myLineFontPatternCode;
 };
-
-
-
-
-
-
 
 #endif // _IGESGraph_LineFontPredefined_HeaderFile

@@ -20,14 +20,10 @@
 #include <Standard.hxx>
 #include <Standard_Type.hxx>
 
-#include <Standard_Real.hxx>
-#include <Interface_GeneralLib.hxx>
 #include <TColStd_Array1OfInteger.hxx>
 #include <MMgt_TShared.hxx>
-#include <Standard_Boolean.hxx>
 class IGESData_IGESModel;
 class Standard_DomainError;
-class IGESData_Protocol;
 class IGESData_IGESEntity;
 class gp_GTrsf;
 class gp_Trsf;
@@ -65,7 +61,7 @@ public:
   //! Creates a ToolLocation on a given Model, filled with the help
   //! of a Protocol (which allows to known Entities referenced by
   //! other ones)
-  Standard_EXPORT IGESData_ToolLocation(const Handle(IGESData_IGESModel)& amodel, const Handle(IGESData_Protocol)& protocol);
+  Standard_EXPORT IGESData_ToolLocation(const Handle(IGESData_IGESModel)& amodel);
   
   //! Does the effective work of determining Locations of Entities
   Standard_EXPORT void Load();
@@ -151,32 +147,14 @@ public:
   //! As a class method, it can be called separately
   Standard_EXPORT static Standard_Boolean ConvertLocation (const Standard_Real prec, const gp_GTrsf& loc, gp_Trsf& result, const Standard_Real uni = 1);
 
-
-
-
   DEFINE_STANDARD_RTTIEXT(IGESData_ToolLocation,MMgt_TShared)
 
-protected:
-
-
-
-
-private:
-
+ private:
 
   Standard_Real theprec;
   Handle(IGESData_IGESModel) themodel;
-  Interface_GeneralLib thelib;
   TColStd_Array1OfInteger therefs;
   TColStd_Array1OfInteger theassocs;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESData_ToolLocation_HeaderFile

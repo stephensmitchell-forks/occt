@@ -49,10 +49,7 @@ void IGESGeom_ToolBoundary::ReadOwnParams(const Handle(IGESGeom_Boundary)& ent,
                                           const Handle(IGESData_IGESReaderData)& IR,
                                           IGESData_ParamReader& PR) const
 {
-  // MGE 30/07/98
-
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
-  Standard_Integer num; //szv#4:S4163:12Mar99 j not needed, i moved down in `for`
+  Standard_Integer num;
   Standard_Integer tempType, tempPreference;
   Handle(IGESData_IGESEntity) tempSurface;
   Handle(TColStd_HArray1OfInteger) tempSenses;
@@ -60,17 +57,16 @@ void IGESGeom_ToolBoundary::ReadOwnParams(const Handle(IGESGeom_Boundary)& ent,
   Handle(IGESBasic_HArray1OfHArray1OfIGESEntity) tempParameterCurves;
   IGESData_Status aStatus;
 
-  //szv#4:S4163:12Mar99 `st=` not needed
-  if (!PR.ReadInteger(PR.Current(), tempType)){
+  if (!PR.ReadInteger(tempType)) {
     Message_Msg Msg122("XTSEP_122");
     PR.SendFail(Msg122);
   }
-  if (!PR.ReadInteger(PR.Current(), tempPreference)){
+  if (!PR.ReadInteger(tempPreference)) {
     Message_Msg Msg123("XTSEP_123");
     PR.SendFail(Msg123);
   }
 
-  if (!PR.ReadEntity(IR, PR.Current(), aStatus, tempSurface)){
+  if (!PR.ReadEntity(IR, aStatus, tempSurface)) {
     Message_Msg Msg124("XTSEP_124");
     switch(aStatus) {
     case IGESData_ReferenceError: {  
@@ -88,7 +84,7 @@ void IGESGeom_ToolBoundary::ReadOwnParams(const Handle(IGESGeom_Boundary)& ent,
     }
   }
  
-  if (PR.ReadInteger(PR.Current(), num) && (num > 0)) {
+  if (PR.ReadInteger(num) && (num > 0)) {
     tempSenses = new TColStd_HArray1OfInteger(1, num);
     tempModelCurves = new IGESData_HArray1OfIGESEntity(1, num);
     tempParameterCurves = new IGESBasic_HArray1OfHArray1OfIGESEntity(1, num);
@@ -99,12 +95,10 @@ void IGESGeom_ToolBoundary::ReadOwnParams(const Handle(IGESGeom_Boundary)& ent,
   }
 
   if (!tempSenses.IsNull() && !tempModelCurves.IsNull() && !tempParameterCurves.IsNull() ) {
-    for ( Standard_Integer i = 1;  i <= num;  i++ ) //szv#4:S4163:12Mar99 Standard_Integer moved in `for`
+    for ( Standard_Integer i = 1;  i <= num;  i++ )
       {
 	Handle(IGESData_IGESEntity) tempEnt;
-	//st = PR.ReadEntity(IR, PR.Current(), Msg127, tempEnt); //szv#4:S4163:12Mar99 moved in if
-	//st = PR.ReadEntity(IR, PR.Current(), "Model Space Curves", tempEnt);
-	if (PR.ReadEntity(IR, PR.Current(), aStatus, tempEnt))
+	if (PR.ReadEntity(IR, aStatus, tempEnt))
 	  tempModelCurves->SetValue(i, tempEnt);
 	else {
 	  Message_Msg Msg127("XTSEP_127");
@@ -125,9 +119,7 @@ void IGESGeom_ToolBoundary::ReadOwnParams(const Handle(IGESGeom_Boundary)& ent,
 	}
 
 	Standard_Integer tempSense;
-	//st = PR.ReadInteger(PR.Current(), Msg128, tempSense); //szv#4:S4163:12Mar99 moved in if
-	//st = PR.ReadInteger(PR.Current(), "Orientation flags", tempSense);
-	if (PR.ReadInteger(PR.Current(), tempSense))
+	if (PR.ReadInteger(tempSense))
 	  tempSenses->SetValue(i, tempSense);
 	else{
 	  Message_Msg Msg128("XTSEP_128");
@@ -135,40 +127,11 @@ void IGESGeom_ToolBoundary::ReadOwnParams(const Handle(IGESGeom_Boundary)& ent,
 	}
 
 	Standard_Integer tempCount;
-	//st = PR.ReadInteger(PR.Current(), Msg129, tempCount); //szv#4:S4163:12Mar99 moved in if
-	//st = PR.ReadInteger(PR.Current(), "Count of Parameter Space Curves", tempCount);
-	//szv#4:S4163:12Mar99 optimized
-/*	
-        if (st && tempCount >= 0)
-	  {
-	    Handle(IGESData_HArray1OfIGESEntity) tempParCurves;
-	    if (tempCount > 0)
-	      st = PR.ReadEnts (IR,PR.CurrentList(tempCount), Msg130, tempParCurves);
-	      //st = PR.ReadEnts (IR,PR.CurrentList(tempCount), "Parameter Space Curves", tempParCurves);
-*/
-/*
-	      {
-		tempParCurves = new
-		  IGESData_HArray1OfIGESEntity(1, tempCount);
-		for ( j = 1; j <= tempCount; j++ ) {
-		  Handle(IGESData_IGESEntity) tempEnt;
-		  st = PR.ReadEntity(IR, PR.Current(),
-				     "Parameter Space Curves", tempEnt);
-		  if (st) tempParCurves->SetValue(j, tempEnt);
-		}
-	      }
-*/
-/*
-	    tempParameterCurves->SetValue(i, tempParCurves);
-	  }
-	if (st && tempCount < 0)
-	  PR.SendFail(Msg129);
-*/
-	if (PR.ReadInteger(PR.Current(), tempCount) && (tempCount >= 0)) {
+	if (PR.ReadInteger(tempCount) && (tempCount >= 0)) {
 	      Handle(IGESData_HArray1OfIGESEntity) tempParCurves;
 	      if (tempCount > 0){
 		Message_Msg Msg130("XTSEP_130");
-		PR.ReadEnts (IR,PR.CurrentList(tempCount), Msg130, tempParCurves); //szv#4:S4163:12Mar99 `st=` not needed
+		PR.ReadEnts (IR,PR.CurrentList(tempCount), Msg130, tempParCurves);
 	      }
 	      tempParameterCurves->SetValue(i, tempParCurves);
 	}

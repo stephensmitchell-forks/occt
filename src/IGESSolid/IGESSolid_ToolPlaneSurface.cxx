@@ -49,9 +49,8 @@ void IGESSolid_ToolPlaneSurface::ReadOwnParams(const Handle(IGESSolid_PlaneSurfa
   Handle(IGESGeom_Direction) tempNormal;
   Handle(IGESGeom_Direction) tempRefdir;          // default Unparametrised
   IGESData_Status aStatus;
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
 
-  if (!PR.ReadEntity(IR, PR.Current(),aStatus,STANDARD_TYPE(IGESGeom_Point), tempLocation)){ //szv#4:S4163:12Mar99 `st=` not needed
+  if (!PR.ReadEntity(IR,aStatus,STANDARD_TYPE(IGESGeom_Point), tempLocation)) {
     Message_Msg Msg174("XSTEP_174");
     switch(aStatus) {
     case IGESData_ReferenceError: {  
@@ -73,11 +72,7 @@ void IGESSolid_ToolPlaneSurface::ReadOwnParams(const Handle(IGESSolid_PlaneSurfa
     }
     }
   }
-/*
-  st = PR.ReadEntity(IR, PR.Current(), "Point on axis",
-		     STANDARD_TYPE(IGESGeom_Point), tempLocation);
-*/
-  if (!PR.ReadEntity(IR, PR.Current(),aStatus,STANDARD_TYPE(IGESGeom_Direction), tempNormal)){ //szv#4:S4163:12Mar99 `st=` not needed
+  if (!PR.ReadEntity(IR,aStatus,STANDARD_TYPE(IGESGeom_Direction), tempNormal)) {
     Message_Msg Msg175("XSTEP_175");
     switch(aStatus) {
     case IGESData_ReferenceError: {  
@@ -99,13 +94,9 @@ void IGESSolid_ToolPlaneSurface::ReadOwnParams(const Handle(IGESSolid_PlaneSurfa
     }
     }
 }
-/*
-  st = PR.ReadEntity(IR, PR.Current(), "Normal direction",
-		     STANDARD_TYPE(IGESGeom_Direction), tempNormal);
-*/
   if (ent->FormNumber() == 1){
       // Parametrised surface
-    if (!PR.ReadEntity(IR, PR.Current(), aStatus, STANDARD_TYPE(IGESGeom_Direction), tempRefdir)){ //szv#4:S4163:12Mar99 `st=` not needed
+    if (!PR.ReadEntity(IR, aStatus, STANDARD_TYPE(IGESGeom_Direction), tempRefdir)) {
       Message_Msg Msg176("XSTEP_176");
       switch(aStatus) {
       case IGESData_ReferenceError: {  
@@ -128,10 +119,6 @@ void IGESSolid_ToolPlaneSurface::ReadOwnParams(const Handle(IGESSolid_PlaneSurfa
       }
     }
   }
-/*
-    st = PR.ReadEntity(IR, PR.Current(), "Reference direction",
-		       STANDARD_TYPE(IGESGeom_Direction), tempRefdir);
-*/
   DirChecker(ent).CheckTypeAndForm(PR.CCheck(),ent);
   ent->Init (tempLocation, tempNormal, tempRefdir);
 }

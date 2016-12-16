@@ -46,34 +46,17 @@ void IGESSolid_ToolVertexList::ReadOwnParams(const Handle(IGESSolid_VertexList)&
                                              const Handle(IGESData_IGESReaderData)& /* IR */,
                                              IGESData_ParamReader& PR) const
 {
-  // MGE 03/08/98
-  // Building of messages
-  //========================================
-//  Message_Msg Msg182("XSTEP_182");
-//  Message_Msg Msg183("XSTEP_183");
-  //========================================
-
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
-  Standard_Integer nbitems = 0; //szv#4:S4163:12Mar99 `i` moved in for
-  //gp_XYZ anXYZ; //szv#4:S4163:12Mar99 moved down
+  Standard_Integer nbitems = 0;
   Handle(TColgp_HArray1OfXYZ) tempVertices;
 
-  //st = PR.ReadInteger(PR.Current(), Msg182, nbitems); //szv#4:S4163:12Mar99 moved in if
-  //st = PR.ReadInteger(PR.Current(), "Number of Vertices", nbitems);
-  Standard_Boolean sb = PR.ReadInteger(PR.Current(), nbitems);
+  Standard_Boolean sb = PR.ReadInteger(nbitems);
   if (sb && (nbitems > 0)) {
-    
-    Message_Msg Msg183("XSTEP_183");
     
     tempVertices = new TColgp_HArray1OfXYZ(1, nbitems);
     
-    gp_XYZ anXYZ;
     for (Standard_Integer i = 1; i <= nbitems; i++)
       {
-	//st = PR.ReadXYZ(PR.CurrentList(1, 3), Msg183, anXYZ); //szv#4:S4163:12Mar99 moved in if
-	//st = PR.ReadXYZ(PR.CurrentList(1, 3), "Vertices", anXYZ);
-	if (PR.ReadXYZ(PR.CurrentList(1, 3), Msg183, anXYZ))
-	  tempVertices->SetValue(i, anXYZ);
+	PR.ReadXYZ(tempVertices->ChangeValue(i));
       }
   }
   else {

@@ -38,18 +38,17 @@ void  IGESDimen_ToolBasicDimension::ReadOwnParams
   (const Handle(IGESDimen_BasicDimension)& ent,
    const Handle(IGESData_IGESReaderData)& /* IR */, IGESData_ParamReader& PR) const
 {
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
   Standard_Integer nbPropVal;
   gp_XY templl;
   gp_XY templr;
   gp_XY tempur;
   gp_XY tempul;
 
-  PR.ReadInteger(PR.Current(),"Number of Property Values",nbPropVal); //szv#4:S4163:12Mar99 `st=` not needed
-  PR.ReadXY(PR.CurrentList(1, 2),"Lower Left Corner", templl); //szv#4:S4163:12Mar99 `st=` not needed
-  PR.ReadXY(PR.CurrentList(1, 2),"Lower Right Corner", templr); //szv#4:S4163:12Mar99 `st=` not needed
-  PR.ReadXY(PR.CurrentList(1, 2),"Upper Right Corner", tempur); //szv#4:S4163:12Mar99 `st=` not needed
-  PR.ReadXY(PR.CurrentList(1, 2),"Upper Left Corner", tempul); //szv#4:S4163:12Mar99 `st=` not needed
+  PR.ReadInteger(nbPropVal,"Number of Property Values");
+  PR.ReadXY(templl,"Lower Left Corner");
+  PR.ReadXY(templr,"Lower Right Corner");
+  PR.ReadXY(tempur,"Upper Right Corner");
+  PR.ReadXY(tempul,"Upper Left Corner");
 
   DirChecker(ent).CheckTypeAndForm(PR.CCheck(),ent);
   ent->Init(nbPropVal, templl, templr, tempur, tempul);

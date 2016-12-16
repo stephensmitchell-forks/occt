@@ -38,23 +38,11 @@ class IGESAppli_NodalDisplAndRot : public IGESData_IGESEntity
 {
  public:
 
+  Standard_EXPORT virtual Standard_Integer TypeNumber() const Standard_OVERRIDE { return 138; }
+
+  Standard_EXPORT virtual Standard_Integer FormNumber() const Standard_OVERRIDE { return 0; }
+
   IGESAppli_NodalDisplAndRot() {}
-  
-  //! This method is used to set the fields of the class
-  //! NodalDisplAndRot
-  //! - allNotes       : Used to store the general note describing
-  //! the analysis cases
-  //! - allIdentifiers : Used to store the node number
-  //! identifier for the nodes
-  //! - allNodes       : Used to store the nodes
-  //! - allRotParams   : Used to store the rotation for the nodes
-  //! - allTransParams : Used to store the incremental
-  //! displacements for the nodes
-  //! raises exception if Lengths of allIdentifiers, allNodes,
-  //! allRotParams, and allTransParams are not same
-  //! or if length of allNotes and size of each element of allRotParams
-  //! and allTransParam are not same
-  Standard_EXPORT void Init (const Handle(IGESDimen_HArray1OfGeneralNote)& allNotes, const Handle(TColStd_HArray1OfInteger)& allIdentifiers, const Handle(IGESAppli_HArray1OfNode)& allNodes, const Handle(IGESBasic_HArray1OfHArray1OfXYZ)& allRotParams, const Handle(IGESBasic_HArray1OfHArray1OfXYZ)& allTransParams);
   
   //! returns the number of analysis cases
   Standard_EXPORT Standard_Integer NbCases() const;
@@ -84,17 +72,25 @@ class IGESAppli_NodalDisplAndRot : public IGESData_IGESEntity
   //! or CaseNum <= 0 or CaseNum > NbCases()
   Standard_EXPORT const gp_XYZ & RotationalParameter (const Standard_Integer NodeNum, const Standard_Integer CaseNum) const;
 
+  Standard_EXPORT virtual void OwnRead (IGESFile_Reader &) Standard_OVERRIDE;
+  
+  Standard_EXPORT virtual void OwnWrite (IGESData_IGESWriter &) const Standard_OVERRIDE;
+
   Standard_EXPORT virtual void OwnShared(Interface_EntityIterator &theIter) const Standard_OVERRIDE;
+
+  Standard_EXPORT virtual IGESData_DirChecker DirChecker () const Standard_OVERRIDE;
+
+  Standard_EXPORT virtual void OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &, const Standard_Integer) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESAppli_NodalDisplAndRot,IGESData_IGESEntity)
 
  private:
 
-  Handle(IGESDimen_HArray1OfGeneralNote) theNotes;
-  Handle(TColStd_HArray1OfInteger) theNodeIdentifiers;
-  Handle(IGESAppli_HArray1OfNode) theNodes;
-  Handle(IGESBasic_HArray1OfHArray1OfXYZ) theTransParam;
-  Handle(IGESBasic_HArray1OfHArray1OfXYZ) theRotParam;
+  Handle(IGESDimen_HArray1OfGeneralNote) myNotes;
+  Handle(TColStd_HArray1OfInteger) myNodeIdentifiers;
+  Handle(IGESAppli_HArray1OfNode) myNodes;
+  Handle(IGESBasic_HArray1OfHArray1OfXYZ) myTransParam;
+  Handle(IGESBasic_HArray1OfHArray1OfXYZ) myRotParam;
 };
 
 #endif // _IGESAppli_NodalDisplAndRot_HeaderFile

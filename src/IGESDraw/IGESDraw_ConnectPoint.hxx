@@ -17,22 +17,12 @@
 #ifndef _IGESDraw_ConnectPoint_HeaderFile
 #define _IGESDraw_ConnectPoint_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
-#include <gp_XYZ.hxx>
-#include <Standard_Integer.hxx>
 #include <IGESData_IGESEntity.hxx>
-#include <Standard_Boolean.hxx>
-class IGESData_IGESEntity;
+#include <gp_XYZ.hxx>
 class TCollection_HAsciiString;
 class IGESGraph_TextDisplayTemplate;
-class gp_XYZ;
 class gp_Pnt;
 
-
-class IGESDraw_ConnectPoint;
-DEFINE_STANDARD_HANDLE(IGESDraw_ConnectPoint, IGESData_IGESEntity)
 
 //! defines IGESConnectPoint, Type <132> Form Number <0>
 //! in package IGESDraw
@@ -43,27 +33,13 @@ DEFINE_STANDARD_HANDLE(IGESDraw_ConnectPoint, IGESData_IGESEntity)
 //! Associative Instance, or it may stand alone.
 class IGESDraw_ConnectPoint : public IGESData_IGESEntity
 {
+ public:
 
-public:
+  Standard_EXPORT virtual Standard_Integer TypeNumber() const Standard_OVERRIDE { return 132; }
 
-  
-  Standard_EXPORT IGESDraw_ConnectPoint();
-  
-  //! This method is used to set the fields of the class
-  //! ConnectPoint
-  //! - aPoint               : A Coordinate point
-  //! - aDisplaySymbol       : Display symbol Geometry
-  //! - aTypeFlag            : Type of the connection
-  //! - aFunctionFlag        : Function flag for the connection
-  //! - aFunctionIdentifier  : Connection Point Function Identifier
-  //! - anIdentifierTemplate : Connection Point Function Template
-  //! - aFunctionName        : Connection Point Function Name
-  //! - aFunctionTemplate    : Connection Point Function Template
-  //! - aPointIdentifier     : Unique Connect Point Identifier
-  //! - aFunctionCode        : Connect Point Function Code
-  //! - aSwapFlag            : Connect Point Swap Flag
-  //! - anOwnerSubfigure     : Pointer to the "Owner" Entity
-  Standard_EXPORT void Init (const gp_XYZ& aPoint, const Handle(IGESData_IGESEntity)& aDisplaySymbol, const Standard_Integer aTypeFlag, const Standard_Integer aFunctionFlag, const Handle(TCollection_HAsciiString)& aFunctionIdentifier, const Handle(IGESGraph_TextDisplayTemplate)& anIdentifierTemplate, const Handle(TCollection_HAsciiString)& aFunctionName, const Handle(IGESGraph_TextDisplayTemplate)& aFunctionTemplate, const Standard_Integer aPointIdentifier, const Standard_Integer aFunctionCode, const Standard_Integer aSwapFlag, const Handle(IGESData_IGESEntity)& anOwnerSubfigure);
+  Standard_EXPORT virtual Standard_Integer FormNumber() const Standard_OVERRIDE { return 0; }
+
+  IGESDraw_ConnectPoint() {}
   
   //! returns the coordinate of the connection point
   Standard_EXPORT gp_Pnt Point() const;
@@ -73,12 +49,12 @@ public:
   
   //! returns True if Display symbol is specified
   //! else returns False
-  Standard_EXPORT Standard_Boolean HasDisplaySymbol() const;
-  
+  Standard_Boolean HasDisplaySymbol() const { return (! theDisplaySymbol.IsNull()); }
+
   //! if display symbol specified returns display symbol geometric entity
   //! else returns NULL Handle
-  Standard_EXPORT Handle(IGESData_IGESEntity) DisplaySymbol() const;
-  
+  const Handle(IGESData_IGESEntity) & DisplaySymbol() const { return theDisplaySymbol; }
+
   //! return value specifies a particular type of connection :
   //! Type Flag = 0   : Not Specified(default)
   //! 1   : Nonspecific logical  point of connection
@@ -91,91 +67,86 @@ public:
   //! 202 : Physical PWA blind pin
   //! 203 : Physical PWA thru-pin
   //! 5001-9999 : Implementor defined.
-  Standard_EXPORT Standard_Integer TypeFlag() const;
-  
+  Standard_Integer TypeFlag() const { return theTypeFlag; }
+
   //! returns Function Code that specifies a particular function for the
   //! ECO576 connection :
   //! e.g.,        Function Flag = 0 : Unspecified(default)
   //! = 1 : Electrical Signal
   //! = 2 : Fluid flow Signal
-  Standard_EXPORT Standard_Integer FunctionFlag() const;
-  
+  Standard_Integer FunctionFlag() const { return theFunctionFlag; }
+
   //! return HAsciiString identifying Pin Number or Nozzle Label etc.
-  Standard_EXPORT Handle(TCollection_HAsciiString) FunctionIdentifier() const;
-  
+  const Handle(TCollection_HAsciiString) & FunctionIdentifier() const { return theFunctionIdentifier; }
+
   //! returns True if Text Display Template is specified for Identifier
   //! else returns False
-  Standard_EXPORT Standard_Boolean HasIdentifierTemplate() const;
-  
+  Standard_Boolean HasIdentifierTemplate() const { return (! theIdentifierTemplate.IsNull()); }
+
   //! if Text Display Template for the Function Identifier is defined,
   //! returns TestDisplayTemplate
   //! else returns NULL Handle
-  Standard_EXPORT Handle(IGESGraph_TextDisplayTemplate) IdentifierTemplate() const;
-  
+  const Handle(IGESGraph_TextDisplayTemplate) & IdentifierTemplate() const { return theIdentifierTemplate; }
+
   //! returns Connection Point Function Name
-  Standard_EXPORT Handle(TCollection_HAsciiString) FunctionName() const;
-  
+  const Handle(TCollection_HAsciiString) & FunctionName() const { return theFunctionName; }
+
   //! returns True if Text Display Template is specified for Function Name
   //! else returns False
-  Standard_EXPORT Standard_Boolean HasFunctionTemplate() const;
-  
+  Standard_Boolean HasFunctionTemplate() const { return (! theFunctionTemplate.IsNull()); }
+
   //! if Text Display Template for the Function Name is defined,
   //! returns TestDisplayTemplate
   //! else returns NULL Handle
-  Standard_EXPORT Handle(IGESGraph_TextDisplayTemplate) FunctionTemplate() const;
-  
+  const Handle(IGESGraph_TextDisplayTemplate) & FunctionTemplate() const { return theFunctionTemplate; }
+
   //! returns the Unique Connect Point Identifier
-  Standard_EXPORT Standard_Integer PointIdentifier() const;
-  
+  Standard_Integer PointIdentifier() const { return thePointIdentifier; }
+
   //! returns the Connect Point Function Code
-  Standard_EXPORT Standard_Integer FunctionCode() const;
-  
+  Standard_Integer FunctionCode() const { return theFunctionCode; }
+
   //! return value = 0 : Connect point may be swapped(default)
   //! = 1 : Connect point may not be swapped
-  Standard_EXPORT Standard_Boolean SwapFlag() const;
-  
+  Standard_Boolean SwapFlag() const { return (theSwapFlag != 0); }
+
   //! returns True if Network Subfigure Instance/Definition Entity
   //! is specified
   //! else returns False
-  Standard_EXPORT Standard_Boolean HasOwnerSubfigure() const;
-  
+  Standard_Boolean HasOwnerSubfigure() const { return (! theOwnerSubfigure.IsNull()); }
+
   //! returns "owner" Network Subfigure Instance Entity,
   //! or Network Subfigure Definition Entity, or NULL Handle.
-  Standard_EXPORT Handle(IGESData_IGESEntity) OwnerSubfigure() const;
+  const Handle(IGESData_IGESEntity) & OwnerSubfigure() const { return theOwnerSubfigure; }
 
+  Standard_EXPORT virtual void OwnRead (IGESFile_Reader &) Standard_OVERRIDE;
+  
+  Standard_EXPORT virtual void OwnWrite (IGESData_IGESWriter &) const Standard_OVERRIDE;
 
+  Standard_EXPORT virtual void OwnShared (Interface_EntityIterator &) const Standard_OVERRIDE;
 
+  Standard_EXPORT virtual IGESData_DirChecker DirChecker () const Standard_OVERRIDE;
+
+  Standard_EXPORT virtual void OwnCheck (const Interface_ShareTool &, Handle(Interface_Check) &) const Standard_OVERRIDE;
+
+  Standard_EXPORT virtual void OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &, const Standard_Integer) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESDraw_ConnectPoint,IGESData_IGESEntity)
 
-protected:
-
-
-
-
-private:
-
+ private:
 
   gp_XYZ thePoint;
-  Handle(IGESData_IGESEntity) theDisplaySymbol;
+  Interface_Pointer<IGESData_IGESEntity> theDisplaySymbol;
   Standard_Integer theTypeFlag;
   Standard_Integer theFunctionFlag;
   Handle(TCollection_HAsciiString) theFunctionIdentifier;
-  Handle(IGESGraph_TextDisplayTemplate) theIdentifierTemplate;
+  Interface_Pointer<IGESGraph_TextDisplayTemplate> theIdentifierTemplate;
   Handle(TCollection_HAsciiString) theFunctionName;
-  Handle(IGESGraph_TextDisplayTemplate) theFunctionTemplate;
+  Interface_Pointer<IGESGraph_TextDisplayTemplate> theFunctionTemplate;
   Standard_Integer thePointIdentifier;
   Standard_Integer theFunctionCode;
-  Standard_Boolean theSwapFlag;
-  Handle(IGESData_IGESEntity) theOwnerSubfigure;
-
-
+  Standard_Integer theSwapFlag;
+  Interface_Pointer<IGESData_IGESEntity> theOwnerSubfigure;
 };
-
-
-
-
-
-
 
 #endif // _IGESDraw_ConnectPoint_HeaderFile

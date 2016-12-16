@@ -40,24 +40,12 @@ void  IGESBasic_ToolGroupWithoutBackP::ReadOwnParams
   (const Handle(IGESBasic_GroupWithoutBackP)& ent,
    const Handle(IGESData_IGESReaderData)& IR, IGESData_ParamReader& PR) const
 {
-  // MGE 03/08/98
-  // Building of messages
-  //========================================
-//  Message_Msg Msg202("XSTEP_202");
-//  Message_Msg Msg203("XSTEP_203");
-  //========================================
-
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
   Standard_Integer nbval = 0;
   Handle(IGESData_HArray1OfIGESEntity)  EntArray;
-//  Msg202.Arg(7);
-  //st = PR.ReadInteger( PR.Current(), Msg202, nbval); //szv#4:S4163:12Mar99 not needed
-  //st = PR.ReadInteger( PR.Current(), "Count of Entities", nbval);
-  if (PR.ReadInteger( PR.Current(), nbval)) { //szv#4:S4163:12Mar99 `st=` not needed
+  if (PR.ReadInteger(nbval)) {
     Message_Msg Msg203("XSTEP_203");
     Msg203.Arg(7);
-    PR.ReadEnts (IR,PR.CurrentList(nbval),Msg203,EntArray); //szv#4:S4163:12Mar99 `st=` not needed
-    //st = PR.ReadEnts (IR,PR.CurrentList(nbval),"Entities",EntArray);
+    PR.ReadEnts (IR,PR.CurrentList(nbval),Msg203,EntArray);
   }
   else{
     Message_Msg Msg202("XSTEP_202");

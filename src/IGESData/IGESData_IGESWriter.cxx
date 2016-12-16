@@ -24,12 +24,9 @@
 #include <IGESData_LabelDisplayEntity.hxx>
 #include <IGESData_LevelListEntity.hxx>
 #include <IGESData_LineFontEntity.hxx>
-#include <IGESData_Protocol.hxx>
-#include <IGESData_ReadWriteModule.hxx>
 #include <IGESData_TransfEntity.hxx>
 #include <IGESData_UndefinedEntity.hxx>
 #include <IGESData_ViewKindEntity.hxx>
-#include <IGESData_WriterLib.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_FileParameter.hxx>
 #include <Interface_FloatWriter.hxx>
@@ -48,8 +45,6 @@
 #include <stdio.h>
 #define MaxcarsG 72
 #define MaxcarsP 64
-
-//#define PATIENCELOG
 
 
 // Constructeur complet : taille OK, et se remplit depuis le modele en direct
@@ -113,28 +108,21 @@ void IGESData_IGESWriter::SendStartLine (const Standard_CString startline)
   SendStartLine (&startline[MaxcarsG]);
 }
 
-    void IGESData_IGESWriter::SendModel
-  (const Handle(IGESData_Protocol)& protocol)
+void IGESData_IGESWriter::SendModel ()
 {
-  Handle(Message_Messenger) sout = Message::DefaultMessenger();
-  IGESData_WriterLib lib(protocol);
+  const Handle(Message_Messenger) &sout = Message::DefaultMessenger();
 
-  Standard_Integer nb = themodel->NbEntities();
-#ifdef PATIENCELOG
-  sout<< " IGESWriter : " << nb << " Entities (* = 1000 Ent.s)" << endl;
-#endif
+  const Standard_Integer nb = themodel->NbEntities();
   SectionS   ();
-  Standard_Integer ns = themodel->NbStartLines();
+  const Standard_Integer ns = themodel->StartSection()->Length();
   Standard_Integer i; // svv Jan11 2000 : porting on DEC
-  for (i = 1; i <= ns; i ++) SendStartLine (themodel->StartLine(i));
+  for (i = 1; i <= ns; i ++)
+    SendStartLine (themodel->StartSection()->Value(i)->ToCString());
   SectionG   (themodel->GlobalSection());
   SectionsDP ();
   for (i = 1; i <= nb; i ++) {
     Handle(IGESData_IGESEntity) ent = themodel->Entity(i);
     Handle(IGESData_IGESEntity) cnt = ent;
-#ifdef PATIENCELOG
-    if (i % 1000 == 1) cout << "*" << flush;
-#endif
 //  Attention aux cas d erreur : contenu redefini
     if (themodel->IsRedefinedContent(i)) {
       sout << " --  IGESWriter : Erroneous Entity N0."<<i<<"  --"<<endl;
@@ -147,24 +135,12 @@ void IGESData_IGESWriter::SendStartLine (const Standard_CString startline)
     OwnParams       (ent);  // preparation : porte sur le vrai <ent> ...
 
 //  Envoi proprement dit des Parametres proprement definis
-    Handle(IGESData_ReadWriteModule) module;  Standard_Integer CN;
-//  Differents cas
-    if (lib.Select(cnt,module,CN))
-      module->WriteOwnParams (CN,cnt,*this);
-    else if (cnt->IsKind(STANDARD_TYPE(IGESData_UndefinedEntity))) {
-      DeclareAndCast(IGESData_UndefinedEntity,undent,cnt);
-      undent->WriteOwnParams (*this);
-    }
-    else sout<<" -- IGESWriter : Not Processed for n0."<<i<<" in file,  Type "
-      <<cnt->TypeNumber()<<"  Form "<<cnt->FormNumber()<<endl;
+    ent->OwnWrite(*this);
 
     Associativities (cnt);
     Properties      (cnt);
     EndEntity ();
   }
-#ifdef PATIENCELOG
-  cout << " Envoi des Entites Termine"<<endl;
-#endif
   SectionT();
 }
 
@@ -211,8 +187,7 @@ void IGESData_IGESWriter::SendStartLine (const Standard_CString startline)
 }
 
 
-    void IGESData_IGESWriter::DirPart
-      (const Handle(IGESData_IGESEntity)& anent)
+void IGESData_IGESWriter::DirPart (const Handle(IGESData_IGESEntity)& anent)
 {
   if (thesect != 3 && thestep != IGESData_ReadEnd)
     Interface_InterfaceError::Raise("IGESWriter : DirPart");
@@ -223,8 +198,7 @@ void IGESData_IGESWriter::SendStartLine (const Standard_CString startline)
 //                                            Remplissage du DirPart
   v[0] = anent->TypeNumber();
   v[1] = 0;               // numero en section P : calcule ulterieurement
-  if (anent->HasStructure())           v[2] = - themodel->DNum(anent->DirFieldEntity(3));
-  else                                 v[2] = 0;
+  v[2] = (anent->Structure().IsNull()? 0 : - themodel->DNum(anent->Structure()));
 
   IGESData_DefType linet = anent->DefLineFont();
   if (linet == IGESData_DefReference)  v[3] = - themodel->DNum(anent->DirFieldEntity(4));
@@ -483,9 +457,6 @@ Standard_Boolean IGESData_IGESWriter::Print (Standard_OStream& S) const
   if(!isGood)
     return isGood;
   char ligne[81];
-#ifdef PATIENCELOG
-  Standard_Integer lignespatience = 1000;
-#endif
   char blancs[73];
   Standard_Integer i; // svv Jan11 2000 : porting on DEC
   for (i = 0; i < MaxcarsG; i ++) blancs[i] = ' ';
@@ -524,9 +495,6 @@ Standard_Boolean IGESData_IGESWriter::Print (Standard_OStream& S) const
       else S << finlin;  S << endl;
     }
   }
-#ifdef PATIENCELOG
-  cout << "Global Section : " << flush;
-#endif
   isGood = S.good();
 //  Global Section  :  convertie dans <thehead>
   Standard_Integer nbg = thehead->Length();
@@ -545,15 +513,9 @@ Standard_Boolean IGESData_IGESWriter::Print (Standard_OStream& S) const
   }
   if(!isGood)
     return isGood;
-#ifdef PATIENCELOG
-  cout << nbg << " lines" << endl;
-#endif
 
 //  Directory Section
   Standard_Integer nbd = thedirs.Upper();   // 0 -> NbEnts
-#ifdef PATIENCELOG
-  cout << "\nDirectory section : " << nbd << " Entites" << endl;
-#endif
   for (i = 1; i <= nbd && isGood ; i ++) {
     Standard_Integer v[17]; char res1[9],res2[9],lab[9],num[9];
     thedirs.Value(i).Values(v[0],v[1],v[2],v[3],v[4],v[5],v[6],v[7],v[8],v[9],
@@ -579,11 +541,6 @@ Standard_Boolean IGESData_IGESWriter::Print (Standard_OStream& S) const
   if(!isGood)
     return isGood;
 //  Parameter Section
-#ifdef PATIENCELOG
-  cout<<" Parameter Section : "<<thepnum.Value(nbd)-1
-      <<" lines (* = 1000 lines) "<<flush;
-#endif
-  
   blancs[MaxcarsP] = '\0';
   for (i = 1; i <= nbd && isGood; i ++) {
     for (Standard_Integer j = thepnum.Value(i); j < thepnum.Value(i+1); j ++) {
@@ -599,10 +556,6 @@ Standard_Boolean IGESData_IGESWriter::Print (Standard_OStream& S) const
       if (fnes) writefnes (S,finlin);
       else S << finlin;  S << endl;
       isGood = S.good();
-#ifdef PATIENCELOG
-      lignespatience --;
-      if (lignespatience <= 0) {  cout<<"*"<<flush;  lignespatience = 1000;  }
-#endif
     }
   }
   if(!isGood)
@@ -616,9 +569,5 @@ Standard_Boolean IGESData_IGESWriter::Print (Standard_OStream& S) const
   else S << ligne;  S<< "\n";
   S.flush();
   isGood = S.good();
-#ifdef PATIENCELOG
-  cout <<"\n Section T (lines counts) : G "<<nbg<<"   D "<<nbd
-       <<"   P "<<thepnum.Value(thepnum.Length())-1<<"   T 1"<<endl;
-#endif
   return isGood;
 }

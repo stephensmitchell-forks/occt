@@ -27,264 +27,16 @@
 //  Pour Correct :
 // MGE 23/07/98
 // Chaque critere est par defaut inhibe
-//=======================================================================
-//function : IGESData_DirChecker
-//purpose  : 
-//=======================================================================
-IGESData_DirChecker::IGESData_DirChecker ()
-{
-  thetype = theform1 = theform2 = 0;
-  thestructure = thelinefont = thelineweig = thecolor = IGESData_ErrorRef;
-  thegraphier = -100;  // ne pas tester GraphicsIgnored
-  theblankst = thesubordst = theuseflag = thehierst = -100;  // ne pas tester
-}
-
-
-//=======================================================================
-//function : IGESData_DirChecker
-//purpose  : 
-//=======================================================================
-
-IGESData_DirChecker::IGESData_DirChecker (const Standard_Integer atype)
-{
-  thetype = atype; theform1 = 0; theform2 = -1;  // test de forme inhibe
-  thestructure = thelinefont = thelineweig = thecolor = IGESData_ErrorRef;
-  thegraphier = -100;  // ne pas tester GraphicsIgnored
-  theblankst = thesubordst = theuseflag = thehierst = -100;  // ne pas tester
-}
-
-
-//=======================================================================
-//function : IGESData_DirChecker
-//purpose  : 
-//=======================================================================
-
-IGESData_DirChecker::IGESData_DirChecker(const Standard_Integer atype,
-                                         const Standard_Integer aform)
-{
-  thetype = atype; theform1 = theform2 = aform;  // forme : valeur requise
-  thestructure = thelinefont = thelineweig = thecolor = IGESData_ErrorRef;
-  thegraphier = -100;  // ne pas tester GraphicsIgnored
-  theblankst = thesubordst = theuseflag = thehierst = -100;  // ne pas tester
-}
-
-
-//=======================================================================
-//function : IGESData_DirChecker
-//purpose  : 
-//=======================================================================
-
-IGESData_DirChecker::IGESData_DirChecker(const Standard_Integer atype,
-                                         const Standard_Integer aform1,
-                                         const Standard_Integer aform2)
-{
-  thetype = atype; theform1 = aform1; theform2 = aform2;  // forme : [...]
-  thestructure = thelinefont = thelineweig = thecolor = IGESData_ErrorRef;
-  thegraphier = -100;  // ne pas tester GraphicsIgnored
-  theblankst = thesubordst = theuseflag = thehierst = -100;  // ne pas tester
-}
-
-
-//=======================================================================
-//function : IsSet
-//purpose  : 
-//=======================================================================
-
-Standard_Boolean IGESData_DirChecker::IsSet () const 
-{
-  return isitset;
-}
-
-
-//=======================================================================
-//function : SetDefault
-//purpose  : 
-//=======================================================================
-
-void IGESData_DirChecker::SetDefault ()
-{
-  Structure(IGESData_DefVoid);
-}    // Option par defaut
-
-
-//=======================================================================
-//function : Structure
-//purpose  : 
-//=======================================================================
-
-void IGESData_DirChecker::Structure (const IGESData_DefType crit)
-{
-  isitset = Standard_True;
-  thestructure = crit;
-}
-
-
-//=======================================================================
-//function : LineFont
-//purpose  : 
-//=======================================================================
-
-void IGESData_DirChecker::LineFont (const IGESData_DefType crit)
-{
-  isitset = Standard_True;
-  thelinefont = crit;
-}
-
-
-//=======================================================================
-//function : LineWeight
-//purpose  : 
-//=======================================================================
-
-void IGESData_DirChecker::LineWeight (const IGESData_DefType crit)
-{
-  isitset = Standard_True;
-  thelineweig = crit;
-}
-
-
-//=======================================================================
-//function : Color
-//purpose  : 
-//=======================================================================
-
-void IGESData_DirChecker::Color (const IGESData_DefType crit)
-{
-  isitset = Standard_True;
-  thecolor = crit;
-}
-
-
-//=======================================================================
-//function : GraphicsIgnored
-//purpose  : 
-//=======================================================================
-
-void IGESData_DirChecker::GraphicsIgnored (const Standard_Integer hierarchy)
-{
-  isitset = Standard_True;
-  thegraphier = hierarchy;
-}
-
-
-//=======================================================================
-//function : BlankStatusIgnored
-//purpose  : 
-//=======================================================================
-
-void IGESData_DirChecker::BlankStatusIgnored ()
-{
-  isitset = Standard_True;
-  theblankst = -10;
-}
-
-
-//=======================================================================
-//function : BlankStatusRequired
-//purpose  : 
-//=======================================================================
-
-void IGESData_DirChecker::BlankStatusRequired (const Standard_Integer val)
-{
-  isitset = Standard_True;
-  theblankst = val;
-}
-
-
-//=======================================================================
-//function : SubordinateStatusIgnored
-//purpose  : 
-//=======================================================================
-
-void IGESData_DirChecker::SubordinateStatusIgnored ()
-{
-  isitset = Standard_True;
-  thesubordst = -10;
-}
-
-
-//=======================================================================
-//function : SubordinateStatusRequired
-//purpose  : 
-//=======================================================================
-
-void IGESData_DirChecker::SubordinateStatusRequired(const Standard_Integer val)
-{
-  isitset = Standard_True;
-  thesubordst = val;
-}
-
-
-//=======================================================================
-//function : UseFlagIgnored
-//purpose  : 
-//=======================================================================
-
-void IGESData_DirChecker::UseFlagIgnored ()
-{
-  isitset = Standard_True;
-  theuseflag = -10;
-}
-
-
-//=======================================================================
-//function : UseFlagRequired
-//purpose  : 
-//=======================================================================
-
-void IGESData_DirChecker::UseFlagRequired (const Standard_Integer val)
-{
-  isitset = Standard_True;
-  theuseflag = val;
-}
-
-
-//=======================================================================
-//function : HierarchyStatusIgnored
-//purpose  : 
-//=======================================================================
-
-void IGESData_DirChecker::HierarchyStatusIgnored ()
-{
-  isitset = Standard_True;
-  thehierst = -10;
-}
-
-
-//=======================================================================
-//function : HierarchyStatusRequired
-//purpose  : 
-//=======================================================================
-
-void IGESData_DirChecker::HierarchyStatusRequired (const Standard_Integer val)
-{
-  isitset = Standard_True;
-  thehierst = val;
-}
 
 
 //=======================================================================
 //function : Check
 //purpose  : 
 //=======================================================================
-
+/*
 void IGESData_DirChecker::Check(Handle(Interface_Check)& ach,
                                 const Handle(IGESData_IGESEntity)& ent) const 
 {
-  // MGE 23/07/98
-  // =====================================
-  //Message_Msg Msg58 ("XSTEP_58");
-  //Message_Msg Msg59 ("XSTEP_59");
-  //Message_Msg Msg60 ("XSTEP_60");
-  //Message_Msg Msg65 ("XSTEP_65");
-  //Message_Msg Msg66 ("XSTEP_66");
-  //Message_Msg Msg67 ("XSTEP_67");
-  //Message_Msg Msg68 ("XSTEP_68");
-  //Message_Msg Msg69 ("XSTEP_69");
-  //Message_Msg Msg70 ("XSTEP_70");
-  //Message_Msg Msg71 ("XSTEP_71");
-  // =====================================
-
   if (thetype != 0)
   {
     // Sending of message : Entity Type Number field is incorrect.
@@ -297,13 +49,13 @@ void IGESData_DirChecker::Check(Handle(Interface_Check)& ach,
     if (theform1 <= theform2) {
       if (ent->FormNumber() < theform1 || ent->FormNumber() > theform2) {
         Message_Msg Msg71 ("XSTEP_71");
-	ach->SendFail(Msg71);
+        ach->SendFail(Msg71);
       }
     }
   }
  
   // Sending of message : Structure field is undefined.
-  if (thestructure == IGESData_DefReference && !ent->HasStructure()) {
+  if (thestructure == IGESData_DefReference && ent->Structure().IsNull()) {
     Message_Msg Msg59 ("XSTEP_59");
     ach->SendFail (Msg59);
   }
@@ -376,7 +128,7 @@ void IGESData_DirChecker::Check(Handle(Interface_Check)& ach,
   }
 
 }
-
+*/
 
 //=======================================================================
 //function : CheckTypeAndForm
@@ -424,9 +176,8 @@ void IGESData_DirChecker::CheckTypeAndForm(Handle(Interface_Check)& ach,
 //function : Correct
 //purpose  : 
 //=======================================================================
-
-Standard_Boolean  IGESData_DirChecker::Correct
-  (const Handle(IGESData_IGESEntity)& ent) const 
+/*szv_c1:
+Standard_Boolean  IGESData_DirChecker::Correct (const Handle(IGESData_IGESEntity)& ent) const
 {
   Standard_Boolean done = Standard_False;
   Standard_Integer type = ent->TypeNumber();
@@ -461,7 +212,7 @@ Standard_Boolean  IGESData_DirChecker::Correct
     {  ent->InitView(nulview);  ent->InitLevel(nulevel);  done = Standard_True;  }
   if ((thegraphier == -1 &&
        (!ent->LabelDisplay().IsNull() || ent->LineWeightNumber() != 0)) ||
-      (ent->HasStructure() && thestructure == IGESData_DefVoid) ) // combines :
+      (!ent->Structure().IsNull() && thestructure == IGESData_DefVoid) ) // combines :
     {  ent->InitMisc (structure,label,linew);       done = Standard_True;  }
 
   Standard_Boolean force = Standard_False;
@@ -480,3 +231,4 @@ Standard_Boolean  IGESData_DirChecker::Correct
   if (force) {  ent->InitStatus(stb,sts,stu,sth);      done = Standard_True;  }
   return done;
 }
+*/

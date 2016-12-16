@@ -52,24 +52,13 @@ void  IGESDimen_ToolAngularDimension::ReadOwnParams
   Handle(IGESDimen_LeaderArrow) firstLeader; 
   Handle(IGESDimen_LeaderArrow) secondLeader; 
 
-  PR.ReadEntity(IR, PR.Current(), "General Note Entity",
-		STANDARD_TYPE(IGESDimen_GeneralNote), note); //szv#4:S4163:12Mar99 `st=` not needed
-
-  PR.ReadEntity (IR, PR.Current(), "First Witness Entity",
-		 STANDARD_TYPE(IGESDimen_WitnessLine), firstWitness, Standard_True); //szv#4:S4163:12Mar99 `st=` not needed
-
-  PR.ReadEntity (IR,PR.Current(),"Second Witness Entity",
-		 STANDARD_TYPE(IGESDimen_WitnessLine), secondWitness, Standard_True); //szv#4:S4163:12Mar99 `st=` not needed
-
-  PR.ReadXY(PR.CurrentList(1, 2), "Vertex Point Co-ords", vertex); //szv#4:S4163:12Mar99 `st=` not needed
-
-  PR.ReadReal(PR.Current(), "Radius of Leader arcs", radius); //szv#4:S4163:12Mar99 `st=` not needed
-
-  PR.ReadEntity(IR, PR.Current(), "First Leader Entity",
-		STANDARD_TYPE(IGESDimen_LeaderArrow), firstLeader); //szv#4:S4163:12Mar99 `st=` not needed
-
-  PR.ReadEntity(IR, PR.Current(),"Second Leader Entity",
-		STANDARD_TYPE(IGESDimen_LeaderArrow), secondLeader); //szv#4:S4163:12Mar99 `st=` not needed
+  PR.ReadEntity(IR, "General Note Entity", STANDARD_TYPE(IGESDimen_GeneralNote), note);
+  PR.ReadEntity(IR, "First Witness Entity", STANDARD_TYPE(IGESDimen_WitnessLine), firstWitness, Standard_True);
+  PR.ReadEntity(IR, "Second Witness Entity", STANDARD_TYPE(IGESDimen_WitnessLine), secondWitness, Standard_True);
+  PR.ReadXY(vertex,"Vertex Point Co-ords");
+  PR.ReadReal(radius,"Radius of Leader arcs");
+  PR.ReadEntity(IR, "First Leader Entity", STANDARD_TYPE(IGESDimen_LeaderArrow), firstLeader);
+  PR.ReadEntity(IR, "Second Leader Entity", STANDARD_TYPE(IGESDimen_LeaderArrow), secondLeader);
 
   DirChecker(ent).CheckTypeAndForm(PR.CCheck(),ent);
   ent->Init

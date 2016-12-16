@@ -17,32 +17,49 @@
 //--------------------------------------------------------------------
 
 #include <IGESGraph_HighLight.hxx>
-#include <Standard_Type.hxx>
+#include <IGESFile_Reader.hxx>
+#include <IGESData_IGESWriter.hxx>
+#include <IGESData_DirChecker.hxx>
+#include <Message_Messenger.hxx>
+#include <IGESData_IGESDumper.hxx>
+#include <IGESData_Dump.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESGraph_HighLight,IGESData_IGESEntity)
 
-IGESGraph_HighLight::IGESGraph_HighLight ()    {  }
+void IGESGraph_HighLight::OwnRead (IGESFile_Reader &PR)
+{ 
+  Standard_Integer aNbPropertyValues = 0;
+  PR.ReadInteger(aNbPropertyValues,"No. of property values");
+  if (aNbPropertyValues != 1)
+    PR.AddFail("No. of Property values : Value is not 1");
 
-
-    void IGESGraph_HighLight::Init
-  (const Standard_Integer nbProps, const Standard_Integer aHighLightStatus)
-{
-  theNbPropertyValues = nbProps;
-  theHighLight        = aHighLightStatus;
-  InitTypeAndForm(406,20);
+  myHighLight = 0; // Default Value
+  PR.ReadInteger(myHighLight,"Highlight flag");
 }
 
-    Standard_Integer IGESGraph_HighLight::NbPropertyValues () const
-{
-  return theNbPropertyValues;
+void IGESGraph_HighLight::OwnWrite (IGESData_IGESWriter& IW) const
+{ 
+  IW.Send(1);
+  IW.Send(myHighLight);
 }
 
-    Standard_Integer IGESGraph_HighLight::HighLightStatus () const
-{
-  return theHighLight;
+IGESData_DirChecker IGESGraph_HighLight::DirChecker () const
+{ 
+  IGESData_DirChecker DC (406, 20);
+  DC.Structure(IGESData_DefVoid);
+  DC.LineFont(IGESData_DefVoid);
+  DC.LineWeight(IGESData_DefVoid);
+  DC.Color(IGESData_DefVoid);
+  DC.BlankStatusIgnored();
+  DC.UseFlagIgnored();
+  DC.HierarchyStatusIgnored();
+  return DC;
 }
 
-    Standard_Boolean IGESGraph_HighLight::IsHighLighted () const
+void IGESGraph_HighLight::OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &S, const Standard_Integer) const
 {
-  return (theHighLight != 0);
+  S << "IGESGraph_HighLight" << endl;
+  S << "No. of property values : 1" << endl;
+  S << "Highlight Status : " << myHighLight << endl;
+  S << endl;
 }

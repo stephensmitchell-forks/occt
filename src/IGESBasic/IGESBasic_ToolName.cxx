@@ -40,10 +40,9 @@ void  IGESBasic_ToolName::ReadOwnParams
 {
   Standard_Integer tempNbPropertyValues;
   Handle(TCollection_HAsciiString) tempName;
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
 
-  PR.ReadInteger(PR.Current(),"Number of property values",tempNbPropertyValues); //szv#4:S4163:12Mar99 `st=` not needed
-  PR.ReadText(PR.Current(),"Name",tempName); //szv#4:S4163:12Mar99 `st=` not needed
+  PR.ReadInteger(tempNbPropertyValues,"Number of property values");
+  PR.ReadText("Name",tempName);
 
   DirChecker(ent).CheckTypeAndForm(PR.CCheck(),ent);
   ent->Init(tempNbPropertyValues,tempName);

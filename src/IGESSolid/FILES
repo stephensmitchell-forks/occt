@@ -36,8 +36,6 @@ IGESSolid_PlaneSurface.cxx
 IGESSolid_PlaneSurface.hxx
 IGESSolid_Protocol.cxx
 IGESSolid_Protocol.hxx
-IGESSolid_ReadWriteModule.cxx
-IGESSolid_ReadWriteModule.hxx
 IGESSolid_RightAngularWedge.cxx
 IGESSolid_RightAngularWedge.hxx
 IGESSolid_SelectedComponent.cxx
@@ -52,8 +50,6 @@ IGESSolid_SolidOfLinearExtrusion.cxx
 IGESSolid_SolidOfLinearExtrusion.hxx
 IGESSolid_SolidOfRevolution.cxx
 IGESSolid_SolidOfRevolution.hxx
-IGESSolid_SpecificModule.cxx
-IGESSolid_SpecificModule.hxx
 IGESSolid_Sphere.cxx
 IGESSolid_Sphere.hxx
 IGESSolid_SphericalSurface.cxx

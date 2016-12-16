@@ -40,30 +40,26 @@ void  IGESSolid_ToolSphere::ReadOwnParams
 {
   Standard_Real tempRadius, tempreal;
   gp_XYZ tempCenter;
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
 
-  PR.ReadReal(PR.Current(), "Radius", tempRadius); //szv#4:S4163:12Mar99 `st=` not needed
+  PR.ReadReal(tempRadius,"Radius");
 
   if (PR.DefinedElseSkip())
     {
-      //st = PR.ReadReal(PR.Current(), "Center (X)", tempreal); //szv#4:S4163:12Mar99 moved in if
-      if (PR.ReadReal(PR.Current(), "Center (X)", tempreal))
+      if (PR.ReadReal(tempreal,"Center (X)"))
 	tempCenter.SetX(tempreal);
     }
   else  tempCenter.SetX(0.0);
 
   if (PR.DefinedElseSkip())
     {
-      //st = PR.ReadReal(PR.Current(), "Center (Y)", tempreal); //szv#4:S4163:12Mar99 moved in if
-      if (PR.ReadReal(PR.Current(), "Center (Y)", tempreal))
+      if (PR.ReadReal(tempreal,"Center (Y)"))
 	tempCenter.SetY(tempreal);
     }
   else  tempCenter.SetY(0.0);
 
   if (PR.DefinedElseSkip())
     {
-      //st = PR.ReadReal(PR.Current(), "Center (Z)", tempreal); //szv#4:S4163:12Mar99 moved in if
-      if (PR.ReadReal(PR.Current(), "Center (Z)", tempreal))
+      if (PR.ReadReal(tempreal,"Center (Z)"))
 	tempCenter.SetZ(tempreal);
     }
   else  tempCenter.SetZ(0.0);

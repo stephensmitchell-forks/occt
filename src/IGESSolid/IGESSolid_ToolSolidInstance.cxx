@@ -38,9 +38,8 @@ void  IGESSolid_ToolSolidInstance::ReadOwnParams
    const Handle(IGESData_IGESReaderData)& IR, IGESData_ParamReader& PR) const
 {
   Handle(IGESData_IGESEntity) tempEntity;
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
 
-  PR.ReadEntity(IR, PR.Current(), "Solid Entity", tempEntity); //szv#4:S4163:12Mar99 `st=` not needed
+  PR.ReadEntity(IR, "Solid Entity", tempEntity);
 
   DirChecker(ent).CheckTypeAndForm(PR.CCheck(),ent);
   ent->Init(tempEntity);

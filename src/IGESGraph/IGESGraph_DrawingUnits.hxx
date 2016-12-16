@@ -17,17 +17,9 @@
 #ifndef _IGESGraph_DrawingUnits_HeaderFile
 #define _IGESGraph_DrawingUnits_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
-#include <Standard_Integer.hxx>
 #include <IGESData_IGESEntity.hxx>
-#include <Standard_Real.hxx>
 class TCollection_HAsciiString;
 
-
-class IGESGraph_DrawingUnits;
-DEFINE_STANDARD_HANDLE(IGESGraph_DrawingUnits, IGESData_IGESEntity)
 
 //! defines IGESDrawingUnits, Type <406> Form <17>
 //! in package IGESGraph
@@ -36,56 +28,44 @@ DEFINE_STANDARD_HANDLE(IGESGraph_DrawingUnits, IGESData_IGESEntity)
 //! in the Drawing entity
 class IGESGraph_DrawingUnits : public IGESData_IGESEntity
 {
+ public:
 
-public:
+  Standard_EXPORT virtual Standard_Integer TypeNumber() const Standard_OVERRIDE { return 406; }
 
-  
-  Standard_EXPORT IGESGraph_DrawingUnits();
-  
-  //! This method is used to set the fields of the class
-  //! DrawingUnits
-  //! - nbProps : Number of property values (NP = 2)
-  //! - aFlag   : DrawingUnits Flag
-  //! - aUnit   : DrawingUnits Name
-  Standard_EXPORT void Init (const Standard_Integer nbProps, const Standard_Integer aFlag, const Handle(TCollection_HAsciiString)& aUnit);
-  
-  //! returns the number of property values in <me>
-  Standard_EXPORT Standard_Integer NbPropertyValues() const;
-  
+  Standard_EXPORT virtual Standard_Integer FormNumber() const Standard_OVERRIDE { return 17; }
+
+  IGESGraph_DrawingUnits()
+  : myFlag(1)
+  {}
+
   //! returns the drawing space units of <me>
-  Standard_EXPORT Standard_Integer Flag() const;
-  
+  Standard_Integer Flag() const { return myFlag; }
+
   //! returns the name of the drawing space units of <me>
-  Standard_EXPORT Handle(TCollection_HAsciiString) Unit() const;
-  
+  const Handle(TCollection_HAsciiString) & Unit() const { return myUnit; }
+
   //! Computes the value of the unit, in meters, according Flag
   //! (same values as for GlobalSection from IGESData)
   Standard_EXPORT Standard_Real UnitValue() const;
 
+  Standard_EXPORT virtual void OwnRead (IGESFile_Reader &) Standard_OVERRIDE;
+  
+  Standard_EXPORT virtual void OwnWrite (IGESData_IGESWriter &) const Standard_OVERRIDE;
 
+  Standard_EXPORT virtual IGESData_DirChecker DirChecker () const Standard_OVERRIDE;
 
+  Standard_EXPORT virtual void OwnCheck (const Interface_ShareTool &, Handle(Interface_Check) &) const Standard_OVERRIDE;
+
+  Standard_EXPORT virtual Standard_Boolean OwnCorrect () Standard_OVERRIDE;
+
+  Standard_EXPORT virtual void OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &, const Standard_Integer) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESGraph_DrawingUnits,IGESData_IGESEntity)
 
-protected:
+ private:
 
-
-
-
-private:
-
-
-  Standard_Integer theNbPropertyValues;
-  Standard_Integer theFlag;
-  Handle(TCollection_HAsciiString) theUnit;
-
-
+  Standard_Integer myFlag;
+  Handle(TCollection_HAsciiString) myUnit;
 };
-
-
-
-
-
-
 
 #endif // _IGESGraph_DrawingUnits_HeaderFile

@@ -23,135 +23,182 @@
 #include <gp_XY.hxx>
 #include <gp_XYZ.hxx>
 #include <IGESData_TransfEntity.hxx>
-#include <IGESData_ViewKindEntity.hxx>
 #include <IGESDraw_PerspectiveView.hxx>
-#include <Standard_OutOfRange.hxx>
-#include <Standard_Type.hxx>
+#include <IGESFile_Reader.hxx>
+#include <IGESData_IGESWriter.hxx>
+#include <Interface_EntityIterator.hxx>
+#include <IGESData_DirChecker.hxx>
+#include <Message_Messenger.hxx>
+#include <IGESData_IGESDumper.hxx>
+#include <IGESData_Dump.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESDraw_PerspectiveView,IGESData_ViewKindEntity)
 
-IGESDraw_PerspectiveView::IGESDraw_PerspectiveView ()    {  }
-
-
-// This class inherits from IGESData_ViewKindEntity
-
-    void IGESDraw_PerspectiveView::Init
-  (const Standard_Integer aViewNumber,
-   const Standard_Real    aScaleFactor,
-   const gp_XYZ&          aViewNormalVector,
-   const gp_XYZ&          aViewReferencePoint,
-   const gp_XYZ&          aCenterOfProjection,
-   const gp_XYZ&          aViewUpVector,
-   const Standard_Real    aViewPlaneDistance,
-   const gp_XY&           aTopLeft,
-   const gp_XY&           aBottomRight,
-   const Standard_Integer aDepthClip,
-   const Standard_Real    aBackPlaneDistance,
-   const Standard_Real    aFrontPlaneDistance)
-{
-  theViewNumber         = aViewNumber;
-  theScaleFactor        = aScaleFactor;
-  theViewNormalVector   = aViewNormalVector;
-  theViewReferencePoint = aViewReferencePoint;
-  theCenterOfProjection = aCenterOfProjection;
-  theViewUpVector       = aViewUpVector;
-  theViewPlaneDistance  = aViewPlaneDistance;
-  theTopLeft            = aTopLeft;
-  theBottomRight        = aBottomRight;
-  theDepthClip          = aDepthClip;
-  theBackPlaneDistance  = aBackPlaneDistance;
-  theFrontPlaneDistance = aFrontPlaneDistance;
-  InitTypeAndForm(410,1);
-}
-
-    Standard_Boolean IGESDraw_PerspectiveView::IsSingle () const
+Standard_Boolean IGESDraw_PerspectiveView::IsSingle () const
 {
   return Standard_True;
 }
 
-    Standard_Integer IGESDraw_PerspectiveView::NbViews () const
-{  return 1;  }
-
-    Handle(IGESData_ViewKindEntity)  IGESDraw_PerspectiveView::ViewItem
-  (const Standard_Integer) const
-{  return Handle(IGESData_ViewKindEntity)::DownCast (This());  }
-
-
-    Standard_Integer IGESDraw_PerspectiveView::ViewNumber () const
+Standard_Integer IGESDraw_PerspectiveView::NbViews () const
 {
-  return theViewNumber;
+  return 1;
 }
 
-    Standard_Real IGESDraw_PerspectiveView::ScaleFactor () const
+Handle(IGESData_ViewKindEntity) IGESDraw_PerspectiveView::ViewItem (const Standard_Integer) const
 {
-  return theScaleFactor;
+  return Handle(IGESData_ViewKindEntity)(this);
 }
 
-    gp_Vec IGESDraw_PerspectiveView::ViewNormalVector () const
+gp_Vec IGESDraw_PerspectiveView::ViewNormalVector () const
 {
   gp_Vec tempRes(theViewNormalVector);
   return tempRes;
 }
 
-    gp_Pnt IGESDraw_PerspectiveView::ViewReferencePoint () const
+gp_Pnt IGESDraw_PerspectiveView::ViewReferencePoint () const
 {
   gp_Pnt tempRes(theViewReferencePoint);
   return tempRes;
 }
 
-    gp_Pnt IGESDraw_PerspectiveView::CenterOfProjection () const
+gp_Pnt IGESDraw_PerspectiveView::CenterOfProjection () const
 {
   gp_Pnt tempRes(theCenterOfProjection);
   return tempRes;
 }
 
-    gp_Vec IGESDraw_PerspectiveView::ViewUpVector () const
+gp_Vec IGESDraw_PerspectiveView::ViewUpVector () const
 {
   gp_Vec tempRes(theViewUpVector);
   return tempRes;
 }
 
-    Standard_Real IGESDraw_PerspectiveView::ViewPlaneDistance () const
-{
-  return theViewPlaneDistance;
-}
-
-    gp_Pnt2d IGESDraw_PerspectiveView::TopLeft () const
+gp_Pnt2d IGESDraw_PerspectiveView::TopLeft () const
 {
   gp_Pnt2d tempRes(theTopLeft);
   return tempRes;
 }
 
-    gp_Pnt2d IGESDraw_PerspectiveView::BottomRight () const
+gp_Pnt2d IGESDraw_PerspectiveView::BottomRight () const
 {
   gp_Pnt2d tempRes(theBottomRight);
   return tempRes;
 }
 
-    Standard_Integer IGESDraw_PerspectiveView::DepthClip () const
-{
-  return theDepthClip;
-}
-
-    Standard_Real IGESDraw_PerspectiveView::BackPlaneDistance () const
-{
-  return theBackPlaneDistance;
-}
-
-    Standard_Real IGESDraw_PerspectiveView::FrontPlaneDistance () const
-{
-  return theFrontPlaneDistance;
-}
-
-    Handle(IGESData_TransfEntity) IGESDraw_PerspectiveView::ViewMatrix () const
-{
-  return (Transf());
-}
-
-    gp_XYZ IGESDraw_PerspectiveView::ModelToView
-  (const gp_XYZ& coords) const
+gp_XYZ IGESDraw_PerspectiveView::ModelToView (const gp_XYZ& coords) const
 {
   gp_XYZ tempCoords = coords;
   Location().Transforms(tempCoords);
   return (tempCoords);
+}
+
+void IGESDraw_PerspectiveView::OwnRead (IGESFile_Reader &PR)
+{
+  PR.ReadInteger(theViewNumber,"View Number");
+  PR.ReadReal(theScaleFactor,"Scale Number");
+  PR.ReadXYZ(theViewNormalVector,"View Plane Normal Vector");
+  PR.ReadXYZ(theViewReferencePoint,"View Reference Point");
+  PR.ReadXYZ(theCenterOfProjection,"Center Of Projection");
+  PR.ReadXYZ(theViewUpVector,"View Up Vector");
+  PR.ReadReal(theViewPlaneDistance,"View Plane Distance");
+
+  Standard_Real r = 0.;
+  PR.ReadReal(r,"Left Side Of Clipping Window");
+  theTopLeft.SetX(r);
+
+  r = 0.;
+  PR.ReadReal(r,"Right Side Of Clipping Window");
+  theBottomRight.SetX(r);
+
+  r = 0.;
+  PR.ReadReal(r,"Bottom Of Clipping Window");
+  theBottomRight.SetY(r);
+
+  r = 0.;
+  PR.ReadReal(r,"Top Of Clipping Window");
+  theTopLeft.SetY(r);
+
+  PR.ReadInteger(theDepthClip,"Depth Clipping Indicator");
+  PR.ReadReal(theBackPlaneDistance,"Back Plane Distance");
+  PR.ReadReal(theFrontPlaneDistance,"Front Plane Distance");
+}
+
+void IGESDraw_PerspectiveView::OwnWrite (IGESData_IGESWriter &IW) const
+{
+  IW.Send(theViewNumber);
+  IW.Send(theScaleFactor);
+  IW.Send(theViewNormalVector.X());
+  IW.Send(theViewNormalVector.Y());
+  IW.Send(theViewNormalVector.Z());
+  IW.Send(theViewReferencePoint.X());
+  IW.Send(theViewReferencePoint.Y());
+  IW.Send(theViewReferencePoint.Z());
+  IW.Send(theCenterOfProjection.X());
+  IW.Send(theCenterOfProjection.Y());
+  IW.Send(theCenterOfProjection.Z());
+  IW.Send(theViewUpVector.X());
+  IW.Send(theViewUpVector.Y());
+  IW.Send(theViewUpVector.Z());
+  IW.Send(theViewPlaneDistance);
+  IW.Send(theTopLeft.X());
+  IW.Send(theBottomRight.X());
+  IW.Send(theBottomRight.Y());
+  IW.Send(theTopLeft.Y());
+  IW.Send(theDepthClip);
+  IW.Send(theBackPlaneDistance);
+  IW.Send(theFrontPlaneDistance);
+}
+
+IGESData_DirChecker IGESDraw_PerspectiveView::DirChecker () const
+{
+  IGESData_DirChecker DC(410, 1);
+  DC.Structure(IGESData_DefVoid);
+  DC.LineFont(IGESData_DefVoid);
+  DC.LineWeight(IGESData_DefVoid);
+  DC.Color(IGESData_DefVoid);
+  DC.BlankStatusIgnored();
+  DC.UseFlagRequired(1);
+  DC.HierarchyStatusIgnored();
+  return DC;
+}
+
+void IGESDraw_PerspectiveView::OwnCheck (const Interface_ShareTool &, Handle(Interface_Check) &ach) const
+{
+  if ((theDepthClip < 0) || (theDepthClip > 3))
+    ach->AddFail("DepthClip has invalid value");
+  if (HasTransf()) {
+    if (Transf()->FormNumber() != 0)
+      ach->AddFail("Associated Matrix has not Form Number 0");
+  }
+}
+
+void IGESDraw_PerspectiveView::OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &S, const Standard_Integer level) const
+{
+  S << "IGESDraw_PerspectiveView" << endl;
+  S << "View Number  : " << theViewNumber  << "  ";
+  S << "Scale Factor : " << theScaleFactor << endl;
+  S         << "View Plane Normal Vector : ";
+  IGESData_DumpXYZL(S,level,theViewNormalVector,Location());
+  S << endl << "View Reference Point     : ";
+  IGESData_DumpXYZL(S,level,theViewReferencePoint,Location());
+  S << endl << "Center Of Projection     : ";
+  IGESData_DumpXYZL(S,level,theCenterOfProjection,Location());
+  S << endl << "View Up Vector           : ";
+  IGESData_DumpXYZL(S,level,theViewUpVector,Location());
+  S << endl << "View Plane Distance      : " << theViewPlaneDistance << endl;
+  S << "Left   Side Of Clipping Window : " << theTopLeft.X()     << endl;
+  S << "Right  Side Of Clipping Window : " << theBottomRight.X() << endl;
+  S << "Bottom Side Of Clipping Window : " << theBottomRight.Y() << endl;
+  S << "Top    Side Of Clipping Window : " << theTopLeft.Y()     << endl;
+  S << "Depth Clipping : " << theDepthClip;
+  switch (theDepthClip) {
+    case 0 :  S << " (No Depth Clipping)" << endl;                    break;
+    case 1 :  S << " (Back Clipping Plane ON)" << endl;               break;
+    case 2 :  S << " (Front Clipping Plane ON)" << endl;              break;
+    case 3 :  S << " (Front and Back Clipping Planes ON)" << endl;    break;
+    default : S << " (Invalid Value)" << endl;                        break;
+  }
+  S << "Back Plane Distance  : " << theBackPlaneDistance  << "  ";
+  S << "Front Plane Distance : " << theFrontPlaneDistance << endl;
+  S << endl;
 }

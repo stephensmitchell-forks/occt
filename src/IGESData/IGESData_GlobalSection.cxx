@@ -64,27 +64,13 @@ void MakeHollerith(const Handle(TCollection_HAsciiString)& astr,
 }
 
 
-//=======================================================================
-//function : IGESData_GlobalSection
-//purpose  : 
-//=======================================================================
-
-IGESData_GlobalSection::IGESData_GlobalSection ()
-{
-//  convunit = 1000.;
-  //#73 rln 10.03.99 S4135: "read.scale.unit" is applied after translation
-  //if (Interface_Static::IVal("read.scale.unit") == 1) convunit = 1;
-}
-
-
 // pourrait etre une methode generale au package en fait
 //=======================================================================
 //function : TranslatedFromHollerith
 //purpose  : 
 //=======================================================================
 
-Handle(TCollection_HAsciiString) IGESData_GlobalSection::TranslatedFromHollerith
-       (const Handle(TCollection_HAsciiString)& astr) const
+Handle(TCollection_HAsciiString) IGESData_GlobalSection::TranslatedFromHollerith (const Handle(TCollection_HAsciiString)& astr) const
 {
   Handle(TCollection_HAsciiString) res;
   if (astr.IsNull()) return res;
@@ -105,17 +91,8 @@ Handle(TCollection_HAsciiString) IGESData_GlobalSection::TranslatedFromHollerith
 //purpose  : 
 //=======================================================================
 
-void IGESData_GlobalSection::Init(const Handle(Interface_ParamSet)& params,
-                                  Handle(Interface_Check)& ach)
+void IGESData_GlobalSection::Init(const Handle(Interface_ParamSet)& params, Handle(Interface_Check)& ach)
 {
-  // MGE 21/07/98
-  // Building of messages
-  //======================================
-  //Message_Msg Msg39 ("XSTEP_39");
-  //Message_Msg Msg48 ("XSTEP_48");
-  //Message_Msg Msg49 ("XSTEP_49");
-  //======================================
-
   theSeparator = ',';       theEndMark = ';';
   theSendName.Nullify();    theFileName.Nullify();  theSystemId.Nullify();
   theInterfaceVersion.Nullify();
@@ -386,303 +363,6 @@ Handle(Interface_ParamSet) IGESData_GlobalSection::Params () const
 
 
 //=======================================================================
-//function : Separator
-//purpose  : 
-//=======================================================================
-
-Standard_Character IGESData_GlobalSection::Separator () const
-{
-  return theSeparator;
-}
-
-
-//=======================================================================
-//function : EndMark
-//purpose  : 
-//=======================================================================
-
-Standard_Character IGESData_GlobalSection::EndMark () const
-{
-  return theEndMark;
-}
-
-
-//=======================================================================
-//function : SendName
-//purpose  : 
-//=======================================================================
-
-Handle(TCollection_HAsciiString) IGESData_GlobalSection::SendName () const
-{
-  return theSendName;
-}
-
-
-//=======================================================================
-//function : FileName
-//purpose  : 
-//=======================================================================
-
-Handle(TCollection_HAsciiString) IGESData_GlobalSection::FileName () const
-{
-  return theFileName;
-}
-
-
-//=======================================================================
-//function : SystemId
-//purpose  : 
-//=======================================================================
-
-Handle(TCollection_HAsciiString) IGESData_GlobalSection::SystemId () const
-{
-  return theSystemId;
-}
-
-
-//=======================================================================
-//function : InterfaceVersion
-//purpose  : 
-//=======================================================================
-
-Handle(TCollection_HAsciiString) IGESData_GlobalSection::InterfaceVersion () const
-{
-  return theInterfaceVersion;
-}
-
-
-//=======================================================================
-//function : IntegerBits
-//purpose  : 
-//=======================================================================
-
-Standard_Integer IGESData_GlobalSection::IntegerBits () const
-{
-  return theIntegerBits;
-}
-
-
-//=======================================================================
-//function : MaxPower10Single
-//purpose  : 
-//=======================================================================
-
-Standard_Integer IGESData_GlobalSection::MaxPower10Single () const
-{
-  return theMaxPower10Single;
-}
-
-
-//=======================================================================
-//function : MaxDigitsSingle
-//purpose  : 
-//=======================================================================
-
-Standard_Integer IGESData_GlobalSection::MaxDigitsSingle () const
-{
-  return theMaxDigitsSingle;
-}
-
-
-//=======================================================================
-//function : MaxPower10Double
-//purpose  : 
-//=======================================================================
-
-Standard_Integer IGESData_GlobalSection::MaxPower10Double () const
-{
-  return theMaxPower10Double;
-}
-
-
-//=======================================================================
-//function : MaxDigitsDouble
-//purpose  : 
-//=======================================================================
-
-Standard_Integer IGESData_GlobalSection::MaxDigitsDouble () const
-{
-  return theMaxDigitsDouble;
-}
-
-
-//=======================================================================
-//function : ReceiveName
-//purpose  : 
-//=======================================================================
-
-Handle(TCollection_HAsciiString) IGESData_GlobalSection::ReceiveName () const
-{
-  return theReceiveName;
-}
-
-
-//=======================================================================
-//function : Scale
-//purpose  : 
-//=======================================================================
-
-Standard_Real IGESData_GlobalSection::Scale () const
-{
-  return theScale;
-}
-
-
-//=======================================================================
-//function : UnitFlag
-//purpose  : 
-//=======================================================================
-
-Standard_Integer IGESData_GlobalSection::UnitFlag () const
-{
-  return theUnitFlag;
-}
-
-
-//=======================================================================
-//function : UnitName
-//purpose  : 
-//=======================================================================
-
-Handle(TCollection_HAsciiString) IGESData_GlobalSection::UnitName () const
-{
-  return theUnitName;
-}
-
-
-//=======================================================================
-//function : LineWeightGrad
-//purpose  : 
-//=======================================================================
-
-Standard_Integer IGESData_GlobalSection::LineWeightGrad () const
-{
-  return theLineWeightGrad;
-}
-
-
-//=======================================================================
-//function : MaxLineWeight
-//purpose  : 
-//=======================================================================
-
-Standard_Real IGESData_GlobalSection::MaxLineWeight () const
-{
-  return theMaxLineWeight;
-}
-
-
-//=======================================================================
-//function : Date
-//purpose  : 
-//=======================================================================
-
-Handle(TCollection_HAsciiString) IGESData_GlobalSection::Date () const
-{
-  return theDate;
-}
-
-
-//=======================================================================
-//function : Resolution
-//purpose  : 
-//=======================================================================
-
-Standard_Real IGESData_GlobalSection::Resolution () const
-{
-  return theResolution;
-}
-
-
-//=======================================================================
-//function : MaxCoord
-//purpose  : 
-//=======================================================================
-
-Standard_Real IGESData_GlobalSection::MaxCoord () const
-{
-  return theMaxCoord;
-}
-
-
-//=======================================================================
-//function : HasMaxCoord
-//purpose  : 
-//=======================================================================
-
-Standard_Boolean IGESData_GlobalSection::HasMaxCoord () const
-{
-  return hasMaxCoord;
-}
-
-
-//=======================================================================
-//function : AuthorName
-//purpose  : 
-//=======================================================================
-
-Handle(TCollection_HAsciiString) IGESData_GlobalSection::AuthorName () const
-{
-  return theAuthorName;
-}
-
-
-//=======================================================================
-//function : CompanyName
-//purpose  : 
-//=======================================================================
-
-Handle(TCollection_HAsciiString) IGESData_GlobalSection::CompanyName () const
-{
-  return theCompanyName;
-}
-
-
-//=======================================================================
-//function : IGESVersion
-//purpose  : 
-//=======================================================================
-
-Standard_Integer IGESData_GlobalSection::IGESVersion () const
-{
-  return theIGESVersion;
-}
-
-
-//=======================================================================
-//function : DraftingStandard
-//purpose  : 
-//=======================================================================
-
-Standard_Integer IGESData_GlobalSection::DraftingStandard () const
-{
-  return theDraftingStandard;
-}
-
-
-//=======================================================================
-//function : LastChangeDate
-//purpose  : 
-//=======================================================================
-
-Handle(TCollection_HAsciiString) IGESData_GlobalSection::LastChangeDate () const
-{
-  return theLastChangeDate;
-}
-
-
-//=======================================================================
-//function : HasLastChangeDate
-//purpose  : 
-//=======================================================================
-
-Standard_Boolean IGESData_GlobalSection::HasLastChangeDate () const
-{
-  return (!theLastChangeDate.IsNull());
-}
-
-
-//=======================================================================
 //function : SetLastChangeDate
 //purpose  : 
 //=======================================================================
@@ -694,34 +374,8 @@ void IGESData_GlobalSection::SetLastChangeDate ()
   OSD_Process system;
   Quantity_Date ladate = system.SystemDate();
   ladate.Values (mois,jour,annee,heure,minute,seconde,millisec,microsec);
-  if (annee < 2000)
-    //#65 rln 12.02.99 S4151 (explicitly force YYMMDD.HHMMSS before Y2000)
-    theLastChangeDate = NewDateString (annee,mois,jour,heure,minute,seconde,0);
-  else 
-    //#65 rln 12.02.99 S4151 (explicitly force YYYYMMDD.HHMMSS after Y2000)
-    theLastChangeDate = NewDateString (annee,mois,jour,heure,minute,seconde, -1);
-}
-
-
-//=======================================================================
-//function : HasApplicationProtocol
-//purpose  : 
-//=======================================================================
-
-Standard_Boolean IGESData_GlobalSection::HasApplicationProtocol () const
-{
-  return !theAppliProtocol.IsNull();
-}
-
-
-//=======================================================================
-//function : ApplicationProtocol
-//purpose  : 
-//=======================================================================
-
-Handle(TCollection_HAsciiString) IGESData_GlobalSection::ApplicationProtocol () const
-{
-  return theAppliProtocol;
+  //#65 rln 12.02.99 S4151 (explicitly force YYMMDD.HHMMSS before Y2000)
+  theLastChangeDate = NewDateString (annee,mois,jour,heure,minute,seconde,(annee < 2000)? 0 : -1);
 }
 
 
@@ -809,12 +463,6 @@ Standard_Real IGESData_GlobalSection::UnitValue () const
 
 // ###############           UPDATES           ###############
 
-    void  IGESData_GlobalSection::SetSeparator   (const Standard_Character val)
-      {  theSeparator = val;  }
-
-    void  IGESData_GlobalSection::SetEndMark     (const Standard_Character val)
-      {  theEndMark = val;  }
-
     void  IGESData_GlobalSection::SetSendName (const Handle(TCollection_HAsciiString)& val)
       {  theSendName = TranslatedFromHollerith(val);  }
 
@@ -827,38 +475,11 @@ Standard_Real IGESData_GlobalSection::UnitValue () const
     void  IGESData_GlobalSection::SetInterfaceVersion (const Handle(TCollection_HAsciiString)& val)
       {  theInterfaceVersion = TranslatedFromHollerith(val);  }
 
-    void  IGESData_GlobalSection::SetIntegerBits (const Standard_Integer val)
-      {  theIntegerBits = val;  }
-
-    void  IGESData_GlobalSection::SetMaxPower10Single (const Standard_Integer val)
-      {  theMaxPower10Single = val;  }
-
-    void  IGESData_GlobalSection::SetMaxDigitsSingle (const Standard_Integer val)
-      {  theMaxDigitsSingle = val;  }
-
-    void  IGESData_GlobalSection::SetMaxPower10Double (const Standard_Integer val)
-      {  theMaxPower10Double = val;  }
-
-    void  IGESData_GlobalSection::SetMaxDigitsDouble (const Standard_Integer val)
-      {  theMaxDigitsDouble = val;  }
-
     void  IGESData_GlobalSection::SetReceiveName (const Handle(TCollection_HAsciiString)& val)
       {  theReceiveName = TranslatedFromHollerith(val);  }
 
-    void  IGESData_GlobalSection::SetScale       (const Standard_Real val)
-      {  theScale = val;  }
-
-    void  IGESData_GlobalSection::SetUnitFlag    (const Standard_Integer val)
-      {  theUnitFlag = val;  }
-
     void  IGESData_GlobalSection::SetUnitName (const Handle(TCollection_HAsciiString)& val)
       {  theUnitName = TranslatedFromHollerith(val);  }
-
-    void  IGESData_GlobalSection::SetLineWeightGrad (const Standard_Integer val)
-      {  theLineWeightGrad = val;  }
-
-    void  IGESData_GlobalSection::SetMaxLineWeight (const Standard_Real val)
-      {  theMaxLineWeight = val;  }
 
     void  IGESData_GlobalSection::SetDate (const Handle(TCollection_HAsciiString)& val)
       {  theDate = TranslatedFromHollerith(val);  }
@@ -888,12 +509,6 @@ Standard_Real IGESData_GlobalSection::UnitValue () const
 
     void  IGESData_GlobalSection::SetCompanyName (const Handle(TCollection_HAsciiString)& val)
       {  theCompanyName = TranslatedFromHollerith(val);  }
-
-    void  IGESData_GlobalSection::SetIGESVersion (const Standard_Integer val)
-      {  theIGESVersion = val;  }
-
-    void  IGESData_GlobalSection::SetDraftingStandard (const Standard_Integer val)
-      {  theDraftingStandard = val;  }
 
     void  IGESData_GlobalSection::SetLastChangeDate (const Handle(TCollection_HAsciiString)& val)
       {  theLastChangeDate = TranslatedFromHollerith(val);  }

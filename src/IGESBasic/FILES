@@ -44,14 +44,10 @@ IGESBasic_OrderedGroupWithoutBackP.cxx
 IGESBasic_OrderedGroupWithoutBackP.hxx
 IGESBasic_Protocol.cxx
 IGESBasic_Protocol.hxx
-IGESBasic_ReadWriteModule.cxx
-IGESBasic_ReadWriteModule.hxx
 IGESBasic_SingleParent.cxx
 IGESBasic_SingleParent.hxx
 IGESBasic_SingularSubfigure.cxx
 IGESBasic_SingularSubfigure.hxx
-IGESBasic_SpecificModule.cxx
-IGESBasic_SpecificModule.hxx
 IGESBasic_SubfigureDef.cxx
 IGESBasic_SubfigureDef.hxx
 IGESBasic_ToolAssocGroupType.cxx

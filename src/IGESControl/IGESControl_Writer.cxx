@@ -37,7 +37,6 @@
 #include <IGESData_IGESWriter.hxx>
 #include <IGESData_Protocol.hxx>
 #include <IGESData_GeneralModule.hxx>
-#include <IGESData_SpecificModule.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_Static.hxx>
 #include <Interface_Graph.hxx>
@@ -224,47 +223,31 @@ void IGESControl_Writer::ComputeModel ()
   }
 }
 
-Standard_Boolean IGESControl_Writer::Write
-  (Standard_OStream& S, const Standard_Boolean fnes)
+Standard_Boolean IGESControl_Writer::Write (Standard_OStream& S, const Standard_Boolean fnes)
 {
   if (!S) return Standard_False;
   ComputeModel();
   Standard_Integer nbEnt = myModel->NbEntities();
-#ifdef OCCT_DEBUG
-  cout<<" IGES Write : "<<nbEnt<<" ent.s"<< flush;
-#endif
   if(!nbEnt)
     return Standard_False;
   IGESData_IGESWriter IW (myModel);
 //  ne pas oublier le mode fnes ... a transmettre a IW
-  IW.SendModel (IGESControl_Controller::DefineProtocol());
-#ifdef OCCT_DEBUG
-  cout<<" ...  ecriture  ..."<<flush;
-#endif
+  IW.SendModel ();
   if (fnes) IW.WriteMode() = 10;
-  Standard_Boolean status = IW.Print(S);
-#ifdef OCCT_DEBUG
-  cout<<" ...  fichier ecrit  ..."<<endl;
-#endif
-  return status;
+  return IW.Print(S);
 }
 
-Standard_Boolean IGESControl_Writer::Write
-  (const Standard_CString file, const Standard_Boolean fnes)
+Standard_Boolean IGESControl_Writer::Write (const Standard_CString file, const Standard_Boolean fnes)
 {
   ofstream fout;
   OSD_OpenStream(fout,file,ios::out);
   if (!fout) return Standard_False;
-#ifdef OCCT_DEBUG
-  cout<<" Ecriture fichier ("<< (fnes ? "fnes" : "IGES") <<"): "<<file<<endl;
-#endif
-  Standard_Boolean res = Write (fout,fnes);
+
+  const Standard_Boolean res = Write (fout,fnes);
 
   errno = 0;
   fout.close();
-  res = fout.good() && res && !errno;
-
-  return res;
+  return (fout.good() && res && !errno);
 }
 
 void IGESControl_Writer::InitProtocol ()
@@ -272,7 +255,6 @@ void IGESControl_Writer::InitProtocol ()
   IGESControl_Controller::Init();
   const Handle(IGESData_Protocol) &aProtocol = IGESControl_Controller::DefineProtocol();
   myGLib = Interface_GeneralLib (aProtocol);
-  mySLib = IGESData_SpecificLib (aProtocol);
 }
 
 void IGESControl_Writer::SetUnitName (const Standard_CString name)
@@ -311,7 +293,7 @@ void IGESControl_Writer::SetUnitName (const Standard_CString name)
 void IGESControl_Writer::ComputeStatus ()
 {
   if (myModel.IsNull()) return;
-  Standard_Integer nb = myModel->NbEntities();
+  const Standard_Integer nb = myModel->NbEntities();
   if (nb == 0) return;
   TColStd_Array1OfInteger subs (0,nb); subs.Init(0); // gere Subordinate Status
   Interface_Graph G (myModel);    // gere & memorise UseFlag
@@ -340,24 +322,17 @@ void IGESControl_Writer::ComputeStatus ()
 //  Traites actuellement (necessaires) :
 //  1(Annotation), aussi 4(pour maillage). 5(ParamUV) traite par AutoCorrect
 
-  Standard_Integer CN;
   Standard_Integer i; // svv Jan11 2000 : porting on DEC
   for (i = 1; i <= nb; i ++) {
 //  Subordinate (sur directs en propre seulement)
     Handle(IGESData_IGESEntity) ent = myModel->Entity(i);
-    Standard_Integer igt = ent->TypeNumber();
-    Handle(Interface_GeneralModule) gmodule;
-    if (myGLib.Select (ent,gmodule,CN)) {
-      Handle(IGESData_GeneralModule) gmod =
-        Handle(IGESData_GeneralModule)::DownCast (gmodule);
-      Interface_EntityIterator sh;
-      gmod->OwnSharedCase (CN,ent,sh);
-      for (sh.Start(); sh.More(); sh.Next()) {
-	Standard_Integer nums = myModel->Number(sh.Value());
-	if (igt == 402 || igt == 404) subs.SetValue (nums,subs.Value(nums) | 2);
-	else subs.SetValue (nums,subs.Value(nums) | 1);
-////	cout<<"ComputeStatus : nums = "<<nums<<" ->"<<subs.Value(nums)<<endl;
-      }
+    const Standard_Integer igt = ent->TypeNumber();
+    Interface_EntityIterator sh;
+    ent->OwnShared (sh);
+    for (sh.Start(); sh.More(); sh.Next()) {
+      const Standard_Integer nums = myModel->Number(sh.Value());
+      if (igt == 402 || igt == 404) subs.SetValue (nums,subs.Value(nums) | 2);
+      else subs.SetValue (nums,subs.Value(nums) | 1);
     }
 //  UseFlag (a propager)
     if (igt / 100 == 2) {
@@ -384,46 +359,37 @@ void IGESControl_Writer::ComputeStatus ()
 
 Standard_Boolean IGESControl_Writer::AutoCorrect (const Handle(IGESData_IGESEntity)& ent)
 {
-  if (myModel.IsNull()) return Standard_False;
-  Handle(IGESData_IGESEntity) bof, subent;
-  Handle(IGESData_LineFontEntity) linefont;
-  Handle(IGESData_LevelListEntity) levelist;
-  Handle(IGESData_ViewKindEntity) view;
-  Handle(IGESData_TransfEntity) transf;
-  Handle(IGESData_LabelDisplayEntity) labdisp;
-  Handle(IGESData_ColorEntity) color;
+  if (ent.IsNull()) return Standard_False;
 
   Standard_Boolean done = Standard_False;
-  if (ent.IsNull()) return done;
 
 //    Corrections dans les Assocs (les Props restent attachees a l Entite)
   Interface_EntityIterator iter = ent->Associativities();
-  for (iter.Start(); iter.More(); iter.Next()) {
-    subent = GetCasted(IGESData_IGESEntity,iter.Value());
-    if (!subent.IsNull() && myModel->Number(subent) == 0)
-      {  subent->Dissociate(ent);      done = Standard_True;  }
+  for (iter.Start(); iter.More(); iter.Next())
+  {
+    const Handle(Standard_Transient) &aent = iter.Value();
+    if (!aent.IsNull() && myModel->Number(aent) == 0)
+    {
+      DeclareAndCast(IGESData_IGESEntity,subent,aent);
+      subent->Dissociate(ent);
+      done = Standard_True;
+    }
   }
 
 //    Corrections specifiques
-  Standard_Integer CN;
-  Handle(Interface_GeneralModule) gmodule;
-  if (myGLib.Select (ent,gmodule,CN)) {
-    Handle(IGESData_GeneralModule) gmod =
-      Handle(IGESData_GeneralModule)::DownCast (gmodule);
-    IGESData_DirChecker DC = gmod->DirChecker(CN,ent);
-    done |= DC.Correct(ent);
-  }
+  //szv_c1:done |= ent->DirChecker().Correct(ent); should be called from OwnCorrect
 
-  Handle(IGESData_SpecificModule) smod;
-  if (mySLib.Select (ent,smod,CN)) done |= smod->OwnCorrect (CN,ent);
+  done |= ent->OwnCorrect();
 
   return done;
 }
 
 Standard_Integer IGESControl_Writer::AutoCorrectModel ()
 {
+  if (myModel.IsNull()) return 0;
+
   Standard_Integer res = 0;
-  Standard_Integer nb = myModel->NbEntities();
+  const Standard_Integer nb = myModel->NbEntities();
   for (Standard_Integer i = 1; i <= nb; i ++) {
     if (AutoCorrect (myModel->Entity(i))) res ++;
   }

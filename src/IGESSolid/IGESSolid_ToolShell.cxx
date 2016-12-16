@@ -48,18 +48,11 @@ void IGESSolid_ToolShell::ReadOwnParams(const Handle(IGESSolid_Shell)& ent,
                                         const Handle(IGESData_IGESReaderData)& IR,
                                         IGESData_ParamReader& PR) const
 {
-
-  // MGE 03/08/98
-
-  //Standard_Boolean abool; //szv#4:S4163:12Mar99 moved down
-  Standard_Integer nbfaces=0;; //szv#4:S4163:12Mar99 `i` moved in for
-  //Handle(IGESSolid_Face) aface; //szv#4:S4163:12Mar99 moved down
+  Standard_Integer nbfaces=0;
   Handle(IGESSolid_HArray1OfFace) tempFaces;
   Handle(TColStd_HArray1OfInteger) tempOrientation;
 
-  //st = PR.ReadInteger(PR.Current(), Msg200, nbfaces); //szv#4:S4163:12Mar99 moved in if
-  //st = PR.ReadInteger(PR.Current(), "Number of faces", nbfaces);
-  Standard_Boolean sb = PR.ReadInteger(PR.Current(), nbfaces);
+  Standard_Boolean sb = PR.ReadInteger(nbfaces);
   if (sb && nbfaces > 0 ) {
     Message_Msg Msg180("XSTEP_180");
     
@@ -69,9 +62,7 @@ void IGESSolid_ToolShell::ReadOwnParams(const Handle(IGESSolid_Shell)& ent,
     tempOrientation = new TColStd_HArray1OfInteger(1, nbfaces);
     IGESData_Status aStatus;
     for (Standard_Integer i=1; i<=nbfaces; i++) {
-      //st = PR.ReadEntity(IR, PR.Current(),Msg201, STANDARD_TYPE(IGESSolid_Face), aface); //szv#4:S4163:12Mar99 moved in if
-      //st = PR.ReadEntity(IR, PR.Current(), "Faces", STANDARD_TYPE(IGESSolid_Face), aface);
-      if (PR.ReadEntity(IR, PR.Current(),aStatus, STANDARD_TYPE(IGESSolid_Face), aface))
+      if (PR.ReadEntity(IR, aStatus, STANDARD_TYPE(IGESSolid_Face), aface))
 	tempFaces->SetValue(i, aface);
       else{
 	Message_Msg Msg201("XSTEP_201");
@@ -95,9 +86,7 @@ void IGESSolid_ToolShell::ReadOwnParams(const Handle(IGESSolid_Shell)& ent,
 	}
 	}
       }
-      //st = PR.ReadBoolean(PR.Current(), Msg180, abool); //szv#4:S4163:12Mar99 moved in if
-      //st = PR.ReadBoolean(PR.Current(), "Orientation flags", abool);
-      if (PR.ReadBoolean(PR.Current(), Msg180, abool))
+      if (PR.ReadBoolean(Msg180, abool))
 	tempOrientation->SetValue(i, (abool ? 1 : 0) );
     }
   }

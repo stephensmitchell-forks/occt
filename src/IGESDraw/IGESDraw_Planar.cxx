@@ -16,55 +16,93 @@
 //--------------------------------------------------------------------
 //--------------------------------------------------------------------
 
-#include <IGESData_IGESEntity.hxx>
 #include <IGESDraw_Planar.hxx>
 #include <IGESGeom_TransformationMatrix.hxx>
-#include <Standard_DimensionMismatch.hxx>
-#include <Standard_OutOfRange.hxx>
-#include <Standard_Type.hxx>
+#include <IGESFile_Reader.hxx>
+#include <IGESData_IGESWriter.hxx>
+#include <Interface_EntityIterator.hxx>
+#include <IGESData_DirChecker.hxx>
+#include <Message_Messenger.hxx>
+#include <IGESData_IGESDumper.hxx>
+#include <IGESData_Dump.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESDraw_Planar,IGESData_IGESEntity)
 
-IGESDraw_Planar::IGESDraw_Planar ()    {  }
-
-
-    void IGESDraw_Planar::Init
-  (const Standard_Integer                        nbMats,
-   const Handle(IGESGeom_TransformationMatrix)&  aTransformationMatrix,
-   const Handle(IGESData_HArray1OfIGESEntity)&   allEntities)
-{
-  if (!allEntities.IsNull())
-    if (allEntities->Lower() != 1)
-      Standard_DimensionMismatch::Raise("IGESDraw_Planar : Init");
-  theNbMatrices           = nbMats;
-  theTransformationMatrix = aTransformationMatrix;
-  theEntities             = allEntities;
-  InitTypeAndForm(402,16);
-}
-
-
-    Standard_Integer IGESDraw_Planar::NbMatrices () const
-{
-  return theNbMatrices;
-}
-
-    Standard_Integer IGESDraw_Planar::NbEntities () const
+Standard_Integer IGESDraw_Planar::NbEntities () const
 {
   return ( theEntities.IsNull()? 0 : theEntities->Length() );
 }
 
-    Standard_Boolean IGESDraw_Planar::IsIdentityMatrix () const
+const Handle(IGESData_IGESEntity) & IGESDraw_Planar::Entity (const Standard_Integer EntityIndex) const
 {
-  return ( theTransformationMatrix.IsNull() );
+  return theEntities->Value(EntityIndex);
 }
 
-    Handle(IGESGeom_TransformationMatrix) IGESDraw_Planar::TransformMatrix () const
-{
-  return theTransformationMatrix;
+void IGESDraw_Planar::OwnRead (IGESFile_Reader &PR)
+{ 
+  theNbMatrices = 1;
+  PR.ReadInteger(theNbMatrices,"No. of Transformation matrices");
+  if ( theNbMatrices != 1 )
+    PR.AddFail("No. of Transformation matrices != 1");
+
+  Standard_Integer nbval = 0;
+  PR.ReadInteger(nbval,"No. of Entities in this plane");
+  if (nbval <= 0) PR.AddFail ("No. of Entities in this plane : Not Positive");
+
+  // Reading transformationMatrix(Instance of TransformationMatrix or Null)
+  PR.ReadPointer(theTransformationMatrix,"Instance of TransformationMatrix",Standard_True);
+
+  if (nbval > 0)
+  {
+    theEntities = new IGESData_HArray1OfIGESEntity(1, nbval);
+    for (Standard_Integer i = 1; i <= nbval; i++)
+      PR.ReadPointer(theEntities->ChangeValue(i),"Plane entity");
+  }
 }
 
-    Handle(IGESData_IGESEntity) IGESDraw_Planar::Entity
-  (const Standard_Integer EntityIndex) const
+void IGESDraw_Planar::OwnWrite (IGESData_IGESWriter &IW) const
+{ 
+  IW.Send( theNbMatrices );
+  Standard_Integer Up = NbEntities();
+  IW.Send( Up );
+  IW.Send( theTransformationMatrix );
+  for ( Standard_Integer i = 1; i <= Up; i++)
+    IW.Send( Entity(i) );
+}
+
+void IGESDraw_Planar::OwnShared (Interface_EntityIterator &iter) const
 {
-  return (theEntities->Value(EntityIndex));
+  Standard_Integer Up = NbEntities();
+  iter.GetOneItem( theTransformationMatrix );
+  for ( Standard_Integer i = 1; i <= Up; i++)
+    iter.GetOneItem( Entity(i) );
+}
+
+IGESData_DirChecker IGESDraw_Planar::DirChecker () const
+{ 
+  IGESData_DirChecker DC (402, 16);
+  DC.Structure(IGESData_DefVoid);
+  DC.LineFont(IGESData_DefVoid);
+  DC.LineWeight(IGESData_DefVoid);
+  DC.Color(IGESData_DefVoid);
+  DC.BlankStatusIgnored();
+  DC.UseFlagRequired(5);
+  DC.HierarchyStatusIgnored();
+  return DC;
+}
+
+void IGESDraw_Planar::OwnDump (const IGESData_IGESDumper &dumper, const Handle(Message_Messenger) &S, const Standard_Integer level) const
+{
+  const Standard_Integer sublevel = (level <= 4) ? 0 : 1;
+  S << "IGESDraw_Planar" << endl;
+  S << "No. of Transformation Matrices : " << theNbMatrices << "  ";
+  S << "i.e. : ";
+  if ( theTransformationMatrix.IsNull() )
+    S << "Null Handle";
+  else
+    theTransformationMatrix->OwnDump(dumper,S,sublevel);
+  S << endl;
+  S << "Array of Entities on the specified plane : ";
+  IGESData_DumpEntities(S,dumper,level,1,NbEntities(),Entity);
+  S << endl;
 }

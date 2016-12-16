@@ -20,28 +20,72 @@
 #include <Standard_DimensionMismatch.hxx>
 #include <Standard_OutOfRange.hxx>
 #include <TCollection_HAsciiString.hxx>
+#include <IGESFile_Reader.hxx>
+#include <IGESData_IGESWriter.hxx>
+#include <Message_Messenger.hxx>
+#include <IGESData_DirChecker.hxx>
+#include <IGESData_IGESDumper.hxx>
+#include <IGESData_Dump.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESAppli_PWBArtworkStackup,IGESData_IGESEntity)
 
-void IGESAppli_PWBArtworkStackup::Init
-  (const Standard_Integer nbPropVal,
-   const Handle(TCollection_HAsciiString)& anArtIdent,
-   const Handle(TColStd_HArray1OfInteger)& allLevelNums)
-{
-  if (allLevelNums->Lower() != 1)
-    Standard_DimensionMismatch::Raise("IGESAppli_PWBArtworkStackup : Init");
-  theNbPropertyValues    = nbPropVal;
-  theArtworkStackupIdent = anArtIdent;
-  theLevelNumbers        = allLevelNums;
-  InitTypeAndForm(406,25);
-}
-
 Standard_Integer IGESAppli_PWBArtworkStackup::NbLevelNumbers () const
 {
-  return theLevelNumbers->Length();
+  return myLevelNumbers->Length();
 }
 
 Standard_Integer IGESAppli_PWBArtworkStackup::LevelNumber (const Standard_Integer Index) const
 {
-  return theLevelNumbers->Value(Index);
+  return myLevelNumbers->Value(Index);
+}
+
+void IGESAppli_PWBArtworkStackup::OwnRead (IGESFile_Reader &theReader)
+{
+  theReader.ReadInteger(myNbPropertyValues,"Number of property values");
+  theReader.ReadText(myArtworkStackupIdent,"Artwork Stackup Identification");
+
+  Standard_Integer num = 0;
+  theReader.ReadInteger(num,"Number of level numbers");
+  if (num > 0)
+  {
+    myLevelNumbers = new TColStd_HArray1OfInteger(1, num);
+    theReader.ReadInteger(myLevelNumbers->ChangeFirst(),num,"Level Numbers");
+  }
+  else theReader.AddFail("Number of level numbers: Not Positive");
+}
+
+void IGESAppli_PWBArtworkStackup::OwnWrite (IGESData_IGESWriter &IW) const
+{
+  IW.Send(myNbPropertyValues);
+  IW.Send(myArtworkStackupIdent);
+  const Standard_Integer num = myLevelNumbers->Length();
+  IW.Send(num);
+  for ( Standard_Integer i = 1; i <= num; i++ )
+    IW.Send(myLevelNumbers->Value(i));
+}
+
+IGESData_DirChecker IGESAppli_PWBArtworkStackup::DirChecker () const
+{
+  IGESData_DirChecker DC(406, 25);
+  DC.Structure(IGESData_DefVoid);
+  DC.GraphicsIgnored();
+  DC.LineFont(IGESData_DefVoid);
+  DC.LineWeight(IGESData_DefVoid);
+  DC.Color(IGESData_DefVoid);
+  DC.BlankStatusIgnored();
+  DC.UseFlagIgnored();
+  DC.HierarchyStatusIgnored();
+  return DC;
+}
+
+void IGESAppli_PWBArtworkStackup::OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &S, const Standard_Integer level) const
+{
+  S << "IGESAppli_PWBArtworkStackup" << endl;
+  S << "Number of property values : " << myNbPropertyValues << endl;
+  S << "Artwork Stackup Identification : ";
+  IGESData_DumpString(S,myArtworkStackupIdent);
+  S << endl;
+  S << "Level Numbers : ";
+  IGESData_DumpVals(S,level,1,NbLevelNumbers(),LevelNumber);
+  S << endl;
 }

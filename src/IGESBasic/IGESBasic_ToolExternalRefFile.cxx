@@ -38,10 +38,8 @@ void  IGESBasic_ToolExternalRefFile::ReadOwnParams
   (const Handle(IGESBasic_ExternalRefFile)& ent,
    const Handle(IGESData_IGESReaderData)& /* IR */, IGESData_ParamReader& PR) const
 {
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
   Handle(TCollection_HAsciiString) tempExtRefFileIdentifier;
-  PR.ReadText(PR.Current(), "External Reference File Identifier",
-	      tempExtRefFileIdentifier); //szv#4:S4163:12Mar99 `st=` not needed
+  PR.ReadText("External Reference File Identifier", tempExtRefFileIdentifier);
 
   DirChecker(ent).CheckTypeAndForm(PR.CCheck(),ent);
   ent->Init(tempExtRefFileIdentifier);

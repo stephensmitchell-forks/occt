@@ -17,10 +17,10 @@
 #ifndef IGESDimen_Array1OfGeneralNote_HeaderFile
 #define IGESDimen_Array1OfGeneralNote_HeaderFile
 
+#include <Interface_Pointer.hxx>
 #include <IGESDimen_GeneralNote.hxx>
 #include <NCollection_Array1.hxx>
 
-typedef NCollection_Array1<Handle(IGESDimen_GeneralNote)> IGESDimen_Array1OfGeneralNote;
-
+typedef NCollection_Array1<Interface_Pointer<IGESDimen_GeneralNote>> IGESDimen_Array1OfGeneralNote;
 
 #endif

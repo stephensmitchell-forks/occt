@@ -17,10 +17,10 @@
 #ifndef IGESBasic_Array1OfLineFontEntity_HeaderFile
 #define IGESBasic_Array1OfLineFontEntity_HeaderFile
 
-#include <IGESData_LineFontEntity.hxx>
+#include <Interface_Pointer.hxx>
 #include <NCollection_Array1.hxx>
+#include <IGESData_LineFontEntity.hxx>
 
-typedef NCollection_Array1<Handle(IGESData_LineFontEntity)> IGESBasic_Array1OfLineFontEntity;
-
+typedef NCollection_Array1<Interface_Pointer<IGESData_LineFontEntity>> IGESBasic_Array1OfLineFontEntity;
 
 #endif

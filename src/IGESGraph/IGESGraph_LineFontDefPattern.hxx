@@ -17,20 +17,10 @@
 #ifndef _IGESGraph_LineFontDefPattern_HeaderFile
 #define _IGESGraph_LineFontDefPattern_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
-#include <TColStd_HArray1OfReal.hxx>
 #include <IGESData_LineFontEntity.hxx>
-#include <Standard_Integer.hxx>
-#include <Standard_Real.hxx>
-#include <Standard_Boolean.hxx>
 class TCollection_HAsciiString;
-class Standard_OutOfRange;
+class TColStd_HArray1OfReal;
 
-
-class IGESGraph_LineFontDefPattern;
-DEFINE_STANDARD_HANDLE(IGESGraph_LineFontDefPattern, IGESData_LineFontEntity)
 
 //! defines IGESLineFontDefPattern, Type <304> Form <2>
 //! in package IGESGraph
@@ -41,17 +31,13 @@ DEFINE_STANDARD_HANDLE(IGESGraph_LineFontDefPattern, IGESData_LineFontEntity)
 //! according to the basic pattern.
 class IGESGraph_LineFontDefPattern : public IGESData_LineFontEntity
 {
+ public:
 
-public:
+  Standard_EXPORT virtual Standard_Integer TypeNumber() const Standard_OVERRIDE { return 304; }
 
-  
-  Standard_EXPORT IGESGraph_LineFontDefPattern();
-  
-  //! This method is used to set the fields of the class
-  //! LineFontDefPattern
-  //! - allSegLength : Containing lengths of respective segments
-  //! - aPattern     : HAsciiString indicating visible-blank segments
-  Standard_EXPORT void Init (const Handle(TColStd_HArray1OfReal)& allSegLength, const Handle(TCollection_HAsciiString)& aPattern);
+  Standard_EXPORT virtual Standard_Integer FormNumber() const Standard_OVERRIDE { return 2; }
+
+  IGESGraph_LineFontDefPattern() {}
   
   //! returns the number of segments in the visible-blank pattern
   Standard_EXPORT Standard_Integer NbSegments() const;
@@ -67,8 +53,8 @@ public:
   //! segments 2, 3 and 5 are visible, whereas segments 1 and 4 are
   //! blank. The method returns "2H16" as the HAsciiString.
   //! Note: The bits are right justified. (16h = 10110)
-  Standard_EXPORT Handle(TCollection_HAsciiString) DisplayPattern() const;
-  
+  const Handle(TCollection_HAsciiString) & DisplayPattern() const { return myDisplayPattern; }
+
   //! The Display Pattern is decrypted to
   //! return True if the Index'th basic pattern is Visible,
   //! False otherwise.
@@ -76,29 +62,22 @@ public:
   //! False.
   Standard_EXPORT Standard_Boolean IsVisible (const Standard_Integer Index) const;
 
+  Standard_EXPORT virtual void OwnRead (IGESFile_Reader &) Standard_OVERRIDE;
+  
+  Standard_EXPORT virtual void OwnWrite (IGESData_IGESWriter &) const Standard_OVERRIDE;
 
+  Standard_EXPORT virtual IGESData_DirChecker DirChecker () const Standard_OVERRIDE;
 
+  Standard_EXPORT virtual void OwnCheck (const Interface_ShareTool &, Handle(Interface_Check) &) const Standard_OVERRIDE;
+
+  Standard_EXPORT virtual void OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &, const Standard_Integer) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESGraph_LineFontDefPattern,IGESData_LineFontEntity)
 
-protected:
+ private:
 
-
-
-
-private:
-
-
-  Handle(TColStd_HArray1OfReal) theSegmentLengths;
-  Handle(TCollection_HAsciiString) theDisplayPattern;
-
-
+  Handle(TColStd_HArray1OfReal) mySegmentLengths;
+  Handle(TCollection_HAsciiString) myDisplayPattern;
 };
-
-
-
-
-
-
 
 #endif // _IGESGraph_LineFontDefPattern_HeaderFile

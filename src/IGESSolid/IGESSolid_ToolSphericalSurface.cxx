@@ -42,25 +42,18 @@ void  IGESSolid_ToolSphericalSurface::ReadOwnParams
   Standard_Real tempRadius;
   Handle(IGESGeom_Direction) tempAxis;        // default Unparameterised
   Handle(IGESGeom_Direction) tempRefdir;      // default Unparameterised
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
 
-  PR.ReadEntity(IR, PR.Current(), "Center point",
-		STANDARD_TYPE(IGESGeom_Point), tempCenter); //szv#4:S4163:12Mar99 `st=` not needed
-
-  PR.ReadReal(PR.Current(), "Radius", tempRadius); //szv#4:S4163:12Mar99 `st=` not needed
+  PR.ReadEntity(IR, "Center point", STANDARD_TYPE(IGESGeom_Point), tempCenter);
+  PR.ReadReal(tempRadius,"Radius");
 
   if (ent->FormNumber() == 1)      // Parametrised surface
     {
-      PR.ReadEntity(IR, PR.Current(), "Axis direction",
-		    STANDARD_TYPE(IGESGeom_Direction), tempAxis); //szv#4:S4163:12Mar99 `st=` not needed
-
-      PR.ReadEntity(IR, PR.Current(), "Reference direction",
-		    STANDARD_TYPE(IGESGeom_Direction), tempRefdir); //szv#4:S4163:12Mar99 `st=` not needed
+      PR.ReadEntity(IR, "Axis direction", STANDARD_TYPE(IGESGeom_Direction), tempAxis);
+      PR.ReadEntity(IR, "Reference direction", STANDARD_TYPE(IGESGeom_Direction), tempRefdir);
     }
 
   DirChecker(ent).CheckTypeAndForm(PR.CCheck(),ent);
   ent->Init (tempCenter, tempRadius, tempAxis, tempRefdir);
-
 }
 
 void  IGESSolid_ToolSphericalSurface::WriteOwnParams

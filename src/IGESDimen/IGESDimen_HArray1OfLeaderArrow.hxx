@@ -17,11 +17,9 @@
 #ifndef IGESDimen_HArray1OfLeaderArrow_HeaderFile
 #define IGESDimen_HArray1OfLeaderArrow_HeaderFile
 
-#include <IGESDimen_LeaderArrow.hxx>
 #include <IGESDimen_Array1OfLeaderArrow.hxx>
 #include <NCollection_DefineHArray1.hxx>
 
 DEFINE_HARRAY1(IGESDimen_HArray1OfLeaderArrow, IGESDimen_Array1OfLeaderArrow)
-
 
 #endif

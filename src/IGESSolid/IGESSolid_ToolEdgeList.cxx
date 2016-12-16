@@ -61,12 +61,11 @@ void IGESSolid_ToolEdgeList::ReadOwnParams(const Handle(IGESSolid_EdgeList)& ent
   Handle(TColStd_HArray1OfInteger)   tempEndVertexIndex;
   IGESData_Status aStatus;
 
-  Standard_Boolean st = PR.ReadInteger(PR.Current(), length);
+  Standard_Boolean st = PR.ReadInteger(length);
   if(!st){
     Message_Msg Msg184("XSTEP_184");
     PR.SendFail(Msg184);
   }
-  //st = PR.ReadInteger(PR.Current(), "Number of edges", length);
   if (st && length > 0)
     {
       tempCurves = new IGESData_HArray1OfIGESEntity(1, length);
@@ -77,9 +76,7 @@ void IGESSolid_ToolEdgeList::ReadOwnParams(const Handle(IGESSolid_EdgeList)& ent
       for (Standard_Integer i=1 ; i<=length ; i++)
 	{
           // Curves
-          //st = PR.ReadEntity(IR, PR.Current(), Msg185, anent); //szv#4:S4163:12Mar99 moved in if
-          //st = PR.ReadEntity(IR, PR.Current(), "Model space curve", anent);
-	  if (PR.ReadEntity(IR, PR.Current(), aStatus, anent))
+	  if (PR.ReadEntity(IR, aStatus, anent))
 	    tempCurves->SetValue(i, anent);
 	  else{
 	    Message_Msg Msg185("XSTEP_185");
@@ -99,13 +96,7 @@ void IGESSolid_ToolEdgeList::ReadOwnParams(const Handle(IGESSolid_EdgeList)& ent
 	    }
 	  }
           // Start vertex list
-          //st = PR.ReadEntity(IR, PR.Current(), Msg188,
-			     //STANDARD_TYPE(IGESSolid_VertexList), avert); //szv#4:S4163:12Mar99 moved in if
-          /*
-          st = PR.ReadEntity(IR, PR.Current(), "Start vertex list",
-			     STANDARD_TYPE(IGESSolid_VertexList), avert);
-          */
-	  if (PR.ReadEntity(IR, PR.Current(), aStatus, STANDARD_TYPE(IGESSolid_VertexList), avert))
+	  if (PR.ReadEntity(IR, aStatus, STANDARD_TYPE(IGESSolid_VertexList), avert))
 	    tempStartVertexList->SetValue(i, avert);
 	  else{
 	    Message_Msg Msg188("XSTEP_188");
@@ -131,9 +122,7 @@ void IGESSolid_ToolEdgeList::ReadOwnParams(const Handle(IGESSolid_EdgeList)& ent
 	  }
 
           // Start vertex index
-          //st = PR.ReadInteger(PR.Current(), Msg186, anint); //szv#4:S4163:12Mar99 moved in if
-          //st = PR.ReadInteger(PR.Current(), "Start vertex index", anint);
-	  if (PR.ReadInteger(PR.Current(), anint))
+	  if (PR.ReadInteger(anint))
 	    tempStartVertexIndex->SetValue(i, anint);
 	  else{
 	    Message_Msg Msg186("XSTEP_186");
@@ -141,13 +130,7 @@ void IGESSolid_ToolEdgeList::ReadOwnParams(const Handle(IGESSolid_EdgeList)& ent
 	  }
 
           // End vertex list
-          //st = PR.ReadEntity(IR, PR.Current(),Msg189 ,
-			     //STANDARD_TYPE(IGESSolid_VertexList), avert); //szv#4:S4163:12Mar99 moved in if
-          /*
-          st = PR.ReadEntity(IR, PR.Current(), "End vertex list",
-			     STANDARD_TYPE(IGESSolid_VertexList), avert);
-          */
-          if (PR.ReadEntity(IR, PR.Current(), aStatus, STANDARD_TYPE(IGESSolid_VertexList), avert))
+          if (PR.ReadEntity(IR, aStatus, STANDARD_TYPE(IGESSolid_VertexList), avert))
 	    tempEndVertexList->SetValue(i, avert);
 	  else{
 	    Message_Msg Msg189("XSTEP_189");
@@ -172,9 +155,7 @@ void IGESSolid_ToolEdgeList::ReadOwnParams(const Handle(IGESSolid_EdgeList)& ent
 	    }
 	  }
           // End vertex index
-          //st = PR.ReadInteger(PR.Current(), Msg187, anint); //szv#4:S4163:12Mar99 moved in if
-          //st = PR.ReadInteger(PR.Current(), "End vertex index", anint);
-	  if (PR.ReadInteger(PR.Current(), anint))
+	  if (PR.ReadInteger(anint))
 	    tempEndVertexIndex->SetValue(i, anint);
 	  else {
 	    Message_Msg Msg187("XSTEP_187");

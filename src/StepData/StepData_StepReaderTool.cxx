@@ -54,11 +54,11 @@ void StepData_StepReaderTool::Prepare ()
   Standard_Integer i = 0;
 
 // Reconnaissance des types
-  DeclareAndCast(StepData_StepReaderData,stepdat,Data());
+  DeclareAndCast(StepData_StepReaderData,stepdat,thereader);
   while ( (i = stepdat->FindNextHeaderRecord(i)) != 0) {
     Handle(Standard_Transient) ent;
     RecognizeByLib (i,ent);
-    if (ent.IsNull()) ent = Protocol()->UnknownEntity();
+    if (ent.IsNull()) ent = theproto->UnknownEntity();
     stepdat->BindEntity(i,ent);
   }
 
@@ -70,7 +70,6 @@ void StepData_StepReaderTool::Prepare ()
   try {
     OCC_CATCH_SIGNALS
     stepdat->SetEntityNumbers(Standard_True);
-    SetEntities();
   }
   catch(Standard_Failure) {
     const Handle(Message_Messenger) &sout = Message::DefaultMessenger();
@@ -104,7 +103,7 @@ void StepData_StepReaderTool::BeginRead (const Handle(Interface_InterfaceModel)&
 {
   Handle(Message_Messenger) sout = Message::DefaultMessenger();
   DeclareAndCast(StepData_StepModel,model,amodel);
-  DeclareAndCast(StepData_StepReaderData,stepdat,Data());
+  DeclareAndCast(StepData_StepReaderData,stepdat,thereader);
 
   model->ClearHeader();
   model->SetGlobalCheck(stepdat->GlobalCheck());
@@ -153,7 +152,7 @@ Standard_Boolean StepData_StepReaderTool::AnalyseRecord
    const Handle(Standard_Transient)& anent,
    Handle(Interface_Check)& acheck)
 {
-  DeclareAndCast(StepData_StepReaderData,stepdat,Data());
+  DeclareAndCast(StepData_StepReaderData,stepdat,thereader);
   Handle(Interface_ReaderModule) imodule;
   Standard_Integer CN;
   if (therlib.Select(anent,imodule,CN))
@@ -180,7 +179,7 @@ Standard_Boolean StepData_StepReaderTool::AnalyseRecord
 
 void StepData_StepReaderTool::EndRead (const Handle(Interface_InterfaceModel)& amodel)
 {
-  DeclareAndCast(StepData_StepReaderData,stepdat,Data());
+  DeclareAndCast(StepData_StepReaderData,stepdat,thereader);
   DeclareAndCast(StepData_StepModel,stepmodel,amodel);
   if (stepmodel.IsNull()) return;
   Standard_Integer i = 0;

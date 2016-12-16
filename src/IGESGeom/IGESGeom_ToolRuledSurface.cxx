@@ -39,14 +39,11 @@ void IGESGeom_ToolRuledSurface::ReadOwnParams
   (const Handle(IGESGeom_RuledSurface)& ent,
    const Handle(IGESData_IGESReaderData)& IR, IGESData_ParamReader& PR) const
 {
-  // MGE 31/07/98
- 
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
   Standard_Integer aDirFlag, aDevFlag;
   Handle(IGESData_IGESEntity) aCurve, anotherCurve;
   IGESData_Status aStatus;
 
-  if (!PR.ReadEntity(IR, PR.Current(), aStatus, aCurve)){ //szv#4:S4163:12Mar99 `st=` not needed
+  if (!PR.ReadEntity(IR, aStatus, aCurve)) {
     Message_Msg Msg148("XSTEP_148");
     switch(aStatus) {
     case IGESData_ReferenceError: {  
@@ -63,7 +60,7 @@ void IGESGeom_ToolRuledSurface::ReadOwnParams
     }
     }
   }
-  if (!PR.ReadEntity(IR, PR.Current(), aStatus, anotherCurve)){ //szv#4:S4163:12Mar99 `st=` not needed
+  if (!PR.ReadEntity(IR, aStatus, anotherCurve)) {
     Message_Msg Msg149("XSTEP_149");
     switch(aStatus) {
     case IGESData_ReferenceError: {  
@@ -80,20 +77,14 @@ void IGESGeom_ToolRuledSurface::ReadOwnParams
     }
     }
   }
-  if (!PR.ReadInteger(PR.Current(), aDirFlag)){ //szv#4:S4163:12Mar99 `st=` not needed
+  if (!PR.ReadInteger(aDirFlag)) {
     Message_Msg Msg150("XSTEP_150");
     PR.SendFail(Msg150);
   }
-  if (!PR.ReadInteger(PR.Current(), aDevFlag)){ //szv#4:S4163:12Mar99 `st=` not needed
+  if (!PR.ReadInteger(aDevFlag)) {
     Message_Msg Msg151("XSTEP_151");
     PR.SendFail(Msg151);
   }
-/*
-  st = PR.ReadEntity(IR, PR.Current(), "First Curve", aCurve);
-  st = PR.ReadEntity(IR, PR.Current(), "Second Curve", anotherCurve);
-  st = PR.ReadInteger(PR.Current(), "DirFlag", aDirFlag);
-  st = PR.ReadInteger(PR.Current(), "DevFlag ", aDevFlag);
-*/
   DirChecker(ent).CheckTypeAndForm(PR.CCheck(),ent);
   ent->Init(aCurve, anotherCurve, aDirFlag, aDevFlag);
 }

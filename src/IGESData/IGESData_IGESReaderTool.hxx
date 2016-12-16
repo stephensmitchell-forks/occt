@@ -21,13 +21,12 @@
 #include <Standard_DefineAlloc.hxx>
 #include <Standard_Handle.hxx>
 
-#include <IGESData_IGESType.hxx>
-#include <IGESData_ReadStage.hxx>
 #include <Interface_FileReaderTool.hxx>
-class Interface_ParamList;
+//class Interface_ParamList;
 class Interface_Check;
 class IGESData_IGESReaderData;
 class IGESData_Protocol;
+class IGESData_IGESModel;
 class Standard_Transient;
 class Interface_InterfaceModel;
 class IGESData_IGESEntity;
@@ -37,66 +36,46 @@ class IGESData_ParamReader;
 
 //! specific FileReaderTool for IGES
 //! Parameters are accessed through specific objects, ParamReaders
-class IGESData_IGESReaderTool  : public Interface_FileReaderTool
+class IGESData_IGESReaderTool
 {
  public:
 
   DEFINE_STANDARD_ALLOC
 
-  //! creates IGESReaderTool to work with an IGESReaderData and an
-  //! IGES Protocol.
-  //! Actually, no Lib is used
-  Standard_EXPORT IGESData_IGESReaderTool(const Handle(IGESData_IGESReaderData)& reader, const Handle(IGESData_Protocol)& protocol);
+  //! creates IGESReaderTool to work with an IGESReaderData and an IGES Protocol.
+  IGESData_IGESReaderTool(const Handle(IGESData_Protocol)& theProtocol)
+  : myProtocol(theProtocol)
+  {}
+
+  Standard_Integer EntityNumber () const { return thecnum; }
+
+  const Handle(IGESData_IGESReaderData) & ReaderData() const { return myData; }
+
+  Handle(Interface_Check) & Check() { return thechk; }
+
+  Standard_Integer GradWeight() const { return thegradweight; }
+
+  Standard_Real MaxWeight() const { return themaxweight; }
   
-  //! binds empty entities to records, works with the Protocol
-  //! (from IGESData) stored and later used
-  //! RQ : Actually, sets DNum into IGES Entities
-  //! Also loads the list of parameters for ParamReader
-  Standard_EXPORT void Prepare ();
+  Standard_EXPORT Standard_Integer Read (const Standard_CString theFileName, const Handle(IGESData_IGESModel)& amodel, const Standard_Boolean modefnes = Standard_False);
 
  private:
-  
-  //! recognizes records by asking Protocol (on data of DirType)
-  Standard_EXPORT virtual Standard_Boolean Recognize (const Standard_Integer num, Handle(Standard_Transient)& ent) Standard_OVERRIDE;
-  
-  //! fills model's header, that is, its GlobalSection
-  Standard_EXPORT virtual void BeginRead (const Handle(Interface_InterfaceModel)& amodel) Standard_OVERRIDE;
-  
-  //! fills an entity, given record no; works by calling ReadDirPart
-  //! then ReadParams (with help of a ParamReader), then if required
-  //! ReadProps and ReadAssocs, from IGESEntity
-  //! Returns True if no fail has been recorded
-  Standard_EXPORT virtual Standard_Boolean AnalyseRecord (const Standard_Integer num, const Handle(Standard_Transient)& anent, Handle(Interface_Check)& acheck) Standard_OVERRIDE;
-  
-  //! Reads directory part componants from file; DP is the litteral
-  //! directory part, IR detains entities referenced by DP
-  Standard_EXPORT void ReadDir (const Handle(IGESData_IGESEntity)& ent, const Handle(IGESData_IGESReaderData)& IR, const IGESData_DirPart& DP, Handle(Interface_Check)& ach) const;
-  
-  //! Performs Reading of own Parameters for each IGESEntity
-  //! Works with the ReaderLib loaded with ReadWriteModules for IGES
-  //! In case of failure, tries UndefinedEntity from IGES
-  Standard_EXPORT void ReadOwnParams (const Handle(IGESData_IGESEntity)& ent, const Handle(IGESData_IGESReaderData)& IR, IGESData_ParamReader& PR) const;
-  
-  //! Reads Property List, if there is (if not, does nothing)
-  //! criterium is : current parameter of PR remains inside params
-  //! list, and Stage is "Own"
-  //! Current parameter must be a positive integer, which value
-  //! gives the length of the list; else, a Fail is produced (into
-  //! Check of PR) and reading process is stopped
-  Standard_EXPORT void ReadProps (const Handle(IGESData_IGESEntity)& ent, const Handle(IGESData_IGESReaderData)& IR, IGESData_ParamReader& PR) const;
-  
-  //! Reads Associativity List, if there is (if not, does nothing)
-  //! criterium is : current parameter of PR remains inside params
-  //! list, and Stage is "Own"
-  //! Same conditions as above; in addition, no parameter must be
-  //! let after the list once read
-  //! Note that "Associated" entities are not declared "Shared"
-  Standard_EXPORT void ReadAssocs (const Handle(IGESData_IGESEntity)& ent, const Handle(IGESData_IGESReaderData)& IR, IGESData_ParamReader& PR) const;
 
-  Handle(Interface_ParamList) thelist;
+  //! Reads and fills Entities from the FileReaderData set by
+  //! SetData to an InterfaceModel.
+  //! It enchains required operations, the specific ones correspond
+  //! to deferred methods (below) to be defined for each Norm.
+  //! It manages also error recovery and trace.
+  //! Remark : it calls SetModel.
+  //! It Can raise any error which can occur during a load
+  //! operation, unless Error Handling is set.
+  //! This method can also be redefined if judged necessary.
+  Standard_EXPORT void LoadModel (const Handle(Interface_InterfaceModel)& amodel);
+
+  Handle(IGESData_Protocol) myProtocol;
+  Handle(IGESData_IGESReaderData) myData;
+
   Standard_Integer thecnum;
-  IGESData_IGESType thectyp;
-  IGESData_ReadStage thestep;
   Handle(Interface_Check) thechk;
   Standard_Integer thegradweight;
   Standard_Real themaxweight;

@@ -21,11 +21,7 @@
 #include <Standard_DefineAlloc.hxx>
 #include <Standard_Handle.hxx>
 
-#include <IGESData_SpecificLib.hxx>
-#include <Standard_Integer.hxx>
 class IGESData_IGESModel;
-class Interface_InterfaceError;
-class IGESData_Protocol;
 class IGESData_IGESEntity;
 class Message_Messenger;
 
@@ -40,18 +36,17 @@ class Message_Messenger;
 //! from Lists of Associativities and Properties)
 class IGESData_IGESDumper 
 {
-public:
+ public:
 
   DEFINE_STANDARD_ALLOC
-
   
   //! Returns an IGESDumper ready to work. The IGESModel provides
   //! the numbering of Entities : as for any InterfaceModel, it
   //! gives each Entity a number; but for IGESEntities, the "Number
   //! of Directory Entry" according to the definition of IGES Files,
   //! is also usefull
-  Standard_EXPORT IGESData_IGESDumper(const Handle(IGESData_IGESModel)& model, const Handle(IGESData_Protocol)& protocol);
-  
+  IGESData_IGESDumper (const Handle(IGESData_IGESModel)& model) : themodel(model) {}
+
   //! Prints onto an output, the "Number of Directory Entry" which
   //! corresponds to an IGESEntity in the IGESModel, under the form
   //! "D#nnn" (a Null Handle gives D#0)
@@ -63,34 +58,10 @@ public:
   Standard_EXPORT void PrintShort (const Handle(IGESData_IGESEntity)& ent, const Handle(Message_Messenger)& S) const;
   
   Standard_EXPORT void Dump (const Handle(IGESData_IGESEntity)& ent, const Handle(Message_Messenger)& S, const Standard_Integer own, const Standard_Integer attached = -1) const;
-  
-  //! Specific Dump for each IGES Entity, call by Dump (just above)
-  //! <own> is the parameter <own> from Dump
-  Standard_EXPORT void OwnDump (const Handle(IGESData_IGESEntity)& ent, const Handle(Message_Messenger)& S, const Standard_Integer own) const;
 
-
-
-
-protected:
-
-
-
-
-
-private:
-
-
+ private:
 
   Handle(IGESData_IGESModel) themodel;
-  IGESData_SpecificLib thelib;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESData_IGESDumper_HeaderFile

@@ -24,18 +24,22 @@
 #include <Interface_Check.hxx>
 #include <Interface_EntityList.hxx>
 #include <Interface_ShareTool.hxx>
+#include <Interface_Pointer.hxx>
 #include <IGESData_DefType.hxx>
 #include <IGESData_DefList.hxx>
 #include <IGESData_DefSwitch.hxx>
 class TCollection_HAsciiString;
 class Interface_InterfaceError;
-class IGESData_ReadWriteModule;
 class IGESData_GeneralModule;
+class IGESData_IGESDumper;
+class IGESFile_Reader;
 class IGESData_IGESReaderTool;
+class IGESData_IGESWriter;
+class IGESData_DirPart;
 class IGESData_DirChecker;
-class IGESData_IGESType;
 class IGESData_LineFontEntity;
 class IGESData_LevelListEntity;
+class IGESData_ParamReader;
 class IGESData_ViewKindEntity;
 class IGESData_TransfEntity;
 class IGESData_LabelDisplayEntity;
@@ -43,6 +47,7 @@ class IGESData_ColorEntity;
 class gp_GTrsf;
 class Interface_EntityIterator;
 class Interface_EntityList;
+class Message_Messenger;
 
 
 class IGESData_IGESEntity;
@@ -54,32 +59,38 @@ class IGESData_IGESEntity : public MMgt_TShared
 {
  public:
   
-  //! gives IGES typing info (includes "Type" and "Form" data)
-  Standard_EXPORT IGESData_IGESType IGESType() const;
-  
   //! gives IGES Type Number (often coupled with Form Number)
-  Standard_EXPORT Standard_Integer TypeNumber() const;
-  
-  //! Returns the form number for that
-  //! type of an IGES entity. The default form number is 0.
-  Standard_EXPORT Standard_Integer FormNumber() const;
-  
+  Standard_EXPORT virtual Standard_Integer TypeNumber() const { return 0; }// { return theType; }
+
+  //! Returns the form number for that type of an IGES entity.
+  //! The default form number is 0.
+  Standard_EXPORT virtual Standard_Integer FormNumber() const { return 0; }//theForm; }
+
   //! Returns the Entity which has been recorded for a given
   //! Field Number, i.e. without any cast. Maps with :
   //! 3 : Structure   4 : LineFont     5 : LevelList     6 : View
   //! 7 : Transf(ormation Matrix)      8 : LabelDisplay
   //! 13 : Color.  Other values give a null handle
   //! It can then be of any kind, while specific items have a Type
-  Standard_EXPORT Handle(IGESData_IGESEntity) DirFieldEntity (const Standard_Integer fieldnum) const;
-  
-  //! returns True if an IGESEntity is defined with a Structure
-  //! (it is normally reserved for certain classes, such as Macros)
-  Standard_EXPORT Standard_Boolean HasStructure() const;
-  
+  Handle(IGESData_IGESEntity) DirFieldEntity (const Standard_Integer fieldnum) const
+  {
+    switch (fieldnum) {
+      case 3: return theStructure;
+      case 4: return theLineFont;
+      case 5: return theLevelList;
+      case 6: return theView;
+      case 7: return theTransf;
+      case 8: return theLabDisplay;
+      case 13: return theColor;
+	  default: break;
+    }
+    return NULL;
+  }
+
   //! Returns Structure (used by some types of IGES Entities only)
   //! Returns a Null Handle if Structure is not defined
-  Standard_EXPORT Handle(IGESData_IGESEntity) Structure() const;
-  
+  const Handle(IGESData_IGESEntity) & Structure() const { return theStructure; }
+
   //! Returns the definition status of LineFont
   Standard_EXPORT virtual IGESData_DefType DefLineFont() const;
   
@@ -96,8 +107,8 @@ class IGESData_IGESEntity : public MMgt_TShared
   
   //! Returns the level the entity
   //! belongs to. Returns -1 if the entity belongs to more than one  level.
-  Standard_EXPORT Standard_Integer Level() const;
-  
+  Standard_Integer Level() const { return theDefLevel; }
+
   //! Returns LevelList if Level is
   //! defined as a list. Returns a null handle if DefLevel is not DefSeveral.
   Standard_EXPORT Handle(IGESData_LevelListEntity) LevelList() const;
@@ -110,7 +121,7 @@ class IGESData_IGESEntity : public MMgt_TShared
   //! This view can be a single view or a list of views.
   //! Warning A null handle is returned if the view is not defined.
   Standard_EXPORT Handle(IGESData_ViewKindEntity) View() const;
-  
+
   //! Returns the view as a single view
   //! if it was defined as such and not as a list of views.
   //! Warning A null handle is returned if DefView does not have the value DefOne.
@@ -122,16 +133,16 @@ class IGESData_IGESEntity : public MMgt_TShared
   Standard_EXPORT Handle(IGESData_ViewKindEntity) ViewList() const;
   
   //! Returns True if a Transformation Matrix is defined
-  Standard_EXPORT Standard_Boolean HasTransf() const;
-  
+  Standard_Boolean HasTransf() const { return (!theTransf.IsNull()); }
+
   //! Returns the Transformation Matrix (under IGES definition)
   //! Returns a Null Handle if there is none
   //! for a more complete use, see Location & CompoundLocation
   Standard_EXPORT Handle(IGESData_TransfEntity) Transf() const;
   
   //! Returns True if a LabelDisplay mode is defined for this entity
-  Standard_EXPORT Standard_Boolean HasLabelDisplay() const;
-  
+  Standard_Boolean HasLabelDisplay() const { return (!theLabDisplay.IsNull()); }
+
   //! Returns the Label Display
   //! Associativity Entity if there is one. Returns a null handle if there is none.
   Standard_EXPORT Handle(IGESData_LabelDisplayEntity) LabelDisplay() const;
@@ -149,12 +160,12 @@ class IGESData_IGESEntity : public MMgt_TShared
   Standard_EXPORT Standard_Integer HierarchyStatus() const;
   
   //! Returns the LineWeight Number (0  not defined), see also LineWeight
-  Standard_EXPORT Standard_Integer LineWeightNumber() const;
-  
+  Standard_Integer LineWeightNumber() const { return theLWeightNum; }
+
   //! Returns the true Line Weight, computed from LineWeightNumber and
   //! Global Parameter in the Model by call to SetLineWeight
-  Standard_EXPORT Standard_Real LineWeight() const;
-  
+  Standard_Real LineWeight() const { return theLWeightVal; }
+
   //! Returns the definition status of Color.
   Standard_EXPORT virtual IGESData_DefType DefColor() const;
   
@@ -177,30 +188,26 @@ class IGESData_IGESEntity : public MMgt_TShared
   
   //! Returns true if a short label is defined.
   //! A short label is a non-blank 8-character string.
-  Standard_EXPORT Standard_Boolean HasShortLabel() const;
-  
+  Standard_Boolean HasShortLabel() const { return (!theShortLabel.IsNull()); }
+
   //! Returns the label value for this IGES entity as a string.
   //! Warning If the label is blank, this string is null.
-  Standard_EXPORT Handle(TCollection_HAsciiString) ShortLabel() const;
-  
+  const Handle(TCollection_HAsciiString) & ShortLabel() const { return theShortLabel; }
+
   //! Returns true if a subscript number is defined.
   //! A subscript number is an integer used to identify a label.
   Standard_EXPORT virtual Standard_Boolean HasSubScriptNumber() const;
   
   //! Returns the integer subscript number used to identify this IGES entity.
   //! Warning 0 is returned if no subscript number is defined for this IGES entity.
-  Standard_EXPORT Standard_Integer SubScriptNumber() const;
-  
-  //! Initializes a directory field as an Entiy of any kind
-  //! See DirFieldEntity for more details
-  Standard_EXPORT void InitDirFieldEntity (const Standard_Integer fieldnum, const Handle(IGESData_IGESEntity)& ent);
+  Standard_Integer SubScriptNumber() const { return (theSubScriptN < 0)? 0 : theSubScriptN; }
   
   //! Initializes Transf, or erases it if <ent> is given Null
   Standard_EXPORT void InitTransf (const Handle(IGESData_TransfEntity)& ent);
-  
+
   //! Initializes View, or erases it if <ent> is given Null
   Standard_EXPORT void InitView (const Handle(IGESData_ViewKindEntity)& ent);
-  
+
   //! Initializes LineFont : if <ent> is not Null, it gives LineFont,
   //! else <rank> gives or erases (if zero) RankLineFont
   Standard_EXPORT void InitLineFont (const Handle(IGESData_LineFontEntity)& ent, const Standard_Integer rank = 0);
@@ -219,8 +226,9 @@ class IGESData_IGESEntity : public MMgt_TShared
   //! Sets a new Label to an IGES Entity
   //! If <sub> is given, it sets value of SubScriptNumber
   //! else, SubScriptNumber is erased
-  Standard_EXPORT void SetLabel (const Handle(TCollection_HAsciiString)& label, const Standard_Integer sub = -1);
-  
+  void SetLabel (const Handle(TCollection_HAsciiString)& label, const Standard_Integer sub = -1)
+  { theShortLabel = label; theSubScriptN = sub; }
+
   //! Initializes various data (those not yet seen above), or erases
   //! them if they are given as Null (Zero for <weightnum>) :
   //! <str> for Structure, <lab> for LabelDisplay, and
@@ -317,16 +325,32 @@ class IGESData_IGESEntity : public MMgt_TShared
   //! or sets it to defw (Default) if LineWeightNumber is null
   Standard_EXPORT void SetLineWeight (const Standard_Real defw, const Standard_Real maxw, const Standard_Integer gradw);
 
-friend class IGESData_ReadWriteModule;
 friend class IGESData_GeneralModule;
 friend class IGESData_IGESReaderTool;
 friend class IGESData_DirChecker;
+  
+  //! Reads own parameters
+  Standard_EXPORT virtual void OwnRead (IGESFile_Reader &);
+
+  //! Writes own parameters
+  Standard_EXPORT virtual void OwnWrite (IGESData_IGESWriter &) const;
 
   //! Lists the Entities shared by <this>, from its specific (own) parameters
   Standard_EXPORT virtual void OwnShared(Interface_EntityIterator &) const {}
   
+  //! Returns a DirChecker, specific for each type of Entity
+  //! (identified by its Case Number) : this DirChecker defines
+  //! constraints which must be respected by the DirectoryPart
+  Standard_EXPORT virtual IGESData_DirChecker DirChecker () const;
+  
   //! Performs Specific Semantic Check
-  Standard_EXPORT virtual void OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &) const {}
+  Standard_EXPORT virtual void OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &) const; // {}
+  
+  //! Performs non-ambiguous Corrections on Entities that support them (AssocGroupType,Hierarchy,Name,SingleParent)
+  Standard_EXPORT virtual Standard_Boolean OwnCorrect (); // { return Standard_False; }
+  
+  //! Dump of Specific Parameters
+  Standard_EXPORT virtual void OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &, const Standard_Integer) const {}
 
   DEFINE_STANDARD_RTTIEXT(IGESData_IGESEntity,MMgt_TShared)
 
@@ -335,37 +359,18 @@ friend class IGESData_DirChecker;
   //! prepares lists of optionnal data, set values to defaults
   Standard_EXPORT IGESData_IGESEntity();
   
-  //! Initializes Type and Form Numbers to new values. Reserved for
-  //! special uses
-  Standard_EXPORT void InitTypeAndForm (const Standard_Integer typenum, const Standard_Integer formnum);
-  
-  //! Loads a complete, already loaded, List of Asociativities
-  //! (used during Read or Copy Operations)
-  Standard_EXPORT void LoadAssociativities (const Interface_EntityList& list);
-  
-  //! Loads a complete, already loaded, List of Properties
-  //! (used during Read or Copy Operations)
-  Standard_EXPORT void LoadProperties (const Interface_EntityList& list);
-  
-  //! Removes all properties in once
-  Standard_EXPORT void ClearProperties();
+  //! Initializes Type and Form Numbers to new values. Reserved for special uses
+  //void InitTypeAndForm (const Standard_Integer typenum, const Standard_Integer formnum)
+  //{ theType = typenum; theForm = formnum; }
+  void InitTypeAndForm (const Standard_Integer, const Standard_Integer) {} //temporary!!!
+
+  void CheckTypeAndForm(const Handle(Interface_Check) &) {} //temporary!!!
 
  private:
 
   //! Clears specific IGES data
   Standard_EXPORT void Clear();
-  
-  //! Adds an Associativity in the list (called by Associate only)
-  Standard_EXPORT void AddAssociativity (const Handle(IGESData_IGESEntity)& ent);
-  
-  //! Removes an Associativity from the list (called by Dissociate)
-  Standard_EXPORT void RemoveAssociativity (const Handle(IGESData_IGESEntity)& ent);
-  
-  //! Removes all associativities in once
-  Standard_EXPORT void ClearAssociativities();
 
-  Standard_Integer theType;
-  Standard_Integer theForm;
   Handle(IGESData_IGESEntity) theStructure;
   IGESData_DefSwitch theDefLineFont;
   Handle(IGESData_IGESEntity) theLineFont;

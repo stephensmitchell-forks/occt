@@ -58,8 +58,7 @@ void IGESDraw_ToolViewsVisibleWithAttr::ReadOwnParams
   Handle(IGESData_HArray1OfIGESEntity) tempDisplayEntities;
   Handle(IGESBasic_HArray1OfLineFontEntity) tempLineDefinitions;
 
-  //st = PR.ReadInteger(PR.Current(), "Number Of Blocks", tempNbBlocks); //szv#4:S4163:12Mar99 moved in if
-  if (PR.ReadInteger(PR.Current(), "Number Of Blocks", tempNbBlocks)) {
+  if (PR.ReadInteger(tempNbBlocks,"Number Of Blocks")) {
     // Initialise HArray1 only if there is no error reading its Length
     if (tempNbBlocks <= 0)
       PR.AddFail("Number Of Blocks : Not Positive");
@@ -74,8 +73,7 @@ void IGESDraw_ToolViewsVisibleWithAttr::ReadOwnParams
   }
 
   if (PR.DefinedElseSkip())
-    PR.ReadInteger(PR.Current(), "Number of Entities Displayed",
-		   tempNbEntity); //szv#4:S4163:12Mar99 `st=` not needed
+    PR.ReadInteger(tempNbEntity,"Number of Entities Displayed");
   else {
     tempNbEntity = 0;
     PR.AddWarning("Number of Entities Displayed : undefined, set to Zero");
@@ -97,21 +95,14 @@ void IGESDraw_ToolViewsVisibleWithAttr::ReadOwnParams
       Handle(IGESGraph_Color) tempColorDef;
       Standard_Integer        tempLineWeightValue;
 
-      //st = PR.ReadEntity(IR, PR.Current(), "View Entity",
-			   //STANDARD_TYPE(IGESData_ViewKindEntity), tempView); //szv#4:S4163:12Mar99 moved in if
-      if (PR.ReadEntity(IR, PR.Current(), "View Entity",
-			STANDARD_TYPE(IGESData_ViewKindEntity), tempView))
+      if (PR.ReadEntity(IR, "View Entity", STANDARD_TYPE(IGESData_ViewKindEntity), tempView))
 	tempViewEntities->SetValue(I, tempView);
 
-      //st = PR.ReadInteger(PR.Current(), "Line Font Value", tempLineFont); //szv#4:S4163:12Mar99 moved in if
-      if (PR.ReadInteger(PR.Current(), "Line Font Value", tempLineFont))
+      if (PR.ReadInteger(tempLineFont,"Line Font Value"))
 	tempLineFonts->SetValue(I, tempLineFont);
 
-      //st = PR.ReadEntity(IR, PR.Current(), "Line Font Definition",
-			   //STANDARD_TYPE(IGESData_LineFontEntity),
-			   //tempEntity1, Standard_True); //szv#4:S4163:12Mar99 moved in if
       if (tempLineFont == 0 &&
-	  PR.ReadEntity(IR, PR.Current(), "Line Font Definition",
+	  PR.ReadEntity(IR, "Line Font Definition",
 			STANDARD_TYPE(IGESData_LineFontEntity),
 			tempEntity1, Standard_True))
 	tempLineDefinitions->SetValue(I, tempEntity1);
@@ -119,7 +110,7 @@ void IGESDraw_ToolViewsVisibleWithAttr::ReadOwnParams
       Standard_Integer curnum = PR.CurrentNumber();
       //  Reading Color : Value (>0) or Definition (<0 = D.E. Pointer)
       if (PR.DefinedElseSkip())
-	PR.ReadInteger( PR.Current(), "Color Value", tempColorValue); //szv#4:S4163:12Mar99 `st=` not needed
+	PR.ReadInteger(tempColorValue,"Color Value");
       else {
 	tempColorValue = 0;
 	PR.AddWarning ("Color Value : undefined, set to Zero");
@@ -134,9 +125,7 @@ void IGESDraw_ToolViewsVisibleWithAttr::ReadOwnParams
       else
 	tempColorValues->SetValue(I, tempColorValue);
 
-      //st = PR.ReadInteger(PR.Current(), "Line Weight Value",
-			    //tempLineWeightValue); //szv#4:S4163:12Mar99 moved in if
-      if (PR.ReadInteger(PR.Current(), "Line Weight Value", tempLineWeightValue))
+      if (PR.ReadInteger(tempLineWeightValue,"Line Weight Value"))
 	tempLineWeights->SetValue(I, tempLineWeightValue);
     }
   }
@@ -145,15 +134,6 @@ void IGESDraw_ToolViewsVisibleWithAttr::ReadOwnParams
   if (tempNbEntity > 0) {
     PR.ReadEnts (IR,PR.CurrentList(tempNbEntity),
 		 "Displayed Entities",tempDisplayEntities); //szv#4:S4163:12Mar99 `st=` not needed
-/*
-    tempDisplayEntities = new IGESData_HArray1OfIGESEntity (1, tempNbEntity);
-    Standard_Integer I;
-    for (I = 1; I <= tempNbEntity; I++) {
-      Handle(IGESData_IGESEntity) tempEntity3;
-      st = PR.ReadEntity(IR, PR.Current(), "Entity", tempEntity3);
-      if (st) tempDisplayEntities->SetValue(I, tempEntity3);
-    }
-*/
   }
 
   DirChecker(ent).CheckTypeAndForm(PR.CCheck(),ent);
@@ -199,15 +179,6 @@ void  IGESDraw_ToolViewsVisibleWithAttr::OwnShared
       iter.GetOneItem(ent->ColorDefinition(I));
   }
 //  Displayed -> Implied
-}
-
-void  IGESDraw_ToolViewsVisibleWithAttr::OwnImplied
-  (const Handle(IGESDraw_ViewsVisibleWithAttr)& ent, Interface_EntityIterator& iter) const
-{
-  Standard_Integer I,up;
-  up  = ent->NbDisplayedEntities();
-  for (I = 1; I <= up; I++)
-    iter.GetOneItem(ent->DisplayedEntity(I));
 }
 
 

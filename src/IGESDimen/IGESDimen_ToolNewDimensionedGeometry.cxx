@@ -44,7 +44,6 @@ void  IGESDimen_ToolNewDimensionedGeometry::ReadOwnParams
   (const Handle(IGESDimen_NewDimensionedGeometry)& ent,
    const Handle(IGESData_IGESReaderData)& IR, IGESData_ParamReader& PR) const
 {
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 moved down
   Standard_Integer i, num;
   Standard_Integer tempNbDimens;
   Standard_Integer tempDimOrientFlag;
@@ -55,11 +54,11 @@ void  IGESDimen_ToolNewDimensionedGeometry::ReadOwnParams
   Handle(TColgp_HArray1OfXYZ) tempPoints;
 
   if (PR.DefinedElseSkip())
-    PR.ReadInteger(PR.Current(), "Number of Dimensions", tempNbDimens); //szv#4:S4163:12Mar99 `st=` not needed
+    PR.ReadInteger(tempNbDimens,"Number of Dimensions");
   else
     tempNbDimens = 1;
 
-  Standard_Boolean st = PR.ReadInteger(PR.Current(), "Number of Geometries", num);
+  Standard_Boolean st = PR.ReadInteger(num,"Number of Geometries");
   if (st && num > 0)
     {
       tempGeomEnts    = new IGESData_HArray1OfIGESEntity(1, num);
@@ -68,26 +67,19 @@ void  IGESDimen_ToolNewDimensionedGeometry::ReadOwnParams
     }
   else  PR.AddFail("Number of Geometries: Not Positive");
 
-  //szv#4:S4163:12Mar99 `st=` not needed
-  PR.ReadEntity(IR, PR.Current(), "Dimension Entity", tempDimen);
-  PR.ReadInteger(PR.Current(), "Dimension Orientation Flag", tempDimOrientFlag);
-  PR.ReadReal(PR.Current(), "Angle Value", tempAngle);
+  PR.ReadEntity(IR, "Dimension Entity", tempDimen);
+  PR.ReadInteger(tempDimOrientFlag,"Dimension Orientation Flag");
+  PR.ReadReal(tempAngle,"Angle Value");
 
   if (!tempGeomEnts.IsNull())
     for ( i = 1; i <= num; i++)
       {
 	Handle(IGESData_IGESEntity) tempEnt;
-	//szv#4:S4163:12Mar99 `st=` not needed
-	PR.ReadEntity(IR, PR.Current(), "Geometry Entity", tempEnt, (i == num)); // The last one may be Null
+	PR.ReadEntity(IR, "Geometry Entity", tempEnt, (i == num)); // The last one may be Null
 	tempGeomEnts->SetValue(i, tempEnt);
 
-	Standard_Integer tempInt;
-	PR.ReadInteger(PR.Current(), "Dimension Location Flag", tempInt); //szv#4:S4163:12Mar99 `st=` not needed
-	tempDimLocFlags->SetValue(i, tempInt);
-
-	gp_XYZ tempPnt;
-	PR.ReadXYZ(PR.CurrentList(1, 3), "Point", tempPnt); //szv#4:S4163:12Mar99 `st=` not needed
-	tempPoints->SetValue(i, tempPnt);
+	PR.ReadInteger(tempDimLocFlags->ChangeValue(i),"Dimension Location Flag");
+	PR.ReadXYZ(tempPoints->ChangeValue(i),"Point");
       }
 
   DirChecker(ent).CheckTypeAndForm(PR.CCheck(),ent);

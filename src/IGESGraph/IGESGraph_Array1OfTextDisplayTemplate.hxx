@@ -17,10 +17,10 @@
 #ifndef IGESGraph_Array1OfTextDisplayTemplate_HeaderFile
 #define IGESGraph_Array1OfTextDisplayTemplate_HeaderFile
 
+#include <Interface_Pointer.hxx>
 #include <IGESGraph_TextDisplayTemplate.hxx>
 #include <NCollection_Array1.hxx>
 
-typedef NCollection_Array1<Handle(IGESGraph_TextDisplayTemplate)> IGESGraph_Array1OfTextDisplayTemplate;
-
+typedef NCollection_Array1<Interface_Pointer<IGESGraph_TextDisplayTemplate>> IGESGraph_Array1OfTextDisplayTemplate;
 
 #endif

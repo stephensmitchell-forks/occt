@@ -42,16 +42,12 @@ void IGESDimen_ToolPointDimension::ReadOwnParams
   Handle(IGESDimen_GeneralNote) tempNote;
   Handle(IGESDimen_LeaderArrow) leadArr;
   Handle(IGESData_IGESEntity) tempGeom;
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
 
-  PR.ReadEntity(IR, PR.Current(), "General Note",
-		STANDARD_TYPE(IGESDimen_GeneralNote), tempNote); //szv#4:S4163:12Mar99 `st=` not needed
-
-  PR.ReadEntity(IR, PR.Current(), "Leader",
-		STANDARD_TYPE(IGESDimen_LeaderArrow), leadArr); //szv#4:S4163:12Mar99 `st=` not needed
+  PR.ReadEntity(IR, "General Note", STANDARD_TYPE(IGESDimen_GeneralNote), tempNote);
+  PR.ReadEntity(IR, "Leader", STANDARD_TYPE(IGESDimen_LeaderArrow), leadArr);
 
   if (PR.IsParamEntity(PR.CurrentNumber()))
-    PR.ReadEntity(IR, PR.Current(), "Enclosing entity", tempGeom); //szv#4:S4163:12Mar99 `st=` not needed
+    PR.ReadEntity(IR, "Enclosing entity", tempGeom);
 
   DirChecker(ent).CheckTypeAndForm(PR.CCheck(),ent);
   ent->Init(tempNote, leadArr, tempGeom);

@@ -17,7 +17,6 @@
 #include "igesread.h"
 
 void iges_newparam(int typarg,int longval, char *parval);
-void iges_newpart(int numsec);
 void iges_curpart(int dnum);
 void iges_addparam(int longval, char* parval);
 
@@ -34,85 +33,6 @@ void iges_addparam(int longval, char* parval);
 /*  les structures de travail de  structiges  sont connues :
     a savoir declarations + curp  */
 /*  #define VERIFPRINT  */
-
-/*    Lecture section D
-      Chaque entite tient sur deux lignes
-
-      Dstat demarre a zero "on lit une nouvelle entite"
-      et bascule avec un   "deuxieme ligne de l'entite"
-*/
-
-
-static int bases[] =
-  { 1,10,100,1000,10000,100000,1000000, 10000000,100000000,1000000000 };
-
-/*      DECODAGE : parce que scanf ne fait pas vraiment ce qu'il faut     */
-/*      Utilitaire decodant un nombre en format fixe dans une ligne
-	Il part de "depuis" inclus (debut ligne = 0) et prend "tant" caracteres
-	Valeur lue en retour de fonction   */
-static int IGES_decode (char* ligne, int depuis, int tant)
-{
-  int val = 0; int i;
-  int depart = depuis+tant-1;
-  for (i = 0; i < tant; i ++) {
-    char uncar = ligne[depart-i];
-    if (uncar == ' ') break;
-    else if (uncar == '+') continue;
-    else if (uncar == '-') val = -val;
-    else if (uncar != '0') val += (uncar - 48)*bases[i];
-  }
-  return val;
-}
-
-/*   Recopie d'une chaine de caracteres de longueur fixe (close par \0)  */
-void IGES_copstr(char *ligne, int depuis, int tant, char* dans)
-{
-  int i;
-  for (i = 0; i < tant; i ++) { dans[i] = ligne[depuis+i]; }
-  dans[tant] = '\0';
-}
-
-/*                   Analyse section D                */
-void iges_Dsect (int *Dstat, int numsec, char* ligne)
-{
-  struct dirpart *curp;
-  if (*Dstat == 0) {
-    iges_newpart(numsec);
-    curp = iges_get_curp();
-    curp->typ  = IGES_decode(ligne, 0,8);
-    curp->poi  = IGES_decode(ligne, 8,8);
-    curp->pdef = IGES_decode(ligne,16,8);
-    curp->tra  = IGES_decode(ligne,24,8);
-    curp->niv  = IGES_decode(ligne,32,8);
-    curp->vue  = IGES_decode(ligne,40,8);
-    curp->trf  = IGES_decode(ligne,48,8);
-    curp->aff  = IGES_decode(ligne,56,8);
-    curp->blk  = IGES_decode(ligne,64,2);
-    curp->sub  = IGES_decode(ligne,66,2);
-    curp->use  = IGES_decode(ligne,68,2);
-    curp->her  = IGES_decode(ligne,70,2);
-#ifdef VERIFPRINT
-    printf("Entite %d : type %d  ->P %d\n",numsec,typ,poi);
-#endif
-    *Dstat = 1;
-  } else if (*Dstat == 1) {
-    curp = iges_get_curp();
-    curp->typ2 = IGES_decode(ligne, 0,8);
-    curp->epa  = IGES_decode(ligne, 8,8);
-    curp->col  = IGES_decode(ligne,16,8);
-    curp->nbl  = IGES_decode(ligne,24,8);
-    curp->form = IGES_decode(ligne,32,8);
-    IGES_copstr (ligne,40,8,curp->res1);
-    IGES_copstr (ligne,48,8,curp->res2);
-    IGES_copstr (ligne,56,8,curp->nom);
-    IGES_copstr (ligne,64,8,curp->num);
-#ifdef VERIFPRINT
-    printf("Entite %d : type %d (redite) form %d\n",numsec,typ2,form);
-#endif
-    *Dstat = 0;
-  }
-}
-
 
 /*     Lecture section P : preanalyse
        Extraction du numero D et troncature a 64 caracteres  */

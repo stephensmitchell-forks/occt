@@ -17,22 +17,11 @@
 #ifndef _IGESDefs_TabularData_HeaderFile
 #define _IGESDefs_TabularData_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
-#include <Standard_Integer.hxx>
-#include <TColStd_HArray1OfInteger.hxx>
 #include <IGESData_IGESEntity.hxx>
-#include <Standard_Boolean.hxx>
-#include <Standard_Real.hxx>
-#include <TColStd_HArray1OfReal.hxx>
+class TColStd_HArray1OfInteger;
+class TColStd_HArray1OfReal;
 class IGESBasic_HArray1OfHArray1OfReal;
-class Standard_DimensionMismatch;
-class Standard_OutOfRange;
 
-
-class IGESDefs_TabularData;
-DEFINE_STANDARD_HANDLE(IGESDefs_TabularData, IGESData_IGESEntity)
 
 //! Defines IGES Tabular Data, Type <406> Form <11>,
 //! in package IGESDefs
@@ -40,11 +29,16 @@ DEFINE_STANDARD_HANDLE(IGESDefs_TabularData, IGESData_IGESEntity)
 //! point form data.
 class IGESDefs_TabularData : public IGESData_IGESEntity
 {
+ public:
 
-public:
+  Standard_EXPORT virtual Standard_Integer TypeNumber() const Standard_OVERRIDE { return 406; }
 
-  
-  Standard_EXPORT IGESDefs_TabularData();
+  Standard_EXPORT virtual Standard_Integer FormNumber() const Standard_OVERRIDE { return 11; }
+
+  IGESDefs_TabularData()
+  : myNbPropertyValues(0),
+    myPropertyType(0)
+  {}
   
   //! This method is used to set the fields of the class
   //! TabularData
@@ -55,21 +49,17 @@ public:
   //! - valuesInd   : Values of independent variables
   //! - valuesDep   : Values of dependent variables
   //! raises exception if lengths of typeInd and nbValuesInd are not same
-  Standard_EXPORT void Init (const Standard_Integer nbProps, const Standard_Integer propType, const Handle(TColStd_HArray1OfInteger)& typesInd, const Handle(TColStd_HArray1OfInteger)& nbValuesInd, const Handle(IGESBasic_HArray1OfHArray1OfReal)& valuesInd, const Handle(IGESBasic_HArray1OfHArray1OfReal)& valuesDep);
+  //Standard_EXPORT void Init (const Standard_Integer nbProps, const Standard_Integer propType, const Handle(TColStd_HArray1OfInteger)& typesInd, const Handle(TColStd_HArray1OfInteger)& nbValuesInd, const Handle(IGESBasic_HArray1OfHArray1OfReal)& valuesInd, const Handle(IGESBasic_HArray1OfHArray1OfReal)& valuesDep);
   
   //! returns the number of property values (recorded)
-  Standard_EXPORT Standard_Integer NbPropertyValues() const;
-  
+  Standard_Integer NbPropertyValues() const { return myNbPropertyValues; }
+
   //! determines the number of property values required
-  Standard_EXPORT Standard_Integer ComputedNbPropertyValues() const;
-  
-  //! checks, and correct as necessary, the number of property
-  //! values. Returns True if corrected, False if already OK
-  Standard_EXPORT Standard_Boolean OwnCorrect();
-  
+  Standard_Integer ComputedNbPropertyValues() const { return myNbPropertyValues; }
+
   //! returns the property type
-  Standard_EXPORT Standard_Integer PropertyType() const;
-  
+  Standard_Integer PropertyType() const { return myPropertyType; }
+
   //! returns the number of dependent variables
   Standard_EXPORT Standard_Integer NbDependents() const;
   
@@ -90,33 +80,24 @@ public:
   
   Standard_EXPORT Standard_Real DependentValue (const Standard_Integer variablenum, const Standard_Integer valuenum) const;
 
+  Standard_EXPORT virtual void OwnRead (IGESFile_Reader &) Standard_OVERRIDE;
+  
+  Standard_EXPORT virtual void OwnWrite (IGESData_IGESWriter &) const Standard_OVERRIDE;
 
+  Standard_EXPORT virtual IGESData_DirChecker DirChecker () const Standard_OVERRIDE;
 
+  Standard_EXPORT virtual void OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &, const Standard_Integer) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESDefs_TabularData,IGESData_IGESEntity)
 
-protected:
+ private:
 
-
-
-
-private:
-
-
-  Standard_Integer theNbPropertyValues;
-  Standard_Integer thePropertyType;
-  Handle(TColStd_HArray1OfInteger) theTypeOfIndependentVariables;
-  Handle(TColStd_HArray1OfInteger) theNbValues;
-  Handle(IGESBasic_HArray1OfHArray1OfReal) theIndependentValues;
-  Handle(IGESBasic_HArray1OfHArray1OfReal) theDependentValues;
-
-
+  Standard_Integer myNbPropertyValues;
+  Standard_Integer myPropertyType;
+  Handle(TColStd_HArray1OfInteger) myTypeOfIndependentVariables;
+  Handle(TColStd_HArray1OfInteger) myNbValues;
+  Handle(IGESBasic_HArray1OfHArray1OfReal) myIndependentValues;
+  Handle(IGESBasic_HArray1OfHArray1OfReal) myDependentValues;
 };
-
-
-
-
-
-
 
 #endif // _IGESDefs_TabularData_HeaderFile

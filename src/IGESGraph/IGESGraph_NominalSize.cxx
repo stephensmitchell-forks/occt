@@ -17,48 +17,62 @@
 //--------------------------------------------------------------------
 
 #include <IGESGraph_NominalSize.hxx>
-#include <Standard_Type.hxx>
 #include <TCollection_HAsciiString.hxx>
+#include <IGESFile_Reader.hxx>
+#include <IGESData_IGESWriter.hxx>
+#include <IGESData_DirChecker.hxx>
+#include <Message_Messenger.hxx>
+#include <IGESData_IGESDumper.hxx>
+#include <IGESData_Dump.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESGraph_NominalSize,IGESData_IGESEntity)
 
-IGESGraph_NominalSize::IGESGraph_NominalSize ()    {  }
+void IGESGraph_NominalSize::OwnRead (IGESFile_Reader &PR)
+{ 
+  Standard_Integer aNbPropertyValues = 0;
+  PR.ReadInteger(aNbPropertyValues,"No. of property values");
+  if ( (aNbPropertyValues != 2) && (aNbPropertyValues != 3) )
+    PR.AddFail("No. of Property values : Value is not 2/3");
 
-
-    void IGESGraph_NominalSize::Init
-  (const Standard_Integer          nbProps,
-   const Standard_Real             aNominalSizeValue,
-   const Handle(TCollection_HAsciiString)& aNominalSizeName,
-   const Handle(TCollection_HAsciiString)& aStandardName)
-{
-  theNbPropertyValues = nbProps;
-  theNominalSizeValue = aNominalSizeValue;
-  theNominalSizeName  = aNominalSizeName;
-  theStandardName     = aStandardName;
-  InitTypeAndForm(406,13);
+  PR.ReadReal(myNominalSizeValue,"Nominal size value");
+  PR.ReadText(myNominalSizeName,"Nominal size name");
+  if (aNbPropertyValues > 2)
+    PR.ReadText(myStandardName,"Name of relevant engg. standard");
 }
 
-    Standard_Integer IGESGraph_NominalSize::NbPropertyValues () const
-{
-  return theNbPropertyValues;
+void IGESGraph_NominalSize::OwnWrite (IGESData_IGESWriter &IW) const
+{ 
+  const Standard_Integer aNbPropertyValues = myStandardName.IsNull()? 2 : 3;
+  IW.Send(aNbPropertyValues);
+  IW.Send(myNominalSizeValue);
+  IW.Send(myNominalSizeName);
+  if (aNbPropertyValues > 2)
+    IW.Send(myStandardName);
 }
 
-    Standard_Real IGESGraph_NominalSize::NominalSizeValue () const
-{
-  return theNominalSizeValue;
+IGESData_DirChecker IGESGraph_NominalSize::DirChecker () const
+{ 
+  IGESData_DirChecker DC (406, 13);
+  DC.Structure(IGESData_DefVoid);
+  DC.LineFont(IGESData_DefVoid);
+  DC.LineWeight(IGESData_DefVoid);
+  DC.Color(IGESData_DefVoid);
+  DC.BlankStatusIgnored();
+  DC.UseFlagIgnored();
+  DC.HierarchyStatusIgnored();
+  return DC;
 }
 
-    Handle(TCollection_HAsciiString) IGESGraph_NominalSize::NominalSizeName () const
+void IGESGraph_NominalSize::OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &S, const Standard_Integer) const
 {
-  return theNominalSizeName;
-}
-
-    Standard_Boolean IGESGraph_NominalSize::HasStandardName () const
-{
-  return (! theStandardName.IsNull() );
-}
-
-    Handle(TCollection_HAsciiString) IGESGraph_NominalSize::StandardName () const
-{
-  return theStandardName;
+  S << "IGESGraph_NominalSize" << endl;
+  const Standard_Integer aNbPropertyValues = myStandardName.IsNull()? 2 : 3;
+  S << "No. of property values : " << aNbPropertyValues << endl;
+  S << "Nominal size value : "     << myNominalSizeValue << endl;
+  S << "Nominal size name  : ";
+  IGESData_DumpString(S,myNominalSizeName);
+  S << endl;
+  S << "Name of relevant engineering standard : ";
+  IGESData_DumpString(S,myStandardName);
+  S << endl;
 }

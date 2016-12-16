@@ -16,6 +16,7 @@
 #include <IGESData_DirPart.hxx>
 #include <IGESData_IGESReaderData.hxx>
 #include <IGESData_IGESWriter.hxx>
+#include <IGESData_IGESDumper.hxx>
 #include <IGESData_LabelDisplayEntity.hxx>
 #include <IGESData_LevelListEntity.hxx>
 #include <IGESData_LineFontEntity.hxx>
@@ -25,9 +26,10 @@
 #include <IGESData_ViewKindEntity.hxx>
 #include <Interface_Check.hxx>
 #include <Interface_Macros.hxx>
+#include <Interface_EntityIterator.hxx>
 #include <Interface_UndefinedContent.hxx>
 #include <Message_Msg.hxx>
-#include <Standard_Type.hxx>
+#include <Message_Messenger.hxx>
 #include <TCollection_AsciiString.hxx>
 #include <TCollection_HAsciiString.hxx>
 
@@ -44,74 +46,7 @@ IGESData_UndefinedEntity::IGESData_UndefinedEntity ()
 }
 
 
-//=======================================================================
-//function : UndefinedContent
-//purpose  : 
-//=======================================================================
-
-Handle(Interface_UndefinedContent) IGESData_UndefinedEntity::UndefinedContent () const
-{
-  return thecont;
-}
-
-
-//=======================================================================
-//function : ChangeableContent
-//purpose  : 
-//=======================================================================
-
-Handle(Interface_UndefinedContent) IGESData_UndefinedEntity::ChangeableContent ()
-{
-  return thecont;
-}
-
-
-//=======================================================================
-//function : SetNewContent
-//purpose  : 
-//=======================================================================
-
-void IGESData_UndefinedEntity::SetNewContent
-  (const Handle(Interface_UndefinedContent)& cont)
-{
-  thecont = cont;
-}
-
-
 //  ....           (Re)definitions specifiques a UndefinedEntity           ....
-
-
-//=======================================================================
-//function : IsOKDirPart
-//purpose  : 
-//=======================================================================
-
-Standard_Boolean IGESData_UndefinedEntity::IsOKDirPart () const
-{
-  return (thedstat == 0);
-}
-
-
-//=======================================================================
-//function : DirStatus
-//purpose  : 
-//=======================================================================
-
-Standard_Integer IGESData_UndefinedEntity::DirStatus () const
-{
-  return thedstat;
-}
-
-
-//=======================================================================
-//function : SetOKDirPart
-//purpose  : 
-//=======================================================================
-
-void IGESData_UndefinedEntity::SetOKDirPart ()
-{
-  thedstat = 0;
-}
 
 
 //=======================================================================
@@ -340,17 +275,10 @@ Standard_Boolean IGESData_UndefinedEntity::ReadDir
 void IGESData_UndefinedEntity::ReadOwnParams
   (const Handle(IGESData_IGESReaderData)& /*IR*/, IGESData_ParamReader& PR)
 {
-  Standard_Integer nb = PR.NbParams();
-
+  const Standard_Integer nb = PR.NbParams();
   thecont->Reservate(nb,nb);
   for (Standard_Integer i = 1; i <= nb; i ++) {
     Interface_ParamType ptyp = PR.ParamType(i);
-/*    if (PR.IsParamEntity(i)) {
-      thecont->AddEntity (ptyp,PR.ParamEntity(IR,i));
-    }
-    else thecont->AddLiteral (ptyp,new TCollection_HAsciiString(PR.ParamValue(i)));
-*/
-//  On est TOUJOURS en mode litteral, c est bien plus clair !
     thecont->AddLiteral (ptyp,new TCollection_HAsciiString(PR.ParamValue(i)));
   }
   PR.SetCurrentNumber(nb+1);
@@ -374,4 +302,48 @@ void IGESData_UndefinedEntity::WriteOwnParams(IGESData_IGESWriter& IW) const
     }
     else IW.SendString (thecont->ParamValue(i));
   }
+}
+
+
+//=======================================================================
+//function : OwnShared
+//purpose  : 
+//=======================================================================
+
+void IGESData_UndefinedEntity::OwnShared (Interface_EntityIterator& theIter) const
+{
+  const Standard_Integer nb = thecont->NbParams();
+  for (Standard_Integer i = 1; i <= nb; i ++) {
+    if (thecont->IsParamEntity(i))
+      theIter.GetOneItem (thecont->ParamEntity(i));
+  }
+}
+
+
+//=======================================================================
+//function : OwnDump
+//purpose  : 
+//=======================================================================
+
+void IGESData_UndefinedEntity::OwnDump (const IGESData_IGESDumper &dumper, const Handle(Message_Messenger) &S, const Standard_Integer) const
+{
+  const Standard_Integer dstat = thedstat;
+  if (dstat != 0)
+    S << " --  Directory Entry Error Status = " << dstat << "  --" << endl;
+  Handle(Interface_UndefinedContent) cont = UndefinedContent();
+  const Standard_Integer nb = cont->NbParams();
+  S << " UNDEFINED ENTITY ...\n" << nb
+    <<" Parameters (WARNING : Odd Integer Values Interpreted as Entities)\n";
+  for (Standard_Integer i = 1; i <= nb; i ++) {
+    Interface_ParamType ptyp = cont->ParamType(i);
+    if (ptyp == Interface_ParamVoid) S<<"	["<<i<<":Void]";
+    else if (cont->IsParamEntity(i)) {
+      DeclareAndCast(IGESData_IGESEntity,anent,cont->ParamEntity(i));
+      S<<"	["<<i<<":IGES]=";  
+      dumper.PrintDNum(anent,S);
+    }
+    else {  S<<"	["<<i<<"]=" << cont->ParamValue(i);  }
+    if ( i == (i%5)*5) S << endl;
+  }
+  S << endl;
 }

@@ -17,20 +17,8 @@
 #ifndef _IGESDefs_AssociativityDef_HeaderFile
 #define _IGESDefs_AssociativityDef_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
 #include <TColStd_HArray1OfInteger.hxx>
 #include <IGESData_IGESEntity.hxx>
-#include <Standard_Integer.hxx>
-#include <Standard_Boolean.hxx>
-class IGESBasic_HArray1OfHArray1OfInteger;
-class Standard_DimensionMismatch;
-class Standard_OutOfRange;
-
-
-class IGESDefs_AssociativityDef;
-DEFINE_STANDARD_HANDLE(IGESDefs_AssociativityDef, IGESData_IGESEntity)
 
 //! defines IGES Associativity Definition Entity, Type <302>
 //! Form <5001 - 9999> in package IGESDefs.
@@ -39,28 +27,21 @@ DEFINE_STANDARD_HANDLE(IGESDefs_AssociativityDef, IGESData_IGESEntity)
 //! defines the type of relationship.
 class IGESDefs_AssociativityDef : public IGESData_IGESEntity
 {
+ public:
 
-public:
+  Standard_EXPORT virtual Standard_Integer TypeNumber() const Standard_OVERRIDE { return 302; }
 
-  
-  Standard_EXPORT IGESDefs_AssociativityDef();
-  
-  //! This method is used to set the fields of the class
-  //! AssociativityDef
-  //! - requirements : Back Pointers requirements
-  //! - orders       : Class Orders
-  //! - numItems     : Number of Items per Class
-  //! - items        : Items in each class
-  //! raises exception if lengths of the arrays are not the same.
-  Standard_EXPORT void Init (const Handle(TColStd_HArray1OfInteger)& requirements, const Handle(TColStd_HArray1OfInteger)& orders, const Handle(TColStd_HArray1OfInteger)& numItems, const Handle(IGESBasic_HArray1OfHArray1OfInteger)& items);
-  
-  Standard_EXPORT void SetFormNumber (const Standard_Integer form);
+  Standard_EXPORT virtual Standard_Integer FormNumber() const Standard_OVERRIDE { return myForm; }
+
+  IGESDefs_AssociativityDef(const Standard_Integer theForm)
+  : myForm(theForm)
+  {}
   
   //! returns the Number of class definitions
   Standard_EXPORT Standard_Integer NbClassDefs() const;
   
-  //! returns 1 if the theBackPointerReqs(ClassNum) = 1
-  //! returns 0 if the theBackPointerReqs(ClassNum) = 2
+  //! returns 1 if the myBackPointerReqs(ClassNum) = 1
+  //! returns 0 if the myBackPointerReqs(ClassNum) = 2
   //! raises exception if ClassNum <= 0 or ClassNum > NbClassDefs()
   Standard_EXPORT Standard_Boolean IsBackPointerReq (const Standard_Integer ClassNum) const;
   
@@ -68,8 +49,8 @@ public:
   //! raises exception if ClassNum <= 0 or ClassNum > NbClassDefs()
   Standard_EXPORT Standard_Integer BackPointerReq (const Standard_Integer ClassNum) const;
   
-  //! returns 1 if theClassOrders(ClassNum) = 1 (ordered class)
-  //! returns 0 if theClassOrders(ClassNum) = 2 (unordered class)
+  //! returns 1 if myClassOrders(ClassNum) = 1 (ordered class)
+  //! returns 0 if myClassOrders(ClassNum) = 2 (unordered class)
   //! raises exception if ClassNum <= 0 or ClassNum > NbClassDefs()
   Standard_EXPORT Standard_Boolean IsOrdered (const Standard_Integer ClassNum) const;
   
@@ -87,31 +68,23 @@ public:
   //! ItemNum <= 0 or ItemNum > NbItemsPerClass(ClassNum)
   Standard_EXPORT Standard_Integer Item (const Standard_Integer ClassNum, const Standard_Integer ItemNum) const;
 
+  Standard_EXPORT virtual void OwnRead (IGESFile_Reader &) Standard_OVERRIDE;
+  
+  Standard_EXPORT virtual void OwnWrite (IGESData_IGESWriter &) const Standard_OVERRIDE;
+  
+  Standard_EXPORT virtual IGESData_DirChecker DirChecker () const Standard_OVERRIDE;
 
-
+  Standard_EXPORT virtual void OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &, const Standard_Integer) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESDefs_AssociativityDef,IGESData_IGESEntity)
 
-protected:
+ private:
 
-
-
-
-private:
-
-
-  Handle(TColStd_HArray1OfInteger) theBackPointerReqs;
-  Handle(TColStd_HArray1OfInteger) theClassOrders;
-  Handle(TColStd_HArray1OfInteger) theNbItemsPerClass;
-  Handle(IGESBasic_HArray1OfHArray1OfInteger) theItems;
-
-
+  Standard_Integer myForm;
+  Handle(TColStd_HArray1OfInteger) myBackPointerReqs;
+  Handle(TColStd_HArray1OfInteger) myClassOrders;
+  Handle(TColStd_HArray1OfInteger) myNbItemsPerClass;
+  Handle(IGESBasic_HArray1OfHArray1OfInteger) myItems;
 };
-
-
-
-
-
-
 
 #endif // _IGESDefs_AssociativityDef_HeaderFile

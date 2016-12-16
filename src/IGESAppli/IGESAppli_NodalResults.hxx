@@ -24,10 +24,6 @@
 class IGESDimen_GeneralNote;
 class IGESAppli_Node;
 
-
-class IGESAppli_NodalResults;
-DEFINE_STANDARD_HANDLE(IGESAppli_NodalResults, IGESData_IGESEntity)
-
 //! defines NodalResults, Type <146>
 //! in package IGESAppli
 //! Used to store the Analysis Data results per FEM Node
@@ -35,36 +31,26 @@ class IGESAppli_NodalResults : public IGESData_IGESEntity
 {
  public:
 
-  IGESAppli_NodalResults() {}
-  
-  //! This method is used to set the fields of the class
-  //! NodalResults
-  //! - aNote              : General Note that describes the
-  //! analysis case
-  //! - aNumber            : Analysis Subcase number
-  //! - aTime              : Analysis time
-  //! - allNodeIdentifiers : Node identifiers for the nodes
-  //! - allNodes           : List of FEM Node Entities
-  //! - allData            : Values of the Finite Element analysis
-  //! result data
-  //! raises exception if Lengths of allNodeIdentifiers, allNodes and
-  //! allData (Cols) are not same
-  Standard_EXPORT void Init (const Handle(IGESDimen_GeneralNote)& aNote, const Standard_Integer aNumber, const Standard_Real aTime, const Handle(TColStd_HArray1OfInteger)& allNodeIdentifiers, const Handle(IGESAppli_HArray1OfNode)& allNodes, const Handle(TColStd_HArray2OfReal)& allData);
-  
-  //! Changes the FormNumber (which indicates Type of Result)
-  //! Error if not in range [0-34]
-  Standard_EXPORT void SetFormNumber (const Standard_Integer form);
+  Standard_EXPORT virtual Standard_Integer TypeNumber() const Standard_OVERRIDE { return 146; }
+
+  Standard_EXPORT virtual Standard_Integer FormNumber() const Standard_OVERRIDE { return myForm; }
+
+  IGESAppli_NodalResults(const Standard_Integer theForm)
+  : myForm(theForm),
+    mySubCaseNum(0),
+    myTime(0.)
+  {}
   
   //! returns the General Note Entity that describes the analysis case
-  const Handle(IGESDimen_GeneralNote) & Note() const { return theNote; }
+  const Handle(IGESDimen_GeneralNote) & Note() const { return myNote; }
 
   //! returns zero if there is no subcase
-  Standard_Integer SubCaseNumber() const { return theSubCaseNum; }
+  Standard_Integer SubCaseNumber() const { return mySubCaseNum; }
 
   //! returns the Analysis time value for this subcase. It is the time
   //! at which transient analysis results occur in the mathematical
   //! FEM model.
-  Standard_Real Time() const { return theTime; }
+  Standard_Real Time() const { return myTime; }
 
   //! returns number of real values in array V for a FEM node
   Standard_EXPORT Standard_Integer NbData() const;
@@ -85,20 +71,29 @@ class IGESAppli_NodalResults : public IGESData_IGESEntity
   //! if (DataNum <=0 or DataNum > NbData())
   Standard_EXPORT Standard_Real Data (const Standard_Integer NodeNum, const Standard_Integer DataNum) const;
 
+  Standard_EXPORT virtual void OwnRead (IGESFile_Reader &) Standard_OVERRIDE;
+  
+  Standard_EXPORT virtual void OwnWrite (IGESData_IGESWriter &) const Standard_OVERRIDE;
+
   Standard_EXPORT virtual void OwnShared(Interface_EntityIterator &theIter) const Standard_OVERRIDE;
 
+  Standard_EXPORT virtual IGESData_DirChecker DirChecker () const Standard_OVERRIDE;
+
   Standard_EXPORT virtual void OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &) const Standard_OVERRIDE;
+
+  Standard_EXPORT virtual void OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &, const Standard_Integer) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESAppli_NodalResults,IGESData_IGESEntity)
 
  private:
 
-  Handle(IGESDimen_GeneralNote) theNote;
-  Standard_Integer theSubCaseNum;
-  Standard_Real theTime;
-  Handle(TColStd_HArray1OfInteger) theNodeIdentifiers;
-  Handle(IGESAppli_HArray1OfNode) theNodes;
-  Handle(TColStd_HArray2OfReal) theData;
+  Standard_Integer myForm;
+  Interface_Pointer<IGESDimen_GeneralNote> myNote;
+  Standard_Integer mySubCaseNum;
+  Standard_Real myTime;
+  Handle(TColStd_HArray1OfInteger) myNodeIdentifiers;
+  Handle(IGESAppli_HArray1OfNode) myNodes;
+  Handle(TColStd_HArray2OfReal) myData;
 };
 
 #endif // _IGESAppli_NodalResults_HeaderFile

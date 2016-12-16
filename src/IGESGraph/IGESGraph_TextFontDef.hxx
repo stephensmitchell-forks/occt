@@ -17,21 +17,11 @@
 #ifndef _IGESGraph_TextFontDef_HeaderFile
 #define _IGESGraph_TextFontDef_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
-#include <Standard_Integer.hxx>
-#include <TColStd_HArray1OfInteger.hxx>
 #include <IGESData_IGESEntity.hxx>
-#include <Standard_Boolean.hxx>
 class TCollection_HAsciiString;
+class TColStd_HArray1OfInteger;
 class IGESBasic_HArray1OfHArray1OfInteger;
-class Standard_DimensionMismatch;
-class Standard_OutOfRange;
 
-
-class IGESGraph_TextFontDef;
-DEFINE_STANDARD_HANDLE(IGESGraph_TextFontDef, IGESData_IGESEntity)
 
 //! defines IGES Text Font Definition Entity, Type <310>
 //! in package IGESGraph
@@ -41,52 +31,38 @@ DEFINE_STANDARD_HANDLE(IGESGraph_TextFontDef, IGESData_IGESEntity)
 //! modification to a subset of characters in another font.
 class IGESGraph_TextFontDef : public IGESData_IGESEntity
 {
+ public:
 
-public:
+  Standard_EXPORT virtual Standard_Integer TypeNumber() const Standard_OVERRIDE { return 310; }
 
-  
-  Standard_EXPORT IGESGraph_TextFontDef();
-  
-  //! This method is used to set the fields of the class
-  //! TextFontDef
-  //! - aFontCode         : Font Code
-  //! - aFontName         : Font Name
-  //! - aSupersededFont   : Number of superseded font
-  //! - aSupersededEntity : Text Definition Entity
-  //! - aScale            : No. of grid units = 1 text height unit
-  //! - allASCIICodes     : ASCII codes for characters
-  //! - allNextCharX & Y  : Grid locations of the next
-  //! character's origin (Integer vals)
-  //! - allPenMotions     : No. of pen motions for the characters
-  //! - allPenFlags       : Pen up/down flags,
-  //! 0 = Down (default), 1 = Up
-  //! - allMovePenToX & Y : Grid locations the pen will move to
-  //! This method initializes the fields of the class TextFontDef.
-  //! An exception is raised if the lengths of allASCIICodes,
-  //! allNextChars, allPenMotions, allPenFlags and allMovePenTo
-  //! are not same.
-  Standard_EXPORT void Init (const Standard_Integer aFontCode, const Handle(TCollection_HAsciiString)& aFontName, const Standard_Integer aSupersededFont, const Handle(IGESGraph_TextFontDef)& aSupersededEntity, const Standard_Integer aScale, const Handle(TColStd_HArray1OfInteger)& allASCIICodes, const Handle(TColStd_HArray1OfInteger)& allNextCharX, const Handle(TColStd_HArray1OfInteger)& allNextCharY, const Handle(TColStd_HArray1OfInteger)& allPenMotions, const Handle(IGESBasic_HArray1OfHArray1OfInteger)& allPenFlags, const Handle(IGESBasic_HArray1OfHArray1OfInteger)& allMovePenToX, const Handle(IGESBasic_HArray1OfHArray1OfInteger)& allMovePenToY);
-  
+  Standard_EXPORT virtual Standard_Integer FormNumber() const Standard_OVERRIDE { return 0; }
+
+  IGESGraph_TextFontDef()
+  : myFontCode(0),
+    mySupersededFontCode(0),
+    myScale(0)
+  {}
+
   //! returns the font code.
-  Standard_EXPORT Standard_Integer FontCode() const;
-  
+  Standard_Integer FontCode() const { return myFontCode; }
+
   //! returns the font name.
-  Standard_EXPORT Handle(TCollection_HAsciiString) FontName() const;
-  
+  const Handle(TCollection_HAsciiString) & FontName() const { return myFontName; }
+
   //! True if this definition supersedes another
   //! TextFontDefinition Entity,
   //! False if it supersedes value.
-  Standard_EXPORT Standard_Boolean IsSupersededFontEntity() const;
-  
+  Standard_Boolean IsSupersededFontEntity() const { return (!mySupersededFontEntity.IsNull()); }
+
   //! returns the font number which this entity modifies.
-  Standard_EXPORT Standard_Integer SupersededFontCode() const;
-  
+  Standard_Integer SupersededFontCode() const { return mySupersededFontCode; }
+
   //! returns the font entity which this entity modifies.
-  Standard_EXPORT Handle(IGESGraph_TextFontDef) SupersededFontEntity() const;
-  
+  const Handle(IGESGraph_TextFontDef) & SupersededFontEntity() const { return mySupersededFontEntity; }
+
   //! returns the number of grid units which equal one text height unit.
-  Standard_EXPORT Standard_Integer Scale() const;
-  
+  Standard_Integer Scale() const { return myScale; }
+
   //! returns the number of characters in this definition.
   Standard_EXPORT Standard_Integer NbCharacters() const;
   
@@ -110,39 +86,32 @@ public:
   
   Standard_EXPORT void NextPenPosition (const Standard_Integer Chnum, const Standard_Integer Motionnum, Standard_Integer& IX, Standard_Integer& IY) const;
 
+  Standard_EXPORT virtual void OwnRead (IGESFile_Reader &) Standard_OVERRIDE;
+  
+  Standard_EXPORT virtual void OwnWrite (IGESData_IGESWriter &) const Standard_OVERRIDE;
 
+  Standard_EXPORT virtual void OwnShared (Interface_EntityIterator &) const Standard_OVERRIDE;
 
+  Standard_EXPORT virtual IGESData_DirChecker DirChecker () const Standard_OVERRIDE;
+
+  Standard_EXPORT virtual void OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &, const Standard_Integer) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESGraph_TextFontDef,IGESData_IGESEntity)
 
-protected:
+ private:
 
-
-
-
-private:
-
-
-  Standard_Integer theFontCode;
-  Handle(TCollection_HAsciiString) theFontName;
-  Standard_Integer theSupersededFontCode;
-  Handle(IGESGraph_TextFontDef) theSupersededFontEntity;
-  Standard_Integer theScale;
-  Handle(TColStd_HArray1OfInteger) theASCIICodes;
-  Handle(TColStd_HArray1OfInteger) theNextCharOriginX;
-  Handle(TColStd_HArray1OfInteger) theNextCharOriginY;
-  Handle(TColStd_HArray1OfInteger) theNbPenMotions;
-  Handle(IGESBasic_HArray1OfHArray1OfInteger) thePenMotions;
-  Handle(IGESBasic_HArray1OfHArray1OfInteger) thePenMovesToX;
-  Handle(IGESBasic_HArray1OfHArray1OfInteger) thePenMovesToY;
-
-
+  Standard_Integer myFontCode;
+  Handle(TCollection_HAsciiString) myFontName;
+  Standard_Integer mySupersededFontCode;
+  Interface_Pointer<IGESGraph_TextFontDef> mySupersededFontEntity;
+  Standard_Integer myScale;
+  Handle(TColStd_HArray1OfInteger) myASCIICodes;
+  Handle(TColStd_HArray1OfInteger) myNextCharOriginX;
+  Handle(TColStd_HArray1OfInteger) myNextCharOriginY;
+  Handle(TColStd_HArray1OfInteger) myNbPenMotions;
+  Handle(IGESBasic_HArray1OfHArray1OfInteger) myPenMotions;
+  Handle(IGESBasic_HArray1OfHArray1OfInteger) myPenMovesToX;
+  Handle(IGESBasic_HArray1OfHArray1OfInteger) myPenMovesToY;
 };
-
-
-
-
-
-
 
 #endif // _IGESGraph_TextFontDef_HeaderFile

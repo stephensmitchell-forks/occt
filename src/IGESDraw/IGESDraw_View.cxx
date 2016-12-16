@@ -19,132 +19,106 @@
 #include <gp_GTrsf.hxx>
 #include <gp_XYZ.hxx>
 #include <IGESData_TransfEntity.hxx>
-#include <IGESData_ViewKindEntity.hxx>
 #include <IGESDraw_View.hxx>
 #include <IGESGeom_Plane.hxx>
-#include <Standard_OutOfRange.hxx>
-#include <Standard_Type.hxx>
+#include <IGESFile_Reader.hxx>
+#include <IGESData_IGESWriter.hxx>
+#include <Interface_EntityIterator.hxx>
+#include <IGESData_DirChecker.hxx>
+#include <Message_Messenger.hxx>
+#include <IGESData_IGESDumper.hxx>
+#include <IGESData_Dump.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESDraw_View,IGESData_ViewKindEntity)
 
-IGESDraw_View::IGESDraw_View ()    {  }
-
-
-// This class inherits from IGESData_ViewKindEntity
-
-    void IGESDraw_View::Init
-  (const Standard_Integer        aViewNum,
-   const Standard_Real           aScale,
-   const Handle(IGESGeom_Plane)& aLeftPlane,
-   const Handle(IGESGeom_Plane)& aTopPlane,
-   const Handle(IGESGeom_Plane)& aRightPlane,
-   const Handle(IGESGeom_Plane)& aBottomPlane,
-   const Handle(IGESGeom_Plane)& aBackPlane,
-   const Handle(IGESGeom_Plane)& aFrontPlane)
-{
-  theViewNumber  = aViewNum;
-  theScaleFactor = aScale;
-  theLeftPlane   = aLeftPlane;
-  theTopPlane    = aTopPlane;
-  theRightPlane  = aRightPlane;
-  theBottomPlane = aBottomPlane;
-  theBackPlane   = aBackPlane;
-  theFrontPlane  = aFrontPlane;
-  InitTypeAndForm(410,0);
-}
-
-    Standard_Boolean IGESDraw_View::IsSingle () const
+Standard_Boolean IGESDraw_View::IsSingle () const
 {
   return Standard_True;
-  // Redefined to return TRUE
 }
 
-    Standard_Integer IGESDraw_View::NbViews () const
-{  return 1;  }
-
-    Handle(IGESData_ViewKindEntity)  IGESDraw_View::ViewItem
-  (const Standard_Integer) const
-{  return Handle(IGESData_ViewKindEntity)::DownCast (This());  }
-
-
-    Standard_Integer IGESDraw_View::ViewNumber () const
+Standard_Integer IGESDraw_View::NbViews () const
 {
-  return theViewNumber;
+  return 1;
 }
 
-    Standard_Real IGESDraw_View::ScaleFactor () const
+Handle(IGESData_ViewKindEntity) IGESDraw_View::ViewItem (const Standard_Integer) const
 {
-  return theScaleFactor;
+  return Handle(IGESData_ViewKindEntity)(this);
 }
 
-    Standard_Boolean IGESDraw_View::HasLeftPlane () const
-{
-  return  (! theLeftPlane.IsNull());
-}
-
-    Handle(IGESGeom_Plane) IGESDraw_View::LeftPlane () const
-{
-  return  theLeftPlane;
-}
-
-    Standard_Boolean IGESDraw_View::HasTopPlane () const
-{
-  return  (! theTopPlane.IsNull());
-}
-
-    Handle(IGESGeom_Plane) IGESDraw_View::TopPlane () const
-{
-  return  theTopPlane;
-}
-
-    Standard_Boolean IGESDraw_View::HasRightPlane () const
-{
-  return  (! theRightPlane.IsNull());
-}
-
-    Handle(IGESGeom_Plane) IGESDraw_View::RightPlane () const
-{
-  return  theRightPlane;
-}
-
-    Standard_Boolean IGESDraw_View::HasBottomPlane () const
-{
-  return  (! theBottomPlane.IsNull());
-}
-
-    Handle(IGESGeom_Plane) IGESDraw_View::BottomPlane () const
-{
-  return  theBottomPlane;
-}
-
-    Standard_Boolean IGESDraw_View::HasBackPlane () const
-{
-  return  (! theBackPlane.IsNull());
-}
-
-    Handle(IGESGeom_Plane) IGESDraw_View::BackPlane () const
-{
-  return  theBackPlane;
-}
-
-    Standard_Boolean IGESDraw_View::HasFrontPlane () const
-{
-  return  (! theFrontPlane.IsNull());
-}
-
-    Handle(IGESGeom_Plane) IGESDraw_View::FrontPlane () const
-{
-  return  theFrontPlane;
-}
-
-    Handle(IGESData_TransfEntity) IGESDraw_View::ViewMatrix () const
-{
-  return (Transf());
-}
-
-    gp_XYZ IGESDraw_View::ModelToView (const gp_XYZ& coords) const
+gp_XYZ IGESDraw_View::ModelToView (const gp_XYZ& coords) const
 {
   gp_XYZ tempCoords = coords;
   Location().Transforms(tempCoords);
   return (tempCoords);
+}
+
+void IGESDraw_View::OwnRead (IGESFile_Reader &PR)
+{
+  PR.ReadInteger(theViewNumber,"View Number");
+
+  theScaleFactor = 1.0;      // Setting to default value of 1.0
+  PR.ReadReal(theScaleFactor,"Scale Factor");
+
+  PR.ReadPointer(theLeftPlane,"Left Side Of View Volume",Standard_True);
+  PR.ReadPointer(theTopPlane,"Top Side Of View Volume",Standard_True);
+  PR.ReadPointer(theRightPlane,"Right Side Of View Volume",Standard_True);
+  PR.ReadPointer(theBottomPlane,"Bottom Side Of View Volume",Standard_True);
+  PR.ReadPointer(theBackPlane,"Back Side Of View Volume",Standard_True);
+  PR.ReadPointer(theFrontPlane,"Front Side Of View Volume",Standard_True);
+}
+
+void IGESDraw_View::OwnWrite (IGESData_IGESWriter &IW) const
+{
+  IW.Send(theViewNumber);
+  IW.Send(theScaleFactor);
+  IW.Send(theLeftPlane);
+  IW.Send(theTopPlane);
+  IW.Send(theRightPlane);
+  IW.Send(theBottomPlane);
+  IW.Send(theBackPlane);
+  IW.Send(theFrontPlane);
+}
+
+void IGESDraw_View::OwnShared (Interface_EntityIterator &iter) const
+{
+  iter.GetOneItem(theLeftPlane);
+  iter.GetOneItem(theTopPlane);
+  iter.GetOneItem(theRightPlane);
+  iter.GetOneItem(theBottomPlane);
+  iter.GetOneItem(theBackPlane);
+  iter.GetOneItem(theFrontPlane);
+}
+
+IGESData_DirChecker IGESDraw_View::DirChecker () const
+{
+  IGESData_DirChecker DC(410, 0);
+  DC.Structure(IGESData_DefVoid);
+  DC.LineFont(IGESData_DefVoid);
+  DC.LineWeight(IGESData_DefVoid);
+  DC.Color(IGESData_DefVoid);
+  DC.BlankStatusIgnored();
+  DC.UseFlagRequired(1);
+  DC.HierarchyStatusIgnored();
+  return DC;
+}
+
+void IGESDraw_View::OwnDump (const IGESData_IGESDumper &dumper, const Handle(Message_Messenger) &S, const Standard_Integer level) const
+{
+  const Standard_Integer tempSubLevel = (level <= 4) ? 0 : 1;
+  S << "IGESDraw_View" << endl;
+  S << "View Number  : " << theViewNumber  << endl;
+  S << "Scale Factor : " << theScaleFactor << endl;
+  S << "Left Plane Of View Volume   : ";
+  dumper.Dump(theLeftPlane,S,tempSubLevel);    S << endl;
+  S << "Top Plane Of View Volume    : ";
+  dumper.Dump(theTopPlane,S,tempSubLevel);     S << endl;
+  S << "Right Plane Of View Volume  : ";
+  dumper.Dump(theRightPlane,S,tempSubLevel);   S << endl;
+  S << "Bottom Plane Of View Volume : ";
+  dumper.Dump(theBottomPlane,S,tempSubLevel);  S << endl;
+  S << "Back Plane Of View Volume   : ";
+  dumper.Dump(theBackPlane,S,tempSubLevel);    S << endl;
+  S << "Front Plane Of View Volume  : ";
+  dumper.Dump(theFrontPlane,S,tempSubLevel);   S << endl;
 }

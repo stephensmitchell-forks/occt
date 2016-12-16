@@ -20,27 +20,64 @@
 #include <IGESData_LevelListEntity.hxx>
 #include <Standard_Type.hxx>
 #include <TCollection_HAsciiString.hxx>
+#include <IGESFile_Reader.hxx>
+#include <IGESData_IGESWriter.hxx>
+#include <Message_Messenger.hxx>
+#include <IGESData_DirChecker.hxx>
+#include <IGESData_IGESDumper.hxx>
+#include <IGESData_Dump.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESAppli_ReferenceDesignator,IGESData_IGESEntity)
 
-void IGESAppli_ReferenceDesignator::Init
-  (const Standard_Integer nbPropVal,
-   const Handle(TCollection_HAsciiString)& aText)
+void IGESAppli_ReferenceDesignator::OwnRead (IGESFile_Reader &theReader)
 {
-  theRefDesigText     = aText;
-  theNbPropertyValues = nbPropVal;
-  InitTypeAndForm(406,7);
+  Standard_Integer aNbPropertyValues = 1;
+  if (theReader.ReadInteger(aNbPropertyValues,"Number of property values") == IGESFile_Reader::ParamError || aNbPropertyValues != 1)
+    theReader.AddFail("Number of Property Values != 1");
+  theReader.ReadText(myRefDesigText,"ReferenceDesignator");
+}
+
+void IGESAppli_ReferenceDesignator::OwnWrite (IGESData_IGESWriter &IW) const
+{
+  IW.Send(1);
+  IW.Send(myRefDesigText);
+}
+
+IGESData_DirChecker IGESAppli_ReferenceDesignator::DirChecker () const
+{
+  //UNFINISHED
+  IGESData_DirChecker DC(406,7);  //Form no = 7 & Type = 406
+  DC.Structure(IGESData_DefVoid);
+  DC.GraphicsIgnored();
+  DC.BlankStatusIgnored();
+  DC.UseFlagIgnored();
+  DC.HierarchyStatusIgnored();
+  return DC;
 }
 
 void IGESAppli_ReferenceDesignator::OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &theCheck) const
 {
   if (SubordinateStatus() != 0)
-    //the level is ignored if this property is subordinate
     if (DefLevel() != IGESData_DefOne &&
 	    DefLevel() != IGESData_DefSeveral)
       theCheck->AddFail("Level type: Not value/reference");
-  if (NbPropertyValues() != 1)
-    theCheck->AddFail("Number of Property Values != 1");
-  //UNFINISHED
-  //the level is ignored if this property is subordinate -- queried
+}
+
+Standard_Boolean IGESAppli_ReferenceDesignator::OwnCorrect ()
+{
+  if (SubordinateStatus() != 0) {
+    Handle(IGESData_LevelListEntity) nulevel;
+    InitLevel(nulevel,0);
+    return Standard_True;
+  }
+  return Standard_False;
+}
+
+void IGESAppli_ReferenceDesignator::OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &S, const Standard_Integer) const
+{
+  S << "IGESAppli_ReferenceDesignator" << endl;
+  S << "Number of Property Values : 1" << endl;
+  S << "ReferenceDesignator : ";
+  IGESData_DumpString(S,myRefDesigText);
+  S << endl;
 }

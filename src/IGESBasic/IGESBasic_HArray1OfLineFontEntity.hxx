@@ -17,11 +17,9 @@
 #ifndef IGESBasic_HArray1OfLineFontEntity_HeaderFile
 #define IGESBasic_HArray1OfLineFontEntity_HeaderFile
 
-#include <IGESData_LineFontEntity.hxx>
 #include <IGESBasic_Array1OfLineFontEntity.hxx>
 #include <NCollection_DefineHArray1.hxx>
 
 DEFINE_HARRAY1(IGESBasic_HArray1OfLineFontEntity, IGESBasic_Array1OfLineFontEntity)
-
 
 #endif

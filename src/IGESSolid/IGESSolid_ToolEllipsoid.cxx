@@ -40,79 +40,69 @@ void  IGESSolid_ToolEllipsoid::ReadOwnParams
    const Handle(IGESData_IGESReaderData)& /* IR */, IGESData_ParamReader& PR) const
 {
   gp_XYZ tempSize, tempCenter, tempXAxis, tempZAxis;
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
   Standard_Real tempreal;
 
-  PR.ReadXYZ(PR.CurrentList(1, 3), "Size", tempSize); //szv#4:S4163:12Mar99 `st=` not needed
+  PR.ReadXYZ(tempSize,"Size");
 
   if (PR.DefinedElseSkip())
     {
-      //st = PR.ReadReal(PR.Current(), "Center Point (X)", tempreal); //szv#4:S4163:12Mar99 moved in if
-      if (PR.ReadReal(PR.Current(), "Center Point (X)", tempreal))
+      if (PR.ReadReal(tempreal,"Center Point (X)"))
 	tempCenter.SetX(tempreal);
     }
   else  tempCenter.SetX(0.0);
 
   if (PR.DefinedElseSkip())
     {
-      //st = PR.ReadReal(PR.Current(), "Center Point (Y)", tempreal); //szv#4:S4163:12Mar99 moved in if
-      if (PR.ReadReal(PR.Current(), "Center Point (Y)", tempreal))
+      if (PR.ReadReal(tempreal,"Center Point (Y)"))
 	tempCenter.SetY(tempreal);
     }
   else  tempCenter.SetY(0.0);
 
   if (PR.DefinedElseSkip())
     {
-      //st = PR.ReadReal(PR.Current(), "Center Point (Z)", tempreal); //szv#4:S4163:12Mar99 moved in if
-      if (PR.ReadReal(PR.Current(), "Center Point (Z)", tempreal))
+      if (PR.ReadReal(tempreal,"Center Point (Z)"))
 	tempCenter.SetZ(tempreal);
     }
   else  tempCenter.SetZ(0.0);
 
   if (PR.DefinedElseSkip())
     {
-      //st = PR.ReadReal(PR.Current(), "Local X axis (I)", tempreal); //szv#4:S4163:12Mar99 moved in if
-      if (PR.ReadReal(PR.Current(), "Local X axis (I)", tempreal))
+      if (PR.ReadReal(tempreal,"Local X axis (I)"))
 	tempXAxis.SetX(tempreal);
     }
   else  tempXAxis.SetX(1.0);
 
   if (PR.DefinedElseSkip())
     {
-      //st = PR.ReadReal(PR.Current(), "Local X axis (J)", tempreal); //szv#4:S4163:12Mar99 moved in if
-      if (PR.ReadReal(PR.Current(), "Local X axis (J)", tempreal))
+      if (PR.ReadReal(tempreal,"Local X axis (J)"))
 	tempXAxis.SetY(tempreal);
     }
   else  tempXAxis.SetY(0.0);
 
   if (PR.DefinedElseSkip())
     {
-      //st = PR.ReadReal(PR.Current(), "Local X axis (K)", tempreal); //szv#4:S4163:12Mar99 moved in if
-      if (PR.ReadReal(PR.Current(), "Local X axis (K)", tempreal))
+      if (PR.ReadReal(tempreal,"Local X axis (K)"))
 	tempXAxis.SetZ(tempreal);
     }
   else  tempXAxis.SetZ(0.0);
 
   if (PR.DefinedElseSkip())
     {
-      //st = PR.ReadReal(PR.Current(), "Local Z axis (I)", tempreal); //szv#4:S4163:12Mar99 moved in if
-      if (PR.ReadReal(PR.Current(), "Local Z axis (I)", tempreal))
+      if (PR.ReadReal(tempreal,"Local Z axis (I)"))
 	tempZAxis.SetX(tempreal);
     }
   else  tempZAxis.SetX(0.0);
 
   if (PR.DefinedElseSkip())
     {
-      //st = PR.ReadReal(PR.Current(), "Local Z axis (J)", tempreal); //szv#4:S4163:12Mar99 moved in if
-      if (PR.ReadReal(PR.Current(), "Local Z axis (J)", tempreal))
+      if (PR.ReadReal(tempreal,"Local Z axis (J)"))
 	tempZAxis.SetY(tempreal);
     }
   else  tempZAxis.SetY(0.0);
 
   if (PR.DefinedElseSkip())
     {
-      //st = PR.ReadReal(PR.Current(), "Local Z axis (K)", tempreal); //szv#4:S4163:12Mar99 moved in if
-      if (PR.ReadReal(PR.Current(), "Local Z axis (K)", tempreal))
+      if (PR.ReadReal(tempreal,"Local Z axis (K)"))
 	tempZAxis.SetZ(tempreal);
     }
   else  tempZAxis.SetZ(1.0);

@@ -42,55 +42,48 @@ void  IGESSolid_ToolTorus::ReadOwnParams
   Standard_Real r1, r2;
   Standard_Real tempreal;
   gp_XYZ tempPoint, tempAxis;
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
 
-  PR.ReadReal(PR.Current(), "Radius of revolution", r1); //szv#4:S4163:12Mar99 `st=` not needed
-  PR.ReadReal(PR.Current(), "Radius of disc", r2); //szv#4:S4163:12Mar99 `st=` not needed
+  PR.ReadReal(r1,"Radius of revolution");
+  PR.ReadReal(r2,"Radius of disc");
 
   if (PR.DefinedElseSkip())
     {
-      //st = PR.ReadReal(PR.Current(), "Center Point (X)", tempreal); //szv#4:S4163:12Mar99 moved in if
-      if (PR.ReadReal(PR.Current(), "Center Point (X)", tempreal))
+      if (PR.ReadReal(tempreal,"Center Point (X)"))
 	tempPoint.SetX(tempreal);
     }
   else  tempPoint.SetX(0.0);
 
   if (PR.DefinedElseSkip())
     {
-      //st = PR.ReadReal(PR.Current(), "Center Point (Y)", tempreal); //szv#4:S4163:12Mar99 moved in if
-      if (PR.ReadReal(PR.Current(), "Center Point (Y)", tempreal))
+      if (PR.ReadReal(tempreal,"Center Point (Y)"))
 	tempPoint.SetY(tempreal);
     }
   else  tempPoint.SetY(0.0);
 
   if (PR.DefinedElseSkip())
     {
-      //st = PR.ReadReal(PR.Current(), "Center Point (Z)", tempreal); //szv#4:S4163:12Mar99 moved in if
-      if (PR.ReadReal(PR.Current(), "Center Point (Z)", tempreal))
+      if (PR.ReadReal(tempreal,"Center Point (Z)"))
 	tempPoint.SetZ(tempreal);
     }
   else  tempPoint.SetZ(0.0);
 
   if (PR.DefinedElseSkip())
     {
-      //st = PR.ReadReal(PR.Current(), "Axis direction (I)", tempreal); //szv#4:S4163:12Mar99 moved in if
-      if (PR.ReadReal(PR.Current(), "Axis direction (I)", tempreal))
+      if (PR.ReadReal(tempreal,"Axis direction (I)"))
 	tempAxis.SetX(tempreal);
     }
   else  tempAxis.SetX(0.0);
 
   if (PR.DefinedElseSkip())
     {
-      //st = PR.ReadReal(PR.Current(), "Axis direction (J)", tempreal); //szv#4:S4163:12Mar99 moved in if
-      if (PR.ReadReal(PR.Current(), "Axis direction (J)", tempreal))
+      if (PR.ReadReal(tempreal,"Axis direction (J)"))
 	tempAxis.SetY(tempreal);
     }
   else  tempAxis.SetY(0.0);
 
   if (PR.DefinedElseSkip())
     {
-      //st = PR.ReadReal(PR.Current(), "Axis direction (K)", tempreal); //szv#4:S4163:12Mar99 moved in if
-      if (PR.ReadReal(PR.Current(), "Axis direction (K)", tempreal))
+      if (PR.ReadReal(tempreal,"Axis direction (K)"))
 	tempAxis.SetZ(tempreal);
     }
   else  tempAxis.SetZ(1.0);

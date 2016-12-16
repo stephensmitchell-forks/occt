@@ -158,13 +158,6 @@ Standard_Integer StepFile_Read
 //   Analyse : par StepReaderTool
 
   StepData_StepReaderTool readtool (undirec,protocol);
-  readtool.Prepare();
-
-#ifdef CHRONOMESURE
-  sout << "      ... Parameters prepared ... "; 
-  c.Show(); 
-#endif
-
   readtool.LoadModel(stepmodel);
   if (stepmodel->Protocol().IsNull()) stepmodel->SetProtocol (protocol);
   lir_file_fin(2);

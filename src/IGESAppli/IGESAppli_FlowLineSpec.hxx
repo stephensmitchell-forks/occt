@@ -33,12 +33,11 @@ class IGESAppli_FlowLineSpec : public IGESData_IGESEntity
 {
  public:
 
+  Standard_EXPORT virtual Standard_Integer TypeNumber() const Standard_OVERRIDE { return 406; }
+
+  Standard_EXPORT virtual Standard_Integer FormNumber() const Standard_OVERRIDE { return 14; }
+
   IGESAppli_FlowLineSpec() {}
-  
-  //! This method is used to set the fields of the class
-  //! FlowLineSpec
-  //! - allProperties : primary flow line specification and modifiers
-  Standard_EXPORT void Init (const Handle(Interface_HArray1OfHAsciiString)& allProperties);
   
   //! returns the number of property values
   Standard_EXPORT Standard_Integer NbPropertyValues() const;
@@ -50,11 +49,19 @@ class IGESAppli_FlowLineSpec : public IGESData_IGESEntity
   //! raises exception if Index <= 1 or Index > NbPropertyValues
   Standard_EXPORT const Handle(TCollection_HAsciiString) & Modifier (const Standard_Integer Index) const;
 
+  Standard_EXPORT virtual void OwnRead (IGESFile_Reader &) Standard_OVERRIDE;
+  
+  Standard_EXPORT virtual void OwnWrite (IGESData_IGESWriter &) const Standard_OVERRIDE;
+
+  Standard_EXPORT virtual IGESData_DirChecker DirChecker () const Standard_OVERRIDE;
+
+  Standard_EXPORT virtual void OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &, const Standard_Integer) const Standard_OVERRIDE;
+
   DEFINE_STANDARD_RTTIEXT(IGESAppli_FlowLineSpec,IGESData_IGESEntity)
 
  private:
 
-  Handle(Interface_HArray1OfHAsciiString) theNameAndModifiers;
+  Handle(Interface_HArray1OfHAsciiString) myNameAndModifiers;
 };
 
 #endif // _IGESAppli_FlowLineSpec_HeaderFile

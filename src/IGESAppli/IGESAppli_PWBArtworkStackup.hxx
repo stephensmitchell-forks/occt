@@ -37,20 +37,19 @@ class IGESAppli_PWBArtworkStackup : public IGESData_IGESEntity
 {
  public:
 
-  IGESAppli_PWBArtworkStackup() {}
-  
-  //! This method is used to set the fields of the class
-  //! PWBArtworkStackup
-  //! - nbPropVal    : number of property values
-  //! - anArtIdent   : Artwork Stackup Identification
-  //! - allLevelNums : Level Numbers
-  Standard_EXPORT void Init (const Standard_Integer nbPropVal, const Handle(TCollection_HAsciiString)& anArtIdent, const Handle(TColStd_HArray1OfInteger)& allLevelNums);
+  Standard_EXPORT virtual Standard_Integer TypeNumber() const Standard_OVERRIDE { return 406; }
+
+  Standard_EXPORT virtual Standard_Integer FormNumber() const Standard_OVERRIDE { return 25; }
+
+  IGESAppli_PWBArtworkStackup()
+  : myNbPropertyValues(0)
+  {}
   
   //! returns number of property values
-  Standard_Integer NbPropertyValues() const { return theNbPropertyValues; }
+  Standard_Integer NbPropertyValues() const { return myNbPropertyValues; }
 
   //! returns Artwork Stackup Identification
-  const Handle(TCollection_HAsciiString) & Identification() const { return theArtworkStackupIdent; }
+  const Handle(TCollection_HAsciiString) & Identification() const { return myArtworkStackupIdent; }
 
   //! returns total number of Level Numbers
   Standard_EXPORT Standard_Integer NbLevelNumbers() const;
@@ -59,13 +58,21 @@ class IGESAppli_PWBArtworkStackup : public IGESData_IGESEntity
   //! raises exception if Index <= 0 or Index > NbLevelNumbers
   Standard_EXPORT Standard_Integer LevelNumber (const Standard_Integer Index) const;
 
+  Standard_EXPORT virtual void OwnRead (IGESFile_Reader &) Standard_OVERRIDE;
+  
+  Standard_EXPORT virtual void OwnWrite (IGESData_IGESWriter &) const Standard_OVERRIDE;
+
+  Standard_EXPORT virtual IGESData_DirChecker DirChecker () const Standard_OVERRIDE;
+
+  Standard_EXPORT virtual void OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &, const Standard_Integer) const Standard_OVERRIDE;
+
   DEFINE_STANDARD_RTTIEXT(IGESAppli_PWBArtworkStackup,IGESData_IGESEntity)
 
  private:
 
-  Standard_Integer theNbPropertyValues;
-  Handle(TCollection_HAsciiString) theArtworkStackupIdent;
-  Handle(TColStd_HArray1OfInteger) theLevelNumbers;
+  Standard_Integer myNbPropertyValues;
+  Handle(TCollection_HAsciiString) myArtworkStackupIdent;
+  Handle(TColStd_HArray1OfInteger) myLevelNumbers;
 };
 
 #endif // _IGESAppli_PWBArtworkStackup_HeaderFile

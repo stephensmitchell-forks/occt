@@ -18,22 +18,49 @@
 
 #include <IGESAppli_LineWidening.hxx>
 #include <IGESData_LevelListEntity.hxx>
+#include <IGESFile_Reader.hxx>
+#include <IGESData_IGESWriter.hxx>
+#include <Message_Messenger.hxx>
+#include <IGESData_DirChecker.hxx>
+#include <IGESData_IGESDumper.hxx>
+#include <IGESData_Dump.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESAppli_LineWidening,IGESData_IGESEntity)
 
-void IGESAppli_LineWidening::Init
-  (const Standard_Integer nbPropVal,
-   const Standard_Real    aWidth,    const Standard_Integer aCornering,
-   const Standard_Integer aExtnFlag, const Standard_Integer aJustifFlag,
-   const Standard_Real    aExtnVal)
+void IGESAppli_LineWidening::OwnRead (IGESFile_Reader &theReader)
 {
-  theNbPropertyValues  = nbPropVal;
-  theWidth             = aWidth;
-  theCorneringCode     = aCornering;
-  theExtensionFlag     = aExtnFlag;
-  theJustificationFlag = aJustifFlag;
-  theExtensionValue    = aExtnVal;
-  InitTypeAndForm(406,5);
+  Standard_Integer aNbPropertyValues = 5;
+  if (theReader.ReadInteger(aNbPropertyValues,"No. of Property values") == IGESFile_Reader::ParamError || aNbPropertyValues != 5)
+    theReader.AddFail("Number of Property Values != 5");
+  theReader.ReadReal(myWidth,"Width of metalization");
+  theReader.ReadInteger(myCorneringCode,"Cornering code");
+  theReader.ReadInteger(myExtensionFlag,"Extension Flag");
+  theReader.ReadInteger(myJustificationFlag,"Justification Flag");
+  myExtensionValue = 0.;
+  if (theReader.ReadReal(myExtensionValue,"Extension value") != IGESFile_Reader::ParamOK)
+    if (myExtensionFlag == 2)
+      theReader.AddFail("Extension Value not defined while Extension Flag = 2");
+}
+
+void IGESAppli_LineWidening::OwnWrite (IGESData_IGESWriter &IW) const
+{
+  IW.Send(5);
+  IW.Send(myWidth);
+  IW.Send(myCorneringCode);
+  IW.Send(myExtensionFlag);
+  IW.Send(myJustificationFlag);
+  IW.Send(myExtensionValue);
+}
+
+IGESData_DirChecker IGESAppli_LineWidening::DirChecker () const
+{
+  IGESData_DirChecker DC(406,5);  //Form no = 5 & Type = 406
+  DC.Structure(IGESData_DefVoid);
+  DC.GraphicsIgnored();
+  DC.BlankStatusIgnored();
+  DC.UseFlagIgnored();
+  DC.HierarchyStatusIgnored();
+  return DC;
 }
 
 void IGESAppli_LineWidening::OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &theCheck) const
@@ -42,12 +69,50 @@ void IGESAppli_LineWidening::OwnCheck (const Interface_ShareTool &, const Handle
     if (DefLevel() == IGESData_DefOne ||
 	    DefLevel() == IGESData_DefSeveral)
       theCheck->AddWarning("Level type: defined while ignored");
-  if (NbPropertyValues() != 5)
-    theCheck->AddFail("Number of Property Values != 5");
-  if (CorneringCode() != 0 && CorneringCode() != 1)
+
+  if (myCorneringCode != 0 && myCorneringCode != 1)
     theCheck->AddFail("Cornering Code incorrect");
-  if (ExtensionFlag() < 0 || ExtensionFlag() > 2)
+  if (myExtensionFlag < 0 || myExtensionFlag > 2)
     theCheck->AddFail("Extension Flag value incorrect");
-  if (JustificationFlag() < 0 || JustificationFlag() > 2)
+  if (myJustificationFlag < 0 || myJustificationFlag > 2)
     theCheck->AddFail("Justification Flag value incorrect");
+}
+
+Standard_Boolean IGESAppli_LineWidening::OwnCorrect ()
+{
+  if (SubordinateStatus() != 0) {
+    Handle(IGESData_LevelListEntity) nulevel;
+    InitLevel(nulevel,0);
+    return Standard_True;
+  }
+  return Standard_False;
+}
+
+void IGESAppli_LineWidening::OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &S, const Standard_Integer) const
+{
+  S << "IGESAppli_LineWidening" << endl;
+  S << "Number of property values : 5" << endl;
+  S << "Width of metalization : " << myWidth << endl;
+
+  S << "Cornering Code : " ;
+  if      (myCorneringCode == 0) S << "0 (rounded)" << endl;
+  else if (myCorneringCode == 1) S << "1 (squared)" << endl;
+  else    S << "incorrect value" << endl;
+
+  S << "Extension Flag : " ;
+  if      (myExtensionFlag == 0) S << "0 (No Extension)" << endl;
+  else if (myExtensionFlag == 1) S << "1 (One-half width extension)" << endl;
+  else if (myExtensionFlag == 2) S << "2 (Extension set by ExtensionValue)" << endl;
+  else    S << "incorrect value" << endl;
+
+  S << "Justification Flag : " ;
+  if      (myJustificationFlag == 0) S << "0 (centre justified)" << endl;
+  else if (myJustificationFlag == 1) S << "1 (left justified)" << endl;
+  else if (myJustificationFlag == 2) S << "2 (right justified)" << endl;
+  else    S << "incorrect value" << endl;
+
+  if (myExtensionFlag == 2)
+    S << "Extension Value : " << myExtensionValue << endl;
+  else
+    S << "No Extension Value (Extension Flag != 2)" << endl;
 }

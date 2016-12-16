@@ -42,7 +42,7 @@ void  IGESBasic_ToolExternalReferenceFile::ReadOwnParams
   //Standard_Boolean st; //szv#4:S4163:12Mar99 moved down
   Standard_Integer num;
   Handle(Interface_HArray1OfHAsciiString) tempNames;
-  Standard_Boolean st = PR.ReadInteger(PR.Current(), "Number of list entries", num);
+  Standard_Boolean st = PR.ReadInteger(num,"Number of list entries");
   if (st && num > 0) tempNames = new Interface_HArray1OfHAsciiString(1, num);
   else  PR.AddFail("Number of list entries: Not Positive");
   if (!tempNames.IsNull())

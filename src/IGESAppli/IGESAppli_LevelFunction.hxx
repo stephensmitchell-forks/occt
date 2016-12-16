@@ -32,36 +32,35 @@ class IGESAppli_LevelFunction : public IGESData_IGESEntity
 {
  public:
 
-  IGESAppli_LevelFunction() {}
-  
-  //! This method is used to set the fields of the class
-  //! LevelFunction
-  //! - nbPropVal    : Number of Properties, always = 2
-  //! - aCode        : Function Description code
-  //! default = 0
-  //! - aFuncDescrip : Function Description
-  //! default = null string
-  Standard_EXPORT void Init (const Standard_Integer nbPropVal, const Standard_Integer aCode, const Handle(TCollection_HAsciiString)& aFuncDescrip);
-  
-  //! is always 2
-  Standard_Integer NbPropertyValues() const { return theNbPropertyValues; }
+  Standard_EXPORT virtual Standard_Integer TypeNumber() const Standard_OVERRIDE { return 406; }
+
+  Standard_EXPORT virtual Standard_Integer FormNumber() const Standard_OVERRIDE { return 3; }
+
+  IGESAppli_LevelFunction()
+  : myFuncDescripCode(0)
+  {}
 
   //! returns the function description code . Default = 0
-  Standard_Integer FuncDescriptionCode() const { return theFuncDescripCode; }
+  Standard_Integer FuncDescriptionCode() const { return myFuncDescripCode; }
 
   //! returns the function description
   //! Default = null string
-  const Handle(TCollection_HAsciiString) & FuncDescription() const { return theFuncDescrip; }
+  const Handle(TCollection_HAsciiString) & FuncDescription() const { return myFuncDescrip; }
 
-  Standard_EXPORT virtual void OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &) const Standard_OVERRIDE;
+  Standard_EXPORT virtual void OwnRead (IGESFile_Reader &) Standard_OVERRIDE;
+
+  Standard_EXPORT virtual void OwnWrite (IGESData_IGESWriter &) const Standard_OVERRIDE;
+
+  Standard_EXPORT virtual IGESData_DirChecker DirChecker () const Standard_OVERRIDE;
+
+  Standard_EXPORT virtual void OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &, const Standard_Integer) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESAppli_LevelFunction,IGESData_IGESEntity)
 
  private:
 
-  Standard_Integer theNbPropertyValues;
-  Standard_Integer theFuncDescripCode;
-  Handle(TCollection_HAsciiString) theFuncDescrip;
+  Standard_Integer myFuncDescripCode;
+  Handle(TCollection_HAsciiString) myFuncDescrip;
 };
 
 #endif // _IGESAppli_LevelFunction_HeaderFile

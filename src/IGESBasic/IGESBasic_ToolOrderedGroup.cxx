@@ -39,21 +39,11 @@ void  IGESBasic_ToolOrderedGroup::ReadOwnParams
   (const Handle(IGESBasic_OrderedGroup)& ent,
    const Handle(IGESData_IGESReaderData)& IR, IGESData_ParamReader& PR) const
 {
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
   Standard_Integer nbval = 0;
   Handle(IGESData_HArray1OfIGESEntity)  EntArray;
 
-  if (PR.ReadInteger( PR.Current(), "Count of Entities", nbval)) { //szv#4:S4163:12Mar99 `st=` not needed
-    PR.ReadEnts (IR,PR.CurrentList(nbval),"Entities",EntArray); //szv#4:S4163:12Mar99 `st=` not needed
-/*
-    EntArray = new IGESData_HArray1OfIGESEntity(1,nbval);
-    for (Standard_Integer i = 1;i <= nbval;i++)
-      {
-	Handle(IGESData_IGESEntity) anent;
-	st = PR.ReadEntity (IR,PR.Current(),"Element of the Group",anent,Standard_True);
-	if (st) EntArray->SetValue(i,anent);
-      }
-*/
+  if (PR.ReadInteger(nbval,"Count of Entities")) {
+    PR.ReadEnts (IR,PR.CurrentList(nbval),"Entities",EntArray);
   }
   DirChecker(ent).CheckTypeAndForm(PR.CCheck(),ent);
   ent->Init(EntArray);

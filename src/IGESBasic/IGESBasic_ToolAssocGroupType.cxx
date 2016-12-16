@@ -38,16 +38,15 @@ void  IGESBasic_ToolAssocGroupType::ReadOwnParams
   (const Handle(IGESBasic_AssocGroupType)& ent,
    const Handle(IGESData_IGESReaderData)& /* IR */, IGESData_ParamReader& PR) const
 {
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
   Standard_Integer tempNbData;
   Standard_Integer tempType;
   Handle(TCollection_HAsciiString) tempName;
   if (PR.DefinedElseSkip())
-    PR.ReadInteger(PR.Current(), "Number of data fields", tempNbData); //szv#4:S4163:12Mar99 `st=` not needed
+    PR.ReadInteger(tempNbData,"Number of data fields");
   else
     tempNbData = 2;
-  PR.ReadInteger(PR.Current(), "Type of attached associativity",tempType); //szv#4:S4163:12Mar99 `st=` not needed
-  PR.ReadText(PR.Current(), "Name of attached associativity", tempName); //szv#4:S4163:12Mar99 `st=` not needed
+  PR.ReadInteger(tempType,"Type of attached associativity");
+  PR.ReadText("Name of attached associativity", tempName);
   DirChecker(ent).CheckTypeAndForm(PR.CCheck(),ent);
   ent->Init(tempNbData, tempType, tempName);
 }

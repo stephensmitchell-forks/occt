@@ -41,33 +41,13 @@ DEFINE_STANDARD_HANDLE(IGESData_UndefinedEntity, IGESData_IGESEntity)
 //! it, and each corrupted field has an associated error flag
 class IGESData_UndefinedEntity : public IGESData_IGESEntity
 {
+ public:
 
-public:
-
-  
   //! creates an unknown entity
   Standard_EXPORT IGESData_UndefinedEntity();
   
   //! Returns own data as an UndefinedContent
-  Standard_EXPORT Handle(Interface_UndefinedContent) UndefinedContent() const;
-  
-  //! Returns own data as an UndefinedContent, in order to touch it
-  Standard_EXPORT Handle(Interface_UndefinedContent) ChangeableContent();
-  
-  //! Redefines a completely new UndefinedContent
-  //! Used by a Copy which begins by ShallowCopy, for instance
-  Standard_EXPORT void SetNewContent (const Handle(Interface_UndefinedContent)& cont);
-  
-  //! says if DirPart is OK or not (if not, it is erroneous)
-  //! Note that if it is not, Def* methods can return Error status
-  Standard_EXPORT Standard_Boolean IsOKDirPart() const;
-  
-  //! returns Directory Error Status (used for Copy)
-  Standard_EXPORT Standard_Integer DirStatus() const;
-  
-  //! Erases the Directory Error Status
-  //! Warning : Be sure that data are consistent to call this method ...
-  Standard_EXPORT void SetOKDirPart();
+  const Handle(Interface_UndefinedContent) & UndefinedContent() const { return thecont; }
   
   //! returns Error status if necessary, else calls original method
   Standard_EXPORT virtual IGESData_DefType DefLineFont() const Standard_OVERRIDE;
@@ -103,29 +83,16 @@ public:
   //! writes parameters to IGESWriter, taken from UndefinedContent
   Standard_EXPORT virtual void WriteOwnParams (IGESData_IGESWriter& IW) const;
 
-
-
+  Standard_EXPORT virtual void OwnShared (Interface_EntityIterator &) const Standard_OVERRIDE;
+  
+  Standard_EXPORT virtual void OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &, const Standard_Integer) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESData_UndefinedEntity,IGESData_IGESEntity)
 
-protected:
-
-
-
-
-private:
-
+ private:
 
   Standard_Integer thedstat;
   Handle(Interface_UndefinedContent) thecont;
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESData_UndefinedEntity_HeaderFile

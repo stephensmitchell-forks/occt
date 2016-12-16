@@ -19,9 +19,6 @@
 #include <IGESData_LabelDisplayEntity.hxx>
 #include <IGESData_LevelListEntity.hxx>
 #include <IGESData_LineFontEntity.hxx>
-#include <IGESData_Protocol.hxx>
-#include <IGESData_SpecificLib.hxx>
-#include <IGESData_SpecificModule.hxx>
 #include <IGESData_TransfEntity.hxx>
 #include <IGESData_ViewKindEntity.hxx>
 #include <Interface_EntityIterator.hxx>
@@ -31,22 +28,13 @@
 #include <Message_Messenger.hxx>
 #include <TCollection_HAsciiString.hxx>
 
-IGESData_IGESDumper::IGESData_IGESDumper
-  (const Handle(IGESData_IGESModel)& model,
-   const Handle(IGESData_Protocol)& protocol)
-      : thelib (protocol)
-      {  themodel = model;  }
-
-
-    void  IGESData_IGESDumper::PrintDNum
-  (const Handle(IGESData_IGESEntity)& ent, const Handle(Message_Messenger)& S) const 
+void IGESData_IGESDumper::PrintDNum (const Handle(IGESData_IGESEntity)& ent, const Handle(Message_Messenger)& S) const
 {
 //   Affichage garanti sur  12 caracteres 12345/D24689
   Standard_Integer num = 0;
   if (!ent.IsNull()) {
     if (themodel.IsNull())                          S<<"    D???    ";
     else if ( (num = themodel->Number(ent)) == 0)   S<<"    0:D?????";
-// Interface_InterfaceError::Raise  ("IGESDumper : PrintDNum");
     else {
       S<<Interface_MSG::Blanks(num,9)<<num<<":D"<<2*num-1<<Interface_MSG::Blanks(2*num-1,9);
     }
@@ -54,10 +42,8 @@ IGESData_IGESDumper::IGESData_IGESDumper
   else                                              S<<"  D0(Null)  ";
 }
 
-    void  IGESData_IGESDumper::PrintShort
-  (const Handle(IGESData_IGESEntity)& ent, const Handle(Message_Messenger)& S) const 
+void IGESData_IGESDumper::PrintShort (const Handle(IGESData_IGESEntity)& ent, const Handle(Message_Messenger)& S) const
 {
-//  PrintDNum(ent,S);
   if (!ent.IsNull()) {
     Standard_Integer num = 0;
     if (!themodel.IsNull()) num = themodel->Number(ent);
@@ -68,10 +54,7 @@ IGESData_IGESDumper::IGESData_IGESDumper
   }
 }
 
-
-    void  IGESData_IGESDumper::Dump
-  (const Handle(IGESData_IGESEntity)& ent, const Handle(Message_Messenger)& S,
-   const Standard_Integer own, const Standard_Integer attached) const 
+void IGESData_IGESDumper::Dump (const Handle(IGESData_IGESEntity)& ent, const Handle(Message_Messenger)& S, const Standard_Integer own, const Standard_Integer attached) const
 {
   Standard_Integer att = attached;
   Standard_Integer diratt = 1;
@@ -123,7 +106,7 @@ IGESData_IGESDumper::IGESData_IGESDumper
 
   if (own >= 2) {
 
-    if (ent->HasStructure())
+    if (!ent->Structure().IsNull())
       {  S<<"**      Structure     :"; PrintDNum (ent->Structure(),S);  S<<"\n";  }
 
     S<<"\n              Graphic Attributes\n";
@@ -151,7 +134,7 @@ IGESData_IGESDumper::IGESData_IGESDumper
 
     if (own > 3) {
       S<<"****             Own Data             ****\n\n";
-      OwnDump(ent,S,own);
+      ent->OwnDump(*this,S,own);
     }
   }
 
@@ -179,20 +162,4 @@ IGESData_IGESDumper::IGESData_IGESDumper
   }
   if (iasuit) {  if (att <= 1) S << "\n";  }
   S<<"\n****             End of Dump          ****\n"<<endl;
-}
-
-
-
-    void  IGESData_IGESDumper::OwnDump
-  (const Handle(IGESData_IGESEntity)& ent, const Handle(Message_Messenger)& S,
-   const Standard_Integer own) const 
-{
-  Handle(IGESData_SpecificModule) module;  Standard_Integer CN;
-  if (thelib.Select(ent,module,CN))
-    module->OwnDump(CN,ent,*this,S,own);
-  else if (themodel.IsNull())
-    S <<"  ****  Dump impossible. Type "<<ent->DynamicType()->Name()<<endl;
-  else
-    S <<"  ****  Dump Impossible, n0:id:"<<themodel->Number(ent)<<":D"
-      <<themodel->DNum(ent)<<" Type "<<ent->DynamicType()->Name()<<endl;
 }

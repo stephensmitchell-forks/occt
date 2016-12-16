@@ -13,6 +13,7 @@
  commercial license or contractual agreement.
 */
 
+#if 0
 #include "igesread.h"
 #include <string.h>
 /*    Routine de base de lecture d'un fichier IGES
@@ -30,19 +31,34 @@
   Cas d erreur : ligne fausse des le debut -> abandon. Sinon tacher d enjamber
 */
 
-static int iges_fautrelire = 0;
 int  iges_lire (FILE* lefic, int *numsec, char ligne[100], int modefnes)
-/*int iges_lire (lefic,numsec,ligne,modefnes)*/
-/*FILE* lefic; int *numsec; char ligne[100]; int modefnes;*/
 {
   int i,result; char typesec;
-/*  int length;*/
-  if (iges_fautrelire == 0)
-  {
-    if (*numsec == 0)
-      ligne[72] = ligne[79] = ' ';
 
-    ligne[0] = '\0'; 
+  if (*numsec == 0)
+    ligne[72] = ligne[79] = ' ';
+
+  ligne[0] = '\0'; 
+  if(modefnes)
+  {
+    if (fgets(ligne,99,lefic) == NULL) // kept for compatibility with fnes
+      return 0;
+  }
+  else
+  {
+    // PTV: 21.03.2002 it is neccessary for files that have only `\r` but no `\n` 
+    // examle file is 919-001-T02-04-CP-VL.iges
+    while ( fgets ( ligne, 2, lefic ) && ( ligne[0] == '\r' || ligne[0] == '\n' ) )
+    {}
+      
+    if (fgets(&ligne[1],80,lefic) == NULL)
+      return 0;
+  }
+    
+  if (*numsec == 0 && ligne[72] != 'S' && ligne[79] == ' ')
+  {/*        ON A DU FNES : Sauter la 1re ligne          */
+    ligne[0] = '\0';
+      
     if(modefnes)
     {
       if (fgets(ligne,99,lefic) == NULL) /*for kept compatibility with fnes*/
@@ -50,40 +66,18 @@ int  iges_lire (FILE* lefic, int *numsec, char ligne[100], int modefnes)
     }
     else
     {
-      /* PTV: 21.03.2002 it is neccessary for files that have only `\r` but no `\n` 
-              examle file is 919-001-T02-04-CP-VL.iges */
       while ( fgets ( ligne, 2, lefic ) && ( ligne[0] == '\r' || ligne[0] == '\n' ) )
       {
       }
-      
       if (fgets(&ligne[1],80,lefic) == NULL)
         return 0;
     }
-    
-    if (*numsec == 0 && ligne[72] != 'S' && ligne[79] == ' ')
-    {/*        ON A DU FNES : Sauter la 1re ligne          */
-      ligne[0] = '\0';
-      
-      if(modefnes)
-      {
-        if (fgets(ligne,99,lefic) == NULL) /*for kept compatibility with fnes*/
-          return 0;
-      }
-      else
-      {
-        while ( fgets ( ligne, 2, lefic ) && ( ligne[0] == '\r' || ligne[0] == '\n' ) )
-        {
-        }
-        if (fgets(&ligne[1],80,lefic) == NULL)
-          return 0;
-      }
-    }
+  }
 
-    if ((ligne[0] & 128) && modefnes)
-    {
-      for (i = 0; i < 80; i ++)
-        ligne[i] = (char)(ligne[i] ^ (150 + (i & 3)));
-    }
+  if ((ligne[0] & 128) && modefnes)
+  {
+    for (i = 0; i < 80; i ++)
+      ligne[i] = (char)(ligne[i] ^ (150 + (i & 3)));
   }
 
   if (feof(lefic))
@@ -98,7 +92,6 @@ int  iges_lire (FILE* lefic, int *numsec, char ligne[100], int modefnes)
     }
   }
 
-  iges_fautrelire = 0;
   if (ligne[0] == '\0' || ligne[0] == '\n' || ligne[0] == '\r')
     return iges_lire(lefic,numsec,ligne,modefnes); /* 0 */
 
@@ -163,8 +156,4 @@ int  iges_lire (FILE* lefic, int *numsec, char ligne[100], int modefnes)
   }
   return -1;
 }
-
-/*          Pour commander la relecture sur place            */
-
-void iges_arelire()
-{  iges_fautrelire = 1;  }
+#endif

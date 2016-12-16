@@ -21,8 +21,6 @@
 #include <Standard_DefineAlloc.hxx>
 #include <Standard_Handle.hxx>
 
-#include <Standard_Integer.hxx>
-#include <Standard_Character.hxx>
 #include <Standard_CString.hxx>
 class IGESData_IGESType;
 
@@ -31,13 +29,12 @@ class IGESData_IGESType;
 //! taken from file
 class IGESData_DirPart 
 {
-public:
+ public:
 
   DEFINE_STANDARD_ALLOC
 
-  
   //! creates an empty DirPart, ready to be filled by Init
-  Standard_EXPORT IGESData_DirPart();
+  IGESData_DirPart() {}
   
   //! fills DirPart with consistant data read from file
   Standard_EXPORT void Init (const Standard_Integer i1, const Standard_Integer i2, const Standard_Integer i3, const Standard_Integer i4, const Standard_Integer i5, const Standard_Integer i6, const Standard_Integer i7, const Standard_Integer i8, const Standard_Integer i9, const Standard_Integer i19, const Standard_Integer i11, const Standard_Integer i12, const Standard_Integer i13, const Standard_Integer i14, const Standard_Integer i15, const Standard_Integer i16, const Standard_Integer i17, const Standard_CString res1, const Standard_CString res2, const Standard_CString label, const Standard_CString subscript);
@@ -49,32 +46,13 @@ public:
   //! returns "type" and "form" info, used to recognize the entity
   Standard_EXPORT IGESData_IGESType Type() const;
 
-
-
-
-protected:
-
-
-
-
-
-private:
-
-
+ private:
 
   Standard_Integer thevals[17];
   Standard_Character theres1[10];
   Standard_Character theres2[10];
   Standard_Character thelabl[10];
   Standard_Character thesubs[10];
-
-
 };
-
-
-
-
-
-
 
 #endif // _IGESData_DirPart_HeaderFile

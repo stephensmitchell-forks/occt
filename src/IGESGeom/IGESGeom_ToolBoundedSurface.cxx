@@ -56,12 +56,11 @@ void IGESGeom_ToolBoundedSurface::ReadOwnParams(const Handle(IGESGeom_BoundedSur
   Handle(IGESGeom_HArray1OfBoundary) tempBounds;
   IGESData_Status aStatus;
 
-  //szv#4:S4163:12Mar99 `st=` not needed
-  if (!PR.ReadInteger(PR.Current(), tempType)){
+  if (!PR.ReadInteger(tempType)) {
     Message_Msg Msg165("XTSEP_165");
     PR.SendFail(Msg165);
   }
-  if (!PR.ReadEntity(IR, PR.Current(), aStatus, tempSurface)){
+  if (!PR.ReadEntity(IR, aStatus, tempSurface)) {
     Message_Msg Msg166("XTSEP_166");
     switch(aStatus) {
     case IGESData_ReferenceError: {  
@@ -78,17 +77,8 @@ void IGESGeom_ToolBoundedSurface::ReadOwnParams(const Handle(IGESGeom_BoundedSur
     }
     }
   }
-  //st = PR.ReadInteger(PR.Current(), Msg167, num); //szv#4:S4163:12Mar99 moved in if
-/*
-  st = PR.ReadInteger(PR.Current(), "Bounded Surface Representation Type", tempType);
-  st = PR.ReadEntity(IR, PR.Current(), "Surface to be Bounded", tempSurface);
-  st = PR.ReadInteger(PR.Current(), "Number Of Boundary Entities", num);
-*/
 
-  //szv#4:S4163:12Mar99 optimized
-  //if (st && num > 0)  tempBounds = new IGESGeom_HArray1OfBoundary(1, num);
-  //if (st && num <= 0)  PR.SendFail(Msg167);
-  if (PR.ReadInteger(PR.Current(), num) && (num > 0)) {
+  if (PR.ReadInteger(num) && (num > 0)) {
     tempBounds = new IGESGeom_HArray1OfBoundary(1, num);
   }
   else{ 
@@ -100,9 +90,7 @@ void IGESGeom_ToolBoundedSurface::ReadOwnParams(const Handle(IGESGeom_BoundedSur
     for ( i = 1; i <= num; i++ )
       {
 	Handle(IGESData_IGESEntity) tempEnt;
-	//st = PR.ReadEntity(IR, PR.Current(), Msg168, tempEnt); //szv#4:S4163:12Mar99 moved in if
-	//st = PR.ReadEntity(IR, PR.Current(), "Boundary Entities", tempEnt);
-	if (PR.ReadEntity(IR, PR.Current(), aStatus, tempEnt))
+	if (PR.ReadEntity(IR, aStatus, tempEnt))
 	  tempBounds->SetValue(i, Handle(IGESGeom_Boundary)::DownCast (tempEnt));
 	else{
 	  Message_Msg Msg168("XTSEP_168");

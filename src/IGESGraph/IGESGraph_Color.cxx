@@ -17,66 +17,63 @@
 //--------------------------------------------------------------------
 
 #include <IGESGraph_Color.hxx>
-#include <Standard_Type.hxx>
 #include <TCollection_HAsciiString.hxx>
+#include <IGESFile_Reader.hxx>
+#include <IGESData_IGESWriter.hxx>
+#include <IGESData_DirChecker.hxx>
+#include <Message_Messenger.hxx>
+#include <IGESData_IGESDumper.hxx>
+#include <IGESData_Dump.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESGraph_Color,IGESData_ColorEntity)
 
-IGESGraph_Color::IGESGraph_Color ()    {  }
-
-
-// This class inherits from IGESData_ColorEntity
-
-    void IGESGraph_Color::Init
-  (const Standard_Real red,
-   const Standard_Real green,
-   const Standard_Real blue,
-   const Handle(TCollection_HAsciiString)& aColorName)
+void IGESGraph_Color::HLSPercentage (Standard_Real& Hue, Standard_Real& Lightness, Standard_Real& Saturation) const
 {
-  theRed        = red;
-  theGreen      = green;
-  theBlue       = blue;
-  theColorName  = aColorName;
-  InitTypeAndForm(314,0);
+  Hue        = ((1.0 / (2.0 * M_PI)) * (ATan(((2 * myRed) - myGreen - myBlue) / (Sqrt(3) * (myGreen - myBlue)))));
+  Lightness  = ((1.0 / 3.0) * (myRed + myGreen + myBlue));
+  Saturation = (Sqrt((myRed * myRed  ) + (myGreen * myGreen) + (myBlue * myBlue ) - (myRed * myGreen) - (myRed * myBlue ) - (myBlue * myGreen)));
 }
 
-    void IGESGraph_Color::RGBIntensity
-  (Standard_Real& Red, Standard_Real& Green, Standard_Real& Blue) const
+void IGESGraph_Color::OwnRead (IGESFile_Reader &PR)
 {
-  Red   = theRed;
-  Green = theGreen;
-  Blue  = theBlue;
+  PR.ReadReal(myRed,"RED as % Of Full Intensity");
+  PR.ReadReal(myGreen,"GREEN as % Of Full Intensity");
+  PR.ReadReal(myBlue,"BLUE as % Of Full Intensity");
+  PR.ReadText(myColorName,"Color Name");
 }
 
-    void IGESGraph_Color::CMYIntensity
-  (Standard_Real& Cyan, Standard_Real& Magenta, Standard_Real& Yellow) const
+void IGESGraph_Color::OwnWrite (IGESData_IGESWriter& IW)  const
 {
-  Cyan    = 100.0 - theRed;
-  Magenta = 100.0 - theGreen;
-  Yellow  = 100.0 - theBlue;
+  IW.Send(myRed);
+  IW.Send(myGreen);
+  IW.Send(myBlue);
+//  ATTENTION  place a reserver (Null) silya des pointeurs additionnels
+  if (!myColorName.IsNull())
+    IW.Send(myColorName);
+  else IW.SendVoid();    // placekeeper to be reserved for additional pointers
 }
 
-    void IGESGraph_Color::HLSPercentage
-  (Standard_Real& Hue, Standard_Real& Lightness, Standard_Real& Saturation) const
+IGESData_DirChecker IGESGraph_Color::DirChecker ()  const
 {
-  Hue        = ((1.0 / (2.0 * M_PI)) *
-		(ATan(((2 * theRed) - theGreen - theBlue) /
-		      (Sqrt(3) * (theGreen - theBlue)))));
-  Lightness  = ((1.0 / 3.0) * (theRed + theGreen + theBlue));
-  Saturation = (Sqrt((theRed   * theRed  ) +
-		     (theGreen * theGreen) +
-		     (theBlue  * theBlue ) -
-		     (theRed   * theGreen) -
-		     (theRed   * theBlue ) -
-		     (theBlue  * theGreen)));
+  IGESData_DirChecker DC(314, 0);
+  DC.Structure(IGESData_DefVoid);
+  DC.LineFont(IGESData_DefVoid);
+  DC.LineWeight(IGESData_DefVoid);
+  DC.Color(IGESData_DefAny);
+  DC.BlankStatusIgnored();
+  DC.SubordinateStatusRequired(0);
+  DC.UseFlagRequired(2);
+  DC.HierarchyStatusIgnored();
+  return DC;
 }
 
-    Standard_Boolean  IGESGraph_Color::HasColorName () const
+void IGESGraph_Color::OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &S, const Standard_Integer) const
 {
-  return (! theColorName.IsNull());
-}
-
-    Handle(TCollection_HAsciiString)  IGESGraph_Color::ColorName () const
-{
-  return theColorName;
+  S << "IGESGraph_Color" << endl;
+  S << "Red   (in % Of Full Intensity) : " << myRed   << endl;
+  S << "Green (in % Of Full Intensity) : " << myGreen << endl;
+  S << "Blue  (in % Of Full Intensity) : " << myBlue  << endl;
+  S << "Color Name : ";
+  IGESData_DumpString(S,myColorName);
+  S << endl;
 }

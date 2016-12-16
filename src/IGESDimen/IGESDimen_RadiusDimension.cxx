@@ -40,8 +40,7 @@ IGESDimen_RadiusDimension::IGESDimen_RadiusDimension ()    {  }
   theLeaderArrow = anArrow;
   theCenter      = arcCenter;
   theLeader2     = anotherArrow;
-  if (!anotherArrow.IsNull()) InitTypeAndForm(222, 1);  // 1 admet aussi Null
-  else InitTypeAndForm(222,FormNumber());
+  InitTypeAndForm(222, (anotherArrow.IsNull()? FormNumber() : 1));  // 1 admet aussi Null
 }
 
     void IGESDimen_RadiusDimension::InitForm (const Standard_Integer form)

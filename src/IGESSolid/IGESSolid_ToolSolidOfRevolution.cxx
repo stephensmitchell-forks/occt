@@ -46,58 +46,51 @@ void  IGESSolid_ToolSolidOfRevolution::ReadOwnParams
   gp_XYZ tempAxis;
   Standard_Real tempFraction;
   Standard_Real tempreal;
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
 
-  PR.ReadEntity(IR, PR.Current(), "Curve Entity", tempEntity); //szv#4:S4163:12Mar99 `st=` not needed
+  PR.ReadEntity(IR, "Curve Entity", tempEntity);
 
   if (PR.DefinedElseSkip())
-    PR.ReadReal(PR.Current(), "Fraction of rotation", tempFraction); //szv#4:S4163:12Mar99 `st=` not needed
+    PR.ReadReal(tempFraction,"Fraction of rotation");
   else
     tempFraction = 1.0;
   if (PR.DefinedElseSkip())
     {
-      //st = PR.ReadReal(PR.Current(), "Axis Point (X)", tempreal); //szv#4:S4163:12Mar99 moved in if
-      if (PR.ReadReal(PR.Current(), "Axis Point (X)", tempreal))
+      if (PR.ReadReal(tempreal,"Axis Point (X)"))
 	tempAxisPoint.SetX(tempreal);
     }
   else  tempAxisPoint.SetX(0.0);
 
   if (PR.DefinedElseSkip())
     {
-      //st = PR.ReadReal(PR.Current(), "Axis Point (Y)", tempreal); //szv#4:S4163:12Mar99 moved in if
-      if (PR.ReadReal(PR.Current(), "Axis Point (Y)", tempreal))
+      if (PR.ReadReal(tempreal,"Axis Point (Y)"))
 	tempAxisPoint.SetY(tempreal);
     }
   else  tempAxisPoint.SetY(0.0);
 
   if (PR.DefinedElseSkip())
     {
-      //st = PR.ReadReal(PR.Current(), "Axis Point (Z)", tempreal); //szv#4:S4163:12Mar99 moved in if
-      if (PR.ReadReal(PR.Current(), "Axis Point (Z)", tempreal))
+      if (PR.ReadReal(tempreal,"Axis Point (Z)"))
 	tempAxisPoint.SetZ(tempreal);
     }
   else  tempAxisPoint.SetZ(0.0);
 
   if (PR.DefinedElseSkip())
     {
-      //st = PR.ReadReal(PR.Current(), "Axis direction (I)", tempreal); //szv#4:S4163:12Mar99 moved in if
-      if (PR.ReadReal(PR.Current(), "Axis direction (I)", tempreal))
+      if (PR.ReadReal(tempreal,"Axis direction (I)"))
 	tempAxis.SetX(tempreal);
     }
   else  tempAxis.SetX(0.0);
 
   if (PR.DefinedElseSkip())
     {
-      //st = PR.ReadReal(PR.Current(), "Axis direction (J)", tempreal); //szv#4:S4163:12Mar99 moved in if
-      if (PR.ReadReal(PR.Current(), "Axis direction (J)", tempreal))
+      if (PR.ReadReal(tempreal,"Axis direction (J)"))
 	tempAxis.SetY(tempreal);
     }
   else  tempAxis.SetY(0.0);
 
   if (PR.DefinedElseSkip())
     {
-      //st = PR.ReadReal(PR.Current(), "Axis direction (K)", tempreal); //szv#4:S4163:12Mar99 moved in if
-      if (PR.ReadReal(PR.Current(), "Axis direction (K)", tempreal))
+      if (PR.ReadReal(tempreal,"Axis direction (K)"))
 	tempAxis.SetZ(tempreal);
     }
   else  tempAxis.SetZ(1.0);

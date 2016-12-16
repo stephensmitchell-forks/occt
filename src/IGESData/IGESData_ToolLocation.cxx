@@ -20,7 +20,6 @@
 #include <gp_Trsf.hxx>
 #include <gp_Vec.hxx>
 #include <gp_XYZ.hxx>
-#include <IGESData_GeneralModule.hxx>
 #include <IGESData_IGESEntity.hxx>
 #include <IGESData_IGESModel.hxx>
 #include <IGESData_Protocol.hxx>
@@ -36,14 +35,12 @@ IMPLEMENT_STANDARD_RTTIEXT(IGESData_ToolLocation,MMgt_TShared)
 
 #define TYPEFORASSOC 402
 
-IGESData_ToolLocation::IGESData_ToolLocation (const Handle(IGESData_IGESModel)& amodel,
-						const Handle(IGESData_Protocol)& protocol)
-: thelib (protocol),
+IGESData_ToolLocation::IGESData_ToolLocation (const Handle(IGESData_IGESModel)& amodel)
+: theprec (1.e-05),
+  themodel (amodel),
   therefs (0,amodel->NbEntities()),
   theassocs (0,amodel->NbEntities())
 {
-  theprec  = 1.e-05;
-  themodel = amodel;
   therefs.Init(0);  theassocs.Init(0);
   Load();
 }
@@ -52,7 +49,7 @@ void  IGESData_ToolLocation::Load ()
 {
   // Pour chaque Entite, sauf Transf et Assoc (sauf SingleParent), on considere
   // ses "OwnShared" comme etant dependents
-  Standard_Integer nb = themodel->NbEntities();
+  const Standard_Integer nb = themodel->NbEntities();
   for (Standard_Integer i = 1; i <= nb; i ++) {
     Handle(IGESData_IGESEntity) ent = themodel->Entity(i);
     if (ent->IsKind(STANDARD_TYPE(IGESData_TransfEntity))) continue;
@@ -78,7 +75,7 @@ void IGESData_ToolLocation::SetReference (const Handle(IGESData_IGESEntity)& par
 					  const Handle(IGESData_IGESEntity)& child)
 {
   Standard_Integer np = themodel->Number(parent);
-  Standard_Integer nc = themodel->Number(child);
+  const Standard_Integer nc = themodel->Number(child);
   if (np == 0 || nc == 0) return;
   if (therefs(nc) > 0) np = -1;    // note ambigu
   therefs.SetValue(nc,np);
@@ -88,7 +85,7 @@ void IGESData_ToolLocation::SetParentAssoc (const Handle(IGESData_IGESEntity)& p
 					    const Handle(IGESData_IGESEntity)& child)
 {
   Standard_Integer np = themodel->Number(parent);
-  Standard_Integer nc = themodel->Number(child);
+  const Standard_Integer nc = themodel->Number(child);
   if (np == 0 || nc == 0) return;
   if (theassocs(nc) > 0) np = -1;    // note ambigu
   theassocs.SetValue(nc,np);
@@ -96,7 +93,7 @@ void IGESData_ToolLocation::SetParentAssoc (const Handle(IGESData_IGESEntity)& p
 
 void  IGESData_ToolLocation::ResetDependences (const Handle(IGESData_IGESEntity)& child)
 {
-  Standard_Integer nc = themodel->Number(child);
+  const Standard_Integer nc = themodel->Number(child);
   if (nc == 0) return;
   therefs.SetValue(nc,0);
   theassocs.SetValue(nc,0);
@@ -104,13 +101,8 @@ void  IGESData_ToolLocation::ResetDependences (const Handle(IGESData_IGESEntity)
 
 void  IGESData_ToolLocation::SetOwnAsDependent (const Handle(IGESData_IGESEntity)& ent)
 {
-  Standard_Integer CN;
-  Handle(Interface_GeneralModule) gmodule;
-  if (!thelib.Select(ent,gmodule,CN)) return;
-  Handle(IGESData_GeneralModule) module =
-    Handle(IGESData_GeneralModule)::DownCast (gmodule);
   Interface_EntityIterator list;
-  module->OwnSharedCase(CN,ent,list);
+  ent->OwnShared(list);
   // Remarque : en toute rigueur, il faudrait ignorer les entites referencees
   // dont le SubordinateStatus vaut 0 ou 2 ...
   // Question : ce Status est-il toujours bien comme il faut ?
@@ -141,7 +133,7 @@ gp_GTrsf  IGESData_ToolLocation::ExplicitLocation
 Standard_Boolean  IGESData_ToolLocation::IsAmbiguous
   (const Handle(IGESData_IGESEntity)& ent) const
 {
-  Standard_Integer num = themodel->Number(ent);
+  const Standard_Integer num = themodel->Number(ent);
   if (num == 0) return Standard_False;
   if (therefs(num) <  0 || theassocs(num) <  0) return Standard_True;
   if (therefs(num) != 0 && theassocs(num) != 0) return Standard_True;
@@ -151,7 +143,7 @@ Standard_Boolean  IGESData_ToolLocation::IsAmbiguous
 Standard_Boolean  IGESData_ToolLocation::HasParent
   (const Handle(IGESData_IGESEntity)& ent) const
 {
-  Standard_Integer num = themodel->Number(ent);
+  const Standard_Integer num = themodel->Number(ent);
   if (num == 0) return Standard_False;
   if (therefs(num) <  0 || theassocs(num) <  0) Standard_DomainError::Raise
     ("IGESData_ToolLocation : HasParent");
@@ -165,7 +157,7 @@ Handle(IGESData_IGESEntity)  IGESData_ToolLocation::Parent
   (const Handle(IGESData_IGESEntity)& ent) const
 {
   Handle(IGESData_IGESEntity) parent;
-  Standard_Integer num = themodel->Number(ent);
+  const Standard_Integer num = themodel->Number(ent);
   if (num == 0) return parent;
   if (therefs(num) <  0 || theassocs(num) <  0) Standard_DomainError::Raise
     ("IGESData_ToolLocation : Parent");
@@ -179,7 +171,7 @@ Handle(IGESData_IGESEntity)  IGESData_ToolLocation::Parent
 Standard_Boolean  IGESData_ToolLocation::HasParentByAssociativity
   (const Handle(IGESData_IGESEntity)& ent) const
 {
-  Standard_Integer num = themodel->Number(ent);
+  const Standard_Integer num = themodel->Number(ent);
   if (num == 0) return Standard_False;
   if (therefs(num) <  0 || theassocs(num) <  0) Standard_DomainError::Raise
     ("IGESData_ToolLocation : HasParentByAssociativity");

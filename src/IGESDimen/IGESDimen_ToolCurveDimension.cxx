@@ -51,25 +51,13 @@ void  IGESDimen_ToolCurveDimension::ReadOwnParams
   Handle(IGESDimen_WitnessLine) firstWitness; 
   Handle(IGESDimen_WitnessLine) secondWitness; 
 
-  PR.ReadEntity(IR, PR.Current(), "General Note Entity",
-		STANDARD_TYPE(IGESDimen_GeneralNote), note); //szv#4:S4163:12Mar99 `st=` not needed
-
-  PR.ReadEntity(IR, PR.Current(), "First Curve Entity", firstCurve); //szv#4:S4163:12Mar99 `st=` not needed
-
-  PR.ReadEntity(IR,PR.Current(),"Second Curve Entity",
-		secondCurve,Standard_True); //szv#4:S4163:12Mar99 `st=` not needed
-
-  PR.ReadEntity(IR, PR.Current(), "First Leader Entity",
-		STANDARD_TYPE(IGESDimen_LeaderArrow), firstLeader); //szv#4:S4163:12Mar99 `st=` not needed
-
-  PR.ReadEntity(IR, PR.Current(),"Second Leader Entity",
-		STANDARD_TYPE(IGESDimen_LeaderArrow), secondLeader); //szv#4:S4163:12Mar99 `st=` not needed
-
-  PR.ReadEntity (IR, PR.Current(), "First Witness Entity",
-		 STANDARD_TYPE(IGESDimen_WitnessLine), firstWitness, Standard_True); //szv#4:S4163:12Mar99 `st=` not needed
-
-  PR.ReadEntity (IR,PR.Current(),"Second Witness Entity",
-		 STANDARD_TYPE(IGESDimen_WitnessLine), secondWitness, Standard_True); //szv#4:S4163:12Mar99 `st=` not needed
+  PR.ReadEntity(IR, "General Note Entity", STANDARD_TYPE(IGESDimen_GeneralNote), note);
+  PR.ReadEntity(IR, "First Curve Entity", firstCurve);
+  PR.ReadEntity(IR, "Second Curve Entity", secondCurve, Standard_True);
+  PR.ReadEntity(IR, "First Leader Entity", STANDARD_TYPE(IGESDimen_LeaderArrow), firstLeader);
+  PR.ReadEntity(IR, "Second Leader Entity", STANDARD_TYPE(IGESDimen_LeaderArrow), secondLeader);
+  PR.ReadEntity(IR, "First Witness Entity", STANDARD_TYPE(IGESDimen_WitnessLine), firstWitness, Standard_True);
+  PR.ReadEntity(IR, "Second Witness Entity", STANDARD_TYPE(IGESDimen_WitnessLine), secondWitness, Standard_True);
 
   DirChecker(ent).CheckTypeAndForm(PR.CCheck(),ent);
   ent->Init

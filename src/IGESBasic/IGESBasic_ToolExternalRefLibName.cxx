@@ -38,12 +38,10 @@ void  IGESBasic_ToolExternalRefLibName::ReadOwnParams
   (const Handle(IGESBasic_ExternalRefLibName)& ent,
    const Handle(IGESData_IGESReaderData)& /* IR */, IGESData_ParamReader& PR) const
 {
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
   Handle(TCollection_HAsciiString) tempLibName;
   Handle(TCollection_HAsciiString) tempExtRefEntitySymbName;
-  PR.ReadText(PR.Current(), "Name of Library", tempLibName); //szv#4:S4163:12Mar99 `st=` not needed
-  PR.ReadText(PR.Current(), "External Reference Symbolic Name",
-	      tempExtRefEntitySymbName); //szv#4:S4163:12Mar99 `st=` not needed
+  PR.ReadText("Name of Library", tempLibName);
+  PR.ReadText("External Reference Symbolic Name", tempExtRefEntitySymbName);
 
   DirChecker(ent).CheckTypeAndForm(PR.CCheck(),ent);
   ent->Init(tempLibName, tempExtRefEntitySymbName);

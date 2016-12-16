@@ -15,14 +15,9 @@
 #include <IGESAppli.hxx>
 #include <IGESAppli_GeneralModule.hxx>
 #include <IGESAppli_Protocol.hxx>
-#include <IGESAppli_ReadWriteModule.hxx>
-#include <IGESAppli_SpecificModule.hxx>
-#include <IGESData_SpecificLib.hxx>
-#include <IGESData_WriterLib.hxx>
 #include <IGESDefs.hxx>
 #include <IGESDraw.hxx>
 #include <Interface_GeneralLib.hxx>
-#include <Interface_ReaderLib.hxx>
 
 #include <IGESData.hxx>
 #include <IGESBasic.hxx>
@@ -66,14 +61,8 @@ const Handle(IGESAppli_Protocol) & IGESAppli::Protocol ()
   static Handle(IGESAppli_Protocol) protocol;
   if (protocol.IsNull()) {
     protocol = new IGESAppli_Protocol;
-    /*Interface_GeneralLib::SetGlobal (new IGESSolid_GeneralModule,  protocol);
-    Interface_ReaderLib::SetGlobal  (new IGESSolid_ReadWriteModule,protocol);
-    IGESData_WriterLib::SetGlobal   (new IGESSolid_ReadWriteModule,protocol);
-    IGESData_SpecificLib::SetGlobal (new IGESSolid_SpecificModule, protocol);*/
+    /*Interface_GeneralLib::SetGlobal (new IGESSolid_GeneralModule,  protocol);*/
     Interface_GeneralLib::SetGlobal (new IGESAppli_GeneralModule,  protocol);
-    Interface_ReaderLib::SetGlobal  (new IGESAppli_ReadWriteModule,protocol);
-    IGESData_WriterLib::SetGlobal   (new IGESAppli_ReadWriteModule,protocol);
-    IGESData_SpecificLib::SetGlobal (new IGESAppli_SpecificModule, protocol);
   }
   return protocol;
 }

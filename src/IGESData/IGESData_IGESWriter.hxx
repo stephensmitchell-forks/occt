@@ -37,7 +37,6 @@
 class IGESData_IGESModel;
 class Interface_InterfaceMismatch;
 class Interface_FloatWriter;
-class IGESData_Protocol;
 class IGESData_GlobalSection;
 class IGESData_IGESEntity;
 class TCollection_HAsciiString;
@@ -85,7 +84,7 @@ public:
   //! Directory Entries & Parameter Lists, etc...)
   //! i.e. fills a list of texts. Once filled, it can be sent by
   //! method Print
-  Standard_EXPORT void SendModel (const Handle(IGESData_Protocol)& protocol);
+  Standard_EXPORT void SendModel ();
   
   //! declares sending of S section (only a declaration)
   //! error if state is not initial

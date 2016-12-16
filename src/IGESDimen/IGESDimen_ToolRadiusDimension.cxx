@@ -45,19 +45,14 @@ void IGESDimen_ToolRadiusDimension::ReadOwnParams
   Handle(IGESDimen_LeaderArrow) leadArr;
   gp_XY arcCenter;
   Handle(IGESDimen_LeaderArrow) leadArr2;
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
 
-  PR.ReadEntity(IR, PR.Current(), "General Note",
-		STANDARD_TYPE(IGESDimen_GeneralNote), tempNote); //szv#4:S4163:12Mar99 `st=` not needed
-
-  PR.ReadEntity(IR, PR.Current(), "Leader arrow",
-		STANDARD_TYPE(IGESDimen_LeaderArrow), leadArr); //szv#4:S4163:12Mar99 `st=` not needed
-
-  PR.ReadXY(PR.CurrentList(1, 2), "Arc center", arcCenter); //szv#4:S4163:12Mar99 `st=` not needed
+  PR.ReadEntity(IR, "General Note", STANDARD_TYPE(IGESDimen_GeneralNote), tempNote);
+  PR.ReadEntity(IR, "Leader arrow", STANDARD_TYPE(IGESDimen_LeaderArrow), leadArr);
+  PR.ReadXY(arcCenter,"Arc center");
 
   if (ent->FormNumber() == 1)
-    PR.ReadEntity(IR, PR.Current(), "Leader arrow 2",
-		  STANDARD_TYPE(IGESDimen_LeaderArrow), leadArr2, Standard_True); //szv#4:S4163:12Mar99 `st=` not needed
+    PR.ReadEntity(IR, "Leader arrow 2",
+		  STANDARD_TYPE(IGESDimen_LeaderArrow), leadArr2, Standard_True);
 
   DirChecker(ent).CheckTypeAndForm(PR.CCheck(),ent);
   ent->Init(tempNote, leadArr, arcCenter, leadArr2);

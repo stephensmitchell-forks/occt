@@ -60,17 +60,6 @@ IGESData_ParamReader::IGESData_ParamReader(const Handle(Interface_ParamList)& li
 
 
 //=======================================================================
-//function : EntityNumber
-//purpose  : 
-//=======================================================================
-
-Standard_Integer IGESData_ParamReader::EntityNumber () const
-{
-  return thenum;
-}
-
-
-//=======================================================================
 //function : Clear
 //purpose  : 
 //=======================================================================
@@ -80,41 +69,6 @@ void IGESData_ParamReader::Clear ()
   thecurr = 1;
   thestage = IGESData_ReadOwn;
   pbrealint=pbrealform=0;
-}
-
-
-//=======================================================================
-//function : CurrentNumber
-//purpose  : 
-//=======================================================================
-
-Standard_Integer IGESData_ParamReader::CurrentNumber () const
-{
-  return thecurr;
-}
-
-
-//=======================================================================
-//function : SetCurrentNumber
-//purpose  : 
-//=======================================================================
-
-void IGESData_ParamReader::SetCurrentNumber (const Standard_Integer num)
-{
-  //if (num <= NbParams() + 1) thecurr = num;  // NbParams+1 : "fin d'objet"
-  //else thecurr = 0;
-  thecurr = num;
-}
-
-
-//=======================================================================
-//function : Stage
-//purpose  : 
-//=======================================================================
-
-IGESData_ReadStage IGESData_ParamReader::Stage () const
-{
-  return thestage;
 }
 
 
@@ -130,29 +84,7 @@ void IGESData_ParamReader::NextStage ()
 }
 
 
-//=======================================================================
-//function : EndAll
-//purpose  : 
-//=======================================================================
-
-void IGESData_ParamReader::EndAll ()
-{
-  thestage = IGESData_ReadEnd;
-}
-
-
 //  ....                  Acces de base aux parametres                  ....
-
-
-//=======================================================================
-//function : NbParams
-//purpose  : 
-//=======================================================================
-
-Standard_Integer IGESData_ParamReader::NbParams () const
-{
-  return (thenbpar - 1);
-}
 
 
 //=======================================================================
@@ -160,8 +92,7 @@ Standard_Integer IGESData_ParamReader::NbParams () const
 //purpose  : 
 //=======================================================================
 
-Interface_ParamType IGESData_ParamReader::ParamType
-  (const Standard_Integer num) const
+Interface_ParamType IGESData_ParamReader::ParamType (const Standard_Integer num) const
 {
   return theparams->Value(num+thebase).ParamType();
 }
@@ -172,8 +103,7 @@ Interface_ParamType IGESData_ParamReader::ParamType
 //purpose  : 
 //=======================================================================
 
-Standard_CString IGESData_ParamReader::ParamValue
-  (const Standard_Integer num) const
+Standard_CString IGESData_ParamReader::ParamValue (const Standard_Integer num) const
 {
   return theparams->Value(num+thebase).CValue();
 }
@@ -184,23 +114,10 @@ Standard_CString IGESData_ParamReader::ParamValue
 //purpose  : 
 //=======================================================================
 
-Standard_Boolean IGESData_ParamReader::IsParamDefined
-  (const Standard_Integer num) const
+Standard_Boolean IGESData_ParamReader::IsParamDefined (const Standard_Integer num) const
 {
   if (num >= thenbpar) return Standard_False;
   return (theparams->Value(num+thebase).ParamType() != Interface_ParamVoid);
-}
-
-
-//=======================================================================
-//function : IsParamEntity
-//purpose  : 
-//=======================================================================
-
-Standard_Boolean IGESData_ParamReader::IsParamEntity
-  (const Standard_Integer num) const
-{
-  return (ParamNumber(num) != 0);
 }
 
 
@@ -261,47 +178,9 @@ IGESData_ParamCursor IGESData_ParamReader::Current () const
 //purpose  : 
 //=======================================================================
 
-IGESData_ParamCursor IGESData_ParamReader::CurrentList
-  (const Standard_Integer nb, const Standard_Integer size) const
+IGESData_ParamCursor IGESData_ParamReader::CurrentList (const Standard_Integer nb, const Standard_Integer size) const
 {
   return IGESData_ParamCursor(thecurr,nb,size);
-}
-
-
-// PrepareRead for MoniTool
-
-
-//=======================================================================
-//function : PrepareRead
-//purpose  : 
-//=======================================================================
-
-Standard_Boolean IGESData_ParamReader::PrepareRead
-  (const IGESData_ParamCursor& PC, const Standard_Boolean several,
-   const Standard_Integer size)
-{
-  theindex  = PC.Start();
-  themaxind = PC.Limit();
-  thenbitem = PC.Count();
-  theitemsz = PC.ItemSize();
-  theoffset = PC.Offset();
-  thetermsz = PC.TermSize();
-  if (!several && thenbitem > 1) {
-   // AddFail (mess," : List not allowed","");
-    return Standard_False;
-  }
-  if (size > 1) {
-    if (thetermsz % size != 0) {
-      return Standard_False;
-    }
-  }
-  if (theindex <= 0 || (themaxind-1) > NbParams()) {
-    return Standard_False;
-  }
-  if (PC.Advance()) 
-    SetCurrentNumber (themaxind);  //themaxind : prochain index
-  thelast = Standard_True;
-  return Standard_True;
 }
 
 
@@ -317,26 +196,28 @@ Standard_Boolean IGESData_ParamReader::PrepareRead
   theindex  = PC.Start();
   themaxind = PC.Limit();
   thenbitem = PC.Count();
-  theitemsz = PC.ItemSize();
-  theoffset = PC.Offset();
-  thetermsz = PC.TermSize();
+  theitemsz = PC.Size();
+  thetermsz = PC.Size();
   if (!several && thenbitem > 1) {
-    AddFail (mess," : List not allowed","");
+    if (mess)
+      AddFail (mess," : List not allowed","");
     return Standard_False;
   }
   if (size > 1) {
     if (thetermsz % size != 0) {
-      AddFail (mess," : term size mismatch","");
+      if (mess)
+        AddFail (mess," : term size mismatch","");
       return Standard_False;
     }
   }
   if (theindex <= 0 || (themaxind-1) > NbParams()) {
-    if (thenbitem == 1) AddFail (mess," : Parameter number out of range","");
-    //else AddFail (mess," : too many values to read" ,"");
-    else AddWarning (mess," : too many values to read" ,"");
+    if (mess) {
+      if (thenbitem == 1) AddFail (mess," : Parameter number out of range","");
+      else AddWarning (mess," : too many values to read" ,"");
+    }
     return Standard_False;
   }
-  if (PC.Advance()) SetCurrentNumber (themaxind);  //themaxind : prochain index
+  thecurr = themaxind;  //themaxind : prochain index
   thelast = Standard_True;
   return Standard_True;
 }
@@ -356,7 +237,6 @@ Standard_Boolean IGESData_ParamReader::PrepareRead
 
 Standard_Integer IGESData_ParamReader::FirstRead (const Standard_Integer nb)
 {
-  theindex += theoffset;   // On se cale d office sur le debut du terme a lire
   Standard_Integer res = theindex;
   thenbterm = nb;
   if (thenbterm >= thetermsz) {
@@ -399,45 +279,23 @@ Standard_Boolean IGESData_ParamReader::DefinedElseSkip ()
 }
 
 
-// ReadInteger for MoniTool
-
 //=======================================================================
 //function : ReadInteger
 //purpose  : 
 //=======================================================================
 
-Standard_Boolean IGESData_ParamReader::ReadInteger (const IGESData_ParamCursor& PC,
-						    Standard_Integer& val)
+Standard_Boolean IGESData_ParamReader::ReadInteger (Standard_Integer& val, const Standard_CString mess)
 {
-  if (!PrepareRead(PC,Standard_False)) return Standard_False;
-  const Interface_FileParameter& FP = theparams->Value(theindex+thebase);
-  if (FP.ParamType() != Interface_ParamInteger) {
-    if (FP.ParamType() == Interface_ParamVoid){
-      val = 0;
-      return Standard_True;
-    }    // DEFAULT
-    return Standard_False;
-  }
-  val = atoi(FP.CValue());
-  return Standard_True;
-}
-
-
-//=======================================================================
-//function : ReadInteger
-//purpose  : 
-//=======================================================================
-
-Standard_Boolean IGESData_ParamReader::ReadInteger
-  (const IGESData_ParamCursor& PC, const Standard_CString mess,
-   Standard_Integer& val)
-{
+  const IGESData_ParamCursor PC(thecurr);
   if (!PrepareRead(PC,mess,Standard_False)) return Standard_False;
   const Interface_FileParameter& FP = theparams->Value(theindex+thebase);
   if (FP.ParamType() != Interface_ParamInteger) {
-    if (FP.ParamType() == Interface_ParamVoid)
-      { val = 0; return Standard_True; }    // DEFAULT
-    AddFail (mess," : not given as an Integer","");
+    if (FP.ParamType() == Interface_ParamVoid) {
+      val = 0;
+      return Standard_True;
+    }    // DEFAULT
+    if (mess)
+      AddFail (mess," : not given as an Integer","");
     return Standard_False;
   }
   val = atoi(FP.CValue());
@@ -452,11 +310,10 @@ Standard_Boolean IGESData_ParamReader::ReadInteger
 //purpose  : 
 //=======================================================================
 
-Standard_Boolean IGESData_ParamReader::ReadBoolean
-  (const IGESData_ParamCursor& PC, const Message_Msg& amsg,
-   Standard_Boolean& val, const Standard_Boolean exact)
+Standard_Boolean IGESData_ParamReader::ReadBoolean (const Message_Msg& amsg, Standard_Boolean& val, const Standard_Boolean exact)
 {
-  if (!PrepareRead(PC,Standard_False)) return Standard_False;
+  const IGESData_ParamCursor PC(thecurr);
+  if (!PrepareRead(PC,NULL,Standard_False)) return Standard_False;
   const Interface_FileParameter& FP = theparams->Value(theindex+thebase);
   if (FP.ParamType() != Interface_ParamInteger) {
     if (FP.ParamType() == Interface_ParamVoid) {
@@ -490,10 +347,9 @@ Standard_Boolean IGESData_ParamReader::ReadBoolean
 //purpose  : 
 //=======================================================================
 
-Standard_Boolean IGESData_ParamReader::ReadBoolean
-  (const IGESData_ParamCursor& PC, const Standard_CString mess,
-   Standard_Boolean& val, const Standard_Boolean exact)
+Standard_Boolean IGESData_ParamReader::ReadBoolean (const Standard_CString mess, Standard_Boolean& val, const Standard_Boolean exact)
 {
+  const IGESData_ParamCursor PC(thecurr);
   if (!PrepareRead(PC,mess,Standard_False)) return Standard_False;
   const Interface_FileParameter& FP = theparams->Value(theindex+thebase);
   if (FP.ParamType() != Interface_ParamInteger) {
@@ -524,53 +380,16 @@ Standard_Boolean IGESData_ParamReader::ReadBoolean
 }
 
 
-// ReadReal for MoniTool
-
 //=======================================================================
 //function : ReadReal
 //purpose  : 
 //=======================================================================
 
-Standard_Boolean IGESData_ParamReader::ReadReal (const IGESData_ParamCursor& PC,
-						 Standard_Real& val)
+Standard_Boolean IGESData_ParamReader::ReadReal (Standard_Real& val, const Standard_CString mess)
 {
-  if (!PrepareRead(PC,Standard_False)) return Standard_False;
-//  return ReadingReal (theindex,amsg,val);
-  return ReadingReal (theindex,val);
-}
-
-
-//=======================================================================
-//function : ReadReal
-//purpose  : 
-//=======================================================================
-
-Standard_Boolean IGESData_ParamReader::ReadReal
-  (const IGESData_ParamCursor& PC,const Standard_CString mess,
-   Standard_Real& val)
-{
+  const IGESData_ParamCursor PC(thecurr);
   if (!PrepareRead(PC,mess,Standard_False)) return Standard_False;
-  return ReadingReal (theindex,mess,val);
-}
-
-
-// ReadXY for MoniTool
-
-//=======================================================================
-//function : ReadXY
-//purpose  : 
-//=======================================================================
-
-Standard_Boolean IGESData_ParamReader::ReadXY
-  (const IGESData_ParamCursor& PC,Message_Msg& /*amsg*/, gp_XY& val)
-{
-  if (!PrepareRead(PC,Standard_False,2)) return Standard_False;
-  Standard_Real X,Y = 0.;
-  Standard_Boolean stat =
-    (ReadingReal (theindex  ,X)  &&
-     ReadingReal (theindex+1,Y)  );
-  if (stat) val.SetCoord(X,Y);
-  return stat;
+  return ReadingReal (theindex,val,mess);
 }
 
 
@@ -579,54 +398,33 @@ Standard_Boolean IGESData_ParamReader::ReadXY
 //purpose  : 
 //=======================================================================
 
-Standard_Boolean IGESData_ParamReader::ReadXY
-  (const IGESData_ParamCursor& PC, const Standard_CString mess, gp_XY& val)
+Standard_Boolean IGESData_ParamReader::ReadXY (gp_XY& val, const Standard_CString mess)
 {
+  const IGESData_ParamCursor PC(thecurr,1,2);
   if (!PrepareRead(PC,mess,Standard_False,2)) return Standard_False;
   Standard_Real X,Y = 0.;
   Standard_Boolean stat =
-    (ReadingReal (theindex  ,mess,X)  &&
-     ReadingReal (theindex+1,mess,Y)  );
+    (ReadingReal (theindex  ,X,mess)  &&
+     ReadingReal (theindex+1,Y,mess)  );
   if (stat) val.SetCoord(X,Y);
   return stat;
 }
 
 
-// ReadXYZ for MoniTool
-
 //=======================================================================
 //function : ReadXYZ
 //purpose  : 
 //=======================================================================
 
-Standard_Boolean IGESData_ParamReader::ReadXYZ
-  (const IGESData_ParamCursor& PC,Message_Msg& /*amsg*/, gp_XYZ& val)
+Standard_Boolean IGESData_ParamReader::ReadXYZ (gp_XYZ& val, const Standard_CString mess)
 {
-  if (!PrepareRead(PC,Standard_False,3)) return Standard_False;
-  Standard_Real X,Y = 0.,Z = 0.;
-  Standard_Boolean stat =
-    (ReadingReal (theindex  ,X)  &&
-     ReadingReal (theindex+1,Y)  &&
-     ReadingReal (theindex+2,Z)  );
-  if (stat) val.SetCoord(X,Y,Z);
-  return Standard_True;
-}
-
-
-//=======================================================================
-//function : ReadXYZ
-//purpose  : 
-//=======================================================================
-
-Standard_Boolean IGESData_ParamReader::ReadXYZ
-  (const IGESData_ParamCursor& PC, const Standard_CString mess, gp_XYZ& val)
-{
+  const IGESData_ParamCursor PC(thecurr,1,3);
   if (!PrepareRead(PC,mess,Standard_False,3)) return Standard_False;
   Standard_Real X,Y = 0.,Z = 0.;
   Standard_Boolean stat =
-    (ReadingReal (theindex  ,mess,X)  &&
-     ReadingReal (theindex+1,mess,Y)  &&
-     ReadingReal (theindex+2,mess,Z)  );
+    (ReadingReal (theindex  ,X,mess)  &&
+     ReadingReal (theindex+1,Y,mess)  &&
+     ReadingReal (theindex+2,Z,mess)  );
   if (stat) val.SetCoord(X,Y,Z);
   return Standard_True;
 }
@@ -639,11 +437,10 @@ Standard_Boolean IGESData_ParamReader::ReadXYZ
 //purpose  : 
 //=======================================================================
 
-Standard_Boolean IGESData_ParamReader::ReadText
-  (const IGESData_ParamCursor& PC, const Message_Msg& amsg,
-   Handle(TCollection_HAsciiString)& val)
+Standard_Boolean IGESData_ParamReader::ReadText (const Message_Msg& amsg, Handle(TCollection_HAsciiString)& val)
 {
-  if (!PrepareRead(PC,Standard_False)) return Standard_False;
+  const IGESData_ParamCursor PC(thecurr);
+  if (!PrepareRead(PC,NULL,Standard_False)) return Standard_False;
   const Interface_FileParameter& FP = theparams->Value(theindex+thebase);
   if (FP.ParamType() != Interface_ParamText) {
     if (FP.ParamType() == Interface_ParamVoid) {
@@ -673,10 +470,9 @@ Standard_Boolean IGESData_ParamReader::ReadText
 //purpose  : 
 //=======================================================================
 
-Standard_Boolean IGESData_ParamReader::ReadText
-  (const IGESData_ParamCursor& PC, const Standard_CString mess,
-   Handle(TCollection_HAsciiString)& val)
+Standard_Boolean IGESData_ParamReader::ReadText (const Standard_CString mess, Handle(TCollection_HAsciiString)& val)
 {
+  const IGESData_ParamCursor PC(thecurr);
   if (!PrepareRead(PC,mess,Standard_False)) return Standard_False;
   const Interface_FileParameter& FP = theparams->Value(theindex+thebase);
   if (FP.ParamType() != Interface_ParamText) {
@@ -703,32 +499,25 @@ Standard_Boolean IGESData_ParamReader::ReadText
 }
 
 
-// ReadEntity for MoniTool
-
 //=======================================================================
 //function : ReadEntity
 //purpose  : 
 //=======================================================================
 
 Standard_Boolean IGESData_ParamReader::ReadEntity (const Handle(IGESData_IGESReaderData)& IR, 
-						   const IGESData_ParamCursor& PC,
 						   IGESData_Status& aStatus, 
 						   Handle(IGESData_IGESEntity)& val, 
 						   const Standard_Boolean canbenul)
 {
+  const IGESData_ParamCursor PC(thecurr);
   aStatus = IGESData_EntityError;
-  if (!PrepareRead(PC,Standard_False)) return Standard_False;
+  if (!PrepareRead(PC,NULL,Standard_False)) return Standard_False;
   Standard_Integer nval;
-//  if (!ReadingEntityNumber(theindex,amsg,nval)) return Standard_False;
-  if (!ReadingEntityNumber(theindex,nval)) return Standard_False;
+  if (!ReadingEntityNumber(theindex,nval,NULL)) return Standard_False;
   if (nval == 0) {
     val.Nullify();
     if (!canbenul) {
       aStatus = IGESData_ReferenceError;
-     // Message_Msg Msg216 ("IGESP_216");
-     // amsg.Arg(amsg.Value());
-     // SendFail (amsg);
-
       thelast = Standard_True;
     }
     else
@@ -739,13 +528,10 @@ Standard_Boolean IGESData_ParamReader::ReadEntity (const Handle(IGESData_IGESRea
   if (val.IsNull()) return canbenul;
   //    Cas du "Nul IGES"
   if (val->TypeNumber() == 0) {           // Null ou pas encore rempli ...
-    if (IR->DirType(nval).Type() == 0) {  // le vrai critere (un peu cher)
+    if (IR->DirPart(nval).Type().Type() == 0) {  // le vrai critere (un peu cher)
       val.Nullify();
       if (!canbenul) {
-	aStatus = IGESData_EntityError;
-	// Message_Msg Msg217 ("IGES_217");
-        //amsg.Arg(Msg217.Value());
-        //SendFail (amsg);
+        aStatus = IGESData_EntityError;
         thelast = Standard_True;
       }
       else
@@ -764,12 +550,13 @@ Standard_Boolean IGESData_ParamReader::ReadEntity (const Handle(IGESData_IGESRea
 //=======================================================================
 
 Standard_Boolean IGESData_ParamReader::ReadEntity
-  (const Handle(IGESData_IGESReaderData)& IR, const IGESData_ParamCursor& PC,
+  (const Handle(IGESData_IGESReaderData)& IR,
    const Standard_CString mess, Handle(IGESData_IGESEntity)& val, const Standard_Boolean canbenul)
 {
+  const IGESData_ParamCursor PC(thecurr);
   if (!PrepareRead(PC,mess,Standard_False)) return Standard_False;
   Standard_Integer nval;
-  if (!ReadingEntityNumber(theindex,mess,nval)) return Standard_False;
+  if (!ReadingEntityNumber(theindex,nval,mess)) return Standard_False;
   if (nval == 0) {
     val.Nullify();
     if (!canbenul) {
@@ -782,11 +569,11 @@ Standard_Boolean IGESData_ParamReader::ReadEntity
   if (val.IsNull()) return canbenul;
   //    Cas du "Nul IGES"
   if (val->TypeNumber() == 0) {           // Null ou pas encore rempli ...
-    if (IR->DirType(nval).Type() == 0) {  // le vrai critere (un peu cher)
+    if (IR->DirPart(nval).Type().Type() == 0) {  // le vrai critere (un peu cher)
       val.Nullify();
       if (!canbenul) {
-	AddFail (mess," : IGES Null Entity","");
-	thelast = Standard_True;
+        AddFail (mess," : IGES Null Entity","");
+        thelast = Standard_True;
       }
       return canbenul;
     }
@@ -803,22 +590,16 @@ Standard_Boolean IGESData_ParamReader::ReadEntity
 //=======================================================================
 
 Standard_Boolean IGESData_ParamReader::ReadEntity (const Handle(IGESData_IGESReaderData)& IR,
-						   const IGESData_ParamCursor& PC,
 						   IGESData_Status& aStatus, 
 						   const Handle(Standard_Type)& type,
 						   Handle(IGESData_IGESEntity)& val,
 						   const Standard_Boolean canbenul)
 {
-  Standard_Boolean res = ReadEntity (IR,PC,aStatus,val,canbenul);
-  if (!res) {
-    return res;
-  }
+  const Standard_Boolean res = ReadEntity (IR,aStatus,val,canbenul);
+  if (!res) return res;
   if (val.IsNull()) return res;
   if (!val->IsKind(type)) {
     aStatus = IGESData_TypeError;
-    // Message_Msg Msg218 ("IGES_218");
-    //amsg.Arg(Msg218.Value());
-    //SendFail(amsg);
     thelast = Standard_True;
     val.Nullify();
     return Standard_False;
@@ -834,11 +615,11 @@ Standard_Boolean IGESData_ParamReader::ReadEntity (const Handle(IGESData_IGESRea
 
 Standard_Boolean IGESData_ParamReader::ReadEntity
   (const Handle(IGESData_IGESReaderData)& IR,
-   const IGESData_ParamCursor& PC, const Standard_CString mess,
+   const Standard_CString mess,
    const Handle(Standard_Type)& type,
    Handle(IGESData_IGESEntity)& val, const Standard_Boolean canbenul)
 {
-  Standard_Boolean res = ReadEntity (IR,PC,mess,val,canbenul);
+  Standard_Boolean res = ReadEntity (IR,mess,val,canbenul);
   if (!res) return res;
   if (val.IsNull()) return res;
   if (!val->IsKind(type)) {
@@ -858,14 +639,12 @@ Standard_Boolean IGESData_ParamReader::ReadEntity
 //purpose  : 
 //=======================================================================
 
-Standard_Boolean IGESData_ParamReader::ReadInts
-  (const IGESData_ParamCursor& PC, const Message_Msg& amsg ,
-   Handle(TColStd_HArray1OfInteger)& val,  const Standard_Integer index)
+Standard_Boolean IGESData_ParamReader::ReadInts (const IGESData_ParamCursor& PC, const Message_Msg& amsg, Handle(TColStd_HArray1OfInteger)& val)
 {
-  if (!PrepareRead(PC,Standard_True)) return Standard_False;
+  if (!PrepareRead(PC,NULL,Standard_True)) return Standard_False;
   if (thenbitem == 0) return Standard_True;    // vide : retour Null ...
-  val = new TColStd_HArray1OfInteger (index,index+thenbitem*thetermsz-1);
-  Standard_Integer ind = index;
+  val = new TColStd_HArray1OfInteger (1,thenbitem*thetermsz);
+  Standard_Integer ind = 1;
 
   for (Standard_Integer i = FirstRead(); i > 0; i = NextRead()) {
     const Interface_FileParameter& FP = theparams->Value(i+thebase);
@@ -887,14 +666,12 @@ Standard_Boolean IGESData_ParamReader::ReadInts
 //purpose  : 
 //=======================================================================
 
-Standard_Boolean IGESData_ParamReader::ReadInts
-  (const IGESData_ParamCursor& PC, const Standard_CString mess,
-   Handle(TColStd_HArray1OfInteger)& val,  const Standard_Integer index)
+Standard_Boolean IGESData_ParamReader::ReadInts (const IGESData_ParamCursor& PC, const Standard_CString mess, Handle(TColStd_HArray1OfInteger)& val)
 {
   if (!PrepareRead(PC,mess,Standard_True)) return Standard_False;
   if (thenbitem == 0) return Standard_True;    // vide : retour Null ...
-  val = new TColStd_HArray1OfInteger (index,index+thenbitem*thetermsz-1);
-  Standard_Integer ind = index;
+  val = new TColStd_HArray1OfInteger (1,thenbitem*thetermsz);
+  Standard_Integer ind = 1;
 
   for (Standard_Integer i = FirstRead(); i > 0; i = NextRead()) {
     const Interface_FileParameter& FP = theparams->Value(i+thebase);
@@ -924,14 +701,14 @@ Standard_Boolean IGESData_ParamReader::ReadReals
   (const IGESData_ParamCursor& PC,Message_Msg& /*amsg*/,
    Handle(TColStd_HArray1OfReal)& val,  const Standard_Integer index)
 {
-  if (!PrepareRead(PC,Standard_True)) return Standard_False;
+  if (!PrepareRead(PC,NULL,Standard_True)) return Standard_False;
   if (thenbitem == 0) return Standard_True;    // vide : retour Null ...
   val = new TColStd_HArray1OfReal (index,index+thenbitem*thetermsz-1);
   Standard_Integer ind = index;
 
   for (Standard_Integer i = FirstRead(); i > 0; i = NextRead()) {
     Standard_Real rval;
-    if (!ReadingReal(i,rval)) return Standard_False;
+    if (!ReadingReal(i,rval,NULL)) return Standard_False;
     val->SetValue (ind, rval);    ind ++;
   }
   return Standard_True;
@@ -954,7 +731,7 @@ Standard_Boolean IGESData_ParamReader::ReadReals
 
   for (Standard_Integer i = FirstRead(); i > 0; i = NextRead()) {
     Standard_Real rval;
-    if (!ReadingReal(i,mess,rval)) return Standard_False;
+    if (!ReadingReal(i,rval,mess)) return Standard_False;
     val->SetValue (ind, rval);    ind ++;
   }
   return Standard_True;
@@ -972,7 +749,7 @@ Standard_Boolean IGESData_ParamReader::ReadTexts
   (const IGESData_ParamCursor& PC, const Message_Msg& amsg  ,
    Handle(Interface_HArray1OfHAsciiString)& val,  const Standard_Integer index)
 {
-  if (!PrepareRead(PC,Standard_True)) return Standard_False;
+  if (!PrepareRead(PC,NULL,Standard_True)) return Standard_False;
   if (thenbitem == 0) return Standard_True;    // vide : retour Null ...
   val = new Interface_HArray1OfHAsciiString(index,index+thenbitem*thetermsz-1);
   Standard_Integer ind = index;
@@ -990,7 +767,6 @@ Standard_Boolean IGESData_ParamReader::ReadTexts
       return Standard_False;
     }
     Handle(TCollection_HAsciiString) tval = new TCollection_HAsciiString (FP.CValue());
-    // IGESFile_Read a filtre
     Standard_Integer lnt = tval->Length();
     Standard_Integer lnh = tval->Location(1,'H',1,lnt);
     if (lnh <= 1 || lnh >= lnt) {
@@ -1035,7 +811,6 @@ Standard_Boolean IGESData_ParamReader::ReadTexts
       return Standard_False;
     }
     Handle(TCollection_HAsciiString) tval = new TCollection_HAsciiString (FP.CValue());
-    // IGESFile_Read a filtre
     Standard_Integer lnt = tval->Length();
     Standard_Integer lnh = tval->Location(1,'H',1,lnt);
     if (lnh <= 1 || lnh >= lnt) {
@@ -1065,7 +840,7 @@ Standard_Boolean IGESData_ParamReader::ReadEnts
    const IGESData_ParamCursor& PC, const Message_Msg& amsg  ,
    Handle(IGESData_HArray1OfIGESEntity)& val,  const Standard_Integer index)
 {
-  if (!PrepareRead(PC,Standard_True)) return Standard_False;
+  if (!PrepareRead(PC,NULL,Standard_True)) return Standard_False;
   if (thenbitem == 0) return Standard_True;    // vide : retour Null ...
   Standard_Integer indmax = index+thenbitem*thetermsz-1;
   val = new IGESData_HArray1OfIGESEntity (index , indmax);
@@ -1075,12 +850,12 @@ Standard_Boolean IGESData_ParamReader::ReadEnts
   Standard_Integer i; // svv Jan11 2000 : porting on DEC
   for (i = FirstRead(); i > 0; i = NextRead()) {
     Standard_Integer nval;
-    if (!ReadingEntityNumber(i,nval)) nval = 0;  //return Standard_False;
+    if (!ReadingEntityNumber(i,nval,NULL)) nval = 0;  //return Standard_False;
     if (nval < 0) nbneg ++;
     if (nval > 0) {
       DeclareAndCast(IGESData_IGESEntity,anent,IR->BoundEntity(nval));
       if (anent.IsNull()) nbnul ++;
-      else if (IR->DirType(nval).Type() == 0) nbnul ++;
+      else if (IR->DirPart(nval).Type().Type() == 0) nbnul ++;
       else  {  val->SetValue (ind, anent);  ind ++;  }
     }
   }
@@ -1117,15 +892,15 @@ Standard_Boolean IGESData_ParamReader::ReadEnts
   Standard_Integer ind = index;
   Standard_Integer nbneg = 0, nbnul = 0;
 
-  Standard_Integer i; // svv Jan11 2000 : porting on DEC
+  Standard_Integer i;
   for (i = FirstRead(); i > 0; i = NextRead()) {
     Standard_Integer nval;
-    if (!ReadingEntityNumber(i,mess,nval)) nval = 0;  //return Standard_False;
+    if (!ReadingEntityNumber(i,nval,mess)) nval = 0;
     if (nval < 0) nbneg ++;
     if (nval > 0) {
       DeclareAndCast(IGESData_IGESEntity,anent,IR->BoundEntity(nval));
       if (anent.IsNull()) nbnul ++;
-      else if (IR->DirType(nval).Type() == 0) nbnul ++;
+      else if (IR->DirPart(nval).Type().Type() == 0) nbnul ++;
       else  {  val->SetValue (ind, anent);  ind ++;  }
     }
   }
@@ -1165,12 +940,12 @@ Standard_Boolean IGESData_ParamReader::ReadEntList
    Interface_EntityList& val, const Standard_Boolean ord)
 {
 
-  if (!PrepareRead(PC,Standard_True)) return Standard_False;
+  if (!PrepareRead(PC,NULL,Standard_True)) return Standard_False;
   val.Clear();
   if (thenbitem == 0) return Standard_True;    // vide : retour Null ...
   for (Standard_Integer i = FirstRead(); i > 0; i = NextRead()) {
     Standard_Integer nval;
-    if (!ReadingEntityNumber(i,nval)) return Standard_False;
+    if (!ReadingEntityNumber(i,nval,NULL)) return Standard_False;
     if (nval < 0) 
       {
         Message_Msg Msg219 ("XSTEP_219");
@@ -1185,7 +960,7 @@ Standard_Boolean IGESData_ParamReader::ReadEntList
       amsg.Arg(Msg216.Value());
       SendWarning(amsg);
     }   
-    else if (IR->DirType(nval).Type() == 0)
+    else if (IR->DirPart(nval).Type().Type() == 0)
     {
       Message_Msg Msg217 ("XSTEP_217");
       SendWarning(TCollection_AsciiString(Msg217.Value()).ToCString());
@@ -1212,12 +987,12 @@ Standard_Boolean IGESData_ParamReader::ReadEntList
   if (thenbitem == 0) return Standard_True;    // vide : retour Null ...
   for (Standard_Integer i = FirstRead(); i > 0; i = NextRead()) {
     Standard_Integer nval;
-    if (!ReadingEntityNumber(i,mess,nval)) return Standard_False;
+    if (!ReadingEntityNumber(i,nval,mess)) return Standard_False;
     if (nval < 0)  AddWarning(" Negative Pointer, skipped","");
     if (nval <= 0) continue;
     DeclareAndCast(IGESData_IGESEntity,anent,IR->BoundEntity(nval));
     if (anent.IsNull()) AddWarning(" Null Pointer, skipped","");
-    else if (IR->DirType(nval).Type() == 0) AddWarning(" Pointer to IGES Null Entity, skipped","");
+    else if (IR->DirPart(nval).Type().Type() == 0) AddWarning(" Pointer to IGES Null Entity, skipped","");
     else if (ord) val.Append (anent);
     else          val.Add    (anent);
   }
@@ -1225,93 +1000,24 @@ Standard_Boolean IGESData_ParamReader::ReadEntList
 }
 
 
-// ReadingReal for MoniTool
-
 //=======================================================================
 //function : ReadingReal
 //purpose  : 
 //=======================================================================
 
-Standard_Boolean IGESData_ParamReader::ReadingReal (const Standard_Integer num,
-						    Standard_Real& val)
-{
-  const Interface_FileParameter& FP = theparams->Value(num+thebase);
-  if(FP.ParamType() == Interface_ParamInteger) {
-    if (!pbrealint) {
-      if (testconv < 0) testconv = 0; //Interface_Static::IVal("iges.convert.read");
-      if (testconv > 0) {
-     //   char ssem[100];
-        pbrealint = num;
-     //   sprintf(ssem,": Integer converted to Real, 1st rank=%d",num);
-     //   AddWarning (mess,ssem,"At least one Integer converted to Real, 1st rank=%d");
-      }
-    }
-    Standard_Integer ival = atoi(FP.CValue());
-    val = ival;
-    return Standard_True; 
-  }
-  char text[50];
-  Standard_CString orig = FP.CValue();
-  Standard_Integer i , j = 0;
-  for (i = 0; i < 50; i ++) {
-    if (orig[i] ==  'D' || orig[i] == 'd')
-      text[j++] = 'e';
-    else
-      text[j++] = orig[i];  
-    if (orig[i] == '\0') break;
-  }
-  if (FP.ParamType() == Interface_ParamReal) 
-    val = Atof(text);
-  else if (FP.ParamType() == Interface_ParamEnum) {  // convention
-    if (!pbrealform) {
-      if (testconv < 0) testconv = 0; //Interface_Static::IVal("iges.convert.read");
-      if (testconv > 0) {
-       // char ssem[100];
-        pbrealform = num;
-      //  sprintf(ssem,"Real with no decimal point (added), 1st rank=%d",num);
-      //  AddWarning (mess,ssem,"Real with no decimal point (added), 1st rank=%d");
-      }
-    }
-    // Par convention (pas d enum explicite dans IGES), signifie
-    // "reconnu comme flottant mais pas blanc-bleu" c-a-d sans point decimal
-    // mais avec exposant (sinon ce serait un entier)
-    // -> un message avertissement + on ajoute le point puis on convertit
-    
-    val = Atof(text);
-  } else if (FP.ParamType() == Interface_ParamVoid) {
-    val = 0.0;    // DEFAULT
-  } else {
-   // char ssem[100];
-  //  sprintf(ssem,": not given as Real, rank %d",num);
-  //  AddFail (mess,ssem,": not given as Real, rank %d");
-  /*  TCollection_AsciiString mess = amsg.Value();
-    if ((mess.Search("ter %d"))||(mess.Search("tre %d")))
-       amsg.AddInteger(num); // Parameter index
-  */ 
-    return Standard_False;
-  }
-  return Standard_True;
-}
-
-
-//=======================================================================
-//function : ReadingReal
-//purpose  : 
-//=======================================================================
-
-Standard_Boolean IGESData_ParamReader::ReadingReal
-  (const Standard_Integer num, const Standard_CString mess,
-   Standard_Real& val)
+Standard_Boolean IGESData_ParamReader::ReadingReal (const Standard_Integer num, Standard_Real& val, const Standard_CString mess)
 {
   const Interface_FileParameter& FP = theparams->Value(num+thebase);
   if (FP.ParamType() == Interface_ParamInteger) {
     if (!pbrealint) {
-      if (testconv < 0) testconv = 0; //Interface_Static::IVal("iges.convert.read");
+      if (testconv < 0) testconv = 0;
       if (testconv > 0) {
-	char ssem[100];
-	pbrealint = num;
-	sprintf(ssem,": Integer converted to Real, 1st rank=%d",num);
-	AddWarning (mess,ssem,"At least one Integer converted to Real, 1st rank=%d");
+        pbrealint = num;
+        if (mess) {
+          char ssem[100];
+          sprintf(ssem,": Integer converted to Real, 1st rank=%d",num);
+          AddWarning (mess,ssem,"At least one Integer converted to Real, 1st rank=%d");
+        }
       }
     }
     Standard_Integer ival = atoi(FP.CValue());
@@ -1332,78 +1038,54 @@ Standard_Boolean IGESData_ParamReader::ReadingReal
     val = Atof(text);
   else if (FP.ParamType() == Interface_ParamEnum) {  // convention
     if (!pbrealform) {
-      if (testconv < 0) testconv = 0; //Interface_Static::IVal("iges.convert.read");
+      if (testconv < 0) testconv = 0;
       if (testconv > 0) {
-	char ssem[100];
-	pbrealform = num;
-	sprintf(ssem,"Real with no decimal point (added), 1st rank=%d",num);
-	AddWarning (mess,ssem,"Real with no decimal point (added), 1st rank=%d");
+        pbrealform = num;
+        if (mess) {
+          char ssem[100];
+          sprintf(ssem,"Real with no decimal point (added), 1st rank=%d",num);
+          AddWarning (mess,ssem,"Real with no decimal point (added), 1st rank=%d");
+        }
       }
     }
     // Par convention (pas d enum explicite dans IGES), signifie
     // "reconnu comme flottant mais pas blanc-bleu" c-a-d sans point decimal
     // mais avec exposant (sinon ce serait un entier)
     // -> un message avertissement + on ajoute le point puis on convertit
-    
     val = Atof(text);
   } else if (FP.ParamType() == Interface_ParamVoid) {
     val = 0.0;    // DEFAULT
   } else {
     val = 0.0;    // DEFAULT
-    char ssem[100];
-    sprintf(ssem,": not given as Real, rank %d",num);
-    AddFail (mess,ssem,": not given as Real, rank %d");
+    if (mess) {
+      char ssem[100];
+      sprintf(ssem,": not given as Real, rank %d",num);
+      AddFail (mess,ssem,": not given as Real, rank %d");
+    }
     return Standard_False;
   }
   return Standard_True;
 }
  
 
-// ReadingEntityNumber for MoniTool
-
 //=======================================================================
 //function : ReadingEntityNumber
 //purpose  : 
 //=======================================================================
 
-Standard_Boolean IGESData_ParamReader::ReadingEntityNumber (const Standard_Integer num, 
-							    Standard_Integer& val)
+Standard_Boolean IGESData_ParamReader::ReadingEntityNumber (const Standard_Integer num, Standard_Integer& val, const Standard_CString mess)
 {
   const Interface_FileParameter& FP = theparams->Value(num+thebase);
   val = ParamNumber(num);
   if (val == 0) {
     Standard_Boolean nulref = Standard_False;
     if (FP.ParamType() == Interface_ParamInteger)
-        nulref = (atoi(FP.CValue()) == 0);
-    else if (FP.ParamType() == Interface_ParamVoid) nulref = Standard_True;
+      nulref = (atoi(FP.CValue()) == 0);
+    else if (FP.ParamType() == Interface_ParamVoid)
+      nulref = Standard_True;
     if (!nulref) {
-   //   AddFail (mess," : cannot refer to an Entity","");
-      thelast = Standard_True;
-      return Standard_False;
-    }
-  }
-  return Standard_True;
-}
-
-
-//=======================================================================
-//function : ReadingEntityNumber
-//purpose  : 
-//=======================================================================
-
-Standard_Boolean IGESData_ParamReader::ReadingEntityNumber
-  (const Standard_Integer num, const Standard_CString mess,
-   Standard_Integer& val)
-{
-  const Interface_FileParameter& FP = theparams->Value(num+thebase);
-  val = ParamNumber(num);
-  if (val == 0) {
-    Standard_Boolean nulref = Standard_False;
-    if (FP.ParamType() == Interface_ParamInteger)
-	nulref = (atoi(FP.CValue()) == 0);
-    else if (FP.ParamType() == Interface_ParamVoid) nulref = Standard_True;
-    if (!nulref) {
-      AddFail (mess," : cannot refer to an Entity","");
+      if (mess)
+        AddFail (mess," : cannot refer to an Entity","");
       thelast = Standard_True;
       return Standard_False;
     }
@@ -1562,39 +1244,6 @@ void IGESData_ParamReader::Mend (const Standard_CString pref)
 {
   thecheck->Mend (pref);
   thelast = Standard_True;
-}
-
-
-//=======================================================================
-//function : HasFailed
-//purpose  : 
-//=======================================================================
-
-Standard_Boolean IGESData_ParamReader::HasFailed () const
-{
-  return !thelast;
-}  //thecheck.HasFailed();
-
-
-//=======================================================================
-//function : Check
-//purpose  : 
-//=======================================================================
-
-const Handle(Interface_Check)& IGESData_ParamReader::Check () const
-{
-  return thecheck;
-}
-
-
-//=======================================================================
-//function : CCheck
-//purpose  : 
-//=======================================================================
-
-Handle(Interface_Check)& IGESData_ParamReader::CCheck ()
-{
-  return thecheck;
 }
 
 

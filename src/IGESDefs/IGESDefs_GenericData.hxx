@@ -17,25 +17,11 @@
 #ifndef _IGESDefs_GenericData_HeaderFile
 #define _IGESDefs_GenericData_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
-#include <Standard_Integer.hxx>
-#include <TColStd_HArray1OfInteger.hxx>
-#include <TColStd_HArray1OfTransient.hxx>
 #include <IGESData_IGESEntity.hxx>
-#include <Standard_Real.hxx>
-#include <Standard_Boolean.hxx>
 class TCollection_HAsciiString;
-class Standard_DimensionMismatch;
-class Standard_OutOfRange;
-class Standard_NullObject;
-class Standard_Transient;
-class IGESData_IGESEntity;
+class TColStd_HArray1OfInteger;
+class TColStd_HArray1OfTransient;
 
-
-class IGESDefs_GenericData;
-DEFINE_STANDARD_HANDLE(IGESDefs_GenericData, IGESData_IGESEntity)
 
 //! defines IGES Generic Data, Type <406> Form <27>
 //! in package IGESDefs
@@ -47,12 +33,16 @@ DEFINE_STANDARD_HANDLE(IGESDefs_GenericData, IGESData_IGESEntity)
 //! instances of this property.
 class IGESDefs_GenericData : public IGESData_IGESEntity
 {
+ public:
 
-public:
+  Standard_EXPORT virtual Standard_Integer TypeNumber() const Standard_OVERRIDE { return 406; }
 
-  
-  Standard_EXPORT IGESDefs_GenericData();
-  
+  Standard_EXPORT virtual Standard_Integer FormNumber() const Standard_OVERRIDE { return 27; }
+
+  IGESDefs_GenericData()
+  : myNbPropertyValues(0)
+  {}
+
   //! This method is used to set the fields of the class
   //! GenericData
   //! - nbPropVal : Number of property values
@@ -62,11 +52,11 @@ public:
   Standard_EXPORT void Init (const Standard_Integer nbPropVal, const Handle(TCollection_HAsciiString)& aName, const Handle(TColStd_HArray1OfInteger)& allTypes, const Handle(TColStd_HArray1OfTransient)& allValues);
   
   //! returns the number of property values
-  Standard_EXPORT Standard_Integer NbPropertyValues() const;
-  
+  Standard_Integer NbPropertyValues() const { return myNbPropertyValues; }
+
   //! returns property name
-  Standard_EXPORT Handle(TCollection_HAsciiString) Name() const;
-  
+  const Handle(TCollection_HAsciiString) & Name() const { return myName; }
+
   //! returns the number of TYPE/VALUE pairs
   Standard_EXPORT Standard_Integer NbTypeValuePairs() const;
   
@@ -99,31 +89,26 @@ public:
   //! Error if Index out of Range, or not a Logical
   Standard_EXPORT Standard_Boolean ValueAsLogical (const Standard_Integer ValueNum) const;
 
+  Standard_EXPORT virtual void OwnRead (IGESFile_Reader &) Standard_OVERRIDE;
+  
+  Standard_EXPORT virtual void OwnWrite (IGESData_IGESWriter &) const Standard_OVERRIDE;
 
+  Standard_EXPORT virtual void OwnShared (Interface_EntityIterator& iter) const Standard_OVERRIDE;
 
+  Standard_EXPORT virtual IGESData_DirChecker DirChecker () const Standard_OVERRIDE;
+
+  Standard_EXPORT virtual void OwnCheck (const Interface_ShareTool &, Handle(Interface_Check) &) const Standard_OVERRIDE;
+
+  Standard_EXPORT virtual void OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &, const Standard_Integer) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESDefs_GenericData,IGESData_IGESEntity)
 
-protected:
+ private:
 
-
-
-
-private:
-
-
-  Standard_Integer theNbPropertyValues;
-  Handle(TCollection_HAsciiString) theName;
-  Handle(TColStd_HArray1OfInteger) theTypes;
-  Handle(TColStd_HArray1OfTransient) theValues;
-
-
+  Standard_Integer myNbPropertyValues;
+  Handle(TCollection_HAsciiString) myName;
+  Handle(TColStd_HArray1OfInteger) myTypes;
+  Handle(TColStd_HArray1OfTransient) myValues;
 };
-
-
-
-
-
-
 
 #endif // _IGESDefs_GenericData_HeaderFile

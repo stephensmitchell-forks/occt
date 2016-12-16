@@ -17,12 +17,9 @@
 #ifndef _IGESData_Protocol_HeaderFile
 #define _IGESData_Protocol_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
 #include <Interface_Protocol.hxx>
-class Interface_InterfaceModel;
-
+class IGESData_IGESEntity;
+class IGESData_IGESType;
 
 class IGESData_Protocol;
 DEFINE_STANDARD_HANDLE(IGESData_Protocol, Interface_Protocol)
@@ -49,6 +46,9 @@ class IGESData_Protocol : public Interface_Protocol
   //! Returns True if <ent> is an Unknown Entity for the Norm, i.e.
   //! Type UndefinedEntity, status Unknown
   Standard_EXPORT Standard_Boolean IsUnknownEntity (const Handle(Standard_Transient)& ent) const Standard_OVERRIDE;
+
+  //! Creates a new entity of the given type
+  Standard_EXPORT Handle(IGESData_IGESEntity) NewEntity(const IGESData_IGESType &theType) const;
 
   DEFINE_STANDARD_RTTIEXT(IGESData_Protocol,Interface_Protocol)
 };

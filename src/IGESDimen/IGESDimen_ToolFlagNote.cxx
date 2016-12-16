@@ -47,14 +47,11 @@ void  IGESDimen_ToolFlagNote::ReadOwnParams
   Standard_Integer nbval;
   Handle(IGESDimen_HArray1OfLeaderArrow) leaders;
 
-  PR.ReadXYZ (PR.CurrentList(1, 3), "Lower Left Corner Co-ords", lowerLeft); //szv#4:S4163:12Mar99 `st=` not needed
+  PR.ReadXYZ(lowerLeft,"Lower Left Corner Co-ords");
+  PR.ReadReal(angle,"Rotation Angle");
+  PR.ReadEntity(IR, "General Note Entity",STANDARD_TYPE(IGESDimen_GeneralNote), note);
 
-  PR.ReadReal(PR.Current(), "Rotation Angle", angle); //szv#4:S4163:12Mar99 `st=` not needed
-
-  PR.ReadEntity(IR, PR.Current(), "General Note Entity",
-		STANDARD_TYPE(IGESDimen_GeneralNote), note); //szv#4:S4163:12Mar99 `st=` not needed
-
-  Standard_Boolean st = PR.ReadInteger(PR.Current(), "Number of Leaders", nbval);
+  Standard_Boolean st = PR.ReadInteger(nbval,"Number of Leaders");
   if (st && nbval > 0)
     {
       leaders = new IGESDimen_HArray1OfLeaderArrow(1, nbval);
@@ -62,9 +59,7 @@ void  IGESDimen_ToolFlagNote::ReadOwnParams
       for (Standard_Integer i = 1; i <= nbval; i++)
 	{
 	  Handle(IGESDimen_LeaderArrow) anentity;
-	  //st = PR.ReadEntity(IR, PR.Current(), "Leaders",
-			       //STANDARD_TYPE(IGESDimen_LeaderArrow), anentity); //szv#4:S4163:12Mar99 moved in if
-	  if (PR.ReadEntity(IR, PR.Current(), "Leaders", STANDARD_TYPE(IGESDimen_LeaderArrow), anentity))
+	  if (PR.ReadEntity(IR, "Leaders", STANDARD_TYPE(IGESDimen_LeaderArrow), anentity))
 	    leaders->SetValue(i, anentity);
 	}
     }

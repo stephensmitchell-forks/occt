@@ -23,46 +23,55 @@
 #include <IGESGeom_TransformationMatrix.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_EntityIterator.hxx>
+#include <IGESFile_Reader.hxx>
+#include <IGESData_IGESWriter.hxx>
+#include <Message_Messenger.hxx>
+#include <IGESData_DirChecker.hxx>
+#include <IGESData_IGESDumper.hxx>
+#include <IGESData_Dump.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESAppli_Node,IGESData_IGESEntity)
 
-void IGESAppli_Node::Init
-  (const gp_XYZ& aCoord,
-   const Handle(IGESGeom_TransformationMatrix)& aCoordSystem)
-{
-  theCoord  = aCoord;
-  theSystem = aCoordSystem;
-  InitTypeAndForm(134,0);
-}
-
-gp_Pnt IGESAppli_Node::Coord () const
-{
-  return  gp_Pnt(theCoord);
-}
-
-Handle(IGESData_TransfEntity) IGESAppli_Node::System () const
-{
-  //if Null, Global Cartesian Coordinate System
-  return Handle(IGESData_TransfEntity)(theSystem);
-}
-
 Standard_Integer IGESAppli_Node::SystemType () const
 {
-  if (theSystem.IsNull()) return 0;      // 0 Global Cartesien
-  return (theSystem->FormNumber() - 9);  // 1 Cartesien, 2 Cylind. 3 Spher.
+  return (mySystem.IsNull()? 0 : (mySystem->FormNumber() - 9)); // 0 Global Cartesien, 1 Cartesien, 2 Cylind. 3 Spher.
 }
 
 gp_Pnt IGESAppli_Node::TransformedNodalCoord () const
 {
-  gp_XYZ tempCoord = Coord().XYZ();
-  Handle(IGESData_TransfEntity) temp = System();
-  if (!temp.IsNull())    temp->Value().Transforms(tempCoord);
+  gp_XYZ tempCoord = myCoord;
+  if (!mySystem.IsNull()) mySystem->Value().Transforms(tempCoord);
   return gp_Pnt(tempCoord);
+}
+
+void IGESAppli_Node::OwnRead (IGESFile_Reader &theReader)
+{
+  theReader.ReadXYZ(myCoord,"Coordinates of Node (XYZ)");
+  theReader.ReadPointer(mySystem,"Transformation Matrix",Standard_True);
+}
+
+void IGESAppli_Node::OwnWrite (IGESData_IGESWriter &IW) const
+{
+  IW.Send(myCoord.X());
+  IW.Send(myCoord.Y());
+  IW.Send(myCoord.Z());
+  IW.Send(mySystem);
 }
 
 void IGESAppli_Node::OwnShared(Interface_EntityIterator &theIter) const
 {
-  theIter.GetOneItem(System());
+  theIter.GetOneItem(mySystem);
+}
+
+IGESData_DirChecker IGESAppli_Node::DirChecker () const
+{
+  IGESData_DirChecker DC(134,0);  //Form no = 0 & Type = 134
+  DC.Structure(IGESData_DefVoid);
+  DC.LineFont(IGESData_DefVoid);
+  DC.LineWeight(IGESData_DefVoid);
+  DC.Color(IGESData_DefAny);
+  DC.UseFlagRequired(04);
+  return DC;
 }
 
 void IGESAppli_Node::OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &theCheck) const
@@ -71,7 +80,19 @@ void IGESAppli_Node::OwnCheck (const Interface_ShareTool &, const Handle(Interfa
     theCheck->AddFail("SubScript Number expected (for Node Number) not present");
   if (!HasTransf())
     theCheck->AddFail("Transformation Matrix expected, not present");
-  if (!System().IsNull())
-    if (System()->FormNumber() < 10)
+  if (!mySystem.IsNull())
+    if (mySystem->FormNumber() < 10)
       theCheck->AddFail("System : Incorrect FormNumber (not 10-11-12)");
+}
+
+void IGESAppli_Node::OwnDump (const IGESData_IGESDumper &dumper, const Handle(Message_Messenger) &S, const Standard_Integer level) const
+{
+  S << "IGESAppli_Node" << endl;
+  S << "Nodal Coords : 1st " << myCoord.X() << "  2nd : " << myCoord.Y() << "  3rd : " << myCoord.Z() <<endl;
+  S << "Nodal Displacement Coordinate System : ";
+  if (!mySystem.IsNull())
+    dumper.Dump(mySystem,S,level);
+  else
+    S << "Global Cartesian Coordinate System (default)";
+  S << endl;
 }

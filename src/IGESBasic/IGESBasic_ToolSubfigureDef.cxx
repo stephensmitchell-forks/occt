@@ -52,18 +52,17 @@ void  IGESBasic_ToolSubfigureDef::ReadOwnParams
 
   Standard_Integer tempDepth;
   Handle(TCollection_HAsciiString) tempName;
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
   Standard_Integer nbval = 0;
   Handle(IGESData_HArray1OfIGESEntity)  EntArray;
 
-  if(!PR.ReadInteger(PR.Current(),tempDepth)){ //szv#4:S4163:12Mar99 `st=` not needed
+  if(!PR.ReadInteger(tempDepth)) {
     Message_Msg Msg208("XSTEP_208");
     PR.SendFail(Msg208);
   }
-  PR.ReadText(PR.Current(),Msg209,tempName); //szv#4:S4163:12Mar99 `st=` not needed
-  if (PR.ReadInteger( PR.Current(), nbval)) { //szv#4:S4163:12Mar99 `st=` not needed
+  PR.ReadText(Msg209,tempName);
+  if (PR.ReadInteger(nbval)) {
     Message_Msg Msg211("XSTEP_211");
-    PR.ReadEnts (IR,PR.CurrentList(nbval),Msg211,EntArray); //szv#4:S4163:12Mar99 `st=` not needed
+    PR.ReadEnts (IR,PR.CurrentList(nbval),Msg211,EntArray);
   }
   else{
     Message_Msg Msg210("XSTEP_210");

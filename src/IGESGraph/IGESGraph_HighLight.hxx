@@ -35,51 +35,36 @@ DEFINE_STANDARD_HANDLE(IGESGraph_HighLight, IGESData_IGESEntity)
 //! displayed in some system dependent manner
 class IGESGraph_HighLight : public IGESData_IGESEntity
 {
+ public:
 
-public:
+  Standard_EXPORT virtual Standard_Integer TypeNumber() const Standard_OVERRIDE { return 406; }
 
-  
-  Standard_EXPORT IGESGraph_HighLight();
-  
-  //! This method is used to set the fields of the class
-  //! HighLight
-  //! - nbProps          : Number of property values (NP = 1)
-  //! - aHighLightStatus : HighLight Flag
-  Standard_EXPORT void Init (const Standard_Integer nbProps, const Standard_Integer aHighLightStatus);
-  
-  //! returns the number of property values in <me>
-  Standard_EXPORT Standard_Integer NbPropertyValues() const;
-  
+  Standard_EXPORT virtual Standard_Integer FormNumber() const Standard_OVERRIDE { return 20; }
+
+  IGESGraph_HighLight()
+  : myHighLight(0)
+  {}
+
   //! returns 0 if <me> is not highlighted(default),
   //! 1 if <me> is highlighted
-  Standard_EXPORT Standard_Integer HighLightStatus() const;
-  
+  Standard_Integer HighLightStatus() const { return myHighLight; }
+
   //! returns True if entity is highlighted
-  Standard_EXPORT Standard_Boolean IsHighLighted() const;
+  Standard_Boolean IsHighLighted() const { return (myHighLight != 0); }
 
+  Standard_EXPORT virtual void OwnRead (IGESFile_Reader &) Standard_OVERRIDE;
+  
+  Standard_EXPORT virtual void OwnWrite (IGESData_IGESWriter &) const Standard_OVERRIDE;
 
+  Standard_EXPORT virtual IGESData_DirChecker DirChecker () const Standard_OVERRIDE;
 
+  Standard_EXPORT virtual void OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &, const Standard_Integer) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESGraph_HighLight,IGESData_IGESEntity)
 
-protected:
+ private:
 
-
-
-
-private:
-
-
-  Standard_Integer theNbPropertyValues;
-  Standard_Integer theHighLight;
-
-
+  Standard_Integer myHighLight;
 };
-
-
-
-
-
-
 
 #endif // _IGESGraph_HighLight_HeaderFile

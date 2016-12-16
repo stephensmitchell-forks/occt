@@ -51,36 +51,24 @@ void  IGESDimen_ToolGeneralSymbol::ReadOwnParams
   if ((ent->FormNumber() == 0) && (!PR.IsParamEntity(PR.CurrentNumber())))
     PR.SetCurrentNumber(PR.CurrentNumber()+1);
   else
-    PR.ReadEntity(IR, PR.Current(), "General Note Entity",
-		  STANDARD_TYPE(IGESDimen_GeneralNote), tempNote); //szv#4:S4163:12Mar99 `st=` not needed
+    PR.ReadEntity(IR, "General Note Entity", STANDARD_TYPE(IGESDimen_GeneralNote), tempNote);
 
-  Standard_Boolean st = PR.ReadInteger(PR.Current(), "Number of Geometries", num);
+  Standard_Boolean st = PR.ReadInteger(num,"Number of Geometries");
   if (!st || num <= 0) PR.AddFail("Number of Geometries: Not Positive");
   if (num > 0) {
-    PR.ReadEnts (IR,PR.CurrentList(num),"Geometry Entities",tempGeoms); //szv#4:S4163:12Mar99 `st=` not needed
-/*
-    tempGeoms = new IGESData_HArray1OfIGESEntity(1, num);
-    for ( i = 1; i <= num; i++)
-      {
-	Handle(IGESData_IGESEntity) tempEnt;
-	st = PR.ReadEntity(IR, PR.Current(), "Geometry Entity", tempEnt);
-	if (st) tempGeoms->SetValue(i, tempEnt);
-      }
-*/
+    PR.ReadEnts (IR,PR.CurrentList(num),"Geometry Entities",tempGeoms);
   }
   else {
     return;
   }
-  st = PR.ReadInteger(PR.Current(), "Number of Leaders", num);
+  st = PR.ReadInteger(num,"Number of Leaders");
   if (st && num > 0)  tempLeaders = new IGESDimen_HArray1OfLeaderArrow(1, num);
   else if (num < 0)  PR.AddFail("Number of Leaders: Less than zero");
   if (!tempLeaders.IsNull())
     for ( i = 1; i <= num; i++)
       {
 	Handle(IGESDimen_LeaderArrow) tempEnt;
-	//st = PR.ReadEntity(IR, PR.Current(), "Leader Entity",
-			     //STANDARD_TYPE(IGESDimen_LeaderArrow), tempEnt); //szv#4:S4163:12Mar99 moved in if
-	if (PR.ReadEntity(IR, PR.Current(), "Leader Entity", STANDARD_TYPE(IGESDimen_LeaderArrow), tempEnt))
+	if (PR.ReadEntity(IR, "Leader Entity", STANDARD_TYPE(IGESDimen_LeaderArrow), tempEnt))
 	  tempLeaders->SetValue(i, tempEnt);
       }
 

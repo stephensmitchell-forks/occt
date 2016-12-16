@@ -30,39 +30,43 @@ class IGESAppli_PWBDrilledHole : public IGESData_IGESEntity
 {
  public:
 
-  IGESAppli_PWBDrilledHole() {}
-  
-  //! This method is used to set the fields of the class
-  //! PWBDrilledHole
-  //! - nbPropVal  : number of property values, always = 3
-  //! - aDrillDia  : Drill diameter size
-  //! - aFinishDia : Finish diameter size
-  //! - aCode      : Function code for drilled hole
-  Standard_EXPORT void Init (const Standard_Integer nbPropVal, const Standard_Real aDrillDia, const Standard_Real aFinishDia, const Standard_Integer aCode);
-  
-  //! returns number of property values, always = 3
-  Standard_Integer NbPropertyValues() const { return theNbPropertyValues; }
+  Standard_EXPORT virtual Standard_Integer TypeNumber() const Standard_OVERRIDE { return 406; }
+
+  Standard_EXPORT virtual Standard_Integer FormNumber() const Standard_OVERRIDE { return 26; }
+
+  IGESAppli_PWBDrilledHole()
+  : myDrillDiameter(0.),
+    myFinishDiameter(0.),
+    myFunctionCode(0)
+  {}
 
   //! returns Drill diameter size
-  Standard_Real DrillDiameterSize() const { return theDrillDiameter; }
+  Standard_Real DrillDiameterSize() const { return myDrillDiameter; }
 
   //! returns Finish diameter size
-  Standard_Real FinishDiameterSize() const { return theFinishDiameter; }
+  Standard_Real FinishDiameterSize() const { return myFinishDiameter; }
 
   //! returns Function code for drilled hole
   //! is 0, 1, 2, 3, 4, 5 or 5001-9999
-  Standard_Integer FunctionCode() const { return theFunctionCode; }
+  Standard_Integer FunctionCode() const { return myFunctionCode; }
+
+  Standard_EXPORT virtual void OwnRead (IGESFile_Reader &) Standard_OVERRIDE;
+  
+  Standard_EXPORT virtual void OwnWrite (IGESData_IGESWriter &) const Standard_OVERRIDE;
+
+  Standard_EXPORT virtual IGESData_DirChecker DirChecker () const Standard_OVERRIDE;
 
   Standard_EXPORT virtual void OwnCheck (const Interface_ShareTool &, const Handle(Interface_Check) &) const Standard_OVERRIDE;
+
+  Standard_EXPORT virtual void OwnDump (const IGESData_IGESDumper &, const Handle(Message_Messenger) &, const Standard_Integer) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTIEXT(IGESAppli_PWBDrilledHole,IGESData_IGESEntity)
 
  private:
 
-  Standard_Integer theNbPropertyValues;
-  Standard_Real theDrillDiameter;
-  Standard_Real theFinishDiameter;
-  Standard_Integer theFunctionCode;
+  Standard_Real myDrillDiameter;
+  Standard_Real myFinishDiameter;
+  Standard_Integer myFunctionCode;
 };
 
 #endif // _IGESAppli_PWBDrilledHole_HeaderFile

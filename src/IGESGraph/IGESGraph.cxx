@@ -13,15 +13,10 @@
 
 
 #include <IGESBasic.hxx>
-#include <IGESData_SpecificLib.hxx>
-#include <IGESData_WriterLib.hxx>
 #include <IGESGraph.hxx>
 #include <IGESGraph_GeneralModule.hxx>
 #include <IGESGraph_Protocol.hxx>
-#include <IGESGraph_ReadWriteModule.hxx>
-#include <IGESGraph_SpecificModule.hxx>
 #include <Interface_GeneralLib.hxx>
-#include <Interface_ReaderLib.hxx>
 
 
 /*void IGESGraph::Init ()
@@ -36,9 +31,6 @@ const Handle(IGESGraph_Protocol) & IGESGraph::Protocol ()
   if (protocol.IsNull()) {
     protocol = new IGESGraph_Protocol;
     Interface_GeneralLib::SetGlobal (new IGESGraph_GeneralModule,  protocol);
-    Interface_ReaderLib::SetGlobal  (new IGESGraph_ReadWriteModule,protocol);
-    IGESData_WriterLib::SetGlobal   (new IGESGraph_ReadWriteModule,protocol);
-    IGESData_SpecificLib::SetGlobal (new IGESGraph_SpecificModule, protocol);
   }
   return protocol;
 }

@@ -46,26 +46,24 @@ void  IGESSolid_ToolBooleanTree::ReadOwnParams
   Handle(TColStd_HArray1OfInteger) tempOperations;
   Handle(IGESData_HArray1OfIGESEntity) tempOperands;
 
-  Standard_Boolean st = PR.ReadInteger(PR.Current(), "Length of post-order notation", length);
+  Standard_Boolean st = PR.ReadInteger(length,"Length of post-order notation");
   if (st && length > 0)
     {
       tempOperations = new TColStd_HArray1OfInteger(1,length); tempOperations->Init(0);
       tempOperands   = new IGESData_HArray1OfIGESEntity(1,length);
 
       // Op. 1-2 : Operands
-      //st = PR.ReadEntity(IR, PR.Current(), "Operand 1", entvalue); //szv#4:S4163:12Mar99 moved in if
-      if (PR.ReadEntity(IR, PR.Current(), "Operand 1", entvalue))
+      if (PR.ReadEntity(IR, "Operand 1", entvalue))
 	tempOperands->SetValue(1, entvalue);
 
-      //st = PR.ReadEntity(IR, PR.Current(), "Operand 2", entvalue); //szv#4:S4163:12Mar99 moved in if
-      if (PR.ReadEntity(IR, PR.Current(), "Operand 2", entvalue))
+      if (PR.ReadEntity(IR, "Operand 2", entvalue))
 	tempOperands->SetValue(2, entvalue);
 
       // Op. 3 -> length-1 : Operand or Operation
       for (Standard_Integer i = 3; i < length; i++)
 	{
 	  Standard_Integer curnum = PR.CurrentNumber();
-	  PR.ReadInteger(PR.Current(), "Operation code", intvalue); //szv#4:S4163:12Mar99 `st=` not needed
+	  PR.ReadInteger(intvalue,"Operation code");
 	  if (intvalue < 0) {
 	    entvalue = PR.ParamEntity (IR,curnum);
 	    if (entvalue.IsNull()) PR.AddFail("Operand : incorrect reference");
@@ -74,8 +72,7 @@ void  IGESSolid_ToolBooleanTree::ReadOwnParams
 	  else tempOperations->SetValue(i, intvalue);
 	}
       // Last Op. : Operation
-      //st = PR.ReadInteger(PR.Current(), "Operation code", intvalue); //szv#4:S4163:12Mar99 moved in if
-      if (PR.ReadInteger(PR.Current(), "Operation code", intvalue))
+      if (PR.ReadInteger(intvalue,"Operation code"))
 	tempOperations->SetValue(length, intvalue);
     }
   else  PR.AddFail("Length of post-order : Not Positive");

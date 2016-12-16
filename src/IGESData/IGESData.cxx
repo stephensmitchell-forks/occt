@@ -19,7 +19,6 @@
 
 #include <IGESData.hxx>
 #include <IGESData_DefaultGeneral.hxx>
-#include <IGESData_DefaultSpecific.hxx>
 #include <IGESData_GlobalSection.hxx>
 #include <IGESData_IGESModel.hxx>
 #include <IGESData_Protocol.hxx>
@@ -39,13 +38,11 @@ static Handle(IGESData_Protocol)  gIGESProto;
 static Handle(IGESData_IGESModel) gIGESModel;
 
 static Handle(IGESData_DefaultGeneral)    stmod;
-static Handle(IGESData_DefaultSpecific)   speci;
 
 void IGESData::Init ()
 {
   if (gIGESProto.IsNull()) gIGESProto = new IGESData_Protocol;
   if (stmod.IsNull()) stmod = new IGESData_DefaultGeneral;
-  if (speci.IsNull()) speci = new IGESData_DefaultSpecific;
 
   //  et modele template "iges"
   if (!gIGESModel.IsNull()) return;

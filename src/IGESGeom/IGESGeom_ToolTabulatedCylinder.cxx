@@ -42,20 +42,12 @@ void IGESGeom_ToolTabulatedCylinder::ReadOwnParams
   (const Handle(IGESGeom_TabulatedCylinder)& ent,
    const Handle(IGESData_IGESReaderData)& IR, IGESData_ParamReader& PR) const
 {
-  // MGE 31/07/98
-  // Building of messages
-  //========================================
-  Message_Msg Msg157("XSTEP_157");
-  //========================================
-
   Handle(IGESData_IGESEntity) aDirectrix;
   gp_XYZ anEnd;
   IGESData_Status aStatus;
 
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
-
   // Reading the directrix curve entity
-  if (!PR.ReadEntity(IR, PR.Current(), aStatus, aDirectrix)){ //szv#4:S4163:12Mar99 `st=` not needed
+  if (!PR.ReadEntity(IR, aStatus, aDirectrix)) {
     Message_Msg Msg156("XSTEP_156");
     switch(aStatus) {
     case IGESData_ReferenceError: {  
@@ -72,11 +64,9 @@ void IGESGeom_ToolTabulatedCylinder::ReadOwnParams
     }
     }
   } 
-  //st = PR.ReadEntity(IR, PR.Current(), "Directrix", aDirectrix);
 
   // Reading the terminate point of the generatrix
-  PR.ReadXYZ(PR.CurrentList(1, 3), Msg157, anEnd); //szv#4:S4163:12Mar99 `st=` not needed
-  //st = PR.ReadXYZ(PR.CurrentList(1, 3), "Terminate Point", anEnd);
+  PR.ReadXYZ(anEnd);
 
   DirChecker(ent).CheckTypeAndForm(PR.CCheck(),ent);
   ent->Init(aDirectrix, anEnd);

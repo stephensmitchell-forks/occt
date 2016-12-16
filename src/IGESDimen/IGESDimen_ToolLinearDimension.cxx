@@ -39,32 +39,20 @@ void  IGESDimen_ToolLinearDimension::ReadOwnParams
   (const Handle(IGESDimen_LinearDimension)& ent,
    const Handle(IGESData_IGESReaderData)& IR, IGESData_ParamReader& PR) const
 { 
-  //Standard_Boolean st; //szv#4:S4163:12Mar99 not needed
-
   Handle(IGESDimen_GeneralNote) note;
   Handle(IGESDimen_LeaderArrow) firstLeader; 
   Handle(IGESDimen_LeaderArrow) secondLeader;
   Handle(IGESDimen_WitnessLine) firstWitness; 
   Handle(IGESDimen_WitnessLine) secondWitness;
 
-  PR.ReadEntity(IR, PR.Current(), "General Note Entity",
-		STANDARD_TYPE(IGESDimen_GeneralNote),note); //szv#4:S4163:12Mar99 `st=` not needed
-
-  PR.ReadEntity(IR, PR.Current(), "First Leader Entity",
-		STANDARD_TYPE(IGESDimen_LeaderArrow), firstLeader); //szv#4:S4163:12Mar99 `st=` not needed
-
-  PR.ReadEntity(IR, PR.Current(),"Second Leader Entity",
-		STANDARD_TYPE(IGESDimen_LeaderArrow), secondLeader); //szv#4:S4163:12Mar99 `st=` not needed
-
-  PR.ReadEntity(IR, PR.Current(), "First Witness Entity",
-		STANDARD_TYPE(IGESDimen_WitnessLine), firstWitness, Standard_True); //szv#4:S4163:12Mar99 `st=` not needed
-
-  PR.ReadEntity(IR,PR.Current(),"Second Witness Entity",
-		STANDARD_TYPE(IGESDimen_WitnessLine), secondWitness, Standard_True); //szv#4:S4163:12Mar99 `st=` not needed
+  PR.ReadEntity(IR, "General Note Entity", STANDARD_TYPE(IGESDimen_GeneralNote), note);
+  PR.ReadEntity(IR, "First Leader Entity", STANDARD_TYPE(IGESDimen_LeaderArrow), firstLeader);
+  PR.ReadEntity(IR, "Second Leader Entity", STANDARD_TYPE(IGESDimen_LeaderArrow), secondLeader);
+  PR.ReadEntity(IR, "First Witness Entity", STANDARD_TYPE(IGESDimen_WitnessLine), firstWitness, Standard_True);
+  PR.ReadEntity(IR, "Second Witness Entity", STANDARD_TYPE(IGESDimen_WitnessLine), secondWitness, Standard_True);
 
   DirChecker(ent).CheckTypeAndForm(PR.CCheck(),ent);
   ent->Init (note, firstLeader, secondLeader, firstWitness, secondWitness);
-
 }
 
 void  IGESDimen_ToolLinearDimension::WriteOwnParams
