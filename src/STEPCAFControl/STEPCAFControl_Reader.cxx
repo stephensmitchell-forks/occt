@@ -175,6 +175,7 @@
 #include <StepShape_Vertex.hxx>
 #include <StepToGeom.hxx>
 #include <StepVisual_AnnotationCurveOccurrence.hxx>
+#include <StepVisual_AnnotationFillArea.hxx>
 #include <StepVisual_AnnotationPlane.hxx>
 #include <StepVisual_DraughtingCallout.hxx>
 #include <StepVisual_DraughtingCalloutElement.hxx>
@@ -1396,6 +1397,8 @@ Standard_Boolean STEPCAFControl_Reader::ReadLayers (const Handle(XSControl_WorkS
     if ( ! enti->IsKind ( tSVPLA ) ) continue;
     Handle(StepVisual_PresentationLayerAssignment) SVPLA = 
       Handle(StepVisual_PresentationLayerAssignment)::DownCast(enti);
+    if (SVPLA->AssignedItems().IsNull())
+      continue;
     
     Handle(TCollection_HAsciiString) descr = SVPLA->Description();
     Handle(TCollection_HAsciiString) hName = SVPLA->Name();
@@ -1767,6 +1770,7 @@ static Standard_Boolean GetMassConversionFactor(Handle(StepBasic_NamedUnit)& NU,
   }
   return Standard_True;
 }
+
 //=======================================================================
 //function : readPMIPresentation
 //purpose  : read polyline or tessellated presentation for 
@@ -1782,25 +1786,25 @@ Standard_Boolean readPMIPresentation(const Handle(Standard_Transient)& thePresen
   if (thePresentEntity.IsNull())
     return Standard_False;
   Handle(Transfer_TransientProcess) aTP = theTR->TransientProcess();
-  Handle(StepVisual_AnnotationCurveOccurrence) anACO;
+  Handle(StepVisual_AnnotationOccurrence) anAO;
   NCollection_Vector<Handle(StepVisual_StyledItem)> anAnnotations;
-  if (thePresentEntity->IsKind(STANDARD_TYPE(StepVisual_AnnotationCurveOccurrence)))
+  if (thePresentEntity->IsKind(STANDARD_TYPE(StepVisual_AnnotationOccurrence)))
   {
-    anACO = Handle(StepVisual_AnnotationCurveOccurrence)::DownCast(thePresentEntity);
-    thePresentName = anACO->Name();
-    if (!anACO.IsNull())
-      anAnnotations.Append(anACO);
+    anAO = Handle(StepVisual_AnnotationOccurrence)::DownCast(thePresentEntity);
+    thePresentName = anAO->Name();
+    if (!anAO.IsNull())
+      anAnnotations.Append(anAO);
   }
   else if (thePresentEntity->IsKind(STANDARD_TYPE(StepVisual_DraughtingCallout)))
   {
     Handle(StepVisual_DraughtingCallout) aDCallout =
       Handle(StepVisual_DraughtingCallout)::DownCast(thePresentEntity);
     thePresentName = aDCallout->Name();
-    for (Standard_Integer i = 1; i <= aDCallout->NbContents() && anACO.IsNull(); i++) {
-      anACO = aDCallout->ContentsValue(i).AnnotationCurveOccurrence();
-      if (!anACO.IsNull())
+    for (Standard_Integer i = 1; i <= aDCallout->NbContents() && anAO.IsNull(); i++) {
+      anAO = Handle(StepVisual_AnnotationOccurrence)::DownCast(aDCallout->ContentsValue(i).Value());
+      if (!anAO.IsNull())
       {
-        anAnnotations.Append(anACO);
+        anAnnotations.Append(anAO);
         continue;
       }
       Handle(StepVisual_TessellatedAnnotationOccurrence) aTesselation =
@@ -1824,11 +1828,11 @@ Standard_Boolean readPMIPresentation(const Handle(Standard_Transient)& thePresen
   for (; i < anAnnotations.Length(); i++)
   {
     Handle(StepVisual_StyledItem) anItem = anAnnotations(i);
-    anACO = Handle(StepVisual_AnnotationCurveOccurrence)::DownCast(anItem);
+    anAO = Handle(StepVisual_AnnotationOccurrence)::DownCast(anItem);
     TopoDS_Shape anAnnotationShape;
-    if (!anACO.IsNull())
+    if (!anAO.IsNull())
     {
-      Handle(StepRepr_RepresentationItem) aCurveItem = anACO->Item();
+      Handle(StepRepr_RepresentationItem) aCurveItem = anAO->Item();
       anAnnotationShape = STEPConstruct::FindShape(aTP, aCurveItem);
       if (anAnnotationShape.IsNull())
       {
@@ -3814,51 +3818,123 @@ Standard_Boolean STEPCAFControl_Reader::ReadGDTs(const Handle(XSControl_WorkSess
       }
     }
     else if (anEnt->IsKind(STANDARD_TYPE(StepVisual_DraughtingCallout)) ||
-      anEnt->IsKind(STANDARD_TYPE(StepVisual_AnnotationCurveOccurrence)))
+      anEnt->IsKind(STANDARD_TYPE(StepVisual_AnnotationOccurrence)))
     {
-      // read common PMIs: presentation, which is not connected to any PMI.
-      Handle(StepVisual_AnnotationPlane) anAnPlane;
-      Handle(StepAP242_DraughtingModelItemAssociation) aDMIA;
-      Standard_Boolean isCommonLabel = Standard_True;
-      for (Interface_EntityIterator anIter = aGraph.Sharings(anEnt); anIter.More(); anIter.Next())
-      {
-        if (anIter.Value()->IsKind(STANDARD_TYPE(StepVisual_AnnotationPlane)))
-          anAnPlane = Handle(StepVisual_AnnotationPlane)::DownCast(anIter.Value());
-        else
-          isCommonLabel = Standard_False;
+      // Protection against import presentation twice
+      Handle(StepVisual_DraughtingCallout) aDC;
+      for (Interface_EntityIterator anIter = aGraph.Sharings(anEnt); anIter.More() && aDC.IsNull(); anIter.Next()) {
+        aDC = Handle(StepVisual_DraughtingCallout)::DownCast(anIter.Value());
       }
-      if (!isCommonLabel)
+      if (!aDC.IsNull())
         continue;
-      // create empty Dimension
-      TDF_Label aGDTL = aDGTTool->AddDimension();
-      Handle(XCAFDoc_Dimension) aDim = XCAFDoc_Dimension::Set(aGDTL);
-      TCollection_AsciiString aStr("DGT:Common_label");
-      TDataStd_Name::Set(aGDTL, aStr);
-      TDF_LabelSequence anEmptySeq1, anEmptySeq2;
-      aDGTTool->SetDimension(anEmptySeq1, anEmptySeq2, aGDTL);
-      Handle(XCAFDimTolObjects_DimensionObject) aDimObj = new XCAFDimTolObjects_DimensionObject();
-      // read annotations
-      Standard_Real aFact = 1.0;
-      if (!anAnPlane.IsNull())
-      {
-        Handle(StepVisual_DraughtingModel) aDModel;
-        for (Interface_EntityIterator anIter = aGraph.Sharings(anAnPlane); anIter.More() && aDModel.IsNull(); anIter.Next())
-        {
-          if (anIter.Value()->IsKind(STANDARD_TYPE(StepVisual_DraughtingModel)))
-            aDModel = Handle(StepVisual_DraughtingModel)::DownCast(anIter.Value());
-        }
-        if (!aDModel.IsNull())
-          GetLengthConversionFactorFromContext(aDModel->ContextOfItems(), aFact);
+      // Read presentations for PMIs without semantic data.
+      Handle(StepAP242_DraughtingModelItemAssociation) aDMIA;
+      TDF_LabelSequence aShapesL;
+      for (Interface_EntityIterator anIter = aGraph.Sharings(anEnt); anIter.More() && aDMIA.IsNull(); anIter.Next()) {
+        aDMIA = Handle(StepAP242_DraughtingModelItemAssociation)::DownCast(anIter.Value());
       }
-      gp_Ax2 aPlaneAxes;
-      readAnnotationPlane(anAnPlane, aFact, aPlaneAxes);
+      if (!aDMIA.IsNull()) {
+        // Check entity, skip all, attached to GDTs
+        Handle(StepRepr_ShapeAspect) aDefinition = aDMIA->Definition().ShapeAspect();
+        if (!aDefinition.IsNull()) {
+          Standard_Boolean isConnectedToGDT = Standard_False;
+          // Skip if definition is a datum
+          if (aDefinition->IsKind(STANDARD_TYPE(StepDimTol_Datum)) ||
+            aDefinition->IsKind(STANDARD_TYPE(StepDimTol_DatumTarget)) ||
+            aDefinition->IsKind(STANDARD_TYPE(StepDimTol_DatumFeature)) ||
+            aDefinition->IsKind(STANDARD_TYPE(StepRepr_CompShAspAndDatumFeatAndShAsp))) {
+            isConnectedToGDT = Standard_True;
+          }
+          // Skip if any GDT is applied to definition
+          for (Interface_EntityIterator anIter = aGraph.Sharings(aDefinition); anIter.More() && !isConnectedToGDT; anIter.Next()) {
+            if (anIter.Value()->IsKind(STANDARD_TYPE(StepShape_DimensionalSize)) ||
+              anIter.Value()->IsKind(STANDARD_TYPE(StepShape_DimensionalLocation)) ||
+              anIter.Value()->IsKind(STANDARD_TYPE(StepDimTol_GeometricTolerance))) {
+              isConnectedToGDT = Standard_True;
+              continue;
+            }
+            Handle(StepRepr_ShapeAspectRelationship) aSAR = Handle(StepRepr_ShapeAspectRelationship)::DownCast(anIter.Value());
+            if (!aSAR.IsNull()) {
+              Handle(StepRepr_ShapeAspect) aSA = aSAR->RelatedShapeAspect();
+              if (!aSA.IsNull()) {
+                if (aSA->IsKind(STANDARD_TYPE(StepDimTol_Datum)) ||
+                  aSA->IsKind(STANDARD_TYPE(StepDimTol_DatumTarget)) ||
+                  aSA->IsKind(STANDARD_TYPE(StepDimTol_DatumFeature)) ||
+                  aSA->IsKind(STANDARD_TYPE(StepRepr_CompShAspAndDatumFeatAndShAsp))) {
+                  isConnectedToGDT = Standard_True;
+                }
+                for (Interface_EntityIterator aDimIter = aGraph.Sharings(aSA); aDimIter.More() && !isConnectedToGDT; aDimIter.Next()) {
+                  if (aDimIter.Value()->IsKind(STANDARD_TYPE(StepShape_DimensionalSize)) ||
+                    aDimIter.Value()->IsKind(STANDARD_TYPE(StepShape_DimensionalLocation)) ||
+                    aDimIter.Value()->IsKind(STANDARD_TYPE(StepDimTol_GeometricTolerance))) {
+                    isConnectedToGDT = Standard_True;
+                    continue;
+                  }
+                }
+              }
+            }
+          }
+          if (isConnectedToGDT)
+            continue;
+        }
+        else if (aDMIA->Definition().PropertyDefinition().IsNull())
+          continue;
+
+        // Get shapes
+        NCollection_Sequence<Handle(StepRepr_ShapeAspect)> aSAs;
+        collectShapeAspect(aDefinition, theWS, aSAs);
+        for (Standard_Integer aSAIt = 1; aSAIt <= aSAs.Length(); aSAIt++) {
+          Handle(StepAP242_GeometricItemSpecificUsage) aGISU;
+          for (Interface_EntityIterator anIter = aGraph.Sharings(aSAs.Value(aSAIt)); anIter.More() && aGISU.IsNull(); anIter.Next())
+            aGISU = Handle(StepAP242_GeometricItemSpecificUsage)::DownCast(anIter.Value());
+          if (aGISU.IsNull())
+            continue;
+          for (Standard_Integer anItemIt = 1; anItemIt <= aGISU->NbIdentifiedItem(); anItemIt++) {
+            TDF_Label aLabel = getShapeLabel(aGISU->IdentifiedItemValue(anItemIt), theWS, XCAFDoc_DocumentTool::ShapeTool(theDoc->Main()));
+            if (!aLabel.IsNull())
+              aShapesL.Append(aLabel);
+          }
+        }
+      }
+      Standard_Boolean isCommonLabel = (aShapesL.Length() == 0);
+
+      // Calculate unit
+      Standard_Real aFact = 1.0;
+      if (!aDMIA.IsNull() && !aDMIA->UsedRepresentation().IsNull())
+        GetLengthConversionFactorFromContext(aDMIA->UsedRepresentation()->ContextOfItems(), aFact);
+
+      // Presentation
       TopoDS_Shape aPresentation;
       Handle(TCollection_HAsciiString) aPresentName;
       Bnd_Box aBox;
-      readPMIPresentation(anEnt, aTR, aFact, aPresentation, aPresentName, aBox);
-      // populate Dimension
-      aDimObj->SetType(XCAFDimTolObjects_DimensionType_CommonLabel);
-      aDimObj->SetPlane(aPlaneAxes);
+      if (!readPMIPresentation(anEnt, aTR, aFact, aPresentation, aPresentName, aBox))
+        continue;
+      // Annotation plane
+      Handle(StepVisual_AnnotationPlane) anAnPlane;
+      for (Interface_EntityIterator anIter = aGraph.Sharings(anEnt); anIter.More() && anAnPlane.IsNull(); anIter.Next())
+        anAnPlane = Handle(StepVisual_AnnotationPlane)::DownCast(anIter.Value());
+      
+      // Set object to XCAF
+      TDF_Label aGDTL = aDGTTool->AddDimension();
+      Handle(XCAFDimTolObjects_DimensionObject) aDimObj = new XCAFDimTolObjects_DimensionObject();
+      Handle(XCAFDoc_Dimension) aDim = XCAFDoc_Dimension::Set(aGDTL);
+      TCollection_AsciiString aStr("DGT:");
+      if (isCommonLabel) {
+        aStr.AssignCat("Common_label");
+        aDimObj->SetType(XCAFDimTolObjects_DimensionType_CommonLabel);
+      }
+      else {
+        aStr.AssignCat("Dimension");
+        aDimObj->SetType(XCAFDimTolObjects_DimensionType_DimensionPresentation);
+      }
+      TDataStd_Name::Set(aGDTL, aStr);
+      TDF_LabelSequence anEmptySeq2;
+      aDGTTool->SetDimension(aShapesL, anEmptySeq2, aGDTL);
+      gp_Ax2 aPlaneAxes;
+      if (!anAnPlane.IsNull()) {
+        if (readAnnotationPlane(anAnPlane, aFact, aPlaneAxes))
+          aDimObj->SetPlane(aPlaneAxes);
+      }
       aDimObj->SetPresentation(aPresentation, aPresentName);
       aDim->SetObject(aDimObj);
     }
