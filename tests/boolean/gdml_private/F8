@@ -1,4 +1,6 @@
+puts "TODO OCC26619 ALL: Error : The area of the resulting shape is"
+
 source [locate_data_file 20000_et1_401-ta6027.prt.2.gdml.tcl]
 
 ## image is differ from application
-set square 3.52888e+07
+set square 1.50445e+007

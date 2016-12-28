@@ -51,6 +51,21 @@ typedef NCollection_IndexedDataMap
 //
 static
   TopAbs_ShapeEnum TypeToExplore(const Standard_Integer theDim);
+//
+static
+  void CollectContainers(const TopoDS_Shape& theS,
+                         BOPCol_ListOfShape& theLSC);
+//
+static
+  void RemoveDuplicates(BOPCol_ListOfShape& theContainers);
+//
+static
+  void RemoveDuplicates(BOPCol_ListOfShape& theContainers,
+                        const TopAbs_ShapeEnum theType);
+//
+static
+  Standard_Integer NbCommonItemsInMap(const BOPCol_MapOfShape& theM1,
+                                      const BOPCol_MapOfShape& theM2);
 
 
 //=======================================================================
@@ -738,86 +753,135 @@ void BOPAlgo_BOP::BuildRC()
 //=======================================================================
 void BOPAlgo_BOP::BuildShape()
 {
-  Standard_Integer aDmin, aNbLCB;
-  TopAbs_ShapeEnum aT1, aT2, aTR;
-  TopoDS_Shape aR, aRC;
-  TopoDS_Iterator aIt;
-  BRep_Builder aBB;
-  BOPCol_ListOfShape aLCB;
-  BOPCol_ListIteratorOfListOfShape aItLCB;
-  //
-  myErrorStatus=0;
-  //
   BuildRC();
   //
-  aDmin=myDims[1];
-  if (myDims[0]<myDims[1]) {
-    aDmin=myDims[0];
-  }
-  //
-  if (!aDmin) {
-    myShape=myRC;
+  if ((myOperation == BOPAlgo_FUSE) && (myDims[0] == 3)) {
+    BuildSolid();
     return;
   }
   //
-  else if (aDmin==1 || aDmin==2) { //edges, faces 
-    aT1=TopAbs_VERTEX;
-    aT2=TopAbs_EDGE;
-    aTR=TopAbs_WIRE;
-    if (aDmin==2) {
-      aT1=TopAbs_EDGE;
-      aT2=TopAbs_FACE;
-      aTR=TopAbs_SHELL;
+  Standard_Integer i;
+  TopAbs_ShapeEnum aType, aT1, aT2;
+  BOPCol_ListOfShape aLSC, aLCB;
+  BOPCol_ListIteratorOfListOfShape aItLS, aItLSIm, aItLCB;
+  TopoDS_Iterator aIt;
+  BRep_Builder aBB;
+  TopoDS_Shape aRC, aRCB;
+  //
+  BOPCol_MapOfShape aMSRC;
+  BOPTools::MapShapes(myRC, aMSRC);
+  //
+  // collect images of containers
+  for (i = 0; i < 2; ++i) {
+    const BOPCol_ListOfShape& aLS = !i ? myArguments : myTools;
+    //
+    aItLS.Initialize(aLS);
+    for (; aItLS.More(); aItLS.Next()) {
+      const TopoDS_Shape& aS = aItLS.Value();
+      //
+      CollectContainers(aS, aLSC);
+    }
+  }
+  // make containers
+  BOPCol_ListOfShape aLCRes;
+  aItLS.Initialize(aLSC);
+  for (; aItLS.More(); aItLS.Next()) {
+    const TopoDS_Shape& aSC = aItLS.Value();
+    //
+    BOPTools_AlgoTools::MakeContainer(TopAbs_COMPOUND, aRC);
+    //
+    aIt.Initialize(aSC);
+    for (; aIt.More(); aIt.Next()) {
+      const TopoDS_Shape& aS = aIt.Value();
+      if (myImages.IsBound(aS)) {
+        const BOPCol_ListOfShape& aLSIm = myImages.Find(aS);
+        //
+        aItLSIm.Initialize(aLSIm);
+        for (; aItLSIm.More(); aItLSIm.Next()) {
+          const TopoDS_Shape& aSIm = aItLSIm.Value();
+          if (aMSRC.Contains(aSIm)) {
+            aBB.Add(aRC, aSIm);
+          }
+        }
+      }
+      else if (aMSRC.Contains(aS)) {
+        aBB.Add(aRC, aS);
+      }
     }
     //
-    BOPTools_AlgoTools::MakeConnexityBlocks
-      (myRC, aT1, aT2, aLCB);
-    aNbLCB=aLCB.Extent();
-    if (!aNbLCB) {
-      myShape=myRC;
-      return;
+    aType = aSC.ShapeType();
+    switch (aType) {
+      case TopAbs_WIRE: {
+        aT1 = TopAbs_VERTEX;
+        aT2 = TopAbs_EDGE;
+        break;
+      }
+      case TopAbs_SHELL: {
+        aT1 = TopAbs_EDGE;
+        aT2 = TopAbs_FACE;
+        break;
+      }
+      default: {
+        aT1 = TopAbs_FACE;
+        aT2 = TopAbs_SOLID;
+      }
     }
     //
-    BOPTools_AlgoTools::MakeContainer(TopAbs_COMPOUND, aRC);  
+    aLCB.Clear();
+    BOPTools_AlgoTools::MakeConnexityBlocks(aRC, aT1, aT2, aLCB);
+    if (aLCB.IsEmpty()) {
+      continue;
+    }
     //
     aItLCB.Initialize(aLCB);
     for (; aItLCB.More(); aItLCB.Next()) {
-      BOPTools_AlgoTools::MakeContainer(aTR, aR);  
+      BOPTools_AlgoTools::MakeContainer(aType, aRCB);
       //
-      const TopoDS_Shape& aCB=aItLCB.Value();
+      const TopoDS_Shape& aCB = aItLCB.Value();
       aIt.Initialize(aCB);
       for (; aIt.More(); aIt.Next()) {
-        const TopoDS_Shape& aS=aIt.Value();
-        aBB.Add(aR, aS);
+        const TopoDS_Shape& aCBS = aIt.Value();
+        aBB.Add(aRCB, aCBS);
       }
       //
-      if (aTR==TopAbs_SHELL) {
-        BOPTools_AlgoTools::OrientFacesOnShell(aR);
+      if (aType == TopAbs_WIRE) {
+        // reorient wire
+        BOPTools_AlgoTools::OrientEdgesOnWire(aRCB);
+      }
+      else if (aType == TopAbs_SHELL) {
+        BOPTools_AlgoTools::OrientFacesOnShell(aRCB);
       }
       //
-      aBB.Add(aRC, aR);
-    }
-    myShape=aRC;
-  }// elase if (aDmin==1 || aDmin==2) {
-  
-  else {//aDmin=3
-    Standard_Integer aNbObjs, aNbTools;
-    //
-    aNbObjs=myArguments.Extent();
-    aNbTools=myTools.Extent();
-    //
-    if (aNbObjs==1 && aNbTools==1) {
-      if (myOperation==BOPAlgo_FUSE) {
-        BuildSolid();
-      }
-      else {
-        myShape=myRC;
-      }
-    }
-    else {
-      BuildSolid();
+      aRCB.Orientation(aSC.Orientation());
+      //
+      aLCRes.Append(aRCB);
     }
   }
+  //
+  RemoveDuplicates(aLCRes);
+  //
+  // add containers to result
+  TopoDS_Compound aResult;
+  aBB.MakeCompound(aResult);
+  //
+  aItLS.Initialize(aLCRes);
+  for (; aItLS.More(); aItLS.Next()) {
+    aBB.Add(aResult, aItLS.Value());
+  }
+  //
+  // add the rest of the shapes into result
+  BOPCol_MapOfShape aMSResult;
+  BOPTools::MapShapes(aResult, aMSResult);
+  //
+  aIt.Initialize(myRC);
+  for (; aIt.More(); aIt.Next()) {
+    const TopoDS_Shape& aS = aIt.Value();
+    if (aMSResult.Add(aS)) {
+      aBB.Add(aResult, aS);
+    }
+  }
+  //
+  myShape = aResult;
 }
 //=======================================================================
 //function : BuildSolid
@@ -1074,4 +1138,150 @@ TopAbs_ShapeEnum TypeToExplore(const Standard_Integer theDim)
     break;
   }
   return aRet;
+}
+//=======================================================================
+//function : CollectContainers
+//purpose  : 
+//=======================================================================
+void CollectContainers(const TopoDS_Shape& theS,
+                       BOPCol_ListOfShape& theLSC)
+{
+  TopAbs_ShapeEnum aType = theS.ShapeType();
+  if (aType == TopAbs_WIRE ||
+      aType == TopAbs_SHELL ||
+      aType == TopAbs_COMPSOLID) {
+    theLSC.Append(theS);
+    return;
+  }
+  //
+  if (aType != TopAbs_COMPOUND) {
+    return;
+  }
+  //
+  TopoDS_Iterator aIt(theS);
+  for (; aIt.More(); aIt.Next()) {
+    const TopoDS_Shape& aS = aIt.Value();
+    CollectContainers(aS, theLSC);
+  }
+}
+
+//=======================================================================
+//function : RemoveDuplicates
+//purpose  : Filters the containers with identical contents
+//=======================================================================
+void RemoveDuplicates(BOPCol_ListOfShape& theContainers)
+{
+  RemoveDuplicates(theContainers, TopAbs_WIRE);
+  RemoveDuplicates(theContainers, TopAbs_SHELL);
+  RemoveDuplicates(theContainers, TopAbs_COMPSOLID);
+}
+
+//=======================================================================
+//function : RemoveDuplicates
+//purpose  : Filters the containers of given type with identical contents
+//=======================================================================
+void RemoveDuplicates(BOPCol_ListOfShape& theContainers,
+                      const TopAbs_ShapeEnum theType)
+{
+  // get containers of given type
+  BOPCol_ListOfShape aLC;
+  BOPCol_ListIteratorOfListOfShape aItLC(theContainers);
+  for (; aItLC.More(); aItLC.Next()) {
+    const TopoDS_Shape& aC = aItLC.Value();
+    if (aC.ShapeType() == theType) {
+      aLC.Append(aC);
+    }
+  }
+  //
+  if (aLC.IsEmpty()) {
+    return;
+  }
+  //
+  // map containers to compare its contents
+  NCollection_IndexedDataMap<TopoDS_Shape, BOPCol_MapOfShape> aContents;
+  //
+  aItLC.Initialize(aLC);
+  for (; aItLC.More(); aItLC.Next()) {
+    const TopoDS_Shape& aC = aItLC.Value();
+    //
+    BOPCol_MapOfShape& aMC = aContents(aContents.Add(aC, BOPCol_MapOfShape()));
+    //
+    TopoDS_Iterator aIt(aC);
+    for (; aIt.More(); aIt.Next()) {
+      aMC.Add(aIt.Value());
+    }
+  }
+  //
+  // compare the contents of the containers and find duplicates
+  BOPCol_MapOfShape aDuplicates;
+  //
+  Standard_Integer i, j, aNb = aContents.Extent();
+  for (i = 1; i <= aNb; ++i) {
+    const TopoDS_Shape& aCi = aContents.FindKey(i);
+    if (aDuplicates.Contains(aCi)) {
+      continue;
+    }
+    const BOPCol_MapOfShape& aMi = aContents(i);
+    Standard_Integer aNbi = aMi.Extent();
+    //
+    for (j = i + 1; j <= aNb; ++j) {
+      const TopoDS_Shape& aCj = aContents.FindKey(j);
+      if (aDuplicates.Contains(aCj)) {
+        continue;
+      }
+      const BOPCol_MapOfShape& aMj = aContents(j);
+      Standard_Integer aNbj = aMj.Extent();
+      //
+      Standard_Integer aNbCommon = NbCommonItemsInMap(aMi, aMj);
+      //
+      if (aNbj == aNbCommon) {
+        aDuplicates.Add(aCj);
+        continue;
+      }
+      //
+      if (aNbi == aNbCommon) {
+        aDuplicates.Add(aCi);
+        break;
+      }
+    }
+  }
+  //
+  if (aDuplicates.IsEmpty()) {
+    return;
+  }
+  //
+  // remove duplicating containers
+  aItLC.Initialize(theContainers);
+  for (; aItLC.More(); ) {
+    const TopoDS_Shape& aC = aItLC.Value();
+    if (aDuplicates.Contains(aC)) {
+      theContainers.Remove(aItLC);
+      continue;
+    }
+    aItLC.Next();
+  }
+}
+
+//=======================================================================
+//function : NbCommonItemsInMap
+//purpose  : Counts the items contained in both maps
+//=======================================================================
+Standard_Integer NbCommonItemsInMap(const BOPCol_MapOfShape& theM1,
+                                    const BOPCol_MapOfShape& theM2)
+{
+  const BOPCol_MapOfShape* aMap1 = &theM1;
+  const BOPCol_MapOfShape* aMap2 = &theM2;
+  //
+  if (theM2.Extent() < theM1.Extent()) {
+    aMap1 = &theM2;
+    aMap2 = &theM1;
+  }
+  //
+  Standard_Integer iCommon = 0;
+  for (BOPCol_MapIteratorOfMapOfShape aIt(*aMap1); aIt.More(); aIt.Next()) {
+    if (aMap2->Contains(aIt.Value())) {
+      ++iCommon;
+    }
+  }
+  return iCommon;
 }

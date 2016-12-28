@@ -2,6 +2,6 @@ restore [locate_data_file case_9_wire.brep] a
 restore [locate_data_file case_9_wire1.brep] b
 bop a b
 bopfuse result
-set length 1809.78
+set length 1953.57
 set nbsh_v 8
 set nbsh_e 9

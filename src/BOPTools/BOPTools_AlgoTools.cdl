@@ -284,8 +284,15 @@ is
     --          theLCB (as list of compounds) 
     --          in terms of connexity by the shapes of theType  
 
+    OrientEdgesOnWire (myclass; 
+            theW   :out Shape from TopoDS);
+    ---Purpose:
+    -- Correctly orients edges on the wire.
+
     OrientFacesOnShell (myclass; 
-            theS   :out Shape from TopoDS); 
+            theS   :out Shape from TopoDS);
+    ---Purpose:
+    -- Correctly orients faces on the shell.
      
     CorrectTolerances (myclass;  
         theS: Shape  from  TopoDS;  
