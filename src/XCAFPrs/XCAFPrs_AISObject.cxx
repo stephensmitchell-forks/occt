@@ -146,12 +146,12 @@ void XCAFPrs_AISObject::DispatchStyles (const Standard_Boolean theToSyncStyles)
 
   // collect sub-shapes with the same style into compounds
   BRep_Builder aBuilder;
-  NCollection_DataMap<XCAFPrs_Style, TopoDS_Compound, XCAFPrs_Style> aStyleGroups;
+  NCollection_IndexedDataMap<XCAFPrs_Style, TopoDS_Compound, XCAFPrs_Style> aStyleGroups;
   for (XCAFPrs_DataMapIteratorOfDataMapOfShapeStyle aStyledShapeIter (aSettings);
        aStyledShapeIter.More(); aStyledShapeIter.Next())
   {
     TopoDS_Compound aComp;
-    if (aStyleGroups.Find (aStyledShapeIter.Value(), aComp))
+    if (aStyleGroups.FindFromKey (aStyledShapeIter.Value(), aComp))
     {
       aBuilder.Add (aComp, aStyledShapeIter.Key());
       continue;
@@ -159,12 +159,16 @@ void XCAFPrs_AISObject::DispatchStyles (const Standard_Boolean theToSyncStyles)
 
     aBuilder.MakeCompound (aComp);
     aBuilder.Add (aComp, aStyledShapeIter.Key());
-    aStyleGroups.Bind (aStyledShapeIter.Value(), aComp);
+    TopoDS_Compound* aMapShape = aStyleGroups.ChangeSeek (aStyledShapeIter.Value());
+    if (aMapShape == NULL)
+      aStyleGroups.Add (aStyledShapeIter.Value(), aComp);
+    else
+      *aMapShape = aComp;
   }
   aSettings.Clear();
 
   // assign custom aspects
-  for (NCollection_DataMap<XCAFPrs_Style, TopoDS_Compound, XCAFPrs_Style>::Iterator aStyleGroupIter (aStyleGroups);
+  for (NCollection_IndexedDataMap<XCAFPrs_Style, TopoDS_Compound, XCAFPrs_Style>::Iterator aStyleGroupIter (aStyleGroups);
        aStyleGroupIter.More(); aStyleGroupIter.Next())
   {
     const TopoDS_Compound& aComp = aStyleGroupIter.Value();
