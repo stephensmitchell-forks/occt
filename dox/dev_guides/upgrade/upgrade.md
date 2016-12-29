@@ -1103,3 +1103,8 @@ The following classes have been changed:
 *  The last optional argument *RemoveInvalidFaces* has been removed from the constructor of class  *BRepOffset_MakeOffset* and method *Initialize*.
 * The public method *BOPDS_DS::VerticesOnIn* has been renamed into *SubShapesOnIn* and the new output parameter *theCommonPB* has been added.
 
+@section upgrade_occt720 Upgrade to OCCT 7.2.0
+
+@subsection upgrade_720_Result_Of_BOP_On_Containers Result of Boolean operations on containers
+
+* The result of Boolean operations on arguments of collection types (WIRE/SHELL/COMPSOLID) is now filtered from duplicating containers.
