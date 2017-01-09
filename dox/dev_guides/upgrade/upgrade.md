@@ -1108,3 +1108,9 @@ The following classes have been changed:
 @subsection upgrade_720_Result_Of_BOP_On_Containers Result of Boolean operations on containers
 
 * The result of Boolean operations on arguments of collection types (WIRE/SHELL/COMPSOLID) is now filtered from duplicating containers.
+
+@subsection upgrade_720_BOP_DataStructure BOP - Pairs of interfering indices
+
+* The classes *BOPDS_PassKey* and *BOPDS_PassKeyBoolean* are too excessive and not used any more in Boolean Operations. To replace them the new *BOPDS_Pair* class has been implemented. Thus:
+  - The method *BOPDS_DS::Interferences()* now returns the *BOPDS_MapOfPair*;
+  - The method *BOPDS_Iterator::Value()* takes now only two parameters - the indices of interfering sub-shapes.
