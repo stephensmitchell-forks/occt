@@ -120,6 +120,8 @@
 #include <GProp_GProps.hxx>
 #include <NCollection_Handle.hxx>
 #include <Standard_Assert.hxx>
+#include <BRepBndLib.hxx>
+#include <NCollection_CellFilter.hxx>
 #include <algorithm>
 
 #include <stdio.h>
@@ -148,21 +150,123 @@ struct BRepFill_TangentLinkInfo
   gp_Dir2d myD1F;
 };
 
+//! intersection segment; V1 ~ first point 
+//! V2 ~ second point (of intersection)
+struct BRepFill_SegmentVV
+{
+  TopoDS_Vertex V1;
+  TopoDS_Vertex V2;
+};
+
+//! two edges in intersection (used for intersection segment)
+struct BRepFill_SegmentEE
+{
+  TopoDS_Edge E1;
+  TopoDS_Edge E2;
+};
+
+static Standard_Boolean IsEqual(const BRepFill_SegmentEE& K1,
+  const BRepFill_SegmentEE& K2)
+{
+  return ((K1.E1.IsSame(K2.E1) && K1.E2.IsSame(K2.E2)) ||
+    (K1.E1.IsSame(K2.E2) && K1.E2.IsSame( K2.E1 )));
+}
+
+struct BRepFill_IntersectionParam
+{
+  BRepFill_IntersectionParam() {};
+
+  BRepFill_IntersectionParam(double _p, TopoDS_Vertex _v) : param(_p), VP(_v) 
+  {};
+
+  double param;
+  TopoDS_Vertex VP;
+}; 
+
+static Standard_Integer HashCode(const BRepFill_SegmentEE& S,const Standard_Integer Upper)
+{
+  return ::HashCode(::HashCode(S.E1, Upper) + ::HashCode(S.E2, Upper), Upper);
+}
+
+static Standard_Boolean IsEqual(const BRepFill_SegmentVV& K1,
+  const BRepFill_SegmentVV& K2)
+{
+  return ((K1.V1.IsSame(K2.V1) && K1.V2.IsSame(K2.V2)) ||
+    (K1.V1.IsSame(K2.V2) && K1.V2.IsSame( K2.V1 )));
+}
+
+static Standard_Integer HashCode(const BRepFill_SegmentVV& S,const Standard_Integer Upper)
+{
+  return ::HashCode(::HashCode(S.V1, Upper) + ::HashCode(S.V2, Upper), Upper);
+}
+
+
+typedef NCollection_IndexedDataMap<BRepFill_SegmentEE, 
+  NCollection_List< BRepFill_SegmentVV >> BRepFill_SegmOnE;
+
 typedef NCollection_UBTree <Standard_Integer, Bnd_Box2d> BRepFill_BndBoxTree;
+
+class NodeInspector: public NCollection_CellFilter_InspectorXYZ
+{
+public:
+  typedef Standard_Integer Target;  
+
+  NodeInspector(const TopTools_IndexedMapOfShape& theVertices,
+                const gp_Pnt& theVertPnt,
+                const double theVertSqTol):
+  myVecOfVertexes(theVertices), myVertPnt(theVertPnt), myVertSqTol(theVertSqTol),
+    myResId(-1)
+  {
+  }
+
+  NCollection_CellFilter_Action Inspect(const Target theID)
+  {
+    const TopoDS_Vertex& V = TopoDS::Vertex(myVecOfVertexes.FindKey(theID)); //??or use array of pnts + sqtol??
+    const gp_Pnt& aPtV = BRep_Tool::Pnt(V);
+    double tolVSq = BRep_Tool::Tolerance(V);
+    tolVSq *= tolVSq;
+
+    Standard_Real sqdist = aPtV.SquareDistance(myVertPnt);
+
+    if ((sqdist < tolVSq) || (sqdist < myVertSqTol)) 
+      myResId = theID;
+
+    return CellFilter_Keep;
+  }
+
+  Target GetResult() const
+  {
+    return myResId;
+  }
+
+private:
+  NodeInspector& operator = (const NodeInspector&);
+
+  const TopTools_IndexedMapOfShape& myVecOfVertexes;
+  const gp_Pnt& myVertPnt;
+  double myVertSqTol;
+  Target myResId;  
+};
+
 
 //!  used to select overlapping 2d boxes
 class BRepFill_BndBoxTreeSelector : public BRepFill_BndBoxTree::Selector
 {
 public:
-  BRepFill_BndBoxTreeSelector( TopTools_IndexedMapOfShape& theMapOfEdges,
-                               const TopoDS_Face& theWFace,
-                               NCollection_IndexedDataMap<TopoDS_Edge, NCollection_DataMap<Standard_Real, TopoDS_Vertex>>& theOutMapOfResult,
-                               Standard_Real thePrec) 
-                               : BRepFill_BndBoxTreeSelector::Selector(), myMapOfEdges (theMapOfEdges),
-                               myWFace (theWFace), myPrec(thePrec),
-                               myOutMapOfResult (theOutMapOfResult){}
-
-
+  BRepFill_BndBoxTreeSelector( const BRepAdaptor_Surface& theSurfAd,
+                               NCollection_IndexedDataMap<TopoDS_Edge, 
+                                 NCollection_List<BRepFill_IntersectionParam>>& theOutMapOfResult,
+                               const NCollection_Array1<NCollection_Handle<BRepAdaptor_Curve2d>>& theEdgeAdapters,
+                               Standard_Real thePrec,
+                               BRepFill_SegmOnE& theISegmL,
+                               NCollection_IndexedMap<TopoDS_Edge>& theAddtSegmIntEdges ) 
+                               : BRepFill_BndBoxTreeSelector::Selector(),
+                               mySurfAd (theSurfAd), myPrec(thePrec),
+                               myEdgeAdapters (theEdgeAdapters),
+                               myOutMapOfResult (theOutMapOfResult),
+                               myISegmL (theISegmL),
+                               myAddtSegmIntEdges(theAddtSegmIntEdges){}
+  
 
 
   Standard_Boolean Reject (const Bnd_Box2d& theBox) const
@@ -170,117 +274,184 @@ public:
     return (myCBox.IsOut (theBox));
   }
 
+  void ProcessIPoints(const IntRes2d_IntersectionPoint& anIPnt,
+    const TopTools_IndexedDataMapOfShapeListOfShape& aVEM,
+    const TopoDS_Edge& E1, const TopoDS_Edge& E2,
+    const BRepAdaptor_Curve2d& BA1, const BRepAdaptor_Curve2d& BA2,
+    TopoDS_Vertex& IV)
+  {
+    Standard_Real Param1 = anIPnt.ParamOnFirst();
+    Standard_Real Param2 = anIPnt.ParamOnSecond();
+
+    gp_Pnt2d p2d1, p2d2;
+    gp_Pnt p3d1, p3d2;
+    BA1.D0(Param1, p2d1); 
+    mySurfAd.D0(p2d1.X(), p2d1.Y(), p3d1);
+
+    BA2.D0(Param2, p2d2);
+    mySurfAd.D0(p2d2.X(), p2d2.Y(), p3d2);
+
+    gp_Pnt IntPnt((p3d1.XYZ() + p3d2.XYZ())/2.);  //middle point of two intersection points of edge1 & edge2
+
+    Standard_Real TolE1 = BRep_Tool::Tolerance(E1);
+    Standard_Real TolE2 = BRep_Tool::Tolerance(E2);
+    Standard_Real aFutTol = 1.001* ((TolE1 > TolE2 ? TolE1 : TolE2)  + (p3d1.Distance(p3d2)/2.));
+
+    Standard_Boolean CreateNew = Standard_True;
+    TopoDS_Vertex UseV;
+    Standard_Integer UseVEdgeInd = -1;
+    for (Standard_Integer i = 1; i <= aVEM.Extent(); i++)
+    {
+      const TopoDS_Vertex& V = TopoDS::Vertex(aVEM.FindKey(i));
+      if (V.IsNull())
+        continue;
+      gp_Pnt PV = BRep_Tool::Pnt(V);
+      Standard_Real TolV = BRep_Tool::Tolerance(V);
+      if (PV.SquareDistance(IntPnt) < (TolV+aFutTol)*(TolV+aFutTol))
+      {
+        const TopTools_ListOfShape& ls = aVEM(i); //non empty list anyway
+        if (ls.Extent() > 1)
+        {
+          IV = V;
+          return; // intersection have been found in shared vertex between E1/E2
+        }
+
+        if (UseV.IsNull())
+        {
+          UseV = V;
+          if (ls.First().IsSame(E1))
+            UseVEdgeInd = 1;
+          else  //ls.First() should be E2
+            UseVEdgeInd = 2;
+          CreateNew = Standard_False;
+        }
+        else //?? non valid shape?
+        {
+          UseV.Nullify(); 
+          break;
+        }
+      }
+    }
+
+    if (CreateNew || !UseV.IsNull())
+    {
+      if (UseV.IsNull())
+        // Make vertex from intersection point
+        myBuilder.MakeVertex(UseV, IntPnt, aFutTol);
+
+      IV = UseV;
+      // Save result of intersection to the map (edge -> seq. of parameters/vert on it)
+      if (UseVEdgeInd != 1)
+        if (!myOutMapOfResult.Contains(E1))
+        {
+          NCollection_List<BRepFill_IntersectionParam> LL;
+          LL.Append(BRepFill_IntersectionParam(Param1, UseV));
+          myOutMapOfResult.Add(E1, LL);
+        }
+        else
+          myOutMapOfResult.ChangeFromKey(E1).Append(BRepFill_IntersectionParam(Param1, UseV));
+
+      if (UseVEdgeInd != 2)
+        if (!myOutMapOfResult.Contains(E2))
+        {
+          NCollection_List<BRepFill_IntersectionParam> LL;
+          LL.Append(BRepFill_IntersectionParam(Param2, UseV));
+          myOutMapOfResult.Add(E2, LL);
+        }
+        else
+          myOutMapOfResult.ChangeFromKey(E2).Append(BRepFill_IntersectionParam(Param2, UseV));
+    }
+  }
+
   Standard_Boolean Accept (const Standard_Integer& theObj)
   {
     //intersection between bounding boxes is found, try to find intersection of edges
     if (theObj < myCInd) //intersection operation on some diff edges is symmetrical
     {
-      TopoDS_Edge E1 = TopoDS::Edge(myMapOfEdges(theObj));
-      TopoDS_Edge E2 = TopoDS::Edge(myMapOfEdges(myCInd));
+      const BRepAdaptor_Curve2d& BA1 = *myEdgeAdapters(theObj);
+      const BRepAdaptor_Curve2d& BA2 = *myEdgeAdapters(myCInd);
       {
-        BRepAdaptor_Curve2d BA1(E1, myWFace);
-        BRepAdaptor_Curve2d BA2(E2, myWFace);
         Geom2dInt_GInter inter(BA1, BA2, myPrec, myPrec);
         if (inter.IsDone())
         {
           //check result points relative to already existing vertices 
-          TopTools_IndexedMapOfShape aVV;
-          TopExp::MapShapes(E1, TopAbs_VERTEX, aVV);
-          TopExp::MapShapes(E2, TopAbs_VERTEX, aVV);
+          const TopoDS_Edge& E1 = BA1.Edge();
+          const TopoDS_Edge& E2 = BA2.Edge();
+          
+          TopTools_IndexedDataMapOfShapeListOfShape aVEM;
+          TopExp::MapShapesAndAncestors(E1, TopAbs_VERTEX, TopAbs_EDGE, aVEM);
+          TopExp::MapShapesAndAncestors(E2, TopAbs_VERTEX, TopAbs_EDGE, aVEM);          
+
+          IntRes2d_SequenceOfIntersectionPoint anIntPnts;
           for (Standard_Integer i = 1; i <= inter.NbPoints(); i++)
           {
             const IntRes2d_IntersectionPoint& anIPnt = inter.Point(i);
-            Standard_Real Param1 = anIPnt.ParamOnFirst();
-            Standard_Real Param2 = anIPnt.ParamOnSecond();
+            TopoDS_Vertex DV;
+            ProcessIPoints(anIPnt, aVEM, E1, E2, BA1, BA2, DV);
+          }
 
-            Standard_Real f1, f2, l1, l2;
-            TopLoc_Location Loc1, Loc2;
-            gp_Pnt p3d1, p3d2;
-            Handle_Geom_Curve aCur1 = BRep_Tool::Curve(E1, Loc1, f1, l1 ); 
-            Handle_Geom_Curve aCur2 = BRep_Tool::Curve(E2, Loc2, f2, l2 ); 
-            aCur1->D0(Param1, p3d1);
-            aCur2->D0(Param2, p3d2);
-            if (!Loc1.IsIdentity())
-              p3d1.Transform(Loc1.Transformation());
-            if (!Loc2.IsIdentity())
-              p3d2.Transform(Loc2.Transformation());
-            gp_Pnt IntPnt((p3d1.XYZ() + p3d2.XYZ())/2.);  //middle point of two intersection points of edge1 & edge2
+          BRepFill_SegmentEE EES;
+          EES.E1 = E1;
+          EES.E2 = E2;
+          NCollection_List<BRepFill_SegmentVV> LSVV;
 
-            Standard_Real TolE1 = BRep_Tool::Tolerance(E1);
-            Standard_Real TolE2 = BRep_Tool::Tolerance(E2);
-            Standard_Real aFutTol = 1.001* ((TolE1 > TolE2 ? TolE1 : TolE2)  + (p3d1.Distance(p3d2)/2.));
-
-            Standard_Boolean CreateNewV = Standard_True;
-            for (Standard_Integer i = 1; i <= aVV.Extent(); i++)
+          for (Standard_Integer i = 1; i <= inter.NbSegments(); i++)
+          {
+            const IntRes2d_IntersectionSegment& aISeg = inter.Segment(i);
+            if (aISeg.HasFirstPoint() && aISeg.HasLastPoint())
             {
-              const TopoDS_Vertex& V = TopoDS::Vertex(aVV.FindKey(i));
-              gp_Pnt PV = BRep_Tool::Pnt(V);
-              Standard_Real TolV = BRep_Tool::Tolerance(V);
-              if (PV.SquareDistance(IntPnt) < (TolV+aFutTol)*(TolV+aFutTol))
-              {
-                CreateNewV = Standard_False;
-                break;
-              }
-            }
+              TopoDS_Vertex V1;
+              TopoDS_Vertex V2;
+              ProcessIPoints(aISeg.FirstPoint(), aVEM, E1, E2, BA1, BA2, V1);
+              ProcessIPoints(aISeg.LastPoint(), aVEM, E1, E2, BA1, BA2, V2);
 
-            if (CreateNewV)
-            {
-              // Make vertex from intersection point
-              TopoDS_Vertex V;
-              myBuilder.MakeVertex(V, IntPnt, aFutTol);
-
-              // Save result of intersection to the map (edge -> seq. of parameters/vert on it)
-              if (!myOutMapOfResult.Contains(E1))
-              {
-                NCollection_DataMap<Standard_Real, TopoDS_Vertex> EP1;
-                EP1.Bind(Param1, V);
-                myOutMapOfResult.Add(E1, EP1);
-              }
-              else
-                myOutMapOfResult.ChangeFromKey(E1).Bind(Param1, V);
-
-              if (!myOutMapOfResult.Contains(E2))
-              {
-                NCollection_DataMap<Standard_Real, TopoDS_Vertex> EP2;
-                EP2.Bind(Param2, V);
-                myOutMapOfResult.Add(E2, EP2);
-              }
-              else
-                myOutMapOfResult.ChangeFromKey(E2).Bind(Param2, V);
+              //
+              // add edges (E1, E2) to addit. map if they will not be splitted later
+              //but participate in intersection
+              TopTools_IndexedMapOfShape DM;
+              TopExp::MapShapes(E1, TopAbs_VERTEX, DM);
+              if (DM.Contains(V1) && DM.Contains(V2))
+                myAddtSegmIntEdges.Add(E1);
+              DM.Clear();
+              TopExp::MapShapes(E2, DM);
+              if (DM.Contains(V1) && DM.Contains(V2))
+                myAddtSegmIntEdges.Add(E2);
+              //
+              BRepFill_SegmentVV SVV;
+              SVV.V1 = V1;
+              SVV.V2 = V2;
+              LSVV.Append(SVV);
             }
           }
+          if (!LSVV.IsEmpty())
+            myISegmL.Add(EES, LSVV);
         }
-
       }
     }
     else if (theObj == myCInd) //try to find self-intersection of edge
     {
-      TopoDS_Edge E = TopoDS::Edge(myMapOfEdges(theObj));
-
-      BRepAdaptor_Curve2d BA(E, myWFace);
+      const BRepAdaptor_Curve2d& BA = *myEdgeAdapters(theObj);
       Geom2dInt_GInter inter(BA, myPrec, myPrec);
-
+      //??take intersection segments into account???
       if (inter.IsDone())
         for (Standard_Integer i = 1; i <= inter.NbPoints(); i++)
         {
-          //check if intersect point is close to some vertex?
+          //check if intersect point is close to some vertex
           Standard_Real Param1 = inter.Point(i).ParamOnFirst();
           Standard_Real Param2 = inter.Point(i).ParamOnSecond();
 
           // Make vertex from intersection point
           TopoDS_Vertex V;
+          const TopoDS_Edge& E = BA.Edge();
 
-          Standard_Real f1, l1;
-          TopLoc_Location Loc1; 
+          gp_Pnt2d p2d1, p2d2;
           gp_Pnt p3d1, p3d2;
-          Handle_Geom_Curve aCur = BRep_Tool::Curve(E, Loc1, f1, l1 ); 
-          aCur->D0(Param1, p3d1);
-          aCur->D0(Param2, p3d2);
-          if (!Loc1.IsIdentity())
-          {
-            p3d1.Transform(Loc1.Transformation());
-            p3d2.Transform(Loc1.Transformation());
-          }
+          BA.D0(Param1, p2d1); 
+          mySurfAd.D0(p2d1.X(), p2d1.Y(), p3d1);
+
+          BA.D0(Param2, p2d2);
+          mySurfAd.D0(p2d2.X(), p2d2.Y(), p3d2);
+
           gp_Pnt IntPnt((p3d1.XYZ() + p3d2.XYZ())/2.); 
           Standard_Real TolE1 = BRep_Tool::Tolerance(E);
 
@@ -289,16 +460,16 @@ public:
           // Save result of intersection to the map (edge -> seq. of parameters/vert on it)
           if (!myOutMapOfResult.Contains(E))
           {
-            NCollection_DataMap<Standard_Real, TopoDS_Vertex> EP;
-            EP.Bind(Param1, V);
-            EP.Bind(Param2, V);
-            myOutMapOfResult.Add(E, EP);
+            NCollection_List<BRepFill_IntersectionParam> LL;
+            LL.Append(BRepFill_IntersectionParam(Param1, V));
+            LL.Append(BRepFill_IntersectionParam(Param2, V));
+            myOutMapOfResult.Add(E, LL);
           }
           else
           {
-            NCollection_DataMap<Standard_Real, TopoDS_Vertex>& Vals = myOutMapOfResult.ChangeFromKey(E);
-            Vals.Bind(Param1, V);
-            Vals.Bind(Param2, V);
+            NCollection_List<BRepFill_IntersectionParam>& LL = myOutMapOfResult.ChangeFromKey(E);
+            LL.Append(BRepFill_IntersectionParam(Param1, V));
+            LL.Append(BRepFill_IntersectionParam(Param2, V));
           }
         }
 
@@ -322,14 +493,17 @@ private:
   BRepFill_BndBoxTreeSelector& operator=(const BRepFill_BndBoxTreeSelector& );
 
 private:
-  TopTools_IndexedMapOfShape& myMapOfEdges; //edges to be intersected with each other
-  const TopoDS_Face& myWFace; //work spine
-  NCollection_IndexedDataMap<TopoDS_Edge, NCollection_DataMap<Standard_Real, TopoDS_Vertex>>& myOutMapOfResult; // edge to it's intersection parameters (param + vertex)
-  //?? NCollection_DataMap<Standard_Real, TopoDS_Vertex> - typedef this??
+  const BRepAdaptor_Surface& mySurfAd; //work spine
+  const NCollection_Array1<NCollection_Handle<BRepAdaptor_Curve2d>>& myEdgeAdapters;
+  NCollection_IndexedDataMap<TopoDS_Edge, 
+    NCollection_List<BRepFill_IntersectionParam>>& myOutMapOfResult; // edge to it's intersection parameters (param + vertex)
+
   Bnd_Box2d myCBox;
   Standard_Integer myCInd;
   BRep_Builder myBuilder; 
   Standard_Real myPrec;
+  BRepFill_SegmOnE& myISegmL;
+  NCollection_IndexedMap<TopoDS_Edge>& myAddtSegmIntEdges;
 };
 
 
@@ -480,18 +654,35 @@ static void FillNode2LLMap(Standard_Integer NewNode, const Poly_MakeLoops2D::Lin
 static void CollectWires(TopoDS_Compound& outCmp, Standard_Integer ind,
   const NCollection_Sequence<TopoDS_Wire>& FWS, const NCollection_Sequence<TopoDS_Wire>& SWS);
 
-void FindWireIntersections(const TopoDS_Wire& theW, const TopoDS_Face& theWorkSpine,
-  NCollection_IndexedDataMap<TopoDS_Edge, NCollection_DataMap<Standard_Real, TopoDS_Vertex>>& theME2IP);
+static void FindWireIntersections(const TopoDS_Wire& theW, const TopoDS_Face& theWorkSpine, NCollection_DataMap<TopoDS_Edge, 
+  NCollection_Handle<BRepAdaptor_Curve2d>>& ME2HA,
+  NCollection_IndexedDataMap<TopoDS_Edge, 
+  NCollection_List<BRepFill_IntersectionParam>>& theME2IP, BRepFill_SegmOnE& theISegmL,
+  TopTools_MapOfShape& theAddtEdgesInt);
 
-void InsertIntersectionPoints(const NCollection_IndexedDataMap<TopoDS_Edge, NCollection_DataMap<Standard_Real, TopoDS_Vertex>>& theME2IP,
-  TopoDS_Wire& theW);
+static void InsertIntersectionPoints(const NCollection_IndexedDataMap<TopoDS_Edge, NCollection_List<BRepFill_IntersectionParam>>& theME2IP,
+  TopoDS_Wire& theW, BRepFill_SegmOnE& theISegmL, const NCollection_IndexedMap<TopoDS_Edge>& theAddtEdgesInt);
 
-Standard_Boolean ReorderWires(TopoDS_Wire& theW);
+static Standard_Boolean FindLoops(const TopoDS_Wire& theW, const TopoDS_Face& theWorkSpine, NCollection_List<TopoDS_Shape>& theLoops);
 
-Standard_Boolean FindLoops(const TopoDS_Wire& theW, const TopoDS_Face& theWorkSpine, NCollection_List<TopoDS_Shape>& theLoops);
-
-Standard_Boolean ClassifyLoops(const NCollection_List<TopoDS_Shape>& theLoops, NCollection_Sequence<TopoDS_Wire>& theIWires,
+static Standard_Boolean ClassifyLoops(const NCollection_List<TopoDS_Shape>& theLoops, NCollection_Sequence<TopoDS_Wire>& theIWires, 
+  NCollection_DataMap<TopoDS_Edge, NCollection_Handle<BRepAdaptor_Curve2d>>& ME2HA,
   NCollection_Sequence<TopoDS_Wire>& theHoleWires, const TopoDS_Face& theWorkSpine, Standard_Integer& MaxMassInd, Standard_Boolean& IsMaxIsHole );
+
+static void FuseVertices(TopoDS_Shape& theW);
+
+static void BuildEE2S(const BRepFill_SegmOnE& theISegmL,
+  NCollection_IndexedDataMap<TopoDS_Edge, NCollection_IndexedMap<TopoDS_Vertex, 
+    TopTools_ShapeMapHasher>> OE2NVS,
+  NCollection_IndexedDataMap<BRepFill_SegmentEE, 
+  NCollection_List<NCollection_IndexedMap<TopoDS_Vertex, TopTools_ShapeMapHasher>>>& EE2S);
+
+static void UpdateSV2CEMap(const TopoDS_Edge& NE, 
+  NCollection_IndexedDataMap<BRepFill_SegmentVV, NCollection_IndexedMap<TopoDS_Edge>>& SV2CE);
+
+static void BuildSV2CE( const NCollection_IndexedMap<TopoDS_Edge>& theAddtEdgesInt,
+  const NCollection_IndexedDataMap<TopoDS_Edge, TopoDS_Edge>& NE2OES,
+  NCollection_IndexedDataMap<BRepFill_SegmentVV, NCollection_IndexedMap<TopoDS_Edge>>& SV2CE );
 
 static Standard_Boolean RemoveLoops(TopoDS_Shape& theInputSh, const TopoDS_Face& theWorkSpine );
 
@@ -3074,6 +3265,16 @@ static void FillNode2LLMap(Standard_Integer NewNode, const Poly_MakeLoops2D::Lin
      mNode2ListOfLinks(NewNode).Append(NewLink);
 }
 
+static void GetEdgeAdaptor(const TopoDS_Edge& InpEdge, const TopoDS_Face& InpF,
+  NCollection_Handle<BRepAdaptor_Curve2d>& outAdapt,
+  NCollection_DataMap<TopoDS_Edge, NCollection_Handle<BRepAdaptor_Curve2d>>& ME2HA)
+{
+  if (ME2HA.IsBound(InpEdge))
+    outAdapt = ME2HA(InpEdge);
+  else
+    outAdapt = *ME2HA.Bound(InpEdge, new BRepAdaptor_Curve2d(InpEdge, InpF));
+}
+
 static void CollectWires(TopoDS_Compound& outCmp, Standard_Integer ind,
   const NCollection_Sequence<TopoDS_Wire>& theFWS, const NCollection_Sequence<TopoDS_Wire>& theSWS)
 {
@@ -3085,13 +3286,12 @@ static void CollectWires(TopoDS_Compound& outCmp, Standard_Integer ind,
     BBC.Add(outCmp, theSWS(i));
 }
 
-void FindWireIntersections(const TopoDS_Wire& theW, const TopoDS_Face& theWorkSpine,
-    NCollection_IndexedDataMap<TopoDS_Edge, NCollection_DataMap<Standard_Real, TopoDS_Vertex>>& theME2IP)
+void FindWireIntersections(const TopoDS_Wire& theW, const TopoDS_Face& theWorkSpine, 
+  NCollection_DataMap<TopoDS_Edge, NCollection_Handle<BRepAdaptor_Curve2d>>& ME2HA,
+  NCollection_IndexedDataMap<TopoDS_Edge, NCollection_List<BRepFill_IntersectionParam>>& theME2IP,
+  BRepFill_SegmOnE& theISegmL, NCollection_IndexedMap<TopoDS_Edge>& theAddtEdgesInt)
 {
-  //TopExp_Explorer ExpE( theW, TopAbs_EDGE );
-  //TopTools_SequenceOfShape Seq; 
-  //for (; ExpE.More(); ExpE.Next())
-  //  Seq.Append( ExpE.Current() );
+
   TopTools_IndexedMapOfShape EdgeMap;
   TopExp::MapShapes(theW, TopAbs_EDGE, EdgeMap);
 
@@ -3099,24 +3299,29 @@ void FindWireIntersections(const TopoDS_Wire& theW, const TopoDS_Face& theWorkSp
   BRepFill_BndBoxTree aTree;
   NCollection_UBTreeFiller <Standard_Integer, Bnd_Box2d> aTreeFiller (aTree);
 
-  BRepFill_BndBoxTreeSelector aSelector(EdgeMap, theWorkSpine, theME2IP, Precision::Confusion());
-
   // Prepare bounding boxes
   int nbBoxes = EdgeMap.Extent();
   NCollection_Array1<Bnd_Box2d> BndBoxesOfEdges(1, nbBoxes);
+  NCollection_Array1<NCollection_Handle<BRepAdaptor_Curve2d>> E2A2d(1, nbBoxes);
   for (Standard_Integer i = 1; i <= nbBoxes; i++)
   {
-    Standard_Real f, l;
-    //too many calls of CurveOnSurface in removeloops. try to use adaptors and cache them??
-    Handle_Geom2d_Curve aCur = BRep_Tool::CurveOnSurface(TopoDS::Edge(EdgeMap(i)), theWorkSpine, f, l ); 
+    const TopoDS_Edge& E = TopoDS::Edge(EdgeMap(i));
+    NCollection_Handle<BRepAdaptor_Curve2d> Adpt2dH = new BRepAdaptor_Curve2d(E, theWorkSpine);
     Bnd_Box2d aBox;
-    BndLib_Add2dCurve::Add( aCur, f, l, 0., aBox );
+    E2A2d(i) = Adpt2dH; //all edges are unique
+    ME2HA.Bind(E, Adpt2dH);
+    BndLib_Add2dCurve::Add( *Adpt2dH, 0., aBox );
     aTreeFiller.Add(i, aBox);
     BndBoxesOfEdges(i) = aBox;
   }
 
-  aTreeFiller.Fill();
 
+  BRepAdaptor_Surface AdptSurf(theWorkSpine);
+  BRepFill_BndBoxTreeSelector aSelector(AdptSurf, theME2IP, E2A2d, Precision::Confusion(), 
+    theISegmL, theAddtEdgesInt);
+
+  aTreeFiller.Fill();
+ 
   //Perform searching and intersecting of edges
   aSelector.ClearResult();
   for (Standard_Integer i = 1; i <= BndBoxesOfEdges.Size(); i++)
@@ -3124,59 +3329,217 @@ void FindWireIntersections(const TopoDS_Wire& theW, const TopoDS_Face& theWorkSp
     aSelector.SetCurrentBox(BndBoxesOfEdges(i), i);
     aTree.Select(aSelector);
   }
-
-  //aSelector.GetResult(theME2IP);
+  
 }
 
-void InsertIntersectionPoints(const NCollection_IndexedDataMap<TopoDS_Edge, NCollection_DataMap<Standard_Real, TopoDS_Vertex>>& theME2IP,
-   TopoDS_Wire& theW)
+//checks interference between two elem. edges through intersection segment (after splitting)
+Standard_Boolean CheckEECoicState(const TopoDS_Edge& ELE1, const TopoDS_Edge& ELE2,
+  const NCollection_IndexedDataMap<TopoDS_Edge, TopoDS_Edge>& NE2OES,
+  const NCollection_IndexedMap<TopoDS_Edge>& theAddtEdgesInt,
+  const NCollection_IndexedDataMap<BRepFill_SegmentEE, 
+    NCollection_List<NCollection_IndexedMap<TopoDS_Vertex, TopTools_ShapeMapHasher>>>& EE2S)
+{
+  TopoDS_Edge OE1, OE2;
+  if (NE2OES.Contains(ELE1))
+    OE1 = NE2OES.FindFromKey(ELE1); //have been splitted
+  else if (theAddtEdgesInt.Contains(ELE1)) //addit. check, probably not needed??
+    OE1 = ELE1;    
+
+  if (NE2OES.Contains(ELE2))
+    OE2 = NE2OES.FindFromKey(ELE2); //have been splitted
+  else if (theAddtEdgesInt.Contains(ELE2))
+    OE2 = ELE2;
+
+  if (OE1.IsNull() || OE2.IsNull())
+    return Standard_False; //
+
+  TopTools_IndexedMapOfShape VELE1; //vertexes on ELE1 & ELE2 is the same. take vertices from any of this
+  TopExp::MapShapes(ELE1, TopAbs_VERTEX, VELE1);
+  if ( VELE1.Extent() != 2)
+    return Standard_False;   //VELE1 extent should be == 2
+  BRepFill_SegmentEE SEE;
+  SEE.E1 = OE1;
+  SEE.E2 = OE2;
+  if ( !EE2S.Contains(SEE))
+    return Standard_False; //not intersection segment or it's not recorded as int.segment
+  const NCollection_List<NCollection_IndexedMap<TopoDS_Vertex, TopTools_ShapeMapHasher>>& SegmLVV = EE2S.FindFromKey(SEE);
+   NCollection_List<NCollection_IndexedMap<TopoDS_Vertex, TopTools_ShapeMapHasher>>::Iterator SegmLVVit (SegmLVV);
+   for (;SegmLVVit.More();SegmLVVit.Next())
+   {
+     const NCollection_IndexedMap<TopoDS_Vertex, TopTools_ShapeMapHasher>& SegmVV = SegmLVVit.Value();
+     //check that both vertices are in range of intersection segment
+     //if true => the 'elementary' segments (parts of 'total' segment) can be considered as coincident
+     if (SegmVV.Contains(TopoDS::Vertex(VELE1(1))) && SegmVV.Contains(TopoDS::Vertex(VELE1(2))))
+       return Standard_True;
+   }
+   return Standard_False;
+}
+
+void UpdateSV2CEMap(const TopoDS_Edge& NE, 
+  NCollection_IndexedDataMap<BRepFill_SegmentVV, NCollection_IndexedMap<TopoDS_Edge>>& SV2CE)
+{
+  BRepFill_SegmentVV SVV;
+  SVV.V1 = TopExp::FirstVertex(NE);
+  SVV.V2 = TopExp::LastVertex(NE);
+  if (!SV2CE.Contains(SVV))
+  {
+    NCollection_IndexedMap<TopoDS_Edge> NME;
+    NME.Add(NE);
+    SV2CE.Add(SVV, NME);
+  }
+  else
+    SV2CE.ChangeFromKey(SVV).Add(NE);
+}
+
+
+void BuildSV2CE( const NCollection_IndexedMap<TopoDS_Edge>& theAddtEdgesInt,
+  const NCollection_IndexedDataMap<TopoDS_Edge, TopoDS_Edge>& NE2OES,
+  NCollection_IndexedDataMap<BRepFill_SegmentVV, NCollection_IndexedMap<TopoDS_Edge>>& SV2CE )
+{
+  for (Standard_Integer i = 1; i <= theAddtEdgesInt.Extent(); i++)
+  {
+    const TopoDS_Edge& NE = theAddtEdgesInt.FindKey(i);
+    UpdateSV2CEMap(NE, SV2CE);
+  }
+
+  for (Standard_Integer i = 1; i <= NE2OES.Extent(); i++)
+  {
+    const TopoDS_Edge& NE = NE2OES.FindKey(i);
+    UpdateSV2CEMap(NE, SV2CE);
+  }
+
+  //if segment contains only one edge => such segment will be deleted
+  NCollection_IndexedDataMap<BRepFill_SegmentVV, NCollection_IndexedMap<TopoDS_Edge>> USV2CE;
+  //?? or remove from SV2CE while iterating through it? 
+  for (Standard_Integer i = 1; i <= SV2CE.Extent(); i++)
+  {
+    const NCollection_IndexedMap<TopoDS_Edge>& Val = SV2CE.FindFromIndex(i);
+    if (Val.Extent() > 1)
+      USV2CE.Add(SV2CE.FindKey(i), Val);
+  }
+
+  SV2CE = USV2CE;
+}
+
+void BuildEE2S(const BRepFill_SegmOnE& theISegmL,
+  NCollection_IndexedDataMap<TopoDS_Edge, NCollection_IndexedMap<TopoDS_Vertex, 
+    TopTools_ShapeMapHasher>> OE2NVS,
+  NCollection_IndexedDataMap<BRepFill_SegmentEE, 
+  NCollection_List<NCollection_IndexedMap<TopoDS_Vertex, TopTools_ShapeMapHasher>>>& EE2S)
+{
+  for (Standard_Integer i = 1; i <= theISegmL.Extent(); i++)
+  {
+    const NCollection_List<BRepFill_SegmentVV>& SVVL = theISegmL(i);
+    const BRepFill_SegmentEE& SEE = theISegmL.FindKey(i);
+    TopoDS_Edge E = SEE.E1;
+    NCollection_List<NCollection_IndexedMap<TopoDS_Vertex, TopTools_ShapeMapHasher>> LIVVIS;
+    if (OE2NVS.Contains(E))
+    {
+      const NCollection_IndexedMap<TopoDS_Vertex, TopTools_ShapeMapHasher>& allV = 
+        OE2NVS.FindFromKey(E);
+
+      NCollection_List<BRepFill_SegmentVV>::Iterator itSVVL(SVVL);
+      for (;itSVVL.More();itSVVL.Next())
+      {
+        const BRepFill_SegmentVV& SVV = itSVVL.Value();
+        NCollection_IndexedMap<TopoDS_Vertex, TopTools_ShapeMapHasher> VVIS;
+        Standard_Integer ind1 = allV.FindIndex(SVV.V1);
+        Standard_Integer ind2 = allV.FindIndex(SVV.V2);
+        if (ind1 > ind2)
+          std::swap(ind1, ind2); //int typedef-ed, should works without warnings
+        //add all vertices from intersection segment
+        for (Standard_Integer k = ind1; k <= ind2; k++)
+          VVIS.Add(allV.FindKey(k));
+        LIVVIS.Append(VVIS);
+      }
+    }
+    else
+    {
+      NCollection_IndexedMap<TopoDS_Vertex, TopTools_ShapeMapHasher> VFL;
+      VFL.Add(TopExp::FirstVertex(E));
+      VFL.Add(TopExp::LastVertex(E));
+      LIVVIS.Append(VFL);
+    }
+    EE2S.Add(SEE, LIVVIS);
+  }
+}
+
+bool BRepFill_ParamComp(BRepFill_IntersectionParam a, BRepFill_IntersectionParam b)
+{
+  return a.param < b.param;
+}
+
+void InsertIntersectionPoints(const NCollection_IndexedDataMap<TopoDS_Edge, 
+  NCollection_List<BRepFill_IntersectionParam>>& theME2IP,
+   TopoDS_Wire& theW, BRepFill_SegmOnE& theISegmL, const NCollection_IndexedMap<TopoDS_Edge>& theAddtEdgesInt)
 {
   //Insert intersection points
   BRep_Builder BB;
   BRepTools_ReShape reshape; //?? use "internal" reshape here??
+  NCollection_IndexedDataMap<TopoDS_Edge, NCollection_IndexedMap<TopoDS_Vertex, 
+    TopTools_ShapeMapHasher>> OE2NVS;
+  NCollection_IndexedDataMap<TopoDS_Edge, TopoDS_Edge> NE2OES;
+
   for (Standard_Integer i = 1; i <= theME2IP.Extent(); i++) 
   {
     const TopoDS_Edge& E = theME2IP.FindKey(i);
-    const NCollection_DataMap<Standard_Real, TopoDS_Vertex>& Params = theME2IP.FindFromIndex(i); 
-    //Handle_Geom_Curve aCur;
+    NCollection_List<BRepFill_IntersectionParam> Params = theME2IP.FindFromIndex(i); 
+
     Standard_Real f, l;
     BRep_Tool::Range(E, f, l );
 
-    //prepare params on the edge
-    Standard_Integer nbPext = Params.Extent();
-    NCollection_Array1<Standard_Real> ParamArr(1, nbPext + 2);
-    Standard_Integer k = 1;
-    for ( NCollection_DataMap<Standard_Real, TopoDS_Vertex>::Iterator itP(Params); itP.More(); itP.Next(), k++)
-      ParamArr(k) = itP.Key();
-    ParamArr(nbPext+1) = f;
-    ParamArr(nbPext+2) = l;
+    NCollection_Array1<BRepFill_IntersectionParam> ParamsArr(1, Params.Extent() + 2);
+    ParamsArr.ChangeFirst() = BRepFill_IntersectionParam(f, TopExp::FirstVertex(E));
+    ParamsArr.ChangeLast() = BRepFill_IntersectionParam(l, TopExp::LastVertex(E));
+    NCollection_List<BRepFill_IntersectionParam>::Iterator itP(Params);
+    Standard_Integer k = 2;
+    for (;itP.More();itP.Next(), k++)
+      ParamsArr(k) = itP.Value();
 
-    //sort parameters
-    std::sort(ParamArr.begin(), ParamArr.end());
-    NCollection_Array1<TopoDS_Vertex> aVOnEdge (1, nbPext + 2);  //Vertexes on the edge which divide it by the intersection points into sequence of edges
-
-    aVOnEdge(1) = TopExp::FirstVertex(E);
-    for (Standard_Integer i = 2; i < ParamArr.Length(); i++)
-    {
-      Standard_Real P = ParamArr(i);
-      aVOnEdge(i) = Params(P);
-    }
-    aVOnEdge(nbPext+2) = TopExp::LastVertex(E);
+    std::sort(ParamsArr.begin(), ParamsArr.end(), BRepFill_ParamComp);
 
     //Split old edge => Construct a sequence of new edges
+    OE2NVS.Add(E, NCollection_IndexedMap<TopoDS_Vertex, TopTools_ShapeMapHasher>());
+    
+    NCollection_IndexedMap<TopoDS_Vertex, TopTools_ShapeMapHasher>& NVS = 
+      OE2NVS.ChangeFromIndex(OE2NVS.Extent());
     TopoDS_Edge DE;
     BRepBuilderAPI_MakeWire MW;
-    for (Standard_Integer j = 1; j < aVOnEdge.Length(); j++)
+    for (int j = ParamsArr.Lower(); j < ParamsArr.Upper(); j++)
     {
+      const BRepFill_IntersectionParam& CIP = ParamsArr(j);
+      const BRepFill_IntersectionParam& NIP = ParamsArr(j+1);
+
       //make all sub-edges forward
+
+      if (NIP.VP.IsSame(CIP.VP))
+        continue;
+      //?? insead of such condition here, the result of inter. params on edge
+      //can be controlled on tree-filler level.. but checking of equal.of curr.v/next.v seems to be faster 
+      //(linear time for all vertices on splitted edge)
+
       DE = TopoDS::Edge(E.EmptyCopied().Oriented(TopAbs_FORWARD));
       if (BRep_Tool::Degenerated(DE))
-        continue; 
-      BB.Range(DE, ParamArr(j), ParamArr(j+1));
-      BB.Add(DE, aVOnEdge(j).Oriented(TopAbs_FORWARD));
-      BB.Add(DE, aVOnEdge(j+1).Oriented(TopAbs_REVERSED));
+        continue; //move up this? since it will check the flag which will be inherited from original edge E 
+
+      const TopoDS_Vertex& VC = CIP.VP;
+      const TopoDS_Vertex& VN = NIP.VP;
+
+      BB.Range(DE, CIP.param, NIP.param);
+      BB.Add(DE, VC.Oriented(TopAbs_FORWARD));
+      BB.Add(DE, VN.Oriented(TopAbs_REVERSED));
+      NVS.Add(VC);
+      //?? BRepBuilderAPI_MakeWire can use new (empty-copied) shapes in output wire
+      //however, NE2OES and OE2NVS maps stores original edges 
+      //it's assumed that this edges will not be changed/replaced during make-wire operation and 
+      // all DE edges will be stored in TW wire
+      //( splitting by params & vertices tolerances should be OK for such assumption)
+      //brepbuilder can be used here for such add-shape-operation, but it will not control the correctness of wire
+      //OR history of MW can be used to update edges from NE2OES etc...
       MW.Add(DE);
+      NE2OES.Add(DE, E);
     }
+    NVS.Add(ParamsArr.Last().VP);
 
     MW.Build();
     TopoDS_Wire TW = MW.Wire();
@@ -3187,43 +3550,68 @@ void InsertIntersectionPoints(const NCollection_IndexedDataMap<TopoDS_Edge, NCol
     reshape.Replace(E, TW);
   }
 
+  //map : segment between two vertices TO edges which contains this vertices (i.e . first/last vertices of E)
+  //takes into account edges which participate in intersection (theAddtEdgesInt,NE2OES maps )
+  NCollection_IndexedDataMap<BRepFill_SegmentVV, NCollection_IndexedMap<TopoDS_Edge>> SV2CE;
+  BuildSV2CE(theAddtEdgesInt, NE2OES, SV2CE);
+
+  //create new map EE2S; the key is the same as in theISegmL map
+  //value contains list of all vertices in intersection segment
+  //instead of boundary-only vertices (last/first points of intersection)
+  NCollection_IndexedDataMap<BRepFill_SegmentEE, 
+    NCollection_List<NCollection_IndexedMap<TopoDS_Vertex, TopTools_ShapeMapHasher>>> EE2S;
+  BuildEE2S(theISegmL, OE2NVS, EE2S);
+
+  //test coincident state after splitting 
+  for (Standard_Integer i = 1; i <= SV2CE.Extent(); i++)
+  {
+    NCollection_IndexedMap<TopoDS_Edge> CEM = SV2CE.FindFromIndex(i);
+    NCollection_List<NCollection_IndexedMap<TopoDS_Edge>> AllGE;
+    NCollection_List<NCollection_IndexedMap<TopoDS_Edge>>::Iterator AllGEIt;
+    for (;!CEM.IsEmpty();)
+    {
+      const TopoDS_Edge& TE = CEM.FindKey(CEM.Extent());
+      AllGEIt.Init(AllGE);
+      Standard_Boolean NewGr = Standard_True;
+      for (;AllGEIt.More();AllGEIt.Next())
+      {
+        NCollection_IndexedMap<TopoDS_Edge>& CG = AllGEIt.ChangeValue();
+        const TopoDS_Edge& FE = CG.FindKey(1);
+        //assume that the operation of checking is transitive
+        Standard_Boolean State = CheckEECoicState(FE, TE, NE2OES, theAddtEdgesInt, EE2S);
+        if (State)
+        {
+          CG.Add(TE);
+          NewGr = Standard_False;
+          break;
+        }
+      }
+      if (NewGr)
+      {
+        NCollection_IndexedMap<TopoDS_Edge> NG;
+        NG.Add(TE);
+        AllGE.Append(NG);
+      }
+      CEM.RemoveLast();
+    }
+    // remove coic edges from wire
+    AllGEIt.Init(AllGE);
+    for (;AllGEIt.More();AllGEIt.Next())
+    {
+      const NCollection_IndexedMap<TopoDS_Edge>& ValMap = AllGEIt.Value();
+      for (Standard_Integer i = 2; i <= ValMap.Extent(); i++)
+      {
+        const TopoDS_Shape& sh = ValMap(i);
+        reshape.Remove(sh);
+      }
+    }
+  }
+
   theW = TopoDS::Wire(reshape.Apply(theW));
 }
 
-Standard_Boolean ReorderWires(TopoDS_Wire& theW)
-{
-  //Perform reorder of wire
-  //?? this can change overall orientation of wire(for ex, hole should be remain hole after this fixing etc)
-  Handle(ShapeExtend_WireData) aWireData  = new ShapeExtend_WireData;
-  Handle(ShapeFix_Wire) aShFixWire = new ShapeFix_Wire;
-
-  Handle(ShapeAnalysis_Wire) aWireAnalyzer;
-  ShapeAnalysis_WireOrder aWireOrder;
-
-  aShFixWire->Load(aWireData);
-  aShFixWire->SetPrecision(1e-7);
-
-  TopExp_Explorer Exp1( theW, TopAbs_EDGE );
-  for (; Exp1.More(); Exp1.Next())
-    aWireData->Add(TopoDS::Edge(Exp1.Current()));
-
-  aWireOrder.KeepLoopsMode() = 0;
-  aWireAnalyzer = aShFixWire->Analyzer();
-  aShFixWire->ModifyTopologyMode() = Standard_True;
-  aWireAnalyzer->CheckOrder(aWireOrder, Standard_True);
-  aWireOrder.Perform(1);
-  aShFixWire->ClosedWireMode() = 1;
-  aShFixWire->FixReorder(aWireOrder);
-  //aShFixWire->FixDegenerated();
-  Standard_Boolean IsDone = !aShFixWire->StatusReorder(ShapeExtend_FAIL);
-  if (!IsDone)
-    return Standard_False;
-
-  theW = aWireData->Wire();
-  return Standard_True;
-}
-
-Standard_Boolean FindLoops(const TopoDS_Wire& theW, const TopoDS_Face& theWorkSpine, NCollection_List<TopoDS_Shape>& theLoops)
+Standard_Boolean FindLoops(const TopoDS_Wire& theW, const TopoDS_Face& theWorkSpine, NCollection_List<TopoDS_Shape>& theLoops, 
+  NCollection_DataMap<TopoDS_Edge, NCollection_Handle<BRepAdaptor_Curve2d>>& ME2HA )
 {
   NCollection_List<TopoDS_Shape> SelfLoops;
   TopTools_IndexedMapOfShape mN2V;
@@ -3238,7 +3626,7 @@ Standard_Boolean FindLoops(const TopoDS_Wire& theW, const TopoDS_Face& theWorkSp
   ExpE.Init(theW, TopAbs_EDGE);
   for (; ExpE.More(); ExpE.Next())
   {
-    TopoDS_Edge E = TopoDS::Edge(ExpE.Current());
+    const TopoDS_Edge& E = TopoDS::Edge(ExpE.Current());
 
     // If edge contains only one vertex => self loop (should be non degenerated)
     TopoDS_Vertex FV, LV;
@@ -3251,27 +3639,27 @@ Standard_Boolean FindLoops(const TopoDS_Wire& theW, const TopoDS_Face& theWorkSp
       continue;
     }
 
-    Handle_Geom2d_Curve aCur;
-    Standard_Real f, l;
+    NCollection_Handle<BRepAdaptor_Curve2d> adapt;
+    GetEdgeAdaptor(E, theWorkSpine, adapt, ME2HA);
+
     gp_Pnt2d Pnt;
     gp_Vec2d Vec;
     gp_Dir2d D1F, D1L;
-    aCur = BRep_Tool::CurveOnSurface(E, theWorkSpine, f, l ); 
-    if (aCur.IsNull())
+    if (adapt->Curve().IsNull())
       continue;
     TopAbs_Orientation EOri = E.Orientation();
-    if (EOri == TopAbs_FORWARD) //?? yet again, use adaptor here?? 
+    if (EOri == TopAbs_FORWARD)
     {
-      aCur->D1(f, Pnt, Vec);
+      adapt->D1(adapt->FirstParameter(), Pnt, Vec);
       D1F.SetCoord(Vec.X(), Vec.Y());
-      aCur->D1(l, Pnt, Vec);
+      adapt->D1(adapt->LastParameter(), Pnt, Vec);
       D1L.SetCoord(Vec.X(), Vec.Y());
     }
     else if (EOri == TopAbs_REVERSED)
     {
-      aCur->D1(l, Pnt, Vec);
+      adapt->D1(adapt->LastParameter(), Pnt, Vec);
       D1F.SetCoord(-Vec.X(), -Vec.Y());
-      aCur->D1(f, Pnt, Vec);
+      adapt->D1(adapt->FirstParameter(), Pnt, Vec);
       D1L.SetCoord(-Vec.X(), -Vec.Y());
     }
     else
@@ -3281,7 +3669,7 @@ Standard_Boolean FindLoops(const TopoDS_Wire& theW, const TopoDS_Face& theWorkSp
     Standard_Integer Node2 = mN2V.FindIndex(LV);
 
     Poly_MakeLoops2D::Link aLink(Node1, Node2);
-    //aLink.flags = Poly_MakeLoops2D::LF_Fwd;
+    //aLink.flags = Poly_MakeLoops2D::LF_Both;
     if (!mL2E.IsBound(aLink))
     {
       mL2E.Bind(aLink, E);
@@ -3299,8 +3687,6 @@ Standard_Boolean FindLoops(const TopoDS_Wire& theW, const TopoDS_Face& theWorkSp
       LastIndV++;
       Poly_MakeLoops2D::Link aLink1(Node1, LastIndV);
       Poly_MakeLoops2D::Link aLink2(LastIndV, Node2);
-      //aLink1.flags = Poly_MakeLoops2D::LF_Fwd;
-      //aLink2.flags = Poly_MakeLoops2D::LF_Fwd;
       mL2E.Bind(aLink1, E);
       mL2E.Bind(aLink2, TopoDS_Edge()); //indicates that one edge represented as two links
 
@@ -3346,7 +3732,7 @@ Standard_Boolean FindLoops(const TopoDS_Wire& theW, const TopoDS_Face& theWorkSp
     if (aWM.IsDone())
     {
       TopoDS_Wire W = aWM.Wire();
-      Standard_ASSERT_VOID(!W.Closed(), "BRepFill_OffsetWire: non closed wire");
+      Standard_ASSERT_VOID(W.Closed(), "BRepFill_OffsetWire: non closed wire");
       theLoops.Append(W);
     }
   }
@@ -3357,6 +3743,7 @@ Standard_Boolean FindLoops(const TopoDS_Wire& theW, const TopoDS_Face& theWorkSp
 }
 
 Standard_Boolean ClassifyLoops(const NCollection_List<TopoDS_Shape>& theLoops, NCollection_Sequence<TopoDS_Wire>& theIWires,
+  NCollection_DataMap<TopoDS_Edge, NCollection_Handle<BRepAdaptor_Curve2d>>& ME2HA,
   NCollection_Sequence<TopoDS_Wire>& theHoleWires, const TopoDS_Face& theWorkSpine, Standard_Integer& MaxMassInd, Standard_Boolean& IsMaxIsHole )
 {
   // try to classify wires
@@ -3387,13 +3774,11 @@ Standard_Boolean ClassifyLoops(const NCollection_List<TopoDS_Shape>& theLoops, N
     NCollection_Handle<BRepTopAdaptor_FClass2d> FClass = new BRepTopAdaptor_FClass2d(af, 0);
     TopAbs_State st = FClass->PerformInfinitePoint();
 
-    Standard_ASSERT_VOID(st == TopAbs_UNKNOWN || st == TopAbs_ON, "BRepFill_OffsetWire: wrong infinite point classification result");
+    Standard_ASSERT_VOID(st == TopAbs_IN || st == TopAbs_OUT, "BRepFill_OffsetWire: wrong infinite point classification result");
     if (st == TopAbs_IN)
       theHoleWires.Append(TopoDS::Wire(OSh));
     else if (st == TopAbs_OUT)
       theIWires.Append(TopoDS::Wire(OSh));
-
-
 
     // IN or OUT states
     GProp_GProps pr;
@@ -3415,16 +3800,11 @@ Standard_Boolean ClassifyLoops(const NCollection_List<TopoDS_Shape>& theLoops, N
         IsMaxIsHole = Standard_False;
       }
     }
-
-
-
   }
 
   if (!IsMaxIsHole && theIWires.Length() <= theHoleWires.Length() ||
     IsMaxIsHole && theIWires.Length() >= theHoleWires.Length())
   {
-    //if (CFPointer)
-      //delete CFPointer;
     return Standard_False; 
   }
 
@@ -3436,14 +3816,13 @@ Standard_Boolean ClassifyLoops(const NCollection_List<TopoDS_Shape>& theLoops, N
     if (i == MaxMassInd)
       continue;
     TopExp_Explorer ExpE( IsMaxIsHole ? theIWires(i) : theHoleWires(i), TopAbs_EDGE );
-    Standard_Real f, l;
-    Handle_Geom2d_Curve aCur;
     gp_Pnt2d MP;
     TopAbs_State cs = TopAbs_UNKNOWN;
     while ((cs == TopAbs_UNKNOWN || cs == TopAbs_ON) && ExpE.More())
     {
-      aCur = BRep_Tool::CurveOnSurface(TopoDS::Edge(ExpE.Current()), theWorkSpine, f, l ); 
-      MP = aCur->Value((l + f) / 2.0);
+      NCollection_Handle<BRepAdaptor_Curve2d> adapt;
+      GetEdgeAdaptor(TopoDS::Edge(ExpE.Current()), theWorkSpine, adapt, ME2HA);
+      MP = adapt->Value((adapt->LastParameter() + adapt->FirstParameter()) / 2.0);
       cs = CFPointer->Perform(MP);
       ExpE.Next(); //try next edge
     }
@@ -3455,12 +3834,93 @@ Standard_Boolean ClassifyLoops(const NCollection_List<TopoDS_Shape>& theLoops, N
     }
   }
 
-  //delete CFPointer;
-
   if (!bFoundOuterP)
     return Standard_False; //cant find an outer wire
   else
     return Standard_True;
+}
+
+void FuseVertices(TopoDS_Shape& theW)
+{
+  TopTools_IndexedMapOfShape allV;
+  TopExp::MapShapes(theW, TopAbs_VERTEX, allV);
+  double maxTol = 0;
+  for (int i = 1; i <= allV.Extent(); i++) 
+  {
+    const TopoDS_Vertex& curV = TopoDS::Vertex(allV(i));
+    double cur_tol = BRep_Tool::Tolerance(curV);
+    if (cur_tol > maxTol)
+      maxTol = cur_tol;
+  }
+  double cellsize = maxTol; //??
+  BRepTools_ReShape reshaper; 
+  NCollection_DataMap<TopoDS_Vertex, NCollection_List<TopoDS_Shape>, TopTools_OrientedShapeMapHasher> exV2CoinV; //first vertex to its coincidents
+  Handle(NCollection_IncAllocator) anAlloc = new NCollection_IncAllocator;
+  NCollection_CellFilter<NodeInspector> theCells(cellsize, anAlloc);
+  TopTools_IndexedMapOfShape newVMap;
+  for(Standard_Integer i = 1; i <= allV.Extent(); i++)
+  {
+    const TopoDS_Vertex& VV = TopoDS::Vertex(allV(i));
+    gp_Pnt PVV = BRep_Tool::Pnt(VV);
+    double sqTolVV = BRep_Tool::Tolerance(VV);
+    sqTolVV *= sqTolVV;
+    NodeInspector anInspector(newVMap, PVV, sqTolVV);
+    Bnd_Box aBox;
+    const TopoDS_Vertex& curV = TopoDS::Vertex(allV(i));
+    BRepBndLib::Add(curV, aBox);
+
+    theCells.Inspect(aBox.CornerMin().XYZ(), aBox.CornerMax().XYZ(), anInspector);
+    NodeInspector::Target aResId = anInspector.GetResult();
+
+    if(aResId == -1)
+    {
+      newVMap.Add(curV);
+      theCells.Add(newVMap.Extent(), aBox.CornerMin().XYZ(), aBox.CornerMax().XYZ());
+    }
+    else
+    {
+      const TopoDS_Vertex& exV = TopoDS::Vertex(newVMap(aResId));
+      if (!exV2CoinV.IsBound(exV)) 
+      {
+        TopTools_ListOfShape nls;
+        nls.Append(curV);
+        exV2CoinV.Bind(exV, nls);
+      }
+      else
+        exV2CoinV(exV).Append(curV);
+    }
+  }
+
+  for (NCollection_DataMap<TopoDS_Vertex, NCollection_List<TopoDS_Shape>, 
+    TopTools_OrientedShapeMapHasher>::Iterator itM(exV2CoinV);itM.More();itM.Next())
+  {
+    const TopoDS_Shape& exV = itM.Key();
+    NCollection_List<TopoDS_Shape> nls = itM.Value();
+    nls.Prepend(exV);
+    gp_Pnt aNC;
+    double aNTol;
+    BRepLib::BoundingVertex(nls, aNC, aNTol);
+    BRep_Builder BB;
+    BB.UpdateVertex(TopoDS::Vertex(exV), aNC, aNTol);
+    //??the updating of vertices
+    //may lead regressions (increasing of toler of vertex)
+    //for ex.offset wire_closed_inside_0_005 B2; offset wire_closed_inside_0_005 F7
+    //the result of offset before fusing is incorrect (bopcheck error, v/v interf)
+    //and OK or 'more correct' after this fusing
+    //however, if reshape will be not applied on wire after the updating of tolerance
+    //(for ex: wire is not containing any intersections)
+    //only the tolerance of vertices may increase, without the changes of topology. this is somewhat incorrect.
+    //one way to resolve such problem is to revert back the original tolerance of updated vertices (if no intersections/loops have been found)
+    //the other way is to move fuse operation from RemoveLoops() and put it before remove-loops (with it's own reshaper)
+    //this is lead to regressions but it's more correct overall
+    NCollection_List<TopoDS_Shape>::Iterator itL(nls);
+    itL.Next(); //skip first (exV)
+    for ( ; itL.More();itL.Next())
+      reshaper.Replace(itL.Value(), exV, Standard_False);
+  }
+
+  theW = reshaper.Apply(theW);
+
 }
 
 //! Used to remove loops from offset result
@@ -3478,21 +3938,25 @@ static Standard_Boolean RemoveLoops(TopoDS_Shape& theInputSh, const TopoDS_Face&
 
     TopoDS_Wire aW = TopoDS::Wire( Exp.Current() );
     
-    //(output result) map edge to params on this edges (indexed for debuging)
-    NCollection_IndexedDataMap<TopoDS_Edge, NCollection_DataMap<Standard_Real, TopoDS_Vertex>> ME2IP;
-    FindWireIntersections(aW, theWorkSpine, ME2IP);
+    //(output result) map edge to params on this edges (indexed for debug)
+    NCollection_IndexedDataMap<TopoDS_Edge, NCollection_List<BRepFill_IntersectionParam>> ME2IP;
+    NCollection_DataMap<TopoDS_Edge, NCollection_Handle<BRepAdaptor_Curve2d>> ME2HA;
+
+    FuseVertices(aW);
+
+    BRepFill_SegmOnE theISegmL;
+
+    NCollection_IndexedMap<TopoDS_Edge> theAddtEdgesInt;
+    FindWireIntersections(aW, theWorkSpine, ME2HA, ME2IP, theISegmL, theAddtEdgesInt);
 
     //no intersection points => go to the next wire
     if (ME2IP.IsEmpty())
       continue;
 
-    InsertIntersectionPoints(ME2IP, aW);
-
-    //if (!ReorderWires(aW))
-      //continue;
+    InsertIntersectionPoints(ME2IP, aW, theISegmL, theAddtEdgesInt);
     
     NCollection_List<TopoDS_Shape> aLoops;
-    if (!FindLoops(aW, theWorkSpine, aLoops))
+    if (!FindLoops(aW, theWorkSpine, aLoops, ME2HA))
       continue;
 
     if (aLoops.IsEmpty())
@@ -3503,7 +3967,7 @@ static Standard_Boolean RemoveLoops(TopoDS_Shape& theInputSh, const TopoDS_Face&
     Standard_Boolean IsMaxIsHole = Standard_False;
     Standard_Integer MaxMassInd = -1;
 
-    if (!ClassifyLoops(aLoops, IWires, HoleWires, theWorkSpine, MaxMassInd, IsMaxIsHole))
+    if (!ClassifyLoops(aLoops, IWires, ME2HA, HoleWires, theWorkSpine, MaxMassInd, IsMaxIsHole))
       continue;
 
     //make compound: outer wire + holes
