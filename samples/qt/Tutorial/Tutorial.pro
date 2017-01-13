@@ -70,7 +70,8 @@ win32 {
         OBJECTS_DIR = ./win$(ARCH)/$(VCVER)/obj
         MOC_DIR = ./win$(ARCH)/$(VCVER)/moc
     }
-    LIBS = -L$$(QTDIR)/lib;$$(CSF_OCCTLibPath)
+    LIBS += -L$$(QTDIR)/lib
+    LIBS += -L$$(CSF_OCCTLibPath)
     DEFINES += NO_COMMONSAMPLE_EXPORTS NO_IESAMPLE_EXPORTS
 }
 

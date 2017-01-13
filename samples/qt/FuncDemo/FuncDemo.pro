@@ -51,7 +51,8 @@ win32 {
         OBJECTS_DIR = ./win$(ARCH)/$(VCVER)/obj
         MOC_DIR = ./src
     }
-    LIBS = -L$$(QTDIR)/lib;$$(CSF_OCCTLibPath)
+    LIBS += -L$$(QTDIR)/lib
+    LIBS += -L$$(CSF_OCCTLibPath)
 }
 
 LIBS += -lTKernel -lTKMath -lTKBRep -lTKGeomBase -lTKGeomAlgo -lTKG3d -lTKG2d \
