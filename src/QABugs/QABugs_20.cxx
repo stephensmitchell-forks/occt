@@ -56,6 +56,7 @@
 #include <XCAFDoc_ShapeTool.hxx>
 
 #include <HLRAppli_ReflectLines.hxx>
+#include <OSD_Chronometer.hxx>
 
 //=======================================================================
 //function : SurfaceGenOCC26675_1 
@@ -2182,6 +2183,27 @@ static Standard_Integer OCC28217(Draw_Interpretor& theDI,
   return 0;
 }
 
+static Standard_Integer OCC22719 (Draw_Interpretor& theDI, Standard_Integer theNArg, const char ** theArgVal)
+{
+  OSD_Chronometer aTimer;
+  aTimer.Start();
+
+  Standard_Integer n = 10000;
+  if (theNArg > 1)
+    n = Draw::Atoi (theArgVal[1]);
+
+  TCollection_AsciiString aString;
+  for (int i = 0; i < n; i++) {
+    aString += "Tested value";
+  } 
+
+  aTimer.Stop();
+  Standard_Real aCpu;
+  aTimer.Show (aCpu);
+
+  theDI << "COUNTER OCC22719 TCollection_AsciiString iterative grow, " << n << " times : " << aCpu;
+  return 0;
+}
 
 void QABugs::Commands_20(Draw_Interpretor& theCommands) {
   const char *group = "QABugs";
@@ -2202,7 +2224,8 @@ void QABugs::Commands_20(Draw_Interpretor& theCommands) {
   theCommands.Add("OCC26270", "OCC26270 shape result", __FILE__, OCC26270, group);
   theCommands.Add ("OCC27552", "OCC27552", __FILE__, OCC27552, group); 
   theCommands.Add("OCC27875", "OCC27875 curve", __FILE__, OCC27875, group);
-  theCommands.Add("OCC28217", "OCC28217", __FILE__, OCC28217, group);
+  theCommands.Add("OCC28217", "OCC28217: test concurrent raising of exceptions", __FILE__, OCC28217, group);
+  theCommands.Add("OCC22719", "OCC22719 [n=100000]: test multiple concatenation of a string", __FILE__, OCC22719, group);
 
   return;
 }
