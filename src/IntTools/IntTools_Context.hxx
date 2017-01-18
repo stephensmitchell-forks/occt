@@ -29,7 +29,6 @@
 #include <Standard_Boolean.hxx>
 #include <BRepAdaptor_Surface.hxx>
 #include <TColStd_MapTransientHasher.hxx>
-class IntTools_FClass2d;
 class TopoDS_Face;
 class GeomAPI_ProjectPointOnSurf;
 class GeomAPI_ProjectPointOnCurve;
@@ -37,6 +36,7 @@ class TopoDS_Edge;
 class Geom_Curve;
 class IntTools_SurfaceRangeLocalizeData;
 class BRepClass3d_SolidClassifier;
+class BRepTopAdaptor_FClass2d;
 class TopoDS_Solid;
 class Geom2dHatch_Hatcher;
 class gp_Pnt;
@@ -64,7 +64,7 @@ Standard_EXPORT virtual  ~IntTools_Context();
 
   //! Returns a reference to point classifier
   //! for given face
-  Standard_EXPORT IntTools_FClass2d& FClass2d (const TopoDS_Face& aF);
+  Standard_EXPORT BRepTopAdaptor_FClass2d& FClass2d(const TopoDS_Face& aF);
   
 
   //! Returns a reference to point projector

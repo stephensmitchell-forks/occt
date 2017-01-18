@@ -23,5 +23,3 @@ if { [regexp "The point is OUT of shape" $info] != 1  } {
 axo
 fit
 checkview -screenshot -2d -path ${imagedir}/${test_image}.png
-
-

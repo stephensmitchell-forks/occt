@@ -4,6 +4,9 @@
 ## Comment : from original bug PRO4497
 ## ====================================
 
+# Result contains the edge covered by the tolerance
+# of its vertices.
+
 restore [locate_data_file CCH_indushep.rle] s
 tscale s 0 0 0 1000
 explode s e

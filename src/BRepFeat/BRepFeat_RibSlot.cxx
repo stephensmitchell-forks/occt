@@ -1518,7 +1518,9 @@ Standard_Boolean BRepFeat_RibSlot::SlidingProfile(TopoDS_Face& Prof,
 // if not concave
 // CheckPnt : point slightly inside the material side
 // Bndface  : face/cut of the bounding box in the plane of the profile
-    BRepTopAdaptor_FClass2d Cl(fac, BRep_Tool::Tolerance(fac));
+    
+    const Standard_Real aTolF = BRep_Tool::Tolerance(fac);
+    BRepTopAdaptor_FClass2d Cl(fac, aTolF);
     Standard_Real u, v;
     ElSLib::Parameters(myPln->Pln(), CheckPnt, u, v);
     gp_Pnt2d checkpnt2d(u, v);
@@ -2205,7 +2207,8 @@ Standard_Boolean BRepFeat_RibSlot::NoSlidingProfile(TopoDS_Face& Prof,
   
 //    if(!Concavite) {
   if(Concavite == 3) {
-    BRepTopAdaptor_FClass2d Cl(fac, BRep_Tool::Tolerance(fac));
+    const Standard_Real aTolF = BRep_Tool::Tolerance(fac);
+    BRepTopAdaptor_FClass2d Cl(fac, aTolF);
     Standard_Real u, v;
     ElSLib::Parameters(myPln->Pln(), CheckPnt, u, v);
     gp_Pnt2d checkpnt2d(u, v);

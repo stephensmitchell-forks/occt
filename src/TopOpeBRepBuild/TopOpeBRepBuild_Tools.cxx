@@ -481,7 +481,7 @@ void TopOpeBRepBuild_Tools::GetNormalInNearestPoint(const TopoDS_Face& F,
 
   
   gp_Pnt2d aP2d(newU, newV);
-  BRepTopAdaptor_FClass2d FC(F, Precision::PConfusion());
+  BRepTopAdaptor_FClass2d FC(F, Precision::Confusion());
   TopAbs_State aState = FC.Perform(aP2d);
 
   //point out of face: try to go at another direction

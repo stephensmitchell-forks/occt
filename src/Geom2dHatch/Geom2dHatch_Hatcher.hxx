@@ -195,7 +195,7 @@ private:
   
   //! Sets the global transition (the before and after
   //! states and segment extremities flags) of the point.
-  Standard_EXPORT Standard_Boolean GlobalTransition (HatchGen_PointOnHatching& Point);
+  Standard_EXPORT Standard_Boolean GlobalTransition (HatchGen_PointOnHatching& Point) const;
 
 
   Geom2dHatch_Intersector myIntersector;

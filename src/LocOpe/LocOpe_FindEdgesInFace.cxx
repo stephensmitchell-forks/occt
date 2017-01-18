@@ -78,7 +78,6 @@ void LocOpe_FindEdgesInFace::Set(const TopoDS_Shape& Sh,
   }
 
   Handle(BRepAdaptor_HSurface) HS = new BRepAdaptor_HSurface(myFace);
-  BRepTopAdaptor_TopolTool TPT(HS);
 
   for (exp.Init(myShape,TopAbs_EDGE); exp.More(); exp.Next()) {
     ToAdd = Standard_False;
@@ -160,13 +159,15 @@ void LocOpe_FindEdgesInFace::Set(const TopoDS_Shape& Sh,
 	else {
 	  ElSLib::Parameters(cy,p[i],U,V);
 	}
-	if (TPT.Classify(gp_Pnt2d(U,V),Precision::Confusion())== TopAbs_OUT) {
-	  break;
-	}
+        
+        BRepTopAdaptor_TopolTool aTPT(HS);
+        if (aTPT.Classify(gp_Pnt2d(U,V),Precision::Confusion())== TopAbs_OUT) {
+          break;
+        }
       }
       if (i >= 3) { 
-	M.Add(edg);
-	myList.Append(edg);
+        M.Add(edg);
+        myList.Append(edg);
       }
     }
   }

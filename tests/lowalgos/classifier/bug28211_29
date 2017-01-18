@@ -1,0 +1,116 @@
+puts "========"
+puts "OCC28211"
+puts "========"
+puts ""
+#################################################
+# Modeling Algorithms - Boolean fuse operation produces incorrect result
+#################################################
+
+# Another example of geometricaly not-closed face.
+# Principial factor in this case is to forbid 
+# use of polygonal classifier. If it launches, wrong result
+# will be obtained.
+
+plane pl 0 0 0 0 0 1
+bsplinecurve cc1 1 2 -0.105299999999371 2 0.10530000000008 2 2.31688587861 0 0 1 2.31688587861 0.1755 0 1 
+bsplinecurve cc2 1 2 0 2 2.31531201105 2 0 0.27 0 1 2.31688587861 0.27 0 1 
+bsplinecurve cc3 1 2 -0.10530000000008 2 0.105299999999371 2 0 0 0 1 0 0.1755 0 1
+bsplinecurve cc4 1 2 0 2 2.31531201105 2 0 0 0 1 2.31688587861 0 0 1
+mkedge e1 cc1
+mkedge e2 cc2
+mkedge e3 cc3
+mkedge e4 cc4
+
+explode e1 v
+copy e1_1 v1
+copy e1_2 v2
+explode e2 v
+copy e2_1 v3
+explode e3 v
+copy e3_1 v4
+
+emptycopy e1 e1
+emptycopy e2 e2
+emptycopy e3 e3
+emptycopy e4 e4
+
+orientation e1 F
+orientation e2 R
+orientation e3 R
+orientation e4 F
+
+# ---
+orientation v1 F
+orientation v2 R
+settolerance v2 0.1
+add v1 e1
+add v2 e1
+
+checknbshapes e1 -vertex 2 -edge 1
+if { ![regexp {FORWARD} [whatis e1] full] } {
+  puts "Error in e1 creation!"
+}
+
+# ---
+copy v2 v2c
+orientation v2c F
+orientation v3 R
+settolerance v3 0.1
+add v2c e2
+add v3 e2
+
+checknbshapes e2 -vertex 2 -edge 1
+if { ![regexp {REVERSED} [whatis e2] full] } {
+  puts "Error in e2 creation!"
+}
+
+# --
+copy v3 v3c
+orientation v3c F
+orientation v4 R
+add v3c e3
+add v4 e3
+
+checknbshapes e3 -vertex 2 -edge 1
+if { ![regexp {REVERSED} [whatis e3] full] } {
+  puts "Error in e3 creation!"
+}
+
+# --
+copy v4 v4c
+copy v1 v1c
+orientation v4c F
+orientation v1c R
+add v4c e4
+add v1c e4
+
+checknbshapes e4 -vertex 2 -edge 1
+if { ![regexp {FORWARD} [whatis e4] full] } {
+  puts "Error in e4 creation!"
+}
+
+wire ww e1 e2 e3 e4
+checknbshapes ww -vertex 4 -edge 4 -wire 1
+
+
+mkface result pl ww
+checkshape result
+
+point pp 2.3154730167575126 0.21264669107436251
+
+v2d
+pcurve result
+2dfit
+checkview -screenshot -2d -path ${imagedir}/${test_image}.png
+
+if { ![regexp {IN} [ b2dclassifx result pp ] ] } {
+    puts "Error : Wrong result of 2d classifier algorithm"
+} else {
+    puts "OK : Good result of 2d classifier algorithm"
+}
+
+if { ![regexp {IN} [ b2dclassify result pp ] ] } {
+    puts "Error : Wrong result of 2d classifier algorithm"
+} else {
+    puts "OK : Good result of 2d classifier algorithm"
+}

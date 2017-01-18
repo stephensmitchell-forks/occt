@@ -21,14 +21,17 @@
 #include <BRep_ListIteratorOfListOfCurveRepresentation.hxx>
 #include <BRep_TEdge.hxx>
 #include <BRep_Tool.hxx>
+#include <BRepAdaptor_Surface.hxx>
+#include <BRepBuilderAPI_MakePolygon.hxx>
 #include <BRepClass3d_SolidClassifier.hxx>
 #include <BRepClass_FaceClassifier.hxx>
+#include <BRepTopAdaptor_FClass2d.hxx>
+#include <CSLib_Class2d.hxx>
 #include <DBRep.hxx>
 #include <Draw.hxx>
 #include <DrawTrSurf.hxx>
 #include <gp_Pnt.hxx>
 #include <gp_Pnt2d.hxx>
-#include <IntTools_FClass2d.hxx>
 #include <TCollection_AsciiString.hxx>
 #include <TopAbs_State.hxx>
 #include <TopoDS.hxx>
@@ -54,6 +57,8 @@ static  Standard_Integer bclassify   (Draw_Interpretor& , Standard_Integer , con
 static  Standard_Integer b2dclassify (Draw_Interpretor& , Standard_Integer , const char** );
 static  Standard_Integer b2dclassifx (Draw_Interpretor& , Standard_Integer , const char** );
 static  Standard_Integer bhaspc      (Draw_Interpretor& , Standard_Integer , const char** );
+static  Standard_Integer IsHole      (Draw_Interpretor&, Standard_Integer, const char**);
+static  Standard_Integer polyclassify( Draw_Interpretor&, Standard_Integer, const char** );
 
 //=======================================================================
 //function : LowCommands
@@ -68,12 +73,25 @@ static  Standard_Integer bhaspc      (Draw_Interpretor& , Standard_Integer , con
   const char* g = "BOPTest commands";
   theCommands.Add("bclassify"    , "use bclassify Solid Point [Tolerance=1.e-7]",
                   __FILE__, bclassify   , g);
-  theCommands.Add("b2dclassify"  , "use b2dclassify Face Point2d [Tol] ",
+  theCommands.Add("b2dclassify", "use b2dclassify Face Point2d "
+                  "[-t Tol3D = <FaceToler>] :\n "
+                  "Tol3D is 3D-tolerance used for check ON-status.",
                   __FILE__, b2dclassify , g);
-  theCommands.Add("b2dclassifx"  , "use b2dclassifx Face Point2d [Tol] ",
+  theCommands.Add("b2dclassifx"  , "use b2dclassifx Face Point2d "
+                  "[-t Tol3D = <FaceToler>] [-na] :\n "
+                  "Enter the command w/o arguments to obtain help.",
                   __FILE__, b2dclassifx , g);
   theCommands.Add("bhaspc"       , "use bhaspc Edge Face [do]",
                   __FILE__, bhaspc      , g);
+
+  theCommands.Add("ishole", "Use: ishole face [-t toler3D = <FaceToler>]: "
+                      "Checks if the face is hole", __FILE__, IsHole, g);
+
+  theCommands.Add("polyclassify", "Use: polyclassify [-s] -c px py -t tolU tolV "
+                  "-p px1 py1 -p px2 py2 ...:\n"
+                   "Classifies the point relatively to the polygon. "
+                   "Enter the command w/o arguments to obtain detail help.",
+                   __FILE__, polyclassify, g );
 }
 
 
@@ -87,7 +105,10 @@ Standard_Integer b2dclassifx (Draw_Interpretor& theDI,
                               const char**      theArgVec)
 {
   if (theArgNb < 3)  {
-    theDI << " use b2dclassifx Face Point2d [Tol]\n";
+    theDI << "Use b2dclassifx Face Point2d [-t Tol3D = <FaceToler>] [-na]:\n";
+    theDI << "Tol3D is 3D-tolerance used for check ON-status;\n"
+             "If \"-na\"-option is disabled (by default) then Point2d will be"
+             " adjusted in the face boundary (if the face is periodic);\n";
     return 1;
   }
 
@@ -100,16 +121,36 @@ Standard_Integer b2dclassifx (Draw_Interpretor& theDI,
     theDI << " Shape type must be FACE\n";
     return 1;
   }
-  TopAbs_State aState;
-  gp_Pnt2d aP (8., 9.);
+  
+  gp_Pnt2d aP;
   //
   DrawTrSurf::GetPoint2d (theArgVec[2], aP);
   const TopoDS_Face&  aF   = TopoDS::Face(aS);
-  const Standard_Real aTol = (theArgNb == 4) ? 
-    Draw::Atof (theArgVec[3]) : BRep_Tool::Tolerance (aF);
-  //
-  IntTools_FClass2d aClassifier(aF, aTol);
-  aState=aClassifier.Perform(aP);
+  
+  Standard_Real aTol3D = BRep_Tool::Tolerance(aF);
+  Standard_Boolean isReqToAdjust = Standard_True;
+
+  for (Standard_Integer aCurrArg = 3; aCurrArg < theArgNb; aCurrArg++)
+  {
+    if (theArgVec[aCurrArg][0] != '-')
+      continue;
+
+    switch (theArgVec[aCurrArg][1])
+    {
+    case 't' :
+      aTol3D = Draw::Atof(theArgVec[++aCurrArg]);
+      break;
+    case 'n' :
+      if(!strncmp(theArgVec[aCurrArg], "-na", 3))
+        isReqToAdjust = Standard_False;
+      break;
+    default:
+      break;
+    }
+  }
+
+  BRepTopAdaptor_FClass2d aClassifier(aF, aTol3D);
+  const TopAbs_State aState = aClassifier.Perform(aP, isReqToAdjust);
   PrintState (theDI, aState);
   //
   return 0;
@@ -124,7 +165,7 @@ Standard_Integer b2dclassify (Draw_Interpretor& theDI,
                               const char**      theArgVec)
 {
   if (theArgNb < 3)  {
-    theDI << " use b2dclassify Face Point2d [Tol]\n";
+    theDI << " use b2dclassify Face Point2d [-t Tol3D = <FaceToler>]\n";
     return 1;
   }
 
@@ -138,19 +179,72 @@ Standard_Integer b2dclassify (Draw_Interpretor& theDI,
     return 1;
   }
   //
-  gp_Pnt2d aP (8., 9.);
+  gp_Pnt2d aP;
   //
   DrawTrSurf::GetPoint2d (theArgVec[2], aP);
   const TopoDS_Face&  aF   = TopoDS::Face(aS);
-  const Standard_Real aTol = (theArgNb == 4) ? 
-    Draw::Atof (theArgVec[3]) : BRep_Tool::Tolerance (aF);
-  
+  Standard_Real aTol3D = BRep_Tool::Tolerance(aF);
+
+  for (Standard_Integer aCurrArg = 3; aCurrArg < theArgNb; aCurrArg++)
+  {
+    if (theArgVec[aCurrArg][0] != '-')
+      continue;
+
+    switch (theArgVec[aCurrArg][1])
+    {
+    case 't':
+      aTol3D = Draw::Atof(theArgVec[++aCurrArg]);
+      break;
+    default:
+      break;
+    }
+  }
+
   BRepClass_FaceClassifier aClassifier;
-  aClassifier.Perform(aF, aP, aTol);
+  aClassifier.Perform(aF, aP, aTol3D);
   PrintState (theDI, aClassifier.State());
   //
   return 0;
 }
+
+//=======================================================================
+//function : IsHole
+//purpose  : 
+//=======================================================================
+Standard_Integer IsHole(Draw_Interpretor& theDI,
+                        Standard_Integer  theArgNb,
+                        const char**      theArgVec)
+{
+  if (theArgNb < 2)
+  {
+    theDI << "Use: ishole face [-t Tol3D = <FaceToler>]\n";
+    return 1;
+  }
+
+  TopoDS_Face aF = TopoDS::Face(DBRep::Get(theArgVec[1]));
+
+  Standard_Real aTol = BRep_Tool::Tolerance(aF);
+  for (Standard_Integer i = 2; i < theArgNb; i++)
+  {
+    if ((theArgVec[i][0] == '-') && (theArgVec[i][1] == 't'))
+    {
+      aTol = Draw::Atof(theArgVec[++i]);
+    }
+  }
+
+  BRepTopAdaptor_FClass2d aClassifier(aF, aTol);
+  if (aClassifier.PerformInfinitePoint() == TopAbs_IN)
+  {
+    theDI << "The face is hole\n";
+  }
+  else
+  {
+    theDI << "The face is not hole\n";
+  }
+
+  return 0;
+}
+
 
 //=======================================================================
 //function : bclassify
@@ -184,6 +278,121 @@ Standard_Integer bclassify (Draw_Interpretor& theDI,
   aSC.Perform (aP,aTol);
 
   PrintState (theDI, aSC.State());
+  return 0;
+}
+
+//=======================================================================
+//function : polyclassify
+//purpose  : 
+//=======================================================================
+Standard_Integer polyclassify(Draw_Interpretor& theDI,
+                              Standard_Integer  theArgNb,
+                              const char**      theArgVec)
+{
+  if(theArgNb < 16)
+  {
+    theDI << "Use: polyclassify [-s] -c px py -t tolU tolV -p px1 py1 -p px2 py2 ...\n"
+    "Creates a 2D-polygon with vertices set by the \"-p\" options. "
+    "Classifies the point (px, py) relatively to this polygon using UV-tolerances "
+    "tolU and tolV.\n"
+    "Option \"-s\" allows showing this polygon in DRAW-viewer. For that:\n"
+    "  1. Create a plane strictly as \"plane pl 0 0 0 0 0 1\";\n"
+    "  2. Create face with surface pl and wire wirsrc;\n"
+    "  3. Look at the p-curve of this face. The classified point "
+    "will be stored in variable pntsrc.\n";
+    return 1;
+  }
+
+  Standard_Boolean hasToShow = Standard_False;
+  gp_Pnt2d aClassifPnt;
+  Standard_Real aTolU = 0.0, aTolV = 0.0;
+
+  Standard_Real aUmin = RealLast(), aUmax = RealFirst();
+  Standard_Real aVmin = RealLast(), aVmax = RealFirst();
+
+  NCollection_Sequence<gp_Pnt2d> aPntVec;
+
+  for(Standard_Integer i = 1; i < theArgNb; i++)
+  {
+    if(theArgVec[i][0] != '-')
+      continue;
+
+    switch(theArgVec[i][1])
+    {
+      case 's':
+        hasToShow = Standard_True;
+        break;
+
+      case 'c':
+      {
+        const Standard_Real aX = Draw::Atof(theArgVec[++i]);
+        const Standard_Real aY = Draw::Atof(theArgVec[++i]);
+        aClassifPnt.SetCoord(aX, aY);
+        break;
+      }
+
+      case 't':
+      {
+        aTolU = Draw::Atof(theArgVec[++i]);
+        aTolV = Draw::Atof(theArgVec[++i]);
+        break;
+      }
+
+      case 'p':
+      {
+        const Standard_Real aX = Draw::Atof(theArgVec[++i]);
+        const Standard_Real aY = Draw::Atof(theArgVec[++i]);
+        aUmin = Min(aUmin, aX);
+        aUmax = Max(aUmax, aX);
+        aVmin = Min(aVmin, aY);
+        aVmax = Max(aVmax, aY);
+
+        aPntVec.Append(gp_Pnt2d(aX, aY));
+        break;
+      }
+    }
+  }
+
+
+  BRepBuilderAPI_MakePolygon aW;
+
+  TColgp_Array1OfPnt2d anArrPnts(1, aPntVec.Length());
+  for(Standard_Integer i = aPntVec.Lower(), j = anArrPnts.Lower(); i <= aPntVec.Upper(); i++, j++)
+  {
+    anArrPnts(j) = aPntVec(i);
+
+    if(!hasToShow)
+      continue;
+
+    aW.Add(gp_Pnt(aPntVec(i).X(), aPntVec(i).Y(), 0.0));
+  }
+
+  if(hasToShow)
+  {
+    aW.Close();
+    DBRep::Set("wirsrc", aW);
+    theDI << "Wire \"wirsrc\" has been created.\n";
+    DrawTrSurf::Set("pntsrc", aClassifPnt);
+    theDI << "Point \"pntsrc\" has been created.\n";
+  }
+
+  CSLib_Class2d aPClass(anArrPnts, aTolU, aTolV, aUmin, aVmin, aUmax, aVmax);
+  CSLib_Class2d::PolyState aState = aPClass.Classify(aClassifPnt);
+
+  theDI << "Point pntsrc is ";
+  switch(aState)
+  {
+    case CSLib_Class2d::PolyOut:
+      theDI << "OUT\n";
+      break;
+    case CSLib_Class2d::PolyOn:
+      theDI << "ON\n";
+      break;
+    case CSLib_Class2d::PolyIn:
+      theDI << "IN\n";
+      break;
+  }
+
   return 0;
 }
 

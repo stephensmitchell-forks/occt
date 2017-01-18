@@ -1,0 +1,7 @@
+circle cc 0 0 15
+
+set log [curvresolution cc 6.5e-4]
+
+regexp {Res2dCurve = +([-0-9.+eE]+)} ${log} full ResC
+
+checkreal {Circle resolution} $ResC 4.3333333336723763e-005 0.0 1.0e-6

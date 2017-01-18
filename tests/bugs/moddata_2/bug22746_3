@@ -6,6 +6,8 @@ puts ""
 # Progress indicator in ShapeHealing
 ###########################################################################
 
+puts "TODO ?OCC28674 ALL: The area of result shape is"
+
 set BugNumber OCC22746
 
 set Min_ListLength 11
