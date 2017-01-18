@@ -42,23 +42,42 @@ public:
   
   //! Creates an algorithm to classify the Point  P with
   //! Tolerance <T> on the face described by <F>.
-  Standard_EXPORT BRepClass_FaceClassifier(BRepClass_FaceExplorer& F, const gp_Pnt2d& P, const Standard_Real Tol);
+  Standard_EXPORT BRepClass_FaceClassifier(BRepClass_FaceExplorer& F,
+                                           const gp_Pnt2d& P,
+                                           const Standard_Real Tol);
   
   //! Creates an algorithm to classify the Point  P with
   //! Tolerance <T> on the face <F>.
-  Standard_EXPORT BRepClass_FaceClassifier(const TopoDS_Face& F, const gp_Pnt2d& P, const Standard_Real Tol);
+  //! If theHasToCheckVertices == TRUE (default value) then the check will be done
+  //! if the point P is covered at least one vertex of the face F. If it is TRUE
+  //! then the classification result must be ON-status. So, if you set this
+  //! flag in FALSE value we MUST(!!!) done analogical check in your application.
+  //! Otherwise, this action is strictly forbidden.
+  Standard_EXPORT 
+    BRepClass_FaceClassifier(const TopoDS_Face& F, const gp_Pnt2d& P,
+                             const Standard_Real Tol);
   
   //! Classify  the Point  P  with  Tolerance <T> on the
   //! face described by <F>.
-  Standard_EXPORT void Perform (const TopoDS_Face& F, const gp_Pnt2d& P, const Standard_Real Tol);
+  //! If theHasToCheckVertices == TRUE (default value) then the check will be done
+  //! if the point P is covered at least one vertex of the face F. If it is TRUE
+  //! then the classification result must be ON-status. So, if you set this
+  //! flag in FALSE value we MUST(!!!) done analogical check in your application.
+  //! Otherwise, this action is strictly forbidden.
+  Standard_EXPORT void Perform(const TopoDS_Face& F, const gp_Pnt2d& P,
+                               const Standard_Real Tol);
   
   //! Creates an algorithm to classify the Point  P with
   //! Tolerance <T> on the face <F>.
-  Standard_EXPORT BRepClass_FaceClassifier(const TopoDS_Face& F, const gp_Pnt& P, const Standard_Real Tol);
+  Standard_EXPORT BRepClass_FaceClassifier(const TopoDS_Face& F,
+                                           const gp_Pnt& P,
+                                           const Standard_Real Tol);
   
   //! Classify  the Point  P  with  Tolerance <T> on the
   //! face described by <F>.
-  Standard_EXPORT void Perform (const TopoDS_Face& F, const gp_Pnt& P, const Standard_Real Tol);
+  Standard_EXPORT void Perform (const TopoDS_Face& F,
+                                const gp_Pnt& P,
+                                const Standard_Real Tol);
 
 
 

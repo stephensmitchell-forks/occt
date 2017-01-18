@@ -204,14 +204,16 @@ static
 //function : IsThePointOn
 //purpose  : 
 //=======================================================================
-  Standard_Boolean BRepTopAdaptor_TopolTool::IsThePointOn(const gp_Pnt2d& P,
-							  const Standard_Real Tol,
-							  const Standard_Boolean RecadreOnPeriodic)
+  Standard_Boolean 
+    BRepTopAdaptor_TopolTool::IsThePointOn(const gp_Pnt2d& P,
+                                           const Standard_Real Tol,
+                                           const Standard_Boolean RecadreOnPeriodic)
 {
   if(myFClass2d == NULL) { 
     myFClass2d = (void *) new BRepTopAdaptor_FClass2d(myFace,Tol);
   } 
-  return(TopAbs_ON==((BRepTopAdaptor_FClass2d *)myFClass2d)->TestOnRestriction(P,Tol,RecadreOnPeriodic));
+  return(TopAbs_ON==((BRepTopAdaptor_FClass2d *)myFClass2d)->
+                                        TestOnRestriction(P,Tol,RecadreOnPeriodic));
 }
 
 //=======================================================================

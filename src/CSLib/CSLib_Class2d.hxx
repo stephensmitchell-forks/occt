@@ -49,23 +49,19 @@ public:
   Standard_EXPORT Standard_Integer InternalSiDansOuOn (const Standard_Real X, const Standard_Real Y) const;
   
   Standard_EXPORT const CSLib_Class2d& Copy (const CSLib_Class2d& Other) const;
-const CSLib_Class2d& operator= (const CSLib_Class2d& Other) const
-{
-  return Copy(Other);
-}
   
   Standard_EXPORT void Destroy();
-~CSLib_Class2d()
-{
-  Destroy();
-}
+  ~CSLib_Class2d()
+  {
+    Destroy();
+  }
 
 
 
 
 protected:
 
-
+  const CSLib_Class2d& operator= (const CSLib_Class2d& Other) const;
 
 
 

@@ -8,7 +8,7 @@ set filename 53921163S0.stp
 set ref_data {
 DATA        : Faulties = 0  ( 0 )  Warnings = 0  ( 0 )  Summary  = 0  ( 0 )
 TPSTAT      : Faulties = 0  ( 0 )  Warnings = 12  ( 25 )  Summary  = 12  ( 25 )
-CHECKSHAPE  : Wires    = 8  ( 7 )  Faces    = 8  ( 9 )  Shells   = 0  ( 0 )   Solids   = 1 ( 1 )
+CHECKSHAPE  : Wires    = 8  ( 7 )  Faces    = 10  ( 7 )  Shells   = 0  ( 0 )   Solids   = 1 ( 1 )
 NBSHAPES    : Solid    = 1  ( 1 )  Shell    = 3  ( 3 )  Face     = 556  ( 556 )   Summary  = 3658  ( 3661 )
 STATSHAPE   : Solid    = 1  ( 1 )  Shell    = 3  ( 3 )  Face     = 556  ( 556 )   FreeWire = 0  ( 0 )   FreeEdge  = 0 ( 0 )   SharedEdge = 1523  ( 1526 )
 TOLERANCE   : MaxTol   =    60.79282309  (    60.87483475 )  AvgTol   =     1.273875452  (     1.266048218 )

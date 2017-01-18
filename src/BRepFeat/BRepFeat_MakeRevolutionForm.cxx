@@ -876,7 +876,7 @@ void BRepFeat_MakeRevolutionForm::Init(const TopoDS_Shape& Sbase,
     BRepLib_MakeFace newbndface(myPln->Pln(), Wiwiwi, Standard_True);
     TopoDS_Face NewBndFace = TopoDS::Face(newbndface.Shape());
 
-    BRepTopAdaptor_FClass2d Cl(NewBndFace, Precision::Confusion());
+    BRepTopAdaptor_FClass2d Cl(NewBndFace, Precision::PConfusion());
     Standard_Real paru, parv;
     ElSLib::Parameters(myPln->Pln(), CheckPnt, paru, parv);
     gp_Pnt2d checkpnt2d(paru, parv);

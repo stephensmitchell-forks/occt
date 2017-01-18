@@ -32,7 +32,7 @@ if { ${s} eq "co_1" } {
   checknbshapes r${s}_1 -vertex 111
 } else {
   checkprops r${s}_1 -l 545.219
-  checknbshapes r${s}_1 -vertex 290
+  checknbshapes r${s}_1 -vertex 293
 } 
 
 }

@@ -56,6 +56,7 @@
 #include <IntTools_Tools.hxx>
 #include <NCollection_UBTreeFiller.hxx>
 #include <Precision.hxx>
+#include <TopoDS.hxx>
 #include <TopoDS_Compound.hxx>
 #include <TopoDS_Edge.hxx>
 #include <TopoDS_Face.hxx>
@@ -490,7 +491,7 @@ void BOPAlgo_PaveFiller::PerformEE()
           }
           //
           Standard_Boolean bIsOnPave[4], bFlag;
-          Standard_Integer nV[4], j;
+          Standard_Integer nV[4];
           Standard_Real aT1, aT2, aTol;
           TopoDS_Vertex aVnew;
           IntTools_Range aCR1, aCR2;
@@ -503,7 +504,7 @@ void BOPAlgo_PaveFiller::PerformEE()
           //decide to keep the pave or not
           bIsOnPave[0] = IntTools_Tools::IsOnPave1(aT1, aR11, aTol) ||
             IntTools_Tools::IsOnPave1(aR11.First(), aCR1, aTol);
-          bIsOnPave[1] = IntTools_Tools::IsOnPave1(aT1, aR12, aTol) || 
+          bIsOnPave[1] = IntTools_Tools::IsOnPave1(aT1, aR12, aTol) ||
             IntTools_Tools::IsOnPave1(aR12.Last(), aCR1, aTol);
           bIsOnPave[2] = IntTools_Tools::IsOnPave1(aT2, aR21, aTol) ||
             IntTools_Tools::IsOnPave1(aR21.First(), aCR2, aTol);
@@ -513,19 +514,50 @@ void BOPAlgo_PaveFiller::PerformEE()
           aPB1->Indices(nV[0], nV[1]);
           aPB2->Indices(nV[2], nV[3]);
           //
-          if((bIsOnPave[0] && bIsOnPave[2]) || 
-             (bIsOnPave[0] && bIsOnPave[3]) ||
-             (bIsOnPave[1] && bIsOnPave[2]) || 
-             (bIsOnPave[1] && bIsOnPave[3])) {
-            continue;
+          BOPTools_AlgoTools::MakeNewVertex(aE1, aT1, aE2, aT2, aVnew);
+          const gp_Pnt aPnew = BRep_Tool::Pnt(aVnew);
+
+          {
+            Standard_Boolean isOnTwoPaves = Standard_False;
+            for (Standard_Integer aPaveI = 0; (!isOnTwoPaves) && (aPaveI < 2); aPaveI++)
+            {
+              for (Standard_Integer aPaveJ = 2; aPaveJ < 4; aPaveJ++)
+              {
+                if (bIsOnPave[aPaveI] && bIsOnPave[aPaveJ])
+                {
+                  if (nV[aPaveI] == nV[aPaveJ])
+                  {
+                    Standard_Real f, l;
+                    //
+                    const Handle(Geom_Curve) aCur1 = BRep_Tool::Curve(aE1, f, l),
+                                             aCur2 = BRep_Tool::Curve(aE2, f, l);
+                    
+                    const TopoDS_Vertex& aV = TopoDS::Vertex(myDS->Shape(nV[aPaveI]));
+                    const gp_Pnt aP2(BRep_Tool::Pnt(aV));
+                    UpdateVertex(nV[aPaveI], aPnew.Distance(aP2));
+                  }
+
+                  isOnTwoPaves = Standard_True;
+                  break;
+                }
+              }
+            }
+
+            if (isOnTwoPaves)
+              continue;
           }
           //
           bFlag = Standard_False;
-          for (j = 0; j < 4; ++j) {
+          for (Standard_Integer j = 0; j < 4; ++j) {
             if (bIsOnPave[j]) {
               //add interf VE(nV[j], nE)
               Handle(BOPDS_PaveBlock)& aPB = (j < 2) ? aPB2 : aPB1;
               ForceInterfVE(nV[j], aPB, aMPBToUpdate);
+
+              const TopoDS_Vertex& aV = TopoDS::Vertex(myDS->Shape(nV[j]));
+              const gp_Pnt aP2 = BRep_Tool::Pnt(aV);
+              UpdateVertex(nV[j], aPnew.Distance(aP2));
+
               bFlag = Standard_True;
               break;
             }
@@ -537,14 +569,15 @@ void BOPAlgo_PaveFiller::PerformEE()
             continue;
           }
           //
-          BOPTools_AlgoTools::MakeNewVertex(aE1, aT1, aE2, aT2, aVnew);
           Standard_Real aTolVnew = BRep_Tool::Tolerance(aVnew);
           if (bAnalytical) {
             // increase tolerance for Line/Line intersection, but do not update 
             // the vertex till its intersection with some other shape
             Standard_Real aTolMin = (BRepAdaptor_Curve(aE1).GetType() == GeomAbs_Line) ?
-              (aCR1.Last() - aCR1.First()) / 2. : (aCR2.Last() - aCR2.First()) / 2.;
-            if (aTolMin > aTolVnew) {
+                                Max(Abs(aCR1.Last() - aT1), Abs(aCR1.First() - aT1)) :
+                                Max(Abs(aCR2.Last() - aT2), Abs(aCR2.First() - aT2));
+            if (aTolMin > aTolVnew)
+            {
               aTolVnew = aTolMin;
             }
           }
@@ -553,10 +586,10 @@ void BOPAlgo_PaveFiller::PerformEE()
             Standard_Integer nVS[2], iFound;
             Standard_Real aTolVx, aD2, aDT2;
             BOPCol_MapOfInteger aMV;
-            gp_Pnt aPnew, aPx;
+            gp_Pnt aPx;
             //
             iFound=0;
-            j=-1;
+            Standard_Integer j=-1;
             aMV.Add(nV[0]);
             aMV.Add(nV[1]);
             //
@@ -568,8 +601,6 @@ void BOPAlgo_PaveFiller::PerformEE()
               ++j;
               nVS[j]=nV[3];
             }
-            //
-            aPnew=BRep_Tool::Pnt(aVnew);
             //
             for (Standard_Integer k1=0; k1<=j; ++k1) {
               const TopoDS_Vertex& aVx= *(TopoDS_Vertex*)&(myDS->Shape(nVS[k1]));

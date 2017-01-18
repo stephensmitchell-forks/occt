@@ -1,5 +1,3 @@
-puts "TODO OCC11111 ALL: Error : OCC377"
-
 pload QAcommands
 
 puts "========"
@@ -18,5 +16,9 @@ if { [ regexp {FAULTY} $result_info ]} {
     puts "Error : OCC377"
 }
 
-checkview -display result -2d -path ${imagedir}/${test_image}.png
+v2d
+pcurve srcface
+2dfit
+
+checkview -screenshot -2d -path ${imagedir}/${test_image}.png
 

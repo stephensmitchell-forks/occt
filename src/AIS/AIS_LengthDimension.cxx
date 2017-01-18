@@ -550,7 +550,7 @@ Standard_Boolean AIS_LengthDimension::InitTwoShapesPoints (const TopoDS_Shape& t
           Quantity_Parameter anU, aV;
           ElSLib::Parameters (aSecondPlane, mySecondPoint, anU, aV);
 
-          BRepTopAdaptor_FClass2d aClassifier (aSecondFace, Precision::Confusion());
+          BRepTopAdaptor_FClass2d aClassifier (aSecondFace, Precision::PConfusion());
           TopAbs_State aState = aClassifier.Perform (gp_Pnt2d (anU, aV), Standard_False);
 
           if (aState == TopAbs_OUT || aState == TopAbs_UNKNOWN)

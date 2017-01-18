@@ -848,7 +848,7 @@ void BRepLib_MakeFace::CheckInside()
 {
   // compute the area and return the face if the area is negative
   TopoDS_Face F = TopoDS::Face(myShape);
-  BRepTopAdaptor_FClass2d FClass(F,0.);
+  BRepTopAdaptor_FClass2d FClass(F,0.0);
   if ( FClass.PerformInfinitePoint() == TopAbs_IN) {
     BRep_Builder B;
     TopoDS_Shape S = myShape.EmptyCopied();

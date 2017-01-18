@@ -858,12 +858,12 @@ void ChFi3d_Builder::StartSol(const Handle(ChFiDS_Stripe)&      Stripe,
       ResV = AS.VResolution(TolE);
       derive *= 2*(Abs(derive.X())*ResU + Abs(derive.Y())*ResV);
       P2d = P1.Translated(derive);
-      if (I1->Classify(P2d, Min(ResU, ResV), 0)== TopAbs_IN) {
+      if (I1->Classify(P2d, Min(ResU, ResV), Standard_False)== TopAbs_IN) {
 	P1 = P2d;
       }
       else {
 	 P2d = P1.Translated(-derive);
-	 if (I1->Classify(P2d, Min(ResU, ResV), 0)== TopAbs_IN) {
+	 if (I1->Classify(P2d, Min(ResU, ResV), Standard_False)== TopAbs_IN) {
 	   P1 = P2d;
 	 }
       }

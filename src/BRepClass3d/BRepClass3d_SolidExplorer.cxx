@@ -33,7 +33,6 @@
 #include <BRepBndLib.hxx>
 #include <BRepClass3d_DataMapIteratorOfMapOfInter.hxx>
 #include <BRepClass3d_SolidExplorer.hxx>
-#include <BRepClass_Edge.hxx>
 #include <BRepClass_FaceClassifier.hxx>
 #include <BRepClass_FacePassiveClassifier.hxx>
 #include <BRepTools.hxx>
@@ -149,8 +148,8 @@ Standard_Boolean BRepClass3d_SolidExplorer::FindAPointInTheFace
       TopoDS_Edge OtherEdge = TopoDS::Edge (otherfaceexplorer.Current());
       if (OtherEdge.Orientation() != TopAbs_EXTERNAL && OtherEdge != Edge)
       {
-        BRepClass_Edge AEdge (OtherEdge, face);
-        FClassifier.Compare (AEdge, OtherEdge.Orientation());
+        TopClass_GeomEdge AEdge(OtherEdge, face);
+        FClassifier.Compare (AEdge);
         if (FClassifier.ClosestIntersection())
         {
           if(ParamInit > FClassifier.Parameter())
@@ -164,8 +163,8 @@ Standard_Boolean BRepClass3d_SolidExplorer::FindAPointInTheFace
 
     if (aNbEdges == 1)
     {
-      BRepClass_Edge AEdge (Edge, face);
-      FClassifier.Compare (AEdge, Edge.Orientation());
+      TopClass_GeomEdge AEdge(Edge, face);
+      FClassifier.Compare (AEdge);
       if (FClassifier.ClosestIntersection())
       {
         if (ParamInit > FClassifier.Parameter())
@@ -183,7 +182,7 @@ Standard_Boolean BRepClass3d_SolidExplorer::FindAPointInTheFace
       v_ = P.Y() + ParamInit* T.Y();
 
       //Additional check
-      BRepTopAdaptor_FClass2d Classifier(face, Precision::Confusion());
+      BRepTopAdaptor_FClass2d Classifier(face, Precision::PConfusion());
       gp_Pnt2d aPnt2d(u_, v_);
       TopAbs_State StateOfResultingPoint = Classifier.Perform(aPnt2d);
       if (StateOfResultingPoint != TopAbs_IN)
@@ -482,7 +481,7 @@ Standard_Integer BRepClass3d_SolidExplorer::OtherSegment(const gp_Pnt& P,
       Handle(BRepAdaptor_HSurface) surf = new BRepAdaptor_HSurface();
       if(aTestInvert)
       {
-        BRepTopAdaptor_FClass2d aClass(face, Precision::Confusion());
+        BRepTopAdaptor_FClass2d aClass(face, Precision::PConfusion());
         if(aClass.PerformInfinitePoint() == TopAbs_IN)
         {
           aRestr = Standard_False;

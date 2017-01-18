@@ -452,7 +452,7 @@ Standard_Boolean BRepFeat::IsInside(const TopoDS_Face& F1,
     vperiod = S->VPeriod();
   }
   TopoDS_Shape aLocalShape = F2.Oriented(TopAbs_FORWARD);
-  BRepTopAdaptor_FClass2d FC (TopoDS::Face(aLocalShape),Precision::Confusion());
+  BRepTopAdaptor_FClass2d FC (TopoDS::Face(aLocalShape),Precision::PConfusion());
 //  BRepTopAdaptor_FClass2d FC (TopoDS::Face(F2.Oriented(TopAbs_FORWARD)),
 //                                Precision::Confusion());
   for(; exp.More(); exp.Next()) {

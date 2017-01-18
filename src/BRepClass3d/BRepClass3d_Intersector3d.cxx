@@ -59,6 +59,9 @@ void BRepClass3d_Intersector3d::Perform(const gp_Lin& L,
   Standard_Real V1 = surface.FirstVParameter();
   Standard_Real V2 = surface.LastVParameter();
   
+  Standard_Real aTol2d = Min(surface.UResolution(Tol), surface.VResolution(Tol));
+  aTol2d = Max(aTol2d, Precision::PConfusion());
+
   //--
   Handle(GeomAdaptor_HCurve) HLL  = new GeomAdaptor_HCurve(LL);
   Handle(BRepAdaptor_HSurface) Hsurface = new BRepAdaptor_HSurface(surface);
@@ -96,7 +99,7 @@ void BRepClass3d_Intersector3d::Perform(const gp_Lin& L,
         Puv.SetY(Y - vperiod * N2);
       }
 
-      classifier2d.Perform(Face,Puv,Tol);
+      classifier2d.Perform(Face, Puv, aTol2d);
       TopAbs_State currentstate = classifier2d.State();
       if(currentstate==TopAbs_IN || currentstate==TopAbs_ON) { 
 	const IntCurveSurface_IntersectionPoint& HICSPoint = HICS.Point(index);

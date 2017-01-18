@@ -20,7 +20,7 @@ renamevar res_1 result
 
 fit
 
-checkprops result -l 386.077 
+checkprops result -l 354.958
 checkshape result 
 checksection result
 

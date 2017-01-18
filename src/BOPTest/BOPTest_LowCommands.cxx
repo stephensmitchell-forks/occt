@@ -21,14 +21,15 @@
 #include <BRep_ListIteratorOfListOfCurveRepresentation.hxx>
 #include <BRep_TEdge.hxx>
 #include <BRep_Tool.hxx>
+#include <BRepAdaptor_Surface.hxx>
 #include <BRepClass3d_SolidClassifier.hxx>
 #include <BRepClass_FaceClassifier.hxx>
+#include <BRepTopAdaptor_FClass2d.hxx>
 #include <DBRep.hxx>
 #include <Draw.hxx>
 #include <DrawTrSurf.hxx>
 #include <gp_Pnt.hxx>
 #include <gp_Pnt2d.hxx>
-#include <IntTools_FClass2d.hxx>
 #include <TCollection_AsciiString.hxx>
 #include <TopAbs_State.hxx>
 #include <TopoDS.hxx>
@@ -54,6 +55,7 @@ static  Standard_Integer bclassify   (Draw_Interpretor& , Standard_Integer , con
 static  Standard_Integer b2dclassify (Draw_Interpretor& , Standard_Integer , const char** );
 static  Standard_Integer b2dclassifx (Draw_Interpretor& , Standard_Integer , const char** );
 static  Standard_Integer bhaspc      (Draw_Interpretor& , Standard_Integer , const char** );
+static  Standard_Integer IsHole      (Draw_Interpretor&, Standard_Integer, const char**);
 
 //=======================================================================
 //function : LowCommands
@@ -74,6 +76,10 @@ static  Standard_Integer bhaspc      (Draw_Interpretor& , Standard_Integer , con
                   __FILE__, b2dclassifx , g);
   theCommands.Add("bhaspc"       , "use bhaspc Edge Face [do]",
                   __FILE__, bhaspc      , g);
+
+  theCommands.Add("ishole"       , "Use: ishole face [-t toler]: Checks if the face is hole",
+    __FILE__, IsHole, g);
+
 }
 
 
@@ -105,10 +111,20 @@ Standard_Integer b2dclassifx (Draw_Interpretor& theDI,
   //
   DrawTrSurf::GetPoint2d (theArgVec[2], aP);
   const TopoDS_Face&  aF   = TopoDS::Face(aS);
-  const Standard_Real aTol = (theArgNb == 4) ? 
-    Draw::Atof (theArgVec[3]) : BRep_Tool::Tolerance (aF);
+  Standard_Real aTol2d = 0.0;
+  if (theArgNb == 4)
+  {
+    aTol2d = Draw::Atof(theArgVec[3]);
+  }
+  else
+  {
+    const Standard_Real aTolF = BRep_Tool::Tolerance(aF);
+    BRepAdaptor_Surface anAS(aF, Standard_False);
+    aTol2d = Min(anAS.UResolution(aTolF), anAS.VResolution(aTolF));
+  }
+  
   //
-  IntTools_FClass2d aClassifier(aF, aTol);
+  BRepTopAdaptor_FClass2d aClassifier(aF, aTol2d);
   aState=aClassifier.Perform(aP);
   PrintState (theDI, aState);
   //
@@ -142,15 +158,65 @@ Standard_Integer b2dclassify (Draw_Interpretor& theDI,
   //
   DrawTrSurf::GetPoint2d (theArgVec[2], aP);
   const TopoDS_Face&  aF   = TopoDS::Face(aS);
-  const Standard_Real aTol = (theArgNb == 4) ? 
-    Draw::Atof (theArgVec[3]) : BRep_Tool::Tolerance (aF);
+  Standard_Real aTol2d = 0.0;
+  if (theArgNb == 4)
+  {
+    aTol2d = Draw::Atof(theArgVec[3]);
+  }
+  else
+  {
+    const Standard_Real aTolF = BRep_Tool::Tolerance(aF);
+    BRepAdaptor_Surface anAS(aF, Standard_False);
+    aTol2d = Min(anAS.UResolution(aTolF), anAS.VResolution(aTolF));
+  }
   
   BRepClass_FaceClassifier aClassifier;
-  aClassifier.Perform(aF, aP, aTol);
+  aClassifier.Perform(aF, aP, aTol2d);
   PrintState (theDI, aClassifier.State());
   //
   return 0;
 }
+
+//=======================================================================
+//function : IsHole
+//purpose  : 
+//=======================================================================
+Standard_Integer IsHole(Draw_Interpretor& theDI,
+  Standard_Integer  theArgNb,
+  const char**      theArgVec)
+{
+  if (theArgNb < 2)
+  {
+    theDI << "Use: ishole face [-t toler]\n";
+    return 1;
+  }
+
+  TopoDS_Face aF = TopoDS::Face(DBRep::Get(theArgVec[1]));
+
+  const Standard_Real aTolF = BRep_Tool::Tolerance(aF);
+  BRepAdaptor_Surface anAS(aF, Standard_False);
+  Standard_Real aTol2d = Min(anAS.UResolution(aTolF), anAS.VResolution(aTolF));
+  for (Standard_Integer i = 2; i < theArgNb; i++)
+  {
+    if ((theArgVec[i][0] == '-') && (theArgVec[i][1] == 't'))
+    {
+      aTol2d = Draw::Atof(theArgVec[++i]);
+    }
+  }
+
+  BRepTopAdaptor_FClass2d aClassifier(aF, aTol2d);
+  if (aClassifier.PerformInfinitePoint() == TopAbs_IN)
+  {
+    theDI << "The face is hole\n";
+  }
+  else
+  {
+    theDI << "The face is not hole\n";
+  }
+
+  return 0;
+}
+
 
 //=======================================================================
 //function : bclassify

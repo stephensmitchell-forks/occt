@@ -1,0 +1,60 @@
+puts "========"
+puts "OCC28211"
+puts "========"
+puts ""
+#################################################
+# Modeling Algorithms - Boolean fuse operation produces incorrect result
+#################################################
+
+# The face is self-interfered but valid because
+# this region is covered by the vertex tolerance
+
+restore [locate_data_file bug28211_cface7.brep] result
+
+checkshape result
+
+explode result v
+
+settolerance result_4 0.163
+
+point pp1 -0.00029719455450734507 0.99995519812621869
+point pp2 0.036074608113613113 0.51294657060594639
+point pp3 -0.017063862250566202 0.53745439961011532
+point pp4 0.003 0.55657429702171448
+
+# Points pp1, pp3 and pp4 are covered by the vertex tolerance.
+# Current version of the classifier does not take into account
+# of this fact and returns computed status. However,
+# this result can be wrong by the reason of self-interferences.
+
+if { ![regexp {OUT} [ b2dclassifx result pp1 ] ] } {
+    puts "Error : Wrong result of 2d classifier algorithm"
+} else {
+    puts "OK : Good result of 2d classifier algorithm"
+}
+
+if { ![regexp {OUT} [ b2dclassifx result pp2 ] ] } {
+    puts "Error : Wrong result of 2d classifier algorithm"
+} else {
+    puts "OK : Good result of 2d classifier algorithm"
+}
+
+if { ![regexp {IN} [ b2dclassifx result pp3 ] ] } {
+    puts "Error : Wrong result of 2d classifier algorithm"
+} else {
+    puts "OK : Good result of 2d classifier algorithm"
+}
+
+if { ![regexp {OUT} [ b2dclassifx result pp4 ] ] } {
+    puts "Error : Wrong result of 2d classifier algorithm"
+} else {
+    puts "OK : Good result of 2d classifier algorithm"
+}
+
+v2d
+
+don pp2 pp3 pp4
+2dfit
+pcurve result
+
+checkview -screenshot -2d -path ${imagedir}/${test_image}.png

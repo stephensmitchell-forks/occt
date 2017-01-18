@@ -711,7 +711,7 @@ static Standard_Integer checkfclass2d(Draw_Interpretor& di, Standard_Integer n, 
   }
   TopoDS_Face aFace = TopoDS::Face(Sh1);
   gp_Pnt2d p2d(ucoord,vcoord);
-  BRepTopAdaptor_FClass2d f2d(aFace,Precision::Confusion());
+  BRepTopAdaptor_FClass2d f2d(aFace,Precision::PConfusion());
   TopAbs_State stat = f2d.Perform(p2d);
   if(stat == TopAbs_OUT)
     di<<"Point is OUT\n";

@@ -18,6 +18,7 @@
 
 #include <BRep_Builder.hxx>
 #include <BRep_Tool.hxx>
+#include <BRepAdaptor_Surface.hxx>
 #include <BRepBuilderAPI.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
 #include <BRepGProp.hxx>
@@ -253,6 +254,16 @@ static Standard_Integer anaface
     di<<"\n";
   }
   else { di<<"Analyse Wires, Ignore Faces\n"; }
+
+  Standard_Real aTol2D = Precision::PConfusion();
+  if (!Face.IsNull())
+  {
+    BRepAdaptor_Surface anAS(Face, Standard_False);
+    const Standard_Real aTolF = BRep_Tool::Tolerance(Face);
+    aTol2D = Max(Min(anAS.UResolution(aTolF), anAS.VResolution(aTolF)), aTol2D);
+  }
+
+
   Standard_Boolean iasurf = !surface.IsNull();
 //:sw  if (!Face.IsNull()) STW.SetFace (Face);
 //:sw  else STW.SetPrecision (BRepBuilderAPI::Precision());
@@ -369,7 +380,7 @@ static Standard_Integer anaface
       if (G.Mass() > 0) di<<"GProps:Mass Out\n";
       else di<<"GProps:Mass In\n";
 ///  return (G.Mass() > 0);
-      BRepTopAdaptor_FClass2d fcl (Face,BRep_Tool::Tolerance(Face));
+      BRepTopAdaptor_FClass2d fcl(Face, aTol2D);
       if (fcl.PerformInfinitePoint () == TopAbs_OUT) di<<"Classifier Infinite : Out\n";
       else di<<"Classifier Infinite : In\n";
       gp_Pnt2d pcl;

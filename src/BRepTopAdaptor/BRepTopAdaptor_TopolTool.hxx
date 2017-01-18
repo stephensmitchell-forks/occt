@@ -131,7 +131,11 @@ public:
   
   Standard_EXPORT virtual Standard_Boolean DomainIsInfinite() Standard_OVERRIDE;
 
-
+  //! Returns face
+  const TopoDS_Face& GetFace() const
+  {
+    return myFace;
+  }
 
   DEFINE_STANDARD_RTTIEXT(BRepTopAdaptor_TopolTool,Adaptor3d_TopolTool)
 

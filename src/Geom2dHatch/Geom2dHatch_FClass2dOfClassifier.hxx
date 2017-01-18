@@ -17,24 +17,15 @@
 #ifndef _Geom2dHatch_FClass2dOfClassifier_HeaderFile
 #define _Geom2dHatch_FClass2dOfClassifier_HeaderFile
 
-#include <Standard.hxx>
 #include <Standard_DefineAlloc.hxx>
-#include <Standard_Handle.hxx>
 
-#include <Standard_Boolean.hxx>
-#include <gp_Lin2d.hxx>
-#include <Standard_Real.hxx>
-#include <TopTrans_CurveTransition.hxx>
 #include <Geom2dHatch_Intersector.hxx>
-#include <Standard_Integer.hxx>
-#include <TopAbs_State.hxx>
+#include <gp_Lin2d.hxx>
 #include <TopAbs_Orientation.hxx>
-class Standard_DomainError;
-class Geom2dAdaptor_Curve;
-class Geom2dHatch_Intersector;
-class gp_Lin2d;
+#include <TopAbs_State.hxx>
+#include <TopTrans_CurveTransition.hxx>
 
-
+class TopClass_GeomEdge;
 
 class Geom2dHatch_FClass2dOfClassifier 
 {
@@ -55,40 +46,31 @@ public:
   
   //! Updates  the classification process with  the edge
   //! <E> from the boundary.
-  Standard_EXPORT void Compare (const Geom2dAdaptor_Curve& E, const TopAbs_Orientation Or);
+  Standard_EXPORT void Compare(const TopClass_GeomEdge& theE);
   
   //! Returns the current value of the parameter.
-    Standard_Real Parameter() const;
-  
+  Standard_Real Parameter() const;
+
   //! Returns the intersecting algorithm.
-    Geom2dHatch_Intersector& Intersector();
-  
+  Geom2dHatch_Intersector& Intersector();
+
   //! Returns  0  if  the   last  compared   edge had no
   //! relevant intersection.  Else returns  the index of
   //! this   intersection  in the    last   intersection
   //! algorithm.
-    Standard_Integer ClosestIntersection() const;
-  
+  Standard_Integer ClosestIntersection() const;
+
   //! Returns the current state of the point.
-    TopAbs_State State() const;
-  
+  TopAbs_State State() const;
+
   //! Returns the Standard_True if the closest intersection point
   //! represents head or end of the edge. Returns Standard_False
   //! otherwise.
-    Standard_Boolean IsHeadOrEnd() const;
-
-
-
+  Standard_Boolean IsHeadOrEnd() const;
 
 protected:
 
-
-
-
-
 private:
-
-
 
   Standard_Boolean myIsSet;
   Standard_Boolean myFirstCompare;
@@ -105,8 +87,6 @@ private:
 
 };
 
-#define TheEdge Geom2dAdaptor_Curve
-#define TheEdge_hxx <Geom2dAdaptor_Curve.hxx>
 #define TheIntersector Geom2dHatch_Intersector
 #define TheIntersector_hxx <Geom2dHatch_Intersector.hxx>
 #define TopClass_Classifier2d Geom2dHatch_FClass2dOfClassifier
@@ -114,8 +94,6 @@ private:
 
 #include <TopClass_Classifier2d.lxx>
 
-#undef TheEdge
-#undef TheEdge_hxx
 #undef TheIntersector
 #undef TheIntersector_hxx
 #undef TopClass_Classifier2d

@@ -234,7 +234,7 @@ static void BuildDomains(TopoDS_Face&               myFace,
     BRepAdaptor_Surface   S(F,0);
     Standard_Real         Tol = BRep_Tool::Tolerance(F); 
 
-    BRepTopAdaptor_FClass2d CL(F,Precision::Confusion());
+    BRepTopAdaptor_FClass2d CL(F,Precision::PConfusion());
 
     TopTools_ListIteratorOfListOfShape itW(LOW);
     while (itW.More()) {

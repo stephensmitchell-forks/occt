@@ -791,7 +791,11 @@ void BRepExtrema_DistanceSS::Perform(const TopoDS_Vertex& S1, const TopoDS_Face&
         Standard_Real U,V;
         gp_Pnt Pt,P1=BRep_Tool::Pnt(S1);
         BRepClass_FaceClassifier classifier;
-        const Standard_Real tol = BRep_Tool::Tolerance(S2);
+        BRepAdaptor_Surface anAS(S2, Standard_False);
+        const Standard_Real aTol = BRep_Tool::Tolerance(S2);
+        const Standard_Real aTol2d = 
+            Max(Min(anAS.UResolution(aTol), anAS.VResolution(aTol)),
+                Precision::PConfusion());
  
         for (i = 1; i <= NbExtrema; i++)
         {
@@ -803,7 +807,7 @@ void BRepExtrema_DistanceSS::Perform(const TopoDS_Vertex& S1, const TopoDS_Face&
               // Check if the parameter does not correspond to a vertex
               Ext.Parameter(i,U,V);
               const gp_Pnt2d PUV(U,V);
-              classifier.Perform(S2,PUV,tol);
+              classifier.Perform(S2, PUV, aTol2d);
               if (classifier.State()==TopAbs_IN)
               {
                 if (myDstRef > Dstmin)
@@ -847,7 +851,11 @@ void BRepExtrema_DistanceSS::Perform(const TopoDS_Face& S1, const TopoDS_Vertex&
         Standard_Real U,V;
         gp_Pnt Pt,P2=BRep_Tool::Pnt(S2);
         BRepClass_FaceClassifier classifier;
-        const Standard_Real tol = BRep_Tool::Tolerance(S1);
+        const Standard_Real aTol = BRep_Tool::Tolerance(S1);
+        BRepAdaptor_Surface anAS(S1, Standard_False);
+        const Standard_Real aTol2d = 
+            Max(Min(anAS.UResolution(aTol), anAS.VResolution(aTol)),
+                Precision::PConfusion());
  
         for (i = 1; i <= NbExtrema; i++)
         {
@@ -859,7 +867,7 @@ void BRepExtrema_DistanceSS::Perform(const TopoDS_Face& S1, const TopoDS_Vertex&
               // Check if the parameter does not correspond to a vertex
               Ext.Parameter(i,U,V);
               const gp_Pnt2d PUV(U,V);
-              classifier.Perform(S1,PUV,tol);
+              classifier.Perform(S1,PUV,aTol2d);
               if (classifier.State()==TopAbs_IN)
               {
                 if (myDstRef > Dstmin)
@@ -992,7 +1000,11 @@ void BRepExtrema_DistanceSS::Perform(const TopoDS_Edge& S1, const TopoDS_Face& S
       {
         Standard_Real Udeb,Ufin,U,V;
         BRep_Tool::Range(S1,Udeb,Ufin);
-        const Standard_Real tol=BRep_Tool::Tolerance(S2);
+        const Standard_Real aTol = BRep_Tool::Tolerance(S2);
+        BRepAdaptor_Surface anAS(S2, Standard_False);
+        const Standard_Real aTol2d = 
+            Max(Min(anAS.UResolution(aTol), anAS.VResolution(aTol)),
+                Precision::PConfusion());
 
         gp_Pnt Pt1,Pt2;
         const Standard_Real epsP=Precision::PConfusion();
@@ -1011,7 +1023,7 @@ void BRepExtrema_DistanceSS::Perform(const TopoDS_Edge& S1, const TopoDS_Face& S
               {
                 Ext.ParameterOnFace(i,U,V);
                 const gp_Pnt2d PUV(U,V);
-                classifier.Perform(S2,PUV,tol);
+                classifier.Perform(S2,PUV,aTol2d);
                 if (classifier.State()==TopAbs_IN)
                 {
                   if (myDstRef > Dstmin)
@@ -1044,7 +1056,11 @@ void BRepExtrema_DistanceSS::Perform(const TopoDS_Edge& S1, const TopoDS_Face& S
 
       gp_Pnt Pt;
       Standard_Real U,V;
-      const Standard_Real tol = BRep_Tool::Tolerance(S2);
+        const Standard_Real aTol = BRep_Tool::Tolerance(S2);
+        BRepAdaptor_Surface anAS(S2, Standard_False);
+        const Standard_Real aTol2d = 
+            Max(Min(anAS.UResolution(aTol), anAS.VResolution(aTol)),
+                Precision::PConfusion());
 
       Standard_Integer i;
       for (i = 1; i <= arrInter.Length(); i++)
@@ -1077,7 +1093,7 @@ void BRepExtrema_DistanceSS::Perform(const TopoDS_Edge& S1, const TopoDS_Face& S
                 // Check if the parameter does not correspond to a vertex
                 ExtPF.Parameter(ii,U,V);
                 const gp_Pnt2d PUV(U,V);
-				classifier.Perform(S2,PUV,tol);
+				classifier.Perform(S2,PUV,aTol2d);
                 if (classifier.State()==TopAbs_IN)
                 {
                   if (myDstRef > Dstmin)
@@ -1137,7 +1153,11 @@ void BRepExtrema_DistanceSS::Perform(const TopoDS_Face& S1, const TopoDS_Edge& S
       {
         Standard_Real Udeb,Ufin,U,V;
         BRep_Tool::Range(S2,Udeb,Ufin);
-        const Standard_Real tol=BRep_Tool::Tolerance(S1);
+        const Standard_Real aTol = BRep_Tool::Tolerance(S1);
+        BRepAdaptor_Surface anAS(S1, Standard_False);
+        const Standard_Real aTol2d = 
+            Max(Min(anAS.UResolution(aTol), anAS.VResolution(aTol)),
+                Precision::PConfusion());
 
         gp_Pnt Pt1,Pt2;
         const Standard_Real epsP=Precision::PConfusion();
@@ -1156,7 +1176,7 @@ void BRepExtrema_DistanceSS::Perform(const TopoDS_Face& S1, const TopoDS_Edge& S
               {
                 Ext.ParameterOnFace(i,U,V);
                 const gp_Pnt2d PUV(U,V);
-                classifier.Perform(S1,PUV,tol);
+                classifier.Perform(S1,PUV,aTol2d);
                 if (classifier.State()==TopAbs_IN)
                 {
                   if (myDstRef > Dstmin)
@@ -1189,7 +1209,11 @@ void BRepExtrema_DistanceSS::Perform(const TopoDS_Face& S1, const TopoDS_Edge& S
 
       gp_Pnt Pt;
       Standard_Real U,V;
-      const Standard_Real tol = BRep_Tool::Tolerance(S1);
+      const Standard_Real aTol = BRep_Tool::Tolerance(S1);
+      BRepAdaptor_Surface anAS(S1, Standard_False);
+      const Standard_Real aTol2d = 
+          Max(Min(anAS.UResolution(aTol), anAS.VResolution(aTol)),
+              Precision::PConfusion());
 
       Standard_Integer i;
       for (i = 1; i <= arrInter.Length(); i++)
@@ -1222,7 +1246,7 @@ void BRepExtrema_DistanceSS::Perform(const TopoDS_Face& S1, const TopoDS_Edge& S
                 // Check if the parameter does not correspond to a vertex
                 ExtPF.Parameter(ii,U,V);
                 const gp_Pnt2d PUV(U,V);
-				classifier.Perform(S1,PUV,tol);
+				classifier.Perform(S1,PUV,aTol2d);
                 if (classifier.State()==TopAbs_IN)
                 {
                   if (myDstRef > Dstmin)
@@ -1277,8 +1301,17 @@ void BRepExtrema_DistanceSS::Perform(const TopoDS_Face& S1, const TopoDS_Face& S
       Dstmin = sqrt(Dstmin);
       if ((Dstmin < myDstRef - myEps) || (fabs(Dstmin-myDstRef) < myEps))
       {
-        const Standard_Real tol1=BRep_Tool::Tolerance(S1);
-        const Standard_Real tol2=BRep_Tool::Tolerance(S2);
+        const Standard_Real aTol1=BRep_Tool::Tolerance(S1);
+        const Standard_Real aTol2=BRep_Tool::Tolerance(S2);
+
+      BRepAdaptor_Surface anAS1(S1, Standard_False);
+      const Standard_Real aTol2d1 = 
+          Max(Min(anAS1.UResolution(aTol1), anAS1.VResolution(aTol1)),
+              Precision::PConfusion());
+      BRepAdaptor_Surface anAS2(S2, Standard_False);
+      const Standard_Real aTol2d2 = 
+          Max(Min(anAS2.UResolution(aTol2), anAS2.VResolution(aTol2)),
+              Precision::PConfusion());
 
         gp_Pnt Pt1,Pt2;
         gp_Pnt2d PUV;
@@ -1296,12 +1329,12 @@ void BRepExtrema_DistanceSS::Perform(const TopoDS_Face& S1, const TopoDS_Face& S
               // Check if the parameter does not correspond to a vertex
               Ext.ParameterOnFace1(i,U1,V1);
               PUV.SetCoord(U1,V1);
-              classifier.Perform(S1,PUV,tol1);
+              classifier.Perform(S1,PUV,aTol2d1);
               if (classifier.State()==TopAbs_IN)
               {
                 Ext.ParameterOnFace2(i,U2,V2);
                 PUV.SetCoord(U2,V2);
-                classifier.Perform(S2,PUV,tol2);
+                classifier.Perform(S2,PUV,aTol2d2);
                 if (classifier.State()==TopAbs_IN)
                 {
                   if (myDstRef > Dstmin)

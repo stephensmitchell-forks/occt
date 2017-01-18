@@ -295,17 +295,7 @@ Standard_Integer CSLib_Class2d::InternalSiDansOuOn(const Standard_Real Px,
   return iRet;
 }
 //modified by NIZNHY-PKV Fri Jan 15 09:03:55 2010t
-//=======================================================================
-//function : Copy
-//purpose  : 
-//=======================================================================
-const CSLib_Class2d& CSLib_Class2d::Copy(const CSLib_Class2d& ) const 
-{ 
-#ifdef OCCT_DEBUG
-  cerr<<"Copy not allowed in CSLib_Class2d"<<endl;
-#endif
-  throw Standard_ConstructionError();
-}
+
 //=======================================================================
 //function : Transform2d
 //purpose  : 

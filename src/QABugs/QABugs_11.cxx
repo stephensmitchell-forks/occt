@@ -1119,6 +1119,7 @@ static Standard_Integer OCC377 (Draw_Interpretor& di, Standard_Integer argc, con
     BRep_Builder B;
     TopoDS_Shape Shape;
     BRepTools::Read ( Shape, argv[1], B );
+    DBRep::Set("srcface", Shape);
 
     // 4. Verify whether enrtry point is on wire and reversed ones (indeed results of veridying must be same)
     TopExp_Explorer exp;

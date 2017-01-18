@@ -17,17 +17,11 @@
 #ifndef _Geom2dHatch_Intersector_HeaderFile
 #define _Geom2dHatch_Intersector_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_DefineAlloc.hxx>
-#include <Standard_Handle.hxx>
-
-#include <Standard_Real.hxx>
 #include <Geom2dInt_GInter.hxx>
+
 class Geom2dAdaptor_Curve;
 class gp_Lin2d;
-class gp_Dir2d;
-
-
+class TopClass_GeomEdge;
 
 class Geom2dHatch_Intersector  : public Geom2dInt_GInter
 {
@@ -68,26 +62,23 @@ public:
   //! RealLast()). Tol is the  Tolerance on the segment.
   //! The order  is relevant, the  first argument is the
   //! segment, the second the Edge.
-  Standard_EXPORT void Perform (const gp_Lin2d& L, const Standard_Real P, const Standard_Real Tol, const Geom2dAdaptor_Curve& E);
+  Standard_EXPORT void Perform(const gp_Lin2d& L,
+                               const Standard_Real P,
+                               const Standard_Real Tol,
+                               const TopClass_GeomEdge& E);
   
   //! Returns in <T>,  <N> and <C>  the tangent,  normal
   //! and  curvature of the edge  <E> at parameter value
   //! <U>.
-  Standard_EXPORT void LocalGeometry (const Geom2dAdaptor_Curve& E, const Standard_Real U, gp_Dir2d& T, gp_Dir2d& N, Standard_Real& C) const;
-
-
-
+  Standard_EXPORT void LocalGeometry(const Geom2dAdaptor_Curve& E,
+                                     const Standard_Real U,
+                                     gp_Dir2d& T,
+                                     gp_Dir2d& N,
+                                     Standard_Real& C) const;
 
 protected:
-
-
-
-
-
+  
 private:
-
-
-
   Standard_Real myConfusionTolerance;
   Standard_Real myTangencyTolerance;
 

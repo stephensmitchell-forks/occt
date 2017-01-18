@@ -200,7 +200,11 @@ void BRepIntCurveSurface_Inter::Find()
 Standard_Boolean BRepIntCurveSurface_Inter::FindPoint()
 {
   Standard_Integer j =  (!myCurrentindex ?  1 : myCurrentindex);
-  
+  const BRepAdaptor_Surface anAS(myFastClass->GetFace());
+  const Standard_Real aTol2D = Max(Min(anAS.UResolution(myTolerance),
+                                        anAS.VResolution(myTolerance)),
+                                                Precision::PConfusion());
+
   for( ; j <= myCurrentnbpoints; j++ )
   {
     Standard_Real anU = myIntcs.Point(j).U();
@@ -208,7 +212,7 @@ Standard_Boolean BRepIntCurveSurface_Inter::FindPoint()
   
     gp_Pnt2d Puv( anU,aV );
 
-    myCurrentstate = myFastClass->Classify(Puv,myTolerance); 
+    myCurrentstate = myFastClass->Classify(Puv,aTol2D); 
     if(myCurrentstate == TopAbs_ON || myCurrentstate == TopAbs_IN) 
     { 
       myCurrentindex = j;

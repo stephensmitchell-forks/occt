@@ -95,7 +95,11 @@ void BRepExtrema_ExtCF::Perform(const TopoDS_Edge& E, const TopoDS_Face& F2)
   {
     // Exploration of points and classification
     BRepClass_FaceClassifier classifier;
-    const Standard_Real Tol = BRep_Tool::Tolerance(F2);
+    const Standard_Real aTol = BRep_Tool::Tolerance(F2);
+    BRepAdaptor_Surface anAS(F2, Standard_False);
+    const Standard_Real aTol2d = 
+            Max(Min(anAS.UResolution(aTol), anAS.VResolution(aTol)),
+                Precision::PConfusion());
     Extrema_POnCurv P1;
     Extrema_POnSurf P2;
 
@@ -104,7 +108,7 @@ void BRepExtrema_ExtCF::Perform(const TopoDS_Edge& E, const TopoDS_Face& F2)
       myExtCS.Points(i, P1, P2);
       P2.Parameter(U1, U2);
       const gp_Pnt2d Puv(U1, U2);
-      classifier.Perform(F2, Puv, Tol);
+      classifier.Perform(F2, Puv, aTol2d);
       const TopAbs_State state = classifier.State();
       if (state == TopAbs_ON || state == TopAbs_IN)
       {

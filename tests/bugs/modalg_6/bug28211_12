@@ -1,0 +1,33 @@
+puts "========"
+puts "OCC28211"
+puts "========"
+puts ""
+#################################################
+# Modeling Algorithms - Boolean fuse operation produces incorrect result
+#################################################
+
+# The face contains degenerated edge
+
+restore [locate_data_file bug28211_degenerated.brep] result
+
+nbshapes result
+
+point pp 0.50013085652508904 -1.4847823204826136
+
+if { ![regexp {OUT} [ b2dclassifx result pp ] ] } {
+    puts "Error : Wrong result of b2dclassifx algorithm"
+} else {
+    puts "OK : Good result of b2dclassifx algorithm"
+}
+
+if { ![regexp {OUT} [ b2dclassify result pp ] ] } {
+    puts "Error : Wrong result of b2dclassify algorithm"
+} else {
+    puts "OK : Good result of b2dclassify algorithm"
+}
+
+v2d
+pcurve result
+2dfit
+
+checkview -screenshot -2d -path ${imagedir}/${test_image}.png

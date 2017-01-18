@@ -160,7 +160,7 @@ void LocOpe_FindEdgesInFace::Set(const TopoDS_Shape& Sh,
 	else {
 	  ElSLib::Parameters(cy,p[i],U,V);
 	}
-	if (TPT.Classify(gp_Pnt2d(U,V),Precision::Confusion())== TopAbs_OUT) {
+	if (TPT.Classify(gp_Pnt2d(U,V),Precision::PConfusion())== TopAbs_OUT) {
 	  break;
 	}
       }

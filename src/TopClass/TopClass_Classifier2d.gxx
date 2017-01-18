@@ -20,9 +20,7 @@
 //  Modified by skv - Wed Jul 12 15:20:58 2006 OCC12627
 
 
-#include <IntRes2d_IntersectionSegment.hxx>
-#include <IntRes2d_IntersectionPoint.hxx>
-#include <gp_Vec2d.hxx>
+#include <TopClass_GeomEdge.hxx>
 
 //=======================================================================
 //function : TopClass_Classifier2d
@@ -64,12 +62,23 @@ void TopClass_Classifier2d::Reset(const gp_Lin2d& L,
 //purpose  : 
 //=======================================================================
 
-void TopClass_Classifier2d::Compare(const TheEdge& E,
-				    const TopAbs_Orientation Or)
+void TopClass_Classifier2d::Compare(const TopClass_GeomEdge& theE)
 {
+  // if the Edge is INTERNAL or EXTERNAL, no problem
+  if (theE.GetOrientation() == TopAbs_INTERNAL)
+  {
+    myState = TopAbs_IN;
+    return;
+  }
+  else if (theE.GetOrientation() == TopAbs_EXTERNAL)
+  {
+    myState = TopAbs_OUT;
+    return;
+  }
+
   // intersect the edge and the segment
   myClosest = 0;
-  myIntersector.Perform(myLin,myParam,myTolerance,E);
+  myIntersector.Perform(myLin, myParam, myTolerance, theE);
   if (!myIntersector.IsDone()) return;
   if ((myIntersector.NbPoints()   == 0)&&
       (myIntersector.NbSegments() == 0)) return;
@@ -119,17 +128,6 @@ void TopClass_Classifier2d::Compare(const TheEdge& E,
   // if no point was found return
   if (myClosest == 0) return;
 
-  // if the Edge is INTERNAL or EXTERNAL, no problem
-  if (Or == TopAbs_INTERNAL) {
-    myState = TopAbs_IN;
-    return;
-  }
-  else if (Or == TopAbs_EXTERNAL) {
-    myState = TopAbs_OUT;
-    return;
-  }
-
-
   if ( ! myFirstCompare ) {
     Standard_Boolean b = (dMin > myParam);
     if (b) {
@@ -161,29 +159,38 @@ void TopClass_Classifier2d::Compare(const TheEdge& E,
   TopAbs_Orientation SegTrans = TopAbs_FORWARD;
 
   const IntRes2d_Transition& T1 = PClosest->TransitionOfFirst();
-  switch (T1.TransitionType()) {
-  case IntRes2d_In :
-    if (Or == TopAbs_REVERSED)   SegTrans = TopAbs_REVERSED;
-    else                         SegTrans = TopAbs_FORWARD;
+  switch (T1.TransitionType())
+  {
+  case IntRes2d_In:
+    SegTrans = theE.GetOrientation();
     break;
-  case IntRes2d_Out :
-    if (Or == TopAbs_REVERSED)   SegTrans = TopAbs_FORWARD;
-    else                         SegTrans = TopAbs_REVERSED;
+  case IntRes2d_Out:
+    if (theE.GetOrientation() == TopAbs_REVERSED)
+      SegTrans = TopAbs_FORWARD;
+    else
+      SegTrans = TopAbs_REVERSED;
     break;
-  case IntRes2d_Touch :
-    switch (T1.Situation()) {
-    case IntRes2d_Inside :
-      if (Or == TopAbs_REVERSED) SegTrans = TopAbs_EXTERNAL;
-      else                       SegTrans = TopAbs_INTERNAL;
+  case IntRes2d_Touch:
+    switch (T1.Situation())
+    {
+    case IntRes2d_Inside:
+      if (theE.GetOrientation() == TopAbs_REVERSED)
+        SegTrans = TopAbs_EXTERNAL;
+      else
+        SegTrans = TopAbs_INTERNAL;
       break;
-    case IntRes2d_Outside :
-      if (Or == TopAbs_REVERSED) SegTrans = TopAbs_INTERNAL;
-      else                       SegTrans = TopAbs_EXTERNAL;
+    case IntRes2d_Outside:
+      if (theE.GetOrientation() == TopAbs_REVERSED)
+        SegTrans = TopAbs_INTERNAL;
+      else
+        SegTrans = TopAbs_EXTERNAL;
       break;
-    case IntRes2d_Unknown :      return;
+    case IntRes2d_Unknown:
+      return;
     }
     break;
-  case IntRes2d_Undecided :      return;
+  case IntRes2d_Undecided:
+    return;
   }
 
   // are we inside the Edge ?
@@ -207,8 +214,9 @@ void TopClass_Classifier2d::Compare(const TheEdge& E,
     // PClosest is Head or End of the edge : update the complex transition
     gp_Dir2d Tang2d,Norm2d;
     Standard_Real Curv;
-    myIntersector.LocalGeometry
-      (E,PClosest->ParamOnSecond(),Tang2d,Norm2d,Curv);
+    myIntersector.LocalGeometry(theE.Get2DCurve(),
+                                PClosest->ParamOnSecond(),
+                                Tang2d, Norm2d, Curv);
     gp_Dir Tang(Tang2d.X(),Tang2d.Y(),0.);
     gp_Dir Norm(Norm2d.X(),Norm2d.Y(),0.);
     if (myFirstTrans) {

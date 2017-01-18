@@ -20,6 +20,7 @@
 #include <BRepTopAdaptor_FClass2d.hxx>
 #include <Geom2d_Curve.hxx>
 #include <Geom2dAPI_ProjectPointOnCurve.hxx>
+#include <Precision.hxx>
 #include <TColStd_MapOfInteger.hxx>
 #include <TopAbs_Orientation.hxx>
 #include <TopAbs_ShapeEnum.hxx>
@@ -1952,7 +1953,7 @@ static TopAbs_State ClassifyEdgeToFaceByOnePoint(const TopoDS_Edge& E,
 
   C2D -> D0(par, aP2d);
 
-  BRepTopAdaptor_FClass2d FC(F, 1e-7);
+  BRepTopAdaptor_FClass2d FC(F, Precision::PConfusion());
   TopAbs_State aState = FC.Perform(aP2d);
 
   return aState;

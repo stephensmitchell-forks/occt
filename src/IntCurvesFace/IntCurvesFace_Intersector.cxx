@@ -386,7 +386,7 @@ Bnd_Box IntCurvesFace_Intersector::Bounding() const {
   }
 }
 TopAbs_State IntCurvesFace_Intersector::ClassifyUVPoint(const gp_Pnt2d& Puv) const { 
-  TopAbs_State state = myTopolTool->Classify(Puv,1e-7);
+  TopAbs_State state = myTopolTool->Classify(Puv,Precision::PConfusion());
   return(state);
 }
 //============================================================================

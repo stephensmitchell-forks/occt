@@ -17,21 +17,15 @@
 #ifndef _BRepClass_FaceExplorer_HeaderFile
 #define _BRepClass_FaceExplorer_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_DefineAlloc.hxx>
-#include <Standard_Handle.hxx>
-
-#include <TopoDS_Face.hxx>
+#include <NCollection_Vector.hxx>
+#include <TopClass_GeomEdge.hxx>
 #include <TopExp_Explorer.hxx>
-#include <Standard_Integer.hxx>
-#include <Standard_Real.hxx>
-#include <Standard_Boolean.hxx>
-#include <TopAbs_Orientation.hxx>
-class TopoDS_Face;
-class gp_Pnt2d;
-class gp_Lin2d;
-class BRepClass_Edge;
+#include <TopoDS_Face.hxx>
+#include <TopoDS_Wire.hxx>
+#include <NCollection_List.hxx>
+#include <NCollection_IndexedDataMap.hxx>
 
+class TopClass_RayInfo;
 
 //! Provide an   exploration of a  BRep Face   for the
 //! classification. Return UV edges.
@@ -41,29 +35,17 @@ public:
 
   DEFINE_STANDARD_ALLOC
 
-  
   Standard_EXPORT BRepClass_FaceExplorer(const TopoDS_Face& F);
 
-  //! Checks the point and change its coords if it is located too far
+  //! Checks the point and change its coordinates if it is located too far
   //! from the bounding box of the face. New Coordinates of the point 
   //! will be on the line between the point and the center of the 
   //! bounding box. Returns True if point was not changed.
-  Standard_EXPORT Standard_Boolean CheckPoint (gp_Pnt2d& thePoint);
-  
-  //! Should  return  True  if the  point  is  outside a
-  //! bounding volume of the face.
-  Standard_EXPORT Standard_Boolean Reject (const gp_Pnt2d& P) const;
-  
-  //! Returns  in <L>, <Par>  a segment having at least
-  //! one  intersection  with  the   face  boundary  to
-  //! compute  intersections.
-  Standard_EXPORT Standard_Boolean Segment (const gp_Pnt2d& P, gp_Lin2d& L, Standard_Real& Par);
-  
-  //! Returns  in <L>, <Par>  a segment having at least
-  //! one  intersection  with  the   face  boundary  to
-  //! compute  intersections. Each call gives another segment.
-  Standard_EXPORT Standard_Boolean OtherSegment (const gp_Pnt2d& P, gp_Lin2d& L, Standard_Real& Par);
-  
+  Standard_EXPORT Standard_Boolean CheckPoint(gp_Pnt2d& thePoint);
+
+  //! Puts ray(s) (see TopClass_RayInfo for detail information) to theList.
+  Standard_EXPORT void ListOfRays(const gp_Pnt2d& P, NCollection_Vector<TopClass_RayInfo>& theList);
+
   //! Starts an exploration of the wires.
   Standard_EXPORT void InitWires();
   
@@ -71,56 +53,89 @@ public:
     Standard_Boolean MoreWires() const;
   
   //! Sets the explorer  to the  next  wire.
-    void NextWire();
-  
-  //! Returns True  if the wire  bounding volume does not
-  //! intersect the segment.
-  Standard_EXPORT Standard_Boolean RejectWire (const gp_Lin2d& L, const Standard_Real Par) const;
-  
+  void NextWire();
+
   //! Starts an exploration of the  edges of the current
   //! wire.
   Standard_EXPORT void InitEdges();
   
   //! Returns True if there is a current edge.
-    Standard_Boolean MoreEdges() const;
-  
+  Standard_Boolean MoreEdges() const;
+
   //! Sets the explorer  to the  next  edge.
-    void NextEdge();
-  
-  //! Returns True  if the edge  bounding volume does not
-  //! intersect the segment.
-  Standard_EXPORT Standard_Boolean RejectEdge (const gp_Lin2d& L, const Standard_Real Par) const;
-  
-  //! Current edge in current wire and its orientation.
-  Standard_EXPORT void CurrentEdge (BRepClass_Edge& E, TopAbs_Orientation& Or) const;
+  void NextEdge();
 
+  //! Returns analyzed edge.
+  Standard_EXPORT void CurrentEdge(TopClass_GeomEdge& E) const;
 
+  //! Returns TRUE if thePnt is covered by the tolerance of at least one
+  //! vertex of the analyzed edge.
+  //! If it is true then stores the parameter of the vertex on the curve.
+  //! Otherwise, returns *theParameter = 0.0.
+  //! This parameter is used in TopOpeBRep class
+  //! and must be deleted after this class will be eliminated.
+  Standard_EXPORT Standard_Boolean IsPointInEdgeVertex(const gp_Pnt2d &thePnt,
+                                                       Standard_Real* const theParameter = 0) const;
 
+  //! This method is used only for compatibility with TopOpeBRep
+  //! packages. It should be deleted after this package will be eliminated.
+  const TopoDS_Edge& GetTopoEdge() const
+  {
+    return myEExplorer.Value().GetTopoEdge();
+  }
 
 protected:
 
+  //! Excludes all necessary information from theEdge
+  //! in order to create pseudo-edges in the future.
+  //! Returns FALSE if pseudo-edge creation is not necessary.
+  //! Returns 2D-point on the myFace (thePnt) respected to
+  //! theCurrentVertex.
+  //! Output parameter theOri indicates if theCurrentVertex
+  //! is first (FORWARD) or last (reversed) vertex of the theEdge.
+  //! ATTENTION!!! theCurrentVertex must be in theEdge.
+  Standard_EXPORT Standard_Boolean
+                    PrepareEdge(const TopoDS_Edge& theEdge,
+                                const TopoDS_Vertex& theCurrentVertex,
+                                gp_Pnt2d& thePnt,
+                                TopAbs_Orientation& theOri);
 
+  //! Inserts topological edge theEdge to myEList without
+  //! any additional checks.
+  Standard_EXPORT void SimpleAdd(const TopoDS_Edge &theEdge);
 
-
+  //! Creates pseudo-edge between and inserts it to myEList.
+  //! Pseudo-edge is 2D-line, which joins ends of theE1 and theE2
+  //! real edges. This edge does not have any 3D- and topological-
+  //! representations (pseudo-edge is not synonym of degenerated edge).
+  //! I.e. it is simple gap in the myFace. This gap must be covered
+  //! by theVertex (otherwise, myFace is not valid for using in OCCT-algorithms).
+  //! theUPeriod and theVPeriod are periods of myFace (are equal to 0.0 if
+  //! the surface is not periodic)
+  Standard_EXPORT void AddPseudo(const TopoDS_Edge& theE1,
+                                 const TopoDS_Edge& theE2,
+                                 const TopoDS_Vertex& theVertex,
+                                 const Standard_Real theUPeriod,
+                                 const Standard_Real theVPeriod);
 
 private:
 
-
-
+  //! Classified face
   TopoDS_Face myFace;
-  TopExp_Explorer myWExplorer;
-  TopExp_Explorer myEExplorer;
-  Standard_Integer myCurEdgeInd;
-  Standard_Real myCurEdgePar;
 
+  //! Explores myFace to wires
+  NCollection_IndexedDataMap <TopoDS_Wire,
+                NCollection_List<TopClass_GeomEdge>> myMapWE;
+
+  //! Iterator of myMapWE
+  NCollection_IndexedDataMap <TopoDS_Wire,
+                      NCollection_List<TopClass_GeomEdge>>::Iterator myWExplorer;
+
+  //! Iterator of myEList
+  NCollection_List<TopClass_GeomEdge>::Iterator myEExplorer;
 
 };
 
-
 #include <BRepClass_FaceExplorer.lxx>
-
-
-
-
 
 #endif // _BRepClass_FaceExplorer_HeaderFile

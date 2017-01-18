@@ -128,7 +128,7 @@ protected:
   //! Internal function
   Standard_EXPORT void Find();
   
-  //! Method chec found intersection point
+  //! Method check found intersection point
   Standard_EXPORT Standard_Boolean FindPoint();
   
   //! Method to clear fields of class

@@ -69,8 +69,10 @@ void BRepExtrema_ExtFF::Perform(const TopoDS_Face& F1, const TopoDS_Face& F2)
   myPointsOnS1.Clear();
   myPointsOnS2.Clear();
 
-  BRepAdaptor_Surface Surf1(F1);
-  if (myHS.IsNull() || Surf1.GetType() == GeomAbs_OtherSurface)
+  BRepAdaptor_Surface Surf1(F1, Standard_False), Surf2(F2, Standard_False);
+  if (myHS.IsNull() ||
+     (Surf1.GetType() == GeomAbs_OtherSurface) ||
+     (Surf2.GetType() == GeomAbs_OtherSurface))
     return; // protect against non-geometric type (e.g. triangulation)
 
   Handle(BRepAdaptor_HSurface) HS1 = new BRepAdaptor_HSurface(Surf1);
@@ -90,7 +92,10 @@ void BRepExtrema_ExtFF::Perform(const TopoDS_Face& F1, const TopoDS_Face& F2)
   {
     // Exploration of points and classification
     BRepClass_FaceClassifier classifier;
-    const Standard_Real Tol2 = BRep_Tool::Tolerance(F2);
+    Standard_Real Tol2 = BRep_Tool::Tolerance(F2);
+    Tol2 = Min(Surf2.UResolution(Tol2), Surf2.VResolution(Tol2));
+    Tol2 = Max(Tol2, Precision::PConfusion());
+
     Extrema_POnSurf P1, P2;
 
     Standard_Integer i;

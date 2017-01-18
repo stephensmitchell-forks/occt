@@ -17,10 +17,11 @@
 
 #include <BRep_Builder.hxx>
 #include <BRep_Tool.hxx>
+#include <BRepAdaptor_Surface.hxx>
 #include <BRepBuilderAPI_Transform.hxx>
 #include <BRepClass3d_SolidClassifier.hxx>
+#include <BRepTopAdaptor_FClass2d.hxx>
 #include <gp_Trsf.hxx>
-#include <IntTools_FClass2d.hxx>
 #include <TColStd_IndexedDataMapOfTransientTransient.hxx>
 #include <TDF_ChildIterator.hxx>
 #include <TDF_Label.hxx>
@@ -917,16 +918,19 @@ Standard_Boolean TNaming::OuterWire(const TopoDS_Face& theFace, TopoDS_Wire& the
   TopoDS_Face aFx;
   TopoDS_Wire aWx;
   BRep_Builder aBB;
-  IntTools_FClass2d aFC;
+  BRepTopAdaptor_FClass2d aFC;
   Standard_Boolean bFlag(Standard_False);
-  Standard_Real aTol = BRep_Tool::Tolerance(theFace);
+  Standard_Real aTolF = BRep_Tool::Tolerance(theFace);
+  BRepAdaptor_Surface anAS(theFace, Standard_False);
+  const Standard_Real aTol2d = Max(Min(anAS.UResolution(aTolF), anAS.VResolution(aTolF)),
+                                      Precision::PConfusion());
   TopoDS_Iterator aIt(theFace);
   for (; aIt.More(); aIt.Next()) {
     aWx=*((TopoDS_Wire*)&aIt.Value());
     aFx = theFace;
     aFx.EmptyCopy();
     aBB.Add(aFx, aWx);
-    aFC.Init(aFx, aTol);
+    aFC.Init(aFx, aTol2d);
     bFlag = aFC.IsHole();
     if (!bFlag) 
       break;

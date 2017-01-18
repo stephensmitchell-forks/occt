@@ -3991,7 +3991,7 @@ void BRepOffset_Tool::CorrectOrientation(const TopoDS_Shape&        SI,
       if (YaInt) {
 	TopoDS_Shape aLocalFace = FI.Oriented(TopAbs_FORWARD);
 	BRepTopAdaptor_FClass2d FC (TopoDS::Face(aLocalFace),
-				    Precision::Confusion());
+				    Precision::PConfusion());
 //	BRepTopAdaptor_FClass2d FC (TopoDS::Face(FI.Oriented(TopAbs_FORWARD)),
 //				    Precision::Confusion());
 	for (itE.Initialize(LOE); itE.More(); itE.Next()) {

@@ -32,6 +32,7 @@
 #include <BOPTools_AlgoTools2D.hxx>
 #include <BRep_Builder.hxx>
 #include <BRep_Tool.hxx>
+#include <BRepTopAdaptor_FClass2d.hxx>
 #include <BRepBndLib.hxx>
 #include <BRepTools.hxx>
 #include <Geom_Surface.hxx>
@@ -41,7 +42,6 @@
 #include <gp_Pnt2d.hxx>
 #include <gp_Vec.hxx>
 #include <IntTools_Context.hxx>
-#include <IntTools_FClass2d.hxx>
 #include <NCollection_DataMap.hxx>
 #include <NCollection_UBTreeFiller.hxx>
 #include <TColStd_MapIntegerHasher.hxx>
@@ -463,6 +463,9 @@ void BOPAlgo_BuilderFace::PerformAreas()
   //
   aTol=BRep_Tool::Tolerance(myFace);
   aS=BRep_Tool::Surface(myFace, aLoc);
+  GeomAdaptor_Surface anAS(aS);
+  Standard_Real aTol2d = Min(anAS.UResolution(aTol), anAS.VResolution(aTol));
+  aTol2d = Max(aTol2d, Precision::PConfusion());
   //
   myAreas.Clear();
   //
@@ -494,8 +497,8 @@ void BOPAlgo_BuilderFace::PerformAreas()
     }
     else{
       // check if a wire is a hole 
-      IntTools_FClass2d& aClsf=myContext->FClass2d(aFace);
-      aClsf.Init(aFace, aTol);
+      BRepTopAdaptor_FClass2d& aClsf = myContext->FClass2d(aFace);
+      aClsf.Init(aFace, aTol2d);
       //
       bIsHole=aClsf.IsHole();
       if (bIsHole) {
@@ -645,9 +648,11 @@ void BOPAlgo_BuilderFace::PerformAreas()
     }
     //
     // update classifier 
+    anAS.Load(BRep_Tool::Surface(aF, aLoc));
     aTol=BRep_Tool::Tolerance(aF);
-    IntTools_FClass2d& aClsf=myContext->FClass2d(aF);
-    aClsf.Init(aF, aTol);
+    aTol2d = Min(anAS.UResolution(aTol), anAS.VResolution(aTol));
+    BRepTopAdaptor_FClass2d& aClsf = myContext->FClass2d(aF);
+    aClsf.Init(aF, Max(aTol2d, Precision::PConfusion()));
   }
   //
   // 7. Fill myAreas
@@ -841,7 +846,7 @@ Standard_Boolean IsInside(const TopoDS_Shape& theHole,
       BOPTools_AlgoTools2D::PointOnSurface(aE, aF2, aT, aU, aV, theContext);
       aP2D.SetCoord(aU, aV);
       //
-      IntTools_FClass2d& aClsf=theContext->FClass2d(aF2);
+      BRepTopAdaptor_FClass2d& aClsf = theContext->FClass2d(aF2);
       aState=aClsf.Perform(aP2D);
       bRet=(aState==TopAbs_IN);
     }

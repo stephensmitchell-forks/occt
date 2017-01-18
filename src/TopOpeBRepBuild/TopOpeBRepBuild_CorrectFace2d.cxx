@@ -792,6 +792,10 @@ TopOpeBRepBuild_CorrectFace2d::TopOpeBRepBuild_CorrectFace2d()
 {
   TopLoc_Location Loc;
   Handle(Geom_Surface) Surf = BRep_Tool::Surface(TopoDS::Face(myCorrectedFace), Loc);
+  GeomAdaptor_Surface anAS(Surf);
+  const Standard_Real aTol2d = Max(Min(anAS.UResolution(myFaceTolerance), 
+                                     anAS.VResolution(myFaceTolerance)),
+                                                    Precision::PConfusion());
 
   TopExp_Explorer ex(myCorrectedFace, TopAbs_WIRE);
   for (; ex.More(); ex.Next()) {
@@ -802,7 +806,7 @@ TopOpeBRepBuild_CorrectFace2d::TopOpeBRepBuild_CorrectFace2d()
     BB.MakeFace(newFace, Surf, Loc, myFaceTolerance);
     BB.Add(newFace, aWire);
     
-    BRepTopAdaptor_FClass2d aClass2d(newFace, myFaceTolerance);
+    BRepTopAdaptor_FClass2d aClass2d(newFace, aTol2d);
     TopAbs_State aState=aClass2d.PerformInfinitePoint();
     if (aState==TopAbs_OUT) {
       anOuterWire=aWire;
