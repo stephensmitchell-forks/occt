@@ -1,0 +1,41 @@
+puts "========"
+puts "OCC28211"
+puts "========"
+puts ""
+#################################################
+# Modeling Algorithms - Boolean fuse operation produces incorrect result
+#################################################
+
+# The source face is trivial, based on planar surface but is invalid
+# in terms of same-parameter criterion.
+# The classified point is near to the edge. Therefore,
+# there is a dangerous to return ON-status. However, result must be IN.
+
+set Toler 1.0e-7
+
+binrestore [locate_data_file bug28211_planarface.bin] a
+
+fixshape result a
+checkshape result
+
+point pp 29.999999147417434 1971.5029199015287
+
+if { ![regexp {IN} [ b2dclassifx result pp -t $Toler] ] } {
+  puts "Error : Wrong result of 2d classifier algorithm"
+} else {
+  puts "OK : Good result of 2d classifier algorithm"
+}
+
+if { ![regexp {IN} [ b2dclassify result pp -t $Toler] ] } {
+  puts "Error : Wrong result of 2d classifier algorithm"
+} else {
+  puts "OK : Good result of 2d classifier algorithm"
+}
+
+v2d
+2dclear
+display pp
+pcurve result
+2dfit
+
+checkview -screenshot -2d -path ${imagedir}/${test_image}_2d.png

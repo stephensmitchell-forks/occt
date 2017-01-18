@@ -257,13 +257,12 @@ static Standard_Boolean isDegenerated(const Handle(GeomAdaptor_HSurface)& theGAH
 //purpose  : 
 //=======================================================================
 void GeomInt_IntSS::MakeCurve(const Standard_Integer Index,
-			                        const Handle(Adaptor3d_TopolTool) & dom1,
-			                        const Handle(Adaptor3d_TopolTool) & dom2,
-			                        const Standard_Real Tol,
-			                        const Standard_Boolean Approx,
-			                        const Standard_Boolean ApproxS1,
-			                        const Standard_Boolean ApproxS2)
-
+                              const Handle(Adaptor3d_TopolTool) & theDom1,
+                              const Handle(Adaptor3d_TopolTool) & theDom2,
+                              const Standard_Real Tol,
+                              const Standard_Boolean Approx,
+                              const Standard_Boolean ApproxS1,
+                              const Standard_Boolean ApproxS2)
 {
   Standard_Boolean myApprox1, myApprox2, myApprox;
   Standard_Real Tolpc, myTolApprox;
@@ -370,7 +369,7 @@ void GeomInt_IntSS::MakeCurve(const Standard_Integer Index,
         }
         Standard_Boolean bFNIt, bLPIt;
         Standard_Real aTestPrm, dT=100.;
-        Standard_Real u1, v1, u2, v2, TolX;
+        Standard_Real u1, v1, u2, v2;
         //
         bFNIt=Precision::IsNegativeInfinite(fprm);
         bLPIt=Precision::IsPositiveInfinite(lprm);
@@ -386,11 +385,10 @@ void GeomInt_IntSS::MakeCurve(const Standard_Integer Index,
         //
         gp_Pnt ptref(newc->Value(aTestPrm));
         //
-        TolX = Precision::Confusion();
         Parameters(myHS1, myHS2, ptref,  u1, v1, u2, v2);
-        ok = (dom1->Classify(gp_Pnt2d(u1, v1), TolX) != TopAbs_OUT);
+        ok = (theDom1->Classify(gp_Pnt2d(u1, v1), Precision::Confusion()) != TopAbs_OUT);
         if(ok) { 
-          ok = (dom2->Classify(gp_Pnt2d(u2,v2),TolX) != TopAbs_OUT); 
+          ok = (theDom2->Classify(gp_Pnt2d(u2, v2), Precision::Confusion()) != TopAbs_OUT);
         }
         if (ok) {
           sline.Append(newc);
@@ -499,18 +497,17 @@ void GeomInt_IntSS::MakeCurve(const Standard_Integer Index,
           }
         }
         //
-        Standard_Real aTwoPIdiv17, u1, v1, u2, v2, TolX;
+        Standard_Real aTwoPIdiv17, u1, v1, u2, v2;
         //
         aTwoPIdiv17=2.*M_PI/17.;
         //
         for (j=0; j<=17; j++) {
           gp_Pnt ptref (newc->Value (j*aTwoPIdiv17));
-          TolX = Precision::Confusion();
 
           Parameters(myHS1, myHS2, ptref, u1, v1, u2, v2);
-          ok = (dom1->Classify(gp_Pnt2d(u1,v1),TolX) != TopAbs_OUT);
+          ok = (theDom1->Classify(gp_Pnt2d(u1, v1), Precision::Confusion()) != TopAbs_OUT);
           if(ok) { 
-            ok = (dom2->Classify(gp_Pnt2d(u2,v2),TolX) != TopAbs_OUT);
+            ok = (theDom2->Classify(gp_Pnt2d(u2, v2), Precision::Confusion()) != TopAbs_OUT);
           }
           if (ok) {
             sline.Append(newc);

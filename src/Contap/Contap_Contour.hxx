@@ -102,16 +102,15 @@ public:
 
 protected:
 
-
+  Standard_EXPORT void Perform (const Handle(Adaptor3d_TopolTool)& Domain);
+  
+  Standard_EXPORT void PerformAna (const Handle(Adaptor3d_TopolTool)& Domain);
 
 
 
 private:
 
   
-  Standard_EXPORT void Perform (const Handle(Adaptor3d_TopolTool)& Domain);
-  
-  Standard_EXPORT void PerformAna (const Handle(Adaptor3d_TopolTool)& Domain);
 
 
   Standard_Boolean done;

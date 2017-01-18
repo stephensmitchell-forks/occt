@@ -43,17 +43,19 @@ public:
   //! Empty constructor.
   Standard_EXPORT BRepClass3d_Intersector3d();
   
-  //! Perform the intersection between the
-  //! segment L(0) ... L(Prm) and the Shape <Sh>.
+  //! Perform the intersection between theL
+  //! and the face <theF>.
   //!
   //! Only the point with the smallest parameter on the
   //! line is returned.
   //!
-  //! The Tolerance <Tol> is used to determine if the
-  //! first point of the segment is near the face. In
+  //! The Tolerance <theTol3D> is used to determine if the
+  //! first point of the segment is near to the face. In
   //! that case, the parameter of the intersection point
-  //! on the line can be a negative value (greater than -Tol).
-  Standard_EXPORT void Perform (const gp_Lin& L, const Standard_Real Prm, const Standard_Real Tol, const TopoDS_Face& F);
+  //! on the line can be equal to a negative value (greater than -Tol).
+  Standard_EXPORT void Perform(const gp_Lin& theL, 
+                               const Standard_Real theTol3D,
+                               const TopoDS_Face& theF);
   
   //! True is returned when the intersection have been computed.
     Standard_Boolean IsDone() const;

@@ -323,7 +323,7 @@ BRepCheck_Status BRepCheck_Face::ClassifyWires(const Standard_Boolean Update)
     newFace.Orientation(TopAbs_FORWARD);
     B.Add(newFace,wir1);
 
-    BRepTopAdaptor_FClass2d FClass2d(newFace,Precision::PConfusion());
+    BRepTopAdaptor_FClass2d FClass2d(newFace,Precision::Confusion());
     Standard_Boolean WireBienOriente = Standard_False;
     if(FClass2d.PerformInfinitePoint() != TopAbs_OUT) { 
       WireBienOriente=Standard_True;

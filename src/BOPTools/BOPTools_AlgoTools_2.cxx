@@ -122,6 +122,12 @@ void BOPTools_AlgoTools::MakeSectEdge(const IntTools_Curve& aIC,
   
   BRepBuilderAPI_MakeEdge aMakeEdge(aC, aV1, aV2, aP1, aP2);
   
+  if (!aMakeEdge.IsDone())
+  {
+    aNewEdge.Nullify();
+    return;
+  }
+
   const TopoDS_Edge& aE=TopoDS::Edge(aMakeEdge.Shape());
   //
   // Range must be as it was !

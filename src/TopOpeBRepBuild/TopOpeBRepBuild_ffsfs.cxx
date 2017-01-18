@@ -96,7 +96,8 @@ static Standard_Integer FUN_getAncestorFsp(TopOpeBRepBuild_Builder& B,TopOpeBRep
       if (!ok) return 0;
       Standard_Real tolf = BRep_Tool::Tolerance(f)*1.e1;
       if (dd > tolf) return 0;
-      Standard_Real  TolClass  = 1e-8; BRepTopAdaptor_FClass2d FClass2d(f,TolClass);
+      Standard_Real  TolClass  = 1e-8;
+      BRepTopAdaptor_FClass2d FClass2d(f,TolClass);
       st = FClass2d.Perform(p2d);
     }
     if (st == TopAbs_IN) {

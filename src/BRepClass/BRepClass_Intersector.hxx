@@ -17,16 +17,10 @@
 #ifndef _BRepClass_Intersector_HeaderFile
 #define _BRepClass_Intersector_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_DefineAlloc.hxx>
-#include <Standard_Handle.hxx>
-
 #include <Geom2dInt_IntConicCurveOfGInter.hxx>
-#include <Standard_Real.hxx>
-class gp_Lin2d;
-class BRepClass_Edge;
-class gp_Dir2d;
 
+class Geom2dAdaptor_Curve;
+class TopClass_GeomEdge;
 
 //! Intersect an Edge  with a segment.
 //! Implement the Intersector2d required by the classifier.
@@ -40,34 +34,24 @@ public:
   Standard_EXPORT BRepClass_Intersector();
   
   //! Intersect the line segment and the edge.
-  Standard_EXPORT void Perform (const gp_Lin2d& L, const Standard_Real P, const Standard_Real Tol, const BRepClass_Edge& E);
+  Standard_EXPORT void Perform(const gp_Lin2d& L,
+                               const Standard_Real P,
+                               const Standard_Real Tol3D,
+                               const TopClass_GeomEdge& theGE);
   
   //! Returns in <T>,  <N> and <C>  the tangent,  normal
   //! and  curvature of the edge  <E> at parameter value
   //! <U>.
-  Standard_EXPORT void LocalGeometry (const BRepClass_Edge& E, const Standard_Real U, gp_Dir2d& T, gp_Dir2d& N, Standard_Real& C) const;
-
-
-
+  Standard_EXPORT void LocalGeometry(const Geom2dAdaptor_Curve& theAdCS,
+                                     const Standard_Real U,
+                                     gp_Dir2d& T,
+                                     gp_Dir2d& N,
+                                     Standard_Real& C) const;
 
 protected:
 
-
-
-
-
 private:
 
-
-
-
-
 };
-
-
-
-
-
-
 
 #endif // _BRepClass_Intersector_HeaderFile

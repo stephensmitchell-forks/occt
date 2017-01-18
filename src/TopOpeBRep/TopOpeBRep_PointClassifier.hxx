@@ -45,7 +45,7 @@ public:
   Standard_EXPORT void Load (const TopoDS_Face& F);
   
   //! compute position of point <P> regarding with the face <F>.
-  Standard_EXPORT TopAbs_State Classify (const TopoDS_Face& F, const gp_Pnt2d& P, const Standard_Real Tol);
+  Standard_EXPORT TopAbs_State Classify (const TopoDS_Face& F, const gp_Pnt2d& P, const Standard_Real Tol3D);
   
   Standard_EXPORT TopAbs_State State() const;
 

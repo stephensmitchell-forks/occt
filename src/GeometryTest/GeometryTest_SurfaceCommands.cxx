@@ -36,6 +36,7 @@
 
 
 #include <GeomAdaptor_Surface.hxx>
+#include <GeomAdaptor_HSurface.hxx>
 #include <GeomAdaptor_Curve.hxx>
 #include <Geom2dAdaptor_Curve.hxx>
 
@@ -371,6 +372,36 @@ static Standard_Integer GetSurfaceContinuity( Draw_Interpretor& theDI,
   return 0;
 }
 
+//=======================================================================
+//function : GetResolution
+//purpose  : Returns the resolution of the given surface
+//=======================================================================
+static Standard_Integer GetResolution(Draw_Interpretor& theDI,
+                                      Standard_Integer theNArg,
+                                      const char** theArgv)
+{
+  if (theNArg != 3)
+  {
+    theDI << "Use: surfresolution surface toler \n";
+    return 1;
+  }
+
+  const Standard_Real aTol = Draw::Atof(theArgv[2]);
+
+  Handle(Geom_Surface) aGS = DrawTrSurf::GetSurface(theArgv[1]);
+  if (aGS.IsNull())
+  {
+    theDI << "Argument is not a surface!\n";
+    return 1;
+  }
+
+  Handle(Adaptor3d_HSurface) anAS = new GeomAdaptor_HSurface(aGS);
+  theDI << "Ures = " << anAS->UResolution(aTol) <<
+           "; Vres = " << anAS->VResolution(aTol) << "\n";
+
+  return 0;
+}
+
 
 //=======================================================================
 //function : SurfaceCommands
@@ -425,7 +456,10 @@ void  GeometryTest::SurfaceCommands(Draw_Interpretor& theCommands)
 		  __FILE__,
 		  GetSurfaceContinuity,g);
 
-
+ theCommands.Add("surfresolution",
+                 "surfresolution surface toler: \n\tReturns the resolution of the given surface",
+                 __FILE__,
+                 GetResolution, g);
 }
 
 

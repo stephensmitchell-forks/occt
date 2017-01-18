@@ -1,0 +1,38 @@
+puts "========"
+puts "OCC28211"
+puts "========"
+puts ""
+#################################################
+# Modeling Algorithms - Boolean fuse operation produces incorrect result
+#################################################
+
+# Check of correct definition of ON-status if 3D- and 2D-
+# curve of edge (which the source point is in) is significant
+# greater than the input tolerance for classifier.
+
+set Toler 1.0e-7
+
+restore [locate_data_file bug28211_fiton.brep] result
+checkshape result
+
+point pp 0.42782232233104311 1.0000000346609297
+
+if { ![regexp {ON} [ b2dclassifx result pp -t $Toler ] ] } {
+  puts "Error : Wrong result of 2d classifier algorithm"
+} else {
+  puts "OK : Good result of 2d classifier algorithm"
+}
+
+if { ![regexp {ON} [ b2dclassify result pp -t $Toler ] ] } {
+  puts "Error : Wrong result of 2d classifier algorithm"
+} else {
+  puts "OK : Good result of 2d classifier algorithm"
+}
+
+v2d
+2dclear
+display pp
+pcurve result
+2dfit
+
+checkview -screenshot -2d -path ${imagedir}/${test_image}_2d.png

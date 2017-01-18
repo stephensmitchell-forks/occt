@@ -1,0 +1,50 @@
+puts "========"
+puts "OCC28211"
+puts "========"
+puts ""
+#################################################
+# Modeling Algorithms - Boolean fuse operation produces incorrect result
+#################################################
+
+# Check of work of polygonal classifier (CSLib_Class2d).
+# Especially for this case, aNullTolV local variable
+# has been added to SLib_Class2d::InternalClass(...) method.
+
+plane pl 0 -130 0 0 -1 0 1 0 0
+circle cc2 0 -130 0 0 -1 0 1 0 0 1026.5
+circle cc1 0 -130 0 0 -1 0 1 0 0 1145
+mkedge ee1 cc1
+mkedge ee2 cc2
+orientation ee2 R
+whatis ee1
+whatis ee2
+wire w1 ee1
+wire w2 ee2
+mkface result pl
+add w1 result
+add w2 result
+
+nbshapes result
+checkshape result
+
+point pp 268.78892051126780 990.82048099294911
+
+if { ![regexp {IN} [ b2dclassifx result pp ] ] } {
+  puts "Error : Wrong result of 2d classifier algorithm"
+} else {
+  puts "OK : Good result of 2d classifier algorithm"
+}
+
+if { ![regexp {IN} [ b2dclassify result pp ] ] } {
+  puts "Error : Wrong result of 2d classifier algorithm"
+} else {
+  puts "OK : Good result of 2d classifier algorithm"
+}
+
+v2d
+2dclear
+display pp
+pcurve result
+2dfit
+
+checkview -screenshot -2d -path ${imagedir}/${test_image}_2d.png

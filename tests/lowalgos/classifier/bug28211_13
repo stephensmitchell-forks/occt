@@ -1,0 +1,34 @@
+puts "========"
+puts "OCC28211"
+puts "========"
+puts ""
+#################################################
+# Modeling Algorithms - Boolean fuse operation produces incorrect result
+#################################################
+
+# The face is not closed. Moreover, it contains NOT-CLOSED edge,
+# which has only single vertex and is covered by it.
+
+restore [locate_data_file bug28211_wface.brep] result
+
+nbshapes result
+
+point pp 3.4250396753448720 -12.076599999999999
+
+if { ![regexp {OUT} [ b2dclassifx result pp ] ] } {
+    puts "Error : Wrong result of b2dclassifx algorithm"
+} else {
+    puts "OK : Good result of b2dclassifx algorithm"
+}
+
+if { ![regexp {OUT} [ b2dclassify result pp ] ] } {
+    puts "Error : Wrong result of b2dclassify algorithm"
+} else {
+    puts "OK : Good result of b2dclassify algorithm"
+}
+
+v2d
+pcurve result
+2dfit
+
+checkview -screenshot -2d -path ${imagedir}/${test_image}.png
