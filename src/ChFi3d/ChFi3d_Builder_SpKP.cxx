@@ -780,7 +780,7 @@ Standard_Boolean ChFi3d_Builder::SplitKPart
     // It is checked if the point 2d of the degenerated edge is in the face.
     if (C1.IsNull()) {
       gp_Pnt2d p2d1 = CD->Get2dPoints(0,1);
-      TopAbs_State situ = I1->Classify(p2d1,1.e-8,0);
+      TopAbs_State situ = I1->Classify(p2d1,Precision::Confusion(),Standard_False);
       if(situ == TopAbs_OUT) return Standard_False;
     }
 
@@ -815,7 +815,7 @@ Standard_Boolean ChFi3d_Builder::SplitKPart
     // It is checked if the point 2d of the degenerated is in the face.
     if (C2.IsNull()) {
       gp_Pnt2d p2d2 = CD->Get2dPoints(0,2);
-      TopAbs_State situ = I2->Classify(p2d2,1.e-8,0);
+      TopAbs_State situ = I2->Classify(p2d2,Precision::Confusion(),Standard_False);
       if(situ == TopAbs_OUT) return Standard_False;
     }
 

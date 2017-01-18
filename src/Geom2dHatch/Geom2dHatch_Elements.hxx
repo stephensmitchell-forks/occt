@@ -17,24 +17,11 @@
 #ifndef _Geom2dHatch_Elements_HeaderFile
 #define _Geom2dHatch_Elements_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_DefineAlloc.hxx>
-#include <Standard_Handle.hxx>
-
 #include <Geom2dHatch_MapOfElements.hxx>
-#include <Geom2dHatch_DataMapIteratorOfMapOfElements.hxx>
-#include <Standard_Integer.hxx>
-#include <Standard_Boolean.hxx>
-#include <Standard_Real.hxx>
-#include <TopAbs_Orientation.hxx>
-class Standard_DomainError;
-class Standard_NoSuchObject;
-class Geom2dHatch_Element;
-class gp_Pnt2d;
-class gp_Lin2d;
-class Geom2dAdaptor_Curve;
+#include <NCollection_List.hxx>
 
-
+class TopClass_GeomEdge;
+class TopClass_RayInfo;
 
 class Geom2dHatch_Elements 
 {
@@ -48,43 +35,41 @@ public:
   Standard_EXPORT Geom2dHatch_Elements(const Geom2dHatch_Elements& Other);
   
   Standard_EXPORT void Clear();
-~Geom2dHatch_Elements()
-{
-  Clear();
-}
+  ~Geom2dHatch_Elements()
+  {
+    Clear();
+  }
   
-  Standard_EXPORT Standard_Boolean Bind (const Standard_Integer K, const Geom2dHatch_Element& I);
+  Standard_EXPORT Standard_Boolean Bind (const Standard_Integer K,
+                                         const Geom2dHatch_Element& I);
   
   Standard_EXPORT Standard_Boolean IsBound (const Standard_Integer K) const;
   
   Standard_EXPORT Standard_Boolean UnBind (const Standard_Integer K);
   
-  Standard_EXPORT const Geom2dHatch_Element& Find (const Standard_Integer K) const;
-const Geom2dHatch_Element& operator() (const Standard_Integer K) const
-{
-  return Find(K);
-}
+  Standard_EXPORT const Geom2dHatch_Element& Find(const Standard_Integer K) const;
+  const Geom2dHatch_Element& operator() (const Standard_Integer K) const
+  {
+    return Find(K);
+  }
   
-  Standard_EXPORT Geom2dHatch_Element& ChangeFind (const Standard_Integer K);
-Geom2dHatch_Element& operator() (const Standard_Integer K)
-{
-  return ChangeFind(K);
-}
+  Standard_EXPORT Geom2dHatch_Element& ChangeFind(const Standard_Integer K);
+  Geom2dHatch_Element& operator() (const Standard_Integer K)
+  {
+    return ChangeFind(K);
+  }
+
   Standard_EXPORT Standard_Boolean CheckPoint (gp_Pnt2d& P);
 
-  Standard_EXPORT Standard_Boolean Reject (const gp_Pnt2d& P) const;
-  
-  Standard_EXPORT Standard_Boolean Segment (const gp_Pnt2d& P, gp_Lin2d& L, Standard_Real& Par);
-  
-  Standard_EXPORT Standard_Boolean OtherSegment (const gp_Pnt2d& P, gp_Lin2d& L, Standard_Real& Par);
-  
+  //! Puts ray(s) (see TopClass_RayInfo for detail information) to theList.
+  Standard_EXPORT void ListOfRays(const gp_Pnt2d& P, 
+                                  NCollection_List<TopClass_RayInfo>& theList);
+
   Standard_EXPORT void InitWires();
   
   Standard_EXPORT Standard_Boolean MoreWires() const;
   
   Standard_EXPORT void NextWire();
-  
-  Standard_EXPORT Standard_Boolean RejectWire (const gp_Lin2d& L, const Standard_Real Par) const;
   
   Standard_EXPORT void InitEdges();
   
@@ -92,36 +77,26 @@ Geom2dHatch_Element& operator() (const Standard_Integer K)
   
   Standard_EXPORT void NextEdge();
   
-  Standard_EXPORT Standard_Boolean RejectEdge (const gp_Lin2d& L, const Standard_Real Par) const;
-  
-  Standard_EXPORT void CurrentEdge (Geom2dAdaptor_Curve& E, TopAbs_Orientation& Or) const;
+  //! Returns analyzed edge.
+  Standard_EXPORT void CurrentEdge(TopClass_GeomEdge& E) const;
 
-
-
+  //! Returns TRUE if thePnt is covered by the tolerance of at least one
+  //! vertex of the analyzed edge.
+  //! If is true then stores the parameter of the vertex on the curve.
+  //! Otherwise, returns *theParameter = 0.0.
+  //! This parameter is used in TopOpeBRep class
+  //! and must be deleted after this class will be eliminated.
+  Standard_EXPORT 
+    Standard_Boolean IsPointInEdgeVertex(const gp_Pnt2d &thePnt,
+                                         Standard_Real* const theParameter = 0) const;
 
 protected:
-
-
-
-
+  
 
 private:
-
-
-
   Geom2dHatch_MapOfElements myMap;
-  Geom2dHatch_DataMapIteratorOfMapOfElements Iter;
-  Standard_Integer NumWire;
-  Standard_Integer NumEdge;
-  Standard_Integer myCurEdge;
-
-
+  Geom2dHatch_DataMapIteratorOfMapOfElements myIter;
+  Standard_Integer myCurrentWire;
 };
-
-
-
-
-
-
 
 #endif // _Geom2dHatch_Elements_HeaderFile

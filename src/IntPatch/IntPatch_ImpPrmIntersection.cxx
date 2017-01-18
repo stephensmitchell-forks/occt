@@ -601,29 +601,21 @@ void IntPatch_ImpPrmIntersection::Perform (const Handle(Adaptor3d_HSurface)& Sur
     //plane only touches surface and does not cross it,
     //so no inner points exist.
     SearchIns = Standard_False;
-    Handle(Adaptor3d_TopolTool) T;
-    if(reversed)
-    {
-      T = D1;
-    }
-    else
-    {
-      T = D2;
-    }
+    const Handle(Adaptor3d_TopolTool) anADTT = (reversed) ? D1 : D2;
     Standard_Integer aNbSamples = 0;
-    aNbSamples = T->NbSamples();
+    aNbSamples = anADTT->NbSamples();
     gp_Pnt2d s2d;
     gp_Pnt s3d;
     Standard_Real aValf[1], aUVap[2];
     math_Vector Valf(aValf,1,1), UVap(aUVap,1,2);
-    T->SamplePoint(1,s2d, s3d);
+    anADTT->SamplePoint(1, s2d, s3d);
     UVap(1)=s2d.X(); 
     UVap(2)=s2d.Y();
     Func.Value(UVap,Valf);
     Standard_Real rvalf = Sign(1.,Valf(1));
     for(Standard_Integer i = 2; i <= aNbSamples; ++i)
     {
-      T->SamplePoint(i,s2d, s3d);
+      anADTT->SamplePoint(i, s2d, s3d);
       UVap(1)=s2d.X(); 
       UVap(2)=s2d.Y();
       Func.Value(UVap,Valf);

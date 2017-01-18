@@ -1,0 +1,43 @@
+puts "========"
+puts "OCC28211"
+puts "========"
+puts ""
+#################################################
+# Modeling Algorithms - Boolean fuse operation produces incorrect result
+#################################################
+
+# Classified point is IN indeed. However, we should
+# use "discr"-command (for v2d) in order to see it.
+# As result, classifier (which is based
+# on internal polygon) can create not precise polygon
+# and consequently return OUT-status.
+
+binrestore [locate_data_file bug28211_sharpface.brep] result
+
+checkshape result
+
+point pp 0.00071766949562590554 0.00070359754473026115
+
+if { ![regexp {IN} [ b2dclassifx result pp] ] } {
+    puts "Error : Wrong result of 2d classifier algorithm"
+} else {
+    puts "OK : Good result of 2d classifier algorithm"
+}
+
+if { ![regexp {IN} [ b2dclassify result pp] ] } {
+    puts "Error : Wrong result of 2d classifier algorithm"
+} else {
+    puts "OK : Good result of 2d classifier algorithm"
+}
+
+v2d
+display pp
+point p1t 0.00057279468289550453 0.00048191679048087871
+point p2t 0.00086390560797472069 0.00077038810872647509
+2dfit
+2dclear
+discr 1000
+display pp
+pcurve result
+
+checkview -screenshot -2d -path ${imagedir}/${test_image}_2d.png

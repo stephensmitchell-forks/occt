@@ -1,0 +1,57 @@
+puts "========"
+puts "OCC28211"
+puts "========"
+puts ""
+#################################################
+# Modeling Algorithms - Boolean fuse operation produces incorrect result
+#################################################
+
+# The classified face is based on the sphere and seems to be valid.
+# As far as we know, the sphere is not periodic in V-direction.
+# However, its equation contains only periodic trigonometric
+# function of V (x=f1(U)*cos(V), y=f2(U)*cos(V), z=R*sin(V),
+# where f1(U) and f2(U) are some (periodic) functions with
+# argument U, R is the radius of the sphere). Therefore,
+# if we decline to limit V-range of the sphere in the traditional
+# boundaries [-pi/2; +pi/2] the sphere will be true periodic in V-direction.
+# So, despite taking the classified point pp too far from the face domain
+# (in V-direction) it will be "converted" to the valid 3D-point ON the
+# some edge of the classified face. As result, there is a danger
+# to return ON-status from the classification algorithm. However,
+# it must return OUT.
+
+binrestore [locate_data_file bug28211_sphereon.brep] result
+
+checkshape result
+
+point pp pi -2*pi
+
+mksurface ss result
+svalue ss pi -2*pi xx yy zz
+vertex vv xx yy zz
+
+smallview 
+donly result vv
+fit
+
+checkview -screenshot -2d -path ${imagedir}/${test_image}_3d.png
+
+if { ![regexp {OUT} [ b2dclassifx result pp ] ] } {
+    puts "Error : Wrong result of 2d classifier algorithm"
+} else {
+    puts "OK : Good result of 2d classifier algorithm"
+}
+
+if { ![regexp {OUT} [ b2dclassify result pp ] ] } {
+    puts "Error : Wrong result of 2d classifier algorithm"
+} else {
+    puts "OK : Good result of 2d classifier algorithm"
+}
+
+v2d
+2dclear
+display pp
+pcurve result
+2dfit
+
+checkview -screenshot -2d -path ${imagedir}/${test_image}_2d.png

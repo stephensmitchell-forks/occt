@@ -36,9 +36,9 @@ BRepClass3d_Intersector3d::BRepClass3d_Intersector3d()
 }
 //============================================================================
 void BRepClass3d_Intersector3d::Perform(const gp_Lin& L,
-					const Standard_Real /*Prm*/,
-					const Standard_Real Tol,
-					const TopoDS_Face& Face) { 
+                                        const Standard_Real theTol3D,
+                                        const TopoDS_Face& Face)
+{
 
   IntCurveSurface_HInter   HICS; 
   BRepAdaptor_Surface      surface;
@@ -96,15 +96,16 @@ void BRepClass3d_Intersector3d::Perform(const gp_Lin& L,
         Puv.SetY(Y - vperiod * N2);
       }
 
-      classifier2d.Perform(Face,Puv,Tol);
+      classifier2d.Perform(Face, Puv, theTol3D);
       TopAbs_State currentstate = classifier2d.State();
       if(currentstate==TopAbs_IN || currentstate==TopAbs_ON) { 
-	const IntCurveSurface_IntersectionPoint& HICSPoint = HICS.Point(index);
-	Standard_Real HICSW = HICSPoint.W();
-//  Modified by skv - Fri Mar  4 12:07:34 2005 OCC7966 Begin
-	if((W > HICSW) && (HICSW>-Tol)) { 
-// 	if(W > HICSW) { 
-//  Modified by skv - Fri Mar  4 12:07:34 2005 OCC7966 End
+        const IntCurveSurface_IntersectionPoint& HICSPoint = HICS.Point(index);
+        Standard_Real HICSW = HICSPoint.W();
+        
+        // Must be "HICSW > -<Curve Resolution>(theTol3D)" but
+        // the curve is Geom_Line. Therefore, its resolution is equal to theTol3D.
+        if((W > HICSW) && (HICSW>-theTol3D))
+        { 
 	  hasapoint  = Standard_True;
 	  U          = HICSPoint.U();
 	  V          = HICSPoint.V();

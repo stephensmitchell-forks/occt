@@ -4019,11 +4019,9 @@ void BRepOffset_Tool::CorrectOrientation(const TopoDS_Shape&        SI,
 	if (NewEdges.Contains(OE)) {YaInt = Standard_True; break;}
       }
       if (YaInt) {
-	TopoDS_Shape aLocalFace = FI.Oriented(TopAbs_FORWARD);
-	BRepTopAdaptor_FClass2d FC (TopoDS::Face(aLocalFace),
-				    Precision::Confusion());
-//	BRepTopAdaptor_FClass2d FC (TopoDS::Face(FI.Oriented(TopAbs_FORWARD)),
-//				    Precision::Confusion());
+        TopoDS_Shape aLocalFace = FI.Oriented(TopAbs_FORWARD);
+        BRepTopAdaptor_FClass2d FC (TopoDS::Face(aLocalFace),
+                                    Precision::Confusion());
 	for (itE.Initialize(LOE); itE.More(); itE.Next()) {
 	  TopoDS_Shape&   OE   = itE.Value();
 	  if (NewEdges.Contains(OE)) {

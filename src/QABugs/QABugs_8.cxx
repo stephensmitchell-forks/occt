@@ -142,7 +142,7 @@ static Standard_Integer OCC1651 (Draw_Interpretor& di, Standard_Integer argc, co
   gp_Dir aD1(Draw::Atof(argv[5]), Draw::Atof(argv[6]), Draw::Atof(argv[7]));
   gp_Lin aL1(aP1,aD1);
   BRepClass3d_Intersector3d aI1;
-  aI1.Perform(aL1, -250, 1e-7, TopoDS::Face(aShape));
+  aI1.Perform(aL1, 1e-7, TopoDS::Face(aShape));
   if(aI1.IsDone() && aI1.HasAPoint()) {
     gp_Pnt aR1 = aI1.Pnt();
     di << aR1.X() << " " << aR1.Y() << " " << aR1.Z() << "\n";
