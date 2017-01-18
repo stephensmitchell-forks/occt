@@ -14,7 +14,7 @@ explode b1 f
 point p2D 4.1882396063720497 50.643343428894831
 
 set info [b2dclassify b1_1 p2D]
-set check [regexp "ON" $info]
+set check [regexp "IN" $info]
 
 if { ${check} == 1 } {
     puts "OK ${BugNumber}"

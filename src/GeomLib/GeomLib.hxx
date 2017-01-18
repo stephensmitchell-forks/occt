@@ -223,6 +223,14 @@ public:
                                                         const Standard_Real V2,
                                                         const Standard_Real Tol);
 
+  //! Returns in <theTan>,  <theNormal> and <theCurvature>  the tangent,  normal
+  //! and  curvature of the curve <theC> at parameter value <theParam>.
+  Standard_EXPORT static void LocalGeometry(const Handle(Geom2d_Curve)& theC,
+                                            const Standard_Real theParam,
+                                            gp_Dir2d& theTan,
+                                            gp_Dir2d& theNormal,
+                                            Standard_Real& theCurvature);
+  
 protected:
 
 

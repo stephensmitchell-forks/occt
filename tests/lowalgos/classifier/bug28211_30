@@ -1,0 +1,30 @@
+puts "========"
+puts "OCC28211"
+puts "========"
+puts ""
+#################################################
+# Modeling Algorithms - Boolean fuse operation produces incorrect result
+#################################################
+
+# Check of work of polygonal classifier (CSLib_Class2d).
+# The result must be ON.
+
+set log [polyclassify -s -c 1513.57217669793 -10.1029426238323 -t 0.0256560053668387 0.0256560053668387 -p 1513.57217669793 11.0973538037081 -p -1051.81650575747 6.73452567267988 -p -1051.8152777319 6.00321559118616 -p -1051.80401237154 -0.66964148152312 -p -1051.79153179272 -8.00754731710954 -p -1051.78462891576 -12.0435532938874 -p -1051.7792064627 -15.1970808363544 -p 1513.60824796713 -10.1029426238323 -p 1513.6062129155 -8.92173663981858 -p 1513.60388800065 -7.56876388778882 -p 1513.60082451782 -5.78147799036545 -p 1513.59744872383 -3.80726865383441 -p 1513.59384827412 -1.69716087791358 -p 1513.590129038 0.486912960705931 -p 1513.58640596764 2.67747973139385 -p 1513.582793967 4.80689217261492 -p 1513.57903892674 7.02554393157767 -p 1513.57532192993 9.22774787864227 -p 1513.57217669793 11.0973538037081 ]
+
+if { ![regexp {ON} $log ] } {
+  puts "Error : Wrong result of 2d classifier algorithm"
+} else {
+  puts "OK : Good result of 2d classifier algorithm"
+}
+
+plane pl 0 0 0 0 0 1
+mkface result pl wirsrc
+v2d
+pcurve result
+don result_8
+2dfit
+2dclear
+pcurve result
+display pntsrc
+
+checkview -screenshot -2d -path ${imagedir}/${test_image}_2d.png

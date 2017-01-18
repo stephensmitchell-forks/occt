@@ -128,7 +128,7 @@ protected:
   //! Internal function
   Standard_EXPORT void Find();
   
-  //! Method chec found intersection point
+  //! Method check found intersection point
   Standard_EXPORT Standard_Boolean FindPoint();
   
   //! Method to clear fields of class
@@ -141,7 +141,7 @@ private:
 
 
 
-  Standard_Real myTolerance;
+  Standard_Real my3DTolerance;
   Handle(GeomAdaptor_HCurve) myCurve;
   IntCurveSurface_HInter myIntcs;
   Standard_Integer myCurrentindex;

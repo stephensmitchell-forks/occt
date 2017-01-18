@@ -972,7 +972,9 @@ void Geom2dHatch_Hatcher::ComputeDomains (const Standard_Integer IndH)
   if(NbPnt == 0)
   {
     //-- cout << "The hatching # " << setw(3) << IndH << " has to be classified" << endl ;
-    Geom2dHatch_Classifier Classifier(myElements,Hatching.ClassificationPoint(),0.0000001); 
+    Geom2dHatch_Classifier Classifier(myElements,
+                                      Hatching.ClassificationPoint(),
+                                      Precision::Confusion()); 
     if(Classifier.State() == TopAbs_IN)
     { 
       HatchGen_Domain domain ;

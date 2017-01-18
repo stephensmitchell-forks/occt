@@ -19,22 +19,13 @@
 
 #include <Standard.hxx>
 #include <Standard_DefineAlloc.hxx>
-#include <Standard_Handle.hxx>
 
-#include <Standard_Boolean.hxx>
-#include <gp_Lin2d.hxx>
-#include <Standard_Real.hxx>
-#include <TopTrans_CurveTransition.hxx>
 #include <BRepClass_Intersector.hxx>
-#include <Standard_Integer.hxx>
 #include <TopAbs_State.hxx>
-#include <TopAbs_Orientation.hxx>
-class Standard_DomainError;
-class BRepClass_Edge;
-class BRepClass_Intersector;
+#include <TopTrans_CurveTransition.hxx>
+
 class gp_Lin2d;
-
-
+class TopClass_GeomEdge;
 
 class BRepClass_FClass2dOfFClassifier 
 {
@@ -49,13 +40,14 @@ public:
   //! Starts  a  classification process.   The  point to
   //! classify is the origin of  the  line <L>.  <P>  is
   //! the original length of the segment on <L>  used to
-  //! compute  intersections.   <Tol> is the   tolerance
-  //! attached to the line segment in intersections.
-  Standard_EXPORT void Reset (const gp_Lin2d& L, const Standard_Real P, const Standard_Real Tol);
+  //! compute  intersections.
+  Standard_EXPORT void Reset (const gp_Lin2d& L, const Standard_Real P);
   
   //! Updates  the classification process with  the edge
-  //! <E> from the boundary.
-  Standard_EXPORT void Compare (const BRepClass_Edge& E, const TopAbs_Orientation Or);
+  //! <theE> from the boundary.
+  //! theTol3D is entered for compatibility with Geom2dHatch* classes.
+  Standard_EXPORT void Compare(const TopClass_GeomEdge& theE,
+                               const Standard_Real theTol3D);
   
   //! Returns the current value of the parameter.
     Standard_Real Parameter() const;
@@ -77,36 +69,22 @@ public:
   //! otherwise.
     Standard_Boolean IsHeadOrEnd() const;
 
-
-
-
 protected:
-
-
-
-
 
 private:
 
-
-
-  Standard_Boolean myIsSet;
   Standard_Boolean myFirstCompare;
   Standard_Boolean myFirstTrans;
   gp_Lin2d myLin;
   Standard_Real myParam;
-  Standard_Real myTolerance;
+
   TopTrans_CurveTransition myTrans;
   BRepClass_Intersector myIntersector;
   Standard_Integer myClosest;
   TopAbs_State myState;
   Standard_Boolean myIsHeadOrEnd;
-
-
 };
 
-#define TheEdge BRepClass_Edge
-#define TheEdge_hxx <BRepClass_Edge.hxx>
 #define TheIntersector BRepClass_Intersector
 #define TheIntersector_hxx <BRepClass_Intersector.hxx>
 #define TopClass_Classifier2d BRepClass_FClass2dOfFClassifier
@@ -114,14 +92,9 @@ private:
 
 #include <TopClass_Classifier2d.lxx>
 
-#undef TheEdge
-#undef TheEdge_hxx
 #undef TheIntersector
 #undef TheIntersector_hxx
 #undef TopClass_Classifier2d
 #undef TopClass_Classifier2d_hxx
-
-
-
 
 #endif // _BRepClass_FClass2dOfFClassifier_HeaderFile

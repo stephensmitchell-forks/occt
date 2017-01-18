@@ -102,13 +102,6 @@ public:
 
 protected:
 
-
-
-
-
-private:
-
-  
   Standard_EXPORT void InternalPerform (Blend_RstRstFunction& Func, Blend_SurfCurvFuncInv& Finv1, Blend_CurvPointFuncInv& FinvP1, Blend_SurfCurvFuncInv& Finv2, Blend_CurvPointFuncInv& FinvP2, const Standard_Real Bound);
   
   Standard_EXPORT Standard_Boolean Recadre1 (Blend_RstRstFunction& Func, Blend_SurfCurvFuncInv& Finv, math_Vector& Solinv, Standard_Boolean& IsVtx, Handle(Adaptor3d_HVertex)& Vtx);
@@ -132,16 +125,20 @@ private:
   Standard_EXPORT Standard_Boolean CheckInside (Blend_RstRstFunction& Func, TopAbs_State& SituOnC1, TopAbs_State& SituOnC2, Blend_DecrochStatus& Decroch);
 
 
+
+
+private:
+
   Standard_Boolean done;
   Handle(BRepBlend_Line) line;
   math_Vector sol;
   Handle(Adaptor3d_HSurface) surf1;
-  Handle(Adaptor3d_TopolTool) domain1;
+  Handle(Adaptor3d_TopolTool) myDomain1;
   Handle(Adaptor3d_HSurface) surf2;
-  Handle(Adaptor3d_TopolTool) domain2;
+  Handle(Adaptor3d_TopolTool) myDomain2;
   Handle(Adaptor2d_HCurve2d) rst1;
   Handle(Adaptor2d_HCurve2d) rst2;
-  Standard_Real tolesp;
+  Standard_Real my3DTolEsp;
   Standard_Real tolgui;
   Standard_Real pasmax;
   Standard_Real fleche;

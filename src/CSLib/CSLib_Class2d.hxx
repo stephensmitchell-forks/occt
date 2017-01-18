@@ -21,75 +21,78 @@
 #include <Standard_DefineAlloc.hxx>
 #include <Standard_Handle.hxx>
 
-#include <Standard_Address.hxx>
-#include <Standard_Real.hxx>
-#include <Standard_Integer.hxx>
+#include <NCollection_Array1.hxx>
 #include <TColgp_Array1OfPnt2d.hxx>
 class gp_Pnt2d;
 
 
-
-//! *** Class2d    : Low level algorithm for 2d classification
-//! this class was moved from package BRepTopAdaptor
+//! Performs the classification of the given 2D-point
+//! relatively to the closed 2D-polygon.
+//! The orientation of the polygon is NOT taken into account.
+//! Returns ON-status if computation is impossible.
 class CSLib_Class2d 
 {
 public:
 
   DEFINE_STANDARD_ALLOC
 
-  
-  Standard_EXPORT CSLib_Class2d(const TColgp_Array1OfPnt2d& TP, const Standard_Real aTolu, const Standard_Real aTolv, const Standard_Real umin, const Standard_Real vmin, const Standard_Real umax, const Standard_Real vmax);
-  
-  Standard_EXPORT Standard_Integer SiDans (const gp_Pnt2d& P) const;
-  
-  Standard_EXPORT Standard_Integer SiDans_OnMode (const gp_Pnt2d& P, const Standard_Real Tol) const;
-  
-  Standard_EXPORT Standard_Integer InternalSiDans (const Standard_Real X, const Standard_Real Y) const;
-  
-  Standard_EXPORT Standard_Integer InternalSiDansOuOn (const Standard_Real X, const Standard_Real Y) const;
-  
-  Standard_EXPORT const CSLib_Class2d& Copy (const CSLib_Class2d& Other) const;
-const CSLib_Class2d& operator= (const CSLib_Class2d& Other) const
-{
-  return Copy(Other);
-}
-  
-  Standard_EXPORT void Destroy();
-~CSLib_Class2d()
-{
-  Destroy();
-}
+  enum PolyState
+  {
+    PolyOut = -1,
+    PolyOn = 0,
+    PolyIn = 1
+  };
 
-
-
-
+  //! Constructs the 2D-polygon.
+  //! theTP2d is the set of the vertices (closed polygon
+  //! will always be created inside of this constructor;
+  //! consequently, there is no point in repeating first and
+  //! last point in theTP2d).
+  //! theTolu and theTolv are tolerances.
+  //! theUmin, theVmin, theUmax, theVmax are
+  //! UV-bounds of the polygon.
+  Standard_EXPORT CSLib_Class2d(const TColgp_Array1OfPnt2d& theTP2d,
+                                const Standard_Real theTolu,
+                                const Standard_Real theTolv,
+                                const Standard_Real theUmin,
+                                const Standard_Real theVmin,
+                                const Standard_Real theUmax,
+                                const Standard_Real theVmax);
+  
+  //! Classifies theP relatively to the polygon.
+  //! Uses internal tolerances (myTolU, myTolV).
+  Standard_EXPORT PolyState Classify(const gp_Pnt2d& theP) const;
+  
+  //! Classifies theP relatively to the polygon.
+  //! Uses given tolerances (theTolU, theTolV).
+  Standard_EXPORT PolyState Classify(const gp_Pnt2d& theP,
+                                     const Standard_Real theTolU,
+                                     const Standard_Real theTolV) const;
+  
 protected:
 
+  //! Classifies theP relatively to the polygon.
+  //! Uses internal tolerances (myTolU, myTolV).
+  //! Realizes the algorithm itself.
+  Standard_EXPORT PolyState InternalClass(const Standard_Real thePx,
+                                          const Standard_Real thePy,
+                                          const Standard_Real theTolU,
+                                          const Standard_Real theTolV) const;
 
-
-
+  //! Assignment operator is disabled for this class.
+  const CSLib_Class2d& operator= (const CSLib_Class2d& Other) const;
 
 private:
+  
+  //! Stores set of vertices of the given 2D-polygons
+  TColgp_Array1OfPnt2d myPnts2d;
 
+  //! Tolerances
+  Standard_Real myTolU, myTolV;
 
-
-  Standard_Address MyPnts2dX;
-  Standard_Address MyPnts2dY;
-  Standard_Real Tolu;
-  Standard_Real Tolv;
-  Standard_Integer N;
-  Standard_Real Umin;
-  Standard_Real Vmin;
-  Standard_Real Umax;
-  Standard_Real Vmax;
-
+  //! UV-bounds of the polygon
+  Standard_Real myUmin, myUmax, myVmin, myVmax;
 
 };
-
-
-
-
-
-
 
 #endif // _CSLib_Class2d_HeaderFile

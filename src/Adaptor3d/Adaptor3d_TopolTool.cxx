@@ -275,23 +275,39 @@ void Adaptor3d_TopolTool::NextVertex ()
   idVtx++;
 }
 
-
-TopAbs_State Adaptor3d_TopolTool::Classify(const gp_Pnt2d& P,
-					 const Standard_Real Tol,
-					 const Standard_Boolean )
-//					 const Standard_Boolean RecadreOnPeriodic)
+//=======================================================================
+//function : Classify
+//purpose  : 
+//=======================================================================
+TopAbs_State Adaptor3d_TopolTool::Classify(const gp_Pnt2d& theP,
+                                           const Standard_Real theTol3D,
+                                           const Standard_Boolean /*theIsAdjustReq*/)
 {
+  const Standard_Real aTolU = myS->UResolution(theTol3D),
+                      aTolV = myS->VResolution(theTol3D);
+  return Classify(theP, aTolU, aTolV);
+}
 
-  Standard_Real U = P.X();
-  Standard_Real V = P.Y();
+
+//=======================================================================
+//function : Classify
+//purpose  : 
+//=======================================================================
+TopAbs_State Adaptor3d_TopolTool::Classify(const gp_Pnt2d& theP,
+                                           const Standard_Real theTolU,
+                                           const Standard_Real theTolV)
+{
+  const Standard_Real aU = theP.X(), aV = theP.Y();
 
   if (nbRestr == 4) {
-    if ((U < Uinf - Tol) || (U > Usup + Tol) ||
-      (V < Vinf - Tol) || (V > Vsup + Tol)) {
+    if (((Uinf-aU) > theTolU) || ((aU-Usup) > theTolU) ||
+        ((Vinf-aV) > theTolV) || ((aV-Vsup) > theTolV))
+    {
         return TopAbs_OUT;
     }
-    if ((Abs(U - Uinf) <= Tol) || (Abs(U - Usup) <= Tol) ||
-      (Abs(V - Vinf) <= Tol) || (Abs(V - Vsup) <= Tol)) {
+    
+    if((Abs(aU - Uinf) <= theTolU) || (Abs(aU - Usup) <= theTolU) ||
+       (Abs(aV - Vinf) <= theTolV) || (Abs(aV - Vsup) <= theTolV)) {
         return TopAbs_ON;
     }
     return TopAbs_IN;
@@ -308,43 +324,43 @@ TopAbs_State Adaptor3d_TopolTool::Classify(const gp_Pnt2d& P,
     }
     else if (Precision::IsNegativeInfinite(Uinf)) {
       surumin = Standard_False;
-      if (U >= Usup+Tol) {
+      if ((aU-Usup) >= theTolU) {
 	      dansu = Standard_False;
 	      surumax = Standard_False;
       }
       else {
 	      dansu = Standard_True;
 	      surumax = Standard_False;
-	      if (Abs(U-Usup)<=Tol) {
+              if (Abs(aU - Usup) <= theTolU) {
 	        surumax = Standard_True;
 	      }
       }
     }
     else if (Precision::IsPositiveInfinite(Usup)) {
       surumax = Standard_False;
-      if (U < Uinf-Tol) {
+      if (theTolU < Uinf - aU) {
         dansu = Standard_False;
         surumin = Standard_False;
       }
       else {
         dansu = Standard_True;
         surumin = Standard_False;
-        if (Abs(U-Uinf)<=Tol) {
+        if (Abs(aU - Uinf) <= theTolU) {
           surumin = Standard_True;
         }
       }
     }
     else {
-      if ((U < Uinf - Tol) || (U > Usup + Tol)) {
+      if (((Uinf - aU) > theTolU) || ((aU - Usup) > theTolU)) {
         surumin = surumax = dansu = Standard_False;
       }
       else {
         dansu = Standard_True;
         surumin = surumax = Standard_False;
-        if (Abs(U-Uinf)<=Tol) {
+        if (Abs(aU - Uinf) <= theTolU) {
           surumin = Standard_True;
         }
-        else if (Abs(U-Usup)<=Tol) {
+        else if (Abs(aU - Usup) <= theTolU) {
           surumax = Standard_True;
         }
       }
@@ -357,43 +373,43 @@ TopAbs_State Adaptor3d_TopolTool::Classify(const gp_Pnt2d& P,
     }
     else if (Precision::IsNegativeInfinite(Vinf)) {
       survmin = Standard_False;
-      if (V > Vsup+Tol) {
+      if ((aV - Vsup) > theTolV) {
         dansv = Standard_False;
         survmax = Standard_False;
       }
       else {
         dansv = Standard_True;
         survmax = Standard_False;
-        if (Abs(V-Vsup)<=Tol) {
+        if (Abs(aV - Vsup) <= theTolV) {
           survmax = Standard_True;
         }
       }
     }
     else if (Precision::IsPositiveInfinite(Vsup)) {
       survmax = Standard_False;
-      if (V < Vinf-Tol) {
+      if (theTolV < (Vinf - aV)) {
         dansv = Standard_False;
         survmin = Standard_False;
       }
       else {
         dansv = Standard_True;
         survmin = Standard_False;
-        if (Abs(V-Vinf)<=Tol) {
+        if (Abs(aV - Vinf) <= theTolV) {
           survmin = Standard_True;
         }
       }
     }
     else {
-      if ((V < Vinf - Tol) || (V > Vsup + Tol)) {
+      if ((theTolV < (Vinf - aV)) || ((aV - Vsup) > theTolV)) {
         survmin = survmax = dansv = Standard_False;
       }
       else {
         dansv = Standard_True;
         survmin = survmax = Standard_False;
-        if (Abs(V-Vinf)<=Tol) {
+        if (Abs(aV - Vinf) <= theTolV) {
           survmin = Standard_True;
         }
-        else if (Abs(V-Vsup)<=Tol) {
+        else if (Abs(aV - Vsup) <= theTolV) {
           survmax = Standard_True;
         }
       }
@@ -409,139 +425,11 @@ TopAbs_State Adaptor3d_TopolTool::Classify(const gp_Pnt2d& P,
   }
 }
 
-
-
-Standard_Boolean  Adaptor3d_TopolTool::IsThePointOn(const gp_Pnt2d& P,
-					     const Standard_Real Tol,
-					     const Standard_Boolean )
-//					     const Standard_Boolean RecadreOnPeriodic)
+Standard_Boolean Adaptor3d_TopolTool::IsThePointOn(const gp_Pnt2d& theP,
+                                                   const Standard_Real theTol3D,
+                                                   const Standard_Boolean theIsAdjustReq)
 {
-
-  Standard_Real U = P.X();
-  Standard_Real V = P.Y();
-
-  if (nbRestr == 4) {
-    if ((U < Uinf - Tol) || (U > Usup + Tol) ||
-	(V < Vinf - Tol) || (V > Vsup + Tol)) {
-      return(Standard_False);
-    }
-    if ((Abs(U - Uinf) <= Tol) || (Abs(U - Usup) <= Tol) ||
-	(Abs(V - Vinf) <= Tol) || (Abs(V - Vsup) <= Tol)) {
-      return(Standard_True);
-    }
-    return(Standard_False);
-  }
-  else if (nbRestr == 0) {
-    return(Standard_False);
-  }
-  else {
-    Standard_Boolean dansu,dansv,surumin,surumax,survmin,survmax;
-    if (Precision::IsNegativeInfinite(Uinf) && 
-	Precision::IsPositiveInfinite(Usup)) {
-      dansu = Standard_True;
-      surumin = surumax = Standard_False;
-    }
-    else if (Precision::IsNegativeInfinite(Uinf)) {
-      surumin = Standard_False;
-      if (U >= Usup+Tol) {
-	dansu = Standard_False;
-	surumax = Standard_False;
-      }
-      else {
-	dansu = Standard_True;
-	surumax = Standard_False;
-	if (Abs(U-Usup)<=Tol) {
-	  surumax = Standard_True;
-	}
-      }
-    }
-    else if (Precision::IsPositiveInfinite(Usup)) {
-      surumax = Standard_False;
-      if (U < Uinf-Tol) {
-	dansu = Standard_False;
-	surumin = Standard_False;
-      }
-      else {
-	dansu = Standard_True;
-	surumin = Standard_False;
-	if (Abs(U-Uinf)<=Tol) {
-	  surumin = Standard_True;
-	}
-      }
-    }
-    else {
-      if ((U < Uinf - Tol) || (U > Usup + Tol)) {
-	surumin = surumax = dansu = Standard_False;
-      }
-      else {
-	dansu = Standard_True;
-	surumin = surumax = Standard_False;
-	if (Abs(U-Uinf)<=Tol) {
-	  surumin = Standard_True;
-	}
-	else if (Abs(U-Usup)<=Tol) {
-	  surumax = Standard_True;
-	}
-      }
-    }
-
-    if (Precision::IsNegativeInfinite(Vinf) &&
-	Precision::IsPositiveInfinite(Vsup)) {
-      dansv = Standard_True;
-      survmin = survmax = Standard_False;
-    }
-    else if (Precision::IsNegativeInfinite(Vinf)) {
-      survmin = Standard_False;
-      if (V > Vsup+Tol) {
-	dansv = Standard_False;
-	survmax = Standard_False;
-      }
-      else {
-	dansv = Standard_True;
-	survmax = Standard_False;
-	if (Abs(V-Vsup)<=Tol) {
-	  survmax = Standard_True;
-	}
-      }
-    }
-    else if (Precision::IsPositiveInfinite(Vsup)) {
-      survmax = Standard_False;
-      if (V < Vinf-Tol) {
-	dansv = Standard_False;
-	survmin = Standard_False;
-      }
-      else {
-	dansv = Standard_True;
-	survmin = Standard_False;
-	if (Abs(V-Vinf)<=Tol) {
-	  survmin = Standard_True;
-	}
-      }
-    }
-    else {
-      if ((V < Vinf - Tol) || (V > Vsup + Tol)) {
-	survmin = survmax = dansv = Standard_False;
-      }
-      else {
-	dansv = Standard_True;
-	survmin = survmax = Standard_False;
-	if (Abs(V-Vinf)<=Tol) {
-	  survmin = Standard_True;
-	}
-	else if (Abs(V-Vsup)<=Tol) {
-	  survmax = Standard_True;
-	}
-      }
-    }
-
-    if (!dansu || !dansv) {
-      return(Standard_False);
-    }
-    if (surumin || survmin || surumax || survmax) {
-      return(Standard_True);
-    }
-    return(Standard_False);;
-  }
+  return (Classify(theP, theTol3D, theIsAdjustReq) == TopAbs_ON);
 }
 
 
