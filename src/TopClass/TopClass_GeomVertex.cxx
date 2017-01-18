@@ -1,7 +1,6 @@
-// Created on: 1992-11-19
-// Created by: Remi LEQUETTE
-// Copyright (c) 1992-1999 Matra Datavision
-// Copyright (c) 1999-2014 OPEN CASCADE SAS
+// Created on: 2017-02-17
+// Created by: Nikolai BUKHALOV
+// Copyright (c) 1999-2017 OPEN CASCADE SAS
 //
 // This file is part of Open CASCADE Technology software library.
 //
@@ -14,43 +13,40 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
+#include <TopClass_GeomVertex.hxx>
+
+#include <BRep_Tool.hxx>
+#include <TopoDS_Vertex.hxx>
+
 //=======================================================================
-//function : Edge
+//function : Init
 //purpose  : 
 //=======================================================================
-
-inline TopoDS_Edge& BRepClass_Edge::Edge() 
+void TopClass_GeomVertex::Init(const TopoDS_Vertex &theV,
+                               const TopoDS_Edge   &theE)
 {
-  return  myEdge;
+  if (theV.IsNull())
+    return;
+
+  // If theV.IsNull() == TRUE then BRep_Tool::Parameter(...)
+  // throws exception.
+  Init(theV, BRep_Tool::Parameter(theV, theE));
 }
 
 //=======================================================================
-//function : Edge
+//function : Init
 //purpose  : 
 //=======================================================================
-
-inline const TopoDS_Edge& BRepClass_Edge::Edge() const
+void TopClass_GeomVertex::Init(const TopoDS_Vertex &theV,
+                               const Standard_Real theParameterOnEdge)
 {
-  return  myEdge;
+  if (theV.IsNull())
+    return;
+
+  // If theV.IsNull() == TRUE then BRep_Tool::Tolerance(...) and
+  // BRep_Tool::Pnt(...) throw exception.
+
+  myEdgeParameter = theParameterOnEdge;
+  myToler = BRep_Tool::Tolerance(theV);
+  myPoint = BRep_Tool::Pnt(theV);  
 }
-
-//=======================================================================
-//function : Face
-//purpose  : 
-//=======================================================================
-
-inline TopoDS_Face& BRepClass_Edge::Face() 
-{
-  return myFace;
-}
-
-//=======================================================================
-//function : Face
-//purpose  : 
-//=======================================================================
-
-inline const TopoDS_Face& BRepClass_Edge::Face() const
-{
-  return myFace;
-}
-

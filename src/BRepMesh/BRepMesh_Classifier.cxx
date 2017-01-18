@@ -40,7 +40,7 @@ TopAbs_State BRepMesh_Classifier::Perform(const gp_Pnt2d& thePoint) const
   
   for (Standard_Integer i = 1; i <= aNb; i++)
   {
-    Standard_Integer aCur = ((CSLib_Class2d*)myTabClass(i))->SiDans(thePoint);
+    Standard_Integer aCur = ((CSLib_Class2d*)myTabClass(i))->Classify(thePoint);
     if (aCur == 0)
     {
       // Point is ON, but mark it as OUT

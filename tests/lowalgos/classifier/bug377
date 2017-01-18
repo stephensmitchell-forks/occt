@@ -1,0 +1,99 @@
+pload QAcommands
+
+puts "========"
+puts "OCC377"
+puts "BUC61056"
+puts "========"
+puts ""
+###################################################################
+# Incorrect behaviour of BRepTopAdapter_FClass2d. 
+###################################################################
+
+# Two faces are created as copy of existing fsrc (have the same
+# surface and wire). However, the first face is created as NOT hole
+# (wire orientation is FORWARD) and the second face is created
+# as hole (wire orientation is REVERSED). Both faces are checked
+# by "ishole" DRAW-command.
+# Finally, some point pp is classified relatively to the every face.
+# Indeed, the classification result should be different for different
+# faces. However, thank to the huge tolerance (classifToler == 6.45)
+# the point pp must have the same status (ON) for both faces.
+
+set classifToler 6.45
+
+restore [locate_data_file OCC377.brep] fsrc
+point pp 1.9812 -0.9557948
+
+explode fsrc w
+copy fsrc_1 wirF
+copy fsrc_1 wirR
+
+orientation wirF F
+orientation wirR R
+
+# The face with the FORWARD wire
+
+emptycopy newface fsrc
+orientation newface F
+
+add wirF newface
+checknbshapes newface -face 1 -wire 1 -edge 8 -vertex 8 -t -m "Face building"
+
+if { ![regexp {The face is not hole} [ ishole newface -t $classifToler ] ] } {
+    puts "Error : Wrong result of 2d classifier algorithm"
+} else {
+    puts "OK : Good result of 2d classifier algorithm"
+}
+
+if { ![regexp {ON} [ b2dclassifx newface pp -t $classifToler ] ] } {
+    puts "Error : Wrong result of 2d classifier algorithm"
+} else {
+    puts "OK : Good result of 2d classifier algorithm"
+}
+
+if { ![regexp {ON} [ b2dclassify newface pp -t $classifToler ] ] } {
+    puts "Error : Wrong result of 2d classifier algorithm"
+} else {
+    puts "OK : Good result of 2d classifier algorithm"
+}
+
+v2d
+2dclear
+pcurve newface
+disp pp
+2dfit
+
+checkview -screenshot -2d -path ${imagedir}/${test_image}_forward.png
+
+# The face with the REVERSED wire
+
+emptycopy newface fsrc
+orientation newface F
+
+add wirR newface
+checknbshapes newface -face 1 -wire 1 -edge 8 -vertex 8 -t -m "Face building"
+
+if { ![regexp {The face is hole} [ ishole newface -t $classifToler ] ] } {
+    puts "Error : Wrong result of 2d classifier algorithm"
+} else {
+    puts "OK : Good result of 2d classifier algorithm"
+}
+
+if { ![regexp {ON} [ b2dclassifx newface pp -t $classifToler ] ] } {
+    puts "Error : Wrong result of 2d classifier algorithm"
+} else {
+    puts "OK : Good result of 2d classifier algorithm"
+}
+
+if { ![regexp {ON} [ b2dclassify newface pp -t $classifToler ] ] } {
+    puts "Error : Wrong result of 2d classifier algorithm"
+} else {
+    puts "OK : Good result of 2d classifier algorithm"
+}
+
+2dclear
+pcurve newface
+disp pp
+2dfit
+
+checkview -screenshot -2d -path ${imagedir}/${test_image}_reversed.png

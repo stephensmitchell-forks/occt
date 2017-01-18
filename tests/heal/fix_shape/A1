@@ -1,2 +1,11 @@
-puts "TODO OCC23127 ALL: Faulty shapes in variables faulty_1 to faulty_1"
+#puts "TODO OCC28863 ALL: Faulty shapes in variables faulty_1 to faulty_1"
+
+# Simple cylindrical face.
+# P-curve of the "top"-edge is geometrically
+# attached to the "bottom" one.
+# ShapeFix does not translate incorrect p-curve.
+# It increases the tolerance only in order to make the face be closed.
+# However, the current version of checkshape does not report about
+# self-intersecting.
+
 restore [locate_data_file aaa.rle] a

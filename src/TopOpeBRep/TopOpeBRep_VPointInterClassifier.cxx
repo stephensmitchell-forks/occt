@@ -61,7 +61,7 @@ TopAbs_State TopOpeBRep_VPointInterClassifier::VPointPosition
  const Standard_Integer FaceClassifyIndex,
  TopOpeBRep_PointClassifier& PC,
  const Standard_Boolean AssumeINON,
- const Standard_Real Tol)
+ const Standard_Real theTol3D)
 {
   myState = TopAbs_UNKNOWN;
 
@@ -101,7 +101,7 @@ TopAbs_State TopOpeBRep_VPointInterClassifier::VPointPosition
   TopoDS_Face FF = TopoDS::Face(F);
   TopOpeBRepTool_ShapeTool::AdjustOnPeriodic(FF,u,v);
   gp_Pnt2d p2d(u,v);
-  TopAbs_State statefast = PC.Classify(FF,p2d,Tol);
+  TopAbs_State statefast = PC.Classify(FF, p2d, theTol3D);
   myState = statefast;
   VP.State(myState,FaceClassifyIndex);
 
@@ -109,14 +109,14 @@ TopAbs_State TopOpeBRep_VPointInterClassifier::VPointPosition
   // intersections est sur une frontiere de la face FF (ON)ou dans la face FF (IN)  
   Standard_Integer VPSI = VP.ShapeIndex();
   if (AssumeINON && FaceClassifyIndex == VPSI) {
-    mySlowFaceClassifier.Perform(FF,p2d,Tol);
+    mySlowFaceClassifier.Perform(FF, p2d, theTol3D);
     myState = mySlowFaceClassifier.State();
     if      (myState == TopAbs_ON) {
 //modified by NIZHNY-MKK  Mon Jun 19 11:45:36 2000.BEGIN
       myState = SlowClassifyOnBoundary(VP.Value(), p2d, mySlowFaceClassifier, FF);      
       if(myState == TopAbs_ON) {
 //modified by NIZHNY-MKK  Mon Jun 19 11:45:36 2000.END
-	VP.EdgeON(mySlowFaceClassifier.Edge().Edge(),
+	VP.EdgeON(mySlowFaceClassifier.Edge().GetTopoEdge(),
 		  mySlowFaceClassifier.EdgeParameter(),
 		  FaceClassifyIndex);
       }
@@ -130,14 +130,14 @@ TopAbs_State TopOpeBRep_VPointInterClassifier::VPointPosition
 
   else if (!AssumeINON) {
     if (statefast == TopAbs_OUT || statefast == TopAbs_ON) {
-      mySlowFaceClassifier.Perform(FF,p2d,Tol);
+      mySlowFaceClassifier.Perform(FF, p2d, theTol3D);
       myState = mySlowFaceClassifier.State();
       if      (myState == TopAbs_ON) {
 //modified by NIZHNY-MKK  Mon Jun 19 11:45:36 2000.BEGIN
 	myState = SlowClassifyOnBoundary(VP.Value(), p2d, mySlowFaceClassifier, FF);
 	if(myState == TopAbs_ON) {
 //modified by NIZHNY-MKK  Mon Jun 19 11:45:36 2000.END
-	  VP.EdgeON(mySlowFaceClassifier.Edge().Edge(),
+	  VP.EdgeON(mySlowFaceClassifier.Edge().GetTopoEdge(),
 		    mySlowFaceClassifier.EdgeParameter(),
 		    FaceClassifyIndex);
 	}
@@ -150,7 +150,7 @@ TopAbs_State TopOpeBRep_VPointInterClassifier::VPointPosition
     //modified by NIZNHY-PKV Mon Feb  5 19:04:01 2001 f
     if (statefast == TopAbs_ON || statefast == TopAbs_OUT) {
     //if (statefast == TopAbs_ON) {
-      mySlowFaceClassifier.Perform(FF, p2d, Tol);
+      mySlowFaceClassifier.Perform(FF, p2d, theTol3D);
       myState = mySlowFaceClassifier.State();
       
       if (myState == TopAbs_ON || myState == TopAbs_OUT) {
@@ -158,7 +158,7 @@ TopAbs_State TopOpeBRep_VPointInterClassifier::VPointPosition
       //modified by NIZNHY-PKV Mon Feb  5 19:04:49 2001 t
 	myState = SlowClassifyOnBoundary(VP.Value(), p2d, mySlowFaceClassifier, FF);
 	if(myState==TopAbs_ON) {
-	  VP.EdgeON(mySlowFaceClassifier.Edge().Edge(),
+	  VP.EdgeON(mySlowFaceClassifier.Edge().GetTopoEdge(),
 		    mySlowFaceClassifier.EdgeParameter(),
 		    FaceClassifyIndex);
 	}
@@ -179,7 +179,7 @@ TopAbs_State TopOpeBRep_VPointInterClassifier::VPointPosition
 const TopoDS_Shape& TopOpeBRep_VPointInterClassifier::Edge() const
 {
   if (myState == TopAbs_ON) {
-    const TopoDS_Shape& S = mySlowFaceClassifier.Edge().Edge();
+    const TopoDS_Shape& S = mySlowFaceClassifier.Edge().GetTopoEdge();
     return S;
   }
   else {
@@ -210,7 +210,7 @@ static TopAbs_State SlowClassifyOnBoundary(const gp_Pnt& thePointToClassify,
 					   const TopoDS_Face& theFace) {   
 
   Standard_Real aParameterOnEdge = theSlowClassifier.EdgeParameter();
-  const TopoDS_Edge& anEdge = theSlowClassifier.Edge().Edge();
+  const TopoDS_Edge& anEdge = theSlowClassifier.Edge().GetTopoEdge();
 
   Standard_Real parf, parl;
   Handle(Geom_Curve) anEdgeCurve = BRep_Tool::Curve(anEdge, parf, parl);
@@ -247,6 +247,8 @@ static TopAbs_State SlowClassifyOnBoundary(const gp_Pnt& thePointToClassify,
 	  
       if(!anEdgePCurve.IsNull()) {
 	gp_Pnt2d aPoint2dOnEdge = anEdgePCurve->Value(aParameterOnEdge);
+
+        // Must be 3D-tolerance. But we keep the current value.
 	Standard_Real aTol2d = thePoint2dToClassify.Distance(aPoint2dOnEdge) / 3;
 	theSlowClassifier.Perform(theFace, thePoint2dToClassify, aTol2d);
 	if(theSlowClassifier.State() == TopAbs_IN)

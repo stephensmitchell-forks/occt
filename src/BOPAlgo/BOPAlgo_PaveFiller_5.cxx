@@ -362,28 +362,28 @@ void BOPAlgo_PaveFiller::PerformEF()
           for (j=0; j<2; ++j) {
             if (bIsOnPave[j]) {
               bV[j]=CheckFacePaves(nV[j], aMIFOn, aMIFIn);
-              if (bV[j]) {
-                const TopoDS_Vertex& aV=
-                  (*(TopoDS_Vertex *)(&myDS->Shape(nV[j])));
-                //
-                Standard_Real f, l, aTolVnew, aDistPP, aTolPC, aTolV;
-                //
-                const Handle(Geom_Curve)& aCur = BRep_Tool::Curve(aE, f, l);
-                //
-                gp_Pnt aP1 = BRep_Tool::Pnt(aV);
-                gp_Pnt aP2 = aCur->Value(aT);
-                //
-                aDistPP=aP1.Distance(aP2);
-                //
-                aTolPC=Precision::PConfusion();
-                aTolV=BRep_Tool::Tolerance(aV);
-                if (aDistPP > (aTolV+aTolPC)) {
-                  aTolVnew=Max(aTolE, aDistPP);
-                  UpdateVertex(nV[j], aTolVnew);
-                }
-              }
-              else {
+              if (!bV[j])
+              {
                 bIsOnPave[j] = ForceInterfVF(nV[j], nF);
+              }
+
+              const TopoDS_Vertex& aV =
+                (*(TopoDS_Vertex *)(&myDS->Shape(nV[j])));
+              //
+              Standard_Real f, l, aTolVnew, aDistPP, aTolPC, aTolV;
+              //
+              const Handle(Geom_Curve)& aCur = BRep_Tool::Curve(aE, f, l);
+              //
+              gp_Pnt aP1 = BRep_Tool::Pnt(aV);
+              gp_Pnt aP2 = aCur->Value(aT);
+              //
+              aDistPP = aP1.Distance(aP2);
+              //
+              aTolPC = Precision::PConfusion();
+              aTolV = BRep_Tool::Tolerance(aV);
+              if (aDistPP > (aTolV + aTolPC)) {
+                aTolVnew = Max(aTolE, aDistPP);
+                UpdateVertex(nV[j], aTolVnew);
               }
             }
           }

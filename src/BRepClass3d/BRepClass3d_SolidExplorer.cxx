@@ -33,7 +33,6 @@
 #include <BRepBndLib.hxx>
 #include <BRepClass3d_DataMapIteratorOfMapOfInter.hxx>
 #include <BRepClass3d_SolidExplorer.hxx>
-#include <BRepClass_Edge.hxx>
 #include <BRepClass_FaceClassifier.hxx>
 #include <BRepClass_FacePassiveClassifier.hxx>
 #include <BRepTools.hxx>
@@ -138,7 +137,7 @@ Standard_Boolean BRepClass3d_SolidExplorer::FindAPointInTheFace
 
     T.Normalize();
     P.SetCoord (P.X() + TolInit * T.X(), P.Y() + TolInit * T.Y());
-    FClassifier.Reset (gp_Lin2d (P, T), ParamInit, RealEpsilon()); //-- Length and Tolerance #######
+    FClassifier.Reset (gp_Lin2d (P, T), ParamInit); //-- Length and Tolerance #######
 
     TopExp_Explorer otherfaceexplorer;
     Standard_Integer aNbEdges = 0;
@@ -149,8 +148,8 @@ Standard_Boolean BRepClass3d_SolidExplorer::FindAPointInTheFace
       TopoDS_Edge OtherEdge = TopoDS::Edge (otherfaceexplorer.Current());
       if (OtherEdge.Orientation() != TopAbs_EXTERNAL && OtherEdge != Edge)
       {
-        BRepClass_Edge AEdge (OtherEdge, face);
-        FClassifier.Compare (AEdge, OtherEdge.Orientation());
+        TopClass_GeomEdge AEdge(OtherEdge, face);
+        FClassifier.Compare (AEdge, 0.0);
         if (FClassifier.ClosestIntersection())
         {
           if(ParamInit > FClassifier.Parameter())
@@ -164,8 +163,8 @@ Standard_Boolean BRepClass3d_SolidExplorer::FindAPointInTheFace
 
     if (aNbEdges == 1)
     {
-      BRepClass_Edge AEdge (Edge, face);
-      FClassifier.Compare (AEdge, Edge.Orientation());
+      TopClass_GeomEdge AEdge(Edge, face);
+      FClassifier.Compare (AEdge, 0.0);
       if (FClassifier.ClosestIntersection())
       {
         if (ParamInit > FClassifier.Parameter())
@@ -561,7 +560,7 @@ Standard_Integer BRepClass3d_SolidExplorer::OtherSegment(const gp_Pnt& P,
 
             gp_Pnt2d aPuv(aU, aV);
 
-            classifier2d.Perform(face,aPuv,Precision::PConfusion());
+            classifier2d.Perform(face,aPuv,Precision::Confusion());
 
             TopAbs_State aState = classifier2d.State();
 

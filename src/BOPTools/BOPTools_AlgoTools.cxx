@@ -1588,6 +1588,10 @@ void BOPTools_AlgoTools::MakeEdge(const IntTools_Curve& theIC,
   //
   BOPTools_AlgoTools::MakeSectEdge (theIC, theV1, theT1, theV2, theT2, 
                                     theE);
+
+  if (theE.IsNull())
+    return;
+
   //
   aBB.UpdateEdge(theE, theTolR3D);
 }

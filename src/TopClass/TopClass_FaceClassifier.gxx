@@ -17,18 +17,19 @@
 //  Modified by skv - Thu Jul 13 18:00:34 2006 OCC12627
 // The method Perform is totally rewroted.
 
-#include <IntRes2d_IntersectionSegment.hxx>
-#include <IntRes2d_IntersectionPoint.hxx>
+#include <algorithm>
+
+#include <BRep_Tool.hxx>
+#include <NCollection_Array1.hxx>
+#include <TopClass_RayInfo.hxx>
 
 //=======================================================================
 //function : TopClass_FaceClassifier
 //purpose  : 
 //=======================================================================
-
 TopClass_FaceClassifier::TopClass_FaceClassifier() :
 myEdgeParameter(0.0),
-rejected(Standard_False),
-nowires(Standard_True)
+myState(TopAbs_UNKNOWN)
 {
 }
 
@@ -36,119 +37,185 @@ nowires(Standard_True)
 //function : TopClass_FaceClassifier
 //purpose  : 
 //=======================================================================
-
 TopClass_FaceClassifier::TopClass_FaceClassifier(TheFaceExplorer& FExp,
-						 const gp_Pnt2d& P,
-						 const Standard_Real Tol) :
+                                                 const gp_Pnt2d& P,
+                                                 const Standard_Real theToler) :
 myEdgeParameter(0.0),
-rejected(Standard_False),
-nowires(Standard_True)
+myState(TopAbs_UNKNOWN)
 {
-  Perform(FExp,P,Tol);
+  Perform(FExp, P, theToler);
 }
 
 //=======================================================================
 //function : Perform
 //purpose  : 
 //=======================================================================
-
-void TopClass_FaceClassifier::Perform(TheFaceExplorer& Fexp,
-				      const gp_Pnt2d& P,
-				      const Standard_Real Tol)
+void TopClass_FaceClassifier::Perform(TheFaceExplorer& theFExp,
+                                      const gp_Pnt2d& theP,
+                                      const Standard_Real theToler)
 {
-  gp_Pnt2d aPoint(P);
+  myEdge = TopClass_GeomEdge();
+  myEdgeParameter = 0.0;
+  myState = TopAbs_UNKNOWN;
+
+  gp_Pnt2d aPoint(theP);
   Standard_Boolean aResOfPointCheck = Standard_False;
   while (aResOfPointCheck == Standard_False)
   {
-    aResOfPointCheck = Fexp.CheckPoint(aPoint);
+    aResOfPointCheck = theFExp.CheckPoint(aPoint);
   }
 
-  // Test for rejection.
-  rejected = Fexp.Reject(aPoint);
+  TopClass_GeomEdge          anEdge;
 
-  if (rejected)
-    return;
-
-  gp_Lin2d                   aLine;
-  Standard_Real              aParam;
-  Standard_Boolean           IsValidSegment = Fexp.Segment(aPoint, aLine, aParam);
-  TheEdge                    anEdge;
-  TopAbs_Orientation         anEdgeOri;
   Standard_Integer           aClosestInd;
   IntRes2d_IntersectionPoint aPInter;
-  TopAbs_State               aState = TopAbs_UNKNOWN;
-  Standard_Boolean           IsWReject;
-  Standard_Boolean           IsEReject;
+  TopClass_FClass2d aClassifier;
 
-  nowires = Standard_True;
+  //These two constants are entered in order to speeding up the performance.
+  unsigned int aMaxWeight = UINT_MAX;
+  const Standard_Real aMaxDelta = 0.01;
 
-  while (IsValidSegment) {
-    myClassifier.Reset(aLine, aParam, Tol);
+  Standard_Boolean hasWires = Standard_False;
+  TopClass_RayInfo aRayInfo;
 
-    for (Fexp.InitWires(); Fexp.MoreWires(); Fexp.NextWire()) {
-      nowires   = Standard_False;
-      IsWReject = Fexp.RejectWire(aLine, myClassifier.Parameter());
+  theFExp.FirstRay(aPoint, aRayInfo);
+  Standard_Real aRealInterval = aRayInfo.MinDeltaInterval();
 
-      if (!IsWReject) {
-	// test this wire
-	for (Fexp.InitEdges(); Fexp.MoreEdges(); Fexp.NextEdge()) {
-	  IsEReject = Fexp.RejectEdge(aLine, myClassifier.Parameter());
+  do
+  {
+    aClassifier.Reset(aRayInfo.GetLine(), aRayInfo.GetParameter());
 
-	  if (!IsEReject) {
-	    // test this edge
-	    Fexp.CurrentEdge(anEdge, anEdgeOri);
+    for (theFExp.InitWires(); theFExp.MoreWires(); theFExp.NextWire())
+    {
+      // Counts penalties added by TheFaceExplorer::IsPointInEdgeVertex(...) method
+      unsigned int aSumPenaltyVertCoinc = 0;
 
-	    if (anEdgeOri == TopAbs_FORWARD || anEdgeOri == TopAbs_REVERSED) {
-	      myClassifier.Compare(anEdge, anEdgeOri);
-	      aClosestInd = myClassifier.ClosestIntersection();
+      // test this wire
+      for (theFExp.InitEdges(); theFExp.MoreEdges(); theFExp.NextEdge())
+      {
+        // Empty face is possible:
+        //    plane pl 0 0 0 0 0 1
+        //    mkface ff pl
+        // As result, ff does not contain any wires/edges/vertices.
+        // However, Geom2dHatch_Classifier (which is used by DBRep_IsoBuilder)
+        // returns some wire but does not find any edge. Therefore, "hasWires"
+        // flag should be put to the current "edges"-cycle (not outer "wires"-cycle).
+        hasWires = Standard_True;
+        
+        // test this edge
+        theFExp.CurrentEdge(anEdge);
+        if ((anEdge.GetOrientation() != TopAbs_FORWARD) &&
+            (anEdge.GetOrientation() != TopAbs_REVERSED))
+        {
+          continue;
+        }
 
-	      if (aClosestInd != 0) {
-		// save the closest edge
-		TheIntersection2d &anIntersector = myClassifier.Intersector();
-		Standard_Integer   aNbPnts       = anIntersector.NbPoints();
+        //Intersects with anEdge
+        aClassifier.Compare(anEdge, theToler);
+        aClosestInd = aClassifier.ClosestIntersection();
 
-		myEdge = anEdge;
+        if (aClosestInd != 0)
+        {
+          // save the closest edge
+          TheIntersection2d &anIntersector = aClassifier.Intersector();
+          Standard_Integer  aNbPnts = anIntersector.NbPoints();
 
-		if (aClosestInd <= aNbPnts) {
-		  aPInter = anIntersector.Point(aClosestInd);
-		} else {
-		  aClosestInd -= aNbPnts;
+          myEdge = anEdge;
 
-		  if (aClosestInd&1) {
-		    aPInter =  anIntersector.
-		      Segment((aClosestInd + 1)/2).FirstPoint();
-		  } else {
-		    aPInter =  anIntersector.
-		      Segment((aClosestInd + 1)/2).LastPoint();
-		  }
-		}
+          if (aClosestInd <= aNbPnts)
+          {
+            aPInter = anIntersector.Point(aClosestInd);
+          }
+          else
+          {
+            aClosestInd -= aNbPnts;
 
-		myPosition      = aPInter.
-		                  TransitionOfSecond().PositionOnCurve();
-		myEdgeParameter = aPInter.ParamOnSecond();
-	      }
-	      // if we are ON, we stop
-	      aState = myClassifier.State();
-	    
-	      if (aState == TopAbs_ON)
-		return;
-	    }
-	  }
-	}
+            //Tangential case
+            aRayInfo.AddPenalty(2);
 
-	// if we are out of the wire we stop
-	aState = myClassifier.State();
+            if (aClosestInd & 1) {
+              aPInter = anIntersector.
+                Segment((aClosestInd + 1) / 2).FirstPoint();
+            }
+            else
+            {
+              aPInter = anIntersector.
+                Segment((aClosestInd + 1) / 2).LastPoint();
+            }
+          }
 
-	if (aState == TopAbs_OUT)
-	  return;
+          const gp_Pnt2d &aPOnC = aPInter.Value();
+          if (theFExp.IsPointInEdgeVertex(aPOnC))
+          {
+            const unsigned int aPenaltyVal = 5u;
+            aSumPenaltyVertCoinc += aPenaltyVal;
+            aRayInfo.AddPenalty(aPenaltyVal);
+          }
+
+          aRayInfo.AddParamOnLine(aPInter.ParamOnFirst());
+
+          myEdgeParameter = aPInter.ParamOnSecond();
+        }
+        
+        if ((aClassifier.State() == TopAbs_ON) &&
+            (aRayInfo.GetWeight() == aSumPenaltyVertCoinc))
+        {
+          // if we are ON, we stop. In case only if we can trust this info.
+          // In case of ON-status we can trust the ray going through the edge vertex.
+          myState = TopAbs_ON;
+          return;
+        }
+      }
+
+      if (aRayInfo.MinDeltaInterval() < aMaxDelta)
+      {
+        aRayInfo.AddPenalty();
+      }
+
+      aRayInfo.SetState(aClassifier.State());
+
+      if ((aRayInfo.GetState() == TopAbs_OUT) && (aRayInfo.GetWeight() == 0))
+      {
+        // If we are out of the wire we stop. In case only if we can trust this info.
+        myState = TopAbs_OUT;
+        return;
       }
     }
 
-    if (!myClassifier.IsHeadOrEnd() && aState != TopAbs_UNKNOWN)
-      break;
+    if ((aClassifier.State() != TopAbs_UNKNOWN) && ((myState == TopAbs_UNKNOWN) ||
+                                                    (aRayInfo.GetWeight() <= aMaxWeight)))
+    {
+      if (aRayInfo.GetWeight() < aMaxWeight)
+      {
+        aMaxWeight = aRayInfo.GetWeight();
+        aRealInterval = aRayInfo.MinDeltaInterval();
+        myState = aClassifier.State();
+      }
+      else if (aRayInfo.MinDeltaInterval() >= aRealInterval)
+      {
+        myState = aClassifier.State();
+        aRealInterval = aRayInfo.MinDeltaInterval();
+      }
+      else if (myState == TopAbs_UNKNOWN)
+      {
+        myState = aClassifier.State();
+      }
+      
+      if (!aClassifier.IsHeadOrEnd() && (aRayInfo.GetWeight() == 0))
+      {
+        myState = aClassifier.State();
+        return;
+      }
+    }
+  }
+  while (hasWires && 
+         ((aRayInfo.GetWeight() != 0) || (myState == TopAbs_UNKNOWN)) &&
+         theFExp.OtherRay(aPoint, aRayInfo, aMaxWeight));
 
-    // Bad case for classification. Trying to get another segment.
-    IsValidSegment = Fexp.OtherSegment(aPoint, aLine, aParam);
+  if (!hasWires)
+  {
+    myState = TopAbs_IN;
+    return;
   }
 }
 
@@ -159,33 +226,6 @@ void TopClass_FaceClassifier::Perform(TheFaceExplorer& Fexp,
 
 TopAbs_State TopClass_FaceClassifier::State() const
 {
-  if (rejected)     return TopAbs_OUT;
-  else if (nowires) return TopAbs_IN;
-  else              return  myClassifier.State();
-}
-
-//=======================================================================
-//function : Edge
-//purpose  : 
-//=======================================================================
-
-const TheEdge& TopClass_FaceClassifier::Edge() const
-{
-  Standard_DomainError_Raise_if(rejected,
-				"TopClass_FaceClassifier::Edge:rejected");
-  return myEdge;
-}
-
-
-//=======================================================================
-//function : EdgeParameter
-//purpose  : 
-//=======================================================================
-
-Standard_Real TopClass_FaceClassifier::EdgeParameter() const
-{
-  Standard_DomainError_Raise_if(rejected,
-				"TopClass_FaceClassifier::EdgeParameter:rejected");
-  return myEdgeParameter;
+  return myState;
 }
 
