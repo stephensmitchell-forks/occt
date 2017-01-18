@@ -1,6 +1,6 @@
 # !!!! This file is generated automatically, do not edit manually! See end script
 puts "TODO CR23096 ALL: LABELS : Faulty"
-puts "TODO CR25923 ALL: STATSHAPE : Faulty"
+puts "TODO CR23096 ALL: STATSHAPE : Faulty"
 
 set LinuxDiff 4
 set filename y306351fM.igs
@@ -8,7 +8,7 @@ set filename y306351fM.igs
 set ref_data {
 DATA        : Faulties = 0  ( 1 )  Warnings = 0  ( 0 )  Summary  = 0  ( 1 )
 TPSTAT      : Faulties = 0  ( 0 )  Warnings = 180  ( 951 )  Summary  = 180  ( 951 )
-CHECKSHAPE  : Wires    = 0  ( 0 )  Faces    = 0  ( 1 )  Shells   = 0  ( 0 )   Solids   = 0 ( 0 )
+CHECKSHAPE  : Wires    = 0  ( 1 )  Faces    = 0  ( 1 )  Shells   = 0  ( 0 )   Solids   = 0 ( 0 )
 NBSHAPES    : Solid    = 0  ( 0 )  Shell    = 0  ( 0 )  Face     = 392  ( 390 )   Summary  = 11570  ( 11567 )
 STATSHAPE   : Solid    = 0  ( 0 )  Shell    = 0  ( 0 )  Face     = 392  ( 390 )   FreeWire = 20  ( 20 )   FreeEdge  = 1157 ( 1157 )   SharedEdge = 4814  ( 4814 )
 TOLERANCE   : MaxTol   =         1e-005  ( 1.00030003e-005 )  AvgTol   =  1.800816884e-007  (  7.374328327e-006 )

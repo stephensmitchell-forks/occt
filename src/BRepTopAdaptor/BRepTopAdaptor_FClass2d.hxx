@@ -17,20 +17,18 @@
 #ifndef _BRepTopAdaptor_FClass2d_HeaderFile
 #define _BRepTopAdaptor_FClass2d_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_DefineAlloc.hxx>
-#include <Standard_Handle.hxx>
-
+#include <BRepClass_FaceClassifier.hxx>
 #include <BRepTopAdaptor_SeqOfPtr.hxx>
 #include <TColStd_SequenceOfInteger.hxx>
-#include <Standard_Real.hxx>
 #include <TopoDS_Face.hxx>
-#include <TopAbs_State.hxx>
-#include <Standard_Boolean.hxx>
-class TopoDS_Face;
-class gp_Pnt2d;
+class CSLib_Class2d;
 
-
+//! Checks the position of some 2D-point relatively 
+//! to the face.
+//! Returns status ON if the point is in the at least of one
+//! edge of the face.
+//! Returns status IN if the point is included to the face.
+//! Otherwise, returns status OUT.
 
 class BRepTopAdaptor_FClass2d 
 {
@@ -38,55 +36,66 @@ public:
 
   DEFINE_STANDARD_ALLOC
 
+  //! Empty constructor
+  Standard_EXPORT BRepTopAdaptor_FClass2d();
+
+  //! Constructs algorithm by theFace and the 3D-tolerance <theTol3D>
+  Standard_EXPORT BRepTopAdaptor_FClass2d(const TopoDS_Face& theFace,
+                                          const Standard_Real theTol3D);
   
-  Standard_EXPORT BRepTopAdaptor_FClass2d(const TopoDS_Face& F, const Standard_Real Tol);
-  
+  //! Initializes algorithm by theFace and the 3D-tolerance <theTol3D>
+  Standard_EXPORT void Init(const TopoDS_Face& theFace,
+                            const Standard_Real theTol3D);
+
+  //! Classifies an infinite 2d point relatively of the Face.
   Standard_EXPORT TopAbs_State PerformInfinitePoint() const;
   
-  Standard_EXPORT TopAbs_State Perform (const gp_Pnt2d& Puv, const Standard_Boolean RecadreOnPeriodic = Standard_True) const;
+  //! Returns state of the 2d point theP2D.
+  //! If theIsReqToAdjust==TRUE the point will be adjusted
+  //! to period for a periodical surface before classification.
+  Standard_EXPORT TopAbs_State
+    Perform(const gp_Pnt2d& theP2D,
+            const Standard_Boolean theIsReqToAdjust = Standard_True) const;
   
+  //! Destructor
   Standard_EXPORT void Destroy();
-~BRepTopAdaptor_FClass2d()
-{
-  Destroy();
-}
+  ~BRepTopAdaptor_FClass2d()
+  {
+    Destroy();
+  }
   
-  Standard_EXPORT const BRepTopAdaptor_FClass2d& Copy (const BRepTopAdaptor_FClass2d& Other) const;
-const BRepTopAdaptor_FClass2d& operator= (const BRepTopAdaptor_FClass2d& Other) const
-{
-  return Copy(Other);
-}
-  
-  //! Test a point with +- an offset (Tol) and returns
-  //! On if some points are OUT an some are IN
-  //! (Caution: Internal use . see the code for more details)
-  Standard_EXPORT TopAbs_State TestOnRestriction (const gp_Pnt2d& Puv, const Standard_Real Tol, const Standard_Boolean RecadreOnPeriodic = Standard_True) const;
+  //! Classifies theP2D using 3D-tolerance theTol3D.
+  //! If theIsReqToAdjust==TRUE the point will be adjusted
+  //! to period for a periodical surface before classification.
+  Standard_EXPORT TopAbs_State
+    TestOnRestriction(const gp_Pnt2d& theP2D,
+                      const Standard_Real theTol3D,
+                      const Standard_Boolean theIsReqToAdjust = Standard_True) const;
 
-
+  //! Returns TRUE if material of the Face
+  //! outside of its outer wire. 
+  Standard_Boolean IsHole() const
+  {
+    return (PerformInfinitePoint() == TopAbs_IN);
+  }
 
 
 protected:
-
+  const BRepTopAdaptor_FClass2d& operator= (const BRepTopAdaptor_FClass2d&) const;
 
 
 
 
 private:
-
-
-
-  BRepTopAdaptor_SeqOfPtr TabClass;
-  TColStd_SequenceOfInteger TabOrien;
-  Standard_Real Toluv;
-  TopoDS_Face Face;
-  Standard_Real U1;
-  Standard_Real V1;
-  Standard_Real U2;
-  Standard_Real V2;
-  Standard_Real Umin;
-  Standard_Real Umax;
-  Standard_Real Vmin;
-  Standard_Real Vmax;
+  mutable BRepClass_FaceClassifier myClassifier;
+  NCollection_Sequence<CSLib_Class2d*> myTabClass;
+  NCollection_Sequence<Standard_Integer> myTabOrien;
+  TopoDS_Face myFace;
+  Standard_Real myTol3D;
+  Standard_Real myUmin;
+  Standard_Real myVmin;
+  Standard_Real myUmax;
+  Standard_Real myVmax;
 
 
 };

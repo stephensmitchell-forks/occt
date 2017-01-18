@@ -19,6 +19,7 @@
 #include <BRepAdaptor_Surface.hxx>
 #include <BRepBndLib.hxx>
 #include <BRepClass3d_SolidClassifier.hxx>
+#include <BRepTopAdaptor_FClass2d.hxx>
 #include <Extrema_LocateExtPC.hxx>
 #include <Geom2d_Curve.hxx>
 #include <Geom2d_TrimmedCurve.hxx>
@@ -33,7 +34,6 @@
 #include <gp_Pnt2d.hxx>
 #include <IntTools_Context.hxx>
 #include <IntTools_Curve.hxx>
-#include <IntTools_FClass2d.hxx>
 #include <IntTools_SurfaceRangeLocalizeData.hxx>
 #include <IntTools_Tools.hxx>
 #include <Precision.hxx>
@@ -103,13 +103,13 @@ IntTools_Context::~IntTools_Context()
   DataMapOfShapeAddress::Iterator aIt;
   DataMapOfTransientAddress::Iterator aIt1;
   //
-  IntTools_FClass2d* pFClass2d;
+  BRepTopAdaptor_FClass2d* pFClass2d;
   //
   aIt.Initialize(myFClass2dMap);
   for (; aIt.More(); aIt.Next()) {
     anAdr=aIt.Value();
-    pFClass2d=(IntTools_FClass2d*)anAdr;
-    (*pFClass2d).~IntTools_FClass2d();
+    pFClass2d = (BRepTopAdaptor_FClass2d*)anAdr;
+    (*pFClass2d).~BRepTopAdaptor_FClass2d();
     myAllocator->Free(anAdr); 
   }
   myFClass2dMap.Clear();
@@ -254,28 +254,23 @@ Standard_Boolean IntTools_Context::IsInfiniteFace
 //function : FClass2d
 //purpose  : 
 //=======================================================================
-IntTools_FClass2d& IntTools_Context::FClass2d(const TopoDS_Face& aF)
+BRepTopAdaptor_FClass2d& IntTools_Context::FClass2d(const TopoDS_Face& aF)
 {
-  Standard_Address anAdr;
-  IntTools_FClass2d* pFClass2d;
+  BRepTopAdaptor_FClass2d* pFClass2d;
   //
   if (!myFClass2dMap.IsBound(aF)) {
-    Standard_Real aTolF;
-    TopoDS_Face aFF;
+    const TopoDS_Face aFF = TopoDS::Face(aF.Oriented(TopAbs_FORWARD));
+    const Standard_Real aTolF=BRep_Tool::Tolerance(aFF);
     //
-    aFF=aF;
-    aFF.Orientation(TopAbs_FORWARD);
-    aTolF=BRep_Tool::Tolerance(aFF);
-    //
-    pFClass2d=(IntTools_FClass2d*)myAllocator->Allocate(sizeof(IntTools_FClass2d));
-    new (pFClass2d) IntTools_FClass2d(aFF, aTolF);
-    //
-    anAdr=(Standard_Address)pFClass2d;
-    myFClass2dMap.Bind(aFF, anAdr);
+    pFClass2d = (BRepTopAdaptor_FClass2d*)myAllocator->
+                        Allocate(sizeof(BRepTopAdaptor_FClass2d));
+    new (pFClass2d)BRepTopAdaptor_FClass2d(aFF, aTolF);
+
+    myFClass2dMap.Bind(aFF, (Standard_Address)pFClass2d);
   }
-  else {
-    anAdr=myFClass2dMap.Find(aF);
-    pFClass2d=(IntTools_FClass2d*)anAdr;
+  else
+  {
+    pFClass2d = (BRepTopAdaptor_FClass2d*)(myFClass2dMap.Find(aF));
   }
   return *pFClass2d;
 }
@@ -703,12 +698,11 @@ Standard_Integer IntTools_Context::ComputeVF
 //function : StatePointFace
 //purpose  : 
 //=======================================================================
-TopAbs_State IntTools_Context::StatePointFace
-  (const TopoDS_Face& aF,
-   const gp_Pnt2d& aP2d)
+TopAbs_State IntTools_Context::StatePointFace(const TopoDS_Face& aF,
+                                              const gp_Pnt2d& aP2d)
 {
   TopAbs_State aState;
-  IntTools_FClass2d& aClass2d=FClass2d(aF);
+  BRepTopAdaptor_FClass2d& aClass2d = FClass2d(aF);
   aState=aClass2d.Perform(aP2d);
   return aState;
 }

@@ -438,8 +438,7 @@ void ChFi3d_FilBuilder::PerformThreeCorner(const Standard_Integer Jndex)
   // the border.  
   Handle(GeomAdaptor_HSurface) 
     bidsurf = new GeomAdaptor_HSurface(Fac->ChangeSurface().Surface());
-  Handle(Adaptor3d_TopolTool) 
-    IFac = new Adaptor3d_TopolTool(bidsurf);
+  Handle(Adaptor3d_TopolTool) IFac = new Adaptor3d_TopolTool(bidsurf);
   // end of the attempt.
   Handle(Adaptor3d_TopolTool) ISurf = new Adaptor3d_TopolTool(Surf);
   Handle(ChFiDS_Stripe) corner = new ChFiDS_Stripe();

@@ -18,6 +18,7 @@
 #include <BRep_Builder.hxx>
 #include <BRep_Tool.hxx>
 #include <BRepTopAdaptor_FClass2d.hxx>
+#include <gp.hxx>
 #include <Precision.hxx>
 #include <Standard_Failure.hxx>
 #include <TopoDS.hxx>
@@ -69,7 +70,7 @@ Standard_Boolean TopOpeBRepTool_face::Init(const TopoDS_Wire& W, const TopoDS_Fa
   B.NaturalRestriction(fres,Standard_True);
 
   // <myfinite> :
-  BRepTopAdaptor_FClass2d FClass(fres,0.);
+  BRepTopAdaptor_FClass2d FClass(fres, gp::Resolution());
   Standard_Boolean infinite = ( FClass.PerformInfinitePoint() == TopAbs_IN);
   myfinite = !infinite;
 

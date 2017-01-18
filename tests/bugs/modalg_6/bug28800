@@ -1,0 +1,15 @@
+puts "============"
+puts "OCC28800"
+puts "============"
+puts ""
+###############################
+## The compound of two faces is incorrectly detected as self-interfered
+###############################
+
+restore [locate_data_file bug28800_faces.brep] result
+set bcheck [bopcheck result]
+if {![regexp {This shape seems to be OK.} $bcheck]} {
+    puts "Error: bopcheck failed"
+}
+
+checkview -display result -2d -path ${imagedir}/${test_image}.png

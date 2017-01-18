@@ -233,22 +233,22 @@ protected:
   
   Standard_EXPORT void CallPerformSurf (Handle(ChFiDS_Stripe)& Stripe, const Standard_Boolean Simul, ChFiDS_SequenceOfSurfData& SeqSD, Handle(ChFiDS_SurfData)& SD, const Handle(ChFiDS_HElSpine)& Guide, const Handle(ChFiDS_Spine)& Spine, const Handle(BRepAdaptor_HSurface)& HS1, const Handle(BRepAdaptor_HSurface)& HS3, const gp_Pnt2d& P1, const gp_Pnt2d& P3, const Handle(Adaptor3d_TopolTool)& I1, const Handle(BRepAdaptor_HSurface)& HS2, const Handle(BRepAdaptor_HSurface)& HS4, const gp_Pnt2d& P2, const gp_Pnt2d& P4, const Handle(Adaptor3d_TopolTool)& I2, const Standard_Real MaxStep, const Standard_Real Fleche, const Standard_Real TolGuide, Standard_Real& First, Standard_Real& Last, const Standard_Boolean Inside, const Standard_Boolean Appro, const Standard_Boolean Forward, const Standard_Boolean RecOnS1, const Standard_Boolean RecOnS2, math_Vector& Soldep, Standard_Integer& Intf, Standard_Integer& Intl, Handle(BRepAdaptor_HSurface)& Surf1, Handle(BRepAdaptor_HSurface)& Surf2);
   
-  //! Method, implemented in the inheritants, calculating
+  //! Method, implemented in the inheritance, calculating
   //! elements of construction of the surface (fillet or
   //! chamfer).
   Standard_EXPORT virtual Standard_Boolean PerformSurf (ChFiDS_SequenceOfSurfData& Data, const Handle(ChFiDS_HElSpine)& Guide, const Handle(ChFiDS_Spine)& Spine, const Standard_Integer Choix, const Handle(BRepAdaptor_HSurface)& S1, const Handle(Adaptor3d_TopolTool)& I1, const Handle(BRepAdaptor_HSurface)& S2, const Handle(Adaptor3d_TopolTool)& I2, const Standard_Real MaxStep, const Standard_Real Fleche, const Standard_Real TolGuide, Standard_Real& First, Standard_Real& Last, const Standard_Boolean Inside, const Standard_Boolean Appro, const Standard_Boolean Forward, const Standard_Boolean RecOnS1, const Standard_Boolean RecOnS2, const math_Vector& Soldep, Standard_Integer& Intf, Standard_Integer& Intl) = 0;
   
-  //! Method, implemented  in inheritants, calculates
+  //! Method, implemented  in inheritance, calculates
   //! the elements of construction of  the surface (fillet
   //! or chamfer) contact edge/face.
   Standard_EXPORT virtual void PerformSurf (ChFiDS_SequenceOfSurfData& Data, const Handle(ChFiDS_HElSpine)& Guide, const Handle(ChFiDS_Spine)& Spine, const Standard_Integer Choix, const Handle(BRepAdaptor_HSurface)& S1, const Handle(Adaptor3d_TopolTool)& I1, const Handle(BRepAdaptor_HCurve2d)& PC1, const Handle(BRepAdaptor_HSurface)& Sref1, const Handle(BRepAdaptor_HCurve2d)& PCref1, Standard_Boolean& Decroch1, const Handle(BRepAdaptor_HSurface)& S2, const Handle(Adaptor3d_TopolTool)& I2, const TopAbs_Orientation Or2, const Standard_Real MaxStep, const Standard_Real Fleche, const Standard_Real TolGuide, Standard_Real& First, Standard_Real& Last, const Standard_Boolean Inside, const Standard_Boolean Appro, const Standard_Boolean Forward, const Standard_Boolean RecP, const Standard_Boolean RecS, const Standard_Boolean RecRst, const math_Vector& Soldep);
   
-  //! Method, implemented in  inheritants, calculates
+  //! Method, implemented in  inheritance, calculates
   //! the elements of construction of  the surface (fillet
   //! or chamfer) contact edge/face.
   Standard_EXPORT virtual void PerformSurf (ChFiDS_SequenceOfSurfData& Data, const Handle(ChFiDS_HElSpine)& Guide, const Handle(ChFiDS_Spine)& Spine, const Standard_Integer Choix, const Handle(BRepAdaptor_HSurface)& S1, const Handle(Adaptor3d_TopolTool)& I1, const TopAbs_Orientation Or1, const Handle(BRepAdaptor_HSurface)& S2, const Handle(Adaptor3d_TopolTool)& I2, const Handle(BRepAdaptor_HCurve2d)& PC2, const Handle(BRepAdaptor_HSurface)& Sref2, const Handle(BRepAdaptor_HCurve2d)& PCref2, Standard_Boolean& Decroch2, const Standard_Real MaxStep, const Standard_Real Fleche, const Standard_Real TolGuide, Standard_Real& First, Standard_Real& Last, const Standard_Boolean Inside, const Standard_Boolean Appro, const Standard_Boolean Forward, const Standard_Boolean RecP, const Standard_Boolean RecS, const Standard_Boolean RecRst, const math_Vector& Soldep);
   
-  //! Method, implemented in inheritants, calculates
+  //! Method, implemented in inheritance, calculates
   //! the elements of construction of  the surface (fillet
   //! or chamfer) contact edge/edge.
   Standard_EXPORT virtual void PerformSurf (ChFiDS_SequenceOfSurfData& Data, const Handle(ChFiDS_HElSpine)& Guide, const Handle(ChFiDS_Spine)& Spine, const Standard_Integer Choix, const Handle(BRepAdaptor_HSurface)& S1, const Handle(Adaptor3d_TopolTool)& I1, const Handle(BRepAdaptor_HCurve2d)& PC1, const Handle(BRepAdaptor_HSurface)& Sref1, const Handle(BRepAdaptor_HCurve2d)& PCref1, Standard_Boolean& Decroch1, const TopAbs_Orientation Or1, const Handle(BRepAdaptor_HSurface)& S2, const Handle(Adaptor3d_TopolTool)& I2, const Handle(BRepAdaptor_HCurve2d)& PC2, const Handle(BRepAdaptor_HSurface)& Sref2, const Handle(BRepAdaptor_HCurve2d)& PCref2, Standard_Boolean& Decroch2, const TopAbs_Orientation Or2, const Standard_Real MaxStep, const Standard_Real Fleche, const Standard_Real TolGuide, Standard_Real& First, Standard_Real& Last, const Standard_Boolean Inside, const Standard_Boolean Appro, const Standard_Boolean Forward, const Standard_Boolean RecP1, const Standard_Boolean RecRst1, const Standard_Boolean RecP2, const Standard_Boolean RecRst2, const math_Vector& Soldep);
@@ -290,34 +290,6 @@ protected:
   
   Standard_EXPORT Standard_Boolean CompleteData (Handle(ChFiDS_SurfData)& Data, const Handle(Geom_Surface)& Surfcoin, const Handle(Adaptor3d_HSurface)& S1, const Handle(Geom2d_Curve)& PC1, const Handle(Adaptor3d_HSurface)& S2, const Handle(Geom2d_Curve)& PC2, const TopAbs_Orientation Or, const Standard_Boolean On1, const Standard_Boolean Gd1, const Standard_Boolean Gd2, const Standard_Boolean Gf1, const Standard_Boolean Gf2);
 
-
-  Standard_Real tolappangle;
-  Standard_Real tolesp;
-  Standard_Real tol2d;
-  Standard_Real tolapp3d;
-  Standard_Real tolapp2d;
-  Standard_Real fleche;
-  GeomAbs_Shape myConti;
-  ChFiDS_Map myEFMap;
-  ChFiDS_Map myESoMap;
-  ChFiDS_Map myEShMap;
-  ChFiDS_Map myVFMap;
-  ChFiDS_Map myVEMap;
-  Handle(TopOpeBRepDS_HDataStructure) myDS;
-  Handle(TopOpeBRepBuild_HBuilder) myCoup;
-  ChFiDS_ListOfStripe myListStripe;
-  ChFiDS_StripeMap myVDataMap;
-  ChFiDS_Regularities myRegul;
-  ChFiDS_ListOfStripe badstripes;
-  TopTools_ListOfShape badvertices;
-  TopTools_DataMapOfShapeListOfInteger myEVIMap;
-  Standard_Boolean done;
-  Standard_Boolean hasresult;
-
-
-private:
-
-  
   Standard_EXPORT Standard_Boolean FaceTangency (const TopoDS_Edge& E0, const TopoDS_Edge& E1, const TopoDS_Vertex& V) const;
   
   Standard_EXPORT void PerformSetOfSurfOnElSpine (const Handle(ChFiDS_HElSpine)& ES, Handle(ChFiDS_Stripe)& St, Handle(BRepTopAdaptor_TopolTool)& It1, Handle(BRepTopAdaptor_TopolTool)& It2, const Standard_Boolean Simul = Standard_False);
@@ -348,6 +320,31 @@ private:
   
   Standard_EXPORT void ConexFaces (const Handle(ChFiDS_Spine)& Sp, const Standard_Integer IEdge, const Standard_Integer RefChoix, Handle(BRepAdaptor_HSurface)& HS1, Handle(BRepAdaptor_HSurface)& HS2) const;
 
+  Standard_Real tolappangle;
+  Standard_Real tolesp;
+  Standard_Real tol2d;
+  Standard_Real tolapp3d;
+  Standard_Real tolapp2d;
+  Standard_Real fleche;
+  GeomAbs_Shape myConti;
+  ChFiDS_Map myEFMap;
+  ChFiDS_Map myESoMap;
+  ChFiDS_Map myEShMap;
+  ChFiDS_Map myVFMap;
+  ChFiDS_Map myVEMap;
+  Handle(TopOpeBRepDS_HDataStructure) myDS;
+  Handle(TopOpeBRepBuild_HBuilder) myCoup;
+  ChFiDS_ListOfStripe myListStripe;
+  ChFiDS_StripeMap myVDataMap;
+  ChFiDS_Regularities myRegul;
+  ChFiDS_ListOfStripe badstripes;
+  TopTools_ListOfShape badvertices;
+  TopTools_DataMapOfShapeListOfInteger myEVIMap;
+  Standard_Boolean done;
+  Standard_Boolean hasresult;
+
+
+private:
 
   TopoDS_Shape myShape;
   Standard_Real angular;

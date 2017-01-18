@@ -36,7 +36,7 @@
 #include <gp_Pnt2d.hxx>
 #include <gp_Vec.hxx>
 #include <IntTools_Context.hxx>
-#include <IntTools_FClass2d.hxx>
+#include <BRepTopAdaptor_FClass2d.hxx>
 #include <NCollection_DataMap.hxx>
 #include <NCollection_UBTreeFiller.hxx>
 #include <TColStd_MapIntegerHasher.hxx>
@@ -423,7 +423,7 @@ void BOPAlgo_BuilderFace::PerformAreas()
     if (!bIsGrowth)
     {
       // Fast check did not give the result, run classification
-      IntTools_FClass2d& aClsf = myContext->FClass2d(aFace);
+      BRepTopAdaptor_FClass2d& aClsf = myContext->FClass2d(aFace);
       bIsGrowth = !aClsf.IsHole();
     }
 
@@ -738,7 +738,7 @@ Standard_Boolean IsInside(const TopoDS_Shape& theHole,
       BOPTools_AlgoTools2D::PointOnSurface(aE, aF2, aT, aU, aV, theContext);
       aP2D.SetCoord(aU, aV);
       //
-      IntTools_FClass2d& aClsf=theContext->FClass2d(aF2);
+      BRepTopAdaptor_FClass2d& aClsf=theContext->FClass2d(aF2);
       aState=aClsf.Perform(aP2D);
       bRet=(aState==TopAbs_IN);
     }

@@ -2951,8 +2951,7 @@ Standard_Real ChFi3d_EvalTolReached(const Handle(Adaptor3d_HSurface)& S1,
 //function : trsfsurf
 //purpose  : 
 //=======================================================================
-Handle(Geom_Surface) trsfsurf(const Handle(Adaptor3d_HSurface)& HS,
-  Handle(Adaptor3d_TopolTool)&      /*dom*/)
+Handle(Geom_Surface) trsfsurf(const Handle(Adaptor3d_HSurface)& HS)
 {
   //Pour l utilisation des domaines voir avec BUBUCH!!
   Handle(Geom_Surface) res;
@@ -3184,9 +3183,8 @@ Standard_Boolean ChFi3d_ComputeCurves(const Handle(Adaptor3d_HSurface)&   S1,
   }
   else {
     // here GeomInt is approached.
-    Handle(Adaptor3d_TopolTool) dom1,dom2;
-    Handle(Geom_Surface) gs1 = trsfsurf(S1,dom1);
-    Handle(Geom_Surface) gs2 = trsfsurf(S2,dom2);
+    Handle(Geom_Surface) gs1 = trsfsurf(S1);
+    Handle(Geom_Surface) gs2 = trsfsurf(S2);
     Standard_Integer nbl ;
     if(!gs1.IsNull() && !gs2.IsNull()) {
       GeomInt_IntSS inter;

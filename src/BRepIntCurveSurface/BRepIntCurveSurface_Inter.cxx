@@ -95,12 +95,13 @@ void BRepIntCurveSurface_Inter::Clear()
 //purpose  : 
 //===========================================================================
 
-void BRepIntCurveSurface_Inter::Load(const TopoDS_Shape& theShape ,const Standard_Real theTol)
+void BRepIntCurveSurface_Inter::Load(const TopoDS_Shape& theShape,
+                                     const Standard_Real theTol3D)
 {
   Clear();
   myFaces.Clear();
   myFaceBoxes.Nullify();
-  myTolerance = theTol;
+  my3DTolerance = theTol3D;
   TopExp_Explorer explorer(theShape,TopAbs_FACE);
   for( ; explorer.More(); explorer.Next())
     myFaces.Append(explorer.Current());
@@ -166,7 +167,7 @@ void BRepIntCurveSurface_Inter::Find()
     if( aFaceBox.IsVoid())
     {
       BRepBndLib::Add(aCurface, aFaceBox);
-      aFaceBox.SetGap(myTolerance);//Precision::Confusion());
+      aFaceBox.SetGap(my3DTolerance);//Precision::Confusion());
     }
     Standard_Boolean isOut = ( myCurve->GetType() == GeomAbs_Line ? aFaceBox.IsOut(myCurve->Line()) :
       ( !myCurveBox.IsVoid() ? aFaceBox.IsOut(myCurveBox ) : Standard_False ) );
@@ -200,7 +201,6 @@ void BRepIntCurveSurface_Inter::Find()
 Standard_Boolean BRepIntCurveSurface_Inter::FindPoint()
 {
   Standard_Integer j =  (!myCurrentindex ?  1 : myCurrentindex);
-  
   for( ; j <= myCurrentnbpoints; j++ )
   {
     Standard_Real anU = myIntcs.Point(j).U();
@@ -208,7 +208,7 @@ Standard_Boolean BRepIntCurveSurface_Inter::FindPoint()
   
     gp_Pnt2d Puv( anU,aV );
 
-    myCurrentstate = myFastClass->Classify(Puv,myTolerance); 
+    myCurrentstate = myFastClass->Classify(Puv, my3DTolerance);
     if(myCurrentstate == TopAbs_ON || myCurrentstate == TopAbs_IN) 
     { 
       myCurrentindex = j;

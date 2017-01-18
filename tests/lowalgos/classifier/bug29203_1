@@ -1,0 +1,36 @@
+puts "========"
+puts "OCC29203"
+puts "========"
+puts ""
+#################################################
+# Different Point-Face-classification algorithms return different results
+#################################################
+
+puts "TODO OCC29203 ALL: Error : Wrong result of 2d classifier algorithm"
+
+# There is a dangerous to return ON-status by the reason
+# of poor algorithm of IntRes2d_Position computation
+# in BRepClass_Intersector class. Correct status is OUT.
+
+binrestore [locate_data_file bug29203_transface.bin] result
+fixshape result result
+checkshape result
+
+point pp 7.1206049999999994 0.17881000000000000
+
+v2d
+pcurve result
+2dfit
+checkview -screenshot -2d -path ${imagedir}/${test_image}.png
+
+if { ![regexp {OUT} [ b2dclassifx result pp -t 1.0e-7 ] ] } {
+    puts "Error : Wrong result of 2d classifier algorithm"
+} else {
+    puts "OK : Good result of 2d classifier algorithm"
+}
+
+if { ![regexp {OUT} [ b2dclassify result pp -t 1.0e-7 ] ] } {
+    puts "Error : Wrong result of 2d classifier algorithm"
+} else {
+    puts "OK : Good result of 2d classifier algorithm"
+}

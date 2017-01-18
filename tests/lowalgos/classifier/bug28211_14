@@ -1,0 +1,47 @@
+puts "========"
+puts "OCC28211"
+puts "========"
+puts ""
+#################################################
+# Modeling Algorithms - Boolean fuse operation produces incorrect result
+#################################################
+
+# We create new face, which is not-closed in 2D-space.
+# This gap is created between two 2D-representations
+# of seam-edges (it is known fact that seam-edge has
+# two p-curves on the face) and is covered by the tolerance
+# of the vertex, which is shared between two edges.
+# After that, point is classified, which is
+# out of the face UV-bounds.
+
+plane pl 0 0 0 0 0 1
+pcylinder cy pl 1 100
+explode cy f
+emptycopy result cy_1
+explode cy_1 e
+copy cy_1_1 e1
+copy cy_1_2 e2
+copy cy_1_2 e3
+orientation e2 F
+orientation e3 R
+wire ww e1 e2 e3
+add ww result
+
+explode result v
+settolerance result_2 10
+
+checkshape result
+
+point pp 3.5 -10
+
+if { ![regexp {OUT} [ b2dclassifx result pp ] ] } {
+    puts "Error : Wrong result of b2dclassifx algorithm"
+} else {
+    puts "OK : Good result of b2dclassifx algorithm"
+}
+
+if { ![regexp {OUT} [ b2dclassify result pp ] ] } {
+    puts "Error : Wrong result of b2dclassify algorithm"
+} else {
+    puts "OK : Good result of b2dclassify algorithm"
+}

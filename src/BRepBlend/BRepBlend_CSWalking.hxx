@@ -97,8 +97,8 @@ private:
   Handle(BRepBlend_Line) line;
   Handle(Adaptor3d_HSurface) surf;
   Handle(Adaptor3d_HCurve) curv;
-  Handle(Adaptor3d_TopolTool) domain;
-  Standard_Real tolesp;
+  Handle(Adaptor3d_TopolTool) myDomain;
+  Standard_Real my3DTolEsp;
   Standard_Real tolgui;
   Standard_Real pasmax;
   Standard_Real fleche;

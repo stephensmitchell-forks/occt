@@ -4,7 +4,7 @@ set filename PRO7745.stp
 set ref_data {
 DATA        : Faulties = 0  ( 0 )  Warnings = 0  ( 0 )  Summary  = 0  ( 0 )
 TPSTAT      : Faulties = 0  ( 0 )  Warnings = 18  ( 18 )  Summary  = 18  ( 18 )
-CHECKSHAPE  : Wires    = 0  ( 0 )  Faces    = 0  ( 0 )  Shells   = 0  ( 0 )   Solids   = 0 ( 0 )
+CHECKSHAPE  : Wires    = 0  ( 0 )  Faces    = 2  ( 2 )  Shells   = 0  ( 0 )   Solids   = 0 ( 0 )
 NBSHAPES    : Solid    = 0  ( 0 )  Shell    = 1  ( 1 )  Face     = 60  ( 60 )   Summary  = 370  ( 370 )
 STATSHAPE   : Solid    = 0  ( 0 )  Shell    = 1  ( 1 )  Face     = 60  ( 60 )   FreeWire = 0  ( 0 )   FreeEdge  = 0 ( 0 )   SharedEdge = 158  ( 158 )
 TOLERANCE   : MaxTol   =    8.855087235  (    8.855087235 )  AvgTol   =    0.2597592097  (    0.2598183653 )
