@@ -1,0 +1,30 @@
+puts "========"
+puts "OCC28211"
+puts "========"
+puts ""
+#################################################
+# Modeling Algorithms - Boolean fuse operation produces incorrect result
+#################################################
+
+# Classification the point on periodic face.
+
+restore [locate_data_file CTO904_pro14942a.rle] a 
+explode a f
+
+copy a_1 result
+
+checkshape result
+
+point pp 3.1415926535897949 1.3545376643853366
+
+if { ![regexp {OUT} [ b2dclassifx result pp ] ] } {
+    puts "Error : Wrong result of 2d classifier algorithm"
+} else {
+    puts "OK : Good result of 2d classifier algorithm"
+}
+
+v2d
+pcurve result
+2dfit
+
+checkview -screenshot -2d -path ${imagedir}/${test_image}.png

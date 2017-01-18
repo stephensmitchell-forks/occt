@@ -559,6 +559,10 @@ void BOPAlgo_PaveFiller::MakeBlocks()
         //
         // Make Edge
         BOPTools_AlgoTools::MakeEdge (aIC, aV1, aT1, aV2, aT2, aTolR3D, aES);
+
+        if (aES.IsNull())
+          continue;
+
         //
         // check for micro edge
         if (BOPTools_AlgoTools::IsMicroEdge(aES, myContext, Standard_False)) {

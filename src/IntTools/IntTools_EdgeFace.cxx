@@ -18,6 +18,7 @@
 #include <BndLib_AddSurface.hxx>
 #include <BRep_Tool.hxx>
 #include <BRepAdaptor_Surface.hxx>
+#include <BRepTopAdaptor_FClass2d.hxx>
 #include <Extrema_ExtCS.hxx>
 #include <Extrema_POnCurv.hxx>
 #include <Extrema_POnSurf.hxx>
@@ -44,7 +45,6 @@
 #include <IntTools_CommonPrt.hxx>
 #include <IntTools_Context.hxx>
 #include <IntTools_EdgeFace.hxx>
-#include <IntTools_FClass2d.hxx>
 #include <IntTools_Range.hxx>
 #include <IntTools_Root.hxx>
 #include <IntTools_Tools.hxx>
@@ -272,7 +272,7 @@ Standard_Boolean IntTools_EdgeFace::IsCoincident()
     aP2d.SetX(aU);
     aP2d.SetY(aV);
 
-    IntTools_FClass2d& aClass2d=myContext->FClass2d(myFace);
+    BRepTopAdaptor_FClass2d& aClass2d = myContext->FClass2d(myFace);
     aState = aClass2d.Perform(aP2d);
     
     if(aState == TopAbs_OUT)

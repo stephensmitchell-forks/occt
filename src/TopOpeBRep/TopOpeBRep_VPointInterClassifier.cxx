@@ -116,7 +116,7 @@ TopAbs_State TopOpeBRep_VPointInterClassifier::VPointPosition
       myState = SlowClassifyOnBoundary(VP.Value(), p2d, mySlowFaceClassifier, FF);      
       if(myState == TopAbs_ON) {
 //modified by NIZHNY-MKK  Mon Jun 19 11:45:36 2000.END
-	VP.EdgeON(mySlowFaceClassifier.Edge().Edge(),
+	VP.EdgeON(mySlowFaceClassifier.Edge().GetTopoEdge(),
 		  mySlowFaceClassifier.EdgeParameter(),
 		  FaceClassifyIndex);
       }
@@ -137,7 +137,7 @@ TopAbs_State TopOpeBRep_VPointInterClassifier::VPointPosition
 	myState = SlowClassifyOnBoundary(VP.Value(), p2d, mySlowFaceClassifier, FF);
 	if(myState == TopAbs_ON) {
 //modified by NIZHNY-MKK  Mon Jun 19 11:45:36 2000.END
-	  VP.EdgeON(mySlowFaceClassifier.Edge().Edge(),
+	  VP.EdgeON(mySlowFaceClassifier.Edge().GetTopoEdge(),
 		    mySlowFaceClassifier.EdgeParameter(),
 		    FaceClassifyIndex);
 	}
@@ -158,7 +158,7 @@ TopAbs_State TopOpeBRep_VPointInterClassifier::VPointPosition
       //modified by NIZNHY-PKV Mon Feb  5 19:04:49 2001 t
 	myState = SlowClassifyOnBoundary(VP.Value(), p2d, mySlowFaceClassifier, FF);
 	if(myState==TopAbs_ON) {
-	  VP.EdgeON(mySlowFaceClassifier.Edge().Edge(),
+	  VP.EdgeON(mySlowFaceClassifier.Edge().GetTopoEdge(),
 		    mySlowFaceClassifier.EdgeParameter(),
 		    FaceClassifyIndex);
 	}
@@ -179,7 +179,7 @@ TopAbs_State TopOpeBRep_VPointInterClassifier::VPointPosition
 const TopoDS_Shape& TopOpeBRep_VPointInterClassifier::Edge() const
 {
   if (myState == TopAbs_ON) {
-    const TopoDS_Shape& S = mySlowFaceClassifier.Edge().Edge();
+    const TopoDS_Shape& S = mySlowFaceClassifier.Edge().GetTopoEdge();
     return S;
   }
   else {
@@ -210,7 +210,7 @@ static TopAbs_State SlowClassifyOnBoundary(const gp_Pnt& thePointToClassify,
 					   const TopoDS_Face& theFace) {   
 
   Standard_Real aParameterOnEdge = theSlowClassifier.EdgeParameter();
-  const TopoDS_Edge& anEdge = theSlowClassifier.Edge().Edge();
+  const TopoDS_Edge& anEdge = theSlowClassifier.Edge().GetTopoEdge();
 
   Standard_Real parf, parl;
   Handle(Geom_Curve) anEdgeCurve = BRep_Tool::Curve(anEdge, parf, parl);

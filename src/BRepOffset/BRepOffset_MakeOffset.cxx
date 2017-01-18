@@ -28,6 +28,7 @@
 #include <BRepAdaptor_Curve.hxx>
 #include <BRepAdaptor_Curve2d.hxx>
 #include <BRepAdaptor_Surface.hxx>
+#include <BRepTopAdaptor_FClass2d.hxx>
 #include <BRepAlgo_AsDes.hxx>
 #include <BRepAlgo_Image.hxx>
 #include <BRepCheck_Analyzer.hxx>
@@ -81,7 +82,6 @@
 #include <gp_Lin2d.hxx>
 #include <gp_Pnt.hxx>
 #include <GProp_GProps.hxx>
-#include <IntTools_FClass2d.hxx>
 #include <NCollection_List.hxx>
 #include <Precision.hxx>
 #include <Standard_ConstructionError.hxx>
@@ -2642,7 +2642,7 @@ void BRepOffset_MakeOffset::MakeMissingWalls ()
               TopoDS_Edge aE1, aE2;
               TopoDS_Wire aW1, aW2;
               Handle(Geom_Plane) aPL;
-              IntTools_FClass2d aClsf;
+              BRepTopAdaptor_FClass2d aClsf;
               //
               if (aCirc.Radius()>aCircOE.Radius()) {
                 aE1 = anEdge;

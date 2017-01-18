@@ -19,6 +19,7 @@
 #include <BRep_Tool.hxx>
 #include <BRepAdaptor_Curve.hxx>
 #include <BRepAdaptor_Surface.hxx>
+#include <BRepTopAdaptor_FClass2d.hxx>
 #include <Geom2d_Curve.hxx>
 #include <Geom2d_TrimmedCurve.hxx>
 #include <Geom_BoundedCurve.hxx>
@@ -41,7 +42,6 @@
 #include <gp_Pnt2d.hxx>
 #include <IntTools_CommonPrt.hxx>
 #include <IntTools_Curve.hxx>
-#include <IntTools_FClass2d.hxx>
 #include <IntTools_Range.hxx>
 #include <IntTools_SequenceOfCurves.hxx>
 #include <IntTools_Tools.hxx>
@@ -437,7 +437,7 @@ static
   TopAbs_State aState;
   
   aFaceTolerance=BRep_Tool::Tolerance(aF);
-  IntTools_FClass2d aClass2d(aF, aFaceTolerance);
+  BRepTopAdaptor_FClass2d aClass2d(aF, aFaceTolerance);
   aState=aClass2d.Perform(aP2d);
   
   return aState;

@@ -5,8 +5,13 @@ TopClass_Classifier3d.gxx
 TopClass_Classifier3d.lxx
 TopClass_FaceClassifier.gxx
 TopClass_FaceClassifier.lxx
+TopClass_GeomEdge.cxx
+TopClass_GeomEdge.hxx
+TopClass_GeomVertex.cxx
+TopClass_GeomVertex.hxx
 TopClass_Intersection3d.cxx
 TopClass_Intersection3d.hxx
+TopClass_RayInfo.hxx
 TopClass_SolidClassifier.gxx
 TopClass_SolidExplorer.cxx
 TopClass_SolidExplorer.hxx

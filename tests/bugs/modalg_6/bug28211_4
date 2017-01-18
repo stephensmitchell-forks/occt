@@ -1,0 +1,63 @@
+puts "========"
+puts "OCC28211"
+puts "========"
+puts ""
+#################################################
+# Modeling Algorithms - Boolean fuse operation produces incorrect result
+#################################################
+
+# We create new face, which is not-closed in 2D-space.
+# This gap is covered by the tolerance of the vertex
+# and this vertex is shared between two edges.
+# After that, point is classified, which is
+# out of the face UV-bounds.
+
+box b1 10 10 1
+copy b1 b2
+btranslate b2 -10 0 0
+sewing bb b1 b2
+
+explode bb f
+
+explode bb_7 v
+copy bb_7_2 v1
+copy bb_7_3 v2
+copy bb_7_4 v3
+settolerance v1 1.5
+
+explode bb_7 e
+emptycopy e1 bb_7_2
+emptycopy e2 bb_7_3
+emptycopy e3 bb_7_4
+
+add v1 e1
+copy v1 v1c
+orientation v1c F
+
+add v2 e1
+copy v2 v2c
+orientation v2c R
+
+add v2c e2
+add v3 e2
+copy v3 v3c
+orientation v3c R
+
+add v3c e3
+add v1c e3
+
+wire w1 e1 e2 e3
+
+buildfaces f1 bb_7 w1
+explode f1 f
+copy f1_1 result
+
+checkshape result
+
+point pp 0.5 10
+
+if { ![regexp {OUT} [ b2dclassifx result pp ] ] } {
+    puts "Error : Wrong result of 2d classifier algorithm"
+} else {
+    puts "OK : Good result of 2d classifier algorithm"
+}

@@ -30,7 +30,7 @@
 #include <TopAbs_State.hxx>
 #include <TopAbs_Orientation.hxx>
 class Standard_DomainError;
-class BRepClass_Edge;
+class TopClass_GeomEdge;
 class BRepClass_Intersector;
 class gp_Lin2d;
 
@@ -55,7 +55,7 @@ public:
   
   //! Updates  the classification process with  the edge
   //! <E> from the boundary.
-  Standard_EXPORT void Compare (const BRepClass_Edge& E, const TopAbs_Orientation Or);
+  Standard_EXPORT void Compare(const TopClass_GeomEdge& E);
   
   //! Returns the current value of the parameter.
     Standard_Real Parameter() const;
@@ -105,8 +105,6 @@ private:
 
 };
 
-#define TheEdge BRepClass_Edge
-#define TheEdge_hxx <BRepClass_Edge.hxx>
 #define TheIntersector BRepClass_Intersector
 #define TheIntersector_hxx <BRepClass_Intersector.hxx>
 #define TopClass_Classifier2d BRepClass_FacePassiveClassifier
@@ -114,8 +112,6 @@ private:
 
 #include <TopClass_Classifier2d.lxx>
 
-#undef TheEdge
-#undef TheEdge_hxx
 #undef TheIntersector
 #undef TheIntersector_hxx
 #undef TopClass_Classifier2d

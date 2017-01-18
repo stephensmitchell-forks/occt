@@ -19,8 +19,8 @@
 #include <BRep_Tool.hxx>
 #include <BRepBuilderAPI_Transform.hxx>
 #include <BRepClass3d_SolidClassifier.hxx>
+#include <BRepTopAdaptor_FClass2d.hxx>
 #include <gp_Trsf.hxx>
-#include <IntTools_FClass2d.hxx>
 #include <TColStd_IndexedDataMapOfTransientTransient.hxx>
 #include <TDF_ChildIterator.hxx>
 #include <TDF_Label.hxx>
@@ -917,7 +917,7 @@ Standard_Boolean TNaming::OuterWire(const TopoDS_Face& theFace, TopoDS_Wire& the
   TopoDS_Face aFx;
   TopoDS_Wire aWx;
   BRep_Builder aBB;
-  IntTools_FClass2d aFC;
+  BRepTopAdaptor_FClass2d aFC;
   Standard_Boolean bFlag(Standard_False);
   Standard_Real aTol = BRep_Tool::Tolerance(theFace);
   TopoDS_Iterator aIt(theFace);

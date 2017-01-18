@@ -23,12 +23,12 @@
 #include <BRep_Tool.hxx>
 #include <BRepClass3d_SolidClassifier.hxx>
 #include <BRepClass_FaceClassifier.hxx>
+#include <BRepTopAdaptor_FClass2d.hxx>
 #include <DBRep.hxx>
 #include <Draw.hxx>
 #include <DrawTrSurf.hxx>
 #include <gp_Pnt.hxx>
 #include <gp_Pnt2d.hxx>
-#include <IntTools_FClass2d.hxx>
 #include <TCollection_AsciiString.hxx>
 #include <TopAbs_State.hxx>
 #include <TopoDS.hxx>
@@ -54,6 +54,7 @@ static  Standard_Integer bclassify   (Draw_Interpretor& , Standard_Integer , con
 static  Standard_Integer b2dclassify (Draw_Interpretor& , Standard_Integer , const char** );
 static  Standard_Integer b2dclassifx (Draw_Interpretor& , Standard_Integer , const char** );
 static  Standard_Integer bhaspc      (Draw_Interpretor& , Standard_Integer , const char** );
+static  Standard_Integer IsHole      (Draw_Interpretor&, Standard_Integer, const char**);
 
 //=======================================================================
 //function : LowCommands
@@ -74,6 +75,10 @@ static  Standard_Integer bhaspc      (Draw_Interpretor& , Standard_Integer , con
                   __FILE__, b2dclassifx , g);
   theCommands.Add("bhaspc"       , "use bhaspc Edge Face [do]",
                   __FILE__, bhaspc      , g);
+
+  theCommands.Add("ishole"       , "Use: ishole face [-t toler]: Checks if the face is hole",
+    __FILE__, IsHole, g);
+
 }
 
 
@@ -108,7 +113,7 @@ Standard_Integer b2dclassifx (Draw_Interpretor& theDI,
   const Standard_Real aTol = (theArgNb == 4) ? 
     Draw::Atof (theArgVec[3]) : BRep_Tool::Tolerance (aF);
   //
-  IntTools_FClass2d aClassifier(aF, aTol);
+  BRepTopAdaptor_FClass2d aClassifier(aF, aTol);
   aState=aClassifier.Perform(aP);
   PrintState (theDI, aState);
   //
@@ -151,6 +156,45 @@ Standard_Integer b2dclassify (Draw_Interpretor& theDI,
   //
   return 0;
 }
+
+//=======================================================================
+//function : IsHole
+//purpose  : 
+//=======================================================================
+Standard_Integer IsHole(Draw_Interpretor& theDI,
+  Standard_Integer  theArgNb,
+  const char**      theArgVec)
+{
+  if (theArgNb < 2)
+  {
+    theDI << "Use: ishole face [-t toler]\n";
+    return 1;
+  }
+
+  TopoDS_Face aF = TopoDS::Face(DBRep::Get(theArgVec[1]));
+  Standard_Real aTol = BRep_Tool::Tolerance(aF);
+
+  for (Standard_Integer i = 2; i < theArgNb; i++)
+  {
+    if ((theArgVec[i][0] == '-') && (theArgVec[i][1] == 't'))
+    {
+      aTol = Draw::Atof(theArgVec[++i]);
+    }
+  }
+
+  BRepTopAdaptor_FClass2d aClassifier(aF, aTol);
+  if (aClassifier.PerformInfinitePoint() == TopAbs_IN)
+  {
+    theDI << "The face is hole\n";
+  }
+  else
+  {
+    theDI << "The face is not hole\n";
+  }
+
+  return 0;
+}
+
 
 //=======================================================================
 //function : bclassify

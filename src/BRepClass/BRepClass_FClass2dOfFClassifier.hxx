@@ -19,22 +19,13 @@
 
 #include <Standard.hxx>
 #include <Standard_DefineAlloc.hxx>
-#include <Standard_Handle.hxx>
 
-#include <Standard_Boolean.hxx>
-#include <gp_Lin2d.hxx>
-#include <Standard_Real.hxx>
-#include <TopTrans_CurveTransition.hxx>
 #include <BRepClass_Intersector.hxx>
-#include <Standard_Integer.hxx>
 #include <TopAbs_State.hxx>
-#include <TopAbs_Orientation.hxx>
-class Standard_DomainError;
-class BRepClass_Edge;
-class BRepClass_Intersector;
+#include <TopTrans_CurveTransition.hxx>
+
 class gp_Lin2d;
-
-
+class TopClass_GeomEdge;
 
 class BRepClass_FClass2dOfFClassifier 
 {
@@ -55,7 +46,7 @@ public:
   
   //! Updates  the classification process with  the edge
   //! <E> from the boundary.
-  Standard_EXPORT void Compare (const BRepClass_Edge& E, const TopAbs_Orientation Or);
+  Standard_EXPORT void Compare(const TopClass_GeomEdge& E);
   
   //! Returns the current value of the parameter.
     Standard_Real Parameter() const;
@@ -77,18 +68,9 @@ public:
   //! otherwise.
     Standard_Boolean IsHeadOrEnd() const;
 
-
-
-
 protected:
 
-
-
-
-
 private:
-
-
 
   Standard_Boolean myIsSet;
   Standard_Boolean myFirstCompare;
@@ -101,12 +83,8 @@ private:
   Standard_Integer myClosest;
   TopAbs_State myState;
   Standard_Boolean myIsHeadOrEnd;
-
-
 };
 
-#define TheEdge BRepClass_Edge
-#define TheEdge_hxx <BRepClass_Edge.hxx>
 #define TheIntersector BRepClass_Intersector
 #define TheIntersector_hxx <BRepClass_Intersector.hxx>
 #define TopClass_Classifier2d BRepClass_FClass2dOfFClassifier
@@ -114,14 +92,9 @@ private:
 
 #include <TopClass_Classifier2d.lxx>
 
-#undef TheEdge
-#undef TheEdge_hxx
 #undef TheIntersector
 #undef TheIntersector_hxx
 #undef TopClass_Classifier2d
 #undef TopClass_Classifier2d_hxx
-
-
-
 
 #endif // _BRepClass_FClass2dOfFClassifier_HeaderFile

@@ -26,8 +26,12 @@
 
 #define TheFaceExplorer Geom2dHatch_Elements
 #define TheFaceExplorer_hxx <Geom2dHatch_Elements.hxx>
-#define TheEdge Geom2dAdaptor_Curve
-#define TheEdge_hxx <Geom2dAdaptor_Curve.hxx>
+
+//! Are used only for compatibility with TopOpeBRep
+//! packages. It should be deleted after this package will be eliminated.
+#define TheTopoEdge Geom2dAdaptor_Curve
+#define TheTopoEdge_hxx <Geom2dAdaptor_Curve.hxx>
+
 #define TheIntersection2d Geom2dHatch_Intersector
 #define TheIntersection2d_hxx <Geom2dHatch_Intersector.hxx>
 #define TopClass_FClass2d Geom2dHatch_FClass2dOfClassifier

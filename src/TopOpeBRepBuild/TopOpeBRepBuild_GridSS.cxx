@@ -17,7 +17,6 @@
 
 #include <BRep_Tool.hxx>
 #include <BRepAdaptor_Surface.hxx>
-#include <BRepClass_Edge.hxx>
 #include <BRepClass_Intersector.hxx>
 #include <BRepTools.hxx>
 #include <ElCLib.hxx>
@@ -77,6 +76,7 @@
 #include <TopOpeBRepTool_ShapeExplorer.hxx>
 #include <TopOpeBRepTool_ShapeTool.hxx>
 #include <TopOpeBRepTool_TOOL.hxx>
+#include <TopClass_GeomEdge.hxx>
 
 #ifdef DRAW
 #include <TopOpeBRepTool_DRAW.hxx>
@@ -1309,8 +1309,6 @@ static Standard_Boolean AreFacesCoincideInArea (const TopoDS_Shape& theBaseFace,
   Standard_Real pLinMin = RealLast();
   Standard_Real tol2d = Precision::PConfusion();
   BRepClass_Intersector anInter;
-  BRepClass_Edge aBCE;
-  aBCE.Face() = aBaseFace;
   Standard_Real maxDist = Max (BRep_Tool::Tolerance(aBaseFace),
                                BRep_Tool::Tolerance(aFace));
 
@@ -1331,8 +1329,9 @@ static Standard_Boolean AreFacesCoincideInArea (const TopoDS_Shape& theBaseFace,
       if (PC.IsNull()) {isError = Standard_True; break;}
       BB.UpdateEdge(aE,PC,aBaseFace,tolE);
     }
-    aBCE.Edge() = aE;
-    anInter.Perform(aLin,pLinMin,tol2d,aBCE);
+
+    TopClass_GeomEdge aGE(aE, aBaseFace);
+    anInter.Perform(aLin, pLinMin, tol2d, aGE);
     if (anInter.IsDone()) {
       Standard_Integer i;
       for (i=1; i <= anInter.NbPoints(); i++) {
