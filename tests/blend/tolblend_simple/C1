@@ -14,6 +14,8 @@
 #sewing s t_1 t_5 t2_1 t2_5
 #explode s Sh
 
+puts "TODO OCC11111 All:TEST INCOMPLETE"
+
 restore [locate_data_file CFI_7_c3_fhq.rle] s
 tscale  s 0 0 0 SCALE1 
 explode s e

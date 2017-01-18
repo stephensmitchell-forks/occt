@@ -16,15 +16,6 @@
 
 #include TheFaceExplorer_hxx
 
-//=======================================================================
-//function : Rejected
-//purpose  : 
-//=======================================================================
-
-inline Standard_Boolean TopClass_FaceClassifier::Rejected() const
-{
-  return rejected;
-}
 
 //=======================================================================
 //function : Nowires

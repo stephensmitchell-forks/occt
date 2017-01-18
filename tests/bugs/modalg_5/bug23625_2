@@ -15,7 +15,7 @@ fit
 
 reflectlines result a 0 1 0
 
-checkprops result -l 3905.95 
+checkprops result -l 3977.19
 checkshape result 
 checksection result
 

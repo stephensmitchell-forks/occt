@@ -40,7 +40,7 @@ DEFINE_STANDARD_HANDLE(Adaptor3d_TopolTool, MMgt_TShared)
 //! from Adaptor3d.
 //! All methods and fields may be redefined when
 //! inheriting from this class.
-//! This class is used to instantiate algorithmes
+//! This class is used to instantiate algorithms
 //! as Intersection, outlines,...
 class Adaptor3d_TopolTool : public MMgt_TShared
 {
@@ -74,9 +74,27 @@ public:
   
   Standard_EXPORT virtual void NextVertex();
   
-  Standard_EXPORT virtual TopAbs_State Classify (const gp_Pnt2d& P, const Standard_Real Tol, const Standard_Boolean ReacdreOnPeriodic = Standard_True);
-  
-  Standard_EXPORT virtual Standard_Boolean IsThePointOn (const gp_Pnt2d& P, const Standard_Real Tol, const Standard_Boolean ReacdreOnPeriodic = Standard_True);
+  //! Classifies theP relatively to the domain of myS.
+  //! theTol3D is the 3D-tolerance. Respective 2D-tolerance
+  //! is recomputed inside this method.
+  //! The parameter ReacdreOnPeriodic is not used in
+  //! this method (is kept for compatibility with
+  //! inherited classes).
+  Standard_EXPORT virtual 
+        TopAbs_State Classify(const gp_Pnt2d& theP,
+                              const Standard_Real theTol3D,
+                              const Standard_Boolean ReacdreOnPeriodic = Standard_True);
+
+  //! Returns TRUE if theP is on the boundary of the domain of myS.
+  //! theTol3D is the 3D-tolerance. Respective 2D-tolerance
+  //! is recomputed inside this method.
+  //! The parameter ReacdreOnPeriodic is not used in
+  //! this method (is kept for compatibility with
+  //! inherited classes).
+  Standard_EXPORT virtual
+        Standard_Boolean IsThePointOn(const gp_Pnt2d& theP,
+                                      const Standard_Real theTol3D,
+                                      const Standard_Boolean ReacdreOnPeriodic = Standard_True);
   
   //! If the function returns the orientation of the arc.
   //! If the orientation is FORWARD or REVERSED, the arc is
@@ -158,6 +176,12 @@ public:
 
 protected:
 
+  //! Classifies theP relatively to the domain of myS.
+  //! theTolU and theTolV is the 2D-tolerances.
+  Standard_EXPORT
+        TopAbs_State Classify(const gp_Pnt2d& theP,
+                              const Standard_Real theTolU,
+                              const Standard_Real theTolV);
 
   Handle(Adaptor3d_HSurface) myS;
   Standard_Integer myNbSamplesU;

@@ -1941,7 +1941,7 @@ HLRBRep_Data::Classify (const Standard_Integer E,
             GeomInt::AdjustPeriodic(v, VMin, VMax, PeriodV, v, aDummyShift);
 	  
           gp_Pnt2d pnt2d(u, v);
-          if (myClassifier->Classify(pnt2d, Precision::PConfusion())
+          if (myClassifier->Classify(pnt2d, Precision::Confusion())
             != TopAbs_OUT)
           {
             state = TopAbs_IN;

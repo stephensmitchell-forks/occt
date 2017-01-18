@@ -1516,7 +1516,7 @@ Standard_Boolean LocOpe_WiresOnShape::Add(const TopTools_SequenceOfShape& theEdg
 
         if (aCheckStateTool.IsNull())
         {
-          aCheckStateTool = new BRepTopAdaptor_FClass2d(aCurF, Precision::PConfusion());
+          aCheckStateTool = new BRepTopAdaptor_FClass2d(aCurF, Precision::Confusion());
         }
         if (aCheckStateTool->Perform(gp_Pnt2d(aU, aV)) == TopAbs_IN)
         {

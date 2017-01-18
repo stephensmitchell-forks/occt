@@ -1,0 +1,29 @@
+puts "========"
+puts "OCC28211"
+puts "========"
+puts ""
+#################################################
+# Modeling Algorithms - Boolean fuse operation produces incorrect result
+#################################################
+
+# The face seems to be valid but quite big (in 2D-space).
+# So, (almost) all classification rays are almost
+# tangent to existing ones.
+
+binrestore [locate_data_file bug28211_bigface.brep] result
+
+checkshape result
+
+point pp -3.1415926535980878 -63835.740811028722
+
+if { ![regexp {OUT} [ b2dclassifx result pp ] ] } {
+    puts "Error : Wrong result of 2d classifier algorithm"
+} else {
+    puts "OK : Good result of 2d classifier algorithm"
+}
+
+if { ![regexp {OUT} [ b2dclassify result pp ] ] } {
+    puts "Error : Wrong result of 2d classifier algorithm"
+} else {
+    puts "OK : Good result of 2d classifier algorithm"
+}

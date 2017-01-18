@@ -1344,7 +1344,7 @@ static void putIntWires(TopoDS_Shape& theFace, TopTools_SequenceOfShape& theWire
       aC2d->D0((aFirst + aLast) * 0.5, aP2d);
       isP2d = Standard_True;
     }
-    BRepClass_FaceClassifier aClass(aFace, aP2d, Precision::PConfusion());
+    BRepClass_FaceClassifier aClass(aFace, aP2d, Precision::Confusion());
     if (aClass.State() == TopAbs_IN)
     {
       BRep_Builder().Add(aFace, aWire);

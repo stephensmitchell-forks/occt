@@ -882,20 +882,6 @@ void IntTools_EdgeEdge::ComputeLineLine()
     return;
   }
   //
-  {
-    TopoDS_Iterator aIt1, aIt2;
-    aIt1.Initialize(myEdge1);
-    for (; aIt1.More(); aIt1.Next()) {
-      const TopoDS_Shape& aV1 = aIt1.Value();
-      aIt2.Initialize(myEdge2);
-      for (; aIt2.More(); aIt2.Next()) {
-        const TopoDS_Shape& aV2 = aIt2.Value();
-        if (aV2.IsSame(aV1)) {
-          return;
-        }
-      }
-    }
-  }
   //
   aSin = 1. - aCos*aCos;
   gp_Pnt O1 = aL1.Location();

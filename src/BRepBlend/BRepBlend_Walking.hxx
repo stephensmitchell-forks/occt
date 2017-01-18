@@ -101,13 +101,6 @@ public:
 
 protected:
 
-
-
-
-
-private:
-
-  
   Standard_EXPORT void InternalPerform (Blend_Function& F, Blend_FuncInv& FInv, const Standard_Real Bound);
   
   Standard_EXPORT Standard_Boolean CorrectExtremityOnOneRst (const Standard_Integer IndexOfRst, const Standard_Real theU, const Standard_Real theV, const Standard_Real theParam, const gp_Pnt& thePntOnRst, Standard_Real& NewU, Standard_Real& NewV, gp_Pnt& NewPoint, Standard_Real& NewParam) const;
@@ -127,21 +120,25 @@ private:
   Standard_EXPORT Blend_Status TestArret (Blend_Function& F, const Blend_Status State, const Standard_Boolean TestDeflection = Standard_True, const Standard_Boolean TestSolution = Standard_True, const Standard_Boolean TestLengthStep = Standard_False);
 
 
+
+
+private:
+
   Blend_Point previousP;
   Handle(BRepBlend_Line) line;
   math_Vector sol;
   Blend_SequenceOfPoint jalons;
   Handle(Adaptor3d_HSurface) surf1;
   Handle(Adaptor3d_HSurface) surf2;
-  Handle(Adaptor3d_TopolTool) domain1;
-  Handle(Adaptor3d_TopolTool) domain2;
-  Handle(Adaptor3d_TopolTool) recdomain1;
-  Handle(Adaptor3d_TopolTool) recdomain2;
+  Handle(Adaptor3d_TopolTool) myDomain1;
+  Handle(Adaptor3d_TopolTool) myDomain2;
+  Handle(Adaptor3d_TopolTool) myRecDomain1;
+  Handle(Adaptor3d_TopolTool) myRecDomain2;
   Handle(ChFiDS_HElSpine) hguide;
   Standard_Boolean ToCorrectOnRst1;
   Standard_Boolean ToCorrectOnRst2;
   Standard_Real CorrectedParam;
-  Standard_Real tolesp;
+  Standard_Real my3DTolEsp;
   Standard_Real tolgui;
   Standard_Real pasmax;
   Standard_Real fleche;

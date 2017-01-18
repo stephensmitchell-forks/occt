@@ -250,8 +250,7 @@ static Standard_Boolean IsClosed (const TopoDS_Wire& W)
 //=======================================================================
 
 static Standard_Boolean IsInside(const TopoDS_Wire&       wir,
-                                 const TopoDS_Face&       F,
-                                 BRepTopAdaptor_FClass2d& /*FClass2d*/)
+                                 const TopoDS_Face&       F)
 {
   TopExp_Explorer exp;
   exp.Init(wir,TopAbs_EDGE);
@@ -277,9 +276,9 @@ static Standard_Boolean IsInside(const TopoDS_Wire&       wir,
     }
 
     gp_Pnt2d pt2d(C2d->Value(prm));
-    BRepTopAdaptor_FClass2d FClass2d(F,Precision::PConfusion());
+    BRepTopAdaptor_FClass2d FClass2d(F,Precision::Confusion());
     TopAbs_State st2=FClass2d.Perform(pt2d,Standard_False);
-    return(st2 == TopAbs_IN);     
+    return(st2 == TopAbs_IN);
   }
   return Standard_False;
 }
@@ -393,7 +392,7 @@ void BRepAlgo_FaceRestrictor::PerformWithCorrection()
     B.Add(NF,W);
     
     if (IsClosed(W)) {  
-      BRepTopAdaptor_FClass2d FClass2d(NF,Precision::PConfusion());
+      BRepTopAdaptor_FClass2d FClass2d(NF,Precision::Confusion());
       if(FClass2d.PerformInfinitePoint() != TopAbs_OUT) { 
         W.Reverse();
       }
@@ -416,10 +415,9 @@ void BRepAlgo_FaceRestrictor::PerformWithCorrection()
       NF.Orientation(TopAbs_FORWARD);
       B.Add(NF,W1);
       
-      BRepTopAdaptor_FClass2d FClass2d(NF,Precision::PConfusion());
       while (it2.More()) {
         const TopoDS_Wire& W2 = TopoDS::Wire(it2.Value());
-        if (!W1.IsSame(W2) && IsInside (W2,NF,FClass2d)) {
+        if (!W1.IsSame(W2) && IsInside (W2,NF)) {
           Store (W2,W1,keyIsIn,keyContains);
         } 
         it2.Next();

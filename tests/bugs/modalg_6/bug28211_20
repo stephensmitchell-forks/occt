@@ -1,0 +1,43 @@
+puts "========"
+puts "OCC28211"
+puts "========"
+puts ""
+#################################################
+# Modeling Algorithms - Boolean fuse operation produces incorrect result
+#################################################
+
+# Before the fix, "b2dclassify" returned ON-status but
+# b2dclassifx returned OUT. After the fix, both
+# commands will return ON.
+# More over, the face is invalid:
+# InvalidCurveOnSurface and InvalidSameParameterFlag.
+
+puts "REQUIRED All: Faulty shapes in variables faulty_1 to faulty_2"
+
+set Toler 1.0e-7
+
+binrestore [locate_data_file bug28211_forhlr25908.brep] result
+
+checkshape result
+
+point pp 0.38952064924606344 1.8145650971005813
+
+if { ![regexp {ON} [ b2dclassifx result pp $Toler] ] } {
+    puts "Error : Wrong result of 2d classifier algorithm"
+} else {
+    puts "OK : Good result of 2d classifier algorithm"
+}
+
+if { ![regexp {ON} [ b2dclassify result pp $Toler] ] } {
+    puts "Error : Wrong result of 2d classifier algorithm"
+} else {
+    puts "OK : Good result of 2d classifier algorithm"
+}
+
+v2d
+2dclear
+display pp
+pcurve result
+2dfit
+
+checkview -screenshot -2d -path ${imagedir}/${test_image}_2d.png

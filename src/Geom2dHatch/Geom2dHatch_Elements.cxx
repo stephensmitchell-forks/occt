@@ -1,4 +1,4 @@
-// Created on: 1994-12-16
+﻿// Created on: 1994-12-16
 // Created by: Laurent BUCHARD
 // Copyright (c) 1994-1999 Matra Datavision
 // Copyright (c) 1999-2014 OPEN CASCADE SAS
@@ -16,18 +16,10 @@
 
 //  Modified by skv - Fri Jul 14 17:03:47 2006 OCC12627
 
-#include <Geom2dAdaptor_Curve.hxx>
-#include <Geom2dHatch_Element.hxx>
 #include <Geom2dHatch_Elements.hxx>
-#include <gp.hxx>
-#include <gp_Lin2d.hxx>
-#include <gp_Pnt2d.hxx>
-#include <gp_Vec2d.hxx>
-#include <Standard_DomainError.hxx>
-#include <Standard_Integer.hxx>
-#include <Standard_NoSuchObject.hxx>
-#include <TColStd_MapIntegerHasher.hxx>
-#include <TopAbs_Orientation.hxx>
+
+#include <TopClass_GeomEdge.hxx>
+#include <TopClass_RayInfo.hxx>
 
 Geom2dHatch_Elements::Geom2dHatch_Elements(const Geom2dHatch_Elements& )
 {
@@ -36,11 +28,8 @@ Geom2dHatch_Elements::Geom2dHatch_Elements(const Geom2dHatch_Elements& )
 #endif
 }
 
-Geom2dHatch_Elements::Geom2dHatch_Elements()
+Geom2dHatch_Elements::Geom2dHatch_Elements() :myCurrentWire(0)
 {
-  NumWire = 0;
-  NumEdge = 0;
-  myCurEdge = 1;
 }
 
 void Geom2dHatch_Elements::Clear()
@@ -84,71 +73,37 @@ Standard_Boolean  Geom2dHatch_Elements::CheckPoint(gp_Pnt2d&)
 }
 
 //=======================================================================
-//function : Reject
+//function : ListOfRays
 //purpose  : 
 //=======================================================================
-
-Standard_Boolean  Geom2dHatch_Elements::Reject(const gp_Pnt2d&) const  {
-  return Standard_False;
-}
-
-//=======================================================================
-//function : Segment
-//purpose  : 
-//=======================================================================
-
-Standard_Boolean Geom2dHatch_Elements::Segment(const gp_Pnt2d& P, 
-					             gp_Lin2d& L, 
-					             Standard_Real& Par)
+void Geom2dHatch_Elements::ListOfRays(const gp_Pnt2d& thePnt,
+                                      NCollection_List<TopClass_RayInfo>& theList)
 {
-  myCurEdge = 1;
+  Geom2dHatch_DataMapIteratorOfMapOfElements Itertemp(myMap);
 
-  return OtherSegment(P, L, Par);
-}
-
-//=======================================================================
-//function : Segment
-//purpose  : 
-//=======================================================================
-
-Standard_Boolean Geom2dHatch_Elements::OtherSegment(const gp_Pnt2d& P, 
-						          gp_Lin2d& L, 
-						          Standard_Real& Par)
-{
-  Geom2dHatch_DataMapIteratorOfMapOfElements Itertemp;
-  Standard_Integer                        i;
-  
-  for(  Itertemp.Initialize(myMap), i = 1; Itertemp.More(); Itertemp.Next(), i++) { 
-    if (i < myCurEdge)
+  for (Itertemp.Initialize(myMap); Itertemp.More(); Itertemp.Next())
+  {
+    const Standard_Integer anIdx = Itertemp.Key();
+    const Geom2dHatch_Element& anItem = myMap.Find(anIdx);
+    const Geom2dAdaptor_Curve& E = anItem.Curve();
+    const TopAbs_Orientation anOri = anItem.Orientation();
+    if ((anOri != TopAbs_FORWARD) && (anOri != TopAbs_REVERSED))
+    {
       continue;
-
-    void *ptrmyMap = (void *)(&myMap);
-    Geom2dHatch_Element& Item=((Geom2dHatch_MapOfElements*)ptrmyMap)->ChangeFind(Itertemp.Key());
-    Geom2dAdaptor_Curve& E = Item.ChangeCurve();
-    TopAbs_Orientation Or= Item.Orientation();
-    gp_Pnt2d P2 = E.Value
-      ((E.FirstParameter() + E.LastParameter()) *0.5);
-    if ((Or == TopAbs_FORWARD) ||
-	(Or == TopAbs_REVERSED)) {
-      gp_Vec2d V(P,P2);
-      Par = V.Magnitude();
-      if (Par >= gp::Resolution()) {
-	L = gp_Lin2d(P,V);
-	myCurEdge++;
-	return Standard_True;
-      }
     }
+
+    TopClass_RayInfo aRI;
+    const gp_Pnt2d aPE = E.Value((E.FirstParameter() + E.LastParameter()) *0.5);
+    const gp_Vec2d aV(thePnt, aPE);
+    aRI.SetParam(aV.Magnitude());
+    if (aRI.GetParameter() < gp::Resolution())
+    {
+      continue;
+    }
+
+    aRI.SetLin(gp_Lin2d(thePnt, aV));
+    theList.Append(aRI);
   }
-
-  if (i == myCurEdge + 1) {
-    Par = RealLast();
-    L = gp_Lin2d(P,gp_Dir2d(1,0));
-    myCurEdge++;
-
-    return Standard_True;
-  }
-
-  return Standard_False;
 }
 
 //=======================================================================
@@ -156,19 +111,9 @@ Standard_Boolean Geom2dHatch_Elements::OtherSegment(const gp_Pnt2d& P,
 //purpose  : 
 //=======================================================================
 
-void  Geom2dHatch_Elements::InitWires()  {
-  NumWire = 0;
-}
-
-//=======================================================================
-//function : RejectWire NYI
-//purpose  : 
-//=======================================================================
-
-Standard_Boolean Geom2dHatch_Elements::RejectWire(const gp_Lin2d& , 
-						   const Standard_Real) const 
+void  Geom2dHatch_Elements::InitWires()
 {
-  return Standard_False;
+  myCurrentWire = 0;
 }
 
 //=======================================================================
@@ -176,41 +121,20 @@ Standard_Boolean Geom2dHatch_Elements::RejectWire(const gp_Lin2d& ,
 //purpose  : 
 //=======================================================================
 
-void  Geom2dHatch_Elements::InitEdges()  {
-  NumEdge = 0;
-  Iter.Initialize(myMap);
-}
-
-//=======================================================================
-//function : RejectEdge NYI
-//purpose  : 
-//=======================================================================
-
-Standard_Boolean Geom2dHatch_Elements::RejectEdge(const gp_Lin2d& , 
-						  const Standard_Real ) const 
+void  Geom2dHatch_Elements::InitEdges()
 {
-  return Standard_False;
+  myIter.Initialize(myMap);
 }
-
 
 //=======================================================================
 //function : CurrentEdge
 //purpose  : 
 //=======================================================================
 
-void  Geom2dHatch_Elements::CurrentEdge(Geom2dAdaptor_Curve& E, 
-					TopAbs_Orientation& Or) const 
+void  Geom2dHatch_Elements::CurrentEdge(TopClass_GeomEdge& theGE) const 
 {
-  void *ptrmyMap = (void *)(&myMap);
-  Geom2dHatch_Element& Item=((Geom2dHatch_MapOfElements*)ptrmyMap)->ChangeFind(Iter.Key());
-
-  E = Item.ChangeCurve();
-  Or= Item.Orientation();
-#if 0 
-  E.Edge() = TopoDS::Edge(myEExplorer.Current());
-  E.Face() = myFace;
-  Or = E.Edge().Orientation();
-#endif
+  const Geom2dHatch_Element& anItem = myMap.Find(myIter.Key());
+  theGE.Replace2DCurve(anItem.Curve(), anItem.Orientation());
 }
 
 
@@ -221,7 +145,7 @@ void  Geom2dHatch_Elements::CurrentEdge(Geom2dAdaptor_Curve& E,
 
 Standard_Boolean  Geom2dHatch_Elements::MoreWires() const 
 {
-  return (NumWire == 0);
+  return (myCurrentWire == 0);
 }
 
 //=======================================================================
@@ -229,8 +153,9 @@ Standard_Boolean  Geom2dHatch_Elements::MoreWires() const
 //purpose  : 
 //=======================================================================
 
-void Geom2dHatch_Elements::NextWire()  {
-  NumWire++;
+void Geom2dHatch_Elements::NextWire()
+{
+  myCurrentWire++;
 }
 
 //=======================================================================
@@ -238,8 +163,9 @@ void Geom2dHatch_Elements::NextWire()  {
 //purpose  : 
 //=======================================================================
 
-Standard_Boolean  Geom2dHatch_Elements::MoreEdges() const  {
-  return(Iter.More());
+Standard_Boolean  Geom2dHatch_Elements::MoreEdges() const
+{
+  return(myIter.More());
 }
 
 //=======================================================================
@@ -247,9 +173,44 @@ Standard_Boolean  Geom2dHatch_Elements::MoreEdges() const  {
 //purpose  : 
 //=======================================================================
 
-void Geom2dHatch_Elements::NextEdge()  {
-  Iter.Next();
+void Geom2dHatch_Elements::NextEdge()
+{
+  myIter.Next();
 }
 
+//=======================================================================
+//function : IsPointInEdgeVertex
+//purpose  : 
+//=======================================================================
+Standard_Boolean
+  Geom2dHatch_Elements::IsPointInEdgeVertex(const gp_Pnt2d &thePnt,
+                                            Standard_Real* const theParameter) const
+{
+  const Geom2dAdaptor_Curve& aCurv = myMap.Find(myIter.Key()).Curve();
+  const gp_Pnt2d aPntF(aCurv.Value(aCurv.FirstParameter())),
+                 aPntL(aCurv.Value(aCurv.LastParameter()));
+  const Standard_Real aSqTol = Precision::SquarePConfusion();
+
+  if (thePnt.SquareDistance(aPntF) < aSqTol)
+  {
+    if (theParameter)
+      *theParameter = aCurv.FirstParameter();
+
+    return Standard_True;
+  }
+
+  if (thePnt.SquareDistance(aPntL) < aSqTol)
+  {
+    if (theParameter)
+      *theParameter = aCurv.LastParameter();
+
+    return Standard_True;
+  }
+
+  if (theParameter)
+    *theParameter = 0.0;
+
+  return Standard_False;
+}
 
 

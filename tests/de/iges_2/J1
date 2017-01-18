@@ -10,7 +10,7 @@ set filename Hutablage.igs
 set ref_data {
 DATA        : Faulties = 0  ( 0 )  Warnings = 0  ( 0 )  Summary  = 0  ( 0 )
 TPSTAT      : Faulties = 0  ( 0 )  Warnings = 515  ( 3435 )  Summary  = 515  ( 3435 )
-CHECKSHAPE  : Wires    = 0  ( 2 )  Faces    = 0  ( 2 )  Shells   = 0  ( 0 )   Solids   = 0 ( 0 )
+CHECKSHAPE  : Wires    = 0  ( 2 )  Faces    = 1  ( 2 )  Shells   = 0  ( 0 )   Solids   = 0 ( 0 )
 NBSHAPES    : Solid    = 0  ( 0 )  Shell    = 0  ( 0 )  Face     = 636  ( 628 )   Summary  = 25749  ( 25764 )
 STATSHAPE   : Solid    = 0  ( 0 )  Shell    = 0  ( 0 )  Face     = 636  ( 628 )   FreeWire = 51  ( 87 )   FreeEdge  = 297 ( 297 )   SharedEdge = 12155  ( 12155 )
 TOLERANCE   : MaxTol   =   0.9940193324  (   0.9940193324 )  AvgTol   =   0.01619162554  (   0.01618254197 )

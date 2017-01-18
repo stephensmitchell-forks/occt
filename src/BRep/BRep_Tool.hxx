@@ -193,6 +193,8 @@ public:
   Standard_EXPORT static void UVPoints (const TopoDS_Edge& E, const Handle(Geom_Surface)& S, const TopLoc_Location& L, gp_Pnt2d& PFirst, gp_Pnt2d& PLast);
   
   //! Gets the UV locations of the extremities of the edge.
+  //! It does not take into account the orientation of E and F
+  //! (i.e. returns first and last points of CurveOnSurface)
   Standard_EXPORT static void UVPoints (const TopoDS_Edge& E, const TopoDS_Face& F, gp_Pnt2d& PFirst, gp_Pnt2d& PLast);
   
   //! Sets the UV locations of the extremities of the edge.

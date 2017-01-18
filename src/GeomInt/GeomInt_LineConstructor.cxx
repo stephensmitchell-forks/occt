@@ -139,7 +139,7 @@ void GeomInt_LineConstructor::Perform(const Handle(IntPatch_Line)& L)
 {
   Standard_Integer i,nbvtx;
   Standard_Real firstp,lastp;
-  const Standard_Real Tol = Precision::PConfusion() * 35.0;
+  const Standard_Real aTol = Precision::Confusion();
   
   const IntPatch_IType typl = L->ArcType();
   if(typl == IntPatch_Analytic)  {
@@ -155,9 +155,9 @@ void GeomInt_LineConstructor::Perform(const Handle(IntPatch_Line)& L)
         const gp_Pnt Pmid = ALine->Value(pmid);
         Parameters(myHS1,myHS2,Pmid,u1,v1,u2,v2);
         Recadre(myHS1,myHS2,u1,v1,u2,v2);
-        const TopAbs_State in1 = myDom1->Classify(gp_Pnt2d(u1,v1),Tol);
+        const TopAbs_State in1 = myDom1->Classify(gp_Pnt2d(u1,v1),aTol);
         if(in1 !=  TopAbs_OUT) {
-          const TopAbs_State in2 = myDom2->Classify(gp_Pnt2d(u2,v2),Tol);
+          const TopAbs_State in2 = myDom2->Classify(gp_Pnt2d(u2,v2),aTol);
           if(in2 != TopAbs_OUT) { 
             seqp.Append(firstp);
             seqp.Append(lastp);
@@ -182,9 +182,9 @@ void GeomInt_LineConstructor::Perform(const Handle(IntPatch_Line)& L)
           const IntSurf_PntOn2S& Pmid = WLine->Point(pmid);
           Pmid.Parameters(u1,v1,u2,v2);
           Recadre(myHS1,myHS2,u1,v1,u2,v2);
-          const TopAbs_State in1 = myDom1->Classify(gp_Pnt2d(u1,v1),Tol);
+          const TopAbs_State in1 = myDom1->Classify(gp_Pnt2d(u1, v1), aTol);
           if(in1 !=  TopAbs_OUT) {   
-            const TopAbs_State in2 = myDom2->Classify(gp_Pnt2d(u2,v2),Tol);
+            const TopAbs_State in2 = myDom2->Classify(gp_Pnt2d(u2, v2), aTol);
             if(in2 != TopAbs_OUT) {   
               seqp.Append(firstp);
               seqp.Append(lastp);
@@ -195,16 +195,16 @@ void GeomInt_LineConstructor::Perform(const Handle(IntPatch_Line)& L)
           const IntSurf_PntOn2S& Pfirst = WLine->Point((Standard_Integer)(firstp));
           Pfirst.Parameters(u1,v1,u2,v2);
           Recadre(myHS1,myHS2,u1,v1,u2,v2);
-          TopAbs_State in1 = myDom1->Classify(gp_Pnt2d(u1,v1),Tol);
+          TopAbs_State in1 = myDom1->Classify(gp_Pnt2d(u1, v1), aTol);
           if(in1 !=  TopAbs_OUT) {  //-- !=ON donne Pb 
-            TopAbs_State in2 = myDom2->Classify(gp_Pnt2d(u2,v2),Tol);
+            TopAbs_State in2 = myDom2->Classify(gp_Pnt2d(u2, v2), aTol);
             if(in2 != TopAbs_OUT) { //-- !=ON  
               const IntSurf_PntOn2S& Plast = WLine->Point((Standard_Integer)(lastp));
               Plast.Parameters(u1,v1,u2,v2);
               Recadre(myHS1,myHS2,u1,v1,u2,v2);
-              in1 = myDom1->Classify(gp_Pnt2d(u1,v1),Tol);
+              in1 = myDom1->Classify(gp_Pnt2d(u1, v1), aTol);
               if(in1 !=  TopAbs_OUT) {  //-- !=ON donne Pb 
-                in2 = myDom2->Classify(gp_Pnt2d(u2,v2),Tol);
+                in2 = myDom2->Classify(gp_Pnt2d(u2, v2), aTol);
                 if(in2 != TopAbs_OUT) {
                   seqp.Append(firstp);
                   seqp.Append(lastp);
@@ -289,7 +289,7 @@ void GeomInt_LineConstructor::Perform(const Handle(IntPatch_Line)& L)
     Handle(IntPatch_GLine) GLine (Handle(IntPatch_GLine)::DownCast (L));
     //
     if(typl == IntPatch_Circle || typl == IntPatch_Ellipse) { 
-      TreatCircle(L, Tol);
+      TreatCircle(L, aTol);
       done=Standard_True;
       return;
     }
@@ -310,9 +310,9 @@ void GeomInt_LineConstructor::Perform(const Handle(IntPatch_Line)& L)
         //
         Parameters(myHS1,myHS2,Pmid,u1,v1,u2,v2);
         Recadre(myHS1,myHS2,u1,v1,u2,v2);
-        const TopAbs_State in1 = myDom1->Classify(gp_Pnt2d(u1,v1),Tol);
+        const TopAbs_State in1 = myDom1->Classify(gp_Pnt2d(u1, v1), aTol);
         if(in1 !=  TopAbs_OUT) { 
-          const TopAbs_State in2 = myDom2->Classify(gp_Pnt2d(u2,v2),Tol);
+          const TopAbs_State in2 = myDom2->Classify(gp_Pnt2d(u2, v2), aTol);
           if(in2 != TopAbs_OUT) { 
             seqp.Append(firstp);
             seqp.Append(lastp);
@@ -376,7 +376,7 @@ void GeomInt_LineConstructor::Perform(const Handle(IntPatch_Line)& L)
     const Standard_Integer nbinserted = seqpss.Length();
     Standard_Boolean inserted = Standard_False;
     for (Standard_Integer j=1; j<=nbinserted;j++)    {
-      if (Abs(prm-seqpss(j).Parameter()) <= Tol)      {
+      if (Abs(prm-seqpss(j).Parameter()) <= aTol)      {
         // accumulate
         GeomInt_ParameterAndOrientation& valj = seqpss.ChangeValue(j);
         if (or1 != TopAbs_INTERNAL) {
@@ -404,7 +404,7 @@ void GeomInt_LineConstructor::Perform(const Handle(IntPatch_Line)& L)
         break;
       }
       
-      if (prm < seqpss(j).Parameter()-Tol ) {
+      if (prm < seqpss(j).Parameter()-aTol ) {
         // insert before position j
         seqpss.InsertBefore(j,GeomInt_ParameterAndOrientation(prm,or1,or2));
         inserted = Standard_True;
@@ -438,7 +438,7 @@ void GeomInt_LineConstructor::Perform(const Handle(IntPatch_Line)& L)
       if (!GeomInt_LineTool::Vertex(L,i).IsOnDomS1() )      {
         GeomInt_LineTool::Vertex(L,i).ParametersOnS1(U,V);
         gp_Pnt2d PPCC(U,V);
-        if (myDom1->Classify(PPCC,Tol) == TopAbs_OUT) {
+        if (myDom1->Classify(PPCC,aTol) == TopAbs_OUT) {
           done = Standard_True;
           return;
         }
@@ -462,7 +462,7 @@ void GeomInt_LineConstructor::Perform(const Handle(IntPatch_Line)& L)
     for (i=1; i<=GeomInt_LineTool::NbVertex(L); i++ )    {
       if (!GeomInt_LineTool::Vertex(L,i).IsOnDomS2() )      {
         GeomInt_LineTool::Vertex(L,i).ParametersOnS2(U,V);
-        if (myDom2->Classify(gp_Pnt2d(U,V),Tol) == TopAbs_OUT) {
+        if (myDom2->Classify(gp_Pnt2d(U,V),aTol) == TopAbs_OUT) {
           done = Standard_True;
           return;
         }
