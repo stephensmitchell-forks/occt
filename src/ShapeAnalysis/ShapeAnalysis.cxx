@@ -230,10 +230,8 @@ Standard_Boolean ShapeAnalysis::IsOuterBound(const TopoDS_Face& face)
     return (totcross >= 0);
   }
   else {
-    BRepAdaptor_Surface Ads ( F, Standard_False ); 
-    Standard_Real tol = BRep_Tool::Tolerance(F);
-    Standard_Real toluv = Min ( Ads.UResolution(tol), Ads.VResolution(tol) );
-    BRepTopAdaptor_FClass2d fcl (F,toluv);
+    const Standard_Real aTol = BRep_Tool::Tolerance(F);
+    BRepTopAdaptor_FClass2d fcl(F, aTol);
     Standard_Boolean rescl = (fcl.PerformInfinitePoint () == TopAbs_OUT);
     return rescl;
   }

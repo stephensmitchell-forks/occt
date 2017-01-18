@@ -227,7 +227,6 @@ void IntCurvesFace_Intersector::InternalCall(const IntCurveSurface_HInter &HICS,
     //Calculate tolerance for 2d classifier
     Standard_Real mintol3d = BRep_Tool::Tolerance(face);
     Standard_Real maxtol3d = mintol3d;
-    Standard_Real mintol2d = Tol, maxtol2d = Tol;
     TopExp_Explorer anExp(face, TopAbs_EDGE);
     for(; anExp.More(); anExp.Next())
     {
@@ -235,24 +234,20 @@ void IntCurvesFace_Intersector::InternalCall(const IntCurveSurface_HInter &HICS,
       mintol3d = Min(mintol3d, curtol);
       maxtol3d = Max(maxtol3d, curtol);
     }
-    Standard_Real minres = Max(Hsurface->UResolution(mintol3d), Hsurface->VResolution(mintol3d));
-    Standard_Real maxres = Max(Hsurface->UResolution(maxtol3d), Hsurface->VResolution(maxtol3d));
-    mintol2d = Max(minres, Tol); 
-    maxtol2d = Max(maxres, Tol);
-    //
+
     Handle(BRepTopAdaptor_TopolTool) anAdditionalTool;
     for(Standard_Integer index=HICS.NbPoints(); index>=1; index--) {  
       const IntCurveSurface_IntersectionPoint& HICSPointindex = HICS.Point(index);
       gp_Pnt2d Puv(HICSPointindex.U(),HICSPointindex.V());
 
       //TopAbs_State currentstate = myTopolTool->Classify(Puv,Tol);
-      TopAbs_State currentstate = myTopolTool->Classify(Puv, !myUseBoundTol ? 0 : mintol2d);
-      if(myUseBoundTol && currentstate == TopAbs_OUT && maxtol2d > mintol2d) {
+      TopAbs_State currentstate = myTopolTool->Classify(Puv, !myUseBoundTol ? 0 : mintol3d);
+      if(myUseBoundTol && currentstate == TopAbs_OUT) {
         if(anAdditionalTool.IsNull())
         {
           anAdditionalTool = new BRepTopAdaptor_TopolTool(Hsurface);
         }
-        currentstate = anAdditionalTool->Classify(Puv,maxtol2d);
+        currentstate = anAdditionalTool->Classify(Puv, maxtol3d);
         if(currentstate == TopAbs_ON)
         {
           currentstate = TopAbs_OUT;
@@ -484,7 +479,7 @@ Bnd_Box IntCurvesFace_Intersector::Bounding() const {
   }
 }
 TopAbs_State IntCurvesFace_Intersector::ClassifyUVPoint(const gp_Pnt2d& Puv) const { 
-  TopAbs_State state = myTopolTool->Classify(Puv,1e-7);
+  TopAbs_State state = myTopolTool->Classify(Puv,Precision::Confusion());
   return(state);
 }
 //============================================================================

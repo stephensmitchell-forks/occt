@@ -33,6 +33,7 @@
 #include <BOPTools_AlgoTools2D.hxx>
 #include <BRep_Builder.hxx>
 #include <BRep_Tool.hxx>
+#include <BRepTopAdaptor_FClass2d.hxx>
 #include <BRepBndLib.hxx>
 #include <BRepTools.hxx>
 #include <Geom_Surface.hxx>
@@ -42,7 +43,6 @@
 #include <gp_Pnt2d.hxx>
 #include <gp_Vec.hxx>
 #include <IntTools_Context.hxx>
-#include <IntTools_FClass2d.hxx>
 #include <NCollection_DataMap.hxx>
 #include <NCollection_UBTreeFiller.hxx>
 #include <TColStd_MapIntegerHasher.hxx>
@@ -438,9 +438,8 @@ void BOPAlgo_BuilderFace::PerformAreas()
 {
   Standard_Boolean bIsGrowth, bIsHole;
   Standard_Integer k, aNbS, aNbHoles, aNbDMISB, m, aNbMSH, aNbInOutMap;
-  Standard_Real aTol;
+  
   TopLoc_Location aLoc;
-  Handle(Geom_Surface) aS;
   BRep_Builder aBB;
   TopoDS_Face aFace;
   BOPCol_ListIteratorOfListOfInteger aItLI;
@@ -456,8 +455,8 @@ void BOPAlgo_BuilderFace::PerformAreas()
   //
   aNbHoles=0;
   //
-  aTol=BRep_Tool::Tolerance(myFace);
-  aS=BRep_Tool::Surface(myFace, aLoc);
+  Standard_Real aTol = BRep_Tool::Tolerance(myFace);
+  const Handle(Geom_Surface) aS = BRep_Tool::Surface(myFace, aLoc);
   //
   myAreas.Clear();
   //
@@ -489,7 +488,7 @@ void BOPAlgo_BuilderFace::PerformAreas()
     }
     else{
       // check if a wire is a hole 
-      IntTools_FClass2d& aClsf=myContext->FClass2d(aFace);
+      BRepTopAdaptor_FClass2d& aClsf = myContext->FClass2d(aFace);
       aClsf.Init(aFace, aTol);
       //
       bIsHole=aClsf.IsHole();
@@ -641,7 +640,7 @@ void BOPAlgo_BuilderFace::PerformAreas()
     //
     // update classifier 
     aTol=BRep_Tool::Tolerance(aF);
-    IntTools_FClass2d& aClsf=myContext->FClass2d(aF);
+    BRepTopAdaptor_FClass2d& aClsf = myContext->FClass2d(aF);
     aClsf.Init(aF, aTol);
   }
   //
@@ -835,7 +834,7 @@ Standard_Boolean IsInside(const TopoDS_Shape& theHole,
       BOPTools_AlgoTools2D::PointOnSurface(aE, aF2, aT, aU, aV, theContext);
       aP2D.SetCoord(aU, aV);
       //
-      IntTools_FClass2d& aClsf=theContext->FClass2d(aF2);
+      BRepTopAdaptor_FClass2d& aClsf = theContext->FClass2d(aF2);
       aState=aClsf.Perform(aP2D);
       bRet=(aState==TopAbs_IN);
     }

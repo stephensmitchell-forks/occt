@@ -17,4 +17,11 @@ checksection result
 checknbshapes result -vertex 2 -edge 1
 checkprops result -l 1765.01
 
-checkview -display result -2d -path ${imagedir}/${test_image}.png
+axo
+don result
+fit
+clear
+display s1
+display result
+
+checkview -screenshot -2d -path ${imagedir}/${test_image}.png

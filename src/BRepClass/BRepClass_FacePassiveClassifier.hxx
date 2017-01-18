@@ -30,7 +30,7 @@
 #include <TopAbs_State.hxx>
 #include <TopAbs_Orientation.hxx>
 class Standard_DomainError;
-class BRepClass_Edge;
+class TopClass_GeomEdge;
 class BRepClass_Intersector;
 class gp_Lin2d;
 
@@ -49,13 +49,13 @@ public:
   //! Starts  a  classification process.   The  point to
   //! classify is the origin of  the  line <L>.  <P>  is
   //! the original length of the segment on <L>  used to
-  //! compute  intersections.   <Tol> is the   tolerance
-  //! attached to the line segment in intersections.
-  Standard_EXPORT void Reset (const gp_Lin2d& L, const Standard_Real P, const Standard_Real Tol);
+  //! compute  intersections. <Tol3D> is the 3D-tolerance
+  //! used for check if the status is ON.
+  Standard_EXPORT void Reset (const gp_Lin2d& L, const Standard_Real P, const Standard_Real Tol3D);
   
   //! Updates  the classification process with  the edge
   //! <E> from the boundary.
-  Standard_EXPORT void Compare (const BRepClass_Edge& E, const TopAbs_Orientation Or);
+  Standard_EXPORT void Compare(const TopClass_GeomEdge& E);
   
   //! Returns the current value of the parameter.
     Standard_Real Parameter() const;
@@ -95,7 +95,10 @@ private:
   Standard_Boolean myFirstTrans;
   gp_Lin2d myLin;
   Standard_Real myParam;
+
+  //! 3D-tolerance
   Standard_Real myTolerance;
+
   TopTrans_CurveTransition myTrans;
   BRepClass_Intersector myIntersector;
   Standard_Integer myClosest;
@@ -105,8 +108,6 @@ private:
 
 };
 
-#define TheEdge BRepClass_Edge
-#define TheEdge_hxx <BRepClass_Edge.hxx>
 #define TheIntersector BRepClass_Intersector
 #define TheIntersector_hxx <BRepClass_Intersector.hxx>
 #define TopClass_Classifier2d BRepClass_FacePassiveClassifier
@@ -114,8 +115,6 @@ private:
 
 #include <TopClass_Classifier2d.lxx>
 
-#undef TheEdge
-#undef TheEdge_hxx
 #undef TheIntersector
 #undef TheIntersector_hxx
 #undef TopClass_Classifier2d

@@ -76,9 +76,9 @@ void GeomInt_IntSS::Perform(const Handle(Geom_Surface)& S1,
   myTolReached2d = myTolReached3d = 0.0;
   myNbrestr = 0;
   sline.Clear();
-  Handle(Adaptor3d_TopolTool) dom1 = new Adaptor3d_TopolTool(myHS1);
-  Handle(Adaptor3d_TopolTool) dom2 = new Adaptor3d_TopolTool(myHS2);
-  myLConstruct.Load(dom1,dom2,myHS1,myHS2);
+  Handle(Adaptor3d_TopolTool) aDom1 = new Adaptor3d_TopolTool(myHS1);
+  Handle(Adaptor3d_TopolTool) aDom2 = new Adaptor3d_TopolTool(myHS2);
+  myLConstruct.Load(aDom1,aDom2,myHS1,myHS2);
 
   Standard_Real TolArc = Tol;
   Standard_Real TolTang = Tol;
@@ -88,13 +88,13 @@ void GeomInt_IntSS::Perform(const Handle(Geom_Surface)& S1,
   myIntersector.SetTolerances(TolArc,TolTang,UVMaxStep,Deflection);
 
   if(myHS1 == myHS2) {
-    myIntersector.Perform(myHS1,dom1,TolArc,TolTang);
+    myIntersector.Perform(myHS1,aDom1,TolArc,TolTang);
   }
   else if (!useStart) {
-    myIntersector.Perform(myHS1,dom1,myHS2,dom2,TolArc,TolTang);
+    myIntersector.Perform(myHS1,aDom1,myHS2,aDom2,TolArc,TolTang);
   }
   else {
-    myIntersector.Perform(myHS1,dom1,myHS2,dom2,U1,V1,U2,V2,TolArc,TolTang);
+    myIntersector.Perform(myHS1,aDom1,myHS2,aDom2,U1,V1,U2,V2,TolArc,TolTang);
   }
 
   // ============================================================
@@ -102,7 +102,7 @@ void GeomInt_IntSS::Perform(const Handle(Geom_Surface)& S1,
     const Standard_Integer nblin = myIntersector.NbLines();
     for (Standard_Integer i=1; i<= nblin; i++)
     {
-      MakeCurve(i,dom1,dom2,Tol,Approx,ApproxS1,ApproxS2);
+      MakeCurve(i,aDom1,aDom2,Tol,Approx,ApproxS1,ApproxS2);
     }
   }
 }

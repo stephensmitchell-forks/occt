@@ -692,7 +692,8 @@ void AdjustFaceBox(const BRepAdaptor_Surface& BS,
                    const Standard_Real umin, const Standard_Real umax, 
                    const Standard_Real vmin, const Standard_Real vmax,
                    Bnd_Box& FaceBox,
-                   const Bnd_Box& EdgeBox, const Standard_Real Tol)
+                   const Bnd_Box& EdgeBox,
+                   const Standard_Real Tol)
 {
   Standard_Real fxmin, fymin, fzmin, fxmax, fymax, fzmax;
   Standard_Real exmin, eymin, ezmin, exmax, eymax, ezmax;
@@ -700,9 +701,9 @@ void AdjustFaceBox(const BRepAdaptor_Surface& BS,
   FaceBox.Get(fxmin, fymin, fzmin, fxmax, fymax, fzmax);
   EdgeBox.Get(exmin, eymin, ezmin, exmax, eymax, ezmax);
   //
-  Standard_Real TolU = Max(BS.UResolution(Tol), Precision::PConfusion());
-  Standard_Real TolV = Max(BS.VResolution(Tol), Precision::PConfusion());
-  BRepTopAdaptor_FClass2d FClass(BS.Face(), Max(TolU, TolV));
+  BRepTopAdaptor_FClass2d FClass(BS.Face(), Tol);
+  const Standard_Real TolU = Max(BS.UResolution(Tol), Precision::PConfusion());
+  const Standard_Real TolV = Max(BS.VResolution(Tol), Precision::PConfusion());
   //
   Standard_Boolean isModified = Standard_False;
   if(exmin > fxmin)

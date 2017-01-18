@@ -84,7 +84,7 @@ static
   s_wnt.Orientation(TopAbs_FORWARD);
   myFace = TopoDS::Face(s_wnt);
   if(myFClass2d != NULL) { 
-    delete (BRepTopAdaptor_FClass2d *)myFClass2d;
+    delete myFClass2d;
   } 
   myFClass2d = NULL;
   myNbSamplesU=-1;
@@ -188,30 +188,33 @@ static
 //function : Classify
 //purpose  : 
 //=======================================================================
-  TopAbs_State BRepTopAdaptor_TopolTool::Classify(const gp_Pnt2d& P,
-						  const Standard_Real Tol,
-						  const Standard_Boolean RecadreOnPeriodic)
+TopAbs_State BRepTopAdaptor_TopolTool::Classify(const gp_Pnt2d& P,
+                                                const Standard_Real theTol3D,
+                                                const Standard_Boolean theIsReqToAdjust)
 {
   if(myFace.IsNull())
     return TopAbs_UNKNOWN;
   if(myFClass2d == NULL) { 
-    myFClass2d = (void *) new BRepTopAdaptor_FClass2d(myFace,Tol);
+    myFClass2d = new BRepTopAdaptor_FClass2d(myFace, theTol3D);
   } 
-  return(((BRepTopAdaptor_FClass2d *)myFClass2d)->Perform(P,RecadreOnPeriodic));
+
+  const TopAbs_State aState = (myFClass2d->Perform(P,theIsReqToAdjust));
+  return aState;
 }
 
 //=======================================================================
 //function : IsThePointOn
 //purpose  : 
 //=======================================================================
-  Standard_Boolean BRepTopAdaptor_TopolTool::IsThePointOn(const gp_Pnt2d& P,
-							  const Standard_Real Tol,
-							  const Standard_Boolean RecadreOnPeriodic)
+Standard_Boolean
+    BRepTopAdaptor_TopolTool::IsThePointOn(const gp_Pnt2d& P,
+                                           const Standard_Real theTol3D,
+                                           const Standard_Boolean theIsReqToAdjust)
 {
   if(myFClass2d == NULL) { 
-    myFClass2d = (void *) new BRepTopAdaptor_FClass2d(myFace,Tol);
+    myFClass2d = new BRepTopAdaptor_FClass2d(myFace, theTol3D);
   } 
-  return(TopAbs_ON==((BRepTopAdaptor_FClass2d *)myFClass2d)->TestOnRestriction(P,Tol,RecadreOnPeriodic));
+  return(TopAbs_ON == myFClass2d->TestOnRestriction(P, theTol3D, theIsReqToAdjust));
 }
 
 //=======================================================================
@@ -221,7 +224,7 @@ static
   void BRepTopAdaptor_TopolTool::Destroy() 
 { 
   if(myFClass2d != NULL) { 
-    delete (BRepTopAdaptor_FClass2d *)myFClass2d;
+    delete myFClass2d;
     myFClass2d=NULL;
   }
 }

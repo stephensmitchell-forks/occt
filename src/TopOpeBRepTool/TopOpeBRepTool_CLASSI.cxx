@@ -257,8 +257,7 @@ Standard_Integer TopOpeBRepTool_CLASSI::Classip2d(const TopoDS_Shape& S1, const 
   // recall : ffi1 and ffi2 are built on same face 
   // => ffi1(u1,v1) = ffi2(u1,v1)
   // ----------------------------
-  Standard_Real tol2d2 = TopOpeBRepTool_TOOL::TolUV(ffi2,BRep_Tool::Tolerance(ffi2));
-  BRepClass_FaceClassifier class2(ffi2,p2d1,tol2d2);
+  BRepClass_FaceClassifier class2(ffi2,p2d1,BRep_Tool::Tolerance(ffi2));
   TopAbs_State sta12 = class2.State();
   
   // staffi12 : only if !bnd2dUNK and stabnd2d12!=DIFF
@@ -296,8 +295,7 @@ Standard_Integer TopOpeBRepTool_CLASSI::Classip2d(const TopoDS_Shape& S1, const 
     gp_Pnt2d p2d2(u2,v2);
 
     // sta21 : 
-    Standard_Real tol2d1 = TopOpeBRepTool_TOOL::TolUV(ffi1,BRep_Tool::Tolerance(ffi1));
-    BRepClass_FaceClassifier class1(ffi1,p2d2,tol2d1);
+    BRepClass_FaceClassifier class1(ffi1,p2d2,BRep_Tool::Tolerance(ffi1));
     TopAbs_State sta21 = class1.State();
 
     if (bnd2dUNK) {

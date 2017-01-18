@@ -19,4 +19,3 @@ if { ${check} == 1 } {
     puts "Faulty ${BugNumber}"
 }
 
-

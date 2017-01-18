@@ -1,0 +1,29 @@
+puts "========"
+puts "OCC28211"
+puts "========"
+puts ""
+#################################################
+# Modeling Algorithms - Boolean fuse operation produces incorrect result
+#################################################
+
+# The face contains four edges.
+# However, one edge (result_4) is degenerated and,
+# more over, does not contain any p-curve on the face.
+# This face is obtained while debugging of the test case
+# "thrusection specific H7".
+
+restore [locate_data_file bug28211_sweepface.brep] result
+
+point pp -48.872643414172487 -4.1512836621766880
+
+if { ![regexp {OUT} [ b2dclassifx result pp ] ] } {
+    puts "Error : Wrong result of b2dclassifx algorithm"
+} else {
+    puts "OK : Good result of b2dclassifx algorithm"
+}
+
+if { ![regexp {OUT} [ b2dclassify result pp ] ] } {
+    puts "Error : Wrong result of b2dclassify algorithm"
+} else {
+    puts "OK : Good result of b2dclassify algorithm"
+}

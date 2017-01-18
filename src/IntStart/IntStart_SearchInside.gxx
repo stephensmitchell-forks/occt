@@ -199,15 +199,17 @@ void IntStart_SearchInside::Perform (TheFunction& Func,
 		testpnt = (j <= nbpt);
 	      }
 	    }
-	    if (j > nbpt) {
-	      //	    situ = TheSITool::Classify(PS,UVap(1),UVap(2));
-	      situ = T->Classify(gp_Pnt2d(UVap(1),UVap(2)),
-				 Maxtoler1toler2,Standard_False);   //-- ,Standard_False pour ne pas recadrer on Periodic
-	      if (situ == TopAbs_IN) {
-		list.Append(IntSurf_InteriorPoint(psol,UVap(1),UVap(2),
-						  Func.Direction3d(),
-						  Func.Direction2d()));
-	      }
+            if (j > nbpt)
+            {
+              //Standard_False pour ne pas recadrer on Periodic
+              situ = T->Classify(gp_Pnt2d(UVap(1), UVap(2)),
+                                    Precision::Confusion(), Standard_False);
+              if (situ == TopAbs_IN)
+              {
+                list.Append(IntSurf_InteriorPoint(psol, UVap(1), UVap(2),
+                                                  Func.Direction3d(),
+                                                  Func.Direction2d()));
+              }
 	    }
 	  }
 	}

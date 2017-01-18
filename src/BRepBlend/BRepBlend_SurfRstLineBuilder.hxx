@@ -133,11 +133,11 @@ private:
   Handle(BRepBlend_Line) line;
   math_Vector sol;
   Handle(Adaptor3d_HSurface) surf1;
-  Handle(Adaptor3d_TopolTool) domain1;
+  Handle(Adaptor3d_TopolTool) myDomain1;
   Handle(Adaptor3d_HSurface) surf2;
   Handle(Adaptor2d_HCurve2d) rst;
-  Handle(Adaptor3d_TopolTool) domain2;
-  Standard_Real tolesp;
+  Handle(Adaptor3d_TopolTool) myDomain2;
+  Standard_Real my3DTolEsp;
   Standard_Real tolgui;
   Standard_Real pasmax;
   Standard_Real fleche;
