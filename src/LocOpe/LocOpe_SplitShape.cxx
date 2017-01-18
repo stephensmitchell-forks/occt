@@ -643,7 +643,7 @@ Standard_Boolean LocOpe_SplitShape::AddClosedWire(const TopoDS_Wire& W,
   //  GProp_GProps GP;
   //  BRepGProp::SurfaceProperties (newFace,GP);
   //  if (GP.Mass() < 0) {
-  BRepTopAdaptor_FClass2d classif(newFace,Precision::PConfusion());
+  BRepTopAdaptor_FClass2d classif(newFace, Precision::Confusion());
   if (classif.PerformInfinitePoint() == TopAbs_IN) {
     //le wire donne defini un trou
     aLocalFace = F.EmptyCopied();
@@ -1352,7 +1352,7 @@ static Standard_Boolean IsInside(const TopoDS_Face& F,
   //  GProp_GProps GP;
   //  BRepGProp::SurfaceProperties(newFace,GP);
   //  if (GP.Mass() < 0) {
-  BRepTopAdaptor_FClass2d classif(newFace,Precision::PConfusion());
+  BRepTopAdaptor_FClass2d classif(newFace,Precision::Confusion());
   Standard_Boolean Reversed = Standard_False;
   if (classif.PerformInfinitePoint() == TopAbs_IN) {
     //le wire donne defini un trou
@@ -1426,7 +1426,7 @@ static Standard_Boolean IsInside(const TopoDS_Face& F,
     gp_Pnt2d pt2d(C2d->Value(prm));
     //  BRepClass_FaceClassifier classif(F,pt2d,Precision::PConfusion());
     //  return (classif.State() != TopAbs_OUT);
-    BRepTopAdaptor_FClass2d classif(F,Precision::PConfusion());
+    BRepTopAdaptor_FClass2d classif(F,Precision::Confusion());
     TopAbs_State stat = classif.Perform(pt2d);
     //  return (classif.Perform(pt2d) != TopAbs_OUT);
     if(stat == TopAbs_OUT) return Standard_False;

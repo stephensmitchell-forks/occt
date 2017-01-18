@@ -2433,7 +2433,7 @@ void ShapeFix_ComposeShell::MakeFacesOnPatch (TopTools_SequenceOfShape &faces,
       TopoDS_Face fc;
       B.MakeFace ( fc, surf, myLoc, ::Precision::Confusion() );
       B.Add ( fc, awtmp );
-      BRepTopAdaptor_FClass2d clas ( fc, ::Precision::PConfusion() );
+      BRepTopAdaptor_FClass2d clas ( fc, Precision::Confusion() );
       TopAbs_State stPoint = clas.Perform (unp,Standard_False);
       if(stPoint == TopAbs_ON || stPoint == TopAbs_UNKNOWN) {
 
@@ -2486,7 +2486,7 @@ void ShapeFix_ComposeShell::MakeFacesOnPatch (TopTools_SequenceOfShape &faces,
     TopoDS_Face fc;
     B.MakeFace ( fc, surf, myLoc, ::Precision::Confusion() );
     B.Add ( fc, wire );
-    BRepTopAdaptor_FClass2d clas ( fc, ::Precision::PConfusion() );
+    BRepTopAdaptor_FClass2d clas ( fc, Precision::Confusion() );
     if ( clas.PerformInfinitePoint() == TopAbs_IN ) {
       reverse = Standard_True;
 #ifdef OCCT_DEBUG

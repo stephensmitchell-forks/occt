@@ -495,10 +495,10 @@ void IntTools_FaceFace::Perform(const TopoDS_Face& aF1,
     myHS2->ChangeSurface().Load(S2, umin, umax, vmin, vmax);
   }
 
-  const Handle(IntTools_TopolTool) dom1 = new IntTools_TopolTool(myHS1);
-  const Handle(IntTools_TopolTool) dom2 = new IntTools_TopolTool(myHS2);
+  const Handle(IntTools_TopolTool) aDom1 = new IntTools_TopolTool(myHS1);
+  const Handle(IntTools_TopolTool) aDom2 = new IntTools_TopolTool(myHS2);
 
-  myLConstruct.Load(dom1, dom2, myHS1, myHS2);
+  myLConstruct.Load(aDom1, aDom2, myHS1, myHS2);
   
 
   Tolerances(myHS1, myHS2, TolTang);
@@ -578,9 +578,9 @@ void IntTools_FaceFace::Perform(const TopoDS_Face& aF1,
 
   const Standard_Boolean isGeomInt = isTreatAnalityc(aBAS1, aBAS2, myTol);
   if (aF1.IsSame(aF2))
-    myIntersector.Perform(myHS1, dom1, TolArc, TolTang);
+    myIntersector.Perform(myHS1, aDom1, TolArc, TolTang);
   else
-    myIntersector.Perform(myHS1, dom1, myHS2, dom2, TolArc, TolTang, 
+    myIntersector.Perform(myHS1, aDom1, myHS2, aDom2, TolArc, TolTang, 
                           myListOfPnts, RestrictLine, isGeomInt);
 
   myIsDone = myIntersector.IsDone();
@@ -598,7 +598,7 @@ void IntTools_FaceFace::Perform(const TopoDS_Face& aF1,
     //
     const Standard_Integer aNbLinIntersector = myIntersector.NbLines();
     for (Standard_Integer i=1; i <= aNbLinIntersector; ++i) {
-      MakeCurve(i, dom1, dom2, TolArc);
+      MakeCurve(i, aDom1, aDom2, TolArc);
     }
     //
     ComputeTolReached3d();
@@ -741,8 +741,8 @@ void IntTools_FaceFace::ComputeTolReached3d()
 //purpose  : 
 //=======================================================================
 void IntTools_FaceFace::MakeCurve(const Standard_Integer Index,
-                                  const Handle(Adaptor3d_TopolTool)& dom1,
-                                  const Handle(Adaptor3d_TopolTool)& dom2,
+                                  const Handle(Adaptor3d_TopolTool)& theDom1,
+                                  const Handle(Adaptor3d_TopolTool)& theDom2,
                                   const Standard_Real theToler) 
 {
   Standard_Boolean bDone, rejectSurface, reApprox, bAvoidLineConstructor;
@@ -907,13 +907,12 @@ void IntTools_FaceFace::MakeCurve(const Standard_Integer Index,
           continue;
         }
 
-        Standard_Real u1, v1, u2, v2, Tol;
-        
-        Tol = Precision::Confusion();
+        Standard_Real u1, v1, u2, v2;
+
         Parameters(myHS1, myHS2, ptref,  u1, v1, u2, v2);
-        ok = (dom1->Classify(gp_Pnt2d(u1, v1), Tol) != TopAbs_OUT);
+        ok = (theDom1->Classify(gp_Pnt2d(u1, v1), Precision::Confusion()) != TopAbs_OUT);
         if(ok) { 
-          ok = (dom2->Classify(gp_Pnt2d(u2,v2),Tol) != TopAbs_OUT); 
+          ok = (theDom2->Classify(gp_Pnt2d(u2, v2), Precision::Confusion()) != TopAbs_OUT);
         }
         if (ok) {
           Handle(Geom2d_BSplineCurve) H1;
@@ -1069,18 +1068,17 @@ void IntTools_FaceFace::MakeCurve(const Standard_Integer Index,
           }
         }
         //
-        Standard_Real aTwoPIdiv17, u1, v1, u2, v2, Tol;
+        Standard_Real aTwoPIdiv17, u1, v1, u2, v2;
 
         aTwoPIdiv17=2.*M_PI/17.;
 
         for (j=0; j<=17; j++) {
           gp_Pnt ptref (newc->Value (j*aTwoPIdiv17));
-          Tol = Precision::Confusion();
 
           Parameters(myHS1, myHS2, ptref, u1, v1, u2, v2);
-          ok = (dom1->Classify(gp_Pnt2d(u1,v1),Tol) != TopAbs_OUT);
+          ok = (theDom1->Classify(gp_Pnt2d(u1, v1), Precision::Confusion()) != TopAbs_OUT);
           if(ok) { 
-            ok = (dom2->Classify(gp_Pnt2d(u2,v2),Tol) != TopAbs_OUT);
+            ok = (theDom2->Classify(gp_Pnt2d(u2, v2), Precision::Confusion()) != TopAbs_OUT);
           }
           if (ok) {
             IntTools_Curve aCurve;

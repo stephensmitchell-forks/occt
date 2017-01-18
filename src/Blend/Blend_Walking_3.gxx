@@ -31,12 +31,12 @@ Standard_Integer Blend_Walking::ArcToRecadre(const Standard_Boolean OnFirst,
   if (OnFirst) {
     if(byinter) previousP.ParametersOnS1(uprev,vprev);
     pt2d.SetCoord(theSol(1),theSol(2));
-    Iter = recdomain1;
+    Iter = myRecDomain1;
   }
   else {
     if(byinter) previousP.ParametersOnS2(uprev,vprev);
     pt2d.SetCoord(theSol(3),theSol(4));
-    Iter = recdomain2;
+    Iter = myRecDomain2;
   }
   lastpt2d.SetCoord(uprev,vprev);
   Iter->Init();
@@ -93,8 +93,8 @@ Standard_Boolean Blend_Walking::Recadre(Blend_FuncInv& FuncInv,
   Handle(Adaptor2d_HCurve2d) thecur;
   Handle(TheTopolTool) Iter;
 
-  if (OnFirst) Iter = recdomain1;
-  else         Iter = recdomain2;
+  if (OnFirst) Iter = myRecDomain1;
+  else         Iter = myRecDomain2;
 
   Indexsol = ArcToRecadre(OnFirst, theSol, 0,
 			  lastpt2d, pt2d, pmin);
@@ -125,7 +125,7 @@ Standard_Boolean Blend_Walking::Recadre(Blend_FuncInv& FuncInv,
   infb(2) -= Extrap;
   supb(2) += Extrap;
   
-  FuncInv.GetTolerance(toler,tolesp/10);//Il vaut mieux garder un peu de marge
+  FuncInv.GetTolerance(toler, 0.1*my3DTolEsp);//Il vaut mieux garder un peu de marge
   math_FunctionSetRoot rsnld(FuncInv,toler,35);
   toler *= 10; // Mais on fait les tests correctements
 
@@ -262,7 +262,7 @@ Standard_Boolean Blend_Walking::Recadre(Blend_FuncInv& FuncInv,
       else solrst(1) = pmin;
     }
     // On verifie le jalon
-    jalons_Trouve = (FuncInv.IsSolution(solrst,tolesp));
+    jalons_Trouve = (FuncInv.IsSolution(solrst, my3DTolEsp));
   }
 
   if (!jalons_Trouve) {
@@ -276,7 +276,7 @@ Standard_Boolean Blend_Walking::Recadre(Blend_FuncInv& FuncInv,
     }
     else {
       rsnld.Root(solrst);
-      recadre = FuncInv.IsSolution(solrst,tolesp);
+      recadre = FuncInv.IsSolution(solrst, my3DTolEsp);
     }
   }
 
@@ -310,7 +310,7 @@ Standard_Boolean Blend_Walking::Recadre(Blend_FuncInv& FuncInv,
     // Le probleme a resoudre
     FuncInv.Set(OnFirst,thecur);
     FuncInv.GetBounds(infb,supb);
-    FuncInv.GetTolerance(toler,tolesp/10);//Il vaut mieux garder un peu de marge
+    FuncInv.GetTolerance(toler, 0.1*my3DTolEsp);//Il vaut mieux garder un peu de marge
     math_FunctionSetRoot aRsnld(FuncInv,toler,35);
     toler *= 10; // Mais on fait les tests correctements
     // Resolution...
@@ -324,7 +324,7 @@ Standard_Boolean Blend_Walking::Recadre(Blend_FuncInv& FuncInv,
     }
     else {
       aRsnld.Root(solrst);
-      recadre = FuncInv.IsSolution(solrst,tolesp);
+      recadre = FuncInv.IsSolution(solrst, my3DTolEsp);
     }
   }
 
@@ -451,20 +451,19 @@ void Blend_Walking::MakeExtremity(TheExtremity& Extrem,
   Handle(TheTopolTool) Iter;
 
   if (OnFirst) {
-    Extrem.SetValue(previousP.PointOnS1(),
-		    sol(1),sol(2),
-		    previousP.Parameter(), tolesp);
+    Extrem.SetValue(previousP.PointOnS1(), sol(1),sol(2),
+                    previousP.Parameter(), my3DTolEsp);
     if (!previousP.IsTangencyPoint())  
       Extrem.SetTangent(previousP.TangentOnS1());
-    Iter = recdomain1;
+    Iter = myRecDomain1;
   }
   else {
     Extrem.SetValue(previousP.PointOnS2(),
-		    sol(3),sol(4),
-		    previousP.Parameter(), tolesp);
+                    sol(3),sol(4),
+                    previousP.Parameter(), my3DTolEsp);
     if (!previousP.IsTangencyPoint())  
       Extrem.SetTangent(previousP.TangentOnS2());
-    Iter = recdomain2;
+    Iter = myRecDomain2;
   }
 
   Iter->Init();
@@ -489,14 +488,14 @@ void  Blend_Walking::MakeSingularExtremity( TheExtremity& Extrem,
   Standard_Real prm;
 
   if (OnFirst) {
-    Iter = recdomain1;
+    Iter = myRecDomain1;
     if (!previousP.IsTangencyPoint())
       Extrem.SetTangent(previousP.TangentOnS1());
   }
   else {
     if (!previousP.IsTangencyPoint()) 
       Extrem.SetTangent(previousP.TangentOnS2());
-    Iter = recdomain2;
+    Iter = myRecDomain2;
   }
   
   Iter->Init(); 

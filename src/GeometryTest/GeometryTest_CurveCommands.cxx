@@ -1737,6 +1737,44 @@ static Standard_Integer GetCurveContinuity( Draw_Interpretor& theDI,
 }
 
 //=======================================================================
+//function : GetResolution
+//purpose  : Returns the resolution of the given curve
+//=======================================================================
+static Standard_Integer GetResolution(Draw_Interpretor& theDI,
+                                      Standard_Integer theNArg,
+                                      const char** theArgv)
+{
+  if (theNArg != 3)
+  {
+    theDI << "Use: curvresolution <3d/2d-curve> toler \n";
+    return 1;
+  }
+
+  const Standard_Real aTol = Draw::Atof(theArgv[2]);  
+
+  Handle(Geom2d_Curve) aGC2d = DrawTrSurf::GetCurve2d(theArgv[1]);
+  Handle(Geom_Curve) aGC3d = DrawTrSurf::GetCurve(theArgv[1]);
+  if (aGC3d.IsNull() && aGC2d.IsNull())
+  {
+    theDI << theArgv[1] << " is not a 2D/3D-curve!\n";
+    return 1;
+  }
+
+  if (!aGC3d.IsNull())
+  {
+    Handle(Adaptor3d_HCurve) anAd = new GeomAdaptor_HCurve(aGC3d);
+    theDI << "Res3dCurve = " << anAd->Resolution(aTol) << "\n";
+  }
+  else //if (!aGC2d.IsNull())
+  {
+    Handle(Adaptor2d_HCurve2d) anAd = new Geom2dAdaptor_HCurve(aGC2d);
+    theDI << "Res2dCurve = " << anAd->Resolution(aTol) << "\n";
+  }
+
+  return 0;
+}
+
+//=======================================================================
 //function : CurveCommands
 //purpose  : 
 //=======================================================================
@@ -1843,6 +1881,10 @@ void  GeometryTest::CurveCommands(Draw_Interpretor& theCommands)
 		  __FILE__,
 		  GetCurveContinuity,g);
 
+  theCommands.Add("curvresolution",
+                  "curvresolution <3d/2d-curve> toler: \n\tReturns the resolution of the given curve",
+                  __FILE__,
+                  GetResolution, g);
 
 }
 

@@ -16,12 +16,12 @@ Number of shapes in shape
  VERTEX    : 56881
  EDGE      : 85310
  WIRE      : 37795
- FACE      : 32992
- SHELL     : 1318
- SOLID     : 1308
+ FACE      : 33006
+ SHELL     : 1323
+ SOLID     : 1313
  COMPSOLID : 0
  COMPOUND  : 1
- SHAPE     : 215605
+ SHAPE     : 215629
 "
 checknbshapes result -ref ${nbshapes_expected} -t -m "importing file"
 checkview -display result -3d -path ${imagedir}/${test_image}.png

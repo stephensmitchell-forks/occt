@@ -1,7 +1,3 @@
-puts "TODO OCC26842 ALL: Error :  is WRONG because number of EDGE entities in shape"
-puts "TODO OCC26842 ALL: Error : The length of result shape is"
-puts "TODO OCC26842 ALL: Error : The command is not valid. The length is 0."
-
 puts "======="
 puts "OCC26842"
 puts "======="
@@ -19,6 +15,13 @@ checkshape result
 checksection result
 
 checknbshapes result -vertex 2 -edge 1
-checkprops result -l 1765.01
+checkprops result -l 3941.88
 
-checkview -display result -2d -path ${imagedir}/${test_image}.png
+axo
+don result
+fit
+clear
+display s2
+display result
+
+checkview -screenshot -2d -path ${imagedir}/${test_image}.png

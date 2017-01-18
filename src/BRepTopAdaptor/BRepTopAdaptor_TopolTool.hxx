@@ -32,6 +32,7 @@
 #include <TopAbs_Orientation.hxx>
 #include <Standard_Integer.hxx>
 class BRepAdaptor_HCurve2d;
+class BRepTopAdaptor_FClass2d;
 class Standard_DomainError;
 class Adaptor3d_HSurface;
 class Adaptor2d_HCurve2d;
@@ -78,10 +79,25 @@ public:
   
   Standard_EXPORT virtual void NextVertex() Standard_OVERRIDE;
   
-  Standard_EXPORT virtual TopAbs_State Classify (const gp_Pnt2d& P2d, const Standard_Real Tol, const Standard_Boolean RecadreOnPeriodic = Standard_True) Standard_OVERRIDE;
+  //! Classifies theP2d relatively to the domain of myS.
+  //! theTol3D is the 3D-tolerance (is used for check ON-status).
+  //! If theIsReqToAdjust == TRUE then the coordinates of theP2d
+  //! will be inscribed (if it is possible) in the UV-bounds of myFace.
+  Standard_EXPORT virtual
+      TopAbs_State Classify(const gp_Pnt2d& theP2d, 
+                            const Standard_Real theTol3D,
+                            const Standard_Boolean theIsReqToAdjust = 
+                                                      Standard_True) Standard_OVERRIDE;
   
-  //! see the code for specifications)
-  Standard_EXPORT virtual Standard_Boolean IsThePointOn (const gp_Pnt2d& P2d, const Standard_Real Tol, const Standard_Boolean RecadreOnPeriodic = Standard_True) Standard_OVERRIDE;
+  //! Returns TRUE if theP is in the some edge of myFace with given
+  //! 3D-tolerance theTol3D.
+  //! If theIsReqToAdjust == TRUE then the coordinates of theP2d
+  //! will be inscribed (if it is possible) in the UV-bounds of myFace.
+  Standard_EXPORT virtual Standard_Boolean
+          IsThePointOn(const gp_Pnt2d& P2d,
+                       const Standard_Real theTol3D,
+                       const Standard_Boolean 
+                                theIsReqToAdjust = Standard_True) Standard_OVERRIDE;
   
   //! If the function returns the orientation of the arc.
   //! If the orientation is FORWARD or REVERSED, the arc is
@@ -131,7 +147,11 @@ public:
   
   Standard_EXPORT virtual Standard_Boolean DomainIsInfinite() Standard_OVERRIDE;
 
-
+  //! Returns face
+  const TopoDS_Face& GetFace() const
+  {
+    return myFace;
+  }
 
   DEFINE_STANDARD_RTTIEXT(BRepTopAdaptor_TopolTool,Adaptor3d_TopolTool)
 
@@ -145,7 +165,7 @@ private:
 
   TopExp_Explorer myVIterator;
   TopoDS_Face myFace;
-  Standard_Address myFClass2d;
+  BRepTopAdaptor_FClass2d *myFClass2d;
   Handle(BRepAdaptor_HCurve2d) myCurve;
   TColStd_ListOfTransient myCurves;
   TColStd_ListIteratorOfListOfTransient myCIterator;

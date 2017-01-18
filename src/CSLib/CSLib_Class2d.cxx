@@ -19,306 +19,253 @@
 #include <CSLib_Class2d.hxx>
 #include <gp_Pnt2d.hxx>
 #include <Standard_ConstructionError.hxx>
-
-static inline 
-  Standard_Real Transform2d(const Standard_Real u,
-			    const Standard_Real umin,
-			    const Standard_Real umaxmumin);
+#include <Precision.hxx>
 
 //=======================================================================
-//function : CSLib_Class2d
+//function : Constructor
 //purpose  : 
 //=======================================================================
-CSLib_Class2d::CSLib_Class2d(const TColgp_Array1OfPnt2d& TP2d,
-			     const Standard_Real aTolu,
-			     const Standard_Real aTolv,
-			     const Standard_Real umin,
-			     const Standard_Real vmin,
-			     const Standard_Real umax,
-			     const Standard_Real vmax) 
+CSLib_Class2d::CSLib_Class2d(const TColgp_Array1OfPnt2d& theTP2d,
+                             const Standard_Real theTolu,
+                             const Standard_Real theTolv,
+                             const Standard_Real theUmin,
+                             const Standard_Real theVmin,
+                             const Standard_Real theUmax,
+                             const Standard_Real theVmax) : myPnts2d(0,
+                                                                theTP2d.Length()),
+                                                            myTolU(theTolu),
+                                                            myTolV(theTolv),
+                                                            myUmin(theUmin),
+                                                            myUmax(theUmax),
+                                                            myVmin(theVmin),
+                                                            myVmax(theVmax)
 {
-  Umin=umin;
-  Vmin=vmin;
-  Umax=umax;
-  Vmax=vmax;
-  //
-  if(umax<=umin || vmax<=vmin) { 
-    MyPnts2dX=NULL;
-    MyPnts2dY=NULL;
-    N=0;
-  }
-  //
-  else {
-    Standard_Integer i, iLower;
-    Standard_Real du,dv,*Pnts2dX,*Pnts2dY, aPrc;   
-    //
-    aPrc=1.e-10;
-    N = TP2d.Length();
-    Tolu = aTolu;
-    Tolv = aTolv;
-    MyPnts2dX = new Standard_Real [N+1];
-    MyPnts2dY = new Standard_Real [N+1];
-    du=umax-umin;
-    dv=vmax-vmin;
-    Pnts2dX = (Standard_Real *)MyPnts2dX;
-    Pnts2dY = (Standard_Real *)MyPnts2dY;
-    //
-    iLower=TP2d.Lower();
-    for(i = 0; i<N; ++i) { 
-      const gp_Pnt2d& aP2D=TP2d(i+iLower);
-      Pnts2dX[i] = Transform2d(aP2D.X(), umin, du);
-      Pnts2dY[i] = Transform2d(aP2D.Y(), vmin, dv);
-    }
-    Pnts2dX[N]=Pnts2dX[0];
-    Pnts2dY[N]=Pnts2dY[0];
-    //
-    if(du>aPrc) {
-      Tolu/=du;
-    }
-    if(dv>aPrc) {
-      Tolv/=dv;
-    }
-  }
-}
-//=======================================================================
-//function : Destroy
-//purpose  : 
-//=======================================================================
-void CSLib_Class2d::Destroy() { 
-  if(MyPnts2dX) { 
-    delete [] (Standard_Real *)MyPnts2dX;
-    MyPnts2dX=NULL;
-  }
-  if(MyPnts2dY) { 
-    delete [] (Standard_Real *)MyPnts2dY;
-    MyPnts2dY=NULL;
-  }
-}
-
-//-- Attention   Table of 0 ------> N + 1 
-//--                      P1 ..... Pn P1
-//--
-//--     1  2  3
-//--     4  0  5
-//--     6  7  8
-//-- 
-//=======================================================================
-//function : SiDans
-//purpose  : 
-//=======================================================================
-Standard_Integer CSLib_Class2d::SiDans(const gp_Pnt2d& P) const
-{ 
-  if(!N) {
-    return 0;
-  }
-  //
-  Standard_Real x,y, aTolu, aTolv;
-  //
-  x = P.X(); y = P.Y();
-  aTolu=Tolu*(Umax-Umin);
-  aTolv=Tolv*(Vmax-Vmin);
-  //
-  if(Umin<Umax && Vmin<Vmax)    {
-    if( ( x<(Umin-aTolu) ) || 
-       ( x>(Umax+aTolu) ) || 
-       ( y<(Vmin-aTolv) ) || 
-       ( y>(Vmax+aTolv) ) ) {
-      return -1;
-    }
-    x=Transform2d(x,Umin,Umax-Umin);
-    y=Transform2d(y,Vmin,Vmax-Vmin);
+  const size_t aN = theTP2d.Length();
+  if((theUmax <= theUmin) || (theVmax <= theVmin) || (aN == 0))
+  {
+    // Nothing will be created.
+    return;
   }
 
+  for (Standard_Integer i = myPnts2d.Lower(), j = theTP2d.Lower(); 
+                                              i < myPnts2d.Upper(); ++i, j++)
+  {
+    const gp_Pnt2d& aP2D = theTP2d(j);
+    myPnts2d(i).SetCoord(aP2D.X() - theUmin, aP2D.Y() - theVmin);
+  }
 
-  Standard_Integer res = InternalSiDansOuOn(x,y);
-  if(res==-1) {    
-    return 0;
-  }
-  if(Tolu || Tolv) {
-    if(res != InternalSiDans(x-Tolu,y-Tolv)) return 0;
-    if(res != InternalSiDans(x+Tolu,y-Tolv)) return 0;
-    if(res != InternalSiDans(x-Tolu,y+Tolv)) return 0;
-    if(res != InternalSiDans(x+Tolu,y+Tolv)) return 0; 
-  }
-  //
-  return((res)? 1: -1);
-}
-//=======================================================================
-//function : SiDans_OnMode
-//purpose  : 
-//=======================================================================
-Standard_Integer CSLib_Class2d::SiDans_OnMode(const gp_Pnt2d& P,
-					      const Standard_Real Tol) const
-{ 
-  if(!N){
-    return 0;
-  }
-  //
-  Standard_Real x,y, aTolu, aTolv;
-  //
-  x = P.X(); y = P.Y();
-  aTolu=Tol; 
-  aTolv=Tol; 
+  myPnts2d.SetValue(myPnts2d.Upper(), myPnts2d(myPnts2d.Lower()));
 
-  //-- ****** TO DO LATER, ESTIMATE AT EACH POINT Tol2d depending on Tol3d *****
-  if(Umin<Umax && Vmin<Vmax) { 
-    if(x<(Umin-aTolu) || (x>Umax+aTolu) || 
-       (y<Vmin-aTolv) || (y>Vmax+aTolv)) {
-      return -1;
-    }
-    x=Transform2d(x,Umin,Umax-Umin);
-    y=Transform2d(y,Vmin,Vmax-Vmin);
-  }
-  //
-  Standard_Integer res = InternalSiDansOuOn(x,y);
-  if(aTolu || aTolv) {
-    if(res != InternalSiDans(x-aTolu,y-aTolv)) return 0;
-    if(res != InternalSiDans(x+aTolu,y-aTolv)) return 0;
-    if(res != InternalSiDans(x-aTolu,y+aTolv)) return 0;
-    if(res != InternalSiDans(x+aTolu,y+aTolv)) return 0; 
-  }
-  return((res)? 1: -1);
-}
-//=======================================================================
-//function : InternalSiDans
-//purpose  : 
-//=======================================================================
-Standard_Integer CSLib_Class2d::InternalSiDans(const Standard_Real Px,
-					       const Standard_Real Py) const
-{ 
-  Standard_Integer nbc, i, ip1, SH, NH;
-  Standard_Real *Pnts2dX, *Pnts2dY;
-  Standard_Real  x, y, nx, ny;
-  //
-  nbc = 0;
-  i   = 0;
-  ip1 = 1;
-  Pnts2dX = (Standard_Real *)MyPnts2dX;
-  Pnts2dY = (Standard_Real *)MyPnts2dY;
-  x   = (Pnts2dX[i]-Px);
-  y   = (Pnts2dY[i]-Py);
-  SH  = (y<0.)? -1 : 1;
-  //
-  for(i=0; i<N ; i++,ip1++) { 
-    nx = Pnts2dX[ip1] - Px;
-    ny = Pnts2dY[ip1] - Py;
-    
-    NH = (ny<0.)? -1 : 1;
-    if(NH!=SH) { 
-      if(x>0. && nx>0.) {
-	nbc++;
-      }
-      else { 
-	if(x>0.0 || nx>0.) { 
-	  if((x-y*(nx-x)/(ny-y))>0.) {
-	    nbc++;
-	  }
-	}
-      }
-      SH = NH;
-    }
-    x = nx; y = ny;
-  }
-  return(nbc&1);
-}
-//modified by NIZNHY-PKV Fri Jan 15 09:03:48 2010f
-//=======================================================================
-//function : InternalSiDansOuOn
-//purpose  : same code as above + test on ON (return(-1) in this case
-//=======================================================================
-Standard_Integer CSLib_Class2d::InternalSiDansOuOn(const Standard_Real Px,
-						   const Standard_Real Py) const 
-{ 
-  Standard_Integer nbc, i, ip1, SH, NH, iRet;
-  Standard_Real *Pnts2dX, *Pnts2dY;
-  Standard_Real x, y, nx, ny, aX;
-  Standard_Real aYmin;
-  //
-  nbc = 0;
-  i   = 0;
-  ip1 = 1;
-  Pnts2dX = (Standard_Real *)MyPnts2dX;
-  Pnts2dY = (Standard_Real *)MyPnts2dY;
-  x   = (Pnts2dX[i]-Px);
-  y   = (Pnts2dY[i]-Py);
-  aYmin=y;
-  SH  = (y<0.)? -1 : 1;
-  for(i=0; i<N ; i++, ip1++) { 
-   
-    nx = Pnts2dX[ip1] - Px;
-    ny = Pnts2dY[ip1] - Py;
-    //-- le 14 oct 97 
-    if(nx<Tolu && nx>-Tolu && ny<Tolv && ny>-Tolv) { 
-      iRet=-1;
-      return iRet;
-    }
-    //find Y coordinate of polyline for current X gka
-    //in order to detect possible status ON
-    Standard_Real aDx = (Pnts2dX[ip1] - Pnts2dX[ip1-1]);
-    if( (Pnts2dX[ip1-1] - Px) * nx < 0.)
+#ifdef CSLIB_CLASS2D_DEBUG
+  bool flShow = false;
+
+  if (flShow)
+  {
+    std::cout << "+++ Dump of CSLib_Class2d polygon ++" << std::endl;
+
+    for (Standard_Integer i = 0; i < aN; i++)
     {
-     
-      Standard_Real aCurPY =  Pnts2dY[ip1] - (Pnts2dY[ip1] - Pnts2dY[ip1-1])/aDx *nx;
-      Standard_Real aDeltaY = aCurPY - Py;
-      if(aDeltaY >= -Tolv && aDeltaY <= Tolv)
-      {
-         iRet=-1;
-         return iRet;
-      }
+      const gp_Pnt2d &aPCurr = myPnts2d(i),
+                     &aPNext = myPnts2d(i + 1);
+      std::cout << "line l" << i << " " << aPCurr.X() + theUmin << " " <<
+                                           aPCurr.Y() + theVmin << " " <<
+                                           aPNext.X() - aPCurr.X() << " " <<
+                                           aPNext.Y() - aPCurr.Y() << std::endl;
+
+      std::cout << "trim l" << i << " l" << i << " " <<
+                            0.0 << " " << aPCurr.Distance(aPNext) << std::endl;
     }
-    //
-      
-    NH = (ny<0.)? -1 : 1;
-    if(NH!=SH) { 
-      if(x>0. && nx>0.) {
-	nbc++;
-      }
-      else { 
-	if(x>0. || nx>0.) { 
-	  aX=x-y*(nx-x)/(ny-y);
-	  if(aX>0.){
-	    nbc++;
-	  }
-	}
-      }
-      SH = NH;
-    }
-    else {// y has same sign as ny  
-      if (ny<aYmin) {
-	aYmin=ny;
-      }
-    }
-    x = nx; y = ny; 
-  }// for(i=0; i<N ; i++,ip1++) { 
- 
-  iRet=nbc&1;
-  return iRet;
-}
-//modified by NIZNHY-PKV Fri Jan 15 09:03:55 2010t
-//=======================================================================
-//function : Copy
-//purpose  : 
-//=======================================================================
-const CSLib_Class2d& CSLib_Class2d::Copy(const CSLib_Class2d& ) const 
-{ 
-#ifdef OCCT_DEBUG
-  cerr<<"Copy not allowed in CSLib_Class2d"<<endl;
+    std::cout << "--- Dump of CSLib_Class2d polygon --" << std::endl << std::endl;
+  }
 #endif
-  throw Standard_ConstructionError();
 }
+
 //=======================================================================
-//function : Transform2d
+//function : Classify
 //purpose  : 
 //=======================================================================
-Standard_Real Transform2d(const Standard_Real u,
-			  const Standard_Real umin,
-			  const Standard_Real umaxmumin) 
+CSLib_Class2d::PolyState CSLib_Class2d::Classify(const gp_Pnt2d& theP) const
+{
+  return Classify(theP, myTolU, myTolV);
+}
+
+//=======================================================================
+//function : Classify
+//purpose  : 
+//=======================================================================
+CSLib_Class2d::PolyState CSLib_Class2d::Classify(const gp_Pnt2d& theP,
+                                                 const Standard_Real theTolU,
+                                                 const Standard_Real theTolV) const
 { 
-  if(umaxmumin>1e-10) { 
-    Standard_Real U = (u-umin)/umaxmumin;
-    return U;
+  if (!myPnts2d.Size())
+  {
+    // Return 0 for compatibility with
+    // previous versions of OCCT (it does not
+    // mean that the status is ON).
+
+#ifdef OCCT_DEBUG
+    std::cout << "CSLib_Class2d::Classify(...). No polygon "
+                 "for classification!" << std::endl;
+#endif
+
+    return (PolyState)0;
   }
-  else { 
-    return u;
+  //
+  Standard_Real aX = theP.X(), aY = theP.Y();
+
+  if (myUmin < myUmax && myVmin<myVmax)
+  {
+    if ((theTolU < (myUmin - aX)) ||
+        ((aX - myUmax) > theTolU) ||
+        (theTolV < (myVmin - aY)) ||
+        ((aY - myVmax) > theTolV))
+    {
+      // The point is outside of the UV-bounds
+      return PolyOut;
+    }
+
+    aX -= myUmin;
+    aY -= myVmin;
   }
+
+  return InternalClass(aX, aY, theTolU, theTolV);
+}
+
+//=======================================================================
+//function : InternalIfIn
+//purpose  : Checks if the point P(thePx, thePy) is inside the
+//            given convex polygon.
+//
+// Algorithm description:
+//
+//  1. Catch the moment when some segment of the polygon
+//      intersects the line Y=thePy. For convex polygon
+//      it can be done not more than in two points.
+//  2. Compute X-coordinates in every point from the item 1.
+//      Let them be called Xmin and Xmax (if no points are found
+//      Xmin and Xmax will not be recomputed; if only one point is
+//      found then Xmin=Xmax).
+//  3. The point P is inside the polygon if Xmin <= thePx <= Xmax.
+//
+// ON-status is checked in parallel mode of this algorithm. It is
+//  made by the following steps:
+//
+//  1. A vector V is created joining P with the nearest point of the
+//    considered segment.
+//  2. V is expanded to the two not collinear components: DU and DV.
+//  3. If every coefficient of expanding is less than the corresponding
+//    tolerance (theTolU and theTolV) then the ON-status is returned.
+//=======================================================================
+CSLib_Class2d::PolyState CSLib_Class2d::InternalClass(const Standard_Real thePx,
+                                                       const Standard_Real thePy,
+                                                       const Standard_Real theTolU,
+                                                       const Standard_Real theTolV) const
+{
+  // The source polygon is translated.
+  // So, classified point has (0, 0) - coordinates.
+  
+  Standard_Real aPrevX = myPnts2d(0).X() - thePx,
+                aPrevY = myPnts2d(0).Y() - thePy;
+
+  if ((Abs(aPrevX) < theTolU) && (Abs(aPrevY) < theTolV))
+  {
+    //If the classified point is in the vertex of
+    //the polygon
+    return PolyOn;
+  }
+
+  Standard_Real aXMin = RealLast(), aXMax = RealFirst();
+
+  const Standard_Integer aN = myPnts2d.Size();
+  for (Standard_Integer i = 1; i < aN; i++)
+  {
+    const Standard_Real aNewX = myPnts2d(i).X() - thePx,
+                        aNewY = myPnts2d(i).Y() - thePy;
+
+    const Standard_Real aDx = aNewX - aPrevX;
+    const Standard_Real aDy = aNewY - aPrevY;
+
+    if ((Abs(aNewX) < theTolU) && (Abs(aNewY) < theTolV))
+    {
+      //If the classified point is in the vertex of
+      //the polygon
+      return PolyOn;
+    }
+    else
+    {
+      //Square length of the considered segment
+      const Standard_Real aSqL = aDx*aDx + aDy*aDy;
+      if (!IsEqual(aSqL, 0.0))
+      {
+        // If the line (which the current segment lies in) has
+        // the location L(aPrevX, aPrevY) and the direction
+        // d{aDx, aDy} then the parameter of the classified point (0, 0)
+        // on the line (i.e. the projection point) is
+        //      t = (d*V)/|| d || = -(aPrevX*aDx+aPrevY*aDy)/|| d ||,
+        // where V{-aPrevX, -aPrevY} is the vector joining L with
+        // the classified point (0, 0).
+        // If the projection point is IN the current segment then
+        // the inequation
+        //      0 <= t <= || d ||
+        // must be satisfied.
+        //
+        // Or
+        //      0 <= -(aPrevX*aDx+aPrevY*aDy) <= aSqL
+
+        const Standard_Real aDP = aDx*aPrevX + aDy*aPrevY;
+        if ((-aSqL <= aDP) && (aDP <= 0.0))
+        {
+          // The projection point has coordinates
+          //    L + t*d/|| d || = L - d*(aPrevX*aDx+aPrevY*aDy)/aSqL
+
+          const Standard_Real aXNear = aPrevX - aDP*aDx / aSqL;
+          const Standard_Real aYNear = aPrevY - aDP*aDy / aSqL;
+
+          if ((Abs(aXNear) < theTolU) && (Abs(aYNear) < theTolV))
+          {
+            // The distance between the projection point and 
+            // the classified point (0, 0) is in the given tolerances
+            return PolyOn;
+          }
+        }
+      }
+    }
+
+    if (aNewY*aPrevY <= 0.0)
+    {
+      // The current segment intersects the line Y=thePy
+
+      if (Abs(aDy) < gp::Resolution())
+      {
+        // The current segment goes strictly along the line Y=thePy.
+        
+        const Standard_Real aX1 = Min(aNewX, aPrevX),
+                            aX2 = Max(aNewX, aPrevX);
+
+        aXMin = Min(aX1, aXMin);
+        aXMax = Max(aX2, aXMax);
+      }
+      else
+      {
+        // Compute X-coordinate of the intersection point 
+        // between the line Y=thePy and the current segment.
+        const Standard_Real aXt = aPrevX - aPrevY*(aNewX - aPrevX) / aDy;
+        aXMin = Min(aXt, aXMin);
+        aXMax = Max(aXt, aXMax);
+      }
+    }
+
+    aPrevX = aNewX;
+    aPrevY = aNewY;
+  }
+
+#ifdef CSLIB_CLASS2D_DEBUG
+  std::cout << "CSLib_Class2d::InternalIfIn(...): aXMin = " << aXMin + thePx + myUmin << 
+               ", aXMax = " << aXMax + thePx + myUmin << std::endl << std::endl;
+#endif
+
+  if ((aXMax >= aXMin) && (aXMin*aXMax <= 0.0))
+    return PolyIn;
+
+  return PolyOut;
 }

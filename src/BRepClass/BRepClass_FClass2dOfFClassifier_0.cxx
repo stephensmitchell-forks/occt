@@ -17,13 +17,10 @@
 #include <BRepClass_FClass2dOfFClassifier.hxx>
 
 #include <Standard_DomainError.hxx>
-#include <BRepClass_Edge.hxx>
+#include <TopClass_GeomEdge.hxx>
 #include <BRepClass_Intersector.hxx>
 #include <gp_Lin2d.hxx>
- 
 
-#define TheEdge BRepClass_Edge
-#define TheEdge_hxx <BRepClass_Edge.hxx>
 #define TheIntersector BRepClass_Intersector
 #define TheIntersector_hxx <BRepClass_Intersector.hxx>
 #define TopClass_Classifier2d BRepClass_FClass2dOfFClassifier

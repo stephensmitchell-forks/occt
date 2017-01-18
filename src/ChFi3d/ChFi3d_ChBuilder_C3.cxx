@@ -354,10 +354,8 @@ void ChFi3d_ChBuilder::PerformThreeCorner(const Standard_Integer Jndex)
   Handle(BRepAdaptor_HSurface) Fac = new BRepAdaptor_HSurface(face[pivot]);
   Handle(GeomAdaptor_HSurface) 
     bidsurf = new GeomAdaptor_HSurface(Fac->ChangeSurface().Surface());
-  Handle(Adaptor3d_TopolTool)  IFac = new Adaptor3d_TopolTool(bidsurf);
 
   Handle(GeomAdaptor_HSurface) Surf = ChFi3d_BoundSurf (DStr,fdpiv,jf[pivot][deb],jf[pivot][fin]);
-  Handle(Adaptor3d_TopolTool) ISurf = new Adaptor3d_TopolTool(Surf);
  
   // Creation of a new Stripe for the corner
   Handle(ChFiDS_Stripe) corner = new ChFiDS_Stripe();

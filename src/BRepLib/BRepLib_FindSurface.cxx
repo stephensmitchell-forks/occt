@@ -568,7 +568,7 @@ void BRepLib_FindSurface::Init(const TopoDS_Shape&    S,
       TopoDS_Face aTmpFace = BRepLib_MakeFace(mySurface, Precision::Confusion());
       BRep_Builder BB;
       BB.Add(aTmpFace, aW);
-      BRepTopAdaptor_FClass2d FClass(aTmpFace, 0.);
+      BRepTopAdaptor_FClass2d FClass(aTmpFace, gp::Resolution());
       if ( FClass.PerformInfinitePoint() == TopAbs_IN ) 
       {
         gp_Dir aN = aPlane->Position().Direction();

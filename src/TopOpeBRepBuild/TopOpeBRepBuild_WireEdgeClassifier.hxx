@@ -23,9 +23,9 @@
 
 #include <Standard_Boolean.hxx>
 #include <gp_Pnt2d.hxx>
-#include <BRepClass_Edge.hxx>
 #include <BRepClass_FacePassiveClassifier.hxx>
 #include <TopoDS_Shape.hxx>
+#include <TopoDS_Face.hxx>
 #include <TopOpeBRepBuild_CompositeClassifier.hxx>
 #include <TopAbs_State.hxx>
 class TopoDS_Shape;
@@ -88,7 +88,7 @@ private:
 
   Standard_Boolean myFirstCompare;
   gp_Pnt2d myPoint2d;
-  BRepClass_Edge myBCEdge;
+  TopoDS_Face myFace;
   BRepClass_FacePassiveClassifier myFPC;
   TopoDS_Shape myShape;
 
