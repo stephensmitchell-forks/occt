@@ -1,0 +1,50 @@
+puts "========"
+puts "OCC28211"
+puts "========"
+puts ""
+#################################################
+# Modeling Algorithms - Boolean fuse operation produces incorrect result
+#################################################
+
+# The classified face is based on the sphere and seems to be valid.
+# Classified point is near to the sphere apex.
+# So, result must be ON.
+
+restore [locate_data_file bug28211_spherepole.brep] result
+
+checkshape result
+
+set px 6.28318531
+set py 1.57079634
+
+point pp $px $py
+
+mksurface ss result
+svalue ss $px $py xx yy zz
+vertex vv xx yy zz
+
+smallview 
+donly result vv
+fit
+
+checkview -screenshot -2d -path ${imagedir}/${test_image}_3d.png
+
+if { ![regexp {ON} [ b2dclassifx result pp -t 1.0e-7 ] ] } {
+    puts "Error : Wrong result of 2d classifier algorithm"
+} else {
+    puts "OK : Good result of 2d classifier algorithm"
+}
+
+if { ![regexp {ON} [ b2dclassify result pp -t 1.0e-7 ] ] } {
+    puts "Error : Wrong result of 2d classifier algorithm"
+} else {
+    puts "OK : Good result of 2d classifier algorithm"
+}
+
+v2d
+2dclear
+display pp
+pcurve result
+2dfit
+
+checkview -screenshot -2d -path ${imagedir}/${test_image}_2d.png

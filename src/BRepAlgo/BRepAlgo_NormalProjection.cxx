@@ -495,8 +495,8 @@ void BRepAlgo_NormalProjection::SetDefaultParams()
               }
               else {
                 // if the common operation has failed, try to classify the part
-	         BRepTopAdaptor_FClass2d classifier(TopoDS::Face(Faces->Value(j)),
-			  		  	    Precision::Confusion());
+                 BRepTopAdaptor_FClass2d classifier(TopoDS::Face(Faces->Value(j)),
+                                                    Precision::Confusion());
 	         gp_Pnt2d Puv;
 	         Standard_Real f = PCur2d->FirstParameter();
 	         Standard_Real l = PCur2d->LastParameter();
@@ -517,8 +517,8 @@ void BRepAlgo_NormalProjection::SetDefaultParams()
                  cout << " BooleanOperations : no solution " << endl;
 #endif
 
-	      BRepTopAdaptor_FClass2d classifier(TopoDS::Face(Faces->Value(j)),
-			  		  	 Precision::Confusion());
+              BRepTopAdaptor_FClass2d classifier(TopoDS::Face(Faces->Value(j)),
+                                                 Precision::Confusion());
 	      gp_Pnt2d Puv;
 	      Standard_Real f = PCur2d->FirstParameter();
 	      Standard_Real l = PCur2d->LastParameter();

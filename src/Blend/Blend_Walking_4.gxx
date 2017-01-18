@@ -123,17 +123,17 @@ void Blend_Walking::InternalPerform(Blend_Function& Func,
   Standard_Boolean Arrive,recad1,recad2, control;
   Standard_Boolean Isvtx1 = Standard_False, Isvtx2 = Standard_False, echecrecad;
   gp_Pnt2d p2d;
-  math_Vector tolerance(1,4),infbound(1,4),supbound(1,4),parinit(1,4);
+  math_Vector aVTol2D(1,4),infbound(1,4),supbound(1,4),parinit(1,4);
   math_Vector solrst1(1,4),solrst2(1,4);
   TheVertex Vtx1,Vtx2;
   TheExtremity Ext1,Ext2;
 
   //IntSurf_Transition Tline,Tarc;
 
-  Func.GetTolerance(tolerance,tolesp);
+  Func.GetTolerance(aVTol2D, my3DTolEsp);
   Func.GetBounds(infbound,supbound);
 
-  math_FunctionSetRoot rsnld(Func,tolerance,30);
+  math_FunctionSetRoot rsnld(Func, aVTol2D, 30);
   parinit = sol;
 
   Arrive = Standard_False;
@@ -166,12 +166,10 @@ void Blend_Walking::InternalPerform(Blend_Function& Func,
       stepw = stepw/2.;
       param = parprec + sens*stepw;  // on ne risque pas de depasser Bound.
       if (Abs(stepw) < tolgui) {
-        Ext1.SetValue(previousP.PointOnS1(),
-                      sol(1),sol(2),
-                      previousP.Parameter(),tolesp);
-        Ext2.SetValue(previousP.PointOnS2(),
-                      sol(3),sol(4),
-                      previousP.Parameter(),tolesp);
+        Ext1.SetValue(previousP.PointOnS1(),sol(1),sol(2),
+                      previousP.Parameter(), my3DTolEsp);
+        Ext2.SetValue(previousP.PointOnS2(),sol(3),sol(4),
+                      previousP.Parameter(), my3DTolEsp);
         if (!previousP.IsTangencyPoint()) {
           Ext1.SetTangent(previousP.TangentOnS1());
           Ext2.SetTangent(previousP.TangentOnS2());
@@ -194,12 +192,22 @@ void Blend_Walking::InternalPerform(Blend_Function& Func,
     else {
       rsnld.Root(sol);
 
-      if(clasonS1) situ1 = domain1->Classify(gp_Pnt2d(sol(1),sol(2)),
-					     Min(tolerance(1),tolerance(2)),0);
-      else situ1 = TopAbs_IN;
-      if(clasonS2) situ2 = domain2->Classify(gp_Pnt2d(sol(3),sol(4)),
-					     Min(tolerance(3),tolerance(4)),0);
-      else situ2 = TopAbs_IN;
+      if (clasonS1)
+      {
+        situ1 = myDomain1->Classify(gp_Pnt2d(sol(1), sol(2)), my3DTolEsp, Standard_False);
+      }
+      else
+      {
+        situ1 = TopAbs_IN;
+      }
+      if (clasonS2)
+      {
+        situ2 = myDomain2->Classify(gp_Pnt2d(sol(3), sol(4)), my3DTolEsp, Standard_False);
+      }
+      else
+      {
+        situ2 = TopAbs_IN;
+      }
     }
     if(bonpoint && line->NbPoints() == 1 && (situ1 != TopAbs_IN || situ2 != TopAbs_IN)){
       State = Blend_StepTooLarge;
@@ -222,7 +230,7 @@ void Blend_Walking::InternalPerform(Blend_Function& Func,
 	if (recad1) {
 	  Standard_Real wtemp;
 	  wtemp  = solrst1(2);
-	  if ((param - wtemp)/sens>= -10*tolesp){
+          if ((param - wtemp) / sens >= -10.0 * my3DTolEsp){
 	    w1 = solrst1(2);
 	    control = Standard_True;
 	  }
@@ -248,7 +256,7 @@ void Blend_Walking::InternalPerform(Blend_Function& Func,
 	if (recad2) {
 	  Standard_Real wtemp;
 	  wtemp = solrst2(2);
-	  if ((param - wtemp)/sens>= -10*tolesp){
+          if ((param - wtemp) / sens >= -10.0*my3DTolEsp){
 	    w2 = solrst2(2);
 	    control = Standard_True;
 	  }
@@ -287,17 +295,17 @@ void Blend_Walking::InternalPerform(Blend_Function& Func,
       // Controle effectif des recadrage
       if (control) {
 	TopAbs_State situ;
-	if (recad1 && clasonS2) {
-	  situ = recdomain2->Classify(gp_Pnt2d(solrst1(3),solrst1(4)),
-			              Min(tolerance(3),tolerance(4)));
+	if (recad1 && clasonS2)
+        {
+          situ = myRecDomain2->Classify(gp_Pnt2d(solrst1(3), solrst1(4)), my3DTolEsp, Standard_False);
 	  if (situ == TopAbs_OUT) {
 	    recad1 = Standard_False;
 	    echecrecad = Standard_True;
 	  }
 	}
-	else if (recad2 && clasonS1) {
-	  situ = recdomain1->Classify(gp_Pnt2d(solrst2(3),solrst2(4)),
-			              Min(tolerance(1),tolerance(1)));
+	else if (recad2 && clasonS1)
+        {
+          situ = myRecDomain1->Classify(gp_Pnt2d(solrst2(3), solrst2(4)), my3DTolEsp, Standard_False);
 	  if (situ == TopAbs_OUT) {
 	    recad2 = Standard_False;
 	    echecrecad = Standard_True;
@@ -315,11 +323,11 @@ void Blend_Walking::InternalPerform(Blend_Function& Func,
 	  State = Blend_OnRst12;
 	  param =  (w1+w2)/2;
           gp_Pnt Pnt1, Pnt2;
-	  p2d = TheArcTool::Value(recdomain1->Value(),solrst1(1));
+	  p2d = TheArcTool::Value(myRecDomain1->Value(),solrst1(1));
 	  sol(1) = p2d.X();
 	  sol(2) = p2d.Y();
           Pnt1 = TheSurfaceTool::Value(surf1,sol(1),sol(2));
-	  p2d = TheArcTool::Value(recdomain2->Value(),solrst2(1));
+	  p2d = TheArcTool::Value(myRecDomain2->Value(),solrst2(1));
 	  sol(3) = p2d.X();
 	  sol(4) = p2d.Y();
           Pnt2 = TheSurfaceTool::Value(surf2,sol(3),sol(4));
@@ -384,13 +392,13 @@ void Blend_Walking::InternalPerform(Blend_Function& Func,
 	  // sol sur 1
 	  State = Blend_OnRst1;
 	  param = w1;
-	  recdomain1->Init();
+	  myRecDomain1->Init();
 	  nbarc = 1;
 	  while (nbarc < Index1) {
 	    nbarc++;
-	    recdomain1->Next();
+	    myRecDomain1->Next();
 	  }
-	  p2d = TheArcTool::Value(recdomain1->Value(),solrst1(1));
+	  p2d = TheArcTool::Value(myRecDomain1->Value(),solrst1(1));
 	  sol(1) = p2d.X();
 	  sol(2) = p2d.Y();
 	  sol(3) = solrst1(3);
@@ -412,13 +420,13 @@ void Blend_Walking::InternalPerform(Blend_Function& Func,
 	  State = Blend_OnRst2;
 	  param = w2;
 	  
-	  recdomain2->Init();
+	  myRecDomain2->Init();
 	  nbarc = 1;
 	  while (nbarc < Index2) {
 	    nbarc++;
-	    recdomain2->Next();
+	    myRecDomain2->Next();
 	  }
-	  p2d = TheArcTool::Value(recdomain2->Value(),solrst2(1));
+	  p2d = TheArcTool::Value(myRecDomain2->Value(),solrst2(1));
 	  sol(1) = solrst2(3);
 	  sol(2) = solrst2(4);
 	  sol(3) = p2d.X();
@@ -486,14 +494,12 @@ void Blend_Walking::InternalPerform(Blend_Function& Func,
 
 	parprec = param;
 
-	if (param == Bound) {
-	  Arrive = Standard_True;
-	  Ext1.SetValue(previousP.PointOnS1(),
-			sol(1),sol(2),
-			previousP.Parameter(), tolesp);
-	  Ext2.SetValue(previousP.PointOnS2(),
-			sol(3),sol(4),
-			previousP.Parameter(), tolesp);
+        if (param == Bound) {
+          Arrive = Standard_True;
+          Ext1.SetValue(previousP.PointOnS1(), sol(1),sol(2),
+                        previousP.Parameter(), my3DTolEsp);
+          Ext2.SetValue(previousP.PointOnS2(), sol(3),sol(4),
+                        previousP.Parameter(), my3DTolEsp);
 	  if (!previousP.IsTangencyPoint()) {
 	    Ext1.SetTangent(previousP.TangentOnS1());
 	    Ext2.SetTangent(previousP.TangentOnS2());
@@ -514,14 +520,12 @@ void Blend_Walking::InternalPerform(Blend_Function& Func,
       
     case Blend_StepTooLarge :
       {
-	stepw = stepw/2.;
-	if (Abs(stepw) < tolgui) {
-	  Ext1.SetValue(previousP.PointOnS1(),
-			sol(1),sol(2),
-			previousP.Parameter(),tolesp);
-	  Ext2.SetValue(previousP.PointOnS2(),
-			sol(3),sol(4),
-			previousP.Parameter(),tolesp);
+        stepw = stepw/2.;
+        if (Abs(stepw) < tolgui) {
+          Ext1.SetValue(previousP.PointOnS1(),sol(1),sol(2),
+                        previousP.Parameter(), my3DTolEsp);
+          Ext2.SetValue(previousP.PointOnS2(),sol(3),sol(4),
+                        previousP.Parameter(), my3DTolEsp);
 	  if (!previousP.IsTangencyPoint()) {
 	    Ext1.SetTangent(previousP.TangentOnS1());
 	    Ext2.SetTangent(previousP.TangentOnS2());
@@ -554,15 +558,13 @@ void Blend_Walking::InternalPerform(Blend_Function& Func,
 
 	parprec = param;
 
-	stepw = Min(1.5*stepw,pasmax);
-	if (param == Bound) {
-	  Arrive = Standard_True;
-	  Ext1.SetValue(previousP.PointOnS1(),
-			sol(1),sol(2),
-			previousP.Parameter(),tolesp);
-	  Ext2.SetValue(previousP.PointOnS2(),
-			sol(3),sol(4), 
-			previousP.Parameter(),tolesp);
+        stepw = Min(1.5*stepw,pasmax);
+        if (param == Bound) {
+          Arrive = Standard_True;
+          Ext1.SetValue(previousP.PointOnS1(),sol(1),sol(2),
+                        previousP.Parameter(), my3DTolEsp);
+          Ext2.SetValue(previousP.PointOnS2(),sol(3),sol(4), 
+                        previousP.Parameter(), my3DTolEsp);
 	  if (!previousP.IsTangencyPoint()) {
 	    Ext1.SetTangent(previousP.TangentOnS1());
 	    Ext2.SetTangent(previousP.TangentOnS2());
@@ -591,17 +593,15 @@ void Blend_Walking::InternalPerform(Blend_Function& Func,
 	MakeExtremity(Ext1,Standard_True,Index1,
 		      solrst1(1),Isvtx1,Vtx1);
         // On blinde le cas singulier ou un des recadrage a planter
-        if (previousP.PointOnS1().IsEqual(previousP.PointOnS2(), 2*tolesp)) {
-	  Ext2.SetValue(previousP.PointOnS1(),
-			sol(3),sol(4),tolesp);
-	  if (Isvtx1) MakeSingularExtremity(Ext2, Standard_False, Vtx1);
-	}
-	else {
-	  Ext2.SetValue(previousP.PointOnS2(),
-			sol(3),sol(4),
-			previousP.Parameter(),tolesp);
-	}
-	Arrive = Standard_True;
+        if (previousP.PointOnS1().IsEqual(previousP.PointOnS2(), 2.0 * my3DTolEsp)) {
+          Ext2.SetValue(previousP.PointOnS1(), sol(3), sol(4), my3DTolEsp);
+          if (Isvtx1) MakeSingularExtremity(Ext2, Standard_False, Vtx1);
+        }
+        else {
+          Ext2.SetValue(previousP.PointOnS2(), sol(3),sol(4),
+                        previousP.Parameter(), my3DTolEsp);
+        }
+        Arrive = Standard_True;
       }
       break;
 
@@ -614,15 +614,13 @@ void Blend_Walking::InternalPerform(Blend_Function& Func,
 	  line->Prepend(previousP);
 	}
         // On blinde le cas singulier ou un des recadrage a plante
-        if (previousP.PointOnS1().IsEqual(previousP.PointOnS2(), 2*tolesp)) {
-	  Ext1.SetValue(previousP.PointOnS2(),
-			sol(1),sol(2),tolesp);
-	  if (Isvtx2) MakeSingularExtremity(Ext1, Standard_True, Vtx2);
-	}
-	else {
-	  Ext1.SetValue(previousP.PointOnS1(),
-			sol(1),sol(2),
-			previousP.Parameter(),tolesp);
+        if (previousP.PointOnS1().IsEqual(previousP.PointOnS2(), 2.0*my3DTolEsp)) {
+          Ext1.SetValue(previousP.PointOnS2(), sol(1), sol(2), my3DTolEsp);
+          if (Isvtx2) MakeSingularExtremity(Ext1, Standard_True, Vtx2);
+        }
+        else {
+          Ext1.SetValue(previousP.PointOnS1(),sol(1),sol(2),
+                        previousP.Parameter(), my3DTolEsp);
 	}
 	MakeExtremity(Ext2,Standard_False,Index2,
 		      solrst2(1),Isvtx2,Vtx2);
@@ -641,7 +639,7 @@ void Blend_Walking::InternalPerform(Blend_Function& Func,
 	}
 
 	if ( (Isvtx1 != Isvtx2) &&
-	    (previousP.PointOnS1().IsEqual(previousP.PointOnS2(), 2*tolesp)) ) {
+                (previousP.PointOnS1().IsEqual(previousP.PointOnS2(), 2.0*my3DTolEsp))) {
 	  // On blinde le cas singulier ou un seul recadrage
 	  // est reconnu comme vertex.
 	  if (Isvtx1) {
@@ -664,21 +662,19 @@ void Blend_Walking::InternalPerform(Blend_Function& Func,
 
     case Blend_SamePoints :
       {
-	// On arrete
+        // On arrete
 #ifdef OCCT_DEBUG
-	cout << " Points confondus dans le cheminement" << endl;
+        cout << " Points confondus dans le cheminement" << endl;
 #endif
-	Ext1.SetValue(previousP.PointOnS1(),
-		      sol(1),sol(2),
-		      previousP.Parameter(),tolesp);
-	Ext2.SetValue(previousP.PointOnS2(),
-		      sol(3),sol(4),
-		      previousP.Parameter(),tolesp);;
-	if (!previousP.IsTangencyPoint()) {
-	  Ext1.SetTangent(previousP.TangentOnS1());
-	  Ext2.SetTangent(previousP.TangentOnS2());
-	}
-	Arrive = Standard_True;
+        Ext1.SetValue(previousP.PointOnS1(),sol(1),sol(2),
+                      previousP.Parameter(), my3DTolEsp);
+        Ext2.SetValue(previousP.PointOnS2(),sol(3),sol(4),
+                      previousP.Parameter(), my3DTolEsp);
+        if (!previousP.IsTangencyPoint()) {
+          Ext1.SetTangent(previousP.TangentOnS1());
+          Ext2.SetTangent(previousP.TangentOnS2());
+        }
+        Arrive = Standard_True;
       }
       break;
     default:
@@ -714,7 +710,7 @@ Standard_Boolean Blend_Walking::CorrectExtremityOnOneRst(const Standard_Integer 
   if (theElSpine.NbVertices() == 0)
     return Standard_False;
   
-  Handle(TheTopolTool) DomainOfRst = (IndexOfRst == 1)? recdomain1 : recdomain2;
+  Handle(TheTopolTool) DomainOfRst = (IndexOfRst == 1)? myRecDomain1 : myRecDomain2;
   TheSurface SurfOfRst = (IndexOfRst == 1)? surf1 : surf2;
   TheSurface AnotherSurf = (IndexOfRst == 1)? surf2 : surf1;
   

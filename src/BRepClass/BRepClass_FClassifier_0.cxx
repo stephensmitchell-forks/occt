@@ -18,7 +18,7 @@
 
 #include <Standard_DomainError.hxx>
 #include <BRepClass_FaceExplorer.hxx>
-#include <BRepClass_Edge.hxx>
+#include <TopClass_GeomEdge.hxx>
 #include <BRepClass_Intersector.hxx>
 #include <BRepClass_FClass2dOfFClassifier.hxx>
 #include <gp_Pnt2d.hxx>
@@ -26,8 +26,12 @@
 
 #define TheFaceExplorer BRepClass_FaceExplorer
 #define TheFaceExplorer_hxx <BRepClass_FaceExplorer.hxx>
-#define TheEdge BRepClass_Edge
-#define TheEdge_hxx <BRepClass_Edge.hxx>
+
+//! Are used only for compatibility with TopOpeBRep
+//! packages. It should be deleted after this package will be eliminated.
+#define TheTopoEdge TopoDS_Edge
+#define TheTopoEdge_hxx <TopoDS_Edge.hxx>
+
 #define TheIntersection2d BRepClass_Intersector
 #define TheIntersection2d_hxx <BRepClass_Intersector.hxx>
 #define TopClass_FClass2d BRepClass_FClass2dOfFClassifier

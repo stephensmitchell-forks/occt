@@ -43,7 +43,7 @@ void TopClass_Classifier3d::Compare(const TopoDS_Face&        Face,
   }
 
   hasIntersect = Standard_False;
-  myIntersector.Perform(myLin,myParam,myTolerance,Face);
+  myIntersector.Perform(myLin,myTolerance,Face);
   if(myIntersector.IsDone()) { 
     if(myIntersector.HasAPoint()) { 
       hasIntersect = Standard_True;

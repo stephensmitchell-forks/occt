@@ -41,10 +41,9 @@ Blend_Status Blend_Walking::TestArret(Blend_Function& Function,
   IntSurf_TypeTrans tras1,tras2;
   Blend_Point curpoint;
   Standard_Boolean loctwist1 = Standard_False, loctwist2 = Standard_False;
-  Standard_Real tolsolu = tolesp;
+  const Standard_Real aTolSolu = ( !TestSolu)? 1000.0*my3DTolEsp : my3DTolEsp;
 
-  if ( !TestSolu) tolsolu *= 1000; //Ca doit toujours etre bon
-  if (Function.IsSolution(sol,tolsolu)) {
+  if (Function.IsSolution(sol,aTolSolu)) {
 
 #ifdef OCCT_DEBUG
     sectioncalculee = 1;
@@ -211,8 +210,8 @@ Blend_Status Blend_Walking::CheckDeflection
     if(!prevpointistangent){
       prevTg = previousP.TangentOnS1();
     }
-    tolu = TheSurfaceTool::UResolution(surf1,tolesp);
-    tolv = TheSurfaceTool::VResolution(surf1,tolesp);
+    tolu = TheSurfaceTool::UResolution(surf1, my3DTolEsp);
+    tolv = TheSurfaceTool::VResolution(surf1, my3DTolEsp);
   }
   else {
     Psurf = CurPoint.PointOnS2();
@@ -223,8 +222,8 @@ Blend_Status Blend_Walking::CheckDeflection
     if(!prevpointistangent){
       prevTg = previousP.TangentOnS2();
     }
-    tolu = TheSurfaceTool::UResolution(surf2,tolesp);
-    tolv = TheSurfaceTool::VResolution(surf2,tolesp);
+    tolu = TheSurfaceTool::UResolution(surf2, my3DTolEsp);
+    tolv = TheSurfaceTool::VResolution(surf2, my3DTolEsp);
   }
 
   gp_Vec Corde(prevP,Psurf);
@@ -233,12 +232,12 @@ Blend_Status Blend_Walking::CheckDeflection
   if(!prevpointistangent) prevNorme = prevTg.SquareMagnitude();
 
 
-  if (Norme <= tolesp*tolesp){
+  if (Norme <= my3DTolEsp*my3DTolEsp){
     // il faudra peut etre  forcer meme point
     return Blend_SamePoints;
   }
   if(!prevpointistangent){
-    if(prevNorme <= tolesp*tolesp) {
+    if (prevNorme <= my3DTolEsp*my3DTolEsp) {
       return Blend_SamePoints;
     }
     Cosi = sens*Corde*prevTg;

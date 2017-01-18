@@ -10,6 +10,15 @@ puts ""
 # bopsection result does not contain any edges.
 ##################################################
 
+# The main problem is in classifier-algorithm.
+# The intersection curve is found but is rejected
+# by BOP-operation because some intermediate point
+# of this curve is classified as OUT. 
+# Good fix must create adecvate polygon for classification,
+# which will respect the pcurve of the face with some deflection
+# (see method BRepTopAdaptor_FClass2d::Init(...)).
+# Currently, this polygon is wrong. 
+
 restore [locate_data_file bug26842_s2.brep] s2
 restore [locate_data_file bug26842_plane.brep] plane
 
@@ -19,6 +28,13 @@ checkshape result
 checksection result
 
 checknbshapes result -vertex 2 -edge 1
-checkprops result -l 1765.01
+checkprops result -l 3941.88
 
-checkview -display result -2d -path ${imagedir}/${test_image}.png
+smallview
+don result
+fit
+clear
+display s2
+display result
+
+checkview -screenshot -2d -path ${imagedir}/${test_image}.png

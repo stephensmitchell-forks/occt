@@ -1095,96 +1095,6 @@ static Standard_Integer OCC363 (Draw_Interpretor& di, Standard_Integer argc, con
 //  return 0;
 //}
 
-#include <BRepTopAdaptor_FClass2d.hxx>
-
-//======================================================================================
-// Function : OCC377
-// Purpose  :
-//======================================================================================
-static Standard_Integer OCC377 (Draw_Interpretor& di, Standard_Integer argc, const char ** argv)
-{
-  try
-  {
-    OCC_CATCH_SIGNALS
-    // 1. Verify validity of arguments
-    if ( argc < 1 ) {di << "Error OCC377. Use  OCC377 file x y precuv \n";return 0;}
-
-    // 2. Initialize parameters
-    gp_Pnt2d p2d;
-    p2d.SetX ( Draw::Atof(argv[2]) );
-    p2d.SetY ( Draw::Atof(argv[3]) );
-    Standard_Real precuv = Draw::Atof (argv[4] );
-
-    // 3. Read shape
-    BRep_Builder B;
-    TopoDS_Shape Shape;
-    BRepTools::Read ( Shape, argv[1], B );
-
-    // 4. Verify whether enrtry point is on wire and reversed ones (indeed results of veridying must be same)
-    TopExp_Explorer exp;
-    Standard_Integer i=1;
-    for (exp.Init(Shape.Oriented(TopAbs_FORWARD),TopAbs_WIRE); exp.More(); exp.Next(), i++)
-    {
-      // 4.1. Verify whether enrtry point is on wire
-      const TopoDS_Wire& wir = TopoDS::Wire(exp.Current());
-      TopoDS_Face newFace = TopoDS::Face(Shape.EmptyCopied());
-
-      TopAbs_Orientation orWire = wir.Orientation();
-      newFace.Orientation(TopAbs_FORWARD);
-      B.Add(newFace,wir);
-
-      BRepTopAdaptor_FClass2d FClass2d1(newFace,precuv);
-      TopAbs_State stat1 = FClass2d1.PerformInfinitePoint();
-      //di << "Wire " << i << ": Infinite point is " <<
-      //  ( stat1 == TopAbs_IN ? "IN" : stat1 == TopAbs_OUT ? "OUT" : stat1 == TopAbs_ON ? "ON" : "UNKNOWN" ) << "\n";
-
-      TCollection_AsciiString TmpString;
-      stat1 == TopAbs_IN ? TmpString.AssignCat("IN") : stat1 == TopAbs_OUT ? TmpString.AssignCat("OUT") : stat1 == TopAbs_ON ? TmpString.AssignCat("ON") : TmpString.AssignCat("UNKNOWN");
-      di << "Wire " << i << ": Infinite point is " << TmpString.ToCString() << "\n";
-
-      stat1 = FClass2d1.Perform(p2d);
-      //di << "Wire " << i << ": point ( " << p2d.X() << ", " << p2d.Y() << " ) is " <<
-      //  ( stat1 == TopAbs_IN ? "IN" : stat1 == TopAbs_OUT ? "OUT" : stat1 == TopAbs_ON ? "ON" : "UNKNOWN" ) << "\n";
-
-      TmpString.Clear();
-      stat1 == TopAbs_IN ? TmpString.AssignCat("IN") : stat1 == TopAbs_OUT ? TmpString.AssignCat("OUT") : stat1 == TopAbs_ON ? TmpString.AssignCat("ON") : TmpString.AssignCat("UNKNOWN");
-      di << "Wire " << i << ": point ( " << p2d.X() << ", " << p2d.Y() << " ) is " << TmpString.ToCString() << "\n";
-
-      // 4.2. Verify whether enrtry point is on reversed wire
-      newFace = TopoDS::Face(Shape.EmptyCopied());
-      newFace.Orientation(TopAbs_FORWARD);
-      orWire = TopAbs::Reverse(orWire);
-      B.Add(newFace,wir.Oriented(orWire));
-      BRepTopAdaptor_FClass2d FClass2d2(newFace,precuv);
-      TopAbs_State stat2 = FClass2d2.PerformInfinitePoint();
-      //di << "Reversed Wire " << i << ": Infinite point is " <<
-      //  ( stat2 == TopAbs_IN ? "IN" : stat2 == TopAbs_OUT ? "OUT" : stat2 == TopAbs_ON ? "ON" : "UNKNOWN" ) << "\n";
-
-      TmpString.Clear();
-      stat2 == TopAbs_IN ? TmpString.AssignCat("IN") : stat2 == TopAbs_OUT ? TmpString.AssignCat("OUT") : stat2 == TopAbs_ON ? TmpString.AssignCat("ON") : TmpString.AssignCat("UNKNOWN");
-      di << "Reversed Wire " << i << ": Infinite point is " << TmpString.ToCString() << "\n";
-
-      stat2 = FClass2d2.Perform(p2d);
-      //di << "Reversed Wire " << i << ": point ( " << p2d.X() << ", " << p2d.Y() << " ) is " <<
-      //  ( stat2 == TopAbs_IN ? "IN" : stat2 == TopAbs_OUT ? "OUT" : stat2 == TopAbs_ON ? "ON" : "UNKNOWN" ) << "\n";
-
-      TmpString.Clear();
-      stat2 == TopAbs_IN ? TmpString.AssignCat("IN") : stat2 == TopAbs_OUT ? TmpString.AssignCat("OUT") : stat2 == TopAbs_ON ? TmpString.AssignCat("ON") : TmpString.AssignCat("UNKNOWN");
-      di << "Reversed Wire " << i << ": point ( " << p2d.X() << ", " << p2d.Y() << " ) is " << TmpString.ToCString() << "\n";
-
-      // 4.3. Compare results (they must be same)
-      if(stat1 ==stat2) di << "OCC377 OK\n";
-      else {di << "OCC377 FAULTY\n"; return 0;}
-    }
-  }
-  catch(Standard_Failure)
-  {
-    di << "OCC377 Exception";
-  }
-
-  return 0;
-}
-
 #include <ShapeUpgrade_ShapeDivideAngle.hxx>
 #include <ShapeBuild_ReShape.hxx>
 
@@ -4863,7 +4773,6 @@ void QABugs::Commands_11(Draw_Interpretor& theCommands) {
   theCommands.Add("OCC363", "OCC363 document filename ", __FILE__, OCC363, group);
   // Must use OCC299
   //theCommands.Add("OCC372", "OCC372", __FILE__, OCC372, group);
-  theCommands.Add("OCC377", "OCC377", __FILE__, OCC377, group);
   theCommands.Add("OCC22", "OCC22 Result Shape CompoundOfSubshapesToBeDivided ConsiderLocation", __FILE__, OCC22, group);
   theCommands.Add("OCC24", "OCC24 Result Shape CompoundOfSubshapes ResourceFileName", __FILE__, OCC24, group);
   theCommands.Add("OCC369", "OCC369 Shape", __FILE__, OCC369, group);

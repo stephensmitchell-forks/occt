@@ -1221,8 +1221,7 @@ void AIS::InitLengthBetweenCurvilinearFaces (const TopoDS_Face&    theFirstFace,
     // Now there is projection of FirstAttach onto SecondSurf in aProjector
     BRepTopAdaptor_FClass2d aClassifier (theSecondFace, Precision::Confusion());
 
-    TopAbs_State aState = 
-      aClassifier.Perform (gp_Pnt2d (aPU, aPV), theSecondSurf->IsUPeriodic() || theSecondSurf->IsVPeriodic());
+    TopAbs_State aState = aClassifier.Perform (gp_Pnt2d (aPU, aPV), Standard_True);
 
     if (aState == TopAbs_OUT || aState == TopAbs_UNKNOWN)
     {

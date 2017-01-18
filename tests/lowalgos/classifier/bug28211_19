@@ -1,0 +1,39 @@
+puts "========"
+puts "OCC28211"
+puts "========"
+puts ""
+#################################################
+# Modeling Algorithms - Boolean fuse operation produces incorrect result
+#################################################
+
+# The tolerance for classification (Toler = 1.0e-4) is enough
+# for returning ON-status.
+# However, b2dclassifx returned wrong result before the fix.
+
+set Toler 1.0e-4
+
+binrestore [locate_data_file bug28211_forblentTBSC1.brep] result
+
+checkshape result
+
+point pp 0.0010616212616224041 -4.5622747218199273e-005
+
+if { ![regexp {ON} [ b2dclassifx result pp -t $Toler] ] } {
+    puts "Error : Wrong result of 2d classifier algorithm"
+} else {
+    puts "OK : Good result of 2d classifier algorithm"
+}
+
+if { ![regexp {ON} [ b2dclassify result pp -t $Toler] ] } {
+    puts "Error : Wrong result of 2d classifier algorithm"
+} else {
+    puts "OK : Good result of 2d classifier algorithm"
+}
+
+v2d
+2dclear
+display pp
+pcurve result
+2dfit
+
+checkview -screenshot -2d -path ${imagedir}/${test_image}_2d.png

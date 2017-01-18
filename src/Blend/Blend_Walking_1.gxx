@@ -25,18 +25,18 @@ Blend_Walking::Blend_Walking(const TheSurface& Surf1,
        twistflag1(Standard_False),twistflag2(Standard_False)
 
 {
-  domain1 = Domain1;
-  domain2 = Domain2;
-  recdomain1 = Domain1;
-  recdomain2 = Domain2;
+  myDomain1 = Domain1;
+  myDomain2 = Domain2;
+  myRecDomain1 = Domain1;
+  myRecDomain2 = Domain2;
   hguide = HGuide;
 }
 
 void Blend_Walking::SetDomainsToRecadre(const Handle(TheTopolTool)& Domain1,
 					const Handle(TheTopolTool)& Domain2)
 {
-  recdomain1 = Domain1;
-  recdomain2 = Domain2;
+  myRecDomain1 = Domain1;
+  myRecDomain2 = Domain2;
 }
 
 void Blend_Walking::AddSingularPoint(const Blend_Point& P) 
@@ -64,7 +64,7 @@ void Blend_Walking::Perform(Blend_Function& Func,
 			    const Standard_Real MaxStep,
 			    const Standard_Real TolGuide,
 			    const math_Vector& ParDep,
-			    const Standard_Real Tolesp,
+			    const Standard_Real the3DTolEsp,
 			    const Standard_Real Fleche,
 			    const Standard_Boolean Appro)
 {
@@ -75,7 +75,7 @@ void Blend_Walking::Perform(Blend_Function& Func,
   Standard_Boolean doextremities = 1;
   if(line.IsNull()) line = new TheLine ();
   else {line->Clear();doextremities = 0;}
-  tolesp = Abs(Tolesp);
+  my3DTolEsp = Abs(the3DTolEsp);
   tolgui = Abs(TolGuide);
   fleche = Abs(Fleche);
   rebrou = Standard_False;
@@ -95,10 +95,10 @@ void Blend_Walking::Perform(Blend_Function& Func,
   if (Appro) {
 
     TopAbs_State situ1,situ2;
-    math_Vector tolerance(1,4),infbound(1,4),supbound(1,4);
-    Func.GetTolerance(tolerance,tolesp);
+    math_Vector aVTol2D(1,4),infbound(1,4),supbound(1,4);
+    Func.GetTolerance(aVTol2D, my3DTolEsp);
     Func.GetBounds(infbound,supbound);
-    math_FunctionSetRoot rsnld(Func,tolerance,30);
+    math_FunctionSetRoot rsnld(Func,aVTol2D,30);
 
     rsnld.Perform(Func,ParDep,infbound,supbound);
     
@@ -107,12 +107,22 @@ void Blend_Walking::Perform(Blend_Function& Func,
     }
     rsnld.Root(sol);
 
-    if(clasonS1) situ1 = domain1->Classify(gp_Pnt2d(sol(1),sol(2)),
-					   Min(tolerance(1),tolerance(2)),0);
-    else situ1 = TopAbs_IN;
-    if(clasonS2) situ2 = domain2->Classify(gp_Pnt2d(sol(3),sol(4)),
-					   Min(tolerance(3),tolerance(4)),0);
-    else situ2 = TopAbs_IN;
+    if (clasonS1)
+    {
+      situ1 = myDomain1->Classify(gp_Pnt2d(sol(1), sol(2)), my3DTolEsp, Standard_False);
+    }
+    else
+    {
+      situ1 = TopAbs_IN;
+    }
+    if (clasonS2)
+    {
+      situ2 = myDomain2->Classify(gp_Pnt2d(sol(3), sol(4)), my3DTolEsp, Standard_False);
+    }
+    else
+    {
+      situ2 = TopAbs_IN;
+    }
 
     if (situ1 != TopAbs_IN || situ2 != TopAbs_IN) {
       return;
@@ -143,9 +153,9 @@ void Blend_Walking::Perform(Blend_Function& Func,
 
   if(doextremities){
     TheExtremity ptf1 (previousP.PointOnS1(),
-		       sol(1),sol(2),tolesp);
+                       sol(1),sol(2), my3DTolEsp);
     TheExtremity ptf2 (previousP.PointOnS2(),
-		       sol(3),sol(4),tolesp);
+                       sol(3), sol(4), my3DTolEsp);
     if (!previousP.IsTangencyPoint()) {
       ptf1.SetTangent(previousP.TangentOnS1());
       ptf2.SetTangent(previousP.TangentOnS2());
@@ -168,7 +178,7 @@ void Blend_Walking::Perform(Blend_Function& Func,
 Standard_Boolean Blend_Walking::PerformFirstSection(Blend_Function&     Func,
                                                     const Standard_Real Pdep,
                                                     math_Vector&        ParDep,
-                                                    const Standard_Real Tolesp,
+                                                    const Standard_Real the3DTolEsp,
                                                     const Standard_Real TolGuide,
                                                     TopAbs_State&       Pos1,
                                                     TopAbs_State&       Pos2)
@@ -176,7 +186,7 @@ Standard_Boolean Blend_Walking::PerformFirstSection(Blend_Function&     Func,
   iscomplete = Standard_False;
   comptra = Standard_False;
   line = new TheLine ();
-  tolesp = Abs(Tolesp);
+  my3DTolEsp = Abs(the3DTolEsp);
   tolgui = Abs(TolGuide);
 
   Pos1 = Pos2 = TopAbs_UNKNOWN;
@@ -184,10 +194,10 @@ Standard_Boolean Blend_Walking::PerformFirstSection(Blend_Function&     Func,
   param = Pdep;
   Func.Set(param);
 
-  math_Vector tolerance(1, 4),infbound(1, 4),supbound(1, 4);
-  Func.GetTolerance(tolerance, tolesp);
+  math_Vector aVTol2D(1, 4),infbound(1, 4),supbound(1, 4);
+  Func.GetTolerance(aVTol2D, my3DTolEsp);
   Func.GetBounds(infbound, supbound);
-  math_FunctionSetRoot rsnld(Func, tolerance, 30);
+  math_FunctionSetRoot rsnld(Func, aVTol2D, 30);
 
   rsnld.Perform(Func, ParDep, infbound, supbound);
 
@@ -197,8 +207,10 @@ Standard_Boolean Blend_Walking::PerformFirstSection(Blend_Function&     Func,
   }
   rsnld.Root(sol);
   ParDep = sol;
-  Pos1 = domain1->Classify(gp_Pnt2d(sol(1), sol(2)), Min(tolerance(1), tolerance(2)), 0);
-  Pos2 = domain2->Classify(gp_Pnt2d(sol(3), sol(4)), Min(tolerance(3), tolerance(4)), 0);
+  {
+    Pos1 = myDomain1->Classify(gp_Pnt2d(sol(1), sol(2)), my3DTolEsp, Standard_False);
+    Pos2 = myDomain2->Classify(gp_Pnt2d(sol(3), sol(4)), my3DTolEsp, Standard_False);
+  }
   if (Pos1 != TopAbs_IN || Pos2 != TopAbs_IN)
   {
     return Standard_False;
@@ -220,7 +232,7 @@ Standard_Boolean Blend_Walking::PerformFirstSection (Blend_Function& Func,
                                                      const Standard_Real Pdep,
                                                      const Standard_Real Pmax,
                                                      const math_Vector& ParDep,
-                                                     const Standard_Real Tolesp,
+                                                     const Standard_Real the3DTolEsp,
                                                      const Standard_Real TolGuide,
                                                      const Standard_Boolean RecOnS1,
                                                      const Standard_Boolean RecOnS2,
@@ -235,7 +247,7 @@ Standard_Boolean Blend_Walking::PerformFirstSection (Blend_Function& Func,
   Standard_Real w1, w2, extrapol;
   Standard_Boolean recad1, recad2;
 
-  tolesp = Abs(Tolesp);
+  my3DTolEsp = Abs(the3DTolEsp);
   tolgui = Abs(TolGuide);
   if (Pmax - Pdep >= 0.0)
   {
@@ -252,7 +264,7 @@ Standard_Boolean Blend_Walking::PerformFirstSection (Blend_Function& Func,
   param = Pdep;
   Func.Set(param);
 
-  math_Vector tolerance(1, 4),infbound(1, 4),supbound(1, 4);
+  math_Vector aVTol2D(1, 4),infbound(1, 4),supbound(1, 4);
   math_Vector solrst1(1, 4),solrst2(1, 4);
   TheExtremity Ext1, Ext2;
   Standard_Integer Index1 = 0, Index2 = 0, nbarc;
@@ -262,9 +274,9 @@ Standard_Boolean Blend_Walking::PerformFirstSection (Blend_Function& Func,
   Standard_Real CorrectedU = 0., CorrectedV = 0.;
   gp_Pnt CorrectedPnt;
 
-  Func.GetTolerance(tolerance, tolesp);
+  Func.GetTolerance(aVTol2D, my3DTolEsp);
   Func.GetBounds(infbound, supbound);
-  math_FunctionSetRoot rsnld(Func, tolerance, 30);
+  math_FunctionSetRoot rsnld(Func, aVTol2D, 30);
 
   rsnld.Perform(Func, ParDep, infbound, supbound);
 
@@ -313,14 +325,14 @@ Standard_Boolean Blend_Walking::PerformFirstSection (Blend_Function& Func,
       State = Blend_OnRst1;
       param = w1;
       
-      recdomain1->Init();
+      myRecDomain1->Init();
       nbarc = 1;
       while (nbarc < Index1)
       {
         nbarc++;
-        recdomain1->Next();
+        myRecDomain1->Next();
       }
-      p2d = TheArcTool::Value(recdomain1->Value(), solrst1(1));
+      p2d = TheArcTool::Value(myRecDomain1->Value(), solrst1(1));
       ParSol(1) = p2d.X();
       ParSol(2) = p2d.Y();
       ParSol(3) = solrst1(3);
@@ -333,14 +345,14 @@ Standard_Boolean Blend_Walking::PerformFirstSection (Blend_Function& Func,
       State = Blend_OnRst2;
       param = w2;
       
-      recdomain2->Init();
+      myRecDomain2->Init();
       nbarc = 1;
       while (nbarc < Index2)
       {
         nbarc++;
-        recdomain2->Next();
+        myRecDomain2->Next();
       }
-      p2d = TheArcTool::Value(recdomain2->Value(), solrst2(1));
+      p2d = TheArcTool::Value(myRecDomain2->Value(), solrst2(1));
       ParSol(1) = solrst2(3);
       ParSol(2) = solrst2(4);
       ParSol(3) = p2d.X();
@@ -352,14 +364,14 @@ Standard_Boolean Blend_Walking::PerformFirstSection (Blend_Function& Func,
     // sol sur 1
     State = Blend_OnRst1;
     param = w1;
-    recdomain1->Init();
+    myRecDomain1->Init();
     nbarc = 1;
     while (nbarc < Index1)
     {
       nbarc++;
-      recdomain1->Next();
+      myRecDomain1->Next();
     }
-    p2d = TheArcTool::Value(recdomain1->Value(), solrst1(1));
+    p2d = TheArcTool::Value(myRecDomain1->Value(), solrst1(1));
     ParSol(1) = p2d.X();
     ParSol(2) = p2d.Y();
     ParSol(3) = solrst1(3);
@@ -375,14 +387,14 @@ Standard_Boolean Blend_Walking::PerformFirstSection (Blend_Function& Func,
     State = Blend_OnRst2;
     param = w2;
     
-    recdomain2->Init();
+    myRecDomain2->Init();
     nbarc = 1;
     while (nbarc < Index2)
     {
       nbarc++;
-      recdomain2->Next();
+      myRecDomain2->Next();
     }
-    p2d = TheArcTool::Value(recdomain2->Value(), solrst2(1));
+    p2d = TheArcTool::Value(myRecDomain2->Value(), solrst2(1));
     ParSol(1) = solrst2(3);
     ParSol(2) = solrst2(4);
     ParSol(3) = p2d.X();
@@ -409,9 +421,9 @@ Standard_Boolean Blend_Walking::PerformFirstSection (Blend_Function& Func,
 #endif
       MakeExtremity(Ext1, Standard_True, Index1, solrst1(1), Isvtx1, Vtx1);
       if (ToCorrectOnRst1)
-        Ext2.SetValue(CorrectedPnt, CorrectedU, CorrectedV, tolesp);
+        Ext2.SetValue(CorrectedPnt, CorrectedU, CorrectedV, my3DTolEsp);
       else
-        Ext2.SetValue(previousP.PointOnS2(), sol(3), sol(4), tolesp);
+        Ext2.SetValue(previousP.PointOnS2(), sol(3), sol(4), my3DTolEsp);
     }
     break;
 
@@ -424,9 +436,9 @@ Standard_Boolean Blend_Walking::PerformFirstSection (Blend_Function& Func,
       }
 #endif
       if (ToCorrectOnRst2)
-        Ext1.SetValue(CorrectedPnt, CorrectedU, CorrectedV, tolesp);
+        Ext1.SetValue(CorrectedPnt, CorrectedU, CorrectedV, my3DTolEsp);
       else
-        Ext1.SetValue(previousP.PointOnS1(), sol(1), sol(2), tolesp);
+        Ext1.SetValue(previousP.PointOnS1(), sol(1), sol(2), my3DTolEsp);
       MakeExtremity(Ext2, Standard_False, Index2, solrst2(1), Isvtx2, Vtx2);
     }
     break;
