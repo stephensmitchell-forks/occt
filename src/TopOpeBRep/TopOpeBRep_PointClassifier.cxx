@@ -66,14 +66,13 @@ void TopOpeBRep_PointClassifier::Load(const TopoDS_Face& F)
 //purpose  : 
 //=======================================================================
 
-TopAbs_State TopOpeBRep_PointClassifier::Classify
-  (const TopoDS_Face& F, 
-   const gp_Pnt2d& P2d, 
-   const Standard_Real Tol)
+TopAbs_State TopOpeBRep_PointClassifier::Classify(const TopoDS_Face& F, 
+                                                  const gp_Pnt2d& P2d, 
+                                                  const Standard_Real theTol3D)
 {
   myState = TopAbs_UNKNOWN;
   Load(F);
-  myState = myTopolTool->Classify(P2d,Tol);
+  myState = myTopolTool->Classify(P2d, theTol3D);
 
   return myState;
 }

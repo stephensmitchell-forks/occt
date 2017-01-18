@@ -18,6 +18,7 @@
 #include <BndLib_AddSurface.hxx>
 #include <BRep_Tool.hxx>
 #include <BRepAdaptor_Surface.hxx>
+#include <BRepTopAdaptor_FClass2d.hxx>
 #include <Extrema_ExtCS.hxx>
 #include <Extrema_POnCurv.hxx>
 #include <Extrema_POnSurf.hxx>
@@ -44,7 +45,6 @@
 #include <IntTools_CommonPrt.hxx>
 #include <IntTools_Context.hxx>
 #include <IntTools_EdgeFace.hxx>
-#include <IntTools_FClass2d.hxx>
 #include <IntTools_Range.hxx>
 #include <IntTools_Root.hxx>
 #include <IntTools_Tools.hxx>
@@ -259,11 +259,11 @@ Standard_Boolean IntTools_EdgeFace::IsCoincident()
     //We classify only three points: in the begin, in the 
     //end and in the middle of the edge.
     //However, exact middle point (when i == (aNbSeg + 1)/2)
-    //can be unprojectable. Therefore, it will not be able to
+    //can be nonprojectable. Therefore, it will not be able to
     //be classified. Therefore, points with indexes in 
     //[aTreshIdxF, aTreshIdxL] range are made available 
     //for classification.
-    //isClassified == TRUE if MIDDLE point has been choosen and
+    //isClassified == TRUE if MIDDLE point has been chosen and
     //classified correctly.
 
     if(((0 < i) && (i < aTreshIdxF)) || ((aTreshIdxL < i ) && (i < aNbSeg)))
@@ -276,7 +276,7 @@ Standard_Boolean IntTools_EdgeFace::IsCoincident()
     aP2d.SetX(aU);
     aP2d.SetY(aV);
 
-    IntTools_FClass2d& aClass2d=myContext->FClass2d(myFace);
+    BRepTopAdaptor_FClass2d& aClass2d = myContext->FClass2d(myFace);
     aState = aClass2d.Perform(aP2d);
     
     if(aState == TopAbs_OUT)

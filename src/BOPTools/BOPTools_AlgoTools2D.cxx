@@ -312,7 +312,7 @@ void BOPTools_AlgoTools2D::AdjustPCurveOnSurf
    Handle(Geom2d_Curve)& aC2DA)
 {
   Standard_Boolean mincond, maxcond;
-  Standard_Real UMin, UMax, VMin, VMax, aT, u2, v2, du, dv, aDelta;
+  Standard_Real UMin, UMax, VMin, VMax, aT, u2, v2, du, dv;
   Standard_Real aUPeriod;
   //
   const TopoDS_Face& aF=aBAS.Face();
@@ -321,7 +321,7 @@ void BOPTools_AlgoTools2D::AdjustPCurveOnSurf
   VMin=aBAS.FirstVParameter();
   VMax=aBAS.LastVParameter();
   //
-  aDelta=Precision::PConfusion(); 
+  const Standard_Real aDelta=Precision::PConfusion();
   
   aT =.5*(aFirst+aLast);
 
@@ -404,7 +404,7 @@ void BOPTools_AlgoTools2D::AdjustPCurveOnSurf
         if ((u > (UMin + aDelta + aUPeriod)) ||
             (u < (UMax - aDelta - aUPeriod))) {
           BRepClass_FaceClassifier aClassifier;
-          aClassifier.Perform(aF, gp_Pnt2d(u, v), aDelta);
+          aClassifier.Perform(aF, gp_Pnt2d(u, v), BRep_Tool::Tolerance(aF));
           TopAbs_State Status = aClassifier.State();
           if (Status == TopAbs_OUT) {
             du += (u > (UMin + aDelta + aUPeriod)) ? -aUPeriod : aUPeriod;
@@ -420,7 +420,7 @@ void BOPTools_AlgoTools2D::AdjustPCurveOnSurf
         if ((v > (VMin + aDelta + aVPeriod)) ||
             (v < (VMax - aDelta - aVPeriod))) {
           BRepClass_FaceClassifier aClassifier;
-          aClassifier.Perform(aF, gp_Pnt2d(u, v), aDelta);
+          aClassifier.Perform(aF, gp_Pnt2d(u, v), BRep_Tool::Tolerance(aF));
           TopAbs_State Status = aClassifier.State();
           if (Status == TopAbs_OUT) {
             dv += (v > (VMin + aDelta + aVPeriod)) ? -aVPeriod : aVPeriod;

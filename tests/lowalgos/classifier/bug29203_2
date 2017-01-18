@@ -1,0 +1,36 @@
+puts "========"
+puts "OCC29203"
+puts "========"
+puts ""
+#################################################
+# Different Point-Face-classification algorithms return different results
+#################################################
+
+# 3D-representation of the source point is in the 
+# wire of the source face (distance is
+# 3.039106595854385e-008). However, in 2D-space
+# the point is quite far from 2D-pcurve.
+# Current version of the algorithm must return
+# ON-status in these cases.
+
+restore [locate_data_file bug29203_toron.brep] result
+checkshape result
+
+point pp 1.6881493482012555 3.9044196877163997
+
+v2d
+pcurve result
+2dfit
+checkview -screenshot -2d -path ${imagedir}/${test_image}.png
+
+if { ![regexp {ON} [ b2dclassifx result pp -t 1.0e-7 ] ] } {
+    puts "Error : Wrong result of 2d classifier algorithm"
+} else {
+    puts "OK : Good result of 2d classifier algorithm"
+}
+
+if { ![regexp {ON} [ b2dclassify result pp -t 1.0e-7 ] ] } {
+    puts "Error : Wrong result of 2d classifier algorithm"
+} else {
+    puts "OK : Good result of 2d classifier algorithm"
+}

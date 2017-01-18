@@ -1249,7 +1249,7 @@ void IntPatch_Intersection::ParamParamPerfom(const Handle(Adaptor3d_HSurface)&  
       interpp.Perform(theS1,theD1,theS2,theD2,TolTang,TolArc,myFleche,myUVMaxStep, ListOfPnts, RestrictLine);
       ClearFlag = Standard_False;
     }
-    interpp.Perform(theS1,theD1,theS2,theD2,TolTang,TolArc,myFleche,myUVMaxStep,ClearFlag);   //double call!!!!!!!
+    interpp.Perform(theS1,theD1,theS2,theD2,TolTang,TolArc,myFleche,myUVMaxStep,ClearFlag);
   }
   else if((theD1->DomainIsInfinite()) ^ (theD2->DomainIsInfinite()))
   {

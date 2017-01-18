@@ -21,6 +21,7 @@
 #include <Geom2dHatch_Hatcher.hxx>
 #include <Geom2dHatch_Hatching.hxx>
 #include <Geom2dHatch_Intersector.hxx>
+#include <GeomLib.hxx>
 #include <HatchGen_Domain.hxx>
 #include <HatchGen_Domains.hxx>
 #include <HatchGen_PointOnElement.hxx>
@@ -738,7 +739,8 @@ Standard_Boolean Geom2dHatch_Hatcher::Trim (const Standard_Integer IndH,
 //            IndH-th hatching.
 //=======================================================================
 
-Standard_Boolean Geom2dHatch_Hatcher::GlobalTransition (HatchGen_PointOnHatching& Point)
+Standard_Boolean 
+    Geom2dHatch_Hatcher::GlobalTransition (HatchGen_PointOnHatching& Point) const
 {
   TopAbs_State StateBefore = TopAbs_UNKNOWN ;
   TopAbs_State StateAfter  = TopAbs_UNKNOWN ;
@@ -751,7 +753,13 @@ Standard_Boolean Geom2dHatch_Hatcher::GlobalTransition (HatchGen_PointOnHatching
 
   const Geom2dAdaptor_Curve& CurveH = HatchingCurve (Point.Index()) ;
 
-  myIntersector.LocalGeometry(CurveH.Curve(), Point.Parameter(), Tangente2d, Normale2d, Courbure);
+  if(!GeomLib::LocalGeometry(CurveH.Curve(),
+                             Point.Parameter(),
+                             Tangente2d,
+                             Normale2d, Courbure))
+  {
+    return Standard_False;
+  }
 
   Tangente.SetCoord (Tangente2d.X(), Tangente2d.Y(), 0.0) ;
   if (Courbure < Precision::Confusion()) {
@@ -805,7 +813,14 @@ Standard_Boolean Geom2dHatch_Hatcher::GlobalTransition (HatchGen_PointOnHatching
 #endif
     Param = PntE.Parameter();
 
-    myIntersector.LocalGeometry(CurveE.Curve(), Param, Tangente2d, Normale2d, Courbure);
+    if(!GeomLib::LocalGeometry(CurveE.Curve(),
+                                  Param,
+                                  Tangente2d,
+                                  Normale2d,
+                                  Courbure))
+    {
+      return Standard_False;
+    }
 
 //-----------------------------------------------------------------------
 // Calcul de la transition locale. On suppose les relations suivantes :
@@ -972,7 +987,9 @@ void Geom2dHatch_Hatcher::ComputeDomains (const Standard_Integer IndH)
   if(NbPnt == 0)
   {
     //-- cout << "The hatching # " << setw(3) << IndH << " has to be classified" << endl ;
-    Geom2dHatch_Classifier Classifier(myElements,Hatching.ClassificationPoint(),0.0000001); 
+    Geom2dHatch_Classifier Classifier(myElements,
+                                      Hatching.ClassificationPoint(),
+                                      Precision::Confusion()); 
     if(Classifier.State() == TopAbs_IN)
     { 
       HatchGen_Domain domain ;

@@ -21,9 +21,10 @@
 #include <Standard_DefineAlloc.hxx>
 #include <Standard_Handle.hxx>
 
+#include <BRepClass_FaceExplorer.hxx>
 #include <BRepClass_FClassifier.hxx>
 #include <Standard_Real.hxx>
-class BRepClass_FaceExplorer;
+
 class gp_Pnt2d;
 class TopoDS_Face;
 class gp_Pnt;
@@ -33,54 +34,42 @@ class gp_Pnt;
 class BRepClass_FaceClassifier  : public BRepClass_FClassifier
 {
 public:
-
   DEFINE_STANDARD_ALLOC
-
   
   //! Empty constructor, undefined algorithm.
   Standard_EXPORT BRepClass_FaceClassifier();
   
-  //! Creates an algorithm to classify the Point  P with
-  //! Tolerance <T> on the face described by <F>.
-  Standard_EXPORT BRepClass_FaceClassifier(BRepClass_FaceExplorer& F, const gp_Pnt2d& P, const Standard_Real Tol);
+  //! Creates an algorithm to classify the point theP relatively to
+  //! the face <theF> with 3D-tolerance <theTol3D> (used only for check ON-status).
+  Standard_EXPORT 
+    BRepClass_FaceClassifier(const TopoDS_Face& theF,
+                             const gp_Pnt2d& theP,
+                             const Standard_Real theTol3D);
   
-  //! Creates an algorithm to classify the Point  P with
-  //! Tolerance <T> on the face <F>.
-  Standard_EXPORT BRepClass_FaceClassifier(const TopoDS_Face& F, const gp_Pnt2d& P, const Standard_Real Tol);
+  //! Creates an algorithm to classify the point theP relatively to
+  //! the face <theF> with 3D-tolerance <theTol3D> (used only for check ON-status).
+  Standard_EXPORT BRepClass_FaceClassifier(const TopoDS_Face& theF,
+                                           const gp_Pnt& theP,
+                                           const Standard_Real theTol3D);
+
+  //! Classify the Point theP with 3D-tolerance <theTol3D> (used only for check ON-status)
+  //! relatively to the face <theF>.
+  Standard_EXPORT void Perform(const TopoDS_Face& theF,
+                               const gp_Pnt2d& theP,
+                               const Standard_Real theTol3D);
   
-  //! Classify  the Point  P  with  Tolerance <T> on the
-  //! face described by <F>.
-  Standard_EXPORT void Perform (const TopoDS_Face& F, const gp_Pnt2d& P, const Standard_Real Tol);
+  //! Classifies the point theP relatively to
+  //! the face <theF> with 3D-tolerance <theTol3D> (used only for check ON-status).
+  Standard_EXPORT void Perform(const TopoDS_Face& theF,
+                               const gp_Pnt& theP,
+                               const Standard_Real theTol3D);
   
-  //! Creates an algorithm to classify the Point  P with
-  //! Tolerance <T> on the face <F>.
-  Standard_EXPORT BRepClass_FaceClassifier(const TopoDS_Face& F, const gp_Pnt& P, const Standard_Real Tol);
-  
-  //! Classify  the Point  P  with  Tolerance <T> on the
-  //! face described by <F>.
-  Standard_EXPORT void Perform (const TopoDS_Face& F, const gp_Pnt& P, const Standard_Real Tol);
-
-
-
-
 protected:
-
-
-
-
+  
 
 private:
 
-
-
-
-
+  BRepClass_FaceExplorer myFEx;
 };
-
-
-
-
-
-
 
 #endif // _BRepClass_FaceClassifier_HeaderFile

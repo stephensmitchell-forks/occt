@@ -1,3 +1,5 @@
+puts "REQUIRED All: Faulty shapes in variables faulty_1 to faulty_"
+
 puts "================"
 puts "OCC23667"
 puts "================"

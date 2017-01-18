@@ -53,20 +53,6 @@
 #include <CSLib.hxx>
 #include <CSLib_NormalStatus.hxx>
 #include <ElCLib.hxx>
-#include <Geom2d_BezierCurve.hxx>
-#include <Geom2d_BSplineCurve.hxx>
-#include <Geom2d_Circle.hxx>
-#include <Geom2d_Curve.hxx>
-#include <Geom2d_Ellipse.hxx>
-#include <Geom2d_Hyperbola.hxx>
-#include <Geom2d_Line.hxx>
-#include <Geom2d_OffsetCurve.hxx>
-#include <Geom2d_Parabola.hxx>
-#include <Geom2d_TrimmedCurve.hxx>
-#include <Geom2dAdaptor_Curve.hxx>
-#include <Geom2dAdaptor_GHCurve.hxx>
-#include <Geom2dAdaptor_HCurve.hxx>
-#include <Geom2dConvert.hxx>
 #include <Geom_BezierCurve.hxx>
 #include <Geom_BezierSurface.hxx>
 #include <Geom_BoundedCurve.hxx>
@@ -84,6 +70,22 @@
 #include <Geom_RectangularTrimmedSurface.hxx>
 #include <Geom_Surface.hxx>
 #include <Geom_TrimmedCurve.hxx>
+#include <Geom2dAdaptor_Curve.hxx>
+#include <Geom2d_BezierCurve.hxx>
+#include <Geom2d_BSplineCurve.hxx>
+#include <Geom2d_Circle.hxx>
+#include <Geom2d_Curve.hxx>
+#include <Geom2d_Ellipse.hxx>
+#include <Geom2d_Hyperbola.hxx>
+#include <Geom2d_Line.hxx>
+#include <Geom2d_OffsetCurve.hxx>
+#include <Geom2d_Parabola.hxx>
+#include <Geom2d_TrimmedCurve.hxx>
+#include <Geom2dAdaptor_Curve.hxx>
+#include <Geom2dAdaptor_GHCurve.hxx>
+#include <Geom2dAdaptor_HCurve.hxx>
+#include <Geom2dConvert.hxx>
+#include <Geom2dLProp_CLProps2d.hxx>
 #include <GeomAdaptor_HSurface.hxx>
 #include <GeomAdaptor_Surface.hxx>
 #include <GeomConvert.hxx>
@@ -135,6 +137,7 @@
 #include <TColStd_Array2OfReal.hxx>
 #include <TColStd_HArray1OfReal.hxx>
 #include <TColStd_HArray2OfReal.hxx>
+
 //
 static Standard_Boolean CompareWeightPoles(const TColgp_Array1OfPnt& thePoles1, 
                                            const TColStd_Array1OfReal* const theW1,
@@ -2736,6 +2739,31 @@ Standard_Boolean GeomLib::IsBzVClosed (const Handle(Geom_BezierSurface)& S,
   const TColgp_Array1OfPnt& aPL = aBzL->Poles();
   //
   return CompareWeightPoles(aPF, 0, aPL, 0, Tol2);
+}
+
+//=======================================================================
+//function : LocalGeometry
+//purpose  : 
+//=======================================================================
+Standard_Boolean GeomLib::LocalGeometry(const Handle(Geom2d_Curve)& theC,
+                                        const Standard_Real theParam,
+                                        gp_Dir2d& theTan,
+                                        gp_Dir2d& theNormal,
+                                        Standard_Real& theCurvature)
+{
+  Geom2dLProp_CLProps2d aProp(theC, theParam, 2, Precision::PConfusion());
+
+  if(!aProp.IsTangentDefined())
+    return Standard_False;
+
+  aProp.Tangent(theTan);
+  theCurvature = aProp.Curvature();
+  if((theCurvature > Precision::PConfusion()) && (theCurvature < RealLast()))
+    aProp.Normal(theNormal);
+  else
+    theNormal.SetCoord(theTan.Y(), -theTan.X());
+
+  return Standard_True;
 }
 
 //=======================================================================

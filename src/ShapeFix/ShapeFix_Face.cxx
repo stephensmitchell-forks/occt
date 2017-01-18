@@ -1195,12 +1195,8 @@ Standard_Boolean ShapeFix_Face::FixOrientation(TopTools_DataMapOfShapeListOfShap
 //      B.MakeFace (af,mySurf->Surface(),::Precision::Confusion());
       af.Orientation ( TopAbs_FORWARD );
       B.Add (af,aw);
-      // PTV OCC945 06.11.2002 files ie_exhaust-A.stp (entities 3782,  3787)
-      // tolerance is too big. It is seems that to identify placement of 2d point
-      // it is enough Precision::PConfusion(), cause wea re know that 2d point in TopAbs_ON
-      // BRepTopAdaptor_FClass2d clas (af,toluv);
       Standard_Boolean CheckShift = Standard_True;
-      BRepTopAdaptor_FClass2d clas (af,::Precision::PConfusion());
+      BRepTopAdaptor_FClass2d clas (af, 0.0);
       TopAbs_State sta = TopAbs_OUT;
       TopAbs_State staout = clas.PerformInfinitePoint();
       TopTools_ListOfShape IntWires;
@@ -2438,7 +2434,7 @@ Standard_Boolean ShapeFix_Face::FixSplitFace(const TopTools_DataMapOfShapeListOf
         TopoDS_Face aFace = TopoDS::Face ( aShapeEmptyCopied);
         aFace.Orientation ( TopAbs_FORWARD );
         B.Add (aFace,liter.Value());
-        BRepTopAdaptor_FClass2d clas (aFace,::Precision::PConfusion());
+        BRepTopAdaptor_FClass2d clas (aFace, 0.0);
         TopAbs_State staout = clas.PerformInfinitePoint();
         if (staout == TopAbs_IN) 
           B.Add(tmpFace,liter.Value());

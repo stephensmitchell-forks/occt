@@ -1,0 +1,37 @@
+puts "========"
+puts "OCC28211"
+puts "========"
+puts ""
+#################################################
+# Modeling Algorithms - Boolean fuse operation produces incorrect result
+#################################################
+
+# We create new face, which is not-closed in 2D- and 3D-space.
+# The face contains only single edge (with REVERSED-orientation)
+# and single vertex, which covers the gap.
+# After that, point is classified, which is
+# out of the face UV-bounds.
+
+circle cc 0 0 0 0 0 1 100
+trim cc cc 0.0001 2*pi-0.0001
+vertex vv 100 0 0
+mkedge ee cc
+emptycopy ee ee
+settolerance vv 0.05
+copy vv vr
+orientation vr R
+orientation ee R
+add vv ee
+add vr ee
+wire ww ee
+mkplane result ww
+
+checkshape result
+
+point pp 100.002 0.0
+
+if { ![regexp {OUT} [ b2dclassify result pp ] ] } {
+    puts "Error : Wrong result of 2d classifier algorithm"
+} else {
+    puts "OK : Good result of 2d classifier algorithm"
+}

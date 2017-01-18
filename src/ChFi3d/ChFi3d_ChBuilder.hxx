@@ -189,13 +189,13 @@ protected:
   //! set the regularities
   Standard_EXPORT void SetRegul() Standard_OVERRIDE;
 
+  Standard_EXPORT void ConexFaces (const Handle(ChFiDS_Spine)& Sp, const Standard_Integer IEdge, TopoDS_Face& F1, TopoDS_Face& F2) const;
 
 
 
 private:
 
   
-  Standard_EXPORT void ConexFaces (const Handle(ChFiDS_Spine)& Sp, const Standard_Integer IEdge, TopoDS_Face& F1, TopoDS_Face& F2) const;
 
 
 

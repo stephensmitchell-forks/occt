@@ -69,17 +69,20 @@ void BRepExtrema_ExtFF::Perform(const TopoDS_Face& F1, const TopoDS_Face& F2)
   myPointsOnS1.Clear();
   myPointsOnS2.Clear();
 
-  BRepAdaptor_Surface Surf1(F1);
-  if (myHS.IsNull() || Surf1.GetType() == GeomAbs_OtherSurface)
+  BRepAdaptor_Surface Surf1(F1, Standard_False), Surf2(F2, Standard_False);
+  if (myHS.IsNull() ||
+     (Surf1.GetType() == GeomAbs_OtherSurface) ||
+     (Surf2.GetType() == GeomAbs_OtherSurface))
     return; // protect against non-geometric type (e.g. triangulation)
 
   Handle(BRepAdaptor_HSurface) HS1 = new BRepAdaptor_HSurface(Surf1);
-  Standard_Real Tol1 = Min(BRep_Tool::Tolerance(F1), Precision::Confusion());
-  Tol1 = Min(Surf1.UResolution(Tol1), Surf1.VResolution(Tol1));
-  Tol1 = Max(Tol1, Precision::PConfusion());
+  const Standard_Real aTol1 = BRep_Tool::Tolerance(F1),
+                      aTol2 = BRep_Tool::Tolerance(F2);
   Standard_Real U1, U2, V1, V2;
   BRepTools::UVBounds(F1, U1, U2, V1, V2);
-  myExtSS.Perform(HS1->Surface(), U1, U2, V1, V2, Tol1);
+  myExtSS.Perform(HS1->Surface(), U1, U2, V1, V2, Max(Min(Surf1.UResolution(aTol1),
+                                                          Surf1.VResolution(aTol1)),
+                                                            Precision::PConfusion()));
 
   if (!myExtSS.IsDone())
     return;
@@ -90,7 +93,6 @@ void BRepExtrema_ExtFF::Perform(const TopoDS_Face& F1, const TopoDS_Face& F2)
   {
     // Exploration of points and classification
     BRepClass_FaceClassifier classifier;
-    const Standard_Real Tol2 = BRep_Tool::Tolerance(F2);
     Extrema_POnSurf P1, P2;
 
     Standard_Integer i;
@@ -99,13 +101,13 @@ void BRepExtrema_ExtFF::Perform(const TopoDS_Face& F1, const TopoDS_Face& F2)
       myExtSS.Points(i, P1, P2);
       P1.Parameter(U1, U2);
       const gp_Pnt2d Puv1(U1, U2);
-      classifier.Perform(F1, Puv1, Tol1);
+      classifier.Perform(F1, Puv1, aTol1);
       const TopAbs_State state1 = classifier.State();
       if (state1 == TopAbs_ON || state1 == TopAbs_IN)
       {
         P2.Parameter(U1, U2);
         const gp_Pnt2d Puv2(U1, U2);
-        classifier.Perform(F2, Puv2, Tol2);
+        classifier.Perform(F2, Puv2, aTol2);
         const TopAbs_State state2 = classifier.State();
         if (state2 == TopAbs_ON || state2 == TopAbs_IN)
         {

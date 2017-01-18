@@ -1,4 +1,14 @@
-puts "TODO All: Faulty shapes in variables faulty_1 to faulty_"
+#puts "TODO OCC23731 All: Faulty shapes in variables faulty_1 to faulty_"
+
+# IR-2017-09-07
+# ko2 and ko4 are shells containing two faces (despite ss_2 and ss_4 being single faces).
+# One face in every shell HAS TO be classified as invalid by checkshape (e.g. as
+# not closed, bad orientation etc. - please see explanation in the issue #28211).
+# However, all gaps are covered by huge vertex tolerance. Bad orientation is not
+# detected after the fix for issue #28211 (gap is covered by the pseudo-edge and
+# the face becomes oriented). However, these faces are still bad for modeling.
+# So, they have to be detected by checkshape. E.g. it is expected after the fix #23731
+# (whole shape is covered by the tolerance of its vertex).
 
 puts "========"
 puts "OCC22919"
