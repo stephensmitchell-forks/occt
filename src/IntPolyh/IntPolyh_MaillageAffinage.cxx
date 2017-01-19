@@ -2197,7 +2197,7 @@ void CalculPtsInterTriEdgeCoplanaires2(const Standard_Integer TriSurfID,
     Standard_Real p0p = Per.Dot(PT1);
     ///The edge are PT1 are projected on the perpendicular of the side in the plane of the triangle
     if ( ( (p1p>=p0p)&&(p0p>=p2p) )||( (p1p<=p0p)&&(p0p<=p2p) ) ) {
-      Standard_Real lambda=(p1p-p0p)/(p1p-p2p);
+      const Standard_Real lambda= Abs(p1p-p2p) < RealSmall() ? 0.0 : (p1p-p0p)/(p1p-p2p);
       if (lambda<-MyConfusionPrecision) {
 
       }
