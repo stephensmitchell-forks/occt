@@ -42,8 +42,3 @@ AdvApp2Var_ApproxAFunc2Var::Surface( const Standard_Integer SSPIndex) const
   return myDegreeInV;
 }
 
- inline Standard_Integer AdvApp2Var_ApproxAFunc2Var::NumSubSpaces(const Standard_Integer Dimension) const 
-{
-  return myNumSubSpaces[Dimension-1];
-}
-

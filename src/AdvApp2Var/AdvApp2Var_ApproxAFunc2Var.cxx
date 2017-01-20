@@ -43,6 +43,44 @@
 #include <Geom_BezierSurface.hxx>
 #include <Geom_BSplineSurface.hxx>
 
+AdvApp2Var_ApproxAFunc2Var::AdvApp2Var_ApproxAFunc2Var
+(
+  const Parameters & parameters,
+  const AdvApp2Var_EvaluatorFunc2Var& Func,
+  AdvApprox_Cutting& UChoice,
+  AdvApprox_Cutting& VChoice
+):
+  myParameters    (parameters),
+  myDone          (Standard_False),
+  myHasResult     (Standard_False),
+  myDegreeInU     (0),
+  myDegreeInV     (0),
+  myCriterionError(0.0)
+{
+  Init();
+  Perform(UChoice, VChoice, Func);
+  ConvertBS();
+}
+
+AdvApp2Var_ApproxAFunc2Var::AdvApp2Var_ApproxAFunc2Var
+(
+  const Parameters & parameters,
+  const AdvApp2Var_EvaluatorFunc2Var& Func,
+  const AdvApp2Var_Criterion& Crit,
+  AdvApprox_Cutting& UChoice,
+  AdvApprox_Cutting& VChoice
+):
+  myParameters    (parameters),
+  myDone          (Standard_False),
+  myHasResult     (Standard_False),
+  myDegreeInU     (0),
+  myDegreeInV     (0),
+  myCriterionError(0.0)
+{
+  Init();
+  Perform(UChoice, VChoice, Func, Crit);
+  ConvertBS();
+}
 
 //=======================================================================
 //function : AdvApp2Var_ApproxAFunc2Var
@@ -73,32 +111,41 @@ AdvApp2Var_ApproxAFunc2Var::AdvApp2Var_ApproxAFunc2Var(
                            const AdvApp2Var_EvaluatorFunc2Var& Func,
                            AdvApprox_Cutting& UChoice,
                            AdvApprox_Cutting& VChoice)
-: my1DTolerances  (OneDTol),
-  my2DTolerances  (TwoDTol),
-  my3DTolerances  (ThreeDTol),
-  my1DTolOnFront  (OneDTolFr),
-  my2DTolOnFront  (TwoDTolFr),
-  my3DTolOnFront  (ThreeDTolFr),
-  myFirstParInU   (FirstInU),
-  myLastParInU    (LastInU),
-  myFirstParInV   (FirstInV),
-  myLastParInV    (LastInV),
-  myFavoriteIso   (FavorIso),
-  myContInU       (ContInU),
-  myContInV       (ContInV),
-  myPrecisionCode (PrecisCode),
-  myMaxDegInU     (MaxDegInU),
-  myMaxDegInV     (MaxDegInV),
-  myMaxPatches    (MaxPatch),
-  myDone          (Standard_False),
+: myDone          (Standard_False),
   myHasResult     (Standard_False),
   myDegreeInU     (0),
   myDegreeInV     (0),
   myCriterionError(0.0)
 {
-  myNumSubSpaces[0] = Num1DSS;
-  myNumSubSpaces[1] = Num2DSS;
-  myNumSubSpaces[2] = Num3DSS;
+  myParameters.NumberSubSpaces[0] = Num1DSS;
+  myParameters.NumberSubSpaces[1] = Num2DSS;
+  myParameters.NumberSubSpaces[2] = Num3DSS;
+
+  myParameters.Tolerances1D = OneDTol;
+  myParameters.Tolerances2D = TwoDTol;
+  myParameters.Tolerances3D = ThreeDTol;
+
+  myParameters.TolerancesOnFrontier1D = OneDTolFr;
+  myParameters.TolerancesOnFrontier2D = TwoDTolFr;
+  myParameters.TolerancesOnFrontier3D = ThreeDTolFr;
+
+  myParameters.FirstParamU = FirstInU;
+  myParameters.FirstParamV = FirstInV;
+  myParameters.LastParamU = LastInU;
+  myParameters.LastParamV = LastInV;
+
+  myParameters.FavouriteIso = FavorIso;
+
+  myParameters.ContinuityU = ContInU;
+  myParameters.ContinuityV = ContInV;
+
+  myParameters.PrecisionCode = PrecisCode;
+  myParameters.DegreeU = MaxDegInU;
+  myParameters.DegreeV = MaxDegInV;
+
+  myParameters.MaxPatchesU = myParameters.MaxPatchesV = IntegerLast();
+
+  myParameters.TotalPatches = MaxPatch;
 
   Init();
   Perform(UChoice, VChoice, Func);
@@ -135,32 +182,41 @@ AdvApp2Var_ApproxAFunc2Var::AdvApp2Var_ApproxAFunc2Var(
                       const AdvApp2Var_Criterion& Crit,
                       AdvApprox_Cutting& UChoice,
                       AdvApprox_Cutting& VChoice)
-: my1DTolerances  (OneDTol),
-  my2DTolerances  (TwoDTol),
-  my3DTolerances  (ThreeDTol),
-  my1DTolOnFront  (OneDTolFr),
-  my2DTolOnFront  (TwoDTolFr),
-  my3DTolOnFront  (ThreeDTolFr),
-  myFirstParInU   (FirstInU),
-  myLastParInU    (LastInU),
-  myFirstParInV   (FirstInV),
-  myLastParInV    (LastInV),
-  myFavoriteIso   (FavorIso),
-  myContInU       (ContInU),
-  myContInV       (ContInV),
-  myPrecisionCode (PrecisCode),
-  myMaxDegInU     (MaxDegInU),
-  myMaxDegInV     (MaxDegInV),
-  myMaxPatches    (MaxPatch),
-  myDone          (Standard_False),
+: myDone          (Standard_False),
   myHasResult     (Standard_False),
   myDegreeInU     (0),
   myDegreeInV     (0),
   myCriterionError(0.0)
 {
-  myNumSubSpaces[0] = Num1DSS;
-  myNumSubSpaces[1] = Num2DSS;
-  myNumSubSpaces[2] = Num3DSS;
+  myParameters.NumberSubSpaces[0] = Num1DSS;
+  myParameters.NumberSubSpaces[1] = Num2DSS;
+  myParameters.NumberSubSpaces[2] = Num3DSS;
+
+  myParameters.Tolerances1D = OneDTol;
+  myParameters.Tolerances2D = TwoDTol;
+  myParameters.Tolerances3D = ThreeDTol;
+
+  myParameters.TolerancesOnFrontier1D = OneDTolFr;
+  myParameters.TolerancesOnFrontier2D = TwoDTolFr;
+  myParameters.TolerancesOnFrontier3D = ThreeDTolFr;
+
+  myParameters.FirstParamU = FirstInU;
+  myParameters.FirstParamV = FirstInV;
+  myParameters.LastParamU = LastInU;
+  myParameters.LastParamV = LastInV;
+
+  myParameters.FavouriteIso = FavorIso;
+
+  myParameters.ContinuityU = ContInU;
+  myParameters.ContinuityV = ContInV;
+
+  myParameters.PrecisionCode = PrecisCode;
+  myParameters.DegreeU = MaxDegInU;
+  myParameters.DegreeV = MaxDegInV;
+
+  myParameters.MaxPatchesU = myParameters.MaxPatchesV = IntegerLast();
+
+  myParameters.TotalPatches = MaxPatch;
 
   Init();
   Perform(UChoice, VChoice, Func, Crit);
@@ -175,7 +231,7 @@ AdvApp2Var_ApproxAFunc2Var::AdvApp2Var_ApproxAFunc2Var(
 void AdvApp2Var_ApproxAFunc2Var::Init()
 {
   Standard_Integer ifav,iu=0,iv=0,ndu,ndv;
-  switch (myFavoriteIso) {
+  switch (myParameters.FavouriteIso) {
   case GeomAbs_IsoU :
     ifav = 1;
     break;
@@ -186,7 +242,7 @@ void AdvApp2Var_ApproxAFunc2Var::Init()
     ifav = 2;
     break;
   }
-  switch (myContInU) {
+  switch (myParameters.ContinuityU) {
   case GeomAbs_C0 :
     iu = 0;
     break;
@@ -199,7 +255,7 @@ void AdvApp2Var_ApproxAFunc2Var::Init()
   default :
     Standard_ConstructionError::Raise("AdvApp2Var_ApproxAFunc2Var : UContinuity Error");
   }
-  switch (myContInV) {
+  switch (myParameters.ContinuityV) {
   case GeomAbs_C0 :
     iv = 0;
     break;
@@ -212,26 +268,27 @@ void AdvApp2Var_ApproxAFunc2Var::Init()
   default :
     Standard_ConstructionError::Raise("AdvApp2Var_ApproxAFunc2Var : VContinuity Error");
   }
-  ndu = Max(myMaxDegInU+1,2*iu+2);
-  ndv = Max(myMaxDegInV+1,2*iv+2);
+  ndu = Max(myParameters.DegreeU+1,2*iu+2);
+  ndv = Max(myParameters.DegreeV+1,2*iv+2);
   if (ndu<2*iu+2)
     Standard_ConstructionError::Raise("AdvApp2Var_ApproxAFunc2Var : UMaxDegree Error");
   if (ndv<2*iv+2)
     Standard_ConstructionError::Raise("AdvApp2Var_ApproxAFunc2Var : VMaxDegree Error");
-  myPrecisionCode = Max(0,Min(myPrecisionCode,3));
+  myParameters.PrecisionCode = Max(0,Min(myParameters.PrecisionCode,3));
   AdvApp2Var_Context Conditions(ifav,iu,iv,ndu,ndv,
-				myPrecisionCode,
-				myNumSubSpaces[0],
-                                myNumSubSpaces[1],
-                                myNumSubSpaces[2],
-                                my1DTolerances,
-                                my2DTolerances,
-                                my3DTolerances,
-                                my1DTolOnFront,
-                                my2DTolOnFront,
-                                my3DTolOnFront);
+      myParameters.PrecisionCode,
+      myParameters.NumberSubSpaces[0],
+      myParameters.NumberSubSpaces[1],
+      myParameters.NumberSubSpaces[2],
+      myParameters.Tolerances1D,
+      myParameters.Tolerances2D,
+      myParameters.Tolerances3D,
+      myParameters.TolerancesOnFrontier1D,
+      myParameters.TolerancesOnFrontier2D,
+      myParameters.TolerancesOnFrontier3D
+    );
   myConditions = Conditions;
-  InitGrid(1);
+  InitGrid(1, 1);
 }
 
 
@@ -240,50 +297,50 @@ void AdvApp2Var_ApproxAFunc2Var::Init()
 //purpose  : Initialisation of the approximation with regular cuttings
 //=======================================================================
 
-void AdvApp2Var_ApproxAFunc2Var::InitGrid(const Standard_Integer NbInt)
+void AdvApp2Var_ApproxAFunc2Var::InitGrid(const Standard_Integer sizeU, const Standard_Integer sizeV)
 {
-  Standard_Integer iu=myConditions.UOrder(),iv=myConditions.VOrder(),iint;
+  Standard_Integer iu=myConditions.UOrder(),iv=myConditions.VOrder();
 
-  AdvApp2Var_Patch M0(myFirstParInU,myLastParInU,myFirstParInV,myLastParInV,iu,iv);
+  AdvApp2Var_Patch M0(myParameters.FirstParamU, myParameters.LastParamU, myParameters.FirstParamV, myParameters.LastParamV,iu,iv);
 
   AdvApp2Var_SequenceOfPatch Net;
   Net.Append(M0);
 
   TColStd_SequenceOfReal TheU,TheV;
-  TheU.Append(myFirstParInU);
-  TheV.Append(myFirstParInV);
-  TheU.Append(myLastParInU);
-  TheV.Append(myLastParInV);
+  TheU.Append(myParameters.FirstParamU);
+  TheV.Append(myParameters.FirstParamV);
+  TheU.Append(myParameters.LastParamU);
+  TheV.Append(myParameters.LastParamV);
 
   AdvApp2Var_Network Result(Net,TheU,TheV);
 
+  gp_XY UV1 (myParameters.FirstParamU, myParameters.FirstParamV);
+  AdvApp2Var_Node C1 (UV1, iu, iv);
+  gp_XY UV2 (myParameters.LastParamU, myParameters.FirstParamV);
+  AdvApp2Var_Node C2 (UV2, iu, iv);
+  gp_XY UV3 (myParameters.FirstParamU, myParameters.LastParamV);
+  AdvApp2Var_Node C3 (UV3, iu, iv);
+  gp_XY UV4 (myParameters.LastParamU, myParameters.LastParamV);
+  AdvApp2Var_Node C4 (UV4, iu, iv);
 
-  gp_XY UV1(myFirstParInU,myFirstParInV);
-  AdvApp2Var_Node C1(UV1,iu,iv);
-  gp_XY UV2(myLastParInU,myFirstParInV);
-  AdvApp2Var_Node C2(UV2,iu,iv);
-  gp_XY UV4(myLastParInU,myLastParInV);
-  AdvApp2Var_Node C4(UV4,iu,iv);
-  gp_XY UV3(myFirstParInU,myLastParInV);
-  AdvApp2Var_Node C3(UV3,iu,iv);
   AdvApp2Var_SequenceOfNode Bag;
   Bag.Append(C1);
   Bag.Append(C2);
   Bag.Append(C3);
   Bag.Append(C4);
 
-  AdvApp2Var_Iso V0(GeomAbs_IsoV,myFirstParInV,
-		    myFirstParInU,myLastParInU,myFirstParInV,myLastParInV,
-		    1,iu,iv);
-  AdvApp2Var_Iso V1(GeomAbs_IsoV,myLastParInV,
-		    myFirstParInU,myLastParInU,myFirstParInV,myLastParInV,
-		    2,iu,iv);
-  AdvApp2Var_Iso U0(GeomAbs_IsoU,myFirstParInU,
-		    myFirstParInU,myLastParInU,myFirstParInV,myLastParInV,
-		    3,iu,iv);
-  AdvApp2Var_Iso U1(GeomAbs_IsoU,myLastParInU,
-		    myFirstParInU,myLastParInU,myFirstParInV,myLastParInV,
-		    4,iu,iv);
+  AdvApp2Var_Iso V0(GeomAbs_IsoV,myParameters.FirstParamV,
+        myParameters.FirstParamU,myParameters.LastParamU,myParameters.FirstParamV,myParameters.LastParamV,
+        1,iu,iv);
+  AdvApp2Var_Iso V1(GeomAbs_IsoV,myParameters.LastParamV,
+        myParameters.FirstParamU,myParameters.LastParamU,myParameters.FirstParamV,myParameters.LastParamV,
+        2,iu,iv);
+  AdvApp2Var_Iso U0(GeomAbs_IsoU,myParameters.FirstParamU,
+        myParameters.FirstParamU,myParameters.LastParamU,myParameters.FirstParamV,myParameters.LastParamV,
+        3,iu,iv);
+  AdvApp2Var_Iso U1(GeomAbs_IsoU,myParameters.LastParamU,
+        myParameters.FirstParamU,myParameters.LastParamU,myParameters.FirstParamV,myParameters.LastParamV,
+        4,iu,iv);
 
   AdvApp2Var_Strip BU0,BV0;
   BU0.Append(V0);
@@ -295,16 +352,24 @@ void AdvApp2Var_ApproxAFunc2Var::InitGrid(const Standard_Integer NbInt)
   UStrip.Append(BU0);
   VStrip.Append(BV0);
 
-  AdvApp2Var_Framework Constraints(Bag,UStrip,VStrip);
+  AdvApp2Var_Framework Constraints(Bag, UStrip, VStrip);
 
-// regular cutting if NbInt>1
-  Standard_Real deltu = (myLastParInU-myFirstParInU)/NbInt,
-                deltv = (myLastParInV-myFirstParInV)/NbInt;
-  for (iint=1;iint<=NbInt-1;iint++) {
-    Result.UpdateInU(myFirstParInU+iint*deltu);
-    Constraints.UpdateInU(myFirstParInU+iint*deltu);
-    Result.UpdateInV(myFirstParInV+iint*deltv);
-    Constraints.UpdateInV(myFirstParInV+iint*deltv);
+  {
+    Standard_Real deltaU = (myParameters.LastParamU - myParameters.FirstParamU)/sizeU;
+    for (Standard_Integer i = 1; i < sizeU; ++i)
+    {
+      Result.UpdateInU(myParameters.FirstParamU + i * deltaU);
+      Constraints.UpdateInU(myParameters.FirstParamU + i * deltaU);
+    }
+  }
+
+  {
+    Standard_Real deltaV = (myParameters.LastParamV - myParameters.FirstParamV)/sizeV;
+    for (Standard_Integer i = 1; i < sizeV; ++i)
+    {
+      Result.UpdateInV(myParameters.FirstParamV + i * deltaV);
+      Constraints.UpdateInV(myParameters.FirstParamV + i * deltaV);
+    }
   }
   myResult = Result;
   myConstraints = Constraints;
@@ -375,16 +440,25 @@ void AdvApp2Var_ApproxAFunc2Var::ComputePatches(const AdvApprox_Cutting& UChoice
     Umore = UChoice.Value(myResult(FirstNA).U0(), myResult(FirstNA).U1(),Udec);
     Vmore = VChoice.Value(myResult(FirstNA).V0(), myResult(FirstNA).V1(),Vdec);
 
+    if (NbU >= myParameters.MaxPatchesU)
+    {
+      Umore = Standard_False;
+    }
+    if (NbV >= myParameters.MaxPatchesV)
+    {
+      Vmore = Standard_False;
+    }
+
     NumDec = 0;
-    if ( ((NbPatch+NbV)<=myMaxPatches) && ((NbPatch+NbU)>myMaxPatches)
+    if ( ((NbPatch+NbV)<=myParameters.TotalPatches) && ((NbPatch+NbU)>myParameters.TotalPatches)
          && (Umore) ) NumDec = 1;
-    if ( ((NbPatch+NbV)>myMaxPatches) && ((NbPatch+NbU)<=myMaxPatches) 
+    if ( ((NbPatch+NbV)>myParameters.TotalPatches) && ((NbPatch+NbU)<=myParameters.TotalPatches) 
          && (Vmore) ) NumDec = 2;
-    if ( ((NbPatch+NbV)<=myMaxPatches) && ((NbPatch+NbU)<=myMaxPatches) ) {
+    if ( ((NbPatch+NbV)<=myParameters.TotalPatches) && ((NbPatch+NbU)<=myParameters.TotalPatches) ) {
       if ( Umore ) NumDec = 3;
       if ( (NbV>NbU) && Vmore ) NumDec = 4;
     }
-    if ( (NbU+1)*(NbV+1)<=myMaxPatches ) {
+    if ( (NbU+1)*(NbV+1)<=myParameters.TotalPatches ) {
       if ( !Umore && !Vmore ) NumDec=0;
       if ( Umore && !Vmore ) NumDec=3;
       if ( !Umore && Vmore ) NumDec=4;
@@ -472,17 +546,24 @@ void AdvApp2Var_ApproxAFunc2Var::ComputePatches(const AdvApprox_Cutting& UChoice
     NbInt = NbU;
     Umore = UChoice.Value(myResult(FirstNA).U0(), myResult(FirstNA).U1(),Udec);
     Vmore = VChoice.Value(myResult(FirstNA).V0(), myResult(FirstNA).V1(),Vdec);
-
+    if (NbU >= myParameters.MaxPatchesU)
+    {
+      Umore = Standard_False;
+    }
+    if (NbV >= myParameters.MaxPatchesV)
+    {
+      Vmore = Standard_False;
+    }
     NumDec = 0;
-    if ( ((NbPatch+NbV)<=myMaxPatches) && ((NbPatch+NbU)>myMaxPatches)
+    if ( ((NbPatch+NbV)<=myParameters.TotalPatches) && ((NbPatch+NbU)>myParameters.TotalPatches)
          && (Umore) ) NumDec = 1;
-    if ( ((NbPatch+NbV)>myMaxPatches) && ((NbPatch+NbU)<=myMaxPatches) 
+    if ( ((NbPatch+NbV)>myParameters.TotalPatches) && ((NbPatch+NbU)<=myParameters.TotalPatches) 
          && (Vmore) ) NumDec = 2;
-    if ( ((NbPatch+NbV)<=myMaxPatches) && ((NbPatch+NbU)<=myMaxPatches) ) {
+    if ( ((NbPatch+NbV)<=myParameters.TotalPatches) && ((NbPatch+NbU)<=myParameters.TotalPatches) ) {
       if ( Umore ) NumDec = 3;
       if ( (NbV>NbU) && Vmore ) NumDec = 4;
     }
-    if ( (NbU+1)*(NbV+1)<=myMaxPatches ) {
+    if ( (NbU+1)*(NbV+1)<=myParameters.TotalPatches ) {
       if ( !Umore && !Vmore ) NumDec=0;
       if ( Umore && !Vmore ) NumDec=1;
       if ( !Umore && Vmore ) NumDec=2;
@@ -509,8 +590,19 @@ void AdvApp2Var_ApproxAFunc2Var::ComputePatches(const AdvApprox_Cutting& UChoice
     Standard_Boolean Regular = (Crit.Repartition() ==  AdvApp2Var_Regular);
 //    Standard_Boolean Regular = Standard_True;
     if (Regular && decision>0) {
-      NbInt++;
-      InitGrid(NbInt);
+      switch (decision)
+      {
+      case 1: ++NbU; break;
+      case 2: ++NbV; break;
+      case 3: ++NbU; ++NbV; break;
+      default:
+        {
+          myHasResult =  myDone = Standard_False;
+          Standard_ConstructionError::Raise ("AdvApp2Var_ApproxAFunc2Var : Surface Approximation Error");
+        }
+      }
+
+      InitGrid(NbU, NbV);
     }
     else {
       switch (decision) {
@@ -577,8 +669,8 @@ void AdvApp2Var_ApproxAFunc2Var::ComputeConstraints(const AdvApprox_Cutting& UCh
     N2 = myConstraints.Node(indN2);
 
     Is.MakeApprox(myConditions,
-		  myFirstParInU, myLastParInU,
-		  myFirstParInV, myLastParInV,
+		  myParameters.FirstParamU, myParameters.LastParamU,
+          myParameters.FirstParamV, myParameters.LastParamV,
 		  Func, N1 , N2);
 
     if (Is.IsApproximated()) {
@@ -595,13 +687,15 @@ void AdvApp2Var_ApproxAFunc2Var::ComputeConstraints(const AdvApprox_Cutting& UCh
       if (Is.Type()==GeomAbs_IsoV) {
 	NbPatch = (NbU+1)*NbV;
 	more = UChoice.Value(Is.T0(),Is.T1(),dec);
+    more = more && (NbU < myParameters.MaxPatchesU);
       }
       else {
 	NbPatch = (NbV+1)*NbU;
 	more = VChoice.Value(Is.T0(),Is.T1(),dec);
+    more = more && (NbU < myParameters.MaxPatchesV);
       }
 
-      if (NbPatch<=myMaxPatches && more) {
+      if (NbPatch<=myParameters.TotalPatches && more) {
 //	It is possible to cut iso
 	if (Is.Type()==GeomAbs_IsoV) {
 	  myResult.UpdateInU(dec);
@@ -659,8 +753,8 @@ void AdvApp2Var_ApproxAFunc2Var::ComputeConstraints(const AdvApprox_Cutting& UCh
       N2 = myConstraints.Node(indN2);
 
       Is.MakeApprox(myConditions,
-                    myFirstParInU, myLastParInU,
-                    myFirstParInV, myLastParInV,
+                    myParameters.FirstParamU, myParameters.LastParamU,
+                    myParameters.FirstParamV, myParameters.LastParamV,
                     Func, N1 , N2);
 
       if (Is.IsApproximated()) {
@@ -677,16 +771,18 @@ void AdvApp2Var_ApproxAFunc2Var::ComputeConstraints(const AdvApprox_Cutting& UCh
 	if (Is.Type()==GeomAbs_IsoV) {
 	  NbPatch = (NbU+1)*NbV;
 	  more = UChoice.Value(Is.T0(),Is.T1(),dec);
+      more = more && (NbU < myParameters.MaxPatchesU);
 	}
 	else {
 	  NbPatch = (NbV+1)*NbU;
 	  more = VChoice.Value(Is.T0(),Is.T1(),dec);
+      more = more && (NbU < myParameters.MaxPatchesU);
 	}
 
 //      To force Overwrite if the criterion is Absolute
 	more = more && (CritRel);
 
-	if (NbPatch<=myMaxPatches && more) {
+	if (NbPatch<=myParameters.TotalPatches && more) {
 //	It is possible to cut iso
 	  if (Is.Type()==GeomAbs_IsoV) {
 	    myResult.UpdateInU(dec);
@@ -727,23 +823,23 @@ void AdvApp2Var_ApproxAFunc2Var::Compute3DErrors()
   Standard_Integer iesp,ipat;
   Standard_Real error_max,error_moy,error_U0,error_V0,error_U1,error_V1;
   Standard_Real Tol,F1Tol,F2Tol,F3Tol,F4Tol;
-  if ( myNumSubSpaces[2] > 0 ) {
-    my3DMaxError = new (TColStd_HArray1OfReal) (1,myNumSubSpaces[2]);
-    my3DAverageError = new (TColStd_HArray1OfReal) (1,myNumSubSpaces[2]);
-    my3DUFrontError = new (TColStd_HArray1OfReal) (1,myNumSubSpaces[2]);
-    my3DVFrontError = new (TColStd_HArray1OfReal) (1,myNumSubSpaces[2]);
-    for (iesp=1;iesp<=myNumSubSpaces[2];iesp++) {
+  if ( myParameters.NumberSubSpaces[2] > 0 ) {
+    my3DMaxError = new (TColStd_HArray1OfReal) (1,myParameters.NumberSubSpaces[2]);
+    my3DAverageError = new (TColStd_HArray1OfReal) (1,myParameters.NumberSubSpaces[2]);
+    my3DUFrontError = new (TColStd_HArray1OfReal) (1,myParameters.NumberSubSpaces[2]);
+    my3DVFrontError = new (TColStd_HArray1OfReal) (1,myParameters.NumberSubSpaces[2]);
+    for (iesp=1;iesp<=myParameters.NumberSubSpaces[2];iesp++) {
       error_max = 0;
       error_moy = 0.;
       error_U0 = 0.;
       error_V0 = 0.;
       error_U1 = 0.;
       error_V1 = 0.;
-      Tol = my3DTolerances->Value(iesp);
-      F1Tol = my3DTolOnFront->Value(iesp,1);
-      F2Tol = my3DTolOnFront->Value(iesp,2);
-      F3Tol = my3DTolOnFront->Value(iesp,3);
-      F4Tol = my3DTolOnFront->Value(iesp,4);
+      Tol = myParameters.Tolerances3D->Value(iesp);
+      F1Tol = myParameters.TolerancesOnFrontier3D->Value(iesp,1);
+      F2Tol = myParameters.TolerancesOnFrontier3D->Value(iesp,2);
+      F3Tol = myParameters.TolerancesOnFrontier3D->Value(iesp,3);
+      F4Tol = myParameters.TolerancesOnFrontier3D->Value(iesp,4);
       for (ipat=1;ipat<=myResult.NbPatch();ipat++) {
 	error_max = Max((myResult(ipat).MaxErrors())->Value(iesp),error_max);
 	error_U0 = Max((myResult(ipat).IsoErrors())->Value(iesp,3),error_U0);
@@ -777,8 +873,8 @@ void AdvApp2Var_ApproxAFunc2Var::ComputeCritError()
 
   Standard_Integer iesp,ipat;
   Standard_Real crit_max;
-  if ( myNumSubSpaces[2] > 0 ) {
-    for (iesp=1;iesp<=myNumSubSpaces[2];iesp++) {
+  if ( myParameters.NumberSubSpaces[2] > 0 ) {
+    for (iesp=1;iesp<=myParameters.NumberSubSpaces[2];iesp++) {
       crit_max = 0.;
       for (ipat=1;ipat<=myResult.NbPatch();ipat++) {
 	crit_max = Max((myResult(ipat).CritValue()),crit_max);
@@ -803,7 +899,7 @@ void AdvApp2Var_ApproxAFunc2Var::ConvertBS()
   myDegreeInV = ncfv - 1;
 
  // Calculate resulting surfaces 
-  mySurfaces = new ( TColGeom_HArray1OfSurface) (1,  myNumSubSpaces[2]);
+  mySurfaces = new ( TColGeom_HArray1OfSurface) (1,  myParameters.NumberSubSpaces[2]);
 
   Standard_Integer j;
   TColStd_Array1OfReal UKnots (1, myResult.NbPatchInU()+1);
@@ -838,7 +934,7 @@ void AdvApp2Var_ApproxAFunc2Var::ConvertBS()
     new (TColStd_HArray1OfReal) (1, nmax * Size_eq);
 
   Standard_Integer SSP, i;
-  for (SSP=1; SSP <= myNumSubSpaces[2]; SSP++) { 
+  for (SSP=1; SSP <= myParameters.NumberSubSpaces[2]; SSP++) { 
 
     // Creation of the grid of polynoms
     Standard_Integer n=0,icf=1,ieq;
@@ -857,7 +953,7 @@ void AdvApp2Var_ApproxAFunc2Var::ConvertBS()
   
     // Conversion into poles
     Convert_GridPolynomialToPoles CvP (myResult.NbPatchInU(),myResult.NbPatchInV(),
-				       iu,iv,myMaxDegInU,myMaxDegInV,NbCoeff,
+				       iu,iv,myParameters.DegreeU,myParameters.DegreeV,NbCoeff,
 				       Poly,Uint1,Vint1,Uint2,Vint2);
     if ( !CvP.IsDone() ) { myDone = Standard_False; }
    
@@ -868,6 +964,21 @@ void AdvApp2Var_ApproxAFunc2Var::ConvertBS()
 	  CvP.UMultiplicities()->Array1(), CvP.VMultiplicities()->Array1(),
 	  CvP.UDegree(), CvP.VDegree() );
   }
+}
+
+//=======================================================================
+//function : NumSubSpaces
+//purpose  : 
+//=======================================================================
+
+Standard_Integer
+AdvApp2Var_ApproxAFunc2Var::NumSubSpaces(const Standard_Integer Dimension) const 
+{
+  if (Dimension < 1 || Dimension > 3)
+  {
+    Standard_OutOfRange::Raise ("AdvApp2Var_ApproxAFunc2Var::MaxError : Dimension must be equal to 1,2 or 3 !");
+  }
+  return myParameters.NumberSubSpaces[Dimension-1];
 }
 
 //=======================================================================
@@ -1076,10 +1187,10 @@ void AdvApp2Var_ApproxAFunc2Var::Dump(Standard_OStream& o) const
   else {
     o<<"There is a result";
     if (myDone) {
-      o<<" within the requested tolerance "<<my3DTolerances->Value(iesp)<<endl;
+      o<<" within the requested tolerance "<<myParameters.Tolerances3D->Value(iesp)<<endl;
     }
-    else if (my3DMaxError->Value(iesp)>my3DTolerances->Value(iesp)) {
-      o<<" WITHOUT the requested tolerance "<<my3DTolerances->Value(iesp)<<endl;
+    else if (my3DMaxError->Value(iesp)>myParameters.Tolerances3D->Value(iesp)) {
+      o<<" WITHOUT the requested tolerance "<<myParameters.Tolerances3D->Value(iesp)<<endl;
     }
     else {
       o<<" WITHOUT the requested continuities "<<endl;

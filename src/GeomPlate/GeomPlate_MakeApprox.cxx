@@ -235,10 +235,39 @@ void GeomPlate_MakeApprox_Eval::Evaluate (Standard_Integer * Dimension,
     }
     break;
   }
- }    	
-
+ }
 }
 
+//=======================================================================
+//function : GeomPlate_MakeApprox
+//purpose  : 
+//=======================================================================
+GeomPlate_MakeApprox::GeomPlate_MakeApprox
+(
+  const Handle(GeomPlate_Surface)& SurfPlate,
+  const AdvApp2Var_Criterion& PlateCrit,
+  const Parameters & parameters,
+  const Standard_Real EnlargeCoeff
+): myPlate (SurfPlate)
+{
+  Perform(parameters, &PlateCrit, EnlargeCoeff);
+}
+
+//=======================================================================
+//function : GeomPlate_MakeApprox
+//purpose  : 
+//=======================================================================
+GeomPlate_MakeApprox::GeomPlate_MakeApprox
+(
+  const Handle(GeomPlate_Surface)& SurfPlate,
+  const Parameters & parameters,
+  const Standard_Integer CritOrder,
+  const Standard_Real dmax,
+  const Standard_Real EnlargeCoeff
+): myPlate (SurfPlate)
+{
+  Perform(parameters, CritOrder, dmax, EnlargeCoeff);
+}
 
 //=======================================================================
 //function : GeomPlate_MakeApprox
@@ -251,55 +280,18 @@ GeomPlate_MakeApprox::GeomPlate_MakeApprox(const Handle(GeomPlate_Surface)& Surf
 					   const Standard_Integer Nbmax,
 					   const Standard_Integer dgmax,
 					   const GeomAbs_Shape Continuity,
-					   const Standard_Real EnlargeCoeff)
+					   const Standard_Real EnlargeCoeff
+): myPlate (SurfPlate)
 {
-  myPlate = SurfPlate;
+  Parameters parameters;
 
-  Standard_Real U0=0., U1=0., V0=0., V1=0.;
-  myPlate->RealBounds(U0, U1, V0, V1);
-  U0 = EnlargeCoeff * U0;
-  U1 = EnlargeCoeff * U1;
-  V0 = EnlargeCoeff * V0;
-  V1 = EnlargeCoeff * V1;
+  parameters.Tolerance3D = Tol3d;
+  parameters.ContinuityU = parameters.ContinuityV = Continuity;
+  parameters.DegreeU = parameters.DegreeV = dgmax;
+  parameters.MaxPatchesU = parameters.MaxPatchesV = IntegerLast();
+  parameters.TotalPatches = Nbmax;
 
-  Standard_Integer nb1 = 0, nb2 = 0, nb3 = 1;
-  Handle(TColStd_HArray1OfReal) nul1 =
-  		 new TColStd_HArray1OfReal(1,1);
-  nul1->Init(0.);
-  Handle(TColStd_HArray2OfReal) nul2 =
-  		 new TColStd_HArray2OfReal(1,1,1,4);
-  nul2->Init(0.);
-  Handle(TColStd_HArray1OfReal) eps3D =
-  		 new TColStd_HArray1OfReal(1,1);
-  eps3D->Init(Tol3d);
-  Handle(TColStd_HArray2OfReal) epsfr =
-  		 new TColStd_HArray2OfReal(1,1,1,4);
-  epsfr->Init(Tol3d);
-  GeomAbs_IsoType myType = GeomAbs_IsoV;
-  Standard_Integer myPrec = 0;
-
-  AdvApprox_DichoCutting myDec;
-
-//POP pour WNT
-  GeomPlate_MakeApprox_Eval ev (myPlate);
-  AdvApp2Var_ApproxAFunc2Var AppPlate(nb1, nb2, nb3,
-			              nul1,nul1,eps3D,
-				      nul2,nul2,epsfr,
-				      U0,U1,V0,V1,
-				      myType,
-				      Continuity, Continuity,
-				      myPrec, 
-				      dgmax,dgmax,Nbmax,ev,
-//				      dgmax,dgmax,Nbmax,myPlateSurfEval,
-				      PlateCrit,myDec,myDec);
-  mySurface = AppPlate.Surface(1);
-  myAppError = AppPlate.MaxError(3,1);
-  myCritError = AppPlate.CritError(3,1);
-#ifdef OCCT_DEBUG
-  cout<<"Approximation results"<<endl;
-  cout<<"  Approximation error : "<<myAppError<<endl;
-  cout<<"  Criterium error : "<<myCritError<<endl;
-#endif
+  Perform(parameters, &PlateCrit, EnlargeCoeff);
 }
 
 
@@ -315,146 +307,209 @@ GeomPlate_MakeApprox::GeomPlate_MakeApprox(const Handle(GeomPlate_Surface)& Surf
 					   const Standard_Real dmax,
 					   const Standard_Integer CritOrder,
 					   const GeomAbs_Shape Continuity,
-					   const Standard_Real EnlargeCoeff)
+					   const Standard_Real EnlargeCoeff
+): myPlate (SurfPlate)
 {
-  myPlate = SurfPlate;
+  Parameters parameters;
 
-  TColgp_SequenceOfXY Seq2d;
-  TColgp_SequenceOfXYZ Seq3d;
+  parameters.Tolerance3D = Tol3d;
+  parameters.ContinuityU = parameters.ContinuityV = Continuity;
+  parameters.DegreeU = parameters.DegreeV = dgmax;
+  parameters.MaxPatchesU = parameters.MaxPatchesV = IntegerLast();
+  parameters.TotalPatches = Nbmax;
 
-  if (CritOrder>=0) {
+  Perform(parameters, CritOrder, dmax, EnlargeCoeff);
+}
 
-//    contraintes 2d d'ordre 0
-    myPlate->Constraints(Seq2d);
+//=======================================================================
+//function : Perform
+//purpose  : 
+//=======================================================================
+void GeomPlate_MakeApprox::Perform
+(
+  const Parameters & parameters,
+  const Standard_Integer CritOrder,
+  const Standard_Real dmax,
+  const Standard_Real EnlargeCoeff
+)
+{
+  if (myPlate.IsNull() || CritOrder > 1)
+  {
+    return;
+  }
 
-//    contraintes 3d correspondantes sur plate
-    Standard_Integer i,nbp=Seq2d.Length();
-    for(i=1;i<=nbp;i++){
-      gp_XY P2d=Seq2d.Value(i);
-      gp_Pnt PP;
-      gp_Vec v1h,v2h,v3h;
-      if (CritOrder==0) {
-//    a l'ordre 0
-	myPlate->D0 (P2d.X(), P2d.Y(), PP);
-	gp_XYZ P3d(PP.X(),PP.Y(),PP.Z());
-	Seq3d.Append(P3d);
+  AdvApp2Var_Criterion * criterion = nullptr;
+
+  if (CritOrder >= 0)
+  {
+    TColgp_SequenceOfXY Seq2d;
+    TColgp_SequenceOfXYZ Seq3d;
+
+    {
+      // contraintes 2d d'ordre 0
+      myPlate->Constraints(Seq2d);
+
+      // contraintes 3d correspondantes sur plate
+      for(Standard_Integer i = 1; i <= Seq2d.Length(); ++i)
+      {
+        gp_XY P2d=Seq2d.Value(i);
+        gp_Pnt PP;
+        gp_Vec v1h,v2h,v3h;
+        if (CritOrder==0)
+        {
+          //    a l'ordre 0
+          myPlate->D0 (P2d.X(), P2d.Y(), PP);
+          gp_XYZ P3d(PP.X(),PP.Y(),PP.Z());
+          Seq3d.Append(P3d);
+        }
+        else
+        {
+          //    a l'ordre 1
+          myPlate->D1 (P2d.X(), P2d.Y(), PP, v1h, v2h);
+          v3h=v1h^v2h;
+          gp_XYZ P3d(v3h.X(),v3h.Y(),v3h.Z());
+          Seq3d.Append(P3d);
+        }
       }
-      else {
-//    a l'ordre 1
-	myPlate->D1 (P2d.X(), P2d.Y(), PP, v1h, v2h);
-	v3h=v1h^v2h;
-	gp_XYZ P3d(v3h.X(),v3h.Y(),v3h.Z());
-	Seq3d.Append(P3d);
-      }
+    }
+
+    Standard_Real seuil = parameters.Tolerance3D;
+    if (parameters.Tolerance3D < 10 * dmax)
+    {
+      seuil = 10 * dmax;
+#ifdef OCCT_DEBUG
+      cout<<"Seuil G" << CritOrder << " choisi trop faible par rapport au contour. On prend "<<seuil<<endl;
+#endif
+    }
+
+    if (0 == CritOrder)
+    {
+      criterion = new GeomPlate_PlateG0Criterion (Seq2d, Seq3d, seuil);
+    }
+    else if (1 == CritOrder)
+    {
+      criterion = new GeomPlate_PlateG1Criterion (Seq2d, Seq3d, seuil);
+    }
+
+    if (nullptr == criterion)
+    {
+      return;
     }
   }
 
-  Standard_Real U0=0., U1=0., V0=0., V1=0.;
-  myPlate->RealBounds(U0, U1, V0, V1);
-  U0 = EnlargeCoeff * U0;
-  U1 = EnlargeCoeff * U1;
-  V0 = EnlargeCoeff * V0;
-  V1 = EnlargeCoeff * V1;
+  Perform(parameters, criterion, EnlargeCoeff);
 
-  Standard_Real seuil = Tol3d;
-  if (CritOrder==0&&Tol3d<10*dmax) {
-    seuil=10*dmax;
-#ifdef OCCT_DEBUG
-    cout<<"Seuil G0 choisi trop faible par rapport au contour. On prend "<<seuil<<endl;
-#endif
+  if (nullptr != criterion)
+  {
+    delete criterion;
   }
-  if (CritOrder==1&&Tol3d<10*dmax) {
-    seuil=10*dmax;
-#ifdef OCCT_DEBUG
-    cout<<"Seuil G1 choisi trop faible par rapport au contour. On prend "<<seuil<<endl;
-#endif
+}
+  
+//=======================================================================
+//function : Perform
+//purpose  : 
+//=======================================================================
+void GeomPlate_MakeApprox::Perform
+(
+  const Parameters & parameters,
+  const AdvApp2Var_Criterion * criterion,
+  const Standard_Real EnlargeCoeff
+)
+{
+  if (myPlate.IsNull())
+  {
+    return;
   }
-  Standard_Integer nb1 = 0, nb2 = 0, nb3 = 1;
-  Handle(TColStd_HArray1OfReal) nul1 =
-  		 new TColStd_HArray1OfReal(1,1);
-  nul1->Init(0.);
-  Handle(TColStd_HArray2OfReal) nul2 =
-  		 new TColStd_HArray2OfReal(1,1,1,4);
-  nul2->Init(0.);
-  Handle(TColStd_HArray1OfReal) eps3D =
-  		 new TColStd_HArray1OfReal(1,1);
-  eps3D->Init(Tol3d);
-  Handle(TColStd_HArray2OfReal) epsfr =
-  		 new TColStd_HArray2OfReal(1,1,1,4);
-  epsfr->Init(Tol3d);
 
-  GeomAbs_IsoType myType = GeomAbs_IsoV;
-  Standard_Integer myPrec = 0;
+  AdvApp2Var_ApproxAFunc2Var::Parameters approxParameters;
+
+  approxParameters.NumberSubSpaces[0] = 0;
+  approxParameters.NumberSubSpaces[1] = 0;
+  approxParameters.NumberSubSpaces[2] = 1;
+
+  {
+    Standard_Real U0=0., U1=0., V0=0., V1=0.;
+    myPlate->RealBounds(U0, U1, V0, V1);
+
+    approxParameters.FirstParamU  = EnlargeCoeff * U0;
+    approxParameters.LastParamU   = EnlargeCoeff * U1;
+    approxParameters.FirstParamV  = EnlargeCoeff * V0;
+    approxParameters.LastParamV   = EnlargeCoeff * V1;
+  }
+
+  {
+    Handle(TColStd_HArray1OfReal) nul1 = new TColStd_HArray1OfReal(1,1);
+    nul1->Init(0.);
+    Handle(TColStd_HArray2OfReal) nul2 = new TColStd_HArray2OfReal(1,1,1,4);
+    nul2->Init(0.);
+    Handle(TColStd_HArray1OfReal) eps3D = new TColStd_HArray1OfReal(1,1);
+    eps3D->Init(parameters.Tolerance3D);
+    Handle(TColStd_HArray2OfReal) epsfr = new TColStd_HArray2OfReal(1,1,1,4);
+    epsfr->Init(parameters.Tolerance3D);
+
+    approxParameters.Tolerances1D = nul1;
+    approxParameters.Tolerances2D = nul1;
+    approxParameters.Tolerances3D = eps3D;
+
+    approxParameters.TolerancesOnFrontier1D = nul2;
+    approxParameters.TolerancesOnFrontier2D = nul2;
+    approxParameters.TolerancesOnFrontier3D = epsfr;
+  }
+
+  approxParameters.FavouriteIso = GeomAbs_IsoV;
+
+  approxParameters.ContinuityU = parameters.ContinuityU;
+  approxParameters.ContinuityV = parameters.ContinuityV;
+
+  approxParameters.PrecisionCode = 0;
+
+  approxParameters.DegreeU = parameters.DegreeU;
+  approxParameters.DegreeV = parameters.DegreeV;
+
+  approxParameters.MaxPatchesU = parameters.MaxPatchesU;
+  approxParameters.MaxPatchesV = parameters.MaxPatchesV;
+
+  approxParameters.TotalPatches = parameters.TotalPatches;
 
   AdvApprox_DichoCutting myDec;
+  GeomPlate_MakeApprox_Eval ev (myPlate);
 
-  if (CritOrder==-1) {
-    myPrec = 1;
-// POP pour NT
-    GeomPlate_MakeApprox_Eval ev (myPlate);
-    AdvApp2Var_ApproxAFunc2Var AppPlate(nb1, nb2, nb3,
-					nul1,nul1,eps3D,
-					nul2,nul2,epsfr,
-					U0,U1,V0,V1,
-					myType,
-					Continuity, Continuity,
-					myPrec,
-					dgmax,dgmax,Nbmax,ev,
-					myDec,myDec);
+  if (nullptr == criterion)
+  {
+    approxParameters.PrecisionCode =  1;
+
+    AdvApp2Var_ApproxAFunc2Var AppPlate
+      (
+        approxParameters,
+        ev,
+        myDec, myDec
+      );
+
     mySurface = AppPlate.Surface(1);
     myAppError = AppPlate.MaxError(3,1);
     myCritError = 0.;
-#ifdef OCCT_DEBUG
-    cout<<"Approximation results"<<endl;
-    cout<<"  Approximation error : "<<myAppError<<endl;
-#endif
   }
-  else if (CritOrder==0) {
-    GeomPlate_PlateG0Criterion Crit0(Seq2d,Seq3d,seuil);
-// POP pour NT
-    GeomPlate_MakeApprox_Eval ev (myPlate);
-    AdvApp2Var_ApproxAFunc2Var AppPlate(nb1, nb2, nb3,
-					nul1,nul1,eps3D,
-					nul2,nul2,epsfr,
-					U0,U1,V0,V1,
-					myType,
-					Continuity, Continuity,
-					myPrec,
-					dgmax,dgmax,Nbmax,ev,
-//					dgmax,dgmax,Nbmax,myPlateSurfEval,
-					Crit0,myDec,myDec);
+  else
+  {
+    // POP pour NT
+    AdvApp2Var_ApproxAFunc2Var AppPlate
+      (
+        approxParameters,
+        ev,
+        *criterion,
+        myDec,myDec
+      );
+
     mySurface = AppPlate.Surface(1);
     myAppError = AppPlate.MaxError(3,1);
     myCritError = AppPlate.CritError(3,1);
-#ifdef OCCT_DEBUG
-    cout<<"Approximation results"<<endl;
-    cout<<"  Approximation error : "<<myAppError<<endl;
-    cout<<"  Criterium error : "<<myCritError<<endl;
-#endif
   }
-  else if (CritOrder==1) {
-    GeomPlate_PlateG1Criterion Crit1(Seq2d,Seq3d,seuil);
-// POP pour NT
-    GeomPlate_MakeApprox_Eval ev (myPlate);
-    AdvApp2Var_ApproxAFunc2Var AppPlate(nb1, nb2, nb3,
-					nul1,nul1,eps3D,
-					nul2,nul2,epsfr,
-					U0,U1,V0,V1,
-					myType,
-					Continuity, Continuity,
-					myPrec,
-					dgmax,dgmax,Nbmax,ev,
-//					dgmax,dgmax,Nbmax,myPlateSurfEval,
-					Crit1,myDec,myDec);
-    mySurface = AppPlate.Surface(1);
-    myAppError = AppPlate.MaxError(3,1);
-    myCritError = AppPlate.CritError(3,1);
+
 #ifdef OCCT_DEBUG
-    cout<<"Approximation results"<<endl;
-    cout<<"  Approximation error : "<<myAppError<<endl;
-    cout<<"  Criterium error : "<<myCritError<<endl;
+  cout<<"Approximation results"<<endl;
+  cout<<"  Approximation error : "<<myAppError<<endl;
+  cout<<"  Criterium error : "<<myCritError<<endl;
 #endif
-  }
 }
 
 

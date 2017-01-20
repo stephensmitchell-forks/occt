@@ -34,9 +34,26 @@ class AdvApp2Var_Criterion;
 class GeomPlate_MakeApprox 
 {
 public:
-
   DEFINE_STANDARD_ALLOC
 
+  struct Parameters
+  {
+    Standard_Real Tolerance3D;
+
+    GeomAbs_Shape ContinuityU;
+    GeomAbs_Shape ContinuityV;
+
+    Standard_Integer DegreeU;
+    Standard_Integer DegreeV;
+
+    Standard_Integer MaxPatchesU;
+    Standard_Integer MaxPatchesV;
+
+    Standard_Integer TotalPatches;
+  };
+
+  Standard_EXPORT GeomPlate_MakeApprox (const Handle(GeomPlate_Surface)& SurfPlate, const AdvApp2Var_Criterion& PlateCrit, const Parameters & parameters, const Standard_Real EnlargeCoeff = 1.1);
+  Standard_EXPORT GeomPlate_MakeApprox (const Handle(GeomPlate_Surface)& SurfPlate, const Parameters & parameters, const Standard_Integer CritOrder, const Standard_Real dmax, const Standard_Real EnlargeCoeff = 1.1);
   
   //! Converts SurfPlate into a Geom_BSplineSurface with
   //! n Bezier pieces (n<=Nbmax) of degree <= dgmax
@@ -69,14 +86,21 @@ public:
   //! curve and point constraints only.
   Standard_EXPORT Standard_Real CriterionError() const;
 
+private:
+  void Perform
+    (
+      const Parameters & parameters,
+      const Standard_Integer CritOrder,
+      const Standard_Real dmax,
+      const Standard_Real EnlargeCoeff
+    );
 
-
-
-protected:
-
-
-
-
+  void Perform
+    (
+      const Parameters & parameters,
+      const AdvApp2Var_Criterion * criterion,
+      const Standard_Real EnlargeCoeff
+    );
 
 private:
 

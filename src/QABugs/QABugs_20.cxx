@@ -2140,6 +2140,187 @@ static Standard_Integer OCC27875(Draw_Interpretor& theDI,
   return 0;
 }
 
+#include <BRepAdaptor_HCurve.hxx>
+#include <BRepAdaptor_HCurve2d.hxx>
+#include <BRepAdaptor_HSurface.hxx>
+#include <BRepFill_CurveConstraint.hxx>
+#include <GeomPlate_BuildPlateSurface.hxx>
+#include <GeomPlate_MakeApprox.hxx>
+#include <GeomPlate_PlateG0Criterion.hxx>
+#include <GeomPlate_Surface.hxx>
+static Standard_Integer OCC27903(Draw_Interpretor& theDI,
+  Standard_Integer n,
+  const char ** a)
+{
+  /*
+  This test code is a copy-paste of the gplate code, but with the added arguments for the degree, continuity and segments count
+  */
+  if ( n < 13 )
+  {
+    theDI << "Not enough arguments\n";
+    return 1;
+  }
+
+  Standard_Integer NbCurFront = Draw::Atoi(a[9]);
+  Standard_Integer NbPointConstraint = Draw::Atoi(a[10]);
+
+  GeomPlate_BuildPlateSurface Henri(3, 15, 2);
+
+  Standard_Integer Indice=11;
+
+  {
+    TopoDS_Shape aLocalFace (DBRep::Get(a[Indice++],TopAbs_FACE));
+    TopoDS_Face SI = TopoDS::Face(aLocalFace);
+    if(SI.IsNull()) 
+    {
+      theDI << "Wrong arguments\n";
+      return 1;
+    }
+
+    {
+      Handle(BRepAdaptor_HSurface) HSI = new BRepAdaptor_HSurface();
+      HSI->ChangeSurface().Initialize(SI);
+      Henri.LoadInitSurface( BRep_Tool::Surface(HSI->ChangeSurface().Face()));
+    }
+  }
+
+  for (Standard_Integer i=1; i<=NbCurFront ; i++)
+  { 
+    TopoDS_Shape aLocalShape(DBRep::Get(a[Indice++],TopAbs_EDGE));
+    TopoDS_Edge E = TopoDS::Edge(aLocalShape);
+
+    if(E.IsNull())
+    {
+      theDI << "Wrong arguments\n";
+      return 1;
+    }
+
+    Standard_Integer Conti=Draw::Atoi(a[Indice++]);
+    if (Conti==0 || Conti==-1)
+    { 
+      Handle(BRepAdaptor_HCurve) C = new BRepAdaptor_HCurve();
+      C->ChangeCurve().Initialize(E);
+      const Handle(Adaptor3d_HCurve)& aC = C; // to avoid ambiguity
+      Handle(GeomPlate_CurveConstraint) Cont= new BRepFill_CurveConstraint(aC,Conti);
+      Henri.Add(Cont);
+    }
+    else 
+    { 
+      TopoDS_Shape aLocalFace = DBRep::Get(a[Indice++],TopAbs_FACE);
+      TopoDS_Face F = TopoDS::Face(aLocalFace);
+
+      if(F.IsNull()) 
+      {
+        theDI << "Wrong arguments\n";
+        return 1;
+      }
+      Handle(BRepAdaptor_HSurface) S = new BRepAdaptor_HSurface();
+      S->ChangeSurface().Initialize(F);
+      Handle(BRepAdaptor_HCurve2d) C = new BRepAdaptor_HCurve2d();
+      C->ChangeCurve2d().Initialize(E,F);
+      Adaptor3d_CurveOnSurface ConS(C,S);
+
+      Handle (Adaptor3d_HCurveOnSurface) HConS = new Adaptor3d_HCurveOnSurface(ConS);
+      Handle(GeomPlate_CurveConstraint) Cont= new BRepFill_CurveConstraint(HConS,Conti);
+      Henri.Add(Cont);
+    }
+  }
+
+  for (Standard_Integer i=1; i<=NbPointConstraint ; i++) 
+  { 
+    gp_Pnt P1;
+
+    if (DrawTrSurf::GetPoint(a[Indice], P1) ) 
+    {
+      Handle(GeomPlate_PointConstraint) PCont = new GeomPlate_PointConstraint(P1,0);
+      Henri.Add(PCont);
+      Indice++;
+    }
+    else
+    { 
+      Standard_Real u=Draw::Atof(a[Indice++]), 
+      v=Draw::Atof(a[Indice++]);
+
+      Standard_Integer Conti=Draw::Atoi(a[Indice++]);
+      TopoDS_Shape aLocalFace = DBRep::Get(a[Indice++],TopAbs_FACE);
+      TopoDS_Face F = TopoDS::Face(aLocalFace);
+
+      if(F.IsNull()) 
+      {
+        theDI << "Wrong arguments\n";
+        return 1;	
+      }
+
+      Handle(BRepAdaptor_HSurface) HF = new BRepAdaptor_HSurface();
+      HF->ChangeSurface().Initialize(F);
+      Handle(GeomPlate_PointConstraint) PCont= new GeomPlate_PointConstraint(u,v,BRep_Tool::Surface(HF->ChangeSurface().Face()),Conti,0.001,0.001,0.001);
+      Henri.Add(PCont);
+    }
+  }
+
+  Henri.Perform();
+
+  Handle(GeomPlate_Surface) gpPlate = Henri.Surface();
+  TColgp_SequenceOfXY S2d;
+  TColgp_SequenceOfXYZ S3d;
+  S2d.Clear();
+  S3d.Clear();
+  Henri.Disc2dContour(4,S2d);
+  Henri.Disc3dContour(4,0,S3d);
+  Standard_Real seuil = Max(0.0001, 10 * Henri.G0Error());
+  GeomPlate_PlateG0Criterion critere (S2d, S3d, seuil);
+
+  Standard_Integer nbcarreau=9;
+  Standard_Integer degmax=8;
+
+  GeomPlate_MakeApprox::Parameters params;
+  Standard_Integer continuity = Draw::Atoi(a[4]);
+  switch (continuity)
+  {
+  case 0: params.ContinuityU = GeomAbs_C0; break;
+  case 1: params.ContinuityU = GeomAbs_C1; break;
+  case 2: params.ContinuityU = GeomAbs_C2; break;
+  case 3: params.ContinuityU = GeomAbs_C3; break;
+  default: params.ContinuityU = GeomAbs_CN; break;
+  }
+  continuity = Draw::Atoi(a[5]);
+  switch (continuity)
+  {
+  case 0: params.ContinuityV = GeomAbs_C0; break;
+  case 1: params.ContinuityV = GeomAbs_C1; break;
+  case 2: params.ContinuityV = GeomAbs_C2; break;
+  case 3: params.ContinuityV = GeomAbs_C3; break;
+  default: params.ContinuityV = GeomAbs_CN; break;
+  }
+
+  params.DegreeU = Draw::Atoi(a[2]);
+  params.DegreeV = Draw::Atoi(a[3]);
+
+  params.MaxPatchesU = Draw::Atoi(a[6]);
+  params.MaxPatchesV = Draw::Atoi(a[7]);
+
+  params.TotalPatches = Draw::Atoi(a[8]);
+
+  params.Tolerance3D = 0.0001;
+
+  GeomPlate_MakeApprox approx (gpPlate, critere, params);
+  Handle (Geom_BSplineSurface) bspline (approx.Surface());
+
+  if (bspline.IsNull())
+  {
+    theDI << "GeomPlate_MakeApprox is not done.\n";
+  }
+
+  {
+    Standard_Real Umin, Umax, Vmin, Vmax;
+    Henri.Surface()->Bounds( Umin, Umax, Vmin, Vmax);
+    BRepBuilderAPI_MakeFace MF(bspline, Umin, Umax, Vmin, Vmax, Precision::Confusion());
+    DBRep::Set(a[1], MF.Face());
+  }
+  
+  return 0;
+}
+
 #include <OSD_Parallel.hxx>
 
 namespace {
@@ -2202,7 +2383,8 @@ void QABugs::Commands_20(Draw_Interpretor& theCommands) {
   theCommands.Add("OCC26270", "OCC26270 shape result", __FILE__, OCC26270, group);
   theCommands.Add ("OCC27552", "OCC27552", __FILE__, OCC27552, group); 
   theCommands.Add("OCC27875", "OCC27875 curve", __FILE__, OCC27875, group);
+  theCommands.Add("OCC27903", "OCC27903 result degmaxU degmaxV contU contV segmaxU segmaxV totalsegmax nbrcurfront nbrpntconst SurfInit [edge 0] [edge tang (1:G1;2:G2) surf]... [point] [u v tang (1:G1;2:G2) surf] ...", __FILE__, OCC27903, group);
   theCommands.Add("OCC28217", "OCC28217", __FILE__, OCC28217, group);
-
+  
   return;
 }
