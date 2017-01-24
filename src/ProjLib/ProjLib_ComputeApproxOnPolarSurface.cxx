@@ -345,29 +345,13 @@ static gp_Pnt2d Function_Value(const Standard_Real theU,
   if((Usup - U0) > uLittle) uSupLi = U0 + uLittle; else uSupLi = Usup;
   if((Vsup - V0) > vLittle) vSupLi = V0 + vLittle; else vSupLi = Vsup;
 
-  GeomAdaptor_Surface SurfLittle;
-  if (Type == GeomAbs_BSplineSurface)
-  {
-    Handle(Geom_Surface) GBSS(theData.mySurf->Surface().BSpline());
-    SurfLittle.Load(GBSS, uInfLi, uSupLi, vInfLi, vSupLi);
-  }
-  else if (Type == GeomAbs_BezierSurface)
-  {
-    Handle(Geom_Surface) GS(theData.mySurf->Surface().Bezier());
-    SurfLittle.Load(GS, uInfLi, uSupLi, vInfLi, vSupLi);
-  }
-  else if (Type == GeomAbs_OffsetSurface)
-  {
-    Handle(Geom_Surface) GS = GeomAdaptor::MakeSurface(theData.mySurf->Surface());
-    SurfLittle.Load(GS, uInfLi, uSupLi, vInfLi, vSupLi);
-  }
-  else
+  if (Type != GeomAbs_BSplineSurface && Type != GeomAbs_BezierSurface && Type != GeomAbs_OffsetSurface)
   {
     Standard_NoSuchObject::Raise("");
   }
 
   // Try to run simple search with initial point (U0, V0).
-  Extrema_GenLocateExtPS  locext(SurfLittle, theData.myTolU, theData.myTolV);
+  Extrema_GenLocateExtPS  locext(theData.mySurf->Surface(), theData.myTolU, theData.myTolV);
   locext.Perform(p, U0, V0);
   if (locext.IsDone()) 
   {
@@ -382,7 +366,7 @@ static gp_Pnt2d Function_Value(const Standard_Real theU,
   }
 
   // Perform whole param space search.
-  Extrema_ExtPS  ext(p, SurfLittle, theData.myTolU, theData.myTolV);
+  Extrema_ExtPS  ext(p, theData.mySurf->Surface(), theData.myTolU, theData.myTolV);
   if (ext.IsDone() && ext.NbExt() >= 1)
   {
     Dist2Min = ext.SquareDistance(1);
