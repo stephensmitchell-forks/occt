@@ -832,7 +832,7 @@ TDF_Label ReadVrmlRec(const OSD_Path& thePath, const Handle(TDocStd_Document)& t
         ReadVrmlRec(aSubDirPath, theDoc, aNewLabel);
       }
 
-      aShapeTool->UpdateAssembly(aNewLabel);
+      aShapeTool->UpdateAssemblies();
     }
     // At the end of operation update assemblies
   }
@@ -985,7 +985,7 @@ TDF_Label ReadVrmlNode (const Handle(VrmlData_Node)& theNode,
       ReadVrmlNode (anIt.Value (), theDoc, aNewLabel);
     }
 
-    aShapeTool->UpdateAssembly (aNewLabel);
+    aShapeTool->UpdateAssemblies();
   }
 
   return aNewLabel;
@@ -1082,7 +1082,7 @@ bool ReadSingleVrml (const OSD_Path& thePath, const Handle (TDocStd_Document)& t
   {
     ReadVrmlNode (anIt.Value (), theDoc, aNewLabel);
   }
-  aShapeTool->UpdateAssembly (aNewLabel);
+  aShapeTool->UpdateAssemblies();
 
   return true;
 }
