@@ -24,6 +24,7 @@ class XmlMDF_ADriverTable;
 class CDM_MessageDriver;
 class XmlMXCAFDoc_AreaDriver;
 class XmlMXCAFDoc_CentroidDriver;
+class XmlMXCAFDoc_ClippingPlaneDriver;
 class XmlMXCAFDoc_ColorDriver;
 class XmlMXCAFDoc_GraphNodeDriver;
 class XmlMXCAFDoc_LocationDriver;
@@ -68,6 +69,7 @@ private:
 
 friend class XmlMXCAFDoc_AreaDriver;
 friend class XmlMXCAFDoc_CentroidDriver;
+friend class XmlMXCAFDoc_ClippingPlaneDriver;
 friend class XmlMXCAFDoc_ColorDriver;
 friend class XmlMXCAFDoc_GraphNodeDriver;
 friend class XmlMXCAFDoc_LocationDriver;
