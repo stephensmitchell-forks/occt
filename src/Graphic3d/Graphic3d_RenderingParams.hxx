@@ -51,6 +51,8 @@ public:
   Graphic3d_RenderingParams()
   : Method                      (Graphic3d_RM_RASTERIZATION),
     NbMsaaSamples               (0),
+    IsOitEnabled                (Standard_True),
+    OitDepthWeight              (0.0f),
     // ray tracing parameters
     IsGlobalIlluminationEnabled (Standard_False),
     SamplesPerPixel             (THE_DEFAULT_SPP),
@@ -92,6 +94,8 @@ public:
 
   Graphic3d_RenderingMode Method;                      //!< specifies rendering mode, Graphic3d_RM_RASTERIZATION by default
   Standard_Integer        NbMsaaSamples;               //!< number of MSAA samples (should be within 0..GL_MAX_SAMPLES, power-of-two number), 0 by default
+  Standard_Boolean        IsOitEnabled;                //!< enables/disables order-independent transparency for rasterization, True by default
+  Standard_ShortReal      OitDepthWeight;              //!< scalar factor [0-1] controlling influence of depth of a fragment to its final coverage
 
   Standard_Boolean        IsGlobalIlluminationEnabled; //!< enables/disables global illumination effects (path tracing)
   Standard_Integer        SamplesPerPixel;             //!< number of samples per pixel (SPP)

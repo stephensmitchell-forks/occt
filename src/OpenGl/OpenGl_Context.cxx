@@ -127,6 +127,8 @@ OpenGl_Context::OpenGl_Context (const Handle(OpenGl_Caps)& theCaps)
   arbNPTW  (Standard_False),
   arbTexRG (Standard_False),
   arbTexFloat (Standard_False),
+  arbTexHalfFloat (Standard_False),
+  arbSampleShading (Standard_False),
   arbTexBindless (NULL),
   arbTBO (NULL),
   arbTboRGB32 (Standard_False),
@@ -152,11 +154,13 @@ OpenGl_Context::OpenGl_Context (const Handle(OpenGl_Caps)& theCaps)
   myMaxTexDim  (1024),
   myMaxClipPlanes (6),
   myMaxMsaaSamples(0),
+  myMaxDrawBuffers (1),
   myGlVerMajor (0),
   myGlVerMinor (0),
   myIsInitialized (Standard_False),
   myIsStereoBuffers (Standard_False),
   myIsGlNormalizeEnabled (Standard_False),
+  myHasHalfFloatTextures (Standard_False),
   myHasRayTracing (Standard_False),
   myHasRayTracingTextures (Standard_False),
   myHasRayTracingAdaptiveSampling (Standard_False),
@@ -171,7 +175,7 @@ OpenGl_Context::OpenGl_Context (const Handle(OpenGl_Caps)& theCaps)
 #endif
   myToCullBackFaces (false),
   myReadBuffer (0),
-  myDrawBuffer (0),
+  myDrawBuffers (1),
   myDefaultVao (0),
   myIsGlDebugCtx (Standard_False),
   myResolutionRatio (1.0f)
@@ -371,16 +375,58 @@ void OpenGl_Context::SetReadBuffer (const Standard_Integer theReadBuffer)
 void OpenGl_Context::SetDrawBuffer (const Standard_Integer theDrawBuffer)
 {
 #if !defined(GL_ES_VERSION_2_0)
-  myDrawBuffer = !myIsStereoBuffers ? stereoToMonoBuffer (theDrawBuffer) : theDrawBuffer;
-  if (myDrawBuffer < GL_COLOR_ATTACHMENT0
+  const Standard_Integer aDrawBuffer = !myIsStereoBuffers ? stereoToMonoBuffer (theDrawBuffer) : theDrawBuffer;
+  if (aDrawBuffer < GL_COLOR_ATTACHMENT0
    && arbFBO != NULL)
   {
     arbFBO->glBindFramebuffer (GL_FRAMEBUFFER, OpenGl_FrameBuffer::NO_FRAMEBUFFER);
   }
-  ::glDrawBuffer (myDrawBuffer);
+  ::glDrawBuffer (aDrawBuffer);
+
+  myDrawBuffers.Clear();
+
+  if (aDrawBuffer != GL_NONE)
+  {
+    myDrawBuffers.SetValue (0, aDrawBuffer);
+  }
 #else
   (void )theDrawBuffer;
 #endif
+}
+
+// =======================================================================
+// function : SetDrawBuffers
+// purpose  :
+// =======================================================================
+void OpenGl_Context::SetDrawBuffers (const Standard_Integer theNb, const Standard_Integer* theDrawBuffers)
+{
+  Standard_ASSERT_RETURN (Functions()->glDrawBuffers != NULL, "Multiple render targets feature is not supported by the context", Standard_ASSERT_DO_NOTHING());
+
+  myDrawBuffers.Clear();
+
+  Standard_Boolean useDefaultFbo = Standard_False;
+  for (Standard_Integer anI = 0; anI < theNb; ++anI)
+  {
+#if !defined(GL_ES_VERSION_2_0)
+    const Standard_Integer aDrawBuffer = !myIsStereoBuffers ? stereoToMonoBuffer (theDrawBuffers[anI]) : theDrawBuffers[anI];
+#else
+    const Standard_Integer aDrawBuffer = theDrawBuffers[anI];
+#endif
+    if (aDrawBuffer < GL_COLOR_ATTACHMENT0 && aDrawBuffer != GL_NONE)
+    {
+      useDefaultFbo = Standard_True;
+    }
+    else if (aDrawBuffer != GL_NONE)
+    {
+      myDrawBuffers.SetValue (anI, aDrawBuffer);
+    }
+  }
+  if (arbFBO != NULL && useDefaultFbo)
+  {
+    arbFBO->glBindFramebuffer (GL_FRAMEBUFFER, OpenGl_FrameBuffer::NO_FRAMEBUFFER);
+  }
+
+  Functions()->glDrawBuffers (theNb, (const GLenum*)theDrawBuffers);
 }
 
 // =======================================================================
@@ -419,9 +465,35 @@ void OpenGl_Context::FetchState()
     ::glGetIntegerv (GL_RENDER_MODE, &myRenderMode);
   }
 
-  // cache buffers state
+  // cache read buffers state
   ::glGetIntegerv (GL_READ_BUFFER, &myReadBuffer);
-  ::glGetIntegerv (GL_DRAW_BUFFER, &myDrawBuffer);
+
+  // cache draw buffers state
+  myDrawBuffers.Clear();
+
+  Standard_Integer aDrawBuffer;
+
+  if (myMaxDrawBuffers == 1)
+  {
+    ::glGetIntegerv (GL_DRAW_BUFFER, &aDrawBuffer);
+
+    if (aDrawBuffer != GL_NONE)
+    {
+      myDrawBuffers.SetValue (0, aDrawBuffer);
+    }
+  }
+  else
+  {
+    for (Standard_Integer anI = 0; anI < myMaxDrawBuffers; ++anI)
+    {
+      ::glGetIntegerv (GL_DRAW_BUFFER0 + anI, &aDrawBuffer);
+
+      if (aDrawBuffer != GL_NONE)
+      {
+        myDrawBuffers.SetValue (anI, aDrawBuffer);
+      }
+    }
+  }
 #endif
 }
 
@@ -1096,6 +1168,7 @@ void OpenGl_Context::init (const Standard_Boolean theIsCoreProfile)
   myGlVerMajor = 0;
   myGlVerMinor = 0;
   myMaxMsaaSamples = 0;
+  myMaxDrawBuffers = 1;
   ReadGlVersion (myGlVerMajor, myGlVerMinor);
   myVendor = (const char* )::glGetString (GL_VENDOR);
   if (!caps->ffpEnable
@@ -1188,6 +1261,8 @@ void OpenGl_Context::init (const Standard_Boolean theIsCoreProfile)
   arbNPTW     = Standard_True;
   arbTexRG    = IsGlGreaterEqual (3, 0)
              || CheckExtension ("GL_EXT_texture_rg");
+  arbSampleShading = IsGlGreaterEqual (3, 2)
+                  || CheckExtension ("GL_OES_sample_variables");
   extBgra     = CheckExtension ("GL_EXT_texture_format_BGRA8888");
   extAnis = CheckExtension ("GL_EXT_texture_filter_anisotropic");
   extPDS  = CheckExtension ("GL_OES_packed_depth_stencil");
@@ -1227,8 +1302,10 @@ void OpenGl_Context::init (const Standard_Boolean theIsCoreProfile)
     hasHighp = Standard_True;
   }
 
-  arbTexFloat = IsGlGreaterEqual (3, 0)
-             && FindProc ("glTexImage3D", myFuncs->glTexImage3D);
+  arbTexFloat     = IsGlGreaterEqual (3, 0)
+                  && FindProc ("glTexImage3D", myFuncs->glTexImage3D);
+  arbTexHalfFloat = IsGlGreaterEqual (3, 0)
+                  || CheckExtension ("GL_OES_texture_half_float");
 
   const Standard_Boolean hasTexBuffer32  = IsGlGreaterEqual (3, 2) && FindProc ("glTexBuffer", myFuncs->glTexBuffer);
   const Standard_Boolean hasExtTexBuffer = CheckExtension ("GL_EXT_texture_buffer") && FindProc ("glTexBufferEXT", myFuncs->glTexBuffer);
@@ -1268,19 +1345,30 @@ void OpenGl_Context::init (const Standard_Boolean theIsCoreProfile)
     }
   }
 
+  const Standard_Boolean hasDrawBuffersExt = (IsGlGreaterEqual (3, 0) || CheckExtension ("GL_EXT_draw_buffers"))
+                                          && FindProc ("glDrawBuffersEXT", myFuncs->glDrawBuffers);
+  // get number of maximum supported draw buffers
+  if (hasDrawBuffersExt)
+  {
+    glGetIntegerv (GL_MAX_DRAW_BUFFERS, &myMaxDrawBuffers);
+  }
 #else
 
   myTexClamp = IsGlGreaterEqual (1, 2) ? GL_CLAMP_TO_EDGE : GL_CLAMP;
 
-  hasTexRGBA8 = Standard_True;
-  arbNPTW     = CheckExtension ("GL_ARB_texture_non_power_of_two");
-  arbTexFloat = IsGlGreaterEqual (3, 0)
-             || CheckExtension ("GL_ARB_texture_float");
-  extBgra     = CheckExtension ("GL_EXT_bgra");
-  extAnis     = CheckExtension ("GL_EXT_texture_filter_anisotropic");
-  extPDS      = CheckExtension ("GL_EXT_packed_depth_stencil");
-  atiMem      = CheckExtension ("GL_ATI_meminfo");
-  nvxMem      = CheckExtension ("GL_NVX_gpu_memory_info");
+  hasTexRGBA8     = Standard_True;
+  arbNPTW         = CheckExtension ("GL_ARB_texture_non_power_of_two");
+  arbTexFloat     = IsGlGreaterEqual (3, 0)
+                  || CheckExtension ("GL_ARB_texture_float");
+  arbTexHalfFloat = IsGlGreaterEqual (3, 0)
+                  || CheckExtension ("GL_ARB_half_float_pixel");
+  arbSampleShading = IsGlGreaterEqual (4, 0)
+                  || CheckExtension("GL_ARB_sample_shading");
+  extBgra          = CheckExtension ("GL_EXT_bgra");
+  extAnis          = CheckExtension ("GL_EXT_texture_filter_anisotropic");
+  extPDS           = CheckExtension ("GL_EXT_packed_depth_stencil");
+  atiMem           = CheckExtension ("GL_ATI_meminfo");
+  nvxMem           = CheckExtension ("GL_NVX_gpu_memory_info");
 
   GLint aStereo = GL_FALSE;
   glGetIntegerv (GL_STEREO, &aStereo);
@@ -1288,6 +1376,12 @@ void OpenGl_Context::init (const Standard_Boolean theIsCoreProfile)
 
   // get number of maximum clipping planes
   glGetIntegerv (GL_MAX_CLIP_PLANES,  &myMaxClipPlanes);
+
+  // get number of maximum supported draw buffers
+  if (IsGlGreaterEqual (2, 0))
+  {
+    glGetIntegerv (GL_MAX_DRAW_BUFFERS, &myMaxDrawBuffers);
+  }
 #endif
 
   glGetIntegerv (GL_MAX_TEXTURE_SIZE, &myMaxTexDim);

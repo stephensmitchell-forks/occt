@@ -70,9 +70,11 @@ Standard_CString OpenGl_ShaderProgram::PredefinedKeywords[] =
   "occBackMaterial",       // OpenGl_OCCT_BACK_MATERIAL
   "occColor",              // OpenGl_OCCT_COLOR
 
+  "occOitEnableWrite",     // OpenGl_OCCT_OIT_ENABLE_WRITE
+  "occOitDepthWeight",     // OpenGl_OCCT_OIT_DEPTH_WEIGHT
+
   "occTexTrsf2d",          // OpenGl_OCCT_TEXTURE_TRSF2D
   "occPointSize"           // OpenGl_OCCT_POINT_SIZE
-
 };
 
 // =======================================================================

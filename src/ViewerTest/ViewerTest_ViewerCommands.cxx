@@ -9077,16 +9077,19 @@ static Standard_Integer VRenderParams (Draw_Interpretor& theDI,
       case Graphic3d_RM_RAYTRACING:    theDI << "raytrace ";      break;
     }
     theDI << "\n";
-    theDI << "msaa:         " <<  aParams.NbMsaaSamples                               << "\n";
-    theDI << "rayDepth:     " <<  aParams.RaytracingDepth                             << "\n";
-    theDI << "fsaa:         " << (aParams.IsAntialiasingEnabled       ? "on" : "off") << "\n";
-    theDI << "shadows:      " << (aParams.IsShadowEnabled             ? "on" : "off") << "\n";
-    theDI << "reflections:  " << (aParams.IsReflectionEnabled         ? "on" : "off") << "\n";
-    theDI << "gleam:        " << (aParams.IsTransparentShadowEnabled  ? "on" : "off") << "\n";
-    theDI << "GI:           " << (aParams.IsGlobalIlluminationEnabled ? "on" : "off") << "\n";
-    theDI << "blocked RNG:  " << (aParams.CoherentPathTracingMode     ? "on" : "off") << "\n";
-    theDI << "iss:          " << (aParams.AdaptiveScreenSampling      ? "on" : "off") << "\n";
-    theDI << "iss debug:    " << (aParams.ShowSamplingTiles           ? "on" : "off") << "\n";
+    theDI << "msaa:           " <<  aParams.NbMsaaSamples                               << "\n";
+    theDI << "oit:            " << (aParams.IsOitEnabled                ? "on" : "off") << "\n";
+    theDI << "oitDepthWeight: " <<  aParams.OitDepthWeight                              << "\n";
+    theDI << "rayDepth:       " <<  aParams.RaytracingDepth                             << "\n";
+    theDI << "fsaa:           " << (aParams.IsAntialiasingEnabled       ? "on" : "off") << "\n";
+    theDI << "shadows:        " << (aParams.IsShadowEnabled             ? "on" : "off") << "\n";
+    theDI << "reflections:    " << (aParams.IsReflectionEnabled         ? "on" : "off") << "\n";
+    theDI << "gleam:          " << (aParams.IsTransparentShadowEnabled  ? "on" : "off") << "\n";
+    theDI << "GI:             " << (aParams.IsGlobalIlluminationEnabled ? "on" : "off") << "\n";
+    theDI << "blocked RNG:    " << (aParams.CoherentPathTracingMode     ? "on" : "off") << "\n";
+    theDI << "iss:            " << (aParams.AdaptiveScreenSampling      ? "on" : "off") << "\n";
+    theDI << "iss debug:      " << (aParams.ShowSamplingTiles           ? "on" : "off") << "\n";
+
     theDI << "shadingModel: ";
     switch (aView->ShadingModel())
     {
@@ -9180,6 +9183,46 @@ static Standard_Integer VRenderParams (Draw_Interpretor& theDI,
       else
       {
         aParams.NbMsaaSamples = aNbSamples;
+      }
+    }
+    else if (aFlag == "-oit")
+    {
+      if (toPrint)
+      {
+        theDI << (aParams.IsOitEnabled ? "on" : "off") << " ";
+        continue;
+      }
+      Standard_Boolean toEnable = Standard_True;
+      if (++anArgIter < theArgNb
+      && !ViewerTest::ParseOnOff (theArgVec[anArgIter], toEnable))
+      {
+        --anArgIter;
+      }
+      aParams.IsOitEnabled = toEnable;
+    }
+    else if (aFlag == "-oitdepth"
+          || aFlag == "-oitdepthweight")
+    {
+      if (toPrint)
+      {
+        theDI << aParams.OitDepthWeight << " ";
+        continue;
+      }
+      else if (++anArgIter >= theArgNb)
+      {
+        std::cerr << "Error: wrong syntax at argument '" << anArg << "'\n";
+        return 1;
+      }
+      const Standard_Real aWeight = Draw::Atof (theArgVec[anArgIter]);
+
+      if (aWeight < 0.0 || aWeight > 1.0)
+      {
+        std::cerr << "Error: invalid value of order-indepedent transparency depth weight " << aWeight << ". Should be within range [0.0; 1.0]\n";
+        return 1;
+      }
+      else
+      {
+        aParams.OitDepthWeight = static_cast<Standard_ShortReal> (aWeight);
       }
     }
     else if (aFlag == "-raydepth"
@@ -10622,23 +10665,25 @@ void ViewerTest::ViewerCommands(Draw_Interpretor& theCommands)
     __FILE__, VRenderParams, group);
   theCommands.Add("vrenderparams",
     "\n    Manages rendering parameters: "
-    "\n      '-raster'               Disables GPU ray-tracing"
-    "\n      '-msaa         0..4'    Specifies number of samples for MSAA"
-    "\n      '-rayTrace'             Enables  GPU ray-tracing"
-    "\n      '-rayDepth     0..10'   Defines maximum ray-tracing depth"
-    "\n      '-shadows      on|off'  Enables/disables shadows rendering"
-    "\n      '-reflections  on|off'  Enables/disables specular reflections"
-    "\n      '-fsaa         on|off'  Enables/disables adaptive anti-aliasing"
-    "\n      '-gleam        on|off'  Enables/disables transparency shadow effects"
-    "\n      '-gi           on|off'  Enables/disables global illumination effects"
-    "\n      '-brng         on|off'  Enables/disables blocked RNG (fast coherent PT)"
-    "\n      '-env          on|off'  Enables/disables environment map background"
-    "\n      '-iss          on|off'  Enables/disables adaptive screen sampling (PT mode)"
-    "\n      '-issd         on|off'  Shows screen sampling distribution in ISS mode"
-    "\n      '-rebuildGlsl  on|off'  Rebuild Ray-Tracing GLSL programs (for debugging)"
-    "\n      '-shadingModel model'   Controls shading model from enumeration"
-    "\n                              color, flat, gouraud, phong"
-    "\n      '-resolution   value'   Sets a new pixels density (PPI), defines scaling factor for parameters like text size"
+    "\n      '-raster'                 Disables GPU ray-tracing"
+    "\n      '-msaa           0..4'    Specifies number of samples for MSAA"
+    "\n      '-oit            on|off'  Enables/disables blended order-independent transparency"
+    "\n      '-oitDepthWeight 0.0-1.0' Defines influence of fragment depth to its coverage"
+    "\n      '-rayTrace'               Enables  GPU ray-tracing"
+    "\n      '-rayDepth       0..10'   Defines maximum ray-tracing depth"
+    "\n      '-shadows        on|off'  Enables/disables shadows rendering"
+    "\n      '-reflections    on|off'  Enables/disables specular reflections"
+    "\n      '-fsaa           on|off'  Enables/disables adaptive anti-aliasing"
+    "\n      '-gleam          on|off'  Enables/disables transparency shadow effects"
+    "\n      '-gi             on|off'  Enables/disables global illumination effects"
+    "\n      '-brng           on|off'  Enables/disables blocked RNG (fast coherent PT)"
+    "\n      '-env            on|off'  Enables/disables environment map background"
+    "\n      '-iss            on|off'  Enables/disables adaptive screen sampling (PT mode)"
+    "\n      '-issd           on|off'  Shows screen sampling distribution in ISS mode"
+    "\n      '-rebuildGlsl    on|off'  Rebuild Ray-Tracing GLSL programs (for debugging)"
+    "\n      '-shadingModel   model'   Controls shading model from enumeration"
+    "\n                                color, flat, gouraud, phong"
+    "\n      '-resolution     value'   Sets a new pixels density (PPI), defines scaling factor for parameters like text size"
     "\n    Unlike vcaps, these parameters dramatically change visual properties."
     "\n    Command is intended to control presentation quality depending on"
     "\n    hardware capabilities and performance.",

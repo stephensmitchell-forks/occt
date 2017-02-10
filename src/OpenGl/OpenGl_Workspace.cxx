@@ -623,22 +623,6 @@ void OpenGl_Workspace::updateMaterial (const int theFlag)
     {
       // render transparent
       myMatTmp.Diffuse.a() = 1.0f - aTransp;
-      glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-      glEnable    (GL_BLEND);
-      if (myUseDepthWrite)
-      {
-        glDepthMask (GL_FALSE);
-      }
-    }
-    else
-    {
-      // render opaque
-      glBlendFunc (GL_ONE, GL_ZERO);
-      glDisable   (GL_BLEND);
-      if (myUseDepthWrite)
-      {
-        glDepthMask (GL_TRUE);
-      }
     }
   }
 
@@ -1250,15 +1234,16 @@ Standard_Boolean OpenGl_Workspace::BufferDump (const Handle(OpenGl_FrameBuffer)&
 }
 
 // =======================================================================
-// function : CanRender
+// function : ShouldRender
 // purpose  :
 // =======================================================================
-Standard_Boolean OpenGl_RaytraceFilter::CanRender (const OpenGl_Element* theElement)
+Standard_Boolean OpenGl_RaytraceFilter::ShouldRender (const Handle(OpenGl_Workspace)& theWorkspace,
+                                                      const OpenGl_Element* theElement)
 {
   Standard_Boolean aPrevFilterResult = Standard_True;
   if (!myPrevRenderFilter.IsNull())
   {
-    aPrevFilterResult = myPrevRenderFilter->CanRender (theElement);
+    aPrevFilterResult = myPrevRenderFilter->ShouldRender (theWorkspace, theElement);
   }
   return aPrevFilterResult &&
     !OpenGl_Raytrace::IsRaytracedElement (theElement);

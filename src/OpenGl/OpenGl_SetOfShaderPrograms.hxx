@@ -31,7 +31,8 @@ enum OpenGl_ProgramOptions
   OpenGl_PO_ClipPlanes1 = 0x040, //!< handle 1 clipping plane
   OpenGl_PO_ClipPlanes2 = 0x080, //!< handle 2 clipping planes
   OpenGl_PO_ClipPlanesN = 0x100, //!< handle N clipping planes
-  OpenGl_PO_NB          = 0x200  //!< overall number of combinations
+  OpenGl_PO_WriteOit    = 0x200, //!< write color/coverage buffer for blended order independet transparency
+  OpenGl_PO_NB          = 0x400  //!< overall number of combinations
 };
 
 //! Alias to programs array of predefined length

@@ -68,7 +68,7 @@ public:
     RenderFiltered (const Handle(OpenGl_Workspace)& theWorkspace,
                     const Handle(OpenGl_RenderFilter)& theFilter) const
   {
-    if (!theFilter.IsNull() && !theFilter->CanRender (this))
+    if (!theFilter.IsNull() && !theFilter->ShouldRender (theWorkspace, this))
     {
       return Standard_False;
     }

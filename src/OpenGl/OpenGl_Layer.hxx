@@ -27,7 +27,6 @@
 #include <Graphic3d_Camera.hxx>
 #include <OpenGl_GlCore11.hxx>
 
-
 struct OpenGl_GlobalLayerSettings
 {
   GLint DepthFunc;

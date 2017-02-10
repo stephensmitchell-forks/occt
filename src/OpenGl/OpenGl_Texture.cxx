@@ -565,7 +565,8 @@ bool OpenGl_Texture::Init (const Handle(OpenGl_Context)& theCtx,
       glTexImage2D (GL_TEXTURE_2D, 0, anIntFormat,
                     theSizeX, theSizeY, 0,
                     thePixelFormat, theDataType, aDataPtr);
-      if (glGetError() != GL_NO_ERROR)
+      const int aErr = glGetError();
+      if (aErr != GL_NO_ERROR)
       {
         Unbind (theCtx);
         Release (theCtx.operator->());
@@ -638,7 +639,8 @@ bool OpenGl_Texture::Init (const Handle(OpenGl_Context)& theCtx,
       glTexImage2D (GL_TEXTURE_2D, 0, anIntFormat,
                     theSizeX, theSizeY, 0,
                     thePixelFormat, theDataType, theImage->Data());
-      if (glGetError() != GL_NO_ERROR)
+      const int aErr = glGetError();
+      if (aErr != GL_NO_ERROR)
       {
         Unbind (theCtx);
         Release (theCtx.operator->());
@@ -889,6 +891,20 @@ bool OpenGl_Texture::Init3D (const Handle(OpenGl_Context)& theCtx,
   if (theDataType == GL_FLOAT && !theCtx->arbTexFloat)
   {
     TCollection_ExtendedString aMsg ("Error: floating-point textures are not supported by hardware.");
+
+    theCtx->PushMessage (GL_DEBUG_SOURCE_APPLICATION,
+                         GL_DEBUG_TYPE_ERROR,
+                         0,
+                         GL_DEBUG_SEVERITY_HIGH,
+                         aMsg);
+
+    Release (theCtx.operator->());
+    Unbind (theCtx);
+    return false;
+  }
+  else if (theDataType == GL_HALF_FLOAT && !theCtx->arbTexHalfFloat)
+  {
+    TCollection_ExtendedString aMsg ("Error: half-precision floating-point textures are not supported by hardware.");
 
     theCtx->PushMessage (GL_DEBUG_SOURCE_APPLICATION,
                          GL_DEBUG_TYPE_ERROR,
