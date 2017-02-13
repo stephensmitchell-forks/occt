@@ -35,6 +35,10 @@ BinMXCAFDoc_MaterialToolDriver.cxx
 BinMXCAFDoc_MaterialToolDriver.hxx
 BinMXCAFDoc_NoteDriver.cxx
 BinMXCAFDoc_NoteDriver.hxx
+BinMXCAFDoc_NoteCommentDriver.cxx
+BinMXCAFDoc_NoteCommentDriver.hxx
+BinMXCAFDoc_NoteBinDataDriver.cxx
+BinMXCAFDoc_NoteBinDataDriver.hxx
 BinMXCAFDoc_NotesToolDriver.cxx
 BinMXCAFDoc_NotesToolDriver.hxx
 BinMXCAFDoc_ShapeToolDriver.cxx

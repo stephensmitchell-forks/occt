@@ -97,7 +97,10 @@ public:
   Standard_EXPORT static Standard_GUID LayerRefGUID();
   
   Standard_EXPORT static Standard_GUID MaterialRefGUID();
-  
+
+  //! Return GUIDs for TreeNode representing types of Note
+  Standard_EXPORT static Standard_GUID NoteRefGUID();
+
   Standard_EXPORT static Standard_GUID InvisibleGUID();
   
   //! Returns GUID for UAttribute identifying external reference on no-step file
