@@ -1,4 +1,4 @@
-// Created on: 2017-02-10
+// Created on: 2017-02-13
 // Created by: Sergey NIKONOV
 // Copyright (c) 2000-2017 OPEN CASCADE SAS
 //
@@ -13,43 +13,34 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef _XCAFDoc_Note_HeaderFile
-#define _XCAFDoc_Note_HeaderFile
+#ifndef _XCAFDoc_NoteComment_HeaderFile
+#define _XCAFDoc_NoteComment_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-#include <TCollection_HExtendedString.hxx>
-#include <OSD_File.hxx>
-#include <TDF_Attribute.hxx>
+#include <XCAFDoc_Note.hxx>
 
-class Standard_GUID;
-class TDF_RelocationTable;
+class XCAFDoc_NoteComment;
+DEFINE_STANDARD_HANDLE(XCAFDoc_NoteComment, XCAFDoc_Note)
 
-class XCAFDoc_Note;
-DEFINE_STANDARD_HANDLE(XCAFDoc_Note, TDF_Attribute)
-
-class XCAFDoc_Note : public TDF_Attribute
+class XCAFDoc_NoteComment : public XCAFDoc_Note
 {
 public:
 
-  DEFINE_STANDARD_RTTIEXT(XCAFDoc_Note, TDF_Attribute)
+  DEFINE_STANDARD_RTTIEXT(XCAFDoc_NoteComment, XCAFDoc_Note)
 
   Standard_EXPORT static const Standard_GUID& GetID();
 
   Standard_EXPORT static Standard_Boolean IsMine(const TDF_Label& theLabel);
 
-  Standard_EXPORT static Handle(XCAFDoc_Note) Set(const TDF_Label&                           theLabel,
-                                                  const Handle(TCollection_HExtendedString)& theUserName,
-                                                  const Handle(TCollection_HExtendedString)& theTimeStamp);
+  Standard_EXPORT static Handle(XCAFDoc_NoteComment) Set(const TDF_Label&                           theLabel,
+                                                         const Handle(TCollection_HExtendedString)& theUserName,
+                                                         const Handle(TCollection_HExtendedString)& theTimeStamp,
+                                                         const Handle(TCollection_HExtendedString)& theComment);
 
-  Standard_EXPORT XCAFDoc_Note();
+  Standard_EXPORT XCAFDoc_NoteComment();
 
-  Standard_EXPORT void Set(const Handle(TCollection_HExtendedString)& theUserName,
-                           const Handle(TCollection_HExtendedString)& theTimeStamp);
+  Standard_EXPORT void Set(const Handle(TCollection_HExtendedString)& theComment);
 
-  Standard_EXPORT Handle(TCollection_HExtendedString) UserName() const;
-
-  Standard_EXPORT Handle(TCollection_HExtendedString) TimeStamp() const;
+  Standard_EXPORT Handle(TCollection_HExtendedString) Comment() const;
 
 public:
 
@@ -66,8 +57,7 @@ public:
 
 protected:
 
-  Handle(TCollection_HExtendedString) myUserName;
-  Handle(TCollection_HExtendedString) myTimeStamp;
+  Handle(TCollection_HExtendedString) myComment;
 };
 
-#endif // _XCAFDoc_Note_HeaderFile
+#endif // _XCAFDoc_NoteComment_HeaderFile

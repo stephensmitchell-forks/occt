@@ -19,9 +19,12 @@
 #include <Standard.hxx>
 #include <Standard_Type.hxx>
 #include <TDF_Attribute.hxx>
+#include <TDF_LabelSequence.hxx>
 
 class Standard_GUID;
+class TCollection_HExtendedString;
 class TDF_RelocationTable;
+class XCAFDoc_Note;
 
 class XCAFDoc_NotesTool;
 DEFINE_STANDARD_HANDLE(XCAFDoc_NotesTool, TDF_Attribute)
@@ -40,14 +43,19 @@ public:
   //! Creates an empty tool
   Standard_EXPORT XCAFDoc_NotesTool();
 
+  //! Returns a sequence of note labels currently stored in the tool table
+  Standard_EXPORT void GetNotes(TDF_LabelSequence& theNoteLabels) const;
+
+  //! Adds a new note and returns a handle to it
+  Standard_EXPORT Handle(XCAFDoc_Note) AddNote(const Handle(TCollection_HExtendedString)& theUserName,
+                                               const Handle(TCollection_HExtendedString)& theTimeStamp);
+
 public:
 
+  // Overrides TDF_Attribute pure virtuals
   Standard_EXPORT const Standard_GUID& ID() const Standard_OVERRIDE;
-
   Standard_EXPORT Handle(TDF_Attribute) NewEmpty() const Standard_OVERRIDE;
-
   Standard_EXPORT void Restore(const Handle(TDF_Attribute)& theAttrFrom) Standard_OVERRIDE;
-
   Standard_EXPORT void Paste(const Handle(TDF_Attribute)&       theAttrInto, 
                              const Handle(TDF_RelocationTable)& theRT) const Standard_OVERRIDE;
 

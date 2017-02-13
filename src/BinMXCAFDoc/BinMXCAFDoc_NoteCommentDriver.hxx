@@ -1,4 +1,4 @@
-// Created on: 2017-02-10
+// Created on: 2017-02-13
 // Created by: Sergey NIKONOV
 // Copyright (c) 2005-2017 OPEN CASCADE SAS
 //
@@ -13,29 +13,19 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef _BinMXCAFDoc_NoteDriver_HeaderFile
-#define _BinMXCAFDoc_NoteDriver_HeaderFile
+#ifndef _BinMXCAFDoc_NoteCommentDriver_HeaderFile
+#define _BinMXCAFDoc_NoteCommentDriver_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
+#include <BinMXCAFDoc_NoteDriver.hxx>
 
-#include <BinMDF_ADriver.hxx>
-#include <Standard_Boolean.hxx>
-#include <BinObjMgt_RRelocationTable.hxx>
-#include <BinObjMgt_SRelocationTable.hxx>
+class BinMXCAFDoc_NoteCommentDriver;
+DEFINE_STANDARD_HANDLE(BinMXCAFDoc_NoteCommentDriver, BinMXCAFDoc_NoteDriver)
 
-class CDM_MessageDriver;
-class TDF_Attribute;
-class BinObjMgt_Persistent;
-
-class BinMXCAFDoc_NoteDriver;
-DEFINE_STANDARD_HANDLE(BinMXCAFDoc_NoteDriver, BinMDF_ADriver)
-
-class BinMXCAFDoc_NoteDriver : public BinMDF_ADriver
+class BinMXCAFDoc_NoteCommentDriver : public BinMXCAFDoc_NoteDriver
 {
 public:
   
-  Standard_EXPORT BinMXCAFDoc_NoteDriver(const Handle(CDM_MessageDriver)& theMsgDriver);
+  Standard_EXPORT BinMXCAFDoc_NoteCommentDriver(const Handle(CDM_MessageDriver)& theMsgDriver);
   
   Standard_EXPORT Handle(TDF_Attribute) NewEmpty() const Standard_OVERRIDE;
   
@@ -47,13 +37,8 @@ public:
                               BinObjMgt_Persistent&        theTarget, 
                               BinObjMgt_SRelocationTable&  theRelocTable) const Standard_OVERRIDE;
 
-  DEFINE_STANDARD_RTTIEXT(BinMXCAFDoc_NoteDriver, BinMDF_ADriver)
-
-protected:
-
-  Standard_EXPORT BinMXCAFDoc_NoteDriver(const Handle(CDM_MessageDriver)& theMsgDriver,
-                                         Standard_CString                 theName);
+  DEFINE_STANDARD_RTTIEXT(BinMXCAFDoc_NoteCommentDriver, BinMXCAFDoc_NoteDriver)
 
 };
 
-#endif // _BinMXCAFDoc_NoteDriver_HeaderFile
+#endif // _BinMXCAFDoc_NoteCommentDriver_HeaderFile

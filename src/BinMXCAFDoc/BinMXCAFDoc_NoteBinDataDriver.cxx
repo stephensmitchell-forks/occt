@@ -1,0 +1,85 @@
+// Created on: 2017-02-13
+// Created by: Eugeny NIKONOV
+// Copyright (c) 2005-2017 OPEN CASCADE SAS
+//
+// This file is part of Open CASCADE Technology software library.
+//
+// This library is free software; you can redistribute it and/or modify it under
+// the terms of the GNU Lesser General Public License version 2.1 as published
+// by the Free Software Foundation, with special exception defined in the file
+// OCCT_LGPL_EXCEPTION.txt. Consult the file LICENSE_LGPL_21.txt included in OCCT
+// distribution for complete text of the license and disclaimer of any warranty.
+//
+// Alternatively, this file may be used under the terms of Open CASCADE
+// commercial license or contractual agreement.
+
+#include <BinObjMgt_Persistent.hxx>
+#include <CDM_MessageDriver.hxx>
+#include <Standard_Type.hxx>
+#include <TDF_Attribute.hxx>
+#include <TCollection_HAsciiString.hxx>
+#include <BinMXCAFDoc_NoteBinDataDriver.hxx>
+#include <XCAFDoc_NoteBinData.hxx>
+
+IMPLEMENT_STANDARD_RTTIEXT(BinMXCAFDoc_NoteBinDataDriver, BinMXCAFDoc_NoteDriver)
+
+//=======================================================================
+//function :
+//purpose  : 
+//=======================================================================
+BinMXCAFDoc_NoteBinDataDriver::BinMXCAFDoc_NoteBinDataDriver(const Handle(CDM_MessageDriver)& theMsgDriver)
+  : BinMXCAFDoc_NoteDriver(theMsgDriver, STANDARD_TYPE(XCAFDoc_NoteBinData)->Name())
+{
+}
+
+//=======================================================================
+//function :
+//purpose  : 
+//=======================================================================
+Handle(TDF_Attribute) BinMXCAFDoc_NoteBinDataDriver::NewEmpty() const
+{
+  return new XCAFDoc_NoteBinData();
+}
+
+//=======================================================================
+//function :
+//purpose  : 
+//=======================================================================
+Standard_Boolean BinMXCAFDoc_NoteBinDataDriver::Paste(const BinObjMgt_Persistent&  theSource,
+                                                      const Handle(TDF_Attribute)& theTarget,
+                                                      BinObjMgt_RRelocationTable&  theRelocTable) const
+{
+  if (!BinMXCAFDoc_NoteDriver::Paste(theSource, theTarget, theRelocTable))
+    return Standard_False;
+
+  Handle(XCAFDoc_NoteBinData) aNoteBinData = Handle(XCAFDoc_NoteBinData)::DownCast(theTarget);
+
+  TCollection_AsciiString aData, aMIMEtype;
+  if (!(theSource >> aData >> aMIMEtype))
+    return Standard_False;
+
+  aNoteBinData->Set(new TCollection_HAsciiString(aData), 
+                    new TCollection_HAsciiString(aMIMEtype));
+
+  return Standard_True;
+}
+
+//=======================================================================
+//function :
+//purpose  : 
+//=======================================================================
+void BinMXCAFDoc_NoteBinDataDriver::Paste(const Handle(TDF_Attribute)& theSource,
+					                                BinObjMgt_Persistent&        theTarget,
+					                                BinObjMgt_SRelocationTable&  theRelocTable) const
+{
+  BinMXCAFDoc_NoteDriver::Paste(theSource, theTarget, theRelocTable);
+
+  Handle(XCAFDoc_NoteBinData) aNoteBinData = Handle(XCAFDoc_NoteBinData)::DownCast(theSource);
+
+  Handle(TCollection_HAsciiString) aData = aNoteBinData->Data();
+  Handle(TCollection_HAsciiString) aMIMEtype = aNoteBinData->MIMEtype();
+  theTarget
+    << (aData ? aData->String() : TCollection_AsciiString(""))
+    << (aMIMEtype ? aMIMEtype->String() : TCollection_AsciiString(""))
+    ;
+}

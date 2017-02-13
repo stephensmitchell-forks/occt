@@ -42,6 +42,10 @@ XCAFDoc_MaterialTool.cxx
 XCAFDoc_MaterialTool.hxx
 XCAFDoc_Note.cxx
 XCAFDoc_Note.hxx
+XCAFDoc_NoteComment.cxx
+XCAFDoc_NoteComment.hxx
+XCAFDoc_NoteBinData.cxx
+XCAFDoc_NoteBinData.hxx
 XCAFDoc_NotesTool.cxx
 XCAFDoc_NotesTool.hxx
 XCAFDoc_ShapeMapTool.cxx

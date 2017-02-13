@@ -15,7 +15,12 @@
 
 #include <Standard_GUID.hxx>
 #include <TDF_Label.hxx>
+#include <TDF_ChildIterator.hxx>
+#include <TDF_LabelSequence.hxx>
+#include <XCAFDoc.hxx>
+#include <XCAFDoc_GraphNode.hxx>
 #include <XCAFDoc_NotesTool.hxx>
+#include <XCAFDoc_Note.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(XCAFDoc_NotesTool, TDF_Attribute)
 
@@ -38,6 +43,28 @@ Handle(XCAFDoc_NotesTool) XCAFDoc_NotesTool::Set(const TDF_Label& theLabel)
 
 XCAFDoc_NotesTool::XCAFDoc_NotesTool()
 {
+}
+
+void XCAFDoc_NotesTool::GetNotes(TDF_LabelSequence& theNoteLabels) const
+{
+  theNoteLabels.Clear();
+  for (TDF_ChildIterator anIter(Label()); anIter.More(); anIter.Next()) 
+  {
+    const TDF_Label aLabel = anIter.Value();
+    if (XCAFDoc_Note::IsMine(aLabel))
+    {
+      theNoteLabels.Append(aLabel);
+    }
+  }
+}
+
+Handle(XCAFDoc_Note) XCAFDoc_NotesTool::AddNote(const Handle(TCollection_HExtendedString)& theUserName,
+                                                const Handle(TCollection_HExtendedString)& theTimeStamp)
+{
+  TDF_Label aNoteLabel;
+  TDF_TagSource aTag;
+  aNoteLabel = aTag.NewChild(Label());
+  return XCAFDoc_Note::Set(aNoteLabel, theUserName, theTimeStamp);
 }
 
 const Standard_GUID& XCAFDoc_NotesTool::ID() const
