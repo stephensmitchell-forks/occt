@@ -31,16 +31,16 @@ public:
 
   Standard_EXPORT static Standard_Boolean IsMine(const TDF_Label& theLabel);
 
-  Standard_EXPORT static Handle(XCAFDoc_NoteComment) Set(const TDF_Label&                           theLabel,
-                                                         const Handle(TCollection_HExtendedString)& theUserName,
-                                                         const Handle(TCollection_HExtendedString)& theTimeStamp,
-                                                         const Handle(TCollection_HExtendedString)& theComment);
+  Standard_EXPORT static Handle(XCAFDoc_NoteComment) Set(const TDF_Label&                  theLabel,
+                                                         const TCollection_ExtendedString& theUserName,
+                                                         const TCollection_ExtendedString& theTimeStamp,
+                                                         const TCollection_ExtendedString& theComment);
 
   Standard_EXPORT XCAFDoc_NoteComment();
 
-  Standard_EXPORT void Set(const Handle(TCollection_HExtendedString)& theComment);
+  Standard_EXPORT void Set(const TCollection_ExtendedString& theComment);
 
-  Standard_EXPORT Handle(TCollection_HExtendedString) Comment() const;
+  Standard_EXPORT const TCollection_ExtendedString& Comment() const;
 
 public:
 
@@ -57,7 +57,7 @@ public:
 
 protected:
 
-  Handle(TCollection_HExtendedString) myComment;
+  TCollection_ExtendedString myComment;
 };
 
 #endif // _XCAFDoc_NoteComment_HeaderFile

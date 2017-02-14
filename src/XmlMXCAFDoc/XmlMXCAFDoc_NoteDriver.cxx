@@ -1,6 +1,6 @@
-// Created on: 2017-02-10
-// Created by: Eugeny NIKONOV
-// Copyright (c) 2005-2017 OPEN CASCADE SAS
+// Created on: 2017-02-14
+// Created by: Sergey NIKONOV
+// Copyright (c) 2008-2017 OPEN CASCADE SAS
 //
 // This file is part of Open CASCADE Technology software library.
 //
@@ -13,43 +13,47 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#include <BinObjMgt_Persistent.hxx>
 #include <CDM_MessageDriver.hxx>
 #include <Standard_Type.hxx>
 #include <TDF_Attribute.hxx>
-#include <BinMXCAFDoc_NoteDriver.hxx>
 #include <XCAFDoc_Note.hxx>
+#include <XmlMXCAFDoc_NoteDriver.hxx>
+#include <XmlObjMgt_Persistent.hxx>
 
-IMPLEMENT_STANDARD_RTTIEXT(BinMXCAFDoc_NoteDriver, BinMDF_ADriver)
+IMPLEMENT_STANDARD_RTTIEXT(XmlMXCAFDoc_NoteDriver, XmlMDF_ADriver)
+IMPLEMENT_DOMSTRING(UserName, "user_name")
+IMPLEMENT_DOMSTRING(TimeStamp, "time_stamp")
 
 //=======================================================================
 //function :
 //purpose  : 
 //=======================================================================
-BinMXCAFDoc_NoteDriver::BinMXCAFDoc_NoteDriver(const Handle(CDM_MessageDriver)& theMsgDriver,
+XmlMXCAFDoc_NoteDriver::XmlMXCAFDoc_NoteDriver(const Handle(CDM_MessageDriver)& theMsgDriver,
                                                Standard_CString                 theName)
-  : BinMDF_ADriver(theMsgDriver, theName)
+  : XmlMDF_ADriver(theMsgDriver, theName)
 {
-
 }
 
 //=======================================================================
 //function :
 //purpose  : 
 //=======================================================================
-Standard_Boolean BinMXCAFDoc_NoteDriver::Paste(const BinObjMgt_Persistent&  theSource,
+Standard_Boolean XmlMXCAFDoc_NoteDriver::Paste(const XmlObjMgt_Persistent&  theSource,
                                                const Handle(TDF_Attribute)& theTarget,
-                                               BinObjMgt_RRelocationTable&  /*theRelocTable*/) const
+                                               XmlObjMgt_RRelocationTable&  /*theRelocTable*/) const
 {
+  const XmlObjMgt_Element& anElement = theSource;
+
+  XmlObjMgt_DOMString aUserName = anElement.getAttribute(::UserName());
+  XmlObjMgt_DOMString aTimeStamp = anElement.getAttribute(::TimeStamp());
+  if (aUserName == NULL || aTimeStamp == NULL) 
+    return Standard_False;
+
   Handle(XCAFDoc_Note) aNote = Handle(XCAFDoc_Note)::DownCast(theTarget);
   if (aNote.IsNull())
     return Standard_False;
-  
-  TCollection_ExtendedString aUserName, aTimeStamp;
-  if (!(theSource >> aUserName >> aTimeStamp))
-    return Standard_False;
 
-  aNote->Set(aUserName, aTimeStamp);
+  aNote->Set(aUserName.GetString(), aTimeStamp.GetString());
 
   return Standard_True;
 }
@@ -58,11 +62,17 @@ Standard_Boolean BinMXCAFDoc_NoteDriver::Paste(const BinObjMgt_Persistent&  theS
 //function :
 //purpose  : 
 //=======================================================================
-void BinMXCAFDoc_NoteDriver::Paste(const Handle(TDF_Attribute)& theSource,
-					                         BinObjMgt_Persistent&        theTarget,
-					                         BinObjMgt_SRelocationTable&  /*theRelocTable*/) const
+void XmlMXCAFDoc_NoteDriver::Paste(const Handle(TDF_Attribute)& theSource,
+                                   XmlObjMgt_Persistent&        theTarget,
+                                   XmlObjMgt_SRelocationTable&  /*theRelocTable*/) const
 {
   Handle(XCAFDoc_Note) aNote = Handle(XCAFDoc_Note)::DownCast(theSource);
-  if (!aNote.IsNull())
-    theTarget << aNote->UserName() << aNote->TimeStamp();
+  if (aNote.IsNull())
+    return;
+
+  XmlObjMgt_DOMString aUserName(TCollection_AsciiString(aNote->UserName()).ToCString());
+  XmlObjMgt_DOMString aTimeStamp(TCollection_AsciiString(aNote->TimeStamp()).ToCString());
+
+  theTarget.Element().setAttribute(::UserName(), aUserName);
+  theTarget.Element().setAttribute(::TimeStamp(), aTimeStamp);
 }

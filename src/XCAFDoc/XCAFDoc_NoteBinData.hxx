@@ -19,7 +19,8 @@
 #include <XCAFDoc_Note.hxx>
 
 class OSD_File;
-class TCollection_HAsciiString;
+class TCollection_AsciiString;
+class TCollection_ExtendedString;
 
 class XCAFDoc_NoteBinData;
 DEFINE_STANDARD_HANDLE(XCAFDoc_NoteBinData, XCAFDoc_Note)
@@ -34,22 +35,26 @@ public:
 
   Standard_EXPORT static Standard_Boolean IsMine(const TDF_Label& theLabel);
 
-  Standard_EXPORT static Handle(XCAFDoc_NoteBinData) Set(const TDF_Label&                           theLabel,
-                                                         const Handle(TCollection_HExtendedString)& theUserName,
-                                                         const Handle(TCollection_HExtendedString)& theTimeStamp,
-                                                         OSD_File&                                  theFile,
-                                                         const Handle(TCollection_HAsciiString)&    theMIMEtype);
+  Standard_EXPORT static Handle(XCAFDoc_NoteBinData) Set(const TDF_Label&                  theLabel,
+                                                         const TCollection_ExtendedString& theUserName,
+                                                         const TCollection_ExtendedString& theTimeStamp,
+                                                         const TCollection_ExtendedString& theTitle,
+                                                         OSD_File&                         theFile,
+                                                         const TCollection_AsciiString&    theMIMEtype);
 
   Standard_EXPORT XCAFDoc_NoteBinData();
 
-  Standard_EXPORT void Set(OSD_File&                               theFile,
-                           const Handle(TCollection_HAsciiString)& theMIMEtype);
+  Standard_EXPORT void Set(const TCollection_ExtendedString& theTitle, 
+                           OSD_File&                         theFile,
+                           const TCollection_AsciiString&    theMIMEtype);
 
-  Standard_EXPORT void Set(const Handle(TCollection_HAsciiString)& theData,
-                           const Handle(TCollection_HAsciiString)& theMIMEtype);
+  Standard_EXPORT void Set(const TCollection_ExtendedString& theTitle, 
+                           const TCollection_AsciiString&    theData,
+                           const TCollection_AsciiString&    theMIMEtype);
 
-  Standard_EXPORT Handle(TCollection_HAsciiString) Data() const;
-  Standard_EXPORT Handle(TCollection_HAsciiString) MIMEtype() const;
+  Standard_EXPORT const TCollection_ExtendedString& Title() const;
+  Standard_EXPORT const TCollection_AsciiString& Data() const;
+  Standard_EXPORT const TCollection_AsciiString& MIMEtype() const;
 
 public:
 
@@ -66,8 +71,9 @@ public:
 
 protected:
 
-  Handle(TCollection_HAsciiString) myData;
-  Handle(TCollection_HAsciiString) myMIMEtype;
+  TCollection_ExtendedString myTitle;
+  TCollection_AsciiString myData;
+  TCollection_AsciiString myMIMEtype;
 };
 
 #endif // _XCAFDoc_NoteBinData_HeaderFile
