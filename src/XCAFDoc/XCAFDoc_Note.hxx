@@ -18,9 +18,10 @@
 
 #include <Standard.hxx>
 #include <Standard_Type.hxx>
-#include <TCollection_HExtendedString.hxx>
+#include <TCollection_ExtendedString.hxx>
 #include <OSD_File.hxx>
 #include <TDF_Attribute.hxx>
+#include <TDF_LabelSequence.hxx>
 
 class Standard_GUID;
 class TDF_RelocationTable;
@@ -34,28 +35,25 @@ public:
 
   DEFINE_STANDARD_RTTIEXT(XCAFDoc_Note, TDF_Attribute)
 
-  Standard_EXPORT static const Standard_GUID& GetID();
-
   Standard_EXPORT static Standard_Boolean IsMine(const TDF_Label& theLabel);
 
-  Standard_EXPORT static Handle(XCAFDoc_Note) Set(const TDF_Label&                           theLabel,
-                                                  const Handle(TCollection_HExtendedString)& theUserName,
-                                                  const Handle(TCollection_HExtendedString)& theTimeStamp);
+  Standard_EXPORT static Handle(XCAFDoc_Note) Get(const TDF_Label& theLabel);
 
-  Standard_EXPORT XCAFDoc_Note();
+  Standard_EXPORT void Set(const TCollection_ExtendedString& theUserName,
+                           const TCollection_ExtendedString& theTimeStamp);
 
-  Standard_EXPORT void Set(const Handle(TCollection_HExtendedString)& theUserName,
-                           const Handle(TCollection_HExtendedString)& theTimeStamp);
+  Standard_EXPORT const TCollection_ExtendedString& UserName() const;
 
-  Standard_EXPORT Handle(TCollection_HExtendedString) UserName() const;
+  Standard_EXPORT const TCollection_ExtendedString& TimeStamp() const;
 
-  Standard_EXPORT Handle(TCollection_HExtendedString) TimeStamp() const;
+  Standard_EXPORT Standard_Boolean IsAttached() const;
+
+  Standard_EXPORT void Attach(const TDF_LabelSequence& theLabels);
+
+  Standard_EXPORT void Detach(const TDF_LabelSequence& theLabels);
+  Standard_EXPORT void DetachAll();
 
 public:
-
-  Standard_EXPORT const Standard_GUID& ID() const Standard_OVERRIDE;
-
-  Standard_EXPORT Handle(TDF_Attribute) NewEmpty() const Standard_OVERRIDE;
 
   Standard_EXPORT void Restore(const Handle(TDF_Attribute)& theAttrFrom) Standard_OVERRIDE;
 
@@ -66,8 +64,12 @@ public:
 
 protected:
 
-  Handle(TCollection_HExtendedString) myUserName;
-  Handle(TCollection_HExtendedString) myTimeStamp;
+  Standard_EXPORT XCAFDoc_Note();
+
+private:
+
+  TCollection_ExtendedString myUserName;
+  TCollection_ExtendedString myTimeStamp;
 };
 
 #endif // _XCAFDoc_Note_HeaderFile

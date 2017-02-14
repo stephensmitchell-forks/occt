@@ -74,7 +74,6 @@ void BinMXCAFDoc::AddDrivers(const Handle(BinMDF_ADriverTable)& theDriverTable,
   theDriverTable->AddDriver( new BinMXCAFDoc_DimensionDriver   (theMsgDrv));
   theDriverTable->AddDriver( new BinMXCAFDoc_DimTolDriver      (theMsgDrv));
   theDriverTable->AddDriver( new BinMXCAFDoc_MaterialDriver    (theMsgDrv));
-  theDriverTable->AddDriver( new BinMXCAFDoc_NoteDriver        (theMsgDrv));
   theDriverTable->AddDriver( new BinMXCAFDoc_NoteBinDataDriver (theMsgDrv));
   theDriverTable->AddDriver( new BinMXCAFDoc_NoteCommentDriver (theMsgDrv));
   theDriverTable->AddDriver (new BinMXCAFDoc_ViewDriver        (theMsgDrv));

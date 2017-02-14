@@ -17,7 +17,8 @@
 #include <CDM_MessageDriver.hxx>
 #include <Standard_Type.hxx>
 #include <TDF_Attribute.hxx>
-#include <TCollection_HAsciiString.hxx>
+#include <TCollection_AsciiString.hxx>
+#include <TCollection_ExtendedString.hxx>
 #include <BinMXCAFDoc_NoteBinDataDriver.hxx>
 #include <XCAFDoc_NoteBinData.hxx>
 
@@ -52,14 +53,16 @@ Standard_Boolean BinMXCAFDoc_NoteBinDataDriver::Paste(const BinObjMgt_Persistent
   if (!BinMXCAFDoc_NoteDriver::Paste(theSource, theTarget, theRelocTable))
     return Standard_False;
 
-  Handle(XCAFDoc_NoteBinData) aNoteBinData = Handle(XCAFDoc_NoteBinData)::DownCast(theTarget);
-
-  TCollection_AsciiString aData, aMIMEtype;
-  if (!(theSource >> aData >> aMIMEtype))
+  Handle(XCAFDoc_NoteBinData) aNote = Handle(XCAFDoc_NoteBinData)::DownCast(theTarget);
+  if (aNote.IsNull())
     return Standard_False;
 
-  aNoteBinData->Set(new TCollection_HAsciiString(aData), 
-                    new TCollection_HAsciiString(aMIMEtype));
+  TCollection_ExtendedString aTitle;
+  TCollection_AsciiString aData, aMIMEtype;
+  if (!(theSource >> aTitle >> aData >> aMIMEtype))
+    return Standard_False;
+
+  aNote->Set(aTitle, aData, aMIMEtype);
 
   return Standard_True;
 }
@@ -74,12 +77,13 @@ void BinMXCAFDoc_NoteBinDataDriver::Paste(const Handle(TDF_Attribute)& theSource
 {
   BinMXCAFDoc_NoteDriver::Paste(theSource, theTarget, theRelocTable);
 
-  Handle(XCAFDoc_NoteBinData) aNoteBinData = Handle(XCAFDoc_NoteBinData)::DownCast(theSource);
-
-  Handle(TCollection_HAsciiString) aData = aNoteBinData->Data();
-  Handle(TCollection_HAsciiString) aMIMEtype = aNoteBinData->MIMEtype();
-  theTarget
-    << (aData ? aData->String() : TCollection_AsciiString(""))
-    << (aMIMEtype ? aMIMEtype->String() : TCollection_AsciiString(""))
-    ;
+  Handle(XCAFDoc_NoteBinData) aNote = Handle(XCAFDoc_NoteBinData)::DownCast(theSource);
+  if (!aNote.IsNull())
+  {
+    theTarget
+      << aNote->Title()
+      << aNote->MIMEtype()
+      << aNote->Data()
+      ;
+  }
 }

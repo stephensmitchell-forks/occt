@@ -15,42 +15,33 @@
 
 #include <Standard_GUID.hxx>
 #include <TDF_Label.hxx>
-#include <XCAFDoc_Note.hxx>
+#include <XCAFDoc.hxx>
+#include <XCAFDoc_GraphNode.hxx>
+#include <XCAFDoc_NoteComment.hxx>
+#include <XCAFDoc_NoteBinData.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(XCAFDoc_Note, TDF_Attribute)
 
-const Standard_GUID& XCAFDoc_Note::GetID()
-{
-  static Standard_GUID s_ID("FDC0AF06-C4AC-468a-ACFB-4C9388C76D9E");
-  return s_ID;
-}
-
 Standard_Boolean XCAFDoc_Note::IsMine(const TDF_Label& theLabel)
 {
-  Handle(XCAFDoc_Note) anAttr;
-  return (!theLabel.IsNull() && theLabel.FindAttribute(XCAFDoc_Note::GetID(), anAttr));
-}
-
-Handle(XCAFDoc_Note) XCAFDoc_Note::Set(const TDF_Label&                  theLabel,
-                                       const Handle(TCollection_HExtendedString)& theUserName,
-                                       const Handle(TCollection_HExtendedString)& theTimeStamp)
-{
-  Handle(XCAFDoc_Note) aNote;
-  if (!theLabel.IsNull() && !theLabel.FindAttribute(XCAFDoc_Note::GetID(), aNote))
-  {
-    aNote = new XCAFDoc_Note();
-    aNote->Set(theUserName, theTimeStamp);
-    theLabel.AddAttribute(aNote);
-  }
-  return aNote;
+  return !Get(theLabel).IsNull();
 }
 
 XCAFDoc_Note::XCAFDoc_Note()
 {
 }
 
-void XCAFDoc_Note::Set(const Handle(TCollection_HExtendedString)& theUserName,
-                       const Handle(TCollection_HExtendedString)& theTimeStamp)
+Handle(XCAFDoc_Note) XCAFDoc_Note::Get(const TDF_Label& theLabel)
+{
+  Handle(XCAFDoc_Note) aNote;
+  if (theLabel.FindAttribute(XCAFDoc_NoteComment::GetID(), aNote) ||
+      theLabel.FindAttribute(XCAFDoc_NoteBinData::GetID(), aNote))
+    return aNote;
+  return aNote;
+}
+
+void XCAFDoc_Note::Set(const TCollection_ExtendedString& theUserName,
+                       const TCollection_ExtendedString& theTimeStamp)
 {
   Backup();
 
@@ -58,24 +49,85 @@ void XCAFDoc_Note::Set(const Handle(TCollection_HExtendedString)& theUserName,
   myTimeStamp = theTimeStamp;
 }
 
-Handle(TCollection_HExtendedString) XCAFDoc_Note::UserName() const
+const TCollection_ExtendedString& XCAFDoc_Note::UserName() const
 {
   return myUserName;
 }
 
-Handle(TCollection_HExtendedString) XCAFDoc_Note::TimeStamp() const
+const TCollection_ExtendedString& XCAFDoc_Note::TimeStamp() const
 {
   return myTimeStamp;
 }
 
-const Standard_GUID& XCAFDoc_Note::ID() const
+Standard_Boolean XCAFDoc_Note::IsAttached() const
 {
-  return GetID();
+  if (!IsMine(Label()))
+    return Standard_False;
+
+  Handle(XCAFDoc_GraphNode) aFather;
+  return Label().FindAttribute(XCAFDoc::NoteRefGUID(), aFather) &&
+         (aFather->NbChildren() > 0);
 }
 
-Handle(TDF_Attribute) XCAFDoc_Note::NewEmpty() const
+void XCAFDoc_Note::Attach(const TDF_LabelSequence& theLabels)
 {
-  return new XCAFDoc_Note();
+  if (!IsMine(Label()) || theLabels.Length() == 0)
+    return;
+
+  Handle(XCAFDoc_GraphNode) aFather = XCAFDoc_GraphNode::Set(Label(), XCAFDoc::NoteRefGUID());
+
+  for (Standard_Integer i = theLabels.Lower(); i <= theLabels.Upper(); i++)
+  {
+    Handle(XCAFDoc_GraphNode) aChild = XCAFDoc_GraphNode::Set(theLabels.Value(i), XCAFDoc::NoteRefGUID());
+    aChild->SetFather(aFather);
+    aFather->SetChild(aChild);
+  }
+}
+
+void XCAFDoc_Note::Detach(const TDF_LabelSequence& theLabels)
+{
+  if (!IsMine(Label()) || theLabels.Length() == 0)
+    return;
+
+  Handle(XCAFDoc_GraphNode) aFather;
+  if (Label().FindAttribute(XCAFDoc::NoteRefGUID(), aFather))
+  {
+    for (Standard_Integer i = theLabels.Lower(); i <= theLabels.Upper(); i++)
+    {
+      Handle(XCAFDoc_GraphNode) aChild;
+      if (theLabels.Value(i).FindAttribute(XCAFDoc::NoteRefGUID(), aChild))
+      {
+        Standard_Integer iFather = aChild->FatherIndex(aFather);
+        if (iFather > 0)
+          aChild->UnSetFather(iFather);
+        if (aChild->NbFathers() == 0)
+          theLabels.Value(i).ForgetAttribute(aChild);
+      }
+    }
+    if (aFather->NbChildren() == 0)
+      Label().ForgetAttribute(aFather);
+  }
+}
+
+void XCAFDoc_Note::DetachAll()
+{
+  if (!IsMine(Label()))
+    return;
+
+  Handle(XCAFDoc_GraphNode) aFather;
+  if (Label().FindAttribute(XCAFDoc::NoteRefGUID(), aFather))
+  {
+    Standard_Integer nbChildren = aFather->NbChildren();
+    for (Standard_Integer iChild = 1; iChild <= nbChildren; ++iChild)
+    {
+      Handle(XCAFDoc_GraphNode) aChild = aFather->GetChild(iChild);
+      aFather->UnSetChild(iChild);
+      if (aChild->NbFathers() == 0)
+        aChild->Label().ForgetAttribute(aChild);
+    }
+    if (aFather->NbChildren() == 0)
+      Label().ForgetAttribute(aFather);
+  }
 }
 
 void XCAFDoc_Note::Restore(const Handle(TDF_Attribute)& theAttr)
@@ -94,9 +146,9 @@ Standard_OStream& XCAFDoc_Note::Dump(Standard_OStream& theOS) const
 {
   theOS 
     << "Note : " 
-    << (myUserName ? myUserName->String() : "<anonymous>")
+    << (myUserName.IsEmpty() ? myUserName : "<anonymous>")
     << " on "
-    << (myTimeStamp ? myTimeStamp->String() : "<unknown>")
+    << (myTimeStamp.IsEmpty() ? myTimeStamp : "<unknown>")
     ;
   return theOS;
 }

@@ -21,8 +21,10 @@
 #include <TDF_Attribute.hxx>
 #include <TDF_LabelSequence.hxx>
 
+class OSD_File;
 class Standard_GUID;
-class TCollection_HExtendedString;
+class TCollection_AsciiString;
+class TCollection_ExtendedString;
 class TDF_RelocationTable;
 class XCAFDoc_Note;
 
@@ -37,18 +39,34 @@ public:
 
   Standard_EXPORT static const Standard_GUID& GetID();
 
-  //! Create (if not exist) NotesTool from XCAFDoc on <L>.
   Standard_EXPORT static Handle(XCAFDoc_NotesTool) Set(const TDF_Label& theLabel);
 
-  //! Creates an empty tool
   Standard_EXPORT XCAFDoc_NotesTool();
 
-  //! Returns a sequence of note labels currently stored in the tool table
+  Standard_EXPORT Standard_Integer NbNotes() const;
+
   Standard_EXPORT void GetNotes(TDF_LabelSequence& theNoteLabels) const;
 
-  //! Adds a new note and returns a handle to it
-  Standard_EXPORT Handle(XCAFDoc_Note) AddNote(const Handle(TCollection_HExtendedString)& theUserName,
-                                               const Handle(TCollection_HExtendedString)& theTimeStamp);
+  Standard_EXPORT Handle(XCAFDoc_Note) AddComment(const TCollection_ExtendedString& theUserName,
+                                                  const TCollection_ExtendedString& theTimeStamp,
+                                                  const TCollection_ExtendedString& theComment);
+
+  Standard_EXPORT Handle(XCAFDoc_Note) AddBinData(const TCollection_ExtendedString& theUserName,
+                                                  const TCollection_ExtendedString& theTimeStamp,
+                                                  const TCollection_ExtendedString& theTitle,
+                                                  OSD_File&                         theFile,
+                                                  const TCollection_AsciiString&    theMIMEtype);
+
+  Standard_EXPORT Standard_Boolean HasAttachedNotes(const TDF_Label& theLabel) const;
+
+  Standard_EXPORT void GetAttachedNotes(const TDF_Label&   theLabel,
+                                        TDF_LabelSequence& theNoteLabels) const;
+  Standard_EXPORT Standard_Integer DetachAllNotes(const TDF_Label& theLabel) const;
+
+  Standard_EXPORT Standard_Boolean RemoveNote(const TDF_Label& theNoteLabel);
+  Standard_EXPORT Standard_Integer RemoveNotes(TDF_LabelSequence& theNoteLabels);
+  Standard_EXPORT Standard_Integer RemoveDetachedNotes();
+  Standard_EXPORT Standard_Integer RemoveAllNotes();
 
 public:
 
