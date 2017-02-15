@@ -17,13 +17,15 @@
 #include <Standard_Type.hxx>
 #include <TDF_Attribute.hxx>
 #include <XCAFDoc_NoteBinData.hxx>
+#include <XmlObjMgt.hxx>
 #include <XmlMXCAFDoc_NoteBinDataDriver.hxx>
 #include <XmlObjMgt_Persistent.hxx>
+#include <LDOM_OSStream.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(XmlMXCAFDoc_NoteBinDataDriver, XmlMXCAFDoc_NoteDriver)
 IMPLEMENT_DOMSTRING(Title, "title")
 IMPLEMENT_DOMSTRING(MIMEtype, "mime_type")
-IMPLEMENT_DOMSTRING(Data, "data")
+IMPLEMENT_DOMSTRING(Size, "size")
 
 //=======================================================================
 //function :
@@ -57,15 +59,30 @@ Standard_Boolean XmlMXCAFDoc_NoteBinDataDriver::Paste(const XmlObjMgt_Persistent
 
   XmlObjMgt_DOMString aTitle = anElement.getAttribute(::Title());
   XmlObjMgt_DOMString aMIMEtype = anElement.getAttribute(::MIMEtype());
-  XmlObjMgt_DOMString aData = anElement.getAttribute(::Data());
-  if (aTitle == NULL || aMIMEtype == NULL || aData == NULL)
+  XmlObjMgt_DOMString aSize = anElement.getAttribute(::Size());
+  if (aTitle == NULL || aMIMEtype == NULL || aSize == NULL)
     return Standard_False;
 
   Handle(XCAFDoc_NoteBinData) aNote = Handle(XCAFDoc_NoteBinData)::DownCast(theTarget);
   if (aNote.IsNull())
     return Standard_False;
 
-  aNote->Set(aTitle.GetString(), aData.GetString(), aMIMEtype.GetString());
+  Standard_Integer nbSize = 0;
+  if (!aSize.GetInteger(nbSize))
+    return Standard_False;
+
+  XmlObjMgt_DOMString aDataStr = XmlObjMgt::GetStringValue(theSource);
+  Standard_SStream anSS(aDataStr.GetString());
+
+  Handle(TColStd_HArray1OfByte) aData = new TColStd_HArray1OfByte(1, nbSize);
+  for (Standard_Integer i = 1; i <= nbSize; ++i)
+  {
+    Standard_Byte aValue;
+    anSS >> aValue;
+    aData->ChangeValue(i) = aValue;
+  }
+
+  aNote->Set(aTitle.GetString(), aMIMEtype.GetString(), aData);
 
   return Standard_True;
 }
@@ -84,9 +101,21 @@ void XmlMXCAFDoc_NoteBinDataDriver::Paste(const Handle(TDF_Attribute)& theSource
 
   XmlObjMgt_DOMString aTitle(TCollection_AsciiString(aNote->Title()).ToCString());
   XmlObjMgt_DOMString aMIMEtype(aNote->MIMEtype().ToCString());
-  XmlObjMgt_DOMString aData(aNote->Data().ToCString());
 
   theTarget.Element().setAttribute(::Title(), aTitle);
   theTarget.Element().setAttribute(::MIMEtype(), aMIMEtype);
-  theTarget.Element().setAttribute(::Data(), aData);
+  theTarget.Element().setAttribute(::Size(), aNote->Size());
+
+  if (aNote->Size() > 0)
+  {
+    const Handle(TColStd_HArray1OfByte)& aData = aNote->Data();
+    LDOM_OSStream anOSS(aNote->Size());
+    for (Standard_Integer i = aData->Lower(); i <= aData->Upper(); ++i)
+    {
+      anOSS << std::hex << aData->Value(i);
+    }
+    Standard_Character* dump = (Standard_Character*)anOSS.str(); // copying! Don't forget to delete it.
+    XmlObjMgt::SetStringValue(theTarget, dump, Standard_True);
+    delete[] dump;
+  }
 }

@@ -17,6 +17,7 @@
 #include <CDM_MessageDriver.hxx>
 #include <Standard_Type.hxx>
 #include <TDF_Attribute.hxx>
+#include <TColStd_HArray1OfByte.hxx>
 #include <TCollection_AsciiString.hxx>
 #include <TCollection_ExtendedString.hxx>
 #include <BinMXCAFDoc_NoteBinDataDriver.hxx>
@@ -58,11 +59,19 @@ Standard_Boolean BinMXCAFDoc_NoteBinDataDriver::Paste(const BinObjMgt_Persistent
     return Standard_False;
 
   TCollection_ExtendedString aTitle;
-  TCollection_AsciiString aData, aMIMEtype;
-  if (!(theSource >> aTitle >> aData >> aMIMEtype))
+  TCollection_AsciiString aMIMEtype;
+  Standard_Integer nbSize;
+  if (!(theSource >> aTitle >> aMIMEtype >> nbSize))
     return Standard_False;
 
-  aNote->Set(aTitle, aData, aMIMEtype);
+  Handle(TColStd_HArray1OfByte) aData;
+  if (nbSize > 0)
+  {
+    aData.reset(new TColStd_HArray1OfByte(1, nbSize));
+    theSource.GetByteArray(&aData->ChangeFirst(), nbSize);
+  }
+
+  aNote->Set(aTitle, aMIMEtype, aData);
 
   return Standard_True;
 }
@@ -80,10 +89,8 @@ void BinMXCAFDoc_NoteBinDataDriver::Paste(const Handle(TDF_Attribute)& theSource
   Handle(XCAFDoc_NoteBinData) aNote = Handle(XCAFDoc_NoteBinData)::DownCast(theSource);
   if (!aNote.IsNull())
   {
-    theTarget
-      << aNote->Title()
-      << aNote->MIMEtype()
-      << aNote->Data()
-      ;
+    theTarget << aNote->Title() << aNote->MIMEtype() << aNote->Size();
+    if (aNote->Size() > 0)
+      theTarget.PutByteArray(&aNote->Data()->ChangeFirst(), aNote->Size());
   }
 }
