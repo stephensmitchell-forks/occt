@@ -17,10 +17,11 @@
 #define _XCAFDoc_NoteBinData_HeaderFile
 
 #include <XCAFDoc_Note.hxx>
+#include <TColStd_HArray1OfByte.hxx>
+#include <TCollection_AsciiString.hxx>
+#include <TCollection_ExtendedString.hxx>
 
 class OSD_File;
-class TCollection_AsciiString;
-class TCollection_ExtendedString;
 
 class XCAFDoc_NoteBinData;
 DEFINE_STANDARD_HANDLE(XCAFDoc_NoteBinData, XCAFDoc_Note)
@@ -39,22 +40,32 @@ public:
                                                          const TCollection_ExtendedString& theUserName,
                                                          const TCollection_ExtendedString& theTimeStamp,
                                                          const TCollection_ExtendedString& theTitle,
-                                                         OSD_File&                         theFile,
-                                                         const TCollection_AsciiString&    theMIMEtype);
+                                                         const TCollection_AsciiString&    theMIMEtype,
+                                                         OSD_File&                         theFile);
+
+  Standard_EXPORT static Handle(XCAFDoc_NoteBinData) Set(const TDF_Label&                     theLabel,
+                                                         const TCollection_ExtendedString&    theUserName,
+                                                         const TCollection_ExtendedString&    theTimeStamp,
+                                                         const TCollection_ExtendedString&    theTitle,
+                                                         const TCollection_AsciiString&       theMIMEtype,
+                                                         const Handle(TColStd_HArray1OfByte)& theData);
 
   Standard_EXPORT XCAFDoc_NoteBinData();
 
-  Standard_EXPORT void Set(const TCollection_ExtendedString& theTitle, 
-                           OSD_File&                         theFile,
-                           const TCollection_AsciiString&    theMIMEtype);
+  Standard_EXPORT Standard_Boolean Set(const TCollection_ExtendedString& theTitle, 
+                                       const TCollection_AsciiString&    theMIMEtype,
+                                       OSD_File&                         theFile);
 
-  Standard_EXPORT void Set(const TCollection_ExtendedString& theTitle, 
-                           const TCollection_AsciiString&    theData,
-                           const TCollection_AsciiString&    theMIMEtype);
+  Standard_EXPORT void Set(const TCollection_ExtendedString&    theTitle,
+                           const TCollection_AsciiString&       theMIMEtype,
+                           const Handle(TColStd_HArray1OfByte)& theData);
 
   Standard_EXPORT const TCollection_ExtendedString& Title() const;
-  Standard_EXPORT const TCollection_AsciiString& Data() const;
   Standard_EXPORT const TCollection_AsciiString& MIMEtype() const;
+
+  Standard_EXPORT Standard_Integer Size() const;
+
+  Standard_EXPORT const Handle(TColStd_HArray1OfByte)& Data() const;
 
 public:
 
@@ -71,9 +82,9 @@ public:
 
 protected:
 
-  TCollection_ExtendedString myTitle;
-  TCollection_AsciiString myData;
-  TCollection_AsciiString myMIMEtype;
+  TCollection_ExtendedString    myTitle;
+  TCollection_AsciiString       myMIMEtype;
+  Handle(TColStd_HArray1OfByte) myData;
 };
 
 #endif // _XCAFDoc_NoteBinData_HeaderFile

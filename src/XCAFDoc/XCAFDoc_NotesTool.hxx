@@ -25,6 +25,7 @@ class OSD_File;
 class Standard_GUID;
 class TCollection_AsciiString;
 class TCollection_ExtendedString;
+class TColStd_HArray1OfByte;
 class TDF_RelocationTable;
 class XCAFDoc_Note;
 
@@ -54,8 +55,14 @@ public:
   Standard_EXPORT Handle(XCAFDoc_Note) AddBinData(const TCollection_ExtendedString& theUserName,
                                                   const TCollection_ExtendedString& theTimeStamp,
                                                   const TCollection_ExtendedString& theTitle,
-                                                  OSD_File&                         theFile,
-                                                  const TCollection_AsciiString&    theMIMEtype);
+                                                  const TCollection_AsciiString&    theMIMEtype,
+                                                  OSD_File&                         theFile);
+
+  Standard_EXPORT Handle(XCAFDoc_Note) AddBinData(const TCollection_ExtendedString&    theUserName,
+                                                  const TCollection_ExtendedString&    theTimeStamp,
+                                                  const TCollection_ExtendedString&    theTitle,
+                                                  const TCollection_AsciiString&       theMIMEtype,
+                                                  const Handle(TColStd_HArray1OfByte)& theData);
 
   Standard_EXPORT Standard_Boolean HasAttachedNotes(const TDF_Label& theLabel) const;
 

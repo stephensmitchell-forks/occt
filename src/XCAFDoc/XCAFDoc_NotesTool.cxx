@@ -14,6 +14,7 @@
 // commercial license or contractual agreement.
 
 #include <Standard_GUID.hxx>
+#include <TColStd_HArray1OfByte.hxx>
 #include <TDF_Label.hxx>
 #include <TDF_ChildIterator.hxx>
 #include <TDF_LabelSequence.hxx>
@@ -88,13 +89,26 @@ Handle(XCAFDoc_Note)
 XCAFDoc_NotesTool::AddBinData(const TCollection_ExtendedString& theUserName,
                               const TCollection_ExtendedString& theTimeStamp,
                               const TCollection_ExtendedString& theTitle,
-                              OSD_File&                         theFile,
-                              const TCollection_AsciiString&    theMIMEtype)
+                              const TCollection_AsciiString&    theMIMEtype,
+                              OSD_File&                         theFile)
 {
   TDF_Label aNoteLabel;
   TDF_TagSource aTag;
   aNoteLabel = aTag.NewChild(Label());
-  return XCAFDoc_NoteBinData::Set(aNoteLabel, theUserName, theTimeStamp, theTitle, theFile, theMIMEtype);
+  return XCAFDoc_NoteBinData::Set(aNoteLabel, theUserName, theTimeStamp, theTitle, theMIMEtype, theFile);
+}
+
+Handle(XCAFDoc_Note) 
+XCAFDoc_NotesTool::AddBinData(const TCollection_ExtendedString&    theUserName,
+                              const TCollection_ExtendedString&    theTimeStamp,
+                              const TCollection_ExtendedString&    theTitle,
+                              const TCollection_AsciiString&       theMIMEtype,
+                              const Handle(TColStd_HArray1OfByte)& theData)
+{
+  TDF_Label aNoteLabel;
+  TDF_TagSource aTag;
+  aNoteLabel = aTag.NewChild(Label());
+  return XCAFDoc_NoteBinData::Set(aNoteLabel, theUserName, theTimeStamp, theTitle, theMIMEtype, theData);
 }
 
 Standard_Boolean XCAFDoc_NotesTool::HasAttachedNotes(const TDF_Label& theLabel) const

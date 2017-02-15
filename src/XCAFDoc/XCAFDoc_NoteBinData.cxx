@@ -15,7 +15,6 @@
 
 #include <OSD_File.hxx>
 #include <Standard_GUID.hxx>
-#include <TCollection_HAsciiString.hxx>
 #include <TDF_Label.hxx>
 #include <XCAFDoc_NoteBinData.hxx>
 
@@ -33,19 +32,41 @@ Standard_Boolean XCAFDoc_NoteBinData::IsMine(const TDF_Label& theLabel)
   return (!theLabel.IsNull() && theLabel.FindAttribute(XCAFDoc_NoteBinData::GetID(), anAttr));
 }
 
-Handle(XCAFDoc_NoteBinData) XCAFDoc_NoteBinData::Set(const TDF_Label&                  theLabel,
-                                                     const TCollection_ExtendedString& theUserName,
-                                                     const TCollection_ExtendedString& theTimeStamp,
-                                                     const TCollection_ExtendedString& theTitle,
-                                                     OSD_File&                         theFile,
-                                                     const TCollection_AsciiString&    theMIMEtype)
+Handle(XCAFDoc_NoteBinData) 
+XCAFDoc_NoteBinData::Set(const TDF_Label&                  theLabel,
+                         const TCollection_ExtendedString& theUserName,
+                         const TCollection_ExtendedString& theTimeStamp,
+                         const TCollection_ExtendedString& theTitle,
+                         const TCollection_AsciiString&    theMIMEtype,
+                         OSD_File&                         theFile)
 {
   Handle(XCAFDoc_NoteBinData) aNoteBinData;
   if (!theLabel.IsNull() && !theLabel.FindAttribute(XCAFDoc_NoteBinData::GetID(), aNoteBinData))
   {
     aNoteBinData = new XCAFDoc_NoteBinData();
     aNoteBinData->XCAFDoc_Note::Set(theUserName, theTimeStamp);
-    aNoteBinData->Set(theTitle, theFile, theMIMEtype);
+    if (aNoteBinData->Set(theTitle, theMIMEtype, theFile))
+      theLabel.AddAttribute(aNoteBinData);
+    else
+      aNoteBinData.Nullify();
+  }
+  return aNoteBinData;
+}
+
+Handle(XCAFDoc_NoteBinData) 
+XCAFDoc_NoteBinData::Set(const TDF_Label&                     theLabel,
+                         const TCollection_ExtendedString&    theUserName,
+                         const TCollection_ExtendedString&    theTimeStamp,
+                         const TCollection_ExtendedString&    theTitle,
+                         const TCollection_AsciiString&       theMIMEtype,
+                         const Handle(TColStd_HArray1OfByte)& theData)
+{
+  Handle(XCAFDoc_NoteBinData) aNoteBinData;
+  if (!theLabel.IsNull() && !theLabel.FindAttribute(XCAFDoc_NoteBinData::GetID(), aNoteBinData))
+  {
+    aNoteBinData = new XCAFDoc_NoteBinData();
+    aNoteBinData->XCAFDoc_Note::Set(theUserName, theTimeStamp);
+    aNoteBinData->Set(theTitle, theMIMEtype, theData);
     theLabel.AddAttribute(aNoteBinData);
   }
   return aNoteBinData;
@@ -55,25 +76,33 @@ XCAFDoc_NoteBinData::XCAFDoc_NoteBinData()
 {
 }
 
-void XCAFDoc_NoteBinData::Set(const TCollection_ExtendedString& theTitle, 
-                              OSD_File&                         theFile,
-                              const TCollection_AsciiString&    theMIMEtype)
+Standard_Boolean XCAFDoc_NoteBinData::Set(const TCollection_ExtendedString& theTitle,
+                                          const TCollection_AsciiString&    theMIMEtype,
+                                          OSD_File&                         theFile)
 {
   if (!theFile.IsOpen() || !theFile.IsReadable())
-    return;
+    return Standard_False;
 
   Backup();
 
-  TCollection_AsciiString myData;
-  theFile.Read(myData, theFile.Size());
+  if (theFile.Size() > IntegerLast())
+    return Standard_False;
+
+  myData.reset(new TColStd_HArray1OfByte(1, theFile.Size()));
+  Standard_Integer nbReadBytes = 0;
+  theFile.Read((Standard_Address)&myData->First(), myData->Length(), nbReadBytes);
+  if (nbReadBytes < myData->Length())
+    return Standard_False;
 
   myTitle = theTitle;
   myMIMEtype = theMIMEtype;
+
+  return Standard_True;
 }
 
-void XCAFDoc_NoteBinData::Set(const TCollection_ExtendedString& theTitle, 
-                              const TCollection_AsciiString&    theData,
-                              const TCollection_AsciiString&    theMIMEtype)
+void XCAFDoc_NoteBinData::Set(const TCollection_ExtendedString&    theTitle, 
+                              const TCollection_AsciiString&       theMIMEtype,
+                              const Handle(TColStd_HArray1OfByte)& theData)
 {
   Backup();
 
@@ -87,14 +116,19 @@ const TCollection_ExtendedString& XCAFDoc_NoteBinData::Title() const
   return myTitle;
 }
 
-const TCollection_AsciiString& XCAFDoc_NoteBinData::Data() const
-{
-  return myData;
-}
-
 const TCollection_AsciiString& XCAFDoc_NoteBinData::MIMEtype() const
 {
   return myMIMEtype;
+}
+
+Standard_Integer XCAFDoc_NoteBinData::Size() const
+{
+  return (!myData.IsNull() ? myData->Length() : 0);
+}
+
+const Handle(TColStd_HArray1OfByte)& XCAFDoc_NoteBinData::Data() const
+{
+  return myData;
 }
 
 const Standard_GUID& XCAFDoc_NoteBinData::ID() const
@@ -114,9 +148,9 @@ void XCAFDoc_NoteBinData::Restore(const Handle(TDF_Attribute)& theAttr)
   Handle(XCAFDoc_NoteBinData) aMine = Handle(XCAFDoc_NoteBinData)::DownCast(theAttr);
   if (!aMine.IsNull())
   {
-    myData = aMine->myData;
     myTitle = aMine->myTitle;
     myMIMEtype = aMine->myMIMEtype;
+    myData = aMine->myData;
   }
 }
 
@@ -127,7 +161,7 @@ void XCAFDoc_NoteBinData::Paste(const Handle(TDF_Attribute)&       theAttrInto,
 
   Handle(XCAFDoc_NoteBinData) aMine = Handle(XCAFDoc_NoteBinData)::DownCast(theAttrInto);
   if (!aMine.IsNull())
-    aMine->Set(myTitle, myData, myMIMEtype);
+    aMine->Set(myTitle, myMIMEtype, myData);
 }
 
 Standard_OStream& XCAFDoc_NoteBinData::Dump(Standard_OStream& theOS) const
@@ -136,8 +170,12 @@ Standard_OStream& XCAFDoc_NoteBinData::Dump(Standard_OStream& theOS) const
   theOS << "\n"
     << "Title : " << (!myTitle.IsEmpty() ? myMIMEtype : "<untitled>") << "\n"
     << "MIME type : " << (!myMIMEtype.IsEmpty() ? myMIMEtype : "<none>") << "\n"
-    << "Size : " << myData.Length() << " bytes" << "\n"
-    << myData
+    << "Size : " << Size() << " bytes" << "\n"
     ;
+  if (!myData.IsNull())
+  {
+    for (Standard_Integer i = myData->Lower(); i <= myData->Upper(); ++i)
+      theOS << myData->Value(i);
+  }
   return theOS;
 }
