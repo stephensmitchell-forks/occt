@@ -14,8 +14,10 @@
 // commercial license or contractual agreement.
 
 #include <Standard_GUID.hxx>
+#include <NCollection_Map.hxx>
 #include <TColStd_HArray1OfByte.hxx>
 #include <TDF_Label.hxx>
+#include <TDF_LabelMapHasher.hxx>
 #include <TDF_ChildIterator.hxx>
 #include <TDF_LabelSequence.hxx>
 #include <XCAFDoc.hxx>
@@ -23,19 +25,28 @@
 #include <XCAFDoc_NotesTool.hxx>
 #include <XCAFDoc_NoteComment.hxx>
 #include <XCAFDoc_NoteBinData.hxx>
+#include <XCAFDoc_AssemblyItemRef.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(XCAFDoc_NotesTool, TDF_Attribute)
 
-const Standard_GUID& XCAFDoc_NotesTool::GetID()
+enum NotesTool_RootLabels
+{
+  NotesTool_NotesRoot = 1,
+  NotesTool_AnnotatedItemsRoot
+};
+
+const Standard_GUID& 
+XCAFDoc_NotesTool::GetID()
 {
   static Standard_GUID s_ID("8F8174B1-6125-47a0-B357-61BD2D89380C");
   return s_ID;
 }
 
-Handle(XCAFDoc_NotesTool) XCAFDoc_NotesTool::Set(const TDF_Label& theLabel)
+Handle(XCAFDoc_NotesTool) 
+XCAFDoc_NotesTool::Set(const TDF_Label& theLabel)
 {
   Handle(XCAFDoc_NotesTool) aTool;
-  if (!theLabel.FindAttribute(XCAFDoc_NotesTool::GetID(), aTool)) 
+  if (!theLabel.IsNull() && !theLabel.FindAttribute(XCAFDoc_NotesTool::GetID(), aTool))
   {
     aTool = new XCAFDoc_NotesTool();
     theLabel.AddAttribute(aTool);
@@ -47,174 +58,368 @@ XCAFDoc_NotesTool::XCAFDoc_NotesTool()
 {
 }
 
-Standard_Integer XCAFDoc_NotesTool::NbNotes() const
+TDF_Label 
+XCAFDoc_NotesTool::GetNotesLabel() const
+{
+  return Label().FindChild(NotesTool_NotesRoot);
+}
+
+TDF_Label XCAFDoc_NotesTool::GetAnnotatedItemsLabel() const
+{
+  return Label().FindChild(NotesTool_AnnotatedItemsRoot);
+}
+
+Standard_Integer 
+XCAFDoc_NotesTool::NbNotes() const
 {
   Standard_Integer nbNotes = 0;
-  for (TDF_ChildIterator anIter(Label()); anIter.More(); anIter.Next())
+  for (TDF_ChildIterator anIter(GetNotesLabel()); anIter.More(); anIter.Next())
   {
     const TDF_Label aLabel = anIter.Value();
     if (XCAFDoc_Note::IsMine(aLabel))
-    {
       ++nbNotes;
-    }
   }
   return nbNotes;
 }
 
-void XCAFDoc_NotesTool::GetNotes(TDF_LabelSequence& theNoteLabels) const
+Standard_Integer 
+XCAFDoc_NotesTool::NbAnnotatedItems() const
 {
-  theNoteLabels.Clear();
-  for (TDF_ChildIterator anIter(Label()); anIter.More(); anIter.Next()) 
+  Standard_Integer nbItems = 0;
+  for (TDF_ChildIterator anIter(GetAnnotatedItemsLabel()); anIter.More(); anIter.Next())
+  {
+    const TDF_Label aLabel = anIter.Value();
+    if (XCAFDoc_AssemblyItemRef::IsMine(aLabel))
+      ++nbItems;
+  }
+  return nbItems;
+}
+
+void 
+XCAFDoc_NotesTool::GetNotes(TDF_LabelSequence& theNoteLabels) const
+{
+  for (TDF_ChildIterator anIter(GetNotesLabel()); anIter.More(); anIter.Next())
   {
     const TDF_Label aLabel = anIter.Value();
     if (XCAFDoc_Note::IsMine(aLabel))
-    {
       theNoteLabels.Append(aLabel);
-    }
   }
 }
 
+void 
+XCAFDoc_NotesTool::GetAnnotatedItems(TDF_LabelSequence& theItemLabels) const
+{
+  for (TDF_ChildIterator anIter(GetAnnotatedItemsLabel()); anIter.More(); anIter.Next())
+  {
+    const TDF_Label aLabel = anIter.Value();
+    if (XCAFDoc_AssemblyItemRef::IsMine(aLabel))
+      theItemLabels.Append(aLabel);
+  }
+}
+
+Standard_Boolean 
+XCAFDoc_NotesTool::IsAnnotatedItem(const XCAFDoc_AssemblyItemId& theItemId) const
+{
+  return !FindAnnotatedItem(theItemId).IsNull();
+}
+
+TDF_Label 
+XCAFDoc_NotesTool::FindAnnotatedItem(const XCAFDoc_AssemblyItemId& theItemId) const
+{
+  for (TDF_ChildIterator anIter(GetAnnotatedItemsLabel()); anIter.More(); anIter.Next())
+  {
+    const TDF_Label aLabel = anIter.Value();
+    Handle(XCAFDoc_AssemblyItemRef) anItemRef = XCAFDoc_AssemblyItemRef::Get(aLabel);
+    if (!anItemRef.IsNull() && anItemRef->Get().IsEqual(theItemId))
+      return aLabel;
+  }
+  return TDF_Label();
+}
+
 Handle(XCAFDoc_Note) 
-XCAFDoc_NotesTool::AddComment(const TCollection_ExtendedString& theUserName,
-                              const TCollection_ExtendedString& theTimeStamp,
-                              const TCollection_ExtendedString& theComment)
+XCAFDoc_NotesTool::CreateComment(const TCollection_ExtendedString& theUserName,
+                                 const TCollection_ExtendedString& theTimeStamp,
+                                 const TCollection_ExtendedString& theComment)
 {
   TDF_Label aNoteLabel;
   TDF_TagSource aTag;
-  aNoteLabel = aTag.NewChild(Label());
+  aNoteLabel = aTag.NewChild(GetNotesLabel());
   return XCAFDoc_NoteComment::Set(aNoteLabel, theUserName, theTimeStamp, theComment);
 }
 
 Handle(XCAFDoc_Note) 
-XCAFDoc_NotesTool::AddBinData(const TCollection_ExtendedString& theUserName,
-                              const TCollection_ExtendedString& theTimeStamp,
-                              const TCollection_ExtendedString& theTitle,
-                              const TCollection_AsciiString&    theMIMEtype,
-                              OSD_File&                         theFile)
+XCAFDoc_NotesTool::CreateBinData(const TCollection_ExtendedString& theUserName,
+                                 const TCollection_ExtendedString& theTimeStamp,
+                                 const TCollection_ExtendedString& theTitle,
+                                 const TCollection_AsciiString&    theMIMEtype,
+                                 OSD_File&                         theFile)
 {
   TDF_Label aNoteLabel;
   TDF_TagSource aTag;
-  aNoteLabel = aTag.NewChild(Label());
+  aNoteLabel = aTag.NewChild(GetNotesLabel());
   return XCAFDoc_NoteBinData::Set(aNoteLabel, theUserName, theTimeStamp, theTitle, theMIMEtype, theFile);
 }
 
 Handle(XCAFDoc_Note) 
-XCAFDoc_NotesTool::AddBinData(const TCollection_ExtendedString&    theUserName,
-                              const TCollection_ExtendedString&    theTimeStamp,
-                              const TCollection_ExtendedString&    theTitle,
-                              const TCollection_AsciiString&       theMIMEtype,
-                              const Handle(TColStd_HArray1OfByte)& theData)
+XCAFDoc_NotesTool::CreateBinData(const TCollection_ExtendedString&    theUserName,
+                                 const TCollection_ExtendedString&    theTimeStamp,
+                                 const TCollection_ExtendedString&    theTitle,
+                                 const TCollection_AsciiString&       theMIMEtype,
+                                 const Handle(TColStd_HArray1OfByte)& theData)
 {
   TDF_Label aNoteLabel;
   TDF_TagSource aTag;
-  aNoteLabel = aTag.NewChild(Label());
+  aNoteLabel = aTag.NewChild(GetNotesLabel());
   return XCAFDoc_NoteBinData::Set(aNoteLabel, theUserName, theTimeStamp, theTitle, theMIMEtype, theData);
 }
 
-Standard_Boolean XCAFDoc_NotesTool::HasAttachedNotes(const TDF_Label& theLabel) const
+Standard_Integer
+XCAFDoc_NotesTool::GetNotes(const XCAFDoc_AssemblyItemId& theItemId,
+                            TDF_LabelSequence&            theNoteLabels) const
 {
+  TDF_Label anAnnotatedItem = FindAnnotatedItem(theItemId);
+  if (anAnnotatedItem.IsNull())
+    return 0;
+
   Handle(XCAFDoc_GraphNode) aChild;
-  return !theLabel.IsNull() && 
-         theLabel.FindAttribute(XCAFDoc::NoteRefGUID(), aChild) &&
-         (aChild->NbFathers() > 0);
+  if (!anAnnotatedItem.FindAttribute(XCAFDoc::NoteRefGUID(), aChild))
+    return 0;
+
+  Standard_Integer nbFathers = aChild->NbFathers();
+  for (Standard_Integer iFather = 1; iFather <= nbFathers; ++iFather)
+  {
+    Handle(XCAFDoc_GraphNode) aFather = aChild->GetFather(iFather);
+    theNoteLabels.Append(aFather->Label());
+  }
+
+  return theNoteLabels.Length();
 }
 
-void XCAFDoc_NotesTool::GetAttachedNotes(const TDF_Label&   theLabel,
-                                         TDF_LabelSequence& theNoteLabels) const
+Handle(XCAFDoc_AssemblyItemRef)
+XCAFDoc_NotesTool::AddNote(const TDF_Label&              theNoteLabel,
+                           const XCAFDoc_AssemblyItemId& theItemId)
 {
-  theNoteLabels.Clear();
+  Handle(XCAFDoc_AssemblyItemRef) anItemRef;
+
+  if (!XCAFDoc_Note::IsMine(theNoteLabel))
+    return anItemRef;
 
   Handle(XCAFDoc_GraphNode) aChild;
-  if (!theLabel.IsNull() && theLabel.FindAttribute(XCAFDoc::NoteRefGUID(), aChild))
+  TDF_Label anAnnotatedItem = FindAnnotatedItem(theItemId);
+  if (anAnnotatedItem.IsNull())
   {
-    Standard_Integer nbNotes = aChild->NbFathers();
-    for (Standard_Integer iNote = 1; iNote <= nbNotes; ++iNote)
+    TDF_TagSource aTag;
+    anAnnotatedItem = aTag.NewChild(GetAnnotatedItemsLabel());
+    if (!anAnnotatedItem.IsNull())
+      return anItemRef;
+  }
+
+  if (!anAnnotatedItem.FindAttribute(XCAFDoc::NoteRefGUID(), aChild))
+  {
+    aChild = XCAFDoc_GraphNode::Set(anAnnotatedItem, XCAFDoc::NoteRefGUID());
+    if (aChild.IsNull())
+      return anItemRef;
+  }
+
+  if (!anAnnotatedItem.FindAttribute(XCAFDoc_AssemblyItemRef::GetID(), anItemRef))
+  {
+    anItemRef = XCAFDoc_AssemblyItemRef::Set(anAnnotatedItem, theItemId);
+    if (anItemRef.IsNull())
+      return anItemRef;
+  }
+
+  Handle(XCAFDoc_GraphNode) aFather;
+  if (!theNoteLabel.FindAttribute(XCAFDoc::NoteRefGUID(), aFather))
+  {
+    aFather = XCAFDoc_GraphNode::Set(theNoteLabel, XCAFDoc::NoteRefGUID());
+    if (aFather.IsNull())
+      return anItemRef;
+  }
+
+  aFather->SetChild(aChild);
+
+  return anItemRef;
+}
+
+Standard_Boolean 
+XCAFDoc_NotesTool::RemoveNote(const TDF_Label&              theNoteLabel,
+                              const XCAFDoc_AssemblyItemId& theItemId,
+                              Standard_Boolean              theDelIfOrphan)
+{
+  Handle(XCAFDoc_Note) aNote = XCAFDoc_Note::Get(theNoteLabel);
+
+  if (aNote.IsNull())
+    return Standard_False;
+
+  Handle(XCAFDoc_GraphNode) aFather;
+  if (!theNoteLabel.FindAttribute(XCAFDoc::NoteRefGUID(), aFather))
+    return Standard_False;
+
+  TDF_Label anAnnotatedItem = FindAnnotatedItem(theItemId);
+  if (anAnnotatedItem.IsNull())
+    return Standard_False;
+
+  Handle(XCAFDoc_GraphNode) aChild;
+  if (!anAnnotatedItem.FindAttribute(XCAFDoc::NoteRefGUID(), aChild))
+    return Standard_False;
+
+  aChild->UnSetFather(aFather);
+  if (aChild->NbFathers() == 0)
+    anAnnotatedItem.ForgetAllAttributes();
+
+  if (theDelIfOrphan && aNote->IsOrphan())
+    DeleteNote(theNoteLabel);
+  
+  return Standard_True;
+}
+
+Standard_Boolean 
+XCAFDoc_NotesTool::RemoveAllNotes(const XCAFDoc_AssemblyItemId& theItemId,
+                                  Standard_Boolean              theDelIfOrphan)
+{
+  TDF_Label anAnnotatedItem = FindAnnotatedItem(theItemId);
+  if (anAnnotatedItem.IsNull())
+    return Standard_False;
+
+  Handle(XCAFDoc_GraphNode) aChild;
+  if (!anAnnotatedItem.FindAttribute(XCAFDoc::NoteRefGUID(), aChild))
+    return Standard_False;
+
+  Standard_Integer nbFathers = aChild->NbFathers();
+  for (Standard_Integer iFather = 1; iFather <= nbFathers; ++iFather)
+  {
+    Handle(XCAFDoc_GraphNode) aFather = aChild->GetFather(iFather);
+    Handle(XCAFDoc_Note) aNote = XCAFDoc_Note::Get(aFather->Label());
+    if (!aNote.IsNull())
     {
-      Handle(XCAFDoc_GraphNode) aNote = aChild->GetFather(iNote);
-      if (XCAFDoc_Note::IsMine(aNote->Label()))
-        theNoteLabels.Append(aNote->Label());
+      aFather->UnSetChild(aChild);
+      if (theDelIfOrphan && aNote->IsOrphan())
+        DeleteNote(aFather->Label());
     }
   }
+
+  anAnnotatedItem.ForgetAllAttributes();
+
+  return Standard_True;
 }
 
-Standard_Integer XCAFDoc_NotesTool::DetachAllNotes(const TDF_Label& theLabel) const
-{
-  Standard_Integer nbNotes = 0;
-  Handle(XCAFDoc_GraphNode) aChild;
-  if (!theLabel.IsNull() && theLabel.FindAttribute(XCAFDoc::NoteRefGUID(), aChild))
-  {
-    Standard_Integer nbNotes = aChild->NbFathers();
-    for (Standard_Integer iNote = 1; iNote <= nbNotes; ++iNote)
-    {
-      aChild->UnSetFather(iNote);
-      ++nbNotes;
-    }
-  }
-  theLabel.ForgetAttribute(aChild);
-  return nbNotes;
-}
-
-Standard_Boolean XCAFDoc_NotesTool::RemoveNote(const TDF_Label& theNoteLabel)
+Standard_Boolean 
+XCAFDoc_NotesTool::DeleteNote(const TDF_Label& theNoteLabel)
 {
   Handle(XCAFDoc_Note) aNote = XCAFDoc_Note::Get(theNoteLabel);
   if (!aNote.IsNull())
   {
-    aNote->DetachAll();
+    Handle(XCAFDoc_GraphNode) aFather;
+    if (theNoteLabel.FindAttribute(XCAFDoc::NoteRefGUID(), aFather) && !aFather.IsNull())
+    {
+      Standard_Integer nbChildren = aFather->NbChildren();
+      for (Standard_Integer iChild = 1; iChild <= nbChildren; ++iChild)
+      {
+        Handle(XCAFDoc_GraphNode) aChild = aFather->GetChild(iChild);
+        aFather->UnSetChild(iChild);
+        if (aChild->NbFathers() == 0)
+          aChild->Label().ForgetAttribute(aChild);
+      }
+    }
     theNoteLabel.ForgetAllAttributes(Standard_True);
     return Standard_True;
   }
   return Standard_False;
 }
 
-Standard_Integer XCAFDoc_NotesTool::RemoveNotes(TDF_LabelSequence& theNoteLabels)
+Standard_Integer 
+XCAFDoc_NotesTool::DeleteNotes(TDF_LabelSequence& theNoteLabels)
 {
   Standard_Integer nbNotes = 0;
   for (TDF_LabelSequence::Iterator anIter(theNoteLabels); anIter.More(); anIter.Next())
   {
-    if (RemoveNote(anIter.Value()))
+    if (DeleteNote(anIter.Value()))
       ++nbNotes;
   }
   return nbNotes;
 }
 
-Standard_Integer XCAFDoc_NotesTool::RemoveDetachedNotes()
+Standard_Integer 
+XCAFDoc_NotesTool::DeleteAllNotes()
 {
   Standard_Integer nbNotes = 0;
-  for (TDF_ChildIterator anIter(Label()); anIter.More(); anIter.Next())
+  for (TDF_ChildIterator anIter(GetNotesLabel()); anIter.More(); anIter.Next())
   {
-    Handle(XCAFDoc_Note) aNote = XCAFDoc_Note::Get(anIter.Value());
-    if (!aNote.IsNull() && !aNote->IsAttached() && RemoveNote(anIter.Value()))
+    if (DeleteNote(anIter.Value()))
       ++nbNotes;
   }
   return nbNotes;
 }
 
-Standard_Integer XCAFDoc_NotesTool::RemoveAllNotes()
+Standard_Integer 
+XCAFDoc_NotesTool::NbOrphanNotes() const
 {
   Standard_Integer nbNotes = 0;
-  for (TDF_ChildIterator anIter(Label()); anIter.More(); anIter.Next())
+  for (TDF_ChildIterator anIter(GetNotesLabel()); anIter.More(); anIter.Next())
   {
-    if (RemoveNote(anIter.Value()))
+    const TDF_Label aLabel = anIter.Value();
+    Handle(XCAFDoc_Note) aNote = XCAFDoc_Note::Get(aLabel);
+    if (!aNote.IsNull() && aNote->IsOrphan())
       ++nbNotes;
   }
   return nbNotes;
 }
 
-const Standard_GUID& XCAFDoc_NotesTool::ID() const
+void 
+XCAFDoc_NotesTool::GetOrphanNotes(TDF_LabelSequence& theNoteLabels) const
+{
+  for (TDF_ChildIterator anIter(GetNotesLabel()); anIter.More(); anIter.Next())
+  {
+    const TDF_Label aLabel = anIter.Value();
+    Handle(XCAFDoc_Note) aNote = XCAFDoc_Note::Get(aLabel);
+    if (!aNote.IsNull() && aNote->IsOrphan())
+      theNoteLabels.Append(aLabel);
+  }
+}
+
+Standard_Integer 
+XCAFDoc_NotesTool::DeleteOrphanNotes()
+{
+  Standard_Integer nbNotes = 0;
+  for (TDF_ChildIterator anIter(GetNotesLabel()); anIter.More(); anIter.Next())
+  {
+    const TDF_Label aLabel = anIter.Value();
+    Handle(XCAFDoc_Note) aNote = XCAFDoc_Note::Get(aLabel);
+    if (!aNote.IsNull() && aNote->IsOrphan() && DeleteNote(aLabel))
+      ++nbNotes;
+  }
+  return nbNotes;
+}
+
+const Standard_GUID& 
+XCAFDoc_NotesTool::ID() const
 {
   return GetID();
 }
 
-Handle(TDF_Attribute) XCAFDoc_NotesTool::NewEmpty() const
+Handle(TDF_Attribute) 
+XCAFDoc_NotesTool::NewEmpty() const
 {
   return new XCAFDoc_NotesTool();
 }
 
-void XCAFDoc_NotesTool::Restore(const Handle(TDF_Attribute)& /*theAttr*/)
+void 
+XCAFDoc_NotesTool::Restore(const Handle(TDF_Attribute)& /*theAttr*/)
 {
 }
 
-void XCAFDoc_NotesTool::Paste(const Handle(TDF_Attribute)&       /*theAttrInto*/,
-                              const Handle(TDF_RelocationTable)& /*theRT*/) const
+void 
+XCAFDoc_NotesTool::Paste(const Handle(TDF_Attribute)&       /*theAttrInto*/,
+                         const Handle(TDF_RelocationTable)& /*theRT*/) const
 {
+}
+
+Standard_OStream& 
+XCAFDoc_NotesTool::Dump(Standard_OStream& theOS) const
+{
+  theOS
+    << "Notes           : " << NbNotes() << "\n"
+    << "Annotated items : " << NbAnnotatedItems() << "\n"
+    ;
+  return theOS;
 }

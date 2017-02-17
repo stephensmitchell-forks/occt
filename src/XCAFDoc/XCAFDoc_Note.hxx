@@ -46,12 +46,7 @@ public:
 
   Standard_EXPORT const TCollection_ExtendedString& TimeStamp() const;
 
-  Standard_EXPORT Standard_Boolean IsAttached() const;
-
-  Standard_EXPORT void Attach(const TDF_LabelSequence& theLabels);
-
-  Standard_EXPORT void Detach(const TDF_LabelSequence& theLabels);
-  Standard_EXPORT void DetachAll();
+  Standard_EXPORT Standard_Boolean IsOrphan() const;
 
 public:
 

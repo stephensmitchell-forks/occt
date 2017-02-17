@@ -1,5 +1,7 @@
 BinMXCAFDoc.cxx
 BinMXCAFDoc.hxx
+BinMXCAFDoc_AssemblyItemRefDriver.cxx
+BinMXCAFDoc_AssemblyItemRefDriver.hxx
 BinMXCAFDoc_AreaDriver.cxx
 BinMXCAFDoc_AreaDriver.hxx
 BinMXCAFDoc_CentroidDriver.cxx
