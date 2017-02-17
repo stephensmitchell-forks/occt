@@ -210,7 +210,7 @@ XCAFDoc_NotesTool::AddNote(const TDF_Label&              theNoteLabel,
   {
     TDF_TagSource aTag;
     anAnnotatedItem = aTag.NewChild(GetAnnotatedItemsLabel());
-    if (!anAnnotatedItem.IsNull())
+    if (anAnnotatedItem.IsNull())
       return anItemRef;
   }
 
@@ -236,6 +236,7 @@ XCAFDoc_NotesTool::AddNote(const TDF_Label&              theNoteLabel,
       return anItemRef;
   }
 
+  aChild->SetFather(aFather);
   aFather->SetChild(aChild);
 
   return anItemRef;
