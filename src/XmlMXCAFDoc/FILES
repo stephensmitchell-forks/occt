@@ -1,7 +1,7 @@
 XmlMXCAFDoc.cxx
 XmlMXCAFDoc.hxx
-XmlMXCAFDoc_AssemblyAtemRefDriver.cxx
-XmlMXCAFDoc_AssemblyAtemRefDriver.hxx
+XmlMXCAFDoc_AssemblyItemRefDriver.cxx
+XmlMXCAFDoc_AssemblyItemRefDriver.hxx
 XmlMXCAFDoc_AreaDriver.cxx
 XmlMXCAFDoc_AreaDriver.hxx
 XmlMXCAFDoc_CentroidDriver.cxx

@@ -19,6 +19,7 @@
 #include <XmlMDF_ADriverTable.hxx>
 #include <XmlMNaming_NamedShapeDriver.hxx>
 #include <XmlMXCAFDoc.hxx>
+#include <XmlMXCAFDoc_AssemblyItemRefDriver.hxx>
 #include <XmlMXCAFDoc_AreaDriver.hxx>
 #include <XmlMXCAFDoc_CentroidDriver.hxx>
 #include <XmlMXCAFDoc_ClippingPlaneToolDriver.hxx>
@@ -64,7 +65,8 @@ void XmlMXCAFDoc::AddDrivers (const Handle(XmlMDF_ADriverTable)& aDriverTable,
     aLocationDriver->SetSharedLocations( &(aNamedShapeDriver->GetShapesLocations()) );
   }
   
-  aDriverTable -> AddDriver( aLocationDriver);
+  aDriverTable -> AddDriver (aLocationDriver);
+  aDriverTable -> AddDriver (new XmlMXCAFDoc_AssemblyItemRefDriver(anMsgDrv));
   aDriverTable -> AddDriver (new XmlMXCAFDoc_VolumeDriver    (anMsgDrv));
   aDriverTable -> AddDriver (new XmlMXCAFDoc_DatumDriver     (anMsgDrv));
   aDriverTable -> AddDriver (new XmlMXCAFDoc_DimTolDriver    (anMsgDrv));

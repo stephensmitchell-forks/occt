@@ -17,6 +17,7 @@
 #include <BinMDF_ADriverTable.hxx>
 #include <BinMNaming_NamedShapeDriver.hxx>
 #include <BinMXCAFDoc.hxx>
+#include <BinMXCAFDoc_AssemblyItemRefDriver.hxx>
 #include <BinMXCAFDoc_AreaDriver.hxx>
 #include <BinMXCAFDoc_CentroidDriver.hxx>
 #include <BinMXCAFDoc_ColorDriver.hxx>
@@ -68,6 +69,7 @@ void BinMXCAFDoc::AddDrivers(const Handle(BinMDF_ADriverTable)& theDriverTable,
   }
   
   theDriverTable->AddDriver( aLocationDriver);
+  theDriverTable->AddDriver( new BinMXCAFDoc_AssemblyItemRefDriver(theMsgDrv));
   theDriverTable->AddDriver( new BinMXCAFDoc_VolumeDriver      (theMsgDrv));
   theDriverTable->AddDriver( new BinMXCAFDoc_DatumDriver       (theMsgDrv));
   theDriverTable->AddDriver( new BinMXCAFDoc_GeomToleranceDriver (theMsgDrv));

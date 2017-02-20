@@ -90,6 +90,7 @@ XCAFDoc_Note::Paste(const Handle(TDF_Attribute)&       theAttrInto,
 Standard_OStream& 
 XCAFDoc_Note::Dump(Standard_OStream& theOS) const
 {
+  TDF_Attribute::Dump(theOS);
   theOS 
     << "Note : " 
     << (myUserName.IsEmpty() ? myUserName : "<anonymous>")
