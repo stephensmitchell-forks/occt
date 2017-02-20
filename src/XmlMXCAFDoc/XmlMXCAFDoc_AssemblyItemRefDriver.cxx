@@ -17,7 +17,7 @@
 #include <Standard_Type.hxx>
 #include <TDF_Attribute.hxx>
 #include <XCAFDoc_AssemblyItemRef.hxx>
-#include <XmlMXCAFDoc_AssemblyAtemRefDriver.hxx>
+#include <XmlMXCAFDoc_AssemblyItemRefDriver.hxx>
 #include <XmlObjMgt_Persistent.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(XmlMXCAFDoc_AssemblyItemRefDriver, XmlMDF_ADriver)
