@@ -18,7 +18,7 @@
 #include <TColStd_HArray1OfByte.hxx>
 #include <TDF_Label.hxx>
 #include <TDF_LabelMapHasher.hxx>
-#include <TDF_ChildIterator.hxx>
+#include <TDF_ChildIDIterator.hxx>
 #include <TDF_LabelSequence.hxx>
 #include <XCAFDoc.hxx>
 #include <XCAFDoc_GraphNode.hxx>
@@ -76,7 +76,7 @@ XCAFDoc_NotesTool::NbNotes() const
   for (TDF_ChildIterator anIter(GetNotesLabel()); anIter.More(); anIter.Next())
   {
     const TDF_Label aLabel = anIter.Value();
-    if (XCAFDoc_Note::IsMine(aLabel))
+    if (!XCAFDoc_Note::Get(aLabel).IsNull())
       ++nbNotes;
   }
   return nbNotes;
@@ -86,10 +86,8 @@ Standard_Integer
 XCAFDoc_NotesTool::NbAnnotatedItems() const
 {
   Standard_Integer nbItems = 0;
-  for (TDF_ChildIterator anIter(GetAnnotatedItemsLabel()); anIter.More(); anIter.Next())
+  for (TDF_ChildIDIterator anIter(GetAnnotatedItemsLabel(), XCAFDoc_AssemblyItemRef::GetID()); anIter.More(); anIter.Next())
   {
-    const TDF_Label aLabel = anIter.Value();
-    if (XCAFDoc_AssemblyItemRef::IsMine(aLabel))
       ++nbItems;
   }
   return nbItems;
@@ -101,7 +99,7 @@ XCAFDoc_NotesTool::GetNotes(TDF_LabelSequence& theNoteLabels) const
   for (TDF_ChildIterator anIter(GetNotesLabel()); anIter.More(); anIter.Next())
   {
     const TDF_Label aLabel = anIter.Value();
-    if (XCAFDoc_Note::IsMine(aLabel))
+    if (!XCAFDoc_Note::Get(aLabel).IsNull())
       theNoteLabels.Append(aLabel);
   }
 }
@@ -109,11 +107,9 @@ XCAFDoc_NotesTool::GetNotes(TDF_LabelSequence& theNoteLabels) const
 void 
 XCAFDoc_NotesTool::GetAnnotatedItems(TDF_LabelSequence& theItemLabels) const
 {
-  for (TDF_ChildIterator anIter(GetAnnotatedItemsLabel()); anIter.More(); anIter.Next())
+  for (TDF_ChildIDIterator anIter(GetAnnotatedItemsLabel(), XCAFDoc_AssemblyItemRef::GetID()); anIter.More(); anIter.Next())
   {
-    const TDF_Label aLabel = anIter.Value();
-    if (XCAFDoc_AssemblyItemRef::IsMine(aLabel))
-      theItemLabels.Append(aLabel);
+    theItemLabels.Append(anIter.Value()->Label());
   }
 }
 
@@ -126,12 +122,11 @@ XCAFDoc_NotesTool::IsAnnotatedItem(const XCAFDoc_AssemblyItemId& theItemId) cons
 TDF_Label 
 XCAFDoc_NotesTool::FindAnnotatedItem(const XCAFDoc_AssemblyItemId& theItemId) const
 {
-  for (TDF_ChildIterator anIter(GetAnnotatedItemsLabel()); anIter.More(); anIter.Next())
+  for (TDF_ChildIDIterator anIter(GetAnnotatedItemsLabel(), XCAFDoc_AssemblyItemRef::GetID()); anIter.More(); anIter.Next())
   {
-    const TDF_Label aLabel = anIter.Value();
-    Handle(XCAFDoc_AssemblyItemRef) anItemRef = XCAFDoc_AssemblyItemRef::Get(aLabel);
+    Handle(XCAFDoc_AssemblyItemRef) anItemRef = Handle(XCAFDoc_AssemblyItemRef)::DownCast(anIter.Value());
     if (!anItemRef.IsNull() && anItemRef->Get().IsEqual(theItemId))
-      return aLabel;
+      return anItemRef->Label();
   }
   return TDF_Label();
 }

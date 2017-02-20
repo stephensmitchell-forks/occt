@@ -36,8 +36,6 @@ public:
 
   Standard_EXPORT static const Standard_GUID& GetID();
 
-  Standard_EXPORT static Standard_Boolean IsMine(const TDF_Label& theLabel);
-
   Standard_EXPORT static Handle(XCAFDoc_AssemblyItemRef) Get(const TDF_Label& theLabel);
 
   Standard_EXPORT static Handle(XCAFDoc_AssemblyItemRef) Set(const TDF_Label&              theLabel,

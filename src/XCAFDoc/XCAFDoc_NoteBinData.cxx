@@ -20,16 +20,19 @@
 
 IMPLEMENT_STANDARD_RTTIEXT(XCAFDoc_NoteBinData, XCAFDoc_Note)
 
-const Standard_GUID& XCAFDoc_NoteBinData::GetID()
+const Standard_GUID& 
+XCAFDoc_NoteBinData::GetID()
 {
   static Standard_GUID s_ID("E9055501-F0FC-4864-BE4B-284FDA7DDEAC");
   return s_ID;
 }
 
-Standard_Boolean XCAFDoc_NoteBinData::IsMine(const TDF_Label& theLabel)
+Handle(XCAFDoc_NoteBinData)
+XCAFDoc_NoteBinData::Get(const TDF_Label& theLabel)
 {
-  Handle(XCAFDoc_NoteBinData) anAttr;
-  return (!theLabel.IsNull() && theLabel.FindAttribute(XCAFDoc_NoteBinData::GetID(), anAttr));
+  Handle(XCAFDoc_NoteBinData) aThis;
+  theLabel.FindAttribute(XCAFDoc_NoteBinData::GetID(), aThis);
+  return aThis;
 }
 
 Handle(XCAFDoc_NoteBinData) 
@@ -76,9 +79,10 @@ XCAFDoc_NoteBinData::XCAFDoc_NoteBinData()
 {
 }
 
-Standard_Boolean XCAFDoc_NoteBinData::Set(const TCollection_ExtendedString& theTitle,
-                                          const TCollection_AsciiString&    theMIMEtype,
-                                          OSD_File&                         theFile)
+Standard_Boolean 
+XCAFDoc_NoteBinData::Set(const TCollection_ExtendedString& theTitle,
+                         const TCollection_AsciiString&    theMIMEtype,
+                         OSD_File&                         theFile)
 {
   if (!theFile.IsOpen() || !theFile.IsReadable())
     return Standard_False;
@@ -100,9 +104,10 @@ Standard_Boolean XCAFDoc_NoteBinData::Set(const TCollection_ExtendedString& theT
   return Standard_True;
 }
 
-void XCAFDoc_NoteBinData::Set(const TCollection_ExtendedString&    theTitle, 
-                              const TCollection_AsciiString&       theMIMEtype,
-                              const Handle(TColStd_HArray1OfByte)& theData)
+void 
+XCAFDoc_NoteBinData::Set(const TCollection_ExtendedString&    theTitle, 
+                         const TCollection_AsciiString&       theMIMEtype,
+                         const Handle(TColStd_HArray1OfByte)& theData)
 {
   Backup();
 
@@ -111,37 +116,44 @@ void XCAFDoc_NoteBinData::Set(const TCollection_ExtendedString&    theTitle,
   myMIMEtype = theMIMEtype;
 }
 
-const TCollection_ExtendedString& XCAFDoc_NoteBinData::Title() const
+const TCollection_ExtendedString& 
+XCAFDoc_NoteBinData::Title() const
 {
   return myTitle;
 }
 
-const TCollection_AsciiString& XCAFDoc_NoteBinData::MIMEtype() const
+const TCollection_AsciiString& 
+XCAFDoc_NoteBinData::MIMEtype() const
 {
   return myMIMEtype;
 }
 
-Standard_Integer XCAFDoc_NoteBinData::Size() const
+Standard_Integer 
+XCAFDoc_NoteBinData::Size() const
 {
   return (!myData.IsNull() ? myData->Length() : 0);
 }
 
-const Handle(TColStd_HArray1OfByte)& XCAFDoc_NoteBinData::Data() const
+const Handle(TColStd_HArray1OfByte)& 
+XCAFDoc_NoteBinData::Data() const
 {
   return myData;
 }
 
-const Standard_GUID& XCAFDoc_NoteBinData::ID() const
+const 
+Standard_GUID& XCAFDoc_NoteBinData::ID() const
 {
   return GetID();
 }
 
-Handle(TDF_Attribute) XCAFDoc_NoteBinData::NewEmpty() const
+Handle(TDF_Attribute) 
+XCAFDoc_NoteBinData::NewEmpty() const
 {
   return new XCAFDoc_NoteBinData();
 }
 
-void XCAFDoc_NoteBinData::Restore(const Handle(TDF_Attribute)& theAttr)
+void 
+XCAFDoc_NoteBinData::Restore(const Handle(TDF_Attribute)& theAttr)
 {
   XCAFDoc_Note::Restore(theAttr);
 
@@ -154,8 +166,9 @@ void XCAFDoc_NoteBinData::Restore(const Handle(TDF_Attribute)& theAttr)
   }
 }
 
-void XCAFDoc_NoteBinData::Paste(const Handle(TDF_Attribute)&       theAttrInto,
-                                const Handle(TDF_RelocationTable)& theRT) const
+void 
+XCAFDoc_NoteBinData::Paste(const Handle(TDF_Attribute)&       theAttrInto,
+                           const Handle(TDF_RelocationTable)& theRT) const
 {
   XCAFDoc_Note::Paste(theAttrInto, theRT);
 
@@ -164,7 +177,8 @@ void XCAFDoc_NoteBinData::Paste(const Handle(TDF_Attribute)&       theAttrInto,
     aMine->Set(myTitle, myMIMEtype, myData);
 }
 
-Standard_OStream& XCAFDoc_NoteBinData::Dump(Standard_OStream& theOS) const
+Standard_OStream& 
+XCAFDoc_NoteBinData::Dump(Standard_OStream& theOS) const
 {
   XCAFDoc_Note::Dump(theOS);
   theOS << "\n"
