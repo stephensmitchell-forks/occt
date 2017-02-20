@@ -38,7 +38,7 @@ XCAFDoc_Note::Get(const TDF_Label& theLabel)
   Handle(XCAFDoc_Note) aNote;
   if (!theLabel.IsNull() && 
       (theLabel.FindAttribute(XCAFDoc_NoteComment::GetID(), aNote) ||
-      theLabel.FindAttribute(XCAFDoc_NoteBinData::GetID(), aNote)))
+       theLabel.FindAttribute(XCAFDoc_NoteBinData::GetID(), aNote)))
     return aNote;
   return aNote;
 }

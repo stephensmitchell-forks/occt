@@ -34,7 +34,7 @@ public:
 
   Standard_EXPORT static const Standard_GUID& GetID();
 
-  Standard_EXPORT static Standard_Boolean IsMine(const TDF_Label& theLabel);
+  Standard_EXPORT static Handle(XCAFDoc_NoteBinData) Get(const TDF_Label& theLabel);
 
   Standard_EXPORT static Handle(XCAFDoc_NoteBinData) Set(const TDF_Label&                  theLabel,
                                                          const TCollection_ExtendedString& theUserName,

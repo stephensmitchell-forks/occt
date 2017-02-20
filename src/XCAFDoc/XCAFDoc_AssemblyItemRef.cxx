@@ -27,15 +27,6 @@ XCAFDoc_AssemblyItemRef::GetID()
   return s_ID;
 }
 
-Standard_Boolean 
-XCAFDoc_AssemblyItemRef::IsMine(const TDF_Label& theLabel)
-{
-  Handle(XCAFDoc_AssemblyItemRef) aThis;
-  return !theLabel.IsNull() &&
-         theLabel.FindAttribute(XCAFDoc_AssemblyItemRef::GetID(), aThis) &&
-         !aThis.IsNull();
-}
-
 Handle(XCAFDoc_AssemblyItemRef) 
 XCAFDoc_AssemblyItemRef::Get(const TDF_Label& theLabel)
 {
