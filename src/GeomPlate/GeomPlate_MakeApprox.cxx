@@ -297,8 +297,8 @@ GeomPlate_MakeApprox::GeomPlate_MakeApprox(const Handle(GeomPlate_Surface)& Surf
   myCritError = AppPlate.CritError(3,1);
 #ifdef OCCT_DEBUG
   cout<<"Approximation results"<<endl;
-  cout<<"  Approximation error : "<<myAppError<<endl;
-  cout<<"  Criterium error : "<<myCritError<<endl;
+  cout<<"DEBUG: Approximation error : "<<myAppError<<endl;
+  cout<<"DEBUG: Criterium error : "<<myCritError<<endl;
 #endif
 }
 
@@ -406,7 +406,7 @@ GeomPlate_MakeApprox::GeomPlate_MakeApprox(const Handle(GeomPlate_Surface)& Surf
     myCritError = 0.;
 #ifdef OCCT_DEBUG
     cout<<"Approximation results"<<endl;
-    cout<<"  Approximation error : "<<myAppError<<endl;
+    cout<<"DEBUG: Approximation error : "<<myAppError<<endl;
 #endif
   }
   else if (CritOrder==0) {
@@ -428,8 +428,8 @@ GeomPlate_MakeApprox::GeomPlate_MakeApprox(const Handle(GeomPlate_Surface)& Surf
     myCritError = AppPlate.CritError(3,1);
 #ifdef OCCT_DEBUG
     cout<<"Approximation results"<<endl;
-    cout<<"  Approximation error : "<<myAppError<<endl;
-    cout<<"  Criterium error : "<<myCritError<<endl;
+    cout<<"DEBUG: Approximation error : "<<myAppError<<endl;
+    cout<<"DEBUG: Criterium error : "<<myCritError<<endl;
 #endif
   }
   else if (CritOrder==1) {
@@ -451,8 +451,8 @@ GeomPlate_MakeApprox::GeomPlate_MakeApprox(const Handle(GeomPlate_Surface)& Surf
     myCritError = AppPlate.CritError(3,1);
 #ifdef OCCT_DEBUG
     cout<<"Approximation results"<<endl;
-    cout<<"  Approximation error : "<<myAppError<<endl;
-    cout<<"  Criterium error : "<<myCritError<<endl;
+    cout<<"DEBUG: Approximation error : "<<myAppError<<endl;
+    cout<<"DEBUG: Criterium error : "<<myCritError<<endl;
 #endif
   }
 }

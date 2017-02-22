@@ -20,11 +20,11 @@ set t_001 [expr [lindex [time {incmesh b 0.001}] 0]/1000000]
 puts "t_001=${t_001}"
 trinfo b
 
-if { [regexp {Debug mode} [dversion]] } {
+if { [checkdebugmode] } {
     cpulimit 2000
     set max_t_001 600
 } else {
-  if { [regexp {Windows} [dversion]] } {
+  if { [checkplatform -windows] } {
     set max_t_001 189
   } else {
     set max_t_001 182

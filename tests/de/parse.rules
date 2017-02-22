@@ -9,3 +9,9 @@ IGNORE /StepToTopoDS, GeometricSet/exception
 IGNORE /OSD_Exception_ACCESS_VIOLATION/ exception during reading step
 IGNORE /Exception Raised while reading Step File/ exception during reading step file
 IGNORE /Warning: ShapeFix_.* Exception/ internal exceptions caught by FixShape
+IGNORE /DEBUG: [*]+\s+Error on Record [0-9]+ \(on [0-9]+ -> [0-9]+ % in File\)\s+[*]+\s+Ident .[0-9]+/ extended messages of OCCT algorithms only for Debug configuration
+IGNORE /DEBUG: Error : curve 2d range crossing non periodic curve origin/ extended messages of OCCT algorithms only for Debug configuration
+IGNORE /DEBUG: Warning: ShapeFix_WireSegment::DefineI[UV]M[inax]+: indexation error/ extended messages of OCCT algorithms only for Debug configuration
+IGNORE /DEBUG: Error: STEPCAFControl_Reader::FindInstance: NAUO is not mapped to shape/ extended messages of OCCT algorithms only for Debug configuration
+IGNORE /DEBUG: Error: ShapeFix_ComposeShell::SplitByLine: parity error/ extended messages of OCCT algorithms only for Debug configuration
+IGNORE /DEBUG: Error: color name .+ is not recognized/ extended messages of OCCT algorithms only for Debug configuration

@@ -1,1 +1,7 @@
 FAILED /\bFaulty\b/ bad shape
+IGNORE /DEBUG:\terror = [0-9.e+-]+\tspans = [0-9.e+-]+/ extended messages of OCCT algorithms only for Debug configuration
+IGNORE /DEBUG: Error: ShapeProcess_Performer::Perform: sequence not defined for Seq/ extended messages of OCCT algorithms only for Debug configuration
+IGNORE /DEBUG: iteration = [0-9.e+-]+\terror = [0-9.e+-]+\tspans = [0-9.e+-]+/ extended messages of OCCT algorithms only for Debug configuration
+IGNORE /DEBUG: Warning: ShapeFix_WireSegment::DefineI[UV]M[inax]+: indexation error/ extended messages of OCCT algorithms only for Debug configuration
+IGNORE /DEBUG: Error: Number of intervals are not equal for 2d 3d[.] Ignored[.]/ extended messages of OCCT algorithms only for Debug configuration
+IGNORE /DEBUG: Error: ShapeFix_ComposeShell::MakeFacesOnPatch: can\'t dispatch wires/ extended messages of OCCT algorithms only for Debug configuration

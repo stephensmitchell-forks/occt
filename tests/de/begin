@@ -2,7 +2,11 @@ pload DCAF
 pload TOPTEST
 pload XDE
 
-cpulimit 2500
+if {[checkdebugmode]} {
+  cpulimit 5000
+} else {
+  cpulimit 2500
+}
 
 # Create a new document and set UndoLimit
 NewDocument D BinXCAF

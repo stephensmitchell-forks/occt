@@ -1,5 +1,9 @@
 pload XDE
 
+if { [checkdebugmode] } {
+  cpulimit 600
+}
+
 stepread [locate_data_file bug26261_mmg-m-cv-qubit.stp] s *
 renamevar s_1 s
 fixshape  r  s  1e-3  1  -maxtaila 6  -maxtailw 1e-3

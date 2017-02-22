@@ -1,3 +1,1 @@
-FAILED /\bFaulty\b/ bad shape
-OK /Relative error of mass computation/ message from vprops
 IGNORE /DEBUG: Error 3d =/ extended messages of OCCT algorithms only for Debug configuration

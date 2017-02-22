@@ -1,5 +1,9 @@
 pload XDE
 
+if { [checkdebugmode] } {
+  cpulimit 1200
+}
+
 stepread [locate_data_file bug26261_ca07771-040x.stp] s *
 renamevar s_1 s
 fixshape  r  s  -maxtaila 1  -maxtailw 1e-3

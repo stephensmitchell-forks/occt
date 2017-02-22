@@ -232,7 +232,7 @@ void StepFile_Interrupt (char* mess)
 {
 #ifdef OCCT_DEBUG
   Handle(Message_Messenger) sout = Message::DefaultMessenger();
-  sout << "    ****    StepFile Error : " << mess << "    ****" << endl;
+  sout << "DEBUG: ****    StepFile Error : " << mess << "    ****" << endl;
 #endif
   checkread->AddFail(mess);
 }

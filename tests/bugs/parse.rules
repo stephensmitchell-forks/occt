@@ -2,3 +2,12 @@ FAILED /\bFaulty\b/ bad shape
 FAILED /failure reading attribute/ attribute failure
 SKIPPED /Error: unsupported locale specification/ locale is unavailable on tested system
 OK /Relative error of mass computation/ message from vprops
+IGNORE /DEBUG: [*]+\s+Error on Record [0-9]+ \(on [0-9]+ -> [0-9]+ % in File\)\s+[*]+\s+Ident .[0-9]+/ extended messages of OCCT algorithms only for Debug configuration
+IGNORE /DEBUG: [*]+\s+StepFile Error : At line [0-9]+, syntax error\s+[*]+/ extended messages of OCCT algorithms only for Debug configuration
+IGNORE /DEBUG: --- BRepCheck Wire: Closed3d -> Error/ extended messages of OCCT algorithms only for Debug configuration
+IGNORE /DEBUG: Approximation error :/ extended messages of OCCT algorithms only for Debug configuration
+IGNORE /DEBUG: Criterium error :/ extended messages of OCCT algorithms only for Debug configuration
+IGNORE /DEBUG: Error [23]d =/ extended messages of OCCT algorithms only for Debug configuration
+IGNORE /DEBUG: Other Error in Make STEP wire/ extended messages of OCCT algorithms only for Debug configuration
+IGNORE /DEBUG: Error: ShapeProcess_Performer::Perform: sequence not defined for Seq/ extended messages of OCCT algorithms only for Debug configuration
+IGNORE /DEBUG: iteration = [0-9.e+-]+\terror = [0-9.e+-]+\tspans = [0-9.e+-]+/ extended messages of OCCT algorithms only for Debug configuration

@@ -730,10 +730,10 @@ Standard_Real Approx_SweepApproximation::TolCurveOnSurf(const Standard_Integer I
 {
   o << "Dump of SweepApproximation" << endl;
   if (done) { 
-    o << "Error 3d = " << MaxErrorOnSurf() << endl;
+    o << "DEBUG: Error 3d = " << MaxErrorOnSurf() << endl;
 
     if (Num2DSS>0) {
-      o << "Error 2d = ";
+      o << "DEBUG: Error 2d = ";
       for (Standard_Integer ii=1; ii<=Num2DSS; ii++) 
 	{  o << Max2dError(ii);
 	   if (ii < Num2DSS) o << " , " << endl;

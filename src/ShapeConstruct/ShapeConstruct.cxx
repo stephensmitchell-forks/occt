@@ -240,7 +240,7 @@ Handle(Geom_BSplineSurface) ShapeConstruct::ConvertSurfaceToBSpline(const Handle
 	
 #ifdef OCCT_DEBUG
 	Standard_Integer nbOfSpan = (anApprox.Surface()->NbUKnots()-1)*(anApprox.Surface()->NbVKnots()-1);
-	cout << "\terror = " << anApprox.MaxError() << "\tspans = " << nbOfSpan << endl;
+	cout << "DEBUG:\terror = " << anApprox.MaxError() << "\tspans = " << nbOfSpan << endl;
 	cout << " Surface is aproximated with continuity " << (GeomAbs_Shape)cnt <<endl;
 #endif
 	S = anApprox.Surface();
@@ -251,7 +251,7 @@ Handle(Geom_BSplineSurface) ShapeConstruct::ConvertSurfaceToBSpline(const Handle
 	if(anApprox.HasResult()) 
 	  errSpl = anApprox.Surface();
 #ifdef OCCT_DEBUG
-	cout << "\terror = " << anApprox.MaxError() <<endl;
+	cout << "DEBUG:\terror = " << anApprox.MaxError() <<endl;
 #endif
 	break;
       }

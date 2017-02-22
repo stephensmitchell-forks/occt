@@ -18,7 +18,7 @@ set ref_dist 1e-7
 
 # find extremum points
 set res [distmini r s_511 b_2]
-set redges [lrange [lindex [split $res \n] 1] 1 end]
+regexp {r_val (.+)\nOutput} $res dump redges
 set nbsol [llength $redges]
 set dist [dval r_val]
 

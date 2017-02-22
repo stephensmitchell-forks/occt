@@ -6,7 +6,7 @@ puts ""
 # Very slow boolean cut operations on cylinders
 #################################################
 
-if { [regexp {Debug mode} [dversion]] } {
+if { [checkdebugmode] } {
     set max_time 0.3
 } else {
     set max_time 0.15

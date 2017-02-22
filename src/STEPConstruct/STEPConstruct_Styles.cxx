@@ -725,7 +725,7 @@ Standard_Boolean STEPConstruct_Styles::DecodeColor (const Handle(StepVisual_Colo
     else if ( name.IsEqual ( "white"   ) ) Col.SetValues ( Quantity_NOC_WHITE );
     else {
 #ifdef OCCT_DEBUG
-      cout << "Error: color name \"" << name << "\" is not recognized" << endl;
+      cout << "DEBUG: Error: color name \"" << name << "\" is not recognized" << endl;
 #endif
       return Standard_False;
     }

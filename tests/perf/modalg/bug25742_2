@@ -6,8 +6,8 @@ puts ""
 ## A partition of 2 shapes stresses a performance issue
 ###############################
 
-if { [regexp {Debug mode} [dversion]] } {
-  if { [regexp {Windows} [dversion]] } {
+if { [checkdebugmode] } {
+  if { [checkplatform -windows] } {
     set max_time 10
     set max_time2 10
   } else {
@@ -15,7 +15,7 @@ if { [regexp {Debug mode} [dversion]] } {
     set max_time2 10
   }
 } else {
-  if { [regexp {Windows} [dversion]] } {
+  if { [checkplatform -windows] } {
     set max_time 1
     set max_time2 1
   } else {

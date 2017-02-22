@@ -8,16 +8,16 @@ puts ""
 
 pload QAcommands
 
-if { [regexp {Debug mode} [dversion]] } {
-  if { [regexp {Windows} [dversion]] } {
-    set max_time 8.
-    set max_time2 5.
+if { [checkdebugmode] } {
+  if { [checkplatform -windows] } {
+    set max_time 180.
+    set max_time2 120.
   } else {
     set max_time 8.
     set max_time2 5.
   }
 } else {
-  if { [regexp {Windows} [dversion]] } {
+  if { [checkplatform -windows] } {
     set max_time 8.
     set max_time2 5.
   } else {
@@ -41,7 +41,7 @@ if { ${A_sec} > ${max_time} } {
 }
 
 if { ${B_sec} > ${max_time2} } {                                         
-    puts "Retrieving 100000000 vertices using approach A) is more than ${max_time2} seconds - Faulty"
+    puts "Retrieving 100000000 vertices using approach B) is more than ${max_time2} seconds - Faulty"
 } else {
-    puts "Retrieving 100000000 vertices using approach A) is less than ${max_time2} seconds - OK"
+    puts "Retrieving 100000000 vertices using approach B) is less than ${max_time2} seconds - OK"
 }

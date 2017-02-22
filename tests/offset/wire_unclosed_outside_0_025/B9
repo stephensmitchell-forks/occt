@@ -1,6 +1,10 @@
 puts "TODO OCC24255 ALL: Faulty shapes in variables faulty_1 to faulty_" 
 puts "TODO OCC24255 ALL: Error : big tolerance of shape result"
 
+if { [checkdebugmode] } {
+  cpulimit 1500
+}
+
 restore [locate_data_file offset_wire_071.brep] s
 
 set length 121794

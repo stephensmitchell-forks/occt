@@ -8,14 +8,14 @@ puts ""
 
 pload XDE
 
-if { [regexp {Debug mode} [dversion]] } {
-  if { [regexp {Windows} [dversion]] } {
-    set max_time 0.5
+if { [checkdebugmode] } {
+  if { [checkplatform -windows] } {
+    set max_time 1
   } else {
-    set max_time 0.5
+    set max_time 1
   }
 } else {
-  if { [regexp {Windows} [dversion]] } {
+  if { [checkplatform -windows] } {
     set max_time 0.5
   } else {
     set max_time 0.5

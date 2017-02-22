@@ -1,9 +1,5 @@
 puts "TODO OCC22033 ALL: Error : The area of result shape is"
 puts "TODO OCC22033 ALL: Faulty shapes in variables faulty_1 to faulty_"
-if { [regexp {Debug mode} [dversion]] } {
-  puts "TODO OCC22033 ALL: TEST INCOMPLETE"
-  puts "TODO OCC22033 ALL: Exception"
-}
 
 puts "================"
 puts "OCC152"

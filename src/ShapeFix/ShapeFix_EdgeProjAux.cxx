@@ -587,7 +587,7 @@ void ShapeFix_EdgeProjAux::UpdateParam2d (const Handle(Geom2d_Curve)& theCurve2d
     else if ( Abs ( myLastParam  - cf ) <= preci2d ) myLastParam  = cl;
     else {
 #ifdef OCCT_DEBUG
-      cout << "Error : curve 2d range crossing non periodic curve origin";
+      cout << "DEBUG: Error : curve 2d range crossing non periodic curve origin";
       cout <<  endl;
 #endif
       // add fail result;

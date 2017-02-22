@@ -1095,7 +1095,7 @@ TDF_Label STEPCAFControl_Reader::FindInstance (const Handle(StepRepr_NextAssembl
   Handle(Transfer_Binder) binder = TP->Find(NAUO);
   if ( binder.IsNull() || ! binder->HasResult() ) {
 #ifdef OCCT_DEBUG
-    cout << "Error: STEPCAFControl_Reader::FindInstance: NAUO is not mapped to shape" << endl;
+    cout << "DEBUG: Error: STEPCAFControl_Reader::FindInstance: NAUO is not mapped to shape" << endl;
 #endif
     return L;
   }
@@ -1103,7 +1103,7 @@ TDF_Label STEPCAFControl_Reader::FindInstance (const Handle(StepRepr_NextAssembl
   TopoDS_Shape S = TransferBRep::ShapeResult ( TP, binder );
   if ( S.IsNull() ) {
 #ifdef OCCT_DEBUG
-    cout << "Error: STEPCAFControl_Reader::FindInstance: NAUO is not mapped to shape" << endl;
+    cout << "DEBUG: Error: STEPCAFControl_Reader::FindInstance: NAUO is not mapped to shape" << endl;
 #endif
     return L;
   }

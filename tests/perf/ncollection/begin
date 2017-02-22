@@ -1,0 +1,4 @@
+set conf ""
+if { [checkdebugmode] } {
+    set conf "DEBUG: "
+}

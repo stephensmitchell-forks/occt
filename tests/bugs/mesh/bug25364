@@ -72,7 +72,7 @@ set mem_delta_wsetpeak 220
 set mem_delta_virt 220
 set mem_delta_heap 80
 
-if { [regexp {Debug mode} [dversion]] } {
+if { [checkdebugmode] } {
    set mem_delta_swap 220
    set mem_delta_swappeak 350
    set mem_delta_wsetpeak 320

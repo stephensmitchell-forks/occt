@@ -1,1 +1,4 @@
 FAILED /\bFaulty\b/ bad shape
+IGNORE /DEBUG: Approximation error :/ extended messages of OCCT algorithms only for Debug configuration
+IGNORE /DEBUG: Criterium error :/ extended messages of OCCT algorithms only for Debug configuration
+IGNORE /DEBUG: Error [23]d =/ extended messages of OCCT algorithms only for Debug configuration

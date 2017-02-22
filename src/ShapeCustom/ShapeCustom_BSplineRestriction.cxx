@@ -683,7 +683,7 @@ Standard_Boolean ShapeCustom_BSplineRestriction::ConvertSurface(const Handle(Geo
             nbOfSpan = (anApprox.Surface()->NbUKnots()-1)*(anApprox.Surface()->NbVKnots()-1);
 #ifdef OCCT_DEBUG
             if((imax-i+1)!=1) {
-              cout << " iteration = " << i
+              cout << "DEBUG: iteration = " << i
                 <<    "\terror = " << anApprox.MaxError()
                 <<    "\tspans = " << nbOfSpan << endl;
               cout<< " Surface is aproximated with continuity " << IntegerToGeomAbsShape(Min(aCU,aCV)) <<endl;

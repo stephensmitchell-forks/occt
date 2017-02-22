@@ -1,0 +1,1 @@
+IGNORE /DEBUG: iteration = [0-9.e+-]+\terror = [0-9.e+-]+\tspans = [0-9.e+-]+/ extended messages of OCCT algorithms only for Debug configuration

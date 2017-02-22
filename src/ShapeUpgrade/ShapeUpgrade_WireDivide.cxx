@@ -460,7 +460,7 @@ void ShapeUpgrade_WireDivide::Perform ()
 	  Standard_Integer nbc2d = theSegments2d->Length();
 	  if (nbc!=nbc2d) {
 #ifdef OCCT_DEBUG
-	    cout<<"Error: Number of intervals are not equal for 2d 3d. Ignored."<<endl;
+	    cout<<"DEBUG: Error: Number of intervals are not equal for 2d 3d. Ignored."<<endl;
 #endif
 	    nbc = Min( nbc,nbc2d);
 	  }

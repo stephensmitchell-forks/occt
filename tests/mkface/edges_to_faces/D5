@@ -5,6 +5,9 @@ puts ""
 #################################################
 # Implementation of the EdgesToFaces function
 #################################################
+if { [checkdebugmode] } {
+  cpulimit 900
+}
 
 restore [locate_data_file bug28284.brep] s
 eval compound [explode s e] c

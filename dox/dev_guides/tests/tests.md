@@ -609,6 +609,8 @@ Draw[2]> checkplatform
 Windows
 ~~~~~
 
+Use procedure *checkdebugmode* to get the configuration. It returns 1 if current configuration is 'Debug', overwise returns 0.
+
 * RegularExpression is a regular expression, which should be matched against the line indicating the problem in the script output. 
 
 Example:

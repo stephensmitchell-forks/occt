@@ -11,5 +11,9 @@ puts "AIS_InteractiveContext::Display performance regression"
 pload VISUALIZATION
 pload QAcommands
 
+if { [checkdebugmode] } {
+  cpulimit 3000
+}
+
 vinit View1
 OCC26139

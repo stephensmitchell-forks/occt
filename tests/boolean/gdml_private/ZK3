@@ -1,2 +1,5 @@
+if { [checkdebugmode] } {
+  cpulimit 1200
+}
 source [locate_data_file voile_3.asm.1.gdml.tcl]
 

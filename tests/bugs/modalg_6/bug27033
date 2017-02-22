@@ -5,7 +5,9 @@ puts ""
 #############################################################
 # Modeling -- ensure stable result of area calculation
 #############################################################
-
+if { [checkdebugmode] } {
+  cpulimit 2400
+}
 pload XDE
 stepread [locate_data_file OCC11856.stp] a *
 

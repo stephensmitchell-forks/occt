@@ -1,1 +1,2 @@
 IGNORE /Error: STEPCAFControl_Reader::FindInstance: NAUO is not mapped to shape/ bad file in xcaf stp_to_dxc C5
+IGNORE /DEBUG: [*]+\s+Error on Record [0-9]+ \(on [0-9]+ -> [0-9]+ % in File\)\s+[*]+\s+Ident .[0-9]+/ extended messages of OCCT algorithms only for Debug configuration

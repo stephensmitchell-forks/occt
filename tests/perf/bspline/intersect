@@ -1,6 +1,6 @@
 # Test performance of intersection of several NURBS surfaces
 
-if { [regexp {Debug mode} [dversion]] } {
+if { [checkdebugmode] } {
    cpulimit 1000
 } else {
    cpulimit 500

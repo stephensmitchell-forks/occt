@@ -189,7 +189,7 @@ void StepData_StepReaderData::SetRecord (const Standard_Integer num,
 	      prev --;  if (prev <= 0) break;
 	    }
 	    Handle(Message_Messenger) sout = Message::DefaultMessenger();
-	    sout << "  ***  Error on Record " << num << " (on " << NbRecords()
+	    sout << "DEBUG: ***  Error on Record " << num << " (on " << NbRecords()
 	      << " -> " << num*100/NbRecords() << " % in File)  ***";
 	    if (prev > 0) sout << "  Ident #" << theidents(prev);
 	    sout << "\n" << errm << endl;

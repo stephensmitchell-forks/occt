@@ -6,6 +6,10 @@ puts ""
 # Intersection part of Boolean algorithm spends much system time and system memory
 #################################
 
+if { [checkdebugmode] } {
+  cpulimit 2000
+}
+
 set max_time 130
 set mem_max_wsetpeak 500000000
 

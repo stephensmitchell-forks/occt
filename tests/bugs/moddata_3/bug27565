@@ -11,7 +11,10 @@ explode a
 
 # Test number of solutions in a result.
 set info [distmini d a_1 a_2 1.0]
-if { [llength $info] != 9 } {
+regexp {d_val (.+)\nOutput} $info dump solutions
+
+if { ![info exists solutions] ||
+      [llength ${solutions}] != 2 } {
     puts "Error : Extrema is wrong"
 } else {
     puts "OK: Extrema is valid"

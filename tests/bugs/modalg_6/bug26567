@@ -6,8 +6,11 @@ puts ""
 ## Exception in Boolean intersection command
 ###############################
 
-cpulimit 1000
-
+if { [checkdebugmode] } {
+  cpulimit 2400
+} else {
+  cpulimit 1000
+}
 restore [locate_data_file Bug26567_c0.brep] b1
 restore [locate_data_file Bug26567_c1.brep] b2
 restore [locate_data_file Bug26567_c2.brep] b3

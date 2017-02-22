@@ -11,8 +11,11 @@ restore [locate_data_file bug27114.brep] aShape
 explode aShape
 set anInfo [distmini d aShape_1 aShape_2]
 
+set solutions {}
+regexp {d_val (.+)\nOutput} $anInfo dump solutions
+
 # Check number of solutions
-if { [llength $anInfo] != 9 } {
+if { [llength ${solutions}] != 2 } {
     puts "ERROR: Incorrect number of solutions"
 } else {
  puts "OK: Two solutions is found"

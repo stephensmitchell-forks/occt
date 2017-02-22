@@ -20,10 +20,10 @@ set t_1 [expr [lindex [time {incmesh b 0.1}] 0]/1000000]
 puts "t_1=${t_1}"
 trinfo b
 
-if { [regexp {Debug mode} [dversion]] } {
+if { [checkdebugmode] } {
     set max_t_1 20
 } else {
-  if { [regexp {Windows} [dversion]] } {
+  if { [checkplatform -windows] } {
     set max_t_1 0
   } else {
     set max_t_1 0

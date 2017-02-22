@@ -39,8 +39,8 @@ puts "vclear done in $d2 microseconds!\n"
 set t1_sec [expr $d1 * 1.e-6]
 set t2_sec [expr $d2 * 1.e-6]
 
-if { [regexp {Debug mode} [dversion]] } {
-  if { [regexp {Windows} [dversion]] } {
+if { [checkdebugmode] } {
+  if { [checkplatform -windows] } {
     set max_time_vconnectto 5
     set max_time_vclear 5
   } else {
@@ -48,7 +48,7 @@ if { [regexp {Debug mode} [dversion]] } {
     set max_time_vclear 5
   }
 } else {
-  if { [regexp {Windows} [dversion]] } {
+  if { [checkplatform -windows] } {
     set max_time_vconnectto 1
     set max_time_vclear 1
   } else {

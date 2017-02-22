@@ -6,14 +6,14 @@ puts ""
 # [Regression in 6.9.0] Projecting a curve hangs
 #######################################################################
 
-if { [regexp {Debug mode} [dversion]] } {
-  if { [regexp {Windows} [dversion]] } {
+if { [checkdebugmode] } {
+  if { [checkplatform -windows] } {
     set max_time 10
   } else {
     set max_time 10
   }
 } else {
-  if { [regexp {Windows} [dversion]] } {
+  if { [checkplatform -windows] } {
     set max_time 3
   } else {
     set max_time 3

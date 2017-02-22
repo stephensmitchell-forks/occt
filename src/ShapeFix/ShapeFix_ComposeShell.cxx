@@ -1680,7 +1680,7 @@ void ShapeFix_ComposeShell::SplitByLine (ShapeFix_SequenceOfWireSegment &wires,
   if ( parity % 2 ) {
     myStatus |= ShapeExtend::EncodeStatus ( ShapeExtend_FAIL4 );
 #ifdef OCCT_DEBUG
-    cout << "Error: ShapeFix_ComposeShell::SplitByLine: parity error" << endl;
+    cout << "DEBUG: Error: ShapeFix_ComposeShell::SplitByLine: parity error" << endl;
 #endif
   }
 
@@ -2471,7 +2471,7 @@ void ShapeFix_ComposeShell::MakeFacesOnPatch (TopTools_SequenceOfShape &faces,
   // check for lost wires, and if they are, make them roots
   if ( roots.Length() <=0 && loops.Length() >0 ) {
 #ifdef OCCT_DEBUG
-    cout << "Error: ShapeFix_ComposeShell::MakeFacesOnPatch: can't dispatch wires" << endl;
+    cout << "DEBUG: Error: ShapeFix_ComposeShell::MakeFacesOnPatch: can't dispatch wires" << endl;
 #endif
     for ( Standard_Integer j=1; j <= loops.Length(); j++ ) {
       roots.Append ( loops(j) );
@@ -2542,7 +2542,7 @@ void ShapeFix_ComposeShell::MakeFacesOnPatch (TopTools_SequenceOfShape &faces,
     // check for lost wires, and if they are, make them roots
     if ( i == roots.Length() && loops.Length() >0 ) {
 #ifdef OCCT_DEBUG
-      cout << "Error: ShapeFix_ComposeShell::MakeFacesOnPatch: can't dispatch wires" << endl;
+      cout << "DEBUG: Error: ShapeFix_ComposeShell::MakeFacesOnPatch: can't dispatch wires" << endl;
 #endif
       for ( j=1; j <= loops.Length(); j++ ) {
         TopoDS_Shape aSh = loops(j);

@@ -6,7 +6,7 @@ puts ""
 # Sample Draw scripts for demonstrating sweeping algorithm
 ##############################################################
 
-if { [regexp {Debug mode} [dversion]] } {
+if { [checkdebugmode] } {
    cpulimit 3000
 }
 

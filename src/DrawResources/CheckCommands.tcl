@@ -43,9 +43,16 @@ proc checkcolor { coord_x coord_y rd_get gr_get bl_get } {
 
     set color ""
     catch { [set color "[vreadpixel ${coord_x} ${coord_y} rgb]"] }
+
     if {"$color" == ""} {
       puts "Error : Pixel coordinates (${position_x}; ${position_y}) are out of view"
     }
+
+    # Skip debug information if necessary
+    if {[llength $color] != 3} {
+      regexp {([0-9]+ [0-9]+ [0-9]+)} $color dump color
+    }
+
     set rd [lindex $color 0]
     set gr [lindex $color 1]
     set bl [lindex $color 2]
@@ -127,6 +134,12 @@ proc _checkpoint {coord_x coord_y rd_ch gr_ch bl_ch} {
             incr j
             continue
           }
+
+          # Skip debug information if necessary
+          if {[llength $color] != 3} {
+            regexp {([0-9]+ [0-9]+ [0-9]+)} $color dump color
+          }
+
           set rd [lindex $color 0]
           set gr [lindex $color 1]
           set bl [lindex $color 2]
@@ -1084,4 +1097,18 @@ proc checkplatform {args} {
 
     # current platform is not equal to given as argument platform, return false
     return 0
+}
+
+help checkdebugmode {
+  return 1 if current configuration is 'Debug', overwise return 0
+
+  Use: checkdebugmode
+}
+proc checkdebugmode {} {
+  catch {set dversion_log [dversion]}
+  if { [regexp {Debug mode} ${dversion_log}] || [regexp {Extended debug mode} ${dversion_log}]} {
+    return 1
+  } else {
+    return 0
+  }
 }

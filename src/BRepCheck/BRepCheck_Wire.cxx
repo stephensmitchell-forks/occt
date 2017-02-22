@@ -382,7 +382,7 @@ Standard_Boolean IsDistanceIn3DTolerance (const gp_Pnt& thePnt_f,
 #ifdef OCCT_DEBUG
   cout << endl;
   cout << "--------Function IsDistanceIn3DTolerance(...)----------"												<< endl;
-  cout << "--- BRepCheck Wire: Closed3d -> Error"																					<< endl;
+  cout << "DEBUG: --- BRepCheck Wire: Closed3d -> Error"																					<< endl;
   cout << "--- Dist (" << Dist << ") > Tol3d (" << aTol3d << ")"													<< endl;
   cout << "Pnt1(" << thePnt_f.X() << "; " << thePnt_f.Y() << "; " << thePnt_f.Z() << ")"	<< endl;
   cout << "Pnt2(" << thePnt_l.X() << "; " << thePnt_l.Y() << "; " << thePnt_l.Z() << ")"	<< endl;
