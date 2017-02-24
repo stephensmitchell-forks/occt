@@ -57,6 +57,12 @@
 
 #include <HLRAppli_ReflectLines.hxx>
 
+#include <OSD_Timer.hxx>
+#include <Geom2d_BSplineCurve.hxx>
+#include <Geom_BSplineCurve.hxx>
+#include <Geom2dAdaptor_Curve.hxx>
+#include <GeomAdaptor_Curve.hxx>
+
 //=======================================================================
 //function : SurfaceGenOCC26675_1 
 //purpose  : Generates a surface for intersect (in corresponding
@@ -2140,6 +2146,78 @@ static Standard_Integer OCC27875(Draw_Interpretor& theDI,
   return 0;
 }
 
+// calculate specified number of points on a curve
+template <class AdCurve>
+void evalCurve (const AdCurve& theCurve, int theNbP, bool isRandom, double theUMin, double theUMax)
+{
+  std::srand(1);
+  double aStep = (theUMax - theUMin) / (! isRandom && theNbP > 0 ? theNbP : 1);
+  for (int i = 0; i < theNbP; i++)
+  {
+    double aU = theUMin + aStep * (isRandom ? std::rand() / (double)RAND_MAX : (double)i);
+    theCurve.Value (aU);
+//    Standard_ASSERT_VOID(theCurve.Value (aU).SquareDistance (theCurve.BSpline()->Value(aU)) < 1e-20,
+//                         "Different points at the same parameter");
+  }
+}
+
+static Standard_Integer probspline (Draw_Interpretor& theDI,
+                                    Standard_Integer theNArg,
+                                    const char ** theArgVal)
+{
+  if (theNArg < 2)
+  {
+    std::cout << "Measures time of evaluating points on bspline" << std::endl;
+    std::cout << "Use: \n" << theArgVal[0] << " bspline nbpoints [-r{andom}] [ustart uend]" << std::endl;
+    return 1;
+  }
+
+  Handle(Geom2d_BSplineCurve) aCurve2d = DrawTrSurf::GetBSplineCurve2d (theArgVal[1]);
+  Handle(Geom_BSplineCurve) aCurve = DrawTrSurf::GetBSplineCurve (theArgVal[1]);
+  if (aCurve2d.IsNull() && aCurve.IsNull())
+  {
+    std::cout << "Error: " << theArgVal[1] << " is neither 2d nor 3d bspline" << std::endl;
+    return 1;
+  }
+
+  Standard_Integer aNbP = Draw::Atoi (theArgVal[2]);
+  Standard_Boolean isRandom = Standard_False;
+  Standard_Integer nbArg = 3;
+  if (theNArg > 3 && theArgVal[nbArg][0] == '-' && theArgVal[nbArg][1] == 'r')
+  {
+    isRandom = Standard_True;
+    nbArg++;
+  }
+  Standard_Real aUMin = (! aCurve2d.IsNull() ? aCurve2d->FirstParameter() : aCurve->FirstParameter());
+  Standard_Real aUMax = (! aCurve2d.IsNull() ? aCurve2d->LastParameter()  : aCurve->LastParameter());
+  if (nbArg + 1 < theNArg)
+  {
+    aUMin = Draw::Atof (theArgVal[nbArg++]);
+    aUMax = Draw::Atof (theArgVal[nbArg++]);
+  }
+
+  std::cout << "Evaluating " << aNbP << (isRandom ? " random" : "sequential") << " points on " 
+            << (! aCurve2d.IsNull() ? "2d" : "3d") << " bspline curve " << theArgVal[1]
+            << " in range [" << aUMin << ", " << aUMax << "]" << std::endl;
+  OSD_Timer aTimer;
+  aTimer.Start();
+  if (! aCurve2d.IsNull())
+  {
+    Geom2dAdaptor_Curve aC (aCurve2d);
+    evalCurve (aC, aNbP, isRandom, aUMin, aUMax);
+  }
+  else if (! aCurve.IsNull())
+  {
+    GeomAdaptor_Curve aC (aCurve);
+    evalCurve (aC, aNbP, isRandom, aUMin, aUMax);
+  }
+  Standard_Real aSec, aCPU;
+  Standard_Integer aMin, aHour;
+  aTimer.Show (aSec, aMin, aHour, aCPU);
+  theDI << "Elapsed " << (aSec + 60. * aMin + 3600. * aHour) << " sec, CPU = " << aCPU << " sec";
+
+  return 0;
+}
 
 #include <TDF_Tool.hxx>
 #include <XCAFDoc_View.hxx>
@@ -2273,6 +2351,8 @@ void QABugs::Commands_20(Draw_Interpretor& theCommands) {
   theCommands.Add ("OCC27552", "OCC27552", __FILE__, OCC27552, group); 
   theCommands.Add("OCC27875", "OCC27875 curve", __FILE__, OCC27875, group);
   theCommands.Add("OCC28389", "OCC28389", __FILE__, OCC28389, group);
+
+  theCommands.Add("probspline", "probspline curve nbpoints [-random] [umin umax]", __FILE__, probspline, group);
 
   return;
 }

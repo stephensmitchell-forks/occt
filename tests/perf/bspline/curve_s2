@@ -1,0 +1,5 @@
+puts "Evaluation of simple curve, sequential, in range"
+
+pload QAcommands
+bsplinecurve  c 3 2 0 4 1 4 0 0 0 1 0 0 1 1  1 0 1 1  1 0 0 1
+probspline c 10000000
