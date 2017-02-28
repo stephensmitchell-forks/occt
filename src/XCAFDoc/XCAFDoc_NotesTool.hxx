@@ -79,6 +79,12 @@ public:
 
   Standard_EXPORT Handle(XCAFDoc_AssemblyItemRef) AddNote(const TDF_Label&              theNoteLabel,
                                                           const XCAFDoc_AssemblyItemId& theItemId);
+  Standard_EXPORT Handle(XCAFDoc_AssemblyItemRef) AddNoteToAttr(const TDF_Label&              theNoteLabel,
+                                                                const XCAFDoc_AssemblyItemId& theItemId,
+                                                                const Standard_GUID&          theGUID);
+  Standard_EXPORT Handle(XCAFDoc_AssemblyItemRef) AddNoteToSubshape(const TDF_Label&              theNoteLabel,
+                                                                    const XCAFDoc_AssemblyItemId& theItemId,
+                                                                    Standard_Integer              theSubshapeIndex);
 
   Standard_EXPORT Standard_Boolean RemoveNote(const TDF_Label&              theNoteLabel,
                                               const XCAFDoc_AssemblyItemId& theItemId,

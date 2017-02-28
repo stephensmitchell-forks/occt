@@ -53,11 +53,32 @@ Standard_Boolean BinMXCAFDoc_AssemblyItemRefDriver::Paste(const BinObjMgt_Persis
   if (aThis.IsNull())
     return Standard_False;
   
-  TCollection_AsciiString aStr;
-  if (!(theSource >> aStr))
+  TCollection_AsciiString aPathStr;
+  if (!(theSource >> aPathStr))
     return Standard_False;
 
-  aThis->Set(aStr);
+  aThis->SetItem(aPathStr);
+
+  Standard_Integer anExtraRef = 0;
+  if (!(theSource >> anExtraRef))
+    return Standard_False;
+
+  if (anExtraRef == 1)
+  {
+    Standard_GUID aGUID;
+    if (!(theSource >> aGUID))
+      return Standard_False;
+
+    aThis->SetGUID(aGUID);
+  }
+  else if (anExtraRef == 2)
+  {
+    Standard_Integer aSubshapeIndex;
+    if (!(theSource >> aSubshapeIndex))
+      return Standard_False;
+
+    aThis->SetSubshapeIndex(aSubshapeIndex);
+  }
 
   return Standard_True;
 }
@@ -72,5 +93,19 @@ void BinMXCAFDoc_AssemblyItemRefDriver::Paste(const Handle(TDF_Attribute)& theSo
 {
   Handle(XCAFDoc_AssemblyItemRef) aThis = Handle(XCAFDoc_AssemblyItemRef)::DownCast(theSource);
   if (!aThis.IsNull())
-    theTarget << aThis->Get().ToString();
+  {
+    theTarget << aThis->GetItem().ToString();
+    if (aThis->IsGUID())
+    {
+      theTarget << Standard_Integer(1);
+      theTarget << aThis->GetGUID();
+    }
+    else if (aThis->IsSubshapeIndex())
+    {
+      theTarget << Standard_Integer(2);
+      theTarget << aThis->GetSubshapeIndex();
+    }
+    else
+      theTarget << Standard_Integer(0);
+  }
 }
