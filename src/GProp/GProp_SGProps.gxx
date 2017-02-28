@@ -778,9 +778,9 @@ static void Compute(Face& S, Domain& D, const gp_Pnt& loc, Standard_Real& dim, g
         y = FuncAdd(y, -yloc);
         z = FuncAdd(z, -zloc);
 
-        const Standard_Real XdS = FuncMul(x, ds);
-        const Standard_Real YdS = FuncMul(y, ds);
-        const Standard_Real ZdS = FuncMul(z, ds);
+        Standard_Real XdS = FuncMul(x, ds);
+        Standard_Real YdS = FuncMul(y, ds);
+        Standard_Real ZdS = FuncMul(z, ds);
         
         LocIx = FuncAdd(LocIx, XdS);
         LocIy = FuncAdd(LocIy, YdS);
@@ -791,6 +791,9 @@ static void Compute(Face& S, Domain& D, const gp_Pnt& loc, Standard_Real& dim, g
         x = Precision::IsInfinite(x) ? Precision::Infinite() : x*x;
         y = Precision::IsInfinite(y) ? Precision::Infinite() : y*y;
         z = Precision::IsInfinite(z) ? Precision::Infinite() : z*z;
+        XdS = FuncMul(x, ds);
+        YdS = FuncMul(y, ds);
+        ZdS = FuncMul(z, ds);
         LocIxx = FuncAdd(LocIxx, FuncAdd(YdS, ZdS));
         LocIyy = FuncAdd(LocIyy, FuncAdd(XdS, ZdS));
         LocIzz = FuncAdd(LocIzz, FuncAdd(XdS, YdS));
@@ -909,9 +912,9 @@ static void Compute(const Face& S,
 
       dsi = FuncAdd(dsi, ds);
 
-      const Standard_Real XdS = FuncMul(x, ds);
-      const Standard_Real YdS = FuncMul(y, ds);
-      const Standard_Real ZdS = FuncMul(z, ds);
+      Standard_Real XdS = FuncMul(x, ds);
+      Standard_Real YdS = FuncMul(y, ds);
+      Standard_Real ZdS = FuncMul(z, ds);
 
       Ixi = FuncAdd(Ixi, XdS);
       Iyi = FuncAdd(Iyi, YdS);
@@ -922,6 +925,9 @@ static void Compute(const Face& S,
       x = Precision::IsInfinite(x) ? Precision::Infinite() : x*x;
       y = Precision::IsInfinite(y) ? Precision::Infinite() : y*y;
       z = Precision::IsInfinite(z) ? Precision::Infinite() : z*z;
+      XdS = FuncMul(x, ds);
+      YdS = FuncMul(y, ds);
+      ZdS = FuncMul(z, ds);
       Ixxi = FuncAdd(Ixxi, FuncAdd(YdS, ZdS));
       Iyyi = FuncAdd(Iyyi, FuncAdd(XdS, ZdS));
       Izzi = FuncAdd(Izzi, FuncAdd(XdS, YdS));
