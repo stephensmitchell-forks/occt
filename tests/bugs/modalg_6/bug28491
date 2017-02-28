@@ -1,0 +1,15 @@
+puts "========"
+puts "OCC28491"
+puts "========"
+puts ""
+##########################################
+## Incomplete section curve
+##########################################
+
+restore [locate_data_file bug28491_H0.brep] h0
+restore [locate_data_file bug28491_Prism.brep] s1
+explode h0 f
+
+bsection result h0_57 s1 -n2d2
+
+set length 4.60797
