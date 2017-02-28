@@ -18,10 +18,11 @@
 
 #include <Standard.hxx>
 #include <Standard_Type.hxx>
+#include <Standard_GUID.hxx>
 #include <TDF_Attribute.hxx>
 #include <XCAFDoc_AssemblyItemId.hxx>
 
-class Standard_GUID;
+class TDF_Data;
 class TDF_RelocationTable;
 
 class XCAFDoc_AssemblyItemRef;
@@ -40,16 +41,32 @@ public:
 
   Standard_EXPORT static Handle(XCAFDoc_AssemblyItemRef) Set(const TDF_Label&              theLabel,
                                                              const XCAFDoc_AssemblyItemId& theItemId);
+  Standard_EXPORT static Handle(XCAFDoc_AssemblyItemRef) Set(const TDF_Label&              theLabel,
+                                                             const XCAFDoc_AssemblyItemId& theItemId,
+                                                             const Standard_GUID&          theGUID);
+  Standard_EXPORT static Handle(XCAFDoc_AssemblyItemRef) Set(const TDF_Label&              theLabel,
+                                                             const XCAFDoc_AssemblyItemId& theItemId,
+                                                             const Standard_Integer        theShapeIndex);
 
   Standard_EXPORT XCAFDoc_AssemblyItemRef();
 
   Standard_EXPORT Standard_Boolean IsOrphan() const;
 
-  Standard_EXPORT const XCAFDoc_AssemblyItemId& Get() const;
+  Standard_EXPORT Standard_Boolean HasExtraRef() const;
+  Standard_EXPORT Standard_Boolean IsGUID() const;
+  Standard_EXPORT Standard_Boolean IsSubshapeIndex() const;
+
+  Standard_EXPORT const XCAFDoc_AssemblyItemId& GetItem() const;
+  Standard_EXPORT Standard_GUID GetGUID() const;
+  Standard_EXPORT Standard_Integer GetSubshapeIndex() const;
   
-  Standard_EXPORT void Set(const XCAFDoc_AssemblyItemId& theItemId);
-  Standard_EXPORT void Set(const TColStd_ListOfAsciiString& thePath);
-  Standard_EXPORT void Set(const TCollection_AsciiString& theString);
+  Standard_EXPORT void SetItem(const XCAFDoc_AssemblyItemId& theItemId);
+  Standard_EXPORT void SetItem(const TColStd_ListOfAsciiString& thePath);
+  Standard_EXPORT void SetItem(const TCollection_AsciiString& theString);
+  Standard_EXPORT void SetGUID(const Standard_GUID& theAttrGUID);
+  Standard_EXPORT void SetSubshapeIndex(Standard_Integer theShapeIndex);
+
+  Standard_EXPORT void ClearExtraRef();
 
 public:
 
@@ -66,7 +83,9 @@ public:
 
 private:
 
-  XCAFDoc_AssemblyItemId myItemId;
+  XCAFDoc_AssemblyItemId  myItemId;
+  Standard_Integer        myExtraRef;
+  TCollection_AsciiString myExtraId;
 
 };
 

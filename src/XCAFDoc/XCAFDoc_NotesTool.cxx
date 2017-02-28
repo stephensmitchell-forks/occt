@@ -125,7 +125,7 @@ XCAFDoc_NotesTool::FindAnnotatedItem(const XCAFDoc_AssemblyItemId& theItemId) co
   for (TDF_ChildIDIterator anIter(GetAnnotatedItemsLabel(), XCAFDoc_AssemblyItemRef::GetID()); anIter.More(); anIter.Next())
   {
     Handle(XCAFDoc_AssemblyItemRef) anItemRef = Handle(XCAFDoc_AssemblyItemRef)::DownCast(anIter.Value());
-    if (!anItemRef.IsNull() && anItemRef->Get().IsEqual(theItemId))
+    if (!anItemRef.IsNull() && anItemRef->GetItem().IsEqual(theItemId))
       return anItemRef->Label();
   }
   return TDF_Label();
@@ -234,6 +234,28 @@ XCAFDoc_NotesTool::AddNote(const TDF_Label&              theNoteLabel,
   aChild->SetFather(aFather);
   aFather->SetChild(aChild);
 
+  return anItemRef;
+}
+
+Handle(XCAFDoc_AssemblyItemRef) 
+XCAFDoc_NotesTool::AddNoteToAttr(const TDF_Label&              theNoteLabel,
+              const XCAFDoc_AssemblyItemId& theItemId,
+              const Standard_GUID&          theGUID)
+{
+  Handle(XCAFDoc_AssemblyItemRef) anItemRef = AddNote(theNoteLabel, theItemId);
+  if (!anItemRef.IsNull())
+    anItemRef->SetGUID(theGUID);
+  return anItemRef;
+}
+
+Handle(XCAFDoc_AssemblyItemRef) 
+XCAFDoc_NotesTool::AddNoteToSubshape(const TDF_Label&              theNoteLabel,
+                  const XCAFDoc_AssemblyItemId& theItemId,
+                  Standard_Integer              theSubshapeIndex)
+{
+  Handle(XCAFDoc_AssemblyItemRef) anItemRef = AddNote(theNoteLabel, theItemId);
+  if (!anItemRef.IsNull())
+    anItemRef->SetSubshapeIndex(theSubshapeIndex);
   return anItemRef;
 }
 
