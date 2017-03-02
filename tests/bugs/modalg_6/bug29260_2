@@ -6,9 +6,6 @@ puts ""
 # Boolean operation hangs on the intersection stage
 #######################################################################
 
-puts "TODO OCC29260 ALL: Error :  is WRONG because number of"
-puts "TODO OCC29260 ALL: Error : The area of result shape is"
-
 restore [locate_data_file bug29260_sewedShapeb1.brep] a
 restore [locate_data_file bug29260_cuttingTool2b1.brep] t2
 
