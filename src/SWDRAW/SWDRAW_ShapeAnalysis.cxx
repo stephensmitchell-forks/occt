@@ -60,6 +60,9 @@
 #include <TopoDS_Vertex.hxx>
 #include <TopoDS_Wire.hxx>
 #include <TopTools_HSequenceOfShape.hxx>
+#include <Adaptor3d_CurveOnSurface.hxx>
+#include <BRepAdaptor_HCurve2d.hxx>
+#include <BRepAdaptor_HSurface.hxx>
 
 #include <stdio.h>
 static Standard_Integer tolerance
@@ -225,6 +228,50 @@ static Standard_Integer projcurve
   dist = ShapeAnalysis_Curve().Project (C,P3D,BRepBuilderAPI::Precision(),res,param, cf,cl);
   res.Coord(X,Y,Z);
   di<<"Result : "<<X<<"  "<<Y<<"  "<<Z<<"\nParam = "<<param<<"  Gap = "<<dist<<"\n";
+  return 0;
+}
+static Standard_Integer projpcurve
+(Draw_Interpretor& di, Standard_Integer argc, const char** argv)
+{
+  //  admet une EDGE ou une CURVE
+  if (argc < 7)
+  {
+    di << "Give : projpcurve edge face tol X Y Z\n";
+    return 1;
+  }
+
+  TopoDS_Edge aEdge = TopoDS::Edge(DBRep::Get(argv[1]));
+  if (aEdge.IsNull())
+  {
+    di << "SHAPE " << argv[1] << " is not an EDGE\n"; return 1 /* Error */;
+  }
+  TopoDS_Face aFace = TopoDS::Face(DBRep::Get(argv[2]));
+  if (aFace.IsNull())
+  {
+    di << "SHAPE " << argv[2] << " is not a FACE\n"; return 1 /* Error */;
+  }
+
+  Standard_Real aTol = Draw::Atof(argv[3]);
+
+
+  Standard_Real X = Draw::Atof(argv[4]);
+  Standard_Real Y = Draw::Atof(argv[5]);
+  Standard_Real Z = Draw::Atof(argv[6]);
+
+  gp_Pnt aP3D(X, Y, Z);
+
+  Adaptor3d_CurveOnSurface aCOnS =
+    Adaptor3d_CurveOnSurface(new BRepAdaptor_HCurve2d(BRepAdaptor_Curve2d(aEdge, aFace)),
+    new BRepAdaptor_HSurface(BRepAdaptor_Surface(aFace, Standard_False)));
+
+  gp_Pnt aPnt;
+  Standard_Real aParam;
+  ShapeAnalysis_Curve aTool;
+  Standard_Real aDist = aTool.Project(aCOnS, aP3D, aTol, aPnt, aParam, Standard_False);
+
+  di << "Point:" << "\n" << aPnt.X() << " " << aPnt.Y() << " " << aPnt.Z() << "\n";
+  di << "Param: " << aParam << "\n";
+  di << "Dist: " << aDist << "\n";
   return 0;
 }
 
@@ -983,7 +1030,9 @@ static Standard_Integer checkedge(Draw_Interpretor& di, Standard_Integer argc, c
   theCommands.Add ("projface","nom_face X Y [Z]", __FILE__,projface,g);
   theCommands.Add ("projcurve","nom_edge | curve3d | curve3d first last + X Y Z",
 		   __FILE__,projcurve,g);
-  theCommands.Add ("anaface","nomface",__FILE__,anaface,g);
+  theCommands.Add("projpcurve", "edge face tol x y z",
+    __FILE__, projpcurve, g);
+  theCommands.Add("anaface", "nomface", __FILE__, anaface, g);
   theCommands.Add ("statshape","shape [particul] : stats/particularites",
 		   __FILE__,XSHAPE_statshape,g);
   theCommands.Add ("comptol","shape [nbpoints]",__FILE__,XSHAPE_comptoledge,g);
