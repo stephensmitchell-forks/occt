@@ -1,4 +1,4 @@
-puts "TODO CR27414 ALL: Error :  is WRONG because number of FACE entities in shape"
+puts "TODO OCC27414 ALL: WRONG because number of FACE .* is 16"
 
 restore [locate_data_file bug28442_simple3.brep] s
 
