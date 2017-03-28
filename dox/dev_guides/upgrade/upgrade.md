@@ -333,6 +333,8 @@ The applications that used these data persistence tools need to be updated to us
 
 The existing data files in standard formats can be converted using OCCT 6.9.1 or a previous version, as follows.
 
+@note Reading / writing custom files capability from OCCT 6.9.1 is restored in OCCT 7.2.0. See details in @ref upgrade_720_persistence section.
+
 #### CSFDB files
 
 Files in *CSFDB* format (usually with extension .csfdb) contain OCCT shape data that can be converted to BRep format. 
@@ -1128,3 +1130,102 @@ The code below shows new calling procedure:
     BodyMaker.MakeThickSolidByJoin(myBody, facesToRemove, -myThickness / 50, 1.e-3);
     myBody = BodyMaker.Shape();
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+@subsection upgrade_720_persistence Restore OCCT 6.9.1 persistence
+  
+Capability of reading / writing files in legacy CSFDB format using functionality provided by *Storage* package and *ShapeSchema* from OCCT 6.9.1 has been restored in OCCT 7.2.0. 
+
+In DRAW Test Harness, commands fsdread / fsdwrite can be used to read and write shapes from / to that format.
+
+The following code examples demonstrate how to read and store shapes from / to that format driver using *StdStorage* class.
+
+Reading CSFDB file:
+
+~~~~
+// aDriver should be created and opened for reading
+Handle(StdStorage_Data) aData;
+
+// Read data from the driver
+// StdStorage::Read creates aData instance automatically if it is null
+Storage_Error anError = StdStorage::Read(aFileName, aData);
+if (anError != Storage_VSOk)
+{
+  // Error processing
+}
+
+// Get root objects
+Handle(StdStorage_RootData) aRootData = aData->RootData();
+Handle(StdStorage_HSequenceOfRoots) aRoots = aRootData->Roots();
+if (!aRoots.IsNull())
+{
+  // Iterator over the sequence of root objects
+  for (StdStorage_HSequenceOfRoots::Iterator anIt(*aRoots); anIt.More(); anIt.Next())
+  {
+    Handle(StdStorage_Root)& aRoot = anIt.ChangeValue();
+	// Get a persistent root's object
+    Handle(StdObjMgt_Persistent) aPObject = aRoot->Object();
+    if (!aPObject.IsNull())
+    {
+      Handle(ShapePersistent_TopoDS::HShape) aHShape = Handle(ShapePersistent_TopoDS::HShape)::DownCast(aPObject);
+      if (aHShape) // Downcast to an expected type to import transient data
+      {
+        TopoDS_Shape aShape = aHShape->Import();
+        shapes.Append(aShape);
+      }
+    }
+  }
+}
+~~~~
+
+Writing CSFDB file:
+
+~~~~
+// Create a file driver
+NCollection_Handle<Storage_BaseDriver> aFileDriver(new FSD_File());
+
+// Try to open the file driver for writing
+try
+{
+  OCC_CATCH_SIGNALS
+  PCDM_ReadWriter::Open(*aFileDriver, TCollection_ExtendedString(CStringA(filename).GetBuffer()), Storage_VSWrite);
+}
+catch (Standard_Failure& e)
+{
+  // Error processing
+}
+
+// Create a storage data instance
+Handle(StdStorage_Data) aData = new StdStorage_Data;
+// Set an axiliary application name (optional)
+aData->HeaderData()->SetApplicationName(TCollection_ExtendedString("Application"));
+
+// Provide a map to track sharing
+StdObjMgt_TransientPersistentMap aMap;
+// Iterator over a collection of shapes
+for (Standard_Integer i = 1; i <= shapes.Length(); ++i)
+{
+  TopoDS_Shape aShape = shapes.Value(i);
+  // Translate a shape to a persistent object
+  Handle(ShapePersistent_TopoDS::HShape) aPShape =
+    ShapePersistent_TopoDS::Translate(aShape, aMap, ShapePersistent_WithTriangle);
+  if (aPShape.IsNull())
+  {
+    // Error processing
+  }
+
+  // Construct a root name
+  TCollection_AsciiString aName = "Shape_";
+  aName += i;
+
+  // Add a root to storage data
+  Handle(StdStorage_Root) aRoot = new StdStorage_Root(aName, aPShape);
+  aData->RootData()->AddRoot(aRoot);
+}
+
+// Write storage data to the driver
+Storage_Error anError = StdStorage::Write(*aFileDriver, aData);
+if (anError != Storage_VSOk)
+{
+  // Error processing
+}
+~~~~
