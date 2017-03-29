@@ -179,7 +179,6 @@ protected:
 
   //! Checks and puts paves from <theMVOn> on the curve <theNC>.
   Standard_EXPORT void PutPavesOnCurve (const BOPCol_MapOfInteger& theMVOn, 
-                                const Standard_Real theTolR3D, 
                                 BOPDS_Curve& theNC, 
                                 const Standard_Integer nF1, 
                                 const Standard_Integer nF2, 
@@ -188,8 +187,7 @@ protected:
                                 BOPCol_DataMapOfIntegerReal& theMVTol,
                                 BOPCol_DataMapOfIntegerListOfInteger& aDMVLV);
 
-  Standard_EXPORT void FilterPavesOnCurves(const BOPDS_VectorOfCurve& theVNC,
-                                           const Standard_Real theTolR3D);
+  Standard_EXPORT void FilterPavesOnCurves(const BOPDS_VectorOfCurve& theVNC);
 
   //! Depending on the parameter aType it checks whether
   //! the vertex nV was created in EE or EF intersections.
@@ -201,7 +199,10 @@ protected:
   //! other - checks both types of intersections.
   Standard_EXPORT Standard_Boolean ExtendedTolerance (const Standard_Integer nV, const BOPCol_MapOfInteger& aMI, Standard_Real& aTolVExt, const Standard_Integer aType = 0);
   
-  Standard_EXPORT void PutBoundPaveOnCurve (const TopoDS_Face& theF1, const TopoDS_Face& theF2, const Standard_Real theTolR3D, BOPDS_Curve& theNC, BOPCol_ListOfInteger& theLBV);
+  Standard_EXPORT void PutBoundPaveOnCurve(const TopoDS_Face& theF1,
+                                           const TopoDS_Face& theF2,
+                                           BOPDS_Curve& theNC,
+                                           BOPCol_ListOfInteger& theLBV);
   
   Standard_EXPORT Standard_Boolean IsExistingPaveBlock
     (const Handle(BOPDS_PaveBlock)& thePB, const BOPDS_Curve& theNC,
