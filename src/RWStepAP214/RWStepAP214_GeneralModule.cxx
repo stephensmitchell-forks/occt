@@ -1363,6 +1363,8 @@ IMPLEMENT_STANDARD_RTTIEXT(RWStepAP214_GeneralModule,StepData_GeneralModule)
 #include <StepVisual_AnnotationFillAreaOccurrence.hxx>
 #include <RWStepVisual_RWAnnotationFillArea.hxx>
 #include <RWStepVisual_RWAnnotationFillAreaOccurrence.hxx>
+#include <StepVisual_AnnotationCurveOccurrenceAndAnnotationOccurrenceAndGeomReprItemAndReprItemAndStyledItem.hxx>
+#include <RWStepVisual_RWAnnotationCurveOccurrenceAndAnnotationOccurrenceAndGeomReprItemAndReprItemAndStyledItem.hxx>
 
 static Standard_Integer catsh,catdr,catstr,catdsc,cataux;
 
@@ -5136,6 +5138,13 @@ void RWStepAP214_GeneralModule::FillSharedCase(const Standard_Integer CN,
     tool.Share(anent, iter);
   }
   break;
+  case 719:
+  {
+    DeclareAndCast(StepVisual_AnnotationCurveOccurrenceAndAnnotationOccurrenceAndGeomReprItemAndReprItemAndStyledItem, anent, ent);
+    RWStepVisual_RWAnnotationCurveOccurrenceAndAnnotationOccurrenceAndGeomReprItemAndReprItemAndStyledItem tool;
+    tool.Share(anent, iter);
+  }
+  break;
     default : break;
     }
 }
@@ -7136,6 +7145,9 @@ Standard_Boolean RWStepAP214_GeneralModule::NewVoid
    case 715:
    ent = new StepVisual_CharacterizedObjectAndCharacterizedRepresentationAndDraughtingModelAndRepresentation;
    break;
+   case 719:
+     ent = new StepVisual_AnnotationCurveOccurrenceAndAnnotationOccurrenceAndGeomReprItemAndReprItemAndStyledItem;
+   break;
 
     
   default: 
@@ -7732,6 +7744,7 @@ Standard_Integer  RWStepAP214_GeneralModule::CategoryNumber
   case 713: return catsh;
   case 714: return catstr;
   case 715: return catdsc;
+  case 719: return catdr;
     
   default : break;
   }
