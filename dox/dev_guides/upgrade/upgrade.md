@@ -1105,6 +1105,11 @@ The following classes have been changed:
 
 @section upgrade_occt720 Upgrade to OCCT 7.2.0
 
+@subsection upgrade_720_removed Removed features
+
+The following obsolete features have been removed:
+* The packages *QANewModTopOpe*, *QANewBRepNaming* and *QANewDBRepNaming* have been removed as containing obsolete features.
+
 @subsection upgrade_720_Result_Of_BOP_On_Containers Result of Boolean operations on containers
 
 * The result of Boolean operations on arguments of collection types (WIRE/SHELL/COMPSOLID) is now filtered from duplicating containers.
