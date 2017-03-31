@@ -37,7 +37,13 @@ uses
     Draw,
     TDF,
     TDocStd,
-    DDF
+    DDF,
+	FSD,
+	BRep,
+	MgtBRep,
+	PCDM,
+	Storage,
+	ShapeSchema	
 
 is
 
@@ -97,5 +103,8 @@ is
     MTMCommands (theCommands : in out Interpretor from Draw);    
     ---Purpose : Create, Add, Remove, Open, Commit, Undo, Redo, SetNestedMode
 
+	ShapeSchemaCommands (theCommands : in out Interpretor from Draw);
+	---Purpose : ShapeSchema_Write, ShapeSchema_Read
+	
 
 end DDocStd;

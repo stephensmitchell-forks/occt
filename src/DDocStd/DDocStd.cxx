@@ -141,4 +141,5 @@ void DDocStd::AllCommands(Draw_Interpretor& theCommands)
   DDocStd::DocumentCommands(theCommands);
   DDocStd::ToolsCommands(theCommands);
   DDocStd::MTMCommands(theCommands);
+  DDocStd::ShapeSchemaCommands(theCommands);
 }
