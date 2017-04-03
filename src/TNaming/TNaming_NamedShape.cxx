@@ -992,7 +992,7 @@ static void SelectSameShape (TNaming_Node*&          myNode,
     if (Valid)
     {
       if (Old) {
-        if( pdn->myOld == RS && pdn->myNew != 0L && pdn->myNew != RS) {
+        if( pdn->myOld == RS && (pdn->myAtt->Evolution() == TNaming_DELETE || pdn->myNew != 0L) && pdn->myNew != RS) {
           break;
         }  
       }
@@ -1175,9 +1175,9 @@ Handle(TNaming_NamedShape) TNaming_NewShapeIterator::NamedShape() const
 
 const TopoDS_Shape& TNaming_NewShapeIterator::Shape() const
 {
-  Standard_NoSuchObject_Raise_if(myNode == 0L,
-				 "TNaming_NewShapeIterator::Shape"); 
-  return myNode->myNew->Shape();
+  Standard_NoSuchObject_Raise_if(myNode == 0L, "TNaming_NewShapeIterator::Shape");
+  static const TopoDS_Shape aNullShape;
+  return (myNode->myNew != NULL) ? myNode->myNew->Shape() : aNullShape;
 }
 
 //=======================================================================
