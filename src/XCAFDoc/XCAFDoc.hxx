@@ -120,6 +120,9 @@ public:
   
   //! Return GUIDs for TreeNode representing specified types of View
   Standard_EXPORT static Standard_GUID ViewRefPlaneGUID();
+ 
+  //! Return GUIDs for TreeNode representing specified types of View
+  Standard_EXPORT static Standard_GUID ViewRefEnabledShapesGUID();
 
   //! Returns GUID for UAttribute identifying lock flag
   Standard_EXPORT static Standard_GUID LockGUID();
