@@ -357,7 +357,7 @@ Standard_Integer thrusections(Draw_Interpretor&, Standard_Integer n, const char*
   Standard_Boolean check = Standard_True;
   Standard_Boolean samenumber = Standard_True;
   Standard_Integer index = 2;
-    // Lecture option
+  // Lecture option
   if (!strcmp(a[1],"-N")) {
     if (n<7) return 1;
     check = Standard_False;
@@ -375,29 +375,34 @@ Standard_Integer thrusections(Draw_Interpretor&, Standard_Integer n, const char*
     Generator = 0;
   }
   Generator = new BRepOffsetAPI_ThruSections(issolid,isruled);
-  
+  Standard_Boolean IsMutableInput = Standard_True;
   Standard_Integer NbEdges = 0;
   Standard_Boolean IsFirstWire = Standard_False;
   for ( Standard_Integer i = index+2; i<= n-1 ; i++) {
+    if (!strcmp(a[i],"-save"))
+    {
+      IsMutableInput = Standard_False;
+      continue;
+    }
     Standard_Boolean IsWire = Standard_True;
     Shape = DBRep::Get(a[i], TopAbs_WIRE);
     if (!Shape.IsNull())
-      {
-	Generator->AddWire(TopoDS::Wire(Shape));
-	if (!IsFirstWire)
-	  IsFirstWire = Standard_True;
-	else
-	  IsFirstWire = Standard_False;
-      }
+    {
+      Generator->AddWire(TopoDS::Wire(Shape));
+      if (!IsFirstWire)
+        IsFirstWire = Standard_True;
+      else
+        IsFirstWire = Standard_False;
+    }
     else
-      {
-	Shape = DBRep::Get(a[i], TopAbs_VERTEX);
-	IsWire = Standard_False;
-	if (!Shape.IsNull())
-	  Generator->AddVertex(TopoDS::Vertex(Shape));
-	else
-	  return 1;
-      }
+    {
+      Shape = DBRep::Get(a[i], TopAbs_VERTEX);
+      IsWire = Standard_False;
+      if (!Shape.IsNull())
+        Generator->AddVertex(TopoDS::Vertex(Shape));
+      else
+        return 1;
+    }
 
     Standard_Integer cpt = 0;
     TopExp_Explorer PE;
@@ -408,9 +413,11 @@ Standard_Integer thrusections(Draw_Interpretor&, Standard_Integer n, const char*
       NbEdges = cpt;
     else
       if (IsWire && cpt != NbEdges)
-	samenumber = Standard_False;
-    
+        samenumber = Standard_False;
+
   }
+
+  Generator->SetMutableInput(IsMutableInput);
 
   check = (check || !samenumber);
   Generator->CheckCompatibility(check);

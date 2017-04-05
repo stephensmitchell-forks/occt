@@ -90,6 +90,9 @@
 #include <TopTools_IndexedDataMapOfShapeListOfShape.hxx>
 #include <TopTools_ListIteratorOfListOfShape.hxx>
 #include <BRepAdaptor_Surface.hxx>
+#include <TopTools_DataMapOfShapeReal.hxx>
+#include <TopTools_DataMapIteratorOfDataMapOfShapeReal.hxx>
+#include <BRepTools_ReShape.hxx>
 
 //=======================================================================
 //function : PreciseUpar
@@ -253,6 +256,7 @@ BRepOffsetAPI_ThruSections::BRepOffsetAPI_ThruSections(const Standard_Boolean is
   myDegen1(Standard_False), myDegen2(Standard_False)
 {
   myWCheck = Standard_True;
+  myMutableInput = Standard_True;
   //----------------------------
   myParamType = Approx_ChordLength; 
   myDegMax    = 8; 
@@ -276,6 +280,7 @@ void BRepOffsetAPI_ThruSections::Init(const Standard_Boolean isSolid, const Stan
   myIsRuled = ruled;
   myPres3d = pres3d;
   myWCheck = Standard_True;
+  myMutableInput = Standard_True;
   //----------------------------
   myParamType = Approx_ChordLength; 
   myDegMax    = 6; 
@@ -507,14 +512,17 @@ void BRepOffsetAPI_ThruSections::Build()
 void BRepOffsetAPI_ThruSections::CreateRuled()
 {
   Standard_Integer nbSects = myWires.Length();
-  BRepFill_Generator aGene;
+  //?? should we clean myBFGenerator in some other places??
+  myBFGenerator.Nullify();
+  myBFGenerator = new BRepFill_Generator();
+  myBFGenerator->SetMutableInput(GetMutableInput());
   //  for (Standard_Integer i=1; i<=nbSects; i++) {
   Standard_Integer i;
   for (i=1; i<=nbSects; i++) {
-    aGene.AddWire(TopoDS::Wire(myWires(i)));
+    myBFGenerator->AddWire(TopoDS::Wire(myWires(i)));
   }
-  aGene.Perform();
-  TopoDS_Shell shell = aGene.Shell();
+  myBFGenerator->Perform();
+  TopoDS_Shell shell = myBFGenerator->Shell();
 
   if (myIsSolid) {
 
@@ -545,6 +553,13 @@ void BRepOffsetAPI_ThruSections::CreateRuled()
 
       TopoDS_Wire wire1 = TopoDS::Wire(myWires.First());
       TopoDS_Wire wire2 = TopoDS::Wire(myWires.Last());
+
+      //myBFGenerator stores the same 'myWires'
+      if (myBFGenerator->IsModified(wire1))
+        wire1 = TopoDS::Wire(myBFGenerator->Modified(wire1));
+      if (myBFGenerator->IsModified(wire2))
+        wire2 = TopoDS::Wire(myBFGenerator->Modified(wire2));
+
       myShape = MakeSolid(shell, wire1, wire2, myPres3d, myFirst, myLast);
 
     }
@@ -585,19 +600,19 @@ void BRepOffsetAPI_ThruSections::CreateRuled()
 
       TopTools_MapOfShape MapFaces;
       if (degen2){
-        TopoDS_Vertex Vdegen = TopExp::FirstVertex(TopoDS::Edge(edge2));
+        TopoDS_Vertex Vdegen = TopoDS::Vertex(myBFGenerator->Modified(TopExp::FirstVertex(TopoDS::Edge(edge2))));
         for (it.Initialize(MV.FindFromKey(Vdegen)); it.More(); it.Next()) {
           MapFaces.Add(it.Value());
         }
       }
       else {
-        for (it.Initialize(M.FindFromKey(edge2)); it.More(); it.Next()) {
+        for (it.Initialize(M.FindFromKey(myBFGenerator->Modified(edge2))); it.More(); it.Next()) {
           MapFaces.Add(it.Value());
         }
       }
 
       if (degen1) {
-        TopoDS_Vertex Vdegen = TopExp::FirstVertex(TopoDS::Edge(edge1));
+        TopoDS_Vertex Vdegen = TopoDS::Vertex(myBFGenerator->Modified(TopExp::FirstVertex(TopoDS::Edge(edge1))));
         for (it.Initialize(MV.FindFromKey(Vdegen)); it.More(); it.Next()) {
           const TopoDS_Shape& Face = it.Value();
           if (MapFaces.Contains(Face)) {
@@ -607,7 +622,7 @@ void BRepOffsetAPI_ThruSections::CreateRuled()
         }
       }
       else {
-        for (it.Initialize(M.FindFromKey(edge1)); it.More(); it.Next()) {
+        for (it.Initialize(M.FindFromKey(myBFGenerator->Modified(edge1))); it.More(); it.Next()) {
           const TopoDS_Shape& Face = it.Value();
           if (MapFaces.Contains(Face)) {
             myEdgeFace.Bind(edge1, Face);
@@ -929,14 +944,59 @@ void BRepOffsetAPI_ThruSections::CreateSmoothed()
     Done();
   }
 
+  TopTools_DataMapOfShapeReal aVToTol;
   TopExp_Explorer ex(myShape,TopAbs_EDGE);
   while (ex.More()) {
-    const TopoDS_Edge& CurE = TopoDS::Edge(ex.Current());
-    B.SameRange(CurE, Standard_False);
-    B.SameParameter(CurE, Standard_False);
-    Standard_Real tol = BRep_Tool::Tolerance(CurE);
-    BRepLib::SameParameter(CurE,tol);
+    const TopoDS_Edge& aCurE = TopoDS::Edge(ex.Current());
+    B.SameRange(aCurE, Standard_False);
+    B.SameParameter(aCurE, Standard_False);
+    Standard_Real aTol = BRep_Tool::Tolerance(aCurE);
+    if (myMutableInput)
+      BRepLib::SameParameter(aCurE,aTol);
+    else
+    {
+      //all edges from myShape can be safely updated/changed
+      //all vertices from myShape are the part of the original wires
+      Standard_Real aNewTol = -1;
+      BRepLib::SameParameter(aCurE, aTol, aNewTol, Standard_True);
+      if (aNewTol > 0)
+      {
+        TopoDS_Vertex aV1, aV2;
+        TopExp::Vertices(aCurE,aV1,aV2);
+        if (!aV1.IsNull())
+        {
+          const Standard_Real* anOldTol = aVToTol.Seek(aV1);
+          if (!anOldTol || (anOldTol && *anOldTol < aNewTol))
+            aVToTol.Bind(aV1,aNewTol);
+        }
+        if (!aV2.IsNull())
+        {
+          const Standard_Real* anOldTol = aVToTol.Seek(aV2);
+          if (!anOldTol || (anOldTol && *anOldTol < aNewTol))
+            aVToTol.Bind(aV2,aNewTol);
+        }
+      }
+    }
     ex.Next();
+  }
+
+  if (!myMutableInput)
+  {
+    BRepTools_ReShape aReshaper;
+    TopTools_DataMapIteratorOfDataMapOfShapeReal itM(aVToTol);
+    for (;itM.More();itM.Next())
+    {
+      const TopoDS_Vertex& aVert = TopoDS::Vertex(itM.Key());
+      const Standard_Real& aNewToler = itM.Value();
+      if (BRep_Tool::Tolerance(aVert) < aNewToler)
+      {
+        TopoDS_Vertex aNVert = TopoDS::Vertex(aVert.EmptyCopied());
+        B.UpdateVertex(aNVert, aNewToler);
+        aReshaper.Replace(aVert, aNVert);
+      }
+    }
+    myShape = aReshaper.Apply(myShape);
+    //?? Modified(shape) is not present in this class  
   }
 }
 
@@ -1244,7 +1304,10 @@ BRepOffsetAPI_ThruSections::Generated(const TopoDS_Shape& S)
       //we return the whole bunch of longitudinal edges
       TopExp::MapShapesAndAncestors(myShape, TopAbs_VERTEX, TopAbs_EDGE, VEmap);
       TopTools_IndexedMapOfShape Emap;
-      const TopTools_ListOfShape& Elist = VEmap.FindFromKey(S);
+      TopoDS_Shape aNewS = S;
+      if (myIsRuled && !myBFGenerator.IsNull())
+        aNewS = myBFGenerator->Modified(S);
+      const TopTools_ListOfShape& Elist = VEmap.FindFromKey(aNewS);
       TopTools_ListIteratorOfListOfShape itl(Elist);
       for (; itl.More(); itl.Next())
       {
@@ -1256,8 +1319,8 @@ BRepOffsetAPI_ThruSections::Generated(const TopoDS_Shape& S)
           //Comprehensive check for possible case of
           //one vertex for start and end degenerated sections:
           //we must take only outgoing or only ingoing edges
-          if ((IsDegen[0] && S.IsSame(VV[0])) ||
-              (IsDegen[1] && S.IsSame(VV[1])))
+          if ((IsDegen[0] && aNewS.IsSame(VV[0])) ||
+              (IsDegen[1] && aNewS.IsSame(VV[1])))
             Emap.Add(anEdge);
         }
       }
@@ -1275,7 +1338,10 @@ BRepOffsetAPI_ThruSections::Generated(const TopoDS_Shape& S)
               TopExp::LastVertex(anEdge) : TopExp::FirstVertex(anEdge);
             const TopTools_ListOfShape& EElist = VEmap.FindFromKey(aVertex);
             TopTools_IndexedMapOfShape EmapOfSection;
-            TopExp::MapShapes(myWires(IndOfSec), TopAbs_EDGE, EmapOfSection);
+            TopoDS_Shape aWsec = myWires(IndOfSec);
+            if (myIsRuled && !myBFGenerator.IsNull())
+              aWsec = myBFGenerator->Modified(aWsec);
+            TopExp::MapShapes(aWsec, TopAbs_EDGE, EmapOfSection);
             TopoDS_Edge NextEdge;
             for (itl.Initialize(EElist); itl.More(); itl.Next())
             {
@@ -1304,6 +1370,9 @@ BRepOffsetAPI_ThruSections::Generated(const TopoDS_Shape& S)
       if (inde == Eindex)
         break;
     }
+
+    if (myIsRuled && !myBFGenerator.IsNull())
+      FirstEdge = TopoDS::Edge(myBFGenerator->Modified(FirstEdge));
 
     //Find the first longitudinal edge
     TopoDS_Face FirstFace = TopoDS::Face(AllFaces(Eindex));
@@ -1488,7 +1557,23 @@ Standard_Boolean BRepOffsetAPI_ThruSections::UseSmoothing () const
   return myUseSmoothing;
 }
 
+//=======================================================================
+//function : SetMutableInput
+//purpose  : 
+//=======================================================================
+void BRepOffsetAPI_ThruSections::SetMutableInput(const Standard_Boolean IsMutableInput)
+{
+  myMutableInput = IsMutableInput;
+}
 
+//=======================================================================
+//function : GetMutableInput
+//purpose  : 
+//=======================================================================
+Standard_Boolean BRepOffsetAPI_ThruSections::GetMutableInput() const
+{
+  return myMutableInput;
+}
 
 
 
