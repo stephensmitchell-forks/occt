@@ -24,6 +24,7 @@
 //=======================================================================
 BRepExtrema_SelfIntersection::BRepExtrema_SelfIntersection (const Standard_Real theTolerance)
 : myTolerance (theTolerance)
+, myCheckAll  (Standard_False)
 {
   myIsInit = Standard_False;
 }
@@ -34,6 +35,7 @@ BRepExtrema_SelfIntersection::BRepExtrema_SelfIntersection (const Standard_Real 
 //=======================================================================
 BRepExtrema_SelfIntersection::BRepExtrema_SelfIntersection (const TopoDS_Shape& theShape, const Standard_Real theTolerance)
 : myTolerance (theTolerance)
+, myCheckAll  (Standard_False)
 {
   LoadShape (theShape);
 }
@@ -240,7 +242,8 @@ BRepExtrema_ElementFilter::FilterResult BRepExtrema_SelfIntersection::isRegularS
 BRepExtrema_ElementFilter::FilterResult BRepExtrema_SelfIntersection::PreCheckElements (const Standard_Integer theIndex1,
                                                                                         const Standard_Integer theIndex2)
 {
-  if (myElementSet->GetFaceID (theIndex1) == myElementSet->GetFaceID (theIndex2))
+  const Standard_Boolean isSameFace = (myElementSet->GetFaceID(theIndex1) == myElementSet->GetFaceID(theIndex2));
+  if (isSameFace && (!myCheckAll || theIndex1 == theIndex2))
   {
     return BRepExtrema_ElementFilter::NoCheck; // triangles are from the same face
   }

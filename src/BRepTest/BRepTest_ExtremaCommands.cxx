@@ -288,7 +288,7 @@ static int ShapeSelfIntersection (Draw_Interpretor& theDI, Standard_Integer theN
   if (theNbArgs < 2 || theNbArgs > 5)
   {
     std::cout << "Usage: " << theArgs[0] <<
-      " Shape [-tol <value>] [-profile]" << std::endl;
+      " Shape [-tol <value>] [-all] [-profile]" << std::endl;
 
     return 1;
   }
@@ -303,6 +303,7 @@ static int ShapeSelfIntersection (Draw_Interpretor& theDI, Standard_Integer theN
 
   Standard_Real    aTolerance = 0.0;
   Standard_Boolean aToProfile = Standard_False;
+  Standard_Boolean isCheckAll = Standard_False;
 
   for (Standard_Integer anArgIdx = 2; anArgIdx < theNbArgs; ++anArgIdx)
   {
@@ -328,10 +329,13 @@ static int ShapeSelfIntersection (Draw_Interpretor& theDI, Standard_Integer theN
         aTolerance = aValue;
       }
     }
-
-    if (aFlag == "-profile")
+    else if (aFlag == "-profile")
     {
       aToProfile = Standard_True;
+    }
+    else if (aFlag == "-all")
+    {
+      isCheckAll = Standard_True;
     }
   }
 
@@ -346,6 +350,7 @@ static int ShapeSelfIntersection (Draw_Interpretor& theDI, Standard_Integer theN
   }
 
   BRepExtrema_SelfIntersection aTool (aShape, aTolerance);
+  aTool.SetCheckAll(isCheckAll);
 
   if (aToProfile)
   {
@@ -443,6 +448,8 @@ void BRepTest::ExtremaCommands (Draw_Interpretor& theCommands)
                    "\n\t\t:   -tol     : non-negative tolerance value used for overlapping"
                    "\n\t\t:              test (for zero tolerance, the strict intersection"
                    "\n\t\t:              test will be performed)"
+                   "\n\t\t:   -all     : check all cases of self-intersection including"
+                   "\n\t\t:              self-intersections on the same face"
                    "\n\t\t:   -profile : outputs execution time for main algorithm stages",
                    __FILE__,
                    ShapeSelfIntersection,
