@@ -54,6 +54,12 @@ static
 static
   Standard_Boolean IsClosed(const TopoDS_Edge& ,
                             const TopoDS_Face& );
+static
+  Standard_Real ComputeTol(const TopoDS_Edge& theE,
+                           const Standard_Real theFirst,
+                           const Standard_Real theLast,
+                           const Handle(Geom2d_Curve)& theC,
+                           const TopoDS_Face& theF);
 
 
 //=======================================================================
@@ -68,7 +74,7 @@ Standard_Integer BOPTools_AlgoTools2D::AttachExistingPCurve
 {
   Standard_Boolean bIsToReverse, bIsClosed;
   Standard_Integer iRet;
-  Standard_Real aTol, aT11, aT12, aT21, aT22, aTolPPC;
+  Standard_Real aTol, aTolSP, aT11, aT12, aT21, aT22, aTolPPC;
   Handle(Geom2d_Curve) aC2Dold, aC2DoldC;
   Handle(Geom2d_TrimmedCurve) aC2DT;
   BRep_Builder aBB;
@@ -97,12 +103,9 @@ Standard_Integer BOPTools_AlgoTools2D::AttachExistingPCurve
   //
   aC2DT=new Geom2d_TrimmedCurve(aC2DoldC, aT21, aT22);
   //
-  aTol=BRep_Tool::Tolerance(aE1);
-  BRep_Tool::Range (aE1, aT11, aT12);
-  aBB.SameRange(aE1, Standard_False);
-  aBB.SameParameter(aE1, Standard_False);
-  
   aTolPPC=Precision::PConfusion();
+  //
+  BRep_Tool::Range (aE1, aT11, aT12);
   //
   GeomLib::SameRange(aTolPPC, aC2DT, aT21, aT22, aT11, aT12, aC2DT);
   //
@@ -110,6 +113,19 @@ Standard_Integer BOPTools_AlgoTools2D::AttachExistingPCurve
     iRet=2;
     return iRet;
   }
+  //
+  // check the curves on same parameter to prevent 
+  // big tolerance increasing
+  aTol = BRep_Tool::Tolerance(aE1);
+  aTolSP = ComputeTol(aE1, aT11, aT12, aC2DT, aF);
+  //
+  if ((aTolSP > 10.*aTol) && aTolSP > 0.1) {
+    iRet = 3;
+    return iRet;
+  }
+  //
+  aBB.SameRange(aE1, Standard_False);
+  aBB.SameParameter(aE1, Standard_False);
   //
   aBB.UpdateEdge(aE1, aC2DT, aF, aTol);
   BRepLib::SameParameter(aE1);
@@ -119,7 +135,7 @@ Standard_Integer BOPTools_AlgoTools2D::AttachExistingPCurve
   if (bIsClosed) {
     iRet=UpdateClosedPCurve(aE2, aE1, aF, aCtx);
     if(iRet) {
-      iRet=3;
+      iRet=4;
     }
   }
   //
@@ -309,4 +325,40 @@ Standard_Boolean IsClosed(const TopoDS_Edge& aE,
   }
   return bRet;
 }
-
+//=======================================================================
+//function : ComputeTol
+//purpose  :
+//=======================================================================
+Standard_Real ComputeTol(const TopoDS_Edge& theE,
+                         const Standard_Real theFirst,
+                         const Standard_Real theLast,
+                         const Handle(Geom2d_Curve)& theC,
+                         const TopoDS_Face& theF)
+{
+  Standard_Real f, l, aD, aDMax, aT, aDt;
+  gp_Pnt aP1, aP2;
+  gp_Pnt2d aP2d;
+  //
+  const Standard_Integer NCONTROL = 22;
+  //
+  const Handle(Geom_Curve)& aC = BRep_Tool::Curve(theE, f, l);
+  const Handle(Geom_Surface)& aS = BRep_Tool::Surface(theF);
+  //
+  aDMax = 0.;
+  aDt = (theLast - theFirst) / NCONTROL;
+  //
+  for (aT = theFirst; aT <= theLast; aT += aDt) {
+    theC->D0(aT, aP2d);
+    aS->D0(aP2d.X(), aP2d.Y(), aP1);
+    //
+    aC->D0(aT, aP2);
+    //
+    aD = aP1.SquareDistance(aP2);
+    if (aD > aDMax) {
+      aDMax = aD;
+    }
+  }
+  //
+  aDMax = sqrt(aDMax);
+  return aDMax;
+}

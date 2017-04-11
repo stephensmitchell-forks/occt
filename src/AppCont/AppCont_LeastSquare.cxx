@@ -74,6 +74,8 @@ void AppCont_LeastSquare::FixSingleBorderPoint(const AppCont_Function&       the
     aPrevP = aTabP;
     aPrevP2d = aTabP2d;
     aPrevDist = aCurrDist;
+    if(aCurrDist == 0.0)//protection of the division by 0 in the next iteration.
+      break;
   }
   theFix2d = aPrevP2d;
   theFix   = aPrevP;
