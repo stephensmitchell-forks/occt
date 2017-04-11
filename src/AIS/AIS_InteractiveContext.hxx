@@ -17,33 +17,32 @@
 #ifndef _AIS_InteractiveContext_HeaderFile
 #define _AIS_InteractiveContext_HeaderFile
 
-#include <Standard.hxx>
-#include <Standard_Type.hxx>
-
-#include <AIS_DataMapOfIOStatus.hxx>
-#include <PrsMgr_PresentationManager3d.hxx>
-#include <StdSelect_ViewerSelector3d.hxx>
-#include <TCollection_AsciiString.hxx>
-#include <Standard_Boolean.hxx>
-#include <Prs3d_Drawer.hxx>
-#include <Quantity_NameOfColor.hxx>
-#include <Standard_Integer.hxx>
 #include <AIS_DataMapOfILC.hxx>
+#include <AIS_DataMapOfIOStatus.hxx>
+#include <AIS_DisplayMode.hxx>
 #include <AIS_DisplayStatus.hxx>
+#include <AIS_ClearMode.hxx>
 #include <AIS_KindOfInteractive.hxx>
-#include <Standard_Real.hxx>
+#include <AIS_ListOfInteractive.hxx>
+#include <AIS_Selection.hxx>
+#include <AIS_StatusOfDetection.hxx>
+#include <AIS_StatusOfPick.hxx>
+#include <AIS_TypeOfIso.hxx>
 #include <Aspect_TypeOfFacingModel.hxx>
 #include <Graphic3d_HighlightStyle.hxx>
 #include <Graphic3d_NameOfMaterial.hxx>
-#include <Standard_ShortReal.hxx>
-#include <TColStd_ListOfInteger.hxx>
-#include <AIS_DisplayMode.hxx>
-#include <AIS_TypeOfIso.hxx>
-#include <AIS_StatusOfDetection.hxx>
-#include <AIS_StatusOfPick.hxx>
-#include <TColgp_Array1OfPnt2d.hxx>
+#include <Prs3d_Drawer.hxx>
+#include <Graphic3d_HighlightStyle.hxx>
+#include <PrsMgr_PresentationManager3d.hxx>
 #include <SelectMgr_IndexedMapOfOwner.hxx>
-#include <AIS_ClearMode.hxx>
+#include <SelectMgr_ListOfFilter.hxx>
+#include <SelectMgr_PickingStrategy.hxx>
+#include <Standard.hxx>
+#include <Standard_Type.hxx>
+#include <StdSelect_ViewerSelector3d.hxx>
+#include <TCollection_AsciiString.hxx>
+#include <TColgp_Array1OfPnt2d.hxx>
+#include <TColStd_ListOfInteger.hxx>
 #include <TopAbs_ShapeEnum.hxx>
 #include <SelectMgr_ListOfFilter.hxx>
 #include <AIS_ListOfInteractive.hxx>
@@ -144,6 +143,26 @@ public:
   
   Standard_EXPORT Standard_Boolean GetAutoActivateSelection() const;
   
+  //! Setup picking strategy - which entities detected by picking line will be accepted, considering Selection Filters.
+  //! By default (SelectMgr_PickingStrategy_FirstAcceptable), Selection Filters reduce the list of entities
+  //! so that the context accepts topmost in remaining.
+  //!
+  //! This means that entities behind non-selectable (by filters) parts can be picked by user.
+  //! If this behavior is undesirable, and user wants that non-selectable (by filters) parts
+  //! should remain an obstacle for picking, SelectMgr_PickingStrategy_OnlyTopmost can be set instead.
+  //!
+  //! Notice, that since Selection Manager operates only objects registered in it,
+  //! SelectMgr_PickingStrategy_OnlyTopmost will NOT prevent picking entities behind
+  //! visible by unregistered in Selection Manager presentations (e.g. deactivated).
+  //! Hence, SelectMgr_PickingStrategy_OnlyTopmost changes behavior only with Selection Filters enabled.
+  void SetPickingStrategy (const SelectMgr_PickingStrategy theStrategy)
+  {
+    myPickingStrategy = theStrategy;
+  }
+
+  //! Return picking strategy; SelectMgr_PickingStrategy_FirstAcceptable by default.
+  SelectMgr_PickingStrategy PickingStrategy() const { return myPickingStrategy; }
+
   //! Controls the choice between the using the display
   //! and selection modes of open local context which you
   //! have defined and activating those available by default.
@@ -1719,6 +1738,7 @@ protected:
   Standard_Integer myCurDetected;
   Standard_Integer myCurHighlighted;
   Standard_Boolean myZDetectionFlag;
+  SelectMgr_PickingStrategy myPickingStrategy; //!< picking strategy to be applied within MoveTo()
   Standard_Boolean myIsAutoActivateSelMode;
 
 };

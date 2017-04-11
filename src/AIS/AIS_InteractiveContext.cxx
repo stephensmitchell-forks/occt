@@ -95,6 +95,7 @@ myCurLocalIndex(0),
 myCurDetected(0),
 myCurHighlighted(0),
 myZDetectionFlag(0),
+myPickingStrategy (SelectMgr_PickingStrategy_FirstAcceptable),
 myIsAutoActivateSelMode(Standard_True)
 { 
   InitAttributes();
