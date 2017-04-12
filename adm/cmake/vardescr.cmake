@@ -160,5 +160,5 @@ set (USE_D3D_DESCR "Indicates whether optional Direct3D wrapper in OCCT visualiz
 
 macro (BUILD_MODULE MODULE_NAME)
   set (ENABLE_MODULE TRUE)
-  set (BUILD_MODULE_${MODULE_NAME} ${ENABLE_MODULE} CACHE BOOL "${BUILD_MODULE_${MODULE_NAME}_DESCR}")
+  OCCT_set_cache_variable (BUILD_MODULE_${MODULE_NAME} ${ENABLE_MODULE} BOOL "${BUILD_MODULE_${MODULE_NAME}_DESCR}")
 endmacro()

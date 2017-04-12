@@ -1,44 +1,44 @@
 # tk
 
 if (NOT DEFINED INSTALL_TK AND BUILD_SHARED_LIBS)
-  set (INSTALL_TK OFF CACHE BOOL "${INSTALL_TK_DESCR}")
+  OCCT_set_cache_variable (INSTALL_TK OFF BOOL "${INSTALL_TK_DESCR}")
 endif()
 
 # tk directory
 if (NOT DEFINED 3RDPARTY_TK_DIR)
-  set (3RDPARTY_TK_DIR "" CACHE PATH "The directory containing tk")
+  OCCT_set_cache_variable (3RDPARTY_TK_DIR "" PATH "The directory containing tk")
 endif ()
 
 if (NOT 3RDPARTY_TK_DIR AND 3RDPARTY_TCLTK_DIR)
-  set (3RDPARTY_TK_DIR "${3RDPARTY_TCLTK_DIR}" CACHE PATH "The directory containing tk" FORCE)
+  OCCT_set_cache_variable (3RDPARTY_TK_DIR "${3RDPARTY_TCLTK_DIR}" PATH "The directory containing tk" FORCE)
 endif()
 
 # tk include directory
 if (NOT DEFINED 3RDPARTY_TK_INCLUDE_DIR)
-  set (3RDPARTY_TK_INCLUDE_DIR "" CACHE FILEPATH "The directory containing headers of tk")
+  OCCT_set_cache_variable (3RDPARTY_TK_INCLUDE_DIR "" FILEPATH "The directory containing headers of tk")
 endif()
 
 if (BUILD_SHARED_LIBS)
   # tk library file (with absolute path)
   if (NOT DEFINED 3RDPARTY_TK_LIBRARY OR NOT 3RDPARTY_TK_LIBRARY_DIR)
-    set (3RDPARTY_TK_LIBRARY "" CACHE FILEPATH "tk library" FORCE)
+    OCCT_set_cache_variable (3RDPARTY_TK_LIBRARY "" FILEPATH "tk library" FORCE)
   endif()
 
   # tk library directory
   if (NOT DEFINED 3RDPARTY_TK_LIBRARY_DIR)
-    set (3RDPARTY_TK_LIBRARY_DIR "" CACHE FILEPATH "The directory containing tk library")
+    OCCT_set_cache_variable (3RDPARTY_TK_LIBRARY_DIR "" FILEPATH "The directory containing tk library")
   endif()
 
   # tk shared library (with absolute path)
   if (WIN32)
     if (NOT DEFINED 3RDPARTY_TK_DLL OR NOT 3RDPARTY_TK_DLL_DIR)
-      set (3RDPARTY_TK_DLL "" CACHE FILEPATH "tk shared library" FORCE)
+      OCCT_set_cache_variable (3RDPARTY_TK_DLL "" FILEPATH "tk shared library" FORCE)
     endif()
   endif()
 
   # tk shared library directory
   if (WIN32 AND NOT DEFINED 3RDPARTY_TK_DLL_DIR)
-    set (3RDPARTY_TK_DLL_DIR "" CACHE FILEPATH "The directory containing tk shared library")
+    OCCT_set_cache_variable (3RDPARTY_TK_DLL_DIR "" FILEPATH "The directory containing tk shared library")
   endif()
 endif()
 
@@ -46,7 +46,7 @@ endif()
 if (NOT 3RDPARTY_TK_DIR AND 3RDPARTY_DIR)
   FIND_PRODUCT_DIR("${3RDPARTY_DIR}" tk TK_DIR_NAME)
   if (TK_DIR_NAME)
-    set (3RDPARTY_TK_DIR "${3RDPARTY_DIR}/${TK_DIR_NAME}" CACHE PATH "The directory containing tk" FORCE)
+    OCCT_set_cache_variable (3RDPARTY_TK_DIR "${3RDPARTY_DIR}/${TK_DIR_NAME}" PATH "The directory containing tk" FORCE)
   endif()
 endif()
 
@@ -64,7 +64,7 @@ find_package(TCL QUIET)
 # tk include dir
 if (NOT 3RDPARTY_TK_INCLUDE_DIR)
   if (TK_INCLUDE_PATH AND EXISTS "${TK_INCLUDE_PATH}")
-    set (3RDPARTY_TK_INCLUDE_DIR "${TK_INCLUDE_PATH}" CACHE FILEPATH "The directory containing headers of TK" FORCE)
+    OCCT_set_cache_variable (3RDPARTY_TK_INCLUDE_DIR "${TK_INCLUDE_PATH}" FILEPATH "The directory containing headers of TK" FORCE)
   endif()
 endif()
 
@@ -72,11 +72,11 @@ if (BUILD_SHARED_LIBS)
   # tk dir and library
   if (NOT 3RDPARTY_TK_LIBRARY)
     if (TK_LIBRARY AND EXISTS "${TK_LIBRARY}")
-      set (3RDPARTY_TK_LIBRARY "${TK_LIBRARY}" CACHE FILEPATH "TK library" FORCE)
+      OCCT_set_cache_variable (3RDPARTY_TK_LIBRARY "${TK_LIBRARY}" FILEPATH "TK library" FORCE)
 
       if (NOT 3RDPARTY_TK_LIBRARY_DIR)
         get_filename_component (3RDPARTY_TK_LIBRARY_DIR "${3RDPARTY_TK_LIBRARY}" PATH)
-        set (3RDPARTY_TK_LIBRARY_DIR "${3RDPARTY_TK_LIBRARY_DIR}" CACHE FILEPATH "The directory containing TK library" FORCE)
+        OCCT_set_cache_variable (3RDPARTY_TK_LIBRARY_DIR "${3RDPARTY_TK_LIBRARY_DIR}" FILEPATH "The directory containing TK library" FORCE)
       endif()
     endif()
   endif()
@@ -96,7 +96,7 @@ if (BUILD_SHARED_LIBS)
           set (DLL_FOLDER_FOR_SEARCH "${3RDPARTY_TK_LIBRARY_DIR_PARENT}/bin")
         endif()
 
-        set (3RDPARTY_TK_DLL "3RDPARTY_TK_DLL-NOTFOUND" CACHE FILEPATH "TK shared library" FORCE)
+        OCCT_set_cache_variable (3RDPARTY_TK_DLL "3RDPARTY_TK_DLL-NOTFOUND" FILEPATH "TK shared library" FORCE)
         find_library (3RDPARTY_TK_DLL NAMES tk86 tk85
                                               PATHS "${DLL_FOLDER_FOR_SEARCH}"
                                               NO_DEFAULT_PATH)
@@ -109,7 +109,7 @@ COMPLIANCE_PRODUCT_CONSISTENCY(TK)
 if (BUILD_SHARED_LIBS)
   # tk dir and library
   if (NOT 3RDPARTY_TK_LIBRARY)
-    set (3RDPARTY_TK_LIBRARY "3RDPARTY_TK_LIBRARY-NOTFOUND" CACHE FILEPATH "TK library" FORCE)
+    OCCT_set_cache_variable (3RDPARTY_TK_LIBRARY "3RDPARTY_TK_LIBRARY-NOTFOUND" FILEPATH "TK library" FORCE)
     find_library (3RDPARTY_TK_LIBRARY NAMES tk8.6 tk86 tk8.5 tk85
                                               PATHS "${3RDPARTY_TK_LIBRARY_DIR}"
                                               NO_DEFAULT_PATH)
@@ -121,12 +121,12 @@ if (BUILD_SHARED_LIBS)
 
 
     if (NOT 3RDPARTY_TK_LIBRARY OR NOT EXISTS "${3RDPARTY_TK_LIBRARY}")
-      set (3RDPARTY_TK_LIBRARY "" CACHE FILEPATH "TK library" FORCE)
+      OCCT_set_cache_variable (3RDPARTY_TK_LIBRARY "" FILEPATH "TK library" FORCE)
     endif()
 
     if (NOT 3RDPARTY_TK_LIBRARY_DIR AND 3RDPARTY_TK_LIBRARY)
       get_filename_component (3RDPARTY_TK_LIBRARY_DIR "${3RDPARTY_TK_LIBRARY}" PATH)
-      set (3RDPARTY_TK_LIBRARY_DIR "${3RDPARTY_TK_LIBRARY_DIR}" CACHE FILEPATH "The directory containing TK library" FORCE)
+      OCCT_set_cache_variable (3RDPARTY_TK_LIBRARY_DIR "${3RDPARTY_TK_LIBRARY_DIR}" FILEPATH "The directory containing TK library" FORCE)
     endif()
   endif()
 
@@ -163,13 +163,13 @@ if (BUILD_SHARED_LIBS)
         set (DLL_FOLDER_FOR_SEARCH "${3RDPARTY_TK_LIBRARY_DIR_PARENT}/bin")
       endif()
 
-      set (3RDPARTY_TK_DLL "3RDPARTY_TK_DLL-NOTFOUND" CACHE FILEPATH "TK shared library" FORCE)
+      OCCT_set_cache_variable (3RDPARTY_TK_DLL "3RDPARTY_TK_DLL-NOTFOUND" FILEPATH "TK shared library" FORCE)
       find_library (3RDPARTY_TK_DLL NAMES tk${3RDPARTY_TK_LIBRARY_VERSION}
                                             PATHS "${DLL_FOLDER_FOR_SEARCH}"
                                             NO_DEFAULT_PATH)
 
       if (NOT 3RDPARTY_TK_DLL OR NOT EXISTS "${3RDPARTY_TK_DLL}")
-        set (3RDPARTY_TK_DLL "" CACHE FILEPATH "TK shared library" FORCE)
+        OCCT_set_cache_variable (3RDPARTY_TK_DLL "" FILEPATH "TK shared library" FORCE)
       endif()
     endif()
     if (NOT 3RDPARTY_TK_DLL_DIR AND 3RDPARTY_TK_DLL)
@@ -283,4 +283,11 @@ if (NOT BUILD_SHARED_LIBS)
   OCCT_CHECK_AND_UNSET (3RDPARTY_TK_DLL)
   OCCT_CHECK_AND_UNSET (3RDPARTY_TK_DLL_DIR)
   OCCT_CHECK_AND_UNSET (INSTALL_TK)
+endif()
+
+if (3RDPARTY_TK_DLL)
+  OCCT_set_cache_variable (3RDPARTY_TK_DLL "${3RDPARTY_TK_DLL}" PATH "" FORCE)
+endif()
+if (3RDPARTY_TK_LIBRARY)
+  OCCT_set_cache_variable (3RDPARTY_TK_LIBRARY "${3RDPARTY_TK_LIBRARY}" PATH "" FORCE)
 endif()

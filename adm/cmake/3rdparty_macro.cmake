@@ -9,11 +9,11 @@ set(3RDPARTY_MACRO_ALREADY_INCLUDED 1)
 macro (THIRDPARTY_PRODUCT PRODUCT_NAME HEADER_NAME LIBRARY_NAME LIBRARY_NAME_DEBUG)
 
   if (NOT DEFINED INSTALL_${PRODUCT_NAME} AND BUILD_SHARED_LIBS)
-    set (INSTALL_${PRODUCT_NAME} OFF CACHE BOOL "${INSTALL_${PRODUCT_NAME}_DESCR}")
+    OCCT_set_cache_variable (INSTALL_${PRODUCT_NAME} OFF BOOL "${INSTALL_${PRODUCT_NAME}_DESCR}")
   endif()
 
   if (NOT DEFINED 3RDPARTY_${PRODUCT_NAME}_DIR)
-    set (3RDPARTY_${PRODUCT_NAME}_DIR "" CACHE PATH "The directory containing ${PRODUCT_NAME}")
+    OCCT_set_cache_variable (3RDPARTY_${PRODUCT_NAME}_DIR "" PATH "The directory containing ${PRODUCT_NAME}")
   endif()
 
   # include occt macros. compiler_bitness, os_wiht_bit, compiler
@@ -26,7 +26,7 @@ macro (THIRDPARTY_PRODUCT PRODUCT_NAME HEADER_NAME LIBRARY_NAME LIBRARY_NAME_DEB
     if (NOT 3RDPARTY_${PRODUCT_NAME}_DIR OR NOT EXISTS "${3RDPARTY_${PRODUCT_NAME}_DIR}")
       FIND_PRODUCT_DIR ("${3RDPARTY_DIR}" ${PRODUCT_NAME} ${PRODUCT_NAME}_DIR_NAME)
       if (${PRODUCT_NAME}_DIR_NAME)
-        set (3RDPARTY_${PRODUCT_NAME}_DIR "${3RDPARTY_DIR}/${${PRODUCT_NAME}_DIR_NAME}" CACHE PATH "The directory containing ${PRODUCT_NAME}" FORCE)
+        OCCT_set_cache_variable (3RDPARTY_${PRODUCT_NAME}_DIR "${3RDPARTY_DIR}/${${PRODUCT_NAME}_DIR_NAME}" PATH "The directory containing ${PRODUCT_NAME}" FORCE)
       endif()
     endif()
   else()
@@ -34,27 +34,27 @@ macro (THIRDPARTY_PRODUCT PRODUCT_NAME HEADER_NAME LIBRARY_NAME LIBRARY_NAME_DEB
   endif()
 
   if (NOT DEFINED 3RDPARTY_${PRODUCT_NAME}_INCLUDE_DIR)
-    set (3RDPARTY_${PRODUCT_NAME}_INCLUDE_DIR           "" CACHE PATH "the path of ${HEADER_NAME}")
+    OCCT_set_cache_variable (3RDPARTY_${PRODUCT_NAME}_INCLUDE_DIR           "" PATH "the path of ${HEADER_NAME}")
   endif()
 
   if (BUILD_SHARED_LIBS)
     if (NOT DEFINED 3RDPARTY_${PRODUCT_NAME}_LIBRARY OR NOT 3RDPARTY_${PRODUCT_NAME}_LIBRARY_DIR OR NOT EXISTS "${3RDPARTY_${PRODUCT_NAME}_LIBRARY_DIR}")
-      set (3RDPARTY_${PRODUCT_NAME}_LIBRARY               "" CACHE FILEPATH "${PRODUCT_NAME} library" FORCE)
+      OCCT_set_cache_variable (3RDPARTY_${PRODUCT_NAME}_LIBRARY               "" FILEPATH "${PRODUCT_NAME} library" FORCE)
     endif()
 
     if (NOT DEFINED 3RDPARTY_${PRODUCT_NAME}_LIBRARY_DIR)
-      set (3RDPARTY_${PRODUCT_NAME}_LIBRARY_DIR           "" CACHE PATH "The directory containing ${PRODUCT_NAME} library")
+      OCCT_set_cache_variable (3RDPARTY_${PRODUCT_NAME}_LIBRARY_DIR           "" PATH "The directory containing ${PRODUCT_NAME} library")
     endif()
 
     if (WIN32)
       if (NOT DEFINED 3RDPARTY_${PRODUCT_NAME}_DLL OR NOT 3RDPARTY_${PRODUCT_NAME}_DLL_DIR OR NOT EXISTS "${3RDPARTY_${PRODUCT_NAME}_DLL_DIR}")
-        set (3RDPARTY_${PRODUCT_NAME}_DLL                 "" CACHE FILEPATH "${PRODUCT_NAME} shared library" FORCE)
+        OCCT_set_cache_variable (3RDPARTY_${PRODUCT_NAME}_DLL                 "" FILEPATH "${PRODUCT_NAME} shared library" FORCE)
       endif()
     endif()
 
     if (WIN32)
       if (NOT DEFINED 3RDPARTY_${PRODUCT_NAME}_DLL_DIR)
-        set (3RDPARTY_${PRODUCT_NAME}_DLL_DIR             "" CACHE PATH "The directory containing ${PRODUCT_NAME} shared library")
+        OCCT_set_cache_variable (3RDPARTY_${PRODUCT_NAME}_DLL_DIR             "" PATH "The directory containing ${PRODUCT_NAME} shared library")
       endif()
     endif()
   endif()
@@ -67,7 +67,7 @@ macro (THIRDPARTY_PRODUCT PRODUCT_NAME HEADER_NAME LIBRARY_NAME LIBRARY_NAME_DEB
 
       if (3RDPARTY_${PRODUCT_NAME}_LIBRARY AND EXISTS "${3RDPARTY_${PRODUCT_NAME}_LIBRARY}")
         get_filename_component (3RDPARTY_${PRODUCT_NAME}_LIBRARY_DIR "${3RDPARTY_${PRODUCT_NAME}_LIBRARY}" PATH)
-        set (3RDPARTY_${PRODUCT_NAME}_LIBRARY_DIR "${3RDPARTY_${PRODUCT_NAME}_LIBRARY_DIR}" CACHE PATH "The directory containing ${PRODUCT_NAME} library" FORCE)
+        OCCT_set_cache_variable (3RDPARTY_${PRODUCT_NAME}_LIBRARY_DIR "${3RDPARTY_${PRODUCT_NAME}_LIBRARY_DIR}" PATH "The directory containing ${PRODUCT_NAME} library" FORCE)
       else()
         CHECK_PATH_FOR_CONSISTENCY (3RDPARTY_${PRODUCT_NAME}_DIR 3RDPARTY_${PRODUCT_NAME}_LIBRARY_DIR PATH "The directory containing ${PRODUCT_NAME} library")
       endif()
@@ -77,7 +77,7 @@ macro (THIRDPARTY_PRODUCT PRODUCT_NAME HEADER_NAME LIBRARY_NAME LIBRARY_NAME_DEB
 
         if (3RDPARTY_${PRODUCT_NAME}_DLL AND EXISTS "${3RDPARTY_${PRODUCT_NAME}_DLL}")
           get_filename_component (3RDPARTY_${PRODUCT_NAME}_DLL_DIR "${3RDPARTY_${PRODUCT_NAME}_DLL}" PATH)
-          set (3RDPARTY_${PRODUCT_NAME}_DLL_DIR "${3RDPARTY_${PRODUCT_NAME}_DLL_DIR}" CACHE PATH "The directory containing ${PRODUCT_NAME} shared library" FORCE)
+          OCCT_set_cache_variable (3RDPARTY_${PRODUCT_NAME}_DLL_DIR "${3RDPARTY_${PRODUCT_NAME}_DLL_DIR}" PATH "The directory containing ${PRODUCT_NAME} shared library" FORCE)
         else()
           CHECK_PATH_FOR_CONSISTENCY (3RDPARTY_${PRODUCT_NAME}_DIR 3RDPARTY_${PRODUCT_NAME}_DLL_DIR PATH "The directory containing ${PRODUCT_NAME} shared library")
         endif()
@@ -89,7 +89,7 @@ macro (THIRDPARTY_PRODUCT PRODUCT_NAME HEADER_NAME LIBRARY_NAME LIBRARY_NAME_DEB
   if (NOT 3RDPARTY_${PRODUCT_NAME}_INCLUDE_DIR OR NOT EXISTS "${3RDPARTY_${PRODUCT_NAME}_INCLUDE_DIR}")
 
     # set 3RDPARTY_${PRODUCT_NAME}_INCLUDE_DIR as notfound, otherwise find_library can't assign a new value to 3RDPARTY_${PRODUCT_NAME}_INCLUDE_DIR
-    set (3RDPARTY_${PRODUCT_NAME}_INCLUDE_DIR "3RDPARTY_${PRODUCT_NAME}_INCLUDE_DIR-NOTFOUND" CACHE FILEPATH "the path to ${HEADER_NAME}" FORCE)
+    OCCT_set_cache_variable (3RDPARTY_${PRODUCT_NAME}_INCLUDE_DIR "3RDPARTY_${PRODUCT_NAME}_INCLUDE_DIR-NOTFOUND" FILEPATH "the path to ${HEADER_NAME}" FORCE)
 
     if (3RDPARTY_${PRODUCT_NAME}_DIR AND EXISTS "${3RDPARTY_${PRODUCT_NAME}_DIR}")
       find_path (3RDPARTY_${PRODUCT_NAME}_INCLUDE_DIR NAMES ${HEADER_NAME}
@@ -109,7 +109,7 @@ macro (THIRDPARTY_PRODUCT PRODUCT_NAME HEADER_NAME LIBRARY_NAME LIBRARY_NAME_DEB
   else()
     list (APPEND 3RDPARTY_NOT_INCLUDED 3RDPARTY_${PRODUCT_NAME}_INCLUDE_DIR)
 
-    set (3RDPARTY_${PRODUCT_NAME}_INCLUDE_DIR "" CACHE FILEPATH "The path to ${HEADER_NAME}" FORCE)
+    OCCT_set_cache_variable (3RDPARTY_${PRODUCT_NAME}_INCLUDE_DIR "" FILEPATH "The path to ${HEADER_NAME}" FORCE)
   endif()
 
   if (BUILD_SHARED_LIBS)
@@ -123,7 +123,7 @@ macro (THIRDPARTY_PRODUCT PRODUCT_NAME HEADER_NAME LIBRARY_NAME LIBRARY_NAME_DEB
       endif()
 
       # set 3RDPARTY_${PRODUCT_NAME}_LIBRARY as notfound, otherwise find_library can't assign a new value to 3RDPARTY_${PRODUCT_NAME}_LIBRARY
-      set (3RDPARTY_${PRODUCT_NAME}_LIBRARY "3RDPARTY_${PRODUCT_NAME}_LIBRARY-NOTFOUND" CACHE FILEPATH "The path to ${PRODUCT_NAME} library" FORCE)
+      OCCT_set_cache_variable (3RDPARTY_${PRODUCT_NAME}_LIBRARY "3RDPARTY_${PRODUCT_NAME}_LIBRARY-NOTFOUND" FILEPATH "The path to ${PRODUCT_NAME} library" FORCE)
 
       if (3RDPARTY_${PRODUCT_NAME}_DIR AND EXISTS "${3RDPARTY_${PRODUCT_NAME}_DIR}")
         find_library (3RDPARTY_${PRODUCT_NAME}_LIBRARY NAMES ${LIBRARY_NAME}
@@ -139,9 +139,9 @@ macro (THIRDPARTY_PRODUCT PRODUCT_NAME HEADER_NAME LIBRARY_NAME LIBRARY_NAME_DEB
 
       if (3RDPARTY_${PRODUCT_NAME}_LIBRARY AND EXISTS "${3RDPARTY_${PRODUCT_NAME}_LIBRARY}")
         get_filename_component (3RDPARTY_${PRODUCT_NAME}_LIBRARY_DIR "${3RDPARTY_${PRODUCT_NAME}_LIBRARY}" PATH)
-        set (3RDPARTY_${PRODUCT_NAME}_LIBRARY_DIR "${3RDPARTY_${PRODUCT_NAME}_LIBRARY_DIR}" CACHE PATH "The directory containing ${PRODUCT_NAME} library" FORCE)
+        OCCT_set_cache_variable (3RDPARTY_${PRODUCT_NAME}_LIBRARY_DIR "${3RDPARTY_${PRODUCT_NAME}_LIBRARY_DIR}" PATH "The directory containing ${PRODUCT_NAME} library" FORCE)
       else()
-        set (3RDPARTY_${PRODUCT_NAME}_LIBRARY_DIR "" CACHE PATH "The directory containing ${PRODUCT_NAME} library" FORCE)
+        OCCT_set_cache_variable (3RDPARTY_${PRODUCT_NAME}_LIBRARY_DIR "" PATH "The directory containing ${PRODUCT_NAME} library" FORCE)
       endif()
     endif()
 
@@ -150,7 +150,7 @@ macro (THIRDPARTY_PRODUCT PRODUCT_NAME HEADER_NAME LIBRARY_NAME LIBRARY_NAME_DEB
     else()
       list (APPEND 3RDPARTY_NOT_INCLUDED 3RDPARTY_${PRODUCT_NAME}_LIBRARY_DIR)
 
-      set (3RDPARTY_${PRODUCT_NAME}_LIBRARY "" CACHE FILEPATH "The path to ${PRODUCT_NAME} library" FORCE)
+      OCCT_set_cache_variable (3RDPARTY_${PRODUCT_NAME}_LIBRARY "" FILEPATH "The path to ${PRODUCT_NAME} library" FORCE)
     endif()
 
     # shared library
@@ -160,7 +160,7 @@ macro (THIRDPARTY_PRODUCT PRODUCT_NAME HEADER_NAME LIBRARY_NAME LIBRARY_NAME_DEB
         set (CMAKE_FIND_LIBRARY_SUFFIXES .dll)
 
         # set 3RDPARTY_${PRODUCT_NAME}_DLL as notfound, otherwise find_library can't assign a new value to 3RDPARTY_${PRODUCT_NAME}_DLL
-        set (3RDPARTY_${PRODUCT_NAME}_DLL "3RDPARTY_${PRODUCT_NAME}_DLL-NOTFOUND" CACHE FILEPATH "The path to ${PRODUCT_NAME} shared library" FORCE)
+        OCCT_set_cache_variable (3RDPARTY_${PRODUCT_NAME}_DLL "3RDPARTY_${PRODUCT_NAME}_DLL-NOTFOUND" FILEPATH "The path to ${PRODUCT_NAME} shared library" FORCE)
 
         if (3RDPARTY_${PRODUCT_NAME}_DIR AND EXISTS "${3RDPARTY_${PRODUCT_NAME}_DIR}")
           find_library (3RDPARTY_${PRODUCT_NAME}_DLL  NAMES ${LIBRARY_NAME}
@@ -173,11 +173,11 @@ macro (THIRDPARTY_PRODUCT PRODUCT_NAME HEADER_NAME LIBRARY_NAME LIBRARY_NAME_DEB
 
         if (3RDPARTY_${PRODUCT_NAME}_DLL AND EXISTS "${3RDPARTY_${PRODUCT_NAME}_DLL}")
           get_filename_component (3RDPARTY_${PRODUCT_NAME}_DLL_DIR "${3RDPARTY_${PRODUCT_NAME}_DLL}" PATH)
-          set (3RDPARTY_${PRODUCT_NAME}_DLL_DIR "${3RDPARTY_${PRODUCT_NAME}_DLL_DIR}" CACHE PATH "The directory containing ${PRODUCT_NAME} library" FORCE)
+          OCCT_set_cache_variable (3RDPARTY_${PRODUCT_NAME}_DLL_DIR "${3RDPARTY_${PRODUCT_NAME}_DLL_DIR}" PATH "The directory containing ${PRODUCT_NAME} library" FORCE)
         else()
-          set (3RDPARTY_${PRODUCT_NAME}_DLL_DIR "" CACHE PATH "The directory containing ${PRODUCT_NAME} shared library" FORCE)
+          OCCT_set_cache_variable (3RDPARTY_${PRODUCT_NAME}_DLL_DIR "" PATH "The directory containing ${PRODUCT_NAME} shared library" FORCE)
 
-          set (3RDPARTY_${PRODUCT_NAME}_DLL "" CACHE FILEPATH "${PRODUCT_NAME} shared library" FORCE)
+          OCCT_set_cache_variable (3RDPARTY_${PRODUCT_NAME}_DLL "" FILEPATH "${PRODUCT_NAME} shared library" FORCE)
         endif()
       endif()
 
@@ -190,7 +190,7 @@ macro (THIRDPARTY_PRODUCT PRODUCT_NAME HEADER_NAME LIBRARY_NAME LIBRARY_NAME_DEB
 
     set (USED_3RDPARTY_${PRODUCT_NAME}_DIR "")
 
-    if (INSTALL_${PRODUCT_NAME})
+    if (NOT EXTERNAL_BUILD AND INSTALL_${PRODUCT_NAME})
       OCCT_MAKE_OS_WITH_BITNESS()
       OCCT_MAKE_COMPILER_SHORT_NAME()
 
@@ -274,7 +274,7 @@ macro (COMPLIANCE_PRODUCT_CONSISTENCY LIBNAME)
       string (REGEX MATCH "${3RDPARTY_${LIBNAME}_DIR}" DOES_PATH_CONTAIN "${3RDPARTY_${LIBNAME}_INCLUDE_DIR}")
     endif()
     if (NOT DOES_PATH_CONTAIN)
-      set (3RDPARTY_${LIBNAME}_INCLUDE_DIR "" CACHE FILEPATH "The directory containing headers of ${LIBNAME}" FORCE)
+      OCCT_set_cache_variable (3RDPARTY_${LIBNAME}_INCLUDE_DIR "" FILEPATH "The directory containing headers of ${LIBNAME}" FORCE)
     endif()
 
     if (BUILD_SHARED_LIBS)
@@ -284,7 +284,7 @@ macro (COMPLIANCE_PRODUCT_CONSISTENCY LIBNAME)
         string (REGEX MATCH "${3RDPARTY_${LIBNAME}_DIR}" DOES_PATH_CONTAIN "${3RDPARTY_${LIBNAME}_LIBRARY_DIR}")
       endif()
       if (NOT DOES_PATH_CONTAIN)
-        set (3RDPARTY_${LIBNAME}_LIBRARY_DIR "" CACHE FILEPATH "The directory containing ${LIBNAME} library" FORCE)
+        OCCT_set_cache_variable (3RDPARTY_${LIBNAME}_LIBRARY_DIR "" FILEPATH "The directory containing ${LIBNAME} library" FORCE)
       endif()
 
       # shared library dir
@@ -294,7 +294,7 @@ macro (COMPLIANCE_PRODUCT_CONSISTENCY LIBNAME)
           string (REGEX MATCH "${3RDPARTY_${LIBNAME}_DIR}" DOES_PATH_CONTAIN "${3RDPARTY_${LIBNAME}_DLL_DIR}")
         endif()
         if (NOT DOES_PATH_CONTAIN)
-          set (3RDPARTY_${LIBNAME}_DLL_DIR "" CACHE FILEPATH "The directory containing ${LIBNAME} shared library" FORCE)
+          OCCT_set_cache_variable (3RDPARTY_${LIBNAME}_DLL_DIR "" FILEPATH "The directory containing ${LIBNAME} shared library" FORCE)
         endif()
       endif()
     endif()
@@ -309,7 +309,7 @@ macro (COMPLIANCE_PRODUCT_CONSISTENCY LIBNAME)
       endif()
     endif()
     if (NOT DOES_PATH_CONTAIN)
-      set (3RDPARTY_${LIBNAME}_LIBRARY "" CACHE FILEPATH "${LIBNAME} library" FORCE)
+      OCCT_set_cache_variable (3RDPARTY_${LIBNAME}_LIBRARY "" FILEPATH "${LIBNAME} library" FORCE)
     endif()
 
     # check shared library
@@ -321,8 +321,12 @@ macro (COMPLIANCE_PRODUCT_CONSISTENCY LIBNAME)
         endif()
       endif()
       if (NOT DOES_PATH_CONTAIN)
-        set (3RDPARTY_${LIBNAME}_DLL "" CACHE FILEPATH "${LIBNAME} shared library" FORCE)
+        OCCT_set_cache_variable (3RDPARTY_${LIBNAME}_DLL "" FILEPATH "${LIBNAME} shared library" FORCE)
       endif()
     endif()
   endif()
 endmacro()
+
+if (3RDPARTY_${PRODUCT_NAME}_DLL)
+  OCCT_set_cache_variable (3RDPARTY_${PRODUCT_NAME}_DLL ${3RDPARTY_${PRODUCT_NAME}_DLL} PATH "" FORCE)
+endif()

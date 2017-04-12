@@ -1,40 +1,40 @@
 # tcl
 
 if (NOT DEFINED INSTALL_TCL AND BUILD_SHARED_LIBS)
-  set (INSTALL_TCL OFF CACHE BOOL "${INSTALL_TCL_DESCR}")
+  OCCT_set_cache_variable (INSTALL_TCL OFF BOOL "${INSTALL_TCL_DESCR}")
 endif()
 
 # tcl directory
 if (NOT DEFINED 3RDPARTY_TCL_DIR)
-  set (3RDPARTY_TCL_DIR "" CACHE PATH "The directory containing tcl")
+  OCCT_set_cache_variable (3RDPARTY_TCL_DIR "" PATH "The directory containing tcl")
 endif()
 
 # tcl include directory
 if (NOT DEFINED 3RDPARTY_TCL_INCLUDE_DIR)
-  set (3RDPARTY_TCL_INCLUDE_DIR "" CACHE FILEPATH "The directory containing headers of tcl")
+  OCCT_set_cache_variable (3RDPARTY_TCL_INCLUDE_DIR "" FILEPATH "The directory containing headers of tcl")
 endif()
 
 if (BUILD_SHARED_LIBS)
   # tcl library file (with absolute path)
   if (NOT DEFINED 3RDPARTY_TCL_LIBRARY OR NOT 3RDPARTY_TCL_LIBRARY_DIR)
-    set (3RDPARTY_TCL_LIBRARY "" CACHE FILEPATH "tcl library"  FORCE)
+    OCCT_set_cache_variable (3RDPARTY_TCL_LIBRARY "" FILEPATH "tcl library"  FORCE)
   endif()
 
   # tcl library directory
   if (NOT DEFINED 3RDPARTY_TCL_LIBRARY_DIR)
-    set (3RDPARTY_TCL_LIBRARY_DIR "" CACHE FILEPATH "The directory containing tcl library")
+    OCCT_set_cache_variable (3RDPARTY_TCL_LIBRARY_DIR "" FILEPATH "The directory containing tcl library")
   endif()
 
   # tcl shared library (with absolute path)
   if (WIN32)
     if (NOT DEFINED 3RDPARTY_TCL_DLL OR NOT 3RDPARTY_TCL_DLL_DIR)
-      set (3RDPARTY_TCL_DLL "" CACHE FILEPATH "tcl shared library" FORCE)
+      OCCT_set_cache_variable (3RDPARTY_TCL_DLL "" FILEPATH "tcl shared library" FORCE)
     endif()
   endif()
 
   # tcl shared library directory
   if (WIN32 AND NOT DEFINED 3RDPARTY_TCL_DLL_DIR)
-    set (3RDPARTY_TCL_DLL_DIR "" CACHE FILEPATH "The directory containing tcl shared library")
+    OCCT_set_cache_variable (3RDPARTY_TCL_DLL_DIR "" FILEPATH "The directory containing tcl shared library")
   endif()
 endif()
 
@@ -42,7 +42,7 @@ endif()
 if (NOT 3RDPARTY_TCL_DIR AND 3RDPARTY_DIR)
   FIND_PRODUCT_DIR("${3RDPARTY_DIR}" tcl TCL_DIR_NAME)
   if (TCL_DIR_NAME)
-    set (3RDPARTY_TCL_DIR "${3RDPARTY_DIR}/${TCL_DIR_NAME}" CACHE PATH "The directory containing tcl" FORCE)
+    OCCT_set_cache_variable (3RDPARTY_TCL_DIR "${3RDPARTY_DIR}/${TCL_DIR_NAME}" PATH "The directory containing tcl" FORCE)
   endif()
 endif()
 
@@ -60,7 +60,7 @@ find_package(TCL QUIET)
 # tcl include dir
 if (NOT 3RDPARTY_TCL_INCLUDE_DIR)
   if (TCL_INCLUDE_PATH AND EXISTS "${TCL_INCLUDE_PATH}")
-    set (3RDPARTY_TCL_INCLUDE_DIR "${TCL_INCLUDE_PATH}" CACHE FILEPATH "The directory containing headers of TCL" FORCE)
+    OCCT_set_cache_variable (3RDPARTY_TCL_INCLUDE_DIR "${TCL_INCLUDE_PATH}" FILEPATH "The directory containing headers of TCL" FORCE)
   endif()
 endif()
 
@@ -68,11 +68,11 @@ if (BUILD_SHARED_LIBS)
   # tcl dir and library
   if (NOT 3RDPARTY_TCL_LIBRARY)
     if (TCL_LIBRARY AND EXISTS "${TCL_LIBRARY}")
-      set (3RDPARTY_TCL_LIBRARY "${TCL_LIBRARY}" CACHE FILEPATH "TCL library" FORCE)
+      OCCT_set_cache_variable (3RDPARTY_TCL_LIBRARY "${TCL_LIBRARY}" FILEPATH "TCL library" FORCE)
 
       if (NOT 3RDPARTY_TCL_LIBRARY_DIR)
         get_filename_component (3RDPARTY_TCL_LIBRARY_DIR "${3RDPARTY_TCL_LIBRARY}" PATH)
-        set (3RDPARTY_TCL_LIBRARY_DIR "${3RDPARTY_TCL_LIBRARY_DIR}" CACHE FILEPATH "The directory containing TCL library" FORCE)
+        OCCT_set_cache_variable (3RDPARTY_TCL_LIBRARY_DIR "${3RDPARTY_TCL_LIBRARY_DIR}" FILEPATH "The directory containing TCL library" FORCE)
       endif()
     endif()
   endif()
@@ -117,12 +117,12 @@ if (BUILD_SHARED_LIBS)
 
 
     if (NOT 3RDPARTY_TCL_LIBRARY OR NOT EXISTS "${3RDPARTY_TCL_LIBRARY}")
-      set (3RDPARTY_TCL_LIBRARY "" CACHE FILEPATH "TCL library" FORCE)
+      OCCT_set_cache_variable (3RDPARTY_TCL_LIBRARY "" FILEPATH "TCL library" FORCE)
     endif()
 
     if (NOT 3RDPARTY_TCL_LIBRARY_DIR AND 3RDPARTY_TCL_LIBRARY)
       get_filename_component (3RDPARTY_TCL_LIBRARY_DIR "${3RDPARTY_TCL_LIBRARY}" PATH)
-      set (3RDPARTY_TCL_LIBRARY_DIR "${3RDPARTY_TCL_LIBRARY_DIR}" CACHE FILEPATH "The directory containing TCL library" FORCE)
+      OCCT_set_cache_variable (3RDPARTY_TCL_LIBRARY_DIR "${3RDPARTY_TCL_LIBRARY_DIR}" FILEPATH "The directory containing TCL library" FORCE)
     endif()
   endif()
 
@@ -159,13 +159,13 @@ if (BUILD_SHARED_LIBS)
         set (DLL_FOLDER_FOR_SEARCH "${3RDPARTY_TCL_LIBRARY_DIR_PARENT}/bin")
       endif()
 
-      set (3RDPARTY_TCL_DLL "3RDPARTY_TCL_DLL-NOTFOUND" CACHE FILEPATH "TCL shared library" FORCE)
+      OCCT_set_cache_variable (3RDPARTY_TCL_DLL "3RDPARTY_TCL_DLL-NOTFOUND" FILEPATH "TCL shared library" FORCE)
       find_library (3RDPARTY_TCL_DLL NAMES tcl${3RDPARTY_TCL_LIBRARY_VERSION}
                                             PATHS "${DLL_FOLDER_FOR_SEARCH}"
                                             NO_DEFAULT_PATH)
 
       if (NOT 3RDPARTY_TCL_DLL OR NOT EXISTS "${3RDPARTY_TCL_DLL}")
-        set (3RDPARTY_TCL_DLL "" CACHE FILEPATH "TCL shared library" FORCE)
+        OCCT_set_cache_variable (3RDPARTY_TCL_DLL "" FILEPATH "TCL shared library" FORCE)
       endif()
     endif()
     if (NOT 3RDPARTY_TCL_DLL_DIR AND 3RDPARTY_TCL_DLL)
@@ -292,3 +292,11 @@ if (NOT BUILD_SHARED_LIBS)
   OCCT_CHECK_AND_UNSET (3RDPARTY_TCL_DLL_DIR)
   OCCT_CHECK_AND_UNSET (INSTALL_TCL)
 endif()
+
+if (3RDPARTY_TCL_DLL)
+  OCCT_set_cache_variable (3RDPARTY_TCL_DLL ${3RDPARTY_TCL_DLL} PATH "" FORCE)
+endif()
+if (3RDPARTY_TCL_LIBRARY)
+  OCCT_set_cache_variable (3RDPARTY_TCL_LIBRARY ${3RDPARTY_TCL_LIBRARY} PATH "" FORCE)
+endif()
+

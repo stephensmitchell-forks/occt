@@ -1,11 +1,11 @@
 # freetype
 
 if (NOT DEFINED INSTALL_FREETYPE AND BUILD_SHARED_LIBS)
-  set (INSTALL_FREETYPE OFF CACHE BOOL "${INSTALL_FREETYPE_DESCR}")
+  OCCT_set_cache_variable (INSTALL_FREETYPE OFF BOOL "${INSTALL_FREETYPE_DESCR}")
 endif()
 
 if (NOT DEFINED 3RDPARTY_FREETYPE_DIR)
-  set (3RDPARTY_FREETYPE_DIR "" CACHE PATH "The directory containing freetype")
+  OCCT_set_cache_variable (3RDPARTY_FREETYPE_DIR "" PATH "The directory containing freetype")
 endif()
 
 # include occt macros. compiler_bitness, os_wiht_bit, compiler
@@ -21,40 +21,40 @@ if (3RDPARTY_DIR AND EXISTS "${3RDPARTY_DIR}")
   if (NOT 3RDPARTY_FREETYPE_DIR OR NOT EXISTS "${3RDPARTY_FREETYPE_DIR}")
     FIND_PRODUCT_DIR ("${3RDPARTY_DIR}" FREETYPE FREETYPE_DIR_NAME)
     if (FREETYPE_DIR_NAME)
-      set (3RDPARTY_FREETYPE_DIR "${3RDPARTY_DIR}/${FREETYPE_DIR_NAME}" CACHE PATH "The directory containing freetype" FORCE)
+      OCCT_set_cache_variable (3RDPARTY_FREETYPE_DIR "${3RDPARTY_DIR}/${FREETYPE_DIR_NAME}" PATH "The directory containing freetype" FORCE)
     endif()
   endif()
 else()
-  #set (3RDPARTY_FREETYPE_DIR "" CACHE PATH "The directory containing freetype" FORCE)
+  #OCCT_set_cache_variable (3RDPARTY_FREETYPE_DIR "" PATH "The directory containing freetype" FORCE)
 endif()
 
 # define required freetype variables
 if (NOT DEFINED 3RDPARTY_FREETYPE_INCLUDE_DIR_ft2build)
-  set (3RDPARTY_FREETYPE_INCLUDE_DIR_ft2build  "" CACHE FILEPATH "the path of ft2build.h")
+  OCCT_set_cache_variable (3RDPARTY_FREETYPE_INCLUDE_DIR_ft2build  "" FILEPATH "the path of ft2build.h")
 endif()
 
 if (NOT DEFINED 3RDPARTY_FREETYPE_INCLUDE_DIR_freetype2)
-  set (3RDPARTY_FREETYPE_INCLUDE_DIR_freetype2 "" CACHE FILEPATH "the path of freetype2")
+  OCCT_set_cache_variable (3RDPARTY_FREETYPE_INCLUDE_DIR_freetype2 "" FILEPATH "the path of freetype2")
 endif()
 
 if (BUILD_SHARED_LIBS)
   if (NOT DEFINED 3RDPARTY_FREETYPE_LIBRARY OR NOT 3RDPARTY_FREETYPE_LIBRARY_DIR OR NOT EXISTS "${3RDPARTY_FREETYPE_LIBRARY_DIR}")
-    set (3RDPARTY_FREETYPE_LIBRARY               "" CACHE FILEPATH "freetype library" FORCE)
+    OCCT_set_cache_variable (3RDPARTY_FREETYPE_LIBRARY               "" FILEPATH "freetype library" FORCE)
   endif()
 
   if (NOT DEFINED 3RDPARTY_FREETYPE_LIBRARY_DIR)
-    set (3RDPARTY_FREETYPE_LIBRARY_DIR           "" CACHE PATH "The directory containing freetype library")
+    OCCT_set_cache_variable (3RDPARTY_FREETYPE_LIBRARY_DIR           "" PATH "The directory containing freetype library")
   endif()
 
   if (WIN32)
     if (NOT DEFINED 3RDPARTY_FREETYPE_DLL OR NOT 3RDPARTY_FREETYPE_DLL_DIR OR NOT EXISTS "${3RDPARTY_FREETYPE_DLL_DIR}")
-      set (3RDPARTY_FREETYPE_DLL                 "" CACHE FILEPATH "freetype shared library" FORCE)
+      OCCT_set_cache_variable (3RDPARTY_FREETYPE_DLL                 "" FILEPATH "freetype shared library" FORCE)
     endif()
   endif()
 
   if (WIN32)
     if (NOT DEFINED 3RDPARTY_FREETYPE_DLL_DIR)
-      set (3RDPARTY_FREETYPE_DLL_DIR               "" CACHE PATH "The directory containing freetype shared library")
+      OCCT_set_cache_variable (3RDPARTY_FREETYPE_DLL_DIR               "" PATH "The directory containing freetype shared library")
     endif()
   endif()
 endif()
@@ -68,7 +68,7 @@ if (3RDPARTY_FREETYPE_DIR AND EXISTS "${3RDPARTY_FREETYPE_DIR}")
 
     if (3RDPARTY_FREETYPE_LIBRARY AND EXISTS "${3RDPARTY_FREETYPE_LIBRARY}")
       get_filename_component (3RDPARTY_FREETYPE_LIBRARY_DIR "${3RDPARTY_FREETYPE_LIBRARY}" PATH)
-      set (3RDPARTY_FREETYPE_LIBRARY_DIR "${3RDPARTY_FREETYPE_LIBRARY_DIR}" CACHE PATH "The directory containing freetype library" FORCE)
+      OCCT_set_cache_variable (3RDPARTY_FREETYPE_LIBRARY_DIR "${3RDPARTY_FREETYPE_LIBRARY_DIR}" PATH "The directory containing freetype library" FORCE)
     else()
       CHECK_PATH_FOR_CONSISTENCY (3RDPARTY_FREETYPE_DIR 3RDPARTY_FREETYPE_LIBRARY_DIR PATH "The directory containing freetype library")
     endif()
@@ -78,7 +78,7 @@ if (3RDPARTY_FREETYPE_DIR AND EXISTS "${3RDPARTY_FREETYPE_DIR}")
 
       if (3RDPARTY_FREETYPE_DLL AND EXISTS "${3RDPARTY_FREETYPE_DLL}")
         get_filename_component (3RDPARTY_FREETYPE_DLL_DIR "${3RDPARTY_FREETYPE_DLL}" PATH)
-        set (3RDPARTY_FREETYPE_DLL_DIR "${3RDPARTY_FREETYPE_DLL_DIR}" CACHE PATH "The directory containing freetype shared library" FORCE)
+        OCCT_set_cache_variable (3RDPARTY_FREETYPE_DLL_DIR "${3RDPARTY_FREETYPE_DLL_DIR}" PATH "The directory containing freetype shared library" FORCE)
       else()
         CHECK_PATH_FOR_CONSISTENCY (3RDPARTY_FREETYPE_DIR 3RDPARTY_FREETYPE_DLL_DIR PATH "The directory containing freetype shared library")
       endif()
@@ -129,28 +129,28 @@ if (IS_BUILTIN_SEARCH_REQUIRED)
   # assign the found paths to corresponding 3RDPARTY_FREETYPE_ variables
   if (NOT 3RDPARTY_FREETYPE_INCLUDE_DIR_ft2build OR NOT EXISTS "${3RDPARTY_FREETYPE_INCLUDE_DIR_ft2build}")
     if (FREETYPE_INCLUDE_DIR_ft2build AND EXISTS "${FREETYPE_INCLUDE_DIR_ft2build}")
-      set (3RDPARTY_FREETYPE_INCLUDE_DIR_ft2build  "${FREETYPE_INCLUDE_DIR_ft2build}" CACHE FILEPATH "the path to ft2build.h" FORCE)
+      OCCT_set_cache_variable (3RDPARTY_FREETYPE_INCLUDE_DIR_ft2build  "${FREETYPE_INCLUDE_DIR_ft2build}" FILEPATH "the path to ft2build.h" FORCE)
     endif()
   endif()
 
   if (NOT 3RDPARTY_FREETYPE_INCLUDE_DIR_freetype2 OR NOT EXISTS "${3RDPARTY_FREETYPE_INCLUDE_DIR_freetype2}")
     if (FREETYPE_INCLUDE_DIR_freetype2 AND EXISTS "${FREETYPE_INCLUDE_DIR_freetype2}")
-      set (3RDPARTY_FREETYPE_INCLUDE_DIR_freetype2  "${FREETYPE_INCLUDE_DIR_freetype2}" CACHE FILEPATH "the path to ftheader.h" FORCE)
+      OCCT_set_cache_variable (3RDPARTY_FREETYPE_INCLUDE_DIR_freetype2  "${FREETYPE_INCLUDE_DIR_freetype2}" FILEPATH "the path to ftheader.h" FORCE)
     endif()
   endif()
 
   if (BUILD_SHARED_LIBS)
     if (NOT 3RDPARTY_FREETYPE_LIBRARY OR NOT EXISTS "${3RDPARTY_FREETYPE_LIBRARY}")
       if (FREETYPE_LIBRARY AND EXISTS "${FREETYPE_LIBRARY}")
-        set (3RDPARTY_FREETYPE_LIBRARY  "${FREETYPE_LIBRARY}" CACHE FILEPATH "The path to freetype library" FORCE)
+        OCCT_set_cache_variable (3RDPARTY_FREETYPE_LIBRARY  "${FREETYPE_LIBRARY}" FILEPATH "The path to freetype library" FORCE)
       endif()
     endif()
 
     if (3RDPARTY_FREETYPE_LIBRARY AND EXISTS "${3RDPARTY_FREETYPE_LIBRARY}")
       get_filename_component (3RDPARTY_FREETYPE_LIBRARY_DIR "${3RDPARTY_FREETYPE_LIBRARY}" PATH)
-      set (3RDPARTY_FREETYPE_LIBRARY_DIR "${3RDPARTY_FREETYPE_LIBRARY_DIR}" CACHE PATH "The directory containing freetype library" FORCE)
+      OCCT_set_cache_variable (3RDPARTY_FREETYPE_LIBRARY_DIR "${3RDPARTY_FREETYPE_LIBRARY_DIR}" PATH "The directory containing freetype library" FORCE)
     else()
-      set (3RDPARTY_FREETYPE_LIBRARY_DIR "" CACHE PATH "The directory containing freetype library" FORCE)
+      OCCT_set_cache_variable (3RDPARTY_FREETYPE_LIBRARY_DIR "" PATH "The directory containing freetype library" FORCE)
     endif()
   endif()
 endif()
@@ -162,7 +162,7 @@ if (NOT 3RDPARTY_FREETYPE_INCLUDE_DIR_ft2build OR NOT EXISTS "${3RDPARTY_FREETYP
   set (FT2BUILD_NAMES ft2build.h config/ft2build.h freetype/config/ft2build.h)
 
   # set 3RDPARTY_FREETYPE_INCLUDE_DIR_ft2build as notfound, otherwise find_library can't assign a new value to 3RDPARTY_FREETYPE_INCLUDE_DIR_ft2build
-  set (3RDPARTY_FREETYPE_INCLUDE_DIR_ft2build "3RDPARTY_FREETYPE_INCLUDE_DIR_ft2build-NOTFOUND" CACHE FILEPATH "the path to ft2build.h" FORCE)
+  OCCT_set_cache_variable (3RDPARTY_FREETYPE_INCLUDE_DIR_ft2build "3RDPARTY_FREETYPE_INCLUDE_DIR_ft2build-NOTFOUND" FILEPATH "the path to ft2build.h" FORCE)
 
   # cmake (version < 3.0) doesn't find ft2build.h of freetype (version is >= 2.5.1)
   # do search taking into account freetype structure of 2.5.1 version
@@ -185,7 +185,7 @@ if (3RDPARTY_FREETYPE_INCLUDE_DIR_ft2build AND EXISTS "${3RDPARTY_FREETYPE_INCLU
 else()
   list (APPEND 3RDPARTY_NOT_INCLUDED 3RDPARTY_FREETYPE_INCLUDE_DIR_ft2build)
 
-  set (3RDPARTY_FREETYPE_INCLUDE_DIR_ft2build "" CACHE FILEPATH "the path to ft2build.h" FORCE)
+  OCCT_set_cache_variable (3RDPARTY_FREETYPE_INCLUDE_DIR_ft2build "" FILEPATH "the path to ft2build.h" FORCE)
 endif()
 
 # ftheader.h
@@ -193,7 +193,7 @@ if (NOT 3RDPARTY_FREETYPE_INCLUDE_DIR_freetype2 OR NOT EXISTS "${3RDPARTY_FREETY
   set (FTHEADER_NAMES ftheader.h config/ftheader.h freetype/config/ftheader.h)
 
   # set 3RDPARTY_FREETYPE_INCLUDE_DIR_freetype2 as notfound, otherwise find_library can't assign a new value to 3RDPARTY_FREETYPE_INCLUDE_DIR_freetype2
-  set (3RDPARTY_FREETYPE_INCLUDE_DIR_freetype2 "3RDPARTY_FREETYPE_INCLUDE_DIR_freetype2-NOTFOUND" CACHE FILEPATH "the path to ftheader.h" FORCE)
+  OCCT_set_cache_variable (3RDPARTY_FREETYPE_INCLUDE_DIR_freetype2 "3RDPARTY_FREETYPE_INCLUDE_DIR_freetype2-NOTFOUND" FILEPATH "the path to ftheader.h" FORCE)
 
   if (3RDPARTY_FREETYPE_DIR AND EXISTS "${3RDPARTY_FREETYPE_DIR}")
     find_path (3RDPARTY_FREETYPE_INCLUDE_DIR_freetype2 NAMES ${FTHEADER_NAMES}
@@ -214,7 +214,7 @@ if (3RDPARTY_FREETYPE_INCLUDE_DIR_freetype2 AND EXISTS "${3RDPARTY_FREETYPE_INCL
 else()
   list (APPEND 3RDPARTY_NOT_INCLUDED 3RDPARTY_FREETYPE_INCLUDE_DIR_freetype2)
 
-  set (3RDPARTY_FREETYPE_INCLUDE_DIR_freetype2 "" CACHE FILEPATH "the path to ftheader.h" FORCE)
+  OCCT_set_cache_variable (3RDPARTY_FREETYPE_INCLUDE_DIR_freetype2 "" FILEPATH "the path to ftheader.h" FORCE)
 endif()
 
 # freetype library
@@ -228,7 +228,7 @@ if (BUILD_SHARED_LIBS)
     endif()
 
     # set 3RDPARTY_FREETYPE_LIBRARY as notfound, otherwise find_library can't assign a new value to 3RDPARTY_FREETYPE_LIBRARY
-    set (3RDPARTY_FREETYPE_LIBRARY "3RDPARTY_FREETYPE_LIBRARY-NOTFOUND" CACHE FILEPATH "The path to freetype library" FORCE)
+    OCCT_set_cache_variable (3RDPARTY_FREETYPE_LIBRARY "3RDPARTY_FREETYPE_LIBRARY-NOTFOUND" FILEPATH "The path to freetype library" FORCE)
 
     if (3RDPARTY_FREETYPE_DIR AND EXISTS "${3RDPARTY_FREETYPE_DIR}")
       find_library (3RDPARTY_FREETYPE_LIBRARY freetype
@@ -255,7 +255,7 @@ if (BUILD_SHARED_LIBS)
   else()
     list (APPEND 3RDPARTY_NOT_INCLUDED 3RDPARTY_FREETYPE_LIBRARY_DIR)
 
-    set (3RDPARTY_FREETYPE_LIBRARY "" CACHE FILEPATH "The path to freetype library" FORCE)
+    OCCT_set_cache_variable (3RDPARTY_FREETYPE_LIBRARY "" FILEPATH "The path to freetype library" FORCE)
   endif()
 
   # freetype shared library
@@ -279,11 +279,11 @@ if (BUILD_SHARED_LIBS)
 
       if (3RDPARTY_FREETYPE_DLL AND EXISTS "${3RDPARTY_FREETYPE_DLL}")
         get_filename_component (3RDPARTY_FREETYPE_DLL_DIR "${3RDPARTY_FREETYPE_DLL}" PATH)
-        set (3RDPARTY_FREETYPE_DLL_DIR "${3RDPARTY_FREETYPE_DLL_DIR}" CACHE PATH "The directory containing freetype library" FORCE)
+        OCCT_set_cache_variable (3RDPARTY_FREETYPE_DLL_DIR "${3RDPARTY_FREETYPE_DLL_DIR}" PATH "The directory containing freetype library" FORCE)
       else()
-        set (3RDPARTY_FREETYPE_DLL_DIR "" CACHE PATH "The directory containing freetype shared library" FORCE)
+        OCCT_set_cache_variable (3RDPARTY_FREETYPE_DLL_DIR "" PATH "The directory containing freetype shared library" FORCE)
 
-        set (3RDPARTY_FREETYPE_DLL "" CACHE FILEPATH "freetype shared library" FORCE)
+        OCCT_set_cache_variable (3RDPARTY_FREETYPE_DLL "" FILEPATH "freetype shared library" FORCE)
       endif()
     endif()
 
@@ -295,7 +295,7 @@ if (BUILD_SHARED_LIBS)
   endif()
 
   # install instructions
-  if (INSTALL_FREETYPE)
+  if (NOT EXTERNAL_BUILD AND INSTALL_FREETYPE)
     OCCT_MAKE_OS_WITH_BITNESS()
 
     if (WIN32)
@@ -360,4 +360,8 @@ else()
   OCCT_CHECK_AND_UNSET(3RDPARTY_FREETYPE_LIBRARY)
   OCCT_CHECK_AND_UNSET(3RDPARTY_FREETYPE_LIBRARY_DIR)
   OCCT_CHECK_AND_UNSET(INSTALL_FREETYPE)
+endif()
+
+if (3RDPARTY_FREETYPE_DLL)
+  OCCT_set_cache_variable (3RDPARTY_FREETYPE_DLL "${3RDPARTY_FREETYPE_DLL}" PATH "" FORCE)
 endif()
