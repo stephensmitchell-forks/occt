@@ -163,6 +163,12 @@ void OpenGl_View::Redraw()
     aNbSamples = OpenGl_Context::GetPowerOfTwo (aNbSamples, aCtx->MaxMsaaSamples());
   }
 
+  bool toUseOit = myRenderParams.IsOitEnabled
+    && checkOitCompatibility (aCtx, aNbSamples > 0);
+
+  bool toInitImmediateFbo = myTransientDrawToFront
+    && (!aCtx->caps->useSystemBuffer || (toUseOit && HasImmediateStructures()));
+
   if ( aFrameBuffer == NULL
    && !aCtx->DefaultFrameBuffer().IsNull()
    &&  aCtx->DefaultFrameBuffer()->IsValid())
@@ -173,7 +179,8 @@ void OpenGl_View::Redraw()
   if (myHasFboBlit
    && (myTransientDrawToFront
     || aProjectType == Graphic3d_Camera::Projection_Stereo
-    || aNbSamples != 0))
+    || aNbSamples != 0
+    || toUseOit))
   {
     if (myMainSceneFbos[0]->GetVPSizeX() != aSizeX
      || myMainSceneFbos[0]->GetVPSizeY() != aSizeY
@@ -193,12 +200,10 @@ void OpenGl_View::Redraw()
       {
         myMainSceneFbos[0]->Init (aCtx, aSizeX, aSizeY, myFboColorFormat, myFboDepthFormat, aNbSamples);
       }
-      if (myTransientDrawToFront
-       && !aCtx->caps->useSystemBuffer
-       && myMainSceneFbos[0]->IsValid())
-      {
-        myImmediateSceneFbos[0]->InitLazy (aCtx, *myMainSceneFbos[0]);
-      }
+    }
+    if (myMainSceneFbos[0]->IsValid() && (toInitImmediateFbo || myImmediateSceneFbos[0]->IsValid()))
+    {
+      myImmediateSceneFbos[0]->InitLazy (aCtx, *myMainSceneFbos[0]);
     }
   }
   else
@@ -238,6 +243,93 @@ void OpenGl_View::Redraw()
     }
   }
 
+  // create color and coverage accumulation buffers required for OIT algorithm
+  if (toUseOit)
+  {
+    Standard_Integer anFboIt = 0;
+    for (; anFboIt < 2; ++anFboIt)
+    {
+      if (myMainSceneFbos[anFboIt]->IsValid()
+       && (myMainSceneFbosOit[anFboIt]->GetVPSizeX() != aSizeX
+        || myMainSceneFbosOit[anFboIt]->GetVPSizeY() != aSizeY
+        || myMainSceneFbosOit[anFboIt]->NbSamples() != aNbSamples))
+      {
+        Standard_Integer aColorConfig = 0;
+        for (;;) // seemly responding to driver limitation (GL_FRAMEBUFFER_UNSUPPORTED)
+        {
+          if (myFboOitColorConfig.IsEmpty())
+          {
+            if (!chooseOitColorConfiguration (aCtx, aColorConfig++, myFboOitColorConfig))
+            {
+              break;
+            }
+          }
+          if (myMainSceneFbosOit[anFboIt]->Init (aCtx, aSizeX, aSizeY, myFboOitColorConfig, myMainSceneFbos[anFboIt]->DepthStencilTexture(), aNbSamples))
+          {
+            break;
+          }
+          myFboOitColorConfig.Clear();
+        }
+        if (!myMainSceneFbosOit[anFboIt]->IsValid())
+        {
+          break;
+        }
+      }
+      else if (!myMainSceneFbosOit[anFboIt]->IsValid())
+      {
+        myMainSceneFbosOit[anFboIt]->Release (aCtx.operator->());
+        myMainSceneFbosOit[anFboIt]->ChangeViewport (0, 0);
+      }
+
+      if (myImmediateSceneFbos[anFboIt]->IsValid()
+       && (myImmediateSceneFbosOit[anFboIt]->GetVPSizeX() != aSizeX
+        || myImmediateSceneFbosOit[anFboIt]->GetVPSizeY() != aSizeY
+        || myImmediateSceneFbosOit[anFboIt]->NbSamples() != aNbSamples))
+      {
+        if (!myImmediateSceneFbosOit[anFboIt]->Init (aCtx, aSizeX, aSizeY, myFboOitColorConfig, myImmediateSceneFbos[anFboIt]->DepthStencilTexture(), aNbSamples))
+        {
+          break;
+        }
+      }
+      else if (!myImmediateSceneFbosOit[anFboIt]->IsValid())
+      {
+        myImmediateSceneFbosOit[anFboIt]->Release (aCtx.operator->());
+        myImmediateSceneFbosOit[anFboIt]->ChangeViewport (0, 0);
+      }
+    }
+    if (!anFboIt) // only the first OIT framebuffer is mandatory
+    {
+      TCollection_ExtendedString aMsg = 
+        "Initialization of float texture framebuffer for use with\n"
+        "  blended order-independent transparency rendering algorithm has failed.\n"
+        "  Blended order-independent transparency will not be available.\n";
+
+      aCtx->PushMessage (GL_DEBUG_SOURCE_APPLICATION,
+                          GL_DEBUG_TYPE_ERROR,
+                          0,
+                          GL_DEBUG_SEVERITY_HIGH,
+                          aMsg);
+
+      if (aNbSamples > 0)
+        myToDisableOITMSAA = Standard_True;
+      else
+        myToDisableOIT     = Standard_True;
+
+      toUseOit = false;
+    }
+  }
+  if (!toUseOit && myMainSceneFbosOit[0]->IsValid())
+  {
+    myMainSceneFbosOit     [0]->Release (aCtx.operator->());
+    myMainSceneFbosOit     [1]->Release (aCtx.operator->());
+    myImmediateSceneFbosOit[0]->Release (aCtx.operator->());
+    myImmediateSceneFbosOit[1]->Release (aCtx.operator->());
+    myMainSceneFbosOit     [0]->ChangeViewport (0, 0);
+    myMainSceneFbosOit     [1]->ChangeViewport (0, 0);
+    myImmediateSceneFbosOit[0]->ChangeViewport (0, 0);
+    myImmediateSceneFbosOit[1]->ChangeViewport (0, 0);
+  }
+
   if (aProjectType == Graphic3d_Camera::Projection_Stereo)
   {
     OpenGl_FrameBuffer* aMainFbos[2] =
@@ -245,34 +337,51 @@ void OpenGl_View::Redraw()
       myMainSceneFbos[0]->IsValid() ? myMainSceneFbos[0].operator->() : NULL,
       myMainSceneFbos[1]->IsValid() ? myMainSceneFbos[1].operator->() : NULL
     };
+    OpenGl_FrameBuffer* aMainFbosOit[2] =
+    {
+      myMainSceneFbosOit[0]->IsValid() ? myMainSceneFbosOit[0].operator->() : NULL,
+      myMainSceneFbosOit[1]->IsValid() ? myMainSceneFbosOit[1].operator->() :
+        myMainSceneFbosOit[0]->IsValid() ? myMainSceneFbosOit[0].operator->() : NULL
+    };
+
     OpenGl_FrameBuffer* anImmFbos[2] =
     {
       myImmediateSceneFbos[0]->IsValid() ? myImmediateSceneFbos[0].operator->() : NULL,
       myImmediateSceneFbos[1]->IsValid() ? myImmediateSceneFbos[1].operator->() : NULL
     };
+    OpenGl_FrameBuffer* anImmFbosOit[2] =
+    {
+      myImmediateSceneFbosOit[0]->IsValid() ? myImmediateSceneFbosOit[0].operator->() : NULL,
+      myImmediateSceneFbosOit[1]->IsValid() ? myImmediateSceneFbosOit[1].operator->() :
+        myImmediateSceneFbosOit[0]->IsValid() ? myImmediateSceneFbosOit[0].operator->() : NULL
+    };
 
     if (!myTransientDrawToFront)
     {
-      anImmFbos[0] = aMainFbos[0];
-      anImmFbos[1] = aMainFbos[1];
+      anImmFbos   [0] = aMainFbos   [0];
+      anImmFbos   [1] = aMainFbos   [1];
+      anImmFbosOit[0] = aMainFbosOit[0];
+      anImmFbosOit[1] = aMainFbosOit[1];
     }
     else if (aStereoMode == Graphic3d_StereoMode_SoftPageFlip
           || aStereoMode == Graphic3d_StereoMode_QuadBuffer)
     {
-      anImmFbos[0] = NULL;
-      anImmFbos[1] = NULL;
+      anImmFbos   [0] = NULL;
+      anImmFbos   [1] = NULL;
+      anImmFbosOit[0] = NULL;
+      anImmFbosOit[1] = NULL;
     }
 
   #if !defined(GL_ES_VERSION_2_0)
     aCtx->SetReadDrawBuffer (aStereoMode == Graphic3d_StereoMode_QuadBuffer ? GL_BACK_LEFT : GL_BACK);
   #endif
-    redraw (Graphic3d_Camera::Projection_MonoLeftEye, aMainFbos[0]);
+    redraw (Graphic3d_Camera::Projection_MonoLeftEye, aMainFbos[0], aMainFbosOit[0]);
     myBackBufferRestored = Standard_True;
     myIsImmediateDrawn   = Standard_False;
   #if !defined(GL_ES_VERSION_2_0)
     aCtx->SetReadDrawBuffer (aStereoMode == Graphic3d_StereoMode_QuadBuffer ? GL_BACK_LEFT : GL_BACK);
   #endif
-    if (!redrawImmediate (Graphic3d_Camera::Projection_MonoLeftEye, aMainFbos[0], anImmFbos[0]))
+    if (!redrawImmediate (Graphic3d_Camera::Projection_MonoLeftEye, aMainFbos[0], anImmFbos[0], anImmFbosOit[0]))
     {
       toSwap = false;
     }
@@ -284,10 +393,10 @@ void OpenGl_View::Redraw()
   #if !defined(GL_ES_VERSION_2_0)
     aCtx->SetReadDrawBuffer (aStereoMode == Graphic3d_StereoMode_QuadBuffer ? GL_BACK_RIGHT : GL_BACK);
   #endif
-    redraw (Graphic3d_Camera::Projection_MonoRightEye, aMainFbos[1]);
+    redraw (Graphic3d_Camera::Projection_MonoRightEye, aMainFbos[1], aMainFbosOit[1]);
     myBackBufferRestored = Standard_True;
     myIsImmediateDrawn   = Standard_False;
-    if (!redrawImmediate (Graphic3d_Camera::Projection_MonoRightEye, aMainFbos[1], anImmFbos[1]))
+    if (!redrawImmediate (Graphic3d_Camera::Projection_MonoRightEye, aMainFbos[1], anImmFbos[1], anImmFbosOit[1]))
     {
       toSwap = false;
     }
@@ -299,15 +408,19 @@ void OpenGl_View::Redraw()
   }
   else
   {
-    OpenGl_FrameBuffer* aMainFbo = myMainSceneFbos[0]->IsValid() ? myMainSceneFbos[0].operator->() : aFrameBuffer;
-    OpenGl_FrameBuffer* anImmFbo = aFrameBuffer;
-    if (!aCtx->caps->useSystemBuffer && myImmediateSceneFbos[0]->IsValid())
-    {
-      anImmFbo = myImmediateSceneFbos[0].operator->();
-    }
+    OpenGl_FrameBuffer* aMainFbo    = myMainSceneFbos[0]->IsValid() ? myMainSceneFbos[0].operator->() : aFrameBuffer;
+    OpenGl_FrameBuffer* aMainFboOit = myMainSceneFbosOit[0]->IsValid() ? myMainSceneFbosOit[0].operator->() : NULL;
+    OpenGl_FrameBuffer* anImmFbo    = aFrameBuffer;
+    OpenGl_FrameBuffer* anImmFboOit = NULL;
     if (!myTransientDrawToFront)
     {
-      anImmFbo = aMainFbo;
+      anImmFbo    = aMainFbo;
+      anImmFboOit = aMainFboOit;
+    }
+    else if (myImmediateSceneFbos[0]->IsValid())
+    {
+      anImmFbo    = myImmediateSceneFbos[0].operator->();
+      anImmFboOit = myImmediateSceneFbosOit[0]->IsValid() ? myImmediateSceneFbosOit[0].operator->() : NULL;
     }
 
   #if !defined(GL_ES_VERSION_2_0)
@@ -316,10 +429,10 @@ void OpenGl_View::Redraw()
       aCtx->SetReadDrawBuffer (GL_BACK);
     }
   #endif
-    redraw (aProjectType, aMainFbo);
+    redraw (aProjectType, aMainFbo, aMainFboOit);
     myBackBufferRestored = Standard_True;
     myIsImmediateDrawn   = Standard_False;
-    if (!redrawImmediate (aProjectType, aMainFbo, anImmFbo))
+    if (!redrawImmediate (aProjectType, aMainFbo, anImmFbo, anImmFboOit))
     {
       toSwap = false;
     }
@@ -422,11 +535,19 @@ void OpenGl_View::RedrawImmediate()
       myImmediateSceneFbos[0]->IsValid() ? myImmediateSceneFbos[0].operator->() : NULL,
       myImmediateSceneFbos[1]->IsValid() ? myImmediateSceneFbos[1].operator->() : NULL
     };
+    OpenGl_FrameBuffer* anImmFbosOit[2] =
+    {
+      myImmediateSceneFbosOit[0]->IsValid() ? myImmediateSceneFbosOit[0].operator->() : NULL,
+      myImmediateSceneFbosOit[1]->IsValid() ? myImmediateSceneFbosOit[1].operator->() :
+        myImmediateSceneFbosOit[0]->IsValid() ? myImmediateSceneFbosOit[0].operator->() : NULL
+    };
     if (aStereoMode == Graphic3d_StereoMode_SoftPageFlip
      || aStereoMode == Graphic3d_StereoMode_QuadBuffer)
     {
-      anImmFbos[0] = NULL;
-      anImmFbos[1] = NULL;
+      anImmFbos[0]    = NULL;
+      anImmFbos[1]    = NULL;
+      anImmFbosOit[0] = NULL;
+      anImmFbosOit[1] = NULL;
     }
 
     if (aCtx->arbFBO != NULL)
@@ -442,6 +563,7 @@ void OpenGl_View::RedrawImmediate()
     toSwap = redrawImmediate (Graphic3d_Camera::Projection_MonoLeftEye,
                               aMainFbos[0],
                               anImmFbos[0],
+                              anImmFbosOit[0],
                               Standard_True) || toSwap;
     if (aStereoMode == Graphic3d_StereoMode_SoftPageFlip
     &&  toSwap
@@ -463,6 +585,7 @@ void OpenGl_View::RedrawImmediate()
     toSwap = redrawImmediate (Graphic3d_Camera::Projection_MonoRightEye,
                               aMainFbos[1],
                               anImmFbos[1],
+                              anImmFbosOit[1],
                               Standard_True) || toSwap;
     if (anImmFbos[0] != NULL)
     {
@@ -473,9 +596,11 @@ void OpenGl_View::RedrawImmediate()
   {
     OpenGl_FrameBuffer* aMainFbo = myMainSceneFbos[0]->IsValid() ? myMainSceneFbos[0].operator->() : NULL;
     OpenGl_FrameBuffer* anImmFbo = aFrameBuffer;
-    if (!aCtx->caps->useSystemBuffer && myImmediateSceneFbos[0]->IsValid())
+    OpenGl_FrameBuffer* anImmFboOit = NULL;
+    if (myImmediateSceneFbos[0]->IsValid())
     {
-      anImmFbo = myImmediateSceneFbos[0].operator->();
+      anImmFbo    = myImmediateSceneFbos[0].operator->();
+      anImmFboOit = myImmediateSceneFbosOit[0]->IsValid() ? myImmediateSceneFbosOit[0].operator->() : NULL;
     }
   #if !defined(GL_ES_VERSION_2_0)
     if (aMainFbo == NULL)
@@ -486,6 +611,7 @@ void OpenGl_View::RedrawImmediate()
     toSwap = redrawImmediate (aProjectType,
                               aMainFbo,
                               anImmFbo,
+                              anImmFboOit,
                               Standard_True) || toSwap;
     if (anImmFbo != NULL
      && anImmFbo != aFrameBuffer)
@@ -517,7 +643,9 @@ void OpenGl_View::RedrawImmediate()
 // function : redraw
 // purpose  :
 // =======================================================================
-void OpenGl_View::redraw (const Graphic3d_Camera::Projection theProjection, OpenGl_FrameBuffer* theReadDrawFbo)
+void OpenGl_View::redraw (const Graphic3d_Camera::Projection theProjection,
+                          OpenGl_FrameBuffer* theReadDrawFbo,
+                          OpenGl_FrameBuffer* theOitAccumFbo)
 {
   Handle(OpenGl_Context) aCtx = myWorkspace->GetGlContext();
   if (theReadDrawFbo != NULL)
@@ -552,7 +680,7 @@ void OpenGl_View::redraw (const Graphic3d_Camera::Projection theProjection, Open
 
   glClear (toClear);
 
-  render (theProjection, theReadDrawFbo, Standard_False);
+  render (theProjection, theReadDrawFbo, theOitAccumFbo, Standard_False);
 }
 
 // =======================================================================
@@ -562,6 +690,7 @@ void OpenGl_View::redraw (const Graphic3d_Camera::Projection theProjection, Open
 bool OpenGl_View::redrawImmediate (const Graphic3d_Camera::Projection theProjection,
                                    OpenGl_FrameBuffer*    theReadFbo,
                                    OpenGl_FrameBuffer*    theDrawFbo,
+                                   OpenGl_FrameBuffer*    theOitAccumFbo,
                                    const Standard_Boolean theIsPartialUpdate)
 {
   Handle(OpenGl_Context) aCtx = myWorkspace->GetGlContext();
@@ -617,7 +746,7 @@ bool OpenGl_View::redrawImmediate (const Graphic3d_Camera::Projection theProject
   glClearDepthf (1.0f);
 #endif
 
-  render (theProjection, theDrawFbo, Standard_True);
+  render (theProjection, theDrawFbo, theOitAccumFbo, Standard_True);
 
   return !toCopyBackToFront;
 }
@@ -628,6 +757,7 @@ bool OpenGl_View::redrawImmediate (const Graphic3d_Camera::Projection theProject
 //=======================================================================
 void OpenGl_View::render (Graphic3d_Camera::Projection theProjection,
                           OpenGl_FrameBuffer*          theOutputFBO,
+                          OpenGl_FrameBuffer*          theOitAccumFbo,
                           const Standard_Boolean       theToDrawImmediate)
 {
   // ==================================
@@ -752,7 +882,7 @@ void OpenGl_View::render (Graphic3d_Camera::Projection theProjection,
 
   myWorkspace->SetEnvironmentTexture (myTextureEnv);
 
-  renderScene (theProjection, theOutputFBO, theToDrawImmediate);
+  renderScene (theProjection, theOutputFBO, theOitAccumFbo, theToDrawImmediate);
 
   myWorkspace->SetEnvironmentTexture (Handle(OpenGl_Texture)());
 
@@ -812,6 +942,7 @@ void OpenGl_View::InvalidateBVHData (const Graphic3d_ZLayerId theLayerId)
 //=======================================================================
 void OpenGl_View::renderStructs (Graphic3d_Camera::Projection theProjection,
                                  OpenGl_FrameBuffer*          theReadDrawFbo,
+                                 OpenGl_FrameBuffer*          theOitAccumFbo,
                                  const Standard_Boolean       theToDrawImmediate)
 {
   if ( myZLayers.NbStructures() <= 0 )
@@ -848,7 +979,7 @@ void OpenGl_View::renderStructs (Graphic3d_Camera::Projection theProjection,
       if (aCtx->arbFBOBlit != NULL)
       {
         // Render bottom OSD layer
-        myZLayers.Render (myWorkspace, theToDrawImmediate, OpenGl_LF_Bottom);
+        myZLayers.Render (myWorkspace, theToDrawImmediate, OpenGl_LF_Bottom, theReadDrawFbo, theOitAccumFbo);
 
         myWorkspace->SetRenderFilter (myRaytraceFilter);
         {
@@ -862,7 +993,7 @@ void OpenGl_View::renderStructs (Graphic3d_Camera::Projection theProjection,
           }
 
           // Render non-polygonal elements in default layer
-          myZLayers.Render (myWorkspace, theToDrawImmediate, OpenGl_LF_Default);
+          myZLayers.Render (myWorkspace, theToDrawImmediate, OpenGl_LF_Default, theReadDrawFbo, theOitAccumFbo);
         }
         myWorkspace->SetRenderFilter (myRaytraceFilter->PrevRenderFilter());
       }
@@ -884,7 +1015,7 @@ void OpenGl_View::renderStructs (Graphic3d_Camera::Projection theProjection,
       raytrace (aSizeX, aSizeY, theProjection, theReadDrawFbo, aCtx);
 
       // Render upper (top and topmost) OpenGL layers
-      myZLayers.Render (myWorkspace, theToDrawImmediate, OpenGl_LF_Upper);
+      myZLayers.Render (myWorkspace, theToDrawImmediate, OpenGl_LF_Upper, theReadDrawFbo, theOitAccumFbo);
     }
   }
 
@@ -892,7 +1023,7 @@ void OpenGl_View::renderStructs (Graphic3d_Camera::Projection theProjection,
   // mode or in case of ray-tracing failure
   if (toRenderGL)
   {
-    myZLayers.Render (myWorkspace, theToDrawImmediate, OpenGl_LF_All);
+    myZLayers.Render (myWorkspace, theToDrawImmediate, OpenGl_LF_All, theReadDrawFbo, theOitAccumFbo);
 
     // Set flag that scene was redrawn by standard pipeline
     myWasRedrawnGL = Standard_True;
@@ -926,6 +1057,7 @@ void OpenGl_View::Invalidate()
 //=======================================================================
 void OpenGl_View::renderScene (Graphic3d_Camera::Projection theProjection,
                                OpenGl_FrameBuffer*          theReadDrawFbo,
+                               OpenGl_FrameBuffer*          theOitAccumFbo,
                                const Standard_Boolean       theToDrawImmediate)
 {
   const Handle(OpenGl_Context)& aContext = myWorkspace->GetGlContext();
@@ -942,7 +1074,7 @@ void OpenGl_View::renderScene (Graphic3d_Camera::Projection theProjection,
   myWorkspace->NamedStatus &= ~(OPENGL_NS_2NDPASSNEED | OPENGL_NS_2NDPASSDO);
 
   // First pass
-  renderStructs (theProjection, theReadDrawFbo, theToDrawImmediate);
+  renderStructs (theProjection, theReadDrawFbo, theOitAccumFbo, theToDrawImmediate);
   myWorkspace->DisableTexture();
 
   // Second pass
@@ -972,7 +1104,7 @@ void OpenGl_View::renderScene (Graphic3d_Camera::Projection theProjection,
     glEnable (GL_DEPTH_TEST);
 
     // Render the view
-    renderStructs (theProjection, theReadDrawFbo, theToDrawImmediate);
+    renderStructs (theProjection, theReadDrawFbo, theOitAccumFbo, theToDrawImmediate);
     myWorkspace->DisableTexture();
 
     // Restore properties back
@@ -1476,4 +1608,75 @@ void OpenGl_View::copyBackToFront()
   aCtx->SetReadBuffer (aCtx->DrawBuffer());
 #endif
   myIsImmediateDrawn = Standard_False;
+}
+
+// =======================================================================
+// function : checkOitCompatibility
+// purpose  :
+// =======================================================================
+Standard_Boolean OpenGl_View::checkOitCompatibility (const Handle(OpenGl_Context)& theGlContext,
+                                                     const Standard_Boolean theMSAA)
+{
+  // determine if OIT is supported by current OpenGl context
+  Standard_Boolean& aToDisableOIT = theMSAA ? myToDisableMSAA : myToDisableOIT;
+
+  if (!aToDisableOIT && theMSAA)
+  {
+    if (!theGlContext->arbSampleShading)
+    {
+      TCollection_ExtendedString aMsg = TCollection_ExtendedString()
+                                      + "Current version of GLSL does not support built-in sample variables.\n"
+                                      + "  Blended order-independent transparency will not be available.\n";
+      theGlContext->PushMessage (GL_DEBUG_SOURCE_APPLICATION,
+                                 GL_DEBUG_TYPE_ERROR,
+                                 0,
+                                 GL_DEBUG_SEVERITY_HIGH,
+                                 aMsg);
+
+      aToDisableOIT = Standard_True;
+    }
+  }
+  else if (!aToDisableOIT)
+  {
+    if (theGlContext->MaxDrawBuffers() < 2)
+    {
+      TCollection_ExtendedString aMsg = TCollection_ExtendedString()
+                                      + "OpenGL context does not support multiple rendering targets.\n"
+                                      + "  Blended order-independent transparency will not be available.\n";
+      theGlContext->PushMessage (GL_DEBUG_SOURCE_APPLICATION,
+                                 GL_DEBUG_TYPE_ERROR,
+                                 0,
+                                 GL_DEBUG_SEVERITY_HIGH,
+                                 aMsg);
+      aToDisableOIT = Standard_True;
+    }
+  }
+
+  return !aToDisableOIT;
+}
+
+// =======================================================================
+// function : chooseOitColorConfiguration
+// purpose  :
+// =======================================================================
+bool OpenGl_View::chooseOitColorConfiguration (const Handle(OpenGl_Context)& theGlContext,
+                                               const Standard_Integer theConfigIndex,
+                                               OpenGl_ColorFormats& theFormats)
+{
+  theFormats.Clear();
+
+  switch (theConfigIndex)
+  {
+    case 0: // choose best applicable color format combination
+      theFormats.Append (theGlContext->arbTexHalfFloat ? GL_RGBA16F : GL_RGBA32F);
+      theFormats.Append (theGlContext->arbTexHalfFloat ? GL_R16F    : GL_R32F);
+      return true;
+
+    case 1: // choose non-optimal applicable color format combination
+      theFormats.Append (theGlContext->arbTexHalfFloat ? GL_RGBA16F : GL_RGBA32F);
+      theFormats.Append (theGlContext->arbTexHalfFloat ? GL_RGBA16F : GL_RGBA32F);
+      return true;
+  }
+
+  return false; // color combination does not exist
 }

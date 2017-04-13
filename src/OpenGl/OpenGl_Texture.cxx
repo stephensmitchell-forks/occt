@@ -900,6 +900,20 @@ bool OpenGl_Texture::Init3D (const Handle(OpenGl_Context)& theCtx,
     Unbind (theCtx);
     return false;
   }
+  else if (theDataType == GL_HALF_FLOAT && !theCtx->arbTexHalfFloat)
+  {
+    TCollection_ExtendedString aMsg ("Error: half-precision floating-point textures are not supported by hardware.");
+
+    theCtx->PushMessage (GL_DEBUG_SOURCE_APPLICATION,
+                         GL_DEBUG_TYPE_ERROR,
+                         0,
+                         GL_DEBUG_SEVERITY_HIGH,
+                         aMsg);
+
+    Release (theCtx.operator->());
+    Unbind (theCtx);
+    return false;
+  }
 
   const GLint anIntFormat = theTextFormat;
 

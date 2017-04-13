@@ -331,6 +331,12 @@ const char THE_FRAG_CLIP_PLANES_2[] =
   }
 #endif
 
+//! Output color and coverage for accumulation by OIT algorithm.
+const char THE_FRAG_write_oit_buffers[] =
+  EOL"  float aWeight     = occFragColor.a * clamp (1e+2 * pow (1.0 - gl_FragCoord.z * occOitDepthWeight, 3.0), 1e-2, 1e+2);"
+  EOL"  occFragCoverage.r = occFragColor.a * aWeight;"
+  EOL"  occFragColor      = vec4 (occFragColor.rgb * occFragColor.a * aWeight, occFragColor.a);";
+
 }
 
 // =======================================================================
@@ -1070,6 +1076,37 @@ void OpenGl_ShaderManager::PushMaterialState (const Handle(OpenGl_ShaderProgram)
 }
 
 // =======================================================================
+// function : PushOitUniformState
+// purpose  : Pushes state of OIT uniforms to the specified program
+// =======================================================================
+void OpenGl_ShaderManager::PushOitUniformState (const Handle(OpenGl_ShaderProgram)& theProgram) const
+{
+  if (!theProgram->IsValid())
+  {
+    return;
+  }
+
+  if (myOitUniformState.Index() == theProgram->ActiveState (OpenGL_OIT_UNIFORM_STATE))
+  {
+    return;
+  }
+
+  const GLint aLocEnableWrite = theProgram->GetStateLocation (OpenGl_OCCT_OIT_ENABLE_WRITE);
+  if (aLocEnableWrite != OpenGl_ShaderProgram::INVALID_LOCATION)
+  {
+    theProgram->SetUniform (myContext, aLocEnableWrite,
+                            myOitUniformState.ToEnableWrite());
+  }
+
+  const GLint aLocDepthWeight = theProgram->GetStateLocation (OpenGl_OCCT_OIT_DEPTH_WEIGHT);
+  if (aLocDepthWeight != OpenGl_ShaderProgram::INVALID_LOCATION)
+  {
+    theProgram->SetUniform (myContext, aLocDepthWeight,
+                            myOitUniformState.DepthWeight());
+  }
+}
+
+// =======================================================================
 // function : PushState
 // purpose  : Pushes state of OCCT graphics parameters to the program
 // =======================================================================
@@ -1082,6 +1119,7 @@ void OpenGl_ShaderManager::PushState (const Handle(OpenGl_ShaderProgram)& thePro
   PushProjectionState  (aProgram);
   PushLightSourceState (aProgram);
   PushMaterialState    (aProgram);
+  PushOitUniformState  (aProgram);
 }
 
 // =======================================================================
@@ -1209,6 +1247,82 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramFboBlit()
 }
 
 // =======================================================================
+// function : prepareStdProgramOitCompositing
+// purpose  :
+// =======================================================================
+Standard_Boolean OpenGl_ShaderManager::prepareStdProgramOitCompositing (const Standard_Boolean theMsaa)
+{
+  Handle(OpenGl_ShaderProgram)& aProgram = myOitCompositingProgram [theMsaa ? 1 : 0];
+  Handle(Graphic3d_ShaderProgram) aProgramSrc = new Graphic3d_ShaderProgram();
+  TCollection_AsciiString aSrcVert, aSrcFrag;
+
+  aSrcVert =
+    EOL"THE_SHADER_OUT vec2 TexCoord;"
+    EOL"void main()"
+    EOL"{"
+    EOL"  TexCoord    = occVertex.zw;"
+    EOL"  gl_Position = vec4(occVertex.x, occVertex.y, 0.0, 1.0);"
+    EOL"}";
+
+  if (!theMsaa)
+  {
+    aSrcFrag =
+      EOL"uniform sampler2D uAccumTexture;"
+      EOL"uniform sampler2D uWeightTexture;"
+      EOL
+      EOL"THE_SHADER_IN vec2 TexCoord;"
+      EOL
+      EOL"void main()"
+      EOL"{"
+      EOL"  vec4 aAccum   = occTexture2D (uAccumTexture,  TexCoord);"
+      EOL"  float aWeight = occTexture2D (uWeightTexture, TexCoord).r;"
+      EOL"  occFragColor = vec4 (aAccum.rgb / max (aWeight, 0.00001), aAccum.a);"
+      EOL"}";
+
+    if (myContext->IsGlGreaterEqual (3, 2))
+    {
+      aProgramSrc->SetHeader ("#version 150");
+    }
+  }
+  else
+  {
+    aSrcFrag =
+      EOL"uniform sampler2DMS uAccumTexture;"
+      EOL"uniform sampler2DMS uWeightTexture;"
+      EOL
+      EOL"THE_SHADER_IN vec2 TexCoord;"
+      EOL
+      EOL"void main()"
+      EOL"{"
+      EOL"  ivec2 aTexel  = ivec2 (textureSize (uAccumTexture) * TexCoord);"
+      EOL"  vec4 aAccum   = texelFetch (uAccumTexture,  aTexel, gl_SampleID);"
+      EOL"  float aWeight = texelFetch (uWeightTexture, aTexel, gl_SampleID).r;"
+      EOL"  occFragColor = vec4 (aAccum.rgb / max (aWeight, 0.00001), aAccum.a);"
+      EOL"}";
+
+    if (myContext->IsGlGreaterEqual (4, 0))
+    {
+      aProgramSrc->SetHeader ("#version 400");
+    }
+  }
+
+  aProgramSrc->AttachShader (Graphic3d_ShaderObject::CreateFromSource (Graphic3d_TOS_VERTEX,   aSrcVert));
+  aProgramSrc->AttachShader (Graphic3d_ShaderObject::CreateFromSource (Graphic3d_TOS_FRAGMENT, aSrcFrag));
+  TCollection_AsciiString aKey;
+  if (!Create (aProgramSrc, aKey, aProgram))
+  {
+    aProgram = new OpenGl_ShaderProgram(); // just mark as invalid
+    return Standard_False;
+  }
+
+  myContext->BindProgram (aProgram);
+  aProgram->SetSampler (myContext, "uAccumTexture", 0);
+  aProgram->SetSampler (myContext, "uWeightTexture", 1);
+  myContext->BindProgram (NULL);
+  return Standard_True;
+}
+
+// =======================================================================
 // function : pointSpriteAlphaSrc
 // purpose  :
 // =======================================================================
@@ -1249,7 +1363,8 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramFlat (Handle(OpenGl_Shad
                                                               const Standard_Integer        theBits)
 {
   Handle(Graphic3d_ShaderProgram) aProgramSrc = new Graphic3d_ShaderProgram();
-  TCollection_AsciiString aSrcVert, aSrcVertExtraOut, aSrcVertExtraMain, aSrcVertExtraFunc, aSrcGetAlpha, aSrcFrag, aSrcFragExtraOut, aSrcFragExtraMain;
+  TCollection_AsciiString aSrcVert, aSrcVertExtraOut, aSrcVertExtraMain, aSrcVertExtraFunc, aSrcGetAlpha, aSrcFrag;
+  TCollection_AsciiString aSrcFragExtraOut, aSrcFragExtraMain, aSrcFragWriteOit;
   TCollection_AsciiString aSrcFragGetColor     = EOL"vec4 getColor(void) { return occColor; }";
   TCollection_AsciiString aSrcFragMainGetColor = EOL"  occFragColor = getColor();";
   if ((theBits & OpenGl_PO_Point) != 0)
@@ -1351,6 +1466,10 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramFlat (Handle(OpenGl_Shad
       aSrcFragExtraMain += THE_FRAG_CLIP_PLANES_N;
     }
   }
+  if ((theBits & OpenGl_PO_WriteOit) != 0)
+  {
+    aSrcFragWriteOit += THE_FRAG_write_oit_buffers;
+  }
 
   TCollection_AsciiString aSrcVertEndMain;
   if ((theBits & OpenGl_PO_StippleLine) != 0)
@@ -1421,6 +1540,7 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramFlat (Handle(OpenGl_Shad
       EOL"{"
     + aSrcFragExtraMain
     + aSrcFragMainGetColor
+    + aSrcFragWriteOit
     + EOL"}";
 
 #if !defined(GL_ES_VERSION_2_0)
@@ -1572,7 +1692,8 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramGouraud (Handle(OpenGl_S
                                                                  const Standard_Integer        theBits)
 {
   Handle(Graphic3d_ShaderProgram) aProgramSrc = new Graphic3d_ShaderProgram();
-  TCollection_AsciiString aSrcVert, aSrcVertColor, aSrcVertExtraOut, aSrcVertExtraMain, aSrcFrag, aSrcFragExtraOut, aSrcFragExtraMain;
+  TCollection_AsciiString aSrcVert, aSrcVertColor, aSrcVertExtraOut, aSrcVertExtraMain, aSrcFrag, aSrcFragExtraOut;
+  TCollection_AsciiString aSrcFragExtraMain, aSrcFragWriteOit;
   TCollection_AsciiString aSrcFragGetColor = EOL"vec4 getColor(void) { return gl_FrontFacing ? FrontColor : BackColor; }";
   if ((theBits & OpenGl_PO_Point) != 0)
   {
@@ -1640,6 +1761,10 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramGouraud (Handle(OpenGl_S
       aSrcFragExtraMain += THE_FRAG_CLIP_PLANES_N;
     }
   }
+  if ((theBits & OpenGl_PO_WriteOit) != 0)
+  {
+    aSrcFragWriteOit += THE_FRAG_write_oit_buffers;
+  }
 
   const TCollection_AsciiString aLights = stdComputeLighting ((theBits & OpenGl_PO_VertColor) != 0);
   aSrcVert = TCollection_AsciiString()
@@ -1673,7 +1798,8 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramGouraud (Handle(OpenGl_S
       EOL"{"
     + aSrcFragExtraMain
     + EOL"  occFragColor = getColor();"
-      EOL"}";
+    + aSrcFragWriteOit
+    + EOL"}";
 
 #if !defined(GL_ES_VERSION_2_0)
   if (myContext->core32 != NULL)
@@ -1702,7 +1828,8 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramPhong (Handle(OpenGl_Sha
   #define thePhongCompLight "computeLighting (normalize (Normal), normalize (View), Position, gl_FrontFacing)"
 
   Handle(Graphic3d_ShaderProgram) aProgramSrc = new Graphic3d_ShaderProgram();
-  TCollection_AsciiString aSrcVert, aSrcVertExtraOut, aSrcVertExtraMain, aSrcFrag, aSrcFragExtraOut, aSrcFragGetVertColor, aSrcFragExtraMain;
+  TCollection_AsciiString aSrcVert, aSrcVertExtraOut, aSrcVertExtraMain, aSrcFrag, aSrcFragExtraOut;
+  TCollection_AsciiString aSrcFragGetVertColor, aSrcFragExtraMain, aSrcFragWriteOit;
   TCollection_AsciiString aSrcFragGetColor = EOL"vec4 getColor(void) { return " thePhongCompLight "; }";
   if ((theBits & OpenGl_PO_Point) != 0)
   {
@@ -1763,6 +1890,10 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramPhong (Handle(OpenGl_Sha
       aSrcFragExtraMain += THE_FRAG_CLIP_PLANES_N;
     }
   }
+  if ((theBits & OpenGl_PO_WriteOit) != 0)
+  {
+    aSrcFragWriteOit += THE_FRAG_write_oit_buffers;
+  }
 
   aSrcVert = TCollection_AsciiString()
     + THE_FUNC_transformNormal
@@ -1799,7 +1930,8 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramPhong (Handle(OpenGl_Sha
       EOL"{"
     + aSrcFragExtraMain
     + EOL"  occFragColor = getColor();"
-      EOL"}";
+    + aSrcFragWriteOit
+    + EOL"}";
 
 #if !defined(GL_ES_VERSION_2_0)
   if (myContext->core32 != NULL)

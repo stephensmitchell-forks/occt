@@ -70,10 +70,26 @@ Standard_CString OpenGl_ShaderProgram::PredefinedKeywords[] =
   "occBackMaterial",       // OpenGl_OCCT_BACK_MATERIAL
   "occColor",              // OpenGl_OCCT_COLOR
 
+  "occOitEnableWrite",     // OpenGl_OCCT_OIT_ENABLE_WRITE
+  "occOitDepthWeight",     // OpenGl_OCCT_OIT_DEPTH_WEIGHT
+
   "occTexTrsf2d",          // OpenGl_OCCT_TEXTURE_TRSF2D
   "occPointSize"           // OpenGl_OCCT_POINT_SIZE
-
 };
+
+namespace
+{
+  #define EOL "\n"
+  const char THE_enable_draw_buffers[] =
+    EOL"#ifdef GL_ES"
+    EOL"  #if (__VERSION__ < 300)"
+    EOL"    #extension GL_EXT_draw_buffers : enable"
+    EOL"  #endif"
+    EOL"#else"
+    EOL"  #extension GL_ARB_draw_buffers : enable"
+    EOL"#endif"
+    EOL"#define OCC_enable_draw_buffers 1";
+}
 
 // =======================================================================
 // function : OpenGl_VariableSetterSelector
@@ -204,11 +220,16 @@ Standard_Boolean OpenGl_ShaderProgram::Initialize (const Handle(OpenGl_Context)&
     }
 
     TCollection_AsciiString aSource = aDeclarations + anIter.Value()->Source();
+    TCollection_AsciiString aExtensions;
+    if (theCtx->MaxDrawBuffers() > 1) {
+      aExtensions += THE_enable_draw_buffers;
+    }
+
     switch (anIter.Value()->Type())
     {
       case Graphic3d_TOS_VERTEX:
       {
-        aSource = aHeader + TCollection_AsciiString ("#define VERTEX_SHADER\n") + aSource;
+        aSource = aHeader + TCollection_AsciiString ("#define VERTEX_SHADER\n") + aExtensions + aSource;
         break;
       }
       case Graphic3d_TOS_FRAGMENT:
@@ -219,9 +240,9 @@ Standard_Boolean OpenGl_ShaderProgram::Initialize (const Handle(OpenGl_Context)&
                                          "precision highp int;\n"
                                        : "precision mediump float;\n"
                                          "precision mediump int;\n");
-        aSource = aHeader + aPrefix + aSource;
+        aSource = aHeader + aPrefix + aExtensions + aSource;
       #else
-        aSource = aHeader + aSource;
+        aSource = aHeader + aExtensions + aSource;
       #endif
         break;
       }

@@ -186,6 +186,45 @@
   #define GL_DEBUG_SEVERITY_HIGH        0x9146
   #define GL_DEBUG_SEVERITY_MEDIUM      0x9147
   #define GL_DEBUG_SEVERITY_LOW         0x9148
+
+  // GL_EXT_draw_buffers
+  #define GL_MAX_COLOR_ATTACHMENTS       0x8CDF
+  #define GL_MAX_DRAW_BUFFERS            0x8824
+  #define GL_DRAW_BUFFER0                0x8825
+  #define GL_DRAW_BUFFER1                0x8826
+  #define GL_DRAW_BUFFER2                0x8827
+  #define GL_DRAW_BUFFER3                0x8828
+  #define GL_DRAW_BUFFER4                0x8829
+  #define GL_DRAW_BUFFER5                0x882A
+  #define GL_DRAW_BUFFER6                0x882B
+  #define GL_DRAW_BUFFER7                0x882C
+  #define GL_DRAW_BUFFER8                0x882D
+  #define GL_DRAW_BUFFER9                0x882E
+  #define GL_DRAW_BUFFER10               0x882F
+  #define GL_DRAW_BUFFER11               0x8830
+  #define GL_DRAW_BUFFER12               0x8831
+  #define GL_DRAW_BUFFER13               0x8832
+  #define GL_DRAW_BUFFER14               0x8833
+  #define GL_DRAW_BUFFER15               0x8834
+  #define GL_COLOR_ATTACHMENT0           0x8CE0
+  #define GL_COLOR_ATTACHMENT1           0x8CE1
+  #define GL_COLOR_ATTACHMENT2           0x8CE2
+  #define GL_COLOR_ATTACHMENT3           0x8CE3
+  #define GL_COLOR_ATTACHMENT4           0x8CE4
+  #define GL_COLOR_ATTACHMENT5           0x8CE5
+  #define GL_COLOR_ATTACHMENT6           0x8CE6
+  #define GL_COLOR_ATTACHMENT7           0x8CE7
+  #define GL_COLOR_ATTACHMENT8           0x8CE8
+  #define GL_COLOR_ATTACHMENT9           0x8CE9
+  #define GL_COLOR_ATTACHMENT10          0x8CEA
+  #define GL_COLOR_ATTACHMENT11          0x8CEB
+  #define GL_COLOR_ATTACHMENT12          0x8CEC
+  #define GL_COLOR_ATTACHMENT13          0x8CED
+  #define GL_COLOR_ATTACHMENT14          0x8CEE
+  #define GL_COLOR_ATTACHMENT15          0x8CEF
+
+  // OES_texture_half_float
+  #define GL_HALF_FLOAT                  0x8D61
 #endif
 
 #if !defined(HAVE_EGL) && (defined(__ANDROID__) || defined(__QNX__) || defined(HAVE_GLES2) || defined(OCCT_UWP))
@@ -751,6 +790,9 @@ public: //! @name OpenGL ES 3.0
 
   typedef void (*glTexImage3D_t)(GLenum target, GLint level, GLint internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid* data);
   glTexImage3D_t glTexImage3D;
+
+  typedef void (*glDrawBuffers_t)(GLsizei n, const GLenum* bufs);
+  glDrawBuffers_t glDrawBuffers;
 
 public: //! @name OpenGL ES 3.1
 

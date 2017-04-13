@@ -65,6 +65,11 @@ enum OpenGl_StateVariable
   OpenGl_OCCT_BACK_MATERIAL,
   OpenGl_OCCT_COLOR,
 
+  // Order-independent transparency rendering state
+  OpenGl_OCCT_OIT_ENABLE_WRITE, //!< Enable bit for writing color (occFragColor) and coverage (occFragCoverage) buffers of OIT processing
+  OpenGl_OCCT_OIT_DEPTH_WEIGHT, //!< Influence of the depth component to the coverage of the accumulated fragment
+
+  // Context-dependent state
   OpenGl_OCCT_TEXTURE_TRSF2D,
   OpenGl_OCCT_POINT_SIZE,
 
@@ -124,6 +129,7 @@ enum OpenGl_UniformStateType
   OpenGl_PROJECTION_STATE,
   OpenGl_MATERIAL_STATE,
   OpenGl_SURF_DETAIL_STATE,
+  OpenGL_OIT_UNIFORM_STATE,
   OpenGl_UniformStateType_NB
 };
 

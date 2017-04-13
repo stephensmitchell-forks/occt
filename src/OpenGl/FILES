@@ -104,6 +104,7 @@ OpenGl_IndexBuffer.cxx
 OpenGl_IndexBuffer.hxx
 OpenGl_Layer.cxx
 OpenGl_Layer.hxx
+OpenGl_OitUniformState.hxx
 OpenGl_RenderFilter.cxx
 OpenGl_RenderFilter.hxx
 OpenGl_Sampler.cxx

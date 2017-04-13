@@ -9065,6 +9065,8 @@ static Standard_Integer VRenderParams (Draw_Interpretor& theDI,
     }
     theDI << "\n";
     theDI << "msaa:           " <<  aParams.NbMsaaSamples                               << "\n";
+    theDI << "oit:            " << (aParams.IsOitEnabled                ? "on" : "off") << "\n";
+    theDI << "oitDepthWeight: " <<  aParams.OitDepthWeight                              << "\n";
     theDI << "rayDepth:       " <<  aParams.RaytracingDepth                             << "\n";
     theDI << "fsaa:           " << (aParams.IsAntialiasingEnabled       ? "on" : "off") << "\n";
     theDI << "shadows:        " << (aParams.IsShadowEnabled             ? "on" : "off") << "\n";
@@ -9169,6 +9171,46 @@ static Standard_Integer VRenderParams (Draw_Interpretor& theDI,
       else
       {
         aParams.NbMsaaSamples = aNbSamples;
+      }
+    }
+    else if (aFlag == "-oit")
+    {
+      if (toPrint)
+      {
+        theDI << (aParams.IsOitEnabled ? "on" : "off") << " ";
+        continue;
+      }
+      Standard_Boolean toEnable = Standard_True;
+      if (++anArgIter < theArgNb
+      && !ViewerTest::ParseOnOff (theArgVec[anArgIter], toEnable))
+      {
+        --anArgIter;
+      }
+      aParams.IsOitEnabled = toEnable;
+    }
+    else if (aFlag == "-oitdepth"
+          || aFlag == "-oitdepthweight")
+    {
+      if (toPrint)
+      {
+        theDI << aParams.OitDepthWeight << " ";
+        continue;
+      }
+      else if (++anArgIter >= theArgNb)
+      {
+        std::cerr << "Error: wrong syntax at argument '" << anArg << "'\n";
+        return 1;
+      }
+      const Standard_Real aWeight = Draw::Atof (theArgVec[anArgIter]);
+
+      if (aWeight < 0.0 || aWeight > 1.0)
+      {
+        std::cerr << "Error: invalid value of order-indepedent transparency depth weight " << aWeight << ". Should be within range [0.0; 1.0]\n";
+        return 1;
+      }
+      else
+      {
+        aParams.OitDepthWeight = static_cast<Standard_ShortReal> (aWeight);
       }
     }
     else if (aFlag == "-raydepth"
@@ -10926,6 +10968,8 @@ void ViewerTest::ViewerCommands(Draw_Interpretor& theCommands)
     "\n    Manages rendering parameters: "
     "\n      '-raster'               Disables GPU ray-tracing"
     "\n      '-msaa         0..4'    Specifies number of samples for MSAA"
+    "\n      '-oit            on|off'  Enables/disables blended order-independent transparency"
+    "\n      '-oitDepthWeight 0.0-1.0' Defines influence of fragment depth to its coverage"
     "\n      '-rayTrace'             Enables  GPU ray-tracing"
     "\n      '-rayDepth     0..10'   Defines maximum ray-tracing depth"
     "\n      '-shadows      on|off'  Enables/disables shadows rendering"

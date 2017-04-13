@@ -49,14 +49,23 @@ public:
   //! Default constructor.
   OpenGl_CappingAlgoFilter() {}
 
+  //! Sets the current active filter in workspace.
+  //! @param thePrevFilter [in] the previously active filter that should have additive effect.
+  void SetPreviousFilter (const Handle(OpenGl_RenderFilter)& thePrevFitler) { myFilter = thePrevFitler; }
+
   //! Checks whether the element can be rendered or not.
   //! @param theElement [in] the element to check.
   //! @return True if element can be rendered.
-  virtual Standard_Boolean CanRender (const OpenGl_Element* theElement) Standard_OVERRIDE;
+  virtual Standard_Boolean ShouldRender (const Handle(OpenGl_Workspace)& theWorkspace,
+                                         const OpenGl_Element* theGlElement) Standard_OVERRIDE;
+
+private:
+
+  Handle(OpenGl_RenderFilter) myFilter; //!< Previous active filter that should be combined.
 
 public:
 
-  DEFINE_STANDARD_RTTIEXT(OpenGl_CappingAlgoFilter,OpenGl_RenderFilter)
+  DEFINE_STANDARD_RTTIEXT(OpenGl_CappingAlgoFilter, OpenGl_RenderFilter)
 };
 
 #endif
