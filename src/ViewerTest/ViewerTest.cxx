@@ -3609,6 +3609,7 @@ static int VDisplay2 (Draw_Interpretor& theDI,
   TColStd_SequenceOfAsciiString aNamesOfDisplayIO;
   AIS_DisplayStatus aDispStatus = AIS_DS_None;
   Standard_Integer toDisplayInView = Standard_False;
+  Standard_Boolean isWerthSpecific = Standard_False;
   for (Standard_Integer anArgIter = 1; anArgIter < theArgNb; ++anArgIter)
   {
     const TCollection_AsciiString aName     = theArgVec[anArgIter];
@@ -3811,6 +3812,10 @@ static int VDisplay2 (Draw_Interpretor& theDI,
     {
       toReDisplay = Standard_True;
     }
+    else if (aNameCase == "-werth")
+    {
+      isWerthSpecific = Standard_True;
+    }
     else
     {
       aNamesOfDisplayIO.Append (aName);
@@ -3878,6 +3883,19 @@ static int VDisplay2 (Draw_Interpretor& theDI,
         if (isSelectable ==  1 || (isSelectable == -1 && aCtx->GetAutoActivateSelection()))
         {
           aSelMode = aShape->GlobalSelectionMode();
+        }
+
+        if ( isWerthSpecific )
+        {
+          Graphic3d_MaterialAspect aFrontMat, aBackMat;
+          Handle(Prs3d_ShadingAspect) aShAspect = new Prs3d_ShadingAspect();
+          aFrontMat = aBackMat = aShAspect->Material();
+          aFrontMat.SetColor (Quantity_NOC_BLUE1);
+          aBackMat.SetColor  (Quantity_NOC_RED);
+          aShAspect->SetMaterial (aFrontMat, Aspect_TOFM_FRONT_SIDE);
+          aShAspect->SetMaterial (aBackMat,  Aspect_TOFM_BACK_SIDE);
+          aShAspect->Aspect()->SetSuppressBackFaces (Standard_False);
+          aShape->Attributes()->SetShadingAspect (aShAspect);
         }
 
         aCtx->Display (aShape, aDispMode, aSelMode,
@@ -5540,7 +5558,8 @@ void ViewerTest::Commands(Draw_Interpretor& theCommands)
       "\n\t\t:               (DY looks up)"
       "\n\t\t:  -dispmode    Sets display mode for objects."
       "\n\t\t:  -highmode    Sets hilight mode for objects."
-      "\n\t\t:  -redisplay   Recomputes presentation of objects.",
+      "\n\t\t:  -redisplay   Recomputes presentation of objects."
+      "\n\t\t:  -werth       Specific visualization mode for Werth.",
       __FILE__, VDisplay2, group);
 
   theCommands.Add ("vupdate",
