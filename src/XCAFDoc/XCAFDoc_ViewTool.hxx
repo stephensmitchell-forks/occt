@@ -78,8 +78,12 @@ public:
   //! Set Clipping planes to  given View
   Standard_EXPORT void SetClippingPlanes(const TDF_LabelSequence& theClippingPlaneLabels,
                                          const TDF_Label& theViewL) const;
+  //! Set Enabled shapes to  given View
   Standard_EXPORT void  SetEnabledShapes(const TDF_LabelSequence& theShapesTransparencyLabels,
                                          const TDF_Label& theViewL) const;
+  //! Set Notes to  given View
+  Standard_EXPORT void SetNotes(const TDF_LabelSequence& theNoteLabels,
+                                const TDF_Label& theViewL) const;
   //! Returns all View labels defined for label ShapeL
   Standard_EXPORT Standard_Boolean GetViewLabelsForShape(const TDF_Label& theShapeL, TDF_LabelSequence& theViews) const;
 
@@ -91,6 +95,9 @@ public:
   
   //! Returns all View labels defined for label Shapes transparency
   Standard_EXPORT Standard_Boolean GetViewLabelsForEnabledShapesLabel(const TDF_Label& theShapesTransparencyL, TDF_LabelSequence& theViews) const;
+  
+  //! Returns all View labels defined for label NotesL
+  Standard_EXPORT Standard_Boolean GetViewLabelsForNote(const TDF_Label& theNoteL, TDF_LabelSequence& theViews) const;
 
   //! Adds a view definition to a View table and returns its label
   Standard_EXPORT TDF_Label AddView() ;
@@ -110,6 +117,11 @@ public:
   //! Returns shapes transparency labels defined for label theViewL
   //! Returns False if the theViewL is not in View table
   Standard_EXPORT Standard_Boolean GetRefEnabledShapesLabel(const TDF_Label& theViewL, TDF_LabelSequence& theShapesTranspanencyLabels) const;
+
+  //! Returns Note labels defined for label theViewL
+  //! Returns False if the theViewL is not in View table
+  Standard_EXPORT Standard_Boolean GetRefNoteLabel(const TDF_Label& theViewL, TDF_LabelSequence& theNoteLabels) const;
+
   //! Returns true if the given View is marked as locked
   Standard_EXPORT Standard_Boolean IsLocked(const TDF_Label& theViewL) const;
 
