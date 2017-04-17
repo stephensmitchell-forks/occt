@@ -42,7 +42,7 @@ static Standard_Integer DDocStd_ShapeSchema_Write(Draw_Interpretor& di,
     return 1;
   }
 
-  NCollection_Handle<Storage_BaseDriver> aFileDriver;
+  NCollection_Handle<Storage_BaseDriver> aFileDriver(new FSD_File);
   
   Standard_Boolean hasStorageDriver = Standard_False;
   Standard_Integer iArgN = n - 1;
@@ -192,7 +192,7 @@ static Standard_Integer DDocStd_ShapeSchema_Read(Draw_Interpretor& di,
     aShapes.Append(aShape);
   }
 
-  di << "Info : " << aShapes.Length() << " shape(s) transleted\n";
+  di << "Info : " << aShapes.Length() << " shape(s) translated\n";
 
   if (aShapes.Length() > 1)
   {
