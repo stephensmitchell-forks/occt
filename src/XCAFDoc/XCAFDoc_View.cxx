@@ -47,7 +47,8 @@ enum ChildLab
   ChildLab_ViewVolumeSidesClipping,
   ChildLab_GDTPoints,
   ChildLab_Image,
-  ChildLab_EnabledShapes
+  ChildLab_EnabledShapes,
+  ChildLab_NotePoints
 };
 
 //=======================================================================
@@ -163,6 +164,14 @@ void XCAFDoc_View::SetObject (const Handle(XCAFView_Object)& theObject)
     for (Standard_Integer i = 1; i <= theObject->NbEnabledShapes(); i++) {
       Standard_Integer aValue = theObject->EnabledShape(i) ? 1 : 0;
       TDataStd_Integer::Set(aShapeTranspLabel.FindChild(i), aValue);
+    }
+  }
+  //note points
+  if (theObject->HasNotePoints())
+  {
+    TDF_Label aPointsLabel = Label().FindChild(ChildLab_NotePoints);
+    for (Standard_Integer i = 1; i <= theObject->NbNotePoints(); i++) {
+      TDataXtd_Point::Set(aPointsLabel.FindChild(i), theObject->NotePoint(i));
     }
   }
 }
@@ -284,6 +293,19 @@ Handle(XCAFView_Object) XCAFDoc_View::GetObject()  const
       aShapesTranspLabel.FindChild(i).FindAttribute(TDataStd_Integer::GetID(), aTranspAttr);
       Standard_Boolean aValue = (aTranspAttr->Get() == 1);
       anObj->SetEnabledShape(i, aValue);
+    }
+  }
+
+  // Note Points
+  if (!Label().FindChild(ChildLab_NotePoints, Standard_False).IsNull()) {
+    TDF_Label aPointsLabel = Label().FindChild(ChildLab_NotePoints);
+    anObj->CreateNotePoints(aPointsLabel.NbChildren());
+    for (Standard_Integer i = 1; i <= aPointsLabel.NbChildren(); i++) {
+      gp_Pnt aPoint;
+      Handle(TDataXtd_Point) aPointAttr;
+      aPointsLabel.FindChild(i).FindAttribute(TDataXtd_Point::GetID(), aPointAttr);
+      TDataXtd_Geometry::Point(aPointAttr->Label(), aPoint);
+      anObj->SetNotePoint(i, aPoint);
     }
   }
   return anObj;
