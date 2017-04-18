@@ -1824,6 +1824,9 @@ proc osutils:tk:files { tkloc thePlatform } {
          "n" { set utyp "nocdlpack" }
          "x" { set utyp "executable" }
     }
+    if { $utyp == "" } {
+      puts "Error: '$loc' is undefined within UDLIST"
+    }
     if [array exists map] { unset map }
     osutils:tk:loadunit $loc map
     #puts " loc = $loc === > [array names map]"

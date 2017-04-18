@@ -360,6 +360,7 @@ n XCAFApp
 n XCAFDimTolObjects
 n XCAFDoc
 n XCAFPrs
+n XCAFView
 n XSAlgo
 n XSControl
 n XmlMXCAFDoc
