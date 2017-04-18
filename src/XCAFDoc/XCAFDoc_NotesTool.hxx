@@ -57,7 +57,7 @@ public:
 
   Standard_EXPORT Standard_Boolean IsAnnotatedItem(const XCAFDoc_AssemblyItemId& theItemId) const;
   Standard_EXPORT TDF_Label FindAnnotatedItem(const XCAFDoc_AssemblyItemId& theItemId) const;
-  Standard_EXPORT TDF_Label FindAnnotatedItemGUID(const XCAFDoc_AssemblyItemId& theItemId,
+  Standard_EXPORT TDF_Label FindAnnotatedItemAttr(const XCAFDoc_AssemblyItemId& theItemId,
                                                   const Standard_GUID&          theGUID) const;
   Standard_EXPORT TDF_Label FindAnnotatedItemSubshape(const XCAFDoc_AssemblyItemId& theItemId,
                                                       Standard_Integer              theSubshapeIndex) const;
@@ -80,6 +80,12 @@ public:
 
   Standard_EXPORT Standard_Integer GetNotes(const XCAFDoc_AssemblyItemId& theItemId,
                                             TDF_LabelSequence&            theNoteLabels) const;
+  Standard_EXPORT Standard_Integer GetAttrNotes(const XCAFDoc_AssemblyItemId& theItemId,
+                                                const Standard_GUID&          theGUID,
+                                                TDF_LabelSequence&            theNoteLabels) const;
+  Standard_EXPORT Standard_Integer GetSubshapeNotes(const XCAFDoc_AssemblyItemId& theItemId,
+                                                    Standard_Integer              theSubshapeIndex,
+                                                    TDF_LabelSequence&            theNoteLabels) const;
 
   Standard_EXPORT Handle(XCAFDoc_AssemblyItemRef) AddNote(const TDF_Label&              theNoteLabel,
                                                           const XCAFDoc_AssemblyItemId& theItemId);

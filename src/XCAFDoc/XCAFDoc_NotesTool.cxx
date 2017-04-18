@@ -132,7 +132,7 @@ XCAFDoc_NotesTool::FindAnnotatedItem(const XCAFDoc_AssemblyItemId& theItemId) co
 }
 
 TDF_Label 
-XCAFDoc_NotesTool::FindAnnotatedItemGUID(const XCAFDoc_AssemblyItemId& theItemId,
+XCAFDoc_NotesTool::FindAnnotatedItemAttr(const XCAFDoc_AssemblyItemId& theItemId,
                                          const Standard_GUID&          theGUID) const
 {
   for (TDF_ChildIDIterator anIter(GetAnnotatedItemsLabel(), XCAFDoc_AssemblyItemRef::GetID()); anIter.More(); anIter.Next())
@@ -218,6 +218,53 @@ XCAFDoc_NotesTool::GetNotes(const XCAFDoc_AssemblyItemId& theItemId,
   return theNoteLabels.Length();
 }
 
+
+Standard_Integer
+XCAFDoc_NotesTool::GetAttrNotes(const XCAFDoc_AssemblyItemId& theItemId,
+                                const Standard_GUID&          theGUID,
+                                TDF_LabelSequence&            theNoteLabels) const
+{
+  TDF_Label anAnnotatedItem = FindAnnotatedItemAttr(theItemId, theGUID);
+  if (anAnnotatedItem.IsNull())
+    return 0;
+
+  Handle(XCAFDoc_GraphNode) aChild;
+  if (!anAnnotatedItem.FindAttribute(XCAFDoc::NoteRefGUID(), aChild))
+    return 0;
+
+  Standard_Integer nbFathers = aChild->NbFathers();
+  for (Standard_Integer iFather = 1; iFather <= nbFathers; ++iFather)
+  {
+    Handle(XCAFDoc_GraphNode) aFather = aChild->GetFather(iFather);
+    theNoteLabels.Append(aFather->Label());
+  }
+
+  return theNoteLabels.Length();
+}
+
+Standard_Integer
+XCAFDoc_NotesTool::GetSubshapeNotes(const XCAFDoc_AssemblyItemId& theItemId,
+                                    Standard_Integer              theSubshapeIndex,
+                                    TDF_LabelSequence&            theNoteLabels) const
+{
+  TDF_Label anAnnotatedItem = FindAnnotatedItemSubshape(theItemId, theSubshapeIndex);
+  if (anAnnotatedItem.IsNull())
+    return 0;
+
+  Handle(XCAFDoc_GraphNode) aChild;
+  if (!anAnnotatedItem.FindAttribute(XCAFDoc::NoteRefGUID(), aChild))
+    return 0;
+
+  Standard_Integer nbFathers = aChild->NbFathers();
+  for (Standard_Integer iFather = 1; iFather <= nbFathers; ++iFather)
+  {
+    Handle(XCAFDoc_GraphNode) aFather = aChild->GetFather(iFather);
+    theNoteLabels.Append(aFather->Label());
+  }
+
+  return theNoteLabels.Length();
+}
+
 Handle(XCAFDoc_AssemblyItemRef)
 XCAFDoc_NotesTool::AddNote(const TDF_Label&              theNoteLabel,
                            const XCAFDoc_AssemblyItemId& theItemId)
@@ -276,7 +323,7 @@ XCAFDoc_NotesTool::AddNoteToAttr(const TDF_Label&              theNoteLabel,
     return anItemRef;
 
   Handle(XCAFDoc_GraphNode) aChild;
-  TDF_Label anAnnotatedItem = FindAnnotatedItemGUID(theItemId, theGUID);
+  TDF_Label anAnnotatedItem = FindAnnotatedItemAttr(theItemId, theGUID);
   if (anAnnotatedItem.IsNull())
   {
     TDF_TagSource aTag;
