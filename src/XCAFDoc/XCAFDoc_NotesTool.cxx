@@ -125,7 +125,35 @@ XCAFDoc_NotesTool::FindAnnotatedItem(const XCAFDoc_AssemblyItemId& theItemId) co
   for (TDF_ChildIDIterator anIter(GetAnnotatedItemsLabel(), XCAFDoc_AssemblyItemRef::GetID()); anIter.More(); anIter.Next())
   {
     Handle(XCAFDoc_AssemblyItemRef) anItemRef = Handle(XCAFDoc_AssemblyItemRef)::DownCast(anIter.Value());
-    if (!anItemRef.IsNull() && anItemRef->GetItem().IsEqual(theItemId))
+    if (!anItemRef.IsNull() && anItemRef->GetItem().IsEqual(theItemId) && !anItemRef->HasExtraRef())
+      return anItemRef->Label();
+  }
+  return TDF_Label();
+}
+
+TDF_Label 
+XCAFDoc_NotesTool::FindAnnotatedItemGUID(const XCAFDoc_AssemblyItemId& theItemId,
+                                         const Standard_GUID&          theGUID) const
+{
+  for (TDF_ChildIDIterator anIter(GetAnnotatedItemsLabel(), XCAFDoc_AssemblyItemRef::GetID()); anIter.More(); anIter.Next())
+  {
+    Handle(XCAFDoc_AssemblyItemRef) anItemRef = Handle(XCAFDoc_AssemblyItemRef)::DownCast(anIter.Value());
+    if (!anItemRef.IsNull() && anItemRef->GetItem().IsEqual(theItemId) && 
+      anItemRef->HasExtraRef() && anItemRef->GetGUID() == theGUID)
+      return anItemRef->Label();
+  }
+  return TDF_Label();
+}
+
+TDF_Label 
+XCAFDoc_NotesTool::FindAnnotatedItemSubshape(const XCAFDoc_AssemblyItemId& theItemId,
+                                             Standard_Integer              theSubshapeIndex) const
+{
+  for (TDF_ChildIDIterator anIter(GetAnnotatedItemsLabel(), XCAFDoc_AssemblyItemRef::GetID()); anIter.More(); anIter.Next())
+  {
+    Handle(XCAFDoc_AssemblyItemRef) anItemRef = Handle(XCAFDoc_AssemblyItemRef)::DownCast(anIter.Value());
+    if (!anItemRef.IsNull() && anItemRef->GetItem().IsEqual(theItemId) &&
+      anItemRef->HasExtraRef() && anItemRef->GetSubshapeIndex() == theSubshapeIndex)
       return anItemRef->Label();
   }
   return TDF_Label();
@@ -239,23 +267,101 @@ XCAFDoc_NotesTool::AddNote(const TDF_Label&              theNoteLabel,
 
 Handle(XCAFDoc_AssemblyItemRef) 
 XCAFDoc_NotesTool::AddNoteToAttr(const TDF_Label&              theNoteLabel,
-              const XCAFDoc_AssemblyItemId& theItemId,
-              const Standard_GUID&          theGUID)
+                                 const XCAFDoc_AssemblyItemId& theItemId,
+                                 const Standard_GUID&          theGUID)
 {
-  Handle(XCAFDoc_AssemblyItemRef) anItemRef = AddNote(theNoteLabel, theItemId);
-  if (!anItemRef.IsNull())
-    anItemRef->SetGUID(theGUID);
+  Handle(XCAFDoc_AssemblyItemRef) anItemRef;
+
+  if (!XCAFDoc_Note::IsMine(theNoteLabel))
+    return anItemRef;
+
+  Handle(XCAFDoc_GraphNode) aChild;
+  TDF_Label anAnnotatedItem = FindAnnotatedItemGUID(theItemId, theGUID);
+  if (anAnnotatedItem.IsNull())
+  {
+    TDF_TagSource aTag;
+    anAnnotatedItem = aTag.NewChild(GetAnnotatedItemsLabel());
+    if (anAnnotatedItem.IsNull())
+      return anItemRef;
+  }
+
+  if (!anAnnotatedItem.FindAttribute(XCAFDoc::NoteRefGUID(), aChild))
+  {
+    aChild = XCAFDoc_GraphNode::Set(anAnnotatedItem, XCAFDoc::NoteRefGUID());
+    if (aChild.IsNull())
+      return anItemRef;
+  }
+
+  if (!anAnnotatedItem.FindAttribute(XCAFDoc_AssemblyItemRef::GetID(), anItemRef))
+  {
+    anItemRef = XCAFDoc_AssemblyItemRef::Set(anAnnotatedItem, theItemId);
+    if (anItemRef.IsNull())
+      return anItemRef;
+  }
+
+  Handle(XCAFDoc_GraphNode) aFather;
+  if (!theNoteLabel.FindAttribute(XCAFDoc::NoteRefGUID(), aFather))
+  {
+    aFather = XCAFDoc_GraphNode::Set(theNoteLabel, XCAFDoc::NoteRefGUID());
+    if (aFather.IsNull())
+      return anItemRef;
+  }
+
+  aChild->SetFather(aFather);
+  aFather->SetChild(aChild);
+
+  anItemRef->SetGUID(theGUID);
+
   return anItemRef;
 }
 
 Handle(XCAFDoc_AssemblyItemRef) 
 XCAFDoc_NotesTool::AddNoteToSubshape(const TDF_Label&              theNoteLabel,
-                  const XCAFDoc_AssemblyItemId& theItemId,
-                  Standard_Integer              theSubshapeIndex)
+                                     const XCAFDoc_AssemblyItemId& theItemId,
+                                     Standard_Integer              theSubshapeIndex)
 {
-  Handle(XCAFDoc_AssemblyItemRef) anItemRef = AddNote(theNoteLabel, theItemId);
-  if (!anItemRef.IsNull())
-    anItemRef->SetSubshapeIndex(theSubshapeIndex);
+  Handle(XCAFDoc_AssemblyItemRef) anItemRef;
+
+  if (!XCAFDoc_Note::IsMine(theNoteLabel))
+    return anItemRef;
+
+  Handle(XCAFDoc_GraphNode) aChild;
+  TDF_Label anAnnotatedItem = FindAnnotatedItemSubshape(theItemId, theSubshapeIndex);
+  if (anAnnotatedItem.IsNull())
+  {
+    TDF_TagSource aTag;
+    anAnnotatedItem = aTag.NewChild(GetAnnotatedItemsLabel());
+    if (anAnnotatedItem.IsNull())
+      return anItemRef;
+  }
+
+  if (!anAnnotatedItem.FindAttribute(XCAFDoc::NoteRefGUID(), aChild))
+  {
+    aChild = XCAFDoc_GraphNode::Set(anAnnotatedItem, XCAFDoc::NoteRefGUID());
+    if (aChild.IsNull())
+      return anItemRef;
+  }
+
+  if (!anAnnotatedItem.FindAttribute(XCAFDoc_AssemblyItemRef::GetID(), anItemRef))
+  {
+    anItemRef = XCAFDoc_AssemblyItemRef::Set(anAnnotatedItem, theItemId);
+    if (anItemRef.IsNull())
+      return anItemRef;
+  }
+
+  Handle(XCAFDoc_GraphNode) aFather;
+  if (!theNoteLabel.FindAttribute(XCAFDoc::NoteRefGUID(), aFather))
+  {
+    aFather = XCAFDoc_GraphNode::Set(theNoteLabel, XCAFDoc::NoteRefGUID());
+    if (aFather.IsNull())
+      return anItemRef;
+  }
+
+  aChild->SetFather(aFather);
+  aFather->SetChild(aChild);
+
+  anItemRef->SetSubshapeIndex(theSubshapeIndex);
+
   return anItemRef;
 }
 

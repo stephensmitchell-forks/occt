@@ -57,6 +57,10 @@ public:
 
   Standard_EXPORT Standard_Boolean IsAnnotatedItem(const XCAFDoc_AssemblyItemId& theItemId) const;
   Standard_EXPORT TDF_Label FindAnnotatedItem(const XCAFDoc_AssemblyItemId& theItemId) const;
+  Standard_EXPORT TDF_Label FindAnnotatedItemGUID(const XCAFDoc_AssemblyItemId& theItemId,
+                                                  const Standard_GUID&          theGUID) const;
+  Standard_EXPORT TDF_Label FindAnnotatedItemSubshape(const XCAFDoc_AssemblyItemId& theItemId,
+                                                      Standard_Integer              theSubshapeIndex) const;
 
   Standard_EXPORT Handle(XCAFDoc_Note) CreateComment(const TCollection_ExtendedString& theUserName,
                                                      const TCollection_ExtendedString& theTimeStamp,
