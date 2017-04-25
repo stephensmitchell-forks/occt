@@ -140,6 +140,7 @@
 #include <TopOpeBRepDS_Transition.hxx>
 #include <TopTools_Array1OfShape.hxx>
 #include <TopTools_ListIteratorOfListOfShape.hxx>
+//#include <BOPTools_AlgoTools2D.hxx>
 
 #ifdef OCCT_DEBUG
 # ifdef DRAW
@@ -621,6 +622,7 @@ void ChFi3d_Builder::PerformOneCorner(const Standard_Integer Index,
   BRepAdaptor_Surface& Bs  = HBs->ChangeSurface();
   BRepAdaptor_Surface& Bad = HBad->ChangeSurface();
   BRepAdaptor_Surface& Bop = HBop->ChangeSurface();
+  TopoDS_Edge aNewEdge;
   Handle(Geom_Curve) Cc;
   Handle(Geom2d_Curve) Pc,Ps;
   Standard_Real Ubid,Vbid;//,mu,Mu,mv,Mv;
@@ -631,6 +633,7 @@ void ChFi3d_Builder::PerformOneCorner(const Standard_Integer Index,
   Standard_Integer IFadArc = 1, IFopArc = 2;
   Fop = TopoDS::Face(DStr.Shape(Fd->Index(IFopArc)));
   TopExp_Explorer ex;
+  BRep_Builder BB;
 
 #ifdef OCCT_DEBUG
   ChFi3d_InitChron(ch); // init perf condition  if (onsame)
@@ -731,12 +734,11 @@ void ChFi3d_Builder::PerformOneCorner(const Standard_Integer Index,
     TopoDS_Face FFv;
     Standard_Real tol;
     Standard_Integer prol=0;
-    BRep_Builder BRE;
     Handle(Geom_Surface ) Sface;
     Sface=BRep_Tool::Surface(Fv);
     ChFi3d_ExtendSurface(Sface,prol);
     tol=BRep_Tool::Tolerance(Fv);
-    BRE.MakeFace(FFv,Sface,tol);
+    BB.MakeFace(FFv,Sface,tol);
     if (prol) {
       Bs.Initialize(FFv,Standard_False);
       DStr.SetNewSurface(Fv,Sface);
@@ -857,6 +859,21 @@ void ChFi3d_Builder::PerformOneCorner(const Standard_Integer Index,
 			      Pc,tolesp,tol2d,tolreached))
       throw Standard_Failure("OneCorner : echec calcul intersection");
 
+    //jgv
+    aNewEdge = BRepLib_MakeEdge(Cc);
+    BB.UpdateEdge(aNewEdge, tolreached);
+    TopLoc_Location aLoc;
+    BB.UpdateEdge(aNewEdge, Ps, DStr.Surface(Fd->Surf()).Surface(), aLoc, 0.);
+    /*
+    Handle(Geom2d_Curve) AdjustedPc;
+    BOPTools_AlgoTools2D::AdjustPCurveOnSurf(Bs, Cc->FirstParameter(), Cc->LastParameter(),
+                                             Pc, AdjustedPc);
+    Pc = AdjustedPc;
+    */
+    BB.UpdateEdge(aNewEdge, Pc, Bs.Face(), 0.);
+    myNewEdges.Add(aNewEdge);
+    /////
+
     Udeb = Cc->FirstParameter();
     Ufin = Cc->LastParameter();
 
@@ -933,11 +950,20 @@ void ChFi3d_Builder::PerformOneCorner(const Standard_Integer Index,
 	break;
       }
     }
-
-//
-
-
   }
+
+  Standard_Integer IndFv;
+  if (!myNewFaces.Contains(Fv))
+    myNewFaces.Add(Fv);
+  IndFv = myNewFaces.FindIndex(Fv);
+  if (!myFaceNewEdges.Contains(IndFv))
+  {
+    ChFi3d_ListOfQualifiedEdge aList;
+    myFaceNewEdges.Add(IndFv, aList);
+  }
+  Standard_Integer IndE = myNewEdges.FindIndex(aNewEdge);
+  QualifiedEdge aQE(IndE, Et, BRepOffset_Convex);
+  myFaceNewEdges.ChangeFromKey(IndFv).Append(aQE);
 
 #ifdef OCCT_DEBUG
   ChFi3d_ResultChron(ch ,t_inter); //result perf condition if (inter)
@@ -1246,6 +1272,7 @@ void ChFi3d_Builder::PerformOneCorner(const Standard_Integer Index,
     Hc = BRep_Tool::CurveOnSurface(Arcprol,Fop,Ubid,Ubid);
     pop1 = Hc->Value(parVtx);
     pop2 = Fiop.PCurveOnFace()->Value(Fiop.Parameter(isfirst));
+    ChFi3d_AdjustSecondPointToFirstPoint(pop1, pop2, Bop);
     Hc = BRep_Tool::CurveOnSurface(Arcprol,Fv,Ubid,Ubid);
     pv1 = Hc->Value(parVtx);
     pv2 = p2dbout;
@@ -1267,6 +1294,31 @@ void ChFi3d_Builder::PerformOneCorner(const Standard_Integer Index,
     if (!ChFi3d_ComputeCurves(HBop,HBs,Pardeb,Parfin,zob3d,zob2dop,
 			      zob2dv,tolesp,tol2d,tolreached))
       throw Standard_Failure("OneCorner : echec calcul intersection");
+
+    //jgv
+    TopoDS_Vertex CommonVertexForNewEdgeAndZobEdge = TopExp::FirstVertex(aNewEdge);
+    TopoDS_Edge aZobEdge = BRepLib_MakeEdge(zob3d, Vtx, CommonVertexForNewEdgeAndZobEdge);
+    BB.UpdateEdge(aZobEdge, tolreached);
+    /*
+    Handle(Geom2d_Curve) AdjustedZob2dop;
+    BOPTools_AlgoTools2D::AdjustPCurveOnSurf(Bop, zob3d->FirstParameter(), zob3d->LastParameter(),
+                                             zob2dop, AdjustedZob2dop);
+    zob2dop = AdjustedZob2dop;
+    */
+    BB.UpdateEdge(aZobEdge, zob2dop, Bop.Face(), 0.);
+    /*
+    Handle(Geom2d_Curve) AdjustedZob2dv;
+    BOPTools_AlgoTools2D::AdjustPCurveOnSurf(Bs, zob3d->FirstParameter(), zob3d->LastParameter(),
+                                             zob2dv, AdjustedZob2dv);
+    zob2dv = AdjustedZob2dv;
+    */
+    BB.UpdateEdge(aZobEdge, zob2dv, Bs.Face(), 0.);
+    TopTools_ListOfShape aZobList, aNewZobList;
+    aZobList.Append(aZobEdge);
+    ChFi3d_SplitAndAdjust(aZobList, aNewZobList, Bop);
+    TopTools_ListIteratorOfListOfShape itl(aNewZobList);
+    for (; itl.More(); itl.Next())
+      myNewEdges.Add(itl.Value());
 
     Udeb = zob3d->FirstParameter();
     Ufin = zob3d->LastParameter();
@@ -1353,6 +1405,11 @@ void ChFi3d_Builder::PerformOneCorner(const Standard_Integer Index,
     }
     else {
       Et = TopAbs::Reverse(TopAbs::Compose(OVtx,OArcprolv));
+
+      Standard_Integer IndZobE = myNewEdges.FindIndex(aZobEdge);
+      QualifiedEdge aQzobE(IndZobE, Et, BRepOffset_Convex);
+      myFaceNewEdges.ChangeFromKey(IndFv).Append(aQzobE);
+      
       Handle(TopOpeBRepDS_SurfaceCurveInterference)
 	InterFv = ChFi3d_FilCurveInDS(IZob,IShape,zob2dv,Et);
       DStr.ChangeShapeInterferences(IShape).Append(InterFv);

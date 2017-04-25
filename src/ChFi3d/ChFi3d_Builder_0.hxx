@@ -81,6 +81,14 @@ Standard_Real ChFi3d_InPeriod(const Standard_Real U,
 			      const Standard_Real ULast,
 			      const Standard_Real Eps);
 
+void ChFi3d_AdjustSecondPointToFirstPoint(const gp_Pnt2d& theFirstPoint,
+                                          gp_Pnt2d& theSecondPoint,
+                                          const BRepAdaptor_Surface& theSurf);
+
+void ChFi3d_SplitAndAdjust(const TopTools_ListOfShape& theElist,
+                           TopTools_ListOfShape& theNewElist,
+                           const BRepAdaptor_Surface& theBAsurf);
+
 void ChFi3d_Boite(const gp_Pnt2d& p1,const gp_Pnt2d& p2,
 		  Standard_Real& mu,Standard_Real& Mu,
 		  Standard_Real& mv,Standard_Real& Mv);
