@@ -98,6 +98,8 @@ void BOPAlgo_PaveFiller::ProcessDE()
           //
           // 2.
           BOPDS_ListOfPaveBlock& aLPBD=myDS->ChangePaveBlocks(nE);
+          if (aLPBD.IsEmpty())
+            continue;
           aPBD=aLPBD.First();
           //
           FillPaves(nV, nE, nF, aLPBOut, aPBD);
@@ -224,7 +226,7 @@ void BOPAlgo_PaveFiller::ProcessDE()
       aPB->SetEdge(nSp);
     }
     else {
-      //aPB->SetEdge(nDE);
+      myDS->ChangeShapeInfo(nDE).SetReference(-1);
       aLPB.Clear();
       break;
     }

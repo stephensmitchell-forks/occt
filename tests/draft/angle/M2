@@ -2,7 +2,7 @@
 # Date : 02 Dec 98
 
 puts "TODO OCC22803 All: Error: The tolerance of the resulting shape is too big"
-#puts "TODO OCC23511 Linux: The area of the resulting shape is 186543"
+puts "TODO OCC23511 ALL: The area of the resulting shape is "
 
 restore [locate_data_file CFE903_pro12ggx.rle] base
 
