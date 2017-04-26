@@ -302,7 +302,8 @@ void BOPAlgo_PaveFiller::PerformInternal()
   }
   //
   UpdateInterfsWithSDVertices();
-  RefineFaceInfoOn();
+  myDS->ReleasePaveBlocks();
+  myDS->RefineFaceInfoOn();
   //
   MakePCurves();
   if (myErrorStatus) {

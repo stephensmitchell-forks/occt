@@ -459,6 +459,9 @@ Standard_EXPORT virtual ~BOPDS_DS();
 
   Standard_EXPORT void InitPaveBlocksForVertex(const Standard_Integer theNV);
 
+  //! Clears information about PaveBlocks for the untouched edges
+  Standard_EXPORT void ReleasePaveBlocks();
+
 protected:
 
   
@@ -477,7 +480,7 @@ protected:
   Standard_EXPORT Standard_Boolean CheckCoincidence (const Handle(BOPDS_PaveBlock)& thePB1,
                                                      const Handle(BOPDS_PaveBlock)& thePB2,
                                                      const Standard_Real theFuzz);
-  
+
 
   //! Computes bouding box <theBox> for the solid with DS-index <theIndex>
   Standard_EXPORT void BuildBndBoxSolid (const Standard_Integer theIndex, Bnd_Box& theBox);
