@@ -591,7 +591,11 @@ is
              
     InitPaveBlocksForVertex(me:out; 
             theNV:Integer from Standard);        
-     
+
+    ReleasePaveBlocks(me:out);
+    ---Purpose:
+    -- Clears information about PaveBlocks for the untouched edges.
+
 fields  
     myAllocator        : BaseAllocator from BOPCol is protected;
     myArguments        : ListOfShape from BOPCol is protected;   

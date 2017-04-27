@@ -312,8 +312,6 @@ void BOPAlgo_PaveFiller::PerformEF()
     nF=aItMI.Value();
     myDS->UpdateFaceInfoIn(nF);
   }
-  // Refine FaceInfoOn to remove all formal pave blocks 
-  // made during EF processing 
   //-----------------------------------------------------scope t
   aMIEFC.Clear();
   aMVCPB.Clear();

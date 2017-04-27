@@ -124,6 +124,11 @@ is
     TreatVerticesEE(me:out) 
       is protected; 
 
+    MakeSDVerticesFF(me:out;
+      theDMVLV: DataMapOfIntegerListOfInteger from BOPCol;
+      theDMNewSD: out DataMapOfIntegerInteger from BOPCol)
+    is protected;
+
     MakeSplitEdges(me:out) 
       is protected;   
         
@@ -132,7 +137,13 @@ is
 	 
     MakePCurves(me:out) 
       is protected; 
-	 
+
+    MakeSDVertices(me:out;
+      theVertIndices : ListOfInteger from BOPCol;
+      theAddInterfs  : Boolean from Standard = Standard_True)
+    returns Integer from Standard
+    is protected;
+
     ProcessDE(me:out) 
       is protected;  
        
@@ -180,7 +191,8 @@ is
         nF2       : Integer from Standard; 
         theMI     : MapOfInteger from BOPCol; 
         theMVEF   : MapOfInteger from BOPCol; 
-        theMVTol  : out DataMapOfIntegerReal from BOPCol) 
+        theMVTol  : out DataMapOfIntegerReal from BOPCol;
+        aDMVLV    : out DataMapOfIntegerListOfInteger from BOPCol) 
       is protected;   
     ---Purpose: 
     -- Checks and puts paves from <theMVOn> on the curve <theNC>.
@@ -271,7 +283,8 @@ is
         theNC      : out Curve from BOPDS; 
         theMI      : MapOfInteger from BOPCol;
         theMVEF    : MapOfInteger from BOPCol;
-        theMVTol   : out DataMapOfIntegerReal from BOPCol)
+        theMVTol   : out DataMapOfIntegerReal from BOPCol;
+        aDMVLV     : out DataMapOfIntegerListOfInteger from BOPCol)
       is protected; 
     ---Purpose: 
     -- Checks and puts paves created in EF intersections on the curve <theNC>.
@@ -282,7 +295,8 @@ is
         theMI      : MapOfInteger from BOPCol;
         theNC      : out Curve from BOPDS; 
         theMVStick : MapOfInteger from BOPCol; 
-        theMVTol   : out DataMapOfIntegerReal from BOPCol)
+        theMVTol   : out DataMapOfIntegerReal from BOPCol;
+        aDMVLV     : out DataMapOfIntegerListOfInteger from BOPCol)
       is protected;  
     ---Purpose: 
     -- Puts stick paves on the curve <theNC>
@@ -323,6 +337,7 @@ is
         theNC     : out Curve from BOPDS; 
         theMI     : MapOfInteger from BOPCol;
         theMVTol  : out DataMapOfIntegerReal from BOPCol;
+        aDMVLV    : out DataMapOfIntegerListOfInteger from BOPCol;
         aType     : Integer from Standard = 0)
       is protected; 
     ---Purpose: 
@@ -378,12 +393,6 @@ is
       is protected; 
     ---Purpose: 
     -- Keeps data for post treatment 
-     
-    RefineFaceInfoOn(me:out) 
-      is protected; 
-    ---Purpose: 
-    -- Refines the state On for the all faces having 
-    -- state information 
 
     UpdateFaceInfo(me:out;
         theDME:out DataMapOfPaveBlockListOfPaveBlock from BOPDS) 

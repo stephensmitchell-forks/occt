@@ -254,7 +254,8 @@ void BOPAlgo_PaveFiller::Perform()
     return; 
   }
   //
-  RefineFaceInfoOn();
+  myDS->ReleasePaveBlocks();
+  myDS->RefineFaceInfoOn();
   //
   MakePCurves();
   if (myErrorStatus) {
