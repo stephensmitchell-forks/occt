@@ -17,9 +17,13 @@
 #define _OpenGl_Workspace_Header
 
 #include <Graphic3d_BufferType.hxx>
+#include <Graphic3d_PresentationAttributes.hxx>
 
 #include <OpenGl_AspectFace.hxx>
-#include <OpenGl_CappingAlgo.hxx>
+#include <OpenGl_AspectMarker.hxx>
+#include <OpenGl_AspectLine.hxx>
+#include <OpenGl_AspectText.hxx>
+#include <OpenGl_CappingRenderer.hxx>
 #include <OpenGl_FrameBuffer.hxx>
 #include <OpenGl_Material.hxx>
 #include <OpenGl_Matrix.hxx>
@@ -264,9 +268,9 @@ public:
   const Graphic3d_PolygonOffset& AppliedPolygonOffset() { return myPolygonOffsetApplied; }
 
   //! Returns capping algorithm rendering filter.
-  const Handle(OpenGl_CappingAlgoFilter)& DefaultCappingAlgoFilter() const
+  const Handle(OpenGl_CappingRenderFilter)& CappingRenderFilter() const
   {
-    return myDefaultCappingAlgoFilter;
+    return myCappingRenderFilter;
   }
 
   //! Returns face aspect for none culling mode.
@@ -289,14 +293,14 @@ public:
 
 protected: //! @name protected fields
 
-  OpenGl_View*                     myView;
-  Handle(OpenGl_Window)            myWindow;
-  Handle(OpenGl_Context)           myGlContext;
-  Standard_Boolean                 myUseZBuffer;
-  Standard_Boolean                 myUseDepthWrite;
-  Handle(OpenGl_CappingAlgoFilter) myDefaultCappingAlgoFilter;
-  OpenGl_AspectFace                myNoneCulling;
-  OpenGl_AspectFace                myFrontCulling;
+  OpenGl_View*                       myView;
+  Handle(OpenGl_Window)              myWindow;
+  Handle(OpenGl_Context)             myGlContext;
+  Standard_Boolean                   myUseZBuffer;
+  Standard_Boolean                   myUseDepthWrite;
+  Handle(OpenGl_CappingRenderFilter) myCappingRenderFilter;
+  OpenGl_AspectFace                  myNoneCulling;
+  OpenGl_AspectFace                  myFrontCulling;
 
 protected: //! @name fields related to status
 
