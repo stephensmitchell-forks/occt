@@ -890,7 +890,7 @@ void AIS_Trihedron::updatePrimitives(const Handle(Prs3d_DatumAspect)& theAspect,
     Handle(Graphic3d_ArrayOfPrimitives) aPrims = new Graphic3d_ArrayOfPolylines(4);
     aPrims->AddVertex(theOrigin);
 
-    Prs3d_DatumParts aPart1, aPart2;
+    Prs3d_DatumParts aPart1 = Prs3d_DP_XAxis, aPart2 = Prs3d_DP_XAxis;
     switch(aPart)
     {
       case Prs3d_DP_XOYAxis:
