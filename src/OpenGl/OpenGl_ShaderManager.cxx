@@ -1429,7 +1429,10 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramFlat (Handle(OpenGl_Shad
       aSrcVertExtraMain += THE_VARY_TexCoord_Trsf;
 
       aSrcFragGetColor =
-        EOL"vec4 getColor(void) { return occTexture2D(occActiveSampler, TexCoord.st / TexCoord.w); }";
+        EOL"vec4 getColor(void)"
+        EOL"{"
+        EOL"  return occTexture2D(occActiveSampler, TexCoord.st / TexCoord.w) * occColor;"
+        EOL"}";
     }
     else if ((theBits & OpenGl_PO_TextureEnv) != 0)
     {
