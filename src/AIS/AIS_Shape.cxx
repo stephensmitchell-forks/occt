@@ -183,7 +183,7 @@ void AIS_Shape::Compute(const Handle(PrsMgr_PresentationManager3d)& /*aPresentat
           try
           {
             OCC_CATCH_SIGNALS
-            StdPrs_ShadedShape::Add (aPrs, myshape, myDrawer);
+            StdPrs_ShadedShape::Add (aPrs, myshape, myDrawer, myCappingStyle);
           }
           catch (Standard_Failure)
           {

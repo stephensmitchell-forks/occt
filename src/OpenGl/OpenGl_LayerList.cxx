@@ -663,7 +663,7 @@ Standard_Boolean OpenGl_LayerList::OpenGl_OpaqueFilter::ShouldRender (const Hand
       && aPArray->DrawMode() >= OpenGl_PrimitiveArray::THE_FILLPRIM_FROM
       && aPArray->DrawMode() <= OpenGl_PrimitiveArray::THE_FILLPRIM_TO)
   {
-    const OpenGl_AspectFace* anAspect = theWorkspace->ApplyAspectFace();
+    const OpenGl_AspectFace* anAspect = theWorkspace->AspectFace();
     if (anAspect)
     {
       const bool toDistinguish = anAspect->Aspect()->Distinguish();

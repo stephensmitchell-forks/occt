@@ -1510,45 +1510,75 @@ static int VSetInteriorStyle (Draw_Interpretor& theDI,
 //! Auxiliary structure for VAspects
 struct ViewerTest_AspectsChangeSet
 {
-  Standard_Integer         ToSetVisibility;
-  Standard_Integer         Visibility;
+  Standard_Integer             ToSetVisibility;
+  Standard_Integer             Visibility;
 
-  Standard_Integer         ToSetColor;
-  Quantity_Color           Color;
+  Standard_Integer             ToSetColor;
+  Quantity_Color               Color;
 
-  Standard_Integer         ToSetLineWidth;
-  Standard_Real            LineWidth;
+  Standard_Integer             ToSetLineWidth;
+  Standard_Real                LineWidth;
 
-  Standard_Integer         ToSetTypeOfLine;
-  Aspect_TypeOfLine        TypeOfLine;
+  Standard_Integer             ToSetTypeOfLine;
+  Aspect_TypeOfLine            TypeOfLine;
 
-  Standard_Integer         ToSetTransparency;
-  Standard_Real            Transparency;
+  Standard_Integer             ToSetTransparency;
+  Standard_Real                Transparency;
 
-  Standard_Integer         ToSetMaterial;
-  Graphic3d_NameOfMaterial Material;
-  TCollection_AsciiString  MatName;
+  Standard_Integer             ToSetMaterial;
+  Graphic3d_NameOfMaterial     Material;
+  TCollection_AsciiString      MatName;
 
   NCollection_Sequence<TopoDS_Shape> SubShapes;
 
-  Standard_Integer         ToSetShowFreeBoundary;
-  Standard_Integer         ToSetFreeBoundaryWidth;
-  Standard_Real            FreeBoundaryWidth;
-  Standard_Integer         ToSetFreeBoundaryColor;
-  Quantity_Color           FreeBoundaryColor;
+  Standard_Integer             ToSetShowFreeBoundary;
+  Standard_Integer             ToSetFreeBoundaryWidth;
+  Standard_Real                FreeBoundaryWidth;
+  Standard_Integer             ToSetFreeBoundaryColor;
+  Quantity_Color               FreeBoundaryColor;
 
-  Standard_Integer         ToEnableIsoOnTriangulation;
+  Standard_Integer             ToEnableIsoOnTriangulation;
 
-  Standard_Integer         ToSetMaxParamValue;
-  Standard_Real            MaxParamValue;
+  Standard_Integer             ToSetMaxParamValue;
+  Standard_Real                MaxParamValue;
 
-  Standard_Integer         ToSetSensitivity;
-  Standard_Integer         SelectionMode;
-  Standard_Integer         Sensitivity;
+  Standard_Integer             ToSetSensitivity;
+  Standard_Integer             SelectionMode;
+  Standard_Integer             Sensitivity;
 
-  Standard_Integer         ToSetHatch;
-  Standard_Integer         StdHatchStyle;
-  TCollection_AsciiString  PathToHatchPattern;
+  Standard_Integer             ToSetHatch;
+  Standard_Integer             StdHatchStyle;
+  TCollection_AsciiString      PathToHatchPattern;
+
+  Standard_Integer             ToSetCappingUseObjMaterial;
+  Standard_Integer             ToSetCappingUseObjTexture;
+  Standard_Integer             ToSetCappingUseObjShader;
+  Standard_Integer             ToSetCappingHatchZoomPers;
+  Standard_Integer             ToSetCappingHatchRotatePers;
+  Standard_Integer             ToSetCappingHatchEnabled;
+  Standard_Boolean             ToSetCappingColor;
+  Quantity_Color               CappingColor;
+  Standard_Boolean             ToSetCappingTexture;
+  Handle(Graphic3d_TextureMap) CappingTexture;
+  Standard_Boolean             ToSetCappingTexScale;
+  Graphic3d_Vec2               CappingTexScale;
+  Standard_Boolean             ToSetCappingTexOrigin;
+  Graphic3d_Vec2               CappingTexOrigin;
+  Standard_Boolean             ToSetCappingTexRotate;
+  Standard_ShortReal           CappingTexRotate;
+  Standard_Boolean             ToSetCappingStippleHatch;
+  Handle(Graphic3d_HatchStyle) CappingHatchStipple;
+  Standard_Boolean             ToSetCappingHatchColor;
+  Quantity_Color               CappingHatchColor;
+  Standard_Boolean             ToSetCappingTextureHatch;
+  Handle(Graphic3d_TextureMap) CappingHatchTexture;
+  Standard_Boolean             ToSetCappingHatchTexScale;
+  Graphic3d_Vec2               CappingHatchTexScale;
+  Standard_Boolean             ToSetCappingHatchTexOrigin;
+  Graphic3d_Vec2               CappingHatchTexOrigin;
+  Standard_Boolean             ToSetCappingHatchTexRotate;
+  Standard_ShortReal           CappingHatchTexRotate;
+  Standard_Boolean             ToUnsetCapping;
 
   //! Empty constructor
   ViewerTest_AspectsChangeSet()
@@ -1576,7 +1606,26 @@ struct ViewerTest_AspectsChangeSet
     SelectionMode (-1),
     Sensitivity (-1),
     ToSetHatch (0),
-    StdHatchStyle (-1)
+    StdHatchStyle (-1),
+    ToSetCappingUseObjMaterial (-1),
+    ToSetCappingUseObjTexture (-1),
+    ToSetCappingUseObjShader (-1),
+    ToSetCappingHatchZoomPers (-1),
+    ToSetCappingHatchRotatePers (-1),
+    ToSetCappingHatchEnabled (-1),
+    ToSetCappingColor (Standard_False),
+    ToSetCappingTexture (Standard_False),
+    ToSetCappingTexScale (Standard_False),
+    ToSetCappingTexOrigin (Standard_False),
+    ToSetCappingTexRotate (Standard_False),
+    ToSetCappingStippleHatch (Standard_False),
+    ToSetCappingHatchColor (Standard_False),
+    ToSetCappingTextureHatch (Standard_False),
+    ToSetCappingHatchTexScale (Standard_False),
+    ToSetCappingHatchTexOrigin (Standard_False),
+    ToSetCappingHatchTexRotate (Standard_False),
+    CappingTexRotate (0.F),
+    ToUnsetCapping (Standard_False)
     {}
 
   //! @return true if no changes have been requested
@@ -1592,7 +1641,30 @@ struct ViewerTest_AspectsChangeSet
         && ToSetFreeBoundaryWidth == 0
         && ToSetMaxParamValue     == 0
         && ToSetSensitivity       == 0
-        && ToSetHatch             == 0;
+        && ToSetHatch             == 0
+        && !ToSetCapping();
+  }
+
+  Standard_Boolean ToSetCapping() const
+  {
+    return ToSetCappingUseObjMaterial  != -1
+        || ToSetCappingUseObjTexture   != -1
+        || ToSetCappingUseObjShader    != -1
+        || ToSetCappingHatchZoomPers   != -1
+        || ToSetCappingHatchRotatePers != -1
+        || ToSetCappingHatchEnabled    != -1
+        || ToSetCappingColor
+        || ToSetCappingTexture
+        || ToSetCappingTexScale
+        || ToSetCappingTexOrigin
+        || ToSetCappingTexRotate
+        || ToSetCappingStippleHatch
+        || ToSetCappingHatchColor
+        || ToSetCappingTextureHatch
+        || ToSetCappingHatchTexScale
+        || ToSetCappingHatchTexOrigin
+        || ToSetCappingHatchTexRotate
+        || ToUnsetCapping;
   }
 
   //! @return true if properties are valid
@@ -1649,9 +1721,109 @@ struct ViewerTest_AspectsChangeSet
       std::cout << "Error: hatch style must be specified\n";
       isOk = Standard_False;
     }
+    if (ToUnsetCapping && ToSetCapping())
+    {
+      std::cout << "Error: not possible to set capping attribute with -unsetCapping specified\n";
+      isOk = Standard_False;
+    }
     return isOk;
   }
 
+  void ApplyToCappingStyle (const Handle(Graphic3d_AspectFillCapping)& theStyle)
+  {
+    if (ToSetCappingUseObjMaterial != -1)
+    {
+      theStyle->SetUseObjectMaterial (ToSetCappingUseObjMaterial != 0);
+    }
+    if (ToSetCappingUseObjTexture != -1)
+    {
+      theStyle->SetUseObjectTexture (ToSetCappingUseObjTexture != 0);
+    }
+    if (ToSetCappingUseObjShader != -1)
+    {
+      theStyle->SetUseObjectShader (ToSetCappingUseObjShader != 0);
+    }
+    if (ToSetCappingHatchZoomPers != -1)
+    {
+      theStyle->SetHatchZoomPeristent (ToSetCappingHatchZoomPers != 0);
+    }
+    if (ToSetCappingHatchRotatePers != -1)
+    {
+      theStyle->SetHatchRotationPeristent (ToSetCappingHatchRotatePers != 0);
+    }
+    if (ToSetCappingHatchEnabled != -1)
+    {
+      theStyle->SetToDrawHatch (ToSetCappingHatchEnabled != 0);
+    }
+    if (ToSetCappingColor)
+    {
+      Graphic3d_MaterialAspect aMat = theStyle->Material();
+      aMat.SetAmbientColor (CappingColor);
+      aMat.SetDiffuseColor (CappingColor);
+      theStyle->SetMaterial (aMat);
+    }
+    if (ToSetCappingTexture)
+    {
+      theStyle->SetTexture (CappingTexture);
+    }
+    if (ToSetCappingTexScale)
+    {
+      if (!theStyle->Texture().IsNull())
+      {
+        theStyle->Texture()->GetParams()->SetScale (CappingTexScale);
+      }
+    }
+    if (ToSetCappingTexOrigin)
+    {
+      if (!theStyle->Texture().IsNull())
+      {
+        theStyle->Texture()->GetParams()->SetTranslation (CappingTexOrigin);
+      }
+    }
+    if (ToSetCappingTexRotate)
+    {
+      if (!theStyle->Texture().IsNull())
+      {
+        theStyle->Texture()->GetParams()->SetRotation (CappingTexRotate);
+      }
+    }
+    if (ToSetCappingStippleHatch)
+    {
+      theStyle->SetHatchStyle (CappingHatchStipple);
+    }
+    if (ToSetCappingHatchColor)
+    {
+      Graphic3d_MaterialAspect aMat = theStyle->HatchMaterial();
+      aMat.SetAmbientColor (CappingHatchColor);
+      aMat.SetDiffuseColor (CappingHatchColor);
+      theStyle->SetHatchMaterial (aMat);
+    }
+    if (ToSetCappingTextureHatch)
+    {
+      theStyle->SetHatchStyle (CappingHatchTexture);
+    }
+    if (ToSetCappingHatchTexScale)
+    {
+      if (!theStyle->TextureHatch().IsNull())
+      {
+        theStyle->TextureHatch()->GetParams()->SetScale (CappingHatchTexScale);
+      }
+    }
+    if (ToSetCappingHatchTexOrigin)
+    {
+      if (!theStyle->TextureHatch().IsNull())
+      {
+        theStyle->TextureHatch()->GetParams()->SetTranslation (CappingHatchTexOrigin);
+      }
+    }
+    if (ToSetCappingHatchTexRotate)
+    {
+      if (!theStyle->TextureHatch().IsNull())
+      {
+        theStyle->TextureHatch()->GetParams()->SetRotation (CappingHatchTexRotate);
+      }
+    }
+  }
 };
 
 //==============================================================================
@@ -1706,6 +1878,7 @@ static Standard_Integer VAspects (Draw_Interpretor& /*theDI*/,
   NCollection_Sequence<ViewerTest_AspectsChangeSet> aChanges;
   aChanges.Append (ViewerTest_AspectsChangeSet());
   ViewerTest_AspectsChangeSet* aChangeSet = &aChanges.ChangeLast();
+  Standard_Boolean toEnable = Standard_False;
 
   // parse syntax of legacy commands
   if (aCmdName == "vsetwidth")
@@ -1825,6 +1998,8 @@ static Standard_Integer VAspects (Draw_Interpretor& /*theDI*/,
   }
   for (; anArgIter < theArgNb; ++anArgIter)
   {
+    const char**     aChangeArgs   = theArgVec + anArgIter;
+    Standard_Integer aNbChangeArgs = theArgNb  - anArgIter;
     TCollection_AsciiString anArg = theArgVec[anArgIter];
     anArg.LowerCase();
     if (anArg == "-setwidth"
@@ -2228,12 +2403,6 @@ static Standard_Integer VAspects (Draw_Interpretor& /*theDI*/,
         return 1;
       }
 
-      if (aNames.IsEmpty())
-      {
-        std::cout << "Error: object should be specified explicitly when -setHatch is used!\n";
-        return 1;
-      }
-
       aChangeSet->ToSetHatch = 1;
       TCollection_AsciiString anArgHatch (theArgVec[++anArgIter]);
       if (anArgHatch.Length() <= 2)
@@ -2251,6 +2420,382 @@ static Standard_Integer VAspects (Draw_Interpretor& /*theDI*/,
       {
         aChangeSet->PathToHatchPattern = anArgHatch;
       }
+    }
+    else if (anArg == "-setcappinguseobjmaterial")
+    {
+      if (isDefaults)
+      {
+        std::cout << "Error: wrong syntax. -setHatch can not be used together with -defaults call!\n";
+        return 1;
+      }
+
+      if (aNbChangeArgs < 2)
+      {
+        std::cout << "Syntax error: -setCappingUseObjMaterial need more arguments.\n";
+        return 1;
+      }
+
+      if (ViewerTest::ParseOnOff (aChangeArgs[1], toEnable))
+      {
+        aChangeSet->ToSetCappingUseObjMaterial = toEnable ? 1 : 0;
+        anArgIter += 1;
+      }
+    }
+    else if (anArg == "-setcappinguseobjtexture")
+    {
+      if (isDefaults)
+      {
+        std::cout << "Error: wrong syntax. -setHatch can not be used together with -defaults call!\n";
+        return 1;
+      }
+
+      if (aNbChangeArgs < 2)
+      {
+        std::cout << "Syntax error: -setCappingUseObjTexture need more arguments.\n";
+        return 1;
+      }
+
+      if (ViewerTest::ParseOnOff (aChangeArgs[1], toEnable))
+      {
+        aChangeSet->ToSetCappingUseObjTexture = toEnable ? 1 : 0;
+        anArgIter += 1;
+      }
+    }
+    else if (anArg == "-setcappinguseobjshader")
+    {
+      if (isDefaults)
+      {
+        std::cout << "Error: wrong syntax. -setHatch can not be used together with -defaults call!\n";
+        return 1;
+      }
+
+      if (aNbChangeArgs < 2)
+      {
+        std::cout << "Syntax error: -setCappingUseObjShader need more arguments.\n";
+        return 1;
+      }
+
+      if (ViewerTest::ParseOnOff (aChangeArgs[1], toEnable))
+      {
+        aChangeSet->ToSetCappingUseObjShader = toEnable ? 1 : 0;
+        anArgIter += 1;
+      }
+    }
+    else if (anArg == "-setcappingcolor")
+    {
+      if (isDefaults)
+      {
+        std::cout << "Error: wrong syntax. -setHatch can not be used together with -defaults call!\n";
+        return 1;
+      }
+
+      Quantity_Color aColor;
+      Standard_Integer aNbParsed = ViewerTest::ParseColor (aNbChangeArgs - 1,
+                                                           aChangeArgs + 1,
+                                                           aColor);
+      if (aNbParsed == 0)
+      {
+        std::cout << "Syntax error: -setCappingColor need more arguments.\n";
+        return 1;
+      }
+      anArgIter += aNbParsed;
+      aChangeSet->ToSetCappingColor = Standard_True;
+      aChangeSet->CappingColor = aColor;
+    }
+    else if (anArg == "-setcappingtexture")
+    {
+      if (isDefaults)
+      {
+        std::cout << "Error: wrong syntax. -setHatch can not be used together with -defaults call!\n";
+        return 1;
+      }
+
+      if (aNbChangeArgs < 2)
+      {
+        std::cout << "Syntax error: -setCappingTexture need more arguments.\n";
+        return 1;
+      }
+
+      TCollection_AsciiString aTextureName (aChangeArgs[1]);
+      Handle(Graphic3d_Texture2Dmanual) aTexture = new Graphic3d_Texture2Dmanual(aTextureName);
+      if (!aTexture->IsDone())
+      {
+        aChangeSet->CappingTexture = Handle(Graphic3d_TextureMap)();
+      }
+      else
+      {
+        aTexture->EnableModulate();
+        aTexture->EnableRepeat();
+        aChangeSet->CappingTexture = aTexture.get();
+      }
+      aChangeSet->ToSetCappingTexture = Standard_True;
+      anArgIter += 1;
+    }
+    else if (anArg == "-setcappingtexscale")
+    {
+      if (isDefaults)
+      {
+        std::cout << "Error: wrong syntax. -setHatch can not be used together with -defaults call!\n";
+        return 1;
+      }
+
+      if (aNbChangeArgs < 3)
+      {
+        std::cout << "Syntax error: -setCappingTexScale need more arguments.\n";
+        return 1;
+      }
+
+      Standard_ShortReal aSx = (Standard_ShortReal)Draw::Atof (aChangeArgs[1]);
+      Standard_ShortReal aSy = (Standard_ShortReal)Draw::Atof (aChangeArgs[2]);
+      aChangeSet->ToSetCappingTexScale = Standard_True;
+      aChangeSet->CappingTexScale = Graphic3d_Vec2 (aSx, aSy);
+      anArgIter += 2;
+    }
+    else if (anArg == "-setcappingtexorigin")
+    {
+      if (aNbChangeArgs < 3)
+      {
+        std::cout << "Syntax error: -setCappingTexOrigin need more arguments.\n";
+        return 1;
+      }
+
+      Standard_ShortReal aTx = (Standard_ShortReal)Draw::Atof (aChangeArgs[1]);
+      Standard_ShortReal aTy = (Standard_ShortReal)Draw::Atof (aChangeArgs[2]);
+      aChangeSet->ToSetCappingTexOrigin = Standard_True;
+      aChangeSet->CappingTexOrigin = Graphic3d_Vec2 (aTx, aTy);
+      anArgIter += 2;
+    }
+    else if (anArg == "-setcappingtexrotate")
+    {
+      if (isDefaults)
+      {
+        std::cout << "Error: wrong syntax. -setHatch can not be used together with -defaults call!\n";
+        return 1;
+      }
+
+      if (aNbChangeArgs < 2)
+      {
+        std::cout << "Syntax error: -setCappingTexRotate need more arguments.\n";
+        return 1;
+      }
+
+      aChangeSet->ToSetCappingTexRotate = Standard_True;
+      aChangeSet->CappingTexRotate = (Standard_ShortReal)Draw::Atof (aChangeArgs[1]);
+      anArgIter += 1;
+    }
+    else if (anArg == "-setcappinghatchzoompers")
+    {
+      if (isDefaults)
+      {
+        std::cout << "Error: wrong syntax. -setHatch can not be used together with -defaults call!\n";
+        return 1;
+      }
+
+      if (aNbChangeArgs < 2)
+      {
+        std::cout << "Syntax error: -setCappingHatchZoomPers need more arguments.\n";
+        return 1;
+      }
+
+      if (ViewerTest::ParseOnOff (aChangeArgs[1], toEnable))
+      {
+        aChangeSet->ToSetCappingHatchZoomPers = toEnable ? 1 : 0;
+        anArgIter += 1;
+      }
+    }
+    else if (anArg == "-setcappinghatchrotatepers")
+    {
+      if (isDefaults)
+      {
+        std::cout << "Error: wrong syntax. -setHatch can not be used together with -defaults call!\n";
+        return 1;
+      }
+
+      if (aNbChangeArgs < 2)
+      {
+        std::cout << "Syntax error: -setCappingHatchRotatePers need more arguments.\n";
+        return 1;
+      }
+
+      if (ViewerTest::ParseOnOff (aChangeArgs[1], toEnable))
+      {
+        aChangeSet->ToSetCappingHatchRotatePers = toEnable ? 1 : 0;
+        anArgIter += 1;
+      }
+    }
+    else if (anArg == "-setcappinghatch")
+    {
+      if (isDefaults)
+      {
+        std::cout << "Error: wrong syntax. -setHatch can not be used together with -defaults call!\n";
+        return 1;
+      }
+
+      if (aNbChangeArgs < 2)
+      {
+        std::cout << "Syntax error: -setCappingHatch need more arguments.\n";
+        return 1;
+      }
+
+      if (ViewerTest::ParseOnOff (aChangeArgs[1], toEnable))
+      {
+        aChangeSet->ToSetCappingHatchEnabled = toEnable ? 1 : 0;
+        anArgIter += 1;
+      }
+    }
+    else if (anArg == "-setcappinghatchstipple")
+    {
+      if (isDefaults)
+      {
+        std::cout << "Error: wrong syntax. -setHatch can not be used together with -defaults call!\n";
+        return 1;
+      }
+
+      if (aNbChangeArgs < 2)
+      {
+        std::cout << "Syntax error: -setCappingHatchStipple need more arguments.\n";
+        return 1;
+      }
+
+      TCollection_AsciiString anArg = aChangeArgs[1];
+      if (anArg.IsIntegerValue())
+      {
+        aChangeSet->ToSetCappingStippleHatch = Standard_True;
+        aChangeSet->CappingHatchStipple = new Graphic3d_HatchStyle ((Aspect_HatchStyle)Draw::Atoi (aChangeArgs[1]));
+      }
+      else
+      {
+        Handle(Image_AlienPixMap) anImage = new Image_AlienPixMap();
+        if (!anImage->Load (anArg))
+        {
+          std::cout << "Syntax error: -setCappingHatchStipple image " << anArg << " could not be loaded.\n";
+          return 1;
+        }
+        aChangeSet->ToSetCappingStippleHatch = Standard_True;
+        aChangeSet->CappingHatchStipple = new Graphic3d_HatchStyle (anImage);
+      }
+      anArgIter += 1;
+    }
+    else if (anArg == "-setcappinghatchcolor")
+    {
+      if (isDefaults)
+      {
+        std::cout << "Error: wrong syntax. -setHatch can not be used together with -defaults call!\n";
+        return 1;
+      }
+
+      Quantity_Color aColor;
+      Standard_Integer aNbParsed = ViewerTest::ParseColor (aNbChangeArgs - 1,
+                                                           aChangeArgs + 1,
+                                                           aColor);
+      if (aNbParsed == 0)
+      {
+        std::cout << "Syntax error: -setCappingHatchColor need more arguments.\n";
+        return 1;
+      }
+
+      aChangeSet->ToSetCappingHatchColor = Standard_True;
+      aChangeSet->CappingHatchColor = aColor;
+      anArgIter += aNbParsed;
+    }
+    else if (anArg == "-setcappinghatchtexture")
+    {
+      if (isDefaults)
+      {
+        std::cout << "Error: wrong syntax. -setHatch can not be used together with -defaults call!\n";
+        return 1;
+      }
+
+      if (aNbChangeArgs < 2)
+      {
+        std::cout << "Syntax error: -setCappingHatchTexture need more arguments.\n";
+        return 1;
+      }
+
+      TCollection_AsciiString aTextureName (aChangeArgs[1]);
+      Handle(Graphic3d_Texture2Dmanual) aTexture = new Graphic3d_Texture2Dmanual(aTextureName);
+      if (aTexture->IsDone())
+      {
+        aTexture->EnableModulate();
+        aTexture->EnableRepeat();
+      }
+      aChangeSet->ToSetCappingTextureHatch = Standard_True;
+      aChangeSet->CappingHatchTexture = aTexture->IsDone() ? aTexture : Handle(Graphic3d_TextureMap)();
+      anArgIter += 1;
+    }
+    else if (anArg == "-setcappinghatchtexscale")
+    {
+      if (isDefaults)
+      {
+        std::cout << "Error: wrong syntax. -setHatch can not be used together with -defaults call!\n";
+        return 1;
+      }
+
+      if (aNbChangeArgs < 3)
+      {
+        std::cout << "Syntax error: -setCappingHatchTexScale need more arguments.\n";
+        return 1;
+      }
+
+      Standard_ShortReal aSx = (Standard_ShortReal)Draw::Atof (aChangeArgs[1]);
+      Standard_ShortReal aSy = (Standard_ShortReal)Draw::Atof (aChangeArgs[2]);
+      aChangeSet->ToSetCappingHatchTexScale = Standard_True;
+      aChangeSet->CappingHatchTexScale = Graphic3d_Vec2 (aSx, aSy);
+      anArgIter += 2;
+    }
+    else if (anArg == "-setcappinghatchtexorigin")
+    {
+      if (isDefaults)
+      {
+        std::cout << "Error: wrong syntax. -setHatch can not be used together with -defaults call!\n";
+        return 1;
+      }
+
+      if (aNbChangeArgs < 3)
+      {
+        std::cout << "Syntax error: -setCappingHatchTexOrigin need more arguments.\n";
+        return 1;
+      }
+
+      Standard_ShortReal aTx = (Standard_ShortReal)Draw::Atof (aChangeArgs[1]);
+      Standard_ShortReal aTy = (Standard_ShortReal)Draw::Atof (aChangeArgs[2]);
+      aChangeSet->ToSetCappingHatchTexOrigin = Standard_True;
+      aChangeSet->CappingHatchTexOrigin = Graphic3d_Vec2 (aTx, aTy);
+      anArgIter += 2;
+    }
+    else if (anArg == "-setcappinghatchtexrotate")
+    {
+      if (isDefaults)
+      {
+        std::cout << "Error: wrong syntax. -setHatch can not be used together with -defaults call!\n";
+        return 1;
+      }
+
+      if (aNbChangeArgs < 2)
+      {
+        std::cout << "Syntax error: -setCappingHatchTexRotate need more arguments.\n";
+        return 1;
+      }
+
+      aChangeSet->ToSetCappingHatchTexRotate = Standard_True;
+      aChangeSet->CappingHatchTexRotate = (Standard_ShortReal)Draw::Atof (aChangeArgs[1]);
+      anArgIter += 1;
+    }
+    else if (anArg == "-unsetcappingstyle")
+    {
+      if (isDefaults)
+      {
+        std::cout << "Error: wrong syntax. -setHatch can not be used together with -defaults call!\n";
+        return 1;
+      }
+
+      if (isDefaults)
+      {
+        std::cout << "Error: wrong syntax. -unsetCappingStyle can not be used together with -defaults call!\n";
+        return 1;
+      }
+
+      aChangeSet->ToUnsetCapping = Standard_True;
     }
     else
     {
@@ -2506,6 +3051,27 @@ static Standard_Integer VAspects (Draw_Interpretor& /*theDI*/,
               anAsp->SetHatchStyle (new Graphic3d_HatchStyle ((Aspect_HatchStyle)aChangeSet->StdHatchStyle));
             }
           }
+          toRedisplay = Standard_True;
+        }
+        if (aChangeSet->ToSetCapping())
+        {
+          Handle(Graphic3d_AspectFillCapping) aCappingStyle = aPrs->CappingStyle();
+
+          if (aCappingStyle.IsNull())
+          {
+            aCappingStyle = new Graphic3d_AspectFillCapping;
+          }
+
+          aChangeSet->ApplyToCappingStyle (aCappingStyle);
+
+          aPrs->SetCappingStyle (aCappingStyle);
+
+          toRedisplay = Standard_True;
+        }
+        if (aChangeSet->ToUnsetCapping != 0)
+        {
+          aPrs->SetCappingStyle (Handle(Graphic3d_AspectFillCapping)());
+
           toRedisplay = Standard_True;
         }
       }
@@ -5670,6 +6236,24 @@ void ViewerTest::Commands(Draw_Interpretor& theCommands)
       "\n\t\t:          [-setMaxParamValue {value}]"
       "\n\t\t:          [-setSensitivity {selection_mode} {value}]"
       "\n\t\t:          [-setHatch HatchStyle]"
+      "\n\t\t:          [-setCappingUseObjMaterial {off/on | 0/1}]"
+      "\n\t\t:          [-setCappingUseObjTexture {off/on | 0/1}]"
+      "\n\t\t:          [-setCappingUseObjShader {off/on | 0/1}]"
+      "\n\t\t:          [-setCappingColor R G B]"
+      "\n\t\t:          [-setCappingTexture texture]"
+      "\n\t\t:          [-setCappingTexScale SX SY]"
+      "\n\t\t:          [-setCappingTexOrigin TX TY]"
+      "\n\t\t:          [-setCappingTexRotate Angle]"
+      "\n\t\t:          [-setCappingHatch {off/on | 0/1}]"
+      "\n\t\t:          [-setCappingHatchColor R G B]"
+      "\n\t\t:          [-setCappingHatchStipple maskID]"
+      "\n\t\t:          [-setCappingHatchTexture Texture]"
+      "\n\t\t:          [-setCappingHatchTexScale SX SY]"
+      "\n\t\t:          [-setCappingHatchTexOrigin TX TY]"
+      "\n\t\t:          [-setCappingHatchTexRotate Angle]"
+      "\n\t\t:          [-setCappingHatchZoomPers {off/on | 0/1}]"
+      "\n\t\t:          [-setCappingHatchRotatePers {off/on | 0/1}]"
+      "\n\t\t:          [-unsetCappingStyle]"
       "\n\t\t: Manage presentation properties of all, selected or named objects."
       "\n\t\t: When -subshapes is specified than following properties will be"
       "\n\t\t: assigned to specified sub-shapes."

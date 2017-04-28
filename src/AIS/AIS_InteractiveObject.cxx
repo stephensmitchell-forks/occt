@@ -21,6 +21,7 @@
 #include <Aspect_PolygonOffsetMode.hxx>
 #include <Bnd_Box.hxx>
 #include <Graphic3d_AspectFillArea3d.hxx>
+#include <Graphic3d_AspectFillCapping.hxx>
 #include <Graphic3d_AspectLine3d.hxx>
 #include <Graphic3d_AspectMarker3d.hxx>
 #include <Graphic3d_AspectText3d.hxx>
@@ -296,6 +297,37 @@ void AIS_InteractiveObject::UnsetMaterial()
   }
 
   hasOwnMaterial = Standard_False;
+}
+
+//=======================================================================
+//function : SetCappingStyle
+//purpose  : 
+//=======================================================================
+void AIS_InteractiveObject::SetCappingStyle (const Handle(Graphic3d_AspectFillCapping)& theStyle)
+{
+  myCappingStyle = theStyle;
+
+  // Modify existing presentations 
+  for (Standard_Integer aPrsIter = 1, n = myPresentations.Length(); aPrsIter <= n; ++aPrsIter)
+  {
+    const Handle(PrsMgr_Presentation)& aPrs3d = myPresentations (aPrsIter).Presentation();
+    if (!aPrs3d.IsNull())
+    {
+      const Handle(Graphic3d_Structure)& aStruct = aPrs3d->Presentation();
+      if (!aStruct.IsNull())
+      {
+        const Graphic3d_SequenceOfGroup& aGroups = aStruct->Groups();
+        for (Graphic3d_SequenceOfGroup::Iterator aGroupIter (aGroups); aGroupIter.More(); aGroupIter.Next())
+        {
+          Handle(Graphic3d_Group)& aGrp = aGroupIter.ChangeValue();
+          if (aGrp.IsNull())
+            continue;
+
+          aGrp->SetGroupPrimitivesAspect (theStyle);
+        }
+      }
+    }
+  }
 }
 
 //=======================================================================
@@ -647,10 +679,11 @@ void AIS_InteractiveObject::SynchronizeAspects()
         continue;
       }
 
-      Handle(Graphic3d_AspectLine3d)     aLineAspect   = aGrp->LineAspect();
-      Handle(Graphic3d_AspectFillArea3d) aFaceAspect   = aGrp->FillAreaAspect();
-      Handle(Graphic3d_AspectMarker3d)   aMarkerAspect = aGrp->MarkerAspect();
-      Handle(Graphic3d_AspectText3d)     aTextAspect   = aGrp->TextAspect();
+      Handle(Graphic3d_AspectLine3d)      aLineAspect    = aGrp->LineAspect();
+      Handle(Graphic3d_AspectFillArea3d)  aFaceAspect    = aGrp->FillAreaAspect();
+      Handle(Graphic3d_AspectFillCapping) aCappingAspect = aGrp->FillCappingAspect();
+      Handle(Graphic3d_AspectMarker3d)    aMarkerAspect  = aGrp->MarkerAspect();
+      Handle(Graphic3d_AspectText3d)      aTextAspect    = aGrp->TextAspect();
       if (!aLineAspect.IsNull())
       {
         aGrp->SetGroupPrimitivesAspect (aLineAspect);
@@ -658,6 +691,10 @@ void AIS_InteractiveObject::SynchronizeAspects()
       if (!aFaceAspect.IsNull())
       {
         aGrp->SetGroupPrimitivesAspect (aFaceAspect);
+      }
+      if (!aCappingAspect.IsNull())
+      {
+        aGrp->SetGroupPrimitivesAspect (aCappingAspect);
       }
       if (!aMarkerAspect.IsNull())
       {
@@ -667,6 +704,7 @@ void AIS_InteractiveObject::SynchronizeAspects()
       {
         aGrp->SetGroupPrimitivesAspect (aTextAspect);
       }
+
     }
   }
 }
