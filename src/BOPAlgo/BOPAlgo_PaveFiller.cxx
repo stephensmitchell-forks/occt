@@ -261,7 +261,6 @@ void BOPAlgo_PaveFiller::PerformInternal()
   }
   //
   UpdatePaveBlocksWithSDVertices();
-  myDS->UpdatePaveBlocks();
   // 11
   PerformEE();
   if (myErrorStatus) {
@@ -280,6 +279,7 @@ void BOPAlgo_PaveFiller::PerformInternal()
     return; 
   }
   UpdatePaveBlocksWithSDVertices();
+  UpdateInterfsWithSDVertices();
   //
   // 22
   PerformFF();
