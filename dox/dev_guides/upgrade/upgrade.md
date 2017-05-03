@@ -1114,6 +1114,10 @@ The following obsolete features have been removed:
 
 * The result of Boolean operations on arguments of collection types (WIRE/SHELL/COMPSOLID) is now filtered from duplicating containers.
 
+@subsection upgrade_720_changes_methods Other changes
+
+* The method BOPAlgo_Builder::Origins() returns BOPCol_DataMapOfShapeListOfShape instead of BOPCol_DataMapOfShapeShape.
+
 @subsection upgrade_720_BOP_DataStructure BOP - Pairs of interfering indices
 
 * The classes *BOPDS_PassKey* and *BOPDS_PassKeyBoolean* are too excessive and not used any more in Boolean Operations. To replace them the new *BOPDS_Pair* class has been implemented. Thus:
