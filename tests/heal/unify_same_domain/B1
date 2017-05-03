@@ -1,0 +1,15 @@
+puts "TODO #28713 ALL: Error :  is WRONG because number of EDGE"
+
+readstl a [locate_data_file bug27767.stl]
+
+unifysamedom  b  a  -t 5e-2  -a 0.01047197551196597746154214461093
+
+explode a e
+compound result
+for {set i 1} {$i <= 186} {incr i} {
+  if {[unifysamedomisdel  a_${i}] == "The shape has been deleted\n"} {
+    add a_${i} result
+  }
+}
+
+checknbshapes  result  -edge 90
