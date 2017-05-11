@@ -99,8 +99,22 @@ public:
   Standard_EXPORT Standard_Boolean RemoveNote(const TDF_Label&              theNoteLabel,
                                               const XCAFDoc_AssemblyItemId& theItemId,
                                               Standard_Boolean              theDelIfOrphan = Standard_False);
+  Standard_EXPORT Standard_Boolean RemoveSubshapeNote(const TDF_Label&              theNoteLabel,
+                                                      const XCAFDoc_AssemblyItemId& theItemId,
+                                                      Standard_Integer              theSubshapeIndex,
+                                                      Standard_Boolean              theDelIfOrphan = Standard_False);
+  Standard_EXPORT Standard_Boolean RemoveAttrNote(const TDF_Label&              theNoteLabel,
+                                                  const XCAFDoc_AssemblyItemId& theItemId,
+                                                  const Standard_GUID&          theGUID,
+                                                  Standard_Boolean              theDelIfOrphan = Standard_False);
   Standard_EXPORT Standard_Boolean RemoveAllNotes(const XCAFDoc_AssemblyItemId& theItemId,
                                                   Standard_Boolean              theDelIfOrphan = Standard_False);
+  Standard_EXPORT Standard_Boolean RemoveAllSubshapeNotes(const XCAFDoc_AssemblyItemId& theItemId,
+                                                          Standard_Integer              theSubshapeIndex,
+                                                          Standard_Boolean              theDelIfOrphan = Standard_False);
+  Standard_EXPORT Standard_Boolean RemoveAllAttrNotes(const XCAFDoc_AssemblyItemId& theItemId,
+                                                      const Standard_GUID&          theGUID,
+                                                      Standard_Boolean              theDelIfOrphan = Standard_False);
 
   Standard_EXPORT Standard_Boolean DeleteNote(const TDF_Label& theNoteLabel);
   Standard_EXPORT Standard_Integer DeleteNotes(TDF_LabelSequence& theNoteLabels);

@@ -445,10 +445,138 @@ XCAFDoc_NotesTool::RemoveNote(const TDF_Label&              theNoteLabel,
 }
 
 Standard_Boolean 
+XCAFDoc_NotesTool::RemoveSubshapeNote(const TDF_Label&              theNoteLabel,
+                                      const XCAFDoc_AssemblyItemId& theItemId,
+                                      Standard_Integer              theSubshapeIndex,
+                                      Standard_Boolean              theDelIfOrphan)
+{
+  Handle(XCAFDoc_Note) aNote = XCAFDoc_Note::Get(theNoteLabel);
+
+  if (aNote.IsNull())
+    return Standard_False;
+
+  Handle(XCAFDoc_GraphNode) aFather;
+  if (!theNoteLabel.FindAttribute(XCAFDoc::NoteRefGUID(), aFather))
+    return Standard_False;
+
+  TDF_Label anAnnotatedItem = FindAnnotatedItemSubshape(theItemId, theSubshapeIndex);
+  if (anAnnotatedItem.IsNull())
+    return Standard_False;
+
+  Handle(XCAFDoc_GraphNode) aChild;
+  if (!anAnnotatedItem.FindAttribute(XCAFDoc::NoteRefGUID(), aChild))
+    return Standard_False;
+
+  aChild->UnSetFather(aFather);
+  if (aChild->NbFathers() == 0)
+    anAnnotatedItem.ForgetAllAttributes();
+
+  if (theDelIfOrphan && aNote->IsOrphan())
+    DeleteNote(theNoteLabel);
+
+  return Standard_True;
+}
+
+Standard_Boolean 
+XCAFDoc_NotesTool::RemoveAttrNote(const TDF_Label&              theNoteLabel,
+                                  const XCAFDoc_AssemblyItemId& theItemId,
+                                  const Standard_GUID&          theGUID,
+                                  Standard_Boolean              theDelIfOrphan)
+{
+  Handle(XCAFDoc_Note) aNote = XCAFDoc_Note::Get(theNoteLabel);
+
+  if (aNote.IsNull())
+    return Standard_False;
+
+  Handle(XCAFDoc_GraphNode) aFather;
+  if (!theNoteLabel.FindAttribute(XCAFDoc::NoteRefGUID(), aFather))
+    return Standard_False;
+
+  TDF_Label anAnnotatedItem = FindAnnotatedItemAttr(theItemId, theGUID);
+  if (anAnnotatedItem.IsNull())
+    return Standard_False;
+
+  Handle(XCAFDoc_GraphNode) aChild;
+  if (!anAnnotatedItem.FindAttribute(XCAFDoc::NoteRefGUID(), aChild))
+    return Standard_False;
+
+  aChild->UnSetFather(aFather);
+  if (aChild->NbFathers() == 0)
+    anAnnotatedItem.ForgetAllAttributes();
+
+  if (theDelIfOrphan && aNote->IsOrphan())
+    DeleteNote(theNoteLabel);
+
+  return Standard_True;
+}
+
+Standard_Boolean 
 XCAFDoc_NotesTool::RemoveAllNotes(const XCAFDoc_AssemblyItemId& theItemId,
                                   Standard_Boolean              theDelIfOrphan)
 {
   TDF_Label anAnnotatedItem = FindAnnotatedItem(theItemId);
+  if (anAnnotatedItem.IsNull())
+    return Standard_False;
+
+  Handle(XCAFDoc_GraphNode) aChild;
+  if (!anAnnotatedItem.FindAttribute(XCAFDoc::NoteRefGUID(), aChild))
+    return Standard_False;
+
+  Standard_Integer nbFathers = aChild->NbFathers();
+  for (Standard_Integer iFather = 1; iFather <= nbFathers; ++iFather)
+  {
+    Handle(XCAFDoc_GraphNode) aFather = aChild->GetFather(iFather);
+    Handle(XCAFDoc_Note) aNote = XCAFDoc_Note::Get(aFather->Label());
+    if (!aNote.IsNull())
+    {
+      aFather->UnSetChild(aChild);
+      if (theDelIfOrphan && aNote->IsOrphan())
+        DeleteNote(aFather->Label());
+    }
+  }
+
+  anAnnotatedItem.ForgetAllAttributes();
+
+  return Standard_True;
+}
+
+Standard_Boolean 
+XCAFDoc_NotesTool::RemoveAllSubshapeNotes(const XCAFDoc_AssemblyItemId& theItemId,
+                                          Standard_Integer              theSubshapeIndex,
+                                          Standard_Boolean              theDelIfOrphan)
+{
+  TDF_Label anAnnotatedItem = FindAnnotatedItemSubshape(theItemId, theSubshapeIndex);
+  if (anAnnotatedItem.IsNull())
+    return Standard_False;
+
+  Handle(XCAFDoc_GraphNode) aChild;
+  if (!anAnnotatedItem.FindAttribute(XCAFDoc::NoteRefGUID(), aChild))
+    return Standard_False;
+
+  Standard_Integer nbFathers = aChild->NbFathers();
+  for (Standard_Integer iFather = 1; iFather <= nbFathers; ++iFather)
+  {
+    Handle(XCAFDoc_GraphNode) aFather = aChild->GetFather(iFather);
+    Handle(XCAFDoc_Note) aNote = XCAFDoc_Note::Get(aFather->Label());
+    if (!aNote.IsNull())
+    {
+      aFather->UnSetChild(aChild);
+      if (theDelIfOrphan && aNote->IsOrphan())
+        DeleteNote(aFather->Label());
+    }
+  }
+
+  anAnnotatedItem.ForgetAllAttributes();
+
+  return Standard_True;
+}
+
+Standard_Boolean 
+XCAFDoc_NotesTool::RemoveAllAttrNotes(const XCAFDoc_AssemblyItemId& theItemId,
+                                      const Standard_GUID&          theGUID,
+                                      Standard_Boolean              theDelIfOrphan)
+{
+  TDF_Label anAnnotatedItem = FindAnnotatedItemAttr(theItemId, theGUID);
   if (anAnnotatedItem.IsNull())
     return Standard_False;
 
