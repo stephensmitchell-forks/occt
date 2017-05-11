@@ -267,6 +267,13 @@ void Extrema_GExtCC::Perform()
   U21 = myInf[1];
   U22 = mySup[1];
 
+  {
+    const Standard_Real aF = 1.0e6;// static_cast<Standard_Real>(INT_MAX - 1);
+    //Standard_Real aCS[2] = { Max((U12 - U11) / aF, 1.0e-5), Max((U22 - U21) / aF, 1.0e-5) };
+    Standard_Real aCS[2] = { (U12 - U11) / aF, (U22 - U21) / aF };
+    myFilter.Reset(aCS);
+  }
+
   if (!Precision::IsInfinite(U11)) P1f = Tool1::Value(*((Curve1*)myC[0]),  U11); 
   if (!Precision::IsInfinite(U12)) P1l = Tool1::Value(*((Curve1*)myC[0]),  U12);
   if (!Precision::IsInfinite(U21)) P2f = Tool2::Value(*((Curve2*)myC[1]), U21);
@@ -513,7 +520,10 @@ void Extrema_GExtCC::Perform()
     {
       const Handle(Extrema_CCache)& aCache1 = Handle(Extrema_CCache)::DownCast (anIt1.Value());
       ComputeIntervExtrema aSel(aCache1, myECC, this, aFInd == 0, U11, U12, U21, U22);
-      myFilter.Reset(myTol);
+      
+      // No reset
+      //myFilter.Reset(myTol);
+
       aDeflTree.Select(aSel);
     }
   }
@@ -940,9 +950,9 @@ void Extrema_GExtCC::Results(const Extrema_ECC&   AlgExt,
 			     const Standard_Real  Ut21,
 			     const Standard_Real  Ut22)
 {
-  Standard_Integer i, NbExt;
+  Standard_Integer NbExt;
   Standard_Real Val, U, U2;
-  Extrema_POnCurv P1, P2;
+  Extrema_POnCurv P1, P2, P1j, P2j;
 
   myDone = AlgExt.IsDone();
   if (myDone) {
@@ -950,26 +960,54 @@ void Extrema_GExtCC::Results(const Extrema_ECC&   AlgExt,
 
     Extrema_CCPointsInspector anInspector(myTol);
 
-    for (i = 1; i <= NbExt; i++)
+    const Standard_Boolean isToUseCFilter =  (NbExt >= 15);
+
+    for (Standard_Integer i = 1; i <= NbExt; i++)
     {
       AlgExt.Points(i, P1, P2);
       U = P1.Parameter();
       U2 = P2.Parameter();
 
-      gp_XY aPnt2d(U, U2);
-      gp_XY aXYmin(U - myTol[0], U2 - myTol[1]);
-      gp_XY aXYmax(U + myTol[0], U2 + myTol[1]);
+      Standard_Boolean IsExtrema = Standard_True;
+      if (!isToUseCFilter)
+      {
+        for (Standard_Integer j = 1; j <= mynbext; j++)
+        {
+          P1j = mypoints.Value(2 * j - 1);
+          P2j = mypoints.Value(2 * j);
+          Standard_Real Uj = P1j.Parameter();
+          Standard_Real U2j = P2j.Parameter();
+          if ((Abs(Uj - U) <= myTol[0]) && (Abs(U2j - U2) <= myTol[1]))
+          {
+            IsExtrema = Standard_False;
+            break;
+          }
+        }
+      }
+      else
+      {
+        gp_XY aPnt2d(U, U2);
+        gp_XY aXYmin(U - myTol[0], U2 - myTol[1]);
+        gp_XY aXYmax(U + myTol[0], U2 + myTol[1]);
 
-      anInspector.ClearFind();
-      anInspector.SetCurrent(aPnt2d);
-      myFilter.Inspect(aXYmin, aXYmax, anInspector);
+        anInspector.ClearFind();
+        anInspector.SetCurrent(aPnt2d);
+        myFilter.Inspect(aXYmin, aXYmax, anInspector);
+        if (!anInspector.isFind())
+        {
+          IsExtrema = Standard_True;
+          myFilter.Add(aPnt2d, aPnt2d);
+        }
+        else
+        {
+          IsExtrema = Standard_False;
+        }
+      }
 
-      if (anInspector.isFind())
+      if (!IsExtrema)
       {
         continue;
       }
-
-      myFilter.Add(aPnt2d, aPnt2d);
 
       //  Verification de la validite des parametres
 	if (Tool1::IsPeriodic(*((Curve1*)myC[0]))) {
