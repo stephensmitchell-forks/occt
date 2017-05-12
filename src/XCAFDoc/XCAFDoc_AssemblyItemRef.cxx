@@ -199,6 +199,7 @@ XCAFDoc_AssemblyItemRef::SetItem(const XCAFDoc_AssemblyItemId& theItemId)
 {
   Backup();
   myItemId = theItemId;
+  ClearExtraRef();
 }
 
 void
@@ -206,6 +207,7 @@ XCAFDoc_AssemblyItemRef::SetItem(const TColStd_ListOfAsciiString& thePath)
 {
   Backup();
   myItemId.Init(thePath);
+  ClearExtraRef();
 }
 
 void
@@ -213,6 +215,7 @@ XCAFDoc_AssemblyItemRef::SetItem(const TCollection_AsciiString& theString)
 {
   Backup();
   myItemId.Init(theString);
+  ClearExtraRef();
 }
 
 void XCAFDoc_AssemblyItemRef::SetGUID(const Standard_GUID& theAttrGUID)

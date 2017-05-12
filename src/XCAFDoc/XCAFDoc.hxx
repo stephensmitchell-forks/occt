@@ -98,7 +98,7 @@ public:
   
   Standard_EXPORT static Standard_GUID MaterialRefGUID();
 
-  //! Return GUIDs for TreeNode representing types of Note
+  //! Return GUIDs for representing notes
   Standard_EXPORT static Standard_GUID NoteRefGUID();
 
   Standard_EXPORT static Standard_GUID InvisibleGUID();
