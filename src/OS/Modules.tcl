@@ -22,6 +22,9 @@ proc OS:Modules { {plat ""} } {
 	   ApplicationFramework \
 	   DataExchange \
 	   Draw \
+	   OCCTools \
+           Helix \
+	   Unfolding
 	   ]
     return $ret
 }

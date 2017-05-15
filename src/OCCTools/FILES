@@ -1,0 +1,5 @@
+FILES
+OCCTools.cxx
+OCCTools.hxx
+OCCTools_ComputeExposedArea.cxx
+OCCTools_ComputeExposedArea.hxx

@@ -1,0 +1,116 @@
+// File:	Unfolding_Point.lxx
+// Created:	Mon Jul 28 15:18:15 2008
+// Author:	Sergey KHROMOV
+//		<skv@dimox>
+
+
+//=======================================================================
+//function : Empty constructor
+//purpose  : 
+//=======================================================================
+
+inline Unfolding_Point::Unfolding_Point()
+     : myAngle(-1.)
+{
+}
+
+//=======================================================================
+//function : SetPointOnSurface
+//purpose  : 
+//=======================================================================
+
+inline void Unfolding_Point::SetPointOnSurface(const gp_XYZ &thePOnSurface)
+{
+  myPOnSurface = thePOnSurface;
+}
+//=======================================================================
+//function : GetPointOnSurface
+//purpose  : 
+//=======================================================================
+
+inline const gp_XYZ &Unfolding_Point::GetPointOnSurface() const
+{
+  return myPOnSurface;
+}
+
+//=======================================================================
+//function : SetParameters
+//purpose  : 
+//=======================================================================
+
+inline void Unfolding_Point::SetParameters(const Standard_Real theU,
+					   const Standard_Real theV)
+{
+  myPoint2d.SetCoord(theU, theV);
+}
+
+//=======================================================================
+//function : GetParameters
+//purpose  : 
+//=======================================================================
+
+inline void Unfolding_Point::GetParameters(Standard_Real &theU,
+					   Standard_Real &theV) const
+{
+  myPoint2d.Coord(theU, theV);
+}
+
+//=======================================================================
+//function : GetU
+//purpose  : 
+//=======================================================================
+
+inline Standard_Real Unfolding_Point::GetU() const
+{
+  return myPoint2d.X();
+}
+
+//=======================================================================
+//function : GetV
+//purpose  : 
+//=======================================================================
+
+inline Standard_Real Unfolding_Point::GetV() const
+{
+  return myPoint2d.Y();
+}
+
+//=======================================================================
+//function : GetAngle
+//purpose  : 
+//=======================================================================
+
+inline void Unfolding_Point::SetAngle(const Standard_Real theAngle)
+{
+  myAngle = theAngle;
+}
+
+//=======================================================================
+//function : GetAngle
+//purpose  : 
+//=======================================================================
+
+inline Standard_Real Unfolding_Point::GetAngle() const
+{
+  return myAngle;
+}
+
+//=======================================================================
+//function : SetPointOnPlane
+//purpose  : 
+//=======================================================================
+
+inline void Unfolding_Point::SetPointOnPlane(const gp_XY &thePOnPlane)
+{
+  myPOnPlane = thePOnPlane;
+}
+
+//=======================================================================
+//function : GetPointOnPlane
+//purpose  : 
+//=======================================================================
+
+inline const gp_XY &Unfolding_Point::GetPointOnPlane() const
+{
+  return myPOnPlane;
+}
