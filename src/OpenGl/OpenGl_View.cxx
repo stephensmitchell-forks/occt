@@ -357,6 +357,39 @@ Standard_Boolean OpenGl_View::BufferDump (Image_PixMap& theImage, const Graphic3
 }
 
 // =======================================================================
+// function : HDRBufferDump
+// purpose  :
+// =======================================================================
+bool OpenGl_View::HDRBufferDump(Image_PixMap& theImage, const Graphic3d_BufferType& theBufferType)
+{
+  if (!myRaytraceParameters.AdaptiveScreenSampling)
+  {
+    return myWorkspace->BufferDump(myAccumFrames % 2 ? myRaytraceFBO2[0] : myRaytraceFBO1[0], theImage, theBufferType);
+  }
+  GLint aW = myRaytraceOutputTexture[0]->SizeX(), aH = myRaytraceOutputTexture[0]->SizeY();
+  glBindTexture(GL_TEXTURE_RECTANGLE, myRaytraceOutputTexture[0]->TextureId());
+
+  std::vector<GLfloat> values(aW * aH);
+  glGetTexImage(GL_TEXTURE_RECTANGLE, 0, OpenGl_TextureFormat::Create<GLfloat, 1>().Format(), GL_FLOAT, &values[0]);
+
+  int aCnt = 0;
+  float* anImageData = reinterpret_cast<float*> (theImage.ChangeData());
+
+  for (int aRow = 0; aRow < aH; aRow += 2)
+  {
+    for (int aCol = 0; aCol < aW; aCol += 3)
+    {
+      float aInvNbSamples = 1.f / values[aRow * aW + aCol + aW];
+      anImageData[aCnt++] = values[aRow * aW + aCol] * aInvNbSamples;
+      anImageData[aCnt++] = values[aRow * aW + aCol + 1] * aInvNbSamples;
+      anImageData[aCnt++] = values[aRow * aW + aCol + 1 + aW] * aInvNbSamples;
+    }
+  }
+
+  return true;
+}
+
+// =======================================================================
 // function : Background
 // purpose  :
 // =======================================================================

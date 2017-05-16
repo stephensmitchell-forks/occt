@@ -265,6 +265,9 @@ public:
   //! Dump active rendering buffer into specified memory buffer.
   virtual Standard_Boolean BufferDump (Image_PixMap& theImage, const Graphic3d_BufferType& theBufferType) = 0;
 
+  //! Dump active rendering buffer into HDR memory buffer.
+  virtual Standard_Boolean HDRBufferDump(Image_PixMap& theImage, const Graphic3d_BufferType& theBufferType) = 0;
+
   //! Export scene into the one of the Vector graphics formats (SVG, PS, PDF...).
   //! In contrast to Bitmaps, Vector graphics is scalable (so you may got quality benefits
   //! on printing to laser printer). Notice however that results may differ a lot and
