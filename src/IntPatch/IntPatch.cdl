@@ -152,4 +152,5 @@ is
          HCurve2dTool from IntPatch,
          CSFunction from IntPatch);
 
+    imported WLineTool;
 end IntPatch;

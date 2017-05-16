@@ -63,7 +63,6 @@ is
              S1: HSurface from Adaptor3d; D1: TopolTool from Adaptor3d;
              S2: HSurface from Adaptor3d; D2: TopolTool from Adaptor3d;
              TolArc,TolTang: Real from Standard;
-             isTheTrimmed: Boolean from Standard = Standard_False;
              theIsReqToKeepRLine: Boolean from Standard = Standard_False)
 
 	raises ConstructionError from Standard    
@@ -103,8 +102,8 @@ is
     TangentFaces(me)
     
 	---Purpose: Returns True if the two patches are considered as
-	--          entierly tangent, i-e every restriction arc of one
-	--          patch is inside the geometric base of the otehr patch.
+	--          entirely tangent, i.e. every restriction arc of one
+	--          patch is inside the geometric base of the other patch.
 
     	returns Boolean from Standard
 	---C++: inline

@@ -56,10 +56,10 @@ if { $z > ${max_time} } {
 mksurface s1 b1_4
 mksurface s2 b2_1
 
-dchrono h2 stop
-set q2 [dchrono h2 show]
+dchrono h2 reset
+dchrono h2 start
 
-set CurveNumb [intersect i s1 s2]
+set CurveNumb [intersect resi s1 s2]
 
 dchrono h2 stop
 set q2 [dchrono h2 show]

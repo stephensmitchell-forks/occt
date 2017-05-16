@@ -1053,6 +1053,7 @@ void  Geom2dConvert::ConcatG1(TColGeom2d_Array1OfBSplineCurve&           ArrayOf
    for (j=1;j<=nb_curve-1;j++){                //boucle secondaire a l'interieur de chaque groupe
      Curve1=ArrayOfCurves(j);
      if ( (j==(nb_curve-1)) &&(Need2DegRepara(ArrayOfCurves))){ 
+       const Standard_Integer aNewCurveDegree = Min(2 * Curve1->Degree(), Geom2d_BSplineCurve::MaxDegree());
        Curve2->D1(Curve2->LastParameter(),Pint,Vec1);
        Curve1->D1(Curve1->FirstParameter(),Pint,Vec2);
        lambda=Vec2.Magnitude()/Vec1.Magnitude();
@@ -1102,7 +1103,7 @@ void  Geom2dConvert::ConcatG1(TColGeom2d_Array1OfBSplineCurve&           ArrayOf
 					Curve1FlatKnots,
 					Curve1Poles,
 					FlatKnots,
-					2*Curve1->Degree(),
+                                        aNewCurveDegree,
 					NewPoles,
 					Status
 					);
@@ -1112,7 +1113,7 @@ void  Geom2dConvert::ConcatG1(TColGeom2d_Array1OfBSplineCurve&           ArrayOf
 					Curve1FlatKnots,
 					Curve1Weights,
 					FlatKnots,
-					2*Curve1->Degree(),
+                                        aNewCurveDegree,
 					NewWeights,
 					Status
 					);
@@ -1138,7 +1139,7 @@ void  Geom2dConvert::ConcatG1(TColGeom2d_Array1OfBSplineCurve&           ArrayOf
        for (ii=1;ii<=NewPoles.Length();ii++)
 	 for (jj=1;jj<=2;jj++)
 	   NewPoles(ii).SetCoord(jj,NewPoles(ii).Coord(jj)/NewWeights(ii));
-       Curve1= new Geom2d_BSplineCurve(NewPoles,NewWeights,KnotC1,KnotC1Mults,2*Curve1->Degree());
+       Curve1 = new Geom2d_BSplineCurve(NewPoles, NewWeights, KnotC1, KnotC1Mults, aNewCurveDegree);
      }
      Geom2dConvert_CompCurveToBSplineCurve   C(Handle(Geom2d_BSplineCurve)::DownCast(Curve2));
      fusion=C.Add(Curve1,
@@ -1304,6 +1305,8 @@ void  Geom2dConvert::ConcatC1(TColGeom2d_Array1OfBSplineCurve&           ArrayOf
      else
        Curve1=ArrayOfCurves(j);
      
+     const Standard_Integer aNewCurveDegree = Min(2 * Curve1->Degree(), Geom2d_BSplineCurve::MaxDegree());
+
      if (j==0)                                      //initialisation en debut de groupe
        Curve2=Curve1;
      else{
@@ -1343,7 +1346,7 @@ void  Geom2dConvert::ConcatC1(TColGeom2d_Array1OfBSplineCurve&           ArrayOf
 	 TColStd_Array1OfReal FlatKnots(1,Curve1FlatKnots.Length()+(Curve1->Degree()*Curve1->NbKnots()));
 	 
 	 BSplCLib::KnotSequence(KnotC1,KnotC1Mults,FlatKnots);
-	 TColgp_Array1OfPnt2d  NewPoles(1,FlatKnots.Length()-(2*Curve1->Degree()+1));
+         TColgp_Array1OfPnt2d  NewPoles(1, FlatKnots.Length() - (aNewCurveDegree + 1));
 	 Standard_Integer      Status;
 	 TColStd_Array1OfReal Curve1Weights(1,Curve1->NbPoles());
 	 Curve1->Weights(Curve1Weights);
@@ -1358,18 +1361,18 @@ void  Geom2dConvert::ConcatC1(TColGeom2d_Array1OfBSplineCurve&           ArrayOf
 					  Curve1FlatKnots,
 					  Curve1Poles,
 					  FlatKnots,
-					  2*Curve1->Degree(),
+                                          aNewCurveDegree,
 					  NewPoles,
 					  Status
 					  );
-	 TColStd_Array1OfReal NewWeights(1,FlatKnots.Length()-(2*Curve1->Degree()+1));
+         TColStd_Array1OfReal NewWeights(1, FlatKnots.Length() - (aNewCurveDegree + 1));
 //	 BSplCLib::FunctionReparameterise(reparameterise_evaluator,
 	 BSplCLib::FunctionReparameterise(ev,
 					  Curve1->Degree(),
 					  Curve1FlatKnots,
 					  Curve1Weights,
 					  FlatKnots,
-					  2*Curve1->Degree(),
+                                          aNewCurveDegree,
 					  NewWeights,
 					  Status
 					  );
@@ -1377,7 +1380,7 @@ void  Geom2dConvert::ConcatC1(TColGeom2d_Array1OfBSplineCurve&           ArrayOf
 	   for (jj=1;jj<=2;jj++)
 	     NewPoles(ii).SetCoord(jj,NewPoles(ii).Coord(jj)/NewWeights(ii));
 	 }
-	 Curve1= new Geom2d_BSplineCurve(NewPoles,NewWeights,KnotC1,KnotC1Mults,2*Curve1->Degree());
+         Curve1 = new Geom2d_BSplineCurve(NewPoles, NewWeights, KnotC1, KnotC1Mults, aNewCurveDegree);
        }
        Geom2dConvert_CompCurveToBSplineCurve   C(Handle(Geom2d_BSplineCurve)::DownCast(Curve2));
        fusion=C.Add(Curve1,
@@ -1448,7 +1451,7 @@ void Geom2dConvert::C0BSplineToC1BSplineCurve(Handle(Geom2d_BSplineCurve)& BS,
  Standard_Integer                 i,j,nbcurveC1=1;
  Standard_Real                    U1,U2;
  Standard_Boolean                 closed_flag = Standard_False ;
- gp_Pnt2d                         point;
+ gp_Pnt2d                         point1, point2;
  gp_Vec2d                         V1,V2;
  Standard_Boolean                 fusion;
 
@@ -1481,15 +1484,20 @@ void Geom2dConvert::C0BSplineToC1BSplineCurve(Handle(Geom2d_BSplineCurve)& BS,
      BSbis->Segment(U1,U2);
      ArrayOfCurves(i)=BSbis;
    }
+
+   const Standard_Real anAngularToler = 1.0e-7;
    Handle(TColStd_HArray1OfInteger) ArrayOfIndices;
    Handle(TColGeom2d_HArray1OfBSplineCurve) ArrayOfConcatenated;
     
-   BS->D1(BS->FirstParameter(),point,V1);  //a verifier
-   BS->D1(BS->LastParameter(),point,V2);
+   BS->D1(BS->FirstParameter(),point1,V1);  //a verifier
+   BS->D1(BS->LastParameter(),point2,V2);
    
-   if ((BS->IsClosed())&&(V1.IsParallel(V2,Precision::Confusion())))
-     closed_flag = Standard_True ;
-    
+   if ((point1.SquareDistance(point2) < gp::Resolution()) &&
+       (V1.IsParallel(V2, anAngularToler)))
+   {
+     closed_flag = Standard_True;
+   }
+
    Geom2dConvert::ConcatC1(ArrayOfCurves,
 			   ArrayOfToler,
 			   ArrayOfIndices,
@@ -1539,7 +1547,7 @@ void Geom2dConvert::C0BSplineToArrayOfC1BSplineCurve(const Handle(Geom2d_BSpline
   Standard_Integer                 i,j,nbcurveC1=1;
   Standard_Real                    U1,U2;
   Standard_Boolean                 closed_flag = Standard_False ;
-  gp_Pnt2d                         point;
+  gp_Pnt2d                         point1, point2;
   gp_Vec2d                         V1,V2;
 //  Standard_Boolean                 fusion;
   
@@ -1573,11 +1581,14 @@ void Geom2dConvert::C0BSplineToArrayOfC1BSplineCurve(const Handle(Geom2d_BSpline
     
     Handle(TColStd_HArray1OfInteger) ArrayOfIndices;
     
-    BS->D1(BS->FirstParameter(),point,V1);  
-    BS->D1(BS->LastParameter(),point,V2);
+    BS->D1(BS->FirstParameter(),point1,V1);  
+    BS->D1(BS->LastParameter(),point2,V2);
     
-    if ((BS->IsClosed())&&(V1.IsParallel(V2,AngularTolerance)))
-      closed_flag = Standard_True ;
+    if (((point1.SquareDistance(point2) < gp::Resolution())) &&
+        (V1.IsParallel(V2, AngularTolerance)))
+    {
+      closed_flag = Standard_True;
+    }
     
     Geom2dConvert::ConcatC1(ArrayOfCurves,
 			    ArrayOfToler,

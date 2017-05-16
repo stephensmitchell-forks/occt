@@ -105,5 +105,6 @@ is  class Box;
 
     class B3f instantiates B3x from Bnd (ShortReal from Standard);
     -- 3D box with single-precision coordinates
-
+    
+    imported Range;
 end Bnd;
