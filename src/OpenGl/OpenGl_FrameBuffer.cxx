@@ -107,6 +107,18 @@ namespace
         theDataType    = GL_UNSIGNED_BYTE;
         return true;
       }
+      case GL_RGB8:
+      {
+        thePixelFormat = GL_RGB;
+        theDataType = GL_UNSIGNED_INT;
+        return true;
+      }
+      case GL_RGB:
+      {
+        thePixelFormat = GL_RGB;
+        theDataType = GL_UNSIGNED_BYTE;
+        return true;
+      }
     }
     return false;
   }
