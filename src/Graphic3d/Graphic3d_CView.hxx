@@ -263,10 +263,8 @@ public:
   virtual void GraduatedTrihedronMinMaxValues (const Graphic3d_Vec3 theMin, const Graphic3d_Vec3 theMax) = 0;
 
   //! Dump active rendering buffer into specified memory buffer.
+  //! In Ray-Tracing allow to get a raw HDR buffer using Graphic3d_BT_RGB_HDR buffer type.
   virtual Standard_Boolean BufferDump (Image_PixMap& theImage, const Graphic3d_BufferType& theBufferType) = 0;
-
-  //! Dump active rendering buffer into HDR memory buffer.
-  virtual Standard_Boolean HDRBufferDump(Image_PixMap& theImage, const Graphic3d_BufferType& theBufferType) = 0;
 
   //! Export scene into the one of the Vector graphics formats (SVG, PS, PDF...).
   //! In contrast to Bitmaps, Vector graphics is scalable (so you may got quality benefits

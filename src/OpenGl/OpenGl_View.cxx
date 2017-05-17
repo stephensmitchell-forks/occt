@@ -353,24 +353,31 @@ void OpenGl_View::GraduatedTrihedronMinMaxValues (const Graphic3d_Vec3 theMin, c
 // =======================================================================
 Standard_Boolean OpenGl_View::BufferDump (Image_PixMap& theImage, const Graphic3d_BufferType& theBufferType)
 {
-  return myWorkspace->BufferDump (myFBO, theImage, theBufferType);
-}
+  if (theBufferType != Graphic3d_BT_RGB_HDR)
+  {
+    return myWorkspace->BufferDump(myFBO, theImage, theBufferType);
+  }
+  else if (theImage.Format() != Image_Format_RGBF)
+  {
+    return false;
+  }
 
-// =======================================================================
-// function : HDRBufferDump
-// purpose  :
-// =======================================================================
-bool OpenGl_View::HDRBufferDump(Image_PixMap& theImage, const Graphic3d_BufferType& theBufferType)
-{
   if (!myRaytraceParameters.AdaptiveScreenSampling)
   {
     return myWorkspace->BufferDump(myAccumFrames % 2 ? myRaytraceFBO2[0] : myRaytraceFBO1[0], theImage, theBufferType);
   }
   GLint aW = myRaytraceOutputTexture[0]->SizeX(), aH = myRaytraceOutputTexture[0]->SizeY();
+
+  if (aW / 3 != theImage.SizeX() || aH / 2 != theImage.SizeY())
+    return false;
+
   glBindTexture(GL_TEXTURE_RECTANGLE, myRaytraceOutputTexture[0]->TextureId());
 
   std::vector<GLfloat> values(aW * aH);
+
+#if !defined(GL_ES_VERSION_2_0)
   glGetTexImage(GL_TEXTURE_RECTANGLE, 0, OpenGl_TextureFormat::Create<GLfloat, 1>().Format(), GL_FLOAT, &values[0]);
+#endif
 
   int aCnt = 0;
   float* anImageData = reinterpret_cast<float*> (theImage.ChangeData());
@@ -387,6 +394,7 @@ bool OpenGl_View::HDRBufferDump(Image_PixMap& theImage, const Graphic3d_BufferTy
   }
 
   return true;
+
 }
 
 // =======================================================================
