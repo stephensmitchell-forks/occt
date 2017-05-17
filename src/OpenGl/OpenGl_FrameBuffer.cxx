@@ -96,11 +96,6 @@ namespace
         return true;
       }
       case GL_RGBA8:
-      {
-        thePixelFormat = GL_RGBA;
-        theDataType    = GL_UNSIGNED_INT;
-        return true;
-      }
       case GL_RGBA:
       {
         thePixelFormat = GL_RGBA;
@@ -108,11 +103,6 @@ namespace
         return true;
       }
       case GL_RGB8:
-      {
-        thePixelFormat = GL_RGB;
-        theDataType = GL_UNSIGNED_INT;
-        return true;
-      }
       case GL_RGB:
       {
         thePixelFormat = GL_RGB;
