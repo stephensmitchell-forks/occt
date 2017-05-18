@@ -1025,12 +1025,15 @@ Standard_Real IntTools_FaceFace::ComputeTolerance()
     }
   }// if ((aType1==GeomAbs_Plane && aType2==GeomAbs_Torus) ||
   //
+  else if ((aType1 == GeomAbs_Plane && aType2 == GeomAbs_SurfaceOfExtrusion) ||
+           (aType2 == GeomAbs_Plane && aType1 == GeomAbs_SurfaceOfExtrusion))
+  {
+    myTolReached3d = ComputeTolerance();
+  }
   else if ((aType1==GeomAbs_SurfaceOfRevolution && aType2==GeomAbs_Cylinder) ||
            (aType2==GeomAbs_SurfaceOfRevolution && aType1==GeomAbs_Cylinder) ||
            (aType1==GeomAbs_Plane && aType2==GeomAbs_Sphere) ||
            (aType2==GeomAbs_Plane && aType1==GeomAbs_Sphere) ||
-           (aType1==GeomAbs_Plane && aType2==GeomAbs_SurfaceOfExtrusion) ||
-           (aType2==GeomAbs_Plane && aType1==GeomAbs_SurfaceOfExtrusion) ||
            (aType1==GeomAbs_Plane && aType2==GeomAbs_BSplineSurface) ||
            (aType2==GeomAbs_Plane && aType1==GeomAbs_BSplineSurface) ||
            (aType1==GeomAbs_Cylinder && aType2==GeomAbs_BSplineSurface) ||

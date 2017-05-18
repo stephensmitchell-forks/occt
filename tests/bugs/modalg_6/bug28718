@@ -1,0 +1,30 @@
+puts "========"
+puts "OCC28718"
+puts "========"
+puts ""
+#################################################
+# Section result has a break
+#################################################
+
+set ExpTol 1.0665733242938802e-008
+
+restore [locate_data_file bug28718_bulk_1.brep] b1
+restore [locate_data_file bug28718_hull.brep] b2
+
+####
+
+explode b1 f
+explode b2 f
+axo
+don b2_61
+fit
+
+set log [bopcurves b1_1 b2_61 -2d]
+
+regexp {Tolerance Reached=+([-0-9.+eE]+)\n+([-0-9.+eE]+)} ${log} full Toler NbCurv
+checkreal TolReached $Toler $ExpTol 0.0 0.1
+
+bsection result b1 b2
+
+set length 19.1199
+set 2dviewer 1
