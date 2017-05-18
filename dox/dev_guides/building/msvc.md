@@ -31,8 +31,8 @@ If you have Visual Studio projects already available (pre-installed or generated
 | VCVER     | Visual Studio version | Windows Platform                 | Binaries folder name |
 |-----------|-----------------------|----------------------------------|----------------------|
 | vc10      | 2010 (10)             | Desktop (Windows API)            | vc10 |
-| vc11      | 2012 (12)             | Desktop (Windows API)            | vc11 |
-| vc12      | 2013 (13)             | Desktop (Windows API)            | vc12 |
+| vc11      | 2012 (11)             | Desktop (Windows API)            | vc11 |
+| vc12      | 2013 (12)             | Desktop (Windows API)            | vc12 |
 | vc14      | 2015 (14)             | Desktop (Windows API)            | vc14 |
 | vc14-uwp  | 2015 (14)             | UWP (Universal Windows Platform) | vc14-uwp |
 | vc141     | 2017 (15)             | Desktop (Windows API)            | vc14 |
