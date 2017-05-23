@@ -751,7 +751,7 @@ Standard_Boolean Geom2dHatch_Hatcher::GlobalTransition (HatchGen_PointOnHatching
 
   const Geom2dAdaptor_Curve& CurveH = HatchingCurve (Point.Index()) ;
 
-  myIntersector.LocalGeometry(CurveH.Curve(), Point.Parameter(), Tangente2d, Normale2d, Courbure);
+  myIntersector.LocalGeometry(CurveH, Point.Parameter(), Tangente2d, Normale2d, Courbure);
 
   Tangente.SetCoord (Tangente2d.X(), Tangente2d.Y(), 0.0) ;
   if (Courbure < Precision::Confusion()) {
@@ -805,7 +805,7 @@ Standard_Boolean Geom2dHatch_Hatcher::GlobalTransition (HatchGen_PointOnHatching
 #endif
     Param = PntE.Parameter();
 
-    myIntersector.LocalGeometry(CurveE.Curve(), Param, Tangente2d, Normale2d, Courbure);
+    myIntersector.LocalGeometry(CurveE, Param, Tangente2d, Normale2d, Courbure);
 
 //-----------------------------------------------------------------------
 // Calcul de la transition locale. On suppose les relations suivantes :
