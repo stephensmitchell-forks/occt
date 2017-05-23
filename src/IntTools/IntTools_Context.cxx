@@ -421,7 +421,6 @@ Geom2dHatch_Hatcher& IntTools_Context::Hatcher(const TopoDS_Face& aF)
     TopAbs_Orientation aOrE;
     Handle(Geom_Surface) aS;
     Handle(Geom2d_Curve) aC2D;
-    Handle(Geom2d_TrimmedCurve) aCT2D;
     TopoDS_Face aFF;
     TopExp_Explorer aExp;
     //
@@ -455,8 +454,7 @@ Geom2dHatch_Hatcher& IntTools_Context::Hatcher(const TopoDS_Face& aF)
         continue;
       }
       //
-      aCT2D=new Geom2d_TrimmedCurve(aC2D, aU1, aU2);
-      Geom2dAdaptor_Curve aGAC (aCT2D);
+      Geom2dAdaptor_Curve aGAC (aC2D, aU1, aU2);
       pHatcher->AddElement(aGAC, aOrE);
     }// for (; aExp.More() ; aExp.Next()) {
     //
