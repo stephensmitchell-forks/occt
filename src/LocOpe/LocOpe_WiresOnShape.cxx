@@ -1208,14 +1208,32 @@ void FindInternalIntersections(const TopoDS_Edge& theEdge,
       {
         if (Abs(theIntPar - thePar[j]) <= Precision::PConfusion())
           break;
+        Standard_Real aMidPar = (theIntPar + thePar[j]) * 0.5;
+        gp_Pnt aPMid = theGAcurve.Value(aMidPar);
+       
+        GeomAPI_ProjectPointOnCurve proj;
+        proj.Init(aPMid,aCurve, aFpar, aLpar);
+        if(!proj.NbPoints())
+          break;
+
+        Standard_Real aDist = proj.LowerDistance();
+        gp_Pnt aPointInt = theCurve->Value(theIntPar);
+        if( aDist <= MaxTol )
+          break;
+        
       }
+
       //intersection found in the middle of the edge
       if (j >= 2) //intersection is inside "theEdge" => split
       {
         gp_Pnt aPoint = aCurve->Value(anIntPar);
+        gp_Pnt aPointInt = theCurve->Value(theIntPar);
         if (aPoint.SquareDistance(thePnt[0]) > aTolV[0] * aTolV[0] &&
-            aPoint.SquareDistance(thePnt[1]) > aTolV[1] * aTolV[1])
+            aPoint.SquareDistance(thePnt[1]) > aTolV[1] * aTolV[1] &&
+            aPointInt.SquareDistance(thePnt[0]) > aTolV[0] * aTolV[0] &&
+            aPointInt.SquareDistance(thePnt[1]) > aTolV[1] * aTolV[1]  )
         {
+
           SplitPars.Append(theIntPar);
           if( aDist > aDistMax)
             aDistMax = aDist;
@@ -1280,7 +1298,11 @@ void FindInternalIntersections(const TopoDS_Edge& theEdge,
     BB.Add(NewEdge, FirstVertex);
     BB.Add(NewEdge, LastVertex);
     NewEdge.Orientation(anOrient);
-    NewEdges.Append(NewEdge);
+    if (anOrient == TopAbs_FORWARD)
+      NewEdges.Append(NewEdge);
+    else
+      NewEdges.Prepend(NewEdge);
+    //NewEdges.Append(NewEdge);
     FirstVertex = LastVertex;
     FirstPar = LastPar;
   }
