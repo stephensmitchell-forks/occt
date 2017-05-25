@@ -522,10 +522,9 @@ XCAFDoc_NotesTool::RemoveAllNotes(const XCAFDoc_AssemblyItemId& theItemId,
   if (!anAnnotatedItem.FindAttribute(XCAFDoc::NoteRefGUID(), aChild))
     return Standard_False;
 
-  Standard_Integer nbFathers = aChild->NbFathers();
-  for (Standard_Integer iFather = 1; iFather <= nbFathers; ++iFather)
+  while (aChild->NbFathers() > 0)
   {
-    Handle(XCAFDoc_GraphNode) aFather = aChild->GetFather(iFather);
+    Handle(XCAFDoc_GraphNode) aFather = aChild->GetFather(1);
     Handle(XCAFDoc_Note) aNote = XCAFDoc_Note::Get(aFather->Label());
     if (!aNote.IsNull())
     {
@@ -553,10 +552,9 @@ XCAFDoc_NotesTool::RemoveAllSubshapeNotes(const XCAFDoc_AssemblyItemId& theItemI
   if (!anAnnotatedItem.FindAttribute(XCAFDoc::NoteRefGUID(), aChild))
     return Standard_False;
 
-  Standard_Integer nbFathers = aChild->NbFathers();
-  for (Standard_Integer iFather = 1; iFather <= nbFathers; ++iFather)
+  while (aChild->NbFathers() > 0)
   {
-    Handle(XCAFDoc_GraphNode) aFather = aChild->GetFather(iFather);
+    Handle(XCAFDoc_GraphNode) aFather = aChild->GetFather(1);
     Handle(XCAFDoc_Note) aNote = XCAFDoc_Note::Get(aFather->Label());
     if (!aNote.IsNull())
     {
@@ -584,10 +582,9 @@ XCAFDoc_NotesTool::RemoveAllAttrNotes(const XCAFDoc_AssemblyItemId& theItemId,
   if (!anAnnotatedItem.FindAttribute(XCAFDoc::NoteRefGUID(), aChild))
     return Standard_False;
 
-  Standard_Integer nbFathers = aChild->NbFathers();
-  for (Standard_Integer iFather = 1; iFather <= nbFathers; ++iFather)
+  while (aChild->NbFathers())
   {
-    Handle(XCAFDoc_GraphNode) aFather = aChild->GetFather(iFather);
+    Handle(XCAFDoc_GraphNode) aFather = aChild->GetFather(1);
     Handle(XCAFDoc_Note) aNote = XCAFDoc_Note::Get(aFather->Label());
     if (!aNote.IsNull())
     {
@@ -611,11 +608,10 @@ XCAFDoc_NotesTool::DeleteNote(const TDF_Label& theNoteLabel)
     Handle(XCAFDoc_GraphNode) aFather;
     if (theNoteLabel.FindAttribute(XCAFDoc::NoteRefGUID(), aFather) && !aFather.IsNull())
     {
-      Standard_Integer nbChildren = aFather->NbChildren();
-      for (Standard_Integer iChild = 1; iChild <= nbChildren; ++iChild)
+      while (aFather->NbChildren() > 0)
       {
-        Handle(XCAFDoc_GraphNode) aChild = aFather->GetChild(iChild);
-        aFather->UnSetChild(iChild);
+        Handle(XCAFDoc_GraphNode) aChild = aFather->GetChild(1);
+        aFather->UnSetChild(aChild);
         if (aChild->NbFathers() == 0)
           aChild->Label().ForgetAttribute(aChild);
       }
