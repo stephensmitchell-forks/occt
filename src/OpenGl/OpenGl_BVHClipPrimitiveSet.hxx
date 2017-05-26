@@ -25,6 +25,7 @@
 //! Set of OpenGl_Structures for building BVH tree.
 class OpenGl_BVHClipPrimitiveSet : public BVH_PrimitiveSet<Standard_Real, 3>
 {
+  DEFINE_STANDARD_RTTIEXT(OpenGl_BVHClipPrimitiveSet, BVH_PrimitiveSet)
 protected:
 
   using BVH_PrimitiveSet<Standard_Real, 3>::Box;

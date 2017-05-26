@@ -6,6 +6,7 @@ BVH_BuildQueue.hxx
 BVH_BuildQueue.cxx
 BVH_BuildThread.hxx
 BVH_BuildThread.cxx
+BVH_Constants.hxx
 BVH_DistanceField.hxx
 BVH_DistanceField.lxx
 BVH_Geometry.hxx

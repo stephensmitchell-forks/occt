@@ -17,12 +17,9 @@
 #define _SelectMgr_SensitiveEntitySet_HeaderFile
 
 #include <BVH_PrimitiveSet.hxx>
-
 #include <NCollection_IndexedMap.hxx>
-#include <NCollection_Handle.hxx>
-
 #include <Select3D_BndBox3d.hxx>
-
+#include <Select3D_BVHBuilder3d.hxx>
 #include <SelectMgr_SensitiveEntity.hxx>
 #include <SelectMgr_Selection.hxx>
 
@@ -33,9 +30,11 @@ typedef NCollection_IndexedMap<Handle(SelectMgr_SensitiveEntity)> SelectMgr_Inde
 //! the performance of searching for overlap among sensitives of one selectable object
 class SelectMgr_SensitiveEntitySet : public BVH_PrimitiveSet<Standard_Real, 3>
 {
+  DEFINE_STANDARD_RTTIEXT(SelectMgr_SensitiveEntitySet, BVH_PrimitiveSet)
 public:
 
-  Standard_EXPORT SelectMgr_SensitiveEntitySet();
+  //! Empty constructor.
+  Standard_EXPORT SelectMgr_SensitiveEntitySet (const Handle(Select3D_BVHBuilder3d)& theBuilder);
 
   virtual ~SelectMgr_SensitiveEntitySet() {};
 

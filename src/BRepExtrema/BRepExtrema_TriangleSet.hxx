@@ -23,7 +23,7 @@
 typedef NCollection_Vector<TopoDS_Face> BRepExtrema_ShapeList;
 
 //! Triangle set corresponding to specific face.
-class BRepExtrema_TriangleSet : public BVH_PrimitiveSet<Standard_Real, 3>, public Standard_Transient
+class BRepExtrema_TriangleSet : public BVH_PrimitiveSet<Standard_Real, 3>
 {
 public:
 
@@ -83,10 +83,10 @@ protected:
 
 public:
 
-  DEFINE_STANDARD_RTTIEXT(BRepExtrema_TriangleSet,Standard_Transient)
+  DEFINE_STANDARD_RTTIEXT(BRepExtrema_TriangleSet, BVH_PrimitiveSet)
 
 };
 
-DEFINE_STANDARD_HANDLE (BRepExtrema_TriangleSet, Standard_Transient)
+DEFINE_STANDARD_HANDLE (BRepExtrema_TriangleSet, BVH_PrimitiveSet)
 
 #endif // _BRepExtrema_TriangleSet_HeaderFile
