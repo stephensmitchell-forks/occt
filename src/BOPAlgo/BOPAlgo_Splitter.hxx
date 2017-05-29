@@ -69,6 +69,7 @@ public:
   //! Performs the operation
   Standard_EXPORT virtual void Perform() Standard_OVERRIDE;
 
+
 protected:
 
   //! Checks the input data

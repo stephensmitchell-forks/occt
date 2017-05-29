@@ -18,6 +18,7 @@
 //
 
 #include <BOPAlgo_CheckerSI.hxx>
+#include <BOPAlgo_Alerts.hxx>
 #include <BOPCol_MapOfShape.hxx>
 #include <BOPDS_DS.hxx>
 #include <BOPDS_Interf.hxx>
@@ -75,8 +76,6 @@ void BOPAlgo_CheckerSI::SetLevelOfCheck(const Standard_Integer theLevel)
 //=======================================================================
 void BOPAlgo_CheckerSI::Init()
 {
-  myErrorStatus=0;
-  //
   Clear();
   //
   // 1. myDS
@@ -94,8 +93,6 @@ void BOPAlgo_CheckerSI::Init()
   //
   // 3 myContext
   myContext=new IntTools_Context;
-  //
-  myErrorStatus=0;
 }
 //=======================================================================
 //function : Perform
@@ -106,9 +103,8 @@ void BOPAlgo_CheckerSI::Perform()
   try {
     OCC_CATCH_SIGNALS
     //
-    myErrorStatus = 0;
     if (myArguments.Extent() != 1) {
-      myErrorStatus = 10;
+      AddError (new BOPAlgo_AlertMultipleArguments);
       return;
     }
     //
@@ -116,16 +112,16 @@ void BOPAlgo_CheckerSI::Perform()
     BOPAlgo_PaveFiller::Perform();
     //
     // Perform intersection with solids
-    if (!myErrorStatus)
+    if (!HasErrors())
       PerformVZ();
     //
-    if (!myErrorStatus)
+    if (!HasErrors())
       PerformEZ();
     //
-    if (!myErrorStatus)
+    if (!HasErrors())
       PerformFZ();
     //
-    if (!myErrorStatus)
+    if (!HasErrors())
       PerformZZ();
     //
     // Treat the intersection results
@@ -133,7 +129,7 @@ void BOPAlgo_CheckerSI::Perform()
   }
   //
   catch (Standard_Failure) {
-    myErrorStatus = 11;
+    AddError (new BOPAlgo_AlertIntersectionFailed);
   }
 }
 //=======================================================================
@@ -144,8 +140,6 @@ void BOPAlgo_CheckerSI::PostTreat()
 {
   Standard_Integer i, aNb, n1, n2; 
   BOPDS_Pair aPK;
-  //
-  myErrorStatus=0;
   //
   BOPDS_MapOfPair& aMPK=
     *((BOPDS_MapOfPair*)&myDS->Interferences());
