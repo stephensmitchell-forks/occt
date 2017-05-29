@@ -454,7 +454,7 @@ static Standard_Boolean TangentOnVertex(const TopoDS_Vertex&    V,
 //           depending on concavities between neighbour faces of the top.
 //=======================================================================
 
-void ChFi3d_Builder::PerformExtremity (const Handle(ChFiDS_Spine)& Spine) 
+void ChFi3d_Builder::PerformExtremity (Handle(ChFiDS_Spine)& Spine) 
 {
   Standard_Integer NbG1Connections = 0;
   

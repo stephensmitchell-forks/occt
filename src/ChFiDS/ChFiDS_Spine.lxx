@@ -17,6 +17,16 @@
 #include <TopoDS.hxx>
 
 //=======================================================================
+//function : SetConnectType
+//purpose  : 
+//=======================================================================
+
+inline void  ChFiDS_Spine::SetConnectType(const BRepOffset_Type theConnectType)
+{
+  myConnectType = theConnectType;
+}
+
+//=======================================================================
 //function : SetFirstStatus
 //purpose  : 
 //=======================================================================
@@ -36,6 +46,17 @@ inline void  ChFiDS_Spine::SetLastStatus(const ChFiDS_State S)
 {
   lastState = S;
 }
+
+//=======================================================================
+//function : ConnectType
+//purpose  : 
+//=======================================================================
+
+inline BRepOffset_Type  ChFiDS_Spine::ConnectType()const 
+{
+  return myConnectType;
+}
+
 //=======================================================================
 //function : FirstStatus
 //purpose  : 
@@ -45,7 +66,6 @@ inline ChFiDS_State  ChFiDS_Spine::FirstStatus()const
 {
   return firstState;
 }
-
 
 //=======================================================================
 //function : LastStatus

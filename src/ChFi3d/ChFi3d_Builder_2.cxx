@@ -732,8 +732,9 @@ Standard_Boolean ChFi3d_Builder::StripeOrientations
   ff2.Orientation(TopAbs_FORWARD);
   Sb2.Initialize(ff2);
 
+  BRepOffset_Type aConnectType;
   ChoixConge = ChFi3d::ConcaveSide(Sb1,Sb2,Spine->Edges(1),
-				   Or1,Or2);
+				   aConnectType,Or1,Or2);
   Or1 = TopAbs::Compose(Or1,Of1);
   Or2 = TopAbs::Compose(Or2,Of2);
   return Standard_True;
@@ -745,7 +746,7 @@ Standard_Boolean ChFi3d_Builder::StripeOrientations
 //purpose  : 
 //=======================================================================
 
-void ChFi3d_Builder::ConexFaces (const Handle(ChFiDS_Spine)&   Spine,
+void ChFi3d_Builder::ConexFaces (Handle(ChFiDS_Spine)&         Spine,
 				 const Standard_Integer        IEdge,
 				 const Standard_Integer        RC,	
 				 Handle(BRepAdaptor_HSurface)& HS1,
@@ -761,10 +762,13 @@ void ChFi3d_Builder::ConexFaces (const Handle(ChFiDS_Spine)&   Spine,
 
   Sb1.Initialize(ff1);
   Sb2.Initialize(ff2);
-  
+
+  BRepOffset_Type aConnectType = Spine->ConnectType();
   TopAbs_Orientation Or1,Or2;
   Standard_Integer Choix = ChFi3d::ConcaveSide(Sb1,Sb2,Spine->Edges(IEdge),
-					       Or1,Or2);  
+					       aConnectType, Or1,Or2);
+  Spine->SetConnectType(aConnectType);
+  
   if (RC%2 != Choix%2) {
     Sb1.Initialize(ff2);
     Sb2.Initialize(ff1);

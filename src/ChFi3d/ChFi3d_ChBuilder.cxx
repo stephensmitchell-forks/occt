@@ -202,7 +202,8 @@ void  ChFi3d_ChBuilder::Add(const TopoDS_Edge& E)
     E_wnt.Orientation(TopAbs_FORWARD);
     Spine->SetEdges(E_wnt);
     if(PerformElement(Spine)){
-      PerformExtremity(Spine);
+      //PerformExtremity(Spine);
+      PerformExtremity(Sp);
       Spine->Load();
       myListStripe.Append(Stripe);
     }
@@ -239,8 +240,9 @@ void  ChFi3d_ChBuilder::Add(const Standard_Real Dis,
       BRepAdaptor_Surface Sb1,Sb2;
       Sb1.Initialize(F1);
       Sb2.Initialize(F2);
+      BRepOffset_Type aConnectType;
       TopAbs_Orientation Or1,Or2;
-      ChFi3d::ConcaveSide(Sb1,Sb2,E_wnt,Or1,Or2); 
+      ChFi3d::ConcaveSide(Sb1,Sb2,E_wnt,aConnectType,Or1,Or2); 
       Handle(ChFiDS_Stripe) Stripe = new ChFiDS_Stripe();
       Handle(ChFiDS_Spine)& Sp = Stripe->ChangeSpine();
       Sp = new ChFiDS_ChamfSpine(tolesp);
@@ -254,7 +256,8 @@ void  ChFi3d_ChBuilder::Add(const Standard_Real Dis,
 	
 	Spine->SetDist(Dis);
 
-	PerformExtremity(Spine);
+	//PerformExtremity(Spine);
+	PerformExtremity(Sp);
       }
     }
   }
@@ -351,8 +354,9 @@ void  ChFi3d_ChBuilder::Add(const Standard_Real Dis1,
       BRepAdaptor_Surface Sb1,Sb2;
       Sb1.Initialize(F1);
       Sb2.Initialize(F2);
+      BRepOffset_Type aConnectType;
       TopAbs_Orientation Or1,Or2;
-      Standard_Integer Choix = ChFi3d::ConcaveSide(Sb1,Sb2,E_wnt,Or1,Or2); 
+      Standard_Integer Choix = ChFi3d::ConcaveSide(Sb1,Sb2,E_wnt,aConnectType,Or1,Or2); 
 
       Handle(ChFiDS_Stripe) Stripe = new ChFiDS_Stripe();
       Handle(ChFiDS_Spine)& Sp = Stripe->ChangeSpine();
@@ -371,6 +375,7 @@ void  ChFi3d_ChBuilder::Add(const Standard_Real Dis1,
 	Sb2.Initialize(F2);
 	ChoixConge = ChFi3d::ConcaveSide(Sb1,Sb2,
 					 Spine->Edges(1),
+                                         aConnectType,
 					 Or1,Or2);
 
 
@@ -381,7 +386,8 @@ void  ChFi3d_ChBuilder::Add(const Standard_Real Dis1,
 	  Spine->SetDists(Dis2, Dis1);
 	else Spine->SetDists(Dis1, Dis2);
 
-	PerformExtremity(Spine);
+	//PerformExtremity(Spine);
+	PerformExtremity(Sp);
       }
     }
   }
@@ -405,6 +411,7 @@ void  ChFi3d_ChBuilder::SetDists(const Standard_Real    Dis1,
 
     // Search the first edge which has a common face equal to F
     TopoDS_Face F1,F2,FirstF1,FirstF2;
+    BRepOffset_Type aConnectType;
     TopAbs_Orientation Or1,Or2;
     Standard_Integer Choix, ChoixConge;
     BRepAdaptor_Surface Sb1,Sb2;
@@ -429,11 +436,13 @@ void  ChFi3d_ChBuilder::SetDists(const Standard_Real    Dis1,
       Sb2.Initialize(F2);
       Choix = ChFi3d::ConcaveSide(Sb1,Sb2,
 				  csp->Edges(i-1),
+                                  aConnectType,
 				  Or1,Or2);
       Sb1.Initialize(FirstF1);
       Sb2.Initialize(FirstF2);
       ChoixConge = ChFi3d::ConcaveSide(Sb1,Sb2,
 				       csp->Edges(1),
+                                       aConnectType,
 				       Or1,Or2);
       if ( ChoixConge%2 != Choix%2 )
 	csp->SetDists(Dis2,Dis1);
@@ -493,8 +502,9 @@ void  ChFi3d_ChBuilder::AddDA(const Standard_Real Dis1,
       BRepAdaptor_Surface Sb1,Sb2;
       Sb1.Initialize(F1);
       Sb2.Initialize(F2);
+      BRepOffset_Type aConnectType;
       TopAbs_Orientation Or1,Or2;
-      Standard_Integer Choix = ChFi3d::ConcaveSide(Sb1,Sb2,E_wnt,Or1,Or2); 
+      Standard_Integer Choix = ChFi3d::ConcaveSide(Sb1,Sb2,E_wnt,aConnectType,Or1,Or2);
 
       Handle(ChFiDS_Stripe) Stripe = new ChFiDS_Stripe();
       Handle(ChFiDS_Spine)& Sp = Stripe->ChangeSpine();
@@ -513,6 +523,7 @@ void  ChFi3d_ChBuilder::AddDA(const Standard_Real Dis1,
 	Sb2.Initialize(F2);
 	ChoixConge = ChFi3d::ConcaveSide(Sb1,Sb2,
 					 Spine->Edges(1),
+                                         aConnectType,
 					 Or1,Or2);
 
 	// compare the 2 computed choices to know how to set the 
@@ -525,7 +536,8 @@ void  ChFi3d_ChBuilder::AddDA(const Standard_Real Dis1,
           Spine->SetDistAngle(Dis1, Angle, Standard_True);
         }
 	
-	PerformExtremity(Spine);
+	//PerformExtremity(Spine);
+	PerformExtremity(Sp);
       }
     }
   }
@@ -549,6 +561,7 @@ void  ChFi3d_ChBuilder::SetDistAngle(const Standard_Real    Dis,
 
     // Search the first edge which has a common face equal to F
     TopoDS_Face F1,F2,FirstF1,FirstF2;
+    BRepOffset_Type aConnectType;
     TopAbs_Orientation Or1,Or2;
     Standard_Integer Choix, ChoixConge;
     BRepAdaptor_Surface Sb1,Sb2;
@@ -575,11 +588,13 @@ void  ChFi3d_ChBuilder::SetDistAngle(const Standard_Real    Dis,
       Sb2.Initialize(F2);
       Choix = ChFi3d::ConcaveSide(Sb1,Sb2,
 				  csp->Edges(i-1),
+                                  aConnectType,
 				  Or1,Or2);
       Sb1.Initialize(FirstF1);
       Sb2.Initialize(FirstF2);
       ChoixConge = ChFi3d::ConcaveSide(Sb1,Sb2,
 				       csp->Edges(1),
+                                       aConnectType,
 				       Or1,Or2);
       if ( ChoixConge%2 != Choix%2 ) {
 	csp->SetDistAngle(Dis, Angle, Standard_False);
@@ -2204,6 +2219,7 @@ void ChFi3d_ChBuilder::ConexFaces (const Handle(ChFiDS_Spine)&  Spine,
 				   TopoDS_Face&                 F2) const
 {
   BRepAdaptor_Surface Sb1,Sb2;
+  BRepOffset_Type aConnectType;
   TopAbs_Orientation tmp1,tmp2;
   Standard_Integer RC,Choix;
   TopoDS_Face f1,f2,ff1,ff2;
@@ -2215,13 +2231,13 @@ void ChFi3d_ChBuilder::ConexFaces (const Handle(ChFiDS_Spine)&  Spine,
   Sb1.Initialize(ff1);
   ff2.Orientation(TopAbs_FORWARD);
   Sb2.Initialize(ff2);
-  RC = ChFi3d::ConcaveSide(Sb1,Sb2,Spine->Edges(1),tmp1,tmp2);
+  RC = ChFi3d::ConcaveSide(Sb1,Sb2,Spine->Edges(1),aConnectType,tmp1,tmp2);
 				  
   //calculate the connected faces
   SearchCommonFaces(myEFMap,Spine->Edges(IEdge),f1,f2);
   Sb1.Initialize(f1);
   Sb2.Initialize(f2);
-  Choix = ChFi3d::ConcaveSide(Sb1,Sb2,Spine->Edges(IEdge),tmp1,tmp2);
+  Choix = ChFi3d::ConcaveSide(Sb1,Sb2,Spine->Edges(IEdge),aConnectType,tmp1,tmp2);
 
   if (RC%2 != Choix%2) {
     F1 = f2;

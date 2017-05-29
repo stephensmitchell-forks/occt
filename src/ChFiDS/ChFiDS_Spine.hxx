@@ -23,6 +23,7 @@
 #include <BRepAdaptor_Curve.hxx>
 #include <Standard_Integer.hxx>
 #include <ChFiDS_State.hxx>
+#include <BRepOffset_Type.hxx>
 #include <TopTools_SequenceOfShape.hxx>
 #include <TColStd_HArray1OfReal.hxx>
 #include <Standard_Boolean.hxx>
@@ -125,9 +126,15 @@ public:
   
   Standard_EXPORT Standard_Boolean IsClosed() const;
   
+  Standard_EXPORT BRepOffset_Type ConnectType() const;
+  
   Standard_EXPORT Standard_Real FirstParameter() const;
   
   Standard_EXPORT Standard_Real LastParameter() const;
+  
+  //! sets the type of connection between faces for all edges of spine:
+  //! it may be Concave, Convex or Other(undefined)
+  Standard_EXPORT void SetConnectType (const BRepOffset_Type theConnectType);
   
   Standard_EXPORT void SetFirstParameter (const Standard_Real Par);
   
@@ -248,6 +255,7 @@ private:
   ChFiDS_State firstState;
   ChFiDS_State lastState;
   TopTools_SequenceOfShape spine;
+  BRepOffset_Type          myConnectType;
   Handle(TColStd_HArray1OfReal) abscissa;
   Standard_Real tolesp;
   Standard_Real firstparam;

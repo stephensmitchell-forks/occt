@@ -653,15 +653,16 @@ ChFiDS_State ChFi3d_EdgeState(TopoDS_Edge* E,
   if (F2.IsNull() || F4.IsNull() || F6.IsNull())
     sst = ChFiDS_FreeBoundary;
   else{
+    BRepOffset_Type aConnectType;
     TopAbs_Orientation o01,o02,o11,o12,o21,o22;
     /*
     i=ChFi3d::ConcaveSide(F[0],F[1],E[0],o01,o02);
     i=ChFi3d::ConcaveSide(F[0],F[2],E[1],o11,o12);
     j=ChFi3d::ConcaveSide(F[1],F[2],E[2],o21,o22);
     */
-    i=ChFi3d::ConcaveSide(F1, F2, E[0], o01, o02);
-    i=ChFi3d::ConcaveSide(F3, F4, E[1], o11, o12);
-    j=ChFi3d::ConcaveSide(F5, F6, E[2], o21, o22);
+    i=ChFi3d::ConcaveSide(F1, F2, E[0], aConnectType, o01, o02);
+    i=ChFi3d::ConcaveSide(F3, F4, E[1], aConnectType, o11, o12);
+    j=ChFi3d::ConcaveSide(F5, F6, E[2], aConnectType, o21, o22);
     
     if(o01==o11 && o02==o21 && o12==o22) sst = ChFiDS_AllSame;
     else if(o12==o22 || i ==10 || j ==10) sst = ChFiDS_OnDiff;
@@ -4947,6 +4948,24 @@ Standard_Integer ChFi3d_NumberOfSharpEdges(const TopoDS_Vertex& Vtx,
   if (bordlibre) nba=(nba-2)/2 +2;
   else  nba=nba/2;
   return nba;
+}
+
+//=======================================================================
+//function : IsInSingularity
+//purpose  :
+//
+//=======================================================================
+Standard_Boolean ChFi3d_IsInSingularity(const TopoDS_Vertex& Vtx,
+                                        const ChFiDS_Map& VEMap)
+{
+  TopTools_ListIteratorOfListOfShape ItE;
+  for (ItE.Initialize(VEMap(Vtx)); ItE.More(); ItE.Next())
+  {
+    const TopoDS_Edge& cur = TopoDS::Edge(ItE.Value());
+    if (BRep_Tool::Degenerated(cur))
+      return Standard_True;
+  }
+  return Standard_False;
 }
 
 //=====================================================

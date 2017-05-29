@@ -37,7 +37,8 @@
 //=======================================================================
 Standard_Integer ChFi3d::ConcaveSide(const BRepAdaptor_Surface& S1, 
 				     const BRepAdaptor_Surface& S2, 
-				     const TopoDS_Edge& E, 
+				     const TopoDS_Edge& E,
+                                     BRepOffset_Type& ConnectType,
 				     TopAbs_Orientation& Or1, 
 				     TopAbs_Orientation& Or2)
 
@@ -49,7 +50,8 @@ Standard_Integer ChFi3d::ConcaveSide(const BRepAdaptor_Surface& S1,
   Standard_Real last = CE.LastParameter();
   Standard_Real par = 0.691254*first + 0.308746*last;
 
-  gp_Pnt pt, pt1, pt2; gp_Vec tgE, tgE1, tgE2, ns1, ns2, dint1, dint2;
+  gp_Pnt pt, pt1, pt2;
+  gp_Vec tgE, tgE1, tgE2, ns1, ns2, dint1, dint2;
   TopoDS_Face F1 = S1.Face();
   TopoDS_Face F2 = S2.Face();
   //F1.Orientation(TopAbs_FORWARD);
@@ -110,8 +112,18 @@ Standard_Integer ChFi3d::ConcaveSide(const BRepAdaptor_Surface& S1,
 
   dint1 = ns1.Crossed(tgE1);
   dint2 = ns2.Crossed(tgE2);
-  Standard_Real ang = ns1.CrossMagnitude(ns2);
+  gp_Vec ProdNormals = ns1 ^ ns2;
+  //Standard_Real ang = ns1.CrossMagnitude(ns2);
+  Standard_Real ang = ProdNormals.Magnitude();
   if(ang > 0.0001*M_PI){
+
+    ProdNormals /= ang;
+    Standard_Real ScalProd = tgE1 * ProdNormals;
+    if (ScalProd > 0.)
+      ConnectType = BRepOffset_Convex;
+    else
+      ConnectType = BRepOffset_Concave;
+    
     Standard_Real scal = ns2.Dot(dint1);
     if ( scal <= 0. ){
       ns2.Reverse();
@@ -185,6 +197,15 @@ Standard_Integer ChFi3d::ConcaveSide(const BRepAdaptor_Surface& S1,
       ns2 = DU2.Crossed(DV2);
       if (F2.Orientation() == TopAbs_REVERSED)
         ns2.Reverse();
+
+      ProdNormals = ns1 ^ ns2;
+      ProdNormals.Normalize();
+      Standard_Real ScalProd = tgE1 * ProdNormals;
+      if (ScalProd > 0.)
+        ConnectType = BRepOffset_Convex;
+      else
+        ConnectType = BRepOffset_Concave;
+      
       gp_Vec vref(pt1,pt2);
       if(ns1.Dot(vref) < 0.){
 	Or1 = TopAbs_REVERSED;

@@ -89,6 +89,7 @@ struct QualifiedEdge
 };
 
 typedef NCollection_List<QualifiedEdge> ChFi3d_ListOfQualifiedEdge;
+typedef ChFi3d_ListOfQualifiedEdge::Iterator ChFi3d_ListIteratorOfListOfQualifiedEdge;
 
 //! Root  class  for calculation of  surfaces (fillets,
 //! chamfers)  destined  to smooth edges  of
@@ -240,7 +241,7 @@ protected:
   
   Standard_EXPORT Standard_Boolean PerformElement (const Handle(ChFiDS_Spine)& CElement);
   
-  Standard_EXPORT void PerformExtremity (const Handle(ChFiDS_Spine)& CElement);
+  Standard_EXPORT void PerformExtremity (Handle(ChFiDS_Spine)& CElement);
   
   Standard_EXPORT void PerformSetOfSurf (Handle(ChFiDS_Stripe)& S, const Standard_Boolean Simul = Standard_False);
   
@@ -370,7 +371,11 @@ private:
   
   Standard_EXPORT void StartSol (const Handle(ChFiDS_Stripe)& S, const Handle(ChFiDS_HElSpine)& HGuide, Handle(BRepAdaptor_HSurface)& HS1, Handle(BRepAdaptor_HSurface)& HS2, Handle(BRepTopAdaptor_TopolTool)& I1, Handle(BRepTopAdaptor_TopolTool)& I2, gp_Pnt2d& P1, gp_Pnt2d& P2, Standard_Real& First) const;
   
-  Standard_EXPORT void ConexFaces (const Handle(ChFiDS_Spine)& Sp, const Standard_Integer IEdge, const Standard_Integer RefChoix, Handle(BRepAdaptor_HSurface)& HS1, Handle(BRepAdaptor_HSurface)& HS2) const;
+  Standard_EXPORT void ConexFaces (Handle(ChFiDS_Spine)& Sp,
+                                   const Standard_Integer IEdge,
+                                   const Standard_Integer RefChoix,
+                                   Handle(BRepAdaptor_HSurface)& HS1,
+                                   Handle(BRepAdaptor_HSurface)& HS2) const;
 
 
   TopoDS_Shape myShape;

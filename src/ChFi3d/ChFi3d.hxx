@@ -23,6 +23,7 @@
 
 #include <Standard_Integer.hxx>
 #include <TopAbs_Orientation.hxx>
+#include <BRepOffset_Type.hxx>
 #include <Standard_Boolean.hxx>
 class BRepAdaptor_Surface;
 class TopoDS_Edge;
@@ -49,7 +50,12 @@ public:
   //! if  not, it  returns the  number of  choice of  the fillet
   //! or chamfer corresponding to  the orientations  calculated
   //! and  to  the tangent to  the  guide line read in  E.
-  Standard_EXPORT static Standard_Integer ConcaveSide (const BRepAdaptor_Surface& S1, const BRepAdaptor_Surface& S2, const TopoDS_Edge& E, TopAbs_Orientation& Or1, TopAbs_Orientation& Or2);
+  Standard_EXPORT static Standard_Integer ConcaveSide (const BRepAdaptor_Surface& S1,
+                                                       const BRepAdaptor_Surface& S2,
+                                                       const TopoDS_Edge& E,
+                                                       BRepOffset_Type& ConnectType,
+                                                       TopAbs_Orientation& Or1,
+                                                       TopAbs_Orientation& Or2);
   
   //! Same  as ConcaveSide, but the orientations are
   //! logically  deduced from  the result of  the call of

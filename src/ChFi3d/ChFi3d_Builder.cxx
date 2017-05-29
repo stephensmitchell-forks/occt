@@ -68,6 +68,8 @@
 #include <TopoDS_Face.hxx>
 #include <TopoDS_Shape.hxx>
 #include <TopoDS_Vertex.hxx>
+//#include <BRepAlgoAPI_Fuse.hxx>
+#include <BOPAlgo_Builder.hxx>
 #include <TopOpeBRepBuild_HBuilder.hxx>
 #include <TopOpeBRepDS_BuildTool.hxx>
 #include <TopOpeBRepDS_Curve.hxx>
@@ -372,7 +374,7 @@ void  ChFi3d_Builder::Compute()
     
     
     if (done) {
-      BRep_Builder B1;
+      BRep_Builder BB;
       CompleteDS(DStr,myShape);
       //Update tolerances on vertex to max adjacent edges or
       //Update tolerances on degenerated edge to max of adjacent vertexes.
@@ -398,7 +400,7 @@ void  ChFi3d_Builder::Compute()
 	      if( tolc < tolv ) tolc = tolv + 0.00001;
 	    }
 	    if(degen && tolc < tolv) tolc = tolv;
-	    else if(tolc>tolv) B1.UpdateVertex(v,tolc);
+	    else if(tolc>tolv) BB.UpdateVertex(v,tolc);
 	  }
 	  else if(gk == TopOpeBRepDS_POINT){
 	    TopOpeBRepDS_Point& p = DStr.ChangePoint(gi);
@@ -409,7 +411,60 @@ void  ChFi3d_Builder::Compute()
 	}
 	if(degen) c.Tolerance(tolc);
       }
+      //jgv
+      
+      //for (on modified faces)
+      //compound of wires from each face
+      //compound of new edges for this face
+      //general fuse (compound of wires from a face, compound of new edges for this face)
+      //method building new face from old and new edges
+      //assembling of resulting shape from modified and unmodified faces.
+      for (Standard_Integer i = 1; i <= myNewFaces.Extent(); i++)
+      {
+        TopoDS_Shape aFace = myNewFaces(i);
+        aFace.Orientation(TopAbs_FORWARD);
+        TopoDS_Compound aWires;
+        BB.MakeCompound(aWires);
+        TopoDS_Iterator itw(aFace);
+        for (; itw.More(); itw.Next())
+          BB.Add(aWires, itw.Value());
+
+        TopoDS_Compound aNewEdges;
+        BB.MakeCompound(aNewEdges);
+        ChFi3d_ListIteratorOfListOfQualifiedEdge itl(myFaceNewEdges.FindFromKey(i));
+        for (; itl.More(); itl.Next())
+        {
+          Standard_Integer anIndex = itl.Value().Index;
+          TopoDS_Shape aNewEdge = myNewEdges(anIndex);
+          aNewEdge.Orientation(itl.Value().Orientation);
+          BB.Add(aNewEdges, aNewEdge);
+        }
+        //BRepAlgoAPI_Fuse aFuse(aWires, aNewEdges);
+        BOPAlgo_Builder GenFuse;
+        GenFuse.AddArgument(aWires);
+        GenFuse.AddArgument(aNewEdges);
+        GenFuse.Perform();
+        TopoDS_Shape aNewFace = aFace.EmptyCopied();
+        const TopoDS_Shape& aResFuse = GenFuse.Shape();
+        const BOPCol_DataMapOfShapeListOfShape& ModifiedShapes = GenFuse.Images();
+        for (itw.Initialize(aWires); itw.More(); itw.Next())
+        {
+          const TopoDS_Shape& aWire = itw.Value();
+          if (!ModifiedShapes.IsBound(aWire))
+            continue;
+          const TopTools_ListOfShape& aListOfModified = ModifiedShapes(aWire);
+          TopTools_ListIteratorOfListOfShape itwm(aListOfModified);
+          for (; itwm.More(); itwm.Next())
+          {
+            const TopoDS_Shape& aModifiedWire = itwm.Value();
+            cout<<"a Modified Wire ..."<<endl;
+          }
+        }
+      }
+
       myCoup->Perform(myDS);
+      //jgv//
+      
       TColStd_MapIteratorOfMapOfInteger It(MapIndSo);
       for(; It.More(); It.Next()){
 	Standard_Integer indsol = It.Key();
@@ -431,18 +486,18 @@ void  ChFi3d_Builder::Compute()
 	  for (; exv.More(); exv.Next() ) {
 	    const TopoDS_Vertex& v = TopoDS::Vertex(exv.Current());
 	    Standard_Real tolv = BRep_Tool::Tolerance(v);
-	    if (tole>tolv) B1.UpdateVertex(v,tole);
+	    if (tole>tolv) BB.UpdateVertex(v,tole);
 	  }
 	}
       }
       if (!hasresult) {
-      B1.MakeCompound(TopoDS::Compound(myShapeResult));
+      BB.MakeCompound(TopoDS::Compound(myShapeResult));
       for(It.Reset(); It.More(); It.Next()){
 	Standard_Integer indsol = It.Key();
 	const TopoDS_Shape& curshape = DStr.Shape(indsol);
 	TopTools_ListIteratorOfListOfShape 
 	  its = myCoup->Merged(curshape,TopAbs_IN);
-	if(!its.More()) B1.Add(myShapeResult,curshape);
+	if(!its.More()) BB.Add(myShapeResult,curshape);
 	else {
 	  //If the old type of Shape is Shell, Shell is placed instead of Solid, 
           //However there is a problem for compound of open Shell.
@@ -452,11 +507,11 @@ void  ChFi3d_Builder::Compute()
 	      TopExp_Explorer expsh2(its.Value(),TopAbs_SHELL);
 	      const TopoDS_Shape& cursh = expsh2.Current();
 	      TopoDS_Shape tt = cursh;
-	      B1.Add(myShapeResult,cursh);
+	      BB.Add(myShapeResult,cursh);
 	      its.Next();
 	    }
 	    else {
-	      B1.Add(myShapeResult,its.Value());
+	      BB.Add(myShapeResult,its.Value());
 	      its.Next();
 	    }
 	  }
@@ -465,16 +520,16 @@ void  ChFi3d_Builder::Compute()
       }
       else {
        done=Standard_False;
-       B1.MakeCompound(TopoDS::Compound(badShape));
+       BB.MakeCompound(TopoDS::Compound(badShape));
       for(It.Reset(); It.More(); It.Next()){
 	Standard_Integer indsol = It.Key();
 	const TopoDS_Shape& curshape = DStr.Shape(indsol);
 	TopTools_ListIteratorOfListOfShape 
 	  its = myCoup->Merged(curshape,TopAbs_IN);
-	if(!its.More()) B1.Add(badShape,curshape);
+	if(!its.More()) BB.Add(badShape,curshape);
 	else {
 	  while (its.More()) { 
-	    B1.Add(badShape,its.Value());
+	    BB.Add(badShape,its.Value());
 	    its.Next();
 	  }
 	}

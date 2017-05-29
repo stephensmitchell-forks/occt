@@ -42,6 +42,7 @@ IMPLEMENT_STANDARD_RTTIEXT(ChFiDS_Spine,MMgt_TShared)
 //=======================================================================
 ChFiDS_Spine::ChFiDS_Spine():
        splitdone(Standard_False),
+       myConnectType(BRepOffset_Other),
        tolesp(Precision::Confusion()),
        firstprolon(Standard_False), 
        lastprolon(Standard_False),
@@ -55,6 +56,7 @@ ChFiDS_Spine::ChFiDS_Spine():
 
 ChFiDS_Spine::ChFiDS_Spine(const Standard_Real Tol):
        splitdone(Standard_False),
+       myConnectType(BRepOffset_Other),
        tolesp(Tol),
        firstprolon(Standard_False), 
        lastprolon(Standard_False),

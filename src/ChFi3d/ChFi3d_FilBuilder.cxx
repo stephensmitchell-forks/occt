@@ -209,7 +209,8 @@ void  ChFi3d_FilBuilder::Add(const TopoDS_Edge& E)
     E_wnt.Orientation(TopAbs_FORWARD);
     Spine->SetEdges(E_wnt);
     if(PerformElement(Spine)){
-      PerformExtremity(Spine);
+      //PerformExtremity(Spine);
+      PerformExtremity(Sp);
       Spine->Load();
       myListStripe.Append(Stripe);
     }

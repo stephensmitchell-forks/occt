@@ -573,6 +573,9 @@ Standard_Integer ChFi3d_NumberOfSharpEdges(const TopoDS_Vertex& Vtx,
                                            const ChFiDS_Map& VEMap,
                                            const ChFiDS_Map& EFmap);
 
+Standard_Boolean ChFi3d_IsInSingularity(const TopoDS_Vertex& Vtx,
+                                        const ChFiDS_Map& VEMap);
+
 void ChFi3d_cherche_vertex (const TopoDS_Edge & E1,
 			    const TopoDS_Edge & E2,
 			    TopoDS_Vertex & vertex,
