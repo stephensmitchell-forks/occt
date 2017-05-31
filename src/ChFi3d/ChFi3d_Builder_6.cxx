@@ -816,6 +816,7 @@ Standard_Boolean ChFi3d_Builder::StoreData(Handle(ChFiDS_SurfData)& Data,
     myFaceNewEdges.Add(IndF1, aList);
   }
   Standard_Integer IndE1 = myNewEdges.FindIndex(Boundary1);
+  Data->ChangeIndexOfE1(IndE1);
   TopAbs_Orientation Et = (Reversed)? TopAbs_REVERSED : TopAbs_FORWARD;
   QualifiedEdge aQE1(IndE1, Et, BRepOffset_Convex);
   myFaceNewEdges.ChangeFromKey(IndF1).Append(aQE1);
@@ -891,6 +892,7 @@ Standard_Boolean ChFi3d_Builder::StoreData(Handle(ChFiDS_SurfData)& Data,
      myFaceNewEdges.Add(IndF2, aList);
     }
     Standard_Integer IndE2 = myNewEdges.FindIndex(Boundary2);
+    Data->ChangeIndexOfE2(IndE2);
     QualifiedEdge aQE2(IndE2, TopAbs::Reverse(Et), BRepOffset_Convex);
     myFaceNewEdges.ChangeFromKey(IndF2).Append(aQE2);
     /////

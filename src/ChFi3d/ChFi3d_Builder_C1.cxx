@@ -756,6 +756,7 @@ void ChFi3d_Builder::PerformOneCorner(const Standard_Integer Index,
   ChFiDS_FaceInterference& FiopArc = Fd->ChangeInterference(IFopArc);
   ChFiDS_CommonPoint& CPadArc = Fd->ChangeVertex(isfirst,IFadArc);
   ChFiDS_FaceInterference& FiadArc = Fd->ChangeInterference(IFadArc);
+  TopoDS_Vertex VerFopFad [3];
   //the parameter of the vertex in the air is initialiced with the value of 
   //its opposite (point on arc).
   Standard_Real wop = Fd->ChangeInterference(IFadArc).Parameter(isfirst);
@@ -771,6 +772,26 @@ void ChFi3d_Builder::PerformOneCorner(const Standard_Integer Index,
 
     inters = IntersUpdateOnSame (HGs,HBs,c3df,Fop,Fv,Arcprol,Vtx,isfirst,10*tolesp, // in
 				 FiopArc,CPopArc,p2dbout,wop);   // out
+    //jgv
+    for (Standard_Integer is = 1; is <= 2; is++)
+    {
+      ChFiDS_FaceInterference& Interf = Fd->ChangeInterference(is);
+      Standard_Integer IndEsurf = Fd->IndexOfEdge(is);
+      TopoDS_Edge EdgeSurf = TopoDS::Edge(myNewEdges(IndEsurf));
+      Standard_Real fpar, lpar;
+      Handle(Geom_Curve) CurveEdgeSurf = BRep_Tool::Curve(EdgeSurf, fpar, lpar);
+      //BRep_Tool::Range(EdgeSurf, fpar, lpar);
+      if (isfirst)
+        fpar = Interf.FirstParameter();
+      else
+        lpar = Interf.LastParameter();
+      BB.Range(EdgeSurf, fpar, lpar);
+      VerFopFad[is] = (isfirst)? TopExp::FirstVertex(EdgeSurf)
+        : TopExp::LastVertex(EdgeSurf);
+      gp_Pnt aPnt = CurveEdgeSurf->Value((isfirst)? fpar : lpar);
+      BB.UpdateVertex(VerFopFad[is], aPnt, 0.);
+    }
+    /////
 
     Handle(BRepAdaptor_HCurve2d) pced = new BRepAdaptor_HCurve2d();
     pced->ChangeCurve2d().Initialize(CPadArc.Arc(),Fv);
@@ -861,7 +882,9 @@ void ChFi3d_Builder::PerformOneCorner(const Standard_Integer Index,
       throw Standard_Failure("OneCorner : echec calcul intersection");
 
     //jgv
-    aNewEdge = BRepLib_MakeEdge(Cc);
+    aNewEdge = BRepLib_MakeEdge(Cc,
+                                VerFopFad[IFopArc], VerFopFad[IFadArc],
+                                Cc->FirstParameter(), Cc->LastParameter());
     BB.UpdateEdge(aNewEdge, tolreached);
     TopLoc_Location aLoc;
     BB.UpdateEdge(aNewEdge, Ps, DStr.Surface(Fd->Surf()).Surface(), aLoc, 0.);
@@ -1299,8 +1322,10 @@ void ChFi3d_Builder::PerformOneCorner(const Standard_Integer Index,
       throw Standard_Failure("OneCorner : echec calcul intersection");
 
     //jgv
-    TopoDS_Vertex CommonVertexForNewEdgeAndZobEdge = TopExp::FirstVertex(aNewEdge);
-    TopoDS_Edge aZobEdge = BRepLib_MakeEdge(zob3d, Vtx, CommonVertexForNewEdgeAndZobEdge);
+    //TopoDS_Vertex CommonVertexForNewEdgeAndZobEdge = TopExp::FirstVertex(aNewEdge);
+    TopoDS_Edge aZobEdge = BRepLib_MakeEdge(zob3d,
+                                            Vtx, VerFopFad[IFopArc],
+                                            zob3d->FirstParameter(), zob3d->LastParameter());
     BB.UpdateEdge(aZobEdge, tolreached);
     /*
     Handle(Geom2d_Curve) AdjustedZob2dop;
