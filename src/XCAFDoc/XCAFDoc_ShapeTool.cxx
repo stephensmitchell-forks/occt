@@ -1031,8 +1031,11 @@ Standard_Boolean XCAFDoc_ShapeTool::IsSubShape (const TDF_Label &shapeL,
 					     const TopoDS_Shape &sub) const
 {
   Handle(XCAFDoc_ShapeMapTool) A;
-  if ( ! shapeL.FindAttribute(XCAFDoc_ShapeMapTool::GetID(), A) )
-    return Standard_False;
+  if (!shapeL.FindAttribute(XCAFDoc_ShapeMapTool::GetID(), A)) {
+    A = XCAFDoc_ShapeMapTool::Set(shapeL);
+    TopoDS_Shape aShape = GetShape(shapeL);
+    A->SetShape(aShape);
+  }
   
   //TopoDS_Shape S = GetShape ( shapeL );
   //return ! S.IsNull() && CheckSubShape ( S, sub );
