@@ -16,7 +16,7 @@
 #ifndef _Select3D_SensitiveSet_Header
 #define _Select3D_SensitiveSet_Header
 
-#include <BVH_PrimitiveSet.hxx>
+#include <BVH_PrimitiveSet3d.hxx>
 #include <Select3D_BndBox3d.hxx>
 #include <Select3D_BVHBuilder3d.hxx>
 #include <Select3D_SensitiveEntity.hxx>
@@ -113,12 +113,12 @@ protected:
 
   //! The purpose of this class is to provide a link between BVH_PrimitiveSet
   //! and Select3D_SensitiveSet instance to build BVH tree for set of sensitives.
-  class BvhPrimitiveSet : public BVH_PrimitiveSet<Standard_Real, 3>
+  class BvhPrimitiveSet : public BVH_PrimitiveSet3d
   {
   public:
 
     //! Empty constructor.
-    BvhPrimitiveSet() : BVH_PrimitiveSet<Standard_Real, 3> (Handle(Select3D_BVHBuilder3d)()) {}
+    BvhPrimitiveSet() : BVH_PrimitiveSet3d (Handle(Select3D_BVHBuilder3d)()) {}
 
     //! Destructor.
     ~BvhPrimitiveSet() {}
@@ -137,7 +137,7 @@ protected:
     virtual Select3D_BndBox3d Box (const Standard_Integer theIdx) const Standard_OVERRIDE { return mySensitiveSet->Box (theIdx); }
 
     //! Make inherited method Box() visible to avoid CLang warning
-    using BVH_PrimitiveSet<Standard_Real, 3>::Box;
+    using BVH_PrimitiveSet3d::Box;
 
     //! Returns center of sensitive with index theIdx in the set along the given axis theAxis
     virtual Standard_Real Center (const Standard_Integer theIdx,

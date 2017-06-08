@@ -162,11 +162,12 @@ public:
 
 //! Shared pointer to quad BVH (QBVH) tree.
 typedef opencascade::handle<BVH_Tree<Standard_ShortReal, 3, BVH_QuadTree> > QuadBvhHandle;
+typedef BVH_Triangulation<Standard_ShortReal, 3> OpenGl_BVHTriangulation3f;
 
 //! Triangulation of single OpenGL primitive array.
-class OpenGl_TriangleSet : public BVH_Triangulation<Standard_ShortReal, 3>
+class OpenGl_TriangleSet : public OpenGl_BVHTriangulation3f
 {
-  DEFINE_STANDARD_RTTIEXT(OpenGl_TriangleSet, BVH_Triangulation)
+  DEFINE_STANDARD_RTTIEXT(OpenGl_TriangleSet, OpenGl_BVHTriangulation3f)
 public:
 
   //! Value of invalid material index to return in case of errors.

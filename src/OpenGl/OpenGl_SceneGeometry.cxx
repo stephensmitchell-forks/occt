@@ -31,7 +31,7 @@ namespace
   static const BVH_Vec4f ZERO_VEC_4F;
 }
 
-IMPLEMENT_STANDARD_RTTIEXT(OpenGl_TriangleSet, BVH_Triangulation)
+IMPLEMENT_STANDARD_RTTIEXT(OpenGl_TriangleSet, OpenGl_BVHTriangulation3f)
 
 // =======================================================================
 // function : OpenGl_RaytraceMaterial

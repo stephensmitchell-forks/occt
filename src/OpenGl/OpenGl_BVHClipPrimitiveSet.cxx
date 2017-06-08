@@ -18,7 +18,7 @@
 #include <BVH_BinnedBuilder.hxx>
 #include <Graphic3d_GraphicDriver.hxx>
 
-IMPLEMENT_STANDARD_RTTIEXT(OpenGl_BVHClipPrimitiveSet, BVH_PrimitiveSet)
+IMPLEMENT_STANDARD_RTTIEXT(OpenGl_BVHClipPrimitiveSet, BVH_PrimitiveSet3d)
 
 // =======================================================================
 // function : OpenGl_BVHClipPrimitiveSet

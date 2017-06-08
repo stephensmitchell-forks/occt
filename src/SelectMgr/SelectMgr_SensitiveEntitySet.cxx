@@ -18,14 +18,14 @@
 #include <Select3D_SensitiveEntity.hxx>
 #include <SelectMgr_SensitiveEntity.hxx>
 
-IMPLEMENT_STANDARD_RTTIEXT(SelectMgr_SensitiveEntitySet, BVH_PrimitiveSet)
+IMPLEMENT_STANDARD_RTTIEXT(SelectMgr_SensitiveEntitySet, BVH_PrimitiveSet3d)
 
 //=======================================================================
 // function : SelectMgr_SensitiveEntitySet
 // purpose  :
 //=======================================================================
 SelectMgr_SensitiveEntitySet::SelectMgr_SensitiveEntitySet (const Handle(Select3D_BVHBuilder3d)& theBuilder)
-: BVH_PrimitiveSet<Standard_Real, 3> (theBuilder)
+: BVH_PrimitiveSet3d (theBuilder)
 {
   //
 }
