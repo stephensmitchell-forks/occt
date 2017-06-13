@@ -30,6 +30,7 @@
 #include <BRepOffset_SimpleOffset.hxx>
 #include <BRepTools_Modifier.hxx>
 #include <Geom_TrimmedCurve.hxx>
+#include <Geom_Line.hxx>
 #include <Geom2d_Line.hxx>
 #include <GeomFill_Generator.hxx>
 #include <Extrema_LocateExtPC.hxx>
@@ -421,6 +422,18 @@ Standard_Boolean BRepOffset_MakeSimpleOffset::BuildMissingWalls(const BRepTools_
   return Standard_True;
 }
 
+// used in BuildWallFace
+static Standard_Boolean isLinear(const TopoDS_Edge& theEdge)
+{
+  Standard_Real aU1, aU2;
+  Handle(Geom_Curve) aCurve = BRep_Tool::Curve(theEdge, aU1, aU2);
+  while (aCurve->IsKind(STANDARD_TYPE(Geom_TrimmedCurve)))
+  {
+    aCurve = Handle(Geom_TrimmedCurve)::DownCast(aCurve)->BasisCurve();
+  }
+  return !aCurve.IsNull() && aCurve->IsKind(STANDARD_TYPE(Geom_Line));
+}
+
 //=============================================================================
 //function : BuildWallFace
 //purpose  :
@@ -505,15 +518,18 @@ TopoDS_Face BRepOffset_MakeSimpleOffset::BuildWallFace(const BRepTools_Modifier&
 
   // Try to build using simple planar approach.
   TopoDS_Face aF;
-  try
+  if (isLinear(anOrigCopy) && isLinear(aWall1) && isLinear(aNewEdge) && isLinear(aWall2))
   {
-    // Call of face maker is wrapped by try/catch since it generates exceptions sometimes.
-    BRepLib_MakeFace aFM(aWire, Standard_True);
-    if (aFM.IsDone())
-      aF = aFM.Face();
-  }
-  catch(Standard_Failure)
-  {
+    try
+    {
+      // Call of face maker is wrapped by try/catch since it generates exceptions sometimes.
+      BRepLib_MakeFace aFM(aWire, Standard_True);
+      if (aFM.IsDone())
+        aF = aFM.Face();
+    }
+    catch (Standard_Failure)
+    {
+    }
   }
 
   if (aF.IsNull()) // Exception in face maker or result is not computed.
