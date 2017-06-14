@@ -26,6 +26,7 @@
 #include <Standard_Integer.hxx>
 #include <Standard_Boolean.hxx>
 #include <ChFiDS_ChamfMethod.hxx>
+#include <ChFiDS_ChamfMode.hxx>
 #include <ChFiDS_SecHArray1.hxx>
 #include <math_Vector.hxx>
 #include <TopAbs_Orientation.hxx>
@@ -114,8 +115,14 @@ public:
   //! contour of index <IC> in the DS
   Standard_EXPORT void GetDistAngle (const Standard_Integer IC, Standard_Real& Dis, Standard_Real& Angle, Standard_Boolean& DisOnFace1) const;
   
+  //! set the mode of shamfer
+  Standard_EXPORT void SetMode (const ChFiDS_ChamfMode theMode);
+  
   //! renvoi la methode des chanfreins utilisee
   Standard_EXPORT ChFiDS_ChamfMethod IsChamfer (const Standard_Integer IC) const;
+  
+  //! returns the mode of chamfer used
+  Standard_EXPORT ChFiDS_ChamfMode Mode () const;
   
   //! Reset tous rayons du contour IC.
   Standard_EXPORT void ResetContour (const Standard_Integer IC);
@@ -197,7 +204,7 @@ private:
   
   Standard_EXPORT void ConexFaces (const Handle(ChFiDS_Spine)& Sp, const Standard_Integer IEdge, TopoDS_Face& F1, TopoDS_Face& F2) const;
 
-
+  ChFiDS_ChamfMode   myMode;
 
 
 };

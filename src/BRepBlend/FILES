@@ -16,6 +16,8 @@ BRepBlend_BlendTool.hxx
 BRepBlend_BlendTool.lxx
 BRepBlend_Chamfer.hxx
 BRepBlend_ChamfInv.hxx
+BRepBlend_ConstHeight.hxx
+BRepBlend_ConstHeightInv.hxx
 BRepBlend_ChAsym.hxx
 BRepBlend_ChAsymInv.hxx
 BRepBlend_ConstRad.hxx
