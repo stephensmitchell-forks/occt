@@ -1,5 +1,5 @@
 // Created on: 1996-06-06
-// Created by: Stagiaire Xuan Trang PHAMPHU
+// Created by: Julia Gerasimova
 // Copyright (c) 1996-1999 Matra Datavision
 // Copyright (c) 1999-2014 OPEN CASCADE SAS
 //
@@ -14,8 +14,8 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#ifndef _BlendFunc_ChamfInv_HeaderFile
-#define _BlendFunc_ChamfInv_HeaderFile
+#ifndef _BlendFunc_ConstHeightInv_HeaderFile
+#define _BlendFunc_ConstHeightInv_HeaderFile
 
 #include <Standard.hxx>
 #include <Standard_DefineAlloc.hxx>
@@ -23,7 +23,6 @@
 
 #include <Standard_Integer.hxx>
 #include <Standard_Boolean.hxx>
-#include <BlendFunc_Corde.hxx>
 #include <BlendFunc_GenChamfInv.hxx>
 #include <math_Vector.hxx>
 #include <Standard_Real.hxx>
@@ -34,14 +33,14 @@ class math_Matrix;
 
 
 
-class BlendFunc_ChamfInv  : public BlendFunc_GenChamfInv
+class BlendFunc_ConstHeightInv  : public BlendFunc_GenChamfInv
 {
 public:
 
   DEFINE_STANDARD_ALLOC
 
   
-  Standard_EXPORT BlendFunc_ChamfInv(const Handle(Adaptor3d_HSurface)& S1, const Handle(Adaptor3d_HSurface)& S2, const Handle(Adaptor3d_HCurve)& C);
+  Standard_EXPORT BlendFunc_ConstHeightInv(const Handle(Adaptor3d_HSurface)& S1, const Handle(Adaptor3d_HSurface)& S2, const Handle(Adaptor3d_HCurve)& C);
   
   Standard_EXPORT Standard_Boolean IsSolution (const math_Vector& Sol, const Standard_Real Tol) Standard_OVERRIDE;
   
@@ -57,8 +56,8 @@ public:
   //! False otherwise.
   Standard_EXPORT Standard_Boolean Derivatives (const math_Vector& X, math_Matrix& D) Standard_OVERRIDE;
   
-  Standard_EXPORT void Set (const Standard_Real Dist1,
-                            const Standard_Real Dist2,
+  Standard_EXPORT void Set (const Standard_Real aHeight,
+                            const Standard_Real,
                             const Standard_Integer Choix) Standard_OVERRIDE;
 
 
@@ -72,12 +71,25 @@ protected:
 
 private:
 
+  Standard_Real Height;
 
+  Standard_Real param;
+  Standard_Real sign1;
+  Standard_Real sign2;
 
-  BlendFunc_Corde corde1;
-  BlendFunc_Corde corde2;
-
-
+  gp_Pnt ptgui;
+  gp_Vec nplan;
+  Standard_Real normtg;
+  Standard_Real theD;
+  gp_Vec d1gui;
+  gp_Vec d2gui;
+  
+  gp_Pnt pts1;
+  gp_Pnt pts2;
+  gp_Vec d1u1;
+  gp_Vec d1v1;
+  gp_Vec d1u2;
+  gp_Vec d1v2;
 };
 
 
@@ -86,4 +98,4 @@ private:
 
 
 
-#endif // _BlendFunc_ChamfInv_HeaderFile
+#endif // _BlendFunc_ConstHeightInv_HeaderFile

@@ -24,6 +24,8 @@
 #include <BRepAdaptor_Surface.hxx>
 #include <BRepBlend_Chamfer.hxx>
 #include <BRepBlend_ChamfInv.hxx>
+#include <BRepBlend_ConstHeight.hxx>
+#include <BRepBlend_ConstHeightInv.hxx>
 #include <BRepBlend_ChAsym.hxx>
 #include <BRepBlend_ChAsymInv.hxx>
 #include <BRepBlend_Line.hxx>
@@ -180,6 +182,7 @@ ChFi3d_ChBuilder::ChFi3d_ChBuilder(const TopoDS_Shape& S,
 				   const Standard_Real Ta) : 
 				          ChFi3d_Builder(S, Ta)
 {
+  myMode = ChFiDS_ClassicChamfer;
 }
 
 
@@ -246,6 +249,8 @@ void  ChFi3d_ChBuilder::Add(const Standard_Real Dis,
       Sp = new ChFiDS_ChamfSpine(tolesp);
       Handle(ChFiDS_ChamfSpine) 
         Spine = Handle(ChFiDS_ChamfSpine)::DownCast(Sp);
+
+      Spine->SetMode(myMode);
 
       Spine->SetEdges(E_wnt);
       if(PerformElement(Spine)){
@@ -611,6 +616,16 @@ void ChFi3d_ChBuilder::GetDistAngle(const Standard_Integer  IC,
 }
 
 //=======================================================================
+//function : SetMode
+//purpose  : set the mode of chamfer
+//=======================================================================
+
+void  ChFi3d_ChBuilder::SetMode(const ChFiDS_ChamfMode theMode)
+{
+  myMode = theMode;
+}
+
+//=======================================================================
 //function : IsChamfer
 //purpose  : 
 //=======================================================================
@@ -622,6 +637,15 @@ ChFiDS_ChamfMethod ChFi3d_ChBuilder::IsChamfer(const Standard_Integer  IC) const
 
   return ret;
 
+}
+
+//=======================================================================
+//function : Mode
+//purpose  : 
+//=======================================================================
+ChFiDS_ChamfMode ChFi3d_ChBuilder::Mode() const
+{
+  return myMode;
 }
 
 //=======================================================================
@@ -843,13 +867,23 @@ ChFi3d_ChBuilder::SimulSurf(Handle(ChFiDS_SurfData)&            Data,
     radius = Max(dis, radiusspine);
     locfleche = radius*1.e-2; //graphic criterion
 
-    BRepBlend_Chamfer Func(S1,S2,HGuide);
-    BRepBlend_ChamfInv FInv(S1,S2,HGuide); 
-    Func.Set(dis, dis, Choix);
-    FInv.Set(dis, dis, Choix);
+    BlendFunc_GenChamfer* Func;
+    BlendFunc_GenChamfInv* FInv;
+    if (chsp->Mode() == ChFiDS_ClassicChamfer)
+    {
+      Func = new BRepBlend_Chamfer(S1,S2,HGuide);
+      FInv = new BRepBlend_ChamfInv(S1,S2,HGuide);
+    }
+    else
+    {
+      Func = new BRepBlend_ConstHeight(S1,S2,HGuide);
+      FInv = new BRepBlend_ConstHeightInv(S1,S2,HGuide); 
+    }
+    Func->Set(dis, dis, Choix);
+    FInv->Set(dis, dis, Choix);
     
     done = SimulData(Data,HGuide,lin,S1,I1,S2,I2,
-		     Func,FInv,PFirst,MaxStep,locfleche,
+		     *Func,*FInv,PFirst,MaxStep,locfleche,
 		     TolGuide,First,Last,Inside,Appro,Forward,
 		     Soldep,4,RecOnS1,RecOnS2);
 
@@ -867,7 +901,7 @@ ChFi3d_ChBuilder::SimulSurf(Handle(ChFiDS_SurfData)&            Data,
       p.ParametersOnS1(u1,v1);
       p.ParametersOnS2(u2,v2);
       ww = p.Parameter();
-      Func.Section(ww,u1,v1,u2,v2,p1,p2,line); 
+      Func->Section(ww,u1,v1,u2,v2,p1,p2,line); 
       isec.Set(line,p1,p2);
       if(i == 1) {pf1.SetCoord(u1,v1); pf2.SetCoord(u2,v2);} 
       if(i == nbp) {pl1.SetCoord(u1,v1); pl2.SetCoord(u2,v2);} 
@@ -1297,8 +1331,16 @@ Standard_Boolean ChFi3d_ChBuilder::PerformFirstSection
     Standard_Real dis;
     chsp->GetDist(dis);
     
-    BRepBlend_Chamfer Func(S1,S2,HGuide);
-    Func.Set(dis,dis,Choix);
+    BlendFunc_GenChamfer* Func;
+    if (chsp->Mode() == ChFiDS_ClassicChamfer)
+    {
+      Func = new BRepBlend_Chamfer(S1,S2,HGuide);
+    }
+    else
+    {
+      Func = new BRepBlend_ConstHeight(S1,S2,HGuide);
+    }
+    Func->Set(dis,dis,Choix);
     BRepBlend_Walking TheWalk(S1,S2,I1,I2,HGuide);
     
     //calculate an approximate starting solution
@@ -1309,8 +1351,8 @@ Standard_Boolean ChFi3d_ChBuilder::PerformFirstSection
     ( HGuide->Curve() ).D1(Par,ptgui,d1gui);
     //  ptgui = (S1->Surface()).Value(SolDep(1),SolDep(2));
     
-    Func.Set(Par);
-    Func.Tangent(SolDep(1),SolDep(2),SolDep(3),SolDep(4),TgF,TgL,tmp1,tmp2);
+    Func->Set(Par);
+    Func->Tangent(SolDep(1),SolDep(2),SolDep(3),SolDep(4),TgF,TgL,tmp1,tmp2);
     
     Standard_Boolean rev1 = Standard_False;
     Standard_Boolean rev2 = Standard_False;
@@ -1350,7 +1392,7 @@ Standard_Boolean ChFi3d_ChBuilder::PerformFirstSection
       (proj2.Point()).Parameter(SolDep(3),SolDep(4)); 
     }
     
-    return TheWalk.PerformFirstSection(Func,Par,SolDep,
+    return TheWalk.PerformFirstSection(*Func,Par,SolDep,
 				       tolesp,TolGuide,Pos1,Pos2);
   }
   else if (chsp->IsChamfer() == ChFiDS_TwoDist)  {
@@ -1610,19 +1652,29 @@ ChFi3d_ChBuilder::PerformSurf(ChFiDS_SequenceOfSurfData&          SeqData,
   if(intl) Last = chsp->LastParameter(chsp->NbEdges());
 
   if (chsp->IsChamfer() == ChFiDS_Sym) {
-    BRepBlend_Chamfer  Func(S1,S2,HGuide);
-    BRepBlend_ChamfInv FInv(S1,S2,HGuide);
+    BlendFunc_GenChamfer* Func;
+    BlendFunc_GenChamfInv* FInv;
+    if (chsp->Mode() == ChFiDS_ClassicChamfer)
+    {
+      Func = new BRepBlend_Chamfer(S1,S2,HGuide);
+      FInv = new BRepBlend_ChamfInv(S1,S2,HGuide);
+    }
+    else
+    {
+      Func = new BRepBlend_ConstHeight(S1,S2,HGuide);
+      FInv = new BRepBlend_ConstHeightInv(S1,S2,HGuide); 
+    }
     Standard_Real dis;
     chsp->GetDist(dis);
-    Func.Set(dis, dis, Choix);
-    FInv.Set(dis, dis, Choix);
+    Func->Set(dis, dis, Choix);
+    FInv->Set(dis, dis, Choix);
       
-    done = ComputeData(Data,HGuide,Spine,lin,S1,I1,S2,I2,Func,FInv,
+    done = ComputeData(Data,HGuide,Spine,lin,S1,I1,S2,I2,*Func,*FInv,
 		       PFirst,MaxStep,Fleche,TolGuide,First,Last,
 		       Inside,Appro,Forward,Soldep,intf,intl,
 		       gd1,gd2,gf1,gf2,RecOnS1,RecOnS2);
     if(!done) return Standard_False; // ratrappage possible PMN 14/05/1998
-    done = CompleteData(Data,Func,lin,S1,S2,Or,gd1,gd2,gf1,gf2);
+    done = CompleteData(Data,*Func,lin,S1,S2,Or,gd1,gd2,gf1,gf2);
     if(!done) throw Standard_Failure("PerformSurf : Fail of approximation!");
   }
   else if (chsp->IsChamfer() == ChFiDS_TwoDist) {
