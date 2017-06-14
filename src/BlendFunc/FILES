@@ -1,5 +1,9 @@
 BlendFunc.cxx
 BlendFunc.hxx
+BlendFunc_GenChamfer.cxx
+BlendFunc_GenChamfer.hxx
+BlendFunc_GenChamfInv.cxx
+BlendFunc_GenChamfInv.hxx
 BlendFunc_Chamfer.cxx
 BlendFunc_Chamfer.hxx
 BlendFunc_ChamfInv.cxx
@@ -30,3 +34,7 @@ BlendFunc_SectionShape.hxx
 BlendFunc_Tensor.cxx
 BlendFunc_Tensor.hxx
 BlendFunc_Tensor.lxx
+BlendFunc_ConstHeight.cxx
+BlendFunc_ConstHeight.hxx
+BlendFunc_ConstHeightInv.cxx
+BlendFunc_ConstHeightInv.hxx

@@ -171,6 +171,16 @@ void BRepFilletAPI_MakeChamfer::GetDistAngle(const Standard_Integer IC,
 }
 
 //=======================================================================
+//function : SetMode
+//purpose  : 
+//=======================================================================
+
+void BRepFilletAPI_MakeChamfer::SetMode(const ChFiDS_ChamfMode theMode)
+{
+  myBuilder.SetMode(theMode);
+}
+
+//=======================================================================
 //function : IsSymetric
 //purpose  : 
 //===============================================================

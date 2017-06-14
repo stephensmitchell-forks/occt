@@ -124,6 +124,9 @@ public:
   //! contour of index <IC> in the DS
   Standard_EXPORT void GetDistAngle (const Standard_Integer IC, Standard_Real& Dis, Standard_Real& Angle, Standard_Boolean& DisOnFace1) const;
   
+  //! Sets the mode of chamfer
+  Standard_EXPORT void SetMode (const ChFiDS_ChamfMode theMode);
+  
   //! return True if chamfer symetric false else.
   Standard_EXPORT Standard_Boolean IsSymetric (const Standard_Integer IC) const;
   
