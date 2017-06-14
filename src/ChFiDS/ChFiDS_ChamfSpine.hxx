@@ -23,6 +23,7 @@
 #include <Standard_Real.hxx>
 #include <Standard_Boolean.hxx>
 #include <ChFiDS_ChamfMethod.hxx>
+#include <ChFiDS_ChamfMode.hxx>
 #include <ChFiDS_Spine.hxx>
 
 
@@ -53,9 +54,13 @@ public:
   
   Standard_EXPORT void SetDistAngle (const Standard_Real Dis, const Standard_Real Angle, const Standard_Boolean DisOnF1);
   
+  Standard_EXPORT void SetMode (const ChFiDS_ChamfMode theMode);
+  
   //! Return the method of chamfers used
   Standard_EXPORT ChFiDS_ChamfMethod IsChamfer() const;
 
+  //! Return the mode of chamfers used
+  Standard_EXPORT ChFiDS_ChamfMode Mode() const;
 
 
 
@@ -74,6 +79,7 @@ private:
   Standard_Boolean dison1;
   Standard_Real angle;
   ChFiDS_ChamfMethod mChamf;
+  ChFiDS_ChamfMode   myMode;
 
 
 };

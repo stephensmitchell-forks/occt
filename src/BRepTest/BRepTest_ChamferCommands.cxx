@@ -28,6 +28,68 @@
 
 #include <Precision.hxx>
 
+//===============================================================================
+// function : chamfheight
+// purpose  : command to construct chamfers with constant height on several edges
+//            Here the chamfer is propagated on tangential edges to the 
+//            required edge
+//===============================================================================
+ 
+static Standard_Integer chamfheight(Draw_Interpretor& di,
+                                    Standard_Integer narg, 
+                                    const char** a)
+{
+  if (narg < 6)
+    return 1;
+
+  TopoDS_Shape S = DBRep::Get(a[2]);
+  if (S.IsNull()) return 1;
+  
+  TopoDS_Edge E;
+  TopoDS_Face F;
+  Standard_Real height;
+  Standard_Integer i      = 3;
+  Standard_Integer NbArg  = 3;
+  
+  BRepFilletAPI_MakeChamfer aMCh(S);
+  aMCh.SetMode(ChFiDS_ConstHeightChamfer);
+  
+  while (i + NbArg <= narg) {
+    TopoDS_Shape aLocalEdge(DBRep::Get(a[i], TopAbs_EDGE));
+    E = TopoDS::Edge(aLocalEdge);
+    TopoDS_Shape aLocalFace(DBRep::Get(a[i + 1], TopAbs_FACE));
+    F = TopoDS::Face(aLocalFace);
+    //      E = TopoDS::Edge(DBRep::Get(a[i], TopAbs_EDGE));
+    //      F = TopoDS::Face(DBRep::Get(a[i + 1], TopAbs_FACE));
+    if (!E.IsNull() && !F.IsNull() && (aMCh.Contour(E) == 0) )  {
+      height = Draw::Atof(a[i + 2]);
+      
+      if (height > Precision::Confusion()) 
+        aMCh.Add(height,E ,F);
+    }
+    i += NbArg;
+  }
+  
+  // compute the chamfer and display the result
+  if (aMCh.NbContours() == 0 )
+  {
+    //cout<<"No suitable edges to chamfer"<<endl;
+    di<<"No suitable edges to chamfer\n";
+    return 1;
+  }
+  else aMCh.Build();
+  
+  if (aMCh.IsDone()){
+    DBRep::Set(a[1],aMCh);
+    return 0;
+  }
+  else {
+    //cout<<"compute of chamfer failed"<<endl;
+    di<<"compute of chamfer failed\n";
+    return 1;
+  }
+}
+
 //=========================================================================
 // function : chamfer
 // purpose  : command to construct chamfers on several edges
@@ -36,9 +98,8 @@
 //=========================================================================
  
 static Standard_Integer chamfer(Draw_Interpretor& di,
-				Standard_Integer narg, 
-				const char** a)
-     
+                                Standard_Integer narg, 
+                                const char** a)
 {
   // check the argument number of the command
   if (narg == 1) {
@@ -177,4 +238,6 @@ void  BRepTest::ChamferCommands(Draw_Interpretor& theCommands)
   theCommands.Add("chamf",
 		  "for help call chamf without arguments",__FILE__,chamfer,g);
 
+  theCommands.Add("chamfheight",
+		  "chamfheight result shape edge face height",__FILE__,chamfheight,g);
 }

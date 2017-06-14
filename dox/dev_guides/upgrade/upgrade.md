@@ -1395,3 +1395,9 @@ if (anError != Storage_VSOk)
 Since 7.2.0 version, method *IsPeriodic()* returns the corresponding status of periodicity of the basis curve regardless of closure status of the adaptor curve (see method *IsClosed()*).
 Method *IsClosed()* for adaptor can return false even on periodic curve, in the case if its parametric range is not full period, e.g. for adaptor on circle in range [0, @f$ \pi @f$].
 In previous versions, *IsPeriodic()* always returned false if *IsClosed()* returned false.
+
+@subsection upgrade_720_New_functionality_of_BRepFilletAPI_MakeChamfer_Algo New functionality of BRepFilletAPI_MakeChamfer algorithm
+
+  A new functionality has been added to *BRepFilletAPI_MakeChamfer* algorithm:
+- constant height (the section of chamfer is isosceles triangle, its height is constant in all sections).
+  A new DRAW Test Harness command *chamfheight* has been added for this new functionality.
