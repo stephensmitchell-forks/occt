@@ -1,7 +1,5 @@
-// Created on: 1996-06-06
-// Created by: Julia Gerasimova
-// Copyright (c) 1996-1999 Matra Datavision
-// Copyright (c) 1999-2014 OPEN CASCADE SAS
+// Created by: Julia GERASIMOVA
+// Copyright (c) 2015 OPEN CASCADE SAS
 //
 // This file is part of Open CASCADE Technology software library.
 //
