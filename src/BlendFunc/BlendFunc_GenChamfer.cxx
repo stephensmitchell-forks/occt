@@ -1,7 +1,5 @@
-// Created on: 1996-06-05
-// Created by: Stagiaire Xuan Trang PHAMPHU
-// Copyright (c) 1996-1999 Matra Datavision
-// Copyright (c) 1999-2014 OPEN CASCADE SAS
+// Created by: Julia GERASIMOVA
+// Copyright (c) 2015 OPEN CASCADE SAS
 //
 // This file is part of Open CASCADE Technology software library.
 //
@@ -13,9 +11,6 @@
 //
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
-
-// Modified : 20/08/96 PMN Ajout des methodes (Nb)Intervals et IsRationnal
-// Modified : 30/12/96 PMN Ajout GetMinimalWeight, GetSectionSize;
 
 #include <Adaptor3d_HCurve.hxx>
 #include <Adaptor3d_HSurface.hxx>

@@ -1,7 +1,5 @@
-// Created on: 1993-12-02
-// Created by: Jacques GOUSSARD
-// Copyright (c) 1993-1999 Matra Datavision
-// Copyright (c) 1999-2014 OPEN CASCADE SAS
+// Created by: Julia GERASIMOVA
+// Copyright (c) 2015 OPEN CASCADE SAS
 //
 // This file is part of Open CASCADE Technology software library.
 //
@@ -13,10 +11,6 @@
 //
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
-
-// Modified 09/09/1996 PMN Adde Nb(Intervalls), IsRationnal
-//                         Optimisation, use of GetCircle
-// Modified 20/02/1998 PMN Singular surfaces management
 
 #include <Adaptor3d_HCurve.hxx>
 #include <Adaptor3d_HSurface.hxx>
@@ -283,13 +277,13 @@ const gp_Vec2d& BlendFunc_ConstHeight::Tangent2dOnS2 () const
 //=======================================================================
 
 void BlendFunc_ConstHeight::Tangent(const Standard_Real U1,
-				 const Standard_Real V1,
-				 const Standard_Real U2,
-				 const Standard_Real V2,
-				 gp_Vec& TgF,
-				 gp_Vec& TgL,
-				 gp_Vec& NmF,
-				 gp_Vec& NmL) const
+                                    const Standard_Real V1,
+                                    const Standard_Real U2,
+                                    const Standard_Real V2,
+                                    gp_Vec& TgF,
+                                    gp_Vec& TgL,
+                                    gp_Vec& NmF,
+                                    gp_Vec& NmL) const
 {
   gp_Pnt pt1,pt2;
   gp_Vec d1u1,d1v1,d1u2,d1v2;

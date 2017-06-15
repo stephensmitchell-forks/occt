@@ -1,7 +1,5 @@
-// Created on: 1996-06-06
-// Created by: Stagiaire Xuan Trang PHAMPHU
-// Copyright (c) 1996-1999 Matra Datavision
-// Copyright (c) 1999-2014 OPEN CASCADE SAS
+// Created by: Julia GERASIMOVA
+// Copyright (c) 2015 OPEN CASCADE SAS
 //
 // This file is part of Open CASCADE Technology software library.
 //
@@ -126,7 +124,7 @@ public:
   //! Sets the distances and the "quadrant".
   Standard_EXPORT virtual void Set (const Standard_Real Dist1,
                                     const Standard_Real Dist2,
-                                    const Standard_Integer Choix) Standard_OVERRIDE = 0;
+                                    const Standard_Integer Choix) = 0;
   
   //! Returns False
   Standard_EXPORT Standard_Boolean IsRational() const Standard_OVERRIDE;
