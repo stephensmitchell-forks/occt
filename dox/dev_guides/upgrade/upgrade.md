@@ -1391,3 +1391,7 @@ if (anError != Storage_VSOk)
 Since 7.2.0 version, method *IsPeriodic()* returns the corresponding status of periodicity of the basis curve regardless of closure status of the adaptor curve (see method *IsClosed()*).
 Method *IsClosed()* for adaptor can return false even on periodic curve, in the case if its parametric range is not full period, e.g. for adaptor on circle in range [0, @f$ \pi @f$].
 In previous versions, *IsPeriodic()* always returned false if *IsClosed()* returned false.
+
+@subsection upgrade_720_Creation_SurfaceOfLinearExtrusion
+
+Since 7.2.0 version, it will be impossible to create the SurfaceOfLinearExtrusion from the linear basis curve (*Line* or *BSpline* curve with only two poles) in the direction parallel to the direction of that curve. The *Standard_ConstructionError* exception will be thrown in this case.

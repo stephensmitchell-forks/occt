@@ -43,30 +43,32 @@ DEFINE_STANDARD_HANDLE(Geom_SurfaceOfLinearExtrusion, Geom_SweptSurface)
 //! surface"), e.g. a generalized cylinder. Such a surface
 //! is obtained by sweeping a curve (called the "extruded
 //! curve" or "basis") in a given direction (referred to as
-//! the "direction of extrusion" and defined by a unit vector).
+//! the "direction of extrusion" and defined by a unit vector).<br>
 //! The u parameter is along the extruded curve. The v
 //! parameter is along the direction of extrusion.
 //! The parameter range for the u parameter is defined
 //! by the reference curve.
 //! The parameter range for the v parameter is ] -
 //! infinity, + infinity [.
-//! The position of the curve gives the origin of the v parameter.
-//! The surface is "CN" in the v parametric direction.
+//! The position of the curve gives the origin of the v parameter.<br>
+//! The surface is "CN" in the v parametric direction.<br>
 //! The form of a surface of linear extrusion is generally a
-//! ruled surface (GeomAbs_RuledForm). It can be:
+//! ruled surface (GeomAbs_RuledForm). It can be:<br>
 //! - a cylindrical surface, if the extruded curve is a circle,
 //! or a trimmed circle, with an axis parallel to the
-//! direction of extrusion (GeomAbs_CylindricalForm), or
+//! direction of extrusion (GeomAbs_CylindricalForm), or<br>
 //! - a planar surface, if the extruded curve is a line
-//! (GeomAbs_PlanarForm).
+//! (GeomAbs_PlanarForm).<br>
 //! Note: The surface of extrusion is built from a copy of
 //! the original basis curve, so the original curve is not
-//! modified when the surface is modified.
-//! Warning
-//! Degenerate surfaces are not detected. A degenerate
-//! surface is obtained, for example, when the extruded
-//! curve is a line and the direction of extrusion is parallel
-//! to that line.
+//! modified when the surface is modified.<br>
+//! Warning: Not all cases of the creation of the degenerated
+//! surfaces are detected.<br>
+//! Only the following case is currently detected:<br>
+//! - The extruded curve is a line (or a BSpline with only two poles)
+//! and the direction of extrusion is parallel to that line.<br>
+//! The exception <i>Standard_ConstructionError</> will be thrown in
+//! this case.
 class Geom_SurfaceOfLinearExtrusion : public Geom_SweptSurface
 {
 
@@ -81,18 +83,25 @@ public:
   //! . a cylindrical surface if the extruded curve is a circle or
   //! a trimmed circle (CylindricalForm),
   //! . a plane surface if the extruded curve is a Line (PlanarForm).
-  //! Warnings :
-  //! Degenerated surface cases are not detected. For example if the
-  //! curve C is a line and V is parallel to the direction of this
-  //! line.
+  //! Warning: Not all cases of the creation of the degenerated
+  //! surfaces are detected.<br>
+  //! Only the following case is currently detected:<br>
+  //! - The given curve is a line (or a BSpline with only two poles)
+  //! and the given direction of extrusion is parallel to that line.<br>
+  //! The exception <i>Standard_ConstructionError</> will be thrown in
+  //! this case.
   Standard_EXPORT Geom_SurfaceOfLinearExtrusion(const Handle(Geom_Curve)& C, const gp_Dir& V);
   
   //! Assigns V as the "direction of extrusion" for this
-  //! surface of linear extrusion.
+  //! surface of linear extrusion.<br>
+  //! Throws the exception <i>Standard_ConstructionError</> if the given direction is
+  //! parallel to the direction of the basisCurve.
   Standard_EXPORT void SetDirection (const gp_Dir& V);
   
   //! Modifies this surface of linear extrusion by redefining
-  //! its "basis curve" (the "extruded curve").
+  //! its "basis curve" (the "extruded curve").<br>
+  //! Throws the exception <i>Standard_ConstructionError</> if the direction
+  //! of extrusion is parallel to the direction of the given curve.
   Standard_EXPORT void SetBasisCurve (const Handle(Geom_Curve)& C);
   
   //! Changes the orientation of this surface of linear

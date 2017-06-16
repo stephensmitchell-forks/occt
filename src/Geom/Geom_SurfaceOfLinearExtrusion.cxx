@@ -64,6 +64,9 @@ typedef gp_Vec  Vec;
 typedef gp_XYZ  XYZ;
 
 
+static
+ Standard_Boolean IsParallel(const Handle(Geom_Curve)& theCurve,
+                             const gp_Dir& theDir);
 
 //=======================================================================
 //function : Copy
@@ -84,15 +87,19 @@ Handle(Geom_Geometry) Geom_SurfaceOfLinearExtrusion::Copy () const
 //purpose  : 
 //=======================================================================
 
-Geom_SurfaceOfLinearExtrusion::Geom_SurfaceOfLinearExtrusion 
-  ( const Handle(Geom_Curve)& C, 
-    const Dir& V) {
-
-   basisCurve = Handle(Geom_Curve)::DownCast(C->Copy());  // Copy 10-03-93
-   direction  = V;
-   smooth     = C->Continuity();
-   myEvaluator = new GeomEvaluator_SurfaceOfExtrusion(basisCurve, direction);
- }
+Geom_SurfaceOfLinearExtrusion::Geom_SurfaceOfLinearExtrusion
+ (const Handle(Geom_Curve)& C,
+  const Dir& V)
+{
+  if (IsParallel(C, V))
+    throw Standard_ConstructionError("Geom_SurfaceOfLinearExtrusion - "
+      "direction of the extrusion coincides with the direction of the basis line");
+  //
+  basisCurve = Handle(Geom_Curve)::DownCast(C->Copy());  // Copy 10-03-93
+  direction = V;
+  smooth = C->Continuity();
+  myEvaluator = new GeomEvaluator_SurfaceOfExtrusion(basisCurve, direction);
+}
 
 
 //=======================================================================
@@ -149,6 +156,9 @@ void Geom_SurfaceOfLinearExtrusion::SetDirection (const Dir& V)
 {
   direction = V;
   myEvaluator->SetDirection(direction);
+  if (!basisCurve.IsNull() && IsParallel(basisCurve, direction))
+    throw Standard_ConstructionError("Geom_SurfaceOfLinearExtrusion::SetDirection - "
+      "direction of the extrusion coincides with the direction of the basis line");
 }
 
 
@@ -158,10 +168,13 @@ void Geom_SurfaceOfLinearExtrusion::SetDirection (const Dir& V)
 //=======================================================================
 
 void Geom_SurfaceOfLinearExtrusion::SetBasisCurve (const Handle(Geom_Curve)& C) {
-
-   smooth = C->Continuity();
-   basisCurve = Handle(Geom_Curve)::DownCast(C->Copy());  // Copy 10-03-93
-   myEvaluator = new GeomEvaluator_SurfaceOfExtrusion(basisCurve, direction);
+  if (IsParallel(C, direction))
+    throw Standard_ConstructionError("Geom_SurfaceOfLinearExtrusion::SetBasisCurve - "
+      "direction of the extrusion coincides with the direction of the basis line");
+  //
+  smooth = C->Continuity();
+  basisCurve = Handle(Geom_Curve)::DownCast(C->Copy());  // Copy 10-03-93
+  myEvaluator = new GeomEvaluator_SurfaceOfExtrusion(basisCurve, direction);
 }
 
 
@@ -390,4 +403,44 @@ gp_GTrsf2d Geom_SurfaceOfLinearExtrusion::ParametricTransformation
   TU.SetAffinity(Axis, basisCurve->ParametricTransformation(T));
  
   return TU * TV;
+}
+
+//=======================================================================
+//function : IsParallel
+//purpose  : Checks if the direction of the given curve is parallel to
+//           the given direction (only lines and BSplines are currently checked)
+//=======================================================================
+Standard_Boolean IsParallel(const Handle(Geom_Curve)& theCurve,
+                            const gp_Dir& theDir)
+{
+  Handle(Geom_Curve) aCurve = theCurve;
+  while (aCurve->IsKind(STANDARD_TYPE(Geom_TrimmedCurve)) ||
+         aCurve->IsKind(STANDARD_TYPE(Geom_OffsetCurve)))
+  {
+    aCurve = aCurve->IsKind(STANDARD_TYPE(Geom_TrimmedCurve)) ?
+      Handle(Geom_TrimmedCurve)::DownCast(aCurve)->BasisCurve() :
+      Handle(Geom_OffsetCurve) ::DownCast(aCurve)->BasisCurve();
+  }
+  //
+  Standard_Boolean bParallel = Standard_False;
+  if (aCurve->IsKind(STANDARD_TYPE(Geom_Line)) ||
+      aCurve->IsKind(STANDARD_TYPE(Geom_BSplineCurve)))
+  {
+    if (aCurve->IsKind(STANDARD_TYPE(Geom_Line)))
+    {
+      gp_Lin aLine = Handle(Geom_Line)::DownCast(aCurve)->Lin();
+      bParallel = aLine.Position().Direction().IsParallel(theDir, Precision::Angular());
+    }
+    else
+    {
+      Handle(Geom_BSplineCurve) aBSplineC = Handle(Geom_BSplineCurve)::DownCast(aCurve);
+      if (aBSplineC->Degree() == 1 && aBSplineC->NbPoles() == 2)
+      {
+        gp_Vec aBSplDir(aBSplineC->Pole(1), aBSplineC->Pole(2));
+        bParallel = (aBSplDir.Magnitude() < gp::Resolution()) ||
+                     aBSplDir.IsParallel(theDir, Precision::Angular());
+      }
+    }
+  }
+  return bParallel;
 }
