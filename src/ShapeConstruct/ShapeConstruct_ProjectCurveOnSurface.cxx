@@ -892,7 +892,6 @@ Standard_Boolean ShapeConstruct_ProjectCurveOnSurface::PerformByProjLib(Handle(G
   
   gp_Pnt p3d;
   gp_Pnt2d p2d;
-  Standard_Integer i;
   Standard_Real isoValue=0., isoPar1=0., isoPar2=0., tPar=0., tdeb,tfin;
   Standard_Real Cf, Cl, parf, parl; //szv#4:S4163:12Mar99 dist not needed
   
@@ -985,29 +984,26 @@ Standard_Boolean ShapeConstruct_ProjectCurveOnSurface::PerformByProjLib(Handle(G
       ChangeCycle = Standard_True;
   //for( i = 1; i <= nbrPnt; i ++) {
   for(Standard_Integer ii=1; ii<=nbrPnt; ii++) {
-    if(ChangeCycle) //skl for OCC3430
-      i=nbrPnt-ii+1;
-    else
-      i=ii;
-    p3d = points(i);
+    const Standard_Integer aPntIndex = ChangeCycle ? (nbrPnt - ii + 1) : ii;
+    p3d = points (aPntIndex);
     if (isoParam) {
       
       if (isoPar2d3d) {
-	if (isoPar2 > isoPar1) tPar = params(i);
-	else                   tPar = t1 + t2 - params(i);
+	if (isoPar2 > isoPar1) tPar = params (aPntIndex);
+	else                   tPar = t1 + t2 - params(aPntIndex);
       } else if (!isAnalytic) {
 	// projection to iso
-	if      (i==1)      tPar = isoPar1;
-	else if (i==nbrPnt) tPar = isoPar2;
+	if      (aPntIndex == 1)      tPar = isoPar1;
+	else if (aPntIndex == nbrPnt) tPar = isoPar2;
 	else {
-	  tPar = pout(i);
+	  tPar = pout(aPntIndex);
 	  //:S4030  ShapeAnalysis_Curve().Project (cIso,p3d,myPreci,pt,tPar,Cf,Cl); //szv#4:S4163:12Mar99 `dist=` not needed
 	}
       }
       
       if (!isoPar2d3d && isAnalytic) {
-	if      (i == 1)      p2d = valueP1;
-	else if (i == nbrPnt) p2d = valueP2;
+	if      (aPntIndex == 1)      p2d = valueP1;
+	else if (aPntIndex == nbrPnt) p2d = valueP2;
         else {
 	  p2d = mySurf->NextValueOfUV(p2d,p3d, myPreci, //%12 pdn 15.02.99 optimizing
 				      Precision::Confusion()+1000*gap); //:q1
@@ -1020,17 +1016,17 @@ Standard_Boolean ShapeConstruct_ProjectCurveOnSurface::PerformByProjLib(Handle(G
     }
     
     else {
-      if     ( (i == 1)      && p1OnIso)  p2d = valueP1;
-      else if( (i == nbrPnt) && p2OnIso)  p2d = valueP2;
+      if     ( (aPntIndex == 1)      && p1OnIso)  p2d = valueP1;
+      else if( (aPntIndex == nbrPnt) && p2OnIso)  p2d = valueP2;
       else  {// general case (not an iso)  mais attention aux singularites !
         // first and last points are already computed by getLine()
-        if ( (i == 1 || i == nbrPnt))
+        if (aPntIndex == 1 || aPntIndex == nbrPnt)
         {
           if (!isRecompute)
           {
-            p2d = pnt2d(i);
+            p2d = pnt2d (aPntIndex);
             gap = mySurf->Gap();
-            if (i == 1) {
+            if (aPntIndex == 1) {
               isFromCashe = isFromCasheLine;
               aSavedPoint = p2d;
             }
@@ -1045,7 +1041,7 @@ Standard_Boolean ShapeConstruct_ProjectCurveOnSurface::PerformByProjLib(Handle(G
               if ( myCashe3d[j].SquareDistance ( p3d ) < myPreci*myPreci )
               {
                 p2d = mySurf->NextValueOfUV (myCashe2d[j], p3d, myPreci, Precision::Confusion()+gap);
-                if (i == 1)
+                if (aPntIndex == 1)
                 {
                   isFromCashe = Standard_True;
                   aSavedPoint = myCashe2d[j];
@@ -1066,12 +1062,12 @@ Standard_Boolean ShapeConstruct_ProjectCurveOnSurface::PerformByProjLib(Handle(G
 	gap = mySurf->Gap();
       }
     }
-    pnt2d (i) = p2d;
+    pnt2d (aPntIndex) = p2d;
     if ( ii > 1 ) {
       if(ChangeCycle)
-        p2d.SetXY ( 2. * p2d.XY() - pnt2d(i+1).XY() );
+        p2d.SetXY ( 2. * p2d.XY() - pnt2d(aPntIndex + 1).XY() );
       else
-        p2d.SetXY ( 2. * p2d.XY() - pnt2d(i-1).XY() );
+        p2d.SetXY ( 2. * p2d.XY() - pnt2d(aPntIndex - 1).XY() );
     }
   }
 
@@ -1165,16 +1161,17 @@ Standard_Boolean ShapeConstruct_ProjectCurveOnSurface::PerformByProjLib(Handle(G
     Standard_Boolean ToAdjust = Standard_False;
     
     // On decalle toujours le suivant
-    for (i = 2; i <= pnt2d.Length(); i++) {
-      //      dist2d = pnt2d (i-1).Distance(pnt2d (i));
-      Standard_Real CurX = pnt2d (i).X();
+    for (Standard_Integer aPntIter = 2; aPntIter <= pnt2d.Length(); ++aPntIter)
+    {
+      //      dist2d = pnt2d (aPntIter - 1).Distance(pnt2d (aPntIter));
+      Standard_Real CurX = pnt2d (aPntIter).X();
       dist2d = Abs (CurX - prevX);
       if (dist2d > ( Up / 2) )
       {
         InsertAdditionalPointOrAdjust(ToAdjust, 1, Up, TolOnUPeriod,
                                       CurX, prevX,
                                       c3d,
-                                      i,
+                                      aPntIter,
                                       points, params, pnt2d);
       }
       prevX = CurX;
@@ -1190,8 +1187,8 @@ Standard_Boolean ShapeConstruct_ProjectCurveOnSurface::PerformByProjLib(Handle(G
       if ( midX > ul ) shiftX = -Up;
       else if ( midX < uf ) shiftX = Up;
       if ( shiftX != 0. ) 
-        for ( i=1; i <= pnt2d.Length(); i++ )
-          pnt2d(i).SetX ( pnt2d(i).X() + shiftX );
+        for (Standard_Integer aPntIter = 1; aPntIter <= pnt2d.Length(); ++aPntIter)
+          pnt2d (aPntIter).SetX ( pnt2d (aPntIter).X() + shiftX );
       }
   }
   // Si la surface est VCLosed, on recadre les points
@@ -1231,16 +1228,17 @@ Standard_Boolean ShapeConstruct_ProjectCurveOnSurface::PerformByProjLib(Handle(G
     Standard_Boolean ToAdjust = Standard_False;
     
     // On decalle toujours le suivant
-    for (i = 2; i <= pnt2d.Length(); i ++) {
+    for (Standard_Integer aPntIter = 2; aPntIter <= pnt2d.Length(); ++aPntIter)
+    {
       //      dist2d = pnt2d (i-1).Distance(pnt2d (i));
-      Standard_Real CurY = pnt2d (i).Y();
+      Standard_Real CurY = pnt2d (aPntIter).Y();
       dist2d = Abs (CurY - prevY);
       if (dist2d > ( Vp / 2) )
       {
         InsertAdditionalPointOrAdjust(ToAdjust, 2, Vp, TolOnVPeriod,
                                       CurY, prevY,
                                       c3d,
-                                      i,
+                                      aPntIter,
                                       points, params, pnt2d);
       }
       prevY = CurY;
@@ -1256,17 +1254,17 @@ Standard_Boolean ShapeConstruct_ProjectCurveOnSurface::PerformByProjLib(Handle(G
       if ( midY > vl ) shiftY = -Vp;
       else if ( midY < vf ) shiftY = Vp;
       if ( shiftY != 0. ) 
-        for ( i=1; i <= pnt2d.Length(); i++ )
-          pnt2d(i).SetY ( pnt2d(i).Y() + shiftY );
+        for (Standard_Integer aPntIter = 1; aPntIter <= pnt2d.Length(); ++aPntIter)
+          pnt2d(aPntIter).SetY ( pnt2d(aPntIter).Y() + shiftY );
       }
   }
   
   //#69 rln 01.03.99 S4135 bm2_sd_t4-A.stp entity 30
   //#78 rln 12.03.99 S4135
   if (mySurf->IsVClosed(myPreci) || mySurf->Surface()->IsKind (STANDARD_TYPE (Geom_SphericalSurface))) {
-    for (i = 2; i <= pnt2d.Length(); i++) {
+    for (Standard_Integer aPntIter = 2; aPntIter <= pnt2d.Length(); ++aPntIter) {
       //#1 rln 11/02/98 ca_exhaust.stp entity #9869 dist2d = pnt2d (i-1).Distance(pnt2d (i));
-      dist2d = Abs (pnt2d(i).Y() - pnt2d(i - 1).Y());
+      dist2d = Abs (pnt2d (aPntIter).Y() - pnt2d (aPntIter - 1).Y());
       if (dist2d > ( Vp / 2) ) {
 	// ATTENTION : il faut regarder ou le decalage se fait.
 	// si plusieurs points sont decalles, il faut plusieurs passes
@@ -1282,10 +1280,10 @@ Standard_Boolean ShapeConstruct_ProjectCurveOnSurface::PerformByProjLib(Handle(G
 	Standard_Boolean currOnLast  = Standard_False;
 	
 	//  .X ?  plutot .Y ,  non ?
-	Standard_Real distPrevVF = Abs(pnt2d (i-1).Y() - vf);
-	Standard_Real distPrevVL = Abs(pnt2d (i-1).Y() - vl);
-	Standard_Real distCurrVF = Abs(pnt2d (i).Y() - vf);
-	Standard_Real distCurrVL = Abs(pnt2d (i).Y() - vl);
+	Standard_Real distPrevVF = Abs(pnt2d (aPntIter - 1).Y() - vf);
+	Standard_Real distPrevVL = Abs(pnt2d (aPntIter - 1).Y() - vl);
+	Standard_Real distCurrVF = Abs(pnt2d (aPntIter).Y() - vf);
+	Standard_Real distCurrVL = Abs(pnt2d (aPntIter).Y() - vl);
 	
 	Standard_Real theMin = distPrevVF;
 	prevOnFirst = Standard_True;
@@ -1309,28 +1307,28 @@ Standard_Boolean ShapeConstruct_ProjectCurveOnSurface::PerformByProjLib(Handle(G
 	}
 	//  Modifs RLN/Nijni  3-DEC-1997
 	if (prevOnFirst) {
-	  // on decalle le point (i-1) en V Last
-	  gp_Pnt2d newPrev(pnt2d (i-1).X(), vf); // instead of  vl RLN/Nijni
-	  pnt2d (i-1) = newPrev;
+	  // on decalle le point (aPntIter - 1) en V Last
+	  gp_Pnt2d newPrev(pnt2d (aPntIter - 1).X(), vf); // instead of  vl RLN/Nijni
+	  pnt2d (aPntIter - 1) = newPrev;
 	}
 	else if (prevOnLast) {
-	  // on decalle le point (i-1) en V first
-	  gp_Pnt2d newPrev(pnt2d (i-1).X(), vl); // instead of  vf RLN/Nijni
-	  pnt2d (i-1) = newPrev;
+	  // on decalle le point (aPntIter - 1) en V first
+	  gp_Pnt2d newPrev(pnt2d (aPntIter - 1).X(), vl); // instead of  vf RLN/Nijni
+	  pnt2d (aPntIter - 1) = newPrev;
 	}
 	else if (currOnFirst) {
-	  // on decalle le point (i) en V Last
-	  gp_Pnt2d newCurr(pnt2d (i).X(),vf);  // instead of vl  RLN/Nijni
-	  pnt2d (i) = newCurr;
+	  // on decalle le point (aPntIter) en V Last
+	  gp_Pnt2d newCurr(pnt2d (aPntIter).X(),vf);  // instead of vl  RLN/Nijni
+	  pnt2d (aPntIter) = newCurr;
 	}
 	else if (currOnLast) {
-	  // on decalle le point (i) en V First
-	  gp_Pnt2d newCurr(pnt2d (i).X(), vl); // instead of vf  RLN/Nijni
-	  pnt2d (i) = newCurr;
+	  // on decalle le point (aPntIter) en V First
+	  gp_Pnt2d newCurr(pnt2d (aPntIter).X(), vl); // instead of vf  RLN/Nijni
+	  pnt2d (aPntIter) = newCurr;
 	}
 	// on verifie
 #ifdef OCCT_DEBUG
-	dist2d = pnt2d (i-1).Distance(pnt2d (i));
+	dist2d = pnt2d (aPntIter - 1).Distance(pnt2d (aPntIter));
 	if (dist2d > ( Vp / 2) ) {
 	  cout << "Echec dans le recadrage" << endl;
 	}
@@ -1668,12 +1666,12 @@ void ShapeConstruct_ProjectCurveOnSurface::CorrectExtremity(const Handle(Geom_Cu
       SecondPointOfLine.Coord(3-IndCoord) < FinishCoord)
     return; //the curve passes through the singularity, do nothing
   //Check correctness of <EndPoint>
-  Standard_Real PrevDist =
-    Abs(SecondPointOfLine.Coord(IndCoord) - FirstPointOfLine.Coord(IndCoord));
-  Standard_Real CurDist =
-    Abs(EndPoint.Coord(IndCoord) - SecondPointOfLine.Coord(IndCoord));
-  if (CurDist <= 2*PrevDist)
-    return;
+  {
+    const Standard_Real aPrevDist = Abs(SecondPointOfLine.Coord(IndCoord) - FirstPointOfLine.Coord(IndCoord));
+    const Standard_Real aCurDist  = Abs(EndPoint.Coord(IndCoord) - SecondPointOfLine.Coord(IndCoord));
+    if (aCurDist <= 2 * aPrevDist)
+      return;
+  }
   
   gp_Pnt2d FinishPoint = (theIsUiso)? gp_Pnt2d(FinishCoord, SecondPointOfLine.Y()) :
     gp_Pnt2d(SecondPointOfLine.X(), FinishCoord); //first approximation of <FinishPoint>
@@ -1718,10 +1716,9 @@ void ShapeConstruct_ProjectCurveOnSurface::CorrectExtremity(const Handle(Geom_Cu
     //Check <SecondPointOfLine> to be enough close to <FirstPointOfLine>
     //because when a projected point is too close to singularity,
     //the non-constant coordinate becomes random.
-    Standard_Real PrevDist = Abs(FirstPointOfLine.Coord(IndCoord) - PrevPoint.Coord(IndCoord));
-    Standard_Real CurDist =
-      Abs(SecondPointOfLine.Coord(IndCoord) - FirstPointOfLine.Coord(IndCoord));
-    if (CurDist > 2*PrevDist)
+    const Standard_Real aPrevDist = Abs(FirstPointOfLine.Coord(IndCoord) - PrevPoint.Coord(IndCoord));
+    const Standard_Real aCurDist  = Abs(SecondPointOfLine.Coord(IndCoord) - FirstPointOfLine.Coord(IndCoord));
+    if (aCurDist > 2 * aPrevDist)
       break;
   }
 

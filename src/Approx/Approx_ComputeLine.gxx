@@ -813,20 +813,20 @@ void Approx_ComputeLine::Perform(const MultiLine& Line)
       }
     }
     TheMultiCurve = AppParCurves_MultiCurve();
-    MultiLine OtherLine;
-    Standard_Boolean OtherLineMade = Standard_False;
+    MultiLine anOtherLine0;
+    Standard_Boolean isOtherLine0Made = Standard_False;
     Standard_Integer indbad = 0;
     alldone = Compute(Line, myfirstpt, mylastpt, TheParam, thetol3d, thetol2d, indbad);
     if (indbad != 0)
     {
-      OtherLineMade = LineTool::MakeMLOneMorePoint(Line, myfirstpt, mylastpt, indbad, OtherLine);
+      isOtherLine0Made = LineTool::MakeMLOneMorePoint(Line, myfirstpt, mylastpt, indbad, anOtherLine0);
     }
-    if (OtherLineMade)
+    if (isOtherLine0Made)
     {
       myIsClear = Standard_True;
       //++myMultiLineNb;
       myNbPlusOnePoint++;
-      Perform(OtherLine);
+      Perform(anOtherLine0);
       alldone = Standard_True;
     }
     if(!alldone && TheMultiCurve.NbCurves() > 0) {
@@ -895,11 +895,9 @@ void Approx_ComputeLine::Perform(const MultiLine& Line)
 	  // Appel recursif du decoupage:
 	  GoUp = Standard_True;
 
-	  MultiLine OtherLine =LineTool::MakeMLBetween(Line, myfirstpt, 
-						       mylastpt, nbp-1);
+	  MultiLine anOtherLine1 = LineTool::MakeMLBetween(Line, myfirstpt, mylastpt, nbp-1);
 	  
-	  Standard_Integer nbpdsotherligne = LineTool::FirstPoint(OtherLine)
-	    -LineTool::LastPoint(OtherLine);
+	  Standard_Integer nbpdsotherligne = LineTool::FirstPoint (anOtherLine1) - LineTool::LastPoint (anOtherLine1);
 
 	  //-- Si MakeML a echoue   on retourne une ligne vide
 	  if ((nbpdsotherligne == 0) || myMultiLineNb >= 3)
@@ -917,22 +915,21 @@ void Approx_ComputeLine::Perform(const MultiLine& Line)
 	    Par = Approx_IsoParametric;
 	    Parameters(Line, myfirstpt, mylastpt, Param);
 	    TheMultiCurve = AppParCurves_MultiCurve();
-            MultiLine OtherLine;
-            Standard_Boolean OtherLineMade = Standard_False;
+            MultiLine anOtherLine2;
+            Standard_Boolean isOtherLine2Made = Standard_False;
             Standard_Integer indbad = 0;
 	    Ok = Compute(Line, myfirstpt, mylastpt, Param, thetol3d, thetol2d, indbad);
             if (indbad != 0)
             {
-              OtherLineMade = LineTool::MakeMLOneMorePoint(Line, myfirstpt, mylastpt, indbad,
-                                                           OtherLine);
+              isOtherLine2Made = LineTool::MakeMLOneMorePoint(Line, myfirstpt, mylastpt, indbad, anOtherLine2);
             }
-            if (OtherLineMade)
+            if (isOtherLine2Made)
             {
               myIsClear = Standard_True;
               //++myMultiLineNb;
               myNbPlusOnePoint++;
               Par = SavePar;
-              Perform(OtherLine);
+              Perform(anOtherLine2);
               Ok = Standard_True;
             }
 
@@ -947,20 +944,19 @@ void Approx_ComputeLine::Perform(const MultiLine& Line)
 		Par = Approx_ChordLength;
 
 	      Parameters(Line, myfirstpt, mylastpt, Param);
-              OtherLineMade = Standard_False;
+        isOtherLine2Made = Standard_False;
               indbad = 0;
 	      Ok = Compute(Line, myfirstpt, mylastpt, Param, thetol3d, thetol2d, indbad);
               if (indbad != 0)
               {
-                OtherLineMade = LineTool::MakeMLOneMorePoint(Line, myfirstpt, mylastpt, indbad,
-                                                             OtherLine);
+                isOtherLine2Made = LineTool::MakeMLOneMorePoint (Line, myfirstpt, mylastpt, indbad, anOtherLine2);
               }
-              if (OtherLineMade)
+              if (isOtherLine2Made)
               {
                 myIsClear = Standard_True;
                 //++myMultiLineNb;
                 myNbPlusOnePoint++;
-                Perform(OtherLine);
+                Perform (anOtherLine2);
                 Ok = Standard_True;
               }
 	      
@@ -988,22 +984,21 @@ void Approx_ComputeLine::Perform(const MultiLine& Line)
 #ifdef OCCT_DEBUG
               if (mydebug) DUMP(TheMultiCurve);
 #endif
-              MultiLine OtherLine;
-              Standard_Boolean OtherLineMade = Standard_False;
-              Standard_Integer indbad = 0;
+              MultiLine anOtherLine3;
+              Standard_Boolean isOtherLine3Made = Standard_False;
+              Standard_Integer indbad2 = 0;
               if (!CheckMultiCurve(TheMultiCurve, Line,
                                    myfirstpt, mylastpt,
-                                   indbad))
+                                   indbad2))
               {
-                OtherLineMade = LineTool::MakeMLOneMorePoint(Line, myfirstpt, mylastpt, indbad,
-                                                             OtherLine);
+                isOtherLine3Made = LineTool::MakeMLOneMorePoint (Line, myfirstpt, mylastpt, indbad2, anOtherLine3);
               }
-              if (OtherLineMade)
+              if (isOtherLine3Made)
               {
                 myIsClear = Standard_True;
                 //++myMultiLineNb;
                 myNbPlusOnePoint++;
-                Perform(OtherLine);
+                Perform(anOtherLine3);
                 myfirstpt = mylastpt;
                 mylastpt = Thelastpt;
               }
@@ -1030,7 +1025,7 @@ void Approx_ComputeLine::Perform(const MultiLine& Line)
 	  {
 	    myIsClear = Standard_True;
 	    ++myMultiLineNb;
-	    Perform(OtherLine);
+	    Perform(anOtherLine1);
 	    myfirstpt = mylastpt;
 	    mylastpt = Thelastpt;
 	  }
@@ -1113,21 +1108,20 @@ void Approx_ComputeLine::Perform(const MultiLine& Line)
 	}
 
 	TheMultiCurve = AppParCurves_MultiCurve();
-        MultiLine OtherLine;
-        Standard_Boolean OtherLineMade = Standard_False;
+        MultiLine anOtherLine4;
+        Standard_Boolean isOtherLine4Made = Standard_False;
         Standard_Integer indbad = 0;
 	Ok = Compute(Line, myfirstpt, mylastpt, Param, thetol3d, thetol2d, indbad);
         if (indbad != 0)
         {
-          OtherLineMade = LineTool::MakeMLOneMorePoint(Line, myfirstpt, mylastpt, indbad,
-                                                       OtherLine);
+          isOtherLine4Made = LineTool::MakeMLOneMorePoint (Line, myfirstpt, mylastpt, indbad, anOtherLine4);
         }
-        if (OtherLineMade)
+        if (isOtherLine4Made)
         {
           myIsClear = Standard_True;
           //++myMultiLineNb;
           myNbPlusOnePoint++;
-          Perform(OtherLine);
+          Perform (anOtherLine4);
           Ok = Standard_True;
         }
         if (myfirstpt == Thelastpt)
