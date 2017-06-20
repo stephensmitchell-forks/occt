@@ -62,14 +62,106 @@
 #include <TopoDS_Shape.hxx>
 #include <TopoDS_Vertex.hxx>
 #include <TopTools_ListIteratorOfListOfShape.hxx>
+#include <HLRAlgo_Projector.hxx>
+#include <Adaptor3d_HSurface.hxx>
+#include <NCollection_Handle.hxx>
+#include <BRepAdaptor_HSurface.hxx>
+#include <OSD_Parallel.hxx>
+
+struct ContourSurfInfo
+{
+  ContourSurfInfo() : myDomain(NULL), mySurface(NULL)
+  {};
+
+  ContourSurfInfo(NCollection_Handle<Contap_Contour> theHFO, 
+    const Handle(BRepTopAdaptor_TopolTool)& theDomain,
+    const Handle(Adaptor3d_HSurface) theSurface) :
+  myHFO(theHFO), myDomain (theDomain.get()), mySurface (theSurface.get())
+  {};
+
+  ContourSurfInfo& operator=( const ContourSurfInfo& otherSurfInfo)
+  {
+    myHFO = otherSurfInfo.myHFO; 
+    myDomain = otherSurfInfo.myDomain;
+    mySurface = otherSurfInfo.mySurface;
+    return *this;
+  };
+
+  NCollection_Handle<Contap_Contour> myHFO;
+  const BRepTopAdaptor_TopolTool* myDomain;
+  const Adaptor3d_HSurface* mySurface;
+};
+
+struct BRTInfo 
+{
+  BRTInfo() 
+  {};
+
+  BRTInfo(BRepTopAdaptor_Tool* thepBRT, ContourSurfInfo* theCSI, const TopoDS_Face& theF ) 
+    : mypBRT (thepBRT), myCSI (theCSI), myF (theF)
+  {};
+
+  BRepTopAdaptor_Tool* mypBRT;
+  ContourSurfInfo* myCSI;
+  TopoDS_Face myF; 
+};
+
+class ParallelContourFunctor
+{
+public:
+
+  ParallelContourFunctor(NCollection_Array1<ContourSurfInfo>& theContourSurfInfo)
+    : myContourSurfInfo (theContourSurfInfo)
+  {
+  }
+
+  void operator() (const Standard_Integer theIndex) const
+  {
+    ContourSurfInfo& aCSInfo = myContourSurfInfo(theIndex);
+    aCSInfo.myHFO->Perform(aCSInfo.mySurface, aCSInfo.myDomain);
+  }
+
+private:
+  ParallelContourFunctor( const ParallelContourFunctor& );
+  ParallelContourFunctor& operator =( ParallelContourFunctor& );
+
+private:
+  NCollection_Array1<ContourSurfInfo>& myContourSurfInfo; 
+};
+
+
+class ParallelBRTInitFunctor
+{
+public:
+
+  ParallelBRTInitFunctor(NCollection_Array1<BRTInfo>& theBRTInfo)
+    : myBRTInfo (theBRTInfo)
+  {
+  }
+
+  void operator() (const Standard_Integer theIndex) const
+  {
+    BRTInfo& BI = myBRTInfo(theIndex);    
+    BI.mypBRT->Init(BI.myF,Precision::PConfusion());
+    BI.myCSI->myDomain = BI.mypBRT->GetTopolTool().get();
+    BI.myCSI->mySurface = BI.mypBRT->GetSurface().get();
+  }
+
+private:
+  ParallelBRTInitFunctor( const ParallelBRTInitFunctor& );
+  ParallelBRTInitFunctor& operator =( ParallelBRTInitFunctor& );
+
+private:
+  NCollection_Array1<BRTInfo>& myBRTInfo; 
+};
 
 //=======================================================================
 //function : Insert
 //purpose  : explore the faces and insert them
 //=======================================================================
-
 void  HLRTopoBRep_DSFiller::Insert (const TopoDS_Shape& S,
-				    Contap_Contour& FO,
+				    const HLRAlgo_Projector& P,
+                                    const gp_Vec& Vecz,
 				    HLRTopoBRep_Data& DS,
 				    BRepTopAdaptor_MapOfShapeTool& MST,
 				    const Standard_Integer nbIso)
@@ -78,35 +170,86 @@ void  HLRTopoBRep_DSFiller::Insert (const TopoDS_Shape& S,
   TopExp_Explorer ex(S,TopAbs_FACE);
   DS.Clear();
   Standard_Boolean withPCurve = Standard_True; // instead of nbIso != 0;
-  Standard_Integer f = 0;
-  
-  while (ex.More()) {
-    if (ShapeMap.Add(ex.Current())) {
-      f++;
+
+  gp_Pnt Eye;
+  gp_Dir DirZ;
+  if (P.Perspective ()) 
+    Eye.SetXYZ (P.Focus ()*Vecz.XYZ ());
+  else 
+    DirZ = Vecz;
+
+  NCollection_List<ContourSurfInfo> ContourSurfInfoList;
+  NCollection_List<BRTInfo> nonInitBRTs;
+    
+  while (ex.More()) 
+  {
+    if (ShapeMap.Add(ex.Current())) 
+    {
       TopoDS_Face S1 = TopoDS::Face(ex.Current());
       S1.Orientation(TopAbs_FORWARD);
-      Handle(BRepTopAdaptor_TopolTool) Domain; 
-      Handle(Adaptor3d_HSurface)         Surface;
-      if(MST.IsBound(S1)) {  
-	BRepTopAdaptor_Tool& BRT = MST.ChangeFind(S1);
-	Domain  = BRT.GetTopolTool();
-	Surface = BRT.GetSurface();
+      //
+      NCollection_Handle<Contap_Contour> HFO = new Contap_Contour();
+      if (P.Perspective ()) 
+        HFO->Init(Eye);
+      else 
+        HFO->Init(DirZ);
+      //
+      BRepTopAdaptor_Tool* pBRT = MST.ChangeSeek(S1);
+      if(pBRT) 
+      {
+        ContourSurfInfo CSInfo(HFO, pBRT->GetTopolTool(), pBRT->GetSurface());
+        ContourSurfInfoList.Append(CSInfo);
       }
-      else { 
-	BRepTopAdaptor_Tool BRT(S1,Precision::PConfusion());
-	MST.Bind(S1,BRT);
-	Domain  = BRT.GetTopolTool();
-	Surface = BRT.GetSurface();
+      else
+      { 
+	pBRT = MST.Bound(S1,BRepTopAdaptor_Tool());
+        BRTInfo& brtI = nonInitBRTs.Append(BRTInfo());
+        brtI.mypBRT = pBRT;
+        brtI.myCSI = &ContourSurfInfoList.Append(ContourSurfInfo(HFO, NULL, NULL));
+        brtI.myF = S1;
       }
-      FO.Perform(Surface, Domain);
-      if (FO.IsDone()) {
-	if (!FO.IsEmpty())
-	  InsertFace(f,S1,FO,DS,withPCurve);
-      }
-      if (nbIso != 0) HLRTopoBRep_FaceIsoLiner::Perform(f,S1,DS,nbIso);
     }
     ex.Next();
   }
+
+  //
+  NCollection_List<BRTInfo>::Iterator itBRTIt(nonInitBRTs);
+  NCollection_Array1<BRTInfo> nonInitBRTArr(1, nonInitBRTs.Extent());
+  Standard_Integer f = 1;
+  for (;itBRTIt.More();itBRTIt.Next(), f++)
+    nonInitBRTArr(f) = itBRTIt.Value();
+
+  ParallelBRTInitFunctor aFunctor1(nonInitBRTArr);
+  OSD_Parallel::For(nonInitBRTArr.Lower(), nonInitBRTArr.Upper() + 1, aFunctor1, false);
+  //
+
+  //
+  NCollection_List<ContourSurfInfo>::Iterator itCS(ContourSurfInfoList);
+  int nbC = ContourSurfInfoList.Extent();  
+  f = 1;
+  NCollection_Array1<ContourSurfInfo> aContourSurfInfoArray(1, nbC);
+  for (;itCS.More();itCS.Next(), f++)
+    aContourSurfInfoArray(f) = itCS.Value();
+
+  //
+  ParallelContourFunctor aFunctor(aContourSurfInfoArray);
+  OSD_Parallel::For(aContourSurfInfoArray.Lower(), aContourSurfInfoArray.Upper() + 1, aFunctor, false);
+  //
+
+  for (f = aContourSurfInfoArray.Lower(); f <= aContourSurfInfoArray.Upper(); f++)
+  {
+    ContourSurfInfo& CSInfo = aContourSurfInfoArray(f);
+    Handle(BRepAdaptor_HSurface) BrepSurf = Handle(BRepAdaptor_HSurface)::DownCast(CSInfo.mySurface);
+    const TopoDS_Face& S1 = BrepSurf->ChangeSurface().Face();
+    if (CSInfo.myHFO->IsDone()) 
+      if (!CSInfo.myHFO->IsEmpty())
+        InsertFace(f,S1,*CSInfo.myHFO,DS,withPCurve);
+
+    if (nbIso != 0) 
+      HLRTopoBRep_FaceIsoLiner::Perform(f,S1,DS,nbIso);
+  }
+
+  //
   ProcessEdges(DS);
 }
 
@@ -117,7 +260,7 @@ void  HLRTopoBRep_DSFiller::Insert (const TopoDS_Shape& S,
 
 void  HLRTopoBRep_DSFiller::InsertFace (const Standard_Integer /*FI*/,
 					const TopoDS_Face& F,
-					Contap_Contour& FO,
+					const Contap_Contour& FO,
 					HLRTopoBRep_Data& DS,
 					const Standard_Boolean withPCurve)
 {

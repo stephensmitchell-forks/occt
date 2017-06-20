@@ -286,7 +286,13 @@ void AIS_Shape::Compute(const Handle(Prs3d_Projector)& aProjector,
       OCC_CATCH_SIGNALS
       switch (TypeOfHLR()) {
         case Prs3d_TOH_Algo:
-          StdPrs_HLRShape::Add (aPresentation, SH, myDrawer, aProjector);
+          {
+            OSD_Timer tt;
+            tt.Start();
+            StdPrs_HLRShape::Add (aPresentation, SH, myDrawer, aProjector);
+            tt.Stop();
+            tt.Show();
+          }
           break;
         case Prs3d_TOH_PolyAlgo:
         default:

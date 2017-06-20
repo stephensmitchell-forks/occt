@@ -42,13 +42,14 @@ void Contap_SurfFunction::Set(const Handle(Adaptor3d_HSurface)& S)
 {
   mySurf = S;
   Standard_Integer i;
-  Standard_Integer nbs = Contap_HContTool::NbSamplePoints(S);
+  Standard_Real uinf,vinf,usup,vsup;
+  Standard_Integer nbs = Contap_HContTool::NbSamplePoints(S,uinf,vinf,usup,vsup);
   Standard_Real U,V;
   gp_Vec norm;
   if (nbs > 0) {
     myMean = 0.;
     for (i = 1; i <= nbs; i++) {
-      Contap_HContTool::SamplePoint(S,i,U,V);
+      Contap_HContTool::SamplePoint(S,i,U,V,uinf,vinf,usup,vsup);
       //      Adaptor3d_HSurfaceTool::D1(S,U,V,solpt,d1u,d1v);
       //      myMean = myMean + d1u.Crossed(d1v).Magnitude();
       Contap_SurfProps::Normale(S,U,V,solpt,norm);

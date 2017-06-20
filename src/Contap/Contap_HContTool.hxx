@@ -44,9 +44,10 @@ public:
   
   Standard_EXPORT static Standard_Integer NbSamplesV (const Handle(Adaptor3d_HSurface)& S, const Standard_Real v1, const Standard_Real v2);
   
-  Standard_EXPORT static Standard_Integer NbSamplePoints (const Handle(Adaptor3d_HSurface)& S);
+  Standard_EXPORT static Standard_Integer NbSamplePoints (const Handle(Adaptor3d_HSurface)& S, Standard_Real& uinf, Standard_Real& vinf, Standard_Real& usup, Standard_Real& vsup);
   
-  Standard_EXPORT static void SamplePoint (const Handle(Adaptor3d_HSurface)& S, const Standard_Integer Index, Standard_Real& U, Standard_Real& V);
+  Standard_EXPORT static void SamplePoint (const Handle(Adaptor3d_HSurface)& S, const Standard_Integer Index, Standard_Real& U, Standard_Real& V,
+    const Standard_Real& uinf, const Standard_Real& vinf, const Standard_Real& usup, const Standard_Real& vsup);
   
   //! Returns True if all the intersection point and edges
   //! are known on the Arc.
