@@ -24,8 +24,6 @@
 #include <gp_Pnt.hxx>
 #include <gp_Pnt2d.hxx>
 
-static Standard_Real uinf,vinf,usup,vsup;
-
 Standard_Integer Contap_HContTool::NbSamplesV
 (const Handle(Adaptor3d_HSurface)& S,
  const Standard_Real ,
@@ -125,7 +123,7 @@ Standard_Integer Contap_HContTool::NbSamplesU
 }
 
 Standard_Integer Contap_HContTool::NbSamplePoints
-(const Handle(Adaptor3d_HSurface)& S)
+(const Handle(Adaptor3d_HSurface)& S, Standard_Real& uinf, Standard_Real& vinf, Standard_Real& usup, Standard_Real& vsup)
 {
   uinf = S->FirstUParameter();
   usup = S->LastUParameter();
@@ -175,7 +173,11 @@ Standard_Integer Contap_HContTool::NbSamplePoints
 void Contap_HContTool::SamplePoint (const Handle(Adaptor3d_HSurface)& S,
                                     const Standard_Integer Index,
                                     Standard_Real& U,
-                                    Standard_Real& V )
+                                    Standard_Real& V,
+                                    const Standard_Real& uinf, 
+                                    const Standard_Real& vinf, 
+                                    const Standard_Real& usup, 
+                                    const Standard_Real& vsup)
 {
   if(S->GetType() ==   GeomAbs_BSplineSurface) {
     Standard_Integer nbIntU = NbSamplesU(S,uinf,usup)/3;

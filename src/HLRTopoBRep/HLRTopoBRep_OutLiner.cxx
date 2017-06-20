@@ -82,17 +82,7 @@ void HLRTopoBRep_OutLiner::Fill(const HLRAlgo_Projector& P,
       gp_Trsf Tr (P.Transformation ());
       Tr.Invert ();
       Vecz.Transform (Tr);
-      Contap_Contour FO;
-      if (P.Perspective ()) {
-	gp_Pnt Eye;
-	Eye.SetXYZ (P.Focus ()*Vecz.XYZ ());
-	FO.Init(Eye);
-      }
-      else {
-	gp_Dir DirZ(Vecz);
-	FO.Init(DirZ);
-      }
-      HLRTopoBRep_DSFiller::Insert(myOriginalShape,FO,myDS,MST,nbIso);
+      HLRTopoBRep_DSFiller::Insert(myOriginalShape,P,Vecz,myDS,MST,nbIso);
       BuildShape(MST);
     }
   }

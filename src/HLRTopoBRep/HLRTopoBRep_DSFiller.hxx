@@ -32,6 +32,7 @@ class TopoDS_Face;
 class TopoDS_Vertex;
 class Contap_Point;
 class TopoDS_Edge;
+class HLRAlgo_Projector;
 
 
 //! Provides methods  to  fill a HLRTopoBRep_Data.
@@ -44,7 +45,7 @@ public:
   
   //! Stores in <DS> the outlines of  <S> using the current
   //! outliner and stores the isolines in <DS> using a Hatcher.
-  Standard_EXPORT static void Insert (const TopoDS_Shape& S, Contap_Contour& FO, HLRTopoBRep_Data& DS, BRepTopAdaptor_MapOfShapeTool& MST, const Standard_Integer nbIso);
+  Standard_EXPORT static void Insert (const TopoDS_Shape& S,const HLRAlgo_Projector& P, const gp_Vec& Vecz, HLRTopoBRep_Data& DS, BRepTopAdaptor_MapOfShapeTool& MST, const Standard_Integer nbIso);
 
 
 
@@ -60,7 +61,7 @@ private:
   
   //! Stores in <DS> the outlines of  <F> using the current
   //! outliner.
-  Standard_EXPORT static void InsertFace (const Standard_Integer FI, const TopoDS_Face& F, Contap_Contour& FO, HLRTopoBRep_Data& DS, const Standard_Boolean withPCurve);
+  Standard_EXPORT static void InsertFace (const Standard_Integer FI, const TopoDS_Face& F, const Contap_Contour& FO, HLRTopoBRep_Data& DS, const Standard_Boolean withPCurve);
   
   //! Make a  vertex  from an intersection  point <P>and
   //! store it in the data structure <DS>.
