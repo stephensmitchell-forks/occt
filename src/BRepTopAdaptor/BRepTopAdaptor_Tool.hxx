@@ -46,11 +46,11 @@ public:
   
   Standard_EXPORT void Init (const Handle(Adaptor3d_HSurface)& Surface, const Standard_Real Tol2d);
   
-  Standard_EXPORT Handle(BRepTopAdaptor_TopolTool) GetTopolTool();
+  Standard_EXPORT Handle(BRepTopAdaptor_TopolTool) GetTopolTool() const;
   
   Standard_EXPORT void SetTopolTool (const Handle(BRepTopAdaptor_TopolTool)& TT);
   
-  Standard_EXPORT Handle(Adaptor3d_HSurface) GetSurface();
+  Standard_EXPORT Handle(Adaptor3d_HSurface) GetSurface() const;
   
   Standard_EXPORT void Destroy();
 ~BRepTopAdaptor_Tool()

@@ -38,10 +38,12 @@ myFlags(0),mySize(0)
 void HLRBRep_FaceData::Set (const TopoDS_Face& FG,
 			    const TopAbs_Orientation Or,
 			    const Standard_Boolean Cl,
-			    const Standard_Integer NW)
+			    const Standard_Integer NW,
+                            const Standard_Boolean isInitSurf) //TODO  isInitSurf can be deleted 
 {
   Closed(Cl);
-  Geometry().Surface(FG);
+  if (isInitSurf)
+    Geometry().Surface(FG);
   myTolerance = (Standard_ShortReal)(BRep_Tool::Tolerance(FG));
   Orientation(Or);
   Wires() = new HLRAlgo_WiresBlock(NW);

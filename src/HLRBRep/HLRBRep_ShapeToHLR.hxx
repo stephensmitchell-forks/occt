@@ -57,9 +57,9 @@ protected:
 private:
 
   
-  Standard_EXPORT static void ExploreFace (const Handle(HLRTopoBRep_OutLiner)& S, const Handle(HLRBRep_Data)& DS, const TopTools_IndexedMapOfShape& FM, const TopTools_IndexedMapOfShape& EM, Standard_Integer& i, const TopoDS_Face& F, const Standard_Boolean closed);
+  Standard_EXPORT static void ExploreFace (const Handle(HLRTopoBRep_OutLiner)& S, Handle(HLRBRep_Data)& DS, const TopTools_IndexedMapOfShape& FM, const TopTools_IndexedMapOfShape& EM, Standard_Integer& i, const TopoDS_Face& F, const Standard_Boolean closed);
   
-  Standard_EXPORT static void ExploreShape (const Handle(HLRTopoBRep_OutLiner)& S, const Handle(HLRBRep_Data)& DS, const TopTools_IndexedMapOfShape& FM, const TopTools_IndexedMapOfShape& EM);
+  Standard_EXPORT static void ExploreShape (const Handle(HLRTopoBRep_OutLiner)& S, Handle(HLRBRep_Data)& DS, const TopTools_IndexedMapOfShape& FM, const TopTools_IndexedMapOfShape& EM);
 
 
 

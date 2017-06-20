@@ -39,6 +39,7 @@
 #include <TopTools_ListIteratorOfListOfShape.hxx>
 #include <TopTools_ListOfShape.hxx>
 #include <TopTools_MapOfShape.hxx>
+#include <OSD_Parallel.hxx>
 
 //=======================================================================
 // Function : Load
@@ -173,7 +174,7 @@ HLRBRep_ShapeToHLR::Load(const Handle(HLRTopoBRep_OutLiner)& S,
 
 void
 HLRBRep_ShapeToHLR::ExploreFace(const Handle(HLRTopoBRep_OutLiner)& S,
-				const Handle(HLRBRep_Data)& DS,
+				Handle(HLRBRep_Data)& DS,
 				const TopTools_IndexedMapOfShape& FM,
 				const TopTools_IndexedMapOfShape& EM,
 				Standard_Integer& i,
@@ -193,7 +194,7 @@ HLRBRep_ShapeToHLR::ExploreFace(const Handle(HLRTopoBRep_OutLiner)& S,
   for (Ex1.Init(theFace, TopAbs_WIRE); Ex1.More(); Ex1.Next())
     nw++;
 
-  fd.Set (theFace, orient, closed, nw);
+  fd.Set (theFace, orient, closed, nw, Standard_False);
   nw = 0;
      
   for (Ex1.Init(theFace, TopAbs_WIRE); Ex1.More(); Ex1.Next()) {
@@ -234,15 +235,47 @@ HLRBRep_ShapeToHLR::ExploreFace(const Handle(HLRTopoBRep_OutLiner)& S,
 //purpose  : 
 //=======================================================================
 
+
+class ParallelSurfInitFunctor
+{
+public:
+
+  ParallelSurfInitFunctor(HLRBRep_Array1OfFData& theFaceDataArr, const TopTools_IndexedMapOfShape& theFM)
+    : myFaceDataArr (theFaceDataArr), myFM (theFM)
+  {
+  }
+
+  void operator() (const Standard_Integer theIndex) const
+  {
+    const TopoDS_Face& aF = TopoDS::Face(myFM(theIndex));     
+    HLRBRep_FaceData& fd = myFaceDataArr.ChangeValue(theIndex);
+    fd.Geometry().Surface( TopoDS::Face(aF.Oriented (TopAbs_FORWARD)));
+  }
+
+private:
+  ParallelSurfInitFunctor( const ParallelSurfInitFunctor& );
+  ParallelSurfInitFunctor& operator =( ParallelSurfInitFunctor& );
+
+private:
+  HLRBRep_Array1OfFData& myFaceDataArr; 
+  const TopTools_IndexedMapOfShape& myFM;
+};
+
+
 void
 HLRBRep_ShapeToHLR::ExploreShape (const Handle(HLRTopoBRep_OutLiner)& S,
-				  const Handle(HLRBRep_Data)& DS,
+				  Handle(HLRBRep_Data)& DS,
 				  const TopTools_IndexedMapOfShape& FM,
 				  const TopTools_IndexedMapOfShape& EM)
 {
   TopTools_MapOfShape ShapeMap;
   TopExp_Explorer exshell, exface, exedge;
-  Standard_Integer i = 0;
+  Standard_Integer i = 1;
+
+  ParallelSurfInitFunctor aFunctor2(DS->FDataArray(), FM);
+  OSD_Parallel::For(1, FM.Extent() + 1, aFunctor2, false);
+
+  i = 0;
 
   for (exshell.Init (S->OriginalShape(), TopAbs_SHELL);
        exshell.More (); 
@@ -276,7 +309,7 @@ HLRBRep_ShapeToHLR::ExploreShape (const Handle(HLRTopoBRep_OutLiner)& S,
       delete [] flag;
       flag = NULL;
     }
-      
+
     for (exface.Init(exshell.Current(), TopAbs_FACE);
 	 exface.More(); 
 	 exface.Next()) {

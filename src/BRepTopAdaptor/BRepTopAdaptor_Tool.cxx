@@ -67,7 +67,7 @@ void BRepTopAdaptor_Tool::Init(const Handle(Adaptor3d_HSurface)& surface,
   myloaded=Standard_True;
 }
 
-Handle(BRepTopAdaptor_TopolTool) BRepTopAdaptor_Tool::GetTopolTool() { 
+Handle(BRepTopAdaptor_TopolTool) BRepTopAdaptor_Tool::GetTopolTool() const{ 
   if(myloaded) { 
     return(myTopolTool);
   }
@@ -79,7 +79,7 @@ Handle(BRepTopAdaptor_TopolTool) BRepTopAdaptor_Tool::GetTopolTool() {
   }
 }
 
-Handle(Adaptor3d_HSurface)  BRepTopAdaptor_Tool::GetSurface() { 
+Handle(Adaptor3d_HSurface)  BRepTopAdaptor_Tool::GetSurface() const{ 
   if(myloaded) { 
     return(myHSurface);
   }

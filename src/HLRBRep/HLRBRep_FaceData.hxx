@@ -46,7 +46,7 @@ public:
   //! if the face  belongs to a  closed  volume. <NW> is
   //! the number of wires ( or block  of  edges ) of the
   //! face.
-  Standard_EXPORT void Set (const TopoDS_Face& FG, const TopAbs_Orientation Or, const Standard_Boolean Cl, const Standard_Integer NW);
+  Standard_EXPORT void Set (const TopoDS_Face& FG, const TopAbs_Orientation Or, const Standard_Boolean Cl, const Standard_Integer NW, const Standard_Boolean isInitSurf);
   
   //! Set <NE> the number  of  edges of the wire  number
   //! <WI>.
