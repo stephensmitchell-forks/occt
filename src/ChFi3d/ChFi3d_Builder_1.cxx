@@ -51,6 +51,12 @@
 #include <ChFiDS_SurfData.hxx>
 #include <Geom2d_Curve.hxx>
 #include <Geom_Surface.hxx>
+#include <Geom_OffsetSurface.hxx>
+#include <Geom_RectangularTrimmedSurface.hxx>
+#include <GeomInt_IntSS.hxx>
+#include <Extrema_ExtPC.hxx>
+#include <GeomConvert_CompCurveToBSplineCurve.hxx>
+#include <Geom_BSplineCurve.hxx>
 #include <gp_Pnt.hxx>
 #include <gp_Pnt2d.hxx>
 #include <gp_Vec.hxx>
@@ -73,10 +79,149 @@
 #include <TopOpeBRepDS_Surface.hxx>
 #include <TopOpeBRepTool_TOOL.hxx>
 #include <TopTools_ListIteratorOfListOfShape.hxx>
+#include <BRepLib_MakeEdge.hxx>
 
 #ifdef OCCT_DEBUG
 extern Standard_Boolean ChFi3d_GetcontextFORCEBLEND(); 
 #endif
+
+static void ReorderFaces(TopoDS_Face&         theF1,
+                         TopoDS_Face&         theF2,
+                         const TopoDS_Face&   theFirstFace,
+                         const TopoDS_Edge&   thePrevEdge,
+                         const TopoDS_Vertex& theCommonVertex)
+{
+  if (theF1.IsSame(theFirstFace))
+    return;
+  else if (theF2.IsSame(theFirstFace))
+  {
+    TopoDS_Face TmpFace = theF1; theF1 = theF2; theF2 = TmpFace;
+    return;
+  }
+
+  TopTools_IndexedDataMapOfShapeListOfShape VEmapFirst, VEmap;
+  TopExp::MapShapesAndAncestors(theFirstFace, TopAbs_VERTEX, TopAbs_EDGE, VEmapFirst);
+  TopExp::MapShapesAndAncestors(theF1, TopAbs_VERTEX, TopAbs_EDGE, VEmap);
+
+  const TopTools_ListOfShape& ElistFirst = VEmapFirst.FindFromKey(theCommonVertex);
+  const TopTools_ListOfShape& Elist      = VEmap.FindFromKey(theCommonVertex);
+  TopTools_ListIteratorOfListOfShape itlfirst(ElistFirst);
+  for (; itlfirst.More(); itlfirst.Next())
+  {
+    const TopoDS_Shape& anEdge = itlfirst.Value();
+    if (anEdge.IsSame(thePrevEdge))
+      continue;
+    TopTools_ListIteratorOfListOfShape itl(Elist);
+    for(; itl.More(); itl.Next())
+      if (anEdge.IsSame(itl.Value()))
+        return;
+  }
+
+  TopoDS_Face TmpFace = theF1; theF1 = theF2; theF2 = TmpFace;
+}
+
+static TopoDS_Edge MakeOffsetEdge(const TopoDS_Edge&         theEdge,
+                                  const Standard_Real        Distance,
+                                  const BRepAdaptor_Surface& S1,
+                                  const BRepAdaptor_Surface& S2)
+{
+  TopoDS_Edge OffsetEdge;
+  
+  TopoDS_Face F1 = S1.Face();
+  TopoDS_Face F2 = S2.Face();
+  Handle(Geom_Surface) GS1 = BRep_Tool::Surface(F1);
+  Handle(Geom_Surface) TrGS1 =
+    new Geom_RectangularTrimmedSurface(GS1,
+                                       S1.FirstUParameter(), S1.LastUParameter(),
+                                       S1.FirstVParameter(), S1.LastVParameter());
+  Standard_Real Offset = -Distance;
+  if (F1.Orientation() == TopAbs_REVERSED)
+    Offset = Distance;
+  Handle(Geom_OffsetSurface) MakeOffsetSurf = new Geom_OffsetSurface(TrGS1, Offset);
+  Handle(Geom_Surface) OffsetTrGS1 = MakeOffsetSurf->Surface();
+  Handle(Geom_Surface) GS2 = BRep_Tool::Surface(F2);
+  Handle(Geom_Surface) TrGS2 =
+    new Geom_RectangularTrimmedSurface(GS2,
+                                       S2.FirstUParameter(), S2.LastUParameter(),
+                                       S2.FirstVParameter(), S2.LastVParameter());
+  GeomInt_IntSS Intersector(OffsetTrGS1, TrGS2, Precision::Confusion());
+  if (!Intersector.IsDone() || Intersector.NbLines() == 0)
+  {
+    return OffsetEdge;
+  }
+
+  Handle(Geom_Curve) IntCurve = Intersector.Line(1);
+
+  if (Intersector.NbLines() > 1)
+  {
+    GeomConvert_CompCurveToBSplineCurve Concat;
+    for (Standard_Integer indc = 1; indc <= Intersector.NbLines(); indc++)
+    {
+      IntCurve = Intersector.Line(indc);
+      Handle(Geom_BoundedCurve) aBoundedCurve = Handle(Geom_BoundedCurve)::DownCast(IntCurve);
+      Standard_Boolean Success = Concat.Add(aBoundedCurve, 1.e-5, Standard_True);
+      if (!Success)
+        Concat.Add(aBoundedCurve, 1.e-5, Standard_False);
+    }
+    IntCurve = Concat.BSplineCurve();
+  }
+  if (IntCurve.IsNull())
+  {
+    return OffsetEdge;
+  }
+  //Projection of extremities onto <IntCurve>
+  GeomAdaptor_Curve GAcurve(IntCurve);
+  gp_Pnt Ends [2];
+  Standard_Real Params [2];
+  BRepAdaptor_Curve aBAcurve(theEdge);
+  Ends[0] = aBAcurve.Value(aBAcurve.FirstParameter());
+  Ends[1] = aBAcurve.Value(aBAcurve.LastParameter());
+  for (Standard_Integer ind_end = 0; ind_end < 2; ind_end++)
+  {
+    if (ind_end == 1 && aBAcurve.IsClosed()/*HGuide->IsPeriodic()*//*HGuide->IsClosed()*/)
+      break;
+    Extrema_ExtPC Projector(Ends[ind_end], GAcurve);
+    if (!Projector.IsDone() || Projector.NbExt() == 0)
+      return OffsetEdge;
+    Standard_Integer imin = 1;
+    for (Standard_Integer iext = 2; iext <= Projector.NbExt(); iext++)
+      if (Projector.SquareDistance(iext) < Projector.SquareDistance(imin))
+        imin = iext;
+    Params[ind_end] = Projector.Point(imin).Parameter();
+  }
+  if (aBAcurve.IsClosed()/*HGuide->IsPeriodic()*//*HGuide->IsClosed()*/)
+    Params[1] = GAcurve.LastParameter(); //temporary
+  if (Params[0] > Params[1])
+  {
+    Standard_Boolean IsClosed = Standard_False;
+    gp_Pnt fpnt = IntCurve->Value(IntCurve->FirstParameter());
+    gp_Pnt lpnt = IntCurve->Value(IntCurve->LastParameter());
+    if (fpnt.SquareDistance(lpnt) <= Precision::SquareConfusion())
+      IsClosed = Standard_True;
+    if (IsClosed)
+      Params[1] = IntCurve->LastParameter();
+    else
+    {
+      Standard_Real NewFirstPar = IntCurve->ReversedParameter(Params[0]);
+      Standard_Real NewLastPar  = IntCurve->ReversedParameter(Params[1]);
+      IntCurve->Reverse();
+      Params[0] = NewFirstPar;
+      Params[1] = NewLastPar;
+    }
+  }
+  if (aBAcurve.IsClosed()/*HGuide->IsPeriodic()*//*HGuide->IsClosed()*/) //check the direction of closed curve
+  {
+    gp_Pnt aPnt, anOffsetPnt;
+    gp_Vec Tangent, OffsetTangent;
+    aBAcurve.D1(aBAcurve.FirstParameter(), aPnt, Tangent);
+    IntCurve->D1(Params[0], anOffsetPnt, OffsetTangent);
+    if (Tangent*OffsetTangent < 0)
+      IntCurve->Reverse();
+  }
+  
+  OffsetEdge = BRepLib_MakeEdge(IntCurve, Params[0], Params[1]);
+  return OffsetEdge;
+}
 
 static TopOpeBRepDS_BuildTool mkbuildtool()
 {
@@ -576,7 +721,9 @@ void ChFi3d_Builder::PerformExtremity (const Handle(ChFiDS_Spine)& Spine)
 // the opposing faces were tangent.
 //=======================================================================
 
-Standard_Boolean ChFi3d_Builder::PerformElement(const Handle(ChFiDS_Spine)& Spine) 
+Standard_Boolean ChFi3d_Builder::PerformElement(const Handle(ChFiDS_Spine)& Spine,
+                                                const Standard_Real         Offset,
+                                                const TopoDS_Face&          theFirstFace)
 {
   Standard_Real ta = angular;
   TopTools_ListIteratorOfListOfShape It;
@@ -597,6 +744,23 @@ Standard_Boolean ChFi3d_Builder::PerformElement(const Handle(ChFiDS_Spine)& Spin
 //if(BRep_Tool::Continuity(Ec,ff1,ff2) != GeomAbs_C0) return 0;
   if (ChFi3d_isTangentFaces(Ec,ff1,ff2)) return 0;
 //  Modified by Sergey KHROMOV - Fri Dec 21 17:46:24 2001 Begin
+
+  TopoDS_Face FirstFace = ff1;
+  if (!theFirstFace.IsNull() && ff2.IsSame(theFirstFace))
+  {
+    FirstFace = ff2;
+    ff2 = ff1; ff1 = FirstFace;
+  }
+  myEdgeFirstFace.Bind(Ec, FirstFace);
+  Standard_Boolean ToRestrict = (Offset > 0)? Standard_True : Standard_False;
+  BRepAdaptor_Surface Sb1(ff1, ToRestrict);
+  BRepAdaptor_Surface Sb2(ff2, ToRestrict);
+  if (Offset > 0)
+  {
+    TopoDS_Edge OffsetEdge = MakeOffsetEdge(Ec, Offset, Sb1, Sb2);
+    OffsetEdge.Orientation(Ec.Orientation());
+    Spine->SetOffsetEdges(OffsetEdge);
+  }
   
   BRepAdaptor_Curve CEc,CEv;
   TopAbs_Orientation curor = Ec.Orientation();
@@ -668,11 +832,26 @@ Standard_Boolean ChFi3d_Builder::PerformElement(const Handle(ChFiDS_Spine)& Spin
 	  }
 	  if (OnAjoute) {
 	    Fini = Standard_False; // If this can be useful (Cf PRO14713)
+            TopoDS_Vertex CommonVertex;
+            TopExp::CommonVertex(Ec, Ev, CommonVertex);
+            TopoDS_Edge PrevEdge = Ec;
 	    Ec = Ev; 
 //	    Ec = TopoDS::Edge(Ev); 
 	    Ec.Orientation(Or1);
 	    Wl = Wf; LVEc = LVEv; 
 	    Spine->SetEdges(Ec);
+            TopoDS_Face CurF1, CurF2;
+            ChFi3d_conexfaces(Ec,CurF1,CurF2,myEFMap);
+            ReorderFaces(CurF1, CurF2, FirstFace, PrevEdge, CommonVertex);
+            myEdgeFirstFace.Bind(Ec, CurF1);
+            if (Offset > 0)
+            {
+              BRepAdaptor_Surface CurSb1(CurF1), CurSb2(CurF2);
+              TopoDS_Edge anOffsetEdge = MakeOffsetEdge(Ec, Offset, CurSb1, CurSb2);
+              anOffsetEdge.Orientation(Or1);
+              Spine->SetOffsetEdges(anOffsetEdge);
+            }
+            FirstFace = CurF1;
 	    curor = Or1;
 	    if (VStart.IsSame(LVEv)) {
 	      if (FaceTangency(Ev,Spine->Edges(1),LVEv)) {
@@ -738,11 +917,26 @@ Standard_Boolean ChFi3d_Builder::PerformElement(const Handle(ChFiDS_Spine)& Spin
 	      OnAjoute=((!rev && av1v2 < ta) || (rev && (M_PI-av1v2) < ta));
 	    }
 	    if  (OnAjoute) {
+              TopoDS_Vertex CommonVertex;
+              TopExp::CommonVertex(Ec, Ev, CommonVertex);
+              TopoDS_Edge PrevEdge = Ec;
 	      Ec = Ev; 
 //	      Ec = TopoDS::Edge(Ev); 
 	      Ec.Orientation(Or1);
 	      Wl = Wf; FVEc = FVEv; 
 	      Spine->PutInFirst(Ec);
+              TopoDS_Face CurF1, CurF2;
+              ChFi3d_conexfaces(Ec,CurF1,CurF2,myEFMap);
+              ReorderFaces(CurF1, CurF2, FirstFace, PrevEdge, CommonVertex);
+              myEdgeFirstFace.Bind(Ec, CurF1);
+              if (Offset > 0)
+              {
+                BRepAdaptor_Surface CurSb1(CurF1), CurSb2(CurF2);
+                TopoDS_Edge anOffsetEdge = MakeOffsetEdge(Ec, Offset, CurSb1, CurSb2);
+                anOffsetEdge.Orientation(Or1);
+                Spine->PutInFirstOffset(anOffsetEdge);
+              }
+              FirstFace = CurF1;
 	      curor = Or1;
 	      break;
 	    }

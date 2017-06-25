@@ -141,14 +141,3 @@ ChFiDS_ChamfMethod  ChFiDS_ChamfSpine::IsChamfer() const
 
   return mChamf;
 }
-
-//=======================================================================
-//function : Mode
-//purpose  : 
-//=======================================================================
-
-ChFiDS_ChamfMode  ChFiDS_ChamfSpine::Mode() const
-{
-
-  return myMode;
-}

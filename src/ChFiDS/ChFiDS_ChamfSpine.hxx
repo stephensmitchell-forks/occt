@@ -60,7 +60,7 @@ public:
   Standard_EXPORT ChFiDS_ChamfMethod IsChamfer() const;
 
   //! Return the mode of chamfers used
-  Standard_EXPORT ChFiDS_ChamfMode Mode() const;
+  //Standard_EXPORT ChFiDS_ChamfMode Mode() const;
 
 
 
@@ -79,7 +79,6 @@ private:
   Standard_Boolean dison1;
   Standard_Real angle;
   ChFiDS_ChamfMethod mChamf;
-  ChFiDS_ChamfMode   myMode;
 
 
 };

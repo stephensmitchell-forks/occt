@@ -46,8 +46,6 @@ class BlendFunc_ChamfInv;
 class BlendFunc_ChAsym;
 class BlendFunc_ChAsymInv;
 class BlendFunc_Tensor;
-class BlendFunc_ConstHeight;
-class BlendFunc_ConstHeightInv;
 
 
 //! This package provides a set of generic functions, that can
@@ -103,8 +101,6 @@ friend class BlendFunc_ChamfInv;
 friend class BlendFunc_ChAsym;
 friend class BlendFunc_ChAsymInv;
 friend class BlendFunc_Tensor;
-friend class BlendFunc_ConstHeight;
-friend class BlendFunc_ConstHeightInv;
 
 };
 

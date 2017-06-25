@@ -38,3 +38,7 @@ BlendFunc_ConstHeight.cxx
 BlendFunc_ConstHeight.hxx
 BlendFunc_ConstHeightInv.cxx
 BlendFunc_ConstHeightInv.hxx
+BlendFunc_ConstThroat.cxx
+BlendFunc_ConstThroat.hxx
+BlendFunc_ConstThroatInv.cxx
+BlendFunc_ConstThroatInv.hxx

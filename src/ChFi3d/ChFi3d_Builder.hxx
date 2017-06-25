@@ -30,6 +30,7 @@
 #include <ChFiDS_Regularities.hxx>
 #include <TopTools_ListOfShape.hxx>
 #include <TopTools_DataMapOfShapeListOfInteger.hxx>
+#include <TopTools_DataMapOfShapeShape.hxx>
 #include <Standard_Boolean.hxx>
 #include <Standard_Integer.hxx>
 #include <ChFiDS_ErrorStatus.hxx>
@@ -37,6 +38,9 @@
 #include <TopAbs_Orientation.hxx>
 #include <ChFiDS_SequenceOfSurfData.hxx>
 #include <TopAbs_State.hxx>
+
+#include <BRepAdaptor_Surface.hxx>
+
 class TopOpeBRepDS_HDataStructure;
 class TopOpeBRepBuild_HBuilder;
 class Standard_OutOfRange;
@@ -219,7 +223,9 @@ protected:
   
   Standard_EXPORT virtual void SetRegul() = 0;
   
-  Standard_EXPORT Standard_Boolean PerformElement (const Handle(ChFiDS_Spine)& CElement);
+  Standard_EXPORT Standard_Boolean PerformElement (const Handle(ChFiDS_Spine)& CElement,
+                                                   const Standard_Real         Offset,
+                                                   const TopoDS_Face&          theFirstFace);
   
   Standard_EXPORT void PerformExtremity (const Handle(ChFiDS_Spine)& CElement);
   
@@ -311,6 +317,7 @@ protected:
   ChFiDS_ListOfStripe badstripes;
   TopTools_ListOfShape badvertices;
   TopTools_DataMapOfShapeListOfInteger myEVIMap;
+  TopTools_DataMapOfShapeShape myEdgeFirstFace;
   Standard_Boolean done;
   Standard_Boolean hasresult;
 
