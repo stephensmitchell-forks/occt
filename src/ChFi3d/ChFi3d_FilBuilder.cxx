@@ -199,6 +199,8 @@ ChFi3d_FilletShape ChFi3d_FilBuilder::GetFilletShape() const
 
 void  ChFi3d_FilBuilder::Add(const TopoDS_Edge& E)
 {
+  TopoDS_Face dummy;
+  
   if(!Contains(E) && myEFMap.Contains(E)){
     Handle(ChFiDS_Stripe) Stripe = new ChFiDS_Stripe();
     Handle(ChFiDS_Spine)& Sp = Stripe->ChangeSpine();
@@ -208,7 +210,7 @@ void  ChFi3d_FilBuilder::Add(const TopoDS_Edge& E)
     TopoDS_Edge E_wnt = E;
     E_wnt.Orientation(TopAbs_FORWARD);
     Spine->SetEdges(E_wnt);
-    if(PerformElement(Spine)){
+    if(PerformElement(Spine, -1, dummy)){
       PerformExtremity(Spine);
       Spine->Load();
       myListStripe.Append(Stripe);

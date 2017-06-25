@@ -1,0 +1,22 @@
+puts "========"
+puts "OCC28828"
+puts "========"
+puts ""
+############################################################
+# New functionalities of BRepFilletAPI_MakeChamfer algorithm
+############################################################
+
+pcylinder a1 10 50
+box a2 -20 -20 -20  40 40 40
+nurbsconvert ba2 a2
+bfuse b a1 ba2
+donly b
+explode b f
+explode b_2 e
+donly b b_2_3
+
+chamf_throat r b b_2_3 b_2 1. 2.
+
+checkshape result
+
+#tolerance of result is less in fact, now it is set incorrect

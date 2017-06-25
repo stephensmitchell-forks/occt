@@ -26,6 +26,8 @@
 #include <BRepBlend_ChamfInv.hxx>
 #include <BRepBlend_ConstHeight.hxx>
 #include <BRepBlend_ConstHeightInv.hxx>
+#include <BRepBlend_ConstThroat.hxx>
+#include <BRepBlend_ConstThroatInv.hxx>
 #include <BRepBlend_ChAsym.hxx>
 #include <BRepBlend_ChAsymInv.hxx>
 #include <BRepBlend_Line.hxx>
@@ -60,10 +62,113 @@
 #include <TopOpeBRepBuild_HBuilder.hxx>
 #include <TopOpeBRepDS_HDataStructure.hxx>
 #include <TopTools_ListIteratorOfListOfShape.hxx>
+//#include <Geom_RectangularTrimmedSurface.hxx>
+//#include <Geom_OffsetSurface.hxx>
+//#include <GeomInt_IntSS.hxx>
+//#include <Extrema_ExtPC.hxx>
+//#include <GeomConvert_CompCurveToBSplineCurve.hxx>
+//#include <Geom_BSplineCurve.hxx>
 
 #ifdef OCCT_DEBUG
 extern Standard_Boolean ChFi3d_GettraceCHRON();
 #endif
+
+/*
+Handle(ChFiDS_HElSpine) MakeOffsetGuide(const Handle(ChFiDS_HElSpine)&      HGuide,
+                                        const Standard_Real                 Distance,
+                                        const Handle(BRepAdaptor_HSurface)& S1,
+                                        const Handle(BRepAdaptor_HSurface)& S2)
+{
+  Handle(ChFiDS_HElSpine) OffsetHGuide;
+  
+  TopoDS_Face F1 = S1->ChangeSurface().Face();
+  TopoDS_Face F2 = S2->ChangeSurface().Face();
+  Handle(Geom_Surface) GS1 = BRep_Tool::Surface(F1);
+  Handle(Geom_Surface) TrGS1 =
+    new Geom_RectangularTrimmedSurface(GS1,
+                                       S1->FirstUParameter(), S1->LastUParameter(),
+                                       S1->FirstVParameter(), S1->LastVParameter());
+  Standard_Real Offset = -Distance;
+  if (F1.Orientation() == TopAbs_REVERSED)
+    Offset = Distance;
+  Handle(Geom_OffsetSurface) MakeOffsetSurf = new Geom_OffsetSurface(TrGS1, Offset);
+  Handle(Geom_Surface) OffsetTrGS1 = MakeOffsetSurf->Surface();
+  Handle(Geom_Surface) GS2 = BRep_Tool::Surface(F2);
+  Handle(Geom_Surface) TrGS2 =
+    new Geom_RectangularTrimmedSurface(GS2,
+                                       S2->FirstUParameter(), S2->LastUParameter(),
+                                       S2->FirstVParameter(), S2->LastVParameter());
+  GeomInt_IntSS Intersector(OffsetTrGS1, TrGS2, Precision::Confusion());
+  if (!Intersector.IsDone() || Intersector.NbLines() == 0)
+  {
+    return OffsetHGuide;
+  }
+
+  Handle(Geom_Curve) IntCurve = Intersector.Line(1);
+
+  if (Intersector.NbLines() > 1)
+  {
+    GeomConvert_CompCurveToBSplineCurve Concat;
+    for (Standard_Integer indc = 1; indc <= Intersector.NbLines(); indc++)
+    {
+      IntCurve = Intersector.Line(indc);
+      Handle(Geom_BoundedCurve) aBoundedCurve = Handle(Geom_BoundedCurve)::DownCast(IntCurve);
+      Standard_Boolean Success = Concat.Add(aBoundedCurve, 1.e-5, Standard_True);
+      if (!Success)
+        Concat.Add(aBoundedCurve, 1.e-5, Standard_False);
+    }
+    IntCurve = Concat.BSplineCurve();
+  }
+  if (IntCurve.IsNull())
+  {
+    return OffsetHGuide;
+  }
+  //Projection of extremities onto <IntCurve>
+  GeomAdaptor_Curve GAcurve(IntCurve);
+  gp_Pnt Ends [2];
+  Standard_Real Params [2];
+  Ends[0] = HGuide->Value(HGuide->FirstParameter());
+  Ends[1] = HGuide->Value(HGuide->LastParameter());
+  for (Standard_Integer ind_end = 0; ind_end < 2; ind_end++)
+  {
+    if (ind_end == 1 && HGuide->IsPeriodic())
+      break;
+    Extrema_ExtPC Projector(Ends[ind_end], GAcurve);
+    if (!Projector.IsDone() || Projector.NbExt() == 0)
+      return OffsetHGuide;
+    Standard_Integer imin = 1;
+    for (Standard_Integer iext = 2; iext <= Projector.NbExt(); iext++)
+      if (Projector.SquareDistance(iext) < Projector.SquareDistance(imin))
+        imin = iext;
+    Params[ind_end] = Projector.Point(imin).Parameter();
+  }
+  if (HGuide->IsPeriodic())
+    Params[1] = GAcurve.LastParameter(); //temporary
+  if (Params[0] > Params[1])
+  {
+    Standard_Real NewFirstPar = IntCurve->ReversedParameter(Params[0]);
+    Standard_Real NewLastPar  = IntCurve->ReversedParameter(Params[1]);
+    IntCurve->Reverse();
+    Params[0] = NewFirstPar;
+    Params[1] = NewLastPar;
+  }
+  if (HGuide->IsPeriodic()) //check the direction of closed curve
+  {
+    gp_Pnt aPnt, anOffsetPnt;
+    gp_Vec Tangent, OffsetTangent;
+    HGuide->D1(HGuide->FirstParameter(), aPnt, Tangent);
+    IntCurve->D1(Params[0], anOffsetPnt, OffsetTangent);
+    if (Tangent*OffsetTangent < 0)
+      IntCurve->Reverse();
+  }
+  ChFiDS_ElSpine OffsetElSpine;
+  OffsetElSpine.SetCurve(IntCurve);
+  OffsetElSpine.FirstParameter(Params[0]);
+  OffsetElSpine.LastParameter(Params[1]);
+  OffsetHGuide = new ChFiDS_HElSpine(OffsetElSpine);
+  return OffsetHGuide;
+}
+*/
 
 //=======================================================================
 //function : SearchCommonFaces
@@ -194,7 +299,8 @@ ChFi3d_ChBuilder::ChFi3d_ChBuilder(const TopoDS_Shape& S,
 
 void  ChFi3d_ChBuilder::Add(const TopoDS_Edge& E)
 {
-
+  TopoDS_Face dummy;
+  
   if(!Contains(E) && myEFMap.Contains(E)){
     Handle(ChFiDS_Stripe) Stripe = new ChFiDS_Stripe();
     Handle(ChFiDS_Spine)& Sp = Stripe->ChangeSpine();
@@ -204,7 +310,7 @@ void  ChFi3d_ChBuilder::Add(const TopoDS_Edge& E)
     TopoDS_Edge E_wnt = E;
     E_wnt.Orientation(TopAbs_FORWARD);
     Spine->SetEdges(E_wnt);
-    if(PerformElement(Spine)){
+    if(PerformElement(Spine, -1, dummy)) {
       PerformExtremity(Spine);
       Spine->Load();
       myListStripe.Append(Stripe);
@@ -223,44 +329,38 @@ void  ChFi3d_ChBuilder::Add(const TopoDS_Edge& E)
 
 void  ChFi3d_ChBuilder::Add(const Standard_Real Dis,
 			    const TopoDS_Edge& E,
-			    const TopoDS_Face& F)
+			    const TopoDS_Face&)
 {
   if (!Contains(E)  && myEFMap.Contains(E)) {
      
     // Take the 2 common faces of the egde <E>
-    TopoDS_Face F1,F2;
-    SearchCommonFaces(myEFMap,E,F1,F2);
+    //TopoDS_Face F1,F2;
+    //SearchCommonFaces(myEFMap,E,F1,F2);
+    TopoDS_Face dummy;
 
-    if (! F1.IsSame(F) && F2.IsSame(F) ) {
-      F2 = F1;
-      F1 = F;
-    }
-
-    if ( F1.IsSame(F)) {
-      TopoDS_Edge E_wnt = E;
-      E_wnt.Orientation(TopAbs_FORWARD);
-      BRepAdaptor_Surface Sb1,Sb2;
-      Sb1.Initialize(F1);
-      Sb2.Initialize(F2);
-      TopAbs_Orientation Or1,Or2;
-      ChFi3d::ConcaveSide(Sb1,Sb2,E_wnt,Or1,Or2); 
-      Handle(ChFiDS_Stripe) Stripe = new ChFiDS_Stripe();
-      Handle(ChFiDS_Spine)& Sp = Stripe->ChangeSpine();
-      Sp = new ChFiDS_ChamfSpine(tolesp);
-      Handle(ChFiDS_ChamfSpine) 
-        Spine = Handle(ChFiDS_ChamfSpine)::DownCast(Sp);
-
-      Spine->SetMode(myMode);
-
-      Spine->SetEdges(E_wnt);
-      if(PerformElement(Spine)){
-	Spine->Load();
-	myListStripe.Append(Stripe);
-	
-	Spine->SetDist(Dis);
-
-	PerformExtremity(Spine);
-      }
+    TopoDS_Edge E_wnt = E;
+    E_wnt.Orientation(TopAbs_FORWARD);
+    //BRepAdaptor_Surface Sb1,Sb2;
+    //Sb1.Initialize(F1);
+    //Sb2.Initialize(F2);
+    //TopAbs_Orientation Or1,Or2;
+    //ChFi3d::ConcaveSide(Sb1,Sb2,E_wnt,Or1,Or2); 
+    Handle(ChFiDS_Stripe) Stripe = new ChFiDS_Stripe();
+    Handle(ChFiDS_Spine)& Sp = Stripe->ChangeSpine();
+    Sp = new ChFiDS_ChamfSpine(tolesp);
+    Handle(ChFiDS_ChamfSpine) 
+      Spine = Handle(ChFiDS_ChamfSpine)::DownCast(Sp);
+    
+    Spine->SetMode(myMode);
+    
+    Spine->SetEdges(E_wnt);
+    if(PerformElement(Spine, -1, dummy)) {
+      Spine->Load();
+      myListStripe.Append(Stripe);
+      
+      Spine->SetDist(Dis);
+      
+      PerformExtremity(Spine);
     }
   }
 }
@@ -340,8 +440,9 @@ void  ChFi3d_ChBuilder::Add(const Standard_Real Dis1,
 			    const TopoDS_Face& F)
 {
   if (!Contains(E)  && myEFMap.Contains(E)) {
-     
+
     // Take the 2 common faces of the egde <E>
+    /*
     TopoDS_Face F1,F2;
     SearchCommonFaces(myEFMap,E,F1,F2);
 
@@ -349,45 +450,35 @@ void  ChFi3d_ChBuilder::Add(const Standard_Real Dis1,
       F2 = F1;
       F1 = F;
     }
+    */
 
-    if ( F1.IsSame(F)) {
-      TopoDS_Edge E_wnt = E;
-      E_wnt.Orientation(TopAbs_FORWARD);
-      BRepAdaptor_Surface Sb1,Sb2;
-      Sb1.Initialize(F1);
-      Sb2.Initialize(F2);
-      TopAbs_Orientation Or1,Or2;
-      Standard_Integer Choix = ChFi3d::ConcaveSide(Sb1,Sb2,E_wnt,Or1,Or2); 
-
-      Handle(ChFiDS_Stripe) Stripe = new ChFiDS_Stripe();
-      Handle(ChFiDS_Spine)& Sp = Stripe->ChangeSpine();
-      Sp = new ChFiDS_ChamfSpine(tolesp);
-      Handle(ChFiDS_ChamfSpine) 
-        Spine = Handle(ChFiDS_ChamfSpine)::DownCast(Sp);
-
-      Spine->SetEdges(E_wnt);
-      if(PerformElement(Spine)){
-	Spine->Load();
-	myListStripe.Append(Stripe);
-	
-	Standard_Integer ChoixConge;
-	SearchCommonFaces(myEFMap,Spine->Edges(1),F1,F2);
-	Sb1.Initialize(F1);
-	Sb2.Initialize(F2);
-	ChoixConge = ChFi3d::ConcaveSide(Sb1,Sb2,
-					 Spine->Edges(1),
-					 Or1,Or2);
-
-
-	// compare the 2 computed choices to know how to set the 
-	// distances of the Spine according to the choice done 
-	// on the added edge <e>
-	if ( ChoixConge%2 != Choix%2 )
-	  Spine->SetDists(Dis2, Dis1);
-	else Spine->SetDists(Dis1, Dis2);
-
-	PerformExtremity(Spine);
-      }
+    TopoDS_Edge E_wnt = E;
+    E_wnt.Orientation(TopAbs_FORWARD);
+    //BRepAdaptor_Surface Sb1,Sb2;
+    //Sb1.Initialize(F1);
+    //Sb2.Initialize(F2);
+    //TopAbs_Orientation Or1,Or2;
+    //Standard_Integer Choix = ChFi3d::ConcaveSide(Sb1,Sb2,E_wnt,Or1,Or2); 
+    
+    Handle(ChFiDS_Stripe) Stripe = new ChFiDS_Stripe();
+    Handle(ChFiDS_Spine)& Sp = Stripe->ChangeSpine();
+    Sp = new ChFiDS_ChamfSpine(tolesp);
+    Handle(ChFiDS_ChamfSpine) 
+      Spine = Handle(ChFiDS_ChamfSpine)::DownCast(Sp);
+    
+    Spine->SetMode(myMode);
+    Standard_Real Offset = -1;
+    if (myMode == ChFiDS_ConstThroatChamfer)
+      Offset = Min(Dis1,Dis2);;
+    
+    Spine->SetEdges(E_wnt);
+    if(PerformElement(Spine, Offset, F)){
+      Spine->Load();
+      myListStripe.Append(Stripe);
+      
+      Spine->SetDists(Dis1, Dis2);
+      
+      PerformExtremity(Spine);
     }
   }
 }
@@ -482,8 +573,9 @@ void  ChFi3d_ChBuilder::AddDA(const Standard_Real Dis1,
 			      const TopoDS_Face& F)
 {
   if (!Contains(E)  && myEFMap.Contains(E)) {
-     
+
     // Take the 2 common faces of the egde <E>
+    /*
     TopoDS_Face F1,F2;
     SearchCommonFaces(myEFMap,E,F1,F2);
  
@@ -491,47 +583,30 @@ void  ChFi3d_ChBuilder::AddDA(const Standard_Real Dis1,
       F2 = F1;
       F1 = F;
     }
+    */
 
-    if ( F1.IsSame(F)) {
-      TopoDS_Edge E_wnt = E;
-      E_wnt.Orientation(TopAbs_FORWARD);
-      BRepAdaptor_Surface Sb1,Sb2;
-      Sb1.Initialize(F1);
-      Sb2.Initialize(F2);
-      TopAbs_Orientation Or1,Or2;
-      Standard_Integer Choix = ChFi3d::ConcaveSide(Sb1,Sb2,E_wnt,Or1,Or2); 
-
-      Handle(ChFiDS_Stripe) Stripe = new ChFiDS_Stripe();
-      Handle(ChFiDS_Spine)& Sp = Stripe->ChangeSpine();
-      Sp = new ChFiDS_ChamfSpine(tolesp);
-      Handle(ChFiDS_ChamfSpine) 
-        Spine = Handle(ChFiDS_ChamfSpine)::DownCast(Sp);
-
-      Spine->SetEdges(E_wnt);
-      if(PerformElement(Spine)){
-	Spine->Load();
-	myListStripe.Append(Stripe);
-	
-	Standard_Integer ChoixConge;
-	SearchCommonFaces(myEFMap,Spine->Edges(1),F1,F2);
-	Sb1.Initialize(F1);
-	Sb2.Initialize(F2);
-	ChoixConge = ChFi3d::ConcaveSide(Sb1,Sb2,
-					 Spine->Edges(1),
-					 Or1,Or2);
-
-	// compare the 2 computed choices to know how to set the 
-	// distances of the Spine according to the choice done 
-	// on the added edge <e>
-	if ( ChoixConge%2 != Choix%2 ) {
-          Spine->SetDistAngle(Dis1, Angle, Standard_False);
-        }
-	else { 
-          Spine->SetDistAngle(Dis1, Angle, Standard_True);
-        }
-	
-	PerformExtremity(Spine);
-      }
+    TopoDS_Edge E_wnt = E;
+    E_wnt.Orientation(TopAbs_FORWARD);
+    //BRepAdaptor_Surface Sb1,Sb2;
+    //Sb1.Initialize(F1);
+    //Sb2.Initialize(F2);
+    //TopAbs_Orientation Or1,Or2;
+    //Standard_Integer Choix = ChFi3d::ConcaveSide(Sb1,Sb2,E_wnt,Or1,Or2); 
+    
+    Handle(ChFiDS_Stripe) Stripe = new ChFiDS_Stripe();
+    Handle(ChFiDS_Spine)& Sp = Stripe->ChangeSpine();
+    Sp = new ChFiDS_ChamfSpine(tolesp);
+    Handle(ChFiDS_ChamfSpine) 
+      Spine = Handle(ChFiDS_ChamfSpine)::DownCast(Sp);
+    
+    Spine->SetEdges(E_wnt);
+    if(PerformElement(Spine, -1, F)) {
+      Spine->Load();
+      myListStripe.Append(Stripe);
+      
+      Spine->SetDistAngle(Dis1, Angle, Standard_True);
+      
+      PerformExtremity(Spine);
     }
   }
 }
@@ -959,13 +1034,46 @@ ChFi3d_ChBuilder::SimulSurf(Handle(ChFiDS_SurfData)&            Data,
     radius = Max(radius, radiusspine);
     locfleche = radius*1.e-2; //graphic criterion
 
-    BRepBlend_Chamfer Func(S1,S2,HGuide);
-    BRepBlend_ChamfInv FInv(S1,S2,HGuide); 
-    Func.Set(dis1,dis2,Choix);
-    FInv.Set(dis1,dis2,Choix);
+    //BRepBlend_Chamfer Func(S1,S2,HGuide);
+    //BRepBlend_ChamfInv FInv(S1,S2,HGuide); 
+    BlendFunc_GenChamfer* Func;
+    BlendFunc_GenChamfInv* FInv;
+    if (chsp->Mode() == ChFiDS_ClassicChamfer)
+    {
+      Func = new BRepBlend_Chamfer(S1,S2,HGuide);
+      FInv = new BRepBlend_ChamfInv(S1,S2,HGuide);
+      Func->Set(dis1,dis2,Choix);
+      FInv->Set(dis1,dis2,Choix);
+    }
+    else
+    {
+      //Handle(ChFiDS_HElSpine) OffsetHGuide = MakeOffsetGuide(HGuide,dis1,S1,S2);
+      //Handle(ChFiDS_HElSpine) OffsetHGuide = MakeOffsetGuide(HGuide,dis2,S2,S1);
+      Handle(ChFiDS_HElSpine) OffsetHGuide;
+      ChFiDS_ListOfHElSpine& ll = Spine->ChangeElSpines();
+      ChFiDS_ListOfHElSpine& ll_offset = Spine->ChangeOffsetElSpines();
+      ChFiDS_ListIteratorOfListOfHElSpine ILES(ll), ILES_offset(ll_offset);
+      for ( ; ILES.More(); ILES.Next(),ILES_offset.Next())
+      {
+        const Handle(ChFiDS_HElSpine)& aHElSpine = ILES.Value();
+        if (aHElSpine == HGuide)
+          OffsetHGuide = ILES_offset.Value();
+      }
+      
+      if (OffsetHGuide.IsNull())
+      {
+        cout<<endl<<"Construction of offset guide failed!"<<endl;
+        //exception
+      }
+      Func = new BRepBlend_ConstThroat(S1,S2,OffsetHGuide);
+      FInv = new BRepBlend_ConstThroatInv(S1,S2,OffsetHGuide);
+      Standard_Real Throat = Max(dis1,dis2);
+      Func->Set(Throat,Throat,Choix); //dis2?
+      FInv->Set(Throat,Throat,Choix); //dis2?
+    }
     
     done = SimulData(Data,HGuide,lin,S1,I1,S2,I2,
-		     Func,FInv,PFirst,MaxStep,locfleche,
+		     *Func,*FInv,PFirst,MaxStep,locfleche,
 		     TolGuide,First,Last,Inside,Appro,Forward,
 		     Soldep,4,RecOnS1,RecOnS2);
 
@@ -983,7 +1091,7 @@ ChFi3d_ChBuilder::SimulSurf(Handle(ChFiDS_SurfData)&            Data,
       p.ParametersOnS1(u1,v1);
       p.ParametersOnS2(u2,v2);
       ww = p.Parameter();
-      Func.Section(ww,u1,v1,u2,v2,p1,p2,line); 
+      Func->Section(ww,u1,v1,u2,v2,p1,p2,line); 
       isec.Set(line,p1,p2);
       if(i == 1) {pf1.SetCoord(u1,v1); pf2.SetCoord(u2,v2);} 
       if(i == nbp) {pl1.SetCoord(u1,v1); pl2.SetCoord(u2,v2);} 
@@ -1399,8 +1507,37 @@ Standard_Boolean ChFi3d_ChBuilder::PerformFirstSection
     Standard_Real dis1, dis2;
     chsp->Dists(dis1, dis2);
     
-    BRepBlend_Chamfer Func(S1,S2,HGuide);
-    Func.Set(dis1,dis2,Choix);
+    //BRepBlend_Chamfer Func(S1,S2,HGuide);
+    BlendFunc_GenChamfer* Func;
+    if (chsp->Mode() == ChFiDS_ClassicChamfer)
+    {
+      Func = new BRepBlend_Chamfer(S1,S2,HGuide);
+      Func->Set(dis1,dis2,Choix);
+    }
+    else
+    {
+      //Handle(ChFiDS_HElSpine) OffsetHGuide = MakeOffsetGuide(HGuide,dis1,S1,S2);
+      //Handle(ChFiDS_HElSpine) OffsetHGuide = MakeOffsetGuide(HGuide,dis2,S2,S1);
+      Handle(ChFiDS_HElSpine) OffsetHGuide;
+      ChFiDS_ListOfHElSpine& ll = Spine->ChangeElSpines();
+      ChFiDS_ListOfHElSpine& ll_offset = Spine->ChangeOffsetElSpines();
+      ChFiDS_ListIteratorOfListOfHElSpine ILES(ll), ILES_offset(ll_offset);
+      for ( ; ILES.More(); ILES.Next(),ILES_offset.Next())
+      {
+        const Handle(ChFiDS_HElSpine)& aHElSpine = ILES.Value();
+        if (aHElSpine == HGuide)
+          OffsetHGuide = ILES_offset.Value();
+      }
+      
+      if (OffsetHGuide.IsNull())
+      {
+        cout<<endl<<"Construction of offset guide failed!"<<endl;
+        //exception
+      }
+      Func = new BRepBlend_ConstThroat(S1,S2,OffsetHGuide);
+      Standard_Real Throat = Max(dis1,dis2);
+      Func->Set(Throat,Throat,Choix); //dis2?
+    }
     BRepBlend_Walking TheWalk(S1,S2,I1,I2,HGuide);
     
     //calculate an approximate starting solution
@@ -1411,8 +1548,8 @@ Standard_Boolean ChFi3d_ChBuilder::PerformFirstSection
     ( HGuide->Curve() ).D1(Par,ptgui,d1gui);
     //  ptgui = (S1->Surface()).Value(SolDep(1),SolDep(2));
     
-    Func.Set(Par);
-    Func.Tangent(SolDep(1),SolDep(2),SolDep(3),SolDep(4),TgF,TgL,tmp1,tmp2);
+    Func->Set(Par);
+    Func->Tangent(SolDep(1),SolDep(2),SolDep(3),SolDep(4),TgF,TgL,tmp1,tmp2);
     
     Standard_Boolean rev1 = Standard_False;
     Standard_Boolean rev2 = Standard_False;
@@ -1432,10 +1569,26 @@ Standard_Boolean ChFi3d_ChBuilder::PerformFirstSection
       TgF.Reverse();
     if( rev2 )
       TgL.Reverse();
+
+    Standard_Real aDist1 = dis1, aDist2 = dis2;
+    if (chsp->Mode() == ChFiDS_ConstThroatChamfer)
+    {
+      /*
+      Standard_Real Alpha = TgF.Angle(TgL);
+      Standard_Real SinAlpha = Sin(Alpha);
+      Standard_Real CosAlpha = Cos(Alpha);
+      Standard_Real TanAlpha = Tan(Alpha);
+      Standard_Real dis1dis1 = dis1*dis1, dis2dis2 = dis2*dis2;
+      aDist2 = sqrt(dis1dis1 - dis2dis2) - dis2/TanAlpha;
+      Standard_Real CosBeta = sqrt(1-dis2dis2/dis1dis1)*CosAlpha + dis2/dis1*SinAlpha;
+      Standard_Real FullDist1 = dis1/CosBeta;
+      aDist1 = FullDist1 - dis2/SinAlpha;
+      */
+    }
     
-    temp = (TgF.XYZ()).Multiplied(dis1);
+    temp = (TgF.XYZ()).Multiplied(aDist1);
     pt1.SetXYZ( (ptgui.XYZ()).Added(temp) );
-    temp = (TgL.XYZ()).Multiplied(dis2);
+    temp = (TgL.XYZ()).Multiplied(aDist2);
     pt2.SetXYZ( (ptgui.XYZ()).Added(temp) );
     
     Standard_Real tol = tolesp*1.e2;
@@ -1453,7 +1606,7 @@ Standard_Boolean ChFi3d_ChBuilder::PerformFirstSection
       (proj2.Point()).Parameter(SolDep(3),SolDep(4)); 
     }
     
-    return TheWalk.PerformFirstSection(Func,Par,SolDep,
+    return TheWalk.PerformFirstSection(*Func,Par,SolDep,
 				       tolesp,TolGuide,Pos1,Pos2);
   }
   else {
@@ -1678,19 +1831,52 @@ ChFi3d_ChBuilder::PerformSurf(ChFiDS_SequenceOfSurfData&          SeqData,
     if(!done) throw Standard_Failure("PerformSurf : Fail of approximation!");
   }
   else if (chsp->IsChamfer() == ChFiDS_TwoDist) {
-    BRepBlend_Chamfer  Func(S1,S2,HGuide);
-    BRepBlend_ChamfInv FInv(S1,S2,HGuide);
+    //BRepBlend_Chamfer  Func(S1,S2,HGuide);
+    //BRepBlend_ChamfInv FInv(S1,S2,HGuide);
     Standard_Real d1, d2;
     chsp->Dists(d1,d2);
-    Func.Set(d1,d2,Choix);
-    FInv.Set(d1,d2,Choix);
+    BlendFunc_GenChamfer* Func;
+    BlendFunc_GenChamfInv* FInv;
+    if (chsp->Mode() == ChFiDS_ClassicChamfer)
+    {
+      Func = new BRepBlend_Chamfer(S1,S2,HGuide);
+      FInv = new BRepBlend_ChamfInv(S1,S2,HGuide);
+      Func->Set(d1,d2,Choix);
+      FInv->Set(d1,d2,Choix);
+    }
+    else
+    {
+      //Handle(ChFiDS_HElSpine) OffsetHGuide = MakeOffsetGuide(HGuide,d1,S1,S2);
+      //Handle(ChFiDS_HElSpine) OffsetHGuide = MakeOffsetGuide(HGuide,d2,S2,S1);
+      Handle(ChFiDS_HElSpine) OffsetHGuide;
+      ChFiDS_ListOfHElSpine& ll = Spine->ChangeElSpines();
+      ChFiDS_ListOfHElSpine& ll_offset = Spine->ChangeOffsetElSpines();
+      ChFiDS_ListIteratorOfListOfHElSpine ILES(ll), ILES_offset(ll_offset);
+      for ( ; ILES.More(); ILES.Next(),ILES_offset.Next())
+      {
+        const Handle(ChFiDS_HElSpine)& aHElSpine = ILES.Value();
+        if (aHElSpine == HGuide)
+          OffsetHGuide = ILES_offset.Value();
+      }
+      
+      if (OffsetHGuide.IsNull())
+      {
+        cout<<endl<<"Construction of offset guide failed!"<<endl;
+        //exception
+      }
+      Func = new BRepBlend_ConstThroat(S1,S2,OffsetHGuide);
+      FInv = new BRepBlend_ConstThroatInv(S1,S2,OffsetHGuide);
+      Standard_Real Throat = Max(d1,d2);
+      Func->Set(Throat,Throat,Choix); //d2?
+      FInv->Set(Throat,Throat,Choix); //d2?
+    }
     
-    done = ComputeData(Data,HGuide,Spine,lin,S1,I1,S2,I2,Func,FInv,
+    done = ComputeData(Data,HGuide,Spine,lin,S1,I1,S2,I2,*Func,*FInv,
 		       PFirst,MaxStep,Fleche,TolGuide,First,Last,
 		       Inside,Appro,Forward,Soldep,intf,intl,
 		       gd1,gd2,gf1,gf2,RecOnS1,RecOnS2);
     if(!done) return Standard_False; // ratrappage possible PMN 14/05/1998
-    done = CompleteData(Data,Func,lin,S1,S2,Or,gd1,gd2,gf1,gf2);
+    done = CompleteData(Data,*Func,lin,S1,S2,Or,gd1,gd2,gf1,gf2);
     if(!done) throw Standard_Failure("PerformSurf : Fail of approximation!");
   }
   else {

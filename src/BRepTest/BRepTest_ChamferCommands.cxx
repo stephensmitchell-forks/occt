@@ -29,6 +29,70 @@
 #include <Precision.hxx>
 
 //===============================================================================
+// function : chamf_throat
+// purpose  : command to construct chamfers with constant throat on several edges
+//            Here the chamfer is propagated on tangential edges to the 
+//            required edge
+//===============================================================================
+ 
+static Standard_Integer chamf_throat(Draw_Interpretor& di,
+                                     Standard_Integer narg, 
+                                     const char** a)
+{
+  if (narg < 7)
+    return 1;
+
+  TopoDS_Shape S = DBRep::Get(a[2]);
+  if (S.IsNull()) return 1;
+  
+  TopoDS_Edge E;
+  TopoDS_Face F;
+  Standard_Real offset, throat;
+  Standard_Integer i      = 3;
+  Standard_Integer NbArg  = 4;
+  
+  BRepFilletAPI_MakeChamfer aMCh(S);
+  aMCh.SetMode(ChFiDS_ConstThroatChamfer);
+  
+  while (i + NbArg <= narg) {
+    TopoDS_Shape aLocalEdge(DBRep::Get(a[i], TopAbs_EDGE));
+    E = TopoDS::Edge(aLocalEdge);
+    TopoDS_Shape aLocalFace(DBRep::Get(a[i + 1], TopAbs_FACE));
+    F = TopoDS::Face(aLocalFace);
+    //      E = TopoDS::Edge(DBRep::Get(a[i], TopAbs_EDGE));
+    //      F = TopoDS::Face(DBRep::Get(a[i + 1], TopAbs_FACE));
+    if (!E.IsNull() && !F.IsNull() && (aMCh.Contour(E) == 0) )  {
+      offset = Draw::Atof(a[i + 2]);
+      throat = Draw::Atof(a[i + 3]);
+      
+      if (offset > Precision::Confusion() &&
+          throat > offset)
+        aMCh.Add(offset,throat,E ,F);
+    }
+    i += NbArg;
+  }
+  
+  // compute the chamfer and display the result
+  if (aMCh.NbContours() == 0 )
+  {
+    //cout<<"No suitable edges to chamfer"<<endl;
+    di<<"No suitable edges to chamfer\n";
+    return 1;
+  }
+  else aMCh.Build();
+  
+  if (aMCh.IsDone()){
+    DBRep::Set(a[1],aMCh);
+    return 0;
+  }
+  else {
+    //cout<<"compute of chamfer failed"<<endl;
+    di<<"compute of chamfer failed\n";
+    return 1;
+  }
+}
+
+//===============================================================================
 // function : chamfheight
 // purpose  : command to construct chamfers with constant height on several edges
 //            Here the chamfer is propagated on tangential edges to the 
@@ -240,4 +304,7 @@ void  BRepTest::ChamferCommands(Draw_Interpretor& theCommands)
 
   theCommands.Add("chamfheight",
 		  "chamfheight result shape edge face height",__FILE__,chamfheight,g);
+  
+  theCommands.Add("chamf_throat",
+		  "chamf_throat result shape edge face offset throat",__FILE__,chamf_throat,g);
 }
