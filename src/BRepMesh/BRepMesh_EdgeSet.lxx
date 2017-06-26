@@ -152,21 +152,21 @@ Standard_Integer BRepMesh_EdgeSet<T, N>::ClosestEdge (const BVH_VecNt& theEdgeV1
     {
       T aLftDist = EdgeToBoxDistance (theEdgeV1,
                                       theEdgeV2,
-                                      aBVH->MinPoint (aBVH->LeftChild (aNode)),
-                                      aBVH->MaxPoint (aBVH->LeftChild (aNode)));
+                                      aBVH->MinPoint (aBVH->Child<0> (aNode)),
+                                      aBVH->MaxPoint (aBVH->Child<0> (aNode)));
 
       T aRghDist = EdgeToBoxDistance (theEdgeV1,
                                       theEdgeV2,
-                                      aBVH->MinPoint (aBVH->RightChild (aNode)),
-                                      aBVH->MaxPoint (aBVH->RightChild (aNode)));
+                                      aBVH->MinPoint (aBVH->Child<1> (aNode)),
+                                      aBVH->MaxPoint (aBVH->Child<1> (aNode)));
 
       const bool aProceedLft = aLftDist < aMinDist;
       const bool aProceedRgh = aRghDist < aMinDist;
 
       if (aProceedLft && aProceedRgh)
       {
-        int aLeft = aBVH->LeftChild (aNode);
-        int aRight = aBVH->RightChild (aNode);
+        int aLeft = aBVH->Child<0> (aNode);
+        int aRight = aBVH->Child<1> (aNode);
 
         aNode = (aLftDist < aRghDist) ? aLeft : aRight;
         aStack[++aHead] = (aRghDist <= aLftDist) ? aLeft : aRight;
@@ -175,7 +175,7 @@ Standard_Integer BRepMesh_EdgeSet<T, N>::ClosestEdge (const BVH_VecNt& theEdgeV1
       {
         if (aProceedLft || aProceedRgh)
         {
-          aNode = aProceedLft ? aBVH->LeftChild (aNode) : aBVH->RightChild (aNode);
+          aNode = aProceedLft ? aBVH->Child<0> (aNode) : aBVH->Child<1> (aNode);
         }
         else
         {
@@ -258,21 +258,21 @@ Standard_Integer BRepMesh_EdgeSet<T, N>::CoherentEdge (const BVH_VecNt& theEdgeV
     {
       T aLftDist = EdgeToBoxDistance (theEdgeV1,
                                       theEdgeV2,
-                                      aBVH->MinPoint (aBVH->LeftChild (aNode)),
-                                      aBVH->MaxPoint (aBVH->LeftChild (aNode)));
+                                      aBVH->MinPoint (aBVH->Child<0> (aNode)),
+                                      aBVH->MaxPoint (aBVH->Child<0> (aNode)));
 
       T aRghDist = EdgeToBoxDistance (theEdgeV1,
                                       theEdgeV2,
-                                      aBVH->MinPoint (aBVH->RightChild (aNode)),
-                                      aBVH->MaxPoint (aBVH->RightChild (aNode)));
+                                      aBVH->MinPoint (aBVH->Child<1> (aNode)),
+                                      aBVH->MaxPoint (aBVH->Child<1> (aNode)));
 
       const bool aProceedLft = aLftDist < aMinDist;
       const bool aProceedRgh = aRghDist < aMinDist;
 
       if (aProceedLft && aProceedRgh)
       {
-        int aLeft = aBVH->LeftChild (aNode);
-        int aRight = aBVH->RightChild (aNode);
+        int aLeft = aBVH->Child<0> (aNode);
+        int aRight = aBVH->Child<1> (aNode);
 
         aNode = (aLftDist < aRghDist) ? aLeft : aRight;
         aStack[++aHead] = (aRghDist <= aLftDist) ? aLeft : aRight;
@@ -281,7 +281,7 @@ Standard_Integer BRepMesh_EdgeSet<T, N>::CoherentEdge (const BVH_VecNt& theEdgeV
       {
         if (aProceedLft || aProceedRgh)
         {
-          aNode = aProceedLft ? aBVH->LeftChild (aNode) : aBVH->RightChild (aNode);
+          aNode = aProceedLft ? aBVH->Child<0> (aNode) : aBVH->Child<1> (aNode);
         }
         else
         {

@@ -484,7 +484,8 @@ Standard_Integer BRepMesh_RestoreOrientationTool::traceRay (const BVH_Vec3d& the
 {
   Standard_Integer aStack[32];
 
-  const NCollection_Handle<BVH_Tree<Standard_Real, 3> >& aBVH = theTriangulation.BVH();
+  const NCollection_Handle<BVH_Tree<Standard_Real, 3, BVH_BinaryTree> >& aBVH =
+    static_cast <const NCollection_Handle<BVH_Tree<Standard_Real, 3, BVH_BinaryTree> >&> (theTriangulation.BVH());
 
   if (aBVH.IsNull())
   {
@@ -535,14 +536,14 @@ Standard_Integer BRepMesh_RestoreOrientationTool::traceRay (const BVH_Vec3d& the
     }
     else
     {
-      BVH_Vec3d aTime0 = (aBVH->MinPoint (aBVH->LeftChild (aNode)) - theOrigin) * anInvDirect;
-      BVH_Vec3d aTime1 = (aBVH->MaxPoint (aBVH->LeftChild (aNode)) - theOrigin) * anInvDirect;
+      BVH_Vec3d aTime0 = (aBVH->MinPoint (aBVH->Child<0> (aNode)) - theOrigin) * anInvDirect;
+      BVH_Vec3d aTime1 = (aBVH->MaxPoint (aBVH->Child<0> (aNode)) - theOrigin) * anInvDirect;
       
       BVH_Vec3d aTimeMax = aTime0.cwiseMax (aTime1);
       BVH_Vec3d aTimeMin = aTime0.cwiseMin (aTime1);
 
-      aTime0 = (aBVH->MinPoint (aBVH->RightChild (aNode)) - theOrigin) * anInvDirect;
-      aTime1 = (aBVH->MaxPoint (aBVH->RightChild (aNode)) - theOrigin) * anInvDirect;
+      aTime0 = (aBVH->MinPoint (aBVH->Child<1> (aNode)) - theOrigin) * anInvDirect;
+      aTime1 = (aBVH->MaxPoint (aBVH->Child<1> (aNode)) - theOrigin) * anInvDirect;
 
       Standard_Real aTimeFinal = aTimeMax.minComp();
       Standard_Real aTimeStart = aTimeMin.maxComp();
@@ -564,8 +565,8 @@ Standard_Integer BRepMesh_RestoreOrientationTool::traceRay (const BVH_Vec3d& the
 
       if (aHitLft && aHitRgh)
       {
-        int aLeft = aBVH->LeftChild (aNode);
-        int aRight = aBVH->RightChild (aNode);
+        int aLeft = aBVH->Child<0> (aNode);
+        int aRight = aBVH->Child<1> (aNode);
 
         aNode = (aTimeMin1 < aTimeMin2) ? aLeft : aRight;
         aStack[++aHead] = (aTimeMin2 <= aTimeMin1) ? aLeft : aRight;
@@ -574,7 +575,7 @@ Standard_Integer BRepMesh_RestoreOrientationTool::traceRay (const BVH_Vec3d& the
       {
         if (aHitLft || aHitRgh)
         {
-          aNode = aHitLft ? aBVH->LeftChild (aNode) : aBVH->RightChild (aNode);
+          aNode = aHitLft ? aBVH->Child<0> (aNode) : aBVH->Child<1> (aNode);
         }
         else
         {
