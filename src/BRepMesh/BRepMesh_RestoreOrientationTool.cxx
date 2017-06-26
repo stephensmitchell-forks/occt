@@ -60,6 +60,9 @@ const Standard_Real COHERENCY_WEIGHT = 50.0;
 // Indicates that ray does not hit any geometry.
 const Standard_Integer INVALID_HIT = -1;
 
+//! Maximum number of attempts for rejection sampling.
+const int MAX_SAMPLING_ATTEMPTS = 10;
+
 //! Samples value from array according to probabilities.
 Standard_Integer sampleValue (Standard_Real theKsi, const std::vector<Standard_Real>& theCDF)
 {
@@ -389,11 +392,16 @@ void BRepMesh_RestoreOrientationTool::computeVisibility (BVH_Triangulation<Stand
 
     // sample point in triangle uniformly
     Standard_Real aKsi, aPsi;
-    do
+    for (int i = 0; i < MAX_SAMPLING_ATTEMPTS; ++i)
     {
       aKsi = anRNG.NextReal();
       aPsi = anRNG.NextReal();
-    } while (aKsi + aPsi > 1.0);
+
+      if (aKsi + aPsi > 1.0)
+      {
+        break;
+      }
+    }
 
     const BVH_Vec3d& aPoint0 = thePatch->Vertices[aTriangle.x()];
     const BVH_Vec3d& aPoint1 = thePatch->Vertices[aTriangle.y()];
@@ -412,7 +420,7 @@ void BRepMesh_RestoreOrientationTool::computeVisibility (BVH_Triangulation<Stand
     BVH_Vec3d aDirection;
     Standard_Real aDot = 0.0;
 
-    do
+    for (int i = 0; i < MAX_SAMPLING_ATTEMPTS; ++i)
     {
       aKsi = anRNG.NextReal();
       aPsi = anRNG.NextReal();
@@ -425,7 +433,11 @@ void BRepMesh_RestoreOrientationTool::computeVisibility (BVH_Triangulation<Stand
 
       aDot = aDirection.Dot (aNormal);
 
-    } while (std::abs (aDot) < 0.2);
+      if (std::abs (aDot) < 0.2)
+      {
+        break;
+      }
+    }
 
     if (aDot < 0.0)
     {
