@@ -67,8 +67,16 @@ win32 {
         OBJECTS_DIR = ./win$(ARCH)/$(VCVER)/obj
         MOC_DIR = ./win$(ARCH)/$(VCVER)/moc
     }
-    LIBS += -L$$(QTDIR)/lib
-    LIBS += -L$$(CSF_OCCTLibPath)
+
+	equals(TEMPLATE, app) {
+		# If the template is app on Windows, the project is built with nmake.
+		# In this case the libraries should not be given separated by a semicolon.
+		LIBS += -L$$(QTDIR)/lib
+		LIBS += -L$$(CSF_OCCTLibPath)
+	} else {
+		LIBS += -L$$(QTDIR)/lib;$$(CSF_OCCTLibPath)
+	}
+
     DEFINES += NO_COMMONSAMPLE_EXPORTS NO_IESAMPLE_EXPORTS
 }
 

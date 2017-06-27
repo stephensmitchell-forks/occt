@@ -51,8 +51,15 @@ win32 {
         OBJECTS_DIR = ./win$(ARCH)/$(VCVER)/obj
         MOC_DIR = ./src
     }
-    LIBS += -L$$(QTDIR)/lib
-    LIBS += -L$$(CSF_OCCTLibPath)
+
+	equals(TEMPLATE, app) {
+		# If the template is app on Windows, the project is built with nmake.
+		# In this case the libraries should not be given separated by a semicolon.
+		LIBS += -L$$(QTDIR)/lib
+		LIBS += -L$$(CSF_OCCTLibPath)
+	} else {
+		LIBS += -L$$(QTDIR)/lib;$$(CSF_OCCTLibPath)
+	}
 }
 
 LIBS += -lTKernel -lTKMath -lTKBRep -lTKGeomBase -lTKGeomAlgo -lTKG3d -lTKG2d \
