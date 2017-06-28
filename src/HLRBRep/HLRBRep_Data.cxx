@@ -899,7 +899,6 @@ void HLRBRep_Data::InitEdge (const Standard_Integer FI,
 Standard_Boolean HLRBRep_Data::MoreEdge ()
 {
 
-
   if (iFaceTest) {
     if (myFaceItr2.MoreEdge()) {            // all edges must be tested if
       myLE         = myFaceItr2.Edge    (); // the face is not a simple
@@ -927,49 +926,92 @@ Standard_Boolean HLRBRep_Data::MoreEdge ()
   return myCurSortEd <= myNbrSortEd;
 }
 //=======================================================================
-//function : NextEdge
+//function : GetNextEdge
 //purpose  : 
 //=======================================================================
+void HLRBRep_Data::GetNextEdge()
+{
+  if (myCurSortEd > myNbrSortEd)
+    return;
+  for (;myCurSortEd <= myNbrSortEd;myCurSortEd++)
+  {
+    myLE = myEdgeIndices(myCurSortEd);
+    if (myEData(myLE).Vertical() || myEData(myLE).Status().AllHidden())
+      continue;
+    myLEData = &myEData(myLE);
+    if (myLEData->HideCount() > myHideCount-2)
+      continue;
+
+    myLEMinMax = &myLEData->MinMax();
+
+    if (((iFaceMinMax->Max[0] - myLEMinMax->Min[0]) & 0x80008000) != 0 ||
+      ((myLEMinMax->Max[0] - iFaceMinMax->Min[0]) & 0x80008000) != 0 ||
+      ((iFaceMinMax->Max[1] - myLEMinMax->Min[1]) & 0x80008000) != 0 ||
+      ((myLEMinMax->Max[1] - iFaceMinMax->Min[1]) & 0x80008000) != 0 ||
+      ((iFaceMinMax->Max[2] - myLEMinMax->Min[2]) & 0x80008000) != 0 ||
+      ((myLEMinMax->Max[2] - iFaceMinMax->Min[2]) & 0x80008000) != 0 ||
+      ((iFaceMinMax->Max[3] - myLEMinMax->Min[3]) & 0x80008000) != 0 ||
+      ((myLEMinMax->Max[3] - iFaceMinMax->Min[3]) & 0x80008000) != 0 ||
+      ((iFaceMinMax->Max[4] - myLEMinMax->Min[4]) & 0x80008000) != 0 ||
+      ((myLEMinMax->Max[4] - iFaceMinMax->Min[4]) & 0x80008000) != 0 ||
+      ((iFaceMinMax->Max[5] - myLEMinMax->Min[5]) & 0x80008000) != 0 ||
+      ((myLEMinMax->Max[5] - iFaceMinMax->Min[5]) & 0x80008000) != 0 ||
+      ((iFaceMinMax->Max[6] - myLEMinMax->Min[6]) & 0x80008000) != 0 ||
+      ((myLEMinMax->Max[6] - iFaceMinMax->Min[6]) & 0x80008000) != 0 ||
+      ((iFaceMinMax->Max[7] - myLEMinMax->Min[7]) & 0x80008000) != 0) 
+      continue;
+    myLEGeom = &myLEData->ChangeGeometry();
+    myLETol = myLEData->Tolerance();
+    if (((HLRBRep_Surface*)iFaceGeom)->IsAbove
+      (iFaceBack,myLEGeom,(Standard_Real)myLETol)) 
+      continue;
+    break;
+  }
+
+  myLEOutLine  = Standard_False;
+  myLEInternal = Standard_False;
+  myLEDouble   = Standard_False;
+  myLEIsoLine  = Standard_False;
+  myLEType     = myLEGeom->GetType();
+}
 
 void HLRBRep_Data::NextEdge (const Standard_Boolean skip)
 {
-
-  if (skip) {
-    if (iFaceTest) myFaceItr2.NextEdge();
-    else           myCurSortEd++;
+  if (skip) 
+  {
+    if (iFaceTest) 
+      myFaceItr2.NextEdge();
+    else
+      myCurSortEd++;
   }
-  if (!MoreEdge()) return;
-  if (iFaceTest) {
-    myLE         = myFaceItr2.Edge    ();
-    myLEOutLine  = myFaceItr2.OutLine ();
-    myLEInternal = myFaceItr2.Internal();
-    myLEDouble   = myFaceItr2.Double  ();
-    myLEIsoLine  = myFaceItr2.IsoLine ();
-    myLEData     = &myEData(myLE);
-    myLEGeom     = &myLEData->ChangeGeometry();
-    myLEMinMax   = &myLEData->MinMax();
-    myLETol      = myLEData->Tolerance();
-    myLEType     = myLEGeom->GetType();
-    if (((HLRBRep_EdgeData*)myLEData)->Vertical() ||
-	(myLEDouble &&
-	 ((HLRBRep_EdgeData*)myLEData)->HideCount() == myHideCount-1))
-      NextEdge();
-    ((HLRBRep_EdgeData*)myLEData)->HideCount(myHideCount-1);
+  
+  if (iFaceTest && !MoreEdge())
+    return;
+
+  if (!iFaceTest) 
+  {
+    GetNextEdge();
     return;
   }
-  else {
-    myLE         = Edge();
-    myLEOutLine  = Standard_False;
-    myLEInternal = Standard_False;
-    myLEDouble   = Standard_False;
-    myLEIsoLine  = Standard_False;
-    myLEData     = &myEData(myLE);
-    myLEGeom     = &myLEData->ChangeGeometry();
-    myLEMinMax   = &myLEData->MinMax();
-    myLETol      = myLEData->Tolerance();
-    myLEType     = myLEGeom->GetType();
-  }
-  if (((HLRBRep_EdgeData*)myLEData)->Vertical()) {
+
+  myLE         = myFaceItr2.Edge    ();
+  myLEOutLine  = myFaceItr2.OutLine ();
+  myLEInternal = myFaceItr2.Internal();
+  myLEDouble   = myFaceItr2.Double  ();
+  myLEIsoLine  = myFaceItr2.IsoLine ();
+  myLEData     = &myEData(myLE);
+  myLEGeom     = &myLEData->ChangeGeometry();
+  myLEMinMax   = &myLEData->MinMax();
+  myLETol      = myLEData->Tolerance();
+  myLEType     = myLEGeom->GetType();
+  if (((HLRBRep_EdgeData*)myLEData)->Vertical() ||
+    (myLEDouble &&
+    ((HLRBRep_EdgeData*)myLEData)->HideCount() == myHideCount-1))
+    NextEdge();
+  ((HLRBRep_EdgeData*)myLEData)->HideCount(myHideCount-1);
+  return;
+
+  /*if (((HLRBRep_EdgeData*)myLEData)->Vertical()) {
     NextEdge();
     return;
   }
@@ -1003,7 +1045,7 @@ void HLRBRep_Data::NextEdge (const Standard_Boolean skip)
       (iFaceBack,myLEGeom,(Standard_Real)myLETol)) {
     NextEdge();
     return;
-  }
+  }*/
   return;               // edge is OK
 }
 

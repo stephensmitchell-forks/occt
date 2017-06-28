@@ -109,6 +109,8 @@ public:
   Standard_EXPORT Standard_Boolean MoreEdge();
   
   Standard_EXPORT void NextEdge (const Standard_Boolean skip = Standard_True);
+
+  Standard_EXPORT void GetNextEdge();
   
   //! Returns the  current Edge
   Standard_EXPORT Standard_Integer Edge() const;
@@ -236,7 +238,9 @@ private:
   Standard_Boolean iFaceBack;
   Standard_Boolean iFaceSimp;
   Standard_Boolean iFaceSmpl;
+  public:
   Standard_Boolean iFaceTest;
+  private:
   Standard_Integer myHideCount;
   Standard_Real myDeca[16];
   Standard_Real mySurD[16];
