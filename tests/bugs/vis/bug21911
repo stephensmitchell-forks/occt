@@ -1,0 +1,22 @@
+puts "========"
+puts "OCC21911"
+puts "========"
+puts ""
+##########################################
+# FitALL doesn't use all available space
+##########################################
+
+# ATTENTION!
+# This test case *MUST* be updated after bug fixing.
+# Result of test case should be processed automatically. Not only by picture comparing as it is now.
+# Possible modification: checking of shape color in the upper left and lower right corners of View window.
+
+restore [locate_data_file bug21911_FitAll.brep] a
+
+vinit View1 w=1200 h=200
+vaxo
+vdisplay a
+vfit
+vbounding a
+
+checkview -screenshot -3d -path ${imagedir}/${test_image}.png
