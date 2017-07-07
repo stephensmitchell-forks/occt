@@ -59,6 +59,7 @@ public:
   //! theDMVV contains the vertices that should be fused.
   Standard_EXPORT static void ConnexIntByInt (const TopoDS_Face& FI, 
                                               BRepOffset_Offset& OFI, 
+                                              const TopoDS_Face& FIO,
                                               TopTools_DataMapOfShapeShape& MES, 
                                               const TopTools_DataMapOfShapeShape& Build, 
                                               const Handle(BRepAlgo_AsDes)& AsDes, 

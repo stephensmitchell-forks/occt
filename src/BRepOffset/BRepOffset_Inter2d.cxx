@@ -1386,6 +1386,7 @@ void BRepOffset_Inter2d::Compute (const Handle(BRepAlgo_AsDes)&     AsDes,
 void BRepOffset_Inter2d::ConnexIntByInt
 (const TopoDS_Face&            FI,
  BRepOffset_Offset&            OFI,
+ const TopoDS_Face&            FIO,
  TopTools_DataMapOfShapeShape& MES,
  const TopTools_DataMapOfShapeShape& Build,
  const Handle(BRepAlgo_AsDes)& AsDes,
@@ -1415,22 +1416,20 @@ void BRepOffset_Inter2d::ConnexIntByInt
     if (YaBuild) {
       for (itL.Initialize(L); itL.More(); itL.Next()) {
         const TopoDS_Edge& EI = TopoDS::Edge(itL.Value());
-        TopoDS_Shape aLocalShape = OFI.Generated(EI);
-        const TopoDS_Edge& OE = TopoDS::Edge(aLocalShape);
-//        const TopoDS_Edge& OE = TopoDS::Edge(OFI.Generated(EI));
-        if (!MES.IsBound(OE) && !Build.IsBound(EI)) {
-//  Modified by skv - Fri Dec 26 16:59:52 2003 OCC4455 Begin
-//          ExtentEdge(OE,NE);
-          ExtentEdge(OE,NE, Offset);
-//  Modified by skv - Fri Dec 26 16:59:54 2003 OCC4455 End
-          MES.Bind  (OE,NE);
+        if (!Build.IsBound(EI)) {
+          TopoDS_Shape aLocalShape = OFI.Generated(EI);
+          const TopoDS_Edge& OE = TopoDS::Edge(aLocalShape);
+          if (!MES.IsBound(OE)) {
+            ExtentEdge(OE,NE, Offset);
+            MES.Bind  (OE,NE);
+          }
         }
       }
     } 
   }
   
-  TopoDS_Face           FIO = TopoDS::Face(OFI.Face());
-  if (MES.IsBound(FIO)) FIO = TopoDS::Face(MES(FIO));
+  //TopoDS_Face           FIO = TopoDS::Face(OFI.Face());
+  //if (MES.IsBound(FIO)) FIO = TopoDS::Face(MES(FIO));
   //
   TopTools_MapOfShape aME;
   const TopTools_ListOfShape& aLE = AsDes->Descendant(FIO);
@@ -1470,34 +1469,48 @@ void BRepOffset_Inter2d::ConnexIntByInt
       gp_Pnt Pref = BRep_Tool::Pnt(Vref);
       //IFV------------
 
-      TopoDS_Shape aLocalShape = OFI.Generated(CurE);
-      TopoDS_Edge CEO = TopoDS::Edge(aLocalShape);
-      aLocalShape = OFI.Generated(NextE);
-      TopoDS_Edge NEO = TopoDS::Edge(aLocalShape);
-//      TopoDS_Edge CEO = TopoDS::Edge(OFI.Generated(CurE));
-//      TopoDS_Edge NEO = TopoDS::Edge(OFI.Generated(NextE));
       //------------------------------------------
       // Inter processing of images of CurE NextE.
       //------------------------------------------
       TopTools_ListOfShape LV1,LV2;
-      Standard_Boolean     DoInter = 1;
       TopoDS_Shape         NE1,NE2;
-      
+      Standard_Boolean     DoInter = 0;
+
       if (Build.IsBound(CurE) && Build.IsBound(NextE)) {
         NE1 = Build(CurE );
         NE2 = Build(NextE);
-      }
-      else if (Build.IsBound(CurE) && MES.IsBound(NEO)) {
-         NE1 = Build(CurE);
-        NE2 = MES  (NEO);
-      }
-      else if (Build.IsBound(NextE) && MES.IsBound(CEO)) {
-        NE1 = Build(NextE);
-        NE2 = MES(CEO);
+        DoInter = 1;
       }
       else {
-        DoInter = 0;
+        TopoDS_Shape aLocalShape = OFI.Generated(CurE);
+        TopoDS_Edge CEO = TopoDS::Edge(aLocalShape);
+        aLocalShape = OFI.Generated(NextE);
+        TopoDS_Edge NEO = TopoDS::Edge(aLocalShape);
+        //
+        if (Build.IsBound(CurE) && MES.IsBound(NEO)) {
+          NE1 = Build(CurE);
+          NE2 = MES  (NEO);
+          DoInter = 1;
+        }
+        else if (Build.IsBound(NextE) && MES.IsBound(CEO)) {
+          NE1 = Build(NextE);
+          NE2 = MES(CEO);
+          DoInter = 1;
+        }
+        else {
+          if (MES.IsBound(CEO)) {
+            TopoDS_Vertex  V = CommonVertex(CEO,NEO); 
+            UpdateVertex  (V,CEO,TopoDS::Edge(MES(CEO)),Tol);
+            AsDes2d->Add     (MES(CEO),V);
+          }
+          else if (MES.IsBound(NEO)) {
+            TopoDS_Vertex V = CommonVertex(CEO,NEO); 
+            UpdateVertex (V,NEO,TopoDS::Edge(MES(NEO)),Tol);
+            AsDes2d->Add    (MES(NEO),V);
+          }
+        }
       }
+      //
       if (DoInter) {
         //------------------------------------
         // NE1,NE2 can be a compound of Edges.
@@ -1531,18 +1544,18 @@ void BRepOffset_Inter2d::ConnexIntByInt
           }
         }
       }
-      else {
-        if (MES.IsBound(CEO)) {
-          TopoDS_Vertex  V = CommonVertex(CEO,NEO); 
-          UpdateVertex  (V,CEO,TopoDS::Edge(MES(CEO)),Tol);
-          AsDes2d->Add     (MES(CEO),V);
-        }
-        else if (MES.IsBound(NEO)) {
-          TopoDS_Vertex V = CommonVertex(CEO,NEO); 
-          UpdateVertex (V,NEO,TopoDS::Edge(MES(NEO)),Tol);
-          AsDes2d->Add    (MES(NEO),V);
-        }
-      }
+      //else {
+      //  if (MES.IsBound(CEO)) {
+      //    TopoDS_Vertex  V = CommonVertex(CEO,NEO); 
+      //    UpdateVertex  (V,CEO,TopoDS::Edge(MES(CEO)),Tol);
+      //    AsDes2d->Add     (MES(CEO),V);
+      //  }
+      //  else if (MES.IsBound(NEO)) {
+      //    TopoDS_Vertex V = CommonVertex(CEO,NEO); 
+      //    UpdateVertex (V,NEO,TopoDS::Edge(MES(NEO)),Tol);
+      //    AsDes2d->Add    (MES(NEO),V);
+      //  }
+      //}
       CurE = NextE;
     }
   }

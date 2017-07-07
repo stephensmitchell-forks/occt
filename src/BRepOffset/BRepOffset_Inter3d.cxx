@@ -420,7 +420,7 @@ void BRepOffset_Inter3d::ConnexIntByArc(const TopTools_ListOfShape& /*SetOfFaces
 
 void BRepOffset_Inter3d::ConnexIntByInt
 (const TopoDS_Shape&                    SI,
- const BRepOffset_DataMapOfShapeOffset& MapSF,
+ const TopTools_DataMapOfShapeShape&    MapSF,
  const BRepOffset_Analyse&              Analyse,
  TopTools_DataMapOfShapeShape&          MES,
  TopTools_DataMapOfShapeShape&          Build,
@@ -543,8 +543,8 @@ void BRepOffset_Inter3d::ConnexIntByInt
       F1 = TopoDS::Face(itF1.Value());
       F2 = TopoDS::Face(itF2.Value());
       //
-      OF1 = TopoDS::Face(MapSF(F1).Face());
-      OF2 = TopoDS::Face(MapSF(F2).Face());
+      OF1 = TopoDS::Face(MapSF.Find(F1));
+      OF2 = TopoDS::Face(MapSF.Find(F2));
       if (!MES.IsBound(OF1)) {
         Standard_Boolean enlargeU = Standard_True;
         Standard_Boolean enlargeVfirst = Standard_True, enlargeVlast = Standard_True;

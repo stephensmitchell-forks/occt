@@ -671,6 +671,21 @@ void BRepOffset_MakeOffset::SetOffsetOnFace(const TopoDS_Face&  F,
 }
 
 //=======================================================================
+//function : SetOffsetFace
+//purpose  : 
+//=======================================================================
+void BRepOffset_MakeOffset::SetOffsetFace(const TopoDS_Face& F,
+                                          const TopoDS_Face& OF)
+{
+  // Check the orientation of the offset face and make
+  // it oriented the same way as original
+  Handle(IntTools_Context) aCtx = new IntTools_Context;
+  Standard_Boolean bToReverse = BOPTools_AlgoTools::IsSplitToReverse(F, OF, aCtx);
+  TopoDS_Face anOffsetFace = bToReverse ? TopoDS::Face(OF.Reversed()) : OF;
+  myMapFaceOffsetFace.Bind(F, anOffsetFace);
+}
+
+//=======================================================================
 //function : RemoveCorks
 //purpose  : 
 //=======================================================================
@@ -1113,6 +1128,9 @@ void BRepOffset_MakeOffset::BuildOffsetByInter()
 #endif
 
   BRepOffset_DataMapOfShapeOffset MapSF;
+  TopTools_DataMapOfShapeShape aMapFaceOffsetFace;
+  // MES   : Map of OffsetShape -> Extended Shapes.
+  TopTools_DataMapOfShapeShape MES;
   TopTools_MapOfShape             Done;
   Standard_Boolean OffsetOutside = (myOffset > 0.)? Standard_True : Standard_False;
   //--------------------------------------------------------
@@ -1127,6 +1145,15 @@ void BRepOffset_MakeOffset::BuildOffsetByInter()
   TopTools_DataMapOfShapeShape ShapeTgt;
   for (itLF.Initialize(LF); itLF.More(); itLF.Next()) {
     const TopoDS_Face&   F = TopoDS::Face(itLF.Value());
+    const TopoDS_Shape* pOFace = myMapFaceOffsetFace.Seek(F);
+    if (pOFace) {
+      // avoid creation of the new offset face
+      // if it was already given by the user
+      aMapFaceOffsetFace.Bind(F, *pOFace);
+      MES.Bind(*pOFace, *pOFace);
+      continue;
+    }
+
     Standard_Real CurOffset = myOffset;
     if (myFaceOffset.IsBound(F)) CurOffset = myFaceOffset(F);
     BRepOffset_Offset    OF(F,CurOffset,ShapeTgt,OffsetOutside,myJoin);
@@ -1161,13 +1188,12 @@ void BRepOffset_MakeOffset::BuildOffsetByInter()
       }
     }
     MapSF.Bind(F,OF);
+    aMapFaceOffsetFace.Bind(F, OF.Face());
   }
   //--------------------------------------------------------------------
-  // MES   : Map of OffsetShape -> Extended Shapes.
   // Build : Map of Initial SS  -> OffsetShape build by Inter.
   //                               can be an edge or a compound of edges       
   //---------------------------------------------------------------------
-  TopTools_DataMapOfShapeShape MES;  
   TopTools_DataMapOfShapeShape Build; 
   TopTools_ListOfShape         Failed;
   TopAbs_State                 Side = TopAbs_IN;  
@@ -1181,7 +1207,7 @@ void BRepOffset_MakeOffset::BuildOffsetByInter()
 
   BRepOffset_Inter3d Inter3 (AsDes,Side,myTol);
   // Intersection between parallel faces
-  Inter3.ConnexIntByInt(myShape,MapSF,myAnalyse,MES,Build,Failed,myIsPlanar);
+  Inter3.ConnexIntByInt(myShape,aMapFaceOffsetFace,myAnalyse,MES,Build,Failed,myIsPlanar);
   // Intersection with caps.
   Inter3.ContextIntByInt(myFaces,ExtentContext,MapSF,myAnalyse,MES,Build,Failed,myIsPlanar);
 
@@ -1195,7 +1221,19 @@ void BRepOffset_MakeOffset::BuildOffsetByInter()
   {
     const TopoDS_Face& FI = TopoDS::Face(Exp.Current());
     Standard_Real aCurrFaceTol = BRep_Tool::Tolerance(FI);
-    BRepOffset_Inter2d::ConnexIntByInt (FI, MapSF(FI), MES, Build, 
+
+    BRepOffset_Offset OFI;
+    TopoDS_Face           FIO;
+    if (myMapFaceOffsetFace.IsBound(FI)) {
+      FIO = TopoDS::Face(myMapFaceOffsetFace.Find(FI));
+    }
+    else {
+      OFI = MapSF(FI);
+      FIO = TopoDS::Face(OFI.Face());
+      if (MES.IsBound(FIO)) FIO = TopoDS::Face(MES(FIO));
+    }
+
+    BRepOffset_Inter2d::ConnexIntByInt (FI, OFI, FIO, MES, Build, 
                                         AsDes, AsDes2d, myOffset, aCurrFaceTol, aDMVV);
   }
   //
@@ -1213,7 +1251,7 @@ void BRepOffset_MakeOffset::BuildOffsetByInter()
   
   for (Exp.Init(myShape,TopAbs_FACE) ; Exp.More(); Exp.Next()) {
     const TopoDS_Face& FI = TopoDS::Face(Exp.Current());
-    NF = MapSF(FI).Face();
+    NF = TopoDS::Face(myMapFaceOffsetFace.IsBound(FI) ? myMapFaceOffsetFace.Find(FI) : MapSF(FI).Face());
     if (MES.IsBound(NF)) {
       NF = TopoDS::Face(MES(NF));
     }
@@ -1313,7 +1351,7 @@ void BRepOffset_MakeOffset::BuildOffsetByInter()
   BRepAlgo_Image     IMOE;
   for (Exp.Init(myShape,TopAbs_FACE) ; Exp.More(); Exp.Next()) {
     const TopoDS_Shape& FI  = Exp.Current();
-    const TopoDS_Shape& OFI = MapSF(FI).Face();
+    const TopoDS_Shape& OFI = myMapFaceOffsetFace.IsBound(FI) ? myMapFaceOffsetFace.Find(FI) : MapSF(FI).Face();
     if (MES.IsBound(OFI)) {
       const TopoDS_Face& aLocalFace = TopoDS::Face(MES(OFI));
       LFE.Append(aLocalFace);
@@ -1393,7 +1431,8 @@ void BRepOffset_MakeOffset::BuildOffsetByInter()
   for (Exp.Init(myShape,TopAbs_FACE) ; Exp.More(); Exp.Next()) {
     const TopoDS_Shape& FI   = Exp.Current();
     myInitOffsetFace.SetRoot(FI);
-    TopoDS_Face  OF  = MapSF(FI).Face();
+    TopoDS_Face OF = TopoDS::Face(myMapFaceOffsetFace.IsBound(FI) ? myMapFaceOffsetFace.Find(FI) : MapSF(FI).Face());
+    //    TopoDS_Face  OF  = MapSF(FI).Face();
     if (MES.IsBound(OF)) {
       OF = TopoDS::Face(MES(OF));
       if (IMOE.HasImage(OF)) {
@@ -4207,6 +4246,24 @@ Standard_Boolean BRepOffset_MakeOffset::CheckInputData()
       }
     }
 
+    if (!isFound)
+    {
+      // Check the availability of the user-defined modifications
+      TopTools_IndexedMapOfShape aMF;
+      TopExp::MapShapes(myShape, TopAbs_FACE, aMF);
+      TopTools_DataMapIteratorOfDataMapOfShapeShape anSSIter(myMapFaceOffsetFace);
+      for (; anSSIter.More(); anSSIter.Next())
+      {
+        const TopoDS_Shape& aFace = anSSIter.Key();
+        const TopoDS_Shape& anOffsetFace = anSSIter.Value();
+        if (aMF.Contains(aFace) && !anOffsetFace.IsNull())
+        {
+          isFound = Standard_True;
+          break;
+        }
+      }
+    }
+    //
     if (!isFound)
     {
       // No face with non-null offset found.
