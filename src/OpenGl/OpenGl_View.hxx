@@ -333,7 +333,7 @@ public:
   const Handle(OpenGl_Window) GlWindow() const { return myWindow; }
 
   //! Returns OpenGL environment map.
-  const Handle(OpenGl_Texture)& GlTextureEnv() const { return myTextureEnv; }
+  const Handle(OpenGl_TextureSet)& GlTextureEnv() const { return myTextureEnv; }
 
   //! Returns selector for BVH tree, providing a possibility to store information
   //! about current view volume and to detect which objects are overlapping it.
@@ -505,7 +505,7 @@ protected:
 
   OpenGl_GraduatedTrihedron myGraduatedTrihedron;
 
-  Handle(OpenGl_Texture) myTextureEnv;
+  Handle(OpenGl_TextureSet) myTextureEnv;
 
   //! Framebuffers for OpenGL output.
   Handle(OpenGl_FrameBuffer) myOpenGlFBO;
@@ -614,30 +614,6 @@ protected: //! @name data types related to ray-tracing
     OpenGl_RT_uMaxRadiance,
 
     OpenGl_RT_NbVariables // special field
-  };
-
-  //! Defines OpenGL texture samplers.
-  enum ShaderSamplerNames
-  {
-    OpenGl_RT_EnvironmentMapTexture = 0,
-
-    OpenGl_RT_SceneNodeInfoTexture  = 1,
-    OpenGl_RT_SceneMinPointTexture  = 2,
-    OpenGl_RT_SceneMaxPointTexture  = 3,
-    OpenGl_RT_SceneTransformTexture = 4,
-
-    OpenGl_RT_GeometryVertexTexture = 5,
-    OpenGl_RT_GeometryNormalTexture = 6,
-    OpenGl_RT_GeometryTexCrdTexture = 7,
-    OpenGl_RT_GeometryTriangTexture = 8,
-
-    OpenGl_RT_RaytraceMaterialTexture = 9,
-    OpenGl_RT_RaytraceLightSrcTexture = 10,
-
-    OpenGl_RT_FsaaInputTexture = 11,
-    OpenGl_RT_PrevAccumTexture = 12,
-
-    OpenGl_RT_RaytraceDepthTexture = 13
   };
 
   //! Defines OpenGL image samplers.

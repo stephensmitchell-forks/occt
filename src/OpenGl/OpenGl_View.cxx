@@ -143,7 +143,11 @@ void OpenGl_View::ReleaseGlResources (const Handle(OpenGl_Context)& theCtx)
 
   if (!myTextureEnv.IsNull())
   {
-    theCtx->DelayedRelease (myTextureEnv);
+    for (OpenGl_TextureSet::Iterator aTextureIter (myTextureEnv); aTextureIter.More(); aTextureIter.Next())
+    {
+      theCtx->DelayedRelease (aTextureIter.ChangeValue());
+      aTextureIter.ChangeValue().Nullify();
+    }
     myTextureEnv.Nullify();
   }
 
@@ -225,7 +229,11 @@ void OpenGl_View::SetTextureEnv (const Handle(Graphic3d_TextureEnv)& theTextureE
   Handle(OpenGl_Context) aCtx = myWorkspace->GetGlContext();
   if (!aCtx.IsNull() && !myTextureEnv.IsNull())
   {
-    aCtx->DelayedRelease (myTextureEnv);
+    for (OpenGl_TextureSet::Iterator aTextureIter (myTextureEnv); aTextureIter.More(); aTextureIter.Next())
+    {
+      aCtx->DelayedRelease (aTextureIter.ChangeValue());
+      aTextureIter.ChangeValue().Nullify();
+    }
   }
 
   myToUpdateEnvironmentMap = Standard_True;
@@ -247,11 +255,13 @@ void OpenGl_View::initTextureEnv (const Handle(OpenGl_Context)& theContext)
     return;
   }
 
-  myTextureEnv = new OpenGl_Texture (myTextureEnvData->GetParams());
+  myTextureEnv = new OpenGl_TextureSet (1);
+  Handle(OpenGl_Texture)& aTextureEnv = myTextureEnv->ChangeFirst();
+  aTextureEnv = new OpenGl_Texture (myTextureEnvData->GetId(), myTextureEnvData->GetParams());
   Handle(Image_PixMap) anImage = myTextureEnvData->GetImage();
   if (!anImage.IsNull())
   {
-    myTextureEnv->Init (theContext, *anImage.operator->(), myTextureEnvData->Type());
+    aTextureEnv->Init (theContext, *anImage.operator->(), myTextureEnvData->Type());
   }
 }
 
