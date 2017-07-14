@@ -4365,9 +4365,9 @@ void ChFi3d_PerformElSpine(Handle(ChFiDS_HElSpine)& HES,
   ES.SetCurve(BSpline);
 
   //Temporary
-  gp_Pnt ptgui;
-  gp_Vec d1gui;
-  ( HES->Curve() ).D1(HES->FirstParameter(),ptgui,d1gui);
+  //gp_Pnt ptgui;
+  //gp_Vec d1gui;
+  //( HES->Curve() ).D1(HES->FirstParameter(),ptgui,d1gui);
 }
 
 //=======================================================================

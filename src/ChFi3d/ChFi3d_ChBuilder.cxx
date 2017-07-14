@@ -73,102 +73,6 @@
 extern Standard_Boolean ChFi3d_GettraceCHRON();
 #endif
 
-/*
-Handle(ChFiDS_HElSpine) MakeOffsetGuide(const Handle(ChFiDS_HElSpine)&      HGuide,
-                                        const Standard_Real                 Distance,
-                                        const Handle(BRepAdaptor_HSurface)& S1,
-                                        const Handle(BRepAdaptor_HSurface)& S2)
-{
-  Handle(ChFiDS_HElSpine) OffsetHGuide;
-  
-  TopoDS_Face F1 = S1->ChangeSurface().Face();
-  TopoDS_Face F2 = S2->ChangeSurface().Face();
-  Handle(Geom_Surface) GS1 = BRep_Tool::Surface(F1);
-  Handle(Geom_Surface) TrGS1 =
-    new Geom_RectangularTrimmedSurface(GS1,
-                                       S1->FirstUParameter(), S1->LastUParameter(),
-                                       S1->FirstVParameter(), S1->LastVParameter());
-  Standard_Real Offset = -Distance;
-  if (F1.Orientation() == TopAbs_REVERSED)
-    Offset = Distance;
-  Handle(Geom_OffsetSurface) MakeOffsetSurf = new Geom_OffsetSurface(TrGS1, Offset);
-  Handle(Geom_Surface) OffsetTrGS1 = MakeOffsetSurf->Surface();
-  Handle(Geom_Surface) GS2 = BRep_Tool::Surface(F2);
-  Handle(Geom_Surface) TrGS2 =
-    new Geom_RectangularTrimmedSurface(GS2,
-                                       S2->FirstUParameter(), S2->LastUParameter(),
-                                       S2->FirstVParameter(), S2->LastVParameter());
-  GeomInt_IntSS Intersector(OffsetTrGS1, TrGS2, Precision::Confusion());
-  if (!Intersector.IsDone() || Intersector.NbLines() == 0)
-  {
-    return OffsetHGuide;
-  }
-
-  Handle(Geom_Curve) IntCurve = Intersector.Line(1);
-
-  if (Intersector.NbLines() > 1)
-  {
-    GeomConvert_CompCurveToBSplineCurve Concat;
-    for (Standard_Integer indc = 1; indc <= Intersector.NbLines(); indc++)
-    {
-      IntCurve = Intersector.Line(indc);
-      Handle(Geom_BoundedCurve) aBoundedCurve = Handle(Geom_BoundedCurve)::DownCast(IntCurve);
-      Standard_Boolean Success = Concat.Add(aBoundedCurve, 1.e-5, Standard_True);
-      if (!Success)
-        Concat.Add(aBoundedCurve, 1.e-5, Standard_False);
-    }
-    IntCurve = Concat.BSplineCurve();
-  }
-  if (IntCurve.IsNull())
-  {
-    return OffsetHGuide;
-  }
-  //Projection of extremities onto <IntCurve>
-  GeomAdaptor_Curve GAcurve(IntCurve);
-  gp_Pnt Ends [2];
-  Standard_Real Params [2];
-  Ends[0] = HGuide->Value(HGuide->FirstParameter());
-  Ends[1] = HGuide->Value(HGuide->LastParameter());
-  for (Standard_Integer ind_end = 0; ind_end < 2; ind_end++)
-  {
-    if (ind_end == 1 && HGuide->IsPeriodic())
-      break;
-    Extrema_ExtPC Projector(Ends[ind_end], GAcurve);
-    if (!Projector.IsDone() || Projector.NbExt() == 0)
-      return OffsetHGuide;
-    Standard_Integer imin = 1;
-    for (Standard_Integer iext = 2; iext <= Projector.NbExt(); iext++)
-      if (Projector.SquareDistance(iext) < Projector.SquareDistance(imin))
-        imin = iext;
-    Params[ind_end] = Projector.Point(imin).Parameter();
-  }
-  if (HGuide->IsPeriodic())
-    Params[1] = GAcurve.LastParameter(); //temporary
-  if (Params[0] > Params[1])
-  {
-    Standard_Real NewFirstPar = IntCurve->ReversedParameter(Params[0]);
-    Standard_Real NewLastPar  = IntCurve->ReversedParameter(Params[1]);
-    IntCurve->Reverse();
-    Params[0] = NewFirstPar;
-    Params[1] = NewLastPar;
-  }
-  if (HGuide->IsPeriodic()) //check the direction of closed curve
-  {
-    gp_Pnt aPnt, anOffsetPnt;
-    gp_Vec Tangent, OffsetTangent;
-    HGuide->D1(HGuide->FirstParameter(), aPnt, Tangent);
-    IntCurve->D1(Params[0], anOffsetPnt, OffsetTangent);
-    if (Tangent*OffsetTangent < 0)
-      IntCurve->Reverse();
-  }
-  ChFiDS_ElSpine OffsetElSpine;
-  OffsetElSpine.SetCurve(IntCurve);
-  OffsetElSpine.FirstParameter(Params[0]);
-  OffsetElSpine.LastParameter(Params[1]);
-  OffsetHGuide = new ChFiDS_HElSpine(OffsetElSpine);
-  return OffsetHGuide;
-}
-*/
 
 //=======================================================================
 //function : SearchCommonFaces
@@ -935,6 +839,7 @@ ChFi3d_ChBuilder::SimulSurf(Handle(ChFiDS_SurfData)&            Data,
   if(intl) Last = chsp->LastParameter(chsp->NbEdges());
 
 
+  Handle(ChFiDS_HElSpine) OffsetHGuide;
 
   if (chsp->IsChamfer() == ChFiDS_Sym) {
     Standard_Real dis;
@@ -957,7 +862,7 @@ ChFi3d_ChBuilder::SimulSurf(Handle(ChFiDS_SurfData)&            Data,
     Func->Set(dis, dis, Choix);
     FInv->Set(dis, dis, Choix);
     
-    done = SimulData(Data,HGuide,lin,S1,I1,S2,I2,
+    done = SimulData(Data,HGuide,OffsetHGuide,lin,S1,I1,S2,I2,
 		     *Func,*FInv,PFirst,MaxStep,locfleche,
 		     TolGuide,First,Last,Inside,Appro,Forward,
 		     Soldep,4,RecOnS1,RecOnS2);
@@ -1049,7 +954,6 @@ ChFi3d_ChBuilder::SimulSurf(Handle(ChFiDS_SurfData)&            Data,
     {
       //Handle(ChFiDS_HElSpine) OffsetHGuide = MakeOffsetGuide(HGuide,dis1,S1,S2);
       //Handle(ChFiDS_HElSpine) OffsetHGuide = MakeOffsetGuide(HGuide,dis2,S2,S1);
-      Handle(ChFiDS_HElSpine) OffsetHGuide;
       ChFiDS_ListOfHElSpine& ll = Spine->ChangeElSpines();
       ChFiDS_ListOfHElSpine& ll_offset = Spine->ChangeOffsetElSpines();
       ChFiDS_ListIteratorOfListOfHElSpine ILES(ll), ILES_offset(ll_offset);
@@ -1072,7 +976,7 @@ ChFi3d_ChBuilder::SimulSurf(Handle(ChFiDS_SurfData)&            Data,
       FInv->Set(Throat,Throat,Choix); //dis2?
     }
     
-    done = SimulData(Data,HGuide,lin,S1,I1,S2,I2,
+    done = SimulData(Data,HGuide,OffsetHGuide,lin,S1,I1,S2,I2,
 		     *Func,*FInv,PFirst,MaxStep,locfleche,
 		     TolGuide,First,Last,Inside,Appro,Forward,
 		     Soldep,4,RecOnS1,RecOnS2);
@@ -1159,7 +1063,7 @@ ChFi3d_ChBuilder::SimulSurf(Handle(ChFiDS_SurfData)&            Data,
       Func.Set(dis, angle, Ch);
       FInv.Set(dis, angle, Ch);
 
-      done = SimulData(Data,HGuide,lin,S1,I1,S2,I2,
+      done = SimulData(Data,HGuide,OffsetHGuide,lin,S1,I1,S2,I2,
 		       Func,FInv,PFirst,MaxStep,locfleche,
 		       TolGuide,First,Last,Inside,Appro,Forward,
 		       Soldep,4,RecOnS1,RecOnS2);
@@ -1245,7 +1149,7 @@ ChFi3d_ChBuilder::SimulSurf(Handle(ChFiDS_SurfData)&            Data,
       Soldep(2) = Soldep(4);
       Soldep(4) = Rtemp;
 
-      done = SimulData(Data,HGuide,lin,S2,I2,S1,I1,
+      done = SimulData(Data,HGuide,OffsetHGuide,lin,S2,I2,S1,I1,
 		       Func,FInv,PFirst,MaxStep,locfleche,
 		       TolGuide,First,Last,Inside,Appro,Forward,
 		       Soldep,4,RecOnS2,RecOnS1);

@@ -1877,9 +1877,9 @@ void ChFi3d_Builder::PerformSetOfSurfOnElSpine
 #endif 
 
   //Temporary
-  gp_Pnt ptgui;
-  gp_Vec d1gui;
-  ( HGuide->Curve() ).D1(HGuide->FirstParameter(),ptgui,d1gui);
+  //gp_Pnt ptgui;
+  //gp_Vec d1gui;
+  //( HGuide->Curve() ).D1(HGuide->FirstParameter(),ptgui,d1gui);
   
   ChFiDS_ElSpine& Guide = HGuide->ChangeCurve();
 

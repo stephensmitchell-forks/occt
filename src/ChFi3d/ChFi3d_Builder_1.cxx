@@ -139,6 +139,8 @@ static TopoDS_Edge MakeOffsetEdge(const TopoDS_Edge&         theEdge,
     Offset = Distance;
   Handle(Geom_OffsetSurface) MakeOffsetSurf = new Geom_OffsetSurface(TrGS1, Offset);
   Handle(Geom_Surface) OffsetTrGS1 = MakeOffsetSurf->Surface();
+  if (OffsetTrGS1.IsNull())
+    OffsetTrGS1 = MakeOffsetSurf;
   Handle(Geom_Surface) GS2 = BRep_Tool::Surface(F2);
   Handle(Geom_Surface) TrGS2 =
     new Geom_RectangularTrimmedSurface(GS2,
@@ -218,6 +220,24 @@ static TopoDS_Edge MakeOffsetEdge(const TopoDS_Edge&         theEdge,
     if (Tangent*OffsetTangent < 0)
       IntCurve->Reverse();
   }
+
+  /*
+  Standard_Real ParTol = 1.e-5;
+  Standard_Real FirstDiff = aBAcurve.FirstParameter() - Params[0];
+  Standard_Real LastDiff  = aBAcurve.LastParameter()  - Params[1];
+  if (Abs(FirstDiff) > ParTol ||
+      Abs(LastDiff)  > ParTol)
+  {
+    Handle(Geom_BSplineCurve) BsplCurve = Handle(Geom_BSplineCurve)::DownCast(IntCurve);
+    TColStd_Array1OfReal aKnots(1, BsplCurve->NbKnots());
+    BsplCurve->Knots(aKnots);
+    BSplCLib::Reparametrize(aBAcurve.FirstParameter(), aBAcurve.LastParameter(), aKnots);
+    BsplCurve->SetKnots(aKnots);
+    if (aBAcurve.IsPeriodic() && !BsplCurve->IsPeriodic())
+      BsplCurve->SetPeriodic();
+    IntCurve = BsplCurve;
+  }
+  */
   
   OffsetEdge = BRepLib_MakeEdge(IntCurve, Params[0], Params[1]);
   return OffsetEdge;
