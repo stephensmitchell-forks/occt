@@ -6,15 +6,17 @@ puts ""
 # New functionalities of BRepFilletAPI_MakeChamfer algorithm
 ############################################################
 
+#nurbsconvert all shape
 pcylinder a1 10 50
 box a2 -20 -20 -20  40 40 40
-nurbsconvert ba2 a2
-bfuse b a1 ba2
+bfuse a a1 a2
+nurbsconvert b a
 donly b
+
 explode b f
 explode b_2 e
-donly b b_2_3
+donly b b_2_2
 
-chamf_throat r b b_2_3 b_2 1. 2.
+chamf_throat r b b_2_2 b_2 1. 2.
 
 checkshape r
