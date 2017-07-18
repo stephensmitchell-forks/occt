@@ -15,7 +15,6 @@
 //    svv #2    23.02.00: porting on SIL
 
 #include <Interface_Macros.hxx>
-#include <Interface_Static.hxx>
 #include <Interface_Statics.hxx>
 #include <StepData.hxx>
 #include <StepData_DefaultGeneral.hxx>
@@ -32,7 +31,6 @@ StaticHandleA(StepData_Protocol,theheader);
 {
 //  InitHandleVoid(StepData_Protocol,proto);
 //  InitHandleVoid(StepData_DefaultGeneral,stmod);
-//:S4136  Interface_Static::Init("step","step.readaccept.void",'i',"1");
 //  if (proto.IsNull()) proto = new StepData_Protocol;
 //  if (stmod.IsNull()) stmod = new StepData_DefaultGeneral;
 }

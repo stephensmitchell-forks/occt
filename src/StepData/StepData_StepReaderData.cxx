@@ -19,7 +19,6 @@
 #include <Interface_HArray1OfHAsciiString.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ParamList.hxx>
-#include <Interface_Static.hxx>
 #include <Message.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_Transient.hxx>
@@ -117,7 +116,6 @@ StepData_StepReaderData::StepData_StepReaderData
   thenbscop = 0;  thenbents = 0;  thelastn = 0;  thenbhead = nbheader;
   //themults.Init(0);
   thecheck = new Interface_Check;
-//:S4136  acceptvoid = Interface_Static::IVal("step.readaccept.void");
   if (initstr) return;
   //for (Standard_Integer i = 0; i < Maxlst; i ++) {
   //  sprintf(textnum,"$%d",i+1);

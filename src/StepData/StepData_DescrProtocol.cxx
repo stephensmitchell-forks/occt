@@ -37,5 +37,5 @@ StepData_DescrProtocol::StepData_DescrProtocol ()    {  }
   StepData_WriterLib::SetGlobal   (rwm,this);
 }
 
-    Standard_CString  StepData_DescrProtocol::SchemaName () const
+    Standard_CString  StepData_DescrProtocol::SchemaName (Standard_Integer /*theShematype*/)
       {  return thename.ToCString();  }

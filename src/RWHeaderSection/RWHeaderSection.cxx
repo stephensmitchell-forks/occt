@@ -22,10 +22,16 @@
 /// #include <EuclidStandard.hxx>
 static Handle(RWHeaderSection_ReadWriteModule) rwm;
 static Handle(RWHeaderSection_GeneralModule) rwg;
+static int THE_RWHeaderSection_init = 0;
 
 
 void RWHeaderSection::Init()
 {
+  if (THE_RWHeaderSection_init)
+  {
+    return;
+  }
+  THE_RWHeaderSection_init = 1;
 ///   EuclidStandard::Init();
   Handle(HeaderSection_Protocol) proto = HeaderSection::Protocol();
   StepData::AddHeaderProtocol(proto);

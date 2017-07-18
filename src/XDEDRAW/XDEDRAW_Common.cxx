@@ -298,11 +298,14 @@ static Standard_Integer ReadStep (Draw_Interpretor& di, Standard_Integer argc, c
     di << "Use: " << argv[0] << " Doc filename [mode]: read STEP file to a document\n";
     return 0;
   }
-  
-  DeclareAndCast(STEPControl_Controller,ctl,XSDRAW::Controller());
-  if (ctl.IsNull()) XSDRAW::SetNorm("STEP");
+  DeclareAndCast(STEPCAFControl_Controller, ctl, XSDRAW::Controller());
+  if (ctl.IsNull())
+  {
+    ctl = new STEPCAFControl_Controller;
+    XSDRAW::SetController(ctl);
+  }
 
-  STEPCAFControl_Reader reader ( XSDRAW::Session(),Standard_True);
+  STEPCAFControl_Reader reader ( XSDRAW::Session(), ctl, Standard_True);
   
   if (argc == 4) {
     Standard_Boolean mode = Standard_True;
@@ -383,9 +386,14 @@ static Standard_Integer WriteStep (Draw_Interpretor& di, Standard_Integer argc, 
   Standard_CString multifile = 0;
   
   Standard_Integer k = 3;
-  DeclareAndCast(STEPControl_Controller,ctl,XSDRAW::Controller());
-  if (ctl.IsNull()) XSDRAW::SetNorm("STEP");
-  STEPCAFControl_Writer writer ( XSDRAW::Session(), Standard_True );
+
+  DeclareAndCast(STEPCAFControl_Controller, ctl, XSDRAW::Controller());
+  if (ctl.IsNull())
+  {
+    ctl = new STEPCAFControl_Controller;
+    XSDRAW::SetController(ctl);
+  }
+  STEPCAFControl_Writer writer ( XSDRAW::Session(), ctl, Standard_True );
    
   STEPControl_StepModelType mode = STEPControl_AsIs;
   if ( argc > k ) {
@@ -521,10 +529,14 @@ static Standard_Integer testSTEP(Draw_Interpretor& di, Standard_Integer argc, co
     return 0;
   }
 
-  DeclareAndCast(STEPControl_Controller, ctl, XSDRAW::Controller());
-  if (ctl.IsNull()) XSDRAW::SetNorm("STEP");
+  DeclareAndCast(STEPCAFControl_Controller, ctl, XSDRAW::Controller());
+  if (ctl.IsNull())
+  {
+    ctl = new STEPCAFControl_Controller;
+    XSDRAW::SetController(ctl);
+  }
 
-  STEPCAFControl_Reader reader(XSDRAW::Session(), Standard_True);
+  STEPCAFControl_Reader reader(XSDRAW::Session(), ctl, Standard_True);
 
   if (argc == 4) {
     Standard_Boolean mode = Standard_True;

@@ -105,6 +105,7 @@ Standard_Boolean  XSControl_WorkSession::SelectNorm(const Standard_CString normn
 void XSControl_WorkSession::SetController(const Handle(XSControl_Controller)& ctl)
 {
   myController = ctl;
+  SetModel(myController->NewModel());
 
   SetLibrary   ( myController->WorkLibrary() );
   SetProtocol  ( myController->Protocol() );

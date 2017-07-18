@@ -83,7 +83,7 @@ XSAlgo_AlgoContainer::XSAlgo_AlgoContainer()
 
 void XSAlgo_AlgoContainer::PrepareForTransfer() const
 {
-  UnitsMethods::SetCasCadeLengthUnit ( Interface_Static::IVal("xstep.cascade.unit") );
+  UnitsMethods::SetCasCadeLengthUnit(getParam("xstep.cascade.unit")->IntegerValue());
 }
 
 //=======================================================================
@@ -104,7 +104,7 @@ TopoDS_Shape XSAlgo_AlgoContainer::ProcessShape (const TopoDS_Shape& shape,
   Handle(ShapeProcess_ShapeContext) context = Handle(ShapeProcess_ShapeContext)::DownCast(info);
   if ( context.IsNull() )
   {
-    Standard_CString rscfile = Interface_Static::CVal(prscfile);
+    Standard_CString rscfile = getParam(prscfile)->CStringValue();
     if (!rscfile)
       rscfile = prscfile;
     context = new ShapeProcess_ShapeContext(shape, rscfile);
@@ -114,7 +114,7 @@ TopoDS_Shape XSAlgo_AlgoContainer::ProcessShape (const TopoDS_Shape& shape,
   }
   info = context;
   
-  Standard_CString seq = Interface_Static::CVal ( pseq );
+  Standard_CString seq = getParam(pseq)->CStringValue();
   if ( ! seq ) seq = pseq;
   
   // if resource file is not loaded or does not define <seq>.exec.op, 
@@ -358,7 +358,7 @@ Standard_Boolean XSAlgo_AlgoContainer::CheckPCurve (const TopoDS_Edge& E,
   B.Range(edge,face,w1,w2);
   B.SameRange(edge, Standard_False );
   //:S4136
-  Standard_Integer SPmode = Interface_Static::IVal("read.stdsameparameter.mode");
+  Standard_Integer SPmode = getParam("read.stdsameparameter.mode")->IntegerValue();
   if ( SPmode ) 
     B.SameParameter (edge, Standard_False );
 
@@ -566,4 +566,30 @@ void XSAlgo_AlgoContainer::MergeTransferInfo(const Handle(Transfer_FinderProcess
       }
     }
   }
+}
+
+//=======================================================================
+// Method  : SetModel
+// Purpose :
+//=======================================================================
+void XSAlgo_AlgoContainer::SetModel(Handle(Interface_InterfaceModel)& theModel)
+{
+  myModel = theModel;
+}
+
+//=======================================================================
+// Method  : getParam
+// Purpose :
+//=======================================================================
+Handle(Interface_Static) XSAlgo_AlgoContainer::getParam
+(const Standard_CString theParamName) const
+{
+  Handle(Interface_Static) aParam;
+  if (!myModel.IsNull())
+    aParam = myModel->GetParam(theParamName);
+
+  if (aParam.IsNull())
+    aParam = Interface_Static::Static(theParamName);
+
+  return aParam;
 }

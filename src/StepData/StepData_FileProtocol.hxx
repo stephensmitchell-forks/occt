@@ -74,7 +74,7 @@ public:
   //! To be redefined by each sub-class
   //! Here, SchemaName returns "" (empty String)
   //! was C++ : return const
-  Standard_EXPORT virtual Standard_CString SchemaName() const Standard_OVERRIDE;
+  Standard_EXPORT virtual Standard_CString SchemaName(Standard_Integer theShematype) Standard_OVERRIDE;
 
 
 

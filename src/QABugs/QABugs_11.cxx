@@ -57,7 +57,6 @@
 #include <OSD.hxx>
 #include <STEPCAFControl_Writer.hxx>
 #include <STEPControl_StepModelType.hxx>
-#include <Interface_Static.hxx>
 #include <IFSelect_ReturnStatus.hxx>
 #include <Standard_Failure.hxx>
 #include <TColgp_HArray1OfPnt2d.hxx>
@@ -2550,7 +2549,7 @@ static Standard_Integer OCC7141 (Draw_Interpretor& di, Standard_Integer argc, co
   shapeTool = XCAFDoc_DocumentTool::ShapeTool(document->Main());
   shapeTool->AddShape(AddTestStructure(nCount), Standard_True);
   STEPControl_StepModelType mode = STEPControl_AsIs;
-  if (!Interface_Static::SetIVal("write.step.assembly",1)) { //assembly mode
+  if (!writer.GetParam("write.step.assembly")->SetIntegerValue(1)) { //assembly mode
     di << "Failed to set assembly mode for step data\n\n";
     return 0;
   }

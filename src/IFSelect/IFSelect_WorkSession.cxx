@@ -71,7 +71,6 @@
 #include <Interface_ReportEntity.hxx>
 #include <Interface_ShareFlags.hxx>
 #include <Interface_ShareTool.hxx>
-#include <Interface_Static.hxx>
 #include <Message.hxx>
 #include <Message_Messenger.hxx>
 #include <OSD_Path.hxx>
@@ -1075,30 +1074,6 @@ Standard_Integer IFSelect_WorkSession::NextIdentForLabel
 
 //  #################################################################
 //  ....                Parametres (Int et Text)                ....
-
-//=======================================================================
-//function : 
-//purpose  : 
-//=======================================================================
-
-Handle(Standard_Transient) IFSelect_WorkSession::NewParamFromStatic
-  (const Standard_CString statname, const Standard_CString name)
-{
-  Handle(Standard_Transient) param;
-  Handle(Interface_Static) stat = Interface_Static::Static(statname);
-  if (stat.IsNull()) return param;
-  if (stat->Type() == Interface_ParamInteger) {
-    Handle(IFSelect_IntParam) intpar = new IFSelect_IntParam;
-    intpar->SetStaticName (statname);
-    param = intpar;
-  } else {
-    param = stat->HStringValue();
-  }
-  if (param.IsNull()) return param;
-  if ( AddNamedItem (name, param) == 0 ) param.Nullify();
-  return param;
-}
-
 
 //=======================================================================
 //function : 

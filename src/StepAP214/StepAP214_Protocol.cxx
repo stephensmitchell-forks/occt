@@ -454,7 +454,6 @@ static Standard_CString schemaAP242DIS = "AP242_MANAGED_MODEL_BASED_3D_ENGINEERI
 #include <StepShape_ExtrudedFaceSolid.hxx>
 #include <StepShape_RevolvedFaceSolid.hxx>
 #include <StepShape_SweptFaceSolid.hxx>
-#include <Interface_Static.hxx>
 #include <StepBasic_AreaUnit.hxx>
 #include <StepBasic_VolumeUnit.hxx>
 #include <StepBasic_SiUnitAndAreaUnit.hxx>
@@ -758,7 +757,8 @@ static Interface_DataMapOfTransientInteger types(800);
 //purpose  : 
 //=======================================================================
 
-StepAP214_Protocol::StepAP214_Protocol ()
+StepAP214_Protocol::StepAP214_Protocol () :
+  myShemaName(schemaAP214IS)
 {
   if (THE_StepAP214_Protocol_init)
   {
@@ -1481,18 +1481,21 @@ Handle(Standard_Type)& atype) const
 //purpose  : 
 //=======================================================================
 
-Standard_CString StepAP214_Protocol::SchemaName() const
-{	
-  switch (Interface_Static::IVal("write.step.schema")) { //:j4
-  default:
-  case 1 : return schemaAP214CD;  break; 
-  case 2 : return schemaAP214DIS; break; 
-  case 3 : return schemaAP203;    break;
-  case 4:  return schemaAP214IS; break;
-  case 5 : return schemaAP242DIS; break;
+Standard_CString StepAP214_Protocol::SchemaName(Standard_Integer theShematype)
+{
+  if (theShematype != 0)
+  {
+    switch (theShematype) { //:j4
+      default:
+      case 1: myShemaName = schemaAP214CD;  break;
+      case 2: myShemaName = schemaAP214DIS; break;
+      case 3: myShemaName = schemaAP203;    break;
+      case 4: myShemaName = schemaAP214IS;  break;
+      case 5: myShemaName = schemaAP242DIS; break;
+    }
   }
+  return myShemaName;
 }
-
 
 //=======================================================================
 //function : NbResources

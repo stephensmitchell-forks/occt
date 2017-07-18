@@ -57,7 +57,7 @@ public:
   //! Returns the Schema Name attached to each class of Protocol
   //! here, returns the SchemaName set by SetSchemaName
   //! was C++ : return const
-  Standard_EXPORT virtual Standard_CString SchemaName() const Standard_OVERRIDE;
+  Standard_EXPORT virtual Standard_CString SchemaName(Standard_Integer theShematype) Standard_OVERRIDE;
 
 
 

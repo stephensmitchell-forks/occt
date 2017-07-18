@@ -1089,6 +1089,31 @@ static Standard_Integer testDoc (Draw_Interpretor&,
   return 0;
 }
 
+static void initStatics()
+{
+  //Be carefull using this method and static map.
+  //For step files all this parameters initialises in the model.
+  //They are initialised here to avoid errors during using auxiliary
+  //functions to work with step files particulary function "param" in IFSelect_Functions.cxx.
+  //Do NOT USE Interface_Static methods for getting param values while reading step.
+  //If you need the parameters values use StepData_StepModel::GetParam method
+
+  // Indicates whether to write sub-shape names to 'Name' attributes of
+  // STEP Representation Items
+  Interface_Static::Init("stepcaf", "write.stepcaf.subshapes.name", 'e', "");
+  Interface_Static::Init("stepcaf", "write.stepcaf.subshapes.name", '&', "enum 0");
+  Interface_Static::Init("stepcaf", "write.stepcaf.subshapes.name", '&', "eval Off"); // 0
+  Interface_Static::Init("stepcaf", "write.stepcaf.subshapes.name", '&', "eval On");  // 1
+  Interface_Static::SetIVal("write.stepcaf.subshapes.name", 0); // Disabled by default
+
+  // Indicates whether to read sub-shape names from 'Name' attributes of
+  // STEP Representation Items
+  Interface_Static::Init("stepcaf", "read.stepcaf.subshapes.name", 'e', "");
+  Interface_Static::Init("stepcaf", "read.stepcaf.subshapes.name", '&', "enum 0");
+  Interface_Static::Init("stepcaf", "read.stepcaf.subshapes.name", '&', "eval Off"); // 0
+  Interface_Static::Init("stepcaf", "read.stepcaf.subshapes.name", '&', "eval On");  // 1
+  Interface_Static::SetIVal("read.stepcaf.subshapes.name", 0); // Disabled by default
+}
 
 //=======================================================================
 //function : Init
@@ -1105,7 +1130,13 @@ void XDEDRAW::Init(Draw_Interpretor& di)
   initactor = Standard_True;
 
   // Load static variables for STEPCAF (ssv; 16.08.2012)
-  STEPCAFControl_Controller::Init();
+  static Standard_Boolean inic = Standard_False;
+  if (!inic) {
+    initStatics();
+    Handle(STEPCAFControl_Controller) STEPCTL = new STEPCAFControl_Controller;
+    XSDRAW::SetController(STEPCTL);
+    inic = Standard_True;
+  }
 
   // Initialize XCAF formats
   Handle(TDocStd_Application) anApp = DDocStd::GetApplication();

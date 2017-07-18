@@ -1040,3 +1040,24 @@ Handle(TColStd_HSequenceOfHAsciiString) Interface_InterfaceModel::ListTemplates 
   }
   return list;
 }
+
+//=======================================================================
+//function : GetParam
+//purpose  : 
+//=======================================================================
+Handle(Interface_Static) Interface_InterfaceModel::GetParam
+(const Standard_CString theParamName)
+{
+  Handle(Standard_Transient) result;
+  myParamMap.Find(theParamName, result);
+  return Handle(Interface_Static)::DownCast(result);
+}
+
+//=======================================================================
+//function : AllParameters
+//purpose  : 
+//=======================================================================
+const NCollection_DataMap<TCollection_AsciiString, Handle(Standard_Transient)>& Interface_InterfaceModel::AllParameters()
+{
+  return myParamMap;
+}

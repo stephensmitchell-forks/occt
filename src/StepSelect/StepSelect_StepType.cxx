@@ -48,7 +48,7 @@ static TCollection_AsciiString lastvalue;
 
     Standard_CString  StepSelect_StepType::Value
   (const Handle(Standard_Transient)& ent,
-   const Handle(Interface_InterfaceModel)& /*model*/) const
+   const Handle(Interface_InterfaceModel)& model) const
 {
   lastvalue.Clear();
   Handle(StepData_ReadWriteModule) module;
@@ -56,7 +56,9 @@ static TCollection_AsciiString lastvalue;
   Standard_Boolean ok = thelib.Select (ent,module,CN);
   if (!ok) {
     lastvalue.AssignCat ("..NOT FROM SCHEMA ");
-    lastvalue.AssignCat (theproto->SchemaName());
+    Standard_Integer aval = model->GetParam("write.step.schema").IsNull() ?
+      0 : model->GetParam("write.step.schema")->IntegerValue();
+    lastvalue.AssignCat (theproto->SchemaName(aval));
     lastvalue.AssignCat ("..");
   } else {
     Standard_Boolean plex = module->IsComplex(CN);
