@@ -1237,9 +1237,16 @@ void ComputeInternalPoints
         // Essayer de converger
         // cout << "Changement de signe detecte" << endl;
         solution = Standard_False;
-        while (!solution) {
-          X(1) = (XInf(1) + XSup(1)) /2.;
-          X(2) = (XInf(2) + XSup(2)) /2.;
+        math_Vector dir1(1,2), dir2(1,2);
+        math_Vector prevX(1,2), prevPrevX (1,2);
+        int count = 0;
+        int revCount = 0;
+        double dot = 0;
+        double t = 0.5;
+        while (!solution)
+        {
+          X(1) =/* (XInf(1) + XSup(1)) /2.;*/ XInf(1) + t * (XSup(1) - XInf(1));
+          X(2) = /*(XInf(2) + XSup(2)) /2.;*/XInf(2) + t * (XSup(2) - XInf(2));
           rsnld.Perform(SFunc,X,infb,supb);
 
           if (!rsnld.IsDone()) {
@@ -1264,6 +1271,28 @@ void ComputeInternalPoints
               else {
                 vtestb = gp_Vec(0.,0.,0.);
               }
+              double vmagn = vtestb.Magnitude();
+              count++;
+              if (count > 10)
+              {
+                if (count > 12)
+                {
+                  dir1 = prevX - prevPrevX;
+                  dir2 = X - prevX;
+                  double d1n = dir1.Norm();
+                  double d2n = dir2.Norm();
+                  if (d1n > gp::Resolution() && d2n > gp::Resolution())
+                  {
+                    dir1 /= d1n;
+                    dir2 /= d2n;
+                    dot = dir1(1) * dir2(1) + dir1(2) * dir2(2);
+                    if (Abs(dot + 1) < 1e-10)
+                      revCount++;
+                  }
+                }
+                prevPrevX = prevX;
+                prevX = X;
+              }
               if ((vtestb.Magnitude() <= gp::Resolution())||
                 (Abs(X(1)-XInf(1)) <= toler(1) 
                 && Abs(X(2)-XInf(2)) <= toler(2)) ||
@@ -1278,6 +1307,11 @@ void ComputeInternalPoints
               }
               else {
                 XInf = X;
+                if (revCount > 10000)
+                {
+                  //XInf = (X + prevPrevX)/2;
+                  t = 0.75;
+                }
               }
             }
             else { // on n est pas sur une solution

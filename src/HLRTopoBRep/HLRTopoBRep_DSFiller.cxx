@@ -67,6 +67,9 @@
 #include <NCollection_Handle.hxx>
 #include <BRepAdaptor_HSurface.hxx>
 #include <OSD_Parallel.hxx>
+#include <math_FunctionSetRoot.hxx>
+#include <Adaptor3d_HSurfaceTool.hxx>
+#include <NCollection_List.hxx>
 
 struct ContourSurfInfo
 {
@@ -243,7 +246,7 @@ void  HLRTopoBRep_DSFiller::Insert (const TopoDS_Shape& S,
     const TopoDS_Face& S1 = BrepSurf->ChangeSurface().Face();
     if (CSInfo.myHFO->IsDone()) 
       if (!CSInfo.myHFO->IsEmpty())
-        InsertFace(f,S1,*CSInfo.myHFO,DS,withPCurve);
+        InsertFace(f,S1,*CSInfo.myHFO, CSInfo.myDomain, DS,withPCurve);
 
     if (nbIso != 0) 
       HLRTopoBRep_FaceIsoLiner::Perform(f,S1,DS,nbIso);
@@ -253,6 +256,53 @@ void  HLRTopoBRep_DSFiller::Insert (const TopoDS_Shape& S,
   ProcessEdges(DS);
 }
 
+static void GetSurfInfo(const Handle(Adaptor3d_HSurface)& Surf, math_Vector& tol, 
+  math_Vector& inf, math_Vector& sup)
+{
+  tol(1) = Adaptor3d_HSurfaceTool::UResolution(Surf,Precision::Confusion());
+  tol(2) = Adaptor3d_HSurfaceTool::VResolution(Surf,Precision::Confusion());
+
+  inf(1) = Adaptor3d_HSurfaceTool::FirstUParameter(Surf);
+  inf(2) = Adaptor3d_HSurfaceTool::FirstVParameter(Surf);
+  sup(1) = Adaptor3d_HSurfaceTool::LastUParameter(Surf);
+  sup(2) = Adaptor3d_HSurfaceTool::LastVParameter(Surf);
+}
+
+//=======================================================================
+//function : ClarifyPoint
+//purpose  : p2d - point to clarify, p2d corresponds to the clarifying 2d point on surface Surf
+//=======================================================================
+static bool ClarifyPoint(math_FunctionSetRoot& rsnld, Contap_SurfFunction& SFunc, 
+  const BRepTopAdaptor_TopolTool* Domain, math_Vector& inf, math_Vector& sup,
+  gp_Pnt2d& P2d, gp_Pnt& p3d)
+{
+  math_Vector StartP(1,2);
+  StartP.Value(1) = P2d.X() ;
+  StartP.Value(2) = P2d.Y();
+  rsnld.Perform(SFunc,StartP,inf,sup);
+
+  if (rsnld.IsDone()) 
+  {
+    math_Vector Sol(1,2);
+    math_Vector F(1,1);
+    rsnld.Root(Sol);
+    SFunc.Value(Sol,F);
+    if (Abs(F(1)) <= SFunc.Tolerance())
+    {
+      P2d.SetCoord(Sol(1), Sol(2));
+      TopAbs_State state = const_cast<BRepTopAdaptor_TopolTool*>(Domain)
+        ->Classify(P2d,Precision::PConfusion());
+      if (state == TopAbs_IN || state == TopAbs_ON)
+      {        
+        const Handle(Adaptor3d_HSurface)& Surf = SFunc.Surface();
+        p3d = Adaptor3d_HSurfaceTool::Value(Surf,P2d.X(),P2d.Y());
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 //=======================================================================
 //function : InsertFace
 //purpose  : private, insert the outlines of a face
@@ -260,7 +310,7 @@ void  HLRTopoBRep_DSFiller::Insert (const TopoDS_Shape& S,
 
 void  HLRTopoBRep_DSFiller::InsertFace (const Standard_Integer /*FI*/,
 					const TopoDS_Face& F,
-					const Contap_Contour& FO,
+					Contap_Contour& FO, const BRepTopAdaptor_TopolTool* Domain,
 					HLRTopoBRep_Data& DS,
 					const Standard_Boolean withPCurve)
 {
@@ -482,7 +532,8 @@ void  HLRTopoBRep_DSFiller::InsertFace (const Standard_Integer /*FI*/,
                   Maxx=Maxy=Maxz=Maxu=Maxv=-RealLast();
                   Minx=Miny=Minz=Minu=Minv=RealLast();
 		  
-                  for(Standard_Integer i=1;i<=nbp;i++) {
+                  for(Standard_Integer i=1;i<=nbp;i++)
+                  {
                     knots.SetValue(i,(Standard_Real)i);
                     mults.SetValue(i,1);
                     const gp_Pnt& P= Line.Point(i+ipF-1).Value();
@@ -495,29 +546,30 @@ void  HLRTopoBRep_DSFiller::InsertFace (const Standard_Integer /*FI*/,
                     Points.SetValue(i,P);
                   }
                   mults(1)=mults(nbp)=2;
-                  Handle(Geom_BSplineCurve)   AppC;
-                  Handle(Geom2d_BSplineCurve) AppC2d;
-                  AppC = new Geom_BSplineCurve(Points,knots,mults,1);
+                  //Handle(Geom_BSplineCurve)   AppC;
+                  //Handle(Geom2d_BSplineCurve) AppC2d;
+                  //AppC = new Geom_BSplineCurve(Points,knots,mults,1);
 
-                  if(withPCurve) {
-                    TColgp_Array1OfPnt2d Points2d(1,nbp);
-                    for(Standard_Integer i=1;i<=nbp;i++) {
-                      Standard_Real u,v;
-                      Line.Point(i+ipF-1).ParametersOnS2(u,v);
-                      if(u<Minu) Minu=u;
-                      if(v<Minv) Minv=v;
-                      if(u>Maxu) Maxu=u;
-                      if(v>Maxv) Maxv=v;
-                      Points2d.SetValue(i,gp_Pnt2d(u,v));
-                    }
-                    AppC2d = new Geom2d_BSplineCurve(Points2d,knots,mults,1);
+
+                  TColgp_Array1OfPnt2d Points2d(1,nbp);
+                  for(Standard_Integer i=1;i<=nbp;i++)
+                  {
+                    Standard_Real u,v;
+                    Line.Point(i+ipF-1).ParametersOnS2(u,v);
+                    if(u<Minu) Minu=u;
+                    if(v<Minv) Minv=v;
+                    if(u>Maxu) Maxu=u;
+                    if(v>Maxv) Maxv=v;
+                    Points2d.SetValue(i,gp_Pnt2d(u,v));
                   }
+                  //AppC2d = new Geom2d_BSplineCurve(Points2d,knots,mults,1);
+
                   first = 1;
                   last = nbp;
 		  
-                  Handle(BRepApprox_ApproxLine) AppLine;
+                  //Handle(BRepApprox_ApproxLine) AppLine;
                   Handle(Geom2d_BSplineCurve) CNull;
-                  AppLine = new BRepApprox_ApproxLine(AppC,AppC2d,CNull);
+                  //AppLine = new BRepApprox_ApproxLine(AppC,AppC2d,CNull);
 		  
                   Standard_Integer dmin=4,dmax=8,niter=0;
                   Standard_Boolean tg= Standard_False;
@@ -532,14 +584,140 @@ void  HLRTopoBRep_DSFiller::InsertFace (const Standard_Integer /*FI*/,
 
                   TOL3d=TOL*Maxx; if(TOL3d<1e-12) TOL3d=1e-12; else if(TOL3d>0.1) TOL3d=0.1;
                   TOL2d=TOL*Maxu; if(TOL2d<1e-12) TOL2d=1e-12; else if(TOL2d>0.1) TOL2d=0.1;
-		  
+
+                  Contap_SurfFunction& SFunc = FO.SurfaceFunction(); 
+                  const Handle(Adaptor3d_HSurface)& Surf = SFunc.Surface();
+
+                  double cmax = 2.0;
+                  double c = 100;
+                  int newsize;
+
+                  NCollection_List<gp_Pnt2d> lp2d;
+                  NCollection_List<gp_Pnt> lp;
+
+                  lp2d.Append(Points2d.First());
+                  lp.Append(Points.First());
+                  for (int jj=2; jj < Points.Size(); jj++ )
+                  {
+                    gp_Pnt curPnt = Points(jj);
+                    gp_Pnt2d curPnt2d = Points2d(jj);
+                    double d3_1 = lp.Last().Distance(curPnt);
+                    double d3_2 = curPnt.Distance(Points(jj+1));
+
+                    double d1 = lp2d.Last().Distance(Points2d(jj));
+                    double d2 = Points2d(jj).Distance(Points2d(jj+1));
+
+                    double x0 = curPnt2d.X();
+                    double y0 = curPnt2d.Y();
+
+                    double coeff = d3_1/d3_2;
+                    c = 1.4;
+                    if (coeff > cmax)
+                    {
+                      //left is wider
+                      double t = 1;
+                      double x1 = lp2d.Last().X();
+                      double y1 = lp2d.Last().Y();
+                      NCollection_List<gp_Pnt2d> dp;
+                      NCollection_List<gp_Pnt> dp3d;
+                      math_Vector tol(1,2), inf(1,2), sup(1,2);
+                      GetSurfInfo(Surf, tol, inf, sup);
+                      math_FunctionSetRoot rsnld(SFunc,tol,50);
+                      for (;;)
+                      {
+                        t = 1 - d2/d1*c;
+                        if (t <= 0)
+                          break;
+                        gp_Pnt2d pnt;
+                        double Xt = x0 + (x1-x0)*t;
+                        double Yt = y0 + (y1-y0)*t;
+                        c=c*c;
+                        gp_Pnt2d draft2d(Xt, Yt);
+                        gp_Pnt draft3d;
+                        //
+                        if (ClarifyPoint(rsnld, SFunc, Domain, inf, sup, draft2d, draft3d))
+                        {
+                          lp2d.Append(dp);
+                          lp.Append(dp3d);
+                        }
+                      }
+                      //
+                      lp2d.Append(curPnt2d);
+                      lp.Append(curPnt);
+                    }
+                    else if (1/coeff > cmax )
+                    {
+                      //right is wider
+                      double t = 0;
+                      lp2d.Append(curPnt2d);
+                      lp.Append(curPnt);
+                      double x1 = Points2d(jj+1).X();
+                      double y1 = Points2d(jj+1).Y();
+                      math_Vector tol(1,2), inf(1,2), sup(1,2);
+                      GetSurfInfo(Surf, tol, inf, sup);
+                      math_FunctionSetRoot rsnld(SFunc,tol,50);
+                      for (;;)
+                      {
+                        t = d1/d2*c;
+                        if (t >= 1)
+                          break;
+                        gp_Pnt2d pnt;
+                        double Xt = x0 + (x1-x0)*t;
+                        double Yt = y0 + (y1-y0)*t;
+                        c=c*c;
+                        gp_Pnt2d draft2d(Xt, Yt);
+                        gp_Pnt draft3d;
+                        //
+                        if (ClarifyPoint(rsnld, SFunc, Domain, inf, sup, draft2d, draft3d))
+                        {
+                          lp.Append(draft3d);
+                          lp2d.Append(draft2d);
+                        }
+                      }
+                    }
+                    else
+                    {
+                      lp2d.Append(curPnt2d);
+                      lp.Append(curPnt);
+                    }
+                  }
+                  lp2d.Append(Points2d.Last());
+                  lp.Append(Points.Last());
+                  //
+
+                  newsize = lp.Size();
+                  TColgp_Array1OfPnt2d newPoints2dA(1,newsize);
+                  TColgp_Array1OfPnt newPoints3dA(1,newsize);
+                  TColStd_Array1OfReal nknots(1,newsize);
+                  TColStd_Array1OfInteger nmults(1,newsize);
+
+                  NCollection_List<gp_Pnt>::Iterator itl(lp);
+                  NCollection_List<gp_Pnt2d>::Iterator itl2(lp2d);
+                  for (int jj = 1;itl.More(), itl2.More();itl.Next(), itl2.Next(), jj++)
+                  {
+                    nknots.SetValue(jj,(Standard_Real)jj);
+                    nmults.SetValue(jj,1);
+                    newPoints2dA.SetValue(jj, itl2.Value());
+                    newPoints3dA.SetValue(jj, itl.Value());                      
+                  }
+                  nmults(1)=nmults(newsize)=2;
+                  Handle_BRepApprox_ApproxLine nAppLine ;
+                  Handle(Geom_BSplineCurve) nAppC =
+                    new Geom_BSplineCurve(newPoints3dA,nknots,nmults,1);
+                  Handle(Geom2d_BSplineCurve) nAppC2d= 
+                    new Geom2d_BSplineCurve(newPoints2dA,nknots,nmults,1);
+
+                  nAppLine = new BRepApprox_ApproxLine(nAppC,nAppC2d,CNull);
+
+
+                  //AppC2d = new Geom2d_BSplineCurve(Points2d,knots,mults,1);
                   //-- cout<<"\nHLRTopoBRep_DSFiller : nbp="<<nbp<<"  Tol3d="<<TOL3d<<"   Tol2d="<<TOL2d<<endl;
 
                   Approx.SetParameters(TOL3d, TOL2d, dmin, dmax, niter, 30, tg);
-                  Approx.Perform(AppLine,Standard_True,Standard_True,Standard_False,1,nbp);
+                  Approx.Perform(nAppLine,Standard_True,Standard_True,Standard_False,1,newsize/*nbp*/);
                   if (!Approx.IsDone()) {
-                    C = AppC;
-                    C2d=AppC2d; 
+                    C = nAppC;
+                    C2d=nAppC2d; 
                     first = 1;
                     last = nbp;
                   }

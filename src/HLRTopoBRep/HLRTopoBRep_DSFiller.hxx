@@ -61,7 +61,8 @@ private:
   
   //! Stores in <DS> the outlines of  <F> using the current
   //! outliner.
-  Standard_EXPORT static void InsertFace (const Standard_Integer FI, const TopoDS_Face& F, const Contap_Contour& FO, HLRTopoBRep_Data& DS, const Standard_Boolean withPCurve);
+  Standard_EXPORT static void InsertFace (const Standard_Integer FI, const TopoDS_Face& F, Contap_Contour& FO,
+    const BRepTopAdaptor_TopolTool* Domain, HLRTopoBRep_Data& DS, const Standard_Boolean withPCurve);
   
   //! Make a  vertex  from an intersection  point <P>and
   //! store it in the data structure <DS>.
