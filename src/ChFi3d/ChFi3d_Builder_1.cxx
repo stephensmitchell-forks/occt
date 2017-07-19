@@ -120,6 +120,31 @@ static void ReorderFaces(TopoDS_Face&         theF1,
   TopoDS_Face TmpFace = theF1; theF1 = theF2; theF2 = TmpFace;
 }
 
+static void ConcatCurves(TColGeom_SequenceOfCurve& theCurves,
+                         TColGeom_SequenceOfCurve& theNewCurves)
+{
+  while (!theCurves.IsEmpty())
+  {
+    GeomConvert_CompCurveToBSplineCurve Concat;
+    Standard_Boolean Success = Standard_False;
+    for (Standard_Integer i = 1; i <= theCurves.Length(); i++)
+    {
+      const Handle(Geom_Curve)& aCurve = theCurves(i);
+      Handle(Geom_BoundedCurve) aBoundedCurve = Handle(Geom_BoundedCurve)::DownCast(aCurve);
+      Success = Concat.Add(aBoundedCurve, 1.e-5, Standard_True);
+      if (!Success)
+        Success = Concat.Add(aBoundedCurve, 1.e-5, Standard_False);
+      if (Success)
+      {
+        theCurves.Remove(i);
+        i--;
+      }
+    }
+    Handle(Geom_Curve) aNewCurve = Concat.BSplineCurve();
+    theNewCurves.Append(aNewCurve);
+  }
+}
+
 static TopoDS_Edge MakeOffsetEdge(const TopoDS_Edge&         theEdge,
                                   const Standard_Real        Distance,
                                   const BRepAdaptor_Surface& S1,
@@ -153,19 +178,38 @@ static TopoDS_Edge MakeOffsetEdge(const TopoDS_Edge&         theEdge,
   }
 
   Handle(Geom_Curve) IntCurve = Intersector.Line(1);
+  gp_Pnt Ends [2];
+  BRepAdaptor_Curve aBAcurve(theEdge);
+  Ends[0] = aBAcurve.Value(aBAcurve.FirstParameter());
+  Ends[1] = aBAcurve.Value(aBAcurve.LastParameter());
 
   if (Intersector.NbLines() > 1)
   {
-    GeomConvert_CompCurveToBSplineCurve Concat;
-    for (Standard_Integer indc = 1; indc <= Intersector.NbLines(); indc++)
+    TColGeom_SequenceOfCurve Curves, NewCurves;
+    for (Standard_Integer i = 1; i <= Intersector.NbLines(); i++)
+      Curves.Append(Intersector.Line(i));
+
+    ConcatCurves(Curves, NewCurves);
+
+    Standard_Real MinDist = RealLast();
+    Standard_Integer imin = 1;
+    for (Standard_Integer i = 1; i <= NewCurves.Length(); i++)
     {
-      IntCurve = Intersector.Line(indc);
-      Handle(Geom_BoundedCurve) aBoundedCurve = Handle(Geom_BoundedCurve)::DownCast(IntCurve);
-      Standard_Boolean Success = Concat.Add(aBoundedCurve, 1.e-5, Standard_True);
-      if (!Success)
-        Concat.Add(aBoundedCurve, 1.e-5, Standard_False);
+      GeomAdaptor_Curve GAcurve(NewCurves(i));
+      Extrema_ExtPC Projector(Ends[0], GAcurve);
+      if (!Projector.IsDone() || Projector.NbExt() == 0)
+        continue;
+      for (Standard_Integer iext = 1; iext <= Projector.NbExt(); iext++)
+      {
+        Standard_Real aDist = Projector.SquareDistance(iext);
+        if (aDist < MinDist)
+        {
+          MinDist = aDist;
+          imin = i;
+        }
+      }
     }
-    IntCurve = Concat.BSplineCurve();
+    IntCurve = NewCurves(imin);
   }
   if (IntCurve.IsNull())
   {
@@ -173,11 +217,7 @@ static TopoDS_Edge MakeOffsetEdge(const TopoDS_Edge&         theEdge,
   }
   //Projection of extremities onto <IntCurve>
   GeomAdaptor_Curve GAcurve(IntCurve);
-  gp_Pnt Ends [2];
   Standard_Real Params [2];
-  BRepAdaptor_Curve aBAcurve(theEdge);
-  Ends[0] = aBAcurve.Value(aBAcurve.FirstParameter());
-  Ends[1] = aBAcurve.Value(aBAcurve.LastParameter());
   for (Standard_Integer ind_end = 0; ind_end < 2; ind_end++)
   {
     if (ind_end == 1 && aBAcurve.IsClosed()/*HGuide->IsPeriodic()*//*HGuide->IsClosed()*/)

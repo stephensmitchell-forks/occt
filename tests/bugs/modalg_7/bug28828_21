@@ -1,0 +1,22 @@
+puts "========"
+puts "OCC28828"
+puts "========"
+puts ""
+############################################################
+# New functionalities of BRepFilletAPI_MakeChamfer algorithm
+############################################################
+
+#non-KPart (nurbsconvert): cone + plane, penetrating throat
+pcone a1 40 0 70
+box a2 -50 -50 -20  100 100 40
+bfuse b a1 a2
+nurbsconvert b b
+donly b
+
+explode b f
+explode b_7 e
+donly b b_7_2
+
+chamf_throat r b b_7_2 b_7 2. 3.
+
+checkshape r
