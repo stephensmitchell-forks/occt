@@ -57,8 +57,6 @@ public:
     return myParameters->GetParameter(theIndex);
   }
 
-  DEFINE_STANDARD_RTTI_INLINE(IMeshData_ParametersListArrayAdaptor<ParametersListPtrType>, Standard_Transient)
-
 private:
 
   IMeshData_ParametersListArrayAdaptor (
