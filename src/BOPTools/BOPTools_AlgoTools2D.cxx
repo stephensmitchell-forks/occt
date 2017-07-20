@@ -640,9 +640,14 @@ void BOPTools_AlgoTools2D::MakePCurveOnFace
     aTolR = aProj1.GetTolerance();
   } 
   else {
-    ProjLib_ProjectedCurve aProjCurv(aBAHS, aBAHC);// 1
+    Standard_Real aTR = Precision::Confusion();//1.e-7;
+    if (TolReached2d > aTR) {
+      aTR = Min(0.0001, Max(.01 * TolReached2d, aTR));
+    }
+
+    ProjLib_ProjectedCurve aProjCurv(aBAHS, aBAHC, aTR);// 1
     BOPTools_AlgoTools2D::MakePCurveOfType(aProjCurv, aC2D);
-    aTolR=aProjCurv.GetTolerance();
+    aTolR = aProjCurv.GetTolerance();
   }
   //
   if (aC2D.IsNull()) { 
