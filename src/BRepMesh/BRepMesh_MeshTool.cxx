@@ -27,7 +27,7 @@
 namespace
 {
   //! Returns index of triangle node opposite to the given link.
-  __forceinline Standard_Integer findApexIndex(
+  inline Standard_Integer findApexIndex(
     const Standard_Integer(&aNodes)[3],
     const BRepMesh_Edge&   theLink)
   {

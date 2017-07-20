@@ -67,7 +67,7 @@ protected:
     Handle(NCollection_IncAllocator) aTmpAlloc =
       new NCollection_IncAllocator(IMeshData::MEMORY_BLOCK_SIZE_HUGE);
 
-    const IMeshData::IFaceHandle& aDFace = getDFace();
+    const IMeshData::IFaceHandle& aDFace = this->getDFace();
     NCollection_Array1<Handle(SequenceOfPnt2d)> aWires(0, aDFace->WiresNb());
     for (Standard_Integer aWireIt = 0; aWireIt < aDFace->WiresNb(); ++aWireIt)
     {
@@ -93,8 +93,8 @@ protected:
     const Standard_Real uCellSize = 14.0 * aTolUV.first;
     const Standard_Real vCellSize = 14.0 * aTolUV.second;
 
-    getStructure()->Data()->SetCellSize (uCellSize    / aDelta.first, vCellSize     / aDelta.second);
-    getStructure()->Data()->SetTolerance(aTolUV.first / aDelta.first, aTolUV.second / aDelta.second);
+    this->getStructure()->Data()->SetCellSize (uCellSize    / aDelta.first, vCellSize     / aDelta.second);
+    this->getStructure()->Data()->SetTolerance(aTolUV.first / aDelta.first, aTolUV.second / aDelta.second);
 
     for (Standard_Integer aWireIt = 0; aWireIt < aDFace->WiresNb(); ++aWireIt)
     {
@@ -107,7 +107,7 @@ protected:
       }
     }
 
-    if (getParameters().InternalVerticesMode)
+    if (this->getParameters().InternalVerticesMode)
     {
       insertInternalVertices();
     }
@@ -159,7 +159,7 @@ private:
     {
       const IMeshData::IEdgeHandle&   aDEdge = theDWire->GetEdge(aEdgeIt).lock();
       const IMeshData::IPCurveHandle& aPCurve = aDEdge->GetPCurve(
-        getDFace(), theDWire->GetEdgeOrientation(aEdgeIt));
+        this->getDFace(), theDWire->GetEdgeOrientation(aEdgeIt));
 
       Standard_Integer aPointIt, aEndIndex, aInc;
       if (aPCurve->IsForward())
@@ -190,7 +190,7 @@ private:
   //! creates corresponding nodes in data structure.
   void insertInternalVertices()
   {
-    TopExp_Explorer aExplorer(getDFace()->GetFace(), TopAbs_VERTEX, TopAbs_EDGE);
+    TopExp_Explorer aExplorer(this->getDFace()->GetFace(), TopAbs_VERTEX, TopAbs_EDGE);
     for (; aExplorer.More(); aExplorer.Next())
     {
       const TopoDS_Vertex& aVertex = TopoDS::Vertex(aExplorer.Current());
@@ -210,13 +210,13 @@ private:
     {
       OCC_CATCH_SIGNALS
 
-        gp_Pnt2d aPnt2d = BRep_Tool::Parameters(theVertex, getDFace()->GetFace());
+        gp_Pnt2d aPnt2d = BRep_Tool::Parameters(theVertex, this->getDFace()->GetFace());
       // check UV values for internal vertices
       if (myClassifier->Perform(aPnt2d) != TopAbs_IN)
         return;
 
-      registerNode(BRep_Tool::Pnt(theVertex), aPnt2d,
-                   BRepMesh_Fixed, Standard_False);
+      this->registerNode(BRep_Tool::Pnt(theVertex), aPnt2d,
+                         BRepMesh_Fixed, Standard_False);
     }
     catch (Standard_Failure)
     {

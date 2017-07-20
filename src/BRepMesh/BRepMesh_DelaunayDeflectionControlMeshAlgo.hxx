@@ -52,8 +52,8 @@ protected:
     // Insert surface nodes.
     DelaunayInsertionBaseClass::postProcessMesh(theMesher);
 
-    if (getParameters().ControlSurfaceDeflection &&
-        getStructure()->ElementsOfDomain().Extent() > 0)
+    if (this->getParameters().ControlSurfaceDeflection &&
+        this->getStructure()->ElementsOfDomain().Extent() > 0)
     {
       optimizeMesh(theMesher);
     }
@@ -66,7 +66,7 @@ protected:
     Handle(NCollection_IncAllocator) aTmpAlloc =
       new NCollection_IncAllocator(IMeshData::MEMORY_BLOCK_SIZE_HUGE);
 
-    myCouplesMap   = new IMeshData::MapOfOrientedEdges(3 * getStructure()->ElementsOfDomain().Extent(), aTmpAlloc);
+    myCouplesMap   = new IMeshData::MapOfOrientedEdges(3 * this->getStructure()->ElementsOfDomain().Extent(), aTmpAlloc);
     myControlNodes = new IMeshData::ListOfPnt2d(aTmpAlloc);
     myCircles      = &theMesher.Circles();
 
@@ -79,16 +79,16 @@ protected:
       myIsAllDegenerated = Standard_True;
       myControlNodes->Clear();
 
-      if (getStructure()->ElementsOfDomain().Extent() < 1)
+      if (this->getStructure()->ElementsOfDomain().Extent() < 1)
       {
         break;
       }
 
       // Iterate on current triangles
-      IMeshData::IteratorOfMapOfInteger aTriangleIt(getStructure()->ElementsOfDomain());
+      IMeshData::IteratorOfMapOfInteger aTriangleIt(this->getStructure()->ElementsOfDomain());
       for (; aTriangleIt.More(); aTriangleIt.Next())
       {
-        const BRepMesh_Triangle& aTriangle = getStructure()->GetElement(aTriangleIt.Key());
+        const BRepMesh_Triangle& aTriangle = this->getStructure()->GetElement(aTriangleIt.Key());
         splitTriangleGeometry(aTriangle);
       }
 
@@ -181,10 +181,10 @@ private:
     const Standard_Integer(&e)[3] = theTriangle.myEdges;
     for (Standard_Integer i = 0; i < 3; ++i)
     {
-      const BRepMesh_Vertex& aVertex = getStructure()->GetNode(theNodesIndices[i]);
-      theInfo[i].Point2d        = getRangeSplitter().Scale(aVertex.Coord(), Standard_False).XY();
-      theInfo[i].Point          = getNodesMap()->Value(aVertex.Location3d()).XYZ();
-      theInfo[i].isFrontierLink = (getStructure()->GetLink(e[i]).Movability() == BRepMesh_Frontier);
+      const BRepMesh_Vertex& aVertex = this->getStructure()->GetNode(theNodesIndices[i]);
+      theInfo[i].Point2d        = this->getRangeSplitter().Scale(aVertex.Coord(), Standard_False).XY();
+      theInfo[i].Point          = this->getNodesMap()->Value(aVertex.Location3d()).XYZ();
+      theInfo[i].isFrontierLink = (this->getStructure()->GetLink(e[i]).Movability() == BRepMesh_Frontier);
     }
   }
 
@@ -194,7 +194,7 @@ private:
     if (theTriangle.Movability() != BRepMesh_Deleted)
     {
       Standard_Integer aNodexIndices[3];
-      getStructure()->ElementNodes(theTriangle, aNodexIndices);
+      this->getStructure()->ElementNodes(theTriangle, aNodexIndices);
 
       TriangleNodeInfo aNodesInfo[3];
       getTriangleInfo(theTriangle, aNodexIndices, aNodesInfo);
@@ -355,7 +355,7 @@ private:
       return Standard_True;
     }
 
-    if (getParameters().MinSize > Precision::Confusion())
+    if (this->getParameters().MinSize > Precision::Confusion())
     {
       return rejectByMinSize(thePnt2d, thePnt3d);
     }
@@ -368,7 +368,7 @@ private:
     const gp_XY&  thePnt2d,
     const gp_Pnt& thePnt3d)
   {
-    const Standard_Real aSqMinSize = getParameters().MinSize * getParameters().MinSize;
+    const Standard_Real aSqMinSize = this->getParameters().MinSize * this->getParameters().MinSize;
 
     Handle(NCollection_IncAllocator) aTmpAlloc =
       new NCollection_IncAllocator(IMeshData::MEMORY_BLOCK_SIZE_HUGE);
@@ -376,7 +376,7 @@ private:
     IMeshData::MapOfInteger aUsedNodes;
     IMeshData::ListOfInteger& aCirclesList =
       const_cast<BRepMesh_CircleTool&>(*myCircles).Select(
-        getRangeSplitter().Scale(thePnt2d, Standard_True).XY());
+        this->getRangeSplitter().Scale(thePnt2d, Standard_True).XY());
 
     IMeshData::ListOfInteger::Iterator aCircleIt(aCirclesList);
     for (; aCircleIt.More(); aCircleIt.Next())

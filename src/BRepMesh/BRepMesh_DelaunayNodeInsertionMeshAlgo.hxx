@@ -49,7 +49,7 @@ protected:
     InsertionBaseClass::postProcessMesh(theMesher);
 
     const Handle(IMeshData::ListOfPnt2d) aSurfaceNodes =
-      getRangeSplitter().GenerateSurfaceNodes(getParameters());
+      this->getRangeSplitter().GenerateSurfaceNodes(getParameters());
 
     insertNodes(aSurfaceNodes, theMesher);
   }
@@ -69,10 +69,10 @@ protected:
     for (Standard_Integer aNodeIt = 1; aNodesIt.More(); aNodesIt.Next(), ++aNodeIt)
     {
       const gp_Pnt2d& aPnt2d = aNodesIt.Value();
-      if (getClassifier()->Perform(aPnt2d) == TopAbs_IN)
+      if (this->getClassifier()->Perform(aPnt2d) == TopAbs_IN)
       {
-        aVertexIndexes.Append(registerNode(getRangeSplitter().Point(aPnt2d),
-                                           aPnt2d, BRepMesh_Free, Standard_False));
+        aVertexIndexes.Append(this->registerNode(this->getRangeSplitter().Point(aPnt2d),
+                                                 aPnt2d, BRepMesh_Free, Standard_False));
       }
     }
 
