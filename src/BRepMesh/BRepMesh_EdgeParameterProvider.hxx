@@ -17,6 +17,9 @@
 #define _BRepMesh_EdgeParameterProvider_HeaderFile
 
 #include <IMeshData_Types.hxx>
+#include <IMeshData_Edge.hxx>
+#include <IMeshData_Face.hxx>
+#include <TopoDS.hxx>
 #include <Standard.hxx>
 #include <Standard_DefineAlloc.hxx>
 #include <Extrema_LocateExtPC.hxx>

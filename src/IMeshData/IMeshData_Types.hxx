@@ -170,31 +170,6 @@ namespace IMeshData
   typedef NCollection_IndexedMap<Standard_Real>                                                                 IMapOfReal;
 
   typedef NCollection_Array1<Standard_Integer>                                                                  Array1OfInteger;
-
-  namespace Sweep
-  {
-    const Standard_Real CoincidencePrecision = 100 * Precision::Confusion();
-    typedef NCollection_Shared<NCollection_DataMap<Standard_Integer, VectorOfInteger> >           DMapOfIntegerVectorOfInteger;
-    typedef std::list<Standard_Integer>                                                           ListOfNodes;
-    typedef ListOfNodes::iterator                                                                 NodeIterator;
-    typedef NCollection_Shared<std::list<NodeIterator> >                                          ListOfNodesIterator;
-    typedef NCollection_EBTree<NodeIterator, Bnd_Box2d>                                           BndBox2dNodeIteratorTree;
-
-    struct NodeIteratorHasher
-    {
-      static Standard_Boolean IsEqual(const NodeIterator& theFirst,
-                                      const NodeIterator& theSecond)
-      {
-        return theFirst == theSecond;
-      }
-
-      static Standard_Integer HashCode(const NodeIterator& theIterator,
-                                       Standard_Integer    theUpper)
-      {
-        return ::HashCode(theIterator.operator->(), theUpper);
-      }
-    };
-  }
 }
 
 #endif
