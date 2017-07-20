@@ -55,8 +55,6 @@ public:
     myClassifier.Nullify();
   }
 
-  DEFINE_STANDARD_RTTI_INLINE(BRepMesh_NodeInsertionMeshAlgo, BaseAlgo)
-
 protected:
 
   typedef NCollection_Shared<NCollection_Sequence<const gp_Pnt2d*> > SequenceOfPnt2d;

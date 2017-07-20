@@ -39,8 +39,6 @@ public:
   {
   }
 
-  DEFINE_STANDARD_RTTI_INLINE(BRepMesh_DelaunayNodeInsertionMeshAlgo, InsertionBaseClass)
-
 protected:
 
   //! Perfroms processing of generated mesh. Generates surface nodes and inserts them into structure.
