@@ -77,7 +77,7 @@ namespace
           aBox.Enlarge(Precision::Confusion());
 
           aBndBoxTreeFiller.Add(aSegments->Size(), aBox);
-          aSegments->Append(BRepMesh_FaceChecker::Segment{ aDEdge, &aPnt1, &aPnt2 });
+          aSegments->Append(BRepMesh_FaceChecker::Segment(aDEdge, &aPnt1, &aPnt2));
         }
       }
 

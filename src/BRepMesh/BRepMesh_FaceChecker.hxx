@@ -36,6 +36,21 @@ public: //! @name mesher API
     IMeshData::IEdgePtr      EdgePtr;
     gp_Pnt2d*                Point1; // \ Use explicit pointers to points instead of accessing
     gp_Pnt2d*                Point2; // / using indices.
+
+    Segment()
+      : Point1(NULL)
+      , Point2(NULL)
+    {
+    }
+
+    Segment(const IMeshData::IEdgePtr& theEdgePtr,
+            gp_Pnt2d*                  thePoint1,
+            gp_Pnt2d*                  thePoint2)
+      : EdgePtr(theEdgePtr)
+      , Point1(thePoint1)
+      , Point2(thePoint2)
+    {
+    }
   };
 
   typedef NCollection_Shared<NCollection_Vector<Segment> >                          Segments;
