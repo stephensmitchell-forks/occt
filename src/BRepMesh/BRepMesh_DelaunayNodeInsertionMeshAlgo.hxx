@@ -49,7 +49,7 @@ protected:
     InsertionBaseClass::postProcessMesh(theMesher);
 
     const Handle(IMeshData::ListOfPnt2d) aSurfaceNodes =
-      this->getRangeSplitter().GenerateSurfaceNodes(getParameters());
+      this->getRangeSplitter().GenerateSurfaceNodes(this->getParameters());
 
     insertNodes(aSurfaceNodes, theMesher);
   }
@@ -64,7 +64,7 @@ protected:
       return Standard_False;
     }
 
-    IMeshData::VectorOfInteger aVertexIndexes(theNodes->Size(), getAllocator());
+    IMeshData::VectorOfInteger aVertexIndexes(theNodes->Size(), this->getAllocator());
     IMeshData::ListOfPnt2d::Iterator aNodesIt(*theNodes);
     for (Standard_Integer aNodeIt = 1; aNodesIt.More(); aNodesIt.Next(), ++aNodeIt)
     {

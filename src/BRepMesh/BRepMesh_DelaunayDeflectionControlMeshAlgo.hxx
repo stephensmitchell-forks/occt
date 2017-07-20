@@ -92,7 +92,7 @@ protected:
         splitTriangleGeometry(aTriangle);
       }
 
-      isInserted = insertNodes(myControlNodes, theMesher);
+      isInserted = this->insertNodes(myControlNodes, theMesher);
     }
 
     myCouplesMap.Nullify();
@@ -100,7 +100,7 @@ protected:
 
     if (!(myMaxSqDeflection < 0.))
     {
-      getDFace()->SetDeflection(Sqrt(myMaxSqDeflection));
+      this->getDFace()->SetDeflection(Sqrt(myMaxSqDeflection));
     }
   }
 
@@ -330,7 +330,7 @@ private:
     const DeflectionFunctor& theDeflectionFunctor)
   {
     gp_Pnt aPnt;
-    getDFace()->GetSurface()->D0(thePnt2d.X(), thePnt2d.Y(), aPnt);
+    this->getDFace()->GetSurface()->D0(thePnt2d.X(), thePnt2d.Y(), aPnt);
     if (!checkDeflectionOfPointAndUpdateCache(thePnt2d, aPnt, theDeflectionFunctor.SquareDeviation(aPnt)))
     {
       myControlNodes->Append(thePnt2d);
@@ -349,7 +349,7 @@ private:
       myMaxSqDeflection = theSqDeflection;
     }
 
-    const Standard_Real aSqDeflection = getDFace()->GetDeflection() * getDFace()->GetDeflection();
+    const Standard_Real aSqDeflection = this->getDFace()->GetDeflection() * this->getDFace()->GetDeflection();
     if (theSqDeflection < aSqDeflection)
     {
       return Standard_True;
@@ -381,18 +381,18 @@ private:
     IMeshData::ListOfInteger::Iterator aCircleIt(aCirclesList);
     for (; aCircleIt.More(); aCircleIt.Next())
     {
-      const BRepMesh_Triangle& aTriangle = getStructure()->GetElement(aCircleIt.Value());
+      const BRepMesh_Triangle& aTriangle = this->getStructure()->GetElement(aCircleIt.Value());
 
       Standard_Integer aNodes[3];
-      getStructure()->ElementNodes(aTriangle, aNodes);
+      this->getStructure()->ElementNodes(aTriangle, aNodes);
 
       for (Standard_Integer i = 0; i < 3; ++i)
       {
         if (!aUsedNodes.Contains(aNodes[i]))
         {
           aUsedNodes.Add(aNodes[i]);
-          const BRepMesh_Vertex& aVertex = getStructure()->GetNode(aNodes[i]);
-          const gp_Pnt& aPoint = getNodesMap()->Value(aVertex.Location3d());
+          const BRepMesh_Vertex& aVertex = this->getStructure()->GetNode(aNodes[i]);
+          const gp_Pnt& aPoint = this->getNodesMap()->Value(aVertex.Location3d());
 
           if (thePnt3d.SquareDistance(aPoint) < aSqMinSize)
           {
