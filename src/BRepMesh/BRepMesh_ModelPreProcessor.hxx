@@ -36,7 +36,7 @@ public:
   //! Performs processing of edges of the given model.
   Standard_EXPORT virtual Standard_Boolean Perform(
     const Handle(IMeshData_Model)& theModel,
-    const IMeshTools_Parameters&   theParameters);
+    const IMeshTools_Parameters&   theParameters) Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTI_INLINE(BRepMesh_ModelPreProcessor, IMeshTools_ModelAlgo)
 };

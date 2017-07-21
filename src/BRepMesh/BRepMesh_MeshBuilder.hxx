@@ -44,7 +44,7 @@ public: //! @name mesher API
   Standard_EXPORT virtual ~BRepMesh_MeshBuilder ();
 
   //! Performs meshing ot the shape.
-  Standard_EXPORT virtual void Perform ();
+  Standard_EXPORT virtual void Perform () Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTI_INLINE(BRepMesh_MeshBuilder, IMeshTools_MeshBuilder)
 };

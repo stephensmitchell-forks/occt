@@ -55,7 +55,7 @@ public:
   //! Performs processing of edges of the given model.
   Standard_EXPORT virtual Standard_Boolean Perform (
     const Handle (IMeshData_Model)& theModel,
-    const IMeshTools_Parameters&    theParameters);
+    const IMeshTools_Parameters&    theParameters) Standard_OVERRIDE;
 
   //! Functor API to discretize the given edge.
   inline void operator() (const Standard_Integer theEdgeIndex) const {

@@ -40,7 +40,7 @@ public:
 protected:
 
   //! Generates mesh for the contour stored in data structure.
-  Standard_EXPORT virtual void generateMesh();
+  Standard_EXPORT virtual void generateMesh() Standard_OVERRIDE;
 
   //! Perfroms processing of generated mesh.
   //! By default does nothing.

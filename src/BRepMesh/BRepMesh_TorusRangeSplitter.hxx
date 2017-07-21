@@ -133,7 +133,7 @@ public:
   }
 
   //! Registers border point.
-  Standard_EXPORT virtual void AddPoint(const gp_Pnt2d& thePoint)
+  Standard_EXPORT virtual void AddPoint(const gp_Pnt2d& thePoint) Standard_OVERRIDE
   {
     BRepMesh_DefaultRangeSplitter::AddPoint(thePoint);
     GetParametersU().Add(thePoint.X());

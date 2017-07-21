@@ -42,7 +42,7 @@ public:
   //! Performs processing of the given face.
   Standard_EXPORT virtual void Perform(
     const IMeshData::IFaceHandle& theDFace,
-    const IMeshTools_Parameters&  theParameters);
+    const IMeshTools_Parameters&  theParameters) Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTI_INLINE(BRepMesh_BaseMeshAlgo, IMeshTools_MeshAlgo)
 
