@@ -29,6 +29,17 @@
   #define Standard_OVERRIDE
 #endif
 
+#if (defined(__GNUC__) && (__GNUC__ >= 4)) || defined(__clang__)
+  #define Standard_CHECK_RETURN __attribute__ ((warn_unused_result))
+#elif defined(_MSC_VER) && (_MSC_VER >= 1700)
+  // _Check_return_ requires /analyze compiler option to take effect.
+  // In addition, the attribute is required to be placed in both - method declaration and definition,
+  // which is inconsistent to normal function attributes (extra warning C28251 is generated otherwise).
+  #define Standard_CHECK_RETURN _Check_return_
+#else
+  #define Standard_CHECK_RETURN
+#endif
+
 // Macro for marking variables / functions as possibly unused
 // so that compiler will not emit redundant "unused" warnings.
 #if defined(__GNUC__) || defined(__clang__)

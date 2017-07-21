@@ -62,17 +62,17 @@ public:
   
   Standard_EXPORT void SetAsciiString (const Standard_Integer Key, const TCollection_AsciiString& Value);
   
-  Standard_EXPORT Standard_Boolean GetInteger (const Standard_Integer Key, Standard_Integer& Value) const;
+  Standard_EXPORT Standard_CHECK_RETURN Standard_Boolean GetInteger (const Standard_Integer Key, Standard_Integer& Value) const;
   
-  Standard_EXPORT Standard_Boolean GetDouble (const Standard_Integer Key, Standard_Real& Value) const;
+  Standard_EXPORT Standard_CHECK_RETURN Standard_Boolean GetDouble (const Standard_Integer Key, Standard_Real& Value) const;
   
-  Standard_EXPORT Standard_Boolean GetBoolean (const Standard_Integer Key, Standard_Boolean& Value) const;
+  Standard_EXPORT Standard_CHECK_RETURN Standard_Boolean GetBoolean (const Standard_Integer Key, Standard_Boolean& Value) const;
   
-  Standard_EXPORT Standard_Boolean GetColor (const Standard_Integer Key, Quantity_Color& Value) const;
+  Standard_EXPORT Standard_CHECK_RETURN Standard_Boolean GetColor (const Standard_Integer Key, Quantity_Color& Value) const;
   
-  Standard_EXPORT Standard_Boolean GetMaterial (const Standard_Integer Key, Graphic3d_MaterialAspect& Value) const;
+  Standard_EXPORT Standard_CHECK_RETURN Standard_Boolean GetMaterial (const Standard_Integer Key, Graphic3d_MaterialAspect& Value) const;
   
-  Standard_EXPORT Standard_Boolean GetAsciiString (const Standard_Integer Key, TCollection_AsciiString& Value) const;
+  Standard_EXPORT Standard_CHECK_RETURN Standard_Boolean GetAsciiString (const Standard_Integer Key, TCollection_AsciiString& Value) const;
   
   Standard_EXPORT Standard_Boolean RemoveInteger (const Standard_Integer Key);
   
