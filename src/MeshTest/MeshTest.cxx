@@ -239,6 +239,9 @@ options:\n\
         case IMeshData_Reused:
           di << "Reused ";
           break;
+        case IMeshData_NoError:
+        default:
+          break;
         }
       }
     }
