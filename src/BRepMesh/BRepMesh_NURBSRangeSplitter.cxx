@@ -19,6 +19,7 @@
 #include <GeomAbs_IsoType.hxx>
 #include <BRepMesh_GeomTool.hxx>
 #include <NCollection_Handle.hxx>
+#include <algorithm>
 
 namespace
 {
