@@ -145,7 +145,6 @@ public:
     return myCurveAdaptor.CurveOnSurface().GetCurve();
   }
 
-  DEFINE_STANDARD_RTTI_INLINE(BRepMesh_EdgeParameterProvider<ParametersCollection>, Standard_Transient)
 private:
 
   ParametersCollection          myParameters;
