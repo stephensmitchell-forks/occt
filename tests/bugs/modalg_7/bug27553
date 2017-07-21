@@ -1,0 +1,44 @@
+puts "TODO OCC27553 ALL: Faulty shapes in variables"
+
+puts "============"
+puts "OCC27553"
+puts "============"
+puts ""
+######################################################
+# BRepFeat_SplitShape returns self-intersecting result since OCC 7.0.0
+######################################################
+
+restore [locate_data_file bug27648_simple.brep] s
+
+whatis s
+explode s
+
+whatis s_1
+whatis s_2
+
+tolerance s_1
+tolerance s_2
+ 
+checkshape s_1
+checkshape s_2
+
+explode s_2
+
+brunparallel 1
+
+bop s_1 s_2
+
+bopsection r
+
+explode r
+explode s_2
+
+splitshape r1 s_2_1 s_2_1 r_4
+splitshape r2 s_2_2 s_2_2 r_2
+splitshape r3 s_2_3 s_2_3 r_1
+splitshape r4 s_2_4 s_2_4 r_3
+
+checkshape r1
+checkshape r2
+checkshape r3
+checkshape r4
