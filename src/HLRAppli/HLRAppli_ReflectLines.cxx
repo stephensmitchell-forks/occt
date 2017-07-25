@@ -112,3 +112,13 @@ TopoDS_Shape HLRAppli_ReflectLines::GetResult() const
 {
   return GetCompoundOf3dEdges(HLRBRep_OutLine, Standard_True, Standard_True);
 }
+//=======================================================================
+//function : GetCompoundOfFaces
+//purpose  :
+//=======================================================================
+TopoDS_Shape HLRAppli_ReflectLines::GetCompoundOfFaces(bool theMode,
+  TopTools_DataMapOfShapeShape& OrigFaceToProjFace ) const
+{
+  HLRBRep_HLRToShape aHLRToShape( myHLRAlgo );
+  return aHLRToShape.CompoundOfFaces(theMode, OrigFaceToProjFace);
+}

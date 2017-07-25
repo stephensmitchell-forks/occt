@@ -1271,7 +1271,6 @@ void ComputeInternalPoints
               else {
                 vtestb = gp_Vec(0.,0.,0.);
               }
-              double vmagn = vtestb.Magnitude();
               count++;
               if (count > 10)
               {

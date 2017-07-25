@@ -182,6 +182,10 @@ public:
   
   //! Returns True if the 2d pnt <P> is out <me>.
   Standard_EXPORT Standard_Boolean IsOut (const gp_Pnt2d& P) const;
+
+  //! Returns distance from point <thePnt2d> to <me>
+  //! distance will be 0 if point is inside of <me>
+   Standard_EXPORT Standard_Real SquareDistance (const gp_Pnt2d& thePnt2d) const;
   
   //! Returns True if <Box2d> is out <me>.
   Standard_EXPORT Standard_Boolean IsOut (const Bnd_Box2d& Other) const;

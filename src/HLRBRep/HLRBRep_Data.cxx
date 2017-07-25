@@ -972,6 +972,8 @@ void HLRBRep_Data::GetNextEdge()
   myLEInternal = Standard_False;
   myLEDouble   = Standard_False;
   myLEIsoLine  = Standard_False;
+  myLEGeom = &myLEData->ChangeGeometry();
+  myLETol = myLEData->Tolerance();
   myLEType     = myLEGeom->GetType();
 }
 
@@ -1009,43 +1011,6 @@ void HLRBRep_Data::NextEdge (const Standard_Boolean skip)
     ((HLRBRep_EdgeData*)myLEData)->HideCount() == myHideCount-1))
     NextEdge();
   ((HLRBRep_EdgeData*)myLEData)->HideCount(myHideCount-1);
-  return;
-
-  /*if (((HLRBRep_EdgeData*)myLEData)->Vertical()) {
-    NextEdge();
-    return;
-  }
-  if (((HLRBRep_EdgeData*)myLEData)->HideCount() > myHideCount-2) {
-    NextEdge();
-    return;
-  }
-  if (((HLRBRep_EdgeData*)myLEData)->Status().AllHidden()) {
-    NextEdge();
-    return;
-  }
-  if (((iFaceMinMax->Max[0] - myLEMinMax->Min[0]) & 0x80008000) != 0 ||
-      ((myLEMinMax->Max[0] - iFaceMinMax->Min[0]) & 0x80008000) != 0 ||
-      ((iFaceMinMax->Max[1] - myLEMinMax->Min[1]) & 0x80008000) != 0 ||
-      ((myLEMinMax->Max[1] - iFaceMinMax->Min[1]) & 0x80008000) != 0 ||
-      ((iFaceMinMax->Max[2] - myLEMinMax->Min[2]) & 0x80008000) != 0 ||
-      ((myLEMinMax->Max[2] - iFaceMinMax->Min[2]) & 0x80008000) != 0 ||
-      ((iFaceMinMax->Max[3] - myLEMinMax->Min[3]) & 0x80008000) != 0 ||
-      ((myLEMinMax->Max[3] - iFaceMinMax->Min[3]) & 0x80008000) != 0 ||
-      ((iFaceMinMax->Max[4] - myLEMinMax->Min[4]) & 0x80008000) != 0 ||
-      ((myLEMinMax->Max[4] - iFaceMinMax->Min[4]) & 0x80008000) != 0 ||
-      ((iFaceMinMax->Max[5] - myLEMinMax->Min[5]) & 0x80008000) != 0 ||
-      ((myLEMinMax->Max[5] - iFaceMinMax->Min[5]) & 0x80008000) != 0 ||
-      ((iFaceMinMax->Max[6] - myLEMinMax->Min[6]) & 0x80008000) != 0 ||
-      ((myLEMinMax->Max[6] - iFaceMinMax->Min[6]) & 0x80008000) != 0 ||
-      ((iFaceMinMax->Max[7] - myLEMinMax->Min[7]) & 0x80008000) != 0) { //-- rejection en z 
-    NextEdge();
-    return;
-  }
-  if (((HLRBRep_Surface*)iFaceGeom)->IsAbove
-      (iFaceBack,myLEGeom,(Standard_Real)myLETol)) {
-    NextEdge();
-    return;
-  }*/
   return;               // edge is OK
 }
 

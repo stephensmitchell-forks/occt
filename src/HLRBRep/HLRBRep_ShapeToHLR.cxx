@@ -272,8 +272,8 @@ HLRBRep_ShapeToHLR::ExploreShape (const Handle(HLRTopoBRep_OutLiner)& S,
   TopExp_Explorer exshell, exface, exedge;
   Standard_Integer i = 1;
 
-  ParallelSurfInitFunctor aFunctor2(DS->FDataArray(), FM);
-  OSD_Parallel::For(1, FM.Extent() + 1, aFunctor2, false);
+  ParallelSurfInitFunctor aSurfFunctor(DS->FDataArray(), FM);
+  OSD_Parallel::For(1, FM.Extent() + 1, aSurfFunctor, Standard_False);
 
   i = 0;
 

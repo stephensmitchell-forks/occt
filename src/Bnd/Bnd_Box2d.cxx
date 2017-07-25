@@ -300,3 +300,23 @@ void Bnd_Box2d::Dump () const
   cout << "\n Gap : " << Gap;
   cout << "\n";
 }
+
+ Standard_Real Bnd_Box2d::SquareDistance (const gp_Pnt2d& thePnt2d) const
+ {
+   Standard_Real Xmin, Xmax, Ymin, Ymax;
+   Standard_Real X = thePnt2d.X(), Y = thePnt2d.Y();
+   Standard_Real dd = 0;
+   Get(Xmin, Ymin, Xmax, Ymax);
+
+   if (X < Xmin)
+     dd += (Xmin - X)*(Xmin - X);
+   else if (X > Xmax)
+     dd += (Xmax - X)*(Xmax - X);
+
+   if (Y < Ymin)
+     dd += (Ymin - Y)*(Ymin - Y);
+   else if (Y > Ymax)
+     dd += (Ymax - Y)*(Ymax - Y);
+
+   return dd;
+ }
