@@ -26,6 +26,7 @@
 #include <HLRBRep_TypeOfResultingEdge.hxx>
 #include <TopoDS_Shape.hxx>
 #include <Standard_Real.hxx>
+#include <TopTools_DataMapOfShapeShape.hxx>
 class TopoDS_Shape;
 
 
@@ -60,6 +61,9 @@ public:
                                                     const Standard_Boolean            visible,
                                                     const Standard_Boolean            In3d) const;
 
+  Standard_EXPORT TopoDS_Shape GetCompoundOfFaces(bool theMode,
+                                                  TopTools_DataMapOfShapeShape& OrigFaceToProjFace) const;
+
 
 
 protected:
@@ -69,8 +73,6 @@ protected:
 
 
 private:
-
-
 
   HLRAlgo_Projector myProjector;
   Handle(HLRBRep_Algo) myHLRAlgo;

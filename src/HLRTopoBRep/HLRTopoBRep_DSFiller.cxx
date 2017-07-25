@@ -222,9 +222,8 @@ void  HLRTopoBRep_DSFiller::Insert (const TopoDS_Shape& S,
   for (;itBRTIt.More();itBRTIt.Next(), f++)
     nonInitBRTArr(f) = itBRTIt.Value();
 
-  ParallelBRTInitFunctor aFunctor1(nonInitBRTArr);
-  OSD_Parallel::For(nonInitBRTArr.Lower(), nonInitBRTArr.Upper() + 1, aFunctor1, false);
-  //
+  ParallelBRTInitFunctor aBRTFunctor(nonInitBRTArr);
+  OSD_Parallel::For(nonInitBRTArr.Lower(), nonInitBRTArr.Upper() + 1, aBRTFunctor, Standard_False);
 
   //
   NCollection_List<ContourSurfInfo>::Iterator itCS(ContourSurfInfoList);
@@ -235,8 +234,8 @@ void  HLRTopoBRep_DSFiller::Insert (const TopoDS_Shape& S,
     aContourSurfInfoArray(f) = itCS.Value();
 
   //
-  ParallelContourFunctor aFunctor(aContourSurfInfoArray);
-  OSD_Parallel::For(aContourSurfInfoArray.Lower(), aContourSurfInfoArray.Upper() + 1, aFunctor, false);
+  ParallelContourFunctor aContourFunctor(aContourSurfInfoArray);
+  OSD_Parallel::For(aContourSurfInfoArray.Lower(), aContourSurfInfoArray.Upper() + 1, aContourFunctor, Standard_False);
   //
 
   for (f = aContourSurfInfoArray.Lower(); f <= aContourSurfInfoArray.Upper(); f++)

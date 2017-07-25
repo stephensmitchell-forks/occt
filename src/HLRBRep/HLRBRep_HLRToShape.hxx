@@ -25,6 +25,7 @@
 #include <Standard_Integer.hxx>
 #include <Standard_Boolean.hxx>
 #include <HLRBRep_TypeOfResultingEdge.hxx>
+#include <TopTools_DataMapOfShapeShape.hxx>
 class HLRBRep_Algo;
 class TopoDS_Shape;
 class HLRBRep_Data;
@@ -131,6 +132,8 @@ public:
                                  const Standard_Boolean            visible,
                                  const Standard_Boolean            In3d);
 
+    TopoDS_Shape CompoundOfFaces (bool theMode,
+                                  TopTools_DataMapOfShapeShape& OrigFaceToProjFace);
 
 
 protected:
