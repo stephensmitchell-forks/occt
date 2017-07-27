@@ -73,8 +73,10 @@ private:
 
 
 
-  Standard_Address MyPnts2dX;
-  Standard_Address MyPnts2dY;
+  Standard_Real  * MyPnts2d;
+  Standard_Real  * MyBoxes1d;
+  Standard_Integer mySizeBox;
+  Standard_Integer myNBoxes;
   Standard_Real Tolu;
   Standard_Real Tolv;
   Standard_Integer N;
