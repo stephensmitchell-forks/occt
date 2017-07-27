@@ -18,8 +18,16 @@
 
 #include <CSLib_Class2d.hxx>
 #include <gp_Pnt2d.hxx>
-#include <Standard.hxx>
 #include <Standard_ConstructionError.hxx>
+
+#ifdef _WIN32
+#if _MSC_VER < 1800
+inline double log2 (const double arg)
+{
+  return log(arg) / log(2.);
+}
+#endif
+#endif
 
 static inline 
   Standard_Real Transform2d(const Standard_Real u,
@@ -28,7 +36,12 @@ static inline
 
 //=======================================================================
 //function : CSLib_Class2d
-//purpose  : 
+//purpose  : Constructor
+//CR28569  : When the number of points is big enough (now 64 or more) then
+//           the internal array of 1D Y-boxes myBoxes1d is initialized. It
+//           cointains approx. sqrt(N) boxes with equal number of points in
+//           them (mySizeBox is a degree of 2). In each box two double
+//           numbers define min Y and max Y of the referred points.
 //=======================================================================
 CSLib_Class2d::CSLib_Class2d(const TColgp_Array1OfPnt2d& TP2d,
 			     const Standard_Real theTolu,
@@ -68,6 +81,7 @@ CSLib_Class2d::CSLib_Class2d(const TColgp_Array1OfPnt2d& TP2d,
     iLower=TP2d.Lower();
 
     if (N > 63) {
+      // large polygon, here 1D Y-boxes are created and filled with data.
       const Standard_Integer aDegBox = static_cast<Standard_Integer>
         (0.5 * log2(static_cast<Standard_Real>(N-1)));
       mySizeBox = 1 << aDegBox;
@@ -109,6 +123,7 @@ CSLib_Class2d::CSLib_Class2d(const TColgp_Array1OfPnt2d& TP2d,
         MyBoxes1d[iBox+1] = Pnts2dY[0];
     }
     else {
+      // small polygon, simply fill the array of points.
       for(i = 0; i<N; ++i) {
         const gp_Pnt2d& aP2D=TP2d(i+iLower);
         Pnts2dX[2*i] = Transform2d(aP2D.X(), umin, du);
