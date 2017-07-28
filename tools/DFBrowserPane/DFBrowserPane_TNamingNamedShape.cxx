@@ -160,22 +160,24 @@ void DFBrowserPane_TNamingNamedShape::Init (const Handle(TDF_Attribute)& theAttr
   aValues << DFBrowserPane_Tools::ToName (DB_NS_TYPE, aShapeAttr->Evolution()).ToCString() << "" << "" << "";
 
   NCollection_List<TopoDS_Shape> aShapes;
-  TopoDS_Shape aShape = aShapeAttr->Get();
-  TCollection_AsciiString aShapeInfo = !aShape.IsNull() ? DFBrowserPane_Tools::GetPointerInfo (aShape.TShape()) : "";
-  aValues << aShapeInfo.ToCString() << DFBrowserPane_Tools::ShapeTypeInfo (aShape) << "" << "";
-  aShapes.Append (aShape);
+  {
+    TopoDS_Shape aShape = aShapeAttr->Get();
+    TCollection_AsciiString aShapeInfo = !aShape.IsNull() ? DFBrowserPane_Tools::GetPointerInfo (aShape.TShape()) : "";
+    aValues << aShapeInfo.ToCString() << DFBrowserPane_Tools::ShapeTypeInfo (aShape) << "" << "";
+    aShapes.Append (aShape);
 
-  TopoDS_Shape aCurrentShape = TNaming_Tool::CurrentShape (aShapeAttr);
-  TCollection_AsciiString aCurrentShapeInfo = !aCurrentShape.IsNull() ?
-                                  DFBrowserPane_Tools::GetPointerInfo (aCurrentShape.TShape()) : "";
-  aValues << aCurrentShapeInfo.ToCString() << DFBrowserPane_Tools::ShapeTypeInfo (aCurrentShape) << "" << "";
-  aShapes.Append (aCurrentShape);
+    TopoDS_Shape aCurrentShape = TNaming_Tool::CurrentShape (aShapeAttr);
+    TCollection_AsciiString aCurrentShapeInfo = !aCurrentShape.IsNull() ?
+                                    DFBrowserPane_Tools::GetPointerInfo (aCurrentShape.TShape()) : "";
+    aValues << aCurrentShapeInfo.ToCString() << DFBrowserPane_Tools::ShapeTypeInfo (aCurrentShape) << "" << "";
+    aShapes.Append (aCurrentShape);
 
-  TopoDS_Shape anOriginalShape = TNaming_Tool::OriginalShape (aShapeAttr);
-  TCollection_AsciiString anOriginalShapeInfo = !anOriginalShape.IsNull() ?
-            DFBrowserPane_Tools::GetPointerInfo (aShape.TShape()) : "";
-  aValues << anOriginalShapeInfo.ToCString() << DFBrowserPane_Tools::ShapeTypeInfo (anOriginalShape) << "" << "";
-  aShapes.Append (anOriginalShape);
+    TopoDS_Shape anOriginalShape = TNaming_Tool::OriginalShape (aShapeAttr);
+    TCollection_AsciiString anOriginalShapeInfo = !anOriginalShape.IsNull() ?
+              DFBrowserPane_Tools::GetPointerInfo (aShape.TShape()) : "";
+    aValues << anOriginalShapeInfo.ToCString() << DFBrowserPane_Tools::ShapeTypeInfo (anOriginalShape) << "" << "";
+    aShapes.Append (anOriginalShape);
+  }
 
   DFBrowserPane_AttributePaneModel* aModel = getPaneModel();
   aModel->Init (aValues);
@@ -184,7 +186,7 @@ void DFBrowserPane_TNamingNamedShape::Init (const Handle(TDF_Attribute)& theAttr
   int aRowId = 2;
   for (NCollection_List<TopoDS_Shape>::Iterator aShapeIt (aShapes); aShapeIt.More(); aShapeIt.Next(), aRowId++)
   {
-    TopoDS_Shape aShape = aShapeIt.Value();
+    const TopoDS_Shape& aShape = aShapeIt.Value();
     if (aShape.IsNull())
       continue;
 
@@ -231,7 +233,7 @@ void DFBrowserPane_TNamingNamedShape::Init (const Handle(TDF_Attribute)& theAttr
     myEvolutionTableView->setVisible (aValues.size() > 0);
     myEvolutionPaneModel->Init (aValues);
 
-    int aRowId = 0;
+    aRowId = 0;
     for (TNaming_Iterator aShapeAttrIt (aShapeAttr); aShapeAttrIt.More(); aShapeAttrIt.Next(), aRowId++)
     {
       const TopoDS_Shape& anOldShape = aShapeAttrIt.OldShape();

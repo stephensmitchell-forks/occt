@@ -22,7 +22,7 @@
 #include <View_ToolActionType.hxx>
 
 #ifdef _MSC_VER
-#pragma warning(disable : 4127) // conditional expression is constant
+  #pragma warning(disable : 4127 4718) // conditional expression is constant, recursive call has no side effects
 #endif
 #include <QObject>
 #include <QMap>

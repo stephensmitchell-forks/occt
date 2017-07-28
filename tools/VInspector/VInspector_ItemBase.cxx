@@ -27,16 +27,16 @@ const Handle(AIS_InteractiveContext)& VInspector_ItemBase::GetContext() const
     return myContext;
   
   Handle(AIS_InteractiveContext) aContext;
-  const VInspector_ItemContext* aContextItem = dynamic_cast<const VInspector_ItemContext*> (this);
-  if (aContextItem)
-    aContext = aContextItem->GetContext();
+  if (const VInspector_ItemContext* aThisContextItem = dynamic_cast<const VInspector_ItemContext*> (this))
+  {
+    aContext = aThisContextItem->GetContext();
+  }
   else
   {
     TreeModel_ItemBasePtr anItem = Parent();
     while (anItem)
     {
-      VInspector_ItemContextPtr aContextItem = itemDynamicCast<VInspector_ItemContext>(anItem);
-      if (aContextItem)
+      if (VInspector_ItemContextPtr aContextItem = itemDynamicCast<VInspector_ItemContext>(anItem))
       {
         aContext = aContextItem->GetContext();
         break;
@@ -49,4 +49,3 @@ const Handle(AIS_InteractiveContext)& VInspector_ItemBase::GetContext() const
 
   return myContext;
 }
-

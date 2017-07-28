@@ -89,7 +89,6 @@ void TInspector_Window::Init (const TCollection_AsciiString& thePluginName,
 
   myParameters->SetParameters (thePluginName, theParameters);
 
-  TInspector_ToolInfo anInfo;
   for (int aToolId = 0, aSize = myToolNames.size(); aToolId < aSize; aToolId++)
   {
     TInspector_ToolInfo anInfo = myToolNames[aToolId];

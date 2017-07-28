@@ -130,15 +130,14 @@ void VInspector_ViewModel::GetSelectedOwners (QItemSelectionModel* theSelectionM
   for (QList<TreeModel_ItemBasePtr>::const_iterator anItemIt = anItems.begin(); anItemIt != anItems.end(); anItemIt++)
   {
     TreeModel_ItemBasePtr anItem = *anItemIt;
-    VInspector_ItemEntityOwnerPtr anOwnerItem = itemDynamicCast<VInspector_ItemEntityOwner>(anItem);
     Handle(SelectBasics_EntityOwner) anEntityOwner;
-    if (anOwnerItem)
-      anEntityOwner = anOwnerItem->EntityOwner();
-    else
+    if (VInspector_ItemEntityOwnerPtr anOwnerItem = itemDynamicCast<VInspector_ItemEntityOwner>(anItem))
     {
-      VInspector_ItemSensitiveEntityPtr anOwnerItem = itemDynamicCast<VInspector_ItemSensitiveEntity>(anItem);
-      if (anOwnerItem)
-        anEntityOwner = anOwnerItem->GetSensitiveEntity()->BaseSensitive()->OwnerId();
+      anEntityOwner = anOwnerItem->EntityOwner();
+    }
+    else if (VInspector_ItemSensitiveEntityPtr aSensItem = itemDynamicCast<VInspector_ItemSensitiveEntity>(anItem))
+    {
+      anEntityOwner = aSensItem->GetSensitiveEntity()->BaseSensitive()->OwnerId();
     }
     if (anEntityOwner.IsNull())
       continue;

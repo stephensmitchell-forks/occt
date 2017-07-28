@@ -139,7 +139,7 @@ QModelIndex DFBrowser_TreeModel::FindIndexByPath (const QStringList& theLabelEnt
   QModelIndex aRootIndex = index (0, 0);
   TreeModel_ItemBasePtr aRootItem = TreeModel_ModelBase::GetItemByIndex (aRootIndex); // application item
   // find document, where label of document item is equal to Root label
-  for (int aDocItemId = 0, aCount = aRootItem->rowCount(); aDocItemId < aCount && !aFoundIndex.isValid(); aDocItemId++)
+  for (int aDocItemId = 0, aNbDocItems = aRootItem->rowCount(); aDocItemId < aNbDocItems && !aFoundIndex.isValid(); aDocItemId++)
   {
     QModelIndex aParentIndex = index (aDocItemId, 0, aRootIndex);
     if (!aParentIndex.isValid()) // OCAF document for this document item is not found
@@ -159,7 +159,7 @@ QModelIndex DFBrowser_TreeModel::FindIndexByPath (const QStringList& theLabelEnt
         anEntry = theValue;
 
       bool aFoundEntry = false;
-      for (int aChildId = 0, aCount = aParentItem->rowCount(); aChildId < aCount; aChildId++)
+      for (int aChildId = 0, aNbChildren = aParentItem->rowCount(); aChildId < aNbChildren; aChildId++)
       {
         QModelIndex anIndex = index (aChildId, 0, aParentIndex);
         TreeModel_ItemBasePtr anItemBase = TreeModel_ModelBase::GetItemByIndex (anIndex);
@@ -168,8 +168,8 @@ QModelIndex DFBrowser_TreeModel::FindIndexByPath (const QStringList& theLabelEnt
         if (aPathId == aPathCount && anItem->HasAttribute())
         {
           // processing attribute in theValue
-          DFBrowser_ItemApplicationPtr aRootItem = itemDynamicCast<DFBrowser_ItemApplication>(m_pRootItem);
-          QString anAttributeInfo = DFBrowser_Module::GetAttributeInfo (anItem->GetAttribute(), aRootItem->GetModule(),
+          DFBrowser_ItemApplicationPtr aRootAppItem = itemDynamicCast<DFBrowser_ItemApplication>(m_pRootItem);
+          QString anAttributeInfo = DFBrowser_Module::GetAttributeInfo (anItem->GetAttribute(), aRootAppItem->GetModule(),
                                                                         Qt::DisplayRole, 0).toString();
           if (anAttributeInfo == anEntry)
           {
