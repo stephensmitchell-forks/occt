@@ -169,11 +169,15 @@ void IntCurveSurface_Polygon::Init(const TheCurve&        C,
       //ddout << "P1 : " << P1.X() << " " << P1.Y() << " " << P1.Z() << endl;
       gp_Pnt P2=ThePnts.Value(i+1);
       //ddout << "P2 : " << P2.X() << " " << P2.Y() << " " << P2.Z() << endl;
-      gp_Lin L(P1,gp_Dir(gp_Vec(P1,P2)));
-      Standard_Real t=L.Distance(Pm);
-      //ddout << "Distance " << t << endl;
-      if(t>TheDeflection) {
-	TheDeflection = t;
+      gp_Vec aV12(P1,P2);
+      if (aV12.SquareMagnitude() > gp::Resolution())
+      {
+        gp_Lin L(P1,gp_Dir());
+        Standard_Real t=L.Distance(Pm);
+        //ddout << "Distance " << t << endl;
+        if(t>TheDeflection) {
+          TheDeflection = t;
+        }
       }
       i++;
     }

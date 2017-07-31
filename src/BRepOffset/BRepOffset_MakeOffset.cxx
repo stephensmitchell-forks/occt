@@ -4302,11 +4302,11 @@ Standard_Boolean BRepOffset_MakeOffset::CheckInputData()
     BRepTools::UVBounds(aF, aUmin, aUmax, aVmin, aVmax);
 
     // Continuity check.
-    if (aSurf->Continuity() == GeomAbs_C0)
-    {
-      myError = BRepOffset_C0Geometry;
-      return Standard_False;
-    }
+    //if (aSurf->Continuity() == GeomAbs_C0)
+    //{
+    //  myError = BRepOffset_C0Geometry;
+    //  return Standard_False;
+    //}
 
     // Get degenerated points, to avoid check them.
     NCollection_Vector<gp_Pnt> aBad3dPnts;
@@ -4320,31 +4320,31 @@ Standard_Boolean BRepOffset_MakeOffset::CheckInputData()
       }
     }
 
-    // Geometry grid check.
-    for(Standard_Integer i = 0; i <= aPntPerDim; i++)
-    {
-      Standard_Real aUParam = aUmin + (aUmax - aUmin) * i / aPntPerDim;
-      for(Standard_Integer j = 0; j <= aPntPerDim; j++)
-      {
-        Standard_Real aVParam = aVmin + (aVmax - aVmin) * j / aPntPerDim;
+    //// Geometry grid check.
+    //for(Standard_Integer i = 0; i <= aPntPerDim; i++)
+    //{
+    //  Standard_Real aUParam = aUmin + (aUmax - aUmin) * i / aPntPerDim;
+    //  for(Standard_Integer j = 0; j <= aPntPerDim; j++)
+    //  {
+    //    Standard_Real aVParam = aVmin + (aVmax - aVmin) * j / aPntPerDim;
 
-        myError = checkSinglePoint(aUParam, aVParam, aSurf, aBad3dPnts);
-        if (myError != BRepOffset_NoError)
-          return Standard_False;
-      }
-    }
+    //    myError = checkSinglePoint(aUParam, aVParam, aSurf, aBad3dPnts);
+    //    if (myError != BRepOffset_NoError)
+    //      return Standard_False;
+    //  }
+    //}
 
-    // Vertex list check.
-    TopExp_Explorer anExpFV(aF, TopAbs_VERTEX);
-    for( ; anExpFV.More(); anExpFV.Next())
-    {
-      const TopoDS_Vertex &aV = TopoDS::Vertex(anExpFV.Current());
-      aPnt2d = BRep_Tool::Parameters(aV, aF);
+    //// Vertex list check.
+    //TopExp_Explorer anExpFV(aF, TopAbs_VERTEX);
+    //for( ; anExpFV.More(); anExpFV.Next())
+    //{
+    //  const TopoDS_Vertex &aV = TopoDS::Vertex(anExpFV.Current());
+    //  aPnt2d = BRep_Tool::Parameters(aV, aF);
 
-      myError = checkSinglePoint(aPnt2d.X(), aPnt2d.Y(), aSurf, aBad3dPnts);
-      if (myError != BRepOffset_NoError)
-        return Standard_False;
-    }
+    //  myError = checkSinglePoint(aPnt2d.X(), aPnt2d.Y(), aSurf, aBad3dPnts);
+    //  if (myError != BRepOffset_NoError)
+    //    return Standard_False;
+    //}
   }
 
   return Standard_True;

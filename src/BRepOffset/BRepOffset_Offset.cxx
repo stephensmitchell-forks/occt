@@ -528,8 +528,8 @@ void BRepOffset_Offset::Init(const TopoDS_Face&                  Face,
     if ( !Co->Position().Direct()) myOffset *= -1;
   }
 
-  Handle(Geom_Surface) TheSurf = 
-    BRepOffset::Surface( S, myOffset, myStatus);
+  Handle(Geom_Surface) TheSurf = fabs(myOffset) > gp::Resolution() ?
+    BRepOffset::Surface( S, myOffset, myStatus) : S;
 
   //processing offsets of faces with possible degenerated edges
   Standard_Boolean UminDegen = Standard_False;
