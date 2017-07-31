@@ -397,7 +397,7 @@ void BRepMesh_RestoreOrientationTool::computeVisibility (BVH_Triangulation<Stand
       aKsi = anRNG.NextReal();
       aPsi = anRNG.NextReal();
 
-      if (aKsi + aPsi > 1.0)
+      if (aKsi + aPsi <= 1.0)
       {
         break;
       }
@@ -433,7 +433,7 @@ void BRepMesh_RestoreOrientationTool::computeVisibility (BVH_Triangulation<Stand
 
       aDot = aDirection.Dot (aNormal);
 
-      if (std::abs (aDot) < 0.2)
+      if (std::abs (aDot) >= 0.2)
       {
         break;
       }
