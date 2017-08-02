@@ -47,6 +47,8 @@
 #include <XCAFDoc_Editor.hxx>
 #include <TDF_Tool.hxx>
 #include <TopoDS_Shape.hxx>
+#include <StepData_StepModel.hxx>
+#include <Interface_Static.hxx>
 
 #include <stdio.h>
 //============================================================
@@ -512,6 +514,87 @@ static Standard_Integer Expand (Draw_Interpretor& di, Standard_Integer argc, con
   }
   return 0;
 }
+static Standard_Integer testSTEP(Draw_Interpretor& di, Standard_Integer argc, const char** argv)
+{
+  if (argc <3) {
+    di << "Use: " << argv[0] << " Doc filename [mode]: read STEP file to a document\n";
+    return 0;
+  }
+
+  DeclareAndCast(STEPControl_Controller, ctl, XSDRAW::Controller());
+  if (ctl.IsNull()) XSDRAW::SetNorm("STEP");
+
+  STEPCAFControl_Reader reader(XSDRAW::Session(), Standard_True);
+
+  if (argc == 4) {
+    Standard_Boolean mode = Standard_True;
+    for (Standard_Integer i = 0; argv[3][i]; i++)
+      switch (argv[3][i]) {
+      case '-': mode = Standard_False; break;
+      case '+': mode = Standard_True; break;
+      case 'c': reader.SetColorMode(mode); break;
+      case 'n': reader.SetNameMode(mode); break;
+      case 'l': reader.SetLayerMode(mode); break;
+      case 'v': reader.SetPropsMode(mode); break;
+    }
+  }
+
+  TCollection_AsciiString fnom, rnom;
+  Standard_Boolean modfic = XSDRAW::FileAndVar(argv[2], argv[1], "STEP", fnom, rnom);
+  if (modfic) di << " File STEP to read : " << fnom.ToCString() << "\n";
+  else        di << " Model taken from the session : " << fnom.ToCString() << "\n";
+  //  di<<" -- Names of variables BREP-DRAW prefixed by : "<<rnom<<"\n";
+  IFSelect_ReturnStatus readstat = IFSelect_RetVoid;
+  if (modfic) readstat = reader.ReadFile(fnom.ToCString());
+  else  if (XSDRAW::Session()->NbStartingEntities() > 0) readstat = IFSelect_RetDone;
+  if (readstat != IFSelect_RetDone) {
+    if (modfic) di << "Could not read file " << fnom.ToCString() << " , abandon\n";
+    else di << "No model loaded\n";
+    return 1;
+  }
+  ////////////////////////////////////////////////////////
+  //Modification for Drawing2.stp
+  Handle(StepData_StepModel) aModel = Handle(StepData_StepModel)::DownCast(reader.ChangeReader().Model());
+  Standard_Integer i = 1 , nbEnt = aModel->NbEntities();
+  for (; i <= nbEnt; i++)
+  {
+    Handle(Standard_Transient) ent = aModel->Value(i);
+    if (ent->IsKind(STANDARD_TYPE(StepBasic_ProductDefinition)))
+      break;
+  }
+  //product defintion is not found
+  if (i > nbEnt)
+    Interface_Static::SetIVal("read.step.all.shapes", 1);
+  else 
+    Interface_Static::SetIVal("read.step.all.shapes", 0);
+  reader.NbRootsForTransfer();
+  
+  /////////////////////////////////////////////////////////
+  Handle(TDocStd_Document) doc;
+  if (!DDocStd::GetDocument(argv[1], doc, Standard_False)) {
+    Handle(TDocStd_Application) A = DDocStd::GetApplication();
+    A->NewDocument("BinXCAF", doc);
+    TDataStd_Name::Set(doc->GetData()->Root(), argv[1]);
+    Handle(DDocStd_DrawDocument) DD = new DDocStd_DrawDocument(doc);
+    Draw::Set(argv[1], DD);
+    //     di << "Document saved with name " << argv[1];
+  }
+  if (!reader.Transfer(doc)) {
+    di << "Cannot read any relevant data from the STEP file\n";
+    return 1;
+  }
+
+  Handle(DDocStd_DrawDocument) DD = new DDocStd_DrawDocument(doc);
+  Draw::Set(argv[1], DD);
+  di << "Document saved with name " << argv[1];
+
+  NCollection_DataMap<TCollection_AsciiString, Handle(STEPCAFControl_ExternFile)> DicFile = reader.ExternFiles();
+  FillDicWS(DicFile);
+  AddWS(fnom, XSDRAW::Session());
+
+  return 0;
+
+}
 
 void XDEDRAW_Common::InitCommands(Draw_Interpretor& di)
 {
@@ -536,5 +619,7 @@ void XDEDRAW_Common::InitCommands(Draw_Interpretor& di)
 
   di.Add("XExpand", "XExpand Doc recursively(0/1) or XExpand Doc recursively(0/1) label1 abel2 ..."  
           "or XExpand Doc recursively(0/1) shape1 shape2 ...",__FILE__, Expand, g);
+
+  di.Add("TestStep", "Doc filename: Read STEP file to DECAF document", __FILE__, testSTEP, g);
 
 }

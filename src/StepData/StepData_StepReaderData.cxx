@@ -1017,8 +1017,8 @@ Standard_Boolean StepData_StepReaderData::ReadReal(const Standard_Integer num,
   Handle(String) errmess;  // Null si pas d erreur
   if (nump > 0 && nump <= NbParams(num)) {
     const Interface_FileParameter& FP = Param(num,nump);
-    if (FP.ParamType() == Interface_ParamReal)  val =
-      Interface_FileReaderData::Fastof(FP.CValue());
+    if (FP.ParamType() == Interface_ParamReal || FP.ParamType() == Interface_ParamInteger) 
+      val = Interface_FileReaderData::Fastof(FP.CValue());
     else errmess = new String("Parameter n0.%d (%s) not a Real");
   }
   else errmess = new String("Parameter n0.%d (%s) absent");
