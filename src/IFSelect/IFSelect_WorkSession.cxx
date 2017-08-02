@@ -212,7 +212,7 @@ IFSelect_ReturnStatus  IFSelect_WorkSession::ReadFile
 {
   if (thelibrary.IsNull()) return IFSelect_RetVoid;
   if (theprotocol.IsNull()) return IFSelect_RetVoid;
-  Handle(Interface_InterfaceModel) model;
+  Handle(Interface_InterfaceModel) model =myModel;
   IFSelect_ReturnStatus status = IFSelect_RetVoid;
   try {
     OCC_CATCH_SIGNALS
@@ -1701,11 +1701,12 @@ Standard_Integer IFSelect_WorkSession::RunTransformer
 {
   Standard_Integer effect = 0;
   if (transf.IsNull() || !IsLoaded()) return effect;
+  
   Handle(Interface_InterfaceModel) newmod;    // Null au depart
   Interface_CheckIterator checks;
   checks.SetName("X-STEP WorkSession : RunTransformer");
   Standard_Boolean res = transf->Perform
-    (thegraph->Graph(),theprotocol,checks,newmod);
+    (thegraph->Graph(),theprotocol,checks,myModel);
 
   if (!checks.IsEmpty(Standard_False)) {
     Handle(Message_Messenger) sout = Message::DefaultMessenger();
@@ -3055,7 +3056,7 @@ Handle(IFSelect_Selection) IFSelect_WorkSession::GiveSelection
   }
 
   Handle(IFSelect_Selection) sel;
-  if (np >= 0)
+  if (np >= 0) 
   {
     nomsel[np] = 0;
   }
