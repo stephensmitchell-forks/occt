@@ -1,0 +1,22 @@
+puts "TODO OCC25081 ALL: TEST INCOMPLETE"
+puts "TODO OCC25081 ALL: Process killed by CPU limit"
+
+puts "========"
+puts "OCC25081"
+puts "========"
+puts ""
+############################
+# bopcheck does not return
+############################
+
+cpulimit 1200
+
+restore [locate_data_file bug25081_v1-sweep-draw-Sweep-0-spine.brep] Sweep-0-spine
+restore [locate_data_file bug25081_v1-sweep-draw-Sweep-0-section-00-Wire.brep] Sweep-0-section-00-Wire
+
+mksweep Sweep-0-spine
+setsweep -FR
+addsweep Sweep-0-section-00-Wire
+buildsweep Sweep -C -S
+
+bopcheck Sweep
