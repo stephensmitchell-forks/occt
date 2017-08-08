@@ -81,6 +81,7 @@
 #include <gp_Lin2d.hxx>
 #include <gp_Pnt.hxx>
 #include <GProp_GProps.hxx>
+#include <IntTools_Context.hxx>
 #include <IntTools_FClass2d.hxx>
 #include <NCollection_List.hxx>
 #include <Precision.hxx>
@@ -627,6 +628,9 @@ void BRepOffset_MakeOffset::Clear()
   myImageOffset    .Clear();
   myFaces          .Clear();  
   myFaceOffset     .Clear();
+  myMapFaceOffsetFace.Clear();
+  myMapModifyingFaces.Clear();
+  myMapConstantEdges.Clear();
   myAsDes          ->Clear();
   myDone     = Standard_False;
 }
@@ -656,6 +660,21 @@ void BRepOffset_MakeOffset::SetOffsetOnFace(const TopoDS_Face&  F,
 {
   if ( myFaceOffset.IsBound(F)) myFaceOffset.UnBind(F);
   myFaceOffset.Bind(F,Off);
+}
+
+//=======================================================================
+//function : SetOffsetFace
+//purpose  : 
+//=======================================================================
+void BRepOffset_MakeOffset::SetOffsetFace(const TopoDS_Face& F,
+                                          const TopoDS_Face& OF)
+{
+  // Check the orientation of the offset face and make
+  // it oriented the same way as original
+  Handle(IntTools_Context) aCtx = new IntTools_Context;
+  Standard_Boolean bToReverse = BOPTools_AlgoTools::IsSplitToReverse(F, OF, aCtx);
+  TopoDS_Face anOffsetFace = bToReverse ? TopoDS::Face(OF.Reversed()) : OF;
+  myMapFaceOffsetFace.Bind(F, anOffsetFace);
 }
 
 //=======================================================================
@@ -794,6 +813,50 @@ void BRepOffset_MakeOffset::MakeOffsetShape()
   // MaJ of SD Face - Offset
   //----------------------------
   UpdateFaceOffset();
+
+  //Filling of <myModifiedFaces> and <myMapConstantEdges>
+  TopTools_IndexedDataMapOfShapeListOfShape EFmap;
+  TopExp::MapShapesAndUniqueAncestors(myShape, TopAbs_EDGE, TopAbs_FACE, EFmap);
+  TopTools_DataMapIteratorOfDataMapOfShapeReal itr1(myFaceOffset);
+  for (; itr1.More(); itr1.Next())
+  {
+    const TopoDS_Shape& aFace = itr1.Key();
+    myMapModifyingFaces.Add(aFace);
+    TopExp_Explorer Explo(aFace, TopAbs_EDGE);
+    for (; Explo.More(); Explo.Next())
+    {
+      const TopoDS_Shape& anEdge = Explo.Current();
+      TopTools_ListIteratorOfListOfShape itl(EFmap.FindFromKey(anEdge));
+      for (; itl.More(); itl.Next())
+        myMapModifyingFaces.Add(itl.Value());
+    }
+  }
+  TopTools_DataMapIteratorOfDataMapOfShapeShape itr2(myMapFaceOffsetFace);
+  for (; itr2.More(); itr2.Next())
+  {
+    const TopoDS_Shape& aFace = itr2.Key();
+    myMapModifyingFaces.Add(aFace);
+    TopExp_Explorer Explo(aFace, TopAbs_EDGE);
+    for (; Explo.More(); Explo.Next())
+    {
+      const TopoDS_Shape& anEdge = Explo.Current();
+      TopTools_ListIteratorOfListOfShape itl(EFmap.FindFromKey(anEdge));
+      for (; itl.More(); itl.Next())
+        myMapModifyingFaces.Add(itl.Value());
+    }
+  }
+  TopExp_Explorer Explo(myShape, TopAbs_FACE);
+  for (; Explo.More(); Explo.Next())
+  {
+    const TopoDS_Shape& aFace = Explo.Current();
+    if (!myMapModifyingFaces.Contains(aFace))
+    {
+      TopExp_Explorer Explo2(aFace, TopAbs_EDGE);
+      for (; Explo2.More(); Explo2.Next())
+        myMapConstantEdges.Add(Explo2.Current());
+    }
+  }
+  ////////////////////////////////////////////////////
 
   if (myJoin == GeomAbs_Arc)          
     BuildOffsetByArc();
@@ -1029,7 +1092,10 @@ void BRepOffset_MakeOffset::MakeOffsetFaces(BRepOffset_DataMapOfShapeOffset& the
   for (; aItLF.More(); aItLF.Next()) {
     const TopoDS_Face& aF = TopoDS::Face(aItLF.Value());
     aCurOffset = myFaceOffset.IsBound(aF) ? myFaceOffset(aF) : myOffset;
-    BRepOffset_Offset OF(aF, aCurOffset, ShapeTgt, OffsetOutside, myJoin);
+    TopoDS_Face InputOffsetFace;
+    if (myMapFaceOffsetFace.IsBound(aF))
+      InputOffsetFace = TopoDS::Face(myMapFaceOffsetFace(aF));
+    BRepOffset_Offset OF(aF, aCurOffset, InputOffsetFace, ShapeTgt, OffsetOutside, myJoin);
     TopTools_ListOfShape Let;
     myAnalyse.Edges(aF,BRepOffset_Tangent,Let);
     TopTools_ListIteratorOfListOfShape itl(Let);    
@@ -1103,7 +1169,7 @@ void BRepOffset_MakeOffset::BuildOffsetByInter()
 
   BRepOffset_Inter3d Inter3 (AsDes,Side,myTol);
   // Intersection between parallel faces
-  Inter3.ConnexIntByInt(myShape,MapSF,myAnalyse,MES,Build,Failed,myIsPlanar);
+  Inter3.ConnexIntByInt(myShape,MapSF,myMapModifyingFaces,myAnalyse,MES,Build,Failed,myIsPlanar);
   // Intersection with caps.
   Inter3.ContextIntByInt(myFaces,ExtentContext,MapSF,myAnalyse,MES,Build,Failed,myIsPlanar);
 
@@ -3549,6 +3615,9 @@ Standard_Boolean BRepOffset_MakeOffset::CheckInputData()
       }
     }
 
+    if (!myMapFaceOffsetFace.IsEmpty())
+      isFound = Standard_True;
+
     if (!isFound)
     {
       // No face with non-null offset found.
@@ -3817,7 +3886,8 @@ void BRepOffset_MakeOffset::IntersectEdges(const TopoDS_Shape& theShape,
     const TopoDS_Face& aF = TopoDS::Face(aExp.Current());
     aTolF = BRep_Tool::Tolerance(aF);
     BRepOffset_Inter2d::ConnexIntByInt
-      (aF, theMapSF(aF), theMES, theBuild, theAsDes2d, myOffset, aTolF, aMFV, aDMVV);
+      (aF, theMapSF(aF), theMES, theBuild, myMapConstantEdges, theAsDes2d,
+       myOffset, aTolF, aMFV, aDMVV);
   }
   // intersect edges created from vertices
   Standard_Integer i, aNbF = aMFV.Extent();
@@ -3825,7 +3895,8 @@ void BRepOffset_MakeOffset::IntersectEdges(const TopoDS_Shape& theShape,
     const TopoDS_Face& aF = TopoDS::Face(aMFV(i));
     aTolF = BRep_Tool::Tolerance(aF);
     BRepOffset_Inter2d::ConnexIntByIntInVert
-      (aF, theMapSF(aF), theMES, theBuild, theAsDes, theAsDes2d, aTolF, aDMVV);
+      (aF, theMapSF(aF), theMES, theBuild, myMapConstantEdges, theAsDes, theAsDes2d,
+       aTolF, aDMVV);
   }
   //
   // fuse vertices on edges

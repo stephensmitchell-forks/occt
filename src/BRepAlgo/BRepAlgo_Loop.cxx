@@ -264,10 +264,10 @@ static void RemovePendingEdges(TopTools_IndexedDataMapOfShapeListOfShape& MVE)
 //purpose  : 
 //=======================================================================
 
-static Standard_Boolean  SamePnt2d(TopoDS_Vertex  V,
-				   TopoDS_Edge&   E1,
-				   TopoDS_Edge&   E2,
-				   TopoDS_Face&   F)
+static Standard_Boolean  SamePnt2d(const TopoDS_Vertex&  V,
+				   const TopoDS_Edge&   E1,
+				   const TopoDS_Edge&   E2,
+				   const TopoDS_Face&   F)
 {
   Standard_Real   f1,f2,l1,l2;
   gp_Pnt2d        P1,P2;
@@ -649,6 +649,7 @@ void BRepAlgo_Loop::Perform()
     //--------------------------------------------------
     // Add new wire to the set of wires
     //------------------------------------------------
+    /*
     Standard_Real Tol = 0.001; //5.e-05; //5.e-07;
     TopExp_Explorer explo( NW, TopAbs_VERTEX );
     for (; explo.More(); explo.Next())
@@ -665,6 +666,7 @@ void BRepAlgo_Loop::Perform()
       TE->Tolerance( Tol );
       TE->Modified( Standard_True );
       }
+    */
 
     if (VF.IsSame(CV) && SamePnt2d(VF,EF,CE,myFace))
     {

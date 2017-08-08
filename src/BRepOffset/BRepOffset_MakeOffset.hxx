@@ -82,6 +82,9 @@ public:
   //! set the offset <Off> on the Face <F>
   Standard_EXPORT void SetOffsetOnFace (const TopoDS_Face& F, const Standard_Real Off);
   
+  //! Sets the offset face for the face in the shape.
+  Standard_EXPORT void SetOffsetFace (const TopoDS_Face& F, const TopoDS_Face& OF);
+  
   Standard_EXPORT void MakeOffsetShape();
   
   Standard_EXPORT void MakeThickSolid();
@@ -218,6 +221,9 @@ private:
   Standard_Boolean myIsPlanar;
   TopoDS_Shape myBadShape;
 
+  TopTools_DataMapOfShapeShape myMapFaceOffsetFace; // map of the face - extended offset face
+  TopTools_MapOfShape myMapModifyingFaces;
+  TopTools_MapOfShape myMapConstantEdges;
 };
 
 #endif // _BRepOffset_MakeOffset_HeaderFile

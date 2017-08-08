@@ -22,6 +22,7 @@
 #include <Standard_Handle.hxx>
 
 #include <TopTools_IndexedMapOfShape.hxx>
+#include <TopTools_MapOfShape.hxx>
 #include <Standard_Real.hxx>
 #include <TopTools_DataMapOfShapeShape.hxx>
 #include <TopTools_IndexedDataMapOfShapeListOfShape.hxx>
@@ -60,6 +61,7 @@ public:
                                               BRepOffset_Offset& OFI,
                                               TopTools_DataMapOfShapeShape& MES,
                                               const TopTools_DataMapOfShapeShape& Build,
+                                              const TopTools_MapOfShape&    MapConstantEdges,
                                               const Handle(BRepAlgo_AsDes)& AsDes2d,
                                               const Standard_Real Offset,
                                               const Standard_Real Tol,
@@ -76,6 +78,7 @@ public:
                                                     BRepOffset_Offset& OFI,
                                                     TopTools_DataMapOfShapeShape& MES,
                                                     const TopTools_DataMapOfShapeShape& Build,
+                                                    const TopTools_MapOfShape&    MapConstantEdges,
                                                     const Handle(BRepAlgo_AsDes)& AsDes,
                                                     const Handle(BRepAlgo_AsDes)& AsDes2d,
                                                     const Standard_Real Tol,

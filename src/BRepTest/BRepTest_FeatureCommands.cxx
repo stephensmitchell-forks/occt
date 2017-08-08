@@ -1107,6 +1107,27 @@ Standard_Integer offsetonface(Draw_Interpretor&, Standard_Integer n, const char*
 }
 
 //=======================================================================
+//function : addoffsetface
+//purpose  : 
+//=======================================================================
+static Standard_Integer addoffsetface(Draw_Interpretor&, Standard_Integer n, const char** a)
+{
+  if ( n < 3) return 1;
+
+  for (Standard_Integer i = 1 ; i < n; i+=2) {
+    TopoDS_Shape  SF  = DBRep::Get(a[i],TopAbs_FACE);
+    if (!SF.IsNull()) {
+      TopoDS_Shape  OF  = DBRep::Get(a[i+1],TopAbs_FACE);
+      if (!OF.IsNull()) {
+        TheOffset.SetOffsetFace(TopoDS::Face(SF), TopoDS::Face(OF));
+      }
+    }
+  }
+  
+  return 0;
+}
+
+//=======================================================================
 //function : offsetperform
 //purpose  : 
 //=======================================================================
@@ -2373,6 +2394,10 @@ void BRepTest::FeatureCommands (Draw_Interpretor& theCommands)
   theCommands.Add("offsetonface",
 		  "offsetonface face1 offset1 face2 offset2 ...",
 		  __FILE__,offsetonface,g);
+
+  theCommands.Add("addoffsetface",
+		  "addoffsetface face1 offset_face1 face2 offset_face2 ...",
+		  __FILE__,addoffsetface,g);
 
   theCommands.Add("offsetperform",
 		  "offsetperform result",

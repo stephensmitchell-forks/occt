@@ -1554,12 +1554,13 @@ void BiTgte_Blend::ComputeCenters()
 
 	if (AS.ShapeType() == TopAbs_FACE) {
 	  const TopoDS_Face& F = TopoDS::Face(myFaces(i));
+          TopoDS_Face NullFace;
 	  if ( TouchedByCork.Contains(F)) {
 	    BRepOffset_Tool::EnLargeFace(F,BigF,Standard_True);
-	    OF1.Init(BigF,myRadius,EdgeTgt);
+	    OF1.Init(BigF,myRadius,NullFace,EdgeTgt);
 	  }
 	  else {
-	    OF1.Init(F,myRadius,EdgeTgt);
+	    OF1.Init(F,myRadius,NullFace,EdgeTgt);
 	  }
 	}
 	else { // So this is a Free Border edge on which the ball rolls.

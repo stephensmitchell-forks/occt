@@ -82,6 +82,7 @@
 #include <TopTools_ListIteratorOfListOfShape.hxx>
 #include <TopTools_MapOfShape.hxx>
 #include <TopTools_SequenceOfShape.hxx>
+//#include <BRepBuilderAPI_Copy.hxx>
 
 #ifdef OCCT_DEBUG
 static Standard_Boolean Affich = Standard_False;
@@ -379,6 +380,8 @@ static void ComputeCurve3d(TopoDS_Edge           Edge,
 
 BRepOffset_Offset::BRepOffset_Offset()
 {
+  myOffset = 0.;
+  myIsInputOffsetFace = Standard_False;
 }
 
 
@@ -404,11 +407,12 @@ BRepOffset_Offset::BRepOffset_Offset(const TopoDS_Face&  Face,
 BRepOffset_Offset::BRepOffset_Offset
 (const TopoDS_Face&                  Face,
  const Standard_Real                 Offset,
+ const TopoDS_Face&                  InputOffsetFace,
  const TopTools_DataMapOfShapeShape& Created,
  const Standard_Boolean              OffsetOutside,
  const GeomAbs_JoinType              JoinType)
 {
-  Init(Face,Offset,Created,OffsetOutside,JoinType);
+  Init(Face,Offset,InputOffsetFace,Created,OffsetOutside,JoinType);
 }
 
 
@@ -476,7 +480,8 @@ void BRepOffset_Offset::Init(const TopoDS_Face&  Face,
 			     const GeomAbs_JoinType JoinType)
 {
   TopTools_DataMapOfShapeShape Empty;
-  Init(Face,Offset,Empty,OffsetOutside,JoinType);
+  TopoDS_Face NullOffsetFace;
+  Init(Face,Offset,NullOffsetFace,Empty,OffsetOutside,JoinType);
 }
 
 
@@ -487,11 +492,31 @@ void BRepOffset_Offset::Init(const TopoDS_Face&  Face,
 
 void BRepOffset_Offset::Init(const TopoDS_Face&                  Face,
 			     const Standard_Real                 Offset,
+                             const TopoDS_Face&                  InputOffsetFace,
 			     const TopTools_DataMapOfShapeShape& Created,
 			     const Standard_Boolean              OffsetOutside,
 			     const GeomAbs_JoinType              JoinType)
 {
   myShape   = Face;
+  myOffset  = Offset;
+  myIsInputOffsetFace = Standard_False;
+
+  if (!InputOffsetFace.IsNull())
+  {
+    myFace = InputOffsetFace;
+    myIsInputOffsetFace = Standard_True;
+    myStatus = BRepOffset_Good;
+    return;
+  }
+  
+  if (Abs(Offset) <= Precision::Confusion())
+  {
+    //myFace = TopoDS::Face(BRepBuilderAPI_Copy(myShape));
+    myFace = Face;
+    myStatus = BRepOffset_Good;
+    return;
+  }
+  
   Standard_Real myOffset = Offset;
   if ( Face.Orientation() == TopAbs_REVERSED) 
     myOffset *= -1.;
@@ -1675,4 +1700,24 @@ TopoDS_Shape BRepOffset_Offset::Generated(const TopoDS_Shape& Shape) const
 BRepOffset_Status BRepOffset_Offset::Status() const 
 {
   return myStatus;
+}
+
+//=======================================================================
+//function : Offset
+//purpose  : 
+//=======================================================================
+
+Standard_Real BRepOffset_Offset::Offset() const 
+{
+  return myOffset;
+}
+
+//=======================================================================
+//function : IsInputOffsetFace
+//purpose  : 
+//=======================================================================
+
+Standard_Boolean BRepOffset_Offset::IsInputOffsetFace() const 
+{
+  return myIsInputOffsetFace;
 }

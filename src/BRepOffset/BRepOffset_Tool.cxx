@@ -1579,11 +1579,16 @@ static TopoDS_Edge AssembleEdge(const BOPDS_PDS& pDS,
 
 void BRepOffset_Tool::Inter3D(const TopoDS_Face& F1,
 			      const TopoDS_Face& F2,
+                              const TopoDS_Face& ProF1,
+                              const TopoDS_Face& ProF2,
 			      TopTools_ListOfShape& L1,
 			      TopTools_ListOfShape& L2,
-			      const TopAbs_State    Side,
+			      const TopTools_ListOfShape& ListOnFirst,
+			      const TopAbs_State     Side,
 			      const TopoDS_Edge&     RefEdge,
-			      const Standard_Boolean IsRefEdgeDefined)
+			      const Standard_Boolean IsRefEdgeDefined,
+                              const Standard_Boolean F1remains,
+                              const Standard_Boolean F2remains)
 {
 #ifdef DRAW
   if (AffichInter) {
@@ -1594,6 +1599,29 @@ void BRepOffset_Tool::Inter3D(const TopoDS_Face& F1,
     DBRep::Set(name,F2);
   }
 #endif
+
+  BRep_Builder BB;
+  if (F1remains || F2remains)
+  {
+    TopoDS_Face ProFace = (F1remains)? ProF2 : ProF1;
+    TopoDS_Face NewFace = (F1remains)? F2 : F1;
+    TopTools_ListIteratorOfListOfShape itl(ListOnFirst);
+    for (; itl.More(); itl.Next())
+    {
+      TopoDS_Edge anEdge = TopoDS::Edge(itl.Value());
+      Standard_Real fpar, lpar;
+      Handle(Geom2d_Curve) aPCurve = BRep_Tool::CurveOnSurface(anEdge,ProFace,fpar,lpar);
+      Handle(Geom2d_Curve) NullPCurve;
+      BB.UpdateEdge(anEdge, NullPCurve, ProFace, 0.);
+      BB.UpdateEdge(anEdge, aPCurve, NewFace, 0.);
+      L1.Append(anEdge);
+      //L2.Append(anEdge.Reversed());
+      if (F1.Orientation() == F2.Orientation())
+        anEdge.Reverse();
+      L2.Append(anEdge);
+    }
+    return;
+  }
 
   // Check if the faces are planar and not trimmed - in this case
   // the IntTools_FaceFace intersection algorithm will be used directly.
@@ -3604,7 +3632,8 @@ void BRepOffset_Tool::ExtentFace (const TopoDS_Face&            F,
       if (ConstShapes.IsBound(E)) ToBuild.UnBind(E);
       if (ToBuild.IsBound(E)) {
         EnLargeFace(TopoDS::Face(ToBuild(E)),StopFace,Standard_False);
-        BRepOffset_Tool::Inter3D (EF,StopFace,LInt1,LInt2,Side,E,Standard_True);
+        TopTools_ListOfShape aList;
+        BRepOffset_Tool::Inter3D (EF,StopFace,EF,StopFace,LInt1,LInt2,aList,Side,E,Standard_True);
         // No intersection, it may happen for example for a chosen (non-offseted) planar face and 
         // its neighbour offseted cylindrical face, if the offset is directed so that 
         // the radius of the cylinder becomes smaller.

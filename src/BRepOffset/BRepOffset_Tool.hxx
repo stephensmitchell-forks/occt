@@ -83,7 +83,18 @@ public:
   //! edges solution   are  stored in <LInt1>  with  the
   //! orientation on <F1>, the sames edges are stored in
   //! <Lint2> with the orientation on <F2>.
-  Standard_EXPORT static void Inter3D (const TopoDS_Face& F1, const TopoDS_Face& F2, TopTools_ListOfShape& LInt1, TopTools_ListOfShape& LInt2, const TopAbs_State Side, const TopoDS_Edge& RefEdge, const Standard_Boolean IsRefEdgeDefined = Standard_False);
+  Standard_EXPORT static void Inter3D (const TopoDS_Face& F1,
+                                       const TopoDS_Face& F2,
+                                       const TopoDS_Face& ProF1,
+                                       const TopoDS_Face& ProF2,
+                                       TopTools_ListOfShape& LInt1,
+                                       TopTools_ListOfShape& LInt2,
+                                       const TopTools_ListOfShape& ListOnFirst,
+                                       const TopAbs_State Side,
+                                       const TopoDS_Edge& RefEdge,
+                                       const Standard_Boolean IsRefEdgeDefined = Standard_False,
+                                       const Standard_Boolean F1remains = Standard_False,
+                                       const Standard_Boolean F2remains = Standard_False);
   
   //! Find if the edges <Edges> of the face <F2> are on
   //! the face <F1>.
