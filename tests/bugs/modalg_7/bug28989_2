@@ -1,0 +1,36 @@
+puts "TODO OCC28989 ALL: Faulty shapes in variables"
+#puts "TODO OCC28989 ALL: Error: result is self-interfered"
+puts "TODO OCC28989 ALL: Error :  is WRONG because number of"
+puts "TODO OCC28989 ALL: Error : The area of result shape is"
+puts "TODO OCC28989 ALL: Error : The volume of result shape is"
+
+
+puts "======="
+puts "OCC28989"
+puts "======="
+puts ""
+##################################################
+# testgrid bugs modalg_7 bug28892
+##################################################
+
+binrestore [locate_data_file bug28892_tools.bin] b
+
+explode b
+# fuse only the inclined cone-like shapes
+don b_6 b_7 b_8 b_9
+
+bclearobjects
+bcleartools
+baddobjects b_6 b_7 b_8 b_9
+bfillds
+bbuild result
+
+checkshape result
+checknbshapes result -wire 29 -face 29 -shell 13 -solid 13
+checkprops result -s 2.39928e+006 -v 5.4582e+007
+
+#if {![regexp "OK" [bopcheck result]]} {
+#  puts "Error: result is self-interfered"
+#}
+
+checkview -display result -2d -path ${imagedir}/${test_image}.png

@@ -1,24 +1,30 @@
 puts "======="
-puts "OCC28892"
+puts "OCC28989"
 puts "======="
 puts ""
 ##################################################
-# BOPAlgo_PaveFiller returns status "error: 11" in draw or raises exception in app on the given shapes set
+# testgrid bugs modalg_7 bug28892
 ##################################################
 
 binrestore [locate_data_file bug28892_tools.bin] b
 
 explode b
+# fuse only the inclined cone-like shapes
+don b_6 b_7 b_8 b_9
+
+bfuzzyvalue 1.e-4
+
 bclearobjects
 bcleartools
-baddobjects b_6
-baddtools b_12
+baddobjects b_6 b_7 b_8 b_9
 bfillds
 bbuild result
 
+bfuzzyvalue 0
+
 checkshape result
-checknbshapes result -wire 12 -face 12 -shell 3 -solid 3
-checkprops result -s 1.74757e+006 -v 9.19911e+007
+checknbshapes result -wire 29 -face 29 -shell 13 -solid 13
+checkprops result -s 2.39928e+006 -v 5.4582e+007
 
 if {![regexp "OK" [bopcheck result]]} {
   puts "Error: result is self-interfered"

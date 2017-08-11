@@ -382,7 +382,7 @@ protected:
   Standard_EXPORT void PreparePostTreatFF (const Standard_Integer aInt, const Standard_Integer aCur, const Handle(BOPDS_PaveBlock)& aPB, BOPDS_IndexedDataMapOfShapeCoupleOfPaveBlocks& aMSCPB, TopTools_DataMapOfShapeInteger& aMVI, BOPDS_ListOfPaveBlock& aLPB);
 
   //! Updates the information about faces
-  Standard_EXPORT void UpdateFaceInfo (BOPDS_DataMapOfPaveBlockListOfPaveBlock& theDME, const TColStd_DataMapOfIntegerInteger& theDMV);
+  Standard_EXPORT void UpdateFaceInfo (BOPDS_DataMapOfPaveBlockListOfPaveBlock& theDME);
   
 
   //! Updates tolerance of vertex with index <nV>
@@ -407,9 +407,13 @@ protected:
   Standard_EXPORT Standard_Integer SplitEdge (const Standard_Integer nE, const Standard_Integer nV1, const Standard_Real aT1, const Standard_Integer nV2, const Standard_Real aT2);
   
 
-  //! Updates pave blocks which have the paves with indices contained
-  //! in the map <aDMNewSD>.
-  Standard_EXPORT void UpdatePaveBlocks(const TColStd_DataMapOfIntegerInteger& aDMNewSD);
+  //! Updates pave blocks with SD vertices and new edges
+  //! containing these vertices.
+  Standard_EXPORT void UpdatePaveBlocks();
+
+  //! Updates maps of the FaceInfo structures with SD vertices for
+  //! the faces participated in intersections with other faces.
+  Standard_EXPORT void UpdateFaceInfoWithSDVertices();
 
   //! Updates tolerance vertex nV due to V/E interference.
   //! It always creates new vertex if nV is from arguments.
