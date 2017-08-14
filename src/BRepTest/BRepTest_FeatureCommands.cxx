@@ -54,6 +54,8 @@
 #include <LocOpe_FindEdges.hxx>
 #include <LocOpe_FindEdgesInFace.hxx>
 
+#include <BRepOffsetAPI_PatchFaces.hxx>
+
 #include <BRepOffsetAPI_MakeOffsetShape.hxx>
 #include <BRepOffsetAPI_MakeThickSolid.hxx>
 #include <BRep_Tool.hxx>
@@ -2249,6 +2251,35 @@ static Standard_Integer BOSS(Draw_Interpretor& theCommands,
   return 1;
 }
 
+//=======================================================================
+//function : patchfaces
+//purpose  :
+//=======================================================================
+static Standard_Integer patchfaces(Draw_Interpretor& /*di*/,
+				   Standard_Integer n, const char** a)
+{
+  if (n < 5) return 1;
+
+  TopoDS_Shape aShape = DBRep::Get(a[2]);
+  if (aShape.IsNull()) return 1;
+
+  TopoDS_Shape aLocalFace   = DBRep::Get(a[3], TopAbs_FACE);
+  if (aLocalFace.IsNull()) return 1;
+  TopoDS_Face aFace = TopoDS::Face(aLocalFace);
+  
+  TopoDS_Shape aLocalNewFace   = DBRep::Get(a[4], TopAbs_FACE);
+  if (aLocalNewFace.IsNull()) return 1;
+  TopoDS_Face aNewFace = TopoDS::Face(aLocalNewFace);
+
+  BRepOffsetAPI_PatchFaces Builder(aShape);
+  Builder.AddPatchFace(aFace, aNewFace);
+  Builder.Build();
+
+  TopoDS_Shape Result = Builder.Shape();
+  DBRep::Set(a[1], Result);
+
+  return 0;
+}
 
 //=======================================================================
 //function : FeatureCommands
@@ -2395,4 +2426,6 @@ void BRepTest::FeatureCommands (Draw_Interpretor& theCommands)
 		  " Perform fillet on top and bottom edges of dprism :bossage dprism result radtop radbottom First/LastShape (1/2)",
 		  __FILE__,BOSS);
 
+  theCommands.Add("patchfaces", "patchfaces res shape face newface",
+		  __FILE__,patchfaces,g);
 }

@@ -1,0 +1,23 @@
+# To prevent loops limit to 10 minutes
+cpulimit 100
+if { [array get Draw_Groups "TOPOLOGY Feature commands"] == "" } {
+    pload TOPTEST
+}
+if { [array get Draw_Groups "Shape Healing"] == "" } {
+    pload XSDRAW
+}
+if { [info exists imagedir] == 0 } {
+   set imagedir .
+}
+if { [info exists test_image ] == 0 } {
+   set test_image photo
+}
+proc PATCHFACES {i} {
+  uplevel #0 binrestore [locate_data_file shape_3_$i.bin] s
+  uplevel #0 tclean s
+  uplevel #0 removeloc s s
+  uplevel #0 explode s
+  uplevel #0 tcopy s_1 InitShape
+  
+  uplevel #0 patchfaces result s_1 s_2 s_3
+}
