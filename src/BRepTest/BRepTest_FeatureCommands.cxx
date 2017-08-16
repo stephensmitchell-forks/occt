@@ -62,6 +62,8 @@
 #include <DBRep_DrawableShape.hxx>
 #include <BRepTest.hxx>
 
+#include <BRepOffsetAPI_PatchFaces.hxx>
+
 #include <BRepFilletAPI_MakeFillet.hxx>
 #include <ChFi3d_FilletShape.hxx>
 
@@ -2287,6 +2289,36 @@ static Standard_Integer ComputeSimpleOffset(Draw_Interpretor& theCommands,
 }
 
 //=======================================================================
+//function : patchfaces
+//purpose  :
+//=======================================================================
+static Standard_Integer patchfaces(Draw_Interpretor& /*di*/,
+				   Standard_Integer n, const char** a)
+{
+  if (n < 5) return 1;
+
+  TopoDS_Shape aShape = DBRep::Get(a[2]);
+  if (aShape.IsNull()) return 1;
+
+  TopoDS_Shape aLocalFace   = DBRep::Get(a[3], TopAbs_FACE);
+  if (aLocalFace.IsNull()) return 1;
+  TopoDS_Face aFace = TopoDS::Face(aLocalFace);
+  
+  TopoDS_Shape aLocalNewFace   = DBRep::Get(a[4], TopAbs_FACE);
+  if (aLocalNewFace.IsNull()) return 1;
+  TopoDS_Face aNewFace = TopoDS::Face(aLocalNewFace);
+
+  BRepOffsetAPI_PatchFaces Builder(aShape);
+  Builder.AddPatchFace(aFace, aNewFace);
+  Builder.Build();
+
+  TopoDS_Shape Result = Builder.Shape();
+  DBRep::Set(a[1], Result);
+
+  return 0;
+}
+
+//=======================================================================
 //function : FeatureCommands
 //purpose  : 
 //=======================================================================
@@ -2434,4 +2466,7 @@ void BRepTest::FeatureCommands (Draw_Interpretor& theCommands)
   theCommands.Add("offsetshapesimple", 
                   "offsetshapesimple result shape offsetvalue [solid]",
                   __FILE__, ComputeSimpleOffset);
+  
+  theCommands.Add("patchfaces", "patchfaces res shape face newface",
+		  __FILE__,patchfaces,g);
 }
