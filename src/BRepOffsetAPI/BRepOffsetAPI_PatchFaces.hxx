@@ -85,7 +85,6 @@ private:
   TopTools_DataMapOfOrientedShapeShape myOrientedEdgeNewEdge;
   TopTools_DataMapOfShapeShape myVertexNewVertex;
   TopTools_MapOfShape myTangentEdges;
-  TopTools_MapOfShape mySmoothEdges;
 
   TopTools_IndexedDataMapOfShapeListOfShape myEFmap;
 
