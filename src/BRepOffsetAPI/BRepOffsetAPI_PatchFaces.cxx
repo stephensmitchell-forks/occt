@@ -221,7 +221,9 @@ static Standard_Boolean IsTangentFaces(const TopoDS_Edge& theEdge,
   Handle(BRepTopAdaptor_TopolTool) aTool2      = new BRepTopAdaptor_TopolTool(aBAHS2);
   Standard_Integer                 aNbSamples1 =     aTool1->NbSamples();
   Standard_Integer                 aNbSamples2 =     aTool2->NbSamples();
-  Standard_Integer                 aNbSamples  =     Max(aNbSamples1, aNbSamples2);
+  const Standard_Integer           aNbSamplesMax =   23;
+  Standard_Integer                 aNbSamples  =     Min(aNbSamplesMax, Max(aNbSamples1, aNbSamples2));
+  const Standard_Real              aTolAngle   =     M_PI/18;
 
 
 // Computation of the continuity.
@@ -233,14 +235,14 @@ static Standard_Boolean IsTangentFaces(const TopoDS_Edge& theEdge,
     if (i == aNbSamples) aPar = aLast;
 
     LocalAnalysis_SurfaceContinuity aCont(aC2d1,  aC2d2,  aPar,
-					  aSurf1, aSurf2, Order,
-					  0.001, TolC0, 0.1, 0.1, 0.1);
-    if (!aCont.IsDone())
-      {
-	nbNotDone++;
-	continue;
-      }
-    
+                                          aSurf1, aSurf2, Order,
+                                          0.001, TolC0, aTolAngle, 0.1, 0.1);
+    if (!aCont.IsDone()) 
+    {
+      nbNotDone++;
+      continue;
+    }
+
     if (Order == GeomAbs_G1)
     {
       if (!aCont.IsG1())
@@ -320,7 +322,8 @@ void BRepOffsetAPI_PatchFaces::Build()
       aNeighborFace.Orientation(TopAbs_FORWARD);
       TopoDS_Face aNewFace;
       BRepOffset_Tool::EnLargeFace(aNeighborFace, aNewFace,
-                                   Standard_True,Standard_True,Standard_True,Standard_True,Standard_True);
+                                   Standard_True,Standard_True,Standard_True,Standard_True,Standard_True,
+                                   Standard_False); //not too big
       myFaceNewFace.Add(aNeighborFace, aNewFace);
     }
   }
