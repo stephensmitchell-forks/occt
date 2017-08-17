@@ -29,8 +29,8 @@
 #include <Message_ProgressIndicator.hxx>
 #include <Resource_Manager.hxx>
 #include <ShapeAlgo.hxx>
-#include <ShapeAlgo_AlgoContainer.hxx>
-#include <ShapeAlgo_ToolContainer.hxx>
+//#include <ShapeAlgo_AlgoContainer.hxx>
+//#include <ShapeAlgo_ToolContainer.hxx>
 #include <ShapeAnalysis_Edge.hxx>
 #include <ShapeBuild_Edge.hxx>
 #include <ShapeBuild_ReShape.hxx>
