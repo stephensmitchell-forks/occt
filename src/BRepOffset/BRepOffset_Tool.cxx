@@ -3248,7 +3248,8 @@ Standard_Boolean BRepOffset_Tool::EnLargeFace
  const Standard_Boolean   UpdatePCurve,
  const Standard_Boolean   enlargeU,
  const Standard_Boolean   enlargeVfirst,
- const Standard_Boolean   enlargeVlast)
+ const Standard_Boolean   enlargeVlast,
+ const Standard_Boolean   UseInfini)
 {
   //---------------------------
   // extension de la geometrie.
@@ -3270,8 +3271,20 @@ Standard_Boolean BRepOffset_Tool::EnLargeFace
   }
 
   S->Bounds            (US1,US2,VS1,VS2);
-  UU1 = VV1 = - TheInfini;
-  UU2 = VV2 =   TheInfini;
+  if (UseInfini)
+  {
+    UU1 = VV1 = - TheInfini;
+    UU2 = VV2 =   TheInfini;
+  }
+  else
+  {
+    Standard_Real FaceDU = UF2 - UF1;
+    Standard_Real FaceDV = VF2 - VF1;
+    UU1 = UF1 - FaceDU;
+    UU2 = UF2 + FaceDU;
+    VV1 = VF1 - FaceDV;
+    VV2 = VF2 + FaceDV;
+  }
   
   if (CanExtentSurface) {
     SurfaceChange = EnlargeGeometry( S, UU1, UU2, VV1, VV2, isVV1degen, isVV2degen, UF1, UF2, VF1, VF2,

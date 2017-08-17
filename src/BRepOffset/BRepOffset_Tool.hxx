@@ -104,7 +104,14 @@ public:
   //! if <UpdatePCurve>  is  TRUE, update the  pcurves of the
   //! edges of <F> on   the new surface.if the surface has  been changed,
   //! Returns  True if The Surface of  <NF> has changed.
-  Standard_EXPORT static Standard_Boolean EnLargeFace (const TopoDS_Face& F, TopoDS_Face& NF, const Standard_Boolean ChangeGeom, const Standard_Boolean UpDatePCurve = Standard_False, const Standard_Boolean enlargeU = Standard_True, const Standard_Boolean enlargeVfirst = Standard_True, const Standard_Boolean enlargeVlast = Standard_True);
+  Standard_EXPORT static Standard_Boolean EnLargeFace (const TopoDS_Face& F,
+                                                       TopoDS_Face& NF,
+                                                       const Standard_Boolean ChangeGeom,
+                                                       const Standard_Boolean UpDatePCurve = Standard_False,
+                                                       const Standard_Boolean enlargeU = Standard_True,
+                                                       const Standard_Boolean enlargeVfirst = Standard_True,
+                                                       const Standard_Boolean enlargeVlast = Standard_True,
+                                                       const Standard_Boolean UseInfini = Standard_True);
   
   Standard_EXPORT static void ExtentFace (const TopoDS_Face& F, TopTools_DataMapOfShapeShape& ConstShapes, TopTools_DataMapOfShapeShape& ToBuild, const TopAbs_State Side, const Standard_Real TolConf, TopoDS_Face& NF);
   
