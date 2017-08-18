@@ -137,7 +137,7 @@ TopoDS_Shape XSAlgo_AlgoContainer::ProcessShape (const TopoDS_Shape& shape,
       try {
         OCC_CATCH_SIGNALS
 	Handle(ShapeExtend_MsgRegistrator) msg = new ShapeExtend_MsgRegistrator;
-	Handle(ShapeFix_Shape) sfs = ShapeAlgo::AlgoContainer()->ToolContainer()->FixShape();
+        Handle(ShapeFix_Shape) sfs = new ShapeFix_Shape;// ShapeAlgo::AlgoContainer()->ToolContainer()->FixShape();
 	sfs->Init ( shape );
 	sfs->SetMsgRegistrator ( msg );
 	sfs->SetPrecision ( Prec );

@@ -64,6 +64,7 @@ protected:
 private:
 
   Standard_CString myShemaName;
+  Interface_DataMapOfTransientInteger types;
 
 };
 

@@ -23,6 +23,7 @@
 #include <IFSelect_SelectSignature.hxx>
 #include <IFSelect_SignAncestor.hxx>
 #include <IFSelect_SignCounter.hxx>
+#include <IFSelect_SelectModelEntities.hxx>
 #include <Interface_InterfaceModel.hxx>
 #include <Interface_Macros.hxx>
 #include <RWHeaderSection.hxx>
@@ -30,12 +31,12 @@
 #include <ShapeExtend.hxx>
 #include <Standard_Type.hxx>
 #include <Standard_Version.hxx>
+#include <StepAP214_Protocol.hxx>
 #include <STEPControl_ActorRead.hxx>
 #include <STEPControl_ActorWrite.hxx>
 #include <STEPControl_Controller.hxx>
 #include <StepData_FileProtocol.hxx>
 #include <StepData_StepModel.hxx>
-#include <STEPEdit.hxx>
 #include <STEPEdit_EditContext.hxx>
 #include <STEPEdit_EditSDR.hxx>
 #include <StepSelect_StepType.hxx>
@@ -60,7 +61,10 @@ IMPLEMENT_STANDARD_RTTIEXT(STEPControl_Controller,XSControl_Controller)
 STEPControl_Controller::STEPControl_Controller()
   : XSControl_Controller("STEP", "step")
 {
-  RWHeaderSection::Init();  RWStepAP214::Init();
+  RWHeaderSection::Init();
+
+  myAdaptorProtocol = new StepAP214_Protocol();
+  RWStepAP214::Init(Handle(StepAP214_Protocol)::DownCast(myAdaptorProtocol));
 
   Handle(STEPControl_ActorWrite) ActWrite = new STEPControl_ActorWrite;
   myAdaptorWrite = ActWrite;
@@ -68,8 +72,10 @@ STEPControl_Controller::STEPControl_Controller()
   Handle(StepSelect_WorkLibrary) swl = new StepSelect_WorkLibrary;
   swl->SetDumpLabel(1);
   myAdaptorLibrary  = swl;
-  myAdaptorProtocol = STEPEdit::Protocol();
   myAdaptorRead     = new STEPControl_ActorRead;  // par ex pour Recognize
+
+  myStepType = new StepSelect_StepType;
+  myStepType->SetProtocol(myAdaptorProtocol);
 
   SetModeWrite (0,4);
   SetModeWriteHelp (0,"As Is");
@@ -82,9 +88,8 @@ STEPControl_Controller::STEPControl_Controller()
 
   DeclareAndCast(IFSelect_Selection,xmr,SessionItem("xst-model-roots"));
   if (!xmr.IsNull()) {
-    Handle(IFSelect_Signature) sty = STEPEdit::SignType();
-    AddSessionItem (sty,"step-type");
-    Handle(IFSelect_SignCounter) tys = new IFSelect_SignCounter(sty,Standard_False,Standard_True);
+    AddSessionItem (myStepType,"step-type");
+    Handle(IFSelect_SignCounter) tys = new IFSelect_SignCounter(myStepType,Standard_False,Standard_True);
     AddSessionItem (tys,"step-types");
 
     //szv:mySignType = sty;
@@ -93,16 +98,32 @@ STEPControl_Controller::STEPControl_Controller()
     AddSessionItem (new IFSelect_SignAncestor(),"xst-derived");
 
     Handle(STEPSelections_SelectDerived) stdvar = new STEPSelections_SelectDerived();
-    stdvar->SetProtocol(STEPEdit::Protocol());
+    stdvar->SetProtocol(myAdaptorProtocol);
     AddSessionItem (stdvar,"step-derived");
     
-    Handle(IFSelect_SelectSignature) selsdr = STEPEdit::NewSelectSDR();
+    //Creates a Selection for ShapeDefinitionRepresentation
+    Handle(IFSelect_SelectSignature) selsdr = new IFSelect_SelectSignature
+    (myStepType, "SHAPE_DEFINITION_REPRESENTATION");
     selsdr->SetInput (xmr);
     AddSessionItem (selsdr,"step-shape-def-repr");
 
-    AddSessionItem (STEPEdit::NewSelectPlacedItem(),"step-placed-items");
-    // input deja pret avec ModelAll
-    AddSessionItem (STEPEdit::NewSelectShapeRepr(),"step-shape-repr");
+    // Creates a Selection for Placed Items, i.e. MappedItem or
+    // ContextDependentShapeRepresentation, which itself refers to a
+    // RepresentationRelationship with possible subtypes (Shape...
+    // and/or ...WithTransformation)
+    Handle(IFSelect_SelectSignature) selrrs = new IFSelect_SelectSignature
+    (myStepType, "MAPPED_ITEM|CONTEXT_DEPENDENT_SHAPE_REPRESENTATION", Standard_False);
+    selrrs->SetInput(new IFSelect_SelectModelEntities);
+    AddSessionItem (selrrs,"step-placed-items");
+
+    // Creates a Selection for ShapeRepresentation and its sub - types,
+    // plus ContextDependentShapeRepresentation (which is not a
+    // sub-type of ShapeRepresentation)
+    Handle(IFSelect_SelectSignature) sel = new IFSelect_SelectSignature
+    (myStepType, "SHAPE_REPRESENTATION", Standard_False);
+    // REPRESENTATION_RELATIONSHIP passe par CONTEXT_DEPENDENT_SHAPE_REPRESENTATION
+    sel->SetInput(new IFSelect_SelectModelEntities);
+    AddSessionItem (sel,"step-shape-repr");
   }
   
   //pdn
@@ -143,7 +164,8 @@ STEPControl_Controller::STEPControl_Controller()
 
 Handle(Interface_InterfaceModel)  STEPControl_Controller::NewModel () const
 {
-  return STEPEdit::NewModel();
+  APIHeaderSection_MakeHeader head;
+  return head.NewModel(myAdaptorProtocol);
 }
 
 //  ####    PROVISOIRE ???   ####
@@ -210,29 +232,43 @@ void STEPControl_Controller::Customise(Handle(XSControl_WorkSession)& WS)
   WS->AddNamedItem ("xst-transferrable-roots",st1);
 
   if (!slr.IsNull()) {
-    Handle(IFSelect_Signature) sty = STEPEdit::SignType();
-    WS->AddNamedItem ("step-type",sty);
+    WS->AddNamedItem ("step-type", myStepType);
     
-    Handle(IFSelect_SignCounter) tys = new IFSelect_SignCounter(sty,Standard_False,Standard_True);
+    Handle(IFSelect_SignCounter) tys = new IFSelect_SignCounter(myStepType,Standard_False,Standard_True);
     WS->AddNamedItem ("step-types",tys);
 
 	//szv:mySignType = sty;
-    WS->SetSignType( sty );
+    WS->SetSignType(myStepType);
     
     //pdn S4133 18.02.99
     WS->AddNamedItem ("xst-derived",new IFSelect_SignAncestor());
     Handle(STEPSelections_SelectDerived) stdvar = new STEPSelections_SelectDerived();
-    stdvar->SetProtocol(STEPEdit::Protocol());
+    stdvar->SetProtocol(myAdaptorProtocol);
     WS->AddNamedItem ("step-derived",stdvar);
-    
-    Handle(IFSelect_SelectSignature) selsdr = STEPEdit::NewSelectSDR();
-    selsdr->SetInput (slr);
-    WS->AddNamedItem ("step-shape-def-repr",selsdr);
-    Handle(IFSelect_SelectSignature) selrrs = STEPEdit::NewSelectPlacedItem();
+
+    //Creates a Selection for ShapeDefinitionRepresentation
+    Handle(IFSelect_SelectSignature) selsdr = new IFSelect_SelectSignature
+    (myStepType, "SHAPE_DEFINITION_REPRESENTATION");
+    selsdr->SetInput(slr);
+    WS->AddNamedItem("step-shape-def-repr", selsdr);
+
+    // Creates a Selection for Placed Items, i.e. MappedItem or
+    // ContextDependentShapeRepresentation, which itself refers to a
+    // RepresentationRelationship with possible subtypes (Shape...
+    // and/or ...WithTransformation)
+    Handle(IFSelect_SelectSignature) selrrs = new IFSelect_SelectSignature
+    (myStepType, "MAPPED_ITEM|CONTEXT_DEPENDENT_SHAPE_REPRESENTATION", Standard_False);
+    selrrs->SetInput(new IFSelect_SelectModelEntities);
     WS->AddNamedItem ("step-placed-items",selrrs);
-    Handle(IFSelect_SelectSignature) selsr = STEPEdit::NewSelectShapeRepr();
-    // input deja pret avec ModelAll
-    WS->AddNamedItem ("step-shape-repr",selsr);
+
+    // Creates a Selection for ShapeRepresentation and its sub - types,
+    // plus ContextDependentShapeRepresentation (which is not a
+    // sub-type of ShapeRepresentation)
+    Handle(IFSelect_SelectSignature) sel = new IFSelect_SelectSignature
+    (myStepType, "SHAPE_REPRESENTATION", Standard_False);
+    // REPRESENTATION_RELATIONSHIP passe par CONTEXT_DEPENDENT_SHAPE_REPRESENTATION
+    sel->SetInput(new IFSelect_SelectModelEntities);
+    WS->AddNamedItem ("step-shape-repr", sel);
   }
   
   //pdn

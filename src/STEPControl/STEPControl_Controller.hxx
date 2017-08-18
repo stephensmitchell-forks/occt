@@ -24,6 +24,7 @@
 #include <IFSelect_ReturnStatus.hxx>
 #include <Standard_Integer.hxx>
 #include <Standard_Boolean.hxx>
+#include <StepSelect_StepType.hxx>
 class Interface_InterfaceModel;
 class Transfer_ActorOfTransientProcess;
 class XSControl_WorkSession;
@@ -71,7 +72,7 @@ protected:
 
 
 private:
-
+  Handle(StepSelect_StepType) myStepType;
 
 };
 
