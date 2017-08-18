@@ -2857,19 +2857,21 @@ Standard_Boolean V3d_View::ToPixMap (Image_PixMap&               theImage,
 
   if (aFBOPtr.IsNull())
   {
-    Standard_Integer aMaxTexSize = MyViewer->Driver()->InquireLimit (Graphic3d_TypeOfLimit_MaxTextureSize);
-    if (theParams.TileSize > aMaxTexSize)
+    Standard_Integer aMaxTexSizeX = MyViewer->Driver()->InquireLimit (Graphic3d_TypeOfLimit_MaxViewDumpSizeX);
+    Standard_Integer aMaxTexSizeY = MyViewer->Driver()->InquireLimit (Graphic3d_TypeOfLimit_MaxViewDumpSizeY);
+    if (theParams.TileSize > aMaxTexSizeX
+     || theParams.TileSize > aMaxTexSizeY)
     {
       Message::DefaultMessenger()->Send (TCollection_AsciiString ("Image dump can not be performed - specified tile size (")
-                                                                 + theParams.TileSize + ") exceeds hardware limits (" + aMaxTexSize + ")", Message_Fail);
+                                                                 + theParams.TileSize + ") exceeds hardware limits (" + aMaxTexSizeX + "x" + aMaxTexSizeY + ")", Message_Fail);
       return Standard_False;
     }
 
-    if (aFBOVPSize.x() > aMaxTexSize
-     || aFBOVPSize.y() > aMaxTexSize)
+    if (aFBOVPSize.x() > aMaxTexSizeX
+     || aFBOVPSize.y() > aMaxTexSizeY)
     {
-      aFBOVPSize.x() = Min (aFBOVPSize.x(), aMaxTexSize);
-      aFBOVPSize.y() = Min (aFBOVPSize.y(), aMaxTexSize);
+      aFBOVPSize.x() = Min (aFBOVPSize.x(), aMaxTexSizeX);
+      aFBOVPSize.y() = Min (aFBOVPSize.y(), aMaxTexSizeY);
       isTiling = true;
     }
 
