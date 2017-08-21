@@ -332,6 +332,34 @@ Standard_Boolean Draw_Interpretor::Remove(Standard_CString const n)
 }
 
 //=======================================================================
+//function : GetHelp
+//purpose  : 
+//=======================================================================
+
+Standard_CString Draw_Interpretor::GetHelp (Standard_CString theCommandName) const
+{
+  return Tcl_GetVar2 (myInterp, "Draw_Helps",  theCommandName,  TCL_GLOBAL_ONLY);
+}
+
+//=======================================================================
+//function : ErrorOnWrongArgs
+//purpose  : 
+//=======================================================================
+
+Standard_Integer Draw_Interpretor::ErrorOnWrongArgs (Standard_CString theCommandName) const
+{
+  std::cerr << "Error: wrong number of arguments" << std::endl;
+
+  Standard_CString aHelp = GetHelp (theCommandName);
+  if (aHelp)
+  {
+    std::cerr << "Use: " << theCommandName << " " << aHelp << std::endl;
+  }
+
+  return 1;
+}
+
+//=======================================================================
 //function : Result
 //purpose  : 
 //=======================================================================

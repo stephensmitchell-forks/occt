@@ -164,6 +164,16 @@ public:
   //! Removes <theCommandName>, returns true if success (the command existed).
   Standard_EXPORT Standard_Boolean Remove (const Standard_CString theCommandName);
 
+  //! Returns text of the help recorded for command theCommandName
+  //! (previously added by method Add() or by command "help" in Tcl interpretor).
+  //! Returns Null if no help string is defined for theCommandName.
+  Standard_EXPORT Standard_CString GetHelp (Standard_CString theCommandName) const;
+
+  //! Prints (to std::cerr) standard error message for theCommandName called with
+  //! wrong number of arguments. The message includes help for this command.
+  //! Returns 1 indicating error status for Tcl command.
+  Standard_EXPORT Standard_Integer ErrorOnWrongArgs (Standard_CString theCommandName) const;
+
 public:
   
   Standard_EXPORT Standard_CString Result() const;
