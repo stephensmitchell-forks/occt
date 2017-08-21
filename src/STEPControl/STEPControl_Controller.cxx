@@ -29,6 +29,7 @@
 #include <RWHeaderSection.hxx>
 #include <RWStepAP214.hxx>
 #include <ShapeExtend.hxx>
+#include <ShapeProcess_OperLibrary.hxx>
 #include <Standard_Type.hxx>
 #include <Standard_Version.hxx>
 #include <StepAP214_Protocol.hxx>
@@ -160,6 +161,9 @@ STEPControl_Controller::STEPControl_Controller()
 
   // initialization of Standard Shape Healing
   ShapeExtend::Init();
+
+  // init Standard Shape Processing operators
+  ShapeProcess_OperLibrary::Init();
 }
 
 Handle(Interface_InterfaceModel)  STEPControl_Controller::NewModel () const
