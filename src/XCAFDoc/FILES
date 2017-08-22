@@ -4,6 +4,8 @@ XCAFDoc.cxx
 XCAFDoc.hxx
 XCAFDoc_Area.cxx
 XCAFDoc_Area.hxx
+XCAFDoc_AssemblyGraph.cxx
+XCAFDoc_AssemblyGraph.hxx
 XCAFDoc_Centroid.cxx
 XCAFDoc_Centroid.hxx
 XCAFDoc_ClippingPlaneTool.cxx
@@ -40,6 +42,7 @@ XCAFDoc_Material.cxx
 XCAFDoc_Material.hxx
 XCAFDoc_MaterialTool.cxx
 XCAFDoc_MaterialTool.hxx
+XCAFDoc_ObjectId.hxx
 XCAFDoc_ShapeMapTool.cxx
 XCAFDoc_ShapeMapTool.hxx
 XCAFDoc_ShapeTool.cxx

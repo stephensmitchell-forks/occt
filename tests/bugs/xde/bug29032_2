@@ -1,0 +1,36 @@
+puts "============"
+puts "CR29032"
+puts "============"
+puts ""
+
+pload VISUALIZATION
+
+##########################################################################
+# Provide XDE interface for exploration of assembly structure
+##########################################################################
+
+ReadStep d [locate_data_file OCC137-ANC101-Solid.stp]
+XShow d
+vfit
+vsetdispmode 1
+
+checkview -screenshot -3d -path ${imagedir}/${::casename}_1.png
+
+# Build assembly graph with parts
+if { [XAssemblyGraph d 1 DAG] == 0 } {
+  puts "Error: cannot build assembly graph"
+}
+
+dump DAG
+
+# Check assembly graph
+set ret [XAssemblyGraphCheck DAG \
+                            -numnodes           1 \
+                            -numarcs            0 \
+                            -numroots           1 \
+                            -numsubassemblies   0 \
+                            -roots              1]
+
+if { $ret == 0 } {
+  puts "Error: unexpected contents of assembly graph"
+}

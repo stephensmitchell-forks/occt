@@ -1,9 +1,13 @@
 XDEDRAW.cxx
 XDEDRAW.hxx
+XDEDRAW_Assemblies.hxx
+XDEDRAW_Assemblies.cxx
 XDEDRAW_Colors.cxx
 XDEDRAW_Colors.hxx
 XDEDRAW_Common.cxx
 XDEDRAW_Common.hxx
+XDEDRAW_DrawableAssemblyGraph.cxx
+XDEDRAW_DrawableAssemblyGraph.hxx
 XDEDRAW_Layers.cxx
 XDEDRAW_Layers.hxx
 XDEDRAW_Props.cxx

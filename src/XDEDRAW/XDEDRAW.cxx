@@ -80,6 +80,7 @@
 #include <XCAFPrs.hxx>
 #include <XCAFPrs_Driver.hxx>
 #include <XDEDRAW.hxx>
+#include <XDEDRAW_Assemblies.hxx>
 #include <XDEDRAW_Colors.hxx>
 #include <XDEDRAW_Common.hxx>
 #include <XDEDRAW_Layers.hxx>
@@ -1165,6 +1166,7 @@ void XDEDRAW::Init(Draw_Interpretor& di)
    di.Add ("XTestDoc", "XTestDoc shape", __FILE__, testDoc, g);
 
   // Specialized commands
+  XDEDRAW_Assemblies::InitCommands ( di );
   XDEDRAW_Shapes::InitCommands ( di );
   XDEDRAW_Colors::InitCommands ( di );
   XDEDRAW_Layers::InitCommands ( di );

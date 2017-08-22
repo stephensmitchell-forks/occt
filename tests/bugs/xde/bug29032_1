@@ -1,0 +1,69 @@
+puts "============"
+puts "CR29032"
+puts "============"
+puts ""
+
+pload VISUALIZATION
+
+##########################################################################
+# Provide XDE interface for exploration of assembly structure
+##########################################################################
+
+ReadStep d [locate_data_file trj3_as1-tc-214.stp]
+XShow d
+vfit
+vsetdispmode 1
+
+checkview -screenshot -3d -path ${imagedir}/${::casename}_1.png
+
+# Build assembly graph with parts
+if { [XAssemblyGraph d 1 DAG] == 0 } {
+  puts "Error: cannot build assembly graph"
+}
+
+dump DAG
+
+# Check assembly graph
+set ret [XAssemblyGraphCheck DAG \
+                            -numnodes           19 \
+                            -numarcs            28 \
+                            -numroots           1 \
+                            -numsubassemblies   6 \
+                            -numpartoccurrences 7 \
+                            -numparts           5 \
+                            -arc                1 2 \
+                            -arc                1 12 \
+                            -arc                1 14 \
+                            -arc                1 15 \
+                            -arc                2 3 \
+                            -arc                2 5 \
+                            -arc                2 10 \
+                            -arc                2 11 \
+                            -arc                3 4 \
+                            -arc                5 6 \
+                            -arc                5 8 \
+                            -arc                6 7 \
+                            -arc                8 9 \
+                            -arc                10 6 \
+                            -arc                10 8 \
+                            -arc                11 6 \
+                            -arc                11 8 \
+                            -arc                12 13 \
+                            -arc                14 3 \
+                            -arc                14 5 \
+                            -arc                14 10 \
+                            -arc                14 11 \
+                            -arc                15 16 \
+                            -arc                15 18 \
+                            -arc                15 19 \
+                            -arc                16 17 \
+                            -arc                18 7 \
+                            -arc                19 7 \
+                            -roots              1 \
+                            -subassemblies      2 5 10 11 14 15 \
+                            -partoccurrences    3 8 6 12 16 18 19 \
+                            -parts              4 7 9 13 17]
+
+if { $ret == 0 } {
+  puts "Error: unexpected contents of assembly graph"
+}
