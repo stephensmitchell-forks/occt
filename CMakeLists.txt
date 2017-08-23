@@ -59,6 +59,14 @@ set_property (GLOBAL PROPERTY OCC_VERSION_MAINTENANCE ${OCC_VERSION_MAINTENANCE}
 
 set (INSTALL_TEST_CASES OFF CACHE BOOL "${INSTALL_TEST_CASES_DESCR}")
 
+if (MSVC)
+  # overwrite type of used RTL libraries
+  if (NOT BUILD_CHANGE_USED_RTL_TYPE)
+    set (BUILD_CHANGE_USED_RTL_TYPE "default" CACHE STRING "${BUILD_CHANGE_USED_RTL_TYPE_DESCR}" FORCE)
+    set_property(CACHE BUILD_CHANGE_USED_RTL_TYPE PROPERTY STRINGS "default" "static/release RTL" "static/debug RTL" "dynamic/release RTL" "dynamic/debug RTL")
+  endif()
+endif()
+
 # Regeneration of OCCT resource files
 set (BUILD_RESOURCES OFF CACHE BOOL "${BUILD_RESOURCES_DESCR}")
 
@@ -230,6 +238,26 @@ if (NOT DEFINED INSTALL_DIR_LIB)
     set (INSTALL_DIR_LIB "lib" CACHE PATH "${INSTALL_DIR_LIB_DESCR}")
   else()
     set (INSTALL_DIR_LIB "${OS_WITH_BIT}/${COMPILER}/lib" CACHE PATH "${INSTALL_DIR_LIB_DESCR}")
+  endif()
+endif()
+
+if (MSVC)
+  if (NOT DEFINED BUILD_CHANGE_USED_RTL_TYPE_PREV)
+    set (BUILD_CHANGE_USED_RTL_TYPE_PREV "${BUILD_CHANGE_USED_RTL_TYPE}" CACHE INTERNAL "" FORCE)
+  elseif (NOT "${BUILD_CHANGE_USED_RTL_TYPE_PREV}" STREQUAL "${BUILD_CHANGE_USED_RTL_TYPE}")
+    if ("${BUILD_CHANGE_USED_RTL_TYPE}" STREQUAL "static/release RTL")
+      set (INSTALL_DIR_BIN "${OS_WITH_BIT}/${COMPILER}/release_rtl/static_rtl/bin" CACHE PATH "${INSTALL_DIR_BIN_DESCR}" FORCE)
+      set (INSTALL_DIR_LIB "${OS_WITH_BIT}/${COMPILER}/release_rtl/static_rtl/lib" CACHE PATH "${INSTALL_DIR_LIB_DESCR}" FORCE)
+    elseif ("${BUILD_CHANGE_USED_RTL_TYPE}" STREQUAL "static/debug RTL")
+      set (INSTALL_DIR_BIN "${OS_WITH_BIT}/${COMPILER}/debug_rtl/static_rtl/bin" CACHE PATH "${INSTALL_DIR_BIN_DESCR}" FORCE)
+      set (INSTALL_DIR_LIB "${OS_WITH_BIT}/${COMPILER}/debug_rtl/static_rtl/lib" CACHE PATH "${INSTALL_DIR_LIB_DESCR}" FORCE)
+    elseif ("${BUILD_CHANGE_USED_RTL_TYPE}" STREQUAL "dynamic/release RTL")
+      set (INSTALL_DIR_BIN "${OS_WITH_BIT}/${COMPILER}/release_rtl/dynamic_rtl/bin" CACHE PATH "${INSTALL_DIR_BIN_DESCR}" FORCE)
+      set (INSTALL_DIR_LIB "${OS_WITH_BIT}/${COMPILER}/release_rtl/dynamic_rtl/lib" CACHE PATH "${INSTALL_DIR_LIB_DESCR}" FORCE)
+    elseif ("${BUILD_CHANGE_USED_RTL_TYPE}" STREQUAL "dynamic/debug RTL")
+      set (INSTALL_DIR_BIN "${OS_WITH_BIT}/${COMPILER}/debug_rtl/dynamic_rtl/bin" CACHE PATH "${INSTALL_DIR_BIN_DESCR}" FORCE)
+      set (INSTALL_DIR_LIB "${OS_WITH_BIT}/${COMPILER}/debug_rtl/dynamic_rtl/lib" CACHE PATH "${INSTALL_DIR_LIB_DESCR}" FORCE)
+    endif()
   endif()
 endif()
 

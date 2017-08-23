@@ -139,6 +139,10 @@ leads to automatic search of Doxygen binaries. Building of it will be call Doxyg
 to generate the documentation in HTML format. The documentation will be available in the
 installation directory (overview.bat script) if INSTALL_DOC_Overview variable is checked")
 
+set (BUILD_CHANGE_USED_RTL_TYPE_DESCR
+"Indicates whether a multithreaded module is a DLL or static and specifies retail or debug versions of the run-time library.
+In case of default value define /MDd will be used for Debug configuration and define /MD will be used for other configurations.")
+
 set (3RDPARTY_DIR_DESCR
 "The root directory where all required third-party products will be searched. If a
 third-party product have been found - corresponding CMake variables will be specified
