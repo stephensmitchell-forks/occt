@@ -5,32 +5,116 @@
 
 @section occt_xde_1 Introduction
 
-This manual explains how to use the Extended Data Exchange (XDE). It provides basic documentation on setting up and using XDE. For advanced information on XDE and its applications, see our <a href="http://www.opencascade.com/content/tutorial-learning">E-learning & Training</a> offerings.
+For hierarchically organizing engineering data, OCCT provides application framework (OCAF). A specialization of OCAF for representing CAD product information is XDE (eXtended Data Exchange) toolset. XDE is capable of associating geometry with metadata (PMI, names, colors, layers, etc.). This framework uses the component-level abstraction of an assembly (see \ref occt_xde_references_ShahMantyla95 "[Shah and Mantyla 1995]" for the overview of possible abstractions). The leaf nodes in the XDE hierarchy are the _part instances_. The interior nodes are the _subassemblies_. The root node represents the _entire assembly_ (several roots are allowed).
 
-The Extended Data Exchange (XDE) module allows extending the scope of exchange by translating  additional data attached to geometric BREP data, thereby improving the interoperability with external software. 
-
-Data types such as colors, layers, assembly descriptions and validation properties (i.e. center of gravity, etc.) are supported. These data are stored together with shapes in an XCAF document. It is also possible to add a new types of data taking the existing tools as prototypes.
-
-Finally, the XDE provides reader and writer tools for reading and writing the data supported by XCAF to and from IGES and STEP files. 
-
-@figure{/user_guides/xde/images/646_xde_11_400.png,"Shape imported using XDE",240}
-
-The XDE component requires @ref occt_user_guides__shape_healing "Shape Healing" toolkit for operation. 
+@figure{/user_guides/xde/images/646_xde_11_400.png,"Shape imported using XDE (courtesy of Dave Goetsch via GrabCAD).",240}
 
 @subsection occt_xde_1_1 Basic terms
 
-For better understanding of XDE, certain key terms are defined: 
-* **Shape** -- a standalone shape, which does not belong to the assembly structure.
-* **Instance** -- a replication of another shape with a location that can be the same location or a different one.
-* **Assembly** -- a construction that is either a root or a sub-assembly. 
+We use the following terminology throughout this documentation:
+
+* **Assembly:** a hierarchy of elements representing a complex product.
+
+* **Subassembly:** a group of elements inside an assembly. Typically, a subassembly is a set of components that are physically assembled into a unit and then assembled with other components.
+
+* **Part:** a piece of data representing a simple individual product.
+
+* **Instance:** a *usage occurrence* of a part or a subassembly. An instance is usually mounted to a parent component by specifying relative transformation. It should be noted that whenever term "instance" is used, it may refer to either a part or a subassembly. When an individual part is mentioned, we use a more precise "part instance" term.
+
+* **Assembly item:** any element in the component hierarchy of an assembly. If visualization is employed, an assembly item typically corresponds to an element in a scene graph.
+
+* **Component:** any *nested* assembly item.
+
+The key terms are illustrated in the figure below.
+
+@figure{/user_guides/xde/images/xde_assembly_design.png,"Parts and instances.",240}
+
+The example above assumes that two parts (a plate and a cylinder) are created independently in some part design system. Then an assembly is constructed by instantiating these parts with some user-defined mutual placements (probably driven by assembly constraints). In this example, the root assembly item "MyAssembly" contains the following components:
+
+* "Plate" as the only instance of the plate part.
+* "Cylinders" as the subassembly which includes three instances of a cylinder part.
+
+A CAD part in a design system has usually no link to other parts in a product unless it is dropped to an assembly structure. To become an assembly component, the part has to be instantiated. An instance is technically a reference to the part with a proper location. The distinction between *parts* and *instances* is one of the fundamental principles in assembly design. A single part may have multiple instances all sharing the same product information (geometry and metadata). It is also valid to associate metadata with the instances themselves, though the latter is not very common (and not fully supported in OCCT).
+
+\note The important point is the distinction between parts and instances. A part is a single product which may several times occur in an assembly. An instance is a particular occurrence of a part in an assembly.
 
 @subsection occt_xde_1_2 XDE Organization
 
-The basis of XDE, called XCAF, is a framework based on OCAF (Open CASCADE Technology Application Framework) and is intended to be used with assemblies and with various kinds of attached data (attributes). Attributes can be Individual attributes for a shape, specifying some characteristics of a shape, or they can be Grouping attributes, specifying that a shape belongs to a given group whose definition is specified apart from the shapes. 
+@subsubsection occt_xde_1_2_1 Assemblies
 
-XDE works in an OCAF document with a specific organization defined in a dedicated XCAF module. This organization is used by various functions of XDE to exchange standardized data other than shapes and geometry. 
+Assembly components are represented as nodes in a directed graph. The arcs of the graph represent "part-of" relations between the components (read like "component A is part of component B"). The following figure illustrates a conventional assembly from \ref occt_xde_references_cax_if "[CAx-IF STEP Library]" composed of five unique parts.
 
-The Assembly Structure and attributes assigned to shapes are stored in the OCAF tree. It is possible to obtain TopoDS representation for each level of the assembly in the form of *TopoDS_Compound* or *TopoDS_Shape* using the API. 
+@figure{/user_guides/xde/images/xde_as1.png,"Sample assembly.",240}
+
+Each part is defined in its local coordinate system and dropped to an assembly with a suitable placement. As such, the bolt has six instances, while a nut is instantiated eight times.
+
+@figure{/user_guides/xde/images/xde_as1_parts.png,"Parts of sample assembly.",240}
+
+The "part-of" graph is sketched in the following figure.
+
+@figure{/user_guides/xde/images/xde_as1_part_of_graph.png,"\"Part-of\" assembly graph.",240}
+
+There are as many component occurrences in an assembly as many paths exist to each leaf from the root nodes. Starting from the root node "as1", 18 unique ways are giving the total number of part occurrences in the component structure.
+
+Technically, each node of the graph is represented by a label in the underlying OCAF structure. However, an OCAF label (TDF_Label) cannot be used as an identifier of an assembly item. In general case, one label can be reached from several "directions" of traversal. Thus, to address a single component occurrence unambiguously, one should use a full path to the occurrence in a component graph as an identifier. The following figure illustrates the result of assembly graph traversal which can be represented as a user-friendly tree (scene graph).
+
+@figure{/user_guides/xde/images/xde_as1_part_of_tree.png,"\"Part-of\" assembly tree.",240}
+
+Such a tree stands for the hierarchy of the components which can be shown to the user. A child-parent relation has "part-of" meaning. Notice that an individual node in the assembly tree is associated with a unique path to the item in the component graph. The following figure illustrates a simple bracket subassembly which is used twice as a component in the sample model.
+
+@figure{/user_guides/xde/images/xde_as1_bracket_subassembly.png,"Bracket subassembly instantiated twice in sample model.",240}
+
+The following figure outlines the component graph for this subassembly.
+
+@figure{/user_guides/xde/images/xde_as1_bracket_subassembly_graph.png,"\"Part-of\" graph for bracket subassembly.",240}
+
+Assembly structure is not directly related to any geometry. Therefore, assembly structure gives only a conceptual view of a product. According to \ref occt_xde_references_ShahMantyla95 "[Shah and Mantyla 1995]" (p. 9), many design tasks are not related to geometry at all, but to other characteristics of a product. Some problems involve idealized or simplified geometry, and it often happens that a detailed geometry is not even required (at least during some design phases). At the same time, the geometric model for a subassembly in XDE can be directly accessed at any time in the form of *TopoDS_Compound*.
+
+XDE defines the specific organization of the assembly content. All elements are stored at sub-labels of label 0:1:1. There can be one or more roots. The hierarchy of labels is always two-levels nested. The first level (direct children of 0:1:1) declares all products within an assembly. The second level determines the "part-of" relations between the assembly elements.
+
+@figure{/user_guides/xde/images/xde_assembly_ocaf.png,"Internal (OCAF) representation of XDE document.",240}
+
+@subsubsection occt_xde_1_2_2 How to explore assembly structure
+
+To explore the assembly structure, you may use a specialized *XCAFDoc_AssemblyGraph* tool. The following code snippet illustrates the construction of explicit assembly graph from XDE document.
+
+\code
+  Handle(TDocStd_Document) doc = ...; // Your XDE document
+
+  // Prepare assembly graph
+  Handle(XCAFDoc_AssemblyGraph) asmGraph = new XCAFDoc_AssemblyGraph(doc, true);
+\endcode
+
+*XCAFDoc_AssemblyGraph* does not contain geometry of the assembly being explored. It is a formal graph structure which makes explicit the "part-of" relations between the assembly components. Each node in a graph is associated with one of the following types:
+
+* **Root:**
+* **Subassembly**
+* **Part occurrence**
+* **Part**
+
+A node contains a persistent ID which points to the corresponding OCAF label. The persistent ID is a key to access geometric representations and metadata associated with the corresponding element of assembly.
+
+@subsubsection occt_xde_1_2_3 Multiple component occurrences
+
+Consider two parts: wheel and axle shown in the picture below.
+
+@figure{/user_guides/xde/images/assm_wheel_axle.png,"Two parts: wheel and axle.",240}
+
+Consider a wheel-axle subassembly composed of one axle and two wheels.
+
+@figure{/user_guides/xde/images/assm_wheel_axle_sa.png,"Subassembly composed of two wheels and one axle.",240}
+
+A higher-level chassis assembly is in turn composed of two wheel-axle subassemblies, the front, and the rear.
+
+@figure{/user_guides/xde/images/assm_wheel_axle_root.png,"Chassis assembly with multiple component occurrences.",240}
+
+There is a requirement to identify individual components such as the left-front wheel. However, a wheel part has only two instances in the owner wheel-axle subassembly. The necessity to uniquely identify all component occurrences requires introducing a *transient* key for the corresponding assembly item. This key is essentially a path in the component graph which unambiguously addresses the element in question.
+
+\note As reported by \ref occt_xde_references_Ungerer02 "[Ungerer and Buchanan 2002]", STEP PDM Schema is capable of tracking specific usages of assembly components. However, OCCT makes no assumption on the used STEP schema, so multiple component occurrences should be implemented at the level of XDE-based application.
+
+\todo mention Grab Instance
+
+//////////////////////////////////////////////////////////
 
 Basic elements used by XDE are introduced in the XCAF sub-module by the package XCAFDoc. These elements consist in descriptions of commonly used data structures (apart from the shapes themselves) in normalized data exchanges. They are not attached to specific applications and do not bring specific semantics, but are structured according to the use and needs of data exchanges. 
 The Document used by XDE usually starts as a *TDocStd_Document*. 
@@ -45,9 +129,7 @@ For example, a mechanical assembly can be defined as follows:
 @figure{/user_guides/xde/images/xde_image004.png,"Assembly View",240}
 
 
-XDE defines the specific organization of the assembly content. Shapes are stored on sub-labels of label 0:1:1. There can be one or more roots (called free shapes) whether they are true trees or simple shapes. A shape can be considered to be an Assembly (such as AS1 under 0:1:1:1 in Figure1) if it is defined with Components (sub-shapes, located or not). 
 
-*XCAFDoc_ShapeTool* is a tool that allows managing the Shape section of the XCAF document. This tool is implemented as an attribute and located at the root label of the shape section. 
 
 @subsection occt_xde_1_4 Validation Properties
 Validation properties are geometric characteristics of Shapes (volume, centroid, surface area) written to STEP files by the sending system. These characteristics are read by the receiving system to validate the quality of the translation. This is done by comparing the values computed by the original system with the same values computed by the receiving system on the resulting model. 
@@ -684,4 +766,15 @@ As XDE provides an extension of the data structure, for relevant data in standar
 As a result, if an application works on Assemblies, on Colors or Layers, on Validation Properties (as defined in STEP), it can rely on all or a part of the XDE definitions, and include them in its own data structure. 
 
 In addition, if an application has a data structure far from these notions, it can get data (such as Colors and Names on Shapes) according to its needs, but without having to consider the whole. 
+
+@section occt_xde_references References
+
+-# \anchor occt_xde_references_ShahMantyla95
+  Shah J., Mantyla M. Parametric and Feature Based CAD/CAM. 1995.
+
+-# \anchor occt_xde_references_cax_if
+  CAx-IF STEP File Library // URL: https://cax-if.org/library/index.html
+
+-# \anchor occt_xde_references_Ungerer02
+  Ungerer, M. and Buchanan, K. 2002. Usage Guide for the STEP PDM Schema Release 4.3. PDM Implementor Forum, Darmstadt January.
 
