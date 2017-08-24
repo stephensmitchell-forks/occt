@@ -62,8 +62,8 @@ set (INSTALL_TEST_CASES OFF CACHE BOOL "${INSTALL_TEST_CASES_DESCR}")
 if (MSVC)
   # overwrite type of used RTL libraries
   if (NOT BUILD_CHANGE_USED_RTL_TYPE)
-    set (BUILD_CHANGE_USED_RTL_TYPE "No changes" CACHE STRING "${BUILD_CHANGE_RTL_TYPE_DESCR}" FORCE)
-    set_property(CACHE BUILD_CHANGE_USED_RTL_TYPE PROPERTY STRINGS "No changes" "static/release RTL" "static/debug RTL" "dynamic/release RTL" "dynamic/debug RTL")
+    set (BUILD_CHANGE_USED_RTL_TYPE "default" CACHE STRING "${BUILD_CHANGE_USED_RTL_TYPE_DESCR}" FORCE)
+    set_property(CACHE BUILD_CHANGE_USED_RTL_TYPE PROPERTY STRINGS "default" "static/release RTL" "static/debug RTL" "dynamic/release RTL" "dynamic/debug RTL")
   endif()
 endif()
 
