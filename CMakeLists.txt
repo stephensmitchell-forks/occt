@@ -112,6 +112,12 @@ if (BUILD_USE_PCH)
 
 endif()
 
+# Generate Toolkits/Modules API header files
+if (NOT BUILD_API_HEADER_FILES)
+  set (BUILD_API_HEADER_FILES "Do not generate" CACHE STRING "${BUILD_API_HEADER_FILES_DESCR}" FORCE)
+  set_property(CACHE BUILD_API_HEADER_FILES PROPERTY STRINGS "Do not generate" "One per toolkit" "One per module" "One per toolkit and module")
+endif()
+
 # copy samples to install directory
 set (INSTALL_SAMPLES OFF CACHE BOOL "${INSTALL_SAMPLES_DESCR}")
 

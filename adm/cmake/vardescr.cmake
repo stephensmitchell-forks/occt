@@ -37,6 +37,9 @@ set (BUILD_USE_PCH_DESCR
 "Use precompiled headers to accelerate the build.
 Precompiled headers are generated automatically by Cotire tool.")
 
+set (BUILD_API_HEADER_FILES_DESCR
+"Generate API header files, one per toolkit and / or module, including all API headers in corresponding toolkit or module.")
+
 # install variables
 set (INSTALL_DIR_DESCR 
 "The place where built OCCT libraries, headers, test cases (INSTALL_TEST_CASES variable),
