@@ -277,6 +277,7 @@ Standard_Boolean Message_MsgFile::LoadFromEnv (const Standard_CString theEnvName
                                                const Standard_CString theFileName,
                                                const Standard_CString theLangExt)
 {
+  Standard_Mutex::Sentry aSentry(theMutex);
   TCollection_AsciiString aLangExt (theLangExt != NULL ? theLangExt : "");
   if (aLangExt.IsEmpty())
   {

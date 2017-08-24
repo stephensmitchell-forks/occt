@@ -32,6 +32,7 @@
 #include <ShapeProcess_OperLibrary.hxx>
 #include <Standard_Type.hxx>
 #include <Standard_Version.hxx>
+#include <Standard_Mutex.hxx>
 #include <StepAP214_Protocol.hxx>
 #include <STEPControl_ActorRead.hxx>
 #include <STEPControl_ActorWrite.hxx>
@@ -62,10 +63,14 @@ IMPLEMENT_STANDARD_RTTIEXT(STEPControl_Controller,XSControl_Controller)
 STEPControl_Controller::STEPControl_Controller()
   : XSControl_Controller("STEP", "step")
 {
-  RWHeaderSection::Init();
-
   myAdaptorProtocol = new StepAP214_Protocol();
-  RWStepAP214::Init(Handle(StepAP214_Protocol)::DownCast(myAdaptorProtocol));
+
+  static Standard_Mutex aPars;
+  {
+    Standard_Mutex::Sentry aLock(aPars);
+    RWHeaderSection::Init();
+    RWStepAP214::Init(Handle(StepAP214_Protocol)::DownCast(myAdaptorProtocol));
+  }
 
   Handle(STEPControl_ActorWrite) ActWrite = new STEPControl_ActorWrite;
   myAdaptorWrite = ActWrite;
