@@ -39,10 +39,8 @@
 #endif
 #include <stdio.h>
 
-//static int errh = 1;
 
-
-static void raisecheck (Standard_Failure& theException,Handle(Interface_Check)& ach)
+void Interface_CheckTool::raisecheck (Standard_Failure& theException,Handle(Interface_Check)& ach)
 {
   char mess[100];
   sprintf (mess,"** Exception Raised during Check : %s **",
@@ -75,6 +73,7 @@ Interface_CheckTool::Interface_CheckTool(const Handle(Interface_InterfaceModel)&
        theshare (model,protocol)
 {
   thestat = 0;
+  errh = 1;
 }
 
 
@@ -88,6 +87,7 @@ Interface_CheckTool::Interface_CheckTool(const Handle(Interface_InterfaceModel)&
 {
   thestat = 0;
   thegtool->Reservate(model->NbEntities());
+  errh = 1;
 }
 
 
@@ -99,6 +99,7 @@ Interface_CheckTool::Interface_CheckTool(const Handle(Interface_InterfaceModel)&
 Interface_CheckTool::Interface_CheckTool(const Interface_Graph& graph)
      : thegtool(graph.Model()->GTool()) , theshare (graph)
 {
+  errh = 1;
 }
 
 
@@ -110,6 +111,7 @@ Interface_CheckTool::Interface_CheckTool(const Interface_Graph& graph)
 Interface_CheckTool::Interface_CheckTool(const Handle(Interface_HGraph)& hgraph)
      : thegtool(hgraph->Graph().Model()->GTool()) , theshare (hgraph)
 {
+  errh = 1;
 }
 
 

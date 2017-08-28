@@ -70,6 +70,12 @@ STEPControl_Controller::STEPControl_Controller()
     Standard_Mutex::Sentry aLock(aPars);
     RWHeaderSection::Init();
     RWStepAP214::Init(Handle(StepAP214_Protocol)::DownCast(myAdaptorProtocol));
+
+    // initialization of Standard Shape Healing
+    ShapeExtend::Init();
+
+    // init Standard Shape Processing operators
+    ShapeProcess_OperLibrary::Init();
   }
 
   Handle(STEPControl_ActorWrite) ActWrite = new STEPControl_ActorWrite;
@@ -163,12 +169,6 @@ STEPControl_Controller::STEPControl_Controller()
   Handle(IFSelect_EditForm) edsdrf = new IFSelect_EditForm (edsdr,Standard_False,Standard_True,"STEP Product Data (SDR)");
   AddSessionItem (edsdr,"step-SDR-edit");
   AddSessionItem (edsdrf,"step-SDR-data");
-
-  // initialization of Standard Shape Healing
-  ShapeExtend::Init();
-
-  // init Standard Shape Processing operators
-  ShapeProcess_OperLibrary::Init();
 }
 
 Handle(Interface_InterfaceModel)  STEPControl_Controller::NewModel () const
@@ -252,7 +252,12 @@ void STEPControl_Controller::Customise(Handle(XSControl_WorkSession)& WS)
     //pdn S4133 18.02.99
     WS->AddNamedItem ("xst-derived",new IFSelect_SignAncestor());
     Handle(STEPSelections_SelectDerived) stdvar = new STEPSelections_SelectDerived();
-    stdvar->SetProtocol(myAdaptorProtocol);
+
+    static Standard_Mutex aPars;
+    {
+      Standard_Mutex::Sentry aLock(aPars);
+      stdvar->SetProtocol(myAdaptorProtocol);
+    }
     WS->AddNamedItem ("step-derived",stdvar);
 
     //Creates a Selection for ShapeDefinitionRepresentation

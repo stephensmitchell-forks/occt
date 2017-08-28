@@ -213,6 +213,7 @@ static Standard_Integer GetFileSize (FILE *theFile)
 
 Standard_Boolean Message_MsgFile::LoadFile (const Standard_CString theFileName)
 {
+  Standard_Mutex::Sentry aSentry(theMutex);
   if (theFileName == NULL || * theFileName == '\0') return Standard_False;
 
   //    Open the file
@@ -321,6 +322,7 @@ Standard_Boolean Message_MsgFile::LoadFromEnv (const Standard_CString theEnvName
 Standard_Boolean Message_MsgFile::LoadFromString (const Standard_CString theContent,
                                                   const Standard_Integer theLength)
 {
+  Standard_Mutex::Sentry aSentry(theMutex);
   Standard_Integer aStringSize = theLength >= 0 ? theLength : (Standard_Integer )strlen (theContent);
   NCollection_Buffer aBuffer (NCollection_BaseAllocator::CommonBaseAllocator());
   if (aStringSize <= 0 || !aBuffer.Allocate (aStringSize + 2))
@@ -345,10 +347,7 @@ Standard_Boolean Message_MsgFile::AddMsg (const TCollection_AsciiString& theKeyw
 					  const TCollection_ExtendedString&  theMessage)
 {
   Standard_Mutex::Sentry aSentry(theMutex);
-  Message_DataMapOfExtendedString& aDataMap = ::msgsDataMap();
-
- 
-  aDataMap.Bind (theKeyword, theMessage);
+  Message_DataMapOfExtendedString& aDataMap = ::msgsDataMap();  aDataMap.Bind (theKeyword, theMessage);
   return Standard_True;
 }
 
@@ -385,7 +384,6 @@ const TCollection_ExtendedString &Message_MsgFile::Msg (const TCollection_AsciiS
   Standard_Mutex::Sentry aSentry(theMutex);
   // find message in the map
   Message_DataMapOfExtendedString& aDataMap = ::msgsDataMap();
- 
 
   // if message is not found, generate error message and add it to the map to minimize overhead
   // on consequent calls with the same key
