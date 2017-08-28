@@ -344,9 +344,10 @@ Standard_Boolean Message_MsgFile::LoadFromString (const Standard_CString theCont
 Standard_Boolean Message_MsgFile::AddMsg (const TCollection_AsciiString& theKeyword,
 					  const TCollection_ExtendedString&  theMessage)
 {
+  Standard_Mutex::Sentry aSentry(theMutex);
   Message_DataMapOfExtendedString& aDataMap = ::msgsDataMap();
 
-  Standard_Mutex::Sentry aSentry (theMutex);
+ 
   aDataMap.Bind (theKeyword, theMessage);
   return Standard_True;
 }
@@ -369,7 +370,8 @@ const TCollection_ExtendedString &Message_MsgFile::Msg (const Standard_CString t
 
 Standard_Boolean Message_MsgFile::HasMsg (const TCollection_AsciiString& theKeyword)
 {
-  Standard_Mutex::Sentry aSentry (theMutex);
+  Standard_Mutex::Sentry aSentry(theMutex);
+  
   return ::msgsDataMap().IsBound (theKeyword);
 }
 
@@ -380,9 +382,10 @@ Standard_Boolean Message_MsgFile::HasMsg (const TCollection_AsciiString& theKeyw
 
 const TCollection_ExtendedString &Message_MsgFile::Msg (const TCollection_AsciiString& theKeyword)
 {
+  Standard_Mutex::Sentry aSentry(theMutex);
   // find message in the map
   Message_DataMapOfExtendedString& aDataMap = ::msgsDataMap();
-  Standard_Mutex::Sentry aSentry (theMutex);
+ 
 
   // if message is not found, generate error message and add it to the map to minimize overhead
   // on consequent calls with the same key

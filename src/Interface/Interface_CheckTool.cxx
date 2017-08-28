@@ -39,7 +39,7 @@
 #endif
 #include <stdio.h>
 
-static int errh = 1;
+//static int errh = 1;
 
 
 static void raisecheck (Standard_Failure& theException,Handle(Interface_Check)& ach)
@@ -126,10 +126,10 @@ void Interface_CheckTool::FillCheck(const Handle(Standard_Transient)& ent,
   Standard_Integer CN;
   if (thegtool->Select(ent,module,CN)) {
 //    Sans try/catch (fait par l appelant, evite try/catch en boucle)
-    if (!errh) {
-      module->CheckCase(CN,ent,sh,ach);
-      return;
-    }
+    //if (!errh) {
+    //  module->CheckCase(CN,ent,sh,ach);
+    //  return;
+    //}
 //    Avec try/catch
     try {
       OCC_CATCH_SIGNALS
@@ -200,7 +200,7 @@ Handle(Interface_Check) Interface_CheckTool::Check(const Standard_Integer num)
   Handle(Interface_InterfaceModel) model = theshare.Model();
   Handle(Standard_Transient) ent = model->Value(num);
   Handle(Interface_Check) ach = new Interface_Check(ent);  // non filtre par "Warning" : tel quel
-  errh = 1;
+  //errh = 1;
   FillCheck(ent,theshare,ach);
   return ach;
 }
@@ -221,13 +221,13 @@ void Interface_CheckTool::CheckSuccess (const Standard_Boolean reset)
     ("Interface Model : Global Check");
   Handle(Interface_InterfaceModel) model = theshare.Model();
   if (model->GlobalCheck()->NbFails() > 0) throw Interface_CheckFailure("Interface Model : Global Check");
-  Handle(Interface_Check) modchk = new Interface_Check;
-  model->VerifyCheck(modchk);
-  if (!model->Protocol().IsNull()) model->Protocol()->GlobalCheck (theshare.Graph(),modchk);
-  if (modchk->HasFailed())  throw Interface_CheckFailure("Interface Model : Verify Check");
-  if (thestat == 3) return;                    // tout teste et ca passe
+  //Handle(Interface_Check) modchk = new Interface_Check;
+  //model->VerifyCheck(modchk);
+  //if (!model->Protocol().IsNull()) model->Protocol()->GlobalCheck (theshare.Graph(),modchk);
+  //if (modchk->HasFailed())  throw Interface_CheckFailure("Interface Model : Verify Check");
+  //if (thestat == 3) return;                    // tout teste et ca passe
 
-  errh = 0;  // Pas de try/catch, car justement on raise
+  //errh = 0;  // Pas de try/catch, car justement on raise
   Standard_Integer nb = model->NbEntities();
   for (Standard_Integer i = 1; i <= nb; i ++) {
     if (model->IsErrorEntity(i)) throw Interface_CheckFailure("Interface Model : an Entity is recorded as Erroneous");
@@ -262,13 +262,13 @@ Interface_CheckIterator Interface_CheckTool::CompleteCheckList ()
   Interface_CheckIterator res;
   res.SetModel(model);
   Handle(Interface_Check) globch = model->GlobalCheck();    // GlobalCheck Statique
-  if (!model->Protocol().IsNull()) model->Protocol()->GlobalCheck (theshare.Graph(),globch);
-  model->VerifyCheck(globch);                       // GlobalCheck Dynamique
-  if (globch->HasFailed() || globch->HasWarnings()) res.Add(globch,0);
-  if (globch->HasFailed()) thestat |= 12;
+  //if (!model->Protocol().IsNull()) model->Protocol()->GlobalCheck (theshare.Graph(),globch);
+  //model->VerifyCheck(globch);                       // GlobalCheck Dynamique
+  //if (globch->HasFailed() || globch->HasWarnings()) res.Add(globch,0);
+  //if (globch->HasFailed()) thestat |= 12;
 
   Standard_Integer i=0,n0 = 1, nb = model->NbEntities();
-  errh = 0;
+  //errh = 0;
   while (n0 <= nb) {
     Handle(Interface_Check) ach = new Interface_Check;
     Handle(Standard_Transient) ent;
@@ -316,11 +316,11 @@ Interface_CheckIterator Interface_CheckTool::CheckList ()
   res.SetModel(model);
   Standard_Integer i=0, n0 = 1, nb = model->NbEntities();
   Handle(Interface_Check) globch = model->GlobalCheck();
-  if (!model->Protocol().IsNull()) model->Protocol()->GlobalCheck (theshare.Graph(),globch);
-  model->VerifyCheck(globch);
-  if (globch->HasFailed()) {  thestat |= 12;  res.Add(globch,0);  }
+  //if (!model->Protocol().IsNull()) model->Protocol()->GlobalCheck (theshare.Graph(),globch);
+  //model->VerifyCheck(globch);
+  //if (globch->HasFailed()) {  thestat |= 12;  res.Add(globch,0);  }
 
-  errh = 0;
+  //errh = 0;
   while (n0 <= nb) {
     Handle(Interface_Check) ach = new Interface_Check; 
     Handle(Standard_Transient) ent;
@@ -368,7 +368,7 @@ Interface_CheckIterator Interface_CheckTool::AnalyseCheckList ()
   res.SetModel(model);
   Standard_Integer i=0, n0 = 1, nb = model->NbEntities();
 
-  errh = 0;
+  //errh = 0;
   while (n0 <= nb) {
     Handle(Interface_Check) ach = new Interface_Check;
     try {
@@ -408,7 +408,7 @@ Interface_CheckIterator Interface_CheckTool::VerifyCheckList ()
   res.SetModel(model);
   Standard_Integer i=0, n0 = 1, nb = model->NbEntities();
 
-  errh = 0;
+  //errh = 0;
   while (n0 <= nb) {
     Handle(Standard_Transient) ent;
     Handle(Interface_Check) ach = new Interface_Check;
@@ -452,7 +452,7 @@ Interface_CheckIterator Interface_CheckTool::WarningCheckList ()
   res.SetModel(model);
   Standard_Integer i=0, n0 = 1, nb = model->NbEntities();
 
-  errh = 0;
+  //errh = 0;
   while (n0 <= nb) {
     Handle(Interface_Check) ach = new Interface_Check;
     Handle(Standard_Transient) ent;

@@ -541,25 +541,25 @@ Standard_Boolean IFSelect_WorkSession::ComputeCheck
   if (thecheckdone) return Standard_True;
   if (!IsLoaded()) return Standard_False;
 
-  Interface_Graph& CG = thegraph->CGraph();
-  Interface_CheckTool cht(thegraph);
-  Interface_CheckIterator checklist = cht.VerifyCheckList();
-  myModel->FillSemanticChecks(checklist,Standard_False);
-  if(themodelstat)
-  {
-    //  Et on met a jour le Graphe (BitMap) !  Flag Incorrect (STX + SEM)
-    Interface_BitMap& BM = CG.CBitMap();
-    BM.Init (Standard_False,Flag_Incorrect);
-    Standard_Integer num, nb = CG.Size();
-    for (checklist.Start(); checklist.More(); checklist.Next()) {
-      const Handle(Interface_Check) chk = checklist.Value();
-      if (!chk->HasFailed()) continue;
-      num = checklist.Number();
-      if (num > 0 && num <= nb) BM.SetTrue (num,Flag_Incorrect);
-    }
-    for (num = 1; num <= nb; num ++)
-      if (myModel->IsErrorEntity (num)) BM.SetTrue (num,Flag_Incorrect);
-  }
+  //Interface_Graph& CG = thegraph->CGraph();
+  //Interface_CheckTool cht(thegraph);
+  //Interface_CheckIterator checklist = cht.VerifyCheckList();
+  //myModel->FillSemanticChecks(checklist,Standard_False);
+  //if(themodelstat)
+  //{
+  //  //  Et on met a jour le Graphe (BitMap) !  Flag Incorrect (STX + SEM)
+  //  Interface_BitMap& BM = CG.CBitMap();
+  //  BM.Init (Standard_False,Flag_Incorrect);
+  //  Standard_Integer num, nb = CG.Size();
+  //  for (checklist.Start(); checklist.More(); checklist.Next()) {
+  //    const Handle(Interface_Check) chk = checklist.Value();
+  //    if (!chk->HasFailed()) continue;
+  //    num = checklist.Number();
+  //    if (num > 0 && num <= nb) BM.SetTrue (num,Flag_Incorrect);
+  //  }
+  //  for (num = 1; num <= nb; num ++)
+  //    if (myModel->IsErrorEntity (num)) BM.SetTrue (num,Flag_Incorrect);
+  //}
   return Standard_True;
 }
 

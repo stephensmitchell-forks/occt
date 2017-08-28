@@ -398,7 +398,7 @@ void StepData_StepModel::AddHeaderEntity
 
 void StepData_StepModel::VerifyCheck(Handle(Interface_Check)& ach) const
 {
-  Interface_GeneralLib lib(StepData::HeaderProtocol());
+  /*Interface_GeneralLib lib(StepData::HeaderProtocol());
   Handle(StepData_StepModel) me (this);
   Handle(Interface_Protocol) aHP = StepData::HeaderProtocol();
   Interface_ShareTool sh(me,aHP);
@@ -407,7 +407,7 @@ void StepData_StepModel::VerifyCheck(Handle(Interface_Check)& ach) const
     Handle(Standard_Transient) head = iter.Value();
     if (!lib.Select(head,module,CN)) continue;
     module->CheckCase(CN,head,sh,ach);
-  }
+  }*/
 }
 
 
