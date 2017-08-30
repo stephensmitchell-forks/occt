@@ -48,13 +48,13 @@ StaticHandleA(StepData_Protocol,theheader);
   InitHandle(StepData_Protocol,theheader);
   if (theheader.IsNull()) theheader = header;
   else {
-    DeclareAndCast(StepData_FileProtocol,headmult,theheader);
-    if (headmult.IsNull()) {
-      headmult = new StepData_FileProtocol;
-      headmult->Add(theheader);
-    }
-    headmult->Add(header);
-    theheader = headmult;
+    //DeclareAndCast(StepData_FileProtocol,headmult,theheader);
+   // if (headmult.IsNull()) {
+     // headmult = new StepData_FileProtocol;
+      //headmult->Add(theheader);
+    //}
+    //headmult->Add(header);
+    //theheader = headmult;
   }
 }
 

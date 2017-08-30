@@ -80,12 +80,13 @@ static IFSelect_ReturnStatus XSControl_xnorm(const Handle(IFSelect_SessionPilot)
       <<  "  Short name (resource) : "<<control->Name(Standard_True)<<endl;
   if (argc == 1) return IFSelect_RetVoid;
 
-  control = XSControl_Controller::Recorded(arg1);
+  control = WS->Recorded(arg1);
   if (control.IsNull()) {
     sout<<" No norm named : "<<arg1<<endl;
     return IFSelect_RetError;
   }
 
+ 
   WS->SetController(control);
   sout<<"new norm : "<<control->Name()<<endl;
   return IFSelect_RetDone;

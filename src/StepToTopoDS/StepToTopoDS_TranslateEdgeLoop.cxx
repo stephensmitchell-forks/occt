@@ -225,7 +225,7 @@ void StepToTopoDS_TranslateEdgeLoop::Init(const Handle(StepShape_FaceBound)& Fac
   Handle(StepData_StepModel) aModel =
     Handle(StepData_StepModel)::DownCast(aTool.TransientProcess()->Model());
 
-  Standard_Integer modepcurve = aModel->GetParam("read.surfacecurve.mode")->IntegerValue();
+  Standard_Integer modepcurve = aModel->IVal("read.surfacecurve.mode");
 //  0,1 : suivre le code,  2 : ne prendre que pcurve,  3 : ne prendre que C3D
 
   BRep_Builder B;

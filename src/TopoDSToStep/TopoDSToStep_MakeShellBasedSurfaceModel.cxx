@@ -54,7 +54,7 @@ TopoDSToStep_MakeShellBasedSurfaceModel::
   Handle(StepData_StepModel) aModel = Handle(StepData_StepModel)::DownCast(FP->Model());
   TopoDSToStep_Tool    aTool(aMap,
                              Standard_False,
-                             aModel->GetParam("write.surfacecurve.mode")->IntegerValue());
+                             aModel->IVal("write.surfacecurve.mode"));
   TopoDSToStep_Builder StepB(aFace, aTool, FP);
 
   TopoDSToStep::AddResult ( FP, aTool );
@@ -105,7 +105,7 @@ TopoDSToStep_MakeShellBasedSurfaceModel::
   Handle(StepData_StepModel) aModel = Handle(StepData_StepModel)::DownCast(FP->Model());
   TopoDSToStep_Tool    aTool(aMap,
                              Standard_False,
-                             aModel->GetParam("write.surfacecurve.mode")->IntegerValue());
+                             aModel->IVal("write.surfacecurve.mode"));
   TopoDSToStep_Builder StepB(aShell, aTool, FP);
   //TopoDSToStep::AddResult ( FP, aTool );
 
@@ -166,7 +166,7 @@ TopoDSToStep_MakeShellBasedSurfaceModel::
       Handle(StepData_StepModel) aModel = Handle(StepData_StepModel)::DownCast(FP->Model());
       TopoDSToStep_Tool    aTool(aMap,
                                  Standard_False,
-                                 aModel->GetParam("write.surfacecurve.mode")->IntegerValue());
+                                 aModel->IVal("write.surfacecurve.mode"));
       TopoDSToStep_Builder StepB(aShell, aTool, FP);
       TopoDSToStep::AddResult ( FP, aTool );
 

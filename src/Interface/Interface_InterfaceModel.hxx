@@ -400,7 +400,11 @@ public:
   Standard_EXPORT static Handle(TColStd_HSequenceOfHAsciiString) ListTemplates();
 
   //! Returns parameter for translation by its name
-  Standard_EXPORT Handle(Interface_Static) GetParam(const Standard_CString theParamName);
+  Standard_EXPORT Handle(Interface_Static) GetParam(const Standard_CString theParamName) const;
+
+  Standard_EXPORT Standard_Integer IVal(const Standard_CString theParamName) const;
+  Standard_EXPORT Standard_Real RVal(const Standard_CString theParamName) const;
+  Standard_EXPORT Standard_CString CVal(const Standard_CString theParamName) const;
 
   //! Adds parameters in the mopdel
   Standard_EXPORT void AddParam(const Standard_CString theParamName, Handle(Interface_Static)& theParam);

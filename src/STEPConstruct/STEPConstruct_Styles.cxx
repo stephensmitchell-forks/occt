@@ -232,7 +232,8 @@ Standard_Boolean STEPConstruct_Styles::CreateMDGPR (const Handle(StepRepr_Repres
 //   Model()->AddWithRefs ( Repr ); add into the model upper
 
   // for AP203, add subschema name
-  if ( theModel->GetParam("write.step.schema")->IntegerValue() == 3 ) {
+ 
+  if ( theModel->IVal("write.step.schema") == 3 ) {
     APIHeaderSection_MakeHeader mkHdr ( Handle(StepData_StepModel)::DownCast ( Model() ) );
     Handle(TCollection_HAsciiString) subSchema = 
       new TCollection_HAsciiString ( "SHAPE_APPEARANCE_LAYER_MIM" );

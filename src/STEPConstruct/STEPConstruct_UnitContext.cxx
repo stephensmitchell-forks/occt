@@ -85,7 +85,8 @@ void STEPConstruct_UnitContext::Init(const Standard_Real Tol3d,
   Standard_CString uName = 0;
   Standard_Boolean hasPref = Standard_True;
   StepBasic_SiPrefix siPref = StepBasic_spMilli;
-  switch (theModel->GetParam("write.step.unit")->IntegerValue()) {
+  Standard_Integer valunits = theModel->IVal("write.step.unit");
+  switch (valunits) {
     case  1: uName = "INCH";             break;
     default:
     case  2:                             break;
@@ -106,7 +107,7 @@ void STEPConstruct_UnitContext::Init(const Standard_Real Tol3d,
   if ( uName ) { // for non-metric units, create conversion_based_unit
     Handle(StepBasic_MeasureValueMember) val = new StepBasic_MeasureValueMember;
     val->SetName("LENGTH_UNIT");
-    val->SetReal(UnitsMethods::GetLengthFactorValue(theModel->GetParam("write.step.unit")->IntegerValue()));
+    val->SetReal(UnitsMethods::GetLengthFactorValue(valunits));
 
     Handle(StepBasic_LengthMeasureWithUnit) measure = new StepBasic_LengthMeasureWithUnit;
     StepBasic_Unit Unit;

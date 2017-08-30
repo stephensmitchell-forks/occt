@@ -4394,7 +4394,7 @@ void STEPCAFControl_Reader::ExpandSubShapes(const Handle(XCAFDoc_ShapeTool)& Sha
   TColStd_MapOfTransient aRepItems;
 
   // Read translation control variables
-  Standard_Boolean doReadSNames = (myReader.Model()->GetParam("read.stepcaf.subshapes.name")->IntegerValue() > 0);
+  Standard_Boolean doReadSNames = (myReader.Model()->IVal("read.stepcaf.subshapes.name") > 0);
 
   if ( !doReadSNames )
     return;

@@ -359,7 +359,7 @@ Standard_Boolean STEPConstruct_ValidationProps::AddProp (const StepRepr_Characte
 
   // for AP203, add subschema name
 
-  if (Model()->GetParam("write.step.schema")->IntegerValue() == 3) {
+  if (Model()->IVal("write.step.schema") == 3) {
     APIHeaderSection_MakeHeader mkHdr(Handle(StepData_StepModel)::DownCast(Model()));
     Handle(TCollection_HAsciiString) subSchema =
       new TCollection_HAsciiString("GEOMETRIC_VALIDATION_PROPERTIES_MIM");

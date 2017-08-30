@@ -77,7 +77,7 @@ TopoDSToStep_MakeBrepWithVoids::
 	  CurrentShell.Reverse(); 
 	//:d7 abv 16 Mar 98: try to treat 'open' shells as closed since flag 
 	// IsClosed() is often incorrect (taken from MakeManifoldSolid(Solid))
-	aTool.Init(aMap, Standard_False, FP->Model()->GetParam("write.surfacecurve.mode")->IntegerValue());
+	aTool.Init(aMap, Standard_False, FP->Model()->IVal("write.surfacecurve.mode"));
 	StepB.Init(CurrentShell, aTool, FP);
 	TopoDSToStep::AddResult ( FP, aTool );
 	if (StepB.IsDone()) {

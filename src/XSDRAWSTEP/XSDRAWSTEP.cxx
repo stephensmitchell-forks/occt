@@ -427,76 +427,27 @@ static Standard_Integer stepread (Draw_Interpretor& di/*theCommands*/, Standard_
 //=======================================================================
 static Standard_Integer testread (Draw_Interpretor& di, Standard_Integer argc, const char** argv)
 {
-  if (argc < 3)                                                                                      
-    {                                                                                             
-      di << "ERROR in " << argv[0] << "Wrong Number of Arguments.\n";                     
-      di << " Usage : " << argv[0] <<" file_name shape_name\n";                          
-      return 1;                                                                                 
-    }
-  STEPControl_Reader Reader;
-  Standard_Integer k =2;
-  for( ; k < argc; k++)
+  if (argc != 3)
   {
-    Standard_CString filename = argv[k];
-    IFSelect_ReturnStatus readstat = Reader.ReadFile(filename);
-    
-
-   /* di<<"Status from reading STEP file "<<filename<<" : ";  
-    switch(readstat) {                                                              
-    case IFSelect_RetVoid  : { di<<"empty file\n"; return 1; }            
-    case IFSelect_RetDone  : { di<<"file read\n";    break; }             
-    case IFSelect_RetError : { di<<"file not found\n";   return 1; }      
-    case IFSelect_RetFail  : { di<<"error during read\n";  return 1; }    
-    default  :  { di<<"failure\n";   return 1; }                          
-    }  */
-    Standard_Integer nbEnt1 = Reader.Model()->NbEntities();
-    //di<<"Number of entities : "<<k<<" "<<nbEnt1<<"\n";
+    di << "ERROR in " << argv[0] << "Wrong Number of Arguments.\n";
+    di << " Usage : " << argv[0] << " file_name shape_name\n";
+    return 1;
   }
-  
-  Standard_Integer nbEnt = Reader.Model()->NbEntities();
- /* di<<"Sum number of entities : "<<nbEnt<<"\n";
-  STEPControl_Writer Writer(Reader.WS(), Standard_False);
-  TCollection_AsciiString filename_out = "Result.stp";
-  Writer.Write(filename_out);*/
-  Standard_Integer nbRoots = Reader.TransferRoots();
-  //Standard_Integer k =1;
-  TopoDS_Compound aComp;
-  BRep_Builder aB;
-  aB.MakeCompound(aComp);
-  gp_Pnt aP1(0.,0.,0.);
-  for ( k =1; k <= nbRoots; k++)
-  {
-    if(Reader.TransferRoot(k))
-    {
-      TopoDS_Shape shape = Reader.Shape(k);
-       if( k == nbRoots)
-        {
-          gp_Trsf aT1;
-          gp_Pnt aP2(10.,0.,0.);
-          aT1.SetTranslation(aP1, aP2);
-          TopLoc_Location aLoc(aT1);
-          TopoDS_Shape aSh1= shape.Moved(aLoc);
-          aB.Add(aComp, aSh1);
-          gp_Trsf aT2;
-          gp_Pnt aP3(20.,0.,0.);
-          aT2.SetTranslation(aP1, aP3);
-          TopLoc_Location aLoc2(aT2);
-          TopoDS_Shape aSh2= shape.Moved(aLoc2);
-          aB.Add(aComp, aSh2);
-
-        }
-        else
-          aB.Add(aComp, shape);
-
-      }
-    }
-
-  
-
-  //TopoDS_Shape shape = Reader.OneShape();
-
-  DBRep::Set(argv[1],aComp); 
-  di<<"Count of shapes produced : "<<Reader.NbShapes()<<"\n";
+  STEPControl_Reader Reader;
+  Standard_CString filename = argv[1];
+  IFSelect_ReturnStatus readstat = Reader.ReadFile(filename);
+  di << "Status from reading STEP file " << filename << " : ";
+  switch (readstat) {
+  case IFSelect_RetVoid: { di << "empty file\n"; return 1; }
+  case IFSelect_RetDone: { di << "file read\n";    break; }
+  case IFSelect_RetError: { di << "file not found\n";   return 1; }
+  case IFSelect_RetFail: { di << "error during read\n";  return 1; }
+  default: { di << "failure\n";   return 1; }
+  }
+  Reader.TransferRoots();
+  TopoDS_Shape shape = Reader.OneShape();
+  DBRep::Set(argv[2], shape);
+  di << "Count of shapes produced : " << Reader.NbShapes() << "\n";
   return 0;
 }
  

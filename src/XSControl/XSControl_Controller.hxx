@@ -225,6 +225,7 @@ class XSControl_Controller : public Standard_Transient
   NCollection_Vector<Handle(Standard_Transient)> myParams;
   NCollection_Vector<Standard_Integer> myParamUses;
   Handle(Interface_HArray1OfHAsciiString) myModeWriteShapeN;
+  
 };
 
 #endif // _XSControl_Controller_HeaderFile

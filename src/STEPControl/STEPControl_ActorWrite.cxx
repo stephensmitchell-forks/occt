@@ -344,7 +344,7 @@ STEPControl_StepModelType STEPControl_ActorWrite::Mode () const
 
 void STEPControl_ActorWrite::SetGroupMode (const Standard_CString theParameter)
 {
-  Standard_Integer aMode = myModel->GetParam(theParameter)->IntegerValue();
+  Standard_Integer aMode = myModel->IVal(theParameter);
   if (aMode >= 0) mygroup = aMode;
 }
 
@@ -460,9 +460,9 @@ Handle(Transfer_Binder) STEPControl_ActorWrite::Transfer (const Handle(Transfer_
   myContext.SetLevel ( 1 ); // set assembly level to 1 (to ensure)
   
   //:S4136: init UnitsMethods to reset angle unit factors (see TopoDSToStep)
-  Standard_Real lFactor = UnitsMethods::GetLengthFactorValue (myModel->GetParam( "write.step.unit" )->IntegerValue() );
+  Standard_Real lFactor = UnitsMethods::GetLengthFactorValue (myModel->IVal("write.step.unit"));
   lFactor /= UnitsMethods::GetCasCadeLengthUnit();
-  Standard_Integer anglemode = myModel->GetParam("step.angleunit.mode")->IntegerValue();
+  Standard_Integer anglemode = myModel->IVal("step.angleunit.mode");
   UnitsMethods::InitializeFactors ( lFactor, ( anglemode <= 1 ? 1. : M_PI/180. ), 1. );
 
   // create SDR
@@ -501,9 +501,9 @@ Standard_Real STEPControl_ActorWrite::usedTolerance(const Standard_Real theToler
   //    Then given to TopoDSToStep_Tool
 
   Standard_Real Tol = theToler;
-  Standard_Integer tolmod = myModel->GetParam("write.precision.mode")->IntegerValue();
+  Standard_Integer tolmod = myModel->IVal("write.precision.mode");
   if (Tol <= 0 && tolmod == 2)
-    Tol = myModel->GetParam("write.precision.val")->RealValue();
+    Tol = myModel->RVal("write.precision.val");
   if (Tol <= 0) {
     ShapeAnalysis_ShapeTolerance stu;
     Tol = stu.Tolerance(theShape, tolmod);
@@ -526,7 +526,7 @@ Standard_Boolean STEPControl_ActorWrite::IsAssembly (TopoDS_Shape &S) const
 {
   if ( ! GroupMode() || S.ShapeType() != TopAbs_COMPOUND ) return Standard_False;
   // PTV 16.09.2002  OCC725 for storing compound of vertices
-  if (myModel->GetParam("write.step.vertex.mode")->IntegerValue() == 0) {//bug 23950
+  if (myModel->IVal("write.step.vertex.mode") == 0) {//bug 23950
     if (S.ShapeType() == TopAbs_COMPOUND ) {
       Standard_Boolean IsOnlyVertices = Standard_True;
       TopoDS_Iterator anItr( S );
@@ -587,7 +587,7 @@ static Standard_Boolean transferVertex (const Handle(Transfer_FinderProcess)& FP
   MoniTool_DataMapOfShapeTransient aMap;
   TopoDSToStep_Tool aTool(aMap,
                           Standard_True,
-                          FP->Model()->GetParam("write.surfacecurve.mode")->IntegerValue());
+                          FP->Model()->IVal("write.surfacecurve.mode"));
   TopoDSToStep_MakeStepVertex aMkVrtx ( TopoDS::Vertex(aShVrtx), aTool, FP );
   
   if (!aMkVrtx.IsDone())
@@ -643,7 +643,7 @@ Handle(Transfer_Binder) STEPControl_ActorWrite::TransferShape (const Handle(Tran
     return TransferCompound(start, SDR0, FP);
 
   // [BEGIN] Separate manifold topology from non-manifold in group mode 0 (ssv; 18.11.2010)
-  Standard_Boolean isNMMode = myModel->GetParam("write.step.nonmanifold")->IntegerValue() != 0;
+  Standard_Boolean isNMMode = myModel->IVal("write.step.nonmanifold") != 0;
   Handle(Transfer_Binder) aNMBinder;
   if (isNMMode && !GroupMode() && theShape.ShapeType() == TopAbs_COMPOUND) {
     TopoDS_Compound aNMCompound;
@@ -763,7 +763,7 @@ Handle(Transfer_Binder) STEPControl_ActorWrite::TransferShape (const Handle(Tran
   Handle(TopTools_HSequenceOfShape) RepItemSeq = new TopTools_HSequenceOfShape();
   
   Standard_Boolean isSeparateVertices = 
-    myModel->GetParam("write.step.vertex.mode")->IntegerValue() == 0;//bug 23950
+    myModel->IVal("write.step.vertex.mode") == 0;//bug 23950
   // PTV 16.09.2002 OCC725 separate shape from solo vertices.
   Standard_Boolean isOnlyVertices = Standard_False;
   if (theShape.ShapeType() == TopAbs_COMPOUND) {
@@ -894,7 +894,7 @@ Handle(Transfer_Binder) STEPControl_ActorWrite::TransferShape (const Handle(Tran
 //    if ( DMT.IsDone() ) aShape = DMT.ModifiedShape ( aShape );
 ////    aShape = TopoDSToStep::DirectFaces(xShape);
     Handle(Standard_Transient) info;
-    Standard_Real maxTol = myModel->GetParam("read.maxprecision.val")->RealValue();
+    Standard_Real maxTol = myModel->RVal("read.maxprecision.val");
 
     TopoDS_Shape aShape;
     aShape = myXSAlgoContainer->ProcessShape(xShape, Tol, maxTol,
@@ -1173,7 +1173,7 @@ Handle(Transfer_Binder) STEPControl_ActorWrite::TransferShape (const Handle(Tran
       GetCasted(StepRepr_RepresentationItem, ItemSeq->Value(rep));
     items->SetValue(rep,repit);
   }
-  Standard_Integer ap = myModel->GetParam("write.step.schema")->IntegerValue();
+  Standard_Integer ap = myModel->IVal("write.step.schema");
   Transfer_SequenceOfBinder aSeqBindRelation;
   if(ap == 3 && nbs > 1) {
     Standard_Integer j = 1;
@@ -1278,7 +1278,7 @@ Handle(Transfer_Binder) STEPControl_ActorWrite::TransferCompound (const Handle(T
   TopoDS_Shape theShape = mapper->Value();
 
   // Inspect non-manifold topology case (ssv; 10.11.2010)
-  Standard_Boolean isNMMode = myModel->GetParam("write.step.nonmanifold")->IntegerValue() != 0;
+  Standard_Boolean isNMMode = myModel->IVal("write.step.nonmanifold") != 0;
   Standard_Boolean isManifold;
   if (isNMMode)
     isManifold = IsManifoldShape(theShape);

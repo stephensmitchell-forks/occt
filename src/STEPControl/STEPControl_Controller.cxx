@@ -37,7 +37,7 @@
 #include <STEPControl_ActorRead.hxx>
 #include <STEPControl_ActorWrite.hxx>
 #include <STEPControl_Controller.hxx>
-#include <StepData_FileProtocol.hxx>
+//#include <StepData_FileProtocol.hxx>
 #include <StepData_StepModel.hxx>
 #include <STEPEdit_EditContext.hxx>
 #include <STEPEdit_EditSDR.hxx>
@@ -68,12 +68,12 @@ STEPControl_Controller::STEPControl_Controller()
   static Standard_Mutex aPars;
   {
     Standard_Mutex::Sentry aLock(aPars);
-    RWHeaderSection::Init();
+    //RWHeaderSection::Init();
     RWStepAP214::Init(Handle(StepAP214_Protocol)::DownCast(myAdaptorProtocol));
 
     // initialization of Standard Shape Healing
-    ShapeExtend::Init();
-    XSAlgo::Init();
+    //ShapeExtend::Init();
+    //XSAlgo::Init();
     // init Standard Shape Processing operators
     ShapeProcess_OperLibrary::Init();
   }

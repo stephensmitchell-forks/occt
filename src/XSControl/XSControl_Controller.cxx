@@ -61,6 +61,7 @@
 #include <XSControl_SignTransferStatus.hxx>
 #include <XSControl_TransferReader.hxx>
 #include <XSControl_WorkSession.hxx>
+#include <Standard_Mutex.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(XSControl_Controller,Standard_Transient)
 
@@ -140,15 +141,19 @@ void XSControl_Controller::SetNames (const Standard_CString theLongName, const S
 
 void XSControl_Controller::Record (const Standard_CString theName) const
 {
-  if (listad.IsBound(theName)) {
-    Handle(Standard_Transient) thisadapt(this);
-    Handle(Standard_Transient) newadapt = listad.ChangeFind(theName);
-    if (newadapt->IsKind(thisadapt->DynamicType()))
-      return;
-    if (!(thisadapt->IsKind(newadapt->DynamicType())) && thisadapt != newadapt)
-      throw Standard_DomainError("XSControl_Controller : Record");
+  static Standard_Mutex aPars;
+  {
+    Standard_Mutex::Sentry aLock(aPars);
+    if (listad.IsBound(theName)) {
+      Handle(Standard_Transient) thisadapt(this);
+      Handle(Standard_Transient) newadapt = listad.ChangeFind(theName);
+      if (newadapt->IsKind(thisadapt->DynamicType()))
+        return;
+      if (!(thisadapt->IsKind(newadapt->DynamicType())) && thisadapt != newadapt)
+        throw Standard_DomainError("XSControl_Controller : Record");
+    }
+    listad.Bind(theName, this);
   }
-  listad.Bind(theName, this);
 }
 
 //=======================================================================
@@ -158,10 +163,14 @@ void XSControl_Controller::Record (const Standard_CString theName) const
 
 Handle(XSControl_Controller) XSControl_Controller::Recorded(const Standard_CString theName)
 {
-  Handle(Standard_Transient) recorded;
-  return (listad.Find(theName, recorded)?
-    Handle(XSControl_Controller)::DownCast(recorded) :
-    Handle(XSControl_Controller)());
+  static Standard_Mutex aPars;
+  {
+    Standard_Mutex::Sentry aLock(aPars);
+    Handle(Standard_Transient) recorded;
+    return (listad.Find(theName, recorded) ?
+      Handle(XSControl_Controller)::DownCast(recorded) :
+      Handle(XSControl_Controller)());
+  }
 }
 
 //    ####    DEFINITION    ####

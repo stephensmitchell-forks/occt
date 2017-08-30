@@ -45,7 +45,7 @@ TopoDSToStep_MakeFacetedBrep::
     MoniTool_DataMapOfShapeTransient aMap;
     TopoDSToStep_Tool aTool(aMap,
                             Standard_True,
-                            FP->Model()->GetParam("write.surfacecurve.mode")->IntegerValue());
+                            FP->Model()->IVal("write.surfacecurve.mode"));
     TopoDSToStep_Builder StepB(aShell, aTool, FP);
     TopoDSToStep::AddResult ( FP, aTool );
 
@@ -94,7 +94,7 @@ TopoDSToStep_MakeFacetedBrep::
       MoniTool_DataMapOfShapeTransient aMap;
       TopoDSToStep_Tool aTool(aMap,
                               Standard_True,
-                              FP->Model()->GetParam("write.surfacecurve.mode")->IntegerValue());
+                              FP->Model()->IVal("write.surfacecurve.mode"));
       TopoDSToStep_Builder StepB(aOuterShell, aTool, FP);
       TopoDSToStep::AddResult ( FP, aTool );
       

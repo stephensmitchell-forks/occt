@@ -216,7 +216,7 @@ Standard_Boolean  STEPControl_ActorRead::Recognize
 
   if (start->IsKind(STANDARD_TYPE(StepRepr_NextAssemblyUsageOccurrence))) return Standard_True;
 
-  TCollection_AsciiString aProdMode = myModel->GetParam("read.step.product.mode")->IntegerValue();
+  TCollection_AsciiString aProdMode = myModel->CVal("read.step.product.mode");
   if(!aProdMode.IsEqual("ON"))
     if(start->IsKind(STANDARD_TYPE(StepShape_ShapeDefinitionRepresentation))) return Standard_True;
 
@@ -402,7 +402,7 @@ void STEPControl_ActorRead::getSDR(const Handle(StepRepr_ProductDefinitionShape)
   // Flag indicating preferred shape representation type, to be chosen if 
   // several different representations are attached to the same shape
   Standard_Integer delta = 100;
-  Standard_Integer ICS = myModel->GetParam("read.step.shape.repr")->IntegerValue();
+  Standard_Integer ICS = myModel->IVal("read.step.shape.repr");
   Standard_Integer nbSDR0 = listSDR->Length();
   
   // Iterate by entities referring PDS
@@ -502,12 +502,12 @@ void STEPControl_ActorRead::getSDR(const Handle(StepRepr_ProductDefinitionShape)
   // Flag indicating whether SDRs associated with the product`s main SDR
   // by SRRs (which correspond to hybrid model representation in AP203 since 1998) 
   // should be taken into account 
-  Standard_Integer readSRR = myModel->GetParam("read.step.shape.relationship")->IntegerValue();
+  Standard_Integer readSRR = myModel->IVal("read.step.shape.relationship");
   
   // Flag indicating whether SDRs associated with the product`s main SDR
   // by SAs (which correspond to hybrid model representation in AP203 before 1998) 
   // should be taken into account 
-  Standard_Integer readSA = myModel->GetParam("read.step.shape.aspect")->IntegerValue();
+  Standard_Integer readSA = myModel->IVal("read.step.shape.aspect");
   if ( ! readSA ) 
     listSDRAspect->Clear();  
     
@@ -521,7 +521,7 @@ void STEPControl_ActorRead::getSDR(const Handle(StepRepr_ProductDefinitionShape)
   // possibly attached directly to intermediate assemblies (1)
   // Special mode (4) is used to translate shape attached to this product only,
   // ignoring sub-assemblies if any
-  Standard_Integer readAssembly = myModel->GetParam("read.step.assembly.level")->IntegerValue();
+  Standard_Integer readAssembly = myModel->IVal("read.step.assembly.level");
   if ( readAssembly ==3 || ( readAssembly ==2 && listNAUO->Length() >0 ) ) 
     listSDR->Clear();
   else if ( readAssembly == 4 )
@@ -772,7 +772,7 @@ Handle(TransferBRep_ShapeBinder) STEPControl_ActorRead::TransferEntity(const Han
   Message_ProgressSentry PS ( TP->GetProgress(), "Sub-assembly", 0, nb, 1 );
 
   // [BEGIN] Proceed with non-manifold topology (ssv; 12.11.2010)
-  Standard_Boolean isNMMode = myModel->GetParam("read.step.nonmanifold")->IntegerValue() != 0;
+  Standard_Boolean isNMMode = myModel->IVal("read.step.nonmanifold") != 0;
   Standard_Boolean isManifold = Standard_True;
   if ( isNMMode && sr->IsKind(STANDARD_TYPE(StepShape_NonManifoldSurfaceShapeRepresentation)) ) {
     isManifold = Standard_False;
@@ -784,7 +784,7 @@ Handle(TransferBRep_ShapeBinder) STEPControl_ActorRead::TransferEntity(const Han
   } 
   // Special processing for I-DEAS STP case (ssv; 15.11.2010)
   else {
-    Standard_Integer isIDeasMode = myModel->GetParam("read.step.ideas")->IntegerValue();
+    Standard_Integer isIDeasMode = myModel->IVal("read.step.ideas");
     if (isNMMode && myNMTool.IsIDEASCase() && isIDeasMode) {
       isManifold = Standard_False;
       NM_DETECTED = Standard_True;
@@ -1410,7 +1410,7 @@ Handle(Transfer_Binder) STEPControl_ActorRead::TransferShape(const Handle(Standa
   // Product Definition Entities
   // They should be treated with Design Manager
    // case ShapeDefinitionRepresentation if ProductMode != ON
-  TCollection_AsciiString aProdMode = myModel->GetParam("read.step.product.mode")->CStringValue();
+  TCollection_AsciiString aProdMode = myModel->CVal("read.step.product.mode");
   if(!aProdMode.IsEqual("ON") && 
      start->IsKind(STANDARD_TYPE(StepShape_ShapeDefinitionRepresentation))) 
     shbinder = OldWay(start,TP);
@@ -1531,7 +1531,7 @@ void STEPControl_ActorRead::PrepareUnits(const Handle(StepRepr_Representation)& 
 
   if (!theGUAC.IsNull()) {
     stat1 = myUnit.ComputeFactors(theGUAC);
-    Standard_Integer anglemode = myModel->GetParam("step.angleunit.mode")->IntegerValue();
+    Standard_Integer anglemode = myModel->IVal("step.angleunit.mode");
     Standard_Real angleFactor = ( anglemode == 0 ? myUnit.PlaneAngleFactor() :
 				  anglemode == 1 ? 1. : M_PI/180. );
     UnitsMethods::InitializeFactors(myUnit.LengthFactor(),
@@ -1546,15 +1546,15 @@ void STEPControl_ActorRead::PrepareUnits(const Handle(StepRepr_Representation)& 
   }
 
 //  myPrecision = Precision::Confusion();
-  if (myModel->GetParam("read.precision.mode")->IntegerValue() == 1)  //:i1 gka S4136 05.04.99
-    myPrecision = myModel->GetParam("read.precision.val")->RealValue();
+  if (myModel->IVal("read.precision.mode") == 1)  //:i1 gka S4136 05.04.99
+    myPrecision = myModel->RVal("read.precision.val");
   else if (myUnit.HasUncertainty())
     myPrecision = myUnit.Uncertainty() * myUnit.LengthFactor();
   else {
     TP->AddWarning(theRepCont,"No Length Uncertainty, value of read.precision.val is taken");
-    myPrecision = myModel->GetParam("read.precision.val")->RealValue();
+    myPrecision = myModel->RVal("read.precision.val");
   }
-  myMaxTol = Max ( myPrecision, myModel->GetParam("read.maxprecision.val")->RealValue() );
+  myMaxTol = Max ( myPrecision, myModel->RVal("read.maxprecision.val") );
   // Assign uncertainty
 #ifdef TRANSLOG
   if (TP->TraceLevel() > 1) 
@@ -1570,8 +1570,8 @@ void STEPControl_ActorRead::PrepareUnits(const Handle(StepRepr_Representation)& 
 void STEPControl_ActorRead::ResetUnits ()
 {
   UnitsMethods::InitializeFactors ( 1, 1, 1 );
-  myPrecision = myModel->GetParam("read.precision.val")->RealValue();
-  myMaxTol = Max ( myPrecision, myModel->GetParam("read.maxprecision.val")->RealValue());
+  myPrecision = myModel->RVal("read.precision.val");
+  myMaxTol = Max ( myPrecision, myModel->RVal("read.maxprecision.val"));
 }
 
 //=======================================================================

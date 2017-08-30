@@ -56,8 +56,7 @@ static TCollection_AsciiString lastvalue;
   Standard_Boolean ok = thelib.Select (ent,module,CN);
   if (!ok) {
     lastvalue.AssignCat ("..NOT FROM SCHEMA ");
-    Standard_Integer aval = model->GetParam("write.step.schema").IsNull() ?
-      0 : model->GetParam("write.step.schema")->IntegerValue();
+    Standard_Integer aval = model->IVal("write.step.schema");
     lastvalue.AssignCat (theproto->SchemaName(aval));
     lastvalue.AssignCat ("..");
   } else {

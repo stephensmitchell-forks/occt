@@ -155,7 +155,7 @@ public:
   Standard_EXPORT Standard_Boolean GetMaterialMode() const;
   
   //! Returns parameter for translation by its name
-  Standard_EXPORT Handle(Interface_Static) GetParam(const Standard_CString theParamName);
+  //Standard_EXPORT Handle(Interface_Static) GetParam(const Standard_CString theParamName);
 
 
 

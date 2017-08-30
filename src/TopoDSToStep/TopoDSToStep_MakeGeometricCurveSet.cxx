@@ -46,7 +46,7 @@ TopoDSToStep_MakeGeometricCurveSet::TopoDSToStep_MakeGeometricCurveSet(
   MoniTool_DataMapOfShapeTransient      aMap;
   TopoDSToStep_Tool aTool (aMap,
                            Standard_False,
-                           FP->Model()->GetParam("write.surfacecurve.mode")->IntegerValue());
+                           FP->Model()->IVal("write.surfacecurve.mode"));
   TopoDSToStep_WireframeBuilder    wirefB (aShape, aTool, FP);
   TopoDSToStep::AddResult ( FP, aTool );
 

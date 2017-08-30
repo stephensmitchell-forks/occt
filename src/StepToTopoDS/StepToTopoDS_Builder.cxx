@@ -93,7 +93,7 @@ static void ResetPreci (const TopoDS_Shape& S,
                         const Handle(Interface_InterfaceModel)& theModel)
 {
   //:S4136
-  Standard_Integer modetol = theModel->GetParam("read.maxprecision.mode")->IntegerValue();
+  Standard_Integer modetol = theModel->IVal("read.maxprecision.mode");
   if (modetol) {
     ShapeFix_ShapeTolerance STU;
     STU.LimitTolerance (S,Precision::Confusion(),maxtol);

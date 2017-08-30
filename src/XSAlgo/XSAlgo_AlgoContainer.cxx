@@ -84,8 +84,7 @@ XSAlgo_AlgoContainer::XSAlgo_AlgoContainer()
 
 void XSAlgo_AlgoContainer::PrepareForTransfer() const
 {
-  Handle(Interface_Static) aParam = getParam("xstep.cascade.unit");
-  UnitsMethods::SetCasCadeLengthUnit(aParam.IsNull() ? 2 : aParam->IntegerValue());
+  UnitsMethods::SetCasCadeLengthUnit(IVal("xstep.cascade.unit"));
 }
 
 //=======================================================================
@@ -106,7 +105,7 @@ TopoDS_Shape XSAlgo_AlgoContainer::ProcessShape (const TopoDS_Shape& shape,
   Handle(ShapeProcess_ShapeContext) context = Handle(ShapeProcess_ShapeContext)::DownCast(info);
   if ( context.IsNull() )
   {
-    Standard_CString rscfile = getParam(prscfile)->CStringValue();
+    Standard_CString rscfile = CVal(prscfile); 
     if (!rscfile)
       rscfile = prscfile;
     context = new ShapeProcess_ShapeContext(shape, rscfile);
@@ -115,8 +114,7 @@ TopoDS_Shape XSAlgo_AlgoContainer::ProcessShape (const TopoDS_Shape& shape,
       context->SetProgress(progress);
   }
   info = context;
-  
-  Standard_CString seq = getParam(pseq)->CStringValue();
+  Standard_CString seq = CVal(pseq);
   if ( ! seq ) seq = pseq;
   
   // if resource file is not loaded or does not define <seq>.exec.op, 
@@ -360,8 +358,8 @@ Standard_Boolean XSAlgo_AlgoContainer::CheckPCurve (const TopoDS_Edge& E,
   B.Range(edge,face,w1,w2);
   B.SameRange(edge, Standard_False );
   //:S4136
-  Handle(Interface_Static) aParam = getParam("read.stdsameparameter.mode");
-  Standard_Integer SPmode = aParam.IsNull() ?  0 : aParam->IntegerValue();
+  
+  Standard_Integer SPmode = IVal("read.stdsameparameter.mode");
   if ( SPmode ) 
     B.SameParameter (edge, Standard_False );
 
@@ -601,6 +599,37 @@ Handle(Interface_Static) XSAlgo_AlgoContainer::getParam
     }
   }
   return aParam;
+}
+
+
+//=======================================================================
+//function : IVal
+//purpose  : 
+//=======================================================================
+Standard_Integer XSAlgo_AlgoContainer::IVal(const Standard_CString theParamName) const
+{
+  Handle(Interface_Static) aParam = getParam(theParamName);
+  return (aParam.IsNull() ? 0 : aParam->IntegerValue());
+}
+
+//=======================================================================
+//function : RVal
+//purpose  : 
+//=======================================================================
+Standard_Real XSAlgo_AlgoContainer::RVal(const Standard_CString theParamName) const
+{
+  Handle(Interface_Static) aParam = getParam(theParamName);
+  return (aParam.IsNull() ? 0.0 : aParam->RealValue());
+}
+
+//=======================================================================
+//function : CVal
+//purpose  : 
+//=======================================================================
+Standard_CString XSAlgo_AlgoContainer::CVal(const Standard_CString theParamName) const
+{
+  Handle(Interface_Static) aParam = getParam(theParamName);
+  return (aParam.IsNull() ? "" : aParam->CStringValue());
 }
 
 void XSAlgo_AlgoContainer::initParameters()

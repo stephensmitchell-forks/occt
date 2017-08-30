@@ -126,7 +126,7 @@ void TopoDSToStep_MakeStepFace::Init(const TopoDS_Face& aFace,
 
   // [BEGIN] Processing non-manifold topology (another approach) (ssv; 10.11.2010)
   Handle(StepData_StepModel) aModel = Handle(StepData_StepModel)::DownCast(FP->Model());
-  Standard_Boolean isNMMode = aModel->GetParam("write.step.nonmanifold")->IntegerValue() != 0;
+  Standard_Boolean isNMMode = aModel->IVal("write.step.nonmanifold") != 0;
   if (isNMMode) {
     Handle(StepShape_AdvancedFace) anAF;
     Handle(TransferBRep_ShapeMapper) aSTEPMapper = TransferBRep::ShapeMapper(FP, aFace);
@@ -232,7 +232,7 @@ void TopoDSToStep_MakeStepFace::Init(const TopoDS_Face& aFace,
       // surface of revolution (necessary e.g. for CATIA)
       if (VL - VF - 2 * M_PI < -Precision::PConfusion())
       {
-        Handle(ShapeAlgo_AlgoContainer) aContainer = new ShapeAlgo_AlgoContainer;
+        //Handle(ShapeAlgo_AlgoContainer) aContainer = new ShapeAlgo_AlgoContainer;
         BasisCurve = aContainer->ConvertCurveToBSpline(BasisCurve, VF, VL, Precision::Approximation(),
                                                          GeomAbs_C1, 100, 9);
         //BasisCurve = new Geom_TrimmedCurve ( BasisCurve, VF, VL );

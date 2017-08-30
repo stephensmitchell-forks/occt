@@ -25,8 +25,8 @@ static int THE_RWStepAP214_init = 0;
 
 void RWStepAP214::Init(const Handle(StepAP214_Protocol)& theProto)
 {
- // static Standard_Mutex aPars;
- // {
+  static Standard_Mutex aPars;
+  {
 
     if (THE_RWStepAP214_init)
     {
@@ -37,5 +37,5 @@ void RWStepAP214::Init(const Handle(StepAP214_Protocol)& theProto)
     Interface_GeneralLib::SetGlobal(new RWStepAP214_GeneralModule, theProto);
     Interface_ReaderLib::SetGlobal(new RWStepAP214_ReadWriteModule, theProto);
     StepData_WriterLib::SetGlobal(new RWStepAP214_ReadWriteModule, theProto);
- // }
+  }
 }

@@ -64,7 +64,7 @@ void STEPConstruct_Part::MakeSDR(const Handle(StepShape_ShapeRepresentation)& th
                                  const Handle(Interface_InterfaceModel)& theModel)
 {
   // get current schema
-  Standard_Integer schema = theModel->GetParam("write.step.schema")->IntegerValue();
+  Standard_Integer schema = theModel->IVal("write.step.schema"); 
   
   // create PC
   Handle(StepBasic_ProductContext) PC;
@@ -147,7 +147,8 @@ void STEPConstruct_Part::MakeSDR(const Handle(StepShape_ShapeRepresentation)& th
 
   // and an associated PRPC
   Handle(TCollection_HAsciiString) PRPCName;
-  switch (theModel->GetParam("write.step.schema")->IntegerValue()) {
+  
+  switch (schema) {
   default:
   case 1: 
     myPRPC = new StepBasic_ProductType; 

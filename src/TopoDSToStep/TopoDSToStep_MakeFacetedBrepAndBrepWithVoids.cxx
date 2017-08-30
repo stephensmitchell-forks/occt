@@ -68,7 +68,7 @@ TopoDSToStep_MakeFacetedBrepAndBrepWithVoids::
 	TopoDS_Shell CurrentShell = TopoDS::Shell(It.Value());
 	if (It.Value().Closed()) {
 
-          aTool.Init(aMap, Standard_False, FP->Model()->GetParam("write.surfacecurve.mode")->IntegerValue());
+          aTool.Init(aMap, Standard_False, FP->Model()->IVal("write.surfacecurve.mode"));
 	  StepB.Init(CurrentShell, aTool, FP);
 	  TopoDSToStep::AddResult ( FP, aTool );
 

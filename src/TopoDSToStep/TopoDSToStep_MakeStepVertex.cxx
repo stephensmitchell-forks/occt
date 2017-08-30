@@ -63,7 +63,7 @@ void TopoDSToStep_MakeStepVertex::Init(const TopoDS_Vertex& aVertex,
 
   // [BEGIN] Processing non-manifold topology (ssv; 11.11.2010)
   Handle(StepData_StepModel) aModel = Handle(StepData_StepModel)::DownCast(FP->Model());
-  Standard_Boolean isNMMode = aModel->GetParam("write.step.nonmanifold")->IntegerValue() != 0;
+  Standard_Boolean isNMMode = aModel->IVal("write.step.nonmanifold") != 0;
   if (isNMMode) {
     Handle(StepShape_VertexPoint) aVP;
     Handle(TransferBRep_ShapeMapper) aSTEPMapper = TransferBRep::ShapeMapper(FP, aVertex);

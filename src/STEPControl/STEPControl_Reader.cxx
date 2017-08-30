@@ -151,7 +151,7 @@ Standard_Integer STEPControl_Reader::NbRootsForTransfer()
   Standard_Integer nb = aModel->NbEntities();
   for (Standard_Integer i = 1; i <= nb; i ++) {
     Handle(Standard_Transient) ent = aModel->Value(i);
-    if (aModel->GetParam("read.step.all.shapes")->IntegerValue() == 1) {
+    if (aModel->IVal("read.step.all.shapes") == 1) {
       // Special case to read invalid shape_representation without links to shapes.
       if (ent->IsKind(STANDARD_TYPE(StepShape_ManifoldSolidBrep))) {
         Interface_EntityIterator aShareds = WS()->Graph().Sharings(ent);
@@ -211,8 +211,8 @@ Standard_Integer STEPControl_Reader::NbRootsForTransfer()
       }
       // determinate roots used ProductDefinitionContext
       if(IsRoot) {
-        const char *str1 = aModel->GetParam("read.step.product.context")->CStringValue();
-        Standard_Integer ICS = aModel->GetParam("read.step.product.context")->IntegerValue();
+        const char *str1 = aModel->CVal("read.step.product.context");
+        Standard_Integer ICS = aModel->IVal("read.step.product.context");
         if(ICS>1) {
           subs = graph.Shareds(PD);
           for(subs.Start(); subs.More(); subs.Next()) {
@@ -245,7 +245,7 @@ Standard_Integer STEPControl_Reader::NbRootsForTransfer()
         WS()->TransferReader()->TransientProcess()->RootsForTransfer()->Append(ent);
       }
     }
-    TCollection_AsciiString aProdMode = aModel->GetParam("read.step.product.mode")->CStringValue();
+    TCollection_AsciiString aProdMode = aModel->CVal("read.step.product.mode");
     if(!aProdMode.IsEqual("ON")) {
       if(ent->IsKind(STANDARD_TYPE(StepShape_ShapeDefinitionRepresentation))) {
         Standard_Boolean IsRoot = Standard_True;
