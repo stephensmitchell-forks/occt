@@ -241,7 +241,7 @@ Handle(Geom_Surface) BRepOffset::CollapseSingularities (const Handle(Geom_Surfac
       Standard_Boolean isCollapsed = Standard_True; // aCenter precisely (with gp::Resolution())
       Standard_Boolean isSingular = Standard_True;  // aCenter with thePrecision
       NCollection_LocalArray<Standard_Boolean,4> isDegenerated (aDegenPnt.Extent()); // degenerated vertex
-      for (int iDegen = 0; iDegen < isDegenerated.Size(); iDegen++) isDegenerated[iDegen] = Standard_True;
+      for (size_t iDegen = 0; iDegen < isDegenerated.Size(); ++iDegen) isDegenerated[iDegen] = Standard_True;
       for (int iPole = 0; iPole < NbSteps[iSide]; iPole++)
       {
         const gp_Pnt& aPole = aPoles (RowStart[iSide] + iPole * RowStep[iSide], ColStart[iSide] + iPole * ColStep[iSide]);
@@ -256,7 +256,7 @@ Handle(Geom_Surface) BRepOffset::CollapseSingularities (const Handle(Geom_Surfac
         // distances from degenerated points
         NCollection_List<gp_Pnt>::Iterator aDegPntIt (aDegenPnt);
         NCollection_List<Standard_Real>::Iterator aDegTolIt(aDegenTol);
-        for (int iDegen = 0; iDegen < isDegenerated.Size(); aDegPntIt.Next(), aDegTolIt.Next(), iDegen++)
+        for (size_t iDegen = 0; iDegen < isDegenerated.Size(); aDegPntIt.Next(), aDegTolIt.Next(), ++iDegen)
         {
           if (isDegenerated[iDegen] && aDegPntIt.Value().Distance (aPole) >= aDegTolIt.Value())
           {
@@ -276,7 +276,7 @@ Handle(Geom_Surface) BRepOffset::CollapseSingularities (const Handle(Geom_Surfac
         Standard_Integer aNbFit = 0;
         NCollection_List<gp_Pnt>::Iterator aDegPntIt (aDegenPnt);
         NCollection_List<Standard_Real>::Iterator aDegTolIt(aDegenTol);
-        for (int iDegen = 0; iDegen < isDegenerated.Size(); iDegen++)
+        for (size_t iDegen = 0; iDegen < isDegenerated.Size(); ++iDegen)
         {
           if (isDegenerated[iDegen])
           {
