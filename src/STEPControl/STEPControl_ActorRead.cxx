@@ -802,6 +802,7 @@ Handle(TransferBRep_ShapeBinder) STEPControl_ActorRead::TransferEntity(const Han
   myNMTool.SetActive(!isManifold && isNMMode);
   // [END] Proceed with non-manifold topology (ssv; 12.11.2010)
 
+  gp_Trsf aTrsf;
   for (Standard_Integer i = 1; i <= nb && PS.More(); i ++,PS.Next()) {
   //for (i = 1; i <= nb ; i ++) {
     #ifdef TRANSLOG
@@ -809,6 +810,24 @@ Handle(TransferBRep_ShapeBinder) STEPControl_ActorRead::TransferEntity(const Han
       sout<<" -- Actor, shape_representation.item n0. "<<i<<endl;
     #endif
     Handle(StepRepr_RepresentationItem) anitem = sr->ItemsValue(i);
+    if (anitem->IsKind(STANDARD_TYPE(StepGeom_Axis2Placement3d)))
+    {
+        Handle(StepGeom_Axis2Placement3d) aCS = Handle(StepGeom_Axis2Placement3d)::DownCast(anitem);
+        Handle(Geom_Axis2Placement) aTargAP = StepToGeom::MakeAxis2Placement(aCS);
+        if (!aTargAP.IsNull())
+        {
+            const gp_Ax3 ax3Orig(gp_Pnt(0., 0., 0), gp_Vec(0., 0., 1.), gp_Vec(1., 0., 0.));
+            const gp_Ax3 ax3Targ(aTargAP->Ax2());
+            if (ax3Targ.Location().SquareDistance(ax3Orig.Location()) < Precision::SquareConfusion() &&
+                ax3Targ.Direction().IsEqual(ax3Orig.Direction(), Precision::Angular()) &&
+                ax3Targ.XDirection().IsEqual(ax3Orig.XDirection(), Precision::Angular()))
+            {
+                continue;
+            }
+            aTrsf.SetTransformation(ax3Targ, ax3Orig);
+        }
+        continue;
+    }
     Handle(Transfer_Binder) binder;
     if (!TP->IsBound(anitem)) {
       binder = TransferShape(anitem, TP, isManifold);
@@ -824,7 +843,7 @@ Handle(TransferBRep_ShapeBinder) STEPControl_ActorRead::TransferEntity(const Han
       nsh ++;
     }
   }
-
+  
   // [BEGIN] Proceed with non-manifold topology (ssv; 12.11.2010)
   if (!isManifold) {
 
@@ -891,23 +910,42 @@ Handle(TransferBRep_ShapeBinder) STEPControl_ActorRead::TransferEntity(const Han
     for (; exp.More(); exp.Next())
     {
         TopoDS_Shape aSubShape = exp.Current();
-        if (aSubShape.ShapeType() == TopAbs_SHELL && aSubShape.Closed()) {
-            TopoDS_Solid nextSolid;
-            brepBuilder.MakeSolid(nextSolid);
-            brepBuilder.Add(nextSolid, aSubShape);
-            brepBuilder.Add(reconstComp, nextSolid);
-        }
-        else if (aSubShape.ShapeType() == TopAbs_SHELL)
-            brepBuilder.Add(reconstComp, aSubShape);
+      if ( aSubShape.ShapeType() == TopAbs_SHELL && aSubShape.Closed() ) {
+        TopoDS_Solid nextSolid;
+        brepBuilder.MakeSolid(nextSolid);
+        brepBuilder.Add(nextSolid, aSubShape);
+        brepBuilder.Add(reconstComp, nextSolid);
+      } 
+      else if (aSubShape.ShapeType() == TopAbs_SHELL)
+        brepBuilder.Add(reconstComp, aSubShape);
     }
     comp = reconstComp;
     // [END] Reconstruct Solids from Closed Shells (ssv; 15.11.2010)
   }
 
   // Bind the resulting shape
-  if      (nsh == 0) shbinder.Nullify();
-  else if (nsh == 1) shbinder = new TransferBRep_ShapeBinder (OneResult);
-  else               shbinder = new TransferBRep_ShapeBinder (comp);
+  //if      (nsh == 0) shbinder.Nullify();
+  //else if (nsh == 1) shbinder = new TransferBRep_ShapeBinder (OneResult);
+  //else               shbinder = new TransferBRep_ShapeBinder (comp);
+  if (nsh == 0) shbinder.Nullify();
+  else if (nsh == 1)
+  {
+      if (aTrsf.Form() != gp_Identity)
+      {
+          TopLoc_Location aLoc(aTrsf);
+          OneResult.Move(aLoc);
+      }
+      shbinder = new TransferBRep_ShapeBinder(OneResult);
+  }
+  else
+  {
+      if (aTrsf.Form() != gp_Identity)
+      {
+          TopLoc_Location aLoc(aTrsf);
+          comp.Move(aLoc);
+      }
+      shbinder = new TransferBRep_ShapeBinder(comp);
+  }
 
   PrepareUnits ( oldSRContext, TP ); //:S4136
   TP->Bind(sr, shbinder);
