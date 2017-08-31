@@ -1,0 +1,19 @@
+puts "TODO OCC28700 ALL: ERROR: OCC28700 is reproduced."
+
+puts "========"
+puts "OCC28700"
+puts "========"
+puts ""
+#########################################################################
+# BRepBuilderAPI_Sewing produces too small edge covered by its vertices
+#########################################################################
+
+restore [locate_data_file OCC714.brep] a
+
+sewing result 0.1 a
+
+foreach e [explode result e] {
+  if {[validrange $e] == "edge has no valid range"} {
+    puts "ERROR: OCC28700 is reproduced. Edge $e is too small."
+  }
+}

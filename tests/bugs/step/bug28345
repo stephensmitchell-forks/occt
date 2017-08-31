@@ -1,0 +1,14 @@
+puts "========"
+puts "OCC28345"
+puts "========"
+puts ""
+###########################################
+# Reading STEP model using STEPCAF crashes
+###########################################
+
+ReadStep D [locate_data_file bug28345_30338.stp]
+
+XShow D
+vfit
+vsetdispmode 1
+checkview -screenshot -3d -path ${imagedir}/${test_image}.png

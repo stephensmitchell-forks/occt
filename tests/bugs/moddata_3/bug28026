@@ -1,0 +1,31 @@
+puts "TODO OCC28026 ALL: ERROR: OCC28026 is reproduced."
+
+puts "========"
+puts "OCC28026"
+puts "========"
+puts ""
+##################################################################################
+# Modeling Data - BRepTools::Clean() does not clean all triangulation from shape
+##################################################################################
+
+set InputFileName [locate_data_file bug28026_Ball.brep]
+set Ver_1FileName ${imagedir}/bug28026_Ball_1.brep
+set Ver_2FileName ${imagedir}/bug28026_Ball_2.brep
+
+catch {exec rm $Ver_1FileName}
+catch {exec rm $Ver_2FileName}
+
+restore $InputFileName b
+set InputFileSize [file size $InputFileName]
+
+tcopy b b1
+save b1 $Ver_1FileName
+set Ver_1FileSize [file size $Ver_1FileName]
+
+tclean b
+save b $Ver_2FileName
+set Ver_2FileSize [file size $Ver_2FileName]
+
+if {$Ver_2FileSize != $Ver_1FileSize} {
+  puts "ERROR: OCC28026 is reproduced. The command tclean does not clean triangulation."
+}

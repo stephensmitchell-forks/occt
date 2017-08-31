@@ -1,0 +1,34 @@
+puts "========"
+puts "OCC28167"
+puts "========"
+puts ""
+#####################################
+# Fillet has strange form at its end
+#####################################
+
+restore [locate_data_file bug28167_solid.brep] s
+
+whatis s
+tolerance s
+checkshape s
+
+vinit
+explode s E
+vdisplay s_3
+
+fillet r s 1 s_3
+
+vdisplay r
+vsetdispmode r 1
+
+visos 20 20 1
+vaspects -isoontriangulation 1
+
+vviewparams -scale 182.307 -proj -0.110782 0.196451 0.974235 -up -0.559668 0.797729 -0.224499 -at 10.5479 -29.4249 22.5344 -eye 0.702122 -11.9652 109.12
+
+set x 200
+set y 200
+vmoveto $x $y
+vselect $x $y
+
+checkview -screenshot -3d -path ${imagedir}/${test_image}.png

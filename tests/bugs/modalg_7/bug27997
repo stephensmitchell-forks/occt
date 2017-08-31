@@ -1,0 +1,33 @@
+puts "========"
+puts "OCC27997"
+puts "========"
+puts ""
+#############################################################
+# Boolean section of two solids results in a broken section
+#############################################################
+
+restore [locate_data_file bug27997_b.brep] b
+
+explode b
+brunparallel 1
+bop b_1 b_2
+bopcommon r
+bopsection s
+
+vinit
+vdisplay s
+vdisplay b_1
+vfit
+set scale 5783.87
+set proj_x 0.758008
+set proj_y -0.47942
+set proj_z 0.442245
+set up_x -0.341519
+set up_y 0.285928
+set up_z 0.895327
+set at_x  -101.41
+set at_y -36.7413
+set at_z 71.494
+vviewparams -scale ${scale} -proj ${proj_x} ${proj_y} ${proj_z} -up ${up_x} ${up_y} ${up_z} -at ${at_x} ${at_y} ${at_z}
+
+checkview -screenshot -3d -path ${imagedir}/${test_image}.png

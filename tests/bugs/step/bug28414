@@ -1,0 +1,10 @@
+puts "========"
+puts "OCC28414"
+puts "========"
+
+stepread [locate_data_file bug28414_bug_toroidal_surface.stp] a *
+
+tpcompound result
+
+checkview -display result -2d -path ${imagedir}/${test_image}-2d.png
+checkview -display result -3d -path ${imagedir}/${test_image}-3d.png

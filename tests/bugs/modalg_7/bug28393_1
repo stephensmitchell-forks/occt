@@ -1,0 +1,42 @@
+puts "TODO OCC28393 ALL: Error: Boolean cut produce wrong result"
+
+puts "========"
+puts "OCC28393"
+puts "========"
+puts ""
+###################################
+# Boolean cut produce wrong result.
+###################################
+
+restore [locate_data_file bug28393_o.brep] o
+restore [locate_data_file bug28393_t.brep] t
+
+set epsilon 1.e-4
+regexp {Mass +: +([-0-9.+eE]+)} [vprops o ${epsilon}] full o_volume
+regexp {Mass +: +([-0-9.+eE]+)} [sprops o ${epsilon}] full o_area
+
+bcut result o t
+
+regexp {Mass +: +([-0-9.+eE]+)} [vprops result ${epsilon}] full result_volume
+regexp {Mass +: +([-0-9.+eE]+)} [sprops result ${epsilon}] full result_area
+
+if { ${o_volume} - ${result_volume} <= ${epsilon} } {
+   puts "Error: Boolean cut produce wrong result. Volume is wrong."
+}
+
+if { ${o_area} - ${result_area} <= ${epsilon} } {
+   puts "Error: Boolean cut produce wrong result. Area is wrong."
+}
+
+smallview
+display o t
+fit
+donly o
+
+checkview -screenshot -2d -path ${imagedir}/${test_image}-o.png
+
+donly t
+checkview -screenshot -2d -path ${imagedir}/${test_image}-t.png
+
+donly result
+checkview -screenshot -2d -path ${imagedir}/${test_image}-result.png

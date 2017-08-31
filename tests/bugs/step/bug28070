@@ -1,0 +1,30 @@
+puts "TODO OCC28070 ALL: Error :  is WRONG because number of "
+
+puts "========"
+puts "OCC28070"
+puts "========"
+puts ""
+#############################################################
+# Writing surface to step removes internal lines and points
+#############################################################
+
+catch {exec rm ${imagedir}/bug28070.step}
+
+restore [locate_data_file bug28070_a.brep] a
+
+stepwrite a a ${imagedir}/bug28070.step
+stepread ${imagedir}/bug28070.step b *
+renamevar b_1 b
+
+set nb_info [string trim [nbshapes a]]
+set i_Vertex   [string trim [lindex $nb_info 7]]
+set i_Edge     [string trim [lindex $nb_info 10]]
+set i_Wire     [string trim [lindex $nb_info 13]]
+set i_Face     [string trim [lindex $nb_info 16]]
+set i_Shell    [string trim [lindex $nb_info 19]]
+set i_Solid    [string trim [lindex $nb_info 22]]
+set i_CSolid   [string trim [lindex $nb_info 25]]
+set i_Compound [string trim [lindex $nb_info 28]]
+set i_Shape    [string trim [lindex $nb_info 31]]
+
+checknbshapes b -vertex ${i_Vertex} -edge ${i_Edge} -wire ${i_Wire} -face ${i_Face} -shell ${i_Shell} -solid ${i_Solid} -compsolid ${i_CSolid} -compound ${i_Compound} -shape ${i_Shape}
