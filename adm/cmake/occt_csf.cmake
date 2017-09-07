@@ -26,7 +26,7 @@ endif()
 
 # FFmpeg
 if (USE_FFMPEG)
-  set (CSF_FFmpeg "avcodec avformat swscale avutil")
+  set (CSF_FFmpeg "avcodec avformat swscale avutil swresample")
 else()
   set (CSF_FFmpeg)
 endif()
