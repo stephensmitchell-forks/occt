@@ -63,6 +63,29 @@ void HLRAppli_ReflectLines::SetAxes(const Standard_Real Nx,
   myProjector = HLRAlgo_Projector(T,IsPerspective,aFocus);
 }
 
+void HLRAppli_ReflectLines::SetAxes(const Standard_Real Nx,
+                                   const Standard_Real Ny,
+                                   const Standard_Real Nz,
+                                   const Standard_Real XAt,
+                                   const Standard_Real YAt,
+                                   const Standard_Real ZAt,
+                                   const Standard_Real XUp,
+                                   const Standard_Real YUp,
+                                   const Standard_Real ZUp,
+                                   Standard_Boolean IsPerspective,
+                                   Standard_Real theFocus)
+{
+  gp_Pnt At (XAt,YAt,ZAt);
+  gp_Dir Zpers (Nx,Ny,Nz);
+  gp_Dir Ypers (XUp,YUp,ZUp);
+  gp_Dir Xpers = Ypers.Crossed(Zpers);
+  gp_Ax3 Axe (At, Zpers, Xpers);
+  gp_Trsf T;
+  T.SetTransformation(Axe);
+  myProjector = HLRAlgo_Projector(T,IsPerspective,theFocus);
+}
+
+
 //=======================================================================
 //function : Perform
 //purpose  :
@@ -117,8 +140,9 @@ TopoDS_Shape HLRAppli_ReflectLines::GetResult() const
 //purpose  :
 //=======================================================================
 TopoDS_Shape HLRAppli_ReflectLines::GetCompoundOfFaces(bool theMode,
-  TopTools_DataMapOfShapeShape& OrigFaceToProjFace ) const
+  TopTools_DataMapOfShapeShape& OrigFaceToProjFace,
+  TopTools_DataMapOfShapeShape& ProjFaceToOrigFace) const
 {
   HLRBRep_HLRToShape aHLRToShape( myHLRAlgo );
-  return aHLRToShape.CompoundOfFaces(theMode, OrigFaceToProjFace);
+  return aHLRToShape.CompoundOfFaces(theMode, OrigFaceToProjFace, ProjFaceToOrigFace);
 }

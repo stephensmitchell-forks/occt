@@ -133,7 +133,8 @@ public:
                                  const Standard_Boolean            In3d);
 
     TopoDS_Shape CompoundOfFaces (bool theMode,
-                                  TopTools_DataMapOfShapeShape& OrigFaceToProjFace);
+                                  TopTools_DataMapOfShapeShape& OrigFaceToProjFace,
+                                  TopTools_DataMapOfShapeShape& ProjFaceToOrigFace);
 
 
 protected:

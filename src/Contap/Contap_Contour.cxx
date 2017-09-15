@@ -1239,14 +1239,15 @@ void ComputeInternalPoints
         solution = Standard_False;
         math_Vector dir1(1,2), dir2(1,2);
         math_Vector prevX(1,2), prevPrevX (1,2);
-        int count = 0;
-        int revCount = 0;
-        double dot = 0;
-        double t = 0.5;
+        Standard_Integer count = 0;
+        Standard_Integer revCount = 0;
+        Standard_Integer maxRevCount = 10000;
+        Standard_Real dot = 0;
+        Standard_Real t = 0.5;
         while (!solution)
         {
-          X(1) =/* (XInf(1) + XSup(1)) /2.;*/ XInf(1) + t * (XSup(1) - XInf(1));
-          X(2) = /*(XInf(2) + XSup(2)) /2.;*/XInf(2) + t * (XSup(2) - XInf(2));
+          X(1) = XInf(1) + t * (XSup(1) - XInf(1));
+          X(2) = XInf(2) + t * (XSup(2) - XInf(2));
           rsnld.Perform(SFunc,X,infb,supb);
 
           if (!rsnld.IsDone()) {
@@ -1304,13 +1305,11 @@ void ComputeInternalPoints
               else if (vtestb.Dot(vecref) < 0.) {
                 XSup = X;
               }
-              else {
+              else
+              {
                 XInf = X;
-                if (revCount > 10000)
-                {
-                  //XInf = (X + prevPrevX)/2;
+                if (revCount > maxRevCount)
                   t = 0.75;
-                }
               }
             }
             else { // on n est pas sur une solution

@@ -48,6 +48,13 @@ public:
   //! the coordinates of the vertical direction vector.
   Standard_EXPORT void SetAxes (const Standard_Real Nx, const Standard_Real Ny, const Standard_Real Nz, const Standard_Real XAt, const Standard_Real YAt, const Standard_Real ZAt, const Standard_Real XUp, const Standard_Real YUp, const Standard_Real ZUp);
   
+
+  Standard_EXPORT void SetAxes (const Standard_Real Nx, const Standard_Real Ny, const Standard_Real Nz,
+    const Standard_Real XAt, const Standard_Real YAt, const Standard_Real ZAt, 
+    const Standard_Real XUp, const Standard_Real YUp, const Standard_Real ZUp,
+    Standard_Boolean IsPerspective, Standard_Real theFocus);
+ 
+
   Standard_EXPORT void Perform();
   
   //! returns resulting compound of reflect lines
@@ -62,7 +69,8 @@ public:
                                                     const Standard_Boolean            In3d) const;
 
   Standard_EXPORT TopoDS_Shape GetCompoundOfFaces(bool theMode,
-                                                  TopTools_DataMapOfShapeShape& OrigFaceToProjFace) const;
+                                                  TopTools_DataMapOfShapeShape& OrigFaceToProjFace,
+                                                  TopTools_DataMapOfShapeShape& ProjFaceToOrigFace) const;
 
 
 

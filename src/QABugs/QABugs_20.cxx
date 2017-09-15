@@ -1737,10 +1737,166 @@ static Standard_Integer OCC28991 (Draw_Interpretor& , Standard_Integer n, const 
 
   Reflector.Perform();
 
-  TopTools_DataMapOfShapeShape aDummy;
-  TopoDS_Shape aFaces = Reflector.GetCompoundOfFaces(true, aDummy);
+  TopTools_DataMapOfShapeShape aDummy, aDummy2;
+  TopoDS_Shape aFaces = Reflector.GetCompoundOfFaces(true, aDummy, aDummy2);
 
   DBRep::Set(a[1], aFaces);
+
+  return 0;
+}
+#include <XCAFDoc_ColorTool.hxx>
+#include <TDataStd_TreeNode.hxx>
+#include <Quantity_Color.hxx>
+#include <XCAFDoc.hxx>
+#include <TopExp_Explorer.hxx>
+#include <TopTools_DataMapIteratorOfDataMapOfShapeShape.hxx>
+#include <V3d_View.hxx>
+#include <ViewerTest.hxx>
+static Standard_Integer OCC_HLRDEMO (Draw_Interpretor& di, Standard_Integer n, const char** a)
+{
+  if (n != 4)
+  {
+    cout << "Use: hlrdemo resDoc inpDoc axo/top/bottom/front/back/left/right" << endl;
+    return 1;
+  }
+
+  Handle(TDocStd_Document) aDoc;   
+  DDocStd::GetDocument(a[2], aDoc);
+  if ( aDoc.IsNull() ) 
+    return 1;
+
+  TDF_LabelSequence Labels;
+  Handle(XCAFDoc_ShapeTool) STool = XCAFDoc_DocumentTool::ShapeTool(aDoc->Main());
+  STool->GetFreeShapes(Labels);
+  if ( Labels.Length() <=0 ) 
+  {
+    cout << "no shapes" << endl;
+    return 0;
+  }
+
+  TopoDS_Compound aShape;
+  BRep_Builder B;
+  B.MakeCompound ( aShape );
+  for ( int i = 1; i <= Labels.Length(); i++) 
+  {
+    TopoDS_Shape S = STool->GetShape ( Labels.Value(i) );
+    B.Add ( aShape, S );
+  }
+  //
+
+  gp_Pnt anOrigin(0.,0.,0.);
+  gp_Dir aNormal(0.57735026918962573, -0.57735026918962573, 0.57735026918962573);
+  gp_Ax2 anAxes(anOrigin, aNormal);
+  gp_Dir aDX = anAxes.XDirection();
+  
+  HLRAppli_ReflectLines Reflector(aShape);
+
+  bool from_view = false;
+  if (strcmp(a[3],"from_view") == 0)
+  {
+    Handle(V3d_View) aView = ViewerTest::CurrentView();
+    if (aView.IsNull())
+      return 1; 
+    from_view = true;
+    //Standard_Real    aViewScale = aView->Scale();
+    //Standard_Real    aViewSize  = 1.0;
+    //Graphic3d_Vec2i  aCenter2d;
+    //gp_XYZ aViewProj, aViewUp, aViewAt, aViewEye;
+    //aView->Proj (aViewProj.ChangeCoord (1), aViewProj.ChangeCoord (2), aViewProj.ChangeCoord (3));
+    //aView->Up   (aViewUp  .ChangeCoord (1), aViewUp  .ChangeCoord (2), aViewUp  .ChangeCoord (3));
+    //aView->At   (aViewAt  .ChangeCoord (1), aViewAt  .ChangeCoord (2), aViewAt  .ChangeCoord (3));
+    //aView->Eye  (aViewEye .ChangeCoord (1), aViewEye .ChangeCoord (2), aViewEye .ChangeCoord (3));
+
+    //anOrigin.SetXYZ(aViewEye);
+    //aNormal.SetXYZ(aViewProj);
+    //aDX.SetXYZ(aViewUp);
+
+    Handle(Graphic3d_Camera) aCamera = aView->Camera();
+    const gp_Dir aDir = aCamera->Direction().Reversed();
+    const gp_Pnt anAt = aCamera->Center();
+    const gp_Dir anUp = aCamera->Up();
+
+    Reflector.SetAxes(aDir.X(), aDir.Y(), aDir.Z(),
+      anAt.X(), anAt.Y(), anAt.Z(),
+      anUp.X(), anUp.Y(), anUp.Z(),
+      !aCamera->IsOrthographic(),
+      aCamera->Scale());
+
+  }
+  else if (strcmp(a[3],"axo") == 0)
+  {
+    aNormal.SetCoord(0.57735026918962573, -0.57735026918962573, 0.57735026918962573);
+    aDX.SetCoord(-0.40824829046386307, 0.40824829046386307, 0.81649658092772615);
+  }
+  else if (strcmp(a[3],"top") == 0)
+  {
+    aNormal.SetCoord(0,0,1);
+    aDX.SetCoord(0,1,0);
+  }
+  else if (strcmp(a[3],"bottom") == 0)
+  {
+    aNormal.SetCoord(0,0,-1);
+    aDX.SetCoord(0,-1,0);
+  }
+  else if (strcmp(a[3],"front") == 0)
+  {
+    aNormal.SetCoord(0,-1,0);
+    aDX.SetCoord(0,0,1);
+  }
+  else if (strcmp(a[3],"back") == 0)
+  {
+    aNormal.SetCoord(0,1,0);
+    aDX.SetCoord(0,0,1);
+  }
+  else if (strcmp(a[3],"left") == 0)
+  {
+    aNormal.SetCoord(-1,0,0);
+    aDX.SetCoord(0,0,1);
+  }
+  else if (strcmp(a[3],"right") == 0)
+  {
+    aNormal.SetCoord(1,0,0);
+    aDX.SetCoord(0,0,1);
+  }
+
+  if (!from_view)
+    Reflector.SetAxes(aNormal.X(), aNormal.Y(), aNormal.Z(),
+                      anOrigin.X(), anOrigin.Y(), anOrigin.Z(),
+                      aDX.X(), aDX.Y(), aDX.Z());
+
+  Reflector.Perform();
+
+  TopTools_DataMapOfShapeShape map3Dto2Dfaces, map2Dto3Dfaces;
+  TopoDS_Shape aFaces = Reflector.GetCompoundOfFaces(true, map3Dto2Dfaces, map2Dto3Dfaces);
+  
+  Handle(XCAFDoc_ColorTool) CTool = XCAFDoc_DocumentTool::ColorTool( aDoc->Main() );  
+ 
+  Handle(TDocStd_Document) OutDoc;   
+  DDocStd::GetDocument(a[1], OutDoc);
+  if ( OutDoc.IsNull() ) 
+  { 
+    di << a[2] << " is not a document\n"; 
+    return 1; 
+  }
+
+  TopExp_Explorer exp(aFaces, TopAbs_FACE);
+  Handle(XCAFDoc_ShapeTool) SToolOut = XCAFDoc_DocumentTool::ShapeTool(OutDoc->Main());
+  Handle(XCAFDoc_ColorTool) CToolOut = XCAFDoc_DocumentTool::ColorTool(OutDoc->Main());
+
+  for (;exp.More();exp.Next())
+  {
+    TopoDS_Shape aCShape = exp.Current();
+    TDF_Label aLabel;
+    aLabel = SToolOut->AddShape(aCShape, 0);
+    if (aLabel.IsNull())
+      continue;
+
+    const TopoDS_Shape& a3df = map2Dto3Dfaces(aCShape);
+    Quantity_Color aQColor;
+    if (!CTool->GetColor ( a3df, XCAFDoc_ColorGen, aQColor) )
+      continue;
+    CToolOut->SetColor(aLabel, aQColor, XCAFDoc_ColorGen);
+  }
 
   return 0;
 }
@@ -2623,8 +2779,13 @@ void QABugs::Commands_20(Draw_Interpretor& theCommands) {
                   "OCC27341 res shape axo/top/bottom/front/back/left/right",
                   __FILE__, OCC27341, group);
   theCommands.Add("OCC28991",
-                  "OCC289911 res shape axo/top/bottom/front/back/left/right",
+                  "OCC28991 res shape axo/top/bottom/front/back/left/right",
                   __FILE__, OCC28991, group);
+
+  theCommands.Add("OCC_HLRDEMO",
+                  "OCC_HLRDEMO outdoc inpdoc axo/top/bottom/front/back/left/right",
+                  __FILE__, OCC_HLRDEMO, group);
+  
   theCommands.Add ("OCC26747_1", "OCC26747_1 result", __FILE__, OCC26747_1, group);
   theCommands.Add ("OCC26747_2", "OCC26747_2 result", __FILE__, OCC26747_2, group);
   theCommands.Add ("OCC26747_3", "OCC26747_3 result", __FILE__, OCC26747_3, group);
@@ -2641,6 +2802,8 @@ void QABugs::Commands_20(Draw_Interpretor& theCommands) {
                   "\n\t\t: Check interface for reading BRep from memory.",
                   __FILE__, OCC28887, group);
   theCommands.Add("OCC28131", "OCC28131 name: creates face problematic for offset", __FILE__, OCC28131, group);
+
+
 
   return;
 }

@@ -569,7 +569,6 @@ public:
         myStop = 1;
     }
     return Standard_True;
-    //int nbpnt = an_inter->.NbPnt();
   }
    
   void SetLine (const gp_Lin& theLine) 
@@ -623,8 +622,7 @@ static bool FuseVE(TopoDS_Shape& theRes)
 }
 
 static void ProcessHVertices(TopoDS_Shape& theRes,
-  NCollection_IndexedDataMap<TopoDS_Edge, BRepAdaptor_Curve2d, TopTools_ShapeMapHasher>& theEdAd,
-  NCollection_DataMap<TopoDS_Edge, Bnd_Box2d, TopTools_ShapeMapHasher>& theEdBnd2d )
+  NCollection_IndexedDataMap<TopoDS_Edge, BRepAdaptor_Curve2d, TopTools_ShapeMapHasher>& theEdAd)
 {
   BRepTools_ReShape reshaper;  
   ///hanging vertices => find closely located point on some edge or vertex
@@ -661,22 +659,19 @@ static void ProcessHVertices(TopoDS_Shape& theRes,
   NCollection_UBTree <Standard_Integer, Bnd_Box2d> aTreeVE;
   NCollection_UBTreeFiller <Standard_Integer, Bnd_Box2d> aTreeFillerVE (aTreeVE);
   int nbEE = EE.Extent();
-  //NCollection_Array1<BRepAdaptor_Curve2d> anEdgeAdapters(1, nbEE);
   for (Standard_Integer i = 1; i <= nbEE; i++)
   { 
     const TopoDS_Edge& anE = TopoDS::Edge(EE(i));
     Bnd_Box2d aBB;
     theEdAd.Add(anE, BRepAdaptor_Curve2d(anE, aDraftPrFace));
     BndLib_Add2dCurve::Add(*theEdAd.Seek(anE), 0, aBB);
-    theEdBnd2d.Bind(anE, aBB);
     aTreeFillerVE.Add(i, aBB);
   }
 
   aTreeFillerVE.Fill();
-  HLRVE_BndBoxTreeSelector aSelectorVE(theEdAd, Precision::Infinite());      //min dist doesn't matter here   
+  HLRVE_BndBoxTreeSelector aSelectorVE(theEdAd, Precision::Infinite());  //min dist doesn't matter here   
   //
-
-  TopTools_IndexedMapOfShape toadd, torem;//temp
+  TopTools_IndexedMapOfShape toadd, torem;
   for (int i = 1; i <= HV.Extent(); i++ )
   {
     const TopoDS_Vertex& CHV = TopoDS::Vertex(HV(i));
@@ -685,20 +680,19 @@ static void ProcessHVertices(TopoDS_Shape& theRes,
     int id = VV.FindIndex(CHV);
     aSelectorVV.Reset(Precision::Infinite());
     aSelectorVV.SetCurrentPoint( id );
-    /*int resVV =*/ aTreeVV.Select(aSelectorVV);
+    aTreeVV.Select(aSelectorVV);
     double aMinDDistReached = aSelectorVV.GetMinDDist();
     TopoDS_Vertex aResV = TopoDS::Vertex(VV(aSelectorVV.GetResVId()));
     //          
     aSelectorVE.Reset(aMinDDistReached);
     aSelectorVE.SetCurrentPoint( CHVPnt );
-    /*int resVE = */aTreeVE.Select(aSelectorVE);
-
+    aTreeVE.Select(aSelectorVE);
+    //
     Extrema_POnCurv2d aPSolRes;
     BRepAdaptor_Curve2d aResEA;
     bool VEFound = aSelectorVE.GetPResult(aPSolRes, aResEA);
     if (VEFound)
     {
-      ///if (BRep_Tool::Degenerated(E)) //can be degenerted??
       double aPar = aPSolRes.Parameter();
       const TopoDS_Edge& aResE = aResEA.Edge();
       TopoDS_Edge aDE1 = TopoDS::Edge(aResE.EmptyCopied().Oriented(TopAbs_FORWARD));
@@ -718,19 +712,29 @@ static void ProcessHVertices(TopoDS_Shape& theRes,
       gp_Pnt aNC;
       double aNTol;
       BRepLib::BoundingVertex(nls, aNC, aNTol);
-
       gp_Pnt aFVP = BRep_Tool::Pnt(aFV);
       gp_Pnt aLVP = BRep_Tool::Pnt(aLV);
-      if (aFVP.Distance(aNC) < aNTol*1e10 ||
-        aLVP.Distance(aNC) < aNTol*1e10)
+      double dF_NC = aFVP.Distance(aNC);
+      double dL_NC = aLVP.Distance(aNC);
+      double aFVTol = BRep_Tool::Tolerance(aFV);
+      double aLVTol = BRep_Tool::Tolerance(aLV);
+      bool aFt = (aNTol + aFVTol) > dF_NC;
+      bool aLt = (aNTol + aLVTol) > dL_NC;
+
+      if (aFt || aLt)
       {
         nls.RemoveFirst();
-        nls.Append(aResV); 
+        //either aFt or aLt is true; dont consider when both true => degenerated case
+        TopoDS_Vertex maV;
+        if (aFt)
+          maV = TopoDS::Vertex(nls.Append(aFV)); 
+        else
+          maV = TopoDS::Vertex(nls.Append(aLV));
         BRepLib::BoundingVertex(nls, aNC, aNTol);
-        BRep_Builder().UpdateVertex(aResV, aNC, aNTol);
-        reshaper.Replace(CHV, aResV.Oriented(CHV.Orientation()));
-        if (HV.Contains(aResV)) //if the closest vertex lays on edge => never contains in HV
-          HV.RemoveKey(aResV);
+        BRep_Builder().UpdateVertex(maV, aNC, aNTol);
+        reshaper.Replace(CHV, maV.Oriented(CHV.Orientation()));
+        if (HV.Contains(maV))
+          HV.RemoveKey(maV);
       }
       else
       {
@@ -743,28 +747,11 @@ static void ProcessHVertices(TopoDS_Shape& theRes,
         BRep_Builder().Add(aDE2, CHV.Oriented(TopAbs_FORWARD));
         BRep_Builder().Add(aDE2, aLV.Oriented(TopAbs_REVERSED));
         //
-
-        ///TODO temp
-        torem.Add(aResE);
-        toadd.Add(aDE1);
-        toadd.Add(aDE2);
-        //TopoDS_Compound aResCmp;
-        //BRep_Builder().MakeCompound(aResCmp);
-        //BRep_Builder().Add(aResCmp, aDE1);
-        //BRep_Builder().Add(aResCmp, aDE2);
-        //
-        //TopoDS_Wire aResW;
-        //BRep_Builder().MakeWire(aResW);
-        //BRep_Builder().Add(aResW, aDE1);
-        //BRep_Builder().Add(aResW, aDE2);
-        //TopoDS_Wire aResW = BRepBuilderAPI_MakeWire(aDE1, aDE2).Wire(); //this will control proper sharing and tolerance matching between vertices
-        /*{ //DEB
-        TopTools_IndexedMapOfShape VVVV;
-        TopExp::MapShapes(aResW, TopAbs_VERTEX, VVVV);
-        //cout << VVVV.Extent() << endl;
-        }*/
-        //aResW.Orientation(aResE.Orientation());
-        //reshape.Replace(aResE, aResCmp);
+        TopoDS_Wire nW;
+        BRep_Builder().MakeWire(nW);
+        BRep_Builder().Add(nW, aDE1);
+        BRep_Builder().Add(nW, aDE2);
+        reshaper.Replace(aResE, nW);
       }
     }
     else
@@ -781,14 +768,7 @@ static void ProcessHVertices(TopoDS_Shape& theRes,
         HV.RemoveKey(aResV);
     }
   }
-  //DEB
-  for (int i =1; i<= torem.Extent() ;i++)
-    BRep_Builder().Remove(theRes, torem(i));
-  //DEB
-  for (int i =1; i<= toadd.Extent() ;i++)
-    BRep_Builder().Add(theRes, toadd(i));
-  //
-  theRes = reshaper.Apply(theRes); //replace only vertices
+  theRes = reshaper.Apply(theRes); 
 }
 
 static void FillNode2LLMap(Standard_Integer NewNode, const Poly_MakeLoops2D::Link& NewLink, 
@@ -802,21 +782,26 @@ static void FillNode2LLMap(Standard_Integer NewNode, const Poly_MakeLoops2D::Lin
 
 static TopAbs_State GetStateOfSamplePoint(const TopoDS_Face& ff2, 
   const IntTools_FClass2d& fclass,
-  const Bnd_Box2d& fbnd)
+  const Bnd_Box& bb1,
+  double mass1)
 {     
   TopExp_Explorer exp(ff2, TopAbs_EDGE); //should contains at least one edge
   TopoDS_Edge fe2 = TopoDS::Edge(exp.Current());
   BRepAdaptor_Curve2d afe2(fe2, ff2);
   gp_Pnt2d middlepoint = afe2.Value((afe2.LastParameter() + afe2.FirstParameter()) / 2.0);
-  Bnd_Box bb3d;
-  BRepBndLib::Add(ff2, bb3d);
-  Bnd_Box2d bb2d;
-  bb2d.Set(gp_Pnt2d(bb3d.CornerMin().X(), bb3d.CornerMin().Y())); 
-  bb2d.Add(gp_Pnt2d(bb3d.CornerMax().X(), bb3d.CornerMax().Y())); 
-  if (bb2d.IsOut(middlepoint))
-    return TopAbs_OUT;
-  else
-    return fclass.Perform(middlepoint);
+  if (Abs(mass1)>1e-10) //?? toler
+  {
+    Bnd_Box2d bb2d;
+    double xmin, ymin, zmin, xmax, ymax, zmax;
+    bb1.Get(xmin, ymin, zmin, xmax, ymax, zmax);
+    bb2d.Add(gp_Pnt2d(xmin, ymin)); 
+    bb2d.Add(gp_Pnt2d(xmax, ymax));
+    if (mass1 > 0 && bb2d.IsOut(middlepoint))
+      return TopAbs_OUT;
+    if (mass1 < 0 && bb2d.IsOut(middlepoint))
+      return TopAbs_IN;
+  }
+  return fclass.Perform(middlepoint);
 }
 
 bool HLRBRep_ParComp(const HLRFL_BndBoxTreeSelector::FaceParam& a, 
@@ -827,15 +812,14 @@ bool HLRBRep_ParComp(const HLRFL_BndBoxTreeSelector::FaceParam& a,
 
 static TopoDS_Shape ProcessLoops(const TopoDS_Shape& theRes,
   NCollection_IndexedDataMap<TopoDS_Edge, BRepAdaptor_Curve2d, TopTools_ShapeMapHasher>& anEdAd,
-  NCollection_DataMap<TopoDS_Edge, Bnd_Box2d, TopTools_ShapeMapHasher> theEdBnd2d,
   HLRAlgo_Projector& projector,
   const TopTools_ListOfShape& anOrigShapes,
   bool theMode, 
-  TopTools_DataMapOfShapeShape& OrigFaceToProjFace )
+  TopTools_DataMapOfShapeShape& OrigFaceToProjFace,
+  TopTools_DataMapOfShapeShape& ProjFaceToOrigFace)
 {  
   NCollection_List<TopoDS_Wire> theLoops;
   NCollection_List<TopoDS_Wire> SelfLoops;
-  NCollection_DataMap<TopoDS_Shape, Bnd_Box2d, TopTools_ShapeMapHasher> aShToBnd2d;
   TopoDS_Face aDraftPrFace;
   BRep_Builder().MakeFace(aDraftPrFace, BRepLib::Plane(), Precision::Confusion());
   TopTools_IndexedMapOfShape mN2V;
@@ -860,9 +844,6 @@ static TopoDS_Shape ProcessLoops(const TopoDS_Shape& theRes,
       {
         const TopoDS_Wire& aW = BRepLib_MakeWire(E).Wire();
         SelfLoops.Append(aW);
-        Bnd_Box2d aBB;        
-        BndLib_Add2dCurve::Add(BRepAdaptor_Curve2d(E, aDraftPrFace), 0, aBB);
-        aShToBnd2d.Bind(aW, aBB);
       }
       continue;
     }
@@ -872,11 +853,7 @@ static TopoDS_Shape ProcessLoops(const TopoDS_Shape& theRes,
     {
       anEdAd.Add(E, BRepAdaptor_Curve2d(E, aDraftPrFace));
       anAd = anEdAd.Seek(E);
-      Bnd_Box2d aBB;
-      BndLib_Add2dCurve::Add(*anEdAd.Seek(E), 0, aBB);
-      theEdBnd2d.Bind(E, aBB);
     }
-    //NCollection_Handle<BRepAdaptor_Curve2d> adapt = new BRepAdaptor_Curve2d(E, aDraftPrFace);
 
     gp_Pnt2d Pnt;
     gp_Vec2d Vec;
@@ -949,40 +926,19 @@ static TopoDS_Shape ProcessLoops(const TopoDS_Shape& theRes,
       Info2->myD1L = D1L;
     }
   }
-
-  //DEBUG: print D1F
-  /*{
-  NCollection_DataMap<Standard_Integer, Poly_MakeLoops2D::ListOfLink>::Iterator it(mNode2ListOfLinks);
-  for (;it.More();it.Next())
-  {
-  int nK = it.Key();
-  Poly_MakeLoops2D::ListOfLink links = it.Value();
-  Poly_MakeLoops2D::ListOfLink::Iterator itl(links);
-  cout << "next:" << endl;
-  for (;itl.More();itl.Next())
-  {
-  BRepFill_TangentLinkInfo linfo = mL2TI(itl.Value());
-  cout << linfo.myD1F.X() <<  "  " << linfo.myD1F.Y() << endl;
-  TopoDS_Edge eee = mL2E(itl.Value());
-  }
-  }
-  */
   //
   BRepFill_PolyHelper helper(mL2TI, mNode2ListOfLinks);
   Poly_MakeLoops2D aLoopMaker(1, &helper, NCollection_BaseAllocator::CommonBaseAllocator() );
   for (NCollection_DataMap<Poly_MakeLoops2D::Link, TopoDS_Edge>::Iterator aMapIt (mL2E); aMapIt.More(); aMapIt.Next())
     aLoopMaker.AddLink(aMapIt.Key());
 
-  aLoopMaker.Perform();   //try to find loops
+  aLoopMaker.Perform();   //try to find loopsEdBnd2d
   Standard_Integer NbLoops = aLoopMaker.GetNbLoops();
   Standard_Integer NbHangs = aLoopMaker.GetNbHanging();
 
   cout << "NbLoops=" << NbLoops << endl;
   cout << "NbHangs=" << NbHangs << endl;
 
-  // if (NbLoops == 0 || NbHangs != 0 )
-  //   return Standard_False;
-  
   theLoops.Append(SelfLoops);
   for (Standard_Integer i = 1; i <= NbLoops; i++)  //loops to wires
   {
@@ -999,44 +955,20 @@ static TopoDS_Shape ProcessLoops(const TopoDS_Shape& theRes,
         E.Reverse();
       //if null => probably this edge was passed as two links (based on the same edge); so skip this edge
       if (!E.IsNull()) 
-      {
         aWM.Add(E);
-        aWBox2d.Add(theEdBnd2d(E));
-      }
     }
     if (aWM.IsDone())
     {
       TopoDS_Wire W = aWM.Wire();
-      if (W.Closed())    
-      {
+      if (W.Closed()) 
         theLoops.Append(W);
-        aShToBnd2d.Bind(W, aWBox2d);
-      }
     }
   }
-
-  //DEBUG
- /* Poly_MakeLoops2D::ListOfLink theHLinks;
-  aLoopMaker.GetHangingLinks(theHLinks);
-  Poly_MakeLoops2D::ListOfLink::Iterator itt(theHLinks);
-
-  TopoDS_Compound cmpH;BRep_Builder().MakeCompound(cmpH);
-  for (; itt.More();itt.Next())
-  {
-    Poly_MakeLoops2D::Link alink = itt.Value();
-    const Poly_MakeLoops2D::Link& Link = itt.Value();
-    TopoDS_Edge E = mL2E(Link);
-    if (Link.flags & Poly_MakeLoops2D::LF_Reversed)
-      E.Reverse();
-    //if null => probably this edge was passed as two links (based on the same edge); so skip this edge
-    if (!E.IsNull()) 
-      BRep_Builder().Add(cmpH, E);
-  }*/
-  //
 
   IntTools_Context context1;// = new IntTools_Context();
   NCollection_List<TopoDS_Wire>::Iterator itL(theLoops);
   NCollection_IndexedDataMap<TopoDS_Shape, double> lf1, lf2;
+  NCollection_DataMap<TopoDS_Face, double> f2mass;
   for (; itL.More(); itL.Next())
   {
     const TopoDS_Wire& aW = itL.Value();
@@ -1046,11 +978,10 @@ static TopoDS_Shape ProcessLoops(const TopoDS_Shape& theRes,
     BRep_Builder().MakeFace(ff, BRepLib::Plane(), Precision::Confusion()); 
     //plane is static; pcurves of edges are already based on this plane
     BRep_Builder().Add(ff, aW);
-    aShToBnd2d(aW).Enlarge(0.001);
-    aShToBnd2d.Bind(ff, aShToBnd2d(aW)); //bndbox still the same
     GProp_GProps pr;
     BRepGProp::SurfaceProperties(ff, pr);
     Standard_Real CurMass = pr.Mass();
+    f2mass.Bind(ff, CurMass);
     if (Abs(CurMass) < 1e-10) //?? TODO 
       continue;
     if (CurMass >= 0)
@@ -1061,7 +992,6 @@ static TopoDS_Shape ProcessLoops(const TopoDS_Shape& theRes,
   NCollection_IndexedDataMap<TopoDS_Face, NCollection_List<TopoDS_Face>> FaceToIntWires;
   for (int i = 1; i <= lf1.Size() && !lf2.IsEmpty(); i++)
   {
-    //NCollection_Handle<BRepTopAdaptor_FClass2d> fclass;
     NCollection_Sequence<TopoDS_Face> intf;
     const TopoDS_Face& ff1 = TopoDS::Face(lf1.FindKey(i));
     for (int j=1;j<= lf2.Size();j++)
@@ -1071,11 +1001,10 @@ static TopoDS_Shape ProcessLoops(const TopoDS_Shape& theRes,
       if (pm < -nm)
         continue;        
       const TopoDS_Face& ff2 = TopoDS::Face(lf2.FindKey(j));
-      //if (!fclass)
-      //  fclass = new BRepTopAdaptor_FClass2d(ff1, Precision::Confusion());
-      IntTools_FClass2d& fclass = context1.FClass2d(ff1);
-      Bnd_Box2d fbnd = aShToBnd2d(ff1);
-      TopAbs_State st = GetStateOfSamplePoint(ff2, fclass, fbnd);
+      IntTools_FClass2d& fclass1 = context1.FClass2d(ff1);
+      const Bnd_Box& bb1 = context1.BndBox(ff1);
+      double mass1 = f2mass(ff1);
+      TopAbs_State st = GetStateOfSamplePoint(ff2, fclass1, bb1, mass1);
       if (st == TopAbs_IN)
         intf.Append(ff2);
     }
@@ -1084,16 +1013,17 @@ static TopoDS_Shape ProcessLoops(const TopoDS_Shape& theRes,
     {
       if (intfInd.Contains(i))
         continue;
-      //BRepTopAdaptor_FClass2d fclassInt(intf(i), Precision::Confusion());
-      IntTools_FClass2d& fclassInt = context1.FClass2d(intf(i));
-      Bnd_Box2d fbndi = aShToBnd2d(intf(i)); 
+      const TopoDS_Face& intfi = intf(i);
+      IntTools_FClass2d& fclassInt = context1.FClass2d(intfi);
+      const Bnd_Box& bb1 = context1.BndBox(intfi);
+      double mass1 = f2mass(intfi);
       for (int j=1; j<= intf.Size();j++)
       {
         if (i==j)
           continue;
         if (intfInd.Contains(j))
           continue;
-        TopAbs_State st = GetStateOfSamplePoint(intf(j), fclassInt, fbndi);
+        TopAbs_State st = GetStateOfSamplePoint(intf(j), fclassInt, bb1, mass1);
         if (st == TopAbs_OUT) //note that intf-faces are holes
           intfInd.Add(j);
       }
@@ -1142,10 +1072,14 @@ static TopoDS_Shape ProcessLoops(const TopoDS_Shape& theRes,
       BRep_Builder().Add(cf, int_wire);
     }
     gp_Pnt2d p2d;
-    gp_Pnt p3d;
-    TopExp_Explorer exp(cf, TopAbs_EDGE);
+    gp_Pnt p3d;    
     Handle(IntTools_Context) context = new IntTools_Context();
-    BOPTools_AlgoTools3D::PointNearEdge( TopoDS::Edge(exp.Current()), cf, p2d, p3d, context);
+    int ierr = BOPTools_AlgoTools3D::PointInFace( cf, p3d, p2d, context);
+    if (ierr)
+    {
+      TopExp_Explorer exp(cf, TopAbs_EDGE);
+      BOPTools_AlgoTools3D::PointNearEdge( TopoDS::Edge(exp.Current()), cf, p2d, p3d, context);
+    }
     gp_Lin shot_line = projector.Shoot(p2d.X(), p2d.Y());
 
     aSelFL.ResetResult();
@@ -1159,7 +1093,10 @@ static TopoDS_Shape ProcessLoops(const TopoDS_Shape& theRes,
       if (theMode)
       {
         std::sort(fp.begin(), fp.end(), HLRBRep_ParComp);
-        OrigFaceToProjFace.Bind(cf, fp.front().myF);
+        TopoDS_Face orF ;
+        orF = fp.front().myF;
+        OrigFaceToProjFace.Bind(orF, cf);
+        ProjFaceToOrigFace.Bind(cf, orF);
       }
     }
   }
@@ -1168,7 +1105,8 @@ static TopoDS_Shape ProcessLoops(const TopoDS_Shape& theRes,
 }
 
 TopoDS_Shape HLRBRep_HLRToShape::CompoundOfFaces(bool theMode,
-  TopTools_DataMapOfShapeShape& OrigFaceToProjFace)
+  TopTools_DataMapOfShapeShape& OrigFaceToProjFace,
+  TopTools_DataMapOfShapeShape& ProjFaceToOrigFace)
 {
   //
   TopTools_ListOfShape anOrigShapes;
@@ -1197,12 +1135,11 @@ TopoDS_Shape HLRBRep_HLRToShape::CompoundOfFaces(bool theMode,
   if( !FuseVE (aTotalOSh))
     return TopoDS_Shape();
   //
-  NCollection_DataMap<TopoDS_Edge, Bnd_Box2d, TopTools_ShapeMapHasher> theEdBnd2d;
   NCollection_IndexedDataMap<TopoDS_Edge, BRepAdaptor_Curve2d, TopTools_ShapeMapHasher> anEdAd; 
-  ProcessHVertices(aTotalOSh, anEdAd, theEdBnd2d);
+  ProcessHVertices(aTotalOSh, anEdAd);
   //
-  TopoDS_Shape aRes = ProcessLoops(aTotalOSh, anEdAd, theEdBnd2d, 
-    myAlgo->Projector(), anOrigShapes, theMode, OrigFaceToProjFace);
+  TopoDS_Shape aRes = ProcessLoops(aTotalOSh, anEdAd, myAlgo->Projector(), anOrigShapes, theMode, 
+    OrigFaceToProjFace, ProjFaceToOrigFace);
   //
   return aRes;
 }

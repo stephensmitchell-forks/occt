@@ -292,7 +292,7 @@ static bool ClarifyPoint(math_FunctionSetRoot& rsnld, Contap_SurfFunction& SFunc
       TopAbs_State state = const_cast<BRepTopAdaptor_TopolTool*>(Domain)
         ->Classify(P2d,Precision::PConfusion());
       if (state == TopAbs_IN || state == TopAbs_ON)
-      {        
+      {
         const Handle(Adaptor3d_HSurface)& Surf = SFunc.Surface();
         p3d = Adaptor3d_HSurfaceTool::Value(Surf,P2d.X(),P2d.Y());
         return true;
@@ -309,7 +309,8 @@ static bool ClarifyPoint(math_FunctionSetRoot& rsnld, Contap_SurfFunction& SFunc
 
 void  HLRTopoBRep_DSFiller::InsertFace (const Standard_Integer /*FI*/,
 					const TopoDS_Face& F,
-					Contap_Contour& FO, const BRepTopAdaptor_TopolTool* Domain,
+					Contap_Contour& FO, 
+					const BRepTopAdaptor_TopolTool* Domain,
 					HLRTopoBRep_Data& DS,
 					const Standard_Boolean withPCurve)
 {
@@ -385,8 +386,8 @@ void  HLRTopoBRep_DSFiller::InsertFace (const Standard_Integer /*FI*/,
             Standard_Boolean InsuffisantNumberOfPoints=Standard_False;
 
             switch (Line.TypeContour()) {
-	      
-              case Contap_Lin :
+
+            case Contap_Lin :
               {
                 C = new Geom_Line(Line.Line());
                 if (withPCurve) {
@@ -396,8 +397,8 @@ void  HLRTopoBRep_DSFiller::InsertFace (const Standard_Integer /*FI*/,
                 }
               }
               break;
-	      
-              case Contap_Circle :
+
+            case Contap_Circle :
               {
                 C = new Geom_Circle(Line.Circle());
                 if (withPCurve) {
@@ -411,89 +412,89 @@ void  HLRTopoBRep_DSFiller::InsertFace (const Standard_Integer /*FI*/,
                 }
               }
               break;
-	      
-              case Contap_Walking :
+
+            case Contap_Walking :
               {
                 // copy the points
                 Standard_Integer ipF = Standard_Integer(parF);
                 Standard_Integer ipL = Standard_Integer(parL);
-		
+
                 if(ipL-ipF < 1) { 
                   InsuffisantNumberOfPoints=Standard_True;
                   //cout<<"\n !! Pb ds HLRTopoBRep_DSFiller.cxx (Contour App Nbp <3)"<<endl;
                 }
-/*
-		else if(ipL-ipF < 6) { 
-		  // compute the tangents
-		  Contap_SurfFunction& SFunc =
-		    FO.SurfaceFunction();
-		  
-		  Standard_Boolean isTg1,isTg2;
-		  gp_Vec tg1,tg2;
-		  gp_Vec2d uv1,uv2;
-		  math_Vector UV(1,2),F(1,1);
-		  
-		  Line.Point(ipF).ParametersOnS2(UV(1),UV(2));
-		  SFunc.Value(UV,F);
-		  isTg1 = SFunc.IsTangent();
-		  if (!isTg1) {
-		    tg1 = SFunc.Direction3d();
-		    if (withPCurve) uv1 = SFunc.Direction2d();
-		  }
-		  
-		  Line.Point(ipL).ParametersOnS2(UV(1),UV(2));
-		  SFunc.Value(UV,F);
-		  isTg2 = SFunc.IsTangent();
-		  if (!isTg2) {
-		    tg2 = SFunc.Direction3d();
-		    if (withPCurve) uv2 = SFunc.Direction2d();
-		  }
-		  // interpolate
-		  Standard_Integer nbp = ipL - ipF + 1;
-		  AppDef_MultiLine MLine(nbp);
-		  Standard_Integer nb2d = 0;
-		  if (withPCurve)  nb2d = 1;
-		  
-		  for (Standard_Integer i = 1; i <= nbp; i++) {
-		    AppDef_MultiPointConstraint MP(1, nb2d);
-		    MP.SetPoint(1,Line.Point(i + ipF - 1).Value());
-		    if (withPCurve) {
-		      Line.Point(i + ipF - 1).ParametersOnS2(UV(1),UV(2));
-		      MP.SetPoint2d(2,gp_Pnt2d(UV(1),UV(2)));
-		    }
-		    
-		    if (i == 1   && !isTg1) {
-		      MP.SetTang  (1,tg1);
-		      if (withPCurve) MP.SetTang2d(2,uv1);
-		    }
-		    if (i == nbp && !isTg2) {
-		      MP.SetTang  (1,tg2);
-		      if (withPCurve) MP.SetTang2d(2,uv2);
-		    }
-		    MLine.SetValue(i,MP);
-		  }
-		  AppDef_BSplineCompute interp;
-		  interp.Interpol(MLine);
-		  AppParCurves_MultiBSpCurve TheCurve = interp.Value();
-		  Standard_Integer Degree = TheCurve.Degree();
-		  TColgp_Array1OfPnt   Poles(1,TheCurve.NbPoles());
-		  TheCurve.Curve(1,Poles);
-		  C   = new Geom_BSplineCurve(Poles, 
-					      TheCurve.Knots(),
-					      TheCurve.Multiplicities(),
-					      Degree);
-		  if (withPCurve) {
-		    TColgp_Array1OfPnt2d Pol2d(1,TheCurve.NbPoles());
-		    TheCurve.Curve(2,Pol2d);
-		    C2d = new Geom2d_BSplineCurve(Pol2d, 
-						  TheCurve.Knots(),
-						  TheCurve.Multiplicities(),
-						  Degree);
-		  }
-		  first = 0;
-		  last = 1;
-		}
-*/
+                /*
+                else if(ipL-ipF < 6) { 
+                // compute the tangents
+                Contap_SurfFunction& SFunc =
+                FO.SurfaceFunction();
+
+                Standard_Boolean isTg1,isTg2;
+                gp_Vec tg1,tg2;
+                gp_Vec2d uv1,uv2;
+                math_Vector UV(1,2),F(1,1);
+
+                Line.Point(ipF).ParametersOnS2(UV(1),UV(2));
+                SFunc.Value(UV,F);
+                isTg1 = SFunc.IsTangent();
+                if (!isTg1) {
+                tg1 = SFunc.Direction3d();
+                if (withPCurve) uv1 = SFunc.Direction2d();
+                }
+
+                Line.Point(ipL).ParametersOnS2(UV(1),UV(2));
+                SFunc.Value(UV,F);
+                isTg2 = SFunc.IsTangent();
+                if (!isTg2) {
+                tg2 = SFunc.Direction3d();
+                if (withPCurve) uv2 = SFunc.Direction2d();
+                }
+                // interpolate
+                Standard_Integer nbp = ipL - ipF + 1;
+                AppDef_MultiLine MLine(nbp);
+                Standard_Integer nb2d = 0;
+                if (withPCurve)  nb2d = 1;
+
+                for (Standard_Integer i = 1; i <= nbp; i++) {
+                AppDef_MultiPointConstraint MP(1, nb2d);
+                MP.SetPoint(1,Line.Point(i + ipF - 1).Value());
+                if (withPCurve) {
+                Line.Point(i + ipF - 1).ParametersOnS2(UV(1),UV(2));
+                MP.SetPoint2d(2,gp_Pnt2d(UV(1),UV(2)));
+                }
+
+                if (i == 1   && !isTg1) {
+                MP.SetTang  (1,tg1);
+                if (withPCurve) MP.SetTang2d(2,uv1);
+                }
+                if (i == nbp && !isTg2) {
+                MP.SetTang  (1,tg2);
+                if (withPCurve) MP.SetTang2d(2,uv2);
+                }
+                MLine.SetValue(i,MP);
+                }
+                AppDef_BSplineCompute interp;
+                interp.Interpol(MLine);
+                AppParCurves_MultiBSpCurve TheCurve = interp.Value();
+                Standard_Integer Degree = TheCurve.Degree();
+                TColgp_Array1OfPnt   Poles(1,TheCurve.NbPoles());
+                TheCurve.Curve(1,Poles);
+                C   = new Geom_BSplineCurve(Poles, 
+                TheCurve.Knots(),
+                TheCurve.Multiplicities(),
+                Degree);
+                if (withPCurve) {
+                TColgp_Array1OfPnt2d Pol2d(1,TheCurve.NbPoles());
+                TheCurve.Curve(2,Pol2d);
+                C2d = new Geom2d_BSplineCurve(Pol2d, 
+                TheCurve.Knots(),
+                TheCurve.Multiplicities(),
+                Degree);
+                }
+                first = 0;
+                last = 1;
+                }
+                */
                 else if(ipL-ipF < 5) { 
                   const Standard_Integer nbp = ipL - ipF + 1;
                   TColStd_Array1OfReal knots(1,nbp);
@@ -507,7 +508,7 @@ void  HLRTopoBRep_DSFiller::InsertFace (const Standard_Integer /*FI*/,
                   }
                   mults(1)=mults(nbp)=2;
                   C = new Geom_BSplineCurve(Points,knots,mults,1);
-		  
+
                   if(withPCurve) { 
                     TColgp_Array1OfPnt2d Points2d(1,nbp);
                     for(Standard_Integer i=1;i<=nbp;i++) {
@@ -530,84 +531,39 @@ void  HLRTopoBRep_DSFiller::InsertFace (const Standard_Integer /*FI*/,
                   Standard_Real Minx,Miny,Minz,Minu,Minv;
                   Maxx=Maxy=Maxz=Maxu=Maxv=-RealLast();
                   Minx=Miny=Minz=Minu=Minv=RealLast();
-		  
-                  for(Standard_Integer i=1;i<=nbp;i++)
-                  {
-                    knots.SetValue(i,(Standard_Real)i);
-                    mults.SetValue(i,1);
-                    const gp_Pnt& P= Line.Point(i+ipF-1).Value();
-                    if(P.X()<Minx) Minx=P.X();
-                    if(P.Y()<Miny) Miny=P.Y();
-                    if(P.Z()<Minz) Minz=P.Z();
-                    if(P.X()>Maxx) Maxx=P.X();
-                    if(P.Y()>Maxy) Maxy=P.Y();
-                    if(P.Z()>Maxz) Maxz=P.Z();		    
-                    Points.SetValue(i,P);
-                  }
-                  mults(1)=mults(nbp)=2;
-                  //Handle(Geom_BSplineCurve)   AppC;
-                  //Handle(Geom2d_BSplineCurve) AppC2d;
-                  //AppC = new Geom_BSplineCurve(Points,knots,mults,1);
 
-
-                  TColgp_Array1OfPnt2d Points2d(1,nbp);
-                  for(Standard_Integer i=1;i<=nbp;i++)
-                  {
-                    Standard_Real u,v;
-                    Line.Point(i+ipF-1).ParametersOnS2(u,v);
-                    if(u<Minu) Minu=u;
-                    if(v<Minv) Minv=v;
-                    if(u>Maxu) Maxu=u;
-                    if(v>Maxv) Maxv=v;
-                    Points2d.SetValue(i,gp_Pnt2d(u,v));
-                  }
-                  //AppC2d = new Geom2d_BSplineCurve(Points2d,knots,mults,1);
-
-                  first = 1;
-                  last = nbp;
-		  
-                  //Handle(BRepApprox_ApproxLine) AppLine;
                   Handle(Geom2d_BSplineCurve) CNull;
-                  //AppLine = new BRepApprox_ApproxLine(AppC,AppC2d,CNull);
-		  
+
                   Standard_Integer dmin=4,dmax=8,niter=0;
                   Standard_Boolean tg= Standard_False;
                   BRepApprox_Approx Approx;
-                  Standard_Real TOL3d,TOL2d,TOL=0.0001;
-
-                  Maxx-=Minx; Maxy-=Miny; Maxz-=Minz;
-                  Maxu-=Minu; Maxv-=Minv;
-                  if(Maxy>Maxx) Maxx=Maxy;
-                  if(Maxz>Maxx) Maxx=Maxy;
-                  if(Maxv>Maxu) Maxu=Maxv;
-
-                  TOL3d=TOL*Maxx; if(TOL3d<1e-12) TOL3d=1e-12; else if(TOL3d>0.1) TOL3d=0.1;
-                  TOL2d=TOL*Maxu; if(TOL2d<1e-12) TOL2d=1e-12; else if(TOL2d>0.1) TOL2d=0.1;
 
                   Contap_SurfFunction& SFunc = FO.SurfaceFunction(); 
                   const Handle(Adaptor3d_HSurface)& Surf = SFunc.Surface();
 
                   double cmax = 2.0;
                   double c = 100;
-                  int newsize;
+                  int newsize = 0;
 
                   NCollection_List<gp_Pnt2d> lp2d;
                   NCollection_List<gp_Pnt> lp;
 
-                  lp2d.Append(Points2d.First());
-                  lp.Append(Points.First());
-                  for (int jj=2; jj < Points.Size(); jj++ )
+                  gp_Pnt firstPnt = Line.Point(ipF).Value();
+                  gp_Pnt2d firstPnt2d = Line.Point(ipF).ValueOnSurface(Standard_False);
+                  lp2d.Append(firstPnt2d/*Points2d.First()*/);
+                  lp.Append(firstPnt/*Points.First()*/);
+
+
+                  for (Standard_Integer jj=2;jj<=nbp-1;jj++)
                   {
-                    gp_Pnt curPnt = Points(jj);
-                    gp_Pnt2d curPnt2d = Points2d(jj);
+                    const gp_Pnt& curPnt= Line.Point(jj+ipF-1).Value();
+                    gp_Pnt2d curPnt2d = Line.Point(jj+ipF-1).ValueOnSurface(Standard_False);
+                    gp_Pnt2d nextPnt2d = Line.Point(jj+ipF).ValueOnSurface(Standard_False);
+                    double x0 = curPnt2d.X(), y0= curPnt2d.Y();
                     double d3_1 = lp.Last().Distance(curPnt);
-                    double d3_2 = curPnt.Distance(Points(jj+1));
-
-                    double d1 = lp2d.Last().Distance(Points2d(jj));
-                    double d2 = Points2d(jj).Distance(Points2d(jj+1));
-
-                    double x0 = curPnt2d.X();
-                    double y0 = curPnt2d.Y();
+                    double d3_2 = curPnt.Distance(Line.Point(jj+ipF).Value());
+                    double d1 = lp2d.Last().Distance(curPnt2d);
+                    double d2 = curPnt2d.Distance(nextPnt2d);
 
                     double coeff = d3_1/d3_2;
                     c = 1.4;
@@ -650,8 +606,8 @@ void  HLRTopoBRep_DSFiller::InsertFace (const Standard_Integer /*FI*/,
                       double t = 0;
                       lp2d.Append(curPnt2d);
                       lp.Append(curPnt);
-                      double x1 = Points2d(jj+1).X();
-                      double y1 = Points2d(jj+1).Y();
+                      double x1 = nextPnt2d.X();
+                      double y1 = nextPnt2d.Y();
                       math_Vector tol(1,2), inf(1,2), sup(1,2);
                       GetSurfInfo(Surf, tol, inf, sup);
                       math_FunctionSetRoot rsnld(SFunc,tol,50);
@@ -680,8 +636,8 @@ void  HLRTopoBRep_DSFiller::InsertFace (const Standard_Integer /*FI*/,
                       lp.Append(curPnt);
                     }
                   }
-                  lp2d.Append(Points2d.Last());
-                  lp.Append(Points.Last());
+                  lp2d.Append(Line.Point(ipL).ValueOnSurface(Standard_False));
+                  lp.Append(Line.Point(ipL).Value());
                   //
 
                   newsize = lp.Size();
@@ -694,11 +650,37 @@ void  HLRTopoBRep_DSFiller::InsertFace (const Standard_Integer /*FI*/,
                   NCollection_List<gp_Pnt2d>::Iterator itl2(lp2d);
                   for (int jj = 1;itl.More(), itl2.More();itl.Next(), itl2.Next(), jj++)
                   {
+                    const gp_Pnt& P= itl.Value();
+                    if(P.X()<Minx) Minx=P.X();
+                    if(P.Y()<Miny) Miny=P.Y();
+                    if(P.Z()<Minz) Minz=P.Z();
+                    if(P.X()>Maxx) Maxx=P.X();
+                    if(P.Y()>Maxy) Maxy=P.Y();
+                    if(P.Z()>Maxz) Maxz=P.Z();	
+                    //
+                    const gp_Pnt2d& P2d = itl2.Value();
+                    if(P2d.X()<Minu) Minu=P2d.X();
+                    if(P2d.Y()<Minv) Minv=P2d.Y();
+                    if(P2d.X()>Maxu) Maxu=P2d.X();
+                    if(P2d.Y()>Maxv) Maxv=P2d.Y();					  
+
                     nknots.SetValue(jj,(Standard_Real)jj);
                     nmults.SetValue(jj,1);
-                    newPoints2dA.SetValue(jj, itl2.Value());
-                    newPoints3dA.SetValue(jj, itl.Value());                      
+                    newPoints2dA.SetValue(jj, P2d);
+                    newPoints3dA.SetValue(jj, P);                      
                   }
+
+                  Standard_Real TOL3d,TOL2d,TOL=0.0001;
+
+                  Maxx-=Minx; Maxy-=Miny; Maxz-=Minz;
+                  Maxu-=Minu; Maxv-=Minv;
+                  if(Maxy>Maxx) Maxx=Maxy;
+                  if(Maxz>Maxx) Maxx=Maxy;
+                  if(Maxv>Maxu) Maxu=Maxv;
+
+                  TOL3d=TOL*Maxx; if(TOL3d<1e-12) TOL3d=1e-12; else if(TOL3d>0.1) TOL3d=0.1;
+                  TOL2d=TOL*Maxu; if(TOL2d<1e-12) TOL2d=1e-12; else if(TOL2d>0.1) TOL2d=0.1;
+
                   nmults(1)=nmults(newsize)=2;
                   Handle_BRepApprox_ApproxLine nAppLine ;
                   Handle(Geom_BSplineCurve) nAppC =
@@ -707,10 +689,6 @@ void  HLRTopoBRep_DSFiller::InsertFace (const Standard_Integer /*FI*/,
                     new Geom2d_BSplineCurve(newPoints2dA,nknots,nmults,1);
 
                   nAppLine = new BRepApprox_ApproxLine(nAppC,nAppC2d,CNull);
-
-
-                  //AppC2d = new Geom2d_BSplineCurve(Points2d,knots,mults,1);
-                  //-- cout<<"\nHLRTopoBRep_DSFiller : nbp="<<nbp<<"  Tol3d="<<TOL3d<<"   Tol2d="<<TOL2d<<endl;
 
                   Approx.SetParameters(TOL3d, TOL2d, dmin, dmax, niter, 30, tg);
                   Approx.Perform(nAppLine,Standard_True,Standard_True,Standard_False,1,newsize/*nbp*/);
