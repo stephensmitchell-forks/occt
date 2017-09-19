@@ -27,8 +27,7 @@ class gp_Pnt2d;
 
 
 //! Performs the classification of the given 2D-point
-//! relatively to the closed CONVEX (!!!) 2D-polygon
-//! (the polygon must be convex in order to obtain correct result).
+//! relatively to the closed 2D-polygon.
 //! The orientation of the polygon is NOT taken into account.
 class CSLib_Class2d 
 {
@@ -82,7 +81,7 @@ protected:
                                           const Standard_Real theTolU,
                                           const Standard_Real theTolV) const;
 
-  //! Assign operator is disabled for this class.
+  //! Assignment operator is disabled for this class.
   const CSLib_Class2d& operator= (const CSLib_Class2d& Other) const;
 
 private:

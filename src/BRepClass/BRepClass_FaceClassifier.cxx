@@ -63,6 +63,14 @@ void  BRepClass_FaceClassifier::Perform(const TopoDS_Face& theF,
                                         const gp_Pnt2d& theP, 
                                         const Standard_Real theTol3D)
 {
+  // For information only.
+  // BRepClass_FaceClassifier works wrong with small faces
+  // (in 2D-space): UV-dimensions are less than 1.0e-5.
+  // See tests
+  //    boolean bopcommon_complex G5, boolean bopcut_complex H4,
+  //    boolean bopfuse_complex F7, G1, G2,
+  //    boolean boptuc_complex C2, C5, C6.
+
   myFEx.Init(theF);
   BRepClass_FClassifier::Perform(myFEx, theP, theTol3D);
 }

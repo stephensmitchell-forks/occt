@@ -132,22 +132,24 @@ CSLib_Class2d::PolyState CSLib_Class2d::Classify(const gp_Pnt2d& theP,
 }
 
 //=======================================================================
-//function : InternalIfIn
+//function : InternalClass
 //purpose  : Checks if the point P(thePx, thePy) is inside the
 //            given convex polygon.
 //
 // Algorithm description:
 //
 //  1. Catch the moment when some segment of the polygon
-//      intersects the line Y=thePy. For convex polygon
-//      it can be done not more than in two points.
-//  2. Compute X-coordinates in every point from the item 1.
-//      Let them be called Xmin and Xmax (if no points are found
-//      Xmin and Xmax will not be recomputed; if only one point is
-//      found then Xmin=Xmax).
-//  3. The point P is inside the polygon if Xmin <= thePx <= Xmax.
+//      intersects the ray from point P in direction {1, 0}.
+//  2. Compute the number of intersections between this ray and
+//      the segments of this polygon.
+//  3. The point P is inside if the number of intersections is even.
+//      The point P is outside if the number of intersections is odd.
 //
-// ON-status is checked in parallel mode of this algorithm. It is
+//  This method works wrong in case of tangent the ray with some
+//  segment of polygon. This case must be investigated additionally.
+//  Therefore, the method will return 0 (as ON-status).
+//
+//  ON-status is checked in parallel mode of this algorithm. It is
 //  made by the following steps:
 //
 //  1. A vector V is created joining P with the nearest point of the
@@ -174,7 +176,7 @@ CSLib_Class2d::PolyState CSLib_Class2d::InternalClass(const Standard_Real thePx,
     return PolyOn;
   }
 
-  Standard_Real aXMin = RealLast(), aXMax = RealFirst();
+  CSLib_Class2d::PolyState aRetVal = PolyOut;
 
   const Standard_Integer aN = myPnts2d.Size();
   for (Standard_Integer i = 1; i < aN; i++)
@@ -185,73 +187,132 @@ CSLib_Class2d::PolyState CSLib_Class2d::InternalClass(const Standard_Real thePx,
     const Standard_Real aDx = aNewX - aPrevX;
     const Standard_Real aDy = aNewY - aPrevY;
 
-    if ((Abs(aNewX) < theTolU) && (Abs(aNewY) < theTolV))
+    if (Abs(aNewY) < theTolV)
     {
-      //If the classified point is in the vertex of
-      //the polygon
-      return PolyOn;
-    }
-    else
-    {
-      //Square length of the considered segment
-      const Standard_Real aSqL = aDx*aDx + aDy*aDy;
-      if (!IsEqual(aSqL, 0.0))
+      // The ray goes through some vertex of the polygon
+
+      if (Abs(aDy) < gp::Resolution())
       {
-        // If the line (which the current segment lies in) has
-        // the location L(aPrevX, aPrevY) and the direction
-        // d{aDx, aDy} then the parameter of the classified point (0, 0)
-        // on the line (i.e. the projection point) is
-        //      t = (d*V)/|| d || = -(aPrevX*aDx+aPrevY*aDy)/|| d ||,
-        // where V{-aPrevX, -aPrevY} is the vector joining L with
-        // the classified point (0, 0).
-        // If the projection point is IN the current segment then
-        // the inequation
-        //      0 <= t <= || d ||
-        // must be satisfied.
-        //
-        // Or
-        //      0 <= -(aPrevX*aDx+aPrevY*aDy) <= aSqL
+        // Tangential case. Must be investigated by other methods.
+        return (PolyState) 0;
+      }
 
-        const Standard_Real aDP = aDx*aPrevX + aDy*aPrevY;
-        if ((-aSqL <= aDP) && (aDP <= 0.0))
+      if (Abs(aNewX) < theTolU)
+      {
+        //If the classified point is in the vertex of
+        //the polygon
+        return PolyOn;
+      }
+
+      if (aNewX > 0.0)
+      {
+        Standard_Real aY1 = aNewY;
+        if (i < aN - 1)
         {
-          // The projection point has coordinates
-          //    L + t*d/|| d || = L - d*(aPrevX*aDx+aPrevY*aDy)/aSqL
+          aY1 = myPnts2d(i + 1).Y() - thePy;
+        }
+        else
+        {
+          aY1 = myPnts2d(myPnts2d.Lower() + 1).Y() - thePy;
+        }
 
-          const Standard_Real aXNear = aPrevX - aDP*aDx / aSqL;
-          const Standard_Real aYNear = aPrevY - aDP*aDy / aSqL;
+        if (aY1*aPrevY < 0.0)
+        {
+          // Case like this
 
-          if ((Abs(aXNear) < theTolU) && (Abs(aYNear) < theTolV))
-          {
-            // The distance between the projection point and 
-            // the classified point (0, 0) is in the given tolerances
-            return PolyOn;
-          }
+          //        o
+          //      o
+          //x___o_____
+          //    *
+          //    *
+          //    * 
+
+          // x - the classified point;
+          // ___ - ray Y=thePy
+          // *** and ooo - adjacent segments of polygon
+
+          //Change status IN <--> OUT;
+          aRetVal = (PolyState) -aRetVal;
+        }
+
+        // Case like this
+
+        //x________ 
+        //     *o
+        //    *  o
+        //   *    o
+
+        // must be ignored.
+
+        aPrevX = aNewX;
+        aPrevY = aNewY;
+        continue;
+      }
+    }
+
+    if (Abs(aPrevY) < theTolV)
+    {
+      aPrevX = aNewX;
+      aPrevY = aNewY;
+      continue;
+    }
+
+    //Square length of the considered segment
+    const Standard_Real aSqL = aDx*aDx + aDy*aDy;
+    if (!IsEqual(aSqL, 0.0))
+    {
+      // If the line (which the current segment lies in) has
+      // the location L(aPrevX, aPrevY) and the direction
+      // d{aDx, aDy} then the parameter of the classified point (0, 0)
+      // on the line (i.e. the projection point) is
+      //      t = (d*V)/|| d || = -(aPrevX*aDx+aPrevY*aDy)/|| d ||,
+      // where V{-aPrevX, -aPrevY} is the vector joining L with
+      // the classified point (0, 0).
+      // If the projection point is IN the current segment then
+      // the inequation
+      //      0 <= t <= || d ||
+      // must be satisfied.
+      //
+      // Or
+      //      0 <= -(aPrevX*aDx+aPrevY*aDy) <= aSqL
+
+      const Standard_Real aDP = aDx*aPrevX + aDy*aPrevY;
+      if ((-aSqL <= aDP) && (aDP <= 0.0))
+      {
+        // The projection point has coordinates
+        //    L + t*d/|| d || = L - d*(aPrevX*aDx+aPrevY*aDy)/aSqL
+
+        const Standard_Real aXNear = aPrevX - aDP*aDx / aSqL;
+        const Standard_Real aYNear = aPrevY - aDP*aDy / aSqL;
+
+        if ((Abs(aXNear) < theTolU) && (Abs(aYNear) < theTolV))
+        {
+          // The distance between the projection point and 
+          // the classified point (0, 0) is in the given tolerances
+          return PolyOn;
         }
       }
     }
 
     if (aNewY*aPrevY <= 0.0)
     {
-      // The current segment intersects the line Y=thePy
+      // The current segment intersects the line Y=thePy.
+      // X-coord. of the intersection point is
+      const Standard_Real aXi = aPrevX - aPrevY*aDx / aDy;
 
-      if (Abs(aDy) < gp::Resolution())
-      {
-        // The current segment goes strictly along the line Y=thePy.
-        
-        const Standard_Real aX1 = Min(aNewX, aPrevX),
-                            aX2 = Max(aNewX, aPrevX);
+      //Note.
+      // (aDy==0.0) if and only if (aNewY==aPrevY).
+      // At that, (aNewY*aPrevY <= 0.0) <==> (aNewY==aPrevY==0.0).
+      // Therefore, the condition above must be satisfied and
+      // the method will return 0.
+      // Consequently, here (aDy != 0.0) and aXi is found unambiguously.
 
-        aXMin = Min(aX1, aXMin);
-        aXMax = Max(aX2, aXMax);
-      }
-      else
+      if (aXi > 0.0)
       {
-        // Compute X-coordinate of the intersection point 
-        // between the line Y=thePy and the current segment.
-        const Standard_Real aXt = aPrevX - aPrevY*(aNewX - aPrevX) / aDy;
-        aXMin = Min(aXt, aXMin);
-        aXMax = Max(aXt, aXMax);
+        // The current segment intersects the ray Y=thePy
+
+        //Change status IN <--> OUT;
+        aRetVal = (PolyState) -aRetVal;
       }
     }
 
@@ -259,13 +320,5 @@ CSLib_Class2d::PolyState CSLib_Class2d::InternalClass(const Standard_Real thePx,
     aPrevY = aNewY;
   }
 
-#ifdef CSLIB_CLASS2D_DEBUG
-  std::cout << "CSLib_Class2d::InternalIfIn(...): aXMin = " << aXMin + thePx + myUmin << 
-               ", aXMax = " << aXMax + thePx + myUmin << std::endl << std::endl;
-#endif
-
-  if ((aXMax >= aXMin) && (aXMin*aXMax <= 0.0))
-    return PolyIn;
-
-  return PolyOut;
+  return aRetVal;
 }

@@ -121,6 +121,12 @@ void  BRepClass_Intersector::Perform(const gp_Lin2d& theLin,
                                anAdC2d.FirstParameter() + aPeriod);
   }
 
+  // There is no point in intersecting geometrical curves. Here,
+  // intersection of line with polygonal-representation of the anAdC2d
+  // will be enough. After we determine the nearest (to the
+  // classified point) edge, only this edge needs to be GEOMETRICALY
+  // intersected with the line (e.g. in order to define correct transition).
+
   Handle(Geom2d_Line) GL = new Geom2d_Line(theLin);
   Geom2dAdaptor_Curve CGA(GL);
   Geom2dInt_GInter Inter(CGA, DL, anAdC2d, DE,

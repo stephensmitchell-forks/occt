@@ -17,6 +17,7 @@
 #ifndef _BRepTopAdaptor_FClass2d_HeaderFile
 #define _BRepTopAdaptor_FClass2d_HeaderFile
 
+#include <BRepClass_FaceClassifier.hxx>
 #include <BRepTopAdaptor_SeqOfPtr.hxx>
 #include <TColStd_SequenceOfInteger.hxx>
 #include <TopoDS_Face.hxx>
@@ -84,7 +85,7 @@ protected:
 
 
 private:
-
+  mutable BRepClass_FaceClassifier myClassifier;
   NCollection_Sequence<CSLib_Class2d*> TabClass;
   NCollection_Sequence<Standard_Integer> TabOrien;
   TopoDS_Face Face;

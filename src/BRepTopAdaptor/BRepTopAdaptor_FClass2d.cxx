@@ -406,17 +406,6 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& aFace,
         PClass(im1) = SeqPnt2d.Value(im1);
         PClass(nbpnts) = SeqPnt2d.Value(nbpnts);
         
-        // This class works well if 2D-polygon
-        // of the face is convex. In this case,
-        // all angles between every pair of adjacent sides
-        // (i.e. in every vertex, angle between the vectors respected
-        // to direction of traversal about the polygon) have equal sign
-        // (either every angle is positive or every angle is negative).
-        // However, let the angles change their sign insignificantly
-        // in our algorithm.
-        // FYI: in case, when 2D-polygon is exactly convex then
-        //      angle value Will be equal to 2*PI.
-        Standard_Real aMaxNegAngle = 0.0, aMaxPositiveAngle = 0.0;
         for (ii = 1; ii<nbpnts; ii++, im0++, im1++, im2++) {
           if (im2 >= nbpnts) im2 = 1;
           if (im1 >= nbpnts) im1 = 1;
@@ -478,8 +467,6 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& aFace,
               }
             }
 
-            aMaxNegAngle = Min(a, aMaxNegAngle);
-            aMaxPositiveAngle = Max(a, aMaxPositiveAngle);
             angle += a;
           }
         }//for(ii=1; ii<nbpnts; ii++,im0++,im1++,im2++) { 
@@ -495,25 +482,7 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& aFace,
                                           FlecheV,
                                           Umin, Vmin, Umax, Vmax));
         
-        // BRepClass_FaceClassifier works wrong with small faces
-        // (in 2D-space). See test
-        //    boolean bopcommon_complex G5, boolean bopcut_complex H4,
-        //    boolean bopfuse_complex F7, G1, G2,
-        //    boolean boptuc_complex C2, C5, C6.
-        // Therefore, we shall avoid using this classifier for these cases.
-        const Standard_Boolean isDUGood = ((Umax - Umin) > 1.0e-3),
-                               isDVGood = ((Vmax - Vmin) > 1.0e-3);
-        if ((isDUGood && isDVGood &&
-            (aMaxNegAngle < -Precision::Angular()) &&
-            (aMaxPositiveAngle > Precision::Angular())) ||
-                        (Abs(angle) < 2.0) || (Abs(angle)>10))
-        {
-          BadWire = 1;
-          TabOrien.Append(-1);
-        }
-        else {
-          TabOrien.Append((angle>0.0) ? 1 : 0);
-        }
+        TabOrien.Append((angle>0.0) ? 1 : 0);
       }
       else {
         BadWire = 1;
@@ -527,14 +496,11 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& aFace,
       }
     }// else if(WireIsNotEmpty)
   } // for(; aExpF.More();  aExpF.Next()) {
-  //
-  Standard_Integer nbtabclass = TabClass.Length();
-  //
-  if (nbtabclass>0) {
+
+  if ((TabClass.Length() > 0) && (BadWire))
+  {
     //-- if an error on a wire was detected : all TabOrien set to -1
-    if (BadWire) {
-      TabOrien(1) = -1;
-    }
+    TabOrien(1) = -1;
   }
 }
 
@@ -693,9 +659,8 @@ TopAbs_State
     } // if(TabOrien(1)!=-1) {
     //compute state of the point using face classifier
     if (bUseClassifier) {
-      BRepClass_FaceClassifier aClassifier;
-      aClassifier.Perform(Face, Puv, myTol3D);
-      aStatus = aClassifier.State();
+      myClassifier.Perform(Face, Puv, myTol3D);
+      aStatus = myClassifier.State();
     }
 
     if (!theIsReqToAdjust || (!IsUPer && !IsVPer))

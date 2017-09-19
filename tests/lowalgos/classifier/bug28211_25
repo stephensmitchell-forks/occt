@@ -1,0 +1,42 @@
+puts "========"
+puts "OCC28211"
+puts "========"
+puts ""
+#################################################
+# Modeling Algorithms - Boolean fuse operation produces incorrect result
+#################################################
+
+# Check of work of polygonal classifier (CSLib_Class2d) when
+# the classified ray (which is parallel X-axis) goes through
+# some vertex of polygon 
+
+set px -24.5
+set py 26.2784601955168
+
+polyline pl 0 0 0 0 20 0 20 50 0 30 30 0 50 60 0 70 0 0 0 0 0
+mkplane result pl
+checkshape result
+
+point pp $px $py
+
+v2d
+2dclear
+display pp
+pcurve result
+2dfit
+
+checkview -screenshot -2d -path ${imagedir}/${test_image}_2d.png
+
+bounds result_3 u1 u2
+2dcvalue result_3 u1 xx yy
+
+if { [expr abs([dval yy]-$py)] > 1.0e-9} {
+  puts "Error: the classified ray (which is parallel X-axis) must go through some vertex of polygon."
+}
+
+if { ![regexp {OUT} [ b2dclassifx result pp] ] } {
+  puts "Error : Wrong result of 2d classifier algorithm"
+} else {
+  puts "OK : Good result of 2d classifier algorithm"
+}
+
