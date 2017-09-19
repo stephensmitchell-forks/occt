@@ -67,7 +67,10 @@ private:
                                             TopoDS_Edge&       thePrevNewEdge,
                                             const TopoDS_Edge& theCurEdge,
                                             TopoDS_Edge&       theCurNewEdge,
-                                            TopoDS_Vertex&     theCurVertex);
+                                            TopoDS_Vertex&     theCurVertex,
+                                            const TopoDS_Face& theFace,
+                                            const TopoDS_Face& theNewFace,
+                                            TopoDS_Face&       theBoundedNewFace);
   
   Standard_EXPORT void PutVertexToEdge(const TopoDS_Vertex& theVertex,
                                        const TopoDS_Vertex& theProVertex,
@@ -75,6 +78,15 @@ private:
                                        const TopoDS_Edge& theProEdge,
                                        const Standard_Real theParamOnEdge);
   
+  Standard_EXPORT void ProjectVertexOnNewEdge_2d(const TopoDS_Vertex& theVertex,
+                                                 const TopoDS_Edge&   theEdge,
+                                                 const TopoDS_Face&   theFace,
+                                                 const TopoDS_Edge&   theNewEdge,
+                                                 const TopoDS_Face&   theNewFace,
+                                                 Standard_Real&       theParam,
+                                                 gp_Pnt&              thePnt,
+                                                 gp_Pnt2d&            thePnt2d,
+                                                 Standard_Real&       theTolReached);
 
   TopoDS_Shape myInitialShape;
   
@@ -82,7 +94,7 @@ private:
   TopTools_IndexedDataMapOfShapeShape myFaceNewFace;
   TopTools_DataMapOfShapeShape myNewFaceBoundedFace;
   TopTools_DataMapOfShapeShape myEdgeNewEdge;
-  TopTools_DataMapOfOrientedShapeShape myOrientedEdgeNewEdge;
+  //TopTools_DataMapOfOrientedShapeShape myOrientedEdgeNewEdge;
   TopTools_DataMapOfShapeShape myVertexNewVertex;
   TopTools_MapOfShape myTangentEdges;
 

@@ -18,6 +18,7 @@
 #include <BRep_Builder.hxx>
 #include <BRep_Tool.hxx>
 #include <BRepAdaptor_Curve.hxx>
+#include <BRepAdaptor_Curve2d.hxx>
 #include <BRepAdaptor_Surface.hxx>
 #include <BRepAdaptor_HSurface.hxx>
 #include <BRepTopAdaptor_TopolTool.hxx>
@@ -26,6 +27,7 @@
 #include <BRepLib.hxx>
 #include <BRepLib_MakeVertex.hxx>
 #include <BRepLib_MakeEdge.hxx>
+#include <BRepTools.hxx>
 #include <BRepTools_WireExplorer.hxx>
 #include <TopExp.hxx>
 #include <TopExp_Explorer.hxx>
@@ -38,9 +40,81 @@
 #include <ShapeConstruct_ProjectCurveOnSurface.hxx>
 #include <BRepAlgoAPI_Section.hxx>
 #include <Extrema_ExtPC.hxx>
-#include <BRepExtrema_ExtCC.hxx>
-#include <ShapeFix_Shape.hxx>
+#include <Extrema_ExtPC2d.hxx>
+#include <Extrema_ExtCC2d.hxx>
+//#include <Geom2dInt_GInter.hxx>
+//#include <BRepExtrema_ExtCC.hxx>
+//#include <ShapeFix_Shape.hxx>
 
+
+static void IntersectIn2d(const TopoDS_Edge& theEdge1,
+                          const TopoDS_Edge& theEdge2,
+                          const TopoDS_Face& theFace,
+                          const gp_Pnt2d&    theP2dRef,
+                          Standard_Real&     theParamOnFirst,
+                          Standard_Real&     theParamOnSecond,
+                          gp_Pnt&            thePntSol,
+                          gp_Pnt&            thePntOnSecond)
+{
+  BRepAdaptor_Curve BAprevcurve(theEdge1);
+  BRepAdaptor_Curve BAcurcurve(theEdge2);
+  BRepAdaptor_Curve2d BAprevcurve2d(theEdge1, theFace);
+  BRepAdaptor_Curve2d BAcurcurve2d(theEdge2, theFace);
+  //Geom2dInt_GInter Inters2d(BAprevcurve2d, BAcurcurve2d,
+  //                        Precision::PConfusion(), Precision::PConfusion());
+  Extrema_ExtCC2d ExtrCC(BAprevcurve2d, BAcurcurve2d);
+  Standard_Real ParOnPrev[6], ParOnCur[6], dist[6], SumDist[6];
+  gp_Pnt2d Pnt2d[6];
+  ParOnPrev[1] = ParOnPrev[2] = BAprevcurve2d.FirstParameter();
+  ParOnPrev[3] = ParOnPrev[4] = BAprevcurve2d.LastParameter();
+  ParOnCur[1]  = ParOnCur[3]  = BAcurcurve2d.FirstParameter();
+  ParOnCur[2]  = ParOnCur[4]  = BAcurcurve2d.LastParameter();
+  
+  ExtrCC.TrimmedSquareDistances(dist[1], dist[2], dist[3], dist[4],
+                                Pnt2d[1], Pnt2d[2], Pnt2d[3], Pnt2d[4]);
+  SumDist[1] = theP2dRef.SquareDistance(Pnt2d[1]) + theP2dRef.SquareDistance(Pnt2d[3]); //first-first
+  SumDist[2] = theP2dRef.SquareDistance(Pnt2d[1]) + theP2dRef.SquareDistance(Pnt2d[4]); //first-last
+  SumDist[3] = theP2dRef.SquareDistance(Pnt2d[2]) + theP2dRef.SquareDistance(Pnt2d[3]); //last-first
+  SumDist[4] = theP2dRef.SquareDistance(Pnt2d[2]) + theP2dRef.SquareDistance(Pnt2d[4]); //last-last
+  SumDist[5] = RealLast();
+  Standard_Integer imin = 0;
+  if (ExtrCC.IsDone())
+  {
+    for (Standard_Integer i = 1; i <= ExtrCC.NbExt(); i++)
+    {
+      Extrema_POnCurv2d P2d1, P2d2;
+      ExtrCC.Points(i, P2d1, P2d2);
+      Standard_Real aSumDist = theP2dRef.SquareDistance(P2d1.Value()) + theP2dRef.SquareDistance(P2d2.Value());
+      if (aSumDist < SumDist[5])
+      {
+        SumDist[5] = aSumDist;
+        imin = i;
+      }
+    }
+    if (imin != 0)
+    {
+      Extrema_POnCurv2d P2d1min, P2d2min;
+      ExtrCC.Points(imin, P2d1min, P2d2min);
+      ParOnPrev[5] = P2d1min.Parameter();
+      ParOnCur[5]  = P2d2min.Parameter();
+    }
+  }
+  if (imin == 0)
+  {
+    imin = 1;
+    for (Standard_Integer i = 2; i <= 4; i++)
+      if (SumDist[i] < SumDist[imin])
+        imin = i;
+  }
+  else
+    imin = 5;
+  
+  theParamOnFirst  = ParOnPrev[imin];
+  theParamOnSecond = ParOnCur[imin];
+  gp_Pnt PntOnFirst = BAprevcurve.Value(theParamOnFirst);
+  thePntOnSecond    = BAcurcurve.Value(theParamOnSecond);
+  thePntSol.SetXYZ((PntOnFirst.XYZ() + thePntOnSecond.XYZ())/2);
+}
 
 static TopoDS_Edge MakeNewEdgeWithOldPcurvesOnNewSurfaces(const TopoDS_Edge& theEdge,
                                                           const TopoDS_Face& theOldFace1,
@@ -87,6 +161,22 @@ static void UpdateEdgeByProjectionOfPCurve(TopoDS_Edge& anEdge,
   Standard_Real TolReached = SAS->Gap();
   //BB.UpdateEdge(anEdge, NullPCurve, aFace, 0.);
   BB.UpdateEdge(anEdge, NewPCurve, aBoundedNewFace, TolReached);
+  //Check
+  Standard_Integer NCONTROL = 23;
+  BRepAdaptor_Curve BAcurve(anEdge);
+  BRepAdaptor_Curve BAcurveonsu(anEdge, aBoundedNewFace);
+  for (Standard_Integer i = 0; i < NCONTROL; i++)
+  {
+    Standard_Real prm = ((NCONTROL-1-i)*fpar + i*lpar)/(NCONTROL-1);
+    gp_Pnt Pnt1 = BAcurve.Value(prm);
+    gp_Pnt Pnt2 = BAcurveonsu.Value(prm);
+    Standard_Real aDist = Pnt1.Distance(Pnt2);
+    if (aDist > TolReached)
+      TolReached = aDist;
+  }
+  BB.UpdateEdge(anEdge, TolReached);
+  ///////
+  
   TopoDS_Vertex V1, V2;
   TopExp::Vertices(anEdge, V1, V2);
   BB.UpdateVertex(V1, TolReached);
@@ -132,6 +222,86 @@ static void ProjectVertexOnNewEdge(const TopoDS_Vertex& theVertex,
   theTolReached = sqrt(dist[imin]);
 }
 
+static Standard_Boolean IsPCurveUiso(const Handle(Geom2d_Curve)& thePCurve,
+                                     Standard_Real theFirstPar,
+                                     Standard_Real theLastPar)
+{
+  gp_Pnt2d FirstP2d = thePCurve->Value(theFirstPar);
+  gp_Pnt2d LastP2d  = thePCurve->Value(theLastPar);
+
+  Standard_Real DeltaU = Abs(FirstP2d.X() - LastP2d.X());
+  Standard_Real DeltaV = Abs(FirstP2d.Y() - LastP2d.Y());
+
+  return (DeltaU < DeltaV);
+}
+
+static TopoDS_Edge GetSeamEdge(const TopoDS_Edge& theEdge,
+                               const TopoDS_Face& theFace,
+                               const TopoDS_Face& theNewFace)
+{
+  TopoDS_Edge aSeamEdge;
+
+  Standard_Real fpar, lpar;
+  Handle(Geom2d_Curve) aPCurve = BRep_Tool::CurveOnSurface(theEdge, theFace, fpar, lpar);
+  Standard_Boolean IsUiso = IsPCurveUiso(aPCurve, fpar, lpar);
+
+  TopExp_Explorer Explo(theNewFace, TopAbs_EDGE);
+  for (; Explo.More(); Explo.Next())
+  {
+    const TopoDS_Edge& anEdge = TopoDS::Edge(Explo.Current());
+    if (BRepTools::IsReallyClosed(anEdge, theNewFace))
+    {
+      Standard_Real NewFirst, NewLast;
+      Handle(Geom2d_Curve) aNewPCurve = BRep_Tool::CurveOnSurface(anEdge, theNewFace,
+                                                                  NewFirst, NewLast);
+      Standard_Boolean IsNewUiso = IsPCurveUiso(aNewPCurve, NewFirst, NewLast);
+      if (IsNewUiso == IsUiso)
+      {
+        aSeamEdge = anEdge;
+        break;
+      }
+    }
+  }
+
+  TopoDS_Edge aNewEdge = TopoDS::Edge(aSeamEdge.EmptyCopied());
+  return aNewEdge;
+}
+
+static Standard_Boolean IsPCurveFirst(const TopoDS_Edge& theEdge,
+                                      const TopoDS_Face& theFace)
+{
+  Standard_Real fpar, lpar;
+  Handle(Geom2d_Curve) aPCurve = BRep_Tool::CurveOnSurface(theEdge, theFace, fpar, lpar);
+  TopoDS_Edge RevEdge = TopoDS::Edge(theEdge.Reversed());
+  Handle(Geom2d_Curve) AnotherPCurve = BRep_Tool::CurveOnSurface(RevEdge, theFace, fpar, lpar);
+  Standard_Boolean IsUiso = IsPCurveUiso(aPCurve, fpar, lpar);
+
+  gp_Pnt2d aP2d       = aPCurve->Value(fpar);
+  gp_Pnt2d AnotherP2d = AnotherPCurve->Value(fpar);
+
+  Standard_Integer IndCoord = (IsUiso)? 1 : 2; // U or V
+  
+  Standard_Real aCoord       = aP2d.Coord(IndCoord);
+  Standard_Real AnotherCoord = AnotherP2d.Coord(IndCoord);
+
+  return (aCoord < AnotherCoord);
+}
+
+static void CorrectOrientationOfSeam(const TopoDS_Edge& theEdge,
+                                     const TopoDS_Face& theFace,
+                                     TopoDS_Edge&       theNewEdge,
+                                     const TopoDS_Face& theNewFace)
+{
+  if (!BRepTools::IsReallyClosed(theEdge, theFace)) //only for seam
+    return;
+
+  Standard_Boolean IsFirstPCurve = IsPCurveFirst(theEdge, theFace);
+  Standard_Boolean IsFirstNewPCurve = IsPCurveFirst(theNewEdge, theNewFace);
+  if (IsFirstPCurve != IsFirstNewPCurve)
+    theNewEdge.Reverse();
+}
+
+/*
 static TopoDS_Edge GetGeneratedEdge(const TopoDS_Edge& anEdge,
                                     const TopoDS_Face& aFace,
                                     const TopoDS_Face& aNewFace)
@@ -159,6 +329,7 @@ static TopoDS_Edge GetGeneratedEdge(const TopoDS_Edge& anEdge,
   BB.Remove(aNewEdge, V2);
   return aNewEdge;
 }
+*/
 
 static TopAbs_Orientation OrientationInEdge(const TopoDS_Vertex& theVertex,
                                             const TopoDS_Edge& theEdge)
@@ -366,8 +537,10 @@ void BRepOffsetAPI_PatchFaces::Build()
         if (Lfaces.Extent() == 1) //seam edge
         {
           cout<<endl<<"Seam edge or degenerated edge !!!"<<endl;
-          TopoDS_Edge GeneratedEdge = GetGeneratedEdge(anEdge, aFace, aNewFace);
-          myOrientedEdgeNewEdge.Bind(anEdge, GeneratedEdge);
+          //TopoDS_Edge GeneratedEdge = GetGeneratedEdge(anEdge, aFace, aNewFace);
+          TopoDS_Edge GeneratedSeamEdge = GetSeamEdge(anEdge, aFace, aNewFace);
+          //myOrientedEdgeNewEdge.Bind(anEdge, GeneratedEdge);
+          myEdgeNewEdge.Bind(anEdge, GeneratedSeamEdge);
           continue;
         }
         
@@ -513,7 +686,7 @@ void BRepOffsetAPI_PatchFaces::Build()
   for (Standard_Integer i = 1; i <= myFaceNewFace.Extent(); i++)
   {
     TopoDS_Face aFace = TopoDS::Face(myFaceNewFace.FindKey(i));
-    TopoDS_Shape aNewFace = myFaceNewFace(i);
+    TopoDS_Face aNewFace = TopoDS::Face(myFaceNewFace(i));
     TopoDS_Face aBoundedNewFace = TopoDS::Face(myNewFaceBoundedFace(aNewFace));
     
     TopoDS_Iterator itf(aFace);
@@ -530,9 +703,7 @@ void BRepOffsetAPI_PatchFaces::Build()
       TopoDS_Vertex CurVertex = wexp.CurrentVertex();
       TopoDS_Edge   FirstEdge = wexp.Current();
       TopoDS_Edge   FirstNewEdge = FirstEdge;
-      if (myOrientedEdgeNewEdge.IsBound(FirstEdge))
-        FirstNewEdge = TopoDS::Edge(myOrientedEdgeNewEdge(FirstEdge));
-      else if (myEdgeNewEdge.IsBound(FirstEdge))
+      if (myEdgeNewEdge.IsBound(FirstEdge))
         FirstNewEdge = TopoDS::Edge(myEdgeNewEdge(FirstEdge));
       TopoDS_Edge CurEdge, PrevEdge = FirstEdge;
       TopoDS_Edge CurNewEdge, PrevNewEdge = FirstNewEdge;
@@ -561,17 +732,17 @@ void BRepOffsetAPI_PatchFaces::Build()
       for (; wexp.More(); wexp.Next())
       {
         CurEdge = wexp.Current();
-        if (myOrientedEdgeNewEdge.IsBound(CurEdge))
-          CurNewEdge = TopoDS::Edge(myOrientedEdgeNewEdge(CurEdge));
-        else if (myEdgeNewEdge.IsBound(CurEdge))
+        if (myEdgeNewEdge.IsBound(CurEdge))
           CurNewEdge = TopoDS::Edge(myEdgeNewEdge(CurEdge));
         else
           CurNewEdge = CurEdge;
         CurVertex = wexp.CurrentVertex();
         UpdateEdgesAndVertex(PrevEdge, PrevNewEdge,
                              CurEdge, CurNewEdge,
-                             CurVertex);
+                             CurVertex,
+                             aFace, aNewFace, aBoundedNewFace);
         if (!PrevEdge.IsSame(PrevNewEdge) &&
+            !BRepTools::IsReallyClosed(PrevEdge, aFace) &&
             PrevEdge.Orientation() == TopAbs_REVERSED)
           PrevNewEdge.Reverse();
         BB.Add(aNewWire, PrevNewEdge);
@@ -584,8 +755,10 @@ void BRepOffsetAPI_PatchFaces::Build()
       CurVertex = wexp.CurrentVertex();
       UpdateEdgesAndVertex(PrevEdge, PrevNewEdge,
                            CurEdge, CurNewEdge,
-                           CurVertex);
+                           CurVertex,
+                           aFace, aNewFace, aBoundedNewFace);
       if (!PrevEdge.IsSame(PrevNewEdge) &&
+          !BRepTools::IsReallyClosed(PrevEdge, aFace) &&
           PrevEdge.Orientation() == TopAbs_REVERSED)
         PrevNewEdge.Reverse();
       BB.Add(aNewWire, PrevNewEdge);
@@ -618,11 +791,11 @@ void BRepOffsetAPI_PatchFaces::Build()
   }
   BB.Add(aSolid, aShell);
 
-  ShapeFix_Shape Fixer(aSolid);
-  Fixer.Perform();
+  //ShapeFix_Shape Fixer(aSolid);
+  //Fixer.Perform();
   
-  myShape = Fixer.Shape();
-  //myShape = aSolid;
+  //myShape = Fixer.Shape();
+  myShape = aSolid;
   
   Done();
 }
@@ -631,8 +804,16 @@ void BRepOffsetAPI_PatchFaces::UpdateEdgesAndVertex(const TopoDS_Edge& thePrevEd
                                                     TopoDS_Edge&       thePrevNewEdge,
                                                     const TopoDS_Edge& theCurEdge,
                                                     TopoDS_Edge&       theCurNewEdge,
-                                                    TopoDS_Vertex&     theCurVertex)
+                                                    TopoDS_Vertex&     theCurVertex,
+                                                    const TopoDS_Face& theFace,
+                                                    const TopoDS_Face& theNewFace,
+                                                    TopoDS_Face&       theBoundedNewFace)
 {
+  CorrectOrientationOfSeam(thePrevEdge, theFace,
+                           thePrevNewEdge, theNewFace);
+  CorrectOrientationOfSeam(theCurEdge, theFace,
+                           theCurNewEdge, theNewFace);
+  
   BRep_Builder BB;
   
   TopoDS_Vertex CurNewVertex;
@@ -640,110 +821,199 @@ void BRepOffsetAPI_PatchFaces::UpdateEdgesAndVertex(const TopoDS_Edge& thePrevEd
     CurNewVertex = TopoDS::Vertex(myVertexNewVertex(theCurVertex));
   else
   {
-    Standard_Boolean IsConstVertex = (!(myEdgeNewEdge.IsBound(thePrevEdge) || myOrientedEdgeNewEdge.IsBound(thePrevEdge)) ||
-                                     !(myEdgeNewEdge.IsBound(theCurEdge)  || myOrientedEdgeNewEdge.IsBound(theCurEdge)));
+    Standard_Boolean IsConstVertex = (!myEdgeNewEdge.IsBound(thePrevEdge) ||
+                                      !myEdgeNewEdge.IsBound(theCurEdge));
     if (IsConstVertex)
       CurNewVertex = theCurVertex;
   }
 
-  Standard_Boolean IsSeamPrev = (myOrientedEdgeNewEdge.IsBound(thePrevEdge));
-  Standard_Boolean IsSeamCur  = (myOrientedEdgeNewEdge.IsBound(theCurEdge));
-  
-  if ((myEdgeNewEdge.IsBound(thePrevEdge) || myOrientedEdgeNewEdge.IsBound(thePrevEdge)) &&
-      (myEdgeNewEdge.IsBound(theCurEdge)  || myOrientedEdgeNewEdge.IsBound(theCurEdge))) //two new edges: intersect
+  if (myEdgeNewEdge.IsBound(thePrevEdge) &&
+      myEdgeNewEdge.IsBound(theCurEdge)) //two new edges: intersect
   {
     Standard_Real ParamOnPrev, ParamOnCur, TolProj;
     gp_Pnt PntOnPrev, PntOnCur;
-    ProjectVertexOnNewEdge(theCurVertex, thePrevEdge, thePrevNewEdge,
-                           ParamOnPrev, PntOnPrev, TolProj);
-    ProjectVertexOnNewEdge(theCurVertex, theCurEdge, theCurNewEdge,
-                           ParamOnCur, PntOnCur, TolProj);
+    gp_Pnt2d Pnt2dOnPrev, Pnt2dOnCur;
+    ProjectVertexOnNewEdge_2d(theCurVertex,
+                              thePrevEdge, theFace,
+                              thePrevNewEdge, theBoundedNewFace,
+                              ParamOnPrev, PntOnPrev, Pnt2dOnPrev, TolProj);
+    ProjectVertexOnNewEdge_2d(theCurVertex,
+                              theCurEdge, theFace,
+                              theCurNewEdge, theBoundedNewFace,
+                              ParamOnCur, PntOnCur, Pnt2dOnCur, TolProj);
+    gp_Pnt2d P2dRef((Pnt2dOnPrev.XY() + Pnt2dOnCur.XY())/2);
 
     Standard_Real TolReached;
     gp_Pnt PntVtx = (CurNewVertex.IsNull())?
       BRep_Tool::Pnt(theCurVertex) : BRep_Tool::Pnt(CurNewVertex);
-    TolReached = PntOnPrev.Distance(PntOnCur);
-    Standard_Real DistVtoPrev = PntVtx.Distance(PntOnPrev);
-    Standard_Real DistVtoCur = PntVtx.Distance(PntOnCur);
-    TolReached = Max(TolReached, DistVtoPrev);
-    TolReached = Max(TolReached, DistVtoCur);
     
-    BRepExtrema_ExtCC ExtrEE(thePrevNewEdge, theCurNewEdge);
-    if (!ExtrEE.IsDone() || ExtrEE.NbExt() == 0)
+    //TolReached = PntOnPrev.Distance(PntOnCur);
+    //Standard_Real DistVtoPrev = PntVtx.Distance(PntOnPrev);
+    //Standard_Real DistVtoCur = PntVtx.Distance(PntOnCur);
+    //TolReached = Max(TolReached, DistVtoPrev);
+    //TolReached = Max(TolReached, DistVtoCur);
+
+    /*
+    //BRepExtrema_ExtCC ExtrEE(thePrevNewEdge, theCurNewEdge);
+    BRepAdaptor_Curve BAprevcurve(thePrevNewEdge);
+    BRepAdaptor_Curve BAcurcurve(theCurNewEdge);
+    BRepAdaptor_Curve2d BAprevcurve2d(thePrevNewEdge, theBoundedNewFace);
+    BRepAdaptor_Curve2d BAcurcurve2d(theCurNewEdge, theBoundedNewFace);
+    //Geom2dInt_GInter Inters2d(BAprevcurve2d, BAcurcurve2d,
+    //                        Precision::PConfusion(), Precision::PConfusion());
+    Extrema_ExtCC2d ExtrCC(BAprevcurve2d, BAcurcurve2d);
+    Standard_Real ParOnPrev[6], ParOnCur[6], dist[6], SumDist[6];
+    gp_Pnt2d Pnt2d[6];
+    ParOnPrev[1] = ParOnPrev[2] = BAprevcurve2d.FirstParameter();
+    ParOnPrev[3] = ParOnPrev[4] = BAprevcurve2d.LastParameter();
+    ParOnCur[1]  = ParOnCur[3]  = BAcurcurve2d.FirstParameter();
+    ParOnCur[2]  = ParOnCur[4]  = BAcurcurve2d.LastParameter();
+    
+    ExtrCC.TrimmedSquareDistances(dist[1], dist[2], dist[3], dist[4],
+                                  Pnt2d[1], Pnt2d[2], Pnt2d[3], Pnt2d[4]);
+    SumDist[1] = P2dRef.SquareDistance(Pnt2d[1]) + P2dRef.SquareDistance(Pnt2d[3]); //first-first
+    SumDist[2] = P2dRef.SquareDistance(Pnt2d[1]) + P2dRef.SquareDistance(Pnt2d[4]); //first-last
+    SumDist[3] = P2dRef.SquareDistance(Pnt2d[2]) + P2dRef.SquareDistance(Pnt2d[3]); //last-first
+    SumDist[4] = P2dRef.SquareDistance(Pnt2d[2]) + P2dRef.SquareDistance(Pnt2d[4]); //last-last
+    SumDist[5] = RealLast();
+    Standard_Integer imin = 0;
+    if (ExtrCC.IsDone())
     {
-      cout<<endl<<"Extrema EE is not done"<<endl;
+      for (Standard_Integer i = 1; i <= ExtrCC.NbExt(); i++)
+      {
+        Extrema_POnCurv2d P2d1, P2d2;
+        ExtrCC.Points(i, P2d1, P2d2);
+        Standard_Real aSumDist = P2dRef.SquareDistance(P2d1.Value()) + P2dRef.SquareDistance(P2d2.Value());
+        if (aSumDist < SumDist[5])
+        {
+          SumDist[5] = aSumDist;
+          imin = i;
+        }
+      }
+      if (imin != 0)
+      {
+        Extrema_POnCurv2d P2d1min, P2d2min;
+        ExtrCC.Points(imin, P2d1min, P2d2min);
+        ParOnPrev[5] = P2d1min.Parameter();
+        ParOnCur[5]  = P2d2min.Parameter();
+      }
+    }
+    if (imin == 0)
+    {
+      imin = 1;
+      for (Standard_Integer i = 2; i <= 4; i++)
+        if (SumDist[i] < SumDist[imin])
+          imin = i;
+    }
+    else
+      imin = 5;
+
+    ParamOnPrev = ParOnPrev[imin];
+    ParamOnCur  = ParOnCur[imin];
+    gp_Pnt SolutionOnPrev = BAprevcurve.Value(ParamOnPrev);
+    gp_Pnt SolutionOnCur  = BAcurcurve.Value(ParamOnCur);
+    gp_Pnt Pint((SolutionOnPrev.XYZ() + SolutionOnCur.XYZ())/2);
+    //Standard_Real TolInt = PntVtx.Distance(Pint);
+    //TolReached = TolInt;
+    */
+    gp_Pnt Pint;
+    IntersectIn2d(thePrevNewEdge, theCurNewEdge, theBoundedNewFace, P2dRef,
+                  ParamOnPrev, ParamOnCur, Pint, PntOnCur);
+    //PntOnPrev = PntOnCur = Pint;
+      
+    if (CurNewVertex.IsNull())
+    {
+      //gp_Pnt NewPnt((PntOnPrev.XYZ() + PntOnCur.XYZ())/2);
+      CurNewVertex = BRepLib_MakeVertex(Pint);
+      myVertexNewVertex.Bind(theCurVertex, CurNewVertex);
+      TolReached = Pint.Distance(PntOnCur);
     }
     else
     {
-      Standard_Integer imin = 1;
-      for (Standard_Integer iext = 2; iext <= ExtrEE.NbExt(); iext++)
-        if (ExtrEE.SquareDistance(iext) < ExtrEE.SquareDistance(imin))
-          imin = iext;
-      Standard_Real TolEE  = sqrt(ExtrEE.SquareDistance(imin));
-      gp_Pnt PntOnE1 = ExtrEE.PointOnE1(imin);
-      gp_Pnt PntOnE2 = ExtrEE.PointOnE2(imin);
-      Standard_Real DistVtoE1 = PntVtx.Distance(PntOnE1);
-      Standard_Real DistVtoE2 = PntVtx.Distance(PntOnE2);
-      TolEE = Max(TolEE, DistVtoE1);
-      TolEE = Max(TolEE, DistVtoE2);
-      if (TolEE < TolReached)
-      {
-        TolReached = TolEE;
-        PntOnPrev = PntOnE1;
-        PntOnCur  = PntOnE2;
-        ParamOnPrev = ExtrEE.ParameterOnE1(imin);
-        ParamOnCur  = ExtrEE.ParameterOnE2(imin);
-      }
+      PntVtx = BRep_Tool::Pnt(CurNewVertex);
+      TolReached = PntVtx.Distance(PntOnCur); //PntVtx.Distance(Pint);
     }
-    if (CurNewVertex.IsNull())
-    {
-      gp_Pnt NewPnt((PntOnPrev.XYZ() + PntOnCur.XYZ())/2);
-      CurNewVertex = BRepLib_MakeVertex(NewPnt);
-      myVertexNewVertex.Bind(theCurVertex, CurNewVertex);
-    }
-    BB.UpdateVertex(CurNewVertex, TolReached);
+    BB.UpdateVertex(CurNewVertex, 1.001*TolReached);
+    
     if (!EdgeContains(thePrevNewEdge, CurNewVertex))
-    {
-      if (IsSeamCur)
-        ParamOnPrev = RealLast();
       PutVertexToEdge(CurNewVertex, theCurVertex, thePrevNewEdge, thePrevEdge, ParamOnPrev);
-    }
     
     if (!EdgeContains(theCurNewEdge, CurNewVertex))
-    {
-      if (IsSeamPrev)
-        ParamOnCur = RealLast();
       PutVertexToEdge(CurNewVertex, theCurVertex, theCurNewEdge, theCurEdge, ParamOnCur);
-    }
   } //two new edges: intersect
-  else if ((myEdgeNewEdge.IsBound(thePrevEdge) || myOrientedEdgeNewEdge.IsBound(thePrevEdge)) ||
-           (myEdgeNewEdge.IsBound(theCurEdge)  || myOrientedEdgeNewEdge.IsBound(theCurEdge))) //one constant edge: project point onto curve
+  else if (myEdgeNewEdge.IsBound(thePrevEdge) ||
+           myEdgeNewEdge.IsBound(theCurEdge)) //one constant edge: project point onto curve
   {
     TopoDS_Edge ConstantEdge, ModifiedEdge, NewEdge;
-    Standard_Boolean IsAdjacentSeam;
-    if (myEdgeNewEdge.IsBound(thePrevEdge) || myOrientedEdgeNewEdge.IsBound(thePrevEdge))
+    if (myEdgeNewEdge.IsBound(thePrevEdge))
     {
       ConstantEdge = theCurEdge;
       ModifiedEdge = thePrevEdge;
       NewEdge = thePrevNewEdge;
-      IsAdjacentSeam = IsSeamCur;
     }
     else
     {
       ConstantEdge = thePrevEdge;
       ModifiedEdge = theCurEdge;
       NewEdge = theCurNewEdge;
-      IsAdjacentSeam = IsSeamPrev;
     }
 
-    Standard_Real ParamOnNewEdge, TolReached;
+    Standard_Real ParamOnConstEdge, ParamOnNewEdge, TolReached;
     gp_Pnt PntOnNewEdge;
-    ProjectVertexOnNewEdge(theCurVertex, ModifiedEdge, NewEdge,
-                           ParamOnNewEdge, PntOnNewEdge, TolReached);
-    BB.UpdateVertex(theCurVertex, TolReached);
+    gp_Pnt2d Pnt2dOnNewEdge;
+    ProjectVertexOnNewEdge_2d(theCurVertex,
+                              ModifiedEdge, theFace,
+                              NewEdge, theBoundedNewFace,
+                              ParamOnNewEdge, PntOnNewEdge, Pnt2dOnNewEdge, TolReached);
+    //BB.UpdateVertex(CurNewVertex, TolReached);
 
-    if (!EdgeContains(NewEdge, theCurVertex))
-      PutVertexToEdge(theCurVertex, theCurVertex, NewEdge, ModifiedEdge, ParamOnNewEdge);
+    /*
+    BRepAdaptor_Curve BAconstcurve(ConstantEdge);
+    BRepAdaptor_Curve2d BAconstcurve2d(ConstantEdge, theBoundedNewFace);
+    BRepAdaptor_Curve2d BAnewcurve2d(NewEdge, theBoundedNewFace);
+    //Geom2dInt_GInter Inters2d(BAconstcurve2d, BAnewcurve2d,
+    //                          Precision::PConfusion(), Precision::PConfusion());
+    Standard_Integer imin = 0;
+    if (Inters2d.IsDone())
+    {
+      Standard_Real MinDist = RealLast();
+      for (Standard_Integer iint = 1; iint <= Inters2d.NbPoints(); iint++)
+      {
+        const IntRes2d_IntersectionPoint& ip = Inters2d.Point(iint);
+        gp_Pnt2d Pint2d = ip.Value();
+        Standard_Real aDist = Pnt2dOnNewEdge.SquareDistance(Pint2d);
+        if (aDist < MinDist)
+        {
+          MinDist = aDist;
+          imin = iint;
+        }
+        //gp_Pnt Pint = BAprevcurve.Value(ip.ParamOnFirst());
+      }
+    }
+    if (imin != 0)
+    {
+      gp_Pnt Pint = BAconstcurve.Value(Inters2d.Point(imin).ParamOnFirst());
+      //Standard_Real TolInt = PntVtx.Distance(Pint);
+      //TolReached = TolInt;
+      PntOnNewEdge = Pint;
+      //ParamOnPrev = Inters2d.Point(imin).ParamOnFirst(); //ExtrEE.ParameterOnE1(imin);
+      ParamOnNewEdge  = Inters2d.Point(imin).ParamOnSecond();  //ExtrEE.ParameterOnE2(imin);
+      gp_Pnt PntVtx = BRep_Tool::Pnt(CurNewVertex);
+      TolReached = PntVtx.Distance(Pint);
+    }
+    BB.UpdateVertex(CurNewVertex, TolReached);
+    */
+
+    gp_Pnt Pint;
+    IntersectIn2d(ConstantEdge, NewEdge, theBoundedNewFace, Pnt2dOnNewEdge,
+                  ParamOnConstEdge, ParamOnNewEdge, Pint, PntOnNewEdge);
+
+    gp_Pnt PntVtx = BRep_Tool::Pnt(CurNewVertex);
+    TolReached = PntVtx.Distance(PntOnNewEdge);
+    BB.UpdateVertex(CurNewVertex, 1.001*TolReached);
+    
+    if (!EdgeContains(NewEdge, CurNewVertex))
+      PutVertexToEdge(CurNewVertex, theCurVertex, NewEdge, ModifiedEdge, ParamOnNewEdge);
   } //else (one constant edge: project point onto curve)
   else //two constant edges
   {
@@ -777,4 +1047,71 @@ void BRepOffsetAPI_PatchFaces::PutVertexToEdge(const TopoDS_Vertex& theVertex,
     else
       BB.Range(theEdge, fpar, theParamOnEdge);
   }
+}
+
+void BRepOffsetAPI_PatchFaces::ProjectVertexOnNewEdge_2d(const TopoDS_Vertex& theVertex,
+                                                         const TopoDS_Edge&   theEdge,
+                                                         const TopoDS_Face&   theFace,
+                                                         const TopoDS_Edge&   theNewEdge,
+                                                         const TopoDS_Face&   theNewFace,
+                                                         Standard_Real&       theParam,
+                                                         gp_Pnt&              thePnt,
+                                                         gp_Pnt2d&            thePnt2d,
+                                                         Standard_Real&       theTolReached)
+{
+  Standard_Real ParamOnEdge = BRep_Tool::Parameter(theVertex, theEdge);
+  BRepAdaptor_Curve2d BAcurve2d(theEdge, theFace);
+  BRepAdaptor_Curve2d BAnewcurve2d(theNewEdge, theNewFace);
+  gp_Pnt2d Point2dFromEdge;
+  if (myFacePatchFace.Contains(theFace))
+  {
+    BRepAdaptor_Curve BAcurve(theEdge);
+    gp_Pnt PointOnEdge = BAcurve.Value(ParamOnEdge);
+    BRepAdaptor_Surface BAnewsurf(theNewFace);
+    Extrema_ExtPS ProjPS(PointOnEdge, BAnewsurf,
+                         Precision::PConfusion(), Precision::PConfusion());
+    Standard_Integer imin = 1;
+    for (Standard_Integer iext = 2; iext <= ProjPS.NbExt(); iext++)
+      if (ProjPS.SquareDistance(iext) < ProjPS.SquareDistance(imin))
+        imin = iext;
+    Standard_Real uu, vv;
+    ProjPS.Point(imin).Parameter(uu,vv);
+    Point2dFromEdge.SetCoord(uu,vv);
+  }
+  else
+  {
+    Point2dFromEdge = BAcurve2d.Value(ParamOnEdge);
+  }
+  Extrema_ExtPC2d Projector(Point2dFromEdge, BAnewcurve2d);
+  Standard_Real Param[4], dist[4];
+  gp_Pnt2d Pnt2d[4];
+  Param[1] = BAnewcurve2d.FirstParameter();
+  Param[2] = BAnewcurve2d.LastParameter();
+  Projector.TrimmedSquareDistances(dist[1], dist[2], Pnt2d[1], Pnt2d[2]);
+  dist[3] = RealLast();
+  if (Projector.IsDone() && Projector.NbExt() > 0)
+  {
+    Standard_Integer imin = 1;
+    for (Standard_Integer i = 2; i <= Projector.NbExt(); i++)
+      if (Projector.SquareDistance(i) < Projector.SquareDistance(imin))
+        imin = i;
+    Param[3] = Projector.Point(imin).Parameter();
+    dist[3]  = Projector.SquareDistance(imin);
+    Pnt2d[3]   = Projector.Point(imin).Value();
+  }
+
+  Standard_Integer imin = 1;
+  for (Standard_Integer i = 2; i <= 3; i++)
+    if (dist[i] < dist[imin])
+      imin = i;
+
+  theParam      = Param[imin];
+  //BRepAdaptor_Surface BAnewsurf(theNewFace, Standard_False);
+  //thePnt        = BAnewsurf.Value(Pnt[imin].X(), Pnt[imin].Y());
+  thePnt2d = Pnt2d[imin];
+  BRepAdaptor_Curve BAcurve(theEdge);
+  BRepAdaptor_Curve BAnewcurve(theNewEdge);
+  thePnt = BAnewcurve.Value(theParam);
+  gp_Pnt PointOnEdge = BAcurve.Value(ParamOnEdge);
+  theTolReached = PointOnEdge.Distance(thePnt); //sqrt(dist[imin]);
 }
