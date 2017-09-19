@@ -2865,7 +2865,7 @@ static Standard_Boolean EnlargeGeometry(Handle(Geom_Surface)& S,
 					const Standard_Boolean GlobalEnlargeVfirst,
 					const Standard_Boolean GlobalEnlargeVlast)
 {
-  const Standard_Real coeff = 4.;
+  const Standard_Real coeff = 2.; //4.;
   const Standard_Real TolApex = 1.e-5;
 
   Standard_Boolean SurfaceChange = Standard_False;
