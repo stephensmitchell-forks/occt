@@ -113,7 +113,7 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& aFace,
   Umin = Vmin = RealLast();
   Umax = Vmax = -Umin;
   BadWire = 0;
-  //
+
   //if face has several wires and one of them is bad,
   //it is necessary to process all of them for correct
   //calculation of Umin, Umax, Vmin, Vmax - ifv, 23.08.06 
@@ -143,6 +143,12 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& aFace,
     for (; aExp.More(); aExp.Next()) {
       NbEdges++;
     }
+
+    // First and last points of the previous edges
+    // in order to detect if wire is close in 2d-space
+    gp_Pnt2d aPrevPoint, aFirstEPoint;
+    Standard_Boolean isFirst = Standard_True;
+
     //
     aWExp.Init(aW, Face);
     for (; aWExp.More(); aWExp.Next()) {
@@ -159,6 +165,29 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& aFace,
       }
       //
       BRepAdaptor_Curve2d C(edge, Face);
+
+      if (isFirst)
+      {
+        C.D0(C.FirstParameter(), aFirstEPoint);
+        C.D0(C.LastParameter(), aPrevPoint);
+
+        if (edge.Orientation() == TopAbs_REVERSED)
+          std::swap(aFirstEPoint, aPrevPoint);
+      }
+      else
+      {
+        gp_Pnt2d aP1(C.Value((Or == TopAbs_REVERSED) ? C.LastParameter() : C.FirstParameter()));
+        if (aP1.SquareDistance(aPrevPoint) > Precision::PConfusion())
+        {
+          //Wire is not closed in 2D-space
+          BadWire = 1;
+        }
+
+        C.D0((Or == TopAbs_REVERSED) ? C.FirstParameter() : C.LastParameter(), aPrevPoint);
+      }
+
+      isFirst = Standard_False;
+
       BRepAdaptor_Curve C3d;
       //------------------------------------------
       degenerated = Standard_False;
@@ -373,8 +402,10 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& aFace,
     } //for(;aWExp.More(); aWExp.Next()) {
     // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     //
-    if (NbEdges) {
-      //-- count ++ with normal explorer and -- with Wire Explorer
+    if (NbEdges || (aPrevPoint.SquareDistance(aFirstEPoint) > Precision::SquarePConfusion()))
+    {
+      // 1. TopExp_Explorer and BRepTools_WireExplorer returns differ number of edges
+      // 2. Wire is not closed in 2D-space
       TColgp_Array1OfPnt2d PClass(1, 2);
       gp_Pnt2d anInitPnt(0., 0.);
       //
@@ -392,7 +423,13 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& aFace,
       gp_Pnt2d anInitPnt(0., 0.);
       //
       PClass.Init(anInitPnt);
-      if (nbpnts>3) {
+      if (nbpnts <= 3)
+      {
+        BadWire = 1;
+      }
+      
+      if (!BadWire)
+      {
         Standard_Integer im2 = nbpnts - 2;
         Standard_Integer im1 = nbpnts - 1;
         Standard_Integer im0 = 1;
@@ -472,20 +509,24 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& aFace,
         }//for(ii=1; ii<nbpnts; ii++,im0++,im1++,im2++) { 
         if (!iFlag) {
           angle = 0.;
+          BadWire = 1;
         }
         //
         FlecheU = Max(myTolU, FlecheU);
         FlecheV = Max(myTolV, FlecheV);
 
-        TabClass.Append(new CSLib_Class2d(PClass,
-                                          FlecheU,
-                                          FlecheV,
-                                          Umin, Vmin, Umax, Vmax));
-        
-        TabOrien.Append((angle>0.0) ? 1 : 0);
+        if (!BadWire)
+        {
+          TabClass.Append(new CSLib_Class2d(PClass,
+                                            FlecheU, FlecheV,
+                                            Umin, Vmin, Umax, Vmax));
+
+          TabOrien.Append((angle > 0.0) ? 1 : 0);
+        }
       }
-      else {
-        BadWire = 1;
+      
+      if (BadWire)
+      {
         TabOrien.Append(-1);
         TColgp_Array1OfPnt2d PPClass(1, 2);
         PPClass.Init(anInitPnt);

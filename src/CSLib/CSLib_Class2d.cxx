@@ -67,10 +67,16 @@ CSLib_Class2d::CSLib_Class2d(const TColgp_Array1OfPnt2d& theTP2d,
     {
       const gp_Pnt2d &aPCurr = myPnts2d(i),
                      &aPNext = myPnts2d(i + 1);
+      const Standard_Real aDX = aPNext.X() - aPCurr.X(),
+                          aDY = aPNext.Y() - aPCurr.Y();
+      
+      if ((aDX*aDX + aDY*aDY) < gp::Resolution())
+        continue;
+      
       std::cout << "line l" << i << " " << aPCurr.X() + theUmin << " " <<
                                            aPCurr.Y() + theVmin << " " <<
-                                           aPNext.X() - aPCurr.X() << " " <<
-                                           aPNext.Y() - aPCurr.Y() << std::endl;
+                                           aDX << " " <<
+                                           aDY << std::endl;
 
       std::cout << "trim l" << i << " l" << i << " " <<
                             0.0 << " " << aPCurr.Distance(aPNext) << std::endl;
