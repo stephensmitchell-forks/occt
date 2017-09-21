@@ -1,0 +1,12 @@
+puts "TODO OCC25440 ALL: Tcl Exception:  File STEP to read :"
+puts "TODO OCC25440 ALL: TEST INCOMPLETE"
+
+puts "========"
+puts "OCC25440"
+puts "========"
+puts ""
+##########################################################
+# STEP file with Japanese unicode symbols cannot be read
+##########################################################
+
+stepread [locate_data_file bug25440_Assy.stp] a *

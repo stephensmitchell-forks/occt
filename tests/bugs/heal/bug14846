@@ -1,0 +1,15 @@
+puts "TODO OCC14846 ALL: Faulty shapes in variables faulty_1 to faulty_"
+
+puts "========"
+puts "OCC14846"
+puts "========"
+puts ""
+###########################################################################
+# ShapeFix_Wireframe::FixWireGaps() works wrong on a shape with seam edge
+###########################################################################
+
+restore [locate_data_file bug14846_Surf_Top.brep] a
+
+checkshape a
+fixwgaps result a
+checkshape result

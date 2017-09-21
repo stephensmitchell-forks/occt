@@ -1,0 +1,17 @@
+puts "TODO OCC28523 ALL: Faulty shapes in variables faulty_1"
+
+puts "========"
+puts "OCC28523"
+puts "========"
+puts ""
+################################################
+## Fixshape reverses the orientation of the face
+################################################
+
+restore [locate_data_file bug28377_problemface.brep] f2
+
+checkshape f2
+
+fixshape newface f2
+
+checkshape newface 

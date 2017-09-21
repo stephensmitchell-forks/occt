@@ -1,0 +1,31 @@
+puts "TODO OCC19412 ALL: ERROR: OCC19412 is reproduced"
+puts "TODO OCC19412 ALL: Tcl Exception:"
+puts "TODO OCC19412 ALL: TEST INCOMPLETE"
+
+
+puts "========"
+puts "OCC19412"
+puts "========"
+puts ""
+###########################################
+# Not all names are read from a STEP file 
+###########################################
+
+pload OCAFKERNEL
+
+ReadStep D [locate_data_file bug19412_PROVA.stp]
+
+set bug_info [string trim [GetName D 0:1:1:1]]
+if {$bug_info != "PROVA"} {
+  puts "ERROR: OCC19412 is reproduced. Name of the assembly is not read."
+}
+
+set bug_info [string trim [GetName D 0:1:1:5]]
+if {$bug_info != "PIPPO"} {
+  puts "ERROR: OCC19412 is reproduced. Name of the second component is not read."
+}
+
+set bug_info [string trim [GetName D 0:1:1:2]]
+if {$bug_info != "PLUTO"} {
+  puts "ERROR: OCC19412 is reproduced. Name of the first component is not read."
+}

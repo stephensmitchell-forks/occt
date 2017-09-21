@@ -1,0 +1,15 @@
+puts "TODO OCC28595 ALL: Faulty shapes in variables faulty_1"
+
+puts "========"
+puts "OCC28595"
+puts "========"
+puts ""
+##########################################################################
+## Shifting 2d curves for non-periodic surfaces leads to incorrect result.
+##########################################################################
+
+restore [locate_data_file bug28595_face.brep] f
+
+fixshape res f
+
+checkshape res

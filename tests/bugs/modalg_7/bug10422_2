@@ -1,0 +1,23 @@
+puts "========"
+puts "OCC10422"
+puts "========"
+puts ""
+########################################
+# Bad result of BRepOffsetAPI_MakePipe
+########################################
+
+restore [locate_data_file bug10422_spine2.brep] sp
+restore [locate_data_file bug10422_profile1.brep] pr
+
+checkshape sp
+checkshape pr
+pipe result sp pr
+
+checkshape result
+
+smallview
+clear
+display result
+fit
+
+checkview -screenshot -2d -path ${imagedir}/${test_image}.png
