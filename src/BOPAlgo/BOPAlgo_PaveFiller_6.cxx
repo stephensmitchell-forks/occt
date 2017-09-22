@@ -711,7 +711,10 @@ void BOPAlgo_PaveFiller::MakeBlocks()
   // Treat possible common zones by trying to put each section edge
   // into all faces, not participated in creation of that edge, as IN edge
   PutSEInOtherFaces();
-  //
+
+  // Filter the Common Blocks created on the Face/Face post treatment stage from duplicates
+  myDS->FilterCommonBlocks();
+
   //-----------------------------------------------------scope t
   aMVStick.Clear();
   aMPBOnIn.Clear();
