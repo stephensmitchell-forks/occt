@@ -1,0 +1,9 @@
+taReadStl a1 [locate_data_file 544261808255.stl]
+taReadStl a2 [locate_data_file 544261808256.stl]
+taReadStl a3 [locate_data_file 544261808263.stl]
+taReadStl a4 [locate_data_file 544261808265.stl]
+taReadStl a5 [locate_data_file 544261808266.stl]
+
+set out [taExposedArea r -fuz 1e-2 -glue a1 a2 a3 a4 a5]
+
+set area_diff_ref 71381.10257150978

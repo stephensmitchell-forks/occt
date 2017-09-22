@@ -1,0 +1,14 @@
+if ![regexp {Sum area is ([0-9.Ee+\-]*)} $out str sum_area] {
+  puts "Error: cannot get area of input shapes"
+}
+if ![regexp {Area is ([0-9.Ee+\-]*)} $out str area] {
+  puts "Error: cannot get result area"
+} else {
+  set area_diff [expr $sum_area - $area]
+  puts "Area diff is $area_diff"
+  if {[expr abs($area_diff - $area_diff_ref)/$area_diff_ref] > $max_rel_diff} {
+    puts "Error: unexpected area difference, $area_diff vs $area_diff_ref"
+  }
+}
+puts "TEST COMPLETED"
+

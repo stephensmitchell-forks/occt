@@ -1,0 +1,7 @@
+taReadStl a1 [locate_data_file 585861208202.stl]
+taReadStl a2 [locate_data_file 585861208220.stl]
+taReadStl a3 [locate_data_file 585861208221.stl]
+
+set out [taExposedArea r a1 a2 a3]
+
+set area_diff_ref 15728.362268625118

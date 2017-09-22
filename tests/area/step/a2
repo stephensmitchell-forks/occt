@@ -1,0 +1,6 @@
+taReadStep a1 [locate_data_file 585861308215.stp]
+taReadStep a2 [locate_data_file 585861408201.stp]
+
+set out [taExposedArea r -fuz 1e-2 -glue a1 a2]
+
+set area_diff_ref 1982.2872809215187
