@@ -38,6 +38,109 @@
 #include <TopoDS_Vertex.hxx>
 #include <TopoDS_Wire.hxx>
 
+#include <NCollection_UBTree.hxx>
+#include <NCollection_UBTreeFiller.hxx>
+#include <Bnd_Box2d.hxx>
+
+typedef NCollection_UBTree<Standard_Integer, Bnd_Box2d> BRepTopAdaptor_FClass2dTree;
+typedef NCollection_UBTreeFiller <Standard_Integer, Bnd_Box2d> BRepTopAdaptor_FClass2dTreeFiller;
+
+class BRepTopAdaptor_FClass2dSel : public NCollection_UBTree <Standard_Integer, Bnd_Box2d>::Selector
+{
+public:
+  BRepTopAdaptor_FClass2dSel(const TColgp_SequenceOfPnt2d& theSeqOfPnts,
+                             const Bnd_Box2d& theBox,
+                             const Standard_Integer theCurIdx) : 
+                             mySeqOfPnts(theSeqOfPnts),
+                             myBox(theBox),
+                             myCurrentIndex(theCurIdx)
+  {}
+
+  Standard_Boolean Reject(const Bnd_Box2d& theBox) const
+  {
+    return theBox.IsOut(myBox);
+  }
+
+#define AcceptSegment {myStop = Standard_True; return Standard_True; }
+  Standard_Boolean Accept(const Standard_Integer& theIndex)
+  {
+    if (myCurrentIndex == theIndex)
+      return Standard_False;
+
+    const Standard_Integer aNbPntsM1 = mySeqOfPnts.Length()-1;
+
+    if ((myCurrentIndex == 1) && (theIndex == aNbPntsM1))
+      return Standard_False;
+
+    if ((myCurrentIndex == aNbPntsM1) && (theIndex == 1))
+      return Standard_False;
+
+    if (Abs(theIndex - myCurrentIndex) == 1)
+      return Standard_False;
+
+    const gp_XY &aP1 = mySeqOfPnts(myCurrentIndex).XY();
+    const gp_XY &aP2 = mySeqOfPnts(myCurrentIndex + 1).XY();
+    const gp_XY &aP3 = mySeqOfPnts(theIndex).XY();
+    const gp_XY &aP4 = mySeqOfPnts(theIndex + 1).XY();
+
+    const gp_XY aV12 = aP2 - aP1;
+    const gp_XY aV13 = aP3 - aP1;
+    const gp_XY aV34 = aP3 - aP4;
+
+    const Standard_Real aDet0 = aV12.Crossed(aV34);
+    const Standard_Real aDet1 = aV13.Crossed(aV34);
+    const Standard_Real aDet2 = aV12.Crossed(aV13);
+
+    if (Abs(aDet0) < Precision::PConfusion())
+    {
+      if ((Abs(aDet1) > Precision::PConfusion()) || (Abs(aDet2) > Precision::PConfusion()))
+        return Standard_False;
+
+      const Standard_Real aSqMP12 = aV12.SquareModulus();
+      const Standard_Real aTP3 = aV13.Dot(aV12);
+      if ((0.0 <= aTP3) && (aTP3 <= aSqMP12))
+        AcceptSegment;
+
+      const Standard_Real aTP4 = (aP4 - aP1).Dot(aV12);
+      if ((0.0 <= aTP4) && (aTP4 <= aSqMP12))
+        AcceptSegment;
+
+      const Standard_Real aSqMP34 = aV34.SquareModulus();
+      const Standard_Real aTP1 = aV13.Reversed().Dot(aV34);
+      if ((0.0 <= aTP1) && (aTP1 <= aSqMP34))
+        AcceptSegment;
+
+      const Standard_Real aTP2 = (aP2 - aP3).Dot(aV34);
+      if ((0.0 <= aTP2) && (aTP2 <= aSqMP34))
+        AcceptSegment;
+
+      return Standard_False;
+    }
+
+    const Standard_Real aT1 = aDet1 / aDet0,
+                        aT2 = aDet2 / aDet0;
+
+    if ((aT1 < 0.0) || (aT2 < 0.0))
+      return Standard_False;
+
+    if ((aT1 > 1.0) || (aT2 > 1.0))
+      return Standard_False;
+
+    AcceptSegment;
+  }
+#undef AcceptSegment
+
+protected:
+  BRepTopAdaptor_FClass2dSel(BRepTopAdaptor_FClass2dSel&);
+  const BRepTopAdaptor_FClass2dSel& operator=(const BRepTopAdaptor_FClass2dSel&);
+
+private:
+  const TColgp_SequenceOfPnt2d& mySeqOfPnts;
+  Bnd_Box2d myBox;
+  Standard_Integer myCurrentIndex;
+};
+
+
 //=======================================================================
 //function : Default constructor
 //purpose  : 
@@ -99,6 +202,9 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& aFace,
 
   Destroy();
 
+  BRepTopAdaptor_FClass2dTree aBBTree;
+  BRepTopAdaptor_FClass2dTreeFiller aTreeFiller(aBBTree);
+
   aPrCf = Precision::Confusion();
   aPrCf2 = aPrCf*aPrCf;
   //
@@ -121,6 +227,8 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& aFace,
   aExpF.Init(Face, TopAbs_WIRE);
   for (; aExpF.More(); aExpF.Next()) {
     const TopoDS_Wire& aW = *((TopoDS_Wire*)&aExpF.Current());
+
+    aTreeFiller.Reset();
     //
     nbpnts = 0;
     firstpoint = 1;
@@ -401,6 +509,8 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& aFace,
         anIndexMap.Bind(1, aD1Next.Length());
     } //for(;aWExp.More(); aWExp.Next()) {
     // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    
+    NCollection_Array1<Bnd_Box2d> anArrBoxes(1, nbpnts-1);
     //
     if (NbEdges || (aPrevPoint.SquareDistance(aFirstEPoint) > Precision::SquarePConfusion()))
     {
@@ -435,7 +545,6 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& aFace,
         Standard_Integer im0 = 1;
         Standard_Integer ii;
         Standard_Real    angle = 0.0;
-        Standard_Real aX0, aY0, aX1, aY1;
         //
         Standard_Integer iFlag = 1;
         //
@@ -443,19 +552,25 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& aFace,
         PClass(im1) = SeqPnt2d.Value(im1);
         PClass(nbpnts) = SeqPnt2d.Value(nbpnts);
         
-        for (ii = 1; ii<nbpnts; ii++, im0++, im1++, im2++) {
+        anArrBoxes(im2).Add(PClass(im2));
+        anArrBoxes(im2).Add(PClass(im1));
+
+        anArrBoxes(im1).Add(PClass(im1));
+        anArrBoxes(im1).Add(PClass(nbpnts));
+
+        for (ii = 1; ii<nbpnts; ii++, im0++, im1++, im2++)
+        {
           if (im2 >= nbpnts) im2 = 1;
           if (im1 >= nbpnts) im1 = 1;
           PClass(ii) = SeqPnt2d.Value(ii);
-          //
-          const gp_Pnt2d& aP2D1 = PClass(im1);
-          const gp_Pnt2d& aP2D0 = PClass(im0);
-          //aP2D0 is next to aP2D1
-          aP2D0.Coord(aX0, aY0);
-          aP2D1.Coord(aX1, aY1);
 
           gp_Vec2d A(PClass(im2), PClass(im1));
           gp_Vec2d B(PClass(im1), PClass(im0));
+          
+          anArrBoxes(ii).Add(PClass(ii));
+          anArrBoxes(ii).Add(SeqPnt2d.Value(ii + 1));
+
+          aTreeFiller.Add(ii, anArrBoxes(ii));
 
           // In order to avoid FPE-signal
           // E.g. if aSqMA == aSqMB = 1.0e200.
@@ -536,6 +651,24 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& aFace,
                                           Umin, Vmin, Umax, Vmax));
       }
     }// else if(WireIsNotEmpty)
+
+    if (BadWire)
+      continue;
+
+    // 2. Shake the tree filler
+    aTreeFiller.Fill();
+
+    for (Standard_Integer aVecIdx = anArrBoxes.Lower();
+         aVecIdx <= anArrBoxes.Upper(); aVecIdx++)
+    {
+      const Bnd_Box2d& aBox = anArrBoxes(aVecIdx);
+      BRepTopAdaptor_FClass2dSel aSelector(SeqPnt2d, aBox, aVecIdx);
+      if (aBBTree.Select(aSelector))
+      {
+        BadWire = Standard_True;
+        break;
+      }
+    }
   } // for(; aExpF.More();  aExpF.Next()) {
 
   if ((TabClass.Length() > 0) && (BadWire))
