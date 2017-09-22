@@ -1653,10 +1653,69 @@ void IntWalk_PWalking::Perform(const TColStd_Array1OfReal& ParDep,
 Standard_Boolean IntWalk_PWalking::ExtendLineInCommonZone(const IntImp_ConstIsoparametric theChoixIso,
                                                           const Standard_Boolean          theDirectionFlag) 
 {
+  // Caro1 and Caro2
+  const Handle(Adaptor3d_HSurface)& Caro1 = myIntersectionOn2S.Function().AuxillarSurface1();
+  const Handle(Adaptor3d_HSurface)& Caro2 = myIntersectionOn2S.Function().AuxillarSurface2();
+  //
+  const Standard_Real UFirst1 = Adaptor3d_HSurfaceTool::FirstUParameter(Caro1);
+  const Standard_Real VFirst1 = Adaptor3d_HSurfaceTool::FirstVParameter(Caro1);
+  const Standard_Real ULast1 = Adaptor3d_HSurfaceTool::LastUParameter(Caro1);
+  const Standard_Real VLast1 = Adaptor3d_HSurfaceTool::LastVParameter(Caro1);
+
+  const Standard_Real UFirst2 = Adaptor3d_HSurfaceTool::FirstUParameter(Caro2);
+  const Standard_Real VFirst2 = Adaptor3d_HSurfaceTool::FirstVParameter(Caro2);
+  const Standard_Real ULast2 = Adaptor3d_HSurfaceTool::LastUParameter(Caro2);
+  const Standard_Real VLast2 = Adaptor3d_HSurfaceTool::LastVParameter(Caro2);
+
   Standard_Boolean bOutOfTangentZone = Standard_False;
+  TColStd_Array1OfReal Param(1,4);
+
+  previousPoint.Parameters(Param(1), Param(2), Param(3), Param(4));
+
+  // If the point is already in the boundary
+  // we avoid extension (see bug #29093).
+  if (Param(1) - UFirst1 < ResoU1)
+  {
+    return bOutOfTangentZone;
+  }
+  
+  if (Param(2) - VFirst1 < ResoV1)
+  {
+    return bOutOfTangentZone;
+  }
+  
+  if (Param(3) - UFirst2 < ResoU2)
+  {
+    return bOutOfTangentZone;
+  }
+  
+  if (Param(4) - VFirst2 < ResoV2)
+  {
+    return bOutOfTangentZone;
+  }
+
+  if (Param(1) - ULast1 > -ResoU1)
+  {
+    return bOutOfTangentZone;
+  }
+  
+  if (Param(2) - VLast1 > -ResoV1)
+  {
+    return bOutOfTangentZone;
+  }
+  
+  if (Param(3) - ULast2 > -ResoU2)
+  {
+    return bOutOfTangentZone;
+  }
+  
+  if (Param(4) - VLast2 > -ResoV2)
+  {
+    return bOutOfTangentZone;
+  }
+
   Standard_Boolean bStop = !myIntersectionOn2S.IsTangent();
   Standard_Integer dIncKey = 1;
-  TColStd_Array1OfReal Param(1,4);
   IntWalk_StatusDeflection aStatus = IntWalk_OK;
   Standard_Integer nbIterWithoutAppend = 0;
   Standard_Integer nbEqualPoints = 0;
@@ -1664,7 +1723,8 @@ Standard_Boolean IntWalk_PWalking::ExtendLineInCommonZone(const IntImp_ConstIsop
   Standard_Integer uvit = 0;
   IntSurf_SequenceOfPntOn2S aSeqOfNewPoint;
 
-  while (!bStop) {
+  while (!bStop)
+  {
     nbIterWithoutAppend++;
 
     if((nbIterWithoutAppend > 20) || (nbEqualPoints > 20)) {

@@ -680,6 +680,9 @@ void BOPAlgo_PaveFiller::MakeBlocks()
   // into all faces, not participated in creation of that edge, as IN edge
   PutSEInOtherFaces();
   //
+
+  myDS->FilterOfCommonBlocks();
+
   //-----------------------------------------------------scope t
   aMVStick.Clear();
   aMPBOnIn.Clear();

@@ -2107,3 +2107,42 @@ Standard_Boolean BOPDS_DS::IsValidShrunkData(const Handle(BOPDS_PaveBlock)& theP
   }
   return Standard_True;
 }
+
+//=======================================================================
+//function : FilterOfCommonBlocks
+//purpose  : 
+//=======================================================================
+void BOPDS_DS::FilterOfCommonBlocks()
+{
+  NCollection_DataMap<TopoDS_Edge, Handle(BOPDS_CommonBlock)> aMapEC;
+  BOPDS_VectorOfListOfPaveBlock& aPBP = ChangePaveBlocksPool();
+  Standard_Integer aNbPBP = aPBP.Extent();
+  //
+  for (Standard_Integer i = 0; i < aNbPBP; ++i)
+  {
+    BOPDS_ListOfPaveBlock& aLPB = aPBP(i);
+    BOPDS_ListIteratorOfListOfPaveBlock aItPB;
+    aItPB.Initialize(aLPB);
+    for (; aItPB.More(); aItPB.Next())
+    {
+      const Handle(BOPDS_PaveBlock) &aPB = aItPB.Value();
+
+      if (!IsCommonBlock(aPB))
+        continue;
+
+      const Standard_Integer anEIdx = aPB->Edge();
+      const TopoDS_Edge &anE = TopoDS::Edge(Shape(anEIdx));
+
+      Handle(BOPDS_CommonBlock) *aCB = aMapEC.ChangeSeek(anE);
+      if (!aCB)
+      {
+        aCB = aMapEC.Bound(anE, CommonBlock(aPB));
+        continue;
+      }
+
+      myMapPBCB.UnBind(aPB);
+      (*aCB)->AddPaveBlock(aPB);
+      SetCommonBlock(aPB, *aCB);
+    }
+  }
+}
