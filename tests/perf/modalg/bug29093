@@ -1,0 +1,47 @@
+puts "========"
+puts "OCC29093"
+puts "========"
+puts ""
+#################################
+# BOP PaveFiller hungs and constantly consumes memory
+#################################
+
+puts "TODO OCC28989 ALL : Error! Big tolerance value!"
+
+set mem_max_wsetpeak 100000000
+
+bclearobjects;
+bcleartools;
+
+restore [locate_data_file bug29093_hung.brep] a
+explode a So
+baddobjects a_1
+baddtools a_2 a_3 a_4 a_5 a_6 a_7 a_8 a_9 a_10 a_11 a_12 a_13 a_14
+
+dchrono cr restart
+
+bfillds
+bbop result 4
+
+dchrono cr stop counter bbuild
+
+set mem_wsetpeak [meminfo wsetpeak]
+
+if { ${mem_wsetpeak} > ${mem_max_wsetpeak}} {
+    puts "Error : there is memory problem (${mem_wsetpeak} MBytes has been allocated)"
+}
+
+regexp {Tolerance +MAX=([-0-9.+eE]+)} [tolerance result] full MaxTol
+
+# Maximal tolerance value must be updated after the fix.
+# Current tolerance value is 803.89403359886296.
+
+if {${MaxTol} > 1.0e-4} {
+  puts "Error! Big tolerance value!"
+}
+
+smallview
+donly result
+fit
+
+checkview -screenshot -2d -path ${imagedir}/${test_image}.png

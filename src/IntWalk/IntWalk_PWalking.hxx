@@ -199,9 +199,6 @@ protected:
                                                              const Standard_Real the3DTol,
                                                              TColStd_Array1OfReal &thePnt);
   
-  Standard_EXPORT Standard_Boolean ExtendLineInCommonZone (const IntImp_ConstIsoparametric theChoixIso,
-                                                           const Standard_Boolean theDirectionFlag);
-
 private:
   Standard_Boolean done;
   Handle(IntSurf_LineOn2S) line;
