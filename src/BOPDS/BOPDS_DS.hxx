@@ -468,6 +468,10 @@ Standard_EXPORT virtual ~BOPDS_DS();
   //! of the existing vertices have been increased.
   Standard_EXPORT Standard_Boolean IsValidShrunkData(const Handle(BOPDS_PaveBlock)& thePB);
 
+  //! Removes the Common-block from the myMapPBCB map.
+  Standard_EXPORT void RemoveCommonBlock(const Handle(BOPDS_PaveBlock)& thePB);
+
+
 protected:
 
   

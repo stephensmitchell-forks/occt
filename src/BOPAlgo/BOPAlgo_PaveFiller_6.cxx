@@ -680,6 +680,42 @@ void BOPAlgo_PaveFiller::MakeBlocks()
   // into all faces, not participated in creation of that edge, as IN edge
   PutSEInOtherFaces();
   //
+
+  {
+    NCollection_DataMap<TopoDS_Edge, Handle(BOPDS_CommonBlock)> aMapEC;
+    BOPDS_VectorOfListOfPaveBlock& aPBP = myDS->ChangePaveBlocksPool();
+    Standard_Integer aNbPBP = aPBP.Extent();
+    //
+    for (i = 0; i < aNbPBP; ++i)
+    {
+      BOPDS_ListOfPaveBlock& aLPB = aPBP(i);
+      BOPDS_ListIteratorOfListOfPaveBlock aItPB;
+      aItPB.Initialize(aLPB);
+      for (; aItPB.More(); aItPB.Next())
+      {
+        const Handle(BOPDS_PaveBlock) &aPB = aItPB.Value();
+
+        if (!myDS->IsCommonBlock(aPB))
+          continue;
+
+        const Standard_Integer anEIdx = aPB->Edge();
+        const TopoDS_Edge &anE = TopoDS::Edge(myDS->Shape(anEIdx));
+
+        Handle(BOPDS_CommonBlock) *aCB = aMapEC.ChangeSeek(anE);
+        if (!aCB)
+        {
+          aCB = aMapEC.Bound(anE, myDS->CommonBlock(aPB));
+          continue;
+        }
+
+        myDS->RemoveCommonBlock(aPB);
+        (*aCB)->AddPaveBlock(aPB);
+        myDS->SetCommonBlock(aPB, *aCB);
+      }
+    }
+  }
+
+
   //-----------------------------------------------------scope t
   aMVStick.Clear();
   aMPBOnIn.Clear();
@@ -1042,22 +1078,11 @@ void BOPAlgo_PaveFiller::PostTreatFF
               iE=myDS->Append(aSI);
             }
             //
-            // update real edge tolerance according to distances in common block if any
-            if (aPDS->IsCommonBlock(aPBRx)) {
-              const Handle(BOPDS_CommonBlock)& aCB = aPDS->CommonBlock(aPBRx);
-              Standard_Real *pTol = aMCBTol.ChangeSeek(aCB);
-              if (!pTol) {
-                Standard_Real aTol = BOPAlgo_Tools::ComputeToleranceOfCB(aCB, aPDS, aPF.Context());
-                pTol = aMCBTol.Bound(aCB, aTol);
-              }
-              //
-              if (aNC.Tolerance() < *pTol) {
-                aNC.SetTolerance(*pTol);
-              }
-            }
-            // append new PaveBlock to aLPBC
+
             Handle(BOPDS_PaveBlock) *pPBC = aMEPB.ChangeSeek(iE);
-            if (!pPBC) {
+            // append new PaveBlock to aLPBC
+            if (!pPBC)
+            {
               pPBC = aMEPB.Bound(iE, new BOPDS_PaveBlock());
               BOPDS_Pave aPaveR1, aPaveR2;
               aPaveR1 = aPBRx->Pave1();
@@ -1070,12 +1095,43 @@ void BOPAlgo_PaveFiller::PostTreatFF
               (*pPBC)->SetEdge(iE);
             }
             //
-            if (bOld) {
+            if (bOld)
+            {
               (*pPBC)->SetOriginalEdge(aPB1->OriginalEdge());
               aDMExEdges.ChangeFind(aPB1).Append(*pPBC);
             }
-            else {
+            else
+            {
               aLPBC.Append(*pPBC);
+            }
+
+            // update real edge tolerance according to distances in common block if any
+            if (aPDS->IsCommonBlock(aPBRx))
+            {
+              const Handle(BOPDS_CommonBlock)& aCB = aPDS->CommonBlock(aPBRx);
+              const Standard_Integer anIdxOriE = aPB1->OriginalEdge();
+
+              if (pPBC && (anIdxOriE > 0))
+              {
+                // If original edge exists                
+                NCollection_List<Handle(BOPDS_PaveBlock)> *aListOfPB = myMapICB.ChangeSeek(iE);
+                if (aListOfPB == 0)
+                {
+                  aListOfPB = myMapICB.Bound(iE, NCollection_List<Handle(BOPDS_PaveBlock)>());
+                }
+
+                aListOfPB->Append(*pPBC);
+              }
+
+              Standard_Real *pTol = aMCBTol.ChangeSeek(aCB);
+              if (!pTol) {
+                Standard_Real aTol = BOPAlgo_Tools::ComputeToleranceOfCB(aCB, aPDS, aPF.Context());
+                pTol = aMCBTol.Bound(aCB, aTol);
+              }
+              //
+              if (aNC.Tolerance() < *pTol) {
+                aNC.SetTolerance(*pTol);
+              }
             }
           }
         }
@@ -2414,18 +2470,35 @@ void BOPAlgo_PaveFiller::UpdateExistingPaveBlocks
     anEF.SetContext(myContext);
     anEF.Perform();
     //
-    const IntTools_SequenceOfCommonPrts& aCPrts=anEF.CommonParts();
-    if (aCPrts.Length() == 1) {
+    const IntTools_SequenceOfCommonPrts& aCPrts = anEF.CommonParts();
+    if (aCPrts.Length() == 1)
+    {
       Standard_Boolean bCoinc = (aCPrts(1).Type() == TopAbs_EDGE);
-      if (bCoinc) {
-        if (bCB) {
+      if (bCoinc)
+      {
+        if (bCB)
+        {
           aCB = myDS->CommonBlock(aPBChangeValue);
-        } else {
+          const NCollection_List<Handle(BOPDS_PaveBlock)> *aListOfPB = myMapICB.Seek(aPBChangeValue->Edge());
+          if (aListOfPB)
+          {
+            NCollection_List<Handle(BOPDS_PaveBlock)>::Iterator anItr(*aListOfPB);
+            for (; anItr.More(); anItr.Next())
+            {
+              Handle(BOPDS_PaveBlock) &aCurrPB = anItr.ChangeValue();
+              aCB->AddPaveBlock(aCurrPB);
+              myDS->SetCommonBlock(aCurrPB, aCB);
+            }
+          }
+          aCB->AddFace(nF);
+        }
+        else
+        {
           aCB = new BOPDS_CommonBlock;
           aCB->AddPaveBlock(aPBChangeValue);
+          aCB->AddFace(nF);
           myDS->SetCommonBlock(aPBChangeValue, aCB);
         }
-        aCB->AddFace(nF);
         //
         aMPBIn.Add(aPBChangeValue);
       }

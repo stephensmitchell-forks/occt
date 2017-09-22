@@ -691,12 +691,15 @@ void BOPAlgo_PaveFiller::MakePCurves()
   Standard_Integer aNb = aVMPC.Extent();
   for (i = 0; i < aNb; ++i)
   {
-    if (aVMPC(i).HasErrors())
+    const TopoDS_Face& aF = TopoDS::Face(aVMPC(i).Face());
+    const TopoDS_Edge& aE = TopoDS::Edge(aVMPC(i).Edge());
+    if (!BOPTools_AlgoTools2D::HasCurveOnSurface(aE, aF) ||
+        aVMPC(i).HasErrors())
     {
       TopoDS_Compound aWC;
       BRep_Builder().MakeCompound(aWC);
-      BRep_Builder().Add(aWC, aVMPC(i).Edge());
-      BRep_Builder().Add(aWC, aVMPC(i).Face());
+      BRep_Builder().Add(aWC, aE);
+      BRep_Builder().Add(aWC, aF);
       AddWarning(new BOPAlgo_AlertBuildingPCurveFailed(aWC));
     }
   }

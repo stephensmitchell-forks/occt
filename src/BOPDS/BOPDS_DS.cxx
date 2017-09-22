@@ -1165,6 +1165,18 @@ void BOPDS_DS::SetCommonBlock(const Handle(BOPDS_PaveBlock)& thePB,
   }
 }
 
+//=======================================================================
+//function : RemoveCommonBlock
+//purpose  : 
+//=======================================================================
+void BOPDS_DS::RemoveCommonBlock(const Handle(BOPDS_PaveBlock)& thePB)
+{
+  //if (!IsCommonBlock(thePB))
+  //  return;
+
+  myMapPBCB.UnBind(thePB);
+}
+
 //
 // FaceInfo
 //

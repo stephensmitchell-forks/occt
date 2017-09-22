@@ -30,6 +30,7 @@
 #include <BOPAlgo_Algo.hxx>
 #include <BOPCol_BaseAllocator.hxx>
 #include <TopAbs_ShapeEnum.hxx>
+#include <TopTools_DataMapOfShapeListOfShape.hxx>
 #include <Standard_Integer.hxx>
 #include <BOPDS_IndexedDataMapOfShapeCoupleOfPaveBlocks.hxx>
 #include <Standard_Boolean.hxx>
@@ -493,7 +494,8 @@ protected:
   Standard_Boolean myIsPrimary;
   Standard_Boolean myAvoidBuildPCurve;
   BOPAlgo_GlueEnum myGlue;
-
+  TopTools_DataMapOfShapeListOfShape myMapOfErigins;
+  NCollection_DataMap<Standard_Integer, NCollection_List<Handle(BOPDS_PaveBlock)>> myMapICB;
 
 private:
 

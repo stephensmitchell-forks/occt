@@ -810,7 +810,6 @@ Standard_Boolean IsInside(const TopoDS_Shape& theHole,
                           Handle(IntTools_Context)& theContext)
 {
   Standard_Boolean bRet;
-  Standard_Real aT, aU, aV;
   
   TopAbs_State aState;
   TopExp_Explorer aExp;
@@ -824,20 +823,19 @@ Standard_Boolean IsInside(const TopoDS_Shape& theHole,
   BOPTools::MapShapes(aF2, TopAbs_EDGE, aME2);//AA
   //
   aExp.Init(theHole, TopAbs_EDGE);
-  if (aExp.More()) {
-    const TopoDS_Edge& aE =(*(TopoDS_Edge *)(&aExp.Current()));
-    if (aME2.Contains(aE)) {
+  if (aExp.More())
+  {
+    const TopoDS_Edge& aE = (*(TopoDS_Edge *) (&aExp.Current()));
+    if (aME2.Contains(aE))
+    {
       return bRet;
     }
-    if (!BRep_Tool::Degenerated(aE)) {
+    if (!BRep_Tool::Degenerated(aE))
+    {
       //
-      aT=BOPTools_AlgoTools2D::IntermediatePoint(aE);
-      BOPTools_AlgoTools2D::PointOnSurface(aE, aF2, aT, aU, aV, theContext);
-      aP2D.SetCoord(aU, aV);
-      //
-      IntTools_FClass2d& aClsf=theContext->FClass2d(aF2);
-      aState=aClsf.Perform(aP2D);
-      bRet=(aState==TopAbs_IN);
+      gp_Pnt aP3D;
+      BOPTools_AlgoTools::PointOnEdge(aE, BOPTools_AlgoTools2D::IntermediatePoint(aE), aP3D);
+      bRet = theContext->IsPointInFace(aP3D, aF2, BRep_Tool::Tolerance(aE));
     }
   }
   //
