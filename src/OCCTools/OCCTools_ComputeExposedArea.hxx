@@ -14,6 +14,15 @@ class Message_ProgressIndicator;
 //! and calculates the area of the result (exposed area).
 //! It looks only for solid shapes in input arguments. If there are no solids
 //! it looks for faces and tries to create closed shells and then solids of them.
+//! The class has the following options:
+//! - *Gluing mode* - allows speeding up the calculation on the touching arguments;
+//!                   In this mode the area computation will be performed on the faces,
+//!                   forming the closed shells, not on the solids. It will help to avoid
+//!                   extra computations and, most importantly, possible errors while
+//!                   constructing the solids;
+//! - *Fuzzy mode* - additional tolerance for the operation to make the arguments
+//!                  interfere when its appropriate.
+//!
 class OCCTools_ComputeExposedArea
 {
 public:
@@ -85,6 +94,7 @@ public:
   }
 
 private:
+
   TopTools_ListOfShape myShapes;
   TopoDS_Shape myFusedShape;
   Standard_Real myFuzzyValue;
