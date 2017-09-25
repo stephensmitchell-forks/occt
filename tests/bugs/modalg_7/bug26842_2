@@ -1,3 +1,7 @@
+puts "TODO OCC26842 ALL: Error :  is WRONG because number of EDGE entities in shape"
+puts "TODO OCC26842 ALL: Error : The length of result shape is"
+puts "TODO OCC26842 ALL: Error : The command is not valid. The length is 0."
+
 puts "======="
 puts "OCC26842"
 puts "======="
@@ -5,6 +9,15 @@ puts ""
 ##################################################
 # bopsection result does not contain any edges.
 ##################################################
+
+# The main problem is in classifier-algorithm.
+# The intersection curve is found but is rejected
+# by BOP-operation because some intermediate point
+# of this curve is classified as OUT. 
+# Good fix must create adecvate polygon for classification,
+# which will respect the pcurve of the face with some deflection
+# (see method BRepTopAdaptor_FClass2d::Init(...)).
+# Currently, this polygon is wrong. 
 
 restore [locate_data_file bug26842_s2.brep] s2
 restore [locate_data_file bug26842_plane.brep] plane

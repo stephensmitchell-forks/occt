@@ -202,9 +202,6 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& aFace,
 
   Destroy();
 
-  BRepTopAdaptor_FClass2dTree aBBTree;
-  BRepTopAdaptor_FClass2dTreeFiller aTreeFiller(aBBTree);
-
   aPrCf = Precision::Confusion();
   aPrCf2 = aPrCf*aPrCf;
   //
@@ -227,13 +224,11 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& aFace,
   aExpF.Init(Face, TopAbs_WIRE);
   for (; aExpF.More(); aExpF.Next()) {
     const TopoDS_Wire& aW = *((TopoDS_Wire*)&aExpF.Current());
-
-    aTreeFiller.Reset();
     //
     nbpnts = 0;
     firstpoint = 1;
-    FlecheU = 0.;
-    FlecheV = 0.;
+    FlecheU = myTolU;
+    FlecheV = myTolV;
     TolVertex1 = 0.;
     TolVertex = 0.;
     WireIsNotEmpty = Standard_False;
@@ -248,7 +243,12 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& aFace,
     // NbEdges
     NbEdges = 0;
     aExp.Init(aW, TopAbs_EDGE);
-    for (; aExp.More(); aExp.Next()) {
+    for (; aExp.More(); aExp.Next())
+    {
+      const TopoDS_Edge& anE = TopoDS::Edge(aExp.Current());
+      const Standard_Real aTol = BRep_Tool::Tolerance(anE);
+      FlecheU = Max(FlecheU, anAS.UResolution(aTol));
+      FlecheV = Max(FlecheV, anAS.VResolution(aTol));
       NbEdges++;
     }
 
@@ -510,7 +510,9 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& aFace,
     } //for(;aWExp.More(); aWExp.Next()) {
     // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     
-    NCollection_Array1<Bnd_Box2d> anArrBoxes(1, nbpnts-1);
+    BRepTopAdaptor_FClass2dTree aBBTree;
+    BRepTopAdaptor_FClass2dTreeFiller aTreeFiller(aBBTree);
+    NCollection_Array1<Bnd_Box2d> anArrBoxes(1, nbpnts - 1);
     //
     if (NbEdges || (aPrevPoint.SquareDistance(aFirstEPoint) > Precision::SquarePConfusion()))
     {

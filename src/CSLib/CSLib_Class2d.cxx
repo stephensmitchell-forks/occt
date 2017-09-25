@@ -47,14 +47,46 @@ CSLib_Class2d::CSLib_Class2d(const TColgp_Array1OfPnt2d& theTP2d,
     return;
   }
 
-  for (Standard_Integer i = myPnts2d.Lower(), j = theTP2d.Lower(); 
-                                              i < myPnts2d.Upper(); ++i, j++)
+  myTolU = Min(myTolU, 0.01*(theUmax - theUmin));
+  myTolV = Min(myTolV, 0.01*(theVmax - theVmin));
+  myTolU = Max(myTolU, Precision::PConfusion());
+  myTolV = Max(myTolV, Precision::PConfusion());
+
+  // The classification algorithm works incorrectly
+  // some segment(s) of the polygon has null length.
+  // The code blow forbid creation of such polygons.
+
+  Standard_Integer aCurrIdx = myPnts2d.Lower();
+  gp_Pnt2d aPPrev = theTP2d(theTP2d.Lower());
+  myPnts2d(aCurrIdx).SetCoord(aPPrev.X() - theUmin, aPPrev.Y() - theVmin);
+  for (Standard_Integer i = theTP2d.Lower()+1; i < theTP2d.Upper(); ++i)
   {
-    const gp_Pnt2d& aP2D = theTP2d(j);
-    myPnts2d(i).SetCoord(aP2D.X() - theUmin, aP2D.Y() - theVmin);
+    const gp_Pnt2d& aPCur = theTP2d(i);
+
+    if ((Abs(aPPrev.X() - aPCur.X()) < myTolU) && (Abs(aPPrev.Y() - aPCur.Y()) < myTolV))
+    {
+      continue;
+    }
+
+    myPnts2d(++aCurrIdx).SetCoord(aPCur.X() - theUmin, aPCur.Y() - theVmin);
+    aPPrev = aPCur;
   }
 
-  myPnts2d.SetValue(myPnts2d.Upper(), myPnts2d(myPnts2d.Lower()));
+  {
+    aPPrev = theTP2d(theTP2d.Lower());
+    const gp_Pnt2d& aPCur = theTP2d(theTP2d.Upper());
+    if ((Abs(aPPrev.X() - aPCur.X()) > myTolU) || (Abs(aPPrev.Y() - aPCur.Y()) > myTolV))
+    {
+      myPnts2d(++aCurrIdx).SetCoord(aPCur.X() - theUmin, aPCur.Y() - theVmin);
+    }
+
+    myPnts2d(++aCurrIdx).SetCoord(aPPrev.X() - theUmin, aPPrev.Y() - theVmin);
+  }
+
+  if (aCurrIdx < myPnts2d.Upper())
+  {
+    myPnts2d.Resize(myPnts2d.Lower(), aCurrIdx, Standard_True);
+  }
 
 #ifdef CSLIB_CLASS2D_DEBUG
   bool flShow = false;
@@ -63,7 +95,7 @@ CSLib_Class2d::CSLib_Class2d(const TColgp_Array1OfPnt2d& theTP2d,
   {
     std::cout << "+++ Dump of CSLib_Class2d polygon ++" << std::endl;
 
-    for (Standard_Integer i = 0; i < aN; i++)
+    for (Standard_Integer i = myPnts2d.Lower(); i < myPnts2d.Upper(); i++)
     {
       const gp_Pnt2d &aPCurr = myPnts2d(i),
                      &aPNext = myPnts2d(i + 1);
@@ -103,7 +135,7 @@ CSLib_Class2d::PolyState CSLib_Class2d::Classify(const gp_Pnt2d& theP,
                                                  const Standard_Real theTolU,
                                                  const Standard_Real theTolV) const
 { 
-  if (!myPnts2d.Size())
+  if (myPnts2d.Size() < 3)
   {
     // Return 0 for compatibility with
     // previous versions of OCCT (it does not
@@ -163,6 +195,9 @@ CSLib_Class2d::PolyState CSLib_Class2d::Classify(const gp_Pnt2d& theP,
 //  2. V is expanded to the two not collinear components: DU and DV.
 //  3. If every coefficient of expanding is less than the corresponding
 //    tolerance (theTolU and theTolV) then the ON-status is returned.
+//
+// ATTENTION!!!
+//  theTolU or/and theTolV can be equal to 0.
 //=======================================================================
 CSLib_Class2d::PolyState CSLib_Class2d::InternalClass(const Standard_Real thePx,
                                                        const Standard_Real thePy,
@@ -175,12 +210,14 @@ CSLib_Class2d::PolyState CSLib_Class2d::InternalClass(const Standard_Real thePx,
   Standard_Real aPrevX = myPnts2d(0).X() - thePx,
                 aPrevY = myPnts2d(0).Y() - thePy;
 
-  if ((Abs(aPrevX) < theTolU) && (Abs(aPrevY) < theTolV))
+  if ((Abs(aPrevX) <= theTolU) && (Abs(aPrevY) <= theTolV))
   {
     //If the classified point is in the vertex of
     //the polygon
     return PolyOn;
   }
+
+  const Standard_Real aNullTolV = Epsilon(myVmax - myVmin);
 
   CSLib_Class2d::PolyState aRetVal = PolyOut;
 
@@ -193,25 +230,27 @@ CSLib_Class2d::PolyState CSLib_Class2d::InternalClass(const Standard_Real thePx,
     const Standard_Real aDx = aNewX - aPrevX;
     const Standard_Real aDy = aNewY - aPrevY;
 
-    if (Abs(aNewY) < theTolV)
+    if (Abs(aNewY) <= theTolV)
     {
       // The ray goes through some vertex of the polygon
 
-      if (Abs(aDy) < gp::Resolution())
+      if (Abs(aPrevY) < theTolV)
       {
         // Tangential case. Must be investigated by other methods.
         return (PolyState) 0;
       }
 
-      if (Abs(aNewX) < theTolU)
+      if (Abs(aNewX) <= theTolU)
       {
         //If the classified point is in the vertex of
         //the polygon
         return PolyOn;
       }
 
-      if (aNewX > 0.0)
+      if ((Abs(aNewY) <= aNullTolV) && (aNewX > 0.0))
       {
+        // Ray goes exactly through the vertex of the polygon.
+
         Standard_Real aY1 = aNewY;
         if (i < aN - 1)
         {
@@ -256,16 +295,6 @@ CSLib_Class2d::PolyState CSLib_Class2d::InternalClass(const Standard_Real thePx,
       }
     }
 
-    if (Abs(aPrevY) < theTolV)
-    {
-      aPrevX = aNewX;
-      aPrevY = aNewY;
-      continue;
-    }
-
-    //Square length of the considered segment
-    const Standard_Real aSqL = aDx*aDx + aDy*aDy;
-    if (!IsEqual(aSqL, 0.0))
     {
       // If the line (which the current segment lies in) has
       // the location L(aPrevX, aPrevY) and the direction
@@ -280,8 +309,11 @@ CSLib_Class2d::PolyState CSLib_Class2d::InternalClass(const Standard_Real thePx,
       // must be satisfied.
       //
       // Or
-      //      0 <= -(aPrevX*aDx+aPrevY*aDy) <= aSqL
+      //      0 <= -(aPrevX*aDx+aPrevY*aDy) <= || d ||^2
 
+      //Square length of the considered segment
+      //aSqL != 0 (see algorithm of polygon building in constructor).
+      const Standard_Real aSqL = aDx*aDx + aDy*aDy;
       const Standard_Real aDP = aDx*aPrevX + aDy*aPrevY;
       if ((-aSqL <= aDP) && (aDP <= 0.0))
       {
@@ -291,13 +323,23 @@ CSLib_Class2d::PolyState CSLib_Class2d::InternalClass(const Standard_Real thePx,
         const Standard_Real aXNear = aPrevX - aDP*aDx / aSqL;
         const Standard_Real aYNear = aPrevY - aDP*aDy / aSqL;
 
-        if ((Abs(aXNear) < theTolU) && (Abs(aYNear) < theTolV))
+        if ((Abs(aXNear) <= theTolU) && (Abs(aYNear) <= theTolV))
         {
           // The distance between the projection point and 
           // the classified point (0, 0) is in the given tolerances
           return PolyOn;
         }
       }
+    }
+
+    if (Abs(aPrevY) <= aNullTolV)
+    {
+      // Ray goes exactly through the vertex of the polygon.
+      // This case was processed earlier.
+
+      aPrevX = aNewX;
+      aPrevY = aNewY;
+      continue;
     }
 
     if (aNewY*aPrevY <= 0.0)
