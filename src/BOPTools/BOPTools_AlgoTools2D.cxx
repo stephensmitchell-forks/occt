@@ -57,6 +57,7 @@
 #include <IntTools_Tools.hxx>
 #include <Precision.hxx>
 #include <ProjLib_ProjectedCurve.hxx>
+#include <ProjLib.hxx>
 #include <Standard_ConstructionError.hxx>
 #include <Standard_NotImplemented.hxx>
 #include <TopExp.hxx>
@@ -64,6 +65,7 @@
 #include <TopLoc_Location.hxx>
 #include <TopoDS_Edge.hxx>
 #include <TopoDS_Face.hxx>
+#include <AppParCurves_Constraint.hxx>
 
 static 
   Standard_Boolean CheckEdgeLength (const TopoDS_Edge& );
@@ -626,6 +628,9 @@ void BOPTools_AlgoTools2D::MakePCurveOnFace
   aBAHS=new GeomAdaptor_HSurface(aGAS);
   aBAHC=new GeomAdaptor_HCurve(aC3D, aT1, aT2);
   //
+  Standard_Real aTR = Precision::Confusion();//1.e-7;
+  Standard_Real aMaxTol = 1.e3 * aTR; //0.0001
+  Standard_Boolean isAnaSurf = ProjLib::IsAnaSurf(aBAHS);
   //when the type of surface is GeomAbs_SurfaceOfRevolution
   if (aGAS.GetType() == GeomAbs_SurfaceOfRevolution) {
     Standard_Real aTR;
@@ -640,27 +645,42 @@ void BOPTools_AlgoTools2D::MakePCurveOnFace
     aTolR = aProj1.GetTolerance();
   } 
   else {
-    Standard_Real aTR = Precision::Confusion();//1.e-7;
-    if (TolReached2d > aTR) {
-      aTR = Min(0.0001, Max(.01 * TolReached2d, aTR));
+    ProjLib_ProjectedCurve aProjCurv(aBAHS);
+    Standard_Integer aDegMin = -1, aDegMax = -1, aMaxSegments = -1;
+    Standard_Real aMaxDist = -1;
+    AppParCurves_Constraint aBndPnt = AppParCurves_NoConstraint;
+    if ((TolReached2d >= 10. * aTR) && (TolReached2d <= aMaxTol || isAnaSurf))
+    {
+      aTR = Min(aMaxTol, 0.1*TolReached2d);
+      aMaxSegments = 100;
+      aMaxDist = 1.e3*TolReached2d;
+      if (!isAnaSurf)
+      {
+        aBndPnt = AppParCurves_PassPoint;
+      }
     }
-
-    ProjLib_ProjectedCurve aProjCurv(aBAHS, aBAHC, aTR);// 1
-    BOPTools_AlgoTools2D::MakePCurveOfType(aProjCurv, aC2D);
+    else if (TolReached2d > aMaxTol)
+    {
+      aTR = Min(TolReached2d, 1.e3 * aMaxTol);
+      aMaxDist = 1.e2 * aTR;
+      aMaxSegments = 100;
+    }
+    aProjCurv.Load(aTR);
+    aProjCurv.SetDegree(aDegMin, aDegMax);
+    aProjCurv.SetMaxSegments(aMaxSegments);
+    aProjCurv.SetBndPnt(aBndPnt);
+    aProjCurv.SetMaxDist(aMaxDist);
+    aProjCurv.Perform(aBAHC);
+    ProjLib::MakePCurveOfType(aProjCurv, aC2D);
     aTolR = aProjCurv.GetTolerance();
   }
   //
-  if (aC2D.IsNull()) { 
-    ProjLib_ProjectedCurve aProjCurvAgain(aBAHS, aBAHC, TolReached2d);// 2
-    BOPTools_AlgoTools2D::MakePCurveOfType(aProjCurvAgain, aC2D);
+  if (aC2D.IsNull() && (aTR < aMaxTol || aTR < TolReached2d))
+  {
+    aTR = Max(TolReached2d, aMaxTol);
+    ProjLib_ProjectedCurve aProjCurvAgain(aBAHS, aBAHC, aTR);// 2
+    ProjLib::MakePCurveOfType(aProjCurvAgain, aC2D);
     aTolR = aProjCurvAgain.GetTolerance();
-    //
-    if (aC2D.IsNull()) { 
-      Standard_Real aTR=0.0001;
-      ProjLib_ProjectedCurve aProj3(aBAHS, aBAHC, aTR);// 3
-      BOPTools_AlgoTools2D::MakePCurveOfType(aProj3, aC2D);
-      aTolR = aProj3.GetTolerance();
-    }
   }
   //
   if(aC2D.IsNull())
