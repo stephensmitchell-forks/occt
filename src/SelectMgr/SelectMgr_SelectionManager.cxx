@@ -339,17 +339,27 @@ void SelectMgr_SelectionManager::Activate (const Handle(SelectMgr_SelectableObje
 
   switch (aSelection->UpdateStatus())
   {
-  case SelectMgr_TOU_Full:
-    if (theObject->HasSelection (theMode))
-      theSelector->RemoveSelectionOfObject (theObject, aSelection);
-    theObject->RecomputePrimitives (theMode);
-  case SelectMgr_TOU_Partial:
-    if(theObject->HasTransformation())
-      theObject->UpdateTransformations (aSelection);
-    theSelector->RebuildObjectsTree();
-    break;
-  default:
-    break;
+    case SelectMgr_TOU_Full:
+    {
+      if (theObject->HasSelection (theMode))
+      {
+        theSelector->RemoveSelectionOfObject (theObject, aSelection);
+      }
+      theObject->RecomputePrimitives (theMode);
+      // pass through SelectMgr_TOU_Partial
+    }
+    Standard_FALLTHROUGH
+    case SelectMgr_TOU_Partial:
+    {
+      if(theObject->HasTransformation())
+      {
+        theObject->UpdateTransformations (aSelection);
+      }
+      theSelector->RebuildObjectsTree();
+      break;
+    }
+    default:
+      break;
   }
   aSelection->UpdateStatus(SelectMgr_TOU_None);
 
@@ -744,16 +754,22 @@ void SelectMgr_SelectionManager::Update (const Handle(SelectMgr_SelectableObject
     {
       switch (aSelection->UpdateStatus())
       {
-      case SelectMgr_TOU_Full:
-        ClearSelectionStructures (theObject, aSelection->Mode());
-        theObject->RecomputePrimitives (aSelection->Mode()); // no break on purpose...
-        RestoreSelectionStructures (theObject, aSelection->Mode());
-      case SelectMgr_TOU_Partial:
-        theObject->UpdateTransformations (aSelection);
-        rebuildSelectionStructures();
-        break;
-      default:
-        break;
+        case SelectMgr_TOU_Full:
+        {
+          ClearSelectionStructures (theObject, aSelection->Mode());
+          theObject->RecomputePrimitives (aSelection->Mode()); // no break on purpose...
+          RestoreSelectionStructures (theObject, aSelection->Mode());
+          // pass through SelectMgr_TOU_Partial
+        }
+        Standard_FALLTHROUGH
+        case SelectMgr_TOU_Partial:
+        {
+          theObject->UpdateTransformations (aSelection);
+          rebuildSelectionStructures();
+          break;
+        }
+        default:
+          break;
       }
       aSelection->UpdateStatus (SelectMgr_TOU_None);
       aSelection->UpdateBVHStatus (SelectMgr_TBU_None);
@@ -799,16 +815,22 @@ void SelectMgr_SelectionManager::Update (const Handle(SelectMgr_SelectableObject
     {
       switch (aSelection->UpdateStatus())
       {
-      case SelectMgr_TOU_Full:
-        ClearSelectionStructures (theObject, aSelection->Mode());
-        theObject->RecomputePrimitives (aSelection->Mode());
-        RestoreSelectionStructures (theObject, aSelection->Mode());
-      case SelectMgr_TOU_Partial:
-        theObject->UpdateTransformations (aSelection);
-        rebuildSelectionStructures();
-        break;
-      default:
-        break;
+        case SelectMgr_TOU_Full:
+        {
+          ClearSelectionStructures (theObject, aSelection->Mode());
+          theObject->RecomputePrimitives (aSelection->Mode());
+          RestoreSelectionStructures (theObject, aSelection->Mode());
+          // pass through SelectMgr_TOU_Partial
+        }
+        Standard_FALLTHROUGH
+        case SelectMgr_TOU_Partial:
+        {
+          theObject->UpdateTransformations (aSelection);
+          rebuildSelectionStructures();
+          break;
+        }
+        default:
+          break;
       }
       aSelection->UpdateStatus (SelectMgr_TOU_None);
       aSelection->UpdateBVHStatus (SelectMgr_TBU_None);
@@ -818,19 +840,25 @@ void SelectMgr_SelectionManager::Update (const Handle(SelectMgr_SelectableObject
     {
       switch (aSelection->UpdateStatus())
       {
-      case SelectMgr_TOU_Full:
-        ClearSelectionStructures (theObject, aSelection->Mode(), theSelector);
-        theObject->RecomputePrimitives (aSelection->Mode());
-        RestoreSelectionStructures (theObject, aSelection->Mode(), theSelector);
-      case SelectMgr_TOU_Partial:
-        if (theObject->HasTransformation())
+        case SelectMgr_TOU_Full:
         {
-          theObject->UpdateTransformations (aSelection);
-          theSelector->RebuildObjectsTree();
+          ClearSelectionStructures (theObject, aSelection->Mode(), theSelector);
+          theObject->RecomputePrimitives (aSelection->Mode());
+          RestoreSelectionStructures (theObject, aSelection->Mode(), theSelector);
+          // pass through SelectMgr_TOU_Partial
         }
-        break;
-      default:
-        break;
+        Standard_FALLTHROUGH
+        case SelectMgr_TOU_Partial:
+        {
+          if (theObject->HasTransformation())
+          {
+            theObject->UpdateTransformations (aSelection);
+            theSelector->RebuildObjectsTree();
+          }
+          break;
+        }
+        default:
+          break;
       }
 
       aSelection->UpdateStatus(SelectMgr_TOU_None);
