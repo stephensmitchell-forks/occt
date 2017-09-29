@@ -118,6 +118,7 @@
 #include <Geom_OffsetSurface.hxx>
 #include <BRep_PointOnCurve.hxx>
 #include <BRep_ListOfPointRepresentation.hxx>
+#include <BRep_TEdge.hxx>
 #include <BRep_TVertex.hxx>
 #include <Message_ProgressSentry.hxx>
 #include <BRepBuilderAPI_VertexInspector.hxx>
@@ -951,11 +952,22 @@ TopoDS_Edge BRepBuilderAPI_Sewing::SameParameterEdge(const TopoDS_Edge& edgeFirs
             if (dist > dist2) 
               dist2 = dist;
           }
-          maxTol = Max(sqrt(dist2), Precision::Confusion());
+          maxTol = Max(sqrt(dist2) * (1. + 1e-7), Precision::Confusion());
         }
       }
       if(maxTol >= 0. && maxTol < tolReached)
+      {
+        if (tolReached > MaxTolerance())
+        {
+          // Set tolerance directly to overwrite too large tolerance
+          static_cast<BRep_TEdge*>(edge.TShape().operator->())->Tolerance(maxTol);
+        }
+        else
+        {
+          // just update tolerance with computed distance
         aBuilder.UpdateEdge(edge, maxTol);
+        }
+      }
       aBuilder.SameParameter(edge,Standard_True);
     }
   }
