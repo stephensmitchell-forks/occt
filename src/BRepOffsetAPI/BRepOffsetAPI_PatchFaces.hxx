@@ -27,6 +27,7 @@
 #include <Standard_Boolean.hxx>
 #include <TopTools_IndexedDataMapOfShapeShape.hxx>
 #include <TopTools_IndexedDataMapOfShapeListOfShape.hxx>
+#include <TopTools_DataMapOfShapeListOfShape.hxx>
 #include <TopTools_DataMapOfShapeShape.hxx>
 #include <TopTools_DataMapOfOrientedShapeShape.hxx>
 #include <TopTools_MapOfShape.hxx>
@@ -72,22 +73,31 @@ private:
                                             const TopoDS_Face& theNewFace,
                                             TopoDS_Face&       theBoundedNewFace);
   
-  Standard_EXPORT void PutVertexToEdge(const TopoDS_Vertex& theVertex,
-                                       const TopoDS_Vertex& theProVertex,
-                                       TopoDS_Edge& theEdge,
-                                       const TopoDS_Edge& theProEdge,
-                                       const Standard_Real theParamOnEdge);
+  Standard_EXPORT void PutVertexToEdge(const TopoDS_Vertex&     theVertex,
+                                       //const TopoDS_Vertex& theProVertex,
+                                       const TopAbs_Orientation theProVertexOrientation,
+                                       TopoDS_Edge&             theEdge,
+                                       const TopoDS_Edge&       theProEdge,
+                                       const TopoDS_Face&       theFace,
+                                       const gp_Pnt2d&          Pnt2dOnConstEdge,
+                                       const Standard_Real      theParamOnEdge);
   
   Standard_EXPORT void ProjectVertexOnNewEdge_2d(const TopoDS_Vertex& theVertex,
                                                  const TopoDS_Edge&   theEdge,
                                                  const TopoDS_Face&   theFace,
                                                  const TopoDS_Edge&   theNewEdge,
                                                  const TopoDS_Face&   theNewFace,
+                                                 Standard_Real&       theParamOnConst,
                                                  Standard_Real&       theParam,
+                                                 gp_Pnt&              thePntOnConst,
                                                  gp_Pnt&              thePnt,
+                                                 gp_Pnt&              thePntSol,
                                                  gp_Pnt2d&            thePnt2d,
                                                  Standard_Real&       theTolReached);
 
+  Standard_EXPORT Standard_Boolean IsMoreThan3Edges(const TopoDS_Vertex& theVertex);
+
+  
   TopoDS_Shape myInitialShape;
   
   TopTools_IndexedDataMapOfShapeShape myFacePatchFace;
@@ -99,6 +109,7 @@ private:
   TopTools_MapOfShape myTangentEdges;
 
   TopTools_IndexedDataMapOfShapeListOfShape myEFmap;
+  TopTools_DataMapOfShapeListOfShape        myVFmap;
 
 };
 
