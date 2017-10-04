@@ -2817,7 +2817,7 @@ static Standard_Boolean EnlargeGeometry(Handle(Geom_Surface)& S,
 					const Standard_Boolean GlobalEnlargeVfirst,
 					const Standard_Boolean GlobalEnlargeVlast)
 {
-  const Standard_Real coeff = 2.;
+  const Standard_Real coeff = 1.;
   const Standard_Real TolApex = 1.e-5;
 
   Standard_Boolean SurfaceChange = Standard_False;
@@ -2865,7 +2865,7 @@ static Standard_Boolean EnlargeGeometry(Handle(Geom_Surface)& S,
 	{
 	  viso = S->VIso( vf1 );
 	  GeomAdaptor_Curve gac( viso );
-	  du = GCPnts_AbscissaPoint::Length( gac ) / coeff;
+	  du = GCPnts_AbscissaPoint::Length( gac ) * coeff;
 	  uiso1 = S->UIso( uf1 );
 	  uiso2 = S->UIso( uf2 );
 	  if (BRepOffset_Tool::Gabarit( uiso1 ) <= TolApex)
@@ -2886,7 +2886,7 @@ static Standard_Boolean EnlargeGeometry(Handle(Geom_Surface)& S,
 	{
 	  uiso = S->UIso( uf1 );
 	  GeomAdaptor_Curve gac( uiso );
-	  dv = GCPnts_AbscissaPoint::Length( gac ) / coeff;
+	  dv = GCPnts_AbscissaPoint::Length( gac ) * coeff;
 	  viso1 = S->VIso( vf1 );
 	  viso2 = S->VIso( vf2 );
 	  if (BRepOffset_Tool::Gabarit( viso1 ) <= TolApex)
@@ -2941,7 +2941,7 @@ static Standard_Boolean EnlargeGeometry(Handle(Geom_Surface)& S,
 	{
 	  viso = S->VIso( v1 );
 	  gac.Load( viso );
-	  du = GCPnts_AbscissaPoint::Length( gac ) / coeff;
+	  du = GCPnts_AbscissaPoint::Length( gac ) * coeff;
 	  uiso1 = S->UIso( u1 );
 	  uiso2 = S->UIso( u2 );
 	  if (BRepOffset_Tool::Gabarit( uiso1 ) <= TolApex)
@@ -2953,7 +2953,7 @@ static Standard_Boolean EnlargeGeometry(Handle(Geom_Surface)& S,
 	{
 	  uiso = S->UIso( u1 );
 	  gac.Load( uiso );
-	  dv = GCPnts_AbscissaPoint::Length( gac ) / coeff;
+	  dv = GCPnts_AbscissaPoint::Length( gac ) * coeff;
 	  viso1 = S->VIso( v1 );
 	  viso2 = S->VIso( v2 );
 	  if (BRepOffset_Tool::Gabarit( viso1 ) <= TolApex)

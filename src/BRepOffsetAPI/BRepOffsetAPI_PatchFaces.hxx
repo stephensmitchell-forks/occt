@@ -27,9 +27,11 @@
 #include <Standard_Boolean.hxx>
 #include <TopTools_IndexedDataMapOfShapeShape.hxx>
 #include <TopTools_IndexedDataMapOfShapeListOfShape.hxx>
+#include <TopTools_DataMapOfShapeListOfShape.hxx>
 #include <TopTools_DataMapOfShapeShape.hxx>
 #include <TopTools_DataMapOfOrientedShapeShape.hxx>
 #include <TopTools_MapOfShape.hxx>
+#include <TColStd_SequenceOfReal.hxx>
 #include <BRepBuilderAPI_MakeShape.hxx>
 class TopoDS_Shape;
 
@@ -67,26 +69,65 @@ private:
                                             TopoDS_Edge&       thePrevNewEdge,
                                             const TopoDS_Edge& theCurEdge,
                                             TopoDS_Edge&       theCurNewEdge,
-                                            TopoDS_Vertex&     theCurVertex);
+                                            const TopoDS_Vertex& theCurVertex,
+                                            const TopoDS_Face& theFace,
+                                            const TopoDS_Face& theNewFace,
+                                            const TopoDS_Face& theBoundedNewFace);
   
-  Standard_EXPORT void PutVertexToEdge(const TopoDS_Vertex& theVertex,
-                                       const TopoDS_Vertex& theProVertex,
-                                       TopoDS_Edge& theEdge,
-                                       const TopoDS_Edge& theProEdge,
-                                       const Standard_Real theParamOnEdge);
+  Standard_EXPORT void PutVertexToEdge(const TopoDS_Vertex&     theVertex,
+                                       const TopAbs_Orientation theProVertexOrientation,
+                                       const TopoDS_Edge&       theEdge,
+                                       const TopoDS_Edge&       theProEdge,
+                                       const TopoDS_Face&       theFace,
+                                       const Standard_Real      theParamOnEdge);
   
+  Standard_EXPORT void ProjectVertexOnNewEdge_2d(const TopoDS_Vertex& theVertex,
+                                                 const TopoDS_Edge&   theEdge,
+                                                 const TopoDS_Face&   theFace,
+                                                 const TopoDS_Edge&   theNewEdge,
+                                                 const TopoDS_Face&   theNewFace,
+                                                 Standard_Real&       theParamOnConst,
+                                                 Standard_Real&       theParam,
+                                                 gp_Pnt&              thePntOnConst,
+                                                 gp_Pnt&              thePnt,
+                                                 gp_Pnt&              thePntSol,
+                                                 gp_Pnt2d&            thePnt2d,
+                                                 Standard_Real&       theTolReached);
 
+  Standard_EXPORT Standard_Boolean IsMoreThan3Edges(const TopoDS_Vertex& theVertex);
+
+  Standard_EXPORT Standard_Boolean AreSmoothlyConnected(const TopoDS_Edge&   theEdge1,
+                                                        const TopoDS_Edge&   theEdge2,
+                                                        const TopoDS_Vertex& theVertex,
+                                                        const TopoDS_Face&   theFace,
+                                                        TopoDS_Edge&         theThirdEdge);
+
+  Standard_EXPORT void UpdateVertexTol(const TopoDS_Vertex&     theVertex,
+                                       const TopoDS_Edge&       theEdge1,
+                                       const TopoDS_Edge&       theProEdge1,
+                                       const TopAbs_Orientation theOrOfVertexForEdge1,
+                                       const TopoDS_Edge&       theEdge2,
+                                       const TopoDS_Edge&       theProEdge2,
+                                       const TopoDS_Face&       theFace,
+                                       TColStd_SequenceOfReal&  theIntParamsOnFirst,
+                                       TColStd_SequenceOfReal&  theIntParamsOnSecond);
+  
+  Standard_EXPORT void UpdateVertexTolOnAllFaces(const TopoDS_Vertex& theVertex,
+                                                 const TopoDS_Vertex& theProVertex);
+  
   TopoDS_Shape myInitialShape;
   
   TopTools_IndexedDataMapOfShapeShape myFacePatchFace;
   TopTools_IndexedDataMapOfShapeShape myFaceNewFace;
   TopTools_DataMapOfShapeShape myNewFaceBoundedFace;
   TopTools_DataMapOfShapeShape myEdgeNewEdge;
-  TopTools_DataMapOfOrientedShapeShape myOrientedEdgeNewEdge;
   TopTools_DataMapOfShapeShape myVertexNewVertex;
   TopTools_MapOfShape myTangentEdges;
+  TopTools_MapOfShape mySmoothEdges;
 
   TopTools_IndexedDataMapOfShapeListOfShape myEFmap;
+  TopTools_IndexedDataMapOfShapeListOfShape myVEmap;
+  TopTools_DataMapOfShapeListOfShape        myVFmap;
 
 };
 
