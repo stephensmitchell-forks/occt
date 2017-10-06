@@ -3074,7 +3074,8 @@ TDF_Label STEPCAFControl_Reader::createGDTObjectInXCAF(const Handle(Standard_Tra
     {
       TDF_Label aShL;
       aSTool->Search(aSh, aShL, Standard_True, Standard_True, Standard_True);
-      aShLS1.Append(aShL);
+      if (!aShL.IsNull())
+        aShLS1.Append(aShL);
     }
   }
   if (!aSeqRI2.IsEmpty())
@@ -3092,7 +3093,8 @@ TDF_Label STEPCAFControl_Reader::createGDTObjectInXCAF(const Handle(Standard_Tra
       {
         TDF_Label aShL;
         aSTool->Search(aSh, aShL, Standard_True, Standard_True, Standard_True);
-        aShLS2.Append(aShL);
+        if (!aShL.IsNull())
+          aShLS2.Append(aShL);
       }
     }
   }
