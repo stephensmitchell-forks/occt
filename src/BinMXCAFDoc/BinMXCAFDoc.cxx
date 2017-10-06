@@ -42,6 +42,8 @@
 #include <BinMXCAFDoc_ViewDriver.hxx>
 #include <BinMXCAFDoc_ViewToolDriver.hxx>
 #include <BinMXCAFDoc_VolumeDriver.hxx>
+#include <BinMXCAFDoc_AnimationDriver.hxx>
+#include <BinMXCAFDoc_AnimationToolDriver.hxx>
 #include <CDM_MessageDriver.hxx>
 #include <TNaming_NamedShape.hxx>
 
@@ -81,6 +83,7 @@ void BinMXCAFDoc::AddDrivers(const Handle(BinMDF_ADriverTable)& theDriverTable,
   theDriverTable->AddDriver( new BinMXCAFDoc_NoteBinDataDriver (theMsgDrv));
   theDriverTable->AddDriver( new BinMXCAFDoc_NoteCommentDriver (theMsgDrv));
   theDriverTable->AddDriver( new BinMXCAFDoc_ViewDriver        (theMsgDrv));
+  theDriverTable->AddDriver( new BinMXCAFDoc_AnimationDriver   (theMsgDrv));
 
   theDriverTable->AddDriver( new BinMXCAFDoc_ColorToolDriver   (theMsgDrv));
   theDriverTable->AddDriver( new BinMXCAFDoc_DocumentToolDriver(theMsgDrv));
@@ -90,4 +93,5 @@ void BinMXCAFDoc::AddDrivers(const Handle(BinMDF_ADriverTable)& theDriverTable,
   theDriverTable->AddDriver( new BinMXCAFDoc_MaterialToolDriver(theMsgDrv));
   theDriverTable->AddDriver( new BinMXCAFDoc_NotesToolDriver   (theMsgDrv));
   theDriverTable->AddDriver( new BinMXCAFDoc_ViewToolDriver    (theMsgDrv));
+  theDriverTable->AddDriver( new BinMXCAFDoc_AnimationToolDriver(theMsgDrv));
 }
