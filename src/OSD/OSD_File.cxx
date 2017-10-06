@@ -43,37 +43,10 @@
   #define OPEN_APPEND 2
 
   void                            _osd_wnt_set_error        ( OSD_Error&, OSD_WhoAmI, ... );
-  #ifndef OCCT_UWP
+
+#ifndef OCCT_UWP
   PSECURITY_DESCRIPTOR __fastcall _osd_wnt_protection_to_sd ( const OSD_Protection&, BOOL, const wchar_t* );
   BOOL                 __fastcall _osd_wnt_sd_to_protection (PSECURITY_DESCRIPTOR, OSD_Protection&, BOOL);
-
-  Standard_Integer __fastcall _get_file_type (Standard_CString theFileName,
-                                              HANDLE theFileHandle)
-  {
-    const int aFileType = theFileHandle == INVALID_HANDLE_VALUE
-                        ? FILE_TYPE_DISK
-                        : GetFileType (theFileHandle);
-    switch (aFileType)
-    {
-      case FILE_TYPE_UNKNOWN:
-        return FLAG_SOCKET;
-      case FILE_TYPE_DISK:
-      {
-        const TCollection_ExtendedString aFileNameW (theFileName, Standard_True);
-        WIN32_FILE_ATTRIBUTE_DATA aFileInfo;
-        if (GetFileAttributesExW (aFileNameW.ToWideString(), GetFileExInfoStandard, &aFileInfo))
-        {
-          return aFileInfo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY ? FLAG_DIRECTORY : FLAG_FILE;
-        }
-        return 0x80000000;
-      }
-      case FILE_TYPE_CHAR:
-        return FLAG_DEVICE;
-      case FILE_TYPE_PIPE:
-        return FLAG_PIPE;
-    }
-    return 0;
-  }
 
   static int OSD_File_getBuffer (HANDLE theChannel,
                                  char* theBuffer,
@@ -190,48 +163,6 @@
     }
   }
 
-  struct OSD_File_WntKey
-  {
-    HKEY           hKey;
-    const wchar_t* keyPath;
-  };
-
-  #endif
-
-  //! Returns number of bytes in the string (including end \n, but excluding \r);
-  static Standard_Integer OSD_File_getLine (char* theBuffer, DWORD theBuffSize, LONG& theSeekPos)
-  {
-    theBuffer[theBuffSize] = 0;
-    for (char* aCharIter = theBuffer; *aCharIter != 0; )
-    {
-      if (*aCharIter == '\n')
-      {
-        ++aCharIter;   // jump newline char
-        *aCharIter = '\0';
-        theSeekPos = LONG(aCharIter - theBuffer - theBuffSize);
-        return Standard_Integer(aCharIter - theBuffer);
-      }
-      else if (aCharIter[0] == '\r'
-            && aCharIter[1] == '\n')
-      {
-        *(aCharIter++) = '\n'; // Substitute carriage return by newline
-        *aCharIter = 0;
-        theSeekPos = LONG(aCharIter + 1 - theBuffer - theBuffSize);
-        return Standard_Integer(aCharIter - theBuffer);
-      }
-      else if (aCharIter[0] == '\r'
-            && aCharIter[1] == '\0')
-      {
-        *aCharIter = '\n' ; // Substitute carriage return by newline
-        return -1;
-      }
-      ++aCharIter;
-    }
-
-    theSeekPos = 0;
-    return theBuffSize;
-  }
-
   static DWORD OSD_File_getAccessMask (OSD_SingleProtection theProtection)
   {
     switch (theProtection)
@@ -278,6 +209,76 @@
       case OSD_RWXD: return GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | DELETE;
     }
     throw Standard_ProgramError ("OSD_File_getDirAccessMask(): incorrect parameter");
+  }
+
+  struct OSD_File_WntKey
+  {
+    HKEY           hKey;
+    const wchar_t* keyPath;
+  };
+
+  #endif /* ! OCCT_UWP */
+
+  Standard_Integer __fastcall _get_file_type (Standard_CString theFileName,
+                                              HANDLE theFileHandle)
+  {
+    const int aFileType = theFileHandle == INVALID_HANDLE_VALUE
+                        ? FILE_TYPE_DISK
+                        : GetFileType (theFileHandle);
+    switch (aFileType)
+    {
+      case FILE_TYPE_UNKNOWN:
+        return FLAG_SOCKET;
+      case FILE_TYPE_DISK:
+      {
+        const TCollection_ExtendedString aFileNameW (theFileName, Standard_True);
+        WIN32_FILE_ATTRIBUTE_DATA aFileInfo;
+        if (GetFileAttributesExW (aFileNameW.ToWideString(), GetFileExInfoStandard, &aFileInfo))
+        {
+          return aFileInfo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY ? FLAG_DIRECTORY : FLAG_FILE;
+        }
+        return 0x80000000;
+      }
+      case FILE_TYPE_CHAR:
+        return FLAG_DEVICE;
+      case FILE_TYPE_PIPE:
+        return FLAG_PIPE;
+    }
+    return 0;
+  }
+
+  //! Returns number of bytes in the string (including end \n, but excluding \r);
+  static Standard_Integer OSD_File_getLine (char* theBuffer, DWORD theBuffSize, LONG& theSeekPos)
+  {
+    theBuffer[theBuffSize] = 0;
+    for (char* aCharIter = theBuffer; *aCharIter != 0; )
+    {
+      if (*aCharIter == '\n')
+      {
+        ++aCharIter;   // jump newline char
+        *aCharIter = '\0';
+        theSeekPos = LONG(aCharIter - theBuffer - theBuffSize);
+        return Standard_Integer(aCharIter - theBuffer);
+      }
+      else if (aCharIter[0] == '\r'
+            && aCharIter[1] == '\n')
+      {
+        *(aCharIter++) = '\n'; // Substitute carriage return by newline
+        *aCharIter = 0;
+        theSeekPos = LONG(aCharIter + 1 - theBuffer - theBuffSize);
+        return Standard_Integer(aCharIter - theBuffer);
+      }
+      else if (aCharIter[0] == '\r'
+            && aCharIter[1] == '\0')
+      {
+        *aCharIter = '\n' ; // Substitute carriage return by newline
+        return -1;
+      }
+      ++aCharIter;
+    }
+
+    theSeekPos = 0;
+    return theBuffSize;
   }
 
   static HANDLE OSD_File_openFile (const TCollection_AsciiString& theFileName,
