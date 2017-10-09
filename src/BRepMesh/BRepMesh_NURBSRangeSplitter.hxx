@@ -43,10 +43,12 @@ public:
   Standard_EXPORT virtual Handle(IMeshData::ListOfPnt2d) GenerateSurfaceNodes(
     const IMeshTools_Parameters& theParameters) const Standard_OVERRIDE;
 
-private:
+protected:
 
-  //! Amplifies parameters using CN continuity intervals.
-  void amplifyParameters();
+  //! Initializes U and V parameters lists using CN continuity intervals.
+  Standard_EXPORT virtual void initParameters() const;
+
+private:
 
   //! Computes parameters of filter and applies it to the source parameters.
   Handle(IMeshData::SequenceOfReal) computeGrainAndFilterParameters(

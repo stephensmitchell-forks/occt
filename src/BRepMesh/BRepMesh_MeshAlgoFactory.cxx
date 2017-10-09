@@ -23,6 +23,7 @@
 #include <BRepMesh_DelaunayBaseMeshAlgo.hxx>
 #include <BRepMesh_DelaunayNodeInsertionMeshAlgo.hxx>
 #include <BRepMesh_DelaunayDeflectionControlMeshAlgo.hxx>
+#include <BRepMesh_BoundaryParamsRangeSplitter.hxx>
 
 namespace
 {
@@ -90,6 +91,10 @@ Handle(IMeshTools_MeshAlgo) BRepMesh_MeshAlgoFactory::GetAlgo(
 
   case GeomAbs_Torus:
     return new NodeInsertionMeshAlgo<BRepMesh_TorusRangeSplitter>::Type;
+    break;
+
+  case GeomAbs_SurfaceOfRevolution:
+    return new DeflectionControlMeshAlgo<BRepMesh_BoundaryParamsRangeSplitter>::Type;
     break;
 
   default:

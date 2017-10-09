@@ -33,7 +33,7 @@ public:
 
   //! Explores shape for edges to be disretized and faces to be meshed (edges first).
   //! All faces passed to visitor are forced to be forward.
-  Standard_EXPORT virtual void Accept (const Handle (IMeshTools_ShapeVisitor)& theVisitor);
+  Standard_EXPORT virtual void Accept (const Handle (IMeshTools_ShapeVisitor)& theVisitor) Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTI_INLINE(BRepMesh_ShapeExplorer, IMeshTools_ShapeExplorer)
 };

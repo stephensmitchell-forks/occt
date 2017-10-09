@@ -39,7 +39,7 @@ public:
 
   //! Resets this splitter. Must be called before first use.
   Standard_EXPORT virtual void Reset(const IMeshData::IFaceHandle& theDFace,
-                                     const IMeshTools_Parameters&  theParameters)
+                                     const IMeshTools_Parameters&  theParameters) Standard_OVERRIDE
   {
     BRepMesh_DefaultRangeSplitter::Reset(theDFace, theParameters);
 
@@ -103,7 +103,7 @@ protected:
   //! Computes parametric delta taking length along U and V into account.
   virtual void computeDelta(
     const Standard_Real /*theLengthU*/,
-    const Standard_Real theLengthV)
+    const Standard_Real theLengthV) Standard_OVERRIDE
   {
     const std::pair<double, double>& aRangeV = GetRangeV();
     myDelta.first  = myDu / Max(theLengthV, aRangeV.second - aRangeV.first);

@@ -40,7 +40,7 @@ public:
   //! Returns nullptr in case of failure.
   Standard_EXPORT virtual Handle (IMeshData_Model) Perform (
     const TopoDS_Shape&          theShape,
-    const IMeshTools_Parameters& theParameters);
+    const IMeshTools_Parameters& theParameters) Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTI_INLINE(BRepMesh_ModelBuilder, IMeshTools_ModelBuilder)
 };

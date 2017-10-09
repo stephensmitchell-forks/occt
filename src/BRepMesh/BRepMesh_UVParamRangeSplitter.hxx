@@ -47,14 +47,6 @@ public:
     myAllocator->Reset(Standard_False);
   }
 
-  //! Creates instance of meshing algorithm for the given type of surface.
-  Standard_EXPORT virtual void AddPoint(const gp_Pnt2d& thePoint)
-  {
-    BRepMesh_DefaultRangeSplitter::AddPoint(thePoint);
-    myUParams.Add(thePoint.X());
-    myVParams.Add(thePoint.Y());
-  }
-
 public:
   //! Returns U parameters.
   inline const IMeshData::IMapOfReal& GetParametersU() const
@@ -80,7 +72,7 @@ public:
     return myVParams;
   }
 
-protected:
+private:
   Handle(NCollection_IncAllocator) myAllocator;
   IMeshData::IMapOfReal            myUParams;
   IMeshData::IMapOfReal            myVParams;

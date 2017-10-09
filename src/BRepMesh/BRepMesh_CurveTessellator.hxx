@@ -48,7 +48,7 @@ public:
   Standard_EXPORT virtual ~BRepMesh_CurveTessellator ();
 
   //! Returns number of tessellation points.
-  Standard_EXPORT virtual Standard_Integer PointsNb () const;
+  Standard_EXPORT virtual Standard_Integer PointsNb () const Standard_OVERRIDE;
 
   //! Returns parameters of solution with the given index.
   //! @param theIndex index of tessellation point.
@@ -58,7 +58,7 @@ public:
   Standard_EXPORT virtual Standard_Boolean Value (
     const Standard_Integer theIndex,
     gp_Pnt&                thePoint,
-    Standard_Real&         theParameter) const;
+    Standard_Real&         theParameter) const Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTI_INLINE(BRepMesh_CurveTessellator, IMeshTools_CurveTessellator)
 

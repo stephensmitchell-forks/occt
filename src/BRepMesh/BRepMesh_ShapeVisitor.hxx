@@ -44,10 +44,10 @@ public:
   Standard_EXPORT virtual ~BRepMesh_ShapeVisitor ();
 
   //! Handles TopoDS_Face object.
-  Standard_EXPORT virtual void Visit (const TopoDS_Face& theFace);
+  Standard_EXPORT virtual void Visit (const TopoDS_Face& theFace) Standard_OVERRIDE;
 
   //! Handles TopoDS_Edge object.
-  Standard_EXPORT virtual void Visit (const TopoDS_Edge& theEdge);
+  Standard_EXPORT virtual void Visit (const TopoDS_Edge& theEdge) Standard_OVERRIDE;
 
   DEFINE_STANDARD_RTTI_INLINE(BRepMesh_ShapeVisitor, IMeshTools_ShapeVisitor)
 
