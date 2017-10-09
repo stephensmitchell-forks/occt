@@ -31,6 +31,7 @@
 #include <TopTools_DataMapOfShapeShape.hxx>
 #include <TopTools_DataMapOfOrientedShapeShape.hxx>
 #include <TopTools_MapOfShape.hxx>
+#include <TColStd_SequenceOfReal.hxx>
 #include <BRepBuilderAPI_MakeShape.hxx>
 class TopoDS_Shape;
 
@@ -97,6 +98,12 @@ private:
 
   Standard_EXPORT Standard_Boolean IsMoreThan3Edges(const TopoDS_Vertex& theVertex);
 
+  Standard_EXPORT Standard_Boolean AreSmoothlyConnected(const TopoDS_Edge&   theEdge1,
+                                                        const TopoDS_Edge&   theEdge2,
+                                                        const TopoDS_Vertex& theVertex,
+                                                        const TopoDS_Face&   theFace,
+                                                        TopoDS_Edge&         theThirdEdge);
+
   
   TopoDS_Shape myInitialShape;
   
@@ -107,8 +114,10 @@ private:
   //TopTools_DataMapOfOrientedShapeShape myOrientedEdgeNewEdge;
   TopTools_DataMapOfShapeShape myVertexNewVertex;
   TopTools_MapOfShape myTangentEdges;
+  TopTools_MapOfShape mySmoothEdges;
 
   TopTools_IndexedDataMapOfShapeListOfShape myEFmap;
+  TopTools_IndexedDataMapOfShapeListOfShape myVEmap;
   TopTools_DataMapOfShapeListOfShape        myVFmap;
 
 };
