@@ -1,3 +1,5 @@
+puts "TODO OCC601 ALL: Error : No possibility to make a fillet 13 at the inner edge of the shape"
+
 puts "========================"
 puts " OCC601 "
 puts "SAM1542"
@@ -8,7 +10,6 @@ puts ""
 #############################################
 
 restore [locate_data_file OCC601.brep] a
-checkshape a
 
 explode a e
 
@@ -19,5 +20,10 @@ if [catch {blend result a 13 a_41 } res] {
     checkshape result
     
     checkprops result -s 32486.0
-    checkview -display result -2d -path ${imagedir}/${test_image}.png
+    set info [bopcheck result]
+    if { [regexp "This shape seems to be OK" ${info}] != 1 } {
+       puts "Error : No possibility to make a fillet 13 at the inner edge of the shape"
+    }
+    checkview -display result -2d -path ${imagedir}/${test_image}-2d.png
+    checkview -display result -3d -path ${imagedir}/${test_image}-3d.png
 }

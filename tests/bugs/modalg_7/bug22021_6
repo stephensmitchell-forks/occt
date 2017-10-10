@@ -1,0 +1,20 @@
+puts "TODO OCC22021 ALL: An exception was caught"
+puts "TODO OCC22021 ALL: \\*\\* Exception \\*\\*.*"
+puts "TODO OCC22021 ALL: TEST INCOMPLETE"
+
+puts "========"
+puts "OCC22021"
+puts "========"
+puts ""
+################################################################
+# Exception during a loft building between two closed contours
+################################################################
+
+restore [locate_data_file bug22021_lowWire2.brep] lw2
+restore [locate_data_file bug22021_topWire2.brep] tw2
+
+thrusections result 1 1 lw2 tw2
+
+checkshape result
+
+checkview -display result -2d -path ${imagedir}/${test_image}.png

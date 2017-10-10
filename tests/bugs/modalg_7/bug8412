@@ -1,0 +1,24 @@
+puts "TODO OCC8412 ALL: Error: Volume"
+
+puts "========"
+puts "OCC8412"
+puts "========"
+puts ""
+######################################################
+# Command vprops has invalid volume on attached shape.
+######################################################
+
+restore [locate_data_file bug8412_bugvprops.brep] a
+
+regexp {Mass +: +([-0-9.+eE]+)} [vprops a] full volume_a
+# 2.44687e+06
+
+explode a SOL
+
+regexp {Mass +: +([-0-9.+eE]+)} [vprops a_1] full volume_a_1
+# Mass :      2.8802e+06
+
+set tol_abs 1.e3
+set tol_rel 1.e-2
+
+checkreal "Volume " ${volume_a} ${volume_a_1} ${tol_abs} ${tol_rel}

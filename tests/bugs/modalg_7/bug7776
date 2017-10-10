@@ -1,0 +1,19 @@
+puts "TODO OCC7776 ALL: Error: Offset is not done"
+
+puts "======="
+puts "OCC7776"
+puts "======="
+puts ""
+########################################################################
+# Algorithm of Offset doesn't work properly for SIN-like b-spline curves
+########################################################################
+
+restore [locate_data_file bug7776_offset_algo_fails_xmlBSpline_1.brep] a
+
+wire w a
+
+catch {mkoffset r w 1 5}
+
+smallview
+fit
+checkview -screenshot -2d -path ${imagedir}/${casename}.png

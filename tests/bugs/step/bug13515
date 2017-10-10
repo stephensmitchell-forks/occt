@@ -1,0 +1,28 @@
+puts "TODO OCC13515 ALL: is not equal to shape "
+
+puts "========"
+puts "OCC13515"
+puts "========"
+puts ""
+##############################################################################
+# Result shape after reading STEP file is invalid after writing -reading STEP.
+##############################################################################
+
+set aFile1 [locate_data_file bug13515_fuse1.brep]
+set aFile2 ${imagedir}/bug13515_fuse2.brep
+
+file delete ${aFile2} -force
+
+restore ${aFile1} a
+checkshape a
+
+stepwrite 0 a ${aFile2}
+
+stepread ${aFile2} res *
+renamevar res_1 res
+checkshape res
+
+checkprops res -equal a
+
+checkview -display a -2d -path ${imagedir}/${test_image}_a.png
+checkview -display res -2d -path ${imagedir}/${test_image}_res.png

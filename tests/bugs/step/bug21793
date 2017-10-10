@@ -1,0 +1,13 @@
+puts "========"
+puts "OCC21793"
+puts "========"
+puts ""
+###########################################
+# Incorrect shape produced by STEP import
+###########################################
+
+stepread [locate_data_file bug21793_2623897_1Fr.stp] a *
+renamevar a_1 result
+checkshape result
+
+checkview -display result -2d -path ${imagedir}/${test_image}.png

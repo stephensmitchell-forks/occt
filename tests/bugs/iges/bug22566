@@ -1,0 +1,15 @@
+puts "TODO OCC22566 ALL: Error :  is WRONG because number of FACE entities in shape"
+
+puts "========"
+puts "OCC22566"
+puts "========"
+puts ""
+#####################
+# Iges import issue
+#####################
+
+igesread [locate_data_file bug22566_test_Bad.igs] result *
+
+checknbshapes result -face 6
+
+checkview -display result -2d -path ${imagedir}/${test_image}.png

@@ -1,0 +1,15 @@
+puts "TODO OCC15751 ALL: Faulty shapes in variables faulty_1"
+
+puts "========"
+puts "OCC15751"
+puts "========"
+puts ""
+##################################################
+## Incorrect handling of non adjacent intersection
+##################################################
+
+igesbrep [locate_data_file bug15751_399H-A_UPPER-fromASTOM041003.igs] result *
+
+checkshape result
+
+checkview -display result -2d -path ${imagedir}/${test_image}.png

@@ -1,0 +1,33 @@
+puts "TODO OCC7929 ALL: Error: Offset is not done"
+
+puts "======="
+puts "OCC7929"
+puts "======="
+puts ""
+##################################
+# Offset crashes on b-spline curve
+##################################
+
+restore [locate_data_file bug7929_test1.brep] a
+
+wire w a
+
+mkoffset r1 w 1 -10
+checkshape r1_1
+checkprops r1_1 -l 3207.62
+checkview -display w -with r1_1 -2d -path ${imagedir}/${test_image}-1.png
+
+mkoffset r2 w 1 10
+checkshape r2_1
+checkprops r2_1 -l 3207.62
+checkview -display w -with r2_1 -2d -path ${imagedir}/${test_image}-2.png
+
+catch {mkoffset r3 w 1 20}
+catch {checkshape r3_1}
+#catch {checkprops r3_1 -l 1}
+checkview -display w -with r3_1 -2d -path ${imagedir}/${test_image}-3.png
+
+mkoffset r4 w 1 40
+checkshape r4_1
+#checkprops r4_1 -l 3162.73
+checkview -display w -with r4_1 -2d -path ${imagedir}/${test_image}-4.png

@@ -1,0 +1,19 @@
+puts "========"
+puts "OCC22022"
+puts "========"
+puts ""
+#########################################
+# Cut operation produces invalid result
+#########################################
+
+restore [locate_data_file bug22022_Object.brep] O
+restore [locate_data_file bug22022_Tool.brep] T
+
+bcut result O T
+checkshape result
+
+checkprops result -s 46.8338
+checkprops result -v 13.7094
+checknbshapes result -wire 124 -face 124 -solid 1
+
+checkview -display result -2d -path ${imagedir}/${test_image}.png

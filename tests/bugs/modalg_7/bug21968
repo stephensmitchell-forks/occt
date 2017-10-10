@@ -1,0 +1,20 @@
+puts "TODO OCC21968 ALL: Faulty shapes in variables"
+puts "TODO OCC21968 ALL: ERROR: OCC12968 is reproduced. Result of checkshape depends on order of edges in wire."
+
+puts "========"
+puts "OCC21968"
+puts "========"
+puts ""
+##################################################################################################
+# BRepTools_WireExplorer gives different number of edges in dependance of order of edges in wire
+##################################################################################################
+
+restore [locate_data_file bug21968_badf.brep] f1
+restore [locate_data_file bug21968_badf2.brep] f2
+
+set bug_info_1 [checkshape f1]
+set bug_info_2 [checkshape f2]
+
+if {$bug_info_2 != $bug_info_1} {
+  puts "ERROR: OCC12968 is reproduced. Result of checkshape depends on order of edges in wire."
+}

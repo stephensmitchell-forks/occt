@@ -1,0 +1,18 @@
+puts "TODO OCC8363 ALL: Faulty shapes in variables faulty_1"
+
+puts "======="
+puts "OCC8363"
+puts "======="
+puts ""
+#####################################
+## Problem in the working of ShapeFix
+#####################################
+
+igesbrep [locate_data_file bug8363_f45.igs] a *
+
+fixshape result a
+
+checkshape result
+
+checkview -display result -2d -path ${imagedir}/${test_image}-2d.png
+checkview -display result -3d -path ${imagedir}/${test_image}-3d.png

@@ -1,0 +1,19 @@
+puts "TODO 0012800 ALL: Error: Projection curve on surface is failed"
+
+puts "======="
+puts "0012800"
+puts "======="
+puts ""
+#######################################
+# Projection curve on surface is failed
+#######################################
+
+restore [locate_data_file bug12800_c.draw] c
+restore [locate_data_file bug12800_s.draw] s
+
+whatis c
+whatis s
+
+if [ catch {project c2d c s} ] {
+   puts "Error: Projection curve on surface is failed"
+}

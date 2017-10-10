@@ -1,0 +1,40 @@
+puts "TODO OCC13175 ALL: Result shape after reading STEP file"
+
+puts "========"
+puts "OCC13175"
+puts "========"
+puts ""
+##############################################################################
+# Result shape after reading STEP file is invalid after writing -reading STEP.
+##############################################################################
+
+set nbshapes_expected "
+Number of shapes
+ VERTEX    : 1
+ EDGE      : 0
+ WIRE      : 0
+ FACE      : 0
+ SHELL     : 0
+ SOLID     : 0
+ COMPSOLID : 0
+ COMPOUND  : 0
+ SHAPE     : 1
+"
+
+set aFile ${imagedir}/bug13175.step
+file delete ${aFile} -force
+
+
+vertex v 10 10 10
+XNewDoc D1
+XAddShape D1 v
+XGetShape r1 D1 0:1:1:1
+whatis r1
+checknbshapes r1 -ref ${nbshapes_expected} -t -m "Result shape after XGetShape"
+
+
+WriteStep D1 ${aFile}
+ReadStep D2 ${aFile}
+XGetShape r2 D2 0:1:1:1
+whatis r2
+checknbshapes r2 -ref ${nbshapes_expected} -t -m "Result shape after reading STEP file"

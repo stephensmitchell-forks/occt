@@ -1,0 +1,16 @@
+puts "========"
+puts "OCC22021"
+puts "========"
+puts ""
+################################################################
+# Exception during a loft building between two closed contours
+################################################################
+
+restore [locate_data_file bug22021_lowWire1.brep] lw1
+restore [locate_data_file bug22021_lowWire2.brep] lw2
+
+thrusections result 1 1 lw1 lw2
+
+checkshape result
+
+checkview -display result -2d -path ${imagedir}/${test_image}.png

@@ -1,0 +1,23 @@
+puts "TODO OCC8546 ALL: Error: there is not WEDGE_"
+
+puts "======="
+puts "OCC8546"
+puts "======="
+puts ""
+########################################################################
+# The algorithm BRepTools_WireExplorer works wrong for the face attached
+########################################################################
+
+restore [locate_data_file bug8546_f.brep] f
+
+explode f w
+
+explode f_1 e 
+
+wexplo f_1 f
+
+for {set i 1} {$i <= 7} {incr i} {
+    if {[info exist WEDGE_$i] == 0} {
+       puts "Error: there is not WEDGE_$i"
+    }
+}
