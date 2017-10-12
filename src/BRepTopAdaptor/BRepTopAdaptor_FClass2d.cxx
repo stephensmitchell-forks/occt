@@ -194,7 +194,7 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& aFace,
   Handle(Geom2d_Curve) aC2D;
   gp_Pnt Ancienpnt3d;
   TColgp_SequenceOfPnt2d SeqPnt2d;
-  TColStd_DataMapOfIntegerInteger anIndexMap;
+  //TColStd_DataMapOfIntegerInteger anIndexMap;
   TColgp_SequenceOfVec2d          aD1Prev;
   TColgp_SequenceOfVec2d          aD1Next;
   
@@ -236,7 +236,7 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& aFace,
     Ancienpnt3d.SetCoord(0., 0., 0.);
     //
     SeqPnt2d.Clear();
-    anIndexMap.Clear();
+    //anIndexMap.Clear();
     aD1Prev.Clear();
     aD1Next.Clear();
     //
@@ -503,10 +503,10 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& aFace,
         aD1Prev.Prepend(aV);
 
       // Fill the map anIndexMap.
-      if (Avant > 0)
-        anIndexMap.Bind(Avant, aD1Next.Length());
-      else
-        anIndexMap.Bind(1, aD1Next.Length());
+      //if (Avant > 0)
+      //  anIndexMap.Bind(Avant, aD1Next.Length());
+      //else
+      //  anIndexMap.Bind(1, aD1Next.Length());
     } //for(;aWExp.More(); aWExp.Next()) {
     // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     
@@ -546,9 +546,7 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& aFace,
         Standard_Integer im1 = nbpnts - 1;
         Standard_Integer im0 = 1;
         Standard_Integer ii;
-        Standard_Real    angle = 0.0;
-        //
-        Standard_Integer iFlag = 1;
+        Standard_Real    anArea = 0.0;
         //
         PClass(im2) = SeqPnt2d.Value(im2);
         PClass(im1) = SeqPnt2d.Value(im1);
@@ -566,7 +564,7 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& aFace,
           if (im1 >= nbpnts) im1 = 1;
           PClass(ii) = SeqPnt2d.Value(ii);
 
-          gp_Vec2d A(PClass(im2), PClass(im1));
+          gp_Vec2d A(PClass(1/*im2*/), PClass(im1));
           gp_Vec2d B(PClass(im1), PClass(im0));
           
           anArrBoxes(ii).Add(PClass(ii));
@@ -576,57 +574,63 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& aFace,
 
           // In order to avoid FPE-signal
           // E.g. if aSqMA == aSqMB = 1.0e200.
-          const Standard_Real aSqMA = A.SquareMagnitude(),
-                              aSqMB = B.SquareMagnitude();
-          if (Precision::IsInfinite(aSqMA) ||
-              Precision::IsInfinite(aSqMB) ||
-              (aSqMA*aSqMB  > 1e-32))
+          //const Standard_Real aSqMA = A.SquareMagnitude(),
+          //                    aSqMB = B.SquareMagnitude();
+          //if (Precision::IsInfinite(aSqMA) ||
+          //    Precision::IsInfinite(aSqMB) ||
+          //    (aSqMA*aSqMB  > 1e-32))
           {
-            Standard_Real a = A.Angle(B);
+            Standard_Real aTmpArea = A.Crossed(B);
             //  
-            if (anIndexMap.IsBound(im1))
+            //if (anIndexMap.IsBound(im1))
             {
-              Standard_Integer  anInd = anIndexMap.Find(im1);
-              const gp_Vec2d   &aVPrev = aD1Prev.Value(anInd);
-              const gp_Vec2d   &aVNext = aD1Next.Value(anInd);
+              //Standard_Integer  anInd = anIndexMap.Find(im1);
+              //const gp_Vec2d   &aVPrev = aD1Prev.Value(anInd);
+              //const gp_Vec2d   &aVNext = aD1Next.Value(anInd);
 
-              if (aVPrev.SquareMagnitude() * aVNext.SquareMagnitude() > 1e-32)
-              {
-                Standard_Real aDerivAngle, aAbsDA, aProduct, aPA;
-                //ifv 23.08.06
-                aPA = Precision::Angular();
-                aDerivAngle = aVPrev.Angle(aVNext);
-                aAbsDA = Abs(aDerivAngle);
-                if (aAbsDA <= aPA)
-                {
-                  aDerivAngle = 0.;
-                }
-                //
-                aProduct = aDerivAngle * a;
-                //
-                if ((M_PI-aAbsDA) <= aPA) {
-                  if (aProduct > 0.) {
-                    aProduct = -aProduct;
-                  }
-                }
-                //ifv 23.08.06 : if edges continuity > G1, |aDerivAngle| ~0,
-                //but can has wrong sign and causes condition aDerivAngle * a < 0.
-                //that is wrong in such situation
-                if (iFlag && aProduct < 0.)
-                {
-                  iFlag = 0;
-                  // Bad case.
-                  angle = 0.;
-                }
-              }
+              //if (aVPrev.SquareMagnitude() * aVNext.SquareMagnitude() > 1e-32)
+              //{
+              //  Standard_Real aDerivAngle, aAbsDA, aProduct, aPA;
+              //  //ifv 23.08.06
+              //  aPA = Precision::Angular();
+              //  aDerivAngle = aVPrev.Angle(aVNext);
+              //  aAbsDA = Abs(aDerivAngle);
+              //  if (aAbsDA <= aPA)
+              //  {
+              //    aDerivAngle = 0.;
+              //  }
+              //  //
+              //  aProduct = aDerivAngle * a;
+              //  //
+              //  if ((M_PI-aAbsDA) <= aPA) {
+              //    if (aProduct > 0.) {
+              //      aProduct = -aProduct;
+              //    }
+              //  }
+              //  //ifv 23.08.06 : if edges continuity > G1, |aDerivAngle| ~0,
+              //  //but can has wrong sign and causes condition aDerivAngle * a < 0.
+              //  //that is wrong in such situation
+              //  if (iFlag && aProduct < 0.)
+              //  {
+              //    iFlag = 0;
+              //    // Bad case.
+              //    anArea = 0.;
+              //  }
+              //}
             }
 
-            angle += a;
+            anArea += aTmpArea;
           }
         }//for(ii=1; ii<nbpnts; ii++,im0++,im1++,im2++) { 
-        if (!iFlag) {
-          angle = 0.;
-          BadWire = 1;
+
+        {
+          const Standard_Real aToler = Max(myTol3D, Precision::Confusion());
+          if (Abs(anArea) < aToler*aToler)
+          {
+            // anArea = |A|*|B|*sin(Angle) < Tol*Tol
+            anArea = 0.;
+            BadWire = 1;
+          }
         }
         //
         FlecheU = Max(myTolU, FlecheU);
@@ -638,7 +642,7 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& aFace,
                                             FlecheU, FlecheV,
                                             Umin, Vmin, Umax, Vmax));
 
-          TabOrien.Append((angle > 0.0) ? 1 : 0);
+          TabOrien.Append((anArea > 0.0) ? 1 : 0);
         }
       }
       

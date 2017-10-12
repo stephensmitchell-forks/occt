@@ -1200,7 +1200,7 @@ Standard_Boolean ShapeFix_Face::FixOrientation(TopTools_DataMapOfShapeListOfShap
       // it is enough Precision::Confusion() for check if the 2d point is TopAbs_ON
       // BRepTopAdaptor_FClass2d clas (af,toluv);
       Standard_Boolean CheckShift = Standard_True;
-      BRepTopAdaptor_FClass2d clas (af, Precision::Confusion());
+      BRepTopAdaptor_FClass2d clas (af, 0.0);
       TopAbs_State sta = TopAbs_OUT;
       TopAbs_State staout = clas.PerformInfinitePoint();
       TopTools_ListOfShape IntWires;
