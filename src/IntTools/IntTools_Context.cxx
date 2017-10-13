@@ -199,7 +199,7 @@ Bnd_Box& IntTools_Context::BndBox(const TopoDS_Shape& aS)
     new (pBox) Bnd_Box();
     //
     Bnd_Box &aBox=*pBox;
-    BRepBndLib::Add(aS, aBox);
+    BRepBndLib::AddOptimal(aS, aBox, Standard_True, Standard_True);
     //
     anAdr=(Standard_Address)pBox;
     myBndBoxDataMap.Bind(aS, anAdr);

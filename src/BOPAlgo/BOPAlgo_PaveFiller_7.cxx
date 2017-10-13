@@ -142,7 +142,7 @@ class BOPAlgo_SplitEdge : public BOPAlgo_Algo  {
                                       myV1, myT1, 
                                       myV2, myT2, 
                                       myESp);
-    BRepBndLib::Add(myESp, myBox);
+    BRepBndLib::AddOptimal(myESp, myBox, Standard_True, Standard_True);
     myBox.SetGap(myBox.GetGap() + Precision::Confusion());
   }
   //
@@ -525,7 +525,7 @@ Standard_Integer BOPAlgo_PaveFiller::SplitEdge(const Standard_Integer nE,
   aSI.SetShape(aSp);
   //
   Bnd_Box& aBox=aSI.ChangeBox();
-  BRepBndLib::Add(aSp, aBox);
+  BRepBndLib::AddOptimal(aSp, aBox, Standard_True, Standard_True);
   aBox.SetGap(aBox.GetGap() + Precision::Confusion());
   //
   nSp=myDS->Append(aSI);

@@ -577,7 +577,7 @@ void BOPAlgo_Builder::FillIn3DParts
           continue;
         }
         Bnd_Box aBox;
-        BRepBndLib::Add(aSx, aBox);
+        BRepBndLib::AddOptimal(aSx, aBox, Standard_True, Standard_True);
         aBox.SetGap(aBox.GetGap() + Precision::Confusion());
         //
         BOPAlgo_ShapeBox& aSB=aVSB.Append1();

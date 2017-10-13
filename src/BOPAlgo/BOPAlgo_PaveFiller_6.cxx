@@ -630,7 +630,7 @@ void BOPAlgo_PaveFiller::MakeBlocks()
       BOPDS_ShapeInfo& aSIDS=myDS->ChangeShapeInfo(nV1);
       Bnd_Box& aBoxDS=aSIDS.ChangeBox();
       aBoxDS = Bnd_Box();
-      BRepBndLib::Add(aV, aBoxDS);
+      BRepBndLib::AddOptimal(aV, aBoxDS, Standard_True, Standard_True);
       aBoxDS.SetGap(aBoxDS.GetGap() + Precision::Confusion());
       //
       if (aDMVLV.IsBound(nV1))
@@ -1536,7 +1536,7 @@ void BOPAlgo_PaveFiller::PutBoundPaveOnCurve(const TopoDS_Face& aF1,
       //
       BOPDS_ShapeInfo& aSIDS=myDS->ChangeShapeInfo(nVn);
       Bnd_Box& aBoxDS=aSIDS.ChangeBox();
-      BRepBndLib::Add(aVn, aBoxDS);
+      BRepBndLib::AddOptimal(aVn, aBoxDS, Standard_True, Standard_True);
       aBoxDS.SetGap(aBoxDS.GetGap() + Precision::Confusion());
       //
       aLVB.Append(nVn);
@@ -2154,7 +2154,7 @@ void BOPAlgo_PaveFiller::PutPaveOnCurve
         //
         BOPDS_ShapeInfo& aSIDS=myDS->ChangeShapeInfo(nV);
         Bnd_Box& aBoxDS=aSIDS.ChangeBox();
-        BRepBndLib::Add(aV, aBoxDS);
+        BRepBndLib::AddOptimal(aV, aBoxDS, Standard_True, Standard_True);
         aBoxDS.SetGap(aBoxDS.GetGap() + Precision::Confusion());
       }
     }

@@ -593,7 +593,7 @@ void BOPAlgo_BuilderFace::PerformAreas()
   // 5.2. Add unused holes to the original face
   if (aNbHoles != aNbInOutMap) {
     Bnd_Box aBoxF;
-    BRepBndLib::Add(myFace, aBoxF);
+    BRepBndLib::AddOptimal(myFace, aBoxF, Standard_True, Standard_True);
     if (aBoxF.IsOpenXmin() || aBoxF.IsOpenXmax() ||
         aBoxF.IsOpenYmin() || aBoxF.IsOpenYmax() ||
         aBoxF.IsOpenZmin() || aBoxF.IsOpenZmax()) {

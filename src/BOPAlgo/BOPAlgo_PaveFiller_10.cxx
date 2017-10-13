@@ -97,7 +97,7 @@ void BOPAlgo_PaveFiller::UpdateEdgeTolerance (const Standard_Integer nE,
   const TopoDS_Edge& aE = *(TopoDS_Edge*)&myDS->Shape(nE);
   aBB.UpdateEdge(aE, aTol);
   Bnd_Box& aBoxE=aSIE.ChangeBox();
-  BRepBndLib::Add(aE, aBoxE);
+  BRepBndLib::AddOptimal(aE, aBoxE, Standard_True, Standard_True);
   aBoxE.SetGap(aBoxE.GetGap() + Precision::Confusion());
   //
   aIt.Initialize(aLI);
@@ -113,7 +113,7 @@ void BOPAlgo_PaveFiller::UpdateEdgeTolerance (const Standard_Integer nE,
       aBB.UpdateVertex(aV, aTol);
       BOPDS_ShapeInfo& aSIV = myDS->ChangeShapeInfo(nV);
       Bnd_Box& aBoxV = aSIV.ChangeBox();
-      BRepBndLib::Add(aV, aBoxV);
+      BRepBndLib::AddOptimal(aV, aBoxV, Standard_True, Standard_True);
       aBoxV.SetGap(aBoxV.GetGap() + Precision::Confusion());
     }
   }
@@ -141,7 +141,7 @@ Standard_Integer BOPAlgo_PaveFiller::UpdateVertex
       aBB.UpdateVertex(aVSD, aTolNew);
       BOPDS_ShapeInfo& aSIV = myDS->ChangeShapeInfo(nVNew);
       Bnd_Box& aBoxV = aSIV.ChangeBox();
-      BRepBndLib::Add(aVSD, aBoxV);
+      BRepBndLib::AddOptimal(aVSD, aBoxV, Standard_True, Standard_True);
       aBoxV.SetGap(aBoxV.GetGap() + Precision::Confusion());
     }
     return nVNew;
@@ -165,7 +165,7 @@ Standard_Integer BOPAlgo_PaveFiller::UpdateVertex
   // bounding box for the new vertex
   BOPDS_ShapeInfo& aSIDS = myDS->ChangeShapeInfo(nVNew);
   Bnd_Box& aBoxDS = aSIDS.ChangeBox();
-  BRepBndLib::Add(aVNew, aBoxDS);
+  BRepBndLib::AddOptimal(aVNew, aBoxDS, Standard_True, Standard_True);
   aBoxDS.SetGap(aBoxDS.GetGap() + Precision::Confusion());
   //
   // add vertex to SD map

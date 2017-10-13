@@ -600,7 +600,7 @@ void BOPAlgo_BuilderSolid::PerformAreas()
     const TopoDS_Shape& aShell = aItLS.Value();
     aSB.SetShape(aShell);
     //
-    BRepBndLib::Add(aShell, aBox);
+    BRepBndLib::AddOptimal(aShell, aBox, Standard_True, Standard_True);
     bIsHole=Standard_False;
     //
     bIsGrowth=IsGrowthShell(aShell, aMHF);
@@ -834,7 +834,7 @@ void BOPAlgo_BuilderSolid::PerformInternalShapes()
     const BOPAlgo_FacePnt& aFP=aVFP(k);
     const TopoDS_Face& aF=aFP.Face();
     //
-    BRepBndLib::Add(aF, aBox);
+    BRepBndLib::AddOptimal(aF, aBox, Standard_True, Standard_True);
     aTreeFiller.Add(k, aBox);
   }
   //

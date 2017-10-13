@@ -463,7 +463,7 @@ void BOPDS_DS::Init(const Standard_Real theFuzz)
       }
       //
       Bnd_Box& aBox=aSI.ChangeBox();
-      BRepBndLib::Add(aE, aBox);
+      BRepBndLib::AddOptimal(aE, aBox, Standard_True, Standard_True);
       //
       const BOPCol_ListOfInteger& aLV=aSI.SubShapes(); 
       aIt1.Initialize(aLV);
@@ -490,7 +490,7 @@ void BOPDS_DS::Init(const Standard_Real theFuzz)
       const TopoDS_Shape& aS=aSI.Shape();
       //
       Bnd_Box& aBox=aSI.ChangeBox();
-      BRepBndLib::Add(aS, aBox);
+      BRepBndLib::AddOptimal(aS, aBox, Standard_True, Standard_True);
       //
       BOPCol_ListOfInteger& aLW=aSI.ChangeSubShapes(); 
       aIt1.Initialize(aLW);
@@ -1786,7 +1786,7 @@ void BOPDS_DS::UpdateEdgeTolerance(const Standard_Integer nE,
   aBB.UpdateEdge(aE, aTol);
   BOPDS_ShapeInfo& aSIE=ChangeShapeInfo(nE);
   Bnd_Box& aBoxE=aSIE.ChangeBox();
-  BRepBndLib::Add(aE, aBoxE);
+  BRepBndLib::AddOptimal(aE, aBoxE, Standard_True, Standard_True);
   aBoxE.SetGap(aBoxE.GetGap() + aTolAdd);
   //
   const BOPCol_ListOfInteger& aLI = aSIE.SubShapes();
