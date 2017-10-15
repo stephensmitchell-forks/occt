@@ -253,6 +253,19 @@ TCollection_ExtendedString::TCollection_ExtendedString
   mystring[mylength] = '\0';
 }
 
+#ifndef OCCT_NO_RVALUE_REFERENCE
+//-----------------------------------------------------------------------------
+// TCollection_ExtendedString
+// ----------------------------------------------------------------------------
+TCollection_ExtendedString::TCollection_ExtendedString (TCollection_ExtendedString&& theOther)
+: mystring (theOther.mystring),
+  mylength (theOther.mylength)
+{
+  theOther.mystring = NULL;
+  theOther.mylength = 0;
+}
+#endif
+
 //---------------------------------------------------------------------------
 //  Create an extendedstring from an AsciiString 
 //---------------------------------------------------------------------------
@@ -371,6 +384,35 @@ void TCollection_ExtendedString::Copy (const TCollection_ExtendedString& fromwhe
       mystring[0] = '\0';
     }
   }
+}
+
+// ----------------------------------------------------------------------------
+// Move
+// ----------------------------------------------------------------------------
+TCollection_ExtendedString& TCollection_ExtendedString::Move (TCollection_ExtendedString& theOther)
+{
+  if (mystring != NULL)
+  {
+    Standard::Free (mystring);
+  }
+  mystring = theOther.mystring;
+  mylength = theOther.mylength;
+  theOther.mystring = NULL;
+  theOther.mylength = 0;
+  return *this;
+}
+
+// ----------------------------------------------------------------------------
+// Swap
+// ----------------------------------------------------------------------------
+void TCollection_ExtendedString::Swap (TCollection_ExtendedString& theOther)
+{
+  Standard_PExtCharacter aString = mystring;
+  Standard_Integer       aLength = mylength;
+  mystring = theOther.mystring;
+  mylength = theOther.mylength;
+  theOther.mystring = aString;
+  theOther.mylength = aLength;
 }
 
 // ----------------------------------------------------------------------------

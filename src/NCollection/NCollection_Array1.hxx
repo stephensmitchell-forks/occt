@@ -155,6 +155,7 @@ public:
   // ---------- PUBLIC METHODS ------------
 
   //! Empty constructor; should be used with caution.
+  //! @sa methods Resize() and Move().
   NCollection_Array1()
   : myLowerBound (1),
     myUpperBound (0),
@@ -191,9 +192,12 @@ public:
     *this = theOther;
   }
 
-  //! Move constructor
-#if(defined(_MSC_VER) && (_MSC_VER < 1600))
-#else
+#ifndef OCCT_NO_RVALUE_REFERENCE
+  //! Move constructor.
+  //! Warning! The moved object will become an unallocated array of 0 size, and can be used afterwards only by moving/assigning another object to it or calling Resize().
+  //! Also, if moved was initialized with externally allocated memory, this array will refer to the same memory (no copy will be done).
+  //! This must be take into account when method returns NCollection_Array1 - compiler will call move constructor implicitly,
+  //! and local object should not be created with given temporarily allocated memory (e.g. from call stack).
   NCollection_Array1 (NCollection_Array1&& theOther)
   : myLowerBound (theOther.myLowerBound),
     myUpperBound (theOther.myUpperBound),
@@ -281,7 +285,8 @@ public:
     return *this;
   }
 
-  //! Move assignment
+  //! Move assignment.
+  //! Warning! The moved object will become an unallocated array of 0 size, and can be used afterwards only by moving/assigning another object to it or calling Resize().
   NCollection_Array1& Move (NCollection_Array1& theOther)
   {
     if (&theOther == this)
@@ -310,9 +315,9 @@ public:
     return Assign (theOther);
   }
 
+#ifndef OCCT_NO_RVALUE_REFERENCE
   //! Move assignment operator.
-#if(defined(_MSC_VER) && (_MSC_VER < 1600))
-#else
+  //! Warning! The moved object will become an unallocated array of 0 size, and can be used afterwards only by moving/assigning another object to it or calling Resize().
   NCollection_Array1& operator= (NCollection_Array1&& theOther)
   {
     return Move (theOther);
