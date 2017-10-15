@@ -170,6 +170,50 @@ public:
     myAllocator = (theAllocator.IsNull() ? NCollection_BaseAllocator::CommonBaseAllocator() : theAllocator);
   }
 
+#ifndef OCCT_NO_RVALUE_REFERENCE
+  //! Move constructor.
+  NCollection_BaseMap (NCollection_BaseMap&& theOther)
+  : myAllocator(theOther.myAllocator),
+    myData1    (theOther.myData1),
+    myData2    (theOther.myData2),
+    isDouble   (theOther.isDouble),
+    mySaturated(theOther.mySaturated),
+    myNbBuckets(theOther.myNbBuckets),
+    mySize     (theOther.mySize)
+  {
+    // leave isDouble and myNbBuckets as is
+    theOther.myAllocator = NCollection_BaseAllocator::CommonBaseAllocator();
+    theOther.myData1     = NULL;
+    theOther.myData2     = NULL;
+    theOther.mySaturated = false;
+    theOther.mySize      = 0;
+   }
+
+  //! Move assignment.
+  void move (NCollection_BaseMap& theOther, NCollection_DelMapNode theDelFun)
+  {
+    if (this == &theOther)
+    {
+      return;
+    }
+
+    Destroy (theDelFun);
+    myAllocator = theOther.myAllocator;
+    myData1     = theOther.myData1;
+    myData2     = theOther.myData2;
+    mySaturated = theOther.mySaturated;
+    myNbBuckets = theOther.myNbBuckets;
+    mySize      = theOther.mySize;
+
+    // leave isDouble and myNbBuckets as is
+    theOther.myAllocator = NCollection_BaseAllocator::CommonBaseAllocator();
+    theOther.myData1     = NULL;
+    theOther.myData2     = NULL;
+    theOther.mySaturated = false;
+    theOther.mySize      = 0;
+  }
+#endif
+
   //! Destructor
   virtual ~NCollection_BaseMap() {}
 

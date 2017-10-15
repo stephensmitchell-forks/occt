@@ -80,6 +80,12 @@ public:
   
   //! Initializes a AsciiString with another AsciiString.
   Standard_EXPORT TCollection_AsciiString(const TCollection_AsciiString& astring);
+
+#ifndef OCCT_NO_RVALUE_REFERENCE
+  //! Move constructor.
+  //! Warning! The moved object will become an unallocated NULL string, not empty string "\0", and can be used afterwards only by assigning new string to it.
+  Standard_EXPORT TCollection_AsciiString (TCollection_AsciiString&& theOther);
+#endif
   
   //! Initializes a AsciiString with copy of another AsciiString
   //! concatenated with the message character.
@@ -270,7 +276,20 @@ void operator = (const TCollection_AsciiString& fromwhere)
 {
   Copy(fromwhere);
 }
-  
+
+  //! Move assignment.
+  //! Warning! The moved object will become an unallocated NULL string, not empty string "\0", and can be used afterwards only by assigning new string to it.
+  Standard_EXPORT TCollection_AsciiString& Move (TCollection_AsciiString& theOther);
+
+  //! Exchange the data of two strings (without reallocating memory).
+  Standard_EXPORT void Exchange (TCollection_AsciiString& theOther);
+
+#ifndef OCCT_NO_RVALUE_REFERENCE
+  //! Move assignment operator.
+  //! Warning! The moved object will become an unallocated NULL string, not empty string "\0", and can be used afterwards only by assigning new string to it.
+  TCollection_AsciiString& operator= (TCollection_AsciiString&& theOther) { return Move (theOther); }
+#endif
+
   //! Frees memory allocated by AsciiString.
   Standard_EXPORT ~TCollection_AsciiString();
   

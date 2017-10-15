@@ -61,6 +61,13 @@ public:
     return *this;
   }
 
+  //! Explicit move assignment.
+  NCollection_SparseArray& Move (NCollection_SparseArray& theOther)
+  {
+    this->move (theOther);
+    return *this;
+  }
+
   //! Exchange the data of two arrays;
   //! can be used primarily to move contents of theOther into the new array
   //! in a fast way (without creation of duplicated data)

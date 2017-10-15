@@ -119,6 +119,11 @@ public:
     Assign (theOther);
   }
 
+#ifndef OCCT_NO_RVALUE_REFERENCE
+  //! Move constructor.
+  NCollection_Sequence (NCollection_Sequence&& theOther) : NCollection_BaseSequence (std::move (theOther)) {}
+#endif
+
   //! Number of items
   Standard_Integer Size (void) const
   { return mySize; }
@@ -186,11 +191,49 @@ public:
     return * this;
   }
 
+  //! Move assignment.
+  NCollection_Sequence& Move (NCollection_Sequence& theOther)
+  {
+    if (this == &theOther)
+    {
+      return *this;
+    }
+
+    Clear();
+    this->myFirstItem    = theOther.myFirstItem;
+    this->myLastItem     = theOther.myLastItem;
+    this->myCurrentItem  = theOther.myCurrentItem;
+    this->myCurrentIndex = theOther.myCurrentIndex;
+    this->mySize         = theOther.mySize;
+
+    theOther.myFirstItem    = NULL;
+    theOther.myLastItem     = NULL;
+    theOther.myCurrentItem  = NULL;
+    theOther.myCurrentIndex = 0;
+    theOther.mySize         = 0;
+    theOther.myAllocator    = NCollection_BaseAllocator::CommonBaseAllocator();
+    return *this;
+  }
+
+  //! Exchange the data of two sequences (without reallocating memory; allocators will be swapped as well).
+  void Exchange (NCollection_Sequence& theOther)
+  {
+    NCollection_Sequence aCopy;
+    aCopy.Move (*this);
+    Move (theOther);
+    theOther.Move (aCopy);
+  }
+
   //! Replacement operator
   NCollection_Sequence& operator= (const NCollection_Sequence& theOther)
   {
     return Assign (theOther);
   }
+
+#ifndef OCCT_NO_RVALUE_REFERENCE
+  //! Move assignment operator.
+  NCollection_Sequence& operator= (NCollection_Sequence&& theOther) { return Move (theOther); }
+#endif
 
   //! Remove one item
   void Remove (Iterator& thePosition)

@@ -191,6 +191,30 @@ protected: //! @name protected methods
     myData = allocMemBlocks (myCapacity);
   }
 
+#ifndef OCCT_NO_RVALUE_REFERENCE
+  //! Move constructor.
+  //! Warning! The moved object will become an unallocated vector, and can be used afterwards only by moving/assigning another object to it.
+  NCollection_BaseVector (NCollection_BaseVector&& theOther)
+  : myAllocator  (theOther.myAllocator),
+    myItemSize   (theOther.myItemSize),
+    myIncrement  (theOther.myIncrement),
+    myLength     (theOther.myLength),
+    myCapacity   (theOther.myCapacity),
+    myNBlocks    (theOther.myNBlocks),
+    myData       (theOther.myData),
+    myInitBlocks (theOther.myInitBlocks)
+  {
+    theOther.myAllocator  = NCollection_BaseAllocator::CommonBaseAllocator();
+    theOther.myItemSize   = 0;
+    theOther.myIncrement  = 0;
+    theOther.myLength     = 0;
+    theOther.myCapacity   = 0;
+    theOther.myNBlocks    = 0;
+    theOther.myData       = NULL;
+    theOther.myInitBlocks = 0;
+  }
+#endif
+
   //! Destructor
   virtual ~NCollection_BaseVector() {}
 

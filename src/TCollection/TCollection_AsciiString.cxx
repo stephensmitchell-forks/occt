@@ -158,6 +158,19 @@ TCollection_AsciiString::TCollection_AsciiString(const TCollection_AsciiString& 
   mystring[mylength] = '\0';
 }
 
+#ifndef OCCT_NO_RVALUE_REFERENCE
+// ----------------------------------------------------------------------------
+// TCollection_AsciiString
+// ----------------------------------------------------------------------------
+TCollection_AsciiString::TCollection_AsciiString (TCollection_AsciiString&& theOther)
+: mystring (theOther.mystring),
+  mylength (theOther.mylength)
+{
+  theOther.mystring = NULL;
+  theOther.mylength = 0;
+}
+#endif
+
 // ----------------------------------------------------------------------------
 // Create an asciistring from a character
 // ----------------------------------------------------------------------------
@@ -414,6 +427,35 @@ void TCollection_AsciiString::Copy(const TCollection_AsciiString& fromwhere)
     mylength = 0;
     mystring[mylength] = '\0';
   }
+}
+
+// ----------------------------------------------------------------------------
+// Move
+// ----------------------------------------------------------------------------
+TCollection_AsciiString& TCollection_AsciiString::Move (TCollection_AsciiString& theOther)
+{
+  if (mystring != NULL)
+  {
+    Free (mystring);
+  }
+  mystring = theOther.mystring;
+  mylength = theOther.mylength;
+  theOther.mystring = NULL;
+  theOther.mylength = 0;
+  return *this;
+}
+
+// ----------------------------------------------------------------------------
+// Exchange
+// ----------------------------------------------------------------------------
+void TCollection_AsciiString::Exchange (TCollection_AsciiString& theOther)
+{
+  Standard_PCharacter aString = mystring;
+  Standard_Integer    aLength = mylength;
+  mystring = theOther.mystring;
+  mylength = theOther.mylength;
+  theOther.mystring = aString;
+  theOther.mylength = aLength;
 }
 
 // ----------------------------------------------------------------------------

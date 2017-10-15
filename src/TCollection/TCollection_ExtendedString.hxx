@@ -100,7 +100,13 @@ public:
   
   //! Initializes a ExtendedString with another ExtendedString.
   Standard_EXPORT TCollection_ExtendedString(const TCollection_ExtendedString& astring);
-  
+
+#ifndef OCCT_NO_RVALUE_REFERENCE
+  //! Move constructor.
+  //! Warning! The moved object will become an unallocated NULL string, not empty string "\0", and can be used afterwards only by assigning new string to it.
+  Standard_EXPORT TCollection_ExtendedString (TCollection_ExtendedString&& theOther);
+#endif
+
   //! Creation by converting an Ascii string to an extended
   //! string. The string is treated as having UTF-8 coding.
   //! If it is not a UTF-8 then each character is copied to ExtCharacter.
@@ -140,7 +146,20 @@ void operator = (const TCollection_ExtendedString& fromwhere)
 {
   Copy(fromwhere);
 }
-  
+
+  //! Move assignment.
+  //! Warning! The moved object will become an unallocated NULL string, not empty string "\0", and can be used afterwards only by assigning new string to it.
+  Standard_EXPORT TCollection_ExtendedString& Move (TCollection_ExtendedString& theOther);
+
+  //! Exchange the data of two strings (without reallocating memory).
+  Standard_EXPORT void Exchange (TCollection_ExtendedString& theOther);
+
+#ifndef OCCT_NO_RVALUE_REFERENCE
+  //! Move assignment operator.
+  //! Warning! The moved object will become an unallocated NULL string, not empty string "\0", and can be used afterwards only by assigning new string to it.
+  TCollection_ExtendedString& operator= (TCollection_ExtendedString&& theOther) { return Move (theOther); }
+#endif
+
   //! Frees memory allocated by ExtendedString.
   Standard_EXPORT ~TCollection_ExtendedString();
   

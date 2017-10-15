@@ -173,6 +173,30 @@ void NCollection_SparseArrayBase::assign (const NCollection_SparseArrayBase& the
 }
 
 //=======================================================================
+//function : move
+//purpose  :
+//=======================================================================
+void NCollection_SparseArrayBase::move (NCollection_SparseArrayBase& theOther)
+{
+  if (this == &theOther)
+  {
+    return;
+  }
+
+  Clear();
+  myItemSize  = theOther.myItemSize;
+  myBlockSize = theOther.myBlockSize;
+  myNbBlocks  = theOther.myNbBlocks;
+  mySize      = theOther.mySize;
+  myData      = theOther.myData;
+
+  // leave myItemSize and myBlockSize as is
+  theOther.myNbBlocks  = 0;
+  theOther.mySize      = 0;
+  theOther.myData      = NULL;
+}
+
+//=======================================================================
 //function : exchange
 //purpose  : 
 //=======================================================================
