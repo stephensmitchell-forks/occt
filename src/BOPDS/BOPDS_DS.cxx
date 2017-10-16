@@ -1156,13 +1156,7 @@ Handle(BOPDS_CommonBlock) BOPDS_DS::CommonBlock
 void BOPDS_DS::SetCommonBlock(const Handle(BOPDS_PaveBlock)& thePB,
                               const Handle(BOPDS_CommonBlock)& theCB)
 {
-  if (IsCommonBlock(thePB)) {
-    Handle(BOPDS_CommonBlock)& aCB = myMapPBCB.ChangeFind(thePB);
-    aCB=theCB;
-  }
-  else {
-    myMapPBCB.Bind(thePB, theCB);
-  }
+  myMapPBCB.Bind(thePB, theCB);
 }
 
 //
@@ -2114,7 +2108,7 @@ Standard_Boolean BOPDS_DS::IsValidShrunkData(const Handle(BOPDS_PaveBlock)& theP
 //=======================================================================
 void BOPDS_DS::FilterOfCommonBlocks()
 {
-  NCollection_DataMap<TopoDS_Edge, Handle(BOPDS_CommonBlock)> aMapEC;
+  NCollection_DataMap<Standard_Integer, Handle(BOPDS_CommonBlock)> aMapEC;
   BOPDS_VectorOfListOfPaveBlock& aPBP = ChangePaveBlocksPool();
   Standard_Integer aNbPBP = aPBP.Extent();
   //
@@ -2131,18 +2125,17 @@ void BOPDS_DS::FilterOfCommonBlocks()
         continue;
 
       const Standard_Integer anEIdx = aPB->Edge();
-      const TopoDS_Edge &anE = TopoDS::Edge(Shape(anEIdx));
 
-      Handle(BOPDS_CommonBlock) *aCB = aMapEC.ChangeSeek(anE);
+      Handle(BOPDS_CommonBlock) *aCB = aMapEC.ChangeSeek(anEIdx);
       if (!aCB)
       {
-        aCB = aMapEC.Bound(anE, CommonBlock(aPB));
-        continue;
+        aCB = aMapEC.Bound(anEIdx, CommonBlock(aPB));
       }
-
-      myMapPBCB.UnBind(aPB);
-      (*aCB)->AddPaveBlock(aPB);
-      SetCommonBlock(aPB, *aCB);
+      else
+      {
+        (*aCB)->AddPaveBlock(aPB);
+        SetCommonBlock(aPB, *aCB);
+      }
     }
   }
 }
