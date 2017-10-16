@@ -35,7 +35,6 @@ public:
 
   DEFINE_STANDARD_ALLOC
 
-private:
   enum PolyState
   {
     PolyOut = -1,
@@ -43,8 +42,6 @@ private:
     PolyIn = 1
   };
 
-public:
-  
   //! Constructs the 2D-polygon.
   //! theTP2d is the set of the vertices (closed polygon
   //! will always be created inside of this constructor;

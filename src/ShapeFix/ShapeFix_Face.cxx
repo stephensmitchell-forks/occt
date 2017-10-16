@@ -2438,7 +2438,7 @@ Standard_Boolean ShapeFix_Face::FixSplitFace(const TopTools_DataMapOfShapeListOf
         TopoDS_Face aFace = TopoDS::Face ( aShapeEmptyCopied);
         aFace.Orientation ( TopAbs_FORWARD );
         B.Add (aFace,liter.Value());
-        BRepTopAdaptor_FClass2d clas (aFace, Precision::Confusion());
+        BRepTopAdaptor_FClass2d clas (aFace, 0.0);
         TopAbs_State staout = clas.PerformInfinitePoint();
         if (staout == TopAbs_IN) 
           B.Add(tmpFace,liter.Value());

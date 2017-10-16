@@ -21,6 +21,14 @@
 #include <Standard_ConstructionError.hxx>
 #include <Precision.hxx>
 
+static inline Standard_Boolean IsOn(const Standard_Real theTolU,
+                                    const Standard_Real theTolV,
+                                    const Standard_Real thePrevX,
+                                    const Standard_Real thePrevY,
+                                    const Standard_Real theDx,
+                                    const Standard_Real theDy);
+
+
 //=======================================================================
 //function : Constructor
 //purpose  : 
@@ -41,7 +49,7 @@ CSLib_Class2d::CSLib_Class2d(const TColgp_Array1OfPnt2d& theTP2d,
                                                             myVmax(theVmax)
 {
   const size_t aN = theTP2d.Length();
-  if((theUmax <= theUmin) || (theVmax <= theVmin) || (aN == 0))
+  if ((theUmax <= theUmin) || (theVmax <= theVmin) || (aN == 0))
   {
     // Nothing will be created.
     return;
@@ -59,7 +67,7 @@ CSLib_Class2d::CSLib_Class2d(const TColgp_Array1OfPnt2d& theTP2d,
   Standard_Integer aCurrIdx = myPnts2d.Lower();
   gp_Pnt2d aPPrev = theTP2d(theTP2d.Lower());
   myPnts2d(aCurrIdx).SetCoord(aPPrev.X() - theUmin, aPPrev.Y() - theVmin);
-  for (Standard_Integer i = theTP2d.Lower()+1; i < theTP2d.Upper(); ++i)
+  for (Standard_Integer i = theTP2d.Lower() + 1; i < theTP2d.Upper(); ++i)
   {
     const gp_Pnt2d& aPCur = theTP2d(i);
 
@@ -87,35 +95,6 @@ CSLib_Class2d::CSLib_Class2d(const TColgp_Array1OfPnt2d& theTP2d,
   {
     myPnts2d.Resize(myPnts2d.Lower(), aCurrIdx, Standard_True);
   }
-
-#ifdef CSLIB_CLASS2D_DEBUG
-  bool flShow = false;
-
-  if (flShow)
-  {
-    std::cout << "+++ Dump of CSLib_Class2d polygon ++" << std::endl;
-
-    for (Standard_Integer i = myPnts2d.Lower(); i < myPnts2d.Upper(); i++)
-    {
-      const gp_Pnt2d &aPCurr = myPnts2d(i),
-                     &aPNext = myPnts2d(i + 1);
-      const Standard_Real aDX = aPNext.X() - aPCurr.X(),
-                          aDY = aPNext.Y() - aPCurr.Y();
-      
-      if ((aDX*aDX + aDY*aDY) < gp::Resolution())
-        continue;
-      
-      std::cout << "line l" << i << " " << aPCurr.X() + theUmin << " " <<
-                                           aPCurr.Y() + theVmin << " " <<
-                                           aDX << " " <<
-                                           aDY << std::endl;
-
-      std::cout << "trim l" << i << " l" << i << " " <<
-                            0.0 << " " << aPCurr.Distance(aPNext) << std::endl;
-    }
-    std::cout << "--- Dump of CSLib_Class2d polygon --" << std::endl << std::endl;
-  }
-#endif
 }
 
 //=======================================================================
@@ -135,7 +114,7 @@ CSLib_Class2d::PolyState CSLib_Class2d::Classify(const gp_Pnt2d& theP,
                                                  const Standard_Real theTolU,
                                                  const Standard_Real theTolV) const
 { 
-  if (myPnts2d.Size() < 3)
+  if ((myPnts2d.Size() < 3) || (myUmin > myUmax) || (myVmin > myVmax))
   {
     // Return 0 for compatibility with
     // previous versions of OCCT (it does not
@@ -150,21 +129,17 @@ CSLib_Class2d::PolyState CSLib_Class2d::Classify(const gp_Pnt2d& theP,
   }
   //
   Standard_Real aX = theP.X(), aY = theP.Y();
-
-  if (myUmin < myUmax && myVmin<myVmax)
+  if ((theTolU < (myUmin - aX)) ||
+      ((aX - myUmax) > theTolU) ||
+      (theTolV < (myVmin - aY)) ||
+      ((aY - myVmax) > theTolV))
   {
-    if ((theTolU < (myUmin - aX)) ||
-        ((aX - myUmax) > theTolU) ||
-        (theTolV < (myVmin - aY)) ||
-        ((aY - myVmax) > theTolV))
-    {
-      // The point is outside of the UV-bounds
-      return PolyOut;
-    }
-
-    aX -= myUmin;
-    aY -= myVmin;
+    // The point is outside of the UV-bounds
+    return PolyOut;
   }
+
+  aX -= myUmin;
+  aY -= myVmin;
 
   return InternalClass(aX, aY, theTolU, theTolV);
 }
@@ -200,10 +175,30 @@ CSLib_Class2d::PolyState CSLib_Class2d::Classify(const gp_Pnt2d& theP,
 //  theTolU or/and theTolV can be equal to 0.
 //=======================================================================
 CSLib_Class2d::PolyState CSLib_Class2d::InternalClass(const Standard_Real thePx,
-                                                       const Standard_Real thePy,
-                                                       const Standard_Real theTolU,
-                                                       const Standard_Real theTolV) const
+                                                      const Standard_Real thePy,
+                                                      const Standard_Real theTolU,
+                                                      const Standard_Real theTolV) const
 {
+#ifdef CSLIB_CLASS2D_DEBUG
+  bool flShow = false;
+
+  if (flShow)
+  {
+    std::cout << "+++ Dump of CSLib_Class2d polygon ++" << std::endl;
+    std::cout << "plane pl 0 0 0 0 0 1" << std::endl;
+    std::cout << "polyline w ";
+    for (Standard_Integer i = myPnts2d.Lower(); i <= myPnts2d.Upper(); i++)
+    {
+      const gp_Pnt2d &aPCurr = myPnts2d(i);
+      std::cout << aPCurr.X() + myUmin << " " << aPCurr.Y() + myVmin << " " << 0 << " ";
+    }
+    std::cout << std::endl << "mkface ff pl w " << std::endl;
+    std::cout << "v2d; pcurve ff" << std::endl;
+
+    std::cout << "--- Dump of CSLib_Class2d polygon --" << std::endl << std::endl;
+  }
+#endif
+
   // The source polygon is translated.
   // So, classified point has (0, 0) - coordinates.
   
@@ -289,47 +284,20 @@ CSLib_Class2d::PolyState CSLib_Class2d::InternalClass(const Standard_Real thePx,
 
         // must be ignored.
 
+        if (IsOn(theTolU, theTolV, aPrevX, aPrevY, aDx, aDy))
+        {
+          return PolyOn;
+        }
+
         aPrevX = aNewX;
         aPrevY = aNewY;
         continue;
       }
     }
 
+    if (IsOn(theTolU, theTolV, aPrevX, aPrevY, aDx, aDy))
     {
-      // If the line (which the current segment lies in) has
-      // the location L(aPrevX, aPrevY) and the direction
-      // d{aDx, aDy} then the parameter of the classified point (0, 0)
-      // on the line (i.e. the projection point) is
-      //      t = (d*V)/|| d || = -(aPrevX*aDx+aPrevY*aDy)/|| d ||,
-      // where V{-aPrevX, -aPrevY} is the vector joining L with
-      // the classified point (0, 0).
-      // If the projection point is IN the current segment then
-      // the inequation
-      //      0 <= t <= || d ||
-      // must be satisfied.
-      //
-      // Or
-      //      0 <= -(aPrevX*aDx+aPrevY*aDy) <= || d ||^2
-
-      //Square length of the considered segment
-      //aSqL != 0 (see algorithm of polygon building in constructor).
-      const Standard_Real aSqL = aDx*aDx + aDy*aDy;
-      const Standard_Real aDP = aDx*aPrevX + aDy*aPrevY;
-      if ((-aSqL <= aDP) && (aDP <= 0.0))
-      {
-        // The projection point has coordinates
-        //    L + t*d/|| d || = L - d*(aPrevX*aDx+aPrevY*aDy)/aSqL
-
-        const Standard_Real aXNear = aPrevX - aDP*aDx / aSqL;
-        const Standard_Real aYNear = aPrevY - aDP*aDy / aSqL;
-
-        if ((Abs(aXNear) <= theTolU) && (Abs(aYNear) <= theTolV))
-        {
-          // The distance between the projection point and 
-          // the classified point (0, 0) is in the given tolerances
-          return PolyOn;
-        }
-      }
+      return PolyOn;
     }
 
     if (Abs(aPrevY) <= aNullTolV)
@@ -369,4 +337,50 @@ CSLib_Class2d::PolyState CSLib_Class2d::InternalClass(const Standard_Real thePx,
   }
 
   return aRetVal;
+}
+
+//=======================================================================
+//function : IsOn
+//purpose  : If the line (which the current segment lies in) has
+//            the location L(thePrevX, thePrevY) and the direction
+//            d{theDx, theDy} then the parameter of the classified
+//            point (0, 0) on the line (i.e. the projection point) is
+//              t = (d*V)/|| d || = -(aPrevX*aDx+aPrevY*aDy)/|| d ||,
+//            where V{-thePrevX, -thePrevY} is the vector joining L with
+//            the classified point (0, 0).
+//            If the projection point is IN the current segment then
+//            the inequation
+//              0 <= t <= || d ||
+//            must be satisfied.
+//            Or
+//              0 <= -(thePrevX*theDx+thePrevY*theDy) <= || d ||^2.
+//=======================================================================
+static inline Standard_Boolean IsOn(const Standard_Real theTolU,
+                                    const Standard_Real theTolV,
+                                    const Standard_Real thePrevX,
+                                    const Standard_Real thePrevY,
+                                    const Standard_Real theDx,
+                                    const Standard_Real theDy)
+{
+  //Square length of the considered segment
+  //aSqL != 0 (see algorithm of polygon building in constructor).
+  const Standard_Real aSqL = theDx*theDx + theDy*theDy;
+  const Standard_Real aDP = theDx*thePrevX + theDy*thePrevY;
+  if ((-aSqL <= aDP) && (aDP <= 0.0))
+  {
+    // The projection point has coordinates
+    //    L + t*d/|| d || = L - d*(aPrevX*aDx+aPrevY*aDy)/aSqL
+
+    const Standard_Real aXNear = thePrevX - aDP*theDx / aSqL;
+    const Standard_Real aYNear = thePrevY - aDP*theDy / aSqL;
+
+    if ((Abs(aXNear) <= theTolU) && (Abs(aYNear) <= theTolV))
+    {
+      // The distance between the projection point and 
+      // the classified point (0, 0) is in the given tolerances
+      return Standard_True;
+    }
+  }
+
+  return Standard_False;
 }

@@ -178,7 +178,7 @@ BRepTopAdaptor_FClass2d::BRepTopAdaptor_FClass2d(const TopoDS_Face& aFace,
 void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& aFace,
                                    const Standard_Real theTol3D)
 {
-  Standard_Boolean WireIsNotEmpty, Ancienpnt3dinitialise, degenerated;
+  Standard_Boolean WireIsEmpty, Ancienpnt3dinitialise, degenerated;
   Standard_Integer nbpnts, firstpoint, NbEdges;
   Standard_Integer iX, aNbs1, nbs, Avant, BadWire;
   Standard_Real u, du, Tole, Tol, pfbid, plbid;
@@ -194,7 +194,6 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& aFace,
   Handle(Geom2d_Curve) aC2D;
   gp_Pnt Ancienpnt3d;
   TColgp_SequenceOfPnt2d SeqPnt2d;
-  //TColStd_DataMapOfIntegerInteger anIndexMap;
   TColgp_SequenceOfVec2d          aD1Prev;
   TColgp_SequenceOfVec2d          aD1Next;
   
@@ -222,7 +221,8 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& aFace,
   //calculation of Umin, Umax, Vmin, Vmax - ifv, 23.08.06 
   //
   aExpF.Init(Face, TopAbs_WIRE);
-  for (; aExpF.More(); aExpF.Next()) {
+  for (; aExpF.More(); aExpF.Next())
+  {
     const TopoDS_Wire& aW = *((TopoDS_Wire*)&aExpF.Current());
     //
     nbpnts = 0;
@@ -231,12 +231,11 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& aFace,
     FlecheV = myTolV;
     TolVertex1 = 0.;
     TolVertex = 0.;
-    WireIsNotEmpty = Standard_False;
+    WireIsEmpty = Standard_True;
     Ancienpnt3dinitialise = Standard_False;
     Ancienpnt3d.SetCoord(0., 0., 0.);
     //
     SeqPnt2d.Clear();
-    //anIndexMap.Clear();
     aD1Prev.Clear();
     aD1Next.Clear();
     //
@@ -476,8 +475,10 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& aFace,
         //calculation of Umin, Umax, Vmin, Vmax - ifv, 23.08.06 
       }
       //
-      if (firstpoint == 1) firstpoint = 2;
-      WireIsNotEmpty = Standard_True;
+      if (firstpoint == 1)
+        firstpoint = 2;
+
+      WireIsEmpty = Standard_False;
       // Append the derivative of the first parameter.
       Standard_Real aU = aPrms(1);
       gp_Pnt2d      aP;
@@ -501,19 +502,8 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& aFace,
         aD1Prev.Append(aV);
       else
         aD1Prev.Prepend(aV);
-
-      // Fill the map anIndexMap.
-      //if (Avant > 0)
-      //  anIndexMap.Bind(Avant, aD1Next.Length());
-      //else
-      //  anIndexMap.Bind(1, aD1Next.Length());
     } //for(;aWExp.More(); aWExp.Next()) {
     // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    
-    BRepTopAdaptor_FClass2dTree aBBTree;
-    BRepTopAdaptor_FClass2dTreeFiller aTreeFiller(aBBTree);
-    NCollection_Array1<Bnd_Box2d> anArrBoxes(1, nbpnts - 1);
-    //
     if (NbEdges || (aPrevPoint.SquareDistance(aFirstEPoint) > Precision::SquarePConfusion()))
     {
       // 1. TopExp_Explorer and BRepTools_WireExplorer returns differ number of edges
@@ -530,7 +520,9 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& aFace,
       TabOrien.Append(-1);
     }
     //
-    else if (WireIsNotEmpty) {
+    else if (!WireIsEmpty)
+    {
+      Standard_Real anArea = 0.0;
       TColgp_Array1OfPnt2d PClass(1, nbpnts);
       gp_Pnt2d anInitPnt(0., 0.);
       //
@@ -542,85 +534,39 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& aFace,
       
       if (!BadWire)
       {
-        Standard_Integer im2 = nbpnts - 2;
+        BRepTopAdaptor_FClass2dTree aBBTree;
+        BRepTopAdaptor_FClass2dTreeFiller aTreeFiller(aBBTree);
+        NCollection_Array1<Bnd_Box2d> anArrBoxes(1, nbpnts - 1);
+
+        // Point to area computation
+        const Standard_Integer im2 = nbpnts - 2;
         Standard_Integer im1 = nbpnts - 1;
         Standard_Integer im0 = 1;
         Standard_Integer ii;
-        Standard_Real    anArea = 0.0;
         //
         PClass(im2) = SeqPnt2d.Value(im2);
         PClass(im1) = SeqPnt2d.Value(im1);
         PClass(nbpnts) = SeqPnt2d.Value(nbpnts);
-        
+
         anArrBoxes(im2).Add(PClass(im2));
         anArrBoxes(im2).Add(PClass(im1));
 
         anArrBoxes(im1).Add(PClass(im1));
         anArrBoxes(im1).Add(PClass(nbpnts));
 
-        for (ii = 1; ii<nbpnts; ii++, im0++, im1++, im2++)
+        for (ii = 1; ii < nbpnts; ii++, im0++, im1++)
         {
-          if (im2 >= nbpnts) im2 = 1;
           if (im1 >= nbpnts) im1 = 1;
           PClass(ii) = SeqPnt2d.Value(ii);
 
           gp_Vec2d A(PClass(1/*im2*/), PClass(im1));
           gp_Vec2d B(PClass(im1), PClass(im0));
-          
+          anArea += A.Crossed(B);
+
           anArrBoxes(ii).Add(PClass(ii));
           anArrBoxes(ii).Add(SeqPnt2d.Value(ii + 1));
 
           aTreeFiller.Add(ii, anArrBoxes(ii));
-
-          // In order to avoid FPE-signal
-          // E.g. if aSqMA == aSqMB = 1.0e200.
-          //const Standard_Real aSqMA = A.SquareMagnitude(),
-          //                    aSqMB = B.SquareMagnitude();
-          //if (Precision::IsInfinite(aSqMA) ||
-          //    Precision::IsInfinite(aSqMB) ||
-          //    (aSqMA*aSqMB  > 1e-32))
-          {
-            Standard_Real aTmpArea = A.Crossed(B);
-            //  
-            //if (anIndexMap.IsBound(im1))
-            {
-              //Standard_Integer  anInd = anIndexMap.Find(im1);
-              //const gp_Vec2d   &aVPrev = aD1Prev.Value(anInd);
-              //const gp_Vec2d   &aVNext = aD1Next.Value(anInd);
-
-              //if (aVPrev.SquareMagnitude() * aVNext.SquareMagnitude() > 1e-32)
-              //{
-              //  Standard_Real aDerivAngle, aAbsDA, aProduct, aPA;
-              //  //ifv 23.08.06
-              //  aPA = Precision::Angular();
-              //  aDerivAngle = aVPrev.Angle(aVNext);
-              //  aAbsDA = Abs(aDerivAngle);
-              //  if (aAbsDA <= aPA)
-              //  {
-              //    aDerivAngle = 0.;
-              //  }
-              //  //
-              //  aProduct = aDerivAngle * a;
-              //  //
-              //  if ((M_PI-aAbsDA) <= aPA) {
-              //    if (aProduct > 0.) {
-              //      aProduct = -aProduct;
-              //    }
-              //  }
-              //  //ifv 23.08.06 : if edges continuity > G1, |aDerivAngle| ~0,
-              //  //but can has wrong sign and causes condition aDerivAngle * a < 0.
-              //  //that is wrong in such situation
-              //  if (iFlag && aProduct < 0.)
-              //  {
-              //    iFlag = 0;
-              //    // Bad case.
-              //    anArea = 0.;
-              //  }
-              //}
-            }
-
-            anArea += aTmpArea;
-          }
         }//for(ii=1; ii<nbpnts; ii++,im0++,im1++,im2++) { 
 
         {
@@ -638,43 +584,42 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& aFace,
 
         if (!BadWire)
         {
-          TabClass.Append(new CSLib_Class2d(PClass,
-                                            FlecheU, FlecheV,
-                                            Umin, Vmin, Umax, Vmax));
+          // 2. Shake the tree filler
+          aTreeFiller.Fill();
 
-          TabOrien.Append((anArea > 0.0) ? 1 : 0);
-        }
+          for (Standard_Integer aVecIdx = anArrBoxes.Lower();
+               aVecIdx <= anArrBoxes.Upper(); aVecIdx++)
+          {
+            const Bnd_Box2d& aBox = anArrBoxes(aVecIdx);
+            BRepTopAdaptor_FClass2dSel aSelector(SeqPnt2d, aBox, aVecIdx);
+            if (aBBTree.Select(aSelector))
+            {
+              //The polygon is self-intersected
+              BadWire = Standard_True;
+              break;
+            }
+          }
+        } // if (!BadWire) cond.
+      } // if (!BadWire) cond.
+
+      if (!BadWire)
+      {
+        TabClass.Append(new CSLib_Class2d(PClass,
+                                          FlecheU, FlecheV,
+                                          Umin, Vmin, Umax, Vmax));
+
+        TabOrien.Append((anArea > 0.0) ? 1 : 0);
       }
-      
-      if (BadWire)
+      else // if (BadWire)
       {
         TabOrien.Append(-1);
         TColgp_Array1OfPnt2d PPClass(1, 2);
-        PPClass.Init(anInitPnt);
         TabClass.Append(new CSLib_Class2d(PPClass,
                                           FlecheU,
                                           FlecheV,
                                           Umin, Vmin, Umax, Vmax));
       }
-    }// else if(WireIsNotEmpty)
-
-    if (BadWire)
-      continue;
-
-    // 2. Shake the tree filler
-    aTreeFiller.Fill();
-
-    for (Standard_Integer aVecIdx = anArrBoxes.Lower();
-         aVecIdx <= anArrBoxes.Upper(); aVecIdx++)
-    {
-      const Bnd_Box2d& aBox = anArrBoxes(aVecIdx);
-      BRepTopAdaptor_FClass2dSel aSelector(SeqPnt2d, aBox, aVecIdx);
-      if (aBBTree.Select(aSelector))
-      {
-        BadWire = Standard_True;
-        break;
-      }
-    }
+    }// else if(!WireIsEmpty) cond.
   } // for(; aExpF.More();  aExpF.Next()) {
 
   if ((TabClass.Length() > 0) && (BadWire))
@@ -805,7 +750,13 @@ TopAbs_State
   for (;;) {
     dedans = 1;
     gp_Pnt2d Puv(u, v);
+
+#ifdef BREPTOPADAPTOR_FCLASS2D_CheckPolygon
+    bUseClassifier = Standard_False;
+#else
     bUseClassifier = (TabOrien(1) == -1);
+#endif
+
     if (!bUseClassifier) {
       Standard_Integer n, cur, TabOrien_n;
       for (n = 1; n <= nbtabclass; n++) {
@@ -830,10 +781,16 @@ TopAbs_State
         }
       } // for(n=1; n<=nbtabclass; n++)
 
-      if (dedans == 0) {
+      if (dedans == 0)
+      {
+#if BREPTOPADAPTOR_FCLASS2D_CheckPolygon
+        aStatus = TopAbs_ON;
+#else
         bUseClassifier = Standard_True;
+#endif
       }
-      else {
+      else
+      {
         aStatus = (dedans == 1) ? TopAbs_IN : TopAbs_OUT;
       }
     } // if(TabOrien(1)!=-1) {

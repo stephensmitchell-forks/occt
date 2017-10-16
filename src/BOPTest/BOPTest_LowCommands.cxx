@@ -22,9 +22,11 @@
 #include <BRep_TEdge.hxx>
 #include <BRep_Tool.hxx>
 #include <BRepAdaptor_Surface.hxx>
+#include <BRepBuilderAPI_MakePolygon.hxx>
 #include <BRepClass3d_SolidClassifier.hxx>
 #include <BRepClass_FaceClassifier.hxx>
 #include <BRepTopAdaptor_FClass2d.hxx>
+#include <CSLib_Class2d.hxx>
 #include <DBRep.hxx>
 #include <Draw.hxx>
 #include <DrawTrSurf.hxx>
@@ -56,6 +58,7 @@ static  Standard_Integer b2dclassify (Draw_Interpretor& , Standard_Integer , con
 static  Standard_Integer b2dclassifx (Draw_Interpretor& , Standard_Integer , const char** );
 static  Standard_Integer bhaspc      (Draw_Interpretor& , Standard_Integer , const char** );
 static  Standard_Integer IsHole      (Draw_Interpretor&, Standard_Integer, const char**);
+static  Standard_Integer polyclassify( Draw_Interpretor&, Standard_Integer, const char** );
 
 //=======================================================================
 //function : LowCommands
@@ -84,6 +87,9 @@ static  Standard_Integer IsHole      (Draw_Interpretor&, Standard_Integer, const
 
   theCommands.Add("ishole", "Use: ishole face [-t toler3D = <FaceToler>]: "
                       "Checks if the face is hole", __FILE__, IsHole, g);
+
+  theCommands.Add("polyclassify", "Use: polyclassify...: "
+                   "Checks if the face is hole", __FILE__, polyclassify, g );
 
 }
 
@@ -270,6 +276,111 @@ Standard_Integer bclassify (Draw_Interpretor& theDI,
   aSC.Perform (aP,aTol);
 
   PrintState (theDI, aSC.State());
+  return 0;
+}
+
+//=======================================================================
+//function : polyclassify
+//purpose  : 
+//=======================================================================
+Standard_Integer polyclassify(Draw_Interpretor& theDI,
+                              Standard_Integer  theArgNb,
+                              const char**      theArgVec)
+{
+  if (theArgNb < 1)
+  {
+    theDI << "polyclassify [-s] -c px py -t tolU tolV -p px1 py1 -p px2 py2 ...\n";
+    return 1;
+  }
+
+  Standard_Boolean hasToShow = Standard_False;
+  gp_Pnt2d aClassifPnt;
+  Standard_Real aTolU = 0.0, aTolV = 0.0;
+
+  Standard_Real aUmin = RealLast(), aUmax = RealFirst();
+  Standard_Real aVmin = RealLast(), aVmax = RealFirst();
+
+  NCollection_Vector<gp_Pnt2d> aPntVec;
+
+  for (Standard_Integer i = 1; i < theArgNb; i++)
+  {
+    if (theArgVec[i][0] != '-')
+      continue;
+
+    switch (theArgVec[i][1])
+    {
+      case 's':
+        hasToShow = Standard_True;
+        break;
+
+      case 'c':
+      {
+        const Standard_Real aX = Draw::Atof(theArgVec[++i]);
+        const Standard_Real aY = Draw::Atof(theArgVec[++i]);
+        aClassifPnt.SetCoord(aX, aY);
+        break;
+      }
+
+      case 't':
+      {
+        aTolU = Draw::Atof(theArgVec[++i]);
+        aTolV = Draw::Atof(theArgVec[++i]);
+        break;
+      }
+
+      case 'p':
+      {
+        const Standard_Real aX = Draw::Atof(theArgVec[++i]);
+        const Standard_Real aY = Draw::Atof(theArgVec[++i]);
+        aUmin = Min(aUmin, aX);
+        aUmax = Max(aUmax, aX);
+        aVmin = Min(aVmin, aY);
+        aVmax = Max(aVmax, aY);
+
+        aPntVec.Append(gp_Pnt2d(aX, aY));
+        break;
+      }
+    }
+  }
+
+  DrawTrSurf::Set("pntsrc", aClassifPnt);
+
+  BRepBuilderAPI_MakePolygon aW;
+
+  TColgp_Array1OfPnt2d anArrPnts(1, aPntVec.Length());
+  for (Standard_Integer i = aPntVec.Lower(), j = anArrPnts.Lower(); i <= aPntVec.Upper(); i++, j++)
+  {
+    anArrPnts(j) = aPntVec(i);
+
+    if (!hasToShow)
+      continue;
+
+    aW.Add( gp_Pnt( aPntVec( i ).X(), aPntVec( i ).Y(), 0.0 ) );
+  }
+
+  if (hasToShow)
+  {
+    aW.Close();
+    DBRep::Set( "wirsrc", aW );
+  }
+
+  CSLib_Class2d aPClass(anArrPnts, aTolU, aTolV, aUmin, aVmin, aUmax, aVmax);
+  CSLib_Class2d::PolyState aState = aPClass.Classify(aClassifPnt);
+
+  theDI << "Point pntsrc is ";
+  switch (aState)
+  {
+    case CSLib_Class2d::PolyOut:
+      theDI << "OUT\n";
+      break;
+    case CSLib_Class2d::PolyOn:
+      theDI << "ON\n";
+      break;
+    case CSLib_Class2d::PolyIn:
+      theDI << "IN\n";
+      break;
+  }
+
   return 0;
 }
 
