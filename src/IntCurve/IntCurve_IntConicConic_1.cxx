@@ -5,8 +5,8 @@
 //
 // This file is part of Open CASCADE Technology software library.
 //
-// This library is free software; you can redistribute it and / or modify it
-// under the terms of the GNU Lesser General Public version 2.1 as published
+// This library is free software; you can redistribute it and/or modify it under
+// the terms of the GNU Lesser General Public License version 2.1 as published
 // by the Free Software Foundation, with special exception defined in the file
 // OCCT_LGPL_EXCEPTION.txt. Consult the file LICENSE_LGPL_21.txt included in OCCT
 // distribution for complete text of the license and disclaimer of any warranty.
@@ -16,24 +16,27 @@
 
 // a modifier le cas de 2 points confondus ( Insert a la place d'append ? ) 
 
-#include <IntCurve_IntConicConic.jxx>
-
-#include <IntCurve_IConicTool.hxx>
-#include <IntCurve_PConic.hxx>
-#include <IntRes2d_Domain.hxx>
-#include <gp.hxx>
-#include <IntCurve_IntConicConic_Tool.hxx>
-#include <IntImpParGen.hxx>
-#include <IntCurve_IntConicConic_1.hxx>
 #include <ElCLib.hxx>
-#include <Standard_ConstructionError.hxx>
-#include <IntRes2d_IntersectionPoint.hxx>
-#include <IntRes2d_IntersectionSegment.hxx>
-
+#include <gp.hxx>
+#include <gp_Circ2d.hxx>
+#include <gp_Elips2d.hxx>
+#include <gp_Hypr2d.hxx>
+#include <gp_Lin2d.hxx>
+#include <gp_Parab2d.hxx>
 #include <gp_Pnt2d.hxx>
 #include <gp_Vec2d.hxx>
-#include <Precision.hxx>
+#include <IntCurve_IConicTool.hxx>
+#include <IntCurve_IntConicConic.hxx>
+#include <IntCurve_IntConicConic_Tool.hxx>
+#include <IntCurve_PConic.hxx>
+#include <IntImpParGen.hxx>
+#include <IntRes2d_Domain.hxx>
+#include <IntRes2d_IntersectionPoint.hxx>
+#include <IntRes2d_IntersectionSegment.hxx>
 #include <IntRes2d_TypeTrans.hxx>
+#include <Precision.hxx>
+#include <Standard_ConstructionError.hxx>
+#include <Extrema_ExtElC2d.hxx>
 
 Standard_Boolean Affichage=Standard_False;
 Standard_Boolean AffichageGraph=Standard_True;
@@ -691,15 +694,16 @@ void IntCurve_IntConicConic::Perform(const gp_Circ2d& Circle1
   gp_Circ2d Circle2=_Circle2;
   IntRes2d_Domain  DomainCirc2=_DomainCirc2;
   Standard_Boolean IndirectCircles=Standard_False;
-  if(Circle1.IsDirect() != _Circle2.IsDirect()) { 
+  if(Circle1.IsDirect() != _Circle2.IsDirect())
+  { 
     IndirectCircles=Standard_True;
     Circle2=_Circle2.Reversed();
     DomainCirc2.SetValues(_DomainCirc2.LastPoint(),
-			  PIpPI-_DomainCirc2.LastParameter(),
-			  _DomainCirc2.LastTolerance(),
-			  _DomainCirc2.FirstPoint(),
-			  PIpPI-_DomainCirc2.FirstParameter(),
-			  _DomainCirc2.FirstTolerance());
+      PIpPI-_DomainCirc2.LastParameter(),
+      _DomainCirc2.LastTolerance(),
+      _DomainCirc2.FirstPoint(),
+      PIpPI-_DomainCirc2.FirstParameter(),
+      _DomainCirc2.FirstTolerance());
     DomainCirc2.SetEquivalentParameters(0.0,PIpPI);
   }
   
@@ -724,8 +728,11 @@ void IntCurve_IntConicConic::Perform(const gp_Circ2d& Circle1
     deltat=NextAfter(PIpPI, 0.);
   }
   
-  while(C1Domain.Binf >= PIpPI) C1Domain.Binf-=PIpPI;
-  while(C1Domain.Binf <  0.0)   C1Domain.Binf+=PIpPI;
+  while(C1Domain.Binf >= PIpPI)
+    C1Domain.Binf-=PIpPI;
+  while(C1Domain.Binf <  0.0)
+    C1Domain.Binf+=PIpPI;
+
   C1Domain.Bsup=C1Domain.Binf+deltat;
 
   PeriodicInterval C2Domain(DomainCirc2); 
@@ -735,13 +742,17 @@ void IntCurve_IntConicConic::Perform(const gp_Circ2d& Circle1
     deltat=NextAfter(PIpPI, 0.);
   }
 
-  while(C2Domain.Binf >= PIpPI) C2Domain.Binf-=PIpPI;
-  while(C2Domain.Binf <  0.0)   C2Domain.Binf+=PIpPI;
+  while(C2Domain.Binf >= PIpPI)
+    C2Domain.Binf-=PIpPI;
+  while(C2Domain.Binf <  0.0)
+    C2Domain.Binf+=PIpPI;
+
   C2Domain.Bsup=C2Domain.Binf+deltat;
 
   Standard_Boolean IdentCircles=Standard_False;
 
-  if(nbsol>2) {       
+  if(nbsol>2)
+  {
     //-- Les 2 cercles sont confondus a Tol pres
     C1_Int1.SetValues(0,PIpPI);
     C1_Int2.SetNull(); 
@@ -795,7 +806,8 @@ void IntCurve_IntConicConic::Perform(const gp_Circ2d& Circle1
   //----------------------------------------------------------------------
   //----------- Traitement du second intervalle Geometrique   C1_Int2 ----
   //----------------------------------------------------------------------
-  if(nbsol==2) {
+  if(nbsol==2)
+  {
     C1DomainAndRes=C1Domain.FirstIntersection(C1_Int2);
     
     ProjectOnC2AndIntersectWithC2Domain(Circle1,Circle2
@@ -826,14 +838,17 @@ void IntCurve_IntConicConic::Perform(const gp_Circ2d& Circle1
   Standard_Real Tol2=Tol+Tol;     //---- Pour eviter de toujours retourner
                                   //des segments
   Standard_Integer i ;
-  if(Tol < (1e-10)) Tol2 = 1e-10; 
-  for( i=0; i<NbSolTotal ; i++) { 
-    if(((R1 * SolutionC1[i].Length()))<=Tol2 
-       && ((R2 * SolutionC2[i].Length()))<=Tol2) {
-      
+  if(Tol < (1e-10))
+    Tol2 = 1e-10; 
+
+  for( i=0; i<NbSolTotal ; i++)
+  { 
+    if(((R1 * SolutionC1[i].Length()) <=Tol2) && 
+              ((R2 * SolutionC2[i].Length())<=Tol2))
+    {
       Standard_Real t=(SolutionC1[i].Binf+SolutionC1[i].Bsup)*0.5;
       SolutionC1[i].Binf=SolutionC1[i].Bsup=t;
-      
+
       t=(SolutionC2[i].Binf+SolutionC2[i].Bsup)*0.5;
       SolutionC2[i].Binf=SolutionC2[i].Bsup=t;
     }
@@ -849,21 +864,91 @@ void IntCurve_IntConicConic::Perform(const gp_Circ2d& Circle1
   IntRes2d_Transition T1a,T1b,T2a,T2b;
   IntRes2d_Position Pos1a,Pos1b,Pos2a,Pos2b;
 
-  Standard_Boolean Opposite=((Circle1.Location().SquareDistance(Circle2.Location()))
-		   >(R1*R1+R2*R2))? Standard_True : Standard_False;
+  Standard_Boolean isOpposite =
+    ((Circle1.Location().SquareDistance(Circle2.Location())) > (R1*R1+R2*R2)) ? 
+          Standard_True : Standard_False;
 
   //if(Circle1.IsDirect()) { cout<<" C1 Direct"<<endl; } else { cout<<" C1 INDirect"<<endl; }
   //if(Circle2.IsDirect()) { cout<<" C2 Direct"<<endl; } else { cout<<" C2 INDirect"<<endl; }
 
-  for(i=0; i<NbSolTotal; i++) {
-    Standard_Real C2inf=(Opposite)? SolutionC2[i].Bsup : SolutionC2[i].Binf;
-    Standard_Real C2sup=(Opposite)? SolutionC2[i].Binf : SolutionC2[i].Bsup;
+  for(i=0; i<NbSolTotal; i++)
+  {
+    Standard_Real C2inf  = isOpposite ? SolutionC2[i].Bsup : SolutionC2[i].Binf;
+    Standard_Real C2sup  = isOpposite ? SolutionC2[i].Binf : SolutionC2[i].Bsup;
+    Standard_Real C1tinf = SolutionC1[i].Binf, C2tinf = C2inf;
+    Standard_Real C1inf=NormalizeOnCircleDomain(C1tinf,DomainCirc1);
+                  C2inf=NormalizeOnCircleDomain(C2tinf,DomainCirc2);
 
-    Standard_Real C1inf=NormalizeOnCircleDomain(SolutionC1[i].Binf,DomainCirc1);
-    C2inf=NormalizeOnCircleDomain(C2inf,DomainCirc2);
+    Standard_Boolean isOutOfRange = Standard_False;
+    if(C1inf < DomainCirc1.FirstParameter())
+    {
+      if(C1tinf < DomainCirc1.FirstParameter())
+      {
+        C1inf = DomainCirc1.FirstParameter();
+        isOutOfRange = Standard_True;
+      }
+      else
+      {
+        C1inf = C1tinf;
+      }
+    }
 
-    if(IndirectCircles) { 
-      
+    if(C1inf > DomainCirc1.LastParameter())
+    {
+      if(C1tinf > DomainCirc1.LastParameter())
+      {
+        C1inf = DomainCirc1.LastParameter();
+        isOutOfRange = Standard_True;
+      }
+      else
+      {
+        C1inf = C1tinf;
+      }
+    }
+    
+    if(C2inf < DomainCirc2.FirstParameter())
+    {
+      if(C2tinf < DomainCirc2.FirstParameter())
+      {
+        C2inf = DomainCirc2.FirstParameter();
+        isOutOfRange = Standard_True;
+      }
+      else
+      {
+        C2inf = C2tinf;
+      }
+    }
+
+    if(C2inf > DomainCirc2.LastParameter())
+    {
+      if(C2tinf > DomainCirc2.LastParameter())
+      {
+        C2inf = DomainCirc2.LastParameter();
+        isOutOfRange = Standard_True;
+      }
+      else
+      {
+        C2inf = C2tinf;
+      }
+    }
+
+    if(isOutOfRange)
+    {
+      gp_Pnt2d aP1, aP2;
+      gp_Vec2d aV11, aV12;
+      gp_Vec2d aV21, aV22;
+
+      ElCLib::CircleD2(C1inf,Axis2C1,R1,aP1,aV11,aV12); 
+      ElCLib::CircleD2(C2inf,Axis2C2,R2,aP2,aV21,aV22);
+
+      if(aP1.SquareDistance(aP2) > Tol2*Tol2)
+      {//there are not any solutions in given parametric range.
+        continue;
+      }
+    }
+
+    if(IndirectCircles)
+    { 
       ElCLib::CircleD2(C1inf,Axis2C1,R1,P1a,Tan1,Norm1); 
       ElCLib::CircleD2(C2inf,Axis2C2,R2,P2a,Tan2,Norm2);
       Tan2.Reverse();
@@ -875,47 +960,50 @@ void IntCurve_IntConicConic::Perform(const gp_Circ2d& Circle1
       
       IntRes2d_IntersectionPoint NewPoint1(P1a,C1inf,PIpPI-C2inf,T1a,T2a,Standard_False);
       
-      if((SolutionC1[i].Length()>0.0 ) || (SolutionC2[i].Length() >0.0)) {
-	//-- On traite un intervalle non reduit a un point
-	Standard_Real C1sup=NormalizeOnCircleDomain(SolutionC1[i].Bsup,DomainCirc1);
-	if(C1sup<C1inf) C1sup+=PIpPI;
-	C2sup=NormalizeOnCircleDomain(C2sup,DomainCirc2);
-	
-	ElCLib::CircleD2(C1sup,Axis2C1,R1,P1b,Tan1,Norm1); 
-	ElCLib::CircleD2(C2sup,Axis2C2,R2,P2b,Tan2,Norm2);
-	Tan2.Reverse();
+      if((SolutionC1[i].Length()>0.0 ) || (SolutionC2[i].Length() >0.0))
+      {
+        //-- On traite un intervalle non reduit a un point
+        Standard_Real C1sup=NormalizeOnCircleDomain(SolutionC1[i].Bsup,DomainCirc1);
+        if(C1sup<C1inf) C1sup+=PIpPI;
+        C2sup=NormalizeOnCircleDomain(C2sup,DomainCirc2);
 
-	IntImpParGen::DeterminePosition(Pos1b,DomainCirc1,P1b,C1sup);
-	IntImpParGen::DeterminePosition(Pos2b,_DomainCirc2,P2b,PIpPI-C2sup);
-	Determine_Transition_LC(Pos1b,Tan1,Norm1,T1b , Pos2b,Tan2,Norm2,T2b, Tol);
-	
-	//--------------------------------------------------
-	
-	if(Opposite) {
-	  if(nbsol!=3) { 
-	    if(C2inf<C2sup) C2inf+=PIpPI;
-	  }
-	}
-	else {
-	  if(nbsol!=3) { 
-	    if(C2sup<C2inf) C2sup+=PIpPI;
-	  }
-	}
-	
-	IntRes2d_IntersectionPoint NewPoint2(P1b,C1sup,PIpPI-C2sup,T1b,T2b,Standard_False);
-	IntRes2d_IntersectionSegment NewSeg(NewPoint1,NewPoint2,
-					    (Opposite==Standard_True)? Standard_False : Standard_True,
-					    Standard_False);
-	Append(NewSeg);
-	
+        ElCLib::CircleD2(C1sup,Axis2C1,R1,P1b,Tan1,Norm1); 
+        ElCLib::CircleD2(C2sup,Axis2C2,R2,P2b,Tan2,Norm2);
+        Tan2.Reverse();
+
+        IntImpParGen::DeterminePosition(Pos1b,DomainCirc1,P1b,C1sup);
+        IntImpParGen::DeterminePosition(Pos2b,_DomainCirc2,P2b,PIpPI-C2sup);
+        Determine_Transition_LC(Pos1b,Tan1,Norm1,T1b , Pos2b,Tan2,Norm2,T2b, Tol);
+
+        //--------------------------------------------------
+
+        if (isOpposite)
+        {
+          if(nbsol!=3)
+          {
+            if(C2inf<C2sup)
+              C2inf+=PIpPI;
+          }
+        }
+        else
+        {
+          if(nbsol!=3)
+          {
+            if(C2sup<C2inf) C2sup+=PIpPI;
+          }
+        }
+
+        IntRes2d_IntersectionPoint NewPoint2(P1b,C1sup,PIpPI-C2sup,T1b,T2b,Standard_False);
+        IntRes2d_IntersectionSegment NewSeg (NewPoint1,NewPoint2, !isOpposite, Standard_False);
+        Append(NewSeg);
       }
-      else {
-	Append(NewPoint1);
+      else
+      {
+        Append(NewPoint1);
       }
-      
     }
-    else { 
-      
+    else
+    { 
       ElCLib::CircleD2(C1inf,Axis2C1,R1,P1a,Tan1,Norm1); 
       ElCLib::CircleD2(C2inf,Axis2C2,R2,P2a,Tan2,Norm2);
       
@@ -926,35 +1014,40 @@ void IntCurve_IntConicConic::Perform(const gp_Circ2d& Circle1
       
       IntRes2d_IntersectionPoint NewPoint1(P1a,C1inf,C2inf,T1a,T2a,Standard_False);
       
-      if((SolutionC1[i].Length()>0.0 ) || (SolutionC2[i].Length() >0.0)) {
-	//-- On traite un intervalle non reduit a un point
-	Standard_Real C1sup=NormalizeOnCircleDomain(SolutionC1[i].Bsup,DomainCirc1);
-	if(C1sup<C1inf) C1sup+=PIpPI;
-	C2sup=NormalizeOnCircleDomain(C2sup,DomainCirc2);
-	
-	ElCLib::CircleD2(C1sup,Axis2C1,R1,P1b,Tan1,Norm1); 
-	ElCLib::CircleD2(C2sup,Axis2C2,R2,P2b,Tan2,Norm2);
-	
-	IntImpParGen::DeterminePosition(Pos1b,DomainCirc1,P1b,C1sup);
-	IntImpParGen::DeterminePosition(Pos2b,DomainCirc2,P2b,C2sup);
-	Determine_Transition_LC(Pos1b,Tan1,Norm1,T1b , Pos2b,Tan2,Norm2,T2b, Tol);
-	
-	//--------------------------------------------------
-	
-	if(Opposite) {
-	    if(C2inf<C2sup) C2inf+=PIpPI;
-	}
-	else {
-	    if(C2sup<C2inf) C2sup+=PIpPI;
-	}
-	
-	IntRes2d_IntersectionPoint NewPoint2(P1b,C1sup,C2sup,T1b,T2b,Standard_False);
-	IntRes2d_IntersectionSegment NewSeg(NewPoint1,NewPoint2,Opposite,Standard_False);
-	Append(NewSeg);
-	
+      if((SolutionC1[i].Length()>0.0 ) || (SolutionC2[i].Length() >0.0))
+      {
+        //-- On traite un intervalle non reduit a un point
+        Standard_Real C1sup=NormalizeOnCircleDomain(SolutionC1[i].Bsup,DomainCirc1);
+        if(C1sup<C1inf) C1sup+=PIpPI;
+        C2sup=NormalizeOnCircleDomain(C2sup,DomainCirc2);
+
+        ElCLib::CircleD2(C1sup,Axis2C1,R1,P1b,Tan1,Norm1); 
+        ElCLib::CircleD2(C2sup,Axis2C2,R2,P2b,Tan2,Norm2);
+
+        IntImpParGen::DeterminePosition(Pos1b,DomainCirc1,P1b,C1sup);
+        IntImpParGen::DeterminePosition(Pos2b,DomainCirc2,P2b,C2sup);
+        Determine_Transition_LC(Pos1b,Tan1,Norm1,T1b , Pos2b,Tan2,Norm2,T2b, Tol);
+
+        //--------------------------------------------------
+
+        if (isOpposite)
+        {
+            if(C2inf<C2sup)
+              C2inf+=PIpPI;
+        }
+        else
+        {
+            if(C2sup<C2inf)
+              C2sup+=PIpPI;
+        }
+
+        IntRes2d_IntersectionPoint NewPoint2(P1b,C1sup,C2sup,T1b,T2b,Standard_False);
+        IntRes2d_IntersectionSegment NewSeg(NewPoint1,NewPoint2,isOpposite,Standard_False);
+        Append(NewSeg);
       }
-      else {
-	Append(NewPoint1);
+      else
+      {
+        Append(NewPoint1);
       }
     }
   }
@@ -1098,6 +1191,30 @@ static Standard_Boolean computeIntPoint(const IntRes2d_Domain& theCurDomain,
   return Standard_True;
 }
 
+//=======================================================================
+//function : CheckLLCoincidence
+//purpose  : Returns true if input are trimmed curves and they coincide
+//           within tolerance
+//=======================================================================
+static Standard_Boolean CheckLLCoincidence(const gp_Lin2d& L1,
+                                           const gp_Lin2d& L2,
+                                           const IntRes2d_Domain& Domain1,
+                                           const IntRes2d_Domain& Domain2,
+                                           const Standard_Real theTol)
+{
+  Standard_Boolean isFirst1 = (Domain1.HasFirstPoint() &&
+    L2.Distance(Domain1.FirstPoint()) < theTol);
+  Standard_Boolean isLast1 = (Domain1.HasLastPoint() &&
+    L2.Distance(Domain1.LastPoint()) < theTol);
+  if (isFirst1 && isLast1)
+    return Standard_True;
+  Standard_Boolean isFirst2 = (Domain2.HasFirstPoint() &&
+    L1.Distance(Domain2.FirstPoint()) < theTol);
+  Standard_Boolean isLast2 = (Domain2.HasLastPoint() &&
+    L1.Distance(Domain2.LastPoint()) < theTol);
+  return isFirst2 && isLast2;
+}
+
 //----------------------------------------------------------------------
 void IntCurve_IntConicConic::Perform(const gp_Lin2d& L1
 				      ,const IntRes2d_Domain& Domain1
@@ -1113,20 +1230,23 @@ void IntCurve_IntConicConic::Perform(const gp_Lin2d& L1
   //--                             2 : Confondues a la tolerance pres
   Standard_Integer nbsol;
   IntRes2d_IntersectionPoint PtSeg1,PtSeg2;
-  Standard_Real SINL1L2;
+  Standard_Real aHalfSinL1L2;
   Standard_Real Tol = TolR;
-  if(TolR< 1e-10) Tol = 1e-10;
-  
+  if(Tol < Precision::PConfusion())
+    Tol = Precision::PConfusion();
 
-  LineLineGeometricIntersection(L1,L2,Tol,U1,U2,SINL1L2,nbsol);
+  LineLineGeometricIntersection(L1,L2,Tol,U1,U2,aHalfSinL1L2,nbsol);
 
   gp_Vec2d Tan1=L1.Direction();
   gp_Vec2d Tan2=L2.Direction();
  
   Standard_Real aCosT1T2 = Tan1.Dot(Tan2);
-  Standard_Boolean Opposite=(aCosT1T2 < 0.0)? Standard_True : Standard_False;
+  Standard_Boolean isOpposite = (aCosT1T2 < 0.0) ? Standard_True : Standard_False;
 
   done=Standard_True;
+
+  if(nbsol==1 && CheckLLCoincidence(L1, L2, Domain1, Domain2, Tol))
+    nbsol = 2;
 
   if(nbsol==1) {
     //---------------------------------------------------
@@ -1135,7 +1255,7 @@ void IntCurve_IntConicConic::Perform(const gp_Lin2d& L1
     //--  d une distance superieure a Tol.
     //---------------------------------------------------
     IntRes2d_Position Pos1a,Pos2a,Pos1b,Pos2b;
-    Standard_Real d=Tol/(SINL1L2);
+    Standard_Real d = 0.5 * Tol / aHalfSinL1L2;
     Standard_Real U1inf=U1-d;
     Standard_Real U1sup=U1+d;
     Standard_Real U1mU2=U1-U2;
@@ -1226,15 +1346,15 @@ void IntCurve_IntConicConic::Perform(const gp_Lin2d& L1
         //------------------------------------------------------
       
     
-    }  //---------------   Fin du cas  :   1 seul point --------------------
+      }  //---------------   Fin du cas  :   1 seul point --------------------
       
       else {
 	//-- Intersection AND Domain1  --------> Segment ---------------------
 	Standard_Real U2inf,U2sup;
 	Standard_Real Res2inf,Res2sup;
 	
-	if(Opposite) { U2inf = U1pU2 -Res1sup;  U2sup= U1pU2-Res1inf;  }
-	else         { U2inf = Res1inf-U1mU2;   U2sup= Res1sup-U1mU2;  }
+	if (isOpposite) { U2inf = U1pU2 -Res1sup; U2sup= U1pU2-Res1inf; }
+	else            { U2inf = Res1inf-U1mU2;  U2sup= Res1sup-U1mU2; }
 	
 	DomainIntersection(Domain2,U2inf,U2sup,Res2inf,Res2sup,Pos2a,Pos2b);
 
@@ -1245,13 +1365,13 @@ void IntCurve_IntConicConic::Perform(const gp_Lin2d& L1
 	if(Res2sup_m_Res2inf < 0.0) {
 	  //-- Pas de solutions On retourne Vide
 	}
-	else if(((Res2sup-Res2inf) > LongMiniSeg)  
+	else if((Res2sup_m_Res2inf > LongMiniSeg)  
 		|| ((Pos2a==Pos2b)&&(Pos2a!=IntRes2d_Middle)))     {
 	  //----------- Calcul des attributs du segment --------------
 	  //-- Attention, les bornes Res1inf(sup) bougent donc il faut
 	  //--  eventuellement recalculer les attributs
 	  
-	  if(Opposite) { Res1inf=U1pU2-Res2sup; Res1sup=U1pU2-Res2inf; 
+	  if(isOpposite) { Res1inf=U1pU2-Res2sup; Res1sup=U1pU2-Res2inf;
 			 Standard_Real Tampon=Res2inf; Res2inf=Res2sup; Res2sup=Tampon;
 			 IntRes2d_Position Pos=Pos2a; Pos2a=Pos2b; Pos2b=Pos;
 		       }
@@ -1271,8 +1391,8 @@ void IntCurve_IntConicConic::Perform(const gp_Lin2d& L1
 	    T2a.SetValue(Standard_False,Pos2a,IntRes2d_Out);
 	  }
 	  else {
-	    T1a.SetValue(Standard_False,Pos1a,IntRes2d_Unknown,Opposite);
-	    T2a.SetValue(Standard_False,Pos2a,IntRes2d_Unknown,Opposite);
+	    T1a.SetValue (Standard_False, Pos1a, IntRes2d_Unknown, isOpposite);
+	    T2a.SetValue (Standard_False, Pos2a, IntRes2d_Unknown, isOpposite);
 	  }
 	  
 
@@ -1330,7 +1450,6 @@ void IntCurve_IntConicConic::Perform(const gp_Lin2d& L1
 	  
 
 	  if((!ResultIsAPoint) && (Pos1a!=IntRes2d_Middle || Pos2a!=IntRes2d_Middle)) {
-	    IntRes2d_Transition T1b,T2b;
 	    if(ProdVectTan>=TOLERANCE_ANGULAIRE) { //&&&&&&&&&&&&&&
 	      T1b.SetValue(Standard_False,Pos1b,IntRes2d_Out);
 	      T2b.SetValue(Standard_False,Pos2b,IntRes2d_In);
@@ -1340,13 +1459,13 @@ void IntCurve_IntConicConic::Perform(const gp_Lin2d& L1
 	      T2b.SetValue(Standard_False,Pos2b,IntRes2d_Out);
 	    }
 	    else {
-	      T1b.SetValue(Standard_False,Pos1b,IntRes2d_Unknown,Opposite);
-	      T2b.SetValue(Standard_False,Pos2b,IntRes2d_Unknown,Opposite);
+	      T1b.SetValue (Standard_False, Pos1b, IntRes2d_Unknown, isOpposite);
+	      T2b.SetValue (Standard_False, Pos2b, IntRes2d_Unknown, isOpposite);
 	    }
 	    gp_Pnt2d Ptdebut;
 	    if(Pos1a==IntRes2d_Middle) { 
 	      Standard_Real t3;
-	      if(Opposite) {
+	      if (isOpposite) {
 		t3 = (Pos2a == IntRes2d_Head)? Res2sup : Res2inf;
 	      }
 	      else {
@@ -1374,8 +1493,7 @@ void IntCurve_IntConicConic::Perform(const gp_Lin2d& L1
 		Res2sup=ElCLib::Parameter(L2,Ptfin);
 	      }
 	      PtSeg2.SetValues(Ptfin,Res1sup,Res2sup,T1b,T2b,Standard_False);
-	      IntRes2d_IntersectionSegment Segment(PtSeg1,PtSeg2
-						   ,Opposite,Standard_False);
+	      IntRes2d_IntersectionSegment Segment (PtSeg1, PtSeg2, isOpposite, Standard_False);
 	      Append(Segment);  
 	    } 
 	    else { //-- Extremite(L1 ou L2)  ------>   Point Middle(L1 et L2)
@@ -1391,14 +1509,14 @@ void IntCurve_IntConicConic::Perform(const gp_Lin2d& L1
 		T2b.SetValue(Standard_False,Pos2b,IntRes2d_Out);
 	      }
 	      else {
-		T1b.SetValue(Standard_False,Pos1b,IntRes2d_Unknown,Opposite);
-		T2b.SetValue(Standard_False,Pos2b,IntRes2d_Unknown,Opposite);
+		T1b.SetValue (Standard_False, Pos1b, IntRes2d_Unknown, isOpposite);
+		T2b.SetValue (Standard_False, Pos2b, IntRes2d_Unknown, isOpposite);
 	      }
 	      
 	      PtSeg2.SetValues(ElCLib::Value(U2,L2),U1,U2,T1b,T2b,Standard_False);
 
 	      if((Abs(Res1inf-U1) >LongMiniSeg) && (Abs(Res2inf-U2) >LongMiniSeg)) {
-		IntRes2d_IntersectionSegment Segment(PtSeg1,PtSeg2,Opposite,Standard_False);
+		IntRes2d_IntersectionSegment Segment (PtSeg1, PtSeg2, isOpposite, Standard_False);
 		Append(Segment);  
 	      }
 	      else {
@@ -1417,7 +1535,7 @@ void IntCurve_IntConicConic::Perform(const gp_Lin2d& L1
 		gp_Pnt2d Ptfin;
 		if(Pos1b==IntRes2d_Middle) {
 		  Standard_Real t2;
-		  if(Opposite) { 
+		  if (isOpposite) {
 		    t2 = (Pos2b == IntRes2d_Head)? Res2sup : Res2inf;
 		  }
 		  else {
@@ -1447,8 +1565,8 @@ void IntCurve_IntConicConic::Perform(const gp_Lin2d& L1
 		  T2b.SetValue(Standard_False,Pos2b,IntRes2d_Out);
 		}
 		else {
-		  T1b.SetValue(Standard_False,Pos1b,IntRes2d_Unknown,Opposite);
-		  T2b.SetValue(Standard_False,Pos2b,IntRes2d_Unknown,Opposite);
+		  T1b.SetValue (Standard_False, Pos1b, IntRes2d_Unknown, isOpposite);
+		  T2b.SetValue (Standard_False, Pos2b, IntRes2d_Unknown, isOpposite);
 		}
 	        PtSeg2.SetValues(Ptfin,Res1sup,Res2sup,T1b,T2b,Standard_False);
 		Append(PtSeg2);
@@ -1466,8 +1584,8 @@ void IntCurve_IntConicConic::Perform(const gp_Lin2d& L1
 		  T2b.SetValue(Standard_False,Pos2b,IntRes2d_Out);
 		}
 		else {
-		  T1b.SetValue(Standard_False,Pos1b,IntRes2d_Unknown,Opposite);
-		  T2b.SetValue(Standard_False,Pos2b,IntRes2d_Unknown,Opposite);
+		  T1b.SetValue (Standard_False, Pos1b, IntRes2d_Unknown, isOpposite);
+		  T2b.SetValue (Standard_False, Pos2b, IntRes2d_Unknown, isOpposite);
 		}
 		PtSeg1.SetValues(ElCLib::Value(U2,L2),U1,U2,T1b,T2b,Standard_False);
 		Append(PtSeg1); 
@@ -1477,7 +1595,6 @@ void IntCurve_IntConicConic::Perform(const gp_Lin2d& L1
 	      PtSeg1.SetValues(ElCLib::Value(U2,L2),U1,U2,T1a,T2a,Standard_False);
 	      
 	      if((Pos1b!=IntRes2d_Middle || Pos2b!=IntRes2d_Middle)) {
-		IntRes2d_Transition T1b,T2b;
 		if(ProdVectTan>=TOLERANCE_ANGULAIRE) {
 		  T1b.SetValue(Standard_False,Pos1b,IntRes2d_Out);
 		  T2b.SetValue(Standard_False,Pos2b,IntRes2d_In);
@@ -1487,8 +1604,8 @@ void IntCurve_IntConicConic::Perform(const gp_Lin2d& L1
 		  T2b.SetValue(Standard_False,Pos2b,IntRes2d_Out);
 		}
 		else {
-		  T1b.SetValue(Standard_False,Pos1b,IntRes2d_Unknown,Opposite);
-		  T2b.SetValue(Standard_False,Pos2b,IntRes2d_Unknown,Opposite);
+		  T1b.SetValue (Standard_False, Pos1b, IntRes2d_Unknown, isOpposite);
+		  T2b.SetValue (Standard_False, Pos2b, IntRes2d_Unknown, isOpposite);
 		}
 		//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		//~~ Ajustement des parametres et du point renvoye
@@ -1508,8 +1625,7 @@ void IntCurve_IntConicConic::Perform(const gp_Lin2d& L1
 		   ||(Abs(U2-Res2sup)>LongMiniSeg)) { 
 		  //-- Modif du 1er Octobre 92 (Pour Composites)
 		  
-		  IntRes2d_IntersectionSegment Segment(PtSeg1,PtSeg2
-						       ,Opposite,Standard_False);
+		  IntRes2d_IntersectionSegment Segment (PtSeg1, PtSeg2, isOpposite, Standard_False);
 		  Append(Segment);  
 		}
 		else {
@@ -1527,17 +1643,41 @@ void IntCurve_IntConicConic::Perform(const gp_Lin2d& L1
 	  //-- Attention Res1sup peut etre  different de  U2
 	  //--   Mais on a Res1sup-Res1inf < Tol 
 
-    //gka #0022833
+          //gka #0022833
     IntRes2d_TypeTrans aCurTrans = ( ProdVectTan >= TOLERANCE_ANGULAIRE ? 
            IntRes2d_In : ( ProdVectTan <= -TOLERANCE_ANGULAIRE ? IntRes2d_Out : IntRes2d_Undecided ) );
 
-    IntRes2d_IntersectionPoint NewPoint1;
+          IntRes2d_IntersectionPoint NewPoint1;
     if( computeIntPoint(Domain2, Domain1, L2, L1, aCosT1T2, U2, U1, Res2inf, Res2sup, 2, aCurTrans, NewPoint1 ) )
-      Append(NewPoint1);
+            Append(NewPoint1);
 	
 	}
       }
     }
+
+//#ifdef OCCT_DEBUG
+//  if (NbPoints() || NbSegments())
+//  {
+//    static int cnt = 0; cnt++;
+//
+//    printf("line l1_%03d %.15g %.15g %.15g %.15g\n", cnt, L1.Location().X(), L1.Location().Y(), L1.Direction().X(), L1.Direction().Y());
+//
+//    if (Domain1.HasFirstPoint() && Domain1.HasLastPoint())
+//      printf("trim l1_%03d l1_%03d %.15g %.15g\n", cnt, cnt, Domain1.FirstParameter(), Domain1.LastParameter());
+//
+//    printf("line l2_%03d %.15g %.15g %.15g %.15g\n", cnt, L2.Location().X(), L2.Location().Y(), L2.Direction().X(), L2.Direction().Y());
+//
+//    if (Domain2.HasFirstPoint() && Domain2.HasLastPoint())
+//      printf("trim l2_%03d l2_%03d %.15g %.15g\n", cnt, cnt, Domain2.FirstParameter(), Domain2.LastParameter());
+//
+//    for (int i=1; i <= NbPoints(); i++)
+//      printf("point p%d_%03d %.15g %.15g\n", i, cnt, Point(i).Value().X(), Point(i).Value().Y());
+//
+//    for (int i=1; i <= NbSegments(); i++)
+//      printf("point s1_%d_%03d %.15g %.15g; point s2_%d_%03d %.15g %.15g\n", i, cnt, Segment(i).FirstPoint().Value().X(), Segment(i).FirstPoint().Value().Y(), i, cnt, Segment(i).LastPoint().Value().X(), Segment(i).LastPoint().Value().Y());
+//  }
+//#endif
+
   }
   else {
     if(nbsol==2) {  //== Droites confondues a la tolerance pres 
@@ -1554,7 +1694,7 @@ void IntCurve_IntConicConic::Perform(const gp_Lin2d& L1
       //== 1 : L1 borne
       if(Domain1.HasFirstPoint()) ResHasFirstPoint=1;
       if(Domain1.HasLastPoint())   ResHasLastPoint=1;
-      if(Opposite) {
+      if (isOpposite) {
 	if(Domain2.HasLastPoint())     ResHasFirstPoint+=2;
 	if(Domain2.HasFirstPoint())   ResHasLastPoint+=2;
       }
@@ -1564,17 +1704,16 @@ void IntCurve_IntConicConic::Perform(const gp_Lin2d& L1
       }
       if(ResHasFirstPoint==0 && ResHasLastPoint==0) {
 	//~~~~ Creation d un segment infini avec Opposite
-	Append(IntRes2d_IntersectionSegment(Opposite));
+	Append (IntRes2d_IntersectionSegment (isOpposite));
       }
       else {  //-- On obtient au pire une demi-droite
 	switch(ResHasFirstPoint) {
 	case 1: 
 	  ParamStart=Domain1.FirstParameter(); 
-	  ParamStart2=(Opposite)? (Org2SurL1-ParamStart) 
-	                         :(ParamStart-Org2SurL1); 
+	  ParamStart2 = isOpposite ? (Org2SurL1 - ParamStart) : (ParamStart - Org2SurL1);
 	  break;
 	case 2:
-	  if(Opposite) {
+	  if (isOpposite) {
 	    ParamStart2=Domain2.LastParameter();
 	    ParamStart=Org2SurL1 - ParamStart2; 
 	  }
@@ -1584,7 +1723,7 @@ void IntCurve_IntConicConic::Perform(const gp_Lin2d& L1
 	  }
 	  break;
 	case 3:
-	  if(Opposite) {
+	  if (isOpposite) {
 	    ParamStart2=Domain2.LastParameter();
 	    ParamStart=Org2SurL1 - ParamStart2; 
 	    if(ParamStart < Domain1.FirstParameter()) {
@@ -1608,11 +1747,10 @@ void IntCurve_IntConicConic::Perform(const gp_Lin2d& L1
 	switch(ResHasLastPoint) {
 	case 1: 
 	  ParamEnd=Domain1.LastParameter(); 
-	  ParamEnd2=(Opposite)? (Org2SurL1-ParamEnd) 
-	                         :(ParamEnd-Org2SurL1); 
+	  ParamEnd2 = isOpposite ? (Org2SurL1 - ParamEnd) : (ParamEnd - Org2SurL1);
 	  break;
 	case 2:
-	  if(Opposite) {
+	  if (isOpposite) {
 	    ParamEnd2=Domain2.FirstParameter();
 	    ParamEnd=Org2SurL1 - ParamEnd2; 
 	  }
@@ -1622,7 +1760,7 @@ void IntCurve_IntConicConic::Perform(const gp_Lin2d& L1
 	  }
 	  break;
 	case 3:
-	  if(Opposite) {
+	  if (isOpposite) {
 	    ParamEnd2=Domain2.FirstParameter();
 	    ParamEnd=Org2SurL1 - ParamEnd2; 
 	    if(ParamEnd > Domain1.LastParameter()) {
@@ -1654,8 +1792,8 @@ void IntCurve_IntConicConic::Perform(const gp_Lin2d& L1
 	      IntRes2d_Position Pos1,Pos2;
 	      Pos1=FindPositionLL(ParamStart,Domain1);
 	      Pos2=FindPositionLL(ParamStart2,Domain2);
-	      Tinf.SetValue(Standard_True,Pos1,IntRes2d_Unknown,Opposite);
-	      Tsup.SetValue(Standard_True,Pos2,IntRes2d_Unknown,Opposite);
+	      Tinf.SetValue (Standard_True, Pos1, IntRes2d_Unknown, isOpposite);
+	      Tsup.SetValue (Standard_True, Pos2, IntRes2d_Unknown, isOpposite);
 	      IntRes2d_IntersectionPoint P1(ElCLib::Value(ParamStart,L1)
 					    ,ParamStart,ParamStart2
 					    ,Tinf,Tsup,Standard_False);
@@ -1663,13 +1801,13 @@ void IntCurve_IntConicConic::Perform(const gp_Lin2d& L1
 		//~~~ Le segment est assez long
 		Pos1=FindPositionLL(ParamEnd,Domain1);
 		Pos2=FindPositionLL(ParamEnd2,Domain2);
-		Tinf.SetValue(Standard_True,Pos1,IntRes2d_Unknown,Opposite);
-		Tsup.SetValue(Standard_True,Pos2,IntRes2d_Unknown,Opposite);
+		Tinf.SetValue (Standard_True, Pos1, IntRes2d_Unknown, isOpposite);
+		Tsup.SetValue (Standard_True, Pos2, IntRes2d_Unknown, isOpposite);
 
 		IntRes2d_IntersectionPoint P2(ElCLib::Value(ParamEnd,L1)
 					      ,ParamEnd,ParamEnd2
 					      ,Tinf,Tsup,Standard_False);
-		IntRes2d_IntersectionSegment Seg(P1,P2,Opposite,Standard_False);
+		IntRes2d_IntersectionSegment Seg (P1, P2, isOpposite, Standard_False);
 		Append(Seg);
 	      }
 	      else {   //~~~~ le segment est de longueur inferieure a Tol
@@ -1681,26 +1819,26 @@ void IntCurve_IntConicConic::Perform(const gp_Lin2d& L1
 	    //~~~ Creation de la demi droite   |----------->
 	    IntRes2d_Position Pos1=FindPositionLL(ParamStart,Domain1);
 	    IntRes2d_Position Pos2=FindPositionLL(ParamStart2,Domain2);
-	    Tinf.SetValue(Standard_True,Pos1,IntRes2d_Unknown,Opposite);
-	    Tsup.SetValue(Standard_True,Pos2,IntRes2d_Unknown,Opposite);
+	    Tinf.SetValue (Standard_True, Pos1, IntRes2d_Unknown, isOpposite);
+	    Tsup.SetValue (Standard_True, Pos2, IntRes2d_Unknown, isOpposite);
 
 	    IntRes2d_IntersectionPoint P(ElCLib::Value(ParamStart,L1)
 					  ,ParamStart,ParamStart2
 					  ,Tinf,Tsup,Standard_False);
-	    IntRes2d_IntersectionSegment Seg(P,Standard_True,Opposite,Standard_False);
+	    IntRes2d_IntersectionSegment Seg (P, Standard_True, isOpposite, Standard_False);
 	    Append(Seg);
 	  }
 	}
 	else {
 	  IntRes2d_Position Pos1=FindPositionLL(ParamEnd,Domain1);
 	  IntRes2d_Position Pos2=FindPositionLL(ParamEnd2,Domain2);
-	  Tinf.SetValue(Standard_True,Pos1,IntRes2d_Unknown,Opposite);
-	  Tsup.SetValue(Standard_True,Pos2,IntRes2d_Unknown,Opposite);
+	  Tinf.SetValue (Standard_True, Pos1, IntRes2d_Unknown, isOpposite);
+	  Tsup.SetValue (Standard_True, Pos2, IntRes2d_Unknown, isOpposite);
 
 	  IntRes2d_IntersectionPoint P2(ElCLib::Value(ParamEnd,L1)
 					,ParamEnd,ParamEnd2
 					,Tinf,Tsup,Standard_False);
-	  IntRes2d_IntersectionSegment Seg(P2,Standard_False,Opposite,Standard_False);
+	  IntRes2d_IntersectionSegment Seg (P2, Standard_False, isOpposite, Standard_False);
 	  Append(Seg);
 	  //~~~ Creation de la demi droite   <-----------|
 	}
@@ -1719,7 +1857,7 @@ void IntCurve_IntConicConic::Perform(const gp_Lin2d& Line
 				     ,const Standard_Real TolConf,const Standard_Real Tol) {
 
 //--  if(! CIRC_Domain.IsClosed()) {
-//--    Standard_ConstructionError::Raise("Domaine incorrect");
+//--    throw Standard_ConstructionError("Domaine incorrect");
 //--  }
 
   Standard_Boolean TheReversedParameters=ReversedParameters();
@@ -1909,7 +2047,7 @@ void IntCurve_IntConicConic::Perform(const gp_Lin2d& Line
     ElCLib::CircleD1(SolutionCircle[0].Binf,CircleAxis,R,P1a,Tan1);
     ElCLib::LineD1(SolutionLine[0].Binf,LineAxis,P2a,Tan2);
     
-    Standard_Boolean Opposite=((Tan1.Dot(Tan2))<0.0)? Standard_True : Standard_False;
+    Standard_Boolean isOpposite = (Tan1.Dot (Tan2) < 0.0);
     
     
     for(i=0; i<NbSolTotal; i++ ) {
@@ -1955,8 +2093,8 @@ void IntCurve_IntConicConic::Perform(const gp_Lin2d& Line
 //-- Fin 7 aout 97
 
       
-      Standard_Real Linf=(Opposite)? SolutionLine[i].Bsup : SolutionLine[i].Binf;
-      Standard_Real Lsup=(Opposite)? SolutionLine[i].Binf : SolutionLine[i].Bsup;
+      Standard_Real Linf = isOpposite ? SolutionLine[i].Bsup : SolutionLine[i].Binf;
+      Standard_Real Lsup = isOpposite ? SolutionLine[i].Binf : SolutionLine[i].Bsup;
       
       //---------------------------------------------------------------
       //-- Si les parametres sur le cercle sont en premier 
@@ -2047,8 +2185,7 @@ void IntCurve_IntConicConic::Perform(const gp_Lin2d& Line
 	   || (T1a.TransitionType() != T2a.TransitionType())) {  
 	  //-- Verifier egalement les transitions 
 	  
-	  IntRes2d_IntersectionSegment NewSeg(NewPoint1,NewPoint2
-					      ,Opposite,ReversedParameters());
+	  IntRes2d_IntersectionSegment NewSeg (NewPoint1, NewPoint2, isOpposite, ReversedParameters());
 	  Append(NewSeg);
 	}
 	else { 
@@ -2108,3 +2245,462 @@ const IntRes2d_IntersectionPoint SegmentToPoint( const IntRes2d_IntersectionPoin
   } 
   return(IntRes2d_IntersectionPoint(Pa.Value(),u1,u2,t1,t2,Standard_False));
 }
+
+//=======================================================================
+//function : LineEllipseGeometricIntersection
+//purpose  : 
+//=======================================================================
+void LineEllipseGeometricIntersection(const gp_Lin2d& Line,
+  const gp_Elips2d& Ellipse,
+  const Standard_Real ,
+  const Standard_Real TolTang,
+  PeriodicInterval& EInt1,
+  PeriodicInterval& EInt2,
+  Standard_Integer& nbsol)
+{
+
+  const gp_Ax22d& anElAxis = Ellipse.Axis();
+  gp_Trsf2d aTr;
+  aTr.SetTransformation(anElAxis.XAxis());
+  gp_Elips2d aTEllipse = Ellipse.Transformed(aTr);
+  gp_Lin2d aTLine = Line.Transformed(aTr);
+  //
+  Standard_Real a = aTEllipse.MajorRadius();
+  Standard_Real b = aTEllipse.MinorRadius();
+  Standard_Real a2 = a * a;
+  Standard_Real b2 = b * b;
+  //
+  Standard_Real eps0 = 1.e-12;
+  if (b / a < 1.e-5)
+  {
+    eps0 = 1.e-6;
+  }
+  Standard_Real anA, aB, aC;
+  aTLine.Coefficients(anA, aB, aC);
+  //
+  Standard_Real x1 = 0., y1 = 0., x2 = 0., y2 = 0.;
+  if (Abs(aB) > eps0)
+  {
+    Standard_Real m = -anA / aB;
+    Standard_Real m2 = m * m;
+    Standard_Real c = -aC / aB;
+    Standard_Real c2 = c * c;
+    Standard_Real D = a2 * m2 + b2 - c2;
+    if (D < 0.)
+    {
+      Extrema_ExtElC2d anExt(aTLine, aTEllipse);
+      Standard_Integer i, imin = 0;
+      Standard_Real dmin = RealLast();
+      for (i = 1; i <= anExt.NbExt(); ++i)
+      {
+        if (anExt.SquareDistance(i) < dmin)
+        {
+          dmin = anExt.SquareDistance(i);
+          imin = i;
+        }
+      }
+      if (imin > 0 && dmin <= TolTang * TolTang)
+      {
+        nbsol = 1;
+        Extrema_POnCurv2d aP1, aP2;
+        anExt.Points(imin, aP1, aP2);
+        Standard_Real pe1 = aP2.Parameter();
+        EInt1.SetValues(pe1, pe1);
+      }
+      else
+      {
+        nbsol = 0;
+      }     
+      return;
+    }
+    D = Sqrt(D);
+    Standard_Real n = a2 * m2 + b2;
+    Standard_Real k = a * b * D / n;
+    Standard_Real l = -a2 * m * c / n;
+    x1 = l + k;
+    y1 = m * x1 + c;
+    x2 = l - k;
+    y2 = m * x2 + c;
+    nbsol = 2;
+  }
+  else
+  {
+    x1 = -aC / anA;
+    if (Abs(x1) > a + TolTang)
+    {
+      nbsol = 0;
+      return;
+    }
+    else if (Abs(x1) >= a - Epsilon(a))
+    {
+      nbsol = 1;
+      y1 = 0.;
+    }
+    else
+    {
+      y1 = b * Sqrt(1. - x1 * x1 / a2);
+      x2 = x1;
+      y2 = -y1;
+      nbsol = 2;
+    }
+  }
+
+  gp_Pnt2d aP1(x1, y1);
+  gp_Pnt2d aP2(x2, y2);
+  Standard_Real pe1 = 0., pe2 = 0.;
+  pe1 = ElCLib::Parameter(aTEllipse, aP1);
+  EInt1.SetValues(pe1, pe1);
+  if (nbsol > 1)
+  { 
+    pe2 = ElCLib::Parameter(aTEllipse, aP2);
+    EInt2.SetValues(pe2, pe2);
+  }
+
+
+}
+//=======================================================================
+//function : ProjectOnLAndIntersectWithLDomain
+//purpose  : 
+//=======================================================================
+void ProjectOnLAndIntersectWithLDomain(const gp_Elips2d& Ellipse
+  , const gp_Lin2d& Line
+  , PeriodicInterval& EDomainAndRes
+  , Interval& LDomain
+  , PeriodicInterval* EllipseSolution
+  , Interval* LineSolution
+  , Standard_Integer &NbSolTotal
+  , const IntRes2d_Domain& RefLineDomain
+  , const IntRes2d_Domain&)
+{
+
+  if (EDomainAndRes.IsNull()) return;
+  //-------------------------------------------------------------------------
+  //--  On cherche l intervalle correspondant sur C2
+  //--  Puis on intersecte l intervalle avec le domaine de C2
+  //--  Enfin, on cherche l intervalle correspondant sur C1
+  //--
+
+  Standard_Real Linf = ElCLib::Parameter(Line
+    , ElCLib::Value(EDomainAndRes.Binf, Ellipse));
+  Standard_Real Lsup = ElCLib::Parameter(Line
+    , ElCLib::Value(EDomainAndRes.Bsup, Ellipse));
+
+  Interval LInter(Linf, Lsup);   //-- Necessairement Borne 
+
+  Interval LInterAndDomain = LDomain.IntersectionWithBounded(LInter);
+
+  if (!LInterAndDomain.IsNull) {
+
+    Standard_Real DomLinf = (RefLineDomain.HasFirstPoint()) ? RefLineDomain.FirstParameter() : -Precision::Infinite();
+    Standard_Real DomLsup = (RefLineDomain.HasLastPoint()) ? RefLineDomain.LastParameter() : Precision::Infinite();
+
+    Linf = LInterAndDomain.Binf;
+    Lsup = LInterAndDomain.Bsup;
+
+    if (Linf<DomLinf) {
+      Linf = DomLinf;
+    }
+    if (Lsup<DomLinf) {
+      Lsup = DomLinf;
+    }
+
+    if (Linf>DomLsup) {
+      Linf = DomLsup;
+    }
+    if (Lsup>DomLsup) {
+      Lsup = DomLsup;
+    }
+
+    LInterAndDomain.Binf = Linf;
+    LInterAndDomain.Bsup = Lsup;
+
+
+    Standard_Real Einf = EDomainAndRes.Binf;
+    Standard_Real Esup = EDomainAndRes.Bsup;
+
+    if (Einf >= Esup) { Einf = EDomainAndRes.Binf; Esup = EDomainAndRes.Bsup; }
+    EllipseSolution[NbSolTotal] = PeriodicInterval(Einf, Esup);
+    if (EllipseSolution[NbSolTotal].Length() > M_PI)
+      EllipseSolution[NbSolTotal].Complement();
+
+    LineSolution[NbSolTotal] = LInterAndDomain;
+    NbSolTotal++;
+  }
+}
+
+//=======================================================================
+//function : Perform
+//purpose  : Line - Elipse
+//=======================================================================
+void IntCurve_IntConicConic::Perform(const gp_Lin2d& L, const
+  IntRes2d_Domain& DL, const gp_Elips2d& E,
+  const IntRes2d_Domain& DE, const Standard_Real TolConf,
+  const Standard_Real Tol)
+{
+  Standard_Boolean TheReversedParameters = ReversedParameters();
+  this->ResetFields();
+  this->SetReversedParameters(TheReversedParameters);
+
+  Standard_Integer nbsol = 0;
+  PeriodicInterval EInt1, EInt2;
+
+  LineEllipseGeometricIntersection(L, E, TolConf, Tol, EInt1, EInt2, nbsol);
+  done = Standard_True;
+  if (nbsol == 0)
+  {
+    return;
+  }
+  //
+  if (nbsol == 2 && EInt2.Bsup == EInt1.Binf + PIpPI) {
+    Standard_Real FirstBound = DE.FirstParameter();
+    Standard_Real LastBound = DE.LastParameter();
+    Standard_Real FirstTol = DE.FirstTolerance();
+    Standard_Real LastTol = DE.LastTolerance();
+    if (EInt1.Binf == 0 && FirstBound - FirstTol > EInt1.Bsup)
+    {
+      nbsol = 1;
+      EInt1.SetValues(EInt2.Binf, EInt2.Bsup);
+    }
+    else if (EInt2.Bsup == PIpPI && LastBound + LastTol < EInt2.Binf)
+    {
+      nbsol = 1;
+    }
+  }
+  //
+  PeriodicInterval EDomain(DE);
+  Standard_Real deltat = EDomain.Bsup - EDomain.Binf;
+  while (EDomain.Binf >= PIpPI) EDomain.Binf -= PIpPI;
+  while (EDomain.Binf <  0.0)   EDomain.Binf += PIpPI;
+  EDomain.Bsup = EDomain.Binf + deltat;
+  //
+  Standard_Real BinfModif = EDomain.Binf;
+  Standard_Real BsupModif = EDomain.Bsup;
+  BinfModif -= DE.FirstTolerance() / E.MinorRadius();
+  BsupModif += DE.LastTolerance() / E.MinorRadius();
+  deltat = BsupModif - BinfModif;
+  if (deltat <= PIpPI) {
+    EDomain.Binf = BinfModif;
+    EDomain.Bsup = BsupModif;
+  }
+  else {
+    Standard_Real t = PIpPI - deltat;
+    t *= 0.5;
+    EDomain.Binf = BinfModif + t;
+    EDomain.Bsup = BsupModif - t;
+  }
+  deltat = EDomain.Bsup - EDomain.Binf;
+  while (EDomain.Binf >= PIpPI) EDomain.Binf -= PIpPI;
+  while (EDomain.Binf <  0.0)   EDomain.Binf += PIpPI;
+  EDomain.Bsup = EDomain.Binf + deltat;
+  //
+  Interval LDomain(DL);
+
+  Standard_Integer NbSolTotal = 0;
+
+  PeriodicInterval SolutionEllipse[4];
+  Interval SolutionLine[4];
+  //----------------------------------------------------------------------
+  //----------- Treatment of first geometric interval EInt1           ----
+  //----------------------------------------------------------------------
+  PeriodicInterval EDomainAndRes = EDomain.FirstIntersection(EInt1);
+
+  ProjectOnLAndIntersectWithLDomain(E, L, EDomainAndRes, LDomain, SolutionEllipse
+    , SolutionLine, NbSolTotal, DL, DE);
+
+  EDomainAndRes = EDomain.SecondIntersection(EInt1);
+
+  ProjectOnLAndIntersectWithLDomain(E, L, EDomainAndRes, LDomain, SolutionEllipse
+    , SolutionLine, NbSolTotal, DL, DE);
+
+
+  //----------------------------------------------------------------------
+  //----------- Treatment of second geometric interval EInt2          ----
+  //----------------------------------------------------------------------
+  if (nbsol == 2)
+  {
+    PeriodicInterval EDomainAndRes = EDomain.FirstIntersection(EInt2);
+
+    ProjectOnLAndIntersectWithLDomain(E, L, EDomainAndRes, LDomain, SolutionEllipse
+      , SolutionLine, NbSolTotal, DL, DE);
+
+    EDomainAndRes = EDomain.SecondIntersection(EInt2);
+
+    ProjectOnLAndIntersectWithLDomain(E, L, EDomainAndRes, LDomain, SolutionEllipse
+      , SolutionLine, NbSolTotal, DL, DE);
+  }
+
+  //----------------------------------------------------------------------
+  //-- Calculation of Transitions at Positions.
+  //----------------------------------------------------------------------
+  Standard_Real R = E.MinorRadius();
+  Standard_Integer i;
+  Standard_Real MaxTol = TolConf;
+  if (MaxTol<Tol) MaxTol = Tol;
+  if (MaxTol<1.0e-10) MaxTol = 1.0e-10;
+
+  for (i = 0; i<NbSolTotal; i++) {
+    if ((R * SolutionEllipse[i].Length())<MaxTol
+      && (SolutionLine[i].Length())<MaxTol) {
+
+      Standard_Real t = (SolutionEllipse[i].Binf + SolutionEllipse[i].Bsup)*0.5;
+      SolutionEllipse[i].Binf = SolutionEllipse[i].Bsup = t;
+
+      t = (SolutionLine[i].Binf + SolutionLine[i].Bsup)*0.5;
+      SolutionLine[i].Binf = SolutionLine[i].Bsup = t;
+    }
+  }
+  //
+  if (NbSolTotal) {
+    gp_Ax22d EllipseAxis = E.Axis();
+    gp_Ax2d LineAxis = L.Position();
+    gp_Pnt2d P1a, P2a, P1b, P2b;
+    gp_Vec2d Tan1, Tan2, Norm1;
+    gp_Vec2d Norm2(0.0, 0.0);
+    IntRes2d_Transition T1a, T2a, T1b, T2b;
+    IntRes2d_Position Pos1a, Pos1b, Pos2a, Pos2b;
+
+    ElCLib::EllipseD1(SolutionEllipse[0].Binf, EllipseAxis, E.MajorRadius(), E.MinorRadius(), P1a, Tan1);
+    ElCLib::LineD1(SolutionLine[0].Binf, LineAxis, P2a, Tan2);
+
+    Standard_Boolean isOpposite = (Tan1.Dot(Tan2) < 0.0);
+    for (i = 0; i<NbSolTotal; i++)
+    {
+      Standard_Real p1 = SolutionEllipse[i].Binf;
+      Standard_Real p2 = SolutionEllipse[i].Bsup;
+      Standard_Real q1 = DE.FirstParameter();
+      Standard_Real q2 = DE.LastParameter();
+
+      if (p1>q2) {
+        do {
+          p1 -= PIpPI;
+          p2 -= PIpPI;
+        } while ((p1>q2));
+      }
+      else if (p2<q1) {
+        do {
+          p1 += PIpPI;
+          p2 += PIpPI;
+        } while ((p2<q1));
+      }
+      if (p1<q1 && p2>q1) {
+        p1 = q1;
+      }
+      if (p1<q2 && p2>q2) {
+        p2 = q2;
+      }
+
+      SolutionEllipse[i].Binf = p1;
+      SolutionEllipse[i].Bsup = p2;
+
+      Standard_Real Linf = isOpposite ? SolutionLine[i].Bsup : SolutionLine[i].Binf;
+      Standard_Real Lsup = isOpposite ? SolutionLine[i].Binf : SolutionLine[i].Bsup;
+
+      if (Linf > Lsup) {
+        Standard_Real T = SolutionEllipse[i].Binf;
+        SolutionEllipse[i].Binf = SolutionEllipse[i].Bsup;
+        SolutionEllipse[i].Bsup = T;
+        T = Linf; Linf = Lsup; Lsup = T;
+      }
+
+
+      ElCLib::EllipseD2(SolutionEllipse[i].Binf, EllipseAxis, E.MajorRadius(),
+                        E.MinorRadius(), P1a, Tan1, Norm1);
+      ElCLib::LineD1(Linf, LineAxis, P2a, Tan2);
+
+      IntImpParGen::DeterminePosition(Pos1a, DE, P1a, SolutionEllipse[i].Binf);
+      IntImpParGen::DeterminePosition(Pos2a, DL, P2a, Linf);
+      Determine_Transition_LC(Pos1a, Tan1, Norm1, T1a, Pos2a, Tan2, Norm2, T2a, Tol);
+      Standard_Real Einf;
+      if (Pos1a == IntRes2d_End) {
+        Einf = DE.LastParameter();
+        P1a = DE.LastPoint();
+        Linf = ElCLib::Parameter(L, P1a);
+
+        ElCLib::EllipseD2(Einf, EllipseAxis, E.MajorRadius(),
+                          E.MinorRadius(), P1a, Tan1, Norm1);
+        ElCLib::LineD1(Linf, LineAxis, P2a, Tan2);
+        IntImpParGen::DeterminePosition(Pos1a, DE, P1a, Einf);
+        IntImpParGen::DeterminePosition(Pos2a, DL, P2a, Linf);
+        Determine_Transition_LC(Pos1a, Tan1, Norm1, T1a, Pos2a, Tan2, Norm2, T2a, Tol);
+      }
+      else if (Pos1a == IntRes2d_Head) {
+        Einf = DE.FirstParameter();
+        P1a = DE.FirstPoint();
+        Linf = ElCLib::Parameter(L, P1a);
+
+        ElCLib::EllipseD2(Einf, EllipseAxis, E.MajorRadius(),
+                          E.MinorRadius(), P1a, Tan1, Norm1);
+        ElCLib::LineD1(Linf, LineAxis, P2a, Tan2);
+        IntImpParGen::DeterminePosition(Pos1a, DE, P1a, Einf);
+        IntImpParGen::DeterminePosition(Pos2a, DL, P2a, Linf);
+        Determine_Transition_LC(Pos1a, Tan1, Norm1, T1a, Pos2a, Tan2, Norm2, T2a, Tol);
+      }
+      else {
+        Einf = NormalizeOnCircleDomain(SolutionEllipse[i].Binf, DE);
+      }
+
+      IntRes2d_IntersectionPoint NewPoint1(P1a, Linf, Einf, T2a, T1a, ReversedParameters());
+
+      if ((SolutionLine[i].Length() + SolutionEllipse[i].Length()) >0.0) {
+
+        ElCLib::EllipseD2(SolutionEllipse[i].Binf, EllipseAxis, E.MajorRadius(),
+                          E.MinorRadius(), P1b, Tan1, Norm1);
+        ElCLib::LineD1(Lsup, LineAxis, P2b, Tan2);
+
+        IntImpParGen::DeterminePosition(Pos1b, DE, P1b, SolutionEllipse[i].Bsup);
+        IntImpParGen::DeterminePosition(Pos2b, DL, P2b, Lsup);
+        Determine_Transition_LC(Pos1b, Tan1, Norm1, T1b, Pos2b, Tan2, Norm2, T2b, Tol);
+        Standard_Real Esup;
+        if (Pos1b == IntRes2d_End) {
+          Esup = DL.LastParameter();
+          P1b = DE.LastPoint();
+          Lsup = ElCLib::Parameter(L, P1b);
+          ElCLib::EllipseD2(Esup, EllipseAxis, E.MajorRadius(),
+                            E.MinorRadius(), P1b, Tan1, Norm1);
+          ElCLib::LineD1(Lsup, LineAxis, P2b, Tan2);
+
+          IntImpParGen::DeterminePosition(Pos1b, DE, P1b, Esup);
+          IntImpParGen::DeterminePosition(Pos2b, DL, P2b, Lsup);
+          Determine_Transition_LC(Pos1b, Tan1, Norm1, T1b, Pos2b, Tan2, Norm2, T2b, Tol);
+        }
+        else if (Pos1b == IntRes2d_Head) {
+          Esup = DE.FirstParameter();
+          P1b = DE.FirstPoint();
+          Lsup = ElCLib::Parameter(L, P1b);
+          ElCLib::EllipseD2(Esup, EllipseAxis, E.MajorRadius(),
+                            E.MinorRadius(), P1b, Tan1, Norm1);
+          ElCLib::LineD1(Lsup, LineAxis, P2b, Tan2);
+
+          IntImpParGen::DeterminePosition(Pos1b, DE, P1b, Esup);
+          IntImpParGen::DeterminePosition(Pos2b, DL, P2b, Lsup);
+          Determine_Transition_LC(Pos1b, Tan1, Norm1, T1b, Pos2b, Tan2, Norm2, T2b, Tol);
+        }
+        else {
+          Esup = NormalizeOnCircleDomain(SolutionEllipse[i].Bsup, DE);
+        }
+
+        IntRes2d_IntersectionPoint NewPoint2(P1b, Lsup, Esup, T2b, T1b, ReversedParameters());
+
+        if (((Abs(Esup - Einf)*R >  MaxTol) && (Abs(Lsup - Linf) > MaxTol))
+          || (T1a.TransitionType() != T2a.TransitionType())) {
+          IntRes2d_IntersectionSegment NewSeg(NewPoint1, NewPoint2, isOpposite, ReversedParameters());
+          Append(NewSeg);
+        }
+        else {
+          if (Pos1a != IntRes2d_Middle || Pos2a != IntRes2d_Middle) {
+            Insert(NewPoint1);
+          }
+          if (Pos1b != IntRes2d_Middle || Pos2b != IntRes2d_Middle) {
+            Insert(NewPoint2);
+          }
+
+        }
+      }
+      else
+      {
+       Insert(NewPoint1);
+      }
+    }
+  }
+}
+

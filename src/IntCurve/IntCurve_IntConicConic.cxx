@@ -5,8 +5,8 @@
 //
 // This file is part of Open CASCADE Technology software library.
 //
-// This library is free software; you can redistribute it and / or modify it
-// under the terms of the GNU Lesser General Public version 2.1 as published
+// This library is free software; you can redistribute it and/or modify it under
+// the terms of the GNU Lesser General Public License version 2.1 as published
 // by the Free Software Foundation, with special exception defined in the file
 // OCCT_LGPL_EXCEPTION.txt. Consult the file LICENSE_LGPL_21.txt included in OCCT
 // distribution for complete text of the license and disclaimer of any warranty.
@@ -16,25 +16,26 @@
 
 // Modified:    OFV Thu Nov  6 17:03:52 2003
 
-
-#include <IntCurve_IntConicConic.ixx>
-#include <IntCurve_IntConicConic_1.hxx>
+#include <ElCLib.hxx>
+#include <gp.hxx>
+#include <gp_Circ2d.hxx>
+#include <gp_Elips2d.hxx>
+#include <gp_Hypr2d.hxx>
+#include <gp_Lin2d.hxx>
+#include <gp_Parab2d.hxx>
+#include <IntAna2d_AnaIntersection.hxx>
+#include <IntAna2d_Conic.hxx>
+#include <IntAna2d_IntPoint.hxx>
 #include <IntCurve_IConicTool.hxx>
+#include <IntCurve_IntConicConic.hxx>
 #include <IntCurve_PConic.hxx>
 #include <IntRes2d_Domain.hxx>
-#include <gp.hxx>
 #include <Precision.hxx>
 #include <Standard_ConstructionError.hxx>
-
-#include <IntAna2d_AnaIntersection.hxx>
-#include <IntAna2d_IntPoint.hxx>
-#include <IntAna2d_Conic.hxx>
-#include <ElCLib.hxx>
 
 //=======================================================================
 // Perform() for
 //              Line      - Parabola
-//              Line      - Elipse
 //              Line      - Hyperbola
 //              Circle    - Parabola
 //              Circle    - Elipse
@@ -46,7 +47,6 @@
 //              Elipse    - Hyperbola
 //              Hyperbola - Hyperbola
 //=======================================================================
-
 static const Standard_Real PARAM_MAX_ON_PARABOLA  = 100000000.0;
 static const Standard_Real PARAM_MAX_ON_HYPERBOLA = 10000.0;
 static const Standard_Real TOL_EXACT_INTER        = 1.e-7;
@@ -188,34 +188,6 @@ void IntCurve_IntConicConic::Perform(const gp_Lin2d&        L,
   }
 }
 
-//=======================================================================
-//function : Perform
-//purpose  : Line - Elipse
-//=======================================================================
-void IntCurve_IntConicConic::Perform(const gp_Lin2d&        L,
-				     const IntRes2d_Domain& DL,
-				     const gp_Elips2d&      E,
-				     const IntRes2d_Domain& DE,
-				     const Standard_Real    TolConf,
-				     const Standard_Real    Tol)
-{
-  
-  this->ResetFields();
-  IntCurve_IConicTool ITool(L);
-  IntCurve_PConic PCurve(E);
-  PCurve.SetAccuracy(20);
-  
-  Inter.SetReversedParameters(ReversedParameters());
-  if(! DE.IsClosed()) {
-    IntRes2d_Domain D(DE);
-    D.SetEquivalentParameters(DE.FirstParameter(),DE.FirstParameter()+M_PI+M_PI);
-    Inter.Perform(ITool,DL,PCurve,D,TolConf,Tol);
-    }
-  else { 
-    Inter.Perform(ITool,DL,PCurve,DE,TolConf,Tol);
-  }
-  this->SetValues(Inter);
-}
 
 //=======================================================================
 //function : Perform
