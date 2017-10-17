@@ -1045,11 +1045,22 @@ void BOPAlgo_PaveFiller::PostTreatFF
               iE=myDS->Append(aSI);
             }
             //
-
-            Handle(BOPDS_PaveBlock) *pPBC = aMEPB.ChangeSeek(iE);
+            // update real edge tolerance according to distances in common block if any
+            if (aPDS->IsCommonBlock(aPBRx)) {
+              const Handle(BOPDS_CommonBlock)& aCB = aPDS->CommonBlock(aPBRx);
+              Standard_Real *pTol = aMCBTol.ChangeSeek(aCB);
+              if (!pTol) {
+                Standard_Real aTol = BOPAlgo_Tools::ComputeToleranceOfCB(aCB, aPDS, aPF.Context());
+                pTol = aMCBTol.Bound(aCB, aTol);
+              }
+              //
+              if (aNC.Tolerance() < *pTol) {
+                aNC.SetTolerance(*pTol);
+              }
+            }
             // append new PaveBlock to aLPBC
-            if (!pPBC)
-            {
+            Handle(BOPDS_PaveBlock) *pPBC = aMEPB.ChangeSeek(iE);
+            if (!pPBC) {
               pPBC = aMEPB.Bound(iE, new BOPDS_PaveBlock());
               BOPDS_Pave aPaveR1, aPaveR2;
               aPaveR1 = aPBRx->Pave1();
@@ -1062,43 +1073,12 @@ void BOPAlgo_PaveFiller::PostTreatFF
               (*pPBC)->SetEdge(iE);
             }
             //
-            if (bOld)
-            {
+            if (bOld) {
               (*pPBC)->SetOriginalEdge(aPB1->OriginalEdge());
               aDMExEdges.ChangeFind(aPB1).Append(*pPBC);
             }
-            else
-            {
+            else {
               aLPBC.Append(*pPBC);
-            }
-
-            // update real edge tolerance according to distances in common block if any
-            if (aPDS->IsCommonBlock(aPBRx))
-            {
-              const Handle(BOPDS_CommonBlock)& aCB = aPDS->CommonBlock(aPBRx);
-              const Standard_Integer anIdxOriE = aPB1->OriginalEdge();
-
-              if (pPBC && (anIdxOriE > 0))
-              {
-                // If original edge exists                
-                NCollection_List<Handle(BOPDS_PaveBlock)> *aListOfPB = myMapICB.ChangeSeek(iE);
-                if (aListOfPB == 0)
-                {
-                  aListOfPB = myMapICB.Bound(iE, NCollection_List<Handle(BOPDS_PaveBlock)>());
-                }
-
-                aListOfPB->Append(*pPBC);
-              }
-
-              Standard_Real *pTol = aMCBTol.ChangeSeek(aCB);
-              if (!pTol) {
-                Standard_Real aTol = BOPAlgo_Tools::ComputeToleranceOfCB(aCB, aPDS, aPF.Context());
-                pTol = aMCBTol.Bound(aCB, aTol);
-              }
-              //
-              if (aNC.Tolerance() < *pTol) {
-                aNC.SetTolerance(*pTol);
-              }
             }
           }
         }
@@ -2437,35 +2417,18 @@ void BOPAlgo_PaveFiller::UpdateExistingPaveBlocks
     anEF.SetContext(myContext);
     anEF.Perform();
     //
-    const IntTools_SequenceOfCommonPrts& aCPrts = anEF.CommonParts();
-    if (aCPrts.Length() == 1)
-    {
+    const IntTools_SequenceOfCommonPrts& aCPrts=anEF.CommonParts();
+    if (aCPrts.Length() == 1) {
       Standard_Boolean bCoinc = (aCPrts(1).Type() == TopAbs_EDGE);
-      if (bCoinc)
-      {
-        if (bCB)
-        {
+      if (bCoinc) {
+        if (bCB) {
           aCB = myDS->CommonBlock(aPBChangeValue);
-          const NCollection_List<Handle(BOPDS_PaveBlock)> *aListOfPB = myMapICB.Seek(aPBChangeValue->Edge());
-          if (aListOfPB)
-          {
-            NCollection_List<Handle(BOPDS_PaveBlock)>::Iterator anItr(*aListOfPB);
-            for (; anItr.More(); anItr.Next())
-            {
-              Handle(BOPDS_PaveBlock) &aCurrPB = anItr.ChangeValue();
-              aCB->AddPaveBlock(aCurrPB);
-              myDS->SetCommonBlock(aCurrPB, aCB);
-            }
-          }
-          aCB->AddFace(nF);
-        }
-        else
-        {
+        } else {
           aCB = new BOPDS_CommonBlock;
           aCB->AddPaveBlock(aPBChangeValue);
-          aCB->AddFace(nF);
           myDS->SetCommonBlock(aPBChangeValue, aCB);
         }
+        aCB->AddFace(nF);
         //
         aMPBIn.Add(aPBChangeValue);
       }

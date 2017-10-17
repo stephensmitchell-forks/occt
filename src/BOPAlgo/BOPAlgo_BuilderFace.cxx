@@ -811,13 +811,11 @@ Standard_Boolean IsInside(const TopoDS_Shape& theHole,
 {
   Standard_Boolean bRet;
   
-  TopAbs_State aState;
   TopExp_Explorer aExp;
   BOPCol_IndexedMapOfShape aME2;
   gp_Pnt2d aP2D;
   //
   bRet=Standard_False;
-  aState=TopAbs_UNKNOWN;
   const TopoDS_Face& aF2=(*(TopoDS_Face *)(&theF2));
   //
   BOPTools::MapShapes(aF2, TopAbs_EDGE, aME2);//AA

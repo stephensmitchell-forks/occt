@@ -493,7 +493,6 @@ protected:
   Standard_Boolean myIsPrimary;
   Standard_Boolean myAvoidBuildPCurve;
   BOPAlgo_GlueEnum myGlue;
-  NCollection_DataMap<Standard_Integer, NCollection_List<Handle(BOPDS_PaveBlock)>> myMapICB;
 
 
 private:
