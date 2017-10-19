@@ -264,7 +264,7 @@ Standard_Boolean XmlLDrivers_DocumentStorageDriver::WriteToDomDocument (const Ha
 //  anInfoElem.setAttribute("appv", anAppVersion.ToCString());
 
   // Document version
-  anInfoElem.setAttribute("DocVersion", XmlLDrivers::StorageVersion());
+  anInfoElem.setAttribute("DocVersion", Handle(TDocStd_Document)::DownCast(theDocument)->GetStorageVersion());
  
   // User info with Copyright
   TColStd_SequenceOfAsciiString aUserInfo;

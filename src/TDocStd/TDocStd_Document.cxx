@@ -77,7 +77,8 @@ myData (new TDF_Data()),
 myUndoLimit(0),
 mySaveTime(0),
 myIsNestedTransactionMode(0),
-mySaveEmptyLabels(Standard_False)
+mySaveEmptyLabels(Standard_False),
+myStorageVersion(10)
 {
   TDF_Transaction* pTr =  new TDF_Transaction (myData,"UNDO");
   myUndoTransaction    = *pTr; delete pTr;
@@ -897,4 +898,22 @@ void TDocStd_Document::BeforeClose()
   if(myIsNestedTransactionMode)
 	 myUndoFILO.Clear();
   ClearUndos();
+}
+
+//=======================================================================
+//function : GetStorageVersion
+//purpose  : Returns storage version of the document.
+//=======================================================================
+Standard_Integer TDocStd_Document::GetStorageVersion()
+{
+    return myStorageVersion;
+}
+
+//=======================================================================
+//function : ChangeStorageVersion
+//purpose  : Changes storage version of the document.
+//=======================================================================
+void TDocStd_Document::ChangeStorageVersion(const Standard_Integer version)
+{
+    myStorageVersion = version;
 }

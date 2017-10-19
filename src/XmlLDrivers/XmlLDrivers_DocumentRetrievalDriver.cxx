@@ -267,12 +267,13 @@ void XmlLDrivers_DocumentRetrievalDriver::ReadFromDomDocument
     
     // oan: OCC22305 - check a document verison and if it's greater than
     // current version of storage driver set an error status and return
-    if( aCurDocVersion > XmlLDrivers::StorageVersion() )
+    Handle(TDocStd_Document) doc = Handle(TDocStd_Document)::DownCast(theNewDocument);
+    if( aCurDocVersion > doc->GetStorageVersion() )
     {
       TCollection_ExtendedString aMsg =
         TCollection_ExtendedString ("error: wrong file version: ") +
                                     aDocVerStr  + " while current is " +
-                                    XmlLDrivers::StorageVersion();
+                                    doc->GetStorageVersion();
       myReaderStatus = PCDM_RS_NoVersion;
       if(!aMsgDriver.IsNull()) 
         aMsgDriver->Write(aMsg.ToExtString());

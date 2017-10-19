@@ -483,14 +483,19 @@ static Standard_Integer DDocStd_PrintComments (Draw_Interpretor& di,
 static Standard_Integer DDocStd_SetStorageVersion (Draw_Interpretor& ,
                                                    Standard_Integer nb,
                                                    const char** a)
-{  
-  if (nb == 2)
+{
+  Standard_Integer ret(1);
+  if (nb == 3)
   {
-    const int version = atoi(a[1]);
-    XmlLDrivers::SetStorageVersion(version);
-    return 0;
+    Handle(TDocStd_Document) D;    
+    if (DDocStd::GetDocument(a[1], D))
+    {
+      const Standard_Integer version = atoi(a[2]);
+      D->ChangeStorageVersion(version);
+      ret = 0;
+    }
   }
-  return 1;
+  return ret;
 }
 
 //=======================================================================
@@ -498,11 +503,21 @@ static Standard_Integer DDocStd_SetStorageVersion (Draw_Interpretor& ,
 //purpose  : 
 //=======================================================================
 static Standard_Integer DDocStd_GetStorageVersion (Draw_Interpretor& di,
-                                                   Standard_Integer ,
-                                                   const char** )
+                                                   Standard_Integer nb,
+                                                   const char** a)
 {  
-  di << XmlLDrivers::StorageVersion() << "\n" ;
-  return 0;
+  Standard_Integer ret(1);
+  if (nb == 2)
+  {
+    Handle(TDocStd_Document) D;    
+    if (DDocStd::GetDocument(a[1], D))
+    {
+      const Standard_Integer version = D->GetStorageVersion();
+      di << version << "\n" ;
+      ret = 0;
+    }
+  }
+  return ret;
 }
 
 //=======================================================================
@@ -565,9 +580,9 @@ void DDocStd::ApplicationCommands(Draw_Interpretor& theCommands)
 		  __FILE__, DDocStd_PrintComments, g);
 
   theCommands.Add("GetStorageVersion",
-		  "GetStorageVersion",
+		  "GetStorageVersion docname",
 		  __FILE__, DDocStd_GetStorageVersion, g);
   theCommands.Add("SetStorageVersion",
-		  "SetStorageVersion Version",
+		  "SetStorageVersion docname version",
 		  __FILE__, DDocStd_SetStorageVersion, g);
 }

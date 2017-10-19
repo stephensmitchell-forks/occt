@@ -85,6 +85,10 @@ Standard_Integer XmlMDF::WriteSubTree
   // Extraction of the driver subset.
   const XmlMDF_TypeADriverMap& aDriverMap = theDrivers->GetDrivers();
 
+  // Version of the document.
+  Handle(TDocStd_Document) doc = TDocStd_Document::Get(theLabel);
+  const Standard_Integer version = doc->GetStorageVersion();
+
   // write attributes
   Standard_Integer count = 0;
   TDF_AttributeIterator itr1 (theLabel);
@@ -106,7 +110,7 @@ Standard_Integer XmlMDF::WriteSubTree
       // was replaced by TDataXtd_Presentation. Therefore, for old versions
       // we write old name of the attribute (TPrsStd_AISPresentation).
       Standard_CString typeName = aDriver->TypeName().ToCString();
-      if (XmlLDrivers::StorageVersion() < 8 &&
+      if (version < 8 &&
           strcmp(typeName, "TDataXtd_Presentation") == 0)
       {
         typeName = "TPrsStd_AISPresentation";

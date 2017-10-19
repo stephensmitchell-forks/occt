@@ -245,8 +245,17 @@ public:
   //! Prepares document for closing
   Standard_EXPORT virtual void BeforeClose();
 
+  //! Returns storage version of the document.
+  Standard_EXPORT Standard_Integer GetStorageVersion();
 
-
+  //! Changes storage version of the document.
+  //! If it is not changed, the document is saved by the newest storage version.
+  //! Calling this method allows storage of the document under older storage versions
+  //! (to be opened by applications based on older versions of Open CASCADE).
+  //! For information, the storage version 7 corresponds to Open CASCADE 6.7.0.
+  //! It means that if we change the storage version of a document to 7, 
+  //! an application built on open CASCADE 6.7.0 will be able to open such a document.
+  Standard_EXPORT void ChangeStorageVersion(const Standard_Integer version);
 
   DEFINE_STANDARD_RTTIEXT(TDocStd_Document,CDM_Document)
 
@@ -284,6 +293,7 @@ private:
   TDF_DeltaList myUndoFILO;
   Standard_Boolean myOnlyTransactionModification;
   Standard_Boolean mySaveEmptyLabels;
+  Standard_Integer myStorageVersion;
 
 };
 

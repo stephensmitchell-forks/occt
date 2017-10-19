@@ -433,10 +433,12 @@ void BinLDrivers_DocumentStorageDriver::WriteInfoSection
   // document.
   theData->SetApplicationVersion(theDoc->Application()->Version());
   theData->SetApplicationName(theDoc->Application()->Name());
+  Handle(TDocStd_Document) doc = Handle(TDocStd_Document)::DownCast(theDoc);
+  Standard_Integer storageVerison = doc->GetStorageVersion();
 
   aHeader.einfo += FSD_BinaryFile::WriteInfo (theOStream,
                                               aObjNb,
-                                              BinLDrivers::StorageVersion(),
+                                              storageVerison,
                                               Storage_Schema::ICreationDate(),
                                               "", // schema name
                                               aShemaVer,
@@ -465,7 +467,7 @@ void BinLDrivers_DocumentStorageDriver::WriteInfoSection
   // write info section
   FSD_BinaryFile::WriteInfo (theOStream,
                              aObjNb,
-                             BinLDrivers::StorageVersion(),
+                             storageVerison,
                              Storage_Schema::ICreationDate(),
                              "", // schema name
                              aShemaVer,
