@@ -26,7 +26,7 @@
 // DEFINE_STANDARD_RTTI* macro is actually a base class.
 // For GCC 4.7+, more strict check is possible -- ensuring that base class 
 // is direct base -- using non-standard C++ reflection functionality.
-#if ! defined(OCC_CHECK_BASE_CLASS)
+#if ! defined(OCCT_CHECK_BASE_CLASS)
 #if (defined(__GNUC__) && ((__GNUC__ == 4 && __GNUC_MINOR__ >= 7) || (__GNUC__ > 4)))
 
 #include <tr2/type_traits>
@@ -56,17 +56,17 @@ namespace opencascade
   struct has_type<T, std::tuple<T, Ts...> > : std::true_type {};
 }
 
-#define OCC_CHECK_BASE_CLASS(Class,Base) \
+#define OCCT_CHECK_BASE_CLASS(Class,Base) \
   using direct_base_classes = opencascade::direct_base_class_as_tuple<std::tr2::direct_bases<Class>::type>::type; \
   static_assert(opencascade::has_type<Base, direct_base_classes>::type::value, "OCCT RTTI definition is incorrect: " #Base " is not direct base class of " #Class);
 
 #else /* ! GCC 4.7+ */
 
-#define OCC_CHECK_BASE_CLASS(Class,Base) \
+#define OCCT_CHECK_BASE_CLASS(Class,Base) \
   static_assert(opencascade::is_base_but_not_same<Base, Class>::value, "OCCT RTTI definition is incorrect: " #Base " is not base class of " #Class);
 
 #endif /* GCC 4.7+ */
-#endif /* ! defined(OCC_CHECK_BASE_CLASS) */
+#endif /* ! defined(OCCT_CHECK_BASE_CLASS) */
 
 //! Helper macro to get instance of a type descriptor for a class in a legacy way.
 #define STANDARD_TYPE(theType) theType::get_type_descriptor()
@@ -79,7 +79,7 @@ namespace opencascade
 #define DEFINE_STANDARD_RTTI_INLINE(Class,Base) \
 public: \
   typedef Base base_type; \
-  static const char* get_type_name () { return #Class; OCC_CHECK_BASE_CLASS(Class,Base) } \
+  static const char* get_type_name () { return #Class; OCCT_CHECK_BASE_CLASS(Class,Base) } \
   static const Handle(Standard_Type)& get_type_descriptor () { return Standard_Type::Instance<Class>(); } \
   virtual const Handle(Standard_Type)& DynamicType() const Standard_OVERRIDE { \
     static_assert(std::is_same<const Class*, decltype(this)>::value, "OCCT RTTI definition is misplaced: current class is not " #Class); \
@@ -93,7 +93,7 @@ public: \
 #define DEFINE_STANDARD_RTTIEXT(Class,Base) \
 public: \
   typedef Base base_type; \
-  static const char* get_type_name () { return #Class; OCC_CHECK_BASE_CLASS(Class,Base) } \
+  static const char* get_type_name () { return #Class; OCCT_CHECK_BASE_CLASS(Class,Base) } \
   Standard_EXPORT static const Handle(Standard_Type)& get_type_descriptor (); \
   Standard_EXPORT virtual const Handle(Standard_Type)& DynamicType() const Standard_OVERRIDE;
 
