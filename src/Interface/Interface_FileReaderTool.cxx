@@ -64,7 +64,7 @@
 
 Interface_FileReaderTool::Interface_FileReaderTool ()
 {
-  //themessenger = Message::DefaultMessenger();
+  themessenger = Message::DefaultMessenger();
   theerrhand = Standard_True;
   thetrace = 0;
   thenbrep0 = thenbreps = 0;

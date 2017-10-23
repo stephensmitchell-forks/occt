@@ -19,6 +19,7 @@
 #include <Standard_Transient.hxx>
 #include <Standard_Type.hxx>
 #include <TCollection_HAsciiString.hxx>
+#include <Standard_Mutex.hxx>
 
 #include <stdio.h>
 IMPLEMENT_STANDARD_RTTIEXT(Interface_Static,Interface_TypedValue)
@@ -210,9 +211,13 @@ Standard_Boolean Interface_Static::InitValues(Handle(Interface_Static)& theStati
 Handle(Interface_Static)  Interface_Static::Static
   (const Standard_CString name)
 {
-  Handle(Standard_Transient) result;
-  MoniTool_TypedValue::Stats().Find(name, result);
-  return Handle(Interface_Static)::DownCast(result);
+  static Standard_Mutex aPars;
+  {
+    Standard_Mutex::Sentry aLock(aPars);
+    Handle(Standard_Transient) result;
+    MoniTool_TypedValue::Stats().Find(name, result);
+    return Handle(Interface_Static)::DownCast(result);
+  }
 }
 
 

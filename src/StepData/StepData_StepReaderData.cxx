@@ -45,6 +45,7 @@
 #include <TColStd_HSequenceOfReal.hxx>
 #include <TColStd_IndexedMapOfInteger.hxx>
 #include <TColStd_SequenceOfInteger.hxx>
+#include <StepData_UndefinedEntity.hxx>
 
 #include <stdio.h>
 IMPLEMENT_STANDARD_RTTIEXT(StepData_StepReaderData,Interface_FileReaderData)
@@ -1052,8 +1053,12 @@ Standard_Boolean StepData_StepReaderData::ReadEntity(const Standard_Integer num,
       warn = (acceptvoid > 0);
       if (nent > 0) {
 	Handle(Standard_Transient) entent = BoundEntity(nent);
-	if (entent.IsNull() || !entent->IsKind(atype))
-	  errmess = new String("Parameter n0.%d (%s) : Entity has illegal type");
+  if (entent.IsNull() || !entent->IsKind(atype))
+  {
+    errmess = new String("Parameter n0.%d (%s) : Entity has illegal type");
+    if (entent->IsKind(STANDARD_TYPE(StepData_UndefinedEntity)))
+      ent = entent;
+  }
 	else ent = entent;
       }
       else errmess = new String("Parameter n0.%d (%s) : Unresolved reference");
@@ -1096,8 +1101,13 @@ Standard_Boolean StepData_StepReaderData::ReadEntity(const Standard_Integer num,
       warn = (acceptvoid > 0);
       if (nent > 0) {
 	Handle(Standard_Transient) entent = BoundEntity(nent);
-	if (!sel.Matches(entent))
-	  errmess = new String("Parameter n0.%d (%s) : Entity has illegal type");
+  if (!sel.Matches(entent))
+  {
+    errmess = new String("Parameter n0.%d (%s) : Entity has illegal type");
+    //fot not suppported STEP entity
+    if (entent->IsKind(STANDARD_TYPE(StepData_UndefinedEntity)))
+      sel.SetValue(entent);
+  }
 	else
           sel.SetValue(entent);
       }

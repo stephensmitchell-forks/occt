@@ -73,7 +73,7 @@ STEPControl_Controller::STEPControl_Controller()
 
     // initialization of Standard Shape Healing
     ShapeExtend::Init();
-
+    XSAlgo::Init();
     // init Standard Shape Processing operators
     ShapeProcess_OperLibrary::Init();
   }

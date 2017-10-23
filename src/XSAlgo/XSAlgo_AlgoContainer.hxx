@@ -94,14 +94,14 @@ protected:
   //! First tries get it from non-static model,
   //! if failure get it from static map
   Standard_EXPORT Handle(Interface_Static) getParam(const Standard_CString theParamName) const;
-
+  void initParameters();
 
 private:
 
 
   Handle(XSAlgo_ToolContainer) myTC;
   Handle(Interface_InterfaceModel) myModel;
-
+ 
 
 };
 

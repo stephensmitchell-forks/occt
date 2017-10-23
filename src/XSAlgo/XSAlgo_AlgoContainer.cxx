@@ -64,6 +64,7 @@
 #include <XSAlgo_AlgoContainer.hxx>
 #include <XSAlgo_ToolContainer.hxx>
 #include <TopExp_Explorer.hxx>
+#include <Standard_Mutex.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(XSAlgo_AlgoContainer,Standard_Transient)
 
@@ -83,7 +84,8 @@ XSAlgo_AlgoContainer::XSAlgo_AlgoContainer()
 
 void XSAlgo_AlgoContainer::PrepareForTransfer() const
 {
-  UnitsMethods::SetCasCadeLengthUnit(getParam("xstep.cascade.unit")->IntegerValue());
+  Handle(Interface_Static) aParam = getParam("xstep.cascade.unit");
+  UnitsMethods::SetCasCadeLengthUnit(aParam.IsNull() ? 2 : aParam->IntegerValue());
 }
 
 //=======================================================================
@@ -358,7 +360,8 @@ Standard_Boolean XSAlgo_AlgoContainer::CheckPCurve (const TopoDS_Edge& E,
   B.Range(edge,face,w1,w2);
   B.SameRange(edge, Standard_False );
   //:S4136
-  Standard_Integer SPmode = getParam("read.stdsameparameter.mode")->IntegerValue();
+  Handle(Interface_Static) aParam = getParam("read.stdsameparameter.mode");
+  Standard_Integer SPmode = aParam.IsNull() ?  0 : aParam->IntegerValue();
   if ( SPmode ) 
     B.SameParameter (edge, Standard_False );
 
@@ -575,6 +578,7 @@ void XSAlgo_AlgoContainer::MergeTransferInfo(const Handle(Transfer_FinderProcess
 void XSAlgo_AlgoContainer::SetModel(Handle(Interface_InterfaceModel)& theModel)
 {
   myModel = theModel;
+  initParameters();
 }
 
 //=======================================================================
@@ -589,7 +593,48 @@ Handle(Interface_Static) XSAlgo_AlgoContainer::getParam
     aParam = myModel->GetParam(theParamName);
 
   if (aParam.IsNull())
-    aParam = Interface_Static::Static(theParamName);
-
+  {
+    static Standard_Mutex aPars;
+    {
+      Standard_Mutex::Sentry aLock(aPars);
+      aParam = Interface_Static::Static(theParamName);
+    }
+  }
   return aParam;
+}
+
+void XSAlgo_AlgoContainer::initParameters()
+{
+  if (myModel.IsNull())
+    return;
+    
+  Handle(Interface_Static) anItem = new Interface_Static("XSTEP", "read.stdsameparameter.mode", Interface_ParamEnum, "");
+  Interface_Static::InitValues(anItem, "enum 0");
+  Interface_Static::InitValues(anItem, "eval Off");
+  Interface_Static::InitValues(anItem, "eval On");
+    
+  anItem->SetCStringValue("Off");
+  myModel->AddParam("read.stdsameparameter.mode", anItem);
+
+  // unit: supposed to be cascade unit (target unit for reading)
+  anItem = new Interface_Static("XSTEP", "xstep.cascade.unit", Interface_ParamEnum, "");
+  Interface_Static::Init("XSTEP", "xstep.cascade.unit", 'e', "");
+  Interface_Static::InitValues(anItem, "enum 1");
+
+
+  Interface_Static::Init("XSTEP", "xstep.cascade.unit", '&', "enum 1");
+  Interface_Static::InitValues(anItem, "eval INCH");  // 1
+  Interface_Static::InitValues(anItem,  "eval MM");    // 2
+  Interface_Static::InitValues(anItem, "eval ??");    // 3
+  Interface_Static::InitValues(anItem, "eval FT");    // 4
+  Interface_Static::InitValues(anItem, "eval MI");    // 5
+  Interface_Static::InitValues(anItem, "eval M");     // 6
+  Interface_Static::InitValues(anItem, "eval KM");    // 7
+  Interface_Static::InitValues(anItem, "eval MIL");   // 8
+  Interface_Static::InitValues(anItem, "eval UM");    // 9
+  Interface_Static::InitValues(anItem, "eval CM");    //10
+  Interface_Static::InitValues(anItem, "eval UIN");   //11
+  anItem->SetCStringValue("MM");
+  myModel->AddParam("xstep.cascade.unit", anItem);
+ 
 }

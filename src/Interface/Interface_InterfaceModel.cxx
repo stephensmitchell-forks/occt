@@ -1048,18 +1048,33 @@ Handle(TColStd_HSequenceOfHAsciiString) Interface_InterfaceModel::ListTemplates 
 Handle(Interface_Static) Interface_InterfaceModel::GetParam
 (const Standard_CString theParamName)
 {
-  if (IsEqual(theParamName, "write.step.schema"))
+  /*if (IsEqual(theParamName, "write.step.schema"))
   {
     Handle(Standard_Transient) result;
     myParamMap.Find(theParamName, result);
     Standard_Integer anInt = Handle(Interface_Static)::DownCast(result)->IntegerValue();
 
+  }*/
+  Handle(Interface_Static) aParam;
+  if (myParamMap.IsBound(theParamName))
+  {
+    Handle(Standard_Transient) result;
+    myParamMap.Find(theParamName, result);
+    if (!result.IsNull())
+      aParam = Handle(Interface_Static)::DownCast(result);
   }
-  Handle(Standard_Transient) result;
-  myParamMap.Find(theParamName, result);
-  return Handle(Interface_Static)::DownCast(result);
+  return aParam;
 }
 
+//=======================================================================
+//function : GetParam
+//purpose  : 
+//=======================================================================
+void Interface_InterfaceModel::AddParam
+(const Standard_CString theParamName, Handle(Interface_Static)& theParam)
+{
+  myParamMap.Bind(theParamName, theParam);
+}
 //=======================================================================
 //function : AllParameters
 //purpose  : 

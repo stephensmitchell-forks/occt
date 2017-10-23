@@ -402,6 +402,9 @@ public:
   //! Returns parameter for translation by its name
   Standard_EXPORT Handle(Interface_Static) GetParam(const Standard_CString theParamName);
 
+  //! Adds parameters in the mopdel
+  Standard_EXPORT void AddParam(const Standard_CString theParamName, Handle(Interface_Static)& theParam);
+
   //! Returns all available parameters for translation
   Standard_EXPORT const NCollection_DataMap<TCollection_AsciiString, Handle(Standard_Transient)>& AllParameters();
 

@@ -110,8 +110,10 @@ void STEPConstruct_ContextTool::AddAPD (const Standard_Boolean enforce)
 {
   Standard_Boolean noapd = theAPD.IsNull();
   if (noapd || enforce) theAPD  = new StepBasic_ApplicationProtocolDefinition;
+  Handle(Interface_Static) aParam = (myModel->GetParam("write.step.schema"));
+  Standard_Integer aShema = aParam.IsNull() ? 4 : aParam->IntegerValue();
 
-  switch (myModel->GetParam("write.step.schema")->IntegerValue()) { //j4
+  switch (aShema) { //j4
   default:
   case 1:
     theAPD->SetApplicationProtocolYear (1997);
@@ -147,7 +149,8 @@ void STEPConstruct_ContextTool::AddAPD (const Standard_Boolean enforce)
   if (theAPD->Application().IsNull())
     theAPD->SetApplication (new StepBasic_ApplicationContext);
   Handle(TCollection_HAsciiString) appl;
-  switch (myModel->GetParam("write.step.schema")->IntegerValue()) { //j4
+ 
+  switch (aShema) { //j4
   default:
   case 1:
   case 2: appl = new TCollection_HAsciiString ( "core data for automotive mechanical design processes" );
@@ -597,7 +600,9 @@ Handle(TColStd_HSequenceOfTransient) STEPConstruct_ContextTool::GetRootsForPart 
   if ( ! SDRTool.PRPC().IsNull() ) seq->Append ( SDRTool.PRPC() );
 
   // for AP203, add required product management data
-  if (myModel->GetParam("write.step.schema")->IntegerValue() == 3 ) {
+  Handle(Interface_Static) aParam = myModel->GetParam("write.step.schema");
+  Standard_Integer aShema = aParam.IsNull() ? 4 : aParam->IntegerValue();
+  if (aShema == 3 ) {
     theAP203.Init ( SDRTool );
     seq->Append (theAP203.GetProductCategoryRelationship());
     seq->Append (theAP203.GetCreator());
@@ -625,7 +630,7 @@ Handle(TColStd_HSequenceOfTransient) STEPConstruct_ContextTool::GetRootsForAssem
   Handle(TColStd_HSequenceOfTransient) seq = new TColStd_HSequenceOfTransient;
 
   seq->Append ( assembly.ItemValue() );
-  
+ 
   // for AP203, write required product management data
   if ( myModel->GetParam("write.step.schema")->IntegerValue() == 3 ) {
     theAP203.Init ( assembly.GetNAUO() );
