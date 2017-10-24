@@ -1,0 +1,61 @@
+puts "========"
+puts "OCC29257"
+puts "========"
+puts ""
+#################################################
+# GeomPlate generates surface in unexpected place
+#################################################
+
+set MaxDist 0.05
+
+restore [locate_data_file bug29257_plate_26_307.brep] a
+explode a
+
+# numbers of edges in a_1 to be replaced
+set old_edges_num {3}
+
+# get modified surface from a_2
+mksurface su a_2
+
+# create compounds of old edges and their replacements new edges
+shape old_edges C
+shape new_edges C
+
+foreach i $old_edges_num {
+  # get old edge and its curve 3d
+  subshape a_1 e $i
+  mkcurve c a_1_$i
+
+  # project it on modified surface, result is curve 2d
+  project cp c su -t 1e-2
+
+  # create 3d curve of projection
+  approxcurveonsurf ca cp su
+
+  # make new edge with pcurve
+  mkedge e ca
+  addpcurve e cp a_2
+  
+  add a_1_$i old_edges
+  add e new_edges
+}
+don a_1 new_edges
+
+# compute plate surface
+pullupface r a_1 old_edges new_edges a_2 -bnd -order 1 -mr 0.4 -step 0.4 -deg 3 -enlarge 1.1
+
+checkprops r -s 286.683
+
+# check distance from vertices of the initial face to the new face
+foreach v [explode a_1 v] {
+  distmini d $v r
+  set dist [dval d_val]
+  if {$dist > $MaxDist} {
+    puts "Error: distance from vertex $v to the result is $dist, which is > $MaxDist"
+  }
+}
+
+smallview 
+don r a_1
+fit
+checkview -screenshot -2d -path ${imagedir}/${test_image}_1.png

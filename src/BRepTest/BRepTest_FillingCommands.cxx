@@ -42,6 +42,8 @@
 #include <BRepAdaptor_Surface.hxx>
 #include <BRepAdaptor_Curve2d.hxx>
 #include <BRepAdaptor_Curve.hxx>  
+#include <BRepExtrema_DistShapeShape.hxx>
+#include <BRepTools.hxx>
 #include <BRepTest.hxx>
 #include <DBRep.hxx>
 #include <Adaptor3d_HCurveOnSurface.hxx>
@@ -64,12 +66,15 @@
 #include <GeomPlate_PointConstraint.hxx>
 #include <GeomAdaptor_HSurface.hxx>
 #include <Geom_Surface.hxx>
+#include <GCPnts_AbscissaPoint.hxx>
+#include <GCPnts_QuasiUniformAbscissa.hxx>
 
 #include <TopoDS_Wire.hxx>
 #include <BRepBuilderAPI_MakeEdge.hxx>
 #include <BRepBuilderAPI_MakeWire.hxx>
 #include <BRepBuilderAPI_WireError.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
+#include <BRepBuilderAPI_MakeVertex.hxx>
 #include <TColGeom2d_HArray1OfCurve.hxx>
 
 #include <AdvApp2Var_ApproxAFunc2Var.hxx>
@@ -92,6 +97,7 @@
 #include <Extrema_ExtPS.hxx>
 #include <Extrema_POnSurf.hxx>
 #include <Geom_Plane.hxx>
+#include <Geom_RectangularTrimmedSurface.hxx>
 #include <BRepOffsetAPI_MakeFilling.hxx>
 #include <TCollection_AsciiString.hxx>
 #include <Geom2d_TrimmedCurve.hxx>
@@ -694,7 +700,311 @@ static Standard_Integer fillingparam( Draw_Interpretor & di, Standard_Integer n,
 }
 
 
+//=======================================================================
+//function : addPointsOnCurveOnSurfaceConstraints
+//purpose  : 
+//=======================================================================
+static void addPointsOnCurveOnSurfaceConstraints(GeomPlate_BuildPlateSurface& thePlate,
+  const TopoDS_Edge &theEdge,
+  const TopoDS_Face &theFace,
+  const TopoDS_Shape& theAvoidEdges,
+  const Standard_Real theAvoidRadius,
+  const Standard_Real theStep,
+  const Standard_Real theTol3d,
+  const Standard_Real theTolAng,
+  const Standard_Integer theOrder,
+  TopoDS_Compound& thePoints)
+{
+  BRepAdaptor_Curve2d anAC2d(theEdge, theFace);
+  BRepAdaptor_Curve anAC(theEdge, theFace);
+  Handle(Geom_Surface) aSurf = BRep_Tool::Surface(theFace);
 
+  // discretize the curve
+  Standard_Real aLen = GCPnts_AbscissaPoint::Length(anAC);
+  Standard_Integer npt = Max(2, (Standard_Integer)(aLen / theStep));
+  GCPnts_QuasiUniformAbscissa aDiscr(anAC, npt);
+  if (!aDiscr.IsDone())
+    Standard_Failure::Raise("Failure discretization of an edge");
+
+  // do not take last point to avoid confusion with first point of the next edge
+  Standard_Integer aBegin = 1, anEnd = aDiscr.NbPoints();
+  if (theEdge.Orientation() == TopAbs_FORWARD)
+    anEnd--;
+  else
+    aBegin++;
+  for (Standard_Integer i = aBegin; i <= anEnd; i++)
+  {
+    Standard_Real aCPar = aDiscr.Parameter(i);
+    gp_Pnt2d aP2d = anAC2d.Value(aCPar);
+
+    // evaluate distance to avoid vertices
+    gp_Pnt aPnt = aSurf->Value(aP2d.X(), aP2d.Y());
+    TopoDS_Vertex aVert = BRepBuilderAPI_MakeVertex(aPnt);
+    Standard_Real aDist = RealLast();
+    if (!theAvoidEdges.IsNull())
+    {
+      BRepExtrema_DistShapeShape aDistSS(theAvoidEdges, aVert);
+      if (!aDistSS.IsDone())
+        Standard_Failure::Raise("Failure computation of distance between edges and vertex");
+      aDist = aDistSS.Value();
+    }
+    if (aDist > theAvoidRadius)
+    {
+      if (theOrder > 0)
+        thePlate.Add(new GeomPlate_PointConstraint
+                     (aP2d.X(), aP2d.Y(), aSurf, theOrder, theTol3d, theTolAng));
+      else
+        thePlate.Add(new GeomPlate_PointConstraint(aPnt, 0, theTol3d));
+      BRep_Builder().Add(thePoints, aVert);
+    }
+  }
+}
+
+//=======================================================================
+//function : addPointsOnCurveOnSurfaceConstraints
+//purpose  : 
+//=======================================================================
+static void addPointsOnSurfaceConstraints(GeomPlate_BuildPlateSurface& thePlate,
+  const TopoDS_Face& theFace,
+  const TopoDS_Shape& theAvoidEdges,
+  const Standard_Real theAvoidRadius,
+  const Standard_Real theStep,
+  const Standard_Real theTol3d,
+  TopoDS_Compound& thePoints)
+{
+  // make adapted surface with UV bounds
+  BRepAdaptor_Surface anASurf(theFace, Standard_True);
+  Standard_Real aU1 = anASurf.FirstUParameter();
+  Standard_Real aU2 = anASurf.LastUParameter();
+  Standard_Real aV1 = anASurf.FirstVParameter();
+  Standard_Real aV2 = anASurf.LastVParameter();
+
+  // get middle iso lines
+  Standard_Real aMidU = (aU1 + aU2) * 0.5;
+  Standard_Real aMidV = (aV1 + aV2) * 0.5;
+  Handle(Geom_Curve) aUIso = anASurf.Surface().Surface()->UIso(aMidU);
+  Handle(Geom_Curve) aVIso = anASurf.Surface().Surface()->VIso(aMidV);
+
+  // compute their length to decide which one to discretize
+  Standard_Real aUIsoLen = GCPnts_AbscissaPoint::Length(GeomAdaptor_Curve(aUIso, aV1, aV2));
+  Standard_Real aVIsoLen = GCPnts_AbscissaPoint::Length(GeomAdaptor_Curve(aVIso, aU1, aU2));
+  Standard_Boolean isUDiscr = aUIsoLen > aVIsoLen;
+
+  // discretize the longest iso line
+  Standard_Real aLongPar1 = aV1, aLongPar2 = aV2, anOrtPar1 = aU1, anOrtPar2 = aU2;
+  if (!isUDiscr)
+  {
+    aLongPar1 = aU1;
+    aLongPar2 = aU2;
+    anOrtPar1 = aV1;
+    anOrtPar2 = aV2;
+  }
+  GeomAdaptor_Curve anACLongIso(isUDiscr ? aUIso : aVIso);
+  Standard_Real aLongLen = (isUDiscr ? aUIsoLen : aVIsoLen);
+  Standard_Integer aLongNpt = Max(3, (Standard_Integer)(aLongLen / theStep));
+  GCPnts_QuasiUniformAbscissa aDiscr(anACLongIso, aLongNpt, aLongPar1, aLongPar2);
+  if (!aDiscr.IsDone())
+    Standard_Failure::Raise("Failure discretization of an iso line");
+
+  // do not take first and last points to avoid confusion with boundary
+  for (Standard_Integer i = 2; i <= aDiscr.NbPoints() - 1; i++)
+  {
+    Standard_Real anIsoPar = aDiscr.Parameter(i);
+    // get orthogonal iso line at this parameter
+    Handle(Geom_Curve) anOrtIso = (isUDiscr ? anASurf.Surface().Surface()->VIso(anIsoPar)
+      : anASurf.Surface().Surface()->UIso(anIsoPar));
+    // discretize the ort iso line
+    GeomAdaptor_Curve anACOrtIso(anOrtIso, anOrtPar1, anOrtPar2);
+    Standard_Real anOrtLen = GCPnts_AbscissaPoint::Length(anACOrtIso);
+    Standard_Integer anOrtNpt = Max(3, (Standard_Integer)(anOrtLen / theStep));
+    GCPnts_QuasiUniformAbscissa aDiscrOrt(anACOrtIso, anOrtNpt);
+    if (!aDiscrOrt.IsDone())
+      Standard_Failure::Raise("Failure discretization of an iso line");
+
+    // do not take first and last points to avoid confusion with boundary
+    for (Standard_Integer j = 2; j <= aDiscrOrt.NbPoints() - 1; j++)
+    {
+      Standard_Real anOrtPar = aDiscrOrt.Parameter(j);
+      gp_Pnt aPnt = anACOrtIso.Value(anOrtPar);
+
+      // evaluate distance between the point and avoid edges
+      TopoDS_Vertex aVert = BRepBuilderAPI_MakeVertex(aPnt);
+      BRepExtrema_DistShapeShape aDistSS(theAvoidEdges, aVert);
+      if (!aDistSS.IsDone())
+        Standard_Failure::Raise("Failure computation of distance between edges and vertex");
+      Standard_Real aDist = aDistSS.Value();
+      if (aDist > theAvoidRadius)
+      {
+        thePlate.Add(new GeomPlate_PointConstraint(aPnt, 0, theTol3d));
+        BRep_Builder().Add(thePoints, aVert);
+      }
+    }
+  }
+}
+
+//=======================================================================
+//function : pullupface
+//purpose  : 
+//=======================================================================
+static Standard_Integer pullupface(Draw_Interpretor& theDI,
+                                   Standard_Integer theArgc,
+                                   const char** theArgv)
+{
+  if (theArgc < 6)
+  {
+    cout << "incorrect usage, see help" << endl;
+    return 1;
+  }
+
+  TopoDS_Face aFace = TopoDS::Face(DBRep::Get(theArgv[2], TopAbs_FACE));
+  if (aFace.IsNull())
+  {
+    cout << "no such face " << theArgv[2] << endl;
+    return 1;
+  }
+  TopoDS_Shape anOldEdges = DBRep::Get(theArgv[3]);
+  if (anOldEdges.IsNull())
+  {
+    cout << "no such shape " << theArgv[3] << endl;
+    return 1;
+  }
+  TopoDS_Shape aNewEdges = DBRep::Get(theArgv[4]);
+  if (aNewEdges.IsNull())
+  {
+    cout << "no such shape " << theArgv[4] << endl;
+    return 1;
+  }
+  TopoDS_Face anOtherFace = TopoDS::Face(DBRep::Get(theArgv[5], TopAbs_FACE));
+  if (anOtherFace.IsNull())
+  {
+    cout << "no such face " << theArgv[5] << endl;
+    return 1;
+  }
+
+  Standard_Real aModifRadius = 0.1;
+  Standard_Integer anOrder = 1, aDegree = 3;
+  Standard_Real aTol2d = 0.00001, aTol3d = 0.0001, aTolAng = 0.01;
+  Standard_Real aStep = 0.1, anEnlargeCoeff = 1.01;
+  Standard_Integer anAppDegree = 8, anAppSegments = 9;
+  Standard_Boolean bAddInner = Standard_False, bAddBnd = Standard_False;
+  Standard_Boolean isOutputPnts = Standard_False;
+  for (Standard_Integer i = 6; i < theArgc; i++)
+  {
+    if (strcmp(theArgv[i], "-mr") == 0)
+      aModifRadius = Draw::Atof(theArgv[++i]);
+    else if (strcmp(theArgv[i], "-order") == 0)
+      anOrder = Draw::Atoi(theArgv[++i]);
+    else if (strcmp(theArgv[i], "-deg") == 0)
+      aDegree = Draw::Atoi(theArgv[++i]);
+    else if (strcmp(theArgv[i], "-step") == 0)
+      aStep = Draw::Atof(theArgv[++i]);
+    else if (strcmp(theArgv[i], "-tol2d") == 0)
+      aTol2d = Draw::Atof(theArgv[++i]);
+    else if (strcmp(theArgv[i], "-tol3d") == 0)
+      aTol3d = Draw::Atof(theArgv[++i]);
+    else if (strcmp(theArgv[i], "-tolang") == 0)
+      aTolAng = Draw::Atof(theArgv[++i]);
+    else if (strcmp(theArgv[i], "-appdeg") == 0)
+      anAppDegree = Draw::Atoi(theArgv[++i]);
+    else if (strcmp(theArgv[i], "-appsegs") == 0)
+      anAppSegments = Draw::Atoi(theArgv[++i]);
+    else if (strcmp(theArgv[i], "-enlarge") == 0)
+      anEnlargeCoeff = Draw::Atof(theArgv[++i]);
+    else if (strcmp(theArgv[i], "-inner") == 0)
+      bAddInner = Standard_True;
+    else if (strcmp(theArgv[i], "-bnd") == 0)
+      bAddBnd = Standard_True;
+    else if (strcmp(theArgv[i], "-pnts") == 0)
+      isOutputPnts = Standard_True;
+    else
+    {
+      cout << "invalid option " << theArgv[i] << endl;
+      return 1;
+    }
+  }
+
+  // Init plate builder
+  Handle(Geom_Surface) aSurf = BRep_Tool::Surface(aFace);
+  Standard_Real aU1, aU2, aV1, aV2;
+  BRepTools::UVBounds(aFace, aU1, aU2, aV1, aV2);
+  aSurf = new Geom_RectangularTrimmedSurface(aSurf, aU1, aU2, aV1, aV2);
+  Standard_Integer aNbIter = 1, aNbPtsOnCur = 10;
+  GeomPlate_BuildPlateSurface aPlate(aDegree, aNbPtsOnCur, aNbIter, aTol2d, aTol3d, aTolAng);
+  aPlate.LoadInitSurface(aSurf);
+
+  TopTools_IndexedMapOfShape anOldEMap;
+  TopExp::MapShapes(anOldEdges, TopAbs_EDGE, anOldEMap);
+
+  TopoDS_Compound aPoints;
+  BRep_Builder().MakeCompound(aPoints);
+
+  if (bAddBnd)
+  {
+    // Add face boundary constraints
+    for (TopExp_Explorer ex(aFace, TopAbs_EDGE); ex.More(); ex.Next())
+    {
+      TopoDS_Edge aE = TopoDS::Edge(ex.Current());
+      if (anOldEMap.Contains(aE))
+      {
+        // edge to be replaced, skip it
+        continue;
+      }
+      TopoDS_Vertex aV1, aV2;
+      TopExp::Vertices(aE, aV1, aV2);
+      addPointsOnCurveOnSurfaceConstraints(aPlate, aE, aFace, anOldEdges, aModifRadius,
+        aStep, aTol3d, aTolAng, anOrder, aPoints);
+    }
+  }
+
+  // add constraints of the replaced edges
+  for (TopExp_Explorer ex(aNewEdges, TopAbs_EDGE); ex.More(); ex.Next())
+  {
+    TopoDS_Edge aE = TopoDS::Edge(ex.Current());
+    //addPointsOnCurveConstraints(aPlate, aE, aStep, aTol3d, aPoints);
+    addPointsOnCurveOnSurfaceConstraints(aPlate, aE, anOtherFace, TopoDS_Shape(), 0.,
+      aStep, aTol3d, aTolAng, anOrder, aPoints);
+  }
+
+  if (bAddInner)
+  {
+    // add face inner constraints
+    addPointsOnSurfaceConstraints(aPlate, aFace, anOldEdges, aModifRadius, aStep, aTol3d, aPoints);
+  }
+
+  if (isOutputPnts)
+  {
+    DBRep::Set("pnts", aPoints);
+    theDI << "compound pnts is drawn\n";
+  }
+
+  // perform plate
+  aPlate.Perform();
+  if (!aPlate.IsDone())
+  {
+    theDI << "plate is not done";
+    return 0;
+  }
+
+  // build plate surface
+  Handle(GeomPlate_Surface) aPlateSurf = aPlate.Surface();
+  Standard_Real aDMax = Max(aTol3d, 10. * aPlate.G0Error());
+  TColgp_SequenceOfXY aS2d;
+  TColgp_SequenceOfXYZ aS3d;
+  aPlate.Disc2dContour(4, aS2d);
+  aPlate.Disc3dContour(4, 0, aS3d);
+  GeomPlate_PlateG0Criterion aCriterion(aS2d, aS3d, aDMax);
+  GeomPlate_MakeApprox anApprox(aPlateSurf, aCriterion, aTol3d,
+                                anAppSegments, anAppDegree, GeomAbs_C1, anEnlargeCoeff);
+  Handle(Geom_BSplineSurface) aNewSurf = anApprox.Surface();
+
+  // make new face
+  BRepBuilderAPI_MakeFace aFMaker(aNewSurf, Precision::Confusion());
+  TopoDS_Face aNewFace = aFMaker.Face();
+
+  DBRep::Set(theArgv[1], aNewFace);
+  theDI << "Done";
+  return 0;
+}
 
 void  BRepTest::FillingCommands(Draw_Interpretor& theCommands)
 {
@@ -738,4 +1048,21 @@ void  BRepTest::FillingCommands(Draw_Interpretor& theCommands)
 		  fillingparam,
 		  g) ;
 
+  theCommands.Add("pullupface",
+                  "result face old_edges new_edges modif_face [options]\n"
+                  "\t\tPull up the surface to new replacement edges. Options:\n"
+                  "\t\t-mr val      Modification radius [default 0.1]\n"
+                  "\t\t-bnd         Use face boundary constraints\n"
+                  "\t\t-inner       Use face inner points constraints\n"
+                  "\t\t-step val    Step of discretization [0.1]\n"
+                  "\t\t-order val   Order of continuity of point constraints (0/1) [1]\n"
+                  "\t\t-deg val     Degree of resolution for Plate (>=2) [3]\n"
+                  "\t\t-pnts        Output point constraints in the compound of vertices pnts\n"
+                  "\t\t-tol2d val   Tolerance to compare points in space of initial surface [1e-5]\n"
+                  "\t\t-tol3d val   Tolerance to compare points in 3d space [1e-4]\n"
+                  "\t\t-tolang val  Tolerance to compare normals of two points [1e-2]\n"
+                  "\t\t-appdeg val  Maximal degree for approximation of the surface [8]\n"
+                  "\t\t-appsegs val Maximal number of bezier pieces in output surface [9]"
+                  "\t\t-enlarge val Enlarge coefficient to extend boundaries of result surface [1.01]",
+                  __FILE__, pullupface, g);
 }
