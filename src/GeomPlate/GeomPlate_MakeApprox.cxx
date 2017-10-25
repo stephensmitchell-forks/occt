@@ -257,8 +257,8 @@ GeomPlate_MakeApprox::GeomPlate_MakeApprox(const Handle(GeomPlate_Surface)& Surf
 
   Standard_Real U0=0., U1=0., V0=0., V1=0.;
   myPlate->RealBounds(U0, U1, V0, V1);
-  Standard_Real aDU = (U1 - U0) * (EnlargeCoeff - 1);
-  Standard_Real aDV = (V1 - V0) * (EnlargeCoeff - 1);
+  Standard_Real aDU = (U1 - U0) * (EnlargeCoeff - 1) * 0.5;
+  Standard_Real aDV = (V1 - V0) * (EnlargeCoeff - 1) * 0.5;
   U0 = U0 - aDU;
   U1 = U1 + aDU;
   V0 = V0 - aDV;

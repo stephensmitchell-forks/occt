@@ -44,7 +44,7 @@ don a_1 new_edges
 # compute plate surface
 pullupface r a_1 old_edges new_edges a_2 -bnd -order 1 -mr 0.4 -step 0.2 -deg 3 -enlarge 1.1
 
-checkprops r -s 10.5986
+checkprops r -s 9.02637
 
 # check distance from vertices of the initial face to the new face
 foreach v [explode a_1 v] {
