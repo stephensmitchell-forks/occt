@@ -456,6 +456,10 @@ void AIS_InteractiveContext::Display (const Handle(AIS_InteractiveObject)& theIO
   {
     Erase  (theIObj, theToUpdateViewer);
     Load (theIObj, theSelectionMode, theToAllowDecomposition);
+    if (Handle(AIS_GlobalStatus)* aStatusPtr = myObjects.ChangeSeek (theIObj))
+    {
+      (*aStatusPtr)->SetDisplayMode (theDispMode);
+    }
     return;
   }
 
@@ -483,7 +487,7 @@ void AIS_InteractiveContext::Display (const Handle(AIS_InteractiveObject)& theIO
   {
     Handle(AIS_GlobalStatus) aStatus = new AIS_GlobalStatus (AIS_DS_Displayed, theDispMode, theSelectionMode);
     myObjects.Bind   (theIObj, aStatus);
-    Handle(Graphic3d_ViewAffinity) anAffinity = myMainVwr->StructureManager()->RegisterObject (theIObj);
+    myMainVwr->StructureManager()->RegisterObject (theIObj);
     myMainPM->Display(theIObj, theDispMode);
     if (theSelectionMode != -1)
     {
@@ -566,23 +570,20 @@ void AIS_InteractiveContext::Load (const Handle(AIS_InteractiveObject)& theIObj,
     return;
   }
 
-  if (theSelMode == -1
-  && !theToAllowDecomposition)
+  if (!myObjects.IsBound (theIObj))
   {
-    if (!myObjects.IsBound (theIObj))
-    {
-      Standard_Integer aDispMode, aHiMod, aSelModeDef;
-      GetDefModes (theIObj, aDispMode, aHiMod, aSelModeDef);
-      Handle(AIS_GlobalStatus) aStatus = new AIS_GlobalStatus (AIS_DS_Erased, aDispMode, aSelModeDef);
-      myObjects.Bind (theIObj, aStatus);
-    }
+    Standard_Integer aDispMode, aHiMod, aSelModeDef;
+    GetDefModes (theIObj, aDispMode, aHiMod, aSelModeDef);
+    Handle(AIS_GlobalStatus) aStatus = new AIS_GlobalStatus (AIS_DS_Erased, aDispMode, theSelMode != -1 ? theSelMode : aSelModeDef);
+    myObjects.Bind (theIObj, aStatus);
+    myMainVwr->StructureManager()->RegisterObject (theIObj);
+  }
 
-    // Register theIObj in the selection manager to prepare further activation of selection
-    const Handle(SelectMgr_SelectableObject)& anObj = theIObj; // to avoid ambiguity
-    if (!mgrSelector->Contains (anObj))
-    {
-      mgrSelector->Load (theIObj);
-    }
+  // Register theIObj in the selection manager to prepare further activation of selection
+  const Handle(SelectMgr_SelectableObject)& anObj = theIObj; // to avoid ambiguity
+  if (!mgrSelector->Contains (anObj))
+  {
+    mgrSelector->Load (theIObj);
   }
 }
 
@@ -791,6 +792,7 @@ Standard_Boolean AIS_InteractiveContext::KeepTemporary(const Handle(AIS_Interact
                                                         Standard_False);
 //    GS->SubIntensityOn();
     myObjects.Bind(anIObj,GS);
+    myMainVwr->StructureManager()->RegisterObject (anIObj);
     mgrSelector->Load(anIObj);
     mgrSelector->Activate(anIObj,SM,myMainSel);
     
