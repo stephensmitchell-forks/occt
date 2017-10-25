@@ -309,6 +309,15 @@ public:
     return *this;
   }
 
+  //! Exchange the data of two arrays (without reallocating memory).
+  void Swap (NCollection_Array1& theOther)
+  {
+    NCollection_Array1 aCopy;
+    aCopy.Move (*this);
+    Move (theOther);
+    theOther.Move (aCopy);
+  }
+
   //! Assignment operator
   NCollection_Array1& operator= (const NCollection_Array1& theOther)
   { 

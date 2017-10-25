@@ -129,9 +129,14 @@ public:
     NCollection_BaseMap (theOther.NbBuckets(), Standard_True, theOther.myAllocator)
   { *this = theOther; }
 
+#ifndef OCCT_NO_RVALUE_REFERENCE
+  //! Move constructor.
+  NCollection_Map (NCollection_Map&& theOther) : NCollection_BaseMap (std::move (theOther)) {}
+#endif
+
   //! Exchange the content of two maps without re-allocations.
   //! Notice that allocators will be swapped as well!
-  void Exchange (NCollection_Map& theOther)
+  void Swap (NCollection_Map& theOther)
   {
     this->exchangeMapsData (theOther);
   }
@@ -151,11 +156,23 @@ public:
     return *this;
   }
 
+  //! Move assignment.
+  NCollection_Map& Move (NCollection_Map& theOther)
+  {
+    this->move (theOther, MapNode::delNode);
+    return *this;
+  }
+
   //! Assign operator
   NCollection_Map& operator= (const NCollection_Map& theOther)
   {
     return Assign(theOther);
   }
+
+#ifndef OCCT_NO_RVALUE_REFERENCE
+  //! Move assignment operator.
+  NCollection_Map& operator= (NCollection_Map&& theOther) { return Move (theOther); }
+#endif
 
   //! ReSize
   void ReSize (const Standard_Integer N)

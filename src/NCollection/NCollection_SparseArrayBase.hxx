@@ -190,8 +190,13 @@ public:
 
 private:
   // Copy constructor and assignment operator are private thus not accessible
-  NCollection_SparseArrayBase (const NCollection_SparseArrayBase&) {}
-  void operator = (const NCollection_SparseArrayBase&) {}
+  NCollection_SparseArrayBase (const NCollection_SparseArrayBase&);
+  void operator = (const NCollection_SparseArrayBase&);
+
+#ifndef OCCT_NO_RVALUE_REFERENCE
+  NCollection_SparseArrayBase (NCollection_SparseArrayBase&& );
+  NCollection_SparseArrayBase& operator= (NCollection_SparseArrayBase&& );
+#endif
 
 protected:
   // Object life
@@ -240,6 +245,10 @@ protected:
   //! Copy contents of theOther to this; 
   //! assumes that this and theOther have exactly the same type of arguments 
   Standard_EXPORT void assign (const NCollection_SparseArrayBase& theOther);
+
+  //! Move contents of theOther into this;
+  //! assumes that this and theOther have exactly the same type of arguments.
+  Standard_EXPORT void move (NCollection_SparseArrayBase& theOther);
 
   //! Exchange contents of theOther and this; 
   //! assumes that this and theOther have exactly the same type of arguments 

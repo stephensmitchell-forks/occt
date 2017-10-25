@@ -164,6 +164,12 @@ public: //! @name public methods
     copyData (theOther);
   }
 
+#ifndef OCCT_NO_RVALUE_REFERENCE
+  //! Move constructor.
+  //! Warning! The moved object will become an unallocated vector, and can be used afterwards only by moving/assigning another object to it.
+  NCollection_Vector (NCollection_Vector&& theOther) : NCollection_BaseVector (std::move (theOther)) {}
+#endif
+
   //! Destructor
   virtual ~NCollection_Vector()
   {
@@ -210,12 +216,31 @@ public: //! @name public methods
   inline void Assign (const NCollection_Vector& theOther,
                       const Standard_Boolean theOwnAllocator = Standard_True);
 
+  //! Move assignment.
+  //! Warning! The moved object will become an unallocated vector with NULL allocator, and can be used afterwards only by moving/assigning another object to it.
+  inline NCollection_Vector& Move (NCollection_Vector& theOther);
+
+  //! Exchange the data of two vectors (without reallocating memory; allocators will be swapped as well).
+  void Swap (NCollection_Vector& theOther)
+  {
+    NCollection_Vector aCopy;
+    aCopy.Move (*this);
+    Move (theOther);
+    theOther.Move (aCopy);
+  }
+
   //! Assignment operator
   NCollection_Vector& operator= (const NCollection_Vector& theOther)
   {
     Assign (theOther, Standard_False);
     return *this;
   }
+
+#ifndef OCCT_NO_RVALUE_REFERENCE
+  //! Move assignment operator.
+  //! Warning! The moved object will become an unallocated vector, and can be used afterwards only by moving/assigning another object to it.
+  NCollection_Vector& operator= (NCollection_Vector&& theOther) { return Move (theOther); }
+#endif
 
   //! Append
   TheItemType& Append (const TheItemType& theValue)
@@ -345,7 +370,10 @@ private: //! @name private methods
 
 };
 
-//! Assignment to the collection of the same type
+// =======================================================================
+// function : Assign
+// purpose  :
+// =======================================================================
 template <class TheItemType> inline
 void NCollection_Vector<TheItemType>::Assign (const NCollection_Vector& theOther,
                                               const Standard_Boolean    theOwnAllocator)
@@ -360,12 +388,19 @@ void NCollection_Vector<TheItemType>::Assign (const NCollection_Vector& theOther
   {
     initMemBlocks (*this, myData[anItemIter], 0, 0);
   }
-  this->myAllocator->Free (myData);
+  if (!myAllocator.IsNull())
+  {
+    myAllocator->Free (myData);
+  }
 
   // allocate memory blocks with new allocator
   if (!theOwnAllocator)
   {
-    this->myAllocator = theOther.myAllocator;
+    myAllocator = theOther.myAllocator;
+  }
+  else if (!myAllocator.IsNull())
+  {
+    myAllocator = NCollection_BaseAllocator::CommonBaseAllocator();
   }
   myIncrement = theOther.myIncrement;
   myLength    = theOther.myLength;
@@ -375,6 +410,41 @@ void NCollection_Vector<TheItemType>::Assign (const NCollection_Vector& theOther
 
   // copy data
   copyData (theOther);
+}
+
+// =======================================================================
+// function : Move
+// purpose  :
+// =======================================================================
+template <class TheItemType> inline
+NCollection_Vector<TheItemType>& NCollection_Vector<TheItemType>::Move (NCollection_Vector<TheItemType>& theOther)
+{
+  if (&theOther == this)
+  {
+    return *this;
+  }
+
+  // destroy current data using current allocator
+  for (Standard_Integer anItemIter = 0; anItemIter < myCapacity; ++anItemIter)
+  {
+    initMemBlocks (*this, myData[anItemIter], 0, 0);
+  }
+  myAllocator->Free (myData);
+
+  myAllocator = theOther.myAllocator;
+  myIncrement = theOther.myIncrement;
+  myLength    = theOther.myLength;
+  myNBlocks   = theOther.myNBlocks;
+  myCapacity  = theOther.myCapacity;
+  myData      = theOther.myData;
+
+  theOther.myAllocator = NCollection_BaseAllocator::CommonBaseAllocator();
+  theOther.myIncrement = 0;
+  theOther.myLength    = 0;
+  theOther.myNBlocks   = 0;
+  theOther.myCapacity  = 0;
+  theOther.myData      = NULL;
+  return *this;
 }
 
 #endif // NCollection_Vector_HeaderFile

@@ -85,6 +85,20 @@ public:
  public:
   // ---------- PUBLIC METHODS ------------
 
+  //! Empty constructor; should be used with caution.
+  //! @sa methods Resize() and Move().
+  NCollection_Array2()
+  : myLowerRow (1),
+    myUpperRow (0),
+    myLowerCol (1),
+    myUpperCol (0),
+    myData     (NULL),
+    myStart    (NULL),
+    myDeletable(Standard_False)
+  {
+    //
+  }
+
   //! Constructor
   NCollection_Array2(const Standard_Integer theRowLower,
                      const Standard_Integer theRowUpper,
@@ -108,6 +122,29 @@ public:
     Allocate();
     *this = theOther;
   }
+
+#ifndef OCCT_NO_RVALUE_REFERENCE
+  //! Move constructor.
+  //! Warning! The moved object will become an unallocated array of 0 size, and can be used afterwards only by moving/assigning another object to it or calling Resize().
+  //! Also, if moved was initialized with externally allocated memory, this array will refer to the same memory (no copy will be done).
+  //! This must be take into account when method returns NCollection_Array2 - compiler will call move constructor implicitly,
+  //! and local object should not be created with given temporarily allocated memory (e.g. from call stack).
+  NCollection_Array2 (NCollection_Array2&& theOther)
+  : myLowerRow (theOther.myLowerRow),
+    myUpperRow (theOther.myUpperRow),
+    myLowerCol (theOther.myLowerCol),
+    myUpperCol (theOther.myUpperCol),
+    myData     (theOther.myData),
+    myStart    (theOther.myStart),
+    myDeletable(theOther.myDeletable)
+  {
+    theOther.myUpperRow  = theOther.myLowerRow - 1;
+    theOther.myUpperCol  = theOther.myLowerCol - 1;
+    theOther.myDeletable = false;
+    theOther.myData      = NULL;
+    theOther.myStart     = NULL;
+  }
+#endif
 
   //! C array-based constructor
   NCollection_Array2(const TheItemType&     theBegin,
@@ -179,6 +216,51 @@ public:
     return *this; 
   }
 
+  //! Move assignment.
+  //! Warning! The moved object will become an unallocated array of 0 size, and can be used afterwards only by moving/assigning another object to it or calling Resize().
+  NCollection_Array2& Move (NCollection_Array2& theOther)
+  {
+    if (&theOther == this)
+    {
+      return *this;
+    }
+
+    if (myDeletable)
+    {
+      if (myDeletable) delete [] myStart;
+      delete [] &(myData[myLowerRow]);
+    }
+    myLowerRow  = theOther.myLowerRow;
+    myUpperRow  = theOther.myUpperRow;
+    myLowerCol  = theOther.myLowerCol;
+    myUpperCol  = theOther.myUpperCol;
+    myDeletable = theOther.myDeletable;
+    myData      = theOther.myData;
+    myStart     = theOther.myStart;
+
+    theOther.myUpperRow  = theOther.myLowerRow - 1;
+    theOther.myUpperCol  = theOther.myLowerCol - 1;
+    theOther.myDeletable = false;
+    theOther.myData      = NULL;
+    theOther.myStart     = NULL;
+    return *this;
+  }
+
+  //! Exchange the data of two arrays (without reallocating memory).
+  void Swap (NCollection_Array2& theOther)
+  {
+    NCollection_Array2 aCopy;
+    aCopy.Move (*this);
+    Move (theOther);
+    theOther.Move (aCopy);
+  }
+
+#ifndef OCCT_NO_RVALUE_REFERENCE
+  //! Move assignment operator.
+  //! Warning! The moved object will become an unallocated array of 0 size, and can be used afterwards only by moving/assigning another object to it or calling Resize().
+  NCollection_Array2& operator= (NCollection_Array2&& theOther) { return Move (theOther); }
+#endif
+
   //! Assignment operator
   NCollection_Array2& operator= (const NCollection_Array2& theOther)
   { 
@@ -228,6 +310,82 @@ public:
   { 
     if (myDeletable) delete [] myStart;
     delete [] &(myData[myLowerRow]);
+  }
+
+  //! Resizes the array to specified bounds.
+  //! No re-allocation will be done if length of array does not change,
+  //! but existing values will not be discarded if theToCopyData set to FALSE.
+  //! @param theRowLower new lower bound of rows
+  //! @param theRowUpper new upper bound of rows
+  //! @param theColLower new lower bound of columns
+  //! @param theColUpper new upper bound of columns
+  //! @param theToCopyData flag to copy existing data into new array
+  void Resize (const Standard_Integer theRowLower,
+               const Standard_Integer theRowUpper,
+               const Standard_Integer theColLower,
+               const Standard_Integer theColUpper,
+               const Standard_Boolean theToCopyData)
+  {
+    Standard_RangeError_Raise_if (theRowUpper < theRowLower || theColUpper < theColLower, "NCollection_Array2::Resize");
+    const Standard_Integer aNbRowsOld   = RowLength();
+    const Standard_Integer aNbColsOld   = ColLength();
+    const Standard_Integer aNbRowsNew   = theRowUpper - theRowLower + 1;
+    const Standard_Integer aNbColsNew   = theColUpper - theColLower + 1;
+    const Standard_Integer aLowerRowOld = myLowerRow;
+    const Standard_Integer aLowerColOld = myLowerCol;
+
+    TheItemType** aRowTableOld = myData + aLowerRowOld;
+    myLowerRow = theRowLower;
+    myUpperRow = theRowUpper;
+    myLowerCol = theColLower;
+    myUpperCol = theColUpper;
+    if (aNbRowsNew == aNbRowsOld
+     && aNbColsNew == aNbColsOld)
+    {
+      if (aLowerColOld != myLowerCol)
+      {
+        TheItemType* aRowPtr = myStart - myLowerCol;
+        for (Standard_Integer aRowIter = 0; aRowIter < aNbRowsNew; ++aRowIter)
+        {
+          aRowTableOld[aRowIter] = aRowPtr;
+          aRowPtr += aNbColsNew;
+        }
+      }
+      myData = aRowTableOld - myLowerRow;
+      return;
+    }
+
+    TheItemType* aStartOld    = myStart;
+    bool         wasDeletable = myDeletable;
+    delete [] aRowTableOld;
+    if (!theToCopyData && wasDeletable)
+    {
+      delete [] aStartOld;
+      wasDeletable = false;
+    }
+    myStart     = NULL;
+    myData      = NULL;
+    myDeletable = true;
+    Allocate();
+    if (!theToCopyData)
+    {
+      return;
+    }
+
+    {
+      TheItemType* anItemPtrNew = myStart;
+      TheItemType* anItemPtrOld = aStartOld;
+      const Standard_Integer aNbItems = Length();
+      for (Standard_Integer anItemIter = 0; anItemIter < aNbItems; ++anItemIter, ++anItemPtrOld, ++anItemPtrNew)
+      {
+        *anItemPtrNew = *anItemPtrOld;
+      }
+    }
+
+    if (wasDeletable)
+    {
+      delete [] aStartOld;
+    }
   }
 
  private:

@@ -119,6 +119,24 @@ public:
     myAllocator = (theAllocator.IsNull() ? NCollection_BaseAllocator::CommonBaseAllocator() : theAllocator);
   }
 
+#ifndef OCCT_NO_RVALUE_REFERENCE
+  //! Move constructor.
+  NCollection_BaseSequence (NCollection_BaseSequence&& theOther)
+  : myFirstItem        (theOther.myFirstItem),
+    myLastItem         (theOther.myLastItem),
+    myCurrentItem      (theOther.myCurrentItem),
+    myCurrentIndex     (theOther.myCurrentIndex),
+    mySize             (theOther.mySize)
+  {
+    theOther.myFirstItem    = NULL;
+    theOther.myLastItem     = NULL;
+    theOther.myCurrentItem  = NULL;
+    theOther.myCurrentIndex = 0;
+    theOther.mySize         = 0;
+    theOther.myAllocator    = NCollection_BaseAllocator::CommonBaseAllocator();
+  }
+#endif
+
   //! Destructor
   virtual ~NCollection_BaseSequence() {}
 

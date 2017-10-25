@@ -69,6 +69,11 @@ public:
     Assign (theOther);
   }
 
+#ifndef OCCT_NO_RVALUE_REFERENCE
+  //! Move constructor.
+  NCollection_List (NCollection_List&& theOther) : NCollection_BaseList (std::move (theOther)) {}
+#endif
+
   //! Size - Number of items
   Standard_Integer Size (void) const
   { return Extent(); }
@@ -84,11 +89,46 @@ public:
     return *this;
   }
 
+  //! Move assignment.
+  NCollection_List& Move (NCollection_List& theOther)
+  {
+    if (this == &theOther)
+    {
+      return *this;
+    }
+
+    Clear();
+    this->myAllocator = theOther.myAllocator;
+    this->myFirst     = theOther.myFirst;
+    this->myLast      = theOther.myLast;
+    this->myLength    = theOther.myLength;
+
+    theOther.myAllocator = NCollection_BaseAllocator::CommonBaseAllocator();
+    theOther.myFirst     = NULL;
+    theOther.myLast      = NULL;
+    theOther.myLength    = 0;
+    return *this;
+  }
+
+  //! Exchange the data of two lists (without reallocating memory; allocators will be swapped as well).
+  void Swap (NCollection_List& theOther)
+  {
+    NCollection_List aCopy;
+    aCopy.Move (*this);
+    Move (theOther);
+    theOther.Move (aCopy);
+  }
+
   //! Replacement operator
   NCollection_List& operator= (const NCollection_List& theOther)
   {
     return Assign (theOther);
   }
+
+#ifndef OCCT_NO_RVALUE_REFERENCE
+  //! Move assignment operator.
+  NCollection_List& operator= (NCollection_List&& theOther) { return Move (theOther); }
+#endif
 
   //! Clear this list
   void Clear (const Handle(NCollection_BaseAllocator)& theAllocator=0L)

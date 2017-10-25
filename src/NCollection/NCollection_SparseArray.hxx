@@ -61,13 +61,20 @@ public:
     return *this;
   }
 
+  //! Explicit move assignment.
+  NCollection_SparseArray& Move (NCollection_SparseArray& theOther)
+  {
+    this->move (theOther);
+    return *this;
+  }
+
   //! Exchange the data of two arrays;
   //! can be used primarily to move contents of theOther into the new array
   //! in a fast way (without creation of duplicated data)
-  void Exchange (NCollection_SparseArray& theOther) 
-  {
-    this->exchange (theOther);
-  }
+  void Swap (NCollection_SparseArray& theOther) { this->exchange (theOther); }
+
+  //! Alias for Swap().
+  void Exchange (NCollection_SparseArray& theOther) { this->exchange (theOther); }
 
   //! Destructor
   virtual ~NCollection_SparseArray ()

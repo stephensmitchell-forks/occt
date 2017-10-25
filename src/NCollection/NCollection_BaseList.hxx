@@ -137,6 +137,21 @@ public:
     myAllocator = (theAllocator.IsNull() ? NCollection_BaseAllocator::CommonBaseAllocator() : theAllocator);
   }
 
+#ifndef OCCT_NO_RVALUE_REFERENCE
+  //! Move constructor.
+  NCollection_BaseList (NCollection_BaseList&& theOther)
+  : myAllocator(theOther.myAllocator),
+    myFirst    (theOther.myFirst),
+    myLast     (theOther.myLast),
+    myLength   (theOther.myLength)
+  {
+    theOther.myAllocator = NCollection_BaseAllocator::CommonBaseAllocator();
+    theOther.myFirst     = NULL;
+    theOther.myLast      = NULL;
+    theOther.myLength    = 0;
+  }
+#endif
+
   // ******** PClear
   // Purpose: deletes all nodes
   Standard_EXPORT void PClear (NCollection_DelListNode fDel);
