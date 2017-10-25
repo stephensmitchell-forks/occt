@@ -261,7 +261,7 @@ Standard_Boolean  StepToTopoDS_GeometricTool::UpdateParam3d
 
   if (w1 < w2) return Standard_True;
 
-  if (theCurve->IsPeriodic()) 
+  if (theCurve->IsPeriodic111() && theCurve->IsClosed()) 
     ElCLib::AdjustPeriodic(cf,cl,Precision::PConfusion(),w1,w2); //:a7 abv 11 Feb 98: preci -> PConfusion()
   else if (theCurve->IsClosed()) {
     // l'un des points projecte se trouve sur l'origine du parametrage

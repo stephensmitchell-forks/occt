@@ -1689,7 +1689,7 @@ void BRepOffset_Tool::Inter3D(const TopoDS_Face& F1,
           if(!aC3DETrim.IsNull()) {
 		Handle(Geom2d_Curve) aC2dNew;
 		
-		if(aC3DE->IsPeriodic()) {
+		if(aC3DE->IsPeriodic111()) {
                   BOPTools_AlgoTools2D::AdjustPCurveOnFace(cpF1, f, l,  aC2d, aC2dNew, aContext);
 		  }
 		else {
@@ -1705,7 +1705,7 @@ void BRepOffset_Tool::Inter3D(const TopoDS_Face& F1,
           if(!aC3DETrim.IsNull()) {
 		Handle(Geom2d_Curve) aC2dNew;
 		
-		if(aC3DE->IsPeriodic()) {
+		if(aC3DE->IsPeriodic111()) {
                   BOPTools_AlgoTools2D::AdjustPCurveOnFace(cpF2, f, l,  aC2d, aC2dNew, aContext);
 		  }
 		else {
