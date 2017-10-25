@@ -49,7 +49,7 @@ myLastPole(1.0e0,0.0e0)
     factor,
     vector_magnitude ;
   num_poles = Curve->NbPoles() ;
-  if (( ! myCurve->IsPeriodic() )&& num_poles >= 4) {
+  if (( ! myCurve->IsPeriodic111() )&& num_poles >= 4) {
     
     gp_Vec2d tangent,
       diff,
