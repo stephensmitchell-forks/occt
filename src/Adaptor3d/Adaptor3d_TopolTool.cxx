@@ -932,12 +932,12 @@ void Adaptor3d_TopolTool::SamplePnts(const Standard_Real theDefl,
 //purpose  : 
 //=======================================================================
 
-void Adaptor3d_TopolTool::BSplSamplePnts(const Standard_Real theDefl, 
-					 const Standard_Integer theNUmin,
-					 const Standard_Integer theNVmin)
-{ 
+void Adaptor3d_TopolTool::BSplSamplePnts(const Standard_Real theDefl,
+                                         const Standard_Integer theNUmin,
+                                         const Standard_Integer theNVmin)
+{
   const Handle(Geom_BSplineSurface)& aBS = myS->BSpline();
-  Standard_Real uinf,usup,vinf,vsup;
+  Standard_Real uinf, usup, vinf, vsup;
   uinf = myS->FirstUParameter();  usup = myS->LastUParameter();
   vinf = myS->FirstVParameter();  vsup = myS->LastVParameter();
 
@@ -948,49 +948,61 @@ void Adaptor3d_TopolTool::BSplSamplePnts(const Standard_Real theDefl,
   Standard_Integer vi1 = aBS->FirstVKnotIndex();
   Standard_Integer vi2 = aBS->LastVKnotIndex();
 
-  for(i = ui1; i < ui2; ++i) {
-    if(uinf >= aBS->UKnot(i) && uinf < aBS->UKnot(i+1)) {
+  for(i = ui1; i < ui2; ++i)
+  {
+    if(uinf >= aBS->UKnot(i) && uinf < aBS->UKnot(i + 1))
+    {
       ui1 = i;
       break;
     }
   }
 
-  for(i = ui2; i > ui1; --i) {
-    if(usup <= aBS->UKnot(i) && usup > aBS->UKnot(i-1)) {
+  for(i = ui2; i > ui1; --i)
+  {
+    if(usup <= aBS->UKnot(i) && usup > aBS->UKnot(i - 1))
+    {
       ui2 = i;
       break;
     }
   }
 
-  for(i = vi1; i < vi2; ++i) {
-    if(vinf >= aBS->VKnot(i) && vinf < aBS->VKnot(i+1)) {
+  for(i = vi1; i < vi2; ++i)
+  {
+    if(vinf >= aBS->VKnot(i) && vinf < aBS->VKnot(i + 1))
+    {
       vi1 = i;
       break;
     }
   }
 
-  for(i = vi2; i > vi1; --i) {
-    if(vsup <= aBS->VKnot(i) && vsup > aBS->VKnot(i-1)) {
+  for(i = vi2; i > vi1; --i)
+  {
+    if(vsup <= aBS->VKnot(i) && vsup > aBS->VKnot(i - 1))
+    {
       vi2 = i;
       break;
     }
   }
 
-  Standard_Integer nbsu = ui2-ui1+1; nbsu += (nbsu - 1) * (aBS->UDegree()-1);
-  Standard_Integer nbsv = vi2-vi1+1; nbsv += (nbsv - 1) * (aBS->VDegree()-1);
+  Standard_Integer nbsu = ui2 - ui1 + 1; nbsu += (nbsu - 1) * (aBS->UDegree() - 1);
+  Standard_Integer nbsv = vi2 - vi1 + 1; nbsv += (nbsv - 1) * (aBS->VDegree() - 1);
   Standard_Boolean bUuniform = Standard_False;
   Standard_Boolean bVuniform = Standard_False;
 
   //modified by NIZHNY-EMV Mon Jun 10 14:19:04 2013
-  if (nbsu < theNUmin || nbsv < theNVmin) {
+  if(nbsu < theNUmin || nbsv < theNVmin)
+  {
     Standard_Integer aNb;
-    if (nbsu < nbsv) {
-      aNb = (Standard_Integer)(nbsv * ((Standard_Real)theNUmin)/((Standard_Real)nbsu));
+    if(nbsu < nbsv)
+    {
+      aNb = (Standard_Integer) (nbsv * ((Standard_Real) theNUmin) / ((Standard_Real) nbsu));
       aNb = Min(aNb, 30);
       bVuniform = (aNb > nbsv) ? Standard_True : bVuniform;
       nbsv = bVuniform ? aNb : nbsv;
-    } else {
-      aNb = (Standard_Integer)(nbsu * ((Standard_Real)theNVmin)/((Standard_Real)nbsv));
+    }
+    else
+    {
+      aNb = (Standard_Integer) (nbsu * ((Standard_Real) theNVmin) / ((Standard_Real) nbsv));
       aNb = Min(aNb, 30);
       bUuniform = (aNb > nbsu) ? Standard_True : bUuniform;
       nbsu = bUuniform ? aNb : nbsu;
@@ -998,12 +1010,14 @@ void Adaptor3d_TopolTool::BSplSamplePnts(const Standard_Real theDefl,
   }
   //modified by NIZHNY-EMV Mon Jun 10 14:19:05 2013
 
-  if(nbsu < theNUmin) {
+  if(nbsu < theNUmin)
+  {
     nbsu = theNUmin;
     bUuniform = Standard_True;
   }
 
-  if(nbsv < theNVmin) {
+  if(nbsv < theNVmin)
+  {
     nbsv = theNVmin;
     bVuniform = Standard_True;
   }
@@ -1014,76 +1028,86 @@ void Adaptor3d_TopolTool::BSplSamplePnts(const Standard_Real theDefl,
   TColStd_Array1OfBoolean aVFlg(1, nbsv);
 
   //Filling of sample parameters
-  if(bUuniform) {
+  if(bUuniform)
+  {
     t1 = uinf;
     t2 = usup;
-    dt = (t2 - t1)/(nbsu - 1);
+    dt = (t2 - t1) / (nbsu - 1);
     anUPars(1) = t1;
     anUFlg(1) = Standard_False;
     anUPars(nbsu) = t2;
     anUFlg(nbsu) = Standard_False;
-    for(i = 2, t1 += dt; i < nbsu; ++i, t1 += dt) {
+    for(i = 2, t1 += dt; i < nbsu; ++i, t1 += dt)
+    {
       anUPars(i) = t1;
       anUFlg(i) = Standard_False;
     }
   }
-  else {  
+  else
+  {
     Standard_Integer nbi = aBS->UDegree();
     k = 0;
     t1 = uinf;
-    for(i = ui1+1; i <= ui2; ++i) {
+    for(i = ui1 + 1; i <= ui2; ++i)
+    {
       if(i == ui2) t2 = usup;
       else t2 = aBS->UKnot(i);
-      dt = (t2 - t1)/nbi;
+      dt = (t2 - t1) / nbi;
       j = 1;
-      do { 
-	++k;
-	anUPars(k) = t1;
-	anUFlg(k) = Standard_False;
-	t1 += dt;	
+      do
+      {
+        ++k;
+        anUPars(k) = t1;
+        anUFlg(k) = Standard_False;
+        t1 += dt;
       }
-      while (++j <= nbi);
+      while(++j <= nbi);
       t1 = t2;
     }
     ++k;
     anUPars(k) = t1;
   }
 
-  if(bVuniform) {
+  if(bVuniform)
+  {
     t1 = vinf;
     t2 = vsup;
-    dt = (t2 - t1)/(nbsv - 1);
+    dt = (t2 - t1) / (nbsv - 1);
     aVPars(1) = t1;
     aVFlg(1) = Standard_False;
     aVPars(nbsv) = t2;
     aVFlg(nbsv) = Standard_False;
-    for(i = 2, t1 += dt; i < nbsv; ++i, t1 += dt) {
+    for(i = 2, t1 += dt; i < nbsv; ++i, t1 += dt)
+    {
       aVPars(i) = t1;
       aVFlg(i) = Standard_False;
     }
   }
-  else {  
+  else
+  {
     Standard_Integer nbi = aBS->VDegree();
     k = 0;
     t1 = vinf;
-    for(i = vi1+1; i <= vi2; ++i) {
+    for(i = vi1 + 1; i <= vi2; ++i)
+    {
       if(i == vi2) t2 = vsup;
       else t2 = aBS->VKnot(i);
-      dt = (t2 - t1)/nbi;
+      dt = (t2 - t1) / nbi;
       j = 1;
-      do { 
-	++k;
-	aVPars(k) = t1;
-	aVFlg(k) = Standard_False;
-	t1 += dt;	
+      do
+      {
+        ++k;
+        aVPars(k) = t1;
+        aVFlg(k) = Standard_False;
+        t1 += dt;
       }
-      while (++j <= nbi);
+      while(++j <= nbi);
       t1 = t2;
     }
     ++k;
     aVPars(k) = t1;
   }
- 
+
   //Analysis of deflection
 
   Standard_Real aDefl2 = Max(theDefl*theDefl, 1.e-9);
@@ -1097,60 +1121,68 @@ void Adaptor3d_TopolTool::BSplSamplePnts(const Standard_Real theDefl,
   anUFlg(1) = Standard_True;
   anUFlg(nbsu) = Standard_True;
   //myNbSamplesU = 2; 
-  for(i = 1; i <= nbsv; ++i) {
+  for(i = 1; i <= nbsv; ++i)
+  {
     t1 = aVPars(i);
     j = 1;
     Standard_Boolean bCont = Standard_True;
-    while (j < nbsu-1 && bCont) {
+    while(j < nbsu - 1 && bCont)
+    {
 
-      if(anUFlg(j+1)) {
-	++j;
-	continue;
+      if(anUFlg(j + 1))
+      {
+        ++j;
+        continue;
       }
 
       t2 = anUPars(j);
-//      gp_Pnt p1 = aBS->Value(t2, t1);
+      //      gp_Pnt p1 = aBS->Value(t2, t1);
       gp_Pnt p1 = aBSplAdaptor.Value(t2, t1);
-      for(k = j+2; k <= nbsu; ++k) {
-	t2 = anUPars(k);
-//	gp_Pnt p2 = aBS->Value(t2, t1);
-	gp_Pnt p2 = aBSplAdaptor.Value(t2, t1);
-	//gce_MakeLin MkLin(p1, p2);
-	//const gp_Lin& lin = MkLin.Value();
+      for(k = j + 2; k <= nbsu; ++k)
+      {
+        t2 = anUPars(k);
+        //	gp_Pnt p2 = aBS->Value(t2, t1);
+        gp_Pnt p2 = aBSplAdaptor.Value(t2, t1);
+        //gce_MakeLin MkLin(p1, p2);
+        //const gp_Lin& lin = MkLin.Value();
 
-	if(p1.SquareDistance(p2) <= tol) continue;
+        if(p1.SquareDistance(p2) <= tol) continue;
 
-	gp_Lin lin(p1, gp_Dir(gp_Vec(p1, p2)));
-	Standard_Boolean ok = Standard_True;
-	for(l = j+1; l < k; ++l) {
+        gp_Lin lin(p1, gp_Dir(gp_Vec(p1, p2)));
+        Standard_Boolean ok = Standard_True;
+        for(l = j + 1; l < k; ++l)
+        {
 
-	  if(anUFlg(l)) {
-	    ok = Standard_False;
-	    break;
-	  }
+          if(anUFlg(l))
+          {
+            ok = Standard_False;
+            break;
+          }
 
-//	  gp_Pnt pp =  aBS->Value(anUPars(l), t1);
-	  gp_Pnt pp =  aBSplAdaptor.Value(anUPars(l), t1);
-	  Standard_Real d = lin.SquareDistance(pp);
-	  
-	  if(d <= aDefl2) continue;
+          //	  gp_Pnt pp =  aBS->Value(anUPars(l), t1);
+          gp_Pnt pp = aBSplAdaptor.Value(anUPars(l), t1);
+          Standard_Real d = lin.SquareDistance(pp);
 
-	  ok = Standard_False;
-	  break;
-	}
+          if(d <= aDefl2) continue;
 
-	if(!ok) {
-	  j = k - 1;
-	  anUFlg(j) = Standard_True;
-	  //++myNbSamplesU;
-	  break;
-	}
-	
-	if(anUFlg(k)) {
-	  j = k;
-	  break;
-	}
-	
+          ok = Standard_False;
+          break;
+        }
+
+        if(!ok)
+        {
+          j = k - 1;
+          anUFlg(j) = Standard_True;
+          //++myNbSamplesU;
+          break;
+        }
+
+        if(anUFlg(k))
+        {
+          j = k;
+          break;
+        }
+
 
       }
 
@@ -1160,84 +1192,95 @@ void Adaptor3d_TopolTool::BSplSamplePnts(const Standard_Real theDefl,
   }
 
   myNbSamplesU = 0;
-  for (i = 1; i <= nbsu; i++)
-    if (anUFlg(i) == Standard_True)
+  for(i = 1; i <= nbsu; i++)
+    if(anUFlg(i) == Standard_True)
       myNbSamplesU++;
-  
-  if(myNbSamplesU < myMinPnts) {
-    if(myNbSamplesU == 2) {
+
+  if(myNbSamplesU < myMinPnts)
+  {
+    if(myNbSamplesU == 2)
+    {
       //"uniform" distribution;
-      Standard_Integer nn = nbsu/myMinPnts;
-      anUFlg(1+nn) = Standard_True;
-      anUFlg(nbsu-nn) = Standard_True;
+      Standard_Integer nn = nbsu / myMinPnts;
+      anUFlg(1 + nn) = Standard_True;
+      anUFlg(nbsu - nn) = Standard_True;
     }
-    else { //myNbSamplesU == 3
+    else
+    { //myNbSamplesU == 3
       //insert in bigger segment
       i = 2;
       while(!anUFlg(i++));
-      if(i < nbsu/2) j = Min(i+(nbsu-i)/2, nbsu-1);
-      else j = Max(i/2, 2);
+      if(i < nbsu / 2) j = Min(i + (nbsu - i) / 2, nbsu - 1);
+      else j = Max(i / 2, 2);
     }
     anUFlg(j) = Standard_True;
     myNbSamplesU = myMinPnts;
   }
-      
+
   aVFlg(1) = Standard_True;
   aVFlg(nbsv) = Standard_True;
   //myNbSamplesV = 2;
-  for(i = 1; i <= nbsu; ++i) {
+  for(i = 1; i <= nbsu; ++i)
+  {
     t1 = anUPars(i);
     j = 1;
     Standard_Boolean bCont = Standard_True;
-    while (j < nbsv-1 && bCont) {
+    while(j < nbsv - 1 && bCont)
+    {
 
-      if(aVFlg(j+1)) {
-	++j;
-	continue;
+      if(aVFlg(j + 1))
+      {
+        ++j;
+        continue;
       }
 
       t2 = aVPars(j);
-//      gp_Pnt p1 = aBS->Value(t1, t2);
+      //      gp_Pnt p1 = aBS->Value(t1, t2);
       gp_Pnt p1 = aBSplAdaptor.Value(t1, t2);
-      for(k = j+2; k <= nbsv; ++k) {
-	t2 = aVPars(k);
-//	gp_Pnt p2 = aBS->Value(t1, t2);
-	gp_Pnt p2 = aBSplAdaptor.Value(t1, t2);
+      for(k = j + 2; k <= nbsv; ++k)
+      {
+        t2 = aVPars(k);
+        //	gp_Pnt p2 = aBS->Value(t1, t2);
+        gp_Pnt p2 = aBSplAdaptor.Value(t1, t2);
 
-	if(p1.SquareDistance(p2) <= tol) continue;
-	//gce_MakeLin MkLin(p1, p2);
-	//const gp_Lin& lin = MkLin.Value();
-	gp_Lin lin(p1, gp_Dir(gp_Vec(p1, p2)));
-	Standard_Boolean ok = Standard_True;
-	for(l = j+1; l < k; ++l) {
+        if(p1.SquareDistance(p2) <= tol) continue;
+        //gce_MakeLin MkLin(p1, p2);
+        //const gp_Lin& lin = MkLin.Value();
+        gp_Lin lin(p1, gp_Dir(gp_Vec(p1, p2)));
+        Standard_Boolean ok = Standard_True;
+        for(l = j + 1; l < k; ++l)
+        {
 
-	  if(aVFlg(l)) {
-	    ok = Standard_False;
-	    break;
-	  }
+          if(aVFlg(l))
+          {
+            ok = Standard_False;
+            break;
+          }
 
-//	  gp_Pnt pp =  aBS->Value(t1, aVPars(l));
-	  gp_Pnt pp =  aBSplAdaptor.Value(t1, aVPars(l));
-	  Standard_Real d = lin.SquareDistance(pp);
-	  
-	  if(d <= aDefl2) continue;
+          //	  gp_Pnt pp =  aBS->Value(t1, aVPars(l));
+          gp_Pnt pp = aBSplAdaptor.Value(t1, aVPars(l));
+          Standard_Real d = lin.SquareDistance(pp);
 
-	  ok = Standard_False;
-	  break;
-	}
+          if(d <= aDefl2) continue;
 
-	if(!ok) {
-	  j = k - 1;
-	  aVFlg(j) = Standard_True;
-	  //++myNbSamplesV;
-	  break;
-	}
-	
-	if(aVFlg(k)) {
-	  j = k;
-	  break;
-	}
-	
+          ok = Standard_False;
+          break;
+        }
+
+        if(!ok)
+        {
+          j = k - 1;
+          aVFlg(j) = Standard_True;
+          //++myNbSamplesV;
+          break;
+        }
+
+        if(aVFlg(k))
+        {
+          j = k;
+          break;
+        }
+
 
       }
 
@@ -1247,24 +1290,27 @@ void Adaptor3d_TopolTool::BSplSamplePnts(const Standard_Real theDefl,
   }
 
   myNbSamplesV = 0;
-  for (i = 1; i <= nbsv; i++)
-    if (aVFlg(i) == Standard_True)
+  for(i = 1; i <= nbsv; i++)
+    if(aVFlg(i) == Standard_True)
       myNbSamplesV++;
-  
-  if(myNbSamplesV < myMinPnts) {
-    if(myNbSamplesV == 2) {
+
+  if(myNbSamplesV < myMinPnts)
+  {
+    if(myNbSamplesV == 2)
+    {
       //"uniform" distribution;
-      Standard_Integer nn = nbsv/myMinPnts;
-      aVFlg(1+nn) = Standard_True;
-      aVFlg(nbsv-nn) = Standard_True;
+      Standard_Integer nn = nbsv / myMinPnts;
+      aVFlg(1 + nn) = Standard_True;
+      aVFlg(nbsv - nn) = Standard_True;
       myNbSamplesV = myMinPnts;
     }
-    else { //myNbSamplesU == 3
+    else
+    { //myNbSamplesU == 3
       //insert in bigger segment
       i = 2;
       while(!aVFlg(i++));
-      if(i < nbsv/2) j = Min(i+(nbsv-i)/2, nbsv-1);
-      else j = Max(i/2, 2);
+      if(i < nbsv / 2) j = Min(i + (nbsv - i) / 2, nbsv - 1);
+      else j = Max(i / 2, 2);
     }
     myNbSamplesV = myMinPnts;
     aVFlg(j) = Standard_True;
@@ -1275,41 +1321,51 @@ void Adaptor3d_TopolTool::BSplSamplePnts(const Standard_Real theDefl,
   Standard_Boolean bFlag;
   //
   // U 
-  bFlag=(myNbSamplesU < theNUmin);
-  if (bFlag) {
-    myNbSamplesU=nbsu;
+  bFlag = (myNbSamplesU < theNUmin);
+  if(bFlag)
+  {
+    myNbSamplesU = nbsu;
   }
   //
   myUPars = new TColStd_HArray1OfReal(1, myNbSamplesU);
   //
-  for(j = 0, i = 1; i <= nbsu; ++i) {
-    if (bFlag) {
-      myUPars->SetValue(i,anUPars(i));
+  for(j = 0, i = 1; i <= nbsu; ++i)
+  {
+    if(bFlag)
+    {
+      myUPars->SetValue(i, anUPars(i));
     }
-    else {
-      if(anUFlg(i)) {
+    else
+    {
+      if(anUFlg(i))
+      {
         ++j;
-        myUPars->SetValue(j,anUPars(i));
+        myUPars->SetValue(j, anUPars(i));
       }
     }
   }
   //
   // V 
-  bFlag=(myNbSamplesV < theNVmin);
-  if (bFlag) {
-    myNbSamplesV=nbsv;
+  bFlag = (myNbSamplesV < theNVmin);
+  if(bFlag)
+  {
+    myNbSamplesV = nbsv;
   }
   //
   myVPars = new TColStd_HArray1OfReal(1, myNbSamplesV);
   //
-  for(j = 0, i = 1; i <= nbsv; ++i) {
-    if (bFlag) {
-       myVPars->SetValue(i,aVPars(i));
+  for(j = 0, i = 1; i <= nbsv; ++i)
+  {
+    if(bFlag)
+    {
+      myVPars->SetValue(i, aVPars(i));
     }
-    else {
-      if(aVFlg(i)) {
+    else
+    {
+      if(aVFlg(i))
+      {
         ++j;
-        myVPars->SetValue(j,aVPars(i));
+        myVPars->SetValue(j, aVPars(i));
       }
     }
   }
@@ -1320,18 +1376,18 @@ void Adaptor3d_TopolTool::BSplSamplePnts(const Standard_Real theDefl,
 
   j = 0;
   for(i = 1; i <= nbsu; ++i) {
-    if(anUFlg(i)) {
-      ++j;
-      myUPars->SetValue(j,anUPars(i));
-    }
+  if(anUFlg(i)) {
+  ++j;
+  myUPars->SetValue(j,anUPars(i));
+  }
   }
 
   j = 0;
   for(i = 1; i <= nbsv; ++i) {
-    if(aVFlg(i)) {
-      ++j;
-      myVPars->SetValue(j,aVPars(i));
-    }
+  if(aVFlg(i)) {
+  ++j;
+  myVPars->SetValue(j,aVPars(i));
+  }
   }
   */
   //modified by NIZNHY-PKV Mon Dec 26 12:25:35 2011t
