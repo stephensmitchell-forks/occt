@@ -2251,6 +2251,7 @@ static Standard_Integer BOSS(Draw_Interpretor& theCommands,
   return 1;
 }
 
+static BRepOffsetAPI_PatchFaces aPFBuilder;
 //=======================================================================
 //function : patchfaces
 //purpose  :
@@ -2271,12 +2272,90 @@ static Standard_Integer patchfaces(Draw_Interpretor& /*di*/,
   if (aLocalNewFace.IsNull()) return 1;
   TopoDS_Face aNewFace = TopoDS::Face(aLocalNewFace);
 
-  BRepOffsetAPI_PatchFaces Builder(aShape);
-  Builder.AddPatchFace(aFace, aNewFace);
-  Builder.Build();
+  aPFBuilder.Clear();
+  aPFBuilder.SetShape(aShape);
+  aPFBuilder.AddPatchFace(aFace, aNewFace);
+  aPFBuilder.Build();
 
-  TopoDS_Shape Result = Builder.Shape();
+  const TopoDS_Shape& Result = aPFBuilder.Shape();
   DBRep::Set(a[1], Result);
+
+  return 0;
+}
+
+//=======================================================================
+//function : pfgetpatchface
+//purpose  :
+//=======================================================================
+static Standard_Integer pfgetpatchface(Draw_Interpretor& di,
+                                       Standard_Integer n,
+                                       const char** a)
+{
+  if (n != 3)
+  {
+    di << di.PrintHelp(a[0]);
+    return 1;
+  }
+
+  if (!aPFBuilder.IsDone())
+  {
+    di << "perform PatchFace operation first\n";
+    return 1;
+  }
+
+  TopoDS_Shape anInitialFace = DBRep::Get(a[2]);
+  if (anInitialFace.IsNull())
+  {
+    di << "The shape " << a[2] << " is a null shape\n";
+    return 1;
+  }
+
+  TopoDS_Shape aPatch = aPFBuilder.GetPatchFace(TopoDS::Face(anInitialFace));
+
+  DBRep::Set(a[1], aPatch);
+
+  return 0;
+}
+
+//=======================================================================
+//function : pfgetadjacentfaces
+//purpose  :
+//=======================================================================
+static Standard_Integer pfgetadjacentfaces(Draw_Interpretor& di,
+                                           Standard_Integer n,
+                                           const char** a)
+{
+  if (n != 3)
+  {
+    di << di.PrintHelp(a[0]);
+    return 1;
+  }
+
+  if (!aPFBuilder.IsDone())
+  {
+    di << "perform PatchFace operation first\n";
+    return 1;
+  }
+
+  TopoDS_Shape anInitialFace = DBRep::Get(a[2]);
+  if (anInitialFace.IsNull())
+  {
+    di << "The shape " << a[2] << " is a null shape\n";
+    return 1;
+  }
+
+  TopTools_ListOfShape aLF;
+  aPFBuilder.GetAdjacentFaces(TopoDS::Face(anInitialFace), aLF);
+
+  BRep_Builder aBB;
+  TopoDS_Compound aCFN;
+  aBB.MakeCompound(aCFN);
+
+  TopTools_ListIteratorOfListOfShape aIt(aLF);
+  for (; aIt.More(); aIt.Next())
+    aBB.Add(aCFN, aIt.Value());
+
+  DBRep::Set(a[1], aCFN);
 
   return 0;
 }
@@ -2428,4 +2507,10 @@ void BRepTest::FeatureCommands (Draw_Interpretor& theCommands)
 
   theCommands.Add("patchfaces", "patchfaces res shape face newface",
 		  __FILE__,patchfaces,g);
+
+  theCommands.Add("pfgetpatchface", "Get the patched face, updated to fit the model, for the given face.\n"
+                                    "Usage: pfgetpatchface res face", __FILE__, pfgetpatchface, g);
+
+  theCommands.Add("pfgetadjacentfaces", "Returns the list of the faces, updated to fit the model, adjacent to the given replaced face.\n"
+                                        "Usage: pfgetadjacentfaces res face", __FILE__, pfgetadjacentfaces, g);
 }

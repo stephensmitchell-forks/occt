@@ -819,6 +819,31 @@ BRepOffsetAPI_PatchFaces::BRepOffsetAPI_PatchFaces(const TopoDS_Shape& theShape)
 }
 
 //=======================================================================
+//function : BRepOffsetAPI_PatchFaces
+//purpose  : Empty constructor
+//=======================================================================
+BRepOffsetAPI_PatchFaces::BRepOffsetAPI_PatchFaces()
+{}
+
+//=======================================================================
+//function : Clear
+//purpose  : 
+//=======================================================================
+void BRepOffsetAPI_PatchFaces::Clear()
+{
+  myFacePatchFace.Clear();
+  myFaceNewFace.Clear();
+  myNewFaceBoundedFace.Clear();
+  myEdgeNewEdge.Clear();
+  myVertexNewVertex.Clear();
+  myTangentEdges.Clear();
+  mySmoothEdges.Clear();
+  myEFmap.Clear();
+  myVEmap.Clear();
+  myVFmap.Clear();
+}
+
+//=======================================================================
 //function : SetOffsetFace
 //purpose  : 
 //=======================================================================
@@ -834,6 +859,60 @@ void BRepOffsetAPI_PatchFaces::AddPatchFace(const TopoDS_Face& theFace,
   Standard_Boolean bToReverse = BOPTools_AlgoTools::IsSplitToReverse(aFace, aPatchFace, aCtx);
   TopoDS_Face anOrientedPatchFace = bToReverse ? TopoDS::Face(aPatchFace.Reversed()) : aPatchFace;
   myFacePatchFace.Add(aFace, anOrientedPatchFace);
+}
+
+//=======================================================================
+//function : GetPatchFace
+//purpose  : 
+//=======================================================================
+TopoDS_Face BRepOffsetAPI_PatchFaces::GetPatchFace(const TopoDS_Face& theFace) const
+{
+  const TopoDS_Shape* anInitialPatchFace = myFacePatchFace.Seek(theFace);
+  if (!anInitialPatchFace)
+  {
+    TopoDS_Face aNullFace;
+    return aNullFace;
+  }
+
+  const TopoDS_Face& aPatch = TopoDS::Face(myNewFaceBoundedFace(*anInitialPatchFace));
+  return aPatch;
+}
+
+//=======================================================================
+//function : Get
+//purpose  : 
+//=======================================================================
+void BRepOffsetAPI_PatchFaces::GetAdjacentFaces(const TopoDS_Face& theFace,
+                                                TopTools_ListOfShape& theNeighbors) const
+{
+  const TopoDS_Shape* anInitialPatchFace = myFacePatchFace.Seek(theFace);
+  if (!anInitialPatchFace)
+    return;
+
+  // Fence map to avoid duplicates in the list
+  TopTools_MapOfShape aMFence;
+  // Find all adjacent faces in the initial solid
+  TopExp_Explorer anExpV(theFace, TopAbs_VERTEX);
+  for (; anExpV.More(); anExpV.Next())
+  {
+    const TopoDS_Shape& aVertex = anExpV.Current();
+    const TopTools_ListOfShape& aLFaces = myVFmap.Find(aVertex);
+
+    TopTools_ListIteratorOfListOfShape aItLF(aLFaces);
+    for (; aItLF.More(); aItLF.Next())
+    {
+      const TopoDS_Shape& aFace = aItLF.Value();
+      if (aFace.IsSame(theFace) || !aMFence.Add(aFace))
+        continue;
+
+      // Get face from the result solid
+      const TopoDS_Shape* pNewFace = myFaceNewFace.Seek(aFace);
+      if (pNewFace)
+        theNeighbors.Append(myNewFaceBoundedFace(*pNewFace));
+      else
+        theNeighbors.Append(aFace);
+    }
+  }
 }
 
 //=======================================================================

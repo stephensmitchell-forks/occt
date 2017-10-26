@@ -47,13 +47,31 @@ public:
   
   //! General constructor.
   Standard_EXPORT BRepOffsetAPI_PatchFaces(const TopoDS_Shape& aShape);
-  
+
+  //! Empty constructor.
+  Standard_EXPORT BRepOffsetAPI_PatchFaces();
+
+  //! Sets the model
+  void SetShape(const TopoDS_Shape& theShape)
+  {
+    myInitialShape = theShape;
+  }
+
+  //! Clears the contents from the previous runs
+  Standard_EXPORT void Clear();
+
   //! Adds the patch face for the face in the shape.
   Standard_EXPORT void AddPatchFace (const TopoDS_Face& theFace, const TopoDS_Face& thePatchFace);
   
   Standard_EXPORT virtual void Build() Standard_OVERRIDE;
 
+  //! Returns the patched face, updated to fit the model, for the given face <theFace>.
+  //! If there is no patched faces for the given face, the returned face will be null.
+  Standard_EXPORT TopoDS_Face GetPatchFace(const TopoDS_Face& theFace) const;
 
+  //! Returns the list of the faces, updated to fit the model, adjacent to the given replaced face.
+  //! If the given face has not been replaced, the list will be empty.
+  Standard_EXPORT void GetAdjacentFaces(const TopoDS_Face& theFace, TopTools_ListOfShape& theNeighbors) const;
 
 
 protected:
