@@ -1,0 +1,15 @@
+puts "TODO OCC22869 ALL: Faulty shapes in variables faulty_1 to faulty_"
+
+puts "========"
+puts "OCC22869"
+puts "========"
+puts ""
+##############################
+# Error during triangulation
+##############################
+
+igesread [locate_data_file bug22869_Spring.igs] s *
+
+fixshape result s
+checkshape result
+# incmesh result 0.01
