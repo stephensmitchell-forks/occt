@@ -943,14 +943,25 @@ void Adaptor3d_TopolTool::BSplSamplePnts(const Standard_Real theDefl,
 
   Standard_Integer i, k, j = 1;
   Standard_Real t1, t2, dt;
-  Standard_Integer ui1 = aBS->FirstUKnotIndex();
-  Standard_Integer ui2 = aBS->LastUKnotIndex();
-  Standard_Integer vi1 = aBS->FirstVKnotIndex();
-  Standard_Integer vi2 = aBS->LastVKnotIndex();
+
+  const Standard_Integer aNbUi = myS->NbUIntervals(GeomAbs_C2),
+    aNbVi = myS->NbVIntervals(GeomAbs_C2);
+
+  TColStd_Array1OfReal aUKnots(1, aNbUi + 1);
+  TColStd_Array1OfReal aVKnots(1, aNbVi + 1);
+
+  myS->UIntervals(aUKnots, GeomAbs_C2);
+
+  myS->VIntervals(aVKnots, GeomAbs_C2);
+
+  Standard_Integer ui1 = aUKnots.Lower();
+  Standard_Integer ui2 = aUKnots.Upper();
+  Standard_Integer vi1 = aVKnots.Lower();
+  Standard_Integer vi2 = aVKnots.Upper();
 
   for(i = ui1; i < ui2; ++i)
   {
-    if(uinf >= aBS->UKnot(i) && uinf < aBS->UKnot(i + 1))
+    if(uinf >= aUKnots.Value(i) && uinf < aUKnots.Value(i + 1))
     {
       ui1 = i;
       break;
@@ -959,7 +970,7 @@ void Adaptor3d_TopolTool::BSplSamplePnts(const Standard_Real theDefl,
 
   for(i = ui2; i > ui1; --i)
   {
-    if(usup <= aBS->UKnot(i) && usup > aBS->UKnot(i - 1))
+    if(usup <= aUKnots.Value(i) && usup > aUKnots.Value(i - 1))
     {
       ui2 = i;
       break;
@@ -968,7 +979,7 @@ void Adaptor3d_TopolTool::BSplSamplePnts(const Standard_Real theDefl,
 
   for(i = vi1; i < vi2; ++i)
   {
-    if(vinf >= aBS->VKnot(i) && vinf < aBS->VKnot(i + 1))
+    if(vinf >= aVKnots.Value(i) && vinf < aVKnots.Value(i + 1))
     {
       vi1 = i;
       break;
@@ -977,7 +988,7 @@ void Adaptor3d_TopolTool::BSplSamplePnts(const Standard_Real theDefl,
 
   for(i = vi2; i > vi1; --i)
   {
-    if(vsup <= aBS->VKnot(i) && vsup > aBS->VKnot(i - 1))
+    if(vsup <= aVKnots.Value(i) && vsup > aVKnots.Value(i - 1))
     {
       vi2 = i;
       break;
@@ -1051,7 +1062,7 @@ void Adaptor3d_TopolTool::BSplSamplePnts(const Standard_Real theDefl,
     for(i = ui1 + 1; i <= ui2; ++i)
     {
       if(i == ui2) t2 = usup;
-      else t2 = aBS->UKnot(i);
+      else t2 = aUKnots.Value(i);
       dt = (t2 - t1) / nbi;
       j = 1;
       do
@@ -1091,7 +1102,7 @@ void Adaptor3d_TopolTool::BSplSamplePnts(const Standard_Real theDefl,
     for(i = vi1 + 1; i <= vi2; ++i)
     {
       if(i == vi2) t2 = vsup;
-      else t2 = aBS->VKnot(i);
+      else t2 = aVKnots.Value(i);
       dt = (t2 - t1) / nbi;
       j = 1;
       do
@@ -1112,7 +1123,6 @@ void Adaptor3d_TopolTool::BSplSamplePnts(const Standard_Real theDefl,
 
   Standard_Real aDefl2 = Max(theDefl*theDefl, 1.e-9);
   Standard_Real tol = Max(0.01*aDefl2, 1.e-9);
-  Standard_Integer l;
 
   // Calculations of B-spline values will be made using adaptor,
   // because it caches the data for performance
@@ -1150,7 +1160,7 @@ void Adaptor3d_TopolTool::BSplSamplePnts(const Standard_Real theDefl,
 
         gp_Lin lin(p1, gp_Dir(gp_Vec(p1, p2)));
         Standard_Boolean ok = Standard_True;
-        for(l = j + 1; l < k; ++l)
+        for(Standard_Integer l = j + 1; l < k; ++l)
         {
 
           if(anUFlg(l))
@@ -1248,7 +1258,7 @@ void Adaptor3d_TopolTool::BSplSamplePnts(const Standard_Real theDefl,
         //const gp_Lin& lin = MkLin.Value();
         gp_Lin lin(p1, gp_Dir(gp_Vec(p1, p2)));
         Standard_Boolean ok = Standard_True;
-        for(l = j + 1; l < k; ++l)
+        for(Standard_Integer l = j + 1; l < k; ++l)
         {
 
           if(aVFlg(l))

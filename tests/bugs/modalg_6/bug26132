@@ -6,6 +6,8 @@ puts ""
 # Invalid result of boolean operation
 ######################################################
 
+puts "TODO OCC11111 ALL: Error : Boolean operations common is WRONG because number of "
+
 restore [locate_data_file bug26132_shape.brep] c
 
 explode c

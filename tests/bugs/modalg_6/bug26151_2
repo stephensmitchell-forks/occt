@@ -6,6 +6,8 @@ puts ""
 ## Wrong result obtained by intersection algorithm.
 ###############################
 
+puts "TODO OCC11111 ALL: Error : Wrong result obtained by intersection algorithm"
+
 restore [locate_data_file bug26132_shape.brep] q
 
 explode q

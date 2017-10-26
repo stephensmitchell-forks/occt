@@ -1,0 +1,43 @@
+puts "================"
+puts "OCC29260"
+puts "================"
+puts ""
+#######################################################################
+# Boolean operation hangs on the intersection stage
+#######################################################################
+
+restore [locate_data_file bug29260_sewedShapeb2.brep] a
+restore [locate_data_file bug29260_cuttingTool1b2.brep] t1
+
+bclearobjects
+bcleartools
+baddobjects a
+baddtools t1
+
+dchrono cr reset
+dchrono cr start
+
+bfillds
+bbop result 2
+
+dchrono cr stop
+
+bbop rs 4
+
+dchrono cr show
+
+if { [string compare -nocase [checksection rs] " nb alone Vertices : 0\n\n"] } {
+  puts "ERROR: the section is not closed"
+} else {
+  puts "The section is OK"
+}
+
+checknbshapes result -solid 1 -shell 1
+checkprops result -s 0.0105663
+checkshape result
+
+smallview
+don result
+fit
+
+checkview -screenshot -2d -path ${imagedir}/${test_image}.png
