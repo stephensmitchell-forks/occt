@@ -92,7 +92,7 @@ static Standard_Boolean IsLikeSeam(const TopoDS_Edge& anEdge,
                                    const TopoDS_Face& aFace,
                                    const Handle(Geom_Surface)& aBaseSurface)
 {
-  if (!aBaseSurface->IsUPeriodic() && !aBaseSurface->IsVPeriodic())
+  if (!aBaseSurface->IsUPeriodic111() && !aBaseSurface->IsVPeriodic111())
     return Standard_False;
 
   BRepAdaptor_Curve2d BAcurve2d(anEdge, aFace);
@@ -112,12 +112,12 @@ static Standard_Boolean IsLikeSeam(const TopoDS_Edge& anEdge,
     LastDir /= Length;
   
   Standard_Real Tol = 1.e-7;
-  if (aBaseSurface->IsUPeriodic() &&
+  if (aBaseSurface->IsUPeriodic111() &&
     (Abs(FirstDir.X()) < Tol) &&
     (Abs(LastDir.X()) < Tol))
     return Standard_True;
 
-  if (aBaseSurface->IsVPeriodic() &&
+  if (aBaseSurface->IsVPeriodic111() &&
     (Abs(FirstDir.Y()) < Tol) &&
     (Abs(LastDir.Y()) < Tol))
     return Standard_True;

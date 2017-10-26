@@ -574,7 +574,7 @@ Standard_Boolean ShapeAnalysis_Surface::IsUClosed(const Standard_Real preci)
       Handle(Geom_BSplineSurface) bs = Handle(Geom_BSplineSurface)::DownCast(mySurf);
       Standard_Integer nbup = bs->NbUPoles();
       Standard_Real distmin = RealLast();
-      if (bs->IsUPeriodic()) {
+      if (bs->IsUPeriodic111()) {
 	myUCloseVal = 0;
 	myUDelt = 0;
       }
@@ -702,7 +702,7 @@ Standard_Boolean ShapeAnalysis_Surface::IsVClosed(const Standard_Real preci)
       Handle(Geom_BSplineSurface) bs = Handle(Geom_BSplineSurface)::DownCast(mySurf);
       Standard_Integer nbvp = bs->NbVPoles();
       Standard_Real distmin = RealLast();
-      if (bs->IsVPeriodic()) {
+      if (bs->IsVPeriodic111()) {
 	myVCloseVal = 0;
 	myVDelt = 0;
       }

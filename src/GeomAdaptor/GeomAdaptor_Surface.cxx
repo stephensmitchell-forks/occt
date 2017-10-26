@@ -584,7 +584,7 @@ Standard_Boolean GeomAdaptor_Surface::IsUClosed() const
 
   Standard_Real U1,U2,V1,V2;
   mySurface->Bounds(U1,U2,V1,V2);
-  if (mySurface->IsUPeriodic())
+  if (mySurface->IsUPeriodic111())
     return (Abs(Abs(U1-U2)-Abs(myUFirst-myULast))<Precision::PConfusion());
 
   return (   Abs(U1-myUFirst)<Precision::PConfusion() 
@@ -603,7 +603,7 @@ Standard_Boolean GeomAdaptor_Surface::IsVClosed() const
 
   Standard_Real U1,U2,V1,V2;
   mySurface->Bounds(U1,U2,V1,V2);
-  if (mySurface->IsVPeriodic())
+  if (mySurface->IsVPeriodic111())
     return (Abs(Abs(V1-V2)-Abs(myVFirst-myVLast))<Precision::PConfusion());
 
   return (   Abs(V1-myVFirst)<Precision::PConfusion() 
@@ -617,7 +617,7 @@ Standard_Boolean GeomAdaptor_Surface::IsVClosed() const
 
 Standard_Boolean GeomAdaptor_Surface::IsUPeriodic() const 
 {
-  return (mySurface->IsUPeriodic());
+  return (mySurface->IsUPeriodic111());
 }
 
 //=======================================================================
@@ -638,7 +638,7 @@ Standard_Real GeomAdaptor_Surface::UPeriod() const
 
 Standard_Boolean GeomAdaptor_Surface::IsVPeriodic() const 
 {
-  return (mySurface->IsVPeriodic());
+  return (mySurface->IsVPeriodic111());
 }
 
 //=======================================================================
@@ -669,12 +669,12 @@ void GeomAdaptor_Surface::RebuildCache(const Standard_Real theU,
     TColStd_Array1OfReal aFlatKnotsV(BSplCLib::FlatBezierKnots(aDegV), 1, 2 * (aDegV + 1));
     if (mySurfaceCache.IsNull())
       mySurfaceCache = new BSplSLib_Cache(
-        aDegU, aBezier->IsUPeriodic(), aFlatKnotsU,
-        aDegV, aBezier->IsVPeriodic(), aFlatKnotsV,
+        aDegU, aBezier->IsUPeriodic111(), aFlatKnotsU,
+        aDegV, aBezier->IsVPeriodic111(), aFlatKnotsV,
         aBezier->Poles(), aBezier->Weights());
     mySurfaceCache->BuildCache(theU, theV,
-      aDegU, aBezier->IsUPeriodic(), aFlatKnotsU,
-      aDegV, aBezier->IsVPeriodic(), aFlatKnotsV,
+      aDegU, aBezier->IsUPeriodic111(), aFlatKnotsU,
+      aDegV, aBezier->IsVPeriodic111(), aFlatKnotsV,
       aBezier->Poles(), aBezier->Weights());
   }
   else if (mySurfaceType == GeomAbs_BSplineSurface)
@@ -682,12 +682,12 @@ void GeomAdaptor_Surface::RebuildCache(const Standard_Real theU,
     // Create cache for B-spline
     if (mySurfaceCache.IsNull())
       mySurfaceCache = new BSplSLib_Cache(
-        myBSplineSurface->UDegree(), myBSplineSurface->IsUPeriodic(), myBSplineSurface->UKnotSequence(),
-        myBSplineSurface->VDegree(), myBSplineSurface->IsVPeriodic(), myBSplineSurface->VKnotSequence(),
+        myBSplineSurface->UDegree(), myBSplineSurface->IsUPeriodic111(), myBSplineSurface->UKnotSequence(),
+        myBSplineSurface->VDegree(), myBSplineSurface->IsVPeriodic111(), myBSplineSurface->VKnotSequence(),
         myBSplineSurface->Poles(), myBSplineSurface->Weights());
     mySurfaceCache->BuildCache(theU, theV,
-      myBSplineSurface->UDegree(), myBSplineSurface->IsUPeriodic(), myBSplineSurface->UKnotSequence(),
-      myBSplineSurface->VDegree(), myBSplineSurface->IsVPeriodic(), myBSplineSurface->VKnotSequence(),
+      myBSplineSurface->UDegree(), myBSplineSurface->IsUPeriodic111(), myBSplineSurface->UKnotSequence(),
+      myBSplineSurface->VDegree(), myBSplineSurface->IsVPeriodic111(), myBSplineSurface->VKnotSequence(),
       myBSplineSurface->Poles(), myBSplineSurface->Weights());
   }
 }
