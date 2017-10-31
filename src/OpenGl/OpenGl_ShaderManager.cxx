@@ -33,9 +33,6 @@ IMPLEMENT_STANDARD_RTTIEXT(OpenGl_ShaderManager,Standard_Transient)
 namespace
 {
 
-  //! Clipping planes limit (see the same definition in Declarations.glsl).
-  static const Standard_Size THE_MAX_CLIP_PLANES = 8;
-
 #define EOL "\n"
 
 //! Definition of TexCoord varying.
@@ -596,59 +593,72 @@ void OpenGl_ShaderManager::PushLightSourceState (const Handle(OpenGl_ShaderProgr
       return;
     }
 
-    if (myContext->core11 != NULL)
+    GLenum aLightGlId = GL_LIGHT0;
+    OpenGl_Vec4 anAmbient (0.0f, 0.0f, 0.0f, 0.0f);
+    const OpenGl_Mat4 aModelView = myWorldViewState.WorldViewMatrix() * myModelWorldState.ModelWorldMatrix();
+    if (myLightSourceState.LightSources() != NULL)
     {
-      GLenum aLightGlId = GL_LIGHT0;
-      OpenGl_Vec4 anAmbient (0.0f, 0.0f, 0.0f, 0.0f);
-      const OpenGl_Mat4 aModelView = myWorldViewState.WorldViewMatrix() * myModelWorldState.ModelWorldMatrix();
-      for (OpenGl_ListOfLight::Iterator aLightIt (*myLightSourceState.LightSources()); aLightIt.More(); aLightIt.Next())
+      for (Graphic3d_ListOfCLight::Iterator aLightIt (*myLightSourceState.LightSources()); aLightIt.More(); aLightIt.Next())
       {
-        const OpenGl_Light& aLight = aLightIt.Value();
+        const Graphic3d_CLight& aLight = aLightIt.Value();
         if (aLight.Type == Graphic3d_TOLS_AMBIENT)
         {
           anAmbient += aLight.Color;
           continue;
         }
-        else if (aLightGlId > GL_LIGHT7) // OpenGLMaxLights - only 8 lights in OpenGL...
+        else if (aLightGlId > GL_LIGHT7) // only 8 lights in FFP...
         {
+          myContext->PushMessage (GL_DEBUG_SOURCE_APPLICATION, GL_DEBUG_TYPE_PORTABILITY, 0, GL_DEBUG_SEVERITY_MEDIUM,
+                                  "Warning: light sources limit (8) has been exceeded within Fixed-function pipeline.");
           continue;
         }
 
-        bindLight (aLightIt.Value(), aLightGlId, aModelView, myContext);
+        bindLight (aLight, aLightGlId, aModelView, myContext);
         ++aLightGlId;
       }
+    }
 
-      // apply accumulated ambient color
-      anAmbient.a() = 1.0f;
-      myContext->core11->glLightModelfv (GL_LIGHT_MODEL_AMBIENT, anAmbient.GetData());
+    // apply accumulated ambient color
+    anAmbient.a() = 1.0f;
+    myContext->core11->glLightModelfv (GL_LIGHT_MODEL_AMBIENT, anAmbient.GetData());
 
-      // GL_LIGHTING is managed by drawers to switch between shaded / no lighting output,
-      // therefore managing the state here does not have any effect - do it just for consistency.
-      if (aLightGlId != GL_LIGHT0)
-      {
-        ::glEnable (GL_LIGHTING);
-      }
-      else
-      {
-        ::glDisable (GL_LIGHTING);
-      }
-      // switch off unused lights
-      for (; aLightGlId <= GL_LIGHT7; ++aLightGlId)
-      {
-        ::glDisable (aLightGlId);
-      }
+    // GL_LIGHTING is managed by drawers to switch between shaded / no lighting output,
+    // therefore managing the state here does not have any effect - do it just for consistency.
+    if (aLightGlId != GL_LIGHT0)
+    {
+      ::glEnable (GL_LIGHTING);
+    }
+    else
+    {
+      ::glDisable (GL_LIGHTING);
+    }
+    // switch off unused lights
+    for (; aLightGlId <= GL_LIGHT7; ++aLightGlId)
+    {
+      ::glDisable (aLightGlId);
     }
   #endif
     return;
   }
 
-  for (Standard_Integer aLightIt = 0; aLightIt < OpenGLMaxLights; ++aLightIt)
+  const Standard_Integer aNbLightsMax = theProgram->NbLightsMax();
+  if (aNbLightsMax == 0)
   {
-    myLightTypeArray[aLightIt].Type = -1;
+    return;
   }
 
-  const Standard_Integer aLightsDefNb = Min (myLightSourceState.LightSources()->Size(), OpenGLMaxLights);
-  if (aLightsDefNb < 1)
+  if (myLightTypeArray.Size() < aNbLightsMax)
+  {
+    myLightTypeArray  .Resize (0, aNbLightsMax - 1, false);
+    myLightParamsArray.Resize (0, aNbLightsMax - 1, false);
+  }
+  for (Standard_Integer aLightIt = 0; aLightIt < aNbLightsMax; ++aLightIt)
+  {
+    myLightTypeArray.ChangeValue (aLightIt).Type = -1;
+  }
+
+  if (myLightSourceState.LightSources() == NULL
+   || myLightSourceState.LightSources()->IsEmpty())
   {
     theProgram->SetUniform (myContext,
                             theProgram->GetStateLocation (OpenGl_OCC_LIGHT_SOURCE_COUNT),
@@ -658,8 +668,8 @@ void OpenGl_ShaderManager::PushLightSourceState (const Handle(OpenGl_ShaderProgr
                             OpenGl_Vec4 (0.0f, 0.0f, 0.0f, 0.0f));
     theProgram->SetUniform (myContext,
                             theProgram->GetStateLocation (OpenGl_OCC_LIGHT_SOURCE_TYPES),
-                            OpenGLMaxLights * OpenGl_ShaderLightType::NbOfVec2i(),
-                            myLightTypeArray[0].Packed());
+                            aNbLightsMax * OpenGl_ShaderLightType::NbOfVec2i(),
+                            myLightTypeArray.First().Packed());
     return;
   }
 
@@ -673,17 +683,21 @@ void OpenGl_ShaderManager::PushLightSourceState (const Handle(OpenGl_ShaderProgr
       anAmbient += aLight.Color;
       continue;
     }
-    else if (aLightsNb >= OpenGLMaxLights)
+    else if (aLightsNb >= aNbLightsMax)
     {
+      if (aNbLightsMax != 0)
+      {
+        myContext->PushMessage (GL_DEBUG_SOURCE_APPLICATION, GL_DEBUG_TYPE_PORTABILITY, 0, GL_DEBUG_SEVERITY_MEDIUM,
+                                TCollection_AsciiString("Warning: light sources limit (") + aNbLightsMax + ") has been exceeded.");
+      }
       continue;
     }
 
-    OpenGl_ShaderLightType& aLightType = myLightTypeArray[aLightsNb];
+    OpenGl_ShaderLightType&       aLightType   = myLightTypeArray.ChangeValue (aLightsNb);
+    OpenGl_ShaderLightParameters& aLightParams = myLightParamsArray.ChangeValue (aLightsNb);
     aLightType.Type        = aLight.Type;
     aLightType.IsHeadlight = aLight.IsHeadlight;
-
-    OpenGl_ShaderLightParameters& aLightParams = myLightParamsArray[aLightsNb];
-    aLightParams.Color = aLight.Color;
+    aLightParams.Color     = aLight.Color;
     if (aLight.Type == Graphic3d_TOLS_DIRECTIONAL)
     {
       aLightParams.Position = -aLight.Direction;
@@ -719,14 +733,14 @@ void OpenGl_ShaderManager::PushLightSourceState (const Handle(OpenGl_ShaderProgr
                           anAmbient);
   theProgram->SetUniform (myContext,
                           theProgram->GetStateLocation (OpenGl_OCC_LIGHT_SOURCE_TYPES),
-                          OpenGLMaxLights * OpenGl_ShaderLightType::NbOfVec2i(),
-                          myLightTypeArray[0].Packed());
+                          aNbLightsMax * OpenGl_ShaderLightType::NbOfVec2i(),
+                          myLightTypeArray.First().Packed());
   if (aLightsNb > 0)
   {
     theProgram->SetUniform (myContext,
                             theProgram->GetStateLocation (OpenGl_OCC_LIGHT_SOURCE_PARAMS),
                             aLightsNb * OpenGl_ShaderLightParameters::NbOfVec4(),
-                            myLightParamsArray[0].Packed());
+                            myLightParamsArray.First().Packed());
   }
 }
 
@@ -907,8 +921,12 @@ void OpenGl_ShaderManager::PushClippingState (const Handle(OpenGl_ShaderProgram)
       return;
     }
 
-    const Standard_Integer aNbMaxPlanes = Min (myContext->MaxClipPlanes(), THE_MAX_CLIP_PLANES);
-    OpenGl_Vec4d anEquations[THE_MAX_CLIP_PLANES];
+    const Standard_Integer aNbMaxPlanes = myContext->MaxClipPlanes();
+    if (myClipPlaneArrayFfp.Size() < aNbMaxPlanes)
+    {
+      myClipPlaneArrayFfp.Resize (0, aNbMaxPlanes - 1, false);
+    }
+
     Standard_Integer aPlaneId = 0;
     Standard_Boolean toRestoreModelView = Standard_False;
     for (OpenGl_ClippingIterator aPlaneIter (myContext->Clipping()); aPlaneIter.More(); aPlaneIter.Next())
@@ -920,14 +938,13 @@ void OpenGl_ShaderManager::PushClippingState (const Handle(OpenGl_ShaderProgram)
       }
       else if (aPlaneId >= aNbMaxPlanes)
       {
-        myContext->PushMessage (GL_DEBUG_SOURCE_APPLICATION,
-                                GL_DEBUG_TYPE_PORTABILITY, 0, GL_DEBUG_SEVERITY_MEDIUM,
+        myContext->PushMessage (GL_DEBUG_SOURCE_APPLICATION, GL_DEBUG_TYPE_PORTABILITY, 0, GL_DEBUG_SEVERITY_MEDIUM,
                                 TCollection_ExtendedString("Warning: clipping planes limit (") + aNbMaxPlanes + ") has been exceeded.");
         break;
       }
 
       const Graphic3d_ClipPlane::Equation& anEquation = aPlane->GetEquation();
-      OpenGl_Vec4d& aPlaneEq = anEquations[aPlaneId];
+      OpenGl_Vec4d& aPlaneEq = myClipPlaneArrayFfp.ChangeValue (aPlaneId);
       aPlaneEq.x() = anEquation.x();
       aPlaneEq.y() = anEquation.y();
       aPlaneEq.z() = anEquation.z();
@@ -976,7 +993,8 @@ void OpenGl_ShaderManager::PushClippingState (const Handle(OpenGl_ShaderProgram)
     return;
   }
 
-  const GLint aNbPlanes = Min (myContext->Clipping().NbClippingOrCappingOn(), THE_MAX_CLIP_PLANES);
+  const Standard_Integer aNbClipPlanesMax = theProgram->NbClipPlanesMax();
+  const GLint aNbPlanes = Min (myContext->Clipping().NbClippingOrCappingOn(), aNbClipPlanesMax);
   theProgram->SetUniform (myContext,
                           theProgram->GetStateLocation (OpenGl_OCC_CLIP_PLANE_COUNT),
                           aNbPlanes);
@@ -985,8 +1003,12 @@ void OpenGl_ShaderManager::PushClippingState (const Handle(OpenGl_ShaderProgram)
     return;
   }
 
-  OpenGl_Vec4 anEquations[THE_MAX_CLIP_PLANES];
-  GLuint aPlaneId = 0;
+  if (myClipPlaneArray.Size() < aNbClipPlanesMax)
+  {
+    myClipPlaneArray.Resize (0, aNbClipPlanesMax - 1, false);
+  }
+
+  Standard_Integer aPlaneId = 0;
   for (OpenGl_ClippingIterator aPlaneIter (myContext->Clipping()); aPlaneIter.More(); aPlaneIter.Next())
   {
     const Handle(Graphic3d_ClipPlane)& aPlane = aPlaneIter.Value();
@@ -994,16 +1016,15 @@ void OpenGl_ShaderManager::PushClippingState (const Handle(OpenGl_ShaderProgram)
     {
       continue;
     }
-    else if (aPlaneId >= THE_MAX_CLIP_PLANES)
+    else if (aPlaneId >= aNbClipPlanesMax)
     {
-      myContext->PushMessage (GL_DEBUG_SOURCE_APPLICATION,
-        GL_DEBUG_TYPE_PORTABILITY, 0, GL_DEBUG_SEVERITY_MEDIUM,
-        "Warning: clipping planes limit (8) has been exceeded.");
+      myContext->PushMessage (GL_DEBUG_SOURCE_APPLICATION, GL_DEBUG_TYPE_PORTABILITY, 0, GL_DEBUG_SEVERITY_MEDIUM,
+                              TCollection_AsciiString("Warning: clipping planes limit (") + aNbClipPlanesMax + ") has been exceeded.");
       break;
     }
 
     const Graphic3d_ClipPlane::Equation& anEquation = aPlane->GetEquation();
-    OpenGl_Vec4& aPlaneEq = anEquations[aPlaneId];
+    OpenGl_Vec4& aPlaneEq = myClipPlaneArray.ChangeValue (aPlaneId);
     aPlaneEq.x() = float(anEquation.x());
     aPlaneEq.y() = float(anEquation.y());
     aPlaneEq.z() = float(anEquation.z());
@@ -1017,7 +1038,7 @@ void OpenGl_ShaderManager::PushClippingState (const Handle(OpenGl_ShaderProgram)
     ++aPlaneId;
   }
 
-  theProgram->SetUniform (myContext, aLocEquations, THE_MAX_CLIP_PLANES, anEquations);
+  theProgram->SetUniform (myContext, aLocEquations, aNbClipPlanesMax, &myClipPlaneArray.First());
 }
 
 // =======================================================================
@@ -1173,6 +1194,8 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramFont()
     aProgramSrc->SetHeader ("#version 300 es");
   }
 #endif
+  aProgramSrc->SetNbLightsMax (0);
+  aProgramSrc->SetNbClipPlanesMax (0);
   aProgramSrc->AttachShader (Graphic3d_ShaderObject::CreateFromSource (Graphic3d_TOS_VERTEX,   aSrcVert));
   aProgramSrc->AttachShader (Graphic3d_ShaderObject::CreateFromSource (Graphic3d_TOS_FRAGMENT, aSrcFrag));
   TCollection_AsciiString aKey;
@@ -1240,6 +1263,8 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramFboBlit()
     aProgramSrc->SetHeader ("#version 150");
   }
 #endif
+  aProgramSrc->SetNbLightsMax (0);
+  aProgramSrc->SetNbClipPlanesMax (0);
   aProgramSrc->AttachShader (Graphic3d_ShaderObject::CreateFromSource (Graphic3d_TOS_VERTEX,   aSrcVert));
   aProgramSrc->AttachShader (Graphic3d_ShaderObject::CreateFromSource (Graphic3d_TOS_FRAGMENT, aSrcFrag));
   TCollection_AsciiString aKey;
@@ -1328,6 +1353,8 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramOitCompositing (const St
   #endif
   }
 
+  aProgramSrc->SetNbLightsMax (0);
+  aProgramSrc->SetNbClipPlanesMax (0);
   aProgramSrc->AttachShader (Graphic3d_ShaderObject::CreateFromSource (Graphic3d_TOS_VERTEX,   aSrcVert));
   aProgramSrc->AttachShader (Graphic3d_ShaderObject::CreateFromSource (Graphic3d_TOS_FRAGMENT, aSrcFrag));
   TCollection_AsciiString aKey;
@@ -1463,6 +1490,8 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramFlat (Handle(OpenGl_Shad
     aSrcFragExtraOut  += EOL"THE_SHADER_IN  vec4 VertColor;";
     aSrcFragGetColor  =  EOL"vec4 getColor(void) { return VertColor; }";
   }
+
+  int aNbClipPlanes = 0;
   if ((theBits & OpenGl_PO_ClipPlanesN) != 0)
   {
     aSrcVertExtraOut +=
@@ -1477,14 +1506,17 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramFlat (Handle(OpenGl_Shad
 
     if ((theBits & OpenGl_PO_ClipPlanes1) != 0)
     {
+      aNbClipPlanes = 1;
       aSrcFragExtraMain += THE_FRAG_CLIP_PLANES_1;
     }
     else if ((theBits & OpenGl_PO_ClipPlanes2) != 0)
     {
+      aNbClipPlanes = 2;
       aSrcFragExtraMain += THE_FRAG_CLIP_PLANES_2;
     }
     else
     {
+      aNbClipPlanes = Graphic3d_ShaderProgram::THE_MAX_CLIP_PLANES_DEFAULT;
       aSrcFragExtraMain += THE_FRAG_CLIP_PLANES_N;
     }
   }
@@ -1575,6 +1607,8 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramFlat (Handle(OpenGl_Shad
     aProgramSrc->SetHeader ("#version 300 es");
   }
 #endif
+  aProgramSrc->SetNbLightsMax (0);
+  aProgramSrc->SetNbClipPlanesMax (aNbClipPlanes);
   aProgramSrc->AttachShader (Graphic3d_ShaderObject::CreateFromSource (Graphic3d_TOS_VERTEX,   aSrcVert));
   aProgramSrc->AttachShader (Graphic3d_ShaderObject::CreateFromSource (Graphic3d_TOS_FRAGMENT, aSrcFrag));
 
@@ -1625,12 +1659,14 @@ TCollection_AsciiString OpenGl_ShaderManager::pointSpriteShadingSrc (const TColl
 // function : stdComputeLighting
 // purpose  :
 // =======================================================================
-TCollection_AsciiString OpenGl_ShaderManager::stdComputeLighting (const Standard_Boolean theHasVertColor)
+TCollection_AsciiString OpenGl_ShaderManager::stdComputeLighting (Standard_Integer& theNbLights,
+                                                                  Standard_Boolean  theHasVertColor)
 {
   Standard_Integer aLightsMap[Graphic3d_TOLS_SPOT + 1] = { 0, 0, 0, 0 };
   TCollection_AsciiString aLightsFunc, aLightsLoop;
   const OpenGl_ListOfLight* aLights = myLightSourceState.LightSources();
   if (aLights != NULL)
+  theNbLights = 0;
   {
     Standard_Integer anIndex = 0;
     for (OpenGl_ListOfLight::Iterator aLightIter (*aLights); aLightIter.More(); aLightIter.Next(), ++anIndex)
@@ -1652,6 +1688,7 @@ TCollection_AsciiString OpenGl_ShaderManager::stdComputeLighting (const Standard
       }
       aLightsMap[aLightIter.Value().Type] += 1;
     }
+    theNbLights = anIndex;
     const Standard_Integer aNbLoopLights = aLightsMap[Graphic3d_TOLS_DIRECTIONAL]
                                          + aLightsMap[Graphic3d_TOLS_POSITIONAL]
                                          + aLightsMap[Graphic3d_TOLS_SPOT];
@@ -1762,6 +1799,7 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramGouraud (Handle(OpenGl_S
     aSrcVertColor = EOL"vec4 getVertColor(void) { return occVertColor; }";
   }
 
+  int aNbClipPlanes = 0;
   if ((theBits & OpenGl_PO_ClipPlanesN) != 0)
   {
     aSrcVertExtraOut +=
@@ -1776,14 +1814,17 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramGouraud (Handle(OpenGl_S
 
     if ((theBits & OpenGl_PO_ClipPlanes1) != 0)
     {
+      aNbClipPlanes = 1;
       aSrcFragExtraMain += THE_FRAG_CLIP_PLANES_1;
     }
     else if ((theBits & OpenGl_PO_ClipPlanes2) != 0)
     {
+      aNbClipPlanes = 2;
       aSrcFragExtraMain += THE_FRAG_CLIP_PLANES_2;
     }
     else
     {
+      aNbClipPlanes = Graphic3d_ShaderProgram::THE_MAX_CLIP_PLANES_DEFAULT;
       aSrcFragExtraMain += THE_FRAG_CLIP_PLANES_N;
     }
   }
@@ -1792,7 +1833,8 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramGouraud (Handle(OpenGl_S
     aSrcFragWriteOit += THE_FRAG_write_oit_buffers;
   }
 
-  const TCollection_AsciiString aLights = stdComputeLighting ((theBits & OpenGl_PO_VertColor) != 0);
+  Standard_Integer aNbLights = 0;
+  const TCollection_AsciiString aLights = stdComputeLighting (aNbLights, (theBits & OpenGl_PO_VertColor) != 0);
   aSrcVert = TCollection_AsciiString()
     + THE_FUNC_transformNormal
     + EOL
@@ -1838,6 +1880,8 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramGouraud (Handle(OpenGl_S
     aProgramSrc->SetHeader ("#version 300 es");
   }
 #endif
+  aProgramSrc->SetNbLightsMax (aNbLights);
+  aProgramSrc->SetNbClipPlanesMax (aNbClipPlanes);
   aProgramSrc->AttachShader (Graphic3d_ShaderObject::CreateFromSource (Graphic3d_TOS_VERTEX,   aSrcVert));
   aProgramSrc->AttachShader (Graphic3d_ShaderObject::CreateFromSource (Graphic3d_TOS_FRAGMENT, aSrcFrag));
   TCollection_AsciiString aKey;
@@ -1914,18 +1958,22 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramPhong (Handle(OpenGl_Sha
                            EOL"vec4 getVertColor(void) { return VertColor; }";
   }
 
+  int aNbClipPlanes = 0;
   if ((theBits & OpenGl_PO_ClipPlanesN) != 0)
   {
     if ((theBits & OpenGl_PO_ClipPlanes1) != 0)
     {
+      aNbClipPlanes = 1;
       aSrcFragExtraMain += THE_FRAG_CLIP_PLANES_1;
     }
     else if ((theBits & OpenGl_PO_ClipPlanes2) != 0)
     {
+      aNbClipPlanes = 2;
       aSrcFragExtraMain += THE_FRAG_CLIP_PLANES_2;
     }
     else
     {
+      aNbClipPlanes = Graphic3d_ShaderProgram::THE_MAX_CLIP_PLANES_DEFAULT;
       aSrcFragExtraMain += THE_FRAG_CLIP_PLANES_N;
     }
   }
@@ -1955,7 +2003,8 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramPhong (Handle(OpenGl_Sha
     + EOL"  gl_Position = occProjectionMatrix * occWorldViewMatrix * occModelWorldMatrix * occVertex;"
       EOL"}";
 
-  const TCollection_AsciiString aLights = stdComputeLighting ((theBits & OpenGl_PO_VertColor) != 0);
+  Standard_Integer aNbLights = 0;
+  const TCollection_AsciiString aLights = stdComputeLighting (aNbLights, (theBits & OpenGl_PO_VertColor) != 0);
   aSrcFrag = TCollection_AsciiString()
     + EOL"THE_SHADER_IN vec4 PositionWorld;"
       EOL"THE_SHADER_IN vec4 Position;"
@@ -2003,6 +2052,8 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramPhong (Handle(OpenGl_Sha
     }
   }
 #endif
+  aProgramSrc->SetNbLightsMax (aNbLights);
+  aProgramSrc->SetNbClipPlanesMax (aNbClipPlanes);
   aProgramSrc->AttachShader (Graphic3d_ShaderObject::CreateFromSource (Graphic3d_TOS_VERTEX,   aSrcVert));
   aProgramSrc->AttachShader (Graphic3d_ShaderObject::CreateFromSource (Graphic3d_TOS_FRAGMENT, aSrcFrag));
   TCollection_AsciiString aKey;
@@ -2225,6 +2276,8 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramStereo (Handle(OpenGl_Sh
   }
 #endif
 
+  aProgramSrc->SetNbLightsMax (0);
+  aProgramSrc->SetNbClipPlanesMax (0);
   aProgramSrc->AttachShader (Graphic3d_ShaderObject::CreateFromSource (Graphic3d_TOS_VERTEX,   aSrcVert));
   aProgramSrc->AttachShader (Graphic3d_ShaderObject::CreateFromSource (Graphic3d_TOS_FRAGMENT, aSrcFrag));
   TCollection_AsciiString aKey;
