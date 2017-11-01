@@ -54,6 +54,10 @@
 #include <windows.h>
 #include <WNT_WClass.hxx>
 #include <WNT_Window.hxx>
+#elif defined(__APPLE__) && !defined(MACOSX_USE_GLX)
+#include <Cocoa_Window.hxx>
+#else
+#include <Xw_Window.hxx>
 #endif
 
 #include <Draw.hxx>
@@ -117,7 +121,6 @@
 #include <X11/Shell.h>
 #include <X11/Xlib.h>
 #include <GL/glx.h>
-#include <Xw_Window.hxx>
 #include <vtkXRenderWindowInteractor.h>
 #include <vtkXOpenGLRenderWindow.h>
 #include <X11/Xutil.h>
@@ -212,21 +215,23 @@ static Handle(PipelinePtr) PipelineByActorName (const TCollection_AsciiString& t
 }
 
 #ifdef _WIN32
-
 static Handle(WNT_Window)& GetWindow()
 {
-  static Handle(WNT_Window) aWindow;
+  static Handle(WNT_Window) WNTWin;
+  return WNTWin;
+}
+#elif defined(__APPLE__) && !defined(MACOSX_USE_GLX)
+static Handle(Cocoa_Window)& GetWindow()
+{
+  static Handle(Cocoa_Window) aWindow;
   return aWindow;
 }
-
 #else
-
 static Handle(Xw_Window)& GetWindow()
 {
   static Handle(Xw_Window) aXWWin;
   return aXWWin;
 }
-
 #endif
 
 static vtkSmartPointer<IVtkDraw_Interactor>& GetInteractor()
@@ -313,8 +318,15 @@ void IVtkDraw::ViewerInit (Standard_Integer thePxLeft,
                                     Quantity_NOC_BLACK);
       GetWindow()->SetVirtual (Draw_VirtualWindows);
     }
+#elif defined(__APPLE__) && !defined(MACOSX_USE_GLX)
+    if (GetWindow().IsNull())
+    {
+      GetWindow() = new Cocoa_Window ("IVtkTest",
+                                     aPxLeft, aPxTop,
+                                     aPxWidth, aPxHeight);
+      GetWindow()->SetVirtual (Draw_VirtualWindows);
+    }
 #else
-
     if (GetWindow().IsNull())
     {
       GetWindow() = new Xw_Window (GetDisplayConnection(),
@@ -332,9 +344,7 @@ void IVtkDraw::ViewerInit (Standard_Integer thePxLeft,
     GetRenderer()->GetActiveCamera()->ParallelProjectionOn();
     aRenWin->SetSize (aPxWidth, aPxHeight);
 
-#ifdef _WIN32
-    aRenWin->SetWindowId((void*)GetWindow()->HWindow());
-#else
+#if !defined(_WIN32) && !defined(__WIN32__) && (!defined(__APPLE__) || defined(MACOSX_USE_GLX))
     Window aWindowId = GetWindow()->XWindow();
     aRenWin->SetWindowId ((void*)aWindowId);
     Display *aDisplayId = GetDisplayConnection()->GetDisplay();
@@ -360,7 +370,11 @@ void IVtkDraw::ViewerInit (Standard_Integer thePxLeft,
       );
 
     XSynchronize (aDisplayId, 0);
-
+#elif defined(__APPLE__) && !defined(MACOSX_USE_GLX)
+    // __APPLE__
+#else
+    // _WIN32
+    aRenWin->SetWindowId((void*)GetWindow()->HWindow());
 #endif
 
     // Init interactor
