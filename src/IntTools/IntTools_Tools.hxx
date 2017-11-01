@@ -42,7 +42,7 @@ class gp_Lin;
 class gp_Pln;
 class Geom2d_Curve;
 class Geom_Surface;
-
+class IntTools_OBB;
 
 
 //! The class contains handy static functions
@@ -182,6 +182,16 @@ public:
                                                        const Standard_Real theTol2,
                                                        const Standard_Real theAngle);
 
+
+  //! Computes the Oriented Bounding box for the shape
+  Standard_EXPORT static void BuildOBB(const TopoDS_Shape& theS,
+                                       const Standard_Real theFuzzy,
+                                       IntTools_OBB& theOBB);
+
+#ifdef DEBUG_OBB
+  //! Get the solid built from the OBB box
+  Standard_EXPORT static TopoDS_Shape GetOBBShapeBox(const IntTools_OBB& theOBB);
+#endif
 
 protected:
 

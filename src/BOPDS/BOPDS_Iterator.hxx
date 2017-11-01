@@ -30,7 +30,7 @@
 #include <Standard_Boolean.hxx>
 #include <TopAbs_ShapeEnum.hxx>
 class BOPDS_DS;
-
+class IntTools_Context;
 
 
 //! The class BOPDS_Iterator is
@@ -81,7 +81,8 @@ public:
 
   //! Perform the intersection algorithm and prepare
   //! the results to be used
-  Standard_EXPORT virtual void Prepare();
+  Standard_EXPORT virtual void Prepare(Handle(IntTools_Context)& theCtx,
+                                       const Standard_Boolean theCheckOBB = Standard_False);
 
   //! Returns the number of intersections founded
   Standard_EXPORT Standard_Integer ExpectedLength() const;
@@ -99,7 +100,8 @@ public:
 
 protected:
 
-  Standard_EXPORT virtual void Intersect();
+  Standard_EXPORT virtual void Intersect(Handle(IntTools_Context)& theCtx,
+                                         const Standard_Boolean theCheckOBB = Standard_False);
 
   BOPCol_BaseAllocator myAllocator;
   Standard_Integer myLength;

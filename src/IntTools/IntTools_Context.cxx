@@ -35,6 +35,7 @@
 #include <IntTools_FClass2d.hxx>
 #include <IntTools_SurfaceRangeLocalizeData.hxx>
 #include <IntTools_Tools.hxx>
+#include <IntTools_OBB.hxx>
 #include <Precision.hxx>
 #include <Standard_Type.hxx>
 #include <TopAbs_State.hxx>
@@ -65,6 +66,7 @@ IntTools_Context::IntTools_Context()
   myProjSDataMap(100, myAllocator),
   myBndBoxDataMap(100, myAllocator),
   mySurfAdaptorMap(100, myAllocator),
+  myOBBMap(100, myAllocator),
   myCreateFlag(0),
   myPOnSTolerance(1.e-12)
 {
@@ -86,6 +88,7 @@ IntTools_Context::IntTools_Context
   myProjSDataMap(100, myAllocator),
   myBndBoxDataMap(100, myAllocator),
   mySurfAdaptorMap(100, myAllocator),
+  myOBBMap(100, myAllocator),
   myCreateFlag(1),
   myPOnSTolerance(1.e-12)
 {
@@ -183,6 +186,16 @@ IntTools_Context::~IntTools_Context()
     myAllocator->Free(anAdr);
   }
   mySurfAdaptorMap.Clear();
+  //
+  IntTools_OBB* pOBB;
+  aIt.Initialize(myOBBMap);
+  for (; aIt.More(); aIt.Next()) {
+    anAdr=aIt.Value();
+    pOBB=(IntTools_OBB*)anAdr;
+    (*pOBB).~IntTools_OBB();
+    myAllocator->Free(anAdr);
+  }
+  myOBBMap.Clear();
 }
 //=======================================================================
 //function : BndBox
@@ -470,6 +483,35 @@ Geom2dHatch_Hatcher& IntTools_Context::Hatcher(const TopoDS_Face& aF)
   }
 
   return *pHatcher;
+}
+
+//=======================================================================
+//function : OBB
+//purpose  : 
+//=======================================================================
+IntTools_OBB& IntTools_Context::OBB(const TopoDS_Shape& aS,
+                                    const Standard_Real theFuzzy)
+{
+  Standard_Address anAdr;
+  IntTools_OBB* pBox;
+  //
+  if (!myOBBMap.IsBound(aS))
+  {
+    pBox = (IntTools_OBB*)myAllocator->Allocate(sizeof(IntTools_OBB));
+    new (pBox) IntTools_OBB();
+    //
+    IntTools_OBB &aBox = *pBox;
+    IntTools_Tools::BuildOBB(aS, theFuzzy, aBox);
+    //
+    anAdr = (Standard_Address)pBox;
+    myOBBMap.Bind(aS, anAdr);
+  }
+  else
+  {
+    anAdr = myOBBMap.Find(aS);
+    pBox = (IntTools_OBB*)anAdr;
+  }
+  return *pBox;
 }
 
 //=======================================================================

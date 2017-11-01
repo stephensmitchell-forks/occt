@@ -44,7 +44,7 @@ class gp_Pnt2d;
 class IntTools_Curve;
 class Bnd_Box;
 class TopoDS_Shape;
-
+class IntTools_OBB;
 
 //! The intersection Context contains geometrical
 //! and topological toolkit (classifiers, projectors, etc).
@@ -97,6 +97,10 @@ Standard_EXPORT virtual  ~IntTools_Context();
   
   //! Returns a reference to surface adaptor for given face
   Standard_EXPORT BRepAdaptor_Surface& SurfaceAdaptor (const TopoDS_Face& theFace);
+
+  //! Returns a reference to surface adaptor for given face
+  Standard_EXPORT IntTools_OBB& OBB(const TopoDS_Shape& theShape,
+                                    const Standard_Real theFuzzy = Precision::Confusion());
 
   //! Computes the boundaries of the face using surface adaptor
   Standard_EXPORT void UVBounds (const TopoDS_Face& theFace,
@@ -250,6 +254,7 @@ protected:
   BOPCol_DataMapOfShapeAddress myProjSDataMap;
   BOPCol_DataMapOfShapeAddress myBndBoxDataMap;
   BOPCol_DataMapOfShapeAddress mySurfAdaptorMap;
+  BOPCol_DataMapOfShapeAddress myOBBMap; //! Map of oriented bounding boxes
   Standard_Integer myCreateFlag;
   Standard_Real myPOnSTolerance;
 

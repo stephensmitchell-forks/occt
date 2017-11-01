@@ -55,6 +55,8 @@ IntTools_MapOfSurfaceSample.hxx
 IntTools_MarkedRangeSet.cxx
 IntTools_MarkedRangeSet.hxx
 IntTools_MarkedRangeSet.lxx
+IntTools_OBB.cxx
+IntTools_OBB.hxx
 IntTools_PntOn2Faces.cxx
 IntTools_PntOn2Faces.hxx
 IntTools_PntOnFace.cxx

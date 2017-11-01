@@ -56,6 +56,18 @@
 #include <TopoDS_Wire.hxx>
 #include <TopTools_IndexedDataMapOfShapeShape.hxx>
 
+#include <gp_Ax3.hxx>
+#include <BRepGProp.hxx>
+#include <BRepBndLib.hxx>
+#include <GProp_GProps.hxx>
+#include <GProp_PrincipalProps.hxx>
+#include <BRepBuilderAPI_Transform.hxx>
+#include <IntTools_OBB.hxx>
+
+#ifdef DEBUG_OBB
+#include <BRepPrimAPI_MakeBox.hxx>
+#endif
+
 static
   void ParabolaTolerance(const Handle(Geom_Curve)& ,
     const Standard_Real ,
@@ -840,3 +852,113 @@ Standard_Real IntTools_Tools::ComputeIntRange(const Standard_Real theTol1,
   //
   return aDt;
 }
+
+//=======================================================================
+// Function : BuildOBB
+// purpose : 
+//=======================================================================
+void IntTools_Tools::BuildOBB(const TopoDS_Shape& theS,
+                              const Standard_Real theFuzzy,
+                              IntTools_OBB& theOBB)
+{
+  // Compute the transformation matrix to obtain more tight bounding box
+  GProp_GProps G;
+  switch (theS.ShapeType())
+  {
+    case TopAbs_VERTEX:
+    {
+      // Just make the AA box
+      const gp_Pnt& aP = BRep_Tool::Pnt(TopoDS::Vertex(theS));
+      Bnd_Box aBox;
+      aBox.Add(aP);
+      aBox.SetGap(BRep_Tool::Tolerance(TopoDS::Vertex(theS)) + theFuzzy);
+
+      theOBB.SetCenter(aP);
+      theOBB.SetXComponent(gp_Dir(1, 0, 0), aBox.GetGap());
+      theOBB.SetYComponent(gp_Dir(0, 1, 0), aBox.GetGap());
+      theOBB.SetZComponent(gp_Dir(0, 0, 1), aBox.GetGap());
+
+      theOBB.SetAABox(Standard_True);
+      theOBB.SetMinPoint(aBox.CornerMin());
+      return;
+    }
+    case TopAbs_EDGE:
+      BRepGProp::LinearProperties(theS, G, Standard_True);
+      break;
+    case TopAbs_FACE:
+      BRepGProp::SurfaceProperties(theS, G, Standard_True);
+      break;
+    case TopAbs_SOLID:
+      BRepGProp::VolumeProperties(theS, G, Standard_True);
+      break;
+    default:
+      break;
+  }
+
+  // Coordinate system in which the shape will have the optimal bounding box
+  gp_Ax3 aLocCoordSys(G.CentreOfMass(),
+                      G.PrincipalProperties().ThirdAxisOfInertia(),
+                      G.PrincipalProperties().FirstAxisOfInertia());
+
+  // Transform the shape to the local coordinate system
+  gp_Trsf aTrsf;
+  aTrsf.SetTransformation(aLocCoordSys);
+
+  BRepBuilderAPI_Transform aTransformer(theS, aTrsf);
+  if (aTransformer.IsDone())
+  {
+    const TopoDS_Shape& aST = aTransformer.Shape();
+
+    // Build the bounding box for oriented shape
+    Bnd_Box anOBB;
+    BRepBndLib::Add(aST, anOBB);
+    anOBB.SetGap(theFuzzy);
+
+    // Create the OBB box
+    gp_Pnt aPMin = anOBB.CornerMin();
+    gp_Pnt aPMax = anOBB.CornerMax();
+
+    // Compute the center of the box
+    gp_XYZ aCenter = (aPMin.XYZ() + aPMax.XYZ()) / 2.;
+    aTrsf.Inverted().Transforms(aCenter);
+
+    // Compute the half diagonal size of the box
+    gp_XYZ anOBBHSize  = (aPMax.XYZ() - aPMin.XYZ()) / 2.;
+    // Make transformation
+    const Standard_Real * aMat = &aTrsf.Inverted().HVectorialPart().Value(1, 1);
+    // Compute axes directions of the box
+    gp_XYZ aXDir(aMat[0], aMat[3], aMat[6]);
+    gp_XYZ aYDir(aMat[1], aMat[4], aMat[7]);
+    gp_XYZ aZDir(aMat[2], aMat[5], aMat[8]);
+
+    theOBB.SetCenter(aCenter);
+    theOBB.SetXComponent(aXDir, anOBBHSize.X());
+    theOBB.SetYComponent(aYDir, anOBBHSize.Y());
+    theOBB.SetZComponent(aZDir, anOBBHSize.Z());
+
+    gp_XYZ aPMinXYZ = aPMin.XYZ();
+    aTrsf.Inverted().Transforms(aPMinXYZ);
+    theOBB.SetMinPoint(aPMinXYZ);
+#ifdef DEBUG_OBB
+    // Get the obtained box
+    GetOBBShapeBox(theOBB);
+#endif
+  }
+}
+
+
+#ifdef DEBUG_OBB
+//=======================================================================
+// Function : GetOBBShapeBox
+// purpose : 
+//=======================================================================
+TopoDS_Shape IntTools_Tools::GetOBBShapeBox(const IntTools_OBB& theOBB)
+{
+  gp_Ax2 axis(theOBB.MinPoint(), theOBB.ZDirection());
+  axis.SetXDirection(theOBB.XDirection());
+  BRepPrimAPI_MakeBox aSMaker(axis, 2 * theOBB.HXSize(), 2 * theOBB.HYSize(), 2 * theOBB.HZSize());
+  const TopoDS_Shape& aSolid = aSMaker.Solid();
+
+  return aSolid;
+}
+#endif

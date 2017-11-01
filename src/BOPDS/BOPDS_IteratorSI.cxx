@@ -33,6 +33,8 @@
 #include <TopoDS.hxx>
 #include <TopoDS_Shape.hxx>
 #include <TopoDS_Vertex.hxx>
+#include <IntTools_Context.hxx>
+#include <IntTools_OBB.hxx>
 
 //
 //=======================================================================
@@ -78,7 +80,8 @@ void BOPDS_IteratorSI::UpdateByLevelOfCheck(const Standard_Integer theLevel)
 // function: Intersect
 // purpose: 
 //=======================================================================
-void BOPDS_IteratorSI::Intersect()
+void BOPDS_IteratorSI::Intersect(Handle(IntTools_Context)& theCtx,
+                                 const Standard_Boolean theCheckOBB)
 {
   Standard_Integer i, j, iX, aNbS;
   Standard_Integer iTi, iTj;
@@ -138,6 +141,15 @@ void BOPDS_IteratorSI::Intersect()
       //
       BOPDS_Pair aPair(i, j);
       if (aMPFence.Add(aPair)) {
+        if (theCheckOBB)
+        {
+          IntTools_OBB& anOBBi = theCtx->OBB(aSI.Shape(), aSI.Box().GetGap());
+          IntTools_OBB& anOBBj = theCtx->OBB(aSJ.Shape(), aSJ.Box().GetGap());
+
+          if (anOBBi.IsOut(anOBBj))
+            continue;
+        }
+
         iX = BOPDS_Tools::TypeToInteger(aTi, aTj);
         myLists(iX).Append(aPair);
       }// if (aMPKXB.Add(aPKXB)) {

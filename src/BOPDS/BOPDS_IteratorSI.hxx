@@ -68,7 +68,8 @@ Standard_EXPORT virtual ~BOPDS_IteratorSI();
 protected:
 
   
-  Standard_EXPORT virtual void Intersect() Standard_OVERRIDE;
+  Standard_EXPORT virtual void Intersect(Handle(IntTools_Context)& theCtx,
+                                         const Standard_Boolean theCheckOBB = Standard_False) Standard_OVERRIDE;
 
 
 

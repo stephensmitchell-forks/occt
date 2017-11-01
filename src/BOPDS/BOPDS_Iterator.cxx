@@ -29,6 +29,12 @@
 #include <NCollection_UBTreeFiller.hxx>
 #include <TopoDS_Shape.hxx>
 #include <algorithm>
+#include <IntTools_Context.hxx>
+#include <IntTools_OBB.hxx>
+
+#ifdef DEBUG_OBB
+#include <IntTools_Tools.hxx>
+#endif
 
 /////////////////////////////////////////////////////////////////////////
 //=======================================================================
@@ -240,7 +246,8 @@ void BOPDS_Iterator::Value(Standard_Integer& theI1,
 // function: Prepare
 // purpose: 
 //=======================================================================
-void BOPDS_Iterator::Prepare()
+void BOPDS_Iterator::Prepare(Handle(IntTools_Context)& theCtx,
+                             const Standard_Boolean theCheckOBB)
 {
   Standard_Integer i, aNbInterfTypes;
   //
@@ -253,14 +260,15 @@ void BOPDS_Iterator::Prepare()
   if (myDS==NULL){
     return;
   }
-  Intersect();
+  Intersect(theCtx, theCheckOBB);
 }
 //
 //=======================================================================
 // function: Intersect
 // purpose: 
 //=======================================================================
-void BOPDS_Iterator::Intersect()
+void BOPDS_Iterator::Intersect(Handle(IntTools_Context)& theCtx,
+                               const Standard_Boolean theCheckOBB)
 {
   Standard_Integer i, j, iX, i1, i2, iR, aNb, aNbR;
   Standard_Integer iTi, iTj;
@@ -304,7 +312,7 @@ void BOPDS_Iterator::Intersect()
     i1 = aR.First();
     i2 = aR.Last();
     for (i = i1; i <= i2; ++i) {
-      const BOPDS_ShapeInfo& aSI = myDS->ShapeInfo(i);
+      BOPDS_ShapeInfo& aSI = myDS->ChangeShapeInfo(i);
       //
       if (!aSI.IsInterfering() || (aSI.ShapeType() == TopAbs_SOLID)) {
         continue;
@@ -327,7 +335,7 @@ void BOPDS_Iterator::Intersect()
           continue;// same range
         }
         //
-        const BOPDS_ShapeInfo& aSJ = myDS->ShapeInfo(j);
+        BOPDS_ShapeInfo& aSJ = myDS->ChangeShapeInfo(j);
         aTj = aSJ.ShapeType();
         iTj = BOPDS_Tools::TypeToInteger(aTj);
         //
@@ -339,6 +347,19 @@ void BOPDS_Iterator::Intersect()
         //
         BOPDS_Pair aPair(i, j);
         if (aMPFence.Add(aPair)) {
+          if (theCheckOBB)
+          {
+            IntTools_OBB& anOBBi = theCtx->OBB(aSI.Shape(), aSI.Box().GetGap());
+            IntTools_OBB& anOBBj = theCtx->OBB(aSJ.Shape(), aSJ.Box().GetGap());
+
+#ifdef DEBUG_OBB
+            TopoDS_Shape aBox1 = IntTools_Tools::GetOBBShapeBox(anOBBi);
+            TopoDS_Shape aBox2 = IntTools_Tools::GetOBBShapeBox(anOBBj);
+#endif
+            if (anOBBi.IsOut(anOBBj))
+              continue;
+          }
+
           iX = BOPDS_Tools::TypeToInteger(aTi, aTj);
           myLists(iX).Append(aPair);
         }// if (aMPFence.Add(aPair)) {
