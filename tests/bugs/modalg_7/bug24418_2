@@ -1,0 +1,34 @@
+puts "TODO OCC24418 ALL: Wrong section curves when intersecting analytical surfaces"
+puts "TODO OCC24418 ALL: Error : T="
+
+puts "========"
+puts "OCC24418"
+puts "========"
+puts ""
+############################################################
+# Wrong section curves when intersecting analytical surfaces
+############################################################
+
+ptorus b1 25 24 90
+plane p 20 20 10 0 0 1
+pcone b2 p 10 8 40
+explode b1 f; copy b1_1 b1
+explode b2 f; copy b2_1 b2
+mksurface s1 b1
+mksurface s2 b2
+trimu s1t s1 0 1.5707963267948966
+trimv s2t s2 0 40.049968789001575
+
+intersect ii s1t s2t
+
+bounds ii_1 u1 u2
+
+set log_1 [xdistcs ii_1 s1 u1 u2 10 2.0e-7]
+regexp {Max distance = ([-0-9.+eE]+)} $log_1 full Max_distance_1
+
+set log_2 [xdistcs ii_1 s2 u1 u2 10 2.0e-7]
+regexp {Max distance = ([-0-9.+eE]+)} $log_2 full Max_distance_2
+
+set tol_abs 1.e-07
+set tol_rel 1.e-07
+checkreal "Wrong section curves when intersecting analytical surfaces, Max distance " ${Max_distance_2} ${Max_distance_1} ${tol_abs} ${tol_rel}
