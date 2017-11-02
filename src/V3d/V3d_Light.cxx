@@ -11,116 +11,27 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-/***********************************************************************
-     FONCTION :
-     ----------
-        Classe V3d_SpotLight :
-     HISTORIQUE DES MODIFICATIONS   :
-     --------------------------------
-      00-09-92 : GG  ; Creation.
-************************************************************************/
-/*----------------------------------------------------------------------*/
-/*
- * Includes
- */
+#include <V3d_Light.hxx>
 
 #include <Graphic3d_Structure.hxx>
-#include <Quantity_Color.hxx>
-#include <Standard_Type.hxx>
 #include <V3d.hxx>
-#include <V3d_BadValue.hxx>
-#include <V3d_Light.hxx>
 #include <V3d_View.hxx>
 #include <V3d_Viewer.hxx>
 
-IMPLEMENT_STANDARD_RTTIEXT(V3d_Light,Standard_Transient)
+IMPLEMENT_STANDARD_RTTIEXT(V3d_Light, Graphic3d_CLight)
 
 // =======================================================================
 // function : V3d_Light
 // purpose  :
 // =======================================================================
-V3d_Light::V3d_Light (const Handle(V3d_Viewer)& theViewer)
+V3d_Light::V3d_Light (Graphic3d_TypeOfLightSource theType,
+                      const Handle(V3d_Viewer)& theViewer) /// TODO V3d_Light should NOT store V3d_Viewer, or it will end-up with cyclic dependencies (active lights are stored in V3d_Viewer/V3d_View and in OpenGl_View)
+: Graphic3d_CLight (theType)
 {
-  SetType (V3d_AMBIENT);
-  theViewer->AddLight (this);
-}
-
-// =======================================================================
-// function : SetType
-// purpose  :
-// =======================================================================
-void V3d_Light::SetType (const V3d_TypeOfLight theType)
-{
-  myLight.Type = (Graphic3d_TypeOfLightSource)theType;
-}
-
-// =======================================================================
-// function : SetColor
-// purpose  :
-// =======================================================================
-void V3d_Light::SetColor (const Quantity_Color& theColor)
-{
-  myLight.Color.r() = static_cast<Standard_ShortReal> (theColor.Red());
-  myLight.Color.g() = static_cast<Standard_ShortReal> (theColor.Green());
-  myLight.Color.b() = static_cast<Standard_ShortReal> (theColor.Blue());
-}
-
-// =======================================================================
-// function : Type
-// purpose  :
-// =======================================================================
-V3d_TypeOfLight V3d_Light::Type() const
-{
-  return (V3d_TypeOfLight)myLight.Type;
-}
-
-// =======================================================================
-// function : SetIntensity
-// purpose  :
-// =======================================================================
-void V3d_Light::SetIntensity (const Standard_Real theValue)
-{
-  Standard_ASSERT_RAISE (theValue > 0.,
-                         "V3d_Light::SetIntensity, "
-                         "Negative value for intensity");
-
-  myLight.Intensity = static_cast<Standard_ShortReal> (theValue);
-}
-
-// =======================================================================
-// function : Intensity
-// purpose  :
-// =======================================================================
-Standard_Real V3d_Light::Intensity() const
-{
-  return myLight.Intensity;
-}
-
-// =======================================================================
-// function : Smoothness
-// purpose  :
-// =======================================================================
-Standard_Real V3d_Light::Smoothness() const
-{
-  return myLight.Smoothness;
-}
-
-// =======================================================================
-// function : Headlight
-// purpose  :
-// =======================================================================
-Standard_Boolean V3d_Light::Headlight() const
-{
-  return myLight.IsHeadlight;
-}
-
-// =======================================================================
-// function : SetHeadlight
-// purpose  :
-// =======================================================================
-void V3d_Light::SetHeadlight (const Standard_Boolean theValue)
-{
-  myLight.IsHeadlight = theValue;
+  if (!theViewer.IsNull())
+  {
+    theViewer->AddLight (this);
+  }
 }
 
 // =======================================================================

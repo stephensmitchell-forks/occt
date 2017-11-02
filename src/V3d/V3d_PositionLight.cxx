@@ -32,8 +32,9 @@ IMPLEMENT_STANDARD_RTTIEXT(V3d_PositionLight,V3d_Light)
 // function : V3d_PositionLight
 // purpose  :
 // =======================================================================
-V3d_PositionLight::V3d_PositionLight (const Handle(V3d_Viewer)& theViewer)
-: V3d_Light(theViewer)
+V3d_PositionLight::V3d_PositionLight (Graphic3d_TypeOfLightSource theType,
+                                      const Handle(V3d_Viewer)& theViewer)
+: V3d_Light (theType, theViewer)
 {
 }
 
@@ -433,4 +434,3 @@ void V3d_PositionLight::Erase()
   if (!myGraphicStructure.IsNull()) myGraphicStructure->Erase();
   if (!myGraphicStructure1.IsNull()) myGraphicStructure1->Erase();
 }
-

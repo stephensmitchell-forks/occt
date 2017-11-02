@@ -33,16 +33,15 @@ V3d_DirectionalLight::V3d_DirectionalLight (const Handle(V3d_Viewer)& theViewer,
                                             const V3d_TypeOfOrientation theDirection,
                                             const Quantity_Color& theColor,
                                             const Standard_Boolean theIsHeadlight)
-: V3d_PositionLight (theViewer)
+: V3d_PositionLight (Graphic3d_TOLS_DIRECTIONAL, theViewer)
 {
   gp_Dir aV = V3d::GetProjAxis (theDirection);
-  SetType (V3d_DIRECTIONAL);
   SetColor (theColor);
   SetHeadlight (theIsHeadlight);
   SetTarget (0., 0., 0.);
   SetPosition (-aV.X(), -aV.Y(), -aV.Z());
-  SetSmoothAngle (0.2);
-  SetIntensity (20.0);
+  SetSmoothAngle (0.2f);
+  SetIntensity (20.0f);
 }
 
 // =======================================================================
@@ -58,25 +57,12 @@ V3d_DirectionalLight::V3d_DirectionalLight (const Handle(V3d_Viewer)& theViewer,
                                             const Standard_Real theZp,
                                             const Quantity_Color& theColor,
                                             const Standard_Boolean theIsHeadlight)
-: V3d_PositionLight (theViewer)
+: V3d_PositionLight (Graphic3d_TOLS_DIRECTIONAL, theViewer)
 {
-  SetType (V3d_DIRECTIONAL);
   SetColor (theColor);
   SetHeadlight (theIsHeadlight);
   SetTarget (theXt, theYt, theZt);
   SetPosition (theXp, theYp, theZp);
-}
-
-// =======================================================================
-// function : SetSmoothAngle
-// purpose  :
-// =======================================================================
-void V3d_DirectionalLight::SetSmoothAngle (const Standard_Real theValue)
-{
-  V3d_BadValue_Raise_if (theValue < 0.0 || theValue > M_PI / 2.0,
-    "Bad value for smoothing angle");
-
-  myLight.Smoothness = static_cast<Standard_ShortReal> (theValue);
 }
 
 // =======================================================================
@@ -98,9 +84,9 @@ void V3d_DirectionalLight::SetDirection (Standard_Real theVx,
                                          Standard_Real theVz)
 {
   gp_Dir aV (theVx, theVy, theVz);
-  myLight.Direction.x() = static_cast<Standard_ShortReal> (aV.X());
-  myLight.Direction.y() = static_cast<Standard_ShortReal> (aV.Y());
-  myLight.Direction.z() = static_cast<Standard_ShortReal> (aV.Z());
+  myDirection.x() = static_cast<Standard_ShortReal> (aV.X());
+  myDirection.y() = static_cast<Standard_ShortReal> (aV.Y());
+  myDirection.z() = static_cast<Standard_ShortReal> (aV.Z());
 }
 
 // =======================================================================

@@ -882,10 +882,10 @@ void OpenGl_View::render (Graphic3d_Camera::Projection theProjection,
   myBVHSelector.SetViewportSize (myWindow->Width(), myWindow->Height());
 
   const Handle(OpenGl_ShaderManager)& aManager   = aContext->ShaderManager();
-  if (StateInfo (myCurrLightSourceState, aManager->LightSourceState().Index()) != myLastLightSourceState)
+  ///if (StateInfo (myCurrLightSourceState, aManager->LightSourceState().Index()) != myLastLightSourceState)
   {
-    aManager->UpdateLightSourceStateTo (myShadingModel == Graphic3d_TOSM_NONE ? &myNoShadingLight : &myLights);
-    myLastLightSourceState = StateInfo (myCurrLightSourceState, aManager->LightSourceState().Index());
+    aManager->UpdateLightSourceStateTo (myShadingModel == Graphic3d_TOSM_NONE ? myNoShadingLight : myLights);
+    ///myLastLightSourceState = StateInfo (myCurrLightSourceState, aManager->LightSourceState().Index());
   }
 
   // Update matrices if camera has changed.

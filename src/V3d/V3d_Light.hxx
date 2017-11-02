@@ -24,54 +24,23 @@
 class Graphic3d_Structure;
 class V3d_Viewer;
 
-class V3d_Light;
-DEFINE_STANDARD_HANDLE(V3d_Light, Standard_Transient)
-
 //! Defines services on Light type objects..
 //! (base class for AmbientLight and PositionLight)
-class V3d_Light : public Standard_Transient
+class V3d_Light : public Graphic3d_CLight
 {
+  DEFINE_STANDARD_RTTIEXT(V3d_Light, Graphic3d_CLight)
 public:
 
-  //! Defines the color of a light source by giving the basic color.
-  Standard_EXPORT void SetColor (const Quantity_Color& theColor);
-
-  //! Returns the color of the light source.
-  Quantity_Color Color() const { return Quantity_Color (myLight.Color.rgb()); }
-
   //! Returns the Type of the Light
-  Standard_EXPORT V3d_TypeOfLight Type() const;
-
-  //! returns true if the light is a headlight
-  Standard_EXPORT Standard_Boolean Headlight() const;
-
-  //! Setup headlight flag.
-  Standard_EXPORT void SetHeadlight (const Standard_Boolean theValue);
-
-  //! Modifies the intensity of light source.
-  Standard_EXPORT void SetIntensity (const Standard_Real theValue);
-
-  //! returns the intensity of light source
-  Standard_EXPORT Standard_Real Intensity() const;
-
-  //! returns the smoothness of light source
-  Standard_EXPORT Standard_Real Smoothness() const;
+  V3d_TypeOfLight Type() const { return (V3d_TypeOfLight)myType; }
 
   //! Returns TRUE when a light representation is displayed
   Standard_EXPORT Standard_Boolean IsDisplayed() const;
 
-friend
-  //! Updates the lights of the view. The view is redrawn.
-  Standard_EXPORT void V3d_View::UpdateLights() const;
-
-  DEFINE_STANDARD_RTTIEXT(V3d_Light,Standard_Transient)
-
 protected:
 
-  Standard_EXPORT V3d_Light (const Handle(V3d_Viewer)& theViewer);
-
-  //! Sets type of the light.
-  Standard_EXPORT void SetType (const V3d_TypeOfLight theType);
+  Standard_EXPORT V3d_Light (Graphic3d_TypeOfLightSource theType,
+                             const Handle(V3d_Viewer)& theViewer);
 
   //! Returns the symmetric point coordinates of "aPoint"
   //! on the sphere of center "Center" and radius "Radius".
@@ -85,15 +54,11 @@ protected:
 
 protected:
 
-  //! Return light properties associated to this light source.
-  //! Hidden method exposed only to V3d_View.
-  Standard_EXPORT const Graphic3d_CLight& Light() const { return myLight; }
-
-protected:
-
-  Graphic3d_CLight myLight;
   Handle(Graphic3d_Structure) myGraphicStructure;
   Handle(Graphic3d_Structure) myGraphicStructure1;
+
 };
+
+DEFINE_STANDARD_HANDLE(V3d_Light, Graphic3d_CLight)
 
 #endif // _V3d_Light_HeaderFile

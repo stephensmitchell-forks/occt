@@ -25,8 +25,7 @@ IMPLEMENT_STANDARD_RTTIEXT(V3d_AmbientLight,V3d_Light)
 // =======================================================================
 V3d_AmbientLight::V3d_AmbientLight (const Handle(V3d_Viewer)& theViewer,
                                     const Quantity_Color& theColor)
-: V3d_Light (theViewer)
+: V3d_Light (Graphic3d_TOLS_AMBIENT, theViewer)
 {
-  SetType  (V3d_AMBIENT);
   SetColor (theColor);
 }

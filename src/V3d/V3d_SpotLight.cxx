@@ -39,17 +39,16 @@ V3d_SpotLight::V3d_SpotLight (const Handle(V3d_Viewer)& theViewer,
                               const Standard_Real theLinearAttenuation,
                               const Standard_Real theConcentration,
                               const Standard_Real theAngle)
-: V3d_PositionLight (theViewer)
+: V3d_PositionLight (Graphic3d_TOLS_SPOT, theViewer)
 {
   gp_Dir aDir = V3d::GetProjAxis (theDirection);
-  SetType (V3d_SPOT);
   SetColor (theColor);
   SetTarget (theX + aDir.X(), theY + aDir.Y(), theZ + aDir.Z());
   SetPosition (theX, theY, theZ);
   SetDirection (aDir.X(), aDir.Y(), aDir.Z());
-  SetAttenuation (theConstAttenuation, theLinearAttenuation);
-  SetConcentration (theConcentration);
-  SetAngle (theAngle);
+  SetAttenuation ((float )theConstAttenuation, (float )theLinearAttenuation);
+  SetConcentration ((float )theConcentration);
+  SetAngle ((float )theAngle);
 }
 
 // =======================================================================
@@ -68,16 +67,15 @@ V3d_SpotLight::V3d_SpotLight (const Handle(V3d_Viewer)& theViewer,
                               const Standard_Real theLinearAttenuation,
                               const Standard_Real theConcentration,
                               const Standard_Real theAngle)
-: V3d_PositionLight (theViewer)
+: V3d_PositionLight (Graphic3d_TOLS_SPOT, theViewer)
 {
-  SetType (V3d_SPOT);
   SetColor (theColor);
   SetTarget (theXt, theYt, theZt);
   SetPosition (theXp, theYp, theZp);
   SetDirection (theXt - theXp, theYt - theYp, theZt - theZp);
-  SetAttenuation (theConstAttenuation, theLinearAttenuation);
-  SetConcentration (theConcentration);
-  SetAngle (theAngle);
+  SetAttenuation ((float )theConstAttenuation, (float )theLinearAttenuation);
+  SetConcentration ((float )theConcentration);
+  SetAngle ((float )theAngle);
 }
 
 // =======================================================================
@@ -90,51 +88,6 @@ void V3d_SpotLight::SetDirection (V3d_TypeOfOrientation theDirection)
   SetDirection (aDir.X(), aDir.Y(), aDir.Z());
 }
 
-// =======================================================================
-// function : SetAttenuation
-// purpose  :
-// =======================================================================
-void V3d_SpotLight::SetAttenuation (const Standard_Real theConstAttenuation,
-                                    const Standard_Real theLinearAttenuation)
-{
-  V3d_BadValue_Raise_if (theConstAttenuation  < 0. ||
-                         theConstAttenuation  > 1. ||
-                         theLinearAttenuation < 0. ||
-                         theLinearAttenuation > 1 ,
-                         "V3d_SpotLight::SetAttenuation, "
-                         "bad coefficients");
-
-  myLight.ChangeConstAttenuation()  = static_cast<Standard_ShortReal> (theConstAttenuation);
-  myLight.ChangeLinearAttenuation() = static_cast<Standard_ShortReal> (theLinearAttenuation);
-}
-
-// =======================================================================
-// function : SetConcentration
-// purpose  :
-// =======================================================================
-void V3d_SpotLight::SetConcentration (const Standard_Real theConcentration)
-{
-  V3d_BadValue_Raise_if (theConcentration < 0. ||
-                         theConcentration > 1.,
-                         "V3d_SpotLight::SetConcentration, "
-                         "bad coefficient");
-
-  myLight.ChangeConcentration() = static_cast<Standard_ShortReal> (theConcentration);
-}
-
-// =======================================================================
-// function : SetAngle
-// purpose  :
-// =======================================================================
-void V3d_SpotLight::SetAngle (const Standard_Real theAngle)
-{
-  V3d_BadValue_Raise_if (theAngle <= 0. || 
-                         theAngle >= M_PI,
-                         "V3d_SpotLight::SetAngle, "
-                         "bad angle");
-
-  myLight.ChangeAngle() = static_cast<Standard_ShortReal> (theAngle);
-}
 // =======================================================================
 // function : Symbol
 // purpose  :

@@ -37,13 +37,12 @@ V3d_PositionalLight::V3d_PositionalLight (const Handle(V3d_Viewer)& theViewer,
                                           const Quantity_Color& theColor,
                                           const Standard_Real theConstAttenuation,
                                           const Standard_Real theLinearAttenuation)
-: V3d_PositionLight (theViewer)
+: V3d_PositionLight (Graphic3d_TOLS_POSITIONAL, theViewer)
 {
-  SetType (V3d_POSITIONAL);
   SetColor (theColor);
   SetTarget (0., 0., 0.);
   SetPosition (theX, theY, theZ);
-  SetAttenuation (theConstAttenuation, theLinearAttenuation);
+  SetAttenuation ((float )theConstAttenuation, (float )theLinearAttenuation);
 }
 
 // =======================================================================
@@ -60,43 +59,12 @@ V3d_PositionalLight::V3d_PositionalLight (const Handle(V3d_Viewer)& theViewer,
                                           const Quantity_Color& theColor,
                                           const Standard_Real theConstAttenuation,
                                           const Standard_Real theLinearAttenuation)
-: V3d_PositionLight (theViewer)
+: V3d_PositionLight (Graphic3d_TOLS_POSITIONAL, theViewer)
 {
-  SetType (V3d_POSITIONAL);
   SetColor (theColor);
   SetTarget (theXt, theYt, theZt);
   SetPosition (theXp, theYp, theZp);
-  SetAttenuation (theConstAttenuation, theLinearAttenuation);
-}
-
-// =======================================================================
-// function : SetSmoothRadius
-// purpose  :
-// =======================================================================
-void V3d_PositionalLight::SetSmoothRadius (const Standard_Real theValue)
-{
-  V3d_BadValue_Raise_if (theValue < 0.0,
-    "V3d_PositionalLight::SetSmoothRadius,"
-    "Bad value for smoothing radius");
-
-  myLight.Smoothness = static_cast<Standard_ShortReal> (theValue);
-}
-
-// =======================================================================
-// function : SetAttenuation
-// purpose  :
-// =======================================================================
-void V3d_PositionalLight::SetAttenuation (const Standard_Real theConstAttenuation,
-                                          const Standard_Real theLinearAttenuation)
-{
-  V3d_BadValue_Raise_if (theConstAttenuation < 0.
-                      || theConstAttenuation > 1.
-                      || theLinearAttenuation < 0.
-                      || theLinearAttenuation > 1.,
-    "V3d_PositionalLight::SetAttenuation, bad coefficients");
-
-  myLight.ChangeConstAttenuation()  = static_cast<Standard_ShortReal> (theConstAttenuation);
-  myLight.ChangeLinearAttenuation() = static_cast<Standard_ShortReal> (theLinearAttenuation);
+  SetAttenuation ((float )theConstAttenuation, (float )theLinearAttenuation);
 }
 
 // =======================================================================

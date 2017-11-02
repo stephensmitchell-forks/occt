@@ -695,6 +695,16 @@ void OpenGl_Layer::Render (const Handle(OpenGl_Workspace)&   theWorkspace,
 
   const Standard_Boolean hasLocalCS = !myLayerSettings.OriginTransformation().IsNull();
   const Handle(OpenGl_Context)&   aCtx         = theWorkspace->GetGlContext();
+  {
+    const Handle(Graphic3d_ListOfCLight)& aLights = !myLayerSettings.Lights().IsNull() ? myLayerSettings.Lights() : theWorkspace->View()->Lights();
+    const Handle(OpenGl_ShaderManager)& aManager = aCtx->ShaderManager();
+    if (aLights != aManager->LightSourceState().LightSources())
+    {
+      aManager->UpdateLightSourceStateTo (aLights);
+      ///myLastLightSourceState = StateInfo (myCurrLightSourceState, aManager->LightSourceState().Index());
+    }
+  }
+
   const Handle(Graphic3d_Camera)& aWorldCamera = theWorkspace->View()->Camera();
   Handle(Graphic3d_Camera) aCameraBack;
   if (hasLocalCS)

@@ -377,10 +377,10 @@ Standard_Boolean V3d_View::IsEmpty() const
 //=============================================================================
 void V3d_View::UpdateLights() const
 {
-  Graphic3d_ListOfCLight aLights;
+  Handle(Graphic3d_ListOfCLight) aLights = new Graphic3d_ListOfCLight();
   for (V3d_ListOfLight::Iterator anActiveLightIter (myActiveLights); anActiveLightIter.More(); anActiveLightIter.Next())
   {
-    aLights.Append (anActiveLightIter.Value()->Light());
+    aLights->Append (anActiveLightIter.Value());
   }
   myView->SetLights (aLights);
 }

@@ -23,19 +23,27 @@
 #include <V3d_TypeOfRepresentation.hxx>
 
 class V3d_View;
-class V3d_Viewer;
-class V3d_PositionLight;
-DEFINE_STANDARD_HANDLE(V3d_PositionLight, V3d_Light)
 
 //! Base class for Positional, Spot and Directional Light classes.
 class V3d_PositionLight : public V3d_Light
 {
+  DEFINE_STANDARD_RTTIEXT(V3d_PositionLight, V3d_Light)
 public:
+
+  //! Returns the position of the light source.
+  Standard_EXPORT virtual void Position (Standard_Real& theX,
+                                         Standard_Real& theY,
+                                         Standard_Real& theZ) const = 0;
 
   //! Defines the position of the light source. Should be redefined!
   Standard_EXPORT virtual void SetPosition (Standard_Real theX,
                                             Standard_Real theY,
                                             Standard_Real theZ) = 0;
+
+  //! Returns the position of the target of the light source.
+  void Target (Standard_Real& theX,
+               Standard_Real& theY,
+               Standard_Real& theZ) const { myTarget.Coord (theX, theY, theZ); }
 
   //! Defines the target of the light (the center of the sphere).
   Standard_EXPORT void SetTarget (const Standard_Real theX,
@@ -85,21 +93,11 @@ public:
   //! If False it's hidden.
   Standard_EXPORT Standard_Boolean SeeOrHide (const Handle(V3d_View)& theView) const;
 
-  //! Returns the position of the light source.
-  Standard_EXPORT virtual void Position (Standard_Real& theX,
-                                         Standard_Real& theY,
-                                         Standard_Real& theZ) const = 0;
-
-  //! Returns the position of the target of the light source.
-  void Target (Standard_Real& theX,
-               Standard_Real& theY,
-               Standard_Real& theZ) const { myTarget.Coord (theX, theY, theZ); }
-
-  DEFINE_STANDARD_RTTIEXT(V3d_PositionLight,V3d_Light)
-
 protected:
 
-  Standard_EXPORT V3d_PositionLight (const Handle(V3d_Viewer)& theViewer);
+  Standard_EXPORT V3d_PositionLight (Graphic3d_TypeOfLightSource theType,
+                                     const Handle(V3d_Viewer)& theViewer);
+
 
 protected:
 
@@ -111,6 +109,15 @@ private:
   //! Defines representation of the light source.
   Standard_EXPORT virtual void Symbol (const Handle(Graphic3d_Group)& theSymbol,
                                        const Handle(V3d_View)& theView) const = 0;
+
+//! @name hidden properties not applicable to positional light
+private:
+
+  using Graphic3d_CLight::Position;
+  using Graphic3d_CLight::SetPosition;
+
 };
+
+DEFINE_STANDARD_HANDLE(V3d_PositionLight, V3d_Light)
 
 #endif // _V3d_PositionLight_HeaderFile
