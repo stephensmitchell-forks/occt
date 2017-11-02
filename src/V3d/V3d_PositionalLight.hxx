@@ -19,13 +19,11 @@
 
 #include <V3d_PositionLight.hxx>
 
-class V3d_PositionalLight;
-DEFINE_STANDARD_HANDLE(V3d_PositionalLight, V3d_PositionLight)
-
 //! Creation and modification of an isolated
 //! (positional) light source.
 class V3d_PositionalLight : public V3d_PositionLight
 {
+  DEFINE_STANDARD_RTTIEXT(V3d_PositionalLight, V3d_PositionLight)
 public:
 
   //! Creates an isolated light source theX, theY, theZ in the viewer.
@@ -73,19 +71,10 @@ public:
                             Standard_Real theY,
                             Standard_Real theZ) Standard_OVERRIDE
   {
-    myLight.Position.x() = theX;
-    myLight.Position.y() = theY;
-    myLight.Position.z() = theZ;
+    myPosition.x() = theX;
+    myPosition.y() = theY;
+    myPosition.z() = theZ;
   }
-
-  //! Defines the attenuation factors.
-  //! Warning: raises BadValue from V3d
-  //! if one of the attenuation coefficients is not between 0 et 1.
-  Standard_EXPORT void SetAttenuation (const Standard_Real theConstAttenuation,
-                                       const Standard_Real theLinearAttenuation);
-
-  //! Modifies the smoothing radius
-  Standard_EXPORT void SetSmoothRadius (const Standard_Real theValue);
 
   //! Display the graphic structure of light source
   //! in the chosen view. We have three type of representation
@@ -105,26 +94,29 @@ public:
                  Standard_Real& theY,
                  Standard_Real& theZ) const Standard_OVERRIDE
   {
-    theX = myLight.Position.x();
-    theY = myLight.Position.y();
-    theZ = myLight.Position.z();
+    theX = myPosition.x();
+    theY = myPosition.y();
+    theZ = myPosition.z();
   }
-
-  //! Returns the attenuation factors.
-  void Attenuation (Standard_Real& theConstAttenuation,
-                    Standard_Real& theLinearAttenuation) const
-  {
-    theConstAttenuation  = myLight.ConstAttenuation();
-    theLinearAttenuation = myLight.LinearAttenuation();
-  }
-
-  DEFINE_STANDARD_RTTIEXT(V3d_PositionalLight,V3d_PositionLight)
 
 private:
 
   //! Defined the representation of the positional light source.
   Standard_EXPORT void Symbol (const Handle(Graphic3d_Group)& theSymbol,
                                const Handle(V3d_View)& theView) const Standard_OVERRIDE;
+
+//! @name hidden properties not applicable to positional light
+private:
+
+  using Graphic3d_CLight::Direction;
+  using Graphic3d_CLight::SetDirection;
+  using Graphic3d_CLight::Angle;
+  using Graphic3d_CLight::SetAngle;
+  using Graphic3d_CLight::Concentration;
+  using Graphic3d_CLight::SetConcentration;
+
 };
+
+DEFINE_STANDARD_HANDLE(V3d_PositionalLight, V3d_PositionLight)
 
 #endif // _V3d_PositionalLight_HeaderFile

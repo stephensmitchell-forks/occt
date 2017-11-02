@@ -9213,6 +9213,7 @@ static int VDefaults (Draw_Interpretor& theDi,
 
 //! Auxiliary method
 inline void addLight (const Handle(V3d_Light)& theLightNew,
+                      const Graphic3d_ZLayerId theLayer,
                       const Standard_Boolean   theIsGlobal)
 {
   if (theLightNew.IsNull())
@@ -9220,13 +9221,32 @@ inline void addLight (const Handle(V3d_Light)& theLightNew,
     return;
   }
 
-  if (theIsGlobal)
+  Handle(V3d_Viewer) aViewer = ViewerTest::GetViewerFromContext();
+  if (theLayer == Graphic3d_ZLayerId_UNKNOWN)
   {
-    ViewerTest::GetViewerFromContext()->SetLightOn (theLightNew);
+    if (theIsGlobal)
+    {
+      aViewer->SetLightOn (theLightNew);
+    }
+    else
+    {
+      ViewerTest::CurrentView()->SetLightOn (theLightNew);
+    }
   }
   else
   {
-    ViewerTest::CurrentView()->SetLightOn (theLightNew);
+    Graphic3d_ZLayerSettings aSettings = aViewer->ZLayerSettings (theLayer);
+    if (aSettings.Lights().IsNull())
+    {
+      aSettings.SetLights (new Graphic3d_ListOfCLight());
+    }
+    aSettings.Lights()->Append (theLightNew);
+    aViewer->SetZLayerSettings (theLayer, aSettings);
+    ///
+  }
+  if (Handle(V3d_PositionLight) aPosLight = Handle(V3d_PositionLight)::DownCast(theLightNew))
+  {
+    ////aPosLight->Display (ViewerTest::CurrentView(), V3d_COMPLETE); /// TODO
   }
 }
 
@@ -9345,6 +9365,7 @@ static int VLight (Draw_Interpretor& theDi,
 
   Handle(V3d_Light) aLightNew;
   Handle(V3d_Light) aLightOld;
+  Graphic3d_ZLayerId aLayer = Graphic3d_ZLayerId_UNKNOWN;
   Standard_Boolean  isGlobal = Standard_True;
   Standard_Boolean  toCreate = Standard_False;
   ViewerTest_AutoUpdater anUpdateTool (ViewerTest::GetAISContext(), aView);
@@ -9371,6 +9392,16 @@ static int VLight (Draw_Interpretor& theDi,
     {
       toCreate = Standard_True;
     }
+    else if (anArgCase.IsEqual ("LAYER")
+          || anArgCase.IsEqual ("ZLAYER"))
+    {
+      if (++anArgIt >= theArgsNb)
+      {
+        std::cerr << "Wrong syntax at argument '" << anArg << "'!\n";
+        return 1;
+      }
+      aLayer = Draw::Atoi (theArgVec[anArgIt]);
+    }
     else if (anArgCase.IsEqual ("GLOB")
           || anArgCase.IsEqual ("GLOBAL"))
     {
@@ -9391,18 +9422,39 @@ static int VLight (Draw_Interpretor& theDi,
           || anArgCase.IsEqual ("CLEAR"))
     {
       toCreate = Standard_False;
-      for (V3d_ListOfLightIterator aLightIter (aView->ActiveLightIterator()); aLightIter.More();)
+
+      TColStd_SequenceOfInteger aLayers;
+      aViewer->GetAllZLayers (aLayers);
+      for (TColStd_SequenceOfInteger::Iterator aLayeriter (aLayers); aLayeriter.More(); aLayeriter.Next())
       {
-        Handle(V3d_Light) aLight = aLightIter.Value();
-        aViewer->DelLight (aLight);
-        aLightIter = aView->ActiveLightIterator();
+        if (aLayeriter.Value() == aLayer
+         || aLayer == Graphic3d_ZLayerId_UNKNOWN)
+        {
+          Graphic3d_ZLayerSettings aSettings = aViewer->ZLayerSettings (aLayeriter.Value());
+          aSettings.SetLights (Handle(Graphic3d_ListOfCLight)());
+          aViewer->SetZLayerSettings (aLayeriter.Value(), aSettings);
+          if (aLayer != Graphic3d_ZLayerId_UNKNOWN)
+          {
+            break;
+          }
+        }
+      }
+
+      if (aLayer == Graphic3d_ZLayerId_UNKNOWN)
+      {
+        for (V3d_ListOfLightIterator aLightIter (aView->ActiveLightIterator()); aLightIter.More();)
+        {
+          Handle(V3d_Light) aLight = aLightIter.Value();
+          aViewer->DelLight (aLight);
+          aLightIter = aView->ActiveLightIterator();
+        }
       }
     }
     else if (anArgCase.IsEqual ("AMB")
           || anArgCase.IsEqual ("AMBIENT")
           || anArgCase.IsEqual ("AMBLIGHT"))
     {
-      addLight (aLightNew, isGlobal);
+      addLight (aLightNew, aLayer, isGlobal);
       if (!toCreate)
       {
         std::cerr << "Wrong syntax at argument '" << anArg << "'!\n";
@@ -9414,7 +9466,7 @@ static int VLight (Draw_Interpretor& theDi,
     else if (anArgCase.IsEqual ("DIRECTIONAL")
           || anArgCase.IsEqual ("DIRLIGHT"))
     {
-      addLight (aLightNew, isGlobal);
+      addLight (aLightNew, aLayer, isGlobal);
       if (!toCreate)
       {
         std::cerr << "Wrong syntax at argument '" << anArg << "'!\n";
@@ -9426,7 +9478,7 @@ static int VLight (Draw_Interpretor& theDi,
     else if (anArgCase.IsEqual ("SPOT")
           || anArgCase.IsEqual ("SPOTLIGHT"))
     {
-      addLight (aLightNew, isGlobal);
+      addLight (aLightNew, aLayer, isGlobal);
       if (!toCreate)
       {
         std::cerr << "Wrong syntax at argument '" << anArg << "'!\n";
@@ -9438,7 +9490,7 @@ static int VLight (Draw_Interpretor& theDi,
     else if (anArgCase.IsEqual ("POSLIGHT")
           || anArgCase.IsEqual ("POSITIONAL"))
     {
-      addLight (aLightNew, isGlobal);
+      addLight (aLightNew, aLayer, isGlobal);
       if (!toCreate)
       {
         std::cerr << "Wrong syntax at argument '" << anArg << "'!\n";
@@ -9449,7 +9501,7 @@ static int VLight (Draw_Interpretor& theDi,
     }
     else if (anArgCase.IsEqual ("CHANGE"))
     {
-      addLight (aLightNew, isGlobal);
+      addLight (aLightNew, aLayer, isGlobal);
       aLightNew.Nullify();
       if (++anArgIt >= theArgsNb)
       {
@@ -9495,7 +9547,36 @@ static int VLight (Draw_Interpretor& theDi,
           break;
         }
       }
-      if (!aLightDel.IsNull())
+      if (aLightDel.IsNull())
+      {
+        continue;
+      }
+
+      TColStd_SequenceOfInteger aLayers;
+      aViewer->GetAllZLayers (aLayers);
+      for (TColStd_SequenceOfInteger::Iterator aLayeriter (aLayers); aLayeriter.More(); aLayeriter.Next())
+      {
+        if (aLayeriter.Value() == aLayer
+         || aLayer == Graphic3d_ZLayerId_UNKNOWN)
+        {
+          Graphic3d_ZLayerSettings aSettings = aViewer->ZLayerSettings (aLayeriter.Value());
+          if (!aSettings.Lights().IsNull())
+          {
+            aSettings.Lights()->Remove (aLightDel);
+            if (aSettings.Lights()->IsEmpty())
+            {
+              aSettings.SetLights (Handle(Graphic3d_ListOfCLight)());
+            }
+          }
+          aViewer->SetZLayerSettings (aLayeriter.Value(), aSettings);
+          if (aLayer != Graphic3d_ZLayerId_UNKNOWN)
+          {
+            break;
+          }
+        }
+      }
+
+      if (aLayer == Graphic3d_ZLayerId_UNKNOWN)
       {
         aViewer->DelLight (aLightDel);
       }
@@ -9582,13 +9663,12 @@ static int VLight (Draw_Interpretor& theDi,
         return 1;
       }
 
-      Standard_Real aSmoothness = Atof (theArgVec[anArgIt]);
-
-      if (fabs (aSmoothness) < Precision::Confusion())
+      Standard_ShortReal aSmoothness = (Standard_ShortReal )Atof (theArgVec[anArgIt]);
+      if (Abs (aSmoothness) <= ShortRealEpsilon())
       {
         aLightCurr->SetIntensity (1.f);
       }
-      else if (fabs (aLightCurr->Smoothness()) < Precision::Confusion())
+      else if (Abs (aLightCurr->Smoothness()) <= ShortRealEpsilon())
       {
         aLightCurr->SetIntensity ((aSmoothness * aSmoothness) / 3.f);
       }
@@ -9616,8 +9696,7 @@ static int VLight (Draw_Interpretor& theDi,
         return 1;
       }
 
-      Standard_Real aIntensity = Atof (theArgVec[anArgIt]);
-
+      Standard_ShortReal aIntensity = (Standard_ShortReal )Atof (theArgVec[anArgIt]);
       if (!aLightCurr.IsNull())
       {
         aLightCurr->SetIntensity (aIntensity);
@@ -9632,11 +9711,10 @@ static int VLight (Draw_Interpretor& theDi,
         return 1;
       }
 
-      Standard_Real anAngle = Atof (theArgVec[anArgIt]);
-
+      Standard_ShortReal anAngle = (Standard_ShortReal )Atof (theArgVec[anArgIt]);
       if (!aLightSpot.IsNull())
       {
-        aLightSpot->SetAngle (anAngle / 180.0 * M_PI);
+        aLightSpot->SetAngle (Standard_ShortReal (anAngle / 180.0 * M_PI));
       }
     }
     else if (anArgCase.IsEqual ("CONSTATTEN")
@@ -9652,13 +9730,13 @@ static int VLight (Draw_Interpretor& theDi,
       {
         aLightPos->Attenuation (anAtten[0], anAtten[1]);
         anAtten[0] = Atof (theArgVec[anArgIt]);
-        aLightPos->SetAttenuation (anAtten[0], anAtten[1]);
+        aLightPos->SetAttenuation ((Standard_ShortReal )anAtten[0], (Standard_ShortReal )anAtten[1]);
       }
       else if (!aLightSpot.IsNull())
       {
         aLightSpot->Attenuation (anAtten[0], anAtten[1]);
         anAtten[0] = Atof (theArgVec[anArgIt]);
-        aLightSpot->SetAttenuation (anAtten[0], anAtten[1]);
+        aLightSpot->SetAttenuation ((Standard_ShortReal )anAtten[0], (Standard_ShortReal )anAtten[1]);
       }
       else
       {
@@ -9680,13 +9758,13 @@ static int VLight (Draw_Interpretor& theDi,
       {
         aLightPos->Attenuation (anAtten[0], anAtten[1]);
         anAtten[1] = Atof (theArgVec[anArgIt]);
-        aLightPos->SetAttenuation (anAtten[0], anAtten[1]);
+        aLightPos->SetAttenuation ((Standard_ShortReal )anAtten[0], (Standard_ShortReal )anAtten[1]);
       }
       else if (!aLightSpot.IsNull())
       {
         aLightSpot->Attenuation (anAtten[0], anAtten[1]);
         anAtten[1] = Atof (theArgVec[anArgIt]);
-        aLightSpot->SetAttenuation (anAtten[0], anAtten[1]);
+        aLightSpot->SetAttenuation ((Standard_ShortReal )anAtten[0], (Standard_ShortReal )anAtten[1]);
       }
       else
       {
@@ -9707,7 +9785,7 @@ static int VLight (Draw_Interpretor& theDi,
 
       if (!aLightSpot.IsNull())
       {
-        aLightSpot->SetConcentration (Atof (theArgVec[anArgIt]));
+        aLightSpot->SetConcentration ((Standard_ShortReal )Atof (theArgVec[anArgIt]));
       }
       else
       {
@@ -9741,7 +9819,7 @@ static int VLight (Draw_Interpretor& theDi,
     }
   }
 
-  addLight (aLightNew, isGlobal);
+  addLight (aLightNew, aLayer, isGlobal);
   aViewer->UpdateLights();
 
   return 0;
@@ -11936,6 +12014,7 @@ void ViewerTest::ViewerCommands(Draw_Interpretor& theCommands)
     "\n          where <type> is one of {amb}ient|directional|{spot}light|positional"
     "\n      'change' <lightId> to edit light source with specified lightId"
     "\n\n      In addition to 'add' and 'change' commands you can use light parameters:"
+    "\n        layer Id"
     "\n        {pos}ition X Y Z"
     "\n        {dir}ection X Y Z (for directional light or for spotlight)"
     "\n        color colorName"

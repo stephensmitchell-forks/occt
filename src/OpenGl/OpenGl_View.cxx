@@ -98,13 +98,11 @@ OpenGl_View::OpenGl_View (const Handle(Graphic3d_StructureManager)& theMgr,
 {
   myWorkspace = new OpenGl_Workspace (this, NULL);
 
-  OpenGl_Light       aLight;
-  aLight.Type        = Graphic3d_TOLS_AMBIENT;
-  aLight.IsHeadlight = Standard_False;
-  aLight.Color.r()   = 1.;
-  aLight.Color.g()   = 1.;
-  aLight.Color.b()   = 1.;
-  myNoShadingLight.Append (aLight);
+  Handle(Graphic3d_CLight) aLight = new Graphic3d_CLight (Graphic3d_TOLS_AMBIENT);
+  aLight->SetHeadlight (false);
+  aLight->SetColor (Quantity_NOC_WHITE);
+  myNoShadingLight = new Graphic3d_ListOfCLight();
+  myNoShadingLight->Append (aLight);
 
   myCurrLightSourceState     = myStateCounter->Increment();
   myMainSceneFbos[0]         = new OpenGl_FrameBuffer();

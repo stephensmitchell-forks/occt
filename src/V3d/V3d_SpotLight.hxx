@@ -20,13 +20,10 @@
 #include <V3d_PositionLight.hxx>
 #include <V3d_TypeOfOrientation.hxx>
 
-class V3d_Viewer;
-class V3d_SpotLight;
-DEFINE_STANDARD_HANDLE(V3d_SpotLight, V3d_PositionLight)
-
 //! Creation and modification of a spot.
 class V3d_SpotLight : public V3d_PositionLight
 {
+  DEFINE_STANDARD_RTTIEXT(V3d_SpotLight, V3d_PositionLight)
 public:
 
   //! Creates a light source of the Spot type in the viewer.
@@ -78,9 +75,9 @@ public:
                             Standard_Real theY,
                             Standard_Real theZ) Standard_OVERRIDE
   {
-    myLight.Position.x() = theX;
-    myLight.Position.y() = theY;
-    myLight.Position.z() = theZ;
+    myPosition.x() = theX;
+    myPosition.y() = theY;
+    myPosition.z() = theZ;
   }
 
   //! Defines the direction of the light source.
@@ -89,29 +86,14 @@ public:
                      Standard_Real theVy,
                      Standard_Real theVz)
   {
-    myLight.Direction.x() = static_cast<Standard_ShortReal> (theVx);
-    myLight.Direction.y() = static_cast<Standard_ShortReal> (theVy);
-    myLight.Direction.z() = static_cast<Standard_ShortReal> (theVz);
+    myDirection.x() = static_cast<Standard_ShortReal> (theVx);
+    myDirection.y() = static_cast<Standard_ShortReal> (theVy);
+    myDirection.z() = static_cast<Standard_ShortReal> (theVz);
   }
 
   //! Defines the direction of the light source
   //! according to a predefined directional vector.
   Standard_EXPORT void SetDirection (V3d_TypeOfOrientation theOrientation);
-
-  //! Defines the coefficients of attenuation.
-  //! Warning! raises BadValue from V3d
-  //! if one of the coefficient is < 0 or > 1.
-  Standard_EXPORT void SetAttenuation (const Standard_Real theConstAttenuation,
-                                       const Standard_Real theLinearAttenuation);
-
-  //! Defines the coefficient of concentration.
-  //! if the coefficient is < 0 or > 1.
-  Standard_EXPORT void SetConcentration (const Standard_Real theConcentration);
-
-  //! Defines the spot angle in RADIANS.
-  //! Warning: raises BadValue from from V3d
-  //! If the angle is <= 0 or > PI.
-  Standard_EXPORT void SetAngle (const Standard_Real theAngle);
 
   //! Display the graphic structure of light source
   //! in the chosen view. We have three type of representation
@@ -131,9 +113,9 @@ public:
                   Standard_Real& theVy,
                   Standard_Real& theVz) const
   {
-    theVx = myLight.Direction.x();
-    theVy = myLight.Direction.y();
-    theVz = myLight.Direction.z();
+    theVx = myDirection.x();
+    theVy = myDirection.y();
+    theVz = myDirection.z();
   }
 
   //! Returns the position of the light source.
@@ -141,25 +123,10 @@ public:
                          Standard_Real& theY,
                          Standard_Real& theZ) const Standard_OVERRIDE
   {
-    theX = myLight.Position.x();
-    theY = myLight.Position.y();
-    theZ = myLight.Position.z();
+    theX = myPosition.x();
+    theY = myPosition.y();
+    theZ = myPosition.z();
   }
-
-  //! Returns the attenuation factors A1,A2 of the light source.
-  void Attenuation (Standard_Real& theConstAttentuation,
-                    Standard_Real& theLinearAttentuation) const
-  {
-    theConstAttentuation  = myLight.ConstAttenuation();
-    theLinearAttentuation = myLight.LinearAttenuation();
-  }
-
-  Standard_Real Concentration() const { return myLight.Concentration(); }
-
-  //! Returns the spot angle.
-  Standard_Real Angle() const { return myLight.Angle(); }
-
-  DEFINE_STANDARD_RTTIEXT(V3d_SpotLight,V3d_PositionLight)
 
 private:
 
@@ -167,5 +134,7 @@ private:
   Standard_EXPORT void Symbol (const Handle(Graphic3d_Group)& theSymbol,
                                const Handle(V3d_View)& theView) const Standard_OVERRIDE;
 };
+
+DEFINE_STANDARD_HANDLE(V3d_SpotLight, V3d_PositionLight)
 
 #endif // _V3d_SpotLight_HeaderFile

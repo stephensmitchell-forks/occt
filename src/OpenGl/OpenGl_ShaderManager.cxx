@@ -260,31 +260,32 @@ const char THE_FRAG_write_oit_buffers[] =
   static const GLfloat THE_DEFAULT_SPOT_CUTOFF   = 180.0f;
 
   //! Bind FFP light source.
-  static void bindLight (const OpenGl_Light& theLight,
+  static void bindLight (const Graphic3d_CLight& theLight,
                          const GLenum        theLightGlId,
                          const OpenGl_Mat4&  theModelView,
                          OpenGl_Context*     theCtx)
   {
     // the light is a headlight?
-    if (theLight.IsHeadlight)
+    if (theLight.IsHeadlight())
     {
       theCtx->core11->glMatrixMode (GL_MODELVIEW);
       theCtx->core11->glLoadIdentity();
     }
 
     // setup light type
-    switch (theLight.Type)
+    const Graphic3d_Vec4& aLightColor = theLight.PackedColor();
+    switch (theLight.Type())
     {
       case Graphic3d_TOLS_AMBIENT    : break; // handled by separate if-clause at beginning of method
       case Graphic3d_TOLS_DIRECTIONAL:
       {
         // if the last parameter of GL_POSITION, is zero, the corresponding light source is a Directional one
-        const OpenGl_Vec4 anInfDir = -theLight.Direction;
+        const OpenGl_Vec4 anInfDir = -theLight.PackedDirection();
 
         // to create a realistic effect,  set the GL_SPECULAR parameter to the same value as the GL_DIFFUSE.
         theCtx->core11->glLightfv (theLightGlId, GL_AMBIENT,               THE_DEFAULT_AMBIENT);
-        theCtx->core11->glLightfv (theLightGlId, GL_DIFFUSE,               theLight.Color.GetData());
-        theCtx->core11->glLightfv (theLightGlId, GL_SPECULAR,              theLight.Color.GetData());
+        theCtx->core11->glLightfv (theLightGlId, GL_DIFFUSE,               aLightColor.GetData());
+        theCtx->core11->glLightfv (theLightGlId, GL_SPECULAR,              aLightColor.GetData());
         theCtx->core11->glLightfv (theLightGlId, GL_POSITION,              anInfDir.GetData());
         theCtx->core11->glLightfv (theLightGlId, GL_SPOT_DIRECTION,        THE_DEFAULT_SPOT_DIR);
         theCtx->core11->glLightf  (theLightGlId, GL_SPOT_EXPONENT,         THE_DEFAULT_SPOT_EXPONENT);
@@ -294,10 +295,10 @@ const char THE_FRAG_write_oit_buffers[] =
       case Graphic3d_TOLS_POSITIONAL:
       {
         // to create a realistic effect, set the GL_SPECULAR parameter to the same value as the GL_DIFFUSE
-        const OpenGl_Vec4 aPosition (static_cast<float>(theLight.Position.x()), static_cast<float>(theLight.Position.y()), static_cast<float>(theLight.Position.z()), 1.0f);
+        const OpenGl_Vec4 aPosition (static_cast<float>(theLight.Position().x()), static_cast<float>(theLight.Position().y()), static_cast<float>(theLight.Position().z()), 1.0f);
         theCtx->core11->glLightfv (theLightGlId, GL_AMBIENT,               THE_DEFAULT_AMBIENT);
-        theCtx->core11->glLightfv (theLightGlId, GL_DIFFUSE,               theLight.Color.GetData());
-        theCtx->core11->glLightfv (theLightGlId, GL_SPECULAR,              theLight.Color.GetData());
+        theCtx->core11->glLightfv (theLightGlId, GL_DIFFUSE,               aLightColor.GetData());
+        theCtx->core11->glLightfv (theLightGlId, GL_SPECULAR,              aLightColor.GetData());
         theCtx->core11->glLightfv (theLightGlId, GL_POSITION,              aPosition.GetData());
         theCtx->core11->glLightfv (theLightGlId, GL_SPOT_DIRECTION,        THE_DEFAULT_SPOT_DIR);
         theCtx->core11->glLightf  (theLightGlId, GL_SPOT_EXPONENT,         THE_DEFAULT_SPOT_EXPONENT);
@@ -309,12 +310,12 @@ const char THE_FRAG_write_oit_buffers[] =
       }
       case Graphic3d_TOLS_SPOT:
       {
-        const OpenGl_Vec4 aPosition (static_cast<float>(theLight.Position.x()), static_cast<float>(theLight.Position.y()), static_cast<float>(theLight.Position.z()), 1.0f);
+        const OpenGl_Vec4 aPosition (static_cast<float>(theLight.Position().x()), static_cast<float>(theLight.Position().y()), static_cast<float>(theLight.Position().z()), 1.0f);
         theCtx->core11->glLightfv (theLightGlId, GL_AMBIENT,               THE_DEFAULT_AMBIENT);
-        theCtx->core11->glLightfv (theLightGlId, GL_DIFFUSE,               theLight.Color.GetData());
-        theCtx->core11->glLightfv (theLightGlId, GL_SPECULAR,              theLight.Color.GetData());
+        theCtx->core11->glLightfv (theLightGlId, GL_DIFFUSE,               aLightColor.GetData());
+        theCtx->core11->glLightfv (theLightGlId, GL_SPECULAR,              aLightColor.GetData());
         theCtx->core11->glLightfv (theLightGlId, GL_POSITION,              aPosition.GetData());
-        theCtx->core11->glLightfv (theLightGlId, GL_SPOT_DIRECTION,        theLight.Direction.GetData());
+        theCtx->core11->glLightfv (theLightGlId, GL_SPOT_DIRECTION,        theLight.PackedDirection().GetData());
         theCtx->core11->glLightf  (theLightGlId, GL_SPOT_EXPONENT,         theLight.Concentration() * 128.0f);
         theCtx->core11->glLightf  (theLightGlId, GL_SPOT_CUTOFF,          (theLight.Angle() * 180.0f) / GLfloat(M_PI));
         theCtx->core11->glLightf  (theLightGlId, GL_CONSTANT_ATTENUATION,  theLight.ConstAttenuation());
@@ -325,7 +326,7 @@ const char THE_FRAG_write_oit_buffers[] =
     }
 
     // restore matrix in case of headlight
-    if (theLight.IsHeadlight)
+    if (theLight.IsHeadlight())
     {
       theCtx->core11->glLoadMatrixf (theModelView.GetData());
     }
@@ -484,12 +485,13 @@ void OpenGl_ShaderManager::switchLightPrograms()
     case Graphic3d_TOSM_VERTEX:   aKey = "g_"; break;
     case Graphic3d_TOSM_FRAGMENT: aKey = "p_"; break;
   }
-  const OpenGl_ListOfLight* aLights = myLightSourceState.LightSources();
-  if (aLights != NULL)
+  const Handle(Graphic3d_ListOfCLight)& aLights = myLightSourceState.LightSources();
+  if (!aLights.IsNull())
   {
-    for (OpenGl_ListOfLight::Iterator aLightIter (*aLights); aLightIter.More(); aLightIter.Next())
+    for (Graphic3d_ListOfCLight::Iterator aLightIter (*aLights); aLightIter.More(); aLightIter.Next())
     {
-      switch (aLightIter.Value().Type)
+      // note that we ignore Graphic3d_CLight::IsEnabled here, since in this way light can be enabled dynamically
+      switch (aLightIter.Value()->Type())
       {
         case Graphic3d_TOLS_AMBIENT:
           break; // skip ambient
@@ -517,7 +519,7 @@ void OpenGl_ShaderManager::switchLightPrograms()
 // function : UpdateLightSourceStateTo
 // purpose  : Updates state of OCCT light sources
 // =======================================================================
-void OpenGl_ShaderManager::UpdateLightSourceStateTo (const OpenGl_ListOfLight* theLights)
+void OpenGl_ShaderManager::UpdateLightSourceStateTo (const Handle(Graphic3d_ListOfCLight)& theLights)
 {
   myLightSourceState.Set (theLights);
   myLightSourceState.Update();
@@ -596,14 +598,18 @@ void OpenGl_ShaderManager::PushLightSourceState (const Handle(OpenGl_ShaderProgr
     GLenum aLightGlId = GL_LIGHT0;
     OpenGl_Vec4 anAmbient (0.0f, 0.0f, 0.0f, 0.0f);
     const OpenGl_Mat4 aModelView = myWorldViewState.WorldViewMatrix() * myModelWorldState.ModelWorldMatrix();
-    if (myLightSourceState.LightSources() != NULL)
+    if (!myLightSourceState.LightSources().IsNull())
     {
       for (Graphic3d_ListOfCLight::Iterator aLightIt (*myLightSourceState.LightSources()); aLightIt.More(); aLightIt.Next())
       {
-        const Graphic3d_CLight& aLight = aLightIt.Value();
-        if (aLight.Type == Graphic3d_TOLS_AMBIENT)
+        const Graphic3d_CLight& aLight = *aLightIt.Value();
+        if (!aLight.IsEnabled())
         {
-          anAmbient += aLight.Color;
+          continue;
+        }
+        else if (aLight.Type() == Graphic3d_TOLS_AMBIENT)
+        {
+          anAmbient += aLight.PackedColor();
           continue;
         }
         else if (aLightGlId > GL_LIGHT7) // only 8 lights in FFP...
@@ -659,7 +665,7 @@ void OpenGl_ShaderManager::PushLightSourceState (const Handle(OpenGl_ShaderProgr
     myLightTypeArray.ChangeValue (aLightIt).Type = -1;
   }
 
-  if (myLightSourceState.LightSources() == NULL
+  if (myLightSourceState.LightSources().IsNull()
    || myLightSourceState.LightSources()->IsEmpty())
   {
     theProgram->SetUniform (myContext,
@@ -677,12 +683,15 @@ void OpenGl_ShaderManager::PushLightSourceState (const Handle(OpenGl_ShaderProgr
 
   OpenGl_Vec4 anAmbient (0.0f, 0.0f, 0.0f, 0.0f);
   Standard_Integer aLightsNb = 0;
-  for (OpenGl_ListOfLight::Iterator anIter (*myLightSourceState.LightSources()); anIter.More(); anIter.Next())
+  for (Graphic3d_ListOfCLight::Iterator anIter (*myLightSourceState.LightSources()); anIter.More(); anIter.Next())
   {
-    const OpenGl_Light& aLight = anIter.Value();
-    if (aLight.Type == Graphic3d_TOLS_AMBIENT)
+    const Graphic3d_CLight& aLight = *anIter.Value();
+    if (aLight.Type() == Graphic3d_TOLS_AMBIENT)
     {
-      anAmbient += aLight.Color;
+      if (aLight.IsEnabled())
+      {
+        anAmbient += aLight.PackedColor();
+      }
       continue;
     }
     else if (aLightsNb >= aNbLightsMax)
@@ -697,33 +706,44 @@ void OpenGl_ShaderManager::PushLightSourceState (const Handle(OpenGl_ShaderProgr
 
     OpenGl_ShaderLightType&       aLightType   = myLightTypeArray.ChangeValue (aLightsNb);
     OpenGl_ShaderLightParameters& aLightParams = myLightParamsArray.ChangeValue (aLightsNb);
-    aLightType.Type        = aLight.Type;
-    aLightType.IsHeadlight = aLight.IsHeadlight;
-    aLightParams.Color     = aLight.Color;
-    if (aLight.Type == Graphic3d_TOLS_DIRECTIONAL)
+    if (!aLight.IsEnabled())
     {
-      aLightParams.Position = -aLight.Direction;
+      // we cannot just ignore disabled light in case of static generation of GLSL code for specific combination of lights;
+      // instead - replace it with a black light so that it will have no influence on result
+      aLightType.Type        = -1; // Graphic3d_TOLS_AMBIENT can be used instead
+      aLightType.IsHeadlight = false;
+      aLightParams.Color     = OpenGl_Vec4 (0.0f, 0.0f, 0.0f, 0.0f);
+      ++aLightsNb;
+      continue;
     }
-    else if (!aLight.IsHeadlight)
+
+    aLightType.Type        = aLight.Type();
+    aLightType.IsHeadlight = aLight.IsHeadlight();
+    aLightParams.Color     = aLight.PackedColor();
+    if (aLight.Type() == Graphic3d_TOLS_DIRECTIONAL)
     {
-      aLightParams.Position.x() = static_cast<float>(aLight.Position.x() - myLocalOrigin.X());
-      aLightParams.Position.y() = static_cast<float>(aLight.Position.y() - myLocalOrigin.Y());
-      aLightParams.Position.z() = static_cast<float>(aLight.Position.z() - myLocalOrigin.Z());
+      aLightParams.Position = -aLight.PackedDirection();
+    }
+    else if (!aLight.IsHeadlight())
+    {
+      aLightParams.Position.x() = static_cast<float>(aLight.Position().x() - myLocalOrigin.X());
+      aLightParams.Position.y() = static_cast<float>(aLight.Position().y() - myLocalOrigin.Y());
+      aLightParams.Position.z() = static_cast<float>(aLight.Position().z() - myLocalOrigin.Z());
       aLightParams.Position.w() = 1.0f;
     }
     else
     {
-      aLightParams.Position.x() = static_cast<float>(aLight.Position.x());
-      aLightParams.Position.y() = static_cast<float>(aLight.Position.y());
-      aLightParams.Position.z() = static_cast<float>(aLight.Position.z());
+      aLightParams.Position.x() = static_cast<float>(aLight.Position().x());
+      aLightParams.Position.y() = static_cast<float>(aLight.Position().y());
+      aLightParams.Position.z() = static_cast<float>(aLight.Position().z());
       aLightParams.Position.w() = 1.0f;
     }
 
-    if (aLight.Type == Graphic3d_TOLS_SPOT)
+    if (aLight.Type() == Graphic3d_TOLS_SPOT)
     {
-      aLightParams.Direction = aLight.Direction;
+      aLightParams.Direction = aLight.PackedDirection();
     }
-    aLightParams.Parameters = aLight.Params;
+    aLightParams.Parameters = aLight.PackedParams();
     ++aLightsNb;
   }
 
@@ -1666,14 +1686,14 @@ TCollection_AsciiString OpenGl_ShaderManager::stdComputeLighting (Standard_Integ
 {
   Standard_Integer aLightsMap[Graphic3d_TOLS_SPOT + 1] = { 0, 0, 0, 0 };
   TCollection_AsciiString aLightsFunc, aLightsLoop;
-  const OpenGl_ListOfLight* aLights = myLightSourceState.LightSources();
-  if (aLights != NULL)
   theNbLights = 0;
+  const Handle(Graphic3d_ListOfCLight)& aLights = myLightSourceState.LightSources();
+  if (!aLights.IsNull())
   {
     Standard_Integer anIndex = 0;
-    for (OpenGl_ListOfLight::Iterator aLightIter (*aLights); aLightIter.More(); aLightIter.Next(), ++anIndex)
+    for (Graphic3d_ListOfCLight::Iterator aLightIter (*aLights); aLightIter.More(); aLightIter.Next(), ++anIndex)
     {
-      switch (aLightIter.Value().Type)
+      switch (aLightIter.Value()->Type())
       {
         case Graphic3d_TOLS_AMBIENT:
           --anIndex;
@@ -1688,7 +1708,7 @@ TCollection_AsciiString OpenGl_ShaderManager::stdComputeLighting (Standard_Integ
           aLightsLoop = aLightsLoop + EOL"    spotLight (" + anIndex + ", theNormal, theView, aPoint, theIsFront);";
           break;
       }
-      aLightsMap[aLightIter.Value().Type] += 1;
+      aLightsMap[aLightIter.Value()->Type()] += 1;
     }
     theNbLights = anIndex;
     const Standard_Integer aNbLoopLights = aLightsMap[Graphic3d_TOLS_DIRECTIONAL]

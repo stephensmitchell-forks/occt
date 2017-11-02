@@ -20,13 +20,10 @@
 #include <V3d_PositionLight.hxx>
 #include <V3d_TypeOfOrientation.hxx>
 
-class V3d_Viewer;
-class V3d_DirectionalLight;
-DEFINE_STANDARD_HANDLE(V3d_DirectionalLight, V3d_PositionLight)
-
 //! Directional light source for a viewer.
 class V3d_DirectionalLight : public V3d_PositionLight
 {
+  DEFINE_STANDARD_RTTIEXT(V3d_DirectionalLight, V3d_PositionLight)
 public:
 
   //! Creates a directional light source in the viewer.
@@ -68,9 +65,6 @@ public:
                             Standard_Real theYp,
                             Standard_Real theZp) Standard_OVERRIDE { SetDisplayPosition (theXp, theYp, theZp); }
 
-  //! Modifies the smoothing angle (in radians)
-  Standard_EXPORT void SetSmoothAngle (const Standard_Real theValue);
-
   //! Display the graphic structure of light source
   //! in the chosen view. We have three type of representation
   //! - SIMPLE   : Only the light source is displayed.
@@ -98,12 +92,10 @@ public:
                   Standard_Real& theVy,
                   Standard_Real& theVz) const
   {
-    theVx = myLight.Direction.x();
-    theVy = myLight.Direction.y();
-    theVz = myLight.Direction.z();
+    theVx = myDirection.x();
+    theVy = myDirection.y();
+    theVz = myDirection.z();
   }
-
-  DEFINE_STANDARD_RTTIEXT(V3d_DirectionalLight,V3d_PositionLight)
 
 private:
 
@@ -114,6 +106,25 @@ private:
 private:
 
   gp_Pnt myDisplayPosition;
+
+//! @name hidden properties not applicable to directional light
+private:
+
+  using Graphic3d_CLight::Position;
+  using Graphic3d_CLight::SetPosition;
+  using Graphic3d_CLight::ConstAttenuation;
+  using Graphic3d_CLight::SetConstAttenuation;
+  using Graphic3d_CLight::LinearAttenuation;
+  using Graphic3d_CLight::SetLinearAttenuation;
+  using Graphic3d_CLight::Attenuation;
+  using Graphic3d_CLight::SetAttenuation;
+  using Graphic3d_CLight::Angle;
+  using Graphic3d_CLight::SetAngle;
+  using Graphic3d_CLight::Concentration;
+  using Graphic3d_CLight::SetConcentration;
+
 };
+
+DEFINE_STANDARD_HANDLE(V3d_DirectionalLight, V3d_PositionLight)
 
 #endif // _V3d_DirectionalLight_HeaderFile
