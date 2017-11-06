@@ -1,0 +1,12 @@
+RWObj.cxx
+RWObj.hxx
+RWObj_CoordinateSystem.hxx
+RWObj_CoordinateSystemFlipper.hxx
+RWObj_Material.hxx
+RWObj_MtlReader.cxx
+RWObj_MtlReader.hxx
+RWObj_Reader.cxx
+RWObj_Reader.hxx
+RWObj_SubMesh.hxx
+RWObj_SubMeshReason.hxx
+RWObj_Tools.hxx

@@ -41,6 +41,7 @@
 #include <Quantity_HArray1OfColor.hxx>
 #include <Quantity_NameOfColor.hxx>
 #include <RWStl.hxx>
+#include <RWObj.hxx>
 #include <SelectMgr_SelectionManager.hxx>
 #include <Standard_ErrorHandler.hxx>
 #include <StdSelect_ViewerSelector3d.hxx>
@@ -135,6 +136,31 @@ static Standard_Integer readstl(Draw_Interpretor& theDI,
     }
   }
 
+  return 0;
+}
+
+//=============================================================================
+//function : readobj
+//purpose  : Reads OBJ file
+//=============================================================================
+static Standard_Integer readobj (Draw_Interpretor& theDI,
+                                 Standard_Integer theArgc,
+                                 const char** theArgv)
+{
+  if (theArgc != 3)
+  {
+    std::cout << "wrong number of parameters\n";
+    return 1;
+  }
+
+  Handle(Draw_ProgressIndicator) aProgress = new Draw_ProgressIndicator (theDI, 1);
+  Handle(Poly_Triangulation) aTriangulation = RWObj::ReadFile (theArgv[2], aProgress);
+
+  TopoDS_Face aFace;
+  BRep_Builder aBuiler;
+  aBuiler.MakeFace (aFace);
+  aBuiler.UpdateFace (aFace, aTriangulation);
+  DBRep::Set (theArgv[1], aFace);
   return 0;
 }
 
@@ -1249,6 +1275,9 @@ void  XSDRAWSTLVRML::InitCommands (Draw_Interpretor& theCommands)
   theCommands.Add ("writestl",  "shape file [ascii/binary (0/1) : 1 by default] [InParallel (0/1) : 0 by default]",__FILE__,writestl,g);
   theCommands.Add ("readstl",   "shape file [triangulation: no by default]",__FILE__,readstl,g);
   theCommands.Add ("loadvrml" , "shape file",__FILE__,loadvrml,g);
+  theCommands.Add ("readobj",
+                   "readobj shape file"
+                   "\n\t\t: Read OBJ file and create triangulation face from it.",__FILE__,readobj,g);
 
   theCommands.Add ("meshfromstl",     "creates MeshVS_Mesh from STL file",            __FILE__, createmesh,      g );
   theCommands.Add ("mesh3delem",      "creates 3d element mesh to test",              __FILE__, create3d,        g );
