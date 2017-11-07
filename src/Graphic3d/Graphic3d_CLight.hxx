@@ -104,6 +104,23 @@ public:
   //! @endcode
   Standard_ShortReal LinearAttenuation() const { return myParams.y(); }
 
+  //! Returns quadratic attenuation factor of positional/spot light source; 0.0 by default.
+  //! Distance attenuation factors of reducing positional/spot light intensity depending on the distance from its position:
+  //! @code
+  //!   float anAttenuation = 1.0 / (ConstAttenuation() + LinearAttenuation() * theDistance + QuadraticAttenuation() * theDistance * theDistance);
+  //! @endcode
+  Standard_ShortReal QuadraticAttenuation() const { return myParams.z(); }
+
+  //! Returns the attenuation factors.
+  void Attenuation (Standard_ShortReal& theConstAttenuation,
+                    Standard_ShortReal& theLinearAttenuation,
+                    Standard_ShortReal& theQuadraticAttenuation) const
+  {
+    theConstAttenuation     = ConstAttenuation();
+    theLinearAttenuation    = LinearAttenuation();
+    theQuadraticAttenuation = QuadraticAttenuation();
+  }
+
   //! Returns the attenuation factors.
   void Attenuation (Standard_Real& theConstAttenuation,
                     Standard_Real& theLinearAttenuation) const
@@ -114,7 +131,8 @@ public:
 
   //! Defines the coefficients of attenuation; values should be >= 0.0 and their summ should not be equal to 0.
   Standard_EXPORT void SetAttenuation (Standard_ShortReal theConstAttenuation,
-                                       Standard_ShortReal theLinearAttenuation);
+                                       Standard_ShortReal theLinearAttenuation,
+                                       Standard_ShortReal theQuadraticAttenuation = 0.0f);
 
 //! @name directional/spot light additional properties
 public:
@@ -142,7 +160,7 @@ public:
 public:
 
   //! Returns an angle in radians of the cone created by the spot; 30 degrees by default.
-  Standard_ShortReal Angle() const { return myParams.z(); }
+  Standard_ShortReal Angle() const { return myDirection.w(); }
 
   //! Angle in radians of the cone created by the spot, should be within range (0.0, M_PI).
   Standard_EXPORT void SetAngle (Standard_ShortReal theAngle);
@@ -187,9 +205,11 @@ public:
   const Graphic3d_Vec4& PackedParams() const { return myParams; }
 
   //! Returns the color of the light source with dummy Alpha component, which should be ignored.
+  //! Note that 4th component is reserved and should not be used in math.
   const Graphic3d_Vec4& PackedColor() const { return myColor; }
 
   //! Returns direction of directional/spot light.
+  //! Note that the 4th component is reserved for Spot Light cutoff angle parameter.
   const Graphic3d_Vec4& PackedDirection() const { return myDirection; }
 
   //! @return modification counter
@@ -203,11 +223,14 @@ private:
   //! Access positional/spot light linear attenuation coefficient from packed vector.
   Standard_ShortReal& changeLinearAttenuation() { return myParams.y(); }
 
-  //! Access spotlight angle parameter from packed vector.
-  Standard_ShortReal& changeAngle()             { return myParams.z();  }
+  //! Access positional/spot light quadratic attenuation coefficient from packed vector.
+  Standard_ShortReal& changeQuadraticAttenuation() { return myParams.z();  }
 
   //! Access spotlight concentration parameter from packed vector.
   Standard_ShortReal& changeConcentration()     { return myParams.w();  }
+
+  //! Access spotlight angle parameter from packed vector.
+  Standard_ShortReal& changeAngle()             { return myDirection.w();  }
 
 private:
 
