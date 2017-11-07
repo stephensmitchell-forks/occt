@@ -23,14 +23,19 @@ uniform               vec4  occLightSources[THE_MAX_LIGHTS * 4];  //!< packed li
 // light source properties accessors
 int   occLight_Type              (in int theId) { return occLightSourcesTypes[theId].x; }
 int   occLight_IsHeadlight       (in int theId) { return occLightSourcesTypes[theId].y; }
-vec4  occLight_Diffuse           (in int theId) { return occLightSources[theId * 4 + 0]; }
-vec4  occLight_Specular          (in int theId) { return occLightSources[theId * 4 + 0]; }
-vec4  occLight_Position          (in int theId) { return occLightSources[theId * 4 + 1]; }
-vec4  occLight_SpotDirection     (in int theId) { return occLightSources[theId * 4 + 2]; }
+vec3  occLight_Diffuse           (in int theId) { return occLightSources[theId * 4 + 0].xyz; }
+vec3  occLight_Specular          (in int theId) { return occLightSources[theId * 4 + 0].xyz; }
+vec3  occLight_Position          (in int theId) { return occLightSources[theId * 4 + 1].xyz; }
+vec3  occLight_SpotDirection     (in int theId) { return occLightSources[theId * 4 + 2].xyz; }
+float occLight_SpotCutOff        (in int theId) { return occLightSources[theId * 4 + 2].w; }
 float occLight_ConstAttenuation  (in int theId) { return occLightSources[theId * 4 + 3].x; }
 float occLight_LinearAttenuation (in int theId) { return occLightSources[theId * 4 + 3].y; }
-float occLight_SpotCutOff        (in int theId) { return occLightSources[theId * 4 + 3].z; }
+float occLight_QuadraticAttenuation(in int theId) { return occLightSources[theId * 4 + 3].z; }
 float occLight_SpotExponent      (in int theId) { return occLightSources[theId * 4 + 3].w; }
+float occLight_Attenuation (in int theId, in float theDist)
+{
+  return 1.0 / (occLightSources[theId * 4 + 3].x + occLightSources[theId * 4 + 3].y * theDist + occLightSources[theId * 4 + 3].z * theDist * theDist);
+}
 #endif
 
 // material state

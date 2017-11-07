@@ -74,12 +74,14 @@ Graphic3d_CLight::Graphic3d_CLight (Graphic3d_TypeOfLightSource theType)
     {
       changeConstAttenuation()  = 1.0f;
       changeLinearAttenuation() = 0.0f;
+      changeQuadraticAttenuation() = 0.0f;
       break;
     }
     case Graphic3d_TOLS_SPOT:
     {
       changeConstAttenuation()  = 1.0f;
       changeLinearAttenuation() = 0.0f;
+      changeQuadraticAttenuation() = 0.0f;
       changeConcentration()     = 1.0f;
       changeAngle()             = 0.523599f;
       break;
@@ -179,18 +181,23 @@ void Graphic3d_CLight::SetAngle (Standard_ShortReal theAngle)
 // purpose  :
 // =======================================================================
 void Graphic3d_CLight::SetAttenuation (Standard_ShortReal theConstAttenuation,
-                                       Standard_ShortReal theLinearAttenuation)
+                                       Standard_ShortReal theLinearAttenuation,
+                                       Standard_ShortReal theQuadraticAttenuation)
 {
   Standard_ProgramError_Raise_if (myType != Graphic3d_TOLS_POSITIONAL
                                && myType != Graphic3d_TOLS_SPOT,
                                   "Graphic3d_CLight::SetAttenuation(), incorrect light type");
   Standard_OutOfRange_Raise_if (theConstAttenuation  < 0.0f
                              || theLinearAttenuation < 0.0f
-                             || theConstAttenuation + theLinearAttenuation == 0.0f, "Graphic3d_CLight::SetAttenuation(), bad coefficient");
+                             || theQuadraticAttenuation < 0.0f
+                             || theConstAttenuation + theLinearAttenuation + theQuadraticAttenuation == 0.0f,
+                                "Graphic3d_CLight::SetAttenuation(), bad coefficient");
   updateRevisionIf (Abs (changeConstAttenuation()  - theConstAttenuation)  > ShortRealEpsilon()
-                 || Abs (changeLinearAttenuation() - theLinearAttenuation) > ShortRealEpsilon());
+                 || Abs (changeLinearAttenuation() - theLinearAttenuation) > ShortRealEpsilon()
+                 || Abs (changeQuadraticAttenuation() - theQuadraticAttenuation) > ShortRealEpsilon());
   changeConstAttenuation()  = theConstAttenuation;
   changeLinearAttenuation() = theLinearAttenuation;
+  changeQuadraticAttenuation() = theQuadraticAttenuation;
 }
 
 // =======================================================================

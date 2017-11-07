@@ -28,7 +28,7 @@ void pointLight (in int  theId,
                  in vec3 theView,
                  in vec3 thePoint)
 {
-  vec3 aLight = occLight_Position (theId).xyz;
+  vec3 aLight = occLight_Position (theId);
   if (occLight_IsHeadlight (theId) == 0)
   {
     aLight = vec3 (occWorldViewMatrix * vec4 (aLight, 1.0));
@@ -37,9 +37,6 @@ void pointLight (in int  theId,
 
   float aDist = length (aLight);
   aLight = aLight * (1.0 / aDist);
-
-  float anAtten = 1.0 / (occLight_ConstAttenuation  (theId)
-                       + occLight_LinearAttenuation (theId) * aDist);
 
   vec3 aHalf = normalize (aLight + theView);
 
@@ -53,8 +50,9 @@ void pointLight (in int  theId,
     aSpecl = pow (aNdotH, gl_FrontFacing ? occFrontMaterial_Shininess() : occBackMaterial_Shininess());
   }
 
-  Diffuse  += occLight_Diffuse  (theId).rgb * aNdotL * anAtten;
-  Specular += occLight_Specular (theId).rgb * aSpecl * anAtten;
+  float anAtten = occLight_Attenuation (theId, aDist);
+  Diffuse  += occLight_Diffuse  (theId) * aNdotL * anAtten;
+  Specular += occLight_Specular (theId) * aSpecl * anAtten;
 }
 
 //! Computes contribution of spotlight source
@@ -63,8 +61,8 @@ void spotLight (in int  theId,
                 in vec3 theView,
                 in vec3 thePoint)
 {
-  vec3 aLight   = occLight_Position      (theId).xyz;
-  vec3 aSpotDir = occLight_SpotDirection (theId).xyz;
+  vec3 aLight   = occLight_Position      (theId);
+  vec3 aSpotDir = occLight_SpotDirection (theId);
   if (occLight_IsHeadlight (theId) == 0)
   {
     aLight   = vec3 (occWorldViewMatrix * vec4 (aLight,   1.0));
@@ -85,8 +83,7 @@ void spotLight (in int  theId,
   }
 
   float anExponent = occLight_SpotExponent (theId);
-  float anAtten    = 1.0 / (occLight_ConstAttenuation  (theId)
-                          + occLight_LinearAttenuation (theId) * aDist);
+  float anAtten = occLight_Attenuation (theId, aDist);
   if (anExponent > 0.0)
   {
     anAtten *= pow (aCosA, anExponent * 128.0);
@@ -104,8 +101,8 @@ void spotLight (in int  theId,
     aSpecl = pow (aNdotH, gl_FrontFacing ? occFrontMaterial_Shininess() : occBackMaterial_Shininess());
   }
 
-  Diffuse  += occLight_Diffuse  (theId).rgb * aNdotL * anAtten;
-  Specular += occLight_Specular (theId).rgb * aSpecl * anAtten;
+  Diffuse  += occLight_Diffuse  (theId) * aNdotL * anAtten;
+  Specular += occLight_Specular (theId) * aSpecl * anAtten;
 }
 
 //! Computes contribution of directional light source
@@ -113,7 +110,7 @@ void directionalLight (in int  theId,
                        in vec3 theNormal,
                        in vec3 theView)
 {
-  vec3 aLight = normalize (occLight_Position (theId).xyz);
+  vec3 aLight = normalize (occLight_Position (theId));
   if (occLight_IsHeadlight (theId) == 0)
   {
     aLight = vec3 (occWorldViewMatrix * vec4 (aLight, 0.0));
@@ -131,8 +128,8 @@ void directionalLight (in int  theId,
     aSpecl = pow (aNdotH, gl_FrontFacing ? occFrontMaterial_Shininess() : occBackMaterial_Shininess());
   }
 
-  Diffuse  += occLight_Diffuse  (theId).rgb * aNdotL;
-  Specular += occLight_Specular (theId).rgb * aSpecl;
+  Diffuse  += occLight_Diffuse  (theId) * aNdotL;
+  Specular += occLight_Specular (theId) * aSpecl;
 }
 
 //! Computes illumination from light sources

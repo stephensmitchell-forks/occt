@@ -9280,7 +9280,7 @@ static int VLight (Draw_Interpretor& theDi,
   }
 
   Standard_Real anXYZ[3]   = {};
-  Standard_Real anAtten[2] = {};
+  Standard_ShortReal anAtten[3] = {};
   if (theArgsNb < 2)
   {
     // print lights info
@@ -9318,8 +9318,7 @@ static int VLight (Draw_Interpretor& theDi,
           theDi << "  Smoothness: " << aLight->Smoothness() << "\n";
           aLight->Position  (anXYZ[0], anXYZ[1], anXYZ[2]);
           theDi << "  Position:   " << anXYZ[0] << ", " << anXYZ[1] << ", " << anXYZ[2] << "\n";
-          aLight->Attenuation (anAtten[0], anAtten[1]);
-          theDi << "  Atten.:     " << anAtten[0] << " " << anAtten[1] << "\n";
+          theDi << "  Atten.:     1.0 / (" << aLight->ConstAttenuation() << " + " << aLight->LinearAttenuation() << " * d + " << aLight->QuadraticAttenuation() << " * d * d)\n";
           break;
         }
         case V3d_SPOT:
@@ -9331,8 +9330,7 @@ static int VLight (Draw_Interpretor& theDi,
           theDi << "  Position:   " << anXYZ[0] << ", " << anXYZ[1] << ", " << anXYZ[2] << "\n";
           aLight->Direction (anXYZ[0], anXYZ[1], anXYZ[2]);
           theDi << "  Direction:  " << anXYZ[0] << ", " << anXYZ[1] << ", " << anXYZ[2] << "\n";
-          aLight->Attenuation (anAtten[0], anAtten[1]);
-          theDi << "  Atten.:     " << anAtten[0] << " " << anAtten[1] << "\n";
+          theDi << "  Atten.:     1.0 / (" << aLight->ConstAttenuation() << " + " << aLight->LinearAttenuation() << " * d + " << aLight->QuadraticAttenuation() << " * d * d)\n";
           theDi << "  Angle:      " << (aLight->Angle() * 180.0 / M_PI) << "\n";
           theDi << "  Exponent:   " << aLight->Concentration() << "\n";
           break;
@@ -9735,6 +9733,26 @@ static int VLight (Draw_Interpretor& theDi,
       Standard_ShortReal anAngle = (Standard_ShortReal )Atof (theArgVec[anArgIt]);
       aLightCurr->SetAngle (Standard_ShortReal (anAngle / 180.0 * M_PI));
     }
+    else if (anArgCase.IsEqual ("ATTEN")
+          || anArgCase.IsEqual ("ATTENUATION")
+          || anArgCase.IsEqual ("-ATTEN")
+          || anArgCase.IsEqual ("-ATTENUATION"))
+    {
+      if (anArgIt + 3 >= theArgsNb
+       || aLightCurr.IsNull()
+       || (aLightCurr->Type() != Graphic3d_TOLS_POSITIONAL
+        && aLightCurr->Type() != Graphic3d_TOLS_SPOT))
+      {
+        std::cerr << "Wrong syntax at argument '" << anArg << "'!\n";
+        return 1;
+      }
+
+      anAtten[0] = (Standard_ShortReal )Atof (theArgVec[anArgIt + 1]);
+      anAtten[1] = (Standard_ShortReal )Atof (theArgVec[anArgIt + 2]);
+      anAtten[2] = (Standard_ShortReal )Atof (theArgVec[anArgIt + 3]);
+      anArgIt += 3;
+      aLightCurr->SetAttenuation (anAtten[0], anAtten[1], anAtten[2]);
+    }
     else if (anArgCase.IsEqual ("CONSTATTEN")
           || anArgCase.IsEqual ("CONSTATTENUATION")
           || anArgCase.IsEqual ("-CONSTATTEN")
@@ -9749,9 +9767,9 @@ static int VLight (Draw_Interpretor& theDi,
         return 1;
       }
 
-      aLightCurr->Attenuation (anAtten[0], anAtten[1]);
-      anAtten[0] = Atof (theArgVec[anArgIt]);
-      aLightCurr->SetAttenuation ((Standard_ShortReal )anAtten[0], (Standard_ShortReal )anAtten[1]);
+      aLightCurr->Attenuation (anAtten[0], anAtten[1], anAtten[2]);
+      anAtten[0] = (Standard_ShortReal )Atof (theArgVec[anArgIt]);
+      aLightCurr->SetAttenuation (anAtten[0], anAtten[1], anAtten[2]);
     }
     else if (anArgCase.IsEqual ("LINATTEN")
           || anArgCase.IsEqual ("LINEARATTEN")
@@ -9769,9 +9787,31 @@ static int VLight (Draw_Interpretor& theDi,
         return 1;
       }
 
-      aLightCurr->Attenuation (anAtten[0], anAtten[1]);
-      anAtten[1] = Atof (theArgVec[anArgIt]);
-      aLightCurr->SetAttenuation ((Standard_ShortReal )anAtten[0], (Standard_ShortReal )anAtten[1]);
+      aLightCurr->Attenuation (anAtten[0], anAtten[1], anAtten[2]);
+      anAtten[1] = (Standard_ShortReal )Atof (theArgVec[anArgIt]);
+      aLightCurr->SetAttenuation (anAtten[0], anAtten[1], anAtten[2]);
+    }
+    else if (anArgCase.IsEqual ("QUADATTEN")
+          || anArgCase.IsEqual ("QUADRATICATTEN")
+          || anArgCase.IsEqual ("QUADATTENUATION")
+          || anArgCase.IsEqual ("QUADRATICATTENUATION")
+          || anArgCase.IsEqual ("-QUADATTEN")
+          || anArgCase.IsEqual ("-QUADRATICATTEN")
+          || anArgCase.IsEqual ("-QUADATTENUATION")
+          || anArgCase.IsEqual ("-QUADRATICATTENUATION"))
+    {
+      if (++anArgIt >= theArgsNb
+       || aLightCurr.IsNull()
+       || (aLightCurr->Type() != Graphic3d_TOLS_POSITIONAL
+        && aLightCurr->Type() != Graphic3d_TOLS_SPOT))
+      {
+        std::cerr << "Wrong syntax at argument '" << anArg << "'!\n";
+        return 1;
+      }
+
+      aLightCurr->Attenuation (anAtten[0], anAtten[1], anAtten[2]);
+      anAtten[2] = (Standard_ShortReal )Atof (theArgVec[anArgIt]);
+      aLightCurr->SetAttenuation (anAtten[0], anAtten[1], anAtten[2]);
     }
     else if (anArgCase.IsEqual ("EXP")
           || anArgCase.IsEqual ("EXPONENT")
@@ -12198,13 +12238,15 @@ void ViewerTest::ViewerCommands(Draw_Interpretor& theCommands)
     "\n        -{head}light 0|1"
     "\n        -{sm}oothness value"
     "\n        -{int}ensity value"
+    "\n        -{atten}uation const linear quadratic"
     "\n        -{constAtten}uation value"
     "\n        -{linearAtten}uation value"
+    "\n        -{quadraticAtten}uation value"
     "\n        -angle angleDeg"
     "\n        -{spotexp}onent value"
     "\n        -local|-global"
     "\n\n        example: vlight -add positional -head 1 -pos 0 1 1 -color red"
-    "\n        example: vlight -change 0 -direction 0 -1 0 -linearAttenuation 0.2",
+    "\n        example: vlight -change 0 -direction 0 -1 0 -attenuation 1.0 0.2 0.0",
     __FILE__, VLight, group);
   theCommands.Add("vraytrace",
             "vraytrace [0|1]"
