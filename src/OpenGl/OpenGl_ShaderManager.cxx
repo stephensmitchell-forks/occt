@@ -77,7 +77,7 @@ const char THE_FUNC_pointLight[] =
   EOL"                 in vec3 thePoint,"
   EOL"                 in bool theIsFront)"
   EOL"{"
-  EOL"  vec3 aLight = occLight_Position (theId).xyz;"
+  EOL"  vec3 aLight = occLight_Position (theId);"
   EOL"  if (occLight_IsHeadlight (theId) == 0)"
   EOL"  {"
   EOL"    aLight = vec3 (occWorldViewMatrix * vec4 (aLight, 1.0));"
@@ -87,8 +87,7 @@ const char THE_FUNC_pointLight[] =
   EOL"  float aDist = length (aLight);"
   EOL"  aLight = aLight * (1.0 / aDist);"
   EOL
-  EOL"  float anAtten = 1.0 / (occLight_ConstAttenuation  (theId)"
-  EOL"                       + occLight_LinearAttenuation (theId) * aDist);"
+  EOL"  float anAtten = occLight_Attenuation (theId, aDist);"
   EOL
   EOL"  vec3 aHalf = normalize (aLight + theView);"
   EOL
@@ -102,8 +101,8 @@ const char THE_FUNC_pointLight[] =
   EOL"    aSpecl = pow (aNdotH, theIsFront ? occFrontMaterial_Shininess() : occBackMaterial_Shininess());"
   EOL"  }"
   EOL
-  EOL"Diffuse  += occLight_Diffuse  (theId).rgb * aNdotL * anAtten;"
-  EOL"Specular += occLight_Specular (theId).rgb * aSpecl * anAtten;"
+  EOL"Diffuse  += occLight_Diffuse  (theId) * aNdotL * anAtten;"
+  EOL"Specular += occLight_Specular (theId) * aSpecl * anAtten;"
   EOL"}";
 
 //! Function computes contribution of spotlight source
@@ -114,8 +113,8 @@ const char THE_FUNC_spotLight[] =
   EOL"                in vec3 thePoint,"
   EOL"                in bool theIsFront)"
   EOL"{"
-  EOL"  vec3 aLight   = occLight_Position      (theId).xyz;"
-  EOL"  vec3 aSpotDir = occLight_SpotDirection (theId).xyz;"
+  EOL"  vec3 aLight   = occLight_Position      (theId);"
+  EOL"  vec3 aSpotDir = occLight_SpotDirection (theId);"
   EOL"  if (occLight_IsHeadlight (theId) == 0)"
   EOL"  {"
   EOL"    aLight   = vec3 (occWorldViewMatrix * vec4 (aLight,   1.0));"
@@ -135,8 +134,7 @@ const char THE_FUNC_spotLight[] =
   EOL"  }"
   EOL
   EOL"  float anExponent = occLight_SpotExponent (theId);"
-  EOL"  float anAtten    = 1.0 / (occLight_ConstAttenuation  (theId)"
-  EOL"                          + occLight_LinearAttenuation (theId) * aDist);"
+  EOL"  float anAtten = occLight_Attenuation (theId, aDist);"
   EOL"  if (anExponent > 0.0)"
   EOL"  {"
   EOL"    anAtten *= pow (aCosA, anExponent * 128.0);"
@@ -154,8 +152,8 @@ const char THE_FUNC_spotLight[] =
   EOL"    aSpecl = pow (aNdotH, theIsFront ? occFrontMaterial_Shininess() : occBackMaterial_Shininess());"
   EOL"  }"
   EOL
-  EOL"  Diffuse  += occLight_Diffuse  (theId).rgb * aNdotL * anAtten;"
-  EOL"  Specular += occLight_Specular (theId).rgb * aSpecl * anAtten;"
+  EOL"  Diffuse  += occLight_Diffuse  (theId) * aNdotL * anAtten;"
+  EOL"  Specular += occLight_Specular (theId) * aSpecl * anAtten;"
   EOL"}";
 
 //! Function computes contribution of directional light source
@@ -183,8 +181,8 @@ const char THE_FUNC_directionalLight[] =
   EOL"    aSpecl = pow (aNdotH, theIsFront ? occFrontMaterial_Shininess() : occBackMaterial_Shininess());"
   EOL"  }"
   EOL
-  EOL"  Diffuse  += occLight_Diffuse  (theId).rgb * aNdotL;"
-  EOL"  Specular += occLight_Specular (theId).rgb * aSpecl;"
+  EOL"  Diffuse  += occLight_Diffuse  (theId) * aNdotL;"
+  EOL"  Specular += occLight_Specular (theId) * aSpecl;"
   EOL"}";
 
 //! The same as THE_FUNC_directionalLight but for the light with zero index
@@ -280,7 +278,7 @@ const char THE_FRAG_write_oit_buffers[] =
       case Graphic3d_TOLS_DIRECTIONAL:
       {
         // if the last parameter of GL_POSITION, is zero, the corresponding light source is a Directional one
-        const OpenGl_Vec4 anInfDir = -theLight.PackedDirection();
+        const OpenGl_Vec4 anInfDir = OpenGl_Vec4 (-theLight.Direction(), 0.0f);
 
         // to create a realistic effect,  set the GL_SPECULAR parameter to the same value as the GL_DIFFUSE.
         theCtx->core11->glLightfv (theLightGlId, GL_AMBIENT,               THE_DEFAULT_AMBIENT);
@@ -305,22 +303,23 @@ const char THE_FRAG_write_oit_buffers[] =
         theCtx->core11->glLightf  (theLightGlId, GL_SPOT_CUTOFF,           THE_DEFAULT_SPOT_CUTOFF);
         theCtx->core11->glLightf  (theLightGlId, GL_CONSTANT_ATTENUATION,  theLight.ConstAttenuation());
         theCtx->core11->glLightf  (theLightGlId, GL_LINEAR_ATTENUATION,    theLight.LinearAttenuation());
-        theCtx->core11->glLightf  (theLightGlId, GL_QUADRATIC_ATTENUATION, 0.0);
+        theCtx->core11->glLightf  (theLightGlId, GL_QUADRATIC_ATTENUATION, theLight.QuadraticAttenuation());
         break;
       }
       case Graphic3d_TOLS_SPOT:
       {
         const OpenGl_Vec4 aPosition (static_cast<float>(theLight.Position().x()), static_cast<float>(theLight.Position().y()), static_cast<float>(theLight.Position().z()), 1.0f);
+        const OpenGl_Vec3 aDirection = theLight.Direction();
         theCtx->core11->glLightfv (theLightGlId, GL_AMBIENT,               THE_DEFAULT_AMBIENT);
         theCtx->core11->glLightfv (theLightGlId, GL_DIFFUSE,               aLightColor.GetData());
         theCtx->core11->glLightfv (theLightGlId, GL_SPECULAR,              aLightColor.GetData());
         theCtx->core11->glLightfv (theLightGlId, GL_POSITION,              aPosition.GetData());
-        theCtx->core11->glLightfv (theLightGlId, GL_SPOT_DIRECTION,        theLight.PackedDirection().GetData());
+        theCtx->core11->glLightfv (theLightGlId, GL_SPOT_DIRECTION,        aDirection.GetData());
         theCtx->core11->glLightf  (theLightGlId, GL_SPOT_EXPONENT,         theLight.Concentration() * 128.0f);
         theCtx->core11->glLightf  (theLightGlId, GL_SPOT_CUTOFF,          (theLight.Angle() * 180.0f) / GLfloat(M_PI));
         theCtx->core11->glLightf  (theLightGlId, GL_CONSTANT_ATTENUATION,  theLight.ConstAttenuation());
         theCtx->core11->glLightf  (theLightGlId, GL_LINEAR_ATTENUATION,    theLight.LinearAttenuation());
-        theCtx->core11->glLightf  (theLightGlId, GL_QUADRATIC_ATTENUATION, 0.0f);
+        theCtx->core11->glLightf  (theLightGlId, GL_QUADRATIC_ATTENUATION, theLight.QuadraticAttenuation());
         break;
       }
     }

@@ -102,13 +102,15 @@ uniform               vec4 occLightAmbient;      //!< Cumulative ambient color
 uniform THE_PREC_ENUM int  occLightSourcesCount; //!< Total number of light sources
 int   occLight_Type              (in int theId); //!< Type of light source
 int   occLight_IsHeadlight       (in int theId); //!< Is light a headlight?
-vec4  occLight_Diffuse           (in int theId); //!< Diffuse intensity for specified light source
-vec4  occLight_Specular          (in int theId); //!< Specular intensity (currently - equals to diffuse intencity)
-vec4  occLight_Position          (in int theId); //!< Position of specified light source
-vec4  occLight_SpotDirection     (in int theId); //!< Direction of specified spot light source
+vec3  occLight_Diffuse           (in int theId); //!< Diffuse intensity for specified light source
+vec3  occLight_Specular          (in int theId); //!< Specular intensity (currently - equals to diffuse intensity)
+vec3  occLight_Position          (in int theId); //!< Position of specified light source
+vec3  occLight_SpotDirection     (in int theId); //!< Direction of specified spot light source
+float occLight_SpotCutOff        (in int theId); //!< Maximum spread angle of the spot light (in radians)
 float occLight_ConstAttenuation  (in int theId); //!< Const attenuation factor of positional light source
 float occLight_LinearAttenuation (in int theId); //!< Linear attenuation factor of positional light source
-float occLight_SpotCutOff        (in int theId); //!< Maximum spread angle of the spot light (in radians)
+float occLight_QuadraticAttenuation (in int theId); //!< Quadratic attenuation factor of positional light source
+float occLight_Attenuation       (in int theId, in float theDist); //!< attenuation coefficient of positional light source
 float occLight_SpotExponent      (in int theId); //!< Attenuation of the spot light intensity (from 0 to 1)
 #endif
 

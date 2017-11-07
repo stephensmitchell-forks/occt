@@ -25,7 +25,7 @@ Graphic3d_CLight::Graphic3d_CLight (Graphic3d_TypeOfLightSource theType)
 : myPosition   (0.0,  0.0,  0.0),
   myColor      (1.0f, 1.0f, 1.0f, 1.0f),
   myDirection  (0.0f, 0.0f, 0.0f, 0.0f),
-  myParams     (0.0f, 0.0f, 0.0f, 0.0f),
+  myParams     (1.0f, 0.0f, 0.0f, 0.0f),
   mySmoothness (0.0f),
   myIntensity  (1.0f),
   myType       (theType),
@@ -108,6 +108,19 @@ void Graphic3d_CLight::SetLinearAttenuation (Standard_ShortReal theLinearAttenua
                                   "Graphic3d_CLight::SetLinearAttenuation(), incorrect light type");
   Standard_OutOfRange_Raise_if (theLinearAttenuation < 0.0f, "Graphic3d_CLight::SetLinearAttenuation(), bad coefficient");
   changeLinearAttenuation() = theLinearAttenuation;
+}
+
+// =======================================================================
+// function : SetQuadraticAttenuation
+// purpose  :
+// =======================================================================
+void Graphic3d_CLight::SetQuadraticAttenuation (Standard_ShortReal theQuadraticAttenuation)
+{
+  Standard_ProgramError_Raise_if (myType != Graphic3d_TOLS_POSITIONAL
+                               && myType != Graphic3d_TOLS_SPOT,
+                                  "Graphic3d_CLight::SetQuadraticAttenuation(), incorrect light type");
+  Standard_OutOfRange_Raise_if (theQuadraticAttenuation < 0.0f, "Graphic3d_CLight::SetQuadraticAttenuation(), bad coefficient");
+  changeQuadraticAttenuation() = theQuadraticAttenuation;
 }
 
 // =======================================================================
