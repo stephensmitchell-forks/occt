@@ -9329,8 +9329,7 @@ static int VLight (Draw_Interpretor& theDi,
           {
             aLightPos->Position  (anXYZ[0], anXYZ[1], anXYZ[2]);
             theDi << "  Position:   " << anXYZ[0] << ", " << anXYZ[1] << ", " << anXYZ[2] << "\n";
-            aLightPos->Attenuation (anAtten[0], anAtten[1]);
-            theDi << "  Atten.:     " << anAtten[0] << " " << anAtten[1] << "\n";
+            theDi << "  Atten.:     " << aLightPos->ConstAttenuation() << " " << aLightPos->LinearAttenuation() << " " << aLightPos->QuadraticAttenuation() << "\n";
           }
           break;
         }
@@ -9347,7 +9346,7 @@ static int VLight (Draw_Interpretor& theDi,
             aLightSpot->Direction (anXYZ[0], anXYZ[1], anXYZ[2]);
             theDi << "  Direction:  " << anXYZ[0] << ", " << anXYZ[1] << ", " << anXYZ[2] << "\n";
             aLightSpot->Attenuation (anAtten[0], anAtten[1]);
-            theDi << "  Atten.:     " << anAtten[0] << " " << anAtten[1] << "\n";
+            theDi << "  Atten.:     " << aLightSpot->ConstAttenuation() << " " << aLightSpot->LinearAttenuation() << " " << aLightSpot->QuadraticAttenuation() << "\n";
             theDi << "  Angle:      " << (aLightSpot->Angle() * 180.0 / M_PI) << "\n";
             theDi << "  Exponent:   " << aLightSpot->Concentration() << "\n";
           }
@@ -9728,15 +9727,11 @@ static int VLight (Draw_Interpretor& theDi,
 
       if (!aLightPos.IsNull())
       {
-        aLightPos->Attenuation (anAtten[0], anAtten[1]);
-        anAtten[0] = Atof (theArgVec[anArgIt]);
-        aLightPos->SetAttenuation ((Standard_ShortReal )anAtten[0], (Standard_ShortReal )anAtten[1]);
+        aLightPos->SetConstAttenuation ((Standard_ShortReal )Atof (theArgVec[anArgIt]));
       }
       else if (!aLightSpot.IsNull())
       {
-        aLightSpot->Attenuation (anAtten[0], anAtten[1]);
-        anAtten[0] = Atof (theArgVec[anArgIt]);
-        aLightSpot->SetAttenuation ((Standard_ShortReal )anAtten[0], (Standard_ShortReal )anAtten[1]);
+        aLightSpot->SetConstAttenuation ((Standard_ShortReal )Atof (theArgVec[anArgIt]));
       }
       else
       {
@@ -9756,15 +9751,36 @@ static int VLight (Draw_Interpretor& theDi,
 
       if (!aLightPos.IsNull())
       {
-        aLightPos->Attenuation (anAtten[0], anAtten[1]);
-        anAtten[1] = Atof (theArgVec[anArgIt]);
-        aLightPos->SetAttenuation ((Standard_ShortReal )anAtten[0], (Standard_ShortReal )anAtten[1]);
+        aLightPos->SetLinearAttenuation ((Standard_ShortReal )Atof (theArgVec[anArgIt]));
       }
       else if (!aLightSpot.IsNull())
       {
-        aLightSpot->Attenuation (anAtten[0], anAtten[1]);
-        anAtten[1] = Atof (theArgVec[anArgIt]);
-        aLightSpot->SetAttenuation ((Standard_ShortReal )anAtten[0], (Standard_ShortReal )anAtten[1]);
+        aLightSpot->SetLinearAttenuation ((Standard_ShortReal )Atof (theArgVec[anArgIt]));
+      }
+      else
+      {
+        std::cerr << "Wrong syntax at argument '" << anArg << "'!\n";
+        return 1;
+      }
+    }
+    else if (anArgCase.IsEqual ("QUADATTEN")
+          || anArgCase.IsEqual ("QUADRATICATTEN")
+          || anArgCase.IsEqual ("QUADATTENUATION")
+          || anArgCase.IsEqual ("QUADRATICATTENUATION"))
+    {
+      if (++anArgIt >= theArgsNb)
+      {
+        std::cerr << "Wrong syntax at argument '" << anArg << "'!\n";
+        return 1;
+      }
+
+      if (!aLightPos.IsNull())
+      {
+        aLightPos->SetQuadraticAttenuation ((Standard_ShortReal )Atof (theArgVec[anArgIt]));
+      }
+      else if (!aLightSpot.IsNull())
+      {
+        aLightSpot->SetQuadraticAttenuation ((Standard_ShortReal )Atof (theArgVec[anArgIt]));
       }
       else
       {
@@ -12023,6 +12039,7 @@ void ViewerTest::ViewerCommands(Draw_Interpretor& theCommands)
     "\n        {int}ensity value"
     "\n        {constAtten}uation value"
     "\n        {linearAtten}uation value"
+    "\n        {quadraticAtten}uation value"
     "\n        angle angleDeg"
     "\n        {spotexp}onent value"
     "\n        local|global"
