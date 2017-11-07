@@ -37,7 +37,8 @@ struct Graphic3d_ZLayerSettings
     myUseEnvironmentTexture (Standard_True),
     myToEnableDepthTest (Standard_True),
     myToEnableDepthWrite(Standard_True),
-    myToClearDepth      (Standard_True) {}
+    myToClearDepth      (Standard_True),
+    myToRenderInDepthPrepass (Standard_True) {}
 
   //! Return user-provided name.
   const TCollection_AsciiString& Name() const { return myName; }
@@ -91,6 +92,12 @@ struct Graphic3d_ZLayerSettings
 
   //! Set if depth values should be cleared before drawing the layer.
   void SetClearDepth (const Standard_Boolean theValue) { myToClearDepth = theValue; }
+
+  //! Return TRUE if layer should be rendered within depth pre-pass; TRUE by default.
+  Standard_Boolean ToRenderInDepthPrepass() const { return myToRenderInDepthPrepass; }
+
+  //! Set if layer should be rendered within depth pre-pass.
+  void SetRenderInDepthPrepass (Standard_Boolean theToRender) { myToRenderInDepthPrepass = theToRender; }
 
   //! Return glPolygonOffset() arguments.
   const Graphic3d_PolygonOffset& PolygonOffset() const { return myPolygonOffset; }
@@ -168,6 +175,7 @@ protected:
   Standard_Boolean            myToEnableDepthTest;     //!< option to enable depth test
   Standard_Boolean            myToEnableDepthWrite;    //!< option to enable write depth values
   Standard_Boolean            myToClearDepth;          //!< option to clear depth values before drawing the layer
+  Standard_Boolean            myToRenderInDepthPrepass;//!< option to render layer within depth pre-pass
 
 };
 

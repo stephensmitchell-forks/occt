@@ -714,7 +714,8 @@ void OpenGl_PrimitiveArray::Render (const Handle(OpenGl_Workspace)& theWorkspace
                                         && myVboAttribs->HasColorAttribute();
   const Standard_Boolean isLightOn = !anAspectFace->IsNoLighting()
                                   && !myVboAttribs.IsNull()
-                                  &&  myVboAttribs->HasNormalAttribute();
+                                  &&  myVboAttribs->HasNormalAttribute()
+                                  &&  aCtx->ColorMask();
 
   // Temporarily disable environment mapping
   Handle(OpenGl_Texture) aTextureBack;
