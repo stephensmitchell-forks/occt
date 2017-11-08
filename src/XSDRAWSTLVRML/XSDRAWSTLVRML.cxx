@@ -67,6 +67,9 @@
 #include <XSDRAWSTLVRML_DataSource.hxx>
 #include <XSDRAWSTLVRML_DataSource3D.hxx>
 #include <XSDRAWSTLVRML_DrawableMesh.hxx>
+#include <BRepLib_PointCloudShape.hxx>
+#include <Precision.hxx>
+#include <TCollection_AsciiString.hxx>
 
 #ifndef _STDIO_H
 #include <stdio.h>
@@ -1237,6 +1240,182 @@ static Standard_Integer meshinfo(Draw_Interpretor& di,
 
   return 0;
 }
+//-----------------------------------------------------------------------------
+typedef NCollection_DataMap<TopoDS_Shape, Quantity_Color> Draw_DataMapOfShapeColor;
+
+class PlyWriter_PointCloudShape : public BRepLib_PointCloudShape
+{
+public:
+
+  //! Constructor initialized 
+  Standard_EXPORT PlyWriter_PointCloudShape(const TopoDS_Shape& theShape, 
+    Standard_Real theTol = Precision::Confusion(), Draw_DataMapOfShapeColor* theFaceColor = 0) : 
+      BRepLib_PointCloudShape(theShape, theTol), myFaceColor(theFaceColor) {}
+
+
+      Standard_EXPORT void Init( const Standard_CString& theFileName, 
+        Standard_Integer theNbPoints,
+        Standard_Real theDensity, Standard_Real theDist,
+        Standard_Boolean theWriteNormals = Standard_True, 
+        Standard_Boolean theWriteColors = Standard_False) 
+      {
+        myWriteNormals = theWriteNormals;
+        myWriteColors = (theWriteColors &&  myFaceColor != 0 && myFaceColor->Extent());
+        myfileply.open(theFileName);
+        //  Standard_Boolean isWriteColors = (theWriteColors && myFaceColor.Extent());
+        //
+        //  std::ofstream fileply (theFilename);
+        myfileply << "ply" << std::endl;
+        myfileply << "format ascii 1.0" << std::endl;
+        myfileply << "comment array of emulated scan points" << "\n";
+        myfileply << "comment distance from shape in the range [0 "<<theDist<<"]"<<"\n";
+        if( !Precision::IsInfinite(theDensity))
+          myfileply << "comment  density of points : "<<theDensity<<"\n";
+        myfileply << "element vertex " << theNbPoints<< "\n";
+        myfileply << "property float x" << "\n";
+        myfileply << "property float y" << "\n";
+        myfileply << "property float z" << "\n";
+        if(theWriteColors &&  myFaceColor != 0 && myFaceColor->Extent())
+        {
+          myfileply << "property float red" << "\n";
+          myfileply << "property float green" << "\n";
+          myfileply << "property float blue" << "\n";
+        }
+
+        if(theWriteNormals)
+        {
+          myfileply << "property float nx" << "\n";
+          myfileply << "property float ny" << "\n";
+          myfileply << "property float nz" << "\n";
+          myfileply << "end_header" << "\n";
+        }
+
+      }
+
+ 
+
+  void Close()
+  {
+    myfileply.close();
+  }
+
+ 
+protected:
+
+  virtual void addPoint( const gp_Pnt& thePoint, const gp_Vec& theNorm, const TopoDS_Shape& theFace)
+  {
+
+    myfileply <<(float)thePoint.X()<<" "<<(float)thePoint.Y()<< " "<<(float)thePoint.Z();
+    if(myWriteColors)
+    {
+      Quantity_Color aColor;
+      if(myFaceColor != 0 && myFaceColor->IsBound(theFace))
+        aColor = myFaceColor->Find(theFace);
+      myfileply <<" "<<aColor.Red()<<" "<<aColor.Green()<< " "<<aColor.Blue();
+    }
+    
+    if(myWriteNormals)
+      myfileply <<" "<<(float)theNorm.X()<<" "<<(float)theNorm.Y()<< " "<<(float)theNorm.Z();
+    myfileply <<"\n";
+
+  };
+
+  
+private:
+ 
+  std::ofstream myfileply;
+  Draw_DataMapOfShapeColor* myFaceColor;
+  Standard_Boolean myWriteNormals;
+  Standard_Boolean myWriteColors;
+
+};
+
+static Standard_Integer writepointclouds_ply(Draw_Interpretor& di,
+                                 Standard_Integer argc,
+                                 const char** argv)
+{
+  if( argc < 3)
+  {
+    cout<<"Invalid number of arguments shoul be: writepointclouds_ply filename shape [-dist val][-dens val] [-tol val] [-color r g b]"<<endl;
+    return 1;
+  }
+  TCollection_AsciiString aFileName(argv[1]);
+  aFileName.LowerCase();
+  if( aFileName.Search(".ply") == -1)
+  {
+    cout<< "Invalid name of file. File should hve extension ply"<<endl;
+    return 1;
+  }
+
+  Standard_Integer k =2;
+  TopoDS_Shape aShape = DBRep::Get(argv[k++]);
+  if( aShape.IsNull())
+  {
+    cout<<"Invalid shape"<<endl;
+    return 1;
+  }
+  Standard_Real aDist =0.;
+  Standard_Real aDens = Precision::Infinite();
+  Standard_Real aTol = Precision::Confusion();
+  Standard_Boolean hasColors = Standard_False;
+  Standard_Boolean hasNormals = Standard_True;
+  Standard_Boolean isDensityPoints = Standard_False;
+  Quantity_Color aColor;
+  for( ; k < argc; k++)
+  {
+    TCollection_AsciiString aStr(argv[k]); 
+    aStr.LowerCase();
+    if(aStr == "-nonormal")
+      hasNormals =Standard_False;
+    else if(aStr == "-dist")
+    {
+      if(k == argc-1 || argv[k+1][0] == '-')
+        continue;
+      aDist = atof(argv[++k]);
+    }
+    else if(aStr == "-dens")
+    {
+      aDens = 0.;
+      if(k == argc-1 || argv[k+1][0] == '-')
+        continue;
+      aDens = atof(argv[++k]);
+      isDensityPoints = Standard_True;
+    }
+    else if(aStr == "-tol")
+    {
+      if(k == argc-1 || argv[k+1][0] == '-')
+        continue;
+      aTol = Max(atof(argv[++k]), Precision::Confusion());
+    }
+    else if(aStr == "-color")
+    {
+      Standard_Real aVal[3];
+      k++;
+      Standard_Integer i =0;
+      for( ; i < 3 && k < argc; k++)
+        aVal[i] = atof(argv[k]);
+      if(i ==3)
+      {
+        hasColors = Standard_True;
+        aColor.SetValues(aVal[0], aVal[1], aVal[2],Quantity_TOC_RGB); 
+      }
+    }
+  }
+
+  PlyWriter_PointCloudShape aPlyWriter(aShape, aTol);
+  Standard_Integer aNbPoints = isDensityPoints ? aPlyWriter.NbPointsDensity(aDens) : aPlyWriter.NbPointsTriangulation();
+  di<<"Number of the generated points : "<<aNbPoints<<"\n";
+  aPlyWriter.Init(argv[1], aNbPoints,aDens, aDist,hasNormals, hasColors);
+  
+  Standard_Boolean isDone = (isDensityPoints ? aPlyWriter.GetPointsDensity(aDens) : aPlyWriter.GetPointsTriang());
+  aPlyWriter.Close();
+  if(!isDone)
+    cout<<"Point cloud was not written in file "<<argv[1]<<endl;
+  else
+     cout<<"Point cloud was written in file"<<argv[1]<<" successfully"<<endl;
+  return 0;
+  
+}
 
 //-----------------------------------------------------------------------------
 
@@ -1268,6 +1447,7 @@ void  XSDRAWSTLVRML::InitCommands (Draw_Interpretor& theCommands)
   theCommands.Add ("meshdeform",      "display deformed mesh",                        __FILE__, meshdeform,      g );
   theCommands.Add ("mesh_edge_width", "set width of edges",                           __FILE__, mesh_edge_width, g );
   theCommands.Add ("meshinfo",        "displays the number of nodes and triangles",   __FILE__, meshinfo,        g );
+  theCommands.Add ("writepointclouds_ply", "writepointclouds_ply filename shape [-dist val][-dens val] [-tol val] [-color r g b]", __FILE__, writepointclouds_ply, g);
 }
 
 //==============================================================================

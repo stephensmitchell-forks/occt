@@ -1,0 +1,4 @@
+# !!!! This file is generated automatically, do not edit manually
+set filename RONDELLE_DE_REGLAGE
+cd [locate_data_file AssemblyControl]
+

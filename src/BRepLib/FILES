@@ -33,3 +33,5 @@ BRepLib_MakeWire_1.cxx
 BRepLib_ShapeModification.hxx
 BRepLib_ShellError.hxx
 BRepLib_WireError.hxx
+BRepLib_PointCloudShape.hxx
+BRepLib_PointCloudShape.cxx
