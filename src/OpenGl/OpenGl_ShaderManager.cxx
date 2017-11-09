@@ -642,7 +642,9 @@ void OpenGl_ShaderManager::PushLightSourceState (const Handle(OpenGl_ShaderProgr
   }
 
   const Standard_Integer aNbLightsMax = theProgram->NbLightsMax();
-  if (aNbLightsMax == 0)
+  const GLint anAmbientLoc = theProgram->GetStateLocation (OpenGl_OCC_LIGHT_AMBIENT);
+  if (aNbLightsMax == 0
+   && anAmbientLoc == OpenGl_ShaderProgram::INVALID_LOCATION)
   {
     return;
   }
@@ -664,7 +666,7 @@ void OpenGl_ShaderManager::PushLightSourceState (const Handle(OpenGl_ShaderProgr
                             theProgram->GetStateLocation (OpenGl_OCC_LIGHT_SOURCE_COUNT),
                             0);
     theProgram->SetUniform (myContext,
-                            theProgram->GetStateLocation (OpenGl_OCC_LIGHT_AMBIENT),
+                            anAmbientLoc,
                             OpenGl_Vec4 (0.0f, 0.0f, 0.0f, 0.0f));
     theProgram->SetUniform (myContext,
                             theProgram->GetStateLocation (OpenGl_OCC_LIGHT_SOURCE_TYPES),
@@ -729,7 +731,7 @@ void OpenGl_ShaderManager::PushLightSourceState (const Handle(OpenGl_ShaderProgr
                           theProgram->GetStateLocation (OpenGl_OCC_LIGHT_SOURCE_COUNT),
                           aLightsNb);
   theProgram->SetUniform (myContext,
-                          theProgram->GetStateLocation (OpenGl_OCC_LIGHT_AMBIENT),
+                          anAmbientLoc,
                           anAmbient);
   theProgram->SetUniform (myContext,
                           theProgram->GetStateLocation (OpenGl_OCC_LIGHT_SOURCE_TYPES),
