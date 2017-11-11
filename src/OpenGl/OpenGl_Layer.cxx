@@ -679,14 +679,24 @@ void OpenGl_Layer::Render (const Handle(OpenGl_Workspace)&   theWorkspace,
   glDepthMask (theWorkspace->UseDepthWrite() ? GL_TRUE : GL_FALSE);
 
   const Standard_Boolean hasLocalCS = !myLayerSettings.OriginTransformation().IsNull();
-  const Handle(OpenGl_Context)&   aCtx         = theWorkspace->GetGlContext();
+  const Handle(OpenGl_Context)& aCtx = theWorkspace->GetGlContext();
   {
-    const Handle(Graphic3d_ListOfCLight)& aLights = !myLayerSettings.Lights().IsNull() ? myLayerSettings.Lights() : theWorkspace->View()->Lights();
     const Handle(OpenGl_ShaderManager)& aManager = aCtx->ShaderManager();
-    if (aLights != aManager->LightSourceState().LightSources())
+    if (!aCtx->ColorMask())
     {
-      aManager->UpdateLightSourceStateTo (aLights);
-      ///myLastLightSourceState = StateInfo (myCurrLightSourceState, aManager->LightSourceState().Index());
+      if (!aManager->LightSourceState().LightSources().IsNull())
+      {
+        aManager->UpdateLightSourceStateTo (Handle(Graphic3d_ListOfCLight)()); ///
+      }
+    }
+    else
+    {
+      const Handle(Graphic3d_ListOfCLight)& aLights = !myLayerSettings.Lights().IsNull() ? myLayerSettings.Lights() : theWorkspace->View()->Lights();
+      if (aLights != aManager->LightSourceState().LightSources())
+      {
+        aManager->UpdateLightSourceStateTo (aLights);
+        ///myLastLightSourceState = StateInfo (myCurrLightSourceState, aManager->LightSourceState().Index());
+      }
     }
   }
 

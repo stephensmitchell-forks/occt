@@ -1477,7 +1477,12 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramFlat (Handle(OpenGl_Shad
   }
   else
   {
-    if ((theBits & OpenGl_PO_TextureRGB) != 0)
+    if ((theBits & OpenGl_PO_NoColor) != 0)
+    {
+      aSrcFragGetColor     = EOL"vec4 getColor(void) { return vec4(1.0, 1.0, 1.0, 1.0); }";
+      aSrcFragMainGetColor = EOL"  occFragColor = getColor();";
+    }
+    else if ((theBits & OpenGl_PO_TextureRGB) != 0)
     {
       aSrcVertExtraOut  += THE_VARY_TexCoord_OUT;
       aSrcFragExtraOut  += THE_VARY_TexCoord_IN;
