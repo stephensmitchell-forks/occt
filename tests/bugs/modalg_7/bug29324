@@ -1,0 +1,17 @@
+puts "========"
+puts "OCC29324"
+puts "========"
+puts ""
+#################################################
+# Incomplete result of Volume Maker algorithm
+#################################################
+
+restore [locate_data_file bug29324_faces.brep] lf
+
+mkvolume result lf -c -ai
+
+checkshape result
+checknbshapes result -vertex 32 -edge 52 -wire 26 -face 24 -shell 3 -solid 3
+checkprops result -s 343.2 -v 140.976
+
+checkview -display result -2d -path ${imagedir}/${test_image}.png

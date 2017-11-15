@@ -273,7 +273,7 @@ void BOPAlgo_ShellSplitter::SplitBlock(BOPTools_ConnexityBlock& aCB)
           if (aMEFP.Contains(aE)) {
             const BOPCol_ListOfShape& aLFP = aMEFP.FindFromKey(aE);
             aNbFP = aLFP.Extent();
-            if (aNbFP > 1) {
+            if (!(aNbFP % 2)) {
               continue;
             }
           }
@@ -397,134 +397,164 @@ void RefineShell(TopoDS_Shell& theShell,
                  BOPCol_ListOfShape& theLShSp)
 {
   TopoDS_Iterator aIt(theShell);
-  if(!aIt.More()) {
+  if (!aIt.More())
+    // No faces in the shell
     return;
-  }
-  //
-  // Find edges with more than 2 adjacent faces - branch edges -
+
+  // Find edges with more than two adjacent faces - branch edges -
   // edges on which the input shell should be split
   BOPCol_MapOfShape aMEStop;
   //
   Standard_Integer i, aNbMEF = theMEF.Extent();
-  for (i = 1; i <= aNbMEF; ++i) {
-    const TopoDS_Edge& aE = TopoDS::Edge(theMEF.FindKey(i));
+  for (i = 1; i <= aNbMEF; ++i)
+  {
+    const TopoDS_Shape& aE = theMEF.FindKey(i);
     const BOPCol_ListOfShape& aLF = theMEF(i);
-    if (aLF.Extent() > 2) {
+    if (aLF.Extent() > 2)
+    {
       aMEStop.Add(aE);
       continue;
     }
-    //
+
     // check for internal edges - count faces, in which the edge
     // is internal, twice
     Standard_Integer aNbF = 0;
     BOPCol_ListIteratorOfListOfShape aItLF(aLF);
-    for (; aItLF.More() && aNbF <= 2; aItLF.Next()) {
-      const TopoDS_Face& aF = TopoDS::Face(aItLF.Value());
+    for (; aItLF.More() && aNbF <= 2; aItLF.Next())
+    {
+      const TopoDS_Shape& aF = aItLF.Value();
       ++aNbF;
       TopExp_Explorer aExp(aF, TopAbs_EDGE);
-      for (; aExp.More(); aExp.Next()) {
+      for (; aExp.More(); aExp.Next())
+      {
         const TopoDS_Shape& aEF = aExp.Current();
-        if (aEF.IsSame(aE)) {
-          if (aEF.Orientation() == TopAbs_INTERNAL) {
+        if (aEF.IsSame(aE))
+        {
+          if (aEF.Orientation() == TopAbs_INTERNAL)
             ++aNbF;
-          }
           break;
         }
       }
     }
     //
-    if (aNbF > 2) {
+    if (aNbF > 2)
       aMEStop.Add(aE);
-    }
   }
   //
-  if (aMEStop.IsEmpty()) {
+  if (aMEStop.IsEmpty())
+  {
     theLShSp.Append(theShell);
     return;
   }
-  //
-  TopoDS_Builder aBB;
-  TopExp_Explorer aExp;
-  BOPCol_IndexedMapOfShape aMFB;
+
+  // Try to split the shell on the branch edges
+
+  // Global map of processed faces
   BOPCol_MapOfOrientedShape aMFProcessed;
-  BOPCol_ListOfShape aLFP, aLFP1;
-  BOPCol_ListIteratorOfListOfShape aItLF, aItLFP;
-  //
-  // The first Face
-  for (; aIt.More(); aIt.Next()) {
-    const TopoDS_Shape& aF1 = aIt.Value();
-    if (!aMFProcessed.Add(aF1)) {
-      continue;
-    }
-    //
-    aMFB.Clear();
-    aLFP.Clear();
-    //
-    aMFB.Add(aF1);
-    aLFP.Append(aF1);
-    //
-    // Trying to reach the branch point
-    for (;;) {
-      aItLFP.Initialize(aLFP);
-      for (; aItLFP.More(); aItLFP.Next()) {
-        const TopoDS_Shape& aFP = aItLFP.Value();
-        //
-        aExp.Init(aFP, TopAbs_EDGE);
-        for (; aExp.More(); aExp.Next()) {
-          const TopoDS_Edge& aE = (*(TopoDS_Edge*)(&aExp.Current()));
-          if (aMEStop.Contains(aE)) {
+
+  // Prepare copies of the iterator and map of processed faces
+  // to have possibility to revert the process in case we have
+  // produced the shell with an odd number of faces on edges
+  TopoDS_Iterator aItSaved = aIt;
+  BOPCol_MapOfOrientedShape aMFPSaved;
+
+  for (; aIt.More();)
+  {
+    // Now the iteration will be performed on the global maps.
+    // If all is OK, the copies will be just updated for future use
+
+    for (; aIt.More(); aIt.Next())
+    {
+      const TopoDS_Shape& aFStart = aIt.Value();
+      if (!aMFProcessed.Add(aFStart))
+        // Face already processed
+        continue;
+
+      // Build the block of faces connected by the edges not contained
+      // in the <aMEStop> map starting with the face <aFStart>
+      BOPCol_IndexedMapOfShape aMFBlock;
+      aMFBlock.Add(aFStart);
+
+      for (i = 1; i <= aMFBlock.Extent(); ++i)
+      {
+        const TopoDS_Shape& aFP = aMFBlock(i);
+        // Analyze the edges of the face
+        TopExp_Explorer anExpE(aFP, TopAbs_EDGE);
+        for (; anExpE.More(); anExpE.Next())
+        {
+          const TopoDS_Edge& aE = TopoDS::Edge(anExpE.Current());
+
+          // Avoid branch edges
+          if (aMEStop.Contains(aE))
             continue;
-          }
-          //
-          if (aE.Orientation() == TopAbs_INTERNAL) {
+
+          // Avoid internal edges
+          if (aE.Orientation() == TopAbs_INTERNAL)
             continue;
-          }
-          //
-          if (BRep_Tool::Degenerated(aE)) {
+
+          // Avoid degenerated edges
+          if (BRep_Tool::Degenerated(aE))
             continue;
-          }
-          //
+
+          // Get all faces containing the edge
           const BOPCol_ListOfShape& aLF = theMEF.FindFromKey(aE);
-          //
-          aItLF.Initialize(aLF);
-          for (; aItLF.More(); aItLF.Next()) {
-            const TopoDS_Shape& aFP1 = aItLF.Value();
-            if (aFP1.IsSame(aFP)) {
-              continue;
-            }
-            if (aMFB.Contains(aFP1)) {
-              continue;
-            }
-            //
-            if (aMFProcessed.Add(aFP1)) {
-              aMFB.Add(aFP1);
-              aLFP1.Append(aFP1);
-            }
-          }// for (; aItLF.More(); aItLF.Next()) { 
-        }// for (; aExp.More(); aExp.Next()) {
-      } // for (; aItLFP.More(); aItLFP.Next()) { 
-      //
-      //
-      if (aLFP1.IsEmpty()) {
-        break;
+          BOPCol_ListIteratorOfListOfShape aItLF(aLF);
+          for (; aItLF.More(); aItLF.Next())
+          {
+            const TopoDS_Shape& aFToAdd = aItLF.Value();
+            if (aMFProcessed.Add(aFToAdd))
+              aMFBlock.Add(aFToAdd);
+          }
+        }
       }
-      //
-      aLFP.Clear();
-      aLFP.Append(aLFP1);
-    }// for (;;) {
-    //
-    Standard_Integer aNbMFB = aMFB.Extent();
-    if (aNbMFB) {
-      TopoDS_Shell aShSp;
-      aBB.MakeShell(aShSp);
-      //
-      for (i = 1; i <= aNbMFB; ++i) {
-        const TopoDS_Shape& aFB = aMFB(i);
-        aBB.Add(aShSp, aFB);
-      }
-      theLShSp.Append(aShSp);
-    }
-  }//for (; aIt.More(); aIt.Next()) {
+
+      // Analyze the produced block - check if it does not contain
+      // any edges with odd number of faces on it.
+      // If it is - check if these edges are contained in the <aMEStop> map
+      // remove them and revert the process
+
+      Standard_Integer aNbFBlock = aMFBlock.Extent();
+      if (aNbFBlock)
+      {
+        Standard_Boolean bToRevert = Standard_False;
+        // Edge-Face map of the block
+        BOPCol_IndexedDataMapOfShapeListOfShape aBEFMap;
+
+        for (i = 1; i <= aNbFBlock; ++i)
+          BOPTools::MapShapesAndAncestors(aMFBlock(i), TopAbs_EDGE, TopAbs_FACE, aBEFMap);
+
+        Standard_Integer aNb = aBEFMap.Extent();
+        for (i = 1; i <= aNb; ++i)
+        {
+          if (aBEFMap(i).Extent() % 2)
+          {
+            const TopoDS_Shape& anEOdd = aBEFMap.FindKey(i);
+            if (aMEStop.Remove(anEOdd))
+              bToRevert = Standard_True;
+          }
+        }
+
+        if (bToRevert)
+        {
+          aIt = aItSaved;
+          aMFProcessed = aMFPSaved;
+          break;
+        }
+
+        // Make the shell of the faces
+        TopoDS_Shell aShSp;
+        BRep_Builder().MakeShell(aShSp);
+
+        for (i = 1; i <= aNbFBlock; ++i)
+          BRep_Builder().Add(aShSp, aMFBlock(i));
+        theLShSp.Append(aShSp);
+
+        // Update the copies
+        aItSaved = aIt;
+        aMFPSaved = aMFProcessed;
+      } // if (aNbFBlock)
+    } // for (; aIt.More(); aIt.Next())
+  } // for (; aIt.More();)
 }
 //=======================================================================
 //function : MakeShells
