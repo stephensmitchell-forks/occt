@@ -70,7 +70,7 @@ public:
   GLint DrawMode() const { return myDrawMode; }
 
   //! Return TRUE if primitive type generates shaded triangulation.
-  Standard_Boolean IsFillDrawMode() const { return myIsFillType; }
+  virtual Standard_Boolean IsFillDrawMode() const Standard_OVERRIDE { return myIsFillType; }
 
   //! @return indices array
   const Handle(Graphic3d_IndexBuffer)& Indices() const { return myIndices; }
