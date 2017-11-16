@@ -476,15 +476,20 @@ Standard_Boolean OpenGl_ShaderManager::IsEmpty() const
 // =======================================================================
 void OpenGl_ShaderManager::switchLightPrograms()
 {
-  TCollection_AsciiString aKey;
+  const Handle(Graphic3d_ListOfCLight)& aLights = myLightSourceState.LightSources();
+  myLightKey.clear();
+  const size_t aCap = (!aLights.IsNull() ? aLights->Size() : 0) + 4;
+  if (myLightKey.capacity() < aCap)
+  {
+    myLightKey.reserve (aCap);
+  }
   switch (myShadingModel)
   {
-    case Graphic3d_TOSM_NONE:     aKey = "c_"; break;
-    case Graphic3d_TOSM_FACET:    aKey = "f_"; break;
-    case Graphic3d_TOSM_VERTEX:   aKey = "g_"; break;
-    case Graphic3d_TOSM_FRAGMENT: aKey = "p_"; break;
+    case Graphic3d_TOSM_NONE:     myLightKey += "c_"; break;
+    case Graphic3d_TOSM_FACET:    myLightKey += "f_"; break;
+    case Graphic3d_TOSM_VERTEX:   myLightKey += "g_"; break;
+    case Graphic3d_TOSM_FRAGMENT: myLightKey += "p_"; break;
   }
-  const Handle(Graphic3d_ListOfCLight)& aLights = myLightSourceState.LightSources();
   if (!aLights.IsNull())
   {
     for (Graphic3d_ListOfCLight::Iterator aLightIter (*aLights); aLightIter.More(); aLightIter.Next())
@@ -495,22 +500,23 @@ void OpenGl_ShaderManager::switchLightPrograms()
         case Graphic3d_TOLS_AMBIENT:
           break; // skip ambient
         case Graphic3d_TOLS_DIRECTIONAL:
-          aKey += "d";
+          myLightKey += "d";
           break;
         case Graphic3d_TOLS_POSITIONAL:
-          aKey += "p";
+          myLightKey += "p";
           break;
         case Graphic3d_TOLS_SPOT:
-          aKey += "s";
+          myLightKey += "s";
           break;
       }
     }
   }
 
-  if (!myMapOfLightPrograms.Find (aKey, myLightPrograms))
+  const TCollection_AsciiString aTKey (myLightKey.c_str());
+  if (!myMapOfLightPrograms.Find (aTKey, myLightPrograms))
   {
     myLightPrograms = new OpenGl_SetOfShaderPrograms();
-    myMapOfLightPrograms.Bind (aKey, myLightPrograms);
+    myMapOfLightPrograms.Bind (aTKey, myLightPrograms);
   }
 }
 

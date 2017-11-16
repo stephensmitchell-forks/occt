@@ -533,6 +533,7 @@ protected:
   mutable NCollection_Array1<OpenGl_ShaderLightParameters> myLightParamsArray;
   mutable NCollection_Array1<OpenGl_Vec4>                  myClipPlaneArray;
   mutable NCollection_Array1<OpenGl_Vec4d>                 myClipPlaneArrayFfp;
+  std::string                                              myLightKey;
 
 private:
 
