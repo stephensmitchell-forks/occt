@@ -56,11 +56,15 @@
 #endif
 
 static Standard_Boolean EdgeContains(const TopoDS_Edge&   theEdge,
-                                     const TopoDS_Vertex& theVertex)
+                                     const TopoDS_Vertex& theVertex,
+                                     const Standard_Boolean isOriented = Standard_False)
 {
+  Standard_Boolean (TopoDS_Shape::*pCompFunc) (const TopoDS_Shape& other) const =
+    (isOriented ? &TopoDS_Shape::IsEqual : &TopoDS_Shape::IsSame);
+
   TopoDS_Iterator ite(theEdge);
   for (; ite.More(); ite.Next())
-    if (theVertex.IsSame(ite.Value()))
+    if ((theVertex.*pCompFunc)(ite.Value()))
       return Standard_True;
   
   return Standard_False;
@@ -1549,17 +1553,18 @@ void BRepOffsetAPI_PatchFaces::PutVertexToEdge(const TopoDS_Vertex&     theVerte
       anOr = TopAbs::Reverse(anOr);
   }
 
-  Standard_Boolean EdgeContainsVertex = EdgeContains(theEdge, theVertex);
+  TopoDS_Edge F_Edge = TopoDS::Edge(theEdge.Oriented(TopAbs_FORWARD));
+  TopoDS_Vertex aVertWithOr = TopoDS::Vertex(theVertex.Oriented(anOr));
+  Standard_Boolean EdgeContainsVertex = EdgeContains(F_Edge, aVertWithOr, Standard_True);
   
   if (!EdgeContainsVertex)
   {
-    TopoDS_Shape F_Edge = theEdge.Oriented(TopAbs_FORWARD);
     F_Edge.Free(Standard_True);
 
     Standard_Real aTolE = BRep_Tool::Tolerance(TopoDS::Edge(F_Edge));
-    BB.UpdateVertex(theVertex, aTolE);
+    BB.UpdateVertex(aVertWithOr, aTolE);
 
-    BB.Add(F_Edge, theVertex.Oriented(anOr));
+    BB.Add(F_Edge, aVertWithOr);
   }
 
   // trim edge by the parameter of vertex on edge
