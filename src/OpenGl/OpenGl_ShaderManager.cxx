@@ -35,6 +35,8 @@ namespace
 
 #define EOL "\n"
 
+  const Standard_Integer THE_NB_UNROLLED_LIGHTS = 10;
+
 //! Definition of TexCoord varying.
 const char THE_VARY_TexCoord_OUT[] =
   EOL"THE_SHADER_OUT vec4 TexCoord;";
@@ -487,22 +489,61 @@ void OpenGl_ShaderManager::switchLightPrograms()
   const Handle(Graphic3d_ListOfCLight)& aLights = myLightSourceState.LightSources();
   if (!aLights.IsNull())
   {
-    for (Graphic3d_ListOfCLight::Iterator aLightIter (*aLights); aLightIter.More(); aLightIter.Next())
+    if (aLights->Size() > THE_NB_UNROLLED_LIGHTS)
     {
-      // note that we ignore Graphic3d_CLight::IsEnabled here, since in this way light can be enabled dynamically
-      switch (aLightIter.Value()->Type())
+      int aMaxLimit = THE_NB_UNROLLED_LIGHTS;
+      for (; aMaxLimit < aLights->Size(); aMaxLimit *= 2) {}
+      aKey += aMaxLimit;
+
+      bool hasLightType[4] = {false, false, false, false};
+      for (Graphic3d_ListOfCLight::Iterator aLightIter (*aLights); aLightIter.More(); aLightIter.Next())
       {
-        case Graphic3d_TOLS_AMBIENT:
-          break; // skip ambient
-        case Graphic3d_TOLS_DIRECTIONAL:
-          aKey += "d";
-          break;
-        case Graphic3d_TOLS_POSITIONAL:
-          aKey += "p";
-          break;
-        case Graphic3d_TOLS_SPOT:
-          aKey += "s";
-          break;
+        // note that we ignore Graphic3d_CLight::IsEnabled here, since in this way light can be enabled dynamically
+        switch (aLightIter.Value()->Type())
+        {
+          case Graphic3d_TOLS_AMBIENT:
+            break; // skip ambient
+          case Graphic3d_TOLS_DIRECTIONAL:
+            if (!hasLightType[Graphic3d_TOLS_DIRECTIONAL])
+            {
+              aKey += "d";
+            }
+            break;
+          case Graphic3d_TOLS_POSITIONAL:
+            if (!hasLightType[Graphic3d_TOLS_POSITIONAL])
+            {
+              aKey += "p";
+            }
+            break;
+          case Graphic3d_TOLS_SPOT:
+            if (!hasLightType[Graphic3d_TOLS_SPOT])
+            {
+              aKey += "s";
+            }
+            break;
+        }
+        hasLightType[aLightIter.Value()->Type()] = true;
+      }
+    }
+    else
+    {
+      for (Graphic3d_ListOfCLight::Iterator aLightIter (*aLights); aLightIter.More(); aLightIter.Next())
+      {
+        // note that we ignore Graphic3d_CLight::IsEnabled here, since in this way light can be enabled dynamically
+        switch (aLightIter.Value()->Type())
+        {
+          case Graphic3d_TOLS_AMBIENT:
+            break; // skip ambient
+          case Graphic3d_TOLS_DIRECTIONAL:
+            aKey += "d";
+            break;
+          case Graphic3d_TOLS_POSITIONAL:
+            aKey += "p";
+            break;
+          case Graphic3d_TOLS_SPOT:
+            aKey += "s";
+            break;
+        }
       }
     }
   }
@@ -1696,18 +1737,77 @@ TCollection_AsciiString OpenGl_ShaderManager::stdComputeLighting (Standard_Integ
           --anIndex;
           break; // skip ambient
         case Graphic3d_TOLS_DIRECTIONAL:
-          aLightsLoop = aLightsLoop + EOL"    directionalLight (" + anIndex + ", theNormal, theView, theIsFront);";
+          if (aLights->Size() <= THE_NB_UNROLLED_LIGHTS)
+          {
+            aLightsLoop = aLightsLoop + EOL"    directionalLight (" + anIndex + ", theNormal, theView, theIsFront);";
+          }
           break;
         case Graphic3d_TOLS_POSITIONAL:
-          aLightsLoop = aLightsLoop + EOL"    pointLight (" + anIndex + ", theNormal, theView, aPoint, theIsFront);";
+          if (aLights->Size() <= THE_NB_UNROLLED_LIGHTS)
+          {
+            aLightsLoop = aLightsLoop + EOL"    pointLight (" + anIndex + ", theNormal, theView, aPoint, theIsFront);";
+          }
           break;
         case Graphic3d_TOLS_SPOT:
-          aLightsLoop = aLightsLoop + EOL"    spotLight (" + anIndex + ", theNormal, theView, aPoint, theIsFront);";
+          if (aLights->Size() <= THE_NB_UNROLLED_LIGHTS)
+          {
+            aLightsLoop = aLightsLoop + EOL"    spotLight (" + anIndex + ", theNormal, theView, aPoint, theIsFront);";
+          }
           break;
       }
       aLightsMap[aLightIter.Value()->Type()] += 1;
     }
-    theNbLights = anIndex;
+    if (aLights->Size() > THE_NB_UNROLLED_LIGHTS)
+    {
+      theNbLights = THE_NB_UNROLLED_LIGHTS;
+      for (; theNbLights < aLights->Size(); theNbLights *= 2) {}
+
+      bool isFirstInLoop = true;
+      aLightsLoop = aLightsLoop +
+        EOL"    for (int anIndex = 0; anIndex < occLightSourcesCount; ++anIndex)"
+        EOL"    {"
+        EOL"      int aType = occLight_Type (anIndex);";
+      if (aLightsMap[Graphic3d_TOLS_DIRECTIONAL] > 0)
+      {
+        isFirstInLoop = false; 
+        aLightsLoop +=
+          EOL"      if (aType == OccLightType_Direct)"
+          EOL"      {"
+          EOL"        directionalLight (anIndex, theNormal, theView, theIsFront);"
+          EOL"      }";
+      }
+      if (aLightsMap[Graphic3d_TOLS_POSITIONAL] > 0)
+      {
+        if (!isFirstInLoop)
+        {
+          aLightsLoop += EOL"      else ";
+        }
+        isFirstInLoop = false;
+        aLightsLoop +=
+          EOL"      if (aType == OccLightType_Point)"
+          EOL"      {"
+          EOL"        pointLight (anIndex, theNormal, theView, aPoint, theIsFront);"
+          EOL"      }";
+      }
+      if (aLightsMap[Graphic3d_TOLS_SPOT] > 0)
+      {
+        if (!isFirstInLoop)
+        {
+          aLightsLoop += EOL"      else ";
+        }
+        isFirstInLoop = false;
+        aLightsLoop +=
+          EOL"      if (aType == OccLightType_Spot)"
+          EOL"      {"
+          EOL"        spotLight (anIndex, theNormal, theView, aPoint, theIsFront);"
+          EOL"      }";
+      }
+      aLightsLoop += EOL"    }";
+    }
+    else
+    {
+      theNbLights = anIndex;
+    }
     const Standard_Integer aNbLoopLights = aLightsMap[Graphic3d_TOLS_DIRECTIONAL]
                                          + aLightsMap[Graphic3d_TOLS_POSITIONAL]
                                          + aLightsMap[Graphic3d_TOLS_SPOT];
