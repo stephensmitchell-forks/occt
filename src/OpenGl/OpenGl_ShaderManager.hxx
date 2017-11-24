@@ -364,7 +364,12 @@ protected:
     {
       aBits |= theTextures->First()->IsAlpha() ? OpenGl_PO_TextureA : OpenGl_PO_TextureRGB;
     }
-    if (theHasVertColor)
+
+    if (!myContext->ColorMask())
+    {
+      aBits |= OpenGl_PO_NoColor;
+    }
+    else if (theHasVertColor)
     {
       aBits |= OpenGl_PO_VertColor;
     }
