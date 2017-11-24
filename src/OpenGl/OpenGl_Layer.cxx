@@ -489,14 +489,15 @@ void OpenGl_Layer::UpdateCulling (const OpenGl_BVHTreeSelector& theSelector,
   updateBVH();
 
   myIsCulled = false;
-  for (OpenGl_ArrayOfIndexedMapOfStructure::Iterator aMapIter (myArray); aMapIter.More(); aMapIter.Next())
+  for (OpenGl_IndexedMapOfStructure::Iterator aStructIter (myBVHPrimitives.Structures()); aStructIter.More(); aStructIter.Next())
   {
-    const OpenGl_IndexedMapOfStructure& aStructures = aMapIter.Value();
-    for (OpenGl_IndexedMapOfStructure::Iterator aStructIter (aStructures); aStructIter.More(); aStructIter.Next())
-    {
-      const OpenGl_Structure* aStruct = aStructIter.Value();
-      aStruct->SetCulled (theToTraverse);
-    }
+    const OpenGl_Structure* aStruct = aStructIter.Value();
+    aStruct->SetCulled (theToTraverse);
+  }
+  for (OpenGl_IndexedMapOfStructure::Iterator aStructIter (myBVHPrimitivesTrsfPers.Structures()); aStructIter.More(); aStructIter.Next())
+  {
+    const OpenGl_Structure* aStruct = aStructIter.Value();
+    aStruct->SetCulled (theToTraverse);
   }
 
   if (!theToTraverse)
