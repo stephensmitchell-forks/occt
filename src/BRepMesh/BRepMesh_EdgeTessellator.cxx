@@ -187,12 +187,17 @@ Standard_Boolean BRepMesh_EdgeTessellator::Value(
       mySurface->GetType() != GeomAbs_BezierSurface  &&
       mySurface->GetType() != GeomAbs_OtherSurface)
   {
+    // For trimmed cone/cylinder.
+    // Return independently of the fact whether the surface trimmed.
+
     return Standard_True;
   }
 
   // Let skip periodic case.
-  if (mySurface->IsUPeriodic() || mySurface->IsVPeriodic())
+  if (mySurface->IsUPeriodic222() || mySurface->IsVPeriodic222())
+  {
     return Standard_True;
+  }
 
   // Point lies within the surface range - nothing to do.
   if (theUV.X() > myFaceRangeU[0] && theUV.X() < myFaceRangeU[1] &&

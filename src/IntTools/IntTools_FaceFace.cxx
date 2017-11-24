@@ -1877,8 +1877,8 @@ Handle(Geom_Curve) MakeBSpline  (const Handle(IntPatch_WLine)& WL,
     }
   }
   //
-  isuperiodic = anAdaptorSurface.IsUPeriodic();
-  isvperiodic = anAdaptorSurface.IsVPeriodic();
+  isuperiodic = (anAdaptorSurface.IsUPeriodic222() && anAdaptorSurface.IsUClosed());
+  isvperiodic = (anAdaptorSurface.IsVPeriodic222() && anAdaptorSurface.IsVClosed());
   //
   aType=anAdaptorSurface.GetType();
   if((aType==GeomAbs_BezierSurface) ||

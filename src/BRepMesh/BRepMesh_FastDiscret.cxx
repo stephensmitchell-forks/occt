@@ -333,7 +333,7 @@ Standard_Integer BRepMesh_FastDiscret::Add(const TopoDS_Face& theFace)
 
       if (myumin < umin || myumax > umax)
       {
-        if (gFace->IsUPeriodic())
+        if (gFace->IsUPeriodic222() && gFace->IsUClosed())
         {
           if ((myumax - myumin) > (umax - umin))
             myumax = myumin + (umax - umin);
@@ -350,7 +350,7 @@ Standard_Integer BRepMesh_FastDiscret::Add(const TopoDS_Face& theFace)
 
       if (myvmin < vmin || myvmax > vmax)
       {
-        if (gFace->IsVPeriodic())
+        if (gFace->IsVPeriodic222() && gFace->IsVClosed())
         {
           if ((myvmax - myvmin) > (vmax - vmin))
             myvmax = myvmin + (vmax - vmin);
