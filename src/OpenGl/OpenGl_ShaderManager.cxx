@@ -246,12 +246,6 @@ const char THE_FRAG_CLIP_PLANES_2[] =
   EOL"    discard;"
   EOL"  }";
 
-//! Output color and coverage for accumulation by OIT algorithm.
-const char THE_FRAG_write_oit_buffers[] =
-  EOL"  float aWeight     = occFragColor.a * clamp (1e+2 * pow (1.0 - gl_FragCoord.z * occOitDepthFactor, 3.0), 1e-2, 1e+2);"
-  EOL"  occFragCoverage.r = occFragColor.a * aWeight;"
-  EOL"  occFragColor      = vec4 (occFragColor.rgb * occFragColor.a * aWeight, occFragColor.a);";
-
 #if !defined(GL_ES_VERSION_2_0)
 
   static const GLfloat THE_DEFAULT_AMBIENT[4]    = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -1182,7 +1176,7 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramFont()
        EOL"  vec4 aColor = occColor;"
        EOL"  aColor.a *= getAlpha();"
        EOL"  if (aColor.a <= 0.285) discard;"
-       EOL"  occFragColor = aColor;"
+       EOL"  occSetFragColor (aColor);"
        EOL"}";
 
 #if !defined(GL_ES_VERSION_2_0)
@@ -1233,7 +1227,7 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramFboBlit()
       EOL"void main()"
       EOL"{"
       EOL"  gl_FragDepth = occTexture2D (uDepthSampler, TexCoord).r;"
-      EOL"  occFragColor = occTexture2D (uColorSampler, TexCoord);"
+      EOL"  occSetFragColor (occTexture2D (uColorSampler, TexCoord));"
       EOL"}";
 
 #if defined(GL_ES_VERSION_2_0)
@@ -1256,7 +1250,7 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramFboBlit()
       EOL
       EOL"void main()"
       EOL"{"
-      EOL"  occFragColor = occTexture2D (uColorSampler, TexCoord);"
+      EOL"  occSetFragColor (occTexture2D (uColorSampler, TexCoord));"
       EOL"}";
   }
 #else
@@ -1313,7 +1307,7 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramOitCompositing (const St
       EOL"{"
       EOL"  vec4 aAccum   = occTexture2D (uAccumTexture,  TexCoord);"
       EOL"  float aWeight = occTexture2D (uWeightTexture, TexCoord).r;"
-      EOL"  occFragColor = vec4 (aAccum.rgb / max (aWeight, 0.00001), aAccum.a);"
+      EOL"  occSetFragColor (vec4 (aAccum.rgb / max (aWeight, 0.00001), aAccum.a));"
       EOL"}";
   #if !defined(GL_ES_VERSION_2_0)
     if (myContext->IsGlGreaterEqual (3, 2))
@@ -1340,7 +1334,7 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramOitCompositing (const St
       EOL"  ivec2 aTexel  = ivec2 (textureSize (uAccumTexture) * TexCoord);"
       EOL"  vec4 aAccum   = texelFetch (uAccumTexture,  aTexel, gl_SampleID);"
       EOL"  float aWeight = texelFetch (uWeightTexture, aTexel, gl_SampleID).r;"
-      EOL"  occFragColor = vec4 (aAccum.rgb / max (aWeight, 0.00001), aAccum.a);"
+      EOL"  occSetFragColor (vec4 (aAccum.rgb / max (aWeight, 0.00001), aAccum.a));"
       EOL"}";
   #if !defined(GL_ES_VERSION_2_0)
     if (myContext->IsGlGreaterEqual (4, 0))
@@ -1417,7 +1411,7 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramFlat (Handle(OpenGl_Shad
   TCollection_AsciiString aSrcVert, aSrcVertExtraOut, aSrcVertExtraMain, aSrcVertExtraFunc, aSrcGetAlpha;
   TCollection_AsciiString aSrcFrag, aSrcFragExtraOut, aSrcFragExtraMain, aSrcFragWriteOit;
   TCollection_AsciiString aSrcFragGetColor     = EOL"vec4 getColor(void) { return occColor; }";
-  TCollection_AsciiString aSrcFragMainGetColor = EOL"  occFragColor = getColor();";
+  TCollection_AsciiString aSrcFragMainGetColor = EOL"  occSetFragColor (getColor());";
   if ((theBits & OpenGl_PO_Point) != 0)
   {
   #if defined(GL_ES_VERSION_2_0)
@@ -1446,14 +1440,14 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramFlat (Handle(OpenGl_Shad
         EOL"  vec4 aColor = getColor();"
         EOL"  aColor.a = getAlpha();"
         EOL"  if (aColor.a <= 0.1) discard;"
-        EOL"  occFragColor = aColor;";
+        EOL"  occSetFragColor (aColor);";
     }
     else
     {
       aSrcFragMainGetColor =
         EOL"  vec4 aColor = getColor();"
         EOL"  if (aColor.a <= 0.1) discard;"
-        EOL"  occFragColor = aColor;";
+        EOL"  occSetFragColor (aColor);";
     }
   }
   else
@@ -1524,7 +1518,8 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramFlat (Handle(OpenGl_Shad
   }
   if ((theBits & OpenGl_PO_WriteOit) != 0)
   {
-    aSrcFragWriteOit += THE_FRAG_write_oit_buffers;
+    aProgramSrc->SetNbFragmentOutputs (2);
+    aProgramSrc->SetWeightOitOutput (true);
   }
 
   TCollection_AsciiString aSrcVertEndMain;
@@ -1566,7 +1561,7 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramFlat (Handle(OpenGl_Shad
         EOL"  if ((uint (uPattern) & (1U << aBit)) == 0U) discard;"
         EOL"  vec4 aColor = getColor();"
         EOL"  if (aColor.a <= 0.1) discard;"
-        EOL"  occFragColor = aColor;";
+        EOL"  occSetFragColor (aColor);";
     }
     else
     {
@@ -1832,7 +1827,8 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramGouraud (Handle(OpenGl_S
   }
   if ((theBits & OpenGl_PO_WriteOit) != 0)
   {
-    aSrcFragWriteOit += THE_FRAG_write_oit_buffers;
+    aProgramSrc->SetNbFragmentOutputs (2);
+    aProgramSrc->SetWeightOitOutput (true);
   }
 
   Standard_Integer aNbLights = 0;
@@ -1867,7 +1863,7 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramGouraud (Handle(OpenGl_S
     + EOL"void main()"
       EOL"{"
     + aSrcFragExtraMain
-    + EOL"  occFragColor = getColor();"
+    + EOL"  occSetFragColor (getColor());"
     + aSrcFragWriteOit
     + EOL"}";
 
@@ -1981,7 +1977,8 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramPhong (Handle(OpenGl_Sha
   }
   if ((theBits & OpenGl_PO_WriteOit) != 0)
   {
-    aSrcFragWriteOit += THE_FRAG_write_oit_buffers;
+    aProgramSrc->SetNbFragmentOutputs (2);
+    aProgramSrc->SetWeightOitOutput (true);
   }
 
   aSrcVert = TCollection_AsciiString()
@@ -2026,7 +2023,7 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramPhong (Handle(OpenGl_Sha
     + (isFlatNormal
     ? EOL"  Normal = normalize (cross (dFdx (Position.xyz / Position.w), dFdy (Position.xyz / Position.w)));"
     : "")
-    + EOL"  occFragColor = getColor();"
+    + EOL"  occSetFragColor (getColor());"
     + aSrcFragWriteOit
     + EOL"}";
 
@@ -2107,7 +2104,7 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramStereo (Handle(OpenGl_Sh
           EOL"  aColorL = pow (aColorL, THE_POW_UP);" // normalize
           EOL"  aColorR = pow (aColorR, THE_POW_UP);"
           EOL"  vec4 aColor = uMultR * aColorR + uMultL * aColorL;"
-          EOL"  occFragColor = pow (aColor, THE_POW_DOWN);"
+          EOL"  occSetFragColor (pow (aColor, THE_POW_DOWN));"
           EOL"}";
       break;
     }
@@ -2125,11 +2122,11 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramStereo (Handle(OpenGl_Sh
           EOL"  vec4 aColorR = occTexture2D (uRightSampler, TexCoord);"
           EOL"  if (int (mod (gl_FragCoord.y - 1023.5, 2.0)) != 1)"
           EOL"  {"
-          EOL"    occFragColor = aColorL;"
+          EOL"    occSetFragColor (aColorL);"
           EOL"  }"
           EOL"  else"
           EOL"  {"
-          EOL"    occFragColor = aColorR;"
+          EOL"    occSetFragColor (aColorR);"
           EOL"  }"
           EOL"}";
       break;
@@ -2148,11 +2145,11 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramStereo (Handle(OpenGl_Sh
           EOL"  vec4 aColorR = occTexture2D (uRightSampler, TexCoord);"
           EOL"  if (int (mod (gl_FragCoord.x - 1023.5, 2.0)) == 1)"
           EOL"  {"
-          EOL"    occFragColor = aColorL;"
+          EOL"    occSetFragColor (aColorL);"
           EOL"  }"
           EOL"  else"
           EOL"  {"
-          EOL"    occFragColor = aColorR;"
+          EOL"    occSetFragColor (aColorR);"
           EOL"  }"
           EOL"}";
       break;
@@ -2173,11 +2170,11 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramStereo (Handle(OpenGl_Sh
           EOL"  bool isEvenY = int(mod(floor(gl_FragCoord.y - 1023.5), 2.0)) == 1;"
           EOL"  if ((isEvenX && isEvenY) || (!isEvenX && !isEvenY))"
           EOL"  {"
-          EOL"    occFragColor = aColorL;"
+          EOL"    occSetFragColor (aColorL);"
           EOL"  }"
           EOL"  else"
           EOL"  {"
-          EOL"    occFragColor = aColorR;"
+          EOL"    occSetFragColor (aColorR);"
           EOL"  }"
           EOL"}";
       break;
@@ -2201,11 +2198,11 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramStereo (Handle(OpenGl_Sh
           EOL"  vec4 aColorR = occTexture2D (uRightSampler, aTexCoord);"
           EOL"  if (TexCoord.x <= 0.5)"
           EOL"  {"
-          EOL"    occFragColor = aColorL;"
+          EOL"    occSetFragColor (aColorL);"
           EOL"  }"
           EOL"  else"
           EOL"  {"
-          EOL"    occFragColor = aColorR;"
+          EOL"    occSetFragColor (aColorR);"
           EOL"  }"
           EOL"}";
       break;
@@ -2229,11 +2226,11 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramStereo (Handle(OpenGl_Sh
           EOL"  vec4 aColorR = occTexture2D (uRightSampler, aTexCoord);"
           EOL"  if (TexCoord.y <= 0.5)"
           EOL"  {"
-          EOL"    occFragColor = aColorL;"
+          EOL"    occSetFragColor (aColorL);"
           EOL"  }"
           EOL"  else"
           EOL"  {"
-          EOL"    occFragColor = aColorR;"
+          EOL"    occSetFragColor (aColorR);"
           EOL"  }"
           EOL"}";
       break;
@@ -2260,7 +2257,7 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramStereo (Handle(OpenGl_Sh
           EOL"  aColorL.b = 0.0;"
           EOL"  aColorL.g = 0.0;"
           EOL"  aColorR.r = 0.0;"
-          EOL"  occFragColor = aColorL + aColorR;"
+          EOL"  occSetFragColor (aColorL + aColorR);"
           EOL"}";
       break;
     }
