@@ -155,6 +155,10 @@ Standard_Boolean OpenGl_ShaderProgram::Initialize (const Handle(OpenGl_Context)&
                                   ? (myProxy->Header() + "\n")
                                   : TCollection_AsciiString();
 
+  Standard_Boolean toEnableDrawBuffers = !myProxy.IsNull()
+                                       ? myProxy->UseMultipleDrawBuffers()
+                                       : Standard_False;
+
   TCollection_AsciiString aDeclarations = Shaders_Declarations_glsl;
   TCollection_AsciiString aDeclImpl = Shaders_DeclarationsImpl_glsl;
 
@@ -207,19 +211,33 @@ Standard_Boolean OpenGl_ShaderProgram::Initialize (const Handle(OpenGl_Context)&
 
     TCollection_AsciiString aSource = aDeclarations + anIter.Value()->Source();
     TCollection_AsciiString anExtensions = "// Enable extensions used in OCCT GLSL programs\n";
-    if (theCtx->hasDrawBuffers)
+    if (toEnableDrawBuffers)
     {
-      anExtensions += "#define OCC_ENABLE_draw_buffers\n";
-    }
-    if (theCtx->hasDrawBuffers == OpenGl_FeatureInExtensions)
-    {
-      if (theCtx->arbDrawBuffers)
+      if (theCtx->hasDrawBuffers)
       {
-        anExtensions += "#extension GL_ARB_draw_buffers : enable\n";
+        anExtensions += "#define OCC_ENABLE_draw_buffers\n";
       }
-      else if (theCtx->extDrawBuffers)
+      else
       {
-        anExtensions += "#extension GL_EXT_draw_buffers : enable\n";
+        TCollection_ExtendedString aMsg = "Error! Multiple draw buffers required by the program, but aren't supported by GL";
+        theCtx->PushMessage (GL_DEBUG_SOURCE_APPLICATION,
+                             GL_DEBUG_TYPE_ERROR,
+                             0,
+                             GL_DEBUG_SEVERITY_HIGH,
+                             aMsg);
+        return Standard_False;
+      }
+
+      if (theCtx->hasDrawBuffers == OpenGl_FeatureInExtensions)
+      {
+        if (theCtx->arbDrawBuffers)
+        {
+          anExtensions += "#extension GL_ARB_draw_buffers : enable\n";
+        }
+        else if (theCtx->extDrawBuffers)
+        {
+          anExtensions += "#extension GL_EXT_draw_buffers : enable\n";
+        }
       }
     }
 

@@ -1483,6 +1483,8 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramFlat (Handle(OpenGl_Shad
   }
   if ((theBits & OpenGl_PO_WriteOit) != 0)
   {
+    aProgramSrc->SetUseMultipleDrawBuffers (Standard_True);
+
     aSrcFragWriteOit += THE_FRAG_write_oit_buffers;
   }
 
@@ -1782,6 +1784,8 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramGouraud (Handle(OpenGl_S
   }
   if ((theBits & OpenGl_PO_WriteOit) != 0)
   {
+    aProgramSrc->SetUseMultipleDrawBuffers (Standard_True);
+
     aSrcFragWriteOit += THE_FRAG_write_oit_buffers;
   }
 
@@ -1916,6 +1920,8 @@ Standard_Boolean OpenGl_ShaderManager::prepareStdProgramPhong (Handle(OpenGl_Sha
   }
   if ((theBits & OpenGl_PO_WriteOit) != 0)
   {
+    aProgramSrc->SetUseMultipleDrawBuffers (Standard_True);
+
     aSrcFragWriteOit += THE_FRAG_write_oit_buffers;
   }
 

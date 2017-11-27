@@ -51,16 +51,28 @@
   THE_ATTRIBUTE vec4 occVertColor;
 #elif (__VERSION__ >= 130)
   #ifdef OCC_ENABLE_draw_buffers
-    out vec4 occFragColorArray[2];
-    #define occFragColor    occFragColorArray[0]
-    #define occFragCoverage occFragColorArray[1]
+    out vec4 occFragColorArray[4];
+    // General purpose outputs notation
+    #define occFragColor0 occFragColorArray[0]
+    #define occFragColor1 occFragColorArray[1]
+    #define occFragColor2 occFragColorArray[2]
+    #define occFragColor3 occFragColorArray[3]
+    // Built-in outputs notation
+    #define occFragColor    occFragColor0
+    #define occFragCoverage occFragColor1
   #else
     out vec4 occFragColor;
   #endif
 #else
   #ifdef OCC_ENABLE_draw_buffers
-    #define occFragColor    gl_FragData[0]
-    #define occFragCoverage gl_FragData[1]
+    // General purpose outputs notation
+    #define occFragColor0 gl_FragData[0]
+    #define occFragColor1 gl_FragData[1]
+    #define occFragColor2 gl_FragData[2]
+    #define occFragColor3 gl_FragData[3]
+    // Built-in outputs notation
+    #define occFragColor    occFragColor0
+    #define occFragCoverage occFragColor1
   #else
     #define occFragColor gl_FragColor
   #endif

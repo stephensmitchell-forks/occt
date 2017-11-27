@@ -81,6 +81,13 @@ public:
   //! Should be done before GLSL program initialization.
   Standard_EXPORT void SetVertexAttributes (const Graphic3d_ShaderAttributeList& theAttributes);
 
+  //! Returns true if shader program should write to multiple draw buffers.
+  Standard_Boolean UseMultipleDrawBuffers() const { return myIsMultiOutput; }
+
+  //! Sets a flag that shader program should write to multiple draw buffers (false by default, minimum 4 is supported).
+  //! Should be done before GLSL program initialization.
+  Standard_EXPORT void SetUseMultipleDrawBuffers (const Standard_Boolean theIsMultiple);
+
   //! Pushes custom uniform variable to the program.
   //! The list of pushed variables is automatically cleared after applying to GLSL program.
   //! Thus after program recreation even unchanged uniforms should be pushed anew.
@@ -132,7 +139,7 @@ private:
   Graphic3d_ShaderVariableList  myVariables;     //!< the list of custom uniform variables
   Graphic3d_ShaderAttributeList myAttributes;    //!< the list of custom vertex attributes
   TCollection_AsciiString       myHeader;        //!< GLSL header with version code and used extensions
-
+  Standard_Boolean              myIsMultiOutput; //!< indicates whether program should use multiple draw buffers.
 };
 
 DEFINE_STANDARD_HANDLE (Graphic3d_ShaderProgram, Standard_Transient)

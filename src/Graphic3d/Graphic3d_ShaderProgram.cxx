@@ -77,6 +77,7 @@ const TCollection_AsciiString& Graphic3d_ShaderProgram::ShadersFolder()
 // purpose  : Creates new empty program object
 // =======================================================================
 Graphic3d_ShaderProgram::Graphic3d_ShaderProgram()
+: myIsMultiOutput (Standard_False)
 {
   myID = TCollection_AsciiString ("Graphic3d_ShaderProgram_")
        + TCollection_AsciiString (Standard_Atomic_Increment (&THE_PROGRAM_OBJECT_COUNTER));
@@ -171,4 +172,13 @@ void Graphic3d_ShaderProgram::ClearVariables()
 void Graphic3d_ShaderProgram::SetVertexAttributes (const Graphic3d_ShaderAttributeList& theAttributes)
 {
   myAttributes = theAttributes;
+}
+
+// =======================================================================
+// function : SetMultipleDrawBuffers
+// purpose  :
+// =======================================================================
+void Graphic3d_ShaderProgram::SetUseMultipleDrawBuffers (const Standard_Boolean theIsMultiple)
+{
+  myIsMultiOutput = theIsMultiple;
 }
