@@ -1,7 +1,3 @@
-puts "TODO ?OCC25913 ALL: Faulty shapes in variables faulty_1 to faulty_"
-puts "TODO OCC25913 ALL: Error :  is WRONG because number of"
-puts "TODO OCC25913 ALL: Error : The area of result shape is"
-
 puts "============"
 puts "OCC8842"
 puts "============"
