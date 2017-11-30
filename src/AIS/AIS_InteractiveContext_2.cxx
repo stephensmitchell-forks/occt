@@ -306,19 +306,18 @@ void AIS_InteractiveContext::SetSelectionModeActive (const Handle(AIS_Interactiv
           if ((theMode == aGlobSelMode && aModeIter.Value() != aGlobSelMode)
            || (theMode != aGlobSelMode && aModeIter.Value() == aGlobSelMode))
           {
+            mgrSelector->Deactivate (theObj, aModeIter.Value(), myMainSel);
             aRemovedModes.Append (aModeIter.Value());
           }
         }
         if (aRemovedModes.Size() == (*aStat)->SelectionModes().Size())
         {
-          mgrSelector->Deactivate (theObj, -1, myMainSel);
           (*aStat)->ClearSelectionModes();
         }
         else
         {
           for (TColStd_ListIteratorOfListOfInteger aModeIter (aRemovedModes); aModeIter.More(); aModeIter.Next())
           {
-            mgrSelector->Deactivate (theObj, aModeIter.Value(), myMainSel);
             (*aStat)->RemoveSelectionMode (aModeIter.Value());
           }
         }
