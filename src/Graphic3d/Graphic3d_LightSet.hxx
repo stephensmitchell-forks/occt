@@ -167,7 +167,7 @@ public:
   const TCollection_AsciiString& KeyEnabledLong() const { return myKeyEnabledLong; }
 
   //! Returns a string defining a list of enabled light sources as concatenation of letters 'd' (Directional), 'p' (Point), 's' (Spot)
-  //! depending on the type of light source in the list, specified only onces.
+  //! depending on the type of light source in the list, specified only once.
   //! Example: "dp".
   //! @sa UpdateRevision()
   const TCollection_AsciiString& KeyEnabledShort() const { return myKeyEnabledShort; }
