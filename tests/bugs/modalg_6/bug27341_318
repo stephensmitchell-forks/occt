@@ -6,6 +6,9 @@ puts ""
 # Incorrect exact HLR results
 ######################################################
 
+puts "TODO OCC29360 Linux: Error : .* is WRONG because number of VERTEX entities"
+puts "TODO OCC29360 Linux: Error : .* is WRONG because number of EDGE entities"
+
 pload XDE
 pload QAcommands
 
