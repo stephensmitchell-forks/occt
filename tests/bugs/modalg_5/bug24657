@@ -1,0 +1,31 @@
+puts "============"
+puts "CR24657"
+puts "==========="
+puts ""
+###############################################################################
+# 2dintersect returns different number of intersect points
+###############################################################################
+
+restore [locate_data_file bug24657.brep] a
+
+explode a e
+
+pcurve p4 a_4 a
+pcurve p5 a_5 a
+
+set inter1 [2dintersect p4 p5 10e-7]
+set inter2 [2dintersect p5 p4 10e-7]
+
+set int1 [regexp {Intersection point 1} ${inter1}]
+set int2 [regexp {Intersection point 1} ${inter2}]
+
+if { ${int1} == 0 || ${int2} == 0 } {
+    puts "Error : Intersection is not found"
+} 
+
+set int3 [regexp {Intersection point 2} ${inter1}]
+set int4 [regexp {Intersection point 2} ${inter2}]
+
+if { ${int3} == 1 || ${int4} == 1 } {
+    puts "Error : Intersection is bad"
+} 
