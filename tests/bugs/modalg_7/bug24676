@@ -1,0 +1,51 @@
+puts "TODO OCC24676 ALL: Error : Wrong result done by intersection algorithm"
+
+puts "========"
+puts "OCC24676"
+puts "========"
+puts ""
+#############################################
+# Wrong result done by intersection algorithm
+#############################################
+
+restore [locate_data_file bug24676_b1_1.brep] b1_1
+restore [locate_data_file bug24676_b1_2.brep] b1_2
+restore [locate_data_file bug24676_b1_3.brep] b1_3
+restore [locate_data_file bug24676_b1_4.brep] b1_4
+restore [locate_data_file bug24676_b1_5.brep] b1_5
+restore [locate_data_file bug24676_b1_6.brep] b1_6
+
+restore [locate_data_file bug24676_b2.brep] b2
+
+set String1 "has no 3d curves"
+set String2 "has no 3d points"
+
+set info1 [bopcurves b1_1 b2]
+if { [regexp ${String1} ${info1}] == 1 && [regexp ${String2} ${info1}] == 1} {
+    puts "Error : Wrong result done by intersection algorithm (1)"
+}
+
+set info2 [bopcurves b1_2 b2]
+if { [regexp ${String1} ${info2}] == 1 && [regexp ${String2} ${info2}] == 1} {
+    puts "Error : Wrong result done by intersection algorithm (2)"
+}
+
+set info3 [bopcurves b1_3 b2]
+if { [regexp ${String1} ${info3}] == 1 && [regexp ${String2} ${info3}] == 1} {
+    puts "Error : Wrong result done by intersection algorithm (3)"
+}
+
+set info4 [bopcurves b1_4 b2]
+if { [regexp ${String1} ${info4}] == 1 && [regexp ${String2} ${info4}] == 1} {
+    puts "Error : Wrong result done by intersection algorithm (4)"
+}
+
+set info5 [bopcurves b1_5 b2]
+if { [regexp ${String1} ${info5}] == 1 && [regexp ${String2} ${info5}] == 1} {
+    puts "Error : Wrong result done by intersection algorithm (5)"
+}
+
+set info6 [bopcurves b1_6 b2]
+if { [regexp ${String1} ${info6}] == 1 && [regexp ${String2} ${info6}] == 1} {
+    puts "Error : Wrong result done by intersection algorithm (6)"
+}
