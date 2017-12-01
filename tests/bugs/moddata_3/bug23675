@@ -1,0 +1,45 @@
+puts "TODO OCC23675 ALL: Error : bad bound"
+
+puts "========"
+puts "OCC23675"
+puts "========"
+puts ""
+#######################################################
+# P-curves of a face are out of the domain of the face.
+#######################################################
+
+restore [locate_data_file bug23511_f1]  f1
+restore [locate_data_file bug23675_f10] f10
+restore [locate_data_file bug23675_f11] f11
+restore [locate_data_file bug23675_f13] f13
+restore [locate_data_file bug23675_f14] f14
+restore [locate_data_file bug23675_f15] f15
+restore [locate_data_file bug23675_f16] f16
+restore [locate_data_file bug23675_f17] f17
+restore [locate_data_file bug23675_f18] f18
+restore [locate_data_file bug23675_f20] f20
+restore [locate_data_file bug23675_f22] f22
+
+set Faces [list f1 f10 f11 f13 f14 f15 f16 f17 f18 f20 f22]
+
+foreach Face ${Faces} {
+  puts "Check ${Face}"
+
+  set xbFace [xbounds ${Face}]
+
+  mksurface Surface ${Face}
+  bounds Surface U1 U2 V1 V2
+
+  if { [lindex ${xbFace} 0] < [dval U1] } {
+     puts "Error : bad bound for U1"
+  }
+  if { [lindex ${xbFace} 1] > [dval U2] } {
+     puts "Error : bad bound for U2"
+  }
+  if { [lindex ${xbFace} 2] < [dval V1] } {
+     puts "Error : bad bound for V1"
+  }
+  if { [lindex ${xbFace} 3] > [dval V2] } {
+     puts "Error : bad bound for V2"
+  }
+}
