@@ -1,0 +1,16 @@
+puts "TODO OCC22886 ALL: Error : checkshape ignores self-intersection of wires"
+
+puts "========"
+puts "OCC24743"
+puts "========"
+puts ""
+################################################################
+# checkshape ignores self-intersection of wires in specific case
+################################################################
+
+restore [locate_data_file bug24743.brep] a
+
+set info [checkshape a]
+if { [regexp "This shape seems to be valid" ${info}] == 1 } {
+    puts "Error : checkshape ignores self-intersection of wires"
+}
