@@ -1454,6 +1454,10 @@ The following public method has been removed:
 The methods BuildPCurveForEdgeOnPlane and BuildPCurveForEdgesOnPlane have been moved from the class BOPTools_AlgoTools2D
 to the more lower level class BRepLib.
 
+@subsection upgrade_721_Changes_in_ProjLib Changes in ProjLib
+
+The method "void Load (const Handle(Adaptor3d_HCurve)& C)" of the class ProjLib_ProjectedCurve has been renamed to "Perform".
+
 @subsection upgrade_721_removed Removed features
 
 The following obsolete features have been removed:
