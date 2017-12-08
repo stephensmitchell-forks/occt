@@ -1,3 +1,4 @@
+#puts "TODO OCC24694 ALL: Error: Length ="
 puts "TODO OCC24694 ALL: Bad Result obtained by processing of two surfaces"
 
 puts "========"
@@ -16,12 +17,18 @@ donly s1
 fit
 display s2
 
-set CurveNumb [intersect i s1 s2]
+set CurveList [intersect i s1 s2]
 
-if { [llength ${CurveNumb}] != 1 } {
+if { [llength ${CurveList}] == 0 } {
     puts "Error : Bad Result obtained by processing of two surfaces having tangential intersection"
 } else {
-    puts "OK : Good Result obtained by processing of two surfaces having tangential intersection"
+    set IntersectLength 0.
+    foreach Curve ${CurveList} {
+        set CurveLength [length ${Curve}]
+        regexp "The length ${Curve} is +(\[-0-9.+eE\]+)" ${CurveLength} full Length
+        set IntersectLength [expr ( ${IntersectLength} + ${Length} )]
+    }
+    checkreal Length ${IntersectLength} 10.0 0.1e-5 1.0e-5
 }
 
 checkview -screenshot -2d -path ${imagedir}/${test_image}.png
