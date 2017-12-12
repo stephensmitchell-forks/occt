@@ -21,8 +21,11 @@
 
 #include <TopExp_Explorer.hxx>
 
+#include <BOPDS_DS.hxx>
+
 #include <BOPTools.hxx>
 #include <BOPTools_AlgoTools.hxx>
+#include <BOPTools_AlgoTools3D.hxx>
 
 #include <BOPAlgo_BuilderSolid.hxx>
 
@@ -48,7 +51,7 @@ BOPAlgo_CellsBuilder::BOPAlgo_CellsBuilder()
   myIndex(100, myAllocator),
   myMaterials(100, myAllocator),
   myShapeMaterial(100, myAllocator),
-  myMapGenerated(100, myAllocator)
+  myMapModified(100, myAllocator)
 {
 }
 
@@ -64,7 +67,7 @@ BOPAlgo_CellsBuilder::BOPAlgo_CellsBuilder
   myIndex(100, myAllocator),
   myMaterials(100, myAllocator),
   myShapeMaterial(100, myAllocator),
-  myMapGenerated(100, myAllocator)
+  myMapModified(100, myAllocator)
 {
 }
 
@@ -88,7 +91,7 @@ void BOPAlgo_CellsBuilder::Clear()
   myIndex.Clear();
   myMaterials.Clear();
   myShapeMaterial.Clear();
-  myMapGenerated.Clear();
+  myMapModified.Clear();
 }
 
 //=======================================================================
@@ -313,7 +316,7 @@ void BOPAlgo_CellsBuilder::AddAllToResult(const Standard_Integer theMaterial,
   aBB.MakeCompound(aResult);
   myShapeMaterial.Clear();
   myMaterials.Clear();
-  myMapGenerated.Clear();
+  myMapModified.Clear();
   //
   TopoDS_Iterator aIt(myAllParts);
   for (; aIt.More(); aIt.Next()) {
@@ -453,7 +456,7 @@ void BOPAlgo_CellsBuilder::RemoveAllFromResult()
   //
   myMaterials.Clear();
   myShapeMaterial.Clear();
-  myMapGenerated.Clear();
+  myMapModified.Clear();
   //
   PrepareHistory();
 }
@@ -669,195 +672,234 @@ Standard_Integer BOPAlgo_CellsBuilder::RemoveInternals(const BOPCol_ListOfShape&
       const TopoDS_Shape& aSS = aMG(i);
       const TopoDS_Shape& aSGen = anUnify.Generated(aSS);
       if (!aSGen.IsNull() && !aSS.IsSame(aSGen)) {
-        myMapGenerated.Bind(aSS, aSGen);
+        myMapModified.Bind(aSS, aSGen);
       }
     }
   }
   else if (aType == TopAbs_SOLID) {
-    // build all solids from the faces
-    BOPCol_ListOfShape aLSF;
+    BRep_Builder aBB;
+    TopoDS_Compound aSolids;
+    aBB.MakeCompound(aSolids);
     //
-    for (BOPCol_ListIteratorOfListOfShape aIt(theLS); aIt.More(); aIt.Next()) {
-      const TopoDS_Shape& aS = aIt.Value();
+    BOPCol_ListIteratorOfListOfShape aItLS(theLS);
+    for (; aItLS.More(); aItLS.Next()) {
+      const TopoDS_Shape& aSol = aItLS.Value();
+      aBB.Add(aSolids, aSol);
+    }
+    //
+    // Make connexity blocks of solids to create from each isolated block one solid.
+    // It will allow attaching internal entities of the solids to new solid.
+    BOPCol_ListOfShape aLCB;
+    BOPTools_AlgoTools::MakeConnexityBlocks(aSolids, TopAbs_FACE, TopAbs_SOLID, aLCB);
+    //
+    // for each block remove internal faces
+    BOPCol_ListIteratorOfListOfShape aItLCB(aLCB);
+    for (; aItLCB.More(); aItLCB.Next()) {
+      const TopoDS_Shape& aCB = aItLCB.Value();
       //
-      aExp.Init(aS, TopAbs_FACE);
-      for (; aExp.More(); aExp.Next()) {
-        const TopoDS_Shape& aF = aExp.Current();
-        aLSF.Append(aF);
-      }
-    }
-    //
-    BOPAlgo_BuilderSolid aBS;
-    aBS.SetShapes(aLSF);
-    aBS.Perform();
-    //
-    iErr = aBS.ErrorStatus();
-    if (iErr) {
-      return iErr;
-    }
-    //
-    theLSNew = aBS.Areas();
-    if (theLSNew.Extent() == 1) {
-      return iErr;
-    }
-    //
-    // result is a list of solids. we need to select external faces.
-    BOPCol_IndexedDataMapOfShapeListOfShape aDMFS;
-    BOPCol_ListOfShape aLFNew;
-    Standard_Integer i, aNb;
-    //
-    // map faces and solids
-    for (BOPCol_ListIteratorOfListOfShape aIt(theLSNew); aIt.More(); aIt.Next()) {
-      const TopoDS_Shape& aS = aIt.Value();
+      // Map faces and solids to find boundary faces that can be removed
+      BOPCol_IndexedDataMapOfShapeListOfShape aDMFS;
+      // internal entities
+      BOPCol_ListOfShape aLSInt;
       //
-      aExp.Init(aS, TopAbs_FACE);
-      for (; aExp.More(); aExp.Next()) {
-        const TopoDS_Shape& aF = aExp.Current();
-        if (aDMFS.Contains(aF)) {
-          BOPCol_ListOfShape& aLFS = aDMFS.ChangeFromKey(aF);
-          aLFS.Append(aS);
-        }
-        else {
-          BOPCol_ListOfShape aLFS;
-          aLFS.Append(aS);
-          aDMFS.Add(aF, aLFS);
+      TopoDS_Iterator aItS(aCB);
+      for (; aItS.More(); aItS.Next()) {
+        const TopoDS_Shape& aSol = aItS.Value();
+        //
+        TopoDS_Iterator aItIS(aSol);
+        for (; aItIS.More(); aItIS.Next()) {
+          const TopoDS_Shape& aSI = aItIS.Value();
+          if (aSI.Orientation() == TopAbs_INTERNAL) {
+            aLSInt.Append(aSI);
+          }
+          else {
+            TopoDS_Iterator aItF(aSI);
+            for (; aItF.More(); aItF.Next()) {
+              const TopoDS_Shape& aF = aItF.Value();
+              BOPCol_ListOfShape *pLSols = aDMFS.ChangeSeek(aF);
+              if (!pLSols) {
+                pLSols = &aDMFS(aDMFS.Add(aF, BOPCol_ListOfShape()));
+              }
+              pLSols->Append(aSol);
+            }
+          }
         }
       }
-    }
-    //
-    // select faces attached to only one solid
-    aNb = aDMFS.Extent();
-    for (i = 1; i <= aNb; ++i) {
-      const BOPCol_ListOfShape& aLS = aDMFS(i);
-      if (aLS.Extent() == 1) {
-        const TopoDS_Shape& aF = aDMFS.FindKey(i);
-        aLFNew.Append(aF);
+      //
+      // to build unified solid, select only faces attached to only one solid
+      BOPCol_ListOfShape aLFUnique;
+      Standard_Integer i, aNb = aDMFS.Extent();
+      for (i = 1; i <= aNb; ++i) {
+        if (aDMFS(i).Extent() == 1) {
+          aLFUnique.Append(aDMFS.FindKey(i));
+        }
       }
+      //
+      if (aNb == aLFUnique.Extent()) {
+        // no faces to remove
+        aItS.Initialize(aCB);
+        for (; aItS.More(); aItS.Next()) {
+          theLSNew.Append(aItS.Value());
+        }
+        continue;
+      }
+      //
+      // build new solid
+      BOPAlgo_BuilderSolid aBS;
+      aBS.SetShapes(aLFUnique);
+      aBS.Perform();
+      //
+      iErr = aBS.ErrorStatus();
+      if (!iErr && aBS.Areas().Extent() != 1)
+        iErr = 1;
+      if (iErr)
+        return iErr;
+
+      TopoDS_Solid& aSNew = *(TopoDS_Solid*)&aBS.Areas().First();
+      //
+      // put all internal parts into new solid
+      aSNew.Free(Standard_True);
+      BOPCol_ListIteratorOfListOfShape aItLSI(aLSInt);
+      for (; aItLSI.More(); aItLSI.Next()) {
+        aBB.Add(aSNew, aItLSI.Value());
+      }
+      aSNew.Free(Standard_False);
+      //
+      theLSNew.Append(aSNew);
+
+      // Save information about the fuse of the solids into a history map
+      aItS.Initialize(aCB);
+      for (; aItS.More(); aItS.Next())
+        myMapModified.Bind(aItS.Value(), aSNew);
     }
-    //
-    if (aNb == aLFNew.Extent()) {
-      return iErr;
-    }
-    //
-    // build new solid
-    BOPAlgo_BuilderSolid aBS1;
-    aBS1.SetShapes(aLFNew);
-    aBS1.Perform();
-    //
-    iErr = aBS1.ErrorStatus();
-    if (iErr) {
-      return iErr;
-    }
-    //
-    theLSNew = aBS1.Areas();
   }
   //
   return iErr;
 }
 
 //=======================================================================
-//function : IsDeleted
+//function : PrepareHistory
 //purpose  : 
 //=======================================================================
-Standard_Boolean BOPAlgo_CellsBuilder::IsDeleted(const TopoDS_Shape& theS)
+void BOPAlgo_CellsBuilder::PrepareHistory()
 {
-  Standard_Boolean bRet = Standard_True;
-  if (theS.IsNull()) {
-    return bRet;
+  if (!myFlagHistory)
+  {
+    // Clearing
+    BOPAlgo_BuilderShape::PrepareHistory();
+    return;
   }
-  //
-  TopAbs_ShapeEnum aType = theS.ShapeType();
-  if (!(aType==TopAbs_EDGE || aType==TopAbs_FACE || 
-      aType==TopAbs_VERTEX || aType==TopAbs_SOLID)) {
-    return bRet;
+
+  // Clearing from previous operations
+  BOPAlgo_BuilderShape::PrepareHistory();
+  myFlagHistory = Standard_True;
+
+  if (myShape.IsNull() ||
+      BOPTools_AlgoTools3D::IsEmptyShape(myShape))
+  {
+    // The result shape is a null shape or empty shape,
+    // thus, no modified, no generated, all deleted
+    myHasModified = Standard_False;
+    myHasGenerated = Standard_False;
+    myHasDeleted = Standard_True;
+    return;
   }
-  //
-  Standard_Boolean bHasImage, bHasGenerated;
-  //
-  bHasImage = myImages.IsBound(theS);
-  bHasGenerated = myMapGenerated.IsBound(theS);
-  if (!bHasImage && !bHasGenerated) {
-    bRet = !myMapShape.Contains(theS);
-    return bRet;
-  }
-  //
-  if (bHasGenerated) {
-    const TopoDS_Shape& aSG = myMapGenerated.Find(theS);
-    if (myMapShape.Contains(aSG)) {
-      bRet = Standard_False;
-      return bRet;
-    }
-  }
-  //
-  if (bHasImage) {
-    const BOPCol_ListOfShape& aLSp = myImages.Find(theS);
-    BOPCol_ListIteratorOfListOfShape aIt(aLSp);
-    for (; aIt.More(); aIt.Next()) {
-      const TopoDS_Shape& aSp = aIt.Value();
-      const TopoDS_Shape& aSpR = myShapesSD.IsBound(aSp) ? 
-        myShapesSD.Find(aSp) : aSp;
-      //
-      const TopoDS_Shape& aSpRG = myMapGenerated.IsBound(aSpR) ?
-        myMapGenerated.Find(aSpR) : aSpR;
-      if (myMapShape.Contains(aSpRG)) {
-        bRet = Standard_False;
-        break;
+
+  // Map the result shape
+  BOPTools::MapShapes(myShape, myMapShape);
+
+  // Among all input shapes find those that have any trace in the result
+  // and save them into myImagesResult map with connection to parts
+  // kept in the result shape.
+  // Also, set the proper values to the history flags:
+  // - myHasDeleted for Deleted shapes;
+  // - myHasModified for Modified shapes;
+  // - myHasGenerated for Generated shapes.
+  Standard_Integer aNbS = myDS->NbSourceShapes();
+  for (Standard_Integer i = 0; i < aNbS; ++i)
+  {
+    const TopoDS_Shape& aS = myDS->Shape(i);
+
+    // History information is only available for the shapes of type
+    // VERTEX, EDGE, FACE and SOLID. Skip all shapes of different type.
+    TopAbs_ShapeEnum aType = aS.ShapeType();
+    if (!(aType == TopAbs_VERTEX ||
+          aType == TopAbs_EDGE   ||
+          aType == TopAbs_FACE   ||
+          aType == TopAbs_SOLID))
+      continue;
+
+    // Check if the shape has any splits
+    const BOPCol_ListOfShape* pLSp = myImages.Seek(aS);
+    if (!pLSp)
+    {
+      // No splits from GF builder.
+      // Check if the shape has been locally modified,
+      // i.e. has participated in the Removal of internal boundaries
+      // and have been unified with other shapes
+      const TopoDS_Shape* pSU = myMapModified.Seek(aS);
+      // Check if the result contains the shape or its unified image
+      const TopoDS_Shape* pSR = !pSU ? &aS : pSU;
+      if (myMapShape.Contains(*pSR))
+      {
+        // Link the shape to itself or to its unified image
+        myImagesResult(myImagesResult.Add(aS, BOPCol_ListOfShape())).Append(*pSR);
+        if (pSU)
+          // Modified element is found
+          myHasModified = Standard_True;
+      }
+      else
+      {
+        // No trace of the shape in the result -> Deleted element is found
+        myHasDeleted = Standard_True;
       }
     }
-  }
-  //
-  return bRet;
-}
+    else
+    {
+      // Find all splits of the shape which are kept in the result
+      BOPCol_ListOfShape *pLSpKept = NULL;
+      BOPCol_ListIteratorOfListOfShape aIt(*pLSp);
+      for (; aIt.More(); aIt.Next())
+      {
+        TopoDS_Shape aSp = aIt.Value();
 
-//=======================================================================
-//function : Generated
-//purpose  : 
-//=======================================================================
-const TopTools_ListOfShape& BOPAlgo_CellsBuilder::Generated(const TopoDS_Shape& theS)
-{
-  myHistShapes.Clear();
-  if (theS.IsNull()) {
-    return myHistShapes;
-  }
-  //
-  TopAbs_ShapeEnum aType = theS.ShapeType();
-  if (!(aType==TopAbs_EDGE || aType==TopAbs_FACE || aType==TopAbs_VERTEX)) {
-    return myHistShapes;
-  }
-  //
-  Standard_Boolean bHasGenerated = myMapGenerated.IsBound(theS);
-  if (bHasGenerated) {
-    const TopoDS_Shape& aSG = myMapGenerated.Find(theS);
-    if (myMapShape.Contains(aSG)) {
-      myHistShapes.Append(aSG);
-    }
-    return myHistShapes;
-  }
-  //
-  Standard_Boolean bHasImage = myImages.IsBound(theS);
-  if (!bHasImage) {
-    return myHistShapes;
-  }
-  //
-  BOPCol_MapOfShape aMFence;
-  const BOPCol_ListOfShape& aLSp = myImages.Find(theS);
-  BOPCol_ListIteratorOfListOfShape aIt(aLSp);
-  for (; aIt.More(); aIt.Next()) {
-    const TopoDS_Shape aSp = aIt.Value();
-    const TopoDS_Shape& aSpR = myShapesSD.IsBound(aSp) ? 
-      myShapesSD.Find(aSp) : aSp;
-    //
-    if (myMapGenerated.IsBound(aSpR)) {
-      const TopoDS_Shape& aSG = myMapGenerated.Find(aSpR);
-      if (myMapShape.Contains(aSG)) {
-        if (aMFence.Add(aSG)) {
-          myHistShapes.Append(aSG);
+        // Check SD shapes
+        const TopoDS_Shape* pSpSD = myShapesSD.Seek(aSp);
+        if (pSpSD)
+          aSp = *pSpSD;
+
+        // Check local modification of the shape (unification with other shapes)
+        const TopoDS_Shape* pSU = myMapModified.Seek(aSp);
+        if (pSU)
+          aSp = *pSU;
+
+        // Check if the result shape contains the split
+        if (myMapShape.Contains(aSp))
+        {
+          if (!pLSpKept)
+            pLSpKept = &myImagesResult(myImagesResult.Add(aS, BOPCol_ListOfShape()));
+
+          // Link the shape to the split
+          pLSpKept->Append(aSp);
         }
       }
+
+      if (pLSpKept)
+        // Modified element is found
+        myHasModified = Standard_True;
+      else
+        // Deleted element is found
+        myHasDeleted = Standard_True;
+    }
+
+    // Try to find generated shapes
+    if (!myHasGenerated)
+    {
+      // Temporarily set the HasGenerated flag to look for the shapes generated from aS
+      myHasGenerated = Standard_True;
+      myHasGenerated = (Generated(aS).Extent() > 0);
     }
   }
-  //
-  return myHistShapes;
 }
 
 //=======================================================================

@@ -84,8 +84,6 @@
 //! VERTEX, EDGE, FACE. This information available through the methods 
 //! IsDeleted() and Modified(). In DRAW Test Harness it is available through the same 
 //! commands as for Boolean Operations (bmodified, bgenerated and bisdeleted).
-//! There could be Generated shapes only after removing of the internal boundaries
-//! between faces and edges, i.e. after using ShapeUpgrade_UnifySameDomain tool.
 //! 
 //! Examples:
 //! 1. API
@@ -213,15 +211,13 @@ class BOPAlgo_CellsBuilder : public BOPAlgo_Builder
   //! Makes the Containers of proper type from the parts added to result.
   Standard_EXPORT void MakeContainers();
 
-  //! Returns the list of shapes generated from the shape theS.
-  Standard_EXPORT virtual const TopTools_ListOfShape& Generated(const TopoDS_Shape& theS) Standard_OVERRIDE;
-  
-  //! Returns true if the shape theS has been deleted.
-  Standard_EXPORT virtual Standard_Boolean IsDeleted (const TopoDS_Shape& theS) Standard_OVERRIDE;
-  
  protected:
 
-  //! Redefined method Prepare - no need to prepare history 
+  //! Prepare information for history support taking into account
+  //! local modification map of unified elements.
+  Standard_EXPORT virtual void PrepareHistory() Standard_OVERRIDE;
+
+  //! Redefined method Prepare - no need to prepare history
   //! information on the default result as it is empty compound.
   Standard_EXPORT virtual void Prepare() Standard_OVERRIDE;
 
@@ -254,7 +250,7 @@ class BOPAlgo_CellsBuilder : public BOPAlgo_Builder
   BOPCol_IndexedDataMapOfShapeListOfShape myIndex;
   BOPCol_DataMapOfIntegerListOfShape myMaterials;
   BOPCol_DataMapOfShapeInteger myShapeMaterial;
-  BOPCol_DataMapOfShapeShape myMapGenerated;
+  BOPCol_DataMapOfShapeShape myMapModified;
 
  private:
 
