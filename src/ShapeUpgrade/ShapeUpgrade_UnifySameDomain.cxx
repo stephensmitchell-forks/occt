@@ -88,38 +88,17 @@ struct SubSequenceOfEdges
   TopoDS_Edge UnionEdges;
 };
 
-static Standard_Boolean IsLikeSeam(const TopoDS_Edge& anEdge,
-                                   const TopoDS_Face& aFace,
-                                   const Handle(Geom_Surface)& aBaseSurface)
+//=======================================================================
+//function : AddOrdinaryEdges
+//purpose  : detects <theEdge> is a seam-edge on non-periodic surface
+//=======================================================================
+static Standard_Boolean IsLikeSeamOnNonPeriodic(const TopoDS_Edge& theEdge,
+                                                const TopoDS_Face& theFace,
+                                                const Handle(Geom_Surface)& theBaseSurface)
 {
-  if (!aBaseSurface->IsUPeriodic() && !aBaseSurface->IsVPeriodic())
-    return Standard_False;
-
-  BRepAdaptor_Curve2d BAcurve2d(anEdge, aFace);
-  gp_Pnt2d FirstPoint, LastPoint;
-  gp_Vec2d FirstDir, LastDir;
-  BAcurve2d.D1(BAcurve2d.FirstParameter(), FirstPoint, FirstDir);
-  BAcurve2d.D1(BAcurve2d.LastParameter(),  LastPoint,  LastDir);
-  Standard_Real Length = FirstDir.Magnitude();
-  if (Length <= gp::Resolution())
-    return Standard_False;
-  else
-    FirstDir /= Length;
-  Length = LastDir.Magnitude();
-  if (Length <= gp::Resolution())
-    return Standard_False;
-  else
-    LastDir /= Length;
-  
-  Standard_Real Tol = 1.e-7;
-  if (aBaseSurface->IsUPeriodic() &&
-    (Abs(FirstDir.X()) < Tol) &&
-    (Abs(LastDir.X()) < Tol))
-    return Standard_True;
-
-  if (aBaseSurface->IsVPeriodic() &&
-    (Abs(FirstDir.Y()) < Tol) &&
-    (Abs(LastDir.Y()) < Tol))
+  if (BRep_Tool::IsClosed(theEdge, theFace) &&
+      (theBaseSurface->IsUClosed() && !theBaseSurface->IsUPeriodic() ||
+       theBaseSurface->IsVClosed() && !theBaseSurface->IsVPeriodic()))
     return Standard_True;
 
   return Standard_False;
@@ -1334,8 +1313,8 @@ void ShapeUpgrade_UnifySameDomain::IntUnifyFaces(const TopoDS_Shape& theInpShape
         //
         if (IsSameDomain(aFace,anCheckedFace, myLinTol, myAngTol)) {
 
-          // hotfix for 27271: prevent merging along periodic direction.
-          if (IsLikeSeam(edge, anCheckedFace, aBaseSurface))
+          //prevent merging along closed but non-periodic direction
+          if (IsLikeSeamOnNonPeriodic(edge, anCheckedFace, aBaseSurface))
             continue;
 
           if (AddOrdinaryEdges(edges,anCheckedFace,dummy)) {
