@@ -1337,6 +1337,9 @@ proc osutils:csfList { theOS theCsfLibsMap theCsfFrmsMap } {
   if { "$::HAVE_LIBLZMA" == "true" } {
     set aLibsMap(CSF_LIBLZMA) "liblzma"
   }
+  if { "$::HAVE_OPENVR" == "true" } {
+    set aLibsMap(CSF_OpenVR) "openvr_api"
+  }
 
   if { "$theOS" == "wnt" } {
     #  WinAPI libraries
