@@ -89,7 +89,7 @@ struct SubSequenceOfEdges
 };
 
 //=======================================================================
-//function : AddOrdinaryEdges
+//function : IsLikeSeamOnNonPeriodic
 //purpose  : detects <theEdge> is a seam-edge on non-periodic surface
 //=======================================================================
 static Standard_Boolean IsLikeSeamOnNonPeriodic(const TopoDS_Edge& theEdge,
