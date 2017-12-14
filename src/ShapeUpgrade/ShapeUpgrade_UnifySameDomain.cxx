@@ -97,8 +97,8 @@ static Standard_Boolean IsLikeSeamOnNonPeriodic(const TopoDS_Edge& theEdge,
                                                 const Handle(Geom_Surface)& theBaseSurface)
 {
   if (BRep_Tool::IsClosed(theEdge, theFace) &&
-      (theBaseSurface->IsUClosed() && !theBaseSurface->IsUPeriodic() ||
-       theBaseSurface->IsVClosed() && !theBaseSurface->IsVPeriodic()))
+      ((theBaseSurface->IsUClosed() && !theBaseSurface->IsUPeriodic()) ||
+       (theBaseSurface->IsVClosed() && !theBaseSurface->IsVPeriodic())))
     return Standard_True;
 
   return Standard_False;
