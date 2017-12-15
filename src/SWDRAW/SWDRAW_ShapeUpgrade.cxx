@@ -1296,6 +1296,7 @@ static Standard_Integer unifysamedom(Draw_Interpretor& di, Standard_Integer n, c
     di << "-e to switch off 'unify-edges' mode\n";
     di << "-nosafe to switch off 'safe input shape' mode\n";
     di << "+b to switch on 'concat bspline' mode\n";
+    di << "+s to switch on 'rebuild non-periodic surface' mode\n";
     di << "+i to switch on 'allow internal edges' mode\n";
     di << "-t val to set linear tolerance\n";
     di << "-a val to set angular tolerance\n";
@@ -1311,6 +1312,7 @@ static Standard_Integer unifysamedom(Draw_Interpretor& di, Standard_Integer n, c
   Standard_Boolean anUFaces = Standard_True;
   Standard_Boolean anUEdges = Standard_True;
   Standard_Boolean anConBS = Standard_False;
+  Standard_Boolean aRebuildNonPeriodicSurf = Standard_False;
   Standard_Boolean isAllowInternal = Standard_False;
   Standard_Boolean isSafeInputMode = Standard_True;
   Standard_Real aLinTol = Precision::Confusion();
@@ -1334,6 +1336,8 @@ static Standard_Integer unifysamedom(Draw_Interpretor& di, Standard_Integer n, c
           isSafeInputMode = Standard_False;
         else if (!strcmp(a[i], "+b"))
           anConBS = Standard_True;
+        else if (!strcmp(a[i], "+s"))
+          aRebuildNonPeriodicSurf = Standard_True;
         else if (!strcmp(a[i], "+i"))
           isAllowInternal = Standard_True;
         else if (!strcmp(a[i], "-t") || !strcmp(a[i], "-a"))
@@ -1351,7 +1355,7 @@ static Standard_Integer unifysamedom(Draw_Interpretor& di, Standard_Integer n, c
       }
     }
 
-  Unifier().Initialize(aShape, anUEdges, anUFaces, anConBS);
+  Unifier().Initialize(aShape, anUEdges, anUFaces, anConBS, aRebuildNonPeriodicSurf);
   Unifier().KeepShapes(aMapOfShapes);
   Unifier().SetSafeInputMode(isSafeInputMode);
   Unifier().AllowInternalEdges(isAllowInternal);
@@ -1626,7 +1630,7 @@ Standard_Integer reshape(Draw_Interpretor& di,
   theCommands.Add ("removeloc","result shape [remove_level(see ShapeEnum)]",__FILE__,removeloc,g);
   
   theCommands.Add ("unifysamedom",
-                   "unifysamedom result shape [s1 s2 ...] [-f] [-e] [-nosafe] [+b] [+i] [-t val] [-a val]",
+                   "unifysamedom result shape [s1 s2 ...] [-f] [-e] [-nosafe] [+b] [+s] [+i] [-t val] [-a val]",
                     __FILE__,unifysamedom,g);
 
   theCommands.Add("unifysamedommod",

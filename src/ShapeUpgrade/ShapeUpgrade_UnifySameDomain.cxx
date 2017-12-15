@@ -78,6 +78,10 @@
 #include <gp_Circ.hxx>
 #include <BRepAdaptor_Curve.hxx>
 #include <BRepAdaptor_Curve2d.hxx>
+#include <BRepAdaptor_Surface.hxx>
+#include <BRepAdaptor_HSurface.hxx>
+#include <LocalAnalysis_SurfaceContinuity.hxx>
+#include <GeomConvert_ApproxSurface.hxx>
 #include <gp_Vec2d.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(ShapeUpgrade_UnifySameDomain,Standard_Transient)
@@ -88,20 +92,24 @@ struct SubSequenceOfEdges
   TopoDS_Edge UnionEdges;
 };
 
+
 //=======================================================================
-//function : IsLikeSeamOnNonPeriodic
+//function : CheckPeriodicity
 //purpose  : detects <theEdge> is a seam-edge on non-periodic surface
 //=======================================================================
-static Standard_Boolean IsLikeSeamOnNonPeriodic(const TopoDS_Edge& theEdge,
-                                                const TopoDS_Face& theFace,
-                                                const Handle(Geom_Surface)& theBaseSurface)
+static void CheckPeriodicity(const TopoDS_Edge& theEdge,
+                             const TopoDS_Face& theFace,
+                             const Handle(Geom_Surface)& theBaseSurface,
+                             Standard_Boolean& theToMakeUPeriodic,
+                             Standard_Boolean& theToMakeVPeriodic)
 {
-  if (BRep_Tool::IsClosed(theEdge, theFace) &&
-      ((theBaseSurface->IsUClosed() && !theBaseSurface->IsUPeriodic()) ||
-       (theBaseSurface->IsVClosed() && !theBaseSurface->IsVPeriodic())))
-    return Standard_True;
-
-  return Standard_False;
+  if (BRep_Tool::IsClosed(theEdge, theFace))
+  {
+    if (theBaseSurface->IsUClosed() && !theBaseSurface->IsUPeriodic())
+      theToMakeUPeriodic = Standard_True;
+    if (theBaseSurface->IsVClosed() && !theBaseSurface->IsVPeriodic())
+      theToMakeVPeriodic = Standard_True;
+  }
 }
 
 //=======================================================================
@@ -1069,6 +1077,7 @@ ShapeUpgrade_UnifySameDomain::ShapeUpgrade_UnifySameDomain()
     myUnifyFaces(Standard_True),
     myUnifyEdges (Standard_True),
     myConcatBSplines (Standard_False),
+    myRebuildNonPeriodicSurface (Standard_False),
     myAllowInternal (Standard_False),
     mySafeInputMode(Standard_True),
     myHistory(new BRepTools_History)
@@ -1091,6 +1100,7 @@ ShapeUpgrade_UnifySameDomain::ShapeUpgrade_UnifySameDomain(const TopoDS_Shape& a
     myUnifyFaces(UnifyFaces),
     myUnifyEdges (UnifyEdges),
     myConcatBSplines (ConcatBSplines),
+    myRebuildNonPeriodicSurface (Standard_False),
     myAllowInternal (Standard_False),
     mySafeInputMode (Standard_True),
     myShape (aShape),
@@ -1107,13 +1117,15 @@ ShapeUpgrade_UnifySameDomain::ShapeUpgrade_UnifySameDomain(const TopoDS_Shape& a
 void ShapeUpgrade_UnifySameDomain::Initialize(const TopoDS_Shape& aShape,
                                               const Standard_Boolean UnifyEdges,
                                               const Standard_Boolean UnifyFaces,
-                                              const Standard_Boolean ConcatBSplines)
+                                              const Standard_Boolean ConcatBSplines,
+                                              const Standard_Boolean RebuildNonPeriodicSurface)
 {
   myInitShape = aShape;
   myShape = aShape;
   myUnifyEdges = UnifyEdges;
   myUnifyFaces = UnifyFaces;
   myConcatBSplines = ConcatBSplines;
+  myRebuildNonPeriodicSurface = RebuildNonPeriodicSurface;
 
   myContext->Clear();
   myKeepShapes.Clear();
@@ -1252,6 +1264,7 @@ void ShapeUpgrade_UnifySameDomain::IntUnifyFaces(const TopoDS_Shape& theInpShape
     TopLoc_Location aBaseLocation;
     Handle(Geom_Surface) aBaseSurface = BRep_Tool::Surface(aFace,aBaseLocation);
     aBaseSurface = ClearRts(aBaseSurface);
+    Standard_Boolean ToMakeUPeriodic = Standard_False, ToMakeVPeriodic = Standard_False;
 
     // find adjacent faces to union
     Standard_Integer i;
@@ -1314,8 +1327,9 @@ void ShapeUpgrade_UnifySameDomain::IntUnifyFaces(const TopoDS_Shape& theInpShape
         if (IsSameDomain(aFace,anCheckedFace, myLinTol, myAngTol)) {
 
           //prevent merging along closed but non-periodic direction
-          if (IsLikeSeamOnNonPeriodic(edge, anCheckedFace, aBaseSurface))
-            continue;
+          if (myRebuildNonPeriodicSurface)
+            CheckPeriodicity(edge, anCheckedFace, aBaseSurface,
+                             ToMakeUPeriodic, ToMakeVPeriodic);
 
           if (AddOrdinaryEdges(edges,anCheckedFace,dummy)) {
             // sequence edges is modified
@@ -1425,6 +1439,27 @@ void ShapeUpgrade_UnifySameDomain::IntUnifyFaces(const TopoDS_Shape& theInpShape
     if (faces.Length() > 1) {
       TopoDS_Face aResult;
       BRep_Builder B;
+      if (ToMakeUPeriodic || ToMakeVPeriodic)
+      {
+        Handle(Geom_BSplineSurface) aBSplineSurface = Handle(Geom_BSplineSurface)::DownCast(aBaseSurface);
+        if (aBSplineSurface.IsNull())
+        {
+          Standard_Real aTol = 1.e-4;
+          GeomAbs_Shape aUCont = GeomAbs_C1, aVCont = GeomAbs_C1;
+          Standard_Integer degU = 14, degV = 14;
+          Standard_Integer nmax = 16;
+          Standard_Integer aPrec = 1;  
+          GeomConvert_ApproxSurface Approximator(aBaseSurface,aTol,aUCont,aVCont,degU,degV,nmax,aPrec);
+          aBSplineSurface = Approximator.Surface();
+        }
+        
+        if (ToMakeUPeriodic)
+          aBSplineSurface->SetUPeriodic();
+        if (ToMakeVPeriodic)
+          aBSplineSurface->SetVPeriodic();
+        
+        aBaseSurface = aBSplineSurface;
+      }
       B.MakeFace(aResult,aBaseSurface,aBaseLocation,0);
       Standard_Integer nbWires = 0;
 

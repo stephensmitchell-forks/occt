@@ -61,7 +61,11 @@ public:
   Standard_EXPORT ShapeUpgrade_UnifySameDomain(const TopoDS_Shape& aShape, const Standard_Boolean UnifyEdges = Standard_True, const Standard_Boolean UnifyFaces = Standard_True, const Standard_Boolean ConcatBSplines = Standard_False);
   
   //! Initializes with a shape
-  Standard_EXPORT void Initialize (const TopoDS_Shape& aShape, const Standard_Boolean UnifyEdges = Standard_True, const Standard_Boolean UnifyFaces = Standard_True, const Standard_Boolean ConcatBSplines = Standard_False);
+  Standard_EXPORT void Initialize (const TopoDS_Shape& aShape,
+                                   const Standard_Boolean UnifyEdges = Standard_True,
+                                   const Standard_Boolean UnifyFaces = Standard_True,
+                                   const Standard_Boolean ConcatBSplines = Standard_False,
+                                   const Standard_Boolean RebuildNonPeriodicSurface = Standard_False);
   
   //! Sets the flag defining whether it is allowed to create
   //! internal edges inside merged faces in the case of non-manifold
@@ -146,6 +150,7 @@ private:
   Standard_Boolean myUnifyFaces;
   Standard_Boolean myUnifyEdges;
   Standard_Boolean myConcatBSplines;
+  Standard_Boolean myRebuildNonPeriodicSurface;
   Standard_Boolean myAllowInternal;
   Standard_Boolean mySafeInputMode;
   TopoDS_Shape myShape;
