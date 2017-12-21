@@ -66,15 +66,7 @@ void  BRepClass_Intersector::Perform(const gp_Lin2d& theLin,
     DL.SetValues(aPnt2D, 0., Precision::PConfusion(), Standard_True);
   }
 
-  const Standard_Real 
-    toldeb = Min(1.0e-5, (theGE.GetOrientation() == TopAbs_FORWARD) ? 
-                anAdC2d.Resolution(theGE.FirstVertex().Tolerance()) :
-                anAdC2d.Resolution(theGE.LastVertex().Tolerance())),
-    tolfin = Min(1.0e-5, (theGE.GetOrientation() == TopAbs_REVERSED) ? 
-                anAdC2d.Resolution(theGE.FirstVertex().Tolerance()) :
-                anAdC2d.Resolution(theGE.LastVertex().Tolerance()));
-
-  IntRes2d_Domain DE(pdeb, aParF, toldeb, pfin, aParL, tolfin);
+  IntRes2d_Domain DE(pdeb, aParF, Precision::PConfusion(), pfin, aParL, Precision::PConfusion());
 
   // For future.
   // There is no point in intersecting geometrical curves. Here,
