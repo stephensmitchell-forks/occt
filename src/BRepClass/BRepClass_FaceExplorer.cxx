@@ -48,10 +48,10 @@ static Standard_Real SquareDistanceOnPeriodic(const gp_Pnt2d &theP1,
                                               const Standard_Real theUPeriod,
                                               const Standard_Real theVPeriod);
 
-static void MyUVPoints(const TopoDS_Edge& theE,
-                       const TopoDS_Face& theF,
-                       gp_Pnt2d& thePFirst,
-                       gp_Pnt2d& thePLast);
+static Standard_Boolean MyUVPoints(const TopoDS_Edge& theE,
+                                   const TopoDS_Face& theF,
+                                   gp_Pnt2d& thePFirst,
+                                   gp_Pnt2d& thePLast);
 
 
 const Standard_Real BRepClass_FaceExplorer::myProbing_Start = 0.123;
@@ -470,8 +470,9 @@ void BRepClass_FaceExplorer::AddPseudo(const TopoDS_Edge& theE1,
     // from aPFirst to aPLast.
     // But in this case it must join end-point of curve
     // with its start-point (exactly in this direction).
-    MyUVPoints(TopoDS::Edge(theE1.Oriented(TopAbs_FORWARD)),
-               myFace, aPLast, aPFirst);
+    if (!MyUVPoints(TopoDS::Edge(theE1.Oriented(TopAbs_FORWARD)),
+                    myFace, aPLast, aPFirst))
+      return;
   }
   else
   {
@@ -566,10 +567,15 @@ Standard_Boolean BRepClass_FaceExplorer::PrepareEdge(const TopoDS_Edge& theEdge,
   {
     gp_Pnt2d aPtemp;
     if (anOri == TopAbs_FORWARD)
-      MyUVPoints(theEdge, myFace, thePnt, aPtemp);
+    {
+      if (!MyUVPoints(theEdge, myFace, thePnt, aPtemp))
+        return Standard_False;
+    }
     else //if(anOri == TopAbs_REVERSED)
-      MyUVPoints(theEdge, myFace, aPtemp, thePnt);
-
+    {
+      if (!MyUVPoints(theEdge, myFace, aPtemp, thePnt))
+        return Standard_False;
+    }
     theOri = TopAbs_FORWARD;// aVFirst.Orientation();
   }
   else if (!aVLast.IsNull() && aVLast.IsSame(theV))
@@ -577,10 +583,15 @@ Standard_Boolean BRepClass_FaceExplorer::PrepareEdge(const TopoDS_Edge& theEdge,
     gp_Pnt2d aPtemp;
 
     if (anOri == TopAbs_FORWARD)
-      MyUVPoints(theEdge, myFace, aPtemp, thePnt);
+    {
+      if (!MyUVPoints(theEdge, myFace, aPtemp, thePnt))
+        return Standard_False;
+    }
     else //if(anOri == TopAbs_REVERSED)
-      MyUVPoints(theEdge, myFace, thePnt, aPtemp);
-
+    {
+      if (!MyUVPoints(theEdge, myFace, thePnt, aPtemp))
+        return Standard_False;
+    }
     theOri = TopAbs_REVERSED;//aVLast.Orientation();
   }
   else
@@ -681,7 +692,7 @@ Standard_Real SquareDistanceOnPeriodic(const gp_Pnt2d &theP1,
 //purpose  : Does the same as BRep_Tool::UVPoints but returns
 //            first and last points of 2d-curves (not UV-points of edge vertices).
 //=======================================================================
-void MyUVPoints(const TopoDS_Edge& theE,
+Standard_Boolean MyUVPoints(const TopoDS_Edge& theE,
                 const TopoDS_Face& theF,
                 gp_Pnt2d& thePFirst,
                 gp_Pnt2d& thePLast)
@@ -694,7 +705,10 @@ void MyUVPoints(const TopoDS_Edge& theE,
                                                             theF,
                                                             aFirst,
                                                             aLast);
+  if (aC.IsNull())
+    return Standard_False;
 
   aC->D0(aFirst, thePFirst);
   aC->D0(aLast, thePLast);
+  return Standard_True;
 }
