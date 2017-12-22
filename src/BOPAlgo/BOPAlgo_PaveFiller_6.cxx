@@ -611,7 +611,10 @@ void BOPAlgo_PaveFiller::MakeBlocks()
     //
     ProcessExistingPaveBlocks(i, aMPBOnIn, aDMBV, aMSCPB, aMVI, aMPBAdd);
   }//for (i=0; i<aNbFF; ++i) {
-  // 
+
+  // Remove "micro" section edges
+  RemoveMicroSectionEdges(aMSCPB, aDMVLV);
+
   // post treatment
   MakeSDVerticesFF(aDMVLV, aDMNewSD);
   myErrorStatus=PostTreatFF(aMSCPB, aMVI, aDMExEdges, aDMNewSD, aAllocator);
@@ -1954,6 +1957,9 @@ void BOPAlgo_PaveFiller::ProcessExistingPaveBlocks
         if (aMPB.Contains(aPB)) {
           continue;
         }
+        if (myDS->ShapeInfo(aPB->OriginalEdge()).HasFlag()) { // skip degenerated edges
+          continue;
+        }
         //
         nE = aPB->Edge();
         const BOPDS_ShapeInfo& aSIE = myDS->ShapeInfo(nE);
@@ -2477,4 +2483,85 @@ Standard_Boolean BOPAlgo_PaveFiller::EstimatePaveOnCurve
   //
   bIsVertexOnLine=myContext->IsVertexOnLine(aV, aIC, aTolR3D, aT);
   return bIsVertexOnLine;
+}
+
+//=======================================================================
+//function : RemoveMicroSectionEdges
+//purpose  : 
+//=======================================================================
+void BOPAlgo_PaveFiller::RemoveMicroSectionEdges
+  (BOPDS_IndexedDataMapOfShapeCoupleOfPaveBlocks& theMSCPB,
+   BOPCol_DataMapOfIntegerListOfInteger& theDMVLV)
+{
+  if (theMSCPB.IsEmpty())
+    // no section edges
+    return;
+
+  // Get all F/F interferences
+  BOPDS_VectorOfInterfFF& aFFs = myDS->InterfFF();
+
+  // Build the new map of section edges avoiding the micro edges
+  BOPDS_IndexedDataMapOfShapeCoupleOfPaveBlocks aSEPBMap;
+  // Analyze all section edges
+  Standard_Integer aNbCPB = theMSCPB.Extent();
+  for (Standard_Integer i = 1; i <= aNbCPB; ++i)
+  {
+    const TopoDS_Shape& aSI = theMSCPB.FindKey(i);
+    const BOPDS_CoupleOfPaveBlocks& aCPB = theMSCPB(i);
+
+    if (aSI.ShapeType() != TopAbs_EDGE)
+    {
+      // Not an edge
+      aSEPBMap.Add(aSI, aCPB);
+      continue;
+    }
+
+    // Get pave block for analysis
+    const Handle(BOPDS_PaveBlock)& aPB = aCPB.PaveBlock1();
+    if (aPB->HasEdge())
+    {
+      // Not a real section edge
+      aSEPBMap.Add(aSI, aCPB);
+      continue;
+    }
+
+    if (!BOPTools_AlgoTools::IsMicroEdge(*(TopoDS_Edge*)&aSI, myContext))
+    {
+      // Normal edge
+      aSEPBMap.Add(aSI, aCPB);
+      continue;
+    }
+
+    // Micro edge is found
+    // Unify its vertices by linking its indices
+    Standard_Integer nV1, nV2;
+    aPB->Indices(nV1, nV2);
+    BOPCol_ListOfInteger* pList = theDMVLV.ChangeSeek(nV1);
+    if (!pList)
+      pList = theDMVLV.Bound(nV1, BOPCol_ListOfInteger());
+    pList->Append(nV2);
+
+    // Avoid the edge in the <theMSCPB> map and remove it
+    // from the F/F Intersection info structure
+
+    // Get F/F interference which created this micro edge
+    BOPDS_InterfFF& aFF = aFFs(aCPB.IndexInterf());
+    // Get curve from which this edge has been created
+    BOPDS_Curve& aCurve = aFF.ChangeCurves().ChangeValue(aCPB.Index());
+    // Get all section pave blocks created from this curve
+    BOPDS_ListOfPaveBlock& aLPBC = aCurve.ChangePaveBlocks();
+    // Remove pave block from the list
+    for (BOPDS_ListIteratorOfListOfPaveBlock it(aLPBC); it.More(); it.Next())
+    {
+      if (it.Value() == aPB)
+      {
+        aLPBC.Remove(it);
+        break;
+      }
+    }
+  }
+
+  // Overwrite the old map if necessary
+  if (aSEPBMap.Extent() != theMSCPB.Extent())
+    theMSCPB = aSEPBMap;
 }

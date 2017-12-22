@@ -26,120 +26,125 @@ const Standard_Integer LimRajout = 5;
 const Standard_Integer NbPntMaxDecoupage = 30 ;
 const Standard_Real RatioTol = 1.5 ;
 
-static Standard_Real MINABS3(Standard_Real a, Standard_Real b,Standard_Real c) { 
-  if(a<0.0) a=-a;
-  if(b<0.0) b=-b;
-  if(c<0.0) c=-c;
-  if(a>c) a=c;
-  if(a>b) a=b;
-  return(a);
-}
+//static Standard_Real MINABS3(Standard_Real a, Standard_Real b,Standard_Real c) { 
+//  if(a<0.0) a=-a;
+//  if(b<0.0) b=-b;
+//  if(c<0.0) c=-c;
+//  if(a>c) a=c;
+//  if(a>b) a=b;
+//  return(a);
+//}
+//
+//static Standard_Real MINABS4(Standard_Real a, Standard_Real b,Standard_Real c,Standard_Real d) { 
+//  if(a<0.0) a=-a;
+//  if(b<0.0) b=-b;
+//  if(c<0.0) c=-c;
+//  if(d<0.0) d=-d;
+//  if(a>c) a=c;
+//  if(a>b) a=b;
+//  if(a>d) a=d;
+//  return(a);
+//}
+//
+//static void  ComputeTrsf3d(const Handle(TheWLine)& theline,
+//			   Standard_Real& Xo, Standard_Real& Ax,
+//			   Standard_Real& Yo, Standard_Real& Ay,
+//			   Standard_Real& Zo, Standard_Real& Az) {
+// 
+//  Standard_Integer nbp = theline->NbPnts();
+//  Standard_Real z0,z1,x0,x1,y0,y1;
+//  z0=y0=x0=RealLast();
+//  z1=y1=x1=RealFirst();
+//  for(Standard_Integer i=1;i<=nbp;i++) { 
+//    const gp_Pnt& P = theline->Point(i).Value();
+//    Standard_Real  X = P.X();
+//    Standard_Real  Y = P.Y();
+//    Standard_Real  Z = P.Z();
+//    if(X<x0) x0=X;
+//    if(X>x1) x1=X;
+//    if(Y<y0) y0=Y;
+//    if(Y>y1) y1=Y;
+//    if(Z<z0) z0=Z;
+//    if(Z>z1) z1=Z;
+//  }
+////-deb-  cout << "ComputeTrsf3d -- NbPnt = " << nbp << endl ;
+////-deb-  cout << "ComputeTrsf3d -- Xm = " << x0 << " Ym = " << y0 << " Zm = " << z0 << endl ;
+////-deb-  cout << "ComputeTrsf3d -- XM = " << x1 << " YM = " << y1 << " ZM = " << z1 << endl ;
+//  Standard_Real dx = x1-x0;
+//  Standard_Real dy = y1-y0;
+//  Standard_Real dz = z1-z0;
+//  Standard_Real MaxD = dx; 
+//  if(MaxD < dy) MaxD=dy;
+//  if(MaxD < dz) MaxD=dz;
+//  Standard_Real MaxDF = 0.01*MaxD;
+//
+//  //-- lbr le 22 fev99 : FPE 
+//  if(MaxDF<1e-12) 
+//    MaxDF=1.0;
+//
+//
+//  if(dx > MaxDF) { Ax = 1.0 / dx;    Xo = -Ax * x0;  }
+//  else {     Ax = 1.0/( MaxDF) ; Xo = -Ax*x0;   }
+//  if(dy > MaxDF) { Ay = 1.0 / dy;    Yo = -Ay * y0;  }
+//  else {     Ay = 1.0/( MaxDF); Yo = -Ay*y0;   }
+//  if(dz > MaxDF) { Az = 1.0 / dz;    Zo = -Az * z0;	}
+//  else {     Az = 1.0/(MaxDF); Zo = -Az*z0;   } 
+//}
+//
+//static void  ComputeTrsf2d(const Handle(TheWLine)& theline,
+//			   Standard_Real& Uo, Standard_Real& Au,
+//			   Standard_Real& Vo, Standard_Real& Av,
+//			   const Standard_Boolean onFirst,
+//			   const Standard_Real UVResRatio = 1.) { 
+//  Standard_Integer nbp = theline->NbPnts();
+//  Standard_Real u0,u1,v0,v1;
+//  u0 = v0 = RealLast();
+//  u1 = v1 = RealFirst();
+//  // pointer to a member-function
+//  void (IntSurf_PntOn2S::* pfunc)(Standard_Real&,Standard_Real&) const;
+//  if (onFirst)
+//    pfunc = &IntSurf_PntOn2S::ParametersOnS1;
+//  else
+//    pfunc = &IntSurf_PntOn2S::ParametersOnS2;
+//  for(Standard_Integer i=1;i<=nbp;i++) { 
+//    const IntSurf_PntOn2S&  POn2S = theline->Point(i);
+//    Standard_Real  U,V;
+//    (POn2S.*pfunc)(U,V);
+//    if(U<u0) u0=U;
+//    if(U>u1) u1=U;
+//    if(V<v0) v0=V;
+//    if(V>v1) v1=V;
+//  }
+//
+//  Standard_Real du = (u1-u0);
+//  Standard_Real dv = (v1-v0);
+//
+//  if (UVResRatio > 1.)
+//    du *= UVResRatio;
+//  else if (UVResRatio < 1.)
+//    dv /= UVResRatio;
+//
+//  Standard_Real MaxUV=du;
+//  if(MaxUV<dv) MaxUV=dv;
+//
+//  Standard_Real MaxUVF=0.01*MaxUV;
+//
+//  //-- lbr le 22 fev 99 (FPE) 
+//  if(MaxUVF<1e-12) 
+//    MaxUVF=1.0;
+//
+//  if(du > MaxUVF) { Au = 1.0 / du;    Uo = -Au * u0;  }
+//  else {     Au = 1.0/(MaxUVF); Uo = -Au*u0;  }
+//  if(dv > MaxUVF) { Av = 1.0 / dv;    Vo = -Av * v0;  }
+//  else {     Av = 1.0/(MaxUVF); Vo = -Av*v0;  }
+//}
 
-static Standard_Real MINABS4(Standard_Real a, Standard_Real b,Standard_Real c,Standard_Real d) { 
-  if(a<0.0) a=-a;
-  if(b<0.0) b=-b;
-  if(c<0.0) c=-c;
-  if(d<0.0) d=-d;
-  if(a>c) a=c;
-  if(a>b) a=b;
-  if(a>d) a=d;
-  return(a);
-}
+//--------------------------------------------------------------------------------
+static Standard_Integer CorrectFinishIdx(const Standard_Integer theMinIdx,
+                                         const Standard_Integer theMaxIdx,
+                                         const Handle(TheWLine)& theline);
 
-static void  ComputeTrsf3d(const Handle(TheWLine)& theline,
-			   Standard_Real& Xo, Standard_Real& Ax,
-			   Standard_Real& Yo, Standard_Real& Ay,
-			   Standard_Real& Zo, Standard_Real& Az) {
- 
-  Standard_Integer nbp = theline->NbPnts();
-  Standard_Real z0,z1,x0,x1,y0,y1;
-  z0=y0=x0=RealLast();
-  z1=y1=x1=RealFirst();
-  for(Standard_Integer i=1;i<=nbp;i++) { 
-    const gp_Pnt& P = theline->Point(i).Value();
-    Standard_Real  X = P.X();
-    Standard_Real  Y = P.Y();
-    Standard_Real  Z = P.Z();
-    if(X<x0) x0=X;
-    if(X>x1) x1=X;
-    if(Y<y0) y0=Y;
-    if(Y>y1) y1=Y;
-    if(Z<z0) z0=Z;
-    if(Z>z1) z1=Z;
-  }
-//-deb-  cout << "ComputeTrsf3d -- NbPnt = " << nbp << endl ;
-//-deb-  cout << "ComputeTrsf3d -- Xm = " << x0 << " Ym = " << y0 << " Zm = " << z0 << endl ;
-//-deb-  cout << "ComputeTrsf3d -- XM = " << x1 << " YM = " << y1 << " ZM = " << z1 << endl ;
-  Standard_Real dx = x1-x0;
-  Standard_Real dy = y1-y0;
-  Standard_Real dz = z1-z0;
-  Standard_Real MaxD = dx; 
-  if(MaxD < dy) MaxD=dy;
-  if(MaxD < dz) MaxD=dz;
-  Standard_Real MaxDF = 0.01*MaxD;
-
-  //-- lbr le 22 fev99 : FPE 
-  if(MaxDF<1e-12) 
-    MaxDF=1.0;
-
-
-  if(dx > MaxDF) { Ax = 1.0 / dx;    Xo = -Ax * x0;  }
-  else {     Ax = 1.0/( MaxDF) ; Xo = -Ax*x0;   }
-  if(dy > MaxDF) { Ay = 1.0 / dy;    Yo = -Ay * y0;  }
-  else {     Ay = 1.0/( MaxDF); Yo = -Ay*y0;   }
-  if(dz > MaxDF) { Az = 1.0 / dz;    Zo = -Az * z0;	}
-  else {     Az = 1.0/(MaxDF); Zo = -Az*z0;   } 
-}
-
-static void  ComputeTrsf2d(const Handle(TheWLine)& theline,
-			   Standard_Real& Uo, Standard_Real& Au,
-			   Standard_Real& Vo, Standard_Real& Av,
-			   const Standard_Boolean onFirst,
-			   const Standard_Real UVResRatio = 1.) { 
-  Standard_Integer nbp = theline->NbPnts();
-  Standard_Real u0,u1,v0,v1;
-  u0 = v0 = RealLast();
-  u1 = v1 = RealFirst();
-  // pointer to a member-function
-  void (IntSurf_PntOn2S::* pfunc)(Standard_Real&,Standard_Real&) const;
-  if (onFirst)
-    pfunc = &IntSurf_PntOn2S::ParametersOnS1;
-  else
-    pfunc = &IntSurf_PntOn2S::ParametersOnS2;
-  for(Standard_Integer i=1;i<=nbp;i++) { 
-    const IntSurf_PntOn2S&  POn2S = theline->Point(i);
-    Standard_Real  U,V;
-    (POn2S.*pfunc)(U,V);
-    if(U<u0) u0=U;
-    if(U>u1) u1=U;
-    if(V<v0) v0=V;
-    if(V>v1) v1=V;
-  }
-
-  Standard_Real du = (u1-u0);
-  Standard_Real dv = (v1-v0);
-
-  if (UVResRatio > 1.)
-    du *= UVResRatio;
-  else if (UVResRatio < 1.)
-    dv /= UVResRatio;
-
-  Standard_Real MaxUV=du;
-  if(MaxUV<dv) MaxUV=dv;
-
-  Standard_Real MaxUVF=0.01*MaxUV;
-
-  //-- lbr le 22 fev 99 (FPE) 
-  if(MaxUVF<1e-12) 
-    MaxUVF=1.0;
-
-  if(du > MaxUVF) { Au = 1.0 / du;    Uo = -Au * u0;  }
-  else {     Au = 1.0/(MaxUVF); Uo = -Au*u0;  }
-  if(dv > MaxUVF) { Av = 1.0 / dv;    Vo = -Av * v0;  }
-  else {     Av = 1.0/(MaxUVF); Vo = -Av*v0;  }
-}
-
-
+//----------------------------------------------------------------------------------
 
 ApproxInt_Approx::ApproxInt_Approx():
        myComputeLine(4,
@@ -174,8 +179,8 @@ void ApproxInt_Approx::Perform(const Handle(TheWLine)& theline,
 			       const Standard_Integer indicemin,
 			       const Standard_Integer indicemax) { 
   
-  myMinFactorXYZ = 0.0;
-  myMinFactorUV  = 0.0;
+  myMinFactorXYZ = 1.0;
+  myMinFactorUV  = 1.0;
   myTolReached3d = myTolReached2d = 0.;
   
   
@@ -198,24 +203,24 @@ void ApproxInt_Approx::Perform(const Handle(TheWLine)& theline,
   myTolReached = Standard_True;
   
   Standard_Real Xo,Ax,Yo,Ay,Zo,Az,U1o,A1u,V1o,A1v,U2o,A2u,V2o,A2v;
-  if(ApproxXYZ) { 
-    ComputeTrsf3d(theline,Xo,Ax,Yo,Ay,Zo,Az);
-  }
-  else { 
+  //if(ApproxXYZ) { 
+  //  ComputeTrsf3d(theline,Xo,Ax,Yo,Ay,Zo,Az);
+  //}
+  //else { 
     Xo=Yo=Zo=0.0; Ax=Ay=Az=1.0;;
-  }
-  if(ApproxU1V1) { 
-    ComputeTrsf2d(theline,U1o,A1u,V1o,A1v,Standard_True);
-  }
-  else { 
+  //}
+  //if(ApproxU1V1) { 
+  //  ComputeTrsf2d(theline,U1o,A1u,V1o,A1v,Standard_True);
+  //}
+  //else { 
     U1o=V1o=0.0; A1u=A1v=1.0;
-  }
-  if(ApproxU2V2) { 
-    ComputeTrsf2d(theline,U2o,A2u,V2o,A2v,Standard_False);
-  }
-  else { 
+  //}
+  //if(ApproxU2V2) { 
+  //  ComputeTrsf2d(theline,U2o,A2u,V2o,A2v,Standard_False);
+  //}
+  //else { 
     U2o=V2o=0.0; A2u=A2v=1.0;
-  }
+  //}
   
   //-deb-  cout << "ApproxInt_Approx -- NbPntMax = " << myNbPntMax    << endl ; 
   //-deb-  cout << "ApproxInt_Approx -- Tol3D    = " << myTol3d       << endl ; 
@@ -226,15 +231,15 @@ void ApproxInt_Approx::Perform(const Handle(TheWLine)& theline,
   //-deb-  cout << "ApproxInt_Approx -- U1o = " << U1o << " V1o = " << V1o << " A1u = " << A1u << " A1v = " << A1v << endl ; 
   //-deb-  cout << "ApproxInt_Approx -- U2o = " << U2o << " V2o = " << V2o << " A2u = " << A2u << " A2v = " << A2v << endl ; 
   
-  Standard_Real A3d = MINABS3(Ax,Ay,Az);
-  if((A3d < myMinFactorXYZ) || (myMinFactorXYZ == 0.0)) { 
-    myMinFactorXYZ = A3d;
-  }
-  
-  Standard_Real A2d = MINABS4(A1u,A1v,A2u,A2v);
-  if((A2d < myMinFactorUV) || (myMinFactorUV == 0.0)) { 
-    myMinFactorUV = A2d;
-  }
+  //Standard_Real A3d = MINABS3(Ax,Ay,Az);
+  //if((A3d < myMinFactorXYZ) || (myMinFactorXYZ == 0.0)) { 
+  //  myMinFactorXYZ = A3d;
+  //}
+  //
+  //Standard_Real A2d = MINABS4(A1u,A1v,A2u,A2v);
+  //if((A2d < myMinFactorUV) || (myMinFactorUV == 0.0)) { 
+  //  myMinFactorUV = A2d;
+  //}
   
   Standard_Boolean cut=Standard_True;
   Approx_ParametrizationType parametrization;
@@ -332,13 +337,16 @@ void ApproxInt_Approx::Perform(const Handle(TheWLine)& theline,
 	  nbmc++) { 
 	myBezToBSpl.Append(myComputeLineBezier.Value(nbmc));
       }
-      if(imax<indicemax) { 
-	imin = imax;    
-	imax = imin+nbpntbez;
-	OtherInter = Standard_True;
-	if((indicemax-imax)<(nbpntbez/2)) { 
-	  imax = indicemax;
-	}
+      if(imax<indicemax)
+      { 
+        imin = imax;    
+        imax = imin+nbpntbez;
+        OtherInter = Standard_True;
+        if((indicemax-imax)<(nbpntbez/2))
+        {
+          imax = indicemax;
+        }
+        imax = CorrectFinishIdx(imin, imax, theline);
       }
     }
   }
@@ -356,8 +364,8 @@ void ApproxInt_Approx::Perform(const ThePSurface& Surf1,
 			       const Standard_Boolean ApproxU2V2,
 			       const Standard_Integer indicemin,
 			       const Standard_Integer indicemax) {
-  myMinFactorXYZ = 0.0;
-  myMinFactorUV  = 0.0;
+  myMinFactorXYZ = 1.0;
+  myMinFactorUV  = 1.0;
   myTolReached3d = myTolReached2d = 0.;
 
   GeomAbs_SurfaceType typeS1 = ThePSurfaceTool::GetType(Surf1);
@@ -410,28 +418,28 @@ void ApproxInt_Approx::Perform(const ThePSurface& Surf1,
 
 
     Standard_Real Xo,Ax,Yo,Ay,Zo,Az,U1o,A1u,V1o,A1v,U2o,A2u,V2o,A2v;
-    if(ApproxXYZ) { 
-      ComputeTrsf3d(theline,Xo,Ax,Yo,Ay,Zo,Az);
-    }
-    else { 
+    //if(ApproxXYZ) { 
+    //  ComputeTrsf3d(theline,Xo,Ax,Yo,Ay,Zo,Az);
+    //}
+    //else { 
       Xo=Yo=Zo=0.0; Ax=Ay=Az=1.0;;
-    }
-    if(ApproxU1V1) { 
-      Standard_Real UVResRatio = ThePSurfaceTool::UResolution(Surf1,1.)/
-                                 ThePSurfaceTool::VResolution(Surf1,1.);
-      ComputeTrsf2d(theline,U1o,A1u,V1o,A1v,Standard_True,UVResRatio);
-    }
-    else { 
+    //}
+    //if(ApproxU1V1) { 
+    //  Standard_Real UVResRatio = ThePSurfaceTool::UResolution(Surf1,1.)/
+    //                             ThePSurfaceTool::VResolution(Surf1,1.);
+    //  ComputeTrsf2d(theline,U1o,A1u,V1o,A1v,Standard_True,UVResRatio);
+    //}
+    //else { 
       U1o=V1o=0.0; A1u=A1v=1.0;
-    }      
-    if(ApproxU2V2) { 
-      Standard_Real UVResRatio = ThePSurfaceTool::UResolution(Surf2,1.)/
-                                 ThePSurfaceTool::VResolution(Surf2,1.);
-      ComputeTrsf2d(theline,U2o,A2u,V2o,A2v,Standard_False,UVResRatio);
-    }
-    else { 
+    //}      
+    //if(ApproxU2V2) { 
+    //  Standard_Real UVResRatio = ThePSurfaceTool::UResolution(Surf2,1.)/
+    //                             ThePSurfaceTool::VResolution(Surf2,1.);
+    //  ComputeTrsf2d(theline,U2o,A2u,V2o,A2v,Standard_False,UVResRatio);
+    //}
+    //else { 
       U2o=V2o=0.0; A2u=A2v=1.0;
-    }
+    //}
 
 //-deb-  cout << "ApproxInt_Approx -- NbPntMax = " << myNbPntMax    << endl ; 
 //-deb-  cout << "ApproxInt_Approx -- Tol3D    = " << myTol3d       << endl ; 
@@ -443,15 +451,15 @@ void ApproxInt_Approx::Perform(const ThePSurface& Surf1,
 //-deb-  cout << "ApproxInt_Approx -- U2o = " << U2o << " V2o = " << V2o << " A2u = " << A2u << " A2v = " << A2v << endl ; 
     
     
-    Standard_Real A3d = MINABS3(Ax,Ay,Az);
-    if((A3d < myMinFactorXYZ) || (myMinFactorXYZ == 0.0)) { 
-      myMinFactorXYZ = A3d;
-    }
-    
-    Standard_Real A2d = MINABS4(A1u,A1v,A2u,A2v);
-    if((A2d < myMinFactorUV) || (myMinFactorUV == 0.0)) { 
-      myMinFactorUV = A2d;
-    }
+    //Standard_Real A3d = MINABS3(Ax,Ay,Az);
+    //if((A3d < myMinFactorXYZ) || (myMinFactorXYZ == 0.0)) { 
+    //  myMinFactorXYZ = A3d;
+    //}
+    //
+    //Standard_Real A2d = MINABS4(A1u,A1v,A2u,A2v);
+    //if((A2d < myMinFactorUV) || (myMinFactorUV == 0.0)) { 
+    //  myMinFactorUV = A2d;
+    //}
     
 
     Approx_ParametrizationType parametrization;
@@ -567,14 +575,17 @@ void ApproxInt_Approx::Perform(const ThePSurface& Surf1,
 	  nbmc++) { 
 	  myBezToBSpl.Append(myComputeLineBezier.Value(nbmc));
 	}
-	if(imax<indicemax) { 
-	  imin = imax;    
-	  imax = imin+nbpntbez;
-	  OtherInter = Standard_True;
-	  if((indicemax-imax)<(nbpntbez/2)) { 
-	    imax = indicemax;
-	  }
-	}
+        if(imax<indicemax)
+        {
+          imin = imax;
+          imax = imin+nbpntbez;
+          OtherInter = Standard_True;
+          if((indicemax-imax)<(nbpntbez/2))
+          {
+            imax = indicemax;
+          }
+          imax = CorrectFinishIdx(imin, imax, theline);
+        }
       }
     }
     while(OtherInter);
@@ -701,8 +712,8 @@ void ApproxInt_Approx::Perform(const ThePSurface& PSurf,
 			       const Standard_Integer indicemin,
 			       const Standard_Integer indicemax)
 {
-  myMinFactorXYZ = 0.0;
-  myMinFactorUV  = 0.0;
+  myMinFactorXYZ = 1.0;
+  myMinFactorUV  = 1.0;
   myTolReached3d = myTolReached2d = 0.;
   
   ApproxInt_TheImpPrmSvSurfaces myImpPrmSvSurfaces(PSurf,ISurf);
@@ -753,26 +764,26 @@ void ApproxInt_Approx::Perform(const ThePSurface& PSurf,
   Standard_Integer imax = imin + nbpntbez;
   myTolReached = Standard_True;
   Standard_Real Xo,Ax,Yo,Ay,Zo,Az,U1o,A1u,V1o,A1v,U2o,A2u,V2o,A2v;
-  if(ApproxXYZ) { 
-    ComputeTrsf3d(theline,Xo,Ax,Yo,Ay,Zo,Az);
-  }
-  else { 
+  //if(ApproxXYZ) { 
+  //  ComputeTrsf3d(theline,Xo,Ax,Yo,Ay,Zo,Az);
+  //}
+  //else { 
     Xo=Yo=Zo=0.0; Ax=Ay=Az=1.0;;
-  }
-  if(ApproxU1V1) { 
-    Standard_Real UVResRatio = ThePSurfaceTool::UResolution(PSurf,1.)/
-                               ThePSurfaceTool::VResolution(PSurf,1.);
-    ComputeTrsf2d(theline,U1o,A1u,V1o,A1v,Standard_True,UVResRatio);
-  }
-  else { 
+  //}
+  //if(ApproxU1V1) { 
+  //  Standard_Real UVResRatio = ThePSurfaceTool::UResolution(PSurf,1.)/
+  //                             ThePSurfaceTool::VResolution(PSurf,1.);
+  //  ComputeTrsf2d(theline,U1o,A1u,V1o,A1v,Standard_True,UVResRatio);
+  //}
+  //else { 
     U1o=V1o=0.0; A1u=A1v=1.0;
-  }
-  if(ApproxU2V2) { 
-    ComputeTrsf2d(theline,U2o,A2u,V2o,A2v,Standard_False);
-  }
-  else { 
+  //}
+  //if(ApproxU2V2) { 
+  //  ComputeTrsf2d(theline,U2o,A2u,V2o,A2v,Standard_False);
+  //}
+  //else { 
     U2o=V2o=0.0; A2u=A2v=1.0;
-  }
+  //}
   
   //-deb-  cout << "ApproxInt_Approx -- NbPntMax = " << myNbPntMax    << endl ; 
   //-deb-  cout << "ApproxInt_Approx -- Tol3D    = " << myTol3d       << endl ; 
@@ -784,15 +795,15 @@ void ApproxInt_Approx::Perform(const ThePSurface& PSurf,
   //-deb-  cout << "ApproxInt_Approx -- U2o = " << U2o << " V2o = " << V2o << " A2u = " << A2u << " A2v = " << A2v << endl ; 
   
   
-  Standard_Real A3d = MINABS3(Ax,Ay,Az);
-  if((A3d < myMinFactorXYZ) || (myMinFactorXYZ == 0.0)) { 
-    myMinFactorXYZ = A3d;
-  }
-  
-  Standard_Real A2d = MINABS4(A1u,A1v,A2u,A2v);
-  if((A2d < myMinFactorUV) || (myMinFactorUV == 0.0)) { 
-    myMinFactorUV = A2d;
-  }
+  //Standard_Real A3d = MINABS3(Ax,Ay,Az);
+  //if((A3d < myMinFactorXYZ) || (myMinFactorXYZ == 0.0)) { 
+  //  myMinFactorXYZ = A3d;
+  //}
+  //
+  //Standard_Real A2d = MINABS4(A1u,A1v,A2u,A2v);
+  //if((A2d < myMinFactorUV) || (myMinFactorUV == 0.0)) { 
+  //  myMinFactorUV = A2d;
+  //}
   
   myComputeLineBezier.Parametrization(parametrization);
 
@@ -903,13 +914,16 @@ void ApproxInt_Approx::Perform(const ThePSurface& PSurf,
 	  nbmc++) { 
 	myBezToBSpl.Append(myComputeLineBezier.Value(nbmc));
       }
-      if(imax<indicemax) { 
-	imin = imax;    
-	imax = imin+nbpntbez;
-	OtherInter = Standard_True;
-	if((indicemax-imax)<(nbpntbez/2)) { 
-	  imax = indicemax;
-	}
+      if(imax<indicemax)
+      {
+        imin = imax;
+        imax = imin+nbpntbez;
+        OtherInter = Standard_True;
+        if((indicemax-imax)<(nbpntbez/2))
+        {
+          imax = indicemax;
+        }
+        imax = CorrectFinishIdx(imin, imax, theline);
       }
     }
   }
@@ -929,8 +943,8 @@ void ApproxInt_Approx::Perform(const TheISurface& ISurf,
 			       const Standard_Integer indicemax)
 {
 
-  myMinFactorXYZ = 0.0;
-  myMinFactorUV  = 0.0;
+  myMinFactorXYZ = 1.0;
+  myMinFactorUV  = 1.0;
   myTolReached3d = myTolReached2d = 0.;
   
   ApproxInt_TheImpPrmSvSurfaces myImpPrmSvSurfaces(ISurf,PSurf);
@@ -964,26 +978,26 @@ void ApproxInt_Approx::Perform(const TheISurface& ISurf,
   myTolReached = Standard_True;
   
   Standard_Real Xo,Ax,Yo,Ay,Zo,Az,U1o,A1u,V1o,A1v,U2o,A2u,V2o,A2v;
-  if(ApproxXYZ) { 
-    ComputeTrsf3d(theline,Xo,Ax,Yo,Ay,Zo,Az);
-  }
-  else { 
+  //if(ApproxXYZ) { 
+  //  ComputeTrsf3d(theline,Xo,Ax,Yo,Ay,Zo,Az);
+  //}
+  //else { 
     Xo=Yo=Zo=0.0; Ax=Ay=Az=1.0;;
-  }
-  if(ApproxU1V1) { 
-    ComputeTrsf2d(theline,U1o,A1u,V1o,A1v,Standard_True);
-  }
-  else { 
+  //}
+  //if(ApproxU1V1) { 
+  //  ComputeTrsf2d(theline,U1o,A1u,V1o,A1v,Standard_True);
+  //}
+  //else { 
     U1o=V1o=0.0; A1u=A1v=1.0;
-  }
-  if(ApproxU2V2) { 
-    Standard_Real UVResRatio = ThePSurfaceTool::UResolution(PSurf,1.)/
-                               ThePSurfaceTool::VResolution(PSurf,1.);
-    ComputeTrsf2d(theline,U2o,A2u,V2o,A2v,Standard_False,UVResRatio);
-  }
-  else { 
+  //}
+  //if(ApproxU2V2) { 
+  //  Standard_Real UVResRatio = ThePSurfaceTool::UResolution(PSurf,1.)/
+  //                             ThePSurfaceTool::VResolution(PSurf,1.);
+  //  ComputeTrsf2d(theline,U2o,A2u,V2o,A2v,Standard_False,UVResRatio);
+  //}
+  //else { 
     U2o=V2o=0.0; A2u=A2v=1.0;
-  }
+  //}
   
   //-deb-  cout << "ApproxInt_Approx -- NbPntMax = " << myNbPntMax    << endl ; 
   //-deb-  cout << "ApproxInt_Approx -- Tol3D    = " << myTol3d       << endl ; 
@@ -995,15 +1009,15 @@ void ApproxInt_Approx::Perform(const TheISurface& ISurf,
   //-deb-  cout << "ApproxInt_Approx -- U2o = " << U2o << " V2o = " << V2o << " A2u = " << A2u << " A2v = " << A2v << endl ; 
   
   
-  Standard_Real A3d = MINABS3(Ax,Ay,Az);
-  if((A3d < myMinFactorXYZ) || (myMinFactorXYZ == 0.0)) { 
-    myMinFactorXYZ = A3d;
-  }
-  
-  Standard_Real A2d = MINABS4(A1u,A1v,A2u,A2v);
-  if((A2d < myMinFactorUV) || (myMinFactorUV == 0.0)) { 
-    myMinFactorUV = A2d;
-  }
+  //Standard_Real A3d = MINABS3(Ax,Ay,Az);
+  //if((A3d < myMinFactorXYZ) || (myMinFactorXYZ == 0.0)) { 
+  //  myMinFactorXYZ = A3d;
+  //}
+  //
+  //Standard_Real A2d = MINABS4(A1u,A1v,A2u,A2v);
+  //if((A2d < myMinFactorUV) || (myMinFactorUV == 0.0)) { 
+  //  myMinFactorUV = A2d;
+  //}
 
   Approx_ParametrizationType parametrization;
   myComputeLineBezier.Parametrization(parametrization);
@@ -1117,21 +1131,26 @@ void ApproxInt_Approx::Perform(const TheISurface& ISurf,
       }
     }
     OtherInter = Standard_False;
-    if(myApproxBez) { 
-      for(Standard_Integer nbmc = 1; 
-	  nbmc <= myComputeLineBezier.NbMultiCurves() ;
-	  nbmc++) { 
-	myBezToBSpl.Append(myComputeLineBezier.Value(nbmc));
+    if(myApproxBez)
+    {
+      for(Standard_Integer nbmc = 1;
+        nbmc <= myComputeLineBezier.NbMultiCurves() ;
+        nbmc++)
+      { 
+          myBezToBSpl.Append(myComputeLineBezier.Value(nbmc));
       }
-      if(imax<indicemax) { 
-	imin = imax;    
-	imax = imin+nbpntbez;
-	OtherInter = Standard_True;
-	if((indicemax-imax)<(nbpntbez/2)) { 
-	  imax = indicemax;
-	}
+      if(imax<indicemax)
+      {
+        imin = imax;
+        imax = imin+nbpntbez;
+        OtherInter = Standard_True;
+        if((indicemax-imax)<(nbpntbez/2))
+        {
+          imax = indicemax;
+        }
+        imax = CorrectFinishIdx(imin, imax, theline);
       }
-    } 
+    }
   }
   while(OtherInter); 
   if(myApproxBez) { 
@@ -1207,4 +1226,36 @@ const AppParCurves_MultiBSpCurve& ApproxInt_Approx::Value(const Standard_Integer
   else { 
     return(myComputeLine.Value());
   }
+}
+////--------------------------------------------------------------------------------
+//Standard_Integer ApproxInt_Approx::CorrectFinishIdx(const Standard_Integer theMinIdx,
+//                                                    const Standard_Integer theMaxIdx,
+//                                                    const Handle(TheWLine)& theline)
+//--------------------------------------------------------------------------------
+Standard_Integer CorrectFinishIdx(const Standard_Integer theMinIdx,
+                                  const Standard_Integer theMaxIdx,
+                                  const Handle(TheWLine)& theline)
+{
+  const Standard_Real aNullCoeff = 1.0e-16;
+  Standard_Real aLimitMaxCoeff = 1.0 / 2500.0;
+  Standard_Real aDist = theline->Point(theMinIdx).Value().SquareDistance(
+                        theline->Point(theMinIdx + 1).Value());
+
+  for(Standard_Integer anIdx = theMinIdx + 1; anIdx < theMaxIdx - 1; anIdx++)
+  {
+    Standard_Real aNextDist = theline->Point(anIdx).Value().SquareDistance(
+                              theline->Point(anIdx + 1).Value());
+    Standard_Real aCoeff = Min (aNextDist, aDist) / Max (aNextDist, aDist);
+
+    //
+    if (aCoeff < aLimitMaxCoeff &&        // Base criteria.
+        aNextDist > aDist &&              // Step increasing.
+        aNextDist > aNullCoeff &&         // Avoid separation in case of too small step.
+        aDist > aNullCoeff)               // Usually found when purger not invoked (blend).
+    {
+      return anIdx;
+    }
+    aDist = aNextDist;
+  }
+  return theMaxIdx;
 }

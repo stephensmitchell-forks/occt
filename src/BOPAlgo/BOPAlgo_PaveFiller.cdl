@@ -555,7 +555,26 @@ is
     IsPrimary(me) 
         returns Boolean from Standard 
         is protected; 
-    
+
+    RemoveMicroSectionEdges(me:out;
+            theMSCPB : out IndexedDataMapOfShapeCoupleOfPaveBlocks from BOPDS;
+            theDMVLV : out DataMapOfIntegerListOfInteger from BOPCol)
+        is protected;
+    ---Purpose:
+    -- When all section edges are created and no increase of the tolerance
+    -- of vertices put on the section edges is expected, make sure that
+    -- the created sections have valid range.
+    -- If any of the section edges do not have valid range, remove them
+    -- from Face/Face intersection info and from the input <theMSCPB> map.
+    -- Link vertices of such edge by putting their indices into <theDMVLV> map
+    -- for further unification in the PostTreatFF method.
+    --
+    -- All these section edges have already been checked to have valid range.
+    -- Current check is necessary for the edges whose vertices have also
+    -- been put on other section edges with greater tolerance, which has caused
+    -- increase of the tolerance value of the vertices.
+
+
 fields  
     myArguments   : ListOfShape from BOPCol is protected;  
     myDS          : PDS from BOPDS is protected; 
