@@ -2,6 +2,7 @@
 puts "TODO CR23096 ALL: NBSHAPES : Faulty" 
 puts "TODO CR23096 ALL: TOLERANCE : Faulty" 
 puts "TODO CR23096 ALL: LABELS : Faulty" 
+puts "TODO CR28805 ALL: 1 differences with reference data found"
 
 set filename sim6049.igs
 

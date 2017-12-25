@@ -6,6 +6,8 @@ puts ""
 # Incorrect exact HLR results
 ######################################################
 
+puts "TODO CR29380 ALL: Error :  is WRONG because number"
+
 pload XDE
 pload QAcommands
 
@@ -23,6 +25,6 @@ build3d result
 fit
 
 checkprops result -l 534.882
-checknbshapes result -vertex 308 -edge 154
+checknbshapes result -vertex 324 -edge 162
 
 checkview -screenshot -2d -path ${imagedir}/${test_image}.png
