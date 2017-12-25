@@ -6,8 +6,6 @@ puts ""
 # Different Point-Face-classification algorithms return different results
 #################################################
 
-puts "TODO OCC29203 ALL: Error : Wrong result of 2d classifier algorithm"
-
 # There is a dangerous to return ON-status by the reason
 # of poor algorithm of IntRes2d_Position computation
 # in BRepClass_Intersector class. Correct status is OUT.
