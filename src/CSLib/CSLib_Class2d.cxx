@@ -55,8 +55,6 @@ CSLib_Class2d::CSLib_Class2d(const TColgp_Array1OfPnt2d& theTP2d,
     return;
   }
 
-  myTolU = Min(myTolU, 0.01*(theUmax - theUmin));
-  myTolV = Min(myTolV, 0.01*(theVmax - theVmin));
   myTolU = Max(myTolU, Precision::PConfusion());
   myTolV = Max(myTolV, Precision::PConfusion());
 

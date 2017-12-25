@@ -42,6 +42,11 @@
 #include <NCollection_UBTreeFiller.hxx>
 #include <Bnd_Box2d.hxx>
 
+#ifdef DEBUG_PCLASS_POLYGON
+#include <DrawTrSurf.hxx>
+#include <Geom2d_BSplineCurve.hxx>
+#endif
+
 typedef NCollection_UBTree<Standard_Integer, Bnd_Box2d> BRepTopAdaptor_FClass2dTree;
 typedef NCollection_UBTreeFiller <Standard_Integer, Bnd_Box2d> BRepTopAdaptor_FClass2dTreeFiller;
 
@@ -205,6 +210,8 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& theFace,
   myTol3D = theTol3D;
   const Standard_Real aTolU = anAS.UResolution(theTol3D),
                       aTolV = anAS.VResolution(theTol3D);
+  const Standard_Real aMaxGapU = Max(aTolU, Precision::PConfusion());
+  const Standard_Real aMaxGapV = Max(aTolV, Precision::PConfusion());
   //
   Tole = 0.;
   Tol = 0.;
@@ -280,7 +287,7 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& theFace,
       else
       {
         gp_Pnt2d aP1(C.Value((Or == TopAbs_REVERSED) ? C.LastParameter() : C.FirstParameter()));
-        if (aP1.SquareDistance(aPrevPoint) > Precision::PConfusion())
+        if (Abs(aP1.X() - aPrevPoint.X()) > aMaxGapU || Abs(aP1.Y() - aPrevPoint.Y()) > aMaxGapV)
         {
           //Wire is not closed in 2D-space
           BadWire = 1;
@@ -501,7 +508,8 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& theFace,
         aD1Prev.Prepend(aV);
     } //for(;aWExp.More(); aWExp.Next()) {
     // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    if (NbEdges || (aPrevPoint.SquareDistance(aFirstEPoint) > Precision::SquarePConfusion()))
+    if (NbEdges || Abs(aFirstEPoint.X() - aPrevPoint.X()) > aMaxGapU ||
+                   Abs(aFirstEPoint.Y() - aPrevPoint.Y()) > aMaxGapV)
     {
       // 1. TopExp_Explorer and BRepTools_WireExplorer returns differ number of edges
       // 2. Wire is not closed in 2D-space
@@ -565,6 +573,19 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& theFace,
 
           aTreeFiller.Add(ii, anArrBoxes(ii));
         }//for(ii=1; ii<nbpnts; ii++,im0++,im1++,im2++) { 
+
+#ifdef DEBUG_PCLASS_POLYGON
+        TColStd_Array1OfReal aKnots(1, nbpnts);
+        TColStd_Array1OfInteger aMults(1, nbpnts);
+        for (int i = 1; i <= nbpnts; i++)
+        {
+          aKnots(i) = i;
+          aMults(i) = 1;
+        }
+        aMults(1) = aMults(nbpnts) = 2;
+        Handle(Geom2d_BSplineCurve) aPol = new Geom2d_BSplineCurve(PClass, aKnots, aMults, 1);
+        DrawTrSurf::Set("pol", aPol);
+#endif
 
         {
           const Standard_Real aToler = Max(myTol3D, Precision::Confusion());

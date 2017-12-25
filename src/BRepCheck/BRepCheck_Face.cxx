@@ -325,7 +325,7 @@ BRepCheck_Status BRepCheck_Face::ClassifyWires(const Standard_Boolean Update)
 
     BRepTopAdaptor_FClass2d FClass2d(newFace,Precision::Confusion());
     Standard_Boolean WireBienOriente = Standard_False;
-    if(FClass2d.PerformInfinitePoint() != TopAbs_OUT) { 
+    if(FClass2d.IsHole()) { 
       WireBienOriente=Standard_True;
       // the given wire defines a hole
       myMapImb.UnBind(wir1);

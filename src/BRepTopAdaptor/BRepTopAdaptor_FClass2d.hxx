@@ -18,6 +18,7 @@
 #define _BRepTopAdaptor_FClass2d_HeaderFile
 
 #include <BRepClass_FaceClassifier.hxx>
+#include <NCollection_Sequence.hxx>
 #include <TopoDS_Face.hxx>
 class CSLib_Class2d;
 

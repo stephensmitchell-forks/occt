@@ -90,11 +90,14 @@ void BRepClass_FaceExplorer::Init(const TopoDS_Face& theF)
   const Standard_Real aUPeriod = anAdS.IsUPeriodic() ? anAdS.UPeriod() : 0.0;
   const Standard_Real aVPeriod = anAdS.IsVPeriodic() ? anAdS.VPeriod() : 0.0;
 
-  for (TopExp_Explorer anExpW(myFace, TopAbs_WIRE); anExpW.More(); anExpW.Next())
+  for (TopoDS_Iterator anExpW(myFace); anExpW.More(); anExpW.Next())
   {
-    const TopoDS_Wire &aWir = TopoDS::Wire(anExpW.Current());
-    NCollection_List<TopClass_GeomEdge> anEList(anAlloc);
-    myMapWE.Add(aWir, anEList);
+    if (anExpW.Value().ShapeType() == TopAbs_WIRE)
+    {
+      const TopoDS_Wire &aWir = TopoDS::Wire(anExpW.Value());
+      NCollection_List<TopClass_GeomEdge> anEList(anAlloc);
+      myMapWE.Add(aWir, anEList);
+    }
   }
 
   if (myMapWE.IsEmpty())
