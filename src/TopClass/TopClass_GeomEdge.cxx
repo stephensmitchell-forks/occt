@@ -36,11 +36,11 @@ TopClass_GeomEdge::TopClass_GeomEdge(const Handle(Geom_Curve)& theC3D,
                                      const TopAbs_Orientation theOri,
                                      const TopClass_GeomVertex &theVf,
                                      const TopClass_GeomVertex &theVl,
-                                     const Standard_Boolean theIsSameParameter) :
-                                     myOri(theOri),
-                                     myVertF(theVf),
-                                     myVertL(theVl),
-                                     myIsSameParameter(theIsSameParameter)
+                                     const Standard_Boolean theIsSameParameter)
+  : myOri(theOri),
+    myVertF(theVf),
+    myVertL(theVl),
+    myIsSameParameter(theIsSameParameter)
 {
   Init(theC3D, theC2D, theS, theFPar, theLPar);
 }
@@ -50,7 +50,11 @@ TopClass_GeomEdge::TopClass_GeomEdge(const Handle(Geom_Curve)& theC3D,
 //purpose  : 
 //=======================================================================
 TopClass_GeomEdge::TopClass_GeomEdge(const TopoDS_Edge& theE,
-                                     const TopoDS_Face& theF) : myTopoEdge(theE)
+                                     const Handle(Geom_Surface)& theSurf,
+                                     const Handle(Geom2d_Curve)& theC2d,
+                                     const Standard_Real theFPar,
+                                     const Standard_Real theLPar)
+  : myTopoEdge(theE)
 {
   myOri = theE.Orientation();
   
@@ -64,13 +68,11 @@ TopClass_GeomEdge::TopClass_GeomEdge(const TopoDS_Edge& theE,
   myVertL.Init(aVl, theE);
 
   Standard_Real aFPar = 1.0, aLPar = -1.0;
-  const Handle(Geom_Surface) aS = BRep_Tool::Surface(theF);
   const Handle(Geom_Curve) aC3d = BRep_Tool::Curve(theE, aFPar, aLPar);
-  const Handle(Geom2d_Curve) aC2d = BRep_Tool::CurveOnSurface(theE, theF, aFPar, aLPar);
 
   myIsSameParameter = (BRep_Tool::SameParameter(theE) && BRep_Tool::SameRange(theE));
 
-  Init(aC3d, aC2d, aS, aFPar, aLPar);
+  Init(aC3d, theC2d, theSurf, theFPar, theLPar);
 }
 
 //=======================================================================
@@ -103,7 +105,7 @@ void TopClass_GeomEdge::Init(const Handle(Geom_Curve)& theC3D,
 //function : Distance3D
 //purpose  : 
 //=======================================================================
-Standard_Real TopClass_GeomEdge::Distance3D(const gp_Pnt2d &thePt,
+Standard_Real TopClass_GeomEdge::Distance3D(const gp_Pnt &thePt,
                                             gp_Pnt *thePOnC,
                                             Standard_Real *theParOnC) const
 {
@@ -115,14 +117,12 @@ Standard_Real TopClass_GeomEdge::Distance3D(const gp_Pnt2d &thePt,
   // Default value for extrema algo.
   const Standard_Real aTolPar = 1.0e-10;
 
-  const gp_Pnt aP(mySurf.Value(thePt.X(), thePt.Y()));
-
-  Extrema_ExtPC anEG(aP, myC3D, aTolPar);
+  Extrema_ExtPC anEG(thePt, myC3D, aTolPar);
 
   if (!anEG.IsDone() || (anEG.NbExt() == 0))
   {
-    const Standard_Real aDistF = aP.SquareDistance(myVertF.GetPnt3D());
-    const Standard_Real aDistL = aP.SquareDistance(myVertL.GetPnt3D());
+    const Standard_Real aDistF = thePt.SquareDistance(myVertF.GetPnt3D());
+    const Standard_Real aDistL = thePt.SquareDistance(myVertL.GetPnt3D());
 
     if (aDistF < aDistL)
     {

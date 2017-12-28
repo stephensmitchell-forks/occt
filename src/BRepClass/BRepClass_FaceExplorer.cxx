@@ -63,6 +63,10 @@ const Standard_Real BRepClass_FaceExplorer::myProbing_Step = 0.2111;
 //purpose  : 
 //=======================================================================
 BRepClass_FaceExplorer::BRepClass_FaceExplorer(const TopoDS_Face& theF)
+  : myBoundsComputed(Standard_False),
+    myUMin(0.), myUMax(0.), myVMin(0.), myVMax(0.),
+    myCurEdgeInd(0), myCurEdgePar(0.)
+
 {
   Init(theF);
 }
@@ -84,8 +88,8 @@ void BRepClass_FaceExplorer::Init(const TopoDS_Face& theF)
 
   myFace = TopoDS::Face(theF.Oriented(TopAbs_FORWARD));
   Handle(NCollection_IncAllocator) anAlloc = new NCollection_IncAllocator;
-  TopLoc_Location aLocation;
-  GeomAdaptor_Surface anAdS(BRep_Tool::Surface(myFace, aLocation));
+  mySurf = BRep_Tool::Surface(myFace);
+  GeomAdaptor_Surface anAdS(mySurf);
 
   const Standard_Real aUPeriod = anAdS.IsUPeriodic() ? anAdS.UPeriod() : 0.0;
   const Standard_Real aVPeriod = anAdS.IsVPeriodic() ? anAdS.VPeriod() : 0.0;
@@ -227,13 +231,11 @@ void BRepClass_FaceExplorer::Init(const TopoDS_Face& theF)
 Standard_Boolean  BRepClass_FaceExplorer::CheckPoint(gp_Pnt2d& thePoint)
 {
   Standard_Real anUMin = 0.0, anUMax = 0.0, aVMin = 0.0, aVMax = 0.0;
-  TopLoc_Location aLocation;
-  const Handle(Geom_Surface)& aSurface = BRep_Tool::Surface(myFace, aLocation);
-  aSurface->Bounds(anUMin, anUMax, aVMin, aVMax);
+  mySurf->Bounds(anUMin, anUMax, aVMin, aVMax);
   if (Precision::IsInfinite(anUMin) || Precision::IsInfinite(anUMax) ||
       Precision::IsInfinite(aVMin) || Precision::IsInfinite(aVMax))
   {
-    BRepTools::UVBounds(myFace, anUMin, anUMax, aVMin, aVMax);
+    UVBounds(anUMin, anUMax, aVMin, aVMax);
     if (Precision::IsInfinite(anUMin) || Precision::IsInfinite(anUMax) ||
         Precision::IsInfinite(aVMin) || Precision::IsInfinite(aVMax))
     {
@@ -430,8 +432,9 @@ void BRepClass_FaceExplorer::SimpleAdd(const TopoDS_Edge &theEdge)
   }
 #endif
 
-
-  const TopClass_GeomEdge aGE(theEdge, myFace);
+  Standard_Real aFPar, aLPar;
+  const Handle(Geom2d_Curve) aC2d = BRep_Tool::CurveOnSurface(theEdge, myFace, aFPar, aLPar);
+  const TopClass_GeomEdge aGE(theEdge, mySurf, aC2d, aFPar, aLPar);
 
   if (aGE.IsNull())
     return;
@@ -543,7 +546,7 @@ void BRepClass_FaceExplorer::AddPseudo(const TopoDS_Edge& theE1,
   // Pseudo-edge. Therefore, parameter of the vertex is not important value.
   TopClass_GeomVertex aV(theV, aFPar);
 
-  TopClass_GeomEdge aGE(aC3d, aPseudoEdge, BRep_Tool::Surface(myFace),
+  TopClass_GeomEdge aGE(aC3d, aPseudoEdge, mySurf,
                         aFPar, aLPar, anOriLast, aV, aV, Standard_False);
 
   NCollection_List<TopClass_GeomEdge>& anEList = myWExplorer.ChangeValue();
@@ -632,9 +635,7 @@ Standard_Boolean BRepClass_FaceExplorer::
                     IsPointInEdgeVertex(const gp_Pnt2d &thePnt,
                                         Standard_Real* const theParameter) const
 {
-  TopLoc_Location aLoc;
-  const Handle(Geom_Surface) aSurf = BRep_Tool::Surface(myFace, aLoc);
-  const gp_Pnt aPref(aSurf->Value(thePnt.X(), thePnt.Y()).Transformed(aLoc));
+  const gp_Pnt aPref(mySurf->Value(thePnt.X(), thePnt.Y()));
   const TopClass_GeomEdge &anEdge = myEExplorer.Value();
 
   if (anEdge.FirstVertex().IsSame(aPref))
@@ -657,6 +658,24 @@ Standard_Boolean BRepClass_FaceExplorer::
     *theParameter = 0.0;
 
   return Standard_False;
+}
+
+//=======================================================================
+//function : UVBounds
+//purpose  : 
+//=======================================================================
+void BRepClass_FaceExplorer::UVBounds(Standard_Real& theUMin, Standard_Real& theUMax,
+                                      Standard_Real& theVMin, Standard_Real& theVMax) const
+{
+  if (!myBoundsComputed)
+  {
+    BRepTools::UVBounds(myFace, myUMin, myUMax, myVMin, myVMax);
+    myBoundsComputed = Standard_True;
+  }
+  theUMin = myUMin;
+  theUMax = myUMax;
+  theVMin = myVMin;
+  theVMax = myVMax;
 }
 
 //=======================================================================

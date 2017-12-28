@@ -1330,7 +1330,7 @@ static Standard_Boolean AreFacesCoincideInArea (const TopoDS_Shape& theBaseFace,
       BB.UpdateEdge(aE,PC,aBaseFace,tolE);
     }
 
-    TopClass_GeomEdge aGE(aE, aBaseFace);
+    TopClass_GeomEdge aGE(aE, BRep_Tool::Surface(aBaseFace), PC, pf, pl);
     anInter.Perform(aLin, pLinMin, 0.0, aGE);
     if (anInter.IsDone()) {
       Standard_Integer i;

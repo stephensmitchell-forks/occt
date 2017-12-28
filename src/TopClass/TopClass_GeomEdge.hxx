@@ -81,7 +81,10 @@ public:
   //!     the orientation of theE. So, the application must set
   //!     correct edge orientation before calling this constructor.
   Standard_EXPORT TopClass_GeomEdge(const TopoDS_Edge& theE,
-                                    const TopoDS_Face& theF);
+                                    const Handle(Geom_Surface)& theSurf,
+                                    const Handle(Geom2d_Curve)& theC2d,
+                                    const Standard_Real theFPar,
+                                    const Standard_Real theLPar);
 
   //! Replaces 2d-curve with theC.
   void Replace2DCurve(const Geom2dAdaptor_Curve& theC,
@@ -91,8 +94,7 @@ public:
     myOri = theOri;
   }
 
-  //! Recomputes thePt on the surface mySurf to 3D-point and
-  //! looks for thePOnC, which is nearest point in
+  //! Looks for thePOnC, which is nearest point in
   //! the 3D-curve myC3D to thePt. If (thePOnC != 0)
   //! the found value will be assigned to thePOnC.
   //! If (theParOnC != 0) the method will assign to it the
@@ -106,7 +108,7 @@ public:
   //!   the result of global extrema algorithm will be returned.
   //!   Otherwise, the local extrema will be used with initial
   //!   parameter "*theParOnC".
-  Standard_EXPORT Standard_Real Distance3D(const gp_Pnt2d &thePt,
+  Standard_EXPORT Standard_Real Distance3D(const gp_Pnt &thePt,
                                            gp_Pnt *thePOnC = 0,
                                            Standard_Real *theParOnC = 0) const;
  
