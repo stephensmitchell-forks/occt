@@ -110,6 +110,10 @@ public:
     return myEExplorer.Value().GetTopoEdge();
   }
 
+  //! Take UVBounds of the face. They are cached on first call.
+  Standard_EXPORT void UVBounds(Standard_Real& theUMin, Standard_Real& theUMax,
+                                Standard_Real& theVMin, Standard_Real& theVMax) const;
+
 protected:
 
   //! Excludes all necessary information from theEdge
@@ -148,6 +152,15 @@ private:
 
   //! Classified face
   TopoDS_Face myFace;
+
+  //! Surface got from the face (it includes location if any)
+  Handle(Geom_Surface) mySurf;
+
+  //! Flag defining whether UV bounds have been computed
+  mutable Standard_Boolean myBoundsComputed;
+
+  //! UV bounds of the face
+  mutable Standard_Real myUMin, myUMax, myVMin, myVMax;
 
   //! Explores myFace to wires
   NCollection_IndexedDataMap <TopoDS_Wire,

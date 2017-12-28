@@ -40,109 +40,84 @@
 
 #include <NCollection_UBTree.hxx>
 #include <NCollection_UBTreeFiller.hxx>
-#include <Bnd_Box2d.hxx>
+#include <Bnd_B2d.hxx>
 
 #ifdef DEBUG_PCLASS_POLYGON
 #include <DrawTrSurf.hxx>
 #include <Geom2d_BSplineCurve.hxx>
 #endif
 
-typedef NCollection_UBTree<Standard_Integer, Bnd_Box2d> BRepTopAdaptor_FClass2dTree;
-typedef NCollection_UBTreeFiller <Standard_Integer, Bnd_Box2d> BRepTopAdaptor_FClass2dTreeFiller;
+typedef NCollection_UBTree<Standard_Integer, Bnd_B2d> BRepTopAdaptor_FClass2dTree;
+typedef NCollection_UBTreeFiller <Standard_Integer, Bnd_B2d> BRepTopAdaptor_FClass2dTreeFiller;
 
-class BRepTopAdaptor_FClass2dSel : public NCollection_UBTree <Standard_Integer, Bnd_Box2d>::Selector
+inline Standard_Boolean IsInter1d(Standard_Real theU1, Standard_Real theU2,
+                                  Standard_Real theW1, Standard_Real theW2)
+{
+  if (theU1 > theU2)  std::swap(theU1, theU2);
+  if (theW1 > theW2)  std::swap(theW1, theW2);
+  return Max(theU1, theW1) - Min(theU2, theW2) < Precision::PConfusion();
+}
+
+class BRepTopAdaptor_FClass2dSel : public BRepTopAdaptor_FClass2dTree::Selector
 {
 public:
-  BRepTopAdaptor_FClass2dSel(const TColgp_SequenceOfPnt2d& theSeqOfPnts,
-                             const Bnd_Box2d& theBox,
+  BRepTopAdaptor_FClass2dSel(const TColgp_Array1OfPnt2d& thePnts,
+                             const Bnd_B2d& theBox,
                              const Standard_Integer theCurIdx) : 
-                             mySeqOfPnts(theSeqOfPnts),
+                             myPnts(thePnts),
                              myBox(theBox),
-                             myCurrentIndex(theCurIdx)
+                             myNbSeg(myPnts.Length() - 1),
+                             myCurrentIndex(theCurIdx),
+                             myP1(myPnts(myCurrentIndex).XY()),
+                             myP2(myPnts(myCurrentIndex + 1).XY()),
+                             myVec12(myP2 - myP1)
   {}
 
-  Standard_Boolean Reject(const Bnd_Box2d& theBox) const
+  Standard_Boolean Reject(const Bnd_B2d& theBox) const
   {
     return theBox.IsOut(myBox);
   }
 
-#define AcceptSegment {myStop = Standard_True; return Standard_True; }
   Standard_Boolean Accept(const Standard_Integer& theIndex)
   {
+    // reject the same or neighboring index
     if (myCurrentIndex == theIndex)
       return Standard_False;
-
-    const Standard_Integer aNbPntsM1 = mySeqOfPnts.Length()-1;
-
-    if ((myCurrentIndex == 1) && (theIndex == aNbPntsM1))
+    if ((myCurrentIndex % myNbSeg) + 1 == theIndex || (theIndex % myNbSeg) + 1 == myCurrentIndex)
       return Standard_False;
 
-    if ((myCurrentIndex == aNbPntsM1) && (theIndex == 1))
-      return Standard_False;
+    const gp_XY& aP3 = myPnts(theIndex).XY();
+    const gp_XY& aP4 = myPnts(theIndex + 1).XY();
 
-    if (Abs(theIndex - myCurrentIndex) == 1)
-      return Standard_False;
-
-    const gp_XY &aP1 = mySeqOfPnts(myCurrentIndex).XY();
-    const gp_XY &aP2 = mySeqOfPnts(myCurrentIndex + 1).XY();
-    const gp_XY &aP3 = mySeqOfPnts(theIndex).XY();
-    const gp_XY &aP4 = mySeqOfPnts(theIndex + 1).XY();
-
-    const gp_XY aV12 = aP2 - aP1;
-    const gp_XY aV13 = aP3 - aP1;
-    const gp_XY aV34 = aP3 - aP4;
-
-    const Standard_Real aDet0 = aV12.Crossed(aV34);
-    const Standard_Real aDet1 = aV13.Crossed(aV34);
-    const Standard_Real aDet2 = aV12.Crossed(aV13);
-
-    if (Abs(aDet0) < Precision::PConfusion())
+    if (IsInter1d(myP1.X(), myP2.X(), aP3.X(), aP4.X()) &&
+        IsInter1d(myP1.Y(), myP2.Y(), aP3.Y(), aP4.Y()))
     {
-      if ((Abs(aDet1) > Precision::PConfusion()) || (Abs(aDet2) > Precision::PConfusion()))
-        return Standard_False;
-
-      const Standard_Real aSqMP12 = aV12.SquareModulus();
-      const Standard_Real aTP3 = aV13.Dot(aV12);
-      if ((0.0 <= aTP3) && (aTP3 <= aSqMP12))
-        AcceptSegment;
-
-      const Standard_Real aTP4 = (aP4 - aP1).Dot(aV12);
-      if ((0.0 <= aTP4) && (aTP4 <= aSqMP12))
-        AcceptSegment;
-
-      const Standard_Real aSqMP34 = aV34.SquareModulus();
-      const Standard_Real aTP1 = aV13.Reversed().Dot(aV34);
-      if ((0.0 <= aTP1) && (aTP1 <= aSqMP34))
-        AcceptSegment;
-
-      const Standard_Real aTP2 = (aP2 - aP3).Dot(aV34);
-      if ((0.0 <= aTP2) && (aTP2 <= aSqMP34))
-        AcceptSegment;
-
-      return Standard_False;
+      Standard_Real anAreaEps = Precision::PConfusion() * Precision::PConfusion();
+      gp_XY aVec13 = aP3 - myP1;
+      gp_XY aVec14 = aP4 - myP1;
+      if (myVec12.Crossed(aVec13) * myVec12.Crossed(aVec14) < anAreaEps)
+      {
+        gp_XY aVec34 = aP4 - aP3;
+        gp_XY aVec32 = myP2 - aP3;
+        if (aVec13.Crossed(aVec14) * aVec34.Crossed(aVec32) < anAreaEps)
+        {
+          myStop = Standard_True;
+          return Standard_True;
+        }
+      }
     }
-
-    const Standard_Real aT1 = aDet1 / aDet0,
-                        aT2 = aDet2 / aDet0;
-
-    if ((aT1 < 0.0) || (aT2 < 0.0))
-      return Standard_False;
-
-    if ((aT1 > 1.0) || (aT2 > 1.0))
-      return Standard_False;
-
-    AcceptSegment;
+    return Standard_False;
   }
-#undef AcceptSegment
 
 protected:
   BRepTopAdaptor_FClass2dSel(BRepTopAdaptor_FClass2dSel&);
   const BRepTopAdaptor_FClass2dSel& operator=(const BRepTopAdaptor_FClass2dSel&);
 
 private:
-  const TColgp_SequenceOfPnt2d& mySeqOfPnts;
-  Bnd_Box2d myBox;
-  Standard_Integer myCurrentIndex;
+  const TColgp_Array1OfPnt2d& myPnts;
+  Bnd_B2d myBox;
+  Standard_Integer myNbSeg, myCurrentIndex;
+  gp_XY myP1, myP2, myVec12;
 };
 
 
@@ -182,8 +157,8 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& theFace,
   Standard_Boolean WireIsEmpty, Ancienpnt3dinitialise, degenerated;
   Standard_Integer nbpnts, firstpoint, NbEdges;
   Standard_Integer iX, aNbs1, nbs, Avant, BadWire;
-  Standard_Real u, du, Tole, Tol, pfbid, plbid;
-  Standard_Real FlecheU, FlecheV, TolVertex1, TolVertex;
+  Standard_Real u, du, pfbid, plbid;
+  Standard_Real FlecheU, FlecheV;
   Standard_Real uFirst, uLast;
   Standard_Real aPrCf, aPrCf2;
   //
@@ -210,11 +185,9 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& theFace,
   myTol3D = theTol3D;
   const Standard_Real aTolU = anAS.UResolution(theTol3D),
                       aTolV = anAS.VResolution(theTol3D);
-  const Standard_Real aMaxGapU = Max(aTolU, Precision::PConfusion());
-  const Standard_Real aMaxGapV = Max(aTolV, Precision::PConfusion());
+  //const Standard_Real aMaxGapU = Max(aTolU, Precision::PConfusion());
+  //const Standard_Real aMaxGapV = Max(aTolV, Precision::PConfusion());
   //
-  Tole = 0.;
-  Tol = 0.;
   myUmin = myVmin = RealLast();
   myUmax = myVmax = -myUmin;
   BadWire = 0;
@@ -232,8 +205,6 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& theFace,
     firstpoint = 1;
     FlecheU = aTolU;
     FlecheV = aTolV;
-    TolVertex1 = 0.;
-    TolVertex = 0.;
     WireIsEmpty = Standard_True;
     Ancienpnt3dinitialise = Standard_False;
     Ancienpnt3d.SetCoord(0., 0., 0.);
@@ -256,8 +227,8 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& theFace,
 
     // First and last points of the previous edges
     // in order to detect if wire is close in 2d-space
-    gp_Pnt2d aPrevPoint, aFirstEPoint;
-    Standard_Boolean isFirst = Standard_True;
+    //gp_Pnt2d aPrevPoint, aFirstEPoint;
+    //Standard_Boolean isFirst = Standard_True;
 
     //
     aWExp.Init(aW, myFace);
@@ -276,27 +247,27 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& theFace,
       //
       BRepAdaptor_Curve2d C(edge, myFace);
 
-      if (isFirst)
-      {
-        C.D0(C.FirstParameter(), aFirstEPoint);
-        C.D0(C.LastParameter(), aPrevPoint);
+      //if (isFirst)
+      //{
+      //  C.D0(C.FirstParameter(), aFirstEPoint);
+      //  C.D0(C.LastParameter(), aPrevPoint);
 
-        if (edge.Orientation() == TopAbs_REVERSED)
-          std::swap(aFirstEPoint, aPrevPoint);
-      }
-      else
-      {
-        gp_Pnt2d aP1(C.Value((Or == TopAbs_REVERSED) ? C.LastParameter() : C.FirstParameter()));
-        if (Abs(aP1.X() - aPrevPoint.X()) > aMaxGapU || Abs(aP1.Y() - aPrevPoint.Y()) > aMaxGapV)
-        {
-          //Wire is not closed in 2D-space
-          BadWire = 1;
-        }
+      //  if (edge.Orientation() == TopAbs_REVERSED)
+      //    std::swap(aFirstEPoint, aPrevPoint);
+      //}
+      //else
+      //{
+      //  gp_Pnt2d aP1(C.Value((Or == TopAbs_REVERSED) ? C.LastParameter() : C.FirstParameter()));
+      //  if (Abs(aP1.X() - aPrevPoint.X()) > aMaxGapU || Abs(aP1.Y() - aPrevPoint.Y()) > aMaxGapV)
+      //  {
+      //    //Wire is not closed in 2D-space
+      //    BadWire = 1;
+      //  }
 
-        C.D0((Or == TopAbs_REVERSED) ? C.FirstParameter() : C.LastParameter(), aPrevPoint);
-      }
+      //  C.D0((Or == TopAbs_REVERSED) ? C.FirstParameter() : C.LastParameter(), aPrevPoint);
+      //}
 
-      isFirst = Standard_False;
+      //isFirst = Standard_False;
 
       BRepAdaptor_Curve C3d;
       //------------------------------------------
@@ -309,23 +280,9 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& theFace,
       //
       TopExp::Vertices(edge, Va, Vb);
       //
-      TolVertex1 = 0.;
-      TolVertex = 0.;
-      if (Va.IsNull()) {
+      if (Va.IsNull() || Vb.IsNull())
+      {
         degenerated = Standard_True;
-      }
-      else {
-        TolVertex1 = BRep_Tool::Tolerance(Va);
-      }
-      if (Vb.IsNull()){
-        degenerated = Standard_True;
-      }
-      else {
-        TolVertex = BRep_Tool::Tolerance(Vb);
-      }
-      // 
-      if (TolVertex<TolVertex1) {
-        TolVertex = TolVertex1;
       }
       //
       //-- Verification of cases when forgotten to code degenereted
@@ -350,10 +307,6 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& theFace,
         }
       }//if(!degenerated)
       //-- ----------------------------------------
-      Tole = BRep_Tool::Tolerance(edge);
-      if (Tole>Tol) {
-        Tol = Tole;
-      }
       //
       // NbSamples +> nbs
       nbs = Geom2dInt_Geom2dCurveTool::NbSamples(C);
@@ -375,7 +328,7 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& theFace,
       }
       //
       // aPrms
-      aNbs1 = nbs + 1;
+      aNbs1 = (nbs == 2 ? nbs + 1 : nbs);
       TColStd_Array1OfReal aPrms(1, aNbs1);
       //
       if (nbs == 2) {
@@ -508,8 +461,8 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& theFace,
         aD1Prev.Prepend(aV);
     } //for(;aWExp.More(); aWExp.Next()) {
     // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    if (NbEdges || Abs(aFirstEPoint.X() - aPrevPoint.X()) > aMaxGapU ||
-                   Abs(aFirstEPoint.Y() - aPrevPoint.Y()) > aMaxGapV)
+    if (NbEdges/* || Abs(aFirstEPoint.X() - aPrevPoint.X()) > aMaxGapU ||
+                   Abs(aFirstEPoint.Y() - aPrevPoint.Y()) > aMaxGapV*/)
     {
       // 1. TopExp_Explorer and BRepTools_WireExplorer returns differ number of edges
       // 2. Wire is not closed in 2D-space
@@ -539,10 +492,6 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& theFace,
       
       if (!BadWire)
       {
-        BRepTopAdaptor_FClass2dTree aBBTree;
-        BRepTopAdaptor_FClass2dTreeFiller aTreeFiller(aBBTree);
-        NCollection_Array1<Bnd_Box2d> anArrBoxes(1, nbpnts - 1);
-
         // Point to area computation
         const Standard_Integer im2 = nbpnts - 2;
         Standard_Integer im1 = nbpnts - 1;
@@ -553,12 +502,6 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& theFace,
         PClass(im1) = SeqPnt2d.Value(im1);
         PClass(nbpnts) = SeqPnt2d.Value(nbpnts);
 
-        anArrBoxes(im2).Add(PClass(im2));
-        anArrBoxes(im2).Add(PClass(im1));
-
-        anArrBoxes(im1).Add(PClass(im1));
-        anArrBoxes(im1).Add(PClass(nbpnts));
-
         for (ii = 1; ii < nbpnts; ii++, im0++, im1++)
         {
           if (im1 >= nbpnts) im1 = 1;
@@ -567,11 +510,6 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& theFace,
           gp_Vec2d A(PClass(1/*im2*/), PClass(im1));
           gp_Vec2d B(PClass(im1), PClass(im0));
           anArea += A.Crossed(B);
-
-          anArrBoxes(ii).Add(PClass(ii));
-          anArrBoxes(ii).Add(SeqPnt2d.Value(ii + 1));
-
-          aTreeFiller.Add(ii, anArrBoxes(ii));
         }//for(ii=1; ii<nbpnts; ii++,im0++,im1++,im2++) { 
 
 #ifdef DEBUG_PCLASS_POLYGON
@@ -599,19 +537,53 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& theFace,
 
         if (!BadWire)
         {
-          // 2. Shake the tree filler
-          aTreeFiller.Fill();
-
-          for (Standard_Integer aVecIdx = anArrBoxes.Lower();
-               aVecIdx <= anArrBoxes.Upper(); aVecIdx++)
+          NCollection_Array1<Bnd_B2d> anArrBoxes(1, nbpnts - 1);
+          anArrBoxes(im2).Add(PClass(im2));
+          anArrBoxes(im2).Add(PClass(im1));
+          anArrBoxes(im1).Add(PClass(im1));
+          anArrBoxes(im1).Add(PClass(nbpnts));
+          for (ii = 1; ii < nbpnts; ii++)
           {
-            const Bnd_Box2d& aBox = anArrBoxes(aVecIdx);
-            BRepTopAdaptor_FClass2dSel aSelector(SeqPnt2d, aBox, aVecIdx);
-            if (aBBTree.Select(aSelector))
+            anArrBoxes(ii).Add(PClass(ii));
+            anArrBoxes(ii).Add(PClass(ii + 1));
+          }
+
+          if (nbpnts > 100)
+          {
+            BRepTopAdaptor_FClass2dTree aBBTree;
             {
-              //The polygon is self-intersected
-              BadWire = Standard_True;
-              break;
+              BRepTopAdaptor_FClass2dTreeFiller aTreeFiller(aBBTree);
+              for (ii = 1; ii < nbpnts; ii++)
+                aTreeFiller.Add(ii, anArrBoxes(ii));
+            }
+            for (ii = 1; ii < nbpnts; ii++)
+            {
+              const Bnd_B2d& aBox = anArrBoxes(ii);
+              BRepTopAdaptor_FClass2dSel aSelector(PClass, aBox, ii);
+              if (aBBTree.Select(aSelector))
+              {
+                //The polygon is self-intersected
+                BadWire = Standard_True;
+                break;
+              }
+            }
+          }
+          else
+          {
+            for (ii = 1; ii < nbpnts; ii++)
+            {
+              const Bnd_B2d& aBox = anArrBoxes(ii);
+              BRepTopAdaptor_FClass2dSel aSelector(PClass, aBox, ii);
+              for (Standard_Integer j = ii + 1; j < nbpnts; j++)
+              {
+                const Bnd_B2d& aBoxj = anArrBoxes(j);
+                if (!aSelector.Reject(aBoxj) && aSelector.Accept(j))
+                {
+                  //The polygon is self-intersected
+                  BadWire = Standard_True;
+                  break;
+                }
+              }
             }
           }
         } // if (!BadWire) cond.

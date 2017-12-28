@@ -141,6 +141,7 @@ Standard_Boolean BRepClass3d_SolidExplorer::FindAPointInTheFace
 
     TopExp_Explorer otherfaceexplorer;
     Standard_Integer aNbEdges = 0;
+    const Handle(Geom_Surface) aSurf = BRep_Tool::Surface(face);
     for (otherfaceexplorer.Init (face, TopAbs_EDGE);
          otherfaceexplorer.More(); 
          otherfaceexplorer.Next(), ++aNbEdges)
@@ -148,7 +149,9 @@ Standard_Boolean BRepClass3d_SolidExplorer::FindAPointInTheFace
       TopoDS_Edge OtherEdge = TopoDS::Edge (otherfaceexplorer.Current());
       if (OtherEdge.Orientation() != TopAbs_EXTERNAL && OtherEdge != Edge)
       {
-        TopClass_GeomEdge AEdge(OtherEdge, face);
+        Standard_Real aFPar, aLPar;
+        const Handle(Geom2d_Curve) aC2d = BRep_Tool::CurveOnSurface(OtherEdge, face, aFPar, aLPar);
+        TopClass_GeomEdge AEdge(OtherEdge, aSurf, aC2d, aFPar, aLPar);
         FClassifier.Compare (AEdge, 0.0);
         if (FClassifier.ClosestIntersection())
         {
@@ -163,7 +166,9 @@ Standard_Boolean BRepClass3d_SolidExplorer::FindAPointInTheFace
 
     if (aNbEdges == 1)
     {
-      TopClass_GeomEdge AEdge(Edge, face);
+      Standard_Real aFPar, aLPar;
+      const Handle(Geom2d_Curve) aC2d = BRep_Tool::CurveOnSurface(Edge, face, aFPar, aLPar);
+      TopClass_GeomEdge AEdge(Edge, aSurf, aC2d, aFPar, aLPar);
       FClassifier.Compare (AEdge, 0.0);
       if (FClassifier.ClosestIntersection())
       {

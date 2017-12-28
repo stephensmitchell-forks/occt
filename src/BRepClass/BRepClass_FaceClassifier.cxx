@@ -20,6 +20,7 @@
 #include <BRepClass_FaceExplorer.hxx>
 #include <BRepExtrema_DistShapeShape.hxx>
 #include <BRepTools.hxx>
+#include <BRepBndLib.hxx>
 #include <Extrema_ExtPS.hxx>
 #include <gp_Pnt.hxx>
 #include <gp_Pnt2d.hxx>
@@ -216,6 +217,8 @@ void  BRepClass_FaceClassifier::Perform(const TopoDS_Face& theF,
     }
   }
 #else
+  const Handle(Geom_Surface) aS = BRep_Tool::Surface(theF);
+  gp_Pnt aP3d = aS->Value(theP.X(), theP.Y());
   TopoDS_Iterator aWirExp(theF);
   for(; aWirExp.More(); aWirExp.Next())
   {
@@ -226,11 +229,20 @@ void  BRepClass_FaceClassifier::Perform(const TopoDS_Face& theF,
     for(; anEExp.More(); anEExp.Next())
     {
       // anE is an edge
-      const TopoDS_Shape& anE = anEExp.Value();
-      const TopClass_GeomEdge aGE(TopoDS::Edge(anE), theF);
+      const TopoDS_Edge& anE = TopoDS::Edge(anEExp.Value());
+
+      Bnd_Box aBox;
+      BRepBndLib::Add(anE, aBox);
+      aBox.Enlarge(theTol3D);
+      if (aBox.IsOut(aP3d))
+        continue;
+
+      Standard_Real aFPar, aLPar;
+      const Handle(Geom2d_Curve) aC2d = BRep_Tool::CurveOnSurface(anE, theF, aFPar, aLPar);
+      const TopClass_GeomEdge aGE(anE, aS, aC2d, aFPar, aLPar);
 
       Standard_Real aParam = RealFirst();
-      const Standard_Real aDist = aGE.Distance3D(theP, 0, &aParam);
+      const Standard_Real aDist = aGE.Distance3D(aP3d, 0, &aParam);
       if((0.0 <= aDist) && (aDist <= theTol3D))
       {
         // It is necessary for periodic and quasi-periodic (e.g. sphere)

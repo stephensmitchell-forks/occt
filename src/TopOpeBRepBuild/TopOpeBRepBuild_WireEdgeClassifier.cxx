@@ -426,9 +426,10 @@ Standard_Boolean TopOpeBRepBuild_WireEdgeClassifier::CompareElement(const TopoDS
     BRep_Builder BB; 
     BB.UpdateEdge(E, C2D, myFace, tol); //jyl980402+
   } //jyl980402+
+  else
+    C2D = FC2D_CurveOnSurface(E, myFace, f2, l2, tolpc);
 
   if (myFirstCompare) {
-    C2D = FC2D_CurveOnSurface(E, myFace, f2, l2, tolpc);
     Standard_Real t = 0.33334567; Standard_Real par = ((1-t)*f2 + t*l2);
     gp_Pnt2d p2d = C2D->Value(par);
     
@@ -446,7 +447,7 @@ Standard_Boolean TopOpeBRepBuild_WireEdgeClassifier::CompareElement(const TopoDS
     myFirstCompare = Standard_False;
   }
   
-  TopClass_GeomEdge aGE(E, myFace);
+  TopClass_GeomEdge aGE(E, BRep_Tool::Surface(myFace), C2D, f2, l2);
   myFPC.Compare(aGE, 0.0);
 #ifdef OCCT_DEBUG
 //  TopAbs_State state = myFPC.State();
