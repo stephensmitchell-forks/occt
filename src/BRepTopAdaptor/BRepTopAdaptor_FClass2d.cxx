@@ -148,6 +148,29 @@ BRepTopAdaptor_FClass2d::BRepTopAdaptor_FClass2d(const TopoDS_Face& theFace,
 }
 
 //=======================================================================
+//function : ComputeDeviation
+//purpose  : 
+//=======================================================================
+static Standard_Boolean ComputeDeviation(const gp_Pnt2d& thePf,
+                                         const gp_Pnt2d& thePl,
+                                         const gp_Pnt2d& thePm,
+                                         Standard_Real& theDU, Standard_Real& theDV)
+{
+  const gp_XY aDirVec = thePl.XY() - thePf.XY();
+
+  if (aDirVec.SquareModulus() > 1.0e-16)
+  {
+    const gp_Lin2d aLin(thePf, gp_Dir2d(aDirVec));
+    const Standard_Real aUmid = ElCLib::Parameter(aLin, thePm);
+    const gp_Pnt2d aPp = ElCLib::Value(aUmid, aLin);
+    theDU = Abs(aPp.X() - thePm.X());
+    theDV = Abs(aPp.Y() - thePm.Y());
+    return Standard_True;
+  }
+  return Standard_False;
+}
+
+//=======================================================================
 //function : Init
 //purpose  : 
 //=======================================================================
@@ -170,8 +193,6 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& theFace,
   Handle(Geom2d_Curve) aC2D;
   gp_Pnt Ancienpnt3d;
   TColgp_SequenceOfPnt2d SeqPnt2d;
-  TColgp_SequenceOfVec2d          aD1Prev;
-  TColgp_SequenceOfVec2d          aD1Next;
   
   BRepAdaptor_Surface anAS(theFace, Standard_False);
 
@@ -210,8 +231,6 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& theFace,
     Ancienpnt3d.SetCoord(0., 0., 0.);
     //
     SeqPnt2d.Clear();
-    aD1Prev.Clear();
-    aD1Next.Clear();
     //
     // NbEdges
     NbEdges = 0;
@@ -405,23 +424,28 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& theFace,
                          &aPpl = SeqPnt2d(ii),
                          &aPpm = SeqPnt2d(ii - 1);
           const gp_XY aDirVec = aPpl.XY() - aPpf.XY();
-
-          if(aDirVec.SquareModulus() > 1.0e-16)
+          Standard_Real aDU, aDV;
+          if (ComputeDeviation(aPpf, aPpl, aPpm, aDU, aDV))
           {
-            const gp_Lin2d aLin(aPpf, gp_Dir2d(aDirVec));
-            const Standard_Real aUmid = ElCLib::Parameter(aLin, aPpm);
-            const gp_Pnt2d aPp = ElCLib::Value(aUmid, aLin);
-            const Standard_Real aDU = Abs(aPp.X() - aPpm.X());
-            const Standard_Real aDV = Abs(aPp.Y() - aPpm.Y());
-            if (aDU>FlecheU)
-            {
+            if (aDU > FlecheU)
               FlecheU = aDU;
-            }
-
-            if (aDV>FlecheV)
-            {
+            if (aDV > FlecheV)
               FlecheV = aDV;
-            }
+          }
+        }
+        else if (firstpoint == 2 && iX == 2)
+        {
+          // compute deflection of skipped beginning of the curve to the created polygon
+          const gp_Pnt2d &aPpf = SeqPnt2d(ii - 1),
+                         &aPpl = SeqPnt2d(ii);
+          const gp_Pnt2d aPpm = C.Value(aPrms(1));
+          Standard_Real aDU, aDV;
+          if (ComputeDeviation(aPpf, aPpl, aPpm, aDU, aDV))
+          {
+            if (aDU > FlecheU)
+              FlecheU = aDU;
+            if (aDV > FlecheV)
+              FlecheV = aDV;
           }
         }
       }// for(iX=firstpoint; iX<=aNbs1; iX++) {
@@ -436,29 +460,6 @@ void BRepTopAdaptor_FClass2d::Init(const TopoDS_Face& theFace,
         firstpoint = 2;
 
       WireIsEmpty = Standard_False;
-      // Append the derivative of the first parameter.
-      Standard_Real aU = aPrms(1);
-      gp_Pnt2d      aP;
-      gp_Vec2d      aV;
-
-      C.D1(aU, aP, aV);
-
-      if (Or == TopAbs_REVERSED)
-        aV.Reverse();
-
-      aD1Next.Append(aV);
-
-      // Append the derivative of the last parameter.
-      aU = aPrms(aNbs1);
-      C.D1(aU, aP, aV);
-
-      if (Or == TopAbs_REVERSED)
-        aV.Reverse();
-
-      if (NbEdges > 0)
-        aD1Prev.Append(aV);
-      else
-        aD1Prev.Prepend(aV);
     } //for(;aWExp.More(); aWExp.Next()) {
     // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     if (NbEdges/* || Abs(aFirstEPoint.X() - aPrevPoint.X()) > aMaxGapU ||
