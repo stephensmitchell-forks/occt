@@ -45,19 +45,49 @@ inline void  gp_Ax3::ZReverse()
 inline void  gp_Ax3::SetAxis(const gp_Ax1& A1)
 {
   Standard_Boolean direct = Direct();
-  axis = A1;
-  vxdir = axis.Direction().CrossCrossed (vxdir, axis.Direction());
-  if(direct) { vydir = axis.Direction().Crossed(vxdir); }
-  else       { vydir = vxdir.Crossed(axis.Direction()); }
+  Standard_Real dot = A1.Direction().Dot(vxdir);
+  if(Abs(Abs(dot) - 1.) <= Precision::Angular()) 
+  {
+    if(dot > 0) 
+    {
+      vxdir = vydir;
+      vydir = axis.Direction();
+    }
+    else 
+      vxdir = axis.Direction();
+    axis = A1;
+  }
+  else
+  {
+    axis = A1;
+    vxdir = axis.Direction().CrossCrossed (vxdir, axis.Direction());
+    if(direct) { vydir = axis.Direction().Crossed(vxdir); }
+    else       { vydir = vxdir.Crossed(axis.Direction()); }
+  }
 }
 
 inline void  gp_Ax3::SetDirection(const gp_Dir& V)
 {
-  Standard_Boolean direct = Direct();
-  axis.SetDirection (V);
-  vxdir = V.CrossCrossed (vxdir, V);
-  if (direct) { vydir = V.Crossed (vxdir); }
-  else        { vydir = vxdir.Crossed (V); }
+  Standard_Boolean direct = Direct(); 
+  Standard_Real dot = V.Dot(vxdir);
+  if(Abs(Abs(dot) - 1.) <= Precision::Angular()) 
+  {
+    if(dot > 0)
+    {
+      vxdir = vydir;
+      vydir = axis.Direction();
+    }
+    else 
+      vxdir = axis.Direction();
+    axis.SetDirection(V);
+  }
+  else
+  {   
+    axis.SetDirection (V);
+    vxdir = V.CrossCrossed (vxdir, V);
+    if (direct) { vydir = V.Crossed (vxdir); }
+    else        { vydir = vxdir.Crossed (V); }
+  }
 }
 
 inline void  gp_Ax3::SetLocation(const gp_Pnt& P)

@@ -2768,6 +2768,66 @@ static Standard_Integer OCC29371 (Draw_Interpretor& di, Standard_Integer n, cons
   return 0;
 }
 
+static Standard_Integer OCC29406 (Draw_Interpretor&, Standard_Integer, const char**)
+{
+  gp_Ax3 anAx1, anAx2;
+  Standard_Boolean bDirect1 = anAx1.Direct();
+  anAx1.SetDirection (gp::DX());
+  if (bDirect1 != anAx1.Direct())
+  {
+    std::cout << "Error: coordinate system is reversed\n";
+    return 1;
+  }
+  //
+  Standard_Boolean bDirect2 = anAx2.Direct();  
+  anAx2.SetDirection (-gp::DX());
+  if (bDirect2 != anAx2.Direct())
+  {
+    std::cout << "Error: coordinate system is reversed\n";
+    return 1;
+  }
+  //
+  gp_Ax3 anAx3, anAx4;
+  anAx3.ZReverse();
+  anAx4.ZReverse();
+  //
+  Standard_Boolean bDirect3 = anAx3.Direct();
+  anAx3.SetDirection (gp::DX());
+  if (bDirect3 != anAx3.Direct())
+  {
+    std::cout << "Error: coordinate system is reversed\n";
+    return 1;
+  }
+  //
+  Standard_Boolean bDirect4 = anAx4.Direct();
+  anAx4.SetDirection (gp::DX());
+  if (bDirect4 != anAx3.Direct())
+  {
+    std::cout << "Error: coordinate system is reversed\n";
+    return 1;
+  }
+  //   
+  gp_Ax3 anAx5, anAx6;
+  gp_Ax1 anAx0_1 (gp::Origin(), gp::DX());
+  Standard_Boolean bDirect5 = anAx5.Direct();
+  anAx5.SetAxis (anAx0_1);
+  if (bDirect5 != anAx5.Direct())
+  {
+    std::cout << "Error: coordinate system is reversed\n";
+    return 1;
+  }
+  //
+  gp_Ax1 anAx0_2 (gp::Origin(), -gp::DX());
+  Standard_Boolean bDirect6 = anAx6.Direct();
+  anAx6.SetAxis (anAx0_1);
+  if (bDirect6 != anAx6.Direct())
+  {
+    std::cout << "Error: coordinate system is reversed\n";
+    return 1;
+  }
+  return 0;
+}
+
 void QABugs::Commands_20(Draw_Interpretor& theCommands) {
   const char *group = "QABugs";
 
@@ -2798,5 +2858,6 @@ void QABugs::Commands_20(Draw_Interpretor& theCommands) {
   theCommands.Add("OCC28131", "OCC28131 name: creates face problematic for offset", __FILE__, OCC28131, group);
   theCommands.Add("OCC29289", "OCC29289 : searching trigonometric root by Newton iterations", __FILE__, OCC29289, group);
   theCommands.Add ("OCC29371", "OCC29371", __FILE__, OCC29371, group);
+  theCommands.Add ("OCC29406", "OCC29406", __FILE__, OCC29406, group);
   return;
 }
