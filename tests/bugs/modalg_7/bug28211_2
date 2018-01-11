@@ -19,6 +19,8 @@ bsection r s_91 t_4
 
 bcut result s t
 
+checkshape result
 checknbshapes result -solid 4 -shell 4 -face 105 -wire 105
+checkprops result -v 226838 -s 36317.7
 
 checkview -display result -2d -path ${imagedir}/${test_image}.png
