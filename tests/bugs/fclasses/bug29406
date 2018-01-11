@@ -1,0 +1,10 @@
+puts "========"
+puts "OCC29406"
+puts "========"
+puts ""
+#########################################################
+##  Foundation Classes - gp_Ax3 fails setting direction
+#########################################################
+
+pload QAcommands
+OCC29406

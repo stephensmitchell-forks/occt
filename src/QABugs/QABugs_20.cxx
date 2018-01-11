@@ -2768,6 +2768,45 @@ static Standard_Integer OCC29371 (Draw_Interpretor& di, Standard_Integer n, cons
   return 0;
 }
 
+static void CheckAx3Dir(gp_Ax3& theAx, const gp_Dir& theDir )
+{
+  Standard_Boolean bDirect = theAx.Direct();
+  theAx.SetDirection (theDir);
+  if (bDirect != theAx.Direct())
+    std::cout << "Error: coordinate system is reversed\n";
+  if (!theDir.IsEqual(theAx.Direction(), Precision::Angular()))
+    std::cout << "Error: main dir was not set properly\n";
+}
+
+static void CheckAx3Ax1(gp_Ax3& theAx, const gp_Ax1& theAx0 )
+{
+  Standard_Boolean bDirect = theAx.Direct();
+  theAx.SetAxis (theAx0);
+  if (bDirect != theAx.Direct())
+    std::cout << "Error: coordinate system is reversed\n";
+  if (!theAx0.Direction().IsEqual(theAx.Direction(), Precision::Angular()))
+    std::cout << "Error: main dir was not set properly\n";
+}
+
+static Standard_Integer OCC29406 (Draw_Interpretor&, Standard_Integer, const char**)
+{
+  gp_Ax3 anAx1, anAx2, anAx3, anAx4, anAx5, anAx6;;
+  anAx3.ZReverse();
+  anAx4.ZReverse();
+  //
+  CheckAx3Dir(anAx1, gp::DX());
+  CheckAx3Dir(anAx2, -gp::DX());
+  CheckAx3Dir(anAx3, gp::DX());
+  CheckAx3Dir(anAx4, -gp::DX());
+  //
+  gp_Ax1 anAx0_1 (gp::Origin(), gp::DX());
+  gp_Ax1 anAx0_2 (gp::Origin(), -gp::DX());
+  //
+  CheckAx3Ax1(anAx5, anAx0_1);
+  CheckAx3Ax1(anAx6, anAx0_2);
+  return 0;
+}
+
 #include <BRepOffsetAPI_MakePipeShell.hxx>
 #include <GC_MakeArcOfCircle.hxx>
 #include <BRepAdaptor_CompCurve.hxx>
@@ -2836,5 +2875,7 @@ void QABugs::Commands_20(Draw_Interpretor& theCommands) {
                               "<result first point> <result last point>",
                               __FILE__, OCC29430, group);
 
+
+  theCommands.Add ("OCC29406", "OCC29406", __FILE__, OCC29406, group);
   return;
 }
