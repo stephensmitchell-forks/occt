@@ -31,7 +31,7 @@
 //purpose  : Make an empty wire
 //=======================================================================
 
-inline void TopoDS_Builder::MakeWire (TopoDS_Wire& W) const
+inline void TopoDS_Builder::MakeWire (TopoDS_Wire& W)
 {
   Handle(TopoDS_TWire) TW = new TopoDS_TWire();
   MakeShape(W,TW);
@@ -43,7 +43,7 @@ inline void TopoDS_Builder::MakeWire (TopoDS_Wire& W) const
 //purpose  : Make an empty Shell
 //=======================================================================
 
-inline void TopoDS_Builder::MakeShell (TopoDS_Shell& S) const
+inline void TopoDS_Builder::MakeShell (TopoDS_Shell& S)
 {
   Handle(TopoDS_TShell) TS = new TopoDS_TShell();
   MakeShape(S,TS);
@@ -54,7 +54,7 @@ inline void TopoDS_Builder::MakeShell (TopoDS_Shell& S) const
 //purpose  : Make an empty Solid
 //=======================================================================
 
-inline void TopoDS_Builder::MakeSolid (TopoDS_Solid& S) const
+inline void TopoDS_Builder::MakeSolid (TopoDS_Solid& S)
 {
   Handle(TopoDS_TSolid) TS = new TopoDS_TSolid();
   MakeShape(S,TS);
@@ -65,7 +65,7 @@ inline void TopoDS_Builder::MakeSolid (TopoDS_Solid& S) const
 //purpose  : Make an empty CompSolid
 //=======================================================================
 
-inline void TopoDS_Builder::MakeCompSolid (TopoDS_CompSolid& C) const
+inline void TopoDS_Builder::MakeCompSolid (TopoDS_CompSolid& C)
 {
   Handle(TopoDS_TCompSolid) TC = new TopoDS_TCompSolid();
   MakeShape(C,TC);
@@ -77,7 +77,7 @@ inline void TopoDS_Builder::MakeCompSolid (TopoDS_CompSolid& C) const
 //purpose  : Make an empty Compound
 //=======================================================================
 
-inline void TopoDS_Builder::MakeCompound (TopoDS_Compound& C) const
+inline void TopoDS_Builder::MakeCompound (TopoDS_Compound& C)
 {
   Handle(TopoDS_TCompound) TC = new TopoDS_TCompound();
   MakeShape(C,TC);

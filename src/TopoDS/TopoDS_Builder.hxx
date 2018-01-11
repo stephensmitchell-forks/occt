@@ -45,9 +45,6 @@ class TopoDS_Compound;
 //! The Remove  method  removes a  Shape from an other
 //! Shape.
 //!
-//! The methods in Builder are not static. They can be
-//! redefined in inherited builders.
-//!
 //! This   Builder does not  provide   methods to Make
 //! Vertices,  Edges, Faces,  Shells  or Solids. These
 //! methods are  provided  in  the inherited  Builders
@@ -80,30 +77,30 @@ public:
 
   
   //! Make an empty Wire.
-    void MakeWire (TopoDS_Wire& W) const;
+    static void MakeWire (TopoDS_Wire& W);
   
   //! Make an empty Shell.
-    void MakeShell (TopoDS_Shell& S) const;
+    static void MakeShell (TopoDS_Shell& S);
   
   //! Make a Solid covering the whole 3D space.
-    void MakeSolid (TopoDS_Solid& S) const;
+    static void MakeSolid (TopoDS_Solid& S);
   
   //! Make an empty Composite Solid.
-    void MakeCompSolid (TopoDS_CompSolid& C) const;
+    static void MakeCompSolid (TopoDS_CompSolid& C);
   
   //! Make an empty Compound.
-    void MakeCompound (TopoDS_Compound& C) const;
+    static void MakeCompound (TopoDS_Compound& C);
   
   //! Add the Shape C in the Shape S.
   //! Exceptions
   //! - TopoDS_FrozenShape if S is not free and cannot be modified.
   //! - TopoDS__UnCompatibleShapes if S and C are not compatible.
-  Standard_EXPORT void Add (TopoDS_Shape& S, const TopoDS_Shape& C) const;
+  Standard_EXPORT static void Add (TopoDS_Shape& S, const TopoDS_Shape& C);
   
   //! Remove the Shape C from the Shape S.
   //! Exceptions
   //! TopoDS_FrozenShape if S is frozen and cannot be modified.
-  Standard_EXPORT void Remove (TopoDS_Shape& S, const TopoDS_Shape& C) const;
+  Standard_EXPORT static void Remove (TopoDS_Shape& S, const TopoDS_Shape& C);
 
 
 
@@ -113,7 +110,7 @@ protected:
   
   //! The basic method to make  a Shape, used by all the
   //! Make methods.
-  Standard_EXPORT void MakeShape (TopoDS_Shape& S, const Handle(TopoDS_TShape)& T) const;
+  Standard_EXPORT void static MakeShape (TopoDS_Shape& S, const Handle(TopoDS_TShape)& T);
 
 
 

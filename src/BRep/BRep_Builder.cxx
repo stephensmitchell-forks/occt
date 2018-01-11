@@ -452,7 +452,7 @@ static void UpdatePoints(BRep_ListOfPointRepresentation& lpr,
 
 void  BRep_Builder::MakeFace(TopoDS_Face& F,
                              const Handle(Geom_Surface)& S,
-                             const Standard_Real Tol) const 
+                             const Standard_Real Tol)
 {
   Handle(BRep_TFace) TF = new BRep_TFace();
   if(!F.IsNull() && F.Locked())
@@ -471,7 +471,7 @@ void  BRep_Builder::MakeFace(TopoDS_Face& F,
 //=======================================================================
 
 void  BRep_Builder::MakeFace(TopoDS_Face&                      F,
-                             const Handle(Poly_Triangulation)& T) const
+                             const Handle(Poly_Triangulation)& T)
 {
   Handle(BRep_TFace) TF = new BRep_TFace();
   if(!F.IsNull() && F.Locked())
@@ -491,7 +491,7 @@ void  BRep_Builder::MakeFace(TopoDS_Face&                      F,
 void  BRep_Builder::MakeFace(TopoDS_Face& F,
                              const Handle(Geom_Surface)& S,
                              const TopLoc_Location& L,
-                             const Standard_Real Tol) const 
+                             const Standard_Real Tol)
 {
   Handle(BRep_TFace) TF = new BRep_TFace();
   if(!F.IsNull() && F.Locked())
@@ -513,7 +513,7 @@ void  BRep_Builder::MakeFace(TopoDS_Face& F,
 void  BRep_Builder::UpdateFace(const TopoDS_Face& F,
                                const Handle(Geom_Surface)& S,
                                const TopLoc_Location& L,
-                               const Standard_Real Tol) const
+                               const Standard_Real Tol)
 {
   const Handle(BRep_TFace)& TF = *((Handle(BRep_TFace)*) &F.TShape());
   if(TF->Locked())
@@ -533,7 +533,7 @@ void  BRep_Builder::UpdateFace(const TopoDS_Face& F,
 //=======================================================================
 
 void  BRep_Builder::UpdateFace(const TopoDS_Face& F,
-                               const Handle(Poly_Triangulation)& T) const
+                               const Handle(Poly_Triangulation)& T)
 {
   const Handle(BRep_TFace)& TF = *((Handle(BRep_TFace)*) &F.TShape());
   if(TF->Locked())
@@ -551,7 +551,7 @@ void  BRep_Builder::UpdateFace(const TopoDS_Face& F,
 //=======================================================================
 
 void  BRep_Builder::UpdateFace(const TopoDS_Face& F,
-                               const Standard_Real Tol) const 
+                               const Standard_Real Tol)
 {
   const Handle(BRep_TFace)& TF = *((Handle(BRep_TFace)*) &F.TShape());
   if(TF->Locked())
@@ -569,7 +569,7 @@ void  BRep_Builder::UpdateFace(const TopoDS_Face& F,
 //=======================================================================
 
 void  BRep_Builder::NaturalRestriction(const TopoDS_Face& F,
-                                       const Standard_Boolean N) const 
+                                       const Standard_Boolean N)
 {
   const Handle(BRep_TFace)& TF = (*((Handle(BRep_TFace)*) &F.TShape()));
   if(TF->Locked())
@@ -586,7 +586,7 @@ void  BRep_Builder::NaturalRestriction(const TopoDS_Face& F,
 //purpose  : make undefined edge
 //=======================================================================
 
-void  BRep_Builder::MakeEdge(TopoDS_Edge& E) const
+void  BRep_Builder::MakeEdge(TopoDS_Edge& E)
 {
   Handle(BRep_TEdge) TE = new BRep_TEdge();
   if(!E.IsNull() && E.Locked())
@@ -605,7 +605,7 @@ void  BRep_Builder::MakeEdge(TopoDS_Edge& E) const
 void  BRep_Builder::UpdateEdge(const TopoDS_Edge& E, 
                                const Handle(Geom_Curve)& C, 
                                const TopLoc_Location& L,
-                               const Standard_Real Tol) const
+                               const Standard_Real Tol)
 {
   const Handle(BRep_TEdge)& TE = *((Handle(BRep_TEdge)*) &E.TShape());
   if(TE->Locked())
@@ -630,7 +630,7 @@ void  BRep_Builder::UpdateEdge(const TopoDS_Edge& E,
                                const Handle(Geom2d_Curve)& C, 
                                const Handle(Geom_Surface)& S, 
                                const TopLoc_Location& L,
-                               const Standard_Real Tol) const
+                               const Standard_Real Tol)
 {
   const Handle(BRep_TEdge)& TE = *((Handle(BRep_TEdge)*) &E.TShape());
   if(TE->Locked())
@@ -657,7 +657,7 @@ void  BRep_Builder::UpdateEdge(const TopoDS_Edge& E,
                                const TopLoc_Location& L,
                                const Standard_Real Tol,
                                const gp_Pnt2d& Pf,
-                               const gp_Pnt2d& Pl) const
+                               const gp_Pnt2d& Pl)
 {
   const Handle(BRep_TEdge)& TE = *((Handle(BRep_TEdge)*) &E.TShape());
   if(TE->Locked())
@@ -683,7 +683,7 @@ void  BRep_Builder::UpdateEdge(const TopoDS_Edge& E,
                                const Handle(Geom2d_Curve)& C2, 
                                const Handle(Geom_Surface)& S, 
                                const TopLoc_Location& L, 
-                               const Standard_Real Tol) const
+                               const Standard_Real Tol)
 {
   const Handle(BRep_TEdge)& TE = *((Handle(BRep_TEdge)*) &E.TShape());
   if(TE->Locked())
@@ -711,7 +711,7 @@ void  BRep_Builder::UpdateEdge(const TopoDS_Edge& E,
                                const TopLoc_Location& L, 
                                const Standard_Real Tol,
                                const gp_Pnt2d& Pf,
-                               const gp_Pnt2d& Pl) const
+                               const gp_Pnt2d& Pl)
 {
   const Handle(BRep_TEdge)& TE = *((Handle(BRep_TEdge)*) &E.TShape());
   if(TE->Locked())
@@ -734,7 +734,7 @@ void  BRep_Builder::UpdateEdge(const TopoDS_Edge& E,
 
 void  BRep_Builder::UpdateEdge(const TopoDS_Edge& E,
                                const Handle(Poly_Polygon3D)& P,
-                               const TopLoc_Location& L) const
+                               const TopLoc_Location& L)
 {
   const Handle(BRep_TEdge)& TE = *((Handle(BRep_TEdge)*) &E.TShape());
   if(TE->Locked())
@@ -774,7 +774,7 @@ void  BRep_Builder::UpdateEdge(const TopoDS_Edge& E,
 void  BRep_Builder::UpdateEdge(const TopoDS_Edge& E,
                                const Handle(Poly_PolygonOnTriangulation)& P,
                                const Handle(Poly_Triangulation)& T,
-                               const TopLoc_Location& L) const
+                               const TopLoc_Location& L)
 {
   const Handle(BRep_TEdge)& TE = *((Handle(BRep_TEdge)*) &E.TShape());
   if(TE->Locked())
@@ -825,7 +825,7 @@ void  BRep_Builder::UpdateEdge(const TopoDS_Edge& E,
                                const Handle(Poly_PolygonOnTriangulation)& P1,
                                const Handle(Poly_PolygonOnTriangulation)& P2,
                                const Handle(Poly_Triangulation)& T,
-                               const TopLoc_Location& L) const
+                               const TopLoc_Location& L)
 {
   const Handle(BRep_TEdge)& TE = *((Handle(BRep_TEdge)*) &E.TShape());
   if(TE->Locked())
@@ -873,7 +873,7 @@ void  BRep_Builder::UpdateEdge(const TopoDS_Edge& E,
 
 void  BRep_Builder::UpdateEdge(const TopoDS_Edge&            E,
                                const Handle(Poly_Polygon2D)& P,
-                               const TopoDS_Face&            F) const
+                               const TopoDS_Face&            F)
 {
   TopLoc_Location l;
   const Handle(Geom_Surface)& S = BRep_Tool::Surface(F,l);
@@ -888,7 +888,7 @@ void  BRep_Builder::UpdateEdge(const TopoDS_Edge&            E,
 void  BRep_Builder::UpdateEdge(const TopoDS_Edge&            E,
                                const Handle(Poly_Polygon2D)& P,
                                const Handle(Geom_Surface)&   S,
-                               const TopLoc_Location&        L) const
+                               const TopLoc_Location&        L)
 {
   const Handle(BRep_TEdge)& TE = *((Handle(BRep_TEdge)*) &E.TShape());
   if(TE->Locked())
@@ -930,7 +930,7 @@ void  BRep_Builder::UpdateEdge(const TopoDS_Edge&            E,
 void  BRep_Builder::UpdateEdge(const TopoDS_Edge&            E,
                                const Handle(Poly_Polygon2D)& P1,
                                const Handle(Poly_Polygon2D)& P2,
-                               const TopoDS_Face&            F) const
+                               const TopoDS_Face&            F)
 {
   TopLoc_Location l;
   const Handle(Geom_Surface)& S = BRep_Tool::Surface(F,l);
@@ -946,7 +946,7 @@ void  BRep_Builder::UpdateEdge(const TopoDS_Edge&            E,
                                const Handle(Poly_Polygon2D)& P1,
                                const Handle(Poly_Polygon2D)& P2,
                                const Handle(Geom_Surface)&   S,
-                               const TopLoc_Location&        L) const
+                               const TopLoc_Location&        L)
 {
   const Handle(BRep_TEdge)& TE = *((Handle(BRep_TEdge)*) &E.TShape());
   if(TE->Locked())
@@ -986,7 +986,7 @@ void  BRep_Builder::UpdateEdge(const TopoDS_Edge&            E,
 //=======================================================================
 
 void  BRep_Builder::UpdateEdge(const TopoDS_Edge& E, 
-                               const Standard_Real Tol) const
+                               const Standard_Real Tol)
 {
   const Handle(BRep_TEdge)& TE = *((Handle(BRep_TEdge)*) &E.TShape());
   if(TE->Locked())
@@ -1006,7 +1006,7 @@ void  BRep_Builder::UpdateEdge(const TopoDS_Edge& E,
 void  BRep_Builder::Continuity(const TopoDS_Edge& E, 
                                const TopoDS_Face& F1, 
                                const TopoDS_Face& F2, 
-                               const GeomAbs_Shape C) const 
+                               const GeomAbs_Shape C)
 {
   TopLoc_Location l1,l2;
   const Handle(Geom_Surface)& S1 = BRep_Tool::Surface(F1,l1);
@@ -1024,7 +1024,7 @@ void  BRep_Builder::Continuity(const TopoDS_Edge& E,
                                const Handle(Geom_Surface)& S2, 
                                const TopLoc_Location& L1,
                                const TopLoc_Location& L2, 
-                               const GeomAbs_Shape C)const 
+                               const GeomAbs_Shape C)
 {
   const Handle(BRep_TEdge)& TE = *((Handle(BRep_TEdge)*) &E.TShape());
   if(TE->Locked())
@@ -1045,7 +1045,7 @@ void  BRep_Builder::Continuity(const TopoDS_Edge& E,
 //=======================================================================
 
 void  BRep_Builder::SameParameter(const TopoDS_Edge& E, 
-                                  const Standard_Boolean S) const 
+                                  const Standard_Boolean S)
 {
   const Handle(BRep_TEdge)& TE = *((Handle(BRep_TEdge)*) &E.TShape());
   if(TE->Locked())
@@ -1062,7 +1062,7 @@ void  BRep_Builder::SameParameter(const TopoDS_Edge& E,
 //=======================================================================
 
 void  BRep_Builder::SameRange(const TopoDS_Edge& E, 
-                              const Standard_Boolean S) const 
+                              const Standard_Boolean S)
 {
   const Handle(BRep_TEdge)& TE = *((Handle(BRep_TEdge)*) &E.TShape());
   if(TE->Locked())
@@ -1079,7 +1079,7 @@ void  BRep_Builder::SameRange(const TopoDS_Edge& E,
 //=======================================================================
 
 void  BRep_Builder::Degenerated(const TopoDS_Edge& E, 
-                                const Standard_Boolean D) const 
+                                const Standard_Boolean D)
 {
   const Handle(BRep_TEdge)& TE = *((Handle(BRep_TEdge)*) &E.TShape());
   if(TE->Locked())
@@ -1103,7 +1103,7 @@ void  BRep_Builder::Degenerated(const TopoDS_Edge& E,
 void  BRep_Builder::Range(const TopoDS_Edge&  E, 
                           const Standard_Real First, 
                           const Standard_Real Last,
-                          const Standard_Boolean Only3d) const
+                          const Standard_Boolean Only3d)
 {
   //  set the range to all the representations if Only3d=FALSE
   const Handle(BRep_TEdge)& TE = *((Handle(BRep_TEdge)*) &E.TShape());
@@ -1135,7 +1135,7 @@ void  BRep_Builder::Range(const TopoDS_Edge& E,
                           const Handle(Geom_Surface)& S,
                           const TopLoc_Location& L,
                           const Standard_Real First, 
-                          const Standard_Real Last) const
+                          const Standard_Real Last)
 {
   const Handle(BRep_TEdge)& TE = *((Handle(BRep_TEdge)*) &E.TShape());
   if(TE->Locked())
@@ -1171,7 +1171,7 @@ void  BRep_Builder::Range(const TopoDS_Edge& E,
 //=======================================================================
 
 void  BRep_Builder::Transfert(const TopoDS_Edge& Ein, 
-                              const TopoDS_Edge& Eout) const
+                              const TopoDS_Edge& Eout)
 {
   const Handle(BRep_TEdge)& TE = *((Handle(BRep_TEdge)*) &Ein.TShape());
   if(TE->Locked())
@@ -1223,7 +1223,7 @@ void  BRep_Builder::Transfert(const TopoDS_Edge& Ein,
 
 void  BRep_Builder::UpdateVertex(const TopoDS_Vertex& V, 
                                  const gp_Pnt& P, 
-                                 const Standard_Real Tol) const 
+                                 const Standard_Real Tol)
 {
   const Handle(BRep_TVertex)& TV = *((Handle(BRep_TVertex)*) &V.TShape());
   if(TV->Locked())
@@ -1244,7 +1244,7 @@ void  BRep_Builder::UpdateVertex(const TopoDS_Vertex& V,
 void  BRep_Builder::UpdateVertex(const TopoDS_Vertex& V, 
                                  const Standard_Real Par, 
                                  const TopoDS_Edge& E,
-                                 const Standard_Real Tol) const
+                                 const Standard_Real Tol)
 {
   if (Precision::IsPositiveInfinite(Par) ||
       Precision::IsNegativeInfinite(Par))
@@ -1327,7 +1327,7 @@ void  BRep_Builder::UpdateVertex(const TopoDS_Vertex& V,
                                  const TopoDS_Edge&   E,
                                  const Handle(Geom_Surface)& S,
                                  const TopLoc_Location& L,
-                                 const Standard_Real  Tol) const
+                                 const Standard_Real  Tol)
 {
   if (Precision::IsPositiveInfinite(Par) ||
       Precision::IsNegativeInfinite(Par))
@@ -1406,7 +1406,7 @@ void  BRep_Builder::UpdateVertex(const TopoDS_Vertex& Ve,
                                  const Standard_Real U, 
                                  const Standard_Real V,
                                  const TopoDS_Face& F, 
-                                 const Standard_Real Tol) const
+                                 const Standard_Real Tol)
 {
   const Handle(BRep_TVertex)& TV = *((Handle(BRep_TVertex)*) &Ve.TShape());
   
@@ -1431,7 +1431,7 @@ void  BRep_Builder::UpdateVertex(const TopoDS_Vertex& Ve,
 //=======================================================================
 
 void  BRep_Builder::UpdateVertex(const TopoDS_Vertex& V, 
-                                 const Standard_Real Tol) const
+                                 const Standard_Real Tol)
 {
   const Handle(BRep_TVertex)& TV = *((Handle(BRep_TVertex)*) &V.TShape());
     
@@ -1453,7 +1453,7 @@ void  BRep_Builder::UpdateVertex(const TopoDS_Vertex& V,
 void  BRep_Builder::Transfert(const TopoDS_Edge& Ein,
                               const TopoDS_Edge& Eout,
                               const TopoDS_Vertex& Vin,
-                              const TopoDS_Vertex& Vout) const
+                              const TopoDS_Vertex& Vout)
 {
   const Standard_Real tol = BRep_Tool::Tolerance(Vin);
   const Standard_Real parin = BRep_Tool::Parameter(Vin,Ein);

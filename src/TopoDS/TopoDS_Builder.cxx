@@ -35,7 +35,7 @@
 //purpose  : Make a Shape from a TShape
 //=======================================================================
 void TopoDS_Builder::MakeShape (TopoDS_Shape& S, 
-                                const Handle(TopoDS_TShape)& T) const
+                                const Handle(TopoDS_TShape)& T)
 {
   S.TShape(T);
   S.Location(TopLoc_Location());
@@ -49,7 +49,7 @@ void TopoDS_Builder::MakeShape (TopoDS_Shape& S,
 //=======================================================================
 
 void TopoDS_Builder::Add (TopoDS_Shape& aShape, 
-                          const TopoDS_Shape& aComponent) const
+                          const TopoDS_Shape& aComponent)
 {
   // From now the Component cannot be edited
   aComponent.TShape()->Free(Standard_False);
@@ -126,7 +126,7 @@ void TopoDS_Builder::Add (TopoDS_Shape& aShape,
 //=======================================================================
 
 void TopoDS_Builder::Remove (TopoDS_Shape& aShape, 
-                             const TopoDS_Shape& aComponent) const
+                             const TopoDS_Shape& aComponent)
 {
   // check  if aShape  is  not Frozen
   TopoDS_FrozenShape_Raise_if (!aShape.Free(),"TopoDS_Builder::Remove");
