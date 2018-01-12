@@ -29,6 +29,23 @@ class Geom_Surface;
 
 
 
+//! Identifies length units.
+enum UnitsMethods_LengthUnits
+{
+  UnitsMethods_INCH       = 1,
+  UnitsMethods_MILLIMETER = 2,
+  UnitsMethods_FOOT       = 4,
+  UnitsMethods_MILE       = 5,
+  UnitsMethods_METER      = 6,
+  UnitsMethods_KILOMETER  = 7,
+  UnitsMethods_MIL        = 8,
+  UnitsMethods_MICRON     = 9,
+  UnitsMethods_CENTIMETER = 10,
+  UnitsMethods_MICROINCH  = 11,
+  UnitsMethods_YARD       = 12,
+  UnitsMethods_DECIMETER  = 13
+};
+
 class UnitsMethods 
 {
 public:
@@ -60,6 +77,10 @@ public:
   //! (integer value denoting unit, as described in IGES
   //! standard) in millimeters
   Standard_EXPORT static Standard_Real GetLengthFactorValue (const Standard_Integer param);
+
+  //! Returns value of unit encoded by parameter param
+  //! (value from UnitsMethods_LengthUnits enumeration) in millimeters
+  Standard_EXPORT static Standard_Real GetLengthFactorValue (const UnitsMethods_LengthUnits param);
   
   //! Returns value of current internal unit for CASCADE
   //! in millemeters

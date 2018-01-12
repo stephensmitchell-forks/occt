@@ -413,18 +413,29 @@ void UnitsMethods::SetCasCadeLengthUnit (const Standard_Integer unit)
 
 Standard_Real UnitsMethods::GetLengthFactorValue (const Standard_Integer par) 
 {
+  return UnitsMethods::GetLengthFactorValue( UnitsMethods_LengthUnits( par ) );
+}
+
+//=======================================================================
+//function : GetLengthFactorValue
+//purpose  : 
+//=======================================================================
+
+Standard_Real UnitsMethods::GetLengthFactorValue (const UnitsMethods_LengthUnits par)
+{
   switch ( par ) {
-  case  1 : return 25.4; // inch
-  case  2 : return 1.; // millimeter
-  
-  case  4 : return 304.8; // foot
-  case  5 : return 1609344.; // mile
-  case  6 : return 1000.; // meter
-  case  7 : return 1000000.; // kilometer
-  case  8 : return 0.0254; // mil (0.001 inch)
-  case  9 : return 0.001; // micron
-  case 10 : return 10.; // centimeter
-  case 11 : return 0.0000254; // microinch
+  case UnitsMethods_INCH       : return 25.4;      // inch
+  case UnitsMethods_MILLIMETER : return 1.;        // millimeter
+  case UnitsMethods_FOOT       : return 304.8;     // foot
+  case UnitsMethods_MILE       : return 1609344.;  // mile
+  case UnitsMethods_METER      : return 1000.;     // meter
+  case UnitsMethods_KILOMETER  : return 1000000.;  // kilometer
+  case UnitsMethods_MIL        : return 0.0254;    // mil (0.001 inch)
+  case UnitsMethods_MICRON     : return 0.001;     // micron
+  case UnitsMethods_CENTIMETER : return 10.;       // centimeter
+  case UnitsMethods_MICROINCH  : return 0.0000254; // microinch
+  case UnitsMethods_YARD       : return 914.4;     // yard
+  case UnitsMethods_DECIMETER  : return 100.;      // decimeter
   default : return 1.;
   }
 }
