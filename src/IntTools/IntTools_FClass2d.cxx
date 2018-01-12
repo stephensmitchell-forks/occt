@@ -394,7 +394,6 @@ void IntTools_FClass2d::Init(const TopoDS_Face& aFace,
         Standard_Integer im2=nbpnts-2;
         Standard_Integer im1=nbpnts-1;
         Standard_Integer im0=1;
-        Standard_Integer ii;
         Standard_Real    angle = 0.0;
         Standard_Real aX0, aY0, aX1, aY1, aS;
         //
@@ -406,7 +405,8 @@ void IntTools_FClass2d::Init(const TopoDS_Face& aFace,
         PClass(im1)=SeqPnt2d.Value(im1);
         PClass(nbpnts)=SeqPnt2d.Value(nbpnts);
         Standard_Real aPer = 0.;
-        for(ii=1; ii<nbpnts; ii++,im0++,im1++,im2++) { 
+        for (Standard_Integer ii = 1; ii<nbpnts; ii++, im0++, im1++, im2++)
+        {
           if(im2>=nbpnts) im2=1;
           if(im1>=nbpnts) im1=1;
           PClass(ii)=SeqPnt2d.Value(ii);
@@ -497,7 +497,6 @@ void IntTools_FClass2d::Init(const TopoDS_Face& aFace,
             Or = edge.Orientation();
             if (Or == TopAbs_FORWARD || Or == TopAbs_REVERSED)
             {
-              Standard_Real pfbid, plbid;
               BRep_Tool::Range(edge, Face, pfbid, plbid);
               if (Abs(plbid - pfbid) < 1.e-9) continue;
               BRepAdaptor_Curve2d C(edge, Face);
