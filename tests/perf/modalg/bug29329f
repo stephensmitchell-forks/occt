@@ -1,0 +1,40 @@
+puts "========"
+puts "OCC29329"
+puts "========"
+puts ""
+#################################################
+# Low performance of the General Fuse algorithm
+#################################################
+
+# Case 1. Fuse the whole compounds
+
+restore [locate_data_file bug29329_hull.brep] ss
+explode ss so
+
+bclearobjects
+bcleartools
+
+baddobjects ss_1 ss_2 ss_3 ss_4 ss_5 ss_6
+baddtools ss_7 ss_8 ss_9
+bnondestructive 1
+
+# start chronometer
+dchrono cpu restart
+
+bfillds
+bbuild result
+
+# stop chronometer
+dchrono cpu stop counter OCC29329c1f
+dchrono cpu  show
+
+checkshape result
+checknbshapes result -solid 9 -shell 9 -face 36 -wire 36
+
+if {![regexp "This shape seems to be OK" [bopcheck result]]} {
+  puts "Error: The result is a self-intersecting shape."
+}
+
+checkprops result -s 8984.45 -v 21609.7
+
+checkview -display result -2d -path ${imagedir}/${test_image}.png

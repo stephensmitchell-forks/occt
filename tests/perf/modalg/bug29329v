@@ -1,0 +1,52 @@
+puts "========"
+puts "OCC29329"
+puts "========"
+puts ""
+#################################################
+# Low performance of the General Fuse algorithm
+#################################################
+
+# Case 1. Volume-maker for whole compounds
+
+shape result CS
+
+restore [locate_data_file bug29329_hull.brep] ss
+explode ss so
+explode ss_7 f
+explode ss_8 f
+explode ss_9 f
+
+bglue 1
+
+# start chronometer
+dchrono cpu restart
+
+# One face of the solid ss_6 must be split
+# by surrounding faces ss_7_5 ss_8_5 ss_9_4
+
+mkvolume s1n ss_6 ss_7_5 ss_8_5 ss_9_4
+
+# Result must contain all necessary solids.
+# Therefore, add them to result.
+add s1n result
+
+foreach a [ explode ss so ] { 
+  if {! [regexp {same shapes} [compare $a ss_6] ] } { 
+    add $a result
+  }
+}
+
+# stop chronometer
+dchrono cpu stop counter OCC29329c1v
+dchrono cpu  show
+
+checkshape result
+checknbshapes result -solid 9 -shell 9 -face 36 -wire 36
+
+if {![regexp "This shape seems to be OK" [bopcheck result]]} {
+  puts "Error: The result is a self-intersecting shape."
+}
+
+checkprops result -s 8984.45 -v 21609.7
+
+checkview -display result -2d -path ${imagedir}/${test_image}.png
