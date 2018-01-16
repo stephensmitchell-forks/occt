@@ -7,5 +7,5 @@ explode f3 w
 setflags f1_1 locked
 setflags f2_1 locked
 setflags f3_1 locked
-thrusections result 1 0 f1_1 f2_1 f3_1 -save
+thrusections result 1 0 f1_1 f2_1 f3_1 -safe
 checkprops result -s 49757.1

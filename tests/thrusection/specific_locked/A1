@@ -41,7 +41,7 @@ setflags w1 locked
 setflags v4 locked
 setflags v5 locked
 
-thrusections result ${issolid} ${isruled} v4 w1 v5 -save
+thrusections result ${issolid} ${isruled} v4 w1 v5 -safe
 
 
 checkprops result -s 490.101

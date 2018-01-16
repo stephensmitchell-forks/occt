@@ -33,7 +33,7 @@ setflags wc2 locked
 
 
 #catch {thrusections result ${issolid} ${isruled} v1 w1 v2}
-catch {thrusections result ${issolid} ${isruled} wc1 w1 wc2 -save}
+catch {thrusections result ${issolid} ${isruled} wc1 w1 wc2 -safe}
 
 
 checkprops result -s 419.166

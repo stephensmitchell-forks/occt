@@ -613,45 +613,37 @@ void BRepFill_Generator::Perform()
       Standard_Boolean degen2
         = BRep_Tool::Degenerated(anOrEd2);
 
-      if ( degen1 ) {
-        //if (!myOldNewShapes.IsBound(anOrEd1)) //?? multiple coping
-        {
-          TopoDS_Shape aLocalShape = anOrEd1.EmptyCopied();
-          Edge1 = TopoDS::Edge(aLocalShape);
-          //	Edge1 = TopoDS::Edge(ex1.Current().EmptyCopied());
-          //	aLocalShape = ex1.Current();
-          //	TopExp::Vertices(TopoDS::Edge(aLocalShape),V1f,V1l);
-          TopExp::Vertices(anOrEd1,V1f,V1l);
-          V1f.Orientation(TopAbs_FORWARD);
-          B.Add(Edge1,V1f);
-          V1l.Orientation(TopAbs_REVERSED);
-          B.Add(Edge1,V1l);
-          B.Range(Edge1,0,1);
-          myOldNewShapes.Bind(anOrEd1, Edge1);
-        }
-        //else
-        //  Edge1 = TopoDS::Edge(myOldNewShapes(anOrEd1));
+      if ( degen1 ) 
+      {
+        TopoDS_Shape aLocalShape = anOrEd1.EmptyCopied();
+        Edge1 = TopoDS::Edge(aLocalShape);
+        //	Edge1 = TopoDS::Edge(ex1.Current().EmptyCopied());
+        //	aLocalShape = ex1.Current();
+        //	TopExp::Vertices(TopoDS::Edge(aLocalShape),V1f,V1l);
+        TopExp::Vertices(anOrEd1,V1f,V1l);
+        V1f.Orientation(TopAbs_FORWARD);
+        B.Add(Edge1,V1f);
+        V1l.Orientation(TopAbs_REVERSED);
+        B.Add(Edge1,V1l);
+        B.Range(Edge1,0,1);
+        myOldNewShapes.Bind(anOrEd1, Edge1);        
       }
       else {
         Edge1 = TopoDS::Edge(anOrEd1);
       }
 
-      if ( degen2 ) {
-        //if (!myOldNewShapes.IsBound(anOrEd2))
-        {
-          TopoDS_Shape aLocalShape = anOrEd2.EmptyCopied();
-          Edge2 = TopoDS::Edge(aLocalShape);
-          //	Edge2 = TopoDS::Edge(ex2.Current().EmptyCopied());
-          TopExp::Vertices(anOrEd2,V2f,V2l);
-          V2f.Orientation(TopAbs_FORWARD);
-          B.Add(Edge2,V2f);
-          V2l.Orientation(TopAbs_REVERSED);
-          B.Add(Edge2,V2l);
-          B.Range(Edge2,0,1);
-          myOldNewShapes.Bind(anOrEd2, Edge2);
-        }
-        //else
-        //  Edge2 = TopoDS::Edge(myOldNewShapes(anOrEd2));
+      if ( degen2 ) 
+      {
+        TopoDS_Shape aLocalShape = anOrEd2.EmptyCopied();
+        Edge2 = TopoDS::Edge(aLocalShape);
+        //	Edge2 = TopoDS::Edge(ex2.Current().EmptyCopied());
+        TopExp::Vertices(anOrEd2,V2f,V2l);
+        V2f.Orientation(TopAbs_FORWARD);
+        B.Add(Edge2,V2f);
+        V2l.Orientation(TopAbs_REVERSED);
+        B.Add(Edge2,V2l);
+        B.Range(Edge2,0,1);
+        myOldNewShapes.Bind(anOrEd2, Edge2);
       }
       else {
         Edge2 = TopoDS::Edge(anOrEd2);
@@ -857,17 +849,24 @@ void BRepFill_Generator::Perform()
 
       if (!myMutableInput)
       {
-        const TopoDS_Shape* aNewEd1 = myOldNewShapes.Seek(Edge1);
-        if (aNewEd1)
-          Edge1 = TopoDS::Edge(*aNewEd1);
-        else if (aFirstWire && !degen1 && (IType != 4 || BRep_Tool::SameParameter(Edge1) || BRep_Tool::SameRange(Edge1)))
-          Edge1 = CreateNewEdge(Edge1, myOldNewShapes, Wire1, aModifWires);
+        if (!degen1) //if true=>already empty-copied
+        {
+          const TopoDS_Shape* aNewEd1 = myOldNewShapes.Seek(Edge1);
+          if (aNewEd1)
+            Edge1 = TopoDS::Edge(*aNewEd1);
+          else if (aFirstWire && (IType != 4 || BRep_Tool::SameParameter(Edge1) || BRep_Tool::SameRange(Edge1)))
+            //if such expression is true and mutableInput is false => pre-copy the edge to prevent a following modifying (see code below)
+            Edge1 = CreateNewEdge(Edge1, myOldNewShapes, Wire1, aModifWires);
+        }
 
-        const TopoDS_Shape* aNewEd2 = myOldNewShapes.Seek(Edge2);
-        if (aNewEd2)
-          Edge2 = TopoDS::Edge(*aNewEd2);
-        else if (!degen2 && (IType != 4 || BRep_Tool::SameParameter(Edge2) || BRep_Tool::SameRange(Edge2)))
-          Edge2 = CreateNewEdge(Edge2, myOldNewShapes, Wire2, aModifWires);
+        if (!degen2)
+        {
+          const TopoDS_Shape* aNewEd2 = myOldNewShapes.Seek(Edge2);
+          if (aNewEd2)
+            Edge2 = TopoDS::Edge(*aNewEd2);
+          else if (IType != 4 || BRep_Tool::SameParameter(Edge2) || BRep_Tool::SameRange(Edge2))
+            Edge2 = CreateNewEdge(Edge2, myOldNewShapes, Wire2, aModifWires);
+        }
       }
 
       // set the pcurves
@@ -975,9 +974,13 @@ void BRepFill_Generator::Perform()
       // complete myMap for edge1
       if (! (degen1 && IType == 4))
       {
+        TopoDS_Edge aREd = anOrEd1;
+        if (degen1)
+          aREd = Edge1; //??
         TopTools_ListOfShape Empty;
-        if (!myMap.IsBound(Edge1)) myMap.Bind(Edge1,Empty);
-        myMap(Edge1).Append(Face);
+        if (!myMap.IsBound(anOrEd1)) 
+          myMap.Bind(anOrEd1,Empty);
+        myMap(anOrEd1).Append(Face);
       }
 
       tantque = ex1.More() && ex2.More();
@@ -990,11 +993,19 @@ void BRepFill_Generator::Perform()
   }
 
   //all vertices from myShell are the part of orig. section wires
-  //add edges from the myShell which can be safely updated to reshaper?? (i.e. already empty-copied/newly created)
   if (myMutableInput)
     BRepLib::SameParameter(myShell);
   else
   {
+    TopTools_DataMapIteratorOfDataMapOfShapeShape itM(myOldNewShapes);
+    for (;itM.More();itM.Next())
+    {
+      const TopoDS_Shape& aK = itM.Key();
+      if (aK.ShapeType() != TopAbs_EDGE)
+        continue; //additional check, should be edge anyway
+      const TopoDS_Shape& aVal = itM.Value();
+      myReshaper.Replace(aK, aVal);
+    }
     BRepLib::SameParameter(myShell, myReshaper );
     myShell = TopoDS::Shell(myReshaper.Apply(myShell));
   }
@@ -1014,7 +1025,7 @@ void BRepFill_Generator::Perform()
     for (;anExpE.More();anExpE.Next())
     {
       const TopoDS_Shape& aCurE = anExpE.Current();
-      const TopoDS_Shape& aNSEdge = Modified(aCurE);
+      const TopoDS_Shape& aNSEdge = ResultShape(aCurE);
       B.Add(aNewW, aNSEdge);
     }
 
@@ -1063,7 +1074,7 @@ const TopTools_DataMapOfShapeListOfShape& BRepFill_Generator::Generated() const
 //function : Modified
 //purpose  : 
 //=======================================================================
-TopoDS_Shape BRepFill_Generator::Modified (const TopoDS_Shape& theShape) const 
+TopoDS_Shape BRepFill_Generator::ResultShape (const TopoDS_Shape& theShape) const 
 {
   const TopoDS_Shape* aDSh = myOldNewShapes.Seek(theShape);
   TopoDS_Shape aNsh = aDSh ? *aDSh : theShape;
@@ -1074,15 +1085,6 @@ TopoDS_Shape BRepFill_Generator::Modified (const TopoDS_Shape& theShape) const
     aNsh = myReshaper.Value(aNsh);
   } while (aNsh != aPrevSh);
   return aNsh;
-}
-
-//=======================================================================
-//function : IsModified
-//purpose  : 
-//=======================================================================
-Standard_Boolean BRepFill_Generator::IsModified (const TopoDS_Shape& theShape) const
-{
-  return myOldNewShapes.IsBound(theShape) || myReshaper.IsRecorded(theShape);
 }
 
 //=======================================================================
@@ -1098,7 +1100,7 @@ void BRepFill_Generator::SetMutableInput(const Standard_Boolean IsMutableInput)
 //function : GetMutableInput
 //purpose  : 
 //=======================================================================
-Standard_Boolean BRepFill_Generator::GetMutableInput() const
+Standard_Boolean BRepFill_Generator::IsMutableInput() const
 {
   return myMutableInput;
 }

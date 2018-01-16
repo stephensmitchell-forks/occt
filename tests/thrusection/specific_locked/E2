@@ -22,7 +22,7 @@ setflags w1 locked
 setflags v1 locked
 setflags v2 locked
 
-catch {thrusections result ${issolid} ${isruled} v1 w1 v2 -save}
+catch {thrusections result ${issolid} ${isruled} v1 w1 v2 -safe}
 
 
 checkprops result -s 400.925

@@ -138,7 +138,7 @@ setflags w111 locked
 setflags w101 locked
 setflags v5 locked
 
-thrusections result ${issolid} ${isruled} v4 w1 w11 w21 w111 w101 v5 -save
+thrusections result ${issolid} ${isruled} v4 w1 w11 w21 w111 w101 v5 -safe
 
 
 checkprops result -s 12651.5

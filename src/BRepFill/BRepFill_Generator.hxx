@@ -58,15 +58,17 @@ public:
   //! <SSection>  of a  section.
   Standard_EXPORT const TopTools_ListOfShape& GeneratedShapes (const TopoDS_Shape& SSection) const;
 
-  //! Returns a modified shape
-  Standard_EXPORT TopoDS_Shape Modified (const TopoDS_Shape& theShape) const;
+  //! Returns a modified shape in the constructed shell,
+  //! If shape is not changed (replaced) during operation => returns the same shape
+  Standard_EXPORT TopoDS_Shape ResultShape (const TopoDS_Shape& theShape) const;
 
-  //! Check if shape have been modified
-  Standard_EXPORT Standard_Boolean IsModified (const TopoDS_Shape& theShape) const;
-
+  //! Sets the mutable input state
+  //! If true then the input profile can be modified 
+  //! inside the operation
   Standard_EXPORT void SetMutableInput(const Standard_Boolean IsMutableInput);
-
-  Standard_EXPORT Standard_Boolean GetMutableInput() const;
+    
+  //! Returns the current mutable input state
+  Standard_EXPORT Standard_Boolean IsMutableInput() const;
 
 
 protected:

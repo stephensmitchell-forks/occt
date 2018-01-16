@@ -4,5 +4,5 @@ orientation w1 F
 orientation w2 R
 setflags w1 locked
 setflags w2 locked
-thrusections result 1 0 w1 w2 -save
+thrusections result 1 0 w1 w2 -safe
 checkprops result -s 29817.5

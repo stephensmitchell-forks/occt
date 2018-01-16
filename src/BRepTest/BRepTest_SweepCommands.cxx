@@ -379,7 +379,7 @@ Standard_Integer thrusections(Draw_Interpretor&, Standard_Integer n, const char*
   Standard_Integer NbEdges = 0;
   Standard_Boolean IsFirstWire = Standard_False;
   for ( Standard_Integer i = index+2; i<= n-1 ; i++) {
-    if (!strcmp(a[i],"-save"))
+    if (!strcmp(a[i],"-safe"))
     {
       IsMutableInput = Standard_False;
       continue;
@@ -997,7 +997,9 @@ void  BRepTest::SweepCommands(Draw_Interpretor& theCommands)
   theCommands.Add("gener", "gener result wire1 wire2 [..wire..]",
 		  __FILE__,gener,g);
 
-  theCommands.Add("thrusections", "thrusections [-N] result issolid isruled shape1 shape2 [..shape..], the option -N means no check on wires, shapes must be wires or vertices (only first or last)",
+  theCommands.Add("thrusections", "thrusections [-N] result issolid isruled shape1 shape2 [..shape..] [-safe], " 
+    "the option -N means no check on wires, shapes must be wires or vertices (only first or last), "
+    "-safe option allows to prevent the modifying of input shapes",
 		  __FILE__,thrusections,g);
 
   theCommands.Add("genthrus", "genthrus res subshape_of_profile",
