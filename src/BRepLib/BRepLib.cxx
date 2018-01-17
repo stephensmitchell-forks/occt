@@ -2693,14 +2693,14 @@ void BRepLib::ExtendFace(const TopoDS_Face& theF,
     Standard_Real aSUMin, aSUMax, aSVMin, aSVMax;
     aSurf->Bounds(aSUMin, aSUMax, aSVMin, aSVMax);
 
-    if (aBAS.IsUPeriodic())
+    if (aBAS.IsUPeriodic222())
     {
       // Adjust face bounds to first period
       Standard_Real aDelta = aFUMax - aFUMin;
       aFUMin = Max(aSUMin, aFUMin + aBAS.UPeriod()*Ceiling((aSUMin - aFUMin)/aBAS.UPeriod()));
       aFUMax = aFUMin + aDelta;
     }
-    if (aBAS.IsVPeriodic())
+    if (aBAS.IsVPeriodic222())
     {
       // Adjust face bounds to first period
       Standard_Real aDelta = aFVMax - aFVMin;
