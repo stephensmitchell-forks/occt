@@ -44,7 +44,6 @@ inline void  gp_Ax3::ZReverse()
 
 inline void  gp_Ax3::SetAxis(const gp_Ax1& A1)
 {
-  Standard_Boolean direct = Direct();
   Standard_Real dot = A1.Direction().Dot(vxdir);
   if(Abs(Abs(dot) - 1.) <= Precision::Angular()) 
   {
@@ -59,6 +58,7 @@ inline void  gp_Ax3::SetAxis(const gp_Ax1& A1)
   }
   else
   {
+    Standard_Boolean direct = Direct();
     axis = A1;
     vxdir = axis.Direction().CrossCrossed (vxdir, axis.Direction());
     if(direct) { vydir = axis.Direction().Crossed(vxdir); }
@@ -68,7 +68,6 @@ inline void  gp_Ax3::SetAxis(const gp_Ax1& A1)
 
 inline void  gp_Ax3::SetDirection(const gp_Dir& V)
 {
-  Standard_Boolean direct = Direct(); 
   Standard_Real dot = V.Dot(vxdir);
   if(Abs(Abs(dot) - 1.) <= Precision::Angular()) 
   {
@@ -83,6 +82,7 @@ inline void  gp_Ax3::SetDirection(const gp_Dir& V)
   }
   else
   {   
+    Standard_Boolean direct = Direct(); 
     axis.SetDirection (V);
     vxdir = V.CrossCrossed (vxdir, V);
     if (direct) { vydir = V.Crossed (vxdir); }

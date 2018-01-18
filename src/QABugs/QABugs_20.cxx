@@ -2768,63 +2768,42 @@ static Standard_Integer OCC29371 (Draw_Interpretor& di, Standard_Integer n, cons
   return 0;
 }
 
+static void CheckAx3Dir(gp_Ax3& theAx, const gp_Dir& theDir )
+{
+  Standard_Boolean bDirect = theAx.Direct();
+  theAx.SetDirection (theDir);
+  if (bDirect != theAx.Direct())
+    std::cout << "Error: coordinate system is reversed\n";
+  if (!theDir.IsEqual(theAx.Direction(), Precision::Angular()))
+    std::cout << "Error: main dir was not set properly\n";
+}
+
+static void CheckAx3Ax1(gp_Ax3& theAx, const gp_Ax1& theAx0 )
+{
+  Standard_Boolean bDirect = theAx.Direct();
+  theAx.SetAxis (theAx0);
+  if (bDirect != theAx.Direct())
+    std::cout << "Error: coordinate system is reversed\n";
+  if (!theAx0.Direction().IsEqual(theAx.Direction(), Precision::Angular()))
+    std::cout << "Error: main dir was not set properly\n";
+}
+
 static Standard_Integer OCC29406 (Draw_Interpretor&, Standard_Integer, const char**)
 {
-  gp_Ax3 anAx1, anAx2;
-  Standard_Boolean bDirect1 = anAx1.Direct();
-  anAx1.SetDirection (gp::DX());
-  if (bDirect1 != anAx1.Direct())
-  {
-    std::cout << "Error: coordinate system is reversed\n";
-    return 1;
-  }
-  //
-  Standard_Boolean bDirect2 = anAx2.Direct();  
-  anAx2.SetDirection (-gp::DX());
-  if (bDirect2 != anAx2.Direct())
-  {
-    std::cout << "Error: coordinate system is reversed\n";
-    return 1;
-  }
-  //
-  gp_Ax3 anAx3, anAx4;
+  gp_Ax3 anAx1, anAx2, anAx3, anAx4, anAx5, anAx6;;
   anAx3.ZReverse();
   anAx4.ZReverse();
   //
-  Standard_Boolean bDirect3 = anAx3.Direct();
-  anAx3.SetDirection (gp::DX());
-  if (bDirect3 != anAx3.Direct())
-  {
-    std::cout << "Error: coordinate system is reversed\n";
-    return 1;
-  }
+  CheckAx3Dir(anAx1, gp::DX());
+  CheckAx3Dir(anAx2, -gp::DX());
+  CheckAx3Dir(anAx3, gp::DX());
+  CheckAx3Dir(anAx4, -gp::DX());
   //
-  Standard_Boolean bDirect4 = anAx4.Direct();
-  anAx4.SetDirection (gp::DX());
-  if (bDirect4 != anAx3.Direct())
-  {
-    std::cout << "Error: coordinate system is reversed\n";
-    return 1;
-  }
-  //   
-  gp_Ax3 anAx5, anAx6;
   gp_Ax1 anAx0_1 (gp::Origin(), gp::DX());
-  Standard_Boolean bDirect5 = anAx5.Direct();
-  anAx5.SetAxis (anAx0_1);
-  if (bDirect5 != anAx5.Direct())
-  {
-    std::cout << "Error: coordinate system is reversed\n";
-    return 1;
-  }
-  //
   gp_Ax1 anAx0_2 (gp::Origin(), -gp::DX());
-  Standard_Boolean bDirect6 = anAx6.Direct();
-  anAx6.SetAxis (anAx0_1);
-  if (bDirect6 != anAx6.Direct())
-  {
-    std::cout << "Error: coordinate system is reversed\n";
-    return 1;
-  }
+  //
+  CheckAx3Ax1(anAx5, anAx0_1);
+  CheckAx3Ax1(anAx6, anAx0_2);
   return 0;
 }
 
