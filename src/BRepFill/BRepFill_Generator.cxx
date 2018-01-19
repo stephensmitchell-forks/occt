@@ -976,11 +976,13 @@ void BRepFill_Generator::Perform()
       {
         TopoDS_Edge aREd = anOrEd1;
         if (degen1)
-          aREd = Edge1; //??
-        TopTools_ListOfShape Empty;
-        if (!myMap.IsBound(anOrEd1)) 
-          myMap.Bind(anOrEd1,Empty);
-        myMap(anOrEd1).Append(Face);
+          aREd = Edge1; //??        
+        if (!myMap.IsBound(aREd)) 
+        {
+          TopTools_ListOfShape Empty;
+          myMap.Bind(aREd,Empty);
+        }
+        myMap(aREd).Append(Face);
       }
 
       tantque = ex1.More() && ex2.More();
@@ -1001,8 +1003,6 @@ void BRepFill_Generator::Perform()
     for (;itM.More();itM.Next())
     {
       const TopoDS_Shape& aK = itM.Key();
-      if (aK.ShapeType() != TopAbs_EDGE)
-        continue; //additional check, should be edge anyway
       const TopoDS_Shape& aVal = itM.Value();
       myReshaper.Replace(aK, aVal);
     }
@@ -1014,17 +1014,17 @@ void BRepFill_Generator::Perform()
     myShell.Closed(Standard_True);
 
   //update wire's history
-  TopExp_Explorer anExpE;
+  TopoDS_Iterator anItE;
   for (int i = 1; i <= aModifWires.Extent(); i++)
   {
     const TopoDS_Shape& aCurW = aModifWires(i);
     TopoDS_Wire aNewW;
     B.MakeWire(aNewW);
 
-    anExpE.Init(aCurW, TopAbs_EDGE);
-    for (;anExpE.More();anExpE.Next())
+    anItE.Initialize(aCurW);
+    for (;anItE.More();anItE.Next())
     {
-      const TopoDS_Shape& aCurE = anExpE.Current();
+      const TopoDS_Shape& aCurE = anItE.Value(); //edges only
       const TopoDS_Shape& aNSEdge = ResultShape(aCurE);
       B.Add(aNewW, aNSEdge);
     }

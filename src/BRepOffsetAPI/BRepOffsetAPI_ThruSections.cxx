@@ -344,6 +344,7 @@ void BRepOffsetAPI_ThruSections::CheckCompatibility(const Standard_Boolean check
 
 void BRepOffsetAPI_ThruSections::Build()
 {
+  myBFGenerator.Nullify();
   //Check set of section for right configuration of punctual sections
   Standard_Integer i;
   TopExp_Explorer explo;
@@ -512,7 +513,6 @@ void BRepOffsetAPI_ThruSections::Build()
 void BRepOffsetAPI_ThruSections::CreateRuled()
 {
   Standard_Integer nbSects = myWires.Length();
-  //?? should we clean myBFGenerator in some other places??
   myBFGenerator.Nullify();
   myBFGenerator = new BRepFill_Generator();
   myBFGenerator->SetMutableInput(IsMutableInput());
@@ -985,7 +985,7 @@ void BRepOffsetAPI_ThruSections::CreateSmoothed()
     for (;itM.More();itM.Next())
     {
       const TopoDS_Vertex& aVert = TopoDS::Vertex(itM.Key());
-      const Standard_Real& aNewToler = itM.Value();
+      Standard_Real aNewToler = itM.Value();
       if (BRep_Tool::Tolerance(aVert) < aNewToler)
       {
         TopoDS_Vertex aNVert = TopoDS::Vertex(aVert.EmptyCopied());
@@ -994,7 +994,6 @@ void BRepOffsetAPI_ThruSections::CreateSmoothed()
       }
     }
     myShape = aReshaper.Apply(myShape);
-    //?? Modified(shape) is not present in this class  
   }
 }
 
@@ -1358,19 +1357,8 @@ BRepOffsetAPI_ThruSections::Generated(const TopoDS_Shape& S)
     
     Standard_Integer Eindex = myVertexIndex(S);
     Standard_Integer Vindex = (Eindex > 0)? 0 : 1;
-    Eindex = Abs(Eindex);
-    const TopoDS_Shape& FirstSection = myWires(1);
+    Eindex = Abs(Eindex);    
     TopoDS_Edge FirstEdge;
-    TopoDS_Iterator itw(FirstSection);
-    for (Standard_Integer inde = 1; itw.More(); itw.Next(),inde++)
-    {
-      FirstEdge = TopoDS::Edge(itw.Value());
-      if (myIsRuled && !myBFGenerator.IsNull())
-        FirstEdge = TopoDS::Edge(myBFGenerator->ResultShape(FirstEdge));
-      if (inde == Eindex)
-        break;
-    }
-
     //Find the first longitudinal edge
     TopoDS_Face FirstFace = TopoDS::Face(AllFaces(Eindex));
     FirstFace.Orientation(TopAbs_FORWARD);
@@ -1392,6 +1380,17 @@ BRepOffsetAPI_ThruSections::Generated(const TopoDS_Shape& S)
     }
     else
     {
+      const TopoDS_Shape& FirstSection = myWires(1);
+      TopoDS_Iterator itw(FirstSection);
+      for (Standard_Integer inde = 1; itw.More(); itw.Next(),inde++)
+      {
+        FirstEdge = TopoDS::Edge(itw.Value());
+        if (myIsRuled && !myBFGenerator.IsNull())
+          FirstEdge = TopoDS::Edge(myBFGenerator->ResultShape(FirstEdge));
+        if (inde == Eindex)
+          break;
+      }
+
       TopoDS_Shape FirstEdgeInFace;
       FirstEdgeInFace = Explo.Current();
       TopoDS_Vertex VV [2];
