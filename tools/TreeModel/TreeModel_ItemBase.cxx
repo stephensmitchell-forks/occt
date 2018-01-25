@@ -44,8 +44,19 @@ void TreeModel_ItemBase::Reset()
       anItem->Reset();
   }
   m_bInitialized = false;
-  mycachedValues.clear();
+  myCachedValues.clear();
+}
 
+// =======================================================================
+// function :  Reset
+// purpose :
+// =======================================================================
+void TreeModel_ItemBase::Reset (int theRole)
+{
+  if (!myCachedValues.contains (theRole))  
+    return;
+
+  myCachedValues.remove (theRole);
 }
 
 // =======================================================================
@@ -83,11 +94,11 @@ const TreeModel_ItemBasePtr TreeModel_ItemBase::currentItem()
 // =======================================================================
 QVariant TreeModel_ItemBase::cachedValue (const int theItemRole) const
 {
-  if (mycachedValues.contains (theItemRole))
-    return mycachedValues[theItemRole];
+  if (myCachedValues.contains (theItemRole))
+    return myCachedValues[theItemRole];
 
-  const_cast<TreeModel_ItemBase*>(this)->mycachedValues.insert (theItemRole,
+  const_cast<TreeModel_ItemBase*>(this)->myCachedValues.insert (theItemRole,
     theItemRole == TreeModel_ItemRole_RowCountRole ? QVariant (initRowCount()) : initValue (theItemRole));
 
-  return mycachedValues.contains (theItemRole) ? mycachedValues[theItemRole] : QVariant();
+  return myCachedValues.contains (theItemRole) ? myCachedValues[theItemRole] : QVariant();
 }

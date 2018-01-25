@@ -30,6 +30,8 @@
 
 #include <QAbstractItemModel>
 
+const int COLUMN_NAME_WIDTH = 300;
+
 // =======================================================================
 // function : Constructor
 // purpose :
@@ -37,9 +39,19 @@
 DFBrowser_TreeModel::DFBrowser_TreeModel (QObject* theParent, DFBrowser_Module* theModule)
 : TreeModel_ModelBase (theParent)
 {
-  m_pRootItem = DFBrowser_ItemApplication::CreateItem (TreeModel_ItemBasePtr());
+  SetHeaderItem (0, TreeModel_HeaderSection ("Name", COLUMN_NAME_WIDTH));
+
   DFBrowser_ItemApplicationPtr aRootItem = itemDynamicCast<DFBrowser_ItemApplication> (m_pRootItem);
   aRootItem->SetModule (theModule);
+}
+
+// =======================================================================
+// function : createRootItem
+// purpose :
+// =======================================================================
+void DFBrowser_TreeModel::createRootItem (const int)
+{
+  m_pRootItem = DFBrowser_ItemApplication::CreateItem (TreeModel_ItemBasePtr());
 }
 
 // =======================================================================

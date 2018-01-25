@@ -1,0 +1,13 @@
+pload TOPTEST INSPECTOR
+
+box a0 40 40 40 
+
+box a1 40 40 40 
+ttranslate a1 100 50 50
+
+tinspector -plugins shapeview
+tinspector -shape a0
+tinspector -shape a1
+
+
+

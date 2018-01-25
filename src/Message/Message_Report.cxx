@@ -26,7 +26,9 @@ IMPLEMENT_STANDARD_RTTIEXT(Message_Report,Standard_Transient)
 //=======================================================================
 
 Message_Report::Message_Report ()
+: myIsStoreElapsedTime (Standard_False), myLimit (-1)
 {
+  SetActive (Standard_True);
 }
 
 //=======================================================================
@@ -34,8 +36,12 @@ Message_Report::Message_Report ()
 //purpose  :
 //=======================================================================
 
-void Message_Report::AddAlert (Message_Gravity theGravity, const Handle(Message_Alert)& theAlert)
+void Message_Report::AddAlert (Message_Gravity theGravity, const Handle(Message_Alert)& theAlert,
+                               const Handle(Message_Alert)& theParentAlert)
 {
+  if (!IsActive (theGravity))
+    return;
+
   Standard_ASSERT_RETURN (! theAlert.IsNull(), "Attempt to add null alert",);
   Standard_ASSERT_RETURN (theGravity >= 0 && size_t(theGravity) < sizeof(myAlerts)/sizeof(myAlerts[0]), 
                           "Adding alert with gravity not in valid range",);
@@ -43,21 +49,47 @@ void Message_Report::AddAlert (Message_Gravity theGravity, const Handle(Message_
   Standard_Mutex::Sentry aSentry (myMutex);
 
   // iterate by already recorded alerts and try to merge new one with one of those
-  Message_ListOfAlert &aList = myAlerts[theGravity];
-  if (theAlert->SupportsMerge() && ! aList.IsEmpty())
+  Message_ListOfAlert& aList = theParentAlert.IsNull() ? myAlerts[theGravity] : theParentAlert->GetAlerts (theGravity);
+
+  if (theAlert->SupportsMerge() && !aList.IsEmpty())
   {
-    // merge is performed only for alerts of exactly same type
+    // merge is performed only for alerts of exactly same type and same name
     const Handle(Standard_Type)& aType = theAlert->DynamicType();
     for (Message_ListOfAlert::Iterator anIt(aList); anIt.More(); anIt.Next())
     {
       // if merged successfully, just return
-      if (aType == anIt.Value()->DynamicType() && theAlert->Merge (anIt.Value()))
+      if (aType == anIt.Value()->DynamicType() && theAlert->GetName().IsEqual (anIt.Value()->GetName()) && theAlert->Merge (anIt.Value()))
         return;
     }
   }
 
   // if not merged, just add to the list
   aList.Append (theAlert);
+  // remove alerts under the report only
+  if (theParentAlert.IsNull() && myLimit > 0 && aList.Extent() >= myLimit)
+    aList.RemoveFirst();
+
+  if (IsStoreElapsedTime())
+  {
+    if (!myAlertOfTimer.IsNull())
+      myAlertOfTimer->SetElapsedTime (myAlertTimer.IsStarted() ? myAlertTimer.ElapsedTime() : 0/*the first alert has time 0*/);
+
+    myAlertOfTimer = theAlert;
+    if (myAlertTimer.IsStarted())
+#if OCC_VERSION_HEX < 0x070201
+    {
+      myAlertTimer.Stop();
+      myAlertTimer.Start();
+    }
+#else
+      myAlertTimer.Restart();
+#endif
+    else
+      myAlertTimer.Start();
+  }
+
+  if (!myCallBack.IsNull())
+    myCallBack->Update();
 }
 
 //=======================================================================
@@ -71,6 +103,30 @@ const Message_ListOfAlert& Message_Report::GetAlerts (Message_Gravity theGravity
   Standard_ASSERT_RETURN (theGravity >= 0 && size_t(theGravity) < sizeof(myAlerts)/sizeof(myAlerts[0]), 
                           "Requesting alerts for gravity not in valid range", anEmptyList);
   return myAlerts[theGravity];
+}
+
+//=======================================================================
+//function : GetLastAlert
+//purpose  :
+//=======================================================================
+
+Handle(Message_Alert) Message_Report::GetLastAlert (Message_Gravity theGravity, const bool isFindInAlertChildren)
+{
+  if (!IsActive (theGravity))
+    return Handle(Message_Alert)();
+
+  if (!isFindInAlertChildren)
+    return GetAlerts (theGravity).Last();
+
+  const Message_ListOfAlert& anAlerts = GetAlerts (theGravity);
+  if (anAlerts.IsEmpty())
+    return Handle(Message_Alert)();
+
+  Handle(Message_Alert) aLastAlert = anAlerts.Last();
+  while (!aLastAlert.IsNull() && !aLastAlert->GetAlerts (theGravity).IsEmpty())
+    aLastAlert = aLastAlert->GetAlerts (theGravity).Last();
+
+  return aLastAlert;
 }
 
 //=======================================================================
@@ -228,11 +284,12 @@ void Message_Report::SendMessages (const Handle(Message_Messenger)& theMessenger
 //purpose  :
 //=======================================================================
 
-void Message_Report::Merge (const Handle(Message_Report)& theOther)
+void Message_Report::Merge (const Handle(Message_Report)& theOther,
+                            const Handle(Message_Alert)& theParentAlert)
 {
   for (int iGravity = Message_Trace; iGravity <= Message_Fail; ++iGravity)
   {
-    Merge (theOther, (Message_Gravity)iGravity);
+    Merge (theOther, (Message_Gravity)iGravity, theParentAlert);
   }
 }
 
@@ -241,10 +298,45 @@ void Message_Report::Merge (const Handle(Message_Report)& theOther)
 //purpose  :
 //=======================================================================
 
-void Message_Report::Merge (const Handle(Message_Report)& theOther, Message_Gravity theGravity)
+void Message_Report::Merge (const Handle(Message_Report)& theOther, Message_Gravity theGravity,
+  const Handle(Message_Alert)& theParentAlert)
 {
   for (Message_ListOfAlert::Iterator anIt (theOther->GetAlerts(theGravity)); anIt.More(); anIt.Next())
   {
-    AddAlert (theGravity, anIt.Value());
+    AddAlert (theGravity, anIt.Value(), theParentAlert);
   }
 }
+
+//=======================================================================
+//function : SetActive
+//purpose  :
+//=======================================================================
+
+void Message_Report::SetActive (const Standard_Boolean& theActive, int theGravity)
+{
+  if (theGravity < 0)
+  {
+    for (int iGravity = Message_Trace; iGravity <= Message_Fail; ++iGravity)
+      SetActive (theActive, iGravity);
+    return;
+  }
+
+  Standard_ASSERT_RETURN (theGravity >= 0 && size_t (theGravity) < sizeof (myAlerts) / sizeof (myAlerts[0]), 
+                          "Set active report with gravity not in valid range", );
+  myIsActive[theGravity] = theActive;
+}
+
+//=======================================================================
+//function : ApplyLastElapsedTime
+//purpose  :
+//=======================================================================
+
+void Message_Report::ApplyLastElapsedTime()
+{
+  if (myAlertOfTimer.IsNull())
+    return;
+
+  myAlertOfTimer->SetElapsedTime (myAlertTimer.IsStarted() ? myAlertTimer.ElapsedTime() : 0/*the first alert has time 0*/);
+  myAlertOfTimer = NULL;
+}
+

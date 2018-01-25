@@ -1,5 +1,6 @@
 AIS.cxx
 AIS.hxx
+AIS_Alerts.hxx
 AIS_Animation.cxx
 AIS_Animation.hxx
 AIS_AnimationTimer.cxx

@@ -16,6 +16,7 @@
 
 #include <AIS_InteractiveContext.hxx>
 
+#include <AIS_Alerts.hxx>
 #include <AIS_DataMapIteratorOfDataMapOfILC.hxx>
 #include <AIS_DataMapIteratorOfDataMapOfIOStatus.hxx>
 #include <AIS_ConnectedInteractive.hxx>
@@ -120,7 +121,8 @@ myCurLocalIndex(0),
 myCurDetected(0),
 myCurHighlighted(0),
 myPickingStrategy (SelectMgr_PickingStrategy_FirstAcceptable),
-myIsAutoActivateSelMode(Standard_True)
+myIsAutoActivateSelMode(Standard_True),
+myReport (new Message_Report())
 {
   myStyles[Prs3d_TypeOfHighlight_None]          = myDefaultDrawer;
   myStyles[Prs3d_TypeOfHighlight_Selected]      = new Prs3d_Drawer();
@@ -167,6 +169,9 @@ myIsAutoActivateSelMode(Standard_True)
   }
 
   InitAttributes();
+
+  SetReportActive (Standard_False);
+  myReport->SetLimit (1000);
 }
 
 //=======================================================================
@@ -398,6 +403,7 @@ void AIS_InteractiveContext::ObjectsForView (AIS_ListOfInteractive&  theListOfIO
 void AIS_InteractiveContext::Display (const Handle(AIS_InteractiveObject)& theIObj,
                                       const Standard_Boolean               theToUpdateViewer)
 {
+  AddInfo (new AIS_AlertObjectInformation (theIObj, "Display"));
   if (theIObj.IsNull())
   {
     return;
@@ -448,6 +454,13 @@ void AIS_InteractiveContext::Display (const Handle(AIS_InteractiveObject)& theIO
                                       const Standard_Boolean               theToAllowDecomposition,
                                       const AIS_DisplayStatus              theDispStatus)
 {
+  AddInfo (new AIS_AlertObjectInformation (theIObj, "Display"));
+  Handle(Message_Alert) anAlertInfo = GetLastInfo();
+  AddInfo (new AIS_AlertInformation (TCollection_AsciiString ("theDispMode = ") + theDispMode), anAlertInfo);
+  AddInfo (new AIS_AlertInformation (TCollection_AsciiString ("theSelectionMode = ") + theSelectionMode), anAlertInfo);
+  AddInfo (new AIS_AlertInformation (TCollection_AsciiString ("theToAllowDecomposition = ") + theToAllowDecomposition), anAlertInfo);
+  AddInfo (new AIS_AlertInformation (TCollection_AsciiString ("theDispStatus = ") + theDispStatus), anAlertInfo);
+
   if (theIObj.IsNull())
   {
     return;
@@ -559,6 +572,11 @@ void AIS_InteractiveContext::Load (const Handle(AIS_InteractiveObject)& theIObj,
                                    const Standard_Integer               theSelMode,
                                    const Standard_Boolean               theToAllowDecomposition)
 {
+  AddInfo (new AIS_AlertObjectInformation (theIObj, "Display"));
+  Handle(Message_Alert) anAlertInfo = GetLastInfo();
+  AddInfo (new AIS_AlertInformation (TCollection_AsciiString ("theSelMode = ") + theSelMode), anAlertInfo);
+  AddInfo (new AIS_AlertInformation (TCollection_AsciiString ("theToAllowDecomposition = ") + theToAllowDecomposition), anAlertInfo);
+
   if (theIObj.IsNull())
   {
     return;
@@ -595,6 +613,8 @@ void AIS_InteractiveContext::Load (const Handle(AIS_InteractiveObject)& theIObj,
 void AIS_InteractiveContext::Erase (const Handle(AIS_InteractiveObject)& theIObj,
                                     const Standard_Boolean               theToUpdateViewer)
 {
+  AddInfo (new AIS_AlertObjectInformation (theIObj, "Erase"));
+
   if (theIObj.IsNull())
   {
     return;
@@ -637,6 +657,7 @@ void AIS_InteractiveContext::Erase (const Handle(AIS_InteractiveObject)& theIObj
 //=======================================================================
 void AIS_InteractiveContext::EraseAll (const Standard_Boolean theToUpdateViewer)
 {
+  AddInfo (new AIS_AlertInformation ("EraseAll"));
   if (HasOpenedContext())
   {
     return;
@@ -662,6 +683,7 @@ void AIS_InteractiveContext::EraseAll (const Standard_Boolean theToUpdateViewer)
 //=======================================================================
 void AIS_InteractiveContext::DisplayAll (const Standard_Boolean theToUpdateViewer)
 {
+  AddInfo (new AIS_AlertInformation ("DisplayAll"));
   if (HasOpenedContext())
   {
     return;
@@ -688,6 +710,7 @@ void AIS_InteractiveContext::DisplayAll (const Standard_Boolean theToUpdateViewe
 //=======================================================================
 void AIS_InteractiveContext::DisplaySelected (const Standard_Boolean theToUpdateViewer)
 {
+  AddInfo (new AIS_AlertInformation ("DisplaySelected"));
   if (HasOpenedContext())
   {
     return;
@@ -711,6 +734,7 @@ void AIS_InteractiveContext::DisplaySelected (const Standard_Boolean theToUpdate
 //=======================================================================
 void AIS_InteractiveContext::EraseSelected (const Standard_Boolean theToUpdateViewer)
 {
+  AddInfo (new AIS_AlertInformation ("EraseSelected"));
   if (HasOpenedContext())
   {
     return;
@@ -827,6 +851,7 @@ AIS_DisplayStatus AIS_InteractiveContext::DisplayStatus (const Handle(AIS_Intera
 void AIS_InteractiveContext::Remove (const Handle(AIS_InteractiveObject)& theIObj,
                                      const Standard_Boolean               theToUpdateViewer)
 {
+  AddInfo (new AIS_AlertObjectInformation (theIObj, "Remove"));
   if (theIObj.IsNull())
   {
     return;
@@ -862,6 +887,7 @@ void AIS_InteractiveContext::Remove (const Handle(AIS_InteractiveObject)& theIOb
 //=======================================================================
 void AIS_InteractiveContext::RemoveAll (const Standard_Boolean theToUpdateViewer)
 {
+  AddInfo (new AIS_AlertInformation ("RemoveAll"));
   AIS_ListOfInteractive aList;
   ObjectsInside (aList);
   for (AIS_ListIteratorOfListOfInteractive aListIterator (aList); aListIterator.More(); aListIterator.Next())
@@ -883,6 +909,7 @@ void AIS_InteractiveContext::ClearPrs (const Handle(AIS_InteractiveObject)& theI
                                        const Standard_Integer               theMode,
                                        const Standard_Boolean               theToUpdateViewer)
 {
+  AddInfo (new AIS_AlertInformation ("ClearPrs"));
   if (theIObj.IsNull())
   {
     return;
@@ -1209,6 +1236,7 @@ void AIS_InteractiveContext::Redisplay (const Handle(AIS_InteractiveObject)& the
                                         const Standard_Boolean               theToUpdateViewer,
                                         const Standard_Boolean               theAllModes)
 {
+  AddInfo (new AIS_AlertObjectInformation (theIObj, "Redisplay"));
   RecomputePrsOnly (theIObj, theToUpdateViewer, theAllModes);
   RecomputeSelectionOnly (theIObj);
 }
@@ -1312,6 +1340,8 @@ void AIS_InteractiveContext::RecomputeSelectionOnly (const Handle(AIS_Interactiv
 void AIS_InteractiveContext::Update (const Handle(AIS_InteractiveObject)& theIObj,
                                      const Standard_Boolean               theUpdateViewer)
 {
+  AddInfo (new AIS_AlertObjectInformation (theIObj, "Update"));
+
   if (theIObj.IsNull())
   {
     return;
@@ -1531,6 +1561,9 @@ Standard_Real AIS_InteractiveContext::HLRAngle() const
 void AIS_InteractiveContext::SetDisplayMode(const Standard_Integer theMode,
                                             const Standard_Boolean theToUpdateViewer)
 {
+  AddInfo (new AIS_AlertInformation ("SetDisplayMode"));
+  AddInfo (new AIS_AlertInformation (TCollection_AsciiString ("theMode = ") + theMode), GetLastInfo());
+
   if (theMode == myDefaultDrawer->DisplayMode())
   {
     return;
@@ -1585,6 +1618,9 @@ void AIS_InteractiveContext::SetDisplayMode (const Handle(AIS_InteractiveObject)
                                              const Standard_Integer               theMode,
                                              const Standard_Boolean               theToUpdateViewer)
 {
+  AddInfo (new AIS_AlertObjectInformation (theIObj, "SetDisplayMode"));
+  AddInfo (new AIS_AlertInformation (TCollection_AsciiString ("theDisplayMode = ") + theMode), GetLastInfo());
+
   setContextToObject (theIObj);
   if (!myObjects.IsBound (theIObj))
   {
@@ -1641,6 +1677,7 @@ void AIS_InteractiveContext::SetDisplayMode (const Handle(AIS_InteractiveObject)
 void AIS_InteractiveContext::UnsetDisplayMode (const Handle(AIS_InteractiveObject)& theIObj,
                                                const Standard_Boolean               theToUpdateViewer)
 {
+  AddInfo (new AIS_AlertObjectInformation (theIObj, "UnsetDisplayMode"));
   if (theIObj.IsNull()
   || !theIObj->HasDisplayMode())
   {
@@ -1766,6 +1803,8 @@ void AIS_InteractiveContext::SetColor (const Handle(AIS_InteractiveObject)& theI
                                        const Quantity_Color&                theColor,
                                        const Standard_Boolean               theToUpdateViewer)
 {
+  AddInfo (new AIS_AlertObjectInformation (theIObj, "SetColor"));
+
   if (theIObj.IsNull())
   {
     return;
@@ -1799,6 +1838,10 @@ void AIS_InteractiveContext::SetDeviationCoefficient (const Handle(AIS_Interacti
                                                       const Standard_Real                  theCoefficient,
                                                       const Standard_Boolean               theToUpdateViewer)
 {
+  AddInfo (new AIS_AlertObjectInformation (theIObj, "SetDeviationCoefficient"));
+  AddInfo (new AIS_AlertInformation (TCollection_AsciiString ("theCoefficient = ") + theCoefficient), GetLastInfo());
+
+
   if (theIObj.IsNull())
   {
     return;
@@ -1829,6 +1872,8 @@ void AIS_InteractiveContext::SetHLRDeviationCoefficient (const Handle(AIS_Intera
                                                          const Standard_Real                  theCoefficient,
                                                          const Standard_Boolean               theToUpdateViewer)
 {
+  AddInfo (new AIS_AlertObjectInformation (theIObj, "SetHLRDeviationCoefficient"));
+  AddInfo (new AIS_AlertInformation (TCollection_AsciiString ("theCoefficient = ") + theCoefficient), GetLastInfo());
   if (theIObj.IsNull())
   {
     return;
@@ -1859,6 +1904,9 @@ void AIS_InteractiveContext::SetDeviationAngle (const Handle(AIS_InteractiveObje
                                                 const Standard_Real                  theAngle,
                                                 const Standard_Boolean               theToUpdateViewer)
 {
+  AddInfo (new AIS_AlertObjectInformation (theIObj, "SetDeviationAngle"));
+  AddInfo (new AIS_AlertInformation (TCollection_AsciiString ("theAngle = ") + theAngle), GetLastInfo());
+
   if (theIObj.IsNull())
   {
     return;
@@ -1888,6 +1936,9 @@ void AIS_InteractiveContext::SetAngleAndDeviation (const Handle(AIS_InteractiveO
                                                    const Standard_Real                  theAngle,
                                                    const Standard_Boolean               theToUpdateViewer)
 {
+  AddInfo (new AIS_AlertObjectInformation (theIObj, "SetAngleAndDeviation"));
+  AddInfo (new AIS_AlertInformation (TCollection_AsciiString ("theAngle = ") + theAngle), GetLastInfo());
+
   if (theIObj.IsNull())
   {
     return;
@@ -1926,6 +1977,9 @@ void AIS_InteractiveContext::SetHLRAngleAndDeviation (const Handle(AIS_Interacti
                                                       const Standard_Real                  theAngle,
                                                       const Standard_Boolean               theToUpdateViewer)
 {
+  AddInfo (new AIS_AlertObjectInformation (theIObj, "SetHLRAngleAndDeviation"));
+  AddInfo (new AIS_AlertInformation (TCollection_AsciiString ("theAngle = ") + theAngle), GetLastInfo());
+
   if (theIObj.IsNull())
   {
     return;
@@ -1954,6 +2008,8 @@ void AIS_InteractiveContext::SetHLRDeviationAngle (const Handle(AIS_InteractiveO
                                                    const Standard_Real                  theAngle,
                                                    const Standard_Boolean               theToUpdateViewer)
 {
+  AddInfo (new AIS_AlertObjectInformation (theIObj, "SetHLRDeviationAngle"));
+  AddInfo (new AIS_AlertInformation (TCollection_AsciiString ("theAngle = ") + theAngle), GetLastInfo());
   if (theIObj.IsNull())
   {
     return;
@@ -1981,6 +2037,8 @@ void AIS_InteractiveContext::SetHLRDeviationAngle (const Handle(AIS_InteractiveO
 void AIS_InteractiveContext::UnsetColor (const Handle(AIS_InteractiveObject)& theIObj,
                                          const Standard_Boolean               theToUpdateViewer)
 {
+  AddInfo (new AIS_AlertObjectInformation (theIObj, "UnsetColor"));
+
   if (theIObj.IsNull())
   {
     return;

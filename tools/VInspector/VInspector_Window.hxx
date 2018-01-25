@@ -20,6 +20,8 @@
 #include <NCollection_List.hxx>
 #include <SelectBasics_EntityOwner.hxx>
 #include <Standard.hxx>
+
+#include <inspector/MessageModel_Actions.hxx>
 #include <inspector/TInspectorAPI_PluginParameters.hxx>
 #include <inspector/VInspector_CallBack.hxx>
 
@@ -59,7 +61,20 @@ public:
 
   //! Sets parameters container, it should be used when the plugin is initialized or in update content
   //! \param theParameters a parameters container
-  void SetParameters (const Handle(TInspectorAPI_PluginParameters)& theParameters) { myParameters = theParameters; }
+  void SetParameters (const Handle(TInspectorAPI_PluginParameters)& theParameters)
+  { myParameters = theParameters; myHistoryActions->SetParameters (theParameters); }
+
+  //! Provide container for actions available in inspector on general level
+  //! \param theMenu if Qt implementation, it is QMenu object
+  Standard_EXPORT void FillActionsMenu (void* theMenu);
+
+  //! Returns plugin preferences: dock widgets state, tree view columns.
+  //! \param theItem container of preference elements
+  Standard_EXPORT void GetPreferences (TInspectorAPI_PreferencesDataMap& theItem);
+
+  //! Applies plugin preferences
+  //! \param theItem container of preference elements
+  Standard_EXPORT void SetPreferences (const TInspectorAPI_PreferencesDataMap& theItem);
 
   //! Applyes parameters to Init controls, opens files if there are in parameters, updates OCAF tree view model
   Standard_EXPORT void UpdateContent();
@@ -88,6 +103,10 @@ private slots:
   //! \param theActionId an action identifier in tool bar
   void onToolBarActionClicked (const int theActionId);
 
+  //! Shows context menu for history view selected item. It contains activate/deactivate actions.
+  //! \param thePosition a clicked point
+  void onHistoryViewContextMenuRequested (const QPoint& thePosition);
+
   //! Synchronization selection between history and tree view. Selection by history view
   //! \param theSelected a selected items
   //! \param theDeselected a deselected items
@@ -109,6 +128,12 @@ private slots:
   //! Erase selected presentation if it is shown
   void onHide();
 
+  //! Set context report(s) not active using method of interactive context
+  void OnDeactivateReport();
+
+  //! Set context report(s) active using method of interactive context
+  void OnActivateReport();
+
 private:
 
   //! Inits the window content by the given context
@@ -117,12 +142,6 @@ private:
 
   //! Updates tree model
   void UpdateTreeModel();
-
-  //! Creates an action with the given text connected to the slot
-  //! \param theText an action text value
-  //! \param theSlot a listener of triggered signal of the new action
-  //! \return a new action
-  QAction* createAction(const QString& theText, const char* theSlot);
 
   //! Set selected in tree view presentations displayed or erased in the current context. Note that erased presentations
   //! still belongs to the current context until Remove is called.
@@ -133,6 +152,10 @@ private:
   //! \return a context of created view.
   Handle(AIS_InteractiveContext) createView();
 
+  //! Returns report item of context
+  //! \return tree model index
+  QModelIndex findHistoryReportItem();
+
 private:
 
   QWidget* myParent; //!< widget, comes when Init window, the window control lays in the layout, updates window title
@@ -141,6 +164,7 @@ private:
   VInspector_ToolBar* myToolBar; //!< tool bar actions
   QTreeView* myTreeView; //!< tree view of AIS content
   QTreeView* myHistoryView; //!< history of AIS context calls
+  MessageModel_Actions* myHistoryActions; //!< processing history view actions
   Handle(VInspector_CallBack) myCallBack; //!< AIS context call back, if set
 
   TreeModel_MessageDialog* myExportToShapeViewDialog; //!< dialog about exporting TopoDS_Shape to ShapeView plugin

@@ -14,14 +14,6 @@
 // commercial license or contractual agreement. 
 
 #include <inspector/ShapeView_Window.hxx>
-#include <inspector/ShapeView_ItemRoot.hxx>
-#include <inspector/ShapeView_ItemShape.hxx>
-#include <inspector/ShapeView_TreeModel.hxx>
-#include <inspector/View_Displayer.hxx>
-#include <inspector/View_ToolBar.hxx>
-#include <inspector/View_Widget.hxx>
-#include <inspector/View_Window.hxx>
-#include <inspector/View_Viewer.hxx>
 
 #include <inspector/ShapeView_Window.hxx>
 #include <inspector/ShapeView_ItemRoot.hxx>
@@ -29,6 +21,17 @@
 #include <inspector/ShapeView_TreeModel.hxx>
 #include <inspector/ShapeView_OpenFileDialog.hxx>
 #include <inspector/ShapeView_Tools.hxx>
+#include <inspector/ShapeView_VisibilityState.hxx>
+
+#include <inspector/TreeModel_Tools.hxx>
+#include <inspector/TreeModel_ContextMenu.hxx>
+
+#include <inspector/View_Displayer.hxx>
+#include <inspector/View_PresentationType.hxx>
+#include <inspector/View_ToolBar.hxx>
+#include <inspector/View_Widget.hxx>
+#include <inspector/View_Window.hxx>
+#include <inspector/View_Viewer.hxx>
 
 #include <BRep_Builder.hxx>
 #include <BRepTools.hxx>
@@ -51,13 +54,6 @@
 #include <QTreeView>
 #include <QWidget>
 #include <QVBoxLayout>
-
-const int FIRST_COLUMN_WIDTH = 190;
-const int SIZE_COLUMN_WIDTH = 30;
-const int POINTER_COLUMN_WIDTH = 70;
-const int ORIENTATION_COLUMN_WIDTH = 70;
-const int LOCATION_COLUMN_WIDTH = 120;
-const int FLAGS_COLUMN_WIDTH = 70;
 
 const int DEFAULT_TEXT_VIEW_WIDTH = 800;
 const int DEFAULT_TEXT_VIEW_HEIGHT = 700;
@@ -126,8 +122,8 @@ QSize ShapeView_TreeView::sizeHint() const
 // function : Constructor
 // purpose :
 // =======================================================================
-ShapeView_Window::ShapeView_Window (QWidget* theParent, const TCollection_AsciiString& theTemporaryDirectory)
-: QObject (theParent), myTemporaryDirectory (theTemporaryDirectory), myNextPosition (0)
+ShapeView_Window::ShapeView_Window (QWidget* theParent)
+: QObject (theParent), myNextPosition (0)
 {
   myMainWindow = new QMainWindow (theParent);
 
@@ -137,8 +133,12 @@ ShapeView_Window::ShapeView_Window (QWidget* theParent, const TCollection_AsciiS
   myTreeView->setContextMenuPolicy (Qt::CustomContextMenu);
   connect (myTreeView, SIGNAL (customContextMenuRequested (const QPoint&)),
           this, SLOT (onTreeViewContextMenuRequested (const QPoint&)));
+  new TreeModel_ContextMenu (myTreeView);
   ShapeView_TreeModel* aModel = new ShapeView_TreeModel (myTreeView);
   myTreeView->setModel (aModel);
+  ShapeView_VisibilityState* aVisibilityState = new ShapeView_VisibilityState (aModel);
+  aModel->SetVisibilityState (aVisibilityState);
+  TreeModel_Tools::UseVisibilityColumn (myTreeView);
 
   QItemSelectionModel* aSelectionModel = new QItemSelectionModel (aModel);
   myTreeView->setSelectionMode (QAbstractItemView::ExtendedSelection);
@@ -148,20 +148,16 @@ ShapeView_Window::ShapeView_Window (QWidget* theParent, const TCollection_AsciiS
 
   QModelIndex aParentIndex = myTreeView->model()->index (0, 0);
   myTreeView->setExpanded (aParentIndex, true);
-  myTreeView->setColumnWidth (0, FIRST_COLUMN_WIDTH);
-  myTreeView->setColumnWidth (1, SIZE_COLUMN_WIDTH);
-  myTreeView->setColumnWidth (2, POINTER_COLUMN_WIDTH);
-  myTreeView->setColumnWidth (3, ORIENTATION_COLUMN_WIDTH);
-  myTreeView->setColumnWidth (4, LOCATION_COLUMN_WIDTH);
-  myTreeView->setColumnWidth (5, FLAGS_COLUMN_WIDTH);
-
   myMainWindow->setCentralWidget (myTreeView);
 
   // view
-  myViewWindow = new View_Window (myMainWindow);
+  myViewWindow = new View_Window (myMainWindow, false);
+  aVisibilityState->SetDisplayer (myViewWindow->GetDisplayer());
+  aVisibilityState->SetPresentationType (View_PresentationType_Main);
   myViewWindow->GetView()->SetPredefinedSize (SHAPEVIEW_DEFAULT_VIEW_WIDTH, SHAPEVIEW_DEFAULT_VIEW_HEIGHT);
 
   QDockWidget* aViewDockWidget = new QDockWidget (tr ("View"), myMainWindow);
+  aViewDockWidget->setObjectName (aViewDockWidget->windowTitle());
   aViewDockWidget->setWidget (myViewWindow);
   aViewDockWidget->setTitleBarWidget (myViewWindow->GetViewToolBar()->GetControl());
   myMainWindow->addDockWidget (Qt::RightDockWidgetArea, aViewDockWidget);
@@ -191,6 +187,58 @@ void ShapeView_Window::SetParent (void* theParent)
     QLayout* aLayout = aParent->layout();
     if (aLayout)
       aLayout->addWidget (GetMainWindow());
+  }
+}
+
+// =======================================================================
+// function : FillActionsMenu
+// purpose :
+// =======================================================================
+void ShapeView_Window::FillActionsMenu (void* theMenu)
+{
+  QMenu* aMenu = (QMenu*)theMenu;
+  QList<QDockWidget*> aDockwidgets = myMainWindow->findChildren<QDockWidget*>();
+  for (QList<QDockWidget*>::iterator it = aDockwidgets.begin(); it != aDockwidgets.end(); ++it)
+  {
+    QDockWidget* aDockWidget = *it;
+    if (aDockWidget->parentWidget() == myMainWindow)
+      aMenu->addAction (aDockWidget->toggleViewAction());
+  }
+}
+
+// =======================================================================
+// function : GetPreferences
+// purpose :
+// =======================================================================
+void ShapeView_Window::GetPreferences (TInspectorAPI_PreferencesDataMap& theItem)
+{
+  theItem.Clear();
+  theItem.Bind ("geometry",  TreeModel_Tools::ToString (myMainWindow->saveState()).toStdString().c_str());
+
+  QMap<QString, QString> anItems;
+  TreeModel_Tools::SaveState (myTreeView, anItems);
+  for (QMap<QString, QString>::const_iterator anItemsIt = anItems.begin(); anItemsIt != anItems.end(); anItemsIt++)
+    theItem.Bind (anItemsIt.key().toStdString().c_str(), anItemsIt.value().toStdString().c_str());
+}
+
+// =======================================================================
+// function : SetPreferences
+// purpose :
+// =======================================================================
+void ShapeView_Window::SetPreferences (const TInspectorAPI_PreferencesDataMap& theItem)
+{
+  if (theItem.IsEmpty())
+  {
+    TreeModel_Tools::SetDefaultHeaderSections (myTreeView);
+    return;
+  }
+
+  for (TInspectorAPI_IteratorOfPreferencesDataMap anItemIt (theItem); anItemIt.More(); anItemIt.Next())
+  {
+    if (anItemIt.Key().IsEqual ("geometry"))
+      myMainWindow->restoreState (TreeModel_Tools::ToByteArray (anItemIt.Value().ToCString()));
+    else if (TreeModel_Tools::RestoreState (myTreeView, anItemIt.Key().ToCString(), anItemIt.Value().ToCString()))
+      continue;
   }
 }
 
@@ -253,15 +301,28 @@ void ShapeView_Window::Init (NCollection_List<Handle(Standard_Transient)>& thePa
 {
   Handle(AIS_InteractiveContext) aContext;
   NCollection_List<Handle(Standard_Transient)> aParameters;
-  for (NCollection_List<Handle(Standard_Transient)>::Iterator aParamsIt (theParameters);
-       aParamsIt.More(); aParamsIt.Next())
+
+  TCollection_AsciiString aPluginName ("TKShapeView");
+  NCollection_List<TCollection_AsciiString> aSelectedParameters;
+  if (myParameters->FindSelectedNames (aPluginName)) // selected names have TShape parameters
+    aSelectedParameters = myParameters->GetSelectedNames (aPluginName);
+
+  NCollection_List<TCollection_AsciiString>::Iterator aParamsIt (aSelectedParameters);
+  for (NCollection_List<Handle(Standard_Transient)>::Iterator anObjectsIt (theParameters);
+       anObjectsIt.More(); anObjectsIt.Next())
   {
-    Handle(Standard_Transient) anObject = aParamsIt.Value();
+    Handle(Standard_Transient) anObject = anObjectsIt.Value();
     Handle(TopoDS_TShape) aShapePointer = Handle(TopoDS_TShape)::DownCast (anObject);
     if (!aShapePointer.IsNull())
     {
       TopoDS_Shape aShape;
       aShape.TShape (aShapePointer);
+      if (aParamsIt.More())
+      {
+        // each Transient object has own location/orientation description
+        TInspectorAPI_PluginParameters::ParametersToShape (aParamsIt.Value(), aShape);
+        aParamsIt.Next();
+      }
       addShape (aShape);
     }
     else
@@ -275,6 +336,7 @@ void ShapeView_Window::Init (NCollection_List<Handle(Standard_Transient)>& thePa
     myViewWindow->SetContext (View_ContextType_External, aContext);
 
   theParameters = aParameters;
+  myParameters->SetSelectedNames (aPluginName, NCollection_List<TCollection_AsciiString>());
 }
 
 // =======================================================================
@@ -328,14 +390,14 @@ void ShapeView_Window::onTreeViewContextMenuRequested (const QPoint& thePosition
   QMenu* aMenu = new QMenu(myMainWindow);
   ShapeView_ItemRootPtr aRootItem = itemDynamicCast<ShapeView_ItemRoot> (anItemBase);
   if (aRootItem) {
-    aMenu->addAction (createAction("Load BREP file", SLOT (onLoadFile())));
-    aMenu->addAction (createAction ("Remove all shape items", SLOT (onClearView())));
+    aMenu->addAction (TreeModel_Tools::CreateAction ("Load BREP file", SLOT (onLoadFile()), myMainWindow, this));
+    aMenu->addAction (TreeModel_Tools::CreateAction ("Remove all shape items", SLOT (onClearView()), myMainWindow, this));
   }
   else {
-    if (!myTemporaryDirectory.IsEmpty())
-      aMenu->addAction (createAction ("BREP view", SLOT (onBREPView())));
-    aMenu->addAction (createAction ("Close All BREP views", SLOT (onCloseAllBREPViews())));
-    aMenu->addAction (createAction ("BREP directory", SLOT (onBREPDirectory())));
+    if (!GetTemporaryDirectory().IsEmpty())
+      aMenu->addAction (TreeModel_Tools::CreateAction ("BREP view", SLOT (onBREPView()), myMainWindow, this));
+    aMenu->addAction (TreeModel_Tools::CreateAction ("Close All BREP views", SLOT (onCloseAllBREPViews()), myMainWindow, this));
+    aMenu->addAction (TreeModel_Tools::CreateAction ("BREP directory", SLOT (onBREPDirectory()), myMainWindow, this));
   }
   QPoint aPoint = myTreeView->mapToGlobal (thePosition);
   aMenu->exec (aPoint);
@@ -350,7 +412,7 @@ void ShapeView_Window::onBREPDirectory()
   QString aFilter (tr ("BREP file (*.brep*)"));
   QString aSelectedFilter;
   QString aFileName = QFileDialog::getOpenFileName (0, tr ("Export shape to BREP file"),
-                                                    myTemporaryDirectory.ToCString(), aSelectedFilter);
+                                                    GetTemporaryDirectory().ToCString(), aSelectedFilter);
   if (!aFileName.isEmpty())
     viewFile (aFileName);
 }
@@ -375,7 +437,7 @@ void ShapeView_Window::onLoadFile()
 // =======================================================================
 void ShapeView_Window::onBREPView()
 {
-  if (myTemporaryDirectory.IsEmpty())
+  if (GetTemporaryDirectory().IsEmpty())
     return;
 
   QItemSelectionModel* aModel = myTreeView->selectionModel();
@@ -399,7 +461,7 @@ void ShapeView_Window::onBREPView()
   QDir aDir;
   if (aFileName.isEmpty() || !aDir.exists (aFileName))
   {
-    TCollection_AsciiString aFileNameIndiced = myTemporaryDirectory + TCollection_AsciiString ("\\") +
+    TCollection_AsciiString aFileNameIndiced = GetTemporaryDirectory() + TCollection_AsciiString ("\\") +
                                                getNextTmpName (anItem->TShapePointer());
     const TopoDS_Shape& aShape = anItem->GetItemShape();
     BRepTools::Write (aShape, aFileNameIndiced.ToCString());
@@ -436,32 +498,6 @@ void ShapeView_Window::onEditorDestroyed(QObject* theObject)
     if (myBREPViews[aViewId] == aWidget)
       myBREPViews.removeAll(aWidget);
   }
-}
-
-// =======================================================================
-// function : displaySelectedShapes
-// purpose :
-// =======================================================================
-void ShapeView_Window::displaySelectedShapes (const QModelIndexList& theSelected)
-{
-  for (QModelIndexList::const_iterator aSelIt = theSelected.begin(); aSelIt != theSelected.end(); aSelIt++)
-  {
-    QModelIndex anIndex = *aSelIt;
-    if (anIndex.column() != 0)
-      continue;
-
-    TreeModel_ItemBasePtr anItemBase = TreeModel_ModelBase::GetItemByIndex (anIndex);
-    if (!anItemBase)
-      continue;
-
-    ShapeView_ItemShapePtr aShapeItem = itemDynamicCast<ShapeView_ItemShape>(anItemBase);
-    if (!aShapeItem)
-      continue;
-    TopoDS_Shape aShape = aShapeItem->GetItemShape();
-    myViewWindow->GetDisplayer()->DisplayPresentation (ShapeView_Tools::CreatePresentation(aShape),
-                                                       View_PresentationType_Main, true);
-  }
-  myViewWindow->GetDisplayer()->UpdateViewer();
 }
 
 // =======================================================================
@@ -504,7 +540,7 @@ void ShapeView_Window::viewFile (const QString& theFileName)
 // =======================================================================
 void ShapeView_Window::removeBREPFiles()
 {
-  QDir aDir (myTemporaryDirectory.ToCString());
+  QDir aDir (GetTemporaryDirectory().ToCString());
 
   QStringList anEntries = aDir.entryList();
   QString aPrefix(viewBREPPrefix().ToCString());
@@ -513,17 +549,6 @@ void ShapeView_Window::removeBREPFiles()
     if (anEntries[anEntryId].contains (aPrefix))
       aDir.remove (anEntries[anEntryId]);
   }
-}
-
-// =======================================================================
-// function : createAction
-// purpose :
-// =======================================================================
-QAction* ShapeView_Window::createAction (const QString& theText, const char* theSlot)
-{
-  QAction* anAction = new QAction (theText, myMainWindow);
-  connect (anAction, SIGNAL (triggered(bool)), this, theSlot);
-  return anAction;
 }
 
 // =======================================================================

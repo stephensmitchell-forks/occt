@@ -13,6 +13,10 @@
 // commercial license or contractual agreement.
 
 
+#include <SelectMgr_OrFilter.hxx>
+
+#include <Message_AlertWithObject.hxx>
+
 #include <SelectMgr_EntityOwner.hxx>
 #include <SelectMgr_Filter.hxx>
 #include <SelectMgr_ListIteratorOfListOfFilter.hxx>
@@ -62,6 +66,8 @@ Standard_Boolean SelectMgr_OrFilter::IsOk (const Handle(SelectMgr_EntityOwner)& 
     {
       return Standard_True;
     }
+    myReport->AddAlert (Message_Info, new Message_AlertWithObject (theObj,
+      TCollection_AsciiString (aFilterIter.Value()->DynamicType()->Name()) + " (failed)"));
   }
 
   return Standard_False;

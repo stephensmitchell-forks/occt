@@ -152,7 +152,7 @@ void BOPAlgo_Builder::CheckFiller()
     AddError (new BOPAlgo_AlertNoFiller);
     return;
   }
-  GetReport()->Merge (myPaveFiller->GetReport());
+  GetReport()->Merge (myPaveFiller->GetReport(), GetLastInfo());
 }
 
 //=======================================================================
@@ -224,9 +224,24 @@ void BOPAlgo_Builder::PerformInternal(const BOPAlgo_PaveFiller& theFiller)
 {
   GetReport()->Clear();
   //
+  GetReport()->SetStoreElapsedTime (Standard_True);
+  AddInfo (new BOPAlgo_AlertInformation ("BOPAlgo_Builder::PerformInternal"));
+  Handle(Message_Alert) aPerformInternalAlert = GetLastInfo();
+
+  AddInfo (new BOPAlgo_AlertInformation ("Arguments"), aPerformInternalAlert);
+  Handle(Message_Alert) anArgumentsAlert = GetLastInfo();
+  TopTools_ListIteratorOfListOfShape aIt (Arguments());
+  for (; aIt.More(); aIt.Next()) {
+    const TopoDS_Shape& aShape = aIt.Value();
+    AddInfo (new BOPAlgo_AlertShapeInformation (aShape), anArgumentsAlert);
+  }
+  AddInfo (new BOPAlgo_AlertInformation ("PerformInternal1"), aPerformInternalAlert);
   try {
     OCC_CATCH_SIGNALS
     PerformInternal1(theFiller);
+
+    const TopoDS_Shape& aShape = Shape();
+    AddInfo (new BOPAlgo_AlertShapeInformation (aShape, "BOPAlgo_BuilderShape::Shape()"), aPerformInternalAlert);
   }
   //
   catch (Standard_Failure) {
@@ -246,12 +261,15 @@ void BOPAlgo_Builder::PerformInternal1(const BOPAlgo_PaveFiller& theFiller)
   myNonDestructive = myPaveFiller->NonDestructive();
   //
   // 1. CheckData
+  Handle(Message_Alert) aFunctionAlert = GetLastInfo();
+  AddInfo (new BOPAlgo_AlertInformation( "CheckData"), aFunctionAlert);
   CheckData();
   if (HasErrors()) {
     return;
   }
   //
   // 2. Prepare
+  AddInfo (new BOPAlgo_AlertInformation ("Prepare"), aFunctionAlert);
   Prepare();
   if (HasErrors()) {
     return;
@@ -259,94 +277,112 @@ void BOPAlgo_Builder::PerformInternal1(const BOPAlgo_PaveFiller& theFiller)
   //
   // 3. Fill Images
   // 3.1 Vertice
+  AddInfo (new BOPAlgo_AlertInformation ("FillImagesVertices"), aFunctionAlert);
   FillImagesVertices();
   if (HasErrors()) {
     return;
   }
   //
+  AddInfo (new BOPAlgo_AlertInformation ("BuildResult(TopAbs_VERTEX)"), aFunctionAlert);
   BuildResult(TopAbs_VERTEX);
   if (HasErrors()) {
     return;
   }
   // 3.2 Edges
+  AddInfo (new BOPAlgo_AlertInformation ("FillImagesEdges"), aFunctionAlert);
   FillImagesEdges();
   if (HasErrors()) {
     return;
   }
   //
+  AddInfo (new BOPAlgo_AlertInformation ("BuildResult(TopAbs_EDGE)"), aFunctionAlert);
   BuildResult(TopAbs_EDGE);
   if (HasErrors()) {
     return;
   }
   //
   // 3.3 Wires
+  AddInfo (new BOPAlgo_AlertInformation ("FillImagesContainers(TopAbs_WIRE)"), aFunctionAlert);
   FillImagesContainers(TopAbs_WIRE);
   if (HasErrors()) {
     return;
   }
   //
+  AddInfo(new BOPAlgo_AlertInformation ("BuildResult(TopAbs_WIRE)"), aFunctionAlert);
   BuildResult(TopAbs_WIRE);
   if (HasErrors()) {
     return;
   }
   
   // 3.4 Faces
+  AddInfo(new BOPAlgo_AlertInformation ("FillImagesFaces"), aFunctionAlert);
   FillImagesFaces();
   if (HasErrors()) {
     return;
   }
   //
+  AddInfo (new BOPAlgo_AlertInformation ("BuildResult(TopAbs_FACE"), aFunctionAlert);
   BuildResult(TopAbs_FACE);
   if (HasErrors()) {
     return;
   }
   // 3.5 Shells
+  AddInfo (new BOPAlgo_AlertInformation ("FillImagesContainers(TopAbs_SHELL)"), aFunctionAlert);
   FillImagesContainers(TopAbs_SHELL);
   if (HasErrors()) {
     return;
   }
   
+  AddInfo (new BOPAlgo_AlertInformation ("BuildResult(TopAbs_SHELL)"), aFunctionAlert);
   BuildResult(TopAbs_SHELL);
   if (HasErrors()) {
     return;
   }
   // 3.6 Solids
+  AddInfo (new BOPAlgo_AlertInformation ("FillImagesSolids"), aFunctionAlert);
   FillImagesSolids();
   if (HasErrors()) {
     return;
   }
   
+  AddInfo (new BOPAlgo_AlertInformation ("BuildResult(TopAbs_SOLID)"), aFunctionAlert);
   BuildResult(TopAbs_SOLID);
   if (HasErrors()) {
     return;
   }
   // 3.7 CompSolids
+  AddInfo (new BOPAlgo_AlertInformation ("FillImagesContainers(TopAbs_COMPSOLID)"), aFunctionAlert);
   FillImagesContainers(TopAbs_COMPSOLID);
   if (HasErrors()) {
     return;
   }
   
+  AddInfo (new BOPAlgo_AlertInformation ("BuildResult(TopAbs_COMPSOLID)"), aFunctionAlert);
   BuildResult(TopAbs_COMPSOLID);
   if (HasErrors()) {
     return;
   }
   
   // 3.8 Compounds
+  AddInfo (new BOPAlgo_AlertInformation ("FillImagesCompounds"), aFunctionAlert);
   FillImagesCompounds();
   if (HasErrors()) {
     return;
   }
   
+  AddInfo (new BOPAlgo_AlertInformation ("BuildResult(TopAbs_COMPOUND)"), aFunctionAlert);
   BuildResult(TopAbs_COMPOUND);
   if (HasErrors()) {
     return;
   }
   //
   // 4.History
+  AddInfo (new BOPAlgo_AlertInformation ("PrepareHistory"), aFunctionAlert);
   PrepareHistory();
   //
   //
   // 5 Post-treatment 
+  AddInfo (new BOPAlgo_AlertInformation ("PostTreat"), aFunctionAlert);
   PostTreat();
   
 }

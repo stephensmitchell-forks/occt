@@ -30,6 +30,7 @@
 #include <AIS_StatusOfPick.hxx>
 #include <AIS_TypeOfIso.hxx>
 #include <Aspect_TypeOfFacingModel.hxx>
+#include <Message_Report.hxx>
 #include <Prs3d_Drawer.hxx>
 #include <Prs3d_TypeOfHighlight.hxx>
 #include <PrsMgr_PresentationManager3d.hxx>
@@ -619,26 +620,17 @@ public: //! @name management of active Selection Modes
                                                const Standard_Boolean theIsForce = Standard_False);
 
   //! Activates the selection mode aMode whose index is given, for the given interactive entity anIobj.
-  void Activate (const Handle(AIS_InteractiveObject)& theObj, const Standard_Integer theMode = 0, const Standard_Boolean theIsForce = Standard_False)
-  {
-    SetSelectionModeActive (theObj, theMode, Standard_True, AIS_SelectionModesConcurrency_GlobalOrLocal, theIsForce);
-  }
+  Standard_EXPORT void Activate (const Handle(AIS_InteractiveObject)& theObj, const Standard_Integer theMode = 0, const Standard_Boolean theIsForce = Standard_False);
 
   //! Activates the given selection mode for the all displayed objects.
   Standard_EXPORT void Activate (const Standard_Integer theMode,
                                  const Standard_Boolean theIsForce = Standard_False);
   
   //! Deactivates all the activated selection modes of an object.
-  void Deactivate (const Handle(AIS_InteractiveObject)& theObj)
-  {
-    SetSelectionModeActive (theObj, -1, Standard_False, AIS_SelectionModesConcurrency_Single);
-  }
+  Standard_EXPORT void Deactivate (const Handle(AIS_InteractiveObject)& theObj);
 
   //! Deactivates all the activated selection modes of the interactive object anIobj with a given selection mode aMode.
-  void Deactivate (const Handle(AIS_InteractiveObject)& theObj, const Standard_Integer theMode)
-  {
-    SetSelectionModeActive (theObj, theMode, Standard_False);
-  }
+  Standard_EXPORT void Deactivate (const Handle(AIS_InteractiveObject)& theObj, const Standard_Integer theMode);
 
   //! Deactivates the given selection mode for all displayed objects.
   Standard_EXPORT void Deactivate (const Standard_Integer theMode);
@@ -1261,6 +1253,21 @@ public: //! @name sub-intensity management (deprecated)
   //! Removes subintensity option for all objects.
   Standard_EXPORT void SubIntensityOff (const Standard_Boolean theToUpdateViewer);
 
+  //! Returns message report
+  Standard_EXPORT Handle(Message_Report) GetReport() const { return myReport; }
+
+  //! Sets whether the message report is active, by default it is false
+  //! \param theState boolean value
+  Standard_EXPORT void SetReportActive (const Standard_Boolean theState);
+
+  //! Adds the alert as information
+  void AddInfo (const Handle(Message_Alert)& theAlert,
+                const Handle(Message_Alert)& theParentAlert = Handle(Message_Alert)())
+  { myReport->AddAlert (Message_Info, theAlert, theParentAlert); }
+
+  //! Returns last information alert
+  Handle(Message_Alert) GetLastInfo () const  { return myReport->GetLastAlert (Message_Info, true); }
+
 protected: //! @name internal methods
 
   Standard_EXPORT void GetDefModes (const Handle(AIS_InteractiveObject)& anIobj, Standard_Integer& Dmode, Standard_Integer& HiMod, Standard_Integer& SelMode) const;
@@ -1448,7 +1455,7 @@ protected: //! @name internal fields
   Standard_Integer myCurHighlighted;
   SelectMgr_PickingStrategy myPickingStrategy; //!< picking strategy to be applied within MoveTo()
   Standard_Boolean myIsAutoActivateSelMode;
-
+  Handle(Message_Report) myReport;
 };
 
 DEFINE_STANDARD_HANDLE(AIS_InteractiveContext, Standard_Transient)

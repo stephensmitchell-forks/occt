@@ -41,7 +41,7 @@ class View_Window : public QWidget
 public:
 
   //! Constructor
-  Standard_EXPORT View_Window (QWidget* theParent);
+  Standard_EXPORT View_Window (QWidget* theParent, const bool isUseKeepView = true);
 
   //! Destructor
   virtual ~View_Window() {}

@@ -17,6 +17,7 @@
 #define _TopoDS_AlertWithShape_HeaderFile
 
 #include <Message_Alert.hxx>
+#include <TCollection_AsciiString.hxx>
 #include <TopoDS_Shape.hxx>
 
 //! Alert object storing TopoDS shape in its field
@@ -24,7 +25,11 @@ class TopoDS_AlertWithShape : public Message_Alert
 {
 public:
   //! Constructor with shape argument
-  Standard_EXPORT TopoDS_AlertWithShape (const TopoDS_Shape& theShape);
+  Standard_EXPORT TopoDS_AlertWithShape (const TopoDS_Shape& theShape,
+    const TCollection_AsciiString& theName = TCollection_AsciiString());
+
+  //! Sets contained shape
+  void SetShape (const TopoDS_Shape& theShape) { myShape = theShape; }
 
   //! Returns contained shape
   const TopoDS_Shape& GetShape() const { return myShape; }
@@ -47,7 +52,8 @@ private:
   class Alert : public TopoDS_AlertWithShape \
   { \
   public:\
-    Alert (const TopoDS_Shape& theShape) : TopoDS_AlertWithShape(theShape) {} \
+    Alert (const TopoDS_Shape& theShape, const TCollection_AsciiString& theName = TCollection_AsciiString()) \
+    : TopoDS_AlertWithShape(theShape, theName) {} \
     DEFINE_STANDARD_RTTI_INLINE(Alert, TopoDS_AlertWithShape) \
   };
 

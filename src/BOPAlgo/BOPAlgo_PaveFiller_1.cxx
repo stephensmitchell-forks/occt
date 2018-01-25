@@ -46,11 +46,13 @@
 //=======================================================================
 void BOPAlgo_PaveFiller::PerformVV() 
 {
+  Handle(Message_Alert) aFunctionAlert = GetLastInfo();
   Standard_Integer n1, n2, iFlag, aSize;
   Handle(NCollection_BaseAllocator) aAllocator;
   //
   myIterator->Initialize(TopAbs_VERTEX, TopAbs_VERTEX);
   aSize=myIterator->ExpectedLength();
+  AddInfo (new BOPAlgo_AlertInformation (TCollection_AsciiString("ExpectedLength = ") + aSize), aFunctionAlert);
   if (!aSize) {
     return; 
   }
@@ -79,6 +81,7 @@ void BOPAlgo_PaveFiller::PerformVV()
   //
   // 2. Make blocks
   BOPAlgo_Tools::MakeBlocks<Standard_Integer, TColStd_MapIntegerHasher>(aMILI, aMBlocks, aAllocator);
+  AddInfo (new BOPAlgo_AlertInformation (TCollection_AsciiString("aMBlocks.Size() = ") + aMBlocks.Size()), aFunctionAlert);
   //
   // 3. Make vertices
   NCollection_List<TColStd_ListOfInteger>::Iterator aItB(aMBlocks);

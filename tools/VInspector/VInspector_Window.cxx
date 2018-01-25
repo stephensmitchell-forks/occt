@@ -17,13 +17,19 @@
 
 #include <AIS_Shape.hxx>
 
+#include <inspector/MessageModel_Actions.hxx>
+#include <inspector/MessageModel_ItemReport.hxx>
+#include <inspector/MessageModel_TreeModel.hxx>
+#include <inspector/TreeModel_ColumnType.hxx>
+#include <inspector/TreeModel_ContextMenu.hxx>
 #include <inspector/TreeModel_MessageDialog.hxx>
+#include <inspector/TreeModel_Tools.hxx>
+#include <inspector/TreeModel_ContextMenu.hxx>
 
 #include <inspector/VInspector_ItemPresentableObject.hxx>
 #include <inspector/VInspector_ToolBar.hxx>
 #include <inspector/VInspector_Tools.hxx>
 #include <inspector/VInspector_ViewModel.hxx>
-#include <inspector/VInspector_ViewModelHistory.hxx>
 #include <inspector/VInspector_CallBack.hxx>
 #include <inspector/VInspector_Communicator.hxx>
 #include <inspector/VInspector_ItemEntityOwner.hxx>
@@ -31,7 +37,6 @@
 #include <inspector/VInspector_ToolBar.hxx>
 #include <inspector/VInspector_Tools.hxx>
 #include <inspector/VInspector_ViewModel.hxx>
-#include <inspector/VInspector_ViewModelHistory.hxx>
 
 #include <inspector/View_Widget.hxx>
 #include <inspector/View_Window.hxx>
@@ -48,20 +53,8 @@
 #include <QTreeView>
 #include <QWidget>
 
-const int FIRST_COLUMN_WIDTH = 230;
-
-const int COLUMN_1_WIDTH = 30;
-const int COLUMN_2_WIDTH = 70;
-const int COLUMN_3_WIDTH = 70;
-const int COLUMN_4_WIDTH = 75;
-const int COLUMN_5_WIDTH = 120;
-const int COLUMN_6_WIDTH = 65;
-const int COLUMN_7_WIDTH = 70;
-
-const int HISTORY_AIS_NAME_COLUMN_WIDTH = 140;
-
 const int VINSPECTOR_DEFAULT_WIDTH  = 1250;
-const int VINSPECTOR_DEFAULT_HEIGHT = 800;
+const int VINSPECTOR_DEFAULT_HEIGHT = 2000;//800;
 
 const int VINSPECTOR_DEFAULT_POSITION_X = 200;
 const int VINSPECTOR_DEFAULT_POSITION_Y = 60;
@@ -70,7 +63,7 @@ const int VINSPECTOR_DEFAULT_VIEW_WIDTH = 400;
 const int VINSPECTOR_DEFAULT_VIEW_HEIGHT = 1000;
 
 const int VINSPECTOR_DEFAULT_HISTORY_VIEW_WIDTH = 400;
-const int VINSPECTOR_DEFAULT_HISTORY_VIEW_HEIGHT = 50;
+const int VINSPECTOR_DEFAULT_HISTORY_VIEW_HEIGHT = 200;
 
 const int VINSPECTOR_DEFAULT_VIEW_POSITION_X = 200 + 900 + 100; // TINSPECTOR_DEFAULT_POSITION_X + TINSPECTOR_DEFAULT_WIDTH + 100
 const int VINSPECTOR_DEFAULT_VIEW_POSITION_Y = 60; // TINSPECTOR_DEFAULT_POSITION_Y + 50
@@ -135,7 +128,7 @@ VInspector_Window::VInspector_Window()
   aParentLay->setContentsMargins (0, 0, 0, 0);
   aParentLay->setSpacing(0);
 
-  // tool bar: on the bottom of the window
+  // restore state of tool bar: on the bottom of the window
   myToolBar = new VInspector_ToolBar(aCentralWidget);
   connect (myToolBar, SIGNAL (actionClicked (int)), this, SLOT (onToolBarActionClicked (int)));
   aParentLay->addWidget (myToolBar->GetControl(), 0, 0);
@@ -146,34 +139,71 @@ VInspector_Window::VInspector_Window()
   myTreeView->setSelectionMode (QAbstractItemView::ExtendedSelection);
   myTreeView->header()->setStretchLastSection (true);
   myTreeView->setContextMenuPolicy(Qt::CustomContextMenu);
+  VInspector_ViewModel* aTreeModel = new VInspector_ViewModel (myTreeView);
+  myTreeView->setModel (aTreeModel);
   connect (myTreeView, SIGNAL(customContextMenuRequested(const QPoint&)),
            this, SLOT (onTreeViewContextMenuRequested(const QPoint&)));
+  new TreeModel_ContextMenu (myTreeView);
+
+  QItemSelectionModel* aSelModel = new QItemSelectionModel (myTreeView->model(), myTreeView);
+  myTreeView->setSelectionModel (aSelModel);
+  connect (aSelModel, SIGNAL (selectionChanged (const QItemSelection&, const QItemSelection&)),
+           this, SLOT (onSelectionChanged (const QItemSelection&, const QItemSelection&)));
+
   aParentLay->addWidget(myTreeView, 1, 0);
   aParentLay->setRowStretch (1, 1);
   myMainWindow->setCentralWidget (aCentralWidget);
 
-  // history view in bottom dock widget
-  myHistoryView = new Vinspector_TreeView (aCentralWidget);
-  myHistoryView->setSelectionBehavior (QAbstractItemView::SelectRows);
+  myHistoryView = new Vinspector_TreeView (myMainWindow);
   ((Vinspector_TreeView*)myHistoryView)->SetPredefinedSize (VINSPECTOR_DEFAULT_HISTORY_VIEW_WIDTH,
                                                             VINSPECTOR_DEFAULT_HISTORY_VIEW_HEIGHT);
+  myHistoryView->setContextMenuPolicy (Qt::CustomContextMenu);
+  myHistoryView->header()->setStretchLastSection (true);
+  connect (myHistoryView, SIGNAL (customContextMenuRequested (const QPoint&)),
+          this, SLOT (onHistoryViewContextMenuRequested (const QPoint&)));
+  new TreeModel_ContextMenu (myHistoryView);
+  MessageModel_TreeModel* aModel = new MessageModel_TreeModel (myHistoryView);
 
+  TreeModel_HeaderSection anItem = aModel->GetHeaderItem (0);
+  anItem.SetName ("History");
+  aModel->SetHeaderItem (0, anItem);
+  for (int aColumnId = 3; aColumnId <= 5; aColumnId++) // hide time columns
+  {
+    TreeModel_HeaderSection anItem = aModel->GetHeaderItem (aColumnId);
+    anItem.SetIsHidden (true);
+    aModel->SetHeaderItem (aColumnId, anItem);
+  }
+  aModel->SetReversed (Standard_True);
+  aModel->SetUniteAlerts (Standard_True);
+  aModel->SetRootItemName ("AIS_InteractiveContext : Report");
+  myHistoryView->setModel (aModel);
+  TreeModel_Tools::UseVisibilityColumn (myHistoryView, false);
+  // hide Visibility column
+  anItem = aModel->GetHeaderItem ((int)TreeModel_ColumnType_Visibility);
+  anItem.SetIsHidden (true);
+  aModel->SetHeaderItem ((int)TreeModel_ColumnType_Visibility, anItem);
+
+  QItemSelectionModel* aSelectionModel = new QItemSelectionModel (aModel);
   myHistoryView->setSelectionMode (QAbstractItemView::ExtendedSelection);
-  VInspector_ViewModelHistory* aHistoryModel = new VInspector_ViewModelHistory (myHistoryView);
-  myHistoryView->setModel (aHistoryModel);
-
-  QItemSelectionModel* aSelectionModel = new QItemSelectionModel (myHistoryView->model());
   myHistoryView->setSelectionModel (aSelectionModel);
   connect (aSelectionModel, SIGNAL (selectionChanged (const QItemSelection&, const QItemSelection&)),
-           this, SLOT (onHistoryViewSelectionChanged (const QItemSelection&, const QItemSelection&)));
+    this, SLOT (onHistoryViewSelectionChanged (const QItemSelection&, const QItemSelection&)));
 
-  myHistoryView->setColumnWidth (0, FIRST_COLUMN_WIDTH);
-  myHistoryView->setColumnWidth (1, COLUMN_1_WIDTH);
-  myHistoryView->setColumnWidth (2, COLUMN_2_WIDTH);
-  myHistoryView->setColumnWidth (3, COLUMN_3_WIDTH);
-  myHistoryView->setColumnWidth (4, HISTORY_AIS_NAME_COLUMN_WIDTH);
+  myHistoryActions = new MessageModel_Actions (myHistoryView, aModel, aSelectionModel);
+
+  QAction* anAction = myHistoryActions->GetAction (MessageModel_ActionType_Activate);
+  disconnect (anAction, SIGNAL (triggered (bool)), myHistoryActions, SLOT (OnActivateReport()));
+  connect (anAction, SIGNAL (triggered (bool)), this, SLOT (OnActivateReport()));
+
+  anAction = myHistoryActions->GetAction (MessageModel_ActionType_Deactivate);
+  disconnect (anAction, SIGNAL (triggered (bool)), myHistoryActions, SLOT (OnDeactivateReport()));
+  connect (anAction, SIGNAL (triggered (bool)), this, SLOT (OnDeactivateReport()));
+
+  QModelIndex aParentIndex = myHistoryView->model()->index (0, 0);
+  myHistoryView->setExpanded (aParentIndex, true);
 
   QDockWidget* aHistoryDockWidget = new QDockWidget (tr ("HistoryView"), myMainWindow);
+  aHistoryDockWidget->setObjectName (aHistoryDockWidget->windowTitle());
   aHistoryDockWidget->setTitleBarWidget (new QWidget(myMainWindow));
   aHistoryDockWidget->setWidget (myHistoryView);
   myMainWindow->addDockWidget (Qt::BottomDockWidgetArea, aHistoryDockWidget);
@@ -198,6 +228,72 @@ void VInspector_Window::SetParent (void* theParent)
   QLayout* aLayout = myParent->layout();
   if (aLayout)
     aLayout->addWidget (GetMainWindow());
+}
+
+// =======================================================================
+// function : FillActionsMenu
+// purpose :
+// =======================================================================
+void VInspector_Window::FillActionsMenu (void* theMenu)
+{
+  QMenu* aMenu = (QMenu*)theMenu;
+  QList<QDockWidget*> aDockwidgets = myMainWindow->findChildren<QDockWidget*>();
+  for (QList<QDockWidget*>::iterator it = aDockwidgets.begin(); it != aDockwidgets.end(); ++it)
+  {
+    QDockWidget* aDockWidget = *it;
+    if (aDockWidget->parentWidget() == myMainWindow)
+      aMenu->addAction (aDockWidget->toggleViewAction());
+  }
+}
+
+// =======================================================================
+// function : GetPreferences
+// purpose :
+// =======================================================================
+void VInspector_Window::GetPreferences (TInspectorAPI_PreferencesDataMap& theItem)
+{
+  theItem.Clear();
+  theItem.Bind ("geometry",  TreeModel_Tools::ToString (myMainWindow->saveState()).toStdString().c_str());
+
+  QMap<QString, QString> anItems;
+  TreeModel_Tools::SaveState (myTreeView, anItems);
+  TCollection_AsciiString aValue1, aValue2;
+  for (QMap<QString, QString>::const_iterator anItemsIt = anItems.begin(); anItemsIt != anItems.end(); anItemsIt++)
+  {
+    aValue1 = anItemsIt.key().toStdString().c_str();
+    aValue2 = anItemsIt.value().toStdString().c_str();
+    theItem.Bind (anItemsIt.key().toStdString().c_str(), anItemsIt.value().toStdString().c_str());
+  }
+
+  anItems.clear();
+  TreeModel_Tools::SaveState (myHistoryView, anItems, "history_view_");
+  for (QMap<QString, QString>::const_iterator anItemsIt = anItems.begin(); anItemsIt != anItems.end(); anItemsIt++)
+    theItem.Bind (anItemsIt.key().toStdString().c_str(), anItemsIt.value().toStdString().c_str());
+}
+
+// =======================================================================
+// function : SetPreferences
+// purpose :
+// =======================================================================
+void VInspector_Window::SetPreferences (const TInspectorAPI_PreferencesDataMap& theItem)
+{
+  if (theItem.IsEmpty())
+  {
+    TreeModel_Tools::SetDefaultHeaderSections (myTreeView);
+    TreeModel_Tools::SetDefaultHeaderSections (myHistoryView);
+    return;
+  }
+
+  for (TInspectorAPI_IteratorOfPreferencesDataMap anItemIt (theItem); anItemIt.More(); anItemIt.Next())
+  {
+    if (anItemIt.Key().IsEqual ("geometry"))
+      myMainWindow->restoreState (TreeModel_Tools::ToByteArray (anItemIt.Value().ToCString()));
+    else if (TreeModel_Tools::RestoreState (myTreeView, anItemIt.Key().ToCString(), anItemIt.Value().ToCString()))
+      continue;
+    else if (TreeModel_Tools::RestoreState (myHistoryView, anItemIt.Key().ToCString(), anItemIt.Value().ToCString(),
+                                            "history_view_"))
+      continue;
+  }
 }
 
 // =======================================================================
@@ -264,15 +360,20 @@ void VInspector_Window::Init (const NCollection_List<Handle(Standard_Transient)>
   }
   if (aContext.IsNull())
     return;
-  SetContext (aContext);
+  VInspector_ViewModel* aViewModel = dynamic_cast<VInspector_ViewModel*> (myTreeView->model());
+  if (aViewModel && aViewModel->GetContext() == aContext)
+    UpdateTreeModel();
+  else {
+    // dynamic update of the view
+    Handle(Message_Report) aMessageReport = aContext->GetReport();
+    if (!aMessageReport.IsNull())
+      aMessageReport->SetCallBack (myParameters->GetCallBack());
+    SetContext (aContext);
+  }
 
-  if (!aCallBack.IsNull())
+  if (!aCallBack.IsNull() && aCallBack != myCallBack)
   {
     myCallBack = aCallBack;
-    VInspector_ViewModelHistory* aHistoryModel = dynamic_cast<VInspector_ViewModelHistory*>
-                                                                    (myHistoryView->model());
-    myCallBack->SetContext (aContext);
-    myCallBack->SetHistoryModel(aHistoryModel);
   }
 }
 
@@ -282,28 +383,15 @@ void VInspector_Window::Init (const NCollection_List<Handle(Standard_Transient)>
 // =======================================================================
 void VInspector_Window::SetContext (const Handle(AIS_InteractiveContext)& theContext)
 {
-  VInspector_ViewModel* aViewModel = new VInspector_ViewModel (myTreeView);
+  VInspector_ViewModel* aViewModel = dynamic_cast<VInspector_ViewModel*> (myTreeView->model());
   aViewModel->SetContext (theContext);
-  myTreeView->setModel (aViewModel);
-
   myTreeView->setExpanded (aViewModel->index (0, 0), true);
-  myTreeView->setColumnWidth (0, FIRST_COLUMN_WIDTH);
 
   if (!myCallBack.IsNull())
     myCallBack->SetContext (theContext);
 
-  QItemSelectionModel* aSelModel = new QItemSelectionModel (aViewModel, myTreeView);
-  myTreeView->setSelectionModel (aSelModel);
-  connect (aSelModel, SIGNAL (selectionChanged (const QItemSelection&, const QItemSelection&)),
-           this, SLOT (onSelectionChanged (const QItemSelection&, const QItemSelection&)));
-
-  myTreeView->setColumnWidth (1, COLUMN_1_WIDTH);
-  myTreeView->setColumnWidth (2, COLUMN_2_WIDTH);
-  myTreeView->setColumnWidth (3, COLUMN_3_WIDTH);
-  myTreeView->setColumnWidth (4, COLUMN_4_WIDTH);
-  myTreeView->setColumnWidth (5, COLUMN_5_WIDTH);
-  myTreeView->setColumnWidth (6, COLUMN_6_WIDTH);
-  myTreeView->setColumnWidth (7, COLUMN_7_WIDTH);
+  MessageModel_TreeModel* aHistoryModel = dynamic_cast<MessageModel_TreeModel*> (myHistoryView->model());
+  aHistoryModel->AddReport (theContext->GetReport());
 }
 
 // =======================================================================
@@ -323,7 +411,7 @@ void VInspector_Window::OpenFile(const TCollection_AsciiString& theFileName)
     return;
 
   Handle(AIS_InteractiveContext) aContext = aViewModel->GetContext();
-  if (!aContext)
+  if (aContext.IsNull())
     return;
 
   TopoDS_Shape aShape = VInspector_Tools::ReadShape (theFileName);
@@ -346,9 +434,9 @@ void VInspector_Window::OpenFile(const TCollection_AsciiString& theFileName)
 void VInspector_Window::onTreeViewContextMenuRequested(const QPoint& thePosition)
 {
   QMenu* aMenu = new QMenu (GetMainWindow());
-  aMenu->addAction (createAction (tr ("Export to ShapeView"), SLOT(onExportToShapeView())));
-  aMenu->addAction (createAction (tr ("Show"), SLOT(onShow())));
-  aMenu->addAction (createAction (tr ("Hide"), SLOT(onHide())));
+  aMenu->addAction (TreeModel_Tools::CreateAction (tr ("Export to ShapeView"), SLOT (onExportToShapeView()), GetMainWindow(), this));
+  aMenu->addAction (TreeModel_Tools::CreateAction (tr ("Show"), SLOT (onShow()), GetMainWindow(), this));
+  aMenu->addAction (TreeModel_Tools::CreateAction (tr ("Hide"), SLOT (onHide()), GetMainWindow(), this));
   QPoint aPoint = myTreeView->mapToGlobal (thePosition);
   aMenu->exec(aPoint);
 }
@@ -413,35 +501,50 @@ void VInspector_Window::onSelectionChanged (const QItemSelection&,
 }
 
 // =======================================================================
+// function : onHistoryViewContextMenuRequested
+// purpose :
+// =======================================================================
+void VInspector_Window::onHistoryViewContextMenuRequested (const QPoint& thePosition)
+{
+  QMenu* aMenu = new QMenu (GetMainWindow());
+
+  QModelIndexList aSelectedIndices = myHistoryView->selectionModel()->selectedIndexes();
+  myHistoryActions->AddMenuActions (aSelectedIndices, aMenu);
+
+  QPoint aPoint = myHistoryView->mapToGlobal (thePosition);
+  aMenu->exec (aPoint);
+}
+
+// =======================================================================
 // function : onHistoryViewSelectionChanged
 // purpose :
 // =======================================================================
-void VInspector_Window::onHistoryViewSelectionChanged (const QItemSelection& theSelected,
+void VInspector_Window::onHistoryViewSelectionChanged (const QItemSelection& /*theSelected*/,
                                                        const QItemSelection&)
 {
-  VInspector_ViewModelHistory* aHistoryModel = dynamic_cast<VInspector_ViewModelHistory*> (myHistoryView->model());
-  if (!aHistoryModel)
-    return;
+  //VInspector_ViewModelHistory* aHistoryModel = dynamic_cast<VInspector_ViewModelHistory*> (myHistoryView->model());
+  //if (!aHistoryModel)
+  //  return;
 
-  if (theSelected.size() == 0)
-    return;
+  //if (theSelected.size() == 0)
+  //  return;
 
-  QModelIndexList aSelectedIndices = theSelected.indexes();
-  QStringList aPointers = aHistoryModel->GetSelectedPointers(aSelectedIndices.first());
+  //QModelIndexList aSelectedIndices = theSelected.indexes();
+  //QStringList aPointers = aHistoryModel->GetSelectedPointers(aSelectedIndices.first());
 
-  VInspector_ViewModel* aTreeModel = dynamic_cast<VInspector_ViewModel*> (myTreeView->model());
-  if (!aTreeModel)
-    return;
+  //VInspector_ViewModel* aTreeModel = dynamic_cast<VInspector_ViewModel*> (myTreeView->model());
+  //if (!aTreeModel)
+  //  return;
 
-  QModelIndexList anIndices = aTreeModel->FindPointers (aPointers);
-  QItemSelectionModel* aSelectionModel = myTreeView->selectionModel();
-  aSelectionModel->clear();
-  for (int anIndicesId = 0, aSize = anIndices.size(); anIndicesId < aSize; anIndicesId++)
-  {
-    QModelIndex anIndex = anIndices[anIndicesId];
-    myTreeView->setExpanded (aTreeModel->parent (anIndex), true);
-    aSelectionModel->select (anIndex, QItemSelectionModel::Select);
-  }
+  //QModelIndexList anIndices = aTreeModel->FindPointers (aPointers);
+  //QItemSelectionModel* aSelectionModel = myTreeView->selectionModel();
+  //aSelectionModel->clear();
+  //for (int anIndicesId = 0, aSize = anIndices.size(); anIndicesId < aSize; anIndicesId++)
+  //{
+  //  QModelIndex anIndex = anIndices[anIndicesId];
+  //  myTreeView->setExpanded (aTreeModel->parent (anIndex), true);
+  //  aSelectionModel->select (anIndex, QItemSelectionModel::Select);
+  //}
 }
 
 // =======================================================================
@@ -460,6 +563,10 @@ void VInspector_Window::onExportToShapeView()
   if (myParameters->FindParameters (aPluginName))
     aParameters = myParameters->Parameters (aPluginName);
 
+  NCollection_List<TCollection_AsciiString> anItemNames;
+  if (myParameters->FindSelectedNames (aPluginName))
+    anItemNames = myParameters->GetSelectedNames (aPluginName);
+
   QStringList anExportedPointers;
   for (NCollection_List<Handle(AIS_InteractiveObject)>::Iterator anIOIt (aSelectedPresentations); anIOIt.More(); anIOIt.Next())
   {
@@ -471,6 +578,7 @@ void VInspector_Window::onExportToShapeView()
     if (aShape.IsNull())
       continue;
     aParameters.Append (aShape.TShape());
+    anItemNames.Append (TInspectorAPI_PluginParameters::ParametersToString(aShape));
     anExportedPointers.append (VInspector_Tools::GetPointerInfo (aShape.TShape(), true).ToCString());
   }
   if (anExportedPointers.empty())
@@ -488,6 +596,7 @@ void VInspector_Window::onExportToShapeView()
     myExportToShapeViewDialog->SetInformation (aMessage);
   myExportToShapeViewDialog->Start();
 
+  myParameters->SetSelectedNames (aPluginName, anItemNames);
   myParameters->SetParameters (aPluginName, aParameters, myExportToShapeViewDialog->IsAccepted());
 }
 
@@ -510,27 +619,60 @@ void VInspector_Window::onHide()
 }
 
 // =======================================================================
+// function : OnDeactivateReport
+// purpose :
+// =======================================================================
+void VInspector_Window::OnDeactivateReport()
+{
+  VInspector_ViewModel* aViewModel = dynamic_cast<VInspector_ViewModel*> (myTreeView->model());
+  if (!aViewModel)
+    return;
+
+  Handle(AIS_InteractiveContext) aContext = aViewModel->GetContext();
+  if (aContext.IsNull())
+    return;
+
+  aContext->SetReportActive (Standard_False);
+
+  QModelIndex aReportIndex = findHistoryReportItem();
+  if (aReportIndex.isValid())
+    ((MessageModel_TreeModel*)aViewModel)->EmitDataChanged (aReportIndex, aReportIndex);
+}
+
+// =======================================================================
+// function : OnActivateReport
+// purpose :
+// =======================================================================
+void VInspector_Window::OnActivateReport()
+{
+  VInspector_ViewModel* aViewModel = dynamic_cast<VInspector_ViewModel*> (myTreeView->model());
+  if (!aViewModel)
+    return;
+
+  Handle(AIS_InteractiveContext) aContext = aViewModel->GetContext();
+  if (aContext.IsNull())
+    return;
+
+  aContext->SetReportActive (Standard_True);
+
+  QModelIndex aReportIndex = findHistoryReportItem();
+  if (aReportIndex.isValid())
+    ((MessageModel_TreeModel*)aViewModel)->EmitDataChanged (aReportIndex, aReportIndex);
+}
+
+// =======================================================================
 // function : UpdateTreeModel
 // purpose :
 // =======================================================================
 void VInspector_Window::UpdateTreeModel()
 {
   VInspector_ViewModel* aViewModel = dynamic_cast<VInspector_ViewModel*> (myTreeView->model());
-  if (!aViewModel)
-    return;
-  aViewModel->Reset();
-  aViewModel->EmitLayoutChanged();
-}
+  if (aViewModel)
+    aViewModel->UpdateTreeModel();
 
-// =======================================================================
-// function : createAction
-// purpose :
-// =======================================================================
-QAction* VInspector_Window::createAction(const QString& theText, const char* theSlot)
-{
-  QAction* anAction = new QAction(theText, GetMainWindow());
-  connect(anAction, SIGNAL(triggered(bool)), this, theSlot);
-  return anAction;
+  MessageModel_TreeModel* aHistoryModel = dynamic_cast<MessageModel_TreeModel*> (myHistoryView->model());
+  if (aHistoryModel)
+    aHistoryModel->UpdateTreeModel();
 }
 
 // =======================================================================
@@ -586,4 +728,26 @@ Handle(AIS_InteractiveContext) VInspector_Window::createView()
   myViewWindow->show();
 
   return myViewWindow->GetView()->GetViewer()->GetContext();
+}
+
+// =======================================================================
+// function : findHistoryReportItem
+// purpose :
+// =======================================================================
+QModelIndex VInspector_Window::findHistoryReportItem()
+{
+  MessageModel_TreeModel* aModel = dynamic_cast<MessageModel_TreeModel*> (myHistoryView->model());
+  if (!aModel)
+    return QModelIndex();
+
+  QModelIndex aParentIndex = aModel->index (0, 0); // root item
+  QModelIndex aReportIndex = aModel->index (0, 0, aParentIndex); // report item
+
+  TreeModel_ItemBasePtr anItemBase = TreeModel_ModelBase::GetItemByIndex (aReportIndex);
+  MessageModel_ItemReportPtr aReportItem = itemDynamicCast<MessageModel_ItemReport> (anItemBase);
+
+  if (!aReportItem)
+    return QModelIndex();
+
+  return aReportIndex;
 }

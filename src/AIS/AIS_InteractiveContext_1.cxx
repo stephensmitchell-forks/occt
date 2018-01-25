@@ -15,9 +15,11 @@
 // commercial license or contractual agreement.
 
 
+#include <AIS_InteractiveContext.hxx>
+
+#include <AIS_Alerts.hxx>
 #include <AIS_DataMapIteratorOfDataMapOfIOStatus.hxx>
 #include <AIS_GlobalStatus.hxx>
-#include <AIS_InteractiveContext.hxx>
 #include <AIS_InteractiveObject.hxx>
 #include <AIS_LocalContext.hxx>
 #include <AIS_MapIteratorOfMapOfInteractive.hxx>
@@ -303,6 +305,9 @@ AIS_StatusOfDetection AIS_InteractiveContext::MoveTo (const Standard_Integer  th
                                                       const Handle(V3d_View)& theView,
                                                       const Standard_Boolean  theToRedrawOnUpdate)
 {
+  AddInfo(new AIS_AlertObjectInformation(myLastPicked, "MoveTo"));
+  Handle(Message_Alert) aFunctionAlert = GetLastInfo();
+
   if (HasOpenedContext())
   {
     myWasLastMain = Standard_True;
@@ -342,6 +347,9 @@ AIS_StatusOfDetection AIS_InteractiveContext::MoveTo (const Standard_Integer  th
       {
         toIgnoreDetTop = Standard_True;
       }
+      AddInfo(new AIS_AlertObjectInformation(anOwner, TCollection_AsciiString(myFilters->DynamicType()->Name()) + " (failed)"), GetLastInfo());
+      myFilters->MergeReport(myReport, GetLastInfo());
+      myFilters->ClearReport();
       continue;
     }
 
@@ -416,6 +424,9 @@ AIS_StatusOfDetection AIS_InteractiveContext::MoveTo (const Standard_Integer  th
     myLastPicked.Nullify();
   }
 
+  if (!aFunctionAlert.IsNull())
+    Handle(AIS_AlertObjectInformation)::DownCast (aFunctionAlert)->SetObject (myLastPicked);
+
   if (toUpdateViewer
    && theToRedrawOnUpdate)
   {
@@ -454,6 +465,8 @@ AIS_StatusOfPick AIS_InteractiveContext::Select (const Standard_Integer  theXPMi
                                                  const Handle(V3d_View)& theView,
                                                  const Standard_Boolean  toUpdateViewer)
 {
+  AddInfo (new AIS_AlertInformation ("Select"));
+
   // all objects detected by the selector are taken, previous current objects are emptied,
   // new objects are put...
 
@@ -503,6 +516,7 @@ AIS_StatusOfPick AIS_InteractiveContext::Select (const TColgp_Array1OfPnt2d& the
                                                  const Handle(V3d_View)&     theView,
                                                  const Standard_Boolean      toUpdateViewer)
 {
+  AddInfo (new AIS_AlertInformation ("Select"));
   // all objects detected by the selector are taken, previous current objects are emptied,
   // new objects are put...
 
@@ -548,6 +562,7 @@ AIS_StatusOfPick AIS_InteractiveContext::Select (const TColgp_Array1OfPnt2d& the
 //=======================================================================
 AIS_StatusOfPick AIS_InteractiveContext::Select (const Standard_Boolean toUpdateViewer)
 {
+  AddInfo (new AIS_AlertInformation ("Select"));
   if (HasOpenedContext())
   {
     if(myWasLastMain)
@@ -599,6 +614,7 @@ AIS_StatusOfPick AIS_InteractiveContext::Select (const Standard_Boolean toUpdate
 //=======================================================================
 AIS_StatusOfPick AIS_InteractiveContext::ShiftSelect (const Standard_Boolean toUpdateViewer)
 {
+  AddInfo (new AIS_AlertInformation ("ShiftSelect"));
   if (HasOpenedContext())
   {
     if(myWasLastMain)
@@ -640,6 +656,7 @@ AIS_StatusOfPick AIS_InteractiveContext::ShiftSelect (const Standard_Integer the
                                                       const Handle(V3d_View)& theView,
                                                       const Standard_Boolean toUpdateViewer)
 {
+  AddInfo (new AIS_AlertInformation ("ShiftSelect"));
   if (HasOpenedContext())
   {
     return myLocalContexts(myCurLocalIndex)->ShiftSelect (theXPMin, theYPMin, theXPMax, theYPMax,
@@ -688,6 +705,7 @@ AIS_StatusOfPick AIS_InteractiveContext::ShiftSelect (const TColgp_Array1OfPnt2d
                                                       const Handle(V3d_View)& theView,
                                                       const Standard_Boolean toUpdateViewer)
 {
+  AddInfo (new AIS_AlertInformation ("ShiftSelect"));
   if (HasOpenedContext())
   {
     return myLocalContexts(myCurLocalIndex)->ShiftSelect (thePolyline, theView, toUpdateViewer);
@@ -749,6 +767,8 @@ void AIS_InteractiveContext::SetCurrentObject (const Handle(AIS_InteractiveObjec
 void AIS_InteractiveContext::AddOrRemoveCurrentObject (const Handle(AIS_InteractiveObject)& theObj,
                                                        const Standard_Boolean theIsToUpdateViewer)
 {
+  AddInfo (new AIS_AlertObjectInformation (theObj, "AddOrRemoveCurrentObject"));
+
   if (HasOpenedContext())
     return;
 
@@ -965,6 +985,8 @@ void AIS_InteractiveContext::UnhilightSelected (const Standard_Boolean theToUpda
 //=======================================================================
 void AIS_InteractiveContext::ClearSelected (const Standard_Boolean theToUpdateViewer)
 {
+  AddInfo (new AIS_AlertInformation ("ClearSelected"));
+
   if (HasOpenedContext())
     return myLocalContexts (myCurLocalIndex)->ClearSelected (theToUpdateViewer);
 
@@ -986,6 +1008,7 @@ void AIS_InteractiveContext::ClearSelected (const Standard_Boolean theToUpdateVi
 //=======================================================================
 void AIS_InteractiveContext::UpdateSelected (const Standard_Boolean theToUpdateViewer)
 {
+  AddInfo (new AIS_AlertInformation ("UpdateSelected"));
   if (HasOpenedContext())
   {
     return myLocalContexts(myCurLocalIndex)->UpdateSelected (theToUpdateViewer);
@@ -1001,6 +1024,8 @@ void AIS_InteractiveContext::UpdateSelected (const Standard_Boolean theToUpdateV
 void AIS_InteractiveContext::SetSelected (const Handle(AIS_InteractiveObject)& theObject,
                                           const Standard_Boolean theToUpdateViewer)
 {
+  AddInfo (new AIS_AlertObjectInformation (theObject, "SetSelected"));
+
   if (HasOpenedContext())
   {
     return myLocalContexts (myCurLocalIndex)->SetSelected (theObject, theToUpdateViewer);
@@ -1081,6 +1106,7 @@ void AIS_InteractiveContext::SetSelected (const Handle(AIS_InteractiveObject)& t
 void AIS_InteractiveContext::SetSelected (const Handle(SelectMgr_EntityOwner)& theOwner,
                                           const Standard_Boolean theToUpdateViewer)
 {
+  AddInfo (new AIS_AlertObjectInformation (theOwner, "SetSelected"));
   if (theOwner.IsNull() || !theOwner->HasSelectable() || !myFilters->IsOk (theOwner))
     return;
 
@@ -1135,6 +1161,7 @@ void AIS_InteractiveContext::SetSelected (const Handle(SelectMgr_EntityOwner)& t
 void AIS_InteractiveContext::AddOrRemoveSelected (const Handle(AIS_InteractiveObject)& theObject,
                                                   const Standard_Boolean theToUpdateViewer)
 {
+  AddInfo (new AIS_AlertObjectInformation (theObject, "AddOrRemoveSelected"));
   if (theObject.IsNull())
   {
     return;
@@ -1162,9 +1189,10 @@ void AIS_InteractiveContext::AddOrRemoveSelected (const Handle(AIS_InteractiveOb
 //purpose  : 
 //=======================================================================
 
-void AIS_InteractiveContext::AddOrRemoveSelected (const TopoDS_Shape& aShap,
+void AIS_InteractiveContext::AddOrRemoveSelected (const TopoDS_Shape& theShape,
 				            const Standard_Boolean updateviewer)
 { 
+  AddInfo (new AIS_AlertShapeInformation (theShape, "AddOrRemoveSelected"));
   if(!HasOpenedContext()) {
 #ifdef OCCT_DEBUG
     cout<<" Attempt to remove a selected shape with no opened local context"<<endl;
@@ -1172,7 +1200,7 @@ void AIS_InteractiveContext::AddOrRemoveSelected (const TopoDS_Shape& aShap,
     return;
   }
   
-  myLocalContexts(myCurLocalIndex)->AddOrRemoveSelected(aShap,updateviewer);
+  myLocalContexts(myCurLocalIndex)->AddOrRemoveSelected (theShape, updateviewer);
   if(updateviewer) UpdateCurrentViewer();
   
 }
@@ -1185,6 +1213,8 @@ void AIS_InteractiveContext::AddOrRemoveSelected (const TopoDS_Shape& aShap,
 void AIS_InteractiveContext::AddOrRemoveSelected (const Handle(SelectMgr_EntityOwner)& theOwner,
                                                   const Standard_Boolean theToUpdateViewer)
 {
+  AddInfo (new AIS_AlertObjectInformation (theOwner, "AddOrRemoveSelected"));
+
   if (HasOpenedContext())
     return myLocalContexts(myCurLocalIndex)->AddOrRemoveSelected (theOwner, theToUpdateViewer);
 
@@ -1544,6 +1574,8 @@ Handle(SelectMgr_EntityOwner) AIS_InteractiveContext::DetectedOwner() const
 Standard_Integer AIS_InteractiveContext::HilightNextDetected (const Handle(V3d_View)& theView,
                                                               const Standard_Boolean  theToRedrawImmediate)
 {
+  AddInfo (new AIS_AlertInformation ("HilightNextDetected"));
+
   if (HasOpenedContext())
   {
     return myLocalContexts (myCurLocalIndex)->HilightNextDetected (theView, theToRedrawImmediate);

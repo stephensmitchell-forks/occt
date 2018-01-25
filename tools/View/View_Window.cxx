@@ -35,7 +35,7 @@ const int DEFAULT_SPACING = 3;
 // function : Constructor
 // purpose :
 // =======================================================================
-View_Window::View_Window (QWidget* theParent)
+View_Window::View_Window (QWidget* theParent, const bool isUseKeepView)
 : QWidget (theParent)
 {
   QGridLayout* aViewLayout = new QGridLayout (this);
@@ -43,7 +43,7 @@ View_Window::View_Window (QWidget* theParent)
   aViewLayout->setSpacing (DEFAULT_SPACING);
 
   myView = new View_Widget (this);
-  myViewToolBar = new View_ToolBar (this);
+  myViewToolBar = new View_ToolBar (this, isUseKeepView);
   aViewLayout->addWidget (myViewToolBar->GetControl(), 0, 0, 1, 2);
   connect (myViewToolBar, SIGNAL (contextChanged()), this, SLOT (onViewSelectorActivated()));
   connect (myViewToolBar, SIGNAL (actionClicked (int)),
@@ -63,6 +63,8 @@ View_Window::View_Window (QWidget* theParent)
   myViewToolBar->SetContext (View_ContextType_Own, aContext);
 
   myDisplayer = new View_Displayer();
+  if (!isUseKeepView)
+    myDisplayer->KeepPresentations (true);
   connect (myView, SIGNAL (displayModeClicked()), this, SLOT (onDisplayModeChanged()));
   onViewSelectorActivated();
 }

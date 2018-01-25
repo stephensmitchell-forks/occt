@@ -58,7 +58,7 @@ public:
   //! \param theParent an index of the parent item
   //! \return integer value
   virtual int columnCount (const QModelIndex& theParent = QModelIndex()) const Standard_OVERRIDE
-  { (void)theParent; return 6; }
+  { (void)theParent; return 0; }
 
   //! Returns the header data for the given role and section in the header with the specified orientation.
   //! \param theSection the header section. For horizontal headers - column number, for vertical headers - row number.
@@ -67,6 +67,11 @@ public:
   //! \return the header data
   Standard_EXPORT virtual QVariant headerData (int theSection, Qt::Orientation theOrientation,
                                                int theRole = Qt::DisplayRole ) const Standard_OVERRIDE;
+
+protected:
+  //! Creates root item
+  //! \param theColumnId index of a column
+  virtual void createRootItem (const int theColumnId) Standard_OVERRIDE { (void)theColumnId; }
 
 private:
 

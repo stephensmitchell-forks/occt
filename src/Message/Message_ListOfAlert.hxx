@@ -16,9 +16,9 @@
 #ifndef _Message_ListOfAlert_HeaderFile
 #define _Message_ListOfAlert_HeaderFile
 
-#include <Message_Alert.hxx>
 #include <NCollection_List.hxx>
 
+class Message_Alert;
 typedef NCollection_List<Handle(Message_Alert)> Message_ListOfAlert;
 
 #endif // _Message_ListOfAlert_HeaderFile

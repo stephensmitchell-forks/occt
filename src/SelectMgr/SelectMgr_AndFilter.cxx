@@ -14,6 +14,9 @@
 
 
 #include <SelectMgr_AndFilter.hxx>
+
+#include <Message_AlertWithObject.hxx>
+
 #include <SelectMgr_EntityOwner.hxx>
 #include <SelectMgr_Filter.hxx>
 #include <SelectMgr_ListIteratorOfListOfFilter.hxx>
@@ -29,7 +32,11 @@ Standard_Boolean SelectMgr_AndFilter::IsOk(const Handle(SelectMgr_EntityOwner)& 
   SelectMgr_ListIteratorOfListOfFilter it(myFilters);
   for ( ; it.More();it.Next()) 
     if(!it.Value()->IsOk(anobj)) 
+    {
+      myReport->AddAlert (Message_Info, new Message_AlertWithObject(anobj,
+        TCollection_AsciiString (it.Value()->DynamicType()->Name()) + " (failed)"));
       return Standard_False;
+    }
   return Standard_True;
 }
 

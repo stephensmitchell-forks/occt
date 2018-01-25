@@ -16,10 +16,16 @@
 #ifndef _Message_Alert_HeaderFile
 #define _Message_Alert_HeaderFile
 
+#include <Message_Gravity.hxx>
+#include <Message_ListOfAlert.hxx>
+#include <Standard_Transient.hxx>
 #include <Standard_Type.hxx>
+#include <TCollection_AsciiString.hxx>
 
 class Message_Alert;
-DEFINE_STANDARD_HANDLE(Message_Alert, MMgt_TShared)
+class Message_Report;
+
+DEFINE_STANDARD_HANDLE(Message_Alert, Standard_Transient)
 
 //! Base class of the hierarchy of classes describing various situations
 //! occurring during execution of some algorithm or procedure.
@@ -36,6 +42,9 @@ DEFINE_STANDARD_HANDLE(Message_Alert, MMgt_TShared)
 class Message_Alert : public Standard_Transient
 {
 public:
+  //! Empty constructor
+  Standard_EXPORT Message_Alert (const TCollection_AsciiString& theName = TCollection_AsciiString())
+    : myElapsedTime (-1), myName (theName) {}
 
   //! Return a C string to be used as a key for generating text user 
   //! messages describing this alert.
@@ -43,7 +52,15 @@ public:
   //! Message_Report::Dump().
   //! Base implementation returns dynamic type name of the instance.
   virtual Standard_EXPORT Standard_CString GetMessageKey () const;
-  
+
+  //! Returns custom name of alert if it is set
+  //! @return alert name
+  const TCollection_AsciiString& GetName() const { return myName; }
+
+  //! Sets the custom name of alert
+  //! @param theName a name for the alert
+  void SetName (const TCollection_AsciiString& theName) { myName = theName; }
+
   //! Return true if this type of alert can be merged with other
   //! of the same type to avoid duplication.
   //! Basis implementation returns true.
@@ -54,11 +71,41 @@ public:
   //! Base implementation always returns true.
   virtual Standard_EXPORT Standard_Boolean Merge (const Handle(Message_Alert)& theTarget);
   
+  //! Returns list of collected alerts with specified gravity
+  Standard_EXPORT Message_ListOfAlert& GetAlerts (Message_Gravity theGravity);
+
+  //! Returns true if specific type of alert is recorded with specified gravity
+  Standard_EXPORT Standard_Boolean HasAlert (const Handle(Standard_Type)& theType, Message_Gravity theGravity);
+
+  //! Returns the alert elapsed time
+  //! @return double value
+  Standard_EXPORT Standard_Real ElapsedTime() const { return myElapsedTime; }
+
+  //! Sets elapsed time of alert
+  //! \param theElapsedTime time of the alert
+  Standard_EXPORT void SetElapsedTime(const Standard_Real theElapsedTime)
+  { myElapsedTime = theElapsedTime; }
+
+
   // OCCT RTTI
   DEFINE_STANDARD_RTTIEXT(Message_Alert,Standard_Transient)
+
+protected:
+  // store messages in a lists sorted by gravity;
+  // here we rely on knowledge that Message_Fail is the last element of the enum
+  Message_ListOfAlert myChildAlerts[Message_Fail + 1];
+
+  Standard_Real myElapsedTime;
+  TCollection_AsciiString myName;
 };
 
-//! Macro allowing to define simple alert (without data) in single line of code
-#define DEFINE_SIMPLE_ALERT(Alert) class Alert : public Message_Alert { DEFINE_STANDARD_RTTI_INLINE(Alert,Message_Alert) };
+//! Macro allowing to define simple alert with name argument in single line of code
+#define DEFINE_SIMPLE_ALERT(Alert) \
+  class Alert : public Message_Alert \
+  { \
+  public:\
+    Alert (const TCollection_AsciiString& theName = TCollection_AsciiString()) : Message_Alert(theName) {} \
+    DEFINE_STANDARD_RTTI_INLINE(Alert, Message_Alert) \
+  };
 
 #endif // _Message_Alert_HeaderFile

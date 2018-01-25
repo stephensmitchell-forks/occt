@@ -3,6 +3,7 @@ TKBRep
 TKG3d
 TKernel
 TKMath
+TKMessageModel
 TKV3d
 TKView
 TKService

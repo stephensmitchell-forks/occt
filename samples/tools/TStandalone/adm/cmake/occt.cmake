@@ -73,3 +73,4 @@ find_library(TKBO TKBO)
 # ShapeView additionally:
 find_library(TKGeomBase TKGeomBase)
 find_library(TKG3d TKG3d)
+find_library(TKTopAlgo TKTopAlgo)
