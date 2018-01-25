@@ -18,6 +18,7 @@
 #include <AIS_InteractiveContext.hxx>
 #include <AIS_InteractiveObject.hxx>
 #include <AIS_ListIteratorOfListOfInteractive.hxx>
+#include <AIS_Shape.hxx>
 #include <V3d_View.hxx>
 #include <V3d_Viewer.hxx>
 #include <inspector/View_Viewer.hxx>
@@ -151,8 +152,68 @@ void View_Displayer::ErasePresentations (const View_PresentationType theType, co
   for (AIS_ListIteratorOfListOfInteractive aDisplayedIt (aDisplayed); aDisplayedIt.More(); aDisplayedIt.Next())
     GetContext()->Remove (aDisplayedIt.Value(), Standard_False);
 
+  aDisplayed.Clear();
+  myDisplayed.Bind (theType, aDisplayed);
+
   if (theToUpdateViewer)
     UpdateViewer();
+}
+
+// =======================================================================
+// function : ErasePresentation
+// purpose :
+// =======================================================================
+void View_Displayer::ErasePresentation (const Handle(Standard_Transient)& thePresentation,
+                                        const View_PresentationType theType,
+                                        const bool theToUpdateViewer)
+{
+  if (GetContext().IsNull())
+    return;
+
+  Handle(AIS_InteractiveObject) aPresentation = Handle(AIS_InteractiveObject)::DownCast (thePresentation);
+  if (aPresentation.IsNull())
+    return;
+
+  GetContext()->Remove (aPresentation, Standard_False);
+
+  NCollection_Shared<AIS_ListOfInteractive> aDisplayed;
+  DisplayedPresentations (aDisplayed, theType);
+  aDisplayed.Remove (aPresentation);
+  myDisplayed.Bind (theType, aDisplayed);
+
+  if (theToUpdateViewer)
+    UpdateViewer();
+}
+
+// =======================================================================
+// function : SetVisible
+// purpose :
+// =======================================================================
+void View_Displayer::SetVisible (const TopoDS_Shape& theShape, const bool theState, const View_PresentationType theType)
+{
+  if (theShape.IsNull())
+    return;
+
+  if (theState)
+    DisplayPresentation (CreatePresentation (theShape), View_PresentationType_Main, Standard_False);
+  else
+  {
+    Handle(AIS_InteractiveObject) aPresentation = FindPresentation (theShape, theType);
+    if (!aPresentation.IsNull())
+      ErasePresentation (aPresentation, theType, Standard_False);
+  }
+
+  UpdateViewer();
+}
+
+// =======================================================================
+// function : IsVisible
+// purpose :
+// =======================================================================
+bool View_Displayer::IsVisible (const TopoDS_Shape& theShape, const View_PresentationType theType) const
+{
+  Handle(AIS_InteractiveObject) aPresentation = FindPresentation (theShape, theType);
+  return !aPresentation.IsNull();
 }
 
 // =======================================================================
@@ -181,7 +242,7 @@ void View_Displayer::SetAttributeColor (const Quantity_Color& theColor, const Vi
 // purpose :
 // =======================================================================
 void View_Displayer::DisplayedPresentations (NCollection_Shared<AIS_ListOfInteractive>& thePresentations,
-                                             const View_PresentationType theType)
+                                             const View_PresentationType theType) const
 {
   myDisplayed.Find (theType, thePresentations);
 }
@@ -204,4 +265,33 @@ Handle(V3d_View) View_Displayer::GetView() const
       aView = aViewer->ActiveView();
   }
   return aView;
+}
+
+// =======================================================================
+// function : FindPresentation
+// purpose :
+// =======================================================================
+Handle(AIS_InteractiveObject) View_Displayer::FindPresentation (const TopoDS_Shape& theShape,
+                                                                const View_PresentationType theType) const
+{
+  NCollection_Shared<AIS_ListOfInteractive> aDisplayed;
+  DisplayedPresentations (aDisplayed, theType);
+
+  for (AIS_ListIteratorOfListOfInteractive aDisplayedIt (aDisplayed); aDisplayedIt.More(); aDisplayedIt.Next())
+  {
+    Handle(AIS_Shape) aPresentation = Handle(AIS_Shape)::DownCast (aDisplayedIt.Value());
+    if (aPresentation->Shape().IsEqual (theShape))
+      return aPresentation;
+  }
+
+  return Handle(AIS_InteractiveObject)();
+}
+
+// =======================================================================
+// function : CreatePresentation
+// purpose :
+// =======================================================================
+Handle(Standard_Transient) View_Displayer::CreatePresentation (const TopoDS_Shape& theShape)
+{
+  return new AIS_Shape (theShape);
 }

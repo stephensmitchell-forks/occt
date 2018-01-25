@@ -15,10 +15,12 @@
 // commercial license or contractual agreement.
 
 
+#include <AIS_InteractiveContext.hxx>
+
+#include <AIS_Alerts.hxx>
 #include <AIS_DataMapIteratorOfDataMapOfILC.hxx>
 #include <AIS_DataMapIteratorOfDataMapOfIOStatus.hxx>
 #include <AIS_GlobalStatus.hxx>
-#include <AIS_InteractiveContext.hxx>
 #include <AIS_InteractiveObject.hxx>
 #include <AIS_LocalContext.hxx>
 #include <AIS_Selection.hxx>
@@ -53,6 +55,7 @@ OpenLocalContext(const Standard_Boolean UseDisplayedObjects,
                  const Standard_Boolean AcceptEraseOfTemporary,
                  const Standard_Boolean /*BothViewers*/)
 {
+  AddInfo (new AIS_AlertInformation ("OpenLocalContext"));
 
   // the entities eventually detected just before the context was opened are unhighlighted...
   if(!IsSelected(myLastPicked)){
@@ -107,6 +110,7 @@ OpenLocalContext(const Standard_Boolean UseDisplayedObjects,
 void AIS_InteractiveContext::CloseLocalContext(const Standard_Integer Index,
                                                const Standard_Boolean updateviewer)
 {
+  AddInfo (new AIS_AlertInformation ("CloseLocalContext"));
 
  Standard_Boolean debugmode(Standard_False);
 #ifdef OCCT_DEBUG
@@ -169,6 +173,7 @@ void AIS_InteractiveContext::CloseLocalContext(const Standard_Integer Index,
 Standard_DISABLE_DEPRECATION_WARNINGS
 void AIS_InteractiveContext::CloseAllContexts(const Standard_Boolean updateviewer)
 {
+  AddInfo (new AIS_AlertInformation ("CloseAllContexts"));
   while(!myLocalContexts.IsEmpty()){
     CloseLocalContext(myCurLocalIndex,Standard_False);
   }
@@ -196,6 +201,8 @@ Standard_Integer AIS_InteractiveContext::IndexOfCurrentLocal() const
 
 void AIS_InteractiveContext::ClearLocalContext(const AIS_ClearMode aMode)
 {
+  AddInfo (new AIS_AlertInformation ("ClearLocalContext"));
+
   if (!HasOpenedContext()) return;
   myLocalContexts(myCurLocalIndex)->Clear(aMode);
 
@@ -226,6 +233,11 @@ void AIS_InteractiveContext::SetSelectionModeActive (const Handle(AIS_Interactiv
                                                      const AIS_SelectionModesConcurrency theActiveFilter,
                                                      const Standard_Boolean theIsForce)
 {
+  AddInfo (new AIS_AlertObjectInformation (theObj, "SetSelectionModeActive"));
+  Handle(Message_Alert) aFunctionAlert = GetLastInfo();
+  AddInfo (new AIS_AlertInformation (TCollection_AsciiString ("theMode =") + theMode), aFunctionAlert);
+  AddInfo (new AIS_AlertInformation (TCollection_AsciiString ("theIsActive =") + theIsActive), aFunctionAlert);
+
   if (theObj.IsNull())
   {
     return;
@@ -337,9 +349,25 @@ void AIS_InteractiveContext::SetSelectionModeActive (const Handle(AIS_Interactiv
 // function : Activate
 // purpose  :
 // ============================================================================
+void AIS_InteractiveContext::Activate (const Handle(AIS_InteractiveObject)& theObj, const Standard_Integer theMode,
+  const Standard_Boolean theIsForce)
+{
+  AddInfo (new AIS_AlertObjectInformation (theObj, "Activate"));
+  AddInfo (new AIS_AlertInformation (TCollection_AsciiString ("theMode =") + theMode), GetLastInfo());
+
+  SetSelectionModeActive (theObj, theMode, Standard_True, AIS_SelectionModesConcurrency_GlobalOrLocal, theIsForce);
+}
+
+// ============================================================================
+// function : Activate
+// purpose  :
+// ============================================================================
 void AIS_InteractiveContext::Activate (const Standard_Integer theMode,
                                        const Standard_Boolean theIsForce)
 {
+  AddInfo (new AIS_AlertInformation ("Activate"));
+  AddInfo (new AIS_AlertInformation (TCollection_AsciiString ("theMode =") + theMode), GetLastInfo());
+
   AIS_ListOfInteractive aDisplayedObjects;
   DisplayedObjects (aDisplayedObjects);
 
@@ -369,6 +397,8 @@ Handle( StdSelect_ViewerSelector3d ) AIS_InteractiveContext::LocalSelector() con
 // ============================================================================
 void AIS_InteractiveContext::Deactivate (const Standard_Integer theMode)
 {
+  AddInfo (new AIS_AlertInformation ("Deactivate"));
+
   AIS_ListOfInteractive aDisplayedObjects;
   DisplayedObjects (aDisplayedObjects);
 
@@ -382,8 +412,33 @@ void AIS_InteractiveContext::Deactivate (const Standard_Integer theMode)
 // function : Deactivate
 // purpose  :
 // ============================================================================
+void AIS_InteractiveContext::Deactivate (const Handle(AIS_InteractiveObject)& theObj)
+{
+  AddInfo (new AIS_AlertObjectInformation (theObj, "Deactivate"));
+
+  SetSelectionModeActive (theObj, -1, Standard_False, AIS_SelectionModesConcurrency_Single);
+}
+
+// ============================================================================
+// function : Deactivate
+// purpose  :
+// ============================================================================
+void AIS_InteractiveContext::Deactivate (const Handle(AIS_InteractiveObject)& theObj, const Standard_Integer theMode)
+{
+  AddInfo (new AIS_AlertInformation ("Deactivate"));
+  AddInfo (new AIS_AlertInformation (TCollection_AsciiString ("theMode =") + theMode), GetLastInfo());
+
+  SetSelectionModeActive (theObj, theMode, Standard_False);
+}
+
+// ============================================================================
+// function : Deactivate
+// purpose  :
+// ============================================================================
 void AIS_InteractiveContext::Deactivate()
 {
+  AddInfo (new AIS_AlertInformation ("Deactivate"));
+
   AIS_ListOfInteractive aDisplayedObjects;
   DisplayedObjects (aDisplayedObjects);
 
@@ -557,6 +612,11 @@ void AIS_InteractiveContext::SubIntensityOff(const Standard_Boolean updateviewer
 //=======================================================================
 void AIS_InteractiveContext::AddFilter(const Handle(SelectMgr_Filter)& aFilter)
 {
+  AddInfo (new AIS_AlertObjectInformation (aFilter, "AddFilter"));
+
+  if (aFilter->IsKind (STANDARD_TYPE (SelectMgr_CompositionFilter)))
+    Handle(SelectMgr_CompositionFilter)::DownCast (aFilter)->SetReportActive (myReport->IsActive (Message_Info));
+
   if(HasOpenedContext())
     myLocalContexts(myCurLocalIndex)->AddFilter(aFilter);
   else
@@ -569,6 +629,8 @@ void AIS_InteractiveContext::AddFilter(const Handle(SelectMgr_Filter)& aFilter)
 //=======================================================================
 void AIS_InteractiveContext::ActivateStandardMode(const TopAbs_ShapeEnum aStandardActivation)
 {
+  AddInfo (new AIS_AlertInformation ("ActivateStandardMode"));
+
   if(!HasOpenedContext()) return;
   myLocalContexts(myCurLocalIndex)->ActivateStandardMode (aStandardActivation);
 }
@@ -579,6 +641,8 @@ void AIS_InteractiveContext::ActivateStandardMode(const TopAbs_ShapeEnum aStanda
 //=======================================================================
 void AIS_InteractiveContext::DeactivateStandardMode(const TopAbs_ShapeEnum aStandardActivation)
 {
+  AddInfo (new AIS_AlertInformation ("DeactivateStandardMode"));
+
   if(!HasOpenedContext()) return;
   myLocalContexts(myCurLocalIndex)->DeactivateStandardMode (aStandardActivation);
 }
@@ -589,6 +653,8 @@ void AIS_InteractiveContext::DeactivateStandardMode(const TopAbs_ShapeEnum aStan
 //=======================================================================
 void AIS_InteractiveContext::RemoveFilter(const Handle(SelectMgr_Filter)& aFilter)
 {
+  AddInfo (new AIS_AlertObjectInformation (aFilter, "RemoveFilter"));
+
   if(HasOpenedContext())
     myLocalContexts(myCurLocalIndex)->RemoveFilter (aFilter);
   else
@@ -602,6 +668,8 @@ void AIS_InteractiveContext::RemoveFilter(const Handle(SelectMgr_Filter)& aFilte
 
 void AIS_InteractiveContext::RemoveFilters()
 {
+  AddInfo (new AIS_AlertInformation ("RemoveFilters"));
+
   if(!HasOpenedContext())
     myFilters->Clear();
   else

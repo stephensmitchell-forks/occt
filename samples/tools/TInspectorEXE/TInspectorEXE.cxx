@@ -66,6 +66,11 @@ void setPluginSampleDirectory (const TCollection_AsciiString& theName, TInspecto
     theCommunicator->OpenFile (theName, fileNameInDataDir ("CSF_OCCTDataPath", "occ/face2.brep"));
     theButtonControl->SetPluginDir (theName, fileNameInDataDir ("CSF_OCCTDataPath", "occ"));
   }
+  if (theName.IsEqual ("TKMessageView"))
+  {
+    theCommunicator->OpenFile (theName, fileNameInDataDir ("CSF_OCCTDataPath", ""));
+    theButtonControl->SetPluginDir (theName, fileNameInDataDir ("CSF_OCCTDataPath", ""));
+  }
 }
 
 // =======================================================================
@@ -96,6 +101,9 @@ int main (int argc, char** argv)
 
     if (!strcmp (argv[anArgId], "vinspector"))
       aPlugins.insert ("TKVInspector");
+
+    if (!strcmp (argv[anArgId], "messageview"))
+      aPlugins.insert ("TKMessageView");
   }
   NCollection_List<Handle(Standard_Transient)> aParameters;
 
@@ -111,9 +119,10 @@ int main (int argc, char** argv)
   TCollection_AsciiString anActivatedPluginName;
   if (aPlugins.empty())
   {
-    aPlugins.insert("TKDFBrowser");
-    aPlugins.insert("TKShapeView");
-    aPlugins.insert("TKVInspector");
+    aPlugins.insert ("TKDFBrowser");
+    aPlugins.insert ("TKShapeView");
+    aPlugins.insert ("TKVInspector");
+    aPlugins.insert ("TKMessageView");
 
     anActivatedPluginName = "TKDFBrowser";
   }

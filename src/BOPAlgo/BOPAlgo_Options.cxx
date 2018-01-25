@@ -53,6 +53,7 @@ BOPAlgo_Options::BOPAlgo_Options()
   myFuzzyValue(Precision::Confusion()),
   myUseOBB(Standard_False)
 {
+  myReport->SetActive (Standard_False, Message_Info);
   BOPAlgo_LoadMessages();
 }
 

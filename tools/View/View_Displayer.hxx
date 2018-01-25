@@ -21,7 +21,9 @@
 
 #include <NCollection_DataMap.hxx>
 #include <NCollection_Shared.hxx>
+#include <TopoDS_Shape.hxx>
 #include <Quantity_Color.hxx>
+
 #include <inspector/View_PresentationType.hxx>
 
 class V3d_View;
@@ -84,6 +86,25 @@ public:
   Standard_EXPORT void ErasePresentations (const View_PresentationType theType = View_PresentationType_Main,
                                            const bool theToUpdateViewer = true);
 
+  //! Erase presentation from viewer
+  //! \param thePresentation a presentation, it will be casted to AIS_InteractiveObject
+  //! \param theType presentation type
+  //! \param isToUpdateView boolean state if viewer should be updated
+  Standard_EXPORT void ErasePresentation (const Handle(Standard_Transient)& thePresentation,
+                                          const View_PresentationType theType = View_PresentationType_Main,
+                                          const bool theToUpdateViewer = true);
+
+  //! Sets shape visible/invisible
+  //! \theShape shape instance
+  //! \theState visibility state
+  Standard_EXPORT void SetVisible (const TopoDS_Shape& theShape, const bool theState,
+                                   const View_PresentationType theType = View_PresentationType_Main);
+
+  //! Returns visibility state value
+  //! \theShape shape instance
+  Standard_EXPORT bool IsVisible (const TopoDS_Shape& theShape,
+                                  const View_PresentationType theType = View_PresentationType_Main) const;
+
   //! Calls UpdateCurrentViewer of context
   Standard_EXPORT void UpdateViewer();
 
@@ -97,10 +118,22 @@ public:
   //! \param thePresentations a container to be filled
   //! \param theType presentation type
   Standard_EXPORT void DisplayedPresentations (NCollection_Shared<AIS_ListOfInteractive>& thePresentations,
-                                               const View_PresentationType theType = View_PresentationType_Main);
+                                               const View_PresentationType theType = View_PresentationType_Main) const;
 
   //! Returns all displayed by the trihedron objects
   const NCollection_DataMap<View_PresentationType, NCollection_Shared<AIS_ListOfInteractive>>& GetDisplayed() const { return myDisplayed; }
+
+  //! Returns presentation if there is displayed AIS_Shape presentation for the parameter shape
+  //! \param theShape a shape instance
+  //! \param theType presentation type
+  //! \return presentation instance or NULL
+  Handle(AIS_InteractiveObject) FindPresentation (const TopoDS_Shape& theShape,
+                                                  const View_PresentationType theType = View_PresentationType_Main) const;
+
+  //! Creates AIS_Shape for the shape
+  //! \param theShape a shape
+  //! \return presentation
+  Standard_EXPORT static Handle(Standard_Transient) CreatePresentation (const TopoDS_Shape& theShape);
 
 private:
 

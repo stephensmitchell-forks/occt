@@ -17,6 +17,8 @@
 #ifndef _SelectMgr_CompositionFilter_HeaderFile
 #define _SelectMgr_CompositionFilter_HeaderFile
 
+#include <Message_Report.hxx>
+
 #include <Standard.hxx>
 #include <Standard_Type.hxx>
 
@@ -36,8 +38,9 @@ class SelectMgr_CompositionFilter : public SelectMgr_Filter
 {
 
 public:
+  //! Constructor  
+  SelectMgr_CompositionFilter();
 
-  
   //! Adds the filter afilter to a filter object created by a
   //! filter class inheriting this framework.
   Standard_EXPORT void Add (const Handle(SelectMgr_Filter)& afilter);
@@ -59,7 +62,20 @@ public:
   
   Standard_EXPORT virtual Standard_Boolean ActsOn (const TopAbs_ShapeEnum aStandardMode) const Standard_OVERRIDE;
 
+  //! Returns message report
+  Standard_EXPORT Handle(Message_Report) GetReport() const { return myReport; }
 
+  //! Sets whether the message report is active, false by default
+  //! \param theState boolean value
+  Standard_EXPORT void SetReportActive (const Standard_Boolean theState);
+
+  //! Recursively iterates by composed filters and gather their alerts
+  //! \param theReport report to gathered alerts
+  //! \param theAlert parent alert where information should be placed
+  Standard_EXPORT void MergeReport (const Handle(Message_Report)& theReport, const Handle(Message_Alert)& theParentAlert);
+
+  //! Recursively iterates by composed filters and clears their alerts
+  Standard_EXPORT void ClearReport();
 
 
   DEFINE_STANDARD_RTTIEXT(SelectMgr_CompositionFilter,SelectMgr_Filter)
@@ -68,6 +84,7 @@ protected:
 
 
   SelectMgr_ListOfFilter myFilters;
+  Handle(Message_Report) myReport;
 
 
 private:

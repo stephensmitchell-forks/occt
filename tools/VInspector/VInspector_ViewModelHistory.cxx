@@ -28,13 +28,13 @@
 VInspector_ViewModelHistory::VInspector_ViewModelHistory (QObject* theParent, const int theHistoryTypesMaxAmount)
 : TreeModel_ModelBase (theParent)
 {
-  for (int aColumnId = 0, aNbColumns = columnCount(); aColumnId < aNbColumns; aColumnId++)
-  {
-    myRootItems.insert(aColumnId, VInspector_ItemHistoryRoot::CreateItem(TreeModel_ItemBasePtr(), 0, aColumnId));
-    VInspector_ItemHistoryRootPtr aRootItem = itemDynamicCast<VInspector_ItemHistoryRoot>(myRootItems[aColumnId]);
-    aRootItem->SetHistoryTypesMaxAmount(theHistoryTypesMaxAmount);
-  }
-  m_pRootItem = myRootItems[0];
+  //for (int aColumnId = 0, aNbColumns = columnCount(); aColumnId < aNbColumns; aColumnId++)
+  //{
+  //  myRootItems.insert(aColumnId, VInspector_ItemHistoryRoot::CreateItem(TreeModel_ItemBasePtr(), 0, aColumnId));
+  //  VInspector_ItemHistoryRootPtr aRootItem = itemDynamicCast<VInspector_ItemHistoryRoot>(myRootItems[aColumnId]);
+  //  aRootItem->SetHistoryTypesMaxAmount(theHistoryTypesMaxAmount);
+  //}
+  //m_pRootItem = myRootItems[0];
 }
 
 // =======================================================================
@@ -44,13 +44,13 @@ VInspector_ViewModelHistory::VInspector_ViewModelHistory (QObject* theParent, co
 void VInspector_ViewModelHistory::AddElement (const VInspector_CallBackMode& theMode, const QList<QVariant>& theInfo)
 {
   // fill root item by the application
-  for (int aColId = 0, aNbColumns = columnCount(); aColId < aNbColumns; aColId++)
-  {
-    VInspector_ItemHistoryRootPtr aRootItem = itemDynamicCast<VInspector_ItemHistoryRoot>(myRootItems[aColId]);
-    aRootItem->AddElement(theMode, theInfo);
-  }
-  Reset();
-  EmitLayoutChanged();
+  //for (int aColId = 0, aNbColumns = columnCount(); aColId < aNbColumns; aColId++)
+  //{
+  //  VInspector_ItemHistoryRootPtr aRootItem = itemDynamicCast<VInspector_ItemHistoryRoot>(myRootItems[aColId]);
+  //  aRootItem->AddElement(theMode, theInfo);
+  //}
+  //Reset();
+  //EmitLayoutChanged();
 }
 
 // =======================================================================
@@ -60,31 +60,31 @@ void VInspector_ViewModelHistory::AddElement (const VInspector_CallBackMode& the
 QStringList VInspector_ViewModelHistory::GetSelectedPointers (const QModelIndex& theIndex)
 {
   QStringList aPointers;
-  TreeModel_ItemBasePtr anItem = TreeModel_ModelBase::GetItemByIndex (theIndex);
-  if (!anItem)
-    return aPointers;
+  //TreeModel_ItemBasePtr anItem = TreeModel_ModelBase::GetItemByIndex (theIndex);
+  //if (!anItem)
+  //  return aPointers;
 
-  VInspector_ItemHistoryTypePtr aHistoryItem = itemDynamicCast<VInspector_ItemHistoryType>(anItem);
-  if (aHistoryItem)
-  {
-    QString aPointerInfo = aHistoryItem->PointerInfo();
-    QString anOwnerInfo = aHistoryItem->OwnerInfo();
+  //VInspector_ItemHistoryTypePtr aHistoryItem = itemDynamicCast<VInspector_ItemHistoryType>(anItem);
+  //if (aHistoryItem)
+  //{
+  //  QString aPointerInfo = aHistoryItem->PointerInfo();
+  //  QString anOwnerInfo = aHistoryItem->OwnerInfo();
 
-    if (!aPointerInfo.isEmpty())
-      aPointers.append (aPointerInfo);
-    if (!anOwnerInfo.isEmpty())
-      aPointers.append (anOwnerInfo.split (", "));
-  }
-  else
-  {
-    VInspector_ItemHistoryElementPtr anElementItem = itemDynamicCast<VInspector_ItemHistoryElement>(anItem);
-    if (anElementItem)
-    {
-      QString aPointerInfo = anElementItem->PointerInfo();
-      if (!aPointerInfo.isEmpty())
-        aPointers.append (aPointerInfo);
-    }
-  }
+  //  if (!aPointerInfo.isEmpty())
+  //    aPointers.append (aPointerInfo);
+  //  if (!anOwnerInfo.isEmpty())
+  //    aPointers.append (anOwnerInfo.split (", "));
+  //}
+  //else
+  //{
+  //  VInspector_ItemHistoryElementPtr anElementItem = itemDynamicCast<VInspector_ItemHistoryElement>(anItem);
+  //  if (anElementItem)
+  //  {
+  //    QString aPointerInfo = anElementItem->PointerInfo();
+  //    if (!aPointerInfo.isEmpty())
+  //      aPointers.append (aPointerInfo);
+  //  }
+  //}
   return aPointers;
 }
 
@@ -94,18 +94,18 @@ QStringList VInspector_ViewModelHistory::GetSelectedPointers (const QModelIndex&
 // =======================================================================
 QVariant VInspector_ViewModelHistory::headerData (int theSection, Qt::Orientation theOrientation, int theRole) const
 {
-  if (theOrientation != Qt::Horizontal || theRole != Qt::DisplayRole)
-    return QVariant();
+  //if (theOrientation != Qt::Horizontal || theRole != Qt::DisplayRole)
+  //  return QVariant();
 
-  switch (theSection)
-  {
-    case 0: return "Name";
-    case 1: return "Size";
-    case 2: return "Pointer";
-    case 3: return "Shape type";
-    case 4: return "AIS Name";
-    case 5: return "Selected/Highlighted";
-    default: break;
-  }
+  //switch (theSection)
+  //{
+  //  case 0: return "Name";
+  //  case 1: return "Size";
+  //  case 2: return "Pointer";
+  //  case 3: return "Shape type";
+  //  case 4: return "AIS Name";
+  //  case 5: return "Selected/Highlighted";
+  //  default: break;
+  //}
   return QVariant();
 }

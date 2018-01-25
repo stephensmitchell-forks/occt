@@ -87,3 +87,13 @@ void AIS_InteractiveContext::PolygonOffsets(
     anObj->PolygonOffsets( aMode, aFactor, aUnits );
 }
 // OCC4895 SAN 22/03/04 High-level interface for controlling polygon offsets 
+
+//=======================================================================
+//function : SetReportActive 
+//purpose  : 
+//=======================================================================
+void AIS_InteractiveContext::SetReportActive (const Standard_Boolean theState)
+{
+  myReport->SetActive (theState);
+  myFilters->SetReportActive (theState);
+}

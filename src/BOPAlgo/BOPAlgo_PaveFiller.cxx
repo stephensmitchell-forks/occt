@@ -69,7 +69,7 @@ BOPAlgo_PaveFiller::BOPAlgo_PaveFiller
 //=======================================================================
 BOPAlgo_PaveFiller::~BOPAlgo_PaveFiller()
 {
-  Clear();
+  //Clear();
 }
 //=======================================================================
 //function : SetNonDestructive
@@ -233,12 +233,14 @@ void BOPAlgo_PaveFiller::Perform()
     OCC_CATCH_SIGNALS
     //
     PerformInternal();
+    GetReport()->ApplyLastElapsedTime();
   }
   //
   catch (Standard_Failure) {
     AddError (new BOPAlgo_AlertIntersectionFailed);
   } 
 }
+
 //=======================================================================
 // function: PerformInternal
 // purpose: 
@@ -246,20 +248,29 @@ void BOPAlgo_PaveFiller::Perform()
 void BOPAlgo_PaveFiller::PerformInternal()
 {
   Init();
+
+  GetReport()->SetStoreElapsedTime (Standard_True);
+  AddInfo (new BOPAlgo_AlertInformation ("BOPAlgo_PaveFiller::PerformInternal"));
+
+  Handle(Message_Alert) aFunctionAlert = GetLastInfo();
+  AddInfo (new BOPAlgo_AlertInformation ("Init"), aFunctionAlert);
   if (HasErrors()) {
     return; 
   }
   //
+  AddInfo (new BOPAlgo_AlertInformation ("Prepare"), aFunctionAlert);
   Prepare();
   if (HasErrors()) {
     return; 
   }
   // 00
+  AddInfo (new BOPAlgo_AlertInformation ("PerformVV"), aFunctionAlert);
   PerformVV();
   if (HasErrors()) {
     return; 
   }
   // 01
+  AddInfo (new BOPAlgo_AlertInformation ("PerformVE"), aFunctionAlert);
   PerformVE();
   if (HasErrors()) {
     return; 
@@ -267,18 +278,21 @@ void BOPAlgo_PaveFiller::PerformInternal()
   //
   UpdatePaveBlocksWithSDVertices();
   // 11
+  AddInfo (new BOPAlgo_AlertInformation ("PerformEE"), aFunctionAlert);
   PerformEE();
   if (HasErrors()) {
     return; 
   }
   UpdatePaveBlocksWithSDVertices();
   // 02
+  AddInfo (new BOPAlgo_AlertInformation ("PerformVF"), aFunctionAlert);
   PerformVF();
   if (HasErrors()) {
     return; 
   }
   UpdatePaveBlocksWithSDVertices();
   // 12
+  AddInfo (new BOPAlgo_AlertInformation ("PerformEF"), aFunctionAlert);
   PerformEF();
   if (HasErrors()) {
     return; 
@@ -288,9 +302,11 @@ void BOPAlgo_PaveFiller::PerformInternal()
 
   // Force intersection of edges after increase
   // of the tolerance values of their vertices
+  AddInfo (new BOPAlgo_AlertInformation ("ForceInterfEE"), aFunctionAlert);
   ForceInterfEE();
   //
   // 22
+  AddInfo (new BOPAlgo_AlertInformation ("PerformFF"), aFunctionAlert);
   PerformFF();
   if (HasErrors()) {
     return; 
@@ -298,6 +314,7 @@ void BOPAlgo_PaveFiller::PerformInternal()
   //
   UpdateBlocksWithSharedVertices();
   //
+  AddInfo (new BOPAlgo_AlertInformation ("MakeSplitEdges"), aFunctionAlert);
   MakeSplitEdges();
   if (HasErrors()) {
     return; 
@@ -305,22 +322,27 @@ void BOPAlgo_PaveFiller::PerformInternal()
   //
   UpdatePaveBlocksWithSDVertices();
   //
+  AddInfo (new BOPAlgo_AlertInformation ("MakeBlocks"), aFunctionAlert);
   MakeBlocks();
   if (HasErrors()) {
     return; 
   }
   //
+  AddInfo (new BOPAlgo_AlertInformation ("CheckSelfInterference"), aFunctionAlert);
   CheckSelfInterference();
   //
+  AddInfo (new BOPAlgo_AlertInformation ("UpdateInterfsWithSDVertices"), aFunctionAlert);
   UpdateInterfsWithSDVertices();
   myDS->ReleasePaveBlocks();
   myDS->RefineFaceInfoOn();
   //
+  AddInfo (new BOPAlgo_AlertInformation ("MakePCurves"), aFunctionAlert);
   MakePCurves();
   if (HasErrors()) {
     return; 
   }
   //
+  AddInfo (new BOPAlgo_AlertInformation ("ProcessDE"), aFunctionAlert);
   ProcessDE();
   if (HasErrors()) {
     return; 

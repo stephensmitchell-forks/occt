@@ -14,6 +14,7 @@
 // commercial license or contractual agreement.
 
 #include <Message_Alert.hxx>
+#include <Standard_Assert.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(Message_Alert,Standard_Transient)
 
@@ -24,7 +25,7 @@ IMPLEMENT_STANDARD_RTTIEXT(Message_Alert,Standard_Transient)
 
 Standard_CString Message_Alert::GetMessageKey () const
 {
-  return DynamicType()->Name();
+  return myName.IsEmpty() ? DynamicType()->Name() : myName.ToCString();
 }
 
 //=======================================================================
@@ -47,4 +48,14 @@ Standard_Boolean Message_Alert::Merge (const Handle(Message_Alert)& /*theTarget*
 {
   // by default, merge trivially
   return Standard_True;
+}
+
+//=======================================================================
+//function : GetAlerts
+//purpose  :
+//=======================================================================
+
+Message_ListOfAlert& Message_Alert::GetAlerts (Message_Gravity theGravity)
+{
+  return myChildAlerts[theGravity];
 }

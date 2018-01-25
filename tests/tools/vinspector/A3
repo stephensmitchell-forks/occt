@@ -1,0 +1,17 @@
+pload ALL INSPECTOR
+vinit
+
+box b1 10 20 30
+box b2 10 10 10 20 20 20
+
+vdisplay b1 -dispMode 1
+vdisplay b2
+vfit
+vsetcolor b1 GREEN
+
+tinspector -plugins vinspector
+
+vselmode 1 1
+vselmode 2 1
+
+tinspector -update

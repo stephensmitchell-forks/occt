@@ -16,12 +16,16 @@
 #ifndef TInspectorAPI_PluginParameters_H
 #define TInspectorAPI_PluginParameters_H
 
+#include <Message_ReportCallBack.hxx>
 #include <NCollection_DataMap.hxx>
 #include <NCollection_List.hxx>
 #include <Standard_Version.hxx>
 #include <Standard_Transient.hxx>
 #include <TCollection_AsciiString.hxx>
 #include <TCollection_AsciiString.hxx>
+#include <TopoDS_Shape.hxx>
+
+#include <inspector/TInspectorAPI_PreferencesDataMap.hxx>
 
 class TInspectorAPI_PluginParameters;
 DEFINE_STANDARD_HANDLE (TInspectorAPI_PluginParameters, Standard_Transient)
@@ -36,7 +40,7 @@ class TInspectorAPI_PluginParameters : public Standard_Transient
 public:
 
   //! Constructs the container.
-  Standard_EXPORT TInspectorAPI_PluginParameters();
+  Standard_EXPORT TInspectorAPI_PluginParameters() {}
 
   //! Destructor
   Standard_EXPORT virtual ~TInspectorAPI_PluginParameters() Standard_OVERRIDE {}
@@ -54,6 +58,14 @@ public:
   //! \param theFileName a name
   Standard_EXPORT void AddFileName (const TCollection_AsciiString& thePluginName,
                                     const TCollection_AsciiString& theFileName);
+
+  //! Sets callback for updating inspector view by an event
+  //! \param theCallBack a callback instance
+  void SetCallBack (const Handle(Message_ReportCallBack)& theCallBack) { myCallBack = theCallBack; }
+
+  //! Returns callback of updating inspector view by an event
+  //! \return a callback instance
+  const Handle(Message_ReportCallBack)& GetCallBack() const { return myCallBack; }
 
   //! Sets file names for the plugin
   //! \param thePluginName a plugin name
@@ -81,8 +93,7 @@ public:
   //! Returns parameters set for the given plugin
   //! \param thePluginName a plugin name
   //! \return container of objects
-  Standard_EXPORT const NCollection_List<Handle(Standard_Transient)>& Parameters (
-                                                      const TCollection_AsciiString& thePluginName);
+  Standard_EXPORT const NCollection_List<Handle(Standard_Transient)>& Parameters (const TCollection_AsciiString& thePluginName);
 
   //! Returns true if there are file names set for the given plugin
   //! \param thePluginName a plugin name
@@ -92,8 +103,7 @@ public:
   //! Returns file names set for the given plugin
   //! \param thePluginName a plugin name
   //! \return container of names
-  Standard_EXPORT const NCollection_List<TCollection_AsciiString>& FileNames(
-                                                      const TCollection_AsciiString& thePluginName);
+  Standard_EXPORT const NCollection_List<TCollection_AsciiString>& FileNames (const TCollection_AsciiString& thePluginName);
 
   //! Returns true if there are file names set for the given plugin
   //! \param thePluginName a plugin name
@@ -112,6 +122,48 @@ public:
   Standard_EXPORT Standard_Boolean GetSelectedObjects (const TCollection_AsciiString& thePluginName,
                                                        NCollection_List<Handle(Standard_Transient)>& theObjects);
 
+  //! Sets path to a directory for temporary plugin files
+  //! \param thePath a path
+  virtual void SetTemporaryDirectory (const TCollection_AsciiString& thePath) { myTemporaryDirectory = thePath; }
+
+  //! Returns path to a directory for temporary plugin files
+  //! \return path
+  TCollection_AsciiString GetTemporaryDirectory() const { return myTemporaryDirectory; }
+
+  //! Returns plugin preferences
+  //! \param thePluginName a plugin name
+  Standard_EXPORT virtual void GetPreferences (const TCollection_AsciiString& thePluginName,
+                                               TInspectorAPI_PreferencesDataMap& theItem) = 0;
+
+  //! Stores plugin preferences
+  //! \param thePluginName a plugin name
+  //! \theItem container of plugin preferences values in form: <name, value>
+  Standard_EXPORT virtual void SetPreferences (const TCollection_AsciiString& thePluginName,
+                                               const TInspectorAPI_PreferencesDataMap& theItem) = 0;
+
+  //! Sets plugin to be immediate updated even if it is not the active plugin
+  //! \param thePluginName a plugin name
+  //! \param theToBeUpdated boolean flag if update is necessary
+  Standard_EXPORT void SetImmediateUpdated (const TCollection_AsciiString& thePluginName,
+                                            const Standard_Boolean theToBeUpdated);
+
+  //! Returns plugin names to be immediatelly updated
+  //! \return container of names
+  Standard_EXPORT const NCollection_List<TCollection_AsciiString>& GetImmediateUpdatedPlugins()
+  { return myImmediateUpdatedPlugins; }
+
+
+  //! Converts a Shape parameters excepting TShape into a string value
+  //! \param theShape processed shape 
+  //! \return string instance
+  Standard_EXPORT static TCollection_AsciiString ParametersToString (const TopoDS_Shape& theShape);
+
+  //! Converts a Shape parameters exceptin TShape into a string value
+  //! \param theValue parameters string value (without TShape information)
+  //! \param theShape processed shape 
+  Standard_EXPORT static void ParametersToShape (const TCollection_AsciiString& theValue, TopoDS_Shape& theShape);
+
+
 #if OCC_VERSION_HEX <= 0x060901
   DEFINE_STANDARD_RTTI (TInspectorAPI_PluginParameters)
 #else
@@ -126,6 +178,12 @@ private:
   NCollection_DataMap<TCollection_AsciiString, NCollection_List<TCollection_AsciiString> > mySelectedItemNames;
   //! container of select objects
   NCollection_DataMap<TCollection_AsciiString, NCollection_List<Handle(Standard_Transient)> > mySelectedObjects;
+  //! container of plugin names to be updated even if the plugins are not activated at the moment
+  NCollection_List<TCollection_AsciiString> myImmediateUpdatedPlugins;
+  //! temporary directory for saving plugin preferences
+  TCollection_AsciiString myTemporaryDirectory;
+  //! call back for immediate update plugin
+  Handle(Message_ReportCallBack) myCallBack;
 };
 
 #endif

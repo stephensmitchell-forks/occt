@@ -22,6 +22,12 @@
 
 IMPLEMENT_STANDARD_RTTIEXT(SelectMgr_CompositionFilter,SelectMgr_Filter)
 
+SelectMgr_CompositionFilter::SelectMgr_CompositionFilter()
+ : myReport (new Message_Report())
+{
+  myReport->SetActive (Standard_False);
+}
+
 void SelectMgr_CompositionFilter::Add(const Handle(SelectMgr_Filter)& afilter)
 {
   myFilters.Append(afilter);
@@ -69,4 +75,45 @@ Standard_Boolean SelectMgr_CompositionFilter::ActsOn(const TopAbs_ShapeEnum aSta
   }
   
   return Standard_False;
+}
+
+void SelectMgr_CompositionFilter::SetReportActive (const Standard_Boolean theState)
+{
+  myReport->SetActive (theState);
+
+  for (SelectMgr_ListIteratorOfListOfFilter aSubFiltersIt (myFilters); aSubFiltersIt.More(); aSubFiltersIt.Next())
+  {
+    if (aSubFiltersIt.Value()->IsKind (STANDARD_TYPE (SelectMgr_CompositionFilter)))
+      Handle(SelectMgr_CompositionFilter)::DownCast (aSubFiltersIt.Value())->SetReportActive (theState);
+  }
+}
+
+void SelectMgr_CompositionFilter::MergeReport (const Handle(Message_Report)& theReport,
+                                               const Handle(Message_Alert)& theParentAlert)
+{
+  if (!myReport->IsActive (Message_Info))
+    return;
+
+  if (myReport->GetLastAlert (Message_Info, true).IsNull())
+  {
+    myReport->AddAlert (Message_Info, new Message_Alert (DynamicType()->Name()));
+  }
+  theReport->Merge (myReport, theParentAlert);
+
+  Handle(Message_Alert) aParentAlert = theReport->GetLastAlert (Message_Info, true);
+  for (SelectMgr_ListIteratorOfListOfFilter aSubFiltersIt (myFilters); aSubFiltersIt.More(); aSubFiltersIt.Next())
+  {
+    if (aSubFiltersIt.Value()->IsKind (STANDARD_TYPE (SelectMgr_CompositionFilter)))
+      Handle(SelectMgr_CompositionFilter)::DownCast (aSubFiltersIt.Value())->MergeReport (theReport, aParentAlert);
+  }
+}
+
+void SelectMgr_CompositionFilter::ClearReport()
+{
+  myReport->Clear();
+  for (SelectMgr_ListIteratorOfListOfFilter aSubFiltersIt (myFilters); aSubFiltersIt.More(); aSubFiltersIt.Next())
+  {
+    if (aSubFiltersIt.Value()->IsKind (STANDARD_TYPE (SelectMgr_CompositionFilter)))
+      Handle(SelectMgr_CompositionFilter)::DownCast (aSubFiltersIt.Value())->ClearReport();
+  }
 }

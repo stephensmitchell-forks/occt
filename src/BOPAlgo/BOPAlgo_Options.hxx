@@ -78,6 +78,14 @@ public:
     myReport->AddAlert (Message_Warning, theAlert);
   }
 
+  //! Adds the alert as information
+  void AddInfo (const Handle(Message_Alert)& theAlert,
+                const Handle(Message_Alert)& theParentAlert = Handle(Message_Alert)())
+  {
+    myReport->AddAlert (Message_Info, theAlert, theParentAlert);
+  }
+
+
   //! Returns true if algorithm has failed
   Standard_Boolean HasErrors() const
   {
@@ -104,6 +112,12 @@ public:
 
   //! Returns report collecting all errors and warnings
   const Handle(Message_Report)& GetReport () const { return myReport; }
+
+  //! Returns last information alert
+  Handle(Message_Alert) GetLastInfo () const
+  {
+    return myReport->GetLastAlert (Message_Info, true);
+  }
 
   //! Dumps the error status into the given stream
   Standard_EXPORT void DumpErrors(Standard_OStream& theOS) const;

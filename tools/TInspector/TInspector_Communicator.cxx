@@ -49,6 +49,15 @@ TInspector_Communicator::TInspector_Communicator()
 // function : SetVisible
 // purpose :
 // =======================================================================
+TInspector_Communicator::~TInspector_Communicator()
+{
+  int aValue = 90;
+}
+
+// =======================================================================
+// function : SetVisible
+// purpose :
+// =======================================================================
 void TInspector_Communicator::SetVisible (const bool theVisible)
 {
   myWindow->GetMainWindow()->setVisible (theVisible);

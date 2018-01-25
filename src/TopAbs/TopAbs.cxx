@@ -54,7 +54,7 @@ Standard_Boolean TopAbs::ShapeTypeFromString (Standard_CString theTypeString,
     Standard_CString aTypeName = TopAbs_Table_PrintShapeEnum[aTypeIter];
     if (aName == aTypeName)
     {
-      theType = TopAbs_ShapeEnum(aTypeIter);
+      theType = TopAbs_ShapeEnum (aTypeIter);
       return Standard_True;
     }
   }
@@ -68,6 +68,27 @@ Standard_Boolean TopAbs::ShapeTypeFromString (Standard_CString theTypeString,
 Standard_CString TopAbs::ShapeOrientationToString (TopAbs_Orientation theOrientation)
 {
   return TopAbs_Table_PrintOrientation[theOrientation];
+}
+
+//=======================================================================
+//function : ShapeOrientationFromString
+//purpose  :
+//=======================================================================
+Standard_Boolean TopAbs::ShapeOrientationFromString (Standard_CString theOrientationString,
+                                                     TopAbs_Orientation& theOrientation)
+{
+  TCollection_AsciiString aName (theOrientationString);
+  aName.UpperCase();
+  for (Standard_Integer anOrientationIter = 0; anOrientationIter <= TopAbs_EXTERNAL; ++anOrientationIter)
+  {
+    Standard_CString anOrientationName = TopAbs_Table_PrintOrientation[anOrientationIter];
+    if (aName == anOrientationName)
+    {
+      theOrientation = TopAbs_Orientation(anOrientationIter);
+      return Standard_True;
+    }
+  }
+  return Standard_False;
 }
 
 //=======================================================================

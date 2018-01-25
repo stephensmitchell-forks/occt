@@ -24,6 +24,7 @@
 #include <BOPTest_Objects.hxx>
 #include <DBRep.hxx>
 #include <Draw.hxx>
+#include <Draw_Report.hxx>
 #include <Draw_Color.hxx>
 #include <DrawTrSurf.hxx>
 #include <OSD_Timer.hxx>
@@ -51,7 +52,7 @@ void BOPTest::PartitionCommands(Draw_Interpretor& theCommands)
   const char* g = "BOPTest commands";
   // Commands  
   theCommands.Add("bfillds", "use bfillds [-t]"  , __FILE__, bfillds, g);
-  theCommands.Add("bbuild" , "use bbuild r [-t]" , __FILE__, bbuild, g);
+  theCommands.Add("bbuild" , "use bbuild r [-t] [-i]" , __FILE__, bbuild, g);
   theCommands.Add("bbop"   , "use bbop r op [-t]", __FILE__, bbop, g);
   theCommands.Add("bsplit" , "use bsplit r [-t]" , __FILE__, bsplit, g);
 }
@@ -154,6 +155,13 @@ Standard_Integer bbuild(Draw_Interpretor& di,
     di << " prepare PaveFiller first\n";
     return 0;
   }
+  Standard_Boolean bShowInfo=Standard_False;
+  for (Standard_Integer i=1; i<n; ++i) {
+    if (!strcmp (a[i], "-i")) {
+      bShowInfo=Standard_True;
+    }
+  }
+
   //
   char buf[128];
   Standard_Boolean bRunParallel, bShowTime;
@@ -166,6 +174,13 @@ Standard_Integer bbuild(Draw_Interpretor& di,
   BOPTest_Objects::SetBuilderDefault();
   BOPAlgo_Builder& aBuilder=BOPTest_Objects::Builder();
   aBuilder.Clear();
+  if (bShowInfo)
+  {
+    Handle(Draw_Report) aDrawReport = new Draw_Report (aBuilder.GetReport());
+    aPF.GetReport()->SetActive (Standard_True, Message_Info);
+    TCollection_AsciiString aReportName = TCollection_AsciiString (a[1]) + "_report";
+    Draw::Set (aReportName.ToCString(), aDrawReport);
+  }
   //
   TopTools_ListOfShape& aLSObj=BOPTest_Objects::Shapes();
   aIt.Initialize(aLSObj);

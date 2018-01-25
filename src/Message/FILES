@@ -3,6 +3,8 @@ Message.hxx
 Message_Algorithm.cxx
 Message_Algorithm.hxx
 Message_Algorithm.lxx
+Message_AlertWithObject.cxx
+Message_AlertWithObject.hxx
 Message_ExecStatus.hxx
 Message_Gravity.hxx
 Message_HArrayOfMsg.hxx
@@ -37,3 +39,5 @@ Message_Alert.hxx
 Message_ListOfAlert.hxx
 Message_Report.cxx
 Message_Report.hxx
+Message_ReportCallBack.cxx
+Message_ReportCallBack.hxx

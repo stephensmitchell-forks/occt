@@ -93,6 +93,8 @@ set (BUILD_TOOLKITS
   TKTreeModel
   TKDFBrowser
   TKVInspector
+  TKMessageModel
+  TKMessageView
   TKShapeView
   TKTInspector
   TKToolsDraw
@@ -113,6 +115,8 @@ set (BUILD_PROJECTS
   DFBrowserPane
   DFBrowserPaneXDE
   DFBrowser
+  MessageModel
+  MessageView
   ShapeView
   VInspector
   TInspector

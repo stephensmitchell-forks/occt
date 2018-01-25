@@ -144,6 +144,16 @@ NCollection_List<Handle(SelectBasics_EntityOwner)> VInspector_Tools::ContextOwne
     Handle(AIS_InteractiveObject) anIO = aIt.Value();
     if (anIO.IsNull())
       continue;
+#if OCC_VERSION_HEX < 0x070201
+    for (anIO->Init(); anIO->More(); anIO->Next())
+    {
+      Handle(SelectMgr_Selection) aSelection = anIO->CurrentSelection();
+      if (aSelection.IsNull())
+        continue;
+      for (aSelection->Init(); aSelection->More(); aSelection->Next())
+      {
+        Handle(SelectMgr_SensitiveEntity) anEntity = aSelection->Sensitive();
+#else
     for (SelectMgr_SequenceOfSelection::Iterator aSelIter (anIO->Selections()); aSelIter.More(); aSelIter.Next())
     {
       Handle(SelectMgr_Selection) aSelection = aSelIter.Value();
@@ -152,6 +162,7 @@ NCollection_List<Handle(SelectBasics_EntityOwner)> VInspector_Tools::ContextOwne
       for (NCollection_Vector<Handle(SelectMgr_SensitiveEntity)>::Iterator aSelEntIter (aSelection->Entities()); aSelEntIter.More(); aSelEntIter.Next())
       {
         Handle(SelectMgr_SensitiveEntity) anEntity = aSelEntIter.Value();
+#endif
         if (anEntity.IsNull())
           continue;
         const Handle(SelectBasics_SensitiveEntity)& aBase = anEntity->BaseSensitive();

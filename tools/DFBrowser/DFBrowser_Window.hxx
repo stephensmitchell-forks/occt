@@ -36,7 +36,6 @@
 class DFBrowser_DumpView;
 class DFBrowser_Module;
 class DFBrowser_PropertyPanel;
-class DFBrowser_Shortcut;
 class DFBrowser_Thread;
 class DFBrowser_TreeLevelLine;
 
@@ -73,6 +72,18 @@ public:
   //! Sets parameters container, it should be used when the plugin is initialized or in update content
   //! \param theParameters a parameters container
   void SetParameters (const Handle(TInspectorAPI_PluginParameters)& theParameters) { myParameters = theParameters; }
+
+  //! Provide container for actions available in inspector on general level
+  //! \param theMenu if Qt implementation, it is QMenu object
+  Standard_EXPORT virtual void FillActionsMenu (void* theMenu);
+
+  //! Returns plugin preferences: dock widgets state, tree view columns.
+  //! \param theItem container of preference elements
+  Standard_EXPORT void GetPreferences (TInspectorAPI_PreferencesDataMap& theItem);
+
+  //! Applies plugin preferences
+  //! \param theItem container of preference elements
+  Standard_EXPORT void SetPreferences (const TInspectorAPI_PreferencesDataMap& theItem);
 
   //! Applyes parameters to Init controls, opens files if there are in parameters, updates OCAF tree view model
   Standard_EXPORT void UpdateContent();
@@ -192,12 +203,6 @@ private:
   //! \param theIndices a container of OCAF tree view model indices
   void highlightIndices (const QModelIndexList& theIndices);
 
-  //! Creates an action with the given text connected to the slot
-  //! \param theText an action text value
-  //! \param theSlot a listener of triggered signal of the new action
-  //! \return a new action
-  QAction* createAction (const QString& theText, const char* theSlot);
-
   //! Returns candidate to be the window title. It is either name of opened STEP file or the application path
   //! \return string value
   QString getWindowTitle() const;
@@ -232,7 +237,6 @@ private:
   View_Window* myViewWindow; //!< V3d view to visualize presentations/references if it can be build for a selected item
   DFBrowser_DumpView* myDumpView; //!< Text editor where "Dump" method output is shown
   DFBrowser_Thread* myThread; //!< Threads manipulator, starting thread items, listens finalizing
-  DFBrowser_Shortcut* myShortcut; //!< Short cut processor, F5 - updates OCAF view model content
   TreeModel_MessageDialog* myExportToShapeViewDialog; //!< dialog about exporting TopoDS_Shape to ShapeView plugin
   Handle(TInspectorAPI_PluginParameters) myParameters; //!< contains application, context, files that should be opened
 };

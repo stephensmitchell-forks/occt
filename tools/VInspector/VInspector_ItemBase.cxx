@@ -21,7 +21,7 @@
 // function : GetContext
 // purpose :
 // =======================================================================
-const Handle(AIS_InteractiveContext)& VInspector_ItemBase::GetContext() const
+Handle(AIS_InteractiveContext) VInspector_ItemBase::GetContext() const
 {
   if (!myContext.IsNull())
     return myContext;
@@ -29,7 +29,7 @@ const Handle(AIS_InteractiveContext)& VInspector_ItemBase::GetContext() const
   Handle(AIS_InteractiveContext) aContext;
   if (const VInspector_ItemContext* aThisContextItem = dynamic_cast<const VInspector_ItemContext*> (this))
   {
-    aContext = aThisContextItem->GetContext();
+    return Handle(AIS_InteractiveContext)(); // context has not be set yet
   }
   else
   {
