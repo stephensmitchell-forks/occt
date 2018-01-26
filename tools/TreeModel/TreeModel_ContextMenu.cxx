@@ -30,7 +30,9 @@ TreeModel_ContextMenu::TreeModel_ContextMenu (QTreeView* theTreeView)
   : QObject (theTreeView), myTreeView (theTreeView)
 {
   myTreeView->header()->setContextMenuPolicy (Qt::CustomContextMenu);
+#if QT_VERSION >= 0x050000
   myTreeView->header()->setSectionsClickable (true);
+#endif
   myTreeView->header()->setHighlightSections (true);
   connect (myTreeView->header(), SIGNAL (customContextMenuRequested (const QPoint&)),
            this, SLOT (onTreeViewHeaderContextMenuRequested (const QPoint&)));

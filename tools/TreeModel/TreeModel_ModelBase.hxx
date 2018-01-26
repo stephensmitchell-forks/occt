@@ -25,6 +25,7 @@
 #include <QMap>
 #include <QModelIndex>
 #include <QVariant>
+#include <QVector>
 
 class TreeModel_VisibilityState;
 

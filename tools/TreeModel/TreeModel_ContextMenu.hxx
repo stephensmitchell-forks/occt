@@ -20,6 +20,7 @@
 #include <Standard_Macro.hxx>
 
 #include <QObject>
+#include <QPoint>
 
 class QTreeView;
 

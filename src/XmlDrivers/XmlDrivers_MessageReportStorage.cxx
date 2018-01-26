@@ -71,7 +71,7 @@ void XmlDrivers_MessageReportStorage::ExportReport (const Handle(Message_Report)
       TDataStd_Name::Set (aGravityLabel, aName);
 
     /// reserved label to store gravity information
-    TDF_Label aFirstAlertLabel = aGravityLabel.NewChild();
+    //TDF_Label aFirstAlertLabel = aGravityLabel.NewChild();
 
     // Alert Labels: labels are started from the second index
     const Message_ListOfAlert& anAlerts = theReport->GetAlerts(aGravity);
@@ -117,7 +117,7 @@ Handle(Message_Report) XmlDrivers_MessageReportStorage::ImportReport (const TCol
     Message_Gravity aGravity = Message::GravityFromString (TCollection_AsciiString (aGravityName).ToCString());
 
     /// reserved label to store gravity information
-    TDF_Label aFirstAlertLabel = aGravityLabel.FindChild (1, Standard_False);
+    //TDF_Label aFirstAlertLabel = aGravityLabel.FindChild (1, Standard_False);
 
     // find alerts information, add corresponded alerts to the report
     for (TDF_ChildIterator anAlertLabelsIt (aGravityLabel); anAlertLabelsIt.More(); anAlertLabelsIt.Next())
