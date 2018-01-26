@@ -129,7 +129,7 @@ bool TreeModel_Tools::RestoreState (QTreeView* theTreeView, const QString& theKe
   else if (theKey == thePrefix + "columns_hidden")
   {
     int aColumnSize = theTreeView->model()->columnCount();
-    QStringList aValues = theValue.split (",", QString::SplitBehavior::SkipEmptyParts);
+    QStringList aValues = theValue.split (",", QString::SkipEmptyParts);
     QList<int> aColumnIds;
     for (int aValueId = 0; aValueId < aValues.size(); aValueId++)
     {

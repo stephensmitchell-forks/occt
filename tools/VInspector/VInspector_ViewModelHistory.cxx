@@ -25,7 +25,7 @@
 // function : Constructor
 // purpose :
 // =======================================================================
-VInspector_ViewModelHistory::VInspector_ViewModelHistory (QObject* theParent, const int theHistoryTypesMaxAmount)
+VInspector_ViewModelHistory::VInspector_ViewModelHistory (QObject* theParent, const int /*theHistoryTypesMaxAmount*/)
 : TreeModel_ModelBase (theParent)
 {
   //for (int aColumnId = 0, aNbColumns = columnCount(); aColumnId < aNbColumns; aColumnId++)
@@ -41,7 +41,7 @@ VInspector_ViewModelHistory::VInspector_ViewModelHistory (QObject* theParent, co
 // function : AddElement
 // purpose :
 // =======================================================================
-void VInspector_ViewModelHistory::AddElement (const VInspector_CallBackMode& theMode, const QList<QVariant>& theInfo)
+void VInspector_ViewModelHistory::AddElement (const VInspector_CallBackMode& /*theMode*/, const QList<QVariant>& /*theInfo*/)
 {
   // fill root item by the application
   //for (int aColId = 0, aNbColumns = columnCount(); aColId < aNbColumns; aColId++)
@@ -57,7 +57,7 @@ void VInspector_ViewModelHistory::AddElement (const VInspector_CallBackMode& the
 // function : GetSelectedPointers
 // purpose :
 // =======================================================================
-QStringList VInspector_ViewModelHistory::GetSelectedPointers (const QModelIndex& theIndex)
+QStringList VInspector_ViewModelHistory::GetSelectedPointers (const QModelIndex& /*theIndex*/)
 {
   QStringList aPointers;
   //TreeModel_ItemBasePtr anItem = TreeModel_ModelBase::GetItemByIndex (theIndex);
@@ -92,7 +92,7 @@ QStringList VInspector_ViewModelHistory::GetSelectedPointers (const QModelIndex&
 // function : headerData
 // purpose :
 // =======================================================================
-QVariant VInspector_ViewModelHistory::headerData (int theSection, Qt::Orientation theOrientation, int theRole) const
+QVariant VInspector_ViewModelHistory::headerData (int /*theSection*/, Qt::Orientation /*theOrientation*/, int /*theRole*/) const
 {
   //if (theOrientation != Qt::Horizontal || theRole != Qt::DisplayRole)
   //  return QVariant();

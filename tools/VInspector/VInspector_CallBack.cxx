@@ -38,7 +38,7 @@ IMPLEMENT_STANDARD_RTTIEXT(VInspector_CallBack, VInspectorAPI_CallBack)
 // function : Activate
 // purpose :
 // =======================================================================
-void VInspector_CallBack::Activate (Handle(AIS_InteractiveObject) thePrs, const Standard_Integer theMode)
+void VInspector_CallBack::Activate (Handle(AIS_InteractiveObject) /*thePrs*/, const Standard_Integer /*theMode*/)
 {
   //QList<QVariant> anInfo = VInspector_Tools::GetInfo (thePrs);
   //anInfo[0] = QString ("%1: %2").arg (anInfo[0].toString()).arg (theMode);
@@ -49,7 +49,7 @@ void VInspector_CallBack::Activate (Handle(AIS_InteractiveObject) thePrs, const 
 // function : AddOrRemoveSelected
 // purpose :
 // =======================================================================
-void VInspector_CallBack::AddOrRemoveSelected (const TopoDS_Shape& theShape)
+void VInspector_CallBack::AddOrRemoveSelected (const TopoDS_Shape& /*theShape*/)
 {
   //QList<QVariant> aValues;
   //aValues.append (""); // Name
@@ -63,7 +63,7 @@ void VInspector_CallBack::AddOrRemoveSelected (const TopoDS_Shape& theShape)
 // function : AddOrRemoveSelected
 // purpose :
 // =======================================================================
-void VInspector_CallBack::AddOrRemoveSelected (Handle(AIS_InteractiveObject) thePrs)
+void VInspector_CallBack::AddOrRemoveSelected (Handle(AIS_InteractiveObject) /*thePrs*/)
 {
   //QList<QVariant> aValues = VInspector_Tools::GetInfo (thePrs);
   //aValues.append (VInspector_Tools::GetSelectedInfoPointers (myContext)); // SelectionInfo
@@ -74,7 +74,7 @@ void VInspector_CallBack::AddOrRemoveSelected (Handle(AIS_InteractiveObject) the
 // function : AddOrRemoveSelected
 // purpose :
 // =======================================================================
-void VInspector_CallBack::AddOrRemoveSelected (Handle(SelectMgr_EntityOwner) theOwner)
+void VInspector_CallBack::AddOrRemoveSelected (Handle(SelectMgr_EntityOwner) /*theOwner*/)
 {
   //QList<QVariant> aValues;
   //aValues.append (""); // Name
@@ -132,7 +132,7 @@ void VInspector_CallBack::ShiftSelect()
 // function : GetInfo
 // purpose :
 // =======================================================================
-QString VInspector_CallBack::GetInfo (const VInspector_CallBackMode& theMode)
+QString VInspector_CallBack::GetInfo (const VInspector_CallBackMode& /*theMode*/)
 {
   //switch (theMode)
   //{

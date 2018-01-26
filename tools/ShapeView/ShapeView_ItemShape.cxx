@@ -210,7 +210,6 @@ QVariant ShapeView_ItemShape::initValue(const int theRole) const
   if (theRole != Qt::DisplayRole && theRole != Qt::ToolTipRole)
     return QVariant();
 
-  bool isDisplayRole = theRole == Qt::DisplayRole;
   switch (Column())
   {
     case 0: return ToName (aShape.ShapeType());

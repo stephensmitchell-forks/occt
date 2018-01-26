@@ -519,7 +519,7 @@ void VInspector_Window::onHistoryViewContextMenuRequested (const QPoint& thePosi
 // function : onHistoryViewSelectionChanged
 // purpose :
 // =======================================================================
-void VInspector_Window::onHistoryViewSelectionChanged (const QItemSelection& theSelected,
+void VInspector_Window::onHistoryViewSelectionChanged (const QItemSelection& /*theSelected*/,
                                                        const QItemSelection&)
 {
   //VInspector_ViewModelHistory* aHistoryModel = dynamic_cast<VInspector_ViewModelHistory*> (myHistoryView->model());

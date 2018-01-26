@@ -37,7 +37,7 @@ public:
   Standard_EXPORT TInspector_Communicator();
 
   //! Destructor
-  virtual ~TInspector_Communicator();
+  virtual ~TInspector_Communicator() {}
 
   //! Registers plugin into TInspector window
   //! \param thePluginName a name of the plugin

@@ -52,7 +52,7 @@ public:
 
   //! Provide container for actions available in inspector on general level
   //! \param theMenu if Qt implementation, it is QMenu object
-  Standard_EXPORT virtual void FillActionsMenu (void* theMenu) {}
+  Standard_EXPORT virtual void FillActionsMenu (void* theMenu) { (void)theMenu; }
 
   //! Returns plugin preferences, empty implementation by default
   virtual void GetPreferences (TInspectorAPI_PreferencesDataMap&) {}

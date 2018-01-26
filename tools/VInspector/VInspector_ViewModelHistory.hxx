@@ -71,7 +71,7 @@ public:
 protected:
   //! Creates root item
   //! \param theColumnId index of a column
-  virtual void createRootItem (const int theColumnId) Standard_OVERRIDE {}
+  virtual void createRootItem (const int theColumnId) Standard_OVERRIDE { (void)theColumnId; }
 
 private:
 

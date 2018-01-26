@@ -207,7 +207,13 @@ void TreeModel_ModelBase::EmitDataChanged (const QModelIndex& theTopLeft, const 
   TreeModel_ItemBasePtr anItemBase = TreeModel_ModelBase::GetItemByIndex (theTopLeft);
   if (anItemBase && isResetItem)
     anItemBase->Reset();
+
+#if QT_VERSION < 0x050000
+  (void)theRoles;
+  emit dataChanged (theTopLeft, theBottomRight);
+#else
   emit dataChanged (theTopLeft, theBottomRight, theRoles);
+#endif
 }
 
 // =======================================================================
