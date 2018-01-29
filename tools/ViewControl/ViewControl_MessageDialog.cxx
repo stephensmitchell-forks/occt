@@ -13,7 +13,7 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement. 
 
-#include <inspector/TreeModel_MessageDialog.hxx>
+#include <inspector/ViewControl_MessageDialog.hxx>
 
 #include <QCheckBox>
 #include <QCursor>
@@ -26,7 +26,7 @@
 // function : Constructor
 // purpose :
 // =======================================================================
-TreeModel_MessageDialog::TreeModel_MessageDialog (QWidget* theParent, const QString& theInformation,
+ViewControl_MessageDialog::ViewControl_MessageDialog (QWidget* theParent, const QString& theInformation,
                                                   const QString& theQuestion)
 : QDialog (theParent), myDoNotShowItAgain (false), myPreviousAnswer (false), myInformation (theInformation),
  myQuestion (theQuestion)
@@ -63,7 +63,7 @@ TreeModel_MessageDialog::TreeModel_MessageDialog (QWidget* theParent, const QStr
 // function : Start
 // purpose :
 // =======================================================================
-void TreeModel_MessageDialog::Start()
+void ViewControl_MessageDialog::Start()
 {
   if (!myDoNotShowItAgain)
   {
@@ -90,7 +90,7 @@ void TreeModel_MessageDialog::Start()
 // function : onOkClicked
 // purpose :
 // =======================================================================
-void TreeModel_MessageDialog::onOkClicked()
+void ViewControl_MessageDialog::onOkClicked()
 {
   myPreviousAnswer = true;
   if (myDoNotShowItAgain)
@@ -103,7 +103,7 @@ void TreeModel_MessageDialog::onOkClicked()
 // function : onCancelClicked
 // purpose :
 // =======================================================================
-void TreeModel_MessageDialog::onCancelClicked()
+void ViewControl_MessageDialog::onCancelClicked()
 {
   myPreviousAnswer = false;
   if (myDoNotShowItAgain)
@@ -116,7 +116,7 @@ void TreeModel_MessageDialog::onCancelClicked()
 // function : setToolTipInfoMode
 // purpose :
 // =======================================================================
-void TreeModel_MessageDialog::setToolTipInfoMode()
+void ViewControl_MessageDialog::setToolTipInfoMode()
 {
   //setWindowFlags (Qt::FramelessWindowHint);
   //myDoNotShowCheckBox->setVisible (false);

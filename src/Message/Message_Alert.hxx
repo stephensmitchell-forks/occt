@@ -74,9 +74,6 @@ public:
   //! Returns list of collected alerts with specified gravity
   Standard_EXPORT Message_ListOfAlert& GetAlerts (Message_Gravity theGravity);
 
-  //! Returns true if specific type of alert is recorded with specified gravity
-  Standard_EXPORT Standard_Boolean HasAlert (const Handle(Standard_Type)& theType, Message_Gravity theGravity);
-
   //! Returns the alert elapsed time
   //! @return double value
   Standard_EXPORT Standard_Real ElapsedTime() const { return myElapsedTime; }

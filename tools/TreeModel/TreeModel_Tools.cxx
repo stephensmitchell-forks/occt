@@ -76,17 +76,6 @@ QByteArray TreeModel_Tools::ToByteArray (const QString& theValue)
 }
 
 // =======================================================================
-// function : CreateAction
-// purpose :
-// =======================================================================
-QAction* TreeModel_Tools::CreateAction (const QString& theText, const char* theSlot, QObject* theParent, QObject* theContext)
-{
-  QAction* anAction = new QAction (theText, theParent);
-  QObject::connect (anAction, SIGNAL (triggered (bool)), theContext, theSlot);
-  return anAction;
-}
-
-// =======================================================================
 // function : SaveState
 // purpose :
 // =======================================================================
@@ -154,8 +143,9 @@ void TreeModel_Tools::SetDefaultHeaderSections(QTreeView* theTreeView)
 
   for (int aColumnId = 0, aNbColumns = aTreeModel->columnCount(); aColumnId < aNbColumns; aColumnId++)
   {
-    theTreeView->setColumnWidth (aColumnId, aTreeModel->ColumnWidth (aColumnId));
-    theTreeView->setColumnHidden (aColumnId, aTreeModel->GetHeaderItem (aColumnId).IsHidden());
+    TreeModel_HeaderSection aSection = aTreeModel->GetHeaderItem (aColumnId);
+    theTreeView->setColumnWidth (aColumnId, aSection.GetWidth());
+    theTreeView->setColumnHidden (aColumnId, aSection.IsHidden());
   }
 }
 

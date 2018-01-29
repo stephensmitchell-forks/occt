@@ -39,7 +39,7 @@ class DFBrowser_PropertyPanel;
 class DFBrowser_Thread;
 class DFBrowser_TreeLevelLine;
 
-class TreeModel_MessageDialog;
+class ViewControl_MessageDialog;
 
 class View_ToolBar;
 class View_Window;
@@ -112,10 +112,6 @@ public:
 
   //! Returns tree level line control
   DFBrowser_TreeLevelLine* GetTreeLevelLine() const { return myTreeLevelLine; }
-
-  //! Change palette of the widget to have white foreground
-  //! \param theControl a widget to be modified
-  Standard_EXPORT static void SetWhiteBackground (QWidget* theControl);
 
   //! Returns temporary directory defined by environment variables TEMP or TMP
   //! \return string value
@@ -237,7 +233,7 @@ private:
   View_Window* myViewWindow; //!< V3d view to visualize presentations/references if it can be build for a selected item
   DFBrowser_DumpView* myDumpView; //!< Text editor where "Dump" method output is shown
   DFBrowser_Thread* myThread; //!< Threads manipulator, starting thread items, listens finalizing
-  TreeModel_MessageDialog* myExportToShapeViewDialog; //!< dialog about exporting TopoDS_Shape to ShapeView plugin
+  ViewControl_MessageDialog* myExportToShapeViewDialog; //!< dialog about exporting TopoDS_Shape to ShapeView plugin
   Handle(TInspectorAPI_PluginParameters) myParameters; //!< contains application, context, files that should be opened
 };
 

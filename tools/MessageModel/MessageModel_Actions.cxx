@@ -22,7 +22,7 @@
 #include <inspector/MessageModel_Tools.hxx>
 #include <inspector/MessageModel_TreeModel.hxx>
 #include <inspector/TInspectorAPI_PluginParameters.hxx>
-#include <inspector/TreeModel_Tools.hxx>
+#include <inspector/ViewControl_Tools.hxx>
 
 #include <TCollection_AsciiString.hxx>
 #include <TopoDS_AlertWithShape.hxx>
@@ -43,11 +43,11 @@ MessageModel_Actions::MessageModel_Actions (QWidget* theParent,
 : QObject (theParent), myTreeModel (theTreeModel), mySelectionModel (theModel)
 {
   myActions.insert (MessageModel_ActionType_Deactivate,
-                    TreeModel_Tools::CreateAction ("Deactivate", SLOT (OnDeactivateReport()), parent(), this));
+                    ViewControl_Tools::CreateAction ("Deactivate", SLOT (OnDeactivateReport()), parent(), this));
   myActions.insert (MessageModel_ActionType_Activate,
-                    TreeModel_Tools::CreateAction ("Activate", SLOT (OnActivateReport()), parent(), this));
+                    ViewControl_Tools::CreateAction ("Activate", SLOT (OnActivateReport()), parent(), this));
   myActions.insert (MessageModel_ActionType_ExportToShapeView,
-                    TreeModel_Tools::CreateAction (tr ("Export to ShapeView"), SLOT (OnExportToShapeView()), parent(), this));
+                    ViewControl_Tools::CreateAction (tr ("Export to ShapeView"), SLOT (OnExportToShapeView()), parent(), this));
 }
 
 // =======================================================================

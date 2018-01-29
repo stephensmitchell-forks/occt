@@ -25,6 +25,8 @@
 #include <inspector/DFBrowser_SearchView.hxx>
 #include <inspector/DFBrowser_Window.hxx>
 
+#include <inspector/ViewControl_Tools.hxx>
+
 #include <TDF_Attribute.hxx>
 
 #include <QItemSelectionModel>
@@ -49,9 +51,9 @@ DFBrowser_AttributePaneStack::DFBrowser_AttributePaneStack (QObject* theParent)
 void DFBrowser_AttributePaneStack::CreateWidget (QWidget* theParent)
 {
   myAttributesStack = new QStackedWidget (theParent);
-  DFBrowser_Window::SetWhiteBackground (myAttributesStack);
+  ViewControl_Tools::SetWhiteBackground (myAttributesStack);
   myEmptyWidget = new QWidget (theParent);
-  DFBrowser_Window::SetWhiteBackground (myEmptyWidget);
+  ViewControl_Tools::SetWhiteBackground (myEmptyWidget);
 
   myAttributesStack->addWidget (myEmptyWidget);
 

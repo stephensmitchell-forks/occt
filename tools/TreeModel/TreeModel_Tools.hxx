@@ -19,9 +19,11 @@
 #include <Standard.hxx>
 #include <Standard_Macro.hxx>
 
+#include <QApplication>
+#include <QByteArray>
 #include <QMap>
 #include <QString>
-#include <QByteArray>
+#include <QStyle>
 
 class QAction;
 class QObject;
@@ -43,14 +45,9 @@ public:
   //! \return the extended filled array
   Standard_EXPORT static QByteArray ToByteArray (const QString& theValue);
 
-  //! Creates an action with the given text connected to the slot
-  //! \param theText an action text value
-  //! \param theSlot a listener of triggered signal of the new action
-  //! \param theParent a parent object
-  //! \param theContext listener of the action toggle
-  //! \return a new action
-  Standard_EXPORT static QAction* CreateAction (const QString& theText, const char* theSlot,
-                                                QObject* theParent, QObject* theContext);
+  //! Returns header margin, defined in style settings of application
+  //! \return integer value
+  Standard_EXPORT static int HeaderSectionMargin() { return qApp->style()->pixelMetric (QStyle::PM_HeaderMargin); }
 
   //! Save state of three view in a container in form: key, value. It saves:
   //! - visibiblity of columns,
@@ -70,6 +67,7 @@ public:
                                             const QString& thePrefix = QString());
 
   //! Fills tree view by default sections parameters obtained in view's tree model
+  //! \param theTreeView tree view instance
   Standard_EXPORT static void SetDefaultHeaderSections (QTreeView* theTreeView);
 
   //! Sets using visibility column in the tree view:

@@ -16,6 +16,8 @@
 #include <inspector/DFBrowserPane_TableView.hxx>
 #include <inspector/DFBrowserPane_Tools.hxx>
 
+#include <inspector/TreeModel_Tools.hxx>
+
 #include <QAbstractTableModel>
 #include <QHeaderView>
 #include <QHBoxLayout>
@@ -68,7 +70,7 @@ void DFBrowserPane_TableView::SetModel (QAbstractTableModel* theModel)
 // =======================================================================
 void DFBrowserPane_TableView::SetFixedRowCount (const int theCount, QTableView* theView, const bool theScroll)
 {
-  double aHeight = theView->verticalHeader()->defaultSectionSize()*theCount + DFBrowserPane_Tools::HeaderSectionMargin();
+  double aHeight = theView->verticalHeader()->defaultSectionSize()*theCount + TreeModel_Tools::HeaderSectionMargin();
   if (theScroll)
     aHeight += theView->horizontalScrollBar()->sizeHint().height();
 

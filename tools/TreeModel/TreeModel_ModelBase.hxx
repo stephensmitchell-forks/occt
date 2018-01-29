@@ -128,11 +128,6 @@ public:
   //! \return the number of rows
   Standard_EXPORT virtual int rowCount (const QModelIndex& theParent = QModelIndex()) const Standard_OVERRIDE;
 
-  //! Returns width of the view column
-  //! \param theColumnId a column index
-  //! \return width value
-  Standard_EXPORT int ColumnWidth (const int theColumnId) const;
-
   //! Returns whether the column is hidden by default
   //! \param theColumnId a column index
   //! \return header section values container

@@ -176,18 +176,6 @@ int TreeModel_ModelBase::rowCount (const QModelIndex& theParent) const
 }
 
 // =======================================================================
-// function : ColumnWidth
-// purpose :
-// =======================================================================
-int TreeModel_ModelBase::ColumnWidth (const int theColumnId) const
-{
-  if (myHeaderValues[theColumnId].GetWidth() > 0)
-    return myHeaderValues[theColumnId].GetWidth();
-
-  return TreeModel_Tools::GetTextWidth (myHeaderValues[theColumnId].GetName(), QObject::parent());
-}
-
-// =======================================================================
 // function : EmitLayoutChanged
 // purpose :
 // =======================================================================

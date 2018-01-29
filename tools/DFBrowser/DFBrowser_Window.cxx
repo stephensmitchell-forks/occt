@@ -39,13 +39,15 @@
 #include <inspector/DFBrowser_TreeLevelLine.hxx>
 #include <inspector/DFBrowser_TreeLevelView.hxx>
 #include <inspector/DFBrowser_TreeModel.hxx>
-#include <inspector/DFBrowser_TreeView.hxx>
 
 #include <inspector/DFBrowserPane_AttributePaneSelector.hxx>
 #include <inspector/DFBrowserPane_SelectionKind.hxx>
 #include <inspector/DFBrowserPane_Tools.hxx>
 
 #include <inspector/TreeModel_ContextMenu.hxx>
+#include <inspector/TreeModel_Tools.hxx>
+
+#include <inspector/ViewControl_TreeView.hxx>
 
 #include <OSD_Directory.hxx>
 #include <OSD_Environment.hxx>
@@ -58,8 +60,8 @@
 #include <inspector/View_Window.hxx>
 
 #include <TDF_Tool.hxx>
-#include <inspector/TreeModel_MessageDialog.hxx>
-#include <inspector/TreeModel_Tools.hxx>
+#include <inspector/ViewControl_MessageDialog.hxx>
+#include <inspector/ViewControl_Tools.hxx>
 
 #include <QAction>
 #include <QApplication>
@@ -106,13 +108,13 @@ DFBrowser_Window::DFBrowser_Window()
   myMainWindow = new QMainWindow (0);
 
   // tree view
-  myTreeView = new DFBrowser_TreeView (myMainWindow);
+  myTreeView = new ViewControl_TreeView (myMainWindow);
   myTreeView->setContextMenuPolicy (Qt::CustomContextMenu);
   connect (myTreeView, SIGNAL (customContextMenuRequested (const QPoint&)),
            this, SLOT (onTreeViewContextMenuRequested (const QPoint&)));
   new TreeModel_ContextMenu (myTreeView);
-  ((DFBrowser_TreeView*)myTreeView)->SetPredefinedSize (DFBROWSER_DEFAULT_TREE_VIEW_WIDTH,
-                                                        DFBROWSER_DEFAULT_TREE_VIEW_HEIGHT);
+  ((ViewControl_TreeView*)myTreeView)->SetPredefinedSize (QSize (DFBROWSER_DEFAULT_TREE_VIEW_WIDTH,
+                                                                 DFBROWSER_DEFAULT_TREE_VIEW_HEIGHT));
   myTreeView->setHeaderHidden (true);
   myTreeView->setSortingEnabled (Standard_False);
   myMainWindow->setCentralWidget (myTreeView);
@@ -182,11 +184,12 @@ DFBrowser_Window::DFBrowser_Window()
   aViewDockWidget->setTitleBarWidget (myViewWindow->GetViewToolBar()->GetControl());
   aViewDockWidget->setWidget (myViewWindow);
   myMainWindow->addDockWidget (Qt::RightDockWidgetArea, aViewDockWidget);
-  myMainWindow->splitDockWidget(aViewDockWidget, aPropertyPanelWidget, Qt::Vertical);
 
   QColor aHColor (229, 243, 255);
   myViewWindow->GetDisplayer()->SetAttributeColor (Quantity_Color(aHColor.red() / 255., aHColor.green() / 255.,
                                                    aHColor.blue() / 255., Quantity_TOC_RGB), View_PresentationType_Additional);
+
+  myMainWindow->splitDockWidget(aPropertyPanelWidget, aViewDockWidget, Qt::Vertical);
   myMainWindow->tabifyDockWidget (aDumpDockWidget, aViewDockWidget);
 
   myTreeView->resize (DFBROWSER_DEFAULT_TREE_VIEW_WIDTH, DFBROWSER_DEFAULT_TREE_VIEW_HEIGHT);
@@ -585,17 +588,6 @@ void DFBrowser_Window::ClearThreadCache()
 }
 
 // =======================================================================
-// function : SetWhiteBackground
-// purpose :
-// =======================================================================
-void DFBrowser_Window::SetWhiteBackground (QWidget* theControl)
-{
-  QPalette aPalette = theControl->palette();
-  aPalette.setColor (QPalette::All, QPalette::Foreground, Qt::white);
-  theControl->setPalette (aPalette);
-}
-
-// =======================================================================
 // function : TmpDirectory
 // purpose :
 // =======================================================================
@@ -652,9 +644,9 @@ QModelIndex DFBrowser_Window::SingleSelected (const QModelIndexList& theIndices,
 void DFBrowser_Window::onTreeViewContextMenuRequested (const QPoint& thePosition)
 {
   QMenu* aMenu = new QMenu(GetMainWindow());
-  aMenu->addAction (TreeModel_Tools::CreateAction (tr ("Expand"), SLOT (onExpand()), GetMainWindow(), this));
-  aMenu->addAction (TreeModel_Tools::CreateAction (tr ("Expand All"), SLOT (onExpandAll()), GetMainWindow(), this));
-  aMenu->addAction (TreeModel_Tools::CreateAction (tr ("Collapse All"), SLOT (onCollapseAll()), GetMainWindow(), this));
+  aMenu->addAction (ViewControl_Tools::CreateAction (tr ("Expand"), SLOT (onExpand()), GetMainWindow(), this));
+  aMenu->addAction (ViewControl_Tools::CreateAction (tr ("Expand All"), SLOT (onExpandAll()), GetMainWindow(), this));
+  aMenu->addAction (ViewControl_Tools::CreateAction (tr ("Collapse All"), SLOT (onCollapseAll()), GetMainWindow(), this));
 
   QPoint aPoint = myTreeView->mapToGlobal (thePosition);
   aMenu->exec (aPoint);
@@ -784,7 +776,7 @@ void DFBrowser_Window::onPaneSelectionChanged (const QItemSelection&,
         QString aQuestion = QString ("Would you like to activate %1 immediately?\n")
           .arg (aPluginShortName.ToCString()).toStdString().c_str();
         if (!myExportToShapeViewDialog)
-          myExportToShapeViewDialog = new TreeModel_MessageDialog (myParent, aMessage, aQuestion);
+          myExportToShapeViewDialog = new ViewControl_MessageDialog (myParent, aMessage, aQuestion);
         else
           myExportToShapeViewDialog->SetInformation (aMessage);
         myExportToShapeViewDialog->Start();

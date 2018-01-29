@@ -21,6 +21,8 @@
 #include <inspector/DFBrowserPane_Tools.hxx>
 #include <inspector/TreeModel_ModelBase.hxx>
 
+#include <inspector/ViewControl_Tools.hxx>
+
 #include <QItemSelectionModel>
 
 #include <QGridLayout>
@@ -61,7 +63,7 @@ DFBrowser_TreeLevelView::DFBrowser_TreeLevelView (QWidget* theParent)
   connect (myTableView, SIGNAL (doubleClicked (const QModelIndex&)),
            this, SLOT (onTableDoubleClicked (const QModelIndex&)));
 
-  DFBrowser_Window::SetWhiteBackground (myTableView);
+  ViewControl_Tools::SetWhiteBackground (myTableView);
   myTableView->setGridStyle (Qt::NoPen);
 }
 

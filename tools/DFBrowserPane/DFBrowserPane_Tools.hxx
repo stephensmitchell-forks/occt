@@ -27,9 +27,7 @@
 #ifdef _MSC_VER
 #pragma warning(disable : 4127) // conditional expression is constant
 #endif
-#include <QApplication>
 #include <QString>
-#include <QStyle>
 #include <QString>
 #include <QVariant>
 
@@ -45,10 +43,6 @@ public:
   //! \param theColumnId a column index
   //! \returns value
   Standard_EXPORT static int DefaultPanelColumnWidth (const int theColumnId);
-
-  //! Returns header margin, defined in style settings of application
-  //! \return integer value
-  Standard_EXPORT static int HeaderSectionMargin() { return qApp->style()->pixelMetric (QStyle::PM_HeaderMargin); }
 
   //! Returns a string presentation of the label
   //! \param theLabel a label object

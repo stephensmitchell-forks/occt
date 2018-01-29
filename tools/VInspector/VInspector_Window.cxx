@@ -22,9 +22,12 @@
 #include <inspector/MessageModel_TreeModel.hxx>
 #include <inspector/TreeModel_ColumnType.hxx>
 #include <inspector/TreeModel_ContextMenu.hxx>
-#include <inspector/TreeModel_MessageDialog.hxx>
+
 #include <inspector/TreeModel_Tools.hxx>
 #include <inspector/TreeModel_ContextMenu.hxx>
+
+#include <inspector/ViewControl_MessageDialog.hxx>
+#include <inspector/ViewControl_Tools.hxx>
 
 #include <inspector/VInspector_ItemPresentableObject.hxx>
 #include <inspector/VInspector_ToolBar.hxx>
@@ -37,6 +40,8 @@
 #include <inspector/VInspector_ToolBar.hxx>
 #include <inspector/VInspector_Tools.hxx>
 #include <inspector/VInspector_ViewModel.hxx>
+
+#include <inspector/ViewControl_TreeView.hxx>
 
 #include <inspector/View_Widget.hxx>
 #include <inspector/View_Window.hxx>
@@ -67,52 +72,6 @@ const int VINSPECTOR_DEFAULT_HISTORY_VIEW_HEIGHT = 200;
 
 const int VINSPECTOR_DEFAULT_VIEW_POSITION_X = 200 + 900 + 100; // TINSPECTOR_DEFAULT_POSITION_X + TINSPECTOR_DEFAULT_WIDTH + 100
 const int VINSPECTOR_DEFAULT_VIEW_POSITION_Y = 60; // TINSPECTOR_DEFAULT_POSITION_Y + 50
-
-//! \class Vinspector_TreeView
-//! Extended tree view control with possibility to set predefined size.
-class Vinspector_TreeView : public QTreeView
-{
-public:
-  //! Constructor
-  Vinspector_TreeView (QWidget* theParent) : QTreeView (theParent), myDefaultWidth (-1), myDefaultHeight (-1) {}
-
-  //! Destructor
-  virtual ~Vinspector_TreeView() {}
-
-  //! Sets default size of control, that is used by the first control show
-  //! \param theDefaultWidth the width value
-  //! \param theDefaultHeight the height value
-  void SetPredefinedSize (int theDefaultWidth, int theDefaultHeight);
-
-  //! Returns predefined size if both values are positive, otherwise parent size hint
-  virtual QSize sizeHint() const Standard_OVERRIDE;
-
-private:
-
-  int myDefaultWidth; //!< default width, -1 if it should not be used
-  int myDefaultHeight; //!< default height, -1 if it should not be used
-};
-
-// =======================================================================
-// function : SetPredefinedSize
-// purpose :
-// =======================================================================
-void Vinspector_TreeView::SetPredefinedSize (int theDefaultWidth, int theDefaultHeight)
-{
-  myDefaultWidth = theDefaultWidth;
-  myDefaultHeight = theDefaultHeight;
-}
-
-// =======================================================================
-// function : sizeHint
-// purpose :
-// =======================================================================
-QSize Vinspector_TreeView::sizeHint() const
-{
-  if (myDefaultWidth > 0 && myDefaultHeight > 0)
-    return QSize (myDefaultWidth, myDefaultHeight);
-  return QTreeView::sizeHint();
-}
 
 // =======================================================================
 // function : Constructor
@@ -154,9 +113,9 @@ VInspector_Window::VInspector_Window()
   aParentLay->setRowStretch (1, 1);
   myMainWindow->setCentralWidget (aCentralWidget);
 
-  myHistoryView = new Vinspector_TreeView (myMainWindow);
-  ((Vinspector_TreeView*)myHistoryView)->SetPredefinedSize (VINSPECTOR_DEFAULT_HISTORY_VIEW_WIDTH,
-                                                            VINSPECTOR_DEFAULT_HISTORY_VIEW_HEIGHT);
+  myHistoryView = new ViewControl_TreeView (myMainWindow);
+  ((ViewControl_TreeView*)myHistoryView)->SetPredefinedSize (QSize (VINSPECTOR_DEFAULT_HISTORY_VIEW_WIDTH,
+                                                                    VINSPECTOR_DEFAULT_HISTORY_VIEW_HEIGHT));
   myHistoryView->setContextMenuPolicy (Qt::CustomContextMenu);
   myHistoryView->header()->setStretchLastSection (true);
   connect (myHistoryView, SIGNAL (customContextMenuRequested (const QPoint&)),
@@ -434,9 +393,9 @@ void VInspector_Window::OpenFile(const TCollection_AsciiString& theFileName)
 void VInspector_Window::onTreeViewContextMenuRequested(const QPoint& thePosition)
 {
   QMenu* aMenu = new QMenu (GetMainWindow());
-  aMenu->addAction (TreeModel_Tools::CreateAction (tr ("Export to ShapeView"), SLOT (onExportToShapeView()), GetMainWindow(), this));
-  aMenu->addAction (TreeModel_Tools::CreateAction (tr ("Show"), SLOT (onShow()), GetMainWindow(), this));
-  aMenu->addAction (TreeModel_Tools::CreateAction (tr ("Hide"), SLOT (onHide()), GetMainWindow(), this));
+  aMenu->addAction (ViewControl_Tools::CreateAction (tr ("Export to ShapeView"), SLOT (onExportToShapeView()), GetMainWindow(), this));
+  aMenu->addAction (ViewControl_Tools::CreateAction (tr ("Show"), SLOT (onShow()), GetMainWindow(), this));
+  aMenu->addAction (ViewControl_Tools::CreateAction (tr ("Hide"), SLOT (onHide()), GetMainWindow(), this));
   QPoint aPoint = myTreeView->mapToGlobal (thePosition);
   aMenu->exec(aPoint);
 }
@@ -591,7 +550,7 @@ void VInspector_Window::onExportToShapeView()
   QString aQuestion = QString ("Would you like to activate %1 immediately?\n")
     .arg (aPluginShortName.ToCString()).toStdString().c_str();
   if (!myExportToShapeViewDialog)
-    myExportToShapeViewDialog = new TreeModel_MessageDialog (myParent, aMessage, aQuestion);
+    myExportToShapeViewDialog = new ViewControl_MessageDialog (myParent, aMessage, aQuestion);
   else
     myExportToShapeViewDialog->SetInformation (aMessage);
   myExportToShapeViewDialog->Start();

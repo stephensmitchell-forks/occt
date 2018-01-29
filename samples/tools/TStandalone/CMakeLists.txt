@@ -112,6 +112,7 @@ set (BUILD_PROJECTS
   TInspectorAPI
   View
   TreeModel
+  ViewControl
   DFBrowserPane
   DFBrowserPaneXDE
   DFBrowser

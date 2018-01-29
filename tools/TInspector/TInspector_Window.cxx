@@ -21,6 +21,8 @@
 #include <inspector/TInspector_Shortcut.hxx>
 #include <inspector/TreeModel_Tools.hxx>
 
+#include <inspector/ViewControl_Tools.hxx>
+
 #include <OSD_Directory.hxx>
 #include <OSD_Environment.hxx>
 #include <OSD_Path.hxx>
@@ -52,7 +54,7 @@ public:
 protected:
   virtual void closeEvent (QCloseEvent* theEvent)
   {
-    myWindow->OnStorePreferences();
+    //myWindow->OnStorePreferences();
     QMainWindow::closeEvent (theEvent);
   }
 
@@ -506,9 +508,9 @@ void TInspector_Window::onShowActionsMenu()
   anInfo.myCommunicator->FillActionsMenu(aMenu);
 
   aMenu->addSeparator();
-  aMenu->addAction (TreeModel_Tools::CreateAction (tr ("Store Preferences"),
+  aMenu->addAction (ViewControl_Tools::CreateAction (tr ("Store Preferences"),
                     SLOT (OnStorePreferences()), myMainWindow, this));
-  aMenu->addAction (TreeModel_Tools::CreateAction (tr ("Default Preferences"),
+  aMenu->addAction (ViewControl_Tools::CreateAction (tr ("Default Preferences"),
                     SLOT (OnRemovePreferences()), myMainWindow, this));
 }
 

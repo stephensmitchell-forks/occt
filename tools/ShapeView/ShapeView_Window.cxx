@@ -26,6 +26,12 @@
 #include <inspector/TreeModel_Tools.hxx>
 #include <inspector/TreeModel_ContextMenu.hxx>
 
+#include <inspector/ViewControl_DockWidget.hxx>
+#include <inspector/ViewControl_PropertyView.hxx>
+#include <inspector/ViewControl_TableModelValues.hxx>
+#include <inspector/ViewControl_Tools.hxx>
+#include <inspector/ViewControl_TreeView.hxx>
+
 #include <inspector/View_Displayer.hxx>
 #include <inspector/View_PresentationType.hxx>
 #include <inspector/View_ToolBar.hxx>
@@ -70,53 +76,7 @@ const int SHAPEVIEW_DEFAULT_TREE_VIEW_WIDTH = 600;
 const int SHAPEVIEW_DEFAULT_TREE_VIEW_HEIGHT = 500;
 
 const int SHAPEVIEW_DEFAULT_VIEW_WIDTH = 200;//400;
-const int SHAPEVIEW_DEFAULT_VIEW_HEIGHT = 1000;
-
-//! \class ShapeView_TreeView
-//! Extended tree view control with possibility to set predefined size.
-class ShapeView_TreeView : public QTreeView
-{
-public:
-  //! Constructor
-  ShapeView_TreeView (QWidget* theParent) : QTreeView (theParent), myDefaultWidth (-1), myDefaultHeight (-1) {}
-
-  //! Destructor
-  virtual ~ShapeView_TreeView() {}
-
-  //! Sets default size of control, that is used by the first control show
-  //! \param theDefaultWidth the width value
-  //! \param theDefaultHeight the height value
-  void SetPredefinedSize (int theDefaultWidth, int theDefaultHeight);
-
-  //! Returns predefined size if both values are positive, otherwise parent size hint
-  virtual QSize sizeHint() const Standard_OVERRIDE;
-
-private:
-
-  int myDefaultWidth; //!< default width, -1 if it should not be used
-  int myDefaultHeight; //!< default height, -1 if it should not be used
-};
-
-// =======================================================================
-// function : SetPredefinedSize
-// purpose :
-// =======================================================================
-void ShapeView_TreeView::SetPredefinedSize (int theDefaultWidth, int theDefaultHeight)
-{
-  myDefaultWidth = theDefaultWidth;
-  myDefaultHeight = theDefaultHeight;
-}
-
-// =======================================================================
-// function : sizeHint
-// purpose :
-// =======================================================================
-QSize ShapeView_TreeView::sizeHint() const
-{
-  if (myDefaultWidth > 0 && myDefaultHeight > 0)
-    return QSize (myDefaultWidth, myDefaultHeight);
-  return QTreeView::sizeHint();
-}
+const int SHAPEVIEW_DEFAULT_VIEW_HEIGHT = 300;
 
 // =======================================================================
 // function : Constructor
@@ -127,9 +87,9 @@ ShapeView_Window::ShapeView_Window (QWidget* theParent)
 {
   myMainWindow = new QMainWindow (theParent);
 
-  myTreeView = new ShapeView_TreeView (myMainWindow);
-  ((ShapeView_TreeView*)myTreeView)->SetPredefinedSize (SHAPEVIEW_DEFAULT_TREE_VIEW_WIDTH,
-                                                        SHAPEVIEW_DEFAULT_TREE_VIEW_HEIGHT);
+  myTreeView = new ViewControl_TreeView (myMainWindow);
+  ((ViewControl_TreeView*)myTreeView)->SetPredefinedSize (QSize (SHAPEVIEW_DEFAULT_TREE_VIEW_WIDTH,
+                                                                 SHAPEVIEW_DEFAULT_TREE_VIEW_HEIGHT));
   myTreeView->setContextMenuPolicy (Qt::CustomContextMenu);
   connect (myTreeView, SIGNAL (customContextMenuRequested (const QPoint&)),
           this, SLOT (onTreeViewContextMenuRequested (const QPoint&)));
@@ -150,6 +110,16 @@ ShapeView_Window::ShapeView_Window (QWidget* theParent)
   myTreeView->setExpanded (aParentIndex, true);
   myMainWindow->setCentralWidget (myTreeView);
 
+  // property view
+  myPropertyView = new ViewControl_PropertyView (myMainWindow);
+  myPropertyPanelWidget = new QDockWidget (tr ("PropertyPanel"), myMainWindow);
+  myPropertyPanelWidget->setObjectName (myPropertyPanelWidget->windowTitle());
+  myPropertyPanelWidget->setTitleBarWidget (new QWidget(myMainWindow));
+  myPropertyPanelWidget->setWidget (myPropertyView->GetControl());
+  myMainWindow->addDockWidget (Qt::RightDockWidgetArea, myPropertyPanelWidget);
+  connect (myPropertyPanelWidget->toggleViewAction(), SIGNAL(toggled(bool)), this, SLOT (onPropertyPanelShown (bool)));
+  //connect (((ViewControl_DockWidget*)myPropertyPanelWidget), SIGNAL (closed()), this, SLOT (onPropertyPanelClosed()));
+
   // view
   myViewWindow = new View_Window (myMainWindow, false);
   aVisibilityState->SetDisplayer (myViewWindow->GetDisplayer());
@@ -161,6 +131,7 @@ ShapeView_Window::ShapeView_Window (QWidget* theParent)
   aViewDockWidget->setWidget (myViewWindow);
   aViewDockWidget->setTitleBarWidget (myViewWindow->GetViewToolBar()->GetControl());
   myMainWindow->addDockWidget (Qt::RightDockWidgetArea, aViewDockWidget);
+  myMainWindow->splitDockWidget(aViewDockWidget, myPropertyPanelWidget, Qt::Vertical);
 
   myMainWindow->resize (DEFAULT_SHAPE_VIEW_WIDTH, DEFAULT_SHAPE_VIEW_HEIGHT);
   myMainWindow->move (DEFAULT_SHAPE_VIEW_POSITION_X, DEFAULT_SHAPE_VIEW_POSITION_Y);
@@ -376,6 +347,18 @@ void ShapeView_Window::addShape (const TopoDS_Shape& theShape)
 // function : onTreeViewContextMenuRequested
 // purpose :
 // =======================================================================
+void ShapeView_Window::onTreeViewSelectionChanged (const QItemSelection&, const QItemSelection&)
+{
+  if (!myPropertyPanelWidget->toggleViewAction()->isChecked())
+    return;
+
+  updatePropertyPanelBySelection();
+}
+
+// =======================================================================
+// function : onTreeViewContextMenuRequested
+// purpose :
+// =======================================================================
 void ShapeView_Window::onTreeViewContextMenuRequested (const QPoint& thePosition)
 {
   QItemSelectionModel* aModel = myTreeView->selectionModel();
@@ -390,17 +373,39 @@ void ShapeView_Window::onTreeViewContextMenuRequested (const QPoint& thePosition
   QMenu* aMenu = new QMenu(myMainWindow);
   ShapeView_ItemRootPtr aRootItem = itemDynamicCast<ShapeView_ItemRoot> (anItemBase);
   if (aRootItem) {
-    aMenu->addAction (TreeModel_Tools::CreateAction ("Load BREP file", SLOT (onLoadFile()), myMainWindow, this));
-    aMenu->addAction (TreeModel_Tools::CreateAction ("Remove all shape items", SLOT (onClearView()), myMainWindow, this));
+    aMenu->addAction (ViewControl_Tools::CreateAction ("Load BREP file", SLOT (onLoadFile()), myMainWindow, this));
+    aMenu->addAction (ViewControl_Tools::CreateAction ("Remove all shape items", SLOT (onClearView()), myMainWindow, this));
   }
   else {
     if (!GetTemporaryDirectory().IsEmpty())
-      aMenu->addAction (TreeModel_Tools::CreateAction ("BREP view", SLOT (onBREPView()), myMainWindow, this));
-    aMenu->addAction (TreeModel_Tools::CreateAction ("Close All BREP views", SLOT (onCloseAllBREPViews()), myMainWindow, this));
-    aMenu->addAction (TreeModel_Tools::CreateAction ("BREP directory", SLOT (onBREPDirectory()), myMainWindow, this));
+      aMenu->addAction (ViewControl_Tools::CreateAction ("BREP view", SLOT (onBREPView()), myMainWindow, this));
+    aMenu->addAction (ViewControl_Tools::CreateAction ("Close All BREP views", SLOT (onCloseAllBREPViews()), myMainWindow, this));
+    aMenu->addAction (ViewControl_Tools::CreateAction ("BREP directory", SLOT (onBREPDirectory()), myMainWindow, this));
   }
+
   QPoint aPoint = myTreeView->mapToGlobal (thePosition);
   aMenu->exec (aPoint);
+}
+
+// =======================================================================
+// function : onTreeViewContextMenuRequested
+// purpose :
+// =======================================================================
+void ShapeView_Window::onPropertyPanelShown (bool isToggled)
+{
+  if (!isToggled)
+    return;
+
+  updatePropertyPanelBySelection();
+}
+
+// =======================================================================
+// function : onTreeViewContextMenuRequested
+// purpose :
+// =======================================================================
+void ShapeView_Window::onPropertyPanelClosed()
+{
+  myPropertyView->Clear();
 }
 
 // =======================================================================
@@ -498,6 +503,30 @@ void ShapeView_Window::onEditorDestroyed(QObject* theObject)
     if (myBREPViews[aViewId] == aWidget)
       myBREPViews.removeAll(aWidget);
   }
+}
+
+// =======================================================================
+// function : updatePropertyPanelBySelection
+// purpose :
+// =======================================================================
+void ShapeView_Window::updatePropertyPanelBySelection()
+{
+  QItemSelectionModel* aModel = myTreeView->selectionModel();
+  if (!aModel)
+    return;
+
+  QModelIndex anIndex = ShapeView_TreeModel::SingleSelected (aModel->selectedIndexes(), 0);
+  TreeModel_ItemBasePtr anItemBase = TreeModel_ModelBase::GetItemByIndex (anIndex);
+  if (!anItemBase)
+    return;
+
+  ShapeView_ItemShapePtr aShapeItem = itemDynamicCast<ShapeView_ItemShape>(anItemBase);
+  if (!aShapeItem)
+    return;
+
+  QList<ViewControl_TableModelValues*> aTableValues;
+  aShapeItem->GetPropertyValues (aTableValues);
+  myPropertyView->Init (aTableValues);
 }
 
 // =======================================================================

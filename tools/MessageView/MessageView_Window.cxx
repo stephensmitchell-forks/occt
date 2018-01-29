@@ -25,6 +25,8 @@
 #include <inspector/TreeModel_ContextMenu.hxx>
 #include <inspector/TreeModel_Tools.hxx>
 
+#include <inspector/ViewControl_TreeView.hxx>
+
 #include <OSD_Environment.hxx>
 
 #include <OSD_Directory.hxx>
@@ -35,6 +37,7 @@
 
 #include <XmlDrivers_MessageReportStorage.hxx>
 
+#include <inspector/ViewControl_Tools.hxx>
 #include <inspector/View_Displayer.hxx>
 #include <inspector/View_ToolBar.hxx>
 #include <inspector/View_Widget.hxx>
@@ -85,52 +88,6 @@ const int MESSAGEVIEW_DEFAULT_TREE_VIEW_HEIGHT = 500;
 const int MESSAGEVIEW_DEFAULT_VIEW_WIDTH = 200;// 400;
 const int MESSAGEVIEW_DEFAULT_VIEW_HEIGHT = 300;// 1000;
 
-//! \class MessageView_TreeView
-//! Extended tree view control with possibility to set predefined size.
-class MessageView_TreeView : public QTreeView
-{
-public:
-  //! Constructor
-  MessageView_TreeView (QWidget* theParent) : QTreeView (theParent), myDefaultWidth (-1), myDefaultHeight (-1) {}
-
-  //! Destructor
-  virtual ~MessageView_TreeView() {}
-
-  //! Sets default size of control, that is used by the first control show
-  //! \param theDefaultWidth the width value
-  //! \param theDefaultHeight the height value
-  void SetPredefinedSize (int theDefaultWidth, int theDefaultHeight);
-
-  //! Returns predefined size if both values are positive, otherwise parent size hint
-  virtual QSize sizeHint() const Standard_OVERRIDE;
-
-private:
-
-  int myDefaultWidth; //!< default width, -1 if it should not be used
-  int myDefaultHeight; //!< default height, -1 if it should not be used
-};
-
-// =======================================================================
-// function : SetPredefinedSize
-// purpose :
-// =======================================================================
-void MessageView_TreeView::SetPredefinedSize (int theDefaultWidth, int theDefaultHeight)
-{
-  myDefaultWidth = theDefaultWidth;
-  myDefaultHeight = theDefaultHeight;
-}
-
-// =======================================================================
-// function : sizeHint
-// purpose :
-// =======================================================================
-QSize MessageView_TreeView::sizeHint() const
-{
-  if (myDefaultWidth > 0 && myDefaultHeight > 0)
-    return QSize (myDefaultWidth, myDefaultHeight);
-  return QTreeView::sizeHint();
-}
-
 // =======================================================================
 // function : Constructor
 // purpose :
@@ -140,9 +97,9 @@ MessageView_Window::MessageView_Window (QWidget* theParent)
 {
   myMainWindow = new QMainWindow (theParent);
 
-  myTreeView = new MessageView_TreeView (myMainWindow);
-  ((MessageView_TreeView*)myTreeView)->SetPredefinedSize (MESSAGEVIEW_DEFAULT_TREE_VIEW_WIDTH,
-                                                          MESSAGEVIEW_DEFAULT_TREE_VIEW_HEIGHT);
+  myTreeView = new ViewControl_TreeView (myMainWindow);
+  ((ViewControl_TreeView*)myTreeView)->SetPredefinedSize (QSize (MESSAGEVIEW_DEFAULT_TREE_VIEW_WIDTH,
+                                                                 MESSAGEVIEW_DEFAULT_TREE_VIEW_HEIGHT));
   MessageModel_TreeModel* aModel = new MessageModel_TreeModel (myTreeView);
   for (int i = 6; i <= 8; i++) // hide shape parameters columns
   {
@@ -396,9 +353,9 @@ void MessageView_Window::onTreeViewContextMenuRequested (const QPoint& thePositi
       break;
   }
   if (aRootItem)
-    aMenu->addAction (TreeModel_Tools::CreateAction (tr ("Import Report"), SLOT (onImportReport()), myMainWindow, this));
+    aMenu->addAction (ViewControl_Tools::CreateAction (tr ("Import Report"), SLOT (onImportReport()), myMainWindow, this));
   else if (aReportItem)
-    aMenu->addAction (TreeModel_Tools::CreateAction (tr ("Export Report"), SLOT (onExportReport()), myMainWindow, this));
+    aMenu->addAction (ViewControl_Tools::CreateAction (tr ("Export Report"), SLOT (onExportReport()), myMainWindow, this));
 
   aMenu->addSeparator();
   myTreeViewActions->AddMenuActions (aSelectedIndices, aMenu);

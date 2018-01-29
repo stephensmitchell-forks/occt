@@ -21,6 +21,8 @@
 #include <inspector/DFBrowser_Window.hxx>
 #include <inspector/DFBrowser_TreeLevelView.hxx>
 
+#include <inspector/ViewControl_Tools.hxx>
+
 #include <QAbstractItemModel>
 #include <QGridLayout>
 #include <QItemSelectionModel>
@@ -34,7 +36,7 @@ DFBrowser_PropertyPanel::DFBrowser_PropertyPanel (QWidget* theParent)
 : QObject (theParent), myAttributesStack (0)
 {
   myMainWindow = new QWidget (theParent);
-  DFBrowser_Window::SetWhiteBackground (myMainWindow);
+  ViewControl_Tools::SetWhiteBackground (myMainWindow);
 
   QGridLayout* aLayout = new QGridLayout (myMainWindow);
   aLayout->setContentsMargins (0, 0, 0, 0);

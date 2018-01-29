@@ -22,6 +22,8 @@
 
 #include <inspector/DFBrowserPane_Tools.hxx>
 
+#include <inspector/TreeModel_Tools.hxx>
+
 #include <QAbstractItemModel>
 #include <QFrame>
 #include <QGridLayout>
@@ -63,7 +65,7 @@ DFBrowser_TreeLevelLine::DFBrowser_TreeLevelLine (QWidget* theParent)
   myTableView->horizontalHeader()->setVisible (false);
   QHeaderView* aVHeader = myTableView->verticalHeader();
   aVHeader->setVisible (false);
-  int aDefCellSize = aVHeader->minimumSectionSize() + DFBrowserPane_Tools::HeaderSectionMargin();
+  int aDefCellSize = aVHeader->minimumSectionSize() + TreeModel_Tools::HeaderSectionMargin();
   aVHeader->setDefaultSectionSize (aDefCellSize);
   aLayout->addWidget (myTableView, 0, 2);
 

@@ -19,6 +19,8 @@
 #include <Standard.hxx>
 #include <Standard_Macro.hxx>
 
+#include <inspector/TreeModel_Tools.hxx>
+
 #include <QString>
 
 //! \class TreeModel_HeaderSection
@@ -27,11 +29,12 @@ class TreeModel_HeaderSection
 {
 public:
   //! Constructor
-  TreeModel_HeaderSection() {}
+  TreeModel_HeaderSection() : myName(), myWidth (-1), myIsHidden (false), myIsItalic (false) {}
 
   //! Constructor
-  TreeModel_HeaderSection (const QString& theName, const int theWidth, const bool theIsHidden = false)
-  : myName (theName), myWidth (theWidth), myIsHidden (theIsHidden) {}
+  TreeModel_HeaderSection (const QString& theName, const int theWidth = -1, const bool theIsHidden = false,
+    const bool theIsItalic = false)
+  : myName (theName), myWidth (theWidth), myIsHidden (theIsHidden), myIsItalic (theIsItalic) {}
 
   //! Destructor
   ~TreeModel_HeaderSection() {}
@@ -48,7 +51,8 @@ public:
   void SetWidth (const int theWidth) { myWidth = theWidth; }
 
   //! Returns section width
-  int GetWidth() const { return myWidth; }
+  int GetWidth (const bool isComputeDefault = true) const
+  { return (myWidth < 0 && isComputeDefault) ? TreeModel_Tools::GetTextWidth (GetName(), 0) : myWidth; }
 
   //! Sets section width
   void SetIsHidden (bool isHidden) { myIsHidden = isHidden; }
@@ -56,10 +60,17 @@ public:
   //! Returns if the section is visiblt
   bool IsHidden() const { return myIsHidden; }
 
+  //! Sets section width
+  void SetIsItalic (bool isItalic) { myIsItalic = isItalic; }
+
+  //! Returns if the section is visiblt
+  bool IsItalic() const { return myIsItalic; }
+
 private:
   QString myName;  //! text value
   int myWidth; //! section width
   bool myIsHidden; //! visibility
+  bool myIsItalic; //! italic
 };
 
 #endif

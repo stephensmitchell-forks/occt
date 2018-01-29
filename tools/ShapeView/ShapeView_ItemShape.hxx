@@ -21,8 +21,11 @@
 #include <TCollection_AsciiString.hxx>
 #include <TopoDS_Shape.hxx>
 
+#include <QList>
 #include <QMap>
 #include <QVariant>
+
+class ViewControl_TableModelValues;
 
 class ShapeView_ItemShape;
 typedef QExplicitlySharedDataPointer<ShapeView_ItemShape> ShapeView_ItemShapePtr;
@@ -69,6 +72,10 @@ public:
 
   //! Resets cached values
   Standard_EXPORT virtual void Reset() Standard_OVERRIDE;
+
+  //! Returns container of values to be visualized in property panel
+  //! \param theTableValues [out] each value is a table of values
+  Standard_EXPORT virtual void GetPropertyValues (QList<ViewControl_TableModelValues*>& theTableValues);
 
   //! Return data value for the role.
   //! \param theRole a value role

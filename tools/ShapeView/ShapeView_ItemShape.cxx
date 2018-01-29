@@ -15,16 +15,21 @@
 
 #include <inspector/ShapeView_ItemShape.hxx>
 
+#include <inspector/ShapeView_ItemRoot.hxx>
+#include <inspector/ShapeView_ItemShape.hxx>
+#include <inspector/ViewControl_TableModelValues.hxx>
+
 #include <Adaptor3d_Curve.hxx>
+
+#include <BRepTools.hxx>
 #include <BRep_Tool.hxx>
 #include <BRepAdaptor_Curve.hxx>
 
 #include <GCPnts_AbscissaPoint.hxx>
-#include <Geom_Curve.hxx>
 #include <GeomAdaptor_Curve.hxx>
+#include <Geom_Curve.hxx>
+#include <Geom_BSplineSurface.hxx>
 
-#include <inspector/ShapeView_ItemRoot.hxx>
-#include <inspector/ShapeView_ItemShape.hxx>
 #include <TCollection_AsciiString.hxx>
 #include <TopoDS.hxx>
 #include <TopoDS_Edge.hxx>
@@ -337,6 +342,53 @@ TCollection_AsciiString ShapeView_ItemShape::getPointerInfo (const Handle(Standa
     }
   }
   return aPtrStr.str().c_str();
+}
+
+// =======================================================================
+// function : Reset
+// purpose :
+// =======================================================================
+void ShapeView_ItemShape::GetPropertyValues (QList<ViewControl_TableModelValues*>& theTableValues)
+{
+  const TopoDS_Shape& aShape = GetItemShape();
+  switch (aShape.ShapeType())
+  {
+    case TopAbs_FACE:
+   {
+      const TopoDS_Face& aFace = TopoDS::Face (aShape);
+
+      //TopLoc_Location aLocation;
+      //const Handle(Geom_Surface)& aSurface = BRep_Tool::Surface (aFace, aLocation);
+      //if (aSurface.IsNull())
+      //  return;
+      //Handle(Geom_BSplineSurface) aSplineSurface = Handle(Geom_BSplineSurface)::DownCast (aSurface);
+      //if (aSplineSurface.IsNull())
+      //  return;
+
+      Standard_Real aUmin = 0.0;
+      Standard_Real aUmax = 0.0;
+      Standard_Real aVmin = 0.0;
+      Standard_Real aVmax = 0.0;
+
+      BRepTools::UVBounds (aFace, aUmin, aUmax, aVmin, aVmax);
+
+      ViewControl_TableModelValues* aTableValues = new ViewControl_TableModelValues();
+      QList<TreeModel_HeaderSection> aHeaderValues;
+      //aHeaderValues << TreeModel_HeaderSection ("BRepTools::UVBounds", -1, false, true/*italic*/)
+      aHeaderValues << TreeModel_HeaderSection ("UMin") << TreeModel_HeaderSection ("UMax")
+                    << TreeModel_HeaderSection ("VMin") << TreeModel_HeaderSection ("VMax");
+      aTableValues->SetHeaderValues (aHeaderValues, Qt::Horizontal);
+      aTableValues->SetHeaderVisible (Qt::Horizontal, false);
+
+      QVector<QVariant> aValues;
+      aValues << aUmin << aUmax << aVmin  << aVmax;
+      aTableValues->SetValues (aValues);
+
+      theTableValues.append (aTableValues);
+    }
+    break;
+    default: break;
+  }
 }
 
 // =======================================================================

@@ -33,8 +33,10 @@
 #include <QTreeView>
 
 class View_Window;
+class ViewControl_PropertyView;
 
 class QAction;
+class QDockWidget;
 class QMainWindow;
 class QWidget;
 
@@ -108,12 +110,18 @@ protected slots:
   //! Displays shapes obtained by selected indices
   //! \param theSelected a container of selected indices in tree view
   //! \param theDeselected a container of deselected indices in tree view
-  void onTreeViewSelectionChanged (const QItemSelection& theSelected, const QItemSelection& theDeselected)
-  { (void)theSelected; (void)theDeselected; }
+  void onTreeViewSelectionChanged (const QItemSelection& theSelected, const QItemSelection& theDeselected);
 
   //! Shows context menu for tree view selected item. It contains expand/collapse actions.
   //! \param thePosition a clicked point
   void onTreeViewContextMenuRequested (const QPoint& thePosition);
+
+  //! Display content of selected tree view item if isToggled is true
+  //! \param isToggled true if the property dock widget is shown
+  void onPropertyPanelShown (bool isToggled);
+
+  //! Clears property panel content by closing
+  void onPropertyPanelClosed();
 
   //! Exports shape to BREP file and view result file
   void onBREPDirectory();
@@ -138,6 +146,8 @@ protected slots:
   void onOpenFile(const QString& theFileName) { OpenFile (TCollection_AsciiString (theFileName.toUtf8().data())); }
 
 protected:
+  //! Updates property panel content by item selected in tree view.
+  void updatePropertyPanelBySelection();
 
   //! Views file name content in a text editor. It creates new Qt free control with content.
   //! \param theFileName a file name
@@ -163,6 +173,9 @@ protected:
 private:
 
   QMainWindow* myMainWindow; //!< main control, parent for all ShapeView controls
+  QDockWidget* myPropertyPanelWidget; //!< property pane dockable widget
+  ViewControl_PropertyView* myPropertyView; //!< property control to display model item values if exist
+
   View_Window* myViewWindow; //!< OCC 3d view to visualize presentations
   QTreeView* myTreeView; //!< tree view visualized shapes
 

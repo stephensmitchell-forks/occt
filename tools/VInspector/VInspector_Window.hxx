@@ -29,7 +29,7 @@
 #include <QItemSelection>
 #include <QMainWindow>
 
-class TreeModel_MessageDialog;
+class ViewControl_MessageDialog;
 
 class VInspector_ToolBar;
 class View_Window;
@@ -167,7 +167,7 @@ private:
   MessageModel_Actions* myHistoryActions; //!< processing history view actions
   Handle(VInspector_CallBack) myCallBack; //!< AIS context call back, if set
 
-  TreeModel_MessageDialog* myExportToShapeViewDialog; //!< dialog about exporting TopoDS_Shape to ShapeView plugin
+  ViewControl_MessageDialog* myExportToShapeViewDialog; //!< dialog about exporting TopoDS_Shape to ShapeView plugin
   View_Window* myViewWindow; //!< temporary view window, it is created if Open is called but context is still NULL
 
   Handle(TInspectorAPI_PluginParameters) myParameters; //!< plugins parameters container
