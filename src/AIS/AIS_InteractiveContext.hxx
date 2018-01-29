@@ -1260,11 +1260,6 @@ public: //! @name sub-intensity management (deprecated)
   //! \param theState boolean value
   Standard_EXPORT void SetReportActive (const Standard_Boolean theState);
 
-  //! Adds the alert as information
-  void AddInfo (const Handle(Message_Alert)& theAlert,
-                const Handle(Message_Alert)& theParentAlert = Handle(Message_Alert)())
-  { myReport->AddAlert (Message_Info, theAlert, theParentAlert); }
-
   //! Returns last information alert
   Handle(Message_Alert) GetLastInfo () const  { return myReport->GetLastAlert (Message_Info, true); }
 

@@ -88,10 +88,4 @@ DEFINE_ALERT_WITH_SHAPE(BOPAlgo_AlertBuildingPCurveFailed)
 //! other shapes and the argument became self-interfered
 DEFINE_ALERT_WITH_SHAPE(BOPAlgo_AlertAcquiredSelfIntersection)
 
-//! Some text information
-DEFINE_SIMPLE_ALERT(BOPAlgo_AlertInformation)
-
-//! Some text information
-DEFINE_ALERT_WITH_SHAPE(BOPAlgo_AlertShapeInformation)
-
 #endif // _BOPAlgo_Alerts_HeaderFile

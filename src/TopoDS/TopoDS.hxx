@@ -115,8 +115,6 @@ inline static TopoDS_CompSolid& CompSolid(TopoDS_Shape&);
 inline static TopoDS_Compound& Compound(TopoDS_Shape&);
 
 
-
-
 protected:
 
 

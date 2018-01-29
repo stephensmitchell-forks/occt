@@ -15,10 +15,12 @@
 
 // Modified: 22/03/04 ; SAN : OCC4895 High-level interface for controlling polygon offsets
 
-#include <AIS_GlobalStatus.hxx>
 #include <AIS_InteractiveContext.hxx>
+
+#include <AIS_GlobalStatus.hxx>
 #include <AIS_InteractiveObject.hxx>
 #include <AIS_LocalContext.hxx>
+#include <Message.hxx>
 #include <Prs3d_BasicAspect.hxx>
 #include <Prs3d_LineAspect.hxx>
 #include <Quantity_Color.hxx>
@@ -89,7 +91,7 @@ void AIS_InteractiveContext::PolygonOffsets(
 // OCC4895 SAN 22/03/04 High-level interface for controlling polygon offsets 
 
 //=======================================================================
-//function : SetReportActive 
+//function : SetReportActive
 //purpose  : 
 //=======================================================================
 void AIS_InteractiveContext::SetReportActive (const Standard_Boolean theState)

@@ -26,6 +26,7 @@
 #include <gp_Pnt.hxx>
 #include <IntTools_Context.hxx>
 #include <NCollection_BaseAllocator.hxx>
+#include <Message.hxx>
 #include <Standard_ErrorHandler.hxx>
 #include <Standard_Failure.hxx>
 #include <TopoDS_Face.hxx>
@@ -250,27 +251,27 @@ void BOPAlgo_PaveFiller::PerformInternal()
   Init();
 
   GetReport()->SetStoreElapsedTime (Standard_True);
-  AddInfo (new BOPAlgo_AlertInformation ("BOPAlgo_PaveFiller::PerformInternal"));
+  Message::Add_report_info ("BOPAlgo_PaveFiller::PerformInternal", myReport);
 
   Handle(Message_Alert) aFunctionAlert = GetLastInfo();
-  AddInfo (new BOPAlgo_AlertInformation ("Init"), aFunctionAlert);
+  Message::Add_report_info ("Init", myReport, aFunctionAlert);
   if (HasErrors()) {
     return; 
   }
   //
-  AddInfo (new BOPAlgo_AlertInformation ("Prepare"), aFunctionAlert);
+  Message::Add_report_info ("Prepare", myReport, aFunctionAlert);
   Prepare();
   if (HasErrors()) {
     return; 
   }
   // 00
-  AddInfo (new BOPAlgo_AlertInformation ("PerformVV"), aFunctionAlert);
+  Message::Add_report_info ("PerformVV", myReport, aFunctionAlert);
   PerformVV();
   if (HasErrors()) {
     return; 
   }
   // 01
-  AddInfo (new BOPAlgo_AlertInformation ("PerformVE"), aFunctionAlert);
+  Message::Add_report_info ("PerformVE", myReport, aFunctionAlert);
   PerformVE();
   if (HasErrors()) {
     return; 
@@ -278,21 +279,21 @@ void BOPAlgo_PaveFiller::PerformInternal()
   //
   UpdatePaveBlocksWithSDVertices();
   // 11
-  AddInfo (new BOPAlgo_AlertInformation ("PerformEE"), aFunctionAlert);
+  Message::Add_report_info ("PerformEE", myReport, aFunctionAlert);
   PerformEE();
   if (HasErrors()) {
     return; 
   }
   UpdatePaveBlocksWithSDVertices();
   // 02
-  AddInfo (new BOPAlgo_AlertInformation ("PerformVF"), aFunctionAlert);
+  Message::Add_report_info ("PerformVF", myReport, aFunctionAlert);
   PerformVF();
   if (HasErrors()) {
     return; 
   }
   UpdatePaveBlocksWithSDVertices();
   // 12
-  AddInfo (new BOPAlgo_AlertInformation ("PerformEF"), aFunctionAlert);
+  Message::Add_report_info ("PerformEF", myReport, aFunctionAlert);
   PerformEF();
   if (HasErrors()) {
     return; 
@@ -302,11 +303,11 @@ void BOPAlgo_PaveFiller::PerformInternal()
 
   // Force intersection of edges after increase
   // of the tolerance values of their vertices
-  AddInfo (new BOPAlgo_AlertInformation ("ForceInterfEE"), aFunctionAlert);
+  Message::Add_report_info ("ForceInterfEE", myReport, aFunctionAlert);
   ForceInterfEE();
   //
   // 22
-  AddInfo (new BOPAlgo_AlertInformation ("PerformFF"), aFunctionAlert);
+  Message::Add_report_info ("PerformFF", myReport, aFunctionAlert);
   PerformFF();
   if (HasErrors()) {
     return; 
@@ -314,7 +315,7 @@ void BOPAlgo_PaveFiller::PerformInternal()
   //
   UpdateBlocksWithSharedVertices();
   //
-  AddInfo (new BOPAlgo_AlertInformation ("MakeSplitEdges"), aFunctionAlert);
+  Message::Add_report_info ("MakeSplitEdges", myReport, aFunctionAlert);
   MakeSplitEdges();
   if (HasErrors()) {
     return; 
@@ -322,27 +323,27 @@ void BOPAlgo_PaveFiller::PerformInternal()
   //
   UpdatePaveBlocksWithSDVertices();
   //
-  AddInfo (new BOPAlgo_AlertInformation ("MakeBlocks"), aFunctionAlert);
+  Message::Add_report_info ("MakeBlocks", myReport, aFunctionAlert);
   MakeBlocks();
   if (HasErrors()) {
     return; 
   }
   //
-  AddInfo (new BOPAlgo_AlertInformation ("CheckSelfInterference"), aFunctionAlert);
+  Message::Add_report_info ("CheckSelfInterference", myReport, aFunctionAlert);
   CheckSelfInterference();
   //
-  AddInfo (new BOPAlgo_AlertInformation ("UpdateInterfsWithSDVertices"), aFunctionAlert);
+  Message::Add_report_info ("UpdateInterfsWithSDVertices", myReport, aFunctionAlert);
   UpdateInterfsWithSDVertices();
   myDS->ReleasePaveBlocks();
   myDS->RefineFaceInfoOn();
   //
-  AddInfo (new BOPAlgo_AlertInformation ("MakePCurves"), aFunctionAlert);
+  Message::Add_report_info ("MakePCurves", myReport, aFunctionAlert);
   MakePCurves();
   if (HasErrors()) {
     return; 
   }
   //
-  AddInfo (new BOPAlgo_AlertInformation ("ProcessDE"), aFunctionAlert);
+  Message::Add_report_info ("ProcessDE", myReport, aFunctionAlert);
   ProcessDE();
   if (HasErrors()) {
     return; 

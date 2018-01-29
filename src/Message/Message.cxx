@@ -16,7 +16,9 @@
 
 
 #include <Message.hxx>
+#include <Message_AlertWithObject.hxx>
 #include <Message_Messenger.hxx>
+#include <Message_Report.hxx>
 #include <TCollection_AsciiString.hxx>
 
 #include <stdio.h>
@@ -62,7 +64,7 @@ namespace
 //function : GravityToString
 //purpose  :
 //=======================================================================
-Standard_CString Message::GravityToString (Message_Gravity theGravity)
+Standard_CString Message::GravityToString (const Message_Gravity theGravity)
 {
   return Message_Table_PrintGravityEnum[theGravity];
 }
@@ -71,7 +73,7 @@ Standard_CString Message::GravityToString (Message_Gravity theGravity)
 //function : GravityFromString
 //purpose  :
 //=======================================================================
-Standard_Boolean Message::GravityFromString (Standard_CString theGravityString,
+Standard_Boolean Message::GravityFromString (const Standard_CString theGravityString,
                                              Message_Gravity& theGravity)
 {
   TCollection_AsciiString aName (theGravityString);
@@ -86,4 +88,28 @@ Standard_Boolean Message::GravityFromString (Standard_CString theGravityString,
     }
   }
   return Standard_False;
+}
+
+//=======================================================================
+//function : add_report_info
+//purpose  : 
+//=======================================================================
+
+void Message::Add_report_info (const TCollection_AsciiString& theName,
+  const Handle(Message_Report)& theReport, const Handle(Message_Alert)& theParentAlert)
+{
+  if (theReport->IsActive(Message_Info))
+      theReport->AddAlert (Message_Info, new Message_Alert (theName), theParentAlert);
+}
+
+//=======================================================================
+//function : add_report_info
+//purpose  : 
+//=======================================================================
+
+void Message::Add_report_info (const Handle(Standard_Transient)& theObject, const TCollection_AsciiString& theName,
+  const Handle(Message_Report)& theReport, const Handle(Message_Alert)& theParentAlert)
+{
+  if (theReport->IsActive (Message_Info))
+      theReport->AddAlert (Message_Info, new Message_AlertWithObject (theObject, theName), theParentAlert);
 }

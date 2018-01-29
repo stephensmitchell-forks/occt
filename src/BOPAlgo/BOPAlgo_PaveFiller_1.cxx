@@ -31,6 +31,7 @@
 #include <BRep_Tool.hxx>
 #include <gp_Pnt.hxx>
 #include <IntTools_Context.hxx>
+#include <Message.hxx>
 #include <NCollection_BaseAllocator.hxx>
 #include <Precision.hxx>
 #include <TColStd_DataMapOfIntegerInteger.hxx>
@@ -52,7 +53,7 @@ void BOPAlgo_PaveFiller::PerformVV()
   //
   myIterator->Initialize(TopAbs_VERTEX, TopAbs_VERTEX);
   aSize=myIterator->ExpectedLength();
-  AddInfo (new BOPAlgo_AlertInformation (TCollection_AsciiString("ExpectedLength = ") + aSize), aFunctionAlert);
+  Message::Add_report_info (TCollection_AsciiString ("ExpectedLength = ") + aSize, myReport, aFunctionAlert);
   if (!aSize) {
     return; 
   }
@@ -81,7 +82,7 @@ void BOPAlgo_PaveFiller::PerformVV()
   //
   // 2. Make blocks
   BOPAlgo_Tools::MakeBlocks<Standard_Integer, TColStd_MapIntegerHasher>(aMILI, aMBlocks, aAllocator);
-  AddInfo (new BOPAlgo_AlertInformation (TCollection_AsciiString("aMBlocks.Size() = ") + aMBlocks.Size()), aFunctionAlert);
+  Message::Add_report_info (TCollection_AsciiString ("aMBlocks.Size() = ") + aMBlocks.Size(), myReport, aFunctionAlert);
   //
   // 3. Make vertices
   NCollection_List<TColStd_ListOfInteger>::Iterator aItB(aMBlocks);

@@ -72,7 +72,7 @@ public:
   virtual Standard_EXPORT Standard_Boolean Merge (const Handle(Message_Alert)& theTarget);
   
   //! Returns list of collected alerts with specified gravity
-  Standard_EXPORT Message_ListOfAlert& GetAlerts (Message_Gravity theGravity);
+  Standard_EXPORT Message_ListOfAlert& GetAlerts (const Message_Gravity theGravity);
 
   //! Returns the alert elapsed time
   //! @return double value

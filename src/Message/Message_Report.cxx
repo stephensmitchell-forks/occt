@@ -36,7 +36,7 @@ Message_Report::Message_Report ()
 //purpose  :
 //=======================================================================
 
-void Message_Report::AddAlert (Message_Gravity theGravity, const Handle(Message_Alert)& theAlert,
+void Message_Report::AddAlert (const Message_Gravity theGravity, const Handle(Message_Alert)& theAlert,
                                const Handle(Message_Alert)& theParentAlert)
 {
   if (!IsActive (theGravity))
@@ -97,7 +97,7 @@ void Message_Report::AddAlert (Message_Gravity theGravity, const Handle(Message_
 //purpose  :
 //=======================================================================
 
-const Message_ListOfAlert& Message_Report::GetAlerts (Message_Gravity theGravity) const
+const Message_ListOfAlert& Message_Report::GetAlerts (const Message_Gravity theGravity) const
 {
   static const Message_ListOfAlert anEmptyList;
   Standard_ASSERT_RETURN (theGravity >= 0 && size_t(theGravity) < sizeof(myAlerts)/sizeof(myAlerts[0]), 
@@ -110,7 +110,8 @@ const Message_ListOfAlert& Message_Report::GetAlerts (Message_Gravity theGravity
 //purpose  :
 //=======================================================================
 
-Handle(Message_Alert) Message_Report::GetLastAlert (Message_Gravity theGravity, const bool isFindInAlertChildren)
+Handle(Message_Alert) Message_Report::GetLastAlert (const Message_Gravity theGravity,
+  const Standard_Boolean isFindInAlertChildren)
 {
   if (!IsActive (theGravity))
     return Handle(Message_Alert)();
@@ -149,7 +150,7 @@ Standard_Boolean Message_Report::HasAlert (const Handle(Standard_Type)& theType)
 //purpose  :
 //=======================================================================
 
-Standard_Boolean Message_Report::HasAlert (const Handle(Standard_Type)& theType, Message_Gravity theGravity)
+Standard_Boolean Message_Report::HasAlert (const Handle(Standard_Type)& theType, const Message_Gravity theGravity)
 {
   Standard_ASSERT_RETURN (theGravity >= 0 && size_t(theGravity) < sizeof(myAlerts)/sizeof(myAlerts[0]), 
                           "Requesting alerts for gravity not in valid range", Standard_False);
@@ -179,7 +180,7 @@ void Message_Report::Clear ()
 //purpose  :
 //=======================================================================
 
-void Message_Report::Clear (Message_Gravity theGravity)
+void Message_Report::Clear (const Message_Gravity theGravity)
 {
   Standard_ASSERT_RETURN (theGravity >= 0 && size_t(theGravity) < sizeof(myAlerts)/sizeof(myAlerts[0]), 
                           "Requesting alerts for gravity not in valid range", );
@@ -227,7 +228,7 @@ void Message_Report::Dump (Standard_OStream& theOS)
 //purpose  :
 //=======================================================================
 
-void Message_Report::Dump (Standard_OStream& theOS, Message_Gravity theGravity)
+void Message_Report::Dump (Standard_OStream& theOS, const Message_Gravity theGravity)
 {
   Standard_ASSERT_RETURN (theGravity >= 0 && size_t(theGravity) < sizeof(myAlerts)/sizeof(myAlerts[0]), 
                           "Requesting alerts for gravity not in valid range", );
@@ -262,7 +263,7 @@ void Message_Report::SendMessages (const Handle(Message_Messenger)& theMessenger
 //purpose  :
 //=======================================================================
 
-void Message_Report::SendMessages (const Handle(Message_Messenger)& theMessenger, Message_Gravity theGravity)
+void Message_Report::SendMessages (const Handle(Message_Messenger)& theMessenger, const Message_Gravity theGravity)
 {
   Standard_ASSERT_RETURN (theGravity >= 0 && size_t(theGravity) < sizeof(myAlerts)/sizeof(myAlerts[0]), 
                           "Requesting alerts for gravity not in valid range", );
@@ -298,7 +299,7 @@ void Message_Report::Merge (const Handle(Message_Report)& theOther,
 //purpose  :
 //=======================================================================
 
-void Message_Report::Merge (const Handle(Message_Report)& theOther, Message_Gravity theGravity,
+void Message_Report::Merge (const Handle(Message_Report)& theOther, const Message_Gravity theGravity,
   const Handle(Message_Alert)& theParentAlert)
 {
   for (Message_ListOfAlert::Iterator anIt (theOther->GetAlerts(theGravity)); anIt.More(); anIt.Next())
@@ -312,7 +313,7 @@ void Message_Report::Merge (const Handle(Message_Report)& theOther, Message_Grav
 //purpose  :
 //=======================================================================
 
-void Message_Report::SetActive (const Standard_Boolean& theActive, int theGravity)
+void Message_Report::SetActive (const Standard_Boolean theActive, const Standard_Integer theGravity)
 {
   if (theGravity < 0)
   {

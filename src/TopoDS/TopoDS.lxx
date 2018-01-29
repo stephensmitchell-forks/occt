@@ -216,4 +216,3 @@ inline TopoDS_Compound& TopoDS::Compound(TopoDS_Shape& S)
   return *(TopoDS_Compound*) &S;
 }
 
-

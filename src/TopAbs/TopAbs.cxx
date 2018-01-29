@@ -65,7 +65,7 @@ Standard_Boolean TopAbs::ShapeTypeFromString (Standard_CString theTypeString,
 //function : ShapeOrientationToString
 //purpose  :
 //=======================================================================
-Standard_CString TopAbs::ShapeOrientationToString (TopAbs_Orientation theOrientation)
+Standard_CString TopAbs::ShapeOrientationToString (const TopAbs_Orientation theOrientation)
 {
   return TopAbs_Table_PrintOrientation[theOrientation];
 }
@@ -74,7 +74,7 @@ Standard_CString TopAbs::ShapeOrientationToString (TopAbs_Orientation theOrienta
 //function : ShapeOrientationFromString
 //purpose  :
 //=======================================================================
-Standard_Boolean TopAbs::ShapeOrientationFromString (Standard_CString theOrientationString,
+Standard_Boolean TopAbs::ShapeOrientationFromString (const Standard_CString theOrientationString,
                                                      TopAbs_Orientation& theOrientation)
 {
   TCollection_AsciiString aName (theOrientationString);

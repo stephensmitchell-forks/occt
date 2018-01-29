@@ -55,7 +55,7 @@ Standard_Boolean Message_Alert::Merge (const Handle(Message_Alert)& /*theTarget*
 //purpose  :
 //=======================================================================
 
-Message_ListOfAlert& Message_Alert::GetAlerts (Message_Gravity theGravity)
+Message_ListOfAlert& Message_Alert::GetAlerts (const Message_Gravity theGravity)
 {
   return myChildAlerts[theGravity];
 }

@@ -31,6 +31,7 @@
 // function : GetApplication
 // purpose :
 // =======================================================================
+
 const Handle(TDocStd_Application)& GetApplication()
 {
   static Handle(TDocStd_Application) anApp;
@@ -46,6 +47,7 @@ const Handle(TDocStd_Application)& GetApplication()
 // function : ExportReport
 // purpose :
 // =======================================================================
+
 void XmlDrivers_MessageReportStorage::ExportReport (const Handle(Message_Report)& theReport,
                                                     const TCollection_AsciiString& theFileName)
 {
@@ -87,6 +89,7 @@ void XmlDrivers_MessageReportStorage::ExportReport (const Handle(Message_Report)
 // function : ImportReport
 // purpose :
 // =======================================================================
+
 Handle(Message_Report) XmlDrivers_MessageReportStorage::ImportReport (const TCollection_AsciiString& theFileName)
 {
   Handle(TDocStd_Document) aDocument;
@@ -136,6 +139,7 @@ Handle(Message_Report) XmlDrivers_MessageReportStorage::ImportReport (const TCol
 // function : exportAlert
 // purpose :
 // =======================================================================
+
 void XmlDrivers_MessageReportStorage::exportAlert (const Handle(Message_Alert)& theAlert, const TDF_Label& theParentLabel)
 {
   TDF_Label anAlertLabel = theParentLabel.NewChild();
@@ -163,7 +167,8 @@ void XmlDrivers_MessageReportStorage::exportAlert (const Handle(Message_Alert)& 
 // function : importAlert
 // purpose :
 // =======================================================================
-void XmlDrivers_MessageReportStorage::importAlert (const TDF_Label& theAlertLabel, Message_Gravity theGravity,
+
+void XmlDrivers_MessageReportStorage::importAlert (const TDF_Label& theAlertLabel, const Message_Gravity theGravity,
   Handle(Message_Report)& theReport, const Handle(Message_Alert)& theParentAlert)
 {
   TDF_Label aParametersLabel = theAlertLabel.FindChild (1, Standard_False);

@@ -48,7 +48,7 @@ private:
   //! \param theGravity an alert gravity
   //! \param theReport a container of alerts
   //! \param theParentAlert a parent alert, if null, the parent is report
-  static void importAlert (const TDF_Label& theAlertLabel, Message_Gravity theGravity,
+  static void importAlert (const TDF_Label& theAlertLabel, const Message_Gravity theGravity,
     Handle(Message_Report)& theReport, const Handle(Message_Alert)& theParentAlert);
 
   //! Convert alert to a custom type and store parameters in child labels and attributes

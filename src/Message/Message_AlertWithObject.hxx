@@ -30,7 +30,7 @@ public:
 
   //! Sets the object
   //! @param theObject an instance
-  void SetObject (Handle(Standard_Transient) theObject) { myObject = theObject; }
+  void SetObject (const Handle(Standard_Transient)& theObject) { myObject = theObject; }
 
   //! Returns object
   Handle(Standard_Transient) GetObject() const { return myObject; }
@@ -58,5 +58,12 @@ private:
     : Message_AlertWithObject(theObject, theName) {} \
     DEFINE_STANDARD_RTTI_INLINE(Alert, Message_AlertWithObject) \
   };
+
+class Message_Report;
+#define add_report_object_info (const Handle(Standard_Transient)& theObject, const TCollection_AsciiString& theName, \
+  const Handle(Message_Report)& theReport, const Handle(Message_Alert)& theParentAlert = Handle(Message_Alert)()) \
+   { if (myReport->IsActive(Message_Info)) \
+      myReport->AddAlert (Message_Info, new Message_AlertWithObject (theObject, theName), theParentAlert); \
+   };
 
 #endif // _Message_AlertWithObject_HeaderFile

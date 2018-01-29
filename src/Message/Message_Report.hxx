@@ -63,30 +63,30 @@ public:
   
   //! Add alert with specified gravity.
   //! This method is thread-safe, i.e. alerts can be added from parallel threads safely.
-  Standard_EXPORT void AddAlert (Message_Gravity theGravity, const Handle(Message_Alert)& theAlert,
+  Standard_EXPORT void AddAlert (const Message_Gravity theGravity, const Handle(Message_Alert)& theAlert,
                                  const Handle(Message_Alert)& theParentAlert = Handle(Message_Alert)());
 
   //! Returns list of collected alerts with specified gravity
-  Standard_EXPORT const Message_ListOfAlert& GetAlerts (Message_Gravity theGravity) const;
+  Standard_EXPORT const Message_ListOfAlert& GetAlerts (const Message_Gravity theGravity) const;
 
   //! Returns last alert in list of report alerts or last alert in hierarchical tree of alerts provided by
   //! the last alert
   //! \parm theGravity a message gravity
   //! \param isFindInAlertChildren a boolean state whether the alert should be found in childrent of found alert
-  Standard_EXPORT Handle(Message_Alert) GetLastAlert (Message_Gravity theGravity,
-                                                      const bool isFindInAlertChildren = false);
+  Standard_EXPORT Handle(Message_Alert) GetLastAlert (const Message_Gravity theGravity,
+                                                      const Standard_Boolean isFindInAlertChildren = false);
 
   //! Returns true if specific type of alert is recorded
   Standard_EXPORT Standard_Boolean HasAlert (const Handle(Standard_Type)& theType);
 
   //! Returns true if specific type of alert is recorded with specified gravity
-  Standard_EXPORT Standard_Boolean HasAlert (const Handle(Standard_Type)& theType, Message_Gravity theGravity);
+  Standard_EXPORT Standard_Boolean HasAlert (const Handle(Standard_Type)& theType, const Message_Gravity theGravity);
 
   //! Clears all collected alerts
   Standard_EXPORT void Clear ();
 
   //! Clears collected alerts with specified gravity
-  Standard_EXPORT void Clear (Message_Gravity theGravity);
+  Standard_EXPORT void Clear (const Message_Gravity theGravity);
 
   //! Clears collected alerts with specified type
   Standard_EXPORT void Clear (const Handle(Standard_Type)& theType);
@@ -101,7 +101,7 @@ public:
   Standard_EXPORT void SendMessages (const Handle(Message_Messenger)& theMessenger);
 
   //! Dumps collected alerts with specified gravity to messenger
-  Standard_EXPORT void SendMessages (const Handle(Message_Messenger)& theMessenger, Message_Gravity theGravity);
+  Standard_EXPORT void SendMessages (const Handle(Message_Messenger)& theMessenger, const Message_Gravity theGravity);
 
   //! Merges data from theOther report into this
   //! \param theParentAlert an alert where alerts of the report are added
@@ -110,22 +110,22 @@ public:
 
   //! Merges alerts with specified gravity from theOther report into this
   //! \param theParentAlert an alert where alerts of the report are added
-  Standard_EXPORT void Merge (const Handle(Message_Report)& theOther, Message_Gravity theGravity,
+  Standard_EXPORT void Merge (const Handle(Message_Report)& theOther, const Message_Gravity theGravity,
     const Handle(Message_Alert)& theParentAlert = Handle(Message_Alert)());
 
   //! Returns a state whether the report is active
   //! \return the state
-  Standard_Boolean IsActive (Message_Gravity theGravity) const { return myIsActive[theGravity]; }
+  Standard_Boolean IsActive (const Message_Gravity theGravity) const { return myIsActive[theGravity]; }
 
   //! Starts a timer to compute time between messages. If a timer has already been started, it will be stopped
   //! \param theActive new state of report active
   //! \param theGravity gravity type, if '-1', apply value for all gravity kinds
-  Standard_EXPORT void SetActive (const Standard_Boolean& theActive, int theGravity = -1);
+  Standard_EXPORT void SetActive (const Standard_Boolean theActive, const Standard_Integer theGravity = -1);
 
   //! Sets a state whether the time of each alert should be stored
   //! \param theValue boolean state
   //! \return the previous state
-  Standard_EXPORT void SetStoreElapsedTime (const Standard_Boolean& theValue)
+  Standard_EXPORT void SetStoreElapsedTime (const Standard_Boolean theValue)
   { myIsStoreElapsedTime = theValue; }
 
   //! Returns a state whether the time of each alert is stored
@@ -142,7 +142,7 @@ public:
   //! removed the first cached alert.
   Standard_EXPORT Standard_Integer GetLimit() const { return myLimit; }
 
-  Standard_EXPORT void SetLimit(const Standard_Integer& theLimit) { myLimit = theLimit; }
+  Standard_EXPORT void SetLimit(const Standard_Integer theLimit) { myLimit = theLimit; }
 
   //! Sets a listener for the report events
   void SetCallBack(const Handle(Message_ReportCallBack)& theCallBack) { myCallBack = theCallBack; }

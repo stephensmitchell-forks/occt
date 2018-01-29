@@ -40,6 +40,14 @@ public:
   //! Returns false.
   virtual Standard_EXPORT Standard_Boolean Merge (const Handle(Message_Alert)& theTarget) Standard_OVERRIDE;
 
+  //! Creates new Message_AlertWithObject and put it into report with Message_Info gravity.
+  //! It does nothing if such kind of gravity is not active in the report
+  //! @param theName the name value of the alert
+  //! @param theReport the message report where new alert is placed
+  //! @param theParentAlert parent for the new alert, or alert is placed under the report
+  Standard_EXPORT static void Add_report_info (const TopoDS_Shape& S, const TCollection_AsciiString& theName,
+    const Handle(Message_Report)& theReport, const Handle(Message_Alert)& theParentAlert = Handle(Message_Alert)());
+
   // OCCT RTTI
   DEFINE_STANDARD_RTTIEXT(TopoDS_AlertWithShape, Message_Alert)
 
@@ -56,5 +64,12 @@ private:
     : TopoDS_AlertWithShape(theShape, theName) {} \
     DEFINE_STANDARD_RTTI_INLINE(Alert, TopoDS_AlertWithShape) \
   };
+
+class Message_Report;
+#define add_report_shape_info (const TopoDS_Shape& theShape, const TCollection_AsciiString& theName, \
+  const Handle(Message_Report)& theReport, const Handle(Message_Alert)& theParentAlert = Handle(Message_Alert)()) \
+   { if (myReport->IsActive(Message_Info)) \
+      myReport->AddAlert (Message_Info, new Message_AlertWithShape (theShape, theName), theParentAlert); \
+   };
 
 #endif // _TopoDS_AlertWithShape_HeaderFile

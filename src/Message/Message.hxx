@@ -26,6 +26,7 @@
 
 #include <Message_Gravity.hxx>
 
+class Message_Alert;
 class Message_Messenger;
 class TCollection_AsciiString;
 class Message_Msg;
@@ -37,7 +38,7 @@ class Message_PrinterOStream;
 class Message_ProgressIndicator;
 class Message_ProgressScale;
 class Message_ProgressSentry;
-
+class Message_Report;
 
 //! Defines
 //! - tools to work with messages
@@ -66,12 +67,12 @@ public:
   //! Returns the string name for a given gravity.
   //! @param Gravity gravity type
   //! @return string identifier from the list Message_Trace, Message_Info, Message_Warning, Message_Alarm and Message_Fail
-  Standard_EXPORT static Standard_CString GravityToString (Message_Gravity theGravity);
+  Standard_EXPORT static Standard_CString GravityToString (const Message_Gravity theGravity);
 
   //! Returns the gravity type from the given string identifier (using case-insensitive comparison).
   //! @param theGravityString string identifier
   //! @return gravity or Message_Trace if string identifier is invalid
-  static Message_Gravity GravityFromString (Standard_CString theGravityString)
+  static Message_Gravity GravityFromString (const Standard_CString theGravityString)
   {
     Message_Gravity aGravity = Message_Trace;
     GravityFromString (theGravityString, aGravity);
@@ -82,9 +83,24 @@ public:
   //! @param theGravityString string identifier
   //! @param theGravity detected shape type
   //! @return TRUE if string identifier is known
-  Standard_EXPORT static Standard_Boolean GravityFromString (Standard_CString theGravityString,
+  Standard_EXPORT static Standard_Boolean GravityFromString (const Standard_CString theGravityString,
                                                              Message_Gravity& theGravity);
 
+  //! Creates new Message_Alert and put it into report with Message_Info gravity.
+  //! It does nothing if such kind of gravity is not active in the report
+  //! @param theName the name value of the alert
+  //! @param theReport the message report where new alert is placed
+  //! @param theParentAlert parent for the new alert, or alert is placed under the report
+  Standard_EXPORT static void Add_report_info (const TCollection_AsciiString& theName,
+    const Handle(Message_Report)& theReport, const Handle(Message_Alert)& theParentAlert = Handle(Message_Alert)());
+
+  //! Creates new Message_AlertWithObject and put it into report with Message_Info gravity.
+  //! It does nothing if such kind of gravity is not active in the report
+  //! @param theName the name value of the alert
+  //! @param theReport the message report where new alert is placed
+  //! @param theParentAlert parent for the new alert, or alert is placed under the report
+  Standard_EXPORT static void Add_report_info (const Handle(Standard_Transient)& theObject, const TCollection_AsciiString& theName,
+    const Handle(Message_Report)& theReport, const Handle(Message_Alert)& theParentAlert = Handle(Message_Alert)());
 
 
 protected:

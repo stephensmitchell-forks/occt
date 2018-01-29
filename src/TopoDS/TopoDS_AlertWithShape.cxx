@@ -16,6 +16,7 @@
 #include <TopoDS_AlertWithShape.hxx>
 
 #include <Message_Msg.hxx>
+#include <Message_Report.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(TopoDS_AlertWithShape,Message_Alert)
 
@@ -52,3 +53,16 @@ Standard_Boolean TopoDS_AlertWithShape::Merge (const Handle(Message_Alert)& /*th
 //  Handle(TopoDS_AlertWithShape) aTarget = Handle(TopoDS_AlertWithShape)::DownCast (theTarget);
 //  return aTarget->GetShape() == myShape;
 }
+
+//=======================================================================
+//function : add_report_info
+//purpose  : 
+//=======================================================================
+
+void TopoDS_AlertWithShape::Add_report_info (const TopoDS_Shape& S, const TCollection_AsciiString& theName,
+  const Handle(Message_Report)& theReport, const Handle(Message_Alert)& theParentAlert)
+{
+  if (theReport->IsActive (Message_Info))
+      theReport->AddAlert (Message_Info, new TopoDS_AlertWithShape (S, theName), theParentAlert);
+}
+

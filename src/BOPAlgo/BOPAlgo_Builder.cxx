@@ -22,8 +22,10 @@
 #include <BOPTools_AlgoTools.hxx>
 #include <BRep_Builder.hxx>
 #include <IntTools_Context.hxx>
+#include <Message.hxx>
 #include <Standard_ErrorHandler.hxx>
 #include <Standard_Failure.hxx>
+#include <TopoDS_AlertWithShape.hxx>
 #include <TopoDS_Compound.hxx>
 #include <BRep_Builder.hxx>
 
@@ -225,23 +227,23 @@ void BOPAlgo_Builder::PerformInternal(const BOPAlgo_PaveFiller& theFiller)
   GetReport()->Clear();
   //
   GetReport()->SetStoreElapsedTime (Standard_True);
-  AddInfo (new BOPAlgo_AlertInformation ("BOPAlgo_Builder::PerformInternal"));
+  Message::Add_report_info ("BOPAlgo_Builder::PerformInternal", myReport);
   Handle(Message_Alert) aPerformInternalAlert = GetLastInfo();
 
-  AddInfo (new BOPAlgo_AlertInformation ("Arguments"), aPerformInternalAlert);
+  Message::Add_report_info ("Arguments", myReport, aPerformInternalAlert);
   Handle(Message_Alert) anArgumentsAlert = GetLastInfo();
   TopTools_ListIteratorOfListOfShape aIt (Arguments());
   for (; aIt.More(); aIt.Next()) {
     const TopoDS_Shape& aShape = aIt.Value();
-    AddInfo (new BOPAlgo_AlertShapeInformation (aShape), anArgumentsAlert);
+    TopoDS_AlertWithShape::Add_report_info (aShape, "", myReport, anArgumentsAlert);
   }
-  AddInfo (new BOPAlgo_AlertInformation ("PerformInternal1"), aPerformInternalAlert);
+  Message::Add_report_info ("PerformInternal1", myReport, aPerformInternalAlert);
   try {
     OCC_CATCH_SIGNALS
     PerformInternal1(theFiller);
 
     const TopoDS_Shape& aShape = Shape();
-    AddInfo (new BOPAlgo_AlertShapeInformation (aShape, "BOPAlgo_BuilderShape::Shape()"), aPerformInternalAlert);
+    TopoDS_AlertWithShape::Add_report_info (aShape, "BOPAlgo_BuilderShape::Shape()", myReport, aPerformInternalAlert);
   }
   //
   catch (Standard_Failure) {
@@ -262,14 +264,14 @@ void BOPAlgo_Builder::PerformInternal1(const BOPAlgo_PaveFiller& theFiller)
   //
   // 1. CheckData
   Handle(Message_Alert) aFunctionAlert = GetLastInfo();
-  AddInfo (new BOPAlgo_AlertInformation( "CheckData"), aFunctionAlert);
+  Message::Add_report_info ("CheckData", myReport, aFunctionAlert);
   CheckData();
   if (HasErrors()) {
     return;
   }
   //
   // 2. Prepare
-  AddInfo (new BOPAlgo_AlertInformation ("Prepare"), aFunctionAlert);
+  Message::Add_report_info ("Prepare", myReport, aFunctionAlert);
   Prepare();
   if (HasErrors()) {
     return;
@@ -277,112 +279,112 @@ void BOPAlgo_Builder::PerformInternal1(const BOPAlgo_PaveFiller& theFiller)
   //
   // 3. Fill Images
   // 3.1 Vertice
-  AddInfo (new BOPAlgo_AlertInformation ("FillImagesVertices"), aFunctionAlert);
+  Message::Add_report_info ("FillImagesVertices", myReport, aFunctionAlert);
   FillImagesVertices();
   if (HasErrors()) {
     return;
   }
   //
-  AddInfo (new BOPAlgo_AlertInformation ("BuildResult(TopAbs_VERTEX)"), aFunctionAlert);
+  Message::Add_report_info ("BuildResult(TopAbs_VERTEX)", myReport, aFunctionAlert);
   BuildResult(TopAbs_VERTEX);
   if (HasErrors()) {
     return;
   }
   // 3.2 Edges
-  AddInfo (new BOPAlgo_AlertInformation ("FillImagesEdges"), aFunctionAlert);
+  Message::Add_report_info ("FillImagesEdges", myReport, aFunctionAlert);
   FillImagesEdges();
   if (HasErrors()) {
     return;
   }
   //
-  AddInfo (new BOPAlgo_AlertInformation ("BuildResult(TopAbs_EDGE)"), aFunctionAlert);
+  Message::Add_report_info ("BuildResult(TopAbs_EDGE)", myReport, aFunctionAlert);
   BuildResult(TopAbs_EDGE);
   if (HasErrors()) {
     return;
   }
   //
   // 3.3 Wires
-  AddInfo (new BOPAlgo_AlertInformation ("FillImagesContainers(TopAbs_WIRE)"), aFunctionAlert);
+  Message::Add_report_info ("FillImagesContainers(TopAbs_WIRE)", myReport, aFunctionAlert);
   FillImagesContainers(TopAbs_WIRE);
   if (HasErrors()) {
     return;
   }
   //
-  AddInfo(new BOPAlgo_AlertInformation ("BuildResult(TopAbs_WIRE)"), aFunctionAlert);
+  Message::Add_report_info ("BuildResult(TopAbs_WIRE)", myReport, aFunctionAlert);
   BuildResult(TopAbs_WIRE);
   if (HasErrors()) {
     return;
   }
   
   // 3.4 Faces
-  AddInfo(new BOPAlgo_AlertInformation ("FillImagesFaces"), aFunctionAlert);
+  Message::Add_report_info ("FillImagesFaces", myReport, aFunctionAlert);
   FillImagesFaces();
   if (HasErrors()) {
     return;
   }
   //
-  AddInfo (new BOPAlgo_AlertInformation ("BuildResult(TopAbs_FACE"), aFunctionAlert);
+  Message::Add_report_info ("BuildResult(TopAbs_FACE", myReport, aFunctionAlert);
   BuildResult(TopAbs_FACE);
   if (HasErrors()) {
     return;
   }
   // 3.5 Shells
-  AddInfo (new BOPAlgo_AlertInformation ("FillImagesContainers(TopAbs_SHELL)"), aFunctionAlert);
+  Message::Add_report_info ("FillImagesContainers(TopAbs_SHELL)", myReport, aFunctionAlert);
   FillImagesContainers(TopAbs_SHELL);
   if (HasErrors()) {
     return;
   }
   
-  AddInfo (new BOPAlgo_AlertInformation ("BuildResult(TopAbs_SHELL)"), aFunctionAlert);
+  Message::Add_report_info ("BuildResult(TopAbs_SHELL)", myReport, aFunctionAlert);
   BuildResult(TopAbs_SHELL);
   if (HasErrors()) {
     return;
   }
   // 3.6 Solids
-  AddInfo (new BOPAlgo_AlertInformation ("FillImagesSolids"), aFunctionAlert);
+  Message::Add_report_info ("FillImagesSolids", myReport, aFunctionAlert);
   FillImagesSolids();
   if (HasErrors()) {
     return;
   }
   
-  AddInfo (new BOPAlgo_AlertInformation ("BuildResult(TopAbs_SOLID)"), aFunctionAlert);
+  Message::Add_report_info ("BuildResult(TopAbs_SOLID)", myReport, aFunctionAlert);
   BuildResult(TopAbs_SOLID);
   if (HasErrors()) {
     return;
   }
   // 3.7 CompSolids
-  AddInfo (new BOPAlgo_AlertInformation ("FillImagesContainers(TopAbs_COMPSOLID)"), aFunctionAlert);
+  Message::Add_report_info ("FillImagesContainers(TopAbs_COMPSOLID)", myReport, aFunctionAlert);
   FillImagesContainers(TopAbs_COMPSOLID);
   if (HasErrors()) {
     return;
   }
   
-  AddInfo (new BOPAlgo_AlertInformation ("BuildResult(TopAbs_COMPSOLID)"), aFunctionAlert);
+  Message::Add_report_info ("BuildResult(TopAbs_COMPSOLID)", myReport, aFunctionAlert);
   BuildResult(TopAbs_COMPSOLID);
   if (HasErrors()) {
     return;
   }
   
   // 3.8 Compounds
-  AddInfo (new BOPAlgo_AlertInformation ("FillImagesCompounds"), aFunctionAlert);
+  Message::Add_report_info ("FillImagesCompounds", myReport, aFunctionAlert);
   FillImagesCompounds();
   if (HasErrors()) {
     return;
   }
   
-  AddInfo (new BOPAlgo_AlertInformation ("BuildResult(TopAbs_COMPOUND)"), aFunctionAlert);
+  Message::Add_report_info ("BuildResult(TopAbs_COMPOUND)", myReport, aFunctionAlert);
   BuildResult(TopAbs_COMPOUND);
   if (HasErrors()) {
     return;
   }
   //
   // 4.History
-  AddInfo (new BOPAlgo_AlertInformation ("PrepareHistory"), aFunctionAlert);
+  Message::Add_report_info ("PrepareHistory", myReport, aFunctionAlert);
   PrepareHistory();
   //
   //
   // 5 Post-treatment 
-  AddInfo (new BOPAlgo_AlertInformation ("PostTreat"), aFunctionAlert);
+  Message::Add_report_info ("PostTreat", myReport, aFunctionAlert);
   PostTreat();
   
 }

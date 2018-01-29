@@ -133,18 +133,18 @@ public:
   //! @param theTypeString string identifier
   //! @param theType detected shape type
   //! @return TRUE if string identifier is known
-  Standard_EXPORT static Standard_Boolean ShapeTypeFromString (Standard_CString theTypeString,
+  Standard_EXPORT static Standard_Boolean ShapeTypeFromString (const Standard_CString theTypeString,
                                                                TopAbs_ShapeEnum& theType);
 
   //! Returns the string name for a given shape orientation.
   //! @param theOrientation shape orientation
   //! @return string identifier from the list FORWARD, REVERSED, INTERNAL, EXTERNAL
-  Standard_EXPORT static Standard_CString ShapeOrientationToString (TopAbs_Orientation theOrientation);
+  Standard_EXPORT static Standard_CString ShapeOrientationToString (const TopAbs_Orientation theOrientation);
 
   //! Returns the shape orientation from the given string identifier (using case-insensitive comparison).
   //! @param theOrientationString string identifier
   //! @return shape orientation or TopAbs_FORWARD if string identifier is invalid
-  static TopAbs_Orientation ShapeOrientationFromString (Standard_CString theOrientationString)
+  static TopAbs_Orientation ShapeOrientationFromString (const Standard_CString theOrientationString)
   {
     TopAbs_Orientation aType = TopAbs_FORWARD;
     ShapeOrientationFromString (theOrientationString, aType);
@@ -155,7 +155,7 @@ public:
   //! @param theOrientationString string identifier
   //! @param theOrientation detected shape orientation
   //! @return TRUE if string identifier is known
-  Standard_EXPORT static Standard_Boolean ShapeOrientationFromString (Standard_CString theOrientationString,
+  Standard_EXPORT static Standard_Boolean ShapeOrientationFromString (const Standard_CString theOrientationString,
                                                                       TopAbs_Orientation& theOrientation);
 };
 
