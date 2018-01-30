@@ -1,0 +1,21 @@
+puts "========"
+puts "OCC29463"
+puts "========"
+puts ""
+#################################################
+# Method BndBox::IsOut() returns true for point lying on the planar face
+#################################################
+
+restore [locate_data_file bug29463_face13_691.brep] f
+
+set x 165.16888924444618
+set y 16.119975403493935
+set z 6.6799998283386177
+
+# check that vertex with coordinates (x, y, z) is inside the bounding box of f
+
+boundingstr f xmin ymin zmin xmax ymax zmax
+
+if {$x < [dval xmin] || $x > [dval xmax] || $y < [dval ymin] || $y > [dval ymax] || $z < [dval zmin] || $z > [dval zmax]} {
+  puts "Error: bounding box works incorrect"
+}
