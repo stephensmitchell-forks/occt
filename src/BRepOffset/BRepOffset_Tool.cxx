@@ -182,6 +182,23 @@ TopAbs_Orientation BRepOffset_Tool::OriEdgeInFace (const TopoDS_Edge& E,
   return E.Orientation();
 }
 
+//=======================================================================
+//function : IsPCurveUiso
+//purpose  : 
+//=======================================================================
+
+static Standard_Boolean IsPCurveUiso(const Handle(Geom2d_Curve)& thePCurve,
+                                     Standard_Real theFirstPar,
+                                     Standard_Real theLastPar)
+{
+  gp_Pnt2d FirstP2d = thePCurve->Value(theFirstPar);
+  gp_Pnt2d LastP2d  = thePCurve->Value(theLastPar);
+
+  Standard_Real DeltaU = Abs(FirstP2d.X() - LastP2d.X());
+  Standard_Real DeltaV = Abs(FirstP2d.Y() - LastP2d.Y());
+
+  return (DeltaU < DeltaV);
+}
 
 //=======================================================================
 //function : FindPeriod
@@ -2560,6 +2577,8 @@ static void MakeFace(const Handle(Geom_Surface)& S,
 		     const Standard_Real UM,
 		     const Standard_Real Vm,
 		     const Standard_Real VM,
+		     const Standard_Boolean uclosed,
+		     const Standard_Boolean vclosed,
 		     const Standard_Boolean isVminDegen,
 		     const Standard_Boolean isVmaxDegen,
 		     TopoDS_Face&        F)
@@ -2568,36 +2587,12 @@ static void MakeFace(const Handle(Geom_Surface)& S,
   Standard_Real UMax = UM;
   Standard_Real VMin = Vm;
   Standard_Real VMax = VM;
-  Standard_Real epsilon = Precision::Confusion();
-
-  Standard_Real umin,umax,vmin,vmax;
-  S->Bounds(umin,umax,vmin,vmax);
-
 
   // compute infinite flags
   Standard_Boolean umininf = Precision::IsNegativeInfinite(UMin);
   Standard_Boolean umaxinf = Precision::IsPositiveInfinite(UMax);
   Standard_Boolean vmininf = Precision::IsNegativeInfinite(VMin);
   Standard_Boolean vmaxinf = Precision::IsPositiveInfinite(VMax);
-  
-  // closed flag
-  Standard_Boolean IsSuclosed = S->IsUClosed(), IsSvclosed = S->IsVClosed();
-  if (S->DynamicType() == STANDARD_TYPE(Geom_OffsetSurface))
-    {
-      Handle(Geom_Surface) BasisSurf = Handle(Geom_OffsetSurface)::DownCast (S)->BasisSurface();
-      IsSuclosed = BasisSurf->IsUClosed();
-      IsSvclosed = BasisSurf->IsVClosed();
-    }
-
-  Standard_Boolean uclosed = 
-    IsSuclosed && 
-      Abs(UMin - umin) < epsilon && 
-	Abs(UMax - umax) < epsilon;
-  
-  Standard_Boolean vclosed = 
-    IsSvclosed && 
-      Abs(VMin - vmin) < epsilon && 
-	Abs(VMax - vmax) < epsilon;
   
   // degenerated flags (for cones)
   Standard_Boolean vmindegen = isVminDegen, vmaxdegen = isVmaxDegen;
@@ -3206,6 +3201,40 @@ void BRepOffset_Tool::CheckBounds(const TopoDS_Face& F,
 }
 
 //=======================================================================
+//function : DetectClosedness
+//purpose  : 
+//=======================================================================
+
+void BRepOffset_Tool::DetectClosedness(const TopoDS_Face& theFace,
+                                       Standard_Boolean&  theUclosed,
+                                       Standard_Boolean&  theVclosed)
+{
+  theUclosed = theVclosed = Standard_False;
+  
+  BRepAdaptor_Surface BAsurf(theFace, Standard_False);
+  Standard_Boolean IsSurfUclosed = BAsurf.IsUClosed();
+  Standard_Boolean IsSurfVclosed = BAsurf.IsVClosed();
+  if (!IsSurfUclosed && !IsSurfVclosed)
+    return;
+  
+  TopExp_Explorer Explo(theFace, TopAbs_EDGE);
+  for (; Explo.More(); Explo.Next())
+  {
+    const TopoDS_Edge& anEdge = TopoDS::Edge(Explo.Current());
+    if (BRepTools::IsReallyClosed(anEdge, theFace))
+    {
+      Standard_Real fpar, lpar;
+      Handle(Geom2d_Curve) aPCurve = BRep_Tool::CurveOnSurface(anEdge, theFace, fpar, lpar);
+      Standard_Boolean IsUiso = IsPCurveUiso(aPCurve, fpar, lpar);
+      if (IsSurfUclosed && IsUiso)
+        theUclosed = Standard_True;
+      if (IsSurfVclosed && !IsUiso)
+        theVclosed = Standard_True;
+    }
+  }
+}
+
+//=======================================================================
 //function : EnLargeFace
 //purpose  : 
 //=======================================================================
@@ -3220,6 +3249,10 @@ Standard_Boolean BRepOffset_Tool::EnLargeFace
  const Standard_Boolean   enlargeVlast,
  const Standard_Boolean   UseInfini)
 {
+  //Detect closedness in U and V
+  Standard_Boolean uclosed = Standard_False, vclosed = Standard_False;
+  DetectClosedness(F, uclosed, vclosed);
+  
   //---------------------------
   // extension de la geometrie.
   //---------------------------
@@ -3259,10 +3292,10 @@ Standard_Boolean BRepOffset_Tool::EnLargeFace
   {
     Standard_Real FaceDU = UF2 - UF1;
     Standard_Real FaceDV = VF2 - VF1;
-    UU1 = UF1 - FaceDU;
-    UU2 = UF2 + FaceDU;
-    VV1 = VF1 - FaceDV;
-    VV2 = VF2 + FaceDV;
+    UU1 = UF1 - 10*FaceDU;
+    UU2 = UF2 + 10*FaceDU;
+    VV1 = VF1 - 10*FaceDV;
+    VV2 = VF2 + 10*FaceDV;
   }
   
   if (CanExtentSurface) {
@@ -3325,7 +3358,7 @@ Standard_Boolean BRepOffset_Tool::EnLargeFace
   if (!enlargeVlast)
     VV2 = VF2;
 
-  MakeFace(S,UU1,UU2,VV1,VV2,isVV1degen,isVV2degen,BF);
+  MakeFace(S,UU1,UU2,VV1,VV2,uclosed,vclosed,isVV1degen,isVV2degen,BF);
   BF.Location(L);
 /*
   if (S->DynamicType() == STANDARD_TYPE(Geom_RectangularTrimmedSurface)) {

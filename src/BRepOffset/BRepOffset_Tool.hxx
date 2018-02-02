@@ -99,6 +99,10 @@ public:
   
   Standard_EXPORT static void CheckBounds (const TopoDS_Face& F, const BRepOffset_Analyse& Analyse, Standard_Boolean& enlargeU, Standard_Boolean& enlargeVfirst, Standard_Boolean& enlargeVlast);
   
+  Standard_EXPORT static void DetectClosedness (const TopoDS_Face& theFace,
+                                                Standard_Boolean&  theUclosed,
+                                                Standard_Boolean&  theVclosed);
+  
   //! if <ChangeGeom> is TRUE  ,   the surface  can  be
   //! changed .
   //! if <UpdatePCurve>  is  TRUE, update the  pcurves of the
