@@ -1,0 +1,19 @@
+puts "=============="
+puts "   splitshape "
+puts "   case1      "
+puts "=============="
+puts ""
+#puts "   OCC26354   "
+###################################################
+# Operation "splitshape" in the Test Harness give invalid result on the attached case.
+###################################################
+
+restore [locate_data_file bug29473_SplitShape.brep] a
+restore [locate_data_file bug29473_SplitEdges.brep] b
+explode a
+explode b
+wire w1 b_1 b_2 b_3
+wire w2 b_4 b_5
+splitshape r1 a a_1 w1 a_2 w2 a_3 b_6 a_4 b_7 @ a_5 b_8
+explode r1 f
+copy r_1 result
