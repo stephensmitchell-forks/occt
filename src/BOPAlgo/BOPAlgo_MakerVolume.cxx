@@ -18,6 +18,7 @@
 #include <BOPAlgo_PaveFiller.hxx>
 #include <BOPAlgo_Tools.hxx>
 #include <BOPAlgo_Alerts.hxx>
+#include <BOPAlgo_Tools.hxx>
 #include <BOPCol_DataMapOfShapeListOfShape.hxx>
 #include <BOPCol_ListOfShape.hxx>
 #include <BOPDS_DS.hxx>
