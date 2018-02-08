@@ -1,0 +1,63 @@
+puts "========"
+puts "OCC29496"
+puts "========"
+puts ""
+#################################################
+# No intersection curve between faces if starting points are given
+#################################################
+
+restore [locate_data_file bug29496_OuterBox.brep] a
+restore [locate_data_file bug29496_Surface_0.brep] s0
+restore [locate_data_file bug29496_Surface_1.brep] s1
+restore [locate_data_file bug29496_Surface_2.brep] s2
+restore [locate_data_file bug29496_Surface_3.brep] s3
+restore [locate_data_file bug29496_Surface_4.brep] s4
+restore [locate_data_file bug29496_Surface_5.brep] s5
+
+set i 1
+
+explode s0 f; copy s0_27 f1
+explode s4 f; copy s4_20 f2
+bsection r$i f1 f2
+checknbshapes r$i -vertex 2 -edge 1
+checkprops r$i -l 2.14991
+
+incr i
+
+explode s0 f; copy s0_27 f1
+explode s5 f; copy s5_8 f2
+bsection r$i f1 f2
+checknbshapes r$i -vertex 2 -edge 1
+checkprops r$i -l 2.15901
+
+incr i
+
+explode s1 f; copy s1_27 f1
+explode s5 f; copy s5_8 f2
+bsection r$i f1 f2
+checknbshapes r$i -vertex 2 -edge 1
+checkprops r$i -l 2.15901
+
+incr i
+
+explode s1 f; copy s1_27 f1
+explode s4 f; copy s4_16 f2
+bsection r$i f1 f2
+checknbshapes r$i -vertex 2 -edge 1
+checkprops r$i -l 2.14991
+
+incr i
+
+explode s0 f; copy s0_26 f1
+explode s5 f; copy s5_2 f2
+bsection r$i f1 f2
+checknbshapes r$i -vertex 2 -edge 1
+checkprops r$i -l 2.22733
+
+incr i
+
+explode s1 f; copy s1_26 f1
+explode s5 f; copy s5_2 f2
+bsection r$i f1 f2
+checknbshapes r$i -vertex 2 -edge 1
+checkprops r$i -l 2.22733
