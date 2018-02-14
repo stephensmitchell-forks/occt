@@ -24,7 +24,7 @@ whatis result_1
 
 checkshape result_1
 
-checkprops result_1 -v 15041.2 -s 8245.4
+checkprops result_1 -v 15287.7 -s 8383.16
 
 checkview -display result_1 -2d -path ${imagedir}/${test_image}.png
 
