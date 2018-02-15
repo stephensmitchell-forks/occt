@@ -583,11 +583,12 @@ else()
 endif()
 
 # OpenGL ES 2.0
-if (WIN32 AND CAN_USE_GLES2)
+set (USE_GLES2 ON CACHE BOOL "${USE_GLES2_DESCR}")
+if (CAN_USE_GLES2)
   if ("${CMAKE_SYSTEM_NAME}" STREQUAL "WindowsStore")
     set (USE_GLES2 ON)
   else()
-    set (USE_GLES2 OFF CACHE BOOL "${USE_GLES2_DESCR}")
+    #set (USE_GLES2 OFF CACHE BOOL "${USE_GLES2_DESCR}")
   endif()
 
   if (USE_GLES2)

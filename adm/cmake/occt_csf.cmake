@@ -80,7 +80,7 @@ if (WIN32)
     set (CSF_OpenGlLibs  "opengl32.lib")
   endif()
 
-  else()
+else()
 
   if (APPLE)
     set (CSF_objc        "objc")
@@ -114,4 +114,8 @@ if (WIN32)
     set (CSF_XwLibs      "X11 Xext Xmu Xi")
     set (CSF_dl          "dl")
   endif()
+
+  #if (USE_GLES2)
+    set (CSF_OpenGlLibs  "EGL GLESv2")
+  #endif()
 endif()
