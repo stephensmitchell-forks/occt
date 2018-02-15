@@ -2361,7 +2361,16 @@ SeekPointOnBoundary(const Handle(Adaptor3d_HSurface)& theASurf1,
       {
         aP1.SetXYZ(line->Value(aPInd).Value().XYZ());
         if (aP1.SquareDistance(aPInt) > Precision::SquareConfusion())
+        {
           break;
+        }
+        else if (aPInd == 1)
+        {
+          // After insertion, we will obtain
+          // two coincident points in the line.
+          // Therefore, insertion is forbidden.
+          return isOK;
+        }
       }
 
       for (++aPInd; aPInd <= aNbPnts; aPInd++)
@@ -2402,7 +2411,16 @@ SeekPointOnBoundary(const Handle(Adaptor3d_HSurface)& theASurf1,
       {
         aPCurr.SetXYZ(line->Value(aPInd).Value().XYZ());
         if (aPCurr.SquareDistance(aPInt) > Precision::SquareConfusion())
+        {
           break;
+        }
+        else if (aPInd == aNbPnts)
+        {
+          // After insertion, we will obtain
+          // two coincident points in the line.
+          // Therefore, insertion is forbidden.
+          return isOK;
+        }
       }
 
       for (--aPInd; aPInd > 0; aPInd--)
