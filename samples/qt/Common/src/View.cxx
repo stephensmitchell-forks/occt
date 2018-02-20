@@ -21,7 +21,6 @@
 #endif
 
 
-#include <Graphic3d_ExportFormat.hxx>
 #include <Graphic3d_GraphicDriver.hxx>
 #include <Graphic3d_TextureEnv.hxx>
 
