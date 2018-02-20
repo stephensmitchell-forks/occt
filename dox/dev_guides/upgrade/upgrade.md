@@ -1537,6 +1537,8 @@ Since new version, the method BRepAdaptor_CompCurve::IsPeriodic() will always re
 
 @subsection upgrade_730_removed Removed features
 * The methods *SetDeflection*, *SetEpsilonT*, *SetDiscretize* of the class *IntTools_EdgeFace* have been removed as excessive.
+* Deprecated functionality *V3d_View::Export()*, related enumerations Graphic3d_ExportFormat, Graphic3d_SortType
+  as well as optional dependency from gl2ps library have been removed.
 
 @subsection upgrade_730_IntersectionAPI Changes in classes responsible for intersection algorithm
 
