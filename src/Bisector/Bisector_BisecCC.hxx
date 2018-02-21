@@ -127,6 +127,7 @@ public:
   
   Standard_EXPORT Standard_Boolean IsClosed() const Standard_OVERRIDE;
   
+  //! This method is overridden from Geom2d_Curve::IsPeriodic()
   Standard_EXPORT Standard_Boolean IsPeriodic() const Standard_OVERRIDE;
   
   //! Returns the point of parameter U.
