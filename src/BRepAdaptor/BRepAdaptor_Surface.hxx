@@ -145,12 +145,16 @@ public:
   
     Standard_Boolean IsVClosed() const Standard_OVERRIDE;
   
+    //! This method is overridden from the basis class
     Standard_Boolean IsUPeriodic() const Standard_OVERRIDE;
   
+    //! This method is overridden from the basis class
     Standard_Real UPeriod() const Standard_OVERRIDE;
   
+    //! This method is overridden from the basis class
     Standard_Boolean IsVPeriodic() const Standard_OVERRIDE;
   
+    //! This method is overridden from the basis class
     Standard_Real VPeriod() const Standard_OVERRIDE;
   
   //! Computes the point of parameters U,V on the surface.

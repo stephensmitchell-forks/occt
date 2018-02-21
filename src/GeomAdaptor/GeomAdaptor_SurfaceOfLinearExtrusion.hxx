@@ -116,12 +116,16 @@ public:
   
   Standard_EXPORT Standard_Boolean IsVClosed() const Standard_OVERRIDE;
   
+  //! This method is overridden from the basis class
   Standard_EXPORT Standard_Boolean IsUPeriodic() const Standard_OVERRIDE;
   
+  //! This method is overridden from the basis class
   Standard_EXPORT Standard_Real UPeriod() const Standard_OVERRIDE;
   
+  //! Always returns FALSE
   Standard_EXPORT Standard_Boolean IsVPeriodic() const Standard_OVERRIDE;
   
+  //! This method is overridden from the basis class
   Standard_EXPORT Standard_Real VPeriod() const Standard_OVERRIDE;
 
   //! Returns the parametric U  resolution corresponding
