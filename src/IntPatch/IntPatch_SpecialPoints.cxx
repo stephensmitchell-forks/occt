@@ -339,16 +339,6 @@ Standard_Boolean IntPatch_SpecialPoints::
                                       const Standard_Boolean theIsReversed,
                                       const Standard_Boolean theIsReqRefCheck)
 {
-  const Standard_Real aUpPeriod = thePSurf->IsUPeriodic() ? thePSurf->UPeriod() : 0.0;
-  const Standard_Real aUqPeriod = theQSurf->IsUPeriodic() ? theQSurf->UPeriod() : 0.0;
-  const Standard_Real aVpPeriod = thePSurf->IsVPeriodic() ? thePSurf->VPeriod() : 0.0;
-  const Standard_Real aVqPeriod = theQSurf->IsVPeriodic() ? theQSurf->VPeriod() : 0.0;
-
-  const Standard_Real anArrOfPeriod[4] = {theIsReversed? aUpPeriod : aUqPeriod,
-                                          theIsReversed? aVpPeriod : aVqPeriod,
-                                          theIsReversed? aUqPeriod : aUpPeriod,
-                                          theIsReversed? aVqPeriod : aVpPeriod};
-
   //On parametric
   Standard_Real aU0 = 0.0, aV0 = 0.0;
   //aPQuad is Pole
@@ -594,6 +584,16 @@ Standard_Boolean IntPatch_SpecialPoints::
 
   if (!isIsoChoosen)
   {
+    Standard_Real anArrOfPeriod[4];
+    if (theIsReversed)
+    {
+      IntSurf::SetPeriod(thePSurf, theQSurf, anArrOfPeriod);
+    }
+    else
+    {
+      IntSurf::SetPeriod(theQSurf, thePSurf, anArrOfPeriod);
+    }
+
     AdjustPointAndVertex(theVertex.PntOn2S(), anArrOfPeriod, theAddedPoint);
   }
   else
@@ -651,16 +651,19 @@ Standard_Boolean IntPatch_SpecialPoints::
   //Here, in case of pole/apex adding, we forbid "jumping" between two neighbor
   //Walking-point with step greater than pi/4
   const Standard_Real aPeriod = (theSPType == IntPatch_SPntPole)? M_PI_2 : 2.0*M_PI;
-
-  const Standard_Real aUpPeriod = thePSurf->IsUPeriodic() ? thePSurf->UPeriod() : 0.0;
-  const Standard_Real aUqPeriod = theQSurf->IsUPeriodic() ? aPeriod : 0.0;
-  const Standard_Real aVpPeriod = thePSurf->IsVPeriodic() ? thePSurf->VPeriod() : 0.0;
-  const Standard_Real aVqPeriod = theQSurf->IsVPeriodic() ? aPeriod : 0.0;
-
-  const Standard_Real anArrOfPeriod[4] = {theIsReversed? aUpPeriod : aUqPeriod,
-                                          theIsReversed? aVpPeriod : aVqPeriod,
-                                          theIsReversed? aUqPeriod : aUpPeriod,
-                                          theIsReversed? aVqPeriod : aVpPeriod};
+  Standard_Real anArrOfPeriod[4];
+  if(theIsReversed)
+  {
+    IntSurf::SetPeriod(thePSurf, theQSurf, anArrOfPeriod);
+    if(anArrOfPeriod[2] > 0.0) anArrOfPeriod[2] = aPeriod;
+    if(anArrOfPeriod[3] > 0.0) anArrOfPeriod[3] = aPeriod;
+  }
+  else
+  {
+    IntSurf::SetPeriod(theQSurf, thePSurf, anArrOfPeriod);
+    if(anArrOfPeriod[0] > 0.0) anArrOfPeriod[0] = aPeriod;
+    if(anArrOfPeriod[1] > 0.0) anArrOfPeriod[1] = aPeriod;
+  }
 
   AdjustPointAndVertex(theRefPt, anArrOfPeriod, theNewPoint);
   return Standard_True;

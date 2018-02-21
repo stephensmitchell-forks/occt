@@ -86,11 +86,15 @@ public:
   //! If <First> >= <Last>
   Standard_EXPORT virtual Handle(Adaptor3d_HCurve) Trim (const Standard_Real First, const Standard_Real Last, const Standard_Real Tol) const;
   
-  Standard_EXPORT virtual Standard_Boolean IsClosed() const;
+  Standard_EXPORT virtual Standard_Boolean IsClosed() const = 0;
   
-  Standard_EXPORT virtual Standard_Boolean IsPeriodic() const;
+  //! //! Returns true if the curve in this adaptor is periodic 
+  //! (please see the documentation, the section
+  //! " /User Guides/Modeling Data/Concept of periodicity applied in OCCT-algorithms ").
+  Standard_EXPORT virtual Standard_Boolean IsPeriodic() const = 0;
   
-  Standard_EXPORT virtual Standard_Real Period() const;
+  //! Returns the period of the periodic adaptor's curve
+  Standard_EXPORT virtual Standard_Real Period() const = 0;
   
   //! Computes the point of parameter U on the curve.
   Standard_EXPORT virtual gp_Pnt Value (const Standard_Real U) const;

@@ -120,8 +120,10 @@ public:
   
   Standard_EXPORT Standard_Boolean IsClosed() const Standard_OVERRIDE;
   
+  //! This method is overridden from the basis class
   Standard_EXPORT Standard_Boolean IsPeriodic() const Standard_OVERRIDE;
   
+  //! This method is overridden from the basis class
   Standard_EXPORT Standard_Real Period() const Standard_OVERRIDE;
   
   //! Computes the point of parameter U on the curve.

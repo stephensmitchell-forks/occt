@@ -251,11 +251,8 @@ static void PutInBounds (const TopoDS_Face&          F,
   BRep_Tool::Range(E,f,l);  
 
   TopLoc_Location L; // Recup S avec la location pour eviter la copie.
-  Handle (Geom_Surface) S   = BRep_Tool::Surface(F,L);
+  const Handle (Geom_Surface) &S = BRep_Tool::Surface(F,L);
 
-  if (S->IsInstance(STANDARD_TYPE(Geom_RectangularTrimmedSurface))) {
-    S = Handle(Geom_RectangularTrimmedSurface)::DownCast (S)->BasisSurface();
-  }
   //---------------
   // Recadre en U.
   //---------------
@@ -1676,25 +1673,15 @@ void BRepOffset_Tool::Inter3D(const TopoDS_Face& F1,
         
         Standard_Real f, l;
 	const Handle(Geom_Curve)& aC3DE = BRep_Tool::Curve(anEdge, f, l);
-	Handle(Geom_TrimmedCurve) aC3DETrim;
 	    
-	if(!aC3DE.IsNull()) 
-            aC3DETrim = new Geom_TrimmedCurve(aC3DE, f, l);
-        
         BRep_Builder aBB;
 	Standard_Real aTolEdge = BRep_Tool::Tolerance(anEdge);
 	        
         if (!BOPTools_AlgoTools2D::HasCurveOnSurface(anEdge, cpF1)) {
           Handle(Geom2d_Curve) aC2d = aBC.Curve().FirstCurve2d();
-          if(!aC3DETrim.IsNull()) {
+          if (!aC3DE.IsNull()) {
 		Handle(Geom2d_Curve) aC2dNew;
-		
-		if(aC3DE->IsPeriodic()) {
                   BOPTools_AlgoTools2D::AdjustPCurveOnFace(cpF1, f, l,  aC2d, aC2dNew, aContext);
-		  }
-		else {
-                  BOPTools_AlgoTools2D::AdjustPCurveOnFace(cpF1, aC3DETrim, aC2d, aC2dNew, aContext); 
-		  }
 		aC2d = aC2dNew;
 	      }
 	      aBB.UpdateEdge(anEdge, aC2d, cpF1, aTolEdge);
@@ -1702,15 +1689,9 @@ void BRepOffset_Tool::Inter3D(const TopoDS_Face& F1,
         
         if (!BOPTools_AlgoTools2D::HasCurveOnSurface(anEdge, cpF2)) {
           Handle(Geom2d_Curve) aC2d = aBC.Curve().SecondCurve2d();
-          if(!aC3DETrim.IsNull()) {
+          if (!aC3DE.IsNull()) {
 		Handle(Geom2d_Curve) aC2dNew;
-		
-		if(aC3DE->IsPeriodic()) {
                   BOPTools_AlgoTools2D::AdjustPCurveOnFace(cpF2, f, l,  aC2d, aC2dNew, aContext);
-		  }
-		else {
-                  BOPTools_AlgoTools2D::AdjustPCurveOnFace(cpF2, aC3DETrim, aC2d, aC2dNew, aContext); 
-		  }
 		aC2d = aC2dNew;
 	      }
 	      aBB.UpdateEdge(anEdge, aC2d, cpF2, aTolEdge);
