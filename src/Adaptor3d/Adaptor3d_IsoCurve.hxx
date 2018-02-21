@@ -114,6 +114,8 @@ public:
   
   Standard_EXPORT Standard_Boolean IsClosed() const Standard_OVERRIDE;
   
+  //! Returns TRUE if the surface (returned by Surface() method) is periodic
+  //! along the chosen direction.
   Standard_EXPORT Standard_Boolean IsPeriodic() const Standard_OVERRIDE;
   
   Standard_EXPORT Standard_Real Period() const Standard_OVERRIDE;

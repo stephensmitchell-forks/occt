@@ -1877,8 +1877,8 @@ Handle(Geom_Curve) MakeBSpline  (const Handle(IntPatch_WLine)& WL,
     }
   }
   //
-  isuperiodic = anAdaptorSurface.IsUPeriodic();
-  isvperiodic = anAdaptorSurface.IsVPeriodic();
+  isuperiodic = (anAdaptorSurface.IsUPeriodic() && anAdaptorSurface.IsUClosed());
+  isvperiodic = (anAdaptorSurface.IsVPeriodic() && anAdaptorSurface.IsVClosed());
   //
   aType=anAdaptorSurface.GetType();
   if((aType==GeomAbs_BezierSurface) ||
@@ -2717,10 +2717,7 @@ Standard_Real MaxDistance(const Handle(Geom_Curve)& theC,
 
   // adjust domain for periodic surfaces
   TopLoc_Location aLoc;
-  Handle(Geom_Surface) aSurf = BRep_Tool::Surface(aFace, aLoc);
-  if (aSurf->IsKind(STANDARD_TYPE(Geom_RectangularTrimmedSurface))) {
-    aSurf = (Handle(Geom_RectangularTrimmedSurface)::DownCast(aSurf))->BasisSurface();
-  }
+  const Handle(Geom_Surface) &aSurf = BRep_Tool::Surface(aFace, aLoc);
   gp_Pnt2d pnt = aPC->Value((fp+lp)/2);
   Standard_Real u,v;
   pnt.Coord(u,v);

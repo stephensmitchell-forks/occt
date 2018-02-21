@@ -332,6 +332,9 @@ Standard_Boolean Geom2d_OffsetCurve::IsCN (const Standard_Integer N) const
 
 Standard_Boolean Geom2d_OffsetCurve::IsPeriodic () const 
 { 
+  if (basisCurve->Continuity() == GeomAbs_C0)
+    return Standard_False;
+
   return basisCurve->IsPeriodic();
 }
 

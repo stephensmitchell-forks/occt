@@ -88,8 +88,12 @@ public:
   
   Standard_EXPORT virtual Standard_Boolean IsClosed() const;
   
+  //! Returns true if the curve in this adaptor is periodic 
+  //! (please see the documentation, the section
+  //! " /User Guides/Modeling Data/Periodicity concept ").
   Standard_EXPORT virtual Standard_Boolean IsPeriodic() const;
   
+  //! Returns the period of the periodic adaptor's curve
   Standard_EXPORT virtual Standard_Real Period() const;
   
   //! Computes the point of parameter U on the curve.

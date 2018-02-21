@@ -639,6 +639,10 @@ Standard_Boolean Geom_OffsetSurface::IsCNv (const Standard_Integer N) const
 
 Standard_Boolean Geom_OffsetSurface::IsUPeriodic () const 
 {
+  //Indeed, the basis surface must have continuity greater than C0 
+  //in U-direction.
+  //However currently it is not checked.
+
   return basisSurf->IsUPeriodic();
 }
 
@@ -659,6 +663,10 @@ Standard_Real Geom_OffsetSurface::UPeriod() const
 
 Standard_Boolean Geom_OffsetSurface::IsVPeriodic () const 
 {
+  //Indeed, the basis surface must have continuity greater than C0 
+  //in U-direction.
+  //However currently it is not checked.
+
   return basisSurf->IsVPeriodic();
 }
 
