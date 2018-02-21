@@ -2889,6 +2889,83 @@ static Standard_Integer OCC29531(Draw_Interpretor&, Standard_Integer, const char
   return 0;
 }
 
+//=======================================================================
+//function : OCC29115c
+//purpose  : 
+//=======================================================================
+#include <GeomLib.hxx>
+static Standard_Integer OCC29115c(Draw_Interpretor&theDI, Standard_Integer, const char** theArgV)
+{
+  const Standard_Real aUf = Draw::Atof(theArgV[2]),
+                      aUl = Draw::Atof(theArgV[3]);
+  const Handle(Geom2d_Curve) aC2d = DrawTrSurf::GetCurve2d(theArgV[1]);
+
+  if (!aC2d.IsNull())
+  {
+    if (GeomLib::IsTrimAllowed(aC2d, aUf, aUl))
+    {
+      theDI << "Trimm is possible.\n";
+    }
+    else
+    {
+      theDI << "Trimm is not possible.\n";
+    }
+
+    return 0;
+  }
+
+  const Handle(Geom_Curve) aC3d = DrawTrSurf::GetCurve(theArgV[1]);
+
+  if (aC3d.IsNull())
+    return 1;
+
+  if (GeomLib::IsTrimAllowed(aC3d, aUf, aUl))
+  {
+    theDI << "Trimm is possible.\n";
+  }
+  else
+  {
+    theDI << "Trimm is not possible.\n";
+  }
+
+  return 0;
+}
+
+//=======================================================================
+//function : OCC29115s
+//purpose  : 
+//=======================================================================
+static Standard_Integer OCC29115s(Draw_Interpretor&theDI, Standard_Integer, const char** theArgV)
+{
+  const Standard_Real aUf = Draw::Atof(theArgV[2]),
+                      aUl = Draw::Atof(theArgV[3]),
+                      aVf = Draw::Atof(theArgV[4]),
+                      aVl = Draw::Atof(theArgV[5]);
+
+  const Handle(Geom_Surface) aS = DrawTrSurf::GetSurface(theArgV[1]);
+  const GeomAdaptor_Surface anAS(aS);
+
+  if (GeomLib::IsUTrimAllowed(anAS, aUf, aUl))
+  {
+    theDI << "U-trimm is possible.\n";
+  }
+  else
+  {
+    theDI << "U-trimm is not possible.\n";
+  }
+
+  if (GeomLib::IsVTrimAllowed(anAS, aVf, aVl))
+  {
+    theDI << "V-trimm is possible.\n";
+  }
+  else
+  {
+    theDI << "V-trimm is not possible.\n";
+  }
+
+  return 0;
+}
+
 void QABugs::Commands_20(Draw_Interpretor& theCommands) {
   const char *group = "QABugs";
 
@@ -2925,5 +3002,8 @@ void QABugs::Commands_20(Draw_Interpretor& theCommands) {
   theCommands.Add("OCC29531", "OCC29531 <step file name>", __FILE__, OCC29531, group);
 
   theCommands.Add ("OCC29064", "OCC29064: test memory usage by copying empty maps", __FILE__, OCC29064, group);
+  theCommands.Add("OCC29115c", "OCC29115c curve Uf Ul <step file name>", __FILE__, OCC29115c, group);
+  theCommands.Add("OCC29115s", "OCC29115s surface Uf Ul Vf Vl", __FILE__, OCC29115s, group);
+
   return;
 }
