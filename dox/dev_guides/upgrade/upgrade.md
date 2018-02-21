@@ -1521,6 +1521,17 @@ Multiple changes have been applied to lights management within TKV3d and TKOpenG
   Dedicated classes only hides visibility of unrelated light properties depending on its type.
 * Calling V3d_Viewer::UpdateLights() is no more required after modifying light sources properties (color, position, etc.).
 
+@subsection upgrade_730_localcontext Local Context removal
+
+Previously deprecated Local Context functionality has been removed from AIS package,
+so that related methods have been removed from AIS_InteractiveContext interface:
+::HasOpenedContext(), ::HighestIndex(), ::LocalContext(), ::LocalSelector(), ::OpenLocalContext(), ::CloseLocalContext(),
+::IndexOfCurrentLocal(), ::CloseAllContexts(), ::ResetOriginalState(), ::ClearLocalContext(), ::UseDisplayedObjects(), ::NotUseDisplayedObjects(),
+::SetShapeDecomposition(), ::SetTemporaryAttributes(), ::ActivateStandardMode(), ::DeactivateStandardMode(), ::KeepTemporary(),
+::SubIntensityOn(), ::SubIntensityOff(), ::ActivatedStandardModes(), ::IsInLocal() ::AddOrRemoveSelected() taking TopoDS_Shape.
+
+A set of deprecated methods previously related to Local Context and now redirecting to other methods has been preserved to simplify porting; they will be removed in next release.
+
 @subsection upgrade_730_BOPAlgo_Section Changes in BOPAlgo_Section
 
 The public method *BuildSection()* in the class *BOPAlgo_Section* has became protected. The methods *Perform()* or *PerformWithFiller()* should be called for construction of the result of SECTION operation.
