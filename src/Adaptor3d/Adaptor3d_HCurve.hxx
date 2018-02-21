@@ -93,8 +93,14 @@ public:
   
     Standard_Boolean IsClosed() const;
   
+    //! Returns true if the curve in this adaptor is periodic 
+    //! (please see the documentation, the section
+    //! " /User Guides/Modeling Data/Concept of periodicity applied in OCCT-algorithms ").
     Standard_Boolean IsPeriodic() const;
   
+    //! Returns the period of the periodic adaptor's curve
+    //! (please see the documentation, the section
+    //! " /User Guides/Modeling Data/Concept of periodicity applied in OCCT-algorithms ").
     Standard_Real Period() const;
   
     gp_Pnt Value (const Standard_Real U) const;

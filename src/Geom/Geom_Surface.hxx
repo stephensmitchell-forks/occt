@@ -175,33 +175,25 @@ public:
   //! or equal to gp::Resolution().
   Standard_EXPORT virtual Standard_Boolean IsVClosed() const = 0;
   
-  //! Checks if this surface is periodic in the u
-  //! parametric direction. Returns true if:
-  //! - this surface is closed in the u parametric direction, and
-  //! - there is a constant T such that the distance
-  //! between the points P (u, v) and P (u + T,
-  //! v) (or the points P (u, v) and P (u, v +
-  //! T)) is less than or equal to gp::Resolution().
-  //! Note: T is the parametric period in the u parametric direction.
+  //! Returns true if the surface is U-periodic 
+  //! (please see the documentation, the section
+  //! " /User Guides/Modeling Data/Concept of periodicity applied in OCCT-algorithms ").
   Standard_EXPORT virtual Standard_Boolean IsUPeriodic() const = 0;
   
   //! Returns the period of this surface in the u
   //! parametric direction.
-  //! raises if the surface is not uperiodic.
+  //! (please see the documentation, the section
+  //! " /User Guides/Modeling Data/Concept of periodicity applied in OCCT-algorithms ").
   Standard_EXPORT virtual Standard_Real UPeriod() const;
   
-  //! Checks if this surface is periodic in the v
-  //! parametric direction. Returns true if:
-  //! - this surface is closed in the v parametric direction, and
-  //! - there is a constant T such that the distance
-  //! between the points P (u, v) and P (u + T,
-  //! v) (or the points P (u, v) and P (u, v +
-  //! T)) is less than or equal to gp::Resolution().
-  //! Note: T is the parametric period in the v parametric direction.
+  //! Returns true if the surface is V-periodic 
+  //! (please see the documentation, the section
+  //! " /User Guides/Modeling Data/Concept of periodicity applied in OCCT-algorithms ").
   Standard_EXPORT virtual Standard_Boolean IsVPeriodic() const = 0;
   
   //! Returns the period of this surface in the v parametric direction.
-  //! raises if the surface is not vperiodic.
+  //! (please see the documentation, the section
+  //! " /User Guides/Modeling Data/Concept of periodicity applied in OCCT-algorithms ").
   Standard_EXPORT virtual Standard_Real VPeriod() const;
   
   //! Computes the U isoparametric curve.
