@@ -44,7 +44,13 @@ public:
   Standard_EXPORT XCAFDimTolObjects_DatumObject();
   
   Standard_EXPORT XCAFDimTolObjects_DatumObject(const Handle(XCAFDimTolObjects_DatumObject)& theObj);
-  
+
+  //! Returns semantic name
+  Standard_EXPORT Handle(TCollection_HAsciiString) GetSemanticName() const;
+
+  //! Sets semantic name
+  Standard_EXPORT void SetSemanticName(const Handle(TCollection_HAsciiString)& theName);
+
   Standard_EXPORT Handle(TCollection_HAsciiString) GetName() const;
   
   Standard_EXPORT void SetName (const Handle(TCollection_HAsciiString)& theTag);
@@ -181,7 +187,8 @@ private:
   Standard_Boolean myHasPnt;
   Standard_Boolean myHasPntText;
   TopoDS_Shape myPresentation;
-   Handle(TCollection_HAsciiString) myPresentationName;
+  Handle(TCollection_HAsciiString) mySemanticName;
+  Handle(TCollection_HAsciiString) myPresentationName;
 };
 
 #endif // _XCAFDimTolObjects_DatumObject_HeaderFile

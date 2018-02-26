@@ -54,6 +54,12 @@ public:
   
   Standard_EXPORT XCAFDimTolObjects_DimensionObject(const Handle(XCAFDimTolObjects_DimensionObject)& theObj);
   
+  //! Returns semantic name
+  Standard_EXPORT Handle(TCollection_HAsciiString) GetSemanticName() const;
+
+  //! Sets semantic name
+  Standard_EXPORT void SetSemanticName(const Handle(TCollection_HAsciiString)& theName);
+
   Standard_EXPORT void SetQualifier (const XCAFDimTolObjects_DimensionQualifier theQualifier);
   
   Standard_EXPORT XCAFDimTolObjects_DimensionQualifier GetQualifier() const;
@@ -186,7 +192,7 @@ public:
     return myPresentation;
   }
 
-   //! Returns graphical presentation of the object
+  //! Returns graphical presentation of the object
   Standard_EXPORT Handle(TCollection_HAsciiString) GetPresentationName() const
   {
     return myPresentationName;
@@ -252,6 +258,7 @@ private:
   Standard_Boolean myHasPntText;
   gp_Pnt myPntText;
   TopoDS_Shape myPresentation;
+  Handle(TCollection_HAsciiString) mySemanticName;
   Handle(TCollection_HAsciiString) myPresentationName;
   NCollection_Vector<Handle(TCollection_HAsciiString)> myDescriptions;
   NCollection_Vector<Handle(TCollection_HAsciiString)> myDescriptionNames;
