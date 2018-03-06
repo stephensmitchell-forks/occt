@@ -80,7 +80,15 @@ public:
   //! to be C0.
   Standard_EXPORT void SetForceApproxC1 (const Standard_Boolean ForceApproxC1);
   
-  //! Build the Sweeep  Surface
+  //! If this option is disabled (theVal == FALSE) then 
+  //! BRepFill_Sweep algorithm is allowed to create invalid faces
+  //! (having self-interferences).
+  void EnableCheckValidity(const Standard_Boolean theVal)
+  {
+    myIsToCheckValidity = theVal;
+  }
+
+  //! Build the Sweep  Surface
   //! Transition define Transition strategy
   //! Approx define Approximation Strategy
   //! - GeomFill_Section : The composed Function Location X Section
@@ -118,13 +126,6 @@ public:
 
 protected:
 
-
-
-
-
-private:
-
-  
   Standard_EXPORT Standard_Boolean CorrectApproxParameters();
   
   Standard_EXPORT Standard_Boolean BuildWire (const BRepFill_TransitionStyle Transition);
@@ -140,6 +141,13 @@ private:
   Standard_EXPORT void UpdateVertex (const Standard_Integer Ipath, const Standard_Integer Isec, const Standard_Real Error, const Standard_Real Param, TopoDS_Shape& V) const;
   
   Standard_EXPORT void RebuildTopOrBottomEdge (const TopoDS_Edge& aNewEdge, TopoDS_Edge& anEdge, TopTools_MapOfShape& ReversedEdges) const;
+
+
+
+
+private:
+
+  
 
 
   Standard_Boolean isDone;
@@ -167,7 +175,7 @@ private:
   Standard_Real Error;
   TopoDS_Wire FirstShape;
   TopoDS_Wire LastShape;
-
+  Standard_Boolean myIsToCheckValidity;
 
 };
 

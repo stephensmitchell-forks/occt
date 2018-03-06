@@ -168,7 +168,11 @@ public:
   Standard_EXPORT void Simulate (const Standard_Integer NumberOfSection, TopTools_ListOfShape& Sections);
   
   //! Builds the resulting shape (redefined from MakeShape).
-  Standard_EXPORT Standard_Boolean Build();
+  //! If theIsToCheckValidity == FALSE then BRepFill_Sweep algorithm
+  //! is allowed to create invalid faces (having self-interferences).
+  //! It is considered for them that such faces will be processed and
+  //! fixed by the high-level algorithms
+  Standard_EXPORT Standard_Boolean Build(const Standard_Boolean theIsToCheckValidity = Standard_True);
   
   //! Transform the sweeping Shell in Solid.
   //! If the section are not closed returns False
