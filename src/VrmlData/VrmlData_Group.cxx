@@ -165,9 +165,20 @@ VrmlData_ErrorStatus VrmlData_Group::Read (VrmlData_InBuffer& theBuffer)
   gp_XYZ aRotAxis (0., 0., 1.), aScaleAxis (0., 0., 1.);
   Standard_Real aRotAngle (0.), aScaleAngle(0.);
 
+  TCollection_AsciiString aName;
   while (OK(aStatus, VrmlData_Scene::ReadLine(theBuffer)))
   {
-    if (VRMLDATA_LCOMPARE (theBuffer.LinePtr, "bboxCenter"))
+    if (VRMLDATA_LCOMPARE(theBuffer.LinePtr, "DEF")
+     && aName.IsEmpty()
+     && (myName == NULL || *myName == '\0'))
+    {
+      // Read the DEF token to assign the node name
+      if (VrmlData_Node::OK(aStatus, Scene().ReadWord (theBuffer, aName)))
+      {
+        setName (aName.ToCString());
+      }
+    }
+    else if (VRMLDATA_LCOMPARE (theBuffer.LinePtr, "bboxCenter"))
       aStatus = Scene().ReadXYZ (theBuffer, aBoxCenter,
                                  Standard_True, Standard_False);
 
@@ -207,8 +218,11 @@ VrmlData_ErrorStatus VrmlData_Group::Read (VrmlData_InBuffer& theBuffer)
       TCollection_AsciiString aDummy;
       aStatus = Scene().ReadWord (theBuffer, aDummy);
     }
-    else if (VRMLDATA_LCOMPARE (theBuffer.LinePtr, "Separator") ||
-             VRMLDATA_LCOMPARE (theBuffer.LinePtr, "Switch")) {
+    else if (VRMLDATA_LCOMPARE (theBuffer.LinePtr, "Separator")
+          || VRMLDATA_LCOMPARE (theBuffer.LinePtr, "Switch")
+          // VRML 1.0
+          || VRMLDATA_LCOMPARE (theBuffer.LinePtr, "TransformSeparator"))
+    {
       Standard_Boolean isBracketed (Standard_False);
       // Read the opening bracket for the list of children
       if (!OK(aStatus, VrmlData_Scene::ReadLine(theBuffer)))
@@ -239,7 +253,9 @@ VrmlData_ErrorStatus VrmlData_Group::Read (VrmlData_InBuffer& theBuffer)
           break;
       }
     }
-    else if (VRMLDATA_LCOMPARE (theBuffer.LinePtr, "ShapeHints")) {
+    else if (VRMLDATA_LCOMPARE (theBuffer.LinePtr, "ShapeHints")
+          // VRML 1.0
+          || VRMLDATA_LCOMPARE (theBuffer.LinePtr, "DirectionalLight")) {
       // Skip this tag
       if (!OK(aStatus, VrmlData_Scene::ReadLine(theBuffer)))
         break;

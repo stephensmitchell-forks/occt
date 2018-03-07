@@ -51,6 +51,8 @@
 #pragma warning (disable:4996)
 #endif
 
+#define VRMLDATA_LCOMPARE_SKIP(aa, bb) (strncmp (aa, bb, sizeof(bb)-1) == 0)
+
 static void     dumpNode        (Standard_OStream&              theStream,
                                  const Handle(VrmlData_Node)&   theNode,
                                  const TCollection_AsciiString& theIndent);
@@ -468,7 +470,8 @@ VrmlData_ErrorStatus VrmlData_Scene::createNode
     // create the new node
     if (VRMLDATA_LCOMPARE(theBuffer.LinePtr, "Appearance"))
       aNode = new VrmlData_Appearance     (* this, strName);
-    else if (VRMLDATA_LCOMPARE(theBuffer.LinePtr, "Shape"))
+    else if (!VRMLDATA_LCOMPARE_SKIP(theBuffer.LinePtr, "ShapeHints")
+           && VRMLDATA_LCOMPARE(theBuffer.LinePtr, "Shape"))
       aNode = new VrmlData_ShapeNode      (* this, strName);
     else if (VRMLDATA_LCOMPARE(theBuffer.LinePtr, "Box"))
       aNode = new VrmlData_Box            (* this, strName);

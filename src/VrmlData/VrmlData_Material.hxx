@@ -150,6 +150,7 @@ class VrmlData_Material : public VrmlData_Node
   Standard_Real         myAmbientIntensity;
   Standard_Real         myShininess;
   Standard_Real         myTransparency;
+  Quantity_Color        myAmbientColor;
   Quantity_Color        myDiffuseColor;
   Quantity_Color        myEmissiveColor;
   Quantity_Color        mySpecularColor;
