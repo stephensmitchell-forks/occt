@@ -124,6 +124,7 @@
 #include <BRepBuilderAPI_CellFilter.hxx>
 #include <BRepBuilderAPI_BndBoxTreeSelector.hxx>
 #include <NCollection_UBTreeFiller.hxx>
+#include <BRep_TEdge.hxx>
 
 //=======================================================================
 //function : SameRange
@@ -934,11 +935,25 @@ TopoDS_Edge BRepBuilderAPI_Sewing::SameParameterEdge(const TopoDS_Edge& edgeFirs
             if (dist > dist2) 
               dist2 = dist;
           }
-          maxTol = Max(sqrt(dist2), Precision::Confusion());
+          maxTol = Max(sqrt(dist2) * (1. + 1e-7), Precision::Confusion());
+          //maxTol = Max(sqrt(dist2), Precision::Confusion());
         }
       }
+     
       if(maxTol >= 0. && maxTol < tolReached)
+      {
+        if (tolReached > MaxTolerance())
+        {
+          // Set tolerance directly to overwrite too large tolerance
+          static_cast<BRep_TEdge*>(edge.TShape().operator->())->Tolerance(maxTol);
+        }
+        else
+        {
+          // just update tolerance with computed distance
         aBuilder.UpdateEdge(edge, maxTol);
+        }
+      }
+            
       aBuilder.SameParameter(edge,Standard_True);
     }
   }
