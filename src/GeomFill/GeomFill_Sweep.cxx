@@ -68,6 +68,8 @@
 #include <TColStd_Array1OfInteger.hxx>
 #include <TColStd_Array1OfReal.hxx>
 #include <TColStd_Array2OfReal.hxx>
+#include <Extrema_ECC.hxx>
+#include <Extrema_POnCurv.hxx>
 
 //#include <GeomLib_Array1OfMat.hxx>
 //=======================================================================
@@ -995,13 +997,78 @@ static Standard_Boolean IsSweepParallelSpine (const Handle(GeomFill_LocationLaw)
 	  }
 	}
 	else SError = 0.;
+
+        if (Ok)
+        {
+          const Handle(Geom_ConicalSurface) aSCon = Handle(Geom_ConicalSurface)::DownCast(S);
+
+          if (!aSCon.IsNull())
+          {
+            const Standard_Real aR = aSCon->RefRadius(),
+                                anAngle = aSCon->SemiAngle();
+
+            const Standard_Real anApexPrm = -aR / Sin(anAngle);
+
+            const Standard_Real aDf = anApexPrm - UFirst,
+                                aDl = ULast - anApexPrm;
+
+            if (aDf*aDl > 0.0)
+            {
+              if (Abs(aDf) > Abs(aDl))
+              {
+                ULast = anApexPrm;
+              }
+              else
+              {
+                UFirst = anApexPrm;
+              }
+            }
+          }
+        }
+
       }
   
       // (2.3) Revolution
       if (!Ok) {
 	if (IsTrsf) { 
 	  Section->Transform(Tf2);
-	  gp_Ax1 Axis (Centre, DN);
+          gp_Ax1 Axis(Centre, DN);
+
+          {
+            const Handle(Geom_Line) aL = new Geom_Line(Axis);
+            const GeomAdaptor_Curve aLin(aL), anAC(Section);
+
+            Extrema_ECC anExtr(anAC, aLin);
+            anExtr.Perform();
+            if (anExtr.IsDone() && anExtr.NbExt() > 0)
+            {
+              Extrema_POnCurv aP1, aP2;
+              for (Standard_Integer i = 1; i <= anExtr.NbExt(); i++)
+              {
+                if (anExtr.SquareDistance(i) > Precision::SquareConfusion())
+                  continue;
+
+                anExtr.Points(i, aP1, aP2);
+
+                const Standard_Real anSinglrPrm = aP1.Parameter();
+                const Standard_Real aDf = anSinglrPrm - UFirst,
+                                    aDl = ULast - anSinglrPrm;
+
+                if (aDf*aDl > 0.0)
+                {
+                  if (Abs(aDf) > Abs(aDl))
+                  {
+                    ULast = anSinglrPrm;
+                  }
+                  else
+                  {
+                    UFirst = anSinglrPrm;
+                  }
+                }
+              }
+            }
+          }
+
 	  S = new (Geom_SurfaceOfRevolution)
 	    (Section, Axis);
 	  myExchUV = Standard_True;
