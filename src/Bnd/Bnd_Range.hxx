@@ -100,6 +100,7 @@ public:
     else if (IsVoid())
     {
       *this = theRange;
+      return;
     }
     myFirst = Min(myFirst, theRange.myFirst);
     myLast  = Max(myLast,  theRange.myLast);
