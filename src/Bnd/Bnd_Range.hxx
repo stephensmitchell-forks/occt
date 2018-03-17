@@ -82,6 +82,21 @@ public:
     return Standard_True;
   }
 
+  //! Obtain first and last boundary of <this>.
+  //! If <this> is VOID the method returns false.
+  Standard_Boolean GetBounds(Standard_Real& theFirstPar,
+                             Standard_Real& theLastPar) const
+  {
+    if(IsVoid())
+    {
+      return Standard_False;
+    }
+
+    theFirstPar = myFirst;
+    theLastPar = myLast;
+    return Standard_True;
+  }
+
   //! Returns range value (MAX-MIN). Returns negative value for VOID range.
   Standard_Real Delta() const
   {
