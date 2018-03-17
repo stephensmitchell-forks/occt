@@ -289,6 +289,35 @@ void AIS_ColoredShape::SetTransparency (const Standard_Real theValue)
 }
 
 //=======================================================================
+//function : UnsetTransparency
+//purpose  :
+//=======================================================================
+void AIS_ColoredShape::UnsetTransparency()
+{
+  myDrawer->SetTransparency (0.0f);
+  if (myDrawer->HasOwnShadingAspect())
+  {
+    myDrawer->ShadingAspect()->SetTransparency (0.0, myCurrentFacingModel);
+    if (!HasColor()
+     && !HasMaterial()
+     && !myDrawer->ShadingAspect()->Aspect()->ToMapTexture())
+    {
+      myDrawer->SetShadingAspect (Handle(Prs3d_ShadingAspect)());
+    }
+  }
+
+  for (AIS_DataMapOfShapeDrawer::Iterator anIter (myShapeColors); anIter.More(); anIter.Next())
+  {
+    const Handle(Prs3d_Drawer)& aDrawer = anIter.Value();
+    if (aDrawer->HasOwnShadingAspect())
+    {
+      aDrawer->ShadingAspect()->SetTransparency (0.0, myCurrentFacingModel);
+    }
+  }
+  SynchronizeAspects();
+}
+
+//=======================================================================
 //function : SetMaterial
 //purpose  :
 //=======================================================================
@@ -577,7 +606,10 @@ void AIS_ColoredShape::addShapesWithCustomProps (const Handle(Prs3d_Presentation
         // add special wireframe presentation for faces without triangulation
         StdPrs_ShadedShape::AddWireframeForFacesWithoutTriangles (thePrs, aShapeDraw, aDrawer);
 
-        Handle(Graphic3d_ArrayOfTriangles) aTriangles = StdPrs_ShadedShape::FillTriangles (aShapeDraw);
+        Handle(Graphic3d_ArrayOfTriangles) aTriangles = StdPrs_ShadedShape::FillTriangles (aShapeDraw,
+                                                                                           aDrawer->ShadingAspect()->Aspect()->ToMapTexture()
+                                                                                       && !aDrawer->ShadingAspect()->Aspect()->TextureMap().IsNull(),
+                                                                                           myUVOrigin, myUVRepeat, myUVScale);
         if (!aTriangles.IsNull())
         {
           if (aShadedGroup.IsNull())
