@@ -48,14 +48,3 @@ const Handle(SelectBasics_EntityOwner)& SelectBasics_SensitiveEntity::OwnerId() 
   return myOwnerId;
 }
 
-//=======================================================================
-// function : SetSensitivityFactor
-// purpose  : Allows to manage sensitivity of a particular entity
-//=======================================================================
-void SelectBasics_SensitiveEntity::SetSensitivityFactor (const Standard_Integer theNewSens)
-{
-  Standard_ASSERT_RAISE (theNewSens > 0,
-    "Error! Selection sensitivity have positive value.");
-
-  mySFactor = theNewSens;
-}
