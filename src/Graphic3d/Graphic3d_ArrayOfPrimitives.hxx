@@ -24,20 +24,11 @@
 #include <Standard_OutOfRange.hxx>
 #include <Quantity_Color.hxx>
 
-class Quantity_Color;
-
 class Graphic3d_ArrayOfPrimitives;
 DEFINE_STANDARD_HANDLE(Graphic3d_ArrayOfPrimitives, MMgt_TShared)
 
-//! This class furnish services to defined and fill an
-//! array of primitives compatible with the use of
-//! the OPENGl glDrawArrays() or glDrawElements() functions.
-//! NOTE that the main goal of this kind of primitive
-//! is to avoid multiple copies of datas between
-//! each layer of the software.
-//! So the array datas exist only one time and the use
-//! of SetXxxxxx() methods enable to change dynamically
-//! the aspect of this primitive.
+//! This class furnish services to defined and fill an array of primitives
+//! which can be passed directly to graphics rendering API.
 //!
 //! Advantages are :
 //! 1) Decrease strongly the loading time.
