@@ -54,9 +54,6 @@ void V3d_View::SetLightOn (const Handle(V3d_Light)& theLight)
 {
   if (!myActiveLights.Contains (theLight))
   {
-    V3d_BadValue_Raise_if (myActiveLights.Extent() >= LightLimit(),
-                           "V3d_View::SetLightOn, "
-                           "too many lights");
     myActiveLights.Append (theLight);
     UpdateLights();
   }
