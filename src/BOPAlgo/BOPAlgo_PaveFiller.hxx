@@ -126,9 +126,23 @@ public:
   
   Standard_EXPORT const BOPDS_PIterator& Iterator();
   
-  Standard_EXPORT void SetArguments (const BOPCol_ListOfShape& theLS);
-  
-  Standard_EXPORT const BOPCol_ListOfShape& Arguments() const;
+  //! Sets the arguments for operation
+  void SetArguments (const BOPCol_ListOfShape& theLS)
+  {
+    myArguments = theLS;
+  }
+
+  //! Adds the argument for operation
+  void AddArgument(const TopoDS_Shape& theShape)
+  {
+    myArguments.Append(theShape);
+  }
+
+  //! Returns the list of arguments
+  const BOPCol_ListOfShape& Arguments() const
+  {
+    return myArguments;
+  }
   
   Standard_EXPORT const Handle(IntTools_Context)& Context();
   
