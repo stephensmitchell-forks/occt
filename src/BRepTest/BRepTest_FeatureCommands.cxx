@@ -61,6 +61,7 @@
 #include <DBRep.hxx>
 #include <DBRep_DrawableShape.hxx>
 #include <BRepTest.hxx>
+#include <BRepTest_Objects.hxx>
 
 #include <BRepFilletAPI_MakeFillet.hxx>
 #include <ChFi3d_FilletShape.hxx>
@@ -2093,9 +2094,9 @@ static Standard_Integer BOSS(Draw_Interpretor& theCommands,
   }
 
   if ((!strcasecmp(a[0],"ENDEDGES") && narg !=5) ||
-      (!strcasecmp(a[0],"FILLET") && narg <5 &&  narg%2 != 1) ||
+      (!strcasecmp(a[0],"FILLET") && (narg < 5 || narg%2 != 1)) ||
       (!strcasecmp(a[0],"BOSSAGE") && narg != 6)) {
-    theCommands << "invalid number of arguments";
+    theCommands.PrintHelp(a[0]);
     return 1;
   }
 
@@ -2233,6 +2234,12 @@ static Standard_Integer BOSS(Draw_Interpretor& theCommands,
       DBRep::Set(a[2],res);
     }
     dout.Flush();
+
+    // Save history for fillet
+    TopTools_ListOfShape anArg;
+    anArg.Append(V);
+    BRepTest_Objects::SetHistory(anArg, *Rakk);
+
     return 0;
   }
 
