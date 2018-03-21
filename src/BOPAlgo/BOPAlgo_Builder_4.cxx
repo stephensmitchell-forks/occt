@@ -155,7 +155,7 @@ const TopTools_ListOfShape& BOPAlgo_Builder::Modified
     return myHistShapes;
 
   const TopTools_ListOfShape* pLSp = myImagesResult.Seek(theS);
-  if (!pLSp)
+  if (!pLSp || pLSp->IsEmpty())
     // No track in the result -> no modified
     return myHistShapes;
 
@@ -190,9 +190,22 @@ const TopTools_ListOfShape& BOPAlgo_Builder::Modified
 //=======================================================================
 Standard_Boolean BOPAlgo_Builder::IsDeleted(const TopoDS_Shape& theS)
 {
-  // The shape is considered as Deleted if the result shape
-  // does not contain the shape itself and none of its splits
-  return myHasDeleted && !myImagesResult.Contains(theS);
+  // The shape is considered as Deleted if it has participated in the
+  // operation and the result shape does not contain the shape itself
+  // and none of its splits.
+
+  if (!myHasDeleted)
+    // Non of the shapes have been deleted during the operation
+    return Standard_False;
+
+  const TopTools_ListOfShape *pImages = myImagesResult.Seek(theS);
+  if (!pImages)
+    // No track about the shape, i.e. the shape has not participated
+    // in operation -> Not deleted
+    return Standard_False;
+
+  // Check if any parts of the shape has been kept in the result
+  return pImages->IsEmpty();
 }
 //=======================================================================
 //function : LocModified
@@ -219,23 +232,15 @@ void BOPAlgo_Builder::PrepareHistory()
   BOPAlgo_BuilderShape::PrepareHistory();
   myFlagHistory = Standard_True;
 
-  if (myShape.IsNull() ||
-      BOPTools_AlgoTools3D::IsEmptyShape(myShape))
-  {
-    // The result shape is a null shape or empty shape,
-    // thus, no modified, no generated, all deleted
-    myHasModified = Standard_False;
-    myHasGenerated = Standard_False;
-    myHasDeleted = Standard_True;
-    return;
-  }
-
   // Map the result shape
   BOPTools::MapShapes(myShape, myMapShape);
 
   // Among all input shapes find those that have any trace in the result
   // and save them into myImagesResult map with connection to parts
-  // kept in the result shape.
+  // kept in the result shape. If the input shape has no trace in the
+  // result shape, link it to the empty list in myImagesResult meaning
+  // that the shape has been removed.
+  //
   // Also, set the proper values to the history flags:
   // - myHasDeleted for Deleted shapes;
   // - myHasModified for Modified shapes;
@@ -254,6 +259,9 @@ void BOPAlgo_Builder::PrepareHistory()
           aType == TopAbs_SOLID))
       continue;
 
+    // Track the modification of the shape
+    TopTools_ListOfShape* pImages = &myImagesResult(myImagesResult.Add(aS, TopTools_ListOfShape()));
+
     // Check if the shape has any splits
     const TopTools_ListOfShape* pLSp = LocModified(aS);
     if (!pLSp)
@@ -261,7 +269,7 @@ void BOPAlgo_Builder::PrepareHistory()
       // No splits, check if the result shape contains the shape itself
       if (myMapShape.Contains(aS))
         // Shape has passed into result without modifications -> link the shape to itself
-        myImagesResult(myImagesResult.Add(aS, TopTools_ListOfShape())).Append(aS);
+        pImages->Append(aS);
       else
         // No trace of the shape in the result -> Deleted element is found
         myHasDeleted = Standard_True;
@@ -269,7 +277,6 @@ void BOPAlgo_Builder::PrepareHistory()
     else
     {
       // Find all splits of the shape which are kept in the result
-      TopTools_ListOfShape *pLSpKept = NULL;
       TopTools_ListIteratorOfListOfShape aIt(*pLSp);
       for (; aIt.More(); aIt.Next())
       {
@@ -278,15 +285,12 @@ void BOPAlgo_Builder::PrepareHistory()
         // Check if the result shape contains the split
         if (myMapShape.Contains(aSp))
         {
-          if (!pLSpKept)
-            pLSpKept = &myImagesResult(myImagesResult.Add(aS, TopTools_ListOfShape()));
-
           // Link the shape to the split
-          pLSpKept->Append(aSp);
+          pImages->Append(aSp);
         }
       }
 
-      if (pLSpKept)
+      if (!pImages->IsEmpty())
         // Modified element is found
         myHasModified = Standard_True;
       else
