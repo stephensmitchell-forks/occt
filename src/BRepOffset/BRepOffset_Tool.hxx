@@ -131,18 +131,30 @@ public:
                                            Standard_Boolean& enlargeVfirst,
                                            Standard_Boolean& enlargeVlast);
   
+  //! Detect closedness of face in U and V directions
+  Standard_EXPORT static void DetectClosedness (const TopoDS_Face& theFace,
+                                                Standard_Boolean&  theUclosed,
+                                                Standard_Boolean&  theVclosed);
+  
   //! if <ChangeGeom> is TRUE  ,   the surface  can  be
   //! changed .
   //! if <UpdatePCurve>  is  TRUE, update the  pcurves of the
   //! edges of <F> on   the new surface.if the surface has  been changed,
   //! Returns  True if The Surface of  <NF> has changed.
+  //! <ExtensionMode> is a mode of extension of the surface of the face:
+  //! if <ExtensionMode> equals 1, potentially infinite surfaces are extended by maximum value,
+  //! and limited surfaces are extended by 25%.
+  //! if <ExtensionMode> equals 2, potentially infinite surfaces are extended by
+  //! 10*(correspondent size of face),
+  //! and limited surfaces are extended by 100%.
   Standard_EXPORT static Standard_Boolean EnLargeFace (const TopoDS_Face& F,
                                                        TopoDS_Face& NF,
                                                        const Standard_Boolean ChangeGeom,
                                                        const Standard_Boolean UpDatePCurve = Standard_False,
                                                        const Standard_Boolean enlargeU = Standard_True,
                                                        const Standard_Boolean enlargeVfirst = Standard_True,
-                                                       const Standard_Boolean enlargeVlast = Standard_True);
+                                                       const Standard_Boolean enlargeVlast = Standard_True,
+                                                       const Standard_Integer ExtensionMode = 1);
   
   Standard_EXPORT static void ExtentFace (const TopoDS_Face& F,
                                           TopTools_DataMapOfShapeShape& ConstShapes,
