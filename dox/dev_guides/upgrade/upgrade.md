@@ -1560,3 +1560,8 @@ Since new version, these unclassified faces are no longer added into resulting s
 The following public methods of the *BOPAlgo_BuilderSolid* class have been removed as excessive:
 * void SetSolid(const TopoDS_Solid& theSolid);
 * const TopoDS_Solid& Solid() const;
+
+@section upgrade_occt740 Upgrade to OCCT 7.4.0
+
+@subsection upgrade_740_BRepPrimAPI_MakeRevol Changes in BRepPrimAPI_MakeRevol algorithm
+Previously the algorithm could create a shape with the same degenerated edge shared between some faces. Now it is prevented. The algorithm creates the different copy of this edge for each face. The method *Generated(...)* has been changed in order to apply restriction to the input shape: input shape can be only of type VERTEX, EDGE, FACE or SOLID. For input shape of another type the method always returns empty list.
