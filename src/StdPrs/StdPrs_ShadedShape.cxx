@@ -306,7 +306,7 @@ namespace
     Standard_Integer aNodeNumber = 0;
     Standard_Integer aNbPolylines = 0;
 
-    TopLoc_Location aTrsf;
+    TopLoc_Location aLoc;
     TColgp_SequenceOfPnt aSeqPntsExtra;
     for (TopExp_Explorer aFaceIter (theShape, TopAbs_FACE); aFaceIter.More(); aFaceIter.Next())
     {
@@ -332,14 +332,14 @@ namespace
 
       // take one of the shared edges and get edge triangulation
       const TopoDS_Face& aFace = TopoDS::Face (anEdgeIter.Value().First());
-      Handle(Poly_Triangulation) aTriangulation = BRep_Tool::Triangulation (aFace, aTrsf);
+      Handle(Poly_Triangulation) aTriangulation = BRep_Tool::Triangulation (aFace, aLoc);
       if (aTriangulation.IsNull())
       {
         continue;
       }
 
       const TopoDS_Edge& anEdge = TopoDS::Edge (anEdgeIter.Key());
-      Handle(Poly_PolygonOnTriangulation) anEdgePoly = BRep_Tool::PolygonOnTriangulation (anEdge, aTriangulation, aTrsf);
+      Handle(Poly_PolygonOnTriangulation) anEdgePoly = BRep_Tool::PolygonOnTriangulation (anEdge, aTriangulation, aLoc);
       if (!anEdgePoly.IsNull()
         && anEdgePoly->Nodes().Length() >= 2)
       {
@@ -366,7 +366,7 @@ namespace
 
     // create indexed segments array to pack polylines from different edges into single array
     const Standard_Integer aSegmentEdgeNb = (aNodeNumber - aNbPolylines) * 2;
-    Handle(Graphic3d_ArrayOfSegments) aSegments = new Graphic3d_ArrayOfSegments (aNodeNumber + aSeqPntsExtra.Size(), aSegmentEdgeNb + aSeqPntsExtra.Size());
+    Handle(Graphic3d_ArrayOfSegments) aSegments = new Graphic3d_ArrayOfSegments (aNodeNumber + aSeqPntsExtra.Size(), aSegmentEdgeNb + aSeqPntsExtra.Size(), false, true);
     for (TopTools_IndexedDataMapOfShapeListOfShape::Iterator anEdgeIter (anEdgesMap); anEdgeIter.More(); anEdgeIter.Next())
     {
       if (anEdgeIter.Value().Extent() == 0)
@@ -374,43 +374,68 @@ namespace
         continue;
       }
 
-      const TopoDS_Face& aFace = TopoDS::Face (anEdgeIter.Value().First());
-      Handle(Poly_Triangulation) aTriangulation = BRep_Tool::Triangulation (aFace, aTrsf);
-      if (aTriangulation.IsNull())
+      Standard_Integer aFaceIndex = 0;
+      const Standard_Integer aFirstNodeInFace = aSegments->VertexNumber() + 1;
+      const Standard_Integer aNbFaces = anEdgeIter.Value().Extent();
+      for (TopTools_ListOfShape::Iterator aFaceIter (anEdgeIter.Value()); aFaceIter.More(); aFaceIter.Next())
       {
-        continue;
-      }
-
-      const TopoDS_Edge& anEdge = TopoDS::Edge (anEdgeIter.Key());
-      Handle(Poly_PolygonOnTriangulation) anEdgePoly = BRep_Tool::PolygonOnTriangulation (anEdge, aTriangulation, aTrsf);
-      if (anEdgePoly.IsNull()
-       || anEdgePoly->Nodes().Length () < 2)
-      {
-        continue;
-      }
-
-      // get edge nodes indexes from face triangulation
-      const TColgp_Array1OfPnt&      aTriNodes   = aTriangulation->Nodes();
-      const TColStd_Array1OfInteger& anEdgeNodes = anEdgePoly->Nodes();
-
-      // collect the edge nodes
-      Standard_Integer aSegmentEdge = aSegments->VertexNumber() + 1;
-      for (Standard_Integer aNodeIdx = anEdgeNodes.Lower(); aNodeIdx <= anEdgeNodes.Upper(); ++aNodeIdx)
-      {
-        // node index in face triangulation
-        // get node and apply location transformation to the node
-        const Standard_Integer aTriIndex = anEdgeNodes.Value (aNodeIdx);
-        gp_Pnt aTriNode = aTriNodes.Value (aTriIndex);
-        if (!aTrsf.IsIdentity())
+        const TopoDS_Face& aFace = TopoDS::Face (aFaceIter.Value());
+        Handle(Poly_Triangulation) aTriangulation = BRep_Tool::Triangulation (aFace, aLoc);
+        if (aTriangulation.IsNull())
         {
-          aTriNode.Transform (aTrsf);
+          continue;
         }
 
-        aSegments->AddVertex (aTriNode);
-        if (aNodeIdx != anEdgeNodes.Lower())
+        const TopoDS_Edge& anEdge = TopoDS::Edge (anEdgeIter.Key());
+        Handle(Poly_PolygonOnTriangulation) anEdgePoly = BRep_Tool::PolygonOnTriangulation (anEdge, aTriangulation, aLoc);
+        if (anEdgePoly.IsNull()
+         || anEdgePoly->Nodes().Length () < 2)
         {
-          aSegments->AddEdge (  aSegmentEdge);
-          aSegments->AddEdge (++aSegmentEdge);
+          continue;
+        }
+
+        // get edge nodes indexes from face triangulation
+        ++aFaceIndex;
+        const TColgp_Array1OfPnt&      aTriNodes   = aTriangulation->Nodes();
+        const TColStd_Array1OfInteger& anEdgeNodes = anEdgePoly->Nodes();
+        const gp_Trsf& aTrsf = aLoc.Transformation();
+
+        // collect the edge nodes
+        Standard_Integer aSegmentEdge = aFirstNodeInFace;
+        for (Standard_Integer aNodeIdx = anEdgeNodes.Lower(); aNodeIdx <= anEdgeNodes.Upper(); ++aNodeIdx)
+        {
+          // node index in face triangulation
+          // get node and apply location transformation to the node
+          const Standard_Integer aTriIndex = anEdgeNodes.Value (aNodeIdx);
+          gp_Pnt aTriNode = aTriNodes.Value (aTriIndex);
+          gp_Dir aNorm = aTriangulation->Normal (aTriIndex);
+          if (aFace.Orientation() == TopAbs_REVERSED)
+          {
+            aNorm.Reverse();
+          }
+          if (!aLoc.IsIdentity())
+          {
+            aTriNode.Transform (aTrsf);
+            aNorm.Transform (aTrsf);
+          }
+
+          if (aFaceIndex == 1)
+          {
+            aSegments->AddVertex (aTriNode, aNorm);
+            if (aNodeIdx != anEdgeNodes.Lower())
+            {
+              aSegments->AddEdge (  aSegmentEdge);
+              aSegments->AddEdge (++aSegmentEdge);
+            }
+          }
+          else
+          {
+            gp_XYZ aNormSum;
+            aSegments->VertexNormal (aSegmentEdge, aNormSum.ChangeCoord (1), aNormSum.ChangeCoord (2), aNormSum.ChangeCoord (3));
+            aNormSum += aNorm.XYZ();
+            aSegments->SetVertexNormal (aSegmentEdge, aNormSum.ChangeCoord (1), aNormSum.ChangeCoord (2), aNormSum.ChangeCoord (3));
+            ++aSegmentEdge;
+          }
         }
       }
     }
