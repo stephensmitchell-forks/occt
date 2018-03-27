@@ -25,11 +25,41 @@ vfit
 donly s1_1 s2_1
 thrusections res2 0 0 s1_1 s2_1
 
+foreach s {s1_1 s2_1} {
+  foreach type {v e} {
+    foreach ss [explode $s $type] {
+      if {[catch { genthrus g $ss } catch_res]} {
+        puts "Error: Unable to get generated shapes"
+      }
+    }
+  }
+}
+
 donly s1_1 s3_1
 thrusections res3 0 0 s1_1 s3_1
 
+foreach s {s1_1 s3_1} {
+  foreach type {v e} {
+    foreach ss [explode $s $type] {
+      if {[catch { genthrus g $ss } catch_res]} {
+        puts "Error: Unable to get generated shapes"
+      }
+    }
+  }
+}
+
 donly s1_1 s4_1
 thrusections res4 0 0 s1_1 s4_1
+
+foreach s {s1_1 s4_1} {
+  foreach type {v e} {
+    foreach ss [explode $s $type] {
+      if {[catch { genthrus g $ss } catch_res]} {
+        puts "Error: Unable to get generated shapes"
+      }
+    }
+  }
+}
 
 checkview -screenshot -3d -path ${imagedir}/${test_image}.png
 
