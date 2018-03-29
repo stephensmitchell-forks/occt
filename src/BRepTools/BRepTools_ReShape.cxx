@@ -363,8 +363,19 @@ TopoDS_Shape BRepTools_ReShape::Apply (const TopoDS_Shape& shape,
     return res;
   }
 
+  // For cases when one Compound should be
+  // replaced with another, subshapes of
+  // an initial Compound should be checked.
+  Standard_Boolean isCheckSubShapes = Standard_False;
+  if (until == TopAbs_COMPOUND)
+  {
+    TopExp_Explorer anExp(shape, TopAbs_COMPOUND);
+    if (anExp.More())
+      isCheckSubShapes = Standard_True;
+  }
+
   TopAbs_ShapeEnum st = shape.ShapeType(); //, subt;
-  if ( st >= until ) return newsh;    // critere d arret
+  if (st >= until && !isCheckSubShapes) return newsh;    // critere d arret
   if(st == TopAbs_VERTEX || st == TopAbs_SHAPE)
     return shape;
   // define allowed types of components
