@@ -595,6 +595,14 @@ proc checkprops {shape args} {
                 if { $m == 0 } {
                     puts "Error : The command is not valid. The $prop is 0."
                 }
+                # Provide comparation with negative value
+                if { [expr $mass*$m ] < 0.0 } {
+                  # Value and expected value have different sign
+                  puts "Error : The $prop of result shape is $m"
+                } else {
+                  set mass [expr abs($mass)]
+                  set m [expr abs($m)]
+                }
                 if { $mass > 0 } {
                     puts "The expected $prop is $mass"
                 }
