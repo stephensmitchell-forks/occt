@@ -24,6 +24,7 @@
 #include <TopoDS_Wire.hxx>
 #include <TopTools_IndexedMapOfShape.hxx>
 #include <TopTools_ListOfShape.hxx>
+class BOPAlgo_MakerVolume;
 
 //! Constructs an evolved volume from a spine (wire or face)
 //! and  a profile ( wire).
@@ -61,8 +62,13 @@ protected:
 
   Standard_EXPORT void BuildSolid();
 
-  Standard_EXPORT void RemoveExcessSolids(const TopoDS_Shape& theShape,
-                                          const TopTools_ListOfShape& theLF);
+  Standard_EXPORT void RemoveExcessSolids(const TopTools_ListOfShape& theLSplits,
+                                          TopoDS_Shape& theShape,
+                                          TopTools_ListOfShape& theArgsList,
+                                          BOPAlgo_MakerVolume& theMV);
+
+  Standard_EXPORT void ExtractOuterSolid(TopoDS_Shape& theShape,
+                                         TopTools_ListOfShape& theArgsList);
 
 private:
 

@@ -51,6 +51,7 @@
 #include <Geom_ConicalSurface.hxx>
 #include <Extrema_ExtPC.hxx>
 #include <BOPDS_DS.hxx>
+#include <BRepLib.hxx>
 
 static const Standard_Real aPipeLinearTolerance = 1.0e-4;
 static const Standard_Real aPipeAngularTolerance = 1.0e-2;
@@ -249,13 +250,58 @@ void BRepFill_Voluved::BuildSolid()
   TopTools_ListOfShape aLF, aLSplits;
 
   TopExp_Explorer anExpF(myPipeShell, TopAbs_FACE);
-  for (; anExpF.More(); anExpF.Next())
+
+  {
+    for (; anExpF.More(); anExpF.Next())
+    {
+      const TopoDS_Face &aF = TopoDS::Face(anExpF.Current());
+      if (!aMapF.Add(aF))
+        continue;
+
+      aLF.Append(aF);
+    }
+
+    // Split interfered edges
+    BOPAlgo_PaveFiller aPF;
+    aPF.SetArguments(aLF);
+    aPF.SetRunParallel(Standard_True);
+
+    aPF.Perform();
+    if (!aPF.HasErrors())
+    {
+      BOPAlgo_Builder aBuilder;
+      TopTools_ListIteratorOfListOfShape aItLE(aLF);
+      for (; aItLE.More(); aItLE.Next())
+      {
+        const TopoDS_Shape& aS = aItLE.Value();
+        aBuilder.AddArgument(aS);
+      }
+
+      aBuilder.SetRunParallel(Standard_True);
+      aBuilder.PerformWithFiller(aPF);
+      myPipeShell = aBuilder.Shape();
+    }
+  }
+
+  aLF.Clear();
+  aMapF.Clear();
+  for (anExpF.Init(myPipeShell, TopAbs_FACE);
+       anExpF.More(); anExpF.Next())
   {
     const TopoDS_Face &aF = TopoDS::Face(anExpF.Current());
     if (!aMapF.Add(aF))
       continue;
 
     CheckSingularityAndAdd(aF, aLF, aLSplits);
+  }
+
+  {
+    TopTools_ListIteratorOfListOfShape anItrS(aLSplits);
+    for (; anItrS.More(); anItrS.Next())
+    {
+      const TopoDS_Face &aF = TopoDS::Face(anItrS.Value());
+      aLF.Append(aF);
+    }
   }
 
   if (!myTopBottom.IsNull())
@@ -268,6 +314,16 @@ void BRepFill_Voluved::BuildSolid()
     }
   }
   
+  {
+    // Fix SameParameter
+    TopoDS_ListIteratorOfListOfShape anItF(aLF);
+    for (; anItF.More(); anItF.Next())
+    {
+      const TopoDS_Shape &aF = anItF.Value();
+      BRepLib::SameParameter(aF, Precision::Confusion(), Standard_True);
+    }
+  }
+
   BOPAlgo_MakerVolume aMV;
   aMV.SetArguments(aLF);
   aMV.SetIntersect(Standard_True);
@@ -281,66 +337,162 @@ void BRepFill_Voluved::BuildSolid()
   }
   
   myResult = aMV.Shape();
-  //RemoveExcessSolids(aMV.Shape(), aLSplits);
+  RemoveExcessSolids(aLSplits, myResult, aLF, aMV);
 
   myErrorStatus = BRepFill_Voluved_OK;
+}
+
+//=======================================================================
+//function : ExtractOuterSolid
+//purpose  : 
+//=======================================================================
+void BRepFill_Voluved::ExtractOuterSolid(TopoDS_Shape& theShape,
+                                         TopTools_ListOfShape& theArgsList)
+{
+  TopTools_IndexedDataMapOfShapeListOfShape aMapS;
+  TopExp::MapShapesAndAncestors(theShape, TopAbs_FACE, TopAbs_SOLID, aMapS);
+
+  Standard_Boolean hasBeenDeleted = Standard_False;
+
+  for (Standard_Integer i = 1; i <= aMapS.Extent(); i++)
+  {
+    const TopTools_ListOfShape &aL = aMapS(i);
+    if (aL.Extent() > 1)
+    {
+      // Face is shared between several solids. ==> 
+      // It cannot participate in the outer contour and should be removed.
+
+      const TopoDS_Face &aF = TopoDS::Face(aMapS.FindKey(i));
+      theArgsList.Remove(aF);
+      hasBeenDeleted = Standard_True;
+    }
+  }
+
+  if (!hasBeenDeleted)
+    return;
+
+  BOPAlgo_MakerVolume aMV;
+  aMV.SetArguments(theArgsList);
+  aMV.SetIntersect(Standard_True);
+  aMV.SetRunParallel(Standard_True);
+  aMV.SetAvoidInternalShapes(Standard_True);
+  aMV.Perform();
+
+  if (aMV.HasErrors())
+  {
+    return;
+  }
+
+  theShape = aMV.Shape();
 }
 
 //=======================================================================
 //function : RemoveExcessSolids
 //purpose  : 
 //=======================================================================
-void BRepFill_Voluved::RemoveExcessSolids(const TopoDS_Shape& theShape,
-                                          const TopTools_ListOfShape& theLSplits)
+void BRepFill_Voluved::RemoveExcessSolids(const TopTools_ListOfShape& theLSplits,
+                                          TopoDS_Shape& theShape,
+                                          TopTools_ListOfShape& theArgsList,
+                                          BOPAlgo_MakerVolume& theMV)
 {
   if (myErrorStatus != BRepFill_Voluved_NotVolume)
     return;
   
+  TopExp_Explorer anExpSo;
+  for (Standard_Integer i = 0; i < 2; i++)
+  {
+    anExpSo.Init(theShape, TopAbs_SOLID);
+    if (!anExpSo.More())
+    {
+      return;
+    }
+
+    anExpSo.Next();
+    if (!anExpSo.More())
+    {
+      // Only one solid has been generated
+      myResult = TopoDS::Solid(anExpSo.Current());
+      return;
+    }
+
+    if (i != 0)
+      break;
+
+    ExtractOuterSolid(theShape, theArgsList);
+  }
+
+  // Remove Split faces from the list of arguments
+  TopTools_ListIteratorOfListOfShape anItl(theLSplits);
+  for (; anItl.More(); anItl.Next())
+  {
+    const TopoDS_Face &aF = TopoDS::Face(anItl.Value());
+    theArgsList.Remove(aF);
+  }
+
+  // Create a list of invalid faces. The face is invalid if
+  // BOPAlgo_MakerVolume changes its orientation while creating solids.
+  // Faces from theLSplits are not checked.
+  TopTools_ListOfShape aListInvFaces;
+  for (anItl.Init(theArgsList); anItl.More(); anItl.Next())
+  {
+    const TopoDS_Face &aF = TopoDS::Face(anItl.Value());
+    for (TopTools_ListIteratorOfListOfShape anItM(theMV.Modified(aF));
+         anItM.More(); anItM.Next())
+    {
+      const TopoDS_Face &aFM = TopoDS::Face(anItM.Value());
+
+      if (aFM.Orientation() != aF.Orientation())
+        aListInvFaces.Append(aFM);
+    }
+  }
+
   TopTools_ListOfShape aSolidList;
-
-  TopExp_Explorer anExpSo(theShape, TopAbs_SOLID);
-  if (!anExpSo.More())
-  {
-    myResult = theShape;
-    return;
-  }
-
-  anExpSo.Next();
-  if (!anExpSo.More())
-  {
-    // Only one solid has been generated
-    myResult = TopoDS::Solid(anExpSo.Current());
-    return;
-  }
-
-  TopTools_ListIteratorOfListOfShape anItSp;
-
   for (anExpSo.Init(theShape, TopAbs_SOLID); anExpSo.More(); anExpSo.Next())
   {
     const TopoDS_Solid &aSo = TopoDS::Solid(anExpSo.Current());
+    TopTools_IndexedMapOfShape aMapF;
+    TopExp::MapShapes(aSo, TopAbs_FACE, aMapF);
+    Standard_Boolean isToDelete = Standard_False;
 
-    Standard_Boolean hasToBeDeleted = Standard_False;
-
-    TopExp_Explorer anExpF(aSo, TopAbs_FACE);
-    for (; !hasToBeDeleted && anExpF.More(); anExpF.Next())
+    for (anItl.Init(aListInvFaces); anItl.More(); anItl.Next())
     {
-      const TopoDS_Face& aF = TopoDS::Face(anExpF.Current());
-      for (anItSp.Init(theLSplits); anItSp.More(); anItSp.Next())
+      const TopoDS_Face &aF = TopoDS::Face(anItl.Value());
+      if (aMapF.Contains(aF))
       {
-        const TopoDS_Face& aFS = TopoDS::Face(anItSp.Value());
-
-        if (aF.IsSame(aFS) && aF.IsNotEqual(aFS))
-        {
-          hasToBeDeleted = Standard_True;
-          break;
-        }
+        isToDelete = Standard_True;
+        break;
       }
     }
 
-    if (!hasToBeDeleted)
+    if (isToDelete)
     {
-      aSolidList.Append(aSo);
+      continue;
     }
+    
+    for (anItl.Init(theArgsList); anItl.More(); anItl.Next())
+    {
+      const TopoDS_Face &aF = TopoDS::Face(anItl.Value());
+      const Standard_Integer anIdx = aMapF.FindIndex(aF);
+      if (anIdx == 0)
+        continue;
+
+      const TopoDS_Face &aF1 = TopoDS::Face(aMapF.FindKey(anIdx));
+
+      // aF and aF1 are same shapes. Check if they are equal.
+
+      if (!aF.IsEqual(aF1))
+      {
+        isToDelete = Standard_True;
+        break;
+      }
+    }
+
+    if (isToDelete)
+    {
+      continue;
+    }
+
+    aSolidList.Append(aSo);
   }
 
   if (aSolidList.Extent() < 1)
@@ -359,9 +511,9 @@ void BRepFill_Voluved::RemoveExcessSolids(const TopoDS_Shape& theShape,
   TopoDS_Compound aCmpSol;
   aBB.MakeCompound(aCmpSol);
 
-  for (anItSp.Init(aSolidList); anItSp.More(); anItSp.Next())
+  for (anItl.Init(aSolidList); anItl.More(); anItl.Next())
   {
-    const TopoDS_Solid &aSo = TopoDS::Solid(anItSp.Value());
+    const TopoDS_Solid &aSo = TopoDS::Solid(anItl.Value());
     aBB.Add(aCmpSol, aSo);
   }
 
@@ -633,27 +785,17 @@ static Standard_Boolean MakeEdgeDegenerated(const TopoDS_Vertex& theV,
 //purpose  : 
 //=======================================================================
 static void InsertEDegenerated(const TopoDS_Face& theFace,
-                               TopTools_ListOfShape& theLEdges)
+                               const TopoDS_Wire& theWire,
+                               TopTools_ListOfShape& theLE)
 {
   // Every degenerated edge (to split) must be added in theLEdges twice
   // with different orientations. Moreover, Degenerated edges cannot be shared.
   // Therefore, make copy of them before adding.
 
-  BRep_Builder aBB;
-  TopoDS_Wire aWir;
-  aBB.MakeWire(aWir);
-
-  TopTools_ListIteratorOfListOfShape anItr(theLEdges);
-  for (; anItr.More(); anItr.Next())
-  {
-    const TopoDS_Edge &anE = TopoDS::Edge(anItr.Value());
-    aBB.Add(aWir, anE);
-  }
-
   TopTools_IndexedDataMapOfShapeListOfShape aMapVE;
-  TopExp::MapShapesAndUniqueAncestors(aWir, TopAbs_VERTEX, TopAbs_EDGE, aMapVE);
+  TopExp::MapShapesAndUniqueAncestors(theWire, TopAbs_VERTEX, TopAbs_EDGE, aMapVE);
 
-  BRepTools_WireExplorer anExp(aWir, theFace);
+  BRepTools_WireExplorer anExp(theWire, TopoDS::Face(theFace.Oriented(TopAbs_FORWARD)));
 
   TopoDS_Edge anE1 = anExp.Current(), aFirstEdge, aLastEdge;
 
@@ -668,6 +810,7 @@ static void InsertEDegenerated(const TopoDS_Face& theFace,
   aFirstEdge = anE1;
   anExp.Next();
 
+# if 0
   if (!anExp.More())
   {
     // The wire contains only single edge.
@@ -683,14 +826,32 @@ static void InsertEDegenerated(const TopoDS_Face& theFace,
       aL = BRep_Tool::Parameter(aVl, anE1);
       const gp_Pnt2d aPf(aC->Value(aF)), aPl(aC->Value(aL));
 
-      MakeEdgeDegenerated(aVf, theFace, aPf, aPl, theLEdges);
+      MakeEdgeDegenerated(aVf, theFace, aPf, aPl, theLE);
     }
 
     return;
   }
+#endif
 
   // Map containing all vertices of degenerated edges
   TopTools_MapOfShape aMapVofDE;
+
+  {
+    TopExp_Explorer anExpDE(theWire, TopAbs_EDGE);
+    for (; anExpDE.More(); anExpDE.Next())
+    {
+      const TopoDS_Edge &anE = TopoDS::Edge(anExpDE.Current());
+      if (!BRep_Tool::Degenerated(anE))
+        continue;
+
+      TopoDS_Vertex aV1, aV2;
+      TopExp::Vertices(anE, aV1, aV2);
+
+      // aV1 and aV2 are SAME vertices
+
+      aMapVofDE.Add(aV1);
+    }
+  }
 
   for (; anExp.More(); anExp.Next())
   {
@@ -698,7 +859,7 @@ static void InsertEDegenerated(const TopoDS_Face& theFace,
     aLastEdge = anE2;
     //if (anE1.IsSame(anE2))
     //{
-    //  //Exclude a gap between two seam-edges (e.g. cylinder without bottom-base).
+    //  //Exclude a gap between two seam-edges (e.g. cylinder without roofs).
     //  anE1 = anE2;
     //  continue;
     //}
@@ -719,7 +880,7 @@ static void InsertEDegenerated(const TopoDS_Face& theFace,
     aL = BRep_Tool::Parameter(aVertCurr, anE2);
     const gp_Pnt2d aPf(aC1->Value(aF)), aPl(aC2->Value(aL));
 
-    if (MakeEdgeDegenerated(aVertCurr, theFace, aPf, aPl, theLEdges))
+    if (MakeEdgeDegenerated(aVertCurr, theFace, aPf, aPl, theLE))
     {
       aMapVofDE.Add(aVertCurr);
       anE1 = anE2;
@@ -772,7 +933,7 @@ static void InsertEDegenerated(const TopoDS_Face& theFace,
         aF = BRep_Tool::Parameter(aVertCurr, anEdge);
         const gp_Pnt2d aP(aC->Value(aF));
 
-        if (MakeEdgeDegenerated(aVertCurr, theFace, aPoint, aP, theLEdges))
+        if (MakeEdgeDegenerated(aVertCurr, theFace, aPoint, aP, theLE))
         {
           aMapVofDE.Add(aVertCurr);
           i = 2;
@@ -789,7 +950,7 @@ static void InsertEDegenerated(const TopoDS_Face& theFace,
 
   //if (aFirstEdge.IsSame(aLastEdge))
   //{
-  //  //Exclude a gap between two seam-edges (e.g. cylinder without bottom-base).
+  //  //Exclude a gap between two seam-edges (e.g. cylinder without roofs).
 
   //  return;
   //}
@@ -852,7 +1013,7 @@ static void InsertEDegenerated(const TopoDS_Face& theFace,
       aL = BRep_Tool::Parameter(aV[anIDLE], aLastEdge);
       const gp_Pnt2d aPf(aC1->Value(aF)), aPl(aC2->Value(aL));
 
-      MakeEdgeDegenerated(aV[anIDFE], theFace, aPf, aPl, theLEdges);
+      MakeEdgeDegenerated(aV[anIDFE], theFace, aPf, aPl, theLE);
     }
   }
 }
@@ -873,63 +1034,27 @@ Standard_Boolean CheckSingularityAndAdd(const TopoDS_Face& theF,
     aSType = anAS.BasisSurface()->GetType();
   }
 
+#if 0
   if (aSType == GeomAbs_Plane)
   {
     TopTools_MapOfShape aME;
-    TopTools_ListOfShape aLE;
+    BRep_Builder aBB;
+    TopoDS_Compound aCompW, aCompF, anEdges;
+    aBB.MakeCompound(aCompW);
+    aBB.MakeCompound(aCompF);
+    aBB.MakeCompound(anEdges);
+
     TopExp_Explorer anExp(theF, TopAbs_EDGE);
     for (; anExp.More(); anExp.Next())
     {
       const TopoDS_Edge &anE = TopoDS::Edge(anExp.Current());
 
-      if (aME.Add(anE))
-        aLE.Append(anE);
+      if (!aME.Add(anE))
+        continue;
+
+      aBB.Add(anEdges, anE);
     }
 
-    // Split interfered edges
-    BOPAlgo_PaveFiller aPF;
-    aPF.SetArguments(aLE);
-    aPF.SetRunParallel(Standard_True);
-
-    aPF.Perform();
-    if (aPF.HasErrors())
-    {
-      theListOfFaces.Append(theF);
-      return Standard_False;
-    }
-
-    const BOPDS_DS &aDS = aPF.DS();
-    if (aDS.NbShapes() == aDS.NbSourceShapes())
-    {
-      //Interfered edges have not been detected
-      theListOfFaces.Append(theF);
-      return Standard_False;
-    }
-
-    BOPAlgo_Builder aBuilder;
-    TopTools_ListIteratorOfListOfShape aItLE(aLE);
-    for (; aItLE.More(); aItLE.Next())
-    {
-      const TopoDS_Shape& aS = aItLE.Value();
-      aBuilder.AddArgument(aS);
-    }
-
-    aBuilder.SetRunParallel(Standard_True);
-    aBuilder.PerformWithFiller(aPF);
-    if (aBuilder.HasErrors())
-    {
-      theListOfFaces.Append(theF);
-      return Standard_False;
-    }
-
-    const TopoDS_Shape& anEdges = aBuilder.Shape();
-
-    // Collect all free edges to wires and create planar 
-    // top and bottom lids from these wires.
-    BRep_Builder aBB;
-    TopoDS_Compound aCompW, aCompF;
-    aBB.MakeCompound(aCompW);
-    aBB.MakeCompound(aCompF);
     BOPAlgo_Tools::EdgesToWires(anEdges, aCompW, Standard_True);
     BOPAlgo_Tools::WiresToFaces(aCompW, aCompF);
 
@@ -943,6 +1068,7 @@ Standard_Boolean CheckSingularityAndAdd(const TopoDS_Face& theF,
 
     return Standard_True;
   }
+#endif
 
   if ((aSType != GeomAbs_Cone) && 
       (aSType != GeomAbs_Sphere) && 
@@ -968,46 +1094,6 @@ Standard_Boolean CheckSingularityAndAdd(const TopoDS_Face& theF,
   {
     const TopoDS_Wire &aWir = TopoDS::Wire(anExpW.Value());
 
-    TopTools_ListOfShape aLGF;
-    TopExp_Explorer anEExp(aWir, TopAbs_EDGE);
-    for (; anEExp.More(); anEExp.Next())
-    {
-      const TopoDS_Edge &anE = TopoDS::Edge(anEExp.Current());
-      aLGF.Append(anE);
-    }
-
-    BOPAlgo_PaveFiller aPF;
-    aPF.SetArguments(aLGF);
-    aPF.Perform();
-
-    if (aPF.HasErrors())
-    {
-      continue;
-    }
-
-    const BOPDS_DS &aDS = aPF.DS();
-    if (aDS.NbShapes() == aDS.NbSourceShapes())
-    {
-      //No new shapes have been created
-      continue;
-    }
-
-    BOPAlgo_Builder aBAB(NCollection_BaseAllocator::CommonBaseAllocator());
-    TopTools_ListIteratorOfListOfShape aBItr(aLGF);
-    for (; aBItr.More(); aBItr.Next())
-    {
-      const TopoDS_Shape &aSh = aBItr.Value();
-      aBAB.AddArgument(aSh);
-    }
-
-    aBAB.SetRunParallel(Standard_True);
-    aBAB.SetNonDestructive(Standard_True);
-    aBAB.PerformWithFiller(aPF);
-    if (aBAB.HasErrors())
-    {
-      continue;
-    }
-
 #if 0
     // This fragment requires fixing the issue #29656
     TopTools_MapOfShape aMM;
@@ -1021,27 +1107,24 @@ Standard_Boolean CheckSingularityAndAdd(const TopoDS_Face& theF,
       aLE.Append(anEE);
     }
 #else
-    for (aBItr.Init(aLGF); aBItr.More(); aBItr.Next())
-    {
-      const TopoDS_Edge &aSh = TopoDS::Edge(aBItr.Value());
-      const TopTools_ListOfShape &aLM = aBAB.Modified(aSh);
-      if (aLM.IsEmpty() || BRep_Tool::Degenerated(aSh))
-      {
-        aLE.Append(aSh);
-        continue;
-      }
 
-      TopTools_ListIteratorOfListOfShape anItLM(aLM);
-      for (; anItLM.More(); anItLM.Next())
-      {
-        const TopoDS_Edge &anEM = TopoDS::Edge(anItLM.Value());
-        aLE.Append(anEM);
-      }
+    TopTools_IndexedMapOfShape aM;
+    TopExp::MapShapes(aWir, TopAbs_EDGE, aM);
+    for (Standard_Integer i = 1; i <= aM.Extent(); i++)
+    {
+      const TopoDS_Edge &anE = TopoDS::Edge(aM.FindKey(i));
+      aLE.Append(anE);
+    }
+
+    TopTools_ListOfShape aLnew;
+    InsertEDegenerated(aF, aWir, aLnew);
+
+    if (!aLnew.IsEmpty())
+    {
+      isSplit = Standard_True;
+      aLE.Append(aLnew);
     }
 #endif
-
-    isSplit = Standard_True;
-    InsertEDegenerated(aF, aLE);
   }
 
   if (!isSplit)
@@ -1051,13 +1134,6 @@ Standard_Boolean CheckSingularityAndAdd(const TopoDS_Face& theF,
   }
 
   RebuildFaces(aLE, theF, theListOfSplits);
-
-  TopTools_ListIteratorOfListOfShape anItrS(theListOfSplits);
-  for (; anItrS.More(); anItrS.Next())
-  {
-    const TopoDS_Face &aF = TopoDS::Face(anItrS.Value());
-    theListOfFaces.Append(aF);
-  }
 
   return Standard_True;
 }
