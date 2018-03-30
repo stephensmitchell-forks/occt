@@ -207,6 +207,15 @@ static Standard_Boolean CheckMultiCurve(const AppParCurves_MultiCurve& theMultiC
     //Check: may be it is a real loop
     if (LoopFound)
     {
+#ifdef DRAW
+      for (Standard_Integer ipoint = theIndfirst; ipoint <= theIndlast; ipoint++)
+      {
+        LineTool::Value(theLine, ipoint, tabP);
+        gp_Pnt aPnt = tabP(1);
+        sprintf(name, "p%d", ipoint);
+        DrawTrSurf::Set(name, aPnt);
+      }
+#endif
       for (Standard_Integer FirstInd = theIndfirst;
            FirstInd <= theIndlast - 2; FirstInd++)
       {
@@ -307,6 +316,15 @@ static Standard_Boolean CheckMultiCurve(const AppParCurves_MultiCurve& theMultiC
     //Check: may be it is a real loop
     if (LoopFound)
     {
+#ifdef DRAW
+      for (Standard_Integer ipoint = theIndfirst; ipoint <= theIndlast; ipoint++)
+      {
+        LineTool::Value(theLine, ipoint, tabP2d);
+        gp_Pnt2d aPnt2d = tabP2d(1);
+        sprintf(name, "p%d", ipoint);
+        DrawTrSurf::Set(name, aPnt2d);
+      }
+#endif
       for (Standard_Integer FirstInd = theIndfirst;
            FirstInd <= theIndlast - 2; FirstInd++)
       {
@@ -1310,28 +1328,18 @@ Standard_Boolean Approx_ComputeLine::Compute(const MultiLine& Line,
 #ifdef OCCT_DEBUG
         if (mydebug) DUMP(mySCU);
 #endif
-        if (myNbPlusOnePoint != 0 &&
-            !CheckMultiCurve(mySCU, Line,
-                             fpt, lpt,
-                             indbad))
-        {
-          return Standard_False;
+        myMultiCurves.Append(mySCU);
+        // Stockage des parametres de la partie de MultiLine approximee:
+        // A ameliorer !! (bq trop de recopies)
+        Handle(TColStd_HArray1OfReal) ThePar = 
+          new TColStd_HArray1OfReal(Para.Lower(), Para.Upper());
+        for (i = Para.Lower(); i <= Para.Upper(); i++) {
+          ThePar->SetValue(i, Para(i));
         }
-        else
-        {
-          myMultiCurves.Append(mySCU);
-          // Stockage des parametres de la partie de MultiLine approximee:
-          // A ameliorer !! (bq trop de recopies)
-          Handle(TColStd_HArray1OfReal) ThePar = 
-            new TColStd_HArray1OfReal(Para.Lower(), Para.Upper());
-          for (i = Para.Lower(); i <= Para.Upper(); i++) {
-            ThePar->SetValue(i, Para(i));
-          }
-          myPar.Append(ThePar);
-          Tolers3d.Append(TheTol3d);
-          Tolers2d.Append(TheTol2d);
-          return Standard_True;
-        }
+        myPar.Append(ThePar);
+        Tolers3d.Append(TheTol3d);
+        Tolers2d.Append(TheTol2d);
+        return Standard_True;
       }
     }
 
