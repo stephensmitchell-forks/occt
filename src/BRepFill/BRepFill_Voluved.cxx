@@ -51,6 +51,7 @@
 #include <Geom_ConicalSurface.hxx>
 #include <Extrema_ExtPC.hxx>
 #include <BOPDS_DS.hxx>
+#include <BRepLib.hxx>
 
 static const Standard_Real aPipeLinearTolerance = 1.0e-4;
 static const Standard_Real aPipeAngularTolerance = 1.0e-2;
@@ -249,6 +250,7 @@ void BRepFill_Voluved::BuildSolid()
   TopTools_ListOfShape aLF, aLSplits;
 
   TopExp_Explorer anExpF(myPipeShell, TopAbs_FACE);
+
   for (; anExpF.More(); anExpF.Next())
   {
     const TopoDS_Face &aF = TopoDS::Face(anExpF.Current());
@@ -268,6 +270,16 @@ void BRepFill_Voluved::BuildSolid()
     }
   }
   
+  {
+    // Fix SameParameter
+    TopoDS_ListIteratorOfListOfShape anItF(aLF);
+    for (; anItF.More(); anItF.Next())
+    {
+      const TopoDS_Shape &aF = anItF.Value();
+      BRepLib::SameParameter(aF, Precision::Confusion(), Standard_True);
+    }
+  }
+
   BOPAlgo_MakerVolume aMV;
   aMV.SetArguments(aLF);
   aMV.SetIntersect(Standard_True);
@@ -281,63 +293,128 @@ void BRepFill_Voluved::BuildSolid()
   }
   
   myResult = aMV.Shape();
-  //RemoveExcessSolids(aMV.Shape(), aLSplits);
+  RemoveExcessSolids(myResult, aLF, aLSplits, aMV);
 
   myErrorStatus = BRepFill_Voluved_OK;
+}
+
+//=======================================================================
+//function : ExtractOuterSolid
+//purpose  : 
+//=======================================================================
+void BRepFill_Voluved::ExtractOuterSolid(TopoDS_Shape& theShape,
+                                         TopTools_ListOfShape& theArgsList)
+{
+  TopTools_IndexedDataMapOfShapeListOfShape aMapS;
+  TopExp::MapShapesAndAncestors(theShape, TopAbs_FACE, TopAbs_SOLID, aMapS);
+
+  Standard_Boolean hasBeenDeleted = Standard_False;
+
+  for (Standard_Integer i = 1; i <= aMapS.Extent(); i++)
+  {
+    const TopTools_ListOfShape &aL = aMapS(i);
+    if (aL.Extent() > 1)
+    {
+      // Face is shared between several solids. ==> 
+      // It cannot participate in the outer contour and should be removed.
+
+      const TopoDS_Face &aF = TopoDS::Face(aMapS.FindKey(i));
+      theArgsList.Remove(aF);
+      hasBeenDeleted = Standard_True;
+    }
+  }
+
+  if (!hasBeenDeleted)
+    return;
+
+  BOPAlgo_MakerVolume aMV;
+  aMV.SetArguments(theArgsList);
+  aMV.SetIntersect(Standard_True);
+  aMV.SetRunParallel(Standard_True);
+  aMV.SetAvoidInternalShapes(Standard_True);
+  aMV.Perform();
+
+  if (aMV.HasErrors())
+  {
+    return;
+  }
+
+  theShape = aMV.Shape();
 }
 
 //=======================================================================
 //function : RemoveExcessSolids
 //purpose  : 
 //=======================================================================
-void BRepFill_Voluved::RemoveExcessSolids(const TopoDS_Shape& theShape,
-                                          const TopTools_ListOfShape& theLSplits)
+void BRepFill_Voluved::RemoveExcessSolids(TopoDS_Shape& theShape,
+                                          TopTools_ListOfShape& theArgsList,
+                                          TopTools_ListOfShape& theLSplits,
+                                          BOPAlgo_MakerVolume& theMV)
 {
   if (myErrorStatus != BRepFill_Voluved_NotVolume)
     return;
   
+  TopExp_Explorer anExpSo;
+  for (Standard_Integer i = 0; i < 2; i++)
+  {
+    anExpSo.Init(theShape, TopAbs_SOLID);
+    if (!anExpSo.More())
+    {
+      return;
+    }
+
+    anExpSo.Next();
+    if (!anExpSo.More())
+    {
+      // Only one solid has been generated
+      myResult = TopoDS::Solid(anExpSo.Current());
+      return;
+    }
+
+    if (i != 0)
+      break;
+
+    ExtractOuterSolid(theShape, theArgsList);
+  }
+
+  // Create a list of invalid faces. The face is invalid if
+  // BOPAlgo_MakerVolume changes its orientation while creating solids.
+  // Faces from theLSplits are not checked.
+  TopTools_ListOfShape aListInvFaces;
+  TopTools_ListIteratorOfListOfShape anItl(theArgsList);
+  for (anExpSo.Init(theShape, TopAbs_SOLID); anItl.More(); anItl.Next())
+  {
+    const TopoDS_Face &aF = TopoDS::Face(anItl.Value());
+    if (theLSplits.Contains(aF))
+      continue;
+
+    for (TopTools_ListIteratorOfListOfShape anItM(theMV.Modified(aF));
+         anItM.More(); anItM.Next())
+    {
+      const TopoDS_Face &aFM = TopoDS::Face(anItM.Value());
+
+      if (aFM.Orientation() != aF.Orientation())
+        aListInvFaces.Append(aFM);
+    }
+  }
+
   TopTools_ListOfShape aSolidList;
-
-  TopExp_Explorer anExpSo(theShape, TopAbs_SOLID);
-  if (!anExpSo.More())
-  {
-    myResult = theShape;
-    return;
-  }
-
-  anExpSo.Next();
-  if (!anExpSo.More())
-  {
-    // Only one solid has been generated
-    myResult = TopoDS::Solid(anExpSo.Current());
-    return;
-  }
-
-  TopTools_ListIteratorOfListOfShape anItSp;
-
   for (anExpSo.Init(theShape, TopAbs_SOLID); anExpSo.More(); anExpSo.Next())
   {
+    Standard_Boolean isToDelete = Standard_False;
     const TopoDS_Solid &aSo = TopoDS::Solid(anExpSo.Current());
-
-    Standard_Boolean hasToBeDeleted = Standard_False;
-
-    TopExp_Explorer anExpF(aSo, TopAbs_FACE);
-    for (; !hasToBeDeleted && anExpF.More(); anExpF.Next())
+    for (TopExp_Explorer anExpF(aSo, TopAbs_FACE);
+         anExpF.More(); anExpF.Next())
     {
       const TopoDS_Face& aF = TopoDS::Face(anExpF.Current());
-      for (anItSp.Init(theLSplits); anItSp.More(); anItSp.Next())
+      if (aListInvFaces.Contains(aF))
       {
-        const TopoDS_Face& aFS = TopoDS::Face(anItSp.Value());
-
-        if (aF.IsSame(aFS) && aF.IsNotEqual(aFS))
-        {
-          hasToBeDeleted = Standard_True;
-          break;
-        }
+        isToDelete = Standard_True;
+        break;
       }
     }
 
-    if (!hasToBeDeleted)
+    if (!isToDelete)
     {
       aSolidList.Append(aSo);
     }
@@ -359,9 +436,9 @@ void BRepFill_Voluved::RemoveExcessSolids(const TopoDS_Shape& theShape,
   TopoDS_Compound aCmpSol;
   aBB.MakeCompound(aCmpSol);
 
-  for (anItSp.Init(aSolidList); anItSp.More(); anItSp.Next())
+  for (anItl.Init(aSolidList); anItl.More(); anItl.Next())
   {
-    const TopoDS_Solid &aSo = TopoDS::Solid(anItSp.Value());
+    const TopoDS_Solid &aSo = TopoDS::Solid(anItl.Value());
     aBB.Add(aCmpSol, aSo);
   }
 
