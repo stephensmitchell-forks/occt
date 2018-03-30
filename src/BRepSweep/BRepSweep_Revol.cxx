@@ -214,4 +214,12 @@ gp_Ax1  BRepSweep_Revol::Axe()const
   return myRotation.Axe();
 }
 
+//=======================================================================
+//function : GetDegEdges
+//purpose  : 
+//=======================================================================
 
+const TopTools_DataMapOfShapeListOfShape& BRepSweep_Revol::GetDegEdges() const
+{
+  return myRotation.GetDegEdges();
+}

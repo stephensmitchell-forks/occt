@@ -30,6 +30,7 @@
 #include <TColStd_Array2OfBoolean.hxx>
 #include <TopAbs_Orientation.hxx>
 #include <Standard_Boolean.hxx>
+#include <TopTools_DataMapOfShapeListOfShape.hxx>
 class Standard_NoMoreObject;
 class Standard_NoSuchObject;
 class Standard_RangeError;
@@ -220,6 +221,7 @@ protected:
   Sweep_NumShapeTool myDirShapeTool;
   TopTools_Array2OfShape myShapes;
   TColStd_Array2OfBoolean myBuiltShapes;
+  TopTools_DataMapOfShapeListOfShape myDegEdges;
 
 
 private:

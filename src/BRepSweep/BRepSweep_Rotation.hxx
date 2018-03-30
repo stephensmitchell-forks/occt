@@ -140,6 +140,9 @@ public:
   //! returns the angle.
   Standard_EXPORT Standard_Real Angle() const;
 
+  //! returns map generated degenarated edges
+  Standard_EXPORT const TopTools_DataMapOfShapeListOfShape& GetDegEdges() const;
+
 private:
 
   Standard_Real myAng;

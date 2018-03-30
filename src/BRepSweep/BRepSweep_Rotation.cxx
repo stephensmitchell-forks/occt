@@ -947,3 +947,11 @@ gp_Ax1 BRepSweep_Rotation::Axe()const
   return myAxe;
 }
 
+//=======================================================================
+//function : GetDegEdges
+//purpose  : 
+//=======================================================================
+const TopTools_DataMapOfShapeListOfShape& BRepSweep_Rotation::GetDegEdges() const
+{
+  return myDegEdges;
+}

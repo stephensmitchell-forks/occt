@@ -30,7 +30,7 @@
 #include <TopAbs_Orientation.hxx>
 #include <TopoDS_Shape.hxx>
 #include <TopTools_SequenceOfShape.hxx>
-
+#include <TopoDS.hxx>
 //=======================================================================
 //function : BRepSweep_NumLinearRegularSweep
 //purpose  : Create a Regular Sweep.
@@ -397,6 +397,32 @@ TopoDS_Shape BRepSweep_NumLinearRegularSweep::Shape (const TopoDS_Shape& aGenS,
       }
     }
     myBuiltShapes(iGenS,iDirS) = Standard_True;
+  }
+  //Return copy of degenerated edge 
+  if (myShapes(iGenS, iDirS).ShapeType() == TopAbs_EDGE)
+  {
+    if (BRep_Tool::Degenerated(TopoDS::Edge(myShapes(iGenS, iDirS))))
+    {
+      if (!myDegEdges.IsBound(myShapes(iGenS, iDirS)))
+      {
+        TopTools_ListOfShape anL;
+        myDegEdges.Bind(myShapes(iGenS, iDirS), anL);
+        myDegEdges.ChangeFind(myShapes(iGenS, iDirS)).Append(myShapes(iGenS, iDirS));
+      }
+      else
+      {
+        TopoDS_Shape aCopyE = myShapes(iGenS, iDirS).EmptyCopied();
+        aCopyE.Orientation(TopAbs_FORWARD);
+        BRep_Builder aBB;
+        TopoDS_Iterator anIt(myShapes(iGenS, iDirS));
+        for (; anIt.More(); anIt.Next())
+        {
+          aBB.Add(aCopyE, anIt.Value());
+        }
+        myDegEdges.ChangeFind(myShapes(iGenS, iDirS)).Append(aCopyE);
+        return aCopyE;
+      }
+    }
   }
   // Change the "Closed" flag only for Wires and Shells
   if (myShapes(iGenS, iDirS).ShapeType() == TopAbs_WIRE ||

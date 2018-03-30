@@ -129,8 +129,38 @@ TopoDS_Shape BRepPrimAPI_MakeRevol::LastShape()
 const TopTools_ListOfShape& BRepPrimAPI_MakeRevol::Generated (const TopoDS_Shape& S)
 {
   myGenerated.Clear();
-  if (!myRevol.Shape (S).IsNull())
-    myGenerated.Append (myRevol.Shape (S));
+  TopoDS_Shape aGS = myRevol.Shape(S);
+  if (!aGS.IsNull())
+  {
+    if (aGS.ShapeType() == TopAbs_EDGE)
+    {
+      if (BRep_Tool::Degenerated(TopoDS::Edge(aGS)))
+      {
+        const TopTools_DataMapOfShapeListOfShape& aDegEdges = myRevol.GetDegEdges();
+        if (aDegEdges.IsBound(aGS))
+        {
+          const TopTools_ListOfShape& anL = aDegEdges.Find(aGS);
+          TopTools_ListIteratorOfListOfShape anIt(anL);
+          for (; anIt.More(); anIt.Next())
+          {
+            myGenerated.Append(anIt.Value());
+          }
+        }
+        else
+        {
+          myGenerated.Append(aGS);
+        }
+      }
+      else
+      {
+        myGenerated.Append(aGS);
+      }
+    }
+    else
+    {
+      myGenerated.Append(aGS);
+    }
+  }
   return myGenerated;
 }
 
